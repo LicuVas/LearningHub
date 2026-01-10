@@ -33,40 +33,61 @@ const Breadcrumb = {
     getHubPath() {
         const path = window.location.pathname;
 
+        // Normalize path - handle both /index.html and trailing / or no extension
+        const normalizedPath = path.replace(/\/index\.html$/, '/').replace(/\/$/, '');
+
         // From lesson page: content/tic/cls6/m1-prezentari/lectia1.html
-        if (path.includes('/content/tic/') && path.match(/\/m\d+-[^/]+\/[^/]+\.html$/)) {
+        // (any .html file inside a module folder that's not index)
+        if (path.includes('/content/tic/') && path.match(/\/m\d+-[^/]+\/[^/]+\.html$/) && !path.endsWith('/index.html')) {
             return '../../../../hub/index.html';
         }
-        // From module index: content/tic/cls6/m1-prezentari/index.html
-        if (path.includes('/content/tic/') && path.match(/\/m\d+-[^/]+\/index\.html$/)) {
+
+        // From module index: content/tic/cls6/m1-prezentari/ or .../index.html
+        if (normalizedPath.match(/\/content\/tic\/cls\d+\/m\d+-[^/]+$/)) {
             return '../../../../hub/index.html';
         }
-        // From grade index: content/tic/cls6/index.html
-        if (path.includes('/content/tic/') && path.match(/\/cls\d+\/index\.html$/)) {
+
+        // From grade index: content/tic/cls6/ or content/tic/cls6/index.html
+        if (normalizedPath.match(/\/content\/tic\/cls\d+$/)) {
             return '../../../hub/index.html';
         }
-        // From hub pages: hub/by-grade/cls5.html
-        if (path.includes('/hub/')) {
+
+        // From hub subpages: hub/by-grade/ or hub/by-concept/
+        if (path.includes('/hub/') && !normalizedPath.endsWith('/hub')) {
+            return '../index.html';
+        }
+
+        // From hub main page
+        if (normalizedPath.endsWith('/hub')) {
             return 'index.html';
         }
 
-        return '../hub/index.html';
+        // Fallback - try to use absolute path
+        return '/hub/index.html';
     },
 
     // Get path to grade index from current page
     getGradePath(grade) {
         const path = window.location.pathname;
+        const normalizedPath = path.replace(/\/index\.html$/, '/').replace(/\/$/, '');
 
-        // From lesson page
-        if (path.match(/\/m\d+-[^/]+\/[^/]+\.html$/)) {
+        // From lesson page (inside a module folder)
+        if (path.match(/\/m\d+-[^/]+\/[^/]+\.html$/) && !path.endsWith('/index.html')) {
             return '../index.html';
         }
+
         // From module index
-        if (path.match(/\/m\d+-[^/]+\/index\.html$/)) {
+        if (normalizedPath.match(/\/m\d+-[^/]+$/)) {
             return '../index.html';
         }
 
-        return `../content/tic/${grade}/index.html`;
+        // From grade index itself - no link needed
+        if (normalizedPath.match(/\/cls\d+$/)) {
+            return '#';
+        }
+
+        // From hub or elsewhere - use absolute path
+        return `/content/tic/${grade}/index.html`;
     },
 
     // Get path to module index from current page
