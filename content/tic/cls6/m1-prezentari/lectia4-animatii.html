@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectia 4: Animatii pentru obiecte | Clasa 6</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-back { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
+        .nav-back:hover { color: var(--accent-cyan); }
+
+        .progress-steps { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }
+        .step { width: 60px; height: 8px; background: var(--border); border-radius: 4px; cursor: pointer; transition: all 0.3s; }
+        .step.active { background: var(--accent-orange); }
+        .step.completed { background: var(--accent-green); }
+
+        .section { display: none; animation: fadeIn 0.5s ease; }
+        .section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .goal-section {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(139, 92, 246, 0.1));
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .goal-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .goal-title { font-size: 2rem; font-weight: 800; color: var(--accent-orange); margin-bottom: 1rem; }
+        .goal-desc { font-size: 1.2rem; color: var(--text-secondary); max-width: 500px; margin: 0 auto 2rem; }
+
+        .try-section {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
+            border: 2px solid var(--accent-orange);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .try-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .try-badge { background: var(--accent-orange); color: #000; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.85rem; }
+
+        .challenge-box { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; }
+        .challenge-title { font-weight: 700; margin-bottom: 0.5rem; color: var(--accent-orange); }
+
+        .learn-section { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+        .learn-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .learn-badge { background: var(--accent-green); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+
+        .concept-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--accent-orange);
+        }
+
+        .concept-name { font-size: 1.2rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.5rem; }
+        .concept-def { color: var(--text-secondary); margin-bottom: 1rem; }
+
+        .animation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .anim-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .anim-card:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-3px);
+        }
+
+        .anim-card .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .anim-card .name { font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.25rem; }
+        .anim-card .desc { font-size: 0.8rem; color: var(--text-muted); }
+
+        .category-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .cat-entrance { background: var(--accent-green); color: #000; }
+        .cat-emphasis { background: var(--accent-orange); color: #000; }
+        .cat-exit { background: var(--accent-red); color: white; }
+        .cat-motion { background: var(--accent-blue); color: white; }
+
+        .test-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1));
+            border: 2px solid var(--accent-purple);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .test-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .test-badge { background: var(--accent-purple); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+
+        .quiz-question {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .quiz-question p { margin-bottom: 1rem; font-weight: 600; }
+
+        .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+
+        .quiz-option {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-option:hover { border-color: var(--accent-purple); }
+        .quiz-option.selected { border-color: var(--accent-cyan); background: rgba(6, 182, 212, 0.1); }
+        .quiz-option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .quiz-option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .btn-next {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-red));
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: block;
+            margin: 2rem auto 0;
+            transition: transform 0.2s;
+        }
+
+        .btn-next:hover { transform: scale(1.05); }
+
+        .btn-check {
+            background: var(--accent-purple);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: block;
+            margin: 2rem auto 0;
+        }
+
+        .complete-section {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.15));
+            border-radius: 20px;
+        }
+
+        .complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .complete-title { font-size: 2rem; font-weight: 800; color: var(--accent-green); margin-bottom: 1rem; }
+
+        #test-result { display: none; margin-top: 1rem; }
+
+        .demo-animation {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .demo-box {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            border-radius: 12px;
+            margin: 1rem auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.5s;
+        }
+
+        .demo-box:hover {
+            transform: scale(1.2) rotate(10deg);
+        }
+
+        @keyframes fadeInDemo {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes flyInDemo {
+            from { transform: translateX(-100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes pulseDemo {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress-steps">
+            <div class="step active" data-step="goal"></div>
+            <div class="step" data-step="try"></div>
+            <div class="step" data-step="learn"></div>
+            <div class="step" data-step="test"></div>
+            <div class="step" data-step="complete"></div>
+        </div>
+
+        <!-- GOAL Section -->
+        <section id="goal" class="section active">
+            <div class="goal-section">
+                <div class="goal-icon">✨</div>
+                <h1 class="goal-title">Vreau prezentari care prind viata!</h1>
+                <p class="goal-desc">Dupa aceasta lectie vei sti sa adaugi animatii obiectelor - text, imagini si forme vor aparea spectaculos!</p>
+                <button class="btn-next" onclick="goToStep('try')">Hai sa incepem!</button>
+            </div>
+        </section>
+
+        <!-- TRY Section -->
+        <section id="try" class="section">
+            <div class="try-section">
+                <div class="try-header">
+                    <span class="try-badge">INCEARCA</span>
+                    <span style="color: var(--text-secondary);">3 minute - experimenteaza animatii!</span>
+                </div>
+
+                <p style="font-size: 1.1rem; margin-bottom: 1rem;">
+                    Deschide o prezentare si <strong>adauga prima ta animatie</strong>!
+                </p>
+
+                <div class="challenge-box">
+                    <div class="challenge-title">Provocare (3 min):</div>
+                    <ol style="margin-left: 1.5rem; color: var(--text-secondary);">
+                        <li>Creeaza un slide cu titlu si o imagine</li>
+                        <li>Selecteaza imaginea (click pe ea)</li>
+                        <li>Mergi la tab-ul <strong>Animations</strong></li>
+                        <li>Alege o animatie din galerie (de ex. "Fade" sau "Fly In")</li>
+                        <li>Apasa <strong>Preview</strong> pentru a vedea efectul</li>
+                    </ol>
+                </div>
+
+                <button class="btn-next" onclick="goToStep('learn')">Am incercat! Vreau sa inteleg mai bine</button>
+            </div>
+        </section>
+
+        <!-- LEARN Section -->
+        <section id="learn" class="section">
+            <div class="learn-section">
+                <div class="learn-header">
+                    <span class="learn-badge">INVATA</span>
+                    <span style="color: var(--text-secondary);">Stapaneste animatiile</span>
+                </div>
+
+                <h2 style="margin-bottom: 1.5rem; color: var(--accent-cyan);">Ce sunt animatiile?</h2>
+
+                <div class="concept-card">
+                    <div class="concept-name">Animatie = Miscare pentru obiecte</div>
+                    <p class="concept-def">
+                        Animatiile controleaza cum <strong>apar, se misca sau dispar</strong> obiectele de pe slide (text, imagini, forme). Spre deosebire de tranzitii (care sunt intre slide-uri), animatiile sunt pentru elemente individuale.
+                    </p>
+                    <div class="demo-animation">
+                        <p style="color: var(--text-muted); margin-bottom: 0.5rem;">Pune mouse-ul peste patrat:</p>
+                        <div class="demo-box">📦</div>
+                        <p style="color: var(--accent-orange); font-size: 0.85rem;">Acesta este un efect simplu de animatie!</p>
+                    </div>
+                </div>
+
+                <h3 style="margin: 1.5rem 0 1rem; color: var(--accent-orange);">Cele 4 categorii de animatii</h3>
+
+                <div class="animation-grid">
+                    <div class="anim-card">
+                        <span class="category-badge cat-entrance">ENTRANCE</span>
+                        <div class="icon">➡️</div>
+                        <div class="name">Intrare</div>
+                        <div class="desc">Cum apare obiectul pe slide</div>
+                    </div>
+                    <div class="anim-card">
+                        <span class="category-badge cat-emphasis">EMPHASIS</span>
+                        <div class="icon">💫</div>
+                        <div class="name">Accentuare</div>
+                        <div class="desc">Atrage atentia (pulseaza, creste)</div>
+                    </div>
+                    <div class="anim-card">
+                        <span class="category-badge cat-exit">EXIT</span>
+                        <div class="icon">⬅️</div>
+                        <div class="name">Iesire</div>
+                        <div class="desc">Cum dispare obiectul</div>
+                    </div>
+                    <div class="anim-card">
+                        <span class="category-badge cat-motion">MOTION PATHS</span>
+                        <div class="icon">〰️</div>
+                        <div class="name">Trasee</div>
+                        <div class="desc">Obiectul se misca pe o cale</div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Animatii populare pentru incepatori</div>
+                    <div class="animation-grid" style="margin-top: 1rem;">
+                        <div class="anim-card">
+                            <div class="icon">🌫️</div>
+                            <div class="name">Fade</div>
+                            <div class="desc">Apare treptat</div>
+                        </div>
+                        <div class="anim-card">
+                            <div class="icon">✈️</div>
+                            <div class="name">Fly In</div>
+                            <div class="desc">Intra in zbor</div>
+                        </div>
+                        <div class="anim-card">
+                            <div class="icon">🔍</div>
+                            <div class="name">Zoom</div>
+                            <div class="desc">Creste din mic</div>
+                        </div>
+                        <div class="anim-card">
+                            <div class="icon">🎯</div>
+                            <div class="name">Appear</div>
+                            <div class="desc">Apare instant</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Cum adaugi o animatie - Pas cu pas</div>
+                    <ol style="margin-left: 1.5rem; color: var(--text-secondary);">
+                        <li><strong>Selecteaza obiectul</strong> (text, imagine, forma)</li>
+                        <li>Mergi la tab-ul <strong>Animations</strong></li>
+                        <li>Alege animatia din galerie</li>
+                        <li>Foloseste <strong>Effect Options</strong> pentru directie</li>
+                        <li><strong>Preview</strong> pentru a vedea rezultatul</li>
+                    </ol>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Animation Pane - Centrul de control</div>
+                    <p class="concept-def">
+                        <strong>Animations → Animation Pane</strong> deschide un panou unde vezi toate animatiile de pe slide:
+                    </p>
+                    <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                        <li>Reordoneaza animatiile (trage sus/jos)</li>
+                        <li>Seteaza <strong>Start</strong>: On Click, With Previous, After Previous</li>
+                        <li>Ajusteaza <strong>Duration</strong> (durata) si <strong>Delay</strong> (intarziere)</li>
+                    </ul>
+                </div>
+
+                <div class="concept-card" style="border-left-color: var(--accent-red);">
+                    <div class="concept-name">Atentie! Nu exagera cu animatiile</div>
+                    <p class="concept-def">
+                        Prea multe animatii distrag publicul de la mesaj. Regula de aur:
+                    </p>
+                    <p style="color: var(--accent-orange); font-size: 1.1rem; font-weight: 600;">
+                        Maximum 2-3 animatii pe slide. Pastreaza-le simple si consistente!
+                    </p>
+                </div>
+
+                <button class="btn-next" onclick="goToStep('test')">Am inteles! Testeaza-ma</button>
+            </div>
+        </section>
+
+        <!-- TEST Section -->
+        <section id="test" class="section">
+            <div class="test-section">
+                <div class="test-header">
+                    <span class="test-badge">VERIFICA</span>
+                    <span style="color: var(--text-secondary);">Raspunde corect la 3 din 4</span>
+                </div>
+
+                <div class="quiz-question" data-correct="b">
+                    <p>1. Ce tip de animatie folosesti pentru ca un obiect sa apara pe slide?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">Exit</div>
+                        <div class="quiz-option" data-value="b">Entrance</div>
+                        <div class="quiz-option" data-value="c">Motion Path</div>
+                    </div>
+                </div>
+
+                <div class="quiz-question" data-correct="c">
+                    <p>2. Ce face animatia "Fade"?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">Obiectul zboara din stanga</div>
+                        <div class="quiz-option" data-value="b">Obiectul se roteste</div>
+                        <div class="quiz-option" data-value="c">Obiectul apare treptat, din invizibil</div>
+                    </div>
+                </div>
+
+                <div class="quiz-question" data-correct="a">
+                    <p>3. Unde gasesti toate animatiile de pe un slide?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">Animation Pane</div>
+                        <div class="quiz-option" data-value="b">Slide Sorter</div>
+                        <div class="quiz-option" data-value="c">Design tab</div>
+                    </div>
+                </div>
+
+                <div class="quiz-question" data-correct="b">
+                    <p>4. Cate animatii sunt recomandate pe un slide?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">Cat mai multe pentru efect</div>
+                        <div class="quiz-option" data-value="b">Maximum 2-3, simple si consistente</div>
+                        <div class="quiz-option" data-value="c">Exact 5 animatii</div>
+                    </div>
+                </div>
+
+                <button class="btn-check" onclick="checkAnswers()">Verifica raspunsurile</button>
+                <div id="test-result"></div>
+            </div>
+        </section>
+
+        <!-- COMPLETE Section -->
+        <section id="complete" class="section">
+            <div class="complete-section">
+                <div class="complete-icon">⭐</div>
+                <h1 class="complete-title">Felicitari!</h1>
+                <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem;">
+                    Ai terminat Lectia 4! Acum stii sa dai viata obiectelor din prezentare.
+                </p>
+                <p style="color: var(--accent-cyan); margin-bottom: 2rem;">
+                    <strong>Ce ai invatat:</strong> Tipuri de animatii, Fade, Fly In, Animation Pane
+                </p>
+                <a href="lectia5-tranzitii.html" class="btn-next" style="display: inline-block; text-decoration: none;">
+                    Continua cu Lectia 5
+                </a>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function goToStep(stepId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(stepId).classList.add('active');
+
+            const steps = ['goal', 'try', 'learn', 'test', 'complete'];
+            const currentIndex = steps.indexOf(stepId);
+
+            document.querySelectorAll('.step').forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index < currentIndex) step.classList.add('completed');
+                if (index === currentIndex) step.classList.add('active');
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const question = this.closest('.quiz-question');
+                question.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        function checkAnswers() {
+            let correctCount = 0;
+
+            document.querySelectorAll('.quiz-question').forEach(question => {
+                const correctAnswer = question.dataset.correct;
+                const selected = question.querySelector('.quiz-option.selected');
+
+                question.querySelectorAll('.quiz-option').forEach(opt => {
+                    opt.classList.remove('correct', 'wrong');
+                    if (opt.dataset.value === correctAnswer) {
+                        opt.classList.add('correct');
+                    }
+                });
+
+                if (selected) {
+                    if (selected.dataset.value === correctAnswer) {
+                        correctCount++;
+                    } else {
+                        selected.classList.add('wrong');
+                    }
+                }
+            });
+
+            const resultDiv = document.getElementById('test-result');
+
+            if (correctCount >= 3) {
+                resultDiv.innerHTML = '<div style="text-align: center; padding: 2rem; background: rgba(16, 185, 129, 0.2); border-radius: 12px; margin-top: 1rem;"><div style="font-size: 3rem;">⭐</div><h3 style="color: var(--accent-green);">Excelent! ' + correctCount + '/4 corecte!</h3></div>';
+                resultDiv.style.display = 'block';
+
+                setTimeout(() => {
+                    goToStep('complete');
+                }, 2000);
+            } else {
+                resultDiv.innerHTML = '<div style="text-align: center; padding: 1rem; background: rgba(245, 158, 11, 0.2); border-radius: 12px; margin-top: 1rem;"><h3 style="color: var(--accent-orange);">' + correctCount + '/4 - Reciteste lectia si incearca din nou!</h3></div>';
+                resultDiv.style.display = 'block';
+            }
+        }
+
+        document.querySelectorAll('.step').forEach(step => {
+            step.addEventListener('click', () => {
+                goToStep(step.dataset.step);
+            });
+        });
+    </script>
+
+    <!-- Author Footer -->
+    <footer style="
+        margin-top: 3rem;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    ">
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong>
+        </div>
+        <div>
+            Informatica si TIC | Materiale educationale pentru elevi
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.75rem;">
+            <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan); text-decoration: none;">
+                grlnvasile@gmail.com
+            </a>
+        </div>
+    </footer>
+
+    <!-- Progress Tracking -->
+    <script src="../../../../assets/js/progress.js"></script>
+    <script>
+        LearningProgress.init('cls6', 'm1-prezentari', 'lectia4');
+
+        // Auto-mark complete when reaching completion section
+        const originalGoToStep = goToStep;
+        goToStep = function(step) {
+            originalGoToStep(step);
+            if (step === 'complete') {
+                LearningProgress.markComplete();
+            }
+        };
+    </script>
+
+    <!-- Breadcrumb Navigation -->
+    <script src="../../../../assets/js/breadcrumb.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Breadcrumb.init({
+        grade: 'cls6',
+        gradeName: 'Clasa a VI-a',
+        module: 'm1-prezentari',
+        moduleName: 'Modulul 1: Prezentari',
+        lesson: 'Lectia 4'
+            });
+        });
+    </script>
+
+    <!-- Enhanced Quiz System -->
+    <script src="../../../../assets/js/quiz.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Quiz.init({
+                passingScore: 6,
+                totalQuestions: 8,
+                explanations: {}  // Can be populated with question-specific explanations
+            });
+        });
+    </script>
+</body>
+</html>

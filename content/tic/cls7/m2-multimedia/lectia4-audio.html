@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectia 4: Editare Audio | Clasa 7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-pink: #ec4899;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-back { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
+        .nav-back:hover { color: var(--accent-pink); }
+
+        .progress-steps { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }
+        .step { width: 60px; height: 8px; background: var(--border); border-radius: 4px; cursor: pointer; transition: all 0.3s; }
+        .step.active { background: var(--accent-pink); }
+        .step.completed { background: var(--accent-purple); }
+
+        .section { display: none; animation: fadeIn 0.5s ease; }
+        .section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .goal-section {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(139, 92, 246, 0.1));
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .goal-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .goal-title { font-size: 2rem; font-weight: 800; color: var(--accent-pink); margin-bottom: 1rem; }
+        .goal-desc { font-size: 1.2rem; color: var(--text-secondary); max-width: 500px; margin: 0 auto 2rem; }
+
+        .try-section {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(139, 92, 246, 0.1));
+            border: 2px solid var(--accent-pink);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .try-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .try-badge { background: var(--accent-pink); color: #000; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.85rem; }
+
+        .challenge-box { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; }
+        .challenge-title { font-weight: 700; margin-bottom: 0.5rem; color: var(--accent-pink); }
+
+        .tool-link {
+            display: inline-block;
+            background: var(--accent-pink);
+            color: #000;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            margin: 1rem 0.5rem 1rem 0;
+            transition: transform 0.2s;
+        }
+        .tool-link:hover { transform: scale(1.05); }
+
+        .tool-link.secondary {
+            background: var(--accent-purple);
+            color: #fff;
+        }
+
+        .learn-section { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+        .learn-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .learn-badge { background: var(--accent-purple); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+
+        .concept-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--accent-pink);
+        }
+
+        .concept-name { font-size: 1.2rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.5rem; }
+        .concept-def { color: var(--text-secondary); margin-bottom: 1rem; }
+
+        .interface-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .interface-item {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .interface-item .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .interface-item .name { font-weight: 700; color: var(--accent-pink); margin-bottom: 0.25rem; }
+        .interface-item .desc { font-size: 0.85rem; color: var(--text-muted); }
+
+        .test-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1));
+            border: 2px solid var(--accent-purple);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .test-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .test-badge { background: var(--accent-purple); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+
+        .quiz-question {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .quiz-question p { margin-bottom: 1rem; font-weight: 600; }
+
+        .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+
+        .quiz-option {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-option:hover { border-color: var(--accent-pink); }
+        .quiz-option.selected { border-color: var(--accent-cyan); background: rgba(6, 182, 212, 0.1); }
+        .quiz-option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .quiz-option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .btn-next {
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            color: #fff;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: block;
+            margin: 2rem auto 0;
+            transition: transform 0.2s;
+        }
+
+        .btn-next:hover { transform: scale(1.05); }
+
+        .btn-check {
+            background: var(--accent-purple);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: block;
+            margin: 2rem auto 0;
+        }
+
+        .complete-section {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(139, 92, 246, 0.15));
+            border-radius: 20px;
+        }
+
+        .complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .complete-title { font-size: 2rem; font-weight: 800; color: var(--accent-pink); margin-bottom: 1rem; }
+
+        #test-result { display: none; margin-top: 1rem; }
+
+        .resource-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .resource-card .icon { font-size: 2rem; }
+        .resource-card .info { flex: 1; }
+        .resource-card .name { font-weight: 700; color: var(--accent-cyan); }
+        .resource-card .desc { font-size: 0.85rem; color: var(--text-muted); }
+        .resource-card a {
+            color: var(--accent-pink);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .resource-card a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress-steps">
+            <div class="step active" data-step="goal"></div>
+            <div class="step" data-step="try"></div>
+            <div class="step" data-step="learn"></div>
+            <div class="step" data-step="test"></div>
+            <div class="step" data-step="complete"></div>
+        </div>
+
+        <!-- GOAL Section -->
+        <section id="goal" class="section active">
+            <div class="goal-section">
+                <div class="goal-icon">🎧</div>
+                <h1 class="goal-title">Editare Audio</h1>
+                <p class="goal-desc">Dupa aceasta lectie vei sti sa adaugi si editezi sunetul perfect pentru videoclipurile tale!</p>
+                <button class="btn-next" onclick="goToStep('try')">Hai sa incepem! →</button>
+            </div>
+        </section>
+
+        <!-- TRY Section -->
+        <section id="try" class="section">
+            <div class="try-section">
+                <div class="try-header">
+                    <span class="try-badge">🧪 INCEARCA</span>
+                    <span style="color: var(--text-secondary);">3 minute - exploreaza singur!</span>
+                </div>
+
+                <p style="font-size: 1.1rem; margin-bottom: 1rem;">
+                    Adauga <strong>muzica de fundal copyright-free</strong> la un videoclip!
+                </p>
+
+                <div>
+                    <a href="https://pixabay.com/music/" target="_blank" class="tool-link secondary">
+                        🎵 Pixabay Music
+                    </a>
+                    <a href="https://editor.flixier.com/projects/create" target="_blank" class="tool-link">
+                        🚀 Flixier Editor
+                    </a>
+                </div>
+
+                <div class="challenge-box">
+                    <div class="challenge-title">🎯 Provocare (3 min):</div>
+                    <ol style="margin-left: 1.5rem; color: var(--text-secondary);">
+                        <li>Descarca o melodie scurta de pe Pixabay (gratuit!)</li>
+                        <li>Importeaz-o in editor pe un track audio separat</li>
+                        <li>Ajusteaza volumul sa nu acopere vocea</li>
+                        <li>Adauga fade out la sfarsit</li>
+                    </ol>
+                </div>
+
+                <button class="btn-next" onclick="goToStep('learn')">Am explorat! Vreau sa inteleg →</button>
+            </div>
+        </section>
+
+        <!-- LEARN Section -->
+        <section id="learn" class="section">
+            <div class="learn-section">
+                <div class="learn-header">
+                    <span class="learn-badge">📚 INVATA</span>
+                    <span style="color: var(--text-secondary);">Acum intelegi ce ai vazut</span>
+                </div>
+
+                <h2 style="margin-bottom: 1.5rem; color: var(--accent-pink);">Audio in Editare Video</h2>
+
+                <div class="interface-grid">
+                    <div class="interface-item">
+                        <div class="icon">🎵</div>
+                        <div class="name">Track Audio</div>
+                        <div class="desc">Stratul separat pentru sunet</div>
+                    </div>
+                    <div class="interface-item">
+                        <div class="icon">🔊</div>
+                        <div class="name">Volum</div>
+                        <div class="desc">Cat de tare se aude</div>
+                    </div>
+                    <div class="interface-item">
+                        <div class="icon">📈</div>
+                        <div class="name">Fade In/Out</div>
+                        <div class="desc">Creste/scade gradual</div>
+                    </div>
+                    <div class="interface-item">
+                        <div class="icon">🎙️</div>
+                        <div class="name">Voice-over</div>
+                        <div class="desc">Naratiune inregistrata</div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">🎚️ Track-uri Audio</div>
+                    <p class="concept-def">
+                        Poti avea mai multe straturi de audio simultan:
+                    </p>
+                    <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                        <li><strong style="color: var(--accent-pink);">Track 1</strong> - Audio original din video</li>
+                        <li><strong style="color: var(--accent-cyan);">Track 2</strong> - Muzica de fundal</li>
+                        <li><strong style="color: var(--accent-purple);">Track 3</strong> - Voice-over (naratiune)</li>
+                        <li><strong style="color: var(--accent-orange);">Track 4</strong> - Efecte sonore</li>
+                    </ul>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">🔊 Ajustarea Volumului</div>
+                    <p class="concept-def">
+                        Echilibrul audio este crucial pentru calitate:
+                    </p>
+                    <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                        <li><strong>Voce principala</strong> - Cel mai tare (100%)</li>
+                        <li><strong>Muzica de fundal</strong> - Mai incet (20-40%)</li>
+                        <li><strong>Efecte sonore</strong> - Variabil, dupa caz</li>
+                    </ul>
+                    <p style="color: var(--accent-orange); margin-top: 1rem;">
+                        💡 Regula: Daca muzica acopere vocea, e prea tare!
+                    </p>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">📈 Fade In / Fade Out</div>
+                    <p class="concept-def">
+                        Sunetul creste sau scade gradual:
+                    </p>
+                    <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                        <li><strong style="color: var(--accent-pink);">Fade In</strong> - Sunetul porneste de la 0 si creste (inceputul)</li>
+                        <li><strong style="color: var(--accent-cyan);">Fade Out</strong> - Sunetul scade pana la 0 (sfarsitul)</li>
+                    </ul>
+                    <p style="color: var(--accent-green); margin-top: 1rem;">
+                        Foloseste fade out la sfarsit pentru un final profesional!
+                    </p>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">🎙️ Voice-over</div>
+                    <p class="concept-def">
+                        Naratiunea adaugata peste video:
+                    </p>
+                    <ol style="margin-left: 1.5rem; color: var(--text-secondary);">
+                        <li>Inregistreaza cu telefonul sau microfonul</li>
+                        <li>Importeaza fisierul audio</li>
+                        <li>Sincronizeaza cu actiunea din video</li>
+                        <li>Ajusteaza volumul muzicii sa scada cand vorbesti</li>
+                    </ol>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">🆓 Unde gasesti muzica gratuita?</div>
+                    <p class="concept-def">
+                        Surse de muzica copyright-free (legala pentru YouTube):
+                    </p>
+                    <div class="resource-card">
+                        <div class="icon">🎵</div>
+                        <div class="info">
+                            <div class="name">Pixabay Music</div>
+                            <div class="desc">Mii de melodii gratuite, fara atribuire</div>
+                        </div>
+                        <a href="https://pixabay.com/music/" target="_blank">Acceseaza →</a>
+                    </div>
+                    <div class="resource-card">
+                        <div class="icon">🔊</div>
+                        <div class="info">
+                            <div class="name">Freesound</div>
+                            <div class="desc">Efecte sonore si sunete ambientale</div>
+                        </div>
+                        <a href="https://freesound.org/" target="_blank">Acceseaza →</a>
+                    </div>
+                    <div class="resource-card">
+                        <div class="icon">🎧</div>
+                        <div class="info">
+                            <div class="name">YouTube Audio Library</div>
+                            <div class="desc">Biblioteca oficiala YouTube</div>
+                        </div>
+                        <a href="https://studio.youtube.com/channel/UC/music" target="_blank">Acceseaza →</a>
+                    </div>
+                </div>
+
+                <button class="btn-next" onclick="goToStep('test')">Am inteles! Testeaza-ma →</button>
+            </div>
+        </section>
+
+        <!-- TEST Section -->
+        <section id="test" class="section">
+            <div class="test-section">
+                <div class="test-header">
+                    <span class="test-badge">✅ VERIFICA</span>
+                    <span style="color: var(--text-secondary);">Raspunde corect la 3 din 4</span>
+                </div>
+
+                <div class="quiz-question" data-correct="b">
+                    <p>1. Ce este un "track audio" in editare video?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">O melodie descarcata</div>
+                        <div class="quiz-option" data-value="b">Un strat separat pentru sunet pe timeline</div>
+                        <div class="quiz-option" data-value="c">Volumul maxim permis</div>
+                    </div>
+                </div>
+
+                <div class="quiz-question" data-correct="c">
+                    <p>2. Cat de tare ar trebui sa fie muzica de fundal fata de voce?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">La fel de tare (100%)</div>
+                        <div class="quiz-option" data-value="b">Mai tare decat vocea</div>
+                        <div class="quiz-option" data-value="c">Mai incet (20-40%)</div>
+                    </div>
+                </div>
+
+                <div class="quiz-question" data-correct="a">
+                    <p>3. Ce face "Fade Out"?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">Sunetul scade gradual pana la 0</div>
+                        <div class="quiz-option" data-value="b">Sunetul creste gradual</div>
+                        <div class="quiz-option" data-value="c">Sunetul se opreste brusc</div>
+                    </div>
+                </div>
+
+                <div class="quiz-question" data-correct="b">
+                    <p>4. Care site ofera muzica gratuita pentru YouTube?</p>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">Spotify</div>
+                        <div class="quiz-option" data-value="b">Pixabay Music</div>
+                        <div class="quiz-option" data-value="c">Apple Music</div>
+                    </div>
+                </div>
+
+                <button class="btn-check" onclick="checkAnswers()">Verifica raspunsurile</button>
+                <div id="test-result"></div>
+            </div>
+        </section>
+
+        <!-- COMPLETE Section -->
+        <section id="complete" class="section">
+            <div class="complete-section">
+                <div class="complete-icon">⭐</div>
+                <h1 class="complete-title">Felicitari!</h1>
+                <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem;">
+                    Ai terminat Lectia 4! Acum stii sa editezi audio profesional.
+                </p>
+                <p style="color: var(--accent-cyan); margin-bottom: 2rem;">
+                    <strong>Ce ai invatat:</strong> Track-uri audio, Volum, Fade in/out, Voice-over, Surse muzica gratuita
+                </p>
+                <a href="lectia5-proiect.html" class="btn-next" style="display: inline-block; text-decoration: none;">
+                    Continua cu Lectia 5 - Proiect Final →
+                </a>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function goToStep(stepId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(stepId).classList.add('active');
+
+            const steps = ['goal', 'try', 'learn', 'test', 'complete'];
+            const currentIndex = steps.indexOf(stepId);
+
+            document.querySelectorAll('.step').forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index < currentIndex) step.classList.add('completed');
+                if (index === currentIndex) step.classList.add('active');
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const question = this.closest('.quiz-question');
+                question.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        function checkAnswers() {
+            let correctCount = 0;
+
+            document.querySelectorAll('.quiz-question').forEach(question => {
+                const correctAnswer = question.dataset.correct;
+                const selected = question.querySelector('.quiz-option.selected');
+
+                question.querySelectorAll('.quiz-option').forEach(opt => {
+                    opt.classList.remove('correct', 'wrong');
+                    if (opt.dataset.value === correctAnswer) {
+                        opt.classList.add('correct');
+                    }
+                });
+
+                if (selected) {
+                    if (selected.dataset.value === correctAnswer) {
+                        correctCount++;
+                    } else {
+                        selected.classList.add('wrong');
+                    }
+                }
+            });
+
+            const resultDiv = document.getElementById('test-result');
+
+            if (correctCount >= 3) {
+                resultDiv.innerHTML = '<div style="text-align: center; padding: 2rem; background: rgba(16, 185, 129, 0.2); border-radius: 12px; margin-top: 1rem;"><div style="font-size: 3rem;">⭐</div><h3 style="color: var(--accent-green);">Excelent! ' + correctCount + '/4 corecte!</h3></div>';
+                resultDiv.style.display = 'block';
+
+                setTimeout(() => {
+                    goToStep('complete');
+                }, 2000);
+            } else {
+                resultDiv.innerHTML = '<div style="text-align: center; padding: 1rem; background: rgba(245, 158, 11, 0.2); border-radius: 12px; margin-top: 1rem;"><h3 style="color: var(--accent-orange);">' + correctCount + '/4 - Reciteste lectia si incearca din nou!</h3></div>';
+                resultDiv.style.display = 'block';
+            }
+        }
+
+        document.querySelectorAll('.step').forEach(step => {
+            step.addEventListener('click', () => {
+                goToStep(step.dataset.step);
+            });
+        });
+    </script>
+
+    <!-- Author Footer -->
+    <footer style="
+        margin-top: 3rem;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    ">
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong>
+        </div>
+        <div>
+            Informatica si TIC | Materiale educationale pentru elevi
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.75rem;">
+            <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan); text-decoration: none;">
+                grlnvasile@gmail.com
+            </a>
+        </div>
+    </footer>
+
+    <!-- Progress Tracking -->
+    <script src="../../../../assets/js/progress.js"></script>
+    <script>
+        LearningProgress.init('cls7', 'm2-multimedia', 'lectia4');
+
+        // Auto-mark complete when reaching completion section
+        const originalGoToStep = goToStep;
+        goToStep = function(step) {
+            originalGoToStep(step);
+            if (step === 'complete') {
+                LearningProgress.markComplete();
+            }
+        };
+    </script>
+
+    <!-- Breadcrumb Navigation -->
+    <script src="../../../../assets/js/breadcrumb.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Breadcrumb.init({
+        grade: 'cls7',
+        gradeName: 'Clasa a VII-a',
+        module: 'm2-multimedia',
+        moduleName: 'Modulul 2: Multimedia',
+        lesson: 'Lectia 4'
+            });
+        });
+    </script>
+
+    <!-- Enhanced Quiz System -->
+    <script src="../../../../assets/js/quiz.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Quiz.init({
+                passingScore: 6,
+                totalQuestions: 8,
+                explanations: {}  // Can be populated with question-specific explanations
+            });
+        });
+    </script>
+</body>
+</html>

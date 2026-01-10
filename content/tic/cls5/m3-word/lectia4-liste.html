@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectia 4: Liste si Indentare | Clasa 5</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-pink: #ec4899;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-back { color: var(--text-secondary); text-decoration: none; }
+        .nav-back:hover { color: var(--accent-cyan); }
+
+        .progress-steps { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }
+
+        .step {
+            width: 60px; height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .step.active { background: var(--accent-blue); }
+        .step.completed { background: var(--accent-green); }
+
+        .section { display: none; animation: fadeIn 0.5s ease; }
+        .section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* GOAL Section */
+        .goal-section {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(139, 92, 246, 0.1));
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .goal-icon { font-size: 5rem; margin-bottom: 1rem; }
+
+        .goal-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .goal-desc {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
+
+        /* Demo boxes */
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .demo-box {
+            background: white;
+            color: #333;
+            padding: 1.5rem;
+            border-radius: 12px;
+            font-family: 'Times New Roman', serif;
+            font-size: 0.95rem;
+        }
+
+        .demo-box.before { opacity: 0.7; }
+        .demo-box.after { box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3); }
+
+        .demo-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        /* TRY Section */
+        .try-section {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
+            border: 2px solid var(--accent-orange);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .try-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .try-badge {
+            background: var(--accent-orange);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .challenge-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .challenge-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--accent-orange);
+        }
+
+        .challenge-task {
+            font-size: 1.1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-orange);
+        }
+
+        .hint-box {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid var(--accent-purple);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .hint-toggle {
+            cursor: pointer;
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        .hint-content {
+            display: none;
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .hint-content.show { display: block; }
+
+        /* LEARN Section */
+        .learn-section {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .learn-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .learn-badge {
+            background: var(--accent-blue);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .concept-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .concept-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .concept-def {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .concept-why {
+            background: rgba(16, 185, 129, 0.1);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .concept-why strong {
+            color: var(--accent-green);
+        }
+
+        .steps-list {
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+        }
+
+        .steps-list li {
+            counter-increment: step;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .steps-list li::before {
+            content: counter(step);
+            background: var(--accent-blue);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .keyboard-key {
+            display: inline-block;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .menu-path {
+            background: var(--bg-primary);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--accent-cyan);
+        }
+
+        /* List type cards */
+        .list-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .list-type-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .list-type-card:hover { border-color: var(--accent-purple); }
+
+        .list-preview {
+            background: white;
+            color: #333;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-family: 'Times New Roman', serif;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .list-preview ul, .list-preview ol {
+            margin-left: 1.5rem;
+        }
+
+        .list-name { font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.25rem; }
+        .list-use { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* TEST Section */
+        .test-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1));
+            border: 2px solid var(--accent-purple);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        .test-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .test-badge {
+            background: var(--accent-purple);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .quiz-question {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .options {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .option {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option:hover {
+            border-color: var(--accent-purple);
+        }
+
+        .option.selected {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .feedback {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .feedback.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .feedback.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+        }
+
+        .btn-primary:hover { transform: scale(1.05); }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        /* Completion */
+        .completion { text-align: center; padding: 3rem; }
+        .completion-icon { font-size: 5rem; margin-bottom: 1rem; }
+
+        .completion-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-green);
+        }
+
+        .xp-gain {
+            font-size: 1.5rem;
+            color: var(--accent-orange);
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .demo-container { grid-template-columns: 1fr; }
+            .list-types { grid-template-columns: 1fr; }
+            .actions { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress-steps">
+            <div class="step active" data-step="goal"></div>
+            <div class="step" data-step="try"></div>
+            <div class="step" data-step="learn"></div>
+            <div class="step" data-step="test"></div>
+        </div>
+
+        <!-- GOAL -->
+        <div class="section active" id="goal">
+            <div class="goal-section">
+                <div class="goal-icon">📋</div>
+                <h1 class="goal-title">Liste si Indentare</h1>
+                <p class="goal-desc">
+                    Vei invata sa organizezi informatiile in liste - cu buline, numere sau litere - si sa indentezi textul pentru claritate!
+                </p>
+
+                <div class="demo-container">
+                    <div class="demo-box before">
+                        <div class="demo-label" style="color: #999;">Inainte</div>
+                        <p>Pentru a face prajitura ai nevoie de: faina, zahar, oua, lapte, unt, cacao. Pasii sunt: amesteci ingredientele uscate, adaugi ouale si laptele, torni in tava, coci 30 minute.</p>
+                    </div>
+                    <div class="demo-box after">
+                        <div class="demo-label" style="color: #10b981;">Dupa</div>
+                        <p style="margin-bottom: 0.5rem;"><strong>Ingrediente:</strong></p>
+                        <ul style="margin-left: 1.5rem; margin-bottom: 0.5rem;">
+                            <li>Faina - 200g</li>
+                            <li>Zahar - 100g</li>
+                            <li>Oua - 2 bucati</li>
+                        </ul>
+                        <p style="margin-bottom: 0.5rem;"><strong>Pasi:</strong></p>
+                        <ol style="margin-left: 1.5rem;">
+                            <li>Amesteci ingredientele</li>
+                            <li>Torni in tava</li>
+                            <li>Coci 30 minute</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="goToStep('try')">
+                    Vreau sa invat! →
+                </button>
+            </div>
+        </div>
+
+        <!-- TRY -->
+        <div class="section" id="try">
+            <div class="try-section">
+                <div class="try-header">
+                    <span class="try-badge">🎯 INCEARCA</span>
+                    <h2>Fara instructiuni - vezi cat poti singur!</h2>
+                </div>
+
+                <div class="challenge-box">
+                    <div class="challenge-title">Provocarea ta (3 minute):</div>
+                    <div class="challenge-task">
+                        Deschide Word si creeaza:
+                        <br><br>
+                        <strong>1.</strong> O lista cu buline cu 3 materii preferate
+                        <br>
+                        <strong>2.</strong> O lista numerotata cu pasii pentru a face tema:
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;- Deschid caietul
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;- Citesc cerinta
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;- Scriu raspunsul
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;- Verific
+                    </div>
+                </div>
+
+                <div class="hint-box">
+                    <div class="hint-toggle" onclick="toggleHint(this)">
+                        💡 Ai nevoie de ajutor? Click aici pentru indiciu
+                    </div>
+                    <div class="hint-content">
+                        <p>Pentru lista cu buline: <span class="menu-path">Home → Bullets</span> (iconita cu puncte)</p>
+                        <p>Pentru lista numerotata: <span class="menu-path">Home → Numbering</span> (iconita cu 1. 2. 3.)</p>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('goal')">← Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('learn')">
+                        Am incercat! Explica-mi →
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEARN -->
+        <div class="section" id="learn">
+            <div class="learn-section">
+                <div class="learn-header">
+                    <span class="learn-badge">📚 INVATA</span>
+                    <h2>Tipuri de Liste in Word</h2>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Ce sunt listele?</div>
+                    <div class="concept-def">
+                        <strong>Listele</strong> sunt o modalitate de a prezenta informatii punct cu punct.
+                        Fac textul mai usor de citit si de inteles - fiecare element e clar separat!
+                    </div>
+                    <div class="concept-why">
+                        <strong>Foloseste liste pentru:</strong> Retete, instructiuni, reguli, comparatii, idei, planuri.
+                    </div>
+                </div>
+
+                <h3 style="margin: 1.5rem 0 1rem; color: var(--accent-cyan);">Cele 3 tipuri de liste:</h3>
+
+                <div class="list-types">
+                    <div class="list-type-card">
+                        <div class="list-preview">
+                            <ul>
+                                <li>Mere</li>
+                                <li>Pere</li>
+                                <li>Banane</li>
+                            </ul>
+                        </div>
+                        <div class="list-name">Lista cu buline (Bullets)</div>
+                        <div class="list-use">Cand ordinea NU conteaza</div>
+                    </div>
+
+                    <div class="list-type-card">
+                        <div class="list-preview">
+                            <ol>
+                                <li>Deschide usa</li>
+                                <li>Intra in camera</li>
+                                <li>Inchide usa</li>
+                            </ol>
+                        </div>
+                        <div class="list-name">Lista numerotata</div>
+                        <div class="list-use">Cand ordinea CONTEAZA</div>
+                    </div>
+
+                    <div class="list-type-card">
+                        <div class="list-preview">
+                            <ol type="a">
+                                <li>Varianta A</li>
+                                <li>Varianta B</li>
+                                <li>Varianta C</li>
+                            </ol>
+                        </div>
+                        <div class="list-name">Lista cu litere</div>
+                        <div class="list-use">Pentru optiuni/variante</div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 1.5rem 0 1rem; color: var(--accent-cyan);">Cum creezi o lista:</h3>
+
+                <ul class="steps-list">
+                    <li>
+                        <div>
+                            <strong>Scrie elementele listei (unul pe rand)</strong><br>
+                            Apasa <span class="keyboard-key">Enter</span> dupa fiecare element
+                        </div>
+                    </li>
+                    <li>
+                        <div>
+                            <strong>Selecteaza tot textul listei</strong><br>
+                            Click si trage sau <span class="keyboard-key">Ctrl</span>+<span class="keyboard-key">A</span>
+                        </div>
+                    </li>
+                    <li>
+                        <div>
+                            <strong>Apasa pe tipul de lista dorit</strong><br>
+                            Din <span class="menu-path">Home</span> alege Bullets sau Numbering
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="concept-card" style="border-color: var(--accent-purple); margin-top: 2rem;">
+                    <div class="concept-name" style="color: var(--accent-purple);">Ce este Indentarea?</div>
+                    <div class="concept-def">
+                        <strong>Indentarea</strong> = mutarea textului mai la dreapta.
+                        Arata ca un element face parte dintr-un altul (sub-punct).
+                    </div>
+                </div>
+
+                <h3 style="margin: 1.5rem 0 1rem; color: var(--accent-cyan);">Cum indentezi (sub-liste):</h3>
+
+                <ul class="steps-list">
+                    <li>
+                        <div>
+                            <strong>Pozitioneaza cursorul pe elementul de indentat</strong><br>
+                            Click la inceputul liniei respective
+                        </div>
+                    </li>
+                    <li>
+                        <div>
+                            <strong>Apasa Tab pentru a indenta</strong><br>
+                            <span class="keyboard-key">Tab</span> = muta la dreapta (mai adanc)
+                        </div>
+                    </li>
+                    <li>
+                        <div>
+                            <strong>Apasa Shift+Tab pentru a reveni</strong><br>
+                            <span class="keyboard-key">Shift</span>+<span class="keyboard-key">Tab</span> = muta la stanga
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="concept-card" style="border-color: var(--accent-orange); margin-top: 1.5rem;">
+                    <div class="concept-name" style="color: var(--accent-orange);">💡 Sfat Pro</div>
+                    <div class="concept-def">
+                        Pentru a termina lista si a scrie text normal, apasa <span class="keyboard-key">Enter</span>
+                        de doua ori sau click pe butonul de lista din nou pentru a-l dezactiva.
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('try')">← Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('test')">
+                        Am inteles! Testeaza-ma →
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEST -->
+        <div class="section" id="test">
+            <div class="test-section">
+                <div class="test-header">
+                    <span class="test-badge">✅ VERIFICA</span>
+                    <h2>Hai sa vedem ce ai retinut!</h2>
+                </div>
+
+                <!-- Question 1 -->
+                <div class="quiz-question" id="q1">
+                    <div class="question-text">1. Ce tip de lista folosesti pentru o reteta (unde ordinea pasilor conteaza)?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q1', false)">Lista cu buline</div>
+                        <div class="option" onclick="selectOption(this, 'q1', true)">Lista numerotata</div>
+                        <div class="option" onclick="selectOption(this, 'q1', false)">Lista cu litere</div>
+                    </div>
+                    <div class="feedback" id="q1-feedback"></div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="quiz-question" id="q2">
+                    <div class="question-text">2. Ce tasta folosesti pentru a indenta un element (a-l muta la dreapta)?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q2', false)"><span class="keyboard-key">Enter</span></div>
+                        <div class="option" onclick="selectOption(this, 'q2', true)"><span class="keyboard-key">Tab</span></div>
+                        <div class="option" onclick="selectOption(this, 'q2', false)"><span class="keyboard-key">Space</span></div>
+                    </div>
+                    <div class="feedback" id="q2-feedback"></div>
+                </div>
+
+                <!-- Question 3 -->
+                <div class="quiz-question" id="q3">
+                    <div class="question-text">3. Pentru o lista de cumparaturi (fructe, legume) unde ordinea NU conteaza, folosesti:</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q3', true)">Lista cu buline (bullets)</div>
+                        <div class="option" onclick="selectOption(this, 'q3', false)">Lista numerotata (1, 2, 3)</div>
+                        <div class="option" onclick="selectOption(this, 'q3', false)">Nici una - scriu totul pe un rand</div>
+                    </div>
+                    <div class="feedback" id="q3-feedback"></div>
+                </div>
+
+                <!-- Question 4 -->
+                <div class="quiz-question" id="q4">
+                    <div class="question-text">4. Cum scoti indentarea (muti textul inapoi la stanga)?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q4', false)"><span class="keyboard-key">Backspace</span></div>
+                        <div class="option" onclick="selectOption(this, 'q4', false)"><span class="keyboard-key">Delete</span></div>
+                        <div class="option" onclick="selectOption(this, 'q4', true)"><span class="keyboard-key">Shift</span> + <span class="keyboard-key">Tab</span></div>
+                    </div>
+                    <div class="feedback" id="q4-feedback"></div>
+                </div>
+
+                <div id="test-result" style="display: none;"></div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('learn')">← Inapoi la lectie</button>
+                    <button class="btn btn-success" onclick="checkAllAnswers()" id="check-btn">
+                        Verifica raspunsurile ✓
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPLETE -->
+        <div class="section" id="complete">
+            <div class="completion">
+                <div class="completion-icon">📋</div>
+                <h2 class="completion-title">Foarte bine!</h2>
+                <p style="color: var(--text-secondary);">Ai terminat Lectia 4: Liste si Indentare</p>
+                <div class="xp-gain">+100 XP</div>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                    Acum poti organiza informatii in liste clare si bine structurate!
+                </p>
+                <div class="actions" style="justify-content: center;">
+                    <a href="lectia5-antet-subsol.html" class="btn btn-primary">
+                        Continua la Lectia 5 →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let answers = {};
+        let correctCount = 0;
+
+        function goToStep(step) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(step).classList.add('active');
+
+            const steps = ['goal', 'try', 'learn', 'test'];
+            const currentIndex = steps.indexOf(step);
+
+            document.querySelectorAll('.step').forEach((s, i) => {
+                s.classList.remove('active', 'completed');
+                if (i < currentIndex) s.classList.add('completed');
+                if (i === currentIndex) s.classList.add('active');
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleHint(el) {
+            const content = el.nextElementSibling;
+            content.classList.toggle('show');
+        }
+
+        function selectOption(el, questionId, isCorrect) {
+            el.parentNode.querySelectorAll('.option').forEach(o => {
+                o.classList.remove('selected', 'correct', 'wrong');
+            });
+            el.classList.add('selected');
+            answers[questionId] = isCorrect;
+        }
+
+        function checkAllAnswers() {
+            correctCount = 0;
+
+            ['q1', 'q2', 'q3', 'q4'].forEach(qId => {
+                const question = document.getElementById(qId);
+                const feedback = document.getElementById(qId + '-feedback');
+                const selectedOption = question.querySelector('.option.selected');
+
+                if (selectedOption) {
+                    if (answers[qId]) {
+                        selectedOption.classList.add('correct');
+                        feedback.className = 'feedback success';
+                        feedback.textContent = '✓ Corect!';
+                        correctCount++;
+                    } else {
+                        selectedOption.classList.add('wrong');
+                        feedback.className = 'feedback error';
+                        feedback.textContent = '✗ Incearca din nou!';
+                        question.querySelectorAll('.option').forEach(o => {
+                            if (o.onclick.toString().includes('true')) {
+                                o.classList.add('correct');
+                            }
+                        });
+                    }
+                }
+            });
+
+            const resultDiv = document.getElementById('test-result');
+
+            if (correctCount >= 3) {
+                resultDiv.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; background: rgba(16, 185, 129, 0.2); border-radius: 12px; margin-top: 1rem;">
+                        <div style="font-size: 3rem;">🌟</div>
+                        <h3 style="color: var(--accent-green);">Excelent! ${correctCount}/4 corecte!</h3>
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+                setTimeout(() => goToStep('complete'), 2000);
+            } else {
+                resultDiv.innerHTML = `
+                    <div style="text-align: center; padding: 1rem; background: rgba(239, 68, 68, 0.2); border-radius: 12px; margin-top: 1rem;">
+                        <h3 style="color: var(--accent-red);">${correctCount}/4 - Mai ai nevoie de minim 3 corecte. Reciteste lectia!</h3>
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+            }
+        }
+
+        document.querySelectorAll('.step').forEach(step => {
+            step.addEventListener('click', () => goToStep(step.dataset.step));
+        });
+    </script>
+
+    <!-- Author Footer -->
+    <footer style="
+        margin-top: 3rem;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    ">
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong>
+        </div>
+        <div>
+            Informatica si TIC | Materiale educationale pentru elevi
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.75rem;">
+            <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan); text-decoration: none;">
+                grlnvasile@gmail.com
+            </a>
+        </div>
+    </footer>
+
+    <!-- Progress Tracking -->
+    <script src="../../../../assets/js/progress.js"></script>
+    <script>
+        LearningProgress.init('cls5', 'm3-word', 'lectia4');
+
+        // Auto-mark complete when reaching completion section
+        const originalGoToStep = goToStep;
+        goToStep = function(step) {
+            originalGoToStep(step);
+            if (step === 'complete') {
+                LearningProgress.markComplete();
+            }
+        };
+    </script>
+
+    <!-- Breadcrumb Navigation -->
+    <script src="../../../../assets/js/breadcrumb.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Breadcrumb.init({
+        grade: 'cls5',
+        gradeName: 'Clasa a V-a',
+        module: 'm3-word',
+        moduleName: 'Modulul 3: Word',
+        lesson: 'Lectia 4'
+            });
+        });
+    </script>
+</body>
+</html>

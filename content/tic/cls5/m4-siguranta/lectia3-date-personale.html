@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectia 3: Date personale | Clasa 5</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-back {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .nav-back:hover { color: var(--accent-cyan); }
+
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            width: 60px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .step.active { background: var(--accent-blue); }
+        .step.completed { background: var(--accent-green); }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .goal-section {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.1));
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .goal-icon { font-size: 5rem; margin-bottom: 1rem; }
+
+        .goal-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-red);
+            margin-bottom: 1rem;
+        }
+
+        .goal-desc {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
+
+        .try-section {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
+            border: 2px solid var(--accent-orange);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .try-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .try-badge {
+            background: var(--accent-orange);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .challenge-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .challenge-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--accent-orange);
+        }
+
+        /* Data Categories */
+        .data-sorter {
+            margin: 1.5rem 0;
+        }
+
+        .data-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .data-item {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .data-item:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .data-item.selected-private {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.15);
+        }
+
+        .data-item.selected-public {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.15);
+        }
+
+        .data-item .icon {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .sort-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .sort-btn {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sort-btn.active-private {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+
+        .sort-btn.active-public {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+        }
+
+        .hint-box {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid var(--accent-purple);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .hint-toggle {
+            cursor: pointer;
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        .hint-content {
+            display: none;
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .hint-content.show { display: block; }
+
+        .learn-section {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .learn-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .learn-badge {
+            background: var(--accent-blue);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .concept-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .concept-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .concept-def {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .concept-why {
+            background: rgba(16, 185, 129, 0.1);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .concept-why strong {
+            color: var(--accent-green);
+        }
+
+        /* Private Data List */
+        .private-data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .private-data-card {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid var(--accent-red);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .private-data-card .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .private-data-card .title {
+            font-weight: 600;
+            color: var(--accent-red);
+            margin-bottom: 0.25rem;
+        }
+
+        .private-data-card .desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Scenario Box */
+        .scenario-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border: 2px solid var(--border);
+        }
+
+        .scenario-box.danger {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .scenario-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .scenario-header .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .scenario-header .name {
+            font-weight: 600;
+        }
+
+        .scenario-header .tag {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+
+        .scenario-message {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-left: 3rem;
+            position: relative;
+        }
+
+        .scenario-message::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 12px;
+            border: 8px solid transparent;
+            border-right-color: var(--bg-secondary);
+        }
+
+        .scenario-response {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--accent-green);
+            border-radius: 8px;
+        }
+
+        .scenario-response h5 {
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid var(--accent-red);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .warning-box h4 {
+            color: var(--accent-red);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .test-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1));
+            border: 2px solid var(--accent-purple);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .test-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .test-badge {
+            background: var(--accent-purple);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .quiz-question {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .options {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .option {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option:hover {
+            border-color: var(--accent-purple);
+        }
+
+        .option.selected {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .feedback {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .feedback.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .feedback.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .completion {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .completion-icon { font-size: 5rem; margin-bottom: 1rem; }
+
+        .completion-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .xp-gain {
+            font-size: 1.5rem;
+            color: var(--accent-orange);
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .goal-title { font-size: 1.5rem; }
+            .actions { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+            .data-items { grid-template-columns: repeat(2, 1fr); }
+            .private-data-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress-steps">
+            <div class="step active" data-step="goal" title="Obiectiv"></div>
+            <div class="step" data-step="try" title="Incearca"></div>
+            <div class="step" data-step="learn" title="Invata"></div>
+            <div class="step" data-step="test" title="Verifica"></div>
+        </div>
+
+        <!-- GOAL Section -->
+        <div class="section active" id="goal">
+            <div class="goal-section">
+                <div class="goal-icon">🙈</div>
+                <h1 class="goal-title">Datele mele personale</h1>
+                <p class="goal-desc">
+                    Dupa aceasta lectie, vei sti exact ce informatii sunt private si de ce nu trebuie sa le impartasesti cu strainii.
+                </p>
+                <button class="btn btn-primary" onclick="goToStep('try')">
+                    Sa incepem! →
+                </button>
+            </div>
+        </div>
+
+        <!-- TRY Section -->
+        <div class="section" id="try">
+            <div class="try-section">
+                <div class="try-header">
+                    <span class="try-badge">🎯 INCEARCA</span>
+                    <h2>Ce informatii sunt secrete?</h2>
+                </div>
+
+                <div class="challenge-box">
+                    <div class="challenge-title">Provocarea ta:</div>
+                    <p>Selecteaza modul (PRIVAT sau OK), apoi click pe informatii pentru a le sorta:</p>
+                </div>
+
+                <div class="data-sorter">
+                    <div class="sort-buttons">
+                        <button class="sort-btn active-private" id="btnPrivate" onclick="setMode('private')">
+                            🔒 PRIVAT (Secret)
+                        </button>
+                        <button class="sort-btn" id="btnPublic" onclick="setMode('public')">
+                            ✅ OK (Poti spune)
+                        </button>
+                    </div>
+
+                    <div class="data-items">
+                        <div class="data-item" onclick="toggleItem(this)" data-correct="private">
+                            <span class="icon">🏠</span>
+                            Adresa mea
+                        </div>
+                        <div class="data-item" onclick="toggleItem(this)" data-correct="public">
+                            <span class="icon">🎨</span>
+                            Culoarea preferata
+                        </div>
+                        <div class="data-item" onclick="toggleItem(this)" data-correct="private">
+                            <span class="icon">📱</span>
+                            Nr. de telefon
+                        </div>
+                        <div class="data-item" onclick="toggleItem(this)" data-correct="public">
+                            <span class="icon">⚽</span>
+                            Sport preferat
+                        </div>
+                        <div class="data-item" onclick="toggleItem(this)" data-correct="private">
+                            <span class="icon">🏫</span>
+                            Numele scolii
+                        </div>
+                        <div class="data-item" onclick="toggleItem(this)" data-correct="private">
+                            <span class="icon">🔐</span>
+                            Parola mea
+                        </div>
+                        <div class="data-item" onclick="toggleItem(this)" data-correct="public">
+                            <span class="icon">🎮</span>
+                            Jocul preferat
+                        </div>
+                        <div class="data-item" onclick="toggleItem(this)" data-correct="private">
+                            <span class="icon">📸</span>
+                            Poze cu mine
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hint-box">
+                    <div class="hint-toggle" onclick="toggleHint(this)">
+                        💡 Ai nevoie de ajutor? Click aici
+                    </div>
+                    <div class="hint-content">
+                        <p>Gandeste-te: Ar putea un strain sa ma gaseasca sau sa ma faca rau daca stie asta?</p>
+                        <p>Daca DA → e PRIVAT. Daca NU → e probabil OK.</p>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('goal')">← Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('learn')">
+                        Vreau sa invat mai mult →
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEARN Section -->
+        <div class="section" id="learn">
+            <div class="learn-section">
+                <div class="learn-header">
+                    <span class="learn-badge">📚 INVATA</span>
+                    <h2>Ce sunt datele personale?</h2>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Date personale = Informatii despre TINE</div>
+                    <div class="concept-def">
+                        <strong>Datele personale</strong> sunt orice informatii care te pot identifica sau localiza:
+                        numele tau complet, unde locuiesti, cum arati, cum pot lua legatura cu tine.
+                    </div>
+                    <div class="concept-why">
+                        <strong>De ce conteaza?</strong> Aceste informatii sunt ca o harta spre tine.
+                        In mainile gresite, pot fi folosite sa iti faca rau sau sa te insele.
+                    </div>
+                </div>
+
+                <h3 style="margin: 1.5rem 0 1rem; color: var(--accent-red);">🔒 Date pe care NICIODATA nu le spui strainilor:</h3>
+
+                <div class="private-data-grid">
+                    <div class="private-data-card">
+                        <div class="icon">👤</div>
+                        <div class="title">Numele complet</div>
+                        <div class="desc">Prenume + Nume de familie</div>
+                    </div>
+                    <div class="private-data-card">
+                        <div class="icon">🏠</div>
+                        <div class="title">Adresa</div>
+                        <div class="desc">Strada, numarul, orasul</div>
+                    </div>
+                    <div class="private-data-card">
+                        <div class="icon">📱</div>
+                        <div class="title">Numarul de telefon</div>
+                        <div class="desc">Al tau sau al parintilor</div>
+                    </div>
+                    <div class="private-data-card">
+                        <div class="icon">🏫</div>
+                        <div class="title">Scoala</div>
+                        <div class="desc">Unde inveti si in ce clasa</div>
+                    </div>
+                    <div class="private-data-card">
+                        <div class="icon">🎂</div>
+                        <div class="title">Data nasterii</div>
+                        <div class="desc">Ziua, luna, anul</div>
+                    </div>
+                    <div class="private-data-card">
+                        <div class="icon">📸</div>
+                        <div class="title">Poze cu tine</div>
+                        <div class="desc">Mai ales in uniforma scolii</div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 1.5rem 0 1rem; color: var(--accent-orange);">⚠️ Cum incearca strainii sa afle informatii:</h3>
+
+                <div class="scenario-box danger">
+                    <div class="scenario-header">
+                        <div class="avatar">👤</div>
+                        <div>
+                            <div class="name">GameMaster2000</div>
+                            <span class="tag">STRAIN</span>
+                        </div>
+                    </div>
+                    <div class="scenario-message">
+                        "Hey! Joci super bine! Hai sa fim prieteni! Cum te cheama? La ce scoala mergi? Poate ne intalnim sa jucam impreuna! 🎮"
+                    </div>
+                    <div class="scenario-response">
+                        <h5>✅ Ce raspunzi:</h5>
+                        <p>"Multumesc! Dar nu dau informatii personale pe internet. Putem juca doar online!"</p>
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <h4>⚠️ Regula de AUR</h4>
+                    <p style="color: var(--text-secondary);">
+                        <strong>Pe internet, nimeni nu este cine spune ca este.</strong><br><br>
+                        Cineva care pretinde ca e un copil de varsta ta poate fi un adult cu intentii rele.
+                        Nu da niciodata informatii personale, nici daca persoana pare foarte draguta!
+                    </p>
+                </div>
+
+                <div class="concept-card" style="border-color: var(--accent-green);">
+                    <div class="concept-name" style="color: var(--accent-green);">✅ Ce POTI impartasi (daca vrei):</div>
+                    <div class="concept-def">
+                        <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                            <li>Culoarea ta preferata</li>
+                            <li>Ce jocuri iti plac</li>
+                            <li>Ce sporturi practici (fara sa spui unde)</li>
+                            <li>Ce filme sau carti iti plac</li>
+                            <li>Opinia ta despre subiecte generale</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="concept-card" style="border-color: var(--accent-purple);">
+                    <div class="concept-name" style="color: var(--accent-purple);">🚨 Ce faci daca cineva insista?</div>
+                    <div class="concept-def">
+                        <ol style="margin-left: 1.5rem; color: var(--text-secondary);">
+                            <li><strong>Refuza politicos:</strong> "Nu dau astfel de informatii."</li>
+                            <li><strong>Blocheaza persoana</strong> daca continua sa insiste</li>
+                            <li><strong>Spune unui parinte</strong> imediat</li>
+                            <li><strong>Pastreaza dovezi</strong> (screenshot-uri) daca poti</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('try')">← Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('test')">
+                        Am inteles! Testeaza-ma →
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEST Section -->
+        <div class="section" id="test">
+            <div class="test-section">
+                <div class="test-header">
+                    <span class="test-badge">✅ VERIFICA</span>
+                    <h2>Stii sa iti protejezi datele?</h2>
+                </div>
+
+                <div class="quiz-question" id="q1">
+                    <div class="question-text">1. Care dintre acestea este o data personala pe care NU o spui online?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q1', false)">Culoarea ta preferata</div>
+                        <div class="option" onclick="selectOption(this, 'q1', true)">Adresa unde locuiesti</div>
+                        <div class="option" onclick="selectOption(this, 'q1', false)">Ca iti place fotbalul</div>
+                        <div class="option" onclick="selectOption(this, 'q1', false)">Ca ai un caine</div>
+                    </div>
+                    <div class="feedback" id="q1-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <div class="question-text">2. Cineva online iti cere numarul de telefon. Ce faci?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q2', false)">Il dau, pare simpatic</div>
+                        <div class="option" onclick="selectOption(this, 'q2', false)">Dau numarul parintilor</div>
+                        <div class="option" onclick="selectOption(this, 'q2', true)">Refuz si spun unui parinte</div>
+                        <div class="option" onclick="selectOption(this, 'q2', false)">Dau un numar inventat</div>
+                    </div>
+                    <div class="feedback" id="q2-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <div class="question-text">3. De ce e periculos sa postezi poze in uniforma scolii?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q3', false)">Uniforma e urata</div>
+                        <div class="option" onclick="selectOption(this, 'q3', true)">Un strain poate afla la ce scoala mergi</div>
+                        <div class="option" onclick="selectOption(this, 'q3', false)">E ilegal</div>
+                        <div class="option" onclick="selectOption(this, 'q3', false)">Nu e periculos deloc</div>
+                    </div>
+                    <div class="feedback" id="q3-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q4">
+                    <div class="question-text">4. Un "prieten" online insista sa afle unde locuiesti. Ce faci?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q4', false)">Ii spun daca promite sa nu spuna nimanui</div>
+                        <div class="option" onclick="selectOption(this, 'q4', false)">Ii spun doar orasul, nu strada</div>
+                        <div class="option" onclick="selectOption(this, 'q4', false)">Ignorez si continuu sa vorbesc cu el</div>
+                        <div class="option" onclick="selectOption(this, 'q4', true)">Refuz, il blochez si spun unui adult</div>
+                    </div>
+                    <div class="feedback" id="q4-feedback"></div>
+                </div>
+
+                <div id="test-result" style="display: none;"></div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('learn')">← Inapoi la lectie</button>
+                    <button class="btn btn-success" onclick="checkAllAnswers()" id="check-btn">
+                        Verifica raspunsurile ✓
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPLETION Section -->
+        <div class="section" id="complete">
+            <div class="completion">
+                <div class="completion-icon">🙈</div>
+                <h2 class="completion-title">Felicitari!</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    Ai terminat Lectia 3: Date personale
+                </p>
+                <div class="xp-gain">+50 XP</div>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                    Acum stii ce informatii trebuie sa pastrezi secrete!
+                </p>
+                <div class="actions" style="justify-content: center;">
+                    <a href="lectia4-prezentari-intro.html" class="btn btn-primary">
+                        Continua la Lectia 4: Prezentari →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let answers = {};
+        let currentMode = 'private';
+
+        function goToStep(step) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(step).classList.add('active');
+
+            const steps = ['goal', 'try', 'learn', 'test'];
+            const currentIndex = steps.indexOf(step);
+
+            document.querySelectorAll('.step').forEach((s, i) => {
+                s.classList.remove('active', 'completed');
+                if (i < currentIndex) s.classList.add('completed');
+                if (i === currentIndex) s.classList.add('active');
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleHint(el) {
+            const content = el.nextElementSibling;
+            content.classList.toggle('show');
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('btnPrivate').className = 'sort-btn' + (mode === 'private' ? ' active-private' : '');
+            document.getElementById('btnPublic').className = 'sort-btn' + (mode === 'public' ? ' active-public' : '');
+        }
+
+        function toggleItem(el) {
+            el.classList.remove('selected-private', 'selected-public');
+            if (currentMode === 'private') {
+                el.classList.add('selected-private');
+            } else {
+                el.classList.add('selected-public');
+            }
+        }
+
+        function selectOption(el, questionId, isCorrect) {
+            el.parentNode.querySelectorAll('.option').forEach(o => {
+                o.classList.remove('selected', 'correct', 'wrong');
+            });
+            el.classList.add('selected');
+            answers[questionId] = isCorrect;
+        }
+
+        function checkAllAnswers() {
+            let correctCount = 0;
+            const questions = ['q1', 'q2', 'q3', 'q4'];
+
+            questions.forEach(qId => {
+                const question = document.getElementById(qId);
+                const feedback = document.getElementById(qId + '-feedback');
+                const selectedOption = question.querySelector('.option.selected');
+
+                if (selectedOption) {
+                    if (answers[qId]) {
+                        selectedOption.classList.add('correct');
+                        feedback.className = 'feedback success';
+                        feedback.textContent = '✓ Corect! Stii sa iti protejezi datele!';
+                        correctCount++;
+                    } else {
+                        selectedOption.classList.add('wrong');
+                        feedback.className = 'feedback error';
+                        feedback.textContent = '✗ Ai grija! Aceasta ar fi o alegere riscanta.';
+                    }
+                }
+            });
+
+            const resultDiv = document.getElementById('test-result');
+
+            if (correctCount >= 3) {
+                resultDiv.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; background: rgba(16, 185, 129, 0.2); border-radius: 12px; margin-top: 1rem;">
+                        <div style="font-size: 3rem;">🛡️</div>
+                        <h3 style="color: var(--accent-green);">Excelent! ${correctCount}/4 corecte! Esti protejat!</h3>
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+                setTimeout(() => goToStep('complete'), 2000);
+            } else {
+                resultDiv.innerHTML = `
+                    <div style="text-align: center; padding: 1rem; background: rgba(239, 68, 68, 0.2); border-radius: 12px; margin-top: 1rem;">
+                        <h3 style="color: var(--accent-red);">${correctCount}/4 - Mai reciteste lectia pentru a fi in siguranta!</h3>
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+            }
+        }
+
+        document.querySelectorAll('.step').forEach(step => {
+            step.addEventListener('click', () => goToStep(step.dataset.step));
+        });
+    </script>
+
+    <footer style="
+        margin-top: 3rem;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    ">
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong>
+        </div>
+        <div>
+            Informatica si TIC | Materiale educationale pentru elevi
+        </div>
+    </footer>
+
+    <!-- Progress Tracking -->
+    <script src="../../../../assets/js/progress.js"></script>
+    <script>
+        LearningProgress.init('cls5', 'm4-siguranta', 'lectia3');
+
+        // Auto-mark complete when reaching completion section
+        const originalGoToStep = goToStep;
+        goToStep = function(step) {
+            originalGoToStep(step);
+            if (step === 'complete') {
+                LearningProgress.markComplete();
+            }
+        };
+    </script>
+
+    <!-- Breadcrumb Navigation -->
+    <script src="../../../../assets/js/breadcrumb.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Breadcrumb.init({
+        grade: 'cls5',
+        gradeName: 'Clasa a V-a',
+        module: 'm4-siguranta',
+        moduleName: 'Modulul 4: Siguranta',
+        lesson: 'Lectia 3'
+            });
+        });
+    </script>
+
+    <!-- Enhanced Quiz System -->
+    <script src="../../../../assets/js/quiz.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Quiz.init({
+                passingScore: 4,
+                totalQuestions: 5,
+                explanations: {}  // Can be populated with question-specific explanations
+            });
+        });
+    </script>
+</body>
+</html>
