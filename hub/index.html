@@ -485,6 +485,14 @@
             </div>
         </div>
 
+        <!-- Player Stats Section -->
+        <div class="grades-section" id="player-stats-section" style="display: none;">
+            <div class="section-title">🎮 Profilul Tau</div>
+            <div id="player-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
         <!-- Quick Start -->
         <div class="quick-start">
             <div class="quick-title">Nu stii de unde sa incepi?</div>
@@ -495,16 +503,96 @@
     </div>
 
     <footer>
-        <p>LearningHub v0.3 | Prof. Gurlan Vasile</p>
+        <p>LearningHub v0.4 | Prof. Gurlan Vasile</p>
         <p style="margin-top: 0.5rem;">
             <a href="../../portal.html">Portal AI</a> |
             <a href="resources/index.html">Resurse Interactive</a>
         </p>
     </footer>
 
+    <!-- RPG System -->
+    <script src="../assets/js/rpg-system.js"></script>
     <script>
-        // Future: Add dynamic module detection based on current date
-        // Future: Add progress tracking
+        // Load and display player stats if they exist
+        document.addEventListener('DOMContentLoaded', function() {
+            const rpgData = localStorage.getItem('learninghub_rpg');
+            if (rpgData) {
+                const data = JSON.parse(rpgData);
+                const statsSection = document.getElementById('player-stats-section');
+                const statsDiv = document.getElementById('player-stats');
+
+                // Get level info
+                const LEVELS = [
+                    { level: 1, xp: 0, title: 'Incepator', icon: '🌱', color: '#94a3b8' },
+                    { level: 2, xp: 200, title: 'Explorator', icon: '🔍', color: '#3b82f6' },
+                    { level: 3, xp: 500, title: 'Ucenic', icon: '📖', color: '#06b6d4' },
+                    { level: 4, xp: 1000, title: 'Invatacel', icon: '✏️', color: '#10b981' },
+                    { level: 5, xp: 1800, title: 'Programator Junior', icon: '💻', color: '#8b5cf6' },
+                    { level: 6, xp: 3000, title: 'Coder', icon: '⌨️', color: '#ec4899' },
+                    { level: 7, xp: 4500, title: 'Developer', icon: '🚀', color: '#f59e0b' },
+                    { level: 8, xp: 6500, title: 'Hacker Etic', icon: '🔐', color: '#ef4444' },
+                    { level: 9, xp: 9000, title: 'Maestru', icon: '🎓', color: '#ffd700' },
+                    { level: 10, xp: 12000, title: 'Legenda', icon: '👑', color: '#ffd700' }
+                ];
+
+                let currentLevel = LEVELS[0];
+                for (const level of LEVELS) {
+                    if (data.xp >= level.xp) currentLevel = level;
+                    else break;
+                }
+
+                const nextLevel = LEVELS[currentLevel.level] || currentLevel;
+                const progress = nextLevel.xp > currentLevel.xp
+                    ? ((data.xp - currentLevel.xp) / (nextLevel.xp - currentLevel.xp)) * 100
+                    : 100;
+
+                statsSection.style.display = 'block';
+                statsDiv.innerHTML = `
+                    <div style="background: var(--bg-card); border-radius: 16px; padding: 1.5rem; border: 2px solid ${currentLevel.color}; text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 0.5rem;">${currentLevel.icon}</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: ${currentLevel.color};">Nivel ${currentLevel.level}</div>
+                        <div style="color: var(--text-secondary); margin-bottom: 1rem;">${currentLevel.title}</div>
+                        <div style="background: var(--bg-primary); border-radius: 10px; height: 12px; overflow: hidden; margin-bottom: 0.5rem;">
+                            <div style="height: 100%; width: ${progress}%; background: linear-gradient(90deg, var(--accent-blue), ${currentLevel.color}); border-radius: 10px;"></div>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">${data.xp} XP total</div>
+                    </div>
+                    <div style="background: var(--bg-card); border-radius: 16px; padding: 1.5rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; font-weight: 700; color: var(--accent-cyan);">${data.stats?.lessonsCompleted || 0}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Lectii</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; font-weight: 700; color: var(--accent-green);">${data.stats?.quizzesPassed || 0}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Quizuri</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; font-weight: 700; color: var(--accent-orange);">🔥 ${data.streak?.current || 0}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Streak</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; font-weight: 700; color: var(--accent-purple);">${data.achievements?.length || 0}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Achievements</div>
+                        </div>
+                    </div>
+                    <div style="background: var(--bg-card); border-radius: 16px; padding: 1.5rem;">
+                        <div style="font-weight: 600; margin-bottom: 1rem; color: var(--accent-orange);">🏆 Achievement-uri recente</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            ${(data.achievements || []).slice(-5).map(a => {
+                                const achievements = {
+                                    first_lesson: '🎯', five_lessons: '🏃', ten_lessons: '⭐',
+                                    first_module: '🏆', quiz_master: '🧠', streak_3: '🔥',
+                                    streak_7: '💪', explorer: '🧭', night_owl: '🦉',
+                                    early_bird: '🐦', cpp_starter: '💠', html_starter: '🌐',
+                                    scratch_starter: '🐱'
+                                };
+                                return '<span style="background: var(--bg-secondary); padding: 0.5rem; border-radius: 8px; font-size: 1.5rem;" title="' + a + '">' + (achievements[a] || '🏅') + '</span>';
+                            }).join('') || '<span style="color: var(--text-muted);">Incepe sa inveti pentru a debloca achievements!</span>'}
+                        </div>
+                    </div>
+                `;
+            }
+        });
     </script>
 </body>
 </html>
