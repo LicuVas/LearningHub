@@ -3,7 +3,13 @@
  * =====================================
  * Tracks lesson completion using localStorage
  *
+ * DEPENDS ON:
+ *   - user-system.js (should be loaded first for profile support)
+ *   - evidence-system.js (optional, for evidence collection before completion)
+ *
  * Usage in lesson pages:
+ *   <script src="../../assets/js/user-system.js"></script>
+ *   <script src="../../assets/js/evidence-system.js"></script>
  *   <script src="../../assets/js/progress.js"></script>
  *   <script>
  *     LearningProgress.init('cls5', 'm3-word', 'lectia1');
@@ -19,11 +25,25 @@ const LearningProgress = {
     STORAGE_KEY: 'learninghub_progress',
 
     /**
+     * Get the storage key (profile-aware if UserSystem is loaded)
+     */
+    getStorageKey() {
+        if (typeof UserSystem !== 'undefined') {
+            const profileId = UserSystem.getActiveProfile();
+            if (profileId && profileId !== '_guest') {
+                return `learninghub_progress_${profileId}`;
+            }
+        }
+        return this.STORAGE_KEY;
+    },
+
+    /**
      * Get all progress data from localStorage
      */
     getData() {
         try {
-            const data = localStorage.getItem(this.STORAGE_KEY);
+            const key = this.getStorageKey();
+            const data = localStorage.getItem(key);
             return data ? JSON.parse(data) : {};
         } catch (e) {
             console.error('Error reading progress:', e);
@@ -36,7 +56,8 @@ const LearningProgress = {
      */
     saveData(data) {
         try {
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+            const key = this.getStorageKey();
+            localStorage.setItem(key, JSON.stringify(data));
         } catch (e) {
             console.error('Error saving progress:', e);
         }
@@ -155,8 +176,56 @@ const LearningProgress = {
 
     /**
      * Mark current lesson as complete
+     * Checks for evidence requirement before allowing completion
      */
     markComplete() {
+        // Check if EvidenceSystem is loaded and evidence is required
+        if (typeof EvidenceSystem !== 'undefined') {
+            // Get lesson title from page
+            const lessonTitle = document.querySelector('h1, .lesson-title')?.textContent || this.currentLesson;
+
+            // Check if evidence is required for this module
+            const evidenceRequired = EvidenceSystem.isEvidenceRequired(
+                this.currentGrade,
+                this.currentModule,
+                this.currentLesson
+            );
+
+            // Check if evidence was already submitted
+            const hasEvidence = EvidenceSystem.hasEvidence(
+                this.currentGrade,
+                this.currentModule,
+                this.currentLesson
+            );
+
+            if (evidenceRequired && !hasEvidence) {
+                // Show evidence modal instead of completing directly
+                EvidenceSystem.showEvidenceModal({
+                    grade: this.currentGrade,
+                    module: this.currentModule,
+                    lesson: this.currentLesson,
+                    lessonTitle: lessonTitle,
+                    onSuccess: () => {
+                        // Evidence submitted successfully, now complete the lesson
+                        this._doComplete();
+                    },
+                    onCancel: () => {
+                        // User chose "Later" - don't complete the lesson
+                        console.log('Evidence submission cancelled - lesson not marked complete');
+                    }
+                });
+                return;
+            }
+        }
+
+        // No evidence required or already has evidence - complete directly
+        this._doComplete();
+    },
+
+    /**
+     * Internal method to actually complete the lesson
+     */
+    _doComplete() {
         const count = this.completeLesson(
             this.currentGrade,
             this.currentModule,
@@ -291,9 +360,23 @@ const LearningProgress = {
      */
     resetAll() {
         if (confirm('Sigur vrei să ștergi tot progresul? Această acțiune nu poate fi anulată.')) {
-            localStorage.removeItem(this.STORAGE_KEY);
+            const key = this.getStorageKey();
+            localStorage.removeItem(key);
             location.reload();
         }
+    },
+
+    /**
+     * Reset progress for a specific module
+     */
+    resetModule(grade, module) {
+        const data = this.getData();
+        if (data[grade] && data[grade][module]) {
+            delete data[grade][module];
+            this.saveData(data);
+            return true;
+        }
+        return false;
     }
 };
 

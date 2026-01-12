@@ -14,20 +14,32 @@ Create a unified, interactive learning experience where students navigate knowle
 
 ## Current Status
 
-**Version:** 0.1.0
-**Phase:** Initial Development
-**Last Updated:** 2026-01-09
+**Version:** 0.2.0
+**Phase:** User System Complete
+**Last Updated:** 2026-01-12
 **Current Module:** Module 3 (Jan 8 - Feb 20, 2026)
+
+### Recent Updates
+
+**v0.2.0 (2026-01-12)** - User System Implementation
+- Unified user-system.js for site-wide profile management
+- Multi-profile support (school lab scenario - multiple students per PC)
+- Profile selection at first visit (index.html shows selector)
+- Progress reset options: all/XP/achievements/per-module
+- Profile deletion with confirmation
+- Guest mode for visitors without profiles
+- All 143 lesson pages updated with user-system.js
+- RPG system and progress tracking now profile-aware
 
 ### Milestones
 
 | Milestone | Description | Status | Target |
 |-----------|-------------|--------|--------|
-| M0 | Project setup, architecture | In Progress | Jan 9 |
-| M1 | Module 3 ICT content (all grades) | Planned | Jan 16 |
-| M2 | Interactive quizzes per topic | Planned | Jan 23 |
+| M0 | Project setup, architecture | Done | Jan 9 |
+| M1 | Module 3 ICT content (all grades) | Done | Jan 16 |
+| M2 | Interactive quizzes per topic | Done | Jan 23 |
 | M3 | Concept linking system | Planned | Jan 30 |
-| M4 | Student progress tracking | Planned | Feb 6 |
+| M4 | Student progress tracking | Done | Feb 6 |
 | M5 | Full multi-navigation system | Planned | Feb 13 |
 
 ## Architecture

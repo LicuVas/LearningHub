@@ -3,14 +3,13 @@
  * ======================
  * Gamification layer: XP, Levels, Achievements, Track Selection
  *
- * MULTI-PROFILE SUPPORT:
- * Since multiple students may use the same computer (school lab),
- * we support multiple profiles stored locally. Each student selects
- * their profile at the start.
+ * DEPENDS ON: user-system.js (must be loaded first)
+ * Uses UserSystem for profile management.
  *
  * Integrates with progress.js for lesson completion tracking
  *
  * Usage:
+ *   <script src="../../assets/js/user-system.js"></script>
  *   <script src="../../assets/js/progress.js"></script>
  *   <script src="../../assets/js/rpg-system.js"></script>
  *   <script>
@@ -20,9 +19,6 @@
 
 const RPG = {
     STORAGE_KEY: 'learninghub_rpg',
-    PROFILES_KEY: 'learninghub_profiles',
-    ACTIVE_PROFILE_KEY: 'learninghub_active_profile',
-    currentProfile: null,
 
     // XP rewards for different actions
     XP_REWARDS: {
@@ -146,18 +142,31 @@ const RPG = {
 
     /**
      * Initialize RPG system for current page
+     * Now relies on UserSystem for profile management
      */
     init(grade, module) {
         this.currentGrade = grade;
         this.currentModule = module;
 
-        // Check for active profile or show selector
-        this.currentProfile = this.getActiveProfile();
+        // Check if UserSystem is available
+        if (typeof UserSystem === 'undefined') {
+            console.error('RPG: UserSystem not loaded! Load user-system.js before rpg-system.js');
+            return;
+        }
 
-        if (!this.currentProfile) {
-            // No profile selected - show profile selector
-            this.showProfileSelector();
-            return; // Don't initialize until profile is selected
+        // Get active profile from UserSystem
+        const profileId = UserSystem.getActiveProfile();
+
+        if (!profileId) {
+            // No profile selected - UserSystem should handle this
+            // Just skip RPG initialization until profile is selected
+            console.log('RPG: No profile active, waiting for profile selection');
+            return;
+        }
+
+        // Update progress.js to use profile-specific storage
+        if (typeof LearningProgress !== 'undefined') {
+            LearningProgress.STORAGE_KEY = `learninghub_progress_${profileId}`;
         }
 
         // Load or create player data for this profile
@@ -177,335 +186,12 @@ const RPG = {
     },
 
     /**
-     * Get all stored profiles
-     */
-    getProfiles() {
-        try {
-            const profiles = localStorage.getItem(this.PROFILES_KEY);
-            return profiles ? JSON.parse(profiles) : [];
-        } catch (e) {
-            return [];
-        }
-    },
-
-    /**
-     * Save profiles list
-     */
-    saveProfiles(profiles) {
-        localStorage.setItem(this.PROFILES_KEY, JSON.stringify(profiles));
-    },
-
-    /**
-     * Get currently active profile
-     */
-    getActiveProfile() {
-        return localStorage.getItem(this.ACTIVE_PROFILE_KEY);
-    },
-
-    /**
-     * Set active profile
-     */
-    setActiveProfile(profileName) {
-        localStorage.setItem(this.ACTIVE_PROFILE_KEY, profileName);
-        this.currentProfile = profileName;
-    },
-
-    /**
-     * Create a new profile
-     */
-    createProfile(name) {
-        const profiles = this.getProfiles();
-        const profileId = name.toLowerCase().replace(/\s+/g, '_');
-
-        if (!profiles.find(p => p.id === profileId)) {
-            profiles.push({
-                id: profileId,
-                name: name,
-                created: new Date().toISOString(),
-                avatar: this.getRandomAvatar()
-            });
-            this.saveProfiles(profiles);
-        }
-
-        // Initialize empty data for this profile
-        const storageKey = `${this.STORAGE_KEY}_${profileId}`;
-        if (!localStorage.getItem(storageKey)) {
-            localStorage.setItem(storageKey, JSON.stringify(this.getDefaultData()));
-        }
-
-        // Also initialize progress tracking for this profile
-        const progressKey = `learninghub_progress_${profileId}`;
-        if (!localStorage.getItem(progressKey)) {
-            localStorage.setItem(progressKey, JSON.stringify({}));
-        }
-
-        return profileId;
-    },
-
-    /**
-     * Get random avatar for new profile
-     */
-    getRandomAvatar() {
-        const avatars = ['🦊', '🐼', '🦁', '🐯', '🐸', '🦉', '🐺', '🦄', '🐲', '🦋', '🐬', '🦅', '🐢', '🦎', '🐙'];
-        return avatars[Math.floor(Math.random() * avatars.length)];
-    },
-
-    /**
-     * Show profile selector modal
-     */
-    showProfileSelector(onSelect = null) {
-        const profiles = this.getProfiles();
-
-        const modal = document.createElement('div');
-        modal.id = 'rpg-profile-selector';
-        modal.innerHTML = `
-            <div class="profile-selector-content">
-                <h2>Cine esti?</h2>
-                <p style="color: var(--text-secondary, #94a3b8); margin-bottom: 1.5rem;">
-                    Selecteaza profilul tau sau creeaza unul nou
-                </p>
-
-                ${profiles.length > 0 ? `
-                    <div class="existing-profiles">
-                        ${profiles.map(p => `
-                            <button class="profile-option" data-profile="${p.id}">
-                                <span class="profile-avatar">${p.avatar || '👤'}</span>
-                                <span class="profile-name">${p.name}</span>
-                            </button>
-                        `).join('')}
-                    </div>
-                    <div class="profile-divider">sau</div>
-                ` : ''}
-
-                <div class="new-profile-form">
-                    <input type="text" id="new-profile-name" placeholder="Numele tau (ex: Maria 7A)" maxlength="20">
-                    <button id="create-profile-btn">Creeaza profil nou</button>
-                </div>
-
-                ${profiles.length > 0 ? `
-                    <div class="guest-option">
-                        <button id="guest-mode-btn">Continua fara profil</button>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-
-        // Add styles
-        const style = document.createElement('style');
-        style.id = 'profile-selector-styles';
-        style.textContent = `
-            #rpg-profile-selector {
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.9);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10003;
-                padding: 1rem;
-            }
-
-            .profile-selector-content {
-                background: var(--bg-secondary, #12121f);
-                border-radius: 24px;
-                padding: 2.5rem;
-                max-width: 400px;
-                width: 100%;
-                text-align: center;
-            }
-
-            .profile-selector-content h2 {
-                font-size: 1.75rem;
-                margin-bottom: 0.5rem;
-                background: linear-gradient(135deg, var(--accent-blue, #3b82f6), var(--accent-purple, #8b5cf6));
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-            }
-
-            .existing-profiles {
-                display: grid;
-                gap: 0.75rem;
-                margin-bottom: 1rem;
-            }
-
-            .profile-option {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                padding: 1rem 1.5rem;
-                background: var(--bg-card, #1a1a2e);
-                border: 2px solid var(--border, #2d2d44);
-                border-radius: 12px;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                width: 100%;
-                color: var(--text-primary, #f1f5f9);
-                font-size: 1rem;
-            }
-
-            .profile-option:hover {
-                border-color: var(--accent-blue, #3b82f6);
-                background: var(--bg-card-hover, #252545);
-                transform: translateX(5px);
-            }
-
-            .profile-avatar {
-                font-size: 2rem;
-            }
-
-            .profile-name {
-                font-weight: 600;
-            }
-
-            .profile-divider {
-                color: var(--text-muted, #64748b);
-                margin: 1rem 0;
-                position: relative;
-            }
-
-            .profile-divider::before,
-            .profile-divider::after {
-                content: '';
-                position: absolute;
-                top: 50%;
-                width: 40%;
-                height: 1px;
-                background: var(--border, #2d2d44);
-            }
-
-            .profile-divider::before { left: 0; }
-            .profile-divider::after { right: 0; }
-
-            .new-profile-form {
-                display: flex;
-                flex-direction: column;
-                gap: 0.75rem;
-            }
-
-            #new-profile-name {
-                padding: 1rem;
-                background: var(--bg-card, #1a1a2e);
-                border: 2px solid var(--border, #2d2d44);
-                border-radius: 12px;
-                color: var(--text-primary, #f1f5f9);
-                font-size: 1rem;
-                text-align: center;
-            }
-
-            #new-profile-name:focus {
-                outline: none;
-                border-color: var(--accent-cyan, #06b6d4);
-            }
-
-            #create-profile-btn {
-                padding: 1rem;
-                background: linear-gradient(135deg, var(--accent-green, #10b981), var(--accent-cyan, #06b6d4));
-                border: none;
-                border-radius: 12px;
-                color: white;
-                font-weight: 600;
-                font-size: 1rem;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-
-            #create-profile-btn:hover {
-                transform: scale(1.02);
-                box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-            }
-
-            .guest-option {
-                margin-top: 1.5rem;
-            }
-
-            #guest-mode-btn {
-                padding: 0.75rem 1.5rem;
-                background: transparent;
-                border: 1px solid var(--border, #2d2d44);
-                border-radius: 8px;
-                color: var(--text-muted, #64748b);
-                cursor: pointer;
-                font-size: 0.9rem;
-                transition: all 0.2s ease;
-            }
-
-            #guest-mode-btn:hover {
-                border-color: var(--text-secondary, #94a3b8);
-                color: var(--text-secondary, #94a3b8);
-            }
-        `;
-        document.head.appendChild(style);
-        document.body.appendChild(modal);
-
-        // Event handlers
-        modal.querySelectorAll('.profile-option').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const profileId = btn.dataset.profile;
-                this.selectProfile(profileId);
-                modal.remove();
-                if (onSelect) onSelect(profileId);
-            });
-        });
-
-        document.getElementById('create-profile-btn').addEventListener('click', () => {
-            const name = document.getElementById('new-profile-name').value.trim();
-            if (name.length >= 2) {
-                const profileId = this.createProfile(name);
-                this.selectProfile(profileId);
-                modal.remove();
-                if (onSelect) onSelect(profileId);
-            } else {
-                document.getElementById('new-profile-name').style.borderColor = '#ef4444';
-                document.getElementById('new-profile-name').placeholder = 'Minim 2 caractere!';
-            }
-        });
-
-        document.getElementById('new-profile-name').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('create-profile-btn').click();
-            }
-        });
-
-        const guestBtn = document.getElementById('guest-mode-btn');
-        if (guestBtn) {
-            guestBtn.addEventListener('click', () => {
-                this.setActiveProfile('_guest');
-                this.currentProfile = '_guest';
-                modal.remove();
-                // Continue initialization without profile
-                this.loadData();
-                this.addStatusBar();
-                this.hookProgressSystem();
-            });
-        }
-    },
-
-    /**
-     * Select and activate a profile
-     */
-    selectProfile(profileId) {
-        this.setActiveProfile(profileId);
-        this.currentProfile = profileId;
-
-        // Update progress.js to use profile-specific storage
-        if (typeof LearningProgress !== 'undefined') {
-            LearningProgress.STORAGE_KEY = `learninghub_progress_${profileId}`;
-        }
-
-        // Continue initialization
-        this.loadData();
-        this.updateStreak();
-        this.checkTimeAchievements();
-        this.addStatusBar();
-        this.hookProgressSystem();
-    },
-
-    /**
-     * Get storage key for current profile
+     * Get storage key for current profile (uses UserSystem)
      */
     getStorageKey() {
-        if (this.currentProfile && this.currentProfile !== '_guest') {
-            return `${this.STORAGE_KEY}_${this.currentProfile}`;
+        const profileId = typeof UserSystem !== 'undefined' ? UserSystem.getActiveProfile() : null;
+        if (profileId && profileId !== '_guest') {
+            return `${this.STORAGE_KEY}_${profileId}`;
         }
         return this.STORAGE_KEY;
     },
@@ -783,21 +469,14 @@ const RPG = {
     },
 
     /**
-     * Add status bar to the page
+     * Add status bar to the page (simplified - no profile badge, UserSystem handles that)
      */
     addStatusBar() {
         const level = this.getLevel();
-        const profile = this.getProfiles().find(p => p.id === this.currentProfile);
-        const profileName = profile ? profile.name : (this.currentProfile === '_guest' ? 'Vizitator' : 'Necunoscut');
-        const profileAvatar = profile ? profile.avatar : '👤';
 
         const statusBar = document.createElement('div');
         statusBar.id = 'rpg-status-bar';
         statusBar.innerHTML = `
-            <div class="rpg-profile-info" onclick="RPG.switchProfile()" title="Click pentru a schimba profilul">
-                <span class="profile-avatar-small">${profileAvatar}</span>
-                <span class="profile-name-small">${profileName}</span>
-            </div>
             <div class="rpg-level" title="Nivel ${level.level}: ${level.title}">
                 <span class="level-icon">${level.icon}</span>
                 <span class="level-num">${level.level}</span>
@@ -819,30 +498,25 @@ const RPG = {
     },
 
     /**
-     * Switch to a different profile
+     * Switch to a different profile (delegates to UserSystem)
      */
     switchProfile() {
-        // Clear active profile
-        localStorage.removeItem(this.ACTIVE_PROFILE_KEY);
-        this.currentProfile = null;
-
-        // Remove status bar
-        const statusBar = document.getElementById('rpg-status-bar');
-        if (statusBar) statusBar.remove();
-
-        // Show profile selector
-        this.showProfileSelector(() => {
-            // Reload page to reset everything with new profile
+        if (typeof UserSystem !== 'undefined') {
+            UserSystem.switchProfile(() => location.reload());
+        } else {
             location.reload();
-        });
+        }
     },
 
     /**
-     * Logout current profile (just switch, don't delete)
+     * Logout current profile (delegates to UserSystem)
      */
     logout() {
-        localStorage.removeItem(this.ACTIVE_PROFILE_KEY);
-        location.reload();
+        if (typeof UserSystem !== 'undefined') {
+            UserSystem.logout();
+        } else {
+            location.reload();
+        }
     },
 
     /**
@@ -939,8 +613,8 @@ const RPG = {
     showProfile() {
         const level = this.getLevel();
         const stats = this.data.stats;
-        const profile = this.getProfiles().find(p => p.id === this.currentProfile);
-        const profileName = profile ? profile.name : (this.currentProfile === '_guest' ? 'Vizitator' : 'Profil');
+        const profile = typeof UserSystem !== 'undefined' ? UserSystem.getActiveProfileData() : null;
+        const profileName = profile ? profile.name : 'Vizitator';
         const profileAvatar = profile ? profile.avatar : '👤';
 
         const modal = document.createElement('div');
@@ -1045,33 +719,6 @@ const RPG = {
                 gap: 1rem;
                 z-index: 9999;
                 backdrop-filter: blur(10px);
-            }
-
-            .rpg-profile-info {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                background: var(--bg-card, #1a1a2e);
-                padding: 0.4rem 0.75rem;
-                border-radius: 20px;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                border: 1px solid var(--border, #2d2d44);
-            }
-
-            .rpg-profile-info:hover {
-                border-color: var(--accent-cyan, #06b6d4);
-                background: var(--bg-card-hover, #252545);
-            }
-
-            .profile-avatar-small { font-size: 1.2rem; }
-            .profile-name-small {
-                font-weight: 600;
-                font-size: 0.85rem;
-                max-width: 100px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
             }
 
             .rpg-level {

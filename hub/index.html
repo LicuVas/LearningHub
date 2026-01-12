@@ -347,6 +347,8 @@
         }
     </style>
     <link rel="stylesheet" href="../assets/css/mobile.css">
+    <!-- User System (must load first) -->
+    <script src="../assets/js/user-system.js"></script>
 </head>
 <body>
     <div class="container">
@@ -485,6 +487,31 @@
             </div>
         </div>
 
+        <!-- Developer Tutorials Section -->
+        <div class="grades-section">
+            <div class="section-title">📖 Formate de Date & Documentatie</div>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;">
+                Invata formatele esentiale folosite in programare si documentatie
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+                <a href="tutorials/markdown.html" class="path-card" style="--path-color: var(--accent-blue);">
+                    <div class="path-icon">📝</div>
+                    <div class="path-title">Markdown</div>
+                    <div class="path-desc">Formatare text simpla pentru documentatie, README, notite</div>
+                </a>
+                <a href="tutorials/json.html" class="path-card" style="--path-color: var(--accent-orange);">
+                    <div class="path-icon">{ }</div>
+                    <div class="path-title">JSON</div>
+                    <div class="path-desc">Format de date pentru API-uri, configurari, comunicare web</div>
+                </a>
+                <a href="tutorials/yaml.html" class="path-card" style="--path-color: var(--accent-green);">
+                    <div class="path-icon">---</div>
+                    <div class="path-title">YAML</div>
+                    <div class="path-desc">Format lizibil pentru configurari, CI/CD, Docker, Kubernetes</div>
+                </a>
+            </div>
+        </div>
+
         <!-- Player Stats Section -->
         <div class="grades-section" id="player-stats-section" style="display: none;">
             <div class="section-title">🎮 Profilul Tau</div>
@@ -513,86 +540,254 @@
     <!-- RPG System -->
     <script src="../assets/js/rpg-system.js"></script>
     <script>
-        // Load and display player stats if they exist
+        // Hub-specific initialization using unified UserSystem
         document.addEventListener('DOMContentLoaded', function() {
-            const rpgData = localStorage.getItem('learninghub_rpg');
-            if (rpgData) {
-                const data = JSON.parse(rpgData);
-                const statsSection = document.getElementById('player-stats-section');
-                const statsDiv = document.getElementById('player-stats');
+            // Check if profile exists, if not show selector via UserSystem
+            const activeProfile = UserSystem.getActiveProfile();
 
-                // Get level info
-                const LEVELS = [
-                    { level: 1, xp: 0, title: 'Incepator', icon: '🌱', color: '#94a3b8' },
-                    { level: 2, xp: 200, title: 'Explorator', icon: '🔍', color: '#3b82f6' },
-                    { level: 3, xp: 500, title: 'Ucenic', icon: '📖', color: '#06b6d4' },
-                    { level: 4, xp: 1000, title: 'Invatacel', icon: '✏️', color: '#10b981' },
-                    { level: 5, xp: 1800, title: 'Programator Junior', icon: '💻', color: '#8b5cf6' },
-                    { level: 6, xp: 3000, title: 'Coder', icon: '⌨️', color: '#ec4899' },
-                    { level: 7, xp: 4500, title: 'Developer', icon: '🚀', color: '#f59e0b' },
-                    { level: 8, xp: 6500, title: 'Hacker Etic', icon: '🔐', color: '#ef4444' },
-                    { level: 9, xp: 9000, title: 'Maestru', icon: '🎓', color: '#ffd700' },
-                    { level: 10, xp: 12000, title: 'Legenda', icon: '👑', color: '#ffd700' }
-                ];
-
-                let currentLevel = LEVELS[0];
-                for (const level of LEVELS) {
-                    if (data.xp >= level.xp) currentLevel = level;
-                    else break;
-                }
-
-                const nextLevel = LEVELS[currentLevel.level] || currentLevel;
-                const progress = nextLevel.xp > currentLevel.xp
-                    ? ((data.xp - currentLevel.xp) / (nextLevel.xp - currentLevel.xp)) * 100
-                    : 100;
-
-                statsSection.style.display = 'block';
-                statsDiv.innerHTML = `
-                    <div style="background: var(--bg-card); border-radius: 16px; padding: 1.5rem; border: 2px solid ${currentLevel.color}; text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: 0.5rem;">${currentLevel.icon}</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: ${currentLevel.color};">Nivel ${currentLevel.level}</div>
-                        <div style="color: var(--text-secondary); margin-bottom: 1rem;">${currentLevel.title}</div>
-                        <div style="background: var(--bg-primary); border-radius: 10px; height: 12px; overflow: hidden; margin-bottom: 0.5rem;">
-                            <div style="height: 100%; width: ${progress}%; background: linear-gradient(90deg, var(--accent-blue), ${currentLevel.color}); border-radius: 10px;"></div>
-                        </div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted);">${data.xp} XP total</div>
-                    </div>
-                    <div style="background: var(--bg-card); border-radius: 16px; padding: 1.5rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
-                        <div style="text-align: center;">
-                            <div style="font-size: 2rem; font-weight: 700; color: var(--accent-cyan);">${data.stats?.lessonsCompleted || 0}</div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Lectii</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 2rem; font-weight: 700; color: var(--accent-green);">${data.stats?.quizzesPassed || 0}</div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Quizuri</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 2rem; font-weight: 700; color: var(--accent-orange);">🔥 ${data.streak?.current || 0}</div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Streak</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 2rem; font-weight: 700; color: var(--accent-purple);">${data.achievements?.length || 0}</div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Achievements</div>
-                        </div>
-                    </div>
-                    <div style="background: var(--bg-card); border-radius: 16px; padding: 1.5rem;">
-                        <div style="font-weight: 600; margin-bottom: 1rem; color: var(--accent-orange);">🏆 Achievement-uri recente</div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                            ${(data.achievements || []).slice(-5).map(a => {
-                                const achievements = {
-                                    first_lesson: '🎯', five_lessons: '🏃', ten_lessons: '⭐',
-                                    first_module: '🏆', quiz_master: '🧠', streak_3: '🔥',
-                                    streak_7: '💪', explorer: '🧭', night_owl: '🦉',
-                                    early_bird: '🐦', cpp_starter: '💠', html_starter: '🌐',
-                                    scratch_starter: '🐱'
-                                };
-                                return '<span style="background: var(--bg-secondary); padding: 0.5rem; border-radius: 8px; font-size: 1.5rem;" title="' + a + '">' + (achievements[a] || '🏅') + '</span>';
-                            }).join('') || '<span style="color: var(--text-muted);">Incepe sa inveti pentru a debloca achievements!</span>'}
-                        </div>
-                    </div>
-                `;
+            if (!activeProfile) {
+                // Show welcome profile selector for new users
+                UserSystem.showProfileSelector((profileId) => {
+                    displayProfileHeader();
+                    displayPlayerStats();
+                });
+            } else {
+                // Load profile and show stats
+                displayProfileHeader();
+                displayPlayerStats();
             }
         });
+
+        function displayProfileHeader() {
+            const profile = UserSystem.getActiveProfileData();
+            if (!profile) return;
+
+            // Remove existing badge if any
+            const existingBadge = document.getElementById('profile-badge');
+            if (existingBadge) existingBadge.remove();
+
+            const badge = document.createElement('div');
+            badge.id = 'profile-badge';
+            badge.innerHTML = `
+                <span class="badge-avatar">${profile.avatar}</span>
+                <span class="badge-name">${profile.name}</span>
+                <button onclick="showProfileMenu(event)" class="badge-menu-btn">▼</button>
+            `;
+            badge.style.cssText = `
+                position: fixed;
+                top: 1rem;
+                right: 1rem;
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: 25px;
+                padding: 0.5rem 1rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                z-index: 1000;
+                cursor: pointer;
+            `;
+            document.body.appendChild(badge);
+
+            // Add styles for badge
+            if (!document.getElementById('profile-badge-styles')) {
+                const style = document.createElement('style');
+                style.id = 'profile-badge-styles';
+                style.textContent = `
+                    #profile-badge:hover { border-color: var(--accent-cyan); }
+                    .badge-avatar { font-size: 1.25rem; }
+                    .badge-name { font-weight: 600; font-size: 0.9rem; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                    .badge-menu-btn {
+                        background: none;
+                        border: none;
+                        color: var(--text-muted);
+                        cursor: pointer;
+                        font-size: 0.7rem;
+                        padding: 0 0.25rem;
+                    }
+                    #profile-menu {
+                        position: fixed;
+                        top: 4rem;
+                        right: 1rem;
+                        background: var(--bg-secondary);
+                        border: 1px solid var(--border);
+                        border-radius: 12px;
+                        padding: 0.5rem;
+                        z-index: 1001;
+                        min-width: 200px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                    }
+                    .menu-item {
+                        display: block;
+                        width: 100%;
+                        padding: 0.75rem 1rem;
+                        background: none;
+                        border: none;
+                        color: var(--text-primary);
+                        text-align: left;
+                        cursor: pointer;
+                        border-radius: 8px;
+                        font-size: 0.9rem;
+                    }
+                    .menu-item:hover { background: var(--bg-card); }
+                    .menu-item.danger { color: #ef4444; }
+                    .menu-item.danger:hover { background: rgba(239, 68, 68, 0.1); }
+                    .menu-divider { height: 1px; background: var(--border); margin: 0.5rem 0; }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        function showProfileMenu(e) {
+            if (e) e.stopPropagation();
+
+            const existing = document.getElementById('profile-menu');
+            if (existing) {
+                existing.remove();
+                return;
+            }
+
+            const menu = document.createElement('div');
+            menu.id = 'profile-menu';
+            menu.innerHTML = `
+                <button class="menu-item" onclick="switchProfile()">🔄 Schimba profilul</button>
+                <div class="menu-divider"></div>
+                <button class="menu-item" onclick="showResetOptions()">🔧 Reseteaza progresul</button>
+                <div class="menu-divider"></div>
+                <button class="menu-item danger" onclick="deleteCurrentProfile()">🗑️ Sterge profilul</button>
+            `;
+            document.body.appendChild(menu);
+
+            // Close menu when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', closeMenuOnClickOutside);
+            }, 100);
+        }
+
+        function closeMenuOnClickOutside(e) {
+            const menu = document.getElementById('profile-menu');
+            const badge = document.getElementById('profile-badge');
+            if (menu && !menu.contains(e.target) && !badge.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', closeMenuOnClickOutside);
+            }
+        }
+
+        function switchProfile() {
+            document.getElementById('profile-menu')?.remove();
+            document.getElementById('profile-badge')?.remove();
+            document.getElementById('player-stats-section').style.display = 'none';
+            UserSystem.switchProfile(() => {
+                displayProfileHeader();
+                displayPlayerStats();
+            });
+        }
+
+        function showResetOptions() {
+            document.getElementById('profile-menu')?.remove();
+            UserSystem.showResetModal(() => {
+                displayPlayerStats();
+            });
+        }
+
+        function deleteCurrentProfile() {
+            const profileId = UserSystem.getActiveProfile();
+            if (!profileId || profileId === '_guest') {
+                alert('Nu poti sterge acest profil!');
+                return;
+            }
+
+            if (UserSystem.deleteProfile(profileId)) {
+                document.getElementById('profile-menu')?.remove();
+                document.getElementById('profile-badge')?.remove();
+                document.getElementById('player-stats-section').style.display = 'none';
+                UserSystem.switchProfile(() => {
+                    displayProfileHeader();
+                    displayPlayerStats();
+                });
+            }
+        }
+
+        function displayPlayerStats() {
+            const profileId = UserSystem.getActiveProfile();
+            if (!profileId || profileId === '_guest') return;
+
+            const rpgData = UserSystem.getRPGData();
+            if (!rpgData) return;
+
+            const statsSection = document.getElementById('player-stats-section');
+            const statsDiv = document.getElementById('player-stats');
+
+            const LEVELS = [
+                { level: 1, xp: 0, title: 'Incepator', icon: '🌱', color: '#94a3b8' },
+                { level: 2, xp: 200, title: 'Explorator', icon: '🔍', color: '#3b82f6' },
+                { level: 3, xp: 500, title: 'Ucenic', icon: '📖', color: '#06b6d4' },
+                { level: 4, xp: 1000, title: 'Invatacel', icon: '✏️', color: '#10b981' },
+                { level: 5, xp: 1800, title: 'Programator Junior', icon: '💻', color: '#8b5cf6' },
+                { level: 6, xp: 3000, title: 'Coder', icon: '⌨️', color: '#ec4899' },
+                { level: 7, xp: 4500, title: 'Developer', icon: '🚀', color: '#f59e0b' },
+                { level: 8, xp: 6500, title: 'Hacker Etic', icon: '🔐', color: '#ef4444' },
+                { level: 9, xp: 9000, title: 'Maestru', icon: '🎓', color: '#ffd700' },
+                { level: 10, xp: 12000, title: 'Legenda', icon: '👑', color: '#ffd700' }
+            ];
+
+            let currentLevel = LEVELS[0];
+            for (const level of LEVELS) {
+                if ((rpgData.xp || 0) >= level.xp) currentLevel = level;
+                else break;
+            }
+
+            const nextLevel = LEVELS[currentLevel.level] || currentLevel;
+            const progress = nextLevel.xp > currentLevel.xp
+                ? (((rpgData.xp || 0) - currentLevel.xp) / (nextLevel.xp - currentLevel.xp)) * 100
+                : 100;
+
+            statsSection.style.display = 'block';
+            statsDiv.innerHTML = `
+                <div style="background: var(--bg-card); border-radius: 16px; padding: 1.5rem; border: 2px solid ${currentLevel.color}; text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 0.5rem;">${currentLevel.icon}</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: ${currentLevel.color};">Nivel ${currentLevel.level}</div>
+                    <div style="color: var(--text-secondary); margin-bottom: 1rem;">${currentLevel.title}</div>
+                    <div style="background: var(--bg-primary); border-radius: 10px; height: 12px; overflow: hidden; margin-bottom: 0.5rem;">
+                        <div style="height: 100%; width: ${progress}%; background: linear-gradient(90deg, var(--accent-blue), ${currentLevel.color}); border-radius: 10px;"></div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">${rpgData.xp || 0} XP total</div>
+                </div>
+                <div style="background: var(--bg-card); border-radius: 16px; padding: 1.5rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-cyan);">${rpgData.stats?.lessonsCompleted || 0}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Lectii</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-green);">${rpgData.stats?.quizzesPassed || 0}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Quizuri</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-orange);">🔥 ${rpgData.streak?.current || 0}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Streak</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-purple);">${(rpgData.achievements || []).length}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Achievements</div>
+                    </div>
+                </div>
+                <div style="background: var(--bg-card); border-radius: 16px; padding: 1.5rem;">
+                    <div style="font-weight: 600; margin-bottom: 1rem; color: var(--accent-orange);">🏆 Achievement-uri recente</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        ${(rpgData.achievements || []).slice(-5).map(a => {
+                            const achievements = {
+                                first_lesson: '🎯', five_lessons: '🏃', ten_lessons: '⭐',
+                                first_module: '🏆', quiz_master: '🧠', streak_3: '🔥',
+                                streak_7: '💪', explorer: '🧭', night_owl: '🦉',
+                                early_bird: '🐦', cpp_starter: '💠', html_starter: '🌐',
+                                scratch_starter: '🐱'
+                            };
+                            return '<span style="background: var(--bg-secondary); padding: 0.5rem; border-radius: 8px; font-size: 1.5rem;" title="' + a + '">' + (achievements[a] || '🏅') + '</span>';
+                        }).join('') || '<span style="color: var(--text-muted);">Incepe sa inveti pentru a debloca achievements!</span>'}
+                    </div>
+                </div>
+            `;
+        }
     </script>
 </body>
 </html>
