@@ -370,6 +370,9 @@ const UserSystem = {
      * Show the profile selector modal
      */
     showProfileSelector(onSelect = null) {
+        // Ensure styles are injected
+        this.injectStyles();
+
         // Remove existing modal if any
         const existing = document.getElementById('us-profile-modal');
         if (existing) existing.remove();
