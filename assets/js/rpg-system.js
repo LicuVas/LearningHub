@@ -137,6 +137,21 @@ const RPG = {
             desc: 'Prima lectie de Scratch',
             icon: '🐱',
             xp: 50
+        },
+        // Practice achievements
+        practice_first: {
+            id: 'practice_first',
+            name: 'Practica Face Perfect',
+            desc: 'Prima problema de practica rezolvata',
+            icon: '🎯',
+            xp: 50
+        },
+        practice_master: {
+            id: 'practice_master',
+            name: 'Maestru al Practicii',
+            desc: 'Ai completat practica pentru 10 lectii',
+            icon: '🏆',
+            xp: 300
         }
     },
 

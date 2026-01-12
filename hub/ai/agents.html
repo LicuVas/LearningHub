@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agents | LearningHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 30% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+        .nav-back {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-back:hover { color: var(--accent-cyan); }
+
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.1));
+            border-radius: 24px;
+            border: 2px solid var(--accent-purple);
+        }
+
+        .level-badge {
+            display: inline-block;
+            background: var(--accent-purple);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .header-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: var(--accent-cyan);
+            margin: 2.5rem 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            color: var(--accent-purple);
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .section ul, .section ol {
+            margin: 1rem 0 1rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .section li {
+            margin-bottom: 0.5rem;
+        }
+
+        strong {
+            color: var(--text-primary);
+        }
+
+        code {
+            background: var(--bg-card);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9em;
+            color: var(--accent-green);
+        }
+
+        /* Comparison Table */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .comparison-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 2px solid var(--border);
+        }
+
+        .comparison-card.chatbot {
+            border-color: var(--accent-blue);
+        }
+
+        .comparison-card.agent {
+            border-color: var(--accent-purple);
+        }
+
+        .comparison-title {
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .comparison-card.chatbot .comparison-title {
+            color: var(--accent-blue);
+        }
+
+        .comparison-card.agent .comparison-title {
+            color: var(--accent-purple);
+        }
+
+        .comparison-card ul {
+            margin: 0 0 0 1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .comparison-card li {
+            margin-bottom: 0.25rem;
+        }
+
+        /* Architecture Diagram */
+        .architecture {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .arch-row {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .arch-box {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            min-width: 120px;
+        }
+
+        .arch-box.brain {
+            border-color: var(--accent-purple);
+            background: linear-gradient(135deg, var(--bg-secondary), rgba(139, 92, 246, 0.2));
+        }
+
+        .arch-box.tools {
+            border-color: var(--accent-cyan);
+        }
+
+        .arch-box.memory {
+            border-color: var(--accent-orange);
+        }
+
+        .arch-box.planning {
+            border-color: var(--accent-green);
+        }
+
+        .arch-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .arch-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .arch-arrow {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        /* Example Cards */
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .example-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .example-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .example-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .example-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid var(--accent-red);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .warning-box h4 {
+            color: var(--accent-red);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .warning-box p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Tip Box */
+        .tip-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 1rem 1.25rem;
+            border-radius: 0 12px 12px 0;
+            margin: 1rem 0;
+        }
+
+        .tip-box p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .tip-box strong {
+            color: var(--accent-green);
+        }
+
+        /* Quiz Section */
+        .quiz-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border: 2px solid var(--accent-blue);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .quiz-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+        }
+
+        .quiz-option {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .quiz-option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .header { padding: 2rem 1.5rem; }
+            .comparison-grid { grid-template-columns: 1fr; }
+            .arch-row { flex-direction: column; align-items: center; }
+        }
+    </style>
+    <link rel="stylesheet" href="../../assets/css/mobile.css">
+    <script src="../../assets/js/user-system.js"></script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="nav-back">← Inapoi la AI Hub</a>
+
+        <header class="header">
+            <span class="level-badge">Nivel Avansat</span>
+            <div class="header-icon">🤖</div>
+            <h1>AI Agents</h1>
+            <p class="subtitle">Urmatorul nivel al inteligentei artificiale: sisteme care gandesc, planifica si actioneaza autonom</p>
+        </header>
+
+        <h2>🎯 Ce sunt AI Agents?</h2>
+        <div class="section">
+            <p>Un <strong>AI Agent</strong> (Agent de Inteligenta Artificiala) este un sistem care poate:</p>
+            <ul>
+                <li><strong>Percepe</strong> mediul in care opereaza (citeste fisiere, navigheaza web, primeste date)</li>
+                <li><strong>Rationeaza</strong> asupra situatiei (analizeaza, planifica, ia decizii)</li>
+                <li><strong>Actioneaza</strong> pentru a atinge obiective (scrie cod, ruleaza comenzi, comunica)</li>
+                <li><strong>Invata</strong> din rezultate (ajusteaza strategia bazat pe feedback)</li>
+            </ul>
+            <p>Spre deosebire de un chatbot care doar raspunde la intrebari, un agent poate <strong>executa actiuni in lumea reala</strong> pentru a rezolva probleme complexe.</p>
+        </div>
+
+        <h2>💬 Chatbot vs Agent</h2>
+        <div class="section">
+            <p>Care este diferenta fundamentala?</p>
+            <div class="comparison-grid">
+                <div class="comparison-card chatbot">
+                    <div class="comparison-title">💬 Chatbot (LLM)</div>
+                    <ul>
+                        <li>Raspunde la intrebari</li>
+                        <li>Genereaza text la cerere</li>
+                        <li>Nu poate executa actiuni</li>
+                        <li>Memorie limitata la conversatie</li>
+                        <li>Pasiv - asteapta input</li>
+                    </ul>
+                </div>
+                <div class="comparison-card agent">
+                    <div class="comparison-title">🤖 AI Agent</div>
+                    <ul>
+                        <li>Rezolva probleme complexe</li>
+                        <li>Foloseste instrumente (tools)</li>
+                        <li>Executa actiuni reale</li>
+                        <li>Memorie persistenta</li>
+                        <li>Activ - ia initiative</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="tip-box">
+                <p><strong>Analogie:</strong> Un chatbot e ca un consultant care iti da sfaturi. Un agent e ca un asistent care chiar face treaba pentru tine.</p>
+            </div>
+        </div>
+
+        <h2>🏗️ Arhitectura unui Agent</h2>
+        <div class="section">
+            <p>Un agent AI modern are patru componente principale:</p>
+            <div class="architecture">
+                <div class="arch-row">
+                    <div class="arch-box brain">
+                        <div class="arch-icon">🧠</div>
+                        <div class="arch-label">LLM (Creier)</div>
+                    </div>
+                </div>
+                <div class="arch-arrow">↓ ↑</div>
+                <div class="arch-row">
+                    <div class="arch-box tools">
+                        <div class="arch-icon">🛠️</div>
+                        <div class="arch-label">Tools</div>
+                    </div>
+                    <div class="arch-box memory">
+                        <div class="arch-icon">💾</div>
+                        <div class="arch-label">Memory</div>
+                    </div>
+                    <div class="arch-box planning">
+                        <div class="arch-icon">📋</div>
+                        <div class="arch-label">Planning</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>🧠 LLM (Large Language Model)</h3>
+            <p>Creierul agentului - modelul de limbaj (GPT-4, Claude, Gemini) care gandeste si ia decizii. Primeste informatii si decide ce actiune sa execute.</p>
+
+            <h3>🛠️ Tools (Instrumente)</h3>
+            <p>Abilitatile agentului - functii pe care le poate apela pentru a actiona in lume:</p>
+            <ul>
+                <li><code>read_file()</code> - citeste fisiere de pe disk</li>
+                <li><code>write_file()</code> - scrie/modifica fisiere</li>
+                <li><code>run_command()</code> - executa comenzi terminal</li>
+                <li><code>search_web()</code> - cauta pe internet</li>
+                <li><code>send_email()</code> - trimite email-uri</li>
+            </ul>
+
+            <h3>💾 Memory (Memorie)</h3>
+            <p>Contextul agentului - informatii pe care le retine intre sesiuni:</p>
+            <ul>
+                <li><strong>Short-term:</strong> Conversatia curenta, fisierele citite recent</li>
+                <li><strong>Long-term:</strong> Preferinte utilizator, proiecte anterioare, lectii invatate</li>
+            </ul>
+
+            <h3>📋 Planning (Planificare)</h3>
+            <p>Strategia agentului - cum imparte o sarcina complexa in pasi mai mici:</p>
+            <ol>
+                <li>Analizeaza obiectivul final</li>
+                <li>Identifica sub-taskuri necesare</li>
+                <li>Determina ordinea executiei</li>
+                <li>Monitorizeaza progresul</li>
+                <li>Ajusteaza planul daca ceva esueaza</li>
+            </ol>
+        </div>
+
+        <h2>🌟 Exemple de AI Agents</h2>
+        <div class="section">
+            <p>Iata cativa agenti AI populari si ce pot face:</p>
+            <div class="examples-grid">
+                <div class="example-card">
+                    <div class="example-icon">💻</div>
+                    <div class="example-name">Claude Code</div>
+                    <div class="example-desc">Scrie, editeaza si ruleaza cod direct in terminal</div>
+                </div>
+                <div class="example-card">
+                    <div class="example-icon">🔧</div>
+                    <div class="example-name">GitHub Copilot</div>
+                    <div class="example-desc">Sugereaza cod in timp real in editorul tau</div>
+                </div>
+                <div class="example-card">
+                    <div class="example-icon">🌐</div>
+                    <div class="example-name">AutoGPT</div>
+                    <div class="example-desc">Agent autonom care isi seteaza singur obiective</div>
+                </div>
+                <div class="example-card">
+                    <div class="example-icon">👥</div>
+                    <div class="example-name">CrewAI</div>
+                    <div class="example-desc">Echipe de agenti care colaboreaza</div>
+                </div>
+            </div>
+        </div>
+
+        <h2>⚠️ Reguli si Siguranta</h2>
+        <div class="section">
+            <p>Agentii AI sunt puternici, dar trebuie folositi responsabil:</p>
+
+            <div class="warning-box">
+                <h4>⚠️ Riscuri de luat in considerare</h4>
+                <p>Un agent poate executa actiuni ireversibile: sterge fisiere, trimite mesaje, face modificari permanente. Intotdeauna verifica ce face agentul inainte de a-i da acces la resurse importante.</p>
+            </div>
+
+            <h3>Principii de siguranta:</h3>
+            <ul>
+                <li><strong>Principiul privilegiului minim</strong> - da agentului doar accesul de care are nevoie</li>
+                <li><strong>Supervizare umana</strong> - revizuieste actiunile inainte de executie (unde posibil)</li>
+                <li><strong>Sandboxing</strong> - testeaza intr-un mediu izolat inainte de productie</li>
+                <li><strong>Logging</strong> - pastreaza jurnale ale tuturor actiunilor pentru audit</li>
+            </ul>
+
+            <div class="tip-box">
+                <p><strong>Regula de aur:</strong> Nu da unui agent acces pe care nu l-ai da unui stagiar. Verifica munca lui!</p>
+            </div>
+        </div>
+
+        <h2>🚀 Aplicatii Practice</h2>
+        <div class="section">
+            <p>Unde sunt folositi agentii AI azi?</p>
+            <ul>
+                <li><strong>Dezvoltare software</strong> - scriu, testeaza si fac debugging la cod</li>
+                <li><strong>Cercetare</strong> - aduna informatii, sintetizeaza documente</li>
+                <li><strong>Customer support</strong> - rezolva tickete, escaleaza probleme complexe</li>
+                <li><strong>Automatizare</strong> - workflow-uri complexe care necesita decizii</li>
+                <li><strong>Educatie</strong> - tutori personalizati care adapteaza lectiile</li>
+            </ul>
+        </div>
+
+        <h2>🧪 Testeaza-ti cunostintele</h2>
+        <div class="quiz-box">
+            <h4>Quick Quiz: Chatbot sau Agent?</h4>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Care dintre urmatoarele este o caracteristica a unui AI Agent?</p>
+            <div class="quiz-option" onclick="checkAnswer(this, false)">A. Raspunde la intrebari despre orice subiect</div>
+            <div class="quiz-option" onclick="checkAnswer(this, false)">B. Genereaza text creativ</div>
+            <div class="quiz-option" onclick="checkAnswer(this, true)">C. Executa actiuni in lumea reala folosind tools</div>
+            <div class="quiz-option" onclick="checkAnswer(this, false)">D. Are o voce naturala</div>
+            <p id="quizFeedback" style="margin-top: 1rem; color: var(--text-secondary); display: none;"></p>
+        </div>
+
+        <h2>📚 Resurse suplimentare</h2>
+        <div class="section">
+            <p>Vrei sa inveti mai mult? Iata cateva resurse:</p>
+            <ul>
+                <li><strong>Anthropic Claude Docs</strong> - documentatia oficiala Claude</li>
+                <li><strong>LangChain</strong> - framework popular pentru construirea agentilor</li>
+                <li><strong>OpenAI Function Calling</strong> - cum sa dai tools unui LLM</li>
+                <li><strong>AutoGen</strong> - framework Microsoft pentru multi-agent systems</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="index.html">Inapoi la AI Hub</a> | <a href="../index.html">LearningHub</a>
+    </footer>
+
+    <script>
+        // Profile badge
+        document.addEventListener('DOMContentLoaded', function() {
+            const profile = UserSystem.getActiveProfileData();
+            if (profile && profile.id !== '_guest') {
+                const badge = UserSystem.createProfileBadge();
+                if (badge) {
+                    badge.style.cssText = 'position: fixed; top: 1rem; right: 1rem; z-index: 1000;';
+                    document.body.appendChild(badge);
+                }
+            }
+        });
+
+        // Quiz functionality
+        function checkAnswer(element, isCorrect) {
+            // Reset all options
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('correct', 'wrong');
+                opt.style.pointerEvents = 'none';
+            });
+
+            // Mark selection
+            if (isCorrect) {
+                element.classList.add('correct');
+                document.getElementById('quizFeedback').textContent = '✅ Corect! Agentii AI se diferentiaza prin capacitatea de a executa actiuni folosind tools (instrumente).';
+                document.getElementById('quizFeedback').style.color = 'var(--accent-green)';
+            } else {
+                element.classList.add('wrong');
+                // Also show correct answer
+                document.querySelectorAll('.quiz-option')[2].classList.add('correct');
+                document.getElementById('quizFeedback').textContent = '❌ Nu chiar. Raspunsul corect este C - agentii pot executa actiuni reale folosind tools.';
+                document.getElementById('quizFeedback').style.color = 'var(--accent-red)';
+            }
+
+            document.getElementById('quizFeedback').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

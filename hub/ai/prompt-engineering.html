@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Engineering | LearningHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 30% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+        .nav-back {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-back:hover { color: var(--accent-cyan); }
+
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.1));
+            border-radius: 24px;
+            border: 2px solid var(--accent-blue);
+        }
+
+        .level-badge {
+            display: inline-block;
+            background: var(--accent-blue);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .header-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: var(--accent-cyan);
+            margin: 2.5rem 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            color: var(--accent-purple);
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .section ul, .section ol {
+            margin: 1rem 0 1rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .section li {
+            margin-bottom: 0.5rem;
+        }
+
+        strong {
+            color: var(--text-primary);
+        }
+
+        code {
+            background: var(--bg-card);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9em;
+            color: var(--accent-green);
+        }
+
+        /* Prompt Examples */
+        .prompt-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .prompt-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 2px solid var(--border);
+        }
+
+        .prompt-box.bad {
+            border-color: var(--accent-red);
+        }
+
+        .prompt-box.good {
+            border-color: var(--accent-green);
+        }
+
+        .prompt-label {
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .prompt-box.bad .prompt-label {
+            color: var(--accent-red);
+        }
+
+        .prompt-box.good .prompt-label {
+            color: var(--accent-green);
+        }
+
+        .prompt-text {
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Technique Cards */
+        .techniques-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .technique-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .technique-card:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-2px);
+        }
+
+        .technique-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .technique-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .technique-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Framework Box */
+        .framework-box {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+            border: 2px solid var(--accent-purple);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .framework-title {
+            font-weight: 700;
+            color: var(--accent-purple);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .framework-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .framework-step {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .step-letter {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            margin-bottom: 0.25rem;
+        }
+
+        .step-word {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Tip Box */
+        .tip-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 1rem 1.25rem;
+            border-radius: 0 12px 12px 0;
+            margin: 1rem 0;
+        }
+
+        .tip-box p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .tip-box strong {
+            color: var(--accent-green);
+        }
+
+        /* Interactive Demo */
+        .demo-box {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border: 2px solid var(--border);
+        }
+
+        .demo-title {
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 1rem;
+        }
+
+        .demo-textarea {
+            width: 100%;
+            min-height: 120px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--text-primary);
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+
+        .demo-textarea:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .demo-tips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .demo-tip {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .demo-tip:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .header { padding: 2rem 1.5rem; }
+            .prompt-comparison { grid-template-columns: 1fr; }
+            .framework-steps { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+    <link rel="stylesheet" href="../../assets/css/mobile.css">
+    <script src="../../assets/js/user-system.js"></script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="nav-back">← Inapoi la AI Hub</a>
+
+        <header class="header">
+            <span class="level-badge">Intermediar</span>
+            <div class="header-icon">✨</div>
+            <h1>Prompt Engineering</h1>
+            <p class="subtitle">Arta de a comunica eficient cu AI-ul</p>
+        </header>
+
+        <h2>🎯 Ce este Prompt Engineering?</h2>
+        <div class="section">
+            <p><strong>Prompt Engineering</strong> este abilitatea de a formula intrebari si instructiuni astfel incat sa obtii raspunsuri optime de la un model AI.</p>
+            <p>Gandeste-te la AI ca la un coleg foarte capabil, dar care are nevoie de instructiuni clare. Cu cat ii explici mai bine ce vrei, cu atat rezultatul va fi mai bun.</p>
+            <div class="tip-box">
+                <p><strong>Regula de baza:</strong> AI-ul nu poate citi gandurile. Daca raspunsul nu e ce asteptai, probabil intrebarea nu a fost suficient de clara.</p>
+            </div>
+        </div>
+
+        <h2>❌ vs ✅ Exemple practice</h2>
+        <div class="section">
+            <p>Compara aceste prompt-uri si vezi diferenta:</p>
+
+            <h3>Exemplul 1: Explicatie</h3>
+            <div class="prompt-comparison">
+                <div class="prompt-box bad">
+                    <div class="prompt-label">❌ Slab</div>
+                    <div class="prompt-text">"Explica-mi Python"</div>
+                </div>
+                <div class="prompt-box good">
+                    <div class="prompt-label">✅ Bun</div>
+                    <div class="prompt-text">"Explica-mi ce sunt listele in Python, cu 3 exemple practice de utilizare. Sunt elev de liceu."</div>
+                </div>
+            </div>
+
+            <h3>Exemplul 2: Scriere</h3>
+            <div class="prompt-comparison">
+                <div class="prompt-box bad">
+                    <div class="prompt-label">❌ Slab</div>
+                    <div class="prompt-text">"Scrie un email"</div>
+                </div>
+                <div class="prompt-box good">
+                    <div class="prompt-label">✅ Bun</div>
+                    <div class="prompt-text">"Scrie un email formal catre profesorul de informatica prin care cer amanarea termenului pentru proiect. Tonul sa fie politicos dar concis. Maximum 100 cuvinte."</div>
+                </div>
+            </div>
+
+            <h3>Exemplul 3: Cod</h3>
+            <div class="prompt-comparison">
+                <div class="prompt-box bad">
+                    <div class="prompt-label">❌ Slab</div>
+                    <div class="prompt-text">"Fa-mi un program"</div>
+                </div>
+                <div class="prompt-box good">
+                    <div class="prompt-label">✅ Bun</div>
+                    <div class="prompt-text">"Scrie o functie Python care primeste o lista de numere si returneaza doar numerele pare, sortate descrescator. Adauga comentarii explicative."</div>
+                </div>
+            </div>
+        </div>
+
+        <h2>🔧 Tehnici esentiale</h2>
+        <div class="section">
+            <div class="techniques-grid">
+                <div class="technique-card">
+                    <div class="technique-icon">🎭</div>
+                    <div class="technique-title">Role Prompting</div>
+                    <div class="technique-desc">Da AI-ului un rol: "Esti un profesor de matematica..." sau "Actioneaza ca un reviewer de cod senior..."</div>
+                </div>
+                <div class="technique-card">
+                    <div class="technique-icon">📋</div>
+                    <div class="technique-title">Few-Shot Learning</div>
+                    <div class="technique-desc">Ofera 2-3 exemple de input-output inainte de a cere rezultatul dorit.</div>
+                </div>
+                <div class="technique-card">
+                    <div class="technique-icon">🔗</div>
+                    <div class="technique-title">Chain of Thought</div>
+                    <div class="technique-desc">Cere AI-ului sa-si explice rationamentul pas cu pas: "Gandeste pas cu pas..."</div>
+                </div>
+                <div class="technique-card">
+                    <div class="technique-icon">📐</div>
+                    <div class="technique-title">Constrangeri clare</div>
+                    <div class="technique-desc">Specifica format, lungime, ton, limba: "In 3 bullet points, in romana..."</div>
+                </div>
+            </div>
+        </div>
+
+        <h2>📝 Framework-ul CRAFT</h2>
+        <div class="section">
+            <p>Un framework simplu pentru a construi prompt-uri eficiente:</p>
+            <div class="framework-box">
+                <div class="framework-title">C.R.A.F.T.</div>
+                <div class="framework-steps">
+                    <div class="framework-step">
+                        <div class="step-letter">C</div>
+                        <div class="step-word">Context</div>
+                        <div class="step-desc">Situatia, fundalul</div>
+                    </div>
+                    <div class="framework-step">
+                        <div class="step-letter">R</div>
+                        <div class="step-word">Role</div>
+                        <div class="step-desc">Cine este AI-ul</div>
+                    </div>
+                    <div class="framework-step">
+                        <div class="step-letter">A</div>
+                        <div class="step-word">Action</div>
+                        <div class="step-desc">Ce trebuie sa faca</div>
+                    </div>
+                    <div class="framework-step">
+                        <div class="step-letter">F</div>
+                        <div class="step-word">Format</div>
+                        <div class="step-desc">Cum sa arate output-ul</div>
+                    </div>
+                    <div class="framework-step">
+                        <div class="step-letter">T</div>
+                        <div class="step-word">Tone</div>
+                        <div class="step-desc">Stilul comunicarii</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Exemplu CRAFT complet:</h3>
+            <div class="prompt-box good" style="border-color: var(--accent-purple); margin-top: 1rem;">
+                <div class="prompt-text">
+                    <strong style="color: var(--accent-cyan);">[Context]</strong> Sunt elev in clasa a 10-a si pregatesc o prezentare despre schimbarile climatice.<br><br>
+                    <strong style="color: var(--accent-cyan);">[Role]</strong> Actioneaza ca un profesor de geografie cu experienta in comunicarea stiintifica pentru adolescenti.<br><br>
+                    <strong style="color: var(--accent-cyan);">[Action]</strong> Creeaza un outline pentru o prezentare de 5 minute despre efectele incalzirii globale asupra Romaniei.<br><br>
+                    <strong style="color: var(--accent-cyan);">[Format]</strong> Structureaza in 5 slide-uri cu titlu si 3-4 bullet points fiecare.<br><br>
+                    <strong style="color: var(--accent-cyan);">[Tone]</strong> Informativ dar accesibil, cu exemple concrete din Romania.
+                </div>
+            </div>
+        </div>
+
+        <h2>💡 Sfaturi avansate</h2>
+        <div class="section">
+            <h3>1. Itereaza si rafineaza</h3>
+            <p>Primul raspuns nu e perfect? Continua conversatia:</p>
+            <ul>
+                <li>"Fa-l mai scurt" / "Adauga mai multe detalii"</li>
+                <li>"Reformuleaza pentru un incepator"</li>
+                <li>"Da-mi 3 alternative diferite"</li>
+            </ul>
+
+            <h3>2. Cere explicatii</h3>
+            <p>Daca nu intelegi raspunsul:</p>
+            <ul>
+                <li>"Explica-mi de ce ai ales aceasta abordare"</li>
+                <li>"Ce alte optiuni existau?"</li>
+                <li>"Ce s-ar intampla daca..."</li>
+            </ul>
+
+            <h3>3. Verifica si corecteaza</h3>
+            <p>AI-ul poate gresi. Intotdeauna:</p>
+            <ul>
+                <li>Verifica faptele importante</li>
+                <li>Testeaza codul generat</li>
+                <li>Cere surse daca ai nevoie de informatii precise</li>
+            </ul>
+        </div>
+
+        <h2>🎮 Incearca!</h2>
+        <div class="demo-box">
+            <div class="demo-title">Practica aici - transforma un prompt slab in unul bun</div>
+            <textarea class="demo-textarea" placeholder="Scrie prompt-ul tau aici...&#10;&#10;Prompt slab de transformat: 'Ajuta-ma cu matematica'&#10;&#10;Gandeste-te: Ce subiect exact? Ce nivel? Ce format de raspuns vrei?"></textarea>
+            <div class="demo-tips">
+                <span class="demo-tip" onclick="addTip('Sunt elev in clasa a 8-a.')">+ Adauga context</span>
+                <span class="demo-tip" onclick="addTip('Explica-mi pas cu pas.')">+ Cere pasi</span>
+                <span class="demo-tip" onclick="addTip('In maximum 5 propozitii.')">+ Limiteaza lungimea</span>
+                <span class="demo-tip" onclick="addTip('Da-mi un exemplu practic.')">+ Cere exemplu</span>
+            </div>
+        </div>
+
+        <h2>➡️ Ce urmeaza?</h2>
+        <div class="section">
+            <p>Acum ca stii sa comunici cu AI-ul, exploreaza:</p>
+            <ul>
+                <li><a href="tools.html" style="color: var(--accent-cyan);">Instrumente AI utile</a> - unde sa aplici aceste tehnici</li>
+                <li><a href="agents.html" style="color: var(--accent-cyan);">AI Agents</a> - cand AI-ul trece de la raspunsuri la actiuni</li>
+                <li><a href="ethics.html" style="color: var(--accent-cyan);">Etica si Siguranta</a> - utilizare responsabila</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="index.html">Inapoi la AI Hub</a> | <a href="../index.html">LearningHub</a>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const profile = UserSystem.getActiveProfileData();
+            if (profile && profile.id !== '_guest') {
+                const badge = UserSystem.createProfileBadge();
+                if (badge) {
+                    badge.style.cssText = 'position: fixed; top: 1rem; right: 1rem; z-index: 1000;';
+                    document.body.appendChild(badge);
+                }
+            }
+        });
+
+        function addTip(tip) {
+            const textarea = document.querySelector('.demo-textarea');
+            if (textarea.value) {
+                textarea.value += '\n' + tip;
+            } else {
+                textarea.value = tip;
+            }
+            textarea.focus();
+        }
+    </script>
+</body>
+</html>

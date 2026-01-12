@@ -880,48 +880,65 @@ const UserSystem = {
             .us-profile-badge {
                 display: flex;
                 align-items: center;
-                gap: 0.5rem;
-                background: var(--us-bg-card);
-                padding: 0.5rem 1rem;
-                border-radius: 25px;
-                border: 1px solid var(--us-border);
+                gap: 0.6rem;
+                background: linear-gradient(135deg, var(--us-bg-card), rgba(139, 92, 246, 0.1));
+                padding: 0.6rem 1.1rem;
+                border-radius: 30px;
+                border: 2px solid var(--us-accent-purple);
                 cursor: pointer;
-                transition: all 0.2s ease;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
             }
 
             .us-profile-badge:hover {
                 border-color: var(--us-accent-cyan);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
             }
 
             .us-badge-avatar {
-                font-size: 1.25rem;
+                font-size: 1.5rem;
+                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
             }
 
             .us-badge-name {
-                font-weight: 600;
-                font-size: 0.9rem;
-                max-width: 100px;
+                font-weight: 700;
+                font-size: 0.95rem;
+                max-width: 120px;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
+                background: linear-gradient(135deg, var(--us-text-primary), var(--us-accent-cyan));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
             }
 
             .us-badge-menu-btn {
-                background: none;
-                border: none;
-                color: var(--us-text-muted);
+                background: var(--us-bg-secondary);
+                border: 1px solid var(--us-border);
+                color: var(--us-text-secondary);
                 cursor: pointer;
-                font-size: 0.7rem;
-                padding: 0 0.25rem;
+                font-size: 0.65rem;
+                padding: 0.25rem 0.4rem;
+                border-radius: 6px;
+                transition: all 0.2s ease;
+            }
+
+            .us-badge-menu-btn:hover {
+                background: var(--us-accent-purple);
+                color: white;
+                border-color: var(--us-accent-purple);
             }
 
             .us-badge-grade {
                 font-size: 0.7rem;
-                padding: 0.15rem 0.5rem;
-                background: var(--us-accent-purple);
-                border-radius: 10px;
+                padding: 0.2rem 0.6rem;
+                background: linear-gradient(135deg, var(--us-accent-purple), var(--us-accent-blue));
+                border-radius: 12px;
                 color: white;
-                font-weight: 600;
+                font-weight: 700;
+                box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
             }
 
             /* Grade Select */
@@ -978,31 +995,41 @@ const UserSystem = {
 
             /* Dropdown Menu */
             .us-menu {
-                background: var(--us-bg-secondary);
-                border: 1px solid var(--us-border);
-                border-radius: 12px;
-                padding: 0.5rem;
-                min-width: 200px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+                background: linear-gradient(135deg, var(--us-bg-secondary), var(--us-bg-card));
+                border: 2px solid var(--us-accent-purple);
+                border-radius: 16px;
+                padding: 0.75rem;
+                min-width: 220px;
+                box-shadow: 0 15px 50px rgba(139, 92, 246, 0.3), 0 5px 20px rgba(0, 0, 0, 0.5);
                 z-index: 100001;
+                animation: us-menuSlide 0.2s ease;
+            }
+
+            @keyframes us-menuSlide {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
             }
 
             .us-menu-item {
-                display: block;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
                 width: 100%;
-                padding: 0.75rem 1rem;
-                background: none;
+                padding: 0.875rem 1rem;
+                background: transparent;
                 border: none;
                 color: var(--us-text-primary);
                 text-align: left;
                 cursor: pointer;
-                border-radius: 8px;
+                border-radius: 10px;
                 font-size: 0.9rem;
-                transition: background 0.2s ease;
+                font-weight: 500;
+                transition: all 0.2s ease;
             }
 
             .us-menu-item:hover {
-                background: var(--us-bg-card);
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.1));
+                transform: translateX(4px);
             }
 
             .us-menu-danger {
@@ -1010,12 +1037,12 @@ const UserSystem = {
             }
 
             .us-menu-danger:hover {
-                background: rgba(239, 68, 68, 0.1);
+                background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
             }
 
             .us-menu-divider {
                 height: 1px;
-                background: var(--us-border);
+                background: linear-gradient(90deg, transparent, var(--us-border), transparent);
                 margin: 0.5rem 0;
             }
 

@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cum functioneaza LLM-urile | LearningHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 30% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+        .nav-back {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-back:hover { color: var(--accent-cyan); }
+
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.1));
+            border-radius: 24px;
+            border: 2px solid var(--accent-green);
+        }
+
+        .level-badge {
+            display: inline-block;
+            background: var(--accent-green);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .header-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: var(--accent-cyan);
+            margin: 2.5rem 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            color: var(--accent-purple);
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .section ul, .section ol {
+            margin: 1rem 0 1rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .section li {
+            margin-bottom: 0.5rem;
+        }
+
+        strong {
+            color: var(--text-primary);
+        }
+
+        code {
+            background: var(--bg-card);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9em;
+            color: var(--accent-green);
+        }
+
+        /* Token Demo */
+        .token-demo {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .token-input {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .token-output {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .token {
+            background: var(--accent-purple);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+        }
+
+        .token:nth-child(2n) {
+            background: var(--accent-cyan);
+        }
+
+        .token:nth-child(3n) {
+            background: var(--accent-blue);
+        }
+
+        /* Process Diagram */
+        .process-flow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .process-step {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .process-step.active {
+            border-color: var(--accent-purple);
+            background: linear-gradient(135deg, var(--bg-card), rgba(139, 92, 246, 0.2));
+        }
+
+        .process-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .process-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .process-arrow {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Model Comparison */
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .model-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .model-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .model-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .model-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .model-company {
+            font-size: 0.8rem;
+            color: var(--accent-purple);
+            margin-bottom: 0.5rem;
+        }
+
+        .model-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Tip Box */
+        .tip-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 1rem 1.25rem;
+            border-radius: 0 12px 12px 0;
+            margin: 1rem 0;
+        }
+
+        .tip-box p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .tip-box strong {
+            color: var(--accent-green);
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 2px solid var(--accent-orange);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .warning-box h4 {
+            color: var(--accent-orange);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .warning-box p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .header { padding: 2rem 1.5rem; }
+            .process-flow { flex-direction: column; }
+            .process-arrow { transform: rotate(90deg); }
+        }
+    </style>
+    <link rel="stylesheet" href="../../assets/css/mobile.css">
+    <script src="../../assets/js/user-system.js"></script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="nav-back">← Inapoi la AI Hub</a>
+
+        <header class="header">
+            <span class="level-badge">Introducere</span>
+            <div class="header-icon">💬</div>
+            <h1>Cum functioneaza LLM-urile</h1>
+            <p class="subtitle">Large Language Models pe intelesul tuturor</p>
+        </header>
+
+        <h2>📖 Ce este un LLM?</h2>
+        <div class="section">
+            <p><strong>LLM</strong> (Large Language Model) este un tip de inteligenta artificiala antrenata pe cantitati uriase de text pentru a intelege si genera limbaj natural.</p>
+            <p>Exemple de LLM-uri populare:</p>
+            <div class="models-grid">
+                <div class="model-card">
+                    <div class="model-icon">🟢</div>
+                    <div class="model-name">GPT-4</div>
+                    <div class="model-company">OpenAI</div>
+                    <div class="model-desc">Modelul din spatele ChatGPT</div>
+                </div>
+                <div class="model-card">
+                    <div class="model-icon">🟣</div>
+                    <div class="model-name">Claude</div>
+                    <div class="model-company">Anthropic</div>
+                    <div class="model-desc">Focusat pe siguranta si acuratete</div>
+                </div>
+                <div class="model-card">
+                    <div class="model-icon">🔵</div>
+                    <div class="model-name">Gemini</div>
+                    <div class="model-company">Google</div>
+                    <div class="model-desc">Integrat cu serviciile Google</div>
+                </div>
+                <div class="model-card">
+                    <div class="model-icon">🟠</div>
+                    <div class="model-name">LLaMA</div>
+                    <div class="model-company">Meta</div>
+                    <div class="model-desc">Open source, rulabil local</div>
+                </div>
+            </div>
+        </div>
+
+        <h2>🧩 Tokenizarea - Primul pas</h2>
+        <div class="section">
+            <p>Inainte sa proceseze text, un LLM il imparte in <strong>tokeni</strong> - bucati mai mici de text.</p>
+            <p>Un token poate fi un cuvant, o parte de cuvant, sau un singur caracter.</p>
+
+            <div class="token-demo">
+                <div class="token-input">"Inteligenta artificiala schimba lumea"</div>
+                <div class="token-output">
+                    <span class="token">Intel</span>
+                    <span class="token">igen</span>
+                    <span class="token">ta</span>
+                    <span class="token">artific</span>
+                    <span class="token">iala</span>
+                    <span class="token">schim</span>
+                    <span class="token">ba</span>
+                    <span class="token">lum</span>
+                    <span class="token">ea</span>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <p><strong>De ce conteaza?</strong> Modelele au o limita de tokeni pe conversatie (context window). GPT-4 poate procesa ~128,000 tokeni, Claude poate ajunge la 200,000+.</p>
+            </div>
+        </div>
+
+        <h2>🔄 Cum genereaza text?</h2>
+        <div class="section">
+            <p>LLM-urile nu "inteleg" text in sens uman. Ele <strong>prezic urmatorul token</strong> bazat pe contextul anterior.</p>
+
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="process-icon">📝</div>
+                    <div class="process-label">Input text</div>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step">
+                    <div class="process-icon">🧩</div>
+                    <div class="process-label">Tokenizare</div>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step active">
+                    <div class="process-icon">🧠</div>
+                    <div class="process-label">Procesare</div>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step">
+                    <div class="process-icon">🎯</div>
+                    <div class="process-label">Predictie</div>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step">
+                    <div class="process-icon">✨</div>
+                    <div class="process-label">Output</div>
+                </div>
+            </div>
+
+            <h3>Exemplu simplificat:</h3>
+            <p>Daca dai modelului: <code>"Cerul este..."</code></p>
+            <p>El calculeaza probabilitati pentru urmatorul cuvant:</p>
+            <ul>
+                <li><strong>albastru</strong> - 45%</li>
+                <li><strong>senin</strong> - 25%</li>
+                <li><strong>acoperit</strong> - 15%</li>
+                <li><strong>frumos</strong> - 10%</li>
+                <li>...alte optiuni</li>
+            </ul>
+            <p>Apoi alege un token (nu neaparat cel mai probabil - are un element de randomizare controlata) si repeta procesul pentru urmatorul.</p>
+        </div>
+
+        <h2>📊 Cat de mari sunt?</h2>
+        <div class="section">
+            <p>LLM-urile moderne au miliarde de <strong>parametri</strong> - valorile care determina comportamentul modelului.</p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">175B</div>
+                    <div class="stat-label">GPT-3 parametri</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">1.7T</div>
+                    <div class="stat-label">GPT-4 (estimat)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">45TB</div>
+                    <div class="stat-label">Date antrenament</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">$100M+</div>
+                    <div class="stat-label">Cost antrenare</div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <p><strong>Perspectiva:</strong> Creierul uman are ~86 miliarde de neuroni, dar fiecare neuron are mii de conexiuni. Modelele AI sunt inca mult mai simple decat creierul.</p>
+            </div>
+        </div>
+
+        <h2>🎓 Cum sunt antrenate?</h2>
+        <div class="section">
+            <p>Antrenarea unui LLM are doua faze principale:</p>
+
+            <h3>1. Pre-training (Antrenare initiala)</h3>
+            <ul>
+                <li>Modelul citeste internet-ul: carti, articole, cod, conversatii</li>
+                <li>Invata tipare: gramatica, fapte, stil de scriere</li>
+                <li>Dureaza luni de zile pe mii de GPU-uri</li>
+            </ul>
+
+            <h3>2. Fine-tuning (Ajustare)</h3>
+            <ul>
+                <li><strong>RLHF</strong> (Reinforcement Learning from Human Feedback)</li>
+                <li>Oameni evalueaza raspunsurile modelului</li>
+                <li>Modelul invata sa fie mai util, sigur si aliniat cu valorile umane</li>
+            </ul>
+
+            <div class="warning-box">
+                <h4>⚠️ Limitare importanta</h4>
+                <p>LLM-urile au o "data limita de cunoastere" (knowledge cutoff). Daca modelul a fost antrenat pana in 2024, nu va sti despre evenimente din 2025.</p>
+            </div>
+        </div>
+
+        <h2>🤔 Ce NU pot face LLM-urile?</h2>
+        <div class="section">
+            <ul>
+                <li><strong>Nu au memorie permanenta</strong> - fiecare conversatie e independenta (daca nu folosesc sisteme externe)</li>
+                <li><strong>Nu pot accesa internetul</strong> - decat daca au tools specifice pentru asta</li>
+                <li><strong>Nu ratiocineaza cu adevarat</strong> - simuleaza rationamentul prin tipare invatate</li>
+                <li><strong>Pot "halucinati"</strong> - inventeaza informatii false cu incredere</li>
+                <li><strong>Nu au constiinta</strong> - nu "stiu" ca exista sau ce sunt</li>
+            </ul>
+
+            <div class="tip-box">
+                <p><strong>Regula de aur:</strong> Verifica intotdeauna informatiile importante generate de AI, mai ales date, statistici si fapte recente.</p>
+            </div>
+        </div>
+
+        <h2>➡️ Ce urmeaza?</h2>
+        <div class="section">
+            <p>Acum ca intelegi cum functioneaza LLM-urile, invata sa comunici eficient cu ele:</p>
+            <ul>
+                <li><a href="prompt-engineering.html" style="color: var(--accent-cyan);">Prompt Engineering</a> - tehnici pentru a obtine raspunsuri mai bune</li>
+                <li><a href="tools.html" style="color: var(--accent-cyan);">Instrumente AI utile</a> - ghid practic pentru tool-urile disponibile</li>
+                <li><a href="agents.html" style="color: var(--accent-cyan);">AI Agents</a> - cand LLM-urile primesc capacitatea de a actiona</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="index.html">Inapoi la AI Hub</a> | <a href="../index.html">LearningHub</a>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const profile = UserSystem.getActiveProfileData();
+            if (profile && profile.id !== '_guest') {
+                const badge = UserSystem.createProfileBadge();
+                if (badge) {
+                    badge.style.cssText = 'position: fixed; top: 1rem; right: 1rem; z-index: 1000;';
+                    document.body.appendChild(badge);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
