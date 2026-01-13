@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectia 6: Evaluare expresii - Tip Bac | Clasa IX Mat-Info</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-primary: #0a0a12; --bg-secondary: #12121f; --bg-card: #1a1a2e; --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-green: #10b981; --accent-orange: #f59e0b; --accent-cyan: #06b6d4; --accent-red: #ef4444; --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b; --border: #2d2d44; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; line-height: 1.7; }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        .nav-bar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
+        .nav-back { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
+        .nav-back:hover { color: var(--accent-cyan); }
+        .lesson-badge { background: var(--accent-cyan); color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; font-weight: 700; }
+        .bac-badge { background: var(--accent-red); color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; font-weight: 700; margin-left: 0.5rem; }
+        .progress-steps { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }
+        .step { width: 60px; height: 8px; background: var(--border); border-radius: 4px; cursor: pointer; }
+        .step.active { background: var(--accent-blue); }
+        .step.completed { background: var(--accent-green); }
+        .section { display: none; animation: fadeIn 0.5s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .goal-section { text-align: center; padding: 3rem; background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(139, 92, 246, 0.1)); border-radius: 20px; margin-bottom: 2rem; border: 2px solid var(--accent-red); }
+        .goal-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .goal-title { font-size: 2rem; font-weight: 800; color: var(--accent-red); margin-bottom: 1rem; }
+        .goal-desc { font-size: 1.2rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 2rem; }
+        .try-section { background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1)); border: 2px solid var(--accent-orange); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+        .try-badge { background: var(--accent-orange); color: #000; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+        .challenge-box { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; }
+        .learn-section { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+        .learn-badge { background: var(--accent-blue); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+        .concept-card { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid var(--accent-red); }
+        .concept-name { font-size: 1.2rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.5rem; }
+        pre { background: var(--bg-primary); border-radius: 8px; padding: 1rem; overflow-x: auto; font-family: 'Fira Code', monospace; font-size: 0.9rem; border: 1px solid var(--border); }
+        .code-comment { color: var(--text-muted); }
+        .exercise-box { background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(139, 92, 246, 0.1)); border: 2px solid var(--accent-red); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; }
+        .exercise-title { color: var(--accent-red); font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .solution-box { background: var(--bg-card); border-radius: 8px; padding: 1rem; margin-top: 1rem; display: none; }
+        .solution-box.show { display: block; }
+        .show-solution-btn { background: var(--bg-secondary); border: 1px solid var(--accent-purple); color: var(--accent-purple); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 1rem; }
+        .test-section { background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.1)); border: 2px solid var(--accent-purple); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+        .test-badge { background: var(--accent-purple); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+        .quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; }
+        .quiz-options { display: grid; gap: 0.5rem; }
+        .quiz-option { padding: 1rem; background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 8px; cursor: pointer; }
+        .quiz-option:hover { border-color: var(--accent-purple); }
+        .quiz-option.selected { border-color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); }
+        .quiz-option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.1); }
+        .quiz-option.incorrect { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.1); }
+        .quiz-result { display: none; padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: center; }
+        .quiz-result.show { display: block; }
+        .quiz-result.passed { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .quiz-result.failed { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+        .complete-section { text-align: center; padding: 3rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.15)); border-radius: 20px; }
+        .complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .complete-title { font-size: 2rem; font-weight: 800; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-badge { display: inline-block; background: linear-gradient(135deg, var(--accent-orange), var(--accent-red)); color: white; padding: 0.5rem 1.5rem; border-radius: 20px; font-weight: 700; font-size: 1.2rem; margin: 1rem 0; }
+        .next-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 1rem 2rem; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: white; text-decoration: none; border-radius: 12px; font-weight: 600; margin-top: 1.5rem; }
+        .next-btn:hover { transform: scale(1.05); }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; }
+        .nav-btn { padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; }
+        .nav-btn.prev { background: var(--bg-card); color: var(--text-secondary); }
+        .nav-btn.next { background: var(--accent-blue); color: white; }
+        .nav-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        footer { margin-top: 3rem; padding: 1.5rem; border-top: 1px solid var(--border); text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+        footer a { color: var(--accent-cyan); text-decoration: none; }
+    </style>
+    <link rel="stylesheet" href="../../../../../assets/css/mobile.css">
+    <script src="../../../../../assets/js/user-system.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-back">← Modulul 1</a>
+            <div>
+                <span class="lesson-badge">Lectia 6 din 6</span>
+                <span class="bac-badge">Bac E(d)</span>
+            </div>
+        </div>
+        <div class="progress-steps">
+            <div class="step active" data-step="0"></div>
+            <div class="step" data-step="1"></div>
+            <div class="step" data-step="2"></div>
+            <div class="step" data-step="3"></div>
+            <div class="step" data-step="4"></div>
+        </div>
+
+        <!-- GOAL -->
+        <div class="section active" id="section-goal">
+            <div class="goal-section">
+                <div class="goal-icon">🎯</div>
+                <h1 class="goal-title">Evaluare expresii - Tip Bac</h1>
+                <p class="goal-desc">Vei rezolva exercitii de tip Subiectul I si II de la Bacalaureat. Aceasta este una dintre cele mai frecvente teme la examen!</p>
+                <div style="color: var(--text-muted); font-size: 0.9rem;">
+                    <span>⏱️ ~60 minute</span> |
+                    <span style="color: var(--accent-red);">🎓 Bac E(d)</span> |
+                    <span>📝 Exercitii</span>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn prev" disabled>← Inapoi</button>
+                <button class="nav-btn next" onclick="goToStep(1)">Incepe →</button>
+            </div>
+        </div>
+
+        <!-- TRY -->
+        <div class="section" id="section-try">
+            <div class="try-section">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                    <span class="try-badge">🎯 RECAPITULARE</span>
+                </div>
+                <div class="challenge-box">
+                    <h3 style="color: var(--accent-orange); margin-bottom: 1rem;">Ordinea operatiilor:</h3>
+                    <ol style="color: var(--text-secondary); margin-left: 1.5rem;">
+                        <li><strong>( )</strong> - Paranteze (prioritate maxima)</li>
+                        <li><strong>* / % //</strong> - Inmultire, impartire, rest</li>
+                        <li><strong>+ -</strong> - Adunare, scadere</li>
+                        <li><strong>&lt; &gt; &lt;= &gt;= == !=</strong> - Comparatie</li>
+                        <li><strong>not / !</strong> - Negatie logica</li>
+                        <li><strong>and / &&</strong> - SI logic</li>
+                        <li><strong>or / ||</strong> - SAU logic</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn prev" onclick="goToStep(0)">← Inapoi</button>
+                <button class="nav-btn next" onclick="goToStep(2)">Am retinut →</button>
+            </div>
+        </div>
+
+        <!-- LEARN -->
+        <div class="section" id="section-learn">
+            <div class="learn-section">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                    <span class="learn-badge">📚 EXERCITII REZOLVATE</span>
+                </div>
+
+                <div class="exercise-box">
+                    <div class="exercise-title">📝 Exercitiu 1 - Tip Subiect I</div>
+                    <p style="color: var(--text-secondary);">Fie a = 10, b = 3. Care este valoarea expresiei:</p>
+                    <pre style="text-align: center; font-size: 1.2rem;">a % b + a // b * 2</pre>
+                    <button class="show-solution-btn" onclick="toggleSolution(this)">Arata rezolvarea</button>
+                    <div class="solution-box">
+                        <p><strong>Rezolvare pas cu pas:</strong></p>
+                        <ol style="color: var(--text-secondary); margin-left: 1.5rem;">
+                            <li>a % b = 10 % 3 = <span style="color: var(--accent-green);">1</span> (restul impartirii)</li>
+                            <li>a // b = 10 // 3 = <span style="color: var(--accent-green);">3</span> (impartire intreaga)</li>
+                            <li>3 * 2 = <span style="color: var(--accent-green);">6</span></li>
+                            <li>1 + 6 = <span style="color: var(--accent-orange); font-weight: 700;">7</span></li>
+                        </ol>
+                        <p style="margin-top: 1rem; color: var(--accent-green);"><strong>Raspuns: 7</strong></p>
+                    </div>
+                </div>
+
+                <div class="exercise-box">
+                    <div class="exercise-title">📝 Exercitiu 2 - Expresie logica</div>
+                    <p style="color: var(--text-secondary);">Fie x = 5, y = 10. Care este valoarea expresiei:</p>
+                    <pre style="text-align: center; font-size: 1.2rem;">x &lt; y and y % x == 0</pre>
+                    <button class="show-solution-btn" onclick="toggleSolution(this)">Arata rezolvarea</button>
+                    <div class="solution-box">
+                        <p><strong>Rezolvare pas cu pas:</strong></p>
+                        <ol style="color: var(--text-secondary); margin-left: 1.5rem;">
+                            <li>x &lt; y → 5 &lt; 10 = <span style="color: var(--accent-green);">True</span></li>
+                            <li>y % x = 10 % 5 = <span style="color: var(--accent-green);">0</span></li>
+                            <li>0 == 0 = <span style="color: var(--accent-green);">True</span></li>
+                            <li>True and True = <span style="color: var(--accent-orange); font-weight: 700;">True</span></li>
+                        </ol>
+                        <p style="margin-top: 1rem; color: var(--accent-green);"><strong>Raspuns: True</strong></p>
+                    </div>
+                </div>
+
+                <div class="exercise-box">
+                    <div class="exercise-title">📝 Exercitiu 3 - Combinat</div>
+                    <p style="color: var(--text-secondary);">Fie n = 17. Care este valoarea expresiei:</p>
+                    <pre style="text-align: center; font-size: 1.2rem;">n // 10 + n % 10 * 10</pre>
+                    <button class="show-solution-btn" onclick="toggleSolution(this)">Arata rezolvarea</button>
+                    <div class="solution-box">
+                        <p><strong>Rezolvare pas cu pas:</strong></p>
+                        <ol style="color: var(--text-secondary); margin-left: 1.5rem;">
+                            <li>n // 10 = 17 // 10 = <span style="color: var(--accent-green);">1</span> (cifra zecilor)</li>
+                            <li>n % 10 = 17 % 10 = <span style="color: var(--accent-green);">7</span> (cifra unitatilor)</li>
+                            <li>7 * 10 = <span style="color: var(--accent-green);">70</span></li>
+                            <li>1 + 70 = <span style="color: var(--accent-orange); font-weight: 700;">71</span></li>
+                        </ol>
+                        <p style="margin-top: 1rem; color: var(--accent-cyan);">Observatie: Aceasta expresie inverseaza un numar de 2 cifre!</p>
+                        <p style="color: var(--accent-green);"><strong>Raspuns: 71</strong></p>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Trucuri pentru Bac</div>
+                    <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+                        <li><code>n % 10</code> = ultima cifra</li>
+                        <li><code>n // 10</code> = numarul fara ultima cifra</li>
+                        <li><code>n % 100</code> = ultimele 2 cifre</li>
+                        <li><code>n // 100</code> = numarul fara ultimele 2 cifre</li>
+                        <li><code>n % 2 == 0</code> = numarul e par</li>
+                        <li><code>n % 2 == 1</code> = numarul e impar</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn prev" onclick="goToStep(1)">← Inapoi</button>
+                <button class="nav-btn next" onclick="goToStep(3)">Testeaza-te →</button>
+            </div>
+        </div>
+
+        <!-- TEST -->
+        <div class="section" id="section-test">
+            <div class="test-section">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                    <span class="test-badge">✍️ SIMULARE BAC</span>
+                </div>
+
+                <div class="quiz-question" data-question="0">
+                    <h4>1. Fie a = 23. Care e valoarea: a % 10 + a // 10?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">a) 23</div>
+                        <div class="quiz-option" data-answer="b">b) 5</div>
+                        <div class="quiz-option" data-answer="c">c) 32</div>
+                        <div class="quiz-option" data-answer="d">d) 6</div>
+                    </div>
+                </div>
+
+                <div class="quiz-question" data-question="1">
+                    <h4>2. Fie x = 7, y = 2. Care e valoarea: x // y + x % y?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">a) 4</div>
+                        <div class="quiz-option" data-answer="b">b) 3</div>
+                        <div class="quiz-option" data-answer="c">c) 5</div>
+                        <div class="quiz-option" data-answer="d">d) 3.5</div>
+                    </div>
+                </div>
+
+                <div class="quiz-question" data-question="2">
+                    <h4>3. Care expresie da True daca n e par?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">a) n / 2 == 0</div>
+                        <div class="quiz-option" data-answer="b">b) n % 2 == 0</div>
+                        <div class="quiz-option" data-answer="c">c) n // 2 == 0</div>
+                        <div class="quiz-option" data-answer="d">d) n % 2 == 1</div>
+                    </div>
+                </div>
+
+                <div class="quiz-question" data-question="3">
+                    <h4>4. Fie a = 5, b = 3. Care e: not(a > b) or (a % b == 2)?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="a">a) True</div>
+                        <div class="quiz-option" data-answer="b">b) False</div>
+                        <div class="quiz-option" data-answer="c">c) 2</div>
+                        <div class="quiz-option" data-answer="d">d) Eroare</div>
+                    </div>
+                </div>
+
+                <div class="quiz-result" id="quizResult"></div>
+                <button onclick="checkQuiz()" style="width: 100%; padding: 1rem; background: var(--accent-purple); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 1rem;">Verifica raspunsurile</button>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn prev" onclick="goToStep(2)">← Inapoi</button>
+                <button class="nav-btn next" id="completeBtn" onclick="goToStep(4)" disabled>Finalizeaza →</button>
+            </div>
+        </div>
+
+        <!-- COMPLETE -->
+        <div class="section" id="section-complete">
+            <div class="complete-section">
+                <div class="complete-icon">🏆</div>
+                <h1 class="complete-title">Modul 1 Complet!</h1>
+                <p style="color: var(--text-secondary); font-size: 1.1rem;">Felicitari! Ai terminat toate lectiile din Modulul 1!</p>
+                <div class="xp-badge">+80 XP + Bonus Modul</div>
+                <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-card); border-radius: 12px; text-align: left;">
+                    <h3 style="color: var(--accent-cyan); margin-bottom: 1rem;">Ce ai invatat in acest modul:</h3>
+                    <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+                        <li>Ce este un algoritm si cum il reprezentam</li>
+                        <li>Variabile si tipuri de date (int, float, string, bool)</li>
+                        <li>Expresii aritmetice si logice</li>
+                        <li>Primul program in Python</li>
+                        <li>Primul program in C++</li>
+                        <li>Tehnici de rezolvare exercitii tip Bac</li>
+                    </ul>
+                </div>
+                <a href="../m2-structuri-control/index.html" class="next-btn">Modulul 2: Structuri de Control →</a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong><br>
+        <a href="index.html">Modulul 1</a> | <a href="../index.html">Clasa IX</a>
+    </footer>
+
+    <script>
+        let currentStep = 0;
+        const correctAnswers = ['b', 'a', 'b', 'a'];
+        let userAnswers = [null, null, null, null];
+
+        function goToStep(step) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            for (let i = 0; i < step; i++) document.querySelectorAll('.step')[i].classList.add('completed');
+            const sectionIds = ['section-goal', 'section-try', 'section-learn', 'section-test', 'section-complete'];
+            document.getElementById(sectionIds[step]).classList.add('active');
+            document.querySelectorAll('.step')[step].classList.add('active');
+            currentStep = step;
+            if (step === 4) awardXP(80);
+        }
+
+        function toggleSolution(btn) {
+            const solution = btn.nextElementSibling;
+            solution.classList.toggle('show');
+            btn.textContent = solution.classList.contains('show') ? 'Ascunde rezolvarea' : 'Arata rezolvarea';
+        }
+
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const questionEl = this.closest('.quiz-question');
+                const questionIndex = parseInt(questionEl.dataset.question);
+                questionEl.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                userAnswers[questionIndex] = this.dataset.answer;
+            });
+        });
+
+        function checkQuiz() {
+            let correct = 0;
+            document.querySelectorAll('.quiz-question').forEach((q, i) => {
+                q.querySelectorAll('.quiz-option').forEach(o => {
+                    o.classList.remove('correct', 'incorrect');
+                    if (o.dataset.answer === correctAnswers[i]) o.classList.add('correct');
+                    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+                });
+                if (userAnswers[i] === correctAnswers[i]) correct++;
+            });
+            const result = document.getElementById('quizResult');
+            result.classList.add('show');
+            if (correct >= 3) {
+                result.className = 'quiz-result show passed';
+                result.innerHTML = `<strong>Excelent!</strong> ${correct}/4 corecte! Esti pregatit pentru Bac!`;
+                document.getElementById('completeBtn').disabled = false;
+            } else {
+                result.className = 'quiz-result show failed';
+                result.innerHTML = `${correct}/4 corecte. Mai exerseaza!`;
+            }
+        }
+
+        function awardXP(amount) {
+            if (typeof UserSystem !== 'undefined' && UserSystem.getActiveProfile()) {
+                const rpgData = UserSystem.getRPGData() || { xp: 0, stats: {} };
+                rpgData.xp = (rpgData.xp || 0) + amount;
+                rpgData.stats = rpgData.stats || {};
+                rpgData.stats.lessonsCompleted = (rpgData.stats.lessonsCompleted || 0) + 1;
+                UserSystem.saveRPGData(rpgData);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const profile = UserSystem.getActiveProfileData();
+            if (profile && profile.id !== '_guest') {
+                const badge = UserSystem.createProfileBadge();
+                if (badge) { badge.style.cssText = 'position: fixed; top: 1rem; right: 1rem; z-index: 1000;'; document.body.appendChild(badge); }
+            }
+        });
+    </script>
+</body>
+</html>
