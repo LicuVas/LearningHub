@@ -386,47 +386,40 @@
             color: var(--text-muted);
         }
 
-        /* Online Badge */
-        .online-badge {
+        /* Today Badge */
+        .today-badge {
             display: inline-flex;
             align-items: center;
             gap: 0.6rem;
-            background: linear-gradient(135deg, var(--bg-card), rgba(16, 185, 129, 0.1));
-            border: 2px solid var(--accent-green);
+            background: linear-gradient(135deg, var(--bg-card), rgba(245, 158, 11, 0.1));
+            border: 2px solid var(--accent-orange);
             border-radius: 25px;
             padding: 0.6rem 1.2rem;
             font-size: 0.9rem;
             color: var(--text-secondary);
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
             transition: all 0.3s ease;
         }
 
-        .online-badge:hover {
+        .today-badge:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
         }
 
-        .online-badge .online-dot {
-            width: 10px;
-            height: 10px;
-            background: var(--accent-green);
-            border-radius: 50%;
-            animation: pulse-dot 2s ease-in-out infinite;
-            box-shadow: 0 0 10px var(--accent-green);
+        .today-badge .today-icon {
+            font-size: 1.1rem;
         }
 
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(1.2); }
-        }
-
-        .online-badge .online-count {
+        .today-badge .today-count {
             font-weight: 700;
             font-size: 1.1rem;
-            color: var(--accent-green);
+            background: linear-gradient(135deg, var(--accent-orange), #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .online-badge .online-label {
+        .today-badge .today-label {
             font-size: 0.8rem;
             color: var(--text-muted);
         }
@@ -440,11 +433,13 @@
         }
     </style>
     <link rel="stylesheet" href="../assets/css/mobile.css">
+    <link rel="stylesheet" href="../assets/css/mobile-first.css">
     <!-- User System (must load first) -->
     <script src="../assets/js/user-system.js"></script>
 </head>
 <body>
-    <div class="container">
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
         <header>
             <div class="logo-icon">🚀</div>
             <h1>Learning Hub</h1>
@@ -644,10 +639,10 @@
                 <span class="visitor-count" id="visitorCount">---</span>
                 <span class="visitor-label">vizitatori total</span>
             </div>
-            <div class="online-badge">
-                <span class="online-dot"></span>
-                <span class="online-count" id="onlineCount">1</span>
-                <span class="online-label">online acum</span>
+            <div class="today-badge">
+                <span class="today-icon">📅</span>
+                <span class="today-count" id="todayCount">---</span>
+                <span class="today-label">vizitatori azi</span>
             </div>
         </div>
     </footer>
@@ -904,69 +899,49 @@
             `;
         }
 
-        // Visitor Counter & Online Tracking
+        // Visitor Counter using visitor.6developer.com (free, cross-domain)
         (function initVisitorStats() {
-            const countEl = document.getElementById('visitorCount');
-            const onlineEl = document.getElementById('onlineCount');
+            const totalEl = document.getElementById('visitorCount');
+            const todayEl = document.getElementById('todayCount');
+            const DOMAIN = 'learninghub-gurlan';
+            const API_BASE = 'https://visitor.6developer.com';
 
-            // Total visitor count
-            if (countEl) {
-                fetch('https://api.countapi.xyz/hit/learninghub-gurlan/visits')
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data && data.value) {
-                            countEl.textContent = data.value.toLocaleString('ro-RO');
-                        }
-                    })
-                    .catch(err => {
-                        console.log('Visitor counter unavailable:', err);
-                        countEl.textContent = '---';
+            // Record this visit and get stats
+            async function recordAndGetStats() {
+                try {
+                    // Record the visit
+                    await fetch(`${API_BASE}/visit`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            domain: DOMAIN,
+                            path: window.location.pathname,
+                            title: document.title,
+                            referrer: document.referrer || ''
+                        })
                     });
-            }
 
-            // Online visitors tracking (localStorage-based simulation)
-            if (onlineEl) {
-                const ONLINE_KEY = 'learninghub_online_sessions';
-                const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
-                const sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
+                    // Get statistics
+                    const response = await fetch(`${API_BASE}/visit?domain=${DOMAIN}`);
+                    const data = await response.json();
 
-                function updateOnlineCount() {
-                    try {
-                        let sessions = JSON.parse(localStorage.getItem(ONLINE_KEY) || '{}');
-                        const now = Date.now();
-
-                        // Clean expired sessions
-                        Object.keys(sessions).forEach(key => {
-                            if (now - sessions[key] > SESSION_TIMEOUT) {
-                                delete sessions[key];
-                            }
-                        });
-
-                        // Add/update current session
-                        sessions[sessionId] = now;
-                        localStorage.setItem(ONLINE_KEY, JSON.stringify(sessions));
-
-                        // Count active sessions
-                        const activeCount = Object.keys(sessions).length;
-                        onlineEl.textContent = activeCount;
-                    } catch (e) {
-                        onlineEl.textContent = '1';
+                    if (data) {
+                        if (totalEl && data.totalCount !== undefined) {
+                            totalEl.textContent = data.totalCount.toLocaleString('ro-RO');
+                        }
+                        if (todayEl && data.todayCount !== undefined) {
+                            todayEl.textContent = data.todayCount.toLocaleString('ro-RO');
+                        }
                     }
+                } catch (err) {
+                    console.log('Visitor counter unavailable:', err);
+                    if (totalEl) totalEl.textContent = '---';
+                    if (todayEl) todayEl.textContent = '---';
                 }
-
-                // Initial update and periodic refresh
-                updateOnlineCount();
-                setInterval(updateOnlineCount, 30000); // Update every 30 seconds
-
-                // Clean up on page unload
-                window.addEventListener('beforeunload', () => {
-                    try {
-                        let sessions = JSON.parse(localStorage.getItem(ONLINE_KEY) || '{}');
-                        delete sessions[sessionId];
-                        localStorage.setItem(ONLINE_KEY, JSON.stringify(sessions));
-                    } catch (e) {}
-                });
             }
+
+            // Run on page load
+            recordAndGetStats();
         })();
     </script>
 </body>
