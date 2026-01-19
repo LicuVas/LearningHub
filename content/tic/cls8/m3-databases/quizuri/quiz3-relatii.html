@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Relatii intre Tabele | Clasa 8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-red: #ef4444;
+            --accent-rose: #f43f5e;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-orange: #f59e0b;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+
+        .quiz-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 1.5rem; background: var(--bg-secondary);
+            border-radius: 16px; margin-bottom: 2rem; border: 1px solid var(--border);
+        }
+        .quiz-title { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-red), var(--accent-rose)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .xp-display { display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange)); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; color: #000; }
+
+        .level-map { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .level-node { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; cursor: pointer; transition: all 0.3s; position: relative; border: 3px solid var(--border); background: var(--bg-card); }
+        .level-node.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-node.locked::after { content: ''; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+        .level-node.active { border-color: var(--accent-red); box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); animation: pulse 2s infinite; }
+        .level-node.completed { background: linear-gradient(135deg, var(--accent-red), var(--accent-rose)); border-color: var(--accent-red); }
+        .level-node.completed::after { content: ''; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .level-connector { width: 30px; height: 3px; background: var(--border); align-self: center; }
+        .level-connector.completed { background: var(--accent-red); }
+
+        .quiz-area { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; border: 1px solid var(--border); min-height: 400px; }
+        .level-intro { text-align: center; padding: 2rem; }
+        .level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-red); }
+        .level-intro p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+        .level-intro .xp-reward { display: inline-block; background: rgba(251, 191, 36, 0.2); color: var(--accent-yellow); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
+
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+        .question-progress { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .progress-dot.current { background: var(--accent-red); }
+        .progress-dot.correct { background: var(--accent-green); }
+        .progress-dot.wrong { background: var(--accent-red); }
+
+        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
+
+        .table-display {
+            background: white; border-radius: 12px; padding: 1rem;
+            margin: 1rem auto; max-width: 600px; overflow-x: auto;
+        }
+        .tables-row {
+            display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        .table-wrapper {
+            background: white; border-radius: 12px; padding: 1rem;
+            overflow-x: auto;
+        }
+        .table-title {
+            font-weight: 700; color: #1a1a2e; margin-bottom: 0.5rem;
+            font-size: 0.9rem; text-align: center;
+        }
+        .demo-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; color: #1a1a2e; }
+        .demo-table th { background: #3b82f6; color: white; padding: 0.6rem; text-align: left; }
+        .demo-table th.pk { background: #ef4444; }
+        .demo-table th.fk { background: #f59e0b; }
+        .demo-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #e5e7eb; }
+        .demo-table td.pk-cell { background: #fee2e2; font-weight: 600; }
+        .demo-table td.fk-cell { background: #fef3c7; font-weight: 600; }
+        .demo-table tr:nth-child(even) { background: #f8fafc; }
+        .demo-table tr.highlight { background: #fef3c7 !important; }
+        .key-legend {
+            display: flex; gap: 1.5rem; justify-content: center; margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+        .key-legend span {
+            display: flex; align-items: center; gap: 0.5rem; color: #64748b;
+        }
+        .key-pk { width: 16px; height: 16px; background: #ef4444; border-radius: 3px; }
+        .key-fk { width: 16px; height: 16px; background: #f59e0b; border-radius: 3px; }
+        .relation-arrow {
+            font-size: 2rem; color: #64748b; align-self: center;
+        }
+
+        .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .option { padding: 1.2rem 1.5rem; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 1rem; text-align: left; }
+        .option:hover { border-color: var(--accent-red); transform: translateX(5px); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .feedback-box { display: none; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; }
+        .feedback-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.correct { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent-green); }
+        .feedback-box.wrong { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--accent-red); }
+        .feedback-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .feedback-text { font-size: 1.1rem; margin-bottom: 1rem; }
+        .explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: left; }
+        .explanation-wrong { font-size: 0.9rem; color: #fca5a5; margin-top: 0.5rem; font-style: italic; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-red), var(--accent-rose)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-red); color: var(--accent-red); }
+
+        .level-complete { display: none; text-align: center; padding: 3rem; }
+        .level-complete.show { display: block; animation: celebrate 0.5s ease; }
+        @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .level-complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .level-complete h2 { font-size: 2rem; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-earned { font-size: 2rem; color: var(--accent-yellow); margin: 1.5rem 0; }
+        .score-display { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .stars { font-size: 3rem; margin: 1rem 0; }
+
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem; font-size: 0.9rem; }
+        .back-link:hover { color: var(--accent-cyan); }
+
+        footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1rem; }
+            .tables-row { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 3</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Relatii intre Tabele</div>
+            <div class="xp-display"><span>XP:</span><span id="totalXP">0</span></div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea"></div>
+    </div>
+
+    <footer>
+        <strong>© 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Cheia Primara (PK)",
+                description: "Identifica si intelege rolul cheii primare",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce este Cheia Primara (Primary Key) intr-un tabel?",
+                        showTable: "elevi_simple",
+                        options: [
+                            "Prima coloana adaugata in tabel",
+                            "Un camp care identifica UNIC fiecare inregistrare",
+                            "Cel mai lung camp din tabel",
+                            "O parola pentru acces la date"
+                        ],
+                        correct: 1,
+                        explanation: "Cheia Primara (PK) este un camp sau grup de campuri care identifica in mod UNIC fiecare rand din tabel. Doua randuri nu pot avea aceeasi valoare pentru cheia primara.",
+                        wrongExplanation: "Cheia primara NU este prima coloana, NU este cea mai lunga si NU este o parola. Este un identificator UNIC!"
+                    },
+                    {
+                        text: "Care camp ar trebui sa fie Cheia Primara in tabelul Elevi de mai jos?",
+                        showTable: "elevi_simple",
+                        options: [
+                            "Nume - pentru ca fiecare elev are nume",
+                            "Varsta - pentru ca e un numar",
+                            "ID - pentru ca e UNIC pentru fiecare elev",
+                            "Clasa - pentru ca grupeaza elevii"
+                        ],
+                        correct: 2,
+                        explanation: "ID-ul este alegerea corecta deoarece: 1) Este garantat UNIC, 2) Nu se schimba in timp, 3) Este scurt si eficient. Numele poate fi duplicat (2 elevi 'Popescu Ion'), varsta si clasa se schimba.",
+                        wrongExplanation: "Numele poate fi duplicat, varsta si clasa se schimba in timp - niciunul nu e potrivit ca PK!"
+                    },
+                    {
+                        text: "Ce se intampla daca incerci sa adaugi doua randuri cu aceeasi cheie primara?",
+                        options: [
+                            "Ambele se adauga fara probleme",
+                            "Baza de date da EROARE si refuza adaugarea",
+                            "Al doilea rand il suprascrie pe primul",
+                            "Cheia primara se modifica automat"
+                        ],
+                        correct: 1,
+                        explanation: "Baza de date REFUZA sa adauge o inregistrare cu o cheie primara care exista deja. Aceasta regula mentine integritatea datelor - fiecare rand trebuie sa fie identificabil unic.",
+                        wrongExplanation: "Bazele de date au reguli stricte pentru PK - nu permit duplicate, nu suprascriu si nu modifica automat!"
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Cheia Straina (FK)",
+                description: "Intelege cum se conecteaza tabelele",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Ce este Cheia Straina (Foreign Key)?",
+                        showTable: "relatii_simple",
+                        options: [
+                            "O cheie primara dintr-un tabel strain (din alta tara)",
+                            "Un camp care face LEGATURA cu cheia primara din ALT tabel",
+                            "O cheie primara duplicata",
+                            "Un camp care nu are valori"
+                        ],
+                        correct: 1,
+                        explanation: "Cheia Straina (FK) este un camp dintr-un tabel care refera (pointeaza catre) cheia primara din ALT tabel. Creeaza o LEGATURA intre tabele.",
+                        wrongExplanation: "'Straina' nu inseamna din alta tara! FK face legatura intre tabele, nu duplica si nu e goala."
+                    },
+                    {
+                        text: "In tabelele de mai jos, care camp este Cheie Straina?",
+                        showTable: "elevi_clase",
+                        options: [
+                            "ID din tabelul Elevi",
+                            "ID din tabelul Clase",
+                            "ClasaID din tabelul Elevi",
+                            "NumeClasa din tabelul Clase"
+                        ],
+                        correct: 2,
+                        explanation: "ClasaID din tabelul Elevi este FK - refera ID-ul din tabelul Clase. Valoarea 1 din ClasaID corespunde clasei '8A' (ID=1 in Clase).",
+                        wrongExplanation: "ID-urile sunt chei PRIMARE in tabelele lor. NumeClasa e doar un camp text. ClasaID face LEGATURA!"
+                    },
+                    {
+                        text: "De ce folosim chei straine in loc sa scriem direct numele clasei in tabelul Elevi?",
+                        options: [
+                            "Pentru ca numerele ocupa mai putin spatiu",
+                            "Pentru a evita erori de scriere si pentru actualizari usoare",
+                            "Pentru ca Access nu permite text",
+                            "Nu exista niciun avantaj"
+                        ],
+                        correct: 1,
+                        explanation: "Daca scrii '8A' de 30 de ori pentru 30 de elevi, poti gresi ('8a', '8 A'). Cu FK, daca se schimba numele clasei, modifici doar in tabelul Clase si toti elevii sunt actualizati automat!",
+                        wrongExplanation: "Spatiul nu e motivul principal, Access permite text. Avantajul real e CONSISTENTA datelor!"
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Relatii One-to-Many (1:N)",
+                description: "Cel mai comun tip de relatie",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce inseamna relatie One-to-Many (1:N / Unu-la-Multi)?",
+                        showTable: "one_to_many",
+                        options: [
+                            "Un tabel are o singura inregistrare, altul are multe",
+                            "O inregistrare din tabelul 1 poate fi legata de MAI MULTE din tabelul 2",
+                            "Toate inregistrarile sunt legate intre ele",
+                            "Fiecare inregistrare e legata de exact una din alt tabel"
+                        ],
+                        correct: 1,
+                        explanation: "Relatia 1:N inseamna: O CLASA poate avea MAI MULTI elevi, dar UN ELEV apartine unei singure clase. Clasa e partea '1', Elevii sunt partea 'N' (multi).",
+                        wrongExplanation: "1:N nu e despre numarul de randuri in tabel, ci despre CATI pot fi legati de UNUL!"
+                    },
+                    {
+                        text: "In relatia Profesor -> Materii, daca un profesor preda mai multe materii, ce tip de relatie avem?",
+                        options: [
+                            "One-to-One (1:1)",
+                            "One-to-Many (1:N) - UN profesor -> MULTE materii",
+                            "Many-to-One (N:1)",
+                            "Nu exista relatie"
+                        ],
+                        correct: 1,
+                        explanation: "Corect! UN profesor poate preda MULTE materii (Matematica, Fizica) = relatie 1:N. Cheia straina MaterieID ar fi in tabelul care are 'multi' (sau un tabel de legatura).",
+                        wrongExplanation: "Daca un profesor preda MAI MULTE materii, nu e 1:1. Many-to-One e acelasi lucru vazut invers!"
+                    },
+                    {
+                        text: "Unde se pune Cheia Straina intr-o relatie 1:N?",
+                        showTable: "one_to_many",
+                        options: [
+                            "In tabelul de pe partea '1' (Clase)",
+                            "In tabelul de pe partea 'N' / 'Multi' (Elevi)",
+                            "In ambele tabele",
+                            "In niciun tabel"
+                        ],
+                        correct: 1,
+                        explanation: "FK se pune INTOTDEAUNA in tabelul de pe partea 'Multi'. De ce? Fiecare elev (multi) trebuie sa stie la CE clasa (unu) apartine. Clasa nu poate stoca toti elevii intr-un singur camp!",
+                        wrongExplanation: "FK nu merge in partea '1' pentru ca ar trebui sa stochezi multiple valori. Nu e in ambele si nici absent!"
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Relatii Many-to-Many (M:N)",
+                description: "Cand ambele parti pot avea mai multe legaturi",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce inseamna relatie Many-to-Many (M:N)?",
+                        options: [
+                            "Fiecare inregistrare din tabel A poate fi legata de MAI MULTE din B, si INVERS",
+                            "Doua tabele au acelasi numar de randuri",
+                            "Toate randurile sunt identice",
+                            "Nu exista legaturi intre tabele"
+                        ],
+                        correct: 0,
+                        explanation: "M:N inseamna: UN elev poate fi inscris la MAI MULTE cercuri, si UN cerc poate avea MAI MULTI elevi. Ambele parti sunt 'multi'!",
+                        wrongExplanation: "M:N nu e despre numarul de randuri sau identitate, ci despre LEGATURI MULTIPLE in ambele directii!"
+                    },
+                    {
+                        text: "Cum implementam o relatie Many-to-Many in baza de date?",
+                        showTable: "many_to_many",
+                        options: [
+                            "Punem FK in ambele tabele",
+                            "Cream un AL TREILEA tabel (junction/legatura) cu FK catre ambele",
+                            "Nu putem implementa M:N",
+                            "Combinam cele doua tabele intr-unul singur"
+                        ],
+                        correct: 1,
+                        explanation: "Pentru M:N cream un tabel de LEGATURA (junction table). Ex: Inscrieri cu ElevID si CercID. Fiecare rand din Inscrieri reprezinta O legatura elev-cerc.",
+                        wrongExplanation: "FK in ambele nu functioneaza (ar fi liste). Combinarea pierde structura. M:N SE POATE implementa cu tabel junction!"
+                    },
+                    {
+                        text: "Priveste tabelul Inscrieri de mai jos. Ce poti deduce?",
+                        showTable: "inscrieri_detalii",
+                        options: [
+                            "Elevul 1 e inscris la cercurile 1 si 2 (mai multe cercuri per elev)",
+                            "Fiecare elev e la un singur cerc",
+                            "Cercurile nu au niciun elev",
+                            "Nu exista relatii"
+                        ],
+                        correct: 0,
+                        explanation: "Din tabel vedem: Elevul 1 apare de 2 ori (cercurile 1 si 2). Cercul 1 are 2 elevi (1 si 2). Asta demonstreaza relatia M:N - multi elevi la multe cercuri!",
+                        wrongExplanation: "Tabelul arata clar ca Elevul 1 e la 2 cercuri si Cercul 1 are 2 elevi. Asta e M:N!"
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Design Practic",
+                description: "Aplica cunostintele in scenarii reale",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Pentru o biblioteca cu Carti si Autori (un autor poate scrie mai multe carti, o carte poate avea mai multi autori), ce structura e corecta?",
+                        options: [
+                            "Un singur tabel cu toate datele",
+                            "Carti(ID, Titlu, AutorID) + Autori(ID, Nume)",
+                            "Carti(ID, Titlu) + Autori(ID, Nume) + CartiAutori(CarteID, AutorID)",
+                            "Nu se poate modela aceasta situatie"
+                        ],
+                        correct: 2,
+                        explanation: "E relatie M:N! Un autor scrie MULTE carti, o carte are MAI MULTI autori. Solutia: 3 tabele - Carti, Autori si tabelul de legatura CartiAutori.",
+                        wrongExplanation: "Un singur tabel = date duplicate. Doar 2 tabele nu permit M:N (o carte cu 2 autori?). SE POATE modela cu 3 tabele!"
+                    },
+                    {
+                        text: "Ai tabelele: Comenzi(ID, Data, ClientID) si Clienti(ID, Nume). Ce tip de relatie este?",
+                        showTable: "comenzi_clienti",
+                        options: [
+                            "One-to-One (1:1)",
+                            "One-to-Many (1:N) - UN client poate avea MAI MULTE comenzi",
+                            "Many-to-Many (M:N)",
+                            "Nu exista relatie"
+                        ],
+                        correct: 1,
+                        explanation: "UN client poate face MAI MULTE comenzi, dar O comanda apartine unui singur client = 1:N. ClientID in Comenzi este FK catre Clienti.",
+                        wrongExplanation: "1:1 ar insemna ca un client are exact o comanda. M:N ar insemna ca o comanda e pentru mai multi clienti. Relatia clara e 1:N!"
+                    },
+                    {
+                        text: "Ce problema apare daca stocam 'Nume Profesor' direct in tabelul Note in loc de 'ProfesorID'?",
+                        options: [
+                            "Nicio problema, e mai usor de citit",
+                            "Daca profesorul isi schimba numele, trebuie actualizate TOATE notele manual",
+                            "Access nu permite text in tabele",
+                            "Notele vor fi sterse automat"
+                        ],
+                        correct: 1,
+                        explanation: "REDUNDANTA datelor! Daca 'Popescu Ion' apare in 500 de note si isi schimba numele, trebuie sa actualizezi 500 de randuri. Cu FK, actualizezi o singura inregistrare in tabelul Profesori!",
+                        wrongExplanation: "NU e mai usor - e o problema majora de mentenanta. Access permite text. Notele nu se sterg automat."
+                    },
+                    {
+                        text: "Care afirmatie despre integritatea referentiala este ADEVARATA?",
+                        options: [
+                            "Poti sterge o clasa chiar daca are elevi inscrisi",
+                            "FK poate avea valori care NU exista in tabelul referit",
+                            "Integritatea referentiala PREVINE stergerea unei clase care are elevi",
+                            "Integritatea referentiala e optionala si neimportanta"
+                        ],
+                        correct: 2,
+                        explanation: "Integritatea referentiala = regula care asigura ca FK-urile indica inregistrari EXISTENTE. Daca o clasa are elevi, NU o poti sterge fara sa muti/stergi elevii intai!",
+                        wrongExplanation: "Integritatea referentiala PREVINE actiuni care ar crea 'legaturi moarte'. E importanta pentru date corecte!"
+                    }
+                ]
+            }
+        };
+
+        const tableTemplates = {
+            elevi_simple: `
+                <div class="table-display">
+                    <div class="table-title">Tabel: Elevi</div>
+                    <table class="demo-table">
+                        <tr><th class="pk">ID (PK)</th><th>Nume</th><th>Varsta</th><th>Clasa</th></tr>
+                        <tr><td class="pk-cell">1</td><td>Popescu Maria</td><td>14</td><td>8A</td></tr>
+                        <tr><td class="pk-cell">2</td><td>Ionescu Andrei</td><td>13</td><td>8A</td></tr>
+                        <tr><td class="pk-cell">3</td><td>Popescu Maria</td><td>14</td><td>8B</td></tr>
+                    </table>
+                    <div class="key-legend">
+                        <span><div class="key-pk"></div> PK = Cheie Primara</span>
+                    </div>
+                </div>
+            `,
+            relatii_simple: `
+                <div class="tables-row">
+                    <div class="table-wrapper">
+                        <div class="table-title">Tabel: Elevi</div>
+                        <table class="demo-table">
+                            <tr><th class="pk">ID</th><th>Nume</th><th class="fk">ClasaID</th></tr>
+                            <tr><td class="pk-cell">1</td><td>Maria</td><td class="fk-cell">1</td></tr>
+                            <tr><td class="pk-cell">2</td><td>Andrei</td><td class="fk-cell">1</td></tr>
+                        </table>
+                    </div>
+                    <div class="relation-arrow">→</div>
+                    <div class="table-wrapper">
+                        <div class="table-title">Tabel: Clase</div>
+                        <table class="demo-table">
+                            <tr><th class="pk">ID</th><th>NumeClasa</th></tr>
+                            <tr><td class="pk-cell">1</td><td>8A</td></tr>
+                            <tr><td class="pk-cell">2</td><td>8B</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="key-legend">
+                    <span><div class="key-pk"></div> PK</span>
+                    <span><div class="key-fk"></div> FK (Cheie Straina)</span>
+                </div>
+            `,
+            elevi_clase: `
+                <div class="tables-row">
+                    <div class="table-wrapper">
+                        <div class="table-title">Tabel: Elevi</div>
+                        <table class="demo-table">
+                            <tr><th class="pk">ID</th><th>Nume</th><th class="fk">ClasaID</th></tr>
+                            <tr><td class="pk-cell">1</td><td>Maria</td><td class="fk-cell">1</td></tr>
+                            <tr><td class="pk-cell">2</td><td>Andrei</td><td class="fk-cell">2</td></tr>
+                        </table>
+                    </div>
+                    <div class="relation-arrow">→</div>
+                    <div class="table-wrapper">
+                        <div class="table-title">Tabel: Clase</div>
+                        <table class="demo-table">
+                            <tr><th class="pk">ID</th><th>NumeClasa</th></tr>
+                            <tr><td class="pk-cell">1</td><td>8A</td></tr>
+                            <tr><td class="pk-cell">2</td><td>8B</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="key-legend">
+                    <span><div class="key-pk"></div> PK</span>
+                    <span><div class="key-fk"></div> FK</span>
+                </div>
+            `,
+            one_to_many: `
+                <div class="tables-row">
+                    <div class="table-wrapper">
+                        <div class="table-title">Clase (partea "1")</div>
+                        <table class="demo-table">
+                            <tr><th class="pk">ID</th><th>Nume</th></tr>
+                            <tr><td class="pk-cell">1</td><td>8A</td></tr>
+                        </table>
+                    </div>
+                    <div class="relation-arrow">1 → N</div>
+                    <div class="table-wrapper">
+                        <div class="table-title">Elevi (partea "N")</div>
+                        <table class="demo-table">
+                            <tr><th class="pk">ID</th><th>Nume</th><th class="fk">ClasaID</th></tr>
+                            <tr><td class="pk-cell">1</td><td>Maria</td><td class="fk-cell">1</td></tr>
+                            <tr><td class="pk-cell">2</td><td>Andrei</td><td class="fk-cell">1</td></tr>
+                            <tr><td class="pk-cell">3</td><td>Elena</td><td class="fk-cell">1</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="key-legend">
+                    <span><div class="key-pk"></div> PK</span>
+                    <span><div class="key-fk"></div> FK</span>
+                </div>
+            `,
+            many_to_many: `
+                <div class="tables-row">
+                    <div class="table-wrapper">
+                        <div class="table-title">Elevi</div>
+                        <table class="demo-table">
+                            <tr><th class="pk">ID</th><th>Nume</th></tr>
+                            <tr><td class="pk-cell">1</td><td>Maria</td></tr>
+                            <tr><td class="pk-cell">2</td><td>Andrei</td></tr>
+                        </table>
+                    </div>
+                    <div class="relation-arrow">M ↔ N</div>
+                    <div class="table-wrapper">
+                        <div class="table-title">Cercuri</div>
+                        <table class="demo-table">
+                            <tr><th class="pk">ID</th><th>Nume</th></tr>
+                            <tr><td class="pk-cell">1</td><td>Robotica</td></tr>
+                            <tr><td class="pk-cell">2</td><td>Teatru</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="table-wrapper" style="margin: 1rem auto; max-width: 250px;">
+                    <div class="table-title">Inscrieri (Tabel Legatura)</div>
+                    <table class="demo-table">
+                        <tr><th class="fk">ElevID</th><th class="fk">CercID</th></tr>
+                        <tr><td class="fk-cell">1</td><td class="fk-cell">1</td></tr>
+                        <tr><td class="fk-cell">1</td><td class="fk-cell">2</td></tr>
+                        <tr><td class="fk-cell">2</td><td class="fk-cell">1</td></tr>
+                    </table>
+                </div>
+            `,
+            inscrieri_detalii: `
+                <div class="table-wrapper" style="margin: 1rem auto; max-width: 350px;">
+                    <div class="table-title">Tabel: Inscrieri</div>
+                    <table class="demo-table">
+                        <tr><th class="pk">ID</th><th class="fk">ElevID</th><th class="fk">CercID</th></tr>
+                        <tr><td class="pk-cell">1</td><td class="fk-cell">1</td><td class="fk-cell">1</td></tr>
+                        <tr><td class="pk-cell">2</td><td class="fk-cell">1</td><td class="fk-cell">2</td></tr>
+                        <tr><td class="pk-cell">3</td><td class="fk-cell">2</td><td class="fk-cell">1</td></tr>
+                    </table>
+                    <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.5rem; text-align: center;">
+                        Elevul 1 = cercurile 1, 2 | Cercul 1 = elevii 1, 2
+                    </p>
+                </div>
+            `,
+            comenzi_clienti: `
+                <div class="tables-row">
+                    <div class="table-wrapper">
+                        <div class="table-title">Clienti</div>
+                        <table class="demo-table">
+                            <tr><th class="pk">ID</th><th>Nume</th></tr>
+                            <tr><td class="pk-cell">1</td><td>Ion Pop</td></tr>
+                            <tr><td class="pk-cell">2</td><td>Ana Rus</td></tr>
+                        </table>
+                    </div>
+                    <div class="relation-arrow">1 → N</div>
+                    <div class="table-wrapper">
+                        <div class="table-title">Comenzi</div>
+                        <table class="demo-table">
+                            <tr><th class="pk">ID</th><th>Data</th><th class="fk">ClientID</th></tr>
+                            <tr><td class="pk-cell">1</td><td>2024-01-10</td><td class="fk-cell">1</td></tr>
+                            <tr><td class="pk-cell">2</td><td>2024-01-15</td><td class="fk-cell">1</td></tr>
+                            <tr><td class="pk-cell">3</td><td>2024-01-20</td><td class="fk-cell">2</td></tr>
+                        </table>
+                    </div>
+                </div>
+            `
+        };
+
+        let currentLevel = 1, currentQuestion = 0, score = 0, totalXP = 0, levelScores = {}, unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('db_quiz3_relatii_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay(); updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('db_quiz3_relatii_progress', JSON.stringify({ totalXP, unlockedLevels, levelScores }));
+        }
+
+        function updateXPDisplay() { document.getElementById('totalXP').textContent = totalXP; }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+                if (levelScores[level] !== undefined) node.classList.add('completed');
+                else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) node.classList.add('active');
+                } else node.classList.add('locked');
+            });
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                conn.classList.toggle('completed', levelScores[index + 1] !== undefined);
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level; currentQuestion = 0; score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">Incepe Nivelul</button>
+                </div>
+            `;
+        }
+
+        function startLevel() { showQuestion(); }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = levelData.questions.map((_, i) =>
+                `<div class="progress-dot ${i === currentQuestion ? 'current' : ''}"></div>`
+            ).join('');
+
+            let tableHTML = '';
+            if (q.showTable && tableTemplates[q.showTable]) {
+                tableHTML = tableTemplates[q.showTable];
+            }
+
+            let optionsHTML = q.options.map((opt, i) =>
+                `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`
+            ).join('');
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    <p class="question-text">${q.text}</p>
+                    ${tableHTML}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) options[q.correct].classList.add('correct');
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `<div class="feedback-icon">🎉</div><div class="feedback-text">Corect!</div><div class="explanation">${q.explanation}</div>`;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `<div class="feedback-icon">😅</div><div class="feedback-text">Nu chiar...</div><div class="explanation">${q.explanation}</div>${q.wrongExplanation ? `<div class="explanation-wrong">${q.wrongExplanation}</div>` : ''}`;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ? 'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+            if (currentQuestion >= levelData.questions.length) showLevelComplete();
+            else showQuestion();
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = percentage >= 100 ? '⭐⭐⭐' : percentage >= 80 ? '⭐⭐' : percentage >= 66 ? '⭐' : '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) totalXP += earnedXP;
+                    levelScores[currentLevel] = percentage;
+                }
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) unlockedLevels.push(currentLevel + 1);
+                saveProgress(); updateXPDisplay(); updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">Reincearca</button>
+                        ${passed && currentLevel < 5 ? `<button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">Nivelul Urmator</button>` : ''}
+                        ${passed && currentLevel === 5 ? `<button class="btn btn-success" onclick="window.location.href='quiz4-interogari.html'">Quiz-ul 4: Interogari SQL</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

@@ -120,4 +120,81 @@ Located at `data/concepts-graph.json`:
 
 ---
 
+## Interactive Quiz Standards
+
+All quizzes must follow these established patterns for consistency and quality.
+
+### Required Features
+
+1. **Level Map Navigation**
+   - Circular nodes showing quiz progress (5 levels recommended)
+   - States: locked (🔒), active (pulsing), completed (✓)
+   - Connectors between levels that fill on completion
+
+2. **XP Reward System**
+   - Each level awards XP (50, 75, 100, 125, 150 progression)
+   - Bonus XP (1.5x) for 100% correct answers
+   - XP display in header with yellow/orange gradient badge
+
+3. **Feedback System (CRITICAL)**
+   - **Immediate feedback after each answer** - both correct AND wrong
+   - **Explanation for EVERY answer** - students learn from feedback
+   - Correct: 🎉 icon + "Corect!" + explanation box
+   - Wrong: 😅 icon + "Nu chiar..." + explanation box
+   - Highlight both selected answer AND correct answer when wrong
+
+4. **Progress Tracking**
+   - Progress dots showing question position
+   - Dots change color: current (accent), correct (green), wrong (red)
+   - localStorage saves: totalXP, unlockedLevels, levelScores
+
+5. **Level Completion**
+   - Stars rating: ⭐⭐⭐ (100%), ⭐⭐ (80%+), ⭐ (66%+), 💪 (retry)
+   - 66% minimum to pass and unlock next level
+   - "Reincearca" and "Nivelul Urmator" buttons
+
+### Visual Standards by Class
+
+| Class | Theme | Primary Color | Secondary Color |
+|-------|-------|---------------|-----------------|
+| 5 | Word/Office | Blue (#3b82f6) | Purple (#8b5cf6) |
+| 6 | Scratch | Orange (#ff9500) | Purple (#8b5cf6) |
+| 7 | C++ | Green (#10b981) | Cyan (#06b6d4) |
+| 8 | Databases | Red (#ef4444) | Rose (#f43f5e) |
+
+### Content Display Elements
+
+- **Scratch blocks**: Colored spans mimicking Scratch categories
+  - Control (orange), Sensing (cyan), Looks (purple), Motion (blue), Operators (green)
+- **Code blocks**: Syntax highlighting with colored spans
+  - Keywords (purple), Types (blue), Strings (green), Comments (gray)
+- **Database tables**: Styled tables with PK indicators and row highlighting
+
+### Question Structure
+
+```javascript
+{
+    text: "Question text in Romanian",
+    options: ["Option A", "Option B", "Option C", "Option D"],
+    correct: 0,  // Index of correct answer
+    explanation: "Why this is correct - ALWAYS provide learning value"
+}
+```
+
+### Quiz File Naming
+
+```
+content/tic/cls{N}/m{M}-{topic}/quizuri/
+├── quiz1-{subtopic}.html
+├── quiz2-{subtopic}.html
+├── quiz3-{subtopic}.html
+...
+```
+
+### Template Location
+
+Reference implementation: `content/tic/cls6/m3-scratch-control/quizuri/quiz1-conditii.html`
+
+---
+
 *Part of C:\AI ecosystem - Prof. Gurlan Vasile*

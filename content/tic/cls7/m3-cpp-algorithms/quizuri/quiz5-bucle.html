@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Bucle in C++ | Clasa 7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+
+        .quiz-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 1.5rem; background: var(--bg-secondary);
+            border-radius: 16px; margin-bottom: 2rem; border: 1px solid var(--border);
+        }
+        .quiz-title { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .xp-display { display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange)); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; color: #000; }
+
+        .level-map { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .level-node { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; cursor: pointer; transition: all 0.3s; position: relative; border: 3px solid var(--border); background: var(--bg-card); }
+        .level-node.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-node.locked::after { content: '🔒'; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+        .level-node.active { border-color: var(--accent-green); box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); animation: pulse 2s infinite; }
+        .level-node.completed { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); border-color: var(--accent-green); }
+        .level-node.completed::after { content: '✓'; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .level-connector { width: 30px; height: 3px; background: var(--border); align-self: center; }
+        .level-connector.completed { background: var(--accent-green); }
+
+        .quiz-area { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; border: 1px solid var(--border); min-height: 400px; }
+        .level-intro { text-align: center; padding: 2rem; }
+        .level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-green); }
+        .level-intro p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+        .level-intro .xp-reward { display: inline-block; background: rgba(251, 191, 36, 0.2); color: var(--accent-yellow); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
+
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+        .question-progress { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .progress-dot.current { background: var(--accent-green); }
+        .progress-dot.correct { background: var(--accent-green); }
+        .progress-dot.wrong { background: var(--accent-red); }
+
+        .question-text { font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
+
+        .code-block {
+            background: #1e1e2e; border-radius: 12px; padding: 1.5rem;
+            margin: 1rem auto; max-width: 550px; font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.95rem; border: 1px solid var(--border); overflow-x: auto;
+        }
+        .code-block .keyword { color: #c678dd; }
+        .code-block .type { color: #61afef; }
+        .code-block .string { color: #98c379; }
+        .code-block .comment { color: #5c6370; font-style: italic; }
+        .code-block .number { color: #d19a66; }
+        .code-block .function { color: #61afef; }
+        .code-block .operator { color: #56b6c2; }
+
+        .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .option { padding: 1.2rem 1.5rem; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 1rem; text-align: left; }
+        .option:hover { border-color: var(--accent-green); transform: translateX(5px); }
+        .option.selected { border-color: var(--accent-cyan); background: rgba(6, 182, 212, 0.1); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .feedback-box { display: none; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; }
+        .feedback-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.correct { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent-green); }
+        .feedback-box.wrong { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--accent-red); }
+        .feedback-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .feedback-text { font-size: 1.1rem; margin-bottom: 1rem; }
+        .explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: left; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-green); color: var(--accent-green); }
+
+        .level-complete { display: none; text-align: center; padding: 3rem; }
+        .level-complete.show { display: block; animation: celebrate 0.5s ease; }
+        @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .level-complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .level-complete h2 { font-size: 2rem; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-earned { font-size: 2rem; color: var(--accent-yellow); margin: 1.5rem 0; }
+        .score-display { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .stars { font-size: 3rem; margin: 1rem 0; }
+
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem; font-size: 0.9rem; }
+        .back-link:hover { color: var(--accent-cyan); }
+
+        footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+            .code-block { font-size: 0.85rem; padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 3</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Bucle in C++ (while, for, do-while)</div>
+            <div class="xp-display"><span>XP:</span><span id="totalXP">0</span></div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea"></div>
+    </div>
+
+    <footer>
+        <strong>© 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Bucla WHILE",
+                description: "Repetare cat timp o conditie este adevarata",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Cand se verifica conditia in bucla while?",
+                        code: "<span class='keyword'>while</span> (conditie) {\n    <span class='comment'>// instructiuni</span>\n}",
+                        options: [
+                            "La sfarsitul fiecarei iteratii",
+                            "INAINTE de fiecare iteratie (inclusiv prima)",
+                            "O singura data, la inceput",
+                            "Niciodata, ruleaza mereu"
+                        ],
+                        correct: 1,
+                        explanation: "while verifica conditia INAINTE de fiecare executie a corpului. Daca conditia e falsa de la inceput, corpul buclei nu se executa NICIODATA."
+                    },
+                    {
+                        text: "De cate ori se executa acest cod?",
+                        code: "<span class='type'>int</span> i = <span class='number'>0</span>;\n<span class='keyword'>while</span> (i < <span class='number'>3</span>) {\n    <span class='function'>cout</span> << i << <span class='string'>\" \"</span>;\n    i++;\n}",
+                        options: ["2 ori (afiseaza: 0 1)", "3 ori (afiseaza: 0 1 2)", "4 ori (afiseaza: 0 1 2 3)", "La infinit"],
+                        correct: 1,
+                        explanation: "i=0: 0<3 DA, afiseaza 0, i=1. i=1: 1<3 DA, afiseaza 1, i=2. i=2: 2<3 DA, afiseaza 2, i=3. i=3: 3<3 NU, STOP. Total: 3 iteratii."
+                    },
+                    {
+                        text: "Ce se intampla daca uitam i++ in bucla while?",
+                        code: "<span class='type'>int</span> i = <span class='number'>0</span>;\n<span class='keyword'>while</span> (i < <span class='number'>5</span>) {\n    <span class='function'>cout</span> << i;\n    <span class='comment'>// lipseste i++</span>\n}",
+                        options: [
+                            "Afiseaza 0 1 2 3 4",
+                            "Afiseaza 0 o singura data",
+                            "BUCLA INFINITA - afiseaza 0 la nesfarsit",
+                            "Eroare de compilare"
+                        ],
+                        correct: 2,
+                        explanation: "Fara i++, variabila i ramane mereu 0. Conditia i < 5 e mereu adevarata = BUCLA INFINITA! Programul trebuie oprit fortat (Ctrl+C)."
+                    },
+                    {
+                        text: "Ce afiseaza acest cod?",
+                        code: "<span class='type'>int</span> x = <span class='number'>10</span>;\n<span class='keyword'>while</span> (x > <span class='number'>0</span>) {\n    x = x - <span class='number'>3</span>;\n}\n<span class='function'>cout</span> << x;",
+                        options: ["1", "0", "-2", "3"],
+                        correct: 2,
+                        explanation: "x=10: 10>0 DA, x=7. x=7: 7>0 DA, x=4. x=4: 4>0 DA, x=1. x=1: 1>0 DA, x=-2. x=-2: -2>0 NU, STOP. Afiseaza: -2"
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Bucla FOR",
+                description: "Bucla cu numar cunoscut de iteratii",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Care sunt cele 3 parti ale buclei for?",
+                        code: "<span class='keyword'>for</span> (A; B; C) { ... }",
+                        options: [
+                            "A=citire, B=afisare, C=calcul",
+                            "A=initializare, B=conditie, C=incrementare",
+                            "A=start, B=stop, C=pas",
+                            "A=variabila, B=valoare, C=rezultat"
+                        ],
+                        correct: 1,
+                        explanation: "for (init; cond; incr): A=initializare (o data la inceput), B=conditie (verificata inainte de fiecare iteratie), C=incrementare (dupa fiecare iteratie)."
+                    },
+                    {
+                        text: "Ce afiseaza acest cod?",
+                        code: "<span class='keyword'>for</span> (<span class='type'>int</span> i = <span class='number'>1</span>; i <= <span class='number'>5</span>; i++) {\n    <span class='function'>cout</span> << i << <span class='string'>\" \"</span>;\n}",
+                        options: ["0 1 2 3 4", "1 2 3 4 5", "1 2 3 4", "0 1 2 3 4 5"],
+                        correct: 1,
+                        explanation: "i incepe de la 1, merge pana la 5 INCLUSIV (<=), si creste cu 1 la fiecare pas. Afiseaza: 1 2 3 4 5 (5 valori)."
+                    },
+                    {
+                        text: "Cum numaram invers de la 5 la 1?",
+                        options: [
+                            "for (int i = 5; i >= 1; i--)",
+                            "for (int i = 1; i <= 5; i++)",
+                            "for (int i = 5; i > 0; i++)",
+                            "for (int i = 5; i < 1; i--)"
+                        ],
+                        correct: 0,
+                        explanation: "Pentru a numara invers: incepem de la 5, mergem cat timp i >= 1, si SCADEM cu 1 (i--). Rezultat: 5 4 3 2 1."
+                    },
+                    {
+                        text: "Ce face acest cod?",
+                        code: "<span class='type'>int</span> suma = <span class='number'>0</span>;\n<span class='keyword'>for</span> (<span class='type'>int</span> i = <span class='number'>1</span>; i <= <span class='number'>10</span>; i++) {\n    suma += i;\n}\n<span class='function'>cout</span> << suma;",
+                        options: [
+                            "Afiseaza 10",
+                            "Afiseaza suma 1+2+...+10 = 55",
+                            "Afiseaza 1 2 3 ... 10",
+                            "Eroare - suma nu e definita"
+                        ],
+                        correct: 1,
+                        explanation: "Acest cod calculeaza suma numerelor de la 1 la 10. suma += i adauga fiecare numar la total. 1+2+3+...+10 = 55."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Bucla DO-WHILE",
+                description: "Executa cel putin o data, apoi verifica",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Care este diferenta principala intre while si do-while?",
+                        options: [
+                            "Nu exista nicio diferenta",
+                            "do-while executa corpul CEL PUTIN O DATA, chiar daca conditia e falsa",
+                            "do-while e mai rapid",
+                            "while nu poate folosi conditii"
+                        ],
+                        correct: 1,
+                        explanation: "while verifica INAINTE (poate sa nu execute niciodata). do-while verifica DUPA (executa cel putin O DATA, chiar daca conditia e falsa de la inceput)."
+                    },
+                    {
+                        text: "Ce afiseaza acest cod?",
+                        code: "<span class='type'>int</span> x = <span class='number'>10</span>;\n<span class='keyword'>do</span> {\n    <span class='function'>cout</span> << x << <span class='string'>\" \"</span>;\n    x++;\n} <span class='keyword'>while</span> (x < <span class='number'>5</span>);",
+                        options: ["Nu afiseaza nimic", "10", "10 11 12 13 14", "Bucla infinita"],
+                        correct: 1,
+                        explanation: "Chiar daca 10 < 5 este FALS, corpul se executa O DATA (afiseaza 10, x devine 11). Apoi verifica: 11 < 5 e FALS, STOP. Afiseaza doar: 10"
+                    },
+                    {
+                        text: "Cand este util do-while?",
+                        options: [
+                            "Cand stim exact de cate ori repetam",
+                            "Cand vrem sa executam actiunea CEL PUTIN O DATA (ex: meniu, validare input)",
+                            "Cand nu avem nevoie de conditie",
+                            "Niciodata, e inutil"
+                        ],
+                        correct: 1,
+                        explanation: "do-while e ideal pentru: 1) Meniuri (afiseaza meniul cel putin o data), 2) Validare input (citeste cel putin o data, repeta daca e invalid), 3) Jocuri (joaca cel putin o runda)."
+                    },
+                    {
+                        text: "Ce cod valideaza un numar pozitiv?",
+                        options: [
+                            "while (n <= 0) cin >> n;",
+                            "do { cin >> n; } while (n <= 0);",
+                            "for (;;) { cin >> n; if (n > 0) break; }",
+                            "Toate variantele functioneaza corect"
+                        ],
+                        correct: 3,
+                        explanation: "Toate 3 variante functioneaza! Dar do-while e cea mai clara pentru acest caz: citeste un numar, repeta daca nu e pozitiv. Este pattern-ul clasic pentru validare input."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Bucle Imbricate",
+                description: "O bucla in interiorul altei bucle",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "De cate ori se afiseaza '*' in acest cod?",
+                        code: "<span class='keyword'>for</span> (<span class='type'>int</span> i = <span class='number'>0</span>; i < <span class='number'>3</span>; i++) {\n    <span class='keyword'>for</span> (<span class='type'>int</span> j = <span class='number'>0</span>; j < <span class='number'>4</span>; j++) {\n        <span class='function'>cout</span> << <span class='string'>\"*\"</span>;\n    }\n}",
+                        options: ["7 ori", "12 ori", "4 ori", "3 ori"],
+                        correct: 1,
+                        explanation: "Bucla exterioara: 3 iteratii (i=0,1,2). Pentru FIECARE, bucla interioara: 4 iteratii (j=0,1,2,3). Total: 3 * 4 = 12 afisari."
+                    },
+                    {
+                        text: "Ce deseneaza acest cod?",
+                        code: "<span class='keyword'>for</span> (<span class='type'>int</span> i = <span class='number'>1</span>; i <= <span class='number'>3</span>; i++) {\n    <span class='keyword'>for</span> (<span class='type'>int</span> j = <span class='number'>1</span>; j <= i; j++) {\n        <span class='function'>cout</span> << <span class='string'>\"*\"</span>;\n    }\n    <span class='function'>cout</span> << endl;\n}",
+                        options: [
+                            "*** (3 stele pe un rand)",
+                            "Un patrat 3x3 de stele",
+                            "Un triunghi: *, **, ***",
+                            "3 randuri cu cate o stea"
+                        ],
+                        correct: 2,
+                        explanation: "i=1: j merge de la 1 la 1 (1 stea). i=2: j merge de la 1 la 2 (2 stele). i=3: j merge de la 1 la 3 (3 stele). Rezultat: triunghi dreptunghic."
+                    },
+                    {
+                        text: "Ce afiseaza acest cod?",
+                        code: "<span class='keyword'>for</span> (<span class='type'>int</span> i = <span class='number'>1</span>; i <= <span class='number'>2</span>; i++) {\n    <span class='keyword'>for</span> (<span class='type'>int</span> j = <span class='number'>1</span>; j <= <span class='number'>3</span>; j++) {\n        <span class='function'>cout</span> << i << j << <span class='string'>\" \"</span>;\n    }\n}",
+                        options: [
+                            "11 12 13 21 22 23",
+                            "1 2 3 1 2 3",
+                            "11 22 33",
+                            "12 13 21 22 23"
+                        ],
+                        correct: 0,
+                        explanation: "i=1: j=1,2,3 afiseaza 11 12 13. i=2: j=1,2,3 afiseaza 21 22 23. Bucla interioara se executa COMPLET pentru fiecare valoare a lui i."
+                    },
+                    {
+                        text: "Cum afisam tabla inmultirii pentru 1-3?",
+                        code: "<span class='keyword'>for</span> (<span class='type'>int</span> i = <span class='number'>1</span>; i <= <span class='number'>3</span>; i++) {\n    <span class='keyword'>for</span> (<span class='type'>int</span> j = <span class='number'>1</span>; j <= <span class='number'>3</span>; j++) {\n        <span class='function'>cout</span> << i <span class='operator'>*</span> j << <span class='string'>\" \"</span>;\n    }\n    <span class='function'>cout</span> << endl;\n}",
+                        options: [
+                            "1 2 3 / 2 4 6 / 3 6 9",
+                            "1 1 1 / 2 2 2 / 3 3 3",
+                            "1 2 3 / 1 2 3 / 1 2 3",
+                            "3 6 9 / 3 6 9 / 3 6 9"
+                        ],
+                        correct: 0,
+                        explanation: "Rand 1 (i=1): 1*1 1*2 1*3 = 1 2 3. Rand 2 (i=2): 2*1 2*2 2*3 = 2 4 6. Rand 3 (i=3): 3*1 3*2 3*3 = 3 6 9."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Probleme Practice",
+                description: "Aplicatii complexe cu bucle",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Ce calculeaza acest cod?",
+                        code: "<span class='type'>int</span> n = <span class='number'>5</span>, f = <span class='number'>1</span>;\n<span class='keyword'>for</span> (<span class='type'>int</span> i = <span class='number'>1</span>; i <= n; i++) {\n    f = f * i;\n}\n<span class='function'>cout</span> << f;",
+                        options: [
+                            "Suma 1+2+3+4+5 = 15",
+                            "Produsul 1*2*3*4*5 = 120 (factorial)",
+                            "Puterea 5^5 = 3125",
+                            "5 * 5 = 25"
+                        ],
+                        correct: 1,
+                        explanation: "f = f * i calculeaza factorialul. f=1*1=1, f=1*2=2, f=2*3=6, f=6*4=24, f=24*5=120. 5! (5 factorial) = 120."
+                    },
+                    {
+                        text: "Ce face acest cod cu un numar n?",
+                        code: "<span class='type'>int</span> n, suma = <span class='number'>0</span>;\n<span class='function'>cin</span> >> n;\n<span class='keyword'>while</span> (n > <span class='number'>0</span>) {\n    suma += n % <span class='number'>10</span>;\n    n = n / <span class='number'>10</span>;\n}",
+                        options: [
+                            "Numara cifrele lui n",
+                            "Calculeaza suma cifrelor lui n",
+                            "Inverseaza cifrele lui n",
+                            "Gaseste cifra maxima"
+                        ],
+                        correct: 1,
+                        explanation: "n % 10 extrage ultima cifra, n / 10 o elimina. Pentru n=123: suma=3, n=12. suma=3+2=5, n=1. suma=5+1=6, n=0. STOP. Suma cifrelor = 6."
+                    },
+                    {
+                        text: "Cum verificam daca un numar n este prim?",
+                        code: "<span class='type'>bool</span> prim = <span class='keyword'>true</span>;\n<span class='keyword'>for</span> (<span class='type'>int</span> i = <span class='number'>2</span>; i < n; i++) {\n    <span class='keyword'>if</span> (n % i == <span class='number'>0</span>) {\n        prim = <span class='keyword'>false</span>;\n        <span class='keyword'>break</span>;\n    }\n}",
+                        options: [
+                            "Verificam daca n este par sau impar",
+                            "Cautam un divizor intre 2 si n-1; daca gasim, n nu e prim",
+                            "Calculam suma divizorilor",
+                            "Verificam daca n e mai mare ca 1"
+                        ],
+                        correct: 1,
+                        explanation: "Un numar prim are doar 2 divizori: 1 si el insusi. Daca gasim ORICE alt divizor (n % i == 0), numarul NU e prim. 'break' opreste bucla imediat ce gasim un divizor."
+                    },
+                    {
+                        text: "Ce afiseaza acest cod pentru n=4?",
+                        code: "<span class='type'>int</span> n = <span class='number'>4</span>;\n<span class='keyword'>for</span> (<span class='type'>int</span> i = <span class='number'>1</span>; i <= n; i++) {\n    <span class='keyword'>for</span> (<span class='type'>int</span> j = <span class='number'>1</span>; j <= n-i; j++)\n        <span class='function'>cout</span> << <span class='string'>\" \"</span>;\n    <span class='keyword'>for</span> (<span class='type'>int</span> j = <span class='number'>1</span>; j <= <span class='number'>2</span>*i-<span class='number'>1</span>; j++)\n        <span class='function'>cout</span> << <span class='string'>\"*\"</span>;\n    <span class='function'>cout</span> << endl;\n}",
+                        options: [
+                            "Un patrat de stele",
+                            "Un triunghi dreptunghic",
+                            "O piramida (triunghi isoscel)",
+                            "Un romb"
+                        ],
+                        correct: 2,
+                        explanation: "Prima bucla j afiseaza spatii (n-i), a doua afiseaza stele (2*i-1). Rezultat: '   *' (3 spatii, 1 stea), '  ***' (2 spatii, 3 stele), ' *****', '*******'. Piramida!"
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1, currentQuestion = 0, score = 0, totalXP = 0, levelScores = {}, unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('cpp_quiz5_bucle_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('cpp_quiz5_bucle_progress', JSON.stringify({ totalXP, unlockedLevels, levelScores }));
+        }
+
+        function updateXPDisplay() { document.getElementById('totalXP').textContent = totalXP; }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+                if (levelScores[level] !== undefined) node.classList.add('completed');
+                else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) node.classList.add('active');
+                } else node.classList.add('locked');
+            });
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                conn.classList.toggle('completed', levelScores[index + 1] !== undefined);
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level; currentQuestion = 0; score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">Incepe Nivelul</button>
+                </div>
+            `;
+        }
+
+        function startLevel() { showQuestion(); }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = levelData.questions.map((_, i) =>
+                `<div class="progress-dot ${i === currentQuestion ? 'current' : ''}"></div>`
+            ).join('');
+
+            let codeBlock = q.code ? `<div class="code-block"><pre>${q.code}</pre></div>` : '';
+
+            let optionsHTML = q.options.map((opt, i) =>
+                `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`
+            ).join('');
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    <p class="question-text">${q.text}</p>
+                    ${codeBlock}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) options[q.correct].classList.add('correct');
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `<div class="feedback-icon">🎉</div><div class="feedback-text">Corect!</div><div class="explanation">${q.explanation}</div>`;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `<div class="feedback-icon">😅</div><div class="feedback-text">Nu chiar...</div><div class="explanation">${q.explanation}</div>`;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ? 'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+            if (currentQuestion >= levelData.questions.length) showLevelComplete();
+            else showQuestion();
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = percentage >= 100 ? '⭐⭐⭐' : percentage >= 80 ? '⭐⭐' : percentage >= 66 ? '⭐' : '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) totalXP += earnedXP;
+                    levelScores[currentLevel] = percentage;
+                }
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) unlockedLevels.push(currentLevel + 1);
+                saveProgress(); updateXPDisplay(); updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">Reincearca</button>
+                        ${passed && currentLevel < 5 ? `<button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">Nivelul Urmator</button>` : ''}
+                        ${passed && currentLevel === 5 ? `<button class="btn btn-success" onclick="window.location.href='../index.html'">Inapoi la Modul</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

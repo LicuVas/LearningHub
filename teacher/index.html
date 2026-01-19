@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - LearningHub</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <style>
+        :root {
+            --bg-primary: #0a0a14;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --border: #2d2d44;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .nav-item .icon {
+            font-size: 1.25rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .main-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .stat-card .label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-card .change {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-card .change.positive {
+            color: var(--success);
+        }
+
+        .stat-card .change.negative {
+            color: var(--danger);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .filter-group label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .filter-group select {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            min-width: 150px;
+        }
+
+        /* Progress Table */
+        .progress-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .progress-table th,
+        .progress-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .progress-table th {
+            color: var(--text-muted);
+            font-weight: 500;
+            background: var(--bg-secondary);
+        }
+
+        .progress-table tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-badge.green {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-badge.yellow {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .status-badge.red {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .status-badge.gray {
+            background: rgba(100, 116, 139, 0.2);
+            color: var(--text-muted);
+        }
+
+        /* Proficiency Badge */
+        .proficiency-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            height: 300px;
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+            padding: 1rem 0;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: var(--accent);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            min-height: 20px;
+            transition: all 0.3s;
+        }
+
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+
+        .chart-bar .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-primary);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .chart-bar:hover .tooltip {
+            opacity: 1;
+        }
+
+        .chart-labels {
+            display: flex;
+            gap: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .chart-labels span {
+            flex: 1;
+            text-align: center;
+            font-size: 0.625rem;
+            color: var(--text-muted);
+        }
+
+        /* Alert List */
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border-left: 3px solid var(--warning);
+        }
+
+        .alert-item.critical {
+            border-left-color: var(--danger);
+        }
+
+        .alert-item .icon {
+            font-size: 1.5rem;
+        }
+
+        .alert-item .content {
+            flex: 1;
+        }
+
+        .alert-item .title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-item .desc {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .progress-bar .fill.green {
+            background: var(--success);
+        }
+
+        .progress-bar .fill.yellow {
+            background: var(--warning);
+        }
+
+        .progress-bar .fill.red {
+            background: var(--danger);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: auto;
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* File Input */
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .main-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+            }
+
+            .progress-table {
+                font-size: 0.75rem;
+            }
+
+            .progress-table th,
+            .progress-table td {
+                padding: 0.5rem;
+            }
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* Section */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Lesson Grid */
+        .lesson-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 4px;
+        }
+
+        .lesson-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.625rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .lesson-cell:hover {
+            transform: scale(1.2);
+            z-index: 1;
+        }
+
+        .lesson-cell.completed {
+            background: var(--success);
+            color: white;
+        }
+
+        .lesson-cell.in-progress {
+            background: var(--warning);
+            color: white;
+        }
+
+        .lesson-cell.not-started {
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span class="icon">📚</span>
+                <h1>Teacher Hub</h1>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-section="overview">
+                    <span class="icon">📊</span>
+                    <span>Overview</span>
+                </a>
+                <a href="#" class="nav-item" data-section="students">
+                    <span class="icon">👥</span>
+                    <span>Elevi</span>
+                </a>
+                <a href="#" class="nav-item" data-section="lessons">
+                    <span class="icon">📖</span>
+                    <span>Lectii</span>
+                </a>
+                <a href="#" class="nav-item" data-section="alerts">
+                    <span class="icon">⚠️</span>
+                    <span>Alerte</span>
+                </a>
+                <a href="#" class="nav-item" data-section="data">
+                    <span class="icon">💾</span>
+                    <span>Export/Import</span>
+                </a>
+            </nav>
+
+            <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <a href="../index.html" class="nav-item">
+                    <span class="icon">🏠</span>
+                    <span>Inapoi la Hub</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Overview Section -->
+            <section class="section active" id="overview">
+                <div class="main-header">
+                    <h2>Dashboard Overview</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="TeacherDashboard.refreshData()">
+                            <span>🔄</span> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label>Clasa</label>
+                        <select id="filter-grade" onchange="TeacherDashboard.applyFilters()">
+                            <option value="">Toate</option>
+                            <option value="V">Clasa V</option>
+                            <option value="VI">Clasa VI</option>
+                            <option value="VII">Clasa VII</option>
+                            <option value="VIII">Clasa VIII</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Modul</label>
+                        <select id="filter-module" onchange="TeacherDashboard.applyFilters()">
+                            <option value="">Toate</option>
+                            <option value="1">M1 - Sisteme</option>
+                            <option value="2">M2 - Birotice</option>
+                            <option value="3">M3 - Word</option>
+                            <option value="4">M4 - Siguranta</option>
+                            <option value="5">M5 - Proiect</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Perioada</label>
+                        <select id="filter-period" onchange="TeacherDashboard.applyFilters()">
+                            <option value="week">Ultima saptamana</option>
+                            <option value="month">Ultima luna</option>
+                            <option value="semester">Semestrul curent</option>
+                            <option value="all">Tot anul</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid" id="stats-grid">
+                    <div class="stat-card">
+                        <div class="label">Elevi Activi</div>
+                        <div class="value" id="stat-students">0</div>
+                        <div class="change positive">+0 saptamana aceasta</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Lectii Completate</div>
+                        <div class="value" id="stat-lessons">0</div>
+                        <div class="change positive">+0 saptamana aceasta</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Quiz-uri Promovate</div>
+                        <div class="value" id="stat-quizzes">0</div>
+                        <div class="change positive">Rata: 0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Scor Mediu</div>
+                        <div class="value" id="stat-avg-score">0%</div>
+                        <div class="change">pe toate quizurile</div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Completare per Modul</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" id="module-chart"></div>
+                            <div class="chart-labels" id="module-labels"></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Distributie Niveluri</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="level-distribution">
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                    <span style="width: 80px;">🐢 Minim</span>
+                                    <div class="progress-bar" style="flex: 1;">
+                                        <div class="fill yellow" id="level-minim" style="width: 0%;"></div>
+                                    </div>
+                                    <span id="level-minim-pct">0%</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                    <span style="width: 80px;">📚 Standard</span>
+                                    <div class="progress-bar" style="flex: 1;">
+                                        <div class="fill green" id="level-standard" style="width: 0%;"></div>
+                                    </div>
+                                    <span id="level-standard-pct">0%</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <span style="width: 80px;">🚀 Perform.</span>
+                                    <div class="progress-bar" style="flex: 1;">
+                                        <div class="fill" id="level-performanta" style="width: 0%; background: #8b5cf6;"></div>
+                                    </div>
+                                    <span id="level-performanta-pct">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Activitate Recenta</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="progress-table">
+                            <thead>
+                                <tr>
+                                    <th>Elev</th>
+                                    <th>Actiune</th>
+                                    <th>Lectie</th>
+                                    <th>Nivel</th>
+                                    <th>Scor</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-activity">
+                                <tr>
+                                    <td colspan="6" class="empty-state">
+                                        <span class="icon">📭</span>
+                                        <p>Nicio activitate inregistrata</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Students Section -->
+            <section class="section" id="students">
+                <div class="main-header">
+                    <h2>Elevi</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="TeacherDashboard.showAddStudent()">
+                            <span>➕</span> Adauga Elev
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <table class="progress-table">
+                            <thead>
+                                <tr>
+                                    <th>Nume</th>
+                                    <th>Clasa</th>
+                                    <th>Lectii</th>
+                                    <th>Progres</th>
+                                    <th>Nivel Principal</th>
+                                    <th>Scor Mediu</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="students-table">
+                                <tr>
+                                    <td colspan="7" class="empty-state">
+                                        <span class="icon">👥</span>
+                                        <p>Niciun elev inregistrat</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lessons Section -->
+            <section class="section" id="lessons">
+                <div class="main-header">
+                    <h2>Lectii</h2>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active" data-grade="V">Clasa V</button>
+                    <button class="tab" data-grade="VI">Clasa VI</button>
+                    <button class="tab" data-grade="VII">Clasa VII</button>
+                    <button class="tab" data-grade="VIII">Clasa VIII</button>
+                </div>
+
+                <div id="lessons-content">
+                    <!-- Generated dynamically -->
+                </div>
+            </section>
+
+            <!-- Alerts Section -->
+            <section class="section" id="alerts">
+                <div class="main-header">
+                    <h2>Alerte</h2>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Elevi in Dificultate</h3>
+                        <span class="status-badge yellow" id="alert-count">0 alerte</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert-list" id="alert-list">
+                            <div class="empty-state">
+                                <span class="icon">✅</span>
+                                <p>Nicio alerta activa</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Criterii Alerte</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem;">
+                            <li>⚠️ <strong>Nivel minim</strong> la 3+ lectii consecutive</li>
+                            <li>⚠️ <strong>Scor sub 50%</strong> la ultimele 3 quizuri</li>
+                            <li>⚠️ <strong>Inactivitate</strong> mai mult de 7 zile</li>
+                            <li>🚨 <strong>Critic:</strong> Combinatie de 2+ criterii</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Section -->
+            <section class="section" id="data">
+                <div class="main-header">
+                    <h2>Export / Import Date</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Export Date</h3>
+                        </div>
+                        <div class="card-body">
+                            <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                                Exporta toate datele de progres pentru backup sau analiza.
+                            </p>
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                <button class="btn btn-primary" onclick="TeacherDashboard.exportAll()">
+                                    <span>📦</span> Export Complet (JSON)
+                                </button>
+                                <button class="btn btn-secondary" onclick="TeacherDashboard.exportStudents()">
+                                    <span>👥</span> Export Elevi
+                                </button>
+                                <button class="btn btn-secondary" onclick="TeacherDashboard.exportProgress()">
+                                    <span>📊</span> Export Progres
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Import Date</h3>
+                        </div>
+                        <div class="card-body">
+                            <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                                Restaureaza date dintr-un backup anterior.
+                            </p>
+                            <div class="file-input-wrapper" style="width: 100%;">
+                                <button class="btn btn-primary" style="width: 100%;">
+                                    <span>📥</span> Selecteaza Fisier JSON
+                                </button>
+                                <input type="file" accept=".json" onchange="TeacherDashboard.importData(event)">
+                            </div>
+                            <div id="import-status" style="margin-top: 1rem;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Date Stocate</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="progress-table">
+                            <thead>
+                                <tr>
+                                    <th>Cheie</th>
+                                    <th>Marime</th>
+                                    <th>Actiuni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="storage-table">
+                                <!-- Generated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div class="modal-overlay" id="add-student-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Adauga Elev</h3>
+                <button class="modal-close" onclick="TeacherDashboard.closeModal('add-student-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nume</label>
+                    <input type="text" id="student-name" placeholder="ex: Popescu Ion">
+                </div>
+                <div class="form-group">
+                    <label>Clasa</label>
+                    <select id="student-grade">
+                        <option value="V">Clasa V</option>
+                        <option value="VI">Clasa VI</option>
+                        <option value="VII">Clasa VII</option>
+                        <option value="VIII">Clasa VIII</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Email (optional)</label>
+                    <input type="email" id="student-email" placeholder="ex: ion.popescu@email.com">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="TeacherDashboard.closeModal('add-student-modal')">Anuleaza</button>
+                <button class="btn btn-primary" onclick="TeacherDashboard.saveStudent()">Salveaza</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/teacher-dashboard.js"></script>
+    <script>
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            TeacherDashboard.init();
+        });
+
+        // Navigation
+        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = item.dataset.section;
+
+                // Update nav
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+
+                // Update section
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(section).classList.add('active');
+            });
+        });
+
+        // Lesson tabs
+        document.querySelectorAll('.tabs .tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                TeacherDashboard.renderLessonsForGrade(tab.dataset.grade);
+            });
+        });
+    </script>
+</body>
+</html>

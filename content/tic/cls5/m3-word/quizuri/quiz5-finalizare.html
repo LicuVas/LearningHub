@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Finalizarea Documentului | Clasa 5</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-node.locked::after { content: '🔒'; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+        .level-node.active { border-color: var(--accent-blue); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); animation: pulse 2s infinite; }
+        .level-node.completed { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); border-color: var(--accent-green); }
+        .level-node.completed::after { content: '✓'; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+        .level-connector { width: 30px; height: 3px; background: var(--border); align-self: center; }
+        .level-connector.completed { background: var(--accent-green); }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro { text-align: center; padding: 2rem; }
+        .level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-blue); }
+        .level-intro p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+        .level-intro .xp-reward { display: inline-block; background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
+
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+        .question-progress { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .progress-dot.current { background: var(--accent-blue); }
+        .progress-dot.correct { background: var(--accent-green); }
+        .progress-dot.wrong { background: var(--accent-red); }
+
+        .question-text { font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
+
+        /* Visual examples */
+        .page-mockup {
+            background: #fff;
+            color: #000;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem auto;
+            max-width: 300px;
+            min-height: 200px;
+            font-family: 'Times New Roman', serif;
+            font-size: 0.75rem;
+            border: 3px solid var(--accent-purple);
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .page-header {
+            text-align: center;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 0.5rem;
+            color: #666;
+            font-size: 0.7rem;
+        }
+
+        .page-footer {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            right: 1rem;
+            text-align: center;
+            padding-top: 0.5rem;
+            border-top: 1px solid #ccc;
+            color: #666;
+            font-size: 0.7rem;
+        }
+
+        .page-content {
+            line-height: 1.4;
+        }
+
+        .margin-indicator {
+            position: absolute;
+            background: rgba(59, 130, 246, 0.2);
+            pointer-events: none;
+        }
+
+        .margin-left { left: 0; top: 0; bottom: 0; width: 15px; }
+        .margin-right { right: 0; top: 0; bottom: 0; width: 15px; }
+        .margin-top { left: 0; right: 0; top: 0; height: 15px; }
+        .margin-bottom { left: 0; right: 0; bottom: 0; height: 15px; }
+
+        .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .option { padding: 1.2rem 1.5rem; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 1rem; text-align: left; }
+        .option:hover { border-color: var(--accent-purple); transform: translateX(5px); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .feedback-box { display: none; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; }
+        .feedback-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.correct { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent-green); }
+        .feedback-box.wrong { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--accent-red); }
+        .feedback-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .feedback-text { font-size: 1.1rem; margin-bottom: 1rem; }
+        .explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+        .level-complete { display: none; text-align: center; padding: 3rem; }
+        .level-complete.show { display: block; animation: celebrate 0.5s ease; }
+        @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .level-complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .level-complete h2 { font-size: 2rem; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-earned { font-size: 2rem; color: var(--accent-blue); margin: 1.5rem 0; }
+        .score-display { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .stars { font-size: 3rem; margin: 1rem 0; }
+
+        .quiz-complete-special {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+            border: 2px solid var(--accent-purple);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem; font-size: 0.9rem; }
+        .back-link:hover { color: var(--accent-cyan); }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+
+        footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 3</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Finalizarea Documentului</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea"></div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Antet si Subsol (Header/Footer)",
+                description: "Invata sa adaugi informatii in partea de sus si de jos a paginii",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce este Header-ul (Antetul) intr-un document?",
+                        visual: '<div class="page-mockup"><div class="page-header">Referat - Clasa 5A</div><div class="page-content">Continutul documentului apare aici...</div></div>',
+                        options: [
+                            "Titlul documentului",
+                            "Zona din partea de SUS a fiecarei pagini, care se repeta",
+                            "Prima propozitie",
+                            "Ultimul paragraf"
+                        ],
+                        correct: 1,
+                        explanation: "Header (Antet) este zona din partea de sus a paginii. Ce pui acolo apare AUTOMAT pe fiecare pagina. Perfect pentru titlul referatului!"
+                    },
+                    {
+                        text: "Ce este Footer-ul (Subsolul)?",
+                        visual: '<div class="page-mockup"><div class="page-content">Continutul documentului...</div><div class="page-footer">Pagina 1</div></div>',
+                        options: [
+                            "Prima linie",
+                            "Zona din partea de JOS a fiecarei pagini",
+                            "O imagine",
+                            "Un tabel"
+                        ],
+                        correct: 1,
+                        explanation: "Footer (Subsol) este zona de jos. Se foloseste pentru numarul paginii, data, sau numele autorului. Apare pe fiecare pagina!"
+                    },
+                    {
+                        text: "Cum accesezi Header sau Footer?",
+                        options: [
+                            "File > Exit",
+                            "Insert > Header sau Footer, sau dublu-click pe zona de sus/jos a paginii",
+                            "Home > Bold",
+                            "View > Zoom"
+                        ],
+                        correct: 1,
+                        explanation: "Insert > Header/Footer sau cel mai simplu: dublu-click pe marginea de sus sau jos a paginii. Apoi scrii ce vrei acolo!"
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Numere de pagina",
+                description: "Invata sa adaugi numerotare automata a paginilor",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "De ce sunt importante numerele de pagina?",
+                        options: [
+                            "Nu sunt importante",
+                            "Ca sa stii cate pagini are documentul si sa gasesti usor informatiile",
+                            "Ca sa fie mai colorat",
+                            "Ca sa ocupe mai mult spatiu"
+                        ],
+                        correct: 1,
+                        explanation: "Numerele de pagina te ajuta sa te orientezi in document. La un referat de 10 pagini, cum altfel ai sti pe ce pagina e capitolul dorit?"
+                    },
+                    {
+                        text: "Unde gasesti optiunea pentru numere de pagina?",
+                        options: [
+                            "File > Save",
+                            "Insert > Page Number",
+                            "Home > Font",
+                            "View > Layout"
+                        ],
+                        correct: 1,
+                        explanation: "Insert > Page Number iti da optiuni: sus, jos, in colt, centrat etc. Word le pune AUTOMAT pe toate paginile!"
+                    },
+                    {
+                        text: "Daca ai un document de 15 pagini, trebuie sa scrii tu fiecare numar?",
+                        options: [
+                            "Da, scrii 1, 2, 3... manual",
+                            "Nu, Word pune numerele automat pe toate paginile",
+                            "Da, dar doar numerele pare",
+                            "Nu se pot pune numere"
+                        ],
+                        correct: 1,
+                        explanation: "Nu! Word pune numerele AUTOMAT. Daca adaugi sau stergi o pagina, numerele se actualizeaza singure. Foarte util!"
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Marginile paginii",
+                description: "Invata sa setezi spatiul liber din jurul textului",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce sunt marginile (margins) in Word?",
+                        visual: '<div class="page-mockup"><div class="margin-indicator margin-left"></div><div class="margin-indicator margin-right"></div><div class="margin-indicator margin-top"></div><div class="margin-indicator margin-bottom"></div><div class="page-content" style="margin: 20px;">Text in interiorul marginilor</div></div>',
+                        options: [
+                            "Culorile paginii",
+                            "Spatiul gol din jurul textului (sus, jos, stanga, dreapta)",
+                            "Titlul documentului",
+                            "Fonturile folosite"
+                        ],
+                        correct: 1,
+                        explanation: "Marginile sunt spatiul gol dintre text si marginea paginii. Fara margini, textul ar fi lipit de foaie si ar fi greu de citit."
+                    },
+                    {
+                        text: "Care margini sunt standard pentru documente scolare?",
+                        options: [
+                            "0 cm (fara margini)",
+                            "2-2.5 cm pe fiecare parte",
+                            "10 cm (foarte mari)",
+                            "Diferite pe fiecare pagina"
+                        ],
+                        correct: 1,
+                        explanation: "Marginile standard sunt de 2-2.5 cm. Ofera spatiu pentru legare (daca tiparesti) si fac textul mai usor de citit."
+                    },
+                    {
+                        text: "Unde schimbi marginile in Word?",
+                        options: [
+                            "Home > Font",
+                            "Layout > Margins",
+                            "Insert > Table",
+                            "File > Exit"
+                        ],
+                        correct: 1,
+                        explanation: "Layout > Margins iti arata optiuni predefinite (Normal, Narrow, Wide) sau poti pune valori personalizate."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Print Preview (Previzualizare)",
+                description: "Invata sa vezi cum va arata documentul tiparit",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce este Print Preview (Previzualizare tiparire)?",
+                        options: [
+                            "O optiune pentru a tipari instant",
+                            "Un mod de a VEDEA cum va arata documentul INAINTE de a-l tipari",
+                            "O culoare",
+                            "Un tip de font"
+                        ],
+                        correct: 1,
+                        explanation: "Print Preview iti arata exact cum va arata foaia tiparita. Poti vedea daca totul e aranjat frumos INAINTE sa consumi hartie si cerneala!"
+                    },
+                    {
+                        text: "Cum accesezi Print Preview?",
+                        options: [
+                            "Ctrl + Z",
+                            "File > Print (vezi previzualizarea in dreapta) sau Ctrl + P",
+                            "Home > Bold",
+                            "Insert > Image"
+                        ],
+                        correct: 1,
+                        explanation: "File > Print sau Ctrl + P. In partea dreapta vezi cum va arata documentul. Daca ceva nu arata bine, apesi Back si corectezi."
+                    },
+                    {
+                        text: "De ce e important sa folosesti Print Preview?",
+                        options: [
+                            "Nu e important",
+                            "Ca sa nu tiparesti gresit si sa risipesti hartie si cerneala",
+                            "Ca sa fie mai rapid",
+                            "Ca sa schimbi culoarea"
+                        ],
+                        correct: 1,
+                        explanation: "Print Preview te scapa de surprize neplacute: text taiat, imagini in locuri gresite, pagini goale. Verifici INAINTE de a tipari!"
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Export in PDF",
+                description: "Invata sa salvezi documentul ca PDF",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Ce este un fisier PDF?",
+                        options: [
+                            "Un tip de imagine",
+                            "Un format de document care arata la fel pe ORICE calculator",
+                            "Un joc",
+                            "Un virus"
+                        ],
+                        correct: 1,
+                        explanation: "PDF (Portable Document Format) pastreaza exact aspectul documentului. Nu conteaza ce calculator sau telefon folosesti - arata identic!"
+                    },
+                    {
+                        text: "De ce ai salva un document Word ca PDF?",
+                        options: [
+                            "Ca sa il poti edita mai usor",
+                            "Ca sa arate la fel pe orice dispozitiv si sa nu poata fi modificat usor",
+                            "Ca sa fie mai mare",
+                            "Ca sa fie mai lent"
+                        ],
+                        correct: 1,
+                        explanation: "PDF-ul pastreaza formatul exact si e greu de modificat. Perfect cand trimiti un referat - profesorul il vede exact cum l-ai facut tu!"
+                    },
+                    {
+                        text: "Cum salvezi un document Word ca PDF?",
+                        options: [
+                            "File > Save",
+                            "File > Save As sau Export > alegi PDF din tipul de fisier",
+                            "Ctrl + C",
+                            "Insert > PDF"
+                        ],
+                        correct: 1,
+                        explanation: "File > Save As > selectezi PDF din lista de formate. Sau File > Export > Create PDF. Documentul tau e acum un PDF!"
+                    },
+                    {
+                        text: "Dupa ce salvezi ca PDF, mai poti modifica textul in PDF?",
+                        options: [
+                            "Da, foarte usor",
+                            "Nu prea - PDF-ul e facut sa fie vizualizat, nu editat. Pastreaza si fisierul .docx!",
+                            "Da, cu Ctrl + Z",
+                            "Da, cu Delete"
+                        ],
+                        correct: 1,
+                        explanation: "PDF-ul nu e facut pentru editare. De aceea PASTREAZA si fisierul .docx original! Asa poti face modificari mai tarziu."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('word_quiz5_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('word_quiz5_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                conn.classList.toggle('completed', levelScores[index + 1] !== undefined);
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">Incepe Nivelul</button>
+                </div>
+            `;
+        }
+
+        function startLevel() { showQuestion(); }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = levelData.questions.map((_, i) =>
+                `<div class="progress-dot${i === currentQuestion ? ' current' : ''}"></div>`
+            ).join('');
+
+            let questionContent = `<p class="question-text">${q.text}</p>`;
+            if (q.visual) questionContent += q.visual;
+
+            let optionsHTML = q.options.map((opt, i) =>
+                `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`
+            ).join('');
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    ${questionContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">Urmatoarea Intrebare</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) options[q.correct].classList.add('correct');
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `<div class="feedback-icon">🎉</div><div class="feedback-text">Corect!</div><div class="explanation">${q.explanation}</div>`;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `<div class="feedback-icon">😅</div><div class="feedback-text">Nu chiar...</div><div class="explanation">${q.explanation}</div>`;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ? 'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = percentage >= 100 ? '⭐⭐⭐' : percentage >= 80 ? '⭐⭐' : percentage >= 66 ? '⭐' : '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) totalXP += earnedXP;
+                    levelScores[currentLevel] = percentage;
+                }
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            // Check if all quizzes are complete
+            let allComplete = currentLevel === 5 && passed;
+            let specialMessage = '';
+            if (allComplete) {
+                specialMessage = `
+                    <div class="quiz-complete-special">
+                        <h3 style="color: var(--accent-purple); margin-bottom: 1rem;">🎓 Felicitari! Ai terminat toate quiz-urile Word!</h3>
+                        <p style="color: var(--text-secondary);">Acum stii sa creezi, formatezi si finalizezi documente profesionale in Microsoft Word. Esti pregatit pentru orice referat!</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? (currentLevel === 5 ? 'Quiz Complet!' : 'Nivel Completat!') : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    ${specialMessage}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">Reincearca</button>
+                        ${passed && currentLevel < 5 ? `<button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">Nivelul Urmator</button>` : ''}
+                        ${passed && currentLevel === 5 ? `<button class="btn btn-success" onclick="window.location.href='../index.html'">Inapoi la Modul</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

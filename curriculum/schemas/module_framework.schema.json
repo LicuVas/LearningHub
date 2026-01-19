@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://learninghub.local/schemas/module_framework.schema.json",
+  "title": "Curriculum Hub Module Framework",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "grade", "hours_per_week", "modules"],
+  "properties": {
+    "schema_version": { "type": "string", "minLength": 1 },
+    "grade": { "type": "string", "enum": ["V", "VI", "VII", "VIII"] },
+    "hours_per_week": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "year": { "type": "string", "pattern": "^20\\d{2}-20\\d{2}$" },
+
+    "modules": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/module" }
+    },
+
+    "x_metadata": { "type": "object" }
+  },
+  "$defs": {
+    "dateISO": { "type": "string", "pattern": "^20\\d{2}-\\d{2}-\\d{2}$" },
+
+    "competencyRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text_ro"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "text_ro": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "lessonRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lesson_code", "title_ro", "path_lesson_json", "path_quiz_json"],
+      "properties": {
+        "lesson_code": { "type": "string", "minLength": 1 },
+        "title_ro": { "type": "string", "minLength": 1 },
+        "path_lesson_json": { "type": "string", "minLength": 1 },
+        "path_quiz_json": { "type": "string", "minLength": 1 },
+        "estimated_minutes": { "type": "integer", "minimum": 20, "maximum": 120 }
+      }
+    },
+
+    "unit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unit_code", "title_ro", "hours_estimate", "mapped_domains", "lessons"],
+      "properties": {
+        "unit_code": { "type": "string", "pattern": "^[A-ZIV]{1,4}-M[1-5]-U\\d{2}$" },
+        "title_ro": { "type": "string", "minLength": 1 },
+        "hours_estimate": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "mapped_domains": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "official_competency_targets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/competencyRef" }
+        },
+        "lessons": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/lessonRef" }
+        },
+        "assessments": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "diagnostic": { "type": "array", "items": { "type": "string" } },
+            "formative": { "type": "array", "items": { "type": "string" } },
+            "summative": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "x_notes": { "type": "object" }
+      }
+    },
+
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["module_index", "module_theme_ro", "units"],
+      "properties": {
+        "module_index": { "type": "integer", "minimum": 1, "maximum": 5 },
+
+        "date_range": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "courses_start": { "$ref": "#/$defs/dateISO" },
+            "courses_end": { "$ref": "#/$defs/dateISO" },
+            "courses_end_options": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/dateISO" }
+            },
+            "courses_start_options": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/dateISO" }
+            },
+            "rule_ro": { "type": "string" }
+          }
+        },
+
+        "module_theme_ro": { "type": "string", "minLength": 1 },
+
+        "official_competency_targets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/competencyRef" }
+        },
+
+        "units": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/unit" }
+        },
+
+        "spaced_retrieval_plan": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "R0": { "type": "array", "items": { "type": "string" } },
+            "R1": { "type": "array", "items": { "type": "string" } },
+            "R2": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+
+        "teacher_notes": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "integration_notes": { "type": "array", "items": { "type": "string" } },
+            "differentiation": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "support": { "type": "array", "items": { "type": "string" } },
+                "stretch": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        },
+
+        "x_metadata": { "type": "object" }
+      }
+    }
+  }
+}

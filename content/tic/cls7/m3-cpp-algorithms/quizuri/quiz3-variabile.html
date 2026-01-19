@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Variabile si Tipuri de Date C++ | Clasa 7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+
+        .quiz-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 1.5rem; background: var(--bg-secondary);
+            border-radius: 16px; margin-bottom: 2rem; border: 1px solid var(--border);
+        }
+        .quiz-title { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .xp-display { display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange)); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; color: #000; }
+
+        .level-map { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .level-node { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; cursor: pointer; transition: all 0.3s; position: relative; border: 3px solid var(--border); background: var(--bg-card); }
+        .level-node.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-node.locked::after { content: '🔒'; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+        .level-node.active { border-color: var(--accent-green); box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); animation: pulse 2s infinite; }
+        .level-node.completed { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); border-color: var(--accent-green); }
+        .level-node.completed::after { content: '✓'; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .level-connector { width: 30px; height: 3px; background: var(--border); align-self: center; }
+        .level-connector.completed { background: var(--accent-green); }
+
+        .quiz-area { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; border: 1px solid var(--border); min-height: 400px; }
+        .level-intro { text-align: center; padding: 2rem; }
+        .level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-green); }
+        .level-intro p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+        .level-intro .xp-reward { display: inline-block; background: rgba(251, 191, 36, 0.2); color: var(--accent-yellow); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
+
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+        .question-progress { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .progress-dot.current { background: var(--accent-green); }
+        .progress-dot.correct { background: var(--accent-green); }
+        .progress-dot.wrong { background: var(--accent-red); }
+
+        .question-text { font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
+
+        .code-block {
+            background: #1e1e2e; border-radius: 12px; padding: 1.5rem;
+            margin: 1rem auto; max-width: 500px; font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.95rem; border: 1px solid var(--border); overflow-x: auto;
+        }
+        .code-block .keyword { color: #c678dd; }
+        .code-block .type { color: #61afef; }
+        .code-block .string { color: #98c379; }
+        .code-block .comment { color: #5c6370; font-style: italic; }
+        .code-block .number { color: #d19a66; }
+        .code-block .function { color: #61afef; }
+
+        .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .option { padding: 1.2rem 1.5rem; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 1rem; text-align: left; }
+        .option:hover { border-color: var(--accent-green); transform: translateX(5px); }
+        .option.selected { border-color: var(--accent-cyan); background: rgba(6, 182, 212, 0.1); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .feedback-box { display: none; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; }
+        .feedback-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.correct { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent-green); }
+        .feedback-box.wrong { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--accent-red); }
+        .feedback-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .feedback-text { font-size: 1.1rem; margin-bottom: 1rem; }
+        .explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-green); color: var(--accent-green); }
+
+        .level-complete { display: none; text-align: center; padding: 3rem; }
+        .level-complete.show { display: block; animation: celebrate 0.5s ease; }
+        @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .level-complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .level-complete h2 { font-size: 2rem; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-earned { font-size: 2rem; color: var(--accent-yellow); margin: 1.5rem 0; }
+        .score-display { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .stars { font-size: 3rem; margin: 1rem 0; }
+
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem; font-size: 0.9rem; }
+        .back-link:hover { color: var(--accent-cyan); }
+
+        footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+            .code-block { font-size: 0.85rem; padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 3</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Variabile si Tipuri de Date C++</div>
+            <div class="xp-display"><span>XP:</span><span id="totalXP">0</span></div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea"></div>
+    </div>
+
+    <footer>
+        <strong>© 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Tipuri de Date Fundamentale",
+                description: "int, float, char - bazele datelor in C++",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Care tip de date este potrivit pentru a stoca numarul 42?",
+                        options: ["float", "int", "char", "string"],
+                        correct: 1,
+                        explanation: "'int' (integer) este tipul pentru numere intregi precum 42. 'float' e pentru numere cu zecimale (42.5), 'char' pentru un singur caracter ('A'), 'string' pentru text (\"salut\")."
+                    },
+                    {
+                        text: "Ce tip de date folosim pentru numere cu zecimale precum 3.14?",
+                        options: ["int", "char", "float", "bool"],
+                        correct: 2,
+                        explanation: "'float' (floating point) stocheaza numere cu virgula mobila. De exemplu: float pi = 3.14; Pentru mai multa precizie putem folosi 'double'."
+                    },
+                    {
+                        text: "Ce tip de date stocheaza un singur caracter?",
+                        code: "<span class='type'>char</span> litera = <span class='string'>'A'</span>;",
+                        options: ["string", "int", "char", "text"],
+                        correct: 2,
+                        explanation: "'char' (character) stocheaza UN SINGUR caracter, scris intre apostroafe: 'A', 'b', '7', '@'. Pentru mai multe caractere folosim string."
+                    },
+                    {
+                        text: "Care declaratie este GRESITA?",
+                        options: [
+                            "int varsta = 15;",
+                            "float nota = 9.5;",
+                            "char litera = \"X\";",
+                            "char simbol = '$';"
+                        ],
+                        correct: 2,
+                        explanation: "char foloseste apostroafe simple ('X'), NU ghilimele duble. Ghilimelele duble sunt pentru string. Corect: char litera = 'X';"
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Declararea Variabilelor",
+                description: "Cum cream si initializam variabile corect",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Care este sintaxa corecta pentru declararea unei variabile?",
+                        options: [
+                            "varsta int = 15;",
+                            "int varsta = 15;",
+                            "15 = int varsta;",
+                            "variabila varsta = 15;"
+                        ],
+                        correct: 1,
+                        explanation: "Sintaxa corecta: TIP NUME = VALOARE; Mai intai tipul (int), apoi numele variabilei (varsta), apoi optional valoarea initiala."
+                    },
+                    {
+                        text: "Ce este gresit in acest cod?",
+                        code: "<span class='type'>int</span> 2numar = <span class='number'>10</span>;",
+                        options: [
+                            "Lipseste punct si virgula",
+                            "Numele variabilei nu poate incepe cu o cifra",
+                            "10 nu este un numar intreg",
+                            "Trebuie sa fie float"
+                        ],
+                        correct: 1,
+                        explanation: "Numele variabilelor NU pot incepe cu cifre! Pot contine litere, cifre si underscore (_), dar trebuie sa inceapa cu litera sau _. Corect: numar2, _numar, numarDoi."
+                    },
+                    {
+                        text: "Ce valoare va avea variabila x?",
+                        code: "<span class='type'>int</span> x;\nx = <span class='number'>5</span>;\nx = <span class='number'>10</span>;",
+                        options: ["5", "10", "15", "Eroare"],
+                        correct: 1,
+                        explanation: "Variabila x primeste intai 5, apoi este suprascris cu 10. Ultima valoare atribuita este cea care ramane. x = 10."
+                    },
+                    {
+                        text: "Cum declaram mai multe variabile de acelasi tip?",
+                        options: [
+                            "int a, b, c;",
+                            "int a; int b; int c;",
+                            "int a b c;",
+                            "Ambele variante A si B sunt corecte"
+                        ],
+                        correct: 3,
+                        explanation: "Putem declara mai multe variabile de acelasi tip separate prin virgula (int a, b, c;) SAU fiecare pe rand (int a; int b; int c;). Ambele sunt corecte!"
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Input/Output - cin si cout",
+                description: "Citirea si afisarea datelor in C++",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce operator folosim cu cout pentru AFISARE?",
+                        code: "<span class='function'>cout</span> ??? <span class='string'>\"Salut!\"</span>;",
+                        options: [">>", "<<", "==", "->"],
+                        correct: 1,
+                        explanation: "Operatorul << (insertion) 'impinge' datele spre cout (ecran). Imaginati-va sagetile: datele MERG spre cout. cout << \"text\";"
+                    },
+                    {
+                        text: "Ce operator folosim cu cin pentru CITIRE?",
+                        code: "<span class='type'>int</span> x;\n<span class='function'>cin</span> ??? x;",
+                        options: ["<<", ">>", "==", "<-"],
+                        correct: 1,
+                        explanation: "Operatorul >> (extraction) 'extrage' datele din cin (tastatura) in variabila. Datele VIN din cin. cin >> x;"
+                    },
+                    {
+                        text: "Ce afiseaza acest cod?",
+                        code: "<span class='type'>int</span> a = <span class='number'>5</span>;\n<span class='function'>cout</span> << <span class='string'>\"a = \"</span> << a;",
+                        options: ["a = a", "a = 5", "5", "\"a = \" 5"],
+                        correct: 1,
+                        explanation: "cout poate afisa mai multe valori inlantuite cu <<. \"a = \" este text fix, iar 'a' (fara ghilimele) este valoarea variabilei. Rezultat: a = 5"
+                    },
+                    {
+                        text: "Cum citim doua numere de la tastatura?",
+                        code: "<span class='type'>int</span> x, y;\n<span class='function'>cin</span> >> x >> y;",
+                        options: [
+                            "Introducem ambele numere separate de spatiu sau Enter",
+                            "Introducem numerele fara spatiu: 510",
+                            "Nu se pot citi doua variabile odata",
+                            "Trebuie sa folosim cin de doua ori separat"
+                        ],
+                        correct: 0,
+                        explanation: "cin >> x >> y citeste doua valori. Le separam cu spatiu, Tab sau Enter. Exemplu: '5 10' sau '5' [Enter] '10'."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Conversii de Tip",
+                description: "Transformarea datelor dintr-un tip in altul",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce valoare va avea x?",
+                        code: "<span class='type'>int</span> x = <span class='number'>7</span> / <span class='number'>2</span>;",
+                        options: ["3.5", "3", "4", "Eroare"],
+                        correct: 1,
+                        explanation: "Cand impartim doua intregi (int), rezultatul e tot intreg - partea zecimala se pierde! 7/2 = 3 (nu 3.5). Pentru zecimale, folositi float: 7.0/2 = 3.5"
+                    },
+                    {
+                        text: "Ce se intampla la conversia float -> int?",
+                        code: "<span class='type'>float</span> f = <span class='number'>9.7</span>;\n<span class='type'>int</span> n = f;",
+                        options: [
+                            "n = 10 (se rotunjeste)",
+                            "n = 9 (se trunchiaza/taie zecimalele)",
+                            "Eroare de compilare",
+                            "n = 9.7"
+                        ],
+                        correct: 1,
+                        explanation: "Conversia float->int TRUNCHIAZA (taie) partea zecimala, NU rotunjeste! 9.7 devine 9, 9.2 devine 9, chiar si 9.9999 devine 9."
+                    },
+                    {
+                        text: "Cum fortam o impartire cu rezultat zecimal?",
+                        code: "<span class='type'>int</span> a = <span class='number'>5</span>, b = <span class='number'>2</span>;\n<span class='type'>float</span> rezultat = ???",
+                        options: [
+                            "a / b",
+                            "(float)a / b",
+                            "a / b.0",
+                            "float(a / b)"
+                        ],
+                        correct: 1,
+                        explanation: "(float)a converteste a la float INAINTE de impartire. Apoi 5.0/2 = 2.5. Varianta D e gresita: calculeaza intai 5/2=2, apoi converteste 2 la float."
+                    },
+                    {
+                        text: "Ce afiseaza acest cod?",
+                        code: "<span class='type'>char</span> c = <span class='string'>'A'</span>;\n<span class='function'>cout</span> << (<span class='type'>int</span>)c;",
+                        options: ["A", "65", "'A'", "Eroare"],
+                        correct: 1,
+                        explanation: "Fiecare caracter are un cod numeric (ASCII). 'A' = 65, 'B' = 66, 'a' = 97, '0' = 48. (int)c afiseaza codul ASCII al caracterului."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Exercitii Practice",
+                description: "Aplicatii practice cu variabile",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Ce calculeaza acest program?",
+                        code: "<span class='type'>int</span> a, b, temp;\n<span class='function'>cin</span> >> a >> b;\ntemp = a;\na = b;\nb = temp;",
+                        options: [
+                            "Suma lui a si b",
+                            "Interschimba valorile lui a si b",
+                            "Copiaza a in b",
+                            "Sterge variabilele"
+                        ],
+                        correct: 1,
+                        explanation: "Acesta este algoritmul de interschimbare! temp salveaza valoarea lui a, a primeste valoarea lui b, apoi b primeste vechea valoare a lui a (din temp)."
+                    },
+                    {
+                        text: "Cum extragem ultima cifra a unui numar?",
+                        code: "<span class='type'>int</span> n = <span class='number'>127</span>;\n<span class='type'>int</span> ultima = n % <span class='number'>10</span>;",
+                        options: ["ultima = 1", "ultima = 12", "ultima = 7", "ultima = 127"],
+                        correct: 2,
+                        explanation: "Operatorul % (modulo) da RESTUL impartirii. 127 % 10 = 7 (restul impartirii lui 127 la 10). Aceasta tehnica extrage ultima cifra a oricarui numar!"
+                    },
+                    {
+                        text: "Ce face acest cod?",
+                        code: "<span class='type'>int</span> n = <span class='number'>127</span>;\nn = n / <span class='number'>10</span>;",
+                        options: [
+                            "n = 12.7",
+                            "n = 12 (sterge ultima cifra)",
+                            "n = 7",
+                            "n = 1270"
+                        ],
+                        correct: 1,
+                        explanation: "Impartirea intreaga la 10 'sterge' ultima cifra. 127/10 = 12 (fara .7 pentru ca sunt intregi). Combinat cu %, putem prelucra cifrele unui numar!"
+                    },
+                    {
+                        text: "Calculeaza media aritmetica a doua note. Care varianta este corecta?",
+                        code: "<span class='type'>int</span> nota1 = <span class='number'>8</span>, nota2 = <span class='number'>9</span>;",
+                        options: [
+                            "int media = (nota1 + nota2) / 2;",
+                            "float media = (nota1 + nota2) / 2;",
+                            "float media = (nota1 + nota2) / 2.0;",
+                            "float media = nota1 + nota2 / 2;"
+                        ],
+                        correct: 2,
+                        explanation: "Varianta C este corecta: impartim la 2.0 (float) pentru a obtine rezultat zecimal. Varianta B: (8+9)/2 = 17/2 = 8 (int/int=int!). Varianta D: ordinea operatiilor e gresita."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1, currentQuestion = 0, score = 0, totalXP = 0, levelScores = {}, unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('cpp_quiz3_variabile_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('cpp_quiz3_variabile_progress', JSON.stringify({ totalXP, unlockedLevels, levelScores }));
+        }
+
+        function updateXPDisplay() { document.getElementById('totalXP').textContent = totalXP; }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+                if (levelScores[level] !== undefined) node.classList.add('completed');
+                else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) node.classList.add('active');
+                } else node.classList.add('locked');
+            });
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                conn.classList.toggle('completed', levelScores[index + 1] !== undefined);
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level; currentQuestion = 0; score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">Incepe Nivelul</button>
+                </div>
+            `;
+        }
+
+        function startLevel() { showQuestion(); }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = levelData.questions.map((_, i) =>
+                `<div class="progress-dot ${i === currentQuestion ? 'current' : ''}"></div>`
+            ).join('');
+
+            let codeBlock = q.code ? `<div class="code-block"><pre>${q.code}</pre></div>` : '';
+
+            let optionsHTML = q.options.map((opt, i) =>
+                `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`
+            ).join('');
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    <p class="question-text">${q.text}</p>
+                    ${codeBlock}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) options[q.correct].classList.add('correct');
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `<div class="feedback-icon">🎉</div><div class="feedback-text">Corect!</div><div class="explanation">${q.explanation}</div>`;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `<div class="feedback-icon">😅</div><div class="feedback-text">Nu chiar...</div><div class="explanation">${q.explanation}</div>`;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ? 'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+            if (currentQuestion >= levelData.questions.length) showLevelComplete();
+            else showQuestion();
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = percentage >= 100 ? '⭐⭐⭐' : percentage >= 80 ? '⭐⭐' : percentage >= 66 ? '⭐' : '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) totalXP += earnedXP;
+                    levelScores[currentLevel] = percentage;
+                }
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) unlockedLevels.push(currentLevel + 1);
+                saveProgress(); updateXPDisplay(); updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">Reincearca</button>
+                        ${passed && currentLevel < 5 ? `<button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">Nivelul Urmator</button>` : ''}
+                        ${passed && currentLevel === 5 ? `<button class="btn btn-success" onclick="window.location.href='quiz4-operatori.html'">Quiz-ul Urmator: Operatori</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>
