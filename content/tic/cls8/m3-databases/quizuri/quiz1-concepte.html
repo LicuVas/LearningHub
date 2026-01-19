@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Concepte Baze de Date | Clasa 8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-red: #ef4444;
+            --accent-rose: #f43f5e;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-orange: #f59e0b;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+
+        .quiz-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 1.5rem; background: var(--bg-secondary);
+            border-radius: 16px; margin-bottom: 2rem; border: 1px solid var(--border);
+        }
+        .quiz-title { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-red), var(--accent-rose)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .xp-display { display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange)); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; color: #000; }
+
+        .level-map { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .level-node { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; cursor: pointer; transition: all 0.3s; position: relative; border: 3px solid var(--border); background: var(--bg-card); }
+        .level-node.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-node.locked::after { content: '🔒'; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+        .level-node.active { border-color: var(--accent-red); box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); animation: pulse 2s infinite; }
+        .level-node.completed { background: linear-gradient(135deg, var(--accent-red), var(--accent-rose)); border-color: var(--accent-red); }
+        .level-node.completed::after { content: '✓'; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .level-connector { width: 30px; height: 3px; background: var(--border); align-self: center; }
+        .level-connector.completed { background: var(--accent-red); }
+
+        .quiz-area { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; border: 1px solid var(--border); min-height: 400px; }
+        .level-intro { text-align: center; padding: 2rem; }
+        .level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-red); }
+        .level-intro p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+        .level-intro .xp-reward { display: inline-block; background: rgba(251, 191, 36, 0.2); color: var(--accent-yellow); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
+
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+        .question-progress { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .progress-dot.current { background: var(--accent-red); }
+        .progress-dot.correct { background: var(--accent-green); }
+        .progress-dot.wrong { background: var(--accent-red); }
+
+        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
+
+        .table-display {
+            background: white; border-radius: 12px; padding: 1rem;
+            margin: 1rem auto; max-width: 500px; overflow-x: auto;
+        }
+        .demo-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; color: #1a1a2e; }
+        .demo-table th { background: #3b82f6; color: white; padding: 0.6rem; text-align: left; }
+        .demo-table th.pk { background: #ef4444; }
+        .demo-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #e5e7eb; }
+        .demo-table tr:nth-child(even) { background: #f8fafc; }
+        .demo-table tr.highlight { background: #fef3c7 !important; }
+
+        .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .option { padding: 1.2rem 1.5rem; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 1rem; text-align: left; }
+        .option:hover { border-color: var(--accent-red); transform: translateX(5px); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .feedback-box { display: none; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; }
+        .feedback-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.correct { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent-green); }
+        .feedback-box.wrong { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--accent-red); }
+        .feedback-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .feedback-text { font-size: 1.1rem; margin-bottom: 1rem; }
+        .explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: left; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-red), var(--accent-rose)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-red); color: var(--accent-red); }
+
+        .level-complete { display: none; text-align: center; padding: 3rem; }
+        .level-complete.show { display: block; animation: celebrate 0.5s ease; }
+        @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .level-complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .level-complete h2 { font-size: 2rem; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-earned { font-size: 2rem; color: var(--accent-yellow); margin: 1.5rem 0; }
+        .score-display { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .stars { font-size: 3rem; margin: 1rem 0; }
+
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem; font-size: 0.9rem; }
+        .back-link:hover { color: var(--accent-cyan); }
+
+        footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 3</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Concepte Baze de Date</div>
+            <div class="xp-display"><span>XP:</span><span id="totalXP">0</span></div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea"></div>
+    </div>
+
+    <footer>
+        <strong>© 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Ce sunt bazele de date?",
+                description: "Invata conceptele de baza despre organizarea datelor",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce este o baza de date?",
+                        options: [
+                            "Un document Word cu text",
+                            "O colectie organizata de informatii stocata pe calculator",
+                            "Un folder cu poze",
+                            "O pagina web"
+                        ],
+                        correct: 1,
+                        explanation: "O baza de date e o colectie ORGANIZATA de date, stocata electronic, care permite cautari si actualizari rapide."
+                    },
+                    {
+                        text: "Care dintre urmatoarele NU foloseste o baza de date?",
+                        options: [
+                            "Facebook (utilizatori, postari)",
+                            "Netflix (filme, preferinte)",
+                            "O poza printata pe hartie",
+                            "Catalogul electronic al scolii"
+                        ],
+                        correct: 2,
+                        explanation: "O poza printata e un obiect fizic, nu date electronice organizate. Toate celelalte folosesc baze de date."
+                    },
+                    {
+                        text: "Ce este un SGBD?",
+                        options: [
+                            "Un tip de calculator",
+                            "Un sistem de gestiune a bazelor de date (program pentru a lucra cu BD)",
+                            "Un limbaj de programare",
+                            "O retea de internet"
+                        ],
+                        correct: 1,
+                        explanation: "SGBD = Sistem de Gestiune a Bazelor de Date. Exemple: Microsoft Access, MySQL, Oracle."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Tabele si Structura",
+                description: "Intelege cum sunt organizate datele in tabele",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Ce este un TABEL intr-o baza de date?",
+                        options: [
+                            "O imagine cu date",
+                            "O structura cu randuri si coloane care stocheaza un tip de date",
+                            "Un fisier text",
+                            "O formula matematica"
+                        ],
+                        correct: 1,
+                        explanation: "Un tabel organizeaza datele in randuri (inregistrari) si coloane (campuri). Ex: tabel Elevi, tabel Profesori."
+                    },
+                    {
+                        text: "Cum se numeste o COLOANA dintr-un tabel?",
+                        showTable: true,
+                        options: [
+                            "Inregistrare",
+                            "Camp (Field)",
+                            "Cheie primara",
+                            "Index"
+                        ],
+                        correct: 1,
+                        explanation: "Coloana = Camp (Field). Fiecare camp reprezinta o caracteristica: Nume, Varsta, Clasa etc."
+                    },
+                    {
+                        text: "Cum se numeste un RAND complet dintr-un tabel?",
+                        showTable: true,
+                        options: [
+                            "Camp",
+                            "Coloana",
+                            "Inregistrare (Record)",
+                            "Tabel"
+                        ],
+                        correct: 2,
+                        explanation: "Rand = Inregistrare (Record). O inregistrare contine toate datele despre un element (ex: un elev)."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Cheia Primara",
+                description: "De ce avem nevoie de identificatori unici",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce este CHEIA PRIMARA (Primary Key)?",
+                        options: [
+                            "Prima coloana din tabel",
+                            "Campul care identifica UNIC fiecare inregistrare",
+                            "Parola pentru baza de date",
+                            "Primul rand din tabel"
+                        ],
+                        correct: 1,
+                        explanation: "Cheia primara e un camp cu valori UNICE pentru fiecare rand. Doua inregistrari nu pot avea aceeasi cheie primara."
+                    },
+                    {
+                        text: "De ce avem nevoie de cheie primara?",
+                        options: [
+                            "Pentru a face tabelul mai frumos",
+                            "Pentru a identifica unic fiecare inregistrare (pot exista 2 elevi 'Popescu Maria'!)",
+                            "Pentru a sterge date",
+                            "Pentru a adauga imagini"
+                        ],
+                        correct: 1,
+                        explanation: "Fara cheie primara, cum distingi 2 elevi cu acelasi nume? Cu ID-ul unic, fiecare e identificabil!"
+                    },
+                    {
+                        text: "Care ar fi cea mai buna cheie primara pentru un tabel 'Elevi'?",
+                        options: [
+                            "Numele elevului",
+                            "Varsta elevului",
+                            "ID (numar unic automat)",
+                            "Clasa elevului"
+                        ],
+                        correct: 2,
+                        explanation: "ID numeric automat e ideal: e unic, nu se schimba, nu depinde de date care pot fi duplicate (nume) sau se pot schimba (clasa)."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Tipuri de Date",
+                description: "Alege tipul corect pentru fiecare camp",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce tip de date folosesti pentru NUME?",
+                        options: [
+                            "Numar (Number)",
+                            "Text / Short Text",
+                            "Data/Ora (Date/Time)",
+                            "Da/Nu (Yes/No)"
+                        ],
+                        correct: 1,
+                        explanation: "Numele e TEXT. Tipul Number e pentru numere, Date/Time pentru date calendaristice."
+                    },
+                    {
+                        text: "Ce tip de date folosesti pentru VARSTA?",
+                        options: [
+                            "Text",
+                            "Number (numar intreg)",
+                            "Date/Time",
+                            "Memo"
+                        ],
+                        correct: 1,
+                        explanation: "Varsta e un numar (14, 15, etc.). Cu Number poti face calcule (media varstelor)."
+                    },
+                    {
+                        text: "Ce tip de date folosesti pentru DATA NASTERII?",
+                        options: [
+                            "Text",
+                            "Number",
+                            "Date/Time",
+                            "Currency"
+                        ],
+                        correct: 2,
+                        explanation: "Date/Time e special pentru date calendaristice. Permite calcule cu date (ani trecuti, diferente)."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Relatii si Design",
+                description: "Cum conectam tabelele intre ele",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "De ce NU punem toate datele intr-un singur tabel imens?",
+                        options: [
+                            "Pentru ca e mai greu de citit",
+                            "Pentru a evita DUPLICAREA datelor si inconsistentele",
+                            "Pentru ca Access nu permite tabele mari",
+                            "Nu exista niciun motiv"
+                        ],
+                        correct: 1,
+                        explanation: "Intr-un singur tabel, ai repeta aceleasi date (ex: numele profesorului pentru fiecare elev). Tabelele separate + relatii = eficienta!"
+                    },
+                    {
+                        text: "Ce este o CHEIE STRAINA (Foreign Key)?",
+                        options: [
+                            "O cheie din alta tara",
+                            "Un camp care face legatura cu cheia primara din ALT tabel",
+                            "O cheie primara duplicata",
+                            "Un tip de parola"
+                        ],
+                        correct: 1,
+                        explanation: "Cheia straina conecteaza tabele. Ex: in tabel Note, ClasaID e cheie straina care refera ID-ul din tabel Clase."
+                    },
+                    {
+                        text: "Ai tabelele: Elevi(ID, Nume, ClasaID) si Clase(ID, NumeClasa). Ce relatie exista?",
+                        options: [
+                            "Nicio relatie",
+                            "ClasaID din Elevi refera ID din Clase (multi elevi -> o clasa)",
+                            "ID din Elevi refera ID din Clase",
+                            "NumeClasa refera Nume"
+                        ],
+                        correct: 1,
+                        explanation: "ClasaID din Elevi = cheie straina. Mai multi elevi pot fi in aceeasi clasa. Asta e relatie 'multi-la-unu'."
+                    },
+                    {
+                        text: "Ce program vom folosi pentru a crea baze de date?",
+                        options: [
+                            "Microsoft Word",
+                            "Microsoft Excel",
+                            "Microsoft Access",
+                            "Microsoft PowerPoint"
+                        ],
+                        correct: 2,
+                        explanation: "Microsoft Access e SGBD-ul inclus in Microsoft Office, perfect pentru a invata bazele de date."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1, currentQuestion = 0, score = 0, totalXP = 0, levelScores = {}, unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('db_quiz1_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay(); updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('db_quiz1_progress', JSON.stringify({ totalXP, unlockedLevels, levelScores }));
+        }
+
+        function updateXPDisplay() { document.getElementById('totalXP').textContent = totalXP; }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+                if (levelScores[level] !== undefined) node.classList.add('completed');
+                else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) node.classList.add('active');
+                } else node.classList.add('locked');
+            });
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                conn.classList.toggle('completed', levelScores[index + 1] !== undefined);
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level; currentQuestion = 0; score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">Incepe Nivelul</button>
+                </div>
+            `;
+        }
+
+        function startLevel() { showQuestion(); }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = levelData.questions.map((_, i) =>
+                `<div class="progress-dot ${i === currentQuestion ? 'current' : ''}"></div>`
+            ).join('');
+
+            let tableHTML = '';
+            if (q.showTable) {
+                tableHTML = `
+                    <div class="table-display">
+                        <table class="demo-table">
+                            <tr><th class="pk">ID</th><th>Nume</th><th>Varsta</th><th>Clasa</th></tr>
+                            <tr><td>1</td><td>Popescu Maria</td><td>14</td><td>8A</td></tr>
+                            <tr><td>2</td><td>Ionescu Andrei</td><td>13</td><td>8A</td></tr>
+                            <tr><td>3</td><td>Popa Elena</td><td>14</td><td>8B</td></tr>
+                        </table>
+                    </div>
+                `;
+            }
+
+            let optionsHTML = q.options.map((opt, i) =>
+                `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`
+            ).join('');
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    <p class="question-text">${q.text}</p>
+                    ${tableHTML}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) options[q.correct].classList.add('correct');
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `<div class="feedback-icon">🎉</div><div class="feedback-text">Corect!</div><div class="explanation">${q.explanation}</div>`;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `<div class="feedback-icon">😅</div><div class="feedback-text">Nu chiar...</div><div class="explanation">${q.explanation}</div>`;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ? 'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+            if (currentQuestion >= levelData.questions.length) showLevelComplete();
+            else showQuestion();
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = percentage >= 100 ? '⭐⭐⭐' : percentage >= 80 ? '⭐⭐' : percentage >= 66 ? '⭐' : '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) totalXP += earnedXP;
+                    levelScores[currentLevel] = percentage;
+                }
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) unlockedLevels.push(currentLevel + 1);
+                saveProgress(); updateXPDisplay(); updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">Reincearca</button>
+                        ${passed && currentLevel < 5 ? `<button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">Nivelul Urmator</button>` : ''}
+                        ${passed && currentLevel === 5 ? `<button class="btn btn-success" onclick="window.location.href='quiz2-sql.html'">Quiz-ul 2: SQL</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: SQL si Interogari | Clasa 8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-blue: #3b82f6;
+            --accent-indigo: #6366f1;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+
+        .quiz-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 1.5rem; background: var(--bg-secondary);
+            border-radius: 16px; margin-bottom: 2rem; border: 1px solid var(--border);
+        }
+        .quiz-title { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .xp-display { display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange)); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; color: #000; }
+
+        .level-map { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .level-node { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; cursor: pointer; transition: all 0.3s; position: relative; border: 3px solid var(--border); background: var(--bg-card); }
+        .level-node.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-node.locked::after { content: '🔒'; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+        .level-node.active { border-color: var(--accent-blue); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); animation: pulse 2s infinite; }
+        .level-node.completed { background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo)); border-color: var(--accent-blue); }
+        .level-node.completed::after { content: '✓'; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .level-connector { width: 30px; height: 3px; background: var(--border); align-self: center; }
+        .level-connector.completed { background: var(--accent-blue); }
+
+        .quiz-area { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; border: 1px solid var(--border); min-height: 400px; }
+        .level-intro { text-align: center; padding: 2rem; }
+        .level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-blue); }
+        .level-intro p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+        .level-intro .xp-reward { display: inline-block; background: rgba(251, 191, 36, 0.2); color: var(--accent-yellow); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
+
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+        .question-progress { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .progress-dot.current { background: var(--accent-blue); }
+        .progress-dot.correct { background: var(--accent-green); }
+        .progress-dot.wrong { background: var(--accent-red); }
+
+        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
+
+        .sql-block {
+            background: #1e1e2e; border-radius: 12px; padding: 1.5rem;
+            margin: 1rem auto; max-width: 550px; font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.95rem; border: 2px solid var(--accent-blue); overflow-x: auto;
+        }
+        .sql-block .keyword { color: #569cd6; font-weight: bold; }
+        .sql-block .field { color: #9cdcfe; }
+        .sql-block .table { color: #4ec9b0; }
+        .sql-block .string { color: #ce9178; }
+        .sql-block .number { color: #b5cea8; }
+        .sql-block .operator { color: #d4d4d4; }
+
+        .table-display {
+            background: white; border-radius: 12px; padding: 1rem;
+            margin: 1rem auto; max-width: 500px; overflow-x: auto;
+        }
+        .demo-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; color: #1a1a2e; }
+        .demo-table th { background: #3b82f6; color: white; padding: 0.6rem; text-align: left; }
+        .demo-table th.pk { background: #ef4444; }
+        .demo-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #e5e7eb; }
+        .demo-table tr:nth-child(even) { background: #f8fafc; }
+        .demo-table tr.highlight { background: #bbf7d0 !important; }
+
+        .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .option { padding: 1.2rem 1.5rem; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; text-align: left; font-family: 'Consolas', monospace; }
+        .option:hover { border-color: var(--accent-blue); transform: translateX(5px); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .feedback-box { display: none; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; }
+        .feedback-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.correct { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent-green); }
+        .feedback-box.wrong { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--accent-red); }
+        .feedback-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .feedback-text { font-size: 1.1rem; margin-bottom: 1rem; }
+        .explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: left; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+        .level-complete { display: none; text-align: center; padding: 3rem; }
+        .level-complete.show { display: block; animation: celebrate 0.5s ease; }
+        @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .level-complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .level-complete h2 { font-size: 2rem; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-earned { font-size: 2rem; color: var(--accent-yellow); margin: 1.5rem 0; }
+        .score-display { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .stars { font-size: 3rem; margin: 1rem 0; }
+
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem; font-size: 0.9rem; }
+        .back-link:hover { color: var(--accent-cyan); }
+
+        footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1rem; }
+            .sql-block, .option { font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 3</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: SQL si Interogari</div>
+            <div class="xp-display"><span>XP:</span><span id="totalXP">0</span></div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea"></div>
+    </div>
+
+    <footer>
+        <strong>© 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Ce este SQL?",
+                description: "Invata bazele limbajului de interogare",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce inseamna SQL?",
+                        options: [
+                            "Super Query Language",
+                            "Structured Query Language",
+                            "Simple Question Logic",
+                            "System Quality Level"
+                        ],
+                        correct: 1,
+                        explanation: "SQL = Structured Query Language (Limbaj Structurat de Interogare). E standardul pentru lucrul cu baze de date."
+                    },
+                    {
+                        text: "La ce folosim SQL?",
+                        options: [
+                            "Sa desenam grafice",
+                            "Sa interogam (punem intrebari) bazele de date",
+                            "Sa cream pagini web",
+                            "Sa editam poze"
+                        ],
+                        correct: 1,
+                        explanation: "SQL ne permite sa INTREBAM baza de date: 'Arata-mi toti elevii din clasa 8A' sau 'Cate produse costa peste 100 lei?'"
+                    },
+                    {
+                        text: "Care comanda SQL selecteaza date dintr-un tabel?",
+                        options: [
+                            "GET",
+                            "FIND",
+                            "SELECT",
+                            "SHOW"
+                        ],
+                        correct: 2,
+                        explanation: "SELECT e comanda principala pentru a extrage date. SELECT * FROM Elevi afiseaza tot din tabelul Elevi."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: SELECT si FROM",
+                description: "Primele tale interogari SQL",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Ce face aceasta interogare?",
+                        sql: "SELECT * FROM Elevi",
+                        options: [
+                            "Sterge toti elevii",
+                            "Selecteaza TOATE coloanele din tabelul Elevi",
+                            "Creeaza tabelul Elevi",
+                            "Numara elevii"
+                        ],
+                        correct: 1,
+                        explanation: "* (asterisc) inseamna 'toate coloanele'. SELECT * FROM Elevi = Afiseaza tot din tabelul Elevi."
+                    },
+                    {
+                        text: "Vrei DOAR numele si varsta elevilor. Care interogare?",
+                        options: [
+                            "SELECT * FROM Elevi",
+                            "SELECT Nume, Varsta FROM Elevi",
+                            "SELECT ALL FROM Elevi",
+                            "GET Nume, Varsta FROM Elevi"
+                        ],
+                        correct: 1,
+                        explanation: "Specificam coloanele dorite: SELECT Nume, Varsta FROM Elevi. Fara *, doar coloanele cerute."
+                    },
+                    {
+                        text: "Care e ordinea corecta intr-o interogare SELECT simpla?",
+                        options: [
+                            "FROM tabel SELECT coloane",
+                            "SELECT coloane FROM tabel",
+                            "tabel SELECT coloane FROM",
+                            "SELECT FROM tabel coloane"
+                        ],
+                        correct: 1,
+                        explanation: "Ordinea standard: SELECT ce_vrei FROM de_unde. SELECT Nume FROM Elevi."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: WHERE - Filtrarea",
+                description: "Selecteaza doar datele care te intereseaza",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce face clauza WHERE?",
+                        sql: "SELECT * FROM Elevi WHERE Clasa = '8A'",
+                        options: [
+                            "Sorteaza elevii dupa clasa",
+                            "Filtreaza - arata DOAR elevii din clasa 8A",
+                            "Grupeaza elevii pe clase",
+                            "Sterge elevii care nu sunt in 8A"
+                        ],
+                        correct: 1,
+                        explanation: "WHERE filtreaza rezultatele. Doar randurile care indeplinesc conditia (Clasa = '8A') sunt afisate."
+                    },
+                    {
+                        text: "Vrei elevii cu varsta MAI MARE de 13 ani. Care conditie?",
+                        options: [
+                            "WHERE Varsta = 13",
+                            "WHERE Varsta > 13",
+                            "WHERE Varsta < 13",
+                            "WHERE Varsta >= 13"
+                        ],
+                        correct: 1,
+                        explanation: "> inseamna 'mai mare'. Varsta > 13 = elevi cu 14, 15, 16... ani (nu si cei de 13)."
+                    },
+                    {
+                        text: "Vrei elevii din clasa 8A SAU 8B. Care interogare?",
+                        options: [
+                            "WHERE Clasa = '8A' AND Clasa = '8B'",
+                            "WHERE Clasa = '8A' OR Clasa = '8B'",
+                            "WHERE Clasa = '8A', '8B'",
+                            "WHERE Clasa = '8A' + '8B'"
+                        ],
+                        correct: 1,
+                        explanation: "OR = SAU. Un elev poate fi in 8A SAU in 8B (nu amandoua simultan). AND ar cere AMBELE conditii (imposibil aici)."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: ORDER BY - Sortarea",
+                description: "Ordoneaza rezultatele cum vrei tu",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce face ORDER BY?",
+                        sql: "SELECT * FROM Elevi ORDER BY Nume",
+                        options: [
+                            "Grupeaza elevii dupa nume",
+                            "Sorteaza elevii alfabetic dupa Nume",
+                            "Filtreaza elevii cu anumite nume",
+                            "Sterge duplicatele de nume"
+                        ],
+                        correct: 1,
+                        explanation: "ORDER BY ordoneaza rezultatele. Implicit e crescator (A-Z pentru text, mic-mare pentru numere)."
+                    },
+                    {
+                        text: "Vrei elevii sortati de la cel mai mare la cel mai mic dupa varsta. Ce adaugi?",
+                        options: [
+                            "ORDER BY Varsta ASC",
+                            "ORDER BY Varsta DESC",
+                            "ORDER BY Varsta REVERSE",
+                            "ORDER BY Varsta DOWN"
+                        ],
+                        correct: 1,
+                        explanation: "DESC = descrescator (mare la mic). ASC = ascendent (mic la mare, e implicit)."
+                    },
+                    {
+                        text: "Sorteaza dupa clasa, apoi dupa nume in cadrul fiecarei clase:",
+                        options: [
+                            "ORDER BY Clasa AND Nume",
+                            "ORDER BY Clasa, Nume",
+                            "ORDER BY Clasa + Nume",
+                            "ORDER BY (Clasa, Nume)"
+                        ],
+                        correct: 1,
+                        explanation: "Pentru sortare multipla, separam cu virgula: ORDER BY Clasa, Nume. Prima e prioritara."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Functii si Agregare",
+                description: "Calcule si statistici cu SQL",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Ce returneaza COUNT(*)?",
+                        sql: "SELECT COUNT(*) FROM Elevi",
+                        options: [
+                            "Suma varstelor tuturor elevilor",
+                            "Numarul total de elevi (randuri) din tabel",
+                            "Media notelor",
+                            "Primul elev"
+                        ],
+                        correct: 1,
+                        explanation: "COUNT(*) numara cate randuri exista. Daca sunt 30 de elevi, returneaza 30."
+                    },
+                    {
+                        text: "Ce face AVG(Varsta)?",
+                        options: [
+                            "Gaseste varsta maxima",
+                            "Calculeaza MEDIA varstelor",
+                            "Numara cate varste diferite sunt",
+                            "Aduna toate varstele"
+                        ],
+                        correct: 1,
+                        explanation: "AVG = Average (medie). AVG(Varsta) = suma varstelor / numar elevi."
+                    },
+                    {
+                        text: "Care interogare afiseaza cati elevi sunt in FIECARE clasa?",
+                        options: [
+                            "SELECT COUNT(*) FROM Elevi",
+                            "SELECT Clasa, COUNT(*) FROM Elevi GROUP BY Clasa",
+                            "SELECT Clasa FROM Elevi ORDER BY COUNT",
+                            "SELECT ALL Clasa, COUNT FROM Elevi"
+                        ],
+                        correct: 1,
+                        explanation: "GROUP BY grupeaza randurile dupa o coloana. COUNT(*) numara pentru FIECARE grup (clasa)."
+                    },
+                    {
+                        text: "Interogarea finala! Ce afiseaza acest cod?",
+                        sql: "SELECT Clasa, AVG(Varsta) AS MediaVarsta\nFROM Elevi\nWHERE Varsta >= 13\nGROUP BY Clasa\nORDER BY MediaVarsta DESC",
+                        options: [
+                            "Toti elevii sortati dupa varsta",
+                            "Media varstelor pe clase (doar elevi 13+ ani), sortata descrescator",
+                            "Elevii cu varsta peste medie",
+                            "Clasele fara elevi de 13 ani"
+                        ],
+                        correct: 1,
+                        explanation: "Combina tot: filtreaza (WHERE), grupeaza (GROUP BY), calculeaza media (AVG), si sorteaza (ORDER BY DESC)!"
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1, currentQuestion = 0, score = 0, totalXP = 0, levelScores = {}, unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('db_quiz2_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay(); updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('db_quiz2_progress', JSON.stringify({ totalXP, unlockedLevels, levelScores }));
+        }
+
+        function updateXPDisplay() { document.getElementById('totalXP').textContent = totalXP; }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+                if (levelScores[level] !== undefined) node.classList.add('completed');
+                else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) node.classList.add('active');
+                } else node.classList.add('locked');
+            });
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                conn.classList.toggle('completed', levelScores[index + 1] !== undefined);
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level; currentQuestion = 0; score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">Incepe Nivelul</button>
+                </div>
+            `;
+        }
+
+        function startLevel() { showQuestion(); }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = levelData.questions.map((_, i) =>
+                `<div class="progress-dot ${i === currentQuestion ? 'current' : ''}"></div>`
+            ).join('');
+
+            let sqlBlock = '';
+            if (q.sql) {
+                sqlBlock = `<div class="sql-block"><pre>${q.sql}</pre></div>`;
+            }
+
+            let optionsHTML = q.options.map((opt, i) =>
+                `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`
+            ).join('');
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    <p class="question-text">${q.text}</p>
+                    ${sqlBlock}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) options[q.correct].classList.add('correct');
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `<div class="feedback-icon">🎉</div><div class="feedback-text">Corect!</div><div class="explanation">${q.explanation}</div>`;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `<div class="feedback-icon">😅</div><div class="feedback-text">Nu chiar...</div><div class="explanation">${q.explanation}</div>`;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ? 'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+            if (currentQuestion >= levelData.questions.length) showLevelComplete();
+            else showQuestion();
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = percentage >= 100 ? '⭐⭐⭐' : percentage >= 80 ? '⭐⭐' : percentage >= 66 ? '⭐' : '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) totalXP += earnedXP;
+                    levelScores[currentLevel] = percentage;
+                }
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) unlockedLevels.push(currentLevel + 1);
+                saveProgress(); updateXPDisplay(); updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">Reincearca</button>
+                        ${passed && currentLevel < 5 ? `<button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">Nivelul Urmator</button>` : ''}
+                        ${passed && currentLevel === 5 ? `<button class="btn btn-success" onclick="window.location.href='../index.html'">Inapoi la Lectii</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

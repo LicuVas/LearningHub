@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Bucle in Scratch | Clasa 6</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-orange: #ff9500;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --accent-blue: #3b82f6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-node.locked::after { content: '🔒'; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+        .level-node.active { border-color: var(--accent-blue); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); animation: pulse 2s infinite; }
+        .level-node.completed { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); border-color: var(--accent-green); }
+        .level-node.completed::after { content: '✓'; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+        .level-connector { width: 30px; height: 3px; background: var(--border); align-self: center; }
+        .level-connector.completed { background: var(--accent-green); }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro { text-align: center; padding: 2rem; }
+        .level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-blue); }
+        .level-intro p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+        .level-intro .xp-reward { display: inline-block; background: rgba(251, 191, 36, 0.2); color: var(--accent-yellow); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
+
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+        .question-progress { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .progress-dot.current { background: var(--accent-blue); }
+        .progress-dot.correct { background: var(--accent-green); }
+        .progress-dot.wrong { background: var(--accent-red); }
+
+        .question-text { font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
+
+        .code-display {
+            background: #1e1e2e;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem auto;
+            max-width: 500px;
+            font-family: 'Consolas', monospace;
+            border: 1px solid var(--border);
+        }
+
+        .scratch-visual {
+            background: linear-gradient(135deg, #4c97ff, #855cd6);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem auto;
+            max-width: 350px;
+            text-align: center;
+        }
+
+        .sb-block {
+            display: block;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 0.3rem auto;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .sb-control { background: #ffab19; color: #000; }
+        .sb-motion { background: #4c97ff; color: white; }
+        .sb-looks { background: #9966ff; color: white; }
+        .sb-indent { margin-left: 20px; }
+
+        .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover { border-color: var(--accent-blue); transform: translateX(5px); }
+        .option.selected { border-color: var(--accent-cyan); background: rgba(6, 182, 212, 0.1); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .feedback-box { display: none; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; }
+        .feedback-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.correct { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent-green); }
+        .feedback-box.wrong { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--accent-red); }
+        .feedback-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .feedback-text { font-size: 1.1rem; margin-bottom: 1rem; }
+        .explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+        .level-complete { display: none; text-align: center; padding: 3rem; }
+        .level-complete.show { display: block; animation: celebrate 0.5s ease; }
+        @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .level-complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .level-complete h2 { font-size: 2rem; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-earned { font-size: 2rem; color: var(--accent-yellow); margin: 1.5rem 0; }
+        .score-display { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .stars { font-size: 3rem; margin: 1rem 0; }
+
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem; font-size: 0.9rem; }
+        .back-link:hover { color: var(--accent-cyan); }
+
+        footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 3</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Bucle in Scratch</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea"></div>
+    </div>
+
+    <footer>
+        <strong>© 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Ce sunt buclele?",
+                description: "Invata de ce avem nevoie de bucle si cum ne ajuta",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "De ce folosim bucle (repetitii) in programare?",
+                        options: [
+                            "Pentru a face programul mai colorat",
+                            "Pentru a repeta actiuni fara a scrie acelasi cod de multe ori",
+                            "Pentru a opri programul",
+                            "Pentru a sterge sprite-uri"
+                        ],
+                        correct: 1,
+                        explanation: "Buclele ne permit sa repetam actiuni eficient. In loc sa scriem 'mergi 10 pasi' de 100 de ori, folosim o bucla!"
+                    },
+                    {
+                        text: "Care bloc repeta actiunile pentru totdeauna (pana opresti programul)?",
+                        options: [
+                            "repeta de 10 ori",
+                            "repeta pana cand",
+                            "repeta la infinit",
+                            "daca...atunci"
+                        ],
+                        correct: 2,
+                        explanation: "'Repeta la infinit' ruleaza blocurile din interior mereu, pana cand opresti manual programul."
+                    },
+                    {
+                        text: "Cate bucle principale exista in Scratch?",
+                        options: [
+                            "1 (doar repeta la infinit)",
+                            "2 (repeta de N ori si repeta la infinit)",
+                            "3 (repeta de N ori, repeta la infinit, repeta pana cand)",
+                            "5 sau mai multe"
+                        ],
+                        correct: 2,
+                        explanation: "In Scratch avem 3 tipuri: 'repeta de N ori', 'repeta la infinit' si 'repeta pana cand'."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Repeta de N ori",
+                description: "Foloseste bucla pentru un numar fix de repetitii",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Ce face acest cod: 'repeta de 4 ori: mergi 50 pasi, roteste-te 90 grade'?",
+                        visual: "repeat4",
+                        options: [
+                            "Merge in cerc",
+                            "Deseneaza un patrat",
+                            "Merge in linie dreapta",
+                            "Sta pe loc"
+                        ],
+                        correct: 1,
+                        explanation: "4 laturi x 90 grade = 360 grade (cerc complet). Sprite-ul deseneaza un patrat perfectt!"
+                    },
+                    {
+                        text: "Vrei ca pisica sa spuna 'Miau!' de exact 5 ori. Ce bucla folosesti?",
+                        options: [
+                            "repeta la infinit",
+                            "repeta de 5 ori",
+                            "repeta pana cand",
+                            "daca...atunci"
+                        ],
+                        correct: 1,
+                        explanation: "Cand stii EXACT de cate ori vrei sa repeti, folosesti 'repeta de N ori'."
+                    },
+                    {
+                        text: "Ce se intampla dupa ce bucla 'repeta de 3 ori' termina?",
+                        options: [
+                            "Programul se opreste complet",
+                            "Programul continua cu blocurile de dupa bucla",
+                            "Bucla reincepe de la 0",
+                            "Apare o eroare"
+                        ],
+                        correct: 1,
+                        explanation: "Dupa ce bucla termina cele 3 repetitii, programul continua normal cu urmatoarele blocuri."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Repeta la infinit",
+                description: "Creeaza actiuni continue care nu se opresc",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Cand folosesti 'repeta la infinit' in loc de 'repeta de N ori'?",
+                        options: [
+                            "Cand vrei sa numeri pana la 100",
+                            "Cand vrei ca actiunea sa continue mereu (ex: miscarea personajului)",
+                            "Cand vrei sa faci un calcul o singura data",
+                            "Niciodata - sunt identice"
+                        ],
+                        correct: 1,
+                        explanation: "Folosim 'repeta la infinit' pentru actiuni continue: verificarea tastelor, animatii, miscari constante."
+                    },
+                    {
+                        text: "Cum faci un personaj sa se miste stanga-dreapta controlat de taste?",
+                        options: [
+                            "repeta de 10 ori: mergi 10 pasi",
+                            "repeta la infinit: daca tasta dreapta apasata, mergi 10 pasi",
+                            "mergi 10 pasi cand tasta dreapta",
+                            "daca tasta dreapta: repeta la infinit"
+                        ],
+                        correct: 1,
+                        explanation: "Punem verificarea tastei INAUNTRUL lui 'repeta la infinit' pentru a verifica constant."
+                    },
+                    {
+                        text: "Ce se intampla daca pui 'asteapta 0.1 secunde' in 'repeta la infinit'?",
+                        options: [
+                            "Programul se blocheaza",
+                            "Animatia devine mai lenta si fluida",
+                            "Bucla se opreste",
+                            "Nu se schimba nimic"
+                        ],
+                        correct: 1,
+                        explanation: "'Asteapta' controleaza viteza. Fara el, bucla merge prea rapid. Cu 0.1s, ai ~10 cadre/secunda."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Repeta pana cand",
+                description: "Opreste bucla cand o conditie devine adevarata",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce face 'repeta pana cand <conditie>'?",
+                        options: [
+                            "Repeta cat timp conditia e adevarata",
+                            "Repeta pana cand conditia DEVINE adevarata, apoi se opreste",
+                            "Verifica conditia o singura data",
+                            "Este identic cu 'repeta la infinit'"
+                        ],
+                        correct: 1,
+                        explanation: "'Repeta pana cand' continua sa repete CAT TIMP conditia e falsa. Se opreste cand devine adevarata."
+                    },
+                    {
+                        text: "Vrei ca sprite-ul sa mearga pana atinge marginea. Ce cod folosesti?",
+                        options: [
+                            "repeta de 100 ori: mergi 10 pasi",
+                            "repeta la infinit: mergi 10 pasi",
+                            "repeta pana cand <atingi marginea>: mergi 10 pasi",
+                            "daca atingi marginea: mergi 10 pasi"
+                        ],
+                        correct: 2,
+                        explanation: "'Repeta pana cand atingi marginea' va opri automat miscarea cand sprite-ul ajunge la margine."
+                    },
+                    {
+                        text: "In 'repeta pana cand <scor = 10>', cand se opreste bucla?",
+                        options: [
+                            "Cand scorul e mai mic de 10",
+                            "Cand scorul ajunge exact la 10",
+                            "Niciodata",
+                            "Dupa 10 repetitii"
+                        ],
+                        correct: 1,
+                        explanation: "Bucla se opreste cand conditia 'scor = 10' devine adevarata."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Maestrul Buclelor!",
+                description: "Demonstreaza-ti abilitatile cu bucle complexe",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Vrei sa faci un cronometru care numara de la 10 la 0, apoi spune 'START!'. Ce structura?",
+                        options: [
+                            "repeta la infinit",
+                            "repeta de 10 ori: schimba timer cu -1, asteapta 1 sec; apoi spune START",
+                            "repeta pana cand timer = 0",
+                            "daca timer > 0: schimba timer"
+                        ],
+                        correct: 1,
+                        explanation: "Stim exact ca trebuie 10 pasi (de la 10 la 0), deci 'repeta de 10 ori' e perfect. Dupa bucla, spunem 'START!'."
+                    },
+                    {
+                        text: "Care e diferenta dintre 'repeta pana cand' si 'repeta cat timp' (while)?",
+                        options: [
+                            "Nu exista diferenta",
+                            "'Repeta pana cand' se opreste cand conditia e TRUE, 'while' continua cat conditia e TRUE",
+                            "'While' nu exista in Scratch",
+                            "Sunt doar nume diferite pentru acelasi bloc"
+                        ],
+                        correct: 1,
+                        explanation: "Sunt opuse! 'Pana cand' se opreste la TRUE. 'Cat timp' (while) continua la TRUE si se opreste la FALSE."
+                    },
+                    {
+                        text: "Ai bucla: 'repeta la infinit: daca <atingi culoarea rosie> atunci: opreste tot'. Ce se intampla?",
+                        options: [
+                            "Programul nu porneste niciodata",
+                            "Sprite-ul verifica mereu daca atinge rosu, si opreste TOTUL cand il atinge",
+                            "Doar bucla se opreste, restul continua",
+                            "Culoarea rosie dispare"
+                        ],
+                        correct: 1,
+                        explanation: "'Opreste tot' opreste INTREGUL program (toate scripturile) cand sprite-ul atinge rosu."
+                    },
+                    {
+                        text: "Pentru un joc cu inamici care apar la fiecare 2 secunde, ce bucla folosesti?",
+                        options: [
+                            "repeta de 10 ori: creeaza clona, asteapta 2 sec",
+                            "repeta la infinit: creeaza clona, asteapta 2 sec",
+                            "repeta pana cand <joc terminat>: creeaza clona, asteapta 2 sec",
+                            "Ultimele doua variante sunt corecte"
+                        ],
+                        correct: 3,
+                        explanation: "Ambele functioneaza! 'Repeta la infinit' merge mereu. 'Repeta pana cand joc terminat' se opreste elegant la sfarsit."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('scratch_quiz2_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('scratch_quiz2_progress', JSON.stringify({
+                totalXP, unlockedLevels, levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                conn.classList.toggle('completed', levelScores[index + 1] !== undefined);
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">Incepe Nivelul</button>
+                </div>
+            `;
+        }
+
+        function startLevel() { showQuestion(); }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = levelData.questions.map((_, i) =>
+                `<div class="progress-dot ${i === currentQuestion ? 'current' : ''}"></div>`
+            ).join('');
+
+            let visualContent = '';
+            if (q.visual === 'repeat4') {
+                visualContent = `
+                    <div class="scratch-visual">
+                        <div class="sb-block sb-control">repeta de 4 ori</div>
+                        <div class="sb-block sb-motion sb-indent">mergi 50 pasi</div>
+                        <div class="sb-block sb-motion sb-indent">roteste-te 90 grade</div>
+                    </div>
+                `;
+            }
+
+            let optionsHTML = q.options.map((opt, i) =>
+                `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`
+            ).join('');
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    <p class="question-text">${q.text}</p>
+                    ${visualContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) options[q.correct].classList.add('correct');
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `<div class="feedback-icon">🎉</div><div class="feedback-text">Corect!</div><div class="explanation">${q.explanation}</div>`;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `<div class="feedback-icon">😅</div><div class="feedback-text">Nu chiar...</div><div class="explanation">${q.explanation}</div>`;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ? 'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = percentage >= 100 ? '⭐⭐⭐' : percentage >= 80 ? '⭐⭐' : percentage >= 66 ? '⭐' : '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) totalXP += earnedXP;
+                    levelScores[currentLevel] = percentage;
+                }
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">Reincearca</button>
+                        ${passed && currentLevel < 5 ? `<button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">Nivelul Urmator</button>` : ''}
+                        ${passed && currentLevel === 5 ? `<button class="btn btn-success" onclick="window.location.href='../index.html'">Inapoi la Lectii</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Conditii in Scratch | Clasa 6</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-orange: #ff9500;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Header with XP */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #000;
+        }
+
+        /* Level Map */
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 20px rgba(255, 149, 0, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Level connector line */
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        /* Quiz Area */
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-orange);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--accent-yellow);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        /* Question styles */
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-orange);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-red);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .question-image {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .question-image img {
+            max-width: 100%;
+            border-radius: 12px;
+        }
+
+        /* Scratch blocks in questions */
+        .scratch-block-display {
+            background: #4c97ff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem auto;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .sb-block {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            margin: 0.25rem;
+            color: white;
+        }
+
+        .sb-control { background: #ffab19; color: #000; }
+        .sb-sensing { background: #5cb1d6; }
+        .sb-looks { background: #9966ff; }
+        .sb-motion { background: #4c97ff; }
+        .sb-operator { background: #59c059; }
+
+        /* Answer options */
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-purple);
+            transform: translateX(5px);
+        }
+
+        .option.selected {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Feedback */
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 149, 0, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+        }
+
+        /* Level complete screen */
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-yellow);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 3</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Conditii in Scratch</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <!-- Level Map -->
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <!-- Quiz Area -->
+        <div class="quiz-area" id="quizArea">
+            <!-- Level intro will be shown here -->
+        </div>
+    </div>
+
+    <footer>
+        <strong>© 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        // Quiz data for each level
+        const levels = {
+            1: {
+                title: "Nivel 1: Ce este o conditie?",
+                description: "Invata bazele - ce sunt conditiile si cum le folosim in Scratch",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce este o conditie in programare?",
+                        options: [
+                            "Un bloc care muta sprite-ul",
+                            "O intrebare la care se raspunde DA sau NU",
+                            "O culoare pentru fundal",
+                            "Un sunet care se reda"
+                        ],
+                        correct: 1,
+                        explanation: "O conditie este o intrebare care poate avea doar doua raspunsuri: adevarat (DA) sau fals (NU)."
+                    },
+                    {
+                        text: "Care dintre urmatoarele este o conditie valida?",
+                        scratch: true,
+                        options: [
+                            "mergi 10 pasi",
+                            "atingi marginea?",
+                            "spune Salut!",
+                            "asteapta 2 secunde"
+                        ],
+                        correct: 1,
+                        explanation: "\"atingi marginea?\" este o conditie pentru ca raspunsul este DA sau NU. Celelalte sunt actiuni."
+                    },
+                    {
+                        text: "Ce culoare are blocul 'daca...atunci' in Scratch?",
+                        options: [
+                            "Albastru (Miscare)",
+                            "Mov (Aspect)",
+                            "Portocaliu (Control)",
+                            "Verde (Operatori)"
+                        ],
+                        correct: 2,
+                        explanation: "Blocurile de control (inclusiv daca...atunci) sunt portocalii in Scratch."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Blocul DACA...ATUNCI",
+                description: "Foloseste blocul daca...atunci pentru a lua decizii simple",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Ce se intampla cand conditia din 'daca...atunci' este FALSA?",
+                        options: [
+                            "Programul se opreste",
+                            "Apare o eroare",
+                            "Blocurile din interior sunt sarite",
+                            "Blocurile se executa de 2 ori"
+                        ],
+                        correct: 2,
+                        explanation: "Cand conditia este falsa, programul sare peste blocurile din interiorul 'daca...atunci' si continua cu urmatorul bloc."
+                    },
+                    {
+                        text: "Vrei ca pisica sa spuna 'Ouch!' cand atinge marginea. Ce conditie folosesti?",
+                        options: [
+                            "tasta spatiu apasata?",
+                            "atingi culoarea rosu?",
+                            "atingi marginea?",
+                            "mouse-ul apasat?"
+                        ],
+                        correct: 2,
+                        explanation: "Pentru a detecta marginea ecranului, folosim conditia 'atingi marginea?' din categoria Senzori."
+                    },
+                    {
+                        text: "Care bloc verifica daca doua lucruri sunt egale?",
+                        options: [
+                            "< (mai mic)",
+                            "> (mai mare)",
+                            "= (egal)",
+                            "+ (plus)"
+                        ],
+                        correct: 2,
+                        explanation: "Operatorul '=' (egal) compara doua valori si returneaza adevarat daca sunt egale."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: DACA...ALTFEL",
+                description: "Alege intre doua actiuni diferite",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Care e diferenta dintre 'daca...atunci' si 'daca...altfel'?",
+                        options: [
+                            "Nu exista nicio diferenta",
+                            "'daca...altfel' ofera o alternativa cand conditia e falsa",
+                            "'daca...altfel' e mai lent",
+                            "'daca...altfel' nu exista in Scratch"
+                        ],
+                        correct: 1,
+                        explanation: "'daca...altfel' executa un set de blocuri cand conditia e adevarata si ALT set cand e falsa."
+                    },
+                    {
+                        text: "Vrei: daca scorul > 100, spune 'Castigator!', altfel spune 'Continua!'. Ce structura folosesti?",
+                        options: [
+                            "daca...atunci (fara altfel)",
+                            "daca...altfel",
+                            "repeta de 10 ori",
+                            "repeta la infinit"
+                        ],
+                        correct: 1,
+                        explanation: "Avem DOUA actiuni diferite (Castigator sau Continua), deci folosim daca...altfel."
+                    },
+                    {
+                        text: "In blocul 'daca scor > 50 atunci ... altfel ...', cand se executa partea 'altfel'?",
+                        options: [
+                            "Cand scorul e exact 50",
+                            "Cand scorul e mai mare de 50",
+                            "Cand scorul e 50 sau mai mic",
+                            "Mereu"
+                        ],
+                        correct: 2,
+                        explanation: "Conditia e 'scor > 50'. 'Altfel' se executa cand conditia e falsa, adica scorul e 50 sau mai mic."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Operatori Logici",
+                description: "Combina conditii cu SI, SAU, NU",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Operatorul 'SI' (AND) returneaza adevarat cand:",
+                        options: [
+                            "Cel putin o conditie e adevarata",
+                            "Ambele conditii sunt adevarate",
+                            "Nicio conditie nu e adevarata",
+                            "Prima conditie e adevarata"
+                        ],
+                        correct: 1,
+                        explanation: "'SI' cere ca AMBELE conditii sa fie adevarate. Daca una e falsa, rezultatul e fals."
+                    },
+                    {
+                        text: "Vrei ca personajul sa sara DOAR cand: apesi SPATIU SI atingi solul. Ce operator folosesti?",
+                        options: [
+                            "SAU (OR)",
+                            "SI (AND)",
+                            "NU (NOT)",
+                            "= (egal)"
+                        ],
+                        correct: 1,
+                        explanation: "Folosim 'SI' pentru ca AMBELE conditii trebuie indeplinite: tasta apasata SI atinge solul."
+                    },
+                    {
+                        text: "Operatorul 'NU' (NOT) face urmatorul lucru:",
+                        options: [
+                            "Aduna doua numere",
+                            "Inverseaza valoarea conditiei (adevarat devine fals)",
+                            "Repeta conditia de mai multe ori",
+                            "Opreste programul"
+                        ],
+                        correct: 1,
+                        explanation: "'NU' inverseaza: daca conditia era adevarata, devine falsa, si invers."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Provocare Finala!",
+                description: "Demonstreaza ca stapanesti conditiile in Scratch",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Ai un joc unde: daca vieti > 0 SI scor > 100, afisezi 'Nivel complet!'. Cand se afiseaza mesajul?",
+                        options: [
+                            "Cand ai cel putin 1 viata",
+                            "Cand scorul e peste 100",
+                            "Cand AI vieti SI scorul e peste 100",
+                            "Cand ori ai vieti, ori scorul e peste 100"
+                        ],
+                        correct: 2,
+                        explanation: "Cu 'SI', AMBELE conditii trebuie adevarate: trebuie sa ai vieti (>0) SI scor mare (>100)."
+                    },
+                    {
+                        text: "Care combinatie de blocuri face sprite-ul sa se miste DOAR cand tasta dreapta e apasata?",
+                        options: [
+                            "repeta la infinit: mergi 10 pasi",
+                            "repeta la infinit: daca tasta dreapta apasata atunci mergi 10 pasi",
+                            "daca tasta dreapta apasata atunci repeta la infinit",
+                            "mergi 10 pasi daca tasta dreapta"
+                        ],
+                        correct: 1,
+                        explanation: "Punem verificarea tastei INAUNTRUL buclei, asa incat sa verificam constant daca e apasata."
+                    },
+                    {
+                        text: "Vrei: daca NU atingi culoarea verde, pierde o viata. Care e conditia corecta?",
+                        options: [
+                            "daca atingi culoarea verde",
+                            "daca NU (atingi culoarea verde)",
+                            "daca atingi culoarea NU verde",
+                            "daca verde = fals"
+                        ],
+                        correct: 1,
+                        explanation: "Folosim 'NU' pentru a inversa: vrem sa se intample ceva cand NU atingem verdele."
+                    },
+                    {
+                        text: "In Scratch, blocurile cu forma de hexagon sunt:",
+                        options: [
+                            "Actiuni (fac ceva)",
+                            "Conditii (returneaza adevarat/fals)",
+                            "Variabile (stocheaza valori)",
+                            "Evenimente (pornesc scriptul)"
+                        ],
+                        correct: 1,
+                        explanation: "Blocurile hexagonale (cu colturi ascutite) sunt conditii - se potrivesc in spatiile de conditie ale blocurilor de control."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        // Load saved progress
+        function loadProgress() {
+            const saved = localStorage.getItem('scratch_quiz1_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('scratch_quiz1_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            if (q.scratch) {
+                questionContent += `
+                    <div class="scratch-block-display">
+                        <span class="sb-block sb-sensing">${q.options[q.correct]}</span>
+                    </div>
+                `;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    ${questionContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            // Disable all options
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            // Show correct/wrong
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            // Update progress dots
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            // Show feedback
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">😅</div>
+                    <div class="feedback-text">Nu chiar...</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                // Unlock next level
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='quiz2-bucle.html'">
+                                Quiz-ul 2: Bucle
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>
