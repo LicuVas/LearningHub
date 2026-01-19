@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Recapitulare Web (HTML/CSS) | Clasa 8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-red: #ef4444;
+            --accent-rose: #f43f5e;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-red);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-red);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-red);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .code-mockup {
+            background: #1e1e3a;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 550px;
+            text-align: left;
+            border: 2px solid var(--border);
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .code-mockup .tag { color: #569cd6; }
+        .code-mockup .attr { color: #9cdcfe; }
+        .code-mockup .value { color: #ce9178; }
+        .code-mockup .property { color: #9cdcfe; }
+        .code-mockup .selector { color: #d7ba7d; }
+        .code-mockup .comment { color: #6a9955; }
+
+        .browser-preview {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 400px;
+            color: #333;
+            text-align: left;
+        }
+
+        .browser-preview h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .browser-preview p { font-size: 0.9rem; line-height: 1.5; }
+
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-rose);
+            transform: translateX(5px);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-red);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 5</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Recapitulare Web (HTML/CSS)</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea">
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Structura HTML",
+                description: "Recapitulare structura de baza a unui document HTML",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce inseamna HTML?",
+                        options: [
+                            "High Tech Modern Language",
+                            "HyperText Markup Language",
+                            "Home Tool Markup Language",
+                            "Hyperlink Text Making Language"
+                        ],
+                        correct: 1,
+                        explanation: "HTML = HyperText Markup Language. Este limbajul standard pentru crearea paginilor web. 'Markup' inseamna ca folosim tag-uri pentru a marca/structura continutul."
+                    },
+                    {
+                        text: "Care este structura corecta a unui document HTML?",
+                        options: [
+                            "&lt;body&gt;&lt;html&gt;&lt;head&gt;",
+                            "&lt;html&gt;&lt;head&gt;...&lt;/head&gt;&lt;body&gt;...&lt;/body&gt;&lt;/html&gt;",
+                            "&lt;head&gt;&lt;body&gt;&lt;html&gt;",
+                            "&lt;document&gt;&lt;page&gt;&lt;/page&gt;&lt;/document&gt;"
+                        ],
+                        correct: 1,
+                        explanation: "Structura corecta: &lt;html&gt; contine &lt;head&gt; (informatii despre pagina, titlu, CSS) si &lt;body&gt; (continutul vizibil). Toate tag-urile trebuie inchise corect."
+                    },
+                    {
+                        text: "Ce contine sectiunea &lt;head&gt; a unui document HTML?",
+                        options: [
+                            "Textul principal al paginii",
+                            "Metadate, titlul paginii, legaturi catre CSS",
+                            "Imaginile paginii",
+                            "Footer-ul paginii"
+                        ],
+                        correct: 1,
+                        explanation: "&lt;head&gt; contine informatii DESPRE pagina (nu vizibile direct): titlul (&lt;title&gt;), metadate, legaturi catre fisiere CSS si JavaScript. Continutul vizibil este in &lt;body&gt;."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Tag-uri HTML Comune",
+                description: "Recapitulare tag-uri pentru text, liste si linkuri",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Care tag creeaza cel mai important titlu (heading)?",
+                        options: [
+                            "&lt;h6&gt;",
+                            "&lt;h1&gt;",
+                            "&lt;title&gt;",
+                            "&lt;header&gt;"
+                        ],
+                        correct: 1,
+                        explanation: "&lt;h1&gt; este cel mai important heading (cel mai mare), &lt;h6&gt; cel mai putin important. &lt;title&gt; e pentru titlul paginii in browser tab, &lt;header&gt; e sectiune semantica."
+                    },
+                    {
+                        text: "Cum cream un link catre google.com?",
+                        options: [
+                            "&lt;link href='google.com'&gt;Google&lt;/link&gt;",
+                            "&lt;a href='https://google.com'&gt;Google&lt;/a&gt;",
+                            "&lt;url&gt;google.com&lt;/url&gt;",
+                            "&lt;href='google.com'&gt;Google&lt;/href&gt;"
+                        ],
+                        correct: 1,
+                        explanation: "Tag-ul &lt;a&gt; (anchor) creeaza linkuri. Atributul 'href' specifica destinatia. Textul dintre tag-uri este cel afisat si pe care utilizatorul da click."
+                    },
+                    {
+                        text: "Care este diferenta intre &lt;ul&gt; si &lt;ol&gt;?",
+                        options: [
+                            "Nu exista diferenta",
+                            "&lt;ul&gt; = lista neordonata (buline), &lt;ol&gt; = lista ordonata (numere)",
+                            "&lt;ul&gt; e pentru linkuri, &lt;ol&gt; pentru text",
+                            "&lt;ol&gt; e mai vechi decat &lt;ul&gt;"
+                        ],
+                        correct: 1,
+                        explanation: "&lt;ul&gt; (Unordered List) afiseaza buline/puncte. &lt;ol&gt; (Ordered List) afiseaza numere/litere. Ambele contin elemente &lt;li&gt; (list item)."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: CSS Bazele",
+                description: "Recapitulare introducere in CSS",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce inseamna CSS si la ce foloseste?",
+                        options: [
+                            "Computer Style System - pentru calcule",
+                            "Cascading Style Sheets - pentru stilizarea paginilor web",
+                            "Creative Site Software - pentru creare site-uri",
+                            "Code Syntax Standard - pentru validare cod"
+                        ],
+                        correct: 1,
+                        explanation: "CSS = Cascading Style Sheets. Defineste ASPECTUL paginii: culori, fonturi, dimensiuni, layout. HTML = structura, CSS = design/aspect."
+                    },
+                    {
+                        text: "Care este sintaxa corecta CSS pentru a face textul rosu?",
+                        options: [
+                            "text-color: red;",
+                            "color: red;",
+                            "font-color: red;",
+                            "text: red;"
+                        ],
+                        correct: 1,
+                        explanation: "In CSS, proprietatea pentru culoarea textului este 'color'. Ex: p { color: red; } face toate paragrafele rosii. 'text-color' si 'font-color' NU exista in CSS."
+                    },
+                    {
+                        text: "Cum aplicam CSS unui element cu id='header'?",
+                        options: [
+                            ".header { }",
+                            "#header { }",
+                            "header { }",
+                            "*header { }"
+                        ],
+                        correct: 1,
+                        explanation: "# (diez) selecteaza dupa ID: #header { }. Punctul (.) selecteaza dupa clasa: .header { }. Fara simbol selecteaza tag-ul: header { } (elementul HTML &lt;header&gt;)."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Proprietati CSS",
+                description: "Recapitulare proprietati CSS comune",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce proprietate CSS controleaza spatiul INTERIOR al unui element?",
+                        options: [
+                            "margin",
+                            "padding",
+                            "border",
+                            "spacing"
+                        ],
+                        correct: 1,
+                        explanation: "padding = spatiu INTERIOR (intre continut si border). margin = spatiu EXTERIOR (intre border si alte elemente). Border = chenarul. 'spacing' nu e proprietate CSS standard."
+                    },
+                    {
+                        text: "Cum setam o imagine de fundal in CSS?",
+                        options: [
+                            "image: url('bg.jpg');",
+                            "background-image: url('bg.jpg');",
+                            "bg-image: 'bg.jpg';",
+                            "background: image('bg.jpg');"
+                        ],
+                        correct: 1,
+                        explanation: "background-image: url('cale/imagine.jpg'); seteaza imaginea de fundal. Poti folosi si 'background' care e shorthand pentru mai multe proprietati de fundal."
+                    },
+                    {
+                        text: "Ce face 'display: flex;' in CSS?",
+                        options: [
+                            "Ascunde elementul",
+                            "Activeaza Flexbox pentru layout flexibil al elementelor copil",
+                            "Face elementul sa se intinda pe toata pagina",
+                            "Adauga o animatie"
+                        ],
+                        correct: 1,
+                        explanation: "display: flex; transforma elementul intr-un container Flexbox. Permite alinierea si distribuirea usoara a elementelor copil pe orizontala sau verticala."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Layout si Design",
+                description: "Recapitulare tehnici de layout web",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Cum centram orizontal un element block cu CSS?",
+                        options: [
+                            "align: center;",
+                            "margin: 0 auto; (cu width definita)",
+                            "center: true;",
+                            "position: center;"
+                        ],
+                        correct: 1,
+                        explanation: "Pentru elemente block: margin: 0 auto; centreaza orizontal (auto imparte spatiul egal stanga-dreapta). Elementul TREBUIE sa aiba width definita, altfel ocupa 100%."
+                    },
+                    {
+                        text: "Ce proprietate face un site sa se adapteze la diferite dimensiuni de ecran?",
+                        options: [
+                            "auto-resize: on;",
+                            "Media Queries (@media)",
+                            "screen-fit: all;",
+                            "adaptive: true;"
+                        ],
+                        correct: 1,
+                        explanation: "Media Queries permit stiluri diferite pentru dimensiuni diferite de ecran. Ex: @media (max-width: 600px) { } aplica stiluri doar pe ecrane sub 600px. Aceasta tehnica se numeste Responsive Design."
+                    },
+                    {
+                        text: "Ce face 'box-sizing: border-box;'?",
+                        options: [
+                            "Adauga un chenar decorativ",
+                            "Include padding si border in dimensiunea totala a elementului",
+                            "Creeaza o cutie in jurul textului",
+                            "Grupeaza mai multe elemente"
+                        ],
+                        correct: 1,
+                        explanation: "border-box face ca width si height sa INCLUDA padding si border. Fara el, un element de 200px + 20px padding devine 240px. Cu border-box ramane 200px total - mult mai usor de calculat!"
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('cls8_quiz_web_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('cls8_quiz_web_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    ${questionContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect! Excelent!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">💡</div>
+                    <div class="feedback-text">Nu este raspunsul corect. Iata explicatia:</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='quiz5-evaluare.html'">
+                                Quiz-ul 5: Pregatire Evaluare
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

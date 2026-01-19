@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Desenare in Paint | Clasa 5</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Header with XP */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* Level Map */
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Level connector line */
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        /* Quiz Area */
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-blue);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        /* Question styles */
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-blue);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-red);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .question-image {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .question-image img {
+            max-width: 100%;
+            border-radius: 12px;
+        }
+
+        /* Paint UI mockup */
+        .paint-ui-mockup {
+            background: #2d2d4a;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 500px;
+            text-align: left;
+            border: 2px solid var(--border);
+        }
+
+        .paint-toolbar {
+            background: #1e1e3a;
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .paint-btn {
+            padding: 0.3rem 0.6rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+        }
+
+        .paint-btn.highlight {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .paint-canvas {
+            background: #fff;
+            padding: 1rem;
+            border-radius: 4px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .paint-palette {
+            display: flex;
+            gap: 4px;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .color-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            border: 1px solid #333;
+        }
+
+        /* Answer options */
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-purple);
+            transform: translateX(5px);
+        }
+
+        .option.selected {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Feedback */
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        /* Level complete screen */
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-blue);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 2</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Desenare in Paint</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <!-- Level Map -->
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <!-- Quiz Area -->
+        <div class="quiz-area" id="quizArea">
+            <!-- Level intro will be shown here -->
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        // Quiz data for each level
+        const levels = {
+            1: {
+                title: "Nivel 1: Ce este Paint?",
+                description: "Invata ce este programul Paint si pentru ce il folosim",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce este Microsoft Paint?",
+                        options: [
+                            "Un program pentru scris texte",
+                            "Un program simplu pentru desenat si editat imagini",
+                            "Un program pentru ascultat muzica",
+                            "Un browser de internet"
+                        ],
+                        correct: 1,
+                        explanation: "Microsoft Paint este un program simplu de grafica inclus in Windows, folosit pentru a desena, colora si edita imagini."
+                    },
+                    {
+                        text: "Ce poti face in Paint?",
+                        options: [
+                            "Doar sa scrii texte",
+                            "Sa desenezi, colorezi si sa editezi poze",
+                            "Sa navighezi pe internet",
+                            "Sa asculti muzica"
+                        ],
+                        correct: 1,
+                        explanation: "In Paint poti desena linii, forme geometrice, poti colora, adauga text pe imagini si edita fotografii simple."
+                    },
+                    {
+                        text: "Cum deschizi Paint pe Windows?",
+                        options: [
+                            "Apesi pe orice fisier",
+                            "Cauti 'Paint' in meniul Start sau bara de cautare",
+                            "Deschizi un browser",
+                            "Apesi tasta Delete"
+                        ],
+                        correct: 1,
+                        explanation: "Pentru a deschide Paint, apasa butonul Start, scrie 'Paint' in casuta de cautare si apasa Enter."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Interfata Paint",
+                description: "Descopera elementele principale ale ferestrei Paint",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Care este zona alba mare din centrul Paint?",
+                        hasVisual: true,
+                        visualType: "canvas",
+                        options: [
+                            "Bara de instrumente",
+                            "Zona de desenare (panza)",
+                            "Paleta de culori",
+                            "Meniul File"
+                        ],
+                        correct: 1,
+                        explanation: "Zona alba mare din centru este 'panza' sau zona de desenare - aici creezi desenele tale."
+                    },
+                    {
+                        text: "Unde gasesti instrumentele de desenat (creion, pensule, forme)?",
+                        options: [
+                            "In partea de jos a ecranului",
+                            "In bara de instrumente din partea de sus",
+                            "In zona de desenare",
+                            "Nu exista instrumente"
+                        ],
+                        correct: 1,
+                        explanation: "Instrumentele de desenat se gasesc in bara de instrumente (Ribbon) din partea de sus a ferestrei Paint."
+                    },
+                    {
+                        text: "Unde se afla paleta de culori in Paint?",
+                        options: [
+                            "In centrul ecranului",
+                            "In bara de instrumente, zona 'Colors'",
+                            "In meniul File",
+                            "Nu exista paleta de culori"
+                        ],
+                        correct: 1,
+                        explanation: "Paleta de culori se afla in bara de instrumente, in sectiunea 'Colors' (Culori), unde poti alege culoarea pentru desen."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Culorile in Paint",
+                description: "Invata sa lucrezi cu culorile",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce reprezinta 'Color 1' si 'Color 2' in Paint?",
+                        options: [
+                            "Doua programe diferite",
+                            "Culoarea principala (pentru desen) si culoarea de fundal",
+                            "Doua tipuri de pensule",
+                            "Doua documente"
+                        ],
+                        correct: 1,
+                        explanation: "Color 1 este culoarea principala cu care desenezi (click stanga), iar Color 2 este culoarea de fundal sau secundara (click dreapta)."
+                    },
+                    {
+                        text: "Cum schimbi culoarea principala (Color 1)?",
+                        options: [
+                            "Apesi tasta Enter",
+                            "Selectezi Color 1, apoi click pe culoarea dorita din paleta",
+                            "Inchizi si redeschizi Paint",
+                            "Nu se poate schimba"
+                        ],
+                        correct: 1,
+                        explanation: "Pentru a schimba culoarea: asigura-te ca Color 1 este selectat, apoi da click pe culoarea dorita din paleta de culori."
+                    },
+                    {
+                        text: "Ce face butonul 'Edit colors' (Editeaza culori)?",
+                        options: [
+                            "Sterge toate culorile",
+                            "Iti permite sa creezi culori personalizate",
+                            "Salveaza documentul",
+                            "Inchide programul"
+                        ],
+                        correct: 1,
+                        explanation: "'Edit colors' deschide o fereastra unde poti crea culori personalizate, alegand exact nuanta pe care o doresti."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Zoom si navigare",
+                description: "Invata sa maresti si sa te deplasezi in desen",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "La ce foloseste functia Zoom in Paint?",
+                        options: [
+                            "Sa stergi desenul",
+                            "Sa maresti sau sa micsorezi vizualizarea desenului",
+                            "Sa salvezi fisierul",
+                            "Sa adaugi text"
+                        ],
+                        correct: 1,
+                        explanation: "Zoom-ul iti permite sa maresti (Zoom In) sau sa micsorezi (Zoom Out) vizualizarea, pentru a lucra la detalii sau pentru a vedea intregul desen."
+                    },
+                    {
+                        text: "Unde gasesti controalele de Zoom in Paint?",
+                        options: [
+                            "In meniul File",
+                            "In coltul din dreapta jos, pe bara de stare, sau in tab-ul View",
+                            "Nu exista Zoom in Paint",
+                            "In paleta de culori"
+                        ],
+                        correct: 1,
+                        explanation: "Controalele de Zoom se gasesc in coltul din dreapta jos (slider) sau in tab-ul View din bara de instrumente."
+                    },
+                    {
+                        text: "Ce se intampla cand maresti mult desenul (zoom in)?",
+                        options: [
+                            "Desenul se sterge",
+                            "Vezi doar o parte din desen, dar in detaliu",
+                            "Desenul devine mai mic",
+                            "Culorile se schimba"
+                        ],
+                        correct: 1,
+                        explanation: "Cand maresti (zoom in), vezi o portiune mai mica din desen dar cu mai multe detalii - util pentru lucru de precizie."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Document nou si dimensiuni",
+                description: "Invata sa creezi un desen nou si sa setezi dimensiunile",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Cum creezi un desen nou in Paint?",
+                        options: [
+                            "Apesi tasta Delete",
+                            "File > New sau Ctrl + N",
+                            "Inchizi calculatorul",
+                            "Apesi pe paleta de culori"
+                        ],
+                        correct: 1,
+                        explanation: "Pentru un desen nou: meniul File > New, sau foloseste scurtatura Ctrl + N. Paint va deschide o panza noua, goala."
+                    },
+                    {
+                        text: "Cum poti schimba dimensiunea panzei (zona de desen)?",
+                        options: [
+                            "Nu se poate schimba",
+                            "Tragi de marginile panzei sau folosesti File > Properties",
+                            "Apesi tasta Enter",
+                            "Stergi tot desenul"
+                        ],
+                        correct: 1,
+                        explanation: "Poti redimensiona panza tragand de patratele mici de la margini sau din File > Properties, unde setezi exact latimea si inaltimea."
+                    },
+                    {
+                        text: "Ce scurtatura folosesti pentru a anula ultima actiune gresita?",
+                        options: [
+                            "Ctrl + S",
+                            "Ctrl + Z",
+                            "Ctrl + P",
+                            "Ctrl + C"
+                        ],
+                        correct: 1,
+                        explanation: "Ctrl + Z este comanda pentru Undo (Anuleaza) - revine la starea anterioara. Foarte utila cand faci o greseala!"
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        // Load saved progress
+        function loadProgress() {
+            const saved = localStorage.getItem('paint_quiz1_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('paint_quiz1_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            // Add visual mockup if needed
+            if (q.hasVisual && q.visualType === 'canvas') {
+                questionContent += `
+                    <div class="paint-ui-mockup">
+                        <div class="paint-toolbar">
+                            <span class="paint-btn">File</span>
+                            <span class="paint-btn">Home</span>
+                            <span class="paint-btn">View</span>
+                            <span class="paint-btn highlight">Pencil</span>
+                            <span class="paint-btn">Brush</span>
+                        </div>
+                        <div class="paint-canvas">
+                            <span style="color: #666; font-style: italic;">Zona de desenare</span>
+                        </div>
+                        <div class="paint-palette">
+                            <div class="color-box" style="background: #000;"></div>
+                            <div class="color-box" style="background: #fff;"></div>
+                            <div class="color-box" style="background: #ff0000;"></div>
+                            <div class="color-box" style="background: #00ff00;"></div>
+                            <div class="color-box" style="background: #0000ff;"></div>
+                            <div class="color-box" style="background: #ffff00;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    ${questionContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            // Disable all options
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            // Show correct/wrong
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            // Update progress dots
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            // Show feedback
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">😅</div>
+                    <div class="feedback-text">Nu chiar...</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                // Unlock next level
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='quiz2-instrumente.html'">
+                                Quiz-ul 2: Instrumentele Paint
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Declarare si Indexare | Clasa 8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-red: #ef4444;
+            --accent-rose: #f43f5e;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-red);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-red);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-rose);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .code-block {
+            background: #1e1e3a;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin: 1rem auto;
+            max-width: 500px;
+            text-align: left;
+            border: 2px solid var(--border);
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1rem;
+            color: #e2e8f0;
+            overflow-x: auto;
+        }
+
+        .code-block .keyword {
+            color: #c586c0;
+        }
+
+        .code-block .type {
+            color: #4ec9b0;
+        }
+
+        .code-block .number {
+            color: #b5cea8;
+        }
+
+        .code-block .variable {
+            color: #9cdcfe;
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-rose);
+            transform: translateX(5px);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-rose);
+            background: rgba(244, 63, 94, 0.2);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(244, 63, 94, 0.2);
+            border: 2px solid var(--accent-rose);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            text-align: left;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-red);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+            .code-block { font-size: 0.85rem; padding: 0.8rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 2</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Declarare si Indexare</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea">
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Sintaxa declararii",
+                description: "Invata cum se declara un tablou in C++",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Care este sintaxa corecta pentru a declara un tablou in C++?",
+                        hasCode: true,
+                        codeContent: "<span class='type'>tip</span> <span class='variable'>nume</span>[<span class='number'>dimensiune</span>];",
+                        options: [
+                            "tip[dimensiune] nume;",
+                            "tip nume[dimensiune];",
+                            "array tip nume[dimensiune];",
+                            "declare tip nume[dimensiune];"
+                        ],
+                        correct: 1,
+                        explanation: "In C++, sintaxa corecta este: tip nume[dimensiune]; Exemplu: int note[10]; - declara un tablou de 10 numere intregi numit 'note'."
+                    },
+                    {
+                        text: "Ce declara urmatoarea linie de cod?",
+                        hasCode: true,
+                        codeContent: "<span class='type'>double</span> <span class='variable'>temperaturi</span>[<span class='number'>7</span>];",
+                        options: [
+                            "7 variabile separate de tip double",
+                            "Un tablou cu 7 numere cu zecimale",
+                            "Un tablou cu 6 numere cu zecimale",
+                            "O variabila double cu valoarea 7"
+                        ],
+                        correct: 1,
+                        explanation: "double temperaturi[7]; declara un tablou cu 7 elemente de tip double (numere cu zecimale). Perfect pentru a stoca temperaturile din fiecare zi a saptamanii!"
+                    },
+                    {
+                        text: "Care declaratie este GRESITA?",
+                        options: [
+                            "int numere[100];",
+                            "char litere[26];",
+                            "float valori[];",
+                            "double medii[30];"
+                        ],
+                        correct: 2,
+                        explanation: "float valori[]; este gresita deoarece NU specifica dimensiunea! In C++, cand declari un tablou, TREBUIE sa spui cate elemente va avea (sau sa-l initializezi cu valori)."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Indexarea de la 0",
+                description: "Intelege de ce numerotam de la 0",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Intr-un tablou int arr[5], care este indexul PRIMULUI element?",
+                        hasCode: true,
+                        codeContent: "<span class='type'>int</span> <span class='variable'>arr</span>[<span class='number'>5</span>]; <span class='comment'>// Primul element este arr[?]</span>",
+                        options: [
+                            "arr[1]",
+                            "arr[0]",
+                            "arr[5]",
+                            "arr[-1]"
+                        ],
+                        correct: 1,
+                        explanation: "In C++ (si majoritatea limbajelor), indexarea incepe de la 0! Primul element este arr[0], al doilea arr[1], si asa mai departe. Este o conventie importanta de retinut!"
+                    },
+                    {
+                        text: "Intr-un tablou int arr[5], care este indexul ULTIMULUI element?",
+                        options: [
+                            "arr[5]",
+                            "arr[4]",
+                            "arr[6]",
+                            "arr[0]"
+                        ],
+                        correct: 1,
+                        explanation: "Daca tabloul are 5 elemente si indexarea incepe de la 0, indicii sunt: 0, 1, 2, 3, 4. Ultimul element este arr[4], NU arr[5]! arr[5] ar fi in afara tabloului."
+                    },
+                    {
+                        text: "Ce se intampla daca accesezi arr[5] intr-un tablou int arr[5]?",
+                        options: [
+                            "Primesti ultimul element",
+                            "Eroare de compilare intotdeauna",
+                            "Comportament nedefinit - accesezi memorie in afara tabloului",
+                            "Primesti valoarea 0"
+                        ],
+                        correct: 2,
+                        explanation: "Accesarea arr[5] intr-un tablou de 5 elemente (indici 0-4) cauzeaza 'undefined behavior' - comportament nedefinit. Poate functiona, poate crapa programul, sau poate da valori aleatorii. Este o eroare grava!"
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Initializarea tablourilor",
+                description: "Invata cum sa dai valori initiale",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Care este sintaxa corecta pentru a initializa un tablou cu valori?",
+                        hasCode: true,
+                        codeContent: "<span class='type'>int</span> <span class='variable'>note</span>[] = {<span class='number'>9</span>, <span class='number'>10</span>, <span class='number'>8</span>, <span class='number'>7</span>, <span class='number'>10</span>};",
+                        options: [
+                            "int note[] = (9, 10, 8, 7, 10);",
+                            "int note[] = {9, 10, 8, 7, 10};",
+                            "int note[] = [9, 10, 8, 7, 10];",
+                            "int note = {9, 10, 8, 7, 10};"
+                        ],
+                        correct: 1,
+                        explanation: "Folosim acolade {} pentru a lista valorile initiale. Cand initializam cu valori, putem omite dimensiunea - compilatorul o calculeaza automat (5 valori = dimensiune 5)."
+                    },
+                    {
+                        text: "Ce dimensiune va avea acest tablou?",
+                        hasCode: true,
+                        codeContent: "<span class='type'>char</span> <span class='variable'>vocale</span>[] = {<span class='string'>'a'</span>, <span class='string'>'e'</span>, <span class='string'>'i'</span>, <span class='string'>'o'</span>, <span class='string'>'u'</span>};",
+                        options: [
+                            "4 elemente",
+                            "5 elemente",
+                            "6 elemente",
+                            "Nu se poate determina"
+                        ],
+                        correct: 1,
+                        explanation: "Cand initializam un tablou cu valori intre acolade, dimensiunea este determinata automat de numarul de valori. Aici avem 5 caractere: 'a', 'e', 'i', 'o', 'u' - deci tabloul are 5 elemente."
+                    },
+                    {
+                        text: "Ce valoare va avea arr[2] dupa aceasta initializare?",
+                        hasCode: true,
+                        codeContent: "<span class='type'>int</span> <span class='variable'>arr</span>[<span class='number'>5</span>] = {<span class='number'>10</span>, <span class='number'>20</span>, <span class='number'>30</span>};",
+                        options: [
+                            "0 (valoare implicita)",
+                            "30",
+                            "20",
+                            "Nedefinit"
+                        ],
+                        correct: 1,
+                        explanation: "arr[0]=10, arr[1]=20, arr[2]=30. Deci arr[2] este 30. Elementele arr[3] si arr[4] nu au fost specificate, dar sunt initializate automat cu 0."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Accesarea elementelor",
+                description: "Citeste si modifica valori in tablou",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce afiseaza acest cod?",
+                        hasCode: true,
+                        codeContent: "<span class='type'>int</span> <span class='variable'>x</span>[] = {<span class='number'>5</span>, <span class='number'>10</span>, <span class='number'>15</span>, <span class='number'>20</span>};\ncout << <span class='variable'>x</span>[<span class='number'>1</span>] + <span class='variable'>x</span>[<span class='number'>3</span>];",
+                        options: [
+                            "15",
+                            "25",
+                            "30",
+                            "35"
+                        ],
+                        correct: 2,
+                        explanation: "x[1] = 10 (al doilea element) si x[3] = 20 (al patrulea element). 10 + 20 = 30. Atentie: x[1] NU este primul element, ci al doilea!"
+                    },
+                    {
+                        text: "Ce efect are aceasta instructiune?",
+                        hasCode: true,
+                        codeContent: "<span class='variable'>arr</span>[<span class='number'>2</span>] = <span class='number'>100</span>;",
+                        options: [
+                            "Creeaza un tablou nou cu valoarea 100",
+                            "Schimba valoarea celui de-al TREILEA element in 100",
+                            "Schimba valoarea celui de-al DOILEA element in 100",
+                            "Adauga 100 la tablou"
+                        ],
+                        correct: 1,
+                        explanation: "arr[2] = 100; modifica elementul de la indexul 2 (al TREILEA element, deoarece indexarea incepe de la 0). Valoarea anterioara este inlocuita cu 100."
+                    },
+                    {
+                        text: "Ce afiseaza acest cod?",
+                        hasCode: true,
+                        codeContent: "<span class='type'>int</span> <span class='variable'>v</span>[] = {<span class='number'>2</span>, <span class='number'>4</span>, <span class='number'>6</span>, <span class='number'>8</span>};\ncout << <span class='variable'>v</span>[<span class='number'>0</span>] * <span class='variable'>v</span>[<span class='number'>2</span>];",
+                        options: [
+                            "8",
+                            "12",
+                            "24",
+                            "6"
+                        ],
+                        correct: 1,
+                        explanation: "v[0] = 2 (primul element) si v[2] = 6 (al treilea element). 2 * 6 = 12."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Formula indicilor",
+                description: "Stapaneste relatia intre dimensiune si indici",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Intr-un tablou cu n elemente, care este intervalul valid de indici?",
+                        options: [
+                            "De la 1 la n",
+                            "De la 0 la n-1",
+                            "De la 0 la n",
+                            "De la 1 la n-1"
+                        ],
+                        correct: 1,
+                        explanation: "Pentru un tablou cu n elemente, indicii valizi sunt de la 0 la n-1. Exemplu: arr[10] are indicii 0, 1, 2, ..., 9 (10 valori in total, de la 0 la 9)."
+                    },
+                    {
+                        text: "Daca vrei sa accesezi al 7-lea element dintr-un tablou, ce index folosesti?",
+                        options: [
+                            "arr[7]",
+                            "arr[6]",
+                            "arr[8]",
+                            "arr[5]"
+                        ],
+                        correct: 1,
+                        explanation: "Al 7-lea element are indexul 6. Formula: pozitia dorita - 1 = index. Primul element (pozitia 1) = index 0, al doilea (pozitia 2) = index 1, ..., al 7-lea = index 6."
+                    },
+                    {
+                        text: "Care afirmatie este corecta pentru int arr[100]?",
+                        options: [
+                            "Primul element este arr[1], ultimul este arr[100]",
+                            "Primul element este arr[0], ultimul este arr[99]",
+                            "Primul element este arr[0], ultimul este arr[100]",
+                            "Tabloul are 99 de elemente"
+                        ],
+                        correct: 1,
+                        explanation: "Un tablou int arr[100] are 100 elemente. Primul element este arr[0] si ultimul este arr[99]. arr[100] ar fi in afara limitelor tabloului!"
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('cpp_arrays_quiz2_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('cpp_arrays_quiz2_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            if (q.hasCode) {
+                questionContent += `<div class="code-block">${q.codeContent}</div>`;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    ${questionContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">&#127881;</div>
+                    <div class="feedback-text">Corect! Excelent!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">&#128161;</div>
+                    <div class="feedback-text">Nu chiar... Hai sa intelegem de ce!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '&#11088;&#11088;&#11088;';
+            else if (percentage >= 80) stars = '&#11088;&#11088;';
+            else if (percentage >= 66) stars = '&#11088;';
+            else stars = '&#128170;';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '&#127942;' : '&#128218;'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='quiz3-parcurgere.html'">
+                                Quiz-ul 3: Parcurgere cu for
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Testare si Finalizare | Clasa 6</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-orange: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-orange);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-orange);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-orange);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-red);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-purple);
+            transform: translateX(5px);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+        }
+
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-orange);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        .module-complete {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(139, 92, 246, 0.1));
+            border-radius: 16px;
+            margin-top: 1rem;
+        }
+
+        .module-complete h3 {
+            font-size: 1.5rem;
+            color: var(--accent-orange);
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 5</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Testare si Finalizare</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea">
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Ce este testarea?",
+                description: "Invata de ce si cum testezi jocul tau",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "De ce trebuie sa testezi jocul dupa ce il faci?",
+                        options: [
+                            "Nu trebuie, merge oricum",
+                            "Ca sa gasesti erori (bug-uri) si sa verifici ca totul functioneaza corect",
+                            "Doar ca sa te joci",
+                            "Ca sa arate mai frumos"
+                        ],
+                        correct: 1,
+                        explanation: "Testarea este esentiala! Chiar si programatorii profesionisti fac greseli. Testarea te ajuta sa gasesti probleme (bug-uri) inainte ca altii sa le descopere."
+                    },
+                    {
+                        text: "Ce este un 'bug' in programare?",
+                        options: [
+                            "O insecta pe ecran",
+                            "O eroare sau problema in cod care face jocul sa nu functioneze corect",
+                            "Un tip de sprite",
+                            "Un sunet"
+                        ],
+                        correct: 1,
+                        explanation: "Un bug este o eroare in program - poate fi o coliziune care nu functioneaza, un scor care nu creste, un personaj care iese din ecran. Numele vine de la o insecta gasita intr-un calculator vechi!"
+                    },
+                    {
+                        text: "Care este primul pas in testare?",
+                        options: [
+                            "Sa publici jocul imediat",
+                            "Sa joci jocul de la inceput pana la sfarsit, incercand toate actiunile",
+                            "Sa stergi tot codul",
+                            "Sa schimbi fundalul"
+                        ],
+                        correct: 1,
+                        explanation: "Primul pas este sa joci jocul complet: incepe, incerca toate controalele, vezi daca coliziunile functioneaza, daca scorul creste, daca poti castiga si pierde - totul!"
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Tipuri de bug-uri",
+                description: "Invata sa identifici problemele comune",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Ce tip de bug este cand personajul trece prin pereti?",
+                        options: [
+                            "Bug de sunet",
+                            "Bug de coliziune (collision bug)",
+                            "Bug de culoare",
+                            "Bug de salvare"
+                        ],
+                        correct: 1,
+                        explanation: "Cand personajul trece prin pereti in loc sa fie oprit, ai un bug de coliziune - detectarea atingerii nu functioneaza corect sau conditia 'if touching' nu e implementata bine."
+                    },
+                    {
+                        text: "Ce faci daca scorul nu creste cand prinzi o moneda?",
+                        options: [
+                            "Renunti la joc",
+                            "Verifici daca ai blocul 'change scor by' in codul monedei",
+                            "Schimbi culoarea monedei",
+                            "Adaugi mai multe monede"
+                        ],
+                        correct: 1,
+                        explanation: "Verifica codul monedei: trebuie sa ai 'if touching [jucator]' apoi 'change scor by [valoare]'. Asigura-te ca variabila scor exista si e globala ('for all sprites')."
+                    },
+                    {
+                        text: "Ce bug ai daca jocul se blocheaza si nu mai raspunde?",
+                        options: [
+                            "Bug vizual",
+                            "Bug de bucla infinita (infinite loop) sau lipsa conditiei de iesire",
+                            "Bug de culoare",
+                            "Nu e niciun bug"
+                        ],
+                        correct: 1,
+                        explanation: "Cand jocul se blocheaza, de obicei ai o bucla infinita fara pauza ('wait') sau fara conditie de iesire. Adauga 'wait 0.01 seconds' in bucle sau verifica conditiile de oprire."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Debugging (gasirea erorilor)",
+                description: "Invata tehnici de debugging",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Cum te ajuta blocul 'say' la debugging?",
+                        options: [
+                            "Face jocul mai frumos",
+                            "Poti afisa valori pentru a vedea ce se intampla in cod",
+                            "Adauga sunete",
+                            "Schimba costumul"
+                        ],
+                        correct: 1,
+                        explanation: "Blocul 'say' e excelent pentru debugging! Poti pune 'say (scor)' sau 'say (vieti)' temporar pentru a vedea daca variabilele au valorile asteptate. Il stergi dupa ce rezolvi problema."
+                    },
+                    {
+                        text: "Ce faci cand nu stii unde e problema in cod?",
+                        options: [
+                            "Stergi tot si o iei de la capat",
+                            "Dezactivezi parti din cod pe rand pentru a izola problema",
+                            "Ignori problema",
+                            "Adaugi mai mult cod"
+                        ],
+                        correct: 1,
+                        explanation: "Tehnica de 'izolare': dezactivezi (sau stergi temporar) parti din cod pe rand pana gasesti sectiunea problematica. Cand jocul merge fara o parte, ai gasit unde e bug-ul!"
+                    },
+                    {
+                        text: "Ce inseamna sa 'comentezi' codul pentru debugging?",
+                        options: [
+                            "Sa scrii pareri despre cod",
+                            "Sa dezactivezi temporar blocuri mutandu-le deoparte (fara sa le stergi)",
+                            "Sa vorbesti despre cod",
+                            "Sa schimbi culoarea blocurilor"
+                        ],
+                        correct: 1,
+                        explanation: "In Scratch, poti 'comenta' codul mutand blocuri deoparte (nu le stergi, le tii separat). Astfel testezi fara acea parte de cod si poti sa o pui inapoi usor daca nu era problema acolo."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Imbunatatiri si polish",
+                description: "Invata sa faci jocul mai bun",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce inseamna 'polish' in dezvoltarea jocurilor?",
+                        options: [
+                            "Sa traduci jocul in polona",
+                            "Sa adaugi detalii care fac jocul sa para profesional (sunete, animatii, efecte)",
+                            "Sa stergi tot codul",
+                            "Sa schimbi numele jocului"
+                        ],
+                        correct: 1,
+                        explanation: "'Polish' inseamna finisare - adaugi sunete pentru actiuni, animatii la colectarea obiectelor, efecte vizuale, ecran de titlu, instructiuni. Fac diferenta intre un joc amator si unul profesional!"
+                    },
+                    {
+                        text: "Ce ar trebui sa aiba un ecran de start bun?",
+                        options: [
+                            "Doar un fundal gol",
+                            "Titlul jocului, buton de start si optional instructiuni scurte",
+                            "Doar cod",
+                            "Nimic"
+                        ],
+                        correct: 1,
+                        explanation: "Un ecran de start bun are: titlul jocului vizibil, un buton sau mesaj 'Apasa SPACE pentru a incepe', si optional instructiuni scurte despre controale si obiectiv."
+                    },
+                    {
+                        text: "Ce elemente audio imbunatatesc experienta?",
+                        options: [
+                            "Niciun sunet, e mai bine liniste",
+                            "Sunete pentru: colectare, lovire, castig, pierdere si optional muzica de fundal",
+                            "Doar un sunet pentru tot",
+                            "Sunete foarte tari si deranjante"
+                        ],
+                        correct: 1,
+                        explanation: "Sunetele potrivite fac jocul mai imersiv: un 'pling' la colectare, un 'ouch' la lovire, fanfara la castig, sunet trist la pierdere. Muzica de fundal e bonus dar nu obligatorie!"
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Publicarea si feedback",
+                description: "Invata sa impartasesti jocul cu altii",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Cum poti impartasi jocul tau Scratch cu altii?",
+                        options: [
+                            "Nu se poate",
+                            "Apesi 'Share' pe scratch.mit.edu si trimiți link-ul",
+                            "Il printezi",
+                            "Il trimiti prin posta"
+                        ],
+                        correct: 1,
+                        explanation: "Pe scratch.mit.edu, butonul 'Share' face proiectul public. Primesti un link pe care il poti trimite prietenilor, familiei sau profesorului. Oricine cu link-ul poate juca!"
+                    },
+                    {
+                        text: "De ce e important feedback-ul de la altii?",
+                        options: [
+                            "Nu e important",
+                            "Altii pot gasi bug-uri sau probleme pe care tu nu le-ai observat",
+                            "Ca sa te laude",
+                            "Ca sa stie ca ai facut un joc"
+                        ],
+                        correct: 1,
+                        explanation: "Ochii proaspeti vad lucruri noi! Tu stii cum 'ar trebui' sa mearga jocul, dar altii il joaca fara prejudecati si pot gasi probleme, confuzii sau sugestii de imbunatatire valoroase."
+                    },
+                    {
+                        text: "Ce faci cu feedback-ul primit?",
+                        options: [
+                            "Il ignori complet",
+                            "Analizezi sugestiile si implementezi imbunatatirile utile",
+                            "Te superi",
+                            "Stergi jocul"
+                        ],
+                        correct: 1,
+                        explanation: "Feedback-ul e un cadou! Nu trebuie sa implementezi TOT, dar analizeaza: daca mai multi spun acelasi lucru, probabil e o problema reala. Imbunatateste, testeaza din nou, repeta!"
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('cls6_m5_quiz5_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('cls6_m5_quiz5_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    <p class="question-text">${q.text}</p>
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">😅</div>
+                    <div class="feedback-text">Nu chiar...</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            let moduleComplete = '';
+            if (passed && currentLevel === 5) {
+                moduleComplete = `
+                    <div class="module-complete">
+                        <h3>Felicitari! Ai completat Modulul 5!</h3>
+                        <p>Acum stii sa planifici, creezi, testezi si sa publici un joc in Scratch!</p>
+                        <p style="margin-top: 1rem; color: var(--accent-purple);">Esti pregatit sa creezi propriul tau joc de la zero!</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    ${moduleComplete}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='../index.html'">
+                                Inapoi la Modulul 5
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

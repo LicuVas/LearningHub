@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Tabele si Campuri | Clasa 7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-green);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-red);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        /* Database table mockup */
+        .db-mockup {
+            background: #2d2d4a;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 600px;
+            overflow-x: auto;
+            border: 2px solid var(--border);
+        }
+
+        .db-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .db-table th {
+            background: var(--accent-green);
+            color: white;
+            padding: 0.6rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .db-table td {
+            background: var(--bg-card);
+            padding: 0.6rem;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .db-table tr:hover td {
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .highlight-col {
+            background: rgba(6, 182, 212, 0.2) !important;
+            border: 2px solid var(--accent-cyan) !important;
+        }
+
+        .highlight-row {
+            background: rgba(251, 191, 36, 0.2) !important;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-cyan);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+            .db-table { font-size: 0.8rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 1</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Tabele si Campuri</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea">
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Structura unui tabel",
+                description: "Invata cum este organizat un tabel in baza de date",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Cum se numesc coloanele dintr-un tabel de baza de date?",
+                        hasVisual: true,
+                        visualType: "table-cols",
+                        options: [
+                            "Randuri",
+                            "Campuri (Fields)",
+                            "Celule",
+                            "Pagini"
+                        ],
+                        correct: 1,
+                        explanation: "Coloanele unui tabel se numesc CAMPURI (Fields). Fiecare camp stocheaza un anumit tip de informatie - de exemplu: Nume, Varsta, Email."
+                    },
+                    {
+                        text: "Cum se numesc randurile dintr-un tabel de baza de date?",
+                        hasVisual: true,
+                        visualType: "table-rows",
+                        options: [
+                            "Inregistrari (Records)",
+                            "Campuri",
+                            "Titluri",
+                            "Antete"
+                        ],
+                        correct: 0,
+                        explanation: "Randurile unui tabel se numesc INREGISTRARI (Records). Fiecare inregistrare reprezinta un set complet de date - de exemplu, toate informatiile despre un elev."
+                    },
+                    {
+                        text: "Priveste tabelul de mai jos. Cate CAMPURI are?",
+                        hasVisual: true,
+                        visualType: "table-count",
+                        options: [
+                            "2 campuri",
+                            "3 campuri",
+                            "4 campuri",
+                            "5 campuri"
+                        ],
+                        correct: 2,
+                        explanation: "Tabelul are 4 campuri (coloane): ID, Nume, Varsta si Oras. Campurile definesc CE informatii stocam despre fiecare inregistrare."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Inregistrari in detaliu",
+                description: "Aprofundeaza cunostintele despre randuri si inregistrari",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "In tabelul 'Elevi', o inregistrare reprezinta:",
+                        options: [
+                            "Numele tuturor elevilor",
+                            "Toate informatiile despre UN singur elev",
+                            "Doar notele unui elev",
+                            "Numele profesorilor"
+                        ],
+                        correct: 1,
+                        explanation: "O inregistrare contine toate informatiile despre o singura entitate. In tabelul 'Elevi', o inregistrare = toate datele despre UN elev (nume, varsta, clasa, adresa etc.)."
+                    },
+                    {
+                        text: "Priveste tabelul. Cate INREGISTRARI (randuri cu date) are?",
+                        hasVisual: true,
+                        visualType: "table-count",
+                        options: [
+                            "1 inregistrare",
+                            "2 inregistrari",
+                            "3 inregistrari",
+                            "4 inregistrari"
+                        ],
+                        correct: 2,
+                        explanation: "Tabelul are 3 inregistrari (randuri cu date): Maria, Andrei si Elena. Randul cu titlurile coloanelor (ID, Nume, etc.) NU este o inregistrare, ci antetul tabelului."
+                    },
+                    {
+                        text: "Ce se intampla cand adaugi un nou elev in baza de date?",
+                        options: [
+                            "Se adauga un camp nou",
+                            "Se adauga o inregistrare noua (rand nou)",
+                            "Se sterge tabelul",
+                            "Se schimba numele tabelului"
+                        ],
+                        correct: 1,
+                        explanation: "Cand adaugi un nou elev, se creeaza o INREGISTRARE noua (un rand nou) cu toate informatiile acelui elev completate in campurile existente."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Campuri si proprietati",
+                description: "Descopera caracteristicile campurilor",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce proprietate importanta trebuie sa aiba fiecare camp?",
+                        options: [
+                            "Sa fie colorat",
+                            "Sa aiba un nume unic si un tip de date",
+                            "Sa fie ascuns",
+                            "Sa fie gol"
+                        ],
+                        correct: 1,
+                        explanation: "Fiecare camp trebuie sa aiba un NUME UNIC (pentru a-l identifica) si un TIP DE DATE (pentru a sti ce fel de informatii stocheaza: text, numar, data etc.)."
+                    },
+                    {
+                        text: "De ce este important sa denumim campurile clar si descriptiv?",
+                        options: [
+                            "Nu este important",
+                            "Pentru a intelege usor ce date contine fiecare camp",
+                            "Pentru a face baza de date mai mare",
+                            "Pentru a ascunde datele"
+                        ],
+                        correct: 1,
+                        explanation: "Nume clare precum 'DataNasterii', 'NumeElev', 'Adresa' ne ajuta sa intelegem instant ce contine fiecare camp. 'Camp1', 'x', 'abc' nu ne spun nimic!"
+                    },
+                    {
+                        text: "Care camp ar fi potrivit pentru a stoca numarul de telefon?",
+                        options: [
+                            "Un camp de tip data calendaristica",
+                            "Un camp de tip text sau numar",
+                            "Un camp de tip imagine",
+                            "Un camp de tip boolean (da/nu)"
+                        ],
+                        correct: 1,
+                        explanation: "Numarul de telefon se stocheaza de obicei ca TEXT (pentru a pastra zerouri initiale si formatare) sau ca NUMAR. Tipul text este recomandat: '0722123456'."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Valori si celule",
+                description: "Intelege cum se stocheaza datele in celule",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce este o celula intr-un tabel de baza de date?",
+                        options: [
+                            "O linie intreaga",
+                            "Intersectia dintre un rand si o coloana - contine o singura valoare",
+                            "Tot tabelul",
+                            "Numele bazei de date"
+                        ],
+                        correct: 1,
+                        explanation: "O CELULA este locul unde se intersecteaza un rand cu o coloana. Fiecare celula contine o singura valoare - de exemplu, varsta '14' a elevului Maria."
+                    },
+                    {
+                        text: "In tabelul de mai jos, ce valoare se afla in celula la intersectia randului 'Andrei' cu coloana 'Oras'?",
+                        hasVisual: true,
+                        visualType: "table-cell",
+                        options: [
+                            "Bucuresti",
+                            "Cluj",
+                            "Iasi",
+                            "15"
+                        ],
+                        correct: 1,
+                        explanation: "Andrei locuieste in Cluj. Aceasta valoare se afla in celula de la intersectia randului lui Andrei cu coloana Oras."
+                    },
+                    {
+                        text: "Ce inseamna cand o celula este 'NULL' sau goala?",
+                        options: [
+                            "Contine numarul zero",
+                            "Nu exista nicio valoare introdusa pentru acel camp",
+                            "Contine textul 'NULL'",
+                            "Celula este stearsa"
+                        ],
+                        correct: 1,
+                        explanation: "NULL inseamna ca nu exista nicio valoare - campul este gol/necunoscut. E diferit de 0 (zero) sau de un text gol. NULL = 'nu stim' sau 'nu s-a completat'."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Proiectarea tabelelor",
+                description: "Invata sa gandesti ca un proiectant de baze de date",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Vrei sa creezi un tabel pentru biblioteca. Ce campuri ar fi esentiale?",
+                        options: [
+                            "Doar titlul cartii",
+                            "TitluCarte, Autor, AnPublicare, ISBN, Disponibil",
+                            "Culoare, Greutate, Miros",
+                            "Pret, Reducere, Promotie"
+                        ],
+                        correct: 1,
+                        explanation: "Pentru o biblioteca, campurile esentiale sunt: TitluCarte, Autor, AnPublicare (cand a aparut), ISBN (cod unic), Disponibil (da/nu). Acestea descriu complet o carte!"
+                    },
+                    {
+                        text: "De ce NU este bine sa stocam adresa completa intr-un singur camp?",
+                        options: [
+                            "Este perfect in regula",
+                            "Pentru ca nu putem cauta usor dupa oras sau strada separat",
+                            "Pentru ca ocupa prea putin spatiu",
+                            "Pentru ca arata mai frumos"
+                        ],
+                        correct: 1,
+                        explanation: "Daca stocam 'Str. Mihai Eminescu 10, Bucuresti, 010101' intr-un singur camp, nu putem cauta usor toti clientii din Bucuresti. Mai bine: Strada, Numar, Oras, CodPostal - campuri separate!"
+                    },
+                    {
+                        text: "Care este o regula importanta la denumirea tabelelor si campurilor?",
+                        options: [
+                            "Sa folosim cat mai multe spatii",
+                            "Sa folosim nume scurte, clare, fara spatii sau caractere speciale",
+                            "Sa folosim doar numere",
+                            "Sa schimbam numele in fiecare zi"
+                        ],
+                        correct: 1,
+                        explanation: "Nume bune: 'Elevi', 'DataNasterii', 'NumarTelefon'. Evitam: spatii, caractere speciale (?,!,@), diacritice. Folosim conventii precum CamelCase sau underscore: 'data_nasterii'."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('db_quiz2_progress_cls7');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('db_quiz2_progress_cls7', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function getTableVisual(type) {
+            const baseTable = `
+                <div class="db-mockup">
+                    <table class="db-table">
+                        <tr>
+                            <th ${type === 'table-cols' ? 'class="highlight-col"' : ''}>ID</th>
+                            <th ${type === 'table-cols' ? 'class="highlight-col"' : ''}>Nume</th>
+                            <th ${type === 'table-cols' ? 'class="highlight-col"' : ''}>Varsta</th>
+                            <th ${type === 'table-cols' ? 'class="highlight-col"' : ''}>Oras</th>
+                        </tr>
+                        <tr ${type === 'table-rows' ? 'class="highlight-row"' : ''}>
+                            <td>1</td>
+                            <td>Maria</td>
+                            <td>14</td>
+                            <td>Bucuresti</td>
+                        </tr>
+                        <tr ${type === 'table-rows' ? 'class="highlight-row"' : ''}>
+                            <td>2</td>
+                            <td>Andrei</td>
+                            <td>15</td>
+                            <td ${type === 'table-cell' ? 'class="highlight-col"' : ''}>Cluj</td>
+                        </tr>
+                        <tr ${type === 'table-rows' ? 'class="highlight-row"' : ''}>
+                            <td>3</td>
+                            <td>Elena</td>
+                            <td>14</td>
+                            <td>Iasi</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+            return baseTable;
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            if (q.hasVisual) {
+                questionContent += getTableVisual(q.visualType);
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    ${questionContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">😅</div>
+                    <div class="feedback-text">Nu chiar... Raspunsul corect era: "${q.options[q.correct]}"</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='quiz3-tipuri.html'">
+                                Quiz-ul 3: Tipuri de Date
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

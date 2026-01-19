@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Navigare si Link-uri | Clasa 7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-green);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-red);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .code-mockup {
+            background: #1e1e3a;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 550px;
+            text-align: left;
+            border: 2px solid var(--border);
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+
+        .code-mockup .tag {
+            color: var(--accent-green);
+        }
+
+        .code-mockup .attr {
+            color: var(--accent-yellow);
+        }
+
+        .code-mockup .value {
+            color: #f472b6;
+        }
+
+        .code-mockup .comment {
+            color: #6b7280;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-cyan);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+            .code-mockup { font-size: 0.75rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 5</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Navigare si Link-uri</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea">
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Ce sunt link-urile?",
+                description: "Invata bazele link-urilor in HTML",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce este un link (hiperlink) intr-o pagina web?",
+                        options: [
+                            "O imagine decorativa",
+                            "Un element pe care dai click pentru a merge la alta pagina sau sectiune",
+                            "Un tip de font",
+                            "O culoare speciala"
+                        ],
+                        correct: 1,
+                        explanation: "Un link (hiperlink) este un element interactiv - cand dai click pe el, te duce la alta pagina, alt site sau alta sectiune din aceeasi pagina."
+                    },
+                    {
+                        text: "Care este tagul HTML pentru a crea un link?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"pagina.html"</span><span class="tag">&gt;</span>Text link<span class="tag">&lt;/a&gt;</span>`,
+                        options: [
+                            "&lt;link&gt;",
+                            "&lt;a&gt; (ancora)",
+                            "&lt;href&gt;",
+                            "&lt;url&gt;"
+                        ],
+                        correct: 1,
+                        explanation: "Tagul &lt;a&gt; (de la 'anchor' = ancora) creeaza link-uri. Atributul 'href' specifica destinatia, iar textul dintre taguri este ce vede utilizatorul."
+                    },
+                    {
+                        text: "Ce inseamna atributul 'href' intr-un link?",
+                        options: [
+                            "Culoarea link-ului",
+                            "Adresa (URL) catre care duce link-ul",
+                            "Dimensiunea textului",
+                            "Numele link-ului"
+                        ],
+                        correct: 1,
+                        explanation: "href (Hypertext REFerence) contine adresa destinatiei: poate fi o alta pagina (despre.html), un site extern (https://...) sau o sectiune din pagina (#sectiune)."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Meniul de navigare",
+                description: "Invata sa creezi un meniu pentru site",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Unde se plaseaza de obicei meniul de navigare?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="tag">&lt;header&gt;</span>
+    <span class="tag">&lt;nav&gt;</span>
+        <span class="comment">&lt;!-- Meniul vine aici --&gt;</span>
+    <span class="tag">&lt;/nav&gt;</span>
+<span class="tag">&lt;/header&gt;</span>`,
+                        options: [
+                            "In footer, la sfarsitul paginii",
+                            "In header, de obicei in partea de sus a paginii",
+                            "In mijlocul paginii",
+                            "Ascuns, invizibil"
+                        ],
+                        correct: 1,
+                        explanation: "Meniul de navigare se pune in &lt;header&gt;, de obicei sus, pentru ca vizitatorii sa-l gaseasca imediat. Tagul &lt;nav&gt; marcheaza zona de navigare."
+                    },
+                    {
+                        text: "Cum arata codul pentru un meniu simplu cu 3 link-uri?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="tag">&lt;nav&gt;</span>
+    <span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"index.html"</span><span class="tag">&gt;</span>Acasa<span class="tag">&lt;/a&gt;</span>
+    <span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"despre.html"</span><span class="tag">&gt;</span>Despre<span class="tag">&lt;/a&gt;</span>
+    <span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"contact.html"</span><span class="tag">&gt;</span>Contact<span class="tag">&lt;/a&gt;</span>
+<span class="tag">&lt;/nav&gt;</span>`,
+                        options: [
+                            "Un singur tag &lt;menu&gt;",
+                            "Mai multe taguri &lt;a&gt; in interiorul unui &lt;nav&gt;",
+                            "Doar taguri &lt;button&gt;",
+                            "Taguri &lt;p&gt; cu text"
+                        ],
+                        correct: 1,
+                        explanation: "Un meniu de navigare contine taguri &lt;a&gt; (link-uri) grupate intr-un &lt;nav&gt;. Fiecare link duce la o pagina diferita a site-ului."
+                    },
+                    {
+                        text: "De ce este important ca meniul sa fie la fel pe toate paginile?",
+                        options: [
+                            "Nu este important",
+                            "Vizitatorii se obisnuiesc si gasesc mai usor ce cauta",
+                            "Ca sa ai mai mult cod de scris",
+                            "Ca sa fie site-ul mai lent"
+                        ],
+                        correct: 1,
+                        explanation: "Consistenta meniului ajuta utilizatorii sa navigheze intuitiv. Daca meniul e diferit pe fiecare pagina, vizitatorii se confuzeaza si parasesc site-ul."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Tipuri de link-uri",
+                description: "Invata diferenta dintre link-uri interne si externe",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Care este diferenta dintre un link intern si unul extern?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="comment">// Link intern (in site-ul tau):</span>
+<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"despre.html"</span><span class="tag">&gt;</span>Despre<span class="tag">&lt;/a&gt;</span>
+
+<span class="comment">// Link extern (alt site):</span>
+<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"https://google.com"</span><span class="tag">&gt;</span>Google<span class="tag">&lt;/a&gt;</span>`,
+                        options: [
+                            "Nu exista diferenta",
+                            "Intern duce la pagini din site-ul tau, extern duce la alte site-uri",
+                            "Intern e colorat, extern e negru",
+                            "Intern e mare, extern e mic"
+                        ],
+                        correct: 1,
+                        explanation: "Link-urile interne duc la alte pagini din site-ul tau (despre.html). Link-urile externe duc la alte site-uri si incep cu https:// sau http://."
+                    },
+                    {
+                        text: "Ce face atributul target='_blank'?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"https://wikipedia.org"</span> <span class="attr">target</span>=<span class="value">"_blank"</span><span class="tag">&gt;</span>
+    Wikipedia
+<span class="tag">&lt;/a&gt;</span>`,
+                        options: [
+                            "Face link-ul invizibil",
+                            "Deschide link-ul intr-un tab nou, pastrand site-ul tau deschis",
+                            "Sterge link-ul",
+                            "Coloreaza link-ul in alb"
+                        ],
+                        correct: 1,
+                        explanation: "target='_blank' deschide link-ul intr-un tab/fereastra noua. E util pentru link-uri externe - vizitatorul nu paraseste site-ul tau complet."
+                    },
+                    {
+                        text: "Cum creezi un link care duce la o sectiune din aceeasi pagina?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="comment">// Link catre sectiune:</span>
+<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"#galerie"</span><span class="tag">&gt;</span>Vezi Galeria<span class="tag">&lt;/a&gt;</span>
+
+<span class="comment">// Sectiunea tinta:</span>
+<span class="tag">&lt;section</span> <span class="attr">id</span>=<span class="value">"galerie"</span><span class="tag">&gt;</span>
+    Continut galerie...
+<span class="tag">&lt;/section&gt;</span>`,
+                        options: [
+                            "href='pagina#sectiune'",
+                            "href='#id-sectiune' - folosind # si id-ul elementului tinta",
+                            "href='sectiune.html'",
+                            "Nu se poate face"
+                        ],
+                        correct: 1,
+                        explanation: "Pentru link-uri in aceeasi pagina, folosesti # urmat de id-ul sectiunii tinta. Elementul tinta trebuie sa aiba atributul id cu aceeasi valoare."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Stilizarea meniului",
+                description: "Invata sa faci meniul sa arate frumos cu CSS",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Cum faci link-urile din meniu sa stea pe orizontala?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="tag">nav</span> {
+    <span class="attr">display</span>: <span class="value">flex</span>;
+    <span class="attr">gap</span>: <span class="value">20px</span>;
+}`,
+                        options: [
+                            "Adaugi mai multe &lt;br&gt;",
+                            "Folosesti display: flex pe nav pentru a le aranja orizontal",
+                            "Scrii link-urile pe acelasi rand in HTML",
+                            "Nu se poate face"
+                        ],
+                        correct: 1,
+                        explanation: "display: flex transforma nav intr-un container flexibil care aranja automat elementele pe orizontala. gap: 20px adauga spatiu intre link-uri."
+                    },
+                    {
+                        text: "Cum elimini sublinierea implicita a link-urilor?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="tag">nav a</span> {
+    <span class="attr">text-decoration</span>: <span class="value">none</span>;
+    <span class="attr">color</span>: <span class="value">#333</span>;
+}`,
+                        options: [
+                            "Folosesti text-underline: off",
+                            "Folosesti text-decoration: none",
+                            "Nu se poate elimina",
+                            "Folosesti underline: false"
+                        ],
+                        correct: 1,
+                        explanation: "text-decoration: none elimina sublinierea implicita a link-urilor. Poti apoi sa adaugi alte stiluri: culoare, font-weight, hover effects etc."
+                    },
+                    {
+                        text: "Cum faci link-ul sa-si schimbe culoarea cand treci mouse-ul peste el?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="tag">nav a:hover</span> {
+    <span class="attr">color</span>: <span class="value">#10b981</span>;
+}`,
+                        options: [
+                            "Folosesti :click",
+                            "Folosesti pseudo-clasa :hover",
+                            "Folosesti :mouse",
+                            "Nu se poate face"
+                        ],
+                        correct: 1,
+                        explanation: ":hover este o pseudo-clasa CSS care se aplica cand mouse-ul e deasupra elementului. Poti schimba culoarea, background, marimea - orice proprietate CSS."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Bune practici pentru navigare",
+                description: "Invata regulile pentru o navigare eficienta",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Cate link-uri ar trebui sa aiba meniul principal?",
+                        options: [
+                            "Cat mai multe posibil",
+                            "Intre 4-7 link-uri pentru a nu coplesii utilizatorul",
+                            "Doar 1 link",
+                            "Peste 20 de link-uri"
+                        ],
+                        correct: 1,
+                        explanation: "Un meniu cu 4-7 optiuni e usor de parcurs. Prea multe link-uri (>7) copleșesc utilizatorul. Prea putine pot insemna ca structura site-ului e prea simpla sau navigarea e ascunsa."
+                    },
+                    {
+                        text: "Ce ar trebui sa indice textul unui link?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="comment">// Gresit:</span>
+<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"preturi.html"</span><span class="tag">&gt;</span>Click aici<span class="tag">&lt;/a&gt;</span>
+
+<span class="comment">// Corect:</span>
+<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"preturi.html"</span><span class="tag">&gt;</span>Vezi preturile<span class="tag">&lt;/a&gt;</span>`,
+                        options: [
+                            "Orice text, nu conteaza",
+                            "Textul trebuie sa descrie clar unde duce link-ul",
+                            "Mereu 'Click aici'",
+                            "Doar numere"
+                        ],
+                        correct: 1,
+                        explanation: "Textul link-ului trebuie sa fie descriptiv: 'Vezi preturile' e mai bun decat 'Click aici'. Ajuta utilizatorii si motoarele de cautare sa inteleaga destinatia."
+                    },
+                    {
+                        text: "Cum indici utilizatorului pe ce pagina se afla in meniu?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="tag">&lt;nav&gt;</span>
+    <span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"index.html"</span><span class="tag">&gt;</span>Acasa<span class="tag">&lt;/a&gt;</span>
+    <span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"despre.html"</span> <span class="attr">class</span>=<span class="value">"active"</span><span class="tag">&gt;</span>Despre<span class="tag">&lt;/a&gt;</span>
+    <span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="value">"contact.html"</span><span class="tag">&gt;</span>Contact<span class="tag">&lt;/a&gt;</span>
+<span class="tag">&lt;/nav&gt;</span>`,
+                        options: [
+                            "Nu e nevoie sa indici",
+                            "Adaugi o clasa 'active' pe link-ul paginii curente si il stilizezi diferit",
+                            "Stergi link-ul paginii curente",
+                            "Ascunzi meniul pe pagina curenta"
+                        ],
+                        correct: 1,
+                        explanation: "Adaugi clasa 'active' pe link-ul paginii curente, apoi in CSS il stilizezi diferit (alta culoare, subliniat, bold). Asa utilizatorul stie unde se afla."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('cls7_quiz3_navigare_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('cls7_quiz3_navigare_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            if (q.hasCodeMockup) {
+                questionContent += `<div class="code-mockup">${q.codeMockup}</div>`;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    ${questionContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">😅</div>
+                    <div class="feedback-text">Nu chiar... Raspunsul corect era: "${q.options[q.correct]}"</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='quiz4-design.html'">
+                                Quiz-ul 4: Design si CSS
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

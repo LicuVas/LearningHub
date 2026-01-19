@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Structura Paginilor | Clasa 7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-green);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-red);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .code-mockup {
+            background: #1e1e3a;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 550px;
+            text-align: left;
+            border: 2px solid var(--border);
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+
+        .code-mockup .tag {
+            color: var(--accent-green);
+        }
+
+        .code-mockup .attr {
+            color: var(--accent-yellow);
+        }
+
+        .code-mockup .value {
+            color: #f472b6;
+        }
+
+        .code-mockup .comment {
+            color: #6b7280;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-cyan);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+            .code-mockup { font-size: 0.75rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 5</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Structura Paginilor Web</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea">
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Pagina index.html",
+                description: "Invata despre pagina principala a site-ului",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "De ce se numeste pagina principala 'index.html'?",
+                        options: [
+                            "Pentru ca asa vrem noi",
+                            "Este numele standard pe care serverele il cauta automat ca pagina de start",
+                            "Pentru ca este mai usor de scris",
+                            "Pentru ca contine un index de carti"
+                        ],
+                        correct: 1,
+                        explanation: "Serverele web cauta automat un fisier numit 'index.html' cand cineva acceseaza site-ul. Acesta este standardul universal pentru pagina principala."
+                    },
+                    {
+                        text: "Ce ar trebui sa contina pagina index.html?",
+                        options: [
+                            "Doar imagini",
+                            "Prezentarea site-ului, meniul de navigare si link-uri catre alte pagini",
+                            "Toate informatiile din toate paginile",
+                            "Nimic, trebuie sa fie goala"
+                        ],
+                        correct: 1,
+                        explanation: "Pagina index.html este 'usa de intrare' - contine prezentarea site-ului, meniul principal si ghideaza vizitatorii catre sectiunile de interes."
+                    },
+                    {
+                        text: "Ce se intampla daca nu ai fisier index.html in folder?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="comment">// Structura folder site:</span>
+📁 site-ul-meu/
+   📄 despre.html
+   📄 contact.html
+   📄 galerie.html
+   <span class="comment">// Lipseste index.html!</span>`,
+                        options: [
+                            "Site-ul functioneaza normal",
+                            "Vizitatorii vor vedea o eroare sau lista de fisiere",
+                            "Se creeaza automat un index.html",
+                            "Se deschide despre.html automat"
+                        ],
+                        correct: 1,
+                        explanation: "Fara index.html, serverul nu stie ce pagina sa afiseze. Vizitatorii vor vedea o eroare 404 sau, in unele cazuri, o lista a fisierelor din folder (ceea ce nu arata profesional)."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Structura HTML de baza",
+                description: "Invata elementele esentiale ale unei pagini HTML",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Care este structura de baza a oricarei pagini HTML?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="tag">&lt;!DOCTYPE html&gt;</span>
+<span class="tag">&lt;html&gt;</span>
+    <span class="tag">&lt;head&gt;</span>...<span class="tag">&lt;/head&gt;</span>
+    <span class="tag">&lt;body&gt;</span>...<span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span>`,
+                        options: [
+                            "Doar tagul &lt;body&gt;",
+                            "DOCTYPE, html, head si body",
+                            "Doar tagul &lt;html&gt;",
+                            "Doar tagul &lt;head&gt;"
+                        ],
+                        correct: 1,
+                        explanation: "Orice pagina HTML are: DOCTYPE (declara tipul documentului), html (contine totul), head (informatii despre pagina) si body (continutul vizibil)."
+                    },
+                    {
+                        text: "Ce punem in sectiunea &lt;head&gt;?",
+                        options: [
+                            "Textul si imaginile vizibile",
+                            "Titlul paginii, meta informatii si link-uri catre CSS",
+                            "Meniul de navigare",
+                            "Videoclipuri"
+                        ],
+                        correct: 1,
+                        explanation: "In &lt;head&gt; punem: &lt;title&gt; (titlul din tab), &lt;meta&gt; (charset, descriere), &lt;link&gt; (pentru CSS). Aceste informatii nu se vad direct pe pagina."
+                    },
+                    {
+                        text: "Ce punem in sectiunea &lt;body&gt;?",
+                        options: [
+                            "Doar codul CSS",
+                            "Tot continutul vizibil: texte, imagini, meniu, footer",
+                            "Doar titlul paginii",
+                            "Doar link-uri externe"
+                        ],
+                        correct: 1,
+                        explanation: "In &lt;body&gt; punem tot ce vede vizitatorul: header, navigare, articole, imagini, paragrafe, footer - intregul continut vizibil al paginii."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Pagini tipice ale unui site",
+                description: "Invata ce pagini are de obicei un site web",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce pagini sunt comune pentru un site de prezentare?",
+                        hasCodeMockup: true,
+                        codeMockup: `📁 proiect-web/
+   📄 index.html      <span class="comment">// Acasa</span>
+   📄 despre.html     <span class="comment">// Despre</span>
+   📄 galerie.html    <span class="comment">// Galerie</span>
+   📄 contact.html    <span class="comment">// Contact</span>
+   📁 css/
+   📁 imagini/`,
+                        options: [
+                            "Doar o pagina foarte lunga",
+                            "Acasa (index), Despre, Galerie/Proiecte, Contact",
+                            "100 de pagini diferite",
+                            "Doar pagina de login"
+                        ],
+                        correct: 1,
+                        explanation: "Un site de prezentare are de obicei: pagina principala (index), despre (informatii), galerie sau proiecte (exemple vizuale) si contact (modalitati de contactare)."
+                    },
+                    {
+                        text: "Ce informatii ar trebui sa contina pagina 'despre.html'?",
+                        options: [
+                            "Lista de preturi",
+                            "Informatii despre subiectul site-ului, autorul sau scopul proiectului",
+                            "Doar imagini",
+                            "Formular de plata"
+                        ],
+                        correct: 1,
+                        explanation: "Pagina 'Despre' prezinta informatii despre cine a creat site-ul, despre ce este vorba, istoria sau povestea din spatele proiectului."
+                    },
+                    {
+                        text: "Ce informatii sunt potrivite pentru pagina 'contact.html'?",
+                        options: [
+                            "Toate parolele tale",
+                            "Adresa de email, eventual telefon si un formular de contact",
+                            "Doar o imagine",
+                            "Lista de cumparaturi"
+                        ],
+                        correct: 1,
+                        explanation: "Pagina Contact ofera vizitatorilor modalitati de a lua legatura: email, telefon (optional), adresa (daca e relevant) sau un formular de mesaj."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Sectiunile unei pagini",
+                description: "Invata tagurile semantice HTML5",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Care sunt sectiunile principale ale unei pagini web moderne?",
+                        hasCodeMockup: true,
+                        codeMockup: `<span class="tag">&lt;body&gt;</span>
+    <span class="tag">&lt;header&gt;</span>Logo + Meniu<span class="tag">&lt;/header&gt;</span>
+    <span class="tag">&lt;main&gt;</span>Continut principal<span class="tag">&lt;/main&gt;</span>
+    <span class="tag">&lt;footer&gt;</span>Copyright<span class="tag">&lt;/footer&gt;</span>
+<span class="tag">&lt;/body&gt;</span>`,
+                        options: [
+                            "Doar un singur &lt;div&gt; mare",
+                            "Header (antet), Main (continut principal), Footer (subsol)",
+                            "Doar &lt;p&gt; si &lt;img&gt;",
+                            "Doar &lt;table&gt;"
+                        ],
+                        correct: 1,
+                        explanation: "HTML5 foloseste taguri semantice: &lt;header&gt; pentru antet (logo, meniu), &lt;main&gt; pentru continutul principal, &lt;footer&gt; pentru subsol (copyright, linkuri)."
+                    },
+                    {
+                        text: "Ce este tagul &lt;nav&gt; si unde il folosim?",
+                        options: [
+                            "Este pentru imagini",
+                            "Contine meniul de navigare cu link-uri catre paginile site-ului",
+                            "Este pentru paragrafe",
+                            "Este pentru videoclipuri"
+                        ],
+                        correct: 1,
+                        explanation: "Tagul &lt;nav&gt; (navigation) contine meniul site-ului - link-urile catre paginile principale. Se pune de obicei in &lt;header&gt;."
+                    },
+                    {
+                        text: "De ce folosim taguri semantice (header, main, footer) in loc de div-uri?",
+                        options: [
+                            "Arata mai colorat",
+                            "Ajuta motoarele de cautare si cititorii de ecran sa inteleaga structura",
+                            "Incarca mai repede",
+                            "Nu exista nicio diferenta"
+                        ],
+                        correct: 1,
+                        explanation: "Tagurile semantice dau sens continutului: Google intelege ce e meniul, ce e continutul principal. Cititorii de ecran (pentru nevazatori) pot naviga mai usor."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Organizarea fisierelor",
+                description: "Invata sa organizezi fisierele proiectului web",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Care este o structura buna de foldere pentru un site web?",
+                        hasCodeMockup: true,
+                        codeMockup: `📁 proiect-site/
+   📄 index.html
+   📄 despre.html
+   📄 contact.html
+   📁 css/
+      📄 style.css
+   📁 imagini/
+      🖼️ logo.png
+      🖼️ foto1.jpg
+   📁 js/
+      📄 script.js`,
+                        options: [
+                            "Toate fisierele amestecate intr-un singur folder",
+                            "Fisiere HTML in radacina, subfoldere separate pentru CSS, imagini si JS",
+                            "Fiecare fisier in folder separat",
+                            "Fara foldere, doar fisiere"
+                        ],
+                        correct: 1,
+                        explanation: "O organizare buna: fisierele HTML in folderul principal, apoi subfoldere pentru CSS (stiluri), imagini si JS (scripturi). Asa gasesti usor orice fisier."
+                    },
+                    {
+                        text: "Cum trebuie scrise numele fisierelor pentru un site web?",
+                        options: [
+                            "Cu spatii si caractere speciale: 'Pagina Mea #1.html'",
+                            "Cu litere mici, fara spatii, folosind cratime: 'despre-noi.html'",
+                            "Cu litere MARI: 'DESPRE.HTML'",
+                            "Nu conteaza cum le numesti"
+                        ],
+                        correct: 1,
+                        explanation: "Reguli pentru numele fisierelor web: litere mici, fara spatii (foloseste - sau _), fara caractere speciale, fara diacritice. Serverele sunt sensibile la aceste detalii."
+                    },
+                    {
+                        text: "De ce este important sa pastrezi aceeasi structura pe toate paginile?",
+                        options: [
+                            "Nu este important",
+                            "Vizitatorii se obisnuiesc cu locul meniului si navigheaza mai usor",
+                            "Ca sa ai mai multe fisiere",
+                            "Ca sa fie site-ul mai lent"
+                        ],
+                        correct: 1,
+                        explanation: "Consistenta ajuta utilizatorii: daca meniul e mereu sus si footer-ul jos, vizitatorii stiu instinctiv unde sa caute. Un site inconsistent e confuz si frustrant."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('cls7_quiz2_structura_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('cls7_quiz2_structura_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            if (q.hasCodeMockup) {
+                questionContent += `<div class="code-mockup">${q.codeMockup}</div>`;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    ${questionContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">😅</div>
+                    <div class="feedback-text">Nu chiar... Raspunsul corect era: "${q.options[q.correct]}"</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='quiz3-navigare.html'">
+                                Quiz-ul 3: Navigare si Link-uri
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

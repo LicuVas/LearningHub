@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Grafice si Diagrame | Clasa 8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-red: #ef4444;
+            --accent-rose: #f43f5e;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-red);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-red);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-red);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        /* Chart mockups */
+        .chart-mockup {
+            background: #2d2d4a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem auto;
+            max-width: 500px;
+            text-align: center;
+            border: 2px solid var(--border);
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        /* Bar chart mockup */
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 1rem;
+            height: 120px;
+            padding: 0 1rem;
+        }
+
+        .bar {
+            width: 40px;
+            background: linear-gradient(to top, var(--accent-red), var(--accent-rose));
+            border-radius: 4px 4px 0 0;
+            position: relative;
+        }
+
+        .bar::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Pie chart mockup */
+        .pie-chart {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--accent-red) 0% 35%,
+                var(--accent-cyan) 35% 60%,
+                var(--accent-yellow) 60% 85%,
+                var(--accent-green) 85% 100%
+            );
+            margin: 0 auto;
+        }
+
+        /* Line chart mockup */
+        .line-chart {
+            height: 100px;
+            position: relative;
+            margin: 1rem;
+            border-left: 2px solid var(--border);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .line-chart svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-rose);
+            transform: translateX(5px);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-red);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        .completion-badge {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            display: inline-block;
+        }
+
+        .completion-badge h3 {
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 1</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Grafice si Diagrame</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea">
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Introducere in grafice",
+                description: "Descopera ce sunt graficele si de ce le folosim",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "De ce folosim grafice in Excel?",
+                        options: [
+                            "Pentru a face fisierul mai mare",
+                            "Pentru a vizualiza datele intr-un mod usor de inteles",
+                            "Pentru a sterge datele",
+                            "Pentru a incetini calculatorul"
+                        ],
+                        correct: 1,
+                        explanation: "Graficele transforma numerele in imagini vizuale, facand datele mult mai usor de inteles si de comparat. O imagine spune mai mult decat 1000 de numere!"
+                    },
+                    {
+                        text: "Din ce fila din Ribbon inserezi un grafic?",
+                        options: [
+                            "Home",
+                            "Insert",
+                            "View",
+                            "Data"
+                        ],
+                        correct: 1,
+                        explanation: "Graficele se insereaza din fila Insert (Inserare). Aici gasesti toate tipurile de grafice: coloane, linii, pie, etc."
+                    },
+                    {
+                        text: "Care este primul pas INAINTE de a crea un grafic?",
+                        options: [
+                            "Alegi tipul de grafic",
+                            "Selectezi datele pe care vrei sa le reprezinti",
+                            "Salvezi fisierul",
+                            "Inchizi alte programe"
+                        ],
+                        correct: 1,
+                        explanation: "Intotdeauna SELECTEZI MAI INTAI datele (celulele cu valori si etichete), apoi inserezi graficul. Excel va folosi automat datele selectate."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Graficul cu coloane",
+                description: "Invata despre graficele cu bare/coloane",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Cand este cel mai potrivit sa folosesti un grafic cu coloane?",
+                        hasVisual: true,
+                        visualType: "bar_chart",
+                        options: [
+                            "Pentru a arata procente dintr-un total",
+                            "Pentru a compara valori intre categorii diferite",
+                            "Pentru a arata o evolutie in timp",
+                            "Pentru a arata date geografice"
+                        ],
+                        correct: 1,
+                        explanation: "Graficul cu coloane (Column Chart) este perfect pentru a COMPARA valori intre categorii diferite. De ex: vanzari pe produse, note pe elevi, etc."
+                    },
+                    {
+                        text: "Ce reprezinta inaltimea unei coloane in grafic?",
+                        options: [
+                            "Numarul de categorii",
+                            "Valoarea numerica a datei respective",
+                            "Ordinea in tabel",
+                            "Culoarea preferata"
+                        ],
+                        correct: 1,
+                        explanation: "Inaltimea fiecarei coloane reprezinta VALOAREA numerica. O coloana mai inalta = valoare mai mare. Asa compari vizual valorile."
+                    },
+                    {
+                        text: "Cum se numeste axa orizontala (de jos) a graficului?",
+                        options: [
+                            "Axa Z",
+                            "Axa X (axa categoriilor)",
+                            "Axa Y (axa valorilor)",
+                            "Axa principala"
+                        ],
+                        correct: 1,
+                        explanation: "Axa X (orizontala) afiseaza CATEGORIILE (ex: lunile, produsele). Axa Y (verticala) afiseaza VALORILE numerice."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Graficul circular (Pie)",
+                description: "Descopera graficul de tip pie/placinta",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Cand folosesti un grafic circular (Pie Chart)?",
+                        hasVisual: true,
+                        visualType: "pie_chart",
+                        options: [
+                            "Pentru a compara evolutia in timp",
+                            "Pentru a arata parti dintr-un INTREG (procente)",
+                            "Pentru a arata relatii intre valori",
+                            "Pentru date negative"
+                        ],
+                        correct: 1,
+                        explanation: "Graficul Pie (placinta) arata cum se imparte un INTREG in parti. Perfect pentru: buget pe categorii, rezultate sondaj, distributia notelor etc."
+                    },
+                    {
+                        text: "Ce reprezinta fiecare felie din graficul Pie?",
+                        options: [
+                            "O valoare absoluta",
+                            "Un procent din total (proportia)",
+                            "O categorie separata",
+                            "O eroare"
+                        ],
+                        correct: 1,
+                        explanation: "Fiecare felie reprezinta PROPORTIA (procentul) unei categorii din totalul de 100%. Toate feliile impreuna formeaza intregul (cercul complet)."
+                    },
+                    {
+                        text: "Ce se intampla daca ai prea multe categorii (ex: 15) intr-un grafic Pie?",
+                        options: [
+                            "Graficul devine foarte clar",
+                            "Feliile devin prea mici si greu de citit",
+                            "Excel da eroare",
+                            "Graficul se transforma automat"
+                        ],
+                        correct: 1,
+                        explanation: "Cu multe categorii, feliile devin foarte subtiri si greu de citit/comparat. Pentru multe categorii, un grafic cu coloane este mai potrivit."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Graficul cu linii",
+                description: "Invata despre graficele de tip linie",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Cand este cel mai potrivit graficul cu linii (Line Chart)?",
+                        hasVisual: true,
+                        visualType: "line_chart",
+                        options: [
+                            "Pentru a compara categorii",
+                            "Pentru a arata EVOLUTIA in timp (tendinte)",
+                            "Pentru a arata procente",
+                            "Pentru date fara ordine"
+                        ],
+                        correct: 1,
+                        explanation: "Graficul cu linii este IDEAL pentru a arata cum evolueaza ceva in TIMP: vanzari lunare, temperaturi zilnice, cresterea populatiei etc."
+                    },
+                    {
+                        text: "Ce arata o linie care merge in SUS pe grafic?",
+                        options: [
+                            "O scadere a valorilor",
+                            "O crestere a valorilor",
+                            "Valori constante",
+                            "O eroare in date"
+                        ],
+                        correct: 1,
+                        explanation: "O linie ascendenta (care urca) indica CRESTERE. O linie descendenta indica scadere. O linie dreapta orizontala indica stabilitate."
+                    },
+                    {
+                        text: "Poti avea mai multe linii pe acelasi grafic?",
+                        options: [
+                            "Nu, doar o singura linie",
+                            "Da, pentru a compara mai multe serii de date",
+                            "Doar 2 linii maximum",
+                            "Doar daca sunt de aceeasi culoare"
+                        ],
+                        correct: 1,
+                        explanation: "Da! Poti avea mai multe linii (serii) pe acelasi grafic pentru a le compara. De ex: vanzari produs A vs produs B in aceeasi perioada."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Editarea graficelor",
+                description: "Invata sa personalizezi graficele",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Cum adaugi un titlu graficului?",
+                        options: [
+                            "Nu se poate adauga titlu",
+                            "Click pe grafic > Chart Elements (+) > Chart Title",
+                            "Scrii direct pe grafic",
+                            "Din meniul File"
+                        ],
+                        correct: 1,
+                        explanation: "Selectezi graficul, apare butonul + (Chart Elements) in dreapta. De acolo poti adauga: titlu, legenda, etichete de date, axe etc."
+                    },
+                    {
+                        text: "Ce este LEGENDA unui grafic?",
+                        options: [
+                            "Titlul graficului",
+                            "Caseta care explica ce reprezinta fiecare culoare/serie",
+                            "Axa X a graficului",
+                            "Fundalul graficului"
+                        ],
+                        correct: 1,
+                        explanation: "Legenda este caseta care arata ce reprezinta fiecare culoare sau serie din grafic. Te ajuta sa intelegi graficul cand ai mai multe categorii."
+                    },
+                    {
+                        text: "Cum schimbi tipul unui grafic deja creat (ex: din coloane in linii)?",
+                        options: [
+                            "Trebuie sa stergi si sa refaci graficul",
+                            "Click dreapta pe grafic > Change Chart Type",
+                            "Nu se poate schimba",
+                            "Apesi tasta Delete"
+                        ],
+                        correct: 1,
+                        explanation: "Poti schimba tipul oricand! Click dreapta pe grafic > Change Chart Type si alegi noul tip. Datele raman aceleasi, doar prezentarea se schimba."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('excel_quiz5_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('excel_quiz5_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            if (q.hasVisual && q.visualType === 'bar_chart') {
+                questionContent += `
+                    <div class="chart-mockup">
+                        <div class="chart-title">Vanzari pe Produse</div>
+                        <div class="bar-chart">
+                            <div class="bar" style="height: 80px;" data-label="Prod A"></div>
+                            <div class="bar" style="height: 50px;" data-label="Prod B"></div>
+                            <div class="bar" style="height: 100px;" data-label="Prod C"></div>
+                            <div class="bar" style="height: 65px;" data-label="Prod D"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (q.hasVisual && q.visualType === 'pie_chart') {
+                questionContent += `
+                    <div class="chart-mockup">
+                        <div class="chart-title">Distributia Bugetului</div>
+                        <div class="pie-chart"></div>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: var(--accent-red);"></div>
+                                <span>Mancare 35%</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: var(--accent-cyan);"></div>
+                                <span>Transport 25%</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: var(--accent-yellow);"></div>
+                                <span>Distractie 25%</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: var(--accent-green);"></div>
+                                <span>Altele 15%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (q.hasVisual && q.visualType === 'line_chart') {
+                questionContent += `
+                    <div class="chart-mockup">
+                        <div class="chart-title">Evolutia Vanzarilor (Ian-Iun)</div>
+                        <div class="line-chart">
+                            <svg viewBox="0 0 200 80" preserveAspectRatio="none">
+                                <polyline
+                                    points="0,60 40,50 80,45 120,30 160,35 200,15"
+                                    fill="none"
+                                    stroke="#ef4444"
+                                    stroke-width="3"
+                                />
+                                <circle cx="0" cy="60" r="4" fill="#ef4444"/>
+                                <circle cx="40" cy="50" r="4" fill="#ef4444"/>
+                                <circle cx="80" cy="45" r="4" fill="#ef4444"/>
+                                <circle cx="120" cy="30" r="4" fill="#ef4444"/>
+                                <circle cx="160" cy="35" r="4" fill="#ef4444"/>
+                                <circle cx="200" cy="15" r="4" fill="#ef4444"/>
+                            </svg>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0 0.5rem; font-size: 0.7rem; color: var(--text-secondary);">
+                            <span>Ian</span><span>Feb</span><span>Mar</span><span>Apr</span><span>Mai</span><span>Iun</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    ${questionContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect! Excelent la grafice!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">😅</div>
+                    <div class="feedback-text">Nu chiar... Iata explicatia:</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            // Check if all levels completed for final message
+            const allCompleted = [1,2,3,4,5].every(l => levelScores[l] !== undefined);
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    ${passed && currentLevel === 5 && allCompleted ? `
+                        <div class="completion-badge">
+                            <h3>🎊 Felicitari! Ai completat toate quiz-urile Excel!</h3>
+                        </div>
+                    ` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='../index.html'">
+                                Inapoi la Modulul 1
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>
