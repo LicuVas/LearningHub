@@ -1,11 +1,11 @@
 # LearningHub - Handoff
 
-> Last updated: 2026-01-15 by Claude Opus 4.5
+> Last updated: 2026-01-20 by Claude Opus 4.5
 
 ## Current State
 
 **Phase:** Content & Feedback Collection
-**Status:** v0.2.0 - User System Complete, content for Module 3 done
+**Status:** v0.4.0 - All Lessons Upgraded with Grading System
 
 **What works:**
 - Multi-profile system (school lab - multiple students per PC)
@@ -15,8 +15,42 @@
 - All 143 lesson pages with user-system.js
 - Interactive quizzes for Module 3 topics
 - Guest mode for visitors
+- **NEW: Atomic Learning System** with per-item progress tracking
+- **NEW: Secure JSON Export** with SHA-256 checksum (anti-tampering)
+- **NEW: Teacher Evaluation Tool** (`tools/evaluate_submissions.py`)
+- **NEW: Grading 1-10 system** (1 point automatic/din oficiu)
 
-## Last Session (2026-01-12)
+## Last Session (2026-01-20)
+
+**Atomic Learning v0.3.0 - Secure Progress Export:**
+
+1. **Enhanced Progress Saving:**
+   - `atomic-learning.js` - saves detailed answers per atom/question
+   - `practice-advanced.js` - saves detailed results per exercise type
+   - `lesson-summary.js` - combines scores, calculates grade 1-10
+
+2. **Secure JSON Export:**
+   - SHA-256 checksum on payload (anti-tampering)
+   - Session fingerprint for authenticity
+   - Per-item answers with question text
+   - Written answers included for teacher review
+
+3. **Teacher Evaluation Tool:**
+   - `tools/evaluate_submissions.py`
+   - Verifies checksum integrity
+   - Analyzes student performance
+   - Evaluates written answers with confidence levels
+   - Flags items needing manual review
+
+4. **Grading System:**
+   - 1-10 scale (Romanian standard)
+   - 1 = participation (din oficiu)
+   - 5 = sufficient (45%+)
+   - 10 = exceptional (95%+)
+
+---
+
+## Previous Session (2026-01-12)
 
 **User System v0.2.0 implemented:**
 - unified user-system.js for site-wide profile management
@@ -26,24 +60,31 @@
 
 ## Next Steps
 
-1. **Immediate:** Create Google Form for student feedback
-   - Form structure designed (3 sections, 11 questions):
-     - Section 1: Lesson feedback (class, lesson name, usefulness 1-5, confusion, learnings)
-     - Section 2: Platform feedback (navigation 1-5, improvements checklist, feature requests)
-     - Section 3: Self-assessment (confidence 1-5, next learning goals, recommendation)
-   - User will create manually, then embed link in hub pages
+1. **Immediate:** Convert more lessons to atomic format
+   - Use `content/tic/cls5/m1-sisteme/lectia2-hardware-atomic.html` as template
+   - Include lesson-summary.js for grading + JSON export
 
-2. **Then:** M3 - Concept linking system (Jan 30 target)
+2. **Teacher workflow setup:**
+   - Students complete lesson, click "Descarca progresul (JSON)"
+   - Teacher collects JSON files in a folder
+   - Run: `python tools/evaluate_submissions.py --batch ./submissions/`
+   - Review flagged items with low confidence
 
-3. **Later:** M5 - Full multi-navigation system
+3. **Then:** M3 - Concept linking system (Jan 30 target)
+
+4. **Later:** M5 - Full multi-navigation system
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
 | `hub/index.html` | Entry point - profile selection |
-| `hub/assets/js/user-system.js` | Profile management |
-| `hub/assets/js/rpg-system.js` | XP and achievements |
+| `assets/js/user-system.js` | Profile management |
+| `assets/js/rpg-system.js` | XP and achievements |
+| `assets/js/atomic-learning.js` | Atomic learning with detailed progress |
+| `assets/js/practice-advanced.js` | Practice exercises with progress |
+| `assets/js/lesson-summary.js` | Grade calculation, secure JSON export |
+| `tools/evaluate_submissions.py` | Teacher tool for checking student JSON |
 | `content/tic/clsX/` | Lesson content by grade |
 | `data/curriculum.json` | What to teach when |
 
@@ -66,6 +107,15 @@
 ---
 
 ## Session History
+
+### 2026-01-20
+- **v0.4.0** - Mass upgrade: 118 lessons now have grading + JSON export
+- Created `tools/upgrade_lessons.py` for batch upgrades
+- Atomic Learning v0.3.0 - Secure Progress Export
+- SHA-256 checksum anti-tampering
+- Detailed per-item answers in JSON
+- Teacher evaluation tool with confidence levels
+- Grading system 1-10
 
 ### 2026-01-15
 - Project context files created for multi-agent portability
