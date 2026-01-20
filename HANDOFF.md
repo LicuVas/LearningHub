@@ -22,6 +22,24 @@
 
 ## Last Session (2026-01-20)
 
+**Bug Fix - Atomic Learning Buttons:**
+
+1. **Problem:** Quiz buttons in converted lessons weren't responding to clicks
+2. **Root Cause:**
+   - `atomic-learning.js` expected `data-atom-id` attribute
+   - Converted HTML files used `id` attribute instead
+   - Duplicate `initAtom()` calls in HTML caused initialization issues
+3. **Solution:**
+   - Fixed `atomic-learning.js` to accept both `data-atom-id` and `id` attributes
+   - Removed duplicate initialization from 89 HTML files
+   - Updated `convert_to_atomic.py` template
+   - Created `tools/fix_atomic_init.py` for batch fixes
+4. **Status:** Fixed, tested, pushed to GitHub
+
+---
+
+## Previous Session (2026-01-20)
+
 **Atomic Learning v0.3.0 - Secure Progress Export:**
 
 1. **Enhanced Progress Saving:**
