@@ -87,7 +87,22 @@ const AtomicLearning = {
         }
 
         const quizContainer = atomEl.querySelector('.atom-quiz');
-        if (!quizContainer) return;
+
+        // Atoms without quiz container are auto-completed (content-only atoms)
+        if (!quizContainer) {
+            this.atoms[atomId] = {
+                element: atomEl,
+                questions: [],
+                answers: {},
+                hintsUsed: {},
+                completed: true,
+                correctCount: 0,
+                score: 100  // Content-only atoms get full score
+            };
+            this.completedAtoms.add(atomId);
+            atomEl.classList.add('atom-completed', 'atom-perfect');
+            return;
+        }
 
         let quizData;
         try {
@@ -100,6 +115,22 @@ const AtomicLearning = {
             }
         } catch (e) {
             console.error(`AtomicLearning: Invalid quiz data for atom ${atomId}`);
+            return;
+        }
+
+        // If quiz data is empty, treat as content-only atom (auto-complete)
+        if (!quizData || quizData.length === 0) {
+            this.atoms[atomId] = {
+                element: atomEl,
+                questions: [],
+                answers: {},
+                hintsUsed: {},
+                completed: true,
+                correctCount: 0,
+                score: 100
+            };
+            this.completedAtoms.add(atomId);
+            atomEl.classList.add('atom-completed', 'atom-perfect');
             return;
         }
 
@@ -133,6 +164,10 @@ const AtomicLearning = {
                 <div class="atom-quiz-header">
                     <span class="atom-quiz-icon">&#128269;</span>
                     <span class="atom-quiz-title">Verifica daca ai inteles</span>
+                </div>
+                <div class="atom-quiz-warning">
+                    <span class="warning-icon">&#9888;</span>
+                    <span>Atentie! Raspunsul se blocheaza dupa selectare. Citeste cu atentie inainte de a alege!</span>
                 </div>
                 ${html}
             </div>
@@ -762,6 +797,23 @@ const AtomicLearning = {
             .atom-quiz-title {
                 font-weight: 600;
                 color: var(--accent-blue-light, #60a5fa);
+            }
+
+            .atom-quiz-warning {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.6rem 0.9rem;
+                margin-bottom: 1rem;
+                background: rgba(245, 158, 11, 0.15);
+                border: 1px solid var(--warning, #f59e0b);
+                border-radius: 8px;
+                font-size: 0.85rem;
+                color: var(--warning, #f59e0b);
+            }
+
+            .atom-quiz-warning .warning-icon {
+                font-size: 1rem;
             }
 
             /* Question */
