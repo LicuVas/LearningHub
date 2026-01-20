@@ -422,6 +422,11 @@ const LessonSummary = {
      * Get detailed practice exercise results with question text
      */
     getPracticeItemDetails: function() {
+        // Check for PracticeSimple first (written answers)
+        if (typeof PracticeSimple !== 'undefined' && PracticeSimple.exercises.length > 0) {
+            return PracticeSimple.getWrittenAnswers();
+        }
+
         if (typeof AdvancedPractice === 'undefined') return [];
 
         const items = [];
