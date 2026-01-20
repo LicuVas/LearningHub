@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectia 5: Sortare si filtrare | Clasa 8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-red: #ef4444;
+            --accent-rose: #f43f5e;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-blue: #3b82f6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-back {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .nav-back:hover { color: var(--accent-cyan); }
+
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            width: 60px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .step.active { background: var(--accent-red); }
+        .step.completed { background: var(--accent-green); }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .goal-section {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.1));
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .goal-icon { font-size: 5rem; margin-bottom: 1rem; }
+
+        .goal-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .goal-desc {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
+
+        .try-section {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
+            border: 2px solid var(--accent-orange);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .try-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .try-badge {
+            background: var(--accent-orange);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .challenge-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .challenge-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--accent-orange);
+        }
+
+        .challenge-task {
+            font-size: 1.1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-orange);
+        }
+
+        .hint-box {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid var(--accent-purple);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .hint-toggle {
+            cursor: pointer;
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        .hint-content {
+            display: none;
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .hint-content.show { display: block; }
+
+        .learn-section {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .learn-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .learn-badge {
+            background: var(--accent-red);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .concept-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--accent-red);
+        }
+
+        .concept-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .concept-def {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .sql-box {
+            background: #1e1e3f;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            overflow-x: auto;
+        }
+
+        .sql-keyword {
+            color: #ff79c6;
+            font-weight: 700;
+        }
+
+        .sql-field {
+            color: #8be9fd;
+        }
+
+        .sql-table {
+            color: #50fa7b;
+        }
+
+        .sql-string {
+            color: #f1fa8c;
+        }
+
+        .sql-operator {
+            color: #ff79c6;
+        }
+
+        .result-table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            color: #1a1a2e;
+        }
+
+        .result-table th {
+            background: #3b82f6;
+            color: white;
+            padding: 0.6rem;
+            text-align: left;
+        }
+
+        .result-table td {
+            padding: 0.5rem 0.6rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .result-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .result-label {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .order-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .order-box {
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .order-box h4 {
+            margin-bottom: 0.5rem;
+        }
+
+        .order-box.asc {
+            border: 2px solid var(--accent-blue);
+        }
+
+        .order-box.desc {
+            border: 2px solid var(--accent-orange);
+        }
+
+        .test-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1));
+            border: 2px solid var(--accent-purple);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .test-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .test-badge {
+            background: var(--accent-purple);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .quiz-question {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .options {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .option {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option:hover { border-color: var(--accent-purple); }
+        .option.selected { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.1); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .feedback {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .feedback.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .feedback.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .completion {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .completion-icon { font-size: 5rem; margin-bottom: 1rem; }
+
+        .completion-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .xp-gain {
+            font-size: 1.5rem;
+            color: var(--accent-orange);
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .goal-title { font-size: 1.5rem; }
+            .actions { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+            .order-comparison { grid-template-columns: 1fr; }
+        }
+    </style>
+    <link rel="stylesheet" href="../../../../assets/css/mobile.css">
+    <link rel="stylesheet" href="../../../../assets/css/mobile-first.css">
+    <!-- PoW System Styles -->
+    <link rel="stylesheet" href="../../../../assets/css/pow.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <div class="progress-steps">
+            <div class="step active" data-step="goal" title="Obiectiv"></div>
+            <div class="step" data-step="try" title="Incearca"></div>
+            <div class="step" data-step="learn" title="Invata"></div>
+            <div class="step" data-step="test" title="Verifica"></div>
+        </div>
+
+        <!-- GOAL Section -->
+        <div class="section active" id="goal">
+            <div class="goal-section">
+                <div class="goal-icon">📊</div>
+                <h1 class="goal-title">Vreau sa organizez datele!</h1>
+                <p class="goal-desc">
+                    Dupa aceasta lectie, vei sti sa sortezi datele (A-Z, 1-100) si sa combini mai multe conditii de filtrare.
+                </p>
+                <button class="btn btn-primary" onclick="goToStep('try')">
+                    Sa incepem! →
+                </button>
+            </div>
+        </div>
+
+        <!-- TRY Section -->
+        <div class="section" id="try">
+            <div class="try-section">
+                <div class="try-header">
+                    <span class="try-badge">INCEARCA</span>
+                    <h2>Gandeste la ordinea datelor!</h2>
+                </div>
+
+                <div class="challenge-box">
+                    <div class="challenge-title">Scenariul:</div>
+                    <div class="challenge-task">
+                        Directorul vrea:
+                        <br><br>
+                        <strong>1.</strong> "Lista cu toti elevii din 8A, ordonati dupa medie - de la cea mai mare la cea mai mica"
+                        <br><br>
+                        <strong>2.</strong> "Elevii care au media intre 8 si 9"
+                        <br><br>
+                        Cum ai combina filtrarea CU sortarea?
+                    </div>
+                </div>
+
+                <div class="hint-box">
+                    <div class="hint-toggle" onclick="toggleHint(this)">
+                        Gandeste-te...
+                    </div>
+                    <div class="hint-content">
+                        <p>Ai nevoie de:</p>
+                        <p>- WHERE pentru a filtra (clasa = 8A, media intre 8 si 9)</p>
+                        <p>- ORDER BY pentru a sorta (dupa medie, descrescator)</p>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('goal')">← Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('learn')">
+                        Arata-mi cum! →
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEARN Section -->
+        <div class="section" id="learn">
+            <div class="learn-section">
+                <div class="learn-header">
+                    <span class="learn-badge">INVATA</span>
+                    <h2>Sortare si filtrare avansata</h2>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">ORDER BY - Sortarea datelor</div>
+                    <div class="concept-def">
+                        <strong>ORDER BY</strong> ordoneaza rezultatele dupa un camp specificat.
+                        Se pune la sfarsitul interogarii, dupa WHERE (daca exista).
+                    </div>
+                </div>
+
+                <div class="order-comparison">
+                    <div class="order-box asc">
+                        <h4 style="color: var(--accent-blue);">ASC (Ascending)</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">De la mic la mare</p>
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">A→Z, 1→100</p>
+                        <p style="color: var(--accent-blue); font-size: 0.8rem; margin-top: 0.5rem;">(implicit daca nu scrii nimic)</p>
+                    </div>
+                    <div class="order-box desc">
+                        <h4 style="color: var(--accent-orange);">DESC (Descending)</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">De la mare la mic</p>
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">Z→A, 100→1</p>
+                    </div>
+                </div>
+
+                <div class="concept-card" style="border-color: var(--accent-blue);">
+                    <div class="concept-name">Exemplu: Sortare alfabetica</div>
+                    <div class="sql-box">
+                        <span class="sql-keyword">SELECT</span> <span class="sql-operator">*</span><br>
+                        <span class="sql-keyword">FROM</span> <span class="sql-table">Elevi</span><br>
+                        <span class="sql-keyword">ORDER BY</span> <span class="sql-field">Nume</span> <span class="sql-keyword">ASC</span>;
+                    </div>
+                    <div class="result-table-container">
+                        <table class="result-table">
+                            <tr><th>ID</th><th>Nume</th><th>Prenume</th><th>Media</th></tr>
+                            <tr><td>2</td><td>Ionescu</td><td>Andrei</td><td>8.75</td></tr>
+                            <tr><td>3</td><td>Popa</td><td>Elena</td><td>9.25</td></tr>
+                            <tr><td>1</td><td>Popescu</td><td>Maria</td><td>9.50</td></tr>
+                        </table>
+                        <div class="result-label">Sortat A → Z dupa Nume</div>
+                    </div>
+                </div>
+
+                <div class="concept-card" style="border-color: var(--accent-orange);">
+                    <div class="concept-name">Exemplu: Sortare dupa medie (descrescator)</div>
+                    <div class="sql-box">
+                        <span class="sql-keyword">SELECT</span> <span class="sql-field">Nume</span>, <span class="sql-field">Media</span><br>
+                        <span class="sql-keyword">FROM</span> <span class="sql-table">Elevi</span><br>
+                        <span class="sql-keyword">ORDER BY</span> <span class="sql-field">Media</span> <span class="sql-keyword">DESC</span>;
+                    </div>
+                    <div class="result-table-container">
+                        <table class="result-table">
+                            <tr><th>Nume</th><th>Media</th></tr>
+                            <tr><td>Popescu</td><td>9.50</td></tr>
+                            <tr><td>Popa</td><td>9.25</td></tr>
+                            <tr><td>Ionescu</td><td>8.75</td></tr>
+                        </table>
+                        <div class="result-label">De la cea mai mare la cea mai mica medie</div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem; color: var(--accent-cyan);">Filtrare avansata cu AND / OR</h3>
+
+                <div class="concept-card" style="border-color: var(--accent-purple);">
+                    <div class="concept-name">AND - Ambele conditii trebuie indeplinite</div>
+                    <div class="sql-box">
+                        <span class="sql-keyword">SELECT</span> <span class="sql-operator">*</span><br>
+                        <span class="sql-keyword">FROM</span> <span class="sql-table">Elevi</span><br>
+                        <span class="sql-keyword">WHERE</span> <span class="sql-field">Clasa</span> <span class="sql-operator">=</span> <span class="sql-string">'8A'</span> <span class="sql-keyword">AND</span> <span class="sql-field">Media</span> <span class="sql-operator">></span> 9;
+                    </div>
+                    <div class="concept-def">
+                        <strong>Traducere:</strong> "Elevii care sunt in 8A SI au media > 9"
+                        <br>Trebuie sa indeplineasca AMBELE conditii!
+                    </div>
+                </div>
+
+                <div class="concept-card" style="border-color: var(--accent-green);">
+                    <div class="concept-name">OR - Cel putin o conditie</div>
+                    <div class="sql-box">
+                        <span class="sql-keyword">SELECT</span> <span class="sql-operator">*</span><br>
+                        <span class="sql-keyword">FROM</span> <span class="sql-table">Elevi</span><br>
+                        <span class="sql-keyword">WHERE</span> <span class="sql-field">Clasa</span> <span class="sql-operator">=</span> <span class="sql-string">'8A'</span> <span class="sql-keyword">OR</span> <span class="sql-field">Clasa</span> <span class="sql-operator">=</span> <span class="sql-string">'8B'</span>;
+                    </div>
+                    <div class="concept-def">
+                        <strong>Traducere:</strong> "Elevii care sunt in 8A SAU in 8B"
+                        <br>E suficient sa indeplineasca UNA din conditii.
+                    </div>
+                </div>
+
+                <div class="concept-card" style="border-color: var(--accent-red);">
+                    <div class="concept-name">BETWEEN - Interval de valori</div>
+                    <div class="sql-box">
+                        <span class="sql-keyword">SELECT</span> <span class="sql-operator">*</span><br>
+                        <span class="sql-keyword">FROM</span> <span class="sql-table">Elevi</span><br>
+                        <span class="sql-keyword">WHERE</span> <span class="sql-field">Media</span> <span class="sql-keyword">BETWEEN</span> 8 <span class="sql-keyword">AND</span> 9;
+                    </div>
+                    <div class="concept-def">
+                        <strong>Traducere:</strong> "Elevii cu media intre 8 si 9 (inclusiv)"
+                        <br>Mai simplu decat: Media >= 8 AND Media <= 9
+                    </div>
+                </div>
+
+                <div class="concept-card" style="border-color: var(--accent-cyan);">
+                    <div class="concept-name">Combinatie completa: WHERE + ORDER BY</div>
+                    <div class="sql-box">
+                        <span class="sql-keyword">SELECT</span> <span class="sql-field">Nume</span>, <span class="sql-field">Prenume</span>, <span class="sql-field">Media</span><br>
+                        <span class="sql-keyword">FROM</span> <span class="sql-table">Elevi</span><br>
+                        <span class="sql-keyword">WHERE</span> <span class="sql-field">Clasa</span> <span class="sql-operator">=</span> <span class="sql-string">'8A'</span><br>
+                        <span class="sql-keyword">ORDER BY</span> <span class="sql-field">Media</span> <span class="sql-keyword">DESC</span>;
+                    </div>
+                    <div class="concept-def">
+                        <strong>Traducere:</strong> "Arata elevii din 8A, sortati de la cea mai mare medie"
+                    </div>
+                    <div class="result-table-container">
+                        <table class="result-table">
+                            <tr><th>Nume</th><th>Prenume</th><th>Media</th></tr>
+                            <tr><td>Popescu</td><td>Maria</td><td>9.50</td></tr>
+                            <tr><td>Popa</td><td>Elena</td><td>9.25</td></tr>
+                        </table>
+                        <div class="result-label">Doar 8A, sortati descrescator dupa medie</div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('try')">← Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('test')">
+                        Am inteles! Testeaza-ma →
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEST Section -->
+        <div class="section" id="test">
+            <div class="test-section">
+                <div class="test-header">
+                    <span class="test-badge">VERIFICA</span>
+                    <h2>Hai sa vedem ce ai retinut!</h2>
+                </div>
+
+                <div class="quiz-question" id="q1">
+                    <div class="question-text">1. Ce cuvant cheie folosesti pentru a sorta rezultatele?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q1', false)">SORT BY</div>
+                        <div class="option" onclick="selectOption(this, 'q1', true)">ORDER BY</div>
+                        <div class="option" onclick="selectOption(this, 'q1', false)">ARRANGE BY</div>
+                    </div>
+                    <div class="feedback" id="q1-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <div class="question-text">2. Ce inseamna DESC in ORDER BY?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q2', false)">Descriere - adauga o descriere</div>
+                        <div class="option" onclick="selectOption(this, 'q2', true)">Descending - de la mare la mic (Z-A, 100-1)</div>
+                        <div class="option" onclick="selectOption(this, 'q2', false)">Sterge rezultatele</div>
+                    </div>
+                    <div class="feedback" id="q2-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <div class="question-text">3. Cum selectezi elevii din 8A care au media > 9?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q3', false)">WHERE Clasa = '8A' OR Media > 9</div>
+                        <div class="option" onclick="selectOption(this, 'q3', true)">WHERE Clasa = '8A' AND Media > 9</div>
+                        <div class="option" onclick="selectOption(this, 'q3', false)">WHERE Clasa = '8A', Media > 9</div>
+                    </div>
+                    <div class="feedback" id="q3-feedback"></div>
+                </div>
+
+                <div id="test-result" style="display: none;"></div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('learn')">← Inapoi la lectie</button>
+                    <button class="btn btn-success" onclick="checkAllAnswers()">
+                        Verifica raspunsurile
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPLETION Section -->
+        <div class="section" id="complete">
+            <div class="completion">
+                <div class="completion-icon">🎉</div>
+                <h2 class="completion-title">Felicitari!</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    Ai terminat Lectia 5: Sortare si filtrare
+                </p>
+                <div class="xp-gain">+75 XP</div>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                    Acum stii sa sortezi si sa filtrezi datele ca un expert!
+                </p>
+                <div class="actions" style="justify-content: center;">
+                    <a href="lectia6-proiect-bd.html" class="btn btn-primary">
+                        Continua la Proiectul Final →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let answers = {};
+        let correctCount = 0;
+
+        function goToStep(step) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(step).classList.add('active');
+
+            const steps = ['goal', 'try', 'learn', 'test'];
+            const currentIndex = steps.indexOf(step);
+
+            document.querySelectorAll('.step').forEach((s, i) => {
+                s.classList.remove('active', 'completed');
+                if (i < currentIndex) s.classList.add('completed');
+                if (i === currentIndex) s.classList.add('active');
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleHint(el) {
+            el.nextElementSibling.classList.toggle('show');
+        }
+
+        function selectOption(el, questionId, isCorrect) {
+            el.parentNode.querySelectorAll('.option').forEach(o => {
+                o.classList.remove('selected', 'correct', 'wrong');
+            });
+            el.classList.add('selected');
+            answers[questionId] = isCorrect;
+        }
+
+        function checkAllAnswers() {
+            correctCount = 0;
+
+            ['q1', 'q2', 'q3'].forEach(qId => {
+                const question = document.getElementById(qId);
+                const feedback = document.getElementById(qId + '-feedback');
+                const selectedOption = question.querySelector('.option.selected');
+
+                if (selectedOption) {
+                    if (answers[qId]) {
+                        selectedOption.classList.add('correct');
+                        feedback.className = 'feedback success';
+                        feedback.textContent = 'Corect!';
+                        correctCount++;
+                    } else {
+                        selectedOption.classList.add('wrong');
+                        feedback.className = 'feedback error';
+                        feedback.textContent = 'Incearca din nou!';
+                        question.querySelectorAll('.option').forEach(o => {
+                            if (o.onclick.toString().includes('true')) o.classList.add('correct');
+                        });
+                    }
+                }
+            });
+
+            const resultDiv = document.getElementById('test-result');
+
+            if (correctCount === 3) {
+                resultDiv.innerHTML = `<div style="text-align: center; padding: 2rem; background: rgba(16, 185, 129, 0.2); border-radius: 12px; margin-top: 1rem;"><div style="font-size: 3rem;">🌟</div><h3 style="color: var(--accent-green);">Excelent! 3/3 corecte!</h3></div>`;
+                resultDiv.style.display = 'block';
+                setTimeout(() => goToStep('complete'), 2000);
+            } else if (correctCount >= 2) {
+                resultDiv.innerHTML = `<div style="text-align: center; padding: 1rem; background: rgba(245, 158, 11, 0.2); border-radius: 12px; margin-top: 1rem;"><h3 style="color: var(--accent-orange);">Bine! ${correctCount}/3 corecte!</h3></div>`;
+                resultDiv.style.display = 'block';
+                setTimeout(() => goToStep('complete'), 2000);
+            } else {
+                resultDiv.innerHTML = `<div style="text-align: center; padding: 1rem; background: rgba(239, 68, 68, 0.2); border-radius: 12px; margin-top: 1rem;"><h3 style="color: var(--accent-red);">${correctCount}/3 - Reciteste lectia!</h3></div>`;
+                resultDiv.style.display = 'block';
+            }
+        }
+
+        document.querySelectorAll('.step').forEach(step => {
+            step.addEventListener('click', () => goToStep(step.dataset.step));
+        });
+    </script>
+
+    <footer style="margin-top: 3rem; padding: 1.5rem; border-top: 1px solid var(--border); text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+        <div style="margin-bottom: 0.5rem;"><strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong></div>
+        <div>Informatica si TIC | Materiale educationale pentru elevi</div>
+        <div style="margin-top: 0.5rem; font-size: 0.75rem;"><a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan); text-decoration: none;">grlnvasile@gmail.com</a></div>
+    </footer>
+
+    
+    <!-- User System -->
+    <script src="../../../../assets/js/user-system.js"></script>
+
+    <!-- PoW System -->
+    <script src="../../../../assets/js/pow/storage.js"></script>
+    <script src="../../../../assets/js/pow/validator.js"></script>
+    <script src="../../../../assets/js/pow/checkpoint.js"></script>
+    <script src="../../../../assets/js/pow/gating.js"></script>
+    <script src="../../../../assets/js/pow/quiz-limiter.js"></script>
+
+    <!-- Progress Tracking -->
+    <script src="../../../../assets/js/progress.js"></script>
+    <!-- RPG System -->
+    <script src="../../../../assets/js/rpg-system.js"></script>
+    <script>
+        RPG.init('cls8', 'm3-databases');
+        // Hook quiz checking to RPG system
+        if (typeof checkAllAnswers !== 'undefined') {
+            const originalCheckAllAnswers = checkAllAnswers;
+            checkAllAnswers = function() {
+                originalCheckAllAnswers();
+                if (typeof correctCount !== 'undefined' && correctCount >= 3) {
+                    RPG.onQuizPass(correctCount, 4, correctCount === 4);
+                }
+            };
+        }
+    </script>
+    <script>
+        LearningProgress.init('cls8', 'm3-databases', 'lectia5');
+    </script>
+
+    <!-- Breadcrumb Navigation -->
+    <script src="../../../../assets/js/breadcrumb.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Breadcrumb.init({
+        grade: 'cls8',
+        gradeName: 'Clasa a VIII-a',
+        module: 'm3-databases',
+        moduleName: 'Modulul 3: Baze de date',
+        lesson: 'Lectia 5'
+            });
+        });
+    </script>
+</body>
+</html>

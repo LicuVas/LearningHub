@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectia 5: Sortarea tablourilor | Clasa 8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-red: #ef4444;
+            --accent-rose: #f43f5e;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-blue: #3b82f6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-back {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .nav-back:hover { color: var(--accent-cyan); }
+
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            width: 60px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .step.active { background: var(--accent-red); }
+        .step.completed { background: var(--accent-green); }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .goal-section {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.1));
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .goal-icon { font-size: 5rem; margin-bottom: 1rem; }
+
+        .goal-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .goal-desc {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
+
+        .try-section {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
+            border: 2px solid var(--accent-orange);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .try-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .try-badge {
+            background: var(--accent-orange);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .challenge-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .challenge-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--accent-orange);
+        }
+
+        .challenge-task {
+            font-size: 1.1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-orange);
+        }
+
+        .hint-box {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid var(--accent-purple);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .hint-toggle {
+            cursor: pointer;
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        .hint-content {
+            display: none;
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .hint-content.show { display: block; }
+
+        .learn-section {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .learn-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .learn-badge {
+            background: var(--accent-red);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .concept-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--accent-red);
+        }
+
+        .concept-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .concept-def {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .concept-why {
+            background: rgba(16, 185, 129, 0.1);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .concept-why strong {
+            color: var(--accent-green);
+        }
+
+        .code-block {
+            background: #1e1e2e;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            border: 1px solid var(--border);
+        }
+
+        .code-block .keyword { color: #c678dd; }
+        .code-block .type { color: #e5c07b; }
+        .code-block .number { color: #d19a66; }
+        .code-block .comment { color: #5c6370; font-style: italic; }
+        .code-block .string { color: #98c379; }
+        .code-block .function { color: #61afef; }
+
+        .array-visual {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .array-cell {
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: white;
+            flex-direction: column;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .array-cell .value { font-size: 1.2rem; }
+        .array-cell .index { font-size: 0.65rem; opacity: 0.8; }
+
+        .array-cell.comparing {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-rose)) !important;
+            transform: scale(1.1);
+        }
+
+        .array-cell.swapping {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)) !important;
+            animation: swap 0.3s ease;
+        }
+
+        .array-cell.sorted {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)) !important;
+        }
+
+        @keyframes swap {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .demo-controls {
+            text-align: center;
+            margin: 1rem 0;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .demo-status {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-weight: 600;
+            min-height: 60px;
+        }
+
+        .step-visual {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .step-item:last-child {
+            border-bottom: none;
+        }
+
+        .step-num {
+            width: 30px;
+            height: 30px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .test-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1));
+            border: 2px solid var(--accent-purple);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .test-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .test-badge {
+            background: var(--accent-purple);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .quiz-question {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .options {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .option {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option:hover { border-color: var(--accent-purple); }
+        .option.selected { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.1); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .feedback {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .feedback.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .feedback.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .completion {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .completion-icon { font-size: 5rem; margin-bottom: 1rem; }
+
+        .completion-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .xp-gain {
+            font-size: 1.5rem;
+            color: var(--accent-orange);
+            margin: 1rem 0;
+        }
+
+        .warning-box {
+            background: rgba(239, 68, 68, 0.15);
+            border: 2px solid var(--accent-red);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .warning-title {
+            color: var(--accent-red);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .goal-title { font-size: 1.5rem; }
+            .actions { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+            .array-cell { width: 42px; height: 42px; font-size: 0.9rem; }
+        }
+    </style>
+    <link rel="stylesheet" href="../../../../assets/css/mobile.css">
+    <link rel="stylesheet" href="../../../../assets/css/mobile-first.css">
+    <link rel="stylesheet" href="../../../../assets/css/practice.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <div class="progress-steps">
+            <div class="step active" data-step="goal" title="Obiectiv"></div>
+            <div class="step" data-step="try" title="Incearca"></div>
+            <div class="step" data-step="learn" title="Invata"></div>
+            <div class="step" data-step="test" title="Verifica"></div>
+        </div>
+
+        <!-- GOAL Section -->
+        <div class="section active" id="goal">
+            <div class="goal-section">
+                <div class="goal-icon">🔢</div>
+                <h1 class="goal-title">Vreau sa sortez elementele!</h1>
+                <p class="goal-desc">
+                    Dupa aceasta lectie, vei sti sa ordonezi elementele unui tablou crescator sau descrescator folosind algoritmul Bubble Sort.
+                </p>
+                <button class="btn btn-primary" onclick="goToStep('try')">
+                    Sa incepem!
+                </button>
+            </div>
+        </div>
+
+        <!-- TRY Section -->
+        <div class="section" id="try">
+            <div class="try-section">
+                <div class="try-header">
+                    <span class="try-badge">INCEARCA</span>
+                    <h2>Gandeste-te la asta!</h2>
+                </div>
+
+                <div class="challenge-box">
+                    <div class="challenge-title">Provocarea ta:</div>
+                    <div class="challenge-task">
+                        Ai numerele: <strong>5, 2, 8, 1, 9</strong>
+                        <br><br>
+                        Cum le-ai ordona crescator (de la mic la mare)?
+                        <br><br>
+                        <strong>Gandeste:</strong> Ce pasi ai urma?
+                        <br>
+                        Ai compara doua numere vecine si le-ai interschimba daca nu sunt in ordine?
+                    </div>
+                </div>
+
+                <div class="hint-box">
+                    <div class="hint-toggle" onclick="toggleHint(this)">
+                        Click pentru indiciu
+                    </div>
+                    <div class="hint-content">
+                        <p>Imagineaza-te ca ai baloane cu numere - cele mai usoare (mici) se ridica sus!</p>
+                        <p>Compari 5 cu 2: 5 > 2, deci le interschimbi: 2, 5, 8, 1, 9</p>
+                        <p>Compari 5 cu 8: 5 < 8, OK, nu schimbi nimic</p>
+                        <p>Continui pana nu mai ai ce interschimba...</p>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('goal')">Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('learn')">
+                        Vreau sa invat algoritmul!
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEARN Section -->
+        <div class="section" id="learn">
+            <div class="learn-section">
+                <!-- Tab navigation -->
+                <div class="learn-tabs">
+                    <button class="learn-tab active" data-tab="learn">📚 Invata</button>
+                    <button class="learn-tab" data-tab="practice">🎯 Practica</button>
+                </div>
+
+                <!-- Learn tab content -->
+                <div class="tab-content active" id="tab-learn">
+                <div class="learn-header">
+                    <span class="learn-badge">INVATA</span>
+                    <h2>Algoritmul Bubble Sort</h2>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Bubble Sort (Sortare prin metoda bulelor)</div>
+                    <div class="concept-def">
+                        <strong>Bubble Sort</strong> este un algoritm simplu de sortare care:
+                        <ol style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li>Compara doua elemente vecine</li>
+                            <li>Daca nu sunt in ordine, le interschimba</li>
+                            <li>Repeta pana tabloul este sortat</li>
+                        </ol>
+                        <br>
+                        Se numeste "bubble" (bula) pentru ca elementele mari "se ridica" spre sfarsit ca bulele de aer in apa!
+                    </div>
+                </div>
+
+                <!-- Algorithm Steps -->
+                <h3 style="margin: 1.5rem 0 1rem; color: var(--accent-cyan);">Pasii algoritmului</h3>
+
+                <div class="step-visual">
+                    <div class="step-item">
+                        <div class="step-num">1</div>
+                        <div>Parcurge tabloul de la inceput</div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num">2</div>
+                        <div>Compara fiecare element cu vecinul sau din dreapta</div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num">3</div>
+                        <div>Daca sunt in ordine gresita, interschimba-le</div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num">4</div>
+                        <div>Repeta parcurgerea pana nu mai faci nicio interschimbare</div>
+                    </div>
+                </div>
+
+                <!-- Interactive Demo -->
+                <h3 style="margin: 1.5rem 0 1rem; color: var(--accent-cyan);">Demo interactiv: Bubble Sort</h3>
+
+                <div class="array-visual" id="sort-visual">
+                    <div class="array-cell" data-value="5">
+                        <span class="value">5</span>
+                        <span class="index">[0]</span>
+                    </div>
+                    <div class="array-cell" data-value="2">
+                        <span class="value">2</span>
+                        <span class="index">[1]</span>
+                    </div>
+                    <div class="array-cell" data-value="8">
+                        <span class="value">8</span>
+                        <span class="index">[2]</span>
+                    </div>
+                    <div class="array-cell" data-value="1">
+                        <span class="value">1</span>
+                        <span class="index">[3]</span>
+                    </div>
+                    <div class="array-cell" data-value="9">
+                        <span class="value">9</span>
+                        <span class="index">[4]</span>
+                    </div>
+                </div>
+
+                <div id="demo-status" class="demo-status">
+                    Click pe "Sorteaza pas cu pas" pentru a vedea algoritmul in actiune!
+                </div>
+
+                <div class="demo-controls">
+                    <button class="btn btn-outline btn-small" onclick="resetArray()">
+                        Reseteaza
+                    </button>
+                    <button class="btn btn-primary btn-small" onclick="bubbleSortStep()" id="sort-btn">
+                        Sorteaza pas cu pas
+                    </button>
+                </div>
+
+                <!-- Swap Code -->
+                <div class="concept-card">
+                    <div class="concept-name">Interschimbarea a doua valori</div>
+                    <div class="code-block">
+<span class="comment">// Pentru a interschimba a si b, avem nevoie de o variabila auxiliara</span>
+<span class="type">int</span> aux = a;   <span class="comment">// salvam valoarea lui a</span>
+a = b;         <span class="comment">// a primeste valoarea lui b</span>
+b = aux;       <span class="comment">// b primeste vechea valoare a lui a</span>
+
+<span class="comment">// Exemplu cu tablou:</span>
+<span class="type">int</span> aux = note[i];
+note[i] = note[i+<span class="number">1</span>];
+note[i+<span class="number">1</span>] = aux;
+                    </div>
+                </div>
+
+                <!-- Bubble Sort Code -->
+                <div class="concept-card">
+                    <div class="concept-name">Codul Bubble Sort (crescator)</div>
+                    <div class="code-block">
+<span class="type">int</span> note[<span class="number">5</span>] = {<span class="number">5</span>, <span class="number">2</span>, <span class="number">8</span>, <span class="number">1</span>, <span class="number">9</span>};
+<span class="type">int</span> n = <span class="number">5</span>;
+
+<span class="comment">// Sortare crescatoare</span>
+<span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i < n - <span class="number">1</span>; i++) {
+    <span class="keyword">for</span>(<span class="type">int</span> j = <span class="number">0</span>; j < n - i - <span class="number">1</span>; j++) {
+        <span class="keyword">if</span>(note[j] > note[j+<span class="number">1</span>]) {
+            <span class="comment">// Interschimbare</span>
+            <span class="type">int</span> aux = note[j];
+            note[j] = note[j+<span class="number">1</span>];
+            note[j+<span class="number">1</span>] = aux;
+        }
+    }
+}
+
+<span class="comment">// Rezultat: 1, 2, 5, 8, 9</span>
+                    </div>
+                </div>
+
+                <!-- Descending -->
+                <div class="concept-card" style="border-color: var(--accent-orange);">
+                    <div class="concept-name" style="color: var(--accent-orange);">Sortare DESCRESCATOARE</div>
+                    <div class="code-block">
+<span class="comment">// Schimbam doar conditia: > devine <</span>
+<span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i < n - <span class="number">1</span>; i++) {
+    <span class="keyword">for</span>(<span class="type">int</span> j = <span class="number">0</span>; j < n - i - <span class="number">1</span>; j++) {
+        <span class="keyword">if</span>(note[j] <span style="color: var(--accent-orange); font-weight: bold;">&lt;</span> note[j+<span class="number">1</span>]) {  <span class="comment">// &lt; in loc de &gt;</span>
+            <span class="type">int</span> aux = note[j];
+            note[j] = note[j+<span class="number">1</span>];
+            note[j+<span class="number">1</span>] = aux;
+        }
+    }
+}
+<span class="comment">// Rezultat: 9, 8, 5, 2, 1</span>
+                    </div>
+                </div>
+
+                <!-- Why n-1 and n-i-1 -->
+                <div class="warning-box">
+                    <div class="warning-title">De ce n-1 si n-i-1?</div>
+                    <p style="color: var(--text-secondary);">
+                        <strong>n-1:</strong> Dupa n-1 parcurgeri, tabloul e garantat sortat
+                        <br><br>
+                        <strong>n-i-1:</strong> Dupa fiecare parcurgere, ultimele i elemente sunt deja sortate (cele mai mari au "plutit" la final)
+                    </p>
+                </div>
+
+                <!-- Complete Example -->
+                <div class="concept-card" style="border-color: var(--accent-green);">
+                    <div class="concept-name" style="color: var(--accent-green);">Exemplu complet</div>
+                    <div class="code-block">
+<span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
+<span class="keyword">using namespace</span> std;
+
+<span class="type">int</span> <span class="function">main</span>() {
+    <span class="type">int</span> note[<span class="number">100</span>];
+    <span class="type">int</span> n;
+
+    cout << <span class="string">"Cate numere? "</span>;
+    cin >> n;
+
+    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i < n; i++) {
+        cout << <span class="string">"Numarul "</span> << i + <span class="number">1</span> << <span class="string">": "</span>;
+        cin >> note[i];
+    }
+
+    <span class="comment">// Bubble Sort crescator</span>
+    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i < n - <span class="number">1</span>; i++) {
+        <span class="keyword">for</span>(<span class="type">int</span> j = <span class="number">0</span>; j < n - i - <span class="number">1</span>; j++) {
+            <span class="keyword">if</span>(note[j] > note[j+<span class="number">1</span>]) {
+                <span class="type">int</span> aux = note[j];
+                note[j] = note[j+<span class="number">1</span>];
+                note[j+<span class="number">1</span>] = aux;
+            }
+        }
+    }
+
+    cout << <span class="string">"Numerele sortate crescator: "</span>;
+    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i < n; i++) {
+        cout << note[i] << <span class="string">" "</span>;
+    }
+
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+                    </div>
+                </div>
+
+                </div><!-- /tab-learn -->
+
+                <!-- Practice tab content -->
+                <div class="tab-content" id="tab-practice">
+                    <div class="practice-header">
+                        <span class="practice-badge">🎯 PRACTICA</span>
+                        <h2>Exerseaza sortarea</h2>
+                        <p class="practice-tagline">Cursul te invata. Practica te face expert.</p>
+                    </div>
+
+                    <!-- Progress indicator -->
+                    <div class="practice-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">0/4</div>
+                    </div>
+
+                    <!-- Problem 1: Sortare crescatoare -->
+                    <div class="practice-problem" data-problem="p1">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P1.</span> Sortare crescatoare</span>
+                            <span class="difficulty-badge difficulty-easy">Usor</span>
+                        </div>
+                        <p class="problem-desc">Citeste n numere intr-un tablou si sorteaza-le crescator folosind Bubble Sort. Afiseaza tabloul sortat.</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">5 elemente: 5 2 8 1 9</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">1 2 5 8 9</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p1')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p1"><code>if(a[j] > a[j+1])</code> apoi interschimbi cu variabila auxiliara</div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p1')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Problem 2: Sortare descrescatoare -->
+                    <div class="practice-problem" data-problem="p2">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P2.</span> Sortare descrescatoare</span>
+                            <span class="difficulty-badge difficulty-easy">Usor</span>
+                        </div>
+                        <p class="problem-desc">Citeste n numere si sorteaza-le DESCRESCATOR (de la mare la mic).</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">4 elemente: 3 7 1 5</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">7 5 3 1</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p2')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p2">Schimba conditia: <code>if(a[j] &lt; a[j+1])</code> in loc de <code>&gt;</code></div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p2')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Problem 3: Sortare + maxim -->
+                    <div class="practice-problem" data-problem="p3">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P3.</span> Cele mai mari 3 valori</span>
+                            <span class="difficulty-badge difficulty-medium">Mediu</span>
+                        </div>
+                        <p class="problem-desc">Citeste n numere (n >= 3), sorteaza-le descrescator si afiseaza primele 3 (cele mai mari).</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">6 elemente: 4 9 2 7 1 8</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">Top 3: 9, 8, 7</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p3')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p3">Dupa sortare descrescatoare: <code>cout << a[0] << a[1] << a[2];</code></div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p3')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Problem 4: Mediana -->
+                    <div class="practice-problem" data-problem="p4">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P4.</span> Gaseste mediana</span>
+                            <span class="difficulty-badge difficulty-medium">Mediu</span>
+                        </div>
+                        <p class="problem-desc">Citeste n numere (n impar), sorteaza-le si afiseaza elementul din mijloc (mediana).</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">5 elemente: 7 2 9 4 1</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">Mediana: 4 (din 1 2 4 7 9)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p4')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p4">Dupa sortare: <code>cout << a[n/2];</code> - elementul din mijloc</div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p4')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+                </div><!-- /tab-practice -->
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('try')">Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('test')">
+                        Am inteles! Testeaza-ma
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEST Section -->
+        <div class="section" id="test">
+            <div class="test-section">
+                <div class="test-header">
+                    <span class="test-badge">VERIFICA</span>
+                    <h2>Hai sa vedem ce ai retinut!</h2>
+                </div>
+
+                <div class="quiz-question" id="q1">
+                    <div class="question-text">1. Ce face algoritmul Bubble Sort?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q1', false)">Cauta un element in tablou</div>
+                        <div class="option" onclick="selectOption(this, 'q1', true)">Ordoneaza elementele comparand vecini si interschimband</div>
+                        <div class="option" onclick="selectOption(this, 'q1', false)">Gaseste elementul maxim</div>
+                    </div>
+                    <div class="feedback" id="q1-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <div class="question-text">2. Pentru sortare DESCRESCATOARE, ce conditie folosim?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q2', false)">if(note[j] > note[j+1])</div>
+                        <div class="option" onclick="selectOption(this, 'q2', true)">if(note[j] < note[j+1])</div>
+                        <div class="option" onclick="selectOption(this, 'q2', false)">if(note[j] == note[j+1])</div>
+                    </div>
+                    <div class="feedback" id="q2-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <div class="question-text">3. De ce avem nevoie de o variabila auxiliara la interschimbare?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q3', true)">Pentru a nu pierde valoarea unuia dintre elemente</div>
+                        <div class="option" onclick="selectOption(this, 'q3', false)">Pentru a face codul mai lung</div>
+                        <div class="option" onclick="selectOption(this, 'q3', false)">Nu avem nevoie, putem face fara</div>
+                    </div>
+                    <div class="feedback" id="q3-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q4">
+                    <div class="question-text">4. Dupa sortare crescatoare a {5, 2, 8, 1}, care este ordinea?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q4', false)">8, 5, 2, 1</div>
+                        <div class="option" onclick="selectOption(this, 'q4', true)">1, 2, 5, 8</div>
+                        <div class="option" onclick="selectOption(this, 'q4', false)">5, 2, 8, 1</div>
+                    </div>
+                    <div class="feedback" id="q4-feedback"></div>
+                </div>
+
+                <div id="test-result" style="display: none;"></div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('learn')">Inapoi la lectie</button>
+                    <button class="btn btn-success" onclick="checkAllAnswers()" id="check-btn">
+                        Verifica raspunsurile
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPLETION Section -->
+        <div class="section" id="complete">
+            <div class="completion">
+                <div class="completion-icon">🎉</div>
+                <h2 class="completion-title">Felicitari!</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    Ai terminat Lectia 5: Sortarea tablourilor
+                </p>
+                <div class="xp-gain">+50 XP</div>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                    Acum stii algoritmul Bubble Sort pentru a ordona elemente!
+                </p>
+                <div class="actions" style="justify-content: center;">
+                    <a href="lectia6-proiect.html" class="btn btn-primary">
+                        Continua la Proiectul Final
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let answers = {};
+        let correctCount = 0;
+        let arrayValues = [5, 2, 8, 1, 9];
+        let sortI = 0;
+        let sortJ = 0;
+        let isSorting = false;
+        let isSorted = false;
+
+        function goToStep(step) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(step).classList.add('active');
+
+            const steps = ['goal', 'try', 'learn', 'test'];
+            const currentIndex = steps.indexOf(step);
+
+            document.querySelectorAll('.step').forEach((s, i) => {
+                s.classList.remove('active', 'completed');
+                if (i < currentIndex) s.classList.add('completed');
+                if (i === currentIndex) s.classList.add('active');
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleHint(el) {
+            const content = el.nextElementSibling;
+            content.classList.toggle('show');
+        }
+
+        function updateVisual() {
+            const cells = document.querySelectorAll('#sort-visual .array-cell');
+            cells.forEach((cell, idx) => {
+                cell.querySelector('.value').textContent = arrayValues[idx];
+                cell.dataset.value = arrayValues[idx];
+            });
+        }
+
+        function resetArray() {
+            arrayValues = [5, 2, 8, 1, 9];
+            sortI = 0;
+            sortJ = 0;
+            isSorting = false;
+            isSorted = false;
+
+            const cells = document.querySelectorAll('#sort-visual .array-cell');
+            cells.forEach(c => {
+                c.classList.remove('comparing', 'swapping', 'sorted');
+            });
+
+            updateVisual();
+            document.getElementById('demo-status').textContent = 'Click pe "Sorteaza pas cu pas" pentru a vedea algoritmul in actiune!';
+            document.getElementById('sort-btn').textContent = 'Sorteaza pas cu pas';
+        }
+
+        function bubbleSortStep() {
+            if (isSorted) {
+                resetArray();
+                return;
+            }
+
+            const cells = document.querySelectorAll('#sort-visual .array-cell');
+            const n = arrayValues.length;
+            const statusDiv = document.getElementById('demo-status');
+
+            // Clear previous highlights
+            cells.forEach(c => c.classList.remove('comparing', 'swapping'));
+
+            if (sortI < n - 1) {
+                if (sortJ < n - sortI - 1) {
+                    // Highlight comparing elements
+                    cells[sortJ].classList.add('comparing');
+                    cells[sortJ + 1].classList.add('comparing');
+
+                    statusDiv.innerHTML = `Compar <strong>${arrayValues[sortJ]}</strong> cu <strong>${arrayValues[sortJ + 1]}</strong>`;
+
+                    setTimeout(() => {
+                        if (arrayValues[sortJ] > arrayValues[sortJ + 1]) {
+                            // Swap
+                            cells[sortJ].classList.add('swapping');
+                            cells[sortJ + 1].classList.add('swapping');
+
+                            statusDiv.innerHTML = `${arrayValues[sortJ]} > ${arrayValues[sortJ + 1]} - <strong style="color: var(--accent-purple);">INTERSCHIMB!</strong>`;
+
+                            let temp = arrayValues[sortJ];
+                            arrayValues[sortJ] = arrayValues[sortJ + 1];
+                            arrayValues[sortJ + 1] = temp;
+
+                            setTimeout(() => {
+                                updateVisual();
+                                cells[sortJ].classList.remove('swapping');
+                                cells[sortJ + 1].classList.remove('swapping');
+                            }, 400);
+                        } else {
+                            statusDiv.innerHTML = `${arrayValues[sortJ]} <= ${arrayValues[sortJ + 1]} - <strong style="color: var(--accent-green);">OK, nu schimb</strong>`;
+                        }
+
+                        sortJ++;
+                    }, 400);
+                } else {
+                    // End of inner loop - mark last element as sorted
+                    cells[n - sortI - 1].classList.add('sorted');
+                    sortJ = 0;
+                    sortI++;
+
+                    if (sortI >= n - 1) {
+                        cells[0].classList.add('sorted');
+                        isSorted = true;
+                        statusDiv.innerHTML = '<strong style="color: var(--accent-green);">TABLOUL ESTE SORTAT!</strong>';
+                        document.getElementById('sort-btn').textContent = 'Reseteaza si reincepe';
+                    }
+                }
+            }
+        }
+
+        function selectOption(el, questionId, isCorrect) {
+            el.parentNode.querySelectorAll('.option').forEach(o => {
+                o.classList.remove('selected', 'correct', 'wrong');
+            });
+            el.classList.add('selected');
+            answers[questionId] = isCorrect;
+        }
+
+        function checkAllAnswers() {
+            correctCount = 0;
+            const questions = ['q1', 'q2', 'q3', 'q4'];
+
+            questions.forEach(qId => {
+                const question = document.getElementById(qId);
+                const feedback = document.getElementById(qId + '-feedback');
+                const selectedOption = question.querySelector('.option.selected');
+
+                if (selectedOption) {
+                    if (answers[qId]) {
+                        selectedOption.classList.add('correct');
+                        feedback.className = 'feedback success';
+                        feedback.textContent = 'Corect!';
+                        correctCount++;
+                    } else {
+                        selectedOption.classList.add('wrong');
+                        feedback.className = 'feedback error';
+                        feedback.textContent = 'Gresit!';
+                    }
+                }
+            });
+
+            const resultDiv = document.getElementById('test-result');
+
+            if (correctCount >= 3) {
+                resultDiv.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; background: rgba(16, 185, 129, 0.2); border-radius: 12px; margin-top: 1rem;">
+                        <div style="font-size: 3rem;">🌟</div>
+                        <h3 style="color: var(--accent-green);">Excelent! ${correctCount}/4 corecte!</h3>
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+
+                setTimeout(() => {
+                    goToStep('complete');
+                }, 2000);
+            } else {
+                resultDiv.innerHTML = `
+                    <div style="text-align: center; padding: 1rem; background: rgba(239, 68, 68, 0.2); border-radius: 12px; margin-top: 1rem;">
+                        <h3 style="color: var(--accent-red);">${correctCount}/4 - Reciteste lectia si incearca din nou!</h3>
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+            }
+        }
+
+        document.querySelectorAll('.step').forEach(step => {
+            step.addEventListener('click', () => {
+                goToStep(step.dataset.step);
+            });
+        });
+    </script>
+
+    <footer style="
+        margin-top: 3rem;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    ">
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong>
+        </div>
+        <div>
+            Informatica si TIC | Materiale educationale pentru elevi
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.75rem;">
+            <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan); text-decoration: none;">
+                grlnvasile@gmail.com
+            </a>
+        </div>
+    </footer>
+
+    
+    <!-- User System -->
+    <script src="../../../../assets/js/user-system.js"></script>
+
+    <!-- PoW System -->
+    <script src="../../../../assets/js/pow/storage.js"></script>
+    <script src="../../../../assets/js/pow/validator.js"></script>
+    <script src="../../../../assets/js/pow/checkpoint.js"></script>
+    <script src="../../../../assets/js/pow/gating.js"></script>
+    <script src="../../../../assets/js/pow/quiz-limiter.js"></script>
+
+    <!-- Progress Tracking -->
+    <script src="../../../../assets/js/progress.js"></script>
+    <!-- RPG System -->
+    <script src="../../../../assets/js/rpg-system.js"></script>
+    <!-- Practice System -->
+    <script src="../../../../assets/js/practice-system.js"></script>
+    <script>
+        RPG.init('cls8', 'm2-structuri-date');
+        PracticeSystem.init('cls8', 'm2-structuri-date', 'lectia5');
+        // Hook quiz checking to RPG system
+        if (typeof checkAllAnswers !== 'undefined') {
+            const originalCheckAllAnswers = checkAllAnswers;
+            checkAllAnswers = function() {
+                originalCheckAllAnswers();
+                if (typeof correctCount !== 'undefined' && correctCount >= 3) {
+                    RPG.onQuizPass(correctCount, 4, correctCount === 4);
+                }
+            };
+        }
+    </script>
+    <script>
+        LearningProgress.init('cls8', 'm2-structuri-date', 'lectia5');
+    </script>
+
+    <!-- Breadcrumb Navigation -->
+    <script src="../../../../assets/js/breadcrumb.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Breadcrumb.init({
+        grade: 'cls8',
+        gradeName: 'Clasa a VIII-a',
+        module: 'm2-structuri-date',
+        moduleName: 'Modulul 2: Structuri date',
+        lesson: 'Lectia 5'
+            });
+        });
+    </script>
+</body>
+</html>

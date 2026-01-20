@@ -72,43 +72,149 @@ def parse_existing_lesson(filepath: Path) -> dict:
             if p:
                 lesson_data['goal_text'] = extract_text_content(p)
 
-    # Extract content from TRY and LEARN sections
+    # Extract content from LEARN section - concept cards and interface items
     content_sections = []
 
-    # Look for section cards or sections
-    sections = soup.find_all(['section', 'div'], class_=lambda x: x and ('section-card' in x or 'section' in x))
+    # Extract from concept-cards (main learning content)
+    concept_cards = soup.find_all(class_='concept-card')
+    for card in concept_cards:
+        name_el = card.find(class_='concept-name')
+        def_el = card.find(class_='concept-def')
 
-    for section in sections:
-        header = section.find(['h2', 'h3'], class_=lambda x: x and 'title' in str(x)) if section else None
-        if not header:
-            header = section.find(['h2', 'h3'])
+        title = extract_text_content(name_el) if name_el else ""
+        definition = extract_text_content(def_el) if def_el else ""
 
-        section_title = extract_text_content(header) if header else ""
-
-        # Skip quiz/test sections for content extraction
-        if any(skip in section_title.lower() for skip in ['test', 'verifica', 'quiz']):
-            continue
-
-        # Get content paragraphs
-        paragraphs = section.find_all('p')
-        highlight_boxes = section.find_all(class_='highlight-box')
-
-        section_content = []
-        for p in paragraphs:
+        # Also get any additional paragraphs
+        extra_content = []
+        for p in card.find_all('p'):
             text = extract_text_content(p)
-            if text and len(text) > 20:  # Skip very short paragraphs
-                section_content.append(text)
+            if text and text != definition and len(text) > 15:
+                extra_content.append(text)
 
-        for box in highlight_boxes:
-            text = extract_text_content(box)
-            if text:
-                section_content.append(f"**{text}**")
-
-        if section_content:
+        if title or definition:
+            content = [definition] if definition else []
+            content.extend(extra_content)
             content_sections.append({
-                'title': section_title,
-                'content': section_content
+                'title': title or f"Concept {len(content_sections)+1}",
+                'content': content
             })
+
+    # Extract from interface-items (grid items)
+    interface_items = soup.find_all(class_='interface-item')
+    for item in interface_items:
+        name_el = item.find(class_='name')
+        desc_el = item.find(class_='desc')
+
+        title = extract_text_content(name_el) if name_el else ""
+        desc = extract_text_content(desc_el) if desc_el else ""
+
+        if title and desc:
+            content_sections.append({
+                'title': title,
+                'content': [desc]
+            })
+
+    # Extract from operator-cards (used in logic lessons)
+    operator_cards = soup.find_all(class_='operator-card')
+    for card in operator_cards:
+        title_el = card.find('h4')
+        title = extract_text_content(title_el) if title_el else ""
+
+        content = []
+        for p in card.find_all('p'):
+            text = extract_text_content(p)
+            if text:
+                content.append(text)
+
+        if title and content:
+            content_sections.append({
+                'title': title,
+                'content': content
+            })
+
+    # Extract from example-boxes
+    example_boxes = soup.find_all(class_='example-box')
+    for box in example_boxes:
+        title_el = box.find(class_='example-title')
+        title = extract_text_content(title_el) if title_el else "Exemplu"
+        # Clean up colon at end
+        title = title.rstrip(':').strip()
+
+        content = []
+        for p in box.find_all('p'):
+            text = extract_text_content(p)
+            if text and len(text) > 10:
+                content.append(text)
+
+        if content:
+            content_sections.append({
+                'title': title or "Exemplu",
+                'content': content
+            })
+
+    # Extract from step-cards (used in project lessons)
+    step_cards = soup.find_all(class_='step-card')
+    for card in step_cards:
+        title_el = card.find(class_='step-title') or card.find('h3') or card.find('h4')
+        title = extract_text_content(title_el) if title_el else ""
+
+        content = []
+        for p in card.find_all('p'):
+            text = extract_text_content(p)
+            if text and len(text) > 10:
+                content.append(text)
+
+        if title and content:
+            content_sections.append({
+                'title': title,
+                'content': content
+            })
+
+    # Extract from try-section challenges
+    try_section = soup.find(class_='try-section')
+    if try_section:
+        challenge_boxes = try_section.find_all(class_='challenge-box')
+        for box in challenge_boxes:
+            title_el = box.find(class_='challenge-title')
+            title = extract_text_content(title_el) if title_el else "Provocare"
+            # Clean up emoji from title
+            title = re.sub(r'^[^\w\s]+\s*', '', title).strip()
+
+            content = []
+            for p in box.find_all('p'):
+                text = extract_text_content(p)
+                if text and len(text) > 10:
+                    content.append(text)
+
+            if content:
+                content_sections.append({
+                    'title': title or "Provocare",
+                    'content': content
+                })
+
+    # Fallback: extract from learn-section headers if no structured cards found
+    if not content_sections:
+        learn_section = soup.find(class_='learn-section')
+        if learn_section:
+            # Get all h2/h3 as section titles
+            headers = learn_section.find_all(['h2', 'h3'])
+            for header in headers:
+                title = extract_text_content(header)
+                if title:
+                    # Get following paragraphs until next header
+                    content = []
+                    for sibling in header.find_next_siblings():
+                        if sibling.name in ['h2', 'h3']:
+                            break
+                        if sibling.name == 'p':
+                            text = extract_text_content(sibling)
+                            if text and len(text) > 15:
+                                content.append(text)
+                    if content:
+                        content_sections.append({
+                            'title': title,
+                            'content': content
+                        })
 
     lesson_data['content_sections'] = content_sections
 
@@ -117,38 +223,42 @@ def parse_existing_lesson(filepath: Path) -> dict:
     quiz_elements = soup.find_all(class_='quiz-question')
 
     for i, quiz in enumerate(quiz_elements):
-        question_text_el = quiz.find(class_='question-text')
-        question_text = extract_text_content(question_text_el) if question_text_el else f"Intrebarea {i+1}"
+        # Get question text - try multiple selectors
+        question_text_el = quiz.find(class_='question-text') or quiz.find('p')
+        question_text = extract_text_content(question_text_el) if question_text_el else f"Întrebarea {i+1}"
 
-        # Remove numbering from question
+        # Remove numbering from question (e.g., "1. " or "2. ")
         question_text = re.sub(r'^\d+\.\s*', '', question_text)
 
         options = []
         correct_answer = 'a'
 
-        # Try both class names: 'quiz-option' and 'option'
+        # Try data-correct attribute first (new format)
+        if quiz.get('data-correct'):
+            correct_answer = quiz.get('data-correct')
+
+        # Extract options - try both class names: 'quiz-option' and 'option'
         option_els = quiz.find_all(class_='quiz-option')
         if not option_els:
             option_els = quiz.find_all(class_='option')
 
         for j, opt in enumerate(option_els):
             opt_text = extract_text_content(opt)
-            # Remove letter prefix
-            opt_text = re.sub(r'^[A-Za-z]\s*', '', opt_text)
 
-            # Check if this is the correct answer
+            # Check onclick for correct answer (old format)
             onclick = opt.get('onclick', '')
             if 'true' in onclick.lower():
                 correct_answer = chr(ord('a') + j)
 
-            options.append(opt_text)
+            if opt_text:
+                options.append(opt_text)
 
         if options:
             quiz_questions.append({
                 'question': question_text,
                 'options': options,
                 'correct': correct_answer,
-                'hint': 'Reciteste sectiunea pentru a gasi raspunsul.'
+                'hint': 'Recitește secțiunea pentru a găsi răspunsul.'
             })
 
     lesson_data['quiz_questions'] = quiz_questions
@@ -685,12 +795,13 @@ def main():
     parser.add_argument('file', nargs='?', help='Single file to convert')
     parser.add_argument('--folder', help='Convert all lessons in folder')
     parser.add_argument('--all-cls5', action='store_true', help='Convert all cls5 lessons')
+    parser.add_argument('--all-cls6', action='store_true', help='Convert all cls6 lessons')
     parser.add_argument('--suffix', default='', help='Suffix for output files (empty = overwrite)')
     parser.add_argument('--dry-run', action='store_true', help='Parse only, do not write')
 
     args = parser.parse_args()
 
-    if not (args.file or args.folder or args.all_cls5):
+    if not (args.file or args.folder or args.all_cls5 or args.all_cls6):
         parser.print_help()
         return
 
@@ -705,6 +816,10 @@ def main():
     elif args.all_cls5:
         cls5_path = CONTENT_ROOT / 'cls5'
         files_to_convert = list(cls5_path.rglob('lectia*.html'))
+        files_to_convert = [f for f in files_to_convert if '-atomic' not in f.stem and '.bak' not in str(f)]
+    elif args.all_cls6:
+        cls6_path = CONTENT_ROOT / 'cls6'
+        files_to_convert = list(cls6_path.rglob('lectia*.html'))
         files_to_convert = [f for f in files_to_convert if '-atomic' not in f.stem and '.bak' not in str(f)]
 
     print(f"Found {len(files_to_convert)} lessons to convert")
