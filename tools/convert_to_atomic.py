@@ -750,16 +750,8 @@ def generate_atomic_lesson(lesson_data: dict) -> str:
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {{
-            // Initialize Atomic Learning
+            // Initialize Atomic Learning (handles all atoms automatically)
             AtomicLearning.init('{lesson_data['lesson_id']}');
-
-            // Initialize all atoms
-            document.querySelectorAll('.atom[data-quiz]').forEach(function(atomEl) {{
-                var quizData = JSON.parse(atomEl.dataset.quiz || '[]');
-                if (quizData.length > 0) {{
-                    AtomicLearning.initAtom(atomEl.id, quizData);
-                }}
-            }});
 
             // Initialize Lesson Summary
             LessonSummary.init('{lesson_data['lesson_id']}');

@@ -63,11 +63,26 @@ const AtomicLearning = {
 
     /**
      * Initialize a single atom
+     * @param {HTMLElement|string} atomElOrId - Atom element or atom ID string
+     * @param {Array} quizDataOverride - Optional quiz data (if passed directly)
      */
-    initAtom: function(atomEl) {
-        const atomId = atomEl.dataset.atomId;
+    initAtom: function(atomElOrId, quizDataOverride) {
+        // Handle both element and ID string
+        let atomEl, atomId;
+        if (typeof atomElOrId === 'string') {
+            atomId = atomElOrId;
+            atomEl = document.getElementById(atomId);
+            if (!atomEl) {
+                console.warn(`AtomicLearning: Could not find atom element with id ${atomId}`);
+                return;
+            }
+        } else {
+            atomEl = atomElOrId;
+            atomId = atomEl.dataset.atomId || atomEl.id;
+        }
+
         if (!atomId) {
-            console.warn('AtomicLearning: Atom missing data-atom-id');
+            console.warn('AtomicLearning: Atom missing data-atom-id or id');
             return;
         }
 
@@ -76,7 +91,13 @@ const AtomicLearning = {
 
         let quizData;
         try {
-            quizData = JSON.parse(quizContainer.dataset.quiz || '[]');
+            // Use override if provided, otherwise read from data-quiz attribute
+            if (quizDataOverride && Array.isArray(quizDataOverride)) {
+                quizData = quizDataOverride;
+            } else {
+                // Read data-quiz from atom element (preferred) or quiz container
+                quizData = JSON.parse(atomEl.dataset.quiz || quizContainer.dataset.quiz || '[]');
+            }
         } catch (e) {
             console.error(`AtomicLearning: Invalid quiz data for atom ${atomId}`);
             return;
@@ -287,7 +308,8 @@ const AtomicLearning = {
                 // First atom is always unlocked
                 atomEl.classList.add('atom-unlocked');
             } else {
-                const prevAtomId = atomEls[index - 1].dataset.atomId;
+                // Support both data-atom-id and id attributes
+                const prevAtomId = atomEls[index - 1].dataset.atomId || atomEls[index - 1].id;
                 if (this.completedAtoms.has(prevAtomId)) {
                     atomEl.classList.add('atom-unlocked');
                 } else {
@@ -320,7 +342,8 @@ const AtomicLearning = {
      */
     unlockNextAtom: function(completedAtomId) {
         const atomEls = Array.from(document.querySelectorAll('.atom'));
-        const currentIndex = atomEls.findIndex(el => el.dataset.atomId === completedAtomId);
+        // Support both data-atom-id and id attributes
+        const currentIndex = atomEls.findIndex(el => (el.dataset.atomId || el.id) === completedAtomId);
 
         if (currentIndex >= 0 && currentIndex < atomEls.length - 1) {
             const nextAtom = atomEls[currentIndex + 1];
