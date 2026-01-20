@@ -24,28 +24,23 @@ const LessonSummary = {
     atomicScore: null,
     practiceScore: null,
 
-    // Weights for final score calculation
-    weights: {
-        atomic: 0.6,      // 60% from atomic learning (core concepts)
-        practice: 0.4    // 40% from practice (application)
+    // Point-based grading system
+    // Total: 10 points
+    // - 1 point: din oficiu (participation)
+    // - 6 points: atomic questions (1 point each)
+    // - 3 points: practice exercises (1 point each)
+    gradeLabels: {
+        10: { label: 'Exceptional!', color: '#22c55e' },
+        9: { label: 'Excelent!', color: '#4ade80' },
+        8: { label: 'Foarte bine!', color: '#60a5fa' },
+        7: { label: 'Bine!', color: '#60a5fa' },
+        6: { label: 'Satisfacator', color: '#fbbf24' },
+        5: { label: 'Suficient', color: '#f59e0b' },
+        4: { label: 'Insuficient', color: '#ef4444' },
+        3: { label: 'Slab', color: '#ef4444' },
+        2: { label: 'Foarte slab', color: '#dc2626' },
+        1: { label: 'Participare', color: '#991b1b' }
     },
-
-    // Grade thresholds (1-10 system, 1 point automatic/din oficiu)
-    // Score 0-100% maps to grade 1-10 where:
-    // - 1 = automatic (participare)
-    // - 2-10 = earned based on performance
-    grades: [
-        { min: 95, grade: 10, label: 'Exceptional!', color: '#22c55e' },
-        { min: 85, grade: 9, label: 'Excelent!', color: '#4ade80' },
-        { min: 75, grade: 8, label: 'Foarte bine!', color: '#60a5fa' },
-        { min: 65, grade: 7, label: 'Bine!', color: '#60a5fa' },
-        { min: 55, grade: 6, label: 'Satisfacator', color: '#fbbf24' },
-        { min: 45, grade: 5, label: 'Suficient', color: '#f59e0b' },
-        { min: 35, grade: 4, label: 'Insuficient', color: '#ef4444' },
-        { min: 25, grade: 3, label: 'Slab', color: '#ef4444' },
-        { min: 10, grade: 2, label: 'Foarte slab', color: '#dc2626' },
-        { min: 0, grade: 1, label: 'Participare', color: '#991b1b' }
-    ],
 
     // Session fingerprint for authenticity
     sessionId: null,
@@ -196,72 +191,66 @@ const LessonSummary = {
     },
 
     /**
-     * Calculate the final combined score
+     * Calculate the final grade using point-based system
+     * Total: 10 points = 1 (din oficiu) + 6 (atomic) + 3 (practice)
      */
     calculateFinalScore: function() {
-        let atomicPct = this.atomicScore?.percentage || 0;
-        let practicePct = this.practiceScore?.percentage || 0;
+        // Get raw counts
+        const atomicCorrect = this.atomicScore?.totalCorrect || 0;
+        const atomicTotal = this.atomicScore?.totalQuestions || 6;
+        const practiceCorrect = this.practiceScore?.correct || 0;
+        const practiceTotal = this.practiceScore?.total || 3;
         const practiceComplete = this.practiceScore?.completed || false;
-        const practiceStarted = this.practiceScore && this.practiceScore.total > 0 &&
-            (this.practiceScore.correct > 0 || Object.keys(this.practiceScore).length > 2);
+        const practiceStarted = practiceCorrect > 0;
 
-        // Logic:
-        // - Practice not started: atomic capped at 80% (max grade 8)
-        // - Practice started but not complete: keep capped at 80% (don't penalize)
-        // - Practice complete: use weighted average (can get up to 100%)
+        // Calculate points
+        // 1 point din oficiu (always given)
+        const dinOficiuPoints = 1;
 
+        // Up to 6 points for atomic (1 point per correct answer, scaled if different total)
+        const atomicPoints = Math.round((atomicCorrect / atomicTotal) * 6);
+
+        // Up to 3 points for practice (1 point per completed exercise, scaled if different total)
+        const practicePoints = Math.round((practiceCorrect / practiceTotal) * 3);
+
+        // Calculate grade
+        // Without practice: max 7 (1 din oficiu + 6 atomic)
+        // With practice: max 10 (1 din oficiu + 6 atomic + 3 practice)
+        let grade;
         if (!practiceStarted) {
-            // Practice not started - cap at 80%
-            const cappedScore = Math.min(atomicPct, 80);
-            return {
-                final: cappedScore,
-                atomic: atomicPct,
-                practice: 0,
-                practiceStarted: false,
-                practiceComplete: false,
-                cappedWithoutPractice: atomicPct > 80
-            };
+            grade = dinOficiuPoints + atomicPoints; // Max 7
+        } else {
+            grade = dinOficiuPoints + atomicPoints + practicePoints; // Max 10
         }
 
-        if (!practiceComplete) {
-            // Practice started but not complete - still cap at 80%, don't penalize
-            const cappedScore = Math.min(atomicPct, 80);
-            return {
-                final: cappedScore,
-                atomic: atomicPct,
-                practice: practicePct,
-                practiceStarted: true,
-                practiceComplete: false,
-                cappedWithoutPractice: atomicPct > 80
-            };
-        }
-
-        // Practice complete - use weighted average (no cap)
-        const final = Math.round(
-            atomicPct * this.weights.atomic +
-            practicePct * this.weights.practice
-        );
+        // Ensure grade is between 1 and 10
+        grade = Math.max(1, Math.min(10, grade));
 
         return {
-            final: final,
-            atomic: atomicPct,
-            practice: practicePct,
-            practiceStarted: true,
-            practiceComplete: true,
-            cappedWithoutPractice: false
+            grade: grade,
+            dinOficiuPoints: dinOficiuPoints,
+            atomicPoints: atomicPoints,
+            atomicCorrect: atomicCorrect,
+            atomicTotal: atomicTotal,
+            practicePoints: practicePoints,
+            practiceCorrect: practiceCorrect,
+            practiceTotal: practiceTotal,
+            practiceStarted: practiceStarted,
+            practiceComplete: practiceComplete,
+            maxWithoutPractice: 7
         };
     },
 
     /**
-     * Get the grade for a score
+     * Get the label and color for a grade
      */
-    getGrade: function(score) {
-        for (const g of this.grades) {
-            if (score >= g.min) {
-                return g;
-            }
-        }
-        return this.grades[this.grades.length - 1];
+    getGrade: function(grade) {
+        const info = this.gradeLabels[grade] || this.gradeLabels[1];
+        return {
+            grade: grade,
+            label: info.label,
+            color: info.color
+        };
     },
 
     /**
@@ -272,14 +261,17 @@ const LessonSummary = {
         if (!container) return;
 
         const scores = this.calculateFinalScore();
-        const grade = this.getGrade(scores.final);
+        const gradeInfo = this.getGrade(scores.grade);
 
         // Check completion status
         const atomicComplete = this.atomicScore?.atomsCompleted >= this.atomicScore?.atomsTotal;
-        const practiceComplete = this.practiceScore?.completed;
 
         // Check if there are written answers requiring teacher evaluation
-        const hasPracticeAnswers = scores.practiceStarted && (this.practiceScore?.total || 0) > 0;
+        const hasPracticeAnswers = scores.practiceStarted;
+
+        // Calculate percentages for progress bars
+        const atomicPercent = scores.atomicTotal > 0 ? Math.round((scores.atomicCorrect / scores.atomicTotal) * 100) : 0;
+        const practicePercent = scores.practiceTotal > 0 ? Math.round((scores.practiceCorrect / scores.practiceTotal) * 100) : 0;
 
         container.innerHTML = `
             <div class="ls-header">
@@ -287,10 +279,12 @@ const LessonSummary = {
                 <span class="ls-title">Rezumatul Lectiei</span>
             </div>
 
-            <div class="ls-grade" style="border-color: ${grade.color};">
-                <div class="ls-grade-number" style="color: ${grade.color};">Nota ${hasPracticeAnswers ? 'provizorie' : ''}: ${grade.grade}</div>
-                <div class="ls-grade-label">${grade.label}</div>
-                <div class="ls-grade-score">${scores.final}% din punctaj</div>
+            <div class="ls-grade" style="border-color: ${gradeInfo.color};">
+                <div class="ls-grade-number" style="color: ${gradeInfo.color};">Nota ${hasPracticeAnswers ? 'provizorie' : ''}: ${scores.grade}</div>
+                <div class="ls-grade-label">${gradeInfo.label}</div>
+                <div class="ls-grade-breakdown">
+                    ${scores.dinOficiuPoints} (oficiu) + ${scores.atomicPoints} (teorie)${scores.practiceStarted ? ` + ${scores.practicePoints} (practica)` : ''} = ${scores.grade} puncte
+                </div>
                 ${hasPracticeAnswers ? `
                     <div class="ls-provisional-notice">
                         <span>&#128269;</span> Nota finala va fi confirmata de profesor dupa evaluarea raspunsurilor scrise
@@ -303,14 +297,13 @@ const LessonSummary = {
                     <div class="ls-section-header">
                         <span class="ls-section-icon">${atomicComplete ? '&#10004;' : '&#9711;'}</span>
                         <span class="ls-section-name">Invatare Atomica</span>
-                        <span class="ls-section-weight">(${Math.round(this.weights.atomic * 100)}%)</span>
+                        <span class="ls-section-weight">(max 6 puncte)</span>
                     </div>
                     <div class="ls-section-bar">
-                        <div class="ls-section-fill" style="width: ${scores.atomic}%; background: var(--accent-blue);"></div>
+                        <div class="ls-section-fill" style="width: ${atomicPercent}%; background: var(--accent-blue);"></div>
                     </div>
                     <div class="ls-section-detail">
-                        ${this.atomicScore?.totalCorrect || 0}/${this.atomicScore?.totalQuestions || 0} corecte
-                        (${scores.atomic}%) - <em>nota automata</em>
+                        ${scores.atomicCorrect}/${scores.atomicTotal} corecte = <strong>${scores.atomicPoints} puncte</strong> - <em>nota automata</em>
                     </div>
                 </div>
 
@@ -318,28 +311,28 @@ const LessonSummary = {
                     <div class="ls-section-header">
                         <span class="ls-section-icon">${scores.practiceComplete ? '&#10004;' : (scores.practiceStarted ? '&#9203;' : '&#9711;')}</span>
                         <span class="ls-section-name">Practica Avansata</span>
-                        <span class="ls-section-weight">(${Math.round(this.weights.practice * 100)}%)</span>
+                        <span class="ls-section-weight">(max 3 puncte)</span>
                     </div>
                     <div class="ls-section-bar">
-                        <div class="ls-section-fill" style="width: ${scores.practice}%; background: var(--success);"></div>
+                        <div class="ls-section-fill" style="width: ${practicePercent}%; background: var(--success);"></div>
                     </div>
                     <div class="ls-section-detail">
                         ${scores.practiceComplete
-                            ? `${this.practiceScore?.correct || 0}/${this.practiceScore?.total || 0} completate (${scores.practice}%) - <em>necesita evaluare profesor</em>`
+                            ? `${scores.practiceCorrect}/${scores.practiceTotal} completate = <strong>${scores.practicePoints} puncte</strong> - <em>necesita evaluare profesor</em>`
                             : (scores.practiceStarted
-                                ? `${this.practiceScore?.correct || 0}/${this.practiceScore?.total || 0} in curs - <em>completeaza pentru nota peste 8</em>`
-                                : 'Neinceputa - optional pentru nota maxima 10')}
+                                ? `${scores.practiceCorrect}/${scores.practiceTotal} in curs = <strong>${scores.practicePoints} puncte</strong> - <em>completeaza pentru nota peste 7</em>`
+                                : 'Neinceputa - completeaza pentru nota peste 7 (max 10)')}
                     </div>
                 </div>
             </div>
 
             ${atomicComplete ? `
                 <div class="ls-status ls-status-complete">
-                    &#10004; Lectia completa! ${grade.grade >= 5 ? 'Poti continua la urmatoarea lectie.' : 'Recomandat: reia lectia pentru o nota mai buna.'}
+                    &#10004; Lectia completa! ${scores.grade >= 5 ? 'Poti continua la urmatoarea lectie.' : 'Recomandat: reia lectia pentru o nota mai buna.'}
                 </div>
-                ${scores.cappedWithoutPractice && !scores.practiceComplete ? `
+                ${!scores.practiceStarted && scores.atomicPoints >= 6 ? `
                     <div class="ls-status" style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning, #f59e0b); color: var(--warning, #f59e0b); margin-top: 0.75rem;">
-                        &#128161; <strong>Nota limitata la 8!</strong> ${scores.practiceStarted ? 'Completeaza toate exercitiile de practica' : 'Completeaza Practica Avansata'} pentru a obtine nota 9 sau 10.
+                        &#128161; <strong>Nota maxima fara practica: 7</strong> Completeaza Practica Avansata pentru nota 8, 9 sau 10.
                     </div>
                 ` : ''}
                 ${hasPracticeAnswers ? `
@@ -367,22 +360,27 @@ const LessonSummary = {
         if (!this.lessonId) return;
 
         const scores = this.calculateFinalScore();
-        const grade = this.getGrade(scores.final);
+        const gradeInfo = this.getGrade(scores.grade);
 
         const key = `lesson-summary-${this.lessonId}`;
         const data = {
             lessonId: this.lessonId,
 
-            // Final score
-            finalScore: scores.final,
-            grade: grade.grade,
-            gradeLabel: grade.label,
+            // Point-based grading (new system)
+            grading: {
+                grade: scores.grade,
+                gradeLabel: gradeInfo.label,
+                dinOficiuPoints: scores.dinOficiuPoints,
+                atomicPoints: scores.atomicPoints,
+                practicePoints: scores.practicePoints,
+                breakdown: `${scores.dinOficiuPoints} + ${scores.atomicPoints} + ${scores.practicePoints} = ${scores.grade}`
+            },
 
             // Atomic learning details
             atomic: {
-                percentage: scores.atomic,
-                correct: this.atomicScore?.totalCorrect || 0,
-                total: this.atomicScore?.totalQuestions || 0,
+                correct: scores.atomicCorrect,
+                total: scores.atomicTotal,
+                points: scores.atomicPoints,
                 atomsCompleted: this.atomicScore?.atomsCompleted || 0,
                 atomsTotal: this.atomicScore?.atomsTotal || 0,
                 atomsPerfect: this.atomicScore?.atomsPerfect || 0
@@ -390,11 +388,11 @@ const LessonSummary = {
 
             // Practice details
             practice: {
-                percentage: scores.practice,
-                correct: this.practiceScore?.correct || 0,
-                total: this.practiceScore?.total || 0,
-                xp: this.practiceScore?.xp || 0,
-                completed: this.practiceScore?.completed || false
+                correct: scores.practiceCorrect,
+                total: scores.practiceTotal,
+                points: scores.practicePoints,
+                started: scores.practiceStarted,
+                completed: scores.practiceComplete
             },
 
             // Completion status
@@ -402,7 +400,7 @@ const LessonSummary = {
 
             // Metadata
             timestamp: Date.now(),
-            version: 1
+            version: 2  // Version 2 for new point-based system
         };
 
         localStorage.setItem(key, JSON.stringify(data));
@@ -538,7 +536,7 @@ const LessonSummary = {
      */
     exportProgress: async function() {
         const scores = this.calculateFinalScore();
-        const grade = this.getGrade(scores.final);
+        const gradeInfo = this.getGrade(scores.grade);
 
         // Get current user profile if available
         let studentInfo = { name: 'Anonim', odidentifier: null };
@@ -553,7 +551,7 @@ const LessonSummary = {
         const payload = {
             // Metadata
             _meta: {
-                version: '2.0',
+                version: '3.0',  // Version 3 for point-based grading
                 exportedAt: new Date().toISOString(),
                 sessionId: this.sessionId,
                 userAgent: navigator.userAgent.substring(0, 100)
@@ -568,30 +566,38 @@ const LessonSummary = {
                 title: document.querySelector('.lesson-title')?.textContent || this.lessonId
             },
 
-            // Final grade (1-10 system)
+            // Point-based grading (1-10 system)
+            // Formula: 1 (oficiu) + atomic points (max 6) + practice points (max 3) = max 10
             grading: {
-                finalScore: scores.final,  // 0-100%
-                grade: grade.grade,        // 1-10
-                gradeLabel: grade.label,
-                isComplete: (this.atomicScore?.atomsCompleted || 0) >= (this.atomicScore?.atomsTotal || 1)
+                grade: scores.grade,
+                gradeLabel: gradeInfo.label,
+                isProvisional: scores.practiceStarted,  // Needs teacher review if practice started
+                isComplete: (this.atomicScore?.atomsCompleted || 0) >= (this.atomicScore?.atomsTotal || 1),
+                breakdown: {
+                    dinOficiu: scores.dinOficiuPoints,
+                    atomic: scores.atomicPoints,
+                    practice: scores.practicePoints,
+                    formula: `${scores.dinOficiuPoints} (oficiu) + ${scores.atomicPoints} (teorie) + ${scores.practicePoints} (practica) = ${scores.grade}`
+                }
             },
 
-            // Summary breakdown
-            summary: {
+            // Detailed results
+            results: {
                 atomic: {
-                    percentage: scores.atomic,
-                    correct: this.atomicScore?.totalCorrect || 0,
-                    total: this.atomicScore?.totalQuestions || 0,
+                    correct: scores.atomicCorrect,
+                    total: scores.atomicTotal,
+                    points: scores.atomicPoints,
+                    maxPoints: 6,
                     atomsCompleted: this.atomicScore?.atomsCompleted || 0,
-                    atomsTotal: this.atomicScore?.atomsTotal || 0,
-                    atomsPerfect: this.atomicScore?.atomsPerfect || 0
+                    atomsTotal: this.atomicScore?.atomsTotal || 0
                 },
                 practice: {
-                    percentage: scores.practice,
-                    correct: this.practiceScore?.correct || 0,
-                    total: this.practiceScore?.total || 0,
-                    xpEarned: this.practiceScore?.xp || 0,
-                    completed: this.practiceScore?.completed || false
+                    completed: scores.practiceCorrect,
+                    total: scores.practiceTotal,
+                    points: scores.practicePoints,
+                    maxPoints: 3,
+                    started: scores.practiceStarted,
+                    allComplete: scores.practiceComplete
                 }
             },
 
@@ -705,10 +711,15 @@ const LessonSummary = {
                 margin: 0.5rem 0;
             }
 
-            .ls-grade-score {
-                font-size: 1.5rem;
-                font-weight: 600;
-                color: var(--text-primary, #fff);
+            .ls-grade-breakdown {
+                font-size: 1rem;
+                font-weight: 500;
+                color: var(--text-secondary, #a0a0b0);
+                margin-top: 0.5rem;
+                padding: 0.5rem 1rem;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 6px;
+                display: inline-block;
             }
 
             .ls-breakdown {
