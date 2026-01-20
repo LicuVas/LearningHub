@@ -140,10 +140,11 @@ const AtomicLearning = {
             questions: quizData,
             answers: {},
             hintsUsed: {},
-            completed: this.completedAtoms.has(atomId)
+            completed: this.completedAtoms.has(atomId),
+            shuffledCorrect: {}  // Will store correct answers after shuffling
         };
 
-        // Render quiz UI
+        // Render quiz UI (this will populate shuffledCorrect)
         this.renderAtomQuiz(atomId, quizContainer, quizData);
 
         // If already completed, show as completed
@@ -195,24 +196,41 @@ const AtomicLearning = {
     renderQuestion: function(atomId, question, index) {
         const qId = `${atomId}-q${index}`;
 
+        // Check if this atom was already completed - don't shuffle to preserve saved answers
+        const isAlreadyCompleted = this.completedAtoms.has(atomId);
+
         // Get original correct answer index (a=0, b=1, c=2, etc.)
         const originalCorrectIndex = question.correct.charCodeAt(0) - 97;
         const correctAnswerText = question.options[originalCorrectIndex];
 
-        // Create array of options with their original indices
-        const optionsWithIndices = question.options.map((opt, i) => ({
-            text: opt,
-            originalIndex: i
-        }));
+        let finalOptions;
+        let newCorrectLetter;
 
-        // Shuffle the options
-        const shuffledOptions = this.shuffleArray(optionsWithIndices);
+        if (isAlreadyCompleted) {
+            // Don't shuffle for completed atoms - preserve original order
+            finalOptions = question.options.map((opt, i) => ({ text: opt, originalIndex: i }));
+            newCorrectLetter = question.correct;
+        } else {
+            // Create array of options with their original indices
+            const optionsWithIndices = question.options.map((opt, i) => ({
+                text: opt,
+                originalIndex: i
+            }));
 
-        // Find new position of correct answer
-        const newCorrectIndex = shuffledOptions.findIndex(opt => opt.text === correctAnswerText);
-        const newCorrectLetter = String.fromCharCode(97 + newCorrectIndex);
+            // Shuffle the options
+            finalOptions = this.shuffleArray(optionsWithIndices);
 
-        const optionsHtml = shuffledOptions.map((opt, i) => `
+            // Find new position of correct answer
+            const newCorrectIndex = finalOptions.findIndex(opt => opt.text === correctAnswerText);
+            newCorrectLetter = String.fromCharCode(97 + newCorrectIndex);
+        }
+
+        // Store the correct answer for later verification
+        if (this.atoms[atomId]) {
+            this.atoms[atomId].shuffledCorrect[qId] = newCorrectLetter;
+        }
+
+        const optionsHtml = finalOptions.map((opt, i) => `
             <button class="atom-option" data-answer="${String.fromCharCode(97 + i)}" data-qid="${qId}">
                 <span class="atom-option-letter">${String.fromCharCode(65 + i)}</span>
                 <span class="atom-option-text">${opt.text}</span>
@@ -317,11 +335,13 @@ const AtomicLearning = {
         const totalQuestions = atom.questions.length;
         const answeredCount = Object.keys(atom.answers).length;
 
-        // Count correct answers
+        // Count correct answers using shuffledCorrect (randomized positions)
         let correctAnswers = 0;
         atom.questions.forEach((q, idx) => {
             const qId = `${atomId}-q${idx}`;
-            if (atom.answers[qId] === q.correct) {
+            // Use shuffledCorrect for comparison (accounts for randomization)
+            const correctAnswer = atom.shuffledCorrect?.[qId] || q.correct;
+            if (atom.answers[qId] === correctAnswer) {
                 correctAnswers++;
             }
         });
@@ -560,6 +580,9 @@ const AtomicLearning = {
             const question = atom.questions[qIndex];
             if (!question) continue;
 
+            // Use shuffledCorrect for comparison (accounts for any shuffling)
+            const correctAnswer = atom.shuffledCorrect?.[qId] || question.correct;
+
             // Lock all options and show selected answer
             questionEl.querySelectorAll('.atom-option').forEach(opt => {
                 opt.classList.add('locked');
@@ -570,7 +593,7 @@ const AtomicLearning = {
                     opt.classList.add('selected');
                     opt.style.opacity = '1';
 
-                    if (answer === question.correct) {
+                    if (answer === correctAnswer) {
                         opt.classList.add('correct');
                     } else {
                         opt.classList.add('incorrect');
@@ -578,7 +601,7 @@ const AtomicLearning = {
                 }
 
                 // Show correct answer if wrong was selected
-                if (answer !== question.correct && opt.dataset.answer === question.correct) {
+                if (answer !== correctAnswer && opt.dataset.answer === correctAnswer) {
                     opt.classList.add('correct');
                     opt.style.opacity = '1';
                 }
@@ -588,7 +611,7 @@ const AtomicLearning = {
             const feedbackEl = questionEl.querySelector('.atom-feedback');
             const hintEl = questionEl.querySelector('.atom-hint');
 
-            if (answer === question.correct) {
+            if (answer === correctAnswer) {
                 feedbackEl.innerHTML = '<span class="feedback-icon">&#10004;</span> Corect!';
                 feedbackEl.className = 'atom-feedback correct';
                 feedbackEl.style.display = 'block';

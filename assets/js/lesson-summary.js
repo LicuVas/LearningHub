@@ -201,21 +201,42 @@ const LessonSummary = {
     calculateFinalScore: function() {
         let atomicPct = this.atomicScore?.percentage || 0;
         let practicePct = this.practiceScore?.percentage || 0;
+        const practiceComplete = this.practiceScore?.completed || false;
+        const practiceStarted = this.practiceScore && this.practiceScore.total > 0 &&
+            (this.practiceScore.correct > 0 || Object.keys(this.practiceScore).length > 2);
 
-        // If practice not started, atomic counts for 100% BUT capped at 80%
-        // This encourages students to do practice for grades above 8
-        if (!this.practiceScore || this.practiceScore.total === 0) {
-            const cappedScore = Math.min(atomicPct, 80); // Max grade 8 without practice
+        // Logic:
+        // - Practice not started: atomic capped at 80% (max grade 8)
+        // - Practice started but not complete: keep capped at 80% (don't penalize)
+        // - Practice complete: use weighted average (can get up to 100%)
+
+        if (!practiceStarted) {
+            // Practice not started - cap at 80%
+            const cappedScore = Math.min(atomicPct, 80);
             return {
                 final: cappedScore,
                 atomic: atomicPct,
                 practice: 0,
                 practiceStarted: false,
-                cappedWithoutPractice: atomicPct > 80 // Flag to show message
+                practiceComplete: false,
+                cappedWithoutPractice: atomicPct > 80
             };
         }
 
-        // Weighted average
+        if (!practiceComplete) {
+            // Practice started but not complete - still cap at 80%, don't penalize
+            const cappedScore = Math.min(atomicPct, 80);
+            return {
+                final: cappedScore,
+                atomic: atomicPct,
+                practice: practicePct,
+                practiceStarted: true,
+                practiceComplete: false,
+                cappedWithoutPractice: atomicPct > 80
+            };
+        }
+
+        // Practice complete - use weighted average (no cap)
         const final = Math.round(
             atomicPct * this.weights.atomic +
             practicePct * this.weights.practice
@@ -226,6 +247,7 @@ const LessonSummary = {
             atomic: atomicPct,
             practice: practicePct,
             practiceStarted: true,
+            practiceComplete: true,
             cappedWithoutPractice: false
         };
     },
@@ -294,7 +316,7 @@ const LessonSummary = {
 
                 <div class="ls-section">
                     <div class="ls-section-header">
-                        <span class="ls-section-icon">${practiceComplete ? '&#10004;' : '&#9711;'}</span>
+                        <span class="ls-section-icon">${scores.practiceComplete ? '&#10004;' : (scores.practiceStarted ? '&#9203;' : '&#9711;')}</span>
                         <span class="ls-section-name">Practica Avansata</span>
                         <span class="ls-section-weight">(${Math.round(this.weights.practice * 100)}%)</span>
                     </div>
@@ -302,9 +324,11 @@ const LessonSummary = {
                         <div class="ls-section-fill" style="width: ${scores.practice}%; background: var(--success);"></div>
                     </div>
                     <div class="ls-section-detail">
-                        ${scores.practiceStarted
+                        ${scores.practiceComplete
                             ? `${this.practiceScore?.correct || 0}/${this.practiceScore?.total || 0} completate (${scores.practice}%) - <em>necesita evaluare profesor</em>`
-                            : 'Neinceputa - optional pentru nota maxima 10'}
+                            : (scores.practiceStarted
+                                ? `${this.practiceScore?.correct || 0}/${this.practiceScore?.total || 0} in curs - <em>completeaza pentru nota peste 8</em>`
+                                : 'Neinceputa - optional pentru nota maxima 10')}
                     </div>
                 </div>
             </div>
@@ -313,9 +337,9 @@ const LessonSummary = {
                 <div class="ls-status ls-status-complete">
                     &#10004; Lectia completa! ${grade.grade >= 5 ? 'Poti continua la urmatoarea lectie.' : 'Recomandat: reia lectia pentru o nota mai buna.'}
                 </div>
-                ${scores.cappedWithoutPractice ? `
+                ${scores.cappedWithoutPractice && !scores.practiceComplete ? `
                     <div class="ls-status" style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning, #f59e0b); color: var(--warning, #f59e0b); margin-top: 0.75rem;">
-                        &#128161; <strong>Nota limitata la 8!</strong> Completeaza Practica Avansata pentru a obtine nota 9 sau 10.
+                        &#128161; <strong>Nota limitata la 8!</strong> ${scores.practiceStarted ? 'Completeaza toate exercitiile de practica' : 'Completeaza Practica Avansata'} pentru a obtine nota 9 sau 10.
                     </div>
                 ` : ''}
                 ${hasPracticeAnswers ? `
