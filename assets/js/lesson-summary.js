@@ -202,13 +202,16 @@ const LessonSummary = {
         let atomicPct = this.atomicScore?.percentage || 0;
         let practicePct = this.practiceScore?.percentage || 0;
 
-        // If practice not started, atomic counts for 100%
+        // If practice not started, atomic counts for 100% BUT capped at 80%
+        // This encourages students to do practice for grades above 8
         if (!this.practiceScore || this.practiceScore.total === 0) {
+            const cappedScore = Math.min(atomicPct, 80); // Max grade 8 without practice
             return {
-                final: atomicPct,
+                final: cappedScore,
                 atomic: atomicPct,
                 practice: 0,
-                practiceStarted: false
+                practiceStarted: false,
+                cappedWithoutPractice: atomicPct > 80 // Flag to show message
             };
         }
 
@@ -222,7 +225,8 @@ const LessonSummary = {
             final: final,
             atomic: atomicPct,
             practice: practicePct,
-            practiceStarted: true
+            practiceStarted: true,
+            cappedWithoutPractice: false
         };
     },
 
@@ -301,6 +305,11 @@ const LessonSummary = {
                 <div class="ls-status ls-status-complete">
                     &#10004; Lectia completa! ${grade.grade >= 5 ? 'Poti continua la urmatoarea lectie.' : 'Recomandat: reia lectia pentru o nota mai buna.'}
                 </div>
+                ${scores.cappedWithoutPractice ? `
+                    <div class="ls-status" style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning, #f59e0b); color: var(--warning, #f59e0b); margin-top: 0.75rem;">
+                        &#128161; <strong>Nota limitata la 8!</strong> Completeaza Practica Avansata pentru a obtine nota 9 sau 10.
+                    </div>
+                ` : ''}
             ` : `
                 <div class="ls-status ls-status-incomplete">
                     &#9888; Completeaza toate sectiunile de invatare atomica pentru a finaliza lectia.

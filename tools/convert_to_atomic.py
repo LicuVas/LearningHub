@@ -285,7 +285,17 @@ def parse_existing_lesson(filepath: Path) -> dict:
             option_els = quiz.find_all(class_='option')
 
         for j, opt in enumerate(option_els):
+            # Extract option text, being careful about nested elements
+            # Some formats have letter in separate span, we want the main text
             opt_text = extract_text_content(opt)
+
+            # Remove leading letter patterns like "A. " or "A) " or just "A "
+            opt_text = re.sub(r'^[A-Da-d][\.\)\s]+\s*', '', opt_text).strip()
+
+            # Also check for text in option-text span specifically
+            text_span = opt.find(class_='option-text')
+            if text_span:
+                opt_text = extract_text_content(text_span)
 
             # Check onclick for correct answer (old format)
             onclick = opt.get('onclick', '')
@@ -381,15 +391,8 @@ def generate_atomic_lesson(lesson_data: dict) -> str:
         })
         q_idx += 1
 
-    # Ensure we have at least 2 atoms
-    if len(atoms) < 2:
-        atoms.append({
-            'id': 'atom-summary',
-            'number': len(atoms) + 1,
-            'title': 'Rezumat',
-            'content': '<p>Felicitari! Ai parcurs aceasta lectie.</p>',
-            'question': None
-        })
+    # NOTE: Removed "Felicitari" fallback atom - it appears prematurely
+    # The lesson-summary.js handles completion messages properly
 
     # Generate HTML
     atoms_html = ""
