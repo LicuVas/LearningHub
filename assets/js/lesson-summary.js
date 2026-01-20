@@ -435,7 +435,36 @@ const LessonSummary = {
             atom.questions.forEach((q, idx) => {
                 const qId = `${atomId}-q${idx}`;
                 const studentAnswer = atom.answers[qId];
-                const isCorrect = studentAnswer === q.correct;
+
+                // Use shuffledCorrect for accurate comparison (accounts for randomization)
+                const correctAnswer = atom.shuffledCorrect?.[qId] || q.correct;
+                const isCorrect = studentAnswer === correctAnswer;
+
+                // Get answer texts from DOM (reflects shuffled order)
+                const questionEl = atomEl?.querySelector(`[data-qid="${qId}"]`);
+                let studentAnswerText = '';
+                let correctAnswerText = '';
+
+                if (questionEl) {
+                    // Get texts from rendered options (which are in shuffled order)
+                    const options = questionEl.querySelectorAll('.atom-option');
+                    options.forEach(opt => {
+                        const letter = opt.dataset.answer;
+                        const text = opt.querySelector('.atom-option-text')?.textContent || '';
+                        if (letter === studentAnswer) {
+                            studentAnswerText = text;
+                        }
+                        if (letter === correctAnswer) {
+                            correctAnswerText = text;
+                        }
+                    });
+                }
+
+                // Fallback to original options if DOM not available
+                if (!correctAnswerText && q.options) {
+                    const origCorrectIdx = q.correct.charCodeAt(0) - 97;
+                    correctAnswerText = q.options[origCorrectIdx] || '';
+                }
 
                 items.push({
                     itemId: qId,
@@ -443,10 +472,10 @@ const LessonSummary = {
                     atomTitle: atomTitle,
                     questionText: q.question,
                     options: q.options,
-                    correctAnswer: q.correct,
-                    correctAnswerText: q.options[q.correct.charCodeAt(0) - 97] || '',
+                    correctAnswer: correctAnswer,
+                    correctAnswerText: correctAnswerText,
                     studentAnswer: studentAnswer || null,
-                    studentAnswerText: studentAnswer ? (q.options[studentAnswer.charCodeAt(0) - 97] || '') : '',
+                    studentAnswerText: studentAnswerText,
                     isCorrect: isCorrect,
                     hint: q.hint || '',
                     answered: studentAnswer !== undefined
