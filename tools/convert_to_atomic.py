@@ -192,8 +192,50 @@ def parse_existing_lesson(filepath: Path) -> dict:
                     'content': content
                 })
 
-    # Fallback: extract from learn-section headers if no structured cards found
-    if not content_sections:
+    # Extract from tip-boxes
+    tip_boxes = soup.find_all(class_='tip-box')
+    for box in tip_boxes:
+        title_el = box.find(class_='tip-box-title')
+        title = extract_text_content(title_el) if title_el else "Sfat"
+        # Clean up emoji from title
+        title = re.sub(r'^[^\w\s]+\s*', '', title).strip()
+
+        content = []
+        for li in box.find_all('li'):
+            text = extract_text_content(li)
+            if text and len(text) > 5:
+                content.append(text)
+        for p in box.find_all('p'):
+            text = extract_text_content(p)
+            if text and len(text) > 10:
+                content.append(text)
+
+        if content:
+            content_sections.append({
+                'title': title or "Sfat",
+                'content': content
+            })
+
+    # Extract from info-boxes
+    info_boxes = soup.find_all(class_='info-box')
+    for box in info_boxes:
+        title_el = box.find('strong') or box.find('b')
+        title = extract_text_content(title_el) if title_el else "Informație"
+
+        content = []
+        for p in box.find_all('p'):
+            text = extract_text_content(p)
+            if text and len(text) > 10:
+                content.append(text)
+
+        if content:
+            content_sections.append({
+                'title': title or "Informație",
+                'content': content
+            })
+
+    # Fallback: extract from learn-section headers if few or no structured cards found
+    if len(content_sections) < 2:
         learn_section = soup.find(class_='learn-section')
         if learn_section:
             # Get all h2/h3 as section titles
