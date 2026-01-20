@@ -98,6 +98,16 @@ const PracticeSimple = {
         const savedAnswer = this.answers[exerciseId] || '';
         const isSaved = savedAnswer.length >= 10;
 
+        // Check if exercise has numbered questions (ol.practice-questions)
+        const hasNumberedQuestions = el.querySelector('ol.practice-questions');
+        const questionCount = hasNumberedQuestions ? hasNumberedQuestions.querySelectorAll('li').length : 0;
+
+        // Build placeholder text based on whether exercise has numbered questions
+        let placeholderText = 'Scrie raspunsul tau aici... (minim 10 caractere pentru a fi considerat complet)';
+        if (questionCount > 0) {
+            placeholderText = `Raspunde la toate cele ${questionCount} intrebari, numerotat:\n1. ...\n2. ...\n${questionCount > 2 ? questionCount + '. ...' : ''}\n(minim 10 caractere pentru a fi considerat complet)`;
+        }
+
         const inputWrapper = document.createElement('div');
         inputWrapper.className = 'ps-input-wrapper';
         inputWrapper.innerHTML = `
@@ -108,8 +118,8 @@ const PracticeSimple = {
             <textarea
                 id="ps-textarea-${exerciseId}"
                 class="ps-textarea"
-                placeholder="Scrie raspunsul tau aici... (minim 10 caractere pentru a fi considerat complet)"
-                rows="5"
+                placeholder="${placeholderText}"
+                rows="${questionCount > 0 ? Math.max(5, questionCount + 3) : 5}"
             >${this.escapeHtml(savedAnswer)}</textarea>
             <div class="ps-actions">
                 <button type="button" class="ps-save-btn ${isSaved ? 'saved' : ''}" id="ps-savebtn-${exerciseId}">
@@ -505,6 +515,27 @@ const PracticeSimple = {
                 content: ' \\2714';
                 color: var(--success, #22c55e);
                 margin-left: 0.5rem;
+            }
+
+            /* Numbered practice questions */
+            .practice-questions {
+                margin-left: 1.5rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .practice-questions li {
+                margin-bottom: 0.5rem;
+                color: var(--text-primary, #fff);
+            }
+
+            .answer-instruction {
+                background: rgba(59, 130, 246, 0.1);
+                border-left: 3px solid var(--accent-blue, #3b82f6);
+                padding: 0.5rem 0.75rem;
+                margin-top: 0.5rem;
+                border-radius: 0 6px 6px 0;
+                font-size: 0.9rem;
+                color: var(--accent-blue-light, #60a5fa);
             }
         `;
 

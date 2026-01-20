@@ -178,19 +178,49 @@ const AtomicLearning = {
     },
 
     /**
-     * Render a single question
+     * Shuffle array using Fisher-Yates algorithm
+     */
+    shuffleArray: function(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    },
+
+    /**
+     * Render a single question with randomized answer positions
      */
     renderQuestion: function(atomId, question, index) {
         const qId = `${atomId}-q${index}`;
-        const optionsHtml = question.options.map((opt, i) => `
+
+        // Get original correct answer index (a=0, b=1, c=2, etc.)
+        const originalCorrectIndex = question.correct.charCodeAt(0) - 97;
+        const correctAnswerText = question.options[originalCorrectIndex];
+
+        // Create array of options with their original indices
+        const optionsWithIndices = question.options.map((opt, i) => ({
+            text: opt,
+            originalIndex: i
+        }));
+
+        // Shuffle the options
+        const shuffledOptions = this.shuffleArray(optionsWithIndices);
+
+        // Find new position of correct answer
+        const newCorrectIndex = shuffledOptions.findIndex(opt => opt.text === correctAnswerText);
+        const newCorrectLetter = String.fromCharCode(97 + newCorrectIndex);
+
+        const optionsHtml = shuffledOptions.map((opt, i) => `
             <button class="atom-option" data-answer="${String.fromCharCode(97 + i)}" data-qid="${qId}">
                 <span class="atom-option-letter">${String.fromCharCode(65 + i)}</span>
-                <span class="atom-option-text">${opt}</span>
+                <span class="atom-option-text">${opt.text}</span>
             </button>
         `).join('');
 
         return `
-            <div class="atom-question" data-qid="${qId}" data-correct="${question.correct}" data-hint="${question.hint || ''}">
+            <div class="atom-question" data-qid="${qId}" data-correct="${newCorrectLetter}" data-hint="${question.hint || ''}">
                 <p class="atom-question-text">${question.question}</p>
                 <div class="atom-options">${optionsHtml}</div>
                 <div class="atom-feedback" style="display: none;"></div>

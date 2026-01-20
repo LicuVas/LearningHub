@@ -256,6 +256,9 @@ const LessonSummary = {
         const atomicComplete = this.atomicScore?.atomsCompleted >= this.atomicScore?.atomsTotal;
         const practiceComplete = this.practiceScore?.completed;
 
+        // Check if there are written answers requiring teacher evaluation
+        const hasPracticeAnswers = scores.practiceStarted && (this.practiceScore?.total || 0) > 0;
+
         container.innerHTML = `
             <div class="ls-header">
                 <span class="ls-icon">&#128202;</span>
@@ -263,9 +266,14 @@ const LessonSummary = {
             </div>
 
             <div class="ls-grade" style="border-color: ${grade.color};">
-                <div class="ls-grade-number" style="color: ${grade.color};">Nota: ${grade.grade}</div>
+                <div class="ls-grade-number" style="color: ${grade.color};">Nota ${hasPracticeAnswers ? 'provizorie' : ''}: ${grade.grade}</div>
                 <div class="ls-grade-label">${grade.label}</div>
                 <div class="ls-grade-score">${scores.final}% din punctaj</div>
+                ${hasPracticeAnswers ? `
+                    <div class="ls-provisional-notice">
+                        <span>&#128269;</span> Nota finala va fi confirmata de profesor dupa evaluarea raspunsurilor scrise
+                    </div>
+                ` : ''}
             </div>
 
             <div class="ls-breakdown">
@@ -280,7 +288,7 @@ const LessonSummary = {
                     </div>
                     <div class="ls-section-detail">
                         ${this.atomicScore?.totalCorrect || 0}/${this.atomicScore?.totalQuestions || 0} corecte
-                        (${scores.atomic}%)
+                        (${scores.atomic}%) - <em>nota automata</em>
                     </div>
                 </div>
 
@@ -295,8 +303,8 @@ const LessonSummary = {
                     </div>
                     <div class="ls-section-detail">
                         ${scores.practiceStarted
-                            ? `${this.practiceScore?.correct || 0}/${this.practiceScore?.total || 0} corecte (${scores.practice}%)`
-                            : 'Neinceputa - optional pentru XP bonus'}
+                            ? `${this.practiceScore?.correct || 0}/${this.practiceScore?.total || 0} completate (${scores.practice}%) - <em>necesita evaluare profesor</em>`
+                            : 'Neinceputa - optional pentru nota maxima 10'}
                     </div>
                 </div>
             </div>
@@ -308,6 +316,14 @@ const LessonSummary = {
                 ${scores.cappedWithoutPractice ? `
                     <div class="ls-status" style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning, #f59e0b); color: var(--warning, #f59e0b); margin-top: 0.75rem;">
                         &#128161; <strong>Nota limitata la 8!</strong> Completeaza Practica Avansata pentru a obtine nota 9 sau 10.
+                    </div>
+                ` : ''}
+                ${hasPracticeAnswers ? `
+                    <div class="ls-teacher-review" style="margin-top: 0.75rem;">
+                        <span class="ls-teacher-icon">&#128100;</span>
+                        <div>
+                            <strong>Pas urmator:</strong> Descarca fisierul JSON si trimite-l profesorului pentru evaluarea finala a raspunsurilor scrise.
+                        </div>
                     </div>
                 ` : ''}
             ` : `
@@ -741,6 +757,35 @@ const LessonSummary = {
                 background: rgba(245, 158, 11, 0.15);
                 border: 1px solid var(--warning, #f59e0b);
                 color: var(--warning, #f59e0b);
+            }
+
+            .ls-provisional-notice {
+                margin-top: 0.75rem;
+                padding: 0.5rem 0.75rem;
+                background: rgba(139, 92, 246, 0.15);
+                border-radius: 6px;
+                font-size: 0.85rem;
+                color: var(--accent-purple, #8b5cf6);
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .ls-teacher-review {
+                display: flex;
+                align-items: flex-start;
+                gap: 0.75rem;
+                padding: 1rem;
+                background: rgba(59, 130, 246, 0.15);
+                border: 1px solid var(--accent-blue, #3b82f6);
+                border-radius: 10px;
+                font-size: 0.9rem;
+                color: var(--accent-blue-light, #60a5fa);
+            }
+
+            .ls-teacher-icon {
+                font-size: 1.5rem;
+                flex-shrink: 0;
             }
 
             @media (max-width: 768px) {
