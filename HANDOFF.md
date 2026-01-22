@@ -1,11 +1,11 @@
 # LearningHub - Handoff
 
-> Last updated: 2026-01-20 by Claude Opus 4.5
+> Last updated: 2026-01-22 by Claude Opus 4.5
 
 ## Current State
 
 **Phase:** Content & Feedback Collection
-**Status:** v0.4.0 - All Lessons Upgraded with Grading System
+**Status:** v0.4.1 - Critical Scoring Bug Fixed
 
 **What works:**
 - Multi-profile system (school lab - multiple students per PC)
@@ -20,7 +20,27 @@
 - **NEW: Teacher Evaluation Tool** (`tools/evaluate_submissions.py`)
 - **NEW: Grading 1-10 system** (1 point automatic/din oficiu)
 
-## Last Session (2026-01-20)
+## Last Session (2026-01-22)
+
+**CRITICAL Bug Fix - Randomized Answer Scoring:**
+
+1. **Problem:** Grades were calculated incorrectly after page reload when quiz answers were randomized
+2. **Root Cause:**
+   - `renderQuestion()` shuffles answer positions randomly on first load
+   - `shuffledCorrect` mapping (which position = correct answer) was stored only in memory
+   - After page reload, the mapping was lost - scores compared against ORIGINAL positions instead of shuffled ones
+   - Example: User correctly answers "c" (shuffled from "a"), reload → system compares against "a" → WRONG!
+3. **Solution in `atomic-learning.js`:**
+   - `saveProgress()`: Now saves `shuffledCorrect` mapping to localStorage (version 3)
+   - `loadProgress()`: Restores `savedShuffledCorrect` from localStorage
+   - `renderQuestion()`: For completed atoms, uses saved shuffled mapping instead of original
+   - `restoreSavedAnswers()`: Uses saved shuffled mapping for visual restoration
+4. **Files Changed:** `assets/js/atomic-learning.js`
+5. **Status:** Fixed, localStorage format upgraded to version 3
+
+---
+
+## Previous Session (2026-01-20)
 
 **Bug Fix - Atomic Learning Buttons:**
 
@@ -125,6 +145,12 @@
 ---
 
 ## Session History
+
+### 2026-01-22
+- **v0.4.1** - CRITICAL: Fixed randomized answer scoring bug
+- `shuffledCorrect` mapping now persisted to localStorage
+- Scores now correctly calculated after page reload
+- localStorage format upgraded to version 3
 
 ### 2026-01-20
 - **v0.4.0** - Mass upgrade: 118 lessons now have grading + JSON export

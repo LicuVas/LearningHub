@@ -209,7 +209,15 @@ const AtomicLearning = {
         if (isAlreadyCompleted) {
             // Don't shuffle for completed atoms - preserve original order
             finalOptions = question.options.map((opt, i) => ({ text: opt, originalIndex: i }));
-            newCorrectLetter = question.correct;
+
+            // CRITICAL FIX: Use saved shuffledCorrect mapping if available
+            // This ensures the correct answer matches what was displayed when user answered
+            if (this.savedShuffledCorrect && this.savedShuffledCorrect[atomId] && this.savedShuffledCorrect[atomId][qId]) {
+                newCorrectLetter = this.savedShuffledCorrect[atomId][qId];
+            } else {
+                // Fallback to original (for old data without shuffledCorrect)
+                newCorrectLetter = question.correct;
+            }
         } else {
             // Create array of options with their original indices
             const optionsWithIndices = question.options.map((opt, i) => ({
@@ -449,12 +457,30 @@ const AtomicLearning = {
     },
 
     /**
+     * Get storage key including profile ID for proper scoping
+     */
+    getStorageKey: function() {
+        if (!this.currentLessonId) return null;
+
+        // Include profile ID if UserSystem is available
+        let profileId = '';
+        if (typeof UserSystem !== 'undefined') {
+            const activeProfile = UserSystem.getActiveProfile();
+            if (activeProfile && activeProfile !== '_guest') {
+                profileId = activeProfile + '-';
+            }
+        }
+
+        return `atomic-progress-${profileId}${this.currentLessonId}`;
+    },
+
+    /**
      * Save progress to localStorage (detailed version)
-     * Saves: completed atoms, individual answers, scores per atom
+     * Saves: completed atoms, individual answers, scores per atom, shuffledCorrect mapping
      */
     saveProgress: function() {
-        if (!this.currentLessonId) return;
-        const key = `atomic-progress-${this.currentLessonId}`;
+        const key = this.getStorageKey();
+        if (!key) return;
 
         // Build detailed atom data
         const atomDetails = {};
@@ -466,7 +492,9 @@ const AtomicLearning = {
                 totalQuestions: atom.questions.length,
                 score: atom.score || 0,
                 wrongAnswers: atom.wrongAnswers || 0,
-                completed: atom.completed || false
+                completed: atom.completed || false,
+                // CRITICAL: Save shuffledCorrect mapping to correctly restore scores after reload
+                shuffledCorrect: { ...atom.shuffledCorrect }
             };
         }
 
@@ -478,7 +506,7 @@ const AtomicLearning = {
             atomDetails: atomDetails,
             lessonScore: lessonScore,
             timestamp: Date.now(),
-            version: 2  // Mark as enhanced format
+            version: 3  // Version 3: includes shuffledCorrect for randomized answer fix
         };
 
         localStorage.setItem(key, JSON.stringify(data));
@@ -523,8 +551,8 @@ const AtomicLearning = {
      * Load progress from localStorage (handles both old and new formats)
      */
     loadProgress: function() {
-        if (!this.currentLessonId) return;
-        const key = `atomic-progress-${this.currentLessonId}`;
+        const key = this.getStorageKey();
+        if (!key) return;
         const saved = localStorage.getItem(key);
 
         if (saved) {
@@ -535,6 +563,15 @@ const AtomicLearning = {
                 // Load detailed atom data if available (version 2+)
                 if (data.version >= 2 && data.atomDetails) {
                     this.savedAtomDetails = data.atomDetails;
+
+                    // CRITICAL: Pre-load shuffledCorrect mappings for completed atoms
+                    // This ensures correct score calculation after page reload
+                    this.savedShuffledCorrect = {};
+                    for (const atomId in data.atomDetails) {
+                        if (data.atomDetails[atomId].shuffledCorrect) {
+                            this.savedShuffledCorrect[atomId] = data.atomDetails[atomId].shuffledCorrect;
+                        }
+                    }
                 }
 
                 // Store lesson score for display
@@ -544,7 +581,8 @@ const AtomicLearning = {
 
                 console.log('AtomicLearning: Loaded progress', {
                     completedAtoms: this.completedAtoms.size,
-                    hasDetails: !!data.atomDetails
+                    hasDetails: !!data.atomDetails,
+                    hasShuffledCorrect: !!this.savedShuffledCorrect
                 });
             } catch (e) {
                 console.warn('AtomicLearning: Could not load saved progress', e);
@@ -569,6 +607,11 @@ const AtomicLearning = {
         atom.wrongAnswers = savedAtom.wrongAnswers;
         atom.completed = savedAtom.completed;
 
+        // CRITICAL: Restore shuffledCorrect mapping from saved data
+        if (savedAtom.shuffledCorrect) {
+            atom.shuffledCorrect = { ...savedAtom.shuffledCorrect };
+        }
+
         // Visually restore the answered questions
         for (const qId in savedAtom.answers) {
             const answer = savedAtom.answers[qId];
@@ -580,8 +623,8 @@ const AtomicLearning = {
             const question = atom.questions[qIndex];
             if (!question) continue;
 
-            // Use shuffledCorrect for comparison (accounts for any shuffling)
-            const correctAnswer = atom.shuffledCorrect?.[qId] || question.correct;
+            // CRITICAL FIX: Use saved shuffledCorrect first, then fall back
+            const correctAnswer = savedAtom.shuffledCorrect?.[qId] || atom.shuffledCorrect?.[qId] || question.correct;
 
             // Lock all options and show selected answer
             questionEl.querySelectorAll('.atom-option').forEach(opt => {
@@ -628,8 +671,8 @@ const AtomicLearning = {
      * Get saved progress data for external use
      */
     getSavedProgress: function() {
-        if (!this.currentLessonId) return null;
-        const key = `atomic-progress-${this.currentLessonId}`;
+        const key = this.getStorageKey();
+        if (!key) return null;
         const saved = localStorage.getItem(key);
         return saved ? JSON.parse(saved) : null;
     },
@@ -641,8 +684,9 @@ const AtomicLearning = {
         this.completedAtoms.clear();
         this.atoms = {};
 
-        if (this.currentLessonId) {
-            localStorage.removeItem(`atomic-progress-${this.currentLessonId}`);
+        const key = this.getStorageKey();
+        if (key) {
+            localStorage.removeItem(key);
         }
 
         // Reload page to fully reset
