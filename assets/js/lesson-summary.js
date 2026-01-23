@@ -124,7 +124,7 @@ const LessonSummary = {
      * Load progress from both systems
      */
     loadProgress: function() {
-        // Load atomic progress
+        // Load atomic progress (try multiple sources)
         const atomicKey = `atomic-progress-${this.lessonId}`;
         const atomicSaved = localStorage.getItem(atomicKey);
         if (atomicSaved) {
@@ -134,6 +134,26 @@ const LessonSummary = {
                     this.atomicScore = data.lessonScore;
                 }
             } catch (e) {}
+        }
+
+        // Also check QuizBridge data (for lessons using legacy quiz system)
+        if (!this.atomicScore) {
+            const quizBridgeKey = `quiz-bridge-${this.lessonId}`;
+            const quizBridgeSaved = localStorage.getItem(quizBridgeKey);
+            if (quizBridgeSaved) {
+                try {
+                    const data = JSON.parse(quizBridgeSaved);
+                    if (data.correctCount !== undefined) {
+                        this.atomicScore = {
+                            totalCorrect: data.correctCount || 0,
+                            totalQuestions: data.totalQuestions || 6,
+                            percentage: data.totalQuestions > 0
+                                ? Math.round((data.correctCount / data.totalQuestions) * 100)
+                                : 0
+                        };
+                    }
+                } catch (e) {}
+            }
         }
 
         // Load practice progress
@@ -162,6 +182,17 @@ const LessonSummary = {
         // Try to get current scores from live systems
         if (typeof AtomicLearning !== 'undefined' && AtomicLearning.currentLessonId === this.lessonId) {
             this.atomicScore = AtomicLearning.calculateLessonScore();
+        }
+
+        // Also check QuizBridge for legacy quiz system
+        if (!this.atomicScore && typeof QuizBridge !== 'undefined' && QuizBridge.lessonId === this.lessonId) {
+            this.atomicScore = {
+                totalCorrect: QuizBridge.correctCount || 0,
+                totalQuestions: QuizBridge.totalQuestions || 6,
+                percentage: QuizBridge.totalQuestions > 0
+                    ? Math.round((QuizBridge.correctCount / QuizBridge.totalQuestions) * 100)
+                    : 0
+            };
         }
 
         if (typeof AdvancedPractice !== 'undefined' && AdvancedPractice.lessonId === this.lessonId) {
