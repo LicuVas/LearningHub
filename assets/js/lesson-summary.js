@@ -182,6 +182,7 @@ const LessonSummary = {
         // Try to get current scores from live systems
         if (typeof AtomicLearning !== 'undefined' && AtomicLearning.currentLessonId === this.lessonId) {
             this.atomicScore = AtomicLearning.calculateLessonScore();
+            console.log('LessonSummary: Got score from AtomicLearning', this.atomicScore);
         }
 
         // Also check QuizBridge for legacy quiz system
@@ -193,6 +194,12 @@ const LessonSummary = {
                     ? Math.round((QuizBridge.correctCount / QuizBridge.totalQuestions) * 100)
                     : 0
             };
+            console.log('LessonSummary: Got score from QuizBridge', this.atomicScore);
+        }
+
+        // Log current state for debugging
+        if (!this.atomicScore) {
+            console.log('LessonSummary: No atomic score available yet');
         }
 
         if (typeof AdvancedPractice !== 'undefined' && AdvancedPractice.lessonId === this.lessonId) {
@@ -229,6 +236,7 @@ const LessonSummary = {
         // Get raw counts
         const atomicCorrect = this.atomicScore?.totalCorrect || 0;
         const atomicTotal = this.atomicScore?.totalQuestions || 6;
+        console.log('LessonSummary.calculateFinalScore:', { atomicCorrect, atomicTotal, atomicScore: this.atomicScore });
         const practiceCorrect = this.practiceScore?.correct || 0;
         const practiceTotal = this.practiceScore?.total || 3;
         const practiceComplete = this.practiceScore?.completed || false;
