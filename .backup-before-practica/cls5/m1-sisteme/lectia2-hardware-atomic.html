@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectia 2: Componentele Hardware (Atomic) | TIC Clasa a V-a</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-card: #1a1a2e;
+            --bg-card-hover: #252540;
+            --accent-blue: #3b82f6;
+            --accent-blue-light: #60a5fa;
+            --accent-purple: #8b5cf6;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --border-color: #2a2a4a;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Navigation */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .nav-link {
+            color: var(--accent-blue);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--accent-blue-light);
+        }
+
+        /* Lesson Header */
+        .lesson-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .lesson-badge {
+            display: inline-block;
+            background: var(--accent-purple);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .lesson-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .lesson-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* Progress indicator */
+        .progress-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .progress-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .progress-bar-wrapper {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--success));
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        .progress-percent {
+            font-weight: 600;
+            color: var(--accent-blue-light);
+            min-width: 45px;
+            text-align: right;
+        }
+
+        /* GOAL Section */
+        .goal-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+            border: 1px solid var(--accent-purple);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .goal-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .goal-icon {
+            font-size: 1.5rem;
+        }
+
+        .goal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--accent-purple);
+        }
+
+        .goal-text {
+            font-style: italic;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Atom Card */
+        .atom {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .atom-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .atom-number {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .atom-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .atom-content {
+            color: var(--text-secondary);
+        }
+
+        .atom-content p {
+            margin-bottom: 1rem;
+        }
+
+        .atom-content strong {
+            color: var(--text-primary);
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            background: var(--bg-primary);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: var(--accent-blue-light);
+        }
+
+        /* Analogy box */
+        .analogy {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid var(--accent-purple);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .analogy-icon {
+            font-size: 1.25rem;
+        }
+
+        .analogy-text {
+            color: var(--accent-purple);
+            font-size: 0.9rem;
+        }
+
+        /* Visual card */
+        .visual-card {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .visual-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .visual-label {
+            color: var(--accent-blue-light);
+            font-weight: 600;
+        }
+
+        /* Table */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .info-table th, .info-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-table th {
+            background: var(--bg-primary);
+            color: var(--accent-blue-light);
+            font-weight: 600;
+        }
+
+        .info-table td {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+        }
+
+        /* Practice Section */
+        .practice-section {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(6, 182, 212, 0.1));
+            border: 2px solid var(--success);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .practice-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .practice-icon {
+            font-size: 2rem;
+        }
+
+        .practice-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .practice-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .practice-task {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .practice-task h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .practice-task p {
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .practice-task ul {
+            color: var(--text-secondary);
+            margin-left: 1.5rem;
+        }
+
+        .practice-task li {
+            margin-bottom: 0.25rem;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .difficulty-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .difficulty-hard {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 2rem;
+        }
+
+        footer a {
+            color: var(--accent-blue);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .lesson-title {
+                font-size: 1.75rem;
+            }
+
+            .atom {
+                padding: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+
+        <!-- Navigation -->
+        <nav class="nav-bar">
+            <a href="lectia1-calculator.html" class="nav-link">
+                <span>&#8592;</span> Lectia anterioara
+            </a>
+            <a href="lectia3-software.html" class="nav-link">
+                Lectia urmatoare <span>&#8594;</span>
+            </a>
+        </nav>
+
+        <!-- Lesson Header -->
+        <header class="lesson-header">
+            <span class="lesson-badge">&#9889; Invatare Atomica</span>
+            <h1 class="lesson-title">Componentele Hardware</h1>
+            <p class="lesson-subtitle">Citeste fiecare concept, apoi raspunde la intrebari pentru a continua</p>
+        </header>
+
+        <!-- Progress -->
+        <div class="progress-container">
+            <span class="progress-label">Progres lectie:</span>
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar-fill" id="lessonProgress"></div>
+            </div>
+            <span class="progress-percent" id="progressPercent">0%</span>
+        </div>
+
+        <!-- GOAL -->
+        <section class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <span class="goal-title">Obiectivul lectiei</span>
+            </div>
+            <p class="goal-text">"Vreau sa stiu ce e inauntrul calculatorului si ce face fiecare piesa!"</p>
+        </section>
+
+        <!-- ATOM 1: Ce este Hardware -->
+        <section class="atom" data-atom-id="hardware-intro">
+            <div class="atom-header">
+                <span class="atom-number">1</span>
+                <h2 class="atom-title">Ce este Hardware-ul?</h2>
+            </div>
+            <div class="atom-content">
+                <div class="highlight-box">
+                    <strong>Hardware</strong> = toate piesele fizice ale calculatorului, cele pe care le poti vedea si atinge.
+                </div>
+                <p>Cuvantul vine din engleza: <strong>"hard"</strong> (tare) + <strong>"ware"</strong> (marfa/produs).</p>
+                <p>Exemple de hardware: monitorul, tastatura, mouse-ul, carcasa calculatorului, si toate componentele din interior.</p>
+            </div>
+
+            <div class="atom-quiz" data-quiz='[
+                {
+                    "question": "Ce inseamna \"hardware\"?",
+                    "options": ["Programele din calculator", "Piesele fizice ale calculatorului", "Internetul"],
+                    "correct": "b",
+                    "hint": "Gandeste-te la cuvantul \"hard\" (tare) - sunt lucruri pe care le poti atinge."
+                }
+            ]'></div>
+        </section>
+
+        <!-- ATOM 2: Procesorul -->
+        <section class="atom" data-atom-id="cpu">
+            <div class="atom-header">
+                <span class="atom-number">2</span>
+                <h2 class="atom-title">Procesorul (CPU)</h2>
+            </div>
+            <div class="atom-content">
+                <div class="visual-card">
+                    <div class="visual-icon">&#129504;</div>
+                    <div class="visual-label">CPU - Central Processing Unit</div>
+                </div>
+                <p><strong>Procesorul</strong> este "creierul" calculatorului. Face toate calculele si ia decizii.</p>
+                <p>Cu cat procesorul e mai rapid, cu atat calculatorul "gandeste" mai repede!</p>
+                <div class="analogy">
+                    <span class="analogy-icon">&#128161;</span>
+                    <span class="analogy-text">Gandeste-te la el ca la creierul tau - proceseaza toate informatiile pe care le primesti.</span>
+                </div>
+            </div>
+
+            <div class="atom-quiz" data-quiz='[
+                {
+                    "question": "De ce este procesorul numit \"creierul\" calculatorului?",
+                    "options": ["Pentru ca e cel mai mare", "Pentru ca face calculele si ia decizii", "Pentru ca e cel mai scump"],
+                    "correct": "b",
+                    "hint": "Ce face creierul uman? Gandeste, proceseaza informatii, ia decizii..."
+                }
+            ]'></div>
+        </section>
+
+        <!-- ATOM 3: Memoria RAM -->
+        <section class="atom" data-atom-id="ram">
+            <div class="atom-header">
+                <span class="atom-number">3</span>
+                <h2 class="atom-title">Memoria RAM</h2>
+            </div>
+            <div class="atom-content">
+                <div class="visual-card">
+                    <div class="visual-icon">&#128200;</div>
+                    <div class="visual-label">RAM - Random Access Memory</div>
+                </div>
+                <p><strong>RAM</strong> este memoria temporara, foarte rapida.</p>
+                <p>Tine minte ce programe ai deschise <strong>acum</strong>. Cand inchizi calculatorul, ea "uita" tot!</p>
+                <div class="highlight-box">
+                    De exemplu: daca ai deschis un joc si un browser, ambele sunt tinute in RAM pentru acces rapid.
+                </div>
+                <div class="analogy">
+                    <span class="analogy-icon">&#128161;</span>
+                    <span class="analogy-text">E ca memoria ta de scurta durata - retii ce faci acum, dar uiti dupa ce dormi.</span>
+                </div>
+            </div>
+
+            <div class="atom-quiz" data-quiz='[
+                {
+                    "question": "Ce se intampla cu informatiile din RAM cand inchizi calculatorul?",
+                    "options": ["Raman salvate pentru totdeauna", "Se sterg complet", "Se muta pe internet"],
+                    "correct": "b",
+                    "hint": "RAM = memorie TEMPORARA. Ce se intampla cu lucrurile temporare?"
+                },
+                {
+                    "question": "De ce avem nevoie de RAM daca avem si hard disk?",
+                    "options": ["RAM e mai ieftina", "RAM e mult mai rapida pentru programele deschise", "RAM are mai mult spatiu"],
+                    "correct": "b",
+                    "hint": "Programele deschise au nevoie de acces RAPID la date..."
+                }
+            ]'></div>
+        </section>
+
+        <!-- ATOM 4: Hard Disk -->
+        <section class="atom" data-atom-id="hdd">
+            <div class="atom-header">
+                <span class="atom-number">4</span>
+                <h2 class="atom-title">Hard Disk-ul (HDD/SSD)</h2>
+            </div>
+            <div class="atom-content">
+                <div class="visual-card">
+                    <div class="visual-icon">&#128191;</div>
+                    <div class="visual-label">Stocare Permanenta</div>
+                </div>
+                <p><strong>Hard Disk-ul</strong> este memoria permanenta. Aici se pastreaza toate fisierele, pozele, jocurile - chiar si cand inchizi calculatorul.</p>
+                <p>Exista doua tipuri principale:</p>
+                <ul style="color: var(--text-secondary); margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li><strong>HDD</strong> (Hard Disk Drive) - mai lent, dar mai ieftin si cu mult spatiu</li>
+                    <li><strong>SSD</strong> (Solid State Drive) - mult mai rapid, dar mai scump</li>
+                </ul>
+                <div class="analogy">
+                    <span class="analogy-icon">&#128161;</span>
+                    <span class="analogy-text">E ca un dulap mare unde pui toate lucrurile tale - raman acolo pana le stergi tu.</span>
+                </div>
+            </div>
+
+            <div class="atom-quiz" data-quiz='[
+                {
+                    "question": "Unde se salveaza permanent jocurile si documentele tale?",
+                    "options": ["In RAM", "Pe Hard Disk", "In procesor"],
+                    "correct": "b",
+                    "hint": "RAM = temporar, Hard Disk = permanent. Unde vrei sa ramana jocurile?"
+                }
+            ]'></div>
+        </section>
+
+        <!-- ATOM 5: Dispozitive I/O -->
+        <section class="atom" data-atom-id="io-devices">
+            <div class="atom-header">
+                <span class="atom-number">5</span>
+                <h2 class="atom-title">Dispozitive de Intrare si Iesire</h2>
+            </div>
+            <div class="atom-content">
+                <p>Hardware-ul se imparte in doua categorii importante:</p>
+
+                <table class="info-table">
+                    <thead>
+                        <tr>
+                            <th>&#128229; Dispozitive de INTRARE</th>
+                            <th>&#128228; Dispozitive de IESIRE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Introduc informatii IN calculator</td>
+                            <td>Scot informatii DIN calculator</td>
+                        </tr>
+                        <tr>
+                            <td>Tastatura - scrii text</td>
+                            <td>Monitor - vezi imagini</td>
+                        </tr>
+                        <tr>
+                            <td>Mouse - indici si selectezi</td>
+                            <td>Boxe - auzi sunete</td>
+                        </tr>
+                        <tr>
+                            <td>Microfon - vorbesti</td>
+                            <td>Imprimanta - tiparesti</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="highlight-box">
+                    <strong>Regula simpla:</strong> Daca tu trimiti informatii CATRE calculator = INTRARE. Daca calculatorul trimite informatii CATRE tine = IESIRE.
+                </div>
+            </div>
+
+            <div class="atom-quiz" data-quiz='[
+                {
+                    "question": "Tastatura este un dispozitiv de:",
+                    "options": ["Intrare - trimiti informatii catre calculator", "Iesire - primesti informatii de la calculator", "Stocare - salvezi fisiere"],
+                    "correct": "a",
+                    "hint": "Cand scrii la tastatura, informatia merge DE LA tine CATRE calculator..."
+                },
+                {
+                    "question": "Monitorul este un dispozitiv de:",
+                    "options": ["Intrare", "Iesire", "Stocare"],
+                    "correct": "b",
+                    "hint": "Pe monitor VEZI ce face calculatorul - informatia vine DE LA calculator CATRE tine."
+                }
+            ]'></div>
+        </section>
+
+        <!-- PRACTICA COMPLEXA -->
+        <section class="practice-section">
+            <div class="practice-header">
+                <span class="practice-icon">&#127942;</span>
+                <div>
+                    <h2 class="practice-title">Practica Complexa</h2>
+                    <p class="practice-subtitle">Exercitii avansate care combina tot ce ai invatat (optional, dar conteaza la XP!)</p>
+                </div>
+            </div>
+
+            <!-- Score Display -->
+            <div class="ap-score-display">
+                <div>
+                    <div class="ap-score-label">Progres practica</div>
+                    <div id="practice-progress">0/5 exercitii</div>
+                </div>
+                <div>
+                    <div class="ap-score-label">XP castigat</div>
+                    <div class="ap-score-value" id="practice-score">0 XP</div>
+                </div>
+            </div>
+
+            <div class="practice-notice" style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--error);">
+                <strong>&#9888; Atentie:</strong> Raspunsurile nu pot fi modificate dupa selectare! Gandeste-te bine inainte de a alege.
+            </div>
+
+            <!-- Container for dynamic exercises -->
+            <div id="advanced-practice"></div>
+        </section>
+
+        <!-- Lesson Summary -->
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <!-- Restart Section -->
+        <section class="restart-section" style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-top: 2rem; text-align: center;">
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                Vrei un punctaj mai bun? Poti relua lectia de la inceput.
+            </p>
+            <button onclick="restartLesson()" style="padding: 0.75rem 1.5rem; background: var(--error); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                &#8634; Reia lectia de la inceput
+            </button>
+            <button onclick="downloadProgress()" style="padding: 0.75rem 1.5rem; background: var(--accent-blue); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-left: 0.5rem;">
+                &#128190; Descarca progresul (JSON)
+            </button>
+        </section>
+
+        <!-- Navigation Bottom -->
+        <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+            <a href="lectia1-calculator.html" class="nav-link" style="padding: 0.75rem 1.5rem; background: var(--bg-card); border-radius: 8px;">
+                <span>&#8592;</span> Lectia anterioara
+            </a>
+            <a href="lectia3-software.html" class="nav-link" style="padding: 0.75rem 1.5rem; background: var(--success); border-radius: 8px; color: white;">
+                Lectia urmatoare <span>&#8594;</span>
+            </a>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Prof. Gurlan Vasile | <a href="index.html">Modul 1: Introducere in sisteme de calcul</a></p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.7;">Prototip: Invatare Atomica v1.0</p>
+    </footer>
+
+    <!-- Atomic Learning System -->
+    <script src="../../../../assets/js/atomic-learning.js"></script>
+    <!-- Advanced Practice System -->
+    <script src="../../../../assets/js/practice-advanced.js"></script>
+    <!-- Lesson Summary System -->
+    <script src="../../../../assets/js/lesson-summary.js"></script>
+
+    <script>
+        // Initialize atomic learning
+        document.addEventListener('DOMContentLoaded', function() {
+            AtomicLearning.init('cls5-m1-lectia2-hardware', {
+                requireCorrectToProgress: true,
+                maxHints: 2,
+                saveProgress: true
+            });
+
+            // Update progress bar when atoms are completed
+            updateProgressBar();
+
+            document.addEventListener('atomCompleted', function(e) {
+                updateProgressBar();
+            });
+
+            // Initialize Advanced Practice with all 4 exercise types
+            AdvancedPractice.init('cls5-m1-lectia2-hardware', [
+                // 1. SYNTHESIS - Quiz de sinteza
+                {
+                    type: 'synthesis',
+                    question: 'Ai 8GB de RAM si deschizi un joc care foloseste 6GB. Daca deschizi si un browser care are nevoie de 3GB, ce se va intampla?',
+                    options: [
+                        'Totul va functiona normal',
+                        'Calculatorul va folosi hard disk-ul ca memorie suplimentara si va deveni mai lent',
+                        'Jocul se va inchide automat',
+                        'Calculatorul se va restarta'
+                    ],
+                    correct: 'b',
+                    explanation: 'Cand RAM-ul se umple, sistemul foloseste o parte din hard disk (memorie virtuala/swap), dar aceasta e mult mai lenta decat RAM-ul.'
+                },
+
+                // 2. DRAG & DROP - Categorizare
+                {
+                    type: 'dragdrop',
+                    question: 'Trage fiecare dispozitiv in categoria corecta:',
+                    items: [
+                        { id: 'tastatura', label: 'Tastatura', icon: '⌨️', category: 'intrare' },
+                        { id: 'monitor', label: 'Monitor', icon: '🖥️', category: 'iesire' },
+                        { id: 'mouse', label: 'Mouse', icon: '🖱️', category: 'intrare' },
+                        { id: 'boxe', label: 'Boxe', icon: '🔊', category: 'iesire' },
+                        { id: 'microfon', label: 'Microfon', icon: '🎤', category: 'intrare' },
+                        { id: 'imprimanta', label: 'Imprimanta', icon: '🖨️', category: 'iesire' }
+                    ],
+                    categories: [
+                        { id: 'intrare', label: 'Dispozitive de INTRARE', icon: '📥' },
+                        { id: 'iesire', label: 'Dispozitive de IESIRE', icon: '📤' }
+                    ],
+                    explanation: 'Dispozitivele de intrare trimit informatii CATRE calculator, cele de iesire primesc informatii DE LA calculator.'
+                },
+
+                // 3. SCENARIO - Situatie reala
+                {
+                    type: 'scenario',
+                    scenario: 'Prietenul tau se plange ca jocul lui preferat "se misca greu" - are FPS mic si se blocheaza des. Calculatorul lui are: Procesor bun, 4GB RAM, HDD de 500GB, placa video integrata veche.',
+                    question: 'Ce componenta ar trebui sa upgradeze PRIMA pentru a imbunatati performanta in jocuri?',
+                    choices: [
+                        { text: 'Sa cumpere mai mult RAM (de la 4GB la 16GB)', icon: '📊', feedback: 'RAM-ul ajuta, dar nu e principalul vinovat pentru FPS mic in jocuri.' },
+                        { text: 'Sa inlocuiasca HDD-ul cu un SSD', icon: '💾', feedback: 'SSD-ul ajuta la incarcarea jocului mai rapida, dar nu la FPS.' },
+                        { text: 'Sa cumpere o placa video dedicata', icon: '🎮', feedback: 'Corect! Placa video e responsabila pentru randarea grafica. O placa integrata veche nu poate rula jocuri moderne.' },
+                        { text: 'Sa schimbe procesorul', icon: '🧠', feedback: 'Procesorul e deja bun conform descrierii.' }
+                    ],
+                    correctChoice: 2,
+                    explanation: 'Pentru jocuri, placa video (GPU) este cea mai importanta componenta. Ea proceseaza toate elementele grafice.'
+                },
+
+                // 4. SCHEMA - Completeaza diagrama
+                {
+                    type: 'schema',
+                    question: 'Completeaza schema cu rolul fiecarei componente:',
+                    diagramHtml: '<div style="text-align: center; margin-bottom: 1rem; font-size: 2rem;">🖥️ Calculator</div>',
+                    slots: [
+                        { label: 'Procesor (CPU):', correct: 'calcule', placeholder: 'Ce face?' },
+                        { label: 'RAM:', correct: 'temporar', placeholder: 'Ce tip de memorie?' },
+                        { label: 'Hard Disk:', correct: 'permanent', placeholder: 'Ce tip de memorie?' },
+                        { label: 'Placa video:', correct: 'grafica', placeholder: 'Ce proceseaza?' }
+                    ],
+                    options: [
+                        { value: 'calcule', label: 'Face calculele', icon: '🧮' },
+                        { value: 'temporar', label: 'Memorie temporara', icon: '⚡' },
+                        { value: 'permanent', label: 'Memorie permanenta', icon: '💾' },
+                        { value: 'grafica', label: 'Proceseaza grafica', icon: '🎨' }
+                    ],
+                    explanation: 'Fiecare componenta are un rol specific: CPU calculeaza, RAM tine date temporar, HDD permanent, GPU randeaza grafica.'
+                },
+
+                // 5. WRITTEN - Raspuns scris pentru punctaj maxim
+                {
+                    type: 'written',
+                    question: 'Explica in cuvintele tale diferenta dintre memoria RAM si Hard Disk. De ce avem nevoie de ambele?',
+                    context: 'Gandeste-te la analogia cu biroul si dulapul mentionata in lectie.',
+                    hints: [
+                        'Mentioneaza ca RAM e temporara si rapida',
+                        'Mentioneaza ca Hard Disk-ul e permanent',
+                        'Explica de ce nu putem folosi doar una dintre ele',
+                        'Poti folosi o analogie proprie'
+                    ],
+                    minChars: 80,
+                    keywords: ['temporar', 'permanent', 'rapid', 'lent', 'sterge', 'pastreaza', 'program', 'fisier', 'inchide', 'memorie']
+                }
+            ]);
+
+            // Listen for practice completion
+            document.addEventListener('practiceComplete', function(e) {
+                console.log('Practica completa!', e.detail);
+                // Here you could show a completion message or unlock next lesson
+            });
+
+            // Initialize Lesson Summary
+            LessonSummary.init('cls5-m1-lectia2-hardware');
+        });
+
+        function updateProgressBar() {
+            const status = AtomicLearning.getStatus();
+            const progressBar = document.getElementById('lessonProgress');
+            const progressPercent = document.getElementById('progressPercent');
+
+            if (progressBar && progressPercent) {
+                progressBar.style.width = status.percentage + '%';
+                progressPercent.textContent = status.percentage + '%';
+            }
+        }
+
+        function restartLesson() {
+            if (confirm('Esti sigur ca vrei sa reiei lectia? Tot progresul va fi sters.')) {
+                // Clear atomic learning progress
+                localStorage.removeItem('atomic-progress-cls5-m1-lectia2-hardware');
+                // Clear practice progress
+                localStorage.removeItem('practice-cls5-m1-lectia2-hardware');
+                // Clear lesson summary
+                localStorage.removeItem('lesson-summary-cls5-m1-lectia2-hardware');
+                // Reload page
+                window.location.reload();
+            }
+        }
+
+        function downloadProgress() {
+            LessonSummary.downloadProgress('cls5-m1-lectia2-hardware-progres.json');
+        }
+    </script>
+
+    <!-- User System (optional - for integration) -->
+    <script src="../../../../assets/js/user-system.js"></script>
+    <!-- RPG System for XP -->
+    <script src="../../../../assets/js/rpg-system.js"></script>
+</body>
+</html>

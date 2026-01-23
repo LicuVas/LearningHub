@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectia 3: Structura liniara | Clasa 7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12; --bg-secondary: #12121f; --bg-card: #1a1a2e;
+            --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-green: #10b981;
+            --accent-orange: #f59e0b; --accent-cyan: #06b6d4; --accent-red: #ef4444;
+            --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b;
+            --border: #2d2d44;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; line-height: 1.7; }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .nav-bar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
+        .nav-back { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
+        .nav-back:hover { color: var(--accent-cyan); }
+        .progress-steps { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }
+        .step { width: 60px; height: 8px; background: var(--border); border-radius: 4px; cursor: pointer; transition: all 0.3s; }
+        .step.active { background: var(--accent-green); }
+        .step.completed { background: var(--accent-cyan); }
+        .section { display: none; animation: fadeIn 0.5s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .goal-section { text-align: center; padding: 3rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.1)); border-radius: 20px; margin-bottom: 2rem; }
+        .goal-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .goal-title { font-size: 2rem; font-weight: 800; color: var(--accent-green); margin-bottom: 1rem; }
+        .goal-desc { font-size: 1.2rem; color: var(--text-secondary); max-width: 500px; margin: 0 auto 2rem; }
+        .try-section { background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1)); border: 2px solid var(--accent-orange); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+        .try-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .try-badge { background: var(--accent-orange); color: #000; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.85rem; }
+        .challenge-box { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; }
+        .challenge-title { font-weight: 700; margin-bottom: 0.5rem; color: var(--accent-orange); }
+        .learn-section { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+        .learn-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .learn-badge { background: var(--accent-green); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+        .concept-card { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid var(--accent-green); }
+        .concept-name { font-size: 1.2rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.5rem; }
+        .concept-def { color: var(--text-secondary); margin-bottom: 1rem; }
+        .code-block { background: #1e1e2e; border-radius: 8px; padding: 1rem; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9rem; overflow-x: auto; margin: 1rem 0; border: 1px solid var(--border); white-space: pre; }
+        .code-block .keyword { color: #c678dd; }
+        .code-block .type { color: #e5c07b; }
+        .code-block .string { color: #98c379; }
+        .code-block .comment { color: #5c6370; font-style: italic; }
+        .code-block .function { color: #61afef; }
+        .code-block .number { color: #d19a66; }
+        .test-section { background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1)); border: 2px solid var(--accent-purple); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+        .test-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .test-badge { background: var(--accent-purple); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+        .quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+        .question-text { font-weight: 600; margin-bottom: 1rem; }
+        .options { display: grid; gap: 0.5rem; }
+        .option { padding: 1rem; background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .option:hover { border-color: var(--accent-purple); }
+        .option.selected { border-color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+        .feedback { padding: 1rem; border-radius: 8px; margin-top: 1rem; display: none; }
+        .feedback.success { display: block; background: rgba(16, 185, 129, 0.2); border: 1px solid var(--accent-green); color: var(--accent-green); }
+        .feedback.error { display: block; background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-red); color: var(--accent-red); }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; text-decoration: none; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3); }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-green); color: var(--accent-green); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .actions { display: flex; justify-content: space-between; margin-top: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .completion { text-align: center; padding: 3rem; }
+        .completion-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .completion-title { font-size: 2rem; font-weight: 800; color: var(--accent-green); margin-bottom: 0.5rem; }
+        .xp-gain { font-size: 1.5rem; color: var(--accent-orange); margin: 1rem 0; }
+        .flow-diagram { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin: 1.5rem 0; }
+        .flow-box { background: var(--accent-cyan); color: #000; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; }
+        .flow-arrow { color: var(--accent-green); font-size: 1.5rem; }
+        .run-code-btn { display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.85rem; margin-top: 1rem; transition: all 0.2s; }
+        .run-code-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4); }
+        .copyable-code { position: relative; }
+        .copy-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: var(--accent-purple); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; opacity: 0.8; }
+        .copy-btn:hover { opacity: 1; }
+        @media (max-width: 768px) { .container { padding: 1rem; } .goal-title { font-size: 1.5rem; } .actions { flex-direction: column; } .btn { width: 100%; justify-content: center; } }
+    </style>
+    <link rel="stylesheet" href="../../../../assets/css/mobile.css">
+    <link rel="stylesheet" href="../../../../assets/css/mobile-first.css">
+    <link rel="stylesheet" href="../../../../assets/css/practice.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <div class="progress-steps">
+            <div class="step active" data-step="goal"></div>
+            <div class="step" data-step="try"></div>
+            <div class="step" data-step="learn"></div>
+            <div class="step" data-step="test"></div>
+        </div>
+
+        <!-- GOAL -->
+        <div class="section active" id="goal">
+            <div class="goal-section">
+                <div class="goal-icon">&#10145;</div>
+                <h1 class="goal-title">Structura liniara</h1>
+                <p class="goal-desc">
+                    Dupa aceasta lectie, vei sti sa scrii programe care executa instructiuni pas cu pas, in ordine.
+                </p>
+                <button class="btn btn-primary" onclick="goToStep('try')">Sa incepem! &#8594;</button>
+            </div>
+        </div>
+
+        <!-- TRY -->
+        <div class="section" id="try">
+            <div class="try-section">
+                <div class="try-header">
+                    <span class="try-badge">&#127919; INCEARCA</span>
+                    <h2>Calculeaza aria unui dreptunghi!</h2>
+                </div>
+                <div class="challenge-box">
+                    <div class="challenge-title">Scrie acest program si ruleaza-l:</div>
+                    <div class="copyable-code">
+                        <button class="copy-btn" onclick="copyCode(this)">📋 Copiaza</button>
+                        <div class="code-block">#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    float lungime, latime, aria;
+
+    cout &lt;&lt; "Lungimea: ";
+    cin &gt;&gt; lungime;
+
+    cout &lt;&lt; "Latimea: ";
+    cin &gt;&gt; latime;
+
+    aria = lungime * latime;
+
+    cout &lt;&lt; "Aria dreptunghiului este: " &lt;&lt; aria &lt;&lt; endl;
+
+    return 0;
+}</div>
+                    </div>
+                    <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" rel="noopener" class="run-code-btn">
+                        🚀 Ruleaza pe OnlineGDB
+                    </a>
+                    <p style="margin-top: 1rem; color: var(--text-secondary);">
+                        <strong>Observa:</strong> Instructiunile se executa exact in ordinea in care sunt scrise!
+                    </p>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('goal')">&#8592; Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('learn')">Am incercat! &#8594;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEARN -->
+        <div class="section" id="learn">
+            <div class="learn-section">
+                <!-- Tab navigation -->
+                <div class="learn-tabs">
+                    <button class="learn-tab active" data-tab="learn">📚 Invata</button>
+                    <button class="learn-tab" data-tab="practice">🎯 Practica</button>
+                </div>
+
+                <!-- Learn tab content -->
+                <div class="tab-content active" id="tab-learn">
+                    <div class="learn-header">
+                        <span class="learn-badge">&#128218; INVATA</span>
+                        <h2>Ce este structura liniara?</h2>
+                    </div>
+
+                    <div class="concept-card">
+                    <div class="concept-name">Structura liniara (secventiala)</div>
+                    <div class="concept-def">
+                        Un program cu <strong>structura liniara</strong> executa instructiunile una dupa alta, in ordinea in care sunt scrise.
+                        Ca o reteta de gatit - faci pasii in ordine, fara sa sari!
+                    </div>
+                    <div class="flow-diagram">
+                        <div class="flow-box">Instructiune 1</div>
+                        <div class="flow-arrow">&#8595;</div>
+                        <div class="flow-box">Instructiune 2</div>
+                        <div class="flow-arrow">&#8595;</div>
+                        <div class="flow-box">Instructiune 3</div>
+                        <div class="flow-arrow">&#8595;</div>
+                        <div class="flow-box">...</div>
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Sablonul clasic: Citire - Prelucrare - Afisare</div>
+                    <div class="code-block"><span class="comment">// 1. CITIRE - luam datele de intrare</span>
+cin &gt;&gt; a;
+cin &gt;&gt; b;
+
+<span class="comment">// 2. PRELUCRARE - facem calculele</span>
+suma = a + b;
+produs = a * b;
+
+<span class="comment">// 3. AFISARE - aratam rezultatele</span>
+cout &lt;&lt; <span class="string">"Suma: "</span> &lt;&lt; suma &lt;&lt; endl;
+cout &lt;&lt; <span class="string">"Produs: "</span> &lt;&lt; produs &lt;&lt; endl;</div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Exemplu complet: Conversia temperaturii</div>
+                    <div class="code-block"><span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
+<span class="keyword">using namespace</span> std;
+
+<span class="type">int</span> <span class="function">main</span>() {
+    <span class="type">float</span> celsius, fahrenheit;
+
+    <span class="comment">// Citire</span>
+    cout &lt;&lt; <span class="string">"Temperatura in Celsius: "</span>;
+    cin &gt;&gt; celsius;
+
+    <span class="comment">// Prelucrare (formula: F = C * 9/5 + 32)</span>
+    fahrenheit = celsius * <span class="number">9</span> / <span class="number">5</span> + <span class="number">32</span>;
+
+    <span class="comment">// Afisare</span>
+    cout &lt;&lt; celsius &lt;&lt; <span class="string">"C = "</span> &lt;&lt; fahrenheit &lt;&lt; <span class="string">"F"</span> &lt;&lt; endl;
+
+    <span class="keyword">return</span> <span class="number">0</span>;
+}</div>
+                </div>
+
+                    <div class="concept-card" style="border-color: var(--accent-orange);">
+                        <div class="concept-name" style="color: var(--accent-orange);">&#128161; Probleme tipice cu structura liniara</div>
+                        <div class="concept-def">
+                            <ul style="margin-left: 1.5rem;">
+                                <li>Calcul arie/perimetru figuri geometrice</li>
+                                <li>Conversii unitati (km-m, C-F, ore-minute)</li>
+                                <li>Calcule matematice simple</li>
+                                <li>Interschimbarea valorilor a doua variabile</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div><!-- /tab-learn -->
+
+                <!-- Practice tab content -->
+                <div class="tab-content" id="tab-practice">
+                    <div class="practice-header">
+                        <span class="practice-badge">🎯 PRACTICA</span>
+                        <h2>Exerseaza ce ai invatat</h2>
+                        <p class="practice-tagline">Cursul te invata. Practica te face expert.</p>
+                    </div>
+
+                    <!-- Progress indicator -->
+                    <div class="practice-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">0/5</div>
+                    </div>
+
+                    <!-- Problem 1: Suma -->
+                    <div class="practice-problem" data-problem="p1">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P1.</span> Suma a doua numere</span>
+                            <span class="difficulty-badge difficulty-easy">Usor</span>
+                        </div>
+                        <p class="problem-desc">Citeste doua numere intregi <code>a</code> si <code>b</code> de la tastatura si afiseaza suma lor.</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">3 5</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">8</span>
+                                </div>
+                            </div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">100 250</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">350</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p1')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p1">Declara variabile <code>int a, b, suma;</code>, citeste cu <code>cin >> a >> b;</code>, calculeaza <code>suma = a + b;</code> si afiseaza cu <code>cout << suma;</code></div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p1')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Problem 2: Perimetru -->
+                    <div class="practice-problem" data-problem="p2">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P2.</span> Perimetrul dreptunghiului</span>
+                            <span class="difficulty-badge difficulty-easy">Usor</span>
+                        </div>
+                        <p class="problem-desc">Se dau lungimea <code>L</code> si latimea <code>l</code> unui dreptunghi. Calculeaza si afiseaza perimetrul.</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">5 3</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">16</span>
+                                </div>
+                            </div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">10 4</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">28</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p2')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p2">Formula perimetrului: <code>P = 2 * (L + l)</code> sau <code>P = 2*L + 2*l</code></div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p2')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Problem 3: Interschimbare -->
+                    <div class="practice-problem" data-problem="p3">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P3.</span> Interschimbare variabile</span>
+                            <span class="difficulty-badge difficulty-medium">Mediu</span>
+                        </div>
+                        <p class="problem-desc">Citeste doua numere <code>a</code> si <code>b</code>. Interschimba valorile lor si afiseaza-le (prima valoarea lui b, apoi valoarea lui a).</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">3 7</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">7 3</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p3')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p3">Ai nevoie de o variabila temporara <code>temp</code>: <code>temp = a; a = b; b = temp;</code></div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p3')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Problem 4: Media -->
+                    <div class="practice-problem" data-problem="p4">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P4.</span> Media aritmetica</span>
+                            <span class="difficulty-badge difficulty-easy">Usor</span>
+                        </div>
+                        <p class="problem-desc">Citeste 3 numere intregi si calculeaza media lor aritmetica (cu zecimale).</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">10 20 30</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">20</span>
+                                </div>
+                            </div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">7 8 9</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">8</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p4')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p4">Foloseste <code>float</code> pentru medie: <code>media = (a + b + c) / 3.0;</code> (observa 3.0, nu 3)</div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p4')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Mini-Project -->
+                    <div class="practice-problem practice-project" data-problem="project1">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">🚀</span> Mini-Proiect: Calculator de conversii</span>
+                            <span class="difficulty-badge difficulty-project">Proiect</span>
+                        </div>
+                        <p class="project-intro">Creeaza un program care converteste intre diferite unitati de masura. Urmeaza pasii:</p>
+                        <div class="checkpoints">
+                            <div class="checkpoint" data-checkpoint="1">
+                                <input type="checkbox" onchange="PracticeSystem.markCheckpointComplete('project1', '1', this)">
+                                <span class="checkpoint-text"><span class="checkpoint-step">1</span> Afiseaza un meniu: "1-Celsius in Fahrenheit, 2-km in m, 3-ore in minute"</span>
+                            </div>
+                            <div class="checkpoint" data-checkpoint="2">
+                                <input type="checkbox" onchange="PracticeSystem.markCheckpointComplete('project1', '2', this)">
+                                <span class="checkpoint-text"><span class="checkpoint-step">2</span> Citeste alegerea utilizatorului (1, 2 sau 3)</span>
+                            </div>
+                            <div class="checkpoint" data-checkpoint="3">
+                                <input type="checkbox" onchange="PracticeSystem.markCheckpointComplete('project1', '3', this)">
+                                <span class="checkpoint-text"><span class="checkpoint-step">3</span> Citeste valoarea de convertit</span>
+                            </div>
+                            <div class="checkpoint" data-checkpoint="4">
+                                <input type="checkbox" onchange="PracticeSystem.markCheckpointComplete('project1', '4', this)">
+                                <span class="checkpoint-text"><span class="checkpoint-step">4</span> Calculeaza si afiseaza rezultatul (foloseste if pentru alegere)</span>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper" style="margin-top: 1rem;">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('project1')">💡 Hint pentru structura</button>
+                            <div class="hint-content" id="hint-project1">
+                                Structura: citeste alegere -> citeste valoare -> if(alegere==1) F=C*9/5+32; else if(alegere==2) m=km*1000; ...
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- /tab-practice -->
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('try')">&#8592; Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('test')">Testeaza-ma &#8594;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEST -->
+        <div class="section" id="test">
+            <div class="test-section">
+                <div class="test-header">
+                    <span class="test-badge">&#9989; VERIFICA</span>
+                    <h2>Verifica ce ai invatat!</h2>
+                </div>
+
+                <div class="quiz-question" id="q1">
+                    <div class="question-text">1. In structura liniara, instructiunile se executa:</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q1', false)">In ordine aleatoare</div>
+                        <div class="option" onclick="selectOption(this, 'q1', true)">Una dupa alta, in ordinea scrierii</div>
+                        <div class="option" onclick="selectOption(this, 'q1', false)">Doar cele care au conditii adevarate</div>
+                    </div>
+                    <div class="feedback" id="q1-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <div class="question-text">2. Care este ordinea corecta intr-un program simplu?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q2', false)">Prelucrare - Citire - Afisare</div>
+                        <div class="option" onclick="selectOption(this, 'q2', true)">Citire - Prelucrare - Afisare</div>
+                        <div class="option" onclick="selectOption(this, 'q2', false)">Afisare - Citire - Prelucrare</div>
+                    </div>
+                    <div class="feedback" id="q2-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <div class="question-text">3. Ce afiseaza acest cod?<br><code>int x = 5; x = x + 3; cout &lt;&lt; x;</code></div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q3', false)">5</div>
+                        <div class="option" onclick="selectOption(this, 'q3', true)">8</div>
+                        <div class="option" onclick="selectOption(this, 'q3', false)">x + 3</div>
+                    </div>
+                    <div class="feedback" id="q3-feedback"></div>
+                </div>
+
+                <div id="test-result" style="display: none;"></div>
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('learn')">&#8592; Inapoi</button>
+                    <button class="btn btn-success" onclick="checkAllAnswers()">Verifica &#10003;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPLETE -->
+        <div class="section" id="complete">
+            <div class="completion">
+                <div class="completion-icon">&#127881;</div>
+                <h2 class="completion-title">Felicitari!</h2>
+                <p style="color: var(--text-secondary);">Ai terminat Lectia 3: Structura liniara</p>
+                <div class="xp-gain">+75 XP</div>
+                <div class="actions" style="justify-content: center;">
+                    <a href="lectia4-structura-alternativa.html" class="btn btn-primary">Continua la Lectia 4 &#8594;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let answers = {};
+        function goToStep(step) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(step).classList.add('active');
+            const steps = ['goal', 'try', 'learn', 'test'];
+            const idx = steps.indexOf(step);
+            document.querySelectorAll('.step').forEach((s, i) => {
+                s.classList.remove('active', 'completed');
+                if (i < idx) s.classList.add('completed');
+                if (i === idx) s.classList.add('active');
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function selectOption(el, qId, isCorrect) {
+            el.parentNode.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'wrong'));
+            el.classList.add('selected');
+            answers[qId] = isCorrect;
+        }
+        function checkAllAnswers() {
+            let correct = 0;
+            ['q1', 'q2', 'q3'].forEach(qId => {
+                const q = document.getElementById(qId);
+                const fb = document.getElementById(qId + '-feedback');
+                const sel = q.querySelector('.option.selected');
+                if (sel) {
+                    if (answers[qId]) { sel.classList.add('correct'); fb.className = 'feedback success'; fb.textContent = '\u2713 Corect!'; correct++; }
+                    else { sel.classList.add('wrong'); fb.className = 'feedback error'; fb.textContent = '\u2717 Gresit!'; q.querySelectorAll('.option').forEach(o => { if (o.onclick.toString().includes('true')) o.classList.add('correct'); }); }
+                }
+            });
+            const res = document.getElementById('test-result');
+            if (correct >= 2) {
+                res.innerHTML = '<div style="text-align:center;padding:2rem;background:rgba(16,185,129,0.2);border-radius:12px;margin-top:1rem;"><h3 style="color:var(--accent-green);">' + correct + '/3 corecte!</h3></div>';
+                res.style.display = 'block';
+                setTimeout(() => goToStep('complete'), 2000);
+            } else {
+                res.innerHTML = '<div style="text-align:center;padding:1rem;background:rgba(245,158,11,0.2);border-radius:12px;margin-top:1rem;"><h3 style="color:var(--accent-orange);">Incearca din nou!</h3></div>';
+                res.style.display = 'block';
+            }
+        }
+        document.querySelectorAll('.step').forEach(s => s.addEventListener('click', () => goToStep(s.dataset.step)));
+
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement.querySelector('.code-block');
+            const text = codeBlock.textContent.replace(/</g, '<').replace(/>/g, '>').replace(/&/g, '&');
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = '✓ Copiat!';
+                setTimeout(() => btn.textContent = '📋 Copiaza', 2000);
+            });
+        }
+    </script>
+
+    <!-- Author Footer -->
+    <footer style="
+        margin-top: 3rem;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    ">
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong>
+        </div>
+        <div>
+            Informatică și TIC | Materiale educaționale pentru elevi
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.75rem;">
+            <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan); text-decoration: none;">
+                grlnvasile@gmail.com
+            </a>
+        </div>
+    </footer>
+
+    
+    
+    <!-- Lesson Summary System (Grading + Export) -->
+    <script src="../../../../assets/js/lesson-summary.js"></script>
+    <!-- Quiz Bridge for Legacy Systems -->
+    <script src="../../../../assets/js/quiz-bridge.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            QuizBridge.init('cls7-m3-cpp-algorithms-lectia3-structura-liniara', { totalQuestions: 3 });
+        });
+    </script>
+
+    <!-- User System -->
+    <script src="../../../../assets/js/user-system.js"></script>
+
+    <!-- PoW System -->
+    <script src="../../../../assets/js/pow/storage.js"></script>
+    <script src="../../../../assets/js/pow/validator.js"></script>
+    <script src="../../../../assets/js/pow/checkpoint.js"></script>
+    <script src="../../../../assets/js/pow/gating.js"></script>
+    <script src="../../../../assets/js/pow/quiz-limiter.js"></script>
+
+    <!-- Progress Tracking -->
+    <script src="../../../../assets/js/progress.js"></script>
+    <!-- RPG System -->
+    <script src="../../../../assets/js/rpg-system.js"></script>
+    <!-- Practice System -->
+    <script src="../../../../assets/js/practice-system.js"></script>
+    <script>
+        LearningProgress.init('cls7', 'm3-cpp-algorithms', 'lectia3');
+        // Initialize Lesson Summary for grading
+        if (typeof LessonSummary !== 'undefined') {
+            LessonSummary.init('cls7-m3-cpp-algorithms-lectia3-structura-liniara');
+        }
+    </script>
+
+    <!-- Breadcrumb Navigation -->
+    <script src="../../../../assets/js/breadcrumb.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Breadcrumb.init({
+        grade: 'cls7',
+        gradeName: 'Clasa a VII-a',
+        module: 'm3-cpp-algorithms',
+        moduleName: 'Modulul 3: Algoritmi C++',
+        lesson: 'Lectia 3'
+            });
+        });
+    
+        function downloadLessonProgress() {
+            if (typeof LessonSummary !== 'undefined') {
+                LessonSummary.downloadProgress('cls7-m3-cpp-algorithms-lectia3-structura-liniara-progres.json');
+            } else {
+                alert('Sistemul de export nu este disponibil.');
+            }
+        }
+    </script>
+</body>
+</html>

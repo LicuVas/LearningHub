@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: CSS Avansat | Clasa 8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-red: #ef4444;
+            --accent-rose: #f43f5e;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-red);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-red);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-rose);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .code-mockup {
+            background: #1e1e3a;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 600px;
+            text-align: left;
+            border: 2px solid var(--border);
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .css-demo {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .css-demo-box {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: white;
+            font-weight: 600;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-rose);
+            transform: translateX(5px);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-rose);
+            background: rgba(244, 63, 94, 0.2);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(244, 63, 94, 0.2);
+            border: 2px solid var(--accent-rose);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-rose));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-red);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+    <link rel="stylesheet" href="../../../../../assets/css/mobile.css">
+    <link rel="stylesheet" href="../../../../../assets/css/mobile-first.css">
+    </head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 4</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: CSS Avansat</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea">
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Selectori - Clase",
+                description: "Invata sa folosesti clase CSS pentru stilizare",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Cum definim o clasa CSS si cum o aplicam in HTML?",
+                        hasCode: true,
+                        codeContent: "CSS: .rosu { color: red; }\nHTML: <p class=\"rosu\">Text</p>",
+                        options: [
+                            "In CSS cu # si in HTML cu id",
+                            "In CSS cu . (punct) si in HTML cu atributul class",
+                            "In CSS cu @ si in HTML cu style",
+                            "In CSS fara simbol si in HTML cu name"
+                        ],
+                        correct: 1,
+                        explanation: "Clasele CSS se definesc cu punct (.) in fata numelui: .nume-clasa { }. In HTML le aplicam cu atributul class=\"nume-clasa\". O clasa poate fi folosita pe multiple elemente."
+                    },
+                    {
+                        text: "Ce avantaj principal au clasele CSS?",
+                        options: [
+                            "Sunt mai rapide decat celelalte selectori",
+                            "Pot fi reutilizate pe multiple elemente",
+                            "Functioneaza doar pe paragrafe",
+                            "Nu au niciun avantaj special"
+                        ],
+                        correct: 1,
+                        explanation: "Clasele pot fi aplicate pe oricate elemente dorim, permitand reutilizarea stilurilor. Un element poate avea si multiple clase: class=\"clasa1 clasa2\"."
+                    },
+                    {
+                        text: "Cum aplicam doua clase pe acelasi element?",
+                        options: [
+                            "class=\"clasa1\" class=\"clasa2\"",
+                            "class=\"clasa1 clasa2\"",
+                            "class=\"clasa1+clasa2\"",
+                            "class=\"clasa1, clasa2\""
+                        ],
+                        correct: 1,
+                        explanation: "Pentru multiple clase, le scriem in acelasi atribut class, separate prin spatiu: class=\"clasa1 clasa2\". Elementul va primi stilurile din ambele clase."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Selectori - ID",
+                description: "Invata diferenta dintre clase si ID-uri",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Cum definim un ID CSS si cum il aplicam in HTML?",
+                        hasCode: true,
+                        codeContent: "CSS: #header { background: blue; }\nHTML: <div id=\"header\">...</div>",
+                        options: [
+                            "In CSS cu . si in HTML cu class",
+                            "In CSS cu # si in HTML cu atributul id",
+                            "In CSS cu @ si in HTML cu name",
+                            "In CSS cu * si in HTML cu data"
+                        ],
+                        correct: 1,
+                        explanation: "ID-urile se definesc cu # (diez) in CSS: #nume-id { }. In HTML le aplicam cu atributul id=\"nume-id\". Un ID trebuie sa fie UNIC pe pagina!"
+                    },
+                    {
+                        text: "Care este diferenta principala dintre clase (.) si ID-uri (#)?",
+                        options: [
+                            "Nu exista diferenta",
+                            "ID-ul trebuie sa fie unic pe pagina, clasa poate fi folosita de mai multe ori",
+                            "Clasa trebuie sa fie unica, ID-ul poate fi folosit de mai multe ori",
+                            "ID-ul e pentru culori, clasa pentru dimensiuni"
+                        ],
+                        correct: 1,
+                        explanation: "ID-ul (#) trebuie sa fie UNIC - un singur element cu acel id pe pagina. Clasa (.) poate fi aplicata pe oricate elemente. ID-ul are si specificitate mai mare in CSS."
+                    },
+                    {
+                        text: "Care selector are prioritate mai mare (specificitate)?",
+                        options: [
+                            "Clasa (.)",
+                            "ID-ul (#)",
+                            "Au aceeasi prioritate",
+                            "Depinde de browser"
+                        ],
+                        correct: 1,
+                        explanation: "ID-ul (#) are specificitate mai mare decat clasa (.). Ordinea de prioritate: inline style > #id > .class > element. De aceea ID-ul va suprascrie stilurile clasei."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Pseudo-clase",
+                description: "Stilizeaza elemente in stari speciale",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce face pseudo-clasa :hover?",
+                        hasCode: true,
+                        codeContent: "button:hover {\n  background: red;\n}",
+                        options: [
+                            "Stilizeaza elementul cand pagina se incarca",
+                            "Stilizeaza elementul cand mouse-ul este deasupra lui",
+                            "Stilizeaza elementul cand e apasat",
+                            "Stilizeaza primul element"
+                        ],
+                        correct: 1,
+                        explanation: ":hover aplica stiluri cand utilizatorul tine cursorul mouse-ului deasupra elementului. Perfect pentru butoane, linkuri si elemente interactive."
+                    },
+                    {
+                        text: "Ce pseudo-clasa stilizeaza un link care a fost deja vizitat?",
+                        options: [
+                            ":clicked",
+                            ":visited",
+                            ":used",
+                            ":seen"
+                        ],
+                        correct: 1,
+                        explanation: ":visited stilizeaza linkurile (<a>) pe care utilizatorul le-a accesat deja. De obicei se schimba culoarea pentru a indica ce pagini au fost vizitate."
+                    },
+                    {
+                        text: "Ce face pseudo-clasa :focus?",
+                        options: [
+                            "Mareste elementul",
+                            "Stilizeaza elementul cand e selectat (ex: click in camp text)",
+                            "Ascunde elementul",
+                            "Animeaza elementul"
+                        ],
+                        correct: 1,
+                        explanation: ":focus se activeaza cand elementul primeste focus - de exemplu cand dai click intr-un camp de formular sau navighezi cu Tab. Util pentru accesibilitate."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Pseudo-clase avansate",
+                description: "Selecteaza elemente dupa pozitie",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce selecteaza :first-child?",
+                        hasCode: true,
+                        codeContent: "li:first-child {\n  font-weight: bold;\n}",
+                        options: [
+                            "Primul element din pagina",
+                            "Primul element copil din parintele sau",
+                            "Primul paragraf",
+                            "Prima clasa"
+                        ],
+                        correct: 1,
+                        explanation: ":first-child selecteaza elementul care este PRIMUL copil al parintelui sau. In exemplu, doar primul <li> din fiecare <ul> sau <ol> va fi bold."
+                    },
+                    {
+                        text: "Ce selecteaza :nth-child(2)?",
+                        options: [
+                            "Toate elementele pare",
+                            "Al doilea element copil",
+                            "Ultimele doua elemente",
+                            "Elementul cu indexul 2 in CSS"
+                        ],
+                        correct: 1,
+                        explanation: ":nth-child(2) selecteaza al doilea copil. Poti folosi si :nth-child(odd) pentru impare, :nth-child(even) pentru pare, sau :nth-child(3n) pentru fiecare al treilea."
+                    },
+                    {
+                        text: "Ce face pseudo-clasa :not()?",
+                        hasCode: true,
+                        codeContent: "p:not(.special) {\n  color: gray;\n}",
+                        options: [
+                            "Selecteaza elementele care NU se potrivesc",
+                            "Sterge elementele",
+                            "Ascunde elementele",
+                            "Inverseaza culorile"
+                        ],
+                        correct: 1,
+                        explanation: ":not() este o pseudo-clasa de negatie - selecteaza elementele care NU corespund selectorului din paranteza. In exemplu: paragrafele care NU au clasa 'special'."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Combinarea selectorilor",
+                description: "Stapaneste selectorii CSS complecsi",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Ce selecteaza: div.container?",
+                        options: [
+                            "Toate div-urile SAU elementele cu clasa container",
+                            "Div-urile care AU clasa container",
+                            "Containerele din interiorul div-urilor",
+                            "Div-urile fara clasa container"
+                        ],
+                        correct: 1,
+                        explanation: "div.container (fara spatiu) selecteaza elementele <div> care au clasa 'container'. Este o combinatie de selector de element si selector de clasa."
+                    },
+                    {
+                        text: "Ce selecteaza: .card .title?",
+                        hasCode: true,
+                        codeContent: ".card .title { color: blue; }",
+                        options: [
+                            "Elementele cu ambele clase card si title",
+                            "Elementele cu clasa title care sunt IN INTERIORUL elementelor cu clasa card",
+                            "Elementele card urmate de title",
+                            "Primul element cu clasa title"
+                        ],
+                        correct: 1,
+                        explanation: "Spatiul dintre selectori indica descendenta. .card .title selecteaza elementele cu clasa 'title' care sunt in interiorul (la orice nivel) elementelor cu clasa 'card'."
+                    },
+                    {
+                        text: "Care este ordinea corecta de specificitate CSS (de la cea mai mica la cea mai mare)?",
+                        options: [
+                            "#id > .class > element",
+                            "element > .class > #id",
+                            ".class > element > #id",
+                            "element > #id > .class"
+                        ],
+                        correct: 1,
+                        explanation: "Specificitatea CSS: element (1) < .class (10) < #id (100) < inline style (1000). Un ID va suprascrie intotdeauna o clasa, care va suprascrie selectorul de element."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('web_quiz3_progress_cls8');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('web_quiz3_progress_cls8', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            if (q.hasCode) {
+                questionContent += `
+                    <div class="code-mockup">
+                        <pre>${q.codeContent}</pre>
+                    </div>
+                `;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    ${questionContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect! Excelent!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">😅</div>
+                    <div class="feedback-text">Nu e chiar asa...</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='quiz4-layout.html'">
+                                Quiz-ul 4: Layout si Flexbox
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

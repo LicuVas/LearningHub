@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Eticheta Digitala (Netiquette) | Clasa 6</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-orange: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-orange);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-orange);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-orange);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-red);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-purple);
+            transform: translateX(5px);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+        }
+
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-orange);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+    <link rel="stylesheet" href="../../../../../assets/css/mobile.css">
+    <link rel="stylesheet" href="../../../../../assets/css/mobile-first.css">
+    </head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 4</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Eticheta Digitala (Netiquette)</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea">
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Ce este netiquette?",
+                description: "Regulile bunei purtari in mediul online",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce inseamna 'netiquette'?",
+                        options: [
+                            "O retea de calculatoare",
+                            "Regulile de buna purtare pe internet",
+                            "Un tip de virus informatic",
+                            "O aplicatie de mesagerie"
+                        ],
+                        correct: 1,
+                        explanation: "Netiquette = network (retea) + etiquette (eticheta). Sunt regulile neoficiale de buna purtare si respect in comunicarea online."
+                    },
+                    {
+                        text: "De ce este importanta eticheta digitala?",
+                        options: [
+                            "Nu este deloc importanta",
+                            "Pentru ca ajuta la comunicare respectuoasa si evita conflictele",
+                            "Pentru ca e o lege obligatorie",
+                            "Pentru a avea mai multi urmaritori"
+                        ],
+                        correct: 1,
+                        explanation: "Eticheta digitala creeaza un mediu online placut pentru toti. Comunicarea respectuoasa evita neintelegeri si conflicte, si construieste relatii pozitive."
+                    },
+                    {
+                        text: "Regula de aur a netiquette-ului este:",
+                        options: [
+                            "Posteaza cat mai mult",
+                            "Trateaza-i pe altii asa cum ai vrea sa fii tratat tu",
+                            "Foloseste cat mai multe emoticoane",
+                            "Raspunde cat mai repede posibil"
+                        ],
+                        correct: 1,
+                        explanation: "Regula de aur: trateaza-i pe altii online asa cum ai vrea sa fii tratat tu. Inainte de a posta ceva, gandeste-te cum te-ai simti daca altcineva ar posta asta despre tine."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Scrierea online",
+                description: "Cum sa scrii corect si respectuos",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Ce transmite scrierea CU MAJUSCULE intr-un mesaj?",
+                        options: [
+                            "Prietenie si bucurie",
+                            "Ca STRIGI sau esti suparat",
+                            "Ca mesajul e important",
+                            "Ca esti profesionist"
+                        ],
+                        correct: 1,
+                        explanation: "SCRIEREA CU MAJUSCULE este echivalentul strigatului online. Este considerata nepoliticoasa si agresiva. Foloseste majusculele doar pentru acronime sau la inceputul propozitiei."
+                    },
+                    {
+                        text: "Care este modul corect de a scrie un mesaj formal unui profesor?",
+                        options: [
+                            "yo profu ce faci??",
+                            "Buna ziua, domnule profesor. Va rog sa...",
+                            "HEI!!! AM O INTREBARE!!!",
+                            "salut... vreau sa stiu ceva... :) :) :)"
+                        ],
+                        correct: 1,
+                        explanation: "Intr-un mesaj formal: foloseste salut politicos (Buna ziua), formule de adresare (domnule/doamna), scrie corect gramatical, si evita prescurtarile/emoticoanele excesive."
+                    },
+                    {
+                        text: "Ce sunt 'emoticoanele' si cand este potrivit sa le folosesti?",
+                        options: [
+                            "Sunt obligatorii in toate mesajele",
+                            "Sunt simboluri pentru emotii, potrivite in conversatii informale",
+                            "Nu trebuie folosite niciodata",
+                            "Trebuie folosite in fiecare propozitie"
+                        ],
+                        correct: 1,
+                        explanation: "Emoticoanele (emoji) ajuta la exprimarea emotiilor in mesaje informale, cu prietenii. In mesaje formale (catre profesori, institutii), evita-le sau foloseste-le foarte rar."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Comunicare respectuoasa",
+                description: "Fii respectuos in orice situatie",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce faci daca cineva posteaza o opinie diferita de a ta?",
+                        options: [
+                            "Il insulti pentru ca greseste",
+                            "Raspunzi respectuos sau ignori daca nu e important",
+                            "Ii trimiti multe mesaje pana isi schimba parerea",
+                            "Il blochezi imediat"
+                        ],
+                        correct: 1,
+                        explanation: "Oamenii au dreptul la opinii diferite. Poti raspunde respectuos cu argumente, sau poti ignora daca subiectul nu e important pentru tine. Niciodata nu insulta sau hartuie!"
+                    },
+                    {
+                        text: "Ce inseamna 'trolling' pe internet?",
+                        options: [
+                            "Un joc video popular",
+                            "Postarea intentionata de mesaje provocatoare pentru a supara pe altii",
+                            "Cautarea de informatii",
+                            "Crearea unui cont nou"
+                        ],
+                        correct: 1,
+                        explanation: "Trolling = postarea de comentarii provocatoare, false sau ofensatoare pentru a crea conflicte si a supara oamenii. Nu raspunde trollilor - asta vor ei!"
+                    },
+                    {
+                        text: "Cum reactionezi cand cineva te critica online?",
+                        options: [
+                            "Raspunzi imediat cu o insulta",
+                            "Citesti cu calm, reflectezi, si raspunzi politicos sau ignori",
+                            "Stergi contul",
+                            "Postezi despre persoana respectiva pe alte platforme"
+                        ],
+                        correct: 1,
+                        explanation: "Cand primesti critici: respira adanc, citeste cu calm, gandeste-te daca critica e valida. Daca da, multumeste si imbunatateste-te. Daca nu, ignora sau raspunde calm."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Respectul pentru altii",
+                description: "Respecta timpul si intimitatea celorlalti",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "De ce este important sa raspunzi la mesaje intr-un timp rezonabil?",
+                        options: [
+                            "Nu e important, raspunzi cand vrei",
+                            "Pentru ca respecti timpul si asteptarile celuilalt",
+                            "Pentru a avea mai multi prieteni",
+                            "Pentru ca e o lege"
+                        ],
+                        correct: 1,
+                        explanation: "Raspunsul prompt (in 24-48 de ore pentru email, mai repede pentru mesaje urgente) arata ca respecti persoana. Daca nu poti raspunde detaliat, trimite un mesaj scurt ca ai primit si vei reveni."
+                    },
+                    {
+                        text: "Ce faci inainte de a impartasi informatii despre altcineva online?",
+                        options: [
+                            "Postezi imediat daca e interesant",
+                            "Ceri permisiunea persoanei respective",
+                            "Verifici daca informatia e amuzanta",
+                            "Trimiti mai intai prietenilor apropiati"
+                        ],
+                        correct: 1,
+                        explanation: "MEREU cere permisiunea inainte de a posta informatii, poze sau videoclipuri cu alte persoane. Respecta intimitatea lor - tu ai vrea ca altii sa posteze despre tine fara sa te intrebe?"
+                    },
+                    {
+                        text: "Ce este 'spam-ul' in comunicarea online?",
+                        options: [
+                            "Mesaje importante de la prieteni",
+                            "Mesaje nedorite, repetitive sau irelevante trimise in cantitati mari",
+                            "Mesaje cu emoticoane",
+                            "Mesaje lungi"
+                        ],
+                        correct: 1,
+                        explanation: "Spam = mesaje nesolicitate, reclame, sau mesaje repetitive. Nu trimite acelasi mesaj de multe ori, nu trimite reclame prietenilor, nu trimite mesaje fara sens in grupuri."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Bune practici avansate",
+                description: "Devino un cetatean digital model",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Ce inseamna sa fii un 'cetatean digital responsabil'?",
+                        options: [
+                            "Sa ai cat mai multe conturi de social media",
+                            "Sa te comporti etic, respectuos si sigur in mediul online",
+                            "Sa postezi zilnic pe toate platformele",
+                            "Sa ai multi urmaritori"
+                        ],
+                        correct: 1,
+                        explanation: "Un cetatean digital responsabil: respecta pe altii online, protejeaza informatiile personale, gandeste inainte de a posta, ajuta la crearea unui mediu online pozitiv."
+                    },
+                    {
+                        text: "Ce faci cand vezi informatii false (fake news) distribuite online?",
+                        options: [
+                            "Le distribui imediat pentru ca par interesante",
+                            "Verifici informatia din surse de incredere inainte de a o distribui",
+                            "Le ignori complet",
+                            "Le adaugi comentarii dramatice"
+                        ],
+                        correct: 1,
+                        explanation: "Inainte de a distribui: verifica informatia din mai multe surse de incredere. Stirile false se raspandesc rapid si pot face rau. Fii parte din solutie, nu din problema!"
+                    },
+                    {
+                        text: "Care este cel mai important lucru de retinut despre comunicarea online?",
+                        options: [
+                            "Poti spune orice pentru ca nimeni nu te vede",
+                            "In spatele fiecarui ecran este o persoana reala cu sentimente",
+                            "Online conteaza doar cat de amuzant esti",
+                            "Regulile din viata reala nu se aplica online"
+                        ],
+                        correct: 1,
+                        explanation: "In spatele fiecarui cont, avatar sau ecran este o PERSOANA REALA cu sentimente. Cuvintele tale au impact real. Trateaza pe toti cu aceeasi bunatate ca si cum ai fi fata in fata cu ei."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('cls6_eticheta_quiz_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('cls6_eticheta_quiz_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    <p class="question-text">${q.text}</p>
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">😅</div>
+                    <div class="feedback-text">Nu chiar...</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='quiz5-colaborare.html'">
+                                Quiz-ul 5: Colaborare Online
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

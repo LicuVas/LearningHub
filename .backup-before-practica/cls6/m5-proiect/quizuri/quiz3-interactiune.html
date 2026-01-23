@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Interactiune si Control | Clasa 6</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-orange: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-orange);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-orange);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-orange);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-red);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-purple);
+            transform: translateX(5px);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+        }
+
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-orange);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+    <link rel="stylesheet" href="../../../../../assets/css/mobile.css">
+    <link rel="stylesheet" href="../../../../../assets/css/mobile-first.css">
+    </head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 5</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Interactiune si Control</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea">
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Controlul cu tastatura",
+                description: "Invata sa controlezi sprite-urile cu tastele",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce bloc folosesti ca sa detectezi cand jucatorul apasa o tasta?",
+                        options: [
+                            "when green flag clicked",
+                            "when [space] key pressed",
+                            "when this sprite clicked",
+                            "forever"
+                        ],
+                        correct: 1,
+                        explanation: "Blocul 'when [tasta] key pressed' din categoria Events (Evenimente) detecteaza cand jucatorul apasa o anumita tasta si porneste codul de sub el."
+                    },
+                    {
+                        text: "Cum faci personajul sa se miste la dreapta cand apesi sageata dreapta?",
+                        options: [
+                            "when right arrow key pressed -> change x by 10",
+                            "when right arrow key pressed -> change y by 10",
+                            "when space key pressed -> move 10 steps",
+                            "forever -> change x by 10"
+                        ],
+                        correct: 0,
+                        explanation: "Sageata dreapta + 'change x by 10' misca sprite-ul la dreapta. X creste spre dreapta, Y creste in sus. Valoarea 10 determina viteza miscarii."
+                    },
+                    {
+                        text: "Ce valoare schimbi pentru a misca personajul in sus?",
+                        options: [
+                            "x cu valoare pozitiva",
+                            "y cu valoare pozitiva",
+                            "x cu valoare negativa",
+                            "size (marimea)"
+                        ],
+                        correct: 1,
+                        explanation: "Pentru a misca in sus, schimbi Y cu o valoare pozitiva (ex: change y by 10). Sus = Y creste, Jos = Y scade."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Controlul cu mouse-ul",
+                description: "Invata sa folosesti mouse-ul in jocuri",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Cum faci un sprite sa urmareasca cursorul mouse-ului?",
+                        options: [
+                            "go to random position",
+                            "go to mouse-pointer (intr-un forever)",
+                            "move 10 steps",
+                            "turn 90 degrees"
+                        ],
+                        correct: 1,
+                        explanation: "Blocul 'go to mouse-pointer' pozitioneaza sprite-ul exact unde este cursorul. Pune-l intr-un bloc 'forever' pentru urmarire continua!"
+                    },
+                    {
+                        text: "Ce bloc detecteaza cand dai click pe un sprite?",
+                        options: [
+                            "when green flag clicked",
+                            "when this sprite clicked",
+                            "when space key pressed",
+                            "when backdrop switches"
+                        ],
+                        correct: 1,
+                        explanation: "Blocul 'when this sprite clicked' din Events se activeaza cand jucatorul da click direct pe sprite-ul respectiv - perfect pentru butoane sau obiecte de colectat!"
+                    },
+                    {
+                        text: "Cum verifici daca butonul mouse-ului este apasat?",
+                        options: [
+                            "if key space pressed",
+                            "if mouse down",
+                            "if touching mouse-pointer",
+                            "if mouse x > 0"
+                        ],
+                        correct: 1,
+                        explanation: "Blocul 'mouse down?' din categoria Sensing (Detectare) returneaza true/false daca butonul mouse-ului este tinut apasat - util pentru tragere continua sau selectie."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Detectarea coliziunilor",
+                description: "Invata sa detectezi cand sprite-urile se ating",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce bloc folosesti pentru a verifica daca sprite-ul atinge alt sprite?",
+                        options: [
+                            "go to [sprite]",
+                            "if touching [sprite] then",
+                            "broadcast [mesaj]",
+                            "change size by 10"
+                        ],
+                        correct: 1,
+                        explanation: "Blocul 'touching [sprite]?' din Sensing, combinat cu 'if...then', verifica daca sprite-ul tau atinge alt sprite specificat - esential pentru detectarea coliziunilor!"
+                    },
+                    {
+                        text: "Ce se intampla in joc cand personajul atinge un inamic?",
+                        options: [
+                            "Nimic automat - tu decizi prin cod",
+                            "Jocul se opreste automat",
+                            "Personajul dispare singur",
+                            "Scratch afiseaza un mesaj"
+                        ],
+                        correct: 0,
+                        explanation: "Scratch nu face nimic automat la coliziuni - TU programezi reactia! Poti scadea vieti, reda un sunet, muta personajul la start sau orice altceva doresti."
+                    },
+                    {
+                        text: "Cum verifici daca sprite-ul atinge o anumita culoare?",
+                        options: [
+                            "if touching color [culoare]",
+                            "if color = red",
+                            "set color to red",
+                            "change color effect"
+                        ],
+                        correct: 0,
+                        explanation: "Blocul 'touching color [culoare]?' detecteaza daca sprite-ul atinge pixeli de o culoare specificata - perfect pentru pereti de labirint, apa, lava sau zone speciale!"
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Miscarea continua",
+                description: "Invata sa faci miscari fluide si continue",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "De ce folosesti blocul 'forever' pentru miscare?",
+                        options: [
+                            "Ca sa ruleze codul o singura data",
+                            "Ca sa verifice si sa actualizeze miscarea continuu",
+                            "Ca sa opreasca jocul",
+                            "Ca sa schimbe culoarea"
+                        ],
+                        correct: 1,
+                        explanation: "Blocul 'forever' creeaza o bucla infinita care verifica constant input-ul (taste, mouse) si actualizeaza pozitia - fara el, codul ar rula doar o data!"
+                    },
+                    {
+                        text: "Care este diferenta intre 'when key pressed' si 'if key pressed' in forever?",
+                        options: [
+                            "Nu e nicio diferenta",
+                            "'when' reactioneaza la apasare, 'if key pressed' in forever detecteaza tasta tinuta",
+                            "'if' este mai lent",
+                            "'when' functioneaza doar cu spatiu"
+                        ],
+                        correct: 1,
+                        explanation: "'when key pressed' se activeaza la fiecare apasare noua. 'if key pressed' intr-un forever detecteaza daca tasta este TINUTA apasata - miscare mai fluida!"
+                    },
+                    {
+                        text: "Cum faci un inamic sa se miste automat stanga-dreapta?",
+                        options: [
+                            "forever: move 10 steps, if on edge bounce",
+                            "move 10 steps (o singura data)",
+                            "go to random position",
+                            "point towards player"
+                        ],
+                        correct: 0,
+                        explanation: "Combinatia 'forever' + 'move steps' + 'if on edge, bounce' creeaza un inamic patrulant care se misca si se intoarce automat cand atinge marginea!"
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Evenimente si mesaje",
+                description: "Invata sa comunici intre sprite-uri",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Ce este un 'broadcast' (difuzare) in Scratch?",
+                        options: [
+                            "Un tip de sunet",
+                            "Un mesaj trimis catre toate sprite-urile",
+                            "O culoare speciala",
+                            "Un tip de miscare"
+                        ],
+                        correct: 1,
+                        explanation: "Broadcast este un mesaj pe care un sprite il trimite tuturor sprite-urilor. Cele care au blocul 'when I receive [mesaj]' vor reactiona - perfect pentru comunicare intre personaje!"
+                    },
+                    {
+                        text: "Cand ai folosi broadcast in loc de detectare coliziuni?",
+                        options: [
+                            "Niciodata",
+                            "Cand vrei ca mai multe sprite-uri sa reactioneze la un eveniment (ex: Game Over)",
+                            "Doar pentru sunete",
+                            "Doar pentru fundal"
+                        ],
+                        correct: 1,
+                        explanation: "Broadcast este ideal pentru evenimente globale: 'Game Over' poate opri inamicii, afisa un mesaj, schimba fundalul - toate sprite-urile primesc mesajul si reactioneaza!"
+                    },
+                    {
+                        text: "Ce bloc folosesti pentru a receptiona un mesaj broadcast?",
+                        options: [
+                            "broadcast [mesaj]",
+                            "when I receive [mesaj]",
+                            "say [mesaj]",
+                            "send [mesaj] to sprite"
+                        ],
+                        correct: 1,
+                        explanation: "Blocul 'when I receive [mesaj]' este 'urechea' sprite-ului - asteapta mesajul specificat si porneste codul de sub el cand il primeste."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('cls6_m5_quiz3_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('cls6_m5_quiz3_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    <p class="question-text">${q.text}</p>
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">😅</div>
+                    <div class="feedback-text">Nu chiar...</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='quiz4-scor.html'">
+                                Quiz-ul 4: Sistem de Scor
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

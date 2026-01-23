@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectia 2: Elemente de baza C++ | Clasa 7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-back { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
+        .nav-back:hover { color: var(--accent-cyan); }
+
+        .progress-steps { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }
+        .step { width: 60px; height: 8px; background: var(--border); border-radius: 4px; cursor: pointer; transition: all 0.3s; }
+        .step.active { background: var(--accent-green); }
+        .step.completed { background: var(--accent-cyan); }
+
+        .section { display: none; animation: fadeIn 0.5s ease; }
+        .section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .goal-section {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.1));
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .goal-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .goal-title { font-size: 2rem; font-weight: 800; color: var(--accent-green); margin-bottom: 1rem; }
+        .goal-desc { font-size: 1.2rem; color: var(--text-secondary); max-width: 500px; margin: 0 auto 2rem; }
+
+        .try-section {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
+            border: 2px solid var(--accent-orange);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .try-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .try-badge { background: var(--accent-orange); color: #000; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.85rem; }
+
+        .challenge-box { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; }
+        .challenge-title { font-weight: 700; margin-bottom: 0.5rem; color: var(--accent-orange); }
+
+        .learn-section { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+        .learn-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .learn-badge { background: var(--accent-green); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+
+        .concept-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .concept-name { font-size: 1.2rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.5rem; }
+        .concept-def { color: var(--text-secondary); margin-bottom: 1rem; }
+
+        .code-block {
+            background: #1e1e2e;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+            white-space: pre;
+        }
+
+        .code-block .keyword { color: #c678dd; }
+        .code-block .type { color: #e5c07b; }
+        .code-block .string { color: #98c379; }
+        .code-block .comment { color: #5c6370; font-style: italic; }
+        .code-block .function { color: #61afef; }
+        .code-block .number { color: #d19a66; }
+
+        .type-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .type-table th, .type-table td {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .type-table th {
+            background: var(--bg-card);
+            color: var(--accent-cyan);
+        }
+
+        .type-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+
+        .test-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1));
+            border: 2px solid var(--accent-purple);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .test-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .test-badge { background: var(--accent-purple); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+
+        .quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+        .question-text { font-weight: 600; margin-bottom: 1rem; }
+        .options { display: grid; gap: 0.5rem; }
+        .option { padding: 1rem; background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .option:hover { border-color: var(--accent-purple); }
+        .option.selected { border-color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .feedback { padding: 1rem; border-radius: 8px; margin-top: 1rem; display: none; }
+        .feedback.success { display: block; background: rgba(16, 185, 129, 0.2); border: 1px solid var(--accent-green); color: var(--accent-green); }
+        .feedback.error { display: block; background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-red); color: var(--accent-red); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-primary { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3); }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-green); color: var(--accent-green); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+
+        .actions { display: flex; justify-content: space-between; margin-top: 2rem; flex-wrap: wrap; gap: 1rem; }
+
+        .completion { text-align: center; padding: 3rem; }
+        .completion-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .completion-title { font-size: 2rem; font-weight: 800; color: var(--accent-green); margin-bottom: 0.5rem; }
+        .xp-gain { font-size: 1.5rem; color: var(--accent-orange); margin: 1rem 0; }
+
+        .hint-box { background: rgba(139, 92, 246, 0.1); border: 1px solid var(--accent-purple); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+        .hint-toggle { cursor: pointer; color: var(--accent-purple); font-weight: 600; }
+        .hint-content { display: none; margin-top: 0.5rem; color: var(--text-secondary); }
+        .hint-content.show { display: block; }
+
+        .run-code-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .run-code-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .copyable-code {
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--accent-purple);
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        .copy-btn:hover { opacity: 1; }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .goal-title { font-size: 1.5rem; }
+            .actions { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+        }
+    </style>
+    <link rel="stylesheet" href="../../../../assets/css/mobile.css">
+    <link rel="stylesheet" href="../../../../assets/css/mobile-first.css">
+    <link rel="stylesheet" href="../../../../assets/css/practice.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <div class="progress-steps">
+            <div class="step active" data-step="goal"></div>
+            <div class="step" data-step="try"></div>
+            <div class="step" data-step="learn"></div>
+            <div class="step" data-step="test"></div>
+        </div>
+
+        <!-- GOAL -->
+        <div class="section active" id="goal">
+            <div class="goal-section">
+                <div class="goal-icon">&#128221;</div>
+                <h1 class="goal-title">Limbajul C++: Elemente de baza</h1>
+                <p class="goal-desc">
+                    Dupa aceasta lectie, vei intelege structura unui program C++, tipurile de date si cum sa declari variabile.
+                </p>
+                <button class="btn btn-primary" onclick="goToStep('try')">
+                    Sa incepem! &#8594;
+                </button>
+            </div>
+        </div>
+
+        <!-- TRY -->
+        <div class="section" id="try">
+            <div class="try-section">
+                <div class="try-header">
+                    <span class="try-badge">&#127919; INCEARCA</span>
+                    <h2>Scrie si ruleaza acest cod!</h2>
+                </div>
+
+                <div class="challenge-box">
+                    <div class="challenge-title">Provocarea ta:</div>
+                    <div class="copyable-code">
+                        <button class="copy-btn" onclick="copyCode(this)">📋 Copiaza</button>
+                        <div class="code-block" id="code1">#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int varsta = 13;
+    float inaltime = 1.65;
+    string nume = "Andrei";
+
+    cout &lt;&lt; "Salut, " &lt;&lt; nume &lt;&lt; "!" &lt;&lt; endl;
+    cout &lt;&lt; "Ai " &lt;&lt; varsta &lt;&lt; " ani." &lt;&lt; endl;
+    cout &lt;&lt; "Inaltimea ta este " &lt;&lt; inaltime &lt;&lt; " m." &lt;&lt; endl;
+
+    return 0;
+}</div>
+                    </div>
+                    <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" rel="noopener" class="run-code-btn">
+                        🚀 Ruleaza pe OnlineGDB
+                    </a>
+                    <p style="margin-top: 1rem; color: var(--text-secondary);">
+                        <strong>Modifica:</strong> Schimba valorile variabilelor cu datele tale personale si ruleaza din nou!
+                    </p>
+                </div>
+
+                <div class="hint-box">
+                    <div class="hint-toggle" onclick="toggleHint(this)">
+                        &#128161; Ce observi in output? Click pentru explicatie
+                    </div>
+                    <div class="hint-content">
+                        <p><code>cout</code> = "console output" - afiseaza text</p>
+                        <p><code>&lt;&lt;</code> = "trimite spre" - trimite date spre ecran</p>
+                        <p><code>endl</code> = "end line" - trece pe rand nou</p>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('goal')">&#8592; Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('learn')">
+                        Am incercat! Vreau sa inteleg &#8594;
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEARN -->
+        <div class="section" id="learn">
+            <div class="learn-section">
+                <!-- Tab navigation -->
+                <div class="learn-tabs">
+                    <button class="learn-tab active" data-tab="learn">📚 Invata</button>
+                    <button class="learn-tab" data-tab="practice">🎯 Practica</button>
+                </div>
+
+                <!-- Learn tab content -->
+                <div class="tab-content active" id="tab-learn">
+                    <div class="learn-header">
+                        <span class="learn-badge">&#128218; INVATA</span>
+                        <h2>Structura unui program C++</h2>
+                    </div>
+
+                    <div class="concept-card">
+                    <div class="concept-name">Structura de baza</div>
+                    <div class="code-block"><span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>    <span class="comment">// 1. Biblioteci (ce unelte folosim)</span>
+<span class="keyword">using namespace</span> std;       <span class="comment">// 2. Spatiu de nume (scurtatura)</span>
+
+<span class="type">int</span> <span class="function">main</span>() {              <span class="comment">// 3. Functia principala</span>
+    <span class="comment">// Codul tau aici</span>
+    <span class="keyword">return</span> <span class="number">0</span>;              <span class="comment">// 4. Semnaleaza "totul OK"</span>
+}</div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Variabile - "cutii" pentru date</div>
+                    <div class="concept-def">
+                        O <strong>variabila</strong> este ca o cutie cu eticheta. Are:
+                        <ul style="margin: 0.5rem 0 0 1.5rem;">
+                            <li><strong>Tip</strong> - ce fel de date contine</li>
+                            <li><strong>Nume</strong> - eticheta cutiei</li>
+                            <li><strong>Valoare</strong> - ce e in cutie</li>
+                        </ul>
+                    </div>
+                    <div class="code-block"><span class="type">int</span> varsta = <span class="number">13</span>;          <span class="comment">// tip: int, nume: varsta, valoare: 13</span>
+<span class="type">float</span> pret = <span class="number">19.99</span>;       <span class="comment">// tip: float, nume: pret, valoare: 19.99</span>
+<span class="type">string</span> culoare = <span class="string">"rosu"</span>; <span class="comment">// tip: string, nume: culoare, valoare: "rosu"</span></div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Tipuri de date principale</div>
+                    <table class="type-table">
+                        <tr>
+                            <th>Tip</th>
+                            <th>Ce stocheaza</th>
+                            <th>Exemple</th>
+                        </tr>
+                        <tr>
+                            <td><code style="color: var(--accent-cyan);">int</code></td>
+                            <td>Numere intregi</td>
+                            <td>-5, 0, 13, 1000</td>
+                        </tr>
+                        <tr>
+                            <td><code style="color: var(--accent-cyan);">float</code></td>
+                            <td>Numere cu virgula (6-7 cifre precizie)</td>
+                            <td>3.14, -0.5, 100.0</td>
+                        </tr>
+                        <tr>
+                            <td><code style="color: var(--accent-cyan);">double</code></td>
+                            <td>Numere cu virgula (15 cifre precizie)</td>
+                            <td>3.141592653589</td>
+                        </tr>
+                        <tr>
+                            <td><code style="color: var(--accent-cyan);">char</code></td>
+                            <td>Un singur caracter</td>
+                            <td>'A', 'x', '7'</td>
+                        </tr>
+                        <tr>
+                            <td><code style="color: var(--accent-cyan);">string</code></td>
+                            <td>Text (sir de caractere)</td>
+                            <td>"Salut", "Ana"</td>
+                        </tr>
+                        <tr>
+                            <td><code style="color: var(--accent-cyan);">bool</code></td>
+                            <td>Adevarat/Fals</td>
+                            <td>true, false</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Operatori aritmetici</div>
+                    <table class="type-table">
+                        <tr>
+                            <th>Operator</th>
+                            <th>Operatie</th>
+                            <th>Exemplu</th>
+                            <th>Rezultat</th>
+                        </tr>
+                        <tr><td>+</td><td>Adunare</td><td>5 + 3</td><td>8</td></tr>
+                        <tr><td>-</td><td>Scadere</td><td>5 - 3</td><td>2</td></tr>
+                        <tr><td>*</td><td>Inmultire</td><td>5 * 3</td><td>15</td></tr>
+                        <tr><td>/</td><td>Impartire</td><td>5 / 3</td><td>1 (intreg!) sau 1.66 (float)</td></tr>
+                        <tr><td>%</td><td>Rest (modulo)</td><td>5 % 3</td><td>2</td></tr>
+                    </table>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-name">Citire de la tastatura</div>
+                    <div class="code-block"><span class="type">int</span> numar;
+cout &lt;&lt; <span class="string">"Introdu un numar: "</span>;
+cin &gt;&gt; numar;  <span class="comment">// cin = "console input" - citeste de la utilizator</span>
+cout &lt;&lt; <span class="string">"Ai introdus: "</span> &lt;&lt; numar;</div>
+                </div>
+
+                    <div class="concept-card" style="border-color: var(--accent-orange);">
+                        <div class="concept-name" style="color: var(--accent-orange);">&#128161; Reguli pentru nume de variabile</div>
+                        <div class="concept-def">
+                            <p>&#9989; Incep cu litera sau _ (nu cifra)</p>
+                            <p>&#9989; Contin litere, cifre, _ (fara spatii!)</p>
+                            <p>&#9989; Case-sensitive: <code>Varsta</code> &#8800; <code>varsta</code></p>
+                            <p>&#10060; Evita: diacritice, cuvinte rezervate (int, if, while...)</p>
+                        </div>
+                    </div>
+                </div><!-- /tab-learn -->
+
+                <!-- Practice tab content -->
+                <div class="tab-content" id="tab-practice">
+                    <div class="practice-header">
+                        <span class="practice-badge">🎯 PRACTICA</span>
+                        <h2>Exerseaza elementele de baza C++</h2>
+                        <p class="practice-tagline">Cursul te invata. Practica te face expert.</p>
+                    </div>
+
+                    <!-- Progress indicator -->
+                    <div class="practice-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">0/5</div>
+                    </div>
+
+                    <!-- Problem 1: Afiseaza numele -->
+                    <div class="practice-problem" data-problem="p1">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P1.</span> Afiseaza-ti numele</span>
+                            <span class="difficulty-badge difficulty-easy">Usor</span>
+                        </div>
+                        <p class="problem-desc">Declara o variabila <code>string</code> cu numele tau si afiseaz-o pe ecran cu mesajul "Salut, [nume]!".</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemplu:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Cod</span>
+                                    <span class="test-io-value">string nume = "Andrei";</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">Salut, Andrei!</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p1')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p1">Foloseste: <code>string nume = "...";</code> si <code>cout << "Salut, " << nume << "!";</code></div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p1')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Problem 2: Suma a doua numere -->
+                    <div class="practice-problem" data-problem="p2">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P2.</span> Suma a doua numere</span>
+                            <span class="difficulty-badge difficulty-easy">Usor</span>
+                        </div>
+                        <p class="problem-desc">Citeste doua numere intregi <code>a</code> si <code>b</code> de la tastatura si afiseaza suma lor.</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">5 3</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">Suma: 8</span>
+                                </div>
+                            </div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">12 7</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">Suma: 19</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p2')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p2"><code>int a, b; cin >> a >> b; cout << "Suma: " << a + b;</code></div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p2')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Problem 3: Interschimbare cu temp -->
+                    <div class="practice-problem" data-problem="p3">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P3.</span> Interschimba doua variabile</span>
+                            <span class="difficulty-badge difficulty-medium">Mediu</span>
+                        </div>
+                        <p class="problem-desc">Citeste doua numere <code>a</code> si <code>b</code>, interschimba-le folosind o variabila temporara <code>temp</code>, apoi afiseaza noile valori.</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">5 9</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">a=9 b=5</span>
+                                </div>
+                            </div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">3 7</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">a=7 b=3</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p3')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p3">Pasii: <code>temp = a; a = b; b = temp;</code> - temp salveaza valoarea lui a inainte sa o pierzi!</div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p3')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Problem 4: Conversie minute -->
+                    <div class="practice-problem" data-problem="p4">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P4.</span> Minute in ore</span>
+                            <span class="difficulty-badge difficulty-medium">Mediu</span>
+                        </div>
+                        <p class="problem-desc">Citeste un numar de minute si afiseaza cate ore complete si cate minute ramase reprezinta.</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">130</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">2 ore si 10 minute</span>
+                                </div>
+                            </div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">90</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">1 ore si 30 minute</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p4')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p4">Foloseste: <code>ore = minute / 60;</code> si <code>rest = minute % 60;</code></div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p4')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Mini-Project -->
+                    <div class="practice-problem practice-project" data-problem="project1">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">🚀</span> Mini-Proiect: Cartonas personal</span>
+                            <span class="difficulty-badge difficulty-project">Proiect</span>
+                        </div>
+                        <p class="project-intro">Creeaza un program care citeste informatii personale si le afiseaza formatat frumos. Urmeaza pasii:</p>
+                        <div class="checkpoints">
+                            <div class="checkpoint" data-checkpoint="1">
+                                <input type="checkbox" onchange="PracticeSystem.markCheckpointComplete('project1', '1', this)">
+                                <span class="checkpoint-text"><span class="checkpoint-step">1</span> Citeste numele (string)</span>
+                            </div>
+                            <div class="checkpoint" data-checkpoint="2">
+                                <input type="checkbox" onchange="PracticeSystem.markCheckpointComplete('project1', '2', this)">
+                                <span class="checkpoint-text"><span class="checkpoint-step">2</span> Citeste varsta (int)</span>
+                            </div>
+                            <div class="checkpoint" data-checkpoint="3">
+                                <input type="checkbox" onchange="PracticeSystem.markCheckpointComplete('project1', '3', this)">
+                                <span class="checkpoint-text"><span class="checkpoint-step">3</span> Citeste orasul (string)</span>
+                            </div>
+                            <div class="checkpoint" data-checkpoint="4">
+                                <input type="checkbox" onchange="PracticeSystem.markCheckpointComplete('project1', '4', this)">
+                                <span class="checkpoint-text"><span class="checkpoint-step">4</span> Afiseaza totul formatat: "=== CARTONAS ===" cu toate datele pe linii separate</span>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper" style="margin-top: 1rem;">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('project1')">💡 Hint pentru structura</button>
+                            <div class="hint-content" id="hint-project1">
+                                Pentru citire string cu spatii foloseste <code>getline(cin, nume);</code>. Output exemplu:<br>
+                                <code>=== CARTONAS ===</code><br>
+                                <code>Nume: Andrei Pop</code><br>
+                                <code>Varsta: 13 ani</code><br>
+                                <code>Oras: Bucuresti</code>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- /tab-practice -->
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('try')">&#8592; Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('test')">
+                        Am inteles! Testeaza-ma &#8594;
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEST -->
+        <div class="section" id="test">
+            <div class="test-section">
+                <div class="test-header">
+                    <span class="test-badge">&#9989; VERIFICA</span>
+                    <h2>Hai sa vedem ce ai retinut!</h2>
+                </div>
+
+                <div class="quiz-question" id="q1">
+                    <div class="question-text">1. Ce tip de variabila folosesti pentru a stoca varsta (13 ani)?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q1', true)">int</div>
+                        <div class="option" onclick="selectOption(this, 'q1', false)">float</div>
+                        <div class="option" onclick="selectOption(this, 'q1', false)">string</div>
+                    </div>
+                    <div class="feedback" id="q1-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <div class="question-text">2. Ce tip folosesti pentru un pret de 19.99 lei?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q2', false)">int</div>
+                        <div class="option" onclick="selectOption(this, 'q2', true)">float</div>
+                        <div class="option" onclick="selectOption(this, 'q2', false)">bool</div>
+                    </div>
+                    <div class="feedback" id="q2-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <div class="question-text">3. Ce operator da restul impartirii?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q3', false)">/</div>
+                        <div class="option" onclick="selectOption(this, 'q3', true)">%</div>
+                        <div class="option" onclick="selectOption(this, 'q3', false)">*</div>
+                    </div>
+                    <div class="feedback" id="q3-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q4">
+                    <div class="question-text">4. Care este declaratia corecta pentru un nume?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q4', false)">int nume = "Maria";</div>
+                        <div class="option" onclick="selectOption(this, 'q4', true)">string nume = "Maria";</div>
+                        <div class="option" onclick="selectOption(this, 'q4', false)">char nume = "Maria";</div>
+                    </div>
+                    <div class="feedback" id="q4-feedback"></div>
+                </div>
+
+                <div id="test-result" style="display: none;"></div>
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('learn')">&#8592; Inapoi la lectie</button>
+                    <button class="btn btn-success" onclick="checkAllAnswers()">
+                        Verifica raspunsurile &#10003;
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPLETE -->
+        <div class="section" id="complete">
+            <div class="completion">
+                <div class="completion-icon">&#127881;</div>
+                <h2 class="completion-title">Felicitari!</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    Ai terminat Lectia 2: Elemente de baza C++
+                </p>
+                <div class="xp-gain">+75 XP</div>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                    Acum stii sa declari variabile si sa folosesti operatori!
+                </p>
+                <div class="actions" style="justify-content: center;">
+                    <a href="lectia3-structura-liniara.html" class="btn btn-primary">
+                        Continua la Lectia 3 &#8594;
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let answers = {};
+        let correctCount = 0;
+
+        function goToStep(step) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(step).classList.add('active');
+            const steps = ['goal', 'try', 'learn', 'test'];
+            const currentIndex = steps.indexOf(step);
+            document.querySelectorAll('.step').forEach((s, i) => {
+                s.classList.remove('active', 'completed');
+                if (i < currentIndex) s.classList.add('completed');
+                if (i === currentIndex) s.classList.add('active');
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleHint(el) { el.nextElementSibling.classList.toggle('show'); }
+
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement.querySelector('.code-block');
+            const text = codeBlock.textContent
+                .replace(/</g, '<')
+                .replace(/>/g, '>')
+                .replace(/&/g, '&');
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = '✓ Copiat!';
+                setTimeout(() => btn.textContent = '📋 Copiaza', 2000);
+            });
+        }
+
+        function selectOption(el, questionId, isCorrect) {
+            el.parentNode.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'wrong'));
+            el.classList.add('selected');
+            answers[questionId] = isCorrect;
+        }
+
+        function checkAllAnswers() {
+            correctCount = 0;
+            ['q1', 'q2', 'q3', 'q4'].forEach(qId => {
+                const question = document.getElementById(qId);
+                const feedback = document.getElementById(qId + '-feedback');
+                const selectedOption = question.querySelector('.option.selected');
+                if (selectedOption) {
+                    if (answers[qId]) {
+                        selectedOption.classList.add('correct');
+                        feedback.className = 'feedback success';
+                        feedback.textContent = '\u2713 Corect!';
+                        correctCount++;
+                    } else {
+                        selectedOption.classList.add('wrong');
+                        feedback.className = 'feedback error';
+                        feedback.textContent = '\u2717 Incearca din nou!';
+                        question.querySelectorAll('.option').forEach(o => {
+                            if (o.onclick.toString().includes('true')) o.classList.add('correct');
+                        });
+                    }
+                }
+            });
+            const resultDiv = document.getElementById('test-result');
+            if (correctCount >= 3) {
+                resultDiv.innerHTML = '<div style="text-align: center; padding: 2rem; background: rgba(16, 185, 129, 0.2); border-radius: 12px; margin-top: 1rem;"><div style="font-size: 3rem;">\u2B50</div><h3 style="color: var(--accent-green);">Excelent! ' + correctCount + '/4 corecte!</h3></div>';
+                resultDiv.style.display = 'block';
+                setTimeout(() => goToStep('complete'), 2000);
+            } else {
+                resultDiv.innerHTML = '<div style="text-align: center; padding: 1rem; background: rgba(245, 158, 11, 0.2); border-radius: 12px; margin-top: 1rem;"><h3 style="color: var(--accent-orange);">' + correctCount + '/4 - Reciteste lectia!</h3></div>';
+                resultDiv.style.display = 'block';
+            }
+        }
+
+        document.querySelectorAll('.step').forEach(step => {
+            step.addEventListener('click', () => goToStep(step.dataset.step));
+        });
+    </script>
+
+    <!-- Author Footer -->
+    <footer style="
+        margin-top: 3rem;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    ">
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong>
+        </div>
+        <div>
+            Informatică și TIC | Materiale educaționale pentru elevi
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.75rem;">
+            <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan); text-decoration: none;">
+                grlnvasile@gmail.com
+            </a>
+        </div>
+    </footer>
+
+    
+    
+    <!-- Lesson Summary System (Grading + Export) -->
+    <script src="../../../../assets/js/lesson-summary.js"></script>
+    <!-- Quiz Bridge for Legacy Systems -->
+    <script src="../../../../assets/js/quiz-bridge.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            QuizBridge.init('cls7-m3-cpp-algorithms-lectia2-elemente-baza', { totalQuestions: 3 });
+        });
+    </script>
+
+    <!-- User System -->
+    <script src="../../../../assets/js/user-system.js"></script>
+
+    <!-- PoW System -->
+    <script src="../../../../assets/js/pow/storage.js"></script>
+    <script src="../../../../assets/js/pow/validator.js"></script>
+    <script src="../../../../assets/js/pow/checkpoint.js"></script>
+    <script src="../../../../assets/js/pow/gating.js"></script>
+    <script src="../../../../assets/js/pow/quiz-limiter.js"></script>
+
+    <!-- Progress Tracking -->
+    <script src="../../../../assets/js/progress.js"></script>
+    <!-- RPG System -->
+    <script src="../../../../assets/js/rpg-system.js"></script>
+    <!-- Practice System -->
+    <script src="../../../../assets/js/practice-system.js"></script>
+    <script>
+        LearningProgress.init('cls7', 'm3-cpp-algorithms', 'lectia2');
+        // Initialize Lesson Summary for grading
+        if (typeof LessonSummary !== 'undefined') {
+            LessonSummary.init('cls7-m3-cpp-algorithms-lectia2-elemente-baza');
+        }
+    </script>
+
+    <!-- Breadcrumb Navigation -->
+    <script src="../../../../assets/js/breadcrumb.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Breadcrumb.init({
+        grade: 'cls7',
+        gradeName: 'Clasa a VII-a',
+        module: 'm3-cpp-algorithms',
+        moduleName: 'Modulul 3: Algoritmi C++',
+        lesson: 'Lectia 2'
+            });
+        });
+    
+        function downloadLessonProgress() {
+            if (typeof LessonSummary !== 'undefined') {
+                LessonSummary.downloadProgress('cls7-m3-cpp-algorithms-lectia2-elemente-baza-progres.json');
+            } else {
+                alert('Sistemul de export nu este disponibil.');
+            }
+        }
+    </script>
+</body>
+</html>

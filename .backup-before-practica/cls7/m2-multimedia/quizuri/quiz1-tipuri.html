@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Tipuri de continut multimedia | Clasa 7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Header with XP */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* Level Map */
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Level connector line */
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        /* Quiz Area */
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-green);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        /* Question styles */
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-red);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        /* Answer options */
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+        .option.selected {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Feedback */
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        /* Level complete screen */
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-cyan);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+    <link rel="stylesheet" href="../../../../../assets/css/mobile.css">
+    <link rel="stylesheet" href="../../../../../assets/css/mobile-first.css">
+    </head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 2</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Tipuri de continut multimedia</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <!-- Level Map -->
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <!-- Quiz Area -->
+        <div class="quiz-area" id="quizArea">
+            <!-- Level intro will be shown here -->
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        // Quiz data for each level
+        const levels = {
+            1: {
+                title: "Nivel 1: Ce este multimedia?",
+                description: "Invata ce inseamna multimedia si componentele sale",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce inseamna 'multimedia'?",
+                        options: [
+                            "Doar imagini colorate",
+                            "Combinarea mai multor tipuri de continut: text, imagini, sunet, video",
+                            "Doar muzica si filme",
+                            "Un tip de calculator special"
+                        ],
+                        correct: 1,
+                        explanation: "Multimedia inseamna 'mai multe medii' - combinarea textului, imaginilor, sunetului, video-ului si animatiilor intr-un singur proiect."
+                    },
+                    {
+                        text: "Care dintre urmatoarele NU este un tip de continut multimedia?",
+                        options: [
+                            "O fotografie digitala",
+                            "Un fisier audio MP3",
+                            "Un cablu de internet",
+                            "Un clip video"
+                        ],
+                        correct: 2,
+                        explanation: "Cablul de internet este hardware (echipament fizic), nu continut multimedia. Continutul multimedia include: text, imagini, audio, video si animatii."
+                    },
+                    {
+                        text: "Unde intalnesti continut multimedia in viata de zi cu zi?",
+                        options: [
+                            "Doar la scoala",
+                            "YouTube, jocuri video, prezentari, site-uri web",
+                            "Doar in filme",
+                            "Nicaieri"
+                        ],
+                        correct: 1,
+                        explanation: "Multimedia este peste tot: pe YouTube (video + audio), in jocuri (grafice + sunet + animatii), pe site-uri web (text + imagini + video), in prezentari PowerPoint etc."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Tipuri de continut",
+                description: "Descopera cele 5 tipuri principale de continut multimedia",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Care sunt cele 5 tipuri principale de continut multimedia?",
+                        options: [
+                            "Calculator, telefon, tableta, laptop, TV",
+                            "Text, imagini, audio, video, animatii",
+                            "Word, Excel, PowerPoint, Paint, Notepad",
+                            "Facebook, Instagram, TikTok, YouTube, Twitter"
+                        ],
+                        correct: 1,
+                        explanation: "Cele 5 tipuri de continut multimedia sunt: TEXT (cuvinte), IMAGINI (fotografii, desene), AUDIO (sunete, muzica), VIDEO (filme, clipuri) si ANIMATII (grafice in miscare)."
+                    },
+                    {
+                        text: "Ce tip de continut multimedia este o melodie MP3?",
+                        options: [
+                            "Text",
+                            "Imagine",
+                            "Audio",
+                            "Video"
+                        ],
+                        correct: 2,
+                        explanation: "O melodie MP3 este continut AUDIO - adica sunet inregistrat digital. Audio include muzica, efecte sonore, voce inregistrata etc."
+                    },
+                    {
+                        text: "Un GIF animat ce tip de continut multimedia reprezinta?",
+                        options: [
+                            "Doar imagine statica",
+                            "Animatie",
+                            "Video complet",
+                            "Audio"
+                        ],
+                        correct: 1,
+                        explanation: "GIF-ul animat este o ANIMATIE - o secventa de imagini care se repeta, creand iluzia de miscare. Nu are sunet ca un video."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Text si imagini",
+                description: "Invata despre continutul text si imagini in multimedia",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "De ce este important textul in proiectele multimedia?",
+                        options: [
+                            "Nu este important deloc",
+                            "Transmite informatii clare, titluri, explicatii",
+                            "Doar pentru a umple spatiul gol",
+                            "Pentru ca arata frumos"
+                        ],
+                        correct: 1,
+                        explanation: "Textul este esential pentru a transmite informatii precise: titluri, subtitluri, explicatii, instructiuni. Fara text, multe mesaje ar fi greu de inteles."
+                    },
+                    {
+                        text: "Care este diferenta principala dintre o fotografie si o ilustratie?",
+                        options: [
+                            "Nu exista nicio diferenta",
+                            "Fotografia capteaza realitatea, ilustratia este desenata/creata",
+                            "Ilustratia este intotdeauna mai mare",
+                            "Fotografia nu poate fi digitala"
+                        ],
+                        correct: 1,
+                        explanation: "Fotografia captureaza o scena reala cu camera, pe cand ilustratia (desen, grafic) este creata manual sau digital de un artist."
+                    },
+                    {
+                        text: "Ce rol au imaginile intr-o prezentare multimedia?",
+                        options: [
+                            "Distrag atentia publicului",
+                            "Ilustreaza ideile, fac continutul mai atractiv si memorabil",
+                            "Incetinesc prezentarea",
+                            "Nu au niciun rol"
+                        ],
+                        correct: 1,
+                        explanation: "Imaginile ajuta la ilustrarea ideilor, fac prezentarea mai atractiva vizual si ajuta publicul sa retina mai bine informatiile."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Audio si video",
+                description: "Exploreaza continutul audio si video",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce include continutul audio in multimedia?",
+                        options: [
+                            "Doar muzica",
+                            "Muzica, voce, efecte sonore, sunete ambientale",
+                            "Doar efecte sonore din jocuri",
+                            "Doar inregistrari vocale"
+                        ],
+                        correct: 1,
+                        explanation: "Audio include toate tipurile de sunet: muzica, vocea naratorului, efecte sonore (explozii, pasi), sunete ambientale (ploaie, pasari) etc."
+                    },
+                    {
+                        text: "Care este diferenta dintre audio si video?",
+                        options: [
+                            "Nu exista nicio diferenta",
+                            "Audio contine doar sunet, video contine imagini in miscare (cu sau fara sunet)",
+                            "Video nu poate avea sunet",
+                            "Audio este mai mare decat video"
+                        ],
+                        correct: 1,
+                        explanation: "Audio = doar sunet (ex: melodie MP3). Video = imagini in miscare, de obicei cu sunet inclus (ex: clip YouTube). Video-ul poate fi si fara sunet (muted)."
+                    },
+                    {
+                        text: "De ce este important sunetul intr-un joc video?",
+                        options: [
+                            "Nu este important",
+                            "Creeaza atmosfera, da feedback la actiuni, face experienta mai imersiva",
+                            "Doar pentru a face zgomot",
+                            "Pentru a deranja vecinii"
+                        ],
+                        correct: 1,
+                        explanation: "Sunetul in jocuri creeaza atmosfera (muzica tensionata), da feedback (sunet cand culegi un obiect), si face jocul mai imersiv si captivant."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Animatii si proiecte",
+                description: "Invata despre animatii si cum se combina totul",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Ce este o animatie?",
+                        options: [
+                            "O poza statica",
+                            "O secventa de imagini afisate rapid pentru a crea iluzia de miscare",
+                            "Un fisier audio",
+                            "Un document text"
+                        ],
+                        correct: 1,
+                        explanation: "Animatia este creata din multe imagini (cadre) afisate rapid una dupa alta, pacalind ochiul sa vada miscare continua - ca la un flipbook!"
+                    },
+                    {
+                        text: "Ce face un proiect multimedia sa fie de succes?",
+                        options: [
+                            "Sa aiba cat mai multe efecte speciale",
+                            "Combinarea echilibrata a tipurilor de continut pentru a transmite mesajul clar",
+                            "Sa foloseasca doar video",
+                            "Sa fie cat mai lung"
+                        ],
+                        correct: 1,
+                        explanation: "Un proiect multimedia bun combina echilibrat text, imagini, audio, video si animatii astfel incat sa transmita mesajul clar si sa fie atractiv pentru public."
+                    },
+                    {
+                        text: "Care este ordinea corecta pentru a crea un proiect multimedia?",
+                        options: [
+                            "Adaugi efecte, apoi te gandesti la continut",
+                            "Planifici continutul, colectezi materialele, le combini, testezi rezultatul",
+                            "Incepi direct fara plan",
+                            "Copiezi proiectul altcuiva"
+                        ],
+                        correct: 1,
+                        explanation: "Procesul corect: 1) Planifici ce vrei sa comunici, 2) Colectezi/creezi materialele (texte, imagini, audio), 3) Le combini intr-un proiect, 4) Testezi si imbunatatesti."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        // Load saved progress
+        function loadProgress() {
+            const saved = localStorage.getItem('cls7_multimedia_quiz1_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('cls7_multimedia_quiz1_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    <p class="question-text">${q.text}</p>
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            // Disable all options
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            // Show correct/wrong
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) {
+                options[q.correct].classList.add('correct');
+            }
+
+            // Update progress dots
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            // Show feedback
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">😅</div>
+                    <div class="feedback-text">Nu chiar... Raspunsul corect era: "${q.options[q.correct]}"</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                // Unlock next level
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='quiz2-imagini.html'">
+                                Quiz-ul 2: Editare imagini
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Sunete in Scratch | Clasa 6</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-orange: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .level-map {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .level-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .level-node.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-node.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 1rem;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .level-node.active {
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            border-color: var(--accent-green);
+        }
+
+        .level-node.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: -5px;
+            right: -5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-connector {
+            width: 30px;
+            height: 3px;
+            background: var(--border);
+            align-self: center;
+        }
+
+        .level-connector.completed {
+            background: var(--accent-green);
+        }
+
+        .quiz-area {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            min-height: 400px;
+        }
+
+        .level-intro {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-orange);
+        }
+
+        .level-intro p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-orange);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .progress-dot.current {
+            background: var(--accent-orange);
+        }
+
+        .progress-dot.correct {
+            background: var(--accent-green);
+        }
+
+        .progress-dot.wrong {
+            background: var(--accent-red);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .sound-visual {
+            background: #2d2d4a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem auto;
+            max-width: 400px;
+            text-align: center;
+            border: 2px solid var(--border);
+        }
+
+        .sound-block {
+            display: inline-block;
+            background: #cf63cf;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            margin: 0.3rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .sound-wave {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3px;
+            height: 50px;
+            margin: 1rem 0;
+        }
+
+        .wave-bar {
+            width: 6px;
+            background: var(--accent-purple);
+            border-radius: 3px;
+            animation: wave 0.8s ease-in-out infinite;
+        }
+
+        .wave-bar:nth-child(1) { height: 20px; animation-delay: 0s; }
+        .wave-bar:nth-child(2) { height: 35px; animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { height: 45px; animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { height: 30px; animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { height: 40px; animation-delay: 0.4s; }
+        .wave-bar:nth-child(6) { height: 25px; animation-delay: 0.5s; }
+        .wave-bar:nth-child(7) { height: 35px; animation-delay: 0.6s; }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.5); }
+        }
+
+        .volume-slider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .volume-track {
+            width: 150px;
+            height: 8px;
+            background: #444;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .volume-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: var(--accent-purple);
+            border-radius: 4px;
+            width: 70%;
+        }
+
+        .volume-icon {
+            font-size: 1.5rem;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .option {
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: var(--accent-purple);
+            transform: translateX(5px);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .feedback-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .feedback-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+        }
+
+        .level-complete {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .level-complete.show {
+            display: block;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-complete-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .level-complete h2 {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .xp-earned {
+            font-size: 2rem;
+            color: var(--accent-orange);
+            margin: 1.5rem 0;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        .quiz-complete-final {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .quiz-complete-final h2 {
+            color: var(--accent-orange);
+            font-size: 1.8rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+    <link rel="stylesheet" href="../../../../../assets/css/mobile.css">
+    <link rel="stylesheet" href="../../../../../assets/css/mobile-first.css">
+    </head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 2</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Sunete in Scratch</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea">
+        </div>
+    </div>
+
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Redarea sunetelor",
+                description: "Invata sa adaugi sunete in proiectele Scratch",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce bloc folosesti pentru a reda un sunet in Scratch?",
+                        hasVisual: true,
+                        visualType: "sound-block",
+                        options: [
+                            "mergi 10 pasi",
+                            "reda sunetul [Meow]",
+                            "spune [Hello!]",
+                            "schimba costumul"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Blocul 'reda sunetul [nume]' (play sound) porneste redarea sunetului ales. Fiecare sprite poate avea propriile sunete, pe care le alegi din lista."
+                    },
+                    {
+                        text: "In ce categorie de blocuri gasesti blocurile de sunete?",
+                        options: [
+                            "Motion (Miscare) - albastru",
+                            "Looks (Aspect) - mov",
+                            "Sound (Sunete) - roz/magenta",
+                            "Events (Evenimente) - galben"
+                        ],
+                        correctIndex: 2,
+                        explanation: "Toate blocurile pentru sunete sunt in categoria SOUND (Sunete) - cea ROZ/MAGENTA. Aici gasesti blocuri pentru redare, oprire, volum si efecte audio."
+                    },
+                    {
+                        text: "Ce sunet are pisica Scratch de la inceput?",
+                        options: [
+                            "Un latrat",
+                            "Meow (miau)",
+                            "Muzica",
+                            "Niciun sunet"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Pisica Scratch vine cu sunetul 'Meow' - un miau dragut! Poti sa-l redai oricand sau sa adaugi alte sunete din biblioteca sau de pe calculator."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Tipuri de redare",
+                description: "Diferenta dintre a reda complet si a porni un sunet",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Care e diferenta intre 'reda sunetul pana la sfarsit' si 'porneste sunetul'?",
+                        options: [
+                            "Nu e nicio diferenta",
+                            "'pana la sfarsit' asteapta sa se termine sunetul, 'porneste' continua imediat codul",
+                            "'porneste' e mai tare",
+                            "'pana la sfarsit' reda doar jumatate"
+                        ],
+                        correctIndex: 1,
+                        explanation: "'Reda sunetul pana la sfarsit' (play sound until done) ASTEAPTA sa se termine sunetul inainte de a trece la urmatorul bloc. 'Porneste sunetul' (start sound) porneste sunetul si continua IMEDIAT codul - sunetul ruleaza in fundal!"
+                    },
+                    {
+                        text: "Cand folosesti 'reda sunetul pana la sfarsit'?",
+                        options: [
+                            "Cand vrei ca personajul sa vorbeasca, apoi sa faca altceva",
+                            "Cand vrei muzica de fundal",
+                            "Niciodata",
+                            "Doar pentru sunete scurte"
+                        ],
+                        correctIndex: 0,
+                        explanation: "Folosesti 'pana la sfarsit' cand vrei sa SINCRONIZEZI actiunile cu sunetul. De exemplu: personajul spune ceva (sunet de voce), APOI se misca. Codul asteapta sa se termine vorba!"
+                    },
+                    {
+                        text: "Cand folosesti 'porneste sunetul'?",
+                        options: [
+                            "Pentru sunete de voce",
+                            "Cand vrei ca sunetul sa ruleze in fundal iar codul sa continue",
+                            "Doar pentru sunete lungi",
+                            "Pentru a opri alte sunete"
+                        ],
+                        correctIndex: 1,
+                        explanation: "'Porneste sunetul' e perfect pentru muzica de FUNDAL sau efecte sonore care nu trebuie sa opreasca actiunea. Muzica canta, iar personajul se misca in acelasi timp!"
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Adaugarea sunetelor",
+                description: "Invata sa adaugi sunete noi",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Cum adaugi un sunet nou la sprite din biblioteca Scratch?",
+                        options: [
+                            "Scrii numele sunetului in cod",
+                            "In tab-ul Sounds, apesi butonul de adaugare si alegi din biblioteca",
+                            "Desenezi sunetul",
+                            "Il descarci de pe internet direct in cod"
+                        ],
+                        correctIndex: 1,
+                        explanation: "In tab-ul 'Sounds' (Sunete), apesi butonul cu difuzor si + pentru a adauga sunete. Poti alege din biblioteca Scratch care are sute de sunete: efecte, muzica, voci, animale etc.!"
+                    },
+                    {
+                        text: "Poti inregistra propriul tau sunet in Scratch?",
+                        options: [
+                            "Nu, doar sunete din biblioteca",
+                            "Da, folosind optiunea 'Record' (Inregistreaza)",
+                            "Doar cu un program extern",
+                            "Doar pe telefon"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Da! Scratch are un recorder de sunet integrat. Apesi 'Record', vorbesti sau faci zgomote in microfon, opresti, si sunetul tau e gata de folosit! Perfect pentru voci de personaje."
+                    },
+                    {
+                        text: "Unde vezi toate sunetele unui sprite?",
+                        options: [
+                            "In zona de cod",
+                            "In tab-ul 'Sounds' (Sunete)",
+                            "Pe scena",
+                            "In meniul File"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Tab-ul 'SOUNDS' (langa Code si Costumes) iti arata toate sunetele sprite-ului selectat. Acolo le poti asculta, edita, redenumi sau sterge."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Volumul",
+                description: "Controleaza cat de tare sunt sunetele",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce face blocul 'seteaza volumul la [100] %'?",
+                        hasVisual: true,
+                        visualType: "volume",
+                        options: [
+                            "Schimba marimea sprite-ului",
+                            "Pune volumul sunetelor la valoarea specificata (100% = maxim)",
+                            "Schimba viteza sunetului",
+                            "Reda 100 de sunete"
+                        ],
+                        correctIndex: 1,
+                        explanation: "'Seteaza volumul la [100]%' pune volumul la valoarea exacta. 100% = volum maxim, 50% = jumatate, 0% = mut (nu se aude nimic). Functioneaza pentru TOATE sunetele sprite-ului!"
+                    },
+                    {
+                        text: "Ce face blocul 'schimba volumul cu [-10]'?",
+                        options: [
+                            "Pune volumul fix la -10",
+                            "Scade volumul cu 10% fata de cel actual",
+                            "Mareste volumul",
+                            "Opreste sunetul"
+                        ],
+                        correctIndex: 1,
+                        explanation: "'Schimba volumul CU -10' SCADE volumul cu 10% din valoarea actuala. Daca era la 100%, devine 90%. Cu valoare pozitiva (+10) il CRESTE. E o schimbare RELATIVA!"
+                    },
+                    {
+                        text: "Ce bloc iti spune volumul actual al sprite-ului?",
+                        options: [
+                            "Nu exista un astfel de bloc",
+                            "Blocul rotund 'volum' - il poti folosi in alte blocuri",
+                            "Blocul 'cat e volumul'",
+                            "Trebuie sa calculezi manual"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Blocul rotund 'volum' (volume) iti da valoarea actuala a volumului. Poti sa-l pui in blocul 'spune' pentru a afisa volumul, sau in alte blocuri matematice!"
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Efecte audio si oprire",
+                description: "Efecte speciale si cum opresti sunetele",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Ce face blocul 'opreste toate sunetele'?",
+                        options: [
+                            "Pune pe pauza sunetele",
+                            "Opreste IMEDIAT toate sunetele care ruleaza",
+                            "Sterge sunetele din proiect",
+                            "Face sunetele mai incete"
+                        ],
+                        correctIndex: 1,
+                        explanation: "'Opreste toate sunetele' (stop all sounds) opreste IMEDIAT orice sunet care ruleaza in proiect - de la orice sprite. Util cand treci la o scena noua sau la game over!"
+                    },
+                    {
+                        text: "Ce efect audio schimba cat de 'inalt' sau 'grav' suna sunetul?",
+                        options: [
+                            "pan left/right (stanga/dreapta)",
+                            "pitch (inaltime)",
+                            "echo (ecou)",
+                            "reverb"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Efectul 'PITCH' (inaltime) schimba cat de inalt sau grav suna. Valori pozitive fac sunetul mai ascutit (ca o veverita), valori negative il fac mai grav (ca un monstru)!"
+                    },
+                    {
+                        text: "Cum faci muzica sa se repete la infinit in fundal?",
+                        options: [
+                            "Pui un singur bloc 'reda sunetul'",
+                            "Pui 'reda sunetul pana la sfarsit' intr-o bucla 'la infinit'",
+                            "Muzica se repeta automat",
+                            "Trebuie sa apesi play de fiecare data"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Pentru muzica de fundal in bucla: pune blocul 'reda sunetul [muzica] pana la sfarsit' intr-o bucla 'la infinit' (forever). Cand se termina, incepe din nou automat!"
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('scratch_quiz5_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('scratch_quiz5_progress', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            if (q.hasVisual && q.visualType === 'sound-block') {
+                questionContent += `
+                    <div class="sound-visual">
+                        <span class="sound-block">reda sunetul Meow</span>
+                        <div class="sound-wave">
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (q.hasVisual && q.visualType === 'volume') {
+                questionContent += `
+                    <div class="sound-visual">
+                        <div class="volume-slider">
+                            <span class="volume-icon">🔈</span>
+                            <div class="volume-track">
+                                <div class="volume-fill"></div>
+                            </div>
+                            <span class="volume-icon">🔊</span>
+                        </div>
+                        <p style="color: #aaa; font-size: 0.9rem;">Volum: 70%</p>
+                    </div>
+                `;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    ${questionContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            options[index].classList.add(index === q.correctIndex ? 'correct' : 'wrong');
+            if (index !== q.correctIndex) {
+                options[q.correctIndex].classList.add('correct');
+            }
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correctIndex ? 'correct' : 'wrong');
+
+            if (index === q.correctIndex) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect! Excelent!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">😅</div>
+                    <div class="feedback-text">Nu chiar... Raspunsul corect era: "${q.options[q.correctIndex]}"</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            let finalContent = '';
+            if (passed && currentLevel === 5) {
+                finalContent = `
+                    <div class="quiz-complete-final">
+                        <div style="font-size: 4rem;">🎊</div>
+                        <h2>Felicitari! Ai terminat toate quiz-urile despre Scratch Basics!</h2>
+                        <p style="color: var(--text-secondary); margin: 1rem 0;">
+                            Acum stii sa folosesti interfata Scratch, sa lucrezi cu sprite-uri si costume,
+                            sa misti personajele, sa aplici efecte vizuale si sa adaugi sunete!
+                        </p>
+                        <button class="btn btn-success" onclick="window.location.href='../index.html'">
+                            Inapoi la Modulul 2
+                        </button>
+                    </div>
+                `;
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                    </div>
+                    ${finalContent}
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>

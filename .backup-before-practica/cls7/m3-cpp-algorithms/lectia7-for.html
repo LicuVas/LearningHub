@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectia 7: Structura FOR | Clasa 7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-primary: #0a0a12; --bg-secondary: #12121f; --bg-card: #1a1a2e; --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-green: #10b981; --accent-orange: #f59e0b; --accent-cyan: #06b6d4; --accent-red: #ef4444; --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b; --border: #2d2d44; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; line-height: 1.7; }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .nav-bar { display: flex; justify-content: space-between; padding: 1rem 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
+        .nav-back { color: var(--text-secondary); text-decoration: none; } .nav-back:hover { color: var(--accent-cyan); }
+        .progress-steps { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }
+        .step { width: 60px; height: 8px; background: var(--border); border-radius: 4px; cursor: pointer; } .step.active { background: var(--accent-green); } .step.completed { background: var(--accent-cyan); }
+        .section { display: none; } .section.active { display: block; }
+        .goal-section { text-align: center; padding: 3rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.1)); border-radius: 20px; margin-bottom: 2rem; }
+        .goal-icon { font-size: 5rem; margin-bottom: 1rem; } .goal-title { font-size: 2rem; font-weight: 800; color: var(--accent-green); margin-bottom: 1rem; }
+        .goal-desc { font-size: 1.1rem; color: var(--text-secondary); max-width: 500px; margin: 0 auto 2rem; }
+        .try-section { background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1)); border: 2px solid var(--accent-orange); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+        .try-badge { background: var(--accent-orange); color: #000; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+        .challenge-box { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; }
+        .learn-section { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+        .learn-badge { background: var(--accent-green); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+        .concept-card { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid var(--accent-green); }
+        .concept-name { font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.5rem; }
+        .code-block { background: #1e1e2e; border-radius: 8px; padding: 1rem; font-family: 'Consolas', monospace; font-size: 0.85rem; overflow-x: auto; margin: 1rem 0; border: 1px solid var(--border); white-space: pre; }
+        .code-block .keyword { color: #c678dd; } .code-block .type { color: #e5c07b; } .code-block .string { color: #98c379; } .code-block .comment { color: #5c6370; } .code-block .number { color: #d19a66; }
+        .test-section { background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1)); border: 2px solid var(--accent-purple); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+        .test-badge { background: var(--accent-purple); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+        .quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+        .question-text { font-weight: 600; margin-bottom: 1rem; } .options { display: grid; gap: 0.5rem; }
+        .option { padding: 1rem; background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 8px; cursor: pointer; }
+        .option:hover { border-color: var(--accent-purple); } .option.selected { border-color: var(--accent-blue); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); } .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+        .feedback { padding: 1rem; border-radius: 8px; margin-top: 1rem; display: none; }
+        .feedback.success { display: block; background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .feedback.error { display: block; background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; cursor: pointer; border: none; text-decoration: none; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .actions { display: flex; justify-content: space-between; margin-top: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .completion { text-align: center; padding: 3rem; }
+        .completion-icon { font-size: 5rem; } .completion-title { font-size: 2rem; font-weight: 800; color: var(--accent-green); }
+        .xp-gain { font-size: 1.5rem; color: var(--accent-orange); margin: 1rem 0; }
+        .for-anatomy { background: var(--bg-primary); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; }
+        .for-part { display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+        .for-part:last-child { border-bottom: none; }
+        .for-label { background: var(--accent-purple); color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; min-width: 100px; text-align: center; }
+        .run-code-btn { display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.85rem; margin-top: 1rem; transition: all 0.2s; }
+        .run-code-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4); }
+        .copyable-code { position: relative; }
+        .copy-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: var(--accent-purple); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; opacity: 0.8; }
+        .copy-btn:hover { opacity: 1; }
+        @media (max-width: 768px) { .container { padding: 1rem; } .actions { flex-direction: column; } .btn { width: 100%; justify-content: center; } }
+    </style>
+    <link rel="stylesheet" href="../../../../assets/css/mobile.css">
+    <link rel="stylesheet" href="../../../../assets/css/mobile-first.css">
+    <link rel="stylesheet" href="../../../../assets/css/practice.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <div class="progress-steps">
+            <div class="step active" data-step="goal"></div>
+            <div class="step" data-step="try"></div>
+            <div class="step" data-step="learn"></div>
+            <div class="step" data-step="test"></div>
+        </div>
+
+        <!-- GOAL -->
+        <div class="section active" id="goal">
+            <div class="goal-section">
+                <div class="goal-icon">&#128258;</div>
+                <h1 class="goal-title">Structura FOR</h1>
+                <p class="goal-desc">Dupa aceasta lectie, vei sti sa folosesti bucla <strong>FOR</strong> - cea mai eleganta pentru un numar cunoscut de repetitii.</p>
+                <button class="btn btn-primary" onclick="goToStep('try')">Sa incepem! &#8594;</button>
+            </div>
+        </div>
+
+        <!-- TRY -->
+        <div class="section" id="try">
+            <div class="try-section">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                    <span class="try-badge">&#127919; INCEARCA</span>
+                    <h2>Tabla inmultirii cu 7!</h2>
+                </div>
+                <div class="challenge-box">
+                    <div class="copyable-code">
+                        <button class="copy-btn" onclick="copyCode(this)">📋 Copiaza</button>
+                        <div class="code-block">#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    cout &lt;&lt; "Tabla inmultirii cu 7:" &lt;&lt; endl;
+
+    for (int i = 1; i &lt;= 10; i++) {
+        cout &lt;&lt; "7 x " &lt;&lt; i &lt;&lt; " = " &lt;&lt; 7 * i &lt;&lt; endl;
+    }
+
+    return 0;
+}</div>
+                    </div>
+                    <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" rel="noopener" class="run-code-btn">
+                        🚀 Ruleaza pe OnlineGDB
+                    </a>
+                    <p style="margin-top: 1rem; color: var(--text-secondary);">Observa cat de compact e codul! Totul intr-o singura linie: <code>for (start; conditie; pas)</code></p>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('goal')">&#8592; Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('learn')">Am incercat! &#8594;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEARN -->
+        <div class="section" id="learn">
+            <div class="learn-section">
+                <!-- Tab navigation -->
+                <div class="learn-tabs">
+                    <button class="learn-tab active" data-tab="learn">📚 Invata</button>
+                    <button class="learn-tab" data-tab="practice">🎯 Practica</button>
+                </div>
+
+                <!-- Learn tab content -->
+                <div class="tab-content active" id="tab-learn">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                        <span class="learn-badge">&#128218; INVATA</span>
+                        <h2>Anatomia lui FOR</h2>
+                    </div>
+
+                    <div class="concept-card">
+                        <div class="concept-name">Structura repetitiva cu contor</div>
+                        <div style="color: var(--text-secondary);">
+                            FOR combina totul intr-o singura linie: <strong>initializare</strong>, <strong>conditie</strong> si <strong>incrementare</strong>.
+                            Perfect cand stii exact de cate ori vrei sa repeti!
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <div class="concept-name">Sintaxa FOR</div>
+                        <div class="code-block"><span class="keyword">for</span> (initializare; conditie; pas) {
+    <span class="comment">// instructiuni</span>
+}</div>
+                        <div class="for-anatomy">
+                            <div class="for-part">
+                                <span class="for-label">Initializare</span>
+                                <span><code>int i = 1</code> - se executa O SINGURA DATA, la inceput</span>
+                            </div>
+                            <div class="for-part">
+                                <span class="for-label">Conditie</span>
+                                <span><code>i &lt;= 10</code> - se verifica INAINTE de fiecare repetitie</span>
+                            </div>
+                            <div class="for-part">
+                                <span class="for-label">Pas</span>
+                                <span><code>i++</code> - se executa DUPA fiecare repetitie</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="concept-card">
+                        <div class="concept-name">Echivalenta FOR - WHILE</div>
+                        <div class="code-block"><span class="comment">// FOR:</span>
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt;= <span class="number">5</span>; i++) {
+    cout &lt;&lt; i;
+}
+
+<span class="comment">// WHILE echivalent:</span>
+<span class="type">int</span> i = <span class="number">1</span>;
+<span class="keyword">while</span> (i &lt;= <span class="number">5</span>) {
+    cout &lt;&lt; i;
+    i++;
+}</div>
+                    </div>
+
+                    <div class="concept-card">
+                        <div class="concept-name">Variatii utile</div>
+                        <div class="code-block"><span class="comment">// Numarare inversa:</span>
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">10</span>; i &gt;= <span class="number">1</span>; i--) { ... }
+
+<span class="comment">// Pas de 2:</span>
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt;= <span class="number">100</span>; i += <span class="number">2</span>) { ... }
+
+<span class="comment">// Numere pare:</span>
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">2</span>; i &lt;= <span class="number">20</span>; i += <span class="number">2</span>) { ... }</div>
+                    </div>
+
+                    <div class="concept-card">
+                        <div class="concept-name">Exemplu: Suma primelor n numere</div>
+                        <div class="code-block"><span class="type">int</span> n, suma = <span class="number">0</span>;
+cout &lt;&lt; <span class="string">"n = "</span>; cin &gt;&gt; n;
+
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt;= n; i++) {
+    suma += i;  <span class="comment">// echivalent cu: suma = suma + i</span>
+}
+
+cout &lt;&lt; <span class="string">"Suma: "</span> &lt;&lt; suma;</div>
+                    </div>
+                </div><!-- /tab-learn -->
+
+                <!-- Practice tab content -->
+                <div class="tab-content" id="tab-practice">
+                    <div class="practice-header">
+                        <span class="practice-badge">🎯 PRACTICA</span>
+                        <h2>Exerseaza bucla FOR</h2>
+                        <p class="practice-tagline">Cursul te invata. Practica te face expert.</p>
+                    </div>
+
+                    <!-- Progress indicator -->
+                    <div class="practice-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">0/5</div>
+                    </div>
+
+                    <!-- Problem 1: Suma de la 1 la N -->
+                    <div class="practice-problem" data-problem="p1">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P1.</span> Suma 1 la N</span>
+                            <span class="difficulty-badge difficulty-easy">Usor</span>
+                        </div>
+                        <p class="problem-desc">Citeste un numar <code>n</code> si calculeaza suma tuturor numerelor de la 1 la n folosind bucla FOR.</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">5</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">15</span>
+                                </div>
+                            </div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">10</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">55</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p1')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p1">Foloseste <code>suma = 0;</code> apoi <code>for (int i = 1; i <= n; i++) suma += i;</code></div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p1')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Problem 2: Tabla inmultirii -->
+                    <div class="practice-problem" data-problem="p2">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P2.</span> Tabla inmultirii</span>
+                            <span class="difficulty-badge difficulty-easy">Usor</span>
+                        </div>
+                        <p class="problem-desc">Citeste un numar <code>n</code> si afiseaza tabla inmultirii cu n (de la n*1 pana la n*10).</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">3</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">3x1=3, 3x2=6, ... 3x10=30</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p2')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p2"><code>for (int i = 1; i <= 10; i++) cout << n << "x" << i << "=" << n*i << endl;</code></div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p2')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Problem 3: Factorial -->
+                    <div class="practice-problem" data-problem="p3">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P3.</span> Factorialul unui numar</span>
+                            <span class="difficulty-badge difficulty-medium">Mediu</span>
+                        </div>
+                        <p class="problem-desc">Citeste un numar <code>n</code> si calculeaza n! (factorial). n! = 1 * 2 * 3 * ... * n</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">5</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">120</span>
+                                </div>
+                            </div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">7</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">5040</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p3')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p3">Incepe cu <code>fact = 1;</code> apoi <code>for (int i = 1; i <= n; i++) fact *= i;</code> (inmultire, nu adunare!)</div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p3')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Problem 4: Numar prim -->
+                    <div class="practice-problem" data-problem="p4">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">P4.</span> Verifica numar prim</span>
+                            <span class="difficulty-badge difficulty-medium">Mediu</span>
+                        </div>
+                        <p class="problem-desc">Citeste un numar <code>n</code> si verifica daca este prim (se divide doar cu 1 si cu el insusi).</p>
+                        <div class="test-cases">
+                            <div class="test-cases-title">Exemple:</div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">7</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">PRIM</span>
+                                </div>
+                            </div>
+                            <div class="test-case">
+                                <div class="test-io">
+                                    <span class="test-io-label">Input</span>
+                                    <span class="test-io-value">12</span>
+                                </div>
+                                <div class="test-io">
+                                    <span class="test-io-label">Output</span>
+                                    <span class="test-io-value">NU E PRIM</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hint-wrapper">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('p4')">💡 Hint</button>
+                            <div class="hint-content" id="hint-p4">Numara cati divizori are: <code>for (int i = 1; i <= n; i++) if (n % i == 0) div++;</code> Daca div == 2, e prim!</div>
+                        </div>
+                        <div class="problem-actions">
+                            <button class="btn-solve" onclick="PracticeSystem.markProblemComplete('p4')">✓ Am rezolvat</button>
+                            <a href="https://www.onlinegdb.com/online_c++_compiler" target="_blank" class="run-code-btn">🚀 OnlineGDB</a>
+                        </div>
+                    </div>
+
+                    <!-- Mini-Project: Pattern cu stele -->
+                    <div class="practice-problem practice-project" data-problem="project1">
+                        <div class="problem-header">
+                            <span class="problem-title"><span class="problem-number">🚀</span> Mini-Proiect: Triunghi de stele</span>
+                            <span class="difficulty-badge difficulty-project">Proiect</span>
+                        </div>
+                        <p class="project-intro">Deseneaza un triunghi de stele folosind FOR-uri imbricate (nested for). Urmeaza pasii:</p>
+                        <div class="checkpoints">
+                            <div class="checkpoint" data-checkpoint="1">
+                                <input type="checkbox" onchange="PracticeSystem.markCheckpointComplete('project1', '1', this)">
+                                <span class="checkpoint-text"><span class="checkpoint-step">1</span> Citeste numarul de randuri <code>n</code></span>
+                            </div>
+                            <div class="checkpoint" data-checkpoint="2">
+                                <input type="checkbox" onchange="PracticeSystem.markCheckpointComplete('project1', '2', this)">
+                                <span class="checkpoint-text"><span class="checkpoint-step">2</span> FOR exterior: pentru fiecare rand (i de la 1 la n)</span>
+                            </div>
+                            <div class="checkpoint" data-checkpoint="3">
+                                <input type="checkbox" onchange="PracticeSystem.markCheckpointComplete('project1', '3', this)">
+                                <span class="checkpoint-text"><span class="checkpoint-step">3</span> FOR interior: afiseaza i stele pe fiecare rand</span>
+                            </div>
+                            <div class="checkpoint" data-checkpoint="4">
+                                <input type="checkbox" onchange="PracticeSystem.markCheckpointComplete('project1', '4', this)">
+                                <span class="checkpoint-text"><span class="checkpoint-step">4</span> Bonus: Fa triunghiul inversat (de la n stele la 1 stea)</span>
+                            </div>
+                        </div>
+                        <div class="test-cases" style="margin-top: 1rem;">
+                            <div class="test-cases-title">Exemplu pentru n=4:</div>
+                            <div class="code-block" style="font-size: 0.9rem;">*
+**
+***
+****</div>
+                        </div>
+                        <div class="hint-wrapper" style="margin-top: 1rem;">
+                            <button class="btn-hint" onclick="PracticeSystem.showHint('project1')">💡 Hint pentru structura</button>
+                            <div class="hint-content" id="hint-project1">
+                                Structura: <code>for (int i = 1; i <= n; i++) { for (int j = 1; j <= i; j++) cout << "*"; cout << endl; }</code>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- /tab-practice -->
+
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('try')">&#8592; Inapoi</button>
+                    <button class="btn btn-primary" onclick="goToStep('test')">Testeaza-ma &#8594;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEST -->
+        <div class="section" id="test">
+            <div class="test-section">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                    <span class="test-badge">&#9989; VERIFICA</span>
+                    <h2>Test!</h2>
+                </div>
+
+                <div class="quiz-question" id="q1">
+                    <div class="question-text">1. In for(int i=0; i&lt;5; i++), de cate ori se executa bucla?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q1', false)">4 ori (0,1,2,3)</div>
+                        <div class="option" onclick="selectOption(this, 'q1', true)">5 ori (0,1,2,3,4)</div>
+                        <div class="option" onclick="selectOption(this, 'q1', false)">6 ori</div>
+                    </div>
+                    <div class="feedback" id="q1-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q2">
+                    <div class="question-text">2. Ce face i-- in bucla for?</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q2', true)">Scade i cu 1 (numarare inversa)</div>
+                        <div class="option" onclick="selectOption(this, 'q2', false)">Creste i cu 1</div>
+                        <div class="option" onclick="selectOption(this, 'q2', false)">Inmulteste i cu 2</div>
+                    </div>
+                    <div class="feedback" id="q2-feedback"></div>
+                </div>
+
+                <div class="quiz-question" id="q3">
+                    <div class="question-text">3. Ce afiseaza: for(int i=1; i&lt;=3; i++) cout&lt;&lt;i*2&lt;&lt;" ";</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(this, 'q3', false)">1 2 3</div>
+                        <div class="option" onclick="selectOption(this, 'q3', true)">2 4 6</div>
+                        <div class="option" onclick="selectOption(this, 'q3', false)">2 4 6 8</div>
+                    </div>
+                    <div class="feedback" id="q3-feedback"></div>
+                </div>
+
+                <div id="test-result" style="display: none;"></div>
+                <div class="actions">
+                    <button class="btn btn-outline" onclick="goToStep('learn')">&#8592; Inapoi</button>
+                    <button class="btn btn-success" onclick="checkAllAnswers()">Verifica &#10003;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPLETE -->
+        <div class="section" id="complete">
+            <div class="completion">
+                <div class="completion-icon">&#127881;</div>
+                <h2 class="completion-title">Felicitari!</h2>
+                <p style="color: var(--text-secondary);">Ai terminat Lectia 7: Structura FOR</p>
+                <div class="xp-gain">+100 XP</div>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">Ai invatat toate cele 3 structuri repetitive!</p>
+                <div class="actions" style="justify-content: center;">
+                    <a href="lectia8-fizica.html" class="btn btn-primary">Continua la Lectia 8 &#8594;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let answers = {};
+        function goToStep(step) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(step).classList.add('active');
+            const steps = ['goal', 'try', 'learn', 'test'], idx = steps.indexOf(step);
+            document.querySelectorAll('.step').forEach((s, i) => { s.classList.remove('active', 'completed'); if (i < idx) s.classList.add('completed'); if (i === idx) s.classList.add('active'); });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function selectOption(el, qId, isCorrect) { el.parentNode.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'wrong')); el.classList.add('selected'); answers[qId] = isCorrect; }
+        function checkAllAnswers() {
+            let correct = 0;
+            ['q1', 'q2', 'q3'].forEach(qId => {
+                const q = document.getElementById(qId), fb = document.getElementById(qId + '-feedback'), sel = q.querySelector('.option.selected');
+                if (sel) { if (answers[qId]) { sel.classList.add('correct'); fb.className = 'feedback success'; fb.textContent = '\u2713 Corect!'; correct++; } else { sel.classList.add('wrong'); fb.className = 'feedback error'; fb.textContent = '\u2717 Gresit!'; q.querySelectorAll('.option').forEach(o => { if (o.onclick.toString().includes('true')) o.classList.add('correct'); }); } }
+            });
+            const res = document.getElementById('test-result');
+            if (correct >= 2) { res.innerHTML = '<div style="text-align:center;padding:2rem;background:rgba(16,185,129,0.2);border-radius:12px;margin-top:1rem;"><h3 style="color:var(--accent-green);">' + correct + '/3 corecte!</h3></div>'; res.style.display = 'block'; setTimeout(() => goToStep('complete'), 2000); }
+            else { res.innerHTML = '<div style="text-align:center;padding:1rem;background:rgba(245,158,11,0.2);border-radius:12px;margin-top:1rem;"><h3 style="color:var(--accent-orange);">Incearca din nou!</h3></div>'; res.style.display = 'block'; }
+        }
+        document.querySelectorAll('.step').forEach(s => s.addEventListener('click', () => goToStep(s.dataset.step)));
+
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement.querySelector('.code-block');
+            const text = codeBlock.textContent.replace(/</g, '<').replace(/>/g, '>').replace(/&/g, '&');
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = '✓ Copiat!';
+                setTimeout(() => btn.textContent = '📋 Copiaza', 2000);
+            });
+        }
+    </script>
+
+    <!-- Author Footer -->
+    <footer style="
+        margin-top: 3rem;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    ">
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--text-secondary);">© 2026 Prof. Gurlan Vasile</strong>
+        </div>
+        <div>
+            Informatică și TIC | Materiale educaționale pentru elevi
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.75rem;">
+            <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan); text-decoration: none;">
+                grlnvasile@gmail.com
+            </a>
+        </div>
+    </footer>
+
+    
+    
+    <!-- Lesson Summary System (Grading + Export) -->
+    <script src="../../../../assets/js/lesson-summary.js"></script>
+    <!-- Quiz Bridge for Legacy Systems -->
+    <script src="../../../../assets/js/quiz-bridge.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            QuizBridge.init('cls7-m3-cpp-algorithms-lectia7-for', { totalQuestions: 3 });
+        });
+    </script>
+
+    <!-- User System -->
+    <script src="../../../../assets/js/user-system.js"></script>
+
+    <!-- PoW System -->
+    <script src="../../../../assets/js/pow/storage.js"></script>
+    <script src="../../../../assets/js/pow/validator.js"></script>
+    <script src="../../../../assets/js/pow/checkpoint.js"></script>
+    <script src="../../../../assets/js/pow/gating.js"></script>
+    <script src="../../../../assets/js/pow/quiz-limiter.js"></script>
+
+    <!-- Progress Tracking -->
+    <script src="../../../../assets/js/progress.js"></script>
+    <!-- RPG System -->
+    <script src="../../../../assets/js/rpg-system.js"></script>
+    <!-- Practice System -->
+    <script src="../../../../assets/js/practice-system.js"></script>
+    <script>
+        LearningProgress.init('cls7', 'm3-cpp-algorithms', 'lectia7');
+        // Initialize Lesson Summary for grading
+        if (typeof LessonSummary !== 'undefined') {
+            LessonSummary.init('cls7-m3-cpp-algorithms-lectia7-for');
+        }
+    </script>
+
+    <!-- Breadcrumb Navigation -->
+    <script src="../../../../assets/js/breadcrumb.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Breadcrumb.init({
+        grade: 'cls7',
+        gradeName: 'Clasa a VII-a',
+        module: 'm3-cpp-algorithms',
+        moduleName: 'Modulul 3: Algoritmi C++',
+        lesson: 'Lectia 7'
+            });
+        });
+    
+        function downloadLessonProgress() {
+            if (typeof LessonSummary !== 'undefined') {
+                LessonSummary.downloadProgress('cls7-m3-cpp-algorithms-lectia7-for-progres.json');
+            } else {
+                alert('Sistemul de export nu este disponibil.');
+            }
+        }
+    </script>
+</body>
+</html>

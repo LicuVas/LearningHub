@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Microsoft Access Practic | Clasa 8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-red: #ef4444;
+            --accent-rose: #f43f5e;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-orange: #f59e0b;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #8b5cf6;
+            --accent-emerald: #059669;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+
+        .quiz-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 1.5rem; background: var(--bg-secondary);
+            border-radius: 16px; margin-bottom: 2rem; border: 1px solid var(--border);
+        }
+        .quiz-title { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-emerald), var(--accent-green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .xp-display { display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange)); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; color: #000; }
+
+        .level-map { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .level-node { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; cursor: pointer; transition: all 0.3s; position: relative; border: 3px solid var(--border); background: var(--bg-card); }
+        .level-node.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-node.locked::after { content: ''; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+        .level-node.active { border-color: var(--accent-green); box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); animation: pulse 2s infinite; }
+        .level-node.completed { background: linear-gradient(135deg, var(--accent-emerald), var(--accent-green)); border-color: var(--accent-green); }
+        .level-node.completed::after { content: ''; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .level-connector { width: 30px; height: 3px; background: var(--border); align-self: center; }
+        .level-connector.completed { background: var(--accent-green); }
+
+        .quiz-area { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; border: 1px solid var(--border); min-height: 400px; }
+        .level-intro { text-align: center; padding: 2rem; }
+        .level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-green); }
+        .level-intro p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+        .level-intro .xp-reward { display: inline-block; background: rgba(251, 191, 36, 0.2); color: var(--accent-yellow); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
+
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+        .question-progress { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .progress-dot.current { background: var(--accent-green); }
+        .progress-dot.correct { background: var(--accent-green); }
+        .progress-dot.wrong { background: var(--accent-red); }
+
+        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
+
+        /* Access UI Mockup Styles */
+        .access-mockup {
+            background: #f0f0f0; border-radius: 12px; overflow: hidden;
+            margin: 1rem auto; max-width: 600px; border: 1px solid #ccc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .access-titlebar {
+            background: linear-gradient(180deg, #4a7c59, #3d6b4a);
+            padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .access-icon { width: 20px; height: 20px; background: #f0ad4e; border-radius: 3px; }
+        .access-title { color: white; font-size: 0.85rem; font-weight: 500; }
+        .access-ribbon {
+            background: #f5f5f5; border-bottom: 1px solid #ddd;
+            padding: 0.5rem; display: flex; gap: 0.5rem;
+        }
+        .ribbon-tab {
+            padding: 0.4rem 0.8rem; background: #e8e8e8; border-radius: 4px 4px 0 0;
+            font-size: 0.75rem; color: #333; cursor: default;
+        }
+        .ribbon-tab.active { background: white; border: 1px solid #ddd; border-bottom: none; }
+        .access-content { padding: 1rem; background: white; min-height: 150px; }
+
+        /* Table Design View */
+        .design-view { font-size: 0.8rem; }
+        .design-header {
+            display: grid; grid-template-columns: 150px 120px 1fr;
+            background: #4472c4; color: white; font-weight: 600;
+        }
+        .design-header > div { padding: 0.4rem 0.6rem; border-right: 1px solid #5a8ad8; }
+        .design-row {
+            display: grid; grid-template-columns: 150px 120px 1fr;
+            border-bottom: 1px solid #ddd;
+        }
+        .design-row > div { padding: 0.4rem 0.6rem; border-right: 1px solid #eee; }
+        .design-row.selected { background: #cce5ff; }
+        .design-row .field-name { font-weight: 500; }
+        .pk-icon { color: #e67e22; font-weight: bold; }
+
+        /* Datasheet View */
+        .datasheet-view { font-size: 0.8rem; }
+        .datasheet-view table { width: 100%; border-collapse: collapse; }
+        .datasheet-view th {
+            background: #4472c4; color: white; padding: 0.5rem;
+            text-align: left; font-weight: 600; border: 1px solid #3d64a8;
+        }
+        .datasheet-view td {
+            padding: 0.4rem 0.5rem; border: 1px solid #ddd;
+            background: white;
+        }
+        .datasheet-view tr:nth-child(even) td { background: #f8f9fa; }
+        .datasheet-view tr.new-row td { background: #fff3cd; }
+        .record-selector { width: 20px; background: #e9ecef !important; text-align: center; }
+        .current-record { background: #007bff !important; color: white; }
+
+        /* Query Builder */
+        .query-builder { font-size: 0.8rem; }
+        .query-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            border: 1px solid #ddd;
+        }
+        .query-cell {
+            padding: 0.4rem; border: 1px solid #eee;
+            background: white; min-height: 28px;
+        }
+        .query-cell.header { background: #e9ecef; font-weight: 600; }
+        .query-cell.field { background: #d4edda; }
+
+        /* Form View */
+        .form-view { padding: 1rem; }
+        .form-field {
+            display: flex; align-items: center; margin-bottom: 0.75rem; gap: 0.5rem;
+        }
+        .form-label {
+            width: 100px; font-weight: 500; color: #333;
+            text-align: right; font-size: 0.85rem;
+        }
+        .form-input {
+            flex: 1; padding: 0.4rem 0.6rem; border: 1px solid #ced4da;
+            border-radius: 4px; background: white; font-size: 0.85rem;
+        }
+        .form-input.readonly { background: #e9ecef; }
+
+        /* Report Preview */
+        .report-preview {
+            background: white; padding: 1rem; border: 1px solid #ddd;
+            font-size: 0.8rem;
+        }
+        .report-header {
+            text-align: center; border-bottom: 2px solid #333;
+            padding-bottom: 0.5rem; margin-bottom: 0.5rem;
+        }
+        .report-title { font-size: 1.1rem; font-weight: 700; color: #333; }
+        .report-date { font-size: 0.75rem; color: #666; }
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+        .report-table th { background: #f0f0f0; padding: 0.4rem; border: 1px solid #ddd; text-align: left; }
+        .report-table td { padding: 0.4rem; border: 1px solid #ddd; }
+
+        /* Navigation pane */
+        .nav-pane {
+            width: 180px; background: #f5f5f5; border-right: 1px solid #ddd;
+            padding: 0.5rem; font-size: 0.8rem;
+        }
+        .nav-section { margin-bottom: 0.5rem; }
+        .nav-section-title {
+            background: #4472c4; color: white; padding: 0.3rem 0.5rem;
+            font-weight: 600; font-size: 0.75rem;
+        }
+        .nav-item {
+            padding: 0.3rem 0.5rem 0.3rem 1.5rem;
+            cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .nav-item:hover { background: #e3e3e3; }
+        .nav-item.selected { background: #cce5ff; }
+        .nav-icon { width: 16px; height: 16px; border-radius: 2px; }
+        .nav-icon.table { background: #28a745; }
+        .nav-icon.query { background: #dc3545; }
+        .nav-icon.form { background: #ffc107; }
+        .nav-icon.report { background: #17a2b8; }
+
+        .access-split { display: flex; }
+        .access-main { flex: 1; }
+
+        .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .option { padding: 1.2rem 1.5rem; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 1rem; text-align: left; }
+        .option:hover { border-color: var(--accent-green); transform: translateX(5px); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+
+        .feedback-box { display: none; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; }
+        .feedback-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.correct { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent-green); }
+        .feedback-box.wrong { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--accent-red); }
+        .feedback-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .feedback-text { font-size: 1.1rem; margin-bottom: 1rem; }
+        .explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: left; }
+        .explanation-wrong { font-size: 0.9rem; color: #fca5a5; margin-top: 0.5rem; font-style: italic; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-emerald), var(--accent-green)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-green); color: var(--accent-green); }
+
+        .level-complete { display: none; text-align: center; padding: 3rem; }
+        .level-complete.show { display: block; animation: celebrate 0.5s ease; }
+        @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .level-complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .level-complete h2 { font-size: 2rem; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-earned { font-size: 2rem; color: var(--accent-yellow); margin: 1.5rem 0; }
+        .score-display { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .stars { font-size: 3rem; margin: 1rem 0; }
+
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem; font-size: 0.9rem; }
+        .back-link:hover { color: var(--accent-cyan); }
+
+        footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); }
+
+        .tip-box {
+            background: rgba(6, 182, 212, 0.1); border: 1px solid var(--accent-cyan);
+            border-radius: 8px; padding: 0.75rem; margin: 1rem 0;
+            font-size: 0.9rem; color: var(--accent-cyan);
+        }
+        .tip-box strong { color: var(--accent-yellow); }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1rem; }
+            .access-mockup { font-size: 0.75rem; }
+            .nav-pane { display: none; }
+        }
+    </style>
+    <link rel="stylesheet" href="../../../../../assets/css/mobile.css">
+    <link rel="stylesheet" href="../../../../../assets/css/mobile-first.css">
+    </head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Modulul 3</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Microsoft Access Practic</div>
+            <div class="xp-display"><span>XP:</span><span id="totalXP">0</span></div>
+        </div>
+
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <div class="quiz-area" id="quizArea"></div>
+    </div>
+
+    <footer>
+        <strong>© 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Crearea Tabelelor",
+                description: "Invata sa creezi tabele in Access",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "In ce vizualizare (View) definesti structura unui tabel in Access?",
+                        showMockup: "design_view",
+                        options: [
+                            "Datasheet View (vizualizare date)",
+                            "Design View (vizualizare proiectare)",
+                            "Form View (vizualizare formular)",
+                            "Report View (vizualizare raport)"
+                        ],
+                        correct: 1,
+                        explanation: "Design View este vizualizarea pentru PROIECTARE - aici definesti campurile (coloane), tipurile de date si proprietatile. Datasheet View e pentru a vedea/edita DATELE.",
+                        wrongExplanation: "Datasheet View arata datele, nu structura. Form si Report View sunt pentru alte obiecte Access."
+                    },
+                    {
+                        text: "Ce tip de date alegi pentru campul 'DataNasterii'?",
+                        showMockup: "design_view",
+                        options: [
+                            "Short Text - pentru ca data e text",
+                            "Number - pentru ca anii sunt numere",
+                            "Date/Time - pentru date calendaristice",
+                            "Currency - pentru valori monetare"
+                        ],
+                        correct: 2,
+                        explanation: "Date/Time este tipul special pentru date calendaristice. Permite calcule cu date (diferenta de ani, zile) si formatare automata (DD/MM/YYYY).",
+                        wrongExplanation: "Daca folosesti Text, nu poti calcula varsta. Number nu gestioneaza luni/zile corect. Currency e pentru bani."
+                    },
+                    {
+                        text: "Cum setezi un camp ca CHEIE PRIMARA in Design View?",
+                        showMockup: "design_view_pk",
+                        options: [
+                            "Scrii 'PK' in numele campului",
+                            "Click dreapta pe camp -> Primary Key (sau iconita cu cheie)",
+                            "Setezi tipul de date ca 'Primary'",
+                            "Cheia primara se seteaza automat si nu poate fi modificata"
+                        ],
+                        correct: 1,
+                        explanation: "In Design View, selectezi randul campului, apoi click dreapta -> Primary Key, sau click pe iconita cu cheie din toolbar. Apare simbolul cheie langa camp.",
+                        wrongExplanation: "PK in nume nu face nimic special. Nu exista tip 'Primary'. Cheia primara se seteaza MANUAL de utilizator."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Introducerea Datelor",
+                description: "Adauga si editeaza date in tabele",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "In ce vizualizare introduci DATE in tabel?",
+                        showMockup: "datasheet_view",
+                        options: [
+                            "Design View",
+                            "Datasheet View (vizualizare foaie de date)",
+                            "SQL View",
+                            "Print Preview"
+                        ],
+                        correct: 1,
+                        explanation: "Datasheet View arata tabelul ca o foaie de calcul - randuri si coloane. Aici introduci, editezi si stergi DATE. Design View e pentru STRUCTURA.",
+                        wrongExplanation: "Design View = structura (campuri, tipuri). SQL View = comenzi text. Print Preview = previzualizare printare."
+                    },
+                    {
+                        text: "Ce inseamna randul gol cu '*' (asterisc) la final in Datasheet View?",
+                        showMockup: "datasheet_new",
+                        options: [
+                            "O eroare in tabel",
+                            "Randul pentru ADAUGAREA unei noi inregistrari",
+                            "Un rand sters care poate fi recuperat",
+                            "Totalul coloanei"
+                        ],
+                        correct: 1,
+                        explanation: "Asteriscul (*) marcheaza randul PENTRU DATE NOI. Cand incepi sa scrii acolo, Access creeaza automat o noua inregistrare si adauga alt rand gol dedesubt.",
+                        wrongExplanation: "Nu e eroare sau total. Randurile sterse nu apar asa. E pur si simplu locul pentru DATE NOI!"
+                    },
+                    {
+                        text: "Ce se intampla daca incerci sa introduci text in campul 'Varsta' (tip Number)?",
+                        options: [
+                            "Textul se converteste automat in numar",
+                            "Access REFUZA si afiseaza eroare de validare",
+                            "Campul ramane gol",
+                            "Intreaga inregistrare este stearsa"
+                        ],
+                        correct: 1,
+                        explanation: "Access valideaza tipul de date! Daca campul e Number si introduci 'paisprezece', primesti eroare. Trebuie sa introduci '14'. Asta previne erori in date.",
+                        wrongExplanation: "Access NU converteste automat text in numar. Nu sterge inregistrarea. Afiseaza EROARE clara!"
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Interogari Simple",
+                description: "Creeaza interogari pentru a filtra date",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce este o INTEROGARE (Query) in Access?",
+                        showMockup: "query_design",
+                        options: [
+                            "O copie a tabelului",
+                            "O intrebare adresata bazei de date pentru a extrage anumite date",
+                            "Un formular pentru introducere date",
+                            "Un raport pentru printare"
+                        ],
+                        correct: 1,
+                        explanation: "O interogare (Query) este o 'intrebare' - specifici ce date vrei, din ce tabele, cu ce conditii. Rezultatul e un set de date filtrate/sortate.",
+                        wrongExplanation: "Interogarea nu copiaza date, nu e formular si nu e raport. E o CERERE de date!"
+                    },
+                    {
+                        text: "In Query Design, unde specifici conditia de filtrare (ex: Varsta > 13)?",
+                        showMockup: "query_criteria",
+                        options: [
+                            "In randul 'Table'",
+                            "In randul 'Field'",
+                            "In randul 'Criteria' (Criterii)",
+                            "In randul 'Sort'"
+                        ],
+                        correct: 2,
+                        explanation: "Randul 'Criteria' (Criterii) e pentru CONDITII de filtrare. Scrii: >13, ='8A', Like 'Pop*' etc. 'Field' = ce coloane, 'Sort' = ordonare.",
+                        wrongExplanation: "Table = din ce tabel. Field = ce coloane afisezi. Sort = cum sortezi. CRITERIA = conditii de filtrare!"
+                    },
+                    {
+                        text: "Cum creezi o interogare care afiseaza DOAR elevii din clasa '8A'?",
+                        showMockup: "query_8a",
+                        options: [
+                            "Stergi elevii din alte clase din tabel",
+                            "In Query Design: adaugi tabelul Elevi, pui in Criteria pentru Clasa: '8A'",
+                            "Sortezi dupa clasa si ignori restul",
+                            "Creezi un tabel nou doar cu 8A"
+                        ],
+                        correct: 1,
+                        explanation: "In Query Design: 1) Adaugi tabelul Elevi, 2) Selectezi campurile dorite, 3) La coloana Clasa, in randul Criteria scrii: '8A' sau =\"8A\"",
+                        wrongExplanation: "NU stergi date din tabel original! Interogarea FILTREAZA fara a modifica tabelul. Nu creezi tabele noi pentru filtrare."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Formulare",
+                description: "Creeaza interfete pentru introducere date",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Care este avantajul principal al folosirii FORMULARELOR pentru introducere date?",
+                        showMockup: "form_view",
+                        options: [
+                            "Sunt mai rapide decat Datasheet View",
+                            "Ofera o interfata prietenoasa, cu un singur rand vizibil, reducand erorile",
+                            "Permit stergerea automata a datelor",
+                            "Sunt obligatorii pentru a salva date"
+                        ],
+                        correct: 1,
+                        explanation: "Formularele afiseaza O SINGURA inregistrare, cu etichete clare pentru fiecare camp. Utilizatorul vede exact ce introduce, reducand confuzia si erorile.",
+                        wrongExplanation: "Nu sunt mai rapide neaparat. Nu sterg date automat. Nu sunt obligatorii - poti introduce date si direct in tabel."
+                    },
+                    {
+                        text: "Ce wizard (asistent) folosesti pentru a crea rapid un formular?",
+                        options: [
+                            "Table Wizard",
+                            "Form Wizard",
+                            "Query Wizard",
+                            "Report Wizard"
+                        ],
+                        correct: 1,
+                        explanation: "Form Wizard te ghideaza pas cu pas: alegi tabelul sursa, selectezi campurile, alegi layout-ul si stilul. In cateva click-uri ai un formular functional!",
+                        wrongExplanation: "Table Wizard creeaza tabele, Query Wizard - interogari, Report Wizard - rapoarte. Pentru formulare: Form Wizard!"
+                    },
+                    {
+                        text: "Ce se intampla cu tabelul original cand introduci date printr-un formular?",
+                        options: [
+                            "Tabelul ramane neschimbat, datele sunt doar in formular",
+                            "Datele se salveaza DIRECT in tabelul sursa",
+                            "Se creeaza un tabel nou pentru date",
+                            "Datele se pierd la inchiderea formularului"
+                        ],
+                        correct: 1,
+                        explanation: "Formularul este doar o INTERFATA! Datele introduse se salveaza direct in tabelul legat. Formularul si tabelul sunt sincronizate - modifici in unul, se actualizeaza in celalalt.",
+                        wrongExplanation: "Datele NU raman doar in formular, NU se creeaza tabele noi si NU se pierd. Formularul e o FEREASTRA catre tabel!"
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Rapoarte",
+                description: "Genereaza documente pentru printare",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Care este scopul principal al RAPOARTELOR in Access?",
+                        showMockup: "report_view",
+                        options: [
+                            "Introducerea de date noi",
+                            "Prezentarea datelor intr-un format profesional pentru PRINTARE/EXPORT",
+                            "Stergerea datelor vechi",
+                            "Crearea de tabele noi"
+                        ],
+                        correct: 1,
+                        explanation: "Rapoartele sunt pentru OUTPUT - prezinta datele formatat frumos, cu titluri, grupari, totaluri. Sunt gandite pentru printare sau export PDF.",
+                        wrongExplanation: "Rapoartele sunt READ-ONLY (doar citire). Nu introduc, nu sterg, nu creeaza tabele. Sunt pentru PREZENTARE!"
+                    },
+                    {
+                        text: "Ce element poti adauga intr-un raport pentru a calcula TOTALUL sau MEDIA unei coloane?",
+                        options: [
+                            "Un camp text simplu",
+                            "Un control calculat (Calculated Control) cu functii SUM, AVG etc.",
+                            "O imagine",
+                            "Un buton"
+                        ],
+                        correct: 1,
+                        explanation: "Controalele calculate folosesc functii: =Sum([Nota]) pentru total, =Avg([Varsta]) pentru medie. Se actualizeaza automat cand datele se schimba.",
+                        wrongExplanation: "Campurile text nu calculeaza. Imaginile si butoanele nu fac calcule. Controalele CALCULATE sunt speciale pentru formule!"
+                    },
+                    {
+                        text: "Care este ordinea corecta a obiectelor Access de la STRUCTURA la PREZENTARE?",
+                        options: [
+                            "Formulare -> Tabele -> Interogari -> Rapoarte",
+                            "Tabele -> Interogari -> Formulare -> Rapoarte",
+                            "Rapoarte -> Formulare -> Tabele -> Interogari",
+                            "Interogari -> Tabele -> Rapoarte -> Formulare"
+                        ],
+                        correct: 1,
+                        explanation: "Fluxul logic: 1) TABELE = stocheaza datele, 2) INTEROGARI = filtreaza/combina date, 3) FORMULARE = introducere date, 4) RAPOARTE = prezentare finala.",
+                        wrongExplanation: "Tabelele sunt FUNDAMENTUL. Fara tabele, nu ai ce interoga. Formularele introduc in tabele. Rapoartele prezinta rezultatul final."
+                    },
+                    {
+                        text: "Ai creat tabelul Elevi, ai introdus date, ai facut o interogare pentru clasa 8A. Ce faci pentru a printa o lista cu acesti elevi?",
+                        options: [
+                            "Printezi direct tabelul",
+                            "Creezi un RAPORT bazat pe interogarea pentru clasa 8A",
+                            "Exporti interogarea in Word",
+                            "Faci screenshot si printezi imaginea"
+                        ],
+                        correct: 1,
+                        explanation: "Raportul bazat pe interogare e cea mai profesionala solutie: preia datele filtrate, le formateaza frumos cu titlu, data, eventual totaluri. Gata de print!",
+                        wrongExplanation: "Printarea directa a tabelului include TOTI elevii. Export Word pierde formatarea. Screenshot nu e profesionist."
+                    }
+                ]
+            }
+        };
+
+        const mockupTemplates = {
+            design_view: `
+                <div class="access-mockup">
+                    <div class="access-titlebar">
+                        <div class="access-icon"></div>
+                        <span class="access-title">Elevi : Table (Design View)</span>
+                    </div>
+                    <div class="access-ribbon">
+                        <div class="ribbon-tab">File</div>
+                        <div class="ribbon-tab active">Table Tools - Design</div>
+                        <div class="ribbon-tab">Database Tools</div>
+                    </div>
+                    <div class="access-content">
+                        <div class="design-view">
+                            <div class="design-header">
+                                <div>Field Name</div>
+                                <div>Data Type</div>
+                                <div>Description</div>
+                            </div>
+                            <div class="design-row selected">
+                                <div class="field-name"><span class="pk-icon">&#128273;</span> ID</div>
+                                <div>AutoNumber</div>
+                                <div>Identificator unic</div>
+                            </div>
+                            <div class="design-row">
+                                <div class="field-name">Nume</div>
+                                <div>Short Text</div>
+                                <div>Numele elevului</div>
+                            </div>
+                            <div class="design-row">
+                                <div class="field-name">Varsta</div>
+                                <div>Number</div>
+                                <div>Varsta in ani</div>
+                            </div>
+                            <div class="design-row">
+                                <div class="field-name">DataNasterii</div>
+                                <div>Date/Time</div>
+                                <div>Data nasterii</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            design_view_pk: `
+                <div class="access-mockup">
+                    <div class="access-titlebar">
+                        <div class="access-icon"></div>
+                        <span class="access-title">Elevi : Table (Design View)</span>
+                    </div>
+                    <div class="access-content">
+                        <div class="design-view">
+                            <div class="design-header">
+                                <div>Field Name</div>
+                                <div>Data Type</div>
+                                <div>Description</div>
+                            </div>
+                            <div class="design-row selected" style="background: #fff3cd;">
+                                <div class="field-name"><span class="pk-icon">&#128273;</span> ID</div>
+                                <div>AutoNumber</div>
+                                <div>Click dreapta -> Primary Key</div>
+                            </div>
+                            <div class="design-row">
+                                <div class="field-name">Nume</div>
+                                <div>Short Text</div>
+                                <div></div>
+                            </div>
+                        </div>
+                        <div class="tip-box" style="margin: 1rem;">
+                            <strong>Tip:</strong> Selecteaza randul ID -> Click dreapta -> Primary Key (sau iconita &#128273; din toolbar)
+                        </div>
+                    </div>
+                </div>
+            `,
+            datasheet_view: `
+                <div class="access-mockup">
+                    <div class="access-titlebar">
+                        <div class="access-icon"></div>
+                        <span class="access-title">Elevi : Table (Datasheet View)</span>
+                    </div>
+                    <div class="access-ribbon">
+                        <div class="ribbon-tab">File</div>
+                        <div class="ribbon-tab active">Home</div>
+                        <div class="ribbon-tab">Create</div>
+                    </div>
+                    <div class="access-content">
+                        <div class="datasheet-view">
+                            <table>
+                                <tr>
+                                    <th class="record-selector"></th>
+                                    <th>ID</th>
+                                    <th>Nume</th>
+                                    <th>Varsta</th>
+                                    <th>Clasa</th>
+                                </tr>
+                                <tr>
+                                    <td class="record-selector current-record">&#9658;</td>
+                                    <td>1</td>
+                                    <td>Popescu Maria</td>
+                                    <td>14</td>
+                                    <td>8A</td>
+                                </tr>
+                                <tr>
+                                    <td class="record-selector"></td>
+                                    <td>2</td>
+                                    <td>Ionescu Andrei</td>
+                                    <td>13</td>
+                                    <td>8A</td>
+                                </tr>
+                                <tr>
+                                    <td class="record-selector"></td>
+                                    <td>3</td>
+                                    <td>Popa Elena</td>
+                                    <td>14</td>
+                                    <td>8B</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `,
+            datasheet_new: `
+                <div class="access-mockup">
+                    <div class="access-titlebar">
+                        <div class="access-icon"></div>
+                        <span class="access-title">Elevi : Table (Datasheet View)</span>
+                    </div>
+                    <div class="access-content">
+                        <div class="datasheet-view">
+                            <table>
+                                <tr>
+                                    <th class="record-selector"></th>
+                                    <th>ID</th>
+                                    <th>Nume</th>
+                                    <th>Varsta</th>
+                                    <th>Clasa</th>
+                                </tr>
+                                <tr>
+                                    <td class="record-selector"></td>
+                                    <td>1</td>
+                                    <td>Popescu Maria</td>
+                                    <td>14</td>
+                                    <td>8A</td>
+                                </tr>
+                                <tr>
+                                    <td class="record-selector"></td>
+                                    <td>2</td>
+                                    <td>Ionescu Andrei</td>
+                                    <td>13</td>
+                                    <td>8A</td>
+                                </tr>
+                                <tr class="new-row">
+                                    <td class="record-selector" style="background: #ffc107 !important;">*</td>
+                                    <td style="color: #999;">(AutoNumber)</td>
+                                    <td style="color: #999;">Scrie aici...</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="tip-box" style="margin: 0.5rem;">
+                            <strong>*</strong> = Rand pentru inregistrare NOUA
+                        </div>
+                    </div>
+                </div>
+            `,
+            query_design: `
+                <div class="access-mockup">
+                    <div class="access-titlebar">
+                        <div class="access-icon"></div>
+                        <span class="access-title">Query1 : Select Query (Design View)</span>
+                    </div>
+                    <div class="access-content">
+                        <div style="background: #e9ecef; padding: 0.5rem; margin-bottom: 0.5rem; border: 1px solid #ddd; text-align: center; font-size: 0.8rem;">
+                            <strong>Elevi</strong><br>
+                            <span style="font-size: 0.7rem; color: #666;">ID | Nume | Varsta | Clasa</span>
+                        </div>
+                        <div class="query-builder">
+                            <div class="query-grid">
+                                <div class="query-cell header">Field:</div>
+                                <div class="query-cell header">Field:</div>
+                                <div class="query-cell header">Field:</div>
+                                <div class="query-cell field">Nume</div>
+                                <div class="query-cell field">Varsta</div>
+                                <div class="query-cell field">Clasa</div>
+                                <div class="query-cell header">Table:</div>
+                                <div class="query-cell header">Table:</div>
+                                <div class="query-cell header">Table:</div>
+                                <div class="query-cell">Elevi</div>
+                                <div class="query-cell">Elevi</div>
+                                <div class="query-cell">Elevi</div>
+                                <div class="query-cell header">Criteria:</div>
+                                <div class="query-cell header">Criteria:</div>
+                                <div class="query-cell header">Criteria:</div>
+                                <div class="query-cell"></div>
+                                <div class="query-cell"></div>
+                                <div class="query-cell"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            query_criteria: `
+                <div class="access-mockup">
+                    <div class="access-titlebar">
+                        <div class="access-icon"></div>
+                        <span class="access-title">Query : Select Query (Design View)</span>
+                    </div>
+                    <div class="access-content">
+                        <div class="query-builder">
+                            <div class="query-grid">
+                                <div class="query-cell header">Field:</div>
+                                <div class="query-cell header">Field:</div>
+                                <div class="query-cell header">Field:</div>
+                                <div class="query-cell field">Nume</div>
+                                <div class="query-cell field">Varsta</div>
+                                <div class="query-cell field">Clasa</div>
+                                <div class="query-cell header">Table:</div>
+                                <div class="query-cell header">Table:</div>
+                                <div class="query-cell header">Table:</div>
+                                <div class="query-cell">Elevi</div>
+                                <div class="query-cell">Elevi</div>
+                                <div class="query-cell">Elevi</div>
+                                <div class="query-cell header">Sort:</div>
+                                <div class="query-cell header">Sort:</div>
+                                <div class="query-cell header">Sort:</div>
+                                <div class="query-cell">Ascending</div>
+                                <div class="query-cell"></div>
+                                <div class="query-cell"></div>
+                                <div class="query-cell header" style="background: #fff3cd;">Criteria:</div>
+                                <div class="query-cell header" style="background: #fff3cd;">Criteria:</div>
+                                <div class="query-cell header" style="background: #fff3cd;">Criteria:</div>
+                                <div class="query-cell"></div>
+                                <div class="query-cell" style="background: #d4edda; font-weight: 600;">>13</div>
+                                <div class="query-cell"></div>
+                            </div>
+                        </div>
+                        <div class="tip-box" style="margin: 0.5rem;">
+                            <strong>Criteria:</strong> Aici scrii conditia de filtrare (>13, ='8A', etc.)
+                        </div>
+                    </div>
+                </div>
+            `,
+            query_8a: `
+                <div class="access-mockup">
+                    <div class="access-titlebar">
+                        <div class="access-icon"></div>
+                        <span class="access-title">Elevi8A : Select Query (Design View)</span>
+                    </div>
+                    <div class="access-content">
+                        <div class="query-builder">
+                            <div class="query-grid">
+                                <div class="query-cell header">Field:</div>
+                                <div class="query-cell header">Field:</div>
+                                <div class="query-cell header">Field:</div>
+                                <div class="query-cell field">Nume</div>
+                                <div class="query-cell field">Varsta</div>
+                                <div class="query-cell field">Clasa</div>
+                                <div class="query-cell header">Table:</div>
+                                <div class="query-cell header">Table:</div>
+                                <div class="query-cell header">Table:</div>
+                                <div class="query-cell">Elevi</div>
+                                <div class="query-cell">Elevi</div>
+                                <div class="query-cell">Elevi</div>
+                                <div class="query-cell header">Criteria:</div>
+                                <div class="query-cell header">Criteria:</div>
+                                <div class="query-cell header">Criteria:</div>
+                                <div class="query-cell"></div>
+                                <div class="query-cell"></div>
+                                <div class="query-cell" style="background: #d4edda; font-weight: 600;">"8A"</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            form_view: `
+                <div class="access-mockup">
+                    <div class="access-titlebar">
+                        <div class="access-icon"></div>
+                        <span class="access-title">Elevi : Form</span>
+                    </div>
+                    <div class="access-content">
+                        <div class="form-view">
+                            <div style="text-align: center; font-size: 1.1rem; font-weight: 600; color: #4472c4; margin-bottom: 1rem; border-bottom: 2px solid #4472c4; padding-bottom: 0.5rem;">
+                                Formular Elevi
+                            </div>
+                            <div class="form-field">
+                                <span class="form-label">ID:</span>
+                                <input type="text" class="form-input readonly" value="1" readonly>
+                            </div>
+                            <div class="form-field">
+                                <span class="form-label">Nume:</span>
+                                <input type="text" class="form-input" value="Popescu Maria">
+                            </div>
+                            <div class="form-field">
+                                <span class="form-label">Varsta:</span>
+                                <input type="text" class="form-input" value="14">
+                            </div>
+                            <div class="form-field">
+                                <span class="form-label">Clasa:</span>
+                                <input type="text" class="form-input" value="8A">
+                            </div>
+                            <div style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: #666;">
+                                Record: 1 of 3 | ◀ ▶
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            report_view: `
+                <div class="access-mockup">
+                    <div class="access-titlebar">
+                        <div class="access-icon"></div>
+                        <span class="access-title">Elevi : Report (Print Preview)</span>
+                    </div>
+                    <div class="access-content" style="background: #e9ecef; padding: 1rem;">
+                        <div class="report-preview">
+                            <div class="report-header">
+                                <div class="report-title">Lista Elevilor - Clasa 8A</div>
+                                <div class="report-date">Data: 19.01.2026</div>
+                            </div>
+                            <table class="report-table">
+                                <tr>
+                                    <th>Nr.</th>
+                                    <th>Nume</th>
+                                    <th>Varsta</th>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>Ionescu Andrei</td>
+                                    <td>13</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>Popescu Maria</td>
+                                    <td>14</td>
+                                </tr>
+                            </table>
+                            <div style="margin-top: 0.5rem; text-align: right; font-size: 0.75rem; border-top: 1px solid #ddd; padding-top: 0.3rem;">
+                                <strong>Total elevi:</strong> 2 | <strong>Media varsta:</strong> 13.5
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+        };
+
+        let currentLevel = 1, currentQuestion = 0, score = 0, totalXP = 0, levelScores = {}, unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('db_quiz5_access_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay(); updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('db_quiz5_access_progress', JSON.stringify({ totalXP, unlockedLevels, levelScores }));
+        }
+
+        function updateXPDisplay() { document.getElementById('totalXP').textContent = totalXP; }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+                if (levelScores[level] !== undefined) node.classList.add('completed');
+                else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) node.classList.add('active');
+                } else node.classList.add('locked');
+            });
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                conn.classList.toggle('completed', levelScores[index + 1] !== undefined);
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level; currentQuestion = 0; score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">Incepe Nivelul</button>
+                </div>
+            `;
+        }
+
+        function startLevel() { showQuestion(); }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = levelData.questions.map((_, i) =>
+                `<div class="progress-dot ${i === currentQuestion ? 'current' : ''}"></div>`
+            ).join('');
+
+            let mockupHTML = '';
+            if (q.showMockup && mockupTemplates[q.showMockup]) {
+                mockupHTML = mockupTemplates[q.showMockup];
+            }
+
+            let optionsHTML = q.options.map((opt, i) =>
+                `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`
+            ).join('');
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    <p class="question-text">${q.text}</p>
+                    ${mockupHTML}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+            options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+            if (index !== q.correct) options[q.correct].classList.add('correct');
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong');
+
+            if (index === q.correct) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `<div class="feedback-icon">🎉</div><div class="feedback-text">Corect!</div><div class="explanation">${q.explanation}</div>`;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `<div class="feedback-icon">😅</div><div class="feedback-text">Nu chiar...</div><div class="explanation">${q.explanation}</div>${q.wrongExplanation ? `<div class="explanation-wrong">${q.wrongExplanation}</div>` : ''}`;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ? 'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+            if (currentQuestion >= levelData.questions.length) showLevelComplete();
+            else showQuestion();
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = percentage >= 100 ? '⭐⭐⭐' : percentage >= 80 ? '⭐⭐' : percentage >= 66 ? '⭐' : '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) totalXP += earnedXP;
+                    levelScores[currentLevel] = percentage;
+                }
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) unlockedLevels.push(currentLevel + 1);
+                saveProgress(); updateXPDisplay(); updateLevelMap();
+            }
+
+            let finalMessage = '';
+            if (passed && currentLevel === 5) {
+                finalMessage = `
+                    <div style="background: rgba(16, 185, 129, 0.2); padding: 1rem; border-radius: 12px; margin-top: 1rem;">
+                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">🎓 Ai completat toate quiz-urile despre Baze de Date!</p>
+                        <p style="color: var(--text-secondary);">Acum stii: concepte BD, relatii, SQL si Access practic.</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    ${finalMessage}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">Reincearca</button>
+                        ${passed && currentLevel < 5 ? `<button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">Nivelul Urmator</button>` : ''}
+                        ${passed && currentLevel === 5 ? `<button class="btn btn-success" onclick="window.location.href='../index.html'">Inapoi la Modul</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>
