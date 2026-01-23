@@ -68,10 +68,10 @@ const QuizLimiter = {
 
         this.originalCheckAnswer = window.checkAnswer;
 
-        window.checkAnswer = (element, isCorrect) => {
+        window.checkAnswer = (questionNum, element, isCorrect) => {
             // Get question context
             const questionContainer = element.closest('.quiz-question');
-            const questionId = this.getQuestionId(questionContainer);
+            const questionId = this.getQuestionId(questionContainer) || `q${questionNum}`;
 
             // Check if locked
             const attemptData = PowStorage.getQuizAttempts(this.lessonId, questionId);
@@ -84,7 +84,7 @@ const QuizLimiter = {
             const newState = PowStorage.recordAttempt(this.lessonId, questionId, isCorrect);
 
             // Call original function
-            this.originalCheckAnswer(element, isCorrect);
+            this.originalCheckAnswer(questionNum, element, isCorrect);
 
             // Check if just got locked
             if (newState.locked && !isCorrect) {
