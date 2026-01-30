@@ -52,22 +52,44 @@ const QuizBridge = {
 
     /**
      * Detect total questions from DOM
+     * Priority: explicit attribute > specific selectors > generic selectors > default
      */
     detectTotalQuestions: function() {
-        // Try different patterns
-        const patterns = [
-            '.quiz-question',
-            '[id^="feedback"]',
-            '.question-card',
-            '[data-correct]'
-        ];
-
-        for (const pattern of patterns) {
-            const count = document.querySelectorAll(pattern).length;
-            if (count > 0) return count;
+        // 1. Check for explicit data attribute (most reliable)
+        const explicitContainer = document.querySelector('[data-total-questions]');
+        if (explicitContainer) {
+            const count = parseInt(explicitContainer.dataset.totalQuestions, 10);
+            if (count > 0 && count < 50) {
+                console.log('QuizBridge: Using explicit data-total-questions:', count);
+                return count;
+            }
         }
 
-        return 6; // Default
+        // 2. Try specific quiz patterns (more reliable)
+        const specificPatterns = [
+            '.quiz-question',
+            '.question-card',
+            '[id^="feedback"]'
+        ];
+
+        for (const pattern of specificPatterns) {
+            const count = document.querySelectorAll(pattern).length;
+            if (count > 0 && count < 50) {
+                console.log(`QuizBridge: Detected ${count} questions using "${pattern}"`);
+                return count;
+            }
+        }
+
+        // 3. Generic pattern (less reliable, with warning)
+        const genericCount = document.querySelectorAll('[data-correct]').length;
+        if (genericCount > 0 && genericCount < 50) {
+            console.warn(`QuizBridge: Using generic [data-correct] selector, found ${genericCount}. Consider adding data-total-questions attribute for accuracy.`);
+            return genericCount;
+        }
+
+        // 4. Default fallback
+        console.warn('QuizBridge: Could not detect questions, using default (6). Add data-total-questions attribute to quiz container for accuracy.');
+        return 6;
     },
 
     /**

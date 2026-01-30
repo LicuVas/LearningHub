@@ -150,7 +150,14 @@ const EvidenceSystem = {
     saveEvidenceData(data) {
         const profileId = this.getProfileId();
         const key = `${this.STORAGE_KEY}_${profileId}`;
-        localStorage.setItem(key, JSON.stringify(data));
+        try {
+            localStorage.setItem(key, JSON.stringify(data));
+        } catch (e) {
+            console.error('EvidenceSystem: Error saving data', e);
+            if (e.name === 'QuotaExceededError') {
+                alert('Spatiul de stocare este plin! Dovezile nu au putut fi salvate.');
+            }
+        }
     },
 
     /**

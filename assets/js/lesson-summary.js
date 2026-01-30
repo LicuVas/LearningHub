@@ -45,6 +45,27 @@ const LessonSummary = {
     // Session fingerprint for authenticity
     sessionId: null,
 
+    // Cached profile ID for consistent storage keys
+    cachedProfileId: null,
+
+    /**
+     * Get current profile ID for storage keys
+     */
+    getProfileId: function() {
+        // Use cached value if available (set at init)
+        if (this.cachedProfileId) {
+            return this.cachedProfileId;
+        }
+        // Fallback to live lookup
+        if (typeof UserSystem !== 'undefined') {
+            const profileId = UserSystem.getActiveProfile();
+            if (profileId && profileId !== '_guest') {
+                return profileId;
+            }
+        }
+        return null;
+    },
+
     /**
      * Initialize the lesson summary system
      * @param {string} lessonId - Unique lesson identifier
@@ -53,6 +74,14 @@ const LessonSummary = {
     init: function(lessonId, options = {}) {
         this.lessonId = lessonId;
         this.weights = { ...this.weights, ...options.weights };
+
+        // Cache profile ID at init time for consistent storage keys
+        if (typeof UserSystem !== 'undefined') {
+            const profileId = UserSystem.getActiveProfile();
+            if (profileId && profileId !== '_guest') {
+                this.cachedProfileId = profileId;
+            }
+        }
 
         // Generate session fingerprint for authenticity
         this.sessionId = this.generateSessionId();
@@ -73,13 +102,19 @@ const LessonSummary = {
     },
 
     /**
-     * Generate a unique session fingerprint
+     * Generate a unique session fingerprint using crypto API
      */
     generateSessionId: function() {
-        const timestamp = Date.now();
+        // Use crypto.getRandomValues for cryptographically secure random bytes
+        if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+            const array = new Uint8Array(16);
+            crypto.getRandomValues(array);
+            return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+        // Fallback for older browsers (less secure but still unique)
+        const timestamp = Date.now().toString(36);
         const random = Math.random().toString(36).substring(2, 15);
-        const userAgent = navigator.userAgent.substring(0, 50);
-        return btoa(`${timestamp}-${random}-${userAgent}`).substring(0, 32);
+        return (timestamp + random).substring(0, 32);
     },
 
     /**
@@ -124,9 +159,17 @@ const LessonSummary = {
      * Load progress from both systems
      */
     loadProgress: function() {
+        const profileId = this.getProfileId();
+        const profileSuffix = profileId ? `_${profileId}` : '';
+
         // Load atomic progress (try multiple sources)
-        const atomicKey = `atomic-progress-${this.lessonId}`;
-        const atomicSaved = localStorage.getItem(atomicKey);
+        // Try profile-aware key first, then fallback to legacy key
+        const atomicKeyProfile = `atomic-progress-${this.lessonId}${profileSuffix}`;
+        const atomicKeyLegacy = `atomic-progress-${this.lessonId}`;
+        let atomicSaved = localStorage.getItem(atomicKeyProfile);
+        if (!atomicSaved && profileId) {
+            atomicSaved = localStorage.getItem(atomicKeyLegacy);
+        }
         if (atomicSaved) {
             try {
                 const data = JSON.parse(atomicSaved);
@@ -138,8 +181,12 @@ const LessonSummary = {
 
         // Also check QuizBridge data (for lessons using legacy quiz system)
         if (!this.atomicScore) {
-            const quizBridgeKey = `quiz-bridge-${this.lessonId}`;
-            const quizBridgeSaved = localStorage.getItem(quizBridgeKey);
+            const quizBridgeKeyProfile = `quiz-bridge-${this.lessonId}${profileSuffix}`;
+            const quizBridgeKeyLegacy = `quiz-bridge-${this.lessonId}`;
+            let quizBridgeSaved = localStorage.getItem(quizBridgeKeyProfile);
+            if (!quizBridgeSaved && profileId) {
+                quizBridgeSaved = localStorage.getItem(quizBridgeKeyLegacy);
+            }
             if (quizBridgeSaved) {
                 try {
                     const data = JSON.parse(quizBridgeSaved);
@@ -157,8 +204,13 @@ const LessonSummary = {
         }
 
         // Load practice progress
-        const practiceKey = `practice-${this.lessonId}`;
-        const practiceSaved = localStorage.getItem(practiceKey);
+        // Try profile-aware key first, then fallback to legacy key
+        const practiceKeyProfile = `practice-${this.lessonId}${profileSuffix}`;
+        const practiceKeyLegacy = `practice-${this.lessonId}`;
+        let practiceSaved = localStorage.getItem(practiceKeyProfile);
+        if (!practiceSaved && profileId) {
+            practiceSaved = localStorage.getItem(practiceKeyLegacy);
+        }
         if (practiceSaved) {
             try {
                 const data = JSON.parse(practiceSaved);
@@ -231,6 +283,10 @@ const LessonSummary = {
     /**
      * Calculate the final grade using point-based system
      * Total: 10 points = 1 (din oficiu) + 6 (atomic) + 3 (practice)
+     *
+     * Without practice: max grade is 7 (1 + 6)
+     * With practice: max grade is 10 (1 + 6 + 3)
+     * Practice is REQUIRED to get a 10.
      */
     calculateFinalScore: function() {
         // Get raw counts
@@ -246,37 +302,31 @@ const LessonSummary = {
         // 1 point din oficiu (always given)
         const dinOficiuPoints = 1;
 
-        // Up to 6 points for atomic (1 point per correct answer, scaled if different total)
-        const atomicPoints = Math.round((atomicCorrect / atomicTotal) * 6);
+        // Atomic always worth max 6 points
+        const atomicMaxPoints = 6;
+        const atomicPoints = Math.round((atomicCorrect / atomicTotal) * atomicMaxPoints);
 
-        // Up to 3 points for practice (1 point per completed exercise, scaled if different total)
-        const practicePoints = Math.round((practiceCorrect / practiceTotal) * 3);
-
-        // Calculate grade
-        // Without practice: max 7 (1 din oficiu + 6 atomic)
-        // With practice: max 10 (1 din oficiu + 6 atomic + 3 practice)
-        let grade;
-        if (!practiceStarted) {
-            grade = dinOficiuPoints + atomicPoints; // Max 7
-        } else {
-            grade = dinOficiuPoints + atomicPoints + practicePoints; // Max 10
+        // Practice worth 3 points - REQUIRED for grade 10
+        let practicePoints = 0;
+        if (practiceStarted) {
+            practicePoints = Math.round((practiceCorrect / practiceTotal) * 3);
         }
 
-        // Ensure grade is between 1 and 10
-        grade = Math.max(1, Math.min(10, grade));
+        // Calculate final grade
+        const grade = Math.max(1, Math.min(10, dinOficiuPoints + atomicPoints + practicePoints));
 
         return {
             grade: grade,
             dinOficiuPoints: dinOficiuPoints,
             atomicPoints: atomicPoints,
+            atomicMaxPoints: atomicMaxPoints,
             atomicCorrect: atomicCorrect,
             atomicTotal: atomicTotal,
             practicePoints: practicePoints,
             practiceCorrect: practiceCorrect,
             practiceTotal: practiceTotal,
             practiceStarted: practiceStarted,
-            practiceComplete: practiceComplete,
-            maxWithoutPractice: 7
+            practiceComplete: practiceComplete
         };
     },
 
@@ -336,7 +386,7 @@ const LessonSummary = {
                     <div class="ls-section-header">
                         <span class="ls-section-icon">${atomicComplete ? '&#10004;' : '&#9711;'}</span>
                         <span class="ls-section-name">Invatare Atomica</span>
-                        <span class="ls-section-weight">(max 6 puncte)</span>
+                        <span class="ls-section-weight">(max ${scores.atomicMaxPoints} puncte)</span>
                     </div>
                     <div class="ls-section-bar">
                         <div class="ls-section-fill" style="width: ${atomicPercent}%; background: var(--accent-blue);"></div>
@@ -359,8 +409,8 @@ const LessonSummary = {
                         ${scores.practiceComplete
                             ? `${scores.practiceCorrect}/${scores.practiceTotal} completate = <strong>${scores.practicePoints} puncte</strong> - <em>necesita evaluare profesor</em>`
                             : (scores.practiceStarted
-                                ? `${scores.practiceCorrect}/${scores.practiceTotal} in curs = <strong>${scores.practicePoints} puncte</strong> - <em>completeaza pentru nota peste 7</em>`
-                                : 'Neinceputa - completeaza pentru nota peste 7 (max 10)')}
+                                ? `${scores.practiceCorrect}/${scores.practiceTotal} in curs = <strong>${scores.practicePoints} puncte</strong>`
+                                : 'Neinceputa - optional pentru exercitii suplimentare')}
                     </div>
                 </div>
             </div>
@@ -369,9 +419,9 @@ const LessonSummary = {
                 <div class="ls-status ls-status-complete">
                     &#10004; Lectia completa! ${scores.grade >= 5 ? 'Poti continua la urmatoarea lectie.' : 'Recomandat: reia lectia pentru o nota mai buna.'}
                 </div>
-                ${!scores.practiceStarted && scores.atomicPoints >= 6 ? `
-                    <div class="ls-status" style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning, #f59e0b); color: var(--warning, #f59e0b); margin-top: 0.75rem;">
-                        &#128161; <strong>Nota maxima fara practica: 7</strong> Completeaza Practica Avansata pentru nota 8, 9 sau 10.
+                ${!scores.practiceStarted && scores.practiceTotal > 0 ? `
+                    <div class="ls-status" style="background: rgba(59, 130, 246, 0.15); border: 1px solid var(--accent-blue, #3b82f6); color: var(--accent-blue, #3b82f6); margin-top: 0.75rem;">
+                        &#128161; <strong>Practica disponibila:</strong> Exercitii suplimentare pentru consolidarea cunostintelor.
                     </div>
                 ` : ''}
                 ${hasPracticeAnswers ? `
@@ -401,7 +451,10 @@ const LessonSummary = {
         const scores = this.calculateFinalScore();
         const gradeInfo = this.getGrade(scores.grade);
 
-        const key = `lesson-summary-${this.lessonId}`;
+        // Use profile-aware key for storage
+        const profileId = this.getProfileId();
+        const profileSuffix = profileId ? `_${profileId}` : '';
+        const key = `lesson-summary-${this.lessonId}${profileSuffix}`;
         const data = {
             lessonId: this.lessonId,
 
@@ -454,8 +507,20 @@ const LessonSummary = {
      * Get the saved summary for a lesson
      */
     getSavedSummary: function(lessonId) {
-        const key = `lesson-summary-${lessonId || this.lessonId}`;
-        const saved = localStorage.getItem(key);
+        const targetLessonId = lessonId || this.lessonId;
+        const profileId = this.getProfileId();
+        const profileSuffix = profileId ? `_${profileId}` : '';
+
+        // Try profile-aware key first
+        const keyProfile = `lesson-summary-${targetLessonId}${profileSuffix}`;
+        let saved = localStorage.getItem(keyProfile);
+
+        // Fallback to legacy key if profile key not found
+        if (!saved && profileId) {
+            const keyLegacy = `lesson-summary-${targetLessonId}`;
+            saved = localStorage.getItem(keyLegacy);
+        }
+
         return saved ? JSON.parse(saved) : null;
     },
 

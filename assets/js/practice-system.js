@@ -16,6 +16,19 @@
 const PracticeSystem = {
     STORAGE_KEY: 'learninghub_practice',
 
+    /**
+     * Get the storage key (profile-aware if UserSystem is loaded)
+     */
+    getStorageKey() {
+        if (typeof UserSystem !== 'undefined') {
+            const profileId = UserSystem.getActiveProfile();
+            if (profileId && profileId !== '_guest') {
+                return `learninghub_practice_${profileId}`;
+            }
+        }
+        return this.STORAGE_KEY;
+    },
+
     // XP rewards
     XP_PER_PROBLEM: 25,
     XP_ALL_COMPLETE_BONUS: 50,
@@ -428,7 +441,8 @@ const PracticeSystem = {
      */
     getData() {
         try {
-            const stored = localStorage.getItem(this.STORAGE_KEY);
+            const key = this.getStorageKey();
+            const stored = localStorage.getItem(key);
             if (stored) {
                 return JSON.parse(stored);
             }
@@ -448,9 +462,13 @@ const PracticeSystem = {
      */
     saveData(data) {
         try {
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+            const key = this.getStorageKey();
+            localStorage.setItem(key, JSON.stringify(data));
         } catch (e) {
             console.error('[Practice] Error saving data:', e);
+            if (e.name === 'QuotaExceededError') {
+                alert('Spatiul de stocare este plin! Progresul nu a putut fi salvat.');
+            }
         }
     },
 
@@ -469,7 +487,8 @@ const PracticeSystem = {
      * Reset all practice progress (for testing)
      */
     resetAll() {
-        localStorage.removeItem(this.STORAGE_KEY);
+        const key = this.getStorageKey();
+        localStorage.removeItem(key);
         location.reload();
     }
 };

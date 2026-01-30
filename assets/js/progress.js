@@ -60,6 +60,9 @@ const LearningProgress = {
             localStorage.setItem(key, JSON.stringify(data));
         } catch (e) {
             console.error('Error saving progress:', e);
+            if (e.name === 'QuotaExceededError') {
+                alert('Spatiul de stocare este plin! Progresul nu a putut fi salvat.');
+            }
         }
     },
 

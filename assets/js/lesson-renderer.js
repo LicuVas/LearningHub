@@ -85,8 +85,12 @@ class LessonRenderer {
             console.error('LessonRenderer: Error loading lesson', e);
             this.container.innerHTML = `
                 <div class="lr-error">
+                    <div class="lr-error-icon">⚠️</div>
                     <h3>Eroare la incarcarea lectiei</h3>
                     <p>${e.message}</p>
+                    <button class="lr-btn lr-btn-retry" onclick="location.reload()">
+                        🔄 Reincearca
+                    </button>
                 </div>
             `;
             return null;
@@ -1019,8 +1023,31 @@ class LessonRenderer {
             /* Error */
             .lr-error {
                 text-align: center;
-                padding: 2rem;
+                padding: 3rem 2rem;
+                background: rgba(239, 68, 68, 0.1);
+                border: 2px solid var(--accent-red, #ef4444);
+                border-radius: 16px;
+                margin: 2rem 0;
+            }
+
+            .lr-error-icon {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+            }
+
+            .lr-error h3 {
                 color: var(--accent-red, #ef4444);
+                margin-bottom: 0.5rem;
+            }
+
+            .lr-error p {
+                color: var(--text-secondary, #94a3b8);
+                margin-bottom: 1.5rem;
+            }
+
+            .lr-btn-retry {
+                background: var(--accent-red, #ef4444);
+                color: white;
             }
 
             /* Mobile */

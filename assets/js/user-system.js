@@ -55,6 +55,15 @@ const UserSystem = {
     ],
 
     /**
+     * Escape HTML to prevent XSS attacks
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
+    /**
      * Initialize the user system
      * @param {Object} options - Configuration options
      * @param {boolean} options.requireProfile - If true, forces profile selection
@@ -111,7 +120,14 @@ const UserSystem = {
      * Save profiles list
      */
     saveProfiles(profiles) {
-        localStorage.setItem(this.PROFILES_KEY, JSON.stringify(profiles));
+        try {
+            localStorage.setItem(this.PROFILES_KEY, JSON.stringify(profiles));
+        } catch (e) {
+            console.error('UserSystem: Error saving profiles', e);
+            if (e.name === 'QuotaExceededError') {
+                alert('Spatiul de stocare este plin! Sterge unele profile sau date pentru a continua.');
+            }
+        }
     },
 
     /**
@@ -147,8 +163,11 @@ const UserSystem = {
      * @returns {string} - The new profile ID
      */
     createProfile(name, avatar = null, grade = null) {
+        // Sanitize name - strip HTML tags and trim
+        const sanitizedName = name.replace(/<[^>]*>/g, '').trim();
+
         const profiles = this.getProfiles();
-        const profileId = name.toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 30);
+        const profileId = sanitizedName.toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 30);
 
         // Ensure unique ID
         let uniqueId = profileId;
@@ -159,7 +178,7 @@ const UserSystem = {
 
         const newProfile = {
             id: uniqueId,
-            name: name.substring(0, 20),
+            name: sanitizedName.substring(0, 20),
             avatar: avatar || this.AVATARS[Math.floor(Math.random() * this.AVATARS.length)],
             grade: grade || 'cls6', // Default to cls6 if not specified
             created: new Date().toISOString()
@@ -178,25 +197,32 @@ const UserSystem = {
      * Initialize empty data structures for a new profile
      */
     initProfileData(profileId) {
-        // RPG data
-        const rpgKey = `learninghub_rpg_${profileId}`;
-        if (!localStorage.getItem(rpgKey)) {
-            localStorage.setItem(rpgKey, JSON.stringify({
-                xp: 0,
-                achievements: [],
-                perfectQuizzes: 0,
-                tracksUsed: [],
-                currentTrack: 'core',
-                streak: { current: 0, lastDate: null, longest: 0 },
-                stats: { lessonsCompleted: 0, quizzesPassed: 0, modulesCompleted: 0, totalTime: 0 },
-                created: new Date().toISOString()
-            }));
-        }
+        try {
+            // RPG data
+            const rpgKey = `learninghub_rpg_${profileId}`;
+            if (!localStorage.getItem(rpgKey)) {
+                localStorage.setItem(rpgKey, JSON.stringify({
+                    xp: 0,
+                    achievements: [],
+                    perfectQuizzes: 0,
+                    tracksUsed: [],
+                    currentTrack: 'core',
+                    streak: { current: 0, lastDate: null, longest: 0 },
+                    stats: { lessonsCompleted: 0, quizzesPassed: 0, modulesCompleted: 0, totalTime: 0 },
+                    created: new Date().toISOString()
+                }));
+            }
 
-        // Progress data
-        const progressKey = `learninghub_progress_${profileId}`;
-        if (!localStorage.getItem(progressKey)) {
-            localStorage.setItem(progressKey, JSON.stringify({}));
+            // Progress data
+            const progressKey = `learninghub_progress_${profileId}`;
+            if (!localStorage.getItem(progressKey)) {
+                localStorage.setItem(progressKey, JSON.stringify({}));
+            }
+        } catch (e) {
+            console.error('UserSystem: Error initializing profile data', e);
+            if (e.name === 'QuotaExceededError') {
+                alert('Spatiul de stocare este plin! Sterge unele profile pentru a continua.');
+            }
         }
     },
 
@@ -204,6 +230,9 @@ const UserSystem = {
      * Select and activate a profile
      */
     selectProfile(profileId, callback) {
+        // Migrate data from default keys to profile-specific keys (first-time fix)
+        this.migrateDefaultData(profileId);
+
         this.setActiveProfile(profileId);
 
         // Update other systems to use profile-specific storage
@@ -214,6 +243,64 @@ const UserSystem = {
         if (callback) callback(profileId);
 
         return profileId;
+    },
+
+    /**
+     * Migrate data from default storage keys to profile-specific keys
+     * This handles the case where user used the site before creating a profile
+     */
+    migrateDefaultData(profileId) {
+        // Keys to migrate: default -> profile-specific
+        const migrations = [
+            { from: 'learninghub_progress', to: `learninghub_progress_${profileId}` },
+            { from: 'learninghub_rpg', to: `learninghub_rpg_${profileId}` }
+        ];
+
+        migrations.forEach(({ from, to }) => {
+            const defaultData = localStorage.getItem(from);
+            const profileData = localStorage.getItem(to);
+
+            // Only migrate if default has data AND profile-specific is empty
+            if (defaultData && !profileData) {
+                try {
+                    // Validate it's proper JSON before migrating
+                    JSON.parse(defaultData);
+                    localStorage.setItem(to, defaultData);
+                    // Clear default key to avoid confusion
+                    localStorage.removeItem(from);
+                    console.log(`UserSystem: Migrated ${from} -> ${to}`);
+                } catch (e) {
+                    console.warn(`UserSystem: Could not migrate ${from}`, e);
+                }
+            }
+        });
+
+        // Also migrate atomic-progress keys (pattern: atomic-progress-{lessonId})
+        // to atomic-progress-{profileId}-{lessonId}
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('atomic-progress-') && !key.includes(profileId)) {
+                // Check if it's a default key (no profile ID in it)
+                const parts = key.replace('atomic-progress-', '').split('-');
+                // Default keys look like: atomic-progress-V-M1-L01
+                // Profile keys look like: atomic-progress-profileid-V-M1-L01
+                // If first part matches a lesson pattern (starts with uppercase), it's likely default
+                if (parts.length >= 1 && /^[A-Z]/.test(parts[0])) {
+                    const lessonId = key.replace('atomic-progress-', '');
+                    const newKey = `atomic-progress-${profileId}-${lessonId}`;
+                    const existingProfile = localStorage.getItem(newKey);
+
+                    if (!existingProfile) {
+                        const data = localStorage.getItem(key);
+                        if (data) {
+                            localStorage.setItem(newKey, data);
+                            localStorage.removeItem(key);
+                            console.log(`UserSystem: Migrated ${key} -> ${newKey}`);
+                        }
+                    }
+                }
+            }
+        }
     },
 
     /**
@@ -228,6 +315,20 @@ const UserSystem = {
      * Switch to a different profile (shows selector)
      */
     switchProfile(callback) {
+        // Dispatch event so other systems can save their data first
+        document.dispatchEvent(new CustomEvent('profileSwitching'));
+
+        // Try to save progress from known systems if they're loaded
+        if (typeof AtomicLearning !== 'undefined' && AtomicLearning.saveProgress) {
+            try { AtomicLearning.saveProgress(); } catch(e) { console.warn('Could not save AtomicLearning', e); }
+        }
+        if (typeof AdvancedPractice !== 'undefined' && AdvancedPractice.saveProgress) {
+            try { AdvancedPractice.saveProgress(); } catch(e) { console.warn('Could not save AdvancedPractice', e); }
+        }
+        if (typeof RPG !== 'undefined' && RPG.saveData) {
+            try { RPG.saveData(); } catch(e) { console.warn('Could not save RPG', e); }
+        }
+
         localStorage.removeItem(this.ACTIVE_PROFILE_KEY);
         this.showProfileSelector(callback || (() => location.reload()));
     },
@@ -252,9 +353,8 @@ const UserSystem = {
         const profiles = this.getProfiles().filter(p => p.id !== profileId);
         this.saveProfiles(profiles);
 
-        // Remove profile data
-        localStorage.removeItem(`learninghub_rpg_${profileId}`);
-        localStorage.removeItem(`learninghub_progress_${profileId}`);
+        // Remove ALL profile-specific data
+        this.clearProfileData(profileId);
 
         // If this was the active profile, clear it
         if (this.getActiveProfile() === profileId) {
@@ -262,6 +362,33 @@ const UserSystem = {
         }
 
         return true;
+    },
+
+    /**
+     * Clear all localStorage data for a specific profile
+     */
+    clearProfileData(profileId) {
+        // Known profile-specific keys
+        const knownKeys = [
+            `learninghub_rpg_${profileId}`,
+            `learninghub_progress_${profileId}`,
+            `learninghub_practice_${profileId}`,
+            `learninghub_evidence_${profileId}`
+        ];
+
+        knownKeys.forEach(key => localStorage.removeItem(key));
+
+        // Also remove atomic-progress keys for this profile
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(`atomic-progress-${profileId}-`)) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+
+        console.log(`UserSystem: Cleared all data for profile ${profileId}`);
     },
 
     /**
@@ -394,7 +521,7 @@ const UserSystem = {
                         ${profiles.map(p => `
                             <button class="us-profile-btn" data-profile="${p.id}">
                                 <span class="us-avatar">${p.avatar || '👤'}</span>
-                                <span class="us-name">${p.name}</span>
+                                <span class="us-name">${this.escapeHtml(p.name)}</span>
                                 ${p.grade ? `<span class="us-grade-tag">${this.GRADES.find(g => g.id === p.grade)?.label || p.grade}</span>` : ''}
                                 <span class="us-arrow">→</span>
                             </button>
@@ -468,6 +595,14 @@ const UserSystem = {
         });
 
         document.getElementById('us-guest-btn').addEventListener('click', () => {
+            // Warn user that progress won't be saved
+            const proceed = confirm(
+                '⚠️ Fara profil, progresul NU se salveaza!\n\n' +
+                'Daca inchizi browserul, vei pierde tot ce ai invatat.\n\n' +
+                'Sigur vrei sa continui fara profil?'
+            );
+            if (!proceed) return;
+
             this.continueAsGuest();
             modal.remove();
             if (onSelect) onSelect('_guest');
@@ -564,7 +699,7 @@ const UserSystem = {
         badge.className = 'us-profile-badge';
         badge.innerHTML = `
             <span class="us-badge-avatar">${profile.avatar}</span>
-            <span class="us-badge-name">${profile.name}</span>
+            <span class="us-badge-name">${this.escapeHtml(profile.name)}</span>
             ${gradeLabel ? `<span class="us-badge-grade">${gradeLabel}</span>` : ''}
             ${options.showMenu !== false ? '<button class="us-badge-menu-btn">▼</button>' : ''}
         `;
@@ -600,19 +735,48 @@ const UserSystem = {
             <button class="us-menu-item us-menu-danger" data-action="delete">🗑️ Sterge profilul</button>
         `;
 
-        // Position menu
+        // Position menu with viewport boundary check
         const rect = anchorElement.getBoundingClientRect();
         menu.style.position = 'fixed';
         menu.style.top = `${rect.bottom + 8}px`;
-        menu.style.right = `${window.innerWidth - rect.right}px`;
 
         document.body.appendChild(menu);
+
+        // After adding to DOM, check if menu fits in viewport
+        const menuRect = menu.getBoundingClientRect();
+        const menuWidth = menuRect.width || 220; // fallback min-width
+
+        // Calculate right position
+        let rightPos = window.innerWidth - rect.right;
+
+        // If menu would go off left edge, align to left edge with padding
+        if (rect.right - menuWidth < 10) {
+            menu.style.right = 'auto';
+            menu.style.left = '10px';
+        } else {
+            menu.style.right = `${Math.max(10, rightPos)}px`;
+        }
+
+        // If menu would go off bottom, position above anchor
+        if (rect.bottom + 8 + menuRect.height > window.innerHeight) {
+            menu.style.top = `${rect.top - menuRect.height - 8}px`;
+        }
+
+        // Create AbortController for cleanup
+        const abortController = new AbortController();
+        const signal = abortController.signal;
+
+        // Helper to clean up and remove menu
+        const cleanupAndRemove = () => {
+            abortController.abort();
+            if (menu.parentNode) menu.remove();
+        };
 
         // Handle actions
         menu.querySelectorAll('.us-menu-item').forEach(item => {
             item.addEventListener('click', () => {
                 const action = item.dataset.action;
-                menu.remove();
+                cleanupAndRemove();
 
                 switch (action) {
                     case 'switch':
@@ -628,17 +792,17 @@ const UserSystem = {
                         }
                         break;
                 }
-            });
+            }, { signal });
         });
 
-        // Close on outside click
-        const closeMenu = (e) => {
-            if (!menu.contains(e.target) && !anchorElement.contains(e.target)) {
-                menu.remove();
-                document.removeEventListener('click', closeMenu);
-            }
-        };
-        setTimeout(() => document.addEventListener('click', closeMenu), 10);
+        // Close on outside click (with proper cleanup via AbortController)
+        setTimeout(() => {
+            document.addEventListener('click', (e) => {
+                if (!menu.contains(e.target) && !anchorElement.contains(e.target)) {
+                    cleanupAndRemove();
+                }
+            }, { signal });
+        }, 10);
     },
 
     /**

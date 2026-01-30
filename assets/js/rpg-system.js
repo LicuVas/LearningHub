@@ -259,6 +259,9 @@ const RPG = {
             localStorage.setItem(key, JSON.stringify(this.data));
         } catch (e) {
             console.error('Error saving RPG data:', e);
+            if (e.name === 'QuotaExceededError') {
+                alert('Spatiul de stocare este plin! Progresul XP nu a putut fi salvat.');
+            }
         }
     },
 
@@ -1230,7 +1233,8 @@ const RPG = {
      */
     reset() {
         if (confirm('Sigur vrei sa stergi progresul RPG? Aceasta actiune nu poate fi anulata.')) {
-            localStorage.removeItem(this.STORAGE_KEY);
+            const key = this.getStorageKey();
+            localStorage.removeItem(key);
             location.reload();
         }
     }

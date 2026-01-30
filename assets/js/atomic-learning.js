@@ -42,6 +42,15 @@ const AtomicLearning = {
         this.currentLessonId = lessonId;
         this.settings = { ...this.settings, ...options };
 
+        // Cache profile ID at init time to ensure consistent storage key throughout session
+        this.cachedProfileId = null;
+        if (typeof UserSystem !== 'undefined') {
+            const activeProfile = UserSystem.getActiveProfile();
+            if (activeProfile && activeProfile !== '_guest') {
+                this.cachedProfileId = activeProfile;
+            }
+        }
+
         // Load saved progress
         if (this.settings.saveProgress) {
             this.loadProgress();
@@ -458,18 +467,13 @@ const AtomicLearning = {
 
     /**
      * Get storage key including profile ID for proper scoping
+     * Uses cached profile ID from init for consistency throughout session
      */
     getStorageKey: function() {
         if (!this.currentLessonId) return null;
 
-        // Include profile ID if UserSystem is available
-        let profileId = '';
-        if (typeof UserSystem !== 'undefined') {
-            const activeProfile = UserSystem.getActiveProfile();
-            if (activeProfile && activeProfile !== '_guest') {
-                profileId = activeProfile + '-';
-            }
-        }
+        // Use cached profile ID for consistent storage key
+        const profileId = this.cachedProfileId ? this.cachedProfileId + '-' : '';
 
         return `atomic-progress-${profileId}${this.currentLessonId}`;
     },
@@ -509,7 +513,14 @@ const AtomicLearning = {
             version: 3  // Version 3: includes shuffledCorrect for randomized answer fix
         };
 
-        localStorage.setItem(key, JSON.stringify(data));
+        try {
+            localStorage.setItem(key, JSON.stringify(data));
+        } catch (e) {
+            console.error('AtomicLearning: Error saving progress', e);
+            if (e.name === 'QuotaExceededError') {
+                alert('Spatiul de stocare este plin! Progresul nu a putut fi salvat.');
+            }
+        }
 
         // Dispatch event for external listeners (e.g., lesson summary)
         document.dispatchEvent(new CustomEvent('atomicProgressSaved', {
