@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recapitulare si Evaluare | TIC Clasa a V-a</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-card: #1a1a2e;
+            --bg-card-hover: #252540;
+            --accent-blue: #3b82f6;
+            --accent-blue-light: #60a5fa;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #f97316;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --border-color: #2a2a4a;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; line-height: 1.6; }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        .nav-bar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
+        .nav-link { color: var(--accent-blue); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; font-weight: 500; }
+        .nav-link:hover { color: var(--accent-blue-light); }
+        .breadcrumb { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--text-secondary); flex-wrap: wrap; }
+        .breadcrumb a { color: var(--accent-blue); text-decoration: none; }
+        .lesson-header { text-align: center; margin-bottom: 2rem; }
+        .lesson-badge { display: inline-block; background: var(--accent-purple); color: white; padding: 0.5rem 1.5rem; border-radius: 50px; font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem; }
+        .lesson-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; background: linear-gradient(135deg, var(--accent-purple), var(--accent-orange)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .progress-container { background: var(--bg-card); border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem; }
+        .progress-bar-wrapper { flex: 1; height: 8px; background: var(--bg-primary); border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-purple), var(--success)); width: 0%; transition: width 0.5s ease; }
+        .progress-text { font-size: 0.875rem; color: var(--text-secondary); }
+        .goal-section { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; border-left: 4px solid var(--accent-purple); }
+        .goal-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .goal-text { color: var(--text-secondary); font-style: italic; }
+        .atom { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .atom-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .atom-number { width: 36px; height: 36px; background: var(--accent-purple); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+        .atom-title { font-size: 1.125rem; font-weight: 600; }
+        .atom-content { color: var(--text-secondary); margin-bottom: 1rem; }
+        .atom-content p { margin-bottom: 0.75rem; }
+        .atom-content ul, .atom-content ol { margin-left: 1.5rem; margin-bottom: 0.75rem; }
+        .atom-content li { margin-bottom: 0.5rem; }
+        .highlight-box { background: rgba(139, 92, 246, 0.1); border: 1px solid var(--accent-purple); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .review-card { background: var(--bg-primary); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; border-left: 3px solid var(--accent-blue); }
+        .review-card h4 { color: var(--accent-blue); margin-bottom: 0.5rem; }
+        .scratch-block { display: inline-block; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-family: monospace; margin: 0.25rem; font-size: 0.9rem; }
+        .scratch-block.motion { background: #4C97FF; }
+        .scratch-block.looks { background: #9966FF; }
+        .scratch-block.events { background: #FFBF00; color: #000; }
+        .scratch-block.control { background: #FFAB19; }
+        .quiz-container { background: var(--bg-primary); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+        .quiz-question { font-weight: 500; margin-bottom: 0.75rem; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .quiz-option { background: var(--bg-card); padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .quiz-option:hover { background: var(--bg-card-hover); }
+        .quiz-option.selected { border-color: var(--accent-blue); }
+        .quiz-option.correct { border-color: var(--success); background: rgba(34, 197, 94, 0.1); }
+        .quiz-option.incorrect { border-color: var(--error); background: rgba(239, 68, 68, 0.1); }
+        .quiz-feedback { margin-top: 0.75rem; padding: 0.75rem; border-radius: 8px; display: none; }
+        .quiz-feedback.show { display: block; }
+        .quiz-feedback.correct { background: rgba(34, 197, 94, 0.1); color: var(--success); }
+        .quiz-feedback.incorrect { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+        .summary-box { background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(249, 115, 22, 0.1)); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; }
+        .summary-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem; }
+        .summary-list { list-style: none; }
+        .summary-list li { padding: 0.5rem 0; padding-left: 1.5rem; position: relative; color: var(--text-secondary); }
+        .summary-list li::before { content: "✓"; position: absolute; left: 0; color: var(--success); }
+        .practice-section { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-top: 2rem; }
+        .practice-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .practice-item { margin-bottom: 1.5rem; }
+        .practice-question { font-weight: 500; margin-bottom: 0.75rem; }
+        .practice-textarea { width: 100%; min-height: 100px; padding: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit; resize: vertical; }
+        .lesson-summary { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-top: 2rem; }
+        .final-score { background: linear-gradient(135deg, var(--accent-purple), var(--accent-orange)); border-radius: 12px; padding: 2rem; text-align: center; margin: 2rem 0; }
+        .final-score h2 { font-size: 1.5rem; margin-bottom: 1rem; }
+        .score-display { font-size: 3rem; font-weight: 700; }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; gap: 1rem; flex-wrap: wrap; }
+        .nav-btn { padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 500; transition: all 0.2s; }
+        .nav-btn.prev { background: var(--bg-card); color: var(--text-primary); }
+        .nav-btn.next { background: var(--accent-purple); color: white; }
+        .nav-btn:hover { transform: translateY(-2px); }
+        .restart-btn { background: var(--warning); color: white; padding: 0.5rem 1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; margin-top: 1rem; }
+        @media (max-width: 640px) {
+            .container { padding: 1rem; }
+            .lesson-title { font-size: 1.5rem; }
+            .nav-buttons { flex-direction: column; }
+            .nav-btn { text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="../index.html" class="nav-link">← Inapoi la Clasa a V-a</a>
+        </nav>
+
+        <div class="breadcrumb">
+            <a href="../../../../index.html">Acasa</a> &gt;
+            <a href="../index.html">Clasa a V-a</a> &gt;
+            <span>M3: Scratch</span> &gt;
+            <span>Lectia 7</span>
+        </div>
+
+        <header class="lesson-header">
+            <span class="lesson-badge">EVALUARE</span>
+            <h1 class="lesson-title">Recapitulare si Test Final</h1>
+        </header>
+
+        <div class="progress-container">
+            <span class="progress-label">Progres evaluare:</span>
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+            <span class="progress-text" id="progressText">0%</span>
+        </div>
+
+        <section class="goal-section">
+            <h2 class="goal-title">🎯 Obiectivul lectiei</h2>
+            <p class="goal-text">Vei recapitula tot ce ai invatat despre Scratch si vei rezolva un test pentru a-ti verifica cunostintele.</p>
+        </section>
+
+        <section class="atom" id="atom-1">
+            <div class="atom-header">
+                <span class="atom-number">1</span>
+                <h2 class="atom-title">Recapitulare: Interfata si Sprite-uri</h2>
+            </div>
+            <div class="atom-content">
+                <div class="review-card">
+                    <h4>Interfata Scratch</h4>
+                    <p>Scratch are 4 zone principale: <strong>Scena</strong> (unde vezi rezultatul), <strong>Zona sprite-urilor</strong> (personajele), <strong>Paleta de blocuri</strong> (toate blocurile) si <strong>Zona de scripturi</strong> (unde programezi).</p>
+                </div>
+
+                <div class="review-card">
+                    <h4>Sprite-uri si Scene</h4>
+                    <p>Un <strong>sprite</strong> este orice personaj sau obiect. Fiecare sprite poate avea mai multe <strong>costume</strong> si propriile scripturi. <strong>Scena</strong> poate avea mai multe <strong>fundaluri</strong>.</p>
+                </div>
+            </div>
+            <div class="quiz-container" data-qid="atom-1-q0" data-hint="Sprite-ul este personajul, iar scena/fundalul este imaginea din spate.">
+                <p class="quiz-question">Care este diferenta dintre un sprite si un fundal?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">Nu exista nicio diferenta</div>
+                    <div class="quiz-option" data-correct="true">Sprite-ul este un personaj care se poate misca, fundalul este imaginea din spatele scenei</div>
+                    <div class="quiz-option" data-correct="false">Fundalul se poate misca, sprite-ul nu</div>
+                    <div class="quiz-option" data-correct="false">Sprite-ul este pentru sunet, fundalul pentru imagine</div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+        </section>
+
+        <section class="atom" id="atom-2">
+            <div class="atom-header">
+                <span class="atom-number">2</span>
+                <h2 class="atom-title">Recapitulare: Blocuri de Miscare</h2>
+            </div>
+            <div class="atom-content">
+                <div class="review-card">
+                    <h4>Blocuri de Miscare (Albastre)</h4>
+                    <ul>
+                        <li><span class="scratch-block motion">mergi (10) pasi</span> - Muta sprite-ul inainte</li>
+                        <li><span class="scratch-block motion">mergi la x: () y: ()</span> - Teleporteaza la coordonate</li>
+                        <li><span class="scratch-block motion">gliseaza in () secunde</span> - Miscare lina</li>
+                        <li><span class="scratch-block motion">indreapta-te spre directia ()</span> - Seteaza directia</li>
+                        <li><span class="scratch-block motion">intoarce-te () grade</span> - Roteste sprite-ul</li>
+                    </ul>
+                </div>
+
+                <div class="highlight-box">
+                    <p><strong>Coordonate:</strong> X merge de la -240 (stanga) la 240 (dreapta). Y merge de la -180 (jos) la 180 (sus). Centrul este (0, 0).</p>
+                </div>
+            </div>
+            <div class="quiz-container" data-qid="atom-2-q0" data-hint="Directia 0 inseamna sus, 90 dreapta, 180 jos, -90 stanga.">
+                <p class="quiz-question">Un sprite este la pozitia (0, 0) si are directia 90. In ce directie va merge?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">Sus</div>
+                    <div class="quiz-option" data-correct="true">Dreapta</div>
+                    <div class="quiz-option" data-correct="false">Jos</div>
+                    <div class="quiz-option" data-correct="false">Stanga</div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+        </section>
+
+        <section class="atom" id="atom-3">
+            <div class="atom-header">
+                <span class="atom-number">3</span>
+                <h2 class="atom-title">Recapitulare: Blocuri de Aspect</h2>
+            </div>
+            <div class="atom-content">
+                <div class="review-card">
+                    <h4>Blocuri de Aspect (Violet)</h4>
+                    <ul>
+                        <li><span class="scratch-block looks">spune [] timp de () secunde</span> - Balon de dialog</li>
+                        <li><span class="scratch-block looks">gandeste []</span> - Balon de gandire (cu buline)</li>
+                        <li><span class="scratch-block looks">urmatorul costum</span> - Schimba costumul</li>
+                        <li><span class="scratch-block looks">seteaza dimensiunea la () %</span> - Marimea sprite-ului</li>
+                        <li><span class="scratch-block looks">arata</span> / <span class="scratch-block looks">ascunde</span> - Vizibilitate</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="quiz-container" data-qid="atom-3-q0" data-hint="'urmatorul costum' trece automat la urmatoarea imagine din lista de costume.">
+                <p class="quiz-question">Cum faci o animatie de mers folosind costume?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">Folosesti doar "mergi pasi"</div>
+                    <div class="quiz-option" data-correct="true">Folosesti "urmatorul costum" in combinatie cu "asteapta" intr-un "repeta"</div>
+                    <div class="quiz-option" data-correct="false">Schimbi fundalul</div>
+                    <div class="quiz-option" data-correct="false">Folosesti "ascunde" si "arata"</div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+        </section>
+
+        <section class="atom" id="atom-4">
+            <div class="atom-header">
+                <span class="atom-number">4</span>
+                <h2 class="atom-title">Recapitulare: Scripturi si Secvente</h2>
+            </div>
+            <div class="atom-content">
+                <div class="review-card">
+                    <h4>Structura unui Script</h4>
+                    <ol>
+                        <li><strong>Bloc de eveniment</strong> (galben) - cand porneste scriptul</li>
+                        <li><strong>Blocuri de actiune</strong> - ce face sprite-ul</li>
+                        <li>Executie <strong>secventiala</strong> - de sus in jos</li>
+                    </ol>
+                </div>
+
+                <div class="review-card">
+                    <h4>Blocuri de Control (Portocaliu)</h4>
+                    <ul>
+                        <li><span class="scratch-block events">cand se apasa pe steag verde</span> - Start program</li>
+                        <li><span class="scratch-block control">asteapta () secunde</span> - Pauza</li>
+                        <li><span class="scratch-block control">repeta ()</span> - Executa de mai multe ori</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="quiz-container" data-qid="atom-4-q0" data-hint="Fara un bloc de eveniment, scriptul nu stie cand sa porneasca.">
+                <p class="quiz-question">Ce se intampla daca un script nu incepe cu un bloc de eveniment?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">Ruleaza automat</div>
+                    <div class="quiz-option" data-correct="false">Ruleaza cand apesi pe sprite</div>
+                    <div class="quiz-option" data-correct="true">Nu ruleaza automat - trebuie sa apesi manual pe blocuri</div>
+                    <div class="quiz-option" data-correct="false">Genereaza o eroare</div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+        </section>
+
+        <section class="atom" id="atom-5">
+            <div class="atom-header">
+                <span class="atom-number">5</span>
+                <h2 class="atom-title">Test Final - Intrebare Complexa</h2>
+            </div>
+            <div class="atom-content">
+                <p>Analizeaza urmatorul script si raspunde la intrebare:</p>
+
+                <div class="highlight-box" style="font-family: monospace;">
+                    <p><span class="scratch-block events">cand se apasa pe steag verde</span></p>
+                    <p><span class="scratch-block motion">mergi la x: (-100) y: (0)</span></p>
+                    <p><span class="scratch-block looks">spune [Start!] timp de (1) secunde</span></p>
+                    <p><span class="scratch-block control">repeta (5)</span></p>
+                    <p style="margin-left: 20px;"><span class="scratch-block motion">mergi (40) pasi</span></p>
+                    <p style="margin-left: 20px;"><span class="scratch-block looks">urmatorul costum</span></p>
+                    <p style="margin-left: 20px;"><span class="scratch-block control">asteapta (0.5) secunde</span></p>
+                    <p><span class="scratch-block looks">spune [Gata!]</span></p>
+                </div>
+            </div>
+            <div class="quiz-container" data-qid="atom-5-q0" data-hint="Sprite-ul incepe la x=-100 si merge 40 pasi de 5 ori. -100 + (40 x 5) = -100 + 200 = 100">
+                <p class="quiz-question">Care va fi pozitia X a sprite-ului la final? (Sprite-ul incepe la x=-100 si merge 40 pasi de 5 ori)</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">x = -100 (ramane la loc)</div>
+                    <div class="quiz-option" data-correct="false">x = 0 (centrul)</div>
+                    <div class="quiz-option" data-correct="true">x = 100 (a mers 200 de pasi in total)</div>
+                    <div class="quiz-option" data-correct="false">x = 200</div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+        </section>
+
+        <div class="summary-box">
+            <h3 class="summary-title">📝 Ai terminat modulul Scratch!</h3>
+            <ul class="summary-list">
+                <li>Ai invatat interfata Scratch si cum sa navighezi</li>
+                <li>Stii sa lucrezi cu sprite-uri, costume si fundaluri</li>
+                <li>Poti folosi blocuri de miscare pentru a deplasa personajele</li>
+                <li>Poti folosi blocuri de aspect pentru dialog si efecte vizuale</li>
+                <li>Intelegi executia secventiala si importanta ordinii blocurilor</li>
+                <li>Ai creat prima ta animatie completa!</li>
+            </ul>
+        </div>
+
+        <div class="final-score" id="finalScore" style="display: none;">
+            <h2>Rezultatul tau</h2>
+            <p class="score-display" id="scoreDisplay">0/5</p>
+            <p id="scoreMessage"></p>
+        </div>
+
+        <section class="practice-section" id="practice">
+            <h2 class="practice-title">✍️ Provocare Finala</h2>
+            <div class="practice-item">
+                <p class="practice-question">Creeaza propriul proiect Scratch care include: 2 sprite-uri, un fundal, miscare, dialog si o animatie. Descrie proiectul tau:</p>
+                <textarea class="practice-textarea" placeholder="Proiectul meu se numeste... si contine..."></textarea>
+            </div>
+            <div class="practice-item">
+                <p class="practice-question">Ce ti-a placut cel mai mult la Scratch? Ce ai vrea sa inveti in continuare?</p>
+                <textarea class="practice-textarea" placeholder="Mi-a placut cel mai mult... As vrea sa invat..."></textarea>
+            </div>
+        </section>
+
+        <section class="lesson-summary" id="lessonSummary">
+            <h2>📊 Sumar evaluare</h2>
+            <p>Completeaza toate intrebarile pentru a vedea scorul final.</p>
+        </section>
+
+        <button class="restart-btn" onclick="restartLesson()">🔄 Reincepe evaluarea</button>
+
+        <div class="nav-buttons">
+            <a href="lectia-6.html" class="nav-btn prev">← Lectia anterioara</a>
+            <a href="../index.html" class="nav-btn next">Inapoi la modul →</a>
+        </div>
+    </div>
+
+    <script src="../../../../assets/js/atomic-learning.js"></script>
+    <script src="../../../../assets/js/practice-advanced.js"></script>
+    <script src="../../../../assets/js/lesson-summary.js"></script>
+    <script src="../../../../assets/js/user-system.js"></script>
+    <script src="../../../../assets/js/rpg-system.js"></script>
+    <script>
+        const LESSON_ID = 'V-M3-L07';
+        let answeredQuestions = new Set();
+        let correctAnswers = 0;
+        const totalQuestions = document.querySelectorAll('.quiz-container').length;
+
+        function updateProgress() {
+            const progress = Math.round((answeredQuestions.size / totalQuestions) * 100);
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressText').textContent = progress + '%';
+            localStorage.setItem(LESSON_ID + '_progress', progress);
+
+            if (answeredQuestions.size === totalQuestions) {
+                showFinalScore();
+            }
+        }
+
+        function showFinalScore() {
+            const scoreSection = document.getElementById('finalScore');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const scoreMessage = document.getElementById('scoreMessage');
+
+            scoreSection.style.display = 'block';
+            scoreDisplay.textContent = correctAnswers + '/' + totalQuestions;
+
+            const percentage = (correctAnswers / totalQuestions) * 100;
+            if (percentage === 100) {
+                scoreMessage.textContent = 'Excelent! Ai raspuns corect la toate intrebarile!';
+            } else if (percentage >= 80) {
+                scoreMessage.textContent = 'Foarte bine! Ai inteles foarte bine Scratch!';
+            } else if (percentage >= 60) {
+                scoreMessage.textContent = 'Bine! Mai recapituleaza lectiile pentru a te perfectiona.';
+            } else {
+                scoreMessage.textContent = 'Mai ai de lucrat. Reciteste lectiile si incearca din nou!';
+            }
+
+            scoreSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const container = this.closest('.quiz-container');
+                const qid = container.dataset.qid;
+                if (answeredQuestions.has(qid)) return;
+
+                const options = container.querySelectorAll('.quiz-option');
+                const feedback = container.querySelector('.quiz-feedback');
+                const isCorrect = this.dataset.correct === 'true';
+
+                if (isCorrect) correctAnswers++;
+
+                options.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                this.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+                feedback.classList.add('show');
+                feedback.classList.remove('correct', 'incorrect');
+                feedback.classList.add(isCorrect ? 'correct' : 'incorrect');
+                feedback.textContent = isCorrect ? '✓ Corect! Bravo!' : '✗ ' + container.dataset.hint;
+
+                answeredQuestions.add(qid);
+                updateProgress();
+            });
+        });
+
+        function restartLesson() {
+            answeredQuestions.clear();
+            correctAnswers = 0;
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+            });
+            document.querySelectorAll('.quiz-feedback').forEach(fb => {
+                fb.classList.remove('show');
+            });
+            document.querySelectorAll('.practice-textarea').forEach(ta => {
+                ta.value = '';
+            });
+            document.getElementById('finalScore').style.display = 'none';
+            updateProgress();
+            window.scrollTo(0, 0);
+        }
+
+        const savedProgress = localStorage.getItem(LESSON_ID + '_progress');
+        if (savedProgress) {
+            document.getElementById('progressBar').style.width = savedProgress + '%';
+            document.getElementById('progressText').textContent = savedProgress + '%';
+        }
+    </script>
+</body>
+</html>
