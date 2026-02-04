@@ -43,7 +43,8 @@ git push
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "✅ Deploy successful! Site will update in ~1 minute." -ForegroundColor Green
-    Write-Host "🔗 Check: https://gurlanv.github.io/LearningHub/" -ForegroundColor Blue
+    Write-Host "🔗 Check: https://licuvas.github.io/LearningHub/hub/" -ForegroundColor Blue
+    Write-Host "🔗 Alt:   https://learninghub-8z6.pages.dev/hub/" -ForegroundColor Blue
 } else {
     Write-Host ""
     Write-Host "❌ Push failed. Check your connection or run:" -ForegroundColor Red
