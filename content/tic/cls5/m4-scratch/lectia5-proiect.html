@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Proiect Scratch - Creeaza un Joc | TIC Clasa a V-a</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+    :root {
+        --bg-primary: #0a0a12;
+        --bg-card: #1a1a2e;
+        --bg-card-hover: #252540;
+        --accent-blue: #3b82f6;
+        --accent-blue-light: #60a5fa;
+        --accent-purple: #8b5cf6;
+        --accent-orange: #f97316;
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0b0;
+        --border-color: #2a2a4a;
+        --success: #22c55e;
+        --error: #ef4444;
+        --warning: #f59e0b;
+        --scratch-motion: #4C97FF;
+        --scratch-looks: #9966FF;
+        --scratch-events: #FFBF00;
+        --scratch-control: #FFAB19;
+        --scratch-sensing: #5CB1D6;
+        --scratch-operators: #59C059;
+        --scratch-variables: #FF8C1A;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+        line-height: 1.6;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+    .nav-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 2rem;
+    }
+
+    .nav-link {
+        color: var(--accent-blue);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+    }
+
+    .nav-link:hover { color: var(--accent-blue-light); }
+
+    .lesson-header { text-align: center; margin-bottom: 2rem; }
+
+    .lesson-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--scratch-events), var(--scratch-control));
+        color: #333;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .lesson-title {
+        font-size: 2.25rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--scratch-events), var(--success));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .lesson-subtitle { color: var(--text-secondary); font-size: 1rem; }
+
+    .progress-container {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .progress-label { font-size: 0.875rem; color: var(--text-secondary); white-space: nowrap; }
+    .progress-bar-wrapper { flex: 1; height: 8px; background: var(--bg-primary); border-radius: 4px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--scratch-events), var(--success)); width: 0%; transition: width 0.5s ease; border-radius: 4px; }
+    .progress-percent { font-weight: 600; color: var(--scratch-events); min-width: 45px; text-align: right; }
+
+    .goal-section {
+        background: linear-gradient(135deg, rgba(255, 191, 0, 0.1), rgba(34, 197, 94, 0.1));
+        border: 1px solid var(--scratch-events);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .goal-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .goal-icon { font-size: 1.5rem; }
+    .goal-title { font-size: 1.25rem; font-weight: 600; color: var(--scratch-events); }
+    .goal-text { font-style: italic; color: var(--text-secondary); font-size: 1.1rem; }
+
+    .atom {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .atom.atom-completed { border-color: var(--success); background: rgba(34, 197, 94, 0.05); }
+
+    .atom-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+
+    .atom-number {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--scratch-events), var(--success));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .atom-completed .atom-number { background: var(--success); }
+
+    .atom-title { font-size: 1.25rem; font-weight: 600; }
+
+    .atom-content { color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .atom-content p { margin-bottom: 0.75rem; }
+
+    .scratch-block {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .scratch-block.motion { background: var(--scratch-motion); }
+    .scratch-block.looks { background: var(--scratch-looks); }
+    .scratch-block.events { background: var(--scratch-events); color: #333; }
+    .scratch-block.control { background: var(--scratch-control); color: #333; }
+    .scratch-block.sensing { background: var(--scratch-sensing); }
+    .scratch-block.operators { background: var(--scratch-operators); }
+    .scratch-block.variables { background: var(--scratch-variables); color: #333; }
+
+    .scratch-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: rgba(255,255,255,0.05);
+        border-radius: 12px;
+    }
+
+    .atom-quiz { background: var(--bg-primary); border-radius: 12px; padding: 1.25rem; }
+
+    .atom-question-text { font-weight: 600; margin-bottom: 1rem; color: var(--text-primary); }
+
+    .atom-options { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .atom-option {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        background: var(--bg-card);
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .atom-option:hover { border-color: var(--scratch-events); transform: translateX(4px); }
+    .atom-option.selected { border-color: var(--scratch-events); background: rgba(255, 191, 0, 0.1); }
+    .atom-option.correct { border-color: var(--success); background: rgba(34, 197, 94, 0.15); }
+    .atom-option.incorrect { border-color: var(--error); background: rgba(239, 68, 68, 0.15); }
+    .atom-option.locked { pointer-events: none; opacity: 0.7; }
+
+    .option-letter {
+        width: 28px;
+        height: 28px;
+        background: var(--bg-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+
+    .atom-feedback {
+        margin-top: 1rem;
+        padding: 0.875rem;
+        border-radius: 8px;
+        display: none;
+        font-weight: 500;
+    }
+
+    .atom-feedback.correct { display: block; background: rgba(34, 197, 94, 0.15); border: 1px solid var(--success); color: var(--success); }
+    .atom-feedback.incorrect { display: block; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--error); color: var(--error); }
+
+    .atom-hint {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid var(--warning);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: var(--warning);
+    }
+
+    .hint-icon { margin-right: 0.5rem; }
+
+    .info-box {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid var(--accent-blue);
+        border-radius: 12px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+
+    .info-box-title {
+        color: var(--accent-blue);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .project-step {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid var(--success);
+        border-radius: 12px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+
+    .project-step-title {
+        color: var(--success);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .checklist {
+        list-style: none;
+        padding: 0;
+    }
+
+    .checklist li {
+        padding: 0.5rem 0;
+        padding-left: 1.5rem;
+        position: relative;
+    }
+
+    .checklist li::before {
+        content: "[ ]";
+        position: absolute;
+        left: 0;
+        color: var(--text-secondary);
+        font-family: monospace;
+    }
+
+    .restart-section {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary { background: var(--scratch-events); color: #333; }
+    .btn-primary:hover { background: var(--success); color: white; }
+
+    footer {
+        text-align: center;
+        padding: 2rem 0;
+        border-top: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin-top: 2rem;
+    }
+
+    footer a { color: var(--scratch-events); }
+
+    @media (max-width: 768px) {
+        .container { padding: 1rem; }
+        .lesson-title { font-size: 1.75rem; }
+    }
+</style>
+<link href="../../../../assets/css/mobile-first.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="container">
+<!-- Navigation -->
+<nav class="nav-bar">
+<a class="nav-link" href="lectia4-decizii-scratch.html">
+<span>←</span> Lectia anterioara
+</a>
+<a class="nav-link" href="lectia6-evaluare.html">
+Lectia urmatoare <span>→</span>
+</a>
+</nav>
+<!-- Lesson Header -->
+<header class="lesson-header">
+<span class="lesson-badge">Scratch - Lectia 5</span>
+<h1 class="lesson-title">Proiect: Creeaza un Joc!</h1>
+<p class="lesson-subtitle">Pune in practica tot ce ai invatat - construieste jocul "Prinde Fructele"</p>
+</header>
+<!-- Progress -->
+<div class="progress-container">
+<span class="progress-label">Progres lectie:</span>
+<div class="progress-bar-wrapper">
+<div class="progress-bar-fill" id="progress-fill"></div>
+</div>
+<span class="progress-percent" id="progress-percent">0%</span>
+</div>
+<!-- GOAL Section -->
+<section class="goal-section">
+<div class="goal-header">
+<span class="goal-icon">🎯</span>
+<h2 class="goal-title">Obiectivul lectiei</h2>
+</div>
+<p class="goal-text">"In aceasta lectie vei crea de la zero jocul Prinde Fructele, folosind toate conceptele invatate: miscare, animatii, decizii si variabile!"</p>
+</section>
+<!-- Atomic Content -->
+<main id="atomic-content">
+<!-- Atom 1 -->
+<div class="atom" data-quiz='[{"question": "Care este primul pas cand incepi un proiect nou in Scratch?", "options": ["Scrii tot codul dintr-o data", "Planifici ce vrei sa faci si ce sprite-uri ai nevoie", "Stergi tot si incepi de la zero"], "correct": "b", "hint": "Inainte de a construi, trebuie sa stii CE construiesti."}]' id="atom-1">
+<div class="atom-header">
+<div class="atom-number">1</div>
+<h3 class="atom-title">Planificarea jocului</h3>
+</div>
+<div class="atom-content">
+<p>Inainte de a scrie cod, trebuie sa planificam jocul <strong>"Prinde Fructele"</strong>:</p>
+<div class="info-box">
+<div class="info-box-title">Descrierea jocului</div>
+<p>Un cos se misca stanga-dreapta controlat de jucator. Fructe cad de sus. Trebuie sa prinzi fructele pentru puncte. Daca scapi un fruct, pierzi o viata. Jocul se termina cand pierzi toate vietile.</p>
+</div>
+<p><strong>Sprite-uri necesare:</strong></p>
+<ul class="checklist">
+<li>Cos (controlat de jucator)</li>
+<li>Fruct (mar, banana, etc. - cade de sus)</li>
+<li>Fundal (optional - o gradina sau cer)</li>
+</ul>
+<p><strong>Variabile necesare:</strong></p>
+<ul class="checklist">
+<li>Scor (creste cand prinzi un fruct)</li>
+<li>Vieti (scade cand scapi un fruct)</li>
+</ul>
+</div>
+<div class="atom-quiz" data-qid="atom-1-q0">
+<div class="atom-question-text">Care este primul pas cand incepi un proiect nou in Scratch?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Scrii tot codul dintr-o data</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Planifici ce vrei sa faci si ce sprite-uri ai nevoie</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Stergi tot si incepi de la zero</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Inainte de a construi, trebuie sa stii CE construiesti.
+</div>
+</div>
+</div>
+<!-- Atom 2 -->
+<div class="atom" data-quiz='[{"question": "Unde ar trebui sa pozitionezi cosul la inceputul jocului?", "options": ["In coltul din stanga-sus", "In partea de jos a scenei, la centru", "In mijlocul exact al scenei"], "correct": "b", "hint": "Cosul trebuie sa prinda fructele care cad de sus."}]' id="atom-2">
+<div class="atom-header">
+<div class="atom-number">2</div>
+<h3 class="atom-title">Pasul 1: Pregateste scena</h3>
+</div>
+<div class="atom-content">
+<div class="project-step">
+<div class="project-step-title">Instructiuni</div>
+<p>1. Deschide Scratch la <strong>scratch.mit.edu</strong></p>
+<p>2. Sterge pisica (click dreapta → Delete)</p>
+<p>3. Adauga sprite-ul <strong>Bowl</strong> (cos/bol) din biblioteca</p>
+<p>4. Adauga un sprite <strong>Apple</strong> (mar) sau alt fruct</p>
+<p>5. Alege un fundal frumos (Backdrop → Choose a Backdrop)</p>
+</div>
+<p><strong>Pozitioneaza cosul</strong> in partea de jos a scenei:</p>
+<div class="scratch-stack">
+<span class="scratch-block events">cand se da click pe 🚩</span>
+<span class="scratch-block motion">mergi la x: (0) y: (-140)</span>
+</div>
+<p>Cosul sta jos (y = -140) si la centru (x = 0). De aici se va misca stanga-dreapta.</p>
+</div>
+<div class="atom-quiz" data-qid="atom-2-q0">
+<div class="atom-question-text">Unde ar trebui sa pozitionezi cosul la inceputul jocului?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">In coltul din stanga-sus</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">In partea de jos a scenei, la centru</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">In mijlocul exact al scenei</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Cosul trebuie sa prinda fructele care cad de sus.
+</div>
+</div>
+</div>
+<!-- Atom 3 -->
+<div class="atom" data-quiz='[{"question": "De ce limitam pozitia X intre -200 si 200?", "options": ["Pentru ca asa arata mai bine", "Pentru ca cosul sa nu iasa din scena", "Pentru ca Scratch nu accepta alte valori"], "correct": "b", "hint": "Marginile scenei sunt la aproximativ -240 si 240."}]' id="atom-3">
+<div class="atom-header">
+<div class="atom-number">3</div>
+<h3 class="atom-title">Pasul 2: Controleaza cosul</h3>
+</div>
+<div class="atom-content">
+<p><strong>Codul complet pentru COS:</strong></p>
+<div class="scratch-stack">
+<span class="scratch-block events">cand se da click pe 🚩</span>
+<span class="scratch-block motion">mergi la x: (0) y: (-140)</span>
+<span class="scratch-block control">la infinit</span>
+<span class="scratch-block control" style="margin-left: 20px;">daca &lt;tasta (sageata dreapta) apasata?&gt; atunci</span>
+<span class="scratch-block motion" style="margin-left: 40px;">schimba x cu (15)</span>
+<span class="scratch-block control" style="margin-left: 20px;">daca &lt;tasta (sageata stanga) apasata?&gt; atunci</span>
+<span class="scratch-block motion" style="margin-left: 40px;">schimba x cu (-15)</span>
+<span class="scratch-block control" style="margin-left: 20px;">daca &lt;(pozitie x) > (200)&gt; atunci</span>
+<span class="scratch-block motion" style="margin-left: 40px;">seteaza x la (200)</span>
+<span class="scratch-block control" style="margin-left: 20px;">daca &lt;(pozitie x) < (-200)&gt; atunci</span>
+<span class="scratch-block motion" style="margin-left: 40px;">seteaza x la (-200)</span>
+</div>
+<p>Ultimele doua conditii impiedica cosul sa iasa din scena!</p>
+</div>
+<div class="atom-quiz" data-qid="atom-3-q0">
+<div class="atom-question-text">De ce limitam pozitia X intre -200 si 200?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Pentru ca asa arata mai bine</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Pentru ca cosul sa nu iasa din scena</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Pentru ca Scratch nu accepta alte valori</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Marginile scenei sunt la aproximativ -240 si 240.
+</div>
+</div>
+</div>
+<!-- Atom 4 -->
+<div class="atom" data-quiz='[{"question": "De ce folosim \"alege la intamplare\" pentru pozitia X a fructului?", "options": ["Pentru ca nu stim matematica", "Pentru ca fructul sa cada din pozitii diferite de fiecare data", "Pentru ca Scratch ne obliga"], "correct": "b", "hint": "Jocul ar fi plictisitor daca fructul ar cadea mereu din acelasi loc."}]' id="atom-4">
+<div class="atom-header">
+<div class="atom-number">4</div>
+<h3 class="atom-title">Pasul 3: Fructul care cade</h3>
+</div>
+<div class="atom-content">
+<p><strong>Codul pentru FRUCT (mar):</strong></p>
+<div class="scratch-stack">
+<span class="scratch-block events">cand se da click pe 🚩</span>
+<span class="scratch-block control">la infinit</span>
+<span class="scratch-block motion" style="margin-left: 20px;">mergi la x: (alege aleator -200 la 200) y: (180)</span>
+<span class="scratch-block looks" style="margin-left: 20px;">arata</span>
+<span class="scratch-block control" style="margin-left: 20px;">repeta pana cand &lt;(pozitie y) < (-170)&gt;</span>
+<span class="scratch-block motion" style="margin-left: 40px;">schimba y cu (-5)</span>
+<span class="scratch-block control" style="margin-left: 40px;">asteapta (0.02) secunde</span>
+</div>
+<p>Fructul:</p>
+<p>1. Apare sus (y=180) intr-o pozitie aleatoare pe orizontala</p>
+<p>2. Cade incet (schimba y cu -5)</p>
+<p>3. Se opreste cand ajunge jos (y < -170)</p>
+</div>
+<div class="atom-quiz" data-qid="atom-4-q0">
+<div class="atom-question-text">De ce folosim "alege la intamplare" pentru pozitia X a fructului?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Pentru ca nu stim matematica</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Pentru ca fructul sa cada din pozitii diferite de fiecare data</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Pentru ca Scratch ne obliga</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Jocul ar fi plictisitor daca fructul ar cadea mereu din acelasi loc.
+</div>
+</div>
+</div>
+<!-- Atom 5 -->
+<div class="atom" data-quiz='[{"question": "Ce se intampla cand fructul atinge cosul in codul nostru?", "options": ["Fructul explodeaza", "Scorul creste cu 1 si fructul se ascunde", "Jocul se opreste"], "correct": "b", "hint": "Citeste codul - ce face cand detecteaza coliziunea?"}]' id="atom-5">
+<div class="atom-header">
+<div class="atom-number">5</div>
+<h3 class="atom-title">Pasul 4: Detecteaza prinderea</h3>
+</div>
+<div class="atom-content">
+<p>Adaugam detectarea coliziunii in codul fructului. <strong>Modifica</strong> codul anterior:</p>
+<div class="scratch-stack">
+<span class="scratch-block events">cand se da click pe 🚩</span>
+<span class="scratch-block variables">seteaza (scor) la (0)</span>
+<span class="scratch-block variables">seteaza (vieti) la (3)</span>
+<span class="scratch-block control">la infinit</span>
+<span class="scratch-block motion" style="margin-left: 20px;">mergi la x: (aleator -200,200) y: (180)</span>
+<span class="scratch-block looks" style="margin-left: 20px;">arata</span>
+<span class="scratch-block control" style="margin-left: 20px;">repeta pana cand &lt;(poz y) < (-170) sau &lt;atingi (Cos)?&gt;&gt;</span>
+<span class="scratch-block motion" style="margin-left: 40px;">schimba y cu (-5)</span>
+<span class="scratch-block control" style="margin-left: 20px;">daca &lt;atingi (Cos)?&gt; atunci</span>
+<span class="scratch-block variables" style="margin-left: 40px;">schimba (scor) cu (1)</span>
+<span class="scratch-block control" style="margin-left: 20px;">altfel</span>
+<span class="scratch-block variables" style="margin-left: 40px;">schimba (vieti) cu (-1)</span>
+<span class="scratch-block looks" style="margin-left: 20px;">ascunde</span>
+</div>
+</div>
+<div class="atom-quiz" data-qid="atom-5-q0">
+<div class="atom-question-text">Ce se intampla cand fructul atinge cosul in codul nostru?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Fructul explodeaza</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Scorul creste cu 1 si fructul se ascunde</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Jocul se opreste</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Citeste codul - ce face cand detecteaza coliziunea?
+</div>
+</div>
+</div>
+<!-- Atom 6 -->
+<div class="atom" data-quiz='[{"question": "Cand se termina jocul?", "options": ["Cand scorul ajunge la 100", "Cand vietile ajung la 0", "Cand apesi tasta Escape"], "correct": "b", "hint": "Verificam daca mai avem vieti ramase."}]' id="atom-6">
+<div class="atom-header">
+<div class="atom-number">6</div>
+<h3 class="atom-title">Pasul 5: Game Over</h3>
+</div>
+<div class="atom-content">
+<p>Adaugam verificarea pentru sfarsitul jocului. Adauga acest cod <strong>la Fruct</strong>, dupa "schimba vieti cu -1":</p>
+<div class="scratch-stack">
+<span class="scratch-block control">daca &lt;(vieti) = (0)&gt; atunci</span>
+<span class="scratch-block looks" style="margin-left: 20px;">spune [Game Over!] pentru (2) secunde</span>
+<span class="scratch-block control" style="margin-left: 20px;">opreste (tot)</span>
+</div>
+<p>Sau poti adauga un <strong>script separat</strong> pentru Cos care verifica mereu:</p>
+<div class="scratch-stack">
+<span class="scratch-block events">cand se da click pe 🚩</span>
+<span class="scratch-block control">asteapta pana cand &lt;(vieti) = (0)&gt;</span>
+<span class="scratch-block looks">spune [Game Over! Scor final: (scor)]</span>
+<span class="scratch-block control">opreste (tot)</span>
+</div>
+</div>
+<div class="atom-quiz" data-qid="atom-6-q0">
+<div class="atom-question-text">Cand se termina jocul?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Cand scorul ajunge la 100</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Cand vietile ajung la 0</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Cand apesi tasta Escape</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Verificam daca mai avem vieti ramase.
+</div>
+</div>
+</div>
+<!-- Atom 7 -->
+<div class="atom" data-quiz='[{"question": "Care dintre urmatoarele NU este o imbunatatire buna pentru joc?", "options": ["Adaugi sunete cand prinzi fructe", "Faci fructul sa cada din ce in ce mai repede", "Stergi tot codul si incepi alt proiect"], "correct": "c", "hint": "Imbunatatirile adauga la joc, nu il sterg."}]' id="atom-7">
+<div class="atom-header">
+<div class="atom-number">7</div>
+<h3 class="atom-title">Pasul 6: Imbunatatiri (Bonus)</h3>
+</div>
+<div class="atom-content">
+<p>Jocul de baza functioneaza! Acum poti adauga <strong>imbunatatiri</strong>:</p>
+<div class="project-step">
+<div class="project-step-title">Idei de imbunatatire</div>
+<ul class="checklist">
+<li><strong>Sunete</strong> - adauga sunet cand prinzi fructul</li>
+<li><strong>Dificultate crescanda</strong> - fructul cade mai repede pe masura ce scorul creste</li>
+<li><strong>Mai multe fructe</strong> - cloneaza fructul pentru a avea mai multe simultan</li>
+<li><strong>Fructe diferite</strong> - unele dau mai multe puncte</li>
+<li><strong>Obstacole</strong> - adauga obiecte de evitat (daca le prinzi, pierzi vieti)</li>
+</ul>
+</div>
+<p><strong>Exemplu: Dificultate crescanda</strong></p>
+<p>In loc de "schimba y cu -5", foloseste:</p>
+<div class="scratch-stack">
+<span class="scratch-block motion">schimba y cu ((-5) - ((scor) / (10)))</span>
+</div>
+<p>Cu cat scorul e mai mare, cu atat fructul cade mai repede!</p>
+</div>
+<div class="atom-quiz" data-qid="atom-7-q0">
+<div class="atom-question-text">Care dintre urmatoarele NU este o imbunatatire buna pentru joc?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Adaugi sunete cand prinzi fructe</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Faci fructul sa cada din ce in ce mai repede</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Stergi tot codul si incepi alt proiect</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Imbunatatirile adauga la joc, nu il sterg.
+</div>
+</div>
+</div>
+</main>
+<!-- Restart Section -->
+<section class="restart-section">
+<p style="color: var(--text-secondary); margin-bottom: 1rem;">
+Vrei un punctaj mai bun? Poti relua lectia de la inceput.
+</p>
+<button class="btn" onclick="restartLesson()" style="background: var(--error); color: white; margin-right: 0.5rem;">
+↺ Reia lectia
+</button>
+<button class="btn btn-primary" onclick="downloadProgress()">
+💾 Descarca progresul (JSON)
+</button>
+</section>
+</div>
+<footer>
+<p>© 2026 LearningHub | <a href="index.html">Inapoi la modul</a></p>
+</footer>
+<!-- Scripts -->
+<script src="../../../../assets/js/user-system.js"></script>
+<script src="../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../assets/js/lesson-summary.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    AtomicLearning.init('cls5-m4-scratch-lectia5-proiect');
+    LessonSummary.init('cls5-m4-scratch-lectia5-proiect');
+});
+
+function restartLesson() {
+    if (confirm('Esti sigur ca vrei sa reiei lectia? Tot progresul va fi sters.')) {
+        localStorage.removeItem('atomic-progress-cls5-m4-scratch-lectia5-proiect');
+        localStorage.removeItem('lesson-summary-cls5-m4-scratch-lectia5-proiect');
+        window.location.reload();
+    }
+}
+
+function downloadProgress() {
+    LessonSummary.downloadProgress('cls5-m4-scratch-lectia5-proiect-progres.json');
+}
+</script>
+</body>
+</html>

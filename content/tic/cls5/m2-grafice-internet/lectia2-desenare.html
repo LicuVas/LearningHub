@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Desenare forme | TIC Clasa a V-a</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+    :root {
+        --bg-primary: #0a0a12;
+        --bg-card: #1a1a2e;
+        --bg-card-hover: #252540;
+        --accent-blue: #3b82f6;
+        --accent-blue-light: #60a5fa;
+        --accent-purple: #8b5cf6;
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0b0;
+        --border-color: #2a2a4a;
+        --success: #22c55e;
+        --error: #ef4444;
+        --warning: #f59e0b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+        line-height: 1.6;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+    .nav-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 2rem;
+    }
+
+    .nav-link {
+        color: var(--accent-blue);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+    }
+
+    .nav-link:hover { color: var(--accent-blue-light); }
+
+    .lesson-header { text-align: center; margin-bottom: 2rem; }
+
+    .lesson-badge {
+        display: inline-block;
+        background: var(--accent-purple);
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .lesson-title {
+        font-size: 2.25rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .lesson-subtitle { color: var(--text-secondary); font-size: 1rem; }
+
+    .progress-container {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .progress-label { font-size: 0.875rem; color: var(--text-secondary); white-space: nowrap; }
+    .progress-bar-wrapper { flex: 1; height: 8px; background: var(--bg-primary); border-radius: 4px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--success)); width: 0%; transition: width 0.5s ease; border-radius: 4px; }
+    .progress-percent { font-weight: 600; color: var(--accent-blue-light); min-width: 45px; text-align: right; }
+
+    .goal-section {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+        border: 1px solid var(--accent-purple);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .goal-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .goal-icon { font-size: 1.5rem; }
+    .goal-title { font-size: 1.25rem; font-weight: 600; color: var(--accent-purple); }
+    .goal-text { font-style: italic; color: var(--text-secondary); font-size: 1.1rem; }
+
+    .atom {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .atom.atom-completed { border-color: var(--success); background: rgba(34, 197, 94, 0.05); }
+
+    .atom-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+
+    .atom-number {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .atom-completed .atom-number { background: var(--success); }
+
+    .atom-title { font-size: 1.25rem; font-weight: 600; }
+
+    .atom-content { color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .atom-content p { margin-bottom: 0.75rem; }
+
+    .atom-quiz { background: var(--bg-primary); border-radius: 12px; padding: 1.25rem; }
+
+    .atom-question-text { font-weight: 600; margin-bottom: 1rem; color: var(--text-primary); }
+
+    .atom-options { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .atom-option {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        background: var(--bg-card);
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .atom-option:hover { border-color: var(--accent-blue); transform: translateX(4px); }
+    .atom-option.selected { border-color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); }
+    .atom-option.correct { border-color: var(--success); background: rgba(34, 197, 94, 0.15); }
+    .atom-option.incorrect { border-color: var(--error); background: rgba(239, 68, 68, 0.15); }
+    .atom-option.locked { pointer-events: none; opacity: 0.7; }
+
+    .option-letter {
+        width: 28px;
+        height: 28px;
+        background: var(--bg-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+
+    .atom-feedback {
+        margin-top: 1rem;
+        padding: 0.875rem;
+        border-radius: 8px;
+        display: none;
+        font-weight: 500;
+    }
+
+    .atom-feedback.correct { display: block; background: rgba(34, 197, 94, 0.15); border: 1px solid var(--success); color: var(--success); }
+    .atom-feedback.incorrect { display: block; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--error); color: var(--error); }
+
+    .atom-hint {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid var(--warning);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: var(--warning);
+    }
+
+    .hint-icon { margin-right: 0.5rem; }
+    .feedback-icon { margin-right: 0.5rem; }
+
+    .restart-section {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary { background: var(--accent-blue); color: white; }
+    .btn-primary:hover { background: var(--accent-blue-light); }
+
+    footer {
+        text-align: center;
+        padding: 2rem 0;
+        border-top: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin-top: 2rem;
+    }
+
+    footer a { color: var(--accent-blue); }
+
+    @media (max-width: 768px) {
+        .container { padding: 1rem; }
+        .lesson-title { font-size: 1.75rem; }
+    }
+</style>
+<link href="../../../../assets/css/mobile-first.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="container">
+<!-- Navigation -->
+<nav class="nav-bar">
+<a class="nav-link" href="lectia1-paint-interfata.html">
+<span>←</span> Lectia anterioara
+</a>
+<a class="nav-link" href="lectia3-culori-selectie.html">
+Lectia urmatoare <span>→</span>
+</a>
+</nav>
+<!-- Lesson Header -->
+<header class="lesson-header">
+<span class="lesson-badge">Invatare Atomica</span>
+<h1 class="lesson-title">Desenez forme si linii!</h1>
+<p class="lesson-subtitle">Citeste fiecare concept, apoi raspunde la intrebari pentru a continua</p>
+</header>
+<!-- Progress -->
+<div class="progress-container">
+<span class="progress-label">Progres lectie:</span>
+<div class="progress-bar-wrapper">
+<div class="progress-bar-fill" id="progress-fill"></div>
+</div>
+<span class="progress-percent" id="progress-percent">0%</span>
+</div>
+<!-- GOAL Section -->
+<section class="goal-section">
+<div class="goal-header">
+<span class="goal-icon">🎯</span>
+<h2 class="goal-title">Obiectivul lectiei</h2>
+</div>
+<p class="goal-text">"Dupa aceasta lectie vei sti sa desenezi forme geometrice, linii drepte si sa desenezi liber cu creionul si pensula!"</p>
+</section>
+<!-- Atomic Content -->
+<main id="atomic-content">
+<!-- Atom 1 -->
+<div class="atom" data-quiz='[{"question": "Ce instrument folosesti pentru a desena liber in Paint?", "options": ["Instrumentul Shape", "Creionul sau Pensula", "Galeata cu vopsea"], "correct": "b", "hint": "Gandeste-te la ce folosesti cand desenezi pe hartie."}]' id="atom-1">
+<div class="atom-header">
+<div class="atom-number">1</div>
+<h3 class="atom-title">Desenul liber - Creion si Pensula</h3>
+</div>
+<div class="atom-content">
+<p>Pentru a desena liber, ca pe hartie, folosesti <strong>Creionul</strong> (Pencil) sau <strong>Pensula</strong> (Brush).</p>
+<p>✏️ <strong>Creionul</strong> - face linii subtiri si precise, ca un creion real</p>
+<p>🖌️ <strong>Pensula</strong> - face linii mai groase si poti alege diferite forme (rotunda, patrata, etc.)</p>
+<p>Tine apasat butonul stang al mouse-ului si misca-l pentru a desena!</p>
+</div>
+<div class="atom-quiz" data-qid="atom-1-q0">
+<div class="atom-question-text">Ce instrument folosesti pentru a desena liber in Paint?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Instrumentul Shape</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Creionul sau Pensula</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Galeata cu vopsea</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Gandeste-te la ce folosesti cand desenezi pe hartie.
+</div>
+</div>
+</div>
+<!-- Atom 2 -->
+<div class="atom" data-quiz='[{"question": "Unde gasesti formele geometrice gata facute in Paint?", "options": ["In meniul File", "In sectiunea Shapes din toolbar", "Nu exista forme in Paint"], "correct": "b", "hint": "Shapes inseamna forme in engleza."}]' id="atom-2">
+<div class="atom-header">
+<div class="atom-number">2</div>
+<h3 class="atom-title">Forme geometrice (Shapes)</h3>
+</div>
+<div class="atom-content">
+<p>Paint are forme geometrice gata facute pe care le poti desena usor. Le gasesti in sectiunea <strong>Shapes</strong> din toolbar.</p>
+<p>⬜ <strong>Dreptunghi</strong> (Rectangle) - pentru case, ferestre, ecrane</p>
+<p>⭕ <strong>Elipsa/Cerc</strong> (Ellipse) - pentru sori, mingi, fete</p>
+<p>🔺 <strong>Triunghi</strong> (Triangle) - pentru acoperisuri, sageți</p>
+<p>⭐ <strong>Stea</strong> (Star) - pentru decoratiuni</p>
+</div>
+<div class="atom-quiz" data-qid="atom-2-q0">
+<div class="atom-question-text">Unde gasesti formele geometrice gata facute in Paint?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">In meniul File</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">In sectiunea Shapes din toolbar</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Nu exista forme in Paint</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Shapes inseamna forme in engleza.
+</div>
+</div>
+</div>
+<!-- Atom 3 -->
+<div class="atom" data-quiz='[{"question": "Cum desenezi un patrat perfect in Paint?", "options": ["Desenezi de mana libera", "Tii apasat Shift cand desenezi dreptunghiul", "Nu se poate desena un patrat perfect"], "correct": "b", "hint": "Tasta Shift te ajuta sa faci forme regulate."}]' id="atom-3">
+<div class="atom-header">
+<div class="atom-number">3</div>
+<h3 class="atom-title">Trucul cu Shift - Forme perfecte</h3>
+</div>
+<div class="atom-content">
+<p>Vrei sa desenezi un <strong>patrat perfect</strong> sau un <strong>cerc perfect</strong>? Foloseste tasta <strong>Shift</strong>!</p>
+<p>🔲 Dreptunghi + Shift = <strong>Patrat perfect</strong></p>
+<p>⭕ Elipsa + Shift = <strong>Cerc perfect</strong></p>
+<p>📏 Linie + Shift = <strong>Linie dreapta</strong> (orizontala, verticala sau la 45°)</p>
+<p>Tine apasat Shift in timp ce tragi forma cu mouse-ul!</p>
+</div>
+<div class="atom-quiz" data-qid="atom-3-q0">
+<div class="atom-question-text">Cum desenezi un patrat perfect in Paint?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Desenezi de mana libera</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Tii apasat Shift cand desenezi dreptunghiul</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Nu se poate desena un patrat perfect</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Tasta Shift te ajuta sa faci forme regulate.
+</div>
+</div>
+</div>
+<!-- Atom 4 -->
+<div class="atom" data-quiz='[{"question": "Ce optiuni ai pentru conturul unei forme?", "options": ["Doar contur negru", "Contur, fara contur, sau contur cu umplere", "Nu poti schimba conturul"], "correct": "b", "hint": "Outline inseamna contur, Fill inseamna umplere."}]' id="atom-4">
+<div class="atom-header">
+<div class="atom-number">4</div>
+<h3 class="atom-title">Contur si umplere (Outline & Fill)</h3>
+</div>
+<div class="atom-content">
+<p>Cand desenezi o forma, poti alege cum sa arate:</p>
+<p>📦 <strong>Outline</strong> (Contur) - doar marginea formei, fara culoare inauntru</p>
+<p>🟦 <strong>Fill</strong> (Umplere) - forma plina cu culoare, fara contur vizibil</p>
+<p>🔳 <strong>Outline + Fill</strong> - si contur si culoare inauntru</p>
+<p>Gasesti aceste optiuni in toolbar dupa ce selectezi o forma.</p>
+</div>
+<div class="atom-quiz" data-qid="atom-4-q0">
+<div class="atom-question-text">Ce optiuni ai pentru conturul unei forme?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Doar contur negru</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Contur, fara contur, sau contur cu umplere</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Nu poti schimba conturul</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Outline inseamna contur, Fill inseamna umplere.
+</div>
+</div>
+</div>
+<!-- Atom 5 -->
+<div class="atom" data-quiz='[{"question": "Cum desenezi o linie dreapta in Paint?", "options": ["Selectezi instrumentul Line si tragi de la un punct la altul", "Folosesti pensula si incerci sa mergi drept", "Liniile nu se pot desena in Paint"], "correct": "a", "hint": "Exista un instrument special pentru linii."}]' id="atom-5">
+<div class="atom-header">
+<div class="atom-number">5</div>
+<h3 class="atom-title">Linii drepte (Line Tool)</h3>
+</div>
+<div class="atom-content">
+<p>Pentru a desena <strong>linii drepte</strong>, foloseste instrumentul <strong>Line</strong> (Linie) din sectiunea Shapes.</p>
+<p>1️⃣ Selecteaza instrumentul Line</p>
+<p>2️⃣ Click unde vrei sa inceapa linia</p>
+<p>3️⃣ Trage pana unde vrei sa se termine</p>
+<p>4️⃣ Elibereaza butonul mouse-ului</p>
+<p>Sfat: Tine Shift pentru linii perfect orizontale, verticale sau diagonale!</p>
+</div>
+<div class="atom-quiz" data-qid="atom-5-q0">
+<div class="atom-question-text">Cum desenezi o linie dreapta in Paint?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Selectezi instrumentul Line si tragi de la un punct la altul</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Folosesti pensula si incerci sa mergi drept</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Liniile nu se pot desena in Paint</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Exista un instrument special pentru linii.
+</div>
+</div>
+</div>
+<!-- Atom 6 -->
+<div class="atom" data-quiz='[{"question": "Cum schimbi grosimea liniei sau a pensulei?", "options": ["Nu se poate schimba grosimea", "Din optiunea Size din toolbar", "Trebuie sa reinstalezi Paint"], "correct": "b", "hint": "Size inseamna marime/grosime."}]' id="atom-6">
+<div class="atom-header">
+<div class="atom-number">6</div>
+<h3 class="atom-title">Grosimea liniei (Size)</h3>
+</div>
+<div class="atom-content">
+<p>Poti schimba cat de groasa este linia pe care o desenezi. Gasesti optiunea <strong>Size</strong> (Marime) in toolbar.</p>
+<p>De obicei ai mai multe optiuni, de la foarte subtire la foarte groasa.</p>
+<p>🔸 Linie subtire - pentru detalii fine</p>
+<p>🔹 Linie medie - pentru desenul obisnuit</p>
+<p>⬛ Linie groasa - pentru contururi puternice</p>
+</div>
+<div class="atom-quiz" data-qid="atom-6-q0">
+<div class="atom-question-text">Cum schimbi grosimea liniei sau a pensulei?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Nu se poate schimba grosimea</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Din optiunea Size din toolbar</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Trebuie sa reinstalezi Paint</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Size inseamna marime/grosime.
+</div>
+</div>
+</div>
+<!-- Atom 7 -->
+<div class="atom" data-quiz='[{"question": "Ce forma geometrica ai folosi pentru a desena un acoperiş de casa?", "options": ["Cerc", "Triunghi", "Stea"], "correct": "b", "hint": "Gandeste-te la forma unui acoperis vazut din fata."}]' id="atom-7">
+<div class="atom-header">
+<div class="atom-number">7</div>
+<h3 class="atom-title">Practica: Deseneaza o casa!</h3>
+</div>
+<div class="atom-content">
+<p>Hai sa punem in practica ce am invatat! Pentru a desena o casa simpla:</p>
+<p>🏠 <strong>Pasul 1:</strong> Deseneaza un dreptunghi mare (corpul casei)</p>
+<p>🔺 <strong>Pasul 2:</strong> Adauga un triunghi deasupra (acoperisul)</p>
+<p>🚪 <strong>Pasul 3:</strong> Un dreptunghi mic pentru usa</p>
+<p>🪟 <strong>Pasul 4:</strong> Patrate pentru ferestre (foloseste Shift!)</p>
+<p>☀️ <strong>Pasul 5:</strong> Un cerc galben pentru soare</p>
+</div>
+<div class="atom-quiz" data-qid="atom-7-q0">
+<div class="atom-question-text">Ce forma geometrica ai folosi pentru a desena un acoperis de casa?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Cerc</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Triunghi</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Stea</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">💡</span> Gandeste-te la forma unui acoperis vazut din fata.
+</div>
+</div>
+</div>
+</main>
+<!-- Lesson Summary -->
+<div id="lesson-summary" style="display: none;"></div>
+<!-- Restart Section -->
+<section class="restart-section">
+<p style="color: var(--text-secondary); margin-bottom: 1rem;">
+Vrei un punctaj mai bun? Poti relua lectia de la inceput.
+</p>
+<button class="btn" onclick="restartLesson()" style="background: var(--error); color: white; margin-right: 0.5rem;">
+↺ Reia lectia
+</button>
+<button class="btn btn-primary" onclick="downloadProgress()">
+💾 Descarca progresul (JSON)
+</button>
+</section>
+</div>
+<footer>
+<p>© 2026 Prof. Gurlan Vasile | <a href="index.html">Inapoi la modul</a></p>
+</footer>
+<!-- User System -->
+<script src="../../../../assets/js/user-system.js"></script>
+<!-- Atomic Learning System -->
+<script src="../../../../assets/js/atomic-learning.js"></script>
+<!-- Lesson Summary System -->
+<script src="../../../../assets/js/lesson-summary.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    AtomicLearning.init('cls5-m2-grafice-internet-lectia2-desenare');
+    LessonSummary.init('cls5-m2-grafice-internet-lectia2-desenare');
+});
+
+function restartLesson() {
+    if (confirm('Esti sigur ca vrei sa reiei lectia? Tot progresul va fi sters.')) {
+        localStorage.removeItem('atomic-progress-cls5-m2-grafice-internet-lectia2-desenare');
+        localStorage.removeItem('lesson-summary-cls5-m2-grafice-internet-lectia2-desenare');
+        window.location.reload();
+    }
+}
+
+function downloadProgress() {
+    LessonSummary.downloadProgress('cls5-m2-grafice-internet-lectia2-desenare-progres.json');
+}
+</script>
+</body>
+</html>

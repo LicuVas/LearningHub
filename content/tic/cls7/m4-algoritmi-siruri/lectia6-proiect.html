@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Proiect - Algoritmi cu siruri | TIC Clasa a VII-a</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+    :root {
+        --bg-primary: #0a0a12;
+        --bg-card: #1a1a2e;
+        --bg-card-hover: #252540;
+        --accent-blue: #3b82f6;
+        --accent-blue-light: #60a5fa;
+        --accent-purple: #8b5cf6;
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0b0;
+        --border-color: #2a2a4a;
+        --success: #22c55e;
+        --error: #ef4444;
+        --warning: #f59e0b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+        line-height: 1.6;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+    .nav-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 2rem;
+    }
+
+    .nav-link {
+        color: var(--accent-blue);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+    }
+
+    .nav-link:hover { color: var(--accent-blue-light); }
+
+    .lesson-header { text-align: center; margin-bottom: 2rem; }
+
+    .lesson-badge {
+        display: inline-block;
+        background: var(--accent-purple);
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .lesson-title {
+        font-size: 2.25rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .lesson-subtitle { color: var(--text-secondary); font-size: 1rem; }
+
+    .progress-container {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .progress-label { font-size: 0.875rem; color: var(--text-secondary); white-space: nowrap; }
+    .progress-bar-wrapper { flex: 1; height: 8px; background: var(--bg-primary); border-radius: 4px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--success)); width: 0%; transition: width 0.5s ease; border-radius: 4px; }
+    .progress-percent { font-weight: 600; color: var(--accent-blue-light); min-width: 45px; text-align: right; }
+
+    .goal-section {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+        border: 1px solid var(--accent-purple);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .goal-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .goal-icon { font-size: 1.5rem; }
+    .goal-title { font-size: 1.25rem; font-weight: 600; color: var(--accent-purple); }
+    .goal-text { font-style: italic; color: var(--text-secondary); font-size: 1.1rem; }
+
+    .atom {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .atom.atom-completed { border-color: var(--success); background: rgba(34, 197, 94, 0.05); }
+
+    .atom-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+
+    .atom-number {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .atom-completed .atom-number { background: var(--success); }
+
+    .atom-title { font-size: 1.25rem; font-weight: 600; }
+
+    .atom-content { color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .atom-content p { margin-bottom: 0.75rem; }
+
+    .atom-quiz { background: var(--bg-primary); border-radius: 12px; padding: 1.25rem; }
+
+    .atom-question-text { font-weight: 600; margin-bottom: 1rem; color: var(--text-primary); }
+
+    .atom-options { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .atom-option {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        background: var(--bg-card);
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .atom-option:hover { border-color: var(--accent-blue); transform: translateX(4px); }
+    .atom-option.selected { border-color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); }
+    .atom-option.correct { border-color: var(--success); background: rgba(34, 197, 94, 0.15); }
+    .atom-option.incorrect { border-color: var(--error); background: rgba(239, 68, 68, 0.15); }
+    .atom-option.locked { pointer-events: none; opacity: 0.7; }
+
+    .option-letter {
+        width: 28px;
+        height: 28px;
+        background: var(--bg-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+
+    .atom-feedback {
+        margin-top: 1rem;
+        padding: 0.875rem;
+        border-radius: 8px;
+        display: none;
+        font-weight: 500;
+    }
+
+    .atom-feedback.correct { display: block; background: rgba(34, 197, 94, 0.15); border: 1px solid var(--success); color: var(--success); }
+    .atom-feedback.incorrect { display: block; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--error); color: var(--error); }
+
+    .atom-hint {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid var(--warning);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: var(--warning);
+    }
+
+    .hint-icon { margin-right: 0.5rem; }
+    .feedback-icon { margin-right: 0.5rem; }
+
+    .restart-section {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary { background: var(--accent-blue); color: white; }
+    .btn-primary:hover { background: var(--accent-blue-light); }
+
+    .code-block {
+        background: #1e1e3f;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.95rem;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+    }
+
+    .code-block .keyword { color: #ff79c6; }
+    .code-block .number { color: #bd93f9; }
+    .code-block .comment { color: #6272a4; }
+    .code-block .variable { color: #50fa7b; }
+
+    .visual-box {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+        border: 1px solid var(--accent-blue);
+        border-radius: 12px;
+        padding: 1rem;
+        margin: 1rem 0;
+        text-align: center;
+    }
+
+    .array-visual {
+        display: flex;
+        justify-content: center;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+        margin: 1rem 0;
+    }
+
+    .array-cell {
+        width: 55px;
+        height: 55px;
+        background: var(--accent-blue);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
+    .array-cell .index {
+        font-size: 0.7rem;
+        opacity: 0.7;
+    }
+
+    .array-cell .value {
+        font-size: 1.2rem;
+    }
+
+    .project-box {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+        border: 2px solid var(--accent-purple);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+    }
+
+    .project-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: var(--accent-purple);
+        margin-bottom: 1rem;
+    }
+
+    .result-box {
+        background: rgba(34, 197, 94, 0.2);
+        border: 2px solid var(--success);
+        border-radius: 12px;
+        padding: 1rem;
+        margin: 1rem 0;
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+
+    .checklist {
+        list-style: none;
+        margin: 1rem 0;
+    }
+
+    .checklist li {
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .checklist li::before {
+        content: "&#9744;";
+        font-size: 1.2rem;
+    }
+
+    footer {
+        text-align: center;
+        padding: 2rem 0;
+        border-top: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin-top: 2rem;
+    }
+
+    footer a { color: var(--accent-blue); }
+
+    @media (max-width: 768px) {
+        .container { padding: 1rem; }
+        .lesson-title { font-size: 1.75rem; }
+    }
+</style>
+<link href="../../../../assets/css/mobile-first.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="container">
+<!-- Navigation -->
+<nav class="nav-bar">
+<a class="nav-link" href="lectia5-maxim-minim.html">
+<span>&#8592;</span> Lectia anterioara
+</a>
+<a class="nav-link" href="index.html">
+Inapoi la modul <span>&#8594;</span>
+</a>
+</nav>
+<!-- Lesson Header -->
+<header class="lesson-header">
+<span class="lesson-badge">Proiect Final</span>
+<h1 class="lesson-title">Proiect: Analiza completa a unui sir</h1>
+<p class="lesson-subtitle">Aplica tot ce ai invatat intr-un proiect practic!</p>
+</header>
+<!-- Progress -->
+<div class="progress-container">
+<span class="progress-label">Progres lectie:</span>
+<div class="progress-bar-wrapper">
+<div class="progress-bar-fill" id="progress-fill"></div>
+</div>
+<span class="progress-percent" id="progress-percent">0%</span>
+</div>
+<!-- GOAL Section -->
+<section class="goal-section">
+<div class="goal-header">
+<span class="goal-icon">&#127919;</span>
+<h2 class="goal-title">Obiectivul proiectului</h2>
+</div>
+<p class="goal-text">"Vei crea un algoritm complet care analizeaza un sir de note si afiseaza statistici utile: suma, media, maxim, minim, si clasificari!"</p>
+</section>
+<!-- Atomic Content -->
+<main id="atomic-content">
+<!-- Atom 1 -->
+<div class="atom" data-quiz='[{"question": "Ce facem prima data intr-un algoritm cu siruri?", "options": ["Calculam media", "Citim dimensiunea (n) si elementele", "Afisam rezultatele"], "correct": "b", "hint": "Intai citim datele, apoi le prelucram."}]' id="atom-1">
+<div class="atom-header">
+<div class="atom-number">1</div>
+<h3 class="atom-title">Proiectul: Catalog de note</h3>
+</div>
+<div class="atom-content">
+<p>Vom crea un program care analizeaza notele unui elev la o materie si calculeaza:</p>
+<div class="project-box">
+<div class="project-title">&#128202; Cerinte proiect:</div>
+<ul style="margin-left: 1.5rem;">
+<li>Citeste n note ale elevului</li>
+<li>Calculeaza <strong>suma</strong> notelor</li>
+<li>Calculeaza <strong>media</strong> aritmetica</li>
+<li>Gaseste nota <strong>maxima</strong> si <strong>minima</strong></li>
+<li>Numara cate note sunt <strong>peste medie</strong></li>
+<li>Afiseaza daca elevul este <strong>promovat</strong> (media &ge; 5)</li>
+</ul>
+</div>
+</div>
+<div class="atom-quiz" data-qid="atom-1-q0">
+<div class="atom-question-text">Ce facem prima data intr-un algoritm cu siruri?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Calculam media</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Citim dimensiunea (n) si elementele</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Afisam rezultatele</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">&#128161;</span> Intai citim datele, apoi le prelucram.
+</div>
+</div>
+</div>
+
+<!-- Atom 2 -->
+<div class="atom" data-quiz='[{"question": "Cand citim notele, ce structura folosim?", "options": ["DACA-ATUNCI", "FOR (bucla)", "Nu folosim nimic special"], "correct": "b", "hint": "FOR ne permite sa citim fiecare nota pe rand."}]' id="atom-2">
+<div class="atom-header">
+<div class="atom-number">2</div>
+<h3 class="atom-title">Pasul 1: Citirea datelor</h3>
+</div>
+<div class="atom-content">
+<p>Incepem prin a citi cate note are elevul si apoi fiecare nota:</p>
+<div class="code-block">
+<span class="keyword">SCRIE</span>("Cate note are elevul? ")<br/>
+<span class="keyword">CITESTE</span> <span class="variable">n</span><br/><br/>
+<span class="keyword">SCRIE</span>("Introdu notele: ")<br/>
+<span class="keyword">PENTRU</span> <span class="variable">i</span> = <span class="number">1</span>, <span class="variable">n</span> <span class="keyword">EXECUTA</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">CITESTE</span> <span class="variable">note</span>[<span class="variable">i</span>]<br/>
+<span class="keyword">SFARSIT_PENTRU</span>
+</div>
+<div class="visual-box">
+<p><strong>Exemplu: 5 note citite</strong></p>
+<div class="array-visual">
+<div class="array-cell"><span class="index">[1]</span><span class="value">8</span></div>
+<div class="array-cell"><span class="index">[2]</span><span class="value">6</span></div>
+<div class="array-cell"><span class="index">[3]</span><span class="value">9</span></div>
+<div class="array-cell"><span class="index">[4]</span><span class="value">7</span></div>
+<div class="array-cell"><span class="index">[5]</span><span class="value">10</span></div>
+</div>
+</div>
+</div>
+<div class="atom-quiz" data-qid="atom-2-q0">
+<div class="atom-question-text">Cand citim notele, ce structura folosim?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">DACA-ATUNCI</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">FOR (bucla)</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Nu folosim nimic special</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">&#128161;</span> FOR ne permite sa citim fiecare nota pe rand.
+</div>
+</div>
+</div>
+
+<!-- Atom 3 -->
+<div class="atom" data-quiz='[{"question": "Putem calcula suma, maxim si minim in aceeasi parcurgere?", "options": ["Nu, trebuie parcurgeri separate", "Da, le calculam pe toate deodata", "Doar suma si media impreuna"], "correct": "b", "hint": "Eficient: facem totul intr-o singura parcurgere!"}]' id="atom-3">
+<div class="atom-header">
+<div class="atom-number">3</div>
+<h3 class="atom-title">Pasul 2: Calculele principale</h3>
+</div>
+<div class="atom-content">
+<p>Calculam suma, maximul si minimul intr-o singura parcurgere (eficient!):</p>
+<div class="code-block">
+<span class="variable">suma</span> = <span class="number">0</span><br/>
+<span class="variable">maxim</span> = <span class="variable">note</span>[<span class="number">1</span>]<br/>
+<span class="variable">minim</span> = <span class="variable">note</span>[<span class="number">1</span>]<br/><br/>
+<span class="keyword">PENTRU</span> <span class="variable">i</span> = <span class="number">1</span>, <span class="variable">n</span> <span class="keyword">EXECUTA</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="variable">suma</span> = <span class="variable">suma</span> + <span class="variable">note</span>[<span class="variable">i</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">DACA</span> <span class="variable">note</span>[<span class="variable">i</span>] &gt; <span class="variable">maxim</span> <span class="keyword">ATUNCI</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="variable">maxim</span> = <span class="variable">note</span>[<span class="variable">i</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">SFARSIT_DACA</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">DACA</span> <span class="variable">note</span>[<span class="variable">i</span>] &lt; <span class="variable">minim</span> <span class="keyword">ATUNCI</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="variable">minim</span> = <span class="variable">note</span>[<span class="variable">i</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">SFARSIT_DACA</span><br/>
+<span class="keyword">SFARSIT_PENTRU</span>
+</div>
+</div>
+<div class="atom-quiz" data-qid="atom-3-q0">
+<div class="atom-question-text">Putem calcula suma, maxim si minim in aceeasi parcurgere?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Nu, trebuie parcurgeri separate</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Da, le calculam pe toate deodata</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Doar suma si media impreuna</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">&#128161;</span> Eficient: facem totul intr-o singura parcurgere!
+</div>
+</div>
+</div>
+
+<!-- Atom 4 -->
+<div class="atom" data-quiz='[{"question": "Pentru a numara notele peste medie, ce conditie verificam?", "options": ["note[i] > n", "note[i] > media", "note[i] > suma"], "correct": "b", "hint": "Comparam fiecare nota cu media calculata."}]' id="atom-4">
+<div class="atom-header">
+<div class="atom-number">4</div>
+<h3 class="atom-title">Pasul 3: Media si analiza</h3>
+</div>
+<div class="atom-content">
+<p>Calculam media si numaram notele peste medie:</p>
+<div class="code-block">
+<span class="variable">media</span> = <span class="variable">suma</span> / <span class="variable">n</span><br/><br/>
+<span class="comment">// Numaram notele peste medie</span><br/>
+<span class="variable">peste_medie</span> = <span class="number">0</span><br/>
+<span class="keyword">PENTRU</span> <span class="variable">i</span> = <span class="number">1</span>, <span class="variable">n</span> <span class="keyword">EXECUTA</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">DACA</span> <span class="variable">note</span>[<span class="variable">i</span>] &gt; <span class="variable">media</span> <span class="keyword">ATUNCI</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="variable">peste_medie</span> = <span class="variable">peste_medie</span> + <span class="number">1</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">SFARSIT_DACA</span><br/>
+<span class="keyword">SFARSIT_PENTRU</span>
+</div>
+<div class="visual-box">
+<p><strong>Exemplu: note = [8, 6, 9, 7, 10], media = 8</strong></p>
+<p>Note peste medie: 9, 10 &#8594; <strong>2 note</strong></p>
+</div>
+</div>
+<div class="atom-quiz" data-qid="atom-4-q0">
+<div class="atom-question-text">Pentru a numara notele peste medie, ce conditie verificam?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">note[i] &gt; n</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">note[i] &gt; media</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">note[i] &gt; suma</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">&#128161;</span> Comparam fiecare nota cu media calculata.
+</div>
+</div>
+</div>
+
+<!-- Atom 5 -->
+<div class="atom" data-quiz='[{"question": "Ce conditie verifica daca elevul este promovat?", "options": ["media > 10", "media >= 5", "media = 5"], "correct": "b", "hint": "Promovat inseamna media cel putin 5."}]' id="atom-5">
+<div class="atom-header">
+<div class="atom-number">5</div>
+<h3 class="atom-title">Pasul 4: Rezultatul final</h3>
+</div>
+<div class="atom-content">
+<p>Afisam toate rezultatele si verificam promovarea:</p>
+<div class="code-block">
+<span class="keyword">SCRIE</span>("===== REZULTATE =====")<br/>
+<span class="keyword">SCRIE</span>("Suma notelor: ", <span class="variable">suma</span>)<br/>
+<span class="keyword">SCRIE</span>("Media: ", <span class="variable">media</span>)<br/>
+<span class="keyword">SCRIE</span>("Nota maxima: ", <span class="variable">maxim</span>)<br/>
+<span class="keyword">SCRIE</span>("Nota minima: ", <span class="variable">minim</span>)<br/>
+<span class="keyword">SCRIE</span>("Note peste medie: ", <span class="variable">peste_medie</span>)<br/><br/>
+<span class="keyword">DACA</span> <span class="variable">media</span> &gt;= <span class="number">5</span> <span class="keyword">ATUNCI</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">SCRIE</span>("Elevul este PROMOVAT!")<br/>
+<span class="keyword">ALTFEL</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">SCRIE</span>("Elevul este NEPROMOVAT.")<br/>
+<span class="keyword">SFARSIT_DACA</span>
+</div>
+</div>
+<div class="atom-quiz" data-qid="atom-5-q0">
+<div class="atom-question-text">Ce conditie verifica daca elevul este promovat?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">media &gt; 10</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">media &gt;= 5</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">media = 5</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">&#128161;</span> Promovat inseamna media cel putin 5.
+</div>
+</div>
+</div>
+
+<!-- Atom 6 -->
+<div class="atom" data-quiz='[{"question": "Ce afiseaza programul pentru note = [8, 6, 9, 7, 10]?", "options": ["Suma=40, Media=8, Max=10, Min=6", "Suma=35, Media=7, Max=9, Min=6", "Suma=40, Media=10, Max=10, Min=8"], "correct": "a", "hint": "8+6+9+7+10=40, media=40/5=8."}]' id="atom-6">
+<div class="atom-header">
+<div class="atom-number">6</div>
+<h3 class="atom-title">Exemplu complet</h3>
+</div>
+<div class="atom-content">
+<p>Sa vedem rezultatele pentru un set de note:</p>
+<div class="visual-box">
+<p><strong>Note introduse: 8, 6, 9, 7, 10</strong></p>
+<div class="array-visual">
+<div class="array-cell"><span class="index">[1]</span><span class="value">8</span></div>
+<div class="array-cell" style="background: var(--error);"><span class="index">[2]</span><span class="value">6</span></div>
+<div class="array-cell"><span class="index">[3]</span><span class="value">9</span></div>
+<div class="array-cell"><span class="index">[4]</span><span class="value">7</span></div>
+<div class="array-cell" style="background: var(--success);"><span class="index">[5]</span><span class="value">10</span></div>
+</div>
+</div>
+<div class="result-box">
+<p>Suma: 40</p>
+<p>Media: 8.0</p>
+<p>Nota maxima: 10 (verde)</p>
+<p>Nota minima: 6 (rosu)</p>
+<p>Note peste medie: 2 (nota 9 si 10)</p>
+<p style="color: var(--success); margin-top: 0.5rem;">&#10003; PROMOVAT</p>
+</div>
+</div>
+<div class="atom-quiz" data-qid="atom-6-q0">
+<div class="atom-question-text">Ce afiseaza programul pentru note = [8, 6, 9, 7, 10]?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Suma=40, Media=8, Max=10, Min=6</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Suma=35, Media=7, Max=9, Min=6</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Suma=40, Media=10, Max=10, Min=8</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">&#128161;</span> 8+6+9+7+10=40, media=40/5=8.
+</div>
+</div>
+</div>
+
+<!-- Atom 7 -->
+<div class="atom" data-quiz='[{"question": "Ce ai invatat in acest modul despre siruri?", "options": ["Doar cum sa le citim", "Citire, parcurgere, suma, media, maxim, minim", "Doar calcule simple"], "correct": "b", "hint": "Ai invatat algoritmi completi pentru lucrul cu siruri!"}]' id="atom-7">
+<div class="atom-header">
+<div class="atom-number">7</div>
+<h3 class="atom-title">Recapitulare modul</h3>
+</div>
+<div class="atom-content">
+<p><strong>Ce ai invatat in acest modul:</strong></p>
+<div class="project-box">
+<ul style="margin-left: 1.5rem;">
+<li>&#10003; Structura <strong>FOR</strong> pentru repetitii</li>
+<li>&#10003; <strong>Siruri</strong> - colectii de date</li>
+<li>&#10003; <strong>Indexul</strong> - pozitia elementului</li>
+<li>&#10003; <strong>Parcurgerea</strong> sirurilor</li>
+<li>&#10003; Calculul <strong>sumei</strong> si <strong>mediei</strong></li>
+<li>&#10003; Gasirea <strong>maximului</strong> si <strong>minimului</strong></li>
+<li>&#10003; Combinarea algoritmilor intr-un <strong>proiect</strong></li>
+</ul>
+</div>
+<div class="visual-box">
+<p><strong>&#127881; Felicitari!</strong></p>
+<p>Acum poti crea programe care prelucreaza liste de date!</p>
+</div>
+</div>
+<div class="atom-quiz" data-qid="atom-7-q0">
+<div class="atom-question-text">Ce ai invatat in acest modul despre siruri?</div>
+<div class="atom-options">
+<div class="atom-option" data-answer="a">
+<span class="option-letter">A</span>
+<span class="option-text">Doar cum sa le citim</span>
+</div>
+<div class="atom-option" data-answer="b">
+<span class="option-letter">B</span>
+<span class="option-text">Citire, parcurgere, suma, media, maxim, minim</span>
+</div>
+<div class="atom-option" data-answer="c">
+<span class="option-letter">C</span>
+<span class="option-text">Doar calcule simple</span>
+</div>
+</div>
+<div class="atom-feedback"></div>
+<div class="atom-hint" style="display: none;">
+<span class="hint-icon">&#128161;</span> Ai invatat algoritmi completi pentru lucrul cu siruri!
+</div>
+</div>
+</div>
+
+<!-- PRACTICA AVANSATA -->
+<section class="practice-advanced" id="practice-advanced">
+<div class="practice-advanced-header">
+<span class="practice-advanced-icon">&#127942;</span>
+<div>
+<h3 class="practice-advanced-title">Proiect Final</h3>
+<p class="practice-advanced-subtitle">Completeaza proiectul pentru nota maxima!</p>
+</div>
+</div>
+
+<div class="practice-exercise" data-type="proiect">
+<h4>&#128187; Proiect: Analizator de temperaturi</h4>
+<p>Adapteaza proiectul "Catalog de note" pentru a analiza temperaturile unei saptamani:</p>
+<div class="project-checklist">
+<p><strong>Cerinte obligatorii:</strong></p>
+<ul class="checklist">
+<li><label><input type="checkbox"/> Citeste 7 temperaturi (pentru fiecare zi)</label></li>
+<li><label><input type="checkbox"/> Calculeaza temperatura medie</label></li>
+<li><label><input type="checkbox"/> Gaseste temperatura maxima si minima</label></li>
+<li><label><input type="checkbox"/> Numara zilele cu temperatura peste 20 grade</label></li>
+<li><label><input type="checkbox"/> Afiseaza daca a fost o saptamana calda (media > 15)</label></li>
+</ul>
+</div>
+<div class="project-bonus">
+<p><strong>&#11088; Bonus (pentru nota maxima):</strong></p>
+<ul>
+<li>Calculeaza amplitudinea termica (max - min)</li>
+<li>Afiseaza in ce zi a fost cel mai cald</li>
+</ul>
+</div>
+</div>
+
+<div class="practice-exercise" data-type="written">
+<h4>&#128221; Reflectie</h4>
+<p><strong>Cerinta:</strong> Scrie 3-4 propozitii despre cum ai putea folosi algoritmii cu siruri in viata reala (exemple concrete).</p>
+<textarea class="practice-answer" rows="6" placeholder="Scrie raspunsul aici..."></textarea>
+</div>
+
+<div class="practice-exercise" data-type="deschis">
+<h4>&#128218; Test final</h4>
+<p>Pentru sirul v = [15, 22, 8, 30, 12, 25, 18], calculeaza:</p>
+<ol class="practice-questions">
+<li>Suma si media elementelor</li>
+<li>Maximul si minimul</li>
+<li>Cate elemente sunt mai mari decat media?</li>
+</ol>
+<p class="answer-instruction"><strong>Raspunde numerotat:</strong> 1. ... 2. ... 3. ...</p>
+</div>
+</section>
+<!-- END PRACTICA AVANSATA -->
+
+</main>
+<!-- Lesson Summary -->
+<div id="lesson-summary" style="display: none;"></div>
+<!-- Restart Section -->
+<section class="restart-section">
+<p style="color: var(--text-secondary); margin-bottom: 1rem;">
+Vrei un punctaj mai bun? Poti relua lectia de la inceput.
+</p>
+<button class="btn" onclick="restartLesson()" style="background: var(--error); color: white; margin-right: 0.5rem;">
+&#8634; Reia lectia
+</button>
+<button class="btn btn-primary" onclick="downloadProgress()">
+&#128190; Descarca progresul (JSON)
+</button>
+</section>
+</div>
+<footer>
+<p>&copy; 2026 Prof. Gurlan Vasile | <a href="index.html">Inapoi la modul</a></p>
+</footer>
+<!-- User System -->
+<script src="../../../../assets/js/user-system.js"></script>
+<!-- Atomic Learning System -->
+<script src="../../../../assets/js/atomic-learning.js"></script>
+<!-- Lesson Summary System -->
+<script src="../../../../assets/js/lesson-summary.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    AtomicLearning.init('cls7-m4-algoritmi-siruri-lectia6-proiect');
+    LessonSummary.init('cls7-m4-algoritmi-siruri-lectia6-proiect');
+});
+
+function restartLesson() {
+    if (confirm('Esti sigur ca vrei sa reiei lectia? Tot progresul va fi sters.')) {
+        localStorage.removeItem('atomic-progress-cls7-m4-algoritmi-siruri-lectia6-proiect');
+        localStorage.removeItem('lesson-summary-cls7-m4-algoritmi-siruri-lectia6-proiect');
+        window.location.reload();
+    }
+}
+
+function downloadProgress() {
+    LessonSummary.downloadProgress('cls7-m4-algoritmi-siruri-lectia6-proiect-progres.json');
+}
+</script>
+<!-- Practice System -->
+<script src="../../../../assets/js/practice-simple.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof PracticeSimple !== 'undefined') {
+        PracticeSimple.init('cls7-m4-algoritmi-siruri-lectia6-proiect');
+    }
+});
+</script>
+</body>
+</html>
