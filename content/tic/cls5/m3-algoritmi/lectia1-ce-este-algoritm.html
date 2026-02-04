@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Ce este un algoritm? | TIC Clasa a V-a</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-card: #1a1a2e;
+            --bg-card-hover: #252540;
+            --accent-blue: #3b82f6;
+            --accent-blue-light: #60a5fa;
+            --accent-purple: #8b5cf6;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --border-color: #2a2a4a;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .nav-link {
+            color: var(--accent-blue);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .nav-link:hover { color: var(--accent-blue-light); }
+
+        .lesson-header { text-align: center; margin-bottom: 2rem; }
+
+        .lesson-badge {
+            display: inline-block;
+            background: var(--accent-purple);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .lesson-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .lesson-subtitle { color: var(--text-secondary); font-size: 1rem; }
+
+        .progress-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .progress-label { font-size: 0.875rem; color: var(--text-secondary); white-space: nowrap; }
+        .progress-bar-wrapper { flex: 1; height: 8px; background: var(--bg-primary); border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--success)); width: 0%; transition: width 0.5s ease; border-radius: 4px; }
+        .progress-percent { font-weight: 600; color: var(--accent-blue-light); min-width: 45px; text-align: right; }
+
+        .goal-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+            border: 1px solid var(--accent-purple);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .goal-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+        .goal-icon { font-size: 1.5rem; }
+        .goal-title { font-size: 1.25rem; font-weight: 600; color: var(--accent-purple); }
+        .goal-text { font-style: italic; color: var(--text-secondary); font-size: 1.1rem; }
+
+        .atom {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .atom.atom-completed { border-color: var(--success); background: rgba(34, 197, 94, 0.05); }
+
+        .atom-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+
+        .atom-number {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .atom-completed .atom-number { background: var(--success); }
+
+        .atom-title { font-size: 1.25rem; font-weight: 600; }
+
+        .atom-content { color: var(--text-secondary); margin-bottom: 1.5rem; }
+        .atom-content p { margin-bottom: 0.75rem; }
+
+        .atom-quiz { background: var(--bg-primary); border-radius: 12px; padding: 1.25rem; }
+
+        .atom-question-text { font-weight: 600; margin-bottom: 1rem; color: var(--text-primary); }
+
+        .atom-options { display: flex; flex-direction: column; gap: 0.5rem; }
+
+        .atom-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .atom-option:hover { border-color: var(--accent-blue); transform: translateX(4px); }
+        .atom-option.selected { border-color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); }
+        .atom-option.correct { border-color: var(--success); background: rgba(34, 197, 94, 0.15); }
+        .atom-option.incorrect { border-color: var(--error); background: rgba(239, 68, 68, 0.15); }
+        .atom-option.locked { pointer-events: none; opacity: 0.7; }
+
+        .option-letter {
+            width: 28px;
+            height: 28px;
+            background: var(--bg-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .atom-feedback {
+            margin-top: 1rem;
+            padding: 0.875rem;
+            border-radius: 8px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .atom-feedback.correct { display: block; background: rgba(34, 197, 94, 0.15); border: 1px solid var(--success); color: var(--success); }
+        .atom-feedback.incorrect { display: block; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--error); color: var(--error); }
+
+        .atom-hint {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--warning);
+        }
+
+        .hint-icon { margin-right: 0.5rem; }
+
+        .feedback-icon { margin-right: 0.5rem; }
+
+        .restart-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary { background: var(--accent-blue); color: white; }
+        .btn-primary:hover { background: var(--accent-blue-light); }
+
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 2rem;
+        }
+
+        footer a { color: var(--accent-blue); }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .lesson-title { font-size: 1.75rem; }
+        }
+    </style>
+    <link href="../../../../assets/css/mobile-first.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="container">
+    <!-- Navigation -->
+    <nav class="nav-bar">
+        <a class="nav-link" href="index.html">
+            <span>←</span> Inapoi la modul
+        </a>
+        <a class="nav-link" href="lectia2-pasi-algoritm.html">
+            Lectia urmatoare <span>→</span>
+        </a>
+    </nav>
+
+    <!-- Lesson Header -->
+    <header class="lesson-header">
+        <span class="lesson-badge">⚡ Invatare Atomica</span>
+        <h1 class="lesson-title">Ce este un algoritm?</h1>
+        <p class="lesson-subtitle">Citeste fiecare concept, apoi raspunde la intrebari pentru a continua</p>
+    </header>
+
+    <!-- Progress -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- GOAL Section -->
+    <section class="goal-section">
+        <div class="goal-header">
+            <span class="goal-icon">🎯</span>
+            <h2 class="goal-title">Obiectivul lectiei</h2>
+        </div>
+        <p class="goal-text">"Dupa aceasta lectie vei sti ce este un algoritm, vei recunoaste algoritmi din viata de zi cu zi si vei intelege de ce sunt importanti!"</p>
+    </section>
+
+    <!-- Atomic Content -->
+    <main id="atomic-content">
+        <!-- Atom 1 -->
+        <div class="atom" data-quiz='[{"question": "Ce este un algoritm?", "options": ["Un joc video", "O serie de pasi pentru a rezolva o problema", "Un tip de calculator"], "correct": "b", "hint": "Gandeste-te la o reteta de bucatarie - ce este ea de fapt?"}]' id="atom-1">
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">Algoritmul - Definitie simpla</h3>
+            </div>
+            <div class="atom-content">
+                <p>Un <strong>algoritm</strong> este ca o reteta de bucatarie pentru calculator! Este o serie de pasi clari si precisi pe care ii urmezi pentru a rezolva o problema sau pentru a face ceva.</p>
+                <p>Imaginati-va ca vreti sa faceti un sandvis. Aveti nevoie de pasi: 1) Ia painea, 2) Pune untul, 3) Adauga sunca, 4) Pune cealalta felie de paine. Aceasta "reteta" este un algoritm!</p>
+                <p>Calculatoarele folosesc algoritmi pentru ORICE fac - de la a afisa o imagine pana la a calcula rezultatul unui joc.</p>
+            </div>
+            <div class="atom-quiz" data-qid="atom-1-q0">
+                <div class="atom-question-text">Ce este un algoritm?</div>
+                <div class="atom-options">
+                    <div class="atom-option" data-answer="a">
+                        <span class="option-letter">A</span>
+                        <span class="option-text">Un joc video</span>
+                    </div>
+                    <div class="atom-option" data-answer="b">
+                        <span class="option-letter">B</span>
+                        <span class="option-text">O serie de pasi pentru a rezolva o problema</span>
+                    </div>
+                    <div class="atom-option" data-answer="c">
+                        <span class="option-letter">C</span>
+                        <span class="option-text">Un tip de calculator</span>
+                    </div>
+                </div>
+                <div class="atom-feedback"></div>
+                <div class="atom-hint" style="display: none;">
+                    <span class="hint-icon">💡</span> Gandeste-te la o reteta de bucatarie - ce este ea de fapt?
+                </div>
+            </div>
+        </div>
+
+        <!-- Atom 2 -->
+        <div class="atom" data-quiz='[{"question": "De unde vine cuvantul algoritm?", "options": ["De la un oras din America", "De la matematicianul al-Khwarizmi", "De la cuvantul algoritmos din greaca"], "correct": "b", "hint": "Numele vine de la un matematician persan din secolul IX."}]' id="atom-2">
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">De unde vine cuvantul "algoritm"?</h3>
+            </div>
+            <div class="atom-content">
+                <p>Cuvantul "algoritm" vine de la numele unui matematician persan foarte destept: <strong>Muhammad ibn Musa al-Khwarizmi</strong>. El a trait acum aproximativ 1200 de ani!</p>
+                <p>Al-Khwarizmi a scris carti despre cum sa rezolvi probleme de matematica pas cu pas. Numele lui, "al-Khwarizmi", s-a transformat in cuvantul "algoritm".</p>
+                <p>Deci, de fiecare data cand auzi "algoritm", gandeste-te la acest matematician genial care ne-a invatat sa rezolvam probleme in ordine!</p>
+            </div>
+            <div class="atom-quiz" data-qid="atom-2-q0">
+                <div class="atom-question-text">De unde vine cuvantul algoritm?</div>
+                <div class="atom-options">
+                    <div class="atom-option" data-answer="a">
+                        <span class="option-letter">A</span>
+                        <span class="option-text">De la un oras din America</span>
+                    </div>
+                    <div class="atom-option" data-answer="b">
+                        <span class="option-letter">B</span>
+                        <span class="option-text">De la matematicianul al-Khwarizmi</span>
+                    </div>
+                    <div class="atom-option" data-answer="c">
+                        <span class="option-letter">C</span>
+                        <span class="option-text">De la cuvantul algoritmos din greaca</span>
+                    </div>
+                </div>
+                <div class="atom-feedback"></div>
+                <div class="atom-hint" style="display: none;">
+                    <span class="hint-icon">💡</span> Numele vine de la un matematician persan din secolul IX.
+                </div>
+            </div>
+        </div>
+
+        <!-- Atom 3 -->
+        <div class="atom" data-quiz='[{"question": "Care dintre urmatoarele este un exemplu de algoritm din viata reala?", "options": ["A te uita la stele", "Reteta pentru prajituri", "Culoarea preferata"], "correct": "b", "hint": "Cauta exemplul care are pasi clari de urmat."}]' id="atom-3">
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">Algoritmi in viata de zi cu zi</h3>
+            </div>
+            <div class="atom-content">
+                <p>Folosesti algoritmi in fiecare zi, chiar daca nu stii! Iata cateva exemple:</p>
+                <p><strong>Dimineata:</strong> Te trezesti → Te speli pe dinti → Te imbraci → Mananci micul dejun → Pleci la scoala. Acestia sunt pasi intr-o ordine precisa!</p>
+                <p><strong>La bucatarie:</strong> O reteta de prajituri este un algoritm perfect - are ingrediente (date de intrare) si pasi clari (amesteca, coace, decoreaza).</p>
+                <p><strong>Jocuri:</strong> Regulile unui joc sunt tot un algoritm - pasii pe care ii urmezi pentru a juca corect.</p>
+            </div>
+            <div class="atom-quiz" data-qid="atom-3-q0">
+                <div class="atom-question-text">Care dintre urmatoarele este un exemplu de algoritm din viata reala?</div>
+                <div class="atom-options">
+                    <div class="atom-option" data-answer="a">
+                        <span class="option-letter">A</span>
+                        <span class="option-text">A te uita la stele</span>
+                    </div>
+                    <div class="atom-option" data-answer="b">
+                        <span class="option-letter">B</span>
+                        <span class="option-text">Reteta pentru prajituri</span>
+                    </div>
+                    <div class="atom-option" data-answer="c">
+                        <span class="option-letter">C</span>
+                        <span class="option-text">Culoarea preferata</span>
+                    </div>
+                </div>
+                <div class="atom-feedback"></div>
+                <div class="atom-hint" style="display: none;">
+                    <span class="hint-icon">💡</span> Cauta exemplul care are pasi clari de urmat.
+                </div>
+            </div>
+        </div>
+
+        <!-- Atom 4 -->
+        <div class="atom" data-quiz='[{"question": "Ce se intampla daca schimbi ordinea pasilor intr-un algoritm?", "options": ["Nu conteaza ordinea", "Poti obtine un rezultat gresit sau neprevazut", "Algoritmul devine mai rapid"], "correct": "b", "hint": "Gandeste-te ce se intampla daca pui glazura inainte sa coci prajitura."}]' id="atom-4">
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">Ordinea conteaza!</h3>
+            </div>
+            <div class="atom-content">
+                <p>Intr-un algoritm, <strong>ordinea pasilor este foarte importanta</strong>! Daca schimbi ordinea, poti obtine un rezultat complet diferit sau gresit.</p>
+                <p>Exemplu: Imagineaza-ti ca faci ceai. Algoritmul corect: 1) Pune apa in ceainic, 2) Fierbe apa, 3) Pune plicul de ceai in cana, 4) Toarna apa fierbinte.</p>
+                <p>Ce s-ar intampla daca ai pune plicul de ceai in cana INAINTE sa ai apa? Sau daca ai incerca sa fierbi apa DUPA ce ai turnat-o? Rezultatul ar fi un dezastru!</p>
+            </div>
+            <div class="atom-quiz" data-qid="atom-4-q0">
+                <div class="atom-question-text">Ce se intampla daca schimbi ordinea pasilor intr-un algoritm?</div>
+                <div class="atom-options">
+                    <div class="atom-option" data-answer="a">
+                        <span class="option-letter">A</span>
+                        <span class="option-text">Nu conteaza ordinea</span>
+                    </div>
+                    <div class="atom-option" data-answer="b">
+                        <span class="option-letter">B</span>
+                        <span class="option-text">Poti obtine un rezultat gresit sau neprevazut</span>
+                    </div>
+                    <div class="atom-option" data-answer="c">
+                        <span class="option-letter">C</span>
+                        <span class="option-text">Algoritmul devine mai rapid</span>
+                    </div>
+                </div>
+                <div class="atom-feedback"></div>
+                <div class="atom-hint" style="display: none;">
+                    <span class="hint-icon">💡</span> Gandeste-te ce se intampla daca pui glazura inainte sa coci prajitura.
+                </div>
+            </div>
+        </div>
+
+        <!-- Atom 5 -->
+        <div class="atom" data-quiz='[{"question": "De ce algoritmii trebuie sa aiba pasi clari si precisi?", "options": ["Pentru ca suna mai profesional", "Pentru ca calculatorul nu poate ghici ce vrem", "Pentru ca sunt mai scurti asa"], "correct": "b", "hint": "Calculatorul face EXACT ce ii spui, nimic mai mult."}]' id="atom-5">
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">Pasi clari si precisi</h3>
+            </div>
+            <div class="atom-content">
+                <p>Un algoritm bun are <strong>pasi clari si precisi</strong>. Calculatorul nu poate ghici ce vrei sa faci - trebuie sa ii spui EXACT!</p>
+                <p>Exemplu prost: "Fa ceva bun de mancare" - Ce inseamna "bun"? Ce fel de mancare?</p>
+                <p>Exemplu bun: "1) Ia 2 oua, 2) Sparge-le intr-un castron, 3) Bate-le 30 de secunde, 4) Pune-le in tigaie, 5) Gateste 2 minute pe fiecare parte."</p>
+                <p>Calculatorul este ca un bucatar care urmeaza reteta EXACT cum e scrisa - daca scrii gresit, face gresit!</p>
+            </div>
+            <div class="atom-quiz" data-qid="atom-5-q0">
+                <div class="atom-question-text">De ce algoritmii trebuie sa aiba pasi clari si precisi?</div>
+                <div class="atom-options">
+                    <div class="atom-option" data-answer="a">
+                        <span class="option-letter">A</span>
+                        <span class="option-text">Pentru ca suna mai profesional</span>
+                    </div>
+                    <div class="atom-option" data-answer="b">
+                        <span class="option-letter">B</span>
+                        <span class="option-text">Pentru ca calculatorul nu poate ghici ce vrem</span>
+                    </div>
+                    <div class="atom-option" data-answer="c">
+                        <span class="option-letter">C</span>
+                        <span class="option-text">Pentru ca sunt mai scurti asa</span>
+                    </div>
+                </div>
+                <div class="atom-feedback"></div>
+                <div class="atom-hint" style="display: none;">
+                    <span class="hint-icon">💡</span> Calculatorul face EXACT ce ii spui, nimic mai mult.
+                </div>
+            </div>
+        </div>
+
+        <!-- Atom 6 -->
+        <div class="atom" data-quiz='[{"question": "Ce caracteristici are un algoritm?", "options": ["Este scurt si complicat", "Are pasi precisi, in ordine, care rezolva o problema", "Este scris doar pentru calculatoare"], "correct": "b", "hint": "Reciteste caracteristicile principale ale unui algoritm."}]' id="atom-6">
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">Caracteristicile unui algoritm</h3>
+            </div>
+            <div class="atom-content">
+                <p>Hai sa recapitulam! Un algoritm bun are aceste caracteristici:</p>
+                <p><strong>1. Finit</strong> - Are un numar limitat de pasi (se termina la un moment dat)</p>
+                <p><strong>2. Precis</strong> - Fiecare pas este clar si nu poate fi inteles gresit</p>
+                <p><strong>3. Ordonat</strong> - Pasii sunt intr-o ordine logica</p>
+                <p><strong>4. Rezolva o problema</strong> - La final obtii un rezultat util</p>
+            </div>
+            <div class="atom-quiz" data-qid="atom-6-q0">
+                <div class="atom-question-text">Ce caracteristici are un algoritm?</div>
+                <div class="atom-options">
+                    <div class="atom-option" data-answer="a">
+                        <span class="option-letter">A</span>
+                        <span class="option-text">Este scurt si complicat</span>
+                    </div>
+                    <div class="atom-option" data-answer="b">
+                        <span class="option-letter">B</span>
+                        <span class="option-text">Are pasi precisi, in ordine, care rezolva o problema</span>
+                    </div>
+                    <div class="atom-option" data-answer="c">
+                        <span class="option-letter">C</span>
+                        <span class="option-text">Este scris doar pentru calculatoare</span>
+                    </div>
+                </div>
+                <div class="atom-feedback"></div>
+                <div class="atom-hint" style="display: none;">
+                    <span class="hint-icon">💡</span> Reciteste caracteristicile principale ale unui algoritm.
+                </div>
+            </div>
+        </div>
+
+        <!-- Atom 7 -->
+        <div class="atom" data-quiz='[{"question": "Unde gasim algoritmi?", "options": ["Doar in calculatoare", "In calculatoare si in viata de zi cu zi", "Doar in matematica"], "correct": "b", "hint": "Aminteste-ti exemplele cu retete, rutina de dimineata si jocurile."}]' id="atom-7">
+            <div class="atom-header">
+                <div class="atom-number">7</div>
+                <h3 class="atom-title">Algoritmi peste tot!</h3>
+            </div>
+            <div class="atom-content">
+                <p>Algoritmii nu sunt doar pentru calculatoare! Ii gasim <strong>peste tot in jurul nostru</strong>:</p>
+                <p><strong>In scoala:</strong> Cum rezolvi o problema de matematica pas cu pas</p>
+                <p><strong>In sport:</strong> Regulile unui joc de fotbal sau baschet</p>
+                <p><strong>In muzica:</strong> Partitura care iti spune ce note sa canti si cand</p>
+                <p><strong>In tehnologie:</strong> Cum functioneaza aplicatiile tale preferate, jocurile video, si chiar cum iti arata YouTube videoclipurile care ti-ar placea!</p>
+            </div>
+            <div class="atom-quiz" data-qid="atom-7-q0">
+                <div class="atom-question-text">Unde gasim algoritmi?</div>
+                <div class="atom-options">
+                    <div class="atom-option" data-answer="a">
+                        <span class="option-letter">A</span>
+                        <span class="option-text">Doar in calculatoare</span>
+                    </div>
+                    <div class="atom-option" data-answer="b">
+                        <span class="option-letter">B</span>
+                        <span class="option-text">In calculatoare si in viata de zi cu zi</span>
+                    </div>
+                    <div class="atom-option" data-answer="c">
+                        <span class="option-letter">C</span>
+                        <span class="option-text">Doar in matematica</span>
+                    </div>
+                </div>
+                <div class="atom-feedback"></div>
+                <div class="atom-hint" style="display: none;">
+                    <span class="hint-icon">💡</span> Aminteste-ti exemplele cu retete, rutina de dimineata si jocurile.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Lesson Summary -->
+    <div id="lesson-summary" style="display: none;"></div>
+
+    <!-- Restart Section -->
+    <section class="restart-section">
+        <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Vrei un punctaj mai bun? Poti relua lectia de la inceput.
+        </p>
+        <button class="btn" onclick="restartLesson()" style="background: var(--error); color: white; margin-right: 0.5rem;">
+            ↺ Reia lectia
+        </button>
+        <button class="btn btn-primary" onclick="downloadProgress()">
+            💾 Descarca progresul (JSON)
+        </button>
+    </section>
+</div>
+
+<footer>
+    <p>© 2025 LearningHub | <a href="index.html">Inapoi la modul</a></p>
+</footer>
+
+<!-- User System -->
+<script src="../../../../assets/js/user-system.js"></script>
+<!-- Atomic Learning System -->
+<script src="../../../../assets/js/atomic-learning.js"></script>
+<!-- Lesson Summary System -->
+<script src="../../../../assets/js/lesson-summary.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Atomic Learning
+        AtomicLearning.init('cls5-m3-algoritmi-lectia1-ce-este-algoritm');
+
+        // Initialize Lesson Summary
+        LessonSummary.init('cls5-m3-algoritmi-lectia1-ce-este-algoritm');
+    });
+
+    function restartLesson() {
+        if (confirm('Esti sigur ca vrei sa reiei lectia? Tot progresul va fi sters.')) {
+            localStorage.removeItem('atomic-progress-cls5-m3-algoritmi-lectia1-ce-este-algoritm');
+            localStorage.removeItem('lesson-summary-cls5-m3-algoritmi-lectia1-ce-este-algoritm');
+            window.location.reload();
+        }
+    }
+
+    function downloadProgress() {
+        LessonSummary.downloadProgress('cls5-m3-algoritmi-lectia1-ce-este-algoritm-progres.json');
+    }
+</script>
+</body>
+</html>
