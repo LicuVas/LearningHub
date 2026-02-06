@@ -46,13 +46,13 @@
 - Advanced algorithms
 - Code editing and debugging
 
-### Grade 8 - Web Development
-**Focus:** HTML/CSS, integration, exam prep
-- HTML structure and elements
-- CSS styling and layout
-- Web page creation
-- Integration projects
-- Proba D preparation (Bacalaureat digital test 2026)
+### Grade 8 - Spreadsheets, Web & Algorithms
+**Focus:** Excel, HTML/CSS, arrays, integration
+- **D1: Calcul tabelar** - Excel interface, formulas, functions (SUM/IF/MAX/MIN), charts
+- **D2: Pagini web** - HTML structure, content editing, CSS formatting
+- **D3: Algoritmi** - Siruri de valori: parcurgere, cautare, numarare, minim/maxim
+- Integration projects and portfolio
+- Preparation for high school (liceu)
 
 ---
 
