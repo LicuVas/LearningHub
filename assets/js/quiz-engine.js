@@ -422,7 +422,17 @@ class QuizEngine {
         if (!this.results) this.evaluateAll();
 
         const { score, total, percentage, details } = this.results;
-        const passed = percentage >= 0.66;
+        let passThreshold = 0.66;
+        if (typeof ProficiencySystem !== 'undefined') {
+            try {
+                const currentLevel = ProficiencySystem.getCurrentLevel?.() || 'standard';
+                const levelData = ProficiencySystem.LEVELS?.[currentLevel];
+                if (levelData?.pass_threshold) {
+                    passThreshold = levelData.pass_threshold;
+                }
+            } catch(e) { /* fallback to default 0.66 */ }
+        }
+        const passed = percentage >= passThreshold;
 
         // Marcheaza intrebarile
         details.forEach(d => {

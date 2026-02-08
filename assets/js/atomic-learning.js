@@ -200,6 +200,48 @@ const AtomicLearning = {
     },
 
     /**
+     * Format text that may contain code - adds styling and multi-line breaks.
+     * Works on raw text (before HTML escaping) to correctly handle semicolons
+     * inside for() loops vs HTML entities like &lt; which also contain ;
+     */
+    formatText: function(text) {
+        var codeRe = /(?:cout|cin|for\s*\(|while\s*\(|if\s*\(|int\s+|float\s+|char\s+|double\s+|string\s+|void\s+|return\s|#include|printf|scanf|endl|sizeof|\w+\[\w*\])/;
+        if (!codeRe.test(text)) return this._escHtml(text);
+        // "question text: code" pattern
+        var cm = text.match(/^(.+?:\s*)(.+)$/s);
+        if (cm && codeRe.test(cm[2]) && !codeRe.test(cm[1])) {
+            return this._escHtml(cm[1]) + this._fmtCode(cm[2]);
+        }
+        return this._fmtCode(text);
+    },
+
+    _escHtml: function(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    },
+
+    _fmtCode: function(raw) {
+        // Split into statements respecting parentheses depth (raw text, before escaping)
+        var stmts = [], depth = 0, current = '';
+        for (var i = 0; i < raw.length; i++) {
+            var ch = raw[i];
+            if (ch === '(') depth++;
+            else if (ch === ')') depth = Math.max(0, depth - 1);
+            current += ch;
+            if (ch === ';' && depth === 0) {
+                stmts.push(current.trim());
+                current = '';
+            }
+        }
+        if (current.trim()) stmts.push(current.trim());
+        var self = this;
+        if (stmts.length >= 2) {
+            var fmt = stmts.map(function(s) { return '  ' + self._escHtml(s); }).join('\n');
+            return '<pre style="background:rgba(0,0,0,0.25);padding:0.6rem 0.8rem;border-radius:8px;font-family:\'Consolas\',\'Monaco\',monospace;font-size:0.85em;white-space:pre-wrap;margin:0.4rem 0;line-height:1.6;color:var(--accent-cyan,#67e8f9);overflow-x:auto;"><code>' + fmt + '</code></pre>';
+        }
+        return '<code style="background:rgba(0,0,0,0.2);padding:0.15rem 0.5rem;border-radius:4px;font-family:\'Consolas\',\'Monaco\',monospace;font-size:0.9em;color:var(--accent-cyan,#67e8f9);">' + this._escHtml(stmts.length ? stmts[0] : raw) + '</code>';
+    },
+
+    /**
      * Render a single question with randomized answer positions
      */
     renderQuestion: function(atomId, question, index) {
@@ -250,13 +292,13 @@ const AtomicLearning = {
         const optionsHtml = finalOptions.map((opt, i) => `
             <button class="atom-option" data-answer="${String.fromCharCode(97 + i)}" data-qid="${qId}">
                 <span class="atom-option-letter">${String.fromCharCode(65 + i)}</span>
-                <span class="atom-option-text">${opt.text}</span>
+                <span class="atom-option-text">${this.formatText(opt.text)}</span>
             </button>
         `).join('');
 
         return `
             <div class="atom-question" data-qid="${qId}" data-correct="${newCorrectLetter}" data-hint="${question.hint || ''}">
-                <p class="atom-question-text">${question.question}</p>
+                <p class="atom-question-text">${this.formatText(question.question)}</p>
                 <div class="atom-options">${optionsHtml}</div>
                 <div class="atom-feedback" style="display: none;"></div>
                 <div class="atom-hint" style="display: none;">

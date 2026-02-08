@@ -248,7 +248,7 @@ const ProficiencySystem = {
         let scoreSum = 0;
 
         for (const [key, value] of Object.entries(data)) {
-            if (key.match(/^[A-Z]+-M\d-L\d+$/)) {
+            if (key.match(/^[A-Z]+-M\d+-L\d+$/)) {
                 stats.total_lessons++;
 
                 if (value.quiz_results?.length > 0) {

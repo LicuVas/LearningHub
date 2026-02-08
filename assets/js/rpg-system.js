@@ -303,7 +303,7 @@ const RPG = {
         }
 
         // Calculate progress to next level
-        const nextLevel = this.LEVELS[currentLevel.level] || currentLevel;
+        const nextLevel = this.LEVELS[currentLevel.level] || this.LEVELS[this.LEVELS.length - 1];
         const xpForCurrent = currentLevel.xp;
         const xpForNext = nextLevel.xp;
         const progress = xpForNext > xpForCurrent
