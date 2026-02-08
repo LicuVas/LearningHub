@@ -71,8 +71,8 @@ class TheoryExtractor:
                 for q in quiz_data:
                     if q.get('question') and q.get('options'):
                         quizzes.append({
-                            'question': q['question'],
-                            'options': q['options'],
+                            'question': html.unescape(q['question']),
+                            'options': [html.unescape(opt) for opt in q['options']],
                             'correct': q.get('correct', 'a')
                         })
             except (json.JSONDecodeError, KeyError):
@@ -99,6 +99,17 @@ class TheoryExtractor:
     def _html_to_text(html_str):
         """Convert HTML to clean plain text."""
         text = html_str
+        # Extract <pre> code blocks first, preserve them with markers
+        code_blocks = []
+        def _save_code(m):
+            code = m.group(1)
+            # Clean inner HTML from code block
+            code = re.sub(r'<[^>]+>', '', code)
+            code = html.unescape(code).strip()
+            idx = len(code_blocks)
+            code_blocks.append(code)
+            return f'\n[CODE_BLOCK_{idx}]\n'
+        text = re.sub(r'<pre[^>]*>(.*?)</pre>', _save_code, text, flags=re.DOTALL)
         # Replace <br> with newline
         text = re.sub(r'<br\s*/?>', '\n', text)
         # Replace <p> tags with double newline
@@ -115,13 +126,16 @@ class TheoryExtractor:
         text = re.sub(r'<[^>]+>', '', text)
         # Decode HTML entities
         text = html.unescape(text)
+        # Restore code blocks
+        for idx, code in enumerate(code_blocks):
+            text = text.replace(f'[CODE_BLOCK_{idx}]', f'\n```\n{code}\n```\n')
         # Clean up whitespace
         text = re.sub(r'\n{3,}', '\n\n', text)
         text = re.sub(r'[ \t]+', ' ', text)
         return text.strip()
 
     @staticmethod
-    def compress_theory(atoms, max_words=150):
+    def compress_theory(atoms, max_words=400):
         """Compress atom texts to fit within word limit."""
         if not atoms:
             return atoms
@@ -472,26 +486,45 @@ class WordDocBuilder:
                 run.bold = True
                 run.font.size = Pt(10)
 
-                # Atom text - handle bold markers
+                # Atom text - split by code blocks first
                 text = atom['text']
-                parts = re.split(r'\*\*(.*?)\*\*', text)
-                p = self.doc.add_paragraph()
-                p.style = self.doc.styles['TheoryText']
-                for i, part in enumerate(parts):
-                    if not part:
-                        continue
-                    run = p.add_run(part)
-                    if i % 2 == 1:  # Odd indices are bold parts
-                        run.bold = True
-
-                # Check for code blocks (backtick marked)
-                if '`' in text:
-                    code_parts = re.findall(r'`([^`]+)`', text)
-                    for code in code_parts:
+                # Split on triple-backtick code blocks
+                code_split = re.split(r'```\n?(.*?)\n?```', text, flags=re.DOTALL)
+                for seg_idx, segment in enumerate(code_split):
+                    if seg_idx % 2 == 1:
+                        # This is a code block - render in monospace with background
+                        for code_line in segment.strip().split('\n'):
+                            p = self.doc.add_paragraph()
+                            p.style = self.doc.styles['CodeBlock']
+                            p.paragraph_format.left_indent = Cm(0.5)
+                            # Add light gray background
+                            shading = parse_xml(f'<w:shd {nsdecls("w")} w:fill="F0F0F0" w:val="clear"/>')
+                            p.paragraph_format.element.get_or_add_pPr().append(shading)
+                            run = p.add_run(f'  {code_line}')
+                    else:
+                        # Normal text - handle bold markers and inline code
+                        segment = segment.strip()
+                        if not segment:
+                            continue
+                        # Handle inline `code` separately
+                        inline_parts = re.split(r'`([^`]+)`', segment)
                         p = self.doc.add_paragraph()
-                        p.style = self.doc.styles['CodeBlock']
-                        p.paragraph_format.left_indent = Cm(0.5)
-                        run = p.add_run(f'  {code}')
+                        p.style = self.doc.styles['TheoryText']
+                        for ip_idx, ip in enumerate(inline_parts):
+                            if ip_idx % 2 == 1:
+                                # Inline code
+                                run = p.add_run(ip)
+                                run.font.name = 'Consolas'
+                                run.font.size = Pt(9)
+                            else:
+                                # Normal text with bold markers
+                                bold_parts = re.split(r'\*\*(.*?)\*\*', ip)
+                                for bp_idx, bp in enumerate(bold_parts):
+                                    if not bp:
+                                        continue
+                                    run = p.add_run(bp)
+                                    if bp_idx % 2 == 1:
+                                        run.bold = True
         else:
             # No theory available - add placeholder
             p = self.doc.add_paragraph()
@@ -1247,13 +1280,24 @@ def generate_grade(grade, content_map, target_module=None):
                         }
                     })
 
-            # Extract vocabulary from atoms (bold terms)
+            # Extract vocabulary from atoms (bold terms with context as definition)
             vocabulary = []
             for atom in atoms:
-                bold_terms = re.findall(r'\*\*(.*?)\*\*', atom.get('text', ''))
+                text = atom.get('text', '')
+                bold_terms = re.findall(r'\*\*(.*?)\*\*', text)
                 for term in bold_terms[:3]:  # Max 3 per atom
-                    if len(term) < 50:  # Skip long phrases
-                        vocabulary.append((term, ''))
+                    if len(term) < 50 and len(term) > 2:  # Skip long phrases and tiny ones
+                        # Extract definition: sentence containing the bold term
+                        clean_text = text.replace(f'**{term}**', term)
+                        sentences = re.split(r'[.!?]\s+', clean_text)
+                        defn = ''
+                        for sent in sentences:
+                            if term.lower() in sent.lower() and len(sent) > len(term) + 5:
+                                defn = sent.strip().rstrip('.')
+                                if len(defn) > 80:
+                                    defn = defn[:77] + '...'
+                                break
+                        vocabulary.append((term, defn))
 
             # Deduplicate vocabulary
             seen = set()
