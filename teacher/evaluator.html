@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluator Note - LearningHub</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a14;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --border: #2d2d44;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-secondary { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--bg-secondary); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .drop-zone:hover { border-color: var(--accent); background: rgba(59, 130, 246, 0.05); }
+        .drop-zone.drag-over { border-color: var(--accent); background: rgba(59, 130, 246, 0.1); transform: scale(1.01); }
+
+        .drop-zone .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .drop-zone .title { font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem; }
+        .drop-zone .subtitle { font-size: 0.8rem; color: var(--text-muted); }
+
+        .drop-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .stat-card .label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+        .stat-card .value { font-size: 1.75rem; font-weight: 700; }
+        .stat-card .sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .filter-group label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .filter-group select, .filter-group input {
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            min-width: 140px;
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 { font-size: 0.95rem; font-weight: 600; }
+
+        /* Results Table */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .results-table th, .results-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .results-table th {
+            color: var(--text-muted);
+            font-weight: 500;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .results-table th:hover { color: var(--text-primary); }
+        .results-table th .sort-arrow { margin-left: 0.25rem; font-size: 0.7rem; }
+
+        .results-table tbody tr.data-row { cursor: pointer; transition: background 0.15s; }
+        .results-table tbody tr.data-row:hover { background: var(--bg-secondary); }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-valid { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .badge-altered { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .badge-provisional { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+
+        .grade-display {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .grade-10 { color: var(--success); }
+        .grade-9 { color: #34d399; }
+        .grade-8 { color: var(--accent); }
+        .grade-7 { color: #60a5fa; }
+        .grade-6 { color: var(--warning); }
+        .grade-5 { color: #fb923c; }
+        .grade-low { color: var(--danger); }
+
+        /* Expanded Detail Row */
+        .detail-row { display: none; }
+        .detail-row.open { display: table-row; }
+
+        .detail-row td {
+            padding: 0 !important;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .detail-content {
+            padding: 1.25rem;
+            background: var(--bg-secondary);
+        }
+
+        .detail-content h4 {
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+            color: var(--accent);
+        }
+
+        .practice-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .practice-item .exercise-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .practice-item .answer {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.5;
+        }
+
+        .practice-item .meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Histogram */
+        .histogram {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            height: 80px;
+            margin-top: 0.5rem;
+        }
+
+        .histogram .bar-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .histogram .bar {
+            width: 100%;
+            background: var(--accent);
+            border-radius: 3px 3px 0 0;
+            min-height: 0;
+            transition: height 0.3s;
+        }
+
+        .histogram .bar-label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .histogram .bar-count {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .filter-bar { flex-direction: column; }
+            .results-table { font-size: 0.75rem; }
+            .results-table th, .results-table td { padding: 0.5rem; }
+            .col-hide-mobile { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <h1>
+                <span>📝</span> Evaluator Note
+                <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 400; margin-left: 0.5rem;">LearningHub</span>
+            </h1>
+            <div class="header-actions">
+                <button class="btn btn-success" id="btn-export" onclick="exportCSV()" disabled>
+                    <span>📊</span> Export CSV
+                </button>
+                <button class="btn btn-danger" id="btn-clear" onclick="clearAll()" disabled>
+                    <span>🗑️</span> Sterge tot
+                </button>
+                <a href="index.html" class="btn btn-secondary">
+                    <span>↩️</span> Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="drop-zone">
+            <input type="file" id="file-input" accept=".json" multiple>
+            <div class="icon">📂</div>
+            <div class="title">Trage fisierele JSON aici</div>
+            <div class="subtitle">sau click pentru a selecta &bull; accepta mai multe fisiere simultan</div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="stats-grid" style="display: none;">
+            <div class="stat-card">
+                <div class="label">Fisiere incarcate</div>
+                <div class="value" id="stat-total">0</div>
+                <div class="sub" id="stat-valid-count">0 valide</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Nota medie</div>
+                <div class="value" id="stat-avg">-</div>
+                <div class="sub" id="stat-pass-rate">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Necesita verificare</div>
+                <div class="value" id="stat-review">0</div>
+                <div class="sub">raspunsuri practice</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Distributie note</div>
+                <div class="histogram" id="histogram"></div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar" id="filter-bar" style="display: none;">
+            <div class="filter-group">
+                <label>Lectie</label>
+                <select id="filter-lesson" onchange="applyFilters()">
+                    <option value="">Toate</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Nota min</label>
+                <input type="number" id="filter-grade-min" min="1" max="10" placeholder="1" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label>Nota max</label>
+                <input type="number" id="filter-grade-max" min="1" max="10" placeholder="10" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label>Checksum</label>
+                <select id="filter-checksum" onchange="applyFilters()">
+                    <option value="">Toate</option>
+                    <option value="valid">Doar valide</option>
+                    <option value="altered">Doar alterate</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Elev</label>
+                <select id="filter-student" onchange="applyFilters()">
+                    <option value="">Toti</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="card" id="results-card" style="display: none;">
+            <div class="card-header">
+                <h3>Rezultate (<span id="results-count">0</span>)</h3>
+            </div>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('student')">Elev <span class="sort-arrow"></span></th>
+                        <th onclick="sortTable('lesson')">Lectie <span class="sort-arrow"></span></th>
+                        <th onclick="sortTable('grade')">Nota <span class="sort-arrow"></span></th>
+                        <th class="col-hide-mobile">Oficiu</th>
+                        <th class="col-hide-mobile">Teorie</th>
+                        <th class="col-hide-mobile">Practica</th>
+                        <th onclick="sortTable('checksum')">Checksum <span class="sort-arrow"></span></th>
+                        <th class="col-hide-mobile" onclick="sortTable('date')">Data <span class="sort-arrow"></span></th>
+                    </tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state">
+            <div class="icon">📋</div>
+            <p>Niciun fisier incarcat</p>
+            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Trage fisiere JSON cu progresul elevilor in zona de mai sus</p>
+        </div>
+    </div>
+
+    <script>
+    // State
+    const state = {
+        entries: [],
+        sortKey: 'student',
+        sortAsc: true,
+        expandedIdx: null
+    };
+
+    // DOM refs
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const statsGrid = document.getElementById('stats-grid');
+    const filterBar = document.getElementById('filter-bar');
+    const resultsCard = document.getElementById('results-card');
+    const resultsBody = document.getElementById('results-body');
+    const emptyState = document.getElementById('empty-state');
+
+    // Drop zone events
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+    // Process files
+    async function handleFiles(fileList) {
+        const files = Array.from(fileList).filter(f => f.name.endsWith('.json'));
+        if (!files.length) return;
+
+        for (const file of files) {
+            try {
+                const text = await file.text();
+                const json = JSON.parse(text);
+                if (!json.payload || !json.security) {
+                    console.warn('Skipping non-progress file:', file.name);
+                    continue;
+                }
+                const checksumValid = await verifyChecksum(json.payload, json.security.checksum);
+                state.entries.push({
+                    fileName: file.name,
+                    data: json,
+                    checksumValid,
+                    loadedAt: new Date()
+                });
+            } catch (err) {
+                console.error('Error parsing', file.name, err);
+            }
+        }
+
+        fileInput.value = '';
+        updateUI();
+    }
+
+    // SHA-256 checksum verification
+    async function verifyChecksum(payload, storedChecksum) {
+        try {
+            const compact = JSON.stringify(payload);
+            const buf = new TextEncoder().encode(compact);
+            const hash = await crypto.subtle.digest('SHA-256', buf);
+            const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+            return hex === storedChecksum;
+        } catch {
+            return false;
+        }
+    }
+
+    // Update everything
+    function updateUI() {
+        const hasData = state.entries.length > 0;
+        statsGrid.style.display = hasData ? 'grid' : 'none';
+        filterBar.style.display = hasData ? 'flex' : 'none';
+        resultsCard.style.display = hasData ? 'block' : 'none';
+        emptyState.style.display = hasData ? 'none' : 'block';
+        document.getElementById('btn-export').disabled = !hasData;
+        document.getElementById('btn-clear').disabled = !hasData;
+
+        if (hasData) {
+            updateStats();
+            updateFilters();
+            renderTable();
+        }
+    }
+
+    // Stats
+    function updateStats() {
+        const entries = state.entries;
+        const grades = entries.map(e => e.data.payload.grading.grade);
+        const avg = grades.reduce((a, b) => a + b, 0) / grades.length;
+        const validCount = entries.filter(e => e.checksumValid).length;
+        const reviewCount = entries.reduce((sum, e) => {
+            const tr = e.data.payload.teacherReviewRequired;
+            return sum + (tr ? tr.totalItemsToReview : 0);
+        }, 0);
+        const passing = grades.filter(g => g >= 5).length;
+
+        document.getElementById('stat-total').textContent = entries.length;
+        document.getElementById('stat-valid-count').textContent = `${validCount} valide, ${entries.length - validCount} alterate`;
+        document.getElementById('stat-avg').textContent = avg.toFixed(1);
+        document.getElementById('stat-pass-rate').textContent = `${passing}/${entries.length} promovati (${Math.round(passing / entries.length * 100)}%)`;
+        document.getElementById('stat-review').textContent = reviewCount;
+
+        // Histogram
+        const dist = Array(10).fill(0);
+        grades.forEach(g => { if (g >= 1 && g <= 10) dist[g - 1]++; });
+        const maxCount = Math.max(...dist, 1);
+        const histEl = document.getElementById('histogram');
+        histEl.innerHTML = dist.map((count, i) => `
+            <div class="bar-wrap">
+                <span class="bar-count">${count || ''}</span>
+                <div class="bar" style="height: ${count / maxCount * 60}px;"></div>
+                <span class="bar-label">${i + 1}</span>
+            </div>
+        `).join('');
+    }
+
+    // Filters
+    function updateFilters() {
+        const lessons = [...new Set(state.entries.map(e => e.data.payload.lesson.id))].sort();
+        const students = [...new Set(state.entries.map(e => e.data.payload.student.name))].sort();
+
+        const lessonSelect = document.getElementById('filter-lesson');
+        const current = lessonSelect.value;
+        lessonSelect.innerHTML = '<option value="">Toate</option>' +
+            lessons.map(l => `<option value="${l}" ${l === current ? 'selected' : ''}>${formatLessonId(l)}</option>`).join('');
+
+        const studentSelect = document.getElementById('filter-student');
+        const currentSt = studentSelect.value;
+        studentSelect.innerHTML = '<option value="">Toti</option>' +
+            students.map(s => `<option value="${s}" ${s === currentSt ? 'selected' : ''}>${s}</option>`).join('');
+    }
+
+    function formatLessonId(id) {
+        // cls5-m1-sisteme-lectia1-calculator -> Cls5 M1 Lectia1
+        return id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).substring(0, 35);
+    }
+
+    function getFiltered() {
+        const lesson = document.getElementById('filter-lesson').value;
+        const gradeMin = parseInt(document.getElementById('filter-grade-min').value) || 1;
+        const gradeMax = parseInt(document.getElementById('filter-grade-max').value) || 10;
+        const checksum = document.getElementById('filter-checksum').value;
+        const student = document.getElementById('filter-student').value;
+
+        return state.entries.filter(e => {
+            const p = e.data.payload;
+            if (lesson && p.lesson.id !== lesson) return false;
+            if (p.grading.grade < gradeMin || p.grading.grade > gradeMax) return false;
+            if (checksum === 'valid' && !e.checksumValid) return false;
+            if (checksum === 'altered' && e.checksumValid) return false;
+            if (student && p.student.name !== student) return false;
+            return true;
+        });
+    }
+
+    function applyFilters() {
+        renderTable();
+    }
+
+    // Sorting
+    function sortTable(key) {
+        if (state.sortKey === key) {
+            state.sortAsc = !state.sortAsc;
+        } else {
+            state.sortKey = key;
+            state.sortAsc = true;
+        }
+        renderTable();
+    }
+
+    function getSortValue(entry, key) {
+        const p = entry.data.payload;
+        switch (key) {
+            case 'student': return p.student.name.toLowerCase();
+            case 'lesson': return p.lesson.id;
+            case 'grade': return p.grading.grade;
+            case 'checksum': return entry.checksumValid ? 1 : 0;
+            case 'date': return p._meta.exportedAt;
+            default: return '';
+        }
+    }
+
+    // Render table
+    function renderTable() {
+        const filtered = getFiltered();
+        filtered.sort((a, b) => {
+            const va = getSortValue(a, state.sortKey);
+            const vb = getSortValue(b, state.sortKey);
+            const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+            return state.sortAsc ? cmp : -cmp;
+        });
+
+        document.getElementById('results-count').textContent = filtered.length;
+
+        if (!filtered.length) {
+            resultsBody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">Niciun rezultat gasit cu filtrele selectate</td></tr>`;
+            return;
+        }
+
+        resultsBody.innerHTML = filtered.map((entry, idx) => {
+            const p = entry.data.payload;
+            const g = p.grading;
+            const b = g.breakdown;
+            const gradeClass = g.grade >= 10 ? 'grade-10' : g.grade >= 9 ? 'grade-9' : g.grade >= 8 ? 'grade-8' : g.grade >= 7 ? 'grade-7' : g.grade >= 6 ? 'grade-6' : g.grade >= 5 ? 'grade-5' : 'grade-low';
+            const checksumBadge = entry.checksumValid
+                ? '<span class="badge badge-valid">VALID</span>'
+                : '<span class="badge badge-altered">ALTERAT</span>';
+            const provisionalBadge = g.isProvisional ? ' <span class="badge badge-provisional">P</span>' : '';
+            const dateStr = formatDate(p._meta.exportedAt);
+            const hasPractice = p.practiceItems && p.practiceItems.length > 0;
+            const expandIcon = hasPractice ? '▶' : '';
+
+            return `
+                <tr class="data-row" onclick="toggleDetail(${idx}, this)" data-idx="${idx}">
+                    <td>${escHtml(p.student.name)}</td>
+                    <td>${formatLessonShort(p.lesson.id)}</td>
+                    <td><span class="grade-display ${gradeClass}">${g.grade}</span>${provisionalBadge}</td>
+                    <td class="col-hide-mobile">${b.dinOficiu}</td>
+                    <td class="col-hide-mobile">${b.atomic}/${p.results.atomic.maxPoints}</td>
+                    <td class="col-hide-mobile">${b.practice}/${p.results.practice.maxPoints}</td>
+                    <td>${checksumBadge}</td>
+                    <td class="col-hide-mobile">${dateStr}</td>
+                </tr>
+                <tr class="detail-row" id="detail-${idx}">
+                    <td colspan="8">
+                        <div class="detail-content">
+                            ${renderDetail(entry)}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderDetail(entry) {
+        const p = entry.data.payload;
+        let html = '';
+
+        // Atomic items
+        if (p.atomicItems && p.atomicItems.length > 0) {
+            html += `<h4>Raspunsuri teorie (${p.results.atomic.correct}/${p.results.atomic.total} corecte)</h4>`;
+            p.atomicItems.forEach(item => {
+                html += `<div class="practice-item">
+                    <div class="exercise-title">${escHtml(item.question || item.id || 'Item')}</div>
+                    <div class="answer">${escHtml(item.selectedAnswer || item.answer || '-')}</div>
+                </div>`;
+            });
+        }
+
+        // Practice items
+        if (p.practiceItems && p.practiceItems.length > 0) {
+            html += `<h4>Raspunsuri practice (${p.results.practice.completed}/${p.results.practice.total} completate)</h4>`;
+            p.practiceItems.forEach(item => {
+                const reviewBadge = item.requiresTeacherEvaluation
+                    ? '<span class="badge badge-provisional">Necesita verificare</span>'
+                    : '<span class="badge badge-valid">Auto-evaluat</span>';
+                html += `<div class="practice-item">
+                    <div class="exercise-title">
+                        <span>${escHtml(item.exerciseTitle)}</span>
+                        ${reviewBadge}
+                    </div>
+                    <div class="answer">${escHtml(item.studentWrittenAnswer || '-')}</div>
+                    <div class="meta">
+                        <span>${item.charCount || 0} caractere</span>
+                        <span>${item.isComplete ? 'Complet' : 'Incomplet'}</span>
+                    </div>
+                </div>`;
+            });
+        }
+
+        if (!html) {
+            html = '<p style="color:var(--text-muted)">Nu sunt detalii disponibile pentru acest fisier.</p>';
+        }
+
+        // File metadata
+        html += `<div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border);font-size:0.7rem;color:var(--text-muted);">
+            <strong>Fisier:</strong> ${escHtml(entry.fileName)} &bull;
+            <strong>Sesiune:</strong> ${p._meta.sessionId || '-'} &bull;
+            <strong>Formula:</strong> ${escHtml(p.grading.breakdown.formula || '-')} &bull;
+            <strong>Checksum:</strong> ${entry.checksumValid ? 'VALID' : 'ALTERAT (fisier modificat!)'}
+        </div>`;
+
+        return html;
+    }
+
+    function toggleDetail(idx, row) {
+        const detailRow = document.getElementById('detail-' + idx);
+        if (!detailRow) return;
+
+        if (detailRow.classList.contains('open')) {
+            detailRow.classList.remove('open');
+            state.expandedIdx = null;
+        } else {
+            // Close any other open detail
+            document.querySelectorAll('.detail-row.open').forEach(r => r.classList.remove('open'));
+            detailRow.classList.add('open');
+            state.expandedIdx = idx;
+        }
+    }
+
+    // Format helpers
+    function formatDate(isoStr) {
+        if (!isoStr) return '-';
+        const d = new Date(isoStr);
+        return d.toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatLessonShort(id) {
+        // cls5-m1-sisteme-lectia1-calculator -> Cls5 L1 Calculator
+        const m = id.match(/cls(\d+)-m(\d+)-\w+-lectia(\d+)-(.+)/);
+        if (m) return `Cls${m[1]} M${m[2]} L${m[3]} ${m[4].charAt(0).toUpperCase() + m[4].slice(1)}`;
+        return id.substring(0, 30);
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // CSV Export
+    function exportCSV() {
+        const filtered = getFiltered();
+        if (!filtered.length) return;
+
+        const BOM = '\uFEFF';
+        const headers = ['Nume Elev', 'Lectie', 'Nota', 'Oficiu', 'Teorie', 'Practica', 'Checksum', 'Data Export'];
+        const rows = filtered.map(e => {
+            const p = e.data.payload;
+            const b = p.grading.breakdown;
+            return [
+                p.student.name,
+                p.lesson.id,
+                p.grading.grade,
+                b.dinOficiu,
+                `${b.atomic}/${p.results.atomic.maxPoints}`,
+                `${b.practice}/${p.results.practice.maxPoints}`,
+                e.checksumValid ? 'VALID' : 'ALTERAT',
+                p._meta.exportedAt
+            ];
+        });
+
+        const csv = BOM + [headers, ...rows].map(r =>
+            r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
+        ).join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `evaluare_note_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // Clear all
+    function clearAll() {
+        if (!confirm('Stergi toate fisierele incarcate?')) return;
+        state.entries = [];
+        state.expandedIdx = null;
+        updateUI();
+    }
+    </script>
+</body>
+</html>
