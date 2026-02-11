@@ -43,6 +43,8 @@ const QuizBridge = {
         // Hook into existing quiz systems
         this.hookLegacyCheckAnswer();
         this.hookQuizOptions();
+        this.hookAutoResults();
+        this.hookRestartButton();
 
         // Dispatch initial state
         this.dispatchProgress();
@@ -138,6 +140,55 @@ const QuizBridge = {
 
             console.log('QuizBridge: Hooked into checkAnswers()');
         }
+    },
+
+    /**
+     * Auto-show results when all questions are answered (remove manual "Verifica" button)
+     * Since each question gives instant feedback, the button is redundant.
+     */
+    hookAutoResults: function() {
+        // Hide the "Verifica raspunsurile" button
+        const checkBtn = document.getElementById('check-btn');
+        if (checkBtn) {
+            checkBtn.style.display = 'none';
+        }
+
+        // Override checkAllAnswered to auto-trigger results
+        if (typeof window.checkAllAnswered === 'function') {
+            const originalFn = window.checkAllAnswered;
+            window.checkAllAnswered = function() {
+                originalFn();
+                // If the button was made visible (all answered), auto-trigger results instead
+                const btn = document.getElementById('check-btn');
+                if (btn && btn.style.display !== 'none' && btn.style.display !== '') {
+                    btn.style.display = 'none';
+                    if (typeof window.checkAllAnswers === 'function') {
+                        window.checkAllAnswers();
+                    }
+                }
+            };
+            console.log('QuizBridge: Hooked auto-results (Verifica button hidden)');
+        }
+    },
+
+    /**
+     * Hook goToStep('goal') to reset all progress ("Reia lectia" button)
+     */
+    hookRestartButton: function() {
+        if (typeof window.goToStep !== 'function') return;
+
+        const originalGoToStep = window.goToStep;
+        window.goToStep = function(step) {
+            // When going back to 'goal', reset everything
+            if (step === 'goal') {
+                if (typeof LessonSummary !== 'undefined' && LessonSummary.lessonId) {
+                    LessonSummary.resetAll();
+                }
+                console.log('QuizBridge: Lesson reset via goToStep(goal)');
+            }
+            originalGoToStep(step);
+        };
+        console.log('QuizBridge: Hooked restart button');
     },
 
     /**

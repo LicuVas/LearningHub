@@ -23,6 +23,7 @@ const LessonSummary = {
     lessonId: null,
     atomicScore: null,
     practiceScore: null,
+    interactedThisSession: false,
 
     // Point-based grading system
     // Total: 10 points
@@ -92,6 +93,19 @@ const LessonSummary = {
         document.addEventListener('atomCompleted', () => this.checkAndUpdate());
         document.addEventListener('practiceComplete', () => this.checkAndUpdate());
 
+        // Detect actual user clicks (not saved-data restoration events)
+        // This sets interactedThisSession only when the student physically clicks
+        document.addEventListener('click', (e) => {
+            if (this.interactedThisSession) return; // already detected
+            if (e.target.closest('.option, .quiz-option, .atom-option, .practice-option, .ps-save-btn')) {
+                this.interactedThisSession = true;
+            }
+        });
+
+        // Hook into goToStep to toggle practice section visibility
+        // Practice should only show on 'test' and 'complete' steps
+        this.hookPracticeVisibility();
+
         // Load existing progress
         this.loadProgress();
 
@@ -99,6 +113,35 @@ const LessonSummary = {
         this.checkAndUpdate();
 
         console.log('LessonSummary: Initialized for', lessonId);
+    },
+
+    /**
+     * Hook into goToStep to show practice section only on test/complete steps
+     */
+    hookPracticeVisibility: function() {
+        const practiceEl = document.querySelector('.practice-section, #practice.practice-section');
+        if (!practiceEl) return;
+
+        // Hide practice initially (unless already on test/complete)
+        const activeSection = document.querySelector('.section.active');
+        const activeId = activeSection ? activeSection.id : '';
+        if (activeId !== 'test' && activeId !== 'complete') {
+            practiceEl.style.display = 'none';
+        }
+
+        // Wrap the existing goToStep to add practice toggle
+        if (typeof window.goToStep === 'function') {
+            const originalGoToStep = window.goToStep;
+            window.goToStep = function(step) {
+                originalGoToStep(step);
+                // Show practice only on test and complete steps
+                if (step === 'test' || step === 'complete') {
+                    practiceEl.style.display = '';
+                } else {
+                    practiceEl.style.display = 'none';
+                }
+            };
+        }
     },
 
     /**
@@ -349,8 +392,24 @@ const LessonSummary = {
         const container = document.getElementById('lesson-summary');
         if (!container) return;
 
-        // Don't show summary until student has answered at least one question
-        const hasAnyAnswers = (this.atomicScore && (this.atomicScore.totalCorrect > 0 || Object.keys(this.atomicScore).length > 2)) ||
+        // Check completion status first (for final mode)
+        // For AtomicLearning: atomsCompleted >= atomsTotal
+        // For QuizBridge: all questions answered
+        let atomicComplete = this.atomicScore?.atomsCompleted >= this.atomicScore?.atomsTotal;
+        if (!atomicComplete && typeof QuizBridge !== 'undefined' && QuizBridge.initialized) {
+            const answered = Object.keys(QuizBridge.answeredQuestions || {}).length;
+            atomicComplete = answered >= QuizBridge.totalQuestions;
+        }
+
+        // In progress mode: only show after student interacts THIS session
+        // In final mode (atomic complete): always show (it's the final result)
+        if (!atomicComplete && !this.interactedThisSession) {
+            container.style.display = 'none';
+            return;
+        }
+
+        // Even in final mode, need actual answers
+        const hasAnyAnswers = (this.atomicScore && this.atomicScore.totalCorrect > 0) ||
             (typeof QuizBridge !== 'undefined' && Object.keys(QuizBridge.answeredQuestions || {}).length > 0) ||
             (this.practiceScore && this.practiceScore.correct > 0);
         if (!hasAnyAnswers) {
@@ -361,9 +420,6 @@ const LessonSummary = {
         const scores = this.calculateFinalScore();
         const gradeInfo = this.getGrade(scores.grade);
 
-        // Check completion status
-        const atomicComplete = this.atomicScore?.atomsCompleted >= this.atomicScore?.atomsTotal;
-
         // Check if there are written answers requiring teacher evaluation
         const hasPracticeAnswers = scores.practiceStarted;
 
@@ -371,66 +427,106 @@ const LessonSummary = {
         const atomicPercent = scores.atomicTotal > 0 ? Math.round((scores.atomicCorrect / scores.atomicTotal) * 100) : 0;
         const practicePercent = scores.practiceTotal > 0 ? Math.round((scores.practiceCorrect / scores.practiceTotal) * 100) : 0;
 
-        container.innerHTML = `
-            <div class="ls-header">
-                <span class="ls-icon">&#128202;</span>
-                <span class="ls-title">Rezumatul Lectiei</span>
-            </div>
-
-            <div class="ls-grade" style="border-color: ${gradeInfo.color};">
-                <div class="ls-grade-number" style="color: ${gradeInfo.color};">Nota ${hasPracticeAnswers ? 'provizorie' : ''}: ${scores.grade}</div>
-                <div class="ls-grade-label">${gradeInfo.label}</div>
-                <div class="ls-grade-breakdown">
-                    ${scores.dinOficiuPoints} (oficiu) + ${scores.atomicPoints} (teorie)${scores.practiceStarted ? ` + ${scores.practicePoints} (practica)` : ''} = ${scores.grade} puncte
+        // Two display modes: progress (during lesson) vs final (after atomic complete)
+        if (!atomicComplete) {
+            // === PROGRESS MODE: Show points earned, not grade ===
+            const earnedSoFar = scores.dinOficiuPoints + scores.atomicPoints;
+            const maxPossible = scores.dinOficiuPoints + scores.atomicMaxPoints;
+            container.innerHTML = `
+                <div class="ls-header">
+                    <span class="ls-icon">&#9889;</span>
+                    <span class="ls-title">Progresul Tau</span>
                 </div>
-                ${hasPracticeAnswers ? `
-                    <div class="ls-provisional-notice">
-                        <span>&#128269;</span> Nota finala va fi confirmata de profesor dupa evaluarea raspunsurilor scrise
-                    </div>
-                ` : ''}
-            </div>
 
-            <div class="ls-breakdown">
-                <div class="ls-section">
-                    <div class="ls-section-header">
-                        <span class="ls-section-icon">${atomicComplete ? '&#10004;' : '&#9711;'}</span>
-                        <span class="ls-section-name">Invatare Atomica</span>
-                        <span class="ls-section-weight">(max ${scores.atomicMaxPoints} puncte)</span>
-                    </div>
-                    <div class="ls-section-bar">
-                        <div class="ls-section-fill" style="width: ${atomicPercent}%; background: var(--accent-blue);"></div>
-                    </div>
-                    <div class="ls-section-detail">
-                        ${scores.atomicCorrect}/${scores.atomicTotal} corecte = <strong>${scores.atomicPoints} puncte</strong> - <em>nota automata</em>
+                <div class="ls-grade" style="border-color: var(--accent-blue, #3b82f6);">
+                    <div class="ls-grade-number" style="color: var(--accent-blue, #3b82f6); font-size: 1.8rem;">+${scores.atomicPoints} puncte</div>
+                    <div class="ls-grade-label" style="color: var(--text-secondary);">${scores.atomicCorrect}/${scores.atomicTotal} raspunsuri corecte</div>
+                    <div class="ls-grade-breakdown">
+                        Continua pentru a strange cat mai multe puncte!
                     </div>
                 </div>
 
-                <div class="ls-section">
-                    <div class="ls-section-header">
-                        <span class="ls-section-icon">${scores.practiceComplete ? '&#10004;' : (scores.practiceStarted ? '&#9203;' : '&#9711;')}</span>
-                        <span class="ls-section-name">Practica Avansata</span>
-                        <span class="ls-section-weight">(max 3 puncte)</span>
-                    </div>
-                    <div class="ls-section-bar">
-                        <div class="ls-section-fill" style="width: ${practicePercent}%; background: var(--success);"></div>
-                    </div>
-                    <div class="ls-section-detail">
-                        ${scores.practiceComplete
-                            ? `${scores.practiceCorrect}/${scores.practiceTotal} completate = <strong>${scores.practicePoints} puncte</strong> - <em>necesita evaluare profesor</em>`
-                            : (scores.practiceStarted
-                                ? `${scores.practiceCorrect}/${scores.practiceTotal} in curs = <strong>${scores.practicePoints} puncte</strong>`
-                                : 'Neinceputa - optional pentru exercitii suplimentare')}
+                <div class="ls-breakdown">
+                    <div class="ls-section">
+                        <div class="ls-section-header">
+                            <span class="ls-section-icon">&#9711;</span>
+                            <span class="ls-section-name">Invatare Atomica</span>
+                            <span class="ls-section-weight">(max ${scores.atomicMaxPoints} puncte)</span>
+                        </div>
+                        <div class="ls-section-bar">
+                            <div class="ls-section-fill" style="width: ${atomicPercent}%; background: var(--accent-blue);"></div>
+                        </div>
+                        <div class="ls-section-detail">
+                            ${scores.atomicCorrect}/${scores.atomicTotal} corecte = <strong>${scores.atomicPoints} puncte</strong>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            ${atomicComplete ? `
+                <div class="ls-status ls-status-incomplete">
+                    &#9888; Completeaza toate sectiunile de invatare atomica pentru a vedea nota finala.
+                </div>
+            `;
+        } else {
+            // === FINAL MODE: Show full grade after atomic sections complete ===
+            container.innerHTML = `
+                <div class="ls-header">
+                    <span class="ls-icon">&#128202;</span>
+                    <span class="ls-title">Rezumatul Lectiei</span>
+                </div>
+
+                <div class="ls-grade" style="border-color: ${gradeInfo.color};">
+                    <div class="ls-grade-number" style="color: ${gradeInfo.color};">Nota${hasPracticeAnswers ? ' provizorie' : ''}: ${scores.grade}</div>
+                    <div class="ls-grade-label">${gradeInfo.label}</div>
+                    <div class="ls-grade-breakdown">
+                        ${scores.dinOficiuPoints} (oficiu) + ${scores.atomicPoints} (teorie)${scores.practiceStarted ? ` + ${scores.practicePoints} (practica)` : ''} = ${scores.grade} puncte
+                    </div>
+                    ${hasPracticeAnswers ? `
+                        <div class="ls-provisional-notice">
+                            <span>&#128269;</span> Nota finala va fi confirmata de profesor dupa evaluarea raspunsurilor scrise
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="ls-breakdown">
+                    <div class="ls-section">
+                        <div class="ls-section-header">
+                            <span class="ls-section-icon">&#10004;</span>
+                            <span class="ls-section-name">Invatare Atomica</span>
+                            <span class="ls-section-weight">(max ${scores.atomicMaxPoints} puncte)</span>
+                        </div>
+                        <div class="ls-section-bar">
+                            <div class="ls-section-fill" style="width: ${atomicPercent}%; background: var(--accent-blue);"></div>
+                        </div>
+                        <div class="ls-section-detail">
+                            ${scores.atomicCorrect}/${scores.atomicTotal} corecte = <strong>${scores.atomicPoints} puncte</strong> - <em>nota automata</em>
+                        </div>
+                    </div>
+
+                    ${scores.practiceStarted ? `
+                    <div class="ls-section">
+                        <div class="ls-section-header">
+                            <span class="ls-section-icon">${scores.practiceComplete ? '&#10004;' : '&#9203;'}</span>
+                            <span class="ls-section-name">Practica Avansata</span>
+                            <span class="ls-section-weight">(max 3 puncte)</span>
+                        </div>
+                        <div class="ls-section-bar">
+                            <div class="ls-section-fill" style="width: ${practicePercent}%; background: var(--success);"></div>
+                        </div>
+                        <div class="ls-section-detail">
+                            ${scores.practiceComplete
+                                ? `${scores.practiceCorrect}/${scores.practiceTotal} completate = <strong>${scores.practicePoints} puncte</strong> - <em>necesita evaluare profesor</em>`
+                                : `${scores.practiceCorrect}/${scores.practiceTotal} in curs = <strong>${scores.practicePoints} puncte</strong>`}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+
                 <div class="ls-status ls-status-complete">
                     &#10004; Lectia completa! ${scores.grade >= 5 ? 'Poti continua la urmatoarea lectie.' : 'Recomandat: reia lectia pentru o nota mai buna.'}
                 </div>
                 ${!scores.practiceStarted && scores.practiceTotal > 0 ? `
                     <div class="ls-status" style="background: rgba(59, 130, 246, 0.15); border: 1px solid var(--accent-blue, #3b82f6); color: var(--accent-blue, #3b82f6); margin-top: 0.75rem;">
-                        &#128161; <strong>Practica disponibila:</strong> Exercitii suplimentare pentru consolidarea cunostintelor.
+                        &#128161; <strong>Practica disponibila:</strong> Completeaza exercitiile practice pentru pana la 3 puncte in plus!
                     </div>
                 ` : ''}
                 ${hasPracticeAnswers ? `
@@ -438,15 +534,20 @@ const LessonSummary = {
                         <span class="ls-teacher-icon">&#128100;</span>
                         <div>
                             <strong>Pas urmator:</strong> Descarca fisierul JSON si trimite-l profesorului pentru evaluarea finala a raspunsurilor scrise.
+                            <button class="ls-download-btn" onclick="LessonSummary.downloadProgress()" style="margin-top: 0.5rem;">
+                                &#128229; Descarca progresul (JSON)
+                            </button>
                         </div>
                     </div>
-                ` : ''}
-            ` : `
-                <div class="ls-status ls-status-incomplete">
-                    &#9888; Completeaza toate sectiunile de invatare atomica pentru a finaliza lectia.
-                </div>
-            `}
-        `;
+                ` : `
+                    <div style="text-align: center; margin-top: 0.75rem;">
+                        <button class="ls-download-btn" onclick="LessonSummary.downloadProgress()">
+                            &#128229; Descarca progresul (JSON)
+                        </button>
+                    </div>
+                `}
+            `;
+        }
 
         container.style.display = 'block';
     },
@@ -497,7 +598,9 @@ const LessonSummary = {
             },
 
             // Completion status
-            isComplete: (this.atomicScore?.atomsCompleted || 0) >= (this.atomicScore?.atomsTotal || 1),
+            isComplete: (this.atomicScore?.atomsCompleted || 0) >= (this.atomicScore?.atomsTotal || 1) ||
+                (typeof QuizBridge !== 'undefined' && QuizBridge.initialized &&
+                    Object.keys(QuizBridge.answeredQuestions || {}).length >= QuizBridge.totalQuestions),
 
             // Metadata
             timestamp: Date.now(),
@@ -531,6 +634,58 @@ const LessonSummary = {
         }
 
         return saved ? JSON.parse(saved) : null;
+    },
+
+    /**
+     * Reset all lesson progress (quiz, practice, summary)
+     * Called by "Reia lectia" button
+     */
+    resetAll: function() {
+        // Reset QuizBridge
+        if (typeof QuizBridge !== 'undefined' && QuizBridge.initialized) {
+            QuizBridge.reset();
+        }
+
+        // Reset PracticeSimple
+        if (typeof PracticeSimple !== 'undefined') {
+            PracticeSimple.reset();
+        }
+
+        // Reset own state
+        this.atomicScore = null;
+        this.practiceScore = null;
+        this.interactedThisSession = false;
+
+        // Clear localStorage keys
+        const profileId = this.getProfileId();
+        const profileSuffix = profileId ? `_${profileId}` : '';
+        ['lesson-summary-', 'atomic-progress-', 'quiz-bridge-', 'practice-'].forEach(prefix => {
+            localStorage.removeItem(`${prefix}${this.lessonId}`);
+            if (profileSuffix) {
+                localStorage.removeItem(`${prefix}${this.lessonId}${profileSuffix}`);
+            }
+        });
+
+        // Reset quiz DOM: remove locked/correct/wrong classes, hide feedback
+        document.querySelectorAll('.option').forEach(o => {
+            o.classList.remove('locked', 'correct', 'wrong');
+        });
+        document.querySelectorAll('.feedback').forEach(f => {
+            f.innerHTML = '';
+            f.className = 'feedback';
+        });
+
+        // Hide result box and check button
+        const resultDiv = document.getElementById('test-result');
+        if (resultDiv) resultDiv.style.display = 'none';
+        const checkBtn = document.getElementById('check-btn');
+        if (checkBtn) checkBtn.style.display = 'none';
+
+        // Hide summary
+        const container = document.getElementById('lesson-summary');
+        if (container) container.style.display = 'none';
+
+        console.log('LessonSummary: Full lesson reset');
     },
 
     /**
@@ -714,7 +869,9 @@ const LessonSummary = {
                 grade: scores.grade,
                 gradeLabel: gradeInfo.label,
                 isProvisional: scores.practiceStarted,  // Needs teacher review if practice started
-                isComplete: (this.atomicScore?.atomsCompleted || 0) >= (this.atomicScore?.atomsTotal || 1),
+                isComplete: (this.atomicScore?.atomsCompleted || 0) >= (this.atomicScore?.atomsTotal || 1) ||
+                    (typeof QuizBridge !== 'undefined' && QuizBridge.initialized &&
+                        Object.keys(QuizBridge.answeredQuestions || {}).length >= QuizBridge.totalQuestions),
                 breakdown: {
                     dinOficiu: scores.dinOficiuPoints,
                     atomic: scores.atomicPoints,
@@ -963,6 +1120,26 @@ const LessonSummary = {
             .ls-teacher-icon {
                 font-size: 1.5rem;
                 flex-shrink: 0;
+            }
+
+            .ls-download-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.6rem 1.25rem;
+                background: var(--accent-blue, #3b82f6);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 0.9rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .ls-download-btn:hover {
+                background: #60a5fa;
+                transform: translateY(-1px);
             }
 
             @media (max-width: 768px) {
