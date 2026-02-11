@@ -349,6 +349,15 @@ const LessonSummary = {
         const container = document.getElementById('lesson-summary');
         if (!container) return;
 
+        // Don't show summary until student has answered at least one question
+        const hasAnyAnswers = (this.atomicScore && (this.atomicScore.totalCorrect > 0 || Object.keys(this.atomicScore).length > 2)) ||
+            (typeof QuizBridge !== 'undefined' && Object.keys(QuizBridge.answeredQuestions || {}).length > 0) ||
+            (this.practiceScore && this.practiceScore.correct > 0);
+        if (!hasAnyAnswers) {
+            container.style.display = 'none';
+            return;
+        }
+
         const scores = this.calculateFinalScore();
         const gradeInfo = this.getGrade(scores.grade);
 

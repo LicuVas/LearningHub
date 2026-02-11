@@ -36,8 +36,8 @@ const PracticeSimple = {
      * Find and setup all practice exercises
      */
     setupExercises: function() {
-        // Find the practice section
-        const container = document.querySelector('.practice-advanced, #practice-advanced');
+        // Find the practice section (supports both naming conventions)
+        const container = document.querySelector('.practice-advanced, #practice-advanced, .practice-section, #practice');
         if (!container) {
             console.log('PracticeSimple: No practice section found');
             return;
@@ -267,7 +267,7 @@ const PracticeSimple = {
      * Update the completion display
      */
     updateCompletionDisplay: function() {
-        const container = document.querySelector('.practice-advanced, #practice-advanced');
+        const container = document.querySelector('.practice-advanced, #practice-advanced, .practice-section, #practice');
         if (!container) return;
 
         const status = this.getCompletionStatus();
