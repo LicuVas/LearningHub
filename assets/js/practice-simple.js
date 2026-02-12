@@ -43,7 +43,7 @@ const PracticeSimple = {
             return;
         }
 
-        const exerciseEls = container.querySelectorAll('.practice-exercise');
+        const exerciseEls = container.querySelectorAll('.practice-exercise, .exercise');
 
         exerciseEls.forEach((el, idx) => {
             const exerciseId = `exercise-${idx}`;

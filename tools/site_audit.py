@@ -83,6 +83,7 @@ def check_js_syntax(content, filepath):
 
         # Check for the specific bug: single-quoted string containing onclick with single quotes
         # Pattern: '...<button onclick="goToStep('...')">...'
+        # NOTE: This is VALID inside backtick template literals, so we must exclude those.
         bad_patterns = [
             (r"'[^']*onclick=\"goToStep\('[^']*'\)\"[^']*'", "Single-quoted string contains goToStep('...') - will break JS parser"),
             (r"'[^']*onclick=\"[^\"]*\('[^']*'\)[^\"]*\"[^']*'", "Single-quoted string contains function call with quotes in onclick"),
@@ -91,6 +92,10 @@ def check_js_syntax(content, filepath):
         for pattern, msg in bad_patterns:
             matches = re.finditer(pattern, script)
             for m in matches:
+                # Skip matches inside backtick template literals (single quotes are valid there)
+                match_line = script[script.rfind('\n', 0, m.start())+1:script.find('\n', m.end())]
+                if '`' in match_line or '${' in match_line:
+                    continue
                 line_num = content[:start_pos + m.start()].count('\n') + 1
                 issues.append(Issue(Issue.CRITICAL, "JS_SYNTAX", msg, filepath, line_num))
 
@@ -309,6 +314,91 @@ def check_module_index(filepath, content):
     return issues
 
 
+def check_onclick_quotes(content, filepath):
+    """Check for unescaped double quotes inside onclick attributes (CRITICAL).
+
+    Pattern: onclick="...text with "quotes" inside..." breaks the HTML attribute.
+    Fix: use &quot; instead of literal " inside onclick values.
+    """
+    issues = []
+
+    if os.path.basename(filepath) == "index.html":
+        return issues
+
+    # Only check HTML outside <script> blocks
+    # Remove script blocks first
+    no_scripts = re.sub(r'<script[^>]*>.*?</script>', '', content, flags=re.DOTALL)
+
+    for line_num, line in enumerate(no_scripts.split('\n'), 1):
+        if 'onclick="' not in line:
+            continue
+
+        # Find all onclick attributes on this line
+        for match in re.finditer(r'onclick="', line):
+            start = match.end()
+            # Walk forward tracking single-quote strings and parens
+            depth = 0
+            in_sq = False
+            j = start
+            has_bad_quote = False
+            while j < len(line):
+                ch = line[j]
+                if ch == "'" and not in_sq:
+                    in_sq = True
+                elif ch == "'" and in_sq:
+                    in_sq = False
+                elif ch == '(' and not in_sq:
+                    depth += 1
+                elif ch == ')' and not in_sq:
+                    depth -= 1
+                    if depth <= 0:
+                        break
+                elif ch == '"' and not in_sq:
+                    has_bad_quote = True
+                    break
+                j += 1
+
+            if has_bad_quote:
+                # Get surrounding text for context
+                context = line[max(0, match.start()-10):min(len(line), j+30)].strip()
+                issues.append(Issue(
+                    Issue.CRITICAL, "ONCLICK_QUOTES",
+                    f"Unescaped \" inside onclick attribute breaks handler",
+                    filepath, line_num
+                ))
+
+    return issues
+
+
+def check_exercise_class(content, filepath):
+    """Check for .exercise class that should be .practice-exercise.
+
+    practice-simple.js now accepts both, but .practice-exercise is preferred.
+    """
+    issues = []
+
+    if os.path.basename(filepath) == "index.html":
+        return issues
+
+    # Check if file has practice section
+    has_practice = bool(re.search(r'practice-simple\.js|PracticeSimple', content))
+    if not has_practice:
+        return issues
+
+    # Find .exercise without .practice-exercise
+    exercise_only = re.findall(r'class="exercise"', content)
+    practice_exercise = re.findall(r'class="practice-exercise"', content)
+
+    if exercise_only and not practice_exercise:
+        issues.append(Issue(
+            Issue.WARNING, "EXERCISE_CLASS",
+            f"Uses class='exercise' ({len(exercise_only)}x) instead of 'practice-exercise' - works but non-standard",
+            filepath
+        ))
+
+    return issues
+
+
 def check_css_consistency(content, filepath):
     """Check for CSS issues"""
     issues = []
@@ -325,12 +415,13 @@ def check_css_consistency(content, filepath):
     return issues
 
 
-def run_audit():
-    """Run the full audit"""
+def run_audit(quick_mode=False):
+    """Run the full audit. quick_mode=True only checks CRITICAL issues."""
     lessons = find_all_lessons()
     all_issues = []
 
-    print(f"LearningHub Full Site Audit")
+    mode_label = "QUICK (CRITICALs only)" if quick_mode else "FULL"
+    print(f"LearningHub Site Audit [{mode_label}]")
     print(f"{'=' * 60}")
     print(f"Scanning {len(lessons)} HTML files...\n")
 
@@ -344,14 +435,17 @@ def run_audit():
 
         # Run all checks
         all_issues.extend(check_js_syntax(content, filepath))
+        all_issues.extend(check_onclick_quotes(content, filepath))
         all_issues.extend(check_script_includes(content, filepath))
-        all_issues.extend(check_breadcrumb(content, filepath))
-        all_issues.extend(check_content_quality(content, filepath))
-        all_issues.extend(check_internal_links(content, filepath))
-        all_issues.extend(check_quiz_files(content, filepath))
-        all_issues.extend(check_practice_placement(content, filepath))
-        all_issues.extend(check_module_index(filepath, content))
-        all_issues.extend(check_css_consistency(content, filepath))
+        if not quick_mode:
+            all_issues.extend(check_breadcrumb(content, filepath))
+            all_issues.extend(check_content_quality(content, filepath))
+            all_issues.extend(check_internal_links(content, filepath))
+            all_issues.extend(check_quiz_files(content, filepath))
+            all_issues.extend(check_practice_placement(content, filepath))
+            all_issues.extend(check_module_index(filepath, content))
+            all_issues.extend(check_css_consistency(content, filepath))
+            all_issues.extend(check_exercise_class(content, filepath))
 
     # Group by severity
     critical = [i for i in all_issues if i.severity == Issue.CRITICAL]
@@ -424,4 +518,10 @@ def run_audit():
 
 
 if __name__ == "__main__":
-    run_audit()
+    quick = "--quick" in sys.argv
+    issues = run_audit(quick_mode=quick)
+
+    # Exit with error code if any CRITICALs found (for pre-commit hook)
+    critical_count = len([i for i in issues if i.severity == Issue.CRITICAL])
+    if critical_count > 0:
+        sys.exit(1)
