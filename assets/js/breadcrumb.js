@@ -42,6 +42,11 @@ const Breadcrumb = {
             return '../../../../hub/index.html';
         }
 
+        // Extensionless lesson URL (Cloudflare Pages): /content/tic/cls6/m1-prezentari/lectia1
+        if (path.includes('/content/tic/') && path.match(/\/m\d+-[^/]+\/[^/]+$/) && !path.endsWith('/index') && !path.match(/\/content\/tic\/cls\d+\/m\d+-[^/]+$/)) {
+            return '../../../../hub/index.html';
+        }
+
         // From module index: content/tic/cls6/m1-prezentari/ or .../index.html
         if (normalizedPath.match(/\/content\/tic\/cls\d+\/m\d+-[^/]+$/)) {
             return '../../../../hub/index.html';
@@ -71,9 +76,13 @@ const Breadcrumb = {
         const path = window.location.pathname;
         const normalizedPath = path.replace(/\/index\.html$/, '/').replace(/\/$/, '');
 
-        // From lesson page (inside a module folder)
+        // From lesson page (inside a module folder) - .html or extensionless
         if (path.match(/\/m\d+-[^/]+\/[^/]+\.html$/) && !path.endsWith('/index.html')) {
             return '../index.html';
+        }
+        // Extensionless lesson URL
+        if (path.match(/\/m\d+-[^/]+\/[^/]+$/) && !path.endsWith('/index') && !normalizedPath.match(/\/m\d+-[^/]+$/)) {
+            return '../';
         }
 
         // From module index
@@ -94,9 +103,14 @@ const Breadcrumb = {
     getModulePath() {
         const path = window.location.pathname;
 
-        // From lesson page (non-index)
+        // From lesson page (non-index) - supports both .html and extensionless URLs (Cloudflare Pages)
         if (path.match(/\/m\d+-[^/]+\/[^/]+\.html$/) && !path.endsWith('/index.html')) {
             return 'index.html';
+        }
+
+        // Extensionless URL: /content/tic/cls6/m4-comunicare/lectia1-email-intro
+        if (path.match(/\/m\d+-[^/]+\/[^/]+$/) && !path.endsWith('/index') && !path.match(/\/m\d+-[^/]+$/)) {
+            return './';
         }
 
         return '#';
