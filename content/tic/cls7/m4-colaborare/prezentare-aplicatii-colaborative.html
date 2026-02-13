@@ -26,55 +26,63 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
+        html, body {
             font-family: 'Inter', sans-serif;
             background: var(--bg);
             color: var(--text);
             overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            cursor: default;
-            user-select: none;
+            height: 100%;
+            width: 100%;
         }
 
-        /* ===== PREZI CANVAS ===== */
-        #canvas-wrapper {
+        /* ===== SLIDE SYSTEM ===== */
+        .slide {
             position: fixed;
             inset: 0;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        #canvas {
-            position: absolute;
-            width: 8000px;
-            height: 6000px;
-            transform-origin: 0 0;
-            transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-
-        .frame {
-            position: absolute;
+            bottom: 72px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
+            padding: 40px 60px;
             opacity: 0;
-            transition: opacity 0.6s ease 0.4s;
+            transform: scale(0.92) translateY(30px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            pointer-events: none;
+            overflow-y: auto;
+            z-index: 1;
         }
 
-        .frame.visible {
+        .slide.active {
             opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+            z-index: 10;
         }
 
-        /* ===== NAVIGATION ===== */
+        .slide.exit-left {
+            opacity: 0;
+            transform: scale(0.88) translateX(-80px);
+        }
+
+        .slide.exit-right {
+            opacity: 0;
+            transform: scale(0.88) translateX(80px);
+        }
+
+        /* Scrollbar styling for tall slides */
+        .slide::-webkit-scrollbar { width: 6px; }
+        .slide::-webkit-scrollbar-track { background: transparent; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* ===== NAVIGATION BAR ===== */
         #nav-bar {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(10, 10, 26, 0.92);
+            background: rgba(10, 10, 26, 0.95);
             backdrop-filter: blur(20px);
             border-top: 1px solid var(--border);
             padding: 12px 24px;
@@ -97,19 +105,12 @@
             align-items: center;
             justify-content: center;
             transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+            flex-shrink: 0;
         }
 
-        .nav-btn:hover {
-            background: var(--blue);
-            border-color: var(--blue);
-            transform: scale(1.1);
-        }
-
-        .nav-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .nav-btn:hover { background: var(--blue); border-color: var(--blue); transform: scale(1.1); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 
         #progress-bar {
             flex: 1;
@@ -129,20 +130,9 @@
             flex-shrink: 0;
         }
 
-        .progress-dot.active {
-            background: var(--blue);
-            box-shadow: 0 0 12px var(--blue);
-            transform: scale(1.3);
-        }
-
-        .progress-dot.visited {
-            background: var(--purple);
-        }
-
-        .progress-dot:hover {
-            transform: scale(1.4);
-            background: var(--blue-light);
-        }
+        .progress-dot.active { background: var(--blue); box-shadow: 0 0 12px var(--blue); transform: scale(1.3); }
+        .progress-dot.visited { background: var(--purple); }
+        .progress-dot:hover { transform: scale(1.4); background: var(--blue-light); }
 
         #slide-counter {
             color: var(--text2);
@@ -152,14 +142,7 @@
             text-align: center;
         }
 
-        /* ===== SLIDE STYLES ===== */
-
-        /* Title Slide */
-        .title-slide {
-            width: 1200px;
-            height: 900px;
-        }
-
+        /* ===== TITLE SLIDE ===== */
         .title-badge {
             background: linear-gradient(135deg, var(--blue), var(--purple));
             padding: 8px 24px;
@@ -168,32 +151,35 @@
             font-weight: 600;
             letter-spacing: 2px;
             text-transform: uppercase;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
+            display: inline-block;
         }
 
         .title-main {
-            font-size: 5rem;
+            font-size: clamp(2.5rem, 6vw, 5rem);
             font-weight: 900;
             line-height: 1.1;
             background: linear-gradient(135deg, #60a5fa, #a78bfa, #ec4899);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .title-sub {
-            font-size: 1.6rem;
+            font-size: clamp(1rem, 2vw, 1.6rem);
             color: var(--text2);
             font-weight: 300;
-            margin-bottom: 40px;
+            margin-bottom: 32px;
         }
 
         .title-meta {
             display: flex;
-            gap: 20px;
-            font-size: 0.95rem;
+            gap: 16px;
+            font-size: 0.9rem;
             color: var(--text3);
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .title-meta span {
@@ -204,7 +190,7 @@
         }
 
         .title-start {
-            margin-top: 50px;
+            margin-top: 40px;
             background: linear-gradient(135deg, var(--blue), var(--purple));
             color: white;
             border: none;
@@ -217,566 +203,164 @@
             font-family: 'Inter', sans-serif;
         }
 
-        .title-start:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
+        .title-start:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4); }
+
+        /* ===== CONTENT SLIDES ===== */
+        .slide-inner {
+            max-width: 1000px;
+            width: 100%;
         }
 
-        /* Content Slides */
-        .content-slide {
-            width: 1100px;
-            padding: 60px;
-            background: var(--surface);
-            border-radius: 24px;
-            border: 1px solid var(--border);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        }
-
-        .slide-icon {
-            font-size: 4rem;
-            margin-bottom: 16px;
-        }
+        .slide-icon { font-size: 3.5rem; margin-bottom: 12px; }
 
         .slide-title {
-            font-size: 2.8rem;
+            font-size: clamp(1.8rem, 3.5vw, 2.8rem);
             font-weight: 800;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             line-height: 1.2;
         }
 
-        .slide-subtitle {
-            font-size: 1.1rem;
-            color: var(--text2);
-            margin-bottom: 36px;
-        }
+        .slide-subtitle { font-size: 1.05rem; color: var(--text2); margin-bottom: 28px; }
 
-        .gradient-text {
-            background: linear-gradient(135deg, var(--blue), var(--purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+        .gradient-text { background: linear-gradient(135deg, var(--blue), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .gradient-green { background: linear-gradient(135deg, var(--green), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .gradient-orange { background: linear-gradient(135deg, var(--orange), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
-        .gradient-green {
-            background: linear-gradient(135deg, var(--green), var(--cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .gradient-orange {
-            background: linear-gradient(135deg, var(--orange), var(--pink));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* Cards Grid */
-        .cards-grid {
-            display: grid;
-            gap: 20px;
-            text-align: left;
-        }
-
+        /* ===== CARDS GRID ===== */
+        .cards-grid { display: grid; gap: 16px; text-align: left; }
         .cards-2 { grid-template-columns: 1fr 1fr; }
         .cards-3 { grid-template-columns: 1fr 1fr 1fr; }
-        .cards-4 { grid-template-columns: 1fr 1fr; }
 
         .info-card {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
+            border-radius: 14px;
+            padding: 20px;
             transition: all 0.3s;
         }
 
-        .info-card:hover {
-            border-color: var(--blue);
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
-        }
+        .info-card:hover { border-color: var(--blue); transform: translateY(-3px); }
 
-        .card-icon {
-            font-size: 2.4rem;
-            margin-bottom: 12px;
-        }
+        .card-icon { font-size: 2rem; margin-bottom: 10px; }
+        .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--blue-light); }
+        .card-text { font-size: 0.9rem; color: var(--text2); line-height: 1.5; }
 
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: var(--blue-light);
-        }
-
-        .card-text {
-            font-size: 0.95rem;
-            color: var(--text2);
-            line-height: 1.6;
-        }
-
-        /* Comparison */
-        .comparison {
-            display: grid;
-            grid-template-columns: 1fr 60px 1fr;
-            align-items: center;
-            gap: 0;
-        }
-
-        .compare-side {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 30px;
-            text-align: left;
-        }
-
-        .compare-side.bad {
-            border: 2px solid var(--red);
-        }
-
-        .compare-side.good {
-            border: 2px solid var(--green);
-        }
-
-        .compare-vs {
-            font-size: 1.8rem;
-            font-weight: 900;
-            color: var(--text3);
-            text-align: center;
-        }
-
-        .compare-label {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-        }
-
+        /* ===== COMPARISON ===== */
+        .comparison { display: grid; grid-template-columns: 1fr 50px 1fr; align-items: center; text-align: left; }
+        .compare-side { background: var(--card); border-radius: 14px; padding: 24px; }
+        .compare-side.bad { border: 2px solid var(--red); }
+        .compare-side.good { border: 2px solid var(--green); }
+        .compare-vs { font-size: 1.6rem; font-weight: 900; color: var(--text3); text-align: center; }
+        .compare-label { font-size: 1.3rem; font-weight: 700; margin-bottom: 14px; }
         .compare-side.bad .compare-label { color: var(--red); }
         .compare-side.good .compare-label { color: var(--green); }
+        .compare-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .compare-list li { display: flex; align-items: flex-start; gap: 8px; color: var(--text2); font-size: 0.95rem; line-height: 1.4; }
 
-        .compare-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+        /* ===== DEFINITION BOX ===== */
+        .def-box { background: var(--card); border: 2px solid var(--border); border-radius: 18px; padding: 28px 32px; margin-top: 20px; text-align: left; }
+        .def-text { font-size: 1.15rem; line-height: 1.7; color: var(--text2); }
+        .def-text strong { color: var(--blue-light); }
+        .def-text em { color: var(--purple); font-style: normal; font-weight: 600; }
 
-        .compare-list li {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            color: var(--text2);
-            font-size: 1rem;
-            line-height: 1.5;
-        }
+        /* ===== STEPS ===== */
+        .steps-vertical { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+        .step-item { display: flex; align-items: center; gap: 16px; background: var(--card); padding: 16px 20px; border-radius: 12px; border: 1px solid var(--border); transition: all 0.3s; }
+        .step-item:hover { border-color: var(--blue); transform: translateX(6px); }
+        .step-num { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--purple)); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0; }
+        .step-content { flex: 1; }
+        .step-content strong { display: block; font-size: 1.05rem; margin-bottom: 2px; }
+        .step-content span { color: var(--text2); font-size: 0.9rem; }
 
-        .compare-list li span:first-child {
-            flex-shrink: 0;
-        }
-
-        /* Steps */
-        .steps-vertical {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            text-align: left;
-        }
-
-        .step-item {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            background: var(--card);
-            padding: 20px 24px;
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            transition: all 0.3s;
-        }
-
-        .step-item:hover {
-            border-color: var(--blue);
-            transform: translateX(8px);
-        }
-
-        .step-num {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--blue), var(--purple));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-
-        .step-content {
-            flex: 1;
-        }
-
-        .step-content strong {
-            display: block;
-            font-size: 1.1rem;
-            margin-bottom: 4px;
-        }
-
-        .step-content span {
-            color: var(--text2);
-            font-size: 0.95rem;
-        }
-
-        /* Permission Bars */
-        .perm-bars {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            text-align: left;
-            width: 100%;
-        }
-
-        .perm-bar {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            background: var(--card);
-            border-radius: 14px;
-            padding: 20px 24px;
-            border-left: 5px solid;
-        }
-
+        /* ===== PERMISSION BARS ===== */
+        .perm-bars { display: flex; flex-direction: column; gap: 16px; text-align: left; width: 100%; }
+        .perm-bar { display: flex; align-items: center; gap: 16px; background: var(--card); border-radius: 12px; padding: 18px 20px; border-left: 5px solid; }
         .perm-bar.viewer { border-left-color: var(--cyan); }
         .perm-bar.commenter { border-left-color: var(--orange); }
         .perm-bar.editor { border-left-color: var(--green); }
-
-        .perm-icon { font-size: 2.4rem; flex-shrink: 0; }
-
+        .perm-icon { font-size: 2rem; flex-shrink: 0; }
         .perm-info { flex: 1; }
-
-        .perm-name {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
+        .perm-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 2px; }
         .perm-bar.viewer .perm-name { color: var(--cyan); }
         .perm-bar.commenter .perm-name { color: var(--orange); }
         .perm-bar.editor .perm-name { color: var(--green); }
-
-        .perm-desc {
-            color: var(--text2);
-            font-size: 0.95rem;
-        }
-
-        .perm-tags {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .perm-tag {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
+        .perm-desc { color: var(--text2); font-size: 0.9rem; }
+        .perm-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        .perm-tag { padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
         .perm-bar.viewer .perm-tag { background: rgba(6, 182, 212, 0.15); color: var(--cyan); }
         .perm-bar.commenter .perm-tag { background: rgba(245, 158, 11, 0.15); color: var(--orange); }
         .perm-bar.editor .perm-tag { background: rgba(16, 185, 129, 0.15); color: var(--green); }
 
-        /* Apps Grid */
-        .apps-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            text-align: center;
-        }
+        /* ===== APPS GRID ===== */
+        .apps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; text-align: center; }
+        .app-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px 16px; transition: all 0.3s; }
+        .app-card:hover { transform: translateY(-4px); border-color: var(--blue); }
+        .app-icon { font-size: 2.4rem; margin-bottom: 8px; }
+        .app-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
+        .app-desc { font-size: 0.8rem; color: var(--text2); line-height: 1.4; }
 
-        .app-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 28px 20px;
-            transition: all 0.3s;
-        }
+        /* ===== ETHICS ===== */
+        .ethics-list { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+        .ethics-item { display: flex; align-items: flex-start; gap: 14px; background: var(--card); padding: 16px 18px; border-radius: 10px; border: 1px solid var(--border); }
+        .ethics-num { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), var(--pink)); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; }
+        .ethics-text { flex: 1; font-size: 0.95rem; line-height: 1.4; color: var(--text2); }
+        .ethics-text strong { color: var(--text); }
 
-        .app-card:hover {
-            transform: translateY(-6px) scale(1.02);
-            border-color: var(--blue);
-            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.2);
-        }
-
-        .app-icon { font-size: 3rem; margin-bottom: 12px; }
-        .app-name { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
-        .app-desc { font-size: 0.85rem; color: var(--text2); line-height: 1.5; }
-
-        /* Ethics list */
-        .ethics-list {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            text-align: left;
-        }
-
-        .ethics-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            background: var(--card);
-            padding: 18px 22px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .ethics-num {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--orange), var(--pink));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 0.95rem;
-            flex-shrink: 0;
-        }
-
-        .ethics-text {
-            flex: 1;
-            font-size: 1.05rem;
-            line-height: 1.5;
-            color: var(--text2);
-        }
-
-        .ethics-text strong {
-            color: var(--text);
-        }
-
-        /* Quiz */
-        .quiz-container {
-            text-align: left;
-            width: 100%;
-        }
-
-        .prez-question {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: var(--text);
-        }
-
-        .quiz-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .quiz-opt {
-            background: var(--card);
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            padding: 16px 20px;
-            cursor: pointer;
-            font-size: 1.05rem;
-            transition: all 0.3s;
-            font-family: 'Inter', sans-serif;
-            color: var(--text);
-            text-align: left;
-            display: block;
-            width: 100%;
-        }
-
-        .quiz-opt:hover {
-            border-color: var(--blue);
-            background: rgba(59, 130, 246, 0.08);
-        }
-
-        .quiz-opt.correct {
-            border-color: var(--green);
-            background: rgba(16, 185, 129, 0.12);
-            color: var(--green);
-        }
-
-        .quiz-opt.wrong {
-            border-color: var(--red);
-            background: rgba(239, 68, 68, 0.12);
-            color: var(--red);
-        }
-
-        .quiz-opt.disabled {
-            pointer-events: none;
-            opacity: 0.5;
-        }
-
-        .quiz-feedback {
-            margin-top: 16px;
-            padding: 14px 18px;
-            border-radius: 10px;
-            font-size: 1rem;
-            display: none;
-        }
-
+        /* ===== QUIZ ===== */
+        .quiz-container { text-align: left; width: 100%; }
+        .prez-question { font-size: 1.2rem; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+        .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+        .quiz-opt { background: var(--card); border: 2px solid var(--border); border-radius: 10px; padding: 14px 18px; cursor: pointer; font-size: 1rem; transition: all 0.3s; font-family: 'Inter', sans-serif; color: var(--text); text-align: left; display: block; width: 100%; }
+        .quiz-opt:hover { border-color: var(--blue); background: rgba(59, 130, 246, 0.08); }
+        .quiz-opt.correct { border-color: var(--green); background: rgba(16, 185, 129, 0.12); color: var(--green); }
+        .quiz-opt.wrong { border-color: var(--red); background: rgba(239, 68, 68, 0.12); color: var(--red); }
+        .quiz-opt.disabled { pointer-events: none; opacity: 0.5; }
+        .quiz-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 8px; font-size: 0.95rem; display: none; }
         .quiz-feedback.show { display: block; }
-        .quiz-feedback.correct-fb {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid var(--green);
-            color: var(--green);
-        }
-        .quiz-feedback.wrong-fb {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid var(--red);
-            color: var(--red);
-        }
+        .quiz-feedback.correct-fb { background: rgba(16, 185, 129, 0.1); border: 1px solid var(--green); color: var(--green); }
+        .quiz-feedback.wrong-fb { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--red); color: var(--red); }
 
-        /* Activity slide */
-        .activity-list {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            text-align: left;
-        }
-
-        .activity-item {
-            display: flex;
-            gap: 16px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 22px;
-            align-items: flex-start;
-        }
-
-        .activity-num {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--green), var(--cyan));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-
+        /* ===== ACTIVITY ===== */
+        .activity-list { display: flex; flex-direction: column; gap: 14px; text-align: left; }
+        .activity-item { display: flex; gap: 14px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; align-items: flex-start; }
+        .activity-num { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--green), var(--cyan)); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0; }
         .activity-content { flex: 1; }
+        .activity-content strong { display: block; font-size: 1.05rem; margin-bottom: 4px; color: var(--green); }
+        .activity-content span { color: var(--text2); font-size: 0.9rem; line-height: 1.4; }
 
-        .activity-content strong {
-            display: block;
-            font-size: 1.1rem;
-            margin-bottom: 6px;
-            color: var(--green);
-        }
+        /* ===== SUMMARY TAGS ===== */
+        .summary-tags { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 16px; }
+        .summary-tag { background: var(--card); border: 1px solid var(--border); padding: 8px 16px; border-radius: 30px; font-size: 0.95rem; font-weight: 600; transition: all 0.3s; }
+        .summary-tag:hover { transform: scale(1.05); border-color: var(--blue); }
 
-        .activity-content span {
-            color: var(--text2);
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-        /* Big icon slide (definition) */
-        .def-container {
-            text-align: center;
-        }
-
-        .def-box {
-            background: var(--card);
-            border: 2px solid var(--border);
-            border-radius: 20px;
-            padding: 36px 40px;
-            margin-top: 24px;
-            text-align: left;
-        }
-
-        .def-text {
-            font-size: 1.35rem;
-            line-height: 1.7;
-            color: var(--text2);
-        }
-
-        .def-text strong {
-            color: var(--blue-light);
-        }
-
-        .def-text em {
-            color: var(--purple);
-            font-style: normal;
-            font-weight: 600;
-        }
-
-        /* Summary tags */
-        .summary-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .summary-tag {
-            background: var(--card);
-            border: 1px solid var(--border);
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .summary-tag:hover {
-            transform: scale(1.08);
-            border-color: var(--blue);
-        }
-
-        /* Floating shapes (decorative) */
-        .shape {
-            position: absolute;
-            border-radius: 50%;
-            opacity: 0.06;
-            pointer-events: none;
-        }
-
-        .shape-1 { width: 600px; height: 600px; background: var(--blue); top: 200px; left: -200px; }
-        .shape-2 { width: 400px; height: 400px; background: var(--purple); top: 3000px; right: -100px; }
-        .shape-3 { width: 500px; height: 500px; background: var(--pink); top: 1500px; left: 5000px; }
-        .shape-4 { width: 350px; height: 350px; background: var(--cyan); top: 4500px; left: 2000px; }
-
-        /* Keyboard hints */
+        /* ===== KEYBOARD HINT ===== */
         #kbd-hint {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(10, 10, 26, 0.8);
+            top: 16px;
+            right: 16px;
+            background: rgba(10, 10, 26, 0.85);
             backdrop-filter: blur(12px);
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 10px 16px;
-            font-size: 0.8rem;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.75rem;
             color: var(--text3);
             z-index: 1000;
             transition: opacity 0.5s;
         }
 
-        kbd {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 2px 6px;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.75rem;
-        }
+        kbd { background: var(--card); border: 1px solid var(--border); border-radius: 3px; padding: 2px 5px; font-family: 'Inter', sans-serif; font-size: 0.7rem; }
 
-        /* Fullscreen btn */
         #fs-btn {
             position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(10, 10, 26, 0.8);
+            top: 16px;
+            left: 16px;
+            background: rgba(10, 10, 26, 0.85);
             backdrop-filter: blur(12px);
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 10px 16px;
-            font-size: 0.9rem;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.85rem;
             color: var(--text2);
             cursor: pointer;
             z-index: 1000;
@@ -784,414 +368,315 @@
             font-family: 'Inter', sans-serif;
         }
 
-        #fs-btn:hover {
-            background: var(--blue);
-            border-color: var(--blue);
-            color: white;
+        #fs-btn:hover { background: var(--blue); border-color: var(--blue); color: white; }
+
+        /* ===== DECORATIVE GRADIENT ===== */
+        .bg-glow {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            opacity: 0.07;
+            pointer-events: none;
+            z-index: 0;
         }
+        .bg-glow-1 { background: var(--blue); top: -200px; left: -200px; }
+        .bg-glow-2 { background: var(--purple); bottom: -200px; right: -200px; }
 
-        /* Highlight pulse */
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-            50% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
-        }
-
-        .pulse { animation: pulse 2s infinite; }
-
-        /* Cloud anim */
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         .float { animation: float 3s ease-in-out infinite; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .slide { padding: 24px 20px; }
+            .comparison { grid-template-columns: 1fr; gap: 12px; }
+            .compare-vs { display: none; }
+            .cards-2, .cards-3 { grid-template-columns: 1fr; }
+            .apps-grid { grid-template-columns: 1fr 1fr; }
+            .perm-bar { flex-direction: column; align-items: flex-start; }
+            .perm-tags { margin-top: 8px; }
+        }
+
+        @media (max-width: 600px) {
+            .apps-grid { grid-template-columns: 1fr; }
+            .title-meta { flex-direction: column; align-items: center; }
+        }
     </style>
 </head>
 <body>
 
-<div id="canvas-wrapper">
-    <div id="canvas">
-        <!-- Decorative shapes -->
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-        <div class="shape shape-4"></div>
+<!-- Background Glow -->
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
 
-        <!-- ========== SLIDE 0: TITLE ========== -->
-        <div class="frame title-slide" id="s0" data-x="600" data-y="450" data-scale="1">
-            <div class="title-badge">TIC &bull; Clasa a VII-a &bull; Modul 4</div>
-            <div class="title-main">Aplicatii<br>Colaborative</div>
-            <div class="title-sub">Lucreaza impreuna, de oriunde, in timp real</div>
-            <div class="title-meta">
-                <span>CS 1.3 &bull; Lucru in echipa</span>
-                <span>Google Workspace &bull; Canva &bull; Padlet</span>
+<!-- ========== SLIDE 0: TITLE ========== -->
+<div class="slide active" id="s0">
+    <div class="title-badge">TIC &bull; Clasa a VII-a &bull; Modul 4</div>
+    <div class="title-main">Aplicatii<br>Colaborative</div>
+    <div class="title-sub">Lucreaza impreuna, de oriunde, in timp real</div>
+    <div class="title-meta">
+        <span>CS 1.3 &bull; Lucru in echipa</span>
+        <span>Google Workspace &bull; Canva &bull; Padlet</span>
+    </div>
+    <button class="title-start" onclick="goTo(1)">Incepe prezentarea &rarr;</button>
+</div>
+
+<!-- ========== SLIDE 1: INAINTE vs ACUM ========== -->
+<div class="slide" id="s1">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F4CB;</div>
+        <div class="slide-title gradient-text">Cum era inainte?</div>
+        <div class="slide-subtitle">De la stick USB la cloud</div>
+        <div class="comparison">
+            <div class="compare-side bad">
+                <div class="compare-label">Inainte</div>
+                <ul class="compare-list">
+                    <li><span>&#x274C;</span> <span>Trimiteai documentul pe email, fiecare modifica pe al lui</span></li>
+                    <li><span>&#x274C;</span> <span>Versiuni multiple: "Proiect_final_v3_FINAL2.docx"</span></li>
+                    <li><span>&#x274C;</span> <span>Trebuia sa astepti sa-ti vina randul</span></li>
+                    <li><span>&#x274C;</span> <span>Pierdeai munca daca se strica PC-ul</span></li>
+                </ul>
             </div>
-            <button class="title-start" onclick="goTo(1)">Incepe prezentarea &rarr;</button>
-        </div>
-
-        <!-- ========== SLIDE 1: INAINTE vs ACUM ========== -->
-        <div class="frame content-slide" id="s1" data-x="2200" data-y="300" data-scale="1">
-            <div class="slide-icon">&#x1F4CB;</div>
-            <div class="slide-title gradient-text">Cum era inainte?</div>
-            <div class="slide-subtitle">De la stick USB la cloud</div>
-            <div class="comparison">
-                <div class="compare-side bad">
-                    <div class="compare-label">Inainte</div>
-                    <ul class="compare-list">
-                        <li><span>&#x274C;</span> <span>Trimiteai documentul pe email, fiecare modifica pe al lui</span></li>
-                        <li><span>&#x274C;</span> <span>Versiuni multiple: "Proiect_final_v3_FINAL2.docx"</span></li>
-                        <li><span>&#x274C;</span> <span>Trebuia sa astepti sa-ti vina randul</span></li>
-                        <li><span>&#x274C;</span> <span>Pierdeai munca daca se strica PC-ul</span></li>
-                    </ul>
-                </div>
-                <div class="compare-vs">VS</div>
-                <div class="compare-side good">
-                    <div class="compare-label">Acum</div>
-                    <ul class="compare-list">
-                        <li><span>&#x2705;</span> <span>Un singur document, accesat de toti</span></li>
-                        <li><span>&#x2705;</span> <span>Un singur fisier, mereu actualizat</span></li>
-                        <li><span>&#x2705;</span> <span>Toti editeaza simultan, in timp real</span></li>
-                        <li><span>&#x2705;</span> <span>Salvare automata in cloud</span></li>
-                    </ul>
-                </div>
+            <div class="compare-vs">VS</div>
+            <div class="compare-side good">
+                <div class="compare-label">Acum</div>
+                <ul class="compare-list">
+                    <li><span>&#x2705;</span> <span>Un singur document, accesat de toti</span></li>
+                    <li><span>&#x2705;</span> <span>Un singur fisier, mereu actualizat</span></li>
+                    <li><span>&#x2705;</span> <span>Toti editeaza simultan, in timp real</span></li>
+                    <li><span>&#x2705;</span> <span>Salvare automata in cloud</span></li>
+                </ul>
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- ========== SLIDE 2: DEFINITIE ========== -->
-        <div class="frame content-slide" id="s2" data-x="3800" data-y="800" data-scale="1">
-            <div class="slide-icon">&#x1F4A1;</div>
-            <div class="slide-title gradient-text">Ce este o aplicatie colaborativa?</div>
-            <div class="def-container">
-                <div class="def-box">
-                    <div class="def-text">
-                        O <strong>aplicatie colaborativa</strong> este un program care sta pe internet (<em>cloud</em>) si permite mai multor persoane sa lucreze <strong>simultan</strong> la acelasi document, prezentare sau proiect.<br><br>
-                        Imaginati-va un <strong>Google Docs</strong> ca pe un caiet magic: cand scrii tu pe o pagina, colegul tau vede instant ce ai scris - chiar daca e acasa! Fiecare are <em>cursorul lui colorat</em>, iar documentul se <strong>salveaza automat</strong>.
-                    </div>
-                </div>
+<!-- ========== SLIDE 2: DEFINITIE ========== -->
+<div class="slide" id="s2">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F4A1;</div>
+        <div class="slide-title gradient-text">Ce este o aplicatie colaborativa?</div>
+        <div class="def-box">
+            <div class="def-text">
+                O <strong>aplicatie colaborativa</strong> este un program care sta pe internet (<em>cloud</em>) si permite mai multor persoane sa lucreze <strong>simultan</strong> la acelasi document, prezentare sau proiect.<br><br>
+                Imaginati-va un <strong>Google Docs</strong> ca pe un caiet magic: cand scrii tu pe o pagina, colegul tau vede instant ce ai scris - chiar daca e acasa! Fiecare are <em>cursorul lui colorat</em>, iar documentul se <strong>salveaza automat</strong>.
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- ========== SLIDE 3: CLOUD ========== -->
-        <div class="frame content-slide" id="s3" data-x="2000" data-y="1600" data-scale="1">
-            <div class="slide-icon float">&#x2601;&#xFE0F;</div>
-            <div class="slide-title gradient-green">Cum functioneaza? Cloud!</div>
-            <div class="slide-subtitle">Documentul tau e pe internet, nu pe calculator</div>
-            <div class="cards-grid cards-2">
-                <div class="info-card">
-                    <div class="card-icon">&#x1F4BB;</div>
-                    <div class="card-title">Traditional (local)</div>
-                    <div class="card-text">Fisierul e salvat pe hard disk. Doar TU il poti accesa, de pe calculatorul tau. Daca se strica PC-ul, pierzi totul.</div>
-                </div>
-                <div class="info-card" style="border-color: var(--green);">
-                    <div class="card-icon">&#x2601;&#xFE0F;</div>
-                    <div class="card-title">Cloud (online)</div>
-                    <div class="card-text">Fisierul e pe serverele Google/Microsoft. Il accesezi de pe orice dispozitiv cu internet. Se salveaza automat. Nu se pierde niciodata!</div>
-                </div>
-                <div class="info-card">
-                    <div class="card-icon">&#x1F4F1;</div>
-                    <div class="card-title">Acces de oriunde</div>
-                    <div class="card-text">De pe telefon, tableta, laptop, sau calculatorul de la scoala - acelasi document, mereu actualizat.</div>
-                </div>
-                <div class="info-card">
-                    <div class="card-icon">&#x1F504;</div>
-                    <div class="card-title">Istoric versiuni</div>
-                    <div class="card-text">Poti vedea TOATE modificarile facute. Daca cineva sterge ceva din greseala, poti reveni la versiunea anterioara.</div>
-                </div>
+<!-- ========== SLIDE 3: CLOUD ========== -->
+<div class="slide" id="s3">
+    <div class="slide-inner">
+        <div class="slide-icon float">&#x2601;&#xFE0F;</div>
+        <div class="slide-title gradient-green">Cum functioneaza? Cloud!</div>
+        <div class="slide-subtitle">Documentul tau e pe internet, nu pe calculator</div>
+        <div class="cards-grid cards-2">
+            <div class="info-card">
+                <div class="card-icon">&#x1F4BB;</div>
+                <div class="card-title">Traditional (local)</div>
+                <div class="card-text">Fisierul e salvat pe hard disk. Doar TU il poti accesa, de pe calculatorul tau. Daca se strica PC-ul, pierzi totul.</div>
+            </div>
+            <div class="info-card" style="border-color: var(--green);">
+                <div class="card-icon">&#x2601;&#xFE0F;</div>
+                <div class="card-title">Cloud (online)</div>
+                <div class="card-text">Fisierul e pe serverele Google/Microsoft. Il accesezi de pe orice dispozitiv cu internet. Se salveaza automat!</div>
+            </div>
+            <div class="info-card">
+                <div class="card-icon">&#x1F4F1;</div>
+                <div class="card-title">Acces de oriunde</div>
+                <div class="card-text">De pe telefon, tableta, laptop, sau calculatorul de la scoala - acelasi document, mereu actualizat.</div>
+            </div>
+            <div class="info-card">
+                <div class="card-icon">&#x1F504;</div>
+                <div class="card-title">Istoric versiuni</div>
+                <div class="card-text">Poti vedea TOATE modificarile. Daca cineva sterge ceva din greseala, revii la versiunea anterioara.</div>
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- ========== SLIDE 4: APLICATII POPULARE ========== -->
-        <div class="frame content-slide" id="s4" data-x="3600" data-y="2200" data-scale="1">
-            <div class="slide-icon">&#x1F3AF;</div>
-            <div class="slide-title gradient-text">Aplicatii colaborative populare</div>
-            <div class="slide-subtitle">Instrumente pe care le poti folosi gratuit</div>
-            <div class="apps-grid">
-                <div class="app-card">
-                    <div class="app-icon">&#x1F4DD;</div>
-                    <div class="app-name" style="color: var(--blue-light);">Google Docs</div>
-                    <div class="app-desc">Documente text. Ca Word, dar online si colaborativ. Mai multi editeaza simultan.</div>
-                </div>
-                <div class="app-card">
-                    <div class="app-icon">&#x1F4CA;</div>
-                    <div class="app-name" style="color: var(--green);">Google Sheets</div>
-                    <div class="app-desc">Tabele si calcule. Ca Excel, dar online. Ideal pentru colectarea datelor in echipa.</div>
-                </div>
-                <div class="app-card">
-                    <div class="app-icon">&#x1F3AC;</div>
-                    <div class="app-name" style="color: var(--orange);">Google Slides</div>
-                    <div class="app-desc">Prezentari. Ca PowerPoint, dar in cloud. Fiecare coleg face cate un slide.</div>
-                </div>
-                <div class="app-card">
-                    <div class="app-icon">&#x1F3A8;</div>
-                    <div class="app-name" style="color: var(--pink);">Canva</div>
-                    <div class="app-desc">Design grafic usor. Postere, infografice, prezentari frumoase. Template-uri gata.</div>
-                </div>
-                <div class="app-card">
-                    <div class="app-icon">&#x1F4CC;</div>
-                    <div class="app-name" style="color: var(--cyan);">Padlet</div>
-                    <div class="app-desc">Tabla virtuala. Toti pun notite, imagini, linkuri pe aceeasi tabla. Brainstorming in echipa!</div>
-                </div>
-                <div class="app-card">
-                    <div class="app-icon">&#x1F4BC;</div>
-                    <div class="app-name" style="color: var(--purple);">Microsoft 365</div>
-                    <div class="app-desc">Word, Excel, PowerPoint online. Aceeasi functionalitate, dar in ecosistemul Microsoft.</div>
-                </div>
+<!-- ========== SLIDE 4: APLICATII POPULARE ========== -->
+<div class="slide" id="s4">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F3AF;</div>
+        <div class="slide-title gradient-text">Aplicatii colaborative populare</div>
+        <div class="slide-subtitle">Instrumente pe care le poti folosi gratuit</div>
+        <div class="apps-grid">
+            <div class="app-card">
+                <div class="app-icon">&#x1F4DD;</div>
+                <div class="app-name" style="color: var(--blue-light);">Google Docs</div>
+                <div class="app-desc">Documente text. Ca Word, dar online si colaborativ.</div>
+            </div>
+            <div class="app-card">
+                <div class="app-icon">&#x1F4CA;</div>
+                <div class="app-name" style="color: var(--green);">Google Sheets</div>
+                <div class="app-desc">Tabele si calcule. Ca Excel, dar online.</div>
+            </div>
+            <div class="app-card">
+                <div class="app-icon">&#x1F3AC;</div>
+                <div class="app-name" style="color: var(--orange);">Google Slides</div>
+                <div class="app-desc">Prezentari. Ca PowerPoint, dar in cloud.</div>
+            </div>
+            <div class="app-card">
+                <div class="app-icon">&#x1F3A8;</div>
+                <div class="app-name" style="color: var(--pink);">Canva</div>
+                <div class="app-desc">Design grafic usor. Postere, infografice, prezentari.</div>
+            </div>
+            <div class="app-card">
+                <div class="app-icon">&#x1F4CC;</div>
+                <div class="app-name" style="color: var(--cyan);">Padlet</div>
+                <div class="app-desc">Tabla virtuala. Brainstorming in echipa!</div>
+            </div>
+            <div class="app-card">
+                <div class="app-icon">&#x1F4BC;</div>
+                <div class="app-name" style="color: var(--purple);">Microsoft 365</div>
+                <div class="app-desc">Word, Excel, PowerPoint online de la Microsoft.</div>
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- ========== SLIDE 5: GOOGLE DOCS DEMO ========== -->
-        <div class="frame content-slide" id="s5" data-x="1200" data-y="2800" data-scale="1">
-            <div class="slide-icon">&#x1F4DD;</div>
-            <div class="slide-title"><span class="gradient-text">Google Docs</span> - Pas cu pas</div>
-            <div class="slide-subtitle">Cum creezi si partajezi un document</div>
-            <div class="steps-vertical">
-                <div class="step-item">
-                    <div class="step-num">1</div>
-                    <div class="step-content">
-                        <strong>Deschide Google Docs</strong>
-                        <span>Acceseaza docs.google.com (ai nevoie de cont Google)</span>
-                    </div>
-                </div>
-                <div class="step-item">
-                    <div class="step-num">2</div>
-                    <div class="step-content">
-                        <strong>Creeaza document nou</strong>
-                        <span>Click pe "+" (Blank) pentru un document gol</span>
-                    </div>
-                </div>
-                <div class="step-item">
-                    <div class="step-num">3</div>
-                    <div class="step-content">
-                        <strong>Scrie continutul</strong>
-                        <span>Scrie titlul si textul proiectului. Se salveaza automat!</span>
-                    </div>
-                </div>
-                <div class="step-item">
-                    <div class="step-num">4</div>
-                    <div class="step-content">
-                        <strong>Partajeaza documentul</strong>
-                        <span>Click pe butonul albastru "Share" (sus-dreapta)</span>
-                    </div>
-                </div>
-                <div class="step-item">
-                    <div class="step-num">5</div>
-                    <div class="step-content">
-                        <strong>Adauga colaboratori</strong>
-                        <span>Scrie emailul colegului si alege permisiunea (Editor / Commenter / Viewer)</span>
-                    </div>
-                </div>
+<!-- ========== SLIDE 5: GOOGLE DOCS PAS CU PAS ========== -->
+<div class="slide" id="s5">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F4DD;</div>
+        <div class="slide-title"><span class="gradient-text">Google Docs</span> - Pas cu pas</div>
+        <div class="slide-subtitle">Cum creezi si partajezi un document</div>
+        <div class="steps-vertical">
+            <div class="step-item"><div class="step-num">1</div><div class="step-content"><strong>Deschide Google Docs</strong><span>Acceseaza docs.google.com (ai nevoie de cont Google)</span></div></div>
+            <div class="step-item"><div class="step-num">2</div><div class="step-content"><strong>Creeaza document nou</strong><span>Click pe "+" (Blank) pentru un document gol</span></div></div>
+            <div class="step-item"><div class="step-num">3</div><div class="step-content"><strong>Scrie continutul</strong><span>Scrie titlul si textul proiectului. Se salveaza automat!</span></div></div>
+            <div class="step-item"><div class="step-num">4</div><div class="step-content"><strong>Partajeaza documentul</strong><span>Click pe butonul albastru "Share" (sus-dreapta)</span></div></div>
+            <div class="step-item"><div class="step-num">5</div><div class="step-content"><strong>Adauga colaboratori</strong><span>Scrie emailul colegului si alege permisiunea</span></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 6: PERMISIUNI ========== -->
+<div class="slide" id="s6">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F512;</div>
+        <div class="slide-title gradient-orange">Niveluri de permisiune</div>
+        <div class="slide-subtitle">Tu controlezi cine ce poate face cu documentul tau</div>
+        <div class="perm-bars">
+            <div class="perm-bar viewer">
+                <div class="perm-icon">&#x1F441;&#xFE0F;</div>
+                <div class="perm-info"><div class="perm-name">Viewer (Cititor)</div><div class="perm-desc">Poate doar sa citeasca. Nu poate modifica nimic.</div></div>
+                <div class="perm-tags"><span class="perm-tag">Citire</span><span class="perm-tag">Descarcare</span></div>
+            </div>
+            <div class="perm-bar commenter">
+                <div class="perm-icon">&#x1F4AC;</div>
+                <div class="perm-info"><div class="perm-name">Commenter (Comentator)</div><div class="perm-desc">Poate citi si adauga comentarii. Nu poate modifica textul.</div></div>
+                <div class="perm-tags"><span class="perm-tag">Citire</span><span class="perm-tag">Comentarii</span><span class="perm-tag">Sugestii</span></div>
+            </div>
+            <div class="perm-bar editor">
+                <div class="perm-icon">&#x270F;&#xFE0F;</div>
+                <div class="perm-info"><div class="perm-name">Editor (Redactor)</div><div class="perm-desc">Poate modifica orice in document. Acces complet la editare.</div></div>
+                <div class="perm-tags"><span class="perm-tag">Citire</span><span class="perm-tag">Comentarii</span><span class="perm-tag">Editare</span><span class="perm-tag">Formatare</span></div>
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- ========== SLIDE 6: PERMISIUNI ========== -->
-        <div class="frame content-slide" id="s6" data-x="3200" data-y="3400" data-scale="1">
-            <div class="slide-icon">&#x1F512;</div>
-            <div class="slide-title gradient-orange">Niveluri de permisiune</div>
-            <div class="slide-subtitle">Tu controlezi cine ce poate face cu documentul tau</div>
-            <div class="perm-bars">
-                <div class="perm-bar viewer">
-                    <div class="perm-icon">&#x1F441;&#xFE0F;</div>
-                    <div class="perm-info">
-                        <div class="perm-name">Viewer (Cititor)</div>
-                        <div class="perm-desc">Poate doar sa citeasca documentul. Nu poate modifica nimic.</div>
-                    </div>
-                    <div class="perm-tags">
-                        <span class="perm-tag">Citire</span>
-                        <span class="perm-tag">Descarcare</span>
-                    </div>
-                </div>
-                <div class="perm-bar commenter">
-                    <div class="perm-icon">&#x1F4AC;</div>
-                    <div class="perm-info">
-                        <div class="perm-name">Commenter (Comentator)</div>
-                        <div class="perm-desc">Poate citi si adauga comentarii. Nu poate modifica textul.</div>
-                    </div>
-                    <div class="perm-tags">
-                        <span class="perm-tag">Citire</span>
-                        <span class="perm-tag">Comentarii</span>
-                        <span class="perm-tag">Sugestii</span>
-                    </div>
-                </div>
-                <div class="perm-bar editor">
-                    <div class="perm-icon">&#x270F;&#xFE0F;</div>
-                    <div class="perm-info">
-                        <div class="perm-name">Editor (Redactor)</div>
-                        <div class="perm-desc">Poate modifica orice in document. Acces complet la editare.</div>
-                    </div>
-                    <div class="perm-tags">
-                        <span class="perm-tag">Citire</span>
-                        <span class="perm-tag">Comentarii</span>
-                        <span class="perm-tag">Editare</span>
-                        <span class="perm-tag">Formatare</span>
-                    </div>
-                </div>
+<!-- ========== SLIDE 7: CANVA + PADLET ========== -->
+<div class="slide" id="s7">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F3A8;</div>
+        <div class="slide-title gradient-text">Canva si Padlet</div>
+        <div class="slide-subtitle">Nu doar documente text - design si brainstorming!</div>
+        <div class="cards-grid cards-2">
+            <div class="info-card" style="border-color: var(--pink);">
+                <div class="card-icon">&#x1F3A8;</div>
+                <div class="card-title" style="color: var(--pink);">Canva</div>
+                <div class="card-text"><strong style="color: var(--text);">Ce poti face:</strong><br>&#x2022; Postere pentru scoala<br>&#x2022; Infografice cu date<br>&#x2022; Prezentari vizuale<br>&#x2022; Logo-uri si banner-e<br><br><strong style="color: var(--text);">De ce e colaborativ:</strong><br>Inviti colegii pe design, fiecare adauga elemente.</div>
+            </div>
+            <div class="info-card" style="border-color: var(--cyan);">
+                <div class="card-icon">&#x1F4CC;</div>
+                <div class="card-title" style="color: var(--cyan);">Padlet</div>
+                <div class="card-text"><strong style="color: var(--text);">Ce poti face:</strong><br>&#x2022; Tabla de idei (brainstorming)<br>&#x2022; Colectare de raspunsuri<br>&#x2022; Timeline pentru proiecte<br>&#x2022; Galerie de imagini colectiva<br><br><strong style="color: var(--text);">De ce e colaborativ:</strong><br>Toti adauga post-it-uri simultan pe aceeasi tabla.</div>
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- ========== SLIDE 7: CANVA + PADLET ========== -->
-        <div class="frame content-slide" id="s7" data-x="800" data-y="4000" data-scale="1">
-            <div class="slide-icon">&#x1F3A8;</div>
-            <div class="slide-title gradient-text">Canva si Padlet</div>
-            <div class="slide-subtitle">Nu doar documente text - design si brainstorming!</div>
-            <div class="cards-grid cards-2">
-                <div class="info-card" style="border-color: var(--pink);">
-                    <div class="card-icon">&#x1F3A8;</div>
-                    <div class="card-title" style="color: var(--pink);">Canva</div>
-                    <div class="card-text">
-                        <strong style="color: var(--text);">Ce poti face:</strong><br>
-                        &#x2022; Postere pentru scoala<br>
-                        &#x2022; Infografice cu date<br>
-                        &#x2022; Prezentari vizuale<br>
-                        &#x2022; Logo-uri si banner-e<br><br>
-                        <strong style="color: var(--text);">De ce e colaborativ:</strong><br>
-                        Inviti colegii pe design, fiecare adauga elemente. Template-uri gratuite!
-                    </div>
-                </div>
-                <div class="info-card" style="border-color: var(--cyan);">
-                    <div class="card-icon">&#x1F4CC;</div>
-                    <div class="card-title" style="color: var(--cyan);">Padlet</div>
-                    <div class="card-text">
-                        <strong style="color: var(--text);">Ce poti face:</strong><br>
-                        &#x2022; Tabla de idei (brainstorming)<br>
-                        &#x2022; Colectare de raspunsuri<br>
-                        &#x2022; Timeline pentru proiecte<br>
-                        &#x2022; Galerie de imagini colectiva<br><br>
-                        <strong style="color: var(--text);">De ce e colaborativ:</strong><br>
-                        Toti pot adauga post-it-uri simultan pe aceeasi tabla virtuala.
-                    </div>
-                </div>
-            </div>
+<!-- ========== SLIDE 8: ETICA ========== -->
+<div class="slide" id="s8">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x2696;&#xFE0F;</div>
+        <div class="slide-title gradient-orange">Etica in mediul colaborativ</div>
+        <div class="slide-subtitle">Reguli pentru o colaborare reusita</div>
+        <div class="ethics-list">
+            <div class="ethics-item"><div class="ethics-num">1</div><div class="ethics-text"><strong>Respecta munca celorlalti</strong> - Nu sterge si nu modifica ce a scris un coleg fara sa discuti cu el.</div></div>
+            <div class="ethics-item"><div class="ethics-num">2</div><div class="ethics-text"><strong>Foloseste comentarii</strong> - Daca ai o sugestie, lasa un comentariu in loc sa schimbi direct textul.</div></div>
+            <div class="ethics-item"><div class="ethics-num">3</div><div class="ethics-text"><strong>Contribuie echitabil</strong> - Fiecare membru al echipei trebuie sa-si faca partea sa de munca.</div></div>
+            <div class="ethics-item"><div class="ethics-num">4</div><div class="ethics-text"><strong>Protejeaza datele personale</strong> - Nu partaja documente cu straini. Foloseste permisiunile corect.</div></div>
+            <div class="ethics-item"><div class="ethics-num">5</div><div class="ethics-text"><strong>Da credit autorilor</strong> - Daca folosesti informatii din alte surse, mentioneaza de unde sunt.</div></div>
         </div>
+    </div>
+</div>
 
-        <!-- ========== SLIDE 8: ETICA ========== -->
-        <div class="frame content-slide" id="s8" data-x="2600" data-y="4600" data-scale="1">
-            <div class="slide-icon">&#x2696;&#xFE0F;</div>
-            <div class="slide-title gradient-orange">Etica in mediul colaborativ</div>
-            <div class="slide-subtitle">Reguli pentru o colaborare reusita</div>
-            <div class="ethics-list">
-                <div class="ethics-item">
-                    <div class="ethics-num">1</div>
-                    <div class="ethics-text"><strong>Respecta munca celorlalti</strong> - Nu sterge si nu modifica ce a scris un coleg fara sa discuti cu el.</div>
-                </div>
-                <div class="ethics-item">
-                    <div class="ethics-num">2</div>
-                    <div class="ethics-text"><strong>Foloseste comentarii</strong> - Daca ai o sugestie, lasa un comentariu in loc sa schimbi direct textul.</div>
-                </div>
-                <div class="ethics-item">
-                    <div class="ethics-num">3</div>
-                    <div class="ethics-text"><strong>Contribuie echitabil</strong> - Fiecare membru al echipei trebuie sa-si faca partea sa de munca.</div>
-                </div>
-                <div class="ethics-item">
-                    <div class="ethics-num">4</div>
-                    <div class="ethics-text"><strong>Protejeaza datele personale</strong> - Nu partaja documente cu straini. Foloseste permisiunile corect.</div>
-                </div>
-                <div class="ethics-item">
-                    <div class="ethics-num">5</div>
-                    <div class="ethics-text"><strong>Da credit autorilor</strong> - Daca folosesti informatii din alte surse, mentioneaza de unde sunt.</div>
-                </div>
-            </div>
+<!-- ========== SLIDE 9: QUIZ ========== -->
+<div class="slide" id="s9">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F9E0;</div>
+        <div class="slide-title gradient-green">Verifica ce ai invatat!</div>
+        <div class="slide-subtitle">Mini-quiz interactiv</div>
+        <div class="quiz-container" id="quiz-area"></div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 10: ACTIVITATE ========== -->
+<div class="slide" id="s10">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F680;</div>
+        <div class="slide-title gradient-green">Activitate practica</div>
+        <div class="slide-subtitle">Lucreaza in echipa de 3-4 colegi</div>
+        <div class="activity-list">
+            <div class="activity-item"><div class="activity-num">1</div><div class="activity-content"><strong>Creeaza un document Google Docs</strong><span>Un membru al echipei creeaza documentul si il partajeaza celorlalti cu permisiune de Editor.</span></div></div>
+            <div class="activity-item"><div class="activity-num">2</div><div class="activity-content"><strong>Scrieti impreuna un mini-proiect</strong><span>Tema: "Aplicatia colaborativa preferata a echipei noastre". Fiecare scrie un paragraf despre o aplicatie diferita.</span></div></div>
+            <div class="activity-item"><div class="activity-num">3</div><div class="activity-content"><strong>Adaugati comentarii si sugestii</strong><span>Fiecare citeste paragraful unui coleg si lasa un comentariu constructiv.</span></div></div>
+            <div class="activity-item"><div class="activity-num">4</div><div class="activity-content"><strong>Partajati profesorului</strong><span>Adaugati emailul profesorului cu permisiune de Commenter pentru evaluare.</span></div></div>
         </div>
+    </div>
+</div>
 
-        <!-- ========== SLIDE 9: QUIZ ========== -->
-        <div class="frame content-slide" id="s9" data-x="4400" data-y="3800" data-scale="1">
-            <div class="slide-icon">&#x1F9E0;</div>
-            <div class="slide-title gradient-green">Verifica ce ai invatat!</div>
-            <div class="slide-subtitle">Mini-quiz interactiv</div>
-            <div class="quiz-container" id="quiz-area">
-                <!-- Populated by JS -->
-            </div>
+<!-- ========== SLIDE 11: RECAPITULARE ========== -->
+<div class="slide" id="s11">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x2B50;</div>
+        <div class="slide-title gradient-text">Ce am invatat azi?</div>
+        <div class="slide-subtitle">Recapitulare</div>
+        <div class="cards-grid cards-2">
+            <div class="info-card"><div class="card-icon">&#x2601;&#xFE0F;</div><div class="card-title">Cloud</div><div class="card-text">Documentele sunt stocate online, accesibile de oriunde, salvate automat.</div></div>
+            <div class="info-card"><div class="card-icon">&#x1F465;</div><div class="card-title">Editare simultana</div><div class="card-text">Mai multe persoane lucreaza pe acelasi document in acelasi timp.</div></div>
+            <div class="info-card"><div class="card-icon">&#x1F512;</div><div class="card-title">Permisiuni</div><div class="card-text">3 niveluri: Viewer, Commenter, Editor. Tu decizi cine ce poate face.</div></div>
+            <div class="info-card"><div class="card-icon">&#x2696;&#xFE0F;</div><div class="card-title">Etica</div><div class="card-text">Respecta munca celorlalti, contribuie echitabil, protejeaza datele.</div></div>
         </div>
-
-        <!-- ========== SLIDE 10: ACTIVITATE ========== -->
-        <div class="frame content-slide" id="s10" data-x="1600" data-y="5000" data-scale="1">
-            <div class="slide-icon">&#x1F680;</div>
-            <div class="slide-title gradient-green">Activitate practica</div>
-            <div class="slide-subtitle">Lucreaza in echipa de 3-4 colegi</div>
-            <div class="activity-list">
-                <div class="activity-item">
-                    <div class="activity-num">1</div>
-                    <div class="activity-content">
-                        <strong>Creeaza un document Google Docs</strong>
-                        <span>Un membru al echipei creeaza documentul si il partajeaza celorlalti cu permisiune de Editor.</span>
-                    </div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-num">2</div>
-                    <div class="activity-content">
-                        <strong>Scrieti impreuna un mini-proiect</strong>
-                        <span>Tema: "Aplicatia colaborativa preferata a echipei noastre". Fiecare scrie un paragraf despre o aplicatie diferita.</span>
-                    </div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-num">3</div>
-                    <div class="activity-content">
-                        <strong>Adaugati comentarii si sugestii</strong>
-                        <span>Fiecare citeste paragraful unui coleg si lasa un comentariu constructiv.</span>
-                    </div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-num">4</div>
-                    <div class="activity-content">
-                        <strong>Partajati profesorului</strong>
-                        <span>Adaugati emailul profesorului cu permisiune de Commenter pentru evaluare.</span>
-                    </div>
-                </div>
-            </div>
+        <div class="summary-tags">
+            <span class="summary-tag" style="color: var(--blue-light);">Google Docs</span>
+            <span class="summary-tag" style="color: var(--green);">Google Sheets</span>
+            <span class="summary-tag" style="color: var(--orange);">Google Slides</span>
+            <span class="summary-tag" style="color: var(--pink);">Canva</span>
+            <span class="summary-tag" style="color: var(--cyan);">Padlet</span>
+            <span class="summary-tag" style="color: var(--purple);">Microsoft 365</span>
         </div>
+    </div>
+</div>
 
-        <!-- ========== SLIDE 11: RECAPITULARE ========== -->
-        <div class="frame content-slide" id="s11" data-x="3800" data-y="5200" data-scale="1">
-            <div class="slide-icon">&#x2B50;</div>
-            <div class="slide-title gradient-text">Ce am invatat azi?</div>
-            <div class="slide-subtitle">Recapitulare</div>
-            <div class="cards-grid cards-2">
-                <div class="info-card">
-                    <div class="card-icon">&#x2601;&#xFE0F;</div>
-                    <div class="card-title">Cloud</div>
-                    <div class="card-text">Documentele sunt stocate online, accesibile de oriunde, salvate automat.</div>
-                </div>
-                <div class="info-card">
-                    <div class="card-icon">&#x1F465;</div>
-                    <div class="card-title">Editare simultana</div>
-                    <div class="card-text">Mai multe persoane lucreaza pe acelasi document in acelasi timp.</div>
-                </div>
-                <div class="info-card">
-                    <div class="card-icon">&#x1F512;</div>
-                    <div class="card-title">Permisiuni</div>
-                    <div class="card-text">3 niveluri: Viewer, Commenter, Editor. Tu decizi cine ce poate face.</div>
-                </div>
-                <div class="info-card">
-                    <div class="card-icon">&#x2696;&#xFE0F;</div>
-                    <div class="card-title">Etica</div>
-                    <div class="card-text">Respecta munca celorlalti, contribuie echitabil, protejeaza datele.</div>
-                </div>
-            </div>
-            <div class="summary-tags">
-                <span class="summary-tag" style="color: var(--blue-light);">Google Docs</span>
-                <span class="summary-tag" style="color: var(--green);">Google Sheets</span>
-                <span class="summary-tag" style="color: var(--orange);">Google Slides</span>
-                <span class="summary-tag" style="color: var(--pink);">Canva</span>
-                <span class="summary-tag" style="color: var(--cyan);">Padlet</span>
-                <span class="summary-tag" style="color: var(--purple);">Microsoft 365</span>
-            </div>
-        </div>
-
-        <!-- ========== SLIDE 12: FINAL ========== -->
-        <div class="frame title-slide" id="s12" data-x="4200" data-y="1200" data-scale="1.2">
-            <div class="title-badge" style="background: linear-gradient(135deg, var(--green), var(--cyan));">Felicitari!</div>
-            <div class="title-main" style="font-size: 4rem;">Ai terminat<br>prezentarea!</div>
-            <div class="title-sub">Acum e randul tau sa colaborezi</div>
-            <div class="title-meta">
-                <span>&#x1F4DD; docs.google.com</span>
-                <span>&#x1F3A8; canva.com</span>
-                <span>&#x1F4CC; padlet.com</span>
-            </div>
-            <div style="margin-top: 40px; color: var(--text3); font-size: 0.9rem;">
-                TIC &bull; Clasa a VII-a &bull; Modul 4 &bull; Prof. Vasile Lica
-            </div>
-        </div>
-
-    </div><!-- /canvas -->
+<!-- ========== SLIDE 12: FINAL ========== -->
+<div class="slide" id="s12">
+    <div class="title-badge" style="background: linear-gradient(135deg, var(--green), var(--cyan));">Felicitari!</div>
+    <div class="title-main" style="font-size: clamp(2rem, 5vw, 4rem);">Ai terminat<br>prezentarea!</div>
+    <div class="title-sub">Acum e randul tau sa colaborezi</div>
+    <div class="title-meta">
+        <span>&#x1F4DD; docs.google.com</span>
+        <span>&#x1F3A8; canva.com</span>
+        <span>&#x1F4CC; padlet.com</span>
+    </div>
+    <div style="margin-top: 40px; color: var(--text3); font-size: 0.9rem;">
+        TIC &bull; Clasa a VII-a &bull; Modul 4 &bull; Prof. Vasile Lica
+    </div>
 </div>
 
 <!-- Navigation Bar -->
@@ -1211,201 +696,105 @@
 <button id="fs-btn" onclick="toggleFS()">&#x26F6; Fullscreen</button>
 
 <script>
-    // ===== SLIDE CONFIGURATION =====
-    const TOTAL = 13; // slides 0..12
+    const TOTAL = 13;
     let current = 0;
     const visited = new Set([0]);
+    const slides = [];
 
-    // Get frame positions from data attributes
-    function getFrameData(i) {
-        const el = document.getElementById('s' + i);
-        return {
-            x: parseFloat(el.dataset.x),
-            y: parseFloat(el.dataset.y),
-            scale: parseFloat(el.dataset.scale) || 1,
-            el: el
-        };
+    // Collect all slides
+    for (let i = 0; i < TOTAL; i++) {
+        slides.push(document.getElementById('s' + i));
     }
 
-    // ===== CAMERA SYSTEM =====
-    const canvas = document.getElementById('canvas');
-    const wrapper = document.getElementById('canvas-wrapper');
+    function goTo(index, direction) {
+        if (index < 0 || index >= TOTAL || index === current) return;
+        if (direction === undefined) direction = index > current ? 1 : -1;
 
-    function goTo(index) {
-        if (index < 0 || index >= TOTAL) return;
+        const oldSlide = slides[current];
+        const newSlide = slides[index];
 
-        // Hide previous
-        const prevFrame = document.getElementById('s' + current);
-        if (prevFrame) prevFrame.classList.remove('visible');
+        // Exit animation on old slide
+        oldSlide.classList.remove('active');
+        oldSlide.classList.add(direction > 0 ? 'exit-left' : 'exit-right');
 
+        // Clean up exit class after transition
+        setTimeout(() => {
+            oldSlide.classList.remove('exit-left', 'exit-right');
+        }, 500);
+
+        // Enter animation on new slide
         current = index;
         visited.add(index);
+        newSlide.classList.add('active');
 
-        const f = getFrameData(index);
-        const vw = wrapper.clientWidth;
-        const vh = wrapper.clientHeight - 72; // nav bar height
-
-        // Calculate zoom to fit the frame
-        const frameW = f.el.offsetWidth * f.scale;
-        const frameH = f.el.offsetHeight * f.scale;
-
-        const scaleX = vw / (frameW + 120);
-        const scaleY = vh / (frameH + 80);
-        const zoom = Math.min(scaleX, scaleY, 1.1);
-
-        // Center the frame
-        const centerX = f.x + (frameW / f.scale) / 2;
-        const centerY = f.y + (frameH / f.scale) / 2;
-
-        const tx = vw / 2 - centerX * zoom;
-        const ty = vh / 2 - centerY * zoom;
-
-        canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${zoom})`;
-
-        // Show current frame with delay
-        setTimeout(() => {
-            f.el.classList.add('visible');
-        }, 300);
+        // Scroll to top if slide has scroll
+        newSlide.scrollTop = 0;
 
         updateUI();
 
-        // Init quiz when reaching quiz slide
+        // Init quiz on first visit
         if (index === 9 && !quizInitialized) initQuiz();
     }
 
-    function next() { goTo(current + 1); }
-    function prev() { goTo(current - 1); }
+    function next() { goTo(current + 1, 1); }
+    function prev() { goTo(current - 1, -1); }
 
-    // ===== UI UPDATES =====
     function updateUI() {
         document.getElementById('btn-prev').disabled = current === 0;
         document.getElementById('btn-next').disabled = current === TOTAL - 1;
         document.getElementById('slide-counter').textContent = (current + 1) + ' / ' + TOTAL;
-
-        // Progress dots
-        const dots = document.querySelectorAll('.progress-dot');
-        dots.forEach((dot, i) => {
+        document.querySelectorAll('.progress-dot').forEach((dot, i) => {
             dot.classList.remove('active', 'visited');
             if (i === current) dot.classList.add('active');
             else if (visited.has(i)) dot.classList.add('visited');
         });
     }
 
-    // Build progress bar
-    function buildProgress() {
+    // Build progress dots
+    (function() {
         const bar = document.getElementById('progress-bar');
         for (let i = 0; i < TOTAL; i++) {
             const dot = document.createElement('div');
-            dot.className = 'progress-dot';
+            dot.className = 'progress-dot' + (i === 0 ? ' active' : '');
             dot.onclick = () => goTo(i);
             dot.title = 'Slide ' + (i + 1);
             bar.appendChild(dot);
         }
-    }
+    })();
 
-    // ===== KEYBOARD NAVIGATION =====
+    // Keyboard navigation
     document.addEventListener('keydown', (e) => {
-        // Don't intercept Space if a button is focused
         if (e.key === ' ' && e.target.tagName === 'BUTTON') return;
-        if (e.key === 'ArrowRight' || e.key === ' ') {
-            e.preventDefault();
-            next();
-        } else if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            prev();
-        } else if (e.key === 'f' || e.key === 'F') {
-            toggleFS();
-        } else if (e.key === 'Home') {
-            goTo(0);
-        } else if (e.key === 'End') {
-            goTo(TOTAL - 1);
-        }
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+        else if (e.key === 'f' || e.key === 'F') { toggleFS(); }
+        else if (e.key === 'Home') { goTo(0); }
+        else if (e.key === 'End') { goTo(TOTAL - 1); }
     });
 
-    // ===== TOUCH NAVIGATION =====
+    // Touch/swipe navigation
     let touchStartX = 0;
-    let touchStartY = 0;
-    document.addEventListener('touchstart', (e) => {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-    });
-
+    document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
     document.addEventListener('touchend', (e) => {
-        // Ignore if touch was on nav bar buttons
         if (e.target.closest('#nav-bar')) return;
-        const diffX = touchStartX - e.changedTouches[0].clientX;
-        const diffY = touchStartY - e.changedTouches[0].clientY;
-        if (Math.abs(diffX) > 60 && Math.abs(diffX) > Math.abs(diffY)) {
-            if (diffX > 0) next();
-            else prev();
-        }
+        const diff = touchStartX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 60) { diff > 0 ? next() : prev(); }
     });
 
-    // Click anywhere on canvas area to advance
-    wrapper.addEventListener('click', (e) => {
-        if (e.target === wrapper || e.target === canvas) {
-            next();
-        }
-    });
-
-    // ===== FULLSCREEN =====
+    // Fullscreen
     function toggleFS() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
-        } else {
-            document.exitFullscreen();
-        }
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+        else document.exitFullscreen();
     }
 
-    // ===== QUIZ SYSTEM =====
+    // Quiz system
     let quizInitialized = false;
     const quizData = [
-        {
-            q: "Ce inseamna \"cloud\" in contextul aplicatiilor colaborative?",
-            opts: [
-                "Un tip de calculator foarte performant",
-                "Stocarea fisierelor pe internet, accesibile de oriunde",
-                "O aplicatie speciala de editare foto",
-                "Un program care functioneaza doar offline"
-            ],
-            correct: 1,
-            feedback: "Cloud = fisierele sunt stocate pe servere pe internet. Le accesezi de pe orice dispozitiv cu internet!"
-        },
-        {
-            q: "Care nivel de permisiune permite unui coleg sa modifice textul din documentul tau?",
-            opts: [
-                "Viewer",
-                "Commenter",
-                "Editor",
-                "Reader"
-            ],
-            correct: 2,
-            feedback: "Editor = acces complet la editare. Viewer doar citeste, Commenter doar comenteaza."
-        },
-        {
-            q: "Ce se intampla cu documentul daca inchizi browser-ul in Google Docs?",
-            opts: [
-                "Pierzi tot ce ai scris",
-                "Se sterge automat dupa 24 de ore",
-                "Ramane salvat in cloud, il continui oricand",
-                "Trebuie sa-l descarci inainte"
-            ],
-            correct: 2,
-            feedback: "Google Docs salveaza automat in cloud! Continui de pe orice dispozitiv, oricand."
-        },
-        {
-            q: "Ce regula de etica trebuie sa respecti in colaborare?",
-            opts: [
-                "Stergi tot ce nu-ti place din textul colegului",
-                "Scrii cat mai mult, fara sa citesti ce au scris ceilalti",
-                "Respecti munca celorlalti si folosesti comentarii pentru sugestii",
-                "Schimbi permisiunile fara sa anunti echipa"
-            ],
-            correct: 2,
-            feedback: "Respecta munca colegilor! Daca ai sugestii, lasa un comentariu in loc sa modifici direct."
-        }
+        { q: "Ce inseamna \"cloud\" in contextul aplicatiilor colaborative?", opts: ["Un tip de calculator foarte performant", "Stocarea fisierelor pe internet, accesibile de oriunde", "O aplicatie speciala de editare foto", "Un program care functioneaza doar offline"], correct: 1, feedback: "Cloud = fisierele sunt stocate pe servere pe internet. Le accesezi de pe orice dispozitiv cu internet!" },
+        { q: "Care nivel de permisiune permite unui coleg sa modifice textul din documentul tau?", opts: ["Viewer", "Commenter", "Editor", "Reader"], correct: 2, feedback: "Editor = acces complet la editare. Viewer doar citeste, Commenter doar comenteaza." },
+        { q: "Ce se intampla cu documentul daca inchizi browser-ul in Google Docs?", opts: ["Pierzi tot ce ai scris", "Se sterge automat dupa 24 de ore", "Ramane salvat in cloud, il continui oricand", "Trebuie sa-l descarci inainte"], correct: 2, feedback: "Google Docs salveaza automat in cloud! Continui de pe orice dispozitiv, oricand." },
+        { q: "Ce regula de etica trebuie sa respecti in colaborare?", opts: ["Stergi tot ce nu-ti place din textul colegului", "Scrii cat mai mult, fara sa citesti ce au scris ceilalti", "Respecti munca celorlalti si folosesti comentarii pentru sugestii", "Schimbi permisiunile fara sa anunti echipa"], correct: 2, feedback: "Respecta munca colegilor! Daca ai sugestii, lasa un comentariu in loc sa modifici direct." }
     ];
-
     let currentQ = 0;
 
     function initQuiz() {
@@ -1417,41 +806,21 @@
     function renderQuestion() {
         const area = document.getElementById('quiz-area');
         if (currentQ >= quizData.length) {
-            area.innerHTML = `
-                <div style="text-align: center; padding: 40px 0;">
-                    <div style="font-size: 4rem; margin-bottom: 16px;">&#x1F389;</div>
-                    <div style="font-size: 2rem; font-weight: 800; color: var(--green); margin-bottom: 12px;">Bravo!</div>
-                    <div style="font-size: 1.2rem; color: var(--text2);">Ai terminat quiz-ul! Esti pregatit pentru activitatea practica.</div>
-                </div>
-            `;
+            area.innerHTML = '<div style="text-align:center;padding:30px 0"><div style="font-size:3.5rem;margin-bottom:12px">&#x1F389;</div><div style="font-size:1.8rem;font-weight:800;color:var(--green);margin-bottom:10px">Bravo!</div><div style="font-size:1.1rem;color:var(--text2)">Ai terminat quiz-ul! Esti pregatit pentru activitatea practica.</div></div>';
             return;
         }
-
         const q = quizData[currentQ];
-        let html = `
-            <div style="margin-bottom: 8px; font-size: 0.9rem; color: var(--text3); font-weight: 600;">
-                Intrebarea ${currentQ + 1} din ${quizData.length}
-            </div>
-            <div class="prez-question">${q.q}</div>
-            <div class="quiz-options">
-        `;
-
-        q.opts.forEach((opt, i) => {
-            html += `<button class="quiz-opt" onclick="checkAnswer(${i})" id="qopt${i}">${String.fromCharCode(65 + i)}) ${opt}</button>`;
-        });
-
-        html += `</div><div class="quiz-feedback" id="quiz-fb"></div>`;
+        let html = '<div style="margin-bottom:6px;font-size:0.85rem;color:var(--text3);font-weight:600">Intrebarea ' + (currentQ + 1) + ' din ' + quizData.length + '</div><div class="prez-question">' + q.q + '</div><div class="quiz-options">';
+        q.opts.forEach((opt, i) => { html += '<button class="quiz-opt" data-idx="' + i + '" id="qopt' + i + '">' + String.fromCharCode(65 + i) + ') ' + opt + '</button>'; });
+        html += '</div><div class="quiz-feedback" id="quiz-fb"></div>';
         area.innerHTML = html;
+        area.querySelectorAll('.quiz-opt').forEach(btn => { btn.addEventListener('click', function() { checkAnswer(parseInt(this.dataset.idx)); }); });
     }
 
     function checkAnswer(idx) {
         const q = quizData[currentQ];
         const fb = document.getElementById('quiz-fb');
-
-        // Disable all options
-        document.querySelectorAll('.quiz-opt').forEach(btn => btn.classList.add('disabled'));
-
-        // Mark correct/wrong
+        document.querySelectorAll('.quiz-opt').forEach(b => b.classList.add('disabled'));
         document.getElementById('qopt' + q.correct).classList.add('correct');
         if (idx !== q.correct) {
             document.getElementById('qopt' + idx).classList.add('wrong');
@@ -1461,25 +830,18 @@
             fb.className = 'quiz-feedback show correct-fb';
             fb.textContent = 'Corect! ' + q.feedback;
         }
-
-        // Auto-advance after 3s
-        setTimeout(() => {
-            currentQ++;
-            renderQuestion();
-        }, 3500);
+        setTimeout(() => { currentQ++; renderQuestion(); }, 3500);
     }
 
-    // ===== HIDE KEYBOARD HINT AFTER 8s =====
+    // Hide keyboard hint after 6s
     setTimeout(() => {
-        document.getElementById('kbd-hint').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('kbd-hint').style.display = 'none';
-        }, 500);
-    }, 8000);
+        const hint = document.getElementById('kbd-hint');
+        hint.style.opacity = '0';
+        setTimeout(() => hint.style.display = 'none', 500);
+    }, 6000);
 
-    // ===== INIT =====
-    buildProgress();
-    goTo(0);
+    // Initial state
+    updateUI();
 </script>
 </body>
 </html>
