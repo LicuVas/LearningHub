@@ -41,7 +41,7 @@ This is the definitive checklist for any agent working on this site. Read it bef
 
 ## Architecture Overview
 
-- **226 HTML files** across 4 grades: `content/tic/cls5/`, `cls6/`, `cls7/`, `cls8/`
+- **346 HTML files** across 4 grades: `content/tic/cls5/` (98), `cls6/` (61), `cls7/` (97), `cls8/` (89)
 - **Two template types:**
   - **5-step format** (cls5, some cls6): GOAL → TRY → LEARN → TEST → COMPLETE
     - Uses: `QuizBridge.init()`, inline `selectOption()`, `goToStep()`
@@ -49,7 +49,8 @@ This is the definitive checklist for any agent working on this site. Read it bef
   - **Atomic format** (cls7, cls8, extras): Progressive atoms with embedded quizzes
     - Uses: `AtomicLearning.init()`, `AdvancedPractice.init()`
     - Practice: `<div class="practice-advanced" id="practice-advanced">`
-- **Shared JS** (in `assets/js/`): quiz-bridge.js, practice-simple.js, lesson-summary.js, breadcrumb.js, progress.js, user-system.js, atomic-learning.js, practice-gate.js
+- **Shared JS** (in `assets/js/`): quiz-bridge.js, practice-simple.js, lesson-summary.js, breadcrumb.js, progress.js, user-system.js, atomic-learning.js, practice-gate.js (20 files total)
+- **Shared CSS** (in `assets/css/`): lesson-5step.css, lesson-atomic.css, quiz-gamified.css (extracted from inline styles, 293 files converted)
 - **Grading**: 1 (din oficiu) + 6 (quiz) + 3 (practice) = 10 max
 - **Hosting**: Cloudflare Pages at `learninghub-8z6.pages.dev`, GitHub at `licuvas.github.io/LearningHub`
 - **Deployment**: Cloudflare serves extensionless URLs (no .html extension)
@@ -222,7 +223,8 @@ Keys: quiz-bridge-cls5-m1-sisteme-lectia1-calculator
 
 ### 3.3 Asset Paths
 - [ ] All `<script src="...">` paths resolve to existing files
-- [ ] All `<link href="...">` paths resolve to existing files
+- [ ] All `<link href="...">` CSS paths resolve to existing files (lesson-5step.css, lesson-atomic.css, or quiz-gamified.css)
+- [ ] CSS `<link>` depth matches file location (e.g., `../../../../assets/css/` for 4 levels deep)
 - [ ] Font imports use HTTPS (Google Fonts CDN)
 - [ ] No hardcoded absolute paths to local filesystem
 
@@ -251,14 +253,16 @@ Keys: quiz-bridge-cls5-m1-sisteme-lectia1-calculator
 
 | Tool | Purpose |
 |------|---------|
-| `tools/site_audit.py` | **Full 226-file audit** — 9 categories, JSON report |
+| `tools/site_audit.py` | **Full 346-file audit** — 9 categories, JSON report |
+| `tools/site_audit.py --quick` | CRITICALs only — used in pre-commit hook |
+| `tools/extract_css.py` | Detects format, extracts shared CSS to external files |
 | `tools/fix_site_issues.py` | Batch fix: practice gates + breadcrumbs |
 | `tools/phase1_fixer.py` | Automated fixes: nav links, scripts, IDs, functions, inits |
 | `tools/fix_storage_keys.py` | Fix localStorage key mismatches |
 | `tools/fix_escaped_quotes.py` | Fix `\"` → `&quot;` in onclick attributes |
 | `tools/check_practice_containers.py` | Audit practice container types across all files |
 | `tools/auto_fixer.py` | Original fixer (JS order, missing divs, nav depth) |
-| `tools/lhqa/orchestrator.py` | LHQA 7-pass quality assurance (111 lessons, 8082 checks) |
+| `tools/lhqa/orchestrator.py` | LHQA 7-pass quality assurance (8082 checks) |
 
 ---
 
@@ -286,7 +290,9 @@ Keys: quiz-bridge-cls5-m1-sisteme-lectia1-calculator
 
 11. **Index concept links to nonexistent directories.** Some module index pages linked to a `concepts/` directory that was planned but never built. These render as broken links. Fix: replace `<a href="concepts/X.html">` with `<span>`.
 
-12. **QuizBridge re-records saved answers on page load.** When a student returns to a page, `recordAnswer()` fires for all saved answers, triggering `atomicProgressSaved` events. Code that sets `interactedThisSession = true` on these events will think the student interacted when they didn't. Fix: use DOM click listeners instead of progress events.
+12. **CSS is externalized — don't re-inline it.** Shared CSS lives in `assets/css/lesson-5step.css`, `lesson-atomic.css`, and `quiz-gamified.css`. Lessons link to these via `<link rel="stylesheet">`. Per-lesson custom styles (animations, lesson-specific colors) remain in inline `<style>` blocks. When creating new lessons, link the shared CSS and only add inline styles for truly unique styling. Run `tools/extract_css.py` to convert inline CSS to external links.
+
+13. **QuizBridge re-records saved answers on page load.** When a student returns to a page, `recordAnswer()` fires for all saved answers, triggering `atomicProgressSaved` events. Code that sets `interactedThisSession = true` on these events will think the student interacted when they didn't. Fix: use DOM click listeners instead of progress events.
 
 ---
 
