@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Structuri de Date: Vectori in C++ | Clasa a VIII-a</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--dark:#1B3A5C;--accent:#2E86AB;--orange:#E86C00;--green:#2D8B4E;
+--red:#C0392B;--codebg:#1E1E2E;--codefg:#E0E0E0;--gray:#555;
+--yellow:#F39C12;--lightblue:#E8F4F8;--lightgreen:#E8F5E9;
+--lightorange:#FFF3E0;--lightred:#FDEDED;--lightyellow:#FFFDE7;
+}
+html,body{height:100vh;overflow:hidden;margin:0;padding:0}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#111}
+.slide{display:none;width:100vw;height:100vh;position:fixed;top:0;left:0;background:#fff;overflow:hidden;z-index:1}
+.slide.active{display:flex;flex-direction:column;z-index:2}
+.accent-bar{height:5px;background:linear-gradient(90deg,var(--dark),var(--accent));width:100%;flex-shrink:0}
+.footer{position:absolute;bottom:0;left:0;right:0;height:36px;background:var(--dark);display:flex;align-items:center;justify-content:space-between;padding:0 30px;color:rgba(255,255,255,0.7);font-size:11px;letter-spacing:0.5px}
+.footer .section-tag{background:var(--accent);color:#fff;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:600}
+.slide-content{flex:1;padding:24px 50px 44px;display:flex;flex-direction:column;position:relative;user-select:text;overflow:hidden}
+h1.slide-title{font-size:30px;color:var(--dark);margin-bottom:2px;font-weight:700;line-height:1.2}
+.slide-subtitle{font-size:15px;color:var(--accent);font-style:italic;margin-bottom:16px}
+.two-col{display:flex;gap:24px;flex:1;min-height:0}
+.three-col{display:flex;gap:20px;flex:1;min-height:0}
+.col{flex:1;overflow:hidden}
+.col-code{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0}
+.col-narrow{flex:0.8}
+.col-wide{flex:1.2}
+ul.content{list-style:none;padding:0}
+ul.content li{padding:3px 0;font-size:16px;color:#1a1a2e;line-height:1.45}
+ul.content li::before{content:"\2022";color:var(--accent);font-weight:bold;margin-right:8px}
+ul.content li.sub{padding-left:28px;font-size:14px;color:var(--gray)}
+ul.content li.sub::before{content:"\25E6";color:var(--gray)}
+ul.content li.heading{font-size:18px;font-weight:700;color:var(--accent);padding-top:8px}
+ul.content li.heading::before{content:"";margin:0}
+ul.content li.warn{font-weight:700;color:var(--red)}
+ul.content li.warn::before{content:"\26A0";color:var(--red);margin-right:6px}
+ul.content li.ok{color:var(--green);font-weight:600}
+ul.content li.ok::before{content:"\2714";color:var(--green)}
+ul.content li.empty{padding:1px 0}
+ul.content li.empty::before{content:""}
+ul.content li code{background:#f0f0f0;padding:1px 6px;border-radius:4px;font-family:'Consolas',monospace;font-size:14px}
+pre.code-box{background:var(--codebg);color:var(--codefg);border-radius:10px;padding:14px 16px;font-family:'Consolas','Courier New',monospace;font-size:13.5px;line-height:1.5;overflow-x:auto;white-space:pre;user-select:text;cursor:text;flex:1;min-height:0;border:1px solid rgba(255,255,255,0.05)}
+pre.code-box .kw{color:#C678DD}
+pre.code-box .cm{color:#5C6370;font-style:italic}
+pre.code-box .str{color:#98C379}
+pre.code-box .num{color:#D19A66}
+pre.code-box .fn{color:#61AFEF}
+.output-box{background:#0D1117;color:#58D68D;border-radius:8px;padding:10px 16px;font-family:'Consolas',monospace;font-size:13px;line-height:1.5;border:1px solid #1a3a1a;margin-top:6px;user-select:text}
+.output-box::before{content:"Output:";display:block;color:#888;font-size:11px;margin-bottom:4px}
+.highlight-box{border-radius:10px;padding:12px 20px;text-align:center;font-weight:700;font-size:15px;margin-top:auto;flex-shrink:0}
+.highlight-box.orange{background:var(--lightorange);border:2px solid var(--orange);color:var(--orange)}
+.highlight-box.green{background:var(--lightgreen);border:2px solid var(--green);color:var(--green)}
+.highlight-box.red{background:var(--lightred);border:2px solid var(--red);color:var(--red)}
+.highlight-box.yellow{background:var(--lightyellow);border:3px solid var(--yellow);color:var(--dark);font-size:18px}
+.highlight-box.blue{background:var(--lightblue);border:2px solid var(--accent);color:var(--dark)}
+.trace-box{background:#F8F9FA;border:2px solid var(--accent);border-radius:10px;padding:14px 18px;font-family:'Consolas',monospace;font-size:13px;line-height:1.6;user-select:text;overflow:auto;flex:1;min-height:0}
+.trace-box .step{color:var(--accent);font-weight:700}
+.trace-box .changed{color:var(--red);font-weight:700}
+.trace-box .ok{color:var(--green)}
+.memo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:4px;margin:8px 0}
+.memo-cell{background:var(--lightblue);border:2px solid var(--accent);border-radius:8px;padding:8px 4px;text-align:center;font-family:Consolas,monospace}
+.memo-cell .idx{font-size:11px;color:var(--gray)}
+.memo-cell .val{font-size:20px;font-weight:700;color:var(--dark)}
+.memo-cell .addr{font-size:10px;color:#999}
+.memo-cell.highlight{background:#FFE0B2;border-color:var(--orange)}
+/* Title slide */
+.title-slide{background:linear-gradient(135deg,#1B3A5C 0%,#2E86AB 100%);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center}
+.title-slide .inner{max-width:800px}
+.title-slide h1{font-size:48px;color:#fff;margin-bottom:8px;text-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.title-slide h2{font-size:32px;color:#87CEEB;font-weight:400;margin-bottom:24px}
+.title-slide .info{color:rgba(255,255,255,0.85);font-size:18px;line-height:1.8}
+.title-slide .info .sub{font-size:16px;color:rgba(255,255,255,0.7)}
+.title-slide .badge{display:inline-block;background:var(--orange);color:#fff;padding:6px 20px;border-radius:20px;font-size:14px;font-weight:600;margin-top:16px}
+/* Section header slides */
+.section-slide{background:linear-gradient(135deg,var(--dark) 0%,var(--accent) 100%);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center}
+.section-slide .section-num{font-size:72px;font-weight:200;color:rgba(255,255,255,0.3);margin-bottom:10px}
+.section-slide h1{font-size:40px;margin-bottom:10px}
+.section-slide .section-desc{font-size:20px;color:rgba(255,255,255,0.8);font-style:italic}
+/* Checkpoint slides */
+.checkpoint-slide{background:linear-gradient(135deg,#FFF3E0 0%,#FFE0B2 100%)}
+.checkpoint-slide h1.slide-title{color:var(--orange)}
+.checkpoint-slide .slide-subtitle{color:#BF360C}
+/* Final slide */
+.final-slide{background:linear-gradient(135deg,#1B3A5C 0%,#2E86AB 100%);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center}
+.final-slide h1{font-size:44px;margin-bottom:16px;text-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.final-slide .motto{font-size:22px;color:#87CEEB;font-style:italic;margin-bottom:16px}
+.final-slide .sub{font-size:18px;color:rgba(255,255,255,0.8);line-height:1.6}
+.final-slide .credit{font-size:13px;color:rgba(255,255,255,0.5);margin-top:24px}
+/* Comparison table */
+.cmp-table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+.cmp-table th{background:var(--dark);color:#fff;padding:8px 12px;text-align:left;font-size:13px}
+.cmp-table td{padding:7px 12px;border-bottom:1px solid #eee}
+.cmp-table tr:nth-child(even){background:#f8f9fa}
+.cmp-table .good{color:var(--green);font-weight:600}
+.cmp-table .bad{color:var(--red);font-weight:600}
+/* Navigation */
+.nav{position:fixed;bottom:50px;right:20px;z-index:999;display:flex;gap:8px;align-items:center}
+.nav button{background:rgba(0,0,0,0.6);color:#fff;border:none;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:all .2s;user-select:none;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.nav button:hover{background:var(--accent);transform:scale(1.1)}
+.nav .counter{color:rgba(255,255,255,0.8);font-size:13px;background:rgba(0,0,0,0.5);padding:4px 12px;border-radius:12px;user-select:none;min-width:60px;text-align:center}
+.progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--orange));z-index:1000;transition:width .3s}
+/* Tip callout */
+.tip-box{background:#E3F2FD;border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 16px;margin:8px 0;font-size:14px;color:var(--dark)}
+.tip-box::before{content:"\1F4A1 ";font-size:16px}
+.tip-box.warning{background:#FFF3E0;border-left-color:var(--orange)}
+.tip-box.warning::before{content:"\26A0\FE0F "}
+.tip-box.danger{background:var(--lightred);border-left-color:var(--red)}
+.tip-box.danger::before{content:"\274C "}
+@media(max-width:900px){
+.slide-content{padding:16px 24px 44px}
+h1.slide-title{font-size:22px}
+.two-col,.three-col{flex-direction:column}
+pre.code-box{font-size:11px;padding:10px 12px}
+ul.content li{font-size:14px}
+.nav{bottom:40px;right:10px}
+}
+</style>
+</head>
+<body>
+<div class="progress-bar" id="progress"></div>
+
+<!-- ==================== SLIDE 1: TITLE ==================== -->
+<div class="slide title-slide active">
+<div class="inner">
+<h1>Structuri de Date</h1>
+<h2>Vectori (Tablouri) &icirc;n C++</h2>
+<div class="info">
+Clasa a VIII-a &bull; Tehnologia Informa&#x021B;iei &#x0219;i a Comunica&#x021B;iilor<br>
+<span class="sub">Modulul: Algoritmi &ndash; Secven&#x021B;e de valori</span>
+</div>
+<div class="badge">6 Lec&#x021B;ii &bull; De la zero la proiect complet</div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 2: CUPRINS ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Ce vom &icirc;nv&#x0103;&#x021B;a &icirc;n acest modul?</h1>
+<div class="slide-subtitle">6 lec&#x021B;ii &bull; Fiecare construie&#x0219;te pe cea anterioar&#x0103;</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading">Lec&#x021B;ia 1: Tablouri (Arrays)</li>
+<li class="sub">Declarare, ini&#x021B;ializare, indexare de la 0</li>
+<li class="sub">Cum stoc&#x0103;m 100 de valori cu o singur&#x0103; linie</li>
+<li class="heading">Lec&#x021B;ia 2: Parcurgere cu for</li>
+<li class="sub">Citire, afi&#x0219;are, sum&#x0103;, medie, num&#x0103;rare</li>
+<li class="sub">Formula magic&#x0103;: for(int i=0; i&lt;n; i++)</li>
+<li class="heading">Lec&#x021B;ia 3: C&#x0103;utare</li>
+<li class="sub">C&#x0103;utare liniar&#x0103; (orice vector)</li>
+<li class="sub">C&#x0103;utare binar&#x0103; (vector sortat &ndash; super-rapid&#x0103;!)</li>
+</ul>
+</div>
+<div class="col">
+<ul class="content">
+<li class="heading">Lec&#x021B;ia 4: Maxim &#x0219;i Minim</li>
+<li class="sub">Algoritmul Campionului</li>
+<li class="sub">Cu pozi&#x021B;ie, ambele simultan</li>
+<li class="heading">Lec&#x021B;ia 5: Sortare (Bubble Sort)</li>
+<li class="sub">Interschimbarea (Swap)</li>
+<li class="sub">Metoda bulelor &ndash; pas cu pas</li>
+<li class="heading">Lec&#x021B;ia 6: Proiect Final</li>
+<li class="sub">Catalog de Note &ndash; aplica&#x021B;ie complet&#x0103;</li>
+<li class="sub">Toate tehnicile combinate</li>
+</ul>
+</div>
+</div>
+<div class="highlight-box green">La final vei &#x0219;ti s&#x0103; stochezi, parcurgi, cau&#x021B;i, sortezi &#x0219;i prelucrezi colec&#x021B;ii de date &icirc;n C++!</div>
+</div>
+<div class="footer"><span class="section-tag">CUPRINS</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 3: SECTION - INTRODUCERE ==================== -->
+<div class="slide section-slide">
+<div>
+<div class="section-num">01</div>
+<h1>Introducere &icirc;n Vectori</h1>
+<div class="section-desc">De ce avem nevoie de ei &#x0219;i cum func&#x021B;ioneaz&#x0103;</div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 4: DE CE VECTORI ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">De ce avem nevoie de vectori?</h1>
+<div class="slide-subtitle">Problema: Cum stoc&#x0103;m notele a 30 de elevi?</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading" style="color:var(--red)">F&#x0103;r&#x0103; vectori:</li>
+</ul>
+<pre class="code-box"><span class="cm">// 30 de variabile separate!</span>
+<span class="kw">int</span> nota1, nota2, nota3;
+<span class="kw">int</span> nota4, nota5, nota6;
+<span class="kw">int</span> nota7, nota8, nota9;
+<span class="cm">// ... inca 21 de variabile ...</span>
+<span class="kw">int</span> nota28, nota29, nota30;
+
+<span class="cm">// Vrei suma? 30 de adunari!</span>
+<span class="kw">int</span> suma = nota1 + nota2 + nota3
+         + nota4 + nota5 + nota6
+         <span class="cm">// ... + inca 24 ...</span></pre>
+<div class="tip-box danger">30 variabile, cod repetitiv, imposibil de gestionat!</div>
+</div>
+<div class="col">
+<ul class="content">
+<li class="heading" style="color:var(--green)">Cu vectori:</li>
+</ul>
+<pre class="code-box"><span class="cm">// O singura linie!</span>
+<span class="kw">int</span> note[<span class="num">30</span>];
+
+<span class="cm">// Citire cu for:</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">30</span>; i++)
+    cin &gt;&gt; note[i];
+
+<span class="cm">// Suma cu for:</span>
+<span class="kw">int</span> suma = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">30</span>; i++)
+    suma += note[i];
+
+<span class="cm">// 4 linii in loc de 60+!</span></pre>
+<div class="tip-box">Acela&#x0219;i cod func&#x021B;ioneaz&#x0103; pentru 5, 30 sau 1000 de elevi!</div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">INTRODUCERE</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 5: ANALOGIE ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Analogie: Dulapul cu sertare</h1>
+<div class="slide-subtitle">Un singur dulap, mai multe sertare numerotate</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading">Dulapul = Vectorul</li>
+<li>Dulapul are un singur <b>NUME</b> (&bdquo;Dulap Note&rdquo;)</li>
+<li>Fiecare sertar are un <b>NUM&#x0102;R</b> (0, 1, 2, 3...)</li>
+<li>Toate sertarele au aceea&#x0219;i form&#x0103; (acela&#x0219;i <b>tip de date</b>)</li>
+<li>Pentru a g&#x0103;si ceva: <b>Dulap[nr_sertar]</b></li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Traduc&#x021B;ia &icirc;n C++:</li>
+<li><code>int note[5]</code> = dulap cu 5 sertare</li>
+<li><code>note[0]</code> = primul sertar (nu note[1]!)</li>
+<li><code>note[4]</code> = ultimul sertar (nu note[5]!)</li>
+<li class="warn">note[5] = sertarul 6 care NU EXIST&#x0102;!</li>
+</ul>
+</div>
+<div class="col">
+<ul class="content">
+<li class="heading">Vizualizare: int note[5] = {9, 7, 10, 8, 6};</li>
+</ul>
+<div class="memo-grid" style="grid-template-columns:repeat(5,1fr);margin-top:12px">
+<div class="memo-cell"><div class="idx">note[0]</div><div class="val">9</div></div>
+<div class="memo-cell"><div class="idx">note[1]</div><div class="val">7</div></div>
+<div class="memo-cell"><div class="idx">note[2]</div><div class="val">10</div></div>
+<div class="memo-cell"><div class="idx">note[3]</div><div class="val">8</div></div>
+<div class="memo-cell"><div class="idx">note[4]</div><div class="val">6</div></div>
+</div>
+<div style="text-align:center;margin:6px 0;font-size:13px;color:var(--gray)">
+&#x2190; index 0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; index 4 &#x2192;
+</div>
+<div class="tip-box">Fiecare <code>int</code> ocup&#x0103; <b>4 bytes</b> consecutivi &icirc;n memorie. Dac&#x0103; note[0] e la adresa 100, note[1] e la 104, note[2] la 108...</div>
+<div class="tip-box warning" style="margin-top:8px"><b>Regula de Aur:</b> N sertare = indici de la <b>0</b> la <b>N-1</b>. Indexul N nu exist&#x0103;!</div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">INTRODUCERE</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 6: SECTION - DECLARARE ==================== -->
+<div class="slide section-slide">
+<div>
+<div class="section-num">02</div>
+<h1>Declarare &#x0219;i Indexare</h1>
+<div class="section-desc">Lec&#x021B;ia 1: Cum cre&#x0103;m &#x0219;i accesam vectori</div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 7: DECLARARE ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Declararea Vectorilor</h1>
+<div class="slide-subtitle">Sintax&#x0103; general&#x0103; &#x0219;i variante</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading">Formula general&#x0103;:</li>
+<li style="font-family:Consolas;font-size:17px;color:var(--dark);padding:6px 0"><b>tip &nbsp; nume[dimensiune];</b></li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Cele 3 tipuri frecvente:</li>
+<li><code>int</code> &ndash; numere &icirc;ntregi (note, v&acirc;rste, scoruri)</li>
+<li><code>float</code> &ndash; numere cu zecimale (temperaturi, medii)</li>
+<li><code>char</code> &ndash; caractere individuale (litere, cifre)</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">4 moduri de declarare:</li>
+<li>Vector gol: <code>int x[10];</code></li>
+<li>Cu valori: <code>int x[5] = {9,7,10,8,6};</code></li>
+<li>Dimensiune dedus&#x0103;: <code>int x[] = {9,7,10};</code></li>
+<li>Par&#x021B;ial: <code>int x[5] = {9,7};</code> restul = 0</li>
+</ul>
+</div>
+<div class="col-code">
+<pre class="code-box"><span class="cm">// 1. Vector gol (valori nedefinite!)</span>
+<span class="kw">int</span> note[<span class="num">30</span>];
+<span class="cm">// ATENTIE: contine "gunoi" din memorie!</span>
+
+<span class="cm">// 2. Vector cu toate valorile</span>
+<span class="kw">int</span> note[<span class="num">5</span>] = {<span class="num">9</span>, <span class="num">7</span>, <span class="num">10</span>, <span class="num">8</span>, <span class="num">6</span>};
+
+<span class="cm">// 3. Dimensiune dedusa automat</span>
+<span class="kw">int</span> zile[] = {<span class="num">31</span>, <span class="num">28</span>, <span class="num">31</span>, <span class="num">30</span>};
+<span class="cm">// compilatorul stie: 4 elemente</span>
+
+<span class="cm">// 4. Partial initializat</span>
+<span class="kw">int</span> x[<span class="num">5</span>] = {<span class="num">9</span>, <span class="num">7</span>};
+<span class="cm">// x = {9, 7, 0, 0, 0}</span>
+<span class="cm">// restul se completeaza cu 0!</span>
+
+<span class="cm">// 5. Toate zero</span>
+<span class="kw">int</span> note[<span class="num">100</span>] = {<span class="num">0</span>};
+<span class="cm">// Truc: toate 100 devin 0</span></pre>
+</div>
+</div>
+<div class="highlight-box orange">Vectorul TREBUIE s&#x0103; aib&#x0103; dimensiune cunoscut&#x0103; la compilare (num&#x0103;r fix sau dedus din valorile ini&#x021B;iale)</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 1</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 8: ACCESARE ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Accesare &#x0219;i Modificare</h1>
+<div class="slide-subtitle">Cum citim &#x0219;i scriem valori &icirc;n vector</div>
+<div class="two-col">
+<div class="col-code">
+<pre class="code-box"><span class="kw">int</span> note[<span class="num">5</span>] = {<span class="num">9</span>, <span class="num">7</span>, <span class="num">10</span>, <span class="num">8</span>, <span class="num">6</span>};
+
+<span class="cm">// CITIRE (accesare)</span>
+cout &lt;&lt; note[<span class="num">0</span>];     <span class="cm">// Afiseaza: 9</span>
+cout &lt;&lt; note[<span class="num">2</span>];     <span class="cm">// Afiseaza: 10</span>
+cout &lt;&lt; note[<span class="num">4</span>];     <span class="cm">// Afiseaza: 6</span>
+
+<span class="cm">// SCRIERE (modificare)</span>
+note[<span class="num">2</span>] = <span class="num">8</span>;
+<span class="cm">// Vectorul acum: {9, 7, 8, 8, 6}</span>
+
+<span class="cm">// CALCULE cu elementele</span>
+<span class="kw">int</span> suma = note[<span class="num">0</span>] + note[<span class="num">1</span>];
+<span class="cm">// suma = 9 + 7 = 16</span>
+
+<span class="cm">// Un element e o variabila normala!</span>
+note[<span class="num">3</span>] = note[<span class="num">3</span>] + <span class="num">1</span>;
+<span class="cm">// sau: note[3]++;</span>
+<span class="cm">// note[3] era 8, acum e 9</span></pre>
+</div>
+<div class="col">
+<ul class="content">
+<li class="heading">Ce pute&#x021B;i face cu note[i]:</li>
+<li>Citi valoarea: <code>cout &lt;&lt; note[i];</code></li>
+<li>Modifica valoarea: <code>note[i] = 10;</code></li>
+<li>Folosi &icirc;n calcule: <code>suma += note[i];</code></li>
+<li>Compara: <code>if (note[i] &gt;= 5)</code></li>
+<li>Citi de la tastatur&#x0103;: <code>cin &gt;&gt; note[i];</code></li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Indexul poate fi &#x0219;i variabil&#x0103;!</li>
+<li><code>int i = 3; cout &lt;&lt; note[i];</code></li>
+<li class="sub">Asta face posibil&#x0103; parcurgerea cu for!</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Indexul poate fi &#x0219;i expresie:</li>
+<li><code>note[i+1]</code> = elementul de dup&#x0103; i</li>
+<li><code>note[n-1]</code> = ultimul element</li>
+<li><code>note[n/2]</code> = elementul din mijloc</li>
+</ul>
+</div>
+</div>
+<div class="highlight-box blue">Fiecare element <code>note[i]</code> se comport&#x0103; exact ca o variabil&#x0103; obi&#x0219;nuit&#x0103; de tip int!</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 1</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 9: GRESELI FRECVENTE ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Gre&#x0219;eli frecvente la declarare &#x0219;i accesare</h1>
+<div class="slide-subtitle">Evit&#x0103;-le &#x0219;i vei fi &icirc;naintea clasei!</div>
+<table class="cmp-table" style="margin-top:8px">
+<tr><th style="width:45%">GRE&#x0218;IT</th><th style="width:45%">CORECT</th><th>De ce?</th></tr>
+<tr><td class="bad"><code>int note(10);</code></td><td class="good"><code>int note[10];</code></td><td>Parantezele rotunde sunt pentru func&#x021B;ii!</td></tr>
+<tr><td class="bad"><code>array note[10];</code></td><td class="good"><code>int note[10];</code></td><td>Nu exist&#x0103; tipul &bdquo;array&rdquo;. Tipul vine primul.</td></tr>
+<tr><td class="bad"><code>int note[];</code></td><td class="good"><code>int note[10];</code></td><td>F&#x0103;r&#x0103; dimensiune &#x0219;i f&#x0103;r&#x0103; valori = eroare!</td></tr>
+<tr><td class="bad"><code>int n; int x[n];</code></td><td class="good"><code>int x[100]; cin&gt;&gt;n;</code></td><td>Dimensiunea trebuie s&#x0103; fie constant&#x0103;!</td></tr>
+<tr><td class="bad"><code>note[5]</code> pt. vector de 5</td><td class="good"><code>note[4]</code> = ultimul</td><td>5 elemente = indici 0,1,2,3,4. NU 5!</td></tr>
+<tr><td class="bad"><code>int x[3]={1,2,3,4};</code></td><td class="good"><code>int x[4]={1,2,3,4};</code></td><td>4 valori nu &icirc;ncap &icirc;n vector de 3!</td></tr>
+<tr><td class="bad"><code>if (x[i] = 5)</code></td><td class="good"><code>if (x[i] == 5)</code></td><td>Un <code>=</code> e atribuire, <code>==</code> e compara&#x021B;ie!</td></tr>
+</table>
+<div class="highlight-box red">Cele mai periculoase gre&#x0219;eli: accesare &icirc;n afara limitelor (<code>note[n]</code>) &#x0219;i confuzia <code>=</code> vs <code>==</code></div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 1</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 10: CHECKPOINT 1 ==================== -->
+<div class="slide checkpoint-slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">&#x1F9E0; Checkpoint: Ce afi&#x0219;eaz&#x0103; codul?</h1>
+<div class="slide-subtitle">Verific&#x0103;-&#x021B;i &icirc;n&#x021B;elegerea indexurilor!</div>
+<div class="two-col">
+<div class="col-code">
+<pre class="code-box"><span class="kw">int</span> x[<span class="num">6</span>] = {<span class="num">3</span>, <span class="num">8</span>, <span class="num">1</span>, <span class="num">5</span>, <span class="num">9</span>, <span class="num">2</span>};
+
+cout &lt;&lt; x[<span class="num">0</span>];         <span class="cm">// a) ???</span>
+cout &lt;&lt; x[<span class="num">3</span>];         <span class="cm">// b) ???</span>
+cout &lt;&lt; x[<span class="num">5</span>];         <span class="cm">// c) ???</span>
+
+x[<span class="num">1</span>] = x[<span class="num">4</span>];
+cout &lt;&lt; x[<span class="num">1</span>];         <span class="cm">// d) ???</span>
+
+x[<span class="num">2</span>] = x[<span class="num">2</span>] + <span class="num">10</span>;
+cout &lt;&lt; x[<span class="num">2</span>];         <span class="cm">// e) ???</span>
+
+cout &lt;&lt; x[<span class="num">0</span>] + x[<span class="num">5</span>]; <span class="cm">// f) ???</span></pre>
+</div>
+<div class="col">
+<ul class="content">
+<li class="heading">R&#x0103;spunsuri:</li>
+<li class="empty">&nbsp;</li>
+<li class="ok">a) <b>3</b> &ndash; x[0] = primul element</li>
+<li class="ok">b) <b>5</b> &ndash; x[3] = al patrulea element</li>
+<li class="ok">c) <b>2</b> &ndash; x[5] = ultimul (al 6-lea)</li>
+<li class="ok">d) <b>9</b> &ndash; x[1] a devenit x[4] care e 9</li>
+<li class="ok">e) <b>11</b> &ndash; x[2] era 1, acum 1+10=11</li>
+<li class="ok">f) <b>5</b> &ndash; 3 + 2 = 5</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Starea final&#x0103; a vectorului:</li>
+</ul>
+<div class="memo-grid" style="grid-template-columns:repeat(6,1fr)">
+<div class="memo-cell"><div class="idx">[0]</div><div class="val">3</div></div>
+<div class="memo-cell highlight"><div class="idx">[1]</div><div class="val">9</div></div>
+<div class="memo-cell highlight"><div class="idx">[2]</div><div class="val">11</div></div>
+<div class="memo-cell"><div class="idx">[3]</div><div class="val">5</div></div>
+<div class="memo-cell"><div class="idx">[4]</div><div class="val">9</div></div>
+<div class="memo-cell"><div class="idx">[5]</div><div class="val">2</div></div>
+</div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">CHECKPOINT</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 11: SECTION - PARCURGERE ==================== -->
+<div class="slide section-slide">
+<div>
+<div class="section-num">03</div>
+<h1>Parcurgerea Vectorilor</h1>
+<div class="section-desc">Lec&#x021B;ia 2: Vizitarea fiec&#x0103;rui element cu bucla for</div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 12: PARCURGERE ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Formula magic&#x0103;: Parcurgerea cu for</h1>
+<div class="slide-subtitle">Analogie: Profesorul face prezen&#x021B;a &ndash; trece prin fiecare elev, de la primul la ultimul</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading">Cele 4 componente:</li>
+<li><code>int i = 0</code> &rarr; &icirc;ncepe de la <b>primul</b> element</li>
+<li><code>i &lt; n</code> &rarr; continu&#x0103; c&acirc;t timp <b>nu am dep&#x0103;&#x0219;it</b></li>
+<li><code>i++</code> &rarr; trece la <b>urm&#x0103;torul</b></li>
+<li><code>x[i]</code> &rarr; <b>elementul curent</b></li>
+<li class="empty">&nbsp;</li>
+<li class="heading">De ce i &lt; n &#x0219;i NU i &lt;= n?</li>
+<li class="warn">Dac&#x0103; n=5, indicii valizi sunt 0,1,2,3,4</li>
+<li class="sub">i &lt; 5 se opre&#x0219;te la i=4 (corect!)</li>
+<li class="sub">i &lt;= 5 ar accesa &#x0219;i x[5] (NU EXIST&#x0102;!)</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Parcurgere invers&#x0103;:</li>
+<li class="sub"><code>for(int i=n-1; i&gt;=0; i--)</code></li>
+</ul>
+</div>
+<div class="col-code">
+<pre class="code-box"><span class="cm">// Parcurgere: stanga -> dreapta</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+    <span class="cm">// Fa ceva cu x[i]</span>
+}
+
+<span class="cm">// Exemplu: Afisare</span>
+<span class="kw">int</span> note[<span class="num">5</span>] = {<span class="num">9</span>, <span class="num">7</span>, <span class="num">10</span>, <span class="num">8</span>, <span class="num">6</span>};
+<span class="kw">int</span> n = <span class="num">5</span>;
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+    cout &lt;&lt; <span class="str">"note["</span> &lt;&lt; i &lt;&lt; <span class="str">"] = "</span>
+         &lt;&lt; note[i] &lt;&lt; endl;
+}</pre>
+<div class="output-box">note[0] = 9
+note[1] = 7
+note[2] = 10
+note[3] = 8
+note[4] = 6</div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 2</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 13: TRACE PARCURGERE ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Trace: Parcurgere pas cu pas</h1>
+<div class="slide-subtitle">int note[5] = {9, 7, 10, 8, 6}; &nbsp;&nbsp; for(int i=0; i&lt;5; i++) suma += note[i];</div>
+<div class="two-col">
+<div class="col" style="flex:1.3">
+<div class="trace-box">
+<span class="step">Ini&#x021B;ial:</span> suma = 0
+
+<span class="step">Pas 1:</span> i=0 &rarr; note[0]=9  &rarr; suma = 0+9 = <span class="changed">9</span>
+  [<b>9</b>] [7] [10] [8] [6]
+   ^
+
+<span class="step">Pas 2:</span> i=1 &rarr; note[1]=7  &rarr; suma = 9+7 = <span class="changed">16</span>
+  [9] [<b>7</b>] [10] [8] [6]
+       ^
+
+<span class="step">Pas 3:</span> i=2 &rarr; note[2]=10 &rarr; suma = 16+10 = <span class="changed">26</span>
+  [9] [7] [<b>10</b>] [8] [6]
+           ^
+
+<span class="step">Pas 4:</span> i=3 &rarr; note[3]=8  &rarr; suma = 26+8 = <span class="changed">34</span>
+  [9] [7] [10] [<b>8</b>] [6]
+                ^
+
+<span class="step">Pas 5:</span> i=4 &rarr; note[4]=6  &rarr; suma = 34+6 = <span class="changed">40</span>
+  [9] [7] [10] [8] [<b>6</b>]
+                    ^
+
+<span class="step">STOP:</span> i=5 &rarr; 5 &lt; 5? <span class="changed">NU!</span> &rarr; Ie&#x0219;im din for
+
+<span class="ok">Rezultat: suma = 40</span></div>
+</div>
+<div class="col" style="flex:0.7">
+<ul class="content">
+<li class="heading">Observa&#x021B;ii:</li>
+<li>i &icirc;ncepe de la 0 (primul)</li>
+<li>i se opre&#x0219;te la n-1 (ultimul)</li>
+<li>La fiecare pas, suma creste cu note[i]</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Acumulatorul:</li>
+<li><code>suma = 0;</code> (ini&#x021B;ializare)</li>
+<li><code>suma += x[i];</code> (acumulare)</li>
+<li class="sub">Acela&#x0219;i pattern pentru:</li>
+<li class="sub">Sum&#x0103;, produs, num&#x0103;rare</li>
+</ul>
+<div class="tip-box" style="margin-top:auto">Ini&#x021B;ializeaz&#x0103; <b>&icirc;nainte</b> de for! Sum&#x0103; = 0, produs = 1, contor = 0</div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 2</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 14: OPERATII ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Opera&#x021B;ii &icirc;n timpul parcurgerii</h1>
+<div class="slide-subtitle">Aceeea&#x0219;i bucl&#x0103;, opera&#x021B;ii diferite</div>
+<div class="three-col">
+<div class="col-code">
+<pre class="code-box"><span class="cm">// 1. CITIRE de la tastatura</span>
+<span class="kw">int</span> note[<span class="num">100</span>], n;
+cout &lt;&lt; <span class="str">"Cate note? "</span>;
+cin &gt;&gt; n;
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+    cout &lt;&lt; <span class="str">"Nota "</span> &lt;&lt; i+<span class="num">1</span>
+         &lt;&lt; <span class="str">": "</span>;
+    cin &gt;&gt; note[i];
+}
+
+<span class="cm">// 2. AFISARE pe o linie</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+    cout &lt;&lt; note[i] &lt;&lt; <span class="str">" "</span>;
+cout &lt;&lt; endl;</pre>
+</div>
+<div class="col-code">
+<pre class="code-box"><span class="cm">// 3. SUMA si MEDIA</span>
+<span class="kw">int</span> suma = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+    suma += note[i];
+
+<span class="kw">float</span> media = (<span class="kw">float</span>)suma / n;
+cout &lt;&lt; <span class="str">"Media: "</span> &lt;&lt; media;
+
+<span class="cm">// 4. NUMARARE (note >= 8)</span>
+<span class="kw">int</span> bune = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+    <span class="kw">if</span> (note[i] &gt;= <span class="num">8</span>)
+        bune++;
+cout &lt;&lt; bune &lt;&lt; <span class="str">" note bune"</span>;</pre>
+</div>
+<div class="col-code">
+<pre class="code-box"><span class="cm">// 5. NUMARARE PARE</span>
+<span class="kw">int</span> pare = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+    <span class="kw">if</span> (x[i] % <span class="num">2</span> == <span class="num">0</span>)
+        pare++;
+
+<span class="cm">// 6. PRODUS</span>
+<span class="kw">long</span> produs = <span class="num">1</span>;  <span class="cm">// NU 0!</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+    produs *= x[i];
+
+<span class="cm">// 7. AFISARE INVERSA</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = n-<span class="num">1</span>; i &gt;= <span class="num">0</span>; i--)
+    cout &lt;&lt; x[i] &lt;&lt; <span class="str">" "</span>;</pre>
+</div>
+</div>
+<div class="highlight-box green">Pattern comun: ini&#x021B;ializeaz&#x0103; variabila (suma=0, contor=0, produs=1) apoi acumuleaz&#x0103; &icirc;n for</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 2</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 15: EXEMPLU COMPLET CITIRE+PRELUCRARE ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Exemplu complet: Temperaturi s&#x0103;pt&#x0103;m&acirc;nale</h1>
+<div class="slide-subtitle">Citire + Afi&#x0219;are + Sum&#x0103; + Medie + Num&#x0103;rare</div>
+<div class="two-col">
+<div class="col-code" style="flex:1.2">
+<pre class="code-box"><span class="kw">#include</span> &lt;iostream&gt;
+<span class="kw">using namespace</span> std;
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">float</span> temp[<span class="num">7</span>];
+    <span class="kw">int</span> n = <span class="num">7</span>;
+    string zile[] = {<span class="str">"Luni"</span>,<span class="str">"Marti"</span>,
+        <span class="str">"Miercuri"</span>,<span class="str">"Joi"</span>,<span class="str">"Vineri"</span>,
+        <span class="str">"Sambata"</span>,<span class="str">"Duminica"</span>};
+
+    <span class="cm">// 1. Citire</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+        cout &lt;&lt; zile[i] &lt;&lt; <span class="str">": "</span>;
+        cin &gt;&gt; temp[i];
+    }
+
+    <span class="cm">// 2. Afisare + Suma</span>
+    <span class="kw">float</span> suma = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+        cout &lt;&lt; zile[i] &lt;&lt; <span class="str">": "</span>
+             &lt;&lt; temp[i] &lt;&lt; <span class="str">"°C"</span> &lt;&lt; endl;
+        suma += temp[i];
+    }
+
+    <span class="cm">// 3. Media</span>
+    cout &lt;&lt; <span class="str">"Media: "</span> &lt;&lt; suma/n &lt;&lt; <span class="str">"°C"</span>;
+
+    <span class="cm">// 4. Numarare zile calde (>25°C)</span>
+    <span class="kw">int</span> calde = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+        <span class="kw">if</span> (temp[i] &gt; <span class="num">25</span>) calde++;
+    cout &lt;&lt; <span class="str">"Zile calde: "</span> &lt;&lt; calde;
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+</div>
+<div class="col" style="flex:0.8">
+<div class="output-box" style="font-size:12px">Luni: 22.5
+Marti: 28.3
+Miercuri: 31.0
+Joi: 19.7
+Vineri: 26.1
+Sambata: 24.5
+Duminica: 21.8
+Media: 24.84&#176;C
+Zile calde: 3</div>
+<div class="tip-box" style="margin-top:12px"><b>Observ&#x0103;:</b> Am folosit <b>2 vectori paraleli</b> &ndash; temp[] &#x0219;i zile[] &ndash; legate prin acela&#x0219;i index i.</div>
+<div class="tip-box warning" style="margin-top:8px">La <code>float</code> nu ai nevoie de <code>(float)</code> la &icirc;mp&#x0103;r&#x021B;ire &ndash; e deja real!</div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 2</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 16: SECTION - CAUTARE ==================== -->
+<div class="slide section-slide">
+<div>
+<div class="section-num">04</div>
+<h1>C&#x0103;utarea &icirc;n Vectori</h1>
+<div class="section-desc">Lec&#x021B;ia 3: Liniar&#x0103; &#x0219;i Binar&#x0103;</div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 17: CAUTARE LINIARA ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">C&#x0103;utarea Liniar&#x0103;</h1>
+<div class="slide-subtitle">Verific&#x0103; element cu element &ndash; simplu dar sigur!</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading">Cum func&#x021B;ioneaz&#x0103;?</li>
+<li>Parcurge vectorul de la &icirc;nceput la sf&acirc;r&#x0219;it</li>
+<li>Compar&#x0103; fiecare element cu cel c&#x0103;utat</li>
+<li>Dac&#x0103; g&#x0103;se&#x0219;te &rarr; se opre&#x0219;te (<code>break</code>)</li>
+<li>Dac&#x0103; ajunge la sf&acirc;r&#x0219;it &rarr; &bdquo;nu exist&#x0103;&rdquo;</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Analogie: C&#x0103;utarea cheilor</li>
+<li>Verifici fiecare buzunar, pe r&acirc;nd</li>
+<li class="sub">Func&#x021B;ioneaz&#x0103; mereu, dar e lent</li>
+<li class="sub">10 buzunare = max. 10 verific&#x0103;ri</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">C&acirc;nd o folosim?</li>
+<li class="ok">Pe ORICE vector (sortat sau nu)</li>
+<li class="sub">E singura op&#x021B;iune pt. vectori nesorta&#x021B;i</li>
+</ul>
+</div>
+<div class="col-code">
+<pre class="code-box"><span class="kw">int</span> x[<span class="num">7</span>] = {<span class="num">3</span>, <span class="num">8</span>, <span class="num">1</span>, <span class="num">4</span>, <span class="num">9</span>, <span class="num">2</span>, <span class="num">7</span>};
+<span class="kw">int</span> n = <span class="num">7</span>;
+<span class="kw">int</span> cautat = <span class="num">4</span>;
+
+<span class="cm">// Variabila pentru rezultat</span>
+<span class="kw">bool</span> gasit = <span class="kw">false</span>;
+<span class="kw">int</span> pozitie = -<span class="num">1</span>;  <span class="cm">// -1 = negasit</span>
+
+<span class="cm">// Parcurgere cu verificare</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+    <span class="kw">if</span> (x[i] == cautat) {
+        gasit = <span class="kw">true</span>;
+        pozitie = i;
+        <span class="kw">break</span>;  <span class="cm">// STOP! Am gasit!</span>
+    }
+}
+
+<span class="cm">// Afisare rezultat</span>
+<span class="kw">if</span> (gasit)
+    cout &lt;&lt; <span class="str">"Gasit la pozitia "</span>
+         &lt;&lt; pozitie;
+<span class="kw">else</span>
+    cout &lt;&lt; <span class="str">"Nu exista!"</span>;</pre>
+<div class="output-box">Gasit la pozitia 3</div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 3</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 18: TRACE CAUTARE LINIARA ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Trace: C&#x0103;utare liniar&#x0103; pas cu pas</h1>
+<div class="slide-subtitle">x = {3, 8, 1, 4, 9, 2, 7} &nbsp; C&#x0103;ut&#x0103;m: 4</div>
+<div class="two-col">
+<div class="col" style="flex:1.3">
+<div class="trace-box">
+<span class="step">Pas 1:</span> i=0 &rarr; x[0]=3 == 4? <span class="changed">NU</span> &rarr; continu&#x0103;
+  [<b>3</b>] [8] [1] [4] [9] [2] [7]
+   ^
+
+<span class="step">Pas 2:</span> i=1 &rarr; x[1]=8 == 4? <span class="changed">NU</span> &rarr; continu&#x0103;
+  [3] [<b>8</b>] [1] [4] [9] [2] [7]
+       ^
+
+<span class="step">Pas 3:</span> i=2 &rarr; x[2]=1 == 4? <span class="changed">NU</span> &rarr; continu&#x0103;
+  [3] [8] [<b>1</b>] [4] [9] [2] [7]
+           ^
+
+<span class="step">Pas 4:</span> i=3 &rarr; x[3]=4 == 4? <span class="ok">DA!</span> &rarr; <span class="ok">GASIT!</span>
+  [3] [8] [1] [<b>4</b>] [9] [2] [7]
+               ^
+
+<span class="ok">break! &rarr; pozitie = 3, gasit = true</span>
+<span class="cm">(Nu mai verificam restul vectorului)</span></div>
+</div>
+<div class="col" style="flex:0.7">
+<ul class="content">
+<li class="heading">Dac&#x0103; c&#x0103;ut&#x0103;m 5?</li>
+<li>Parcurgem TOAT&#x0102; lista</li>
+<li>7 compara&#x021B;ii, nici o potrivire</li>
+<li>gasit r&#x0103;m&acirc;ne <b>false</b></li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Performan&#x021B;&#x0103;:</li>
+<li>Cel mai bun caz: <b>1 pas</b></li>
+<li class="sub">(Elementul e primul)</li>
+<li>Cel mai r&#x0103;u caz: <b>n pa&#x0219;i</b></li>
+<li class="sub">(E ultimul sau nu exist&#x0103;)</li>
+<li>Media: <b>n/2 pa&#x0219;i</b></li>
+</ul>
+<div class="tip-box warning" style="margin-top:auto"><code>break</code> e esen&#x021B;ial! F&#x0103;r&#x0103; el, continu&#x0103; s&#x0103; caute dup&#x0103; ce a g&#x0103;sit.</div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 3</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 19: CAUTARE BINARA ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">C&#x0103;utarea Binar&#x0103; &ndash; Super-rapid&#x0103;!</h1>
+<div class="slide-subtitle">Condi&#x021B;ie obligatorie: vectorul TREBUIE s&#x0103; fie SORTAT!</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading">Ideea genial&#x0103;:</li>
+<li>&Icirc;mparte zona de c&#x0103;utare &icirc;n <b>jum&#x0103;tate</b></li>
+<li>Compar&#x0103; cu elementul din <b>mijloc</b></li>
+<li class="sub">Egal? GASIT!</li>
+<li class="sub">Mai mic? Caut&#x0103; &icirc;n <b>st&acirc;nga</b></li>
+<li class="sub">Mai mare? Caut&#x0103; &icirc;n <b>dreapta</b></li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Analogie: Ghicirea num&#x0103;rului</li>
+<li>&bdquo;G&acirc;nde&#x0219;te-te la un num&#x0103;r 1-100&rdquo;</li>
+<li>&bdquo;E mai mare sau mai mic dec&acirc;t 50?&rdquo;</li>
+<li class="sub">Cu fiecare &icirc;ntrebare, eliminam jum&#x0103;tate!</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Performan&#x021B;&#x0103; incredibil&#x0103;:</li>
+</ul>
+<table class="cmp-table">
+<tr><th>Elemente</th><th>Liniar&#x0103;</th><th>Binar&#x0103;</th></tr>
+<tr><td>100</td><td>100 pa&#x0219;i</td><td class="good">7 pa&#x0219;i</td></tr>
+<tr><td>1.000</td><td>1.000</td><td class="good">10 pa&#x0219;i</td></tr>
+<tr><td>1.000.000</td><td>1.000.000</td><td class="good">20 pa&#x0219;i!</td></tr>
+</table>
+</div>
+<div class="col-code">
+<pre class="code-box"><span class="cm">// OBLIGATORIU: vector SORTAT!</span>
+<span class="kw">int</span> x[<span class="num">8</span>] = {<span class="num">2</span>,<span class="num">5</span>,<span class="num">8</span>,<span class="num">12</span>,<span class="num">15</span>,<span class="num">23</span>,<span class="num">37</span>,<span class="num">45</span>};
+<span class="kw">int</span> n = <span class="num">8</span>, cautat = <span class="num">15</span>;
+
+<span class="kw">int</span> st = <span class="num">0</span>, dr = n - <span class="num">1</span>;
+<span class="kw">bool</span> gasit = <span class="kw">false</span>;
+<span class="kw">int</span> pozitie = -<span class="num">1</span>;
+
+<span class="kw">while</span> (st &lt;= dr) {
+    <span class="kw">int</span> mij = (st + dr) / <span class="num">2</span>;
+
+    <span class="kw">if</span> (x[mij] == cautat) {
+        gasit = <span class="kw">true</span>;
+        pozitie = mij;
+        <span class="kw">break</span>;
+    }
+    <span class="kw">else if</span> (cautat &lt; x[mij])
+        dr = mij - <span class="num">1</span>;  <span class="cm">// stanga</span>
+    <span class="kw">else</span>
+        st = mij + <span class="num">1</span>;  <span class="cm">// dreapta</span>
+}
+
+<span class="kw">if</span> (gasit)
+    cout &lt;&lt; <span class="str">"Gasit la "</span> &lt;&lt; pozitie;
+<span class="kw">else</span>
+    cout &lt;&lt; <span class="str">"Nu exista!"</span>;</pre>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 3</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 20: TRACE CAUTARE BINARA ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Trace: C&#x0103;utare binar&#x0103; pas cu pas</h1>
+<div class="slide-subtitle">x = {2, 5, 8, 12, 15, 23, 37, 45} &nbsp; C&#x0103;ut&#x0103;m: 15</div>
+<div class="two-col">
+<div class="col" style="flex:1.4">
+<div class="trace-box">
+<span class="step">Pas 1:</span> st=0, dr=7 &rarr; mij=(0+7)/2 = <b>3</b>
+  [2] [5] [8] [<b>12</b>] [15] [23] [37] [45]
+   st          mij                     dr
+  x[3]=12, cautat=15 &rarr; 15 &gt; 12 &rarr; <span class="changed">caut&#x0103; DREAPTA</span>
+  st = mij+1 = <span class="changed">4</span>
+
+<span class="step">Pas 2:</span> st=4, dr=7 &rarr; mij=(4+7)/2 = <b>5</b>
+  [2] [5] [8] [12] [15] [<b>23</b>] [37] [45]
+                    st    mij         dr
+  x[5]=23, cautat=15 &rarr; 15 &lt; 23 &rarr; <span class="changed">caut&#x0103; ST&Acirc;NGA</span>
+  dr = mij-1 = <span class="changed">4</span>
+
+<span class="step">Pas 3:</span> st=4, dr=4 &rarr; mij=(4+4)/2 = <b>4</b>
+  [2] [5] [8] [12] [<b>15</b>] [23] [37] [45]
+                    st=mij=dr
+  x[4]=15, cautat=15 &rarr; 15 == 15 &rarr; <span class="ok">GASIT!</span>
+
+<span class="ok">Rezultat: pozitie = 4 (doar 3 pasi!)</span></div>
+</div>
+<div class="col" style="flex:0.6">
+<ul class="content">
+<li class="heading">Rezumat:</li>
+<li>8 elemente, doar <b>3 pa&#x0219;i</b></li>
+<li>Liniar&#x0103; ar fi f&#x0103;cut <b>5 pa&#x0219;i</b></li>
+<li class="empty">&nbsp;</li>
+<li class="heading">De re&#x021B;inut:</li>
+<li class="warn">NUMAI pe vector SORTAT!</li>
+<li>Folosim <b>while</b>, nu for</li>
+<li><code>mij = (st+dr)/2</code></li>
+<li>La fiecare pas, jum&#x0103;t&#x0103;&#x021B;im zona</li>
+</ul>
+<div class="tip-box danger" style="margin-top:auto">C&#x0103;utare binar&#x0103; pe vector NESORTAT = REZULTATE GRE&#x0218;ITE! Sorteaz&#x0103; &icirc;nt&acirc;i!</div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 3</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 21: NUMARARE APARITII ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Num&#x0103;rarea apari&#x021B;iilor &#x0219;i c&#x0103;utare condi&#x021B;ional&#x0103;</h1>
+<div class="slide-subtitle">Varia&#x021B;iuni ale c&#x0103;ut&#x0103;rii &ndash; diferen&#x021B;a cheie: break vs. f&#x0103;r&#x0103; break</div>
+<div class="two-col">
+<div class="col-code">
+<pre class="code-box"><span class="cm">// 1. NUMARARE: Cate note de 10?</span>
+<span class="kw">int</span> note[<span class="num">8</span>] = {<span class="num">7</span>,<span class="num">10</span>,<span class="num">8</span>,<span class="num">10</span>,<span class="num">6</span>,<span class="num">10</span>,<span class="num">9</span>,<span class="num">10</span>};
+<span class="kw">int</span> contor = <span class="num">0</span>;
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">8</span>; i++) {
+    <span class="kw">if</span> (note[i] == <span class="num">10</span>)
+        contor++;  <span class="cm">// NU break!</span>
+}
+cout &lt;&lt; <span class="str">"Nota 10: "</span> &lt;&lt; contor
+     &lt;&lt; <span class="str">" ori"</span>;</pre>
+<div class="output-box">Nota 10: 4 ori</div>
+</div>
+<div class="col-code">
+<pre class="code-box"><span class="cm">// 2. PRIMA aparitie conditionala</span>
+<span class="cm">// Primul numar par din vector</span>
+<span class="kw">int</span> x[<span class="num">6</span>] = {<span class="num">7</span>, <span class="num">3</span>, <span class="num">9</span>, <span class="num">4</span>, <span class="num">8</span>, <span class="num">1</span>};
+<span class="kw">int</span> pozitie = -<span class="num">1</span>;
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">6</span>; i++) {
+    <span class="kw">if</span> (x[i] % <span class="num">2</span> == <span class="num">0</span>) {
+        pozitie = i;
+        <span class="kw">break</span>;  <span class="cm">// STOP!</span>
+    }
+}
+cout &lt;&lt; <span class="str">"Primul par: "</span> &lt;&lt; x[pozitie]
+     &lt;&lt; <span class="str">" la poz "</span> &lt;&lt; pozitie;</pre>
+<div class="output-box">Primul par: 4 la poz 3</div>
+</div>
+</div>
+<div class="highlight-box yellow">&#x2B50; C&#x0103;utare (un element) &rarr; <b>break</b> dup&#x0103; g&#x0103;sire &nbsp; | &nbsp; Num&#x0103;rare (toate) &rarr; <b>F&#x0102;R&#x0102; break</b>, parcurgem tot!</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 3</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 22: SECTION - MAXIM/MINIM ==================== -->
+<div class="slide section-slide">
+<div>
+<div class="section-num">05</div>
+<h1>Maxim &#x0219;i Minim</h1>
+<div class="section-desc">Lec&#x021B;ia 4: Algoritmul Campionului</div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 23: ALGORITMUL CAMPIONULUI ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Algoritmul Campionului</h1>
+<div class="slide-subtitle">Analogie: Campionatul &#x0219;colar &ndash; cine e cel mai bun?</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading">Cum func&#x021B;ioneaz&#x0103;:</li>
+<li>1. &Icirc;l iei pe <b>primul</b> ca &bdquo;campion&rdquo; ini&#x021B;ial</li>
+<li>2. Compari campionul cu <b>al doilea</b></li>
+<li class="sub">E mai bun? Noul campion!</li>
+<li class="sub">Nu? Campionul r&#x0103;m&acirc;ne.</li>
+<li>3. Compari cu al treilea, al patrulea...</li>
+<li>4. La sf&acirc;r&#x0219;it = campionul adev&#x0103;rat!</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Pa&#x0219;i &icirc;n cod:</li>
+<li>maxim = <code>x[0]</code> (campionul ini&#x021B;ial)</li>
+<li>Parcurge de la <code>i=1</code> (NU de la 0!)</li>
+<li>Dac&#x0103; <code>x[i] &gt; maxim</code> &rarr; <code>maxim = x[i]</code></li>
+<li class="empty">&nbsp;</li>
+<li class="warn">NICIODAT&#x0102; maxim = 0! Dac&#x0103; ai {-3, -1, -7}, maximul e -1, NU 0!</li>
+</ul>
+</div>
+<div class="col-code">
+<pre class="code-box"><span class="kw">int</span> note[<span class="num">5</span>] = {<span class="num">7</span>, <span class="num">9</span>, <span class="num">4</span>, <span class="num">10</span>, <span class="num">6</span>};
+<span class="kw">int</span> n = <span class="num">5</span>;
+
+<span class="cm">// MAXIM</span>
+<span class="kw">int</span> maxim = note[<span class="num">0</span>]; <span class="cm">// campion initial</span>
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt; n; i++) {
+    <span class="kw">if</span> (note[i] &gt; maxim) {
+        maxim = note[i]; <span class="cm">// noul campion</span>
+    }
+}
+cout &lt;&lt; <span class="str">"Maximul: "</span> &lt;&lt; maxim;</pre>
+<div class="output-box">Maximul: 10</div>
+<pre class="code-box" style="margin-top:8px"><span class="cm">// MINIM - singura diferenta: &gt; devine &lt;</span>
+<span class="kw">int</span> minim = note[<span class="num">0</span>];
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt; n; i++) {
+    <span class="kw">if</span> (note[i] &lt; minim)
+        minim = note[i];
+}
+cout &lt;&lt; <span class="str">"Minimul: "</span> &lt;&lt; minim;</pre>
+<div class="output-box">Minimul: 4</div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 4</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 24: TRACE CAMPION ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Trace: Algoritmul Campionului</h1>
+<div class="slide-subtitle">note = {7, 9, 4, 10, 6} &ndash; C&#x0103;ut&#x0103;m MAXIMUL</div>
+<div class="two-col">
+<div class="col" style="flex:1.3">
+<div class="trace-box">
+<span class="step">Ini&#x021B;ial:</span> maxim = note[0] = <b>7</b> (campion ini&#x021B;ial)
+
+<span class="step">Pas 1:</span> i=1 &rarr; note[1]=9 &gt; 7? <span class="ok">DA!</span> &rarr; maxim = <span class="changed">9</span>
+  [7] [<b>9</b>] [4] [10] [6]     campion: 9
+       ^
+
+<span class="step">Pas 2:</span> i=2 &rarr; note[2]=4 &gt; 9? <span class="changed">NU.</span> &rarr; maxim r&#x0103;m&acirc;ne 9
+  [7] [9] [<b>4</b>] [10] [6]     campion: 9
+           ^
+
+<span class="step">Pas 3:</span> i=3 &rarr; note[3]=10 &gt; 9? <span class="ok">DA!</span> &rarr; maxim = <span class="changed">10</span>
+  [7] [9] [4] [<b>10</b>] [6]    campion: 10
+               ^
+
+<span class="step">Pas 4:</span> i=4 &rarr; note[4]=6 &gt; 10? <span class="changed">NU.</span> &rarr; maxim r&#x0103;m&acirc;ne 10
+  [7] [9] [4] [10] [<b>6</b>]    campion: 10
+                    ^
+
+<span class="ok">Rezultat: maxim = 10 &#x2714;</span></div>
+</div>
+<div class="col" style="flex:0.7">
+<ul class="content">
+<li class="heading">Observ&#x0103;:</li>
+<li>4 compara&#x021B;ii (n-1)</li>
+<li>2 actualiz&#x0103;ri ale campionului</li>
+<li>Parcurgem de la <code>i=1</code></li>
+<li class="sub">(note[0] e deja campionul)</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Variante utile:</li>
+<li><b>Cu pozi&#x021B;ie:</b></li>
+</ul>
+<pre class="code-box" style="font-size:12px"><span class="kw">int</span> maxim = x[<span class="num">0</span>];
+<span class="kw">int</span> poz = <span class="num">0</span>;  <span class="cm">// pozitia max</span>
+<span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">1</span>; i&lt;n; i++)
+  <span class="kw">if</span>(x[i] &gt; maxim) {
+    maxim = x[i];
+    poz = i;  <span class="cm">// retine si unde</span>
+  }</pre>
+<div class="tip-box" style="margin-top:auto">Max &#x0219;i Min &icirc;n aceea&#x0219;i parcurgere:<br><code>if(x[i]&gt;maxim) maxim=x[i];</code><br><code>if(x[i]&lt;minim) minim=x[i];</code></div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 4</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 25: SECTION - SORTARE ==================== -->
+<div class="slide section-slide">
+<div>
+<div class="section-num">06</div>
+<h1>Sortarea &ndash; Bubble Sort</h1>
+<div class="section-desc">Lec&#x021B;ia 5: Interschimbarea &#x0219;i metoda bulelor</div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 26: SWAP ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Interschimbarea (Swap)</h1>
+<div class="slide-subtitle">Opera&#x021B;ia fundamental&#x0103; pentru sortare &ndash; Analogia cu paharele</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading">Problema: Interschimb&#x0103; 2 valori</li>
+<li>Pahar A: suc de portocale</li>
+<li>Pahar B: suc de mere</li>
+<li>Vrei s&#x0103; le interschimbi?</li>
+<li class="sub">Ai nevoie de un pahar GOL (temp)!</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Cei 3 pa&#x0219;i:</li>
+<li><b>Pasul 1:</b> temp = a[i]</li>
+<li class="sub">Salvezi portocalele &icirc;n paharul gol</li>
+<li><b>Pasul 2:</b> a[i] = a[i+1]</li>
+<li class="sub">Torni merele &icirc;n paharul A</li>
+<li><b>Pasul 3:</b> a[i+1] = temp</li>
+<li class="sub">Torni portocalele salvate &icirc;n paharul B</li>
+</ul>
+</div>
+<div class="col-code">
+<pre class="code-box"><span class="cm">// CORECT - cu variabila temporara</span>
+<span class="kw">int</span> temp = a[i];      <span class="cm">// Salvam</span>
+a[i] = a[i+<span class="num">1</span>];       <span class="cm">// Copiam</span>
+a[i+<span class="num">1</span>] = temp;       <span class="cm">// Restauram</span></pre>
+<pre class="code-box" style="margin-top:10px;border:2px solid var(--red)"><span class="cm">// GRESIT - fara temp!</span>
+a[i] = a[i+<span class="num">1</span>];    <span class="cm">// a[i] original PIERDUT!</span>
+a[i+<span class="num">1</span>] = a[i];    <span class="cm">// Ambele au aceeasi</span>
+                   <span class="cm">// valoare acum!</span></pre>
+<div class="trace-box" style="margin-top:10px;font-size:12px">
+<span class="step">Exemplu:</span> a[0]=5, a[1]=3. Swap:
+  temp = 5         &rarr; temp=5, a={<b>5</b>,3}
+  a[0] = a[1] = 3  &rarr; temp=5, a={<b>3</b>,3}
+  a[1] = temp = 5   &rarr; temp=5, a={3,<b>5</b>}
+  <span class="ok">Rezultat: a = {3, 5} &#x2714;</span></div>
+</div>
+</div>
+<div class="highlight-box red">F&#x0103;r&#x0103; variabila temporar&#x0103; (temp), valoarea original&#x0103; se PIERDE definitiv!</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 5</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 27: BUBBLE SORT ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Bubble Sort &ndash; Metoda Bulelor</h1>
+<div class="slide-subtitle">Compar&#x0103; vecini, interschimb&#x0103;, repet&#x0103; &ndash; ca bulele care urc&#x0103; la suprafa&#x021B;&#x0103;!</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading">Cum func&#x021B;ioneaz&#x0103;?</li>
+<li>Compar&#x0103; perechi de <b>vecini</b>: a[i] cu a[i+1]</li>
+<li>Dac&#x0103; sunt &icirc;n ordine gre&#x0219;it&#x0103; &rarr; <b>swap</b>!</li>
+<li>Repet&#x0103; trecerea p&acirc;n&#x0103; c&acirc;nd totul e sortat</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">De ce &bdquo;bule&rdquo;?</li>
+<li>Dup&#x0103; fiecare trecere, cel mai mare element &bdquo;<b>urc&#x0103;</b>&rdquo; la sf&acirc;r&#x0219;it</li>
+<li class="sub">Ca o bul&#x0103; de aer &icirc;n ap&#x0103;!</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Formule cheie:</li>
+<li>N elemente &rarr; <b>N-1</b> treceri maxim</li>
+<li>Bucla interioar&#x0103;: <code>i &lt; n-1-p</code></li>
+<li class="sub">La fiecare trecere, ultimul element deja e pe loc</li>
+<li class="empty">&nbsp;</li>
+<li>Cresc&#x0103;tor: <code>if (a[i] &gt; a[i+1])</code></li>
+<li>Descresc&#x0103;tor: <code>if (a[i] &lt; a[i+1])</code></li>
+</ul>
+</div>
+<div class="col-code">
+<pre class="code-box"><span class="kw">int</span> a[<span class="num">5</span>] = {<span class="num">5</span>, <span class="num">3</span>, <span class="num">8</span>, <span class="num">1</span>, <span class="num">4</span>};
+<span class="kw">int</span> n = <span class="num">5</span>;
+
+<span class="cm">// Bubble Sort CRESCATOR</span>
+<span class="kw">for</span> (<span class="kw">int</span> p = <span class="num">0</span>; p &lt; n-<span class="num">1</span>; p++) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n-<span class="num">1</span>-p; i++) {
+        <span class="kw">if</span> (a[i] &gt; a[i+<span class="num">1</span>]) {
+            <span class="cm">// Swap (interschimbare)</span>
+            <span class="kw">int</span> temp = a[i];
+            a[i] = a[i+<span class="num">1</span>];
+            a[i+<span class="num">1</span>] = temp;
+        }
+    }
+}
+<span class="cm">// Rezultat: {1, 3, 4, 5, 8}</span></pre>
+<pre class="code-box" style="margin-top:8px"><span class="cm">// Bubble Sort DESCRESCATOR</span>
+<span class="cm">// Singura diferenta: &gt; devine &lt;</span>
+<span class="kw">for</span> (<span class="kw">int</span> p = <span class="num">0</span>; p &lt; n-<span class="num">1</span>; p++)
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n-<span class="num">1</span>-p; i++)
+        <span class="kw">if</span> (a[i] <span class="changed">&lt;</span> a[i+<span class="num">1</span>]) {
+            <span class="kw">int</span> temp = a[i];
+            a[i] = a[i+<span class="num">1</span>];
+            a[i+<span class="num">1</span>] = temp;
+        }
+<span class="cm">// Rezultat: {8, 5, 4, 3, 1}</span></pre>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 5</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 28: TRACE BUBBLE SORT ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Trace: Bubble Sort pas cu pas</h1>
+<div class="slide-subtitle">Vector ini&#x021B;ial: {5, 3, 8, 1, 4} &rarr; Sortare CRESC&#x0102;TOARE</div>
+<div class="two-col">
+<div class="col">
+<div class="trace-box" style="font-size:12.5px">
+<span class="step">TRECEREA 1 (p=0): 4 compara&#x021B;ii</span>
+  (5,3) &rarr; 5&gt;3? DA &rarr; swap &rarr; {<span class="changed">3,5</span>,8,1,4}
+  (5,8) &rarr; 5&gt;8? NU  &rarr;       {3,5,8,1,4}
+  (8,1) &rarr; 8&gt;1? DA &rarr; swap &rarr; {3,5,<span class="changed">1,8</span>,4}
+  (8,4) &rarr; 8&gt;4? DA &rarr; swap &rarr; {3,5,1,<span class="changed">4,8</span>}
+  &#x2192; Rezultat: {3, 5, 1, 4, [<span class="ok">8</span>]} &#x2190; 8 pe loc!
+
+<span class="step">TRECEREA 2 (p=1): 3 compara&#x021B;ii</span>
+  (3,5) &rarr; 3&gt;5? NU
+  (5,1) &rarr; 5&gt;1? DA &rarr; swap &rarr; {3,<span class="changed">1,5</span>,4,8}
+  (5,4) &rarr; 5&gt;4? DA &rarr; swap &rarr; {3,1,<span class="changed">4,5</span>,8}
+  &#x2192; Rezultat: {3, 1, 4, [<span class="ok">5</span>], [<span class="ok">8</span>]}
+
+<span class="step">TRECEREA 3 (p=2): 2 compara&#x021B;ii</span>
+  (3,1) &rarr; 3&gt;1? DA &rarr; swap &rarr; {<span class="changed">1,3</span>,4,5,8}
+  (3,4) &rarr; 3&gt;4? NU
+  &#x2192; Rezultat: {1, 3, [<span class="ok">4</span>], [<span class="ok">5</span>], [<span class="ok">8</span>]}
+
+<span class="step">TRECEREA 4 (p=3): 1 compara&#x021B;ie</span>
+  (1,3) &rarr; 1&gt;3? NU
+  &#x2192; Rezultat: {[<span class="ok">1</span>], [<span class="ok">3</span>], [<span class="ok">4</span>], [<span class="ok">5</span>], [<span class="ok">8</span>]}
+
+<span class="ok">FINAL: {1, 3, 4, 5, 8} &#x2714;</span></div>
+</div>
+<div class="col">
+<ul class="content">
+<li class="heading">Statistici:</li>
+<li>4 treceri (n-1 = 5-1)</li>
+<li>10 compara&#x021B;ii total (4+3+2+1)</li>
+<li>6 interschimb&#x0103;ri</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">De ce n-1-p?</li>
+<li>Dup&#x0103; trecerea 1: ultimul e sortat</li>
+<li>Dup&#x0103; trecerea 2: ultimii 2 sunt sorta&#x021B;i</li>
+<li class="sub">Nu mai trebuie s&#x0103;-i verific&#x0103;m!</li>
+<li class="empty">&nbsp;</li>
+<li class="heading">Optimizare (oprit devreme):</li>
+</ul>
+<pre class="code-box" style="font-size:12px"><span class="cm">// Daca o trecere nu face swap</span>
+<span class="cm">// = vectorul e deja sortat!</span>
+<span class="kw">bool</span> sortat;
+<span class="kw">for</span>(<span class="kw">int</span> p=<span class="num">0</span>; p&lt;n-<span class="num">1</span>; p++) {
+  sortat = <span class="kw">true</span>;
+  <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>; i&lt;n-<span class="num">1</span>-p; i++)
+    <span class="kw">if</span>(a[i] &gt; a[i+<span class="num">1</span>]) {
+      <span class="kw">int</span> t=a[i];
+      a[i]=a[i+<span class="num">1</span>];
+      a[i+<span class="num">1</span>]=t;
+      sortat = <span class="kw">false</span>;
+    }
+  <span class="kw">if</span>(sortat) <span class="kw">break</span>; <span class="cm">//STOP!</span>
+}</pre>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 5</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 29: SECTION - PROIECT ==================== -->
+<div class="slide section-slide">
+<div>
+<div class="section-num">07</div>
+<h1>Proiect Final: Catalog Note</h1>
+<div class="section-desc">Lec&#x021B;ia 6: Toate tehnicile combinate &icirc;ntr-o aplica&#x021B;ie real&#x0103;</div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 30: PROIECT OVERVIEW ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Proiectul: Catalog de Note</h1>
+<div class="slide-subtitle">6 func&#x021B;ionalit&#x0103;&#x021B;i = 6 lec&#x021B;ii aplicate</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading">Func&#x021B;ionalit&#x0103;&#x021B;i:</li>
+<li class="empty">&nbsp;</li>
+<li><b>1. Citirea notelor</b> (L1+L2)</li>
+<li class="sub">Declarare vector + citire cu for</li>
+<li><b>2. Afi&#x0219;area catalogului</b> (L2)</li>
+<li class="sub">Parcurgere + format frumos (Nr. | Nota)</li>
+<li><b>3. Statistici: Suma + Media</b> (L2)</li>
+<li class="sub">Acumulator + (float)suma/n</li>
+<li><b>4. Nota maxim&#x0103; &#x0219;i minim&#x0103;</b> (L4)</li>
+<li class="sub">Algoritmul campionului cu pozi&#x021B;ie</li>
+<li><b>5. C&#x0103;utare: c&acirc;te note de 10?</b> (L3)</li>
+<li class="sub">Num&#x0103;rare apari&#x021B;ii (f&#x0103;r&#x0103; break!)</li>
+<li><b>6. Sortare descresc&#x0103;toare</b> (L5)</li>
+<li class="sub">Bubble Sort: if(a[i] &lt; a[i+1]) swap</li>
+</ul>
+</div>
+<div class="col">
+<ul class="content">
+<li class="heading">Ordinea conteaz&#x0103;!</li>
+<li class="empty">&nbsp;</li>
+</ul>
+<div class="trace-box" style="font-size:13px">
+<span class="ok">1. Citire</span> &rarr; avem datele
+
+<span class="ok">2. Afisare</span> &rarr; vedem ce am citit
+
+<span class="ok">3. Statistici</span> &rarr; suma, media
+   (INAINTE de sortare!)
+
+<span class="ok">4. Max/Min</span> &rarr; extreme
+   (INAINTE de sortare!)
+
+<span class="ok">5. Cautare</span> &rarr; numarare aparitii
+   (ordinea nu conteaza)
+
+<span class="changed">6. Sortare</span> &rarr; ULTIMUL!
+   (schimba ordinea originala!)
+</div>
+<div class="tip-box danger" style="margin-top:10px">Dup&#x0103; sortare, nu mai &#x0219;tii care elev avea care not&#x0103;! Calculeaz&#x0103; tot ce ai nevoie &icirc;NAINTE.</div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 6</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 31: COD PROIECT ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Codul complet al proiectului</h1>
+<div class="slide-subtitle">Selecteaz&#x0103; &#x0219;i copiaz&#x0103; codul pentru a-l testa!</div>
+<div class="two-col">
+<div class="col-code">
+<pre class="code-box" style="font-size:12px"><span class="kw">#include</span> &lt;iostream&gt;
+<span class="kw">using namespace</span> std;
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">const int</span> MAX = <span class="num">100</span>;
+    <span class="kw">int</span> note[MAX], n;
+
+    <span class="cm">// 1. CITIRE</span>
+    cout &lt;&lt; <span class="str">"Cati elevi? "</span>;
+    cin &gt;&gt; n;
+    <span class="kw">for</span>(<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+        cout &lt;&lt; <span class="str">"Nota elevului "</span> &lt;&lt; i+<span class="num">1</span>
+             &lt;&lt; <span class="str">": "</span>;
+        cin &gt;&gt; note[i];
+    }
+
+    <span class="cm">// 2. AFISARE CATALOG</span>
+    cout &lt;&lt; <span class="str">"\n=== CATALOG ===\n"</span>;
+    <span class="kw">for</span>(<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+        cout &lt;&lt; <span class="str">"Elev "</span> &lt;&lt; i+<span class="num">1</span>
+             &lt;&lt; <span class="str">": "</span> &lt;&lt; note[i] &lt;&lt; endl;
+
+    <span class="cm">// 3. SUMA + MEDIA</span>
+    <span class="kw">int</span> suma = <span class="num">0</span>;
+    <span class="kw">for</span>(<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+        suma += note[i];
+    <span class="kw">float</span> media = (<span class="kw">float</span>)suma / n;
+    cout &lt;&lt; <span class="str">"Suma: "</span> &lt;&lt; suma &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"Media: "</span> &lt;&lt; media &lt;&lt; endl;</pre>
+</div>
+<div class="col-code">
+<pre class="code-box" style="font-size:12px">    <span class="cm">// 4. MAX si MIN cu pozitie</span>
+    <span class="kw">int</span> mx = note[<span class="num">0</span>], pmx = <span class="num">0</span>;
+    <span class="kw">int</span> mn = note[<span class="num">0</span>], pmn = <span class="num">0</span>;
+    <span class="kw">for</span>(<span class="kw">int</span> i = <span class="num">1</span>; i &lt; n; i++) {
+        <span class="kw">if</span>(note[i] &gt; mx) { mx=note[i]; pmx=i; }
+        <span class="kw">if</span>(note[i] &lt; mn) { mn=note[i]; pmn=i; }
+    }
+    cout &lt;&lt; <span class="str">"Max: "</span> &lt;&lt; mx
+         &lt;&lt; <span class="str">" (elev "</span> &lt;&lt; pmx+<span class="num">1</span> &lt;&lt; <span class="str">")\n"</span>;
+    cout &lt;&lt; <span class="str">"Min: "</span> &lt;&lt; mn
+         &lt;&lt; <span class="str">" (elev "</span> &lt;&lt; pmn+<span class="num">1</span> &lt;&lt; <span class="str">")\n"</span>;
+
+    <span class="cm">// 5. NUMARARE note de 10</span>
+    <span class="kw">int</span> zece = <span class="num">0</span>, promovati = <span class="num">0</span>;
+    <span class="kw">for</span>(<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+        <span class="kw">if</span>(note[i] == <span class="num">10</span>) zece++;
+        <span class="kw">if</span>(note[i] &gt;= <span class="num">5</span>) promovati++;
+    }
+    cout &lt;&lt; <span class="str">"Note de 10: "</span> &lt;&lt; zece &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"Promovati: "</span> &lt;&lt; promovati
+         &lt;&lt; <span class="str">"/"</span> &lt;&lt; n &lt;&lt; endl;
+
+    <span class="cm">// 6. SORTARE descrescatoare</span>
+    <span class="kw">for</span>(<span class="kw">int</span> p=<span class="num">0</span>; p&lt;n-<span class="num">1</span>; p++)
+      <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>; i&lt;n-<span class="num">1</span>-p; i++)
+        <span class="kw">if</span>(note[i] &lt; note[i+<span class="num">1</span>]) {
+          <span class="kw">int</span> t=note[i];
+          note[i]=note[i+<span class="num">1</span>];
+          note[i+<span class="num">1</span>]=t;
+        }
+    cout &lt;&lt; <span class="str">"\nClasament: "</span>;
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>; i&lt;n; i++)
+        cout &lt;&lt; note[i] &lt;&lt; <span class="str">" "</span>;
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 6</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 32: GRESELI PROIECT ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Gre&#x0219;eli clasice &icirc;n proiect</h1>
+<div class="slide-subtitle">Top 5 gre&#x0219;eli &ndash; verific&#x0103; s&#x0103; nu le faci!</div>
+<table class="cmp-table" style="margin-top:10px">
+<tr><th>#</th><th style="width:40%">Gre&#x0219;eala</th><th style="width:35%">Consecin&#x021B;a</th><th>Solu&#x021B;ia</th></tr>
+<tr><td>1</td><td class="bad">Sortezi INAINTE de statistici</td><td>Pierzi asocierea elev-not&#x0103;</td><td class="good">Statistici &rarr; apoi sortare</td></tr>
+<tr><td>2</td><td class="bad"><code>suma/n</code> (int/int)</td><td>58/8 = <b>7</b> (nu 7.25!)</td><td class="good"><code>(float)suma/n</code></td></tr>
+<tr><td>3</td><td class="bad"><code>maxim = 0</code></td><td>E&#x0219;ec la note negative</td><td class="good"><code>maxim = note[0]</code></td></tr>
+<tr><td>4</td><td class="bad"><code>break</code> la num&#x0103;rare</td><td>G&#x0103;se&#x0219;te doar prima apari&#x021B;ie</td><td class="good">F&#x0103;r&#x0103; break la num&#x0103;rare!</td></tr>
+<tr><td>5</td><td class="bad"><code>i &lt;= n</code> &icirc;n for</td><td>Accesare &icirc;n afara vectorului</td><td class="good"><code>i &lt; n</code> (strict mai mic)</td></tr>
+</table>
+<div class="two-col" style="margin-top:12px">
+<div class="col-code">
+<pre class="code-box"><span class="cm">// GRESIT: suma/n cand ambele sunt int</span>
+<span class="kw">int</span> suma = <span class="num">58</span>, n = <span class="num">8</span>;
+cout &lt;&lt; suma / n;     <span class="cm">// Afiseaza: 7 !!!</span>
+cout &lt;&lt; (<span class="kw">float</span>)suma/n; <span class="cm">// Afiseaza: 7.25 &#x2714;</span></pre>
+</div>
+<div class="col-code">
+<pre class="code-box"><span class="cm">// GRESIT: maxim = 0 cu numere negative</span>
+<span class="kw">int</span> x[<span class="num">3</span>] = {-<span class="num">3</span>, -<span class="num">1</span>, -<span class="num">7</span>};
+<span class="kw">int</span> maxim = <span class="num">0</span>;        <span class="cm">// Maximul REAL e -1!</span>
+<span class="kw">int</span> maxim = x[<span class="num">0</span>];     <span class="cm">// CORECT: -3 &#x2714;</span></pre>
+</div>
+</div>
+<div class="highlight-box yellow" style="margin-top:auto">&#x2B50; Regula de Aur: <b>Statistici &rarr; Sortare &rarr; Afisare clasament</b> (aceast&#x0103; ordine!)</div>
+</div>
+<div class="footer"><span class="section-tag">LEC&#x021A;IA 6</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 33: SECTION - RECAPITULARE ==================== -->
+<div class="slide section-slide">
+<div>
+<div class="section-num">08</div>
+<h1>Recapitulare</h1>
+<div class="section-desc">Tot ce ai &icirc;nv&#x0103;&#x021B;at, pe scurt</div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 34: RECAPITULARE ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Recapitulare: 6 tehnici esen&#x021B;iale</h1>
+<div class="slide-subtitle">Tot modulul pe un singur slide</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading">L1: Tablouri (Arrays)</li>
+<li class="sub"><code>int x[n];</code> &ndash; declarare, acces cu x[i], index de la 0</li>
+<li class="heading">L2: Parcurgere</li>
+<li class="sub"><code>for(int i=0; i&lt;n; i++)</code> &ndash; citire, afi&#x0219;are, sum&#x0103;, medie, num&#x0103;rare</li>
+<li class="heading">L3: C&#x0103;utare</li>
+<li class="sub">Liniar&#x0103; (orice vector) &ndash; element cu element, <code>break</code> la g&#x0103;sire</li>
+<li class="sub">Binar&#x0103; (DOAR sortat) &ndash; &icirc;njum&#x0103;t&#x0103;&#x021B;ire repetat&#x0103;, super-rapid&#x0103;</li>
+<li class="heading">L4: Maxim &#x0219;i Minim</li>
+<li class="sub">Algoritmul campionului: <code>max=x[0]</code>, parcurgere de la <code>i=1</code></li>
+<li class="heading">L5: Sortare</li>
+<li class="sub">Swap cu temp + Bubble Sort: compar&#x0103; vecini, repet&#x0103;</li>
+<li class="heading">L6: Proiect</li>
+<li class="sub">Catalog Note: citire &rarr; statistici &rarr; max/min &rarr; cautare &rarr; sortare</li>
+</ul>
+</div>
+<div class="col">
+<ul class="content">
+<li class="heading">&#x2B50; Regulile de Aur:</li>
+<li class="empty">&nbsp;</li>
+<li class="ok">Indexarea &icirc;ncepe de la <b>0</b>, NU de la 1</li>
+<li class="ok">N elemente = indici de la <b>0</b> la <b>N-1</b></li>
+<li class="ok"><code>for(i=0; i&lt;n; i++)</code> &ndash; strict mai mic!</li>
+<li class="ok">Ini&#x021B;ializeaz&#x0103; maxim/minim cu <b>x[0]</b>, NU cu 0</li>
+<li class="ok">Swap necesit&#x0103; variabila <b>temp</b></li>
+<li class="ok"><code>==</code> pentru compara&#x021B;ie, <code>=</code> pentru atribuire</li>
+<li class="ok"><code>(float)suma/n</code> pentru medie real&#x0103;</li>
+<li class="ok"><b>break</b> la c&#x0103;utare, f&#x0103;r&#x0103; break la num&#x0103;rare</li>
+<li class="ok">C&#x0103;utare binar&#x0103; = DOAR pe vector sortat</li>
+<li class="ok">Statistici &Icirc;NAINTE de sortare</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">RECAPITULARE</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 35: CHEAT SHEET ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">&#x1F4CB; Cheat Sheet: Formule esen&#x021B;iale</h1>
+<div class="slide-subtitle">Referin&#x021B;&#x0103; rapid&#x0103; &ndash; selecteaz&#x0103; &#x0219;i copiaz&#x0103; ce ai nevoie</div>
+<div class="three-col">
+<div class="col-code">
+<pre class="code-box" style="font-size:12px"><span class="cm">// DECLARARE</span>
+<span class="kw">int</span> x[<span class="num">100</span>], n;
+
+<span class="cm">// CITIRE</span>
+cin &gt;&gt; n;
+<span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>; i&lt;n; i++)
+    cin &gt;&gt; x[i];
+
+<span class="cm">// AFISARE</span>
+<span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>; i&lt;n; i++)
+    cout &lt;&lt; x[i] &lt;&lt; <span class="str">" "</span>;
+
+<span class="cm">// SUMA + MEDIA</span>
+<span class="kw">int</span> s = <span class="num">0</span>;
+<span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>; i&lt;n; i++)
+    s += x[i];
+<span class="kw">float</span> m = (<span class="kw">float</span>)s / n;</pre>
+</div>
+<div class="col-code">
+<pre class="code-box" style="font-size:12px"><span class="cm">// NUMARARE (cate &gt;= 8?)</span>
+<span class="kw">int</span> c = <span class="num">0</span>;
+<span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>; i&lt;n; i++)
+    <span class="kw">if</span>(x[i] &gt;= <span class="num">8</span>) c++;
+
+<span class="cm">// CAUTARE LINIARA</span>
+<span class="kw">int</span> poz = -<span class="num">1</span>;
+<span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>; i&lt;n; i++)
+    <span class="kw">if</span>(x[i] == cautat) {
+        poz = i; <span class="kw">break</span>;
+    }
+
+<span class="cm">// MAXIM</span>
+<span class="kw">int</span> mx = x[<span class="num">0</span>];
+<span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">1</span>; i&lt;n; i++)
+    <span class="kw">if</span>(x[i] &gt; mx) mx = x[i];</pre>
+</div>
+<div class="col-code">
+<pre class="code-box" style="font-size:12px"><span class="cm">// MINIM</span>
+<span class="kw">int</span> mn = x[<span class="num">0</span>];
+<span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">1</span>; i&lt;n; i++)
+    <span class="kw">if</span>(x[i] &lt; mn) mn = x[i];
+
+<span class="cm">// SWAP (interschimbare)</span>
+<span class="kw">int</span> temp = x[i];
+x[i] = x[i+<span class="num">1</span>];
+x[i+<span class="num">1</span>] = temp;
+
+<span class="cm">// BUBBLE SORT crescator</span>
+<span class="kw">for</span>(<span class="kw">int</span> p=<span class="num">0</span>; p&lt;n-<span class="num">1</span>; p++)
+ <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>; i&lt;n-<span class="num">1</span>-p; i++)
+  <span class="kw">if</span>(x[i] &gt; x[i+<span class="num">1</span>]) {
+    <span class="kw">int</span> t=x[i];
+    x[i]=x[i+<span class="num">1</span>];
+    x[i+<span class="num">1</span>]=t;
+  }</pre>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">CHEAT SHEET</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 36: EXERCITII ==================== -->
+<div class="slide">
+<div class="accent-bar"></div>
+<div class="slide-content">
+<h1 class="slide-title">Exerci&#x021B;ii practice</h1>
+<div class="slide-subtitle">4 nivele de dificultate &ndash; alege-l pe al t&#x0103;u!</div>
+<div class="two-col">
+<div class="col">
+<ul class="content">
+<li class="heading" style="color:var(--green)">&#x1F7E2; Nivel 1: &Icirc;ncep&#x0103;tor</li>
+<li>Declar&#x0103; un vector cu 5 numere &#x0219;i afi&#x0219;eaz&#x0103;-le.</li>
+<li>Calculeaz&#x0103; suma &#x0219;i media elementelor.</li>
+<li class="empty">&nbsp;</li>
+<li class="heading" style="color:var(--accent)">&#x1F535; Nivel 2: Intermediar</li>
+<li>Cite&#x0219;te n numere. Afi&#x0219;eaz&#x0103; c&acirc;te sunt pare &#x0219;i c&acirc;te impare.</li>
+<li>G&#x0103;se&#x0219;te cel mai mare &#x0219;i cel mai mic num&#x0103;r din vector.</li>
+<li class="empty">&nbsp;</li>
+<li class="heading" style="color:var(--orange)">&#x1F7E0; Nivel 3: Avansat</li>
+<li>Cite&#x0219;te n numere. Caut&#x0103; o valoare dat&#x0103; &#x0219;i afi&#x0219;eaz&#x0103; pozi&#x021B;ia.</li>
+<li>Sorteaz&#x0103; vectorul cu Bubble Sort. Afi&#x0219;eaz&#x0103; &icirc;nainte &#x0219;i dup&#x0103;.</li>
+</ul>
+</div>
+<div class="col">
+<ul class="content">
+<li class="heading" style="color:var(--red)">&#x1F534; Nivel 4: Expert (Proiect)</li>
+<li>Implementeaz&#x0103; Catalogul de Note complet:</li>
+<li class="sub">Citire note + Afi&#x0219;are formatat&#x0103;</li>
+<li class="sub">Suma + Media + Nr. promova&#x021B;i</li>
+<li class="sub">Nota max &#x0219;i min cu pozi&#x021B;ie</li>
+<li class="sub">Num&#x0103;rare note de 10</li>
+<li class="sub">Sortare &#x0219;i clasament</li>
+<li class="empty">&nbsp;</li>
+<li class="heading" style="color:gold">&#x2B50; BONUS Challenge:</li>
+<li>Ad&#x0103;ug&#x0103; &#x0219;i numele elevilor (vector paralel de string-uri)</li>
+<li>Implementeaz&#x0103; c&#x0103;utarea binar&#x0103; pe vectorul sortat</li>
+<li>Num&#x0103;r&#x0103; interschimb&#x0103;rile la Bubble Sort</li>
+</ul>
+<div class="tip-box" style="margin-top:auto">Testeaz&#x0103; pe <a href="https://onecompiler.com/cpp" style="color:var(--accent)">onecompiler.com/cpp</a> &ndash; nu ai nevoie de nimic instalat!</div>
+</div>
+</div>
+</div>
+<div class="footer"><span class="section-tag">EXERCI&#x021A;II</span><span>Prof. Gurlan Vasile &nbsp;|&nbsp; Clasa a VIII-a</span></div>
+</div>
+
+<!-- ==================== SLIDE 37: FINAL ==================== -->
+<div class="slide final-slide">
+<div>
+<h1>Succes la programare!</h1>
+<div class="motto">&bdquo;Practica face perfectul.&rdquo;</div>
+<div class="sub">
+Vectorii sunt fundamentul program&#x0103;rii.<br>
+St&#x0103;p&acirc;ni&#x021B;i-i &#x0219;i ve&#x021B;i putea rezolva orice problem&#x0103;!<br><br>
+<b>Sfat:</b> Scrie codul cu m&acirc;na ta, nu-l copia.<br>
+Gre&#x0219;elile sunt cele mai bune lec&#x021B;ii!
+</div>
+<div class="credit">Prof. Gurlan Vasile &nbsp;&bull;&nbsp; Clasa a VIII-a &nbsp;&bull;&nbsp; TIC</div>
+</div>
+</div>
+
+<!-- Navigation: ONLY buttons -->
+<div class="nav">
+<button id="btnPrev" title="Inapoi (slide anterior)">&larr;</button>
+<span class="counter" id="counter">1 / 37</span>
+<button id="btnNext" title="Inainte (slide urmator)">&rarr;</button>
+</div>
+
+<script>
+const slides=document.querySelectorAll('.slide');
+const total=slides.length;
+let current=0;
+const counter=document.getElementById('counter');
+const progress=document.getElementById('progress');
+
+function show(n){
+  slides[current].classList.remove('active');
+  current=Math.max(0,Math.min(n,total-1));
+  slides[current].classList.add('active');
+  counter.textContent=(current+1)+' / '+total;
+  progress.style.width=((current+1)/total*100)+'%';
+}
+function next(){show(current+1)}
+function prev(){show(current-1)}
+
+// Navigation ONLY via buttons
+document.getElementById('btnPrev').addEventListener('click',function(e){e.stopPropagation();prev();});
+document.getElementById('btnNext').addEventListener('click',function(e){e.stopPropagation();next();});
+
+// Keyboard: only Left/Right arrows, Home/End, F for fullscreen
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'){next();}
+  else if(e.key==='ArrowLeft'){prev();}
+  else if(e.key==='Home'){e.preventDefault();show(0);}
+  else if(e.key==='End'){e.preventDefault();show(total-1);}
+  else if(e.key==='f'||e.key==='F'){
+    if(!document.fullscreenElement)document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+});
+
+show(0);
+</script>
+</body>
+</html>
