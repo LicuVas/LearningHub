@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introducere in Scratch | TIC Clasa a V-a</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a1a; --surface: #12122a; --card: #1a1a3e; --border: #2d2d5e;
+            --blue: #3b82f6; --blue-light: #60a5fa; --purple: #8b5cf6;
+            --green: #10b981; --orange: #f59e0b; --cyan: #06b6d4;
+            --pink: #ec4899; --red: #ef4444;
+            --text: #f1f5f9; --text2: #94a3b8; --text3: #64748b;
+            --scratch-motion: #4C97FF; --scratch-looks: #9966FF;
+            --scratch-sound: #CF63CF; --scratch-events: #FFBF00;
+            --scratch-control: #FFAB19; --scratch-sensing: #5CB1D6;
+            --scratch-operators: #59C059; --scratch-variables: #FF8C1A;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100%; width: 100%; }
+
+        /* SLIDE SYSTEM */
+        .slide { position: fixed; inset: 0; bottom: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px 40px; opacity: 0; transform: scale(0.92) translateY(30px); transition: opacity 0.5s ease, transform 0.5s ease; pointer-events: none; overflow-y: auto; z-index: 1; }
+        .slide.active { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; z-index: 10; }
+        .slide.exit-left { opacity: 0; transform: scale(0.88) translateX(-80px); }
+        .slide.exit-right { opacity: 0; transform: scale(0.88) translateX(80px); }
+        .slide::-webkit-scrollbar { width: 6px; }
+        .slide::-webkit-scrollbar-track { background: transparent; }
+        .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* NAV BAR */
+        #nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,26,0.95); backdrop-filter: blur(20px); border-top: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; z-index: 1000; }
+        .nav-btn { background: var(--card); border: 2px solid var(--border); color: var(--text); width: 44px; height: 44px; border-radius: 50%; font-size: 1.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; font-family: 'Inter', sans-serif; flex-shrink: 0; }
+        .nav-btn:hover { background: var(--blue); border-color: var(--blue); transform: scale(1.1); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+        #progress-bar { flex: 1; margin: 0 16px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .progress-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); cursor: pointer; transition: all 0.4s; flex-shrink: 0; }
+        .progress-dot.active { background: var(--blue); box-shadow: 0 0 10px var(--blue); transform: scale(1.3); }
+        .progress-dot.visited { background: var(--purple); }
+        .progress-dot:hover { transform: scale(1.4); background: var(--blue-light); }
+        #slide-counter { color: var(--text2); font-size: 0.8rem; font-weight: 600; min-width: 50px; text-align: center; }
+
+        /* TITLE */
+        .title-badge { background: linear-gradient(135deg, var(--scratch-motion), var(--scratch-looks)); padding: 8px 24px; border-radius: 30px; font-size: 0.85rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; display: inline-block; }
+        .title-main { font-size: clamp(2rem, 5vw, 4rem); font-weight: 900; line-height: 1.1; background: linear-gradient(135deg, var(--scratch-motion), var(--scratch-looks), var(--scratch-events)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 12px; }
+        .title-sub { font-size: clamp(0.9rem, 2vw, 1.4rem); color: var(--text2); font-weight: 300; margin-bottom: 24px; }
+
+        /* COMMON */
+        .slide-inner { max-width: 960px; width: 100%; }
+        .slide-icon { font-size: 3rem; margin-bottom: 10px; }
+        .slide-title { font-size: clamp(1.4rem, 3vw, 2.2rem); font-weight: 800; margin-bottom: 8px; line-height: 1.2; }
+        .slide-subtitle { font-size: 0.95rem; color: var(--text2); margin-bottom: 20px; }
+        .gradient-text { background: linear-gradient(135deg, var(--scratch-motion), var(--scratch-looks)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .gradient-green { background: linear-gradient(135deg, var(--green), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .gradient-orange { background: linear-gradient(135deg, var(--scratch-events), var(--scratch-control)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+        /* CARDS */
+        .cards-grid { display: grid; gap: 14px; text-align: left; }
+        .cards-2 { grid-template-columns: 1fr 1fr; }
+        .cards-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .cards-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        .info-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; transition: all 0.3s; }
+        .info-card:hover { border-color: var(--blue); transform: translateY(-2px); }
+        .card-icon { font-size: 1.8rem; margin-bottom: 8px; }
+        .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 4px; color: var(--blue-light); }
+        .card-text { font-size: 0.85rem; color: var(--text2); line-height: 1.5; }
+
+        /* SCRATCH BLOCK */
+        .scratch-block { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; color: #fff; margin: 3px; user-select: none; position: relative; }
+        .scratch-block::before { content: ''; position: absolute; top: 0; left: 4px; right: 4px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 0 0 4px 4px; }
+        .scratch-block::after { content: ''; position: absolute; bottom: 0; left: 4px; right: 4px; height: 4px; background: rgba(0,0,0,0.15); border-radius: 4px 4px 0 0; }
+        .sb-motion { background: var(--scratch-motion); }
+        .sb-looks { background: var(--scratch-looks); }
+        .sb-sound { background: var(--scratch-sound); }
+        .sb-events { background: var(--scratch-events); color: #333; }
+        .sb-control { background: var(--scratch-control); color: #333; }
+        .sb-sensing { background: var(--scratch-sensing); }
+        .sb-operators { background: var(--scratch-operators); }
+        .sb-variables { background: var(--scratch-variables); }
+        .scratch-input { display: inline-block; background: rgba(255,255,255,0.3); border-radius: 12px; padding: 1px 8px; min-width: 30px; font-weight: 400; }
+        .scratch-hat { border-radius: 14px 14px 8px 8px; }
+        .scratch-c { border-radius: 8px; border-left: 4px solid rgba(0,0,0,0.2); padding: 8px 14px 8px 18px; }
+
+        /* BLOCK STACK (visual code) */
+        .block-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin: 12px auto; text-align: left; padding: 16px 20px; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); width: fit-content; }
+        .block-stack .scratch-block { margin: 0; width: auto; }
+        .block-indent { margin-left: 24px; display: flex; flex-direction: column; gap: 2px; }
+
+        /* COMPARISON */
+        .comparison { display: grid; grid-template-columns: 1fr 40px 1fr; align-items: center; text-align: left; }
+        .compare-side { background: var(--card); border-radius: 14px; padding: 20px; }
+        .compare-side.bad { border: 2px solid var(--red); }
+        .compare-side.good { border: 2px solid var(--green); }
+        .compare-vs { font-size: 1.4rem; font-weight: 900; color: var(--text3); text-align: center; }
+        .compare-label { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; }
+        .compare-side.bad .compare-label { color: var(--red); }
+        .compare-side.good .compare-label { color: var(--green); }
+        .compare-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .compare-list li { display: flex; align-items: flex-start; gap: 6px; color: var(--text2); font-size: 0.85rem; line-height: 1.4; }
+
+        /* DEF BOX */
+        .def-box { background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 22px 26px; margin-top: 14px; text-align: left; }
+        .def-text { font-size: 1rem; line-height: 1.6; color: var(--text2); }
+        .def-text strong { color: var(--blue-light); }
+        .def-text em { color: var(--cyan); font-style: normal; font-weight: 600; }
+
+        /* HUB MENU */
+        .hub-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+        .hub-card { background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 20px 16px; cursor: pointer; transition: all 0.3s; position: relative; text-align: center; }
+        .hub-card:hover { border-color: var(--scratch-motion); transform: translateY(-4px); box-shadow: 0 8px 24px rgba(76,151,255,0.15); }
+        .hub-card.completed { border-color: var(--green); }
+        .hub-card .hub-icon { font-size: 2.2rem; margin-bottom: 8px; }
+        .hub-card .hub-name { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+        .hub-card .hub-desc { font-size: 0.75rem; color: var(--text3); }
+        .hub-badge { position: absolute; top: -6px; right: -6px; width: 24px; height: 24px; border-radius: 50%; background: var(--green); display: none; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; }
+        .hub-card.completed .hub-badge { display: flex; }
+        .hub-progress { margin-top: 20px; text-align: center; }
+        .hub-progress-bar { width: 100%; max-width: 400px; height: 8px; background: var(--border); border-radius: 4px; margin: 8px auto; overflow: hidden; }
+        .hub-progress-fill { height: 100%; background: linear-gradient(90deg, var(--scratch-motion), var(--green)); border-radius: 4px; transition: width 0.5s; }
+
+        /* ACTION BUTTONS */
+        .action-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.3s; font-family: 'Inter', sans-serif; border: none; color: white; margin: 6px; }
+        .action-btn:hover { transform: translateY(-2px); }
+        .btn-primary { background: linear-gradient(135deg, var(--scratch-motion), var(--scratch-looks)); }
+        .btn-primary:hover { box-shadow: 0 8px 20px rgba(76,151,255,0.3); }
+        .btn-hub { background: linear-gradient(135deg, var(--purple), var(--pink)); }
+        .btn-hub:hover { box-shadow: 0 8px 20px rgba(139,92,246,0.3); }
+        .btn-next-topic { background: linear-gradient(135deg, var(--green), var(--cyan)); }
+        .btn-next-topic:hover { box-shadow: 0 8px 20px rgba(16,185,129,0.3); }
+        .slide-actions { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+
+        /* INLINE QUIZ */
+        .inline-quiz { background: var(--surface); border: 2px solid var(--border); border-radius: 14px; padding: 20px; margin-top: 16px; text-align: left; }
+        .iq-label { font-size: 0.75rem; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .iq-question { font-size: 1rem; font-weight: 600; margin-bottom: 14px; }
+        .iq-options { display: flex; flex-direction: column; gap: 8px; }
+        .iq-opt { background: var(--card); border: 2px solid var(--border); border-radius: 10px; padding: 12px 16px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s; font-family: 'Inter', sans-serif; color: var(--text); text-align: left; }
+        .iq-opt:hover { border-color: var(--blue); }
+        .iq-opt.iq-correct { border-color: var(--green); background: rgba(16,185,129,0.12); color: var(--green); }
+        .iq-opt.iq-wrong { border-color: var(--red); background: rgba(239,68,68,0.12); color: var(--red); }
+        .iq-opt.iq-disabled { pointer-events: none; opacity: 0.5; }
+        .iq-fb { margin-top: 10px; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; display: none; }
+        .iq-fb.show { display: block; }
+        .iq-fb.ok { background: rgba(16,185,129,0.1); border: 1px solid var(--green); color: var(--green); }
+        .iq-fb.nok { background: rgba(239,68,68,0.1); border: 1px solid var(--red); color: var(--red); }
+
+        /* CLASSIFY EXERCISE */
+        .classify-exercise { background: var(--surface); border: 2px solid var(--border); border-radius: 14px; padding: 20px; margin-top: 16px; text-align: left; }
+        .classify-items { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+        .classify-item { padding: 10px 16px; background: var(--card); border: 2px solid var(--border); border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.3s; user-select: none; }
+        .classify-item:hover { border-color: var(--blue); }
+        .classify-item.placed { opacity: 0.4; pointer-events: none; }
+        .classify-zones { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+        .classify-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 14px; min-height: 80px; transition: all 0.3s; cursor: pointer; }
+        .zone-label { font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; }
+        .zone-items { display: flex; flex-wrap: wrap; gap: 6px; }
+        .zone-placed { padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+
+        /* ORDER EXERCISE */
+        .order-exercise { background: var(--surface); border: 2px solid var(--border); border-radius: 14px; padding: 20px; margin-top: 16px; text-align: left; }
+        .order-slots { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+        .order-slot { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--card); border: 2px solid var(--border); border-radius: 10px; transition: all 0.3s; }
+        .order-num { width: 28px; height: 28px; border-radius: 50%; background: var(--border); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; flex-shrink: 0; }
+        .order-text { flex: 1; font-size: 0.85rem; }
+        .order-arrows { display: flex; gap: 4px; }
+        .order-arrow { width: 28px; height: 28px; border-radius: 6px; background: var(--border); border: none; color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; transition: all 0.2s; }
+        .order-arrow:hover { background: var(--scratch-motion); }
+        .order-slot.correct-order { border-color: var(--green); }
+        .order-slot.wrong-order { border-color: var(--red); }
+
+        /* DRAG EXERCISE */
+        .drag-zone { min-height: 120px; background: var(--surface); border: 2px dashed var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; transition: all 0.3s; }
+        .drag-zone.drag-over { border-color: var(--scratch-motion); background: rgba(76,151,255,0.05); }
+        .drag-block { cursor: grab; user-select: none; }
+        .drag-block:active { cursor: grabbing; }
+
+        /* SCORE DISPLAY */
+        .score-display { background: linear-gradient(135deg, var(--card), var(--surface)); border: 2px solid var(--green); border-radius: 16px; padding: 20px; margin-top: 16px; text-align: center; }
+        .score-big { font-size: 3rem; font-weight: 900; color: var(--green); }
+        .score-label { font-size: 0.9rem; color: var(--text2); }
+
+        /* CATEGORY CARD (for block categories) */
+        .cat-card { background: var(--card); border-radius: 14px; padding: 16px; text-align: left; transition: all 0.3s; border-left: 5px solid; }
+        .cat-card:hover { transform: translateY(-2px); }
+        .cat-name { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+        .cat-desc { font-size: 0.8rem; color: var(--text2); line-height: 1.4; }
+        .cat-blocks { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+
+        /* INTERFACE MAP */
+        .interface-map { display: grid; grid-template-columns: 200px 1fr 280px; grid-template-rows: auto auto; gap: 12px; max-width: 800px; margin: 14px auto; text-align: left; }
+        .iface-box { background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 14px; transition: all 0.3s; }
+        .iface-box:hover { border-color: var(--scratch-motion); }
+        .iface-label { font-size: 0.75rem; font-weight: 700; color: var(--scratch-motion); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .iface-text { font-size: 0.82rem; color: var(--text2); line-height: 1.4; }
+
+        /* STEPS */
+        .steps-vertical { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+        .step-item { display: flex; align-items: center; gap: 14px; background: var(--card); padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border); transition: all 0.3s; }
+        .step-item:hover { border-color: var(--scratch-motion); transform: translateX(4px); }
+        .step-num { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--scratch-motion), var(--scratch-looks)); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0; }
+        .step-content { flex: 1; }
+        .step-content strong { display: block; font-size: 0.95rem; margin-bottom: 2px; }
+        .step-content span { color: var(--text2); font-size: 0.8rem; }
+
+        /* SUMMARY TAGS */
+        .summary-tags { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+        .summary-tag { background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 30px; font-size: 0.85rem; font-weight: 600; transition: all 0.3s; cursor: pointer; }
+        .summary-tag:hover { transform: scale(1.05); border-color: var(--scratch-motion); }
+
+        /* QUIZ (final) */
+        .prez-question { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; }
+        .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+        .quiz-opt { background: var(--card); border: 2px solid var(--border); border-radius: 10px; padding: 14px 18px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s; font-family: 'Inter', sans-serif; color: var(--text); text-align: left; }
+        .quiz-opt:hover { border-color: var(--scratch-motion); }
+        .quiz-opt.correct { border-color: var(--green); background: rgba(16,185,129,0.15); }
+        .quiz-opt.wrong { border-color: var(--red); background: rgba(239,68,68,0.15); }
+        .quiz-opt.disabled { pointer-events: none; opacity: 0.5; }
+        .quiz-feedback { margin-top: 12px; padding: 12px 16px; border-radius: 10px; font-size: 0.85rem; display: none; }
+        .quiz-feedback.show { display: block; }
+        .quiz-feedback.correct-fb { background: rgba(16,185,129,0.1); border: 1px solid var(--green); color: var(--green); }
+        .quiz-feedback.wrong-fb { background: rgba(239,68,68,0.1); border: 1px solid var(--red); color: var(--red); }
+
+        /* MISC */
+        #kbd-hint { position: fixed; top: 12px; right: 12px; background: rgba(10,10,26,0.85); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 0.7rem; color: var(--text3); z-index: 1000; transition: opacity 0.5s; }
+        kbd { background: var(--card); border: 1px solid var(--border); border-radius: 3px; padding: 1px 4px; font-family: 'Inter', sans-serif; font-size: 0.65rem; }
+        #fs-btn { position: fixed; top: 12px; left: 12px; background: rgba(10,10,26,0.85); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; color: var(--text2); cursor: pointer; z-index: 1000; transition: all 0.3s; font-family: 'Inter', sans-serif; }
+        #fs-btn:hover { background: var(--scratch-motion); border-color: var(--scratch-motion); color: white; }
+        .bg-glow { position: fixed; width: 400px; height: 400px; border-radius: 50%; opacity: 0.06; pointer-events: none; z-index: 0; }
+        .bg-glow-1 { background: var(--scratch-motion); top: -200px; left: -200px; }
+        .bg-glow-2 { background: var(--scratch-events); bottom: -200px; right: -200px; }
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        .float { animation: float 3s ease-in-out infinite; }
+
+        @media (max-width: 900px) {
+            .slide { padding: 20px 16px; }
+            .comparison { grid-template-columns: 1fr; gap: 10px; }
+            .compare-vs { display: none; }
+            .cards-2, .cards-3, .cards-4 { grid-template-columns: 1fr; }
+            .hub-grid { grid-template-columns: 1fr 1fr; }
+            .classify-zones { grid-template-columns: 1fr; }
+            .interface-map { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+            .hub-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+
+<!-- S0: TITLE -->
+<div class="slide active" id="s0">
+    <div class="slide-icon float" style="font-size:5rem">&#x1F431;</div>
+    <div class="title-badge">TIC &bull; Clasa a V-a</div>
+    <div class="title-main">Introducere in<br>Scratch</div>
+    <div class="title-sub">Programeaza jocuri, animatii si povesti &mdash; fara sa scrii cod!</div>
+    <button class="action-btn btn-primary" data-go="1">Hai sa incepem! &rarr;</button>
+</div>
+
+<!-- S1: HUB MENU -->
+<div class="slide" id="s1">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F3AF;</div>
+        <div class="slide-title"><span class="gradient-text">Alege un subiect</span></div>
+        <div class="slide-subtitle">Exploreaza fiecare tema, apoi revino aici</div>
+        <div class="hub-grid" id="hub-grid">
+            <div class="hub-card" data-go="2"><div class="hub-badge">&#x2713;</div><div class="hub-icon">&#x1F30D;</div><div class="hub-name">Ce este Scratch?</div><div class="hub-desc">Istorie si importanta</div></div>
+            <div class="hub-card" data-go="5"><div class="hub-badge">&#x2713;</div><div class="hub-icon">&#x1F5A5;</div><div class="hub-name">Interfata</div><div class="hub-desc">Zone si instrumente</div></div>
+            <div class="hub-card" data-go="8"><div class="hub-badge">&#x2713;</div><div class="hub-icon">&#x1F9E9;</div><div class="hub-name">Blocuri</div><div class="hub-desc">Categorii si culori</div></div>
+            <div class="hub-card" data-go="12"><div class="hub-badge">&#x2713;</div><div class="hub-icon">&#x1F680;</div><div class="hub-name">Primul Program</div><div class="hub-desc">Pas cu pas</div></div>
+            <div class="hub-card" data-go="16"><div class="hub-badge">&#x2713;</div><div class="hub-icon">&#x1F3A8;</div><div class="hub-name">Personaje</div><div class="hub-desc">Sprite-uri si costume</div></div>
+            <div class="hub-card" data-go="19"><div class="hub-badge">&#x2713;</div><div class="hub-icon">&#x1F4A1;</div><div class="hub-name">Idei de Proiecte</div><div class="hub-desc">Ce poti crea</div></div>
+        </div>
+        <div class="hub-progress">
+            <div id="hub-text" style="font-size:0.85rem;color:var(--text2)">0 din 6 completate</div>
+            <div class="hub-progress-bar"><div class="hub-progress-fill" id="hub-fill" style="width:0%"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- S2: Ce este Scratch? -->
+<div class="slide" id="s2">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F30D;</div>
+        <div class="slide-title"><span class="gradient-text">Ce este Scratch?</span></div>
+        <div class="slide-subtitle">Un limbaj de programare vizual creat la MIT</div>
+        <div class="def-box">
+            <div class="def-text">
+                <strong>Scratch</strong> este un <em>limbaj de programare vizual</em> creat la <strong>MIT Media Lab</strong> (Institutul de Tehnologie din Massachusetts, SUA) in 2007. In loc sa scrii linii de cod, <em>tragi si lipesti blocuri colorate</em> ca piesele unui puzzle. Este folosit de <strong>peste 100 milioane de copii</strong> din toata lumea!
+            </div>
+        </div>
+        <div class="cards-grid cards-3" style="margin-top:16px">
+            <div class="info-card"><div class="card-icon">&#x1F9E9;</div><div class="card-title">Vizual</div><div class="card-text">Blocuri colorate in loc de text &mdash; imposibil sa faci greseli de scriere!</div></div>
+            <div class="info-card"><div class="card-icon">&#x1F310;</div><div class="card-title">Online</div><div class="card-text">Merge direct in browser la <strong>scratch.mit.edu</strong> &mdash; nu instalezi nimic!</div></div>
+            <div class="info-card"><div class="card-icon">&#x1F30E;</div><div class="card-title">In Romana</div><div class="card-text">Interfata e tradusa complet &mdash; inclusiv toate blocurile si meniurile!</div></div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="3">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S3: De ce Scratch? -->
+<div class="slide" id="s3">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F914;</div>
+        <div class="slide-title">De ce <span class="gradient-text">Scratch</span>?</div>
+        <div class="comparison" style="margin-top:16px">
+            <div class="compare-side bad">
+                <div class="compare-label">&#x274C; Programare clasica</div>
+                <ul class="compare-list">
+                    <li>&#x1F4DD; Scrii mult text complicat</li>
+                    <li>&#x1F6AB; O virgula gresita = eroare</li>
+                    <li>&#x1F62D; Greu de inteles la inceput</li>
+                    <li>&#x23F3; Rezultate greu de vazut</li>
+                </ul>
+            </div>
+            <div class="compare-vs">VS</div>
+            <div class="compare-side good">
+                <div class="compare-label">&#x2705; Scratch</div>
+                <ul class="compare-list">
+                    <li>&#x1F9E9; Tragi blocuri colorate</li>
+                    <li>&#x2728; Blocurile se potrivesc ca un puzzle</li>
+                    <li>&#x1F60A; Usor si distractiv</li>
+                    <li>&#x26A1; Vezi rezultatul INSTANT</li>
+                </ul>
+            </div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="4">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S4: Ce poti face + Quiz -->
+<div class="slide" id="s4">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F3AE;</div>
+        <div class="slide-title">Ce poti face in <span class="gradient-text">Scratch</span>?</div>
+        <div class="cards-grid cards-4" style="margin-top:14px">
+            <div class="info-card"><div class="card-icon">&#x1F3AE;</div><div class="card-title">Jocuri</div><div class="card-text">Platformere, labirinturi, quiz-uri</div></div>
+            <div class="info-card"><div class="card-icon">&#x1F3AC;</div><div class="card-title">Animatii</div><div class="card-text">Povesti animate, desene</div></div>
+            <div class="info-card"><div class="card-icon">&#x1F3B5;</div><div class="card-title">Muzica</div><div class="card-text">Instrumente, ritmuri, melodii</div></div>
+            <div class="info-card"><div class="card-icon">&#x1F4D0;</div><div class="card-title">Simulari</div><div class="card-text">Fizica, arta generativa</div></div>
+        </div>
+        <div class="inline-quiz" style="margin-top:16px">
+            <div class="iq-label">Verificare rapida</div>
+            <div class="iq-question">Ce inseamna ca Scratch este un limbaj de programare "vizual"?</div>
+            <div class="iq-options" id="iq1-opts">
+                <button class="iq-opt" data-correct="0">Functioneaza doar pe ecrane 4K</button>
+                <button class="iq-opt" data-correct="1">Folosesti blocuri colorate in loc de text</button>
+                <button class="iq-opt" data-correct="0">Trebuie sa desenezi codul cu mouse-ul</button>
+            </div>
+            <div class="iq-fb" id="iq1-fb"></div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-next-topic" data-go="5">Tema urmatoare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S5: Interfata Scratch - Overview -->
+<div class="slide" id="s5">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F5A5;</div>
+        <div class="slide-title">Interfata <span class="gradient-text">Scratch 3.0</span></div>
+        <div class="slide-subtitle">5 zone principale pe care trebuie sa le cunosti</div>
+        <div class="interface-map">
+            <div class="iface-box" style="grid-row: span 2; border-color: var(--scratch-motion);">
+                <div class="iface-label">&#x1F4E6; Paleta de Blocuri</div>
+                <div class="iface-text">Aici gasesti TOATE blocurile, organizate pe categorii colorate: Miscare (albastru), Aspect (mov), Sunet (roz), Evenimente (galben), Control (portocaliu)...</div>
+            </div>
+            <div class="iface-box" style="border-color: var(--scratch-looks);">
+                <div class="iface-label">&#x1F4DD; Zona de Cod</div>
+                <div class="iface-text">Centrul ecranului &mdash; aici <strong>tragi blocurile</strong> si le conectezi. E ca un birou de lucru!</div>
+            </div>
+            <div class="iface-box" style="border-color: var(--scratch-events);">
+                <div class="iface-label">&#x1F3AC; Scena</div>
+                <div class="iface-text">Ecranul unde iti vezi programul in actiune. Are coordonate <strong>X</strong> (stanga-dreapta) si <strong>Y</strong> (sus-jos). Steagul verde = START, cercul rosu = STOP.</div>
+            </div>
+            <div class="iface-box" style="border-color: var(--scratch-control);">
+                <div class="iface-label">&#x1F3AD; Taburi</div>
+                <div class="iface-text"><strong>Cod</strong> = blocuri | <strong>Costume</strong> = cum arata personajul | <strong>Sunete</strong> = efecte audio</div>
+            </div>
+            <div class="iface-box" style="border-color: var(--green);">
+                <div class="iface-label">&#x1F431; Sprite-uri</div>
+                <div class="iface-text">Lista de personaje (sprite-uri) din proiect. Poti adauga, sterge, duplica. <strong>Fiecare sprite are propriul cod!</strong></div>
+            </div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="6">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S6: Interfata - Coordonate -->
+<div class="slide" id="s6">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F4CD;</div>
+        <div class="slide-title">Sistemul de <span class="gradient-text">Coordonate</span></div>
+        <div class="slide-subtitle">Scena Scratch = un plan cu X si Y</div>
+        <div class="def-box">
+            <div class="def-text">
+                Scena are <strong>480 x 360</strong> pixeli. Centrul e la <em>x: 0, y: 0</em>.<br>
+                <strong>X</strong> merge de la <em>-240</em> (stanga) la <em>+240</em> (dreapta).<br>
+                <strong>Y</strong> merge de la <em>-180</em> (jos) la <em>+180</em> (sus).<br><br>
+                Exemplu: Un sprite la <em>x: 100, y: 50</em> e in dreapta-sus fata de centru.
+            </div>
+        </div>
+        <div class="cards-grid cards-2" style="margin-top:14px">
+            <div class="info-card" style="border-color: var(--scratch-motion)">
+                <div class="card-title" style="color: var(--scratch-motion)">&#x2194; Axa X</div>
+                <div class="card-text">Stanga = numere negative<br>Dreapta = numere pozitive<br>Centru = 0</div>
+            </div>
+            <div class="info-card" style="border-color: var(--scratch-looks)">
+                <div class="card-title" style="color: var(--scratch-looks)">&#x2195; Axa Y</div>
+                <div class="card-text">Jos = numere negative<br>Sus = numere pozitive<br>Centru = 0</div>
+            </div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="7">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S7: Interfata - Quiz -->
+<div class="slide" id="s7">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x2753;</div>
+        <div class="slide-title">Verificare: <span class="gradient-text">Interfata</span></div>
+        <div class="inline-quiz">
+            <div class="iq-label">Intrebarea 1</div>
+            <div class="iq-question">Unde tragi blocurile pentru a crea programul?</div>
+            <div class="iq-options" id="iq2-opts">
+                <button class="iq-opt" data-correct="0">Pe scena</button>
+                <button class="iq-opt" data-correct="1">In zona de cod (centru)</button>
+                <button class="iq-opt" data-correct="0">In paleta de blocuri</button>
+            </div>
+            <div class="iq-fb" id="iq2-fb"></div>
+        </div>
+        <div class="inline-quiz" style="margin-top:12px">
+            <div class="iq-label">Intrebarea 2</div>
+            <div class="iq-question">Un sprite se afla la x: -100, y: 0. Unde e pe scena?</div>
+            <div class="iq-options" id="iq3-opts">
+                <button class="iq-opt" data-correct="0">In dreapta, la jumatate</button>
+                <button class="iq-opt" data-correct="0">Exact in centru</button>
+                <button class="iq-opt" data-correct="1">In stanga, la mijloc pe verticala</button>
+            </div>
+            <div class="iq-fb" id="iq3-fb"></div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-next-topic" data-go="8">Tema urmatoare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S8: Blocuri - Categorii Overview -->
+<div class="slide" id="s8">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F9E9;</div>
+        <div class="slide-title">Categoriile de <span class="gradient-text">Blocuri</span></div>
+        <div class="slide-subtitle">Fiecare categorie are o culoare specifica</div>
+        <div class="cards-grid cards-4" style="margin-top:14px">
+            <div class="cat-card" style="border-left-color: var(--scratch-motion)">
+                <div class="cat-name" style="color: var(--scratch-motion)">&#x27A1; Miscare</div>
+                <div class="cat-desc">Muta, roteste, gliseaza sprite-ul pe scena</div>
+            </div>
+            <div class="cat-card" style="border-left-color: var(--scratch-looks)">
+                <div class="cat-name" style="color: var(--scratch-looks)">&#x1F3AD; Aspect</div>
+                <div class="cat-desc">Schimba costumul, dimensiunea, spune ceva</div>
+            </div>
+            <div class="cat-card" style="border-left-color: var(--scratch-sound)">
+                <div class="cat-name" style="color: var(--scratch-sound)">&#x1F3B5; Sunet</div>
+                <div class="cat-desc">Reda sunete, schimba volumul, efecte</div>
+            </div>
+            <div class="cat-card" style="border-left-color: var(--scratch-events)">
+                <div class="cat-name" style="color: var(--scratch-events)">&#x26A1; Evenimente</div>
+                <div class="cat-desc">Cand steagul e apasat, cand o tasta e apasata</div>
+            </div>
+            <div class="cat-card" style="border-left-color: var(--scratch-control)">
+                <div class="cat-name" style="color: var(--scratch-control)">&#x1F504; Control</div>
+                <div class="cat-desc">Repeta, daca-atunci, asteapta, la infinit</div>
+            </div>
+            <div class="cat-card" style="border-left-color: var(--scratch-sensing)">
+                <div class="cat-name" style="color: var(--scratch-sensing)">&#x1F50D; Senzori</div>
+                <div class="cat-desc">Atinge? Distanta, intreaba, raspuns</div>
+            </div>
+            <div class="cat-card" style="border-left-color: var(--scratch-operators)">
+                <div class="cat-name" style="color: var(--scratch-operators)">&#x2795; Operatori</div>
+                <div class="cat-desc">Matematica, comparatii, text, aleatoriu</div>
+            </div>
+            <div class="cat-card" style="border-left-color: var(--scratch-variables)">
+                <div class="cat-name" style="color: var(--scratch-variables)">&#x1F4CA; Variabile</div>
+                <div class="cat-desc">Stocheaza date: scor, vieti, viteza</div>
+            </div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="9">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S9: Blocuri - Exemple vizuale -->
+<div class="slide" id="s9">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F50D;</div>
+        <div class="slide-title">Exemple de <span class="gradient-text">Blocuri</span></div>
+        <div class="slide-subtitle">Asa arata blocurile in Scratch</div>
+        <div class="cards-grid cards-2" style="margin-top:14px">
+            <div class="info-card" style="border-color: var(--scratch-motion)">
+                <div class="card-title" style="color: var(--scratch-motion)">Miscare</div>
+                <div style="margin-top:8px">
+                    <span class="scratch-block sb-motion">mergi <span class="scratch-input">10</span> pasi</span>
+                    <span class="scratch-block sb-motion">roteste-te &#x21BB; <span class="scratch-input">15</span> grade</span>
+                    <span class="scratch-block sb-motion">mergi la x: <span class="scratch-input">0</span> y: <span class="scratch-input">0</span></span>
+                </div>
+            </div>
+            <div class="info-card" style="border-color: var(--scratch-looks)">
+                <div class="card-title" style="color: var(--scratch-looks)">Aspect</div>
+                <div style="margin-top:8px">
+                    <span class="scratch-block sb-looks">spune <span class="scratch-input">Salut!</span> timp de <span class="scratch-input">2</span> secunde</span>
+                    <span class="scratch-block sb-looks">treci la costumul <span class="scratch-input">costum2</span></span>
+                    <span class="scratch-block sb-looks">seteaza dimensiunea la <span class="scratch-input">100</span> %</span>
+                </div>
+            </div>
+            <div class="info-card" style="border-color: var(--scratch-events)">
+                <div class="card-title" style="color: var(--scratch-events)">Evenimente</div>
+                <div style="margin-top:8px">
+                    <span class="scratch-block sb-events scratch-hat">cand se da click pe &#x1F3F4;</span>
+                    <span class="scratch-block sb-events scratch-hat">cand se apasa tasta <span class="scratch-input">spatiu</span></span>
+                </div>
+            </div>
+            <div class="info-card" style="border-color: var(--scratch-control)">
+                <div class="card-title" style="color: var(--scratch-control)">Control</div>
+                <div style="margin-top:8px">
+                    <span class="scratch-block sb-control scratch-c">repeta <span class="scratch-input">10</span></span>
+                    <span class="scratch-block sb-control scratch-c">la infinit</span>
+                    <span class="scratch-block sb-control">asteapta <span class="scratch-input">1</span> secunde</span>
+                </div>
+            </div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="10">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S10: Blocuri - Clasificare Exercise -->
+<div class="slide" id="s10">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F3AF;</div>
+        <div class="slide-title">Clasifica <span class="gradient-text">Blocurile</span></div>
+        <div class="slide-subtitle">Selecteaza un bloc, apoi apasa pe categoria potrivita</div>
+        <div class="classify-exercise">
+            <div class="classify-items" id="clf-items"></div>
+            <div class="classify-zones" style="grid-template-columns: 1fr 1fr 1fr">
+                <div class="classify-zone" id="clf-motion" style="border-color: var(--scratch-motion)">
+                    <div class="zone-label" style="color: var(--scratch-motion)">&#x27A1; Miscare</div>
+                    <div class="zone-items" id="clf-motion-items"></div>
+                </div>
+                <div class="classify-zone" id="clf-looks" style="border-color: var(--scratch-looks)">
+                    <div class="zone-label" style="color: var(--scratch-looks)">&#x1F3AD; Aspect</div>
+                    <div class="zone-items" id="clf-looks-items"></div>
+                </div>
+                <div class="classify-zone" id="clf-events" style="border-color: var(--scratch-events)">
+                    <div class="zone-label" style="color: var(--scratch-events)">&#x26A1; Evenimente</div>
+                    <div class="zone-items" id="clf-events-items"></div>
+                </div>
+            </div>
+            <div class="iq-fb" id="clf-fb"></div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="11">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S11: Blocuri - Quiz -->
+<div class="slide" id="s11">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x2753;</div>
+        <div class="slide-title">Verificare: <span class="gradient-text">Blocuri</span></div>
+        <div class="inline-quiz">
+            <div class="iq-label">Intrebarea 1</div>
+            <div class="iq-question">Ce culoare au blocurile de Miscare in Scratch?</div>
+            <div class="iq-options" id="iq4-opts">
+                <button class="iq-opt" data-correct="0">Mov (violet)</button>
+                <button class="iq-opt" data-correct="1">Albastru</button>
+                <button class="iq-opt" data-correct="0">Galben</button>
+            </div>
+            <div class="iq-fb" id="iq4-fb"></div>
+        </div>
+        <div class="inline-quiz" style="margin-top:12px">
+            <div class="iq-label">Intrebarea 2</div>
+            <div class="iq-question">Ce bloc folosesti ca sa pornesti un program?</div>
+            <div class="iq-options" id="iq5-opts">
+                <button class="iq-opt" data-correct="0">mergi 10 pasi</button>
+                <button class="iq-opt" data-correct="0">repeta 10</button>
+                <button class="iq-opt" data-correct="1">cand se da click pe steagul verde</button>
+            </div>
+            <div class="iq-fb" id="iq5-fb"></div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-next-topic" data-go="12">Tema urmatoare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S12: Primul Program - Intro -->
+<div class="slide" id="s12">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F680;</div>
+        <div class="slide-title">Primul tau <span class="gradient-text">Program</span></div>
+        <div class="slide-subtitle">Sa facem pisica sa se miste si sa vorbeasca!</div>
+        <div class="steps-vertical">
+            <div class="step-item"><div class="step-num">1</div><div class="step-content"><strong>Deschide Scratch</strong><span>Du-te la scratch.mit.edu si apasa "Creeaza"</span></div></div>
+            <div class="step-item"><div class="step-num">2</div><div class="step-content"><strong>Gaseste blocul de start</strong><span>Din Evenimente (galben): "cand se da click pe steagul verde"</span></div></div>
+            <div class="step-item"><div class="step-num">3</div><div class="step-content"><strong>Adauga miscare</strong><span>Din Miscare (albastru): "mergi 10 pasi" &mdash; lipeste-l sub blocul de start</span></div></div>
+            <div class="step-item"><div class="step-num">4</div><div class="step-content"><strong>Adauga vorbire</strong><span>Din Aspect (mov): "spune Salut! timp de 2 secunde"</span></div></div>
+            <div class="step-item"><div class="step-num">5</div><div class="step-content"><strong>Testeaza!</strong><span>Apasa steagul verde &#x1F3F4; &mdash; pisica se misca si vorbeste!</span></div></div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="13">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S13: Primul Program - Codul vizual -->
+<div class="slide" id="s13">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F4BB;</div>
+        <div class="slide-title">Asa arata <span class="gradient-text">codul</span> tau</div>
+        <div class="slide-subtitle">Blocurile conectate unul sub altul</div>
+        <div class="block-stack" style="margin:20px auto">
+            <span class="scratch-block sb-events scratch-hat">cand se da click pe &#x1F3F4;</span>
+            <span class="scratch-block sb-motion">mergi <span class="scratch-input">10</span> pasi</span>
+            <span class="scratch-block sb-looks">spune <span class="scratch-input">Salut!</span> timp de <span class="scratch-input">2</span> secunde</span>
+            <span class="scratch-block sb-motion">mergi <span class="scratch-input">50</span> pasi</span>
+            <span class="scratch-block sb-looks">spune <span class="scratch-input">Sunt pisica Scratch!</span> timp de <span class="scratch-input">3</span> secunde</span>
+        </div>
+        <div class="def-box">
+            <div class="def-text">
+                Observa: Blocurile se <strong>conecteaza vertical</strong>, ca piesele de puzzle. Programul se executa <em>de sus in jos</em>, un bloc dupa altul. Aceasta se numeste <strong>executie secventiala</strong> &mdash; pasii se fac in ordine!
+            </div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="14">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S14: Primul Program - Repetitie -->
+<div class="slide" id="s14">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F504;</div>
+        <div class="slide-title">Adaugam <span class="gradient-orange">Repetitie</span></div>
+        <div class="slide-subtitle">Fa pisica sa mearga non-stop cu blocul "la infinit"</div>
+        <div class="cards-grid cards-2" style="margin-top:14px">
+            <div style="text-align:left">
+                <h3 style="font-size:1rem;margin-bottom:10px;color:var(--scratch-control)">Program cu repetitie:</h3>
+                <div class="block-stack">
+                    <span class="scratch-block sb-events scratch-hat">cand se da click pe &#x1F3F4;</span>
+                    <span class="scratch-block sb-control scratch-c">la infinit</span>
+                    <div class="block-indent">
+                        <span class="scratch-block sb-motion">mergi <span class="scratch-input">10</span> pasi</span>
+                        <span class="scratch-block sb-motion">daca atingi marginea, ricoseaza</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="def-box" style="margin-top:0">
+                    <div class="def-text">
+                        <strong>la infinit</strong> = repeta blocurile din interior <em>pentru totdeauna</em>.<br><br>
+                        <strong>daca atingi marginea, ricoseaza</strong> = pisica nu iese de pe ecran, ci se intoarce!<br><br>
+                        Rezultat: pisica se plimba continuu pe scena, mergand inainte si inapoi.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="15">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S15: Primul Program - Ordoneaza pasii -->
+<div class="slide" id="s15">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F522;</div>
+        <div class="slide-title">Ordoneaza <span class="gradient-text">Pasii</span></div>
+        <div class="slide-subtitle">Pune in ordine pasii pentru a face o animatie simpla</div>
+        <div class="order-exercise">
+            <div class="iq-label">Ordoneaza corect (muta cu sagetile &#x2191; &#x2193;)</div>
+            <div class="order-slots" id="order-slots"></div>
+            <button class="action-btn btn-primary" id="order-check" style="margin-top:10px">Verifica ordinea</button>
+            <div class="iq-fb" id="order-fb"></div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-next-topic" data-go="16">Tema urmatoare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S16: Personaje - Sprite-uri -->
+<div class="slide" id="s16">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F3A8;</div>
+        <div class="slide-title">Personaje: <span class="gradient-text">Sprite-uri</span></div>
+        <div class="slide-subtitle">Tot ce se misca pe scena e un sprite</div>
+        <div class="def-box">
+            <div class="def-text">
+                Un <strong>sprite</strong> (se citeste "sprait") = un personaj sau obiect din proiect. Pisica Scratch e sprite-ul implicit. Poti avea <em>cate sprite-uri vrei</em> &mdash; fiecare cu propriul cod, propriile costume si propriile sunete!
+            </div>
+        </div>
+        <div class="cards-grid cards-2" style="margin-top:14px">
+            <div class="info-card">
+                <div class="card-icon">&#x1F50D;</div>
+                <div class="card-title">Alege din biblioteca</div>
+                <div class="card-text">Scratch vine cu <strong>sute de sprite-uri gata facute</strong>: animale, persoane, obiecte, litere, fantome, rachete...</div>
+            </div>
+            <div class="info-card">
+                <div class="card-icon">&#x1F3A8;</div>
+                <div class="card-title">Deseneaza-ti propriul</div>
+                <div class="card-text">Deschide <strong>editorul de costume</strong> si creeaza orice iti imaginezi cu instrumente de desenare!</div>
+            </div>
+            <div class="info-card">
+                <div class="card-icon">&#x1F4F7;</div>
+                <div class="card-title">Incarca o imagine</div>
+                <div class="card-text">Poti incarca <strong>orice imagine</strong> de pe calculator ca sprite &mdash; inclusiv poze sau desene scanate!</div>
+            </div>
+            <div class="info-card">
+                <div class="card-icon">&#x1F3AD;</div>
+                <div class="card-title">Costume multiple</div>
+                <div class="card-text">Un sprite poate avea <strong>mai multe costume</strong> &mdash; schimband costumul rapid creezi animatie!</div>
+            </div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="17">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S17: Personaje - Fundaluri -->
+<div class="slide" id="s17">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F5BC;</div>
+        <div class="slide-title">Fundaluri si <span class="gradient-text">Decor</span></div>
+        <div class="slide-subtitle">Scena poate avea mai multe fundaluri</div>
+        <div class="cards-grid cards-3" style="margin-top:14px">
+            <div class="info-card">
+                <div class="card-icon">&#x1F3DE;</div>
+                <div class="card-title">Biblioteca</div>
+                <div class="card-text">Zeci de fundaluri gata: plaje, spatiu, clase, paduri, orase, scene de teatru</div>
+            </div>
+            <div class="info-card">
+                <div class="card-icon">&#x270F;</div>
+                <div class="card-title">Deseneaza</div>
+                <div class="card-text">Creeaza fundalul tau propriu cu editorul de imagine integrat</div>
+            </div>
+            <div class="info-card">
+                <div class="card-icon">&#x1F504;</div>
+                <div class="card-title">Schimba dinamic</div>
+                <div class="card-text">Cu blocul "treci la decorul ___" poti schimba fundalul in timpul programului!</div>
+            </div>
+        </div>
+        <div class="inline-quiz" style="margin-top:16px">
+            <div class="iq-label">Verificare rapida</div>
+            <div class="iq-question">Ce este un "costum" in Scratch?</div>
+            <div class="iq-options" id="iq6-opts">
+                <button class="iq-opt" data-correct="0">Un tip de fundal pentru scena</button>
+                <button class="iq-opt" data-correct="1">O infatisare (imagine) a unui sprite</button>
+                <button class="iq-opt" data-correct="0">Un bloc de culoare speciala</button>
+            </div>
+            <div class="iq-fb" id="iq6-fb"></div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="18">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S18: Personaje - Quiz -->
+<div class="slide" id="s18">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x2753;</div>
+        <div class="slide-title">Verificare: <span class="gradient-text">Personaje</span></div>
+        <div class="inline-quiz">
+            <div class="iq-label">Intrebarea 1</div>
+            <div class="iq-question">Ce e adevarat despre sprite-uri?</div>
+            <div class="iq-options" id="iq7-opts">
+                <button class="iq-opt" data-correct="1">Fiecare sprite are propriul cod separat</button>
+                <button class="iq-opt" data-correct="0">Toate sprite-urile impart acelasi cod</button>
+                <button class="iq-opt" data-correct="0">Un proiect poate avea maximum 3 sprite-uri</button>
+            </div>
+            <div class="iq-fb" id="iq7-fb"></div>
+        </div>
+        <div class="inline-quiz" style="margin-top:12px">
+            <div class="iq-label">Intrebarea 2</div>
+            <div class="iq-question">Cum creezi o animatie simpla cu un sprite?</div>
+            <div class="iq-options" id="iq8-opts">
+                <button class="iq-opt" data-correct="0">Desenezi fiecare cadru pe scena</button>
+                <button class="iq-opt" data-correct="1">Schimbi rapid intre costumele sprite-ului</button>
+                <button class="iq-opt" data-correct="0">Stergi si re-creezi sprite-ul de fiecare data</button>
+            </div>
+            <div class="iq-fb" id="iq8-fb"></div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-next-topic" data-go="19">Tema urmatoare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S19: Idei de Proiecte -->
+<div class="slide" id="s19">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F4A1;</div>
+        <div class="slide-title">Idei de <span class="gradient-text">Proiecte</span></div>
+        <div class="slide-subtitle">Ce poti crea cu ce ai invatat azi</div>
+        <div class="cards-grid cards-3" style="margin-top:14px">
+            <div class="info-card" style="border-color: var(--scratch-motion)">
+                <div class="card-icon">&#x1F431;</div>
+                <div class="card-title">Pisica dansatoare</div>
+                <div class="card-text">Pisica se misca stanga-dreapta si schimba costumele. Adauga muzica de fundal!</div>
+            </div>
+            <div class="info-card" style="border-color: var(--scratch-looks)">
+                <div class="card-icon">&#x1F3AE;</div>
+                <div class="card-title">Prinde obiectele</div>
+                <div class="card-text">Un personaj controlat cu tastele prinde obiecte care cad. Tine scorul!</div>
+            </div>
+            <div class="info-card" style="border-color: var(--scratch-events)">
+                <div class="card-icon">&#x1F4AC;</div>
+                <div class="card-title">Poveste interactiva</div>
+                <div class="card-text">Doua personaje vorbesc. Apasa taste pentru a avansa dialogul!</div>
+            </div>
+            <div class="info-card" style="border-color: var(--green)">
+                <div class="card-icon">&#x1F30A;</div>
+                <div class="card-title">Acvariu virtual</div>
+                <div class="card-text">Pesti care inoata, bule care se ridica. Fiecare peste are propriul cod!</div>
+            </div>
+            <div class="info-card" style="border-color: var(--scratch-sound)">
+                <div class="card-icon">&#x1F3B9;</div>
+                <div class="card-title">Pian virtual</div>
+                <div class="card-text">Apasa taste pentru a canta note. Fiecare tasta = un sunet diferit!</div>
+            </div>
+            <div class="info-card" style="border-color: var(--scratch-control)">
+                <div class="card-icon">&#x2753;</div>
+                <div class="card-title">Quiz interactiv</div>
+                <div class="card-text">Intrebari cu "intreaba si asteapta", verifici raspunsul, tii scorul!</div>
+            </div>
+        </div>
+        <div class="inline-quiz" style="margin-top:16px">
+            <div class="iq-label">Provocare</div>
+            <div class="iq-question">Care proiect ti se pare cel mai interesant? (nu exista raspuns gresit!)</div>
+            <div class="iq-options" id="iq9-opts">
+                <button class="iq-opt" data-correct="1">&#x1F3AE; Un joc</button>
+                <button class="iq-opt" data-correct="1">&#x1F3AC; O animatie/poveste</button>
+                <button class="iq-opt" data-correct="1">&#x1F3B5; Ceva cu muzica</button>
+            </div>
+            <div class="iq-fb" id="iq9-fb"></div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="20">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S20: Quiz Final -->
+<div class="slide" id="s20">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F3C6;</div>
+        <div class="slide-title">Quiz <span class="gradient-text">Final</span></div>
+        <div class="slide-subtitle">Testeaza tot ce ai invatat!</div>
+        <div id="quiz-area" style="max-width:600px;margin:0 auto;text-align:left"></div>
+        <div id="final-score" style="display:none">
+            <div class="score-display">
+                <div class="score-big" id="score-num">0/6</div>
+                <div class="score-label">Raspunsuri corecte</div>
+            </div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="21">Continuare &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S21: Recapitulare -->
+<div class="slide" id="s21">
+    <div class="slide-inner">
+        <div class="slide-icon">&#x1F4CB;</div>
+        <div class="slide-title">Recapitulare <span class="gradient-text">Totala</span></div>
+        <div class="slide-subtitle">Ce ai invatat azi &mdash; apasa pe un card pentru a revizui</div>
+        <div class="hub-grid">
+            <div class="hub-card" data-go="2"><div class="hub-icon">&#x1F30D;</div><div class="hub-name">Ce este Scratch</div><div class="hub-desc">Limbaj vizual de la MIT</div></div>
+            <div class="hub-card" data-go="5"><div class="hub-icon">&#x1F5A5;</div><div class="hub-name">Interfata</div><div class="hub-desc">5 zone + coordonate X, Y</div></div>
+            <div class="hub-card" data-go="8"><div class="hub-icon">&#x1F9E9;</div><div class="hub-name">Blocuri</div><div class="hub-desc">8 categorii colorate</div></div>
+            <div class="hub-card" data-go="12"><div class="hub-icon">&#x1F680;</div><div class="hub-name">Primul Program</div><div class="hub-desc">Secvential + repetitie</div></div>
+            <div class="hub-card" data-go="16"><div class="hub-icon">&#x1F3A8;</div><div class="hub-name">Personaje</div><div class="hub-desc">Sprite-uri, costume, fundaluri</div></div>
+            <div class="hub-card" data-go="19"><div class="hub-icon">&#x1F4A1;</div><div class="hub-name">Idei Proiecte</div><div class="hub-desc">Jocuri, animatii, muzica</div></div>
+        </div>
+        <div class="summary-tags" style="margin-top:18px">
+            <span class="summary-tag" style="border-color:var(--scratch-motion)">Blocuri colorate</span>
+            <span class="summary-tag" style="border-color:var(--scratch-looks)">Sprite-uri</span>
+            <span class="summary-tag" style="border-color:var(--scratch-events)">Steagul verde</span>
+            <span class="summary-tag" style="border-color:var(--scratch-control)">La infinit</span>
+            <span class="summary-tag" style="border-color:var(--scratch-sensing)">Coordonate X, Y</span>
+            <span class="summary-tag" style="border-color:var(--scratch-operators)">Executie secventiala</span>
+            <span class="summary-tag" style="border-color:var(--scratch-variables)">Costume</span>
+            <span class="summary-tag" style="border-color:var(--green)">scratch.mit.edu</span>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="22">Finalizeaza &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- S22: Final -->
+<div class="slide" id="s22">
+    <div class="slide-inner">
+        <div class="slide-icon float" style="font-size:5rem">&#x1F389;</div>
+        <div class="slide-title" style="font-size:clamp(1.8rem,4vw,3rem)"><span class="gradient-text">Felicitari!</span></div>
+        <div class="slide-subtitle" style="font-size:1.1rem">Acum stii tot ce ai nevoie pentru a incepe sa creezi in Scratch!</div>
+        <div class="def-box" style="max-width:500px;margin:16px auto;text-align:center">
+            <div class="def-text" style="text-align:center">
+                <strong>Urmatorul pas:</strong><br>
+                Deschide <em>scratch.mit.edu</em>, apasa <strong>"Creeaza"</strong><br>si fa primul tau proiect!<br><br>
+                &#x1F431; Pisica Scratch te asteapta!
+            </div>
+        </div>
+        <div class="slide-actions">
+            <button class="action-btn btn-hub" data-go="1">&#x2190; Meniu</button>
+            <button class="action-btn btn-primary" data-go="0">&#x1F3E0; De la inceput</button>
+        </div>
+    </div>
+</div>
+
+<!-- NAV BAR -->
+<div id="nav-bar">
+    <button class="nav-btn" id="btn-prev" title="Inapoi">&#x2190;</button>
+    <div id="progress-bar"></div>
+    <span id="slide-counter">1/23</span>
+    <button class="nav-btn" id="btn-next" title="Inainte">&#x2192;</button>
+</div>
+
+<div id="kbd-hint"><kbd>&#x2190;</kbd> <kbd>&#x2192;</kbd> navigare &bull; <kbd>F</kbd> fullscreen</div>
+<button id="fs-btn" title="Fullscreen">&#x26F6; Fullscreen</button>
+
+<script>
+// ===== SLIDE ENGINE =====
+var slides = document.querySelectorAll('.slide');
+var total = slides.length;
+var cur = 0;
+var visited = [true];
+for (var v = 1; v < total; v++) visited.push(false);
+
+function buildDots() {
+    var bar = document.getElementById('progress-bar');
+    bar.innerHTML = '';
+    for (var i = 0; i < total; i++) {
+        var dot = document.createElement('div');
+        dot.className = 'progress-dot';
+        dot.dataset.idx = i;
+        bar.appendChild(dot);
+    }
+}
+buildDots();
+
+function goTo(n) {
+    if (n < 0 || n >= total || n === cur) return;
+    var dir = n > cur ? 'left' : 'right';
+    slides[cur].classList.remove('active');
+    slides[cur].classList.add('exit-' + dir);
+    setTimeout(function() { slides[cur === undefined ? 0 : cur].classList.remove('exit-left', 'exit-right'); }, 500);
+    var prev = cur;
+    cur = n;
+    visited[cur] = true;
+    slides[cur].classList.add('active');
+    updateUI();
+    // init exercises when visiting specific slides
+    if (cur === 10) initClassify();
+    if (cur === 15) initOrder();
+    if (cur === 20 && !quizInit) initQuiz();
+    setTimeout(function() { slides[prev].classList.remove('exit-left', 'exit-right'); }, 600);
+}
+
+function updateUI() {
+    document.getElementById('slide-counter').textContent = (cur + 1) + '/' + total;
+    document.getElementById('btn-prev').disabled = (cur === 0);
+    document.getElementById('btn-next').disabled = (cur === total - 1);
+    var dots = document.querySelectorAll('.progress-dot');
+    dots.forEach(function(d, i) {
+        d.classList.remove('active', 'visited');
+        if (i === cur) d.classList.add('active');
+        else if (visited[i]) d.classList.add('visited');
+    });
+}
+
+// Navigation
+document.getElementById('btn-prev').addEventListener('click', function() { goTo(cur - 1); });
+document.getElementById('btn-next').addEventListener('click', function() { goTo(cur + 1); });
+document.getElementById('progress-bar').addEventListener('click', function(e) {
+    var dot = e.target.closest('.progress-dot');
+    if (dot) goTo(parseInt(dot.dataset.idx));
+});
+
+// data-go click delegation
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-go]');
+    if (btn) goTo(parseInt(btn.dataset.go));
+});
+
+// Keyboard nav
+document.addEventListener('keydown', function(e) {
+    if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(cur + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(cur - 1); }
+    if (e.key === 'f' || e.key === 'F') {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+    }
+});
+document.getElementById('fs-btn').addEventListener('click', function() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+});
+
+// ===== HUB COMPLETION =====
+var topicCompleted = [false, false, false, false, false, false];
+var topicEndSlide = [4, 7, 11, 15, 18, 19];
+function markTopicDone(t) {
+    if (topicCompleted[t]) return;
+    topicCompleted[t] = true;
+    updateHub();
+}
+function updateHub() {
+    var cards = document.querySelectorAll('#hub-grid .hub-card');
+    var done = 0;
+    topicCompleted.forEach(function(c, i) {
+        if (c) { cards[i].classList.add('completed'); done++; }
+    });
+    document.getElementById('hub-text').textContent = done + ' din 6 completate';
+    document.getElementById('hub-fill').style.width = (done / 6 * 100) + '%';
+}
+
+// Auto-mark topic on visiting end slide
+var origGoTo = goTo;
+goTo = function(n) {
+    origGoTo(n);
+    topicEndSlide.forEach(function(end, t) {
+        if (n === end) markTopicDone(t);
+    });
+};
+
+// ===== INLINE QUIZ HANDLER =====
+document.addEventListener('click', function(e) {
+    var opt = e.target.closest('.iq-opt');
+    if (!opt) return;
+    var parent = opt.closest('.inline-quiz');
+    if (!parent) return;
+    var fb = parent.querySelector('.iq-fb');
+    var opts = parent.querySelectorAll('.iq-opt');
+    var isCorrect = opt.dataset.correct === '1';
+    opts.forEach(function(o) {
+        o.classList.add('iq-disabled');
+        if (o.dataset.correct === '1') o.classList.add('iq-correct');
+    });
+    if (!isCorrect) { opt.classList.add('iq-wrong'); fb.className = 'iq-fb show nok'; fb.textContent = 'Nu chiar... Raspunsul corect e marcat cu verde.'; }
+    else { fb.className = 'iq-fb show ok'; fb.textContent = 'Corect! Bravo!'; }
+});
+
+// ===== CLASSIFY EXERCISE (Block Categories) =====
+var clfData = [
+    { text: 'mergi 10 pasi', cat: 'motion' },
+    { text: 'spune Salut!', cat: 'looks' },
+    { text: 'cand se da click pe steag', cat: 'events' },
+    { text: 'roteste-te 15 grade', cat: 'motion' },
+    { text: 'treci la costumul 2', cat: 'looks' },
+    { text: 'cand se apasa tasta spatiu', cat: 'events' },
+    { text: 'mergi la x:0 y:0', cat: 'motion' },
+    { text: 'spune Buna! 2 secunde', cat: 'looks' },
+    { text: 'cand primesc mesaj1', cat: 'events' }
+];
+var clfSelected = null;
+var clfPlaced = 0;
+function initClassify() {
+    if (document.getElementById('clf-items').children.length > 0) return;
+    var items = document.getElementById('clf-items');
+    var shuffled = clfData.slice().sort(function() { return Math.random() - 0.5; });
+    // store shuffled order
+    items.dataset.order = JSON.stringify(shuffled.map(function(d) { return clfData.indexOf(d); }));
+    shuffled.forEach(function(d, si) {
+        var origIdx = clfData.indexOf(d);
+        var el = document.createElement('div');
+        el.className = 'classify-item'; el.textContent = d.text; el.dataset.idx = origIdx;
+        el.addEventListener('click', function() {
+            if (this.classList.contains('placed')) return;
+            document.querySelectorAll('#clf-items .classify-item').forEach(function(x) { x.style.borderColor = ''; });
+            this.style.borderColor = 'var(--scratch-motion)';
+            clfSelected = parseInt(this.dataset.idx);
+        });
+        items.appendChild(el);
+    });
+    document.getElementById('clf-motion').addEventListener('click', function() { placeClfBlock('motion'); });
+    document.getElementById('clf-looks').addEventListener('click', function() { placeClfBlock('looks'); });
+    document.getElementById('clf-events').addEventListener('click', function() { placeClfBlock('events'); });
+}
+function placeClfBlock(zone) {
+    if (clfSelected === null) return;
+    var d = clfData[clfSelected];
+    var targetId = 'clf-' + zone + '-items';
+    var el = document.createElement('div');
+    el.className = 'zone-placed'; el.textContent = d.text;
+    var correct = d.cat === zone;
+    var colors = { motion: 'var(--scratch-motion)', looks: 'var(--scratch-looks)', events: 'var(--scratch-events)' };
+    el.style.background = 'rgba(76,151,255,0.15)'; el.style.color = colors[zone] || 'var(--text)';
+    if (!correct) { el.style.textDecoration = 'line-through'; el.style.opacity = '0.6'; }
+    document.getElementById(targetId).appendChild(el);
+    document.querySelectorAll('#clf-items .classify-item').forEach(function(item) {
+        if (parseInt(item.dataset.idx) === clfSelected) item.classList.add('placed');
+    });
+    clfSelected = null; clfPlaced++;
+    if (clfPlaced >= clfData.length) {
+        var fb = document.getElementById('clf-fb');
+        fb.className = 'iq-fb show ok'; fb.textContent = 'Ai clasificat toate blocurile! Elementele taiate = plasate gresit.';
+        markTopicDone(2);
+    }
+}
+
+// ===== ORDER EXERCISE =====
+var orderSteps = [
+    'Deschide scratch.mit.edu si apasa Creeaza',
+    'Gaseste blocul "cand se da click pe steag" (Evenimente)',
+    'Trage blocul de start in zona de cod',
+    'Adauga "mergi 10 pasi" sub blocul de start',
+    'Adauga "spune Salut!" sub blocul de miscare',
+    'Apasa steagul verde pentru a testa'
+];
+var orderCurrent = [];
+function initOrder() {
+    if (document.getElementById('order-slots').children.length > 0) return;
+    orderCurrent = orderSteps.slice().sort(function() { return Math.random() - 0.5; });
+    renderOrder();
+}
+function renderOrder() {
+    var slots = document.getElementById('order-slots');
+    slots.innerHTML = '';
+    orderCurrent.forEach(function(text, i) {
+        var div = document.createElement('div');
+        div.className = 'order-slot';
+        div.innerHTML = '<div class="order-num">' + (i + 1) + '</div><div class="order-text">' + text + '</div><div class="order-arrows"></div>';
+        var arrows = div.querySelector('.order-arrows');
+        if (i > 0) { var up = document.createElement('button'); up.className = 'order-arrow'; up.textContent = '\u2191'; up.dataset.dir = 'up'; up.dataset.idx = i; arrows.appendChild(up); }
+        if (i < orderCurrent.length - 1) { var dn = document.createElement('button'); dn.className = 'order-arrow'; dn.textContent = '\u2193'; dn.dataset.dir = 'down'; dn.dataset.idx = i; arrows.appendChild(dn); }
+        slots.appendChild(div);
+    });
+    slots.addEventListener('click', function(e) {
+        var arrow = e.target.closest('.order-arrow');
+        if (!arrow) return;
+        var idx = parseInt(arrow.dataset.idx);
+        var dir = arrow.dataset.dir;
+        if (dir === 'up' && idx > 0) { var tmp = orderCurrent[idx]; orderCurrent[idx] = orderCurrent[idx - 1]; orderCurrent[idx - 1] = tmp; }
+        if (dir === 'down' && idx < orderCurrent.length - 1) { var tmp2 = orderCurrent[idx]; orderCurrent[idx] = orderCurrent[idx + 1]; orderCurrent[idx + 1] = tmp2; }
+        renderOrder();
+    });
+}
+document.getElementById('order-check').addEventListener('click', function() {
+    var correct = true;
+    var slots = document.querySelectorAll('#order-slots .order-slot');
+    orderCurrent.forEach(function(text, i) {
+        if (text !== orderSteps[i]) { correct = false; slots[i].classList.add('wrong-order'); slots[i].classList.remove('correct-order'); }
+        else { slots[i].classList.add('correct-order'); slots[i].classList.remove('wrong-order'); }
+    });
+    var fb = document.getElementById('order-fb');
+    if (correct) { fb.className = 'iq-fb show ok'; fb.textContent = 'Perfect! Ordinea este corecta! Bravo!'; markTopicDone(3); }
+    else { fb.className = 'iq-fb show nok'; fb.textContent = 'Nu chiar... Verde = corect, rosu = gresit. Mai incearca!'; }
+});
+
+// ===== FINAL QUIZ =====
+var quizInit = false;
+var quizScore = 0;
+var quizData = [
+    { q: "Ce este Scratch?", opts: ["Un editor de text", "Un limbaj de programare vizual", "Un joc video"], correct: 1, fb: "Scratch este un limbaj de programare vizual unde folosesti blocuri colorate!" },
+    { q: "Cine a creat Scratch?", opts: ["Google", "MIT Media Lab", "Microsoft"], correct: 1, fb: "Scratch a fost creat la MIT Media Lab in 2007." },
+    { q: "Ce culoare au blocurile de Aspect (Looks)?", opts: ["Albastru", "Galben", "Mov (violet)"], correct: 2, fb: "Blocurile de Aspect sunt mov/violet - spune, costum, dimensiune." },
+    { q: "Ce se intampla cand apesi steagul verde?", opts: ["Scratch se inchide", "Programul porneste", "Se sterge tot codul"], correct: 1, fb: "Steagul verde = butonul de START pentru programul tau!" },
+    { q: "Ce e un sprite?", opts: ["Un tip de bloc", "Un personaj/obiect din proiect", "O culoare de fundal"], correct: 1, fb: "Un sprite e un personaj sau obiect - pisica Scratch e sprite-ul implicit." },
+    { q: "Cum face pisica sa mearga non-stop?", opts: ["mergi 1000000 pasi", "Pune 'mergi pasi' in blocul 'la infinit'", "Apasa steagul verde de 100 ori"], correct: 1, fb: "Blocul 'la infinit' repeta actiunile pentru totdeauna!" }
+];
+var currentQ = 0;
+function initQuiz() { quizInit = true; currentQ = 0; quizScore = 0; renderQ(); }
+function renderQ() {
+    var area = document.getElementById('quiz-area');
+    if (currentQ >= quizData.length) {
+        area.innerHTML = '<div style="text-align:center;padding:20px 0"><div style="font-size:3rem;margin-bottom:8px">&#x1F389;</div><div style="font-size:1.5rem;font-weight:800;color:var(--green);margin-bottom:8px">Bravo!</div><div style="font-size:1.8rem;font-weight:900;color:var(--text)">' + quizScore + ' / ' + quizData.length + '</div><div style="color:var(--text2);margin-bottom:12px">Raspunsuri corecte</div></div>';
+        document.getElementById('final-score').style.display = '';
+        document.getElementById('score-num').textContent = quizScore + '/' + quizData.length;
+        return;
+    }
+    var q = quizData[currentQ];
+    var html = '<div style="margin-bottom:6px;font-size:0.8rem;color:var(--text3);font-weight:600">Intrebarea ' + (currentQ + 1) + ' din ' + quizData.length + '</div><div class="prez-question">' + q.q + '</div><div class="quiz-options">';
+    q.opts.forEach(function(opt, i) { html += '<button class="quiz-opt" data-idx="' + i + '" id="qopt' + i + '">' + String.fromCharCode(65 + i) + ') ' + opt + '</button>'; });
+    html += '</div><div class="quiz-feedback" id="quiz-fb"></div>';
+    area.innerHTML = html;
+    area.querySelectorAll('.quiz-opt').forEach(function(btn) { btn.addEventListener('click', function() { checkA(parseInt(this.dataset.idx)); }); });
+}
+function checkA(idx) {
+    var q = quizData[currentQ];
+    var fb = document.getElementById('quiz-fb');
+    document.querySelectorAll('.quiz-opt').forEach(function(b) { b.classList.add('disabled'); });
+    document.getElementById('qopt' + q.correct).classList.add('correct');
+    if (idx !== q.correct) { document.getElementById('qopt' + idx).classList.add('wrong'); fb.className = 'quiz-feedback show wrong-fb'; fb.textContent = q.fb; }
+    else { quizScore++; fb.className = 'quiz-feedback show correct-fb'; fb.textContent = 'Corect! ' + q.fb; }
+    setTimeout(function() { currentQ++; renderQ(); }, 2500);
+}
+
+setTimeout(function() { var h = document.getElementById('kbd-hint'); if(h) { h.style.opacity = '0'; setTimeout(function() { h.style.display = 'none'; }, 500); } }, 5000);
+updateUI();
+</script>
+</body>
+</html>
