@@ -354,6 +354,9 @@ def check_onclick_quotes(content, filepath):
                     if depth <= 0:
                         break
                 elif ch == '"' and not in_sq:
+                    if depth == 0:
+                        # This is the closing " of the onclick attribute — valid
+                        break
                     has_bad_quote = True
                     break
                 j += 1
