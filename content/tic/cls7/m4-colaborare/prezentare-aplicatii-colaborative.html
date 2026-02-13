@@ -42,6 +42,7 @@
             position: fixed;
             inset: 0;
             overflow: hidden;
+            z-index: 1;
         }
 
         #canvas {
@@ -1304,6 +1305,8 @@
 
     // ===== KEYBOARD NAVIGATION =====
     document.addEventListener('keydown', (e) => {
+        // Don't intercept Space if a button is focused
+        if (e.key === ' ' && e.target.tagName === 'BUTTON') return;
         if (e.key === 'ArrowRight' || e.key === ' ') {
             e.preventDefault();
             next();
@@ -1321,15 +1324,27 @@
 
     // ===== TOUCH NAVIGATION =====
     let touchStartX = 0;
+    let touchStartY = 0;
     document.addEventListener('touchstart', (e) => {
         touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
     });
 
     document.addEventListener('touchend', (e) => {
-        const diff = touchStartX - e.changedTouches[0].clientX;
-        if (Math.abs(diff) > 60) {
-            if (diff > 0) next();
+        // Ignore if touch was on nav bar buttons
+        if (e.target.closest('#nav-bar')) return;
+        const diffX = touchStartX - e.changedTouches[0].clientX;
+        const diffY = touchStartY - e.changedTouches[0].clientY;
+        if (Math.abs(diffX) > 60 && Math.abs(diffX) > Math.abs(diffY)) {
+            if (diffX > 0) next();
             else prev();
+        }
+    });
+
+    // Click anywhere on canvas area to advance
+    wrapper.addEventListener('click', (e) => {
+        if (e.target === wrapper || e.target === canvas) {
+            next();
         }
     });
 
