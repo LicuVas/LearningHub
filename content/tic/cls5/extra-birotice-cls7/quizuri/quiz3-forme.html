@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz: Forme si culori in Paint | Clasa 5</title>
+    <title>Quiz: Tabele in Word | Clasa 5</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -31,401 +31,80 @@
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 1.5rem;
-        }
+        .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
 
-        .quiz-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            margin-bottom: 2rem;
-            border: 1px solid var(--border);
-        }
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: var(--bg-secondary); border-radius: 16px; margin-bottom: 2rem; border: 1px solid var(--border); }
+        .quiz-title { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .xp-display { display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; color: #fff; }
 
-        .quiz-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .level-map { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .level-node { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; cursor: pointer; transition: all 0.3s; position: relative; border: 3px solid var(--border); background: var(--bg-card); }
+        .level-node.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-node.locked::after { content: '\uD83D\uDD12'; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+        .level-node.active { border-color: var(--accent-blue); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); animation: pulse 2s infinite; }
+        .level-node.completed { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); border-color: var(--accent-green); }
+        .level-node.completed::after { content: '\2713'; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
-        .xp-display {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 700;
-            color: #fff;
-        }
+        .level-connector { width: 30px; height: 3px; background: var(--border); align-self: center; }
+        .level-connector.completed { background: var(--accent-green); }
 
-        .level-map {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
+        .quiz-area { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; border: 1px solid var(--border); min-height: 400px; }
+        .level-intro { text-align: center; padding: 2rem; }
+        .level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-blue); }
+        .level-intro p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+        .level-intro .xp-reward { display: inline-block; background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
 
-        .level-node {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            border: 3px solid var(--border);
-            background: var(--bg-card);
-        }
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
 
-        .level-node.locked {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .question-progress { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .progress-dot.current { background: var(--accent-blue); }
+        .progress-dot.correct { background: var(--accent-green); }
+        .progress-dot.wrong { background: var(--accent-red); }
 
-        .level-node.locked::after {
-            content: '🔒';
-            position: absolute;
-            font-size: 1rem;
-            bottom: -5px;
-            right: -5px;
-        }
+        .question-text { font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
 
-        .level-node.active {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-            animation: pulse 2s infinite;
-        }
+        .word-ui-mockup { background: #2d2d4a; border-radius: 12px; padding: 1rem; margin: 1rem auto; max-width: 500px; text-align: left; border: 2px solid var(--border); }
+        .word-toolbar { background: #1e1e3a; padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .word-btn { padding: 0.3rem 0.6rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 0.85rem; }
+        .word-btn.highlight { background: var(--accent-blue); border-color: var(--accent-blue); }
+        .word-document { background: #fff; color: #000; padding: 1rem; border-radius: 4px; min-height: 100px; font-family: 'Times New Roman', serif; }
 
-        .level-node.completed {
-            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
-            border-color: var(--accent-green);
-        }
+        .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .option { padding: 1.2rem 1.5rem; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 1rem; text-align: left; }
+        .option:hover { border-color: var(--accent-purple); transform: translateX(5px); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
 
-        .level-node.completed::after {
-            content: '✓';
-            position: absolute;
-            font-size: 0.8rem;
-            bottom: -5px;
-            right: -5px;
-            background: var(--accent-green);
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .feedback-box { display: none; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; }
+        .feedback-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.correct { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent-green); }
+        .feedback-box.wrong { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--accent-red); }
+        .feedback-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .feedback-text { font-size: 1.1rem; margin-bottom: 1rem; }
+        .explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
 
-        .level-connector {
-            width: 30px;
-            height: 3px;
-            background: var(--border);
-            align-self: center;
-        }
+        .level-complete { display: none; text-align: center; padding: 3rem; }
+        .level-complete.show { display: block; animation: celebrate 0.5s ease; }
+        @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .level-complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .level-complete h2 { font-size: 2rem; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-earned { font-size: 2rem; color: var(--accent-blue); margin: 1.5rem 0; }
+        .score-display { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .stars { font-size: 3rem; margin: 1rem 0; }
 
-        .level-connector.completed {
-            background: var(--accent-green);
-        }
-
-        .quiz-area {
-            background: var(--bg-secondary);
-            border-radius: 20px;
-            padding: 2rem;
-            border: 1px solid var(--border);
-            min-height: 400px;
-        }
-
-        .level-intro {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .level-intro h2 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            color: var(--accent-blue);
-        }
-
-        .level-intro p {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-            font-size: 1.1rem;
-        }
-
-        .level-intro .xp-reward {
-            display: inline-block;
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--accent-blue);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            margin-bottom: 2rem;
-        }
-
-        .question-container {
-            display: none;
-        }
-
-        .question-container.active {
-            display: block;
-            animation: slideIn 0.5s ease;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(30px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .question-progress {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .progress-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--border);
-        }
-
-        .progress-dot.current {
-            background: var(--accent-blue);
-        }
-
-        .progress-dot.correct {
-            background: var(--accent-green);
-        }
-
-        .progress-dot.wrong {
-            background: var(--accent-red);
-        }
-
-        .question-text {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            line-height: 1.6;
-        }
-
-        .shape-demo {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            margin: 1.5rem 0;
-            flex-wrap: wrap;
-        }
-
-        .shape-box {
-            background: var(--bg-card);
-            padding: 1rem;
-            border-radius: 8px;
-            text-align: center;
-            min-width: 80px;
-        }
-
-        .shape-icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .shape-name {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        .options-grid {
-            display: grid;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .option {
-            padding: 1.2rem 1.5rem;
-            background: var(--bg-card);
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1rem;
-            text-align: left;
-        }
-
-        .option:hover {
-            border-color: var(--accent-purple);
-            transform: translateX(5px);
-        }
-
-        .option.correct {
-            border-color: var(--accent-green);
-            background: rgba(16, 185, 129, 0.2);
-        }
-
-        .option.wrong {
-            border-color: var(--accent-red);
-            background: rgba(239, 68, 68, 0.2);
-        }
-
-        .feedback-box {
-            display: none;
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-top: 1.5rem;
-            text-align: center;
-        }
-
-        .feedback-box.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .feedback-box.correct {
-            background: rgba(16, 185, 129, 0.2);
-            border: 2px solid var(--accent-green);
-        }
-
-        .feedback-box.wrong {
-            background: rgba(239, 68, 68, 0.2);
-            border: 2px solid var(--accent-red);
-        }
-
-        .feedback-icon {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .feedback-text {
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-        }
-
-        .explanation {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            background: var(--bg-card);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            border: none;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
-            color: white;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border);
-            color: var(--text-secondary);
-        }
-
-        .btn-outline:hover {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-        }
-
-        .level-complete {
-            display: none;
-            text-align: center;
-            padding: 3rem;
-        }
-
-        .level-complete.show {
-            display: block;
-            animation: celebrate 0.5s ease;
-        }
-
-        @keyframes celebrate {
-            0% { transform: scale(0.8); opacity: 0; }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .level-complete-icon {
-            font-size: 5rem;
-            margin-bottom: 1rem;
-        }
-
-        .level-complete h2 {
-            font-size: 2rem;
-            color: var(--accent-green);
-            margin-bottom: 1rem;
-        }
-
-        .xp-earned {
-            font-size: 2rem;
-            color: var(--accent-blue);
-            margin: 1.5rem 0;
-        }
-
-        .score-display {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-        }
-
-        .stars {
-            font-size: 3rem;
-            margin: 1rem 0;
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-            text-decoration: none;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-
-        .back-link:hover {
-            color: var(--accent-cyan);
-        }
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem; font-size: 0.9rem; }
+        .back-link:hover { color: var(--accent-cyan); }
 
         @media (max-width: 600px) {
             .container { padding: 1rem; }
@@ -434,25 +113,18 @@
             .question-text { font-size: 1.1rem; }
         }
 
-        footer {
-            margin-top: 3rem;
-            padding: 1.5rem;
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            border-top: 1px solid var(--border);
-        }
+        footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); }
     </style>
     <link rel="stylesheet" href="../../../../../assets/css/mobile.css">
     <link rel="stylesheet" href="../../../../../assets/css/mobile-first.css">
-    </head>
+</head>
 <body>
     <a href="#main-content" class="skip-link">Sari la continut</a>
     <div id="main-content" class="container">
-        <a href="../index.html" class="back-link">← Inapoi la Modulul 2</a>
+        <a href="../index.html" class="back-link">&larr; Inapoi la modul</a>
 
         <div class="quiz-header">
-            <div class="quiz-title">Quiz: Forme si culori in Paint</div>
+            <div class="quiz-title">Quiz 3: Tabele in Word</div>
             <div class="xp-display">
                 <span>XP:</span>
                 <span id="totalXP">0</span>
@@ -471,8 +143,7 @@
             <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
         </div>
 
-        <div class="quiz-area" id="quizArea">
-        </div>
+        <div class="quiz-area" id="quizArea"></div>
     </div>
 
     <footer>
@@ -481,204 +152,207 @@
     </footer>
 
     <script>
+        // Quiz ID: cls5-extra-birotice-quiz3
         const levels = {
             1: {
-                title: "Nivel 1: Dreptunghiul",
-                description: "Invata sa desenezi dreptunghiuri si patrate",
+                title: "Nivel 1: Ce este un tabel?",
+                description: "Invata ce sunt tabelele si cand le folosim in Word",
                 xpReward: 50,
                 questions: [
                     {
-                        text: "Unde gasesti formele geometrice in Paint?",
+                        text: "Ce este un tabel in Word?",
                         options: [
-                            "In meniul File",
-                            "In sectiunea 'Shapes' din bara de instrumente",
-                            "In paleta de culori",
-                            "Nu exista forme in Paint"
+                            "O imagine cu linii",
+                            "O structura formata din randuri si coloane pentru organizarea informatiilor",
+                            "Un tip de font special",
+                            "O lista cu buline"
                         ],
                         correct: 1,
-                        explanation: "Formele geometrice (dreptunghi, elipsa, linie etc.) se gasesc in sectiunea 'Shapes' din bara de instrumente Home."
+                        explanation: "Un tabel este o structura cu randuri (linii orizontale) si coloane (linii verticale) care creeaza celule. Este perfect pentru a organiza date clar."
                     },
                     {
-                        text: "Cum desenezi un dreptunghi in Paint?",
+                        text: "Cand este util sa folosesti un tabel?",
                         options: [
-                            "Apesi tasta D",
-                            "Selectezi forma Rectangle, apoi tragi cu mouse-ul pe panza",
-                            "Scrii 'dreptunghi' cu tastatura",
-                            "Dai click de doua ori"
+                            "Cand vrei sa scrii un poem",
+                            "Cand vrei sa organizezi informatii in categorii (ex: orar, note, comparatii)",
+                            "Cand vrei sa desenezi",
+                            "Cand vrei sa asculti muzica"
                         ],
                         correct: 1,
-                        explanation: "Selectezi Rectangle din Shapes, apoi tii apasat butonul mouse-ului si tragi pentru a desena dreptunghiul."
+                        explanation: "Tabelele sunt ideale pentru orare, liste de note, comparatii, inventare - orice informatii care au nevoie de structura clara pe categorii."
                     },
                     {
-                        text: "Cum faci un patrat perfect (nu dreptunghi)?",
+                        text: "Cum se numeste fiecare casuta dintr-un tabel?",
                         options: [
-                            "Nu se poate in Paint",
-                            "Tii apasata tasta Shift in timp ce tragi",
-                            "Apesi tasta P",
-                            "Tragi foarte incet"
+                            "Paragraf",
+                            "Celula",
+                            "Pagina",
+                            "Rand"
                         ],
                         correct: 1,
-                        explanation: "Tinand apasata tasta Shift cand desenezi un dreptunghi, obtii un patrat perfect cu toate laturile egale."
+                        explanation: "Fiecare casuta dintr-un tabel se numeste celula. O celula se afla la intersectia unui rand cu o coloana."
                     }
                 ]
             },
             2: {
-                title: "Nivel 2: Elipsa si cercul",
-                description: "Invata sa desenezi elipse si cercuri perfecte",
+                title: "Nivel 2: Inserarea unui tabel",
+                description: "Invata cum sa adaugi un tabel in documentul tau",
                 xpReward: 75,
                 questions: [
                     {
-                        text: "Care forma din Paint folosesti pentru a desena un cerc?",
+                        text: "Din ce tab inserezi un tabel in Word?",
+                        hasVisual: true,
+                        visualType: "table-insert",
                         options: [
-                            "Rectangle",
-                            "Oval (Ellipse)",
-                            "Line",
-                            "Triangle"
+                            "Home",
+                            "Insert (Inserare)",
+                            "View",
+                            "File"
                         ],
                         correct: 1,
-                        explanation: "Forma Oval (Ellipse) deseneaza elipse. Pentru un cerc perfect, tii apasata tasta Shift."
+                        explanation: "Tab-ul Insert contine butonul Table. Apesi Insert > Table si alegi numarul de randuri si coloane dorit."
                     },
                     {
-                        text: "Ce obtii daca desenezi o elipsa tinand Shift apasat?",
+                        text: "Cum alegi dimensiunea tabelului (numar de randuri si coloane)?",
                         options: [
-                            "O elipsa mai mare",
-                            "Un cerc perfect",
-                            "Un patrat",
-                            "O linie"
+                            "Scrii numarul pe tastatura",
+                            "Treci cu mouse-ul peste grila si selectezi cate randuri si coloane vrei",
+                            "Apesi tasta Enter",
+                            "Nu poti alege dimensiunea"
                         ],
                         correct: 1,
-                        explanation: "Shift + Ellipse = cerc perfect! La fel cum Shift + Rectangle = patrat perfect."
+                        explanation: "Cand apesi butonul Table, apare o grila vizuala. Treci cu mouse-ul peste ea pentru a selecta cate coloane si randuri vrei (ex: 3x4 = 3 coloane, 4 randuri)."
                     },
                     {
-                        text: "Cum poti schimba culoarea de umplere a unei elipse INAINTE de a o desena?",
+                        text: "Ce se intampla dupa ce inserezi un tabel?",
                         options: [
-                            "Nu se poate umple cu culoare",
-                            "Alegi optiunea Fill din Shapes si selectezi culoarea Color 1",
-                            "Apesi tasta C",
-                            "Desenezi elipsa si apoi o colorezi"
+                            "Word se inchide",
+                            "Apare tabelul in document si poti incepe sa scrii in celule",
+                            "Documentul se sterge",
+                            "Apare o imagine"
                         ],
                         correct: 1,
-                        explanation: "In sectiunea Shapes exista optiunea Fill (Umplere). Alege 'Solid color' si seteaza Color 1 la culoarea dorita."
+                        explanation: "Tabelul apare in document cu celule goale. Dai click in orice celula si incepi sa scrii. Cu Tab treci la celula urmatoare."
                     }
                 ]
             },
             3: {
-                title: "Nivel 3: Linii si sageti",
-                description: "Invata sa desenezi linii drepte si sageti",
+                title: "Nivel 3: Navigarea in tabel",
+                description: "Invata sa te deplasezi eficient intr-un tabel",
                 xpReward: 100,
                 questions: [
                     {
-                        text: "Cum desenezi o linie perfect dreapta (orizontala sau verticala)?",
+                        text: "Cum treci de la o celula la urmatoarea celula din dreapta?",
                         options: [
-                            "Este imposibil in Paint",
-                            "Selectezi Line si tii Shift apasat cand tragi",
-                            "Apesi de doua ori",
-                            "Folosesti creionul"
+                            "Apesi Enter",
+                            "Apesi tasta Tab",
+                            "Apesi Escape",
+                            "Apesi Delete"
                         ],
                         correct: 1,
-                        explanation: "Cu instrumentul Line si Shift apasat, linia se aliniaza perfect la 0, 45 sau 90 de grade."
+                        explanation: "Tasta Tab te muta la urmatoarea celula din dreapta. Daca esti in ultima celula a randului, Tab te duce la prima celula a randului urmator."
                     },
                     {
-                        text: "Unde gasesti instrumentul pentru sageti (Arrow)?",
+                        text: "Ce se intampla daca apesi Tab in ultima celula a tabelului?",
                         options: [
-                            "Nu exista sageti in Paint",
-                            "In lista de forme (Shapes), exista forme de sageti",
-                            "In meniul View",
-                            "In paleta de culori"
+                            "Tabelul se sterge",
+                            "Se adauga automat un rand nou la sfarsitul tabelului",
+                            "Cursorul iese din tabel",
+                            "Nu se intampla nimic"
                         ],
                         correct: 1,
-                        explanation: "In sectiunea Shapes gasesti mai multe tipuri de sageti pe care le poti folosi in desenele tale."
+                        explanation: "Daca apesi Tab in ultima celula (coltul din dreapta jos), Word adauga automat un rand nou. Este o metoda rapida de a extinde tabelul!"
                     },
                     {
-                        text: "Ce rol are optiunea 'Outline' pentru forme?",
+                        text: "Cum selectezi un rand intreg dintr-un tabel?",
                         options: [
-                            "Sterge forma",
-                            "Seteaza stilul si culoarea conturului formei",
-                            "Salveaza documentul",
-                            "Roteste forma"
+                            "Dai click in mijlocul randului",
+                            "Pozitionezi mouse-ul in stanga randului (langa tabel) si dai click",
+                            "Apesi tasta Spatiu",
+                            "Apesi Delete"
                         ],
                         correct: 1,
-                        explanation: "Outline (Contur) controleaza marginea formei - poti alege grosimea, culoarea si daca sa fie vizibil sau nu."
+                        explanation: "Pentru a selecta un rand intreg, pozitionezi mouse-ul in stanga tabelului, langa randul dorit. Cursorul se transforma intr-o sageata, apoi dai click."
                     }
                 ]
             },
             4: {
-                title: "Nivel 4: Umplerea formelor",
-                description: "Invata optiunile de umplere si contur",
+                title: "Nivel 4: Modificarea tabelului",
+                description: "Invata sa adaugi si sa stergi randuri si coloane",
                 xpReward: 125,
                 questions: [
                     {
-                        text: "Care sunt cele 3 optiuni principale pentru Fill (umplere) la forme?",
+                        text: "Cum adaugi un rand nou in mijlocul tabelului?",
                         options: [
-                            "Mare, Mic, Mediu",
-                            "No fill (gol), Solid color (plin), si alte stiluri",
-                            "Rosu, Verde, Albastru",
-                            "Nu exista optiuni"
+                            "Click dreapta pe rand > Insert > Insert Rows Above/Below",
+                            "Apesi tasta Enter",
+                            "Stergi o celula",
+                            "Nu se poate adauga"
                         ],
-                        correct: 1,
-                        explanation: "Poti alege: No fill (doar contur), Solid color (umplut complet), sau stiluri speciale ca Marker, Crayon etc."
+                        correct: 0,
+                        explanation: "Click dreapta pe un rand existent, apoi Insert > 'Insert Rows Above' (deasupra) sau 'Insert Rows Below' (dedesubt) pentru a adauga un rand nou."
                     },
                     {
-                        text: "Ce culoare foloseste Paint pentru umplerea formelor?",
+                        text: "Cum stergi o coloana dintr-un tabel?",
                         options: [
-                            "Intotdeauna alb",
-                            "Color 1 pentru umplere, Color 2 pentru fundal",
-                            "Intotdeauna negru",
-                            "O culoare aleatorie"
+                            "Apesi tasta Backspace",
+                            "Selectezi coloana, click dreapta > Delete Columns",
+                            "Apesi tasta Escape",
+                            "Inchizi documentul"
                         ],
                         correct: 1,
-                        explanation: "Paint foloseste Color 1 (culoarea principala) pentru umplere si Color 2 pentru fundal cand este cazul."
+                        explanation: "Selectezi intreaga coloana (click pe marginea de sus), apoi click dreapta > Delete Columns. Coloana dispare impreuna cu tot continutul."
                     },
                     {
-                        text: "Cum desenezi un dreptunghi cu contur rosu si umplut cu galben?",
+                        text: "Cum poti redimensiona (mari sau micsora) o coloana?",
                         options: [
-                            "Nu se poate",
-                            "Setezi Color 1 = galben (fill), Outline = rosu, apoi desenezi",
-                            "Desenezi doua dreptunghiuri",
-                            "Folosesti radiera"
+                            "Apesi tasta Tab",
+                            "Tragi de marginea coloanei cu mouse-ul",
+                            "Apesi Ctrl + Z",
+                            "Scrii mai mult text"
                         ],
                         correct: 1,
-                        explanation: "Setezi culoarea de umplere (Color 1), apoi pentru contur alegi culoarea separat din Outline color."
+                        explanation: "Pozitionezi mouse-ul pe marginea dintre doua coloane (cursorul se schimba intr-o sageata dubla), apoi tragi spre stanga sau dreapta."
                     }
                 ]
             },
             5: {
-                title: "Nivel 5: Forme complexe",
-                description: "Combina forme pentru desene mai elaborate",
+                title: "Nivel 5: Formatarea tabelului",
+                description: "Invata sa faci tabelul sa arate profesional",
                 xpReward: 150,
                 questions: [
                     {
-                        text: "Cum poti desena o casa simpla in Paint?",
+                        text: "Ce sunt 'Table Styles' (Stiluri de tabel) in Word?",
                         options: [
-                            "Folosesti o singura forma",
-                            "Combini un dreptunghi (peretii) cu un triunghi (acoperisul)",
-                            "Scrii 'casa'",
-                            "Nu se poate desena o casa"
+                            "Tipuri de fonturi pentru tabel",
+                            "Modele predefinite de design care coloreaza si formateaza tabelul automat",
+                            "Tipuri de documente",
+                            "Stiluri de paragraf"
                         ],
                         correct: 1,
-                        explanation: "O casa simpla = un dreptunghi pentru pereti + un triunghi pentru acoperis + dreptunghiuri mici pentru usi si ferestre."
+                        explanation: "Table Styles sunt sabloane de design pregatite care aplica automat culori, borduri si formatare tabelului. Le gasesti in tab-ul Table Design."
                     },
                     {
-                        text: "Ce forma ai folosi pentru a desena un stea?",
+                        text: "Cum faci ca primul rand al tabelului (antetul) sa arate diferit?",
                         options: [
-                            "Circle",
-                            "Star (exista forme de stea in Shapes)",
-                            "Rectangle",
-                            "Line"
+                            "Il stergi si il rescrii",
+                            "Activezi optiunea 'Header Row' din Table Design si formatezi cu Bold/culori",
+                            "Nu se poate face",
+                            "Apesi tasta Delete"
                         ],
                         correct: 1,
-                        explanation: "In sectiunea Shapes exista forme de stele gata facute - le poti folosi direct!"
+                        explanation: "In tab-ul Table Design, bifezi 'Header Row' pentru ca primul rand sa fie formatat diferit (mai inchis, bold). Apoi poti adauga Bold si culoare manual."
                     },
                     {
-                        text: "Cum poti muta o forma dupa ce ai desenat-o?",
+                        text: "Cum imbini (unesti) doua celule intr-una singura?",
                         options: [
-                            "Nu se poate muta",
-                            "Selectezi zona cu Select tool, apoi tragi in alta parte",
-                            "Stergi si desenezi din nou",
-                            "Apesi tasta M"
+                            "Stergi textul din ele",
+                            "Selectezi celulele dorite, click dreapta > Merge Cells",
+                            "Apesi tasta Tab",
+                            "Le copiezi"
                         ],
                         correct: 1,
-                        explanation: "Folosesti instrumentul Select pentru a selecta forma/zona, apoi o poti trage (drag) in alta pozitie."
+                        explanation: "Selectezi celulele pe care vrei sa le unesti, click dreapta > Merge Cells (Imbina celulele). Cele doua celule devin una singura, mai mare."
                     }
                 ]
             }
@@ -692,59 +366,40 @@
         let unlockedLevels = [1];
 
         function loadProgress() {
-            const saved = localStorage.getItem('paint_quiz3_progress');
+            const saved = localStorage.getItem('cls5-extra-birotice-quiz3');
             if (saved) {
                 const data = JSON.parse(saved);
                 totalXP = data.totalXP || 0;
                 unlockedLevels = data.unlockedLevels || [1];
                 levelScores = data.levelScores || {};
-                updateXPDisplay();
-                updateLevelMap();
+                updateXPDisplay(); updateLevelMap();
             }
         }
 
         function saveProgress() {
-            localStorage.setItem('paint_quiz3_progress', JSON.stringify({
-                totalXP,
-                unlockedLevels,
-                levelScores
-            }));
+            localStorage.setItem('cls5-extra-birotice-quiz3', JSON.stringify({ totalXP, unlockedLevels, levelScores }));
         }
 
-        function updateXPDisplay() {
-            document.getElementById('totalXP').textContent = totalXP;
-        }
+        function updateXPDisplay() { document.getElementById('totalXP').textContent = totalXP; }
 
         function updateLevelMap() {
             document.querySelectorAll('.level-node').forEach((node, index) => {
                 const level = index + 1;
                 node.classList.remove('locked', 'active', 'completed');
-
-                if (levelScores[level] !== undefined) {
-                    node.classList.add('completed');
-                } else if (unlockedLevels.includes(level)) {
-                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
-                        node.classList.add('active');
-                    }
-                } else {
-                    node.classList.add('locked');
-                }
+                if (levelScores[level] !== undefined) node.classList.add('completed');
+                else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) node.classList.add('active');
+                } else node.classList.add('locked');
             });
-
             document.querySelectorAll('.level-connector').forEach((conn, index) => {
-                if (levelScores[index + 1] !== undefined) {
-                    conn.classList.add('completed');
-                } else {
-                    conn.classList.remove('completed');
-                }
+                if (levelScores[index + 1] !== undefined) conn.classList.add('completed');
+                else conn.classList.remove('completed');
             });
         }
 
         function selectLevel(level) {
             if (!unlockedLevels.includes(level)) return;
-            currentLevel = level;
-            currentQuestion = 0;
-            score = 0;
+            currentLevel = level; currentQuestion = 0; score = 0;
             showLevelIntro();
         }
 
@@ -755,23 +410,14 @@
                     <h2>${levelData.title}</h2>
                     <p>${levelData.description}</p>
                     <div class="xp-reward">+${levelData.xpReward} XP</div>
-                    <button class="btn btn-primary" onclick="startLevel()">
-                        Incepe Nivelul
-                    </button>
-                </div>
-            `;
+                    <button class="btn btn-primary" onclick="startLevel()">Incepe Nivelul</button>
+                </div>`;
         }
 
-        function startLevel() {
-            showQuestion();
-        }
+        function startLevel() { showQuestion(); }
 
         function showQuestion() {
-        // HTML-escape to prevent < > from breaking option rendering
-        function escHtml(s) {
-            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        }
-
+            function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
             const levelData = levels[currentLevel];
             const q = levelData.questions[currentQuestion];
 
@@ -783,6 +429,25 @@
             }
 
             let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            if (q.hasVisual && q.visualType === 'table-insert') {
+                questionContent += `
+                    <div class="word-ui-mockup">
+                        <div class="word-toolbar">
+                            <span class="word-btn">File</span>
+                            <span class="word-btn">Home</span>
+                            <span class="word-btn highlight">Insert</span>
+                            <span class="word-btn">Layout</span>
+                        </div>
+                        <div class="word-document">
+                            <table style="border-collapse: collapse; width: 100%;">
+                                <tr><td style="border: 1px solid #999; padding: 6px;">Nume</td><td style="border: 1px solid #999; padding: 6px;">Nota</td><td style="border: 1px solid #999; padding: 6px;">Materie</td></tr>
+                                <tr><td style="border: 1px solid #999; padding: 6px;">Ana</td><td style="border: 1px solid #999; padding: 6px;">10</td><td style="border: 1px solid #999; padding: 6px;">TIC</td></tr>
+                                <tr><td style="border: 1px solid #999; padding: 6px;">Ion</td><td style="border: 1px solid #999; padding: 6px;">9</td><td style="border: 1px solid #999; padding: 6px;">TIC</td></tr>
+                            </table>
+                        </div>
+                    </div>`;
+            }
 
             let optionsHTML = '';
             q.options.forEach((opt, i) => {
@@ -796,12 +461,9 @@
                     <div class="options-grid">${optionsHTML}</div>
                     <div class="feedback-box" id="feedback"></div>
                     <div style="text-align: center; margin-top: 1.5rem;">
-                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
-                            Urmatoarea Intrebare
-                        </button>
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">Urmatoarea Intrebare</button>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
         function selectAnswer(index) {
@@ -812,11 +474,8 @@
             const nextBtn = document.getElementById('nextBtn');
 
             options.forEach(opt => opt.style.pointerEvents = 'none');
-
             options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
-            if (index !== q.correct) {
-                options[q.correct].classList.add('correct');
-            }
+            if (index !== q.correct) options[q.correct].classList.add('correct');
 
             const dots = document.querySelectorAll('.progress-dot');
             dots[currentQuestion].classList.remove('current');
@@ -825,34 +484,20 @@
             if (index === q.correct) {
                 score++;
                 feedback.className = 'feedback-box show correct';
-                feedback.innerHTML = `
-                    <div class="feedback-icon">🎉</div>
-                    <div class="feedback-text">Corect!</div>
-                    <div class="explanation">${q.explanation}</div>
-                `;
+                feedback.innerHTML = `<div class="feedback-icon">🎉</div><div class="feedback-text">Corect!</div><div class="explanation">${q.explanation}</div>`;
             } else {
                 feedback.className = 'feedback-box show wrong';
-                feedback.innerHTML = `
-                    <div class="feedback-icon">😅</div>
-                    <div class="feedback-text">Nu chiar...</div>
-                    <div class="explanation">${q.explanation}</div>
-                `;
+                feedback.innerHTML = `<div class="feedback-icon">😅</div><div class="feedback-text">Nu chiar...</div><div class="explanation">${q.explanation}</div>`;
             }
 
             nextBtn.style.display = 'inline-flex';
-            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
-                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ? 'Urmatoarea Intrebare' : 'Vezi Rezultatul';
         }
 
         function nextQuestion() {
-            const levelData = levels[currentLevel];
             currentQuestion++;
-
-            if (currentQuestion >= levelData.questions.length) {
-                showLevelComplete();
-            } else {
-                showQuestion();
-            }
+            if (currentQuestion >= levels[currentLevel].questions.length) showLevelComplete();
+            else showQuestion();
         }
 
         function showLevelComplete() {
@@ -870,21 +515,12 @@
             if (passed) {
                 earnedXP = levelData.xpReward;
                 if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
-
                 if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
-                    if (!levelScores[currentLevel]) {
-                        totalXP += earnedXP;
-                    }
+                    if (!levelScores[currentLevel]) totalXP += earnedXP;
                     levelScores[currentLevel] = percentage;
                 }
-
-                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
-                    unlockedLevels.push(currentLevel + 1);
-                }
-
-                saveProgress();
-                updateXPDisplay();
-                updateLevelMap();
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) unlockedLevels.push(currentLevel + 1);
+                saveProgress(); updateXPDisplay(); updateLevelMap();
             }
 
             document.getElementById('quizArea').innerHTML = `
@@ -895,22 +531,11 @@
                     <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
                     ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
                     <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
-                            Reincearca
-                        </button>
-                        ${passed && currentLevel < 5 ? `
-                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
-                                Nivelul Urmator
-                            </button>
-                        ` : ''}
-                        ${passed && currentLevel === 5 ? `
-                            <button class="btn btn-success" onclick="window.location.href='quiz4-text.html'">
-                                Quiz-ul 4: Text si salvare
-                            </button>
-                        ` : ''}
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">Reincearca</button>
+                        ${passed && currentLevel < 5 ? `<button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">Nivelul Urmator</button>` : ''}
+                        ${passed && currentLevel === 5 ? `<button class="btn btn-success" onclick="window.location.href='quiz4-text.html'">Quiz-ul 4: Imagini in Word</button>` : ''}
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
         loadProgress();

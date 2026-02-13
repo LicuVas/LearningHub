@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz: Instrumentele Paint | Clasa 5</title>
+    <title>Quiz: Formatare Word | Clasa 5</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -31,395 +31,80 @@
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 1.5rem;
-        }
+        .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
 
-        .quiz-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            margin-bottom: 2rem;
-            border: 1px solid var(--border);
-        }
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: var(--bg-secondary); border-radius: 16px; margin-bottom: 2rem; border: 1px solid var(--border); }
+        .quiz-title { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .xp-display { display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; color: #fff; }
 
-        .quiz-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .level-map { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .level-node { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; cursor: pointer; transition: all 0.3s; position: relative; border: 3px solid var(--border); background: var(--bg-card); }
+        .level-node.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-node.locked::after { content: '\uD83D\uDD12'; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+        .level-node.active { border-color: var(--accent-blue); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); animation: pulse 2s infinite; }
+        .level-node.completed { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); border-color: var(--accent-green); }
+        .level-node.completed::after { content: '\2713'; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
-        .xp-display {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 700;
-            color: #fff;
-        }
+        .level-connector { width: 30px; height: 3px; background: var(--border); align-self: center; }
+        .level-connector.completed { background: var(--accent-green); }
 
-        .level-map {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
+        .quiz-area { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; border: 1px solid var(--border); min-height: 400px; }
+        .level-intro { text-align: center; padding: 2rem; }
+        .level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-blue); }
+        .level-intro p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+        .level-intro .xp-reward { display: inline-block; background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
 
-        .level-node {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            border: 3px solid var(--border);
-            background: var(--bg-card);
-        }
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
 
-        .level-node.locked {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .question-progress { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .progress-dot.current { background: var(--accent-blue); }
+        .progress-dot.correct { background: var(--accent-green); }
+        .progress-dot.wrong { background: var(--accent-red); }
 
-        .level-node.locked::after {
-            content: '🔒';
-            position: absolute;
-            font-size: 1rem;
-            bottom: -5px;
-            right: -5px;
-        }
+        .question-text { font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
 
-        .level-node.active {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-            animation: pulse 2s infinite;
-        }
+        .word-ui-mockup { background: #2d2d4a; border-radius: 12px; padding: 1rem; margin: 1rem auto; max-width: 500px; text-align: left; border: 2px solid var(--border); }
+        .word-toolbar { background: #1e1e3a; padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .word-btn { padding: 0.3rem 0.6rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 0.85rem; }
+        .word-btn.highlight { background: var(--accent-blue); border-color: var(--accent-blue); }
+        .word-document { background: #fff; color: #000; padding: 1rem; border-radius: 4px; min-height: 100px; font-family: 'Times New Roman', serif; }
 
-        .level-node.completed {
-            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
-            border-color: var(--accent-green);
-        }
+        .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .option { padding: 1.2rem 1.5rem; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 1rem; text-align: left; }
+        .option:hover { border-color: var(--accent-purple); transform: translateX(5px); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
 
-        .level-node.completed::after {
-            content: '✓';
-            position: absolute;
-            font-size: 0.8rem;
-            bottom: -5px;
-            right: -5px;
-            background: var(--accent-green);
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .feedback-box { display: none; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; }
+        .feedback-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.correct { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent-green); }
+        .feedback-box.wrong { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--accent-red); }
+        .feedback-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .feedback-text { font-size: 1.1rem; margin-bottom: 1rem; }
+        .explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
 
-        .level-connector {
-            width: 30px;
-            height: 3px;
-            background: var(--border);
-            align-self: center;
-        }
+        .level-complete { display: none; text-align: center; padding: 3rem; }
+        .level-complete.show { display: block; animation: celebrate 0.5s ease; }
+        @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .level-complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .level-complete h2 { font-size: 2rem; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-earned { font-size: 2rem; color: var(--accent-blue); margin: 1.5rem 0; }
+        .score-display { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .stars { font-size: 3rem; margin: 1rem 0; }
 
-        .level-connector.completed {
-            background: var(--accent-green);
-        }
-
-        .quiz-area {
-            background: var(--bg-secondary);
-            border-radius: 20px;
-            padding: 2rem;
-            border: 1px solid var(--border);
-            min-height: 400px;
-        }
-
-        .level-intro {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .level-intro h2 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            color: var(--accent-blue);
-        }
-
-        .level-intro p {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-            font-size: 1.1rem;
-        }
-
-        .level-intro .xp-reward {
-            display: inline-block;
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--accent-blue);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            margin-bottom: 2rem;
-        }
-
-        .question-container {
-            display: none;
-        }
-
-        .question-container.active {
-            display: block;
-            animation: slideIn 0.5s ease;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(30px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .question-progress {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .progress-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--border);
-        }
-
-        .progress-dot.current {
-            background: var(--accent-blue);
-        }
-
-        .progress-dot.correct {
-            background: var(--accent-green);
-        }
-
-        .progress-dot.wrong {
-            background: var(--accent-red);
-        }
-
-        .question-text {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            line-height: 1.6;
-        }
-
-        .tool-demo {
-            background: #2d2d4a;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin: 1rem auto;
-            max-width: 400px;
-            text-align: center;
-            border: 2px solid var(--border);
-        }
-
-        .tool-icon {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .tool-name {
-            color: var(--accent-cyan);
-            font-weight: 600;
-        }
-
-        .options-grid {
-            display: grid;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .option {
-            padding: 1.2rem 1.5rem;
-            background: var(--bg-card);
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1rem;
-            text-align: left;
-        }
-
-        .option:hover {
-            border-color: var(--accent-purple);
-            transform: translateX(5px);
-        }
-
-        .option.correct {
-            border-color: var(--accent-green);
-            background: rgba(16, 185, 129, 0.2);
-        }
-
-        .option.wrong {
-            border-color: var(--accent-red);
-            background: rgba(239, 68, 68, 0.2);
-        }
-
-        .feedback-box {
-            display: none;
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-top: 1.5rem;
-            text-align: center;
-        }
-
-        .feedback-box.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .feedback-box.correct {
-            background: rgba(16, 185, 129, 0.2);
-            border: 2px solid var(--accent-green);
-        }
-
-        .feedback-box.wrong {
-            background: rgba(239, 68, 68, 0.2);
-            border: 2px solid var(--accent-red);
-        }
-
-        .feedback-icon {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .feedback-text {
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-        }
-
-        .explanation {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            background: var(--bg-card);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            border: none;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
-            color: white;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border);
-            color: var(--text-secondary);
-        }
-
-        .btn-outline:hover {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-        }
-
-        .level-complete {
-            display: none;
-            text-align: center;
-            padding: 3rem;
-        }
-
-        .level-complete.show {
-            display: block;
-            animation: celebrate 0.5s ease;
-        }
-
-        @keyframes celebrate {
-            0% { transform: scale(0.8); opacity: 0; }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .level-complete-icon {
-            font-size: 5rem;
-            margin-bottom: 1rem;
-        }
-
-        .level-complete h2 {
-            font-size: 2rem;
-            color: var(--accent-green);
-            margin-bottom: 1rem;
-        }
-
-        .xp-earned {
-            font-size: 2rem;
-            color: var(--accent-blue);
-            margin: 1.5rem 0;
-        }
-
-        .score-display {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-        }
-
-        .stars {
-            font-size: 3rem;
-            margin: 1rem 0;
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-            text-decoration: none;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-
-        .back-link:hover {
-            color: var(--accent-cyan);
-        }
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem; font-size: 0.9rem; }
+        .back-link:hover { color: var(--accent-cyan); }
 
         @media (max-width: 600px) {
             .container { padding: 1rem; }
@@ -428,25 +113,18 @@
             .question-text { font-size: 1.1rem; }
         }
 
-        footer {
-            margin-top: 3rem;
-            padding: 1.5rem;
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            border-top: 1px solid var(--border);
-        }
+        footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); }
     </style>
     <link rel="stylesheet" href="../../../../../assets/css/mobile.css">
     <link rel="stylesheet" href="../../../../../assets/css/mobile-first.css">
-    </head>
+</head>
 <body>
     <a href="#main-content" class="skip-link">Sari la continut</a>
     <div id="main-content" class="container">
-        <a href="../index.html" class="back-link">← Inapoi la Modulul 2</a>
+        <a href="../index.html" class="back-link">&larr; Inapoi la modul</a>
 
         <div class="quiz-header">
-            <div class="quiz-title">Quiz: Instrumentele Paint</div>
+            <div class="quiz-title">Quiz 2: Formatarea Textului in Word</div>
             <div class="xp-display">
                 <span>XP:</span>
                 <span id="totalXP">0</span>
@@ -465,8 +143,7 @@
             <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
         </div>
 
-        <div class="quiz-area" id="quizArea">
-        </div>
+        <div class="quiz-area" id="quizArea"></div>
     </div>
 
     <footer>
@@ -475,204 +152,207 @@
     </footer>
 
     <script>
+        // Quiz ID: cls5-extra-birotice-quiz2
         const levels = {
             1: {
-                title: "Nivel 1: Creionul (Pencil)",
-                description: "Invata sa folosesti instrumentul Creion pentru linii fine",
+                title: "Nivel 1: Bold, Italic, Underline",
+                description: "Invata cele trei formatari de baza ale textului",
                 xpReward: 50,
                 questions: [
                     {
-                        text: "La ce foloseste instrumentul Creion (Pencil) in Paint?",
+                        text: "Ce scurtatura de taste face textul Bold (ingrosit)?",
                         options: [
-                            "Pentru a sterge parti din desen",
-                            "Pentru a desena linii subtiri, ca si cum ai scrie cu un creion real",
-                            "Pentru a umple zone cu culoare",
-                            "Pentru a adauga text"
+                            "Ctrl + I",
+                            "Ctrl + U",
+                            "Ctrl + B",
+                            "Ctrl + P"
                         ],
-                        correct: 1,
-                        explanation: "Creionul (Pencil) deseneaza linii subtiri de 1 pixel - perfect pentru detalii fine si schite precise."
+                        correct: 2,
+                        explanation: "Ctrl + B activeaza formatul Bold (B de la Bold). Textul selectat va deveni ingrosit."
                     },
                     {
-                        text: "Cum desenezi cu creionul in Paint?",
+                        text: "Ce inseamna formatul Italic?",
                         options: [
-                            "Dai dublu-click pe panza",
-                            "Selectezi creionul, tii apasat butonul stang al mouse-ului si misti",
-                            "Apesi tasta Enter",
-                            "Scrii cu tastatura"
+                            "Textul devine mai mare",
+                            "Textul devine aplecat (inclinat) spre dreapta",
+                            "Textul devine subliniat",
+                            "Textul devine rosu"
                         ],
                         correct: 1,
-                        explanation: "Selectezi instrumentul Pencil, apoi tii apasat butonul stang al mouse-ului si misti cursorul pentru a desena."
+                        explanation: "Italic face textul inclinat (aplecat) spre dreapta. Se foloseste adesea pentru titluri de carti sau cuvinte in alte limbi."
                     },
                     {
-                        text: "Ce grosime are linia desenata cu Creionul?",
+                        text: "Care este scurtatura pentru Underline (subliniere)?",
                         options: [
-                            "Foarte groasa",
-                            "Subtire, de 1 pixel",
-                            "Medie",
-                            "Variabila, se schimba singura"
+                            "Ctrl + U",
+                            "Ctrl + S",
+                            "Ctrl + B",
+                            "Ctrl + N"
                         ],
-                        correct: 1,
-                        explanation: "Creionul deseneaza intotdeauna linii de 1 pixel grosime - este cel mai subtire instrument de desenat."
+                        correct: 0,
+                        explanation: "Ctrl + U activeaza sublinierea (U de la Underline). Textul selectat va avea o linie dedesubt."
                     }
                 ]
             },
             2: {
-                title: "Nivel 2: Pensula (Brush)",
-                description: "Descopera instrumentul Pensula si stilurile sale",
+                title: "Nivel 2: Fontul si dimensiunea",
+                description: "Schimba tipul de font si marimea textului",
                 xpReward: 75,
                 questions: [
                     {
-                        text: "Care este diferenta principala intre Creion si Pensula?",
+                        text: "Ce este un font?",
                         options: [
-                            "Nu exista diferenta",
-                            "Pensula poate avea diferite grosimi si stiluri, creionul nu",
-                            "Creionul coloreaza, pensula sterge",
-                            "Pensula deseneaza doar cercuri"
+                            "O culoare pentru text",
+                            "Stilul vizual al literelor (cum arata literele)",
+                            "O imagine inserata in text",
+                            "Un tip de paragraf"
                         ],
                         correct: 1,
-                        explanation: "Pensula (Brush) ofera mai multe optiuni: poti alege grosimea, stilul (rotund, patrat, caligrafic) si efecte diferite."
+                        explanation: "Un font (sau tip de litera) este stilul vizual al textului. Exemple: Arial arata diferit de Times New Roman sau Comic Sans."
                     },
                     {
-                        text: "Unde gasesti optiunile pentru stilul si grosimea pensulei?",
+                        text: "Unde schimbi dimensiunea fontului in Word?",
+                        hasVisual: true,
+                        visualType: "fontsize",
                         options: [
                             "In meniul File",
-                            "In bara de instrumente, sub butonul Brushes, si in sectiunea Size",
-                            "Nu se pot schimba",
-                            "In paleta de culori"
+                            "In casuta cu numarul din tab-ul Home (langa numele fontului)",
+                            "In tab-ul View",
+                            "In bara de stare de jos"
                         ],
                         correct: 1,
-                        explanation: "Apasa pe sageata de sub Brushes pentru a vedea stilurile disponibile, iar in sectiunea Size alegi grosimea."
+                        explanation: "Dimensiunea fontului se schimba din casuta cu numarul din tab-ul Home. Numere mai mari = text mai mare (ex: 12 este normal, 24 este titlu mare)."
                     },
                     {
-                        text: "Ce tip de pensula ai folosi pentru efecte de acuarela?",
+                        text: "Ce trebuie sa faci INAINTE de a formata un text existent?",
                         options: [
-                            "Creion simplu",
-                            "Watercolor brush (Pensula acuarela)",
-                            "Radiera",
-                            "Galeata de culoare"
+                            "Sa salvezi documentul",
+                            "Sa selectezi (sa evidentiezi) textul pe care vrei sa-l formatezi",
+                            "Sa inchizi documentul",
+                            "Sa stergi textul"
                         ],
                         correct: 1,
-                        explanation: "Pensula Watercolor (Acuarela) creeaza efecte transparente, ca pictura cu acuarele - culorile se amesteca frumos."
+                        explanation: "Trebuie intai sa selectezi textul (cu mouse-ul sau tastatura), apoi sa aplici formatarea dorita. Altfel, formatarea se va aplica doar textului pe care il vei scrie in continuare."
                     }
                 ]
             },
             3: {
-                title: "Nivel 3: Radiera (Eraser)",
-                description: "Invata sa stergi parti din desen",
+                title: "Nivel 3: Culoarea textului",
+                description: "Invata sa schimbi culoarea textului si a fundalului",
                 xpReward: 100,
                 questions: [
                     {
-                        text: "Ce face instrumentul Radiera (Eraser)?",
+                        text: "Unde gasesti butonul pentru culoarea textului in Word?",
                         options: [
-                            "Adauga culoare",
-                            "Sterge parti din desen, inlocuind cu culoarea de fundal",
-                            "Deseneaza linii rosii",
-                            "Salveaza fisierul"
+                            "In tab-ul Insert",
+                            "In tab-ul Home, sectiunea Font - butonul cu litera A colorata",
+                            "In tab-ul View",
+                            "In tab-ul Layout"
                         ],
                         correct: 1,
-                        explanation: "Radiera sterge ceea ce ai desenat si inlocuieste cu culoarea de fundal (Color 2) - de obicei alb."
+                        explanation: "Butonul pentru culoarea textului se afla in tab-ul Home, in grupul Font. Are o litera 'A' cu o linie colorata dedesubt."
                     },
                     {
-                        text: "Cum poti schimba dimensiunea (marimea) radierei?",
+                        text: "Ce face butonul Text Highlight Color (culoare de evidentiare)?",
                         options: [
-                            "Nu se poate schimba",
-                            "Din sectiunea Size din bara de instrumente",
-                            "Apasand tasta Delete",
-                            "Din meniul Help"
+                            "Schimba culoarea literelor",
+                            "Pune o culoare de fundal in spatele textului, ca un marker",
+                            "Sterge textul",
+                            "Face textul invizibil"
                         ],
                         correct: 1,
-                        explanation: "In sectiunea Size din bara de instrumente poti alege cat de mare sau mica sa fie radiera."
+                        explanation: "Text Highlight simuleaza un marker (evidentator): pune o culoare de fundal in spatele textului selectat, ca si cum ai marca cu un marker fluorescent."
                     },
                     {
-                        text: "Ce culoare lasa radiera in urma sa?",
+                        text: "Cum faci ca un titlu sa fie rosu si ingrosit?",
                         options: [
-                            "Intotdeauna negru",
-                            "Culoarea setata ca Color 2 (culoare de fundal)",
-                            "Intotdeauna rosu",
-                            "Transparent"
+                            "Selectezi titlul, apesi Bold, apoi alegi culoarea rosie din Font Color",
+                            "Scrii titlul cu Caps Lock",
+                            "Apesi doar Enter",
+                            "Nu se poate face in Word"
                         ],
-                        correct: 1,
-                        explanation: "Radiera foloseste Color 2 (culoarea de fundal). Daca vrei sa stearga cu alb, asigura-te ca Color 2 este alb."
+                        correct: 0,
+                        explanation: "Pasii sunt: 1) Selectezi textul titlului, 2) Apesi Bold (Ctrl+B), 3) Alegi culoarea rosie din butonul Font Color. Poti combina mai multe formatari!"
                     }
                 ]
             },
             4: {
-                title: "Nivel 4: Galeata de culoare (Fill)",
-                description: "Invata sa umpli zone cu culoare",
+                title: "Nivel 4: Alinierea textului",
+                description: "Invata sa aliniezi textul: stanga, centru, dreapta, justified",
                 xpReward: 125,
                 questions: [
                     {
-                        text: "Ce face instrumentul Galeata de culoare (Fill with color)?",
+                        text: "Cate tipuri de aliniere a textului exista in Word?",
                         options: [
-                            "Deseneaza o galeata",
-                            "Umple o zona inchisa cu culoarea selectata",
-                            "Sterge tot desenul",
-                            "Schimba dimensiunea panzei"
+                            "2 tipuri",
+                            "3 tipuri",
+                            "4 tipuri: stanga, centru, dreapta si justify",
+                            "1 singur tip"
                         ],
-                        correct: 1,
-                        explanation: "Galeata de culoare umple instantaneu o zona inchisa cu culoarea aleasa - foarte rapid pentru colorat!"
+                        correct: 2,
+                        explanation: "Word ofera 4 tipuri de aliniere: Left (stanga), Center (centru), Right (dreapta) si Justify (aliniere la ambele margini)."
                     },
                     {
-                        text: "Ce se intampla daca forma nu este complet inchisa cand folosesti galeata?",
+                        text: "Ce scurtatura folosesti pentru a centra textul?",
                         options: [
-                            "Nimic",
-                            "Culoarea se va raspandi si in afara formei",
-                            "Paint se inchide",
-                            "Forma devine perfecta"
+                            "Ctrl + L",
+                            "Ctrl + R",
+                            "Ctrl + E",
+                            "Ctrl + J"
                         ],
-                        correct: 1,
-                        explanation: "Daca exista vreo 'gaura' (chiar si de 1 pixel), culoarea scapa si umple tot ce e in jur! Verifica sa fie inchisa forma."
+                        correct: 2,
+                        explanation: "Ctrl + E centreaza textul. Ctrl + L = stanga (Left), Ctrl + R = dreapta (Right), Ctrl + J = justify (aliniere la ambele margini)."
                     },
                     {
-                        text: "Cum selectezi culoarea pentru galeata de culoare?",
+                        text: "Ce inseamna alinierea 'Justify'?",
                         options: [
-                            "Nu poti selecta culoarea",
-                            "Selectezi Color 1 din paleta de culori inainte de a folosi galeata",
-                            "Galeata alege singura culoarea",
-                            "Scrii culoarea cu tastatura"
+                            "Textul este centrat",
+                            "Textul este aliniat la ambele margini (stanga si dreapta), ca in carti",
+                            "Textul este aliniat doar la dreapta",
+                            "Textul este sters"
                         ],
                         correct: 1,
-                        explanation: "Mai intai alegi culoarea dorita in Color 1, apoi selectezi galeata si dai click pe zona de umplut."
+                        explanation: "Justify aliniaza textul la ambele margini - stanga si dreapta. Word adauga spatiu intre cuvinte pentru ca fiecare rand sa ajunga pana la marginea dreapta, ca in carti si ziare."
                     }
                 ]
             },
             5: {
-                title: "Nivel 5: Pipeta (Color picker)",
-                description: "Invata sa copiezi culori din desen",
+                title: "Nivel 5: Liste si spatiere",
+                description: "Invata sa creezi liste si sa ajustezi spatierea",
                 xpReward: 150,
                 questions: [
                     {
-                        text: "La ce foloseste instrumentul Pipeta (Color picker)?",
+                        text: "Cum creezi o lista cu buline (bullets) in Word?",
                         options: [
-                            "Pentru a desena pipete",
-                            "Pentru a prelua (copia) o culoare din desen si a o folosi",
-                            "Pentru a sterge culori",
-                            "Pentru a salva fisierul"
+                            "Apesi tasta Tab",
+                            "Din tab-ul Home, apesi butonul Bullets (cel cu puncte)",
+                            "Scrii manual puncte la inceputul fiecarui rand",
+                            "Din tab-ul File"
                         ],
                         correct: 1,
-                        explanation: "Pipeta 'suge' culoarea de unde dai click si o seteaza ca Color 1. Astfel poti folosi exact aceeasi nuanta!"
+                        explanation: "Din tab-ul Home, grupul Paragraph, apesi butonul Bullets pentru a crea automat o lista cu buline. Fiecare Enter creeaza un nou punct in lista."
                     },
                     {
-                        text: "Cand este utila pipeta?",
+                        text: "Care este diferenta intre o lista cu buline si una numerotata?",
                         options: [
-                            "Niciodata",
-                            "Cand vrei sa folosesti exact aceeasi culoare ca intr-o alta parte a desenului",
-                            "Cand vrei sa stergi",
-                            "Cand salvezi fisierul"
+                            "Nu exista nicio diferenta",
+                            "Lista cu buline foloseste puncte/simboluri, cea numerotata foloseste numere (1, 2, 3...)",
+                            "Lista numerotata nu se poate crea in Word",
+                            "Lista cu buline este colorata"
                         ],
                         correct: 1,
-                        explanation: "Pipeta este perfecta cand vrei sa potrivesti culorile exact - dai click pe culoarea dorita si gata!"
+                        explanation: "Lista cu buline (bullets) foloseste simboluri (punct, patrat etc.), iar lista numerotata (numbered) foloseste numere secventiale (1, 2, 3...)."
                     },
                     {
-                        text: "Ce scurtatura de tastatura activeaza instrumentul Color picker?",
+                        text: "Ce face optiunea 'Line Spacing' (spatiere intre randuri)?",
                         options: [
-                            "Ctrl + S",
-                            "Tasta K sau I (in functie de versiune)",
-                            "Tasta Delete",
-                            "Tasta Enter"
+                            "Schimba culoarea textului",
+                            "Modifica distanta dintre randurile de text",
+                            "Adauga imagini intre randuri",
+                            "Sterge randuri goale"
                         ],
                         correct: 1,
-                        explanation: "In Paint, poti accesa rapid Color picker-ul cu tasta I sau K. Scurtaturile fac lucrul mai rapid!"
+                        explanation: "Line Spacing controleaza cat spatiu liber este intre randuri. Valoarea 1.0 = fara spatiu extra, 1.5 = spatiu si jumatate, 2.0 = spatiu dublu (recomandat pentru teme)."
                     }
                 ]
             }
@@ -686,59 +366,40 @@
         let unlockedLevels = [1];
 
         function loadProgress() {
-            const saved = localStorage.getItem('paint_quiz2_progress');
+            const saved = localStorage.getItem('cls5-extra-birotice-quiz2');
             if (saved) {
                 const data = JSON.parse(saved);
                 totalXP = data.totalXP || 0;
                 unlockedLevels = data.unlockedLevels || [1];
                 levelScores = data.levelScores || {};
-                updateXPDisplay();
-                updateLevelMap();
+                updateXPDisplay(); updateLevelMap();
             }
         }
 
         function saveProgress() {
-            localStorage.setItem('paint_quiz2_progress', JSON.stringify({
-                totalXP,
-                unlockedLevels,
-                levelScores
-            }));
+            localStorage.setItem('cls5-extra-birotice-quiz2', JSON.stringify({ totalXP, unlockedLevels, levelScores }));
         }
 
-        function updateXPDisplay() {
-            document.getElementById('totalXP').textContent = totalXP;
-        }
+        function updateXPDisplay() { document.getElementById('totalXP').textContent = totalXP; }
 
         function updateLevelMap() {
             document.querySelectorAll('.level-node').forEach((node, index) => {
                 const level = index + 1;
                 node.classList.remove('locked', 'active', 'completed');
-
-                if (levelScores[level] !== undefined) {
-                    node.classList.add('completed');
-                } else if (unlockedLevels.includes(level)) {
-                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
-                        node.classList.add('active');
-                    }
-                } else {
-                    node.classList.add('locked');
-                }
+                if (levelScores[level] !== undefined) node.classList.add('completed');
+                else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) node.classList.add('active');
+                } else node.classList.add('locked');
             });
-
             document.querySelectorAll('.level-connector').forEach((conn, index) => {
-                if (levelScores[index + 1] !== undefined) {
-                    conn.classList.add('completed');
-                } else {
-                    conn.classList.remove('completed');
-                }
+                if (levelScores[index + 1] !== undefined) conn.classList.add('completed');
+                else conn.classList.remove('completed');
             });
         }
 
         function selectLevel(level) {
             if (!unlockedLevels.includes(level)) return;
-            currentLevel = level;
-            currentQuestion = 0;
-            score = 0;
+            currentLevel = level; currentQuestion = 0; score = 0;
             showLevelIntro();
         }
 
@@ -749,23 +410,14 @@
                     <h2>${levelData.title}</h2>
                     <p>${levelData.description}</p>
                     <div class="xp-reward">+${levelData.xpReward} XP</div>
-                    <button class="btn btn-primary" onclick="startLevel()">
-                        Incepe Nivelul
-                    </button>
-                </div>
-            `;
+                    <button class="btn btn-primary" onclick="startLevel()">Incepe Nivelul</button>
+                </div>`;
         }
 
-        function startLevel() {
-            showQuestion();
-        }
+        function startLevel() { showQuestion(); }
 
         function showQuestion() {
-        // HTML-escape to prevent < > from breaking option rendering
-        function escHtml(s) {
-            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        }
-
+            function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
             const levelData = levels[currentLevel];
             const q = levelData.questions[currentQuestion];
 
@@ -777,6 +429,23 @@
             }
 
             let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            if (q.hasVisual && q.visualType === 'fontsize') {
+                questionContent += `
+                    <div class="word-ui-mockup">
+                        <div class="word-toolbar">
+                            <span class="word-btn">Calibri</span>
+                            <span class="word-btn highlight">12</span>
+                            <span class="word-btn"><b>B</b></span>
+                            <span class="word-btn"><i>I</i></span>
+                            <span class="word-btn" style="text-decoration:underline;">U</span>
+                        </div>
+                        <div class="word-document">
+                            <p>Text normal cu dimensiunea 12</p>
+                            <p style="font-size: 1.5em;"><b>Titlu mare cu dimensiunea 24</b></p>
+                        </div>
+                    </div>`;
+            }
 
             let optionsHTML = '';
             q.options.forEach((opt, i) => {
@@ -790,12 +459,9 @@
                     <div class="options-grid">${optionsHTML}</div>
                     <div class="feedback-box" id="feedback"></div>
                     <div style="text-align: center; margin-top: 1.5rem;">
-                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
-                            Urmatoarea Intrebare
-                        </button>
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">Urmatoarea Intrebare</button>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
         function selectAnswer(index) {
@@ -806,11 +472,8 @@
             const nextBtn = document.getElementById('nextBtn');
 
             options.forEach(opt => opt.style.pointerEvents = 'none');
-
             options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
-            if (index !== q.correct) {
-                options[q.correct].classList.add('correct');
-            }
+            if (index !== q.correct) options[q.correct].classList.add('correct');
 
             const dots = document.querySelectorAll('.progress-dot');
             dots[currentQuestion].classList.remove('current');
@@ -819,34 +482,20 @@
             if (index === q.correct) {
                 score++;
                 feedback.className = 'feedback-box show correct';
-                feedback.innerHTML = `
-                    <div class="feedback-icon">🎉</div>
-                    <div class="feedback-text">Corect!</div>
-                    <div class="explanation">${q.explanation}</div>
-                `;
+                feedback.innerHTML = `<div class="feedback-icon">🎉</div><div class="feedback-text">Corect!</div><div class="explanation">${q.explanation}</div>`;
             } else {
                 feedback.className = 'feedback-box show wrong';
-                feedback.innerHTML = `
-                    <div class="feedback-icon">😅</div>
-                    <div class="feedback-text">Nu chiar...</div>
-                    <div class="explanation">${q.explanation}</div>
-                `;
+                feedback.innerHTML = `<div class="feedback-icon">😅</div><div class="feedback-text">Nu chiar...</div><div class="explanation">${q.explanation}</div>`;
             }
 
             nextBtn.style.display = 'inline-flex';
-            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
-                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ? 'Urmatoarea Intrebare' : 'Vezi Rezultatul';
         }
 
         function nextQuestion() {
-            const levelData = levels[currentLevel];
             currentQuestion++;
-
-            if (currentQuestion >= levelData.questions.length) {
-                showLevelComplete();
-            } else {
-                showQuestion();
-            }
+            if (currentQuestion >= levels[currentLevel].questions.length) showLevelComplete();
+            else showQuestion();
         }
 
         function showLevelComplete() {
@@ -864,21 +513,12 @@
             if (passed) {
                 earnedXP = levelData.xpReward;
                 if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
-
                 if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
-                    if (!levelScores[currentLevel]) {
-                        totalXP += earnedXP;
-                    }
+                    if (!levelScores[currentLevel]) totalXP += earnedXP;
                     levelScores[currentLevel] = percentage;
                 }
-
-                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
-                    unlockedLevels.push(currentLevel + 1);
-                }
-
-                saveProgress();
-                updateXPDisplay();
-                updateLevelMap();
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) unlockedLevels.push(currentLevel + 1);
+                saveProgress(); updateXPDisplay(); updateLevelMap();
             }
 
             document.getElementById('quizArea').innerHTML = `
@@ -889,22 +529,11 @@
                     <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
                     ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
                     <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
-                            Reincearca
-                        </button>
-                        ${passed && currentLevel < 5 ? `
-                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
-                                Nivelul Urmator
-                            </button>
-                        ` : ''}
-                        ${passed && currentLevel === 5 ? `
-                            <button class="btn btn-success" onclick="window.location.href='quiz3-forme.html'">
-                                Quiz-ul 3: Forme si culori
-                            </button>
-                        ` : ''}
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">Reincearca</button>
+                        ${passed && currentLevel < 5 ? `<button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">Nivelul Urmator</button>` : ''}
+                        ${passed && currentLevel === 5 ? `<button class="btn btn-success" onclick="window.location.href='quiz3-forme.html'">Quiz-ul 3: Tabele in Word</button>` : ''}
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
         loadProgress();

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz: Text si salvare in Paint | Clasa 5</title>
+    <title>Quiz: Imagini in Word | Clasa 5</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -31,403 +31,80 @@
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 1.5rem;
-        }
+        .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
 
-        .quiz-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            margin-bottom: 2rem;
-            border: 1px solid var(--border);
-        }
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: var(--bg-secondary); border-radius: 16px; margin-bottom: 2rem; border: 1px solid var(--border); }
+        .quiz-title { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .xp-display { display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; color: #fff; }
 
-        .quiz-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .level-map { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .level-node { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; cursor: pointer; transition: all 0.3s; position: relative; border: 3px solid var(--border); background: var(--bg-card); }
+        .level-node.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-node.locked::after { content: '\uD83D\uDD12'; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+        .level-node.active { border-color: var(--accent-blue); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); animation: pulse 2s infinite; }
+        .level-node.completed { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); border-color: var(--accent-green); }
+        .level-node.completed::after { content: '\2713'; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
-        .xp-display {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 700;
-            color: #fff;
-        }
+        .level-connector { width: 30px; height: 3px; background: var(--border); align-self: center; }
+        .level-connector.completed { background: var(--accent-green); }
 
-        .level-map {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
+        .quiz-area { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; border: 1px solid var(--border); min-height: 400px; }
+        .level-intro { text-align: center; padding: 2rem; }
+        .level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-blue); }
+        .level-intro p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+        .level-intro .xp-reward { display: inline-block; background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
 
-        .level-node {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            border: 3px solid var(--border);
-            background: var(--bg-card);
-        }
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
 
-        .level-node.locked {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .question-progress { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .progress-dot.current { background: var(--accent-blue); }
+        .progress-dot.correct { background: var(--accent-green); }
+        .progress-dot.wrong { background: var(--accent-red); }
 
-        .level-node.locked::after {
-            content: '🔒';
-            position: absolute;
-            font-size: 1rem;
-            bottom: -5px;
-            right: -5px;
-        }
+        .question-text { font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
 
-        .level-node.active {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-            animation: pulse 2s infinite;
-        }
+        .word-ui-mockup { background: #2d2d4a; border-radius: 12px; padding: 1rem; margin: 1rem auto; max-width: 500px; text-align: left; border: 2px solid var(--border); }
+        .word-toolbar { background: #1e1e3a; padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .word-btn { padding: 0.3rem 0.6rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 0.85rem; }
+        .word-btn.highlight { background: var(--accent-blue); border-color: var(--accent-blue); }
+        .word-document { background: #fff; color: #000; padding: 1rem; border-radius: 4px; min-height: 100px; font-family: 'Times New Roman', serif; }
 
-        .level-node.completed {
-            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
-            border-color: var(--accent-green);
-        }
+        .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .option { padding: 1.2rem 1.5rem; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 1rem; text-align: left; }
+        .option:hover { border-color: var(--accent-purple); transform: translateX(5px); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
 
-        .level-node.completed::after {
-            content: '✓';
-            position: absolute;
-            font-size: 0.8rem;
-            bottom: -5px;
-            right: -5px;
-            background: var(--accent-green);
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .feedback-box { display: none; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; }
+        .feedback-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.correct { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent-green); }
+        .feedback-box.wrong { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--accent-red); }
+        .feedback-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .feedback-text { font-size: 1.1rem; margin-bottom: 1rem; }
+        .explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
 
-        .level-connector {
-            width: 30px;
-            height: 3px;
-            background: var(--border);
-            align-self: center;
-        }
+        .level-complete { display: none; text-align: center; padding: 3rem; }
+        .level-complete.show { display: block; animation: celebrate 0.5s ease; }
+        @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .level-complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .level-complete h2 { font-size: 2rem; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-earned { font-size: 2rem; color: var(--accent-blue); margin: 1.5rem 0; }
+        .score-display { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .stars { font-size: 3rem; margin: 1rem 0; }
 
-        .level-connector.completed {
-            background: var(--accent-green);
-        }
-
-        .quiz-area {
-            background: var(--bg-secondary);
-            border-radius: 20px;
-            padding: 2rem;
-            border: 1px solid var(--border);
-            min-height: 400px;
-        }
-
-        .level-intro {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .level-intro h2 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            color: var(--accent-blue);
-        }
-
-        .level-intro p {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-            font-size: 1.1rem;
-        }
-
-        .level-intro .xp-reward {
-            display: inline-block;
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--accent-blue);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            margin-bottom: 2rem;
-        }
-
-        .question-container {
-            display: none;
-        }
-
-        .question-container.active {
-            display: block;
-            animation: slideIn 0.5s ease;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(30px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .question-progress {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .progress-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--border);
-        }
-
-        .progress-dot.current {
-            background: var(--accent-blue);
-        }
-
-        .progress-dot.correct {
-            background: var(--accent-green);
-        }
-
-        .progress-dot.wrong {
-            background: var(--accent-red);
-        }
-
-        .question-text {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            line-height: 1.6;
-        }
-
-        .file-formats {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin: 1.5rem 0;
-            flex-wrap: wrap;
-        }
-
-        .format-box {
-            background: var(--bg-card);
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            text-align: center;
-            border: 2px solid var(--border);
-        }
-
-        .format-ext {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent-cyan);
-        }
-
-        .format-name {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-top: 0.3rem;
-        }
-
-        .options-grid {
-            display: grid;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .option {
-            padding: 1.2rem 1.5rem;
-            background: var(--bg-card);
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1rem;
-            text-align: left;
-        }
-
-        .option:hover {
-            border-color: var(--accent-purple);
-            transform: translateX(5px);
-        }
-
-        .option.correct {
-            border-color: var(--accent-green);
-            background: rgba(16, 185, 129, 0.2);
-        }
-
-        .option.wrong {
-            border-color: var(--accent-red);
-            background: rgba(239, 68, 68, 0.2);
-        }
-
-        .feedback-box {
-            display: none;
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-top: 1.5rem;
-            text-align: center;
-        }
-
-        .feedback-box.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .feedback-box.correct {
-            background: rgba(16, 185, 129, 0.2);
-            border: 2px solid var(--accent-green);
-        }
-
-        .feedback-box.wrong {
-            background: rgba(239, 68, 68, 0.2);
-            border: 2px solid var(--accent-red);
-        }
-
-        .feedback-icon {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .feedback-text {
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-        }
-
-        .explanation {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            background: var(--bg-card);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            border: none;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
-            color: white;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border);
-            color: var(--text-secondary);
-        }
-
-        .btn-outline:hover {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-        }
-
-        .level-complete {
-            display: none;
-            text-align: center;
-            padding: 3rem;
-        }
-
-        .level-complete.show {
-            display: block;
-            animation: celebrate 0.5s ease;
-        }
-
-        @keyframes celebrate {
-            0% { transform: scale(0.8); opacity: 0; }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .level-complete-icon {
-            font-size: 5rem;
-            margin-bottom: 1rem;
-        }
-
-        .level-complete h2 {
-            font-size: 2rem;
-            color: var(--accent-green);
-            margin-bottom: 1rem;
-        }
-
-        .xp-earned {
-            font-size: 2rem;
-            color: var(--accent-blue);
-            margin: 1.5rem 0;
-        }
-
-        .score-display {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-        }
-
-        .stars {
-            font-size: 3rem;
-            margin: 1rem 0;
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-            text-decoration: none;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-
-        .back-link:hover {
-            color: var(--accent-cyan);
-        }
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem; font-size: 0.9rem; }
+        .back-link:hover { color: var(--accent-cyan); }
 
         @media (max-width: 600px) {
             .container { padding: 1rem; }
@@ -436,25 +113,18 @@
             .question-text { font-size: 1.1rem; }
         }
 
-        footer {
-            margin-top: 3rem;
-            padding: 1.5rem;
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            border-top: 1px solid var(--border);
-        }
+        footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); }
     </style>
     <link rel="stylesheet" href="../../../../../assets/css/mobile.css">
     <link rel="stylesheet" href="../../../../../assets/css/mobile-first.css">
-    </head>
+</head>
 <body>
     <a href="#main-content" class="skip-link">Sari la continut</a>
     <div id="main-content" class="container">
-        <a href="../index.html" class="back-link">← Inapoi la Modulul 2</a>
+        <a href="../index.html" class="back-link">&larr; Inapoi la modul</a>
 
         <div class="quiz-header">
-            <div class="quiz-title">Quiz: Text si salvare in Paint</div>
+            <div class="quiz-title">Quiz 4: Imagini in Word</div>
             <div class="xp-display">
                 <span>XP:</span>
                 <span id="totalXP">0</span>
@@ -473,8 +143,7 @@
             <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
         </div>
 
-        <div class="quiz-area" id="quizArea">
-        </div>
+        <div class="quiz-area" id="quizArea"></div>
     </div>
 
     <footer>
@@ -483,204 +152,207 @@
     </footer>
 
     <script>
+        // Quiz ID: cls5-extra-birotice-quiz4
         const levels = {
             1: {
-                title: "Nivel 1: Adaugarea textului",
-                description: "Invata sa adaugi text pe desenele tale",
+                title: "Nivel 1: Inserarea imaginilor",
+                description: "Invata cum adaugi imagini intr-un document Word",
                 xpReward: 50,
                 questions: [
                     {
-                        text: "Cum adaugi text pe un desen in Paint?",
+                        text: "Din ce tab inserezi o imagine in Word?",
                         options: [
-                            "Scrii direct cu tastatura oriunde",
-                            "Selectezi instrumentul Text (A), tragi o caseta, apoi scrii",
-                            "Apesi tasta T si scrii",
-                            "Nu se poate adauga text in Paint"
+                            "Home",
+                            "View",
+                            "Insert (Inserare)",
+                            "File"
                         ],
-                        correct: 1,
-                        explanation: "Selectezi instrumentul Text (litera A) din bara de instrumente, tragi un dreptunghi pe panza unde vrei textul, apoi scrii."
+                        correct: 2,
+                        explanation: "Tab-ul Insert contine butonul Pictures (Imagini). Apesi Insert > Pictures pentru a alege o imagine de pe calculator."
                     },
                     {
-                        text: "Unde gasesti instrumentul Text in Paint?",
+                        text: "Ce tipuri de imagini poti insera in Word?",
                         options: [
-                            "In meniul File",
-                            "In sectiunea Tools din bara Home, simbolul 'A'",
-                            "In paleta de culori",
-                            "In meniul View"
+                            "Doar fisiere .txt",
+                            "Fotografii (.jpg, .png), clipart-uri si forme",
+                            "Doar fisiere .mp3",
+                            "Doar fisiere .docx"
                         ],
                         correct: 1,
-                        explanation: "Instrumentul Text este marcat cu litera 'A' si se gaseste in sectiunea Tools din tab-ul Home."
+                        explanation: "Word suporta multe formate de imagine: JPG, PNG, GIF, BMP. Poti insera si forme (Shapes), pictograme (Icons) sau imagini online."
                     },
                     {
-                        text: "Ce se intampla dupa ce dai click in afara casetei de text?",
+                        text: "Ce se intampla cand inserezi o imagine in document?",
                         options: [
-                            "Textul dispare",
-                            "Textul devine permanent, nu mai poate fi editat",
-                            "Paint se inchide",
-                            "Textul se sterge"
+                            "Imaginea inlocuieste tot textul",
+                            "Imaginea apare in document la pozitia cursorului",
+                            "Documentul se sterge",
+                            "Word se inchide"
                         ],
                         correct: 1,
-                        explanation: "ATENTIE! Odata ce dai click in afara casetei de text, acesta devine parte din imagine si nu mai poate fi modificat."
+                        explanation: "Imaginea este inserata exact unde se afla cursorul in document. Apoi o poti muta si redimensiona dupa nevoie."
                     }
                 ]
             },
             2: {
-                title: "Nivel 2: Formatarea textului",
-                description: "Invata sa schimbi fontul, marimea si stilul textului",
+                title: "Nivel 2: Redimensionarea imaginilor",
+                description: "Invata sa ajustezi dimensiunea imaginilor",
                 xpReward: 75,
                 questions: [
                     {
-                        text: "Cum schimbi fontul (tipul de scris) al textului?",
+                        text: "Cum maresti sau micsorezi o imagine in Word?",
                         options: [
-                            "Nu se poate schimba",
-                            "Din bara Text care apare cand esti in modul editare text",
-                            "Din meniul File",
-                            "Apasand tasta F"
+                            "Apesi tasta Delete",
+                            "Tragi de colturile sau marginile imaginii cu mouse-ul",
+                            "Scrii dimensiunea pe tastatura",
+                            "Nu se poate redimensiona"
                         ],
                         correct: 1,
-                        explanation: "Cand ai textul selectat pentru editare, apare bara Text unde poti alege fontul, marimea si stilul."
+                        explanation: "Click pe imagine pentru a o selecta, apoi trage de cercurelele (punctele de prindere) din colturi sau de pe margini pentru a redimensiona."
                     },
                     {
-                        text: "Cum faci textul mai mare sau mai mic?",
+                        text: "De ce este mai bine sa tragi de COLT decat de MARGINE cand redimensionezi?",
                         options: [
-                            "Il tragi cu mouse-ul",
-                            "Schimbi numarul din casuta 'Size' (marime) din bara Text",
-                            "Apesi + sau -",
-                            "Il stergi si il rescrii"
+                            "Nu exista nicio diferenta",
+                            "Tragand de colt pastrezi proportiile imaginii (nu se deformeaza)",
+                            "Tragand de margine imaginea se sterge",
+                            "Tragand de colt imaginea se coloreaza"
                         ],
                         correct: 1,
-                        explanation: "In bara Text, schimbi numarul din casuta Size - un numar mai mare = text mai mare."
+                        explanation: "Tragand de un colt, imaginea isi pastreaza proportiile originale (nu se intinde urat). Tragand de o margine laterala, imaginea se poate deforma."
                     },
                     {
-                        text: "Ce optiuni de stil poti aplica textului in Paint?",
+                        text: "Ce apare cand dai click pe o imagine in Word?",
+                        hasVisual: true,
+                        visualType: "image-selected",
                         options: [
-                            "Nicio optiune",
-                            "Bold (ingrosat), Italic (inclinat), Underline (subliniat), Strikeout (taiat)",
-                            "Doar culori",
-                            "Doar marime"
+                            "Nimic special",
+                            "Puncte de prindere (cercurete) pe margini si colturi, plus tab-ul Picture Format",
+                            "Imaginea dispare",
+                            "Un mesaj de eroare"
                         ],
                         correct: 1,
-                        explanation: "Paint ofera stiluri de baza: Bold (B), Italic (I), Underline (U) si Strikethrough pentru a personaliza textul."
+                        explanation: "Cand selectezi o imagine, apar puncte de prindere (cercurete) pe margini si colturi pentru redimensionare, plus un tab nou 'Picture Format' cu instrumente speciale."
                     }
                 ]
             },
             3: {
-                title: "Nivel 3: Salvarea fisierelor",
-                description: "Invata sa salvezi desenele in diferite formate",
+                title: "Nivel 3: Pozitionarea imaginii",
+                description: "Invata cum se comporta imaginea in raport cu textul",
                 xpReward: 100,
                 questions: [
                     {
-                        text: "Care este scurtatura pentru a salva rapid desenul?",
+                        text: "Ce inseamna 'Text Wrapping' (Inconjurare text)?",
                         options: [
-                            "Ctrl + P",
-                            "Ctrl + S",
-                            "Ctrl + Z",
-                            "Ctrl + N"
+                            "Stergerea textului din jurul imaginii",
+                            "Modul in care textul curge in jurul imaginii",
+                            "Colorarea textului",
+                            "Copierea textului"
                         ],
                         correct: 1,
-                        explanation: "Ctrl + S = Save (Salvare). Tine minte: S de la Save! Salveaza frecvent pentru a nu pierde munca."
+                        explanation: "Text Wrapping (Inconjurare text) controleaza cum se comporta textul in jurul imaginii: poate fi deasupra, in jurul, in spatele sau in fata imaginii."
                     },
                     {
-                        text: "Care este diferenta intre Save si Save As?",
+                        text: "Ce face optiunea 'In Line with Text' (In linie cu textul)?",
                         options: [
-                            "Nu este nicio diferenta",
-                            "Save salveaza in acelasi loc, Save As permite alegerea numelui si locatiei",
-                            "Save As sterge fisierul",
-                            "Save este mai rapid"
+                            "Imaginea pluteste peste text",
+                            "Imaginea se comporta ca un caracter mare in textul tau",
+                            "Imaginea dispare",
+                            "Textul dispare"
                         ],
                         correct: 1,
-                        explanation: "Save = salveaza modificarile in fisierul existent. Save As = permite alegerea unui nume nou si a unui folder nou."
+                        explanation: "'In Line with Text' face ca imaginea sa se comporte ca o litera mare - se misca odata cu textul si nu poti trage imaginea liber pe pagina."
                     },
                     {
-                        text: "Ce format de fisier este implicit (default) in Paint?",
+                        text: "Ce optiune de Text Wrapping folosesti ca textul sa curga in jurul imaginii?",
                         options: [
-                            ".mp3",
-                            ".png (sau .bmp in versiuni mai vechi)",
-                            ".docx",
-                            ".exe"
+                            "In Line with Text",
+                            "Behind Text",
+                            "Square (Patrat) sau Tight (Strans)",
+                            "In Front of Text"
                         ],
-                        correct: 1,
-                        explanation: "Paint salveaza implicit in format PNG (imagine), care pastreaza bine calitatea. Versiunile vechi foloseau BMP."
+                        correct: 2,
+                        explanation: "Square face textul sa curga in jurul imaginii intr-un patrat. Tight face textul sa se lipeasca strans de conturul imaginii."
                     }
                 ]
             },
             4: {
-                title: "Nivel 4: Formate de imagine",
-                description: "Invata diferentele dintre formatele de fisiere imagine",
+                title: "Nivel 4: Editarea imaginilor",
+                description: "Invata sa editezi imaginile direct in Word",
                 xpReward: 125,
                 questions: [
                     {
-                        text: "Ce format este cel mai bun pentru poze cu multe culori (fotografii)?",
+                        text: "Unde gasesti instrumentele de editare a imaginilor in Word?",
                         options: [
-                            ".bmp - este cel mai vechi",
-                            ".jpg sau .jpeg - compresie buna pentru fotografii",
-                            ".gif - pentru animatii",
-                            ".txt - pentru text"
+                            "In tab-ul Home",
+                            "In tab-ul Picture Format (apare cand selectezi o imagine)",
+                            "In tab-ul File",
+                            "Nu exista instrumente de editare"
                         ],
                         correct: 1,
-                        explanation: "JPEG (.jpg) este ideal pentru fotografii - comprima bine imaginea pastrand calitatea acceptabila."
+                        explanation: "Tab-ul Picture Format apare automat cand selectezi o imagine. Contine instrumente pentru culoare, efecte, borduri si decupare."
                     },
                     {
-                        text: "Ce format pastreaza fundalul transparent?",
+                        text: "Ce face butonul Crop (Decupare)?",
                         options: [
-                            ".jpg",
-                            ".png",
-                            ".bmp",
-                            "Toate formatele"
+                            "Sterge imaginea",
+                            "Taie (decupeaza) parti din imagine pe care nu le vrei",
+                            "Mareste imaginea",
+                            "Roteste imaginea"
                         ],
                         correct: 1,
-                        explanation: "PNG poate salva imagini cu fundal transparent - util pentru logo-uri si elemente grafice."
+                        explanation: "Crop (Decupare) iti permite sa tai margini din imagine, pastrand doar partea care te intereseaza. Foarte util cand vrei doar o portiune din fotografie."
                     },
                     {
-                        text: "Care format de imagine are cea mai mare dimensiune (ocupa mai mult spatiu)?",
+                        text: "Cum adaugi o bordura (chenar) in jurul imaginii?",
                         options: [
-                            ".jpg",
-                            ".bmp (Bitmap - necomprimat)",
-                            ".png",
-                            ".gif"
+                            "Desenezi manual cu creionul",
+                            "Din Picture Format > Picture Border alegi culoarea si grosimea bordurii",
+                            "Apesi tasta Enter",
+                            "Nu se pot adauga borduri"
                         ],
                         correct: 1,
-                        explanation: "BMP (Bitmap) nu comprima imaginea, astfel ca fisierele sunt foarte mari. JPG si PNG comprima datele."
+                        explanation: "In tab-ul Picture Format, butonul Picture Border iti permite sa alegi culoarea, grosimea si stilul bordurii (continua, punctata etc.)."
                     }
                 ]
             },
             5: {
-                title: "Nivel 5: Deschidere si editare",
-                description: "Invata sa deschizi si sa editezi imagini existente",
+                title: "Nivel 5: Sfaturi avansate",
+                description: "Invata trucuri utile pentru lucrul cu imagini in Word",
                 xpReward: 150,
                 questions: [
                     {
-                        text: "Cum deschizi o imagine existenta in Paint?",
+                        text: "Cum adaugi un text descriptiv (Alt Text) la o imagine?",
                         options: [
-                            "Apesi tasta O",
-                            "File > Open sau Ctrl + O",
-                            "Tragi imaginea pe desktop",
-                            "Scrii numele imaginii"
+                            "Scrii textul deasupra imaginii",
+                            "Click dreapta pe imagine > Edit Alt Text",
+                            "Apesi Ctrl + Z",
+                            "Nu se poate adauga text descriptiv"
                         ],
                         correct: 1,
-                        explanation: "Folosesti File > Open sau scurtatura Ctrl + O, apoi navighezi la imaginea dorita si o selectezi."
+                        explanation: "Alt Text (text alternativ) descrie imaginea pentru persoanele care nu o pot vedea. Click dreapta pe imagine > Edit Alt Text si scrii o descriere scurta."
                     },
                     {
-                        text: "Ce tip de fisiere poate deschide Paint?",
+                        text: "Ce format de imagine este recomandat pentru fotografii in Word?",
                         options: [
-                            "Doar fisiere .paint",
-                            "Fisiere imagine: PNG, JPG, BMP, GIF si altele",
-                            "Doar documente Word",
-                            "Fisiere video"
+                            ".txt",
+                            ".jpg sau .png",
+                            ".mp3",
+                            ".exe"
                         ],
                         correct: 1,
-                        explanation: "Paint poate deschide majoritatea formatelor de imagine comune: PNG, JPG, JPEG, BMP, GIF, TIFF etc."
+                        explanation: "JPG este ideal pentru fotografii (fisiere mai mici). PNG este bun cand ai nevoie de fundal transparent sau imagini cu text clar."
                     },
                     {
-                        text: "Ce se intampla daca salvezi o imagine JPG dupa ce ai adaugat text?",
+                        text: "De ce este important sa nu pui prea multe imagini de dimensiuni mari intr-un document?",
                         options: [
-                            "Textul dispare",
-                            "Textul devine parte permanenta din imagine",
-                            "Imaginea se sterge",
-                            "Paint cere confirmare"
+                            "Word nu permite mai mult de 2 imagini",
+                            "Documentul devine foarte mare (MB) si se poate deschide greu",
+                            "Imaginile se sterg automat",
+                            "Nu exista nicio problema"
                         ],
                         correct: 1,
-                        explanation: "Cand salvezi, textul (si toate modificarile) devin parte permanenta din imagine. Nu mai poti edita separat textul."
+                        explanation: "Imaginile mari cresc dimensiunea fisierului .docx. Un document cu multe poze de rezolutie inalta poate deveni foarte mare si greu de trimis pe email. Comprima imaginile daca este necesar!"
                     }
                 ]
             }
@@ -694,59 +366,40 @@
         let unlockedLevels = [1];
 
         function loadProgress() {
-            const saved = localStorage.getItem('paint_quiz4_progress');
+            const saved = localStorage.getItem('cls5-extra-birotice-quiz4');
             if (saved) {
                 const data = JSON.parse(saved);
                 totalXP = data.totalXP || 0;
                 unlockedLevels = data.unlockedLevels || [1];
                 levelScores = data.levelScores || {};
-                updateXPDisplay();
-                updateLevelMap();
+                updateXPDisplay(); updateLevelMap();
             }
         }
 
         function saveProgress() {
-            localStorage.setItem('paint_quiz4_progress', JSON.stringify({
-                totalXP,
-                unlockedLevels,
-                levelScores
-            }));
+            localStorage.setItem('cls5-extra-birotice-quiz4', JSON.stringify({ totalXP, unlockedLevels, levelScores }));
         }
 
-        function updateXPDisplay() {
-            document.getElementById('totalXP').textContent = totalXP;
-        }
+        function updateXPDisplay() { document.getElementById('totalXP').textContent = totalXP; }
 
         function updateLevelMap() {
             document.querySelectorAll('.level-node').forEach((node, index) => {
                 const level = index + 1;
                 node.classList.remove('locked', 'active', 'completed');
-
-                if (levelScores[level] !== undefined) {
-                    node.classList.add('completed');
-                } else if (unlockedLevels.includes(level)) {
-                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
-                        node.classList.add('active');
-                    }
-                } else {
-                    node.classList.add('locked');
-                }
+                if (levelScores[level] !== undefined) node.classList.add('completed');
+                else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) node.classList.add('active');
+                } else node.classList.add('locked');
             });
-
             document.querySelectorAll('.level-connector').forEach((conn, index) => {
-                if (levelScores[index + 1] !== undefined) {
-                    conn.classList.add('completed');
-                } else {
-                    conn.classList.remove('completed');
-                }
+                if (levelScores[index + 1] !== undefined) conn.classList.add('completed');
+                else conn.classList.remove('completed');
             });
         }
 
         function selectLevel(level) {
             if (!unlockedLevels.includes(level)) return;
-            currentLevel = level;
-            currentQuestion = 0;
-            score = 0;
+            currentLevel = level; currentQuestion = 0; score = 0;
             showLevelIntro();
         }
 
@@ -757,23 +410,14 @@
                     <h2>${levelData.title}</h2>
                     <p>${levelData.description}</p>
                     <div class="xp-reward">+${levelData.xpReward} XP</div>
-                    <button class="btn btn-primary" onclick="startLevel()">
-                        Incepe Nivelul
-                    </button>
-                </div>
-            `;
+                    <button class="btn btn-primary" onclick="startLevel()">Incepe Nivelul</button>
+                </div>`;
         }
 
-        function startLevel() {
-            showQuestion();
-        }
+        function startLevel() { showQuestion(); }
 
         function showQuestion() {
-        // HTML-escape to prevent < > from breaking option rendering
-        function escHtml(s) {
-            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        }
-
+            function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
             const levelData = levels[currentLevel];
             const q = levelData.questions[currentQuestion];
 
@@ -785,6 +429,27 @@
             }
 
             let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            if (q.hasVisual && q.visualType === 'image-selected') {
+                questionContent += `
+                    <div class="word-ui-mockup">
+                        <div class="word-toolbar">
+                            <span class="word-btn">File</span>
+                            <span class="word-btn">Home</span>
+                            <span class="word-btn">Insert</span>
+                            <span class="word-btn highlight">Picture Format</span>
+                        </div>
+                        <div class="word-document" style="text-align: center;">
+                            <div style="display: inline-block; border: 2px dashed #3b82f6; padding: 4px; position: relative;">
+                                <div style="width: 120px; height: 80px; background: linear-gradient(135deg, #87CEEB, #228B22); display: flex; align-items: center; justify-content: center; font-size: 0.8em; color: #fff;">Imagine</div>
+                                <div style="position:absolute;top:-4px;left:-4px;width:8px;height:8px;background:#3b82f6;border-radius:50%;"></div>
+                                <div style="position:absolute;top:-4px;right:-4px;width:8px;height:8px;background:#3b82f6;border-radius:50%;"></div>
+                                <div style="position:absolute;bottom:-4px;left:-4px;width:8px;height:8px;background:#3b82f6;border-radius:50%;"></div>
+                                <div style="position:absolute;bottom:-4px;right:-4px;width:8px;height:8px;background:#3b82f6;border-radius:50%;"></div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
 
             let optionsHTML = '';
             q.options.forEach((opt, i) => {
@@ -798,12 +463,9 @@
                     <div class="options-grid">${optionsHTML}</div>
                     <div class="feedback-box" id="feedback"></div>
                     <div style="text-align: center; margin-top: 1.5rem;">
-                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
-                            Urmatoarea Intrebare
-                        </button>
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">Urmatoarea Intrebare</button>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
         function selectAnswer(index) {
@@ -814,11 +476,8 @@
             const nextBtn = document.getElementById('nextBtn');
 
             options.forEach(opt => opt.style.pointerEvents = 'none');
-
             options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
-            if (index !== q.correct) {
-                options[q.correct].classList.add('correct');
-            }
+            if (index !== q.correct) options[q.correct].classList.add('correct');
 
             const dots = document.querySelectorAll('.progress-dot');
             dots[currentQuestion].classList.remove('current');
@@ -827,34 +486,20 @@
             if (index === q.correct) {
                 score++;
                 feedback.className = 'feedback-box show correct';
-                feedback.innerHTML = `
-                    <div class="feedback-icon">🎉</div>
-                    <div class="feedback-text">Corect!</div>
-                    <div class="explanation">${q.explanation}</div>
-                `;
+                feedback.innerHTML = `<div class="feedback-icon">🎉</div><div class="feedback-text">Corect!</div><div class="explanation">${q.explanation}</div>`;
             } else {
                 feedback.className = 'feedback-box show wrong';
-                feedback.innerHTML = `
-                    <div class="feedback-icon">😅</div>
-                    <div class="feedback-text">Nu chiar...</div>
-                    <div class="explanation">${q.explanation}</div>
-                `;
+                feedback.innerHTML = `<div class="feedback-icon">😅</div><div class="feedback-text">Nu chiar...</div><div class="explanation">${q.explanation}</div>`;
             }
 
             nextBtn.style.display = 'inline-flex';
-            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
-                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ? 'Urmatoarea Intrebare' : 'Vezi Rezultatul';
         }
 
         function nextQuestion() {
-            const levelData = levels[currentLevel];
             currentQuestion++;
-
-            if (currentQuestion >= levelData.questions.length) {
-                showLevelComplete();
-            } else {
-                showQuestion();
-            }
+            if (currentQuestion >= levels[currentLevel].questions.length) showLevelComplete();
+            else showQuestion();
         }
 
         function showLevelComplete() {
@@ -872,21 +517,12 @@
             if (passed) {
                 earnedXP = levelData.xpReward;
                 if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
-
                 if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
-                    if (!levelScores[currentLevel]) {
-                        totalXP += earnedXP;
-                    }
+                    if (!levelScores[currentLevel]) totalXP += earnedXP;
                     levelScores[currentLevel] = percentage;
                 }
-
-                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
-                    unlockedLevels.push(currentLevel + 1);
-                }
-
-                saveProgress();
-                updateXPDisplay();
-                updateLevelMap();
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) unlockedLevels.push(currentLevel + 1);
+                saveProgress(); updateXPDisplay(); updateLevelMap();
             }
 
             document.getElementById('quizArea').innerHTML = `
@@ -897,22 +533,11 @@
                     <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
                     ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
                     <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
-                            Reincearca
-                        </button>
-                        ${passed && currentLevel < 5 ? `
-                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
-                                Nivelul Urmator
-                            </button>
-                        ` : ''}
-                        ${passed && currentLevel === 5 ? `
-                            <button class="btn btn-success" onclick="window.location.href='quiz5-proiecte.html'">
-                                Quiz-ul 5: Proiecte creative
-                            </button>
-                        ` : ''}
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">Reincearca</button>
+                        ${passed && currentLevel < 5 ? `<button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">Nivelul Urmator</button>` : ''}
+                        ${passed && currentLevel === 5 ? `<button class="btn btn-success" onclick="window.location.href='quiz5-proiecte.html'">Quiz-ul 5: Salvarea Documentelor</button>` : ''}
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
         loadProgress();

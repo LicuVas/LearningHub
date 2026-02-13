@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Bazele Internetului | Clasa 5</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-primary: #0f0f1a; --bg-secondary: #1a1a2e; --bg-card: #252540; --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-green: #10b981; --accent-cyan: #06b6d4; --accent-red: #ef4444; --accent-yellow: #fbbf24; --text-primary: #f1f5f9; --text-secondary: #94a3b8; --border: #3d3d5c; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
+        .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: var(--bg-secondary); border-radius: 16px; margin-bottom: 2rem; border: 1px solid var(--border); }
+        .quiz-title { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .xp-display { display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; color: #fff; }
+        .level-map { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .level-node { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; cursor: pointer; transition: all 0.3s; position: relative; border: 3px solid var(--border); background: var(--bg-card); }
+        .level-node.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-node.locked::after { content: '\U0001F512'; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+        .level-node.active { border-color: var(--accent-blue); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); animation: pulse 2s infinite; }
+        .level-node.completed { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); border-color: var(--accent-green); }
+        .level-node.completed::after { content: '\2713'; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .level-connector { width: 30px; height: 3px; background: var(--border); align-self: center; }
+        .level-connector.completed { background: var(--accent-green); }
+        .quiz-area { background: var(--bg-secondary); border-radius: 20px; padding: 2rem; border: 1px solid var(--border); min-height: 400px; }
+        .level-intro { text-align: center; padding: 2rem; }
+        .level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-blue); }
+        .level-intro p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; }
+        .level-intro .xp-reward { display: inline-block; background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
+        .question-container { display: none; }
+        .question-container.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        .question-progress { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .progress-dot.current { background: var(--accent-blue); }
+        .progress-dot.correct { background: var(--accent-green); }
+        .progress-dot.wrong { background: var(--accent-red); }
+        .question-text { font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
+        .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+        .option { padding: 1.2rem 1.5rem; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 1rem; text-align: left; }
+        .option:hover { border-color: var(--accent-purple); transform: translateX(5px); }
+        .option.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); }
+        .option.wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.2); }
+        .feedback-box { display: none; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; }
+        .feedback-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.correct { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent-green); }
+        .feedback-box.wrong { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--accent-red); }
+        .feedback-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .feedback-text { font-size: 1.1rem; margin-bottom: 1rem; }
+        .explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+        .level-complete { display: none; text-align: center; padding: 3rem; }
+        .level-complete.show { display: block; animation: celebrate 0.5s ease; }
+        @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .level-complete-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .level-complete h2 { font-size: 2rem; color: var(--accent-green); margin-bottom: 1rem; }
+        .xp-earned { font-size: 2rem; color: var(--accent-blue); margin: 1.5rem 0; }
+        .score-display { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem; }
+        .stars { font-size: 3rem; margin: 1rem 0; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 1rem; font-size: 0.9rem; }
+        .back-link:hover { color: var(--accent-cyan); }
+        @media (max-width: 600px) { .container { padding: 1rem; } .quiz-header { flex-direction: column; gap: 1rem; } .level-node { width: 50px; height: 50px; font-size: 1.2rem; } .question-text { font-size: 1.1rem; } }
+        footer { margin-top: 3rem; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); }
+    </style>
+    <link rel="stylesheet" href="../../../../../assets/css/mobile.css">
+    <link rel="stylesheet" href="../../../../../assets/css/mobile-first.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <a href="../index.html" class="back-link">&#8592; Inapoi la Modulul 2</a>
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz: Bazele Internetului</div>
+            <div class="xp-display"><span>XP:</span><span id="totalXP">0</span></div>
+        </div>
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+        <div class="quiz-area" id="quizArea"></div>
+    </div>
+    <footer>
+        <strong>&copy; 2026 Prof. Gurlan Vasile</strong><br>
+        Informatica si TIC | <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+    </footer>
+
+    <script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Ce este Internetul?",
+                description: "Invata notiunile de baza despre Internet",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Ce este Internetul?",
+                        options: [
+                            "Un singur calculator foarte mare",
+                            "O retea globala care conecteaza milioane de calculatoare din toata lumea",
+                            "Un program de calculator",
+                            "Un tip de monitor"
+                        ],
+                        correct: 1,
+                        explanation: "Internetul este o retea globala (mondiala) care conecteaza milioane de calculatoare, telefoane si alte dispozitive din toata lumea. Prin Internet putem comunica, cauta informatii si accesa servicii online."
+                    },
+                    {
+                        text: "Ce este World Wide Web (WWW)?",
+                        options: [
+                            "Acelasi lucru cu Internetul",
+                            "Un serviciu al Internetului care contine pagini web interconectate",
+                            "Un tip de cablu de retea",
+                            "Un motor de cautare"
+                        ],
+                        correct: 1,
+                        explanation: "World Wide Web (WWW) este un serviciu care functioneaza pe Internet. Contine miliarde de pagini web interconectate prin link-uri. Internetul este infrastructura (reteaua), iar WWW este continutul (paginile web)."
+                    },
+                    {
+                        text: "Ce echipament ai nevoie acasa pentru a te conecta la Internet?",
+                        options: [
+                            "Doar un calculator",
+                            "Un calculator/telefon, un router si o conexiune de la un furnizor de internet",
+                            "Doar un cablu de curent",
+                            "Doar o antena TV"
+                        ],
+                        correct: 1,
+                        explanation: "Pentru a te conecta la Internet ai nevoie de: un dispozitiv (calculator, telefon, tableta), un router (care distribuie semnalul) si un abonament la un furnizor de internet (ISP) care asigura conexiunea."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Browserul web",
+                description: "Descopera ce este si cum functioneaza un browser",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "Ce este un browser web?",
+                        options: [
+                            "Un motor de cautare",
+                            "Un program care iti permite sa vizualizezi pagini web",
+                            "Un tip de sistem de operare",
+                            "Un antivirus"
+                        ],
+                        correct: 1,
+                        explanation: "Browserul web (navigatorul) este un program care iti permite sa accesezi si sa vizualizezi pagini web. Exemple: Google Chrome, Mozilla Firefox, Microsoft Edge, Safari."
+                    },
+                    {
+                        text: "Care dintre urmatoarele este un browser web?",
+                        options: [
+                            "Google (motorul de cautare)",
+                            "Google Chrome",
+                            "Windows",
+                            "Facebook"
+                        ],
+                        correct: 1,
+                        explanation: "Google Chrome este un browser web (program de navigare). Google este un motor de cautare (un site web). Windows este un sistem de operare. Facebook este o retea sociala (un site web)."
+                    },
+                    {
+                        text: "Ce este bara de adrese (URL) a browserului?",
+                        options: [
+                            "Locul unde scrii mesaje email",
+                            "Locul din partea de sus unde scrii adresa unei pagini web",
+                            "Bara de instrumente pentru desenare",
+                            "Meniul cu setarile browserului"
+                        ],
+                        correct: 1,
+                        explanation: "Bara de adrese se afla in partea de sus a browserului. Aici scrii adresa (URL-ul) paginii web pe care vrei sa o vizitezi, de exemplu: www.google.com sau www.wikipedia.org."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: URL si navigare",
+                description: "Invata despre adresele web si navigare",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Ce inseamna URL?",
+                        options: [
+                            "Un tip de virus",
+                            "Adresa unica a unei pagini web pe Internet",
+                            "Un program de calculator",
+                            "Un tip de fisier"
+                        ],
+                        correct: 1,
+                        explanation: "URL (Uniform Resource Locator) este adresa unica a fiecarei pagini web. Ca si adresa unei case, URL-ul te duce exact la pagina dorita. Exemplu: https://www.wikipedia.org"
+                    },
+                    {
+                        text: "Ce inseamna 'https://' de la inceputul unei adrese web?",
+                        options: [
+                            "Este doar un prefix decorativ",
+                            "Indica o conexiune securizata (criptata) cu site-ul",
+                            "Inseamna ca site-ul este gratuit",
+                            "Este numele serverului"
+                        ],
+                        correct: 1,
+                        explanation: "HTTPS (HyperText Transfer Protocol Secure) indica o conexiune securizata si criptata. Lacatul din bara de adrese confirma ca datele tale sunt protejate. Site-urile cu http:// (fara 's') sunt mai putin sigure."
+                    },
+                    {
+                        text: "Ce este un hyperlink (link)?",
+                        options: [
+                            "Un tip de virus",
+                            "Un text sau o imagine pe care faci click pentru a merge la o alta pagina",
+                            "O parola",
+                            "Un tip de fisier"
+                        ],
+                        correct: 1,
+                        explanation: "Un hyperlink (link) este un text, imagine sau buton pe care faci click si te duce la o alta pagina web. Link-urile text sunt de obicei colorate (albastru) si subliniate. Cursorul mouse-ului se transforma in 'manuta' cand treci peste un link."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Motoare de cautare",
+                description: "Invata sa cauti eficient pe Internet",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce este un motor de cautare?",
+                        options: [
+                            "Un browser web",
+                            "Un site web care te ajuta sa gasesti informatii pe Internet",
+                            "Un program de editare foto",
+                            "Un tip de hardware"
+                        ],
+                        correct: 1,
+                        explanation: "Un motor de cautare (search engine) este un site web specializat in gasirea informatiilor pe Internet. Scrii ce cauti si el iti arata o lista de pagini web relevante. Exemple: Google, Bing, Yahoo."
+                    },
+                    {
+                        text: "Cum gasesti informatii despre 'vulcanul Vezuviu' pe Google?",
+                        options: [
+                            "Scrii adresa www.vezuviu.com",
+                            "Scrii 'vulcanul Vezuviu' in bara de cautare Google si apesi Enter",
+                            "Apesi butonul 'Vulcani' din meniul Google",
+                            "Trimiti un email la Google"
+                        ],
+                        correct: 1,
+                        explanation: "Pentru a cauta informatii, scrii cuvintele cheie ('vulcanul Vezuviu') in bara de cautare a motorului de cautare si apesi Enter sau butonul de cautare. Google va afisa o lista de pagini relevante."
+                    },
+                    {
+                        text: "Ce sunt 'rezultatele cautarii' afisate de un motor de cautare?",
+                        options: [
+                            "Reclame",
+                            "O lista de pagini web care contin informatii despre ce ai cautat",
+                            "Fisiere descarcate automat",
+                            "Mesaje de la alti utilizatori"
+                        ],
+                        correct: 1,
+                        explanation: "Rezultatele cautarii sunt o lista de pagini web ordonate dupa relevanta (cat de bine se potrivesc cu ce ai cautat). Fiecare rezultat are un titlu (link albastru), adresa web si o scurta descriere."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: Navigarea eficienta",
+                description: "Testeaza-ti cunostintele de navigare web",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Ce fac butoanele Inapoi (Back) si Inainte (Forward) din browser?",
+                        options: [
+                            "Deschid pagini noi",
+                            "Te duc la pagina anterioara sau urmatoare din istoricul de navigare",
+                            "Inchid tab-uri",
+                            "Salveaza pagina"
+                        ],
+                        correct: 1,
+                        explanation: "Butonul Back (Inapoi) te duce la pagina vizitata anterior. Forward (Inainte) te readuce la pagina de unde ai dat Back. Sunt ca butoanele Undo/Redo, dar pentru navigare."
+                    },
+                    {
+                        text: "Ce este un 'tab' (fila) in browser?",
+                        options: [
+                            "Un tip de buton",
+                            "O fila care permite deschiderea mai multor pagini web in aceeasi fereastra",
+                            "O parola salvata",
+                            "Un tip de extensie"
+                        ],
+                        correct: 1,
+                        explanation: "Tab-urile (filele) permit deschiderea mai multor pagini web simultan, in aceeasi fereastra a browserului. Poti trece de la un tab la altul facand click pe ele. Se deschide un tab nou cu Ctrl+T."
+                    },
+                    {
+                        text: "Ce este un 'bookmark' (semn de carte) in browser?",
+                        options: [
+                            "Un virus",
+                            "O pagina web salvata pentru a o accesa rapid ulterior",
+                            "O parola",
+                            "Un tip de fisier descarcat"
+                        ],
+                        correct: 1,
+                        explanation: "Un bookmark (semn de carte sau favorit) salveaza adresa unei pagini web pentru a o accesa rapid in viitor, fara sa mai cauti sau sa introduci adresa. Se adauga cu Ctrl+D sau din iconita stea."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1, currentQuestion = 0, score = 0, totalXP = 0, levelScores = {}, unlockedLevels = [1];
+        function loadProgress() { const s = localStorage.getItem('cls5_m2_quiz4_progress'); if (s) { const d = JSON.parse(s); totalXP = d.totalXP || 0; unlockedLevels = d.unlockedLevels || [1]; levelScores = d.levelScores || {}; updateXPDisplay(); updateLevelMap(); } }
+        function saveProgress() { localStorage.setItem('cls5_m2_quiz4_progress', JSON.stringify({ totalXP, unlockedLevels, levelScores })); }
+        function updateXPDisplay() { document.getElementById('totalXP').textContent = totalXP; }
+        function updateLevelMap() { document.querySelectorAll('.level-node').forEach((node, i) => { const l = i + 1; node.classList.remove('locked', 'active', 'completed'); if (levelScores[l] !== undefined) node.classList.add('completed'); else if (unlockedLevels.includes(l)) { if (l === Math.max(...unlockedLevels.filter(x => levelScores[x] === undefined))) node.classList.add('active'); } else node.classList.add('locked'); }); document.querySelectorAll('.level-connector').forEach((c, i) => { if (levelScores[i + 1] !== undefined) c.classList.add('completed'); else c.classList.remove('completed'); }); }
+        function selectLevel(level) { if (!unlockedLevels.includes(level)) return; currentLevel = level; currentQuestion = 0; score = 0; showLevelIntro(); }
+        function showLevelIntro() { const l = levels[currentLevel]; document.getElementById('quizArea').innerHTML = `<div class="level-intro"><h2>${l.title}</h2><p>${l.description}</p><div class="xp-reward">+${l.xpReward} XP</div><button class="btn btn-primary" onclick="startLevel()">Incepe Nivelul</button></div>`; }
+        function startLevel() { showQuestion(); }
+        function showQuestion() { function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); } const l = levels[currentLevel]; const q = l.questions[currentQuestion]; let dots = ''; for (let i = 0; i < l.questions.length; i++) dots += `<div class="progress-dot${i === currentQuestion ? ' current' : ''}"></div>`; let opts = ''; q.options.forEach((o, i) => { opts += `<div class="option" onclick="selectAnswer(${i})">${escHtml(o)}</div>`; }); document.getElementById('quizArea').innerHTML = `<div class="question-container active"><div class="question-progress">${dots}</div><p class="question-text">${q.text}</p><div class="options-grid">${opts}</div><div class="feedback-box" id="feedback"></div><div style="text-align:center;margin-top:1.5rem;"><button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display:none;">Urmatoarea Intrebare</button></div></div>`; }
+        function selectAnswer(index) { const l = levels[currentLevel]; const q = l.questions[currentQuestion]; const opts = document.querySelectorAll('.option'); const fb = document.getElementById('feedback'); const nb = document.getElementById('nextBtn'); opts.forEach(o => o.style.pointerEvents = 'none'); opts[index].classList.add(index === q.correct ? 'correct' : 'wrong'); if (index !== q.correct) opts[q.correct].classList.add('correct'); const d = document.querySelectorAll('.progress-dot'); d[currentQuestion].classList.remove('current'); d[currentQuestion].classList.add(index === q.correct ? 'correct' : 'wrong'); if (index === q.correct) { score++; fb.className = 'feedback-box show correct'; fb.innerHTML = `<div class="feedback-icon">&#127881;</div><div class="feedback-text">Corect! Foarte bine!</div><div class="explanation">${q.explanation}</div>`; } else { fb.className = 'feedback-box show wrong'; fb.innerHTML = `<div class="feedback-icon">&#128517;</div><div class="feedback-text">Nu chiar... Hai sa invatam!</div><div class="explanation">${q.explanation}</div>`; } nb.style.display = 'inline-flex'; nb.textContent = currentQuestion < l.questions.length - 1 ? 'Urmatoarea Intrebare' : 'Vezi Rezultatul'; }
+        function nextQuestion() { currentQuestion++; if (currentQuestion >= levels[currentLevel].questions.length) showLevelComplete(); else showQuestion(); }
+        function showLevelComplete() { const l = levels[currentLevel]; const pct = Math.round((score / l.questions.length) * 100); const passed = pct >= 66; let stars = pct >= 100 ? '&#11088;&#11088;&#11088;' : pct >= 80 ? '&#11088;&#11088;' : pct >= 66 ? '&#11088;' : '&#128170;'; let earnedXP = 0; if (passed) { earnedXP = l.xpReward; if (pct === 100) earnedXP = Math.round(earnedXP * 1.5); if (!levelScores[currentLevel] || levelScores[currentLevel] < pct) { if (!levelScores[currentLevel]) totalXP += earnedXP; levelScores[currentLevel] = pct; } if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) unlockedLevels.push(currentLevel + 1); saveProgress(); updateXPDisplay(); updateLevelMap(); } document.getElementById('quizArea').innerHTML = `<div class="level-complete show"><div class="level-complete-icon">${passed ? '&#127942;' : '&#128218;'}</div><h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2><div class="stars">${stars}</div><div class="score-display">${score}/${l.questions.length} raspunsuri corecte (${pct}%)</div>${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;"><button class="btn btn-outline" onclick="selectLevel(${currentLevel})">Reincearca</button>${passed && currentLevel < 5 ? `<button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">Nivelul Urmator</button>` : ''}${passed && currentLevel === 5 ? `<button class="btn btn-success" onclick="window.location.href='quiz5-siguranta.html'">Quiz-ul 5: Siguranta Online</button>` : ''}</div></div>`; }
+        loadProgress(); showLevelIntro();
+    </script>
+</body>
+</html>
