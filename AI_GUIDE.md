@@ -1,14 +1,23 @@
 # LearningHub - AI Agent Guide
 
+> **IMPORTANT: For lesson creation, modification, or evaluation, the authoritative source is now `LESSON_SPECIFICATION.md` (Format C: Guided Atomic). This file is kept for historical context only. The lesson format described below is SUPERSEDED.**
+
 ## Quick Context
 
-LearningHub is a student-centered learning platform where students navigate knowledge through purpose-driven paths. The core philosophy is **"I want to do this"** → discover concepts as tools.
+LearningHub is a student-centered learning platform for Romanian ICT education (grades 5-8). 346 HTML lesson and quiz files, no backend. Live at `https://learninghub-8z6.pages.dev`.
 
-## Core Design Patterns
+**Start here:** `.init.md` → `LESSON_SPECIFICATION.md` → `OFFICIAL_TEACHING_SEQUENCE.md`
 
-### Lesson Structure (GOAL → TRY → LEARN → TEST)
+## Lesson Format (SUPERSEDED — see LESSON_SPECIFICATION.md)
 
-Every lesson follows this exact pattern:
+The old 4-step pattern below has been replaced by **Format C: Guided Atomic**:
+- FRAME (goal + pain comparison + outcomes)
+- TRY (optional hands-on challenge)
+- ATOMS (content + embedded quiz, sequentially gated)
+- PRACTICE (3 exercises: minim/standard/performanta)
+- REVIEW (summary + grade + next lesson)
+
+### Legacy Format (historical reference only)
 
 1. **GOAL (30s)** - Visual preview of what they'll achieve
    - Show end result first

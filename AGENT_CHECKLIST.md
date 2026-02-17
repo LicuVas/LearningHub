@@ -3,6 +3,8 @@
 > **Written by John (CTO) — Feb 2026**
 > Based on 6 repair sessions, 226-file site audit, 900+ code fixes, and hard lessons about what automation catches vs misses.
 
+> **NOTE:** For lesson creation and format specification, the authoritative source is now **`LESSON_SPECIFICATION.md`** (Format C: Guided Atomic). This checklist covers repair history, known traps, and inspection protocol. Both documents are complementary — read the spec first, use this checklist for QA.
+
 This is the definitive checklist for any agent working on this site. Read it before touching any file.
 
 ---

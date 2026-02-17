@@ -3,6 +3,12 @@
 Interactive TIC (ICT) learning platform for Romanian gymnasium students (grades 5-8).
 Live at **https://learninghub-8z6.pages.dev** and **https://licuvas.github.io/LearningHub**.
 
+## For AI Agents
+
+**Start here:** `.init.md` → `LESSON_SPECIFICATION.md` → `OFFICIAL_TEACHING_SEQUENCE.md`
+
+The master lesson specification (`LESSON_SPECIFICATION.md`) defines Format C "Guided Atomic" — the canonical format for all new and refactored lessons. It contains the HTML template, content requirements, grading system, JS/CSS architecture, quality checklist, known traps, and migration guide.
+
 ## What It Is
 
 346 self-contained HTML lesson and quiz pages covering the full TIC curriculum per OMEN 3393/2017. Each lesson is a single HTML file with embedded interactivity — no backend, no build step, no dependencies. Students open a page, learn, answer quizzes, practice, and get graded 1-10.

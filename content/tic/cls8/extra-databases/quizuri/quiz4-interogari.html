@@ -6,6 +6,148 @@
     <title>Quiz: Interogari SQL | Clasa a VIII-a</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../../../../../assets/css/quiz-gamified.css">
+
+    <style>
+        /* Lesson-specific styles */
+:root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-red: #ef4444;
+            --accent-rose: #f43f5e;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-orange: #f59e0b;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #8b5cf6;
+            --accent-blue: #3b82f6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #2d2d44;
+        }
+
+body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+
+.quiz-title { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+.xp-display { display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange)); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; color: #000; }
+
+.level-node.locked::after { content: ''; position: absolute; font-size: 1rem; bottom: -5px; right: -5px; }
+
+.level-node.active { border-color: var(--accent-blue); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); animation: pulse 2s infinite; }
+
+.level-node.completed { background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); border-color: var(--accent-blue); }
+
+.level-node.completed::after { content: ''; position: absolute; font-size: 0.8rem; bottom: -5px; right: -5px; background: var(--accent-green); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+
+.level-connector.completed { background: var(--accent-blue); }
+
+.level-intro h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--accent-blue); }
+
+.level-intro .xp-reward { display: inline-block; background: rgba(251, 191, 36, 0.2); color: var(--accent-yellow); padding: 0.5rem 1rem; border-radius: 20px; margin-bottom: 2rem; }
+
+.progress-dot.current { background: var(--accent-blue); }
+
+.question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; line-height: 1.6; }
+
+/* SQL Code Display */
+        .sql-display {
+            background: #1e1e3f; border-radius: 12px; padding: 1.25rem;
+            margin: 1rem auto; max-width: 600px; overflow-x: auto;
+            border: 1px solid #3d3d6b; position: relative;
+        }
+
+.sql-display::before {
+            content: 'SQL'; position: absolute; top: 0.5rem; right: 0.75rem;
+            font-size: 0.7rem; color: #64748b; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+.sql-code {
+            font-family: 'Fira Code', monospace; font-size: 0.95rem;
+            line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+        }
+
+.sql-keyword { color: #ff79c6; font-weight: 600; }
+
+.sql-function { color: #50fa7b; }
+
+.sql-string { color: #f1fa8c; }
+
+.sql-number { color: #bd93f9; }
+
+.sql-field { color: #8be9fd; }
+
+.sql-table { color: #ffb86c; }
+
+.sql-operator { color: #ff5555; }
+
+.sql-comment { color: #6272a4; font-style: italic; }
+
+/* Table Display */
+        .table-display {
+            background: white; border-radius: 12px; padding: 1rem;
+            margin: 1rem auto; max-width: 500px; overflow-x: auto;
+        }
+
+.table-title {
+            font-weight: 700; color: #1a1a2e; margin-bottom: 0.5rem;
+            font-size: 0.9rem; text-align: center;
+        }
+
+.demo-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; color: #1a1a2e; }
+
+.demo-table th { background: #3b82f6; color: white; padding: 0.6rem; text-align: left; }
+
+.demo-table th.pk { background: #ef4444; }
+
+.demo-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #e5e7eb; }
+
+.demo-table tr:nth-child(even) { background: #f8fafc; }
+
+.demo-table tr.highlight { background: #dbeafe !important; }
+
+.demo-table td.highlight-cell { background: #fef3c7; font-weight: 600; }
+
+/* Result Table */
+        .result-preview {
+            background: #ecfdf5; border-radius: 12px; padding: 1rem;
+            margin: 1rem auto; max-width: 400px; border: 2px dashed #10b981;
+        }
+
+.result-preview .table-title { color: #047857; }
+
+.result-preview .demo-table th { background: #10b981; }
+
+.option:hover { border-color: var(--accent-blue); transform: translateX(5px); }
+
+.option code { font-family: 'Fira Code', monospace; background: rgba(139, 92, 246, 0.2); padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.9rem; }
+
+.explanation { font-size: 0.95rem; color: var(--text-secondary); background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: left; }
+
+.explanation code { font-family: 'Fira Code', monospace; background: rgba(139, 92, 246, 0.3); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.85rem; }
+
+.explanation-wrong { font-size: 0.9rem; color: #fca5a5; margin-top: 0.5rem; font-style: italic; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.btn-primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); color: white; }
+
+.btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+
+.btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+.xp-earned { font-size: 2rem; color: var(--accent-yellow); margin: 1.5rem 0; }
+
+@media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .quiz-header { flex-direction: column; gap: 1rem; }
+            .level-node { width: 50px; height: 50px; font-size: 1.2rem; }
+            .question-text { font-size: 1rem; }
+            .sql-code { font-size: 0.85rem; }
+        }
+    </style>
+    
 </head>
 <body>
     <a href="#main-content" class="skip-link">Sari la continut</a>
