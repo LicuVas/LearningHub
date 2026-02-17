@@ -206,8 +206,9 @@ def smart_lower(text):
     """Lowercase text but preserve known proper nouns."""
     result = text.lower()
     for proper in PRESERVE_CASE:
-        # Replace lowercase version with proper case
-        result = re.sub(re.escape(proper.lower()), proper, result, flags=re.IGNORECASE)
+        # Word boundary prevents matching inside other words (e.g. "ram" in "frame")
+        pattern = r'\b' + re.escape(proper.lower()) + r'\b'
+        result = re.sub(pattern, proper, result, flags=re.IGNORECASE)
     return result
 
 
@@ -535,6 +536,120 @@ def cmd_apply(dry_run=False):
     print(f"Atom title fixes: {titles_fixed}")
 
 
+REVIEW_PLACEHOLDER = "<li>Continut</li>"
+
+# Review summary prefixes (Romanian, varied)
+REVIEW_PREFIXES = [
+    "Ai invatat",
+    "Acum stii",
+    "Ai descoperit",
+    "Ai explorat",
+    "Ai inteles",
+]
+
+
+def get_atom_topics(filepath):
+    """Extract real topic names from atoms in a file."""
+    with open(filepath, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    soup = BeautifulSoup(content, "html.parser")
+    topics = []
+
+    for atom_div in soup.find_all("div", class_="atom"):
+        # Try concept-name first (better quality)
+        concept_el = atom_div.find(class_="concept-name")
+        if concept_el and concept_el.get_text().strip():
+            topics.append(concept_el.get_text().strip())
+            continue
+
+        # Fall back to atom-title
+        title_el = atom_div.find(class_="atom-title")
+        if title_el:
+            title = title_el.get_text().strip()
+            # Skip placeholder titles
+            if not re.match(r"^\d+\.\s*Continut$", title) and title != "Continut":
+                topics.append(title)
+
+    return topics
+
+
+def generate_review_bullet(topic, index):
+    """Generate a review summary bullet from a topic."""
+    prefix = REVIEW_PREFIXES[index % len(REVIEW_PREFIXES)]
+    topic_clean = topic.strip().rstrip("?!.")
+
+    # Lowercase first char of topic if it follows a prefix
+    if topic_clean and topic_clean[0].isupper():
+        # Keep proper nouns, lowercase generic words
+        first_word = topic_clean.split()[0]
+        if first_word not in [p for p in PRESERVE_CASE if p == first_word]:
+            topic_clean = topic_clean[0].lower() + topic_clean[1:]
+
+    return f"{prefix} {smart_lower(topic_clean)}"
+
+
+def cmd_fix_review(dry_run=False):
+    """Fix bare <li>Continut</li> in REVIEW sections."""
+    files = sorted(CONTENT_DIR.rglob("*.html"))
+    modified = 0
+    total_replacements = 0
+
+    for filepath in files:
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception:
+            continue
+
+        if REVIEW_PLACEHOLDER not in content:
+            continue
+
+        # Count placeholders in this file
+        placeholder_count = content.count(REVIEW_PLACEHOLDER)
+        topics = get_atom_topics(filepath)
+
+        if not topics:
+            if not dry_run:
+                print(f"SKIP (no topics): {filepath.relative_to(PROJECT_ROOT)}")
+            continue
+
+        # Generate review bullets (match count to placeholders, cycle topics if needed)
+        bullets = []
+        for i in range(placeholder_count):
+            topic = topics[i] if i < len(topics) else topics[i % len(topics)]
+            bullet = generate_review_bullet(topic, i)
+            bullets.append(bullet)
+
+        # Replace each <li>Continut</li> one at a time
+        new_content = content
+        for bullet in bullets:
+            new_content = new_content.replace(
+                REVIEW_PLACEHOLDER,
+                f"<li>{bullet}</li>",
+                1  # replace one at a time
+            )
+
+        if new_content != content:
+            modified += 1
+            total_replacements += placeholder_count
+            rel_path = filepath.relative_to(PROJECT_ROOT)
+
+            if dry_run:
+                print(f"WOULD MODIFY: {rel_path} ({placeholder_count} bullets)")
+                for b in bullets[:3]:
+                    print(f"  + {b}")
+                if len(bullets) > 3:
+                    print(f"  ... +{len(bullets)-3} more")
+            else:
+                with open(filepath, "w", encoding="utf-8") as f:
+                    f.write(new_content)
+
+    action = "Would modify" if dry_run else "Modified"
+    print(f"\n{action} {modified} files")
+    print(f"Review bullets replaced: {total_replacements}")
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(__doc__)
@@ -550,6 +665,9 @@ if __name__ == "__main__":
     elif cmd == "apply":
         dry = "--dry" in sys.argv
         cmd_apply(dry_run=dry)
+    elif cmd == "fix-review":
+        dry = "--dry" in sys.argv
+        cmd_fix_review(dry_run=dry)
     else:
         print(f"Unknown command: {cmd}")
         print(__doc__)
