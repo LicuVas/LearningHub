@@ -1,2797 +1,548 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lectia 3: Crearea unei Baze de Date in Access | TIC Clasa a VIII-a</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../../../../assets/css/lesson-5step.css">
-    <style>
-        /* Lesson-specific styles */
-:root {
-            --bg-primary: #0a0a12;
-            --bg-secondary: #12121f;
-            --bg-card: #1a1a2e;
-            --bg-card-hover: #252540;
-            --accent-blue: #3b82f6;
-            --accent-blue-light: #60a5fa;
-            --accent-purple: #8b5cf6;
-            --accent-green: #10b981;
-            --accent-orange: #f59e0b;
-            --accent-cyan: #06b6d4;
-            --accent-red: #ef4444;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --border: #2d2d44;
-            --success: #22c55e;
-            --error: #ef4444;
-            --warning: #f59e0b;
-        }
-
-body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            line-height: 1.7;
-        }
-
-.container { max-width: 850px; margin: 0 auto; padding: 2rem; }
-
-/* Navigation */
-        .nav-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-.nav-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-.nav-link:hover { color: var(--accent-purple); }
-
-/* Progress Steps */
-        .progress-steps {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-            align-items: center;
-        }
-
-.step {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: var(--bg-card);
-            border: 2px solid var(--border);
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-.step:hover { border-color: var(--accent-purple); color: var(--text-secondary); }
-
-.step.active {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.15));
-            border-color: var(--accent-purple);
-            color: var(--accent-purple);
-        }
-
-.step.completed {
-            background: rgba(16, 185, 129, 0.15);
-            border-color: var(--accent-green);
-            color: var(--accent-green);
-        }
-
-.step-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-
-.step-connector {
-            width: 20px;
-            height: 2px;
-            background: var(--border);
-            flex-shrink: 0;
-        }
-
-@keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-@keyframes slideDown {
-            from { opacity: 0; max-height: 0; }
-            to { opacity: 1; max-height: 500px; }
-        }
-
-/* ==================== */
-        /* GOAL Section         */
-        /* ==================== */
-        .goal-hero {
-            text-align: center;
-            padding: 3rem 2rem;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.1));
-            border-radius: 20px;
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            margin-bottom: 2rem;
-        }
-
-.goal-emoji { font-size: 4.5rem; margin-bottom: 1rem; display: block; }
-
-.goal-title {
-            font-size: 2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.75rem;
-        }
-
-.goal-subtitle {
-            font-size: 1.15rem;
-            color: var(--text-secondary);
-            max-width: 580px;
-            margin: 0 auto 2rem;
-        }
-
-/* The "pain" scenario */
-        .pain-scenario {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.75rem;
-            margin: 2rem auto;
-            max-width: 650px;
-            text-align: left;
-        }
-
-.pain-scenario-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-.pain-label {
-            display: inline-block;
-            padding: 0.2rem 0.6rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-.pain-label-bad {
-            background: rgba(239, 68, 68, 0.2);
-            color: var(--accent-red);
-        }
-
-.pain-label-good {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--accent-green);
-        }
-
-.pain-code {
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.85rem;
-            white-space: pre-wrap;
-            margin: 0.75rem 0;
-            line-height: 1.5;
-        }
-
-.pain-code-bad {
-            background: rgba(239, 68, 68, 0.08);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #f87171;
-        }
-
-.pain-code-good {
-            background: rgba(16, 185, 129, 0.08);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: #34d399;
-        }
-
-.pain-commentary {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-style: italic;
-            margin-top: 0.5rem;
-        }
-
-.pain-vs {
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--accent-purple);
-            margin: 1rem 0;
-        }
-
-.goal-outcomes {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1.25rem 1.5rem;
-            margin: 1.5rem auto;
-            max-width: 550px;
-            text-align: left;
-        }
-
-.goal-outcomes h4 {
-            color: var(--accent-green);
-            font-size: 0.95rem;
-            margin-bottom: 0.75rem;
-        }
-
-.goal-outcomes ul {
-            list-style: none;
-            padding: 0;
-        }
-
-.goal-outcomes li {
-            padding: 0.3rem 0;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-.goal-outcomes li::before {
-            content: "\2713 ";
-            color: var(--accent-green);
-            font-weight: 700;
-            margin-right: 0.5rem;
-        }
-
-/* ==================== */
-        /* TRY Section          */
-        /* ==================== */
-        .try-section {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(239, 68, 68, 0.08));
-            border: 2px solid rgba(245, 158, 11, 0.4);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-.try-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 0.5rem;
-        }
-
-.try-badge {
-            background: var(--accent-orange);
-            color: #000;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.85rem;
-        }
-
-.try-subtitle {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            margin-bottom: 1.5rem;
-        }
-
-.challenge-box {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-        }
-
-.challenge-title {
-            font-weight: 700;
-            margin-bottom: 0.75rem;
-            color: var(--accent-orange);
-            font-size: 1.05rem;
-        }
-
-.challenge-step {
-            display: flex;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-            padding: 0.75rem 1rem;
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            border-left: 3px solid var(--accent-orange);
-        }
-
-.challenge-step-num {
-            background: var(--accent-orange);
-            color: #000;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.85rem;
-            flex-shrink: 0;
-        }
-
-.challenge-step-text {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-.challenge-step-text code {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.15rem 0.4rem;
-            border-radius: 4px;
-            font-family: 'Consolas', monospace;
-            color: var(--accent-cyan);
-            font-size: 0.9rem;
-        }
-
-.challenge-step-text strong {
-            color: var(--text-primary);
-        }
-
-.challenge-bonus {
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px dashed var(--accent-purple);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            margin-top: 0.75rem;
-            color: var(--accent-purple);
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-/* ==================== */
-        /* Code Blocks          */
-        /* ==================== */
-        .code-block {
-            background: #1e1e2e;
-            border-radius: 8px;
-            padding: 1rem 1.25rem;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.88rem;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            margin: 0.75rem 0;
-            border: 1px solid var(--border);
-            line-height: 1.65;
-        }
-
-.code-block .kw { color: #c678dd; }
-
-.code-block .type { color: #61afef; }
-
-.code-block .str { color: #98c379; }
-
-.code-block .num { color: #d19a66; }
-
-.code-block .cmt { color: #5c6370; font-style: italic; }
-
-.code-block .fn { color: #e5c07b; }
-
-.code-block .op { color: #56b6c2; }
-
-.code-label {
-            background: var(--accent-purple);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 4px 4px 0 0;
-            font-size: 0.75rem;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: -1px;
-        }
-
-.code-label-orange {
-            background: var(--accent-orange);
-            color: #000;
-        }
-
-.code-label-green {
-            background: var(--accent-green);
-            color: #000;
-        }
-
-.code-label-red {
-            background: var(--accent-red);
-        }
-
-/* ==================== */
-        /* LEARN Section        */
-        /* ==================== */
-        .learn-section {
-            background: var(--bg-secondary);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-.learn-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-.learn-badge {
-            background: var(--accent-purple);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.85rem;
-        }
-
-.concept-card {
-            background: var(--bg-card);
-            border-radius: 14px;
-            padding: 1.5rem;
-            margin: 1.25rem 0;
-            border-left: 4px solid var(--accent-purple);
-        }
-
-.concept-name {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: var(--accent-cyan);
-            margin-bottom: 0.5rem;
-        }
-
-.concept-def {
-            color: var(--text-secondary);
-            margin-bottom: 0.75rem;
-            line-height: 1.8;
-        }
-
-.concept-def p { margin-bottom: 0.5rem; }
-
-.analogy-box {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(6, 182, 212, 0.08));
-            border: 1px solid rgba(139, 92, 246, 0.25);
-            padding: 1rem 1.25rem;
-            border-radius: 10px;
-            margin: 0.75rem 0;
-        }
-
-.analogy-box strong { color: var(--accent-purple); }
-
-.analogy-box p {
-            color: var(--text-secondary);
-            font-size: 0.92rem;
-            line-height: 1.7;
-        }
-
-/* ==================== */
-        /* Visual Diagrams      */
-        /* ==================== */
-        .visual-box {
-            background: var(--bg-card);
-            border: 2px dashed var(--accent-purple);
-            border-radius: 14px;
-            padding: 1.75rem;
-            margin: 1.5rem 0;
-        }
-
-.visual-title {
-            color: var(--accent-purple);
-            font-weight: 700;
-            margin-bottom: 1.25rem;
-            text-align: center;
-            font-size: 0.95rem;
-        }
-
-/* Access interface mockup */
-        .access-mockup {
-            background: #1e1e2e;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-            margin: 1rem 0;
-        }
-
-.access-titlebar {
-            background: linear-gradient(135deg, #1a5276, #1f6f8b);
-            padding: 0.5rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: white;
-        }
-
-.access-titlebar-icon {
-            width: 18px;
-            height: 18px;
-            background: #c0392b;
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.65rem;
-            font-weight: 800;
-            color: white;
-        }
-
-.access-ribbon {
-            background: #2c3e50;
-            padding: 0.4rem 0.75rem;
-            display: flex;
-            gap: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-.ribbon-tab {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            cursor: default;
-        }
-
-.ribbon-tab.active {
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--accent-blue-light);
-        }
-
-.access-content {
-            padding: 1rem;
-        }
-
-/* Table mockup */
-        .db-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.82rem;
-            margin: 0.5rem 0;
-        }
-
-.db-table th {
-            background: #2c3e50;
-            color: var(--accent-cyan);
-            padding: 0.5rem 0.75rem;
-            text-align: left;
-            border: 1px solid var(--border);
-            font-weight: 600;
-            font-size: 0.8rem;
-        }
-
-.db-table td {
-            padding: 0.45rem 0.75rem;
-            border: 1px solid var(--border);
-            font-family: 'Consolas', monospace;
-            font-size: 0.82rem;
-            color: var(--text-secondary);
-        }
-
-.db-table tr:nth-child(even) td {
-            background: rgba(59, 130, 246, 0.04);
-        }
-
-.db-table .pk-icon {
-            color: var(--accent-orange);
-            font-weight: 700;
-            margin-right: 0.25rem;
-        }
-
-/* Design view mockup */
-        .design-view {
-            background: #1a1a2e;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-
-.design-view-header {
-            background: #2c3e50;
-            padding: 0.4rem 0.75rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--accent-cyan);
-            border-bottom: 1px solid var(--border);
-        }
-
-.design-row {
-            display: grid;
-            grid-template-columns: 2fr 2fr 3fr;
-            border-bottom: 1px solid rgba(45, 45, 68, 0.5);
-            font-size: 0.82rem;
-        }
-
-.design-row.header-row {
-            background: #2c3e50;
-            font-weight: 600;
-            color: var(--accent-cyan);
-        }
-
-.design-cell {
-            padding: 0.4rem 0.75rem;
-            border-right: 1px solid rgba(45, 45, 68, 0.5);
-            color: var(--text-secondary);
-        }
-
-.design-cell:last-child { border-right: none; }
-
-.design-cell.pk { color: var(--accent-orange); font-weight: 600; }
-
-/* ==================== */
-        /* Info / Warning Boxes */
-        /* ==================== */
-        .info-box {
-            background: rgba(59, 130, 246, 0.08);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin: 1rem 0;
-        }
-
-.info-box-title {
-            color: var(--accent-blue);
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-.warning-box {
-            background: rgba(239, 68, 68, 0.08);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin: 1rem 0;
-        }
-
-.warning-box-title {
-            color: var(--accent-red);
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-.mistake-box {
-            background: rgba(245, 158, 11, 0.08);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin: 1rem 0;
-        }
-
-.mistake-box-title {
-            color: var(--accent-orange);
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-.tip-box {
-            background: rgba(16, 185, 129, 0.08);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin: 1rem 0;
-        }
-
-.tip-box-title {
-            color: var(--accent-green);
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-/* ==================== */
-        /* Step-by-step Trace   */
-        /* ==================== */
-        .trace-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 0.75rem 0;
-            font-size: 0.9rem;
-        }
-
-.trace-table th {
-            background: var(--bg-primary);
-            color: var(--accent-cyan);
-            padding: 0.6rem 0.75rem;
-            text-align: left;
-            border: 1px solid var(--border);
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-.trace-table td {
-            padding: 0.5rem 0.75rem;
-            border: 1px solid var(--border);
-            font-size: 0.85rem;
-        }
-
-.trace-table tr:nth-child(even) td {
-            background: rgba(59, 130, 246, 0.04);
-        }
-
-.trace-table .trace-comment {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.83rem;
-            color: var(--text-secondary);
-        }
-
-/* Learn subsection titles */
-        .learn-subtitle {
-            margin: 2rem 0 0.75rem;
-            color: var(--accent-cyan);
-            font-size: 1.1rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-.learn-subtitle-bar {
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(to right, var(--accent-cyan), transparent);
-            opacity: 0.3;
-        }
-
-/* Hint toggle */
-        .hint-box {
-            background: rgba(139, 92, 246, 0.08);
-            border: 1px solid rgba(139, 92, 246, 0.25);
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin-top: 1rem;
-        }
-
-.hint-toggle {
-            cursor: pointer;
-            color: var(--accent-purple);
-            font-weight: 600;
-            font-size: 0.9rem;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-.hint-toggle:hover { opacity: 0.8; }
-
-.hint-arrow {
-            transition: transform 0.3s;
-            display: inline-block;
-        }
-
-.hint-arrow.open { transform: rotate(90deg); }
-
-.hint-content {
-            display: none;
-            margin-top: 0.75rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            line-height: 1.7;
-            padding-left: 1.5rem;
-            border-left: 2px solid rgba(139, 92, 246, 0.3);
-        }
-
-.hint-content.show { display: block; animation: slideDown 0.3s ease; }
-
-.hint-content code {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.1rem 0.4rem;
-            border-radius: 4px;
-            font-family: 'Consolas', monospace;
-            color: var(--accent-cyan);
-            font-size: 0.88rem;
-        }
-
-/* ==================== */
-        /* Comparison boxes     */
-        /* ==================== */
-        .comparison-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin: 1rem 0;
-        }
-
-.comparison-card {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1.25rem;
-            border: 2px solid var(--border);
-        }
-
-.comparison-card h4 {
-            font-size: 0.95rem;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-.comparison-card ul {
-            list-style: none;
-            padding: 0;
-        }
-
-.comparison-card li {
-            padding: 0.3rem 0;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-.comparison-card li::before {
-            margin-right: 0.4rem;
-            font-weight: 700;
-        }
-
-.comparison-card.design-card {
-            border-color: rgba(139, 92, 246, 0.4);
-        }
-
-.comparison-card.design-card h4 { color: var(--accent-purple); }
-
-.comparison-card.design-card li::before {
-            content: "\1F527 ";
-        }
-
-.comparison-card.datasheet-card {
-            border-color: rgba(16, 185, 129, 0.4);
-        }
-
-.comparison-card.datasheet-card h4 { color: var(--accent-green); }
-
-.comparison-card.datasheet-card li::before {
-            content: "\1F4CA ";
-        }
-
-/* Field properties panel */
-        .properties-panel {
-            background: var(--bg-card);
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-            margin: 1rem 0;
-        }
-
-.properties-header {
-            background: #2c3e50;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--accent-cyan);
-        }
-
-.property-row {
-            display: flex;
-            border-bottom: 1px solid rgba(45, 45, 68, 0.4);
-            font-size: 0.82rem;
-        }
-
-.property-name {
-            flex: 1;
-            padding: 0.4rem 0.75rem;
-            color: var(--text-muted);
-            border-right: 1px solid rgba(45, 45, 68, 0.4);
-        }
-
-.property-value {
-            flex: 1.5;
-            padding: 0.4rem 0.75rem;
-            color: var(--text-secondary);
-            font-family: 'Consolas', monospace;
-        }
-
-/* ==================== */
-        /* TEST Section         */
-        /* ==================== */
-        .test-section {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(236, 72, 153, 0.08));
-            border: 2px solid rgba(139, 92, 246, 0.35);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-.test-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 0.5rem;
-        }
-
-.test-badge {
-            background: var(--accent-purple);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.85rem;
-        }
-
-.test-subtitle {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-        }
-
-.quiz-question {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.25rem;
-            border: 1px solid var(--border);
-        }
-
-.question-number {
-            display: inline-block;
-            background: var(--accent-purple);
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 28px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            margin-right: 0.5rem;
-        }
-
-.question-text {
-            font-weight: 600;
-            margin-bottom: 1rem;
-            line-height: 1.6;
-        }
-
-.question-text code {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.15rem 0.45rem;
-            border-radius: 4px;
-            font-family: 'Consolas', monospace;
-            color: var(--accent-cyan);
-            font-size: 0.9rem;
-        }
-
-.options { display: grid; gap: 0.5rem; }
-
-.option {
-            padding: 0.875rem 1rem;
-            background: var(--bg-secondary);
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-.option:hover:not(.locked) { border-color: var(--accent-purple); background: rgba(139, 92, 246, 0.05); }
-
-.option.locked { cursor: default; }
-
-.option.correct {
-            border-color: var(--accent-green);
-            background: rgba(16, 185, 129, 0.15);
-        }
-
-.option.wrong {
-            border-color: var(--accent-red);
-            background: rgba(239, 68, 68, 0.15);
-        }
-
-.option code {
-            background: rgba(0, 0, 0, 0.25);
-            padding: 0.1rem 0.35rem;
-            border-radius: 3px;
-            font-family: 'Consolas', monospace;
-            font-size: 0.9rem;
-        }
-
-.feedback {
-            padding: 0.875rem 1rem;
-            border-radius: 8px;
-            margin-top: 0.75rem;
-            display: none;
-            font-size: 0.9rem;
-            line-height: 1.6;
-        }
-
-.feedback.success {
-            display: block;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: #6ee7b7;
-        }
-
-.feedback.error {
-            display: block;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
-        }
-
-/* ==================== */
-        /* Buttons              */
-        /* ==================== */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.875rem 1.75rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            border: none;
-            transition: all 0.3s;
-            text-decoration: none;
-            font-family: 'Inter', sans-serif;
-        }
-
-.btn-primary {
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
-            color: white;
-        }
-
-.btn-primary:hover {
-            transform: scale(1.03);
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
-        }
-
-.btn-success {
-            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
-            color: white;
-        }
-
-.btn-success:hover {
-            transform: scale(1.03);
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
-        }
-
-.btn-outline {
-            background: transparent;
-            border: 2px solid var(--border);
-            color: var(--text-secondary);
-        }
-
-.btn-outline:hover { border-color: var(--accent-purple); color: var(--accent-purple); }
-
-.btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-.actions {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-/* ==================== */
-        /* Completion Screen    */
-        /* ==================== */
-        .completion {
-            text-align: center;
-            padding: 3rem 2rem;
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.08));
-            border-radius: 20px;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
-.completion-icon { font-size: 5rem; margin-bottom: 1rem; display: block; }
-
-.completion-title {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--accent-green);
-            margin-bottom: 0.5rem;
-        }
-
-.completion-summary {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1.25rem;
-            margin: 1.5rem auto;
-            max-width: 450px;
-            text-align: left;
-        }
-
-.completion-summary li {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            padding: 0.25rem 0;
-        }
-
-/* ==================== */
-        /* Practice Section     */
-        /* ==================== */
-        .practice-advanced {
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-top: 2rem;
-            border: 1px solid var(--border);
-        }
-
-.practice-advanced-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-.practice-advanced-icon { font-size: 2rem; }
-
-.practice-advanced-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--accent-purple);
-        }
-
-.practice-advanced-subtitle {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-.practice-exercise {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border: 1px solid var(--border);
-        }
-
-.practice-exercise h4 {
-            color: var(--accent-cyan);
-            margin-bottom: 0.75rem;
-            font-size: 1rem;
-        }
-
-.practice-exercise p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-
-.practice-questions {
-            padding-left: 1.25rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-.practice-questions li { margin-bottom: 0.4rem; }
-
-.practice-questions code {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.1rem 0.3rem;
-            border-radius: 3px;
-            font-family: 'Consolas', monospace;
-            color: var(--accent-cyan);
-            font-size: 0.88rem;
-        }
-
-.answer-instruction {
-            color: var(--accent-orange) !important;
-            font-size: 0.85rem !important;
-            margin-top: 0.75rem !important;
-        }
-
-.code-example {
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            margin: 0.5rem 0;
-        }
-
-.code-example code {
-            color: var(--accent-green);
-            font-family: 'Consolas', monospace;
-            font-size: 0.88rem;
-        }
-
-.hints {
-            background: rgba(139, 92, 246, 0.05);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            margin-top: 0.5rem;
-        }
-
-.hints p { color: var(--accent-purple) !important; font-weight: 600; }
-
-.hints ul {
-            padding-left: 1rem;
-            margin-top: 0.25rem;
-        }
-
-.hints li {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-
-.hints code {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.1rem 0.3rem;
-            border-radius: 3px;
-            font-family: 'Consolas', monospace;
-            color: var(--accent-cyan);
-            font-size: 0.85rem;
-        }
-
-.keywords {
-            color: var(--accent-orange) !important;
-            font-size: 0.85rem !important;
-            margin-top: 0.75rem !important;
-        }
-
-/* ==================== */
-        /* Access-specific      */
-        /* ==================== */
-        .access-step-visual {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1.25rem;
-            margin: 1rem 0;
-            border: 1px solid var(--border);
-        }
-
-.access-step-visual .step-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--accent-orange);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.5rem;
-        }
-
-.access-step-visual .step-desc {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            line-height: 1.7;
-        }
-
-.access-step-visual .step-desc strong {
-            color: var(--text-primary);
-        }
-
-.menu-path {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            font-family: 'Consolas', monospace;
-            font-size: 0.85rem;
-            color: var(--accent-cyan);
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.2rem 0.6rem;
-            border-radius: 6px;
-        }
-
-.menu-arrow {
-            color: var(--accent-orange);
-            font-weight: 700;
-        }
-
-.key-combo {
-            display: inline-block;
-            background: #2c3e50;
-            color: var(--text-primary);
-            padding: 0.15rem 0.5rem;
-            border-radius: 4px;
-            font-family: 'Consolas', monospace;
-            font-size: 0.82rem;
-            border: 1px solid var(--border);
-            box-shadow: 0 2px 0 var(--border);
-        }
-
-/* ==================== */
-        /* Responsive           */
-        /* ==================== */
-        @media (max-width: 768px) {
-            .container { padding: 1rem; }
-            .goal-title { font-size: 1.5rem; }
-            .goal-hero, .try-section, .learn-section, .test-section { padding: 1.25rem; }
-            .actions { flex-direction: column; }
-            .btn { width: 100%; justify-content: center; }
-            .step { padding: 0.4rem 0.6rem; font-size: 0.7rem; }
-            .step-connector { width: 10px; }
-            .progress-steps { gap: 0.25rem; }
-            .trace-table { font-size: 0.8rem; }
-            .trace-table th, .trace-table td { padding: 0.4rem 0.5rem; }
-            .pain-scenario { padding: 1.25rem; }
-            .comparison-grid { grid-template-columns: 1fr; }
-            .design-row { font-size: 0.75rem; }
-        }
-
-@media (max-width: 480px) {
-            .step span:not(.step-dot) { display: none; }
-            .step { padding: 0.5rem; }
-            .db-table { font-size: 0.75rem; }
-            .db-table th, .db-table td { padding: 0.35rem 0.5rem; }
-        }
-    </style>
-    <link rel="stylesheet" href="../../../../assets/css/mobile-first.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 3: Crearea unei Baze de Date in Access | TIC Clasa a VIII-a</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
 </head>
 <body>
-    <div class="container">
-        <!-- Navigation -->
-        <nav class="nav-bar">
-            <a class="nav-link" href="index.html">&#8592; Inapoi la modul</a>
-            <a class="nav-link" href="lectia4-interogari-simple.html">Lectia urmatoare &#8594;</a>
-        </nav>
+<div class="container">
 
-        <!-- Progress Steps -->
-        <div class="progress-steps">
-            <div class="step active" data-step="goal" onclick="goToStep('goal')">
-                <span class="step-dot"></span>
-                <span>OBIECTIV</span>
-            </div>
-            <div class="step-connector"></div>
-            <div class="step" data-step="try" onclick="goToStep('try')">
-                <span class="step-dot"></span>
-                <span>INCEARCA</span>
-            </div>
-            <div class="step-connector"></div>
-            <div class="step" data-step="learn" onclick="goToStep('learn')">
-                <span class="step-dot"></span>
-                <span>INVATA</span>
-            </div>
-            <div class="step-connector"></div>
-            <div class="step" data-step="test" onclick="goToStep('test')">
-                <span class="step-dot"></span>
-                <span>VERIFICA</span>
-            </div>
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8592; Modulul</a>
+        <a href="lectia4-interogari-simple.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Vreau sa creez prima mea baza de date!</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
         </div>
-
-        <!-- ============================================================ -->
-        <!-- GOAL Section                                                 -->
-        <!-- ============================================================ -->
-        <div class="section active" id="goal">
-            <div class="goal-hero">
-                <span class="goal-emoji">&#128451;</span>
-                <h1 class="goal-title">Vreau sa creez prima mea baza de date!</h1>
-                <p class="goal-subtitle">
-                    Ai invatat ce sunt bazele de date, tabelele si campurile. Acum e momentul sa le pui in practica in Microsoft Access!
-                </p>
-
-                <!-- The pain scenario -->
-                <div class="pain-scenario">
-                    <div class="pain-scenario-title">
-                        <span class="pain-label pain-label-bad">FARA Access</span>
-                        Datele elevilor intr-un caiet...
-                    </div>
-                    <div class="pain-code pain-code-bad">Elev: Popescu Ion, Clasa a VIII-aA, Media 8.50
-Elev: Ionescu Maria, Clasa a VIII-aB, Media 9.25
-Elev: Georgescu Ana, Clasa a VIII-aA, Media 7.80
-... si inca 200 de elevi!
-Cum gasesti toti elevii din 8A cu media peste 9?
-Foiesti prin pagini... timp pierdut!</div>
-                    <p class="pain-commentary">Caietul sau fisierul text nu stie sa caute, sa sorteze sau sa filtreze. Faci totul manual, cu riscul de a gresi.</p>
-
-                    <div class="pain-vs">VS</div>
-
-                    <div class="pain-scenario-title">
-                        <span class="pain-label pain-label-good">CU Access</span>
-                        Baza de date organizata!
-                    </div>
-                    <div class="pain-code pain-code-good">Tabel "Elevi" cu campurile:
-  ID | Nume | Prenume | Clasa | MediaGenerala
-  1  | Popescu  | Ion   | 8A   | 8.50
-  2  | Ionescu  | Maria | 8B   | 9.25
-  3  | Georgescu| Ana   | 8A   | 7.80
-
-Interogare: SELECT * FROM Elevi
-            WHERE Clasa="8A" AND MediaGenerala>9
-Rezultat instant!</div>
-                    <p class="pain-commentary">Access organizeaza datele in tabele structurate. Poti cauta, sorta si filtra sute de inregistrari in cateva secunde.</p>
-                </div>
-
-                <!-- Preview of what they'll build -->
-                <div class="visual-box" style="border-color: var(--accent-green); max-width: 650px; margin: 2rem auto;">
-                    <div class="visual-title" style="color: var(--accent-green);">&#127919; Ce vei construi in aceasta lectie:</div>
-                    <div class="access-mockup">
-                        <div class="access-titlebar">
-                            <div class="access-titlebar-icon">A</div>
-                            Catalog.accdb - Microsoft Access
-                        </div>
-                        <div class="access-ribbon">
-                            <span class="ribbon-tab">File</span>
-                            <span class="ribbon-tab active">Home</span>
-                            <span class="ribbon-tab">Create</span>
-                            <span class="ribbon-tab">External Data</span>
-                        </div>
-                        <div class="access-content">
-                            <table class="db-table">
-                                <tr>
-                                    <th><span class="pk-icon">&#128273;</span> ID</th>
-                                    <th>Nume</th>
-                                    <th>Prenume</th>
-                                    <th>Clasa</th>
-                                    <th>MediaGenerala</th>
-                                </tr>
-                                <tr>
-                                    <td>1</td>
-                                    <td>Popescu</td>
-                                    <td>Ion</td>
-                                    <td>8A</td>
-                                    <td>8.50</td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>Ionescu</td>
-                                    <td>Maria</td>
-                                    <td>8B</td>
-                                    <td>9.25</td>
-                                </tr>
-                                <tr>
-                                    <td>3</td>
-                                    <td>Georgescu</td>
-                                    <td>Ana</td>
-                                    <td>8A</td>
-                                    <td>7.80</td>
-                                </tr>
-                                <tr>
-                                    <td>4</td>
-                                    <td>Dumitrescu</td>
-                                    <td>Andrei</td>
-                                    <td>8C</td>
-                                    <td>9.75</td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.75rem; text-align: center;">
-                        Baza de date "Catalog" cu tabelul "Elevi" - 5 campuri, 4 inregistrari
-                    </p>
-                </div>
-
-                <div class="goal-outcomes">
-                    <h4>La finalul lectiei vei putea:</h4>
-                    <ul>
-                        <li>Sa deschizi Microsoft Access si sa creezi o baza de date noua</li>
-                        <li>Sa creezi un tabel in Design View cu campuri si tipuri de date</li>
-                        <li>Sa setezi cheia primara (Primary Key)</li>
-                        <li>Sa configurezi proprietatile campurilor</li>
-                        <li>Sa introduci date in Datasheet View</li>
-                        <li>Sa salvezi si sa denumesti corect tabelele</li>
-                    </ul>
-                </div>
-
-                <div class="info-box" style="max-width: 550px; margin: 1.5rem auto; text-align: left;">
-                    <div class="info-box-title">&#128218; Prerequisite</div>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
-                        Aceasta lectie presupune ca ai parcurs deja:<br>
-                        <strong>Lectia 1:</strong> Introducere in Baze de Date (ce este o BD, de ce le folosim)<br>
-                        <strong>Lectia 2:</strong> Tabele si Campuri (structura tabelelor, tipuri de date, cheia primara)
-                    </p>
-                </div>
-
-                <button class="btn btn-primary" onclick="goToStep('try')" style="margin-top: 1.5rem; font-size: 1.1rem;">
-                    Sa incepem! &#8594;
-                </button>
-            </div>
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- TRY Section                                                  -->
-        <!-- ============================================================ -->
-        <div class="section" id="try">
-            <div class="try-section">
-                <div class="try-header">
-                    <span class="try-badge">&#127919; INCEARCA</span>
-                    <h2>Creeaza baza de date "Catalog"</h2>
-                </div>
-                <p class="try-subtitle">Urmeaza pasii de mai jos in Microsoft Access. Nu trebuie sa intelegi totul acum - doar fa exact ce scrie la fiecare pas!</p>
-
-                <!-- Challenge Box 1: Creating the database -->
-                <div class="challenge-box">
-                    <div class="challenge-title">Partea 1: Creeaza baza de date (2 minute)</div>
-
-                    <div class="challenge-step">
-                        <span class="challenge-step-num">1</span>
-                        <div class="challenge-step-text">
-                            Deschide <strong>Microsoft Access</strong>. Il gasesti in <span class="menu-path">Start <span class="menu-arrow">&#8594;</span> Microsoft Office <span class="menu-arrow">&#8594;</span> Microsoft Access</span>. Daca ai Windows 11, cauta "Access" in bara de cautare.
-                        </div>
-                    </div>
-
-                    <div class="challenge-step">
-                        <span class="challenge-step-num">2</span>
-                        <div class="challenge-step-text">
-                            Pe ecranul de start, apasa pe <strong>"Blank database"</strong> (sau "Blank desktop database" in versiunile mai noi). Este de obicei prima optiune vizibila.
-                        </div>
-                    </div>
-
-                    <div class="challenge-step">
-                        <span class="challenge-step-num">3</span>
-                        <div class="challenge-step-text">
-                            In casuta <strong>"File Name"</strong>, scrie: <code>Catalog</code>. Apasa pe iconita de folder pentru a alege locatia (de ex. <strong>Desktop</strong> sau un folder dedicat). Apoi apasa <strong>"Create"</strong>.
-                        </div>
-                    </div>
-
-                    <div class="challenge-step">
-                        <span class="challenge-step-num">4</span>
-                        <div class="challenge-step-text">
-                            Access creeaza automat fisierul <code>Catalog.accdb</code> si deschide un tabel nou gol numit <strong>"Table1"</strong> in Datasheet View. Momentan nu face nimic cu el - il vom sterge.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Challenge Box 2: Creating table in Design View -->
-                <div class="challenge-box">
-                    <div class="challenge-title">Partea 2: Creeaza tabelul "Elevi" in Design View (5 minute)</div>
-
-                    <div class="challenge-step">
-                        <span class="challenge-step-num">5</span>
-                        <div class="challenge-step-text">
-                            Inchide "Table1" (click pe <strong>X</strong> de pe tab-ul tabelului). Cand te intreaba daca vrei sa salvezi, alege <strong>"No"</strong>/<strong>"Nu"</strong>.
-                        </div>
-                    </div>
-
-                    <div class="challenge-step">
-                        <span class="challenge-step-num">6</span>
-                        <div class="challenge-step-text">
-                            In panglica (ribbon), mergi la tab-ul <strong>"Create"</strong> si apasa pe <strong>"Table Design"</strong>. Se deschide un tabel gol in <strong>Design View</strong> - aici definim structura.
-                        </div>
-                    </div>
-
-                    <div class="challenge-step">
-                        <span class="challenge-step-num">7</span>
-                        <div class="challenge-step-text">
-                            Acum adauga campurile, unul cate unul. In coloana <strong>"Field Name"</strong> scrie numele campului, iar in <strong>"Data Type"</strong> alege tipul. Completeaza asa:
-                        </div>
-                    </div>
-
-                    <!-- Visual: fields to create -->
-                    <div class="access-step-visual">
-                        <div class="step-label">Campurile de adaugat:</div>
-                        <div class="design-view">
-                            <div class="design-row header-row">
-                                <div class="design-cell">Field Name</div>
-                                <div class="design-cell">Data Type</div>
-                                <div class="design-cell">Description</div>
-                            </div>
-                            <div class="design-row">
-                                <div class="design-cell pk">&#128273; ID</div>
-                                <div class="design-cell">AutoNumber</div>
-                                <div class="design-cell">Identificator unic elev</div>
-                            </div>
-                            <div class="design-row">
-                                <div class="design-cell">Nume</div>
-                                <div class="design-cell">Short Text</div>
-                                <div class="design-cell">Numele de familie</div>
-                            </div>
-                            <div class="design-row">
-                                <div class="design-cell">Prenume</div>
-                                <div class="design-cell">Short Text</div>
-                                <div class="design-cell">Prenumele elevului</div>
-                            </div>
-                            <div class="design-row">
-                                <div class="design-cell">Clasa</div>
-                                <div class="design-cell">Short Text</div>
-                                <div class="design-cell">Clasa (ex: 8A, 8B)</div>
-                            </div>
-                            <div class="design-row">
-                                <div class="design-cell">MediaGenerala</div>
-                                <div class="design-cell">Number</div>
-                                <div class="design-cell">Media generala (ex: 8.50)</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="challenge-step">
-                        <span class="challenge-step-num">8</span>
-                        <div class="challenge-step-text">
-                            <strong>Seteaza cheia primara:</strong> Click pe randul <strong>"ID"</strong> ca sa-l selectezi. Apoi, in panglica, apasa pe butonul <strong>"Primary Key"</strong> (iconita cu o cheie galbena). Ar trebui sa apara o cheita langa campul ID.
-                        </div>
-                    </div>
-
-                    <div class="challenge-step">
-                        <span class="challenge-step-num">9</span>
-                        <div class="challenge-step-text">
-                            <strong>Salveaza tabelul:</strong> Apasa <span class="key-combo">Ctrl+S</span>. In casuta care apare, scrie <code>Elevi</code> (nu lasa "Table1"!). Apasa <strong>OK</strong>.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Challenge Box 3: Entering data -->
-                <div class="challenge-box">
-                    <div class="challenge-title">Partea 3: Introdu date in tabel (3 minute)</div>
-
-                    <div class="challenge-step">
-                        <span class="challenge-step-num">10</span>
-                        <div class="challenge-step-text">
-                            Comuta la <strong>Datasheet View</strong>: in panglica, mergi la tab-ul <strong>"Home"</strong> si apasa pe <strong>"View"</strong> &#8594; <strong>"Datasheet View"</strong>. Sau click dreapta pe tab-ul tabelului si alege "Datasheet View".
-                        </div>
-                    </div>
-
-                    <div class="challenge-step">
-                        <span class="challenge-step-num">11</span>
-                        <div class="challenge-step-text">
-                            Acum vezi tabelul ca un spreadsheet. Coloana <strong>ID</strong> se completeaza automat (AutoNumber). Click pe coloana <strong>Nume</strong> si scrie datele de mai jos, rand cu rand:
-                        </div>
-                    </div>
-
-                    <!-- Visual: data to enter -->
-                    <div class="access-step-visual">
-                        <div class="step-label">Datele de introdus:</div>
-                        <table class="db-table">
-                            <tr>
-                                <th>ID (auto)</th>
-                                <th>Nume</th>
-                                <th>Prenume</th>
-                                <th>Clasa</th>
-                                <th>MediaGenerala</th>
-                            </tr>
-                            <tr>
-                                <td style="color: var(--text-muted); font-style: italic;">1</td>
-                                <td>Popescu</td>
-                                <td>Ion</td>
-                                <td>8A</td>
-                                <td>8.50</td>
-                            </tr>
-                            <tr>
-                                <td style="color: var(--text-muted); font-style: italic;">2</td>
-                                <td>Ionescu</td>
-                                <td>Maria</td>
-                                <td>8B</td>
-                                <td>9.25</td>
-                            </tr>
-                            <tr>
-                                <td style="color: var(--text-muted); font-style: italic;">3</td>
-                                <td>Georgescu</td>
-                                <td>Ana</td>
-                                <td>8A</td>
-                                <td>7.80</td>
-                            </tr>
-                            <tr>
-                                <td style="color: var(--text-muted); font-style: italic;">4</td>
-                                <td>Dumitrescu</td>
-                                <td>Andrei</td>
-                                <td>8C</td>
-                                <td>9.75</td>
-                            </tr>
-                        </table>
-                        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 0.5rem; font-style: italic;">
-                            Foloseste Tab sau Enter pentru a trece la urmatorul camp. ID-ul se completeaza automat!
-                        </p>
-                    </div>
-
-                    <div class="challenge-step">
-                        <span class="challenge-step-num">12</span>
-                        <div class="challenge-step-text">
-                            Dupa ce ai introdus toate cele 4 randuri, salveaza cu <span class="key-combo">Ctrl+S</span>. <strong>Felicitari!</strong> Ai creat prima ta baza de date cu un tabel complet!
-                        </div>
-                    </div>
-
-                    <div class="challenge-bonus">
-                        &#127775; BONUS: Intoarce-te la Design View si verifica: apare iconita de cheie langa campul ID? Daca da, cheia primara este setata corect!
-                    </div>
-                </div>
-
-                <!-- Hints -->
-                <div class="hint-box">
-                    <div class="hint-toggle" onclick="toggleHint(this)">
-                        <span class="hint-arrow">&#9654;</span> Nu gasesc "Table Design" - unde este?
-                    </div>
-                    <div class="hint-content">
-                        <p>Mergi la tab-ul <strong>"Create"</strong> din panglica (ribbon) - este al treilea tab, dupa "File" si "Home".</p>
-                        <p>In sectiunea "Tables" vei gasi butonul <strong>"Table Design"</strong>. In unele versiuni de Access se numeste "Table" cu o sageata dropdown - apasa pe sageata si alege "Table Design".</p>
-                    </div>
-                </div>
-                <div class="hint-box" style="margin-top: 0.5rem;">
-                    <div class="hint-toggle" onclick="toggleHint(this)">
-                        <span class="hint-arrow">&#9654;</span> Nu pot scrie in coloana ID - de ce?
-                    </div>
-                    <div class="hint-content">
-                        <p>Asta e normal! Campul ID este de tip <strong>AutoNumber</strong>, ceea ce inseamna ca Access il completeaza automat cu numere crescatoare: 1, 2, 3, 4...</p>
-                        <p>Tu trebuie sa incepi sa scrii de la coloana <strong>Nume</strong>. Click direct pe celula de sub "Nume" si scrie primul nume.</p>
-                    </div>
-                </div>
-                <div class="hint-box" style="margin-top: 0.5rem;">
-                    <div class="hint-toggle" onclick="toggleHint(this)">
-                        <span class="hint-arrow">&#9654;</span> Cum trec de la Design View la Datasheet View?
-                    </div>
-                    <div class="hint-content">
-                        <p>Exista mai multe metode:</p>
-                        <p><strong>Metoda 1:</strong> In panglica, tab-ul "Home", primul buton din stanga este "View" - apasa pe el.</p>
-                        <p><strong>Metoda 2:</strong> Click dreapta pe tab-ul tabelului (unde scrie "Elevi") si alege "Datasheet View" sau "Design View".</p>
-                        <p><strong>Metoda 3:</strong> In coltul din dreapta-jos al ferestrei Access, exista doua iconite mici - una pentru fiecare tip de view.</p>
-                    </div>
-                </div>
-
-                <div class="actions">
-                    <button class="btn btn-outline" onclick="goToStep('goal')">&#8592; Inapoi</button>
-                    <button class="btn btn-primary" onclick="goToStep('learn')">
-                        Am incercat! Vreau sa inteleg &#8594;
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- LEARN Section                                                -->
-        <!-- ============================================================ -->
-        <div class="section" id="learn">
-            <div class="learn-section">
-                <div class="learn-header">
-                    <span class="learn-badge">&#128218; INVATA</span>
-                    <h2>Crearea unei Baze de Date in Access</h2>
-                </div>
-
-                <!-- ===== CONCEPT 1: Access Interface ===== -->
-                <div class="concept-card">
-                    <div class="concept-name">Interfata Microsoft Access - Anatomie</div>
-                    <div class="concept-def">
-                        <p>Microsoft Access este un <strong>Sistem de Gestiune a Bazelor de Date (SGBD)</strong> care face parte din suita Microsoft Office. Cand deschizi Access, intalnesti cateva zone importante pe care trebuie sa le cunosti.</p>
-                    </div>
-                </div>
-
-                <!-- Visual: Access interface anatomy -->
-                <div class="visual-box">
-                    <div class="visual-title">&#128444; Anatomia ferestrei Access</div>
-                    <div class="access-mockup" style="font-size: 0.8rem;">
-                        <div class="access-titlebar">
-                            <div class="access-titlebar-icon">A</div>
-                            <span style="flex: 1;">Catalog.accdb - Microsoft Access</span>
-                            <span style="opacity: 0.6; font-size: 0.7rem;">&#9866; &#9744; &#10005;</span>
-                        </div>
-                        <div class="access-ribbon" style="flex-wrap: wrap; gap: 0.5rem;">
-                            <span class="ribbon-tab">File</span>
-                            <span class="ribbon-tab active">Home</span>
-                            <span class="ribbon-tab">Create</span>
-                            <span class="ribbon-tab">External Data</span>
-                            <span class="ribbon-tab">Database Tools</span>
-                        </div>
-                        <div style="display: flex; min-height: 100px;">
-                            <div style="width: 150px; background: #151525; padding: 0.5rem; border-right: 1px solid var(--border); font-size: 0.72rem;">
-                                <div style="color: var(--accent-orange); font-weight: 600; margin-bottom: 0.5rem;">All Access Objects</div>
-                                <div style="color: var(--text-muted); padding: 0.2rem 0.4rem; margin: 0.15rem 0; display: flex; align-items: center; gap: 0.3rem;">
-                                    <span style="font-size: 0.65rem;">&#128451;</span> Tables
-                                </div>
-                                <div style="color: var(--accent-cyan); padding: 0.2rem 0.75rem; margin: 0.15rem 0; background: rgba(6, 182, 212, 0.1); border-radius: 3px;">
-                                    &#9658; Elevi
-                                </div>
-                            </div>
-                            <div style="flex: 1; padding: 0.75rem;">
-                                <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; gap: 0.75rem;">
-                                    <span style="background: rgba(6, 182, 212, 0.15); padding: 0.15rem 0.5rem; border-radius: 3px; color: var(--accent-cyan);">Elevi</span>
-                                </div>
-                                <table class="db-table" style="font-size: 0.72rem;">
-                                    <tr>
-                                        <th style="padding: 0.3rem 0.5rem;">&#128273; ID</th>
-                                        <th style="padding: 0.3rem 0.5rem;">Nume</th>
-                                        <th style="padding: 0.3rem 0.5rem;">Prenume</th>
-                                        <th style="padding: 0.3rem 0.5rem;">Clasa</th>
-                                        <th style="padding: 0.3rem 0.5rem;">Media</th>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 0.25rem 0.5rem;">1</td>
-                                        <td style="padding: 0.25rem 0.5rem;">Popescu</td>
-                                        <td style="padding: 0.25rem 0.5rem;">Ion</td>
-                                        <td style="padding: 0.25rem 0.5rem;">8A</td>
-                                        <td style="padding: 0.25rem 0.5rem;">8.50</td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem; font-size: 0.82rem;">
-                        <div style="background: var(--bg-secondary); padding: 0.6rem 0.75rem; border-radius: 8px; border-left: 3px solid var(--accent-blue);">
-                            <strong style="color: var(--accent-blue);">1. Title Bar</strong>
-                            <p style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.2rem;">Arata numele bazei de date deschise (Catalog.accdb)</p>
-                        </div>
-                        <div style="background: var(--bg-secondary); padding: 0.6rem 0.75rem; border-radius: 8px; border-left: 3px solid var(--accent-purple);">
-                            <strong style="color: var(--accent-purple);">2. Ribbon (Panglica)</strong>
-                            <p style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.2rem;">Tab-urile cu toate instrumentele: Home, Create, External Data</p>
-                        </div>
-                        <div style="background: var(--bg-secondary); padding: 0.6rem 0.75rem; border-radius: 8px; border-left: 3px solid var(--accent-orange);">
-                            <strong style="color: var(--accent-orange);">3. Navigation Pane</strong>
-                            <p style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.2rem;">Lista cu toate obiectele din BD: tabele, interogari, formulare</p>
-                        </div>
-                        <div style="background: var(--bg-secondary); padding: 0.6rem 0.75rem; border-radius: 8px; border-left: 3px solid var(--accent-cyan);">
-                            <strong style="color: var(--accent-cyan);">4. Document Area</strong>
-                            <p style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.2rem;">Zona principala unde lucrezi cu tabelele si datele</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ===== CONCEPT 2: Saving the database ===== -->
-                <h3 class="learn-subtitle">
-                    &#128190; Crearea si salvarea bazei de date
-                    <span class="learn-subtitle-bar"></span>
-                </h3>
-
-                <div class="concept-card">
-                    <div class="concept-name">Fisierul .accdb</div>
-                    <div class="concept-def">
-                        <p>Cand creezi o baza de date in Access, se genereaza un fisier cu extensia <strong>.accdb</strong> (Access Database). Acest singur fisier contine <strong>totul</strong>: tabelele, datele, interogarile, formularele, rapoartele.</p>
-                        <p>Spre deosebire de alte programe (Word, Excel), Access <strong>salveaza automat</strong> datele pe masura ce le introduci. Nu trebuie sa apesi Ctrl+S dupa fiecare rand - doar cand creezi sau modifici <strong>structura</strong> (campuri, tabele).</p>
-                    </div>
-                    <div class="analogy-box">
-                        <strong>&#128188; Analogie: Dulapul de documente</strong>
-                        <p>Gandeste-te la fisierul .accdb ca la un <strong>dulap de birou</strong>. Dulapul (fisierul .accdb) contine mai multe <strong>sertare</strong> (tabelele). Fiecare sertar are <strong>dosare</strong> (inregistrarile) organizate dupa <strong>etichete</strong> (campurile). Cand pui un dosar in sertar, el ramane acolo - nu trebuie sa "salvezi" sertarul de fiecare data.</p>
-                    </div>
-                </div>
-
-                <div class="tip-box">
-                    <div class="tip-box-title">&#128273; Reguli de denumire</div>
-                    <ul style="margin-left: 1.25rem; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8;">
-                        <li><strong>Baza de date:</strong> Numele sa descrie scopul (ex: <code style="background:rgba(0,0,0,0.3);padding:0.1rem 0.4rem;border-radius:4px;font-family:Consolas,monospace;color:#06b6d4;">Catalog</code>, <code style="background:rgba(0,0,0,0.3);padding:0.1rem 0.4rem;border-radius:4px;font-family:Consolas,monospace;color:#06b6d4;">Biblioteca</code>, <code style="background:rgba(0,0,0,0.3);padding:0.1rem 0.4rem;border-radius:4px;font-family:Consolas,monospace;color:#06b6d4;">GestiuneNote</code>)</li>
-                        <li><strong>Tabele:</strong> La plural, sa descrie ce contine (ex: <code style="background:rgba(0,0,0,0.3);padding:0.1rem 0.4rem;border-radius:4px;font-family:Consolas,monospace;color:#06b6d4;">Elevi</code>, <code style="background:rgba(0,0,0,0.3);padding:0.1rem 0.4rem;border-radius:4px;font-family:Consolas,monospace;color:#06b6d4;">Profesori</code>, <code style="background:rgba(0,0,0,0.3);padding:0.1rem 0.4rem;border-radius:4px;font-family:Consolas,monospace;color:#06b6d4;">Materii</code>)</li>
-                        <li><strong>Campuri:</strong> La singular, fara spatii (ex: <code style="background:rgba(0,0,0,0.3);padding:0.1rem 0.4rem;border-radius:4px;font-family:Consolas,monospace;color:#06b6d4;">Nume</code>, <code style="background:rgba(0,0,0,0.3);padding:0.1rem 0.4rem;border-radius:4px;font-family:Consolas,monospace;color:#06b6d4;">MediaGenerala</code>, <code style="background:rgba(0,0,0,0.3);padding:0.1rem 0.4rem;border-radius:4px;font-family:Consolas,monospace;color:#06b6d4;">DataNasterii</code>)</li>
-                        <li><strong>Evita:</strong> "Table1", "Field1", spatii in nume, caractere speciale (!, @, #)</li>
-                    </ul>
-                </div>
-
-                <!-- ===== CONCEPT 3: Design View vs Datasheet View ===== -->
-                <h3 class="learn-subtitle">
-                    &#128260; Design View vs. Datasheet View
-                    <span class="learn-subtitle-bar"></span>
-                </h3>
-
-                <div class="concept-card">
-                    <div class="concept-name">Cele doua moduri de lucru cu un tabel</div>
-                    <div class="concept-def">
-                        <p>In Access, un tabel poate fi deschis in doua <strong>moduri diferite</strong> (views). Fiecare mod are un scop specific. Este foarte important sa intelegi diferenta!</p>
-                    </div>
-                </div>
-
-                <div class="comparison-grid">
-                    <div class="comparison-card design-card">
-                        <h4>&#128295; Design View</h4>
-                        <ul>
-                            <li>Definesti <strong>structura</strong> tabelului</li>
-                            <li>Adaugi/stergi/modifici campuri</li>
-                            <li>Setezi tipurile de date</li>
-                            <li>Configurezi proprietatile campurilor</li>
-                            <li>Setezi cheia primara</li>
-                            <li>NU vezi datele!</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-card datasheet-card">
-                        <h4>&#128202; Datasheet View</h4>
-                        <ul>
-                            <li>Lucrezi cu <strong>datele</strong> din tabel</li>
-                            <li>Introduci inregistrari noi</li>
-                            <li>Editezi sau stergi date existente</li>
-                            <li>Sortezi si filtrezi datele</li>
-                            <li>Vezi tabelul ca un spreadsheet</li>
-                            <li>NU poti modifica structura in detaliu!</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Visual: side-by-side views -->
-                <div class="visual-box">
-                    <div class="visual-title">&#128444; Acelasi tabel "Elevi" in cele doua moduri</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div>
-                            <p style="color: var(--accent-purple); font-weight: 700; font-size: 0.82rem; margin-bottom: 0.5rem; text-align: center;">&#128295; Design View (structura)</p>
-                            <div class="design-view" style="font-size: 0.75rem;">
-                                <div class="design-view-header">Elevi : Table</div>
-                                <div class="design-row header-row">
-                                    <div class="design-cell">Field Name</div>
-                                    <div class="design-cell">Data Type</div>
-                                    <div class="design-cell">Description</div>
-                                </div>
-                                <div class="design-row">
-                                    <div class="design-cell pk">&#128273; ID</div>
-                                    <div class="design-cell">AutoNumber</div>
-                                    <div class="design-cell">Cheie primara</div>
-                                </div>
-                                <div class="design-row">
-                                    <div class="design-cell">Nume</div>
-                                    <div class="design-cell">Short Text</div>
-                                    <div class="design-cell">Nume familie</div>
-                                </div>
-                                <div class="design-row">
-                                    <div class="design-cell">Prenume</div>
-                                    <div class="design-cell">Short Text</div>
-                                    <div class="design-cell">Prenume elev</div>
-                                </div>
-                                <div class="design-row">
-                                    <div class="design-cell">Clasa</div>
-                                    <div class="design-cell">Short Text</div>
-                                    <div class="design-cell">Ex: 8A</div>
-                                </div>
-                                <div class="design-row">
-                                    <div class="design-cell">MediaGen.</div>
-                                    <div class="design-cell">Number</div>
-                                    <div class="design-cell">Media gen.</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <p style="color: var(--accent-green); font-weight: 700; font-size: 0.82rem; margin-bottom: 0.5rem; text-align: center;">&#128202; Datasheet View (date)</p>
-                            <div style="background: #1a1a2e; border-radius: 8px; border: 1px solid var(--border); overflow: hidden;">
-                                <div style="background: #2c3e50; padding: 0.3rem 0.5rem; font-size: 0.7rem; color: var(--accent-green); font-weight: 600;">Elevi</div>
-                                <table class="db-table" style="font-size: 0.7rem;">
-                                    <tr>
-                                        <th style="padding: 0.25rem 0.4rem;">ID</th>
-                                        <th style="padding: 0.25rem 0.4rem;">Nume</th>
-                                        <th style="padding: 0.25rem 0.4rem;">Prenume</th>
-                                        <th style="padding: 0.25rem 0.4rem;">Clasa</th>
-                                        <th style="padding: 0.25rem 0.4rem;">Media</th>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 0.2rem 0.4rem;">1</td>
-                                        <td style="padding: 0.2rem 0.4rem;">Popescu</td>
-                                        <td style="padding: 0.2rem 0.4rem;">Ion</td>
-                                        <td style="padding: 0.2rem 0.4rem;">8A</td>
-                                        <td style="padding: 0.2rem 0.4rem;">8.50</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 0.2rem 0.4rem;">2</td>
-                                        <td style="padding: 0.2rem 0.4rem;">Ionescu</td>
-                                        <td style="padding: 0.2rem 0.4rem;">Maria</td>
-                                        <td style="padding: 0.2rem 0.4rem;">8B</td>
-                                        <td style="padding: 0.2rem 0.4rem;">9.25</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 0.2rem 0.4rem;">3</td>
-                                        <td style="padding: 0.2rem 0.4rem;">Georgescu</td>
-                                        <td style="padding: 0.2rem 0.4rem;">Ana</td>
-                                        <td style="padding: 0.2rem 0.4rem;">8A</td>
-                                        <td style="padding: 0.2rem 0.4rem;">7.80</td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <p style="color: var(--text-muted); text-align: center; font-size: 0.82rem; margin-top: 0.75rem;">
-                        Design View = <strong>"cum e construit"</strong> tabelul &nbsp;|&nbsp; Datasheet View = <strong>"ce date contine"</strong>
-                    </p>
-                </div>
-
-                <div class="info-box">
-                    <div class="info-box-title">&#128161; Cand folosesc fiecare view?</div>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.7;">
-                        <strong>Design View</strong> - cand vrei sa schimbi <em>structura</em>: adaugi un camp nou, schimbi tipul de date, setezi proprietati.<br>
-                        <strong>Datasheet View</strong> - cand vrei sa lucrezi cu <em>datele</em>: introduci elevi noi, modifici o nota, cauti un elev.<br><br>
-                        E ca diferenta dintre <strong>proiectarea unei case</strong> (planul arhitectului = Design View) si <strong>locuirea in casa</strong> (mobilarea si utilizarea = Datasheet View). Intai proiectezi, apoi folosesti.
-                    </p>
-                </div>
-
-                <!-- ===== CONCEPT 4: Data Types in Access ===== -->
-                <h3 class="learn-subtitle">
-                    &#128206; Tipuri de date in Access
-                    <span class="learn-subtitle-bar"></span>
-                </h3>
-
-                <div class="concept-card">
-                    <div class="concept-name">Principalele tipuri de date</div>
-                    <div class="concept-def">
-                        <p>Fiecare camp trebuie sa aiba un <strong>tip de date</strong> care spune Access-ului ce fel de informatii poate stoca. Alegerea corecta a tipului este foarte importanta!</p>
-                    </div>
-
-                    <table class="trace-table">
-                        <tr>
-                            <th style="width: 25%;">Tip de date</th>
-                            <th style="width: 30%;">Ce stocheaza</th>
-                            <th style="width: 45%;">Exemplu</th>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-cyan); font-weight: 600;">Short Text</td>
-                            <td class="trace-comment">Text scurt (max 255 caractere)</td>
-                            <td class="trace-comment">Nume, Prenume, Clasa, Oras, Email</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-cyan); font-weight: 600;">Long Text</td>
-                            <td class="trace-comment">Text lung (memo, pana la 64.000 car.)</td>
-                            <td class="trace-comment">Observatii, Descriere, Note elev</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-cyan); font-weight: 600;">Number</td>
-                            <td class="trace-comment">Numere (intregi sau cu zecimale)</td>
-                            <td class="trace-comment">MediaGenerala, Varsta, NrAbsente</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-cyan); font-weight: 600;">AutoNumber</td>
-                            <td class="trace-comment">Numar generat automat (1, 2, 3...)</td>
-                            <td class="trace-comment">ID (cheie primara)</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-cyan); font-weight: 600;">Date/Time</td>
-                            <td class="trace-comment">Data si/sau ora</td>
-                            <td class="trace-comment">DataNasterii, DataInscrierii</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-cyan); font-weight: 600;">Yes/No</td>
-                            <td class="trace-comment">Adevarat sau fals (checkbox)</td>
-                            <td class="trace-comment">EsteTransferat, AreBursa</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-cyan); font-weight: 600;">Currency</td>
-                            <td class="trace-comment">Valori monetare (cu 4 zecimale)</td>
-                            <td class="trace-comment">Pret, Salariu, TaxaScolara</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div class="mistake-box">
-                    <div class="mistake-box-title">&#9888; Greseli frecvente la alegerea tipului de date</div>
-                    <table class="trace-table" style="font-size: 0.85rem;">
-                        <tr>
-                            <th style="width: 35%;">Gresit &#10060;</th>
-                            <th style="width: 65%;">De ce e gresit</th>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-red);">Clasa = Number</td>
-                            <td class="trace-comment">Clasa "8A" contine si litere, deci trebuie <strong>Short Text</strong>, nu Number. Number nu permite litere!</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-red);">Telefon = Number</td>
-                            <td class="trace-comment">Numerele de telefon incep cu 0 (ex: 0721...). Tipul Number elimina zero-ul din fata! Foloseste <strong>Short Text</strong>.</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-red);">MediaGenerala = Short Text</td>
-                            <td class="trace-comment">Daca media e text, nu poti calcula media mediilor sau face comparatii numerice. Foloseste <strong>Number</strong>.</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-red);">ID = Number (manual)</td>
-                            <td class="trace-comment">Daca completezi ID-ul manual, poti face greseli (duplicate, omisiuni). Foloseste <strong>AutoNumber</strong> - Access se ocupa de el.</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <!-- ===== CONCEPT 5: Field Properties ===== -->
-                <h3 class="learn-subtitle">
-                    &#128736; Proprietatile campurilor
-                    <span class="learn-subtitle-bar"></span>
-                </h3>
-
-                <div class="concept-card">
-                    <div class="concept-name">Panoul de proprietati (Field Properties)</div>
-                    <div class="concept-def">
-                        <p>Cand selectezi un camp in Design View, in partea de jos a ferestrei apare <strong>panoul de proprietati</strong>. Aici poti configura detalii suplimentare despre fiecare camp.</p>
-                    </div>
-                </div>
-
-                <!-- Visual: Properties panel -->
-                <div class="visual-box" style="border-color: var(--accent-orange);">
-                    <div class="visual-title" style="color: var(--accent-orange);">&#128444; Proprietatile campului "Nume" (Short Text)</div>
-                    <div class="properties-panel">
-                        <div class="properties-header">Field Properties - General</div>
-                        <div class="property-row">
-                            <div class="property-name">Field Size</div>
-                            <div class="property-value">50</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-name">Format</div>
-                            <div class="property-value" style="color: var(--text-muted);">(nicio valoare)</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-name">Input Mask</div>
-                            <div class="property-value" style="color: var(--text-muted);">(nicio valoare)</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-name">Caption</div>
-                            <div class="property-value">Numele de familie</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-name">Default Value</div>
-                            <div class="property-value" style="color: var(--text-muted);">(nicio valoare)</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-name">Required</div>
-                            <div class="property-value" style="color: var(--accent-green);">Yes</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-name">Allow Zero Length</div>
-                            <div class="property-value">No</div>
-                        </div>
-                        <div class="property-row">
-                            <div class="property-name">Indexed</div>
-                            <div class="property-value">No</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="info-box">
-                    <div class="info-box-title">&#128161; Proprietati importante de cunoscut</div>
-                    <table class="trace-table">
-                        <tr>
-                            <th style="width: 25%;">Proprietate</th>
-                            <th style="width: 35%;">Ce face</th>
-                            <th style="width: 40%;">Exemplu practic</th>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-cyan); font-weight: 600;">Field Size</td>
-                            <td class="trace-comment">Numarul maxim de caractere permise</td>
-                            <td class="trace-comment">Nume: 50 caractere, Clasa: 5 caractere</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-cyan); font-weight: 600;">Required</td>
-                            <td class="trace-comment">Campul este obligatoriu (Yes) sau optional (No)</td>
-                            <td class="trace-comment">Numele e obligatoriu, Observatii e optional</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-cyan); font-weight: 600;">Default Value</td>
-                            <td class="trace-comment">Valoarea care apare automat la un rand nou</td>
-                            <td class="trace-comment">Clasa: "8A" (daca majoritatea elevilor sunt din 8A)</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-cyan); font-weight: 600;">Caption</td>
-                            <td class="trace-comment">Textul afisat in Datasheet View (in loc de Field Name)</td>
-                            <td class="trace-comment">Field Name: MediaGenerala, Caption: "Media Generala"</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-cyan); font-weight: 600;">Decimal Places</td>
-                            <td class="trace-comment">Cate zecimale sa afiseze (doar pt. Number)</td>
-                            <td class="trace-comment">MediaGenerala: 2 zecimale (8.50, nu 8.5042)</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <!-- ===== CONCEPT 6: Primary Key ===== -->
-                <h3 class="learn-subtitle">
-                    &#128273; Cheia primara (Primary Key)
-                    <span class="learn-subtitle-bar"></span>
-                </h3>
-
-                <div class="concept-card" style="border-color: var(--accent-orange);">
-                    <div class="concept-name" style="color: var(--accent-orange);">De ce avem nevoie de cheie primara?</div>
-                    <div class="concept-def">
-                        <p>Cheia primara este un camp (sau o combinatie de campuri) care <strong>identifica unic</strong> fiecare inregistrare din tabel. Fiecare valoare din acest camp trebuie sa fie <strong>unica</strong> - nu pot exista doua randuri cu aceeasi valoare.</p>
-                        <p>In tabelul nostru "Elevi", cheia primara este <strong>ID</strong> (AutoNumber). De ce nu putem folosi "Nume" ca cheie primara? Pentru ca doi elevi pot avea acelasi nume (ex: doi "Popescu Ion" in scoala).</p>
-                    </div>
-                </div>
-
-                <div class="visual-box" style="border-color: var(--accent-orange);">
-                    <div class="visual-title" style="color: var(--accent-orange);">&#128444; Cum setezi cheia primara in Design View</div>
-                    <div style="display: flex; flex-direction: column; gap: 1rem;">
-                        <div class="access-step-visual" style="margin: 0;">
-                            <div class="step-label">Pasul 1</div>
-                            <div class="step-desc">In Design View, <strong>click pe randul campului ID</strong> (sau campul pe care vrei sa-l faci cheie primara). Randul se evidentiaza.</div>
-                        </div>
-                        <div class="access-step-visual" style="margin: 0;">
-                            <div class="step-label">Pasul 2</div>
-                            <div class="step-desc">In panglica (tab-ul <strong>Design</strong>), apasa butonul <strong>"Primary Key"</strong> - iconita cu o cheie galbena. Alternativ: <strong>click dreapta</strong> pe randul campului si alege <strong>"Primary Key"</strong> din meniu.</div>
-                        </div>
-                        <div class="access-step-visual" style="margin: 0;">
-                            <div class="step-label">Rezultat</div>
-                            <div class="step-desc">Apare o <strong>iconita de cheie</strong> &#128273; in stanga campului ID. Asta confirma ca ID este cheia primara a tabelului.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tip-box">
-                    <div class="tip-box-title">&#128273; Reguli pentru cheia primara</div>
-                    <ul style="margin-left: 1.25rem; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8;">
-                        <li>Fiecare tabel trebuie sa aiba <strong>exact o cheie primara</strong></li>
-                        <li>Valorile cheii primare trebuie sa fie <strong>unice</strong> (nicio repetare)</li>
-                        <li>Cheia primara <strong>nu poate fi goala</strong> (Required = Yes automat)</li>
-                        <li>De obicei folosim un camp <strong>AutoNumber</strong> numit "ID" - simplu si sigur</li>
-                        <li>Access poate seta automat un camp AutoNumber ca cheie primara la crearea tabelului</li>
-                    </ul>
-                </div>
-
-                <!-- ===== CONCEPT 7: Entering Data ===== -->
-                <h3 class="learn-subtitle">
-                    &#9997; Introducerea datelor
-                    <span class="learn-subtitle-bar"></span>
-                </h3>
-
-                <div class="concept-card" style="border-color: var(--accent-green);">
-                    <div class="concept-name" style="color: var(--accent-green);">Cum adaugi inregistrari in tabel</div>
-                    <div class="concept-def">
-                        <p>Dupa ce ai creat structura tabelului in Design View, comuti la <strong>Datasheet View</strong> pentru a introduce date. Fiecare rand pe care il completezi devine o <strong>inregistrare</strong> (record).</p>
-                    </div>
-                </div>
-
-                <div class="info-box">
-                    <div class="info-box-title">&#128065; Pas cu pas: Introducerea unei inregistrari</div>
-                    <table class="trace-table">
-                        <tr>
-                            <th>Pas</th>
-                            <th>Actiune</th>
-                            <th>Ce se intampla</th>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-orange); font-weight: 600;">1</td>
-                            <td class="trace-comment">Click pe primul rand gol, coloana "Nume"</td>
-                            <td class="trace-comment">Cursorul apare in celula; ID-ul ramane gol (inca)</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-orange); font-weight: 600;">2</td>
-                            <td class="trace-comment">Scrie "Popescu", apoi apasa <span class="key-combo">Tab</span></td>
-                            <td class="trace-comment">Cursorul se muta la campul "Prenume"</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-orange); font-weight: 600;">3</td>
-                            <td class="trace-comment">Scrie "Ion", apoi <span class="key-combo">Tab</span></td>
-                            <td class="trace-comment">Cursorul se muta la "Clasa"</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-orange); font-weight: 600;">4</td>
-                            <td class="trace-comment">Scrie "8A", apoi <span class="key-combo">Tab</span></td>
-                            <td class="trace-comment">Cursorul se muta la "MediaGenerala"</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-orange); font-weight: 600;">5</td>
-                            <td class="trace-comment">Scrie "8.50", apoi <span class="key-combo">Tab</span> sau <span class="key-combo">Enter</span></td>
-                            <td class="trace-comment">Inregistrarea se salveaza automat! ID-ul devine "1". Cursorul trece la urmatorul rand.</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div class="warning-box">
-                    <div class="warning-box-title">&#128165; Atentie la zecimale!</div>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.7;">
-                        In Access (versiunea romana), separatorul de zecimale poate fi <strong>virgula</strong> (8,50) in loc de <strong>punct</strong> (8.50), in functie de setarile Windows. Daca primesti eroare cand scrii 8.50, incearca cu 8,50.<br><br>
-                        <strong>Verifica:</strong> Setarile regionale ale Windows-ului tau determina daca se foloseste punct sau virgula.
-                    </p>
-                </div>
-
-                <div class="tip-box">
-                    <div class="tip-box-title">&#128161; Sfaturi pentru introducerea datelor</div>
-                    <ul style="margin-left: 1.25rem; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8;">
-                        <li><span class="key-combo">Tab</span> te muta la urmatorul camp (la dreapta)</li>
-                        <li><span class="key-combo">Enter</span> te muta la urmatorul rand (in jos)</li>
-                        <li><span class="key-combo">Esc</span> anuleaza modificarile din celula curenta</li>
-                        <li><span class="key-combo">Ctrl+Z</span> anuleaza ultima actiune (undo)</li>
-                        <li>Datele se salveaza <strong>automat</strong> cand treci la alt rand</li>
-                        <li>Nu poti scrie in campul <strong>AutoNumber</strong> - el se completeaza singur!</li>
-                    </ul>
-                </div>
-
-                <!-- ===== CONCEPT 8: Saving the table ===== -->
-                <h3 class="learn-subtitle">
-                    &#128190; Salvarea si denumirea tabelului
-                    <span class="learn-subtitle-bar"></span>
-                </h3>
-
-                <div class="concept-card">
-                    <div class="concept-name">Ctrl+S = Salvezi structura, nu datele</div>
-                    <div class="concept-def">
-                        <p>O particularitate importanta a Access: cand apesi <span class="key-combo">Ctrl+S</span>, salvezi <strong>structura</strong> tabelului (campuri, proprietati). <strong>Datele</strong> se salveaza automat cand treci la alt rand sau inchizi tabelul.</p>
-                        <p>Prima data cand salvezi un tabel nou, Access te intreaba sa-i dai un <strong>nume</strong>. Alege un nume descriptiv la plural (ex: "Elevi", nu "Table1")!</p>
-                    </div>
-                </div>
-
-                <div class="mistake-box">
-                    <div class="mistake-box-title">&#9888; Cele mai frecvente greseli ale incepatorilor</div>
-                    <table class="trace-table" style="font-size: 0.85rem;">
-                        <tr>
-                            <th style="width: 40%;">Greseala</th>
-                            <th style="width: 60%;">Cum eviti</th>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-red);">Lasa numele "Table1"</td>
-                            <td class="trace-comment">Schimba-l mereu! "Table1" nu-ti spune nimic. Numeste-l "Elevi", "Profesori", "Materii"</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-red);">Nu seteaza cheia primara</td>
-                            <td class="trace-comment">Fiecare tabel are nevoie de cheie primara. Adauga un camp ID de tip AutoNumber</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-red);">Alege tipul de date gresit</td>
-                            <td class="trace-comment">Gandeste-te: "Voi face calcule cu acest camp?" Da = Number. Nu = Short Text</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-red);">Pune spatii in numele campurilor</td>
-                            <td class="trace-comment">Foloseste "MediaGenerala" sau "Media_Generala", nu "Media Generala"</td>
-                        </tr>
-                        <tr>
-                            <td style="color: var(--accent-red);">Nu salveaza structura inainte de a introduce date</td>
-                            <td class="trace-comment">Apasa Ctrl+S dupa ce termini de definit campurile in Design View!</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div class="actions">
-                    <button class="btn btn-outline" onclick="goToStep('try')">&#8592; Inapoi la provocare</button>
-                    <button class="btn btn-primary" onclick="goToStep('test')">
-                        Am inteles! Testeaza-ma &#8594;
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- TEST Section                                                 -->
-        <!-- ============================================================ -->
-        <div class="section" id="test">
-            <div class="test-section">
-                <div class="test-header">
-                    <span class="test-badge">&#9989; VERIFICA</span>
-                    <h2>Hai sa vedem ce ai retinut!</h2>
-                </div>
-                <p class="test-subtitle">Raspunde la toate cele 6 intrebari. Ai nevoie de minim 4 corecte pentru a trece.</p>
-
-                <!-- Q1: File extension -->
-                <div class="quiz-question" id="q1">
-                    <div class="question-text">
-                        <span class="question-number">1</span>
-                        Ce extensie are fisierul unei baze de date Access?
-                    </div>
-                    <div class="options">
-                        <div class="option" onclick="selectOption(this, 'q1', false, 'Extensia .xlsx este pentru fisierele Excel, nu Access. Desi ambele sunt Microsoft Office, sunt programe diferite cu formate diferite.')">
-                            <code>.xlsx</code>
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q1', true, 'Corect! Fisierele Access au extensia .accdb (Access Database). Aceasta extensie este folosita din Access 2007. Versiunile mai vechi foloseau .mdb.')">
-                            <code>.accdb</code>
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q1', false, 'Extensia .docx este pentru fisierele Word (documente text). Bazele de date Access au extensia .accdb.')">
-                            <code>.docx</code>
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q1', false, 'Extensia .sql este pentru fisiere cu cod SQL. Access foloseste extensia .accdb pentru bazele sale de date.')">
-                            <code>.sql</code>
-                        </div>
-                    </div>
-                    <div class="feedback" id="q1-feedback"></div>
-                </div>
-
-                <!-- Q2: Design View purpose -->
-                <div class="quiz-question" id="q2">
-                    <div class="question-text">
-                        <span class="question-number">2</span>
-                        In ce view (mod de vizualizare) definesti structura unui tabel - campuri, tipuri de date si proprietati?
-                    </div>
-                    <div class="options">
-                        <div class="option" onclick="selectOption(this, 'q2', false, 'Datasheet View este pentru introducerea si vizualizarea datelor, nu pentru definirea structurii. Poti adauga campuri rapid in Datasheet View, dar nu ai acces la toate proprietatile.')">
-                            Datasheet View
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q2', true, 'Corect! Design View este modul in care definesti structura tabelului: adaugi campuri, alegi tipurile de date, setezi proprietati si cheia primara. E ca planul arhitectului inainte de a construi casa.')">
-                            Design View
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q2', false, 'Print Preview este pentru vizualizarea documentului inainte de imprimare. Pentru structura tabelului, foloseste Design View.')">
-                            Print Preview
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q2', false, 'SQL View exista in Access pentru interogari, nu pentru definirea structurii tabelelor. Foloseste Design View pentru a crea si modifica campurile unui tabel.')">
-                            SQL View
-                        </div>
-                    </div>
-                    <div class="feedback" id="q2-feedback"></div>
-                </div>
-
-                <!-- Q3: AutoNumber purpose -->
-                <div class="quiz-question" id="q3">
-                    <div class="question-text">
-                        <span class="question-number">3</span>
-                        Ce tip de date folosim de obicei pentru campul <code>ID</code> (cheie primara)?
-                    </div>
-                    <div class="options">
-                        <div class="option" onclick="selectOption(this, 'q3', false, 'Daca folosesti Number si completezi manual, poti face greseli: uiti un numar, pui unul duplicat. AutoNumber face totul automat si fara erori.')">
-                            Number (completat manual)
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q3', true, 'Corect! AutoNumber genereaza automat numere unice crescatoare (1, 2, 3...) fara sa trebuiasca sa le introduci manual. Este ideal pentru cheia primara deoarece garanteaza unicitatea.')">
-                            AutoNumber
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q3', false, 'Short Text este pentru text (nume, adrese). Cheia primara trebuie sa fie un identificator unic - de obicei un numar generat automat (AutoNumber).')">
-                            Short Text
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q3', false, 'Currency este pentru valori monetare (preturi, salarii). Pentru cheia primara folosim AutoNumber - un numar unic generat automat de Access.')">
-                            Currency
-                        </div>
-                    </div>
-                    <div class="feedback" id="q3-feedback"></div>
-                </div>
-
-                <!-- Q4: Data type choice -->
-                <div class="quiz-question" id="q4">
-                    <div class="question-text">
-                        <span class="question-number">4</span>
-                        Ce tip de date ar trebui sa aiba campul <code>Clasa</code> care stocheaza valori precum "8A", "8B", "7C"?
-                    </div>
-                    <div class="options">
-                        <div class="option" onclick="selectOption(this, 'q4', false, 'Number poate stoca doar numere (8, 7, etc.), dar NU si litere. &quot;8A&quot; contine litera A, deci Number ar genera o eroare. Foloseste Short Text.')">
-                            Number
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q4', true, 'Corect! Valorile &quot;8A&quot;, &quot;8B&quot;, &quot;7C&quot; contin atat cifre cat si litere, deci sunt text. Short Text este alegerea corecta, cu o dimensiune mica (ex: Field Size = 5).')">
-                            Short Text
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q4', false, 'Long Text (Memo) este pentru texte lungi de sute de caractere (observatii, descrieri). Pentru un camp scurt de 2-3 caractere precum &quot;8A&quot;, Short Text este suficient si mai eficient.')">
-                            Long Text
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q4', false, 'AutoNumber genereaza numere automat crescator si nu poate fi editat. Clasa trebuie sa poata fi scrisa manual (&quot;8A&quot;, &quot;8B&quot;). Foloseste Short Text.')">
-                            AutoNumber
-                        </div>
-                    </div>
-                    <div class="feedback" id="q4-feedback"></div>
-                </div>
-
-                <!-- Q5: Primary Key concept -->
-                <div class="quiz-question" id="q5">
-                    <div class="question-text">
-                        <span class="question-number">5</span>
-                        De ce NU putem folosi campul "Nume" ca cheie primara?
-                    </div>
-                    <div class="options">
-                        <div class="option" onclick="selectOption(this, 'q5', false, 'Nu exista nicio limitare tehnica de acest fel. Orice camp poate fi cheie primara din punct de vedere al tipului de date. Problema este alta...')">
-                            Campurile de tip Short Text nu pot fi cheie primara
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q5', true, 'Corect! Cheia primara trebuie sa aiba valori UNICE. Doi elevi pot avea acelasi nume de familie (de ex. doi &quot;Popescu&quot; in aceeasi scoala). De aceea folosim un camp ID de tip AutoNumber care garanteaza unicitatea.')">
-                            Doi elevi pot avea acelasi nume, deci valorile nu ar fi unice
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q5', false, 'Numele nu sunt prea lungi pentru o cheie primara. Problema reala este ca nu sunt unice - doi elevi pot avea acelasi nume.')">
-                            Numele sunt prea lungi pentru o cheie primara
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q5', false, 'Access NU seteaza automat cheia primara pe primul camp. O poti seta pe orice camp doresti. Problema cu &quot;Nume&quot; este ca valorile nu ar fi unice.')">
-                            Access nu permite - seteaza automat cheia primara pe primul camp
-                        </div>
-                    </div>
-                    <div class="feedback" id="q5-feedback"></div>
-                </div>
-
-                <!-- Q6: Saving behavior -->
-                <div class="quiz-question" id="q6">
-                    <div class="question-text">
-                        <span class="question-number">6</span>
-                        Cand se salveaza datele (inregistrarile) in Access?
-                    </div>
-                    <div class="options">
-                        <div class="option" onclick="selectOption(this, 'q6', false, 'Ctrl+S salveaza structura tabelului (campuri, proprietati), nu datele. Datele se salveaza automat cand treci la alt rand sau inchizi tabelul.')">
-                            Doar cand apesi Ctrl+S manual
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q6', false, 'Nu trebuie sa astepti pana inchizi programul! Datele se salveaza mult mai devreme - automat, de fiecare data cand treci la un alt rand.')">
-                            Cand inchizi programul Access
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q6', true, 'Corect! In Access, datele se salveaza automat cand treci la un alt rand sau cand inchizi tabelul. Nu trebuie sa apesi Ctrl+S pentru date - doar pentru structura (campuri, proprietati). Aceasta este o diferenta importanta fata de Word sau Excel!')">
-                            Automat, cand treci la un alt rand sau inchizi tabelul
-                        </div>
-                        <div class="option" onclick="selectOption(this, 'q6', false, 'Access salveaza automat, dar nu la fiecare caracter scris. Salvarea se face cand treci la un alt rand (nu la fiecare apasare de tasta).')">
-                            Dupa fiecare caracter scris
-                        </div>
-                    </div>
-                    <div class="feedback" id="q6-feedback"></div>
-                </div>
-
-                <div id="test-result" style="display: none;"></div>
-
-                <div class="actions">
-                    <button class="btn btn-outline" onclick="goToStep('learn')">&#8592; Inapoi la lectie</button>
-                    <button class="btn btn-success" onclick="checkAllAnswers()" id="check-btn">
-                        Verifica raspunsurile &#10003;
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- COMPLETION Section                                           -->
-        <!-- ============================================================ -->
-        <div class="section" id="complete">
-            <div class="completion">
-                <span class="completion-icon">&#127881;</span>
-                <h2 class="completion-title">Felicitari!</h2>
-                <p style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 1.1rem;">
-                    Ai terminat Lectia 3: Crearea unei Baze de Date in Access
-                </p>
-                <p id="score-display" style="color: var(--accent-cyan); margin-bottom: 1.5rem;"></p>
-
-                <div class="completion-summary">
-                    <h4 style="color: var(--accent-green); margin-bottom: 0.5rem;">Ce ai invatat:</h4>
-                    <ul style="list-style: none; padding: 0;">
-                        <li style="padding: 0.3rem 0;">&#9989; Cum deschizi Access si creezi o baza de date noua (.accdb)</li>
-                        <li style="padding: 0.3rem 0;">&#9989; Cum creezi un tabel in Design View cu campuri si tipuri de date</li>
-                        <li style="padding: 0.3rem 0;">&#9989; Diferenta dintre Design View si Datasheet View</li>
-                        <li style="padding: 0.3rem 0;">&#9989; Cum setezi cheia primara (Primary Key)</li>
-                        <li style="padding: 0.3rem 0;">&#9989; Cum configurezi proprietatile campurilor</li>
-                        <li style="padding: 0.3rem 0;">&#9989; Cum introduci date in Datasheet View</li>
-                        <li style="padding: 0.3rem 0;">&#9989; Cum salvezi si denumesti corect tabelele</li>
-                    </ul>
-                </div>
-
-                <div class="actions" style="justify-content: center; gap: 1rem;">
-                    <a href="lectia4-interogari-simple.html" class="btn btn-primary" style="font-size: 1.05rem;">
-                        Continua la Lectia 4: Interogari Simple &#8594;
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- PRACTICA AVANSATA (always visible)                           -->
-        <!-- ============================================================ -->
-        <section class="practice-advanced" id="practice-advanced">
-            <div class="practice-advanced-header">
-                <span class="practice-advanced-icon">&#127942;</span>
-                <div>
-                    <h3 class="practice-advanced-title">Practica Avansata</h3>
-                    <p class="practice-advanced-subtitle">Fara practica: nota maxima 8. Cu practica completa: nota maxima 10!</p>
-                </div>
-            </div>
-
-            <div class="practice-exercise" data-type="practic">
-                <h4>&#128451; Exercitiul 1: Baza de date "Biblioteca"</h4>
-                <p><strong>Cerinta:</strong> Creeaza o baza de date noua numita <code>Biblioteca.accdb</code> cu un tabel <code>Carti</code> care sa contina urmatoarele campuri:</p>
-                <ol class="practice-questions">
-                    <li><strong>ID</strong> - AutoNumber, cheie primara</li>
-                    <li><strong>Titlu</strong> - Short Text (dimensiune 100)</li>
-                    <li><strong>Autor</strong> - Short Text (dimensiune 50)</li>
-                    <li><strong>AnPublicare</strong> - Number (intreg)</li>
-                    <li><strong>NrPagini</strong> - Number (intreg)</li>
-                    <li><strong>Disponibila</strong> - Yes/No (default: Yes)</li>
-                </ol>
-                <p>Introdu cel putin <strong>5 carti</strong> in tabel (alege carti din programa scolara sau carti preferate).</p>
-                <div class="hints">
-                    <p><strong>Indicii:</strong></p>
-                    <ul>
-                        <li>Foloseste <code>Create</code> &#8594; <code>Table Design</code> pentru a crea tabelul</li>
-                        <li>Pentru AnPublicare, alege tipul Number si seteaza Field Size la "Long Integer"</li>
-                        <li>Pentru Disponibila, tipul Yes/No va aparea ca un checkbox in Datasheet View</li>
-                        <li>Nu uita sa setezi cheia primara pe campul ID!</li>
-                    </ul>
-                </div>
-                <p class="answer-instruction"><strong>Raspunde cu:</strong> Un screenshot din Datasheet View cu cele 5 carti introduse.</p>
-            </div>
-
-            <div class="practice-exercise" data-type="practic">
-                <h4>&#128187; Exercitiul 2: Baza de date "Club Sportiv"</h4>
-                <p><strong>Cerinta:</strong> Creeaza baza de date <code>ClubSportiv.accdb</code> cu un tabel <code>Membri</code>. Gandeste-te singur la ce campuri are nevoie un club sportiv pentru a-si gestiona membrii.</p>
-                <p>Tabelul trebuie sa contina <strong>minimum 6 campuri</strong> (inclusiv ID) si sa foloseasca cel putin <strong>3 tipuri de date diferite</strong>.</p>
-                <ol class="practice-questions">
-                    <li>Ce campuri ai ales si de ce? Justifica fiecare alegere.</li>
-                    <li>Ce tip de date ai ales pentru fiecare camp? Explica de ce.</li>
-                    <li>Care camp este cheia primara si de ce?</li>
-                    <li>Ce proprietati ai setat pentru campuri? (Field Size, Required, Default Value)</li>
-                </ol>
-                <div class="hints">
-                    <p><strong>Indicii:</strong></p>
-                    <ul>
-                        <li>Gandeste-te ce informatii ar avea nevoie un antrenor: nume, sport, varsta, data inscrierii...</li>
-                        <li>Foloseste Date/Time pentru date calendaristice</li>
-                        <li>Un camp Yes/No ar putea indica daca cotizatia e platita</li>
-                    </ul>
-                </div>
-                <p class="answer-instruction"><strong>Raspunde cu:</strong> 1. Lista campurilor cu justificari. 2. Screenshot-uri din Design View si Datasheet View.</p>
-            </div>
-
-            <div class="practice-exercise" data-type="written">
-                <h4>&#128221; Exercitiul 3: Comparatie si analiza</h4>
-                <p><strong>Cerinta:</strong> Raspunde la urmatoarele intrebari in scris:</p>
-                <ol class="practice-questions">
-                    <li>Explica in cuvintele tale diferenta dintre <strong>Design View</strong> si <strong>Datasheet View</strong>. Cand folosesti fiecare?</li>
-                    <li>Un coleg a creat un tabel cu urmatoarele campuri. Identifica <strong>3 greseli</strong> si explica cum le-ai corecta:<br>
-                        <code>Table1: Nume elev (Short Text), nota (Short Text), Telefon (Number), clasa (Number)</code></li>
-                    <li>De ce este important sa setezi cheia primara? Ce s-ar intampla daca un tabel nu ar avea cheie primara?</li>
-                </ol>
-                <div class="hints">
-                    <p><strong>Indicii:</strong></p>
-                    <ul>
-                        <li>La intrebarea 2: gandeste-te la spatiile din nume, tipul de date al notei, ce se intampla cu zero-ul de la telefon, si tipul "clasa"</li>
-                        <li>La intrebarea 3: gandeste-te ce s-ar intampla daca doi elevi ar avea exact acelasi nume - cum i-ai diferentia?</li>
-                    </ul>
-                </div>
-                <p class="keywords"><strong>Cuvinte cheie de folosit:</strong> Design View, Datasheet View, cheie primara, AutoNumber, tip de date, camp, inregistrare, structura, proprietati</p>
-            </div>
-        </section>
-
+        <span class="progress-percent" id="progress-percent">0%</span>
     </div>
 
-    <!-- Lesson Summary -->
-    <div id="lesson-summary" style="display: none;"></div>
-
-    <!-- Footer -->
-    <footer style="
-        margin-top: 3rem;
-        padding: 1.5rem;
-        border-top: 1px solid var(--border);
-        text-align: center;
-        color: var(--text-muted);
-        font-size: 0.85rem;
-    ">
-        <div style="margin-bottom: 0.5rem;">
-            <strong style="color: var(--text-secondary);">&copy; 2026 Prof. Gurlan Vasile</strong>
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Ai invatat ce sunt bazele de date, tabelele si campurile. Acum e momentul sa le pui in practica in Microsoft Access!</p>
         </div>
-        <div>Informatica si TIC | <a href="index.html" style="color: var(--accent-cyan); text-decoration: none;">Inapoi la modul</a></div>
-    </footer>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa intelegi si sa aplici: Continut</li>
+                <li>Sa intelegi si sa aplici: Continut</li>
+                <li>Sa intelegi si sa aplici: Continut</li>
+                <li>Sa intelegi si sa aplici: Continut</li>
+                <li>Sa intelegi si sa aplici: Continut</li>
+            </ul>
+        </div>
+    </section>
 
-    <!-- ============================================================ -->
-    <!-- JavaScript                                                   -->
-    <!-- ============================================================ -->
-    <script>
-        // ==========================================
-        // State
-        // ==========================================
-        let answers = {};
-        let correctCount = 0;
-        const TOTAL_QUESTIONS = 6;
-        const PASS_THRESHOLD = 4;
-        const stepsOrder = ['goal', 'try', 'learn', 'test', 'complete'];
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="try-section">
+<div class="try-header">
+<span class="try-badge">🎯 INCEARCA</span>
+<h2>Creeaza baza de date "Catalog"</h2>
+</div>
+<p class="try-subtitle">Urmeaza pasii de mai jos in Microsoft Access. Nu trebuie sa intelegi totul acum - doar fa exact ce scrie la fiecare pas!</p>
+<!-- Challenge Box 1: Creating the database -->
+<div class="challenge-box">
+<div class="challenge-title">Partea 1: Creeaza baza de date (2 minute)</div>
+<div class="challenge-step">
+<span class="challenge-step-num">1</span>
+<div class="challenge-step-text">
+                            Deschide <strong>Microsoft Access</strong>. Il gasesti in <span class="menu-path">Start <span class="menu-arrow">→</span> Microsoft Office <span class="menu-arrow">→</span> Microsoft Access</span>. Daca ai Windows 11, cauta "Access" in bara de cautare.
+                        </div>
+</div>
+<div class="challenge-step">
+<span class="challenge-step-num">2</span>
+<div class="challenge-step-text">
+                            Pe ecranul de start, apasa pe <strong>"Blank database"</strong> (sau "Blank desktop database" in versiunile mai noi). Este de obicei prima optiune vizibila.
+                        </div>
+</div>
+<div class="challenge-step">
+<span class="challenge-step-num">3</span>
+<div class="challenge-step-text">
+                            In casuta <strong>"File Name"</strong>, scrie: <code>Catalog</code>. Apasa pe iconita de folder pentru a alege locatia (de ex. <strong>Desktop</strong> sau un folder dedicat). Apoi apasa <strong>"Create"</strong>.
+                        </div>
+</div>
+<div class="challenge-step">
+<span class="challenge-step-num">4</span>
+<div class="challenge-step-text">
+                            Access creeaza automat fisierul <code>Catalog.accdb</code> si deschide un tabel nou gol numit <strong>"Table1"</strong> in Datasheet View. Momentan nu face nimic cu el - il vom sterge.
+                        </div>
+</div>
+</div>
+<!-- Challenge Box 2: Creating table in Design View -->
+<div class="challenge-box">
+<div class="challenge-title">Partea 2: Creeaza tabelul "Elevi" in Design View (5 minute)</div>
+<div class="challenge-step">
+<span class="challenge-step-num">5</span>
+<div class="challenge-step-text">
+                            Inchide "Table1" (click pe <strong>X</strong> de pe tab-ul tabelului). Cand te intreaba daca vrei sa salvezi, alege <strong>"No"</strong>/<strong>"Nu"</strong>.
+                        </div>
+</div>
+<div class="challenge-step">
+<span class="challenge-step-num">6</span>
+<div class="challenge-step-text">
+                            In panglica (ribbon), mergi la tab-ul <strong>"Create"</strong> si apasa pe <strong>"Table Design"</strong>. Se deschide un tabel gol in <strong>Design View</strong> - aici definim structura.
+                        </div>
+</div>
+<div class="challenge-step">
+<span class="challenge-step-num">7</span>
+<div class="challenge-step-text">
+                            Acum adauga campurile, unul cate unul. In coloana <strong>"Field Name"</strong> scrie numele campului, iar in <strong>"Data Type"</strong> alege tipul. Completeaza asa:
+                        </div>
+</div>
+<!-- Visual: fields to create -->
+<div class="access-step-visual">
+<div class="step-label">Campurile de adaugat:</div>
+<div class="design-view">
+<div class="design-row header-row">
+<div class="design-cell">Field Name</div>
+<div class="design-cell">Data Type</div>
+<div class="design-cell">Description</div>
+</div>
+<div class="design-row">
+<div class="design-cell pk">🔑 ID</div>
+<div class="design-cell">AutoNumber</div>
+<div class="design-cell">Identificator unic elev</div>
+</div>
+<div class="design-row">
+<div class="design-cell">Nume</div>
+<div class="design-cell">Short Text</div>
+<div class="design-cell">Numele de familie</div>
+</div>
+<div class="design-row">
+<div class="design-cell">Prenume</div>
+<div class="design-cell">Short Text</div>
+<div class="design-cell">Prenumele elevului</div>
+</div>
+<div class="design-row">
+<div class="design-cell">Clasa</div>
+<div class="design-cell">Short Text</div>
+<div class="design-cell">Clasa (ex: 8A, 8B)</div>
+</div>
+<div class="design-row">
+<div class="design-cell">MediaGenerala</div>
+<div class="design-cell">Number</div>
+<div class="design-cell">Media generala (ex: 8.50)</div>
+</div>
+</div>
+</div>
+<div class="challenge-step">
+<span class="challenge-step-num">8</span>
+<div class="challenge-step-text">
+<strong>Seteaza cheia primara:</strong> Click pe randul <strong>"ID"</strong> ca sa-l selectezi. Apoi, in panglica, apasa pe butonul <strong>"Primary Key"</strong> (iconita cu o cheie galbena). Ar trebui sa apara o cheita langa campul ID.
+                        </div>
+</div>
+<div class="challenge-step">
+<span class="challenge-step-num">9</span>
+<div class="challenge-step-text">
+<strong>Salveaza tabelul:</strong> Apasa <span class="key-combo">Ctrl+S</span>. In casuta care apare, scrie <code>Elevi</code> (nu lasa "Table1"!). Apasa <strong>OK</strong>.
+                        </div>
+</div>
+</div>
+<!-- Challenge Box 3: Entering data -->
+<div class="challenge-box">
+<div class="challenge-title">Partea 3: Introdu date in tabel (3 minute)</div>
+<div class="challenge-step">
+<span class="challenge-step-num">10</span>
+<div class="challenge-step-text">
+                            Comuta la <strong>Datasheet View</strong>: in panglica, mergi la tab-ul <strong>"Home"</strong> si apasa pe <strong>"View"</strong> → <strong>"Datasheet View"</strong>. Sau click dreapta pe tab-ul tabelului si alege "Datasheet View".
+                        </div>
+</div>
+<div class="challenge-step">
+<span class="challenge-step-num">11</span>
+<div class="challenge-step-text">
+                            Acum vezi tabelul ca un spreadsheet. Coloana <strong>ID</strong> se completeaza automat (AutoNumber). Click pe coloana <strong>Nume</strong> si scrie datele de mai jos, rand cu rand:
+                        </div>
+</div>
+<!-- Visual: data to enter -->
+<div class="access-step-visual">
+<div class="step-label">Datele de introdus:</div>
+<table class="db-table">
+<tr>
+<th>ID (auto)</th>
+<th>Nume</th>
+<th>Prenume</th>
+<th>Clasa</th>
+<th>MediaGenerala</th>
+</tr>
+<tr>
+<td style="color: var(--text-muted); font-style: italic;">1</td>
+<td>Popescu</td>
+<td>Ion</td>
+<td>8A</td>
+<td>8.50</td>
+</tr>
+<tr>
+<td style="color: var(--text-muted); font-style: italic;">2</td>
+<td>Ionescu</td>
+<td>Maria</td>
+<td>8B</td>
+<td>9.25</td>
+</tr>
+<tr>
+<td style="color: var(--text-muted); font-style: italic;">3</td>
+<td>Georgescu</td>
+<td>Ana</td>
+<td>8A</td>
+<td>7.80</td>
+</tr>
+<tr>
+<td style="color: var(--text-muted); font-style: italic;">4</td>
+<td>Dumitrescu</td>
+<td>Andrei</td>
+<td>8C</td>
+<td>9.75</td>
+</tr>
+</table>
+<p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 0.5rem; font-style: italic;">
+                            Foloseste Tab sau Enter pentru a trece la urmatorul camp. ID-ul se completeaza automat!
+                        </p>
+</div>
+<div class="challenge-step">
+<span class="challenge-step-num">12</span>
+<div class="challenge-step-text">
+                            Dupa ce ai introdus toate cele 4 randuri, salveaza cu <span class="key-combo">Ctrl+S</span>. <strong>Felicitari!</strong> Ai creat prima ta baza de date cu un tabel complet!
+                        </div>
+</div>
+<div class="challenge-bonus">
+                        🌟 BONUS: Intoarce-te la Design View si verifica: apare iconita de cheie langa campul ID? Daca da, cheia primara este setata corect!
+                    </div>
+</div>
+<!-- Hints -->
+<div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">
+<span class="hint-arrow">▶</span> Nu gasesc "Table Design" - unde este?
+                    </div>
+<div class="hint-content">
+<p>Mergi la tab-ul <strong>"Create"</strong> din panglica (ribbon) - este al treilea tab, dupa "File" si "Home".</p>
+<p>In sectiunea "Tables" vei gasi butonul <strong>"Table Design"</strong>. In unele versiuni de Access se numeste "Table" cu o sageata dropdown - apasa pe sageata si alege "Table Design".</p>
+</div>
+</div>
+<div class="hint-box" style="margin-top: 0.5rem;">
+<div class="hint-toggle" onclick="toggleHint(this)">
+<span class="hint-arrow">▶</span> Nu pot scrie in coloana ID - de ce?
+                    </div>
+<div class="hint-content">
+<p>Asta e normal! Campul ID este de tip <strong>AutoNumber</strong>, ceea ce inseamna ca Access il completeaza automat cu numere crescatoare: 1, 2, 3, 4...</p>
+<p>Tu trebuie sa incepi sa scrii de la coloana <strong>Nume</strong>. Click direct pe celula de sub "Nume" si scrie primul nume.</p>
+</div>
+</div>
+<div class="hint-box" style="margin-top: 0.5rem;">
+<div class="hint-toggle" onclick="toggleHint(this)">
+<span class="hint-arrow">▶</span> Cum trec de la Design View la Datasheet View?
+                    </div>
+<div class="hint-content">
+<p>Exista mai multe metode:</p>
+<p><strong>Metoda 1:</strong> In panglica, tab-ul "Home", primul buton din stanga este "View" - apasa pe el.</p>
+<p><strong>Metoda 2:</strong> Click dreapta pe tab-ul tabelului (unde scrie "Elevi") si alege "Datasheet View" sau "Design View".</p>
+<p><strong>Metoda 3:</strong> In coltul din dreapta-jos al ferestrei Access, exista doua iconite mici - una pentru fiecare tip de view.</p>
+</div>
+</div>
+<div class="actions">
+<button class="btn btn-outline" onclick="goToStep('goal')">← Inapoi</button>
+<button class="btn btn-primary" onclick="goToStep('learn')">
+                        Am incercat! Vreau sa inteleg →
+                    </button>
+</div>
+</div>
+        </div>
+    </section>
 
-        // ==========================================
-        // Navigation
-        // ==========================================
-        function goToStep(step) {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            // Show target section
-            const target = document.getElementById(step);
-            if (target) target.classList.add('active');
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
 
-            // Update progress steps
-            const navSteps = ['goal', 'try', 'learn', 'test'];
-            const currentIndex = navSteps.indexOf(step);
+        <div class="atom" id="atom-1" data-quiz='[{"question": "1Ce extensie are fisierul unei baze de date Access?", "options": [".xlsx", ".accdb", ".docx", ".sql"], "correct": "b", "hint": "Corect! Fisierele Access au extensia .accdb (Access Database). Aceasta extensie este folosita din Access 2007. Versiunile mai vechi foloseau .mdb."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Continut</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-name">Interfata Microsoft Access - Anatomie</div>
+<div class="concept-def">
+<p>Microsoft Access este un <strong>Sistem de Gestiune a Bazelor de Date (SGBD)</strong> care face parte din suita Microsoft Office. Cand deschizi Access, intalnesti cateva zone importante pe care trebuie sa le cunosti.</p>
+</div>
+            </div>
+        </div>
 
-            document.querySelectorAll('.step').forEach((s, i) => {
-                s.classList.remove('active', 'completed');
-                if (currentIndex >= 0) {
-                    if (i < currentIndex) s.classList.add('completed');
-                    if (i === currentIndex) s.classList.add('active');
-                }
-                // If on complete page, mark all as completed
-                if (step === 'complete') s.classList.add('completed');
-            });
+        <div class="atom" id="atom-2" data-quiz='[{"question": "2In ce view (mod de vizualizare) definesti structura unui tabel - campuri, tipuri de date si proprietati?", "options": ["Datasheet View", "Design View", "Print Preview", "SQL View"], "correct": "b", "hint": "Corect! Design View este modul in care definesti structura tabelului: adaugi campuri, alegi tipurile de date, setezi proprietati si cheia primara. E ca planul arhitectului inainte de a construi casa."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Continut</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-name">Fisierul .accdb</div>
+<div class="concept-def">
+<p>Cand creezi o baza de date in Access, se genereaza un fisier cu extensia <strong>.accdb</strong> (Access Database). Acest singur fisier contine <strong>totul</strong>: tabelele, datele, interogarile, formularele, rapoartele.</p>
+<p>Spre deosebire de alte programe (Word, Excel), Access <strong>salveaza automat</strong> datele pe masura ce le introduci. Nu trebuie sa apesi Ctrl+S dupa fiecare rand - doar cand creezi sau modifici <strong>structura</strong> (campuri, tabele).</p>
+</div>
+<div class="analogy-box">
+<strong>💼 Analogie: Dulapul de documente</strong>
+<p>Gandeste-te la fisierul .accdb ca la un <strong>dulap de birou</strong>. Dulapul (fisierul .accdb) contine mai multe <strong>sertare</strong> (tabelele). Fiecare sertar are <strong>dosare</strong> (inregistrarile) organizate dupa <strong>etichete</strong> (campurile). Cand pui un dosar in sertar, el ramane acolo - nu trebuie sa "salvezi" sertarul de fiecare data.</p>
+</div>
+            </div>
+        </div>
 
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        <div class="atom" id="atom-3" data-quiz='[{"question": "3Ce tip de date folosim de obicei pentru campulID(cheie primara)?", "options": ["Number (completat manual)", "AutoNumber", "Short Text", "Currency"], "correct": "b", "hint": "Corect! AutoNumber genereaza automat numere unice crescatoare (1, 2, 3...) fara sa trebuiasca sa le introduci manual. Este ideal pentru cheia primara deoarece garanteaza unicitatea."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Continut</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-name">Cele doua moduri de lucru cu un tabel</div>
+<div class="concept-def">
+<p>In Access, un tabel poate fi deschis in doua <strong>moduri diferite</strong> (views). Fiecare mod are un scop specific. Este foarte important sa intelegi diferenta!</p>
+</div>
+            </div>
+        </div>
 
-        // ==========================================
-        // Hint toggle
-        // ==========================================
-        function toggleHint(el) {
-            const content = el.nextElementSibling;
-            const arrow = el.querySelector('.hint-arrow');
-            content.classList.toggle('show');
-            if (arrow) arrow.classList.toggle('open');
-        }
+        <div class="atom" id="atom-4" data-quiz='[{"question": "4Ce tip de date ar trebui sa aiba campulClasacare stocheaza valori precum \"8A\", \"8B\", \"7C\"?", "options": ["Number", "Short Text", "Long Text", "AutoNumber"], "correct": "b", "hint": "Corect! Valorile \"8A\", \"8B\", \"7C\" contin atat cifre cat si litere, deci sunt text. Short Text este alegerea corecta, cu o dimensiune mica (ex: Field Size = 5)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Continut</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-name">Principalele tipuri de date</div>
+<div class="concept-def">
+<p>Fiecare camp trebuie sa aiba un <strong>tip de date</strong> care spune Access-ului ce fel de informatii poate stoca. Alegerea corecta a tipului este foarte importanta!</p>
+</div>
+<table class="trace-table">
+<tr>
+<th style="width: 25%;">Tip de date</th>
+<th style="width: 30%;">Ce stocheaza</th>
+<th style="width: 45%;">Exemplu</th>
+</tr>
+<tr>
+<td style="color: var(--accent-cyan); font-weight: 600;">Short Text</td>
+<td class="trace-comment">Text scurt (max 255 caractere)</td>
+<td class="trace-comment">Nume, Prenume, Clasa, Oras, Email</td>
+</tr>
+<tr>
+<td style="color: var(--accent-cyan); font-weight: 600;">Long Text</td>
+<td class="trace-comment">Text lung (memo, pana la 64.000 car.)</td>
+<td class="trace-comment">Observatii, Descriere, Note elev</td>
+</tr>
+<tr>
+<td style="color: var(--accent-cyan); font-weight: 600;">Number</td>
+<td class="trace-comment">Numere (intregi sau cu zecimale)</td>
+<td class="trace-comment">MediaGenerala, Varsta, NrAbsente</td>
+</tr>
+<tr>
+<td style="color: var(--accent-cyan); font-weight: 600;">AutoNumber</td>
+<td class="trace-comment">Numar generat automat (1, 2, 3...)</td>
+<td class="trace-comment">ID (cheie primara)</td>
+</tr>
+<tr>
+<td style="color: var(--accent-cyan); font-weight: 600;">Date/Time</td>
+<td class="trace-comment">Data si/sau ora</td>
+<td class="trace-comment">DataNasterii, DataInscrierii</td>
+</tr>
+<tr>
+<td style="color: var(--accent-cyan); font-weight: 600;">Yes/No</td>
+<td class="trace-comment">Adevarat sau fals (checkbox)</td>
+<td class="trace-comment">EsteTransferat, AreBursa</td>
+</tr>
+<tr>
+<td style="color: var(--accent-cyan); font-weight: 600;">Currency</td>
+<td class="trace-comment">Valori monetare (cu 4 zecimale)</td>
+<td class="trace-comment">Pret, Salariu, TaxaScolara</td>
+</tr>
+</table>
+            </div>
+        </div>
 
-        // ==========================================
-        // Quiz: Select option
-        // ==========================================
-        function selectOption(el, questionId, isCorrect, explanation) {
-            // Don't allow re-answering
-            if (answers[questionId] !== undefined) return;
+        <div class="atom" id="atom-5" data-quiz='[{"question": "5De ce NU putem folosi campul \"Nume\" ca cheie primara?", "options": ["Campurile de tip Short Text nu pot fi cheie primara", "Doi elevi pot avea acelasi nume, deci valorile nu ar fi unice", "Numele sunt prea lungi pentru o cheie primara", "Access nu permite - seteaza automat cheia primara pe primul camp"], "correct": "b", "hint": "Corect! Cheia primara trebuie sa aiba valori UNICE. Doi elevi pot avea acelasi nume de familie (de ex. doi \"Popescu\" in aceeasi scoala). De aceea folosim un camp ID de tip AutoNumber care garanteaza unicitatea."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Continut</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-name">Panoul de proprietati (Field Properties)</div>
+<div class="concept-def">
+<p>Cand selectezi un camp in Design View, in partea de jos a ferestrei apare <strong>panoul de proprietati</strong>. Aici poti configura detalii suplimentare despre fiecare camp.</p>
+</div>
+            </div>
+        </div>
 
-            // Lock all options in this question
-            const allOptions = el.parentNode.querySelectorAll('.option');
-            allOptions.forEach(o => {
-                o.classList.add('locked');
-                o.style.pointerEvents = 'none';
-                o.style.opacity = '0.6';
-            });
+        <div class="atom" id="atom-6" data-quiz='[{"question": "6Cand se salveaza datele (inregistrarile) in Access?", "options": ["Doar cand apesi Ctrl+S manual", "Cand inchizi programul Access", "Automat, cand treci la un alt rand sau inchizi tabelul", "Dupa fiecare caracter scris"], "correct": "c", "hint": "Corect! In Access, datele se salveaza automat cand treci la un alt rand sau cand inchizi tabelul. Nu trebuie sa apesi Ctrl+S pentru date - doar pentru structura (campuri, proprietati). Aceasta este o diferenta importanta fata de Word sau Excel!"}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Continut</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-name" style="color: var(--accent-orange);">De ce avem nevoie de cheie primara?</div>
+<div class="concept-def">
+<p>Cheia primara este un camp (sau o combinatie de campuri) care <strong>identifica unic</strong> fiecare inregistrare din tabel. Fiecare valoare din acest camp trebuie sa fie <strong>unica</strong> - nu pot exista doua randuri cu aceeasi valoare.</p>
+<p>In tabelul nostru "Elevi", cheia primara este <strong>ID</strong> (AutoNumber). De ce nu putem folosi "Nume" ca cheie primara? Pentru ca doi elevi pot avea acelasi nume (ex: doi "Popescu Ion" in scoala).</p>
+</div>
+            </div>
+        </div>
 
-            // Highlight selected
-            el.style.opacity = '1';
-            answers[questionId] = isCorrect;
+        <div class="atom" id="atom-7">
+            <div class="atom-header">
+                <div class="atom-number">7</div>
+                <h3 class="atom-title">7. Continut</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-name" style="color: var(--accent-green);">Cum adaugi inregistrari in tabel</div>
+<div class="concept-def">
+<p>Dupa ce ai creat structura tabelului in Design View, comuti la <strong>Datasheet View</strong> pentru a introduce date. Fiecare rand pe care il completezi devine o <strong>inregistrare</strong> (record).</p>
+</div>
+            </div>
+        </div>
 
-            const feedback = document.getElementById(questionId + '-feedback');
+        <div class="atom" id="atom-8">
+            <div class="atom-header">
+                <div class="atom-number">8</div>
+                <h3 class="atom-title">8. Continut</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-name">Ctrl+S = Salvezi structura, nu datele</div>
+<div class="concept-def">
+<p>O particularitate importanta a Access: cand apesi <span class="key-combo">Ctrl+S</span>, salvezi <strong>structura</strong> tabelului (campuri, proprietati). <strong>Datele</strong> se salveaza automat cand treci la alt rand sau inchizi tabelul.</p>
+<p>Prima data cand salvezi un tabel nou, Access te intreaba sa-i dai un <strong>nume</strong>. Alege un nume descriptiv la plural (ex: "Elevi", nu "Table1")!</p>
+</div>
+            </div>
+        </div>
 
-            if (isCorrect) {
-                el.classList.add('correct');
-                feedback.className = 'feedback success';
-                feedback.innerHTML = '<strong>\u2713 Corect!</strong> ' + explanation;
-            } else {
-                el.classList.add('wrong');
-                feedback.className = 'feedback error';
-                feedback.innerHTML = '<strong>\u2717 Gresit.</strong> ' + explanation;
+    </main>
 
-                // Highlight the correct answer
-                allOptions.forEach(o => {
-                    const onclickStr = o.getAttribute('onclick') || '';
-                    if (onclickStr.includes(', true,')) {
-                        o.classList.add('correct');
-                        o.style.opacity = '1';
-                    }
-                });
-            }
-        }
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) - Baza de date "Biblioteca"</h3>
+            <p><strong>Cerinta:</strong> Creeaza o baza de date noua numita <code>Biblioteca.accdb</code> cu un tabel <code>Carti</code> care sa contina urmatoarele campuri:</p>
+<ol class="practice-questions">
+<li><strong>ID</strong> - AutoNumber, cheie primara</li>
+<li><strong>Titlu</strong> - Short Text (dimensiune 100)</li>
+<li><strong>Autor</strong> - Short Text (dimensiune 50)</li>
+<li><strong>AnPublicare</strong> - Number (intreg)</li>
+<li><strong>NrPagini</strong> - Number (intreg)</li>
+<li><strong>Disponibila</strong> - Yes/No (default: Yes)</li>
+</ol>
+<p>Introdu cel putin <strong>5 carti</strong> in tabel (alege carti din programa scolara sau carti preferate).</p>
+<div class="hints">
+<p><strong>Indicii:</strong></p>
+<ul>
+<li>Foloseste <code>Create</code> → <code>Table Design</code> pentru a crea tabelul</li>
+<li>Pentru AnPublicare, alege tipul Number si seteaza Field Size la "Long Integer"</li>
+<li>Pentru Disponibila, tipul Yes/No va aparea ca un checkbox in Datasheet View</li>
+<li>Nu uita sa setezi cheia primara pe campul ID!</li>
+</ul>
+</div>
+<p class="answer-instruction"><strong>Raspunde cu:</strong> Un screenshot din Datasheet View cu cele 5 carti introduse.</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) - Baza de date "Club Sportiv"</h3>
+            <p><strong>Cerinta:</strong> Creeaza baza de date <code>ClubSportiv.accdb</code> cu un tabel <code>Membri</code>. Gandeste-te singur la ce campuri are nevoie un club sportiv pentru a-si gestiona membrii.</p>
+<p>Tabelul trebuie sa contina <strong>minimum 6 campuri</strong> (inclusiv ID) si sa foloseasca cel putin <strong>3 tipuri de date diferite</strong>.</p>
+<ol class="practice-questions">
+<li>Ce campuri ai ales si de ce? Justifica fiecare alegere.</li>
+<li>Ce tip de date ai ales pentru fiecare camp? Explica de ce.</li>
+<li>Care camp este cheia primara si de ce?</li>
+<li>Ce proprietati ai setat pentru campuri? (Field Size, Required, Default Value)</li>
+</ol>
+<div class="hints">
+<p><strong>Indicii:</strong></p>
+<ul>
+<li>Gandeste-te ce informatii ar avea nevoie un antrenor: nume, sport, varsta, data inscrierii...</li>
+<li>Foloseste Date/Time pentru date calendaristice</li>
+<li>Un camp Yes/No ar putea indica daca cotizatia e platita</li>
+</ul>
+</div>
+<p class="answer-instruction"><strong>Raspunde cu:</strong> 1. Lista campurilor cu justificari. 2. Screenshot-uri din Design View si Datasheet View.</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) - Comparatie si analiza</h3>
+            <p><strong>Cerinta:</strong> Raspunde la urmatoarele intrebari in scris:</p>
+<ol class="practice-questions">
+<li>Explica in cuvintele tale diferenta dintre <strong>Design View</strong> si <strong>Datasheet View</strong>. Cand folosesti fiecare?</li>
+<li>Un coleg a creat un tabel cu urmatoarele campuri. Identifica <strong>3 greseli</strong> si explica cum le-ai corecta:<br/>
+<code>Table1: Nume elev (Short Text), nota (Short Text), Telefon (Number), clasa (Number)</code></li>
+<li>De ce este important sa setezi cheia primara? Ce s-ar intampla daca un tabel nu ar avea cheie primara?</li>
+</ol>
+<div class="hints">
+<p><strong>Indicii:</strong></p>
+<ul>
+<li>La intrebarea 2: gandeste-te la spatiile din nume, tipul de date al notei, ce se intampla cu zero-ul de la telefon, si tipul "clasa"</li>
+<li>La intrebarea 3: gandeste-te ce s-ar intampla daca doi elevi ar avea exact acelasi nume - cum i-ai diferentia?</li>
+</ul>
+</div>
+<p class="keywords"><strong>Cuvinte cheie de folosit:</strong> Design View, Datasheet View, cheie primara, AutoNumber, tip de date, camp, inregistrare, structura, proprietati</p>
+        </div>
+    </section>
 
-        // ==========================================
-        // Quiz: Check all answers
-        // ==========================================
-        function checkAllAnswers() {
-            const questionIds = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6'];
-            const answeredCount = Object.keys(answers).length;
-            const resultDiv = document.getElementById('test-result');
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Continut</li>
+                <li>Continut</li>
+                <li>Continut</li>
+                <li>Continut</li>
+                <li>Continut</li>
+                <li>Continut</li>
+                <li>Continut</li>
+                <li>Continut</li>
+            </ul>
+        </div>
 
-            if (answeredCount < TOTAL_QUESTIONS) {
-                const remaining = TOTAL_QUESTIONS - answeredCount;
-                resultDiv.innerHTML = '<div style="text-align: center; padding: 1.25rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; margin-top: 1rem;">' +
-                    '<h3 style="color: var(--accent-orange); margin-bottom: 0.5rem;">Mai ai ' + remaining + ' intrebare' + (remaining > 1 ? 'i' : '') + ' fara raspuns!</h3>' +
-                    '<p style="color: var(--text-secondary); font-size: 0.9rem;">Raspunde la toate intrebarile inainte de a verifica.</p></div>';
-                resultDiv.style.display = 'block';
-                return;
-            }
+        <div id="lesson-summary" style="display: none;"></div>
 
-            // Count correct answers
-            correctCount = 0;
-            questionIds.forEach(qId => {
-                if (answers[qId] === true) correctCount++;
-            });
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu lectia urmatoare pentru a aprofunda cunostintele.</p>
+            <a href="lectia4-interogari-simple.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
 
-            if (correctCount >= PASS_THRESHOLD) {
-                resultDiv.innerHTML = '<div style="text-align: center; padding: 2rem; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; margin-top: 1rem;">' +
-                    '<div style="font-size: 3rem; margin-bottom: 0.5rem;">&#11088;</div>' +
-                    '<h3 style="color: var(--accent-green);">Excelent! ' + correctCount + '/' + TOTAL_QUESTIONS + ' corecte!</h3>' +
-                    '<p style="color: var(--text-secondary); margin-top: 0.5rem;">Ai demonstrat ca stii sa creezi o baza de date in Access! Mergi mai departe.</p></div>';
-                resultDiv.style.display = 'block';
+</div>
 
-                // Save quiz result
-                try {
-                    localStorage.setItem('quiz-result-cls8-extra-databases-lectia3-creare-bd-access', JSON.stringify({
-                        correct: correctCount,
-                        total: TOTAL_QUESTIONS,
-                        percentage: Math.round((correctCount / TOTAL_QUESTIONS) * 100),
-                        timestamp: Date.now()
-                    }));
-                } catch(e) {}
-
-                // Navigate to completion after delay
-                setTimeout(() => {
-                    document.getElementById('score-display').textContent =
-                        'Scor: ' + correctCount + '/' + TOTAL_QUESTIONS + ' (' + Math.round((correctCount / TOTAL_QUESTIONS) * 100) + '%)';
-                    goToStep('complete');
-                }, 2500);
-            } else {
-                resultDiv.innerHTML = '<div style="text-align: center; padding: 1.25rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; margin-top: 1rem;">' +
-                    '<h3 style="color: var(--accent-orange);">' + correctCount + '/' + TOTAL_QUESTIONS + ' corecte. Ai nevoie de minim ' + PASS_THRESHOLD + '.</h3>' +
-                    '<p style="color: var(--text-secondary); margin-top: 0.5rem;">Reciteste sectiunea INVATA si incearca din nou! Concentreaza-te pe conceptele din intrebarile gresite.</p></div>';
-                resultDiv.style.display = 'block';
-            }
-        }
-    </script>
-
-    <!-- Integration Scripts -->
-
-    <script src="../../../../assets/js/quiz-bridge.js"></script>
-
-    <script src="../../../../assets/js/practice-simple.js"></script>
-
-    <script src="../../../../assets/js/lesson-summary.js"></script>
-
-    <script src="../../../../assets/js/breadcrumb.js"></script>
-
-    <script src="../../../../assets/js/progress.js"></script>
-
-    <script src="../../../../assets/js/user-system.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize QuizBridge
-            if (typeof QuizBridge !== 'undefined') {
-                QuizBridge.init('cls8-extra-databases-lectia3-creare-bd-access', { totalQuestions: 6 });
-            }
-            // Initialize Practice
-            if (typeof PracticeSimple !== 'undefined') {
-                PracticeSimple.init('cls8-extra-databases-lectia3-creare-bd-access');
-            }
-            // Initialize Lesson Summary
-            if (typeof LessonSummary !== 'undefined') {
-                LessonSummary.init('cls8-extra-databases-lectia3-creare-bd-access');
-            }
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../assets/js/progress.js"></script>
+<script src="../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls8-extra-databases-lectia3-creare-bd-access');
+        PracticeSimple.init('cls8-extra-databases-lectia3-creare-bd-access');
+        LessonSummary.init('cls8-extra-databases-lectia3-creare-bd-access');
+        Breadcrumb.init({
+            grade: 'cls8',
+            gradeName: 'Clasa a VIII-a',
+            module: 'extra-databases',
+            moduleName: 'Extra Databases',
+            lesson: 'Vreau sa creez prima mea baza de date!'
         });
-    </script>
-    <!-- Breadcrumb Navigation -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof Breadcrumb !== 'undefined') {
-                Breadcrumb.init({
-                    grade: 'cls8',
-                    gradeName: 'Clasa a VIII-a',
-                    module: 'extra-databases',
-                    moduleName: 'Baze de Date',
-                    lesson: 'Lectia 3'
-                });
-            }
-        });
-    </script>
-    <!-- Progress Tracking -->
-    <script>
-        if (typeof LearningProgress !== 'undefined') {
-            LearningProgress.init('cls8', 'extra-databases', 'lectia3');
-        }
-    </script>
+        LearningProgress.init('cls8', 'extra-databases', 'lectia3-creare-bd-access.html');
+    });
+</script>
 </body>
 </html>
