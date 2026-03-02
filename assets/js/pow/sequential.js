@@ -6,8 +6,9 @@
  *
  * Used on module index pages.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @depends storage.js
+ * @optional progress.js (LearningProgress fallback)
  */
 
 const SequentialLocking = {
@@ -106,6 +107,28 @@ const SequentialLocking = {
     },
 
     /**
+     * Check if lesson is complete in ANY progress system.
+     * Checks PowStorage (new) then falls back to LearningProgress (legacy).
+     */
+    isLessonCompleteAny(lesson) {
+        // Check PowStorage first (PoW checkpoint system)
+        if (PowStorage.isLessonComplete(lesson.lessonId)) {
+            return true;
+        }
+
+        // Fallback: check LearningProgress (legacy completion button system)
+        if (typeof LearningProgress !== 'undefined') {
+            const href = lesson.href || lesson.element?.getAttribute('href');
+            if (href && this.gradeId && this.moduleId) {
+                const filename = href.split('/').pop();
+                return LearningProgress.isLessonComplete(this.gradeId, this.moduleId, filename);
+            }
+        }
+
+        return false;
+    },
+
+    /**
      * Apply sequential locking to lesson cards
      */
     applyLocking() {
@@ -113,7 +136,7 @@ const SequentialLocking = {
 
         // Find the last completed lesson
         this.lessons.forEach((lesson, idx) => {
-            if (PowStorage.isLessonComplete(lesson.lessonId)) {
+            if (this.isLessonCompleteAny(lesson)) {
                 lastUnlockedIndex = idx;
             }
         });
@@ -123,7 +146,7 @@ const SequentialLocking = {
         const nextUnlockedIndex = lastUnlockedIndex + 1;
 
         this.lessons.forEach((lesson, idx) => {
-            const isCompleted = PowStorage.isLessonComplete(lesson.lessonId);
+            const isCompleted = this.isLessonCompleteAny(lesson);
             const isAccessible = !this.sequential || idx <= nextUnlockedIndex;
 
             this.updateLessonCard(lesson, {
@@ -207,7 +230,7 @@ const SequentialLocking = {
      */
     updateProgressDisplay() {
         const completedCount = this.lessons.filter(l =>
-            PowStorage.isLessonComplete(l.lessonId)
+            this.isLessonCompleteAny(l)
         ).length;
         const totalCount = this.lessons.length;
 
@@ -266,7 +289,7 @@ const SequentialLocking = {
      */
     getNextLesson() {
         for (const lesson of this.lessons) {
-            if (!PowStorage.isLessonComplete(lesson.lessonId)) {
+            if (!this.isLessonCompleteAny(lesson)) {
                 return lesson;
             }
         }
@@ -287,7 +310,7 @@ const SequentialLocking = {
 
         // Check if previous lesson is completed
         const prevLesson = this.lessons[idx - 1];
-        if (!PowStorage.isLessonComplete(prevLesson.lessonId)) {
+        if (!this.isLessonCompleteAny(prevLesson)) {
             // Redirect to previous lesson
             if (prevLesson.href) {
                 this.showToast('Completeaza lectia anterioara inainte!', 'error');
