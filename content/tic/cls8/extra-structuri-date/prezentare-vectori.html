@@ -15,8 +15,8 @@
 }
 html,body{height:100vh;overflow:hidden;margin:0;padding:0}
 body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#111}
-.slide{display:none;width:100vw;height:100vh;position:fixed;top:0;left:0;background:#fff;overflow:hidden;z-index:1}
-.slide.active{display:flex;flex-direction:column;z-index:2}
+.slide{display:flex;flex-direction:column;width:100vw;height:100vh;position:fixed;top:0;left:0;background:#fff;overflow:hidden;z-index:1;pointer-events:none}
+.slide.active{z-index:2;pointer-events:auto}
 .accent-bar{height:5px;background:linear-gradient(90deg,var(--dark),var(--accent));width:100%;flex-shrink:0}
 .footer{position:absolute;bottom:0;left:0;right:0;height:36px;background:var(--dark);display:flex;align-items:center;justify-content:space-between;padding:0 30px;color:rgba(255,255,255,0.7);font-size:11px;letter-spacing:0.5px}
 .footer .section-tag{background:var(--accent);color:#fff;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:600}
@@ -110,6 +110,15 @@ pre.code-box .fn{color:#61AFEF}
 .tip-box.warning::before{content:"\26A0\FE0F "}
 .tip-box.danger{background:var(--lightred);border-left-color:var(--red)}
 .tip-box.danger::before{content:"\274C "}
+/* Slide transitions */
+.slide{opacity:0;transform:translateX(30px);transition:opacity .35s ease,transform .35s ease}
+.slide.active{opacity:1;transform:translateX(0)}
+/* Copy button on code blocks */
+.code-wrapper{position:relative}
+.copy-btn{position:absolute;top:6px;right:6px;background:rgba(255,255,255,0.12);color:#aaa;border:none;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;opacity:0;transition:opacity .2s;font-family:inherit;z-index:5}
+.code-wrapper:hover .copy-btn{opacity:1}
+.copy-btn:hover{background:rgba(255,255,255,0.22);color:#fff}
+.copy-btn.copied{color:var(--green);background:rgba(45,139,78,0.25)}
 @media(max-width:900px){
 .slide-content{padding:16px 24px 44px}
 h1.slide-title{font-size:22px}
@@ -117,6 +126,32 @@ h1.slide-title{font-size:22px}
 pre.code-box{font-size:11px;padding:10px 12px}
 ul.content li{font-size:14px}
 .nav{bottom:40px;right:10px}
+.copy-btn{opacity:0.7}
+}
+@media(max-width:600px){
+.slide-content{padding:12px 14px 44px}
+h1.slide-title{font-size:18px}
+.slide-subtitle{font-size:12px}
+pre.code-box{font-size:10px;padding:8px 10px;border-radius:6px}
+ul.content li{font-size:13px}
+ul.content li code{font-size:12px}
+.highlight-box{font-size:13px;padding:10px 14px}
+.title-slide h1{font-size:30px}
+.title-slide h2{font-size:22px}
+.title-slide .info{font-size:14px}
+.section-slide .section-num{font-size:48px}
+.section-slide h1{font-size:28px}
+.nav button{width:38px;height:38px;font-size:16px}
+.footer{font-size:9px;padding:0 12px;height:30px}
+.trace-box{font-size:11px;padding:10px 12px}
+.cmp-table{font-size:12px}
+.cmp-table th,.cmp-table td{padding:5px 8px}
+.memo-grid{gap:2px}
+.memo-cell .val{font-size:16px}
+.memo-cell .idx{font-size:9px}
+.tip-box{font-size:12px;padding:8px 12px}
+.output-box{font-size:11px;padding:8px 12px}
+.copy-btn{opacity:0.7;font-size:10px}
 }
 </style>
 
@@ -1631,22 +1666,28 @@ const counter=document.getElementById('counter');
 const progress=document.getElementById('progress');
 
 function show(n){
+  if(n===current)return;
+  const dir=n>current?1:-1;
   slides[current].classList.remove('active');
+  slides[current].style.transform='translateX('+(dir*-60)+'px)';
   current=Math.max(0,Math.min(n,total-1));
+  slides[current].style.transform='translateX('+(dir*30)+'px)';
+  void slides[current].offsetHeight;
   slides[current].classList.add('active');
+  slides[current].style.transform='';
   counter.textContent=(current+1)+' / '+total;
   progress.style.width=((current+1)/total*100)+'%';
 }
 function next(){show(current+1)}
 function prev(){show(current-1)}
 
-// Navigation ONLY via buttons
+// Button navigation
 document.getElementById('btnPrev').addEventListener('click',function(e){e.stopPropagation();prev();});
 document.getElementById('btnNext').addEventListener('click',function(e){e.stopPropagation();next();});
 
-// Keyboard: only Left/Right arrows, Home/End, F for fullscreen
+// Keyboard: arrows, Space, Home/End, F for fullscreen
 document.addEventListener('keydown',function(e){
-  if(e.key==='ArrowRight'){next();}
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();next();}
   else if(e.key==='ArrowLeft'){prev();}
   else if(e.key==='Home'){e.preventDefault();show(0);}
   else if(e.key==='End'){e.preventDefault();show(total-1);}
@@ -1655,6 +1696,61 @@ document.addEventListener('keydown',function(e){
     else document.exitFullscreen();
   }
 });
+
+// Touch swipe navigation
+let touchStartX=0,touchStartY=0;
+document.addEventListener('touchstart',function(e){
+  touchStartX=e.changedTouches[0].screenX;
+  touchStartY=e.changedTouches[0].screenY;
+},{passive:true});
+document.addEventListener('touchend',function(e){
+  const dx=e.changedTouches[0].screenX-touchStartX;
+  const dy=e.changedTouches[0].screenY-touchStartY;
+  if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>50){
+    if(dx<0)next();else prev();
+  }
+},{passive:true});
+
+// Copy-to-clipboard on code blocks
+document.querySelectorAll('pre.code-box').forEach(function(pre){
+  var wrapper=document.createElement('div');
+  wrapper.className='code-wrapper';
+  pre.parentNode.insertBefore(wrapper,pre);
+  wrapper.appendChild(pre);
+  var btn=document.createElement('button');
+  btn.className='copy-btn';
+  btn.textContent='Copiaza';
+  btn.addEventListener('click',function(e){
+    e.stopPropagation();
+    var text=pre.innerText.replace(/^(Output:)\n/,'');
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent='Copiat!';
+      btn.classList.add('copied');
+      setTimeout(function(){btn.textContent='Copiaza';btn.classList.remove('copied');},1500);
+    });
+  });
+  wrapper.appendChild(btn);
+});
+
+// TOC navigation: make lesson headings on slide 2 clickable
+(function(){
+  var tocSlide=slides[1];
+  if(!tocSlide)return;
+  var sectionSlides=[];
+  slides.forEach(function(s,i){if(s.classList.contains('section-slide'))sectionSlides.push(i);});
+  var headings=tocSlide.querySelectorAll('li.heading');
+  var secIdx=0;
+  headings.forEach(function(h){
+    if(secIdx<sectionSlides.length){
+      var target=sectionSlides[secIdx];
+      h.style.cursor='pointer';
+      h.style.textDecoration='underline';
+      h.style.textDecorationColor='rgba(46,134,171,0.4)';
+      h.addEventListener('click',function(){show(target);});
+      secIdx++;
+    }
+  });
+})();
 
 show(0);
 </script>
