@@ -1155,3 +1155,123 @@ const AtomicLearning = {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = AtomicLearning;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Generic Interactive Handlers (auto-attached for all lessons)
+// Handles: hint toggles, hint boxes, copy buttons, drag-reorder, "Am incercat"
+// ─────────────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ── .hint-toggle / .hint-content pairs ───────────────────────────
+    document.querySelectorAll('.hint-toggle').forEach(function(toggle) {
+        toggle.addEventListener('click', function() {
+            this.classList.toggle('open');
+            var content = this.nextElementSibling;
+            if (content && content.classList.contains('hint-content')) {
+                content.classList.toggle('open');
+            }
+        });
+    });
+
+    // ── .hint-box with .hint-header (div-based collapsible) ──────────
+    document.querySelectorAll('.hint-box .hint-header').forEach(function(header) {
+        header.addEventListener('click', function() {
+            this.closest('.hint-box').classList.toggle('open');
+        });
+    });
+
+    // ── .copy-btn ────────────────────────────────────────────────────
+    document.querySelectorAll('.copy-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var block = this.closest('.code-block');
+            var content = block ? block.querySelector('.code-content') : null;
+            if (content && navigator.clipboard) {
+                var self = this;
+                navigator.clipboard.writeText(content.textContent.trim()).then(function() {
+                    self.textContent = 'Copiat!';
+                    setTimeout(function() { self.textContent = 'Copiaza'; }, 2000);
+                });
+            }
+        });
+    });
+
+    // ── "Am incercat! Vreau sa inteleg" → scroll to atoms ────────────
+    document.querySelectorAll('.btn-center .btn').forEach(function(btn) {
+        if (!btn.getAttribute('onclick') && !btn.getAttribute('href')) {
+            btn.addEventListener('click', function() {
+                var target = document.getElementById('atomic-content');
+                if (target) target.scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+    });
+
+    // ── Drag-and-Drop Reorder (.shuffled-steps) ───────────────────────
+    var reorderContainer = document.getElementById('shuffled-steps');
+    if (reorderContainer) {
+        var dragSrc = null;
+        reorderContainer.addEventListener('dragstart', function(e) {
+            dragSrc = e.target.closest('.step-card');
+            if (dragSrc) {
+                dragSrc.style.opacity = '0.45';
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        });
+        reorderContainer.addEventListener('dragend', function() {
+            if (dragSrc) dragSrc.style.opacity = '';
+            reorderContainer.querySelectorAll('.step-card').forEach(function(c) {
+                c.classList.remove('drag-over');
+            });
+        });
+        reorderContainer.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            var target = e.target.closest('.step-card');
+            if (target && target !== dragSrc) {
+                reorderContainer.querySelectorAll('.step-card').forEach(function(c) {
+                    c.classList.remove('drag-over');
+                });
+                target.classList.add('drag-over');
+            }
+        });
+        reorderContainer.addEventListener('dragleave', function(e) {
+            var target = e.target.closest('.step-card');
+            if (target) target.classList.remove('drag-over');
+        });
+        reorderContainer.addEventListener('drop', function(e) {
+            e.preventDefault();
+            var target = e.target.closest('.step-card');
+            if (target && target !== dragSrc) {
+                target.classList.remove('drag-over');
+                var cards = Array.from(reorderContainer.children);
+                if (cards.indexOf(dragSrc) < cards.indexOf(target)) {
+                    reorderContainer.insertBefore(dragSrc, target.nextSibling);
+                } else {
+                    reorderContainer.insertBefore(dragSrc, target);
+                }
+            }
+        });
+    }
+
+    // ── checkStepOrder (global, used by onclick in HTML) ─────────────
+    window.checkStepOrder = window.checkStepOrder || function() {
+        var cards = document.querySelectorAll('#shuffled-steps .step-card');
+        var feedback = document.getElementById('order-feedback');
+        if (!feedback) return;
+        var allCorrect = true;
+        cards.forEach(function(card, idx) {
+            var correct = parseInt(card.getAttribute('data-correct-order'));
+            if (correct === idx + 1) {
+                card.classList.add('correct-pos');
+                card.classList.remove('wrong-pos');
+            } else {
+                card.classList.add('wrong-pos');
+                card.classList.remove('correct-pos');
+                allCorrect = false;
+            }
+        });
+        feedback.className = 'order-feedback show ' + (allCorrect ? 'correct' : 'wrong');
+        feedback.textContent = allCorrect
+            ? '✓ Felicitari! Ai ordonat corect toti pasii! Continua sa inveti teoria.'
+            : '✗ Nu e chiar asa. Pasii marcati cu rosu sunt pe pozitii gresite. Mai incearca!';
+        if (allCorrect) feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+});
