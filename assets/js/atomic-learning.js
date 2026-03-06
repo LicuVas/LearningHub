@@ -1181,13 +1181,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ── .copy-btn ────────────────────────────────────────────────────
+    // Two HTML patterns exist:
+    //   New (cls7/8): .copyable-code > .copy-btn + .code-block  (text directly in .code-block)
+    //   Old (cls5/6): .code-block > .code-block-header > .copy-btn  (text in sibling .code-content)
     document.querySelectorAll('.copy-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            var block = this.closest('.code-block');
-            var content = block ? block.querySelector('.code-content') : null;
-            if (content && navigator.clipboard) {
+            var wrapper = this.closest('.copyable-code');
+            var block = wrapper
+                ? wrapper.querySelector('.code-block')       // new pattern
+                : this.closest('.code-block');                // old pattern
+            var text = '';
+            if (block) {
+                var inner = block.querySelector('.code-content');
+                text = (inner || block).textContent.trim();
+            }
+            if (text && navigator.clipboard) {
                 var self = this;
-                navigator.clipboard.writeText(content.textContent.trim()).then(function() {
+                navigator.clipboard.writeText(text).then(function() {
                     self.textContent = 'Copiat!';
                     setTimeout(function() { self.textContent = 'Copiaza'; }, 2000);
                 });
