@@ -1188,18 +1188,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ── .copy-btn ────────────────────────────────────────────────────
-    // Two HTML patterns exist:
-    //   New (cls7/8): .copyable-code > .copy-btn + .code-block  (text directly in .code-block)
-    //   Old (cls5/6): .code-block > .code-block-header > .copy-btn  (text in sibling .code-content)
+    // Three HTML patterns exist:
+    //   A) .copyable-code > .copy-btn + .code-block  (text directly in .code-block)
+    //   B) .code-block > .code-block-header > .copy-btn  (text in sibling .code-content)
+    //   C) .code-block > .copy-btn + <pre>  (text in <pre>, button is sibling)
     document.querySelectorAll('.copy-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var wrapper = this.closest('.copyable-code');
             var block = wrapper
-                ? wrapper.querySelector('.code-block')       // new pattern
-                : this.closest('.code-block');                // old pattern
+                ? wrapper.querySelector('.code-block')       // pattern A
+                : this.closest('.code-block');                // patterns B & C
             var text = '';
             if (block) {
-                var inner = block.querySelector('.code-content');
+                // Find the most specific text container to avoid copying button text
+                var inner = block.querySelector('.code-content') || block.querySelector('pre');
                 text = (inner || block).textContent.trim();
             }
             if (text && navigator.clipboard) {
