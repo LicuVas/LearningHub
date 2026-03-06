@@ -1163,12 +1163,19 @@ if (typeof module !== 'undefined' && module.exports) {
 document.addEventListener('DOMContentLoaded', function() {
 
     // ── .hint-toggle / .hint-content pairs ───────────────────────────
+    // When inside .hint-box, toggle .open on the box (CSS: .hint-box.open .hint-content)
+    // When standalone, toggle .open on both toggle and content directly
     document.querySelectorAll('.hint-toggle').forEach(function(toggle) {
         toggle.addEventListener('click', function() {
-            this.classList.toggle('open');
-            var content = this.nextElementSibling;
-            if (content && content.classList.contains('hint-content')) {
-                content.classList.toggle('open');
+            var box = this.closest('.hint-box');
+            if (box) {
+                box.classList.toggle('open');
+            } else {
+                this.classList.toggle('open');
+                var content = this.nextElementSibling;
+                if (content && content.classList.contains('hint-content')) {
+                    content.classList.toggle('open');
+                }
             }
         });
     });
@@ -1206,13 +1213,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ── "Am incercat! Vreau sa inteleg" → scroll to atoms ────────────
-    document.querySelectorAll('.btn-center .btn').forEach(function(btn) {
-        if (!btn.getAttribute('onclick') && !btn.getAttribute('href')) {
-            btn.addEventListener('click', function() {
+    // Two wrapper patterns: .btn-center (cls5/6) and .actions (cls7/8)
+    document.querySelectorAll('.btn-center .btn, .actions .btn').forEach(function(btn) {
+        if (btn.getAttribute('onclick') || btn.getAttribute('href')) return;
+        btn.addEventListener('click', function() {
+            if (this.classList.contains('btn-outline')) {
+                // "← Inapoi" → scroll to top of page
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                // "Am incercat!" → scroll to atoms
                 var target = document.getElementById('atomic-content');
                 if (target) target.scrollIntoView({ behavior: 'smooth' });
-            });
-        }
+            }
+        });
     });
 
     // ── Drag-and-Drop Reorder (.shuffled-steps) ───────────────────────
