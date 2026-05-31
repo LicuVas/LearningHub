@@ -37,6 +37,17 @@ git add -A
 Write-Host "💾 Committing: $msg" -ForegroundColor Cyan
 git commit -m "$msg"
 
+# Abort if the commit itself failed (e.g. missing git identity, empty commit).
+# Without this check the script would falsely report success on the push step below.
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ""
+    Write-Host "❌ Commit failed - nothing was deployed." -ForegroundColor Red
+    Write-Host "   Likely cause: git identity not set in this repo. Fix with:" -ForegroundColor Yellow
+    Write-Host "   git config user.email `"grlnvasile@gmail.com`"" -ForegroundColor Yellow
+    Write-Host "   git config user.name `"Prof. Gurlan Vasile`"" -ForegroundColor Yellow
+    exit 1
+}
+
 Write-Host "🚀 Pushing to remote..." -ForegroundColor Cyan
 git push
 
