@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Imagini in HTML | Clasa a VII-a</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../../../../assets/css/quiz-gamified.css">
+
+    <style>
+        /* Lesson-specific styles */
+:root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #3d3d5c;
+        }
+
+.quiz-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+.xp-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+.level-node.active {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+.level-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-green);
+        }
+
+.level-intro .xp-reward {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+.progress-dot.current {
+            background: var(--accent-green);
+        }
+
+.code-display {
+            background: #1e1e3a;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 600px;
+            text-align: left;
+            border: 2px solid var(--border);
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+.option:hover {
+            border-color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+.explanation {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            text-align: left;
+        }
+
+.btn-primary {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+.btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+.btn-outline:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+.xp-earned {
+            font-size: 2rem;
+            color: var(--accent-cyan);
+            margin: 1.5rem 0;
+        }
+
+@keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Sari la continut</a>
+    <div id="main-content" class="container">
+        <a href="../index.html" class="back-link">← Inapoi la Web - HTML/CSS Bazic</a>
+
+        <div class="quiz-header">
+            <div class="quiz-title">Quiz 4: Imagini in HTML</div>
+            <div class="xp-display">
+                <span>XP:</span>
+                <span id="totalXP">0</span>
+            </div>
+        </div>
+
+        <!-- Level Map -->
+        <div class="level-map">
+            <div class="level-node active" data-level="1" onclick="selectLevel(1)">1</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="2" onclick="selectLevel(2)">2</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="3" onclick="selectLevel(3)">3</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="4" onclick="selectLevel(4)">4</div>
+            <div class="level-connector"></div>
+            <div class="level-node locked" data-level="5" onclick="selectLevel(5)">5</div>
+        </div>
+
+        <!-- Quiz Area -->
+        <div class="quiz-area" id="quizArea">
+        </div>
+    </div>
+<script>
+        const levels = {
+            1: {
+                title: "Nivel 1: Tag-ul &lt;img&gt;",
+                description: "Descopera cum se adauga imagini intr-o pagina HTML",
+                xpReward: 50,
+                questions: [
+                    {
+                        text: "Care este tag-ul HTML folosit pentru a insera o imagine?",
+                        options: [
+                            "&lt;image&gt;",
+                            "&lt;img&gt;",
+                            "&lt;picture&gt;",
+                            "&lt;photo&gt;"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Tag-ul &lt;img&gt; este folosit pentru a insera imagini in HTML. Este un element 'void' (fara tag de inchidere) - se scrie ca &lt;img src=\"...\" alt=\"...\"&gt; sau &lt;img src=\"...\" alt=\"...\" /&gt;."
+                    },
+                    {
+                        text: "Tag-ul &lt;img&gt; are nevoie de tag de inchidere?",
+                        options: [
+                            "Da, &lt;/img&gt; este obligatoriu",
+                            "Da, dar se poate omite",
+                            "Nu, &lt;img&gt; este un element void (se auto-inchide)",
+                            "Depinde de browser"
+                        ],
+                        correctIndex: 2,
+                        explanation: "Tag-ul &lt;img&gt; este un element 'void' in HTML5 - nu are tag de inchidere &lt;/img&gt;. Corect: &lt;img src=\"foto.jpg\" alt=\"Descriere\"&gt;. In XHTML se scria &lt;img ... /&gt;, dar in HTML5 slash-ul este optional."
+                    },
+                    {
+                        text: "Care este atributul obligatoriu care specifica sursa imaginii?",
+                        hasCode: true,
+                        code: "&lt;img ??? =\"poza.jpg\" alt=\"Peisaj\"&gt;",
+                        options: [
+                            "href",
+                            "url",
+                            "src",
+                            "link"
+                        ],
+                        correctIndex: 2,
+                        explanation: "Atributul 'src' (source = sursa) specifica calea sau URL-ul imaginii. Poate fi o cale relativa (imagini/poza.jpg), o cale absoluta (/imagini/poza.jpg) sau un URL complet (https://site.ro/poza.jpg)."
+                    }
+                ]
+            },
+            2: {
+                title: "Nivel 2: Atributul alt",
+                description: "Invata de ce textul alternativ este esential",
+                xpReward: 75,
+                questions: [
+                    {
+                        text: "La ce foloseste atributul 'alt' al tag-ului &lt;img&gt;?",
+                        options: [
+                            "Seteaza culoarea imaginii",
+                            "Ofera text alternativ afisat cand imaginea nu se incarca si pentru accesibilitate",
+                            "Seteaza dimensiunea imaginii",
+                            "Adauga un cadru in jurul imaginii"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Atributul 'alt' ofera un text alternativ care: (1) apare daca imaginea nu se poate incarca, (2) este citit de screen readere pentru utilizatorii cu deficiente de vedere, (3) ajuta motoarele de cautare sa inteleaga imaginea. Exemplu: alt=\"Apus de soare peste mare\"."
+                    },
+                    {
+                        text: "Cand putem lasa atributul alt cu valoare vida (alt=\"\")?",
+                        options: [
+                            "Niciodata - alt trebuie sa aiba mereu text",
+                            "Cand imaginea este pur decorativa si nu adauga informatie",
+                            "Cand imaginea este foarte mica",
+                            "Cand imaginea are deja un titlu"
+                        ],
+                        correctIndex: 1,
+                        explanation: "alt=\"\" (vid) se foloseste pentru imagini DECORATIVE - care nu adauga informatie (ex: linii decorative, fundal). Screen readerele vor sarita aceste imagini. Daca imaginea are continut informational, alt-ul trebuie sa descrie acea informatie."
+                    },
+                    {
+                        text: "Care varianta este corecta pentru o imagine cu text alternativ bun?",
+                        options: [
+                            "&lt;img src=\"caine.jpg\"&gt;",
+                            "&lt;img src=\"caine.jpg\" alt=\"imagine\"&gt;",
+                            "&lt;img src=\"caine.jpg\" alt=\"Caine labrador galben care alearga pe plaja\"&gt;",
+                            "&lt;img src=\"caine.jpg\" alt=\"caine.jpg\"&gt;"
+                        ],
+                        correctIndex: 2,
+                        explanation: "Un text alt bun descrie CONTINUTUL imaginii: ce se vede, context relevant. 'imagine' sau numele fisierului nu ajuta pe nimeni. 'Caine labrador galben care alearga pe plaja' da informatia corecta utilizatorilor care nu pot vedea imaginea."
+                    }
+                ]
+            },
+            3: {
+                title: "Nivel 3: Dimensiuni imagini",
+                description: "Controleaza marimea imaginilor cu width si height",
+                xpReward: 100,
+                questions: [
+                    {
+                        text: "Cum specificam latimea unei imagini in HTML?",
+                        hasCode: true,
+                        code: "&lt;img src=\"foto.jpg\" alt=\"Foto\" ???=\"300\"&gt;",
+                        options: [
+                            "size",
+                            "width",
+                            "largime",
+                            "dimension"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Atributul 'width' seteaza latimea imaginii in pixeli. Exemplu: width=\"300\" face imaginea lata de 300 pixeli. Similar, 'height' seteaza inaltimea. Daca specifici doar width, inaltimea se calculeaza proportional."
+                    },
+                    {
+                        text: "Ce se intampla daca specificam DOAR width fara height?",
+                        options: [
+                            "Imaginea devine patrata",
+                            "Inaltimea se calculeaza automat proportional cu aspectul original",
+                            "Imaginea se distorsioneaza",
+                            "Se afiseaza o eroare"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Daca specificam doar width (sau doar height), browserul calculeaza automat cealalta dimensiune proportional cu raportul original al imaginii. Aceasta pastreaza aspectul natural. Daca specificam AMBELE, imaginea poate fi distorsionata daca proportiile nu se potrivesc."
+                    },
+                    {
+                        text: "Care este codul corect pentru o imagine cu latime 200 si inaltime 150 pixeli?",
+                        options: [
+                            "&lt;img src=\"img.jpg\" alt=\"Img\" size=\"200x150\"&gt;",
+                            "&lt;img src=\"img.jpg\" alt=\"Img\" width=\"200\" height=\"150\"&gt;",
+                            "&lt;img src=\"img.jpg\" alt=\"Img\" dim=\"200,150\"&gt;",
+                            "&lt;img src=\"img.jpg\" alt=\"Img\"&gt;{width: 200; height: 150}"
+                        ],
+                        correctIndex: 1,
+                        explanation: "In HTML, dimensiunile se specifica cu atributele width si height, cu valori numerice (fara 'px'): width=\"200\" height=\"150\". In CSS se poate folosi style=\"width: 200px; height: 150px;\" - dar atributele HTML sunt preferabile pentru imaginile cu dimensiuni fixe."
+                    }
+                ]
+            },
+            4: {
+                title: "Nivel 4: Cai si formate",
+                description: "Invata tipurile de cai si formatele de imagini",
+                xpReward: 125,
+                questions: [
+                    {
+                        text: "Ce tip de cale foloseste o adresa completa cu http/https?",
+                        hasCode: true,
+                        code: "src=\"https://example.com/imagini/poza.jpg\"",
+                        options: [
+                            "Cale relativa",
+                            "Cale absoluta externa (URL)",
+                            "Cale absoluta locala",
+                            "Cale de retea"
+                        ],
+                        correctIndex: 1,
+                        explanation: "O adresa care incepe cu https:// sau http:// este o cale absoluta externa (URL). Imaginea se incarca de pe alt server. Avantaj: usor de folosit. Dezavantaj: depinzi de disponibilitatea serverului extern."
+                    },
+                    {
+                        text: "Ce format de imagine este recomandat pentru fotografii?",
+                        options: [
+                            "PNG - pastreaza transparenta",
+                            "SVG - format vectorial",
+                            "JPG/JPEG - compresie buna pentru fotografii",
+                            "BMP - calitate maxima"
+                        ],
+                        correctIndex: 2,
+                        explanation: "JPG/JPEG este formatul ideal pentru fotografii - ofera compresie buna cu pierdere minima de calitate vizibila. PNG este mai bun pentru imagini cu text, linii clare sau transparenta. SVG este pentru grafice vectoriale (logo-uri, icoane). BMP este necomprimat si produce fisiere foarte mari."
+                    },
+                    {
+                        text: "Cum scriem o cale RELATIVA catre o imagine din acelasi folder?",
+                        options: [
+                            "src=\"/imagini/poza.jpg\"",
+                            "src=\"https://site.ro/poza.jpg\"",
+                            "src=\"poza.jpg\"",
+                            "src=\"./folder/../poza.jpg\""
+                        ],
+                        correctIndex: 2,
+                        explanation: "O cale relativa din acelasi folder se scrie simplu ca numele fisierului: src=\"poza.jpg\". Daca e intr-un subfolder: src=\"imagini/poza.jpg\". Daca e in folderul parinte: src=\"../poza.jpg\". Caile relative sunt portabile - functioneaza indiferent de unde e gazduit site-ul."
+                    }
+                ]
+            },
+            5: {
+                title: "Nivel 5: figure si figcaption",
+                description: "Imagini semantice cu legenda",
+                xpReward: 150,
+                questions: [
+                    {
+                        text: "Ce tag HTML5 semantic grupeaza o imagine cu legenda sa?",
+                        options: [
+                            "&lt;imgbox&gt;",
+                            "&lt;figure&gt;",
+                            "&lt;caption&gt;",
+                            "&lt;gallery&gt;"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Tag-ul &lt;figure&gt; este un element HTML5 semantic care grupeaza o imagine (sau alt continut) impreuna cu legenda sa. Este mai bun decat un simplu &lt;div&gt; pentru ca transmite semnificatie: 'aceasta imagine face parte dintr-o unitate cu legenda sa'."
+                    },
+                    {
+                        text: "Care tag se foloseste pentru legenda (titlul) unei imagini in &lt;figure&gt;?",
+                        hasCode: true,
+                        code: "&lt;figure&gt;\n  &lt;img src=\"grafic.jpg\" alt=\"Grafic\"&gt;\n  &lt;??? &gt;Fig. 1: Evolutia temperaturii&lt;/???&gt;\n&lt;/figure&gt;",
+                        options: [
+                            "&lt;legend&gt;",
+                            "&lt;label&gt;",
+                            "&lt;figcaption&gt;",
+                            "&lt;subtitle&gt;"
+                        ],
+                        correctIndex: 2,
+                        explanation: "&lt;figcaption&gt; este tag-ul pentru legenda unei imagini in cadrul &lt;figure&gt;. Poate aparea inainte sau dupa &lt;img&gt;. Motoarele de cautare si screen readerele il asociaza automat cu imaginea din &lt;figure&gt;."
+                    },
+                    {
+                        text: "Care este codul HTML complet si corect pentru o imagine cu legenda?",
+                        options: [
+                            "&lt;img src=\"foto.jpg\" alt=\"Foto\" title=\"Legenda\"&gt;",
+                            "&lt;figure&gt;&lt;img src=\"foto.jpg\" alt=\"Foto\"&gt;&lt;figcaption&gt;Legenda&lt;/figcaption&gt;&lt;/figure&gt;",
+                            "&lt;div&gt;&lt;img src=\"foto.jpg\"&gt;&lt;p&gt;Legenda&lt;/p&gt;&lt;/div&gt;",
+                            "&lt;image src=\"foto.jpg\" caption=\"Legenda\"&gt;"
+                        ],
+                        correctIndex: 1,
+                        explanation: "Structura corecta: &lt;figure&gt; ca container, &lt;img&gt; cu src si alt obligatorii, &lt;figcaption&gt; pentru legenda. Aceasta este structura HTML5 semantica recomandata. Varianta cu &lt;div&gt; functioneaza tehnic dar nu e semantica - nu transmite browserului sau motorului de cautare ca e vorba de o imagine cu legenda."
+                    }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let totalXP = 0;
+        let levelScores = {};
+        let unlockedLevels = [1];
+
+        function loadProgress() {
+            const saved = localStorage.getItem('imagini_quiz4_progress_cls7');
+            if (saved) {
+                const data = JSON.parse(saved);
+                totalXP = data.totalXP || 0;
+                unlockedLevels = data.unlockedLevels || [1];
+                levelScores = data.levelScores || {};
+                updateXPDisplay();
+                updateLevelMap();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('imagini_quiz4_progress_cls7', JSON.stringify({
+                totalXP,
+                unlockedLevels,
+                levelScores
+            }));
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('totalXP').textContent = totalXP;
+        }
+
+        function updateLevelMap() {
+            document.querySelectorAll('.level-node').forEach((node, index) => {
+                const level = index + 1;
+                node.classList.remove('locked', 'active', 'completed');
+
+                if (levelScores[level] !== undefined) {
+                    node.classList.add('completed');
+                } else if (unlockedLevels.includes(level)) {
+                    if (level === Math.max(...unlockedLevels.filter(l => levelScores[l] === undefined))) {
+                        node.classList.add('active');
+                    }
+                } else {
+                    node.classList.add('locked');
+                }
+            });
+
+            document.querySelectorAll('.level-connector').forEach((conn, index) => {
+                if (levelScores[index + 1] !== undefined) {
+                    conn.classList.add('completed');
+                } else {
+                    conn.classList.remove('completed');
+                }
+            });
+        }
+
+        function selectLevel(level) {
+            if (!unlockedLevels.includes(level)) return;
+            currentLevel = level;
+            currentQuestion = 0;
+            score = 0;
+            showLevelIntro();
+        }
+
+        function showLevelIntro() {
+            const levelData = levels[currentLevel];
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-intro">
+                    <h2>${levelData.title}</h2>
+                    <p>${levelData.description}</p>
+                    <div class="xp-reward">+${levelData.xpReward} XP</div>
+                    <button class="btn btn-primary" onclick="startLevel()">
+                        Incepe Nivelul
+                    </button>
+                </div>
+            `;
+        }
+
+        function startLevel() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            function escHtml(s) {
+                return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            }
+
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+
+            let progressDots = '';
+            for (let i = 0; i < levelData.questions.length; i++) {
+                let dotClass = 'progress-dot';
+                if (i === currentQuestion) dotClass += ' current';
+                progressDots += `<div class="${dotClass}"></div>`;
+            }
+
+            let questionContent = `<p class="question-text">${q.text}</p>`;
+
+            if (q.hasCode && q.code) {
+                questionContent += `
+                    <div class="code-display">
+                        <code>${q.code}</code>
+                    </div>
+                `;
+            }
+
+            let optionsHTML = '';
+            q.options.forEach((opt, i) => {
+                optionsHTML += `<div class="option" onclick="selectAnswer(${i})">${escHtml(opt)}</div>`;
+            });
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="question-container active">
+                    <div class="question-progress">${progressDots}</div>
+                    ${questionContent}
+                    <div class="options-grid">${optionsHTML}</div>
+                    <div class="feedback-box" id="feedback"></div>
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display: none;">
+                            Urmatoarea Intrebare
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(index) {
+            const levelData = levels[currentLevel];
+            const q = levelData.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+
+            options[index].classList.add(index === q.correctIndex ? 'correct' : 'wrong');
+            if (index !== q.correctIndex) {
+                options[q.correctIndex].classList.add('correct');
+            }
+
+            const dots = document.querySelectorAll('.progress-dot');
+            dots[currentQuestion].classList.remove('current');
+            dots[currentQuestion].classList.add(index === q.correctIndex ? 'correct' : 'wrong');
+
+            if (index === q.correctIndex) {
+                score++;
+                feedback.className = 'feedback-box show correct';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">🎉</div>
+                    <div class="feedback-text">Corect! Excelent!</div>
+                    <div class="explanation">${q.explanation}</div>
+                `;
+            } else {
+                feedback.className = 'feedback-box show wrong';
+                feedback.innerHTML = `
+                    <div class="feedback-icon">💡</div>
+                    <div class="feedback-text">Nu e chiar asa...</div>
+                    <div class="explanation"><strong>Raspunsul corect era:</strong> ${q.options[q.correctIndex]}<br><br>${q.explanation}</div>
+                `;
+            }
+
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.textContent = currentQuestion < levelData.questions.length - 1 ?
+                'Urmatoarea Intrebare' : 'Vezi Rezultatul';
+        }
+
+        function nextQuestion() {
+            const levelData = levels[currentLevel];
+            currentQuestion++;
+
+            if (currentQuestion >= levelData.questions.length) {
+                showLevelComplete();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showLevelComplete() {
+            const levelData = levels[currentLevel];
+            const percentage = Math.round((score / levelData.questions.length) * 100);
+            const passed = percentage >= 66;
+
+            let stars = '';
+            if (percentage >= 100) stars = '⭐⭐⭐';
+            else if (percentage >= 80) stars = '⭐⭐';
+            else if (percentage >= 66) stars = '⭐';
+            else stars = '💪';
+
+            let earnedXP = 0;
+            if (passed) {
+                earnedXP = levelData.xpReward;
+                if (percentage === 100) earnedXP = Math.round(earnedXP * 1.5);
+
+                if (!levelScores[currentLevel] || levelScores[currentLevel] < percentage) {
+                    if (!levelScores[currentLevel]) {
+                        totalXP += earnedXP;
+                    }
+                    levelScores[currentLevel] = percentage;
+                }
+
+                if (currentLevel < 5 && !unlockedLevels.includes(currentLevel + 1)) {
+                    unlockedLevels.push(currentLevel + 1);
+                }
+
+                saveProgress();
+                updateXPDisplay();
+                updateLevelMap();
+            }
+
+            document.getElementById('quizArea').innerHTML = `
+                <div class="level-complete show">
+                    <div class="level-complete-icon">${passed ? '🏆' : '📚'}</div>
+                    <h2>${passed ? 'Nivel Completat!' : 'Mai incearca!'}</h2>
+                    <div class="stars">${stars}</div>
+                    <div class="score-display">${score}/${levelData.questions.length} raspunsuri corecte (${percentage}%)</div>
+                    ${passed ? `<div class="xp-earned">+${earnedXP} XP</div>` : ''}
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="selectLevel(${currentLevel})">
+                            Reincearca
+                        </button>
+                        ${passed && currentLevel < 5 ? `
+                            <button class="btn btn-primary" onclick="selectLevel(${currentLevel + 1})">
+                                Nivelul Urmator
+                            </button>
+                        ` : ''}
+                        ${passed && currentLevel === 5 ? `
+                            <button class="btn btn-success" onclick="window.location.href='quiz4-css-intro.html'">
+                                Quiz-ul 5: CSS Intro
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize
+        loadProgress();
+        showLevelIntro();
+    </script>
+</body>
+</html>
