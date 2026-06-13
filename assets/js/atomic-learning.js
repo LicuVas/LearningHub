@@ -1188,21 +1188,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ── .copy-btn ────────────────────────────────────────────────────
-    // Three HTML patterns exist:
-    //   A) .copyable-code > .copy-btn + .code-block  (text directly in .code-block)
-    //   B) .code-block > .code-block-header > .copy-btn  (text in sibling .code-content)
+    // Four HTML patterns exist:
+    //   A) .copyable-code > .copy-btn + .code-block  (text in .code-block)
+    //   B) .code-block > .code-block-header > .copy-btn  (text in .code-content)
     //   C) .code-block > .copy-btn + <pre>  (text in <pre>, button is sibling)
+    //   D) .copyable-block > .copy-btn + pre.copyable-code  (lectia1-interfata, m1-excel)
     document.querySelectorAll('.copy-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            var wrapper = this.closest('.copyable-code');
-            var block = wrapper
-                ? wrapper.querySelector('.code-block')       // pattern A
-                : this.closest('.code-block');                // patterns B & C
             var text = '';
-            if (block) {
-                // Find the most specific text container to avoid copying button text
-                var inner = block.querySelector('.code-content') || block.querySelector('pre');
-                text = (inner || block).textContent.trim();
+            // Pattern D: .copyable-block wrapper with a sibling pre.copyable-code
+            var copyableBlock = this.closest('.copyable-block');
+            if (copyableBlock) {
+                var pre = copyableBlock.querySelector('.copyable-code');
+                if (pre) { text = pre.textContent.trim(); }
+            } else {
+                // Patterns A/B/C: .copyable-code (legacy wrapper) or .code-block
+                var wrapper = this.closest('.copyable-code');
+                var block = wrapper
+                    ? wrapper.querySelector('.code-block')       // pattern A
+                    : this.closest('.code-block');                // patterns B & C
+                if (block) {
+                    var inner = block.querySelector('.code-content') || block.querySelector('pre');
+                    text = (inner || block).textContent.trim();
+                }
             }
             if (text && navigator.clipboard) {
                 var self = this;
