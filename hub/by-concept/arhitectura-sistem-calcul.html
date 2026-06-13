@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arhitectura unui sistem de calcul — hardware și periferice | LearningHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #12121f;
+            --bg-card: #1a1a2e;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-pink: #ec4899;
+            --accent-hardware: #06b6d4;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d44;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* ── NAV ── */
+        .nav-back {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2.5rem;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-back:hover { color: var(--accent-hardware); }
+
+        /* ── HERO ── */
+        .hero {
+            text-align: center;
+            padding: 2.5rem 1rem 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .hero-icon {
+            font-size: 4rem;
+            margin-bottom: 1.25rem;
+            display: block;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.25;
+            margin-bottom: 1rem;
+        }
+
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 0.75rem;
+        }
+
+        .family-badge {
+            padding: 0.3rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--accent-hardware);
+        }
+
+        .grade-chip {
+            padding: 0.3rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+        }
+
+        /* ── SECTIONS ── */
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-hardware);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title .icon {
+            font-size: 1.2rem;
+        }
+
+        p { color: var(--text-secondary); margin-bottom: 0.9rem; }
+        p strong { color: var(--text-primary); }
+
+        /* ── COMPONENT LIST ── */
+        .component-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.25rem 0;
+        }
+
+        @media (max-width: 600px) {
+            .component-list { grid-template-columns: 1fr; }
+        }
+
+        .component-item {
+            padding: 1.1rem 1.2rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+        }
+
+        .component-item .comp-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .component-item p {
+            font-size: 0.875rem;
+            margin: 0;
+            color: var(--text-secondary);
+        }
+
+        /* ── IO TABLE ── */
+        .io-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.25rem 0;
+        }
+        @media (max-width: 600px) {
+            .io-row { grid-template-columns: 1fr; }
+        }
+
+        .io-col {
+            padding: 1.1rem 1.2rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+        }
+
+        .io-col .io-label {
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+        .io-col.input .io-label { color: var(--accent-blue); }
+        .io-col.output .io-label { color: var(--accent-purple); }
+
+        .io-col ul {
+            list-style: none;
+            padding: 0;
+        }
+        .io-col ul li {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            padding: 0.2rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* ── STORAGE UNITS TABLE ── */
+        .units-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            margin: 1.25rem 0;
+        }
+        .units-table th {
+            text-align: left;
+            padding: 0.65rem 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+        }
+        .units-table td {
+            padding: 0.65rem 0.9rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid #1e1e30;
+        }
+        .units-table td:first-child {
+            color: var(--accent-hardware);
+            font-weight: 700;
+            font-family: 'Inter', monospace;
+        }
+        .units-table tr:last-child td { border-bottom: none; }
+
+        /* ── SCENARIOS ── */
+        .scenario-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .scenario-item {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .scenario-num {
+            flex-shrink: 0;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--accent-hardware);
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 0.1rem;
+        }
+
+        .scenario-item p { margin: 0; }
+
+        /* ── LESSON MAP ── */
+        .lesson-map {
+            margin: 1rem 0;
+        }
+
+        .grade-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .grade-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .lesson-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            background: var(--bg-card);
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.25s ease;
+            margin-bottom: 0.6rem;
+        }
+        .lesson-link:hover {
+            color: var(--accent-hardware);
+            background: #1f1f35;
+        }
+        .lesson-link .l-icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .lesson-link .l-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+        .lesson-link .l-grade {
+            margin-left: auto;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 8px;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+        }
+
+        /* ── QUIZ ── */
+        .quiz-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            margin-top: 1rem;
+        }
+
+        .quiz-item {
+            padding: 1.1rem 1.2rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+        }
+
+        .quiz-question {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .quiz-trigger {
+            background: none;
+            border: none;
+            color: var(--accent-hardware);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0.35rem 0.8rem;
+            border-radius: 8px;
+            background: rgba(6, 182, 212, 0.1);
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: 'Inter', sans-serif;
+        }
+        .quiz-trigger:hover { background: rgba(6, 182, 212, 0.2); }
+
+        .quiz-answer {
+            display: none;
+            margin-top: 0.9rem;
+            padding: 0.85rem 1rem;
+            background: rgba(6, 182, 212, 0.07);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .quiz-answer strong { color: var(--accent-hardware); }
+        .quiz-answer.visible { display: block; }
+
+        /* ── RELATED ── */
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .related-link {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.85rem 1rem;
+            background: var(--bg-card);
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
+        }
+        .related-link:hover {
+            color: var(--accent-hardware);
+            background: #1f1f35;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            margin-top: 4rem;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 640px) {
+            .hero h1 { font-size: 1.7rem; }
+            .section-title { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <a href="index.html" class="nav-back">&#8592; Înapoi la concepte</a>
+
+    <!-- HERO -->
+    <div class="hero">
+        <span class="hero-icon">🖥️</span>
+        <h1>Arhitectura unui sistem de calcul<br>hardware și periferice</h1>
+        <div class="hero-meta">
+            <span class="family-badge">💾 Hardware</span>
+            <span class="grade-chip">Clasa a V-a</span>
+        </div>
+    </div>
+
+    <!-- PE SCURT -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">⚡</span>Pe scurt
+        </div>
+        <p>
+            Un calculator nu este o cutie magică — este un <strong>sistem</strong> format din componente fizice precise,
+            fiecare cu un rol bine definit. Procesorul gândește, RAM-ul ține minte temporar, hard disk-ul stochează pe termen lung,
+            iar perifericele sunt „mâinile și ochii" prin care comunici cu mașina.
+        </p>
+        <p>
+            Înțelegând cum colaborează aceste piese — și ce înseamnă un <strong>megabyte</strong> față de un <strong>gigabyte</strong> —
+            vei putea lua decizii inteligente: de la alegerea unui calculator, până la explicarea unei pene de curent care ți-a distrus tema.
+        </p>
+    </div>
+
+    <!-- CE ESTE -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">🧩</span>Ce este
+        </div>
+        <p>
+            <strong>Arhitectura unui sistem de calcul</strong> descrie cum sunt organizate și conectate toate componentele
+            hardware ale unui calculator. Imaginează-ți o <strong>clasă de liceu</strong>: profesorul (procesorul) primește
+            întrebări, se gândește și dă răspunsuri; biroul elevului (RAM-ul) ține cărțile cu care lucrezi acum;
+            dulapul de acasă (hard disk-ul) păstrează tot ce ai strâns în ani; holul școlii (placa de bază) leagă toate sălile
+            și lasă datele să circule; iar tableta și tabla (perifericele) fac legătura între profesori și elevi.
+        </p>
+
+        <div class="component-list">
+            <div class="component-item">
+                <div class="comp-name">🧠 Procesor (CPU)</div>
+                <p>Creierul calculatorului. Execută toate instrucțiunile și face toate calculele. Viteza se măsoară în GHz; un procesor modern are mai multe nuclee (cores) care lucrează simultan.</p>
+            </div>
+            <div class="component-item">
+                <div class="comp-name">⚡ Memorie RAM</div>
+                <p>Memoria de lucru temporară. Ține datele cu care lucrezi <em>acum</em>. Când închizi calculatorul, RAM-ul se golește complet — tot ce nu ai salvat dispare.</p>
+            </div>
+            <div class="component-item">
+                <div class="comp-name">💽 Hard Disk / SSD</div>
+                <p>Stocarea permanentă. Păstrează fișiere, jocuri, programe — chiar și cu calculatorul oprit. SSD-ul e mult mai rapid decât HDD-ul clasic (fără piese mobile).</p>
+            </div>
+            <div class="component-item">
+                <div class="comp-name">🏗️ Placă de bază</div>
+                <p>Scheletul calculatorului. Conectează procesorul, RAM-ul, placa video și hard disk-ul. Fără ea, componentele n-ar putea comunica între ele.</p>
+            </div>
+            <div class="component-item">
+                <div class="comp-name">🎮 Placă video (GPU)</div>
+                <p>Specialist în grafică. Calculează și afișează tot ce vezi pe ecran — de la interfața Windows la jocuri 3D. Poate fi integrată în procesor sau separată (dedicată).</p>
+            </div>
+            <div class="component-item">
+                <div class="comp-name">🔌 Sursă de alimentare (PSU)</div>
+                <p>Inima energetică. Transformă curentul din priză (220V) în tensiunile mici de care au nevoie componentele. Fără ea, calculatorul e o cutie de metal moartă.</p>
+            </div>
+        </div>
+
+        <p style="margin-top:0.5rem;">
+            Pe lângă componentele interne, sistemul include și <strong>periferice</strong> — dispozitive externe
+            clasificate în funcție de sensul în care circulă informația:
+        </p>
+
+        <div class="io-row">
+            <div class="io-col input">
+                <div class="io-label">📥 Intrare (Input)</div>
+                <ul>
+                    <li>⌨️ Tastatură — scrii text și comenzi</li>
+                    <li>🖱️ Mouse — indici și selectezi</li>
+                    <li>🎤 Microfon — trimiți voce</li>
+                    <li>📷 Cameră web — trimiți imagine video</li>
+                    <li>🖨️ Scanner — introduci documente fizice</li>
+                </ul>
+            </div>
+            <div class="io-col output">
+                <div class="io-label">📤 Ieșire (Output)</div>
+                <ul>
+                    <li>🖥️ Monitor — afișează imagini și texte</li>
+                    <li>🔊 Boxe / Căști — redă sunete</li>
+                    <li>🖨️ Imprimantă — tipărește pe hârtie</li>
+                    <li>📽️ Proiector — proiectează pe ecran mare</li>
+                </ul>
+            </div>
+        </div>
+
+        <p>
+            <strong>Regula de aur:</strong> Dacă <em>tu</em> trimiți informații spre calculator = input.
+            Dacă calculatorul îți transmite ceva ție = output.
+            (Imprimanta pare să „primească" hârtie, dar ea <em>afișează</em> date pe hârtie — deci este output.)
+        </p>
+
+        <p style="margin-top:1.5rem; margin-bottom:0.5rem;">
+            <strong>Unități de măsură pentru capacitatea de stocare</strong>
+        </p>
+        <table class="units-table">
+            <thead>
+                <tr>
+                    <th>Unitate</th>
+                    <th>Abreviere</th>
+                    <th>Echivalent</th>
+                    <th>Exemplu practic</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Byte</td>
+                    <td>B</td>
+                    <td>8 biți</td>
+                    <td>O literă din alfabet</td>
+                </tr>
+                <tr>
+                    <td>Kilobyte</td>
+                    <td>KB</td>
+                    <td>~1 000 B</td>
+                    <td>Un mesaj text scurt</td>
+                </tr>
+                <tr>
+                    <td>Megabyte</td>
+                    <td>MB</td>
+                    <td>~1 000 KB</td>
+                    <td>O fotografie de calitate medie</td>
+                </tr>
+                <tr>
+                    <td>Gigabyte</td>
+                    <td>GB</td>
+                    <td>~1 000 MB</td>
+                    <td>Un film HD, sau ~1 000 fotografii</td>
+                </tr>
+                <tr>
+                    <td>Terabyte</td>
+                    <td>TB</td>
+                    <td>~1 000 GB</td>
+                    <td>Hard disk-ul unui laptop modern</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DE CE CONTEAZĂ -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">🎯</span>De ce contează
+        </div>
+        <div class="scenario-list">
+            <div class="scenario-item">
+                <div class="scenario-num">1</div>
+                <p>
+                    <strong>Ai lucrat 2 ore la un proiect și s-a oprit curentul.</strong>
+                    Dacă înțelegi că RAM-ul este volatil — se golește la oprire —
+                    vei ști de ce ai pierdut tot ce nu salvaseși și vei lua obiceiul de Ctrl+S din 5 în 5 minute.
+                </p>
+            </div>
+            <div class="scenario-item">
+                <div class="scenario-num">2</div>
+                <p>
+                    <strong>Calculatorul din clasă rulează lent la lecțiile cu video.</strong>
+                    Știind că procesorul și RAM-ul sunt „gâtul de sticlă" pentru sarcini complexe,
+                    poți explica profesorului de ce un singur program greu blochează toată activitatea.
+                </p>
+            </div>
+            <div class="scenario-item">
+                <div class="scenario-num">3</div>
+                <p>
+                    <strong>Alegi un stick USB pentru a duce tema la școală.</strong>
+                    Capacitățile de 4 GB, 16 GB sau 64 GB nu mai sunt cifre abstracte —
+                    știi că 4 GB înseamnă vreo 4 000 de fotografii sau câteva filme, deci alegi inteligent.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- HARTA LECȚIILOR -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">🗺️</span>Harta lecțiilor
+        </div>
+        <div class="lesson-map">
+            <div class="grade-group">
+                <div class="grade-label">Clasa a V-a</div>
+                <a class="lesson-link" href="../../content/tic/cls5/m1-sisteme/lectia2-hardware.html">
+                    <span class="l-icon">🔧</span>
+                    <span class="l-title">Componentele hardware</span>
+                    <span class="l-grade">Cls. V</span>
+                </a>
+                <a class="lesson-link" href="../../content/tic/cls5/m1-sisteme/lectia3-software.html">
+                    <span class="l-icon">💿</span>
+                    <span class="l-title">Software vs Hardware</span>
+                    <span class="l-grade">Cls. V</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- VERIFICĂ-TE -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">🧪</span>Verifică-te
+        </div>
+        <div class="quiz-list">
+
+            <div class="quiz-item">
+                <div class="quiz-question">1. Lucrezi la un desen în Paint de o oră și calculatorul se oprește brusc. De ce ai pierdut munca dacă nu ai salvat?</div>
+                <button class="quiz-trigger" onclick="toggleQuiz(this)" aria-expanded="false">
+                    &#128065; Vezi răspunsul
+                </button>
+                <div class="quiz-answer">
+                    <strong>RAM-ul este volatil.</strong> Tot ce lucrai era stocat temporar în RAM (memoria de lucru). Când calculatorul s-a oprit, RAM-ul s-a golit complet. Fișierul ar fi fost în siguranță doar pe hard disk (HDD/SSD), unde se ajunge prin comanda Salvare (Ctrl+S).
+                </div>
+            </div>
+
+            <div class="quiz-item">
+                <div class="quiz-question">2. Tastatura, mouse-ul, monitorul și imprimanta — care sunt dispozitive de intrare și care de ieșire?</div>
+                <button class="quiz-trigger" onclick="toggleQuiz(this)" aria-expanded="false">
+                    &#128065; Vezi răspunsul
+                </button>
+                <div class="quiz-answer">
+                    <strong>Intrare (Input):</strong> tastatura și mouse-ul — tu trimiți informații spre calculator.<br>
+                    <strong>Ieșire (Output):</strong> monitorul și imprimanta — calculatorul îți transmite informații ție (pe ecran sau pe hârtie).
+                </div>
+            </div>
+
+            <div class="quiz-item">
+                <div class="quiz-question">3. Un stick USB are 8 GB. O fotografie face în medie 4 MB. Câte fotografii poți stoca aproximativ?</div>
+                <button class="quiz-trigger" onclick="toggleQuiz(this)" aria-expanded="false">
+                    &#128065; Vezi răspunsul
+                </button>
+                <div class="quiz-answer">
+                    <strong>Aproximativ 2 000 de fotografii.</strong> 8 GB = 8 000 MB. 8 000 MB ÷ 4 MB/fotografie = 2 000 fotografii. Unitatea de măsură contează: confundarea MB cu GB este o greșeală frecventă care te poate lăsa fără spațiu pe stick.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CONCEPTE ÎNRUDITE -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">🔗</span>Concepte înrudite
+        </div>
+        <div class="related-grid">
+            <a class="related-link" href="sisteme-calcul-tipuri.html">
+                🖥️ Tipuri de sisteme de calcul
+            </a>
+            <a class="related-link" href="sistem-operare.html">
+                ⚙️ Sistemul de operare
+            </a>
+            <a class="related-link" href="ergonomie-siguranta-laborator.html">
+                🪑 Ergonomie și siguranță în laborator
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    <strong style="color: var(--text-secondary);">&#169; 2026 Prof. Gurlan Vasile</strong><br>
+    Informatică și TIC &nbsp;|&nbsp; <a href="mailto:grlnvasile@gmail.com" style="color: var(--accent-cyan);">grlnvasile@gmail.com</a>
+</footer>
+
+<script>
+    function toggleQuiz(btn) {
+        var answer = btn.nextElementSibling;
+        var isVisible = answer.classList.contains('visible');
+        answer.classList.toggle('visible', !isVisible);
+        btn.setAttribute('aria-expanded', String(!isVisible));
+        btn.textContent = isVisible ? '👁 Vezi răspunsul' : '👁 Ascunde răspunsul';
+    }
+</script>
+
+</body>
+</html>
