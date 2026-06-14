@@ -38,17 +38,17 @@ const Breadcrumb = {
 
         // From lesson page: content/tic/cls6/m1-prezentari/lectia1.html
         // (any .html file inside a module folder that's not index)
-        if (path.includes('/content/tic/') && path.match(/\/m\d+-[^/]+\/[^/]+\.html$/) && !path.endsWith('/index.html')) {
+        if (path.includes('/content/tic/') && path.match(/\/(?:m\d+|extra)-[^/]+\/[^/]+\.html$/) && !path.endsWith('/index.html')) {
             return '../../../../hub/index.html';
         }
 
         // Extensionless lesson URL (Cloudflare Pages): /content/tic/cls6/m1-prezentari/lectia1
-        if (path.includes('/content/tic/') && path.match(/\/m\d+-[^/]+\/[^/]+$/) && !path.endsWith('/index') && !path.match(/\/content\/tic\/cls\d+\/m\d+-[^/]+$/)) {
+        if (path.includes('/content/tic/') && path.match(/\/(?:m\d+|extra)-[^/]+\/[^/]+$/) && !path.endsWith('/index') && !path.match(/\/content\/tic\/cls\d+\/(?:m\d+|extra)-[^/]+$/)) {
             return '../../../../hub/index.html';
         }
 
         // From module index: content/tic/cls6/m1-prezentari/ or .../index.html
-        if (normalizedPath.match(/\/content\/tic\/cls\d+\/m\d+-[^/]+$/)) {
+        if (normalizedPath.match(/\/content\/tic\/cls\d+\/(?:m\d+|extra)-[^/]+$/)) {
             return '../../../../hub/index.html';
         }
 
@@ -77,16 +77,16 @@ const Breadcrumb = {
         const normalizedPath = path.replace(/\/index\.html$/, '/').replace(/\/$/, '');
 
         // From lesson page (inside a module folder) - .html or extensionless
-        if (path.match(/\/m\d+-[^/]+\/[^/]+\.html$/) && !path.endsWith('/index.html')) {
+        if (path.match(/\/(?:m\d+|extra)-[^/]+\/[^/]+\.html$/) && !path.endsWith('/index.html')) {
             return '../index.html';
         }
         // Extensionless lesson URL
-        if (path.match(/\/m\d+-[^/]+\/[^/]+$/) && !path.endsWith('/index') && !normalizedPath.match(/\/m\d+-[^/]+$/)) {
+        if (path.match(/\/(?:m\d+|extra)-[^/]+\/[^/]+$/) && !path.endsWith('/index') && !normalizedPath.match(/\/(?:m\d+|extra)-[^/]+$/)) {
             return '../';
         }
 
         // From module index
-        if (normalizedPath.match(/\/m\d+-[^/]+$/)) {
+        if (normalizedPath.match(/\/(?:m\d+|extra)-[^/]+$/)) {
             return '../index.html';
         }
 
@@ -104,12 +104,12 @@ const Breadcrumb = {
         const path = window.location.pathname;
 
         // From lesson page (non-index) - supports both .html and extensionless URLs (Cloudflare Pages)
-        if (path.match(/\/m\d+-[^/]+\/[^/]+\.html$/) && !path.endsWith('/index.html')) {
+        if (path.match(/\/(?:m\d+|extra)-[^/]+\/[^/]+\.html$/) && !path.endsWith('/index.html')) {
             return 'index.html';
         }
 
         // Extensionless URL: /content/tic/cls6/m4-comunicare/lectia1-email-intro
-        if (path.match(/\/m\d+-[^/]+\/[^/]+$/) && !path.endsWith('/index') && !path.match(/\/m\d+-[^/]+$/)) {
+        if (path.match(/\/(?:m\d+|extra)-[^/]+\/[^/]+$/) && !path.endsWith('/index') && !path.match(/\/(?:m\d+|extra)-[^/]+$/)) {
             return './';
         }
 

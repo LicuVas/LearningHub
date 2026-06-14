@@ -148,7 +148,7 @@
     </head>
 <body>
     <a href="#main-content" class="skip-link">Sari la continut</a>
-    <div id="main-content" class="loading-container" id="loading">
+    <div id="main-content" class="loading-container">
         <div class="logo-icon">🚀</div>
         <h1>LearningHub</h1>
         <p class="tagline">Invata la ritmul tau</p>
@@ -162,23 +162,35 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const statusEl = document.getElementById('status');
-            const loadingEl = document.getElementById('loading');
+            const loadingEl = document.getElementById('main-content');
 
-            // ALWAYS show profile selector on the main landing page
-            // This ensures users always choose/confirm their profile when entering the site
-            statusEl.textContent = 'Selecteaza profilul tau...';
+            // Bulletproof redirect — runs no matter what (guards against any
+            // exception in the selector callback ever stranding the user here).
+            function goToHub() { window.location.replace('hub/index.html'); }
 
-            setTimeout(() => {
-                UserSystem.showProfileSelector((profileId) => {
+            function welcomeAndGo(profileId) {
+                try {
                     const profile = UserSystem.getActiveProfileData();
                     statusEl.textContent = `Bine ai venit, ${profile?.name || 'Vizitator'}!`;
-                    loadingEl.classList.add('ready');
+                    if (loadingEl) loadingEl.classList.add('ready');
+                } catch (e) { /* ignore — redirect anyway */ }
+                setTimeout(goToHub, 700);
+            }
 
-                    setTimeout(() => {
-                        window.location.href = 'hub/index.html';
-                    }, 800);
-                });
-            }, 500);
+            // If a profile already exists, skip the selector and go straight in.
+            if (UserSystem.getActiveProfile()) {
+                welcomeAndGo(UserSystem.getActiveProfile());
+            } else {
+                statusEl.textContent = 'Selecteaza profilul tau...';
+                setTimeout(() => {
+                    UserSystem.showProfileSelector(welcomeAndGo);
+                }, 400);
+            }
+
+            // Hard safety net: if still on this page after 12s, force the redirect.
+            setTimeout(function() {
+                if (document.getElementById('main-content')) goToHub();
+            }, 12000);
         });
     </script>
 </body>
