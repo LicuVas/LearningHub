@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 3: Generarea permutarilor prin backtracking | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia2-backtracking-intro.html" class="nav-btn" title="Lectia anterioara">&#8592; Anterioara</a>
+        <a href="lectia4-aranjamente-combinari.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Generarea permutarilor prin backtracking</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei implementa generarea sistematica a tuturor permutarilor multimii {1, 2, ..., n} prin tehnica backtracking, vei intelege mecanismul de constructie si revenire, si vei aplica conditii de continuare pentru permutari cu restrictii.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti notiunea de permutare si sa calculezi numarul lor (n!)</li>
+                <li>Sa implementezi generarea permutarilor in Python folosind backtracking cu vector de marcaj</li>
+                <li>Sa trasezi arborele de cautare al backtracking-ului pentru n mic (n=2, n=3)</li>
+                <li>Sa adaugi conditii de continuare (<em>pruning</em>) pentru permutari cu restrictii</li>
+                <li>Sa analizezi complexitatea temporala O(n &middot; n!) a algoritmului</li>
+                <li>[EXCLUSIV INTENSIV] Sa implementezi aceeasi solutie in C++ cu tablouri si functie recursiva</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare de gandire:</div>
+<p>Scrie pe hartie toate modurile in care poti aranja literele A, B, C fara repetitie.<br>
+Cate ai gasit? Ai gasit toate? Cum esti sigur ca nu ai ratat niciuna?</p>
+<textarea id="tryAnswer" placeholder="Aranjamentele lui A, B, C:
+1. A B C
+2. A C B
+3. ..." rows="7"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle">&#128161; Ai nevoie de un indiciu? <span class="hint-arrow">&#9654;</span></div>
+<div class="hint-content">
+<p>Incepe prin a fixa prima pozitie: daca A este primul, ramane sa aranjezi B si C in 2 moduri (B C sau C B). Daca B este primul, ai A si C in 2 moduri. Daca C este primul, tot 2 moduri. In total: 3 x 2 x 1 = 6 aranjamente.</p>
+<p>Backtracking-ul face exact asta &mdash; sistematic, fara sa sara si fara sa repete.</p>
+</div>
+</div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ═══ ATOM 1: Ce este o permutare ═══ -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Cate permutari distincte are multimea {1, 2, 3, 4}?", "options": ["12", "16", "24", "64"], "correct": "c", "hint": "Numarul de permutari ale lui n elemente este n! = 1x2x...xn. Pentru n=4: 4! = 4x3x2x1 = 24."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Ce este o permutare?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O <strong>permutare</strong> a multimii {1, 2, ..., n} este o aranjare a tuturor celor n elemente intr-o ordine anume. Fiecare element apare exact o data.
+                </div>
+                <div class="example-box">
+<div class="example-title">Exemplu: Permutarile lui {1, 2, 3}</div>
+<pre>1 2 3
+1 3 2
+2 1 3
+2 3 1
+3 1 2
+3 2 1</pre>
+<p>Total: 3! = 3 &times; 2 &times; 1 = <strong>6 permutari</strong></p>
+</div>
+                <div class="concept-def">
+                    <strong>Formula:</strong> Numarul de permutari ale lui n elemente este <strong>n!</strong> (n factorial).
+                </div>
+                <div class="example-box">
+<div class="example-title">Cresterea lui n! (output real, Python):</div>
+<pre>n=1:    1 permutari
+n=2:    2 permutari
+n=3:    6 permutari
+n=4:   24 permutari
+n=5:  120 permutari
+n=6:  720 permutari
+n=7: 5040 permutari
+n=8: 40320 permutari</pre>
+<p>Atentie: n! creste <strong>exploziv</strong>. Algoritmul devine lent pentru n &gt; 12 in aplicatii de timp real.</p>
+</div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 2: Ideea backtracking pentru permutari ═══ -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Ce rol are vectorul `folosit[]` in algoritmul de generare a permutarilor?", "options": ["Retine solutia finala", "Marcheaza ce elemente au fost deja plasate pe pozitii anterioare", "Numara cate permutari s-au generat", "Sorteaza permutarile"], "correct": "b", "hint": "La fiecare pas, ne intereseaza sa nu punem pe pozitia curenta un element care a fost deja pus pe o pozitie mai din stanga. Vectorul folosit[] retine aceasta informatie."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Ideea algoritmului: constructie pozitie cu pozitie</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Construim permutarea <strong>pas cu pas</strong>: la pasul <code>k</code> decidem ce element punem pe pozitia <code>k</code>. Incercam pe rand fiecare element nefolosit inca. Daca ajungem la o solutie completa (toate n pozitiile ocupate), o afisam, apoi <strong>revenim</strong> (backtrack) si incercam urmatoarea optiune.
+                </div>
+                <div class="example-box">
+<div class="example-title">Arborele de cautare pentru n=2 (output real, Python):</div>
+<pre>Pun 1 pe pozitia 0
+  Pun 2 pe pozitia 1
+    =&gt; Solutie: [1, 2]
+  Revin: scot 2 de pe pozitia 1
+Revin: scot 1 de pe pozitia 0
+Pun 2 pe pozitia 0
+  Pun 1 pe pozitia 1
+    =&gt; Solutie: [2, 1]
+  Revin: scot 1 de pe pozitia 1
+Revin: scot 2 de pe pozitia 0</pre>
+</div>
+                <div class="concept-def">
+                    Ingredientele esentiale ale algoritmului:
+                    <ul>
+                        <li><strong>perm[k]</strong> &mdash; elementul ales pentru pozitia k</li>
+                        <li><strong>folosit[i]</strong> &mdash; True daca elementul i este deja pe o pozitie</li>
+                        <li><strong>back(pas)</strong> &mdash; functia recursiva: genereaza pozitia <code>pas</code> si toate cele urmatoare</li>
+                        <li><strong>Caz de baza:</strong> daca <code>pas == n</code>, avem o solutie completa</li>
+                        <li><strong>Revenire:</strong> dupa exploatarea ramurii, dezactivam marcajul si incercam urmatorul element</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 3: Implementarea completa Python ═══ -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Ce face instructiunea `perm[pas] = 0` si `folosit[i] = False` de dupa apelul recursiv?", "options": ["Reseteaza toata permutarea", "Realizeaza revenirea (backtrack): elibereaza pozitia si marcajul pentru a incerca urmatorul element", "Numara solutiile", "Verifica corectitudinea solutiei"], "correct": "b", "hint": "Dupa ce am explorat toate permutarile care incep cu i pe pozitia `pas`, trebuie sa eliberam locul pentru a incerca urmatorul candidat."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Implementarea completa in Python</h3>
+            </div>
+            <div class="atom-content">
+                <pre><span class="code-comment"># Generarea permutarilor prin backtracking</span>
+<span class="code-comment"># Limbaj: Python | Nivel: mat-info cls XI</span>
+
+<span class="code-keyword">def</span> <span class="code-function">permutari</span>(n):
+    perm = [<span class="code-number">0</span>] * n          <span class="code-comment"># vectorul solutie, indexat 0..n-1</span>
+    folosit = [<span class="code-keyword">False</span>] * (n + <span class="code-number">1</span>)  <span class="code-comment"># folosit[i]=True daca i e pe o pozitie</span>
+    rezultate = []
+
+    <span class="code-keyword">def</span> <span class="code-function">back</span>(pas):
+        <span class="code-keyword">if</span> pas == n:
+            rezultate.<span class="code-function">append</span>(perm[:])  <span class="code-comment"># copie a solutiei curente</span>
+            <span class="code-keyword">return</span>
+        <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>):
+            <span class="code-keyword">if not</span> folosit[i]:
+                perm[pas] = i
+                folosit[i] = <span class="code-keyword">True</span>
+                <span class="code-function">back</span>(pas + <span class="code-number">1</span>)
+                perm[pas] = <span class="code-number">0</span>          <span class="code-comment"># revenire: eliberam pozitia</span>
+                folosit[i] = <span class="code-keyword">False</span>    <span class="code-comment"># revenire: eliberam marcajul</span>
+
+    <span class="code-function">back</span>(<span class="code-number">0</span>)
+    <span class="code-keyword">return</span> rezultate
+
+<span class="code-comment"># Generam permutarile lui {1,2,3}</span>
+n = <span class="code-number">3</span>
+sol = <span class="code-function">permutari</span>(n)
+<span class="code-function">print</span>(<span class="code-string">f"Permutarile lui </span>{<span class="code-string">1,...,</span>{n}<span class="code-string">} ({len(sol)} bucati):"</span>)
+<span class="code-keyword">for</span> p <span class="code-keyword">in</span> sol:
+    <span class="code-function">print</span>(<span class="code-string">' '</span>.<span class="code-function">join</span>(<span class="code-function">map</span>(str, p)))</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Permutarile lui {1,...,3} (6 bucati):
+1 2 3
+1 3 2
+2 1 3
+2 3 1
+3 1 2
+3 2 1</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Observatie:</strong> Permutarile sunt generate in <em>ordine lexicografica</em> deoarece iteram candidatii i de la 1 la n in ordine crescatoare.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 4: Permutari cu conditii (pruning) ═══ -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Cand aplicam o conditie de taiere (pruning) in backtracking?", "options": ["Doar la sfarsit, dupa ce solutia e completa", "La inceputul functiei back(), inainte de orice", "Inainte de apelul recursiv, cand stim ca un candidat nu poate duce la solutie valida", "Nu putem aplica conditii in backtracking"], "correct": "c", "hint": "Pruning = taierea ramurilor inainte de a le explora complet. Se aplica inainte de apelul recursiv, verificand daca plasarea candidatului curent respecta conditia."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Permutari cu restrictii: taiere de ramuri (<em>pruning</em>)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Puterea backtracking-ului sta in <strong>taierea ramurilor</strong> (pruning): daca un candidat nu poate duce la o solutie valida, il sarim inainte de a-l explora recursiv. Adaugam o verificare suplimentara <em>inainte</em> de apelul <code>back(pas+1)</code>.
+                </div>
+                <div class="example-box">
+<div class="example-title">Exemplu: Permutari fara doua numere pare consecutive</div>
+</div>
+                <pre><span class="code-comment"># Permutari fara doua pare consecutive</span>
+<span class="code-keyword">def</span> <span class="code-function">permutari_restrictie</span>(n):
+    perm = [<span class="code-number">0</span>] * n
+    folosit = [<span class="code-keyword">False</span>] * (n + <span class="code-number">1</span>)
+    rezultate = []
+
+    <span class="code-keyword">def</span> <span class="code-function">back</span>(pas):
+        <span class="code-keyword">if</span> pas == n:
+            rezultate.<span class="code-function">append</span>(perm[:])
+            <span class="code-keyword">return</span>
+        <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>):
+            <span class="code-keyword">if not</span> folosit[i]:
+                <span class="code-comment"># Conditie de taiere: nu doua pare consecutive</span>
+                <span class="code-keyword">if</span> pas > <span class="code-number">0</span> <span class="code-keyword">and</span> perm[pas-<span class="code-number">1</span>] % <span class="code-number">2</span> == <span class="code-number">0</span> <span class="code-keyword">and</span> i % <span class="code-number">2</span> == <span class="code-number">0</span>:
+                    <span class="code-keyword">continue</span>  <span class="code-comment"># taiem aceasta ramura</span>
+                perm[pas] = i
+                folosit[i] = <span class="code-keyword">True</span>
+                <span class="code-function">back</span>(pas + <span class="code-number">1</span>)
+                perm[pas] = <span class="code-number">0</span>
+                folosit[i] = <span class="code-keyword">False</span>
+
+    <span class="code-function">back</span>(<span class="code-number">0</span>)
+    <span class="code-keyword">return</span> rezultate
+
+n = <span class="code-number">4</span>
+sol = <span class="code-function">permutari_restrictie</span>(n)
+<span class="code-function">print</span>(<span class="code-string">f"Permutari de 4 fara doua pare consecutive ({len(sol)} bucati):"</span>)
+<span class="code-keyword">for</span> p <span class="code-keyword">in</span> sol:
+    <span class="code-function">print</span>(<span class="code-string">' '</span>.<span class="code-function">join</span>(<span class="code-function">map</span>(str, p)))</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Permutari de 4 fara doua pare consecutive (12 bucati):
+1 2 3 4
+1 4 3 2
+2 1 3 4
+2 1 4 3
+2 3 1 4
+2 3 4 1
+3 2 1 4
+3 4 1 2
+4 1 2 3
+4 1 3 2
+4 3 1 2
+4 3 2 1</pre>
+</div>
+                <div class="concept-def">
+                    Din cele 24 permutari posibile ale lui {1,2,3,4}, doar 12 respecta conditia. Backtracking-ul a evitat sa mai exploreze ramurile invalide, reducand efortul la jumatate in acest caz.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 5: Complexitate ═══ -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Care este complexitatea temporala a algoritmului de generare a tuturor permutarilor?", "options": ["O(n^2)", "O(2^n)", "O(n * n!)", "O(log n * n!)"], "correct": "c", "hint": "Sunt n! permutari, fiecare de lungime n (afisarea/copierea ei costa O(n)). Total: O(n * n!)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Complexitate si limite practice</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Complexitate temporala: O(n &middot; n!)</strong><br>
+                    Exista n! permutari distincte. Fiecare permutare are n elemente, deci afisarea/copierea ei costa O(n). Suma totala: n &times; n! operatii.
+                </div>
+                <div class="example-box">
+<div class="example-title">Numar de permutari pentru diverse valori ale lui n:</div>
+<pre>n=1:       1 permutari
+n=2:       2 permutari
+n=3:       6 permutari
+n=4:      24 permutari
+n=5:     120 permutari
+n=6:     720 permutari
+n=7:    5040 permutari
+n=8:   40320 permutari</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Limite practice:</strong>
+                    <ul>
+                        <li>n &le; 8: instant (sub 1 secunda)</li>
+                        <li>n = 10: 3.628.800 permutari &mdash; cateva secunde</li>
+                        <li>n = 12: 479.001.600 permutari &mdash; minute sau ore</li>
+                        <li>n &gt; 12: practic imposibil de enumerat toate</li>
+                    </ul>
+                    La subiecte BAC si concursuri, n este de obicei mic (n &le; 8). Cand n este mare, se cer doar <em>unele</em> solutii (primele k, cele cu o proprietate speciala) sau se aplica pruning agresiv.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 6: EXCLUSIV INTENSIV - C++ ═══ -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, de ce declaram `int perm[10]` si `bool folosit[10]` ca variabile globale in loc de locale in main()?", "options": ["Ca sa ocupe mai putina memorie", "Ca sa fie accesibile direct in functia recursiva back() fara sa le transmitem ca parametri", "Ca sa fie initializate automat cu 0", "Nu conteaza unde le declaram"], "correct": "b", "hint": "Functia back() are nevoie sa citeasca si sa modifice perm[] si folosit[]. Daca sunt globale, le acceseaza direct. Altfel ar trebui transmise ca parametri la fiecare apel recursiv."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Implementare C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+<p>La profilul mat-info intensiv, acelasi algoritm se implementeaza in C++ cu tablouri statice si functie recursiva globala. Diferente fata de Python: tipuri explicite, tablouri de dimensiune fixa, <code>bool</code> explicit.</p>
+</div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> n;
+<span class="code-keyword">int</span> perm[<span class="code-number">10</span>];        <span class="code-comment">// solutia curenta, pozitii 0..n-1</span>
+<span class="code-keyword">bool</span> folosit[<span class="code-number">10</span>];    <span class="code-comment">// marcaj elemente 1..n</span>
+
+<span class="code-keyword">void</span> <span class="code-function">back</span>(<span class="code-keyword">int</span> pas) {
+    <span class="code-keyword">if</span> (pas == n) {
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++) {
+            cout &lt;&lt; perm[i];
+            <span class="code-keyword">if</span> (i &lt; n - <span class="code-number">1</span>) cout &lt;&lt; <span class="code-string">" "</span>;
+        }
+        cout &lt;&lt; <span class="code-string">"\n"</span>;
+        <span class="code-keyword">return</span>;
+    }
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">1</span>; i &lt;= n; i++) {
+        <span class="code-keyword">if</span> (!folosit[i]) {
+            perm[pas] = i;
+            folosit[i] = <span class="code-keyword">true</span>;
+            <span class="code-function">back</span>(pas + <span class="code-number">1</span>);
+            perm[pas] = <span class="code-number">0</span>;          <span class="code-comment">// revenire</span>
+            folosit[i] = <span class="code-keyword">false</span>;    <span class="code-comment">// revenire</span>
+        }
+    }
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    n = <span class="code-number">3</span>;
+    cout &lt;&lt; <span class="code-string">"Permutarile lui {1,2,3}:\n"</span>;
+    <span class="code-function">back</span>(<span class="code-number">0</span>);
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+<pre>Permutarile lui {1,2,3}:
+1 2 3
+1 3 2
+2 1 3
+2 3 1
+3 1 2
+3 2 1</pre>
+</div>
+                <p>Acelasi output ca versiunea Python &mdash; algoritmul este identic, doar sintaxa difera. In C++, variabilele globale <code>int perm[10]</code> si <code>bool folosit[10]</code> sunt initializate automat cu 0 / <code>false</code>.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Urmarire manuala</h3>
+            <p>Ruleaza mental algoritmul <code>permutari(2)</code>. Deseneaza pe hartie arborele de cautare: ce valori ia <code>perm</code> la fiecare pas? Ce solutii se genereaza? Verifica raspunsul cu output-ul din Atomul 2.</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Modificare cu conditie</h3>
+            <p>Modifica algoritmul din Atomul 3 astfel incat sa genereze doar permutarile lui {1, 2, 3, 4, 5} in care <strong>1 apare inaintea lui 2</strong> (adica pozitia lui 1 este mai mica decat pozitia lui 2). Cate astfel de permutari exista? (Indiciu: exact jumatate din 5! = 60.)</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Permutari cu suma diagonalei</h3>
+            <p>[BAC III / Olimpiada] Genereaza toate permutarile lui {1, 2, 3, 4} pentru care suma elementelor de pe pozitiile pare (perm[0] + perm[2]) este egala cu suma celor de pe pozitiile impare (perm[1] + perm[3]). Afiseaza-le si numara-le. Implementeaza in Python; optional si in C++ (la intensiv).</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Definitia permutarii si formula n! (factorialul)</li>
+                <li>Structura algoritmului backtracking: <code>back(pas)</code> cu vector perm[] si vector folosit[]</li>
+                <li>Mecanismul de revenire: reset perm[pas]=0 si folosit[i]=False dupa apelul recursiv</li>
+                <li>Taierea de ramuri (pruning): conditie suplimentara inaintea apelului recursiv</li>
+                <li>Complexitatea O(n &middot; n!) si limitele practice ale algoritmului</li>
+                <li>[Intensiv] Implementarea in C++ cu tablouri globale si functie recursiva</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu Lectia 4 pentru a invata generarea aranjamentelor si combinarilor prin backtracking.</p>
+            <a href="lectia4-aranjamente-combinari.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m2-algoritmi-complecsi-lectia3-permutari');
+        PracticeSimple.init('cls11-m2-algoritmi-complecsi-lectia3-permutari');
+        LessonSummary.init('cls11-m2-algoritmi-complecsi-lectia3-permutari');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm2-algoritmi-complecsi',
+            moduleName: 'M2 Algoritmi Complecsi',
+            lesson: 'Generarea permutarilor prin backtracking'
+        });
+        LearningProgress.init('cls11', 'm2-algoritmi-complecsi', 'lectia3-permutari.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

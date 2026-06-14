@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 1: Lanturi, cicluri si drumuri | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8592; Modulul</a>
+        <a href="lectia2-parcurgere-dfs.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Lanturi, cicluri si drumuri intr-un graf</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- FRAME SECTION -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei invata sa descrii si sa clasifici traseele intr-un graf (lanturi, cicluri, drumuri), sa recunosti tipurile elementare si vei vedea cum se verifica aceste proprietati in cod Python si in C++ (intensiv).</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti corect un lant, un lant simplu si un lant elementar</li>
+                <li>Sa definesti un ciclu si un ciclu elementar</li>
+                <li>Sa distingi intre circuit eulerian si circuit hamiltonian</li>
+                <li>Sa definesti un drum si un circuit intr-un graf orientat</li>
+                <li>Sa calculezi lungimea unui lant / drum</li>
+                <li>Sa implementezi in Python verificarea unui lant elementar</li>
+                <li>Sa recunosti conditia Euler pentru existenta unui circuit eulerian</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- TRY SECTION -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare:</div>
+<p>Imagineaza-ti un oras cu 5 intersectii si 5 strazi: 1-2, 2-3, 2-4, 3-4, 4-5. Poti gasi un traseu care trece prin FIECARE strada exact o singura data si se intoarce la start? Dar un traseu care trece prin FIECARE intersectie exact o singura data?</p>
+<textarea id="tryAnswer" placeholder="Notite: care intersectii au un numar par de strazi?" rows="5"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+<div class="hint-content">
+<p>Traseul prin fiecare <strong>strada</strong> (muchie) o singura data = <strong>lant eulerian</strong>. Exista circuit eulerian daca toate intersectiile au grad par. Traseul prin fiecare <strong>intersectie</strong> o singura data = <strong>lant hamiltonian</strong>. Nu exista formula simpla pentru asta!</p>
+</div>
+</div>
+        </div>
+    </section>
+
+    <!-- ATOMS -->
+    <main id="atomic-content">
+
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Intr-un graf neorientat, un lant este o secventa de noduri in care:", "options": ["Toate nodurile sunt distincte", "Oricare doua noduri consecutive sunt legate printr-o muchie", "Nodul de start si nodul de final coincid", "Suma gradelor este para"], "correct": "b", "hint": "Un lant cere doar ca nodurile consecutive sa fie legate prin muchii. Nodurile pot repeta. Daca nodurile sunt toate distincte avem lant elementar."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Graful de lucru si definitia lantului</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    In aceasta lectie lucram cu graful neorientat <strong>G = (V, E)</strong>:<br>
+                    V = {1, 2, 3, 4, 5} &nbsp;&nbsp; E = {(1,2), (2,3), (2,4), (3,4), (4,5)}
+                </div>
+                <div class="example-box">
+<div class="example-title">Lista de adiacenta a grafului G:</div>
+<pre>1: [2]
+2: [1, 3, 4]
+3: [2, 4]
+4: [2, 3, 5]
+5: [4]</pre>
+<p>Gradele nodurilor: grad(1)=1, grad(2)=3, grad(3)=2, grad(4)=3, grad(5)=1</p>
+</div>
+                <div class="concept-def">
+                    <strong>Definitie &mdash; Lant:</strong> O secventa de noduri v<sub>0</sub>, v<sub>1</sub>, ..., v<sub>k</sub> astfel incat (v<sub>i</sub>, v<sub>i+1</sub>) &isin; E pentru orice i.<br>
+                    <strong>Lungimea</strong> = numarul de muchii = k.
+                </div>
+                <div class="example-box">
+<div class="example-title">Exemple:</div>
+<pre>L = [1, 2, 4, 3]  &#x2192; lant de lungime 3 (muchii: 1-2, 2-4, 4-3)
+S = [1, 2, 5]     &#x2192; NU e lant (muchia 2-5 nu exista in G)</pre>
+</div>
+                <p>Proprietate: <strong>suma gradelor</strong> = 2 &times; numarul de muchii.</p>
+                <pre><span class="code-comment"># Verificare: suma gradelor = 2 * nr_muchii</span>
+G = {<span class="code-number">1</span>:[<span class="code-number">2</span>], <span class="code-number">2</span>:[<span class="code-number">1</span>,<span class="code-number">3</span>,<span class="code-number">4</span>], <span class="code-number">3</span>:[<span class="code-number">2</span>,<span class="code-number">4</span>], <span class="code-number">4</span>:[<span class="code-number">2</span>,<span class="code-number">3</span>,<span class="code-number">5</span>], <span class="code-number">5</span>:[<span class="code-number">4</span>]}
+suma = <span class="code-function">sum</span>(<span class="code-function">len</span>(G[n]) <span class="code-keyword">for</span> n <span class="code-keyword">in</span> G)
+<span class="code-function">print</span>(<span class="code-string">f"Suma gradelor: {suma}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Numar muchii: {suma // 2}"</span>)
+lant = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">4</span>, <span class="code-number">3</span>]
+<span class="code-function">print</span>(<span class="code-string">f"Lungimea lantului {lant}: {len(lant) - 1}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Suma gradelor: 10
+Numar muchii: 5
+Lungimea lantului [1, 2, 4, 3]: 3</pre>
+</div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Care dintre urmatoarele este un lant ELEMENTAR in G?", "options": ["[1, 2, 3, 2, 4]", "[1, 2, 5]", "[1, 2, 4, 3]", "[3, 4, 2, 4]"], "correct": "c", "hint": "[1,2,3,2,4] repeta nodul 2; [1,2,5] muchia 2-5 lipseste; [3,4,2,4] repeta nodul 4. Doar [1,2,4,3] are noduri distincte si toate muchiile existente."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Lant simplu si lant elementar &mdash; definitii si cod</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <ul>
+                        <li><strong>Lant simplu:</strong> fiecare <em>muchie</em> apare cel mult o data</li>
+                        <li><strong>Lant elementar:</strong> fiecare <em>nod</em> apare cel mult o data (implica simplu)</li>
+                    </ul>
+                    Ierarhie: elementar &sube; simplu &sube; lant
+                </div>
+                <div class="example-box">
+<div class="example-title">Clasificare pe graful G:</div>
+<pre>L1 = [1, 2, 3, 4]    &#x2192; elementar (noduri distincte, toate muchii existente)
+L2 = [1, 2, 4, 3]    &#x2192; elementar
+L3 = [1, 2, 3, 2, 4] &#x2192; lant; simplu? NU (muchia 2-3 repetat); elementar? NU
+L4 = [1, 2, 5]       &#x2192; NU e lant (muchia 2-5 lipseste)</pre>
+</div>
+                <pre><span class="code-keyword">def</span> <span class="code-function">este_lant_elementar</span>(G, secventa):
+    <span class="code-comment"># Verifica ca nu se repeta noduri</span>
+    <span class="code-keyword">if</span> <span class="code-function">len</span>(secventa) != <span class="code-function">len</span>(<span class="code-function">set</span>(secventa)):
+        <span class="code-keyword">return</span> <span class="code-keyword">False</span>
+    <span class="code-comment"># Verifica ca exista muchie intre noduri consecutive</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-function">len</span>(secventa) - <span class="code-number">1</span>):
+        u, v = secventa[i], secventa[i+<span class="code-number">1</span>]
+        <span class="code-keyword">if</span> v <span class="code-keyword">not in</span> G[u]:
+            <span class="code-keyword">return</span> <span class="code-keyword">False</span>
+    <span class="code-keyword">return</span> <span class="code-keyword">True</span>
+
+lant = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">4</span>, <span class="code-number">3</span>]
+<span class="code-function">print</span>(<span class="code-string">f"Lant: {lant}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Lungime: {len(lant) - 1}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Este lant elementar: {este_lant_elementar(G, lant)}"</span>)
+lant2 = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">2</span>, <span class="code-number">4</span>]
+<span class="code-function">print</span>(<span class="code-string">f"Lant: {lant2}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Este lant elementar: {este_lant_elementar(G, lant2)}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Lant: [1, 2, 4, 3]
+Lungime: 3
+Este lant elementar: True
+Lant: [1, 2, 3, 2, 4]
+Este lant elementar: False</pre>
+</div>
+                <p><strong>Complexitate:</strong> O(n &times; d) unde n = lungimea secventei, d = gradul maxim al nodurilor.</p>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Care este lungimea MINIMA a unui ciclu elementar intr-un graf neorientat simplu?", "options": ["1", "2", "3", "4"], "correct": "c", "hint": "Un ciclu elementar: start = final, nodurile interioare distincte si diferite de start. Cu 3 noduri: A-B-C-A (lungime 3). Cu 2 ar insemna A-B-A cu muchia AB parcursa de doua ori deci nu e simplu."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Cicluri in graful neorientat</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Ciclu:</strong> lant cu v<sub>0</sub> = v<sub>k</sub>, k &ge; 1.<br>
+                    <strong>Ciclu simplu:</strong> muchiile nu se repeta.<br>
+                    <strong>Ciclu elementar:</strong> nodurile interioare distincte si diferite de v<sub>0</sub>. Lungime minima: 3.
+                </div>
+                <div class="example-box">
+<div class="example-title">Cicluri in G (cu muchia aditionala 1-5):</div>
+<pre>C1 = [1, 2, 3, 4, 5, 1] &#x2192; ciclu elementar, lungime 5
+C2 = [2, 3, 4, 2]       &#x2192; ciclu elementar, lungime 3
+C3 = [2, 4, 3, 2]       &#x2192; ciclu elementar, lungime 3 (sens invers)</pre>
+</div>
+                <pre><span class="code-comment"># Graful G extins cu muchia 1-5</span>
+G2 = {<span class="code-number">1</span>:[<span class="code-number">2</span>,<span class="code-number">5</span>], <span class="code-number">2</span>:[<span class="code-number">1</span>,<span class="code-number">3</span>,<span class="code-number">4</span>], <span class="code-number">3</span>:[<span class="code-number">2</span>,<span class="code-number">4</span>], <span class="code-number">4</span>:[<span class="code-number">2</span>,<span class="code-number">3</span>,<span class="code-number">5</span>], <span class="code-number">5</span>:[<span class="code-number">1</span>,<span class="code-number">4</span>]}
+
+<span class="code-keyword">def</span> <span class="code-function">este_ciclu_elementar</span>(G, s):
+    <span class="code-keyword">if</span> <span class="code-function">len</span>(s) &lt; <span class="code-number">3</span>: <span class="code-keyword">return</span> <span class="code-keyword">False</span>
+    <span class="code-keyword">if</span> s[<span class="code-number">0</span>] != s[-<span class="code-number">1</span>]: <span class="code-keyword">return</span> <span class="code-keyword">False</span>
+    interior = s[:-<span class="code-number">1</span>]
+    <span class="code-keyword">if</span> <span class="code-function">len</span>(interior) != <span class="code-function">len</span>(<span class="code-function">set</span>(interior)): <span class="code-keyword">return</span> <span class="code-keyword">False</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-function">len</span>(interior) - <span class="code-number">1</span>):
+        <span class="code-keyword">if</span> interior[i+<span class="code-number">1</span>] <span class="code-keyword">not in</span> G[interior[i]]: <span class="code-keyword">return</span> <span class="code-keyword">False</span>
+    <span class="code-keyword">if</span> interior[<span class="code-number">0</span>] <span class="code-keyword">not in</span> G[interior[-<span class="code-number">1</span>]]: <span class="code-keyword">return</span> <span class="code-keyword">False</span>
+    <span class="code-keyword">return</span> <span class="code-keyword">True</span>
+
+c1 = [<span class="code-number">1</span>,<span class="code-number">2</span>,<span class="code-number">3</span>,<span class="code-number">4</span>,<span class="code-number">5</span>,<span class="code-number">1</span>]
+c2 = [<span class="code-number">2</span>,<span class="code-number">3</span>,<span class="code-number">4</span>,<span class="code-number">2</span>]
+<span class="code-function">print</span>(<span class="code-string">f"C1={c1}: ciclu elementar={este_ciclu_elementar(G2,c1)}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"C2={c2}: ciclu elementar={este_ciclu_elementar(G2,c2)}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>C1=[1, 2, 3, 4, 5, 1]: ciclu elementar=True
+C2=[2, 3, 4, 2]: ciclu elementar=True</pre>
+</div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Teorema lui Euler (1736): un graf conex are circuit eulerian daca si numai daca:", "options": ["Are un numar par de noduri", "Toate nodurile au grad par", "Nu contine cicluri de lungime impara", "Numarul de muchii este par"], "correct": "b", "hint": "Teorema Euler: circuit eulerian in graf conex daca si numai daca TOATE nodurile au grad par. Triunghiul C3 are toate gradele = 2 (par) deci are circuit eulerian 1-2-3-1."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Circuit eulerian si circuit hamiltonian</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Lant eulerian:</strong> trece prin fiecare <em>muchie</em> exact o data.<br>
+                    <strong>Circuit eulerian:</strong> lant eulerian inchis.<br>
+                    <strong>Teorema Euler (1736):</strong> Graf conex are circuit eulerian &hArr; toate gradele sunt <em>pare</em>.<br><br>
+                    <strong>Lant hamiltonian:</strong> trece prin fiecare <em>nod</em> exact o data.<br>
+                    <strong>Circuit hamiltonian:</strong> lant hamiltonian inchis.<br>
+                    <strong>Atentie:</strong> nu exista conditie simpla &mdash; problema este <em>NP-completa</em>.
+                </div>
+                <pre><span class="code-keyword">def</span> <span class="code-function">grad</span>(G, nod): <span class="code-keyword">return</span> <span class="code-function">len</span>(G[nod])
+
+<span class="code-keyword">def</span> <span class="code-function">are_circuit_eulerian</span>(G):
+    <span class="code-keyword">for</span> nod <span class="code-keyword">in</span> G:
+        <span class="code-keyword">if</span> <span class="code-function">grad</span>(G, nod) % <span class="code-number">2</span> != <span class="code-number">0</span>:
+            <span class="code-keyword">return</span> <span class="code-keyword">False</span>
+    <span class="code-keyword">return</span> <span class="code-keyword">True</span>
+
+G1 = {<span class="code-number">1</span>:[<span class="code-number">2</span>,<span class="code-number">3</span>], <span class="code-number">2</span>:[<span class="code-number">1</span>,<span class="code-number">3</span>], <span class="code-number">3</span>:[<span class="code-number">1</span>,<span class="code-number">2</span>]}
+G2 = {<span class="code-number">1</span>:[<span class="code-number">2</span>,<span class="code-number">3</span>,<span class="code-number">4</span>], <span class="code-number">2</span>:[<span class="code-number">1</span>,<span class="code-number">3</span>], <span class="code-number">3</span>:[<span class="code-number">1</span>,<span class="code-number">2</span>,<span class="code-number">4</span>], <span class="code-number">4</span>:[<span class="code-number">1</span>,<span class="code-number">3</span>]}
+<span class="code-function">print</span>(<span class="code-string">f"G1 graduri: {[grad(G1,n) for n in G1]}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"G1 circuit eulerian: {are_circuit_eulerian(G1)}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"G2 graduri: {[grad(G2,n) for n in G2]}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"G2 circuit eulerian: {are_circuit_eulerian(G2)}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>G1 graduri: [2, 2, 2]
+G1 circuit eulerian: True
+G2 graduri: [3, 2, 3, 2]
+G2 circuit eulerian: False</pre>
+</div>
+                <p>Circuit hamiltonian prin <em>backtracking</em> (K4):</p>
+                <pre>GH = {<span class="code-number">1</span>:[<span class="code-number">2</span>,<span class="code-number">3</span>,<span class="code-number">4</span>], <span class="code-number">2</span>:[<span class="code-number">1</span>,<span class="code-number">3</span>,<span class="code-number">4</span>], <span class="code-number">3</span>:[<span class="code-number">1</span>,<span class="code-number">2</span>,<span class="code-number">4</span>], <span class="code-number">4</span>:[<span class="code-number">1</span>,<span class="code-number">2</span>,<span class="code-number">3</span>]}; n=<span class="code-number">4</span>
+
+<span class="code-keyword">def</span> <span class="code-function">hamiltonian</span>(G, nod, vizitat, drum, n):
+    <span class="code-keyword">if</span> <span class="code-function">len</span>(drum) == n: <span class="code-keyword">return</span> drum[<span class="code-number">0</span>] <span class="code-keyword">in</span> G[drum[-<span class="code-number">1</span>]]
+    <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> G[nod]:
+        <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> vizitat:
+            vizitat.<span class="code-function">add</span>(vecin); drum.<span class="code-function">append</span>(vecin)
+            <span class="code-keyword">if</span> <span class="code-function">hamiltonian</span>(G, vecin, vizitat, drum, n): <span class="code-keyword">return</span> <span class="code-keyword">True</span>
+            drum.<span class="code-function">pop</span>(); vizitat.<span class="code-function">remove</span>(vecin)
+    <span class="code-keyword">return</span> <span class="code-keyword">False</span>
+
+drum=[<span class="code-number">1</span>]; vizitat={<span class="code-number">1</span>}
+<span class="code-keyword">if</span> <span class="code-function">hamiltonian</span>(GH,<span class="code-number">1</span>,vizitat,drum,n):
+    drum.<span class="code-function">append</span>(drum[<span class="code-number">0</span>]); <span class="code-function">print</span>(<span class="code-string">f"Circuit hamiltonian: {drum}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Circuit hamiltonian: [1, 2, 3, 4, 1]</pre>
+</div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-5" data-quiz='[{"question": "In GO = {1:[2,3], 2:[4], 3:[4,5], 4:[5], 5:[]}, este [1,2,3,5] un drum valid?", "options": ["Da, deoarece 1,2,3,5 sunt noduri distincte", "Nu, deoarece arcul 2->3 nu exista in GO", "Da, deoarece 3 si 5 sunt adiacente", "Nu, deoarece GO nu are arce de la 2"], "correct": "b", "hint": "In GO, nodul 2 are succesorii [4] deci 2->4 exista dar 2->3 NU exista. Secventa [1,2,3,5] esueaza la pasul 2->3. Drumuri valide: [1,2,4,5] sau [1,3,5]."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Drumuri si circuite in graful orientat</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Intr-un <strong>graf orientat</strong> (digraf), arcul (u,v) merge <em>doar</em> de la u la v.<br>
+                    <strong>Drum:</strong> secventa v<sub>0</sub>,...,v<sub>k</sub> cu arcul (v<sub>i</sub>,v<sub>i+1</sub>) in digraf pentru orice i.<br>
+                    <strong>Drum elementar:</strong> nodurile sunt distincte.<br>
+                    <strong>Circuit:</strong> drum inchis (v<sub>0</sub>=v<sub>k</sub>).
+                </div>
+                <div class="example-box">
+<div class="example-title">Digraful GO: arce 1-&gt;2, 1-&gt;3, 2-&gt;4, 3-&gt;4, 3-&gt;5, 4-&gt;5</div>
+<pre>GO = {1:[2,3], 2:[4], 3:[4,5], 4:[5], 5:[]}</pre>
+</div>
+                <pre><span class="code-comment"># Digraf - lista de succesori</span>
+GO = {<span class="code-number">1</span>:[<span class="code-number">2</span>,<span class="code-number">3</span>], <span class="code-number">2</span>:[<span class="code-number">4</span>], <span class="code-number">3</span>:[<span class="code-number">4</span>,<span class="code-number">5</span>], <span class="code-number">4</span>:[<span class="code-number">5</span>], <span class="code-number">5</span>:[]}
+
+<span class="code-keyword">def</span> <span class="code-function">este_drum_elementar</span>(GO, s):
+    <span class="code-keyword">if</span> <span class="code-function">len</span>(s) != <span class="code-function">len</span>(<span class="code-function">set</span>(s)): <span class="code-keyword">return</span> <span class="code-keyword">False</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-function">len</span>(s) - <span class="code-number">1</span>):
+        <span class="code-keyword">if</span> s[i+<span class="code-number">1</span>] <span class="code-keyword">not in</span> GO[s[i]]: <span class="code-keyword">return</span> <span class="code-keyword">False</span>
+    <span class="code-keyword">return</span> <span class="code-keyword">True</span>
+
+d1=[<span class="code-number">1</span>,<span class="code-number">2</span>,<span class="code-number">4</span>,<span class="code-number">5</span>]; d2=[<span class="code-number">1</span>,<span class="code-number">3</span>,<span class="code-number">5</span>]; d3=[<span class="code-number">1</span>,<span class="code-number">2</span>,<span class="code-number">3</span>,<span class="code-number">5</span>]
+<span class="code-function">print</span>(<span class="code-string">f"D1={d1}: drum elementar={este_drum_elementar(GO,d1)}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"D2={d2}: drum elementar={este_drum_elementar(GO,d2)}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"D3={d3}: drum elementar={este_drum_elementar(GO,d3)}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>D1=[1, 2, 4, 5]: drum elementar=True
+D2=[1, 3, 5]: drum elementar=True
+D3=[1, 2, 3, 5]: drum elementar=False</pre>
+</div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++ cu vector<int> G[6], ce structura STL verifica rapid ca nodurile unui vector sunt unice?", "options": ["queue<int>", "set<int>", "stack<int>", "deque<int>"], "correct": "b", "hint": "set<int> din STL stocheaza elementele unice. Daca set(s).size() != s.size() atunci exista duplicate. Exact echivalentul Python: len(s) != len(set(s))."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Implementare C++ cu liste de adiacenta <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+<p>In C++ folosim <code>vector&lt;int&gt; G[NMAX]</code> pentru lista de adiacenta. Logica este identica cu Python; diferentele sunt tipuri explicite, iteratori STL si <code>set&lt;int&gt;</code> pentru noduri unice.</p>
+</div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;set&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+vector&lt;<span class="code-keyword">int</span>&gt; G[<span class="code-number">6</span>] = {
+    {},                     <span class="code-comment">// 0 neutilizat</span>
+    {<span class="code-number">2</span>},                   <span class="code-comment">// nod 1</span>
+    {<span class="code-number">1</span>,<span class="code-number">3</span>,<span class="code-number">4</span>},             <span class="code-comment">// nod 2</span>
+    {<span class="code-number">2</span>,<span class="code-number">4</span>},               <span class="code-comment">// nod 3</span>
+    {<span class="code-number">2</span>,<span class="code-number">3</span>,<span class="code-number">5</span>},             <span class="code-comment">// nod 4</span>
+    {<span class="code-number">4</span>}                   <span class="code-comment">// nod 5</span>
+};
+
+<span class="code-keyword">bool</span> <span class="code-function">existaMuchie</span>(<span class="code-keyword">int</span> u, <span class="code-keyword">int</span> v) {
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : G[u])
+        <span class="code-keyword">if</span> (x == v) <span class="code-keyword">return true</span>;
+    <span class="code-keyword">return false</span>;
+}
+
+<span class="code-keyword">bool</span> <span class="code-function">esteLantElementar</span>(vector&lt;<span class="code-keyword">int</span>&gt;&amp; s) {
+    set&lt;<span class="code-keyword">int</span>&gt; vazut(s.begin(), s.end());
+    <span class="code-keyword">if</span> ((<span class="code-keyword">int</span>)vazut.<span class="code-function">size</span>() != (<span class="code-keyword">int</span>)s.<span class="code-function">size</span>()) <span class="code-keyword">return false</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i=<span class="code-number">0</span>; i&lt;(<span class="code-keyword">int</span>)s.<span class="code-function">size</span>()-<span class="code-number">1</span>; i++)
+        <span class="code-keyword">if</span> (!<span class="code-function">existaMuchie</span>(s[i],s[i+<span class="code-number">1</span>])) <span class="code-keyword">return false</span>;
+    <span class="code-keyword">return true</span>;
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    vector&lt;<span class="code-keyword">int</span>&gt; l1={<span class="code-number">1</span>,<span class="code-number">2</span>,<span class="code-number">4</span>,<span class="code-number">3</span>}, l2={<span class="code-number">1</span>,<span class="code-number">2</span>,<span class="code-number">3</span>,<span class="code-number">2</span>,<span class="code-number">4</span>};
+    cout&lt;&lt;<span class="code-string">"Lant [1,2,4,3] elementar: "</span>&lt;&lt;(<span class="code-function">esteLantElementar</span>(l1)?<span class="code-string">"DA"</span>:<span class="code-string">"NU"</span>)&lt;&lt;endl;
+    cout&lt;&lt;<span class="code-string">"Lungime: "</span>&lt;&lt;l1.<span class="code-function">size</span>()-<span class="code-number">1</span>&lt;&lt;endl;
+    cout&lt;&lt;<span class="code-string">"Lant [1,2,3,2,4] elementar: "</span>&lt;&lt;(<span class="code-function">esteLantElementar</span>(l2)?<span class="code-string">"DA"</span>:<span class="code-string">"NU"</span>)&lt;&lt;endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>Lant [1,2,4,3] elementar: DA
+Lungime: 3
+Lant [1,2,3,2,4] elementar: NU</pre>
+</div>
+                <p>Aceeasi logica in Python si C++ &mdash; structura algoritmului nu depinde de limbaj.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- PRACTICE -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Clasifica secventele</h3>
+            <p>Fie G = {1:[2], 2:[1,3,4], 3:[2,4], 4:[2,3,5], 5:[4]}. Clasifica fiecare secventa (lant / nu-e-lant; simplu; elementar):</p>
+            <ul>
+                <li>a) [1, 2, 4, 5]</li>
+                <li>b) [1, 2, 3, 4, 2]</li>
+                <li>c) [3, 4, 2, 1]</li>
+                <li>d) [1, 3, 4]</li>
+            </ul>
+            <p><em>Raspuns: a) lant elementar (lung. 3); b) lant simplu, NU elementar (nodul 2 repetat); c) lant elementar (lung. 3); d) NU e lant (muchia 1-3 nu exista).</em></p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Conditia Euler</h3>
+            <p>Determina daca urmatoarele grafuri au circuit eulerian si justifica prin gradele nodurilor:</p>
+            <ul>
+                <li>a) C<sub>4</sub>: {(1,2),(2,3),(3,4),(4,1)}</li>
+                <li>b) K<sub>4</sub> (complet, 4 noduri)</li>
+                <li>c) Graful G din lectie (5 noduri, 5 muchii)</li>
+            </ul>
+            <p><em>Indiciu: a) DA (toate grade = 2); b) DA (toate grade = 3 &mdash; par); c) NU (grad(1)=1, grad(5)=1 &mdash; impare).</em></p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Toate lanturile elementare</h3>
+            <p>Scrie o functie Python care gaseste <strong>toate</strong> lanturile elementare de la nodul 1 la nodul 5 in G, folosind backtracking. Afiseaza lanturile si lungimile lor.</p>
+            <p><em>Rezultat asteptat: [1,2,4,5] (lung. 3) si [1,2,3,4,5] (lung. 4) &mdash; doua lanturi elementare distincte.</em></p>
+        </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Lant = secventa noduri cu muchii consecutive existente; lungime = numarul de muchii</li>
+                <li>Lant simplu: muchii neduplicate; lant elementar: noduri neduplicate (implica simplu)</li>
+                <li>Ciclu = lant inchis; ciclu elementar: noduri interioare distincte; lungime minima 3</li>
+                <li>Circuit eulerian: trece prin fiecare muchie exact o data &mdash; exista &hArr; toate gradele pare (Euler, 1736)</li>
+                <li>Circuit hamiltonian: trece prin fiecare nod exact o data &mdash; NP-complet, fara conditie simpla</li>
+                <li>Drum / circuit in graful orientat: arcele au directie obligatorie</li>
+                <li>Verificare lant elementar: O(n &times; d) cu lista de adiacenta</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu parcurgerea DFS (Depth-First Search) &mdash; algoritmul fundamental de explorare in adancime a unui graf.</p>
+            <a href="lectia2-parcurgere-dfs.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m3-grafuri-lectia1-lanturi-cicluri');
+        PracticeSimple.init('cls11-m3-grafuri-lectia1-lanturi-cicluri');
+        LessonSummary.init('cls11-m3-grafuri-lectia1-lanturi-cicluri');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm3-grafuri',
+            moduleName: 'M3 Grafuri',
+            lesson: 'Lanturi, cicluri si drumuri'
+        });
+        LearningProgress.init('cls11', 'm3-grafuri', 'lectia1-lanturi-cicluri.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

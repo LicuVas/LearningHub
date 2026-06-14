@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 5: Arbori | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia4-conexitate.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 4</a>
+        <a href="lectia6-aplicatii-grafuri.html" class="nav-btn" title="Lectia urmatoare">Lectia 6 &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Arbori: definitie, proprietati, arbore binar</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei stapani structura de date arbore — cel mai important model ierarhic din informatica — si vei invata sa implementezi si sa parcurgi arbori generali si arbori binari de cautare.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti arborele si sa enunti proprietatile sale esentiale (n noduri, n-1 muchii, conexitate, aciclic)</li>
+                <li>Sa identifici terminologia: radacina, parinte, fiu, frunza, nivel, inaltime, subarbore</li>
+                <li>Sa parcurgi un arbore general in latime (BFS) si in adancime (DFS)</li>
+                <li>Sa definesti arborele binar si cele trei parcurgeri: inordine, preordine, postordine</li>
+                <li>Sa implementezi un Arbore Binar de Cautare (BST) cu inserare si cautare</li>
+                <li>Sa rezolvi exercitii de tip Bacalaureat cu arbori si proprietatile lor</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Gandeste-te la o organigrama (ex: directorul unei scoli, cu 3 directori adjuncti, fiecare avand 2-4 profesori in subordine). Desenati relatia ierarhica.</p>
+                <p>Intrebari de reflectie: Cate relatii (muchii) exista daca sunt 10 persoane? Poate un angajat sa aiba doi sefi directi?</p>
+                <textarea id="tryAnswer" placeholder="Am 10 persoane si... relatii..." rows="4"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>O organigrama cu <strong>n persoane</strong> are exact <strong>n-1 relatii</strong> (fiecare persoana, exceptand directorul, are exact un sef direct). Aceasta este proprietatea fundamentala a arborilor!</p>
+                    <p>Un angajat nu poate avea doi sefi directi — asta ar crea un ciclu sau ar face structura sa nu mai fie un arbore.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Definitie si proprietati -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Un arbore cu 8 noduri are exact:", "options": ["8 muchii", "7 muchii", "6 muchii", "Poate varia"], "correct": "b", "hint": "Proprietatea fundamentala: un arbore cu n noduri are intotdeauna exact n-1 muchii. Pentru n=8, avem 8-1=7 muchii."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Definitia arborelui si proprietatile sale</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un <strong>arbore</strong> este un graf neorientat conex si aciclic. Echivalent, un arbore cu <em>n</em> noduri are exact <em>n-1</em> muchii.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Proprietatile esentiale ale unui arbore:</div>
+                    <ul>
+                        <li><strong>Conexitate:</strong> intre oricare doua noduri exista exact un lant</li>
+                        <li><strong>Aciclic:</strong> nu contine cicluri (nu exista lant de la un nod la el insusi)</li>
+                        <li><strong>n noduri =&gt; n-1 muchii</strong> (proprietate numerica definitorie)</li>
+                        <li><strong>Eliminarea oricarei muchii</strong> deconecteaza arborele in doua componente</li>
+                        <li><strong>Adaugarea oricarei muchii</strong> creeaza exact un ciclu</li>
+                    </ul>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Verificare in Python — conditia n-1 muchii:</div>
+                    <pre><span class="code-comment"># Un arbore cu n noduri are exact n-1 muchii</span>
+n_noduri = <span class="code-number">5</span>
+muchii = [(<span class="code-number">1</span>,<span class="code-number">2</span>), (<span class="code-number">1</span>,<span class="code-number">3</span>), (<span class="code-number">2</span>,<span class="code-number">4</span>), (<span class="code-number">2</span>,<span class="code-number">5</span>)]
+
+<span class="code-function">print</span>(<span class="code-string">f"Graf cu {n_noduri} noduri si {len(muchii)} muchii:"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"  Este arbore? {len(muchii) == n_noduri - 1}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"  Proprietate: n={n_noduri} noduri =&gt; n-1={n_noduri-1} muchii (exact {len(muchii)})"</span>)</pre>
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Graf cu 5 noduri si 4 muchii:
+  Este arbore? True
+  Proprietate: n=5 noduri =&gt; n-1=4 muchii (exact 4)</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Reprezentare vizuala — arbore cu 6 noduri:</div>
+                    <pre>        1          &lt;-- radacina (nivel 0)
+       / \
+      2   3        &lt;-- nivel 1
+     / \   \
+    4   5   6      &lt;-- nivel 2 (frunze)
+
+Noduri: 6   Muchii: 5 = 6-1  ✓</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Terminologie -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "O frunza este un nod cu:", "options": ["Cel putin un fiu", "Exact doi fii", "Niciun fiu (grad 1 intr-un arbore cu radacina)", "Cel putin doi parinti"], "correct": "c", "hint": "O frunza este un nod terminal — nu are niciun descendent (fiu). Intr-un arbore cu radacina, are gradul 1 (legat de un singur alt nod — parintele sau)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Terminologia arborelui cu radacina</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un <strong>arbore cu radacina</strong> (rooted tree) este un arbore in care un nod special — <strong>radacina</strong> — defineste ierarhia. Toate muchiile devin orientate implicit: dinspre parinte spre fii.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Termeni esentiali (cu exemplu pe arborele de mai jos):</div>
+                    <pre>        1          Radacina = 1
+       / \
+      2   3        Parinte(2)=1, Parinte(3)=1, Parinte(6)=3
+     / \   \
+    4   5   6      Frunze = {4, 5, 6}  (grad 1, fara fii)
+
+Nivel(1)=0, Nivel(2)=Nivel(3)=1, Nivel(4)=Nivel(5)=Nivel(6)=2
+Inaltime arbore = max nivel frunza = 2
+Subarbore(2) = nodul 2 impreuna cu 4 si 5</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Tabel de terminologie:</div>
+                    <pre>Termen        | Definitie
+--------------+------------------------------------------
+Radacina      | Nodul fara parinte (nivelul 0)
+Parinte       | Nodul direct superior in ierarhie
+Fiu (copil)   | Nod direct inferior unui parinte
+Frunza        | Nod fara fii (nod terminal)
+Nod intern    | Nod cu cel putin un fiu (non-frunza)
+Nivel         | Distanta (nr. muchii) de la radacina
+Inaltime (h)  | Nivelul maxim al unei frunze
+Subarbore     | Un nod + toti descendentii sai
+Adancime nod  | Nivelul nodului (sinonim cu nivel)</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Calcul nivel si parinte (Python):</div>
+                    <pre><span class="code-comment"># BFS pe arbore pentru nivel si parinte</span>
+<span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+adj = {<span class="code-number">1</span>:[<span class="code-number">2</span>,<span class="code-number">3</span>], <span class="code-number">2</span>:[<span class="code-number">1</span>,<span class="code-number">4</span>,<span class="code-number">5</span>], <span class="code-number">3</span>:[<span class="code-number">1</span>,<span class="code-number">6</span>],
+       <span class="code-number">4</span>:[<span class="code-number">2</span>], <span class="code-number">5</span>:[<span class="code-number">2</span>], <span class="code-number">6</span>:[<span class="code-number">3</span>]}
+nivel = {<span class="code-number">1</span>: <span class="code-number">0</span>}
+parinte = {<span class="code-number">1</span>: <span class="code-string">"radacina"</span>}
+coada = deque([<span class="code-number">1</span>])
+vizitat = {<span class="code-number">1</span>}
+
+<span class="code-keyword">while</span> coada:
+    nod = coada.popleft()
+    <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> adj[nod]:
+        <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> vizitat:
+            vizitat.add(vecin)
+            nivel[vecin] = nivel[nod] + <span class="code-number">1</span>
+            parinte[vecin] = nod
+            coada.append(vecin)
+
+<span class="code-keyword">for</span> nod <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, <span class="code-number">7</span>):
+    <span class="code-function">print</span>(<span class="code-string">f"  Nod {nod}: nivel={nivel[nod]}, parinte={parinte[nod]}"</span>)</pre>
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>  Nod 1: nivel=0, parinte=radacina
+  Nod 2: nivel=1, parinte=1
+  Nod 3: nivel=1, parinte=1
+  Nod 4: nivel=2, parinte=2
+  Nod 5: nivel=2, parinte=2
+  Nod 6: nivel=2, parinte=3</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Parcurgeri DFS/BFS arbore general -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "La parcurgerea DFS a arborelui 1-{2,3}, 2-{4,5}, 3-{6} cu radacina 1 (vecini in ordine crescatoare), care este ordinea vizitarii?", "options": ["1, 2, 3, 4, 5, 6", "1, 2, 4, 5, 3, 6", "1, 3, 6, 2, 4, 5", "4, 5, 2, 6, 3, 1"], "correct": "b", "hint": "DFS merge in adancime: 1 -> merge pe primul vecin (2) -> merge pe primul vecin al lui 2 (4) -> 4 e frunza, back -> 5 -> back la 2 -> back la 1 -> 3 -> 6. Ordinea: 1,2,4,5,3,6."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Parcurgerea arborelui — DFS si BFS</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Algoritmii de parcurgere a grafurilor (DFS si BFS) se aplica direct pe arbori. Pe un arbore, DFS genereaza o parcurgere <strong>in adancime</strong> (ramura completa inainte de alta ramura), iar BFS genereaza o parcurgere <strong>nivel cu nivel</strong>.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">DFS pe arbore (Python) — O(n+m) = O(n):</div>
+                    <pre><span class="code-comment"># DFS recursiv pe arbore</span>
+<span class="code-keyword">def</span> <span class="code-function">dfs_arbore</span>(adj, nod, vizitat, ordine):
+    vizitat[nod] = <span class="code-keyword">True</span>
+    ordine.append(nod)
+    <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> <span class="code-function">sorted</span>(adj.get(nod, [])):
+        <span class="code-keyword">if not</span> vizitat[vecin]:
+            <span class="code-function">dfs_arbore</span>(adj, vecin, vizitat, ordine)
+
+adj = {<span class="code-number">1</span>:[<span class="code-number">2</span>,<span class="code-number">3</span>], <span class="code-number">2</span>:[<span class="code-number">1</span>,<span class="code-number">4</span>,<span class="code-number">5</span>], <span class="code-number">3</span>:[<span class="code-number">1</span>,<span class="code-number">6</span>],
+       <span class="code-number">4</span>:[<span class="code-number">2</span>], <span class="code-number">5</span>:[<span class="code-number">2</span>], <span class="code-number">6</span>:[<span class="code-number">3</span>]}
+vizitat = [<span class="code-keyword">False</span>] * <span class="code-number">7</span>
+ordine = []
+<span class="code-function">dfs_arbore</span>(adj, <span class="code-number">1</span>, vizitat, ordine)
+<span class="code-function">print</span>(<span class="code-string">f"DFS pe arbore (radacina=1):"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Ordine vizitare: {ordine}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Toate 6 noduri vizitate: {all(vizitat[1:])}"</span>)</pre>
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>DFS pe arbore (radacina=1):
+Ordine vizitare: [1, 2, 4, 5, 3, 6]
+Toate 6 noduri vizitate: True</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Comparatie DFS vs BFS pe acelasi arbore:</div>
+                    <pre>Arbore:   1 - 2 - 4
+              |   \- 5
+              \- 3 - 6
+
+DFS (adancime):  1, 2, 4, 5, 3, 6   (ramura stanga completa, apoi dreapta)
+BFS (latime):    1, 2, 3, 4, 5, 6   (nivel 0, nivel 1, nivel 2)
+
+Pe un arbore, BFS = parcurgere pe niveluri (level-order traversal)
+Pe un arbore, DFS = parcurgere preordine (R-S-D) daca vecinii sunt sortati</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Arbore binar si parcurgeri -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Parcurgerea inordine (S-R-D) a unui Arbore Binar de Cautare produce valorile:", "options": ["In ordinea inserarii", "Sortat descrescator", "Sortat crescator", "In ordine aleatorie"], "correct": "c", "hint": "Proprietatea BST: tot subarborele stang are valori mai mici decat radacina, tot subarborele drept are valori mai mari. Parcurgerea inordine (Stang-Radacina-Drept) viziteaza valorile in ordine crescatoare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Arborele binar si parcurgerile sale</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un <strong>arbore binar</strong> este un arbore cu radacina in care fiecare nod are <em>cel mult doi fii</em>: <strong>fiul stang</strong> si <strong>fiul drept</strong>. Un <strong>Arbore Binar de Cautare (BST)</strong> adauga proprietatea: valorile din subarborele stang &lt; radacina &lt; valorile din subarborele drept.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cele trei parcurgeri ale arborelui binar:</div>
+                    <pre>Cele trei parcurgeri:
+  Inordine   (S-R-D): Stang -> Radacina -> Drept
+  Preordine  (R-S-D): Radacina -> Stang -> Drept
+  Postordine (S-D-R): Stang -> Drept -> Radacina
+
+BST cu valorile 5, 3, 7, 1, 4, 6, 8:
+
+        5
+       / \
+      3   7
+     / \ / \
+    1  4 6  8
+
+Inordine:   1, 3, 4, 5, 6, 7, 8  (sortat crescator!)
+Preordine:  5, 3, 1, 4, 7, 6, 8  (radacina prima)
+Postordine: 1, 4, 3, 6, 8, 7, 5  (radacina ultima)</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Implementare BST in Python — inserare si parcurgeri:</div>
+                    <pre><span class="code-keyword">class</span> <span class="code-function">Nod</span>:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(self, val):
+        self.val = val
+        self.stang = <span class="code-keyword">None</span>
+        self.drept = <span class="code-keyword">None</span>
+
+<span class="code-keyword">def</span> <span class="code-function">insereaza</span>(radacina, val):
+    <span class="code-keyword">if</span> radacina <span class="code-keyword">is None</span>:
+        <span class="code-keyword">return</span> <span class="code-function">Nod</span>(val)
+    <span class="code-keyword">if</span> val &lt; radacina.val:
+        radacina.stang = <span class="code-function">insereaza</span>(radacina.stang, val)
+    <span class="code-keyword">else</span>:
+        radacina.drept = <span class="code-function">insereaza</span>(radacina.drept, val)
+    <span class="code-keyword">return</span> radacina
+
+<span class="code-keyword">def</span> <span class="code-function">inordine</span>(nod, rezultat):
+    <span class="code-keyword">if</span> nod <span class="code-keyword">is None</span>: <span class="code-keyword">return</span>
+    <span class="code-function">inordine</span>(nod.stang, rezultat)
+    rezultat.append(nod.val)
+    <span class="code-function">inordine</span>(nod.drept, rezultat)
+
+<span class="code-keyword">def</span> <span class="code-function">preordine</span>(nod, rezultat):
+    <span class="code-keyword">if</span> nod <span class="code-keyword">is None</span>: <span class="code-keyword">return</span>
+    rezultat.append(nod.val)
+    <span class="code-function">preordine</span>(nod.stang, rezultat)
+    <span class="code-function">preordine</span>(nod.drept, rezultat)
+
+<span class="code-keyword">def</span> <span class="code-function">postordine</span>(nod, rezultat):
+    <span class="code-keyword">if</span> nod <span class="code-keyword">is None</span>: <span class="code-keyword">return</span>
+    <span class="code-function">postordine</span>(nod.stang, rezultat)
+    <span class="code-function">postordine</span>(nod.drept, rezultat)
+    rezultat.append(nod.val)
+
+valori = [<span class="code-number">5</span>, <span class="code-number">3</span>, <span class="code-number">7</span>, <span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">6</span>, <span class="code-number">8</span>]
+radacina = <span class="code-keyword">None</span>
+<span class="code-keyword">for</span> v <span class="code-keyword">in</span> valori:
+    radacina = <span class="code-function">insereaza</span>(radacina, v)
+
+rez_in, rez_pre, rez_post = [], [], []
+<span class="code-function">inordine</span>(radacina, rez_in)
+<span class="code-function">preordine</span>(radacina, rez_pre)
+<span class="code-function">postordine</span>(radacina, rez_post)
+
+<span class="code-function">print</span>(<span class="code-string">f"Arbore Binar de Cautare (BST) cu valorile: {valori}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Parcurgere inordine  (S-R-D): {rez_in}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Parcurgere preordine (R-S-D): {rez_pre}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Parcurgere postordine(S-D-R): {rez_post}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Observatie: inordine produce valorile sortate crescator!"</span>)</pre>
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Arbore Binar de Cautare (BST) cu valorile: [5, 3, 7, 1, 4, 6, 8]
+Parcurgere inordine  (S-R-D): [1, 3, 4, 5, 6, 7, 8]
+Parcurgere preordine (R-S-D): [5, 3, 1, 4, 7, 6, 8]
+Parcurgere postordine(S-D-R): [1, 4, 3, 6, 8, 7, 5]
+Observatie: inordine produce valorile sortate crescator!</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Inaltimea si proprietati cantitative -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Care este inaltimea BST-ului cu valorile 5, 3, 7, 1, 4, 6, 8?", "options": ["h = 1", "h = 2", "h = 3", "h = 4"], "correct": "b", "hint": "Inaltimea = nivelul maxim al unei frunze. Radacina (5) e la nivel 0, copiii sai (3,7) la nivel 1, nepotii (1,4,6,8) la nivel 2. Inaltimea = 2."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Inaltimea arborelui binar si calcul recursiv</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Inaltimea</strong> unui arbore binar este lungimea celui mai lung lant de la radacina la o frunza. Un arbore cu un singur nod are inaltimea 0. Arborele vid are inaltimea -1 (conventie frecventa in informatica).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Calcul recursiv al inaltimii, numarului de noduri si frunze (Python):</div>
+                    <pre><span class="code-keyword">def</span> <span class="code-function">inaltime</span>(nod):
+    <span class="code-keyword">if</span> nod <span class="code-keyword">is None</span>:
+        <span class="code-keyword">return</span> -<span class="code-number">1</span>   <span class="code-comment"># conventie: arborele vid</span>
+    <span class="code-keyword">return</span> <span class="code-number">1</span> + <span class="code-function">max</span>(<span class="code-function">inaltime</span>(nod.stang), <span class="code-function">inaltime</span>(nod.drept))
+
+<span class="code-keyword">def</span> <span class="code-function">nr_noduri</span>(nod):
+    <span class="code-keyword">if</span> nod <span class="code-keyword">is None</span>: <span class="code-keyword">return</span> <span class="code-number">0</span>
+    <span class="code-keyword">return</span> <span class="code-number">1</span> + <span class="code-function">nr_noduri</span>(nod.stang) + <span class="code-function">nr_noduri</span>(nod.drept)
+
+<span class="code-keyword">def</span> <span class="code-function">nr_frunze</span>(nod):
+    <span class="code-keyword">if</span> nod <span class="code-keyword">is None</span>: <span class="code-keyword">return</span> <span class="code-number">0</span>
+    <span class="code-keyword">if</span> nod.stang <span class="code-keyword">is None and</span> nod.drept <span class="code-keyword">is None</span>: <span class="code-keyword">return</span> <span class="code-number">1</span>
+    <span class="code-keyword">return</span> <span class="code-function">nr_frunze</span>(nod.stang) + <span class="code-function">nr_frunze</span>(nod.drept)
+
+<span class="code-comment"># BST cu valorile 5, 3, 7, 1, 4, 6, 8 (construit anterior)</span>
+h = <span class="code-function">inaltime</span>(radacina)
+n = <span class="code-function">nr_noduri</span>(radacina)
+f = <span class="code-function">nr_frunze</span>(radacina)
+<span class="code-function">print</span>(<span class="code-string">f"BST cu valorile {valori}:"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"  Inaltime h = {h}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"  Numar noduri n = {n}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"  Numar frunze = {f}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"  Numar noduri interne = {n - f}"</span>)</pre>
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>BST cu valorile [5, 3, 7, 1, 4, 6, 8]:
+  Inaltime h = 2
+  Numar noduri n = 7
+  Numar frunze = 4
+  Numar noduri interne = 3</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Relatii importante pentru arbori binari (de memorat):</div>
+                    <pre>Arbore binar cu inaltime h:
+  - Are MINIM h+1 noduri (lant - arbore degenerat)
+  - Are MAXIM 2^(h+1) - 1 noduri (arbore complet)
+
+Arbore binar COMPLET cu n noduri:
+  - Inaltime h = floor(log2(n))
+  - Ex: n=7 => h=2, n=15 => h=3, n=31 => h=4
+
+Numar frunze = numar noduri interne + 1
+  (valabila pentru arbori binari COMPETI cu toti fiii)</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: C++ intensiv -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, cum se declara corect un nod al unui arbore binar?", "options": ["int nod { int val; int stang; int drept; };", "struct Nod { int val; Nod* stang; Nod* drept; };", "class Nod { int val; Nod stang; Nod drept; };", "vector<int> nod = {val, stang, drept};"], "correct": "b", "hint": "In C++, nodul arborelui binar este un struct cu doi pointeri (Nod*) la fiii sai. Pointerii permit legarea dinamica a nodurilor in memorie."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Arbore binar in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune exclusiv pentru profil intensiv informatica</div>
+                    <p>La profilul intensiv vei implementa BST cu alocare dinamica (<code>new/delete</code>) si pointeri. Parcurgerile sunt identice ca logica cu Python, dar sintaxa C++ impune declararea explicita a tipurilor si gestionarea memoriei.</p>
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">struct</span> Nod {
+    <span class="code-keyword">int</span> val;
+    Nod* stang;
+    Nod* drept;
+    Nod(<span class="code-keyword">int</span> v): val(v), stang(<span class="code-keyword">nullptr</span>), drept(<span class="code-keyword">nullptr</span>) {}
+};
+
+Nod* <span class="code-function">insereaza</span>(Nod* radacina, <span class="code-keyword">int</span> val) {
+    <span class="code-keyword">if</span> (!radacina) <span class="code-keyword">return new</span> Nod(val);
+    <span class="code-keyword">if</span> (val &lt; radacina-&gt;val)
+        radacina-&gt;stang = <span class="code-function">insereaza</span>(radacina-&gt;stang, val);
+    <span class="code-keyword">else</span>
+        radacina-&gt;drept = <span class="code-function">insereaza</span>(radacina-&gt;drept, val);
+    <span class="code-keyword">return</span> radacina;
+}
+
+<span class="code-keyword">void</span> <span class="code-function">inordine</span>(Nod* nod) {
+    <span class="code-keyword">if</span> (!nod) <span class="code-keyword">return</span>;
+    <span class="code-function">inordine</span>(nod-&gt;stang);
+    cout &lt;&lt; nod-&gt;val &lt;&lt; <span class="code-string">" "</span>;
+    <span class="code-function">inordine</span>(nod-&gt;drept);
+}
+
+<span class="code-keyword">int</span> <span class="code-function">inaltime</span>(Nod* nod) {
+    <span class="code-keyword">if</span> (!nod) <span class="code-keyword">return</span> -<span class="code-number">1</span>;
+    <span class="code-keyword">return</span> <span class="code-number">1</span> + <span class="code-function">max</span>(<span class="code-function">inaltime</span>(nod-&gt;stang), <span class="code-function">inaltime</span>(nod-&gt;drept));
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> valori[] = {<span class="code-number">5</span>, <span class="code-number">3</span>, <span class="code-number">7</span>, <span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">6</span>, <span class="code-number">8</span>};
+    Nod* radacina = <span class="code-keyword">nullptr</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> v : valori) radacina = <span class="code-function">insereaza</span>(radacina, v);
+    cout &lt;&lt; <span class="code-string">"BST cu valorile: 5 3 7 1 4 6 8"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Parcurgere inordine: "</span>;
+    <span class="code-function">inordine</span>(radacina);
+    cout &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Inaltime: "</span> &lt;&lt; <span class="code-function">inaltime</span>(radacina) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>BST cu valorile: 5 3 7 1 4 6 8
+Parcurgere inordine: 1 3 4 5 6 7 8
+Inaltime: 2</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Diferente C++ fata de Python:</div>
+                    <pre>Python                     C++ (intensiv)
+--------------------------+---------------------------
+class Nod:                 struct Nod {
+  self.stang = None          Nod* stang = nullptr;
+                           }
+  (garbage collector)        delete nod; // manual
+  radacina.stang             radacina->stang
+  return Nod(val)            return new Nod(val)</pre>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) — Proprietati arbore</h3>
+            <p>Un arbore are 12 noduri. Raspunde la urmatoarele:</p>
+            <ol>
+                <li>Cate muchii are arborele?</li>
+                <li>Poate un nod sa aiba 3 parinti? Justifica.</li>
+                <li>Daca adaugam o muchie noua intre doua noduri deja existente, mai este arborele un arbore? De ce?</li>
+            </ol>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) — Parcurgeri BST</h3>
+            <p>Construieste un Arbore Binar de Cautare inserand valorile in ordinea: <strong>10, 5, 15, 3, 7, 12, 20</strong>.</p>
+            <ol>
+                <li>Deseneaza arborele rezultat.</li>
+                <li>Scrie parcurgerea inordine — ce observi?</li>
+                <li>Scrie parcurgerea preordine.</li>
+                <li>Care este inaltimea arborelui?</li>
+                <li>Cate frunze are?</li>
+            </ol>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) — Implementare completa BST</h3>
+            <p>Implementeaza in Python o functie <code>cauta(radacina, val)</code> care cauta o valoare in BST si returneaza <code>True/False</code>. Complexitatea trebuie sa fie O(h) unde h este inaltimea arborelui.</p>
+            <p>Bonus (intensiv): Implementeaza aceeasi functie in C++ cu signatura: <code>bool cauta(Nod* radacina, int val)</code>.</p>
+            <p>Testeaza pe BST-ul cu valorile 5, 3, 7, 1, 4, 6, 8 si cauta valorile 4 (prezent) si 9 (absent).</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Definitia arborelui: graf neorientat conex si aciclic cu n noduri si n-1 muchii</li>
+                <li>Terminologia: radacina, parinte, fiu, frunza, nivel, inaltime, subarbore</li>
+                <li>Parcurgerea DFS si BFS pe arbori generali — O(n)</li>
+                <li>Arborele binar: cel mult 2 fii per nod (stang si drept)</li>
+                <li>Cele trei parcurgeri: inordine (S-R-D), preordine (R-S-D), postordine (S-D-R)</li>
+                <li>BST: inordine produce valorile sortate crescator</li>
+                <li>Inaltimea recursiva: h(arbore_vid)=-1, h(nod)=1+max(h(stang),h(drept))</li>
+                <li>[Intensiv] Implementare C++ cu struct si pointeri (Nod*)</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu Lectia 6 — Aplicatii grafuri: probleme tip Bacalaureat cu grafuri si arbori.</p>
+            <a href="lectia6-aplicatii-grafuri.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m3-grafuri-lectia5-arbori');
+        PracticeSimple.init('cls11-m3-grafuri-lectia5-arbori');
+        LessonSummary.init('cls11-m3-grafuri-lectia5-arbori');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm3-grafuri',
+            moduleName: 'M3 Teoria Grafurilor',
+            lesson: 'Arbori'
+        });
+        LearningProgress.init('cls11', 'm3-grafuri', 'lectia5-arbori.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

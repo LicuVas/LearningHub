@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 5: Generarea submultimilor | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia4-aranjamente-combinari.html" class="nav-btn" title="Lectia anterioara">&#8592; Anterioara</a>
+        <a href="lectia6-backtracking-aplicatii.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Generarea submultimilor</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- FRAME SECTION -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei implementa generarea sistematica a tuturor submultimilor unei multimi finite, vei intelege legatura cu produsul cartezian si cu backtracking-ul, si vei aplica taieri de ramuri pentru probleme cu restrictii.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti notiunea de submultime si sa calculezi numarul total de submultimi (2<sup>n</sup>)</li>
+                <li>Sa implementezi generarea submultimilor prin backtracking in Python (recursie cu parametru <code>start</code>)</li>
+                <li>Sa explici legatura dintre generarea submultimilor si produsul cartezian {0,1}<sup>n</sup></li>
+                <li>Sa aplici taieri de ramuri (pruning) pentru submultimi cu restrictii (suma data)</li>
+                <li>Sa analizezi complexitatea temporala O(n &middot; 2<sup>n</sup>) a algoritmului</li>
+                <li>[EXCLUSIV INTENSIV] Sa implementezi generarea submultimilor in C++ cu tablou static si contor <code>lung</code></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- TRY SECTION -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare de gandire:</div>
+<p>Scrie pe hartie <strong>toate</strong> submultimile multimii {1, 2, 3}.<br>
+Esti sigur ca nu ai ratat niciuna si ca nu ai dubluri?</p>
+<textarea id="tryAnswer" placeholder="Incerc sa le listez pe toate:&#10;{}&#10;{1}&#10;{2}&#10;..." rows="8"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu? <span class="hint-arrow">&#9654;</span></div>
+<div class="hint-content">
+<p>Gandeste-te la fiecare element in parte: il incluzi sau nu? Fiecare element are 2 optiuni: <strong>da</strong> sau <strong>nu</strong>. Pentru 3 elemente: 2 &times; 2 &times; 2 = 8 submultimi.</p>
+<p>Lista completa: {}, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}. Backtracking-ul genereaza exact aceasta lista sistematic, fara salturi si fara repetari.</p>
+</div>
+</div>
+        </div>
+    </section>
+
+    <!-- ATOMS -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1 -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Cate submultimi are multimea {1, 2, 3, 4}?", "options": ["8", "12", "16", "24"], "correct": "c", "hint": "Numarul de submultimi ale unei multimi cu n elemente este 2^n. Pentru n=4: 2^4 = 16."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Ce este o submultime?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O <strong>submultime</strong> a multimii A este orice multime B cu proprietatea ca orice element din B se afla si in A. <strong>Multimea vida {} si multimea A insasi sunt intotdeauna submultimi ale lui A.</strong>
+                </div>
+                <div class="example-box">
+<div class="example-title">Toate submultimile lui {1, 2, 3} (output real, Python si C++):</div>
+<pre>{}
+{1}
+{1, 2}
+{1, 2, 3}
+{1, 3}
+{2}
+{2, 3}
+{3}</pre>
+<p>Total: 2<sup>3</sup> = <strong>8 submultimi</strong></p>
+</div>
+                <div class="concept-def">
+                    <strong>Formula generala:</strong> O multime cu <code>n</code> elemente are exact <strong>2<sup>n</sup> submultimi</strong> (inclusiv {} si multimea insasi).<br><br>
+                    <strong>De ce 2<sup>n</sup>?</strong> Fiecare element are exact 2 optiuni: il includem sau nu. Deci avem 2 &times; 2 &times; &hellip; &times; 2 (de n ori) = 2<sup>n</sup> combinatii posibile.
+                </div>
+                <div class="example-box">
+<div class="example-title">Cresterea lui 2^n (output real, Python):</div>
+<pre>n= 3: 2^n =            8 submultimi
+n= 4: 2^n =           16 submultimi
+n= 5: 2^n =           32 submultimi
+n= 8: 2^n =          256 submultimi
+n=10: 2^n =        1,024 submultimi
+n=20: 2^n =    1,048,576 submultimi
+n=30: 2^n = 1,073,741,824 submultimi</pre>
+<p>Atentie: 2<sup>n</sup> creste <strong>exponential</strong>. La n=30, peste un miliard de submultimi.</p>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 2 -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Ce rol are parametrul start in functia back(start)?", "options": ["Retine numarul de submultimi gasite", "Indica elementul minim pe care il mai putem adauga, garantand ordine crescatoare si evitand dubluri", "Numara cate elemente are submultimea curenta", "Verifica daca submultimea e valida"], "correct": "b", "hint": "Parametrul start asigura ca adaugam doar elemente >= start."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Ideea algoritmului backtracking pentru submultimi</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Construim submultimea <strong>adaugand un element la un moment</strong>. La fiecare pas alegem un element i &ge; start. <strong>Inainte</strong> de orice candidat, inregistram solutia curenta (chiar daca e vida). Dupa fiecare extindere, revenim.
+                </div>
+                <div class="example-box">
+<div class="example-title">Arborele de cautare pentru n=2 (output real, Python):</div>
+<pre>=&gt; Solutie: {}
+Adaug 1: sol=[1]
+  =&gt; Solutie: {1}
+  Adaug 2: sol=[1, 2]
+    =&gt; Solutie: {1, 2}
+  Scot 2
+Scot 1
+Adaug 2: sol=[2]
+  =&gt; Solutie: {2}
+Scot 2</pre>
+<p>4 submultimi = 2<sup>2</sup>, generate in ordine: {}, {1}, {1,2}, {2}.</p>
+</div>
+                <div class="concept-def">
+                    <strong>Ingredientele algoritmului:</strong>
+                    <ul>
+                        <li><strong>sol</strong> &mdash; lista cu elementele alese pana acum (submultimea in constructie)</li>
+                        <li><strong>back(start)</strong> &mdash; genereaza toate extensiile posibile cu elemente &ge; start</li>
+                        <li><strong>Inregistrare la INCEPUT:</strong> inregistram sol inaintea buclei (includem si multimea vida)</li>
+                        <li><strong>Revenire:</strong> dupa explorarea ramurii, scoatem elementul adaugat (sol.pop())</li>
+                        <li><strong>Parametrul start creste</strong> la fiecare nivel, garantand ordine si unicitate</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3 -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "De ce apelam back(i+1) si nu back(i) in recursie?", "options": ["Ca sa sarim primul element", "Ca sa generam doar submultimi de lungime 1", "Ca sa garantam ca elementele sunt strict crescatoare, fara repetitie si fara dubluri", "Ca sa limitam numarul de apeluri"], "correct": "c", "hint": "Dupa ce am ales elementul i, urmatoarele trebuie sa fie strict mai mari. start=i+1 evita repetitia si dublurile."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Implementarea completa in Python</h3>
+            </div>
+            <div class="atom-content">
+                <pre><span class="code-comment"># Generarea submultimilor prin backtracking</span>
+<span class="code-comment"># Limbaj: Python | Nivel: mat-info cls XI</span>
+
+<span class="code-keyword">def</span> <span class="code-function">submultimi_bt</span>(n):
+    sol = []          <span class="code-comment"># submultimea in constructie</span>
+    rezultate = []
+
+    <span class="code-keyword">def</span> <span class="code-function">back</span>(start):
+        <span class="code-comment"># inregistram solutia curenta (chiar daca e vida)</span>
+        rezultate.<span class="code-function">append</span>(sol[:])
+        <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(start, n + <span class="code-number">1</span>):
+            sol.<span class="code-function">append</span>(i)          <span class="code-comment"># adaugam i la submultime</span>
+            <span class="code-function">back</span>(i + <span class="code-number">1</span>)             <span class="code-comment"># continuam cu elemente &gt; i</span>
+            sol.<span class="code-function">pop</span>()              <span class="code-comment"># revenire: scoatem i</span>
+
+    <span class="code-function">back</span>(<span class="code-number">1</span>)
+    <span class="code-keyword">return</span> rezultate
+
+<span class="code-comment"># Generam submultimile lui {1, 2, 3}</span>
+n = <span class="code-number">3</span>
+subs = <span class="code-function">submultimi_bt</span>(n)
+<span class="code-function">print</span>(<span class="code-string">f"Submultimile lui {chr(123)}1,...,{n}{chr(125)} ({len(subs)} bucati):"</span>)
+<span class="code-keyword">for</span> s <span class="code-keyword">in</span> subs:
+    <span class="code-keyword">if</span> s:
+        <span class="code-function">print</span>(<span class="code-string">'{'</span> + <span class="code-string">', '</span>.<span class="code-function">join</span>(<span class="code-function">map</span>(str, s)) + <span class="code-string">'}')  </span><span class="code-comment"># nevida</span>
+    <span class="code-keyword">else</span>:
+        <span class="code-function">print</span>(<span class="code-string">'{}'</span>)  <span class="code-comment"># multimea vida</span></pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Submultimile lui {1,...,3} (8 bucati):
+{}
+{1}
+{1, 2}
+{1, 2, 3}
+{1, 3}
+{2}
+{2, 3}
+{3}</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Observatie cheie:</strong> Ordinea de generare este ordinea arborelui de cautare: mai intai toate submultimile care contin 1, in interiorul lor cele care contin 2, etc. Aceasta este ordinea lexicografica a submultimilor.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4 -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Produsul cartezian {1,2} x {3,4} x {5,6} are cate elemente?", "options": ["6", "8", "9", "12"], "correct": "b", "hint": "Produsul cartezian A1 x A2 x Ak are |A1| x |A2| x |Ak| elemente. Aici: 2 x 2 x 2 = 8 tupli."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Produs cartezian si conexiunea cu submultimile</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Produsul cartezian</strong> A<sub>1</sub> &times; A<sub>2</sub> &times; &hellip; &times; A<sub>k</sub> este multimea tuturor tuplilor (a<sub>1</sub>, a<sub>2</sub>, &hellip;, a<sub>k</sub>) cu a<sub>i</sub> &isin; A<sub>i</sub>. Numarul de elemente este |A<sub>1</sub>| &times; |A<sub>2</sub>| &times; &hellip; &times; |A<sub>k</sub>|.
+                </div>
+                <pre><span class="code-comment"># Produs cartezian al k multimi prin backtracking</span>
+<span class="code-keyword">def</span> <span class="code-function">produs_cartezian_bt</span>(multimi):
+    k = <span class="code-function">len</span>(multimi)
+    sol = [<span class="code-keyword">None</span>] * k    <span class="code-comment"># tuplul in constructie</span>
+    rezultate = []
+
+    <span class="code-keyword">def</span> <span class="code-function">back</span>(nivel):
+        <span class="code-keyword">if</span> nivel == k:         <span class="code-comment"># tuplul e complet</span>
+            rezultate.<span class="code-function">append</span>(<span class="code-function">tuple</span>(sol))
+            <span class="code-keyword">return</span>
+        <span class="code-keyword">for</span> elem <span class="code-keyword">in</span> multimi[nivel]:
+            sol[nivel] = elem
+            <span class="code-function">back</span>(nivel + <span class="code-number">1</span>)
+
+    <span class="code-function">back</span>(<span class="code-number">0</span>)
+    <span class="code-keyword">return</span> rezultate
+
+multimi = [[<span class="code-number">1</span>, <span class="code-number">2</span>], [<span class="code-number">3</span>, <span class="code-number">4</span>], [<span class="code-number">5</span>, <span class="code-number">6</span>]]
+rez = <span class="code-function">produs_cartezian_bt</span>(multimi)
+<span class="code-function">print</span>(<span class="code-string">f"Produs cartezian {{1,2}} x {{3,4}} x {{5,6}} (2x2x2={len(rez)} tupli):"</span>)
+<span class="code-keyword">for</span> r <span class="code-keyword">in</span> rez:
+    <span class="code-function">print</span>(r)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Produs cartezian {1,2} x {3,4} x {5,6} (2x2x2=8 tupli):
+(1, 3, 5)
+(1, 3, 6)
+(1, 4, 5)
+(1, 4, 6)
+(2, 3, 5)
+(2, 3, 6)
+(2, 4, 5)
+(2, 4, 6)</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Conexiunea cu submultimile:</strong> Generarea submultimilor lui {1,...,n} este echivalenta cu generarea produsului cartezian {0,1}<sup>n</sup>, unde 0 = nu includem si 1 = includem. De exemplu, (1,0,1) corespunde submultimii {1,3}.<br><br>
+                    <strong>Diferenta intre produs cartezian si submultimi:</strong> La produsul cartezian avem k niveluri fixe si fiecare nivel parcurge propria multime. La submultimi, dimensiunea solutiei variaza (de la 0 la n) si parametrul start evita dublurile.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5 -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "In algoritmul cu suma exacta S, de ce oprim cand suma_curenta > S?", "options": ["Ca sa limitam memoria", "Elementele sunt pozitive, suma nu poate scadea adaugand mai mult", "Ca sa nu generam submultimi prea lungi", "Nu ar trebui sa oprim"], "correct": "b", "hint": "Elementele sunt pozitive. Daca suma actuala depaseste deja S, adaugand mai multe suma va fi si mai mare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Submultimi cu restrictii: taieri de ramuri (pruning)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Backtracking-ul devine cu adevarat eficient cand adaugam <strong>conditii de taiere (pruning)</strong>: daca stim ca o ramura nu poate duce la o solutie valida, o eliminam <em>inainte</em> de a o explora complet.
+                </div>
+                <pre><span class="code-comment"># Submultimi cu suma exacta S (cu pruning)</span>
+<span class="code-keyword">def</span> <span class="code-function">submultimi_suma</span>(n, S):
+    sol = []
+    rezultate = []
+
+    <span class="code-keyword">def</span> <span class="code-function">back</span>(start, suma_curenta):
+        <span class="code-keyword">if</span> suma_curenta == S:
+            rezultate.<span class="code-function">append</span>(sol[:])
+            <span class="code-keyword">return</span>
+        <span class="code-keyword">if</span> suma_curenta &gt; S:
+            <span class="code-keyword">return</span>  <span class="code-comment"># pruning: suma a depasit S, taiem</span>
+        <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(start, n + <span class="code-number">1</span>):
+            sol.<span class="code-function">append</span>(i)
+            <span class="code-function">back</span>(i + <span class="code-number">1</span>, suma_curenta + i)
+            sol.<span class="code-function">pop</span>()
+
+    <span class="code-function">back</span>(<span class="code-number">1</span>, <span class="code-number">0</span>)
+    <span class="code-keyword">return</span> rezultate
+
+n = <span class="code-number">6</span>
+S = <span class="code-number">7</span>
+rez = <span class="code-function">submultimi_suma</span>(n, S)
+<span class="code-function">print</span>(<span class="code-string">f"Submultimi din {{1,...,{n}}} cu suma={S} ({len(rez)} solutii):"</span>)
+<span class="code-keyword">for</span> s <span class="code-keyword">in</span> rez:
+    <span class="code-function">print</span>(<span class="code-string">'{'</span> + <span class="code-string">', '</span>.<span class="code-function">join</span>(<span class="code-function">map</span>(str, s)) + <span class="code-string">'}')  </span></pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Submultimi din {1,...,6} cu suma=7 (4 solutii):
+{1, 2, 4}
+{1, 6}
+{2, 5}
+{3, 4}</pre>
+</div>
+                <div class="concept-def">
+                    Din cele 2<sup>6</sup> = 64 submultimi posibile, backtracking-ul cu pruning exploreaza mult mai putine. Cand suma depaseste 7, intreaga subramura este eliminata. Corectitudinea taierii: elementele sunt pozitive, deci adaugand mai mult suma nu poate scadea &mdash; nu pierdem nicio solutie valida.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: C++ EXCLUSIV INTENSIV -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, ce echivalent are sol.append(i) din Python, in implementarea cu tablou static?", "options": ["push_back pe vector", "sol[lung++] = i pe tablou int sol[]", "insert in array", "Nu exista echivalent"], "correct": "b", "hint": "In loc de lista dinamica, mentinem int sol[NMAX] si int lung. sol[lung++]=i pune i pe varf si creste varful."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Implementare C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+<p>La profilul mat-info intensiv, implementam acelasi algoritm in C++. Diferente fata de Python: tablou static <code>int sol[20]</code> cu contor <code>lung</code> in loc de lista dinamica; variabile globale pentru acces direct din recursie; afisare directa.</p>
+</div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> n;
+<span class="code-keyword">int</span> sol[<span class="code-number">20</span>];   <span class="code-comment">// submultimea in constructie</span>
+<span class="code-keyword">int</span> lung;      <span class="code-comment">// numarul de elemente curente in sol</span>
+
+<span class="code-keyword">void</span> <span class="code-function">back</span>(<span class="code-keyword">int</span> start) {
+    <span class="code-comment">// afisam solutia curenta (inclusiv {})</span>
+    cout &lt;&lt; <span class="code-string">"{"</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; lung; i++) {
+        <span class="code-keyword">if</span> (i &gt; <span class="code-number">0</span>) cout &lt;&lt; <span class="code-string">", "</span>;
+        cout &lt;&lt; sol[i];
+    }
+    cout &lt;&lt; <span class="code-string">"}\n"</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = start; i &lt;= n; i++) {
+        sol[lung++] = i;   <span class="code-comment">// adaugam i, lung creste</span>
+        <span class="code-function">back</span>(i + <span class="code-number">1</span>);         <span class="code-comment">// continuam cu elemente &gt; i</span>
+        lung--;            <span class="code-comment">// revenire: lung scade</span>
+    }
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    n = <span class="code-number">3</span>; lung = <span class="code-number">0</span>;
+    cout &lt;&lt; <span class="code-string">"Submultimile lui {1,...,"</span> &lt;&lt; n
+         &lt;&lt; <span class="code-string">"} (2^n="</span> &lt;&lt; (<span class="code-number">1</span> &lt;&lt; n) &lt;&lt; <span class="code-string">" bucati):\n"</span>;
+    <span class="code-function">back</span>(<span class="code-number">1</span>);
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+<pre>Submultimile lui {1,...,3} (2^n=8 bucati):
+{}
+{1}
+{1, 2}
+{1, 2, 3}
+{1, 3}
+{2}
+{2, 3}
+{3}</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Tehnica sol[lung++] si lung--:</strong> Tabloul sol joaca rolul stivei. lung este numarul de elemente curente. sol[lung++] = i pune i pe varf si incrementeaza (echivalent sol.append(i) in Python), iar lung-- elimina ultimul element (echivalent sol.pop()). Acelasi output ca versiunea Python &mdash; algoritmul este identic, doar sintaxa difera.
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- PRACTICE -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Urmarire manuala</h3>
+            <p>Urmareste manual algoritmul <code>submultimi_bt(3)</code>. Deseneaza pe hartie arborele de cautare: pentru fiecare apel <code>back(start)</code>, scrie ce valoare are <code>sol</code> si ce submultime se inregistreaza. Verifica ca obtii exact cele 8 submultimi din Atomul 3, in aceeasi ordine.</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Modificare cu conditie de lungime</h3>
+            <p>Modifica algoritmul din Atomul 3 pentru a genera toate submultimile lui {1, 2, 3, 4, 5} care au <strong>exact 3 elemente</strong>. Adauga o conditie de taiere: daca lungimea solutiei curente depaseste 3, opreste acea ramura. Cate astfel de submultimi exista? (Indiciu: C(5,3) = 10.)</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Problema clasica cu sir arbitrar</h3>
+            <p>[BAC III / Olimpiada] Se da un sir de n numere naturale distincte (nu neaparat 1,...,n) si un numar S. Genereaza toate submultimile sirului cu suma exacta S. Testeaza cu <code>sir = [3, 7, 1, 8, 5, 2]</code> si <code>S = 10</code>. Implementeaza in Python cu pruning eficient. Indiciu: sorteaza sirul mai intai. Optional: implementare si in C++ la intensiv.</p>
+        </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Definitia submultimii si formula 2<sup>n</sup>: fiecare element are 2 optiuni, inclus sau nu</li>
+                <li>Algoritmul backtracking pentru submultimi: back(start), inregistrare la inceput, revenire cu sol.pop()</li>
+                <li>Rolul parametrului start: garanteaza ordine crescatoare si evita dublurile</li>
+                <li>Legatura cu produsul cartezian: submultimile sunt echivalente cu {0,1}<sup>n</sup>; produsul cartezian generalizat functioneaza cu k multimi si k niveluri fixe</li>
+                <li>Pruning cu suma: taierea ramurilor cand suma depaseste S (corecta pentru elemente pozitive)</li>
+                <li>Complexitate O(n &middot; 2<sup>n</sup>): 2<sup>n</sup> submultimi, fiecare costa O(n) la afisare/copiere</li>
+                <li>[Intensiv] Implementarea C++ cu tablou static sol[20] si contor lung ca stiva manuala</li>
+            </ul>
+        </div>
+        <div id="lesson-summary" style="display: none;"></div>
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu aplicatii mai complexe de backtracking: problema celor n dame, labirintul, colorarea grafului.</p>
+            <a href="lectia6-backtracking-aplicatii.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m2-algoritmi-complecsi-lectia5-submultimi');
+        PracticeSimple.init('cls11-m2-algoritmi-complecsi-lectia5-submultimi');
+        LessonSummary.init('cls11-m2-algoritmi-complecsi-lectia5-submultimi');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm2-algoritmi-complecsi',
+            moduleName: 'M2 Algoritmi Complecsi',
+            lesson: 'Generarea submultimilor'
+        });
+        LearningProgress.init('cls11', 'm2-algoritmi-complecsi', 'lectia5-submultimi.html');
+    });
+
+    function toggleHint(el) {
+        var content = el.nextElementSibling;
+        if (content) {
+            content.classList.toggle('open');
+            el.classList.toggle('open');
+        }
+    }
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

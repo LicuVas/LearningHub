@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 3: Coada (FIFO) | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <nav class="nav-bar">
+        <a href="lectia2-stiva-aplicatii.html" class="nav-btn">&#8592; Lectia 2</a>
+        <a href="lectia4-coada-aplicatii.html" class="nav-btn">Lectia 4 &#8594;</a>
+    </nav>
+
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Coada &mdash; structura FIFO</h1>
+    </header>
+
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <section class="lesson-frame">
+        <div class="goal-section"><div class="goal-header"><span class="goal-icon">&#127919;</span><h2 class="goal-title">Obiectivul lectiei</h2></div>
+        <p class="goal-text">Vei intelege principiul FIFO (First In, First Out), vei sti sa implementezi o coada in Python cu <code>collections.deque</code> si vei aplica operatiile fundamentale <strong>enqueue</strong> si <strong>dequeue</strong>. Sectiunile marcate &#9889; EXCLUSIV INTENSIV acopera implementarea in C++ si coada circulara.</p></div>
+        <div class="learning-outcomes"><h3>Dupa aceasta lectie vei putea:</h3><ul>
+            <li>Sa definesti principiul FIFO si sa il distingi de LIFO (stiva)</li>
+            <li>Sa implementezi o coada in Python cu <code>collections.deque</code></li>
+            <li>Sa aplici operatiile enqueue, dequeue, front, este_vida cu complexitate O(1)</li>
+            <li>Sa argumentezi de ce <code>list.pop(0)</code> este O(n) iar <code>deque.popleft()</code> este O(1)</li>
+            <li>Sa modelezi probleme reale cu o coada (ghiseu, planificator de procese)</li>
+            <li>&#9889; (Intensiv) Sa folosesti <code>std::queue</code> in C++ cu push/pop/front/back</li>
+            <li>&#9889; (Intensiv) Sa construiesti o coada circulara cu tablou si indici modulo</li>
+        </ul></div>
+    </section>
+
+    <section class="try-section"><h2>Incearca singur!</h2><div class="try-challenge">
+        <div class="challenge-box"><div class="challenge-title">Provocare:</div>
+        <p>La un ghiseu vin pe rand: Ion, apoi Maria, apoi Andrei. Ghiseul serveste in ordinea sosirii. Daca se mai aseaza Pavel la rand dupa Andrei, scrie ordinea completa in care vor fi serviti toti patru si explica in doua cuvinte principiul care guverneaza aceasta ordine.</p>
+        <textarea id="tryAnswer" placeholder="Ordinea servirii: ..." rows="4"></textarea></div>
+        <div class="hint-box"><div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+        <div class="hint-content"><p>Primul care a intrat in coada (Ion) este primul servit. Aceasta este proprietatea <strong>FIFO: First In, First Out</strong>.</p>
+        <p>Ordinea: Ion &#8594; Maria &#8594; Andrei &#8594; Pavel.</p></div></div>
+    </div></section>
+
+    <main id="atomic-content">
+
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Ce inseamna acronimul FIFO?", "options": ["Fast Input Fast Output", "First In First Out", "File Index File Order", "Full Index Full Output"], "correct": "b", "hint": "FIFO = First In, First Out: primul element adaugat este primul care iese."}]'>
+            <div class="atom-header"><div class="atom-number">1</div><h3 class="atom-title">1. Ce este coada? Principiul FIFO</h3></div>
+            <div class="atom-content">
+                <div class="concept-def">O <strong>coada</strong> (en. <em>queue</em>) este o structura de date liniara care respecta principiul <strong>FIFO</strong> (<em>First In, First Out</em>): elementul adaugat cel mai devreme este si primul eliminat. Adaugarea se face la un capat numit <em>rear</em> (spate), iar eliminarea la celalalt capat, <em>front</em> (fata).</div>
+                <div class="example-box"><div class="example-title">Coada (FIFO) vs Stiva (LIFO):</div>
+                <p><strong>Coada (FIFO):</strong> rand la ghiseu &mdash; primul sosit, primul servit.<br><strong>Stiva (LIFO):</strong> teanc de farfurii &mdash; ultima pusa, prima luata.</p>
+                <p>Operatii coada: <code>enqueue(x)</code> &mdash; adauga la spate; <code>dequeue()</code> &mdash; scoate din fata. Ambele sunt <strong>O(1)</strong> cu implementarea corecta.</p></div>
+                <div class="example-box"><div class="example-title">Diagrama structura FIFO:</div>
+<pre>  enqueue(A)  enqueue(B)  enqueue(C)
+  +-------+-------+-------+
+  |   A   |   B   |   C   |
+  +-------+-------+-------+
+  ^                       ^
+FRONT                   REAR
+(dequeue de aici)  (enqueue aici)
+
+  dequeue() --&gt; returneaza A (primul intrat)</pre></div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Care metoda a lui collections.deque adauga un element LA SPATE (rear)?", "options": ["appendleft()", "popleft()", "pop()", "append()"], "correct": "d", "hint": "append() adauga la dreapta (rear). popleft() scoate din stanga (front). Aceasta combinatie da comportamentul FIFO."}]'>
+            <div class="atom-header"><div class="atom-number">2</div><h3 class="atom-title">2. Implementare Python cu collections.deque</h3></div>
+            <div class="atom-content">
+                <div class="concept-def">Python ofera <code>collections.deque</code> ca implementare eficienta pentru coada. <code>append()</code> adauga la spate &mdash; <strong>O(1)</strong>. <code>popleft()</code> scoate din fata &mdash; <strong>O(1)</strong>. Comparativ, <code>list.pop(0)</code> este <strong>O(n)</strong> deoarece deplaseaza toate elementele ramase.</div>
+<pre><span class="code-comment"># Demonstratie: Coada FIFO cu lista Python</span>
+<span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+coada = deque()
+
+<span class="code-comment"># Enqueue (adaugare la coada)</span>
+coada.<span class="code-function">append</span>(<span class="code-string">"Alice"</span>)
+coada.<span class="code-function">append</span>(<span class="code-string">"Bob"</span>)
+coada.<span class="code-function">append</span>(<span class="code-string">"Carol"</span>)
+
+<span class="code-function">print</span>(<span class="code-string">"Dupa enqueue Alice, Bob, Carol:"</span>)
+<span class="code-function">print</span>(<span class="code-string">"Coada:"</span>, <span class="code-function">list</span>(coada))
+<span class="code-function">print</span>(<span class="code-string">"Front (primul):"</span>, coada[<span class="code-number">0</span>])
+<span class="code-function">print</span>(<span class="code-string">"Rear (ultimul):"</span>, coada[-<span class="code-number">1</span>])
+
+<span class="code-comment"># Dequeue (scoatere din fata)</span>
+primul = coada.<span class="code-function">popleft</span>()
+<span class="code-function">print</span>(<span class="code-string">"\nDupa dequeue:"</span>)
+<span class="code-function">print</span>(<span class="code-string">"Scos:"</span>, primul)
+<span class="code-function">print</span>(<span class="code-string">"Coada acum:"</span>, <span class="code-function">list</span>(coada))</pre>
+                <div class="example-box"><div class="example-title">Output real (rulat cu python):</div>
+<pre>Dupa enqueue Alice, Bob, Carol:
+Coada: ['Alice', 'Bob', 'Carol']
+Front (primul): Alice
+Rear (ultimul): Carol
+
+Dupa dequeue:
+Scos: Alice
+Coada acum: ['Bob', 'Carol']</pre></div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Ce face metoda front() a unei cozi?", "options": ["Elimina si returneaza primul element", "Returneaza primul element fara a-l elimina", "Returneaza ultimul element", "Returneaza numarul de elemente"], "correct": "b", "hint": "front() citeste capul cozii fara sa il elimine. dequeue() il elimina si il returneaza."}]'>
+            <div class="atom-header"><div class="atom-number">3</div><h3 class="atom-title">3. Clasa Coada &mdash; interfata explicita</h3></div>
+            <div class="atom-content">
+                <div class="concept-def">Implementam o clasa <code>Coada</code> care incapsuleaza un <code>deque</code> si expune interfata standard: <code>enqueue</code>, <code>dequeue</code>, <code>front</code>, <code>este_vida</code>, <code>dimensiune</code>. Toate operatiile sunt <strong>O(1)</strong>.</div>
+<pre><span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+<span class="code-keyword">class</span> <span class="code-function">Coada</span>:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">self</span>.elemente = deque()
+
+    <span class="code-keyword">def</span> <span class="code-function">enqueue</span>(<span class="code-keyword">self</span>, valoare):
+        <span class="code-string">"""Adauga la spate (rear) - O(1)"""</span>
+        <span class="code-keyword">self</span>.elemente.<span class="code-function">append</span>(valoare)
+
+    <span class="code-keyword">def</span> <span class="code-function">dequeue</span>(<span class="code-keyword">self</span>):
+        <span class="code-string">"""Scoate din fata (front) - O(1)"""</span>
+        <span class="code-keyword">if</span> <span class="code-keyword">self</span>.<span class="code-function">este_vida</span>():
+            <span class="code-keyword">raise</span> IndexError(<span class="code-string">"Coada este vida!"</span>)
+        <span class="code-keyword">return</span> <span class="code-keyword">self</span>.elemente.<span class="code-function">popleft</span>()
+
+    <span class="code-keyword">def</span> <span class="code-function">front</span>(<span class="code-keyword">self</span>):
+        <span class="code-string">"""Returneaza primul element fara al elimina - O(1)"""</span>
+        <span class="code-keyword">if</span> <span class="code-keyword">self</span>.<span class="code-function">este_vida</span>():
+            <span class="code-keyword">raise</span> IndexError(<span class="code-string">"Coada este vida!"</span>)
+        <span class="code-keyword">return</span> <span class="code-keyword">self</span>.elemente[<span class="code-number">0</span>]
+
+    <span class="code-keyword">def</span> <span class="code-function">este_vida</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">return</span> <span class="code-function">len</span>(<span class="code-keyword">self</span>.elemente) == <span class="code-number">0</span>
+
+    <span class="code-keyword">def</span> <span class="code-function">dimensiune</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">return</span> <span class="code-function">len</span>(<span class="code-keyword">self</span>.elemente)
+
+    <span class="code-keyword">def</span> <span class="code-function">__str__</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">return</span> <span class="code-string">"Coada: "</span> + <span class="code-function">str</span>(<span class="code-function">list</span>(<span class="code-keyword">self</span>.elemente)) + <span class="code-string">" (front -&gt; rear)"</span>
+
+<span class="code-comment"># Test</span>
+c = <span class="code-function">Coada</span>()
+c.<span class="code-function">enqueue</span>(<span class="code-number">10</span>)
+c.<span class="code-function">enqueue</span>(<span class="code-number">20</span>)
+c.<span class="code-function">enqueue</span>(<span class="code-number">30</span>)
+<span class="code-function">print</span>(c)
+<span class="code-function">print</span>(<span class="code-string">"front():"</span>, c.<span class="code-function">front</span>())
+<span class="code-function">print</span>(<span class="code-string">"dequeue():"</span>, c.<span class="code-function">dequeue</span>())
+<span class="code-function">print</span>(c)
+<span class="code-function">print</span>(<span class="code-string">"dimensiune():"</span>, c.<span class="code-function">dimensiune</span>())</pre>
+                <div class="example-box"><div class="example-title">Output real (rulat cu python):</div>
+<pre>Coada: [10, 20, 30] (front -&gt; rear)
+front(): 10
+dequeue(): 10
+Coada: [20, 30] (front -&gt; rear)
+dimensiune(): 2</pre></div>
+                <div class="example-box"><div class="example-title">Complexitate toate operatiile:</div><p>
+                <strong>enqueue(x)</strong> &mdash; adauga la rear: <strong>O(1)</strong><br>
+                <strong>dequeue()</strong> &mdash; elimina din front: <strong>O(1)</strong><br>
+                <strong>front()</strong> &mdash; citeste capul fara eliminare: <strong>O(1)</strong><br>
+                <strong>este_vida()</strong> &mdash; test gol: <strong>O(1)</strong><br>
+                <strong>dimensiune()</strong> &mdash; numara elemente: <strong>O(1)</strong></p></div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Intr-o simulare ghiseu FIFO cu sosirile Ion, Maria, Andrei, Elena, Mihai (in aceasta ordine), al treilea client servit este:", "options": ["Ion", "Elena", "Andrei", "Maria"], "correct": "c", "hint": "FIFO: ordinea servirii = ordinea sosirii. Ion (1), Maria (2), Andrei (3)."}]'>
+            <div class="atom-header"><div class="atom-number">4</div><h3 class="atom-title">4. Aplicatie: Simulare ghiseu banca</h3></div>
+            <div class="atom-content">
+                <div class="concept-def">Coada este structura naturala pentru orice sistem unde <em>ordinea de intrare = ordinea de procesare</em>: ghiseu banca, coada imprimanta, planificator procese OS, parcurgere BFS in grafuri.</div>
+<pre><span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+<span class="code-function">print</span>(<span class="code-string">"=== Simulare ghiseu banca ==="</span>)
+ghiseu = deque()
+
+<span class="code-comment"># Sosesc clienti</span>
+clienti_sositi = [<span class="code-string">"Ion"</span>, <span class="code-string">"Maria"</span>, <span class="code-string">"Andrei"</span>, <span class="code-string">"Elena"</span>, <span class="code-string">"Mihai"</span>]
+<span class="code-keyword">for</span> client <span class="code-keyword">in</span> clienti_sositi:
+    ghiseu.<span class="code-function">append</span>(client)
+    <span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  {client} s-a asezat la coada. Coada: {list(ghiseu)}"</span>)
+
+<span class="code-function">print</span>()
+<span class="code-function">print</span>(<span class="code-string">"Servire clienti:"</span>)
+numar_servit = <span class="code-number">0</span>
+<span class="code-keyword">while</span> ghiseu:
+    client_servit = ghiseu.<span class="code-function">popleft</span>()
+    numar_servit += <span class="code-number">1</span>
+    <span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Servit clientul {numar_servit}: {client_servit}. Ramasi: {list(ghiseu)}"</span>)
+<span class="code-function">print</span>(<span class="code-string">"Toti clientii au fost serviti!"</span>)</pre>
+                <div class="example-box"><div class="example-title">Output real (rulat cu python):</div>
+<pre>=== Simulare ghiseu banca ===
+  Ion s-a asezat la coada. Coada: ['Ion']
+  Maria s-a asezat la coada. Coada: ['Ion', 'Maria']
+  Andrei s-a asezat la coada. Coada: ['Ion', 'Maria', 'Andrei']
+  Elena s-a asezat la coada. Coada: ['Ion', 'Maria', 'Andrei', 'Elena']
+  Mihai s-a asezat la coada. Coada: ['Ion', 'Maria', 'Andrei', 'Elena', 'Mihai']
+
+Servire clienti:
+  Servit clientul 1: Ion. Ramasi: ['Maria', 'Andrei', 'Elena', 'Mihai']
+  Servit clientul 2: Maria. Ramasi: ['Andrei', 'Elena', 'Mihai']
+  Servit clientul 3: Andrei. Ramasi: ['Elena', 'Mihai']
+  Servit clientul 4: Elena. Ramasi: ['Mihai']
+  Servit clientul 5: Mihai. Ramasi: []
+Toti clientii au fost serviti!</pre></div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-5" data-quiz='[{"question": "In C++ std::queue, metoda care elimina elementul din front (fara a-l returna) este:", "options": ["dequeue()", "popleft()", "pop()", "remove()"], "correct": "c", "hint": "In C++ std::queue: pop() elimina din front (nu returneaza valoarea). front() citeste valoarea. Se folosesc impreuna."}]'>
+            <div class="atom-header"><div class="atom-number">5</div><h3 class="atom-title">5. Coada in C++ cu std::queue <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3></div>
+            <div class="atom-content">
+                <div class="bonus-box"><div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+                <p>Biblioteca standard C++ ofera <code>std::queue</code> (header <code>&lt;queue&gt;</code>). Operatii: <code>push(x)</code> (enqueue), <code>pop()</code> (elimina din front, nu returneaza), <code>front()</code> (citeste capul), <code>back()</code> (citeste coada), <code>size()</code>, <code>empty()</code>. Toate sunt <strong>O(1)</strong>.</p></div>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;queue&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    queue&lt;<span class="code-keyword">int</span>&gt; q;
+
+    <span class="code-comment">// push() = enqueue</span>
+    q.<span class="code-function">push</span>(<span class="code-number">10</span>);
+    q.<span class="code-function">push</span>(<span class="code-number">20</span>);
+    q.<span class="code-function">push</span>(<span class="code-number">30</span>);
+
+    cout &lt;&lt; <span class="code-string">"Dimensiune: "</span> &lt;&lt; q.<span class="code-function">size</span>() &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Front (primul): "</span> &lt;&lt; q.<span class="code-function">front</span>() &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Back (ultimul): "</span> &lt;&lt; q.<span class="code-function">back</span>() &lt;&lt; endl;
+
+    <span class="code-comment">// Citim front() inainte de pop() (pop nu returneaza valoarea)</span>
+    cout &lt;&lt; <span class="code-string">"Dequeue: "</span> &lt;&lt; q.<span class="code-function">front</span>() &lt;&lt; endl;
+    q.<span class="code-function">pop</span>();
+
+    cout &lt;&lt; <span class="code-string">"Dupa dequeue, front: "</span> &lt;&lt; q.<span class="code-function">front</span>() &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Dimensiune acum: "</span> &lt;&lt; q.<span class="code-function">size</span>() &lt;&lt; endl;
+
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box"><div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>Dimensiune: 3
+Front (primul): 10
+Back (ultimul): 30
+Dequeue: 10
+Dupa dequeue, front: 20
+Dimensiune acum: 2</pre></div>
+                <div class="example-box"><div class="example-title">Python vs C++ &mdash; diferenta de design:</div>
+                <p><strong>Python deque:</strong> <code>popleft()</code> &mdash; scoate SI returneaza valoarea intr-un apel.<br>
+                <strong>C++ std::queue:</strong> <code>front()</code> citeste, <code>pop()</code> elimina &mdash; doua apeluri separate. Motivul: <code>pop()</code> nu face copie inutila a valorii (eficienta la tipuri mari).</p></div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Intr-o coada circulara cu MAXN=5, daca rear este la indicele 4, urmatorul enqueue plaseaza elementul la indicele:", "options": ["5", "-1", "0", "MAXN"], "correct": "c", "hint": "(rear + 1) % MAXN = (4 + 1) % 5 = 0. Modulul face indicele sa se intoarca la 0, creand efectul circular."}]'>
+            <div class="atom-header"><div class="atom-number">6</div><h3 class="atom-title">6. Coada circulara cu tablou <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3></div>
+            <div class="atom-content">
+                <div class="bonus-box"><div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+                <p>Implementarea cu tablou static si doi indici (<code>front</code>, <code>rear</code>) devine <em>circulara</em> prin operatorul modulo <code>%</code>. Avantaj: reutilizeaza spatiul eliberat prin dequeue, fara deplasarea elementelor. Enqueue si dequeue raman ambele <strong>O(1)</strong>.</p></div>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">const int</span> MAXN = <span class="code-number">5</span>;
+
+<span class="code-keyword">struct</span> CoadaCirculara {
+    <span class="code-keyword">int</span> date[MAXN];
+    <span class="code-keyword">int</span> front, rear, dimensiune;
+
+    CoadaCirculara() : front(<span class="code-number">0</span>), rear(<span class="code-number">0</span>), dimensiune(<span class="code-number">0</span>) {}
+
+    <span class="code-keyword">bool</span> <span class="code-function">esteVida</span>()  { <span class="code-keyword">return</span> dimensiune == <span class="code-number">0</span>; }
+    <span class="code-keyword">bool</span> <span class="code-function">estePlina</span>() { <span class="code-keyword">return</span> dimensiune == MAXN; }
+
+    <span class="code-keyword">void</span> <span class="code-function">enqueue</span>(<span class="code-keyword">int</span> val) {
+        <span class="code-keyword">if</span> (<span class="code-function">estePlina</span>()) {
+            cout &lt;&lt; <span class="code-string">"Coada plina! Nu se poate adauga "</span> &lt;&lt; val &lt;&lt; endl;
+            <span class="code-keyword">return</span>;
+        }
+        date[rear] = val;
+        rear = (rear + <span class="code-number">1</span>) % MAXN;
+        dimensiune++;
+    }
+
+    <span class="code-keyword">int</span> <span class="code-function">dequeue</span>() {
+        <span class="code-keyword">if</span> (<span class="code-function">esteVida</span>()) { <span class="code-keyword">return</span> -<span class="code-number">1</span>; }
+        <span class="code-keyword">int</span> val = date[front];
+        front = (front + <span class="code-number">1</span>) % MAXN;
+        dimensiune--;
+        <span class="code-keyword">return</span> val;
+    }
+
+    <span class="code-keyword">int</span> <span class="code-function">getFront</span>() { <span class="code-keyword">return</span> date[front]; }
+};
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    CoadaCirculara c;
+    c.<span class="code-function">enqueue</span>(<span class="code-number">1</span>);
+    c.<span class="code-function">enqueue</span>(<span class="code-number">2</span>);
+    c.<span class="code-function">enqueue</span>(<span class="code-number">3</span>);
+    cout &lt;&lt; <span class="code-string">"front: "</span> &lt;&lt; c.<span class="code-function">getFront</span>() &lt;&lt; <span class="code-string">", dim: "</span> &lt;&lt; c.dimensiune &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"dequeue: "</span> &lt;&lt; c.<span class="code-function">dequeue</span>() &lt;&lt; endl;
+    c.<span class="code-function">enqueue</span>(<span class="code-number">4</span>);
+    cout &lt;&lt; <span class="code-string">"front: "</span> &lt;&lt; c.<span class="code-function">getFront</span>() &lt;&lt; <span class="code-string">", dim: "</span> &lt;&lt; c.dimensiune &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box"><div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>front: 1, dim: 3
+dequeue: 1
+front: 2, dim: 3</pre></div>
+                <div class="example-box"><div class="example-title">De ce circulara?</div>
+                <p>Fara modulo, dupa N dequeue-uri, <code>front</code> ajunge la sfarsitul tabloului si spatiul din fata nu se mai poate reutiliza chiar daca exista locuri libere. Formula <code>(rear + 1) % MAXN</code> face indicele sa se intoarca la 0, permitand reutilizarea continua fara realocare.</p></div>
+            </div>
+        </div>
+
+    </main>
+
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Urmarire manuala</h3>
+            <p>Fie urmatoarea secventa de operatii pe o coada initial vida:</p>
+            <p><code>enqueue(5)</code>, <code>enqueue(3)</code>, <code>enqueue(8)</code>, <code>dequeue()</code>, <code>enqueue(1)</code>, <code>dequeue()</code></p>
+            <p>a) Ce elemente raman in coada dupa toate operatiile?<br>
+            b) Ce valori au returnat cele doua operatii <code>dequeue()</code>?<br>
+            c) Care este valoarea returnata de <code>front()</code> la final?</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Palindrom cu coada si stiva</h3>
+            <p>Scrie o functie Python <code>este_palindrom(sir)</code> care foloseste simultan o coada (<code>deque</code>) si o stiva (<code>list</code>) si returneaza <code>True</code> daca sirul este palindrom, <code>False</code> altfel.</p>
+            <p>Exemplu: <code>"racecar"</code> &#8594; <code>True</code>, <code>"hello"</code> &#8594; <code>False</code>.</p>
+            <p><em>Indiciu:</em> Pune toate caracterele in coada (append) si in stiva (append). Compara <code>popleft()</code> cu <code>pop()</code> pentru fiecare pozitie.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Simulare printer <span class="bonus-badge">INTENSIV</span></h3>
+            <p>Simuleaza o imprimanta de retea cu o coada de documente. Fiecare document are <em>id</em>, <em>prioritate</em> (1-5, informativa) si <em>numar de pagini</em>. Implementeaza clasa <code>PrinterQueue</code> cu:</p>
+            <ul><li><code>add_job(id, prioritate, pagini)</code> &mdash; adauga la coada</li>
+            <li><code>print_next()</code> &mdash; printeaza documentul din fata (afiseaza id + pagini)</li>
+            <li><code>total_pages_waiting()</code> &mdash; returneaza suma paginilor in asteptare</li></ul>
+            <p>Testare: adauga 3 documente, printeaza 2, calculeaza paginile ramase.</p>
+            <p><em>Nota:</em> Aceasta este o coada FIFO simpla (nu coada de prioritati; prioritatea e doar informativa).</p>
+        </div>
+    </section>
+
+    <section class="review-section">
+        <div class="summary-box"><h2>Ce ai invatat astazi</h2><ul>
+            <li>Principiul <strong>FIFO</strong>: First In, First Out &mdash; primul intrat este primul iesit</li>
+            <li><strong>enqueue</strong> (adauga la rear) si <strong>dequeue</strong> (scoate din front): ambele <strong>O(1)</strong> cu <code>deque</code></li>
+            <li><code>collections.deque</code>: <code>append()</code> = enqueue, <code>popleft()</code> = dequeue</li>
+            <li>Clasa <code>Coada</code> cu interfata explicita: enqueue, dequeue, front, este_vida, dimensiune</li>
+            <li>Aplicatie: simulare ghiseu &mdash; ordinea servirii = ordinea sosirii</li>
+            <li><code>list.pop(0)</code> este <strong>O(n)</strong>; <code>deque.popleft()</code> este <strong>O(1)</strong> &mdash; diferenta de mii de ori la volum mare</li>
+            <li><span class="bonus-badge">INTENSIV</span> <code>std::queue</code> C++: <code>push()</code>, <code>front()</code> + <code>pop()</code> (doua apeluri separate)</li>
+            <li><span class="bonus-badge">INTENSIV</span> Coada circulara: <code>(front/rear + 1) % MAXN</code>, reutilizare spatiu, O(1)</li>
+        </ul></div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson"><h3>Urmatoarea lectie</h3>
+        <p>Continua cu <strong>Lectia 4 &mdash; Aplicatii cu cozi</strong>: simulare procese, BFS preview, deque.</p>
+        <a href="lectia4-coada-aplicatii.html" class="btn-next">Continua &#8594;</a></div>
+    </section>
+
+</div>
+
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m1-structuri-avansate-lectia3-coada-intro');
+        PracticeSimple.init('cls11-m1-structuri-avansate-lectia3-coada-intro');
+        LessonSummary.init('cls11-m1-structuri-avansate-lectia3-coada-intro');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm1-structuri-avansate',
+            moduleName: 'M1 Structuri Avansate',
+            lesson: 'Coada (FIFO)'
+        });
+        LearningProgress.init('cls11', 'm1-structuri-avansate', 'lectia3-coada-intro.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

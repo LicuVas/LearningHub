@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 2: Aplicatii cu stive | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia1-stiva-intro.html" class="nav-btn" title="Lectia anterioara">&#8592; Anterioara</a>
+        <a href="lectia3-coada-intro.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Aplicatii cu stive: paranteze si expresii</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- =============== FRAME SECTION =============== -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei invata doua aplicatii clasice ale stivei: verificarea echilibrului parantezelor si evaluarea expresiilor in forma postfixata (Reverse Polish Notation). Vei intelege de ce stiva este structura naturala pentru ambele probleme.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa implementezi algoritmul de verificare a parantezelor echilibrate folosind o stiva</li>
+                <li>Sa explici notatia postfixata (RPN) si avantajele ei fata de notatia infixata</li>
+                <li>Sa evaluezi o expresie postfixata pas cu pas cu o stiva</li>
+                <li>Sa analizezi complexitatea O(n) a ambilor algoritmi si sa o justifici</li>
+                <li>Sa descrii algoritmul Shunting-Yard (conversie infix-&gt;postfix) &mdash; nivel intensiv</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- =============== TRY SECTION =============== -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Ai expresia <strong>({[]})</strong>. Urmareste fiecare caracter de la stanga la dreapta si noteaza ce se intampla cu o stiva imaginara. La final, stiva e goala?</p>
+                <textarea id="tryAnswer" placeholder="Car 1: ( -> pun pe stiva.&#10;Car 2: { -> pun pe stiva.&#10;..." rows="8"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Regula: cand intalnesti o paranteza <strong>deschisa</strong> (<code>(</code> <code>[</code> <code>{</code>) o pui pe stiva. Cand intalnesti o paranteza <strong>inchisa</strong> &mdash; verifici daca varful stivei e perechea corecta si o scoti (pop).</p>
+                    <p>Daca la final stiva e goala =&gt; parantezele sunt echilibrate!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =============== ATOMS =============== -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1 -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "De ce stiva este structura ideala pentru verificarea parantezelor?", "options": ["Pentru ca are acces aleator la orice element", "Pentru ca poate stoca numere mari", "Pentru ca ultima paranteza deschisa trebuie inchisa prima (LIFO)", "Pentru ca este mai rapida decat un vector"], "correct": "c", "hint": "Principiul LIFO al stivei corespunde exact regulii parantezelor: ultima deschisa = prima de inchis."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. De ce stiva si paranteze?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O expresie cu paranteze este <strong>echilibrata</strong> daca fiecare paranteza deschisa are o pereche inchisa, in ordinea corecta de cuibare.
+                    Stiva este structura naturala pentru aceasta problema: principiul <strong>LIFO</strong> (Last In First Out) reflecta exact regula &bdquo;ultima deschisa = prima de inchis&rdquo;.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Vizualizare pas cu pas pentru {[()]}:</div>
+<pre>Pas  Car   Actiune              Stiva dupa
+---------------------------------------------
+1    '{'  push('{')            ['{']
+2    '['  push('[')            ['{', '[']
+3    '('  push('(')            ['{', '[', '(']
+4    ')'  pop()='('            ['{', '[']
+5    ']'  pop()='['            ['{']
+6    '}'  pop()='{'            []
+
+Stiva goala? True =&gt; ECHILIBRATE</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cazuri care esueaza:</div>
+                    <ul>
+                        <li><code>((a+b)</code> &mdash; stiva nu e goala la final (ramane un <code>(</code>)</li>
+                        <li><code>([)]</code> &mdash; varful stivei este <code>(</code> dar intalnim <code>]</code> &rarr; nepotrivire</li>
+                        <li><code>)</code> &mdash; stiva goala la inchidere &rarr; eroare imediata</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2 -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Ce se intampla cand intalnim o paranteza inchisa si stiva este goala?", "options": ["Expresia este neechilibrata (returnam False)", "Ignoram acel caracter", "Punem caracterul pe stiva", "Continuam pana la sfarsit"], "correct": "a", "hint": "O paranteza inchisa fara pereche deschisa inseamna imediat ca expresia este neechilibrata."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Algoritm Python: verificare paranteze</h3>
+            </div>
+            <div class="atom-content">
+<pre><span class="code-comment"># Verificare paranteze echilibrate cu stiva</span>
+<span class="code-keyword">def</span> <span class="code-function">verifica_paranteze</span>(expresie):
+    stiva = []
+    perechi = {<span class="code-string">')'</span>: <span class="code-string">'('</span>, <span class="code-string">']'</span>: <span class="code-string">'['</span>, <span class="code-string">'}'</span>: <span class="code-string">'{'</span>}
+    <span class="code-keyword">for</span> car <span class="code-keyword">in</span> expresie:
+        <span class="code-keyword">if</span> car <span class="code-keyword">in</span> <span class="code-string">'([{'</span>:
+            stiva.<span class="code-function">append</span>(car)          <span class="code-comment"># push</span>
+        <span class="code-keyword">elif</span> car <span class="code-keyword">in</span> <span class="code-string">')]}'</span>:
+            <span class="code-keyword">if not</span> stiva <span class="code-keyword">or</span> stiva[-<span class="code-number">1</span>] != perechi[car]:
+                <span class="code-keyword">return False</span>        <span class="code-comment"># stiva goala sau nepotrivire</span>
+            stiva.<span class="code-function">pop</span>()              <span class="code-comment"># pop</span>
+    <span class="code-keyword">return</span> <span class="code-function">len</span>(stiva) == <span class="code-number">0</span>       <span class="code-comment"># echilibrat daca stiva goala</span>
+
+<span class="code-function">print</span>(<span class="code-function">verifica_paranteze</span>(<span class="code-string">"(a+b)*[c-d]"</span>))  <span class="code-comment"># True</span>
+<span class="code-function">print</span>(<span class="code-function">verifica_paranteze</span>(<span class="code-string">"((a+b)"</span>))       <span class="code-comment"># False</span>
+<span class="code-function">print</span>(<span class="code-function">verifica_paranteze</span>(<span class="code-string">"{[()]}"</span>))       <span class="code-comment"># True</span>
+<span class="code-function">print</span>(<span class="code-function">verifica_paranteze</span>(<span class="code-string">"([)]"</span>))         <span class="code-comment"># False</span></pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+<pre>True
+False
+True
+False</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> O(n) timp &mdash; fiecare caracter este procesat exact o data. O(n) spatiu &mdash; stiva retine cel mult n/2 paranteze deschise (cazul nefavorabil: <code>((((</code>).
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3 -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Expresia postfixata 5 3 + 2 * corespunde infixatei:", "options": ["5 + 3 * 2", "5 + 3 + 2", "5 * (3 + 2)", "(5 + 3) * 2"], "correct": "d", "hint": "5 3 + inseamna 5+3=8, apoi 8 2 * inseamna 8*2=16. Parantezele sunt implicite in forma postfixata."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Notatia postfixata (Reverse Polish Notation)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    In notatia <strong>infixata</strong> (obisnuita), operatorul este intre operanzi: <code>a + b</code>.<br>
+                    In notatia <strong>postfixata</strong> (RPN &mdash; Reverse Polish Notation), operatorul vine <em>dupa</em> operanzii sai: <code>a b +</code>.<br>
+                    <strong>Avantaj major:</strong> nu necesita paranteze si nu necesita reguli de precedenta la evaluare &mdash; ordinea calculelor este codificata implicit in sirul de tokeni.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Corespondenta infix &harr; postfix:</div>
+<pre>Infix                 Postfix              Rezultat
+------------------------------------------------------
+3 + 4 * 2          -&gt;  3 4 2 * +            11
+(5 + 3) * 2        -&gt;  5 3 + 2 *            16
+10 + 2 * 8 - 3     -&gt;  10 2 8 * + 3 -       23</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Evaluare manuala a "3 4 2 * +":</div>
+<pre>Token  Actiune          Stiva
+-------------------------------
+3      push(3)          [3]
+4      push(4)          [3, 4]
+2      push(2)          [3, 4, 2]
+*      pop b=2, pop a=4 [3]
+       push(4*2=8)      [3, 8]
++      pop b=8, pop a=3 []
+       push(3+8=11)     [11]
+
+Rezultat: 11</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4 -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "La evaluarea postfix, cand intalnim un operator, scoatem din stiva:", "options": ["Un singur operand", "Doi operanzi; primul scos devine operandul DREPT", "Toti operanzii din stiva", "Nimic, aplicam operatorul pe varf"], "correct": "b", "hint": "Primul pop -> b (dreapta), al doilea pop -> a (stanga). Calculam a op b, nu b op a."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Algoritm Python: evaluare postfix</h3>
+            </div>
+            <div class="atom-content">
+<pre><span class="code-comment"># Evaluare expresie postfixata (RPN) cu stiva</span>
+<span class="code-keyword">def</span> <span class="code-function">evalueaza_postfix</span>(expresie):
+    stiva = []
+    tokeni = expresie.<span class="code-function">split</span>()
+    <span class="code-keyword">for</span> token <span class="code-keyword">in</span> tokeni:
+        <span class="code-keyword">if</span> token.<span class="code-function">lstrip</span>(<span class="code-string">'-'</span>).<span class="code-function">isdigit</span>():
+            stiva.<span class="code-function">append</span>(<span class="code-function">int</span>(token))  <span class="code-comment"># e numar -&gt; push</span>
+        <span class="code-keyword">else</span>:
+            b = stiva.<span class="code-function">pop</span>()             <span class="code-comment"># al doilea operand (dreapta)</span>
+            a = stiva.<span class="code-function">pop</span>()             <span class="code-comment"># primul operand (stanga)</span>
+            <span class="code-keyword">if</span> token == <span class="code-string">'+'</span>: stiva.<span class="code-function">append</span>(a + b)
+            <span class="code-keyword">elif</span> token == <span class="code-string">'-'</span>: stiva.<span class="code-function">append</span>(a - b)
+            <span class="code-keyword">elif</span> token == <span class="code-string">'*'</span>: stiva.<span class="code-function">append</span>(a * b)
+            <span class="code-keyword">elif</span> token == <span class="code-string">'/'</span>: stiva.<span class="code-function">append</span>(<span class="code-function">int</span>(a / b))
+    <span class="code-keyword">return</span> stiva[<span class="code-number">0</span>]
+
+<span class="code-function">print</span>(<span class="code-function">evalueaza_postfix</span>(<span class="code-string">"3 4 2 * +"</span>))       <span class="code-comment"># 11</span>
+<span class="code-function">print</span>(<span class="code-function">evalueaza_postfix</span>(<span class="code-string">"5 3 + 2 *"</span>))       <span class="code-comment"># 16</span>
+<span class="code-function">print</span>(<span class="code-function">evalueaza_postfix</span>(<span class="code-string">"10 2 8 * + 3 -"</span>))  <span class="code-comment"># 23</span></pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+<pre>11
+16
+23</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> O(n) timp &mdash; fiecare token este procesat exact o data. O(n) spatiu &mdash; stiva contine cel mult n/2 operanzi.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5 EXCLUSIV INTENSIV -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "In algoritmul Shunting-Yard, cand mutam un operator din stiva in rezultat?", "options": ["Cand operatorul din stiva are precedenta mai mare sau egala si nu este paranteza", "Cand intalnim orice operator nou", "Cand stiva este plina", "Numai la sfarsitul expresiei"], "correct": "a", "hint": "Mutam din stiva in rezultat cat timp varful stivei e operator cu precedenta >= noul operator si nu e paranteza."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Conversie infix &rarr; postfix (Shunting-Yard) <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune doar pentru profil intensiv informatica</div>
+                    <p>Algoritmul <strong>Shunting-Yard</strong> (Dijkstra, 1961) transforma o expresie infixata in postfixata folosind o stiva de operatori. Este fundamentul compilatoarelor si calculatoarelor stiintifice care accepta expresii cu paranteze si precedenta.</p>
+                </div>
+                <div class="concept-def">
+                    <strong>Reguli Shunting-Yard:</strong>
+                    <ul>
+                        <li><strong>Numar</strong> &rarr; adauga direct la output</li>
+                        <li><strong>Operator</strong> &rarr; cat timp varful stivei e operator cu precedenta &ge; operator curent, muta in output; apoi push operator curent</li>
+                        <li><strong>(</strong> &rarr; push pe stiva</li>
+                        <li><strong>)</strong> &rarr; muta din stiva in output pana la <code>(</code>, apoi scoate <code>(</code></li>
+                        <li><strong>Final</strong> &rarr; muta toti operatorii ramasi din stiva in output</li>
+                    </ul>
+                </div>
+<pre><span class="code-comment"># Conversie infix -&gt; postfix (Shunting-Yard, Dijkstra 1961)</span>
+<span class="code-keyword">def</span> <span class="code-function">infix_la_postfix</span>(expresie):
+    precedenta = {<span class="code-string">'+'</span>: <span class="code-number">1</span>, <span class="code-string">'-'</span>: <span class="code-number">1</span>, <span class="code-string">'*'</span>: <span class="code-number">2</span>, <span class="code-string">'/'</span>: <span class="code-number">2</span>}
+    stiva = []
+    rezultat = []
+    tokeni = expresie.<span class="code-function">split</span>()
+    <span class="code-keyword">for</span> token <span class="code-keyword">in</span> tokeni:
+        <span class="code-keyword">if</span> token.<span class="code-function">lstrip</span>(<span class="code-string">'-'</span>).<span class="code-function">isdigit</span>():
+            rezultat.<span class="code-function">append</span>(token)        <span class="code-comment"># numar -&gt; direct in output</span>
+        <span class="code-keyword">elif</span> token == <span class="code-string">'('</span>:
+            stiva.<span class="code-function">append</span>(token)
+        <span class="code-keyword">elif</span> token == <span class="code-string">')'</span>:
+            <span class="code-keyword">while</span> stiva <span class="code-keyword">and</span> stiva[-<span class="code-number">1</span>] != <span class="code-string">'('</span>:
+                rezultat.<span class="code-function">append</span>(stiva.<span class="code-function">pop</span>())
+            stiva.<span class="code-function">pop</span>()                  <span class="code-comment"># scoate '('</span>
+        <span class="code-keyword">else</span>:                           <span class="code-comment"># operator</span>
+            <span class="code-keyword">while</span> (stiva <span class="code-keyword">and</span> stiva[-<span class="code-number">1</span>] != <span class="code-string">'('</span> <span class="code-keyword">and</span>
+                   stiva[-<span class="code-number">1</span>] <span class="code-keyword">in</span> precedenta <span class="code-keyword">and</span>
+                   precedenta[stiva[-<span class="code-number">1</span>]] >= precedenta[token]):
+                rezultat.<span class="code-function">append</span>(stiva.<span class="code-function">pop</span>())
+            stiva.<span class="code-function">append</span>(token)
+    <span class="code-keyword">while</span> stiva:
+        rezultat.<span class="code-function">append</span>(stiva.<span class="code-function">pop</span>())
+    <span class="code-keyword">return</span> <span class="code-string">' '</span>.<span class="code-function">join</span>(rezultat)
+
+<span class="code-function">print</span>(<span class="code-function">infix_la_postfix</span>(<span class="code-string">"3 + 4 * 2"</span>))        <span class="code-comment"># 3 4 2 * +</span>
+<span class="code-function">print</span>(<span class="code-function">infix_la_postfix</span>(<span class="code-string">"( 5 + 3 ) * 2"</span>))     <span class="code-comment"># 5 3 + 2 *</span>
+<span class="code-function">print</span>(<span class="code-function">infix_la_postfix</span>(<span class="code-string">"10 + 2 * 8 - 3"</span>))    <span class="code-comment"># 10 2 8 * + 3 -</span></pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+<pre>3 4 2 * +
+5 3 + 2 *
+10 2 8 * + 3 -</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> O(n) timp &mdash; fiecare token intra si iese din stiva cel mult o data. O(n) spatiu &mdash; stiva contine cel mult n/2 operatori simultan.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6 EXCLUSIV INTENSIV C++ -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, metoda std::stack pentru a citi varful fara a-l scoate este:", "options": ["peek()", "get()", "top()", "front()"], "correct": "c", "hint": "std::stack ofera top() pentru citire si pop() pentru scoatere. In Python echivalentul e stiva[-1]."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Implementare C++: std::stack si cei doi algoritmi <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune doar pentru profil intensiv informatica</div>
+                    <p>In C++ folosim <code>std::stack&lt;T&gt;</code> din <code>&lt;stack&gt;</code>. Metode: <code>push(x)</code>, <code>pop()</code>, <code>top()</code>, <code>empty()</code>. Atentie: <code>pop()</code> nu returneaza valoarea &mdash; citeste cu <code>top()</code> inainte.</p>
+                </div>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;stack&gt;</span>
+<span class="code-preprocessor">#include &lt;string&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">bool</span> <span class="code-function">verificaParanteze</span>(<span class="code-keyword">const</span> string&amp; expr) {
+    stack&lt;<span class="code-keyword">char</span>&gt; stiva;
+    <span class="code-keyword">for</span> (<span class="code-keyword">char</span> c : expr) {
+        <span class="code-keyword">if</span> (c == <span class="code-string">'('</span> || c == <span class="code-string">'['</span> || c == <span class="code-string">'{'</span>) {
+            stiva.<span class="code-function">push</span>(c);
+        } <span class="code-keyword">else if</span> (c == <span class="code-string">')'</span> || c == <span class="code-string">']'</span> || c == <span class="code-string">'}'</span>) {
+            <span class="code-keyword">if</span> (stiva.<span class="code-function">empty</span>()) <span class="code-keyword">return false</span>;
+            <span class="code-keyword">char</span> top = stiva.<span class="code-function">top</span>(); stiva.<span class="code-function">pop</span>();
+            <span class="code-keyword">if</span> (c == <span class="code-string">')'</span> &amp;&amp; top != <span class="code-string">'('</span>) <span class="code-keyword">return false</span>;
+            <span class="code-keyword">if</span> (c == <span class="code-string">']'</span> &amp;&amp; top != <span class="code-string">'['</span>) <span class="code-keyword">return false</span>;
+            <span class="code-keyword">if</span> (c == <span class="code-string">'}'</span> &amp;&amp; top != <span class="code-string">'{'</span>) <span class="code-keyword">return false</span>;
+        }
+    }
+    <span class="code-keyword">return</span> stiva.<span class="code-function">empty</span>();
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-function">verificaParanteze</span>(<span class="code-string">"(a+b)*[c-d]"</span>) &lt;&lt; endl;  <span class="code-comment">// 1 (true)</span>
+    cout &lt;&lt; <span class="code-function">verificaParanteze</span>(<span class="code-string">"((a+b)"</span>)       &lt;&lt; endl;  <span class="code-comment">// 0 (false)</span>
+    cout &lt;&lt; <span class="code-function">verificaParanteze</span>(<span class="code-string">"{[()]}"</span>)       &lt;&lt; endl;  <span class="code-comment">// 1 (true)</span>
+    cout &lt;&lt; <span class="code-function">verificaParanteze</span>(<span class="code-string">"([)]"</span>)         &lt;&lt; endl;  <span class="code-comment">// 0 (false)</span>
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+<pre>1
+0
+1
+0</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Nota:</strong> In C++, <code>bool</code> cu <code>cout</code> apare ca <code>1</code> (true) sau <code>0</code> (false). Adauga <code>cout &lt;&lt; boolalpha;</code> pentru text <code>true</code>/<code>false</code> explicit.
+                </div>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;stack&gt;</span>
+<span class="code-preprocessor">#include &lt;sstream&gt;</span>
+<span class="code-preprocessor">#include &lt;string&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">evalueazaPostfix</span>(<span class="code-keyword">const</span> string&amp; expresie) {
+    stack&lt;<span class="code-keyword">int</span>&gt; stiva;
+    istringstream iss(expresie);
+    string token;
+    <span class="code-keyword">while</span> (iss &gt;&gt; token) {
+        <span class="code-keyword">if</span> (<span class="code-function">isdigit</span>(token[<span class="code-number">0</span>])) {
+            stiva.<span class="code-function">push</span>(<span class="code-function">stoi</span>(token));
+        } <span class="code-keyword">else</span> {
+            <span class="code-keyword">int</span> b = stiva.<span class="code-function">top</span>(); stiva.<span class="code-function">pop</span>();
+            <span class="code-keyword">int</span> a = stiva.<span class="code-function">top</span>(); stiva.<span class="code-function">pop</span>();
+            <span class="code-keyword">if</span> (token == <span class="code-string">"+"</span>) stiva.<span class="code-function">push</span>(a + b);
+            <span class="code-keyword">else if</span> (token == <span class="code-string">"-"</span>) stiva.<span class="code-function">push</span>(a - b);
+            <span class="code-keyword">else if</span> (token == <span class="code-string">"*"</span>) stiva.<span class="code-function">push</span>(a * b);
+            <span class="code-keyword">else if</span> (token == <span class="code-string">"/"</span>) stiva.<span class="code-function">push</span>(a / b);
+        }
+    }
+    <span class="code-keyword">return</span> stiva.<span class="code-function">top</span>();
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-function">evalueazaPostfix</span>(<span class="code-string">"3 4 2 * +"</span>) &lt;&lt; endl;       <span class="code-comment">// 11</span>
+    cout &lt;&lt; <span class="code-function">evalueazaPostfix</span>(<span class="code-string">"5 3 + 2 *"</span>) &lt;&lt; endl;       <span class="code-comment">// 16</span>
+    cout &lt;&lt; <span class="code-function">evalueazaPostfix</span>(<span class="code-string">"10 2 8 * + 3 -"</span>) &lt;&lt; endl; <span class="code-comment">// 23</span>
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+<pre>11
+16
+23</pre>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- =============== PRACTICE =============== -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Verificare manuala</h3>
+            <p>Aplica algoritmul de verificare a parantezelor <em>manual</em> pentru expresia <code>[(a+b)*(c-{d})]</code>. Deseneaza stiva la fiecare pas si precizeaza concluzia.</p>
+            <p><em>Raspuns asteptat:</em> expresia este echilibrata; stiva este goala la final.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Calcul postfix</h3>
+            <p>Evalueaza expresia postfixata <code>7 2 3 * - 4 +</code> folosind stiva (pas cu pas). Care este rezultatul?</p>
+            <p><em>Indiciu:</em> <code>2 3 *</code> = 6; <code>7 6 -</code> = 1; <code>1 4 +</code> = 5.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Conversie si evaluare completa</h3>
+            <p>Transforma expresia infixata <code>( 8 - 3 ) * ( 2 + 4 ) / 3</code> in forma postfixata (Shunting-Yard), apoi evalueaza postfix-ul obtinut. Verifica: (8-3)*(2+4)/3 = 5*6/3 = 10.</p>
+            <p><em>Postfix asteptat:</em> <code>8 3 - 2 4 + * 3 /</code>. Rezultat: 10.</p>
+        </div>
+    </section>
+
+    <!-- =============== REVIEW =============== -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Verificarea parantezelor echilibrate: push la deschidere, pop+potrivire la inchidere, stiva goala la final = echilibrat; O(n) timp si spatiu</li>
+                <li>Notatia postfixata (RPN): operatorul apare dupa operanzi, nu necesita paranteze la evaluare</li>
+                <li>Evaluarea postfix: numere &rarr; push; operator &rarr; pop(b), pop(a), calcul a op b, push rezultat; O(n)</li>
+                <li>Algoritmul Shunting-Yard (intensiv): conversie infix&rarr;postfix cu stiva de operatori, respectand precedenta; O(n)</li>
+                <li>In C++: <code>std::stack&lt;T&gt;</code> cu <code>push()</code>, <code>top()</code>, <code>pop()</code>, <code>empty()</code></li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Coada &mdash; structura FIFO</strong>: concept, operatii enqueue/dequeue, coada circulara.</p>
+            <a href="lectia3-coada-intro.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- =============== SCRIPTS =============== -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m1-structuri-avansate-lectia2-stiva-aplicatii');
+        PracticeSimple.init('cls11-m1-structuri-avansate-lectia2-stiva-aplicatii');
+        LessonSummary.init('cls11-m1-structuri-avansate-lectia2-stiva-aplicatii');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm1-structuri-avansate',
+            moduleName: 'M1 Structuri Avansate',
+            lesson: 'Aplicatii cu stive'
+        });
+        LearningProgress.init('cls11', 'm1-structuri-avansate', 'lectia2-stiva-aplicatii.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

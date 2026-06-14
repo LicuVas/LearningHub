@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 6: Aplicatii grafuri - Probleme rezolvate | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia5-arbori.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 5</a>
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">Modulul &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Aplicatii grafuri: Probleme rezolvate</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei consolida toate algoritmii pe grafuri invatati prin rezolvarea unor probleme complete de tip Bacalaureat si concurs: distante minime, componente conexe, reconstructia drumului si (la intensiv) distante in grafuri ponderate cu Dijkstra.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa alegi algoritmul potrivit (BFS/DFS) pentru o problema data</li>
+                <li>Sa calculezi distanta minima intre doua noduri folosind BFS</li>
+                <li>Sa numeri si sa identifici componentele conexe ale unui graf</li>
+                <li>Sa reconstruiesti drumul minim retinand parintele fiecarui nod</li>
+                <li>Sa detectezi existenta unui ciclu intr-un graf orientat</li>
+                <li>Sa rezolvi probleme complete asa cum apar la Bacalaureat</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Ai un graf cu nodurile 1-5 si muchiile: (1,2), (1,3), (2,4), (3,5). Fara a scrie cod, raspunde: care este distanta minima de la nodul 1 la nodul 5? Dar la nodul 4? Care algoritm folosesti si de ce?</p>
+                <textarea id="tryAnswer" placeholder="Distanta 1->5 = ...&#10;Distanta 1->4 = ...&#10;Algoritmul ales: ...&#10;De ce: ..." rows="5"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>BFS (parcurgere in latime) gaseste drumul cu <strong>cel mai mic numar de muchii</strong> intr-un graf <strong>neponderat</strong>. Pornesti din nodul 1 si explorezi vecinii nivel cu nivel.</p>
+                    <p>Nodul 5 se atinge prin lantul 1-3-5 (2 muchii). Nodul 4 se atinge prin 1-2-4 (2 muchii). Ambele sunt la distanta 2.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Strategia alegerii algoritmului -->
+        <div class="atom" id="atom-1" data-quiz="[{&quot;question&quot;: &quot;Ce algoritm folosim pentru a gasi distanta MINIMA (nr. minim de muchii) intr-un graf NEPONDERAT?&quot;, &quot;options&quot;: [&quot;BFS (parcurgere in latime)&quot;, &quot;DFS (parcurgere in adancime)&quot;, &quot;Dijkstra&quot;, &quot;Backtracking&quot;], &quot;correct&quot;: &quot;a&quot;, &quot;hint&quot;: &quot;BFS exploreaza nodurile nivel cu nivel — nodurile la distanta 1, apoi la distanta 2, etc. Primul drum gasit catre o destinatie este mereu cel mai scurt (in numar de muchii).&quot;}]">
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Strategia: ce algoritm alegem?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Inainte de a scrie cod, trebuie sa identificam tipul problemei si sa alegem algoritmul potrivit:
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Tabel de decizie</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cerinta problemei</th>
+                                <th>Algoritm</th>
+                                <th>Complexitate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Distanta minima (nr. muchii), graf neponderat</td>
+                                <td><strong>BFS</strong></td>
+                                <td>O(V + E)</td>
+                            </tr>
+                            <tr>
+                                <td>Componente conexe, existenta drumului</td>
+                                <td><strong>DFS</strong> sau BFS</td>
+                                <td>O(V + E)</td>
+                            </tr>
+                            <tr>
+                                <td>Detectare ciclu in graf orientat</td>
+                                <td><strong>DFS cu colorare</strong></td>
+                                <td>O(V + E)</td>
+                            </tr>
+                            <tr>
+                                <td>Distanta minima, graf ponderat pozitiv</td>
+                                <td><strong>Dijkstra</strong></td>
+                                <td>O((V+E) log V)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p>Unde V = numar noduri, E = numar muchii.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Reprezentarea grafului in Python</div>
+                    <p>In toate problemele urmatoare vom folosi <strong>lista de adiacenta</strong> ca dictionar:</p>
+                    <pre><span class="code-comment"># Graf neorientat cu 6 noduri</span>
+graf = {
+    <span class="code-number">1</span>: [<span class="code-number">2</span>, <span class="code-number">3</span>],
+    <span class="code-number">2</span>: [<span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">5</span>],
+    <span class="code-number">3</span>: [<span class="code-number">1</span>, <span class="code-number">6</span>],
+    <span class="code-number">4</span>: [<span class="code-number">2</span>],
+    <span class="code-number">5</span>: [<span class="code-number">2</span>, <span class="code-number">6</span>],
+    <span class="code-number">6</span>: [<span class="code-number">3</span>, <span class="code-number">5</span>]
+}</pre>
+                    <p>Muchii: 1-2, 1-3, 2-4, 2-5, 3-6, 5-6</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: BFS - Distanta minima -->
+        <div class="atom" id="atom-2" data-quiz="[{&quot;question&quot;: &quot;De ce BFS gaseste drumul cu numar minim de muchii?&quot;, &quot;options&quot;: [&quot;Pentru ca viziteaza nodurile in ordine alfabetica&quot;, &quot;Pentru ca exploreaza mai intai toate nodurile la distanta k inainte de a trece la distanta k+1&quot;, &quot;Pentru ca foloseste o stiva (LIFO)&quot;, &quot;Pentru ca marcheaza nodurile vizitate&quot;], &quot;correct&quot;: &quot;b&quot;, &quot;hint&quot;: &quot;BFS foloseste o coada (FIFO): extrage un nod, adauga toti vecinii nevizitati. Astfel, nodurile la distanta 1 sunt procesate inaintea celor la distanta 2, garantand ca primul drum gasit catre orice nod este cel mai scurt.&quot;}]">
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Problema 1: Distanta minima cu BFS</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Enunt:</strong> Intr-un graf neorientat cu 6 noduri si muchiile: 1-2, 1-3, 2-4, 2-5, 3-6, 5-6, determina distanta minima (in numar de muchii) de la nodul 1 la toate celelalte noduri.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Traseul BFS nivel cu nivel</div>
+                    <p>Nivelul 0: {1} — nodul de start, distanta 0</p>
+                    <p>Nivelul 1: {2, 3} — vecini nevizitati ai lui 1, distanta 1</p>
+                    <p>Nivelul 2: {4, 5, 6} — vecini nevizitati ai lui 2 si 3, distanta 2</p>
+                </div>
+                <pre><span class="code-comment"># BFS - distante minime de la un nod sursa</span>
+<span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+<span class="code-keyword">def</span> <span class="code-function">bfs_distante</span>(graf, start):
+    dist = {start: <span class="code-number">0</span>}
+    coada = <span class="code-function">deque</span>([start])
+    <span class="code-keyword">while</span> coada:
+        nod = coada.<span class="code-function">popleft</span>()
+        <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> graf[nod]:
+            <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> dist:
+                dist[vecin] = dist[nod] + <span class="code-number">1</span>
+                coada.<span class="code-function">append</span>(vecin)
+    <span class="code-keyword">return</span> dist
+
+graf = {
+    <span class="code-number">1</span>: [<span class="code-number">2</span>, <span class="code-number">3</span>],
+    <span class="code-number">2</span>: [<span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">5</span>],
+    <span class="code-number">3</span>: [<span class="code-number">1</span>, <span class="code-number">6</span>],
+    <span class="code-number">4</span>: [<span class="code-number">2</span>],
+    <span class="code-number">5</span>: [<span class="code-number">2</span>, <span class="code-number">6</span>],
+    <span class="code-number">6</span>: [<span class="code-number">3</span>, <span class="code-number">5</span>]
+}
+
+dist = <span class="code-function">bfs_distante</span>(graf, <span class="code-number">1</span>)
+<span class="code-function">print</span>(<span class="code-string">"Distanta minima de la 1 la 6:"</span>, dist[<span class="code-number">6</span>])
+<span class="code-keyword">for</span> nod <span class="code-keyword">in</span> <span class="code-function">sorted</span>(dist):
+    <span class="code-function">print</span>(<span class="code-string">f"  nod {nod}: distanta {dist[nod]}"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Distanta minima de la 1 la 6: 2
+  nod 1: distanta 0
+  nod 2: distanta 1
+  nod 3: distanta 1
+  nod 4: distanta 2
+  nod 5: distanta 2
+  nod 6: distanta 2</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Analiza complexitatii</div>
+                    <p>Fiecare nod este adaugat in coada o singura data: <strong>O(V)</strong>. Fiecare muchie este examinata de doua ori (o data din fiecare capat): <strong>O(E)</strong>. Total: <strong>O(V + E)</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Componente conexe cu DFS -->
+        <div class="atom" id="atom-3" data-quiz="[{&quot;question&quot;: &quot;Daca un graf cu 8 noduri are componentele conexe {1,2,3}, {4,5}, {6}, {7,8}, cate componente conexe are?&quot;, &quot;options&quot;: [&quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;8&quot;], &quot;correct&quot;: &quot;c&quot;, &quot;hint&quot;: &quot;Fiecare grup de noduri izolat de restul formeaza o componenta conexa. Nodul 6 singur este o componenta conexa (trivial). Numaram grupurile: {1,2,3}, {4,5}, {6}, {7,8} = 4 componente.&quot;}]">
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Problema 2: Componente conexe cu DFS</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Enunt:</strong> Dat un graf neorientat cu 8 noduri si muchiile: 1-2, 1-3, 4-5, 7-8, determina numarul componentelor conexe si nodurile din fiecare componenta. (Nodurile 6 este izolat — nu are muchii.)
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Idee algoritm</div>
+                    <p>Parcurgem toate nodurile. Daca un nod nu a fost vizitat inca, lansam un DFS din el — toate nodurile atinse de acel DFS formeaza o componenta conexa. Repetam pentru urmatorul nod nevizitat.</p>
+                </div>
+                <pre><span class="code-comment"># DFS - componente conexe</span>
+<span class="code-keyword">def</span> <span class="code-function">dfs</span>(graf, nod, vizitat, componenta):
+    vizitat.<span class="code-function">add</span>(nod)
+    componenta.<span class="code-function">append</span>(nod)
+    <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> graf[nod]:
+        <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> vizitat:
+            <span class="code-function">dfs</span>(graf, vecin, vizitat, componenta)
+
+<span class="code-keyword">def</span> <span class="code-function">componente_conexe</span>(graf):
+    vizitat = <span class="code-function">set</span>()
+    componente = []
+    <span class="code-keyword">for</span> nod <span class="code-keyword">in</span> <span class="code-function">sorted</span>(graf):
+        <span class="code-keyword">if</span> nod <span class="code-keyword">not in</span> vizitat:
+            comp = []
+            <span class="code-function">dfs</span>(graf, nod, vizitat, comp)
+            componente.<span class="code-function">append</span>(<span class="code-function">sorted</span>(comp))
+    <span class="code-keyword">return</span> componente
+
+graf = {
+    <span class="code-number">1</span>: [<span class="code-number">2</span>, <span class="code-number">3</span>], <span class="code-number">2</span>: [<span class="code-number">1</span>], <span class="code-number">3</span>: [<span class="code-number">1</span>],
+    <span class="code-number">4</span>: [<span class="code-number">5</span>], <span class="code-number">5</span>: [<span class="code-number">4</span>],
+    <span class="code-number">6</span>: [],
+    <span class="code-number">7</span>: [<span class="code-number">8</span>], <span class="code-number">8</span>: [<span class="code-number">7</span>]
+}
+
+comps = <span class="code-function">componente_conexe</span>(graf)
+<span class="code-function">print</span>(<span class="code-string">"Numar componente conexe:"</span>, <span class="code-function">len</span>(comps))
+<span class="code-keyword">for</span> i, c <span class="code-keyword">in</span> <span class="code-function">enumerate</span>(comps, <span class="code-number">1</span>):
+    <span class="code-function">print</span>(<span class="code-string">f"  Componenta {i}: {c}"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Numar componente conexe: 4
+  Componenta 1: [1, 2, 3]
+  Componenta 2: [4, 5]
+  Componenta 3: [6]
+  Componenta 4: [7, 8]</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Nota: DFS recursiv vs. limite de stiva</div>
+                    <p>Recursivitatea DFS poate atinge limita de stiva Python pentru grafuri cu mii de noduri. In practica (si la examene), pentru grafuri mici aceasta implementare este acceptabila. Pentru grafuri mari se foloseste versiunea iterativa cu stiva explicita.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Reconstructia drumului -->
+        <div class="atom" id="atom-4" data-quiz="[{&quot;question&quot;: &quot;De ce retinem vectorul parinte in BFS pentru reconstructia drumului?&quot;, &quot;options&quot;: [&quot;Ca sa stim de cate ori am vizitat fiecare nod&quot;, &quot;Ca sa calculam costul drumului&quot;, &quot;Ca sa evitam vizitarea de doua ori a aceluiasi nod&quot;, &quot;Ca sa putem reconstitui drumul mergand inapoi de la destinatie la sursa&quot;], &quot;correct&quot;: &quot;d&quot;, &quot;hint&quot;: &quot;parinte[v] = u inseamna ca nodul u ne-a condus la v in BFS. Mergand inapoi (v -&gt; parinte[v] -&gt; parinte[parinte[v]] -&gt; ...) ajungem la sursa, obtinand drumul in ordine inversa.&quot;}]">
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Problema 3: Reconstructia drumului minim</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Enunt:</strong> Pe acelasi graf cu 6 noduri, determina nu doar distanta, ci si drumul concret (lista de noduri) de la nodul 1 la nodul 6 cu numar minim de muchii.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Tehnica: vectorul parinte</div>
+                    <p>In BFS, cand descoperim un nod <code>v</code> prin nodul <code>u</code>, retinem <code>parinte[v] = u</code>. Dupa ce ajungem la destinatie, mergem inapoi prin parinti pana la sursa, inversam lista si obtinem drumul.</p>
+                </div>
+                <pre><span class="code-comment"># BFS cu reconstructia drumului</span>
+<span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+<span class="code-keyword">def</span> <span class="code-function">bfs_drum</span>(graf, start, stop):
+    parinte = {start: <span class="code-keyword">None</span>}
+    coada = <span class="code-function">deque</span>([start])
+    <span class="code-keyword">while</span> coada:
+        nod = coada.<span class="code-function">popleft</span>()
+        <span class="code-keyword">if</span> nod == stop:
+            <span class="code-keyword">break</span>
+        <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> graf[nod]:
+            <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> parinte:
+                parinte[vecin] = nod
+                coada.<span class="code-function">append</span>(vecin)
+    <span class="code-keyword">if</span> stop <span class="code-keyword">not in</span> parinte:
+        <span class="code-keyword">return</span> []  <span class="code-comment"># nu exista drum</span>
+    <span class="code-comment"># Reconstructia: mergem inapoi prin parinti</span>
+    drum = []
+    nod = stop
+    <span class="code-keyword">while</span> nod <span class="code-keyword">is not None</span>:
+        drum.<span class="code-function">append</span>(nod)
+        nod = parinte[nod]
+    <span class="code-keyword">return</span> <span class="code-function">list</span>(<span class="code-function">reversed</span>(drum))
+
+graf = {
+    <span class="code-number">1</span>: [<span class="code-number">2</span>, <span class="code-number">3</span>], <span class="code-number">2</span>: [<span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">5</span>],
+    <span class="code-number">3</span>: [<span class="code-number">1</span>, <span class="code-number">6</span>], <span class="code-number">4</span>: [<span class="code-number">2</span>],
+    <span class="code-number">5</span>: [<span class="code-number">2</span>, <span class="code-number">6</span>], <span class="code-number">6</span>: [<span class="code-number">3</span>, <span class="code-number">5</span>]
+}
+
+drum = <span class="code-function">bfs_drum</span>(graf, <span class="code-number">1</span>, <span class="code-number">6</span>)
+<span class="code-function">print</span>(<span class="code-string">"Drum minim de la 1 la 6:"</span>, drum)
+<span class="code-function">print</span>(<span class="code-string">"Lungimea drumului:"</span>, <span class="code-function">len</span>(drum) - <span class="code-number">1</span>, <span class="code-string">"muchii"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Drum minim de la 1 la 6: [1, 3, 6]
+Lungimea drumului: 2 muchii</pre>
+                </div>
+                <p>Drumul <code>1 → 3 → 6</code> are 2 muchii, care este minimul (exista si drumul 1→2→5→6 cu 3 muchii).</p>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Detectarea ciclului -->
+        <div class="atom" id="atom-5" data-quiz="[{&quot;question&quot;: &quot;In DFS cu colorare tricolora, ce inseamna culoarea 1 (gri) pentru un nod?&quot;, &quot;options&quot;: [&quot;Nodul este in stiva curenta de apel recursiv (in curs de explorare)&quot;, &quot;Nodul nu a fost inca vizitat&quot;, &quot;Nodul a fost complet explorat&quot;, &quot;Nodul face parte dintr-un ciclu&quot;], &quot;correct&quot;: &quot;a&quot;, &quot;hint&quot;: &quot;Culoarea 1 (gri/in_stiva) inseamna ca nodul a fost descoperit dar DFS nu a terminat inca de explorat toti descendentii lui. Daca gasim un arc catre un nod gri, am gasit un ciclu (arc inapoi in arborele DFS).&quot;}]">
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Problema 4: Detectarea ciclului intr-un graf orientat</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Enunt:</strong> Dat un graf orientat, determina daca acesta contine un ciclu. Exemplu 1: 1&rarr;2&rarr;3&rarr;1 (ciclu). Exemplu 2: 1&rarr;2&rarr;3 (aciclic, fara ciclu).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Tehnica: colorare tricolora in DFS</div>
+                    <p>Fiecare nod primeste una din trei culori:</p>
+                    <ul>
+                        <li><strong>0 (alb)</strong> — nod nevizitat</li>
+                        <li><strong>1 (gri)</strong> — nod descoperit, DFS inca in curs pentru el</li>
+                        <li><strong>2 (negru)</strong> — nod complet explorat</li>
+                    </ul>
+                    <p>Un arc catre un nod <strong>gri</strong> inseamna <strong>ciclu</strong> (arc inapoi in arborele DFS).</p>
+                </div>
+                <pre><span class="code-comment"># Detectare ciclu in graf orientat</span>
+<span class="code-keyword">def</span> <span class="code-function">are_ciclu</span>(graf, n):
+    <span class="code-comment"># 0=nevizitat, 1=in_stiva, 2=finalizat</span>
+    culoare = [<span class="code-number">0</span>] * (n + <span class="code-number">1</span>)
+
+    <span class="code-keyword">def</span> <span class="code-function">dfs</span>(nod):
+        culoare[nod] = <span class="code-number">1</span>
+        <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> graf.<span class="code-function">get</span>(nod, []):
+            <span class="code-keyword">if</span> culoare[vecin] == <span class="code-number">1</span>:
+                <span class="code-keyword">return True</span>  <span class="code-comment"># arc catre nod gri = ciclu</span>
+            <span class="code-keyword">if</span> culoare[vecin] == <span class="code-number">0</span>:
+                <span class="code-keyword">if</span> <span class="code-function">dfs</span>(vecin):
+                    <span class="code-keyword">return True</span>
+        culoare[nod] = <span class="code-number">2</span>
+        <span class="code-keyword">return False</span>
+
+    <span class="code-keyword">for</span> nod <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>):
+        <span class="code-keyword">if</span> culoare[nod] == <span class="code-number">0</span>:
+            <span class="code-keyword">if</span> <span class="code-function">dfs</span>(nod):
+                <span class="code-keyword">return True</span>
+    <span class="code-keyword">return False</span>
+
+<span class="code-comment"># Graf orientat cu ciclu: 1->2->3->1</span>
+graf_ciclu = {<span class="code-number">1</span>: [<span class="code-number">2</span>], <span class="code-number">2</span>: [<span class="code-number">3</span>], <span class="code-number">3</span>: [<span class="code-number">1</span>]}
+<span class="code-function">print</span>(<span class="code-string">"Graf 1->2->3->1 are ciclu:"</span>, <span class="code-function">are_ciclu</span>(graf_ciclu, <span class="code-number">3</span>))
+
+<span class="code-comment"># Graf orientat fara ciclu: 1->2->3</span>
+graf_aciclic = {<span class="code-number">1</span>: [<span class="code-number">2</span>], <span class="code-number">2</span>: [<span class="code-number">3</span>], <span class="code-number">3</span>: []}
+<span class="code-function">print</span>(<span class="code-string">"Graf 1->2->3 are ciclu:"</span>, <span class="code-function">are_ciclu</span>(graf_aciclic, <span class="code-number">3</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Graf 1->2->3->1 are ciclu: True
+Graf 1->2->3 are ciclu: False</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Dijkstra - EXCLUSIV INTENSIV -->
+        <div class="atom" id="atom-6" data-quiz="[{&quot;question&quot;: &quot;De ce nu putem folosi BFS in loc de Dijkstra pentru grafuri ponderate?&quot;, &quot;options&quot;: [&quot;BFS e prea lent&quot;, &quot;BFS nu functioneaza pe grafuri orientate&quot;, &quot;BFS presupune ca toate muchiile au acelasi cost; la costuri diferite, primul drum gasit poate sa nu fie cel mai ieftin&quot;, &quot;Dijkstra e mai simplu de implementat&quot;], &quot;correct&quot;: &quot;c&quot;, &quot;hint&quot;: &quot;BFS numara muchii, nu costuri. Pe un graf ponderat, un drum cu 1 muchie de cost 100 e mai scump decat un drum cu 3 muchii de cost 1+1+1=3. Dijkstra extinde mereu nodul cu distanta curenta minima, garantand corectitudinea.&quot;}]">
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Problema 5: Distante minime in graf ponderat &mdash; Dijkstra <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+                    <p>Algoritmul lui Dijkstra rezolva problema drumurilor minime intr-un <strong>graf ponderat cu costuri pozitive</strong>. Este un algoritm Greedy: la fiecare pas extrage nodul cu distanta estimata minima si relaxeaza muchiile acestuia. Complexitate: <strong>O((V+E) log V)</strong> cu min-heap.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Enunt</div>
+                    <p>Graf neorientat ponderat cu 5 noduri. Muchii cu costuri: (1,2,4), (1,3,2), (2,3,5), (2,4,1), (3,5,8), (4,5,3). Determina distantele minime de la nodul 1 la toate celelalte noduri.</p>
+                </div>
+
+                <p><strong>Implementare Python (heapq):</strong></p>
+                <pre><span class="code-keyword">import</span> heapq
+
+<span class="code-keyword">def</span> <span class="code-function">dijkstra</span>(graf, start, n):
+    dist = {i: <span class="code-function">float</span>(<span class="code-string">'inf'</span>) <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n+<span class="code-number">1</span>)}
+    dist[start] = <span class="code-number">0</span>
+    heap = [(<span class="code-number">0</span>, start)]   <span class="code-comment"># (distanta, nod)</span>
+    <span class="code-keyword">while</span> heap:
+        d, u = heapq.<span class="code-function">heappop</span>(heap)
+        <span class="code-keyword">if</span> d > dist[u]:
+            <span class="code-keyword">continue</span>   <span class="code-comment"># intrare depasita in heap</span>
+        <span class="code-keyword">for</span> cost, v <span class="code-keyword">in</span> graf.<span class="code-function">get</span>(u, []):
+            <span class="code-keyword">if</span> dist[u] + cost < dist[v]:
+                dist[v] = dist[u] + cost
+                heapq.<span class="code-function">heappush</span>(heap, (dist[v], v))
+    <span class="code-keyword">return</span> dist
+
+<span class="code-comment"># graf[u] = [(cost, v), ...]  - neorientat: adaugam ambele directii</span>
+graf = {
+    <span class="code-number">1</span>: [(<span class="code-number">4</span>,<span class="code-number">2</span>), (<span class="code-number">2</span>,<span class="code-number">3</span>)],
+    <span class="code-number">2</span>: [(<span class="code-number">4</span>,<span class="code-number">1</span>), (<span class="code-number">5</span>,<span class="code-number">3</span>), (<span class="code-number">1</span>,<span class="code-number">4</span>)],
+    <span class="code-number">3</span>: [(<span class="code-number">2</span>,<span class="code-number">1</span>), (<span class="code-number">5</span>,<span class="code-number">2</span>), (<span class="code-number">8</span>,<span class="code-number">5</span>)],
+    <span class="code-number">4</span>: [(<span class="code-number">1</span>,<span class="code-number">2</span>), (<span class="code-number">3</span>,<span class="code-number">5</span>)],
+    <span class="code-number">5</span>: [(<span class="code-number">8</span>,<span class="code-number">3</span>), (<span class="code-number">3</span>,<span class="code-number">4</span>)]
+}
+
+dist = <span class="code-function">dijkstra</span>(graf, <span class="code-number">1</span>, <span class="code-number">5</span>)
+<span class="code-function">print</span>(<span class="code-string">"Distante minime de la nodul 1:"</span>)
+<span class="code-keyword">for</span> nod <span class="code-keyword">in</span> <span class="code-function">sorted</span>(dist):
+    <span class="code-function">print</span>(<span class="code-string">f"  nod {nod}: {dist[nod]}"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Distante minime de la nodul 1:
+  nod 1: 0
+  nod 2: 4
+  nod 3: 2
+  nod 4: 5
+  nod 5: 8</pre>
+                </div>
+                <p><strong>Verificare manuala:</strong> 1&rarr;3 (cost 2), 3&rarr;? &rarr; 5: calea 1&rarr;3&rarr;5 are cost 2+8=10, dar 1&rarr;2&rarr;4&rarr;5 are cost 4+1+3=8. Deci dist[5]=8. Corect.</p>
+
+                <p><strong>Implementare C++ cu priority_queue:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;queue&gt;</span>
+<span class="code-preprocessor">#include &lt;climits&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">void</span> <span class="code-function">dijkstra</span>(<span class="code-keyword">int</span> start, <span class="code-keyword">int</span> n,
+              vector&lt;vector&lt;pair&lt;<span class="code-keyword">int</span>,<span class="code-keyword">int</span>&gt;&gt;&gt;&amp; adj,
+              vector&lt;<span class="code-keyword">int</span>&gt;&amp; dist) {
+    dist.<span class="code-function">assign</span>(n + <span class="code-number">1</span>, INT_MAX);
+    dist[start] = <span class="code-number">0</span>;
+    <span class="code-comment">// min-heap: (distanta, nod)</span>
+    priority_queue&lt;pair&lt;<span class="code-keyword">int</span>,<span class="code-keyword">int</span>&gt;,
+                   vector&lt;pair&lt;<span class="code-keyword">int</span>,<span class="code-keyword">int</span>&gt;&gt;,
+                   greater&lt;pair&lt;<span class="code-keyword">int</span>,<span class="code-keyword">int</span>&gt;&gt;&gt; pq;
+    pq.<span class="code-function">push</span>({<span class="code-number">0</span>, start});
+    <span class="code-keyword">while</span> (!pq.<span class="code-function">empty</span>()) {
+        <span class="code-keyword">auto</span> [d, u] = pq.<span class="code-function">top</span>(); pq.<span class="code-function">pop</span>();
+        <span class="code-keyword">if</span> (d > dist[u]) <span class="code-keyword">continue</span>;
+        <span class="code-keyword">for</span> (<span class="code-keyword">auto</span> [cost, v] : adj[u]) {
+            <span class="code-keyword">if</span> (dist[u] + cost < dist[v]) {
+                dist[v] = dist[u] + cost;
+                pq.<span class="code-function">push</span>({dist[v], v});
+            }
+        }
+    }
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n = <span class="code-number">5</span>;
+    vector&lt;vector&lt;pair&lt;<span class="code-keyword">int</span>,<span class="code-keyword">int</span>&gt;&gt;&gt; adj(n + <span class="code-number">1</span>);
+    <span class="code-comment">// adj[u] = {cost, v}</span>
+    adj[<span class="code-number">1</span>].<span class="code-function">push_back</span>({<span class="code-number">4</span>,<span class="code-number">2</span>}); adj[<span class="code-number">2</span>].<span class="code-function">push_back</span>({<span class="code-number">4</span>,<span class="code-number">1</span>});
+    adj[<span class="code-number">1</span>].<span class="code-function">push_back</span>({<span class="code-number">2</span>,<span class="code-number">3</span>}); adj[<span class="code-number">3</span>].<span class="code-function">push_back</span>({<span class="code-number">2</span>,<span class="code-number">1</span>});
+    adj[<span class="code-number">3</span>].<span class="code-function">push_back</span>({<span class="code-number">5</span>,<span class="code-number">2</span>}); adj[<span class="code-number">2</span>].<span class="code-function">push_back</span>({<span class="code-number">5</span>,<span class="code-number">3</span>});
+    adj[<span class="code-number">2</span>].<span class="code-function">push_back</span>({<span class="code-number">1</span>,<span class="code-number">4</span>}); adj[<span class="code-number">4</span>].<span class="code-function">push_back</span>({<span class="code-number">1</span>,<span class="code-number">2</span>});
+    adj[<span class="code-number">3</span>].<span class="code-function">push_back</span>({<span class="code-number">8</span>,<span class="code-number">5</span>}); adj[<span class="code-number">5</span>].<span class="code-function">push_back</span>({<span class="code-number">8</span>,<span class="code-number">3</span>});
+    adj[<span class="code-number">4</span>].<span class="code-function">push_back</span>({<span class="code-number">3</span>,<span class="code-number">5</span>}); adj[<span class="code-number">5</span>].<span class="code-function">push_back</span>({<span class="code-number">3</span>,<span class="code-number">4</span>});
+
+    vector&lt;<span class="code-keyword">int</span>&gt; dist;
+    <span class="code-function">dijkstra</span>(<span class="code-number">1</span>, n, adj, dist);
+
+    cout &lt;&lt; <span class="code-string">"Distante minime de la nodul 1:"</span> &lt;&lt; endl;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">1</span>; i &lt;= n; i++) {
+        cout &lt;&lt; <span class="code-string">"  nod "</span> &lt;&lt; i &lt;&lt; <span class="code-string">": "</span>
+             &lt;&lt; (dist[i] == INT_MAX ? <span class="code-number">-1</span> : dist[i]) &lt;&lt; endl;
+    }
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>Distante minime de la nodul 1:
+  nod 1: 0
+  nod 2: 4
+  nod 3: 2
+  nod 4: 5
+  nod 5: 8</pre>
+                </div>
+                <p>Python si C++ produc acelasi rezultat &mdash; algoritmul este identic, doar sintaxa difera.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Traseu BFS pe hartie</h3>
+            <p>Considera graful cu nodurile 1-5 si muchiile: 1-2, 2-3, 2-4, 4-5. Simuleaza BFS pornind din nodul 1 si completeaza tabelul: ce noduri intra in coada la fiecare pas si care este distanta lor fata de nodul 1? Raspunde: care este distanta de la 1 la 5?</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Componente conexe, problema completa</h3>
+            <p>Scrie in Python o functie care primeste numarul de noduri <code>n</code> si o lista de muchii, construieste lista de adiacenta si returneaza numarul de componente conexe. Testeaza cu: n=7, muchii=[(1,2),(3,4),(3,5),(6,7)]. Raspuns asteptat: 3 componente conexe (nodurile 1-2, 3-4-5, 6-7).</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Drum minim cu reconstructie + verificare ciclu</h3>
+            <p>Dat un graf orientat cu 6 noduri si arcele: 1&rarr;2 (cost 3), 1&rarr;3 (cost 1), 3&rarr;2 (cost 1), 2&rarr;4 (cost 2), 4&rarr;5 (cost 4), 5&rarr;6 (cost 1), 6&rarr;3 (cost 1). (a) Exista un ciclu? (b) Care este drumul de cost minim de la 1 la 4? Scrie codul complet in Python si explica de ce Dijkstra (nu BFS) este necesar.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Cum sa alegi algoritmul potrivit (BFS/DFS/Dijkstra) in functie de cerinta problemei</li>
+                <li>BFS pentru distante minime in nr. de muchii &mdash; O(V+E)</li>
+                <li>DFS pentru componente conexe &mdash; un DFS per componenta</li>
+                <li>Tehnica vectorului parinte pentru reconstructia drumului minim</li>
+                <li>Detectarea ciclului in graf orientat cu colorare tricolora (0/1/2)</li>
+                <li>[Intensiv] Dijkstra cu min-heap pentru grafuri ponderate &mdash; O((V+E) log V)</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Modulul completat!</h3>
+            <p>Ai parcurs toate cele 6 lectii ale modulului Teoria Grafurilor. Revino la index pentru a revizui sau a trece la modulul urmator.</p>
+            <a href="index.html" class="btn-next">Inapoi la modul &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m3-grafuri-lectia6-aplicatii-grafuri');
+        PracticeSimple.init('cls11-m3-grafuri-lectia6-aplicatii-grafuri');
+        LessonSummary.init('cls11-m3-grafuri-lectia6-aplicatii-grafuri');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm3-grafuri',
+            moduleName: 'M3 Teoria Grafurilor',
+            lesson: 'Aplicatii grafuri: Probleme rezolvate'
+        });
+        LearningProgress.init('cls11', 'm3-grafuri', 'lectia6-aplicatii-grafuri.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

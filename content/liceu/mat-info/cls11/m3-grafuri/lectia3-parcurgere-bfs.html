@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 3: Parcurgere BFS | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia2-parcurgere-dfs.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 2: DFS</a>
+        <a href="lectia4-conexitate.html" class="nav-btn" title="Lectia urmatoare">Lectia 4: Conexitate &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Parcurgere in latime (BFS)</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege algoritmul BFS (Breadth-First Search), vei sti sa-l implementezi pas cu pas folosind o coada si vei folosi BFS pentru a gasi drumul minim intr-un graf neponderat.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa explici principiul parcurgerii in latime si diferenta fata de DFS</li>
+                <li>Sa implementezi BFS in Python folosind <code>collections.deque</code></li>
+                <li>Sa calculezi distantele minime (in numar de muchii) de la un nod sursa la toate celelalte</li>
+                <li>Sa reconstruiesti drumul minim intre doua noduri folosind vectorul de parinti</li>
+                <li>Sa analizezi complexitatea timp si spatiu O(V + E) a algoritmului BFS</li>
+                <li>Sa implementezi BFS in C++ cu <code>queue&lt;int&gt;</code> si liste de adiacenta <span class="bonus-badge">EXCLUSIV INTENSIV</span></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Imagineaza-ti un grup de prieteni conectati intr-o retea. Plecand de la tine, vrei sa afli cate "cercuri de prietenie" te despart de fiecare persoana. Ce strategie ai folosi: ai explora toti prietenii directi intai, sau ai merge adanc pe o singura ramura?</p>
+                <textarea id="tryAnswer" placeholder="Scrie strategia ta aici: cum ai explora nivelurile?..." rows="5"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Strategia corecta este: exploreaza TOI prietenii directi (nivel 1), apoi toti prietenii prietenilor (nivel 2) etc. Aceasta este exact ideea BFS: nivel cu nivel, nu pe o singura ramura adanca.</p>
+                    <p>Instrumentul care asigura aceasta ordine este <strong>coada (queue)</strong>: primul intrat, primul iesit.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Ideea BFS -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Ce structura de date este esentiala pentru BFS?", "options": ["Stiva (Stack)", "Coada (Queue)", "Arbore binar", "Dictionar (Hash Map)"], "correct": "b", "hint": "BFS exploreaza nodurile nivel cu nivel — primul nod bagat este primul scos. Aceasta este definitia exacta a cozii (FIFO)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Ideea din spatele BFS</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>BFS (Breadth-First Search)</strong> parcurge graful <em>nivel cu nivel</em>: mai intai toate nodurile la distanta 1 de sursa, apoi la distanta 2, si asa mai departe. Instrumentul care impune aceasta ordine este <strong>coada (queue)</strong> &mdash; First In, First Out.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Analogie: valuri concentrice pe apa</div>
+                    <p>Arunci o piatra intr-un lac. Valurile se extind uniform in toate directiile simultan. BFS functioneaza la fel: pleaca din nodul sursa si "valurile" sale ating toate nodurile de la distanta 1, apoi 2 etc. Niciun val nu sare peste un nivel.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Comparatie BFS vs DFS</div>
+                    <p><strong>BFS</strong> &mdash; coada &rarr; nivel cu nivel &rarr; gaseste drumul MINIM (ca numar de muchii) in grafuri neponderate.</p>
+                    <p><strong>DFS</strong> &mdash; stiva/recursivitate &rarr; adanc pe o ramura intai &rarr; nu garanteaza drum minim, dar mai simplu de implementat recursiv.</p>
+                </div>
+                <div class="concept-def">
+                    <strong>Proprietate cheie:</strong> BFS garanteaza ca primul drum gasit spre orice nod este cel mai scurt (ca numar de muchii). Aceasta proprietate <em>nu</em> este valabila pentru DFS.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Algoritmul pas cu pas -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Dupa ce principiu marcam un nod ca vizitat in BFS?", "options": ["Cand il scoatem din coada", "Cand il adaugam in coada (prima oara)", "Cand am vizitat toti vecinii lui", "Niciodata - BFS nu marcheaza noduri"], "correct": "b", "hint": "Marcam nodul vizitat in momentul in care il adaugam in coada, nu cand il scoatem. Altfel, acelasi nod ar putea fi adaugat de mai multe ori de catre vecini diferiti."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Algoritmul BFS &mdash; pasii si urmarirea</h3>
+            </div>
+            <div class="atom-content">
+                <div class="pseudocode">
+<span class="pseudocode-comment">// BFS pornind din nodul sursa s</span><br/>
+<span class="pseudocode-keyword">INITIALIZEAZA</span> coada cu s<br/>
+<span class="pseudocode-keyword">MARCHEAZA</span> s ca vizitat<br/>
+<span class="pseudocode-keyword">CAT TIMP</span> coada nu e goala:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;nod &larr; <span class="pseudocode-keyword">SCOATE</span> primul element din coada<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="pseudocode-keyword">PENTRU FIECARE</span> vecin al lui nod:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="pseudocode-keyword">DACA</span> vecin NU e vizitat:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="pseudocode-keyword">MARCHEAZA</span> vecin ca vizitat<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="pseudocode-keyword">ADAUGA</span> vecin in coada
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Urmarire pas cu pas pe graful exemplu</div>
+                    <p>Graful are 6 noduri cu muchiile: 1-2, 1-3, 2-4, 2-5, 3-6. Pornind din nodul 1:</p>
+                    <pre>Initial: coada=[1], vizitat=[1]
+Pas 1: extras=1, adaugati=[2, 3], coada=[2, 3], vizitat=[1, 2, 3]
+Pas 2: extras=2, adaugati=[4, 5], coada=[3, 4, 5], vizitat=[1, 2, 3, 4, 5]
+Pas 3: extras=3, adaugati=[6],    coada=[4, 5, 6], vizitat=[1, 2, 3, 4, 5, 6]
+Pas 4: extras=4, adaugati=[],     coada=[5, 6],    vizitat=[1, 2, 3, 4, 5, 6]
+Pas 5: extras=5, adaugati=[],     coada=[6],       vizitat=[1, 2, 3, 4, 5, 6]
+Pas 6: extras=6, adaugati=[],     coada=[],        vizitat=[1, 2, 3, 4, 5, 6]</pre>
+                    <p>Ordinea de vizitare: <strong>1, 2, 3, 4, 5, 6</strong> &mdash; exact nivel cu nivel.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Nivelurile (distantele) din sursa 1</div>
+                    <pre>Nivel 0: 1
+Nivel 1: 2, 3
+Nivel 2: 4, 5, 6</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Implementare Python BFS simplu -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "De ce folosim collections.deque in loc de o lista Python simpla pentru coada BFS?", "options": ["Deque are mai multa memorie decat o lista", "popleft() pe deque este O(1), pe lista este O(n)", "Deque permite numai numere intregi", "Nu exista nicio diferenta practica"], "correct": "b", "hint": "list.pop(0) muta toate elementele ramase (O(n)), pe cand deque.popleft() este O(1). La grafuri mari aceasta diferenta devine semnificativa."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Implementare BFS in Python</h3>
+            </div>
+            <div class="atom-content">
+                <p>Graful este reprezentat ca <strong>dictionar de liste de adiacenta</strong>. Coada este un <code>deque</code> din modulul <code>collections</code>.</p>
+                <pre><span class="code-comment"># BFS simplu - ordine de vizitare</span>
+<span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+<span class="code-keyword">def</span> <span class="code-function">bfs</span>(graf, start):
+    vizitat = <span class="code-function">set</span>()
+    coada = <span class="code-function">deque</span>([start])
+    vizitat.<span class="code-function">add</span>(start)
+    ordine = []
+    <span class="code-keyword">while</span> coada:
+        nod = coada.<span class="code-function">popleft</span>()
+        ordine.<span class="code-function">append</span>(nod)
+        <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> <span class="code-function">sorted</span>(graf[nod]):
+            <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> vizitat:
+                vizitat.<span class="code-function">add</span>(vecin)
+                coada.<span class="code-function">append</span>(vecin)
+    <span class="code-keyword">return</span> ordine
+
+<span class="code-comment"># Graful din exemplu (noduri 1-6)</span>
+G = {
+    <span class="code-number">1</span>: [<span class="code-number">2</span>, <span class="code-number">3</span>],
+    <span class="code-number">2</span>: [<span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">5</span>],
+    <span class="code-number">3</span>: [<span class="code-number">1</span>, <span class="code-number">6</span>],
+    <span class="code-number">4</span>: [<span class="code-number">2</span>],
+    <span class="code-number">5</span>: [<span class="code-number">2</span>],
+    <span class="code-number">6</span>: [<span class="code-number">3</span>]
+}
+
+rezultat = <span class="code-function">bfs</span>(G, <span class="code-number">1</span>)
+<span class="code-function">print</span>(<span class="code-string">"Ordinea BFS pornind din nodul 1:"</span>, rezultat)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Ordinea BFS pornind din nodul 1: [1, 2, 3, 4, 5, 6]</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">De retinut</div>
+                    <p>Marcam nodul <em>vizitat</em> cand il <strong>adaugam</strong> in coada (nu cand il scoatem). Daca am marca la scoatere, acelasi nod ar putea fi adaugat de mai multe ori de catre vecini diferiti, ducand la parcurgere gresita sau bucla infinita in grafuri cu cicluri.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Distante minime + drum minim -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "De ce BFS garanteaza drumul minim (ca numar de muchii) in grafuri neponderate?", "options": ["Deoarece parcurge nodurile in ordine alfabetica", "Deoarece exploreaza toate nodurile la distanta k inainte de distanta k+1", "Deoarece foloseste o stiva recursiva", "Deoarece graful trebuie sa fie aciclic"], "correct": "b", "hint": "BFS viziteaza complet nivelul k inainte de a trece la nivelul k+1. Cand atinge un nod pentru prima data, distanta gasita este minima - nu poate exista un drum mai scurt, deoarece nu au fost sarite niveluri."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Distante minime si reconstructia drumului</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Intr-un <strong>graf neponderat</strong> (fiecare muchie are costul 1), BFS calculeaza <strong>distanta minima</strong> (numarul minim de muchii) de la sursa la orice alt nod. Inlocuim setul de vizitati cu un <strong>dictionar de distante</strong>: <code>dist[v] != -1</code> inseamna vizitat.
+                </div>
+                <pre><span class="code-comment"># BFS - distante minime de la sursa</span>
+<span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+<span class="code-keyword">def</span> <span class="code-function">bfs_distante</span>(graf, start):
+    dist = {start: <span class="code-number">0</span>}
+    coada = <span class="code-function">deque</span>([start])
+    <span class="code-keyword">while</span> coada:
+        nod = coada.<span class="code-function">popleft</span>()
+        <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> <span class="code-function">sorted</span>(graf[nod]):
+            <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> dist:
+                dist[vecin] = dist[nod] + <span class="code-number">1</span>
+                coada.<span class="code-function">append</span>(vecin)
+    <span class="code-keyword">return</span> dist
+
+G = {
+    <span class="code-number">1</span>: [<span class="code-number">2</span>, <span class="code-number">3</span>],
+    <span class="code-number">2</span>: [<span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">5</span>],
+    <span class="code-number">3</span>: [<span class="code-number">1</span>, <span class="code-number">6</span>],
+    <span class="code-number">4</span>: [<span class="code-number">2</span>],
+    <span class="code-number">5</span>: [<span class="code-number">2</span>],
+    <span class="code-number">6</span>: [<span class="code-number">3</span>]
+}
+distante = <span class="code-function">bfs_distante</span>(G, <span class="code-number">1</span>)
+<span class="code-keyword">for</span> nod <span class="code-keyword">in</span> <span class="code-function">sorted</span>(distante):
+    <span class="code-function">print</span>(<span class="code-string">f"dist[{nod}] = {distante[nod]}"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>dist[1] = 0
+dist[2] = 1
+dist[3] = 1
+dist[4] = 2
+dist[5] = 2
+dist[6] = 2</pre>
+                </div>
+                <p>Adaugam <strong>vectorul de parinti</strong> pentru a reconstitui drumul efectiv:</p>
+                <pre><span class="code-comment"># BFS - drum minim cu reconstructie</span>
+<span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+<span class="code-keyword">def</span> <span class="code-function">drum_minim</span>(graf, start, stop):
+    dist = {start: <span class="code-number">0</span>}
+    parinte = {start: <span class="code-keyword">None</span>}
+    coada = <span class="code-function">deque</span>([start])
+    <span class="code-keyword">while</span> coada:
+        nod = coada.<span class="code-function">popleft</span>()
+        <span class="code-keyword">if</span> nod == stop:
+            <span class="code-keyword">break</span>
+        <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> <span class="code-function">sorted</span>(graf[nod]):
+            <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> dist:
+                dist[vecin] = dist[nod] + <span class="code-number">1</span>
+                parinte[vecin] = nod
+                coada.<span class="code-function">append</span>(vecin)
+    <span class="code-comment"># Reconstruire drum: mers inapoi prin parinti</span>
+    drum = []
+    crt = stop
+    <span class="code-keyword">while</span> crt <span class="code-keyword">is not None</span>:
+        drum.<span class="code-function">append</span>(crt)
+        crt = parinte[crt]
+    drum.<span class="code-function">reverse</span>()
+    <span class="code-keyword">return</span> drum, dist.<span class="code-function">get</span>(stop, -<span class="code-number">1</span>)
+
+G = {
+    <span class="code-number">1</span>: [<span class="code-number">2</span>, <span class="code-number">3</span>],
+    <span class="code-number">2</span>: [<span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">5</span>],
+    <span class="code-number">3</span>: [<span class="code-number">1</span>, <span class="code-number">6</span>],
+    <span class="code-number">4</span>: [<span class="code-number">2</span>],
+    <span class="code-number">5</span>: [<span class="code-number">2</span>],
+    <span class="code-number">6</span>: [<span class="code-number">3</span>]
+}
+drum, lungime = <span class="code-function">drum_minim</span>(G, <span class="code-number">1</span>, <span class="code-number">4</span>)
+<span class="code-function">print</span>(<span class="code-string">"Drum minim de la 1 la 4:"</span>, <span class="code-string">" -> "</span>.<span class="code-function">join</span>(<span class="code-function">map</span>(str, drum)))
+<span class="code-function">print</span>(<span class="code-string">"Lungime drum:"</span>, lungime)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Drum minim de la 1 la 4: 1 -> 2 -> 4
+Lungime drum: 2</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Complexitate si proprietati -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Care este complexitatea timp a algoritmului BFS pe un graf cu V noduri si E muchii?", "options": ["O(V * E)", "O(V^2)", "O(V + E)", "O(log V)"], "correct": "c", "hint": "Fiecare nod este extras din coada exact o data (V operatii). Fiecare muchie este examinata exact de doua ori intr-un graf neorientat (2E operatii). Deci O(V + E)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Complexitate, reprezentari si proprietati</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Complexitate timp: O(V + E)</strong><br/>
+                    &bull; Fiecare nod este introdus si scos din coada exact <em>o singura data</em> &rarr; V operatii.<br/>
+                    &bull; Fiecare muchie este examinata de exacta <em>doua ori</em> (o data din fiecare capat) &rarr; 2E operatii.<br/>
+                    &bull; Total: O(V + E).<br/><br/>
+                    <strong>Complexitate spatiu: O(V)</strong><br/>
+                    Coada contine cel mult V noduri simultan. Vectorii de distante si parinti au V intrari.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Lista de adiacenta vs. matrice de adiacenta</div>
+                    <p><strong>Lista de adiacenta</strong> &mdash; spatiu O(V + E), traversare vecini O(grad(nod)). <em>Recomandata</em> pentru grafuri rare (putine muchii).</p>
+                    <p><strong>Matrice de adiacenta</strong> &mdash; spatiu O(V&sup2;), verificare muchie O(1), traversare vecini O(V). Practica doar la V mic sau grafuri dense.</p>
+                    <p>In subiecte BAC cls. XI, grafurile au V ≤ 10..20 &rarr; ambele sunt acceptabile, dar lista de adiacenta este standard la olimpiada.</p>
+                </div>
+                <div class="concept-def">
+                    <strong>Proprietati esentiale BFS (de memorat pentru BAC):</strong>
+                    <ul>
+                        <li>Gaseste drumul minim ca <em>numar de muchii</em> in grafuri neponderate.</li>
+                        <li>Intr-un graf ponderat (muchii cu costuri diferite), BFS NU garanteaza drum minim &mdash; se foloseste Dijkstra.</li>
+                        <li>BFS poate determina daca un graf este conex: daca dintr-un nod oarecare BFS viziteaza toate V nodurile, graful este conex.</li>
+                        <li>BFS poate determina numarul de componente conexe: se repeta BFS din fiecare nod nevizitat.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: C++ EXCLUSIV INTENSIV -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, ce tip de date din STL implementeaza coada FIFO necesara pentru BFS?", "options": ["stack&lt;int&gt;", "priority_queue&lt;int&gt;", "queue&lt;int&gt;", "set&lt;int&gt;"], "correct": "c", "hint": "queue<int> din headerul <queue> implementeaza coada FIFO: push() adauga la spate, front() citeste din fata, pop() sterge din fata - exact ce avem nevoie pentru BFS."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. BFS in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune exclusiv pentru profilul intensiv informatica</div>
+                    <p>In C++ folosim <code>#include &lt;queue&gt;</code> pentru coada STL si <code>vector&lt;vector&lt;int&gt;&gt;</code> pentru lista de adiacenta. Conventie olimpiada: indexare de la 1, distanta initiala -1 inseamna nevizitat.</p>
+                </div>
+                <p><strong>Exemplu 1: Calcul distante minime</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;queue&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n = <span class="code-number">6</span>;
+    vector&lt;vector&lt;<span class="code-keyword">int</span>&gt;&gt; adj(n + <span class="code-number">1</span>);
+    adj[<span class="code-number">1</span>] = {<span class="code-number">2</span>, <span class="code-number">3</span>}; adj[<span class="code-number">2</span>] = {<span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">5</span>};
+    adj[<span class="code-number">3</span>] = {<span class="code-number">1</span>, <span class="code-number">6</span>}; adj[<span class="code-number">4</span>] = {<span class="code-number">2</span>};
+    adj[<span class="code-number">5</span>] = {<span class="code-number">2</span>}; adj[<span class="code-number">6</span>] = {<span class="code-number">3</span>};
+
+    vector&lt;<span class="code-keyword">int</span>&gt; dist(n + <span class="code-number">1</span>, -<span class="code-number">1</span>);
+    queue&lt;<span class="code-keyword">int</span>&gt; q;
+    dist[<span class="code-number">1</span>] = <span class="code-number">0</span>;
+    q.<span class="code-function">push</span>(<span class="code-number">1</span>);
+
+    <span class="code-keyword">while</span> (!q.<span class="code-function">empty</span>()) {
+        <span class="code-keyword">int</span> nod = q.<span class="code-function">front</span>(); q.<span class="code-function">pop</span>();
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> vecin : adj[nod]) {
+            <span class="code-keyword">if</span> (dist[vecin] == -<span class="code-number">1</span>) {
+                dist[vecin] = dist[nod] + <span class="code-number">1</span>;
+                q.<span class="code-function">push</span>(vecin);
+            }
+        }
+    }
+
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">1</span>; i &lt;= n; i++)
+        cout &lt;&lt; <span class="code-string">"dist["</span> &lt;&lt; i &lt;&lt; <span class="code-string">"] = "</span> &lt;&lt; dist[i] &lt;&lt; <span class="code-string">"\n"</span>;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>dist[1] = 0
+dist[2] = 1
+dist[3] = 1
+dist[4] = 2
+dist[5] = 2
+dist[6] = 2</pre>
+                </div>
+                <p><strong>Exemplu 2: Reconstructie drum minim</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;queue&gt;</span>
+<span class="code-preprocessor">#include &lt;algorithm&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n = <span class="code-number">6</span>;
+    vector&lt;vector&lt;<span class="code-keyword">int</span>&gt;&gt; adj(n + <span class="code-number">1</span>);
+    adj[<span class="code-number">1</span>] = {<span class="code-number">2</span>, <span class="code-number">3</span>}; adj[<span class="code-number">2</span>] = {<span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">5</span>};
+    adj[<span class="code-number">3</span>] = {<span class="code-number">1</span>, <span class="code-number">6</span>}; adj[<span class="code-number">4</span>] = {<span class="code-number">2</span>};
+    adj[<span class="code-number">5</span>] = {<span class="code-number">2</span>}; adj[<span class="code-number">6</span>] = {<span class="code-number">3</span>};
+
+    vector&lt;<span class="code-keyword">int</span>&gt; dist(n + <span class="code-number">1</span>, -<span class="code-number">1</span>);
+    vector&lt;<span class="code-keyword">int</span>&gt; parinte(n + <span class="code-number">1</span>, -<span class="code-number">1</span>);
+    queue&lt;<span class="code-keyword">int</span>&gt; q;
+    dist[<span class="code-number">1</span>] = <span class="code-number">0</span>;
+    q.<span class="code-function">push</span>(<span class="code-number">1</span>);
+
+    <span class="code-keyword">while</span> (!q.<span class="code-function">empty</span>()) {
+        <span class="code-keyword">int</span> nod = q.<span class="code-function">front</span>(); q.<span class="code-function">pop</span>();
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> vecin : adj[nod]) {
+            <span class="code-keyword">if</span> (dist[vecin] == -<span class="code-number">1</span>) {
+                dist[vecin] = dist[nod] + <span class="code-number">1</span>;
+                parinte[vecin] = nod;
+                q.<span class="code-function">push</span>(vecin);
+            }
+        }
+    }
+
+    <span class="code-keyword">int</span> dest = <span class="code-number">4</span>;
+    vector&lt;<span class="code-keyword">int</span>&gt; drum;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> crt = dest; crt != -<span class="code-number">1</span>; crt = parinte[crt])
+        drum.<span class="code-function">push_back</span>(crt);
+    <span class="code-function">reverse</span>(drum.<span class="code-function">begin</span>(), drum.<span class="code-function">end</span>());
+
+    cout &lt;&lt; <span class="code-string">"Drum minim de la 1 la 4: "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; (<span class="code-keyword">int</span>)drum.<span class="code-function">size</span>(); i++) {
+        <span class="code-keyword">if</span> (i) cout &lt;&lt; <span class="code-string">" -> "</span>;
+        cout &lt;&lt; drum[i];
+    }
+    cout &lt;&lt; <span class="code-string">"\nLungime drum: "</span> &lt;&lt; dist[dest] &lt;&lt; <span class="code-string">"\n"</span>;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>Drum minim de la 1 la 4: 1 -> 2 -> 4
+Lungime drum: 2</pre>
+                </div>
+                <p>Observatie: <code>dist[v] == -1</code> joaca rolul de "nevizitat". Este idiomul standard C++ pentru BFS la olimpiada si BAC.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Urmarire manuala BFS</h3>
+            <p>Considera graful neorientat cu 5 noduri si muchiile: 1-2, 1-3, 2-4, 3-4, 4-5. Pornind BFS din nodul 1, scrie in ordine:</p>
+            <ul>
+                <li>a) Ordinea in care nodurile sunt vizitate.</li>
+                <li>b) Distanta minima de la nodul 1 la nodul 5.</li>
+            </ul>
+            <p><em>Indiciu:</em> urmareste coada pas cu pas ca in atomul 2. Raspuns asteptat: ordinea 1, 2, 3, 4, 5; distanta 3.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Numararea componentelor conexe</h3>
+            <p>Implementeaza in Python functia <code>numar_componente(n, muchii)</code> care primeste numarul de noduri si o lista de perechi (muchii) si returneaza numarul componentelor conexe ale grafului. Foloseste BFS repetat: porneste BFS din fiecare nod nevizitat si incrementeaza contorul.</p>
+            <p><em>Exemplu:</em> <code>numar_componente(5, [(1,2),(2,3),(4,5)])</code> returneaza <code>2</code> (componentele {1,2,3} si {4,5}).</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Labirint 2D <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            <p>Un labirint este reprezentat ca o matrice n x m de caractere: <code>'.'</code> = liber, <code>'#'</code> = zid. Gaseste numarul minim de pasi pentru a ajunge de la celula start la celula finish (miscare in 4 directii: sus, jos, stanga, dreapta).</p>
+            <p>Modeleaza fiecare celula ca un nod si aplica BFS. Starea BFS este o pereche (linie, coloana). Distanta initiala este 0 pentru celula start.</p>
+            <p>Implementeaza in C++ sau Python. Testeaza cu labirintul: <code>[".##", "..#", "#.#", "..."]</code>, start=(0,0), finish=(3,2). Raspuns asteptat: 5 pasi. <em>(Drum: (0,0)&rarr;(1,0)&rarr;(1,1)&rarr;(2,1)&rarr;(3,1)&rarr;(3,2))</em></p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>BFS exploreaza graful nivel cu nivel, folosind o coada (FIFO)</li>
+                <li>Nodul se marcheaza vizitat cand este <em>adaugat</em> in coada (nu la scoatere)</li>
+                <li>BFS garanteaza drumul minim ca numar de muchii in grafuri neponderate</li>
+                <li>Vectorul de parinti permite reconstructia drumului efectiv, parcurgand inapoi pana la sursa</li>
+                <li>Complexitate: O(V + E) timp, O(V) spatiu</li>
+                <li>In Python: <code>collections.deque</code> cu <code>popleft()</code> O(1); in C++: <code>queue&lt;int&gt;</code> cu <code>front()</code> si <code>pop()</code></li>
+                <li>BFS NU gaseste drum minim in grafuri ponderate (costuri diferite) &mdash; acolo se foloseste Dijkstra</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Lectia 4: Conexitate</strong> &mdash; componente conexe, verificare conexitate si algoritm de numarat componente.</p>
+            <a href="lectia4-conexitate.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m3-grafuri-lectia3-parcurgere-bfs');
+        PracticeSimple.init('cls11-m3-grafuri-lectia3-parcurgere-bfs');
+        LessonSummary.init('cls11-m3-grafuri-lectia3-parcurgere-bfs');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm3-grafuri',
+            moduleName: 'M3 Grafuri',
+            lesson: 'Parcurgere BFS'
+        });
+        LearningProgress.init('cls11', 'm3-grafuri', 'lectia3-parcurgere-bfs.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

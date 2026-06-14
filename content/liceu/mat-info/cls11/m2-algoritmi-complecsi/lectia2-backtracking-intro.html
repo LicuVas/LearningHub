@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 2: Backtracking - Introducere | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline style blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia1-recursivitate-avansata.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia anterioara</a>
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8593; Modulul</a>
+        <a href="lectia3-permutari.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Backtracking: Schema generala, conditii de continuare si validare</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+    <!-- FRAME SECTION -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege metoda backtracking: cum se construieste sistematic spatiul solutiilor, ce inseamna conditia de continuare (pruning), ce inseamna conditia de validare a solutiei complete, si vei implementa schema generala in Python (si C++ la nivel intensiv).</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa explici principiul backtracking: explorare + revenire</li>
+                <li>Sa distingi intre conditia de continuare si conditia de solutie completa</li>
+                <li>Sa implementezi schema generala de backtracking in Python</li>
+                <li>Sa urmaresti executia pas cu pas a unui algoritm backtracking</li>
+                <li>Sa estimezi corect complexitatea timp O(n * n!) in cazul permutarilor</li>
+                <li><span class="bonus-badge">EXCLUSIV INTENSIV</span> Sa implementezi schema in C++ cu tablouri globale</li>
+            </ul>
+        </div>
+    </section>
+    <!-- TRY SECTION -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Ai cifrele 1, 2, 3. In cate moduri le poti aranja intr-o coloana de 3 pozitii, astfel incat fiecare cifra sa apara exact o data? Enumera toate variantele inainte sa continui lectia.</p>
+                <textarea id="tryAnswer" placeholder="Varianta 1: 1, 2, 3&#10;Varianta 2: 1, 3, 2&#10;..." rows="8"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Pe prima pozitie poti pune 3 cifre diferite. Dupa ce o alegi, pe a doua pozitie raman 2 optiuni. Pe a treia pozitie ramane exact o optiune. Total: 3 x 2 x 1 = <strong>6 variante</strong>.</p>
+                    <p>Backtracking le genereaza sistematic pe toate, fara sa repete niciuna.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ATOMS -->
+    <main id="atomic-content">
+        <!-- ATOM 1 -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Ce face un algoritm backtracking cand o alegere nu duce la solutie?", "options": ["Opreste executia programului", "Revine la pasul anterior si incearca alta valoare", "Continua cu urmatoarea pozitie fara sa schimbe nimic", "Afiseaza un mesaj de eroare"], "correct": "b", "hint": "Backtracking = explorare + REVENIRE. Cand o cale e blocata, ne intoarcem la ultima decizie si incercam alt drum."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Ce este backtracking?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Backtracking</strong> (revenire / explorare sistematica) este o strategie algoritmca de rezolvare a problemelor prin enumerarea sistematica a tuturor solutiilor posibile, cu abandonarea timpurie (pruning) a ramurilor care nu pot duce la o solutie valida.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Intuitie: parcurgerea unui labirint cu ramificatii</div>
+                    <p>Mergeti pe un culoar. Ajungeti la un zid. <strong>Va intoarceti</strong> la ultima intersectie si luati alt culoar. Repetati pana gasiti iesirea sau epuizati toate drumurile. Aceasta intoarcere controlata este esenta backtracking-ului.</p>
+                    <p>Important: nu intrati niciodata de doua ori pe acelasi culoar din acelasi punct &mdash; acesta este rolul marcajului (<code>used[]</code>).</p>
+                </div>
+                <div class="concept-def">
+                    <strong>Aplicatii clasice:</strong> generarea permutarilor, aranjamentelor, combinarilor, submultimilor; problema celor n dame; colorarea grafurilor; rezolvarea Sudoku.
+                </div>
+            </div>
+        </div>
+        <!-- ATOM 2 -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Cum se numeste structura abstracta care reprezinta toate alocarile posibile intr-un algoritm backtracking?", "options": ["Lista circulara dublu inlantuita", "Arbore de cautare (search tree)", "Graf orientat aciclic", "Matrice de adiacenta"], "correct": "b", "hint": "Toate alegerile posibile formeaza ramuri ale unui arbore. Backtracking parcurge acest arbore in adancime (DFS)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Spatiul solutiilor si arborele de cautare</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Spatiul solutiilor</strong> = multimea tuturor solutiilor candidate (complete sau partiale). Backtracking il exploreaza ca un <strong>arbore de cautare</strong> parcurs in adancime (DFS &mdash; Depth First Search).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Arborele de cautare pentru permutarile lui {1, 2}</div>
+                    <pre>                    ( )          &lt;-- radacina: solutie vida
+                   /                      [1]       [2]    &lt;-- nivel 1: prima pozitie
+                  |         |
+               [1,2]     [2,1]   &lt;-- nivel 2: solutii complete
+               SOLUTIE   SOLUTIE</pre>
+                    <p>Pentru n=3: 3 ramuri la radacina, 2 la nivelul 1, 1 la nivelul 2. Total frunze = 3! = 6 solutii.</p>
+                </div>
+                <div class="concept-def">
+                    <strong>Pruning (taiere):</strong> cand o conditie esueaza la nivelul k, intregul subarbore de la nodul curent este abandonat. Aceasta reduce dramatic numarul de noduri explorati in problemele cu restrictii.
+                </div>
+            </div>
+        </div>
+        <!-- ATOM 3 -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "In schema generala de backtracking, ce face functia cand k == n?", "options": ["Incrementeaza k si continua", "A gasit o solutie completa si o prelucreaza", "Verifica conditia de continuare pentru nivelul urmator", "Reseteaza sol[] la 0 si reia de la inceput"], "correct": "b", "hint": "k == n inseamna ca am completat toate cele n pozitii. Solutia este acum completa si o afisam sau procesam."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Schema generala in Python</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Schema generala are 3 componente esentiale: <strong>(a)</strong> verificarea solutiei complete, <strong>(b)</strong> iterarea valorilor posibile pentru pozitia curenta, <strong>(c)</strong> conditia de continuare + pasul de revenire.
+                </div>
+                <pre><span class="code-comment"># Schema generala backtracking in Python</span>
+<span class="code-comment"># k = pozitia curenta (0..n-1); n = lungimea solutiei</span>
+<span class="code-comment"># sol = lista solutiei partial construite</span>
+<span class="code-comment"># used = marcaj: used[v]=True daca v a fost deja folosit</span>
+
+<span class="code-keyword">def</span> backtracking(k, n, sol, used):
+    <span class="code-comment"># (a) Conditia de solutie completa</span>
+    <span class="code-keyword">if</span> k == n:
+        <span class="code-keyword">print</span>(sol[:])
+        <span class="code-keyword">return</span>
+
+    <span class="code-comment"># (b) Iterare valori candidate pentru pozitia k</span>
+    <span class="code-keyword">for</span> v <span class="code-keyword">in</span> <span class="code-keyword">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>):
+        <span class="code-comment"># (c) Conditia de continuare: v este valid pe pozitia k?</span>
+        <span class="code-keyword">if</span> <span class="code-keyword">not</span> used[v]:
+            <span class="code-comment"># Alegere: plaseaza v pe pozitia k</span>
+            sol[k] = v
+            used[v] = <span class="code-keyword">True</span>
+            <span class="code-comment"># Recursie: rezolva pozitia k+1</span>
+            backtracking(k + <span class="code-number">1</span>, n, sol, used)
+            <span class="code-comment"># REVENIRE (backtrack): anuleaza alegerea</span>
+            sol[k] = <span class="code-number">0</span>
+            used[v] = <span class="code-keyword">False</span></pre>
+                <div class="example-box">
+                    <div class="example-title">Exemplu complet: Permutarile lui {1, 2, 3}</div>
+                    <pre>n = <span class="code-number">3</span>
+sol = [<span class="code-number">0</span>] * n
+used = [<span class="code-keyword">False</span>] * (n + <span class="code-number">1</span>)
+<span class="code-keyword">print</span>(<span class="code-string">"Permutarile lui {1, 2, 3}:"</span>)
+backtracking(<span class="code-number">0</span>, n, sol, used)</pre>
+                    <div class="example-box">
+                        <div class="example-title">Output real (rulat cu python bt_schema2.py):</div>
+                        <pre>Permutarile lui {1, 2, 3}:
+[1, 2, 3]
+[1, 3, 2]
+[2, 1, 3]
+[2, 3, 1]
+[3, 1, 2]
+[3, 2, 1]</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ATOM 4 -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Care este rolul conditiei de continuare aplicata inainte de recursie?", "options": ["Verifica daca solutia partial construita este completa", "Decide daca valoarea v poate fi plasata pe pozitia k, INAINTE de recursie", "Afiseaza solutia gasita pe ecran", "Incrementeaza un contor global de solutii"], "correct": "b", "hint": "Conditia de continuare filtreaza valorile INAINTE de recursie. Daca esueaza, nu mai coboram in acel nod al arborelui (pruning)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Conditia de continuare vs. conditia de solutie completa</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Exista doua tipuri distincte de verificari in backtracking:
+                    <ul>
+                        <li><strong>Conditia de solutie completa</strong> (<code>k == n</code>): toate pozitiile au primit valori; solutia este gata de procesat.</li>
+                        <li><strong>Conditia de continuare / validare partiala</strong> (<code>conditie(k, v)</code>): valoarea v poate fi plasata pe pozitia k fara a viola restrictiile problemei. Daca esueaza, nu exploram acel subarbore (pruning).</li>
+                    </ul>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu: siruri din {0,1} fara doua cifre consecutive identice</div>
+                    <p>Conditia de continuare: <code>k == 0 or sol[k-1] != v</code> (nu repetam valoarea precedenta).</p>
+                    <pre><span class="code-keyword">def</span> backtracking(k, n, sol):
+    <span class="code-keyword">if</span> k == n:
+        <span class="code-keyword">print</span>(sol[:])
+        <span class="code-keyword">return</span>
+    <span class="code-keyword">for</span> v <span class="code-keyword">in</span> [<span class="code-number">0</span>, <span class="code-number">1</span>]:
+        <span class="code-comment"># conditie continuare: diferit de precedentul</span>
+        <span class="code-keyword">if</span> k == <span class="code-number">0</span> <span class="code-keyword">or</span> sol[k<span class="code-number">-1</span>] != v:
+            sol[k] = v
+            backtracking(k + <span class="code-number">1</span>, n, sol)
+            sol[k] = <span class="code-number">-1</span>
+
+n = <span class="code-number">3</span>
+sol = [<span class="code-number">-1</span>] * n
+<span class="code-keyword">print</span>(<span class="code-string">"Siruri din {0,1} fara cifre consecutive identice, lungime 3:"</span>)
+backtracking(<span class="code-number">0</span>, n, sol)</pre>
+                    <div class="example-box">
+                        <div class="example-title">Output real (rulat cu python bt_conditie.py):</div>
+                        <pre>Siruri din {0,1} fara cifre consecutive identice, lungime 3:
+[0, 1, 0]
+[1, 0, 1]</pre>
+                    </div>
+                    <p>Fara conditia de continuare: 2^3 = 8 siruri de explorat. Cu conditia: arborele este taiat precoce si sunt gasite direct cele 2 siruri valide.</p>
+                </div>
+            </div>
+        </div>
+        <!-- ATOM 5 -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Cate apeluri recursive total face backtracking(0, 2, sol, used) pentru permutarile lui {1,2}?", "options": ["2 apeluri", "3 apeluri", "5 apeluri", "6 apeluri"], "correct": "c", "hint": "Arborele are: 1 nod radacina (k=0), 2 noduri la k=1, 2 noduri frunza la k=2. Total = 1 + 2 + 2 = 5 apeluri."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Urmarirea executiei pas cu pas</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    La urmarirea executiei (BAC / olimpiada), completam un tabel cu starea variabilelor la fiecare apel recursiv: nivelul k, valoarea v incercata, si solutia partiala curenta.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Trace real pentru permutarile lui {1, 2} (rulat cu python bt_trace.py):</div>
+                    <pre>Traseul backtracking pentru permutarile lui {1,2}:
+bt(k=0) sol=[]
+  bt(k=1) sol=[1]
+    bt(k=2) sol=[1, 2]
+    -&gt; SOLUTIE: [1, 2]
+  bt(k=1) sol=[2]
+    bt(k=2) sol=[2, 1]
+    -&gt; SOLUTIE: [2, 1]
+
+Total apeluri recursive: 5</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Tabel de urmarire (forma BAC):</strong>
+                    <table class="review-table">
+                        <thead><tr><th>Apel nr.</th><th>k</th><th>v incercat</th><th>sol partial</th><th>Actiune</th></tr></thead>
+                        <tbody>
+                            <tr><td>1</td><td>0</td><td>1</td><td>[ ]</td><td>alege v=1, apel recursiv</td></tr>
+                            <tr><td>2</td><td>1</td><td>2</td><td>[1]</td><td>alege v=2, apel recursiv</td></tr>
+                            <tr><td>3</td><td>2</td><td>-</td><td>[1, 2]</td><td>SOLUTIE, return, revenire</td></tr>
+                            <tr><td>4</td><td>1</td><td>-</td><td>[1]</td><td>v=2 epuizat, return, revenire la k=0</td></tr>
+                            <tr><td>5</td><td>0</td><td>2</td><td>[ ]</td><td>alege v=2, apel recursiv</td></tr>
+                            <tr><td>6</td><td>1</td><td>1</td><td>[2]</td><td>alege v=1, apel recursiv</td></tr>
+                            <tr><td>7</td><td>2</td><td>-</td><td>[2, 1]</td><td>SOLUTIE, return, revenire</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="concept-def">
+                    <strong>Complexitate timp:</strong> pentru generarea tuturor permutarilor lui {1, ..., n}: O(n &middot; n!). Sunt n! solutii, iar afisarea fiecareia costa O(n). Complexitate spatiu (stiva de recursie): O(n).
+                </div>
+            </div>
+        </div>
+        <!-- ATOM 6 EXCLUSIV INTENSIV -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In implementarea C++ a backtracking-ului, de ce folosim tablouri globale (sol[], used[]) in loc de parametri?", "options": ["C++ nu permite transmiterea tablourilor ca parametri", "Conventie uzuala la concursuri: evita copierea si simplifica semnatura functiei", "Tablourile globale sunt intotdeauna mai rapide in C++", "Ambele variante sunt echivalente si alegerea nu conteaza"], "correct": "b", "hint": "La concursuri (olimpiada, BAC) tablourile globale sunt conventie pentru claritate si evitarea transmiterii de pointeri in semnatura."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Schema in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+                    <p>La profilul intensiv informatica, implementam aceeasi schema in C++ cu tablouri globale (conventie standard la concursuri). Diferente fata de Python: tipuri declarate explicit, tablouri cu dimensiune maxima constanta, functia <code>main()</code> obligatorie.</p>
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">const int</span> NMAX = <span class="code-number">10</span>;
+<span class="code-keyword">int</span>  n = <span class="code-number">3</span>;
+<span class="code-keyword">int</span>  sol[NMAX];
+<span class="code-keyword">bool</span> used[NMAX];
+
+<span class="code-keyword">bool</span> conditie(<span class="code-keyword">int</span> k, <span class="code-keyword">int</span> v) {
+    <span class="code-keyword">return</span> !used[v];     <span class="code-comment">// v nu a mai fost folosit</span>
+}
+
+<span class="code-keyword">bool</span> esteSolutieCompleta(<span class="code-keyword">int</span> k) {
+    <span class="code-keyword">return</span> k == n;
+}
+
+<span class="code-keyword">void</span> afiseazaSolutia() {
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++)
+        cout &lt;&lt; sol[i] &lt;&lt; (i &lt; n - <span class="code-number">1</span> ? <span class="code-string">" "</span> : <span class="code-string">"
+"</span>);
+}
+
+<span class="code-keyword">void</span> backtracking(<span class="code-keyword">int</span> k) {
+    <span class="code-keyword">if</span> (esteSolutieCompleta(k)) {
+        afiseazaSolutia();
+        <span class="code-keyword">return</span>;
+    }
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> v = <span class="code-number">1</span>; v &lt;= n; v++) {
+        <span class="code-keyword">if</span> (conditie(k, v)) {
+            sol[k] = v;
+            used[v] = <span class="code-keyword">true</span>;
+            backtracking(k + <span class="code-number">1</span>);
+            sol[k] = <span class="code-number">0</span>;
+            used[v] = <span class="code-keyword">false</span>;
+        }
+    }
+}
+
+<span class="code-keyword">int</span> main() {
+    cout &lt;&lt; <span class="code-string">"Permutarile lui {1, 2, 3}:"</span> &lt;&lt; endl;
+    backtracking(<span class="code-number">0</span>);
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat: g++ -std=c++17 bt_cpp2.cpp -o bt_cpp2, rulat: ./bt_cpp2):</div>
+                    <pre>Permutarile lui {1, 2, 3}:
+1 2 3
+1 3 2
+2 1 3
+2 3 1
+3 1 2
+3 2 1</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Diferente cheie Python vs C++:</strong>
+                    <ul>
+                        <li>C++: <code>bool used[NMAX]</code> cu dimensiune maxima; Python: <code>used = [False] * (n+1)</code> alocat dinamic.</li>
+                        <li>C++: <code>conditie()</code> si <code>esteSolutieCompleta()</code> ca functii separate &mdash; claritate arhitecturala, recomandat la olimpiada.</li>
+                        <li>C++: variabilele <code>n</code>, <code>sol</code>, <code>used</code> sunt globale &mdash; conventie uzuala la concursuri.</li>
+                        <li>Ambele variante produc acelasi rezultat; structura algoritmului este identica.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </main>
+    <!-- PRACTICE SECTION -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) - Identificare componente schema</h3>
+            <p>In schema generala de backtracking de mai jos, identifica si denumeste: (a) conditia de solutie completa, (b) conditia de continuare, (c) pasul de alegere, (d) pasul de revenire.</p>
+            <pre>def bt(k, n, sol, used):
+    if k == n:
+        print(sol)
+        return
+    for v in range(1, n+1):
+        if not used[v]:
+            sol[k] = v; used[v] = True
+            bt(k+1, n, sol, used)
+            sol[k] = 0; used[v] = False</pre>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) - Modificare conditie de continuare</h3>
+            <p>Modifica schema generala (Python) pentru a genera toate sirurile de lungime 4 formate din cifrele {1, 2, 3}, in care suma oricaror doua elemente consecutive este cel mult 4. Scrie conditia de continuare corespunzatoare si ruleaza codul pentru a afisa toate solutiile valide.</p>
+            <p><em>Indiciu:</em> conditie: <code>k == 0 or sol[k-1] + v &lt;= 4</code>. Cate siruri valide exista?</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) - Complexitate si analiza</h3>
+            <p>Analizeaza algoritmul de generare a permutarilor lui {1, ..., n}:</p>
+            <ul>
+                <li>(a) Demonstreaza ca numarul de solutii este exact n! (prin rationament combinatorial).</li>
+                <li>(b) Numarul total de noduri in arborele de cautare este suma de la k=0 la n a lui n!/(n-k)!. Calculeaza valoarea pentru n=3.</li>
+                <li>(c) De ce complexitatea timp este O(n * n!) si nu O(n!)? Ce pas costa O(n) per solutie?</li>
+                <li>(d) <span class="bonus-badge">EXCLUSIV INTENSIV</span> Implementeaza in C++ o versiune care numara apelurile recursive si afiseaza totalul. Verifica pentru n=3 (total apeluri asteptat: 16).</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- REVIEW SECTION -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Backtracking = explorare sistematica + revenire controlata la primul punct de decizie anterior</li>
+                <li>Arborele de cautare: noduri = solutii partiale, frunze = solutii complete sau ramuri taiate</li>
+                <li>Schema generala: (a) conditia solutie completa, (b) iterare valori, (c) conditie de continuare + revenire</li>
+                <li>Conditia de continuare filtreaza valorile INAINTE de recursie &mdash; pruning = eficienta sporita</li>
+                <li>Urmarirea executiei: tabel cu k, v, sol la fiecare apel (cerinta frecventa BAC)</li>
+                <li>Complexitate permutari: O(n * n!) timp, O(n) spatiu pe stiva de recursie</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Lectia 3: Generarea permutarilor</strong> &mdash; vei implementa variante complete cu conditii, permutari cu repetitie si optimizari specifice.</p>
+            <a href="lectia3-permutari.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m2-algoritmi-complecsi-lectia2-backtracking-intro');
+        PracticeSimple.init('cls11-m2-algoritmi-complecsi-lectia2-backtracking-intro');
+        LessonSummary.init('cls11-m2-algoritmi-complecsi-lectia2-backtracking-intro');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm2-algoritmi-complecsi',
+            moduleName: 'M2 Algoritmi Complecsi',
+            lesson: 'Backtracking: Introducere'
+        });
+        LearningProgress.init('cls11', 'm2-algoritmi-complecsi', 'lectia2-backtracking-intro.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

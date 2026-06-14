@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 4: Aranjamente si combinari prin backtracking | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline style blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia3-permutari.html" class="nav-btn" title="Lectia anterioara">&#8592; Anterioara</a>
+        <a href="lectia5-submultimi.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Aranjamente si combinari prin backtracking</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- FRAME SECTION -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege diferenta dintre aranjamente si combinari, vei implementa algoritmii de generare prin backtracking (Python si C++) si vei sti sa alegi tehnica potrivita in functie de contextul problemei.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa explici diferenta dintre aranjamente (ordinea conteaza) si combinari (ordinea nu conteaza)</li>
+                <li>Sa calculezi A(n,k) si C(n,k) folosind formulele corecte</li>
+                <li>Sa implementezi generarea aranjamentelor prin backtracking cu vector de folosit</li>
+                <li>Sa implementezi generarea combinarilor prin backtracking cu parametrul <code>start</code></li>
+                <li>Sa identifici ce structura de backtracking genereaza aranjamente vs combinari</li>
+                <li>Sa aplici algoritmii la probleme practice (podiumuri, echipe, coduri)</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- TRY SECTION -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare mentala:</div>
+<p>Ai 3 culori: Rosu, Verde, Albastru. Trebuie sa alegi 2 culori pentru un steag cu doua benzi.</p>
+<p><strong>Intrebare 1:</strong> Daca banda de sus si cea de jos trebuie sa fie culori diferite (ordinea conteaza), cate steaguri diferite poti face?</p>
+<p><strong>Intrebare 2:</strong> Daca vrei doar sa alegi 2 culori (fara a conta care e sus si care e jos), cate perechi poti forma?</p>
+<textarea id="tryAnswer" placeholder="Steaguri cu ordine: ...
+Perechi fara ordine: ..." rows="4"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+<div class="hint-content">
+<p>Cu ordine: (R,V), (R,A), (V,R), (V,A), (A,R), (A,V) = <strong>6 steaguri</strong>. Aceasta este notiunea de <strong>aranjament</strong>.</p>
+<p>Fara ordine: {R,V}, {R,A}, {V,A} = <strong>3 perechi</strong>. Aceasta este notiunea de <strong>combinare</strong>.</p>
+<p>Observa: 6 = 2 &times; 3. Fiecare combinare genereaza k! = 2 aranjamente.</p>
+</div>
+</div>
+        </div>
+    </section>
+
+    <!-- ATOMS -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1 -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Care este diferenta esentiala dintre aranjamente si combinari?", "options": ["Aranjamentele folosesc numere, combinarile folosesc litere", "La aranjamente ordinea elementelor conteaza, la combinari nu", "Aranjamentele au mai putine solutii decat combinarile", "Nu exista diferenta, sunt acelasi lucru"], "correct": "b", "hint": "Gandeste-te la podium: Aur-Argint-Bronz (ordine conteaza) vs echipa de 3 (ordine nu conteaza)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Aranjamente vs. Combinari &mdash; diferenta fundamentala</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Aranjament A(n,k)</strong> &mdash; selectie ordonata de k elemente din n elemente distincte. Ordinea conteaza: (1,2) &ne; (2,1).<br><br>
+                    <strong>Combinare C(n,k)</strong> &mdash; selectie neordonata de k elemente din n elemente distincte. Ordinea nu conteaza: {1,2} = {2,1}.
+                </div>
+                <div class="example-box">
+<div class="example-title">Exemplu comparativ: n=3, k=2</div>
+<p><strong>Aranjamente A(3,2)</strong> &mdash; selectii de 2 din {1,2,3}, cu ordine:</p>
+<pre>A(3,2) = (1,2)  (1,3)  (2,1)  (2,3)  (3,1)  (3,2)   &rarr; 6 solutii</pre>
+<p><strong>Combinari C(3,2)</strong> &mdash; selectii de 2 din {1,2,3}, fara ordine:</p>
+<pre>C(3,2) = {1,2}  {1,3}  {2,3}                          &rarr; 3 solutii</pre>
+<p>Observatie: A(3,2) = 2! &times; C(3,2). Fiecare combinare poate fi ordonata in 2! = 2 moduri.</p>
+</div>
+                <div class="example-box">
+<div class="example-title">Recunoastere rapida</div>
+<p>&#127942; <strong>Podium olimpic</strong> (Aur, Argint, Bronz) din 10 sportivi &rarr; <strong>Aranjament</strong> (pozitia conteaza)</p>
+<p>&#9917; <strong>Echipa de fotbal</strong> de 11 din 20 jucatori &rarr; <strong>Combinare</strong> (nu exista ordine intr-o echipa)</p>
+<p>&#128273; <strong>Cod PIN</strong> de 4 cifre distincte din {0..9} &rarr; <strong>Aranjament</strong> (1234 &ne; 4321)</p>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 2 -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Cum se calculeaza C(n,k) pornind de la A(n,k)?", "options": ["C(n,k) = A(n,k) * k!", "C(n,k) = A(n,k) / k!", "C(n,k) = A(n,k) + k!", "C(n,k) = A(n,k) - k!"], "correct": "b", "hint": "Fiecare combinare de k elemente poate fi ordonata in k! moduri. Deci A(n,k) = C(n,k) * k!, adica C(n,k) = A(n,k) / k!."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Formulele matematice: A(n,k) si C(n,k)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>A(n, k) = n! / (n-k)!</strong><br>
+                    = n &times; (n-1) &times; &hellip; &times; (n-k+1) &nbsp;&nbsp; <em>(produs de k factori descendenti)</em><br><br>
+                    <strong>C(n, k) = n! / (k! &times; (n-k)!) = A(n,k) / k!</strong><br>
+                    = A(n,k) impartit la k! (impartim la permutarile interne)
+                </div>
+                <div class="example-box">
+<div class="example-title">Calcule verificate cu Python:</div>
+<pre><span class="code-comment"># Formulele A(n,k) si C(n,k)</span>
+<span class="code-keyword">import</span> math
+
+n, k = <span class="code-number">4</span>, <span class="code-number">2</span>
+A = math.<span class="code-function">factorial</span>(n) // math.<span class="code-function">factorial</span>(n - k)
+C = math.<span class="code-function">factorial</span>(n) // (math.<span class="code-function">factorial</span>(k) * math.<span class="code-function">factorial</span>(n - k))
+
+<span class="code-function">print</span>(<span class="code-string">f"A(4,2) = 4! / (4-2)! = 24 / 2 = {A}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"C(4,2) = 4! / (2! * 2!) = 24 / 4 = {C}"</span>)</pre>
+<div class="example-title">Output real (python):</div>
+<pre>A(4,2) = 4! / (4-2)! = 24 / 2 = 12
+C(4,2) = 4! / (2! * 2!) = 24 / 4 = 6</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Valori uzuale</div>
+<pre>n=4, k=2:  A(4,2)= 12   C(4,2)= 6   raport A/C = 2! = 2
+n=4, k=3:  A(4,3)= 24   C(4,3)= 4   raport A/C = 3! = 6
+n=5, k=2:  A(5,2)= 20   C(5,2)=10   raport A/C = 2! = 2
+n=5, k=3:  A(5,3)= 60   C(5,3)=10   raport A/C = 3! = 6
+n=6, k=3:  A(6,3)=120   C(6,3)=20   raport A/C = 3! = 6</pre>
+<p>Raportul A(n,k)/C(n,k) este intotdeauna k!.</p>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 3 -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "In algoritmul de generare a aranjamentelor, vectorul `folosit` are rolul de:", "options": ["A numara solutiile gasite", "A retine solutia curenta", "A marca elementele deja folosite pe ramura curenta, evitand repetitia", "A sorta elementele"], "correct": "c", "hint": "La aranjamente, fiecare element poate aparea o singura data. Vectorul folosit[] tine evidenta elementelor deja in stiva."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Generarea aranjamentelor prin backtracking (Python)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    La fiecare nivel al recursiei, incercam toate elementele din {1..n} care nu sunt deja in stiva (marcate in <code>folosit[]</code>). Cand stiva are k elemente, am gasit o solutie.
+                </div>
+<pre><span class="code-comment"># Generare aranjamente A(3,2) prin backtracking</span>
+
+<span class="code-keyword">def</span> <span class="code-function">aranjamente</span>(n, k, stiva=[], folosit=<span class="code-keyword">None</span>, pas=[<span class="code-number">0</span>]):
+    <span class="code-keyword">if</span> folosit <span class="code-keyword">is</span> <span class="code-keyword">None</span>:
+        folosit = [<span class="code-keyword">False</span>] * (n + <span class="code-number">1</span>)
+    <span class="code-keyword">if</span> <span class="code-function">len</span>(stiva) == k:          <span class="code-comment"># stiva plina = solutie</span>
+        pas[<span class="code-number">0</span>] += <span class="code-number">1</span>
+        <span class="code-function">print</span>(<span class="code-string">f"  Solutia {pas[0]}: {stiva}"</span>)
+        <span class="code-keyword">return</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>):
+        <span class="code-keyword">if not</span> folosit[i]:          <span class="code-comment"># element nefolosit</span>
+            folosit[i] = <span class="code-keyword">True</span>
+            stiva.<span class="code-function">append</span>(i)
+            <span class="code-function">aranjamente</span>(n, k, stiva, folosit, pas)
+            stiva.<span class="code-function">pop</span>()              <span class="code-comment"># backtrack</span>
+            folosit[i] = <span class="code-keyword">False</span>       <span class="code-comment"># elibereaza</span>
+
+<span class="code-function">print</span>(<span class="code-string">"A(3,2) - aranjamente de 2 din {1,2,3}:"</span>)
+<span class="code-function">aranjamente</span>(<span class="code-number">3</span>, <span class="code-number">2</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (python):</div>
+<pre>A(3,2) - aranjamente de 2 din {1,2,3}:
+  Solutia 1: [1, 2]
+  Solutia 2: [1, 3]
+  Solutia 3: [2, 1]
+  Solutia 4: [2, 3]
+  Solutia 5: [3, 1]
+  Solutia 6: [3, 2]</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Trasarea executiei (primele 3 ramuri)</div>
+<pre>nivel 0: incerc i=1 &rarr; stiva=[1], folosit[1]=True
+  nivel 1: i=1 &rarr; BLOCAT (folosit[1]=True)
+           i=2 &rarr; stiva=[1,2] &rarr; <strong>SOLUTIA 1: [1,2]</strong>
+           backtrack: stiva=[1], folosit[2]=False
+           i=3 &rarr; stiva=[1,3] &rarr; <strong>SOLUTIA 2: [1,3]</strong>
+  backtrack: stiva=[], folosit[1]=False
+nivel 0: incerc i=2 &rarr; stiva=[2]
+  nivel 1: i=1 &rarr; stiva=[2,1] &rarr; <strong>SOLUTIA 3: [2,1]</strong></pre>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 4 -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "In algoritmul de generare a combinarilor, parametrul `start` are rolul de:", "options": ["A numara cate solutii am gasit", "A impiedica alegerea elementelor mai mici decat cel anterior, evitand duplicatele", "A verifica daca stiva este plina", "A marca elementele folosite"], "correct": "b", "hint": "La combinari nu avem vector folosit[] - in schimb impunem ordine crescatoare prin parametrul start."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Generarea combinarilor prin backtracking (Python)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Structura backtracking pentru combinari: <strong>nu folosim vector <code>folosit[]</code></strong>. In schimb, adaugam parametrul <code>start</code> care impune ca elementele sa fie alese in ordine strict crescatoare. Aceasta elimina duplicatele ({1,2} si {2,1} sunt acelasi lucru).
+                </div>
+<pre><span class="code-comment"># Generare combinari C(3,2) prin backtracking</span>
+
+<span class="code-keyword">def</span> <span class="code-function">combinari</span>(n, k, start=<span class="code-number">1</span>, stiva=[]):
+    <span class="code-keyword">if</span> <span class="code-function">len</span>(stiva) == k:           <span class="code-comment"># stiva plina = solutie</span>
+        <span class="code-function">print</span>(<span class="code-string">f"  {stiva}"</span>)
+        <span class="code-keyword">return</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(start, n + <span class="code-number">1</span>):  <span class="code-comment"># incepem de la start</span>
+        stiva.<span class="code-function">append</span>(i)
+        <span class="code-function">combinari</span>(n, k, i + <span class="code-number">1</span>, stiva)  <span class="code-comment"># urmatorul e strict mai mare</span>
+        stiva.<span class="code-function">pop</span>()
+
+<span class="code-function">print</span>(<span class="code-string">"C(3,2) - combinari de 2 din {1,2,3}:"</span>)
+<span class="code-function">combinari</span>(<span class="code-number">3</span>, <span class="code-number">2</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (python):</div>
+<pre>C(3,2) - combinari de 2 din {1,2,3}:
+  [1, 2]
+  [1, 3]
+  [2, 3]</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">De ce lipsesc [2,1], [3,1], [3,2]?</div>
+<p>Parametrul <code>start</code> impune alegerea in ordine strict crescatoare. Cand am ales deja <code>1</code>, urmatorul element incepe de la <code>2</code> &mdash; deci nu putem reveni la <code>1</code>. Astfel {1,2} si {2,1} sunt tratate ca un singur obiect, reprezentat intotdeauna ca <code>[1,2]</code>.</p>
+</div>
+                <div class="concept-def">
+                    <strong>Comparatie structurala:</strong><br>
+                    Aranjamente: <code>for i in range(1, n+1): if not folosit[i]: ...</code> &nbsp; (cu vector folosit)<br>
+                    Combinari: &nbsp;&nbsp; <code>for i in range(start, n+1): ...</code> &nbsp; (fara vector folosit, start creste)
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5 -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Din 5 jucatori, cate echipe de 3 se pot forma?", "options": ["60", "20", "10", "15"], "correct": "c", "hint": "C(5,3) = 5! / (3! * 2!) = 120 / 12 = 10. Ordinea nu conteaza intr-o echipa, deci e combinare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Aplicatie: echipe de fotbal &mdash; C(5,3)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="example-box">
+<div class="example-title">Problema: Din 5 jucatori, cate echipe de 3?</div>
+<p>Ordinea nu conteaza: echipa {1,2,3} este aceeasi indiferent de ordine. Folosim combinari C(5,3) = 10.</p>
+<pre><span class="code-comment"># C(5,3) - echipe de 3 din 5 jucatori</span>
+<span class="code-keyword">import</span> math
+n, k = <span class="code-number">5</span>, <span class="code-number">3</span>
+c = math.<span class="code-function">factorial</span>(n) // (math.<span class="code-function">factorial</span>(k) * math.<span class="code-function">factorial</span>(n - k))
+<span class="code-function">print</span>(<span class="code-string">f"Din {n} jucatori, echipe de {k}: C({n},{k}) = {c}"</span>)
+
+<span class="code-keyword">def</span> <span class="code-function">combinari</span>(n, k, start=<span class="code-number">1</span>, stiva=[]):
+    <span class="code-keyword">if</span> <span class="code-function">len</span>(stiva) == k:
+        <span class="code-function">print</span>(<span class="code-string">f"  Echipa: {stiva}"</span>)
+        <span class="code-keyword">return</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(start, n + <span class="code-number">1</span>):
+        stiva.<span class="code-function">append</span>(i)
+        <span class="code-function">combinari</span>(n, k, i + <span class="code-number">1</span>, stiva)
+        stiva.<span class="code-function">pop</span>()
+
+<span class="code-function">print</span>(<span class="code-string">"Echipele posibile:"</span>)
+<span class="code-function">combinari</span>(<span class="code-number">5</span>, <span class="code-number">3</span>)</pre>
+<div class="example-title">Output real (python):</div>
+<pre>Din 5 jucatori, echipe de 3: C(5,3) = 10
+Echipele posibile:
+  Echipa: [1, 2, 3]
+  Echipa: [1, 2, 4]
+  Echipa: [1, 2, 5]
+  Echipa: [1, 3, 4]
+  Echipa: [1, 3, 5]
+  Echipa: [1, 4, 5]
+  Echipa: [2, 3, 4]
+  Echipa: [2, 3, 5]
+  Echipa: [2, 4, 5]
+  Echipa: [3, 4, 5]</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Comparatie: podiumuri din aceiasi 5 sportivi</div>
+<p>Podiumurile (Aur, Argint, Bronz) sunt <strong>aranjamente</strong>: A(5,3) = 5 &times; 4 &times; 3 = <strong>60</strong>, adica de 3! = 6 ori mai multe decat echipele (C(5,3) = 10). Fiecare echipa {1,2,3} genereaza 6 podiumuri distincte: (1,2,3), (1,3,2), (2,1,3), (2,3,1), (3,1,2), (3,2,1).</p>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 6 -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, ce inlocuieste vectorul `folosit[]` la generarea combinarilor?", "options": ["Un vector suplimentar `ales[]`", "Parametrul `start` care impune ordine crescatoare", "O instructiune break", "Un contor global"], "correct": "b", "hint": "Exact ca in Python: la combinari nu marcam elementele ca folosite - parametrul start garanteaza ordinea crescatoare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Implementare C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune exclusiv pentru intensiv informatica</div>
+<p>In C++, algoritmii sunt identici ca logica cu Python, dar cu sintaxa specifica: tablouri in loc de liste, variabile globale pentru stiva/folosit (practica uzuala la olimpiade). Complexitate timp: O(A(n,k)&times;k) pentru aranjamente, O(C(n,k)&times;k) pentru combinari.</p>
+</div>
+                <p><strong>Aranjamente A(4,2) in C++:</strong></p>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> n = <span class="code-number">4</span>, k = <span class="code-number">2</span>;
+<span class="code-keyword">int</span> stiva[<span class="code-number">10</span>];
+<span class="code-keyword">bool</span> folosit[<span class="code-number">10</span>] = {<span class="code-keyword">false</span>};
+
+<span class="code-keyword">void</span> <span class="code-function">aranjamente</span>(<span class="code-keyword">int</span> nivel) {
+    <span class="code-keyword">if</span> (nivel == k) {
+        cout &lt;&lt; <span class="code-string">"("</span>;
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; k; i++) {
+            cout &lt;&lt; stiva[i];
+            <span class="code-keyword">if</span> (i &lt; k-<span class="code-number">1</span>) cout &lt;&lt; <span class="code-string">","</span>;
+        }
+        cout &lt;&lt; <span class="code-string">") "</span>;
+        <span class="code-keyword">return</span>;
+    }
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">1</span>; i &lt;= n; i++) {
+        <span class="code-keyword">if</span> (!folosit[i]) {
+            folosit[i] = <span class="code-keyword">true</span>;
+            stiva[nivel] = i;
+            <span class="code-function">aranjamente</span>(nivel + <span class="code-number">1</span>);
+            folosit[i] = <span class="code-keyword">false</span>;
+        }
+    }
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"A(4,2) in C++:"</span> &lt;&lt; endl;
+    <span class="code-function">aranjamente</span>(<span class="code-number">0</span>);
+    cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (g++ -std=c++17, then run):</div>
+<pre>A(4,2) in C++:
+(1,2) (1,3) (1,4) (2,1) (2,3) (2,4) (3,1) (3,2) (3,4) (4,1) (4,2) (4,3)</pre>
+</div>
+                <p><strong>Combinari C(4,2) in C++:</strong></p>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> n = <span class="code-number">4</span>, k = <span class="code-number">2</span>;
+<span class="code-keyword">int</span> stiva[<span class="code-number">10</span>];
+
+<span class="code-keyword">void</span> <span class="code-function">combinari</span>(<span class="code-keyword">int</span> nivel, <span class="code-keyword">int</span> start) {
+    <span class="code-keyword">if</span> (nivel == k) {
+        cout &lt;&lt; <span class="code-string">"{"</span>;
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; k; i++) {
+            cout &lt;&lt; stiva[i];
+            <span class="code-keyword">if</span> (i &lt; k-<span class="code-number">1</span>) cout &lt;&lt; <span class="code-string">","</span>;
+        }
+        cout &lt;&lt; <span class="code-string">"} "</span>;
+        <span class="code-keyword">return</span>;
+    }
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = start; i &lt;= n; i++) {
+        stiva[nivel] = i;
+        <span class="code-function">combinari</span>(nivel + <span class="code-number">1</span>, i + <span class="code-number">1</span>);
+    }
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"C(4,2) in C++:"</span> &lt;&lt; endl;
+    <span class="code-function">combinari</span>(<span class="code-number">0</span>, <span class="code-number">1</span>);
+    cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (g++ -std=c++17, then run):</div>
+<pre>C(4,2) in C++:
+{1,2} {1,3} {1,4} {2,3} {2,4} {3,4}</pre>
+</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- PRACTICE -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Calcul si recunoastere</h3>
+            <p>a) Calculeaza A(5,2) si C(5,2) folosind formulele.</p>
+            <p>b) Identifica tipul selectiei (aranjament sau combinare):<br>
+            &nbsp;&nbsp;1. Alegi 2 carti dintr-un pachet de 10 (nu conteaza ordinea)<br>
+            &nbsp;&nbsp;2. Formezi un cod de 3 litere distincte din {A,B,C,D,E} (ordinea conteaza)<br>
+            &nbsp;&nbsp;3. Alegi 4 membri dintr-un grup de 8 pentru o comisie (nu exista functii diferite)</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Modificare algoritm</h3>
+            <p>Modifica algoritmul de aranjamente din lectie astfel incat sa genereze aranjamentele de lungime 3 din multimea <code>['a','b','c','d']</code>. Afiseaza fiecare aranjament ca un sir (ex: <code>"abc"</code>).</p>
+            <p>Verifica ca obtii A(4,3) = 24 de solutii.</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Combinari cu conditii (pruning)</h3>
+            <p>Genereaza toate combinarile de 3 elemente din {1,2,3,4,5,6} cu suma elementelor cel mult 10.</p>
+            <p>Indiciu: adauga o conditie de pruning &mdash; daca suma stivei curente depaseste deja 10, nu mai continua pe acea ramura.</p>
+            <p>Raspuns asteptat: 10 solutii din C(6,3)=20.</p>
+        </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Aranjamente A(n,k): selectie ordonata; A(n,k) = n!/(n-k)!; ordinea conteaza</li>
+                <li>Combinari C(n,k): selectie neordonata; C(n,k) = A(n,k)/k!; ordinea nu conteaza</li>
+                <li>Backtracking aranjamente: vector <code>folosit[]</code> previne reutilizarea elementelor</li>
+                <li>Backtracking combinari: parametrul <code>start</code> impune ordine crescatoare, fara vector folosit</li>
+                <li>Complexitate: O(A(n,k)&times;k) pentru aranjamente, O(C(n,k)&times;k) pentru combinari</li>
+                <li>Recunoastere: "ordine conteaza" &rarr; aranjament; "ordine nu conteaza" &rarr; combinare</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu generarea submultimilor si produsul cartezian prin backtracking.</p>
+            <a href="lectia5-submultimi.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m2-algoritmi-complecsi-lectia4-aranjamente-combinari');
+        PracticeSimple.init('cls11-m2-algoritmi-complecsi-lectia4-aranjamente-combinari');
+        LessonSummary.init('cls11-m2-algoritmi-complecsi-lectia4-aranjamente-combinari');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm2-algoritmi-complecsi',
+            moduleName: 'M2 Algoritmi Complecsi',
+            lesson: 'Aranjamente si combinari'
+        });
+        LearningProgress.init('cls11', 'm2-algoritmi-complecsi', 'lectia4-aranjamente-combinari.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

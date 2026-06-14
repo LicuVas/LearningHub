@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 1: Recursivitate avansata | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+<nav class="nav-bar">
+<a href="index.html" class="nav-btn">&#8592; Modulul</a>
+<a href="lectia2-backtracking-intro.html" class="nav-btn">Urmatoarea &#8594;</a>
+</nav>
+<header class="lesson-header">
+<span class="lesson-badge">Invatare Atomica</span>
+<h1 class="lesson-title">Recursivitate avansata: recursivitate multipla, stive de apel</h1>
+</header>
+<div class="progress-container">
+<span class="progress-label">Progres lectie:</span>
+<div class="progress-bar-wrapper"><div class="progress-bar-fill" id="progress-fill"></div></div>
+<span class="progress-percent" id="progress-percent">0%</span>
+</div>
+<section class="lesson-frame">
+<div class="goal-section">
+<div class="goal-header"><span class="goal-icon">&#127919;</span><h2 class="goal-title">Obiectivul lectiei</h2></div>
+<p class="goal-text">Vei intelege cum functioneaza recursivitatea multipla la nivel de masina, vei analiza arborii de recursie, vei calcula complexitatea reala si vei cunoaste optimizarea prin memoizare.</p>
+</div>
+<div class="learning-outcomes">
+<h3>Dupa aceasta lectie vei putea:</h3>
+<ul>
+<li>Sa explici diferenta dintre recursivitate simpla si recursivitate multipla</li>
+<li>Sa desenezi arborele de recursie si sa numeri apelurile</li>
+<li>Sa descrii mecanismul stivei de apeluri: ce se salveaza si ce se restaureaza la fiecare apel</li>
+<li>Sa determini complexitatea O(n) pentru recursivitate liniara si O(2^n) pentru recursivitate binara</li>
+<li>Sa implementezi memoizarea pentru a reduce complexitatea de la O(2^n) la O(n)</li>
+<li>(Intensiv) Sa implementezi Fibonacci si Hanoi in C++ si sa compari cu Python</li>
+</ul>
+</div>
+</section>
+<section class="try-section">
+<h2>Incearca singur!</h2>
+<div class="try-challenge">
+<div class="challenge-box">
+<div class="challenge-title">Provocare:</div>
+<p>Calculeaza manual cate apeluri face <code>fib(5)</code> stiind ca apeleaza fib(n-1) si fib(n-2). Scrie arborele de apeluri (fiecare nod = un apel).</p>
+<textarea id="tryAnswer" rows="8" placeholder="fib(5)&#10;  fib(4)&#10;    fib(3)&#10;      ..."></textarea>
+</div>
+<div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+<div class="hint-content">
+<p>Fiecare apel cu n &gt; 1 genereaza exact 2 apeluri copil. Numara toate nodurile inclusiv frunzele.</p>
+<p>Raspuns: fib(5) face <strong>15 apeluri</strong> totale &mdash; verificat in lectie.</p>
+</div>
+</div>
+</div>
+</section>
+<main id="atomic-content">
+<div class="atom" id="atom-1" data-quiz='[{"question": "Care este diferenta principala intre recursivitate simpla si recursivitate multipla?", "options": ["Recursivitatea multipla are mai multi parametri", "Recursivitatea multipla contine doua sau mai multe apeluri recursive in corp", "Recursivitatea multipla ruleaza in paralel", "Recursivitatea multipla nu are caz de baza"], "correct": "b", "hint": "Recursivitatea multipla inseamna ca functia se apeleaza pe sine de doua sau mai multe ori, generand un arbore de apeluri."}]'>
+<div class="atom-header"><div class="atom-number">1</div><h3 class="atom-title">1. Recursivitate simpla vs. recursivitate multipla</h3></div>
+<div class="atom-content">
+<div class="concept-def">
+<p><strong>Recursivitate simpla (liniara)</strong>: functia se apeleaza exact o data pe sine. Genereaza un lant de apeluri. Exemple: factorial, suma cifrelor. Complexitate temporala: O(n).</p>
+<p><strong>Recursivitate multipla (binara sau n-ara)</strong>: functia se apeleaza pe sine de doua sau mai multe ori in corpul ei. Genereaza un arbore de apeluri. Exemple: Fibonacci, Hanoi, backtracking. Complexitate temporala: O(2^n) sau mai mult.</p>
+<p><strong>Orice functie recursiva corecta</strong> are: caz de baza (conditia de oprire, fara apel recursiv), caz recursiv (argument mai simplu) si convergenta garantata catre cazul de baza.</p>
+</div>
+<div class="example-box">
+<div class="example-title">Comparatie: factorial (simpla) vs fibonacci (multipla)</div>
+<pre><span class="code-comment"># Recursivitate SIMPLA: un singur apel recursiv -&gt; lant</span>
+<span class="code-keyword">def</span> <span class="code-function">factorial</span>(n):
+    <span class="code-keyword">if</span> n == <span class="code-number">0</span>:
+        <span class="code-keyword">return</span> <span class="code-number">1</span>
+    <span class="code-keyword">return</span> n * <span class="code-function">factorial</span>(n - <span class="code-number">1</span>)
+
+<span class="code-comment"># Recursivitate MULTIPLA: doua apeluri recursive -&gt; arbore</span>
+<span class="code-keyword">def</span> <span class="code-function">fib</span>(n):
+    <span class="code-keyword">if</span> n &lt;= <span class="code-number">1</span>:
+        <span class="code-keyword">return</span> n
+    <span class="code-keyword">return</span> <span class="code-function">fib</span>(n - <span class="code-number">1</span>) + <span class="code-function">fib</span>(n - <span class="code-number">2</span>)
+
+<span class="code-function">print</span>(<span class="code-string">"fib(0) ="</span>, <span class="code-function">fib</span>(<span class="code-number">0</span>))
+<span class="code-function">print</span>(<span class="code-string">"fib(1) ="</span>, <span class="code-function">fib</span>(<span class="code-number">1</span>))
+<span class="code-function">print</span>(<span class="code-string">"fib(5) ="</span>, <span class="code-function">fib</span>(<span class="code-number">5</span>))
+<span class="code-function">print</span>(<span class="code-string">"fib(7) ="</span>, <span class="code-function">fib</span>(<span class="code-number">7</span>))</pre>
+</div>
+<div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>fib(0) = 0
+fib(1) = 1
+fib(5) = 5
+fib(7) = 13</pre>
+</div>
+</div>
+</div>
+<div class="atom" id="atom-2" data-quiz='[{"question": "Cate apeluri totale face fib(5)?", "options": ["5 apeluri", "10 apeluri", "15 apeluri", "31 apeluri"], "correct": "c", "hint": "Verificat experimental: fib(5) face 15 apeluri totale. Numarul creste exponential."}]'>
+<div class="atom-header"><div class="atom-number">2</div><h3 class="atom-title">2. Arborele de recursie si numarul de apeluri</h3></div>
+<div class="atom-content">
+<div class="concept-def">
+<p>Un <strong>arbore de recursie</strong> este reprezentarea grafica a tuturor apelurilor generate de o functie recursiva multipla. Fiecare nod = un apel; copiii unui nod = apelurile recursive generate. La recursivitate binara numarul total de noduri creste exponential. Complexitatea temporala este <strong>O(2^n)</strong>.</p>
+</div>
+<div class="example-box">
+<div class="example-title">Contorizarea apelurilor pentru fib(n)</div>
+<pre>counter = <span class="code-number">0</span>
+
+<span class="code-keyword">def</span> <span class="code-function">fib_count</span>(n):
+    <span class="code-keyword">global</span> counter
+    counter += <span class="code-number">1</span>
+    <span class="code-keyword">if</span> n &lt;= <span class="code-number">1</span>:
+        <span class="code-keyword">return</span> n
+    <span class="code-keyword">return</span> <span class="code-function">fib_count</span>(n - <span class="code-number">1</span>) + <span class="code-function">fib_count</span>(n - <span class="code-number">2</span>)
+
+<span class="code-keyword">for</span> n <span class="code-keyword">in</span> [<span class="code-number">5</span>, <span class="code-number">10</span>, <span class="code-number">15</span>]:
+    counter = <span class="code-number">0</span>
+    result = <span class="code-function">fib_count</span>(n)
+    <span class="code-function">print</span>(<span class="code-string">f"fib({n}) = {result}, apeluri = {counter}"</span>)</pre>
+</div>
+<div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>fib(5) = 5, apeluri = 15
+fib(10) = 55, apeluri = 177
+fib(15) = 610, apeluri = 1973</pre>
+</div>
+<div class="example-box">
+<div class="example-title">Urmarirea arborelui pentru fib(4) pas cu pas</div>
+<pre>depth = <span class="code-number">0</span>
+
+<span class="code-keyword">def</span> <span class="code-function">fib_trace</span>(n):
+    <span class="code-keyword">global</span> depth
+    indent = <span class="code-string">"  "</span> * depth
+    <span class="code-function">print</span>(<span class="code-string">f"{indent}-&gt; fib({n}) apelat"</span>)
+    <span class="code-keyword">if</span> n &lt;= <span class="code-number">1</span>:
+        <span class="code-function">print</span>(<span class="code-string">f"{indent}&lt;- fib({n}) returneaza {n}"</span>)
+        <span class="code-keyword">return</span> n
+    depth += <span class="code-number">1</span>
+    r1 = <span class="code-function">fib_trace</span>(n - <span class="code-number">1</span>)
+    r2 = <span class="code-function">fib_trace</span>(n - <span class="code-number">2</span>)
+    depth -= <span class="code-number">1</span>
+    result = r1 + r2
+    <span class="code-function">print</span>(<span class="code-string">f"{indent}&lt;- fib({n}) returneaza {result}"</span>)
+    <span class="code-keyword">return</span> result
+
+<span class="code-function">print</span>(<span class="code-string">"Urmarirea stivei pentru fib(4):"</span>)
+<span class="code-function">print</span>(<span class="code-string">"Rezultat final:"</span>, <span class="code-function">fib_trace</span>(<span class="code-number">4</span>))</pre>
+</div>
+<div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Urmarirea stivei pentru fib(4):
+-&gt; fib(4) apelat
+  -&gt; fib(3) apelat
+    -&gt; fib(2) apelat
+      -&gt; fib(1) apelat
+      &lt;- fib(1) returneaza 1
+      -&gt; fib(0) apelat
+      &lt;- fib(0) returneaza 0
+    &lt;- fib(2) returneaza 1
+    -&gt; fib(1) apelat
+    &lt;- fib(1) returneaza 1
+  &lt;- fib(3) returneaza 2
+  -&gt; fib(2) apelat
+    -&gt; fib(1) apelat
+    &lt;- fib(1) returneaza 1
+    -&gt; fib(0) apelat
+    &lt;- fib(0) returneaza 0
+  &lt;- fib(2) returneaza 1
+&lt;- fib(4) returneaza 3
+Rezultat final: 3</pre>
+</div>
+</div>
+</div>
+<div class="atom" id="atom-3" data-quiz='[{"question": "Ce se salveaza in stiva de apeluri la fiecare apel recursiv?", "options": ["Doar valoarea returnata", "Adresa de revenire si valorile parametrilor si variabilelor locale", "Doar parametrii functiei", "Nimic, Python nu foloseste stiva"], "correct": "b", "hint": "Se salveaza: adresa de revenire, parametrii si variabilele locale. La return acestea se restaureaza."}]'>
+<div class="atom-header"><div class="atom-number">3</div><h3 class="atom-title">3. Mecanismul stivei de apeluri (call stack)</h3></div>
+<div class="atom-content">
+<div class="concept-def">
+<p>Stiva de apeluri (<strong>call stack</strong>) este o zona de memorie gestionata automat. La fiecare apel de functie se <strong>impinge</strong> un cadru de stiva (stack frame) care contine:</p>
+<ul>
+<li><strong>Adresa de revenire</strong> &mdash; unde sa reia executia dupa <code>return</code></li>
+<li><strong>Parametrii</strong> functiei (copii ale valorilor)</li>
+<li><strong>Variabilele locale</strong> declarate in corp</li>
+<li>Spatiu rezervat pentru <strong>valoarea returnata</strong></li>
+</ul>
+<p>La <code>return</code>, cadrul se <strong>scoate</strong> din stiva si executia continua de la adresa salvata.</p>
+</div>
+<div class="example-box">
+<div class="example-title">Starea stivei la cel mai adanc apel din fib(4)</div>
+<pre><span class="code-comment"># Stiva creste de jos in sus; fiecare rand = un cadru activ simultan</span>
+<span class="code-comment"># [BAS] fib(4): n=4, asteapta r1 de la fib(3)</span>
+<span class="code-comment">#       fib(3): n=3, asteapta r1 de la fib(2)</span>
+<span class="code-comment">#       fib(2): n=2, asteapta r1 de la fib(1)</span>
+<span class="code-comment"># [VRF] fib(1): n=1 --&gt; returneaza 1, cadrul este scos</span>
+<span class="code-comment"># Dupa return: fib(2) primeste r1=1, apeleaza fib(0)</span>
+<span class="code-comment"># [VRF] fib(0): n=0 --&gt; returneaza 0, cadrul este scos</span>
+<span class="code-comment"># fib(2) calculeaza r1+r2=1+0=1, returneaza, cadrul scos</span>
+<span class="code-function">print</span>(<span class="code-string">"Adancimea maxima a stivei pentru fib(n): n cadre simultan"</span>)
+<span class="code-function">print</span>(<span class="code-string">"Complexitate spatiala: O(n)"</span>)</pre>
+</div>
+<div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Adancimea maxima a stivei pentru fib(n): n cadre simultan
+Complexitate spatiala: O(n)</pre>
+</div>
+<div class="concept-def">
+<p><strong>Complexitate spatiala:</strong> Desi numarul total de apeluri este O(2^n), adancimea maxima a stivei este <strong>O(n)</strong>, deoarece orice cale radacina-frunza are lungime cel mult n. In memorie coexista simultan cel mult n+1 cadre.</p>
+<p><strong>Stack overflow:</strong> Recursivitate prea adanca (&gt;~1000 apeluri simultane in Python) produce <em>RecursionError: maximum recursion depth exceeded</em>.</p>
+</div>
+</div>
+</div>
+<div class="atom" id="atom-4" data-quiz='[{"question": "Care este complexitatea lui fib_memo(n) cu memoizare?", "options": ["O(2^n)", "O(n^2)", "O(n log n)", "O(n)"], "correct": "d", "hint": "Cu memoizare, fiecare valoare se calculeaza exact o data. Total: O(n) apeluri si O(n) memorie."}]'>
+<div class="atom-header"><div class="atom-number">4</div><h3 class="atom-title">4. Memoizare &mdash; optimizarea recursivitate multiple</h3></div>
+<div class="atom-content">
+<div class="concept-def">
+<p><strong>Memoizarea</strong> (top-down dynamic programming) salveaza rezultatul fiecarui apel recursiv intr-un dictionar. Daca acelasi apel apare din nou, se returneaza valoarea salvata fara a reface calculul. fib fara memoizare recalculeaza fib(2) de 3 ori, fib(3) de 2 ori etc.</p>
+</div>
+<div class="example-box">
+<div class="example-title">Fibonacci cu memoizare</div>
+<pre>memo = {}
+counter_memo = <span class="code-number">0</span>
+
+<span class="code-keyword">def</span> <span class="code-function">fib_memo</span>(n):
+    <span class="code-keyword">global</span> counter_memo
+    counter_memo += <span class="code-number">1</span>
+    <span class="code-keyword">if</span> n <span class="code-keyword">in</span> memo:
+        <span class="code-keyword">return</span> memo[n]    <span class="code-comment"># gasit in cache</span>
+    <span class="code-keyword">if</span> n &lt;= <span class="code-number">1</span>:
+        memo[n] = n
+        <span class="code-keyword">return</span> n
+    memo[n] = <span class="code-function">fib_memo</span>(n - <span class="code-number">1</span>) + <span class="code-function">fib_memo</span>(n - <span class="code-number">2</span>)
+    <span class="code-keyword">return</span> memo[n]
+
+<span class="code-keyword">for</span> n <span class="code-keyword">in</span> [<span class="code-number">5</span>, <span class="code-number">10</span>, <span class="code-number">15</span>]:
+    memo = {}
+    counter_memo = <span class="code-number">0</span>
+    result = <span class="code-function">fib_memo</span>(n)
+    <span class="code-function">print</span>(<span class="code-string">f"fib_memo({n}) = {result}, apeluri = {counter_memo}"</span>)</pre>
+</div>
+<div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>fib_memo(5) = 5, apeluri = 9
+fib_memo(10) = 55, apeluri = 19
+fib_memo(15) = 610, apeluri = 29</pre>
+</div>
+<div class="concept-def">
+<p><strong>Comparatie directa pentru n=15:</strong> fib(15) fara memoizare: <strong>1973 apeluri</strong>, O(2^n). fib_memo(15) cu memoizare: <strong>29 apeluri</strong>, O(n). Python ofera si <code>@functools.lru_cache</code> care face memoizare automata.</p>
+</div>
+</div>
+</div>
+<div class="atom" id="atom-5" data-quiz='[{"question": "Turnurile Hanoi cu n discuri necesita exact cate mutari?", "options": ["n mutari", "n^2 mutari", "2^n - 1 mutari", "n*(n-1) mutari"], "correct": "c", "hint": "T(n)=2*T(n-1)+1, T(1)=1. Solutia: T(n)=2^n-1. Pentru 3 discuri: 7 mutari, confirmat."}]'>
+<div class="atom-header"><div class="atom-number">5</div><h3 class="atom-title">5. Turnuri Hanoi &mdash; recursivitate multipla clasica</h3></div>
+<div class="atom-content">
+<div class="concept-def">
+<p><strong>Turnurile Hanoi:</strong> mutam n discuri de pe tija A pe tija C, folosind B ca auxiliar, fara a pune niciodata un disc mai mare peste unul mai mic. Algoritm: (1) Muta n-1 discuri A-&gt;B. (2) Muta discul n A-&gt;C. (3) Muta n-1 discuri B-&gt;C. Recurenta: <strong>T(n) = 2*T(n-1)+1</strong>, T(1)=1. Solutia: <strong>T(n) = 2^n - 1</strong>. Complexitate optima.</p>
+</div>
+<div class="example-box">
+<div class="example-title">Hanoi recursiv &mdash; 3 discuri</div>
+<pre><span class="code-keyword">def</span> <span class="code-function">hanoi</span>(n, sursa, destinatie, auxiliar):
+    <span class="code-keyword">if</span> n == <span class="code-number">1</span>:
+        <span class="code-function">print</span>(<span class="code-string">f"  Muta disc 1: {sursa} -&gt; {destinatie}"</span>)
+        <span class="code-keyword">return</span>
+    <span class="code-function">hanoi</span>(n - <span class="code-number">1</span>, sursa, auxiliar, destinatie)   <span class="code-comment"># apel 1</span>
+    <span class="code-function">print</span>(<span class="code-string">f"  Muta disc {n}: {sursa} -&gt; {destinatie}"</span>)
+    <span class="code-function">hanoi</span>(n - <span class="code-number">1</span>, auxiliar, destinatie, sursa)    <span class="code-comment"># apel 2</span>
+
+<span class="code-function">print</span>(<span class="code-string">"Turnuri Hanoi cu 3 discuri:"</span>)
+<span class="code-function">hanoi</span>(<span class="code-number">3</span>, <span class="code-string">"A"</span>, <span class="code-string">"C"</span>, <span class="code-string">"B"</span>)</pre>
+</div>
+<div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Turnuri Hanoi cu 3 discuri:
+  Muta disc 1: A -&gt; C
+  Muta disc 2: A -&gt; B
+  Muta disc 1: C -&gt; B
+  Muta disc 3: A -&gt; C
+  Muta disc 1: B -&gt; A
+  Muta disc 2: B -&gt; C
+  Muta disc 1: A -&gt; C</pre>
+</div>
+<div class="concept-def"><p>7 linii = 7 mutari = 2^3 - 1. Confirmat.</p></div>
+</div>
+</div>
+<div class="atom" id="atom-6" data-quiz='[{"question": "In C++, ce tip se foloseste pentru o functie care nu returneaza nimic?", "options": ["null", "none", "void", "empty"], "correct": "c", "hint": "In C++, void este tipul pentru functiile fara valoare de return."}]'>
+<div class="atom-header"><div class="atom-number">6</div><h3 class="atom-title">6. Implementare C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3></div>
+<div class="atom-content">
+<div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune exclusiva pentru intensiv informatica (cls. XI)</div>
+<p>La profilul intensiv, recursivitatea multipla se implementeaza si in C++. Aceeasi logica ca in Python, dar cu tipuri declarate explicit, <code>cout &lt;&lt;</code> in loc de <code>print()</code> si <code>;</code> la sfarsit de instructiune.</p>
+</div>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-comment">// Fibonacci recursiv in C++</span>
+<span class="code-keyword">int</span> <span class="code-function">fib</span>(<span class="code-keyword">int</span> n) {
+    <span class="code-keyword">if</span> (n &lt;= <span class="code-number">1</span>) <span class="code-keyword">return</span> n;
+    <span class="code-keyword">return</span> <span class="code-function">fib</span>(n - <span class="code-number">1</span>) + <span class="code-function">fib</span>(n - <span class="code-number">2</span>);
+}
+
+<span class="code-comment">// Turnuri Hanoi in C++</span>
+<span class="code-keyword">void</span> <span class="code-function">hanoi</span>(<span class="code-keyword">int</span> n, <span class="code-keyword">char</span> sursa, <span class="code-keyword">char</span> destinatie, <span class="code-keyword">char</span> auxiliar) {
+    <span class="code-keyword">if</span> (n == <span class="code-number">1</span>) {
+        cout &lt;&lt; <span class="code-string">"  Muta disc 1: "</span> &lt;&lt; sursa &lt;&lt; <span class="code-string">" -&gt; "</span> &lt;&lt; destinatie &lt;&lt; endl;
+        <span class="code-keyword">return</span>;
+    }
+    <span class="code-function">hanoi</span>(n - <span class="code-number">1</span>, sursa, auxiliar, destinatie);
+    cout &lt;&lt; <span class="code-string">"  Muta disc "</span> &lt;&lt; n &lt;&lt; <span class="code-string">": "</span> &lt;&lt; sursa &lt;&lt; <span class="code-string">" -&gt; "</span> &lt;&lt; destinatie &lt;&lt; endl;
+    <span class="code-function">hanoi</span>(n - <span class="code-number">1</span>, auxiliar, destinatie, sursa);
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"fib(0) = "</span> &lt;&lt; <span class="code-function">fib</span>(<span class="code-number">0</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"fib(5) = "</span> &lt;&lt; <span class="code-function">fib</span>(<span class="code-number">5</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"fib(7) = "</span> &lt;&lt; <span class="code-function">fib</span>(<span class="code-number">7</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Turnuri Hanoi cu 3 discuri:"</span> &lt;&lt; endl;
+    <span class="code-function">hanoi</span>(<span class="code-number">3</span>, <span class="code-string">'A'</span>, <span class="code-string">'C'</span>, <span class="code-string">'B'</span>);
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+<div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+<pre>fib(0) = 0
+fib(5) = 5
+fib(7) = 13
+Turnuri Hanoi cu 3 discuri:
+  Muta disc 1: A -&gt; C
+  Muta disc 2: A -&gt; B
+  Muta disc 1: C -&gt; B
+  Muta disc 3: A -&gt; C
+  Muta disc 1: B -&gt; A
+  Muta disc 2: B -&gt; C
+  Muta disc 1: A -&gt; C</pre>
+</div>
+<div class="concept-def"><p>Rezultatele sunt identice cu Python. Logica recursiva este aceeasi in ambele limbaje.</p></div>
+</div>
+</div>
+</main>
+<section class="practice-section" id="practice">
+<h2>Exercitii practice</h2>
+<div class="practice-exercise" data-level="minim">
+<h3>Exercitiul 1 (Nivel minim) &mdash; Urmarire executie</h3>
+<p>Urmareste manual executia lui <code>fib(3)</code> si scrie toate apelurile in ordine: ce se apeleaza, in ce ordine, ce returneaza. Care este rezultatul? Cate apeluri totale s-au facut?</p>
+</div>
+<div class="practice-exercise" data-level="standard">
+<h3>Exercitiul 2 (Nivel standard) &mdash; Stiva de apeluri</h3>
+<p>Descrie continutul stivei in momentul in care <code>fib(5)</code> a ajuns la cel mai adanc apel. Cate cadre are stiva simultan? Ce contine fiecare cadru? De ce complexitatea spatiala este O(n) si nu O(2^n)?</p>
+</div>
+<div class="practice-exercise" data-level="performanta">
+<h3>Exercitiul 3 (Nivel performanta) &mdash; Implementare si analiza</h3>
+<p>Implementeaza in Python <code>count_paths(m, n)</code> care numara drumurile intr-o grila m x n de la (0,0) la (m-1,n-1), miscandu-te doar la dreapta sau in jos. Aplica memoizare si compara numarul de apeluri cu si fara. Analizeaza complexitatea ambelor variante.</p>
+</div>
+</section>
+<section class="review-section">
+<div class="summary-box">
+<h2>Ce ai invatat astazi</h2>
+<ul>
+<li>Recursivitate simpla (liniara, O(n)) vs. multipla (arbore, O(2^n))</li>
+<li>Arborele de recursie: fib(5) = 15 apeluri; fib(15) = 1973 apeluri &mdash; crestere exponentiala confirmata experimental</li>
+<li>Stiva de apeluri: cadru = adresa revenire + parametri + locale; adancime maxima = O(n), nu O(2^n)</li>
+<li>Memoizarea: fib_memo(15) face 29 apeluri fata de 1973 &mdash; reducere de la O(2^n) la O(n)</li>
+<li>Turnuri Hanoi: T(n) = 2^n - 1 mutari, complexitate optima O(2^n); confirmat 7 mutari pentru n=3</li>
+<li>(Intensiv) Aceeasi logica in C++: tipuri explicite, cout, sintaxa diferita, rezultate identice</li>
+</ul>
+</div>
+<div id="lesson-summary" style="display: none;"></div>
+<div class="next-lesson">
+<h3>Urmatoarea lectie</h3>
+<p>Continua cu Lectia 2 &mdash; Introducere backtracking: sablonul general si spatiul solutiilor.</p>
+<a href="lectia2-backtracking-intro.html" class="btn-next">Continua &#8594;</a>
+</div>
+</section>
+</div>
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    AtomicLearning.init("cls11-m2-algoritmi-complecsi-lectia1-recursivitate-avansata");
+    PracticeSimple.init("cls11-m2-algoritmi-complecsi-lectia1-recursivitate-avansata");
+    LessonSummary.init("cls11-m2-algoritmi-complecsi-lectia1-recursivitate-avansata");
+    Breadcrumb.init({grade:"cls11",gradeName:"Clasa a XI-a",module:"m2-algoritmi-complecsi",moduleName:"M2 Algoritmi Complecsi",lesson:"Recursivitate avansata"});
+    LearningProgress.init("cls11","m2-algoritmi-complecsi","lectia1-recursivitate-avansata.html");
+});
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

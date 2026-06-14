@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 6: Aplicatii backtracking: dame, labirint, colorare | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia5-submultimi.html" class="nav-btn" title="Lectia anterioara">&#8592; Anterioara</a>
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8617; Modulul</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Aplicatii backtracking: dame, labirint, colorare</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei aplica tehnica backtracking pe trei probleme clasice &mdash; problema damelor, rezolvarea unui labirint si colorarea unui graf &mdash; recunoscand in fiecare cum se formuleaza spatiul solutiilor, conditia de validitate si mecanismul de revenire.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa formulezi problema damelor (n-queens) si sa implementezi solutia backtracking in Python</li>
+                <li>Sa descrii conditia de validitate pentru dame: coloana + diagonale</li>
+                <li>Sa implementezi explorarea unui labirint prin backtracking cu vector de vizitare</li>
+                <li>Sa analizezi diferenta intre &quot;gaseste o solutie&quot; si &quot;gaseste toate solutiile&quot;</li>
+                <li>Sa implementezi colorarea unui graf cu k culori si sa intelegi legatura cu cromaticitatea</li>
+                <li>Sa analizezi complexitatea fiecaruia dintre cei trei algoritmi</li>
+                <li>[EXCLUSIV INTENSIV] Sa implementezi problema damelor in C++ cu tablouri si functie recursiva globala</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare de gandire:</div>
+<p>Pe o tabla de sah 4x4 ai 4 dame. Poti sa le plasezi astfel incat <strong>nicio doua dame sa nu se atace?</strong> (Doua dame se ataca daca sunt pe aceeasi linie, coloana sau diagonala.)</p>
+<p>Incerca sa gasesti o plasare valida, notand pozitia fiecarei dame pe o linie a tablei (de exemplu: D pe coloana 1, D pe coloana 3, ...).</p>
+<textarea id="tryAnswer" placeholder="Linia 0: dama pe coloana ...
+Linia 1: dama pe coloana ...
+Linia 2: dama pe coloana ...
+Linia 3: dama pe coloana ..." rows="5"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle">&#128161; Ai nevoie de un indiciu? <span class="hint-arrow">&#9654;</span></div>
+<div class="hint-content">
+<p>Observa: pe tabla 4x4 exista exact <strong>2 solutii</strong>. O solutie valida este: coloana 1, coloana 3, coloana 0, coloana 2 (numaram coloanele de la 0). Backtracking-ul gaseste sistematic ambele solutii, incercand fiecare coloana pe fiecare linie si eliminand conflictele devreme.</p>
+</div>
+</div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ═══ ATOM 1: Problema damelor - enunt si idee ═══ -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Pe tabla 4x4, cate solutii valide exista pentru problema damelor?", "options": ["0 solutii", "1 solutie", "2 solutii", "4 solutii"], "correct": "c", "hint": "Vrem exact n dame (cate una pe fiecare linie). Conditia este sa nu fie pe aceeasi coloana sau diagonala. Exista solutii valide pentru n >= 4."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Problema damelor &mdash; enunt si idee</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Problema damelor (n-queens):</strong> Plaseaza n dame pe o tabla de sah n&times;n astfel incat nicio doua dame sa nu se atace. Doua dame se ataca daca se afla pe aceeasi <em>linie</em>, <em>coloana</em> sau <em>diagonala</em>.
+                </div>
+                <div class="example-box">
+<div class="example-title">Solutie valida pentru n=4 (output real, Python):</div>
+<pre>Solutia 1: col=[1, 3, 0, 2]
+. D . .
+. . . D
+D . . .
+. . D .
+
+Solutia 2: col=[2, 0, 3, 1]
+. . D .
+D . . .
+. . . D
+. D . .</pre>
+<p>Total: <strong>2 solutii</strong> pentru 4x4. (Pentru 8x8 exista 92 solutii.)</p>
+</div>
+                <div class="concept-def">
+                    <strong>Idee backtracking:</strong> Punem exact o dama pe fiecare <em>linie</em> (linia = pasul curent). La linia <code>k</code> incercam fiecare coloana 0..n-1. Verificam daca plasarea e valida fata de toate damele deja puse. Daca da, continuam recursiv cu linia k+1. Daca nu gasim nicio coloana valida, revenim la linia precedenta.
+                </div>
+                <div class="concept-def">
+                    <strong>Conditia de validitate</strong> &mdash; dama de pe linia <code>linie</code> in coloana <code>coloana</code> este invalida daca exista o linie anterioara <code>l</code> cu:
+                    <ul>
+                        <li><code>col[l] == coloana</code> &nbsp;&mdash;&nbsp; aceeasi coloana</li>
+                        <li><code>abs(col[l] - coloana) == abs(l - linie)</code> &nbsp;&mdash;&nbsp; pe aceeasi diagonala</li>
+                    </ul>
+                    Nu e nevoie sa verificam liniile (punem cate o dama per linie prin constructie).
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 2: Implementare dame Python ═══ -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "De ce nu este necesara verificarea conflictului de linie in functia valid() din problema damelor?", "options": ["Liniile nu conteaza la dame", "Punem exact o dama per linie, deci doua dame nu pot fi pe aceeasi linie niciodata", "Verificarea de diagonala o include pe cea de linie", "Dam doar coliziunile de coloana si diagonala prin forta"], "correct": "b", "hint": "Structura algoritmului garanteaza: la pasul `linie` plasam o singura dama pe acea linie. Deci nu putem plasa doua dame pe aceeasi linie prin constructie."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Implementare dame in Python</h3>
+            </div>
+            <div class="atom-content">
+                <pre><span class="code-comment"># Problema damelor - backtracking</span>
+<span class="code-comment"># col[i] = coloana damei de pe linia i (0-indexat)</span>
+
+<span class="code-keyword">def</span> <span class="code-function">dame</span>(n):
+    col = [<span class="code-number">0</span>] * n     <span class="code-comment"># solutia curenta</span>
+    rezultate = []
+
+    <span class="code-keyword">def</span> <span class="code-function">valid</span>(linie, coloana):
+        <span class="code-keyword">for</span> l <span class="code-keyword">in</span> <span class="code-function">range</span>(linie):
+            <span class="code-keyword">if</span> col[l] == coloana:           <span class="code-comment"># aceeasi coloana</span>
+                <span class="code-keyword">return False</span>
+            <span class="code-keyword">if</span> <span class="code-function">abs</span>(col[l] - coloana) == <span class="code-function">abs</span>(l - linie):  <span class="code-comment"># diagonala</span>
+                <span class="code-keyword">return False</span>
+        <span class="code-keyword">return True</span>
+
+    <span class="code-keyword">def</span> <span class="code-function">back</span>(linie):
+        <span class="code-keyword">if</span> linie == n:
+            rezultate.<span class="code-function">append</span>(col[:])   <span class="code-comment"># copie a solutiei</span>
+            <span class="code-keyword">return</span>
+        <span class="code-keyword">for</span> c <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+            <span class="code-keyword">if</span> <span class="code-function">valid</span>(linie, c):
+                col[linie] = c
+                <span class="code-function">back</span>(linie + <span class="code-number">1</span>)
+                col[linie] = <span class="code-number">0</span>    <span class="code-comment"># revenire</span>
+
+    <span class="code-function">back</span>(<span class="code-number">0</span>)
+    <span class="code-keyword">return</span> rezultate
+
+<span class="code-comment"># Test n=4</span>
+sol = <span class="code-function">dame</span>(<span class="code-number">4</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Dame 4x4: {len(sol)} solutii"</span>)
+<span class="code-keyword">for</span> s <span class="code-keyword">in</span> sol:
+    <span class="code-function">print</span>(s)
+
+<span class="code-comment"># Test n=8</span>
+sol8 = <span class="code-function">dame</span>(<span class="code-number">8</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Dame 8x8: {len(sol8)} solutii"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Dame 4x4: 2 solutii
+[1, 3, 0, 2]
+[2, 0, 3, 1]
+Dame 8x8: 92 solutii</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> In cel mai rau caz, arborele de cautare are n<sup>n</sup> noduri, dar conditia de validitate taie radical ramurile. Complexitate reala: aproximativ O(n!) ramuri explorate, cu un factor de taiere semnificativ in practica.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 3: Implementare dame C++ EXCLUSIV INTENSIV ═══ -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "In implementarea C++ a problemei damelor, ce se intampla cu col[linie]=0 dupa apelul recursiv back(linie+1)?", "options": ["Initializeaza tabloul col", "Salveaza solutia curenta", "Realizeaza revenirea (backtrack): elibereaza pozitia pentru urmatorul candidat", "Verifica conditia de validitate"], "correct": "c", "hint": "Functia back() are nevoie sa citeasca si sa modifice col[]. Daca e globala, o acceseaza direct la orice nivel al recursiei."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Implementare dame in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+<p>La profilul mat-info intensiv, acelasi algoritm se scrie in C++ cu tablouri statice globale si functie recursiva. Diferente fata de Python: tipuri explicite (<code>int</code>, <code>bool</code>), tablouri de marime fixa, <code>abs()</code> din <code>&lt;cstdlib&gt;</code>.</p>
+</div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;cstdlib&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> n;
+<span class="code-keyword">int</span> col[<span class="code-number">10</span>];         <span class="code-comment">// col[i] = coloana damei pe linia i</span>
+<span class="code-keyword">int</span> nr_sol = <span class="code-number">0</span>;
+
+<span class="code-keyword">bool</span> <span class="code-function">valid</span>(<span class="code-keyword">int</span> linie, <span class="code-keyword">int</span> coloana) {
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> l = <span class="code-number">0</span>; l &lt; linie; l++) {
+        <span class="code-keyword">if</span> (col[l] == coloana) <span class="code-keyword">return false</span>;
+        <span class="code-keyword">if</span> (<span class="code-function">abs</span>(col[l] - coloana) == <span class="code-function">abs</span>(l - linie)) <span class="code-keyword">return false</span>;
+    }
+    <span class="code-keyword">return true</span>;
+}
+
+<span class="code-keyword">void</span> <span class="code-function">back</span>(<span class="code-keyword">int</span> linie) {
+    <span class="code-keyword">if</span> (linie == n) {
+        nr_sol++;
+        <span class="code-keyword">if</span> (nr_sol &lt;= <span class="code-number">2</span>) {
+            cout &lt;&lt; <span class="code-string">"Solutia "</span> &lt;&lt; nr_sol &lt;&lt; <span class="code-string">": "</span>;
+            <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++) cout &lt;&lt; col[i] &lt;&lt; <span class="code-string">" "</span>;
+            cout &lt;&lt; <span class="code-string">"\n"</span>;
+        }
+        <span class="code-keyword">return</span>;
+    }
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> c = <span class="code-number">0</span>; c &lt; n; c++) {
+        <span class="code-keyword">if</span> (<span class="code-function">valid</span>(linie, c)) {
+            col[linie] = c;
+            <span class="code-function">back</span>(linie + <span class="code-number">1</span>);
+            col[linie] = <span class="code-number">0</span>;    <span class="code-comment">// revenire</span>
+        }
+    }
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    n = <span class="code-number">4</span>;
+    cout &lt;&lt; <span class="code-string">"Dame 4x4:\n"</span>;
+    <span class="code-function">back</span>(<span class="code-number">0</span>);
+    cout &lt;&lt; <span class="code-string">"Total solutii: "</span> &lt;&lt; nr_sol &lt;&lt; <span class="code-string">"\n"</span>;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+<pre>Dame 4x4:
+Solutia 1: 1 3 0 2
+Solutia 2: 2 0 3 1
+Total solutii: 2</pre>
+</div>
+                <p>Acelasi rezultat ca versiunea Python. In C++, variabilele globale <code>int col[10]</code> si <code>int nr_sol</code> sunt initializate automat cu 0. Functia <code>back()</code> le acceseaza direct la orice nivel al recursiei, fara a le transmite ca parametri.</p>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 4: Labirint prin backtracking ═══ -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "De ce avem nevoie de matricea `vizitat[][]` in rezolvarea labirintului prin backtracking?", "options": ["Ca sa retinem solutia finala", "Nu avem nevoie de ea", "Ca sa calculam lungimea drumului", "Ca sa evitam vizitarea aceluiasi nod de doua ori pe acelasi drum (cicluri infinite)"], "correct": "d", "hint": "Fara vizitat[][], algoritmul ar putea reveni la un nod deja vizitat pe drumul curent, formand un ciclu infinit. vizitat[][] marcheaza nodurile care fac parte din drumul curent."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Rezolvarea labirintului prin backtracking</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Problema labirintului:</strong> Intr-o matrice n&times;m, celulele sunt libere (0) sau pereti (1). Gaseste toate drumurile de la coltul stanga-sus <code>(0,0)</code> la coltul dreapta-jos <code>(n-1,m-1)</code>, miscandu-te in cele 4 directii (sus, jos, stanga, dreapta).
+                </div>
+                <div class="example-box">
+<div class="example-title">Labirint 4x4 (0=liber, 1=perete):</div>
+<pre>0 0 1 0
+1 0 0 0
+1 0 1 0
+0 0 0 0</pre>
+<p>Start: (0,0), Stop: (3,3)</p>
+</div>
+                <div class="concept-def">
+                    <strong>Idee:</strong> La fiecare pas, incercam cele 4 directii posibile. Conditia de taiere: iesim din matrice, dam de un perete sau am mai vizitat celula asta pe drumul curent. Cand ajungem la destinatie, salvam drumul. La revenire, eliberam celula din <code>vizitat</code>.
+                </div>
+                <pre><span class="code-comment"># Labirint backtracking - gaseste toate drumurile</span>
+
+<span class="code-keyword">def</span> <span class="code-function">labirint</span>(grid):
+    n = <span class="code-function">len</span>(grid)
+    m = <span class="code-function">len</span>(grid[<span class="code-number">0</span>])
+    vizitat = [[<span class="code-keyword">False</span>]*m <span class="code-keyword">for</span> _ <span class="code-keyword">in</span> <span class="code-function">range</span>(n)]
+    drum = []
+    solutii = []
+    dx = [-<span class="code-number">1</span>, <span class="code-number">1</span>, <span class="code-number">0</span>, <span class="code-number">0</span>]  <span class="code-comment"># sus, jos, stanga, dreapta</span>
+    dy = [<span class="code-number">0</span>, <span class="code-number">0</span>, -<span class="code-number">1</span>, <span class="code-number">1</span>]
+
+    <span class="code-keyword">def</span> <span class="code-function">back</span>(x, y):
+        <span class="code-keyword">if</span> x &lt; <span class="code-number">0</span> <span class="code-keyword">or</span> x &gt;= n <span class="code-keyword">or</span> y &lt; <span class="code-number">0</span> <span class="code-keyword">or</span> y &gt;= m:
+            <span class="code-keyword">return</span>                          <span class="code-comment"># iesit din matrice</span>
+        <span class="code-keyword">if</span> grid[x][y] == <span class="code-number">1</span> <span class="code-keyword">or</span> vizitat[x][y]:
+            <span class="code-keyword">return</span>                          <span class="code-comment"># perete sau deja vizitat</span>
+        vizitat[x][y] = <span class="code-keyword">True</span>
+        drum.<span class="code-function">append</span>((x, y))
+        <span class="code-keyword">if</span> x == n-<span class="code-number">1</span> <span class="code-keyword">and</span> y == m-<span class="code-number">1</span>:
+            solutii.<span class="code-function">append</span>(drum[:])        <span class="code-comment"># drum complet - salvam</span>
+        <span class="code-keyword">else</span>:
+            <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">4</span>):
+                <span class="code-function">back</span>(x + dx[i], y + dy[i])  <span class="code-comment"># exploreaza vecini</span>
+        drum.<span class="code-function">pop</span>()
+        vizitat[x][y] = <span class="code-keyword">False</span>              <span class="code-comment"># revenire</span>
+
+    <span class="code-function">back</span>(<span class="code-number">0</span>, <span class="code-number">0</span>)
+    <span class="code-keyword">return</span> solutii
+
+grid = [
+    [<span class="code-number">0</span>, <span class="code-number">0</span>, <span class="code-number">1</span>, <span class="code-number">0</span>],
+    [<span class="code-number">1</span>, <span class="code-number">0</span>, <span class="code-number">0</span>, <span class="code-number">0</span>],
+    [<span class="code-number">1</span>, <span class="code-number">0</span>, <span class="code-number">1</span>, <span class="code-number">0</span>],
+    [<span class="code-number">0</span>, <span class="code-number">0</span>, <span class="code-number">0</span>, <span class="code-number">0</span>]
+]
+sol = <span class="code-function">labirint</span>(grid)
+<span class="code-function">print</span>(<span class="code-string">f"Labirint 4x4: {len(sol)} solutii"</span>)
+<span class="code-keyword">for</span> i, s <span class="code-keyword">in</span> <span class="code-function">enumerate</span>(sol):
+    <span class="code-function">print</span>(<span class="code-string">f"  Solutia {i+1}: {s}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Labirint 4x4: 2 solutii
+  Solutia 1: [(0, 0), (0, 1), (1, 1), (2, 1), (3, 1), (3, 2), (3, 3)]
+  Solutia 2: [(0, 0), (0, 1), (1, 1), (1, 2), (1, 3), (2, 3), (3, 3)]</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Varianta &quot;prima solutie&quot;:</strong> Daca vrei doar un drum (nu toate), adauga un flag <code>gasit = [False]</code> si opreste explorarea dupa prima solutie: <code>if gasit[0]: return</code>. Aceasta varianta este mult mai eficienta cand drumul exista.
+                </div>
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> In cel mai rau caz (matrice fara pereti), O(4<sup>n&middot;m</sup>) &mdash; fiecare celula are 4 directii. In practica, conditia <code>vizitat[][]</code> limiteaza drastic numarul de stari.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 5: Colorarea grafului ═══ -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Cate colorari valide are graful patrat (ciclu 4 noduri) cu exact 2 culori?", "options": ["1", "2", "4", "18"], "correct": "b", "hint": "Ciclul cu numar par de noduri (4, 6, ...) este 2-colorabil (bipartit): alternezi culorile 1-2-1-2. Ciclurile cu numar impar de noduri necesita 3 culori."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Colorarea unui graf cu k culori</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Problema colorarii grafului:</strong> Dat un graf cu n noduri si o lista de muchii, gaseste toate modurile de a atribui fiecarui nod una din k culori, astfel incat <em>nodurile vecine sa aiba culori diferite</em>.
+                </div>
+                <div class="example-box">
+<div class="example-title">Graf exemplu: patrat (4 noduri, 4 muchii)</div>
+<pre>1 -- 2
+|    |
+4 -- 3
+
+Muchii: 1-2, 2-3, 3-4, 4-1</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Idee backtracking:</strong> Coloram nodurile in ordine 1, 2, ..., n. La fiecare nod incercam culorile 1..k. Verificam daca niciun vecin deja colorat nu are aceeasi culoare. Daca toate nodurile sunt colorate valid, avem o solutie.
+                </div>
+                <pre><span class="code-comment"># Colorarea unui graf - backtracking</span>
+
+<span class="code-keyword">def</span> <span class="code-function">colorare</span>(n, adj, k):
+    culoare = [<span class="code-number">0</span>] * (n + <span class="code-number">1</span>)   <span class="code-comment"># culoare[i] = culoarea nodului i</span>
+    solutii = []
+
+    <span class="code-keyword">def</span> <span class="code-function">valid</span>(nod, c):
+        <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> adj[nod]:
+            <span class="code-keyword">if</span> culoare[vecin] == c:
+                <span class="code-keyword">return False</span>
+        <span class="code-keyword">return True</span>
+
+    <span class="code-keyword">def</span> <span class="code-function">back</span>(nod):
+        <span class="code-keyword">if</span> nod &gt; n:
+            solutii.<span class="code-function">append</span>(culoare[<span class="code-number">1</span>:n+<span class="code-number">1</span>][:])
+            <span class="code-keyword">return</span>
+        <span class="code-keyword">for</span> c <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, k + <span class="code-number">1</span>):
+            <span class="code-keyword">if</span> <span class="code-function">valid</span>(nod, c):
+                culoare[nod] = c
+                <span class="code-function">back</span>(nod + <span class="code-number">1</span>)
+                culoare[nod] = <span class="code-number">0</span>   <span class="code-comment"># revenire</span>
+
+    <span class="code-function">back</span>(<span class="code-number">1</span>)
+    <span class="code-keyword">return</span> solutii
+
+<span class="code-comment"># Graf: patrat 1-2-3-4-1</span>
+n = <span class="code-number">4</span>
+adj = {<span class="code-number">1</span>: [<span class="code-number">2</span>, <span class="code-number">4</span>], <span class="code-number">2</span>: [<span class="code-number">1</span>, <span class="code-number">3</span>], <span class="code-number">3</span>: [<span class="code-number">2</span>, <span class="code-number">4</span>], <span class="code-number">4</span>: [<span class="code-number">3</span>, <span class="code-number">1</span>]}
+
+sol2 = <span class="code-function">colorare</span>(n, adj, <span class="code-number">2</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Colorare patrat cu 2 culori: {len(sol2)} solutii"</span>)
+<span class="code-keyword">for</span> s <span class="code-keyword">in</span> sol2:
+    <span class="code-function">print</span>(s)
+
+sol3 = <span class="code-function">colorare</span>(n, adj, <span class="code-number">3</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Colorare patrat cu 3 culori: {len(sol3)} solutii"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Colorare patrat cu 2 culori: 2 solutii
+[1, 2, 1, 2]
+[2, 1, 2, 1]
+Colorare patrat cu 3 culori: 18 solutii</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Interpretare:</strong> Patatrul are <em>numarul cromatic</em> = 2 (e bipartit, 4 noduri in ciclu par). Cu 2 culori exista exact 2 colorari distincte. Cu 3 culori avem 18 colorari (mai multe optiuni, dar strict mai multe &mdash; culorile sunt numere, deci [1,2,1,2] si [2,1,2,1] si [1,3,1,3] etc. sunt distincte).
+                </div>
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> O(k<sup>n</sup>) in cel mai rau caz (k culori, n noduri). Conditia de validitate taie ramurile atunci cand un vecin colorat blocheaza o culoare. Pentru grafuri dense, taierea e mai agresiva.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 6: Comparatie si tipare comune ═══ -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Care dintre urmatoarele NU este o problema de backtracking clasica?", "options": ["Problema damelor (n-queens)", "Colorarea unui graf cu k culori", "Sortarea prin metoda bulelor (nu implica revenire)", "Rezolvarea unui labirint"], "correct": "c", "hint": "Sortarea prin metoda bulelor este un algoritm greedy/iterativ, nu backtracking. Backtracking presupune explorarea sistematica a unui spatiu de solutii cu revenire cand o ramura esueaza."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Tipare comune si comparatie intre aplicatii</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Toate cele trei probleme urmeaza <strong>acelasi sablon backtracking</strong>. Diferentele sunt doar in ce reprezinta &quot;starea curenta&quot;, &quot;candidatii&quot; si &quot;conditia de validitate&quot;:
+                </div>
+                <div class="example-box">
+<div class="example-title">Comparatie: dame vs labirint vs colorare</div>
+<pre>                 DAME              LABIRINT         COLORARE
+-----------------------------------------------------------------
+Stare curenta    col[linie]        (x, y)           culoare[nod]
+Parametru back   linie (0..n-1)    (x, y) coordonate  nod (1..n)
+Candidati        coloane 0..n-1    4 directii (dx,dy)  culori 1..k
+Caz de baza      linie == n        (n-1, m-1)       nod > n
+Conditie valid   coloana+diag.     in matrice,       vecini !=c
+                                   liber, nevizitat
+Revenire         col[linie]=0      pop drum,         culoare[nod]=0
+                                   vizitat[x][y]=F
+Complexitate     ~O(n!)            ~O(4^(n*m))      ~O(k^n)
+-----------------------------------------------------------------</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Retine structura universala:</strong>
+                    <ol>
+                        <li><strong>Caz de baza:</strong> solutia e completa &rarr; salveaza/afiseaza, <code>return</code></li>
+                        <li><strong>Iterare candidati:</strong> pentru fiecare candidat posibil la pasul curent</li>
+                        <li><strong>Verificare validitate:</strong> daca candidatul e valid in contextul curent</li>
+                        <li><strong>Avansare:</strong> aplica candidatul, apeleaza recursiv cu pasul urmator</li>
+                        <li><strong>Revenire:</strong> anuleaza candidatul (resetezi la 0 / False / scoate din drum)</li>
+                    </ol>
+                </div>
+                <div class="concept-def">
+                    <strong>Nota BAC:</strong> La subiectele de tip BAC III (clasa XI, backtracking), se cere de obicei: (a) completarea functiei back() sau valid(), (b) urmarirea manuala pentru un n mic, (c) numarul de solutii. Stii sa raspunzi la toate trei dupa aceasta lectie.
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Urmarire manuala dame</h3>
+            <p>Ruleaza mental <code>dame(3)</code>: tabla 3x3. Incerca sa plasezi 3 dame (cate una pe fiecare linie) fara conflicte. Gasesti vreo solutie? Verifica: algoritm va returna lista vida (dame(3) = 0 solutii). Explica de ce nu exista solutie pentru n=3.</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Labirint cu obstacole</h3>
+            <p>Modifica labirintul din Atomul 4 adaugand un perete suplimentar la pozitia (3,1). Cate solutii mai exista? (Modifica <code>grid[3][1] = 1</code> si ruleaza algoritmul.) Deseneaza pe hartie drumul ramas.</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Colorare si cromaticitate</h3>
+            <p>[BAC III / Olimpiada] Considera graful complet K4 (4 noduri, fiecare conectat cu ceilalti 3). (a) Implementeaza in Python si determina numarul minim de culori k pentru care exista cel putin o colorare valida. (b) Cate colorari exista pentru k = numarul cromatic gasit? (c) [Intensiv] Implementeaza si in C++. Indiciu: numarul cromatic al K_n este n.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Problema damelor: conditia de validitate (coloana + diagonale); 4x4 are 2 solutii, 8x8 are 92</li>
+                <li>Labirint: vizitat[][] previne ciclurile; drumul se construieste prin append/pop</li>
+                <li>Colorare graf: culoare[nod]=0 la revenire; numarul cromatic = minimul k cu solutii</li>
+                <li>Sablonul universal: caz-de-baza / iterare-candidati / validare / avansare / revenire</li>
+                <li>Complexitate: ~O(n!) pentru dame, ~O(4^(n*m)) pentru labirint, ~O(k^n) pentru colorare</li>
+                <li>[Intensiv] C++: variabile globale accesibile in functia recursiva; sintaxa identica ca logica Python</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Modulul complet!</h3>
+            <p>Ai terminat toate lectiile din M2 Algoritmi Complecsi. Revino la modul pentru recapitulare sau continua cu urmatorul modul.</p>
+            <a href="index.html" class="btn-next">&#8617; Inapoi la modul</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m2-algoritmi-complecsi-lectia6-backtracking-aplicatii');
+        PracticeSimple.init('cls11-m2-algoritmi-complecsi-lectia6-backtracking-aplicatii');
+        LessonSummary.init('cls11-m2-algoritmi-complecsi-lectia6-backtracking-aplicatii');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm2-algoritmi-complecsi',
+            moduleName: 'M2 Algoritmi Complecsi',
+            lesson: 'Aplicatii backtracking: dame, labirint, colorare'
+        });
+        LearningProgress.init('cls11', 'm2-algoritmi-complecsi', 'lectia6-backtracking-aplicatii.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

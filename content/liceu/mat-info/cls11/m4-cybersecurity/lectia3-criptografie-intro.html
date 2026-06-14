@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 3: Introducere in Criptografie | Clasa a XI-a Cybersecurity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia2-inginerie-sociala.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 2</a>
+        <a href="lectia4-ai-intro.html" class="nav-btn" title="Lectia urmatoare">Lectia 4 &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Introducere in Criptografie</h1>
+        <p class="lesson-subtitle">Cum protejam informatia: cheie simetrica, cheie asimetrica, hash si semnatura digitala</p>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege cum functioneaza criptografia la nivel conceptual: de ce avem nevoie de ea, cum transforma informatia clara intr-un mesaj protejat si care sunt cele trei mari mecanisme folosite in securitatea digitala moderna.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa explici ce este criptografia si de ce este esentiala in lumea digitala</li>
+                <li>Sa descrii cifrul Cezar si sa cifrezi/descifrezi manual un mesaj simplu</li>
+                <li>Sa compari criptarea simetrica cu criptarea asimetrica (avantaje si dezavantaje)</li>
+                <li>Sa explici ce este o functie hash si de ce hash-ul nu poate fi inversat</li>
+                <li>Sa identifici situatii reale in care fiecare mecanism este utilizat (HTTPS, parole, semnatura digitala)</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare: Cifrul Cezar manual</div>
+                <p>Incearca sa descifrezi acest mesaj folosind regula: <strong>muta fiecare litera inapoi cu 3 pozitii in alfabet</strong>.</p>
+                <p><code>FXQHFXQD</code></p>
+                <textarea id="tryAnswer" placeholder="Raspunsul tau: litera F devine... litera X devine..." rows="3" class="answer-area"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>F - 3 = C, X - 3 = U, Q - 3 = N, H - 3 = E. Aplica acelasi calcul pentru toate literele.</p>
+                    <p>Raspuns: <strong>CUNECUNA</strong> (CUNE + CUNA — secvente similare, dar nu identice; observa totusi ca literele F, X, Q apar de doua ori in textul cifrat si produc aceleasi litere C, U, N in clar — asta ilustreaza un punct slab al cifrului Cezar: frecventele si tiparele de litere se pastreaza).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Ce este criptografia -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Care este scopul principal al criptografiei?", "options": ["Sa faca fisierele mai mici", "Sa accelereze transmiterea datelor", "Sa stearga datele sensibile", "Sa transforme informatia astfel incat numai destinatarul autorizat sa o poata citi"], "correct": "d", "hint": "Criptografia protejeaza confidentialitatea informatiei prin transformarea ei intr-un format ilizibil pentru cei neautorizati."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Ce este criptografia?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Criptografia</strong> este stiinta transformarii informatiei intr-o forma ilizibila pentru cei neautorizati, astfel incat numai persoanele care detin <em>cheia</em> corecta sa o poata citi sau folosi.
+                </div>
+                <div class="concept-def">
+                    <strong>Doua concepte de baza:</strong>
+                    <ul>
+                        <li><strong>Textul clar (plaintext)</strong> — mesajul original, lizibil</li>
+                        <li><strong>Textul cifrat (ciphertext)</strong> — mesajul transformat, ilizibil fara cheie</li>
+                    </ul>
+                </div>
+                <div class="analogy-box">
+                    <div class="analogy-title">Analogie</div>
+                    <p>Gandeste-te la un seif cu cifru. Documentele sunt informatia clara; seiful incuiat este informatia criptata. Codul seifului este cheia. Fara cod, nimeni nu poate citi documentele, chiar daca seiful este vizibil.</p>
+                </div>
+                <div class="info-box info">
+                    <div class="info-box-icon">&#128274;</div>
+                    <div class="info-box-content">
+                        <div class="info-box-title">De ce conteaza in viata de zi cu zi?</div>
+                        <p>De fiecare data cand accesezi un site HTTPS, trimiti un mesaj pe WhatsApp sau platesti online, criptografia functioneaza in fundal pentru a-ti proteja datele.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Cifrul Cezar -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "In cifrul Cezar cu cheie 3, litera M devine:", "options": ["J", "N", "P", "O"], "correct": "c", "hint": "M este a 13-a litera. 13 + 3 = 16, adica litera P (A=1, B=2, ..., P=16)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Cifrul Cezar — primul algoritm de criptare</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Cifrul Cezar</strong> este unul dintre cele mai vechi metode de criptare: fiecare litera din mesaj este inlocuita cu o alta litera aflata la o distanta fixa in alfabet (numita <em>cheie</em> sau <em>deplasare</em>).
+                </div>
+                <p>Exemplu cu cheie = 3:</p>
+                <div class="example-box">
+                    <div class="example-title">Tabel de deplasare (primele 13 litere)</div>
+                    <pre>Original: A  B  C  D  E  F  G  H  I  J  K  L  M
+Criptat:  D  E  F  G  H  I  J  K  L  M  N  O  P</pre>
+                </div>
+                <p>Cifrarea <strong>BUNA</strong> cu cheie 3:</p>
+                <div class="example-box">
+                    <div class="example-title">Pas cu pas</div>
+                    <pre>B (pozitia 2)  + 3 = E (pozitia 5)
+U (pozitia 21) + 3 = X (pozitia 24)
+N (pozitia 14) + 3 = Q (pozitia 17)
+A (pozitia 1)  + 3 = D (pozitia 4)
+
+BUNA  →  criptat  →  EXQD</pre>
+                </div>
+                <p>Decriptarea functioneaza invers: scadem 3 din fiecare litera a textului cifrat si obtinem mesajul original.</p>
+                <p>Demonstratie rulata in Python (output real):</p>
+                <pre><span class="code-comment"># Cifrul Cezar - criptare si decriptare</span>
+mesaj = <span class="code-string">'SALUT'</span>
+cheie = <span class="code-number">3</span>
+
+criptat = <span class="code-string">''</span>
+<span class="code-keyword">for</span> litera <span class="code-keyword">in</span> mesaj:
+    deplasare = (ord(litera) - ord(<span class="code-string">'A'</span>) + cheie) % <span class="code-number">26</span>
+    criptat += chr(ord(<span class="code-string">'A'</span>) + deplasare)
+
+<span class="code-function">print</span>(<span class="code-string">'Mesaj original:'</span>, mesaj)
+<span class="code-function">print</span>(<span class="code-string">'Mesaj criptat:'</span>, criptat)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (python):</div>
+                    <pre>Mesaj original: SALUT
+Mesaj criptat: VDOXW</pre>
+                </div>
+                <div class="warning-box">
+                    <div class="box-label">&#9888; Atentie — punct slab</div>
+                    <div class="box-text">Cifrul Cezar este <strong>usor de spart</strong>: exista doar 25 de chei posibile (deplasari 1-25). Un atacator poate incerca toate variantele in cateva secunde. Este util doar ca exemplu educational, nu pentru securitate reala.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Criptare simetrica -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Care este principala problema a criptarii simetrice?", "options": ["Aceeasi cheie trebuie transmisa in mod securizat catre destinatar", "Este prea lenta pentru fisiere mari", "Nu poate cripta imagini", "Produce fisiere mai mari decat originalul"], "correct": "a", "hint": "Daca expeditorul si destinatarul folosesc aceeasi cheie, cum isi transmit acea cheie in siguranta? Acesta este problema clasica a distributiei cheilor."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Criptarea simetrica — o cheie pentru amandoi</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    In <strong>criptarea simetrica</strong>, expeditorul si destinatarul folosesc <em>aceeasi cheie secreta</em> atat pentru cifrare cat si pentru descifrare. Cifrul Cezar este cel mai simplu exemplu. Algoritmi moderni: <strong>AES</strong> (Advanced Encryption Standard).
+                </div>
+                <div class="comparison-grid">
+                    <div class="comparison-card good">
+                        <div class="icon">&#10003;</div>
+                        <h4>Avantaje</h4>
+                        <p>Foarte rapida; potrivita pentru volume mari de date (video, baze de date, hard-disk-uri criptate).</p>
+                    </div>
+                    <div class="comparison-card bad">
+                        <div class="icon">&#10007;</div>
+                        <h4>Dezavantaj major</h4>
+                        <p>Problema distributiei cheii: cum trimiti cheia secreta destinatarului fara ca altcineva sa o intercepteze?</p>
+                    </div>
+                </div>
+                <div class="analogy-box">
+                    <div class="analogy-title">Analogie</div>
+                    <p>Expeditorul si destinatarul au copii identice ale aceleiasi chei fizice pentru un lacat. Pot incuia si descuia cutia de scrisori. Dar daca vor sa-si trimita prima copie a cheii, au nevoie sa o predea cumva in siguranta — altfel cineva ar putea sa o copieze pe drum.</p>
+                </div>
+                <p><strong>Utilizare tipica:</strong> criptarea discului (BitLocker, FileVault), criptarea arhivelor ZIP cu parola, transferul rapid al datelor in interiorul unei conexiuni deja stabilite.</p>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Criptare asimetrica -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "In criptarea asimetrica, cu ce cheie cripteaza expeditorul mesajul?", "options": ["Cu cheia sa privata", "Cu cheia publica a destinatarului", "Cu o cheie generata aleator la fiecare sesiune", "Cu parola destinatarului"], "correct": "b", "hint": "Expeditorul foloseste cheia PUBLICA a destinatarului pentru a cripta. Numai destinatarul, cu cheia sa PRIVATA (pe care nu o dezvaluie nimanui), poate decripta."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Criptarea asimetrica — doua chei, zero schimb secret</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    In <strong>criptarea asimetrica</strong> (sau <em>cu cheie publica</em>), fiecare participant are o <em>pereche</em> de chei: una <strong>publica</strong> (distribuita liber, oricui) si una <strong>privata</strong> (pastrata in secret, numai de proprietar). Algoritmi: <strong>RSA</strong>, <strong>ECC</strong>.
+                </div>
+                <p><strong>Cum functioneaza:</strong></p>
+                <ol class="steps-list">
+                    <li><span class="step-text">Ana isi publica <em>cheia publica</em> (ca un numar de telefon listat in carte).</span></li>
+                    <li><span class="step-text">Bogdan vrea sa ii trimita un mesaj secret. El cripteaza mesajul cu <strong>cheia publica a Anei</strong>.</span></li>
+                    <li><span class="step-text">Mesajul cifrat poate fi vazut de oricine, dar <strong>numai Ana</strong> il poate decripta, folosind <strong>cheia sa privata</strong>.</span></li>
+                    <li><span class="step-text">Nici macar Bogdan nu poate decripta ce a criptat el insusi!</span></li>
+                </ol>
+                <div class="comparison-grid">
+                    <div class="comparison-card good">
+                        <div class="icon">&#10003;</div>
+                        <h4>Avantaj major</h4>
+                        <p>Elimina problema distributiei cheii: cheia publica poate fi trimisa pe orice canal, inclusiv nesigur.</p>
+                    </div>
+                    <div class="comparison-card bad">
+                        <div class="icon">&#10007;</div>
+                        <h4>Dezavantaj</h4>
+                        <p>Mult mai lenta decat criptarea simetrica; nepotrivita pentru volume mari de date.</p>
+                    </div>
+                </div>
+                <div class="tip-box">
+                    <div class="box-label">&#128161; In practica: HTTPS combina ambele!</div>
+                    <div class="box-text">Cand accesezi un site HTTPS, browserul si serverul folosesc <strong>criptare asimetrica</strong> pentru a schimba in siguranta o <strong>cheie simetrica</strong> temporara. Dupa aceea, intreaga sesiune este criptata <strong>simetric</strong> (rapid). Aceasta combinatie se numeste <em>TLS handshake</em>.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Functii hash -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Ce proprietate ESENTIALA are o functie hash criptografica?", "options": ["Poate fi inversata cu cheia corecta", "Produce output de aceeasi lungime cu inputul", "Acelasi input produce intotdeauna acelasi output, dar din output nu poti reconstitui inputul", "Este reversibila numai de catre autorul algoritmului"], "correct": "c", "hint": "Hash-ul este o functie UNIDIRECTIONALA: usor de calculat intr-un sens, practic imposibil de inversat. Nu exista cheie de decriptare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Functii hash — amprenta digitala a datelor</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O <strong>functie hash criptografica</strong> transforma orice date (orice lungime) intr-un sir de lungime fixa, numit <strong>hash</strong> sau <strong>digest</strong>. Este o functie <em>unidirectionala</em>: din hash nu poti reconstitui datele originale. Algoritmi: <strong>SHA-256</strong>, <strong>SHA-3</strong>.
+                </div>
+                <div class="concept-def">
+                    <strong>Proprietatile esentiale ale unui hash criptografic:</strong>
+                    <ul>
+                        <li><strong>Determinism:</strong> acelasi input produce intotdeauna acelasi hash</li>
+                        <li><strong>Unidirectional:</strong> nu poti calcula inputul pornind de la hash</li>
+                        <li><strong>Sensibil la modificari:</strong> o singura litera schimbata produce un hash complet diferit</li>
+                        <li><strong>Lungime fixa:</strong> SHA-256 produce intotdeauna 256 de biti (64 caractere hexadecimale)</li>
+                    </ul>
+                </div>
+                <p>Demonstratie rulata in Python (output real):</p>
+                <pre><span class="code-comment"># Hash cu hashlib - Python</span>
+<span class="code-keyword">import</span> hashlib
+
+parola = <span class="code-string">'parola123'</span>
+hash_sha256 = hashlib.sha256(parola.encode()).hexdigest()
+
+<span class="code-function">print</span>(<span class="code-string">'Parola:'</span>, parola)
+<span class="code-function">print</span>(<span class="code-string">'Hash SHA-256:'</span>, hash_sha256[:<span class="code-number">32</span>], <span class="code-string">'...'</span>)
+
+parola2 = <span class="code-string">'parola123'</span>
+<span class="code-function">print</span>(<span class="code-string">'Acelasi hash:'</span>, hashlib.sha256(parola2.encode()).hexdigest()[:<span class="code-number">32</span>])
+<span class="code-function">print</span>(<span class="code-string">'Sunt identice:'</span>, hash_sha256 == hashlib.sha256(parola2.encode()).hexdigest())</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (python):</div>
+                    <pre>Parola: parola123
+Hash SHA-256: a3a2754f94b4f8c1ca8d29290bc37ba9 ...
+Acelasi hash: a3a2754f94b4f8c1ca8d29290bc37ba9
+Sunt identice: True</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Utilizare practica: stocarea parolelor</div>
+                    <p>Site-urile nu iti salveaza parola in clar! Salveaza hash-ul parolei tale. Cand te autentifici, site-ul calculeaza hash-ul parolei introduse si il compara cu cel stocat. Daca cineva fura baza de date, obtine doar hash-uri — nu parolele reale.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Semnatura digitala + comparatie -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Ce garanteaza semnatura digitala?", "options": ["Ca mesajul nu poate fi citit de altcineva", "Ca expeditorul este cine pretinde ca este si ca mesajul nu a fost modificat", "Ca mesajul ajunge mai repede la destinatar", "Ca destinatarul nu poate nega ca a primit mesajul"], "correct": "b", "hint": "Semnatura digitala ofera AUTENTICITATE (confirma identitatea expeditorului) si INTEGRITATE (confirma ca mesajul nu a fost alterat pe drum)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Semnatura digitala si rezumat comparativ</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Semnatura digitala</strong> combina hash-ul si criptarea asimetrica pentru a dovedi <em>autenticitatea</em> si <em>integritatea</em> unui document: cine l-a trimis si ca nu a fost modificat pe drum.
+                </div>
+                <p><strong>Cum functioneaza:</strong></p>
+                <ol class="steps-list">
+                    <li><span class="step-text">Ana calculeaza hash-ul documentului.</span></li>
+                    <li><span class="step-text">Ana cripteaza hash-ul cu <strong>cheia sa PRIVATA</strong> — aceasta este semnatura digitala.</span></li>
+                    <li><span class="step-text">Bogdan primeste documentul + semnatura. El decripteaza semnatura cu <strong>cheia PUBLICA a Anei</strong> si obtine hash-ul original.</span></li>
+                    <li><span class="step-text">Bogdan calculeaza independent hash-ul documentului primit. Daca cele doua hash-uri coincid, documentul este autentic si nemodificat.</span></li>
+                </ol>
+                <p><strong>Rezumat comparativ al mecanismelor:</strong></p>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Mecanism</th>
+                            <th>Cheie(i)</th>
+                            <th>Reversibil?</th>
+                            <th>Utilizare tipica</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Simetric</strong> (AES)</td>
+                            <td>O cheie secreta</td>
+                            <td>Da (cu aceeasi cheie)</td>
+                            <td>Criptare disc, VPN, ZIP</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Asimetric</strong> (RSA)</td>
+                            <td>Pereche publica/privata</td>
+                            <td>Da (cu cheia privata)</td>
+                            <td>HTTPS, e-mail criptat</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hash</strong> (SHA-256)</td>
+                            <td>Nicio cheie</td>
+                            <td>Nu</td>
+                            <td>Parole, integritate fisiere</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Semnatura digitala</strong></td>
+                            <td>Pereche publica/privata</td>
+                            <td>Partial (hash)</td>
+                            <td>Documente legale, software</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="info-box info">
+                    <div class="info-box-icon">&#128269;</div>
+                    <div class="info-box-content">
+                        <div class="info-box-title">Cele trei proprietati protejate de criptografie</div>
+                        <p><strong>Confidentialitate</strong> (cine poate citi) · <strong>Integritate</strong> (daca a fost modificat) · <strong>Autenticitate</strong> (cine a trimis). Impreuna formeaza baza securitatii informatiei.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) — Cifrul Cezar manual</h3>
+            <p>Cripteaza cuvantul <strong>INFO</strong> folosind cifrul Cezar cu cheie = 4. Scrie fiecare pas (litera originala → pozitie → pozitie + 4 → litera criptata). Ce cuvant obtii?</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) — Alege mecanismul potrivit</h3>
+            <p>Pentru fiecare situatie, indica ce mecanism criptografic este cel mai potrivit si justifica alegerea:</p>
+            <ol class="steps-list">
+                <li>Un site de shopping vrea sa stocheze parolele utilizatorilor.</li>
+                <li>O companie vrea sa cripteze rapid 500 GB de date pe un server intern.</li>
+                <li>Un avocat vrea sa trimita un contract electronic si sa dovedeasca faptul ca el l-a semnat si ca nu a fost modificat.</li>
+            </ol>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) — Analiza unui scenariu HTTPS</h3>
+            <p>Descrie in ordine pasii care au loc criptografic atunci cand accesezi <code>https://bancatamea.ro</code> si introduci parola. Identifica: ce tip de criptare se foloseste la fiecare pas, ce chei sunt implicate si ce se protejeaza (confidentialitate / integritate / autenticitate).</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Criptografia transforma informatia clara in ciphertext; numai cel cu cheia corecta poate decripta</li>
+                <li>Cifrul Cezar deplaseaza fiecare litera cu un numar fix — simplu de inteles, usor de spart</li>
+                <li>Criptarea simetrica (AES): o cheie, rapida, problema distributiei cheii</li>
+                <li>Criptarea asimetrica (RSA): pereche publica/privata, elimina problema distributiei, mai lenta</li>
+                <li>Functia hash (SHA-256): unidirectionala, lungime fixa, utilizata pentru parole si integritate</li>
+                <li>Semnatura digitala: hash + criptare asimetrica = autenticitate + integritate</li>
+                <li>HTTPS foloseste ambele tipuri de criptare: asimetric pentru negocierea cheii, simetric pentru sesiune</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Lectia 4: Ce este Inteligenta Artificiala?</strong> — Machine Learning, retele neurale si aplicatii practice.</p>
+            <a href="lectia4-ai-intro.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m4-cybersecurity-lectia3-criptografie-intro');
+        PracticeSimple.init('cls11-m4-cybersecurity-lectia3-criptografie-intro');
+        LessonSummary.init('cls11-m4-cybersecurity-lectia3-criptografie-intro');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm4-cybersecurity',
+            moduleName: 'M4 Cybersecurity si AI',
+            lesson: 'Introducere in Criptografie'
+        });
+        LearningProgress.init('cls11', 'm4-cybersecurity', 'lectia3-criptografie-intro.html');
+    });
+
+    function toggleHint(el) {
+        var content = el.nextElementSibling;
+        if (content.style.display === 'block') {
+            content.style.display = 'none';
+        } else {
+            content.style.display = 'block';
+        }
+    }
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

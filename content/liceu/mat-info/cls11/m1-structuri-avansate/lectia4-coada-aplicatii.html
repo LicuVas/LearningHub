@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 4: Aplicatii cu cozi | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+</head>
+<body>
+<div class="container">
+<nav class="nav-bar"><a href="lectia3-coada-intro.html" class="nav-btn">&larr; Lectia 3</a><a href="lectia5-grafuri-intro.html" class="nav-btn">Lectia 5 &rarr;</a></nav>
+<header class="lesson-header"><span class="lesson-badge">Invatare Atomica</span><h1 class="lesson-title">Aplicatii cu cozi: simulari si procesare in ordine</h1></header>
+<div class="progress-container"><span class="progress-label">Progres lectie:</span><div class="progress-bar-wrapper"><div class="progress-bar-fill" id="progress-fill"></div></div><span class="progress-percent" id="progress-percent">0%</span></div>
+<section class="lesson-frame"><div class="goal-section"><div class="goal-header"><span class="goal-icon">&#127919;</span><h2 class="goal-title">Obiectivul lectiei</h2></div><p class="goal-text">Vei aplica structura FIFO a cozii pentru a rezolva probleme reale: simularea proceselor, procesarea datelor in ordine de sosire si parcurgerea BFS a grafurilor.</p></div><div class="learning-outcomes"><h3>Dupa aceasta lectie vei putea:</h3><ul><li>Sa implementezi simulari pas-cu-pas folosind o coada (ghiseu, imprimanta)</li><li>Sa procesezi date in ordinea sosirii cu <code>collections.deque</code> din Python</li><li>Sa explici de ce BFS foloseste o coada si nu o stiva</li><li>Sa implementezi BFS complet pe un graf in Python</li><li>Sa distingi intre <code>deque</code> dublu-capat si coada simpla</li><li>Sa folosesti <code>std::queue</code> si <code>std::deque</code> din C++ STL <span class="enrichment-badge">EXCLUSIV INTENSIV</span></li></ul></div></section>
+<section class="try-section"><h2>Incearca singur!</h2><div class="try-challenge"><div class="challenge-box"><div class="challenge-title">Provocare de gandire:</div><p>Un supermarket are 3 case de marcat. Daca doriti sa aflati <strong>care client iese primul</strong>, ce informatii aveti nevoie despre fiecare coada?</p><div class="hint-box"><div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div><div class="hint-content"><p>Trebuie sa stiti cat timp dureaza servirea fiecarui client. Clientul care termina primul are suma minima: <em>(timp pana la el) + (timp propriu de servire)</em>. Aceasta este esenta simularii cu cozi multiple!</p></div></div></div></div></section>
+<main id="atomic-content">
+<div class="atom" id="atom-1" data-quiz='[{"question": "Care este complexitatea temporala a popleft() pe un collections.deque in Python?", "options": ["O(n) deplaseaza elementele", "O(log n) structura interna", "O(1) amortizat - lista dublu inlantuita", "O(n log n) resorteaza"], "correct": "c", "hint": "collections.deque este lista dublu inlantuita; stergerea la ambele capete O(1) amortizat."}]'><div class="atom-header"><div class="atom-number">1</div><h3 class="atom-title">1. Recapitulare: coada FIFO si deque in Python</h3></div><div class="atom-content"><div class="concept-def">O <strong>coada</strong> (queue) este o structura FIFO: primul element intrat este primul care iese. In Python, <code>collections.deque</code> implementeaza o coada eficienta cu O(1) la ambele capete.</div><div class="analogy-box"><div class="analogy-title">Analogie: randul la ghiseu</div><p>Prima persoana venita este prima servita. Ordinea de intrare = ordinea de iesire. Nu poti sari sau intra pe la spate.</p></div><pre><span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+coada = deque()
+coada.append(<span class="code-string">&quot;Ana&quot;</span>)      <span class="code-comment"># enqueue: adaugam la spate  O(1)</span>
+coada.append(<span class="code-string">&quot;Bogdan&quot;</span>)
+coada.append(<span class="code-string">&quot;Cristi&quot;</span>)
+
+<span class="code-function">print</span>(<span class="code-string">&quot;Coada initiala:&quot;</span>, <span class="code-function">list</span>(coada))
+<span class="code-function">print</span>(<span class="code-string">&quot;Lungime:&quot;</span>, <span class="code-function">len</span>(coada))
+<span class="code-function">print</span>(<span class="code-string">&quot;
+Servire clienti:&quot;</span>)
+<span class="code-keyword">while</span> coada:
+    client = coada.popleft()  <span class="code-comment"># dequeue: scoatem din fata  O(1)</span>
+    <span class="code-function">print</span>(<span class="code-string">f&quot;  Servit: {client}  |  Ramas in coada: {list(coada)}&quot;</span>)</pre><div class="example-box"><div class="example-title">Output real (python coada_test1.py):</div><pre>Coada initiala: ['Ana', 'Bogdan', 'Cristi']
+Lungime: 3
+
+Servire clienti:
+  Servit: Ana  |  Ramas in coada: ['Bogdan', 'Cristi']
+  Servit: Bogdan  |  Ramas in coada: ['Cristi']
+  Servit: Cristi  |  Ramas in coada: []</pre></div><div class="info-box info"><span class="info-box-icon">&#9888;</span><div class="info-box-content"><div class="info-box-title">De ce NU list.pop(0)?</div><p><code>list.pop(0)</code> este O(n): deplaseaza toate elementele. <code>deque.popleft()</code> este O(1). Pentru cozi cu mii de elemente, diferenta este critica.</p></div></div><table class="comparison-table"><thead><tr><th>Operatie</th><th>list Python</th><th>collections.deque</th></tr></thead><tbody><tr><td>Adaugare la spate</td><td><code>append(x)</code> &mdash; O(1)</td><td><code>append(x)</code> &mdash; O(1)</td></tr><tr><td>Extragere din fata</td><td><code>pop(0)</code> &mdash; <strong>O(n)</strong></td><td><code>popleft()</code> &mdash; <strong>O(1)</strong></td></tr><tr><td>Acces la primul element</td><td><code>[0]</code> &mdash; O(1)</td><td><code>[0]</code> &mdash; O(1)</td></tr></tbody></table></div></div>
+<div class="atom" id="atom-2" data-quiz='[{"question": "Intr-o coada de imprimanta cu 3 joburi, un job nou sosit va fi procesat al:", "options": ["Primului - prioritate maxima", "Al doilea - dupa cel curent", "Al patrulea - dupa cele 3 existente", "Al cincilea"], "correct": "c", "hint": "FIFO: noul job merge la sfarsitul cozii. Cu 3 joburi deja, noul job este al 4-lea."}]'><div class="atom-header"><div class="atom-number">2</div><h3 class="atom-title">2. Simulare: coada de imprimanta</h3></div><div class="atom-content"><div class="concept-def"><strong>Simularea</strong> cu coada modeleaza un sistem real unde evenimentele se proceseaza in timp, in ordine FIFO. Joburile de imprimanta se proceseaza in ordinea sosirii, indiferent de utilizator.</div><pre><span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+imprimanta = deque()
+imprimanta.append({<span class="code-string">&quot;id&quot;</span>: <span class="code-number">1</span>, <span class="code-string">&quot;pagini&quot;</span>: <span class="code-number">3</span>, <span class="code-string">&quot;utilizator&quot;</span>: <span class="code-string">&quot;Ana&quot;</span>})
+imprimanta.append({<span class="code-string">&quot;id&quot;</span>: <span class="code-number">2</span>, <span class="code-string">&quot;pagini&quot;</span>: <span class="code-number">1</span>, <span class="code-string">&quot;utilizator&quot;</span>: <span class="code-string">&quot;Bogdan&quot;</span>})
+imprimanta.append({<span class="code-string">&quot;id&quot;</span>: <span class="code-number">3</span>, <span class="code-string">&quot;pagini&quot;</span>: <span class="code-number">5</span>, <span class="code-string">&quot;utilizator&quot;</span>: <span class="code-string">&quot;Cristi&quot;</span>})
+
+<span class="code-function">print</span>(<span class="code-string">&quot;Joburi in coada imprimantei:&quot;</span>)
+<span class="code-keyword">for</span> i, job <span class="code-keyword">in</span> <span class="code-function">enumerate</span>(imprimanta):
+    <span class="code-function">print</span>(<span class="code-string">f"  [{i+1}] Job#{job['id']} - {job['pagini']} pagini - {job['utilizator']}"</span>)
+
+<span class="code-function">print</span>(<span class="code-string">&quot;
+Procesare:&quot;</span>)
+total_pagini = <span class="code-number">0</span>
+<span class="code-keyword">while</span> imprimanta:
+    job = imprimanta.popleft()
+    total_pagini += job[<span class="code-string">&quot;pagini&quot;</span>]
+    <span class="code-function">print</span>(<span class="code-string">f"  Tiparit Job#{job['id']} ({job['pagini']} pagini) - {job['utilizator']}"</span>)
+    <span class="code-function">print</span>(<span class="code-string">f&quot;       In asteptare: {len(imprimanta)} joburi&quot;</span>)
+
+<span class="code-function">print</span>(<span class="code-string">f&quot;
+Total pagini tiparite: {total_pagini}&quot;</span>)</pre><div class="example-box"><div class="example-title">Output real (python coada_test2.py):</div><pre>Joburi in coada imprimantei:
+  [1] Job#1 - 3 pagini - Ana
+  [2] Job#2 - 1 pagini - Bogdan
+  [3] Job#3 - 5 pagini - Cristi
+
+Procesare:
+  Tiparit Job#1 (3 pagini) - Ana
+       In asteptare: 2 joburi
+  Tiparit Job#2 (1 pagini) - Bogdan
+       In asteptare: 1 joburi
+  Tiparit Job#3 (5 pagini) - Cristi
+       In asteptare: 0 joburi
+
+Total pagini tiparite: 9</pre></div><div class="tip-box"><div class="box-label">Complexitate</div><div class="box-text">Fiecare job procesat exact o data: <strong>O(n)</strong> timp, O(n) spatiu.</div></div><p>Tiparul general al simularii cu coada: (1) Initializam coada; (2) Cat timp coada nu e vida: extragem, procesam, optional adaugam elemente noi; (3) Colectam rezultatele.</p></div></div>
+<div class="atom" id="atom-3" data-quiz='[{"question": "De ce BFS foloseste o COADA si nu o STIVA?", "options": ["Stiva nu poate stoca noduri de graf", "Coada garanteaza explorarea nivel cu nivel: noduri la distanta d procesate inaintea celor la d+1", "Coada este mai rapida decat stiva in C++", "Nu conteaza - ambele produc BFS"], "correct": "b", "hint": "BFS exploreaza graful nivel cu nivel. Coada garanteaza procesarea nodurilor in ordinea descoperirii (FIFO). Stiva ar produce DFS."}]'><div class="atom-header"><div class="atom-number">3</div><h3 class="atom-title">3. BFS (Breadth-First Search) &mdash; coada la lucru pe grafuri</h3></div><div class="atom-content"><div class="concept-def"><strong>BFS (parcurgere in latime)</strong> viziteaza toate nodurile unui graf nivel cu nivel. Coada garanteaza ca un nod la distanta <em>d</em> este procesat inaintea oricarui nod la distanta <em>d+1</em>.</div><div class="analogy-box"><div class="analogy-title">Analogie: undele de apa</div><p>O piatra aruncata intr-un lac produce unde circulare. Toate punctele la raza 1 sunt atinse inainte de cele la raza 2. BFS functioneaza identic: exploreaza valuri concentrice pornind de la nodul sursa.</p></div><p>Graf exemplu: noduri 1&ndash;6, muchii: 1&ndash;2, 1&ndash;3, 2&ndash;4, 2&ndash;5, 3&ndash;6</p><pre><span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+graf = {
+    <span class="code-number">1</span>: [<span class="code-number">2</span>, <span class="code-number">3</span>],
+    <span class="code-number">2</span>: [<span class="code-number">4</span>, <span class="code-number">5</span>],
+    <span class="code-number">3</span>: [<span class="code-number">6</span>],
+    <span class="code-number">4</span>: [], <span class="code-number">5</span>: [], <span class="code-number">6</span>: []
+}
+
+<span class="code-keyword">def</span> <span class="code-function">bfs</span>(start):
+    vizitat = <span class="code-function">set</span>()
+    coada = deque()
+    ordine = []
+    coada.append(start)
+    vizitat.add(start)
+    <span class="code-keyword">while</span> coada:
+        nod = coada.popleft()
+        ordine.append(nod)
+        <span class="code-function">print</span>(<span class="code-string">f&quot;  Vizitat: {nod}  |  Coada: {list(coada)}&quot;</span>)
+        <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> graf[nod]:
+            <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> vizitat:
+                vizitat.add(vecin)
+                coada.append(vecin)
+    <span class="code-keyword">return</span> ordine
+
+<span class="code-function">print</span>(<span class="code-string">&quot;BFS pornind din nodul 1:&quot;</span>)
+rezultat = <span class="code-function">bfs</span>(<span class="code-number">1</span>)
+<span class="code-function">print</span>(<span class="code-string">f&quot;
+Ordine vizitare: {rezultat}&quot;</span>)</pre><div class="example-box"><div class="example-title">Output real (python coada_test3.py):</div><pre>BFS pornind din nodul 1:
+  Vizitat: 1  |  Coada: []
+  Vizitat: 2  |  Coada: [3]
+  Vizitat: 3  |  Coada: [4, 5]
+  Vizitat: 4  |  Coada: [5, 6]
+  Vizitat: 5  |  Coada: [6]
+  Vizitat: 6  |  Coada: []
+
+Ordine vizitare: [1, 2, 3, 4, 5, 6]</pre></div><div class="info-box info"><span class="info-box-icon">&#128270;</span><div class="info-box-content"><div class="info-box-title">De ce vizitat este un set si nu o lista?</div><p>Verificarea <code>vecin not in vizitat</code> trebuie sa fie O(1). Un <code>set</code> ofera acces O(1) in medie. O lista ar face aceasta verificare O(n), incetinind BFS-ul de la O(V+E) la O(V&middot;E).</p></div></div><div class="tip-box"><div class="box-label">Complexitate BFS</div><div class="box-text"><strong>Timp: O(V + E)</strong> &mdash; fiecare nod vizitat exact o data, fiecare muchie examinata exact o data. <strong>Spatiu: O(V)</strong> pentru coada si multimea vizitat.</div></div></div></div>
+<div class="atom" id="atom-4" data-quiz='[{"question": "Care este diferenta esentiala intre deque si o coada simpla?", "options": ["deque este mai lent", "deque permite insertie si stergere la AMBELE capete in O(1)", "deque poate stoca doar numere", "Nu exista diferenta"], "correct": "b", "hint": "deque = double-ended queue. Suporta push/pop la fata si la spate in O(1). Coada simpla: push la spate, pop la fata."}]'><div class="atom-header"><div class="atom-number">4</div><h3 class="atom-title">4. Deque: coada cu doua capete si fereastra glisanta</h3></div><div class="atom-content"><div class="concept-def">Un <strong>deque</strong> (double-ended queue, pronuntat &ldquo;deck&rdquo;) permite adaugarea si stergerea elementelor la <em>ambele</em> capete in O(1). Util cand avem nevoie de flexibilitate mai mare decat o coada simpla.</div><pre><span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+d = deque([<span class="code-number">10</span>, <span class="code-number">20</span>, <span class="code-number">30</span>])
+<span class="code-function">print</span>(<span class="code-string">&quot;Deque initial:&quot;</span>, <span class="code-function">list</span>(d))
+d.appendleft(<span class="code-number">5</span>)
+<span class="code-function">print</span>(<span class="code-string">&quot;Dupa appendleft(5):&quot;</span>, <span class="code-function">list</span>(d))
+d.append(<span class="code-number">40</span>)
+<span class="code-function">print</span>(<span class="code-string">&quot;Dupa append(40):&quot;</span>, <span class="code-function">list</span>(d))
+stanga = d.popleft()
+<span class="code-function">print</span>(<span class="code-string">f&quot;popleft() = {stanga}, deque ramas: {list(d)}&quot;</span>)
+dreapta = d.pop()
+<span class="code-function">print</span>(<span class="code-string">f&quot;pop() = {dreapta}, deque ramas: {list(d)}&quot;</span>)
+<span class="code-comment"># maxlen: fereastra glisanta de dimensiune fixa</span>
+fereastra = deque(maxlen=<span class="code-number">3</span>)
+<span class="code-keyword">for</span> val <span class="code-keyword">in</span> [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>, <span class="code-number">5</span>]:
+    fereastra.append(val)
+    <span class="code-function">print</span>(<span class="code-string">f&quot;  append({val}) -&gt; {list(fereastra)}&quot;</span>)</pre><div class="example-box"><div class="example-title">Output real (python coada_test4.py):</div><pre>Deque initial: [10, 20, 30]
+Dupa appendleft(5): [5, 10, 20, 30]
+Dupa append(40): [5, 10, 20, 30, 40]
+popleft() = 5, deque ramas: [10, 20, 30, 40]
+pop() = 40, deque ramas: [10, 20, 30]
+  append(1) -> [1]
+  append(2) -> [1, 2]
+  append(3) -> [1, 2, 3]
+  append(4) -> [2, 3, 4]
+  append(5) -> [3, 4, 5]</pre></div><p>Parametrul <code>maxlen</code> creeaza o <strong>fereastra glisanta</strong>: cand deque-ul este plin, adaugarea unui element nou elimina automat elementul de la celalalt capat. Util pentru: media ultimelor N valori, log-uri de dimensiune fixa.</p><div class="warning-box"><div class="box-label">Atentie</div><div class="box-text">Accesul la mijlocul unui deque (<code>d[i]</code> pentru i interior) este O(n), nu O(1). Daca aveti nevoie de acces aleator frecvent, folositi o lista. Deque este optim doar pentru operatii la capete.</div></div></div></div>
+<div class="atom" id="atom-5" data-quiz='[{"question": "In C++ STL, ce operatie din std::queue returneaza elementul din fata fara a-l elimina?", "options": ["pop()", "peek()", "front()", "top()"], "correct": "c", "hint": "std::queue::front() returneaza referinta la primul element fara a-l elimina. pop() elimina fara a returna. top() este pentru std::stack. peek() nu exista in STL."}]'><div class="atom-header"><div class="atom-number">5</div><h3 class="atom-title">5. C++ STL: <code>std::queue</code> &mdash; simulare clienti <span class="enrichment-badge">EXCLUSIV INTENSIV</span></h3></div><div class="atom-content"><div class="enrichment-note">Aceasta sectiune este destinata exclusiv profilului mat-info intensiv. La profilul standard, Python cu collections.deque este suficient.</div><div class="concept-def">In C++, <code>&lt;queue&gt;</code> din STL ofera <code>std::queue&lt;T&gt;</code> pentru cozi FIFO. Operatii: <code>push(x)</code>, <code>pop()</code>, <code>front()</code>, <code>back()</code>, <code>empty()</code>, <code>size()</code>.</div><div class="warning-box"><div class="box-label">Diferenta cruciala fata de Python</div><div class="box-text">In C++, <code>queue::pop()</code> NU returneaza elementul eliminat. Trebuie sa cititi cu <code>front()</code>, stocati valoarea, apoi apelati <code>pop()</code>. Uitarea acestui detaliu produce bug-uri silentioase.</div></div><pre><span class="code-keyword">#include</span> &lt;iostream&gt;
+<span class="code-keyword">#include</span> &lt;queue&gt;
+<span class="code-keyword">#include</span> &lt;string&gt;
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> main() {
+    queue&lt;string&gt; coada;
+    coada.push(<span class="code-string">&quot;Ana&quot;</span>);
+    coada.push(<span class="code-string">&quot;Bogdan&quot;</span>);
+    coada.push(<span class="code-string">&quot;Cristi&quot;</span>);
+    cout &lt;&lt; <span class="code-string">&quot;Coada are &quot;</span> &lt;&lt; coada.size() &lt;&lt; <span class="code-string">&quot; clienti.&quot;</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">&quot;Primul la rand: &quot;</span> &lt;&lt; coada.front() &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">&quot;Ultimul la rand: &quot;</span> &lt;&lt; coada.back() &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">&quot;
+Servire clienti:&quot;</span> &lt;&lt; endl;
+    <span class="code-keyword">while</span> (!coada.empty()) {
+        cout &lt;&lt; <span class="code-string">&quot;  Servit: &quot;</span> &lt;&lt; coada.front()
+             &lt;&lt; <span class="code-string">&quot;  |  Ramas: &quot;</span> &lt;&lt; (coada.size() - 1) &lt;&lt; endl;
+        coada.pop();
+    }
+    <span class="code-keyword">return</span> 0;
+}</pre><div class="example-box"><div class="example-title">Output real (g++ -std=c++17 coada_cpp1.cpp -o coada_cpp1.exe &amp;&amp; ./coada_cpp1.exe):</div><pre>Coada are 3 clienti.
+Primul la rand: Ana
+Ultimul la rand: Cristi
+
+Servire clienti:
+  Servit: Ana  |  Ramas: 2
+  Servit: Bogdan  |  Ramas: 1
+  Servit: Cristi  |  Ramas: 0</pre></div></div></div>
+<div class="atom" id="atom-6" data-quiz='[{"question": "In BFS implementat in C++ cu std::queue, care este secventa corecta la fiecare iteratie?", "options": ["pop(), front(), procesare", "front(), pop(), procesare", "front(), procesare, pop()", "procesare, front(), pop()"], "correct": "c", "hint": "Tiparul corect: cititi cu front(), faceti procesarea, apoi apelati pop(). Daca apelati pop() inaintea procesarii, pierdeti valoarea elementului."}]'><div class="atom-header"><div class="atom-number">6</div><h3 class="atom-title">6. BFS si <code>std::deque</code> in C++ <span class="enrichment-badge">EXCLUSIV INTENSIV</span></h3></div><div class="atom-content"><div class="enrichment-note">BFS in C++ este cerut la concursuri (OJI, ONI, Baraj). Varianta cu matrice de adiacenta este cea mai simpla de implementat in timp limitat.</div><p><strong>BFS complet in C++ cu matrice de adiacenta:</strong></p><pre><span class="code-keyword">#include</span> &lt;iostream&gt;
+<span class="code-keyword">#include</span> &lt;queue&gt;
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> adj[7][7] = {0};
+<span class="code-keyword">int</span> main() {
+    adj[1][2]=1; adj[1][3]=1;
+    adj[2][4]=1; adj[2][5]=1;
+    adj[3][6]=1;
+    <span class="code-keyword">bool</span> vizitat[7] = {<span class="code-keyword">false</span>};
+    queue&lt;<span class="code-keyword">int</span>&gt; coada;
+    coada.push(1); vizitat[1] = <span class="code-keyword">true</span>;
+    cout &lt;&lt; <span class="code-string">&quot;BFS din nodul 1:&quot;</span> &lt;&lt; endl;
+    <span class="code-keyword">while</span> (!coada.empty()) {
+        <span class="code-keyword">int</span> nod = coada.front(); coada.pop();
+        cout &lt;&lt; <span class="code-string">&quot;  Vizitat: &quot;</span> &lt;&lt; nod &lt;&lt; endl;
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> v = 1; v &lt;= 6; v++) {
+            <span class="code-keyword">if</span> (adj[nod][v] &amp;&amp; !vizitat[v]) {
+                vizitat[v] = <span class="code-keyword">true</span>; coada.push(v);
+            }
+        }
+    }
+    <span class="code-keyword">return</span> 0;
+}</pre><div class="example-box"><div class="example-title">Output real (g++ -std=c++17 coada_cpp2.cpp -o coada_cpp2.exe &amp;&amp; ./coada_cpp2.exe):</div><pre>BFS din nodul 1:
+  Vizitat: 1
+  Vizitat: 2
+  Vizitat: 3
+  Vizitat: 4
+  Vizitat: 5
+  Vizitat: 6</pre></div><p><strong>std::deque &mdash; operatii la ambele capete:</strong></p><pre><span class="code-keyword">#include</span> &lt;iostream&gt;
+<span class="code-keyword">#include</span> &lt;deque&gt;
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> main() {
+    deque&lt;<span class="code-keyword">int</span>&gt; d = {10, 20, 30};
+    d.push_front(5); d.push_back(40);
+    cout &lt;&lt; <span class="code-string">&quot;pop_front() = &quot;</span> &lt;&lt; d.front() &lt;&lt; endl; d.pop_front();
+    cout &lt;&lt; <span class="code-string">&quot;pop_back() = &quot;</span> &lt;&lt; d.back() &lt;&lt; endl; d.pop_back();
+    cout &lt;&lt; <span class="code-string">&quot;Final: &quot;</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : d) cout &lt;&lt; x &lt;&lt; <span class="code-string">&quot; &quot;</span>;
+    cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> 0;
+}</pre><div class="example-box"><div class="example-title">Output real (g++ -std=c++17 coada_cpp3.cpp -o coada_cpp3.exe &amp;&amp; ./coada_cpp3.exe):</div><pre>pop_front() = 5
+pop_back() = 40
+Final: 10 20 30 </pre></div><table class="comparison-table"><thead><tr><th>Operatie</th><th>std::queue</th><th>std::deque</th><th>Complexitate</th></tr></thead><tbody><tr><td>Adauga la spate</td><td><code>push(x)</code></td><td><code>push_back(x)</code></td><td>O(1)</td></tr><tr><td>Adauga la fata</td><td><strong>NU exista</strong></td><td><code>push_front(x)</code></td><td>O(1)</td></tr><tr><td>Scoate din fata</td><td><code>pop()</code></td><td><code>pop_front()</code></td><td>O(1)</td></tr><tr><td>Scoate din spate</td><td><strong>NU exista</strong></td><td><code>pop_back()</code></td><td>O(1)</td></tr><tr><td>Peek fata</td><td><code>front()</code></td><td><code>front()</code></td><td>O(1)</td></tr><tr><td>Acces index</td><td><strong>NU exista</strong></td><td><code>d[i]</code></td><td>O(1)</td></tr></tbody></table></div></div>
+</main>
+<section class="practice-section" id="practice">
+<h2>Exercitii practice</h2>
+<div class="practice-exercise" data-level="minim">
+<h3>Exercitiul 1 (Nivel minim) &mdash; Simulare ghiseu</h3>
+<p>Scrieti un program Python care simuleaza un ghiseu bancar. Adaugati 5 clienti in coada (ID: 101&ndash;105), serviti-i pe rand afisand <code>"Clientul [ID] a fost servit. Raman [N] clienti."</code> Folositi <code>collections.deque</code>.</p>
+</div>
+<div class="practice-exercise" data-level="standard">
+<h3>Exercitiul 2 (Nivel standard) &mdash; BFS cu calcul distante</h3>
+<p>Modificati BFS din Atomul 3 pentru a calcula si afisa <strong>distanta</strong> de la nodul de start la fiecare nod. Pastrati un dictionar <code>dist</code> unde <code>dist[vecin] = dist[nod] + 1</code>. Afisati <code>"Distanta de la 1 la [nod]: [d]"</code> pentru toate nodurile.</p>
+</div>
+<div class="practice-exercise" data-level="performanta">
+<h3>Exercitiul 3 (Nivel performanta) &mdash; Fereastra glisanta maxim cu deque O(n)</h3>
+<p>Dat un sir de n numere si un numar k, gasiti maximul din fiecare fereastra de dimensiune k. Solutia naiva O(n&middot;k); solutia optima cu deque O(n). Testati pe <code>[1, 3, -1, -3, 5, 3, 6, 7]</code> cu <code>k=3</code>; rezultat asteptat: <code>[3, 3, 5, 5, 6, 7]</code>.</p>
+</div>
+</section>
+<section class="review-section">
+<div class="summary-box">
+<h2>Ce ai invatat astazi</h2>
+<ul>
+<li><code>collections.deque</code>: coada eficienta in Python, O(1) pentru append/popleft</li>
+<li>Simulare cu coada: init &rarr; while coada: popleft &rarr; procese &rarr; eventual append</li>
+<li>BFS foloseste coada pentru explorare nivel cu nivel &mdash; O(V+E) timp, O(V) spatiu</li>
+<li>Deque cu <code>maxlen</code> implementeaza fereastra glisanta de dimensiune fixa in O(1)</li>
+<li>[intensiv] <code>std::queue</code>: push/pop/front/back; pop() NU returneaza valoarea</li>
+<li>[intensiv] <code>std::deque</code>: push_front/push_back/pop_front/pop_back, acces direct <code>[]</code></li>
+</ul>
+</div>
+<div id="lesson-summary" style="display: none;"></div>
+<div class="next-lesson">
+<h3>Urmatoarea lectie</h3>
+<p>Continua cu Lectia 5: Introducere grafuri &mdash; terminologie, noduri, muchii, grade, graf orientat vs neorientat.</p>
+<a href="lectia5-grafuri-intro.html" class="btn-next">Lectia 5: Grafuri &rarr;</a>
+</div>
+</section>
+</div>
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    AtomicLearning.init('cls11-m1-structuri-avansate-lectia4-coada-aplicatii');
+    PracticeSimple.init('cls11-m1-structuri-avansate-lectia4-coada-aplicatii');
+    LessonSummary.init('cls11-m1-structuri-avansate-lectia4-coada-aplicatii');
+    Breadcrumb.init({grade:'cls11',gradeName:'Clasa a XI-a',module:'m1-structuri-avansate',moduleName:'M1 Structuri Avansate',lesson:'Aplicatii cu cozi'});
+    LearningProgress.init('cls11','m1-structuri-avansate','lectia4-coada-aplicatii.html');
+});
+function toggleHint(el) {
+    var c = el.nextElementSibling;
+    if (c.style.display === 'block') { c.style.display = 'none'; } else { c.style.display = 'block'; }
+}
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

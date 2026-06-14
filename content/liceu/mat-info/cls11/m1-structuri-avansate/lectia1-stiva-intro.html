@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 1: Stiva - Structura LIFO | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8592; Modulul</a>
+        <a href="lectia2-stiva-aplicatii.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Stiva &#8212; Structura LIFO</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege ce este o stiva (structura LIFO), vei invata operatiile fundamentale push / pop / top si vei implementa o stiva folosind lista Python (si, la nivel intensiv, o clasa C++).</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti stiva si sa explici principiul LIFO</li>
+                <li>Sa descrii si sa aplici operatiile push, pop, top, is_empty</li>
+                <li>Sa implementezi o stiva cu lista Python si sa urmaresti executia pas cu pas</li>
+                <li>Sa identifici complexitatea O(1) a fiecarei operatii</li>
+                <li>Sa scrii o clasa Stiva completa in Python si (exclusiv intensiv) in C++</li>
+                <li>Sa rezolvi exercitii de tip BAC cu stive</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Ai o stiva goala. Aplici operatiile: <strong>push(3), push(7), push(1), pop(), push(5), pop()</strong>. Ce element ramane in varful stivei la final? Scrie raspunsul tau inainte sa citesti lectia.</p>
+                <textarea id="tryAnswer" placeholder="Varful stivei este..." rows="4"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Traseaza pas cu pas stiva ca o lista verticala. Varful este intotdeauna <em>ultimul</em> element adaugat care nu a fost inca scos.</p>
+                    <p>push adauga pe varf, pop scoate de pe varf &mdash; LIFO = <em>Last In, First Out</em>.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ═══ ATOM 1 ═══ -->
+        <div class="atom" id="atom-1"
+             data-quiz='[{"question": "Ce inseamna acronimul LIFO?", "options": ["Last Input First Output", "Last In First Out", "Linear Input Forward Output", "Linear In First Order"], "correct": "b", "hint": "LIFO = Last In, First Out: ultimul intrat este primul iesit. Exact ca o stiva de farfurii."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Ce este o stiva?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O <strong>stiva</strong> (engl. <em>stack</em>) este o structura de date liniara care respecta principiul <strong>LIFO</strong>: <em>Last In, First Out</em> &mdash; ultimul element adaugat este primul care poate fi scos.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Analogie sigura &mdash; stiva de farfurii curate:</div>
+                    <p>Pui o farfurie pe stiva (push). Pui inca una deasupra (push). Cand ai nevoie, iei mereu <strong>de deasupra</strong> (pop) &mdash; niciodata de la baza.</p>
+                    <p>Acelasi principiu apare in natura digitala: butonul <em>Undo</em> din editoare, apelurile de functii (call stack), expresiile cu paranteze.</p>
+                </div>
+                <div class="stack-diagram">
+                    <div class="stack-frame stack-frame-f2">30 &larr; varf (top)</div>
+                    <div class="stack-frame stack-frame-f1">20</div>
+                    <div class="stack-frame stack-frame-main">10 &larr; baza</div>
+                </div>
+                <p>Stiva de mai sus contine elementele 10, 20, 30 (in aceasta ordine push). Urmatorul pop va returna <strong>30</strong>.</p>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 2 ═══ -->
+        <div class="atom" id="atom-2"
+             data-quiz='[{"question": "Care operatie adauga un element pe varful stivei?", "options": ["pop()", "top()", "push(x)", "is_empty()"], "correct": "c", "hint": "push(x) adauga elementul x pe varful stivei. pop() scoate si returneaza varful. top() doar il citeste fara sa il scoata."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Operatiile de baza</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Stiva are 4 operatii fundamentale, toate cu complexitate O(1):</strong>
+                    <ul>
+                        <li><strong>push(x)</strong> &mdash; adauga elementul <em>x</em> pe varful stivei</li>
+                        <li><strong>pop()</strong> &mdash; scoate si returneaza elementul din varf (stiva nu trebuie sa fie goala)</li>
+                        <li><strong>top()</strong> &mdash; returneaza elementul din varf <em>fara a-l scoate</em></li>
+                        <li><strong>is_empty()</strong> &mdash; returneaza True daca stiva este goala</li>
+                    </ul>
+                </div>
+                <div class="info-box">
+                    <div class="info-box-header">
+                        <span class="info-box-icon">&#9203;</span>
+                        <span class="info-box-title">Complexitate O(1)</span>
+                    </div>
+                    <div class="info-box-content">
+                        Toate cele 4 operatii ruleaza in timp <strong>constant O(1)</strong> &mdash; indiferent de cate elemente are stiva. Acest lucru este posibil deoarece lucram mereu cu un singur capat: varful.
+                    </div>
+                </div>
+                <div class="compare-table">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Operatie</th>
+                                <th>Ce face</th>
+                                <th>Stiva inainte</th>
+                                <th>Stiva dupa</th>
+                                <th>Returneaza</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>push(5)</code></td><td>Adauga 5 pe varf</td><td>[10, 20]</td><td>[10, 20, 5]</td><td>-</td></tr>
+                            <tr><td><code>pop()</code></td><td>Scoate varful</td><td>[10, 20, 5]</td><td>[10, 20]</td><td>5</td></tr>
+                            <tr><td><code>top()</code></td><td>Citeste varful</td><td>[10, 20]</td><td>[10, 20]</td><td>20</td></tr>
+                            <tr><td><code>is_empty()</code></td><td>Verifica daca e goala</td><td>[10, 20]</td><td>[10, 20]</td><td>False</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 3 ═══ -->
+        <div class="atom" id="atom-3"
+             data-quiz='[{"question": "In Python, cum se realizeaza push pe o lista folosita ca stiva?", "options": ["lista.insert(0, x)", "lista.append(x)", "lista.add(x)", "lista.push(x)"], "correct": "b", "hint": "append(x) adauga x la sfarsitul listei, care reprezinta varful stivei. insert(0,x) ar adauga la baza - gresit pentru stiva."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Implementare cu lista Python</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    In Python, <strong>lista</strong> poate juca rolul de stiva fara nicio structura suplimentara. Varful stivei este <em>sfarsitul listei</em> (indexul -1). Aceasta asigura O(1) pentru append si pop.
+                </div>
+                <p>Implementare cu functii simple:</p>
+                <pre><span class="code-comment"># Implementare stiva cu lista Python</span>
+stiva = []
+
+<span class="code-comment"># push - adaugam elemente</span>
+stiva.<span class="code-function">append</span>(<span class="code-number">10</span>)
+stiva.<span class="code-function">append</span>(<span class="code-number">20</span>)
+stiva.<span class="code-function">append</span>(<span class="code-number">30</span>)
+
+<span class="code-function">print</span>(<span class="code-string">"Stiva dupa 3 push-uri:"</span>, stiva)
+<span class="code-function">print</span>(<span class="code-string">"Top (varful stivei):"</span>, stiva[<span class="code-number">-1</span>])
+
+<span class="code-comment"># pop - scoatem elementul din varf</span>
+extras = stiva.<span class="code-function">pop</span>()
+<span class="code-function">print</span>(<span class="code-string">"Pop a returnat:"</span>, extras)
+<span class="code-function">print</span>(<span class="code-string">"Stiva dupa pop:"</span>, stiva)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Stiva dupa 3 push-uri: [10, 20, 30]
+Top (varful stivei): 30
+Pop a returnat: 30
+Stiva dupa pop: [10, 20]</pre>
+                </div>
+                <p>Functii cu verificare de erori:</p>
+                <pre><span class="code-keyword">def</span> <span class="code-function">push</span>(s, valoare):
+    s.<span class="code-function">append</span>(valoare)
+
+<span class="code-keyword">def</span> <span class="code-function">pop</span>(s):
+    <span class="code-keyword">if not</span> <span class="code-function">is_empty</span>(s):
+        <span class="code-keyword">return</span> s.<span class="code-function">pop</span>()
+    <span class="code-keyword">raise</span> IndexError(<span class="code-string">"Stiva este goala!"</span>)
+
+<span class="code-keyword">def</span> <span class="code-function">top</span>(s):
+    <span class="code-keyword">if not</span> <span class="code-function">is_empty</span>(s):
+        <span class="code-keyword">return</span> s[<span class="code-number">-1</span>]
+    <span class="code-keyword">raise</span> IndexError(<span class="code-string">"Stiva este goala!"</span>)
+
+<span class="code-keyword">def</span> <span class="code-function">is_empty</span>(s):
+    <span class="code-keyword">return</span> <span class="code-function">len</span>(s) == <span class="code-number">0</span>
+
+<span class="code-comment"># Utilizare</span>
+stiva = []
+<span class="code-function">push</span>(stiva, <span class="code-number">5</span>)
+<span class="code-function">push</span>(stiva, <span class="code-number">12</span>)
+<span class="code-function">push</span>(stiva, <span class="code-number">7</span>)
+<span class="code-function">print</span>(<span class="code-string">"Stiva:"</span>, stiva)
+<span class="code-function">print</span>(<span class="code-string">"Top:"</span>, <span class="code-function">top</span>(stiva))
+<span class="code-function">print</span>(<span class="code-string">"Pop:"</span>, <span class="code-function">pop</span>(stiva))
+<span class="code-function">print</span>(<span class="code-string">"Stiva dupa pop:"</span>, stiva)
+<span class="code-function">print</span>(<span class="code-string">"Este goala?"</span>, <span class="code-function">is_empty</span>(stiva))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Stiva: [5, 12, 7]
+Top: 7
+Pop: 7
+Stiva dupa pop: [5, 12]
+Este goala? False</pre>
+                </div>
+                <div class="warning-box">
+                    <div class="warning-box-title">&#9888; Eroare frecventa</div>
+                    <p>Nu folosi <code>lista.insert(0, x)</code> pentru push! Acel apel are complexitate O(n) deoarece deplaseaza toate elementele. Varful stivei trebuie sa fie la <em>sfarsitul</em> listei, nu la inceput.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 4 ═══ -->
+        <div class="atom" id="atom-4"
+             data-quiz='[{"question": "Dupa secventa: push(1), push(2), push(3), pop(), push(4), pop() — ce afiseaza top()?", "options": ["3", "4", "2", "1"], "correct": "c", "hint": "Traseaza: stiva=[1], [1,2], [1,2,3], pop->3 => [1,2], push(4) => [1,2,4], pop->4 => [1,2]. Top = 2."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Trasarea executiei pas cu pas</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    La subiectele de tip BAC, vei fi intrebat sa urmaresti o secventa de operatii si sa determini starea stivei sau ce returneaza anumite apeluri. Metoda: traseaza <strong>stiva ca o lista</strong> si actualizeaz-o la fiecare pas.
+                </div>
+                <pre><span class="code-comment"># Urmarirea executiei - trasare pas cu pas</span>
+stiva = []
+operatii = [
+    (<span class="code-string">"push"</span>, <span class="code-number">1</span>),
+    (<span class="code-string">"push"</span>, <span class="code-number">2</span>),
+    (<span class="code-string">"push"</span>, <span class="code-number">3</span>),
+    (<span class="code-string">"pop"</span>, <span class="code-keyword">None</span>),
+    (<span class="code-string">"push"</span>, <span class="code-number">4</span>),
+    (<span class="code-string">"pop"</span>, <span class="code-keyword">None</span>),
+    (<span class="code-string">"pop"</span>, <span class="code-keyword">None</span>),
+]
+
+<span class="code-function">print</span>(f<span class="code-string">"{'Operatie':&lt;15} {'Stiva dupa':&lt;25} {'Returnat'}"</span>)
+<span class="code-function">print</span>(<span class="code-string">"-"</span> * <span class="code-number">50</span>)
+<span class="code-keyword">for</span> op, val <span class="code-keyword">in</span> operatii:
+    <span class="code-keyword">if</span> op == <span class="code-string">"push"</span>:
+        stiva.<span class="code-function">append</span>(val)
+        <span class="code-function">print</span>(f<span class="code-string">"push({val})   {str(stiva):&lt;25}  -"</span>)
+    <span class="code-keyword">else</span>:
+        ret = stiva.<span class="code-function">pop</span>()
+        <span class="code-function">print</span>(f<span class="code-string">"pop()        {str(stiva):&lt;25}  {ret}"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Operatie        Stiva dupa                Returnat
+--------------------------------------------------
+push(1)   [1]                        -
+push(2)   [1, 2]                     -
+push(3)   [1, 2, 3]                  -
+pop()        [1, 2]                     3
+push(4)   [1, 2, 4]                  -
+pop()        [1, 2]                     4
+pop()        [1]                        2</pre>
+                </div>
+                <div class="step-trace">
+                    <div class="step-trace-title">Tabel de trasare (format BAC):</div>
+                    <table class="trace-table">
+                        <thead>
+                            <tr>
+                                <th class="trace-cell">Pas</th>
+                                <th class="trace-cell">Operatie</th>
+                                <th class="trace-cell">Stiva (baza &#8594; varf)</th>
+                                <th class="trace-cell">Returnat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="trace-cell">1</td><td class="trace-cell">push(1)</td><td class="trace-cell">[1]</td><td class="trace-cell">-</td></tr>
+                            <tr><td class="trace-cell">2</td><td class="trace-cell">push(2)</td><td class="trace-cell">[1, 2]</td><td class="trace-cell">-</td></tr>
+                            <tr><td class="trace-cell">3</td><td class="trace-cell">push(3)</td><td class="trace-cell">[1, 2, 3]</td><td class="trace-cell">-</td></tr>
+                            <tr><td class="trace-cell">4</td><td class="trace-cell">pop()</td><td class="trace-cell">[1, 2]</td><td class="trace-cell"><strong>3</strong></td></tr>
+                            <tr><td class="trace-cell">5</td><td class="trace-cell">push(4)</td><td class="trace-cell">[1, 2, 4]</td><td class="trace-cell">-</td></tr>
+                            <tr><td class="trace-cell">6</td><td class="trace-cell">pop()</td><td class="trace-cell">[1, 2]</td><td class="trace-cell"><strong>4</strong></td></tr>
+                            <tr><td class="trace-cell">7</td><td class="trace-cell">pop()</td><td class="trace-cell">[1]</td><td class="trace-cell"><strong>2</strong></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 5 ═══ -->
+        <div class="atom" id="atom-5"
+             data-quiz='[{"question": "In clasa Stiva implementata in Python, de ce folosim self._date (cu underscore) si nu self.date?", "options": ["Este o conventie de stil fara efect real", "Indica ca atributul este privat (nu se acceseza direct din exterior)", "Python nu permite atribute fara underscore in clase", "Este obligatoriu pentru ca pop() sa functioneze"], "correct": "b", "hint": "In Python, _ prefix = conventie pentru atribut privat. Nu este restrictie tehnica, dar semnaleaza ca date este un detaliu de implementare, nu parte din interfata publica a clasei."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Clasa Stiva in Python (OOP)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O implementare mai robusta incapsuleaza stiva intr-o <strong>clasa</strong>. Datele sunt ascunse (atribut privat <code>_date</code>); utilizatorul interactioneaza doar prin metodele publice.
+                </div>
+                <pre><span class="code-comment"># Clasa Stiva - implementare OOP</span>
+<span class="code-keyword">class</span> <span class="code-function">Stiva</span>:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(self):
+        self._date = []     <span class="code-comment"># atribut privat</span>
+
+    <span class="code-keyword">def</span> <span class="code-function">push</span>(self, valoare):
+        self._date.<span class="code-function">append</span>(valoare)
+
+    <span class="code-keyword">def</span> <span class="code-function">pop</span>(self):
+        <span class="code-keyword">if</span> self.<span class="code-function">este_goala</span>():
+            <span class="code-keyword">raise</span> IndexError(<span class="code-string">"Stiva este goala!"</span>)
+        <span class="code-keyword">return</span> self._date.<span class="code-function">pop</span>()
+
+    <span class="code-keyword">def</span> <span class="code-function">top</span>(self):
+        <span class="code-keyword">if</span> self.<span class="code-function">este_goala</span>():
+            <span class="code-keyword">raise</span> IndexError(<span class="code-string">"Stiva este goala!"</span>)
+        <span class="code-keyword">return</span> self._date[<span class="code-number">-1</span>]
+
+    <span class="code-keyword">def</span> <span class="code-function">este_goala</span>(self):
+        <span class="code-keyword">return</span> <span class="code-function">len</span>(self._date) == <span class="code-number">0</span>
+
+    <span class="code-keyword">def</span> <span class="code-function">dimensiune</span>(self):
+        <span class="code-keyword">return</span> <span class="code-function">len</span>(self._date)
+
+    <span class="code-keyword">def</span> <span class="code-function">__repr__</span>(self):
+        <span class="code-keyword">return</span> f<span class="code-string">"Stiva({self._date})"</span>
+
+<span class="code-comment"># Test</span>
+s = <span class="code-function">Stiva</span>()
+s.<span class="code-function">push</span>(<span class="code-number">100</span>)
+s.<span class="code-function">push</span>(<span class="code-number">200</span>)
+s.<span class="code-function">push</span>(<span class="code-number">300</span>)
+<span class="code-function">print</span>(<span class="code-string">"Stiva:"</span>, s)
+<span class="code-function">print</span>(<span class="code-string">"Dimensiune:"</span>, s.<span class="code-function">dimensiune</span>())
+<span class="code-function">print</span>(<span class="code-string">"Top:"</span>, s.<span class="code-function">top</span>())
+<span class="code-function">print</span>(<span class="code-string">"Pop:"</span>, s.<span class="code-function">pop</span>())
+<span class="code-function">print</span>(<span class="code-string">"Stiva dupa pop:"</span>, s)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Stiva: Stiva([100, 200, 300])
+Dimensiune: 3
+Top: 300
+Pop: 300
+Stiva dupa pop: Stiva([100, 200])</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ATOM 6 ═══ -->
+        <div class="atom" id="atom-6"
+             data-quiz='[{"question": "In C++, metoda echivalenta lui list.append() pentru std::vector este:", "options": ["push_back()", "insert_back()", "add()", "append()"], "correct": "a", "hint": "In C++, vector::push_back(x) adauga x la sfarsitul vectorului, echivalent cu list.append(x) din Python."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Clasa Stiva in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune exclusiva pentru intensiv informatica</div>
+                    <p>La profilul intensiv vei implementa aceeasi logica in C++. Utilizam <code>std::vector&lt;int&gt;</code> ca structura interna (echivalent listei Python). C++ ofera si <code>std::stack</code> din STL &mdash; prezentat mai jos ca referinta.</p>
+                </div>
+                <p><strong>Implementare cu clasa proprie (vector intern):</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;stdexcept&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">class</span> <span class="code-function">Stiva</span> {
+<span class="code-keyword">private</span>:
+    vector&lt;<span class="code-keyword">int</span>&gt; date;
+<span class="code-keyword">public</span>:
+    <span class="code-keyword">void</span> <span class="code-function">push</span>(<span class="code-keyword">int</span> valoare) {
+        date.<span class="code-function">push_back</span>(valoare);
+    }
+    <span class="code-keyword">int</span> <span class="code-function">pop</span>() {
+        <span class="code-keyword">if</span> (<span class="code-function">esteGoala</span>())
+            <span class="code-keyword">throw</span> runtime_error(<span class="code-string">"Stiva este goala!"</span>);
+        <span class="code-keyword">int</span> val = date.<span class="code-function">back</span>();
+        date.<span class="code-function">pop_back</span>();
+        <span class="code-keyword">return</span> val;
+    }
+    <span class="code-keyword">int</span> <span class="code-function">top</span>() <span class="code-keyword">const</span> {
+        <span class="code-keyword">if</span> (<span class="code-function">esteGoala</span>())
+            <span class="code-keyword">throw</span> runtime_error(<span class="code-string">"Stiva este goala!"</span>);
+        <span class="code-keyword">return</span> date.<span class="code-function">back</span>();
+    }
+    <span class="code-keyword">bool</span> <span class="code-function">esteGoala</span>() <span class="code-keyword">const</span> {
+        <span class="code-keyword">return</span> date.<span class="code-function">empty</span>();
+    }
+    <span class="code-keyword">int</span> <span class="code-function">dimensiune</span>() <span class="code-keyword">const</span> {
+        <span class="code-keyword">return</span> (<span class="code-keyword">int</span>)date.<span class="code-function">size</span>();
+    }
+};
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    Stiva s;
+    s.<span class="code-function">push</span>(<span class="code-number">100</span>);
+    s.<span class="code-function">push</span>(<span class="code-number">200</span>);
+    s.<span class="code-function">push</span>(<span class="code-number">300</span>);
+    cout &lt;&lt; <span class="code-string">"Dimensiune: "</span> &lt;&lt; s.<span class="code-function">dimensiune</span>() &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Top: "</span> &lt;&lt; s.<span class="code-function">top</span>() &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Pop: "</span> &lt;&lt; s.<span class="code-function">pop</span>() &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Dimensiune dupa pop: "</span> &lt;&lt; s.<span class="code-function">dimensiune</span>() &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Top dupa pop: "</span> &lt;&lt; s.<span class="code-function">top</span>() &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>Dimensiune: 3
+Top: 300
+Pop: 300
+Dimensiune dupa pop: 2
+Top dupa pop: 200</pre>
+                </div>
+                <p><strong>Alternativa STL &mdash; std::stack (pentru uz rapid in concursuri):</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;stack&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    stack&lt;<span class="code-keyword">int</span>&gt; s;
+    s.<span class="code-function">push</span>(<span class="code-number">10</span>);
+    s.<span class="code-function">push</span>(<span class="code-number">20</span>);
+    s.<span class="code-function">push</span>(<span class="code-number">30</span>);
+    cout &lt;&lt; <span class="code-string">"Dimensiune: "</span> &lt;&lt; s.<span class="code-function">size</span>() &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Top: "</span> &lt;&lt; s.<span class="code-function">top</span>() &lt;&lt; endl;
+    s.<span class="code-function">pop</span>();  <span class="code-comment">// pop() NU returneaza valoarea in STL!</span>
+    cout &lt;&lt; <span class="code-string">"Dupa pop, top: "</span> &lt;&lt; s.<span class="code-function">top</span>() &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Este goala? "</span> &lt;&lt; (s.<span class="code-function">empty</span>() ? <span class="code-string">"da"</span> : <span class="code-string">"nu"</span>) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>Dimensiune: 3
+Top: 30
+Dupa pop, top: 20
+Este goala? nu</pre>
+                </div>
+                <div class="warning-box">
+                    <div class="warning-box-title">&#9888; Atentie STL: pop() nu returneaza valoarea!</div>
+                    <p>In <code>std::stack</code>, <code>pop()</code> sterge varful dar <strong>nu il returneaza</strong>. Daca ai nevoie de valoare, mai intai <code>top()</code>, apoi <code>pop()</code>: <code>int v = s.top(); s.pop();</code></p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &#8212; Trasare manuala</h3>
+            <p>Dati o stiva initial goala, urmariti urmatoarea secventa de operatii si completati tabelul de trasare:</p>
+            <p><strong>push(5), push(3), push(8), pop(), push(2), top()</strong></p>
+            <p>Completati: Ce returneaza top() la final? Care este continutul final al stivei (de la baza la varf)?</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &#8212; Inversarea unui sir</h3>
+            <p>Folosind o stiva, scrie un program Python care citeste un cuvant de la utilizator si il afiseaza in ordine inversa. De exemplu, pentru "ABCDE" va afisa "EDCBA".</p>
+            <p><em>Indiciu:</em> push fiecare caracter, apoi pop pana cand stiva este goala.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &#8212; Verificare paranteze balansate</h3>
+            <p>Scrie o functie Python <code>paranteze_ok(sir)</code> care primeste un sir de caractere continand doar paranteze rotunde <code>( )</code> si returneaza <code>True</code> daca toate parantezele sunt corect balansate, <code>False</code> altfel.</p>
+            <p>Exemple: <code>"(()())"</code> &rarr; True | <code>"(()"</code> &rarr; False | <code>")()"</code> &rarr; False</p>
+            <p><em>Bonus intensiv C++:</em> Extinde solutia pentru a verifica paranteze mixte: <code>( ) [ ] { }</code>.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Stiva = structura LIFO (Last In, First Out)</li>
+                <li>Operatii: push(x), pop(), top(), is_empty() &#8212; toate O(1)</li>
+                <li>Implementare in Python cu lista: append = push, pop(-1) = pop, [-1] = top</li>
+                <li>Clasa Stiva in Python (incapsulare OOP, atribut privat _date)</li>
+                <li>Trasarea pas cu pas a operatiilor pe stiva (format BAC)</li>
+                <li>[Intensiv] Clasa Stiva in C++ cu vector&lt;int&gt; si std::stack din STL</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu aplicatiile stivei: verificare paranteze, evaluare expresii postfix si legatura cu recursivitatea.</p>
+            <a href="lectia2-stiva-aplicatii.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m1-structuri-avansate-lectia1-stiva-intro');
+        PracticeSimple.init('cls11-m1-structuri-avansate-lectia1-stiva-intro');
+        LessonSummary.init('cls11-m1-structuri-avansate-lectia1-stiva-intro');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm1-structuri-avansate',
+            moduleName: 'M1 Structuri Avansate',
+            lesson: 'Stiva - Structura LIFO'
+        });
+        LearningProgress.init('cls11', 'm1-structuri-avansate', 'lectia1-stiva-intro.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

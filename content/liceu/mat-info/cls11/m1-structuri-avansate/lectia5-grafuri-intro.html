@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 5: Introducere Grafuri | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia4-coada-aplicatii.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 4</a>
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8801; Modulul</a>
+        <a href="lectia6-reprezentari-graf.html" class="nav-btn" title="Lectia urmatoare">Lectia 6 &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Introducere Grafuri: Notiuni de Baza</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege ce este un graf, cum se descrie matematic, ce sunt nodurile si muchiile, cum se calculeaza gradul unui nod, si vei distinge intre tipurile principale de grafuri (orientat, neorientat, complet, conex, bipartit).</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti un graf ca pereche G = (V, E) si sa identifici nodurile si muchiile</li>
+                <li>Sa calculezi gradul unui nod si sa aplici Lema Mainilor (suma grade = 2|E|)</li>
+                <li>Sa distingi intre graf orientat si neorientat, grad interior si exterior</li>
+                <li>Sa identifici graful complet K<sub>n</sub>, graful conex si graful bipartit</li>
+                <li>Sa implementezi reprezentarea unui graf si calculul de grade in Python</li>
+                <li>(Intensiv) Sa implementezi aceleasi operatii in C++ cu <code>vector&lt;pair&lt;int,int&gt;&gt;</code></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Gandeste-te la colegii tai din clasa. Daca trasezi o linie intre tine si fiecare coleg cu care colaborezi la proiecte, obtii un &ldquo;graf de colaborare&rdquo;. Cati colegi ai cu care colaborezi? Acesta este <strong>gradul</strong> nodului tau in acel graf.</p>
+                <textarea id="tryAnswer" placeholder="Am 4 colegi cu care colaborez: A, B, C, D.
+Gradul meu (numarul de legaturi) este 4.
+Linia dintre mine si A este o muchie.
+Toti impreuna formeaza un graf cu 5 noduri (eu + 4 colegi)." rows="6"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>In teoria grafurilor: tu esti un <strong>nod</strong>, fiecare coleg este un nod, iar fiecare legatura de colaborare este o <strong>muchie</strong>.</p>
+                    <p>Gradul tau = numarul de muchii care pleaca din nodul tau = numarul de colegi cu care colaborezi direct.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ─── ATOM 1: Definitia grafului ─── -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Un graf G = (V, E) este format din:", "options": ["Variabile si Expresii", "Vectori si Elemente", "Varfuri (noduri) si Muchii (arce)", "Valori si Erori"], "correct": "c", "hint": "In teoria grafurilor, G = (V, E) unde V = multimea varfurilor (nodurilor) si E = multimea muchiilor (arcelor)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Ce este un graf? Definitie formala</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un <strong>graf</strong> este o pereche ordonata <strong>G = (V, E)</strong> unde:
+                    <ul>
+                        <li><strong>V</strong> &mdash; multimea <em>varfurilor</em> (nodurilor), V &ne; &empty;</li>
+                        <li><strong>E</strong> &mdash; multimea <em>muchiilor</em> (legaturilor intre noduri); E &sube; V &times; V</li>
+                    </ul>
+                    <br>
+                    Scriem <strong>|V| = n</strong> (numarul de noduri) si <strong>|E| = m</strong> (numarul de muchii).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemple din viata reala:</div>
+                    <p>Reteaua de drumuri intre orase: orasele = noduri, drumurile = muchii.</p>
+                    <p>Reteaua de calculatoare: calculatoarele = noduri, cablurile de retea = muchii.</p>
+                    <p>Orarul unui profesor: materiile = noduri, conflictele de timp = muchii.</p>
+                </div>
+                <p>In Python putem reprezenta un graf simplu cu doua seturi:</p>
+                <pre><span class="code-comment"># Graf neorientat: G = (V, E)</span>
+V = {<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>, <span class="code-number">5</span>}
+E = {(<span class="code-number">1</span>, <span class="code-number">2</span>), (<span class="code-number">1</span>, <span class="code-number">3</span>), (<span class="code-number">2</span>, <span class="code-number">3</span>), (<span class="code-number">2</span>, <span class="code-number">4</span>), (<span class="code-number">3</span>, <span class="code-number">5</span>), (<span class="code-number">4</span>, <span class="code-number">5</span>)}
+
+<span class="code-function">print</span>(<span class="code-string">"Noduri (V):"</span>, <span class="code-function">sorted</span>(V))
+<span class="code-function">print</span>(<span class="code-string">"Muchii (E):"</span>, <span class="code-function">sorted</span>(E))
+<span class="code-function">print</span>(<span class="code-string">"Numar noduri |V| ="</span>, <span class="code-function">len</span>(V))
+<span class="code-function">print</span>(<span class="code-string">"Numar muchii |E| ="</span>, <span class="code-function">len</span>(E))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Noduri (V): [1, 2, 3, 4, 5]
+Muchii (E): [(1, 2), (1, 3), (2, 3), (2, 4), (3, 5), (4, 5)]
+Numar noduri |V| = 5
+Numar muchii |E| = 6</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── ATOM 2: Gradul unui nod + Lema Mainilor ─── -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Lema mainilor (Handshaking Lemma) afirma ca suma gradelor tuturor nodurilor este egala cu:", "options": ["De doua ori numarul de muchii 2*|E|", "Numarul de noduri |V|", "Jumatatea numarului de muchii |E|/2", "Patratul numarului de noduri |V|^2"], "correct": "a", "hint": "Fiecare muchie contribuie cu +1 la gradul ambelor noduri pe care le conecteaza, deci suma totala a gradelor = 2 * numarul de muchii."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Gradul unui nod si Lema Mainilor</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Gradul unui nod v</strong> (notat <em>d(v)</em> sau <em>grad(v)</em>) = numarul de muchii incidente cu v = numarul de vecini directi ai lui v.
+                    <br><br>
+                    <strong>Lema Mainilor (Handshaking Lemma):</strong>
+                    <br>
+                    &sum; d(v) = 2 &middot; |E|
+                    <br><br>
+                    <em>Consecinta imediata:</em> Numarul de noduri cu grad impar este intotdeauna par (nu poate exista un numar impar de noduri cu grad impar).
+                </div>
+                <pre><span class="code-comment"># Calculul gradului fiecarui nod intr-un graf neorientat</span>
+muchii = [(<span class="code-number">1</span>, <span class="code-number">2</span>), (<span class="code-number">1</span>, <span class="code-number">3</span>), (<span class="code-number">2</span>, <span class="code-number">3</span>), (<span class="code-number">2</span>, <span class="code-number">4</span>), (<span class="code-number">3</span>, <span class="code-number">5</span>), (<span class="code-number">4</span>, <span class="code-number">5</span>)]
+noduri = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>, <span class="code-number">5</span>]
+
+grad = {}
+<span class="code-keyword">for</span> nod <span class="code-keyword">in</span> noduri:
+    grad[nod] = <span class="code-number">0</span>
+
+<span class="code-keyword">for</span> (u, v) <span class="code-keyword">in</span> muchii:
+    grad[u] += <span class="code-number">1</span>
+    grad[v] += <span class="code-number">1</span>
+
+<span class="code-function">print</span>(<span class="code-string">"Gradul fiecarui nod:"</span>)
+<span class="code-keyword">for</span> nod <span class="code-keyword">in</span> noduri:
+    <span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  grad({nod}) = {grad[nod]}"</span>)
+
+suma_grade = <span class="code-function">sum</span>(grad.values())
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"\nSuma gradelor = {suma_grade}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"2 * |E| = {2 * len(muchii)}"</span>)
+<span class="code-function">print</span>(<span class="code-string">"Lema mainilor: suma grade = 2 * numar muchii ->"</span>, suma_grade == <span class="code-number">2</span> * <span class="code-function">len</span>(muchii))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Gradul fiecarui nod:
+  grad(1) = 2
+  grad(2) = 3
+  grad(3) = 3
+  grad(4) = 2
+  grad(5) = 2
+
+Suma gradelor = 12
+2 * |E| = 12
+Lema mainilor: suma grade = 2 * numar muchii -> True</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">De retinut:</div>
+                    <p>Nodurile 2 si 3 au grad 3 (gradul maxim in acest graf). Nodurile 1, 4, 5 au grad 2. Un nod cu grad 0 se numeste <strong>nod izolat</strong>. Complexitate calcul grade: <strong>O(|V| + |E|)</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── ATOM 3: Graf orientat vs neorientat ─── -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Intr-un graf orientat, gradul interior al unui nod v este:", "options": ["Numarul de arce care pleaca din v", "Numarul de arce care sosesc in v", "Suma arcelor ce pleaca si sosesc in v", "Numarul de vecini ai lui v in graful neorientat corespunzator"], "correct": "b", "hint": "Gradul interior (in-degree) = numarul arcelor care INTRA in v. Gradul exterior (out-degree) = numarul arcelor care IESESC din v."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Graf orientat vs. Graf neorientat</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Graf neorientat:</strong> Muchia (u, v) = (v, u): legatura bidirectionala. Nu conteaza ordinea.<br><br>
+                    <strong>Graf orientat (digraf):</strong> Arcul (u, v) &ne; (v, u): legatura unidirectionala, <em>de la u la v</em>.<br><br>
+                    In graful orientat distingem:
+                    <ul>
+                        <li><strong>grad interior d<sup>&minus;</sup>(v)</strong> = numarul arcelor care <em>intra</em> in v</li>
+                        <li><strong>grad exterior d<sup>+</sup>(v)</strong> = numarul arcelor care <em>ies</em> din v</li>
+                    </ul>
+                    Lema mainilor generalizata: &sum; d<sup>+</sup>(v) = &sum; d<sup>&minus;</sup>(v) = |E|
+                </div>
+                <pre><span class="code-comment"># Graf orientat (digraf): arcele au directie</span>
+arce = [(<span class="code-number">1</span>, <span class="code-number">2</span>), (<span class="code-number">1</span>, <span class="code-number">3</span>), (<span class="code-number">3</span>, <span class="code-number">2</span>), (<span class="code-number">2</span>, <span class="code-number">4</span>), (<span class="code-number">4</span>, <span class="code-number">3</span>), (<span class="code-number">3</span>, <span class="code-number">5</span>)]
+noduri = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>, <span class="code-number">5</span>]
+
+grad_in  = {nod: <span class="code-number">0</span> <span class="code-keyword">for</span> nod <span class="code-keyword">in</span> noduri}
+grad_out = {nod: <span class="code-number">0</span> <span class="code-keyword">for</span> nod <span class="code-keyword">in</span> noduri}
+
+<span class="code-keyword">for</span> (u, v) <span class="code-keyword">in</span> arce:
+    grad_out[u] += <span class="code-number">1</span>
+    grad_in[v]  += <span class="code-number">1</span>
+
+<span class="code-function">print</span>(<span class="code-string">"Gradul nodurilor in graful orientat:"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"{'Nod':>4} | {'grad_out (exterior)':>20} | {'grad_in (interior)':>18}"</span>)
+<span class="code-function">print</span>(<span class="code-string">"-"</span> * <span class="code-number">50</span>)
+<span class="code-keyword">for</span> nod <span class="code-keyword">in</span> noduri:
+    <span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"{nod:>4} | {grad_out[nod]:>20} | {grad_in[nod]:>18}"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Gradul nodurilor in graful orientat:
+ Nod |  grad_out (exterior) | grad_in (interior)
+--------------------------------------------------
+   1 |                    2 |                  0
+   2 |                    1 |                  2
+   3 |                    2 |                  2
+   4 |                    1 |                  1
+   5 |                    0 |                  1</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Interpretare:</div>
+                    <p>Nodul 1 are grad interior 0 (nicio sageata intra in el &mdash; este <strong>sursa</strong>). Nodul 5 are grad exterior 0 (nicio sageata iese din el &mdash; este <strong>destinatie/absorbtie</strong>).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── ATOM 4: Tipuri de grafuri ─── -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Graful complet K_n are exact:", "options": ["n muchii", "n*(n-1) muchii", "n^2 muchii", "n*(n-1)/2 muchii"], "correct": "d", "hint": "In K_n fiecare nod e conectat cu celelalte n-1 noduri. Suma 1+2+...+(n-1) = n*(n-1)/2 (impartim la 2 pentru ca fiecare muchie e numarata de 2 ori)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Tipuri de grafuri: complet, conex, bipartit</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Graf complet K<sub>n</sub>:</strong> Orice doua noduri distincte sunt conectate direct. Are exact n&middot;(n&minus;1)/2 muchii. Fiecare nod are gradul n&minus;1.
+                    <br><br>
+                    <strong>Graf conex:</strong> Intre orice doua noduri u si v exista cel putin un <em>lant</em> (secventa de noduri si muchii). Daca nu este conex, graful are mai multe <em>componente conexe</em>.
+                    <br><br>
+                    <strong>Graf bipartit:</strong> Nodurile se pot imparti in doua multimi disjuncte A si B astfel incat orice muchie are un capat in A si celalalt in B. Detectie: 2-colorare prin BFS (un graf este bipartit daca si numai daca nu are cicluri de lungime impara).
+                </div>
+                <pre><span class="code-comment"># Verificare graf complet si bipartit</span>
+
+<span class="code-keyword">def</span> <span class="code-function">este_complet</span>(noduri, muchii):
+    n = <span class="code-function">len</span>(noduri)
+    muchii_max = n * (n - <span class="code-number">1</span>) // <span class="code-number">2</span>
+    <span class="code-keyword">return</span> <span class="code-function">len</span>(muchii) == muchii_max
+
+<span class="code-keyword">def</span> <span class="code-function">este_bipartit_simplu</span>(noduri, muchii):
+    culoare = {}
+    adj = {nod: [] <span class="code-keyword">for</span> nod <span class="code-keyword">in</span> noduri}
+    <span class="code-keyword">for</span> (u, v) <span class="code-keyword">in</span> muchii:
+        adj[u].append(v)
+        adj[v].append(u)
+    <span class="code-keyword">for</span> start <span class="code-keyword">in</span> noduri:
+        <span class="code-keyword">if</span> start <span class="code-keyword">not in</span> culoare:
+            coada = [start]
+            culoare[start] = <span class="code-number">0</span>
+            <span class="code-keyword">while</span> coada:
+                nod = coada.pop(<span class="code-number">0</span>)
+                <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> adj[nod]:
+                    <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> culoare:
+                        culoare[vecin] = <span class="code-number">1</span> - culoare[nod]
+                        coada.append(vecin)
+                    <span class="code-keyword">elif</span> culoare[vecin] == culoare[nod]:
+                        <span class="code-keyword">return False</span>
+    <span class="code-keyword">return True</span>
+
+<span class="code-comment"># Graf K4 (complet cu 4 noduri)</span>
+V4 = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>]
+E4 = [(<span class="code-number">1</span>,<span class="code-number">2</span>),(<span class="code-number">1</span>,<span class="code-number">3</span>),(<span class="code-number">1</span>,<span class="code-number">4</span>),(<span class="code-number">2</span>,<span class="code-number">3</span>),(<span class="code-number">2</span>,<span class="code-number">4</span>),(<span class="code-number">3</span>,<span class="code-number">4</span>)]
+<span class="code-function">print</span>(<span class="code-string">"Graf K4 (complet cu 4 noduri):"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Noduri: {V4}, Muchii: {len(E4)}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Este complet? {este_complet(V4, E4)}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Este bipartit? {este_bipartit_simplu(V4, E4)}"</span>)
+<span class="code-function">print</span>()
+<span class="code-comment"># Graf bipartit: A={1,2}, B={3,4}</span>
+V_bip = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>]
+E_bip = [(<span class="code-number">1</span>,<span class="code-number">3</span>),(<span class="code-number">1</span>,<span class="code-number">4</span>),(<span class="code-number">2</span>,<span class="code-number">3</span>),(<span class="code-number">2</span>,<span class="code-number">4</span>)]
+<span class="code-function">print</span>(<span class="code-string">"Graf bipartit: A={1,2}, B={3,4}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Muchii: {E_bip}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Este complet? {este_complet(V_bip, E_bip)}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Este bipartit? {este_bipartit_simplu(V_bip, E_bip)}"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Graf K4 (complet cu 4 noduri):
+  Noduri: [1, 2, 3, 4], Muchii: 6
+  Este complet? True
+  Este bipartit? False
+
+Graf bipartit: A={1,2}, B={3,4}
+  Muchii: [(1, 3), (1, 4), (2, 3), (2, 4)]
+  Este complet? False
+  Este bipartit? True</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── ATOM 5: Conexitate, lant, ciclu ─── -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Un nod izolat dintr-un graf are gradul:", "options": ["0", "1", "2", "Egal cu numarul de noduri minus 1"], "correct": "a", "hint": "Un nod izolat nu are nicio muchie conectata la el, deci gradul sau este 0."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Conexitate, lant, ciclu &mdash; verificare DFS</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Lant:</strong> Secventa de noduri v<sub>0</sub>, v<sub>1</sub>, ..., v<sub>k</sub> in care oricare doua consecutive sunt legate printr-o muchie. Lungimea lantului = numarul de muchii = k.
+                    <br><br>
+                    <strong>Drum (in graf orientat):</strong> Secventa in care arcele respecta directia (de la v<sub>i</sub> la v<sub>i+1</sub>).
+                    <br><br>
+                    <strong>Ciclu:</strong> Lant cu v<sub>0</sub> = v<sub>k</sub> (incepe si termina in acelasi nod). Lungime minima ciclu simplu = 3 (triunghi).
+                    <br><br>
+                    <strong>Graf aciclic:</strong> Nu contine niciun ciclu. Un graf neorientat conex si aciclic se numeste <strong>arbore</strong> (studiat in modulul urmator).
+                </div>
+                <pre><span class="code-comment"># Verificare conexitate cu DFS iterativ</span>
+
+<span class="code-keyword">def</span> <span class="code-function">este_conex</span>(noduri, muchii):
+    adj = {nod: [] <span class="code-keyword">for</span> nod <span class="code-keyword">in</span> noduri}
+    <span class="code-keyword">for</span> (u, v) <span class="code-keyword">in</span> muchii:
+        adj[u].append(v)
+        adj[v].append(u)
+    <span class="code-keyword">if not</span> noduri:
+        <span class="code-keyword">return True</span>
+    vizitat = <span class="code-function">set</span>()
+    stiva = [noduri[<span class="code-number">0</span>]]
+    vizitat.add(noduri[<span class="code-number">0</span>])
+    <span class="code-keyword">while</span> stiva:
+        nod = stiva.pop()
+        <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> adj[nod]:
+            <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> vizitat:
+                vizitat.add(vecin)
+                stiva.append(vecin)
+    <span class="code-keyword">return</span> <span class="code-function">len</span>(vizitat) == <span class="code-function">len</span>(noduri)
+
+<span class="code-comment"># Graf conex</span>
+V1 = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>, <span class="code-number">5</span>]
+E1 = [(<span class="code-number">1</span>,<span class="code-number">2</span>),(<span class="code-number">2</span>,<span class="code-number">3</span>),(<span class="code-number">3</span>,<span class="code-number">4</span>),(<span class="code-number">4</span>,<span class="code-number">5</span>),(<span class="code-number">5</span>,<span class="code-number">1</span>),(<span class="code-number">2</span>,<span class="code-number">4</span>)]
+<span class="code-function">print</span>(<span class="code-string">"Graf conex:"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Noduri: {V1}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Muchii: {E1}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Este conex? {este_conex(V1, E1)}"</span>)
+<span class="code-function">print</span>()
+<span class="code-comment"># Graf neconex (nodul 4 este izolat)</span>
+V2 = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>]
+E2 = [(<span class="code-number">1</span>,<span class="code-number">2</span>),(<span class="code-number">2</span>,<span class="code-number">3</span>)]
+<span class="code-function">print</span>(<span class="code-string">"Graf neconex (nodul 4 izolat):"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Noduri: {V2}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Muchii: {E2}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  Este conex? {este_conex(V2, E2)}"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Graf conex:
+  Noduri: [1, 2, 3, 4, 5]
+  Muchii: [(1, 2), (2, 3), (3, 4), (4, 5), (5, 1), (2, 4)]
+  Este conex? True
+
+Graf neconex (nodul 4 izolat):
+  Noduri: [1, 2, 3, 4]
+  Muchii: [(1, 2), (2, 3)]
+  Este conex? False</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Complexitate:</div>
+                    <p>Verificarea conexitatii prin DFS/BFS ruleaza in <strong>O(|V| + |E|)</strong> &mdash; liniar in numarul de noduri plus numarul de muchii.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── ATOM 6: C++ exclusiv intensiv ─── -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++17, structured bindings (auto& [u, v]) permit:", "options": ["Declararea a doua variabile cu acelasi tip", "Destructurarea unui pair intr-o bucla for-each", "Initializarea automata a unui vector cu perechi", "Sortarea automata a perechilor dupa primul element"], "correct": "b", "hint": "auto& [u, v] in C++17 destructureaza un pair<int,int> in doua variabile numite u si v direct in bucla for-each, evitand .first si .second."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Grafuri in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+                    <p>La profilul intensiv implementam grafuri in C++ folosind <code>vector&lt;pair&lt;int,int&gt;&gt;</code> pentru lista de muchii si <code>vector&lt;int&gt;</code> pentru grade. Folosim <em>structured bindings</em> C++17 (<code>auto&amp; [u, v]</code>) pentru iterare eleganta &mdash; evitam <code>.first</code> si <code>.second</code>.</p>
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-comment">// Graf neorientat: 5 noduri, lista de muchii</span>
+    <span class="code-keyword">int</span> n = <span class="code-number">5</span>;
+    vector&lt;pair&lt;<span class="code-keyword">int</span>,<span class="code-keyword">int</span>&gt;&gt; muchii = {
+        {<span class="code-number">1</span>,<span class="code-number">2</span>},{<span class="code-number">1</span>,<span class="code-number">3</span>},{<span class="code-number">2</span>,<span class="code-number">3</span>},{<span class="code-number">2</span>,<span class="code-number">4</span>},{<span class="code-number">3</span>,<span class="code-number">5</span>},{<span class="code-number">4</span>,<span class="code-number">5</span>}
+    };
+
+    <span class="code-comment">// Gradul fiecarui nod (indexat de la 1)</span>
+    vector&lt;<span class="code-keyword">int</span>&gt; grad(n + <span class="code-number">1</span>, <span class="code-number">0</span>);
+    <span class="code-keyword">for</span> (<span class="code-keyword">auto</span>&amp; [u, v] : muchii) {
+        grad[u]++;
+        grad[v]++;
+    }
+
+    cout &lt;&lt; <span class="code-string">"Graf neorientat cu "</span> &lt;&lt; n &lt;&lt; <span class="code-string">" noduri si "</span>
+         &lt;&lt; muchii.size() &lt;&lt; <span class="code-string">" muchii"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Gradele nodurilor:"</span> &lt;&lt; endl;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">1</span>; i &lt;= n; i++) {
+        cout &lt;&lt; <span class="code-string">"  grad("</span> &lt;&lt; i &lt;&lt; <span class="code-string">") = "</span> &lt;&lt; grad[i] &lt;&lt; endl;
+    }
+
+    <span class="code-keyword">int</span> suma = <span class="code-number">0</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">1</span>; i &lt;= n; i++) suma += grad[i];
+    cout &lt;&lt; <span class="code-string">"Suma grade = "</span> &lt;&lt; suma
+         &lt;&lt; <span class="code-string">" (= 2 * "</span> &lt;&lt; muchii.size() &lt;&lt; <span class="code-string">" = "</span>
+         &lt;&lt; <span class="code-number">2</span> * (<span class="code-keyword">int</span>)muchii.size() &lt;&lt; <span class="code-string">")"</span> &lt;&lt; endl;
+
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>Graf neorientat cu 5 noduri si 6 muchii
+Gradele nodurilor:
+  grad(1) = 2
+  grad(2) = 3
+  grad(3) = 3
+  grad(4) = 2
+  grad(5) = 2
+Suma grade = 12 (= 2 * 6 = 12)</pre>
+                </div>
+                <p>Aceleasi rezultate ca in Python &mdash; acelasi algoritm O(|V| + |E|), doar sintaxa difera. In lectia urmatoare vom trece la reprezentari mai eficiente: matrice de adiacenta si liste de adiacenta.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Calcul grad</h3>
+            <p>Se da graful neorientat cu nodurile {A, B, C, D, E} si muchiile {AB, AC, BC, BD, CE, DE}.</p>
+            <ol>
+                <li>Scrie multimile V si E cu notatia matematica G = (V, E).</li>
+                <li>Calculeaza gradul fiecarui nod.</li>
+                <li>Verifica Lema Mainilor: suma gradelor = 2 &times; numarul de muchii.</li>
+                <li>Exista noduri izolate? Exista noduri cu grad impar? Cate?</li>
+            </ol>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Graf orientat</h3>
+            <p>Se da graful orientat G cu nodurile {1, 2, 3, 4} si arcele {(1,2), (1,3), (2,4), (3,2), (4,1), (4,3)}.</p>
+            <ol>
+                <li>Calculeaza gradul interior si exterior al fiecarui nod.</li>
+                <li>Verifica: suma grad_in = suma grad_out = |E|.</li>
+                <li>Identifica sursele (grad interior 0) si absorbtiile (grad exterior 0) din graf.</li>
+                <li>Exista un ciclu orientat? Descrie-l ca secventa de noduri.</li>
+            </ol>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Analiza completa in Python</h3>
+            <p>Construieste in Python un graf neorientat cu n = 6 noduri si muchiile {(1,2),(1,4),(2,3),(2,5),(3,6),(4,5),(5,6)}.</p>
+            <ol>
+                <li>Verifica daca graful este conex (folosind DFS iterativ).</li>
+                <li>Gaseste toate tripletele de noduri (i, j, k) cu i &lt; j &lt; k care formeaza un triunghi (ciclu de lungime 3).</li>
+                <li>Calculeaza numarul de componente conexe daca elimini nodul 2 si toate muchiile incidente lui.</li>
+                <li>(Exclusiv intensiv C++) Rescrie verificarea conexitatii in C++ cu <code>vector&lt;vector&lt;int&gt;&gt;</code> pentru lista de adiacenta.</li>
+            </ol>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Definitia formala a grafului: G = (V, E), cu |V| = n noduri si |E| = m muchii</li>
+                <li>Gradul unui nod = numarul de muchii incidente; Lema Mainilor: &sum;d(v) = 2|E|</li>
+                <li>Graf orientat vs. neorientat; grad interior d<sup>&minus;</sup>(v) si grad exterior d<sup>+</sup>(v)</li>
+                <li>Graf complet K<sub>n</sub> cu n&middot;(n&minus;1)/2 muchii; graf conex; graf bipartit (2-colorabil)</li>
+                <li>Lant, drum, ciclu; graf aciclic; conexitate verificata prin DFS in O(|V| + |E|)</li>
+                <li>(Intensiv) Implementare C++ cu <code>vector&lt;pair&lt;int,int&gt;&gt;</code> si structured bindings C++17</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Lectia 6: Reprezentari grafuri</strong> &mdash; matrice de adiacenta, liste de adiacenta si comparatia complexitatii spatiale O(n<sup>2</sup>) vs O(n+m).</p>
+            <a href="lectia6-reprezentari-graf.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m1-structuri-avansate-lectia5-grafuri-intro');
+        PracticeSimple.init('cls11-m1-structuri-avansate-lectia5-grafuri-intro');
+        LessonSummary.init('cls11-m1-structuri-avansate-lectia5-grafuri-intro');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm1-structuri-avansate',
+            moduleName: 'M1 Structuri Avansate',
+            lesson: 'Introducere Grafuri'
+        });
+        LearningProgress.init('cls11', 'm1-structuri-avansate', 'lectia5-grafuri-intro.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

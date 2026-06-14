@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 2: Parcurgere DFS | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia1-lanturi-cicluri.html" class="nav-btn" title="Lectia anterioara">&#8592; Anterioara</a>
+        <a href="lectia3-parcurgere-bfs.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Parcurgere in adancime (DFS)</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- FRAME SECTION -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege cum functioneaza algoritmul de parcurgere in adancime (DFS), il vei implementa iterativ si recursiv, si vei aplica DFS pentru a detecta cicluri si a numara componentele conexe ale unui graf.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa descrii principiul DFS: mergem cat mai adanc, marcam nodurile vizitate</li>
+                <li>Sa implementezi DFS iterativ folosind o stiva (Python)</li>
+                <li>Sa implementezi DFS recursiv in Python si C++ (la intensiv)</li>
+                <li>Sa analizezi complexitatea temporala si spatiala a DFS: O(V + E)</li>
+                <li>Sa aplici DFS pentru detectia ciclurilor si numararea componentelor conexe</li>
+                <li>Sa rezolvi probleme tip Bacalaureat cu parcurgeri in adancime</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- TRY SECTION -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare initiala:</div>
+                <p>Considera graful cu nodurile 0, 1, 2, 3 si muchiile: 0-1, 0-2, 1-3. Daca incepem din nodul 0 si mergem intotdeauna la primul vecin (cel mai mic) nevizitat, in ce ordine vizitam nodurile?</p>
+                <textarea id="tryAnswer" placeholder="Ordinea vizitarii: nodul 0 ->" rows="4"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Din 0, mergem la 1 (primul vecin). Din 1, mergem la 3. Din 3 nu mai avem vecini nevizitati, revenim la 1, revenim la 0, mergem la 2.</p>
+                    <p>Ordinea: <strong>0 &#8594; 1 &#8594; 3 &#8594; 2</strong>.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ATOMS -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1 -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Ce structura de date sta la baza DFS iterativ?", "options": ["Stiva (stack)", "Coada (queue)", "Arbore binar", "Tabela hash"], "correct": "a", "hint": "DFS = Depth-First Search. Merge cat mai adanc: ultimul intrat = primul procesat. Aceasta este definitia stivei (LIFO)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Ce este DFS si ideea de baza</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>DFS (Depth-First Search)</strong> = parcurgere in <em>adancime</em>: din nodul curent, mergem cat mai departe pe un drum pana nu mai putem continua, apoi revenim si exploram alta ramura.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Analogie: explorarea unui labirint pe hartie</div>
+                    <p>Tii o evidenta a nodurilor vizitate cu un creion. Alegi un drum si mergi pe el cat mai departe, marcand fiecare nod. Cand ajungi la un nod fara iesiri noi, te intorci si iei urmatorul drum neexplorat.</p>
+                </div>
+                <div class="concept-def">
+                    <strong>Idei cheie:</strong>
+                    <ul>
+                        <li>Fiecare nod este vizitat <strong>exact o data</strong> (marcam cu <code>vizitat[]</code>)</li>
+                        <li>Implementare <strong>iterativa</strong>: folosim o <strong>stiva</strong> (LIFO)</li>
+                        <li>Implementare <strong>recursiva</strong>: stiva de apeluri a programului joaca rolul stivei</li>
+                        <li>Complexitate: <strong>O(V + E)</strong> unde V = nr. noduri, E = nr. muchii</li>
+                    </ul>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Graful folosit in toata lectia (6 noduri, 6 muchii)</div>
+                    <pre><span class="code-comment"># Noduri: 0, 1, 2, 3, 4, 5</span>
+<span class="code-comment"># Muchii: 0-1, 0-2, 1-3, 1-4, 2-5, 4-5</span>
+<span class="code-comment">#     0</span>
+<span class="code-comment">#    / \</span>
+<span class="code-comment">#   1   2</span>
+<span class="code-comment">#  / \   \</span>
+<span class="code-comment"># 3   4---5</span></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2 -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "De ce adaugam vecinii pe stiva in ordine DESCRESCATOARE (reverse=True)?", "options": ["Ca sa evitam ciclurile", "Ca sa sortam graful", "Ca sa procesam vecinii in ordine crescatoare (cel mai mic iese primul din stiva LIFO)", "Nu conteaza ordinea"], "correct": "c", "hint": "Stiva LIFO: ultimul intrat, primul iesit. Daca vrem sa procesam vecinii de la mic la mare, trebuie sa ii punem in ordine inversa pe stiva."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. DFS iterativ in Python (cu stiva)</h3>
+            </div>
+            <div class="atom-content">
+                <pre><span class="code-comment"># DFS iterativ - Python</span>
+graf = {
+    <span class="code-number">0</span>: [<span class="code-number">1</span>, <span class="code-number">2</span>],
+    <span class="code-number">1</span>: [<span class="code-number">0</span>, <span class="code-number">3</span>, <span class="code-number">4</span>],
+    <span class="code-number">2</span>: [<span class="code-number">0</span>, <span class="code-number">5</span>],
+    <span class="code-number">3</span>: [<span class="code-number">1</span>],
+    <span class="code-number">4</span>: [<span class="code-number">1</span>, <span class="code-number">5</span>],
+    <span class="code-number">5</span>: [<span class="code-number">2</span>, <span class="code-number">4</span>]
+}
+
+<span class="code-keyword">def</span> <span class="code-function">dfs_iterativ</span>(graf, start):
+    vizitat = <span class="code-function">set</span>()
+    stiva = [start]
+    ordine = []
+    <span class="code-keyword">while</span> stiva:
+        nod = stiva.<span class="code-function">pop</span>()  <span class="code-comment"># scoatem din varful stivei</span>
+        <span class="code-keyword">if</span> nod <span class="code-keyword">not in</span> vizitat:
+            vizitat.<span class="code-function">add</span>(nod)
+            ordine.<span class="code-function">append</span>(nod)
+            <span class="code-comment"># punem vecinii in ordine INVERSA</span>
+            <span class="code-comment"># ca sa ii procesam in ordine crescatoare</span>
+            <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> <span class="code-function">sorted</span>(graf[nod], reverse=<span class="code-keyword">True</span>):
+                <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> vizitat:
+                    stiva.<span class="code-function">append</span>(vecin)
+    <span class="code-keyword">return</span> ordine
+
+rezultat = <span class="code-function">dfs_iterativ</span>(graf, <span class="code-number">0</span>)
+<span class="code-function">print</span>(<span class="code-string">"Ordine DFS (iterativ, start=0):"</span>, rezultat)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Ordine DFS (iterativ, start=0): [0, 1, 3, 4, 5, 2]</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Urmarire pas cu pas (primii 4 pasi)</div>
+                    <pre>Stiva initiala: [0]
+Pas 1: scoatem 0, vizitat={0}, punem [2,1] -&gt; stiva=[2,1]
+Pas 2: scoatem 1, vizitat={0,1}, punem [4,3] -&gt; stiva=[2,4,3]
+Pas 3: scoatem 3, vizitat={0,1,3}, niciun vecin nou -&gt; stiva=[2,4]
+Pas 4: scoatem 4, vizitat={0,1,3,4}, punem [5] -&gt; stiva=[2,5]
+...</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3 -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Cand se opreste DFS recursiv pentru un nod dat?", "options": ["Dupa 10 apeluri recursive", "Cand toti vecinii sai au fost deja vizitati", "Cand ajunge la nodul cu numarul cel mai mare", "Cand stiva devine goala"], "correct": "b", "hint": "DFS recursiv continua sa apeleze dfs(vecin) cat timp gaseste vecini nevizitati. Cand toti vecinii sunt vizitati, functia returneaza."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. DFS recursiv in Python</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Varianta recursiva este mai eleganta. Stiva este gestionata implicit de <strong>stiva de apeluri a programului</strong>: fiecare apel <code>dfs(vecin)</code> creeaza un nou cadru pe stiva sistemului.
+                </div>
+                <pre><span class="code-comment"># DFS recursiv - Python</span>
+graf = {
+    <span class="code-number">0</span>: [<span class="code-number">1</span>, <span class="code-number">2</span>],
+    <span class="code-number">1</span>: [<span class="code-number">0</span>, <span class="code-number">3</span>, <span class="code-number">4</span>],
+    <span class="code-number">2</span>: [<span class="code-number">0</span>, <span class="code-number">5</span>],
+    <span class="code-number">3</span>: [<span class="code-number">1</span>],
+    <span class="code-number">4</span>: [<span class="code-number">1</span>, <span class="code-number">5</span>],
+    <span class="code-number">5</span>: [<span class="code-number">2</span>, <span class="code-number">4</span>]
+}
+
+<span class="code-keyword">def</span> <span class="code-function">dfs_recursiv</span>(graf, nod, vizitat=<span class="code-keyword">None</span>, ordine=<span class="code-keyword">None</span>):
+    <span class="code-keyword">if</span> vizitat <span class="code-keyword">is None</span>:
+        vizitat = <span class="code-function">set</span>()
+        ordine = []
+    vizitat.<span class="code-function">add</span>(nod)
+    ordine.<span class="code-function">append</span>(nod)
+    <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> <span class="code-function">sorted</span>(graf[nod]):
+        <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> vizitat:
+            <span class="code-function">dfs_recursiv</span>(graf, vecin, vizitat, ordine)
+    <span class="code-keyword">return</span> ordine
+
+<span class="code-function">print</span>(<span class="code-string">"Ordine DFS (recursiv, start=0):"</span>,
+      <span class="code-function">dfs_recursiv</span>(graf, <span class="code-number">0</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Ordine DFS (recursiv, start=0): [0, 1, 3, 4, 5, 2]</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Arborele de apeluri recursive</div>
+                    <pre>dfs(0)
+  dfs(1)     &lt;- primul vecin al lui 0
+    dfs(3)   &lt;- primul vecin al lui 1
+    &lt;return&gt; &lt;- 3 fara vecini nevizitati
+    dfs(4)   &lt;- al doilea vecin al lui 1
+      dfs(5) &lt;- vecinul nevizitat al lui 4
+        dfs(2) &lt;- via 5
+        &lt;return&gt;
+      &lt;return&gt;
+    &lt;return&gt;
+  &lt;return&gt;
+&lt;return&gt;</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: C++ EXCLUSIV INTENSIV -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "In C++, ce tip de date folosim cel mai des pentru lista de adiacenta la DFS?", "options": ["vector<vector<int>> adj", "int adj[][]", "string adj[]", "map<string,int>"], "correct": "a", "hint": "vector<vector<int>> permite un numar variabil de vecini pentru fiecare nod."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. DFS recursiv in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+                    <p>La profilul intensiv implementam DFS si in C++. Diferente fata de Python: lista de adiacenta se declara ca <code>vector&lt;int&gt; adj[NMAX]</code>, vectorul <code>viz[]</code> e de obicei global, tipurile se declara explicit, fiecare instructiune se termina cu <code>;</code>.</p>
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;algorithm&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> n = <span class="code-number">6</span>;
+vector&lt;<span class="code-keyword">int</span>&gt; adj[<span class="code-number">6</span>];
+<span class="code-keyword">bool</span> viz[<span class="code-number">6</span>];
+
+<span class="code-keyword">void</span> <span class="code-function">dfs</span>(<span class="code-keyword">int</span> nod) {
+    viz[nod] = <span class="code-keyword">true</span>;
+    cout &lt;&lt; nod &lt;&lt; <span class="code-string">" "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> vecin : adj[nod])
+        <span class="code-keyword">if</span> (!viz[vecin]) <span class="code-function">dfs</span>(vecin);
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    adj[<span class="code-number">0</span>] = {<span class="code-number">1</span>, <span class="code-number">2</span>};
+    adj[<span class="code-number">1</span>] = {<span class="code-number">0</span>, <span class="code-number">3</span>, <span class="code-number">4</span>};
+    adj[<span class="code-number">2</span>] = {<span class="code-number">0</span>, <span class="code-number">5</span>};
+    adj[<span class="code-number">3</span>] = {<span class="code-number">1</span>};
+    adj[<span class="code-number">4</span>] = {<span class="code-number">1</span>, <span class="code-number">5</span>};
+    adj[<span class="code-number">5</span>] = {<span class="code-number">2</span>, <span class="code-number">4</span>};
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++)
+        <span class="code-function">sort</span>(adj[i].<span class="code-function">begin</span>(), adj[i].<span class="code-function">end</span>());
+    cout &lt;&lt; <span class="code-string">"DFS recursiv (start=0): "</span>;
+    <span class="code-function">dfs</span>(<span class="code-number">0</span>);
+    cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>DFS recursiv (start=0): 0 1 3 4 5 2 </pre>
+                </div>
+                <p>Acelasi algoritm, acelasi rezultat. In C++ vectorul <code>viz[]</code> e un array global simplu, iar <code>dfs()</code> apeleaza recursiv pentru fiecare vecin nevizitat.</p>
+            </div>
+        </div>
+
+        <!-- ATOM 5 -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Cum detectam un ciclu intr-un graf neorientat cu DFS?", "options": ["Daca DFS se termina prea repede", "Daca gasim un vecin vizitat care nu este parintele nodului curent", "Daca numarul de muchii depaseste numarul de noduri", "Daca graful nu este conex"], "correct": "b", "hint": "Daca gasim un vecin deja vizitat care NU este parintele, exista o cale alternativa = ciclu."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Aplicatie: Detectia ciclurilor cu DFS</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    In timpul DFS, daca gasim un vecin <strong>deja vizitat</strong> care <strong>nu este parintele</strong> nodului curent, am gasit un <strong>ciclu</strong>.
+                </div>
+                <pre><span class="code-comment"># Detectie ciclu cu DFS - Python</span>
+<span class="code-keyword">def</span> <span class="code-function">are_ciclu</span>(graf, n):
+    vizitat = [<span class="code-keyword">False</span>] * n
+
+    <span class="code-keyword">def</span> <span class="code-function">dfs</span>(nod, parinte):
+        vizitat[nod] = <span class="code-keyword">True</span>
+        <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> graf[nod]:
+            <span class="code-keyword">if not</span> vizitat[vecin]:
+                <span class="code-keyword">if</span> <span class="code-function">dfs</span>(vecin, nod):
+                    <span class="code-keyword">return True</span>
+            <span class="code-keyword">elif</span> vecin != parinte:  <span class="code-comment"># vizitat si nu parinte = ciclu!</span>
+                <span class="code-keyword">return True</span>
+        <span class="code-keyword">return False</span>
+
+    <span class="code-keyword">for</span> i <span class="code-keyword">in range</span>(n):
+        <span class="code-keyword">if not</span> vizitat[i]:
+            <span class="code-keyword">if</span> <span class="code-function">dfs</span>(i, -<span class="code-number">1</span>):
+                <span class="code-keyword">return True</span>
+    <span class="code-keyword">return False</span>
+
+g1 = {<span class="code-number">0</span>:[<span class="code-number">1</span>], <span class="code-number">1</span>:[<span class="code-number">0</span>,<span class="code-number">2</span>], <span class="code-number">2</span>:[<span class="code-number">1</span>,<span class="code-number">3</span>], <span class="code-number">3</span>:[<span class="code-number">2</span>]}  <span class="code-comment"># lant, fara ciclu</span>
+g2 = {<span class="code-number">0</span>:[<span class="code-number">1</span>,<span class="code-number">2</span>], <span class="code-number">1</span>:[<span class="code-number">0</span>,<span class="code-number">2</span>], <span class="code-number">2</span>:[<span class="code-number">1</span>,<span class="code-number">0</span>]}  <span class="code-comment"># triunghi, cu ciclu</span>
+<span class="code-function">print</span>(<span class="code-string">"Graf 0-1-2-3 are ciclu?"</span>, <span class="code-function">are_ciclu</span>(g1, <span class="code-number">4</span>))
+<span class="code-function">print</span>(<span class="code-string">"Graf 0-1-2-0 are ciclu?"</span>, <span class="code-function">are_ciclu</span>(g2, <span class="code-number">3</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Graf 0-1-2-3 are ciclu? False
+Graf 0-1-2-0 are ciclu? True</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">De ce excludem parintele?</div>
+                    <p>In graful neorientat, muchia 0-1 exista si ca 1-0. Cand suntem in nodul 1 (venind din 0), nodul 0 este deja vizitat dar este <em>parintele</em> nostru, deci nu este ciclu real. Ciclul apare doar daca gasim alt nod vizitat, diferit de parinte.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6 -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Daca un graf cu 5 noduri are 2 componente conexe, cate DFS-uri independente pornim?", "options": ["5", "1", "2", "Depinde de numarul de muchii"], "correct": "c", "hint": "Bucla principala porneste un DFS nou doar daca nodul i nu a fost inca vizitat. Fiecare DFS acopera o componenta conexa intreaga."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Aplicatie: Numara componentele conexe</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un singur apel DFS pornit dintr-un nod viziteaza <strong>toata componenta conexa</strong> care contine acel nod. Dupa DFS, nodurile nevizitate apartin altor componente.
+                </div>
+                <pre><span class="code-comment"># Componente conexe cu DFS - Python</span>
+<span class="code-keyword">def</span> <span class="code-function">componente_conexe</span>(graf, n):
+    vizitat = [<span class="code-keyword">False</span>] * n
+    componente = []
+
+    <span class="code-keyword">def</span> <span class="code-function">dfs</span>(nod, comp):
+        vizitat[nod] = <span class="code-keyword">True</span>
+        comp.<span class="code-function">append</span>(nod)
+        <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> <span class="code-function">sorted</span>(graf.<span class="code-function">get</span>(nod, [])):
+            <span class="code-keyword">if not</span> vizitat[vecin]:
+                <span class="code-function">dfs</span>(vecin, comp)
+
+    <span class="code-keyword">for</span> i <span class="code-keyword">in range</span>(n):
+        <span class="code-keyword">if not</span> vizitat[i]:  <span class="code-comment"># nod nevizitat = noua componenta</span>
+            comp = []
+            <span class="code-function">dfs</span>(i, comp)
+            componente.<span class="code-function">append</span>(comp)
+    <span class="code-keyword">return</span> componente
+
+<span class="code-comment"># Graf cu 2 componente: {0,1,2} si {3,4}</span>
+graf = {<span class="code-number">0</span>:[<span class="code-number">1</span>,<span class="code-number">2</span>], <span class="code-number">1</span>:[<span class="code-number">0</span>,<span class="code-number">2</span>], <span class="code-number">2</span>:[<span class="code-number">0</span>,<span class="code-number">1</span>],
+        <span class="code-number">3</span>:[<span class="code-number">4</span>], <span class="code-number">4</span>:[<span class="code-number">3</span>]}
+<span class="code-function">print</span>(<span class="code-string">"Componente conexe:"</span>,
+      <span class="code-function">componente_conexe</span>(graf, <span class="code-number">5</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Componente conexe: [[0, 1, 2], [3, 4]]</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Complexitate DFS - rezumat</div>
+                    <p><strong>Timp: O(V + E)</strong> - fiecare nod e vizitat o data (V), fiecare muchie e examinata de doua ori la grafuri neorientate.</p>
+                    <p><strong>Spatiu: O(V)</strong> - pentru vectorul <code>vizitat</code> + stiva de apeluri recursive (profunda maxim V in cazul unui graf-lant).</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- PRACTICE SECTION -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) - Urmarire DFS</h3>
+            <p>Consideram graful cu 4 noduri (0, 1, 2, 3) si muchiile: 0-1, 0-3, 1-2, 2-3. Scrie ordinea de vizitare DFS pornind din nodul 0, cu vecinii procesati in ordine crescatoare. Urmareste stiva pas cu pas.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) - Detectie ciclu manual</h3>
+            <p>Fie graful cu 5 noduri si muchiile: 0-1, 1-2, 2-3, 3-4, 4-1. Aplicand algoritmul din Atomul 5, determina daca graful are ciclu. Indica exact care pereche (nod curent, vecin vizitat diferit de parinte) declanseaza detectia.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) <span class="bonus-badge">INTENSIV</span> - Implementare C++ componente conexe</h3>
+            <p>Implementeaza in C++ o functie <code>int nr_componente(vector&lt;vector&lt;int&gt;&gt;&amp; adj, int n)</code> care returneaza numarul de componente conexe. Testeaza pe graful din Atomul 6 (5 noduri, 2 componente). Complexitate ceruta: O(V + E).</p>
+        </div>
+    </section>
+
+    <!-- REVIEW SECTION -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>DFS = parcurgere in adancime: mergem cat mai departe, marcam cu <code>vizitat[]</code></li>
+                <li>DFS iterativ foloseste o <strong>stiva (stack)</strong>; DFS recursiv foloseste stiva de apeluri</li>
+                <li>Complexitate: <strong>O(V + E)</strong> timp, <strong>O(V)</strong> spatiu</li>
+                <li>Detectia ciclurilor: vecin vizitat diferit de parinte = ciclu</li>
+                <li>Componente conexe: fiecare DFS independent acopera exact o componenta</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Parcurgere BFS</strong> pentru a invata cum gasim distantele minime intr-un graf folosind o coada.</p>
+            <a href="lectia3-parcurgere-bfs.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m3-grafuri-lectia2-parcurgere-dfs');
+        PracticeSimple.init('cls11-m3-grafuri-lectia2-parcurgere-dfs');
+        LessonSummary.init('cls11-m3-grafuri-lectia2-parcurgere-dfs');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm3-grafuri',
+            moduleName: 'M3 Teoria Grafurilor',
+            lesson: 'Parcurgere DFS'
+        });
+        LearningProgress.init('cls11', 'm3-grafuri', 'lectia2-parcurgere-dfs.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

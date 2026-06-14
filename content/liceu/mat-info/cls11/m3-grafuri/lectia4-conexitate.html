@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 4: Conexitate in grafuri neorientate | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia3-parcurgere-bfs.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 3: BFS</a>
+        <a href="lectia5-arbori.html" class="nav-btn" title="Lectia urmatoare">Lectia 5: Arbori &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Conexitate in grafuri neorientate</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- FRAME SECTION -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege ce inseamna conexitatea unui graf neorientat, vei invata sa identifici componentele conexe si vei implementa algoritmul de numarat componente conexe folosind DFS si BFS, cu complexitate O(V + E).</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti graful conex si componenta conexa</li>
+                <li>Sa verifici daca un graf este conex folosind DFS sau BFS dintr-un singur nod</li>
+                <li>Sa numeri componentele conexe ale unui graf printr-o parcurgere repetata din noduri nevizitate</li>
+                <li>Sa implementezi algoritmul de numarat componente in Python (DFS recursiv si BFS cu coada)</li>
+                <li>Sa analizezi complexitatea O(V + E) a algoritmului si sa justifici de ce este optima</li>
+                <li>Sa implementezi algoritmul in C++ cu <code>vector&lt;vector&lt;int&gt;&gt;</code> si <code>queue&lt;int&gt;</code> <span class="bonus-badge">EXCLUSIV INTENSIV</span></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- TRY SECTION -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Imagineaza-ti o harta cu 7 orase. Intre unele orase exista drumuri directe: 1&mdash;2, 2&mdash;3, 3&mdash;1, 4&mdash;5, 6&mdash;7. Poti ajunge din orasul 1 in orasul 6 folosind doar drumuri existente? Dar din 4 in 5?</p>
+                <p>Deseneaza graful si identifica grupurile de orase intre care poti circula liber.</p>
+                <textarea id="tryAnswer" placeholder="Grupul 1: orasele... sunt conectate intre ele.&#10;Grupul 2: ...&#10;Nu pot ajunge din ... in ... pentru ca ..." rows="5"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Urmand drumurile existente: orasele 1, 2, 3 formeaza un grup (toti conectati prin ciclul 1-2-3-1). Orasele 4 si 5 formeaza alt grup. Orasele 6 si 7 formeaza al treilea grup.</p>
+                    <p>Nu poti ajunge din 1 in 6 pentru ca nu exista niciun lant de drumuri care sa le uneasca. Aceste grupuri izolate se numesc <strong>componente conexe</strong>.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ATOMS -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1 -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Un graf neorientat este conex daca:", "options": ["Are mai multe muchii decat noduri", "Intre oricare doua noduri exista cel putin un lant", "Toate nodurile au acelasi grad", "Nu contine cicluri"], "correct": "b", "hint": "Conexitatea inseamna ca poti ajunge din orice nod in orice alt nod urmand muchiile grafului. Nu are legatura cu numarul de muchii, gradul nodurilor sau absenta ciclurilor."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Graf conex si componenta conexa &mdash; definitii</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un <strong>graf neorientat G = (V, E)</strong> este <strong>conex</strong> daca pentru oricare doua noduri u, v &isin; V exista un lant (succesiune de muchii) care le uneste.<br><br>
+                    O <strong>componenta conexa</strong> a unui graf este un subgraf conex maximal: un set de noduri intre care exista lanturi, si care nu poate fi extins cu niciun alt nod din graf pastrand aceasta proprietate.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemple vizuale:</div>
+                    <pre>Graf CONEX (1 componenta):          Graf NECONEX (3 componente):
+
+  1 --- 2 --- 4                       1 --- 2 --- 3
+  |     |
+  3 --- 5 --- 6                       4 --- 5         6 --- 7
+
+  Poti ajunge din 1 in 6:            Nu poti ajunge din 1 in 4,
+  1-2-5-6 (lant de lungime 3)        nici din 5 in 7.
+
+  Componentele grafului neconex:
+    C1 = {1, 2, 3}
+    C2 = {4, 5}
+    C3 = {6, 7}</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Proprietati esentiale:</strong>
+                    <ul>
+                        <li>Componentele conexe <em>partitioneaza</em> multimea nodurilor: fiecare nod apartine exact unei componente.</li>
+                        <li>Un graf cu <em>n</em> noduri si <em>0</em> muchii are <em>n</em> componente conexe (fiecare nod izolat este propria sa componenta).</li>
+                        <li>Un graf conex are exact <em>1</em> componenta conexa.</li>
+                        <li>Adaugarea unei muchii intre doua componente diferite <em>reduce</em> numarul de componente cu 1.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2 -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Cum verificam daca un graf cu n noduri este conex, folosind BFS dintr-un nod?", "options": ["Rulam BFS din nodul 1 si verificam daca coada devine goala inainte de a vizita toate nodurile", "Rulam BFS din nodul 1 si verificam daca numarul nodurilor vizitate este egal cu n", "Rulam BFS din fiecare nod si numaram vizitarile totale", "Verificam daca numarul de muchii este mai mare sau egal cu n-1"], "correct": "b", "hint": "BFS dintr-un nod sursa viziteaza EXACT nodurile din componenta conexa a sursei. Daca toti cei n noduri sunt vizitati, componenta sursei este intregul graf, deci graful este conex."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Verificarea conexitatii cu un singur BFS</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Idee cheie:</strong> BFS sau DFS pornind dintr-un nod sursa viziteaza exact toate nodurile accesibile din acea sursa &mdash; adica exact componenta conexa a sursei. Graful este conex daca si numai daca, pornind BFS din nodul 1, vizitam toate cele <em>n</em> noduri.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Algoritm verificare conexitate (pseudocod):</div>
+                    <div class="pseudocode">
+<span class="pseudocode-comment">// Verifica daca graful cu n noduri este conex</span><br/>
+<span class="pseudocode-keyword">INITIALIZEAZA</span> vizitat[] = False pentru toti<br/>
+<span class="pseudocode-keyword">RULEAZA</span> BFS pornind din nodul 1<br/>
+<span class="pseudocode-keyword">DACA</span> numarul nodurilor vizitate == n:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="pseudocode-keyword">RETURNEAZA</span> "conex"<br/>
+<span class="pseudocode-keyword">ALTFEL</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="pseudocode-keyword">RETURNEAZA</span> "neconex"
+                    </div>
+                </div>
+                <p>Implementare Python cu BFS:</p>
+                <pre><span class="code-comment"># Verifica conexitatea cu BFS</span>
+<span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+<span class="code-keyword">def</span> <span class="code-function">este_conex</span>(n, muchii):
+    adj = {i: [] <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>)}
+    <span class="code-keyword">for</span> u, v <span class="code-keyword">in</span> muchii:
+        adj[u].<span class="code-function">append</span>(v)
+        adj[v].<span class="code-function">append</span>(u)
+
+    vizitat = <span class="code-function">set</span>()
+    coada = <span class="code-function">deque</span>([<span class="code-number">1</span>])
+    vizitat.<span class="code-function">add</span>(<span class="code-number">1</span>)
+    <span class="code-keyword">while</span> coada:
+        nod = coada.<span class="code-function">popleft</span>()
+        <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> adj[nod]:
+            <span class="code-keyword">if</span> vecin <span class="code-keyword">not in</span> vizitat:
+                vizitat.<span class="code-function">add</span>(vecin)
+                coada.<span class="code-function">append</span>(vecin)
+    <span class="code-keyword">return</span> <span class="code-function">len</span>(vizitat) == n
+
+<span class="code-comment"># Graf conex: 5 noduri, lant 1-2-3-4-5</span>
+<span class="code-function">print</span>(<span class="code-function">este_conex</span>(<span class="code-number">5</span>, [(<span class="code-number">1</span>,<span class="code-number">2</span>),(<span class="code-number">2</span>,<span class="code-number">3</span>),(<span class="code-number">3</span>,<span class="code-number">4</span>),(<span class="code-number">4</span>,<span class="code-number">5</span>)]))
+<span class="code-comment"># Graf neconex: 5 noduri, 2 componente</span>
+<span class="code-function">print</span>(<span class="code-function">este_conex</span>(<span class="code-number">5</span>, [(<span class="code-number">1</span>,<span class="code-number">2</span>),(<span class="code-number">2</span>,<span class="code-number">3</span>),(<span class="code-number">4</span>,<span class="code-number">5</span>)]))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>True
+False</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Complexitate si optimalitate:</div>
+                    <p>BFS viziteaza fiecare nod exact o data (V operatii) si examineaza fiecare muchie exact de doua ori (2E operatii). Total: <strong>O(V + E)</strong>. Nu putem face mai bine: trebuie sa examinam fiecare muchie cel putin o data, deci O(V + E) este <strong>optim</strong> pentru verificarea conexitatii.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3 -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "In algoritmul de numarat componente conexe, cand incrementam contorul de componente?", "options": ["La fiecare nod vizitat", "La fiecare muchie parcursa", "Cand gasim un nod nevizitat si pornim o noua parcurgere DFS/BFS din el", "La finalul algoritmului, o singura data"], "correct": "c", "hint": "Contorul creste exact cand incepem o noua parcurgere dintr-un nod inca nevizitat. Fiecare astfel de pornire semnifica o componenta noua. Nodurile dintr-o componenta deja vizitata nu declanseaza o noua parcurgere."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Numarat componente conexe &mdash; DFS recursiv</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Ideea algoritmului:</strong> parcurgem toate nodurile 1, 2, ..., n. Cand gasim un nod nevizitat, inseamna ca am descoperit o componenta noua &mdash; incrementam contorul si rulam DFS din acel nod pentru a marca toate nodurile componentei ca vizitate. La finalul buclei, contorul contine numarul de componente.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Algoritmul pas cu pas (pseudocod):</div>
+                    <div class="pseudocode">
+<span class="pseudocode-comment">// Numara componentele conexe</span><br/>
+<span class="pseudocode-keyword">INITIALIZEAZA</span> vizitat[] = False; nr_componente = 0<br/>
+<span class="pseudocode-keyword">PENTRU FIECARE</span> nod din 1 la n:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="pseudocode-keyword">DACA</span> nod NU este vizitat:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nr_componente &larr; nr_componente + 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="pseudocode-keyword">RULEAZA</span> DFS(nod) &nbsp;<span class="pseudocode-comment">// marcheaza toata componenta</span><br/>
+<span class="pseudocode-keyword">RETURNEAZA</span> nr_componente
+                    </div>
+                </div>
+                <p>Implementare Python cu <strong>DFS recursiv</strong>:</p>
+                <pre><span class="code-comment"># DFS recursiv - marcheaza toti vecinii accesibili din 'nod'</span>
+<span class="code-keyword">def</span> <span class="code-function">dfs</span>(adj, nod, vizitat):
+    vizitat[nod] = <span class="code-keyword">True</span>
+    <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> adj[nod]:
+        <span class="code-keyword">if not</span> vizitat[vecin]:
+            <span class="code-function">dfs</span>(adj, vecin, vizitat)
+
+<span class="code-keyword">def</span> <span class="code-function">numar_componente_dfs</span>(n, muchii):
+    adj = {i: [] <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>)}
+    <span class="code-keyword">for</span> u, v <span class="code-keyword">in</span> muchii:
+        adj[u].<span class="code-function">append</span>(v)
+        adj[v].<span class="code-function">append</span>(u)
+
+    vizitat = {i: <span class="code-keyword">False</span> <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>)}
+    nr = <span class="code-number">0</span>
+
+    <span class="code-keyword">for</span> nod <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>):
+        <span class="code-keyword">if not</span> vizitat[nod]:
+            nr += <span class="code-number">1</span>
+            <span class="code-function">dfs</span>(adj, nod, vizitat)
+
+    <span class="code-keyword">return</span> nr
+
+<span class="code-comment"># Exemplu: 7 noduri, 3 componente ({1,2,3}, {4,5}, {6,7})</span>
+n = <span class="code-number">7</span>
+muchii = [(<span class="code-number">1</span>,<span class="code-number">2</span>), (<span class="code-number">2</span>,<span class="code-number">3</span>), (<span class="code-number">4</span>,<span class="code-number">5</span>), (<span class="code-number">6</span>,<span class="code-number">7</span>)]
+<span class="code-function">print</span>(<span class="code-string">"Graf:"</span>, n, <span class="code-string">"noduri, muchii ="</span>, muchii)
+<span class="code-function">print</span>(<span class="code-string">"Numar componente conexe:"</span>, <span class="code-function">numar_componente_dfs</span>(n, muchii))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Graf: 7 noduri, muchii = [(1, 2), (2, 3), (4, 5), (6, 7)]
+Numar componente conexe: 3</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Urmarire pas cu pas:</div>
+                    <pre>nod=1: nevizitat -> nr=1, DFS(1) marcheaza {1, 2, 3}
+nod=2: deja vizitat -> sare
+nod=3: deja vizitat -> sare
+nod=4: nevizitat -> nr=2, DFS(4) marcheaza {4, 5}
+nod=5: deja vizitat -> sare
+nod=6: nevizitat -> nr=3, DFS(6) marcheaza {6, 7}
+nod=7: deja vizitat -> sare
+Rezultat final: nr = 3</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4 -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Un graf cu 8 noduri si muchiile: (1,2),(1,3),(2,4),(5,6),(7,8) are cate componente conexe?", "options": ["1 componenta", "2 componente", "3 componente", "4 componente"], "correct": "c", "hint": "Pornim BFS din nodul 1: ajungem la {1,2,3,4} -> componenta 1. Nodul 5 este nevizitat: BFS din 5 ajunge la {5,6} -> componenta 2. Nodul 7 este nevizitat: BFS din 7 ajunge la {7,8} -> componenta 3. Total: 3."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Numarat componente cu BFS &mdash; varianta recomandata</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Varianta cu <strong>BFS</strong> este identica ca logica cu DFS, inlocuind recursivitatea cu o coada. Este preferata in practica deoarece evita riscul de stack overflow pe grafuri cu componente adanci (Python are recursivitate limitata la ~1000 niveluri implicit).
+                </div>
+                <pre><span class="code-comment"># BFS - numara componentele conexe</span>
+<span class="code-keyword">from</span> collections <span class="code-keyword">import</span> deque
+
+<span class="code-keyword">def</span> <span class="code-function">numar_componente</span>(n, muchii):
+    adj = {i: [] <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>)}
+    <span class="code-keyword">for</span> u, v <span class="code-keyword">in</span> muchii:
+        adj[u].<span class="code-function">append</span>(v)
+        adj[v].<span class="code-function">append</span>(u)
+
+    vizitat = {i: <span class="code-keyword">False</span> <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>)}
+    nr_componente = <span class="code-number">0</span>
+
+    <span class="code-keyword">for</span> nod <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>):
+        <span class="code-keyword">if not</span> vizitat[nod]:
+            nr_componente += <span class="code-number">1</span>
+            <span class="code-comment"># BFS din nodul curent - marcheaza toata componenta</span>
+            coada = <span class="code-function">deque</span>([nod])
+            vizitat[nod] = <span class="code-keyword">True</span>
+            <span class="code-keyword">while</span> coada:
+                crt = coada.<span class="code-function">popleft</span>()
+                <span class="code-keyword">for</span> vecin <span class="code-keyword">in</span> adj[crt]:
+                    <span class="code-keyword">if not</span> vizitat[vecin]:
+                        vizitat[vecin] = <span class="code-keyword">True</span>
+                        coada.<span class="code-function">append</span>(vecin)
+
+    <span class="code-keyword">return</span> nr_componente
+
+<span class="code-comment"># Exemplul din lectie: 8 noduri, 3 componente</span>
+n = <span class="code-number">8</span>
+muchii = [(<span class="code-number">1</span>,<span class="code-number">2</span>), (<span class="code-number">1</span>,<span class="code-number">3</span>), (<span class="code-number">2</span>,<span class="code-number">4</span>), (<span class="code-number">5</span>,<span class="code-number">6</span>), (<span class="code-number">7</span>,<span class="code-number">8</span>)]
+<span class="code-function">print</span>(<span class="code-string">f"Graf cu {n} noduri si muchiile: {muchii}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Numar componente conexe: {numar_componente(n, muchii)}"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Graf cu 8 noduri si muchiile: [(1, 2), (1, 3), (2, 4), (5, 6), (7, 8)]
+Numar componente conexe: 3</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Vizualizarea grafului din exemplu:</div>
+                    <pre>  1 --- 2 --- 4       5 --- 6       7 --- 8
+  |
+  3
+
+  Componenta 1: {1, 2, 3, 4}
+  Componenta 2: {5, 6}
+  Componenta 3: {7, 8}
+  Numar total componente: 3</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5 -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "De ce algoritmul de numarat componente are complexitate O(V + E) si nu O(V * (V + E))?", "options": ["Deoarece fiecare nod este marcat vizitat la prima intalnire si nu este niciodata reprocesat", "Deoarece folosim BFS si nu DFS", "Deoarece graful este neorientat", "Deoarece folosim liste de adiacenta si nu matrice de adiacenta"], "correct": "a", "hint": "Vectorul vizitat garanteaza ca fiecare nod este introdus in coada exact o singura data, indiferent de cate ori apare ca vecin. Suma tuturor BFS-urilor este V operatii de tip push + 2E examinari de muchii = O(V + E)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Analiza complexitatii O(V + E) &mdash; de ce este optima</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Complexitate timp: O(V + E)</strong><br/>
+                    Bucla exterioara itereaza prin toate V nodurile. Dar nu fiecare iteratie declanseaza o parcurgere costisitoare &mdash; <em>in total</em>, pe intreaga executie a algoritmului:
+                    <ul>
+                        <li>Fiecare nod este adaugat in coada <em>exact o data</em> (la prima intalnire, cand este marcat vizitat).</li>
+                        <li>Fiecare muchie (u, v) este examinata <em>exact de doua ori</em>: o data din u, o data din v.</li>
+                        <li>Suma tuturor parcurgerilor BFS/DFS = V adaugari + 2E examinari = <strong>O(V + E)</strong>.</li>
+                    </ul>
+                    <strong>Complexitate spatiu: O(V + E)</strong> &mdash; pentru lista de adiacenta (O(V+E)) si vectorul vizitat (O(V)).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Tabel comparativ &mdash; reprezentari si complexitate:</div>
+                    <pre>Reprezentare       | Spatiu    | Parcurgere BFS/DFS  | Recomandata cand
+-------------------+-----------+---------------------+--------------------
+Lista de adiacenta | O(V + E)  | O(V + E)            | Grafuri rare (E &lt;&lt; V^2)
+Matrice adiacenta  | O(V^2)    | O(V^2)              | V mic, E mare (dens)
+
+La olimpiada/BAC: lista de adiacenta este MEREU preferata.</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Proprietati conexitate (de memorat pentru BAC):</div>
+                    <pre>Graf conex cu n noduri:
+  - Are cel putin n-1 muchii (exact n-1 muchii => arbore)
+  - BFS/DFS dintr-un nod viziteaza toate n nodurile
+
+Graf neconex cu n noduri si k componente:
+  - BFS/DFS dintr-un nod viziteaza doar nodurile componentei sale
+
+Numar componente = numarul de apeluri BFS/DFS din bucla exterioara</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: C++ EXCLUSIV INTENSIV -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, ce tip de date STL folosim pentru lista de adiacenta a unui graf cu n noduri numerotate 1..n?", "options": ["int adj[NMAX][NMAX]", "vector&lt;vector&lt;int&gt;&gt; adj(n+1)", "map&lt;int, list&lt;int&gt;&gt; adj", "set&lt;pair&lt;int,int&gt;&gt; adj"], "correct": "b", "hint": "vector<vector<int>> adj(n+1) aloca n+1 vectori la initializare (indexati 0..n), permitand indexare directa adj[1]..adj[n]. Este idiomul standard C++ la olimpiada: simplu, eficient, O(1) push_back amortizat."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Componente conexe in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune exclusiv pentru profilul intensiv informatica</div>
+                    <p>In C++ folosim <code>vector&lt;vector&lt;int&gt;&gt;</code> pentru lista de adiacenta si <code>queue&lt;int&gt;</code> pentru BFS. Conventie olimpiada: indexare noduri de la 1, <code>vector&lt;bool&gt; vizitat(n+1, false)</code> pentru marcare.</p>
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;queue&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-comment">// BFS dintr-un nod sursa - marcheaza toata componenta</span>
+<span class="code-keyword">void</span> <span class="code-function">bfs</span>(vector&lt;vector&lt;<span class="code-keyword">int</span>&gt;&gt;&amp; adj,
+         vector&lt;<span class="code-keyword">bool</span>&gt;&amp; vizitat, <span class="code-keyword">int</span> sursa) {
+    queue&lt;<span class="code-keyword">int</span>&gt; q;
+    q.<span class="code-function">push</span>(sursa);
+    vizitat[sursa] = <span class="code-keyword">true</span>;
+    <span class="code-keyword">while</span> (!q.<span class="code-function">empty</span>()) {
+        <span class="code-keyword">int</span> crt = q.<span class="code-function">front</span>(); q.<span class="code-function">pop</span>();
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> vecin : adj[crt]) {
+            <span class="code-keyword">if</span> (!vizitat[vecin]) {
+                vizitat[vecin] = <span class="code-keyword">true</span>;
+                q.<span class="code-function">push</span>(vecin);
+            }
+        }
+    }
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n = <span class="code-number">8</span>;
+    vector&lt;vector&lt;<span class="code-keyword">int</span>&gt;&gt; adj(n + <span class="code-number">1</span>);
+
+    <span class="code-comment">// Muchiile grafului (neorientat: adaugam in ambele directii)</span>
+    <span class="code-keyword">auto</span> <span class="code-function">addEdge</span> = [&amp;](<span class="code-keyword">int</span> u, <span class="code-keyword">int</span> v) {
+        adj[u].<span class="code-function">push_back</span>(v);
+        adj[v].<span class="code-function">push_back</span>(u);
+    };
+    <span class="code-function">addEdge</span>(<span class="code-number">1</span>,<span class="code-number">2</span>); <span class="code-function">addEdge</span>(<span class="code-number">1</span>,<span class="code-number">3</span>); <span class="code-function">addEdge</span>(<span class="code-number">2</span>,<span class="code-number">4</span>);
+    <span class="code-function">addEdge</span>(<span class="code-number">5</span>,<span class="code-number">6</span>); <span class="code-function">addEdge</span>(<span class="code-number">7</span>,<span class="code-number">8</span>);
+
+    vector&lt;<span class="code-keyword">bool</span>&gt; vizitat(n + <span class="code-number">1</span>, <span class="code-keyword">false</span>);
+    <span class="code-keyword">int</span> nr_componente = <span class="code-number">0</span>;
+
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> nod = <span class="code-number">1</span>; nod &lt;= n; nod++) {
+        <span class="code-keyword">if</span> (!vizitat[nod]) {
+            nr_componente++;
+            <span class="code-function">bfs</span>(adj, vizitat, nod);
+        }
+    }
+
+    cout &lt;&lt; <span class="code-string">"Graf cu "</span> &lt;&lt; n
+         &lt;&lt; <span class="code-string">" noduri si muchiile: {1-2, 1-3, 2-4, 5-6, 7-8}"</span>
+         &lt;&lt; <span class="code-string">"\n"</span>;
+    cout &lt;&lt; <span class="code-string">"Numar componente conexe: "</span>
+         &lt;&lt; nr_componente &lt;&lt; <span class="code-string">"\n"</span>;
+    cout &lt;&lt; <span class="code-string">"Este conex: "</span>
+         &lt;&lt; (nr_componente == <span class="code-number">1</span> ? <span class="code-string">"da"</span> : <span class="code-string">"nu"</span>) &lt;&lt; <span class="code-string">"\n"</span>;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>Graf cu 8 noduri si muchiile: {1-2, 1-3, 2-4, 5-6, 7-8}
+Numar componente conexe: 3
+Este conex: nu</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Diferente C++ fata de Python:</div>
+                    <pre>Python                          C++ (intensiv)
+--------------------------------+----------------------------------
+deque([nod])                     queue&lt;int&gt; q; q.push(nod);
+coada.popleft()                  q.front(); q.pop();
+vizitat = {i: False ...}         vector&lt;bool&gt; vizitat(n+1, false);
+adj = {i: [] for ...}            vector&lt;vector&lt;int&gt;&gt; adj(n+1);
+adj[u].append(v)                 adj[u].push_back(v);</pre>
+                </div>
+                <p>Logica algoritmului este <em>identica</em> in ambele limbaje &mdash; diferenta este sintaxa si tipizarea explicita a lui C++.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- PRACTICE -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Identificare manuala componente</h3>
+            <p>Considera graful neorientat cu 9 noduri si muchiile: (1,2), (2,3), (1,3), (4,5), (5,6), (7,8), (8,9).</p>
+            <ol>
+                <li>Deseneaza graful (noduri ca cercuri, muchii ca linii).</li>
+                <li>Identifica fiecare componenta conexa (care noduri sunt in aceeasi componenta).</li>
+                <li>Este graful conex? Justifica.</li>
+                <li>Ce se intampla daca adaugam muchia (3,4)? Dar muchia (6,7)?</li>
+            </ol>
+            <p><em>Raspuns asteptat:</em> 3 componente &mdash; {1,2,3}, {4,5,6}, {7,8,9}. Adaugarea lui (3,4) uneste primele doua; adaugarea lui (6,7) uneste ultimele doua.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Implementare si testare</h3>
+            <p>Implementeaza in Python functia <code>componente(n, muchii)</code> care returneaza o lista de liste, fiecare sublista continand nodurile unei componente conexe (sortate crescator).</p>
+            <p>Testeaza cu:</p>
+            <pre>componente(7, [(1,2),(2,3),(4,5),(6,7)])
+# Asteptat: [[1, 2, 3], [4, 5], [6, 7]]
+
+componente(5, [])
+# Asteptat: [[1], [2], [3], [4], [5]]</pre>
+            <p><em>Indiciu:</em> modifica algoritmul din atomul 4 pentru a retine si nodurile fiecarei componente, nu doar contorul.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Muchii critice <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            <p>O <strong>muchie critica</strong> (pod) intr-un graf conex este o muchie a carei eliminare deconecteaza graful (creste numarul de componente conexe).</p>
+            <p>Implementeaza in C++ sau Python functia <code>este_critica(n, muchii, u, v)</code> care returneaza <code>true</code> daca muchia (u,v) este critica. Algoritm: elimina muchia (u,v) din graf si verifica daca graful ramane conex (numarul de componente devine mai mare decat 1).</p>
+            <p><em>Exemplu:</em> Graf 1-2-3 (lant). Muchiile (1,2) si (2,3) sunt critice. Intr-un ciclu 1-2-3-1, nicio muchie nu e critica. Complexitate acceptabila: O(V + E) per verificare.</p>
+        </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Un graf neorientat este <em>conex</em> daca intre oricare doua noduri exista un lant</li>
+                <li>O <em>componenta conexa</em> este un subgraf conex maximal; multimea nodurilor se partitioneaza in componente</li>
+                <li>Conexitatea se verifica cu un singur BFS/DFS: daca viziteaza toate n nodurile, graful este conex</li>
+                <li>Numarul de componente se calculeaza in O(V + E): bucla prin toate nodurile, BFS/DFS din fiecare nevizitat</li>
+                <li>Vectorul <code>vizitat</code> garanteaza ca fiecare nod este procesat exact o data in total &mdash; de aceea O(V + E) si nu O(V * (V+E))</li>
+                <li>Lista de adiacenta este reprezentarea standard: O(V+E) spatiu, parcurgere O(V+E)</li>
+                <li>[Intensiv] In C++: <code>vector&lt;vector&lt;int&gt;&gt;</code> + <code>queue&lt;int&gt;</code>; logica identica cu Python</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Lectia 5: Arbori</strong> &mdash; definitie, proprietati, terminologie si parcurgeri ale arborilor generali si binari.</p>
+            <a href="lectia5-arbori.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m3-grafuri-lectia4-conexitate');
+        PracticeSimple.init('cls11-m3-grafuri-lectia4-conexitate');
+        LessonSummary.init('cls11-m3-grafuri-lectia4-conexitate');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm3-grafuri',
+            moduleName: 'M3 Teoria Grafurilor',
+            lesson: 'Conexitate'
+        });
+        LearningProgress.init('cls11', 'm3-grafuri', 'lectia4-conexitate.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

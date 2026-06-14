@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 6: Reprezentari grafuri | Clasa a XI-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia5-grafuri-intro.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 5</a>
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">Modulul &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Reprezentari grafuri: matrice si liste de adiacenta</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- FRAME SECTION -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei invata sa memorezi un graf in calculator folosind doua structuri fundamentale: matricea de adiacenta si listele de adiacenta. Vei stii cand sa le alegi pe fiecare in functie de caracteristicile grafului.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa construiesti si sa interpretezi matricea de adiacenta a unui graf (orientat sau neorientat)</li>
+                <li>Sa construiesti si sa interpretezi listele de adiacenta ale unui graf</li>
+                <li>Sa determini gradul unui nod din fiecare reprezentare</li>
+                <li>Sa compari cele doua reprezentari ca spatiu O() si timp de acces</li>
+                <li>Sa implementezi ambele reprezentari in Python (si C++ la intensiv)</li>
+                <li>Sa rezolvi subiecte de tip Bacalaureat care cer citirea sau construirea unei reprezentari</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- TRY SECTION -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Ai un grup de 4 prieteni: Ana (1), Bogdan (2), Crina (3), Dan (4). Prieteniile sunt: Ana-Bogdan, Ana-Crina, Bogdan-Crina, Bogdan-Dan.</p>
+                <p>Deseneaza pe foaie o matrice 4x4 si pune 1 unde exista prietenie. Cati prieteni are Bogdan?</p>
+                <textarea id="tryAnswer" placeholder="Matricea:
+   1 2 3 4
+1 [?, ?, ?, ?]
+2 [?, ?, ?, ?]
+3 [?, ?, ?, ?]
+4 [?, ?, ?, ?]
+Bogdan (nodul 2) are ... prieteni." rows="8"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Prietenia e neorientata: daca Ana-Bogdan, atunci mat[1][2]=1 SI mat[2][1]=1.</p>
+                    <p>Gradul lui Bogdan = suma valorilor de pe linia 2. Numara cate prietenii are!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ATOMS -->
+    <main id="atomic-content">
+
+        <div class="atom" id="atom-1" data-quiz='[{"question":"De ce nu putem stoca direct desenul unui graf in memorie?","options":["Calculatorul lucreaza cu numere si structuri de date, nu cu forme vizuale","Grafurile nu au un desen standard definit","Structurile de date sunt mai eficiente ca imaginile","Normele Bac interzic imaginile"],"correct":"a","hint":"Calculatorul lucreaza cu numere si structuri de date, nu cu forme vizuale. Avem nevoie sa codificam relatiile din graf intr-o forma numerica."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Problema reprezentarii</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un <strong>graf</strong> G=(V,E) are o multime de noduri V si o multime de muchii E. Ca sa putem prelucra un graf intr-un program, trebuie sa il <strong>reprezentam</strong> in memorie cu o structura de date.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Graful exemplu (folosit in toata lectia):</div>
+                    <p>4 noduri: {1, 2, 3, 4}. Muchii neorientate: (1,2), (1,3), (2,3), (2,4).</p>
+                    <p>Vizual: 1 este conectat cu 2 si 3; 2 este conectat cu 1, 3 si 4; 3 este conectat cu 1 si 2; 4 este conectat doar cu 2.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cele doua reprezentari standard:</div>
+                    <ul>
+                        <li><strong>Matricea de adiacenta</strong> &mdash; un tablou 2D de 0 si 1</li>
+                        <li><strong>Listele de adiacenta</strong> &mdash; pentru fiecare nod, lista vecinilor sai</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-2" data-quiz='[{"question":"In matricea de adiacenta a unui graf NEORIENTAT, ce proprietate are mereu?","options":["Diagonala principala contine doar valori de 1","Este simetrica fata de diagonala principala","Suma fiecarei linii este intotdeauna 0","Toate valorile sunt strict pozitive"],"correct":"b","hint":"Daca exista muchia (i,j) intr-un graf neorientat, atunci mat[i][j]=1 SI mat[j][i]=1, deci matricea e simetrica."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Matricea de adiacenta</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Matricea de adiacenta</strong> A este un tablou de n x n intregi, unde:<br>
+                    A[i][j] = 1, daca exista muchia (i,j) in graf<br>
+                    A[i][j] = 0, daca nu exista muchia (i,j)
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Graful exemplu &mdash; matricea de adiacenta:</div>
+                    <table class="comparison-table">
+                        <thead>
+                            <tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><th>1</th><td>0</td><td>1</td><td>1</td><td>0</td></tr>
+                            <tr><th>2</th><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+                            <tr><th>3</th><td>1</td><td>1</td><td>0</td><td>0</td></tr>
+                            <tr><th>4</th><td>0</td><td>1</td><td>0</td><td>0</td></tr>
+                        </tbody>
+                    </table>
+                    <p>Gradul nodului 2 = suma liniei 2 = 1+0+1+1 = <strong>3</strong></p>
+                    <p>Graf neorientat: matricea e <strong>simetrica</strong> (A[i][j] = A[j][i]). Diagonala principala = 0 (fara bucle).</p>
+                </div>
+                <p>Implementare Python (noduri indexate 1..n, pozitia 0 ignorata):</p>
+                <pre><span class="code-comment"># Matrice de adiacenta -- graf neorientat, n=4</span>
+n = <span class="code-number">4</span>
+mat = [[<span class="code-number">0</span>] * (n + <span class="code-number">1</span>) <span class="code-keyword">for</span> _ <span class="code-keyword">in</span> <span class="code-function">range</span>(n + <span class="code-number">1</span>)]
+
+muchii = [(<span class="code-number">1</span>, <span class="code-number">2</span>), (<span class="code-number">1</span>, <span class="code-number">3</span>), (<span class="code-number">2</span>, <span class="code-number">3</span>), (<span class="code-number">2</span>, <span class="code-number">4</span>)]
+<span class="code-keyword">for</span> u, v <span class="code-keyword">in</span> muchii:
+    mat[u][v] = <span class="code-number">1</span>
+    mat[v][u] = <span class="code-number">1</span>  <span class="code-comment"># neorientat: ambele sensuri</span>
+
+<span class="code-function">print</span>(<span class="code-string">"Matricea de adiacenta (linii/coloane 1..4):"</span>)
+<span class="code-function">print</span>(<span class="code-string">"   "</span>, <span class="code-string">" "</span>.<span class="code-function">join</span>(<span class="code-function">str</span>(j) <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>)))
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>):
+    <span class="code-function">print</span>(f<span class="code-string">" {i} "</span>, <span class="code-string">" "</span>.<span class="code-function">join</span>(<span class="code-function">str</span>(mat[i][j]) <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>)))
+<span class="code-function">print</span>()
+<span class="code-function">print</span>(<span class="code-string">"Gradul nodului 2:"</span>, <span class="code-function">sum</span>(mat[<span class="code-number">2</span>]))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Matricea de adiacenta (linii/coloane 1..4):
+    1 2 3 4
+ 1  0 1 1 0
+ 2  1 0 1 1
+ 3  1 1 0 0
+ 4  0 1 0 0
+
+Gradul nodului 2: 3</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-3" data-quiz='[{"question":"Intr-un graf ORIENTAT cu arcul 3->2 (nu si 2->3), ce valori contine matricea?","options":["mat[3][2]=1 si mat[2][3]=1","mat[3][2]=0 si mat[2][3]=1","Ambele pozitii raman 0","mat[3][2]=1 si mat[2][3]=0"],"correct":"d","hint":"Intr-un graf orientat, arcul 3->2 inseamna doar mat[3][2]=1. Nu se pune si mat[2][3]=1, deoarece arcul nu merge in ambele sensuri."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Matricea de adiacenta pentru grafuri orientate</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Intr-un <strong>graf orientat</strong>, arcul (i,j) merge din i catre j. Punem 1 DOAR la mat[i][j], NU si la mat[j][i].<br>
+                    Matricea nu mai este simetrica in general.<br>
+                    <strong>Grad exterior</strong> (grad+) al nodului i = suma liniei i = nr. arce care pleaca din i<br>
+                    <strong>Grad interior</strong> (grad-) al nodului i = suma coloanei i = nr. arce care intra in i
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu graf orientat: arce 1&#8594;2, 1&#8594;3, 2&#8594;4, 3&#8594;2</div>
+                    <table class="comparison-table">
+                        <thead>
+                            <tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><th>1</th><td>0</td><td>1</td><td>1</td><td>0</td></tr>
+                            <tr><th>2</th><td>0</td><td>0</td><td>0</td><td>1</td></tr>
+                            <tr><th>3</th><td>0</td><td>1</td><td>0</td><td>0</td></tr>
+                            <tr><th>4</th><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>Cum citim gradele din matrice:</p>
+                <pre><span class="code-comment"># grade pentru graf orientat (mat deja construit, n=4)</span>
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>):
+    grad_ext = <span class="code-function">sum</span>(mat[i][j] <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>))  <span class="code-comment"># pleaca din i</span>
+    grad_int = <span class="code-function">sum</span>(mat[j][i] <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>))  <span class="code-comment"># intra in i</span>
+    <span class="code-function">print</span>(f<span class="code-string">"  nod {i}: grad+={grad_ext}, grad-={grad_int}"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>  nod 1: grad+=2, grad-=0
+  nod 2: grad+=1, grad-=2
+  nod 3: grad+=1, grad-=1
+  nod 4: grad+=0, grad-=1</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Interpretare:</div>
+                    <p>Nodul 1 are grad exterior 2 (pleaca 2 arce) si grad interior 0 (nu intra nimic). Nodul 4 are grad exterior 0 (nu pleaca nimic) si grad interior 1 (intra un arc din 2).</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-4" data-quiz='[{"question":"In listele de adiacenta ale unui graf neorientat cu muchia (2,4), ce se stocheaza?","options":["Numai 4 in lista nodului 2","Numai 2 in lista nodului 4","4 in lista nodului 2 SI 2 in lista nodului 4","Un singur obiect (2,4) intr-o lista separata"],"correct":"c","hint":"Ca si la matricea de adiacenta, muchia neorientata (i,j) apare in ambele liste: j apare in lista lui i, si i apare in lista lui j."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Listele de adiacenta</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Listele de adiacenta</strong>: pentru fiecare nod i stocam o lista cu toti vecinii sai directi.<br>
+                    adj[i] = lista tuturor nodurilor j cu care i este conectat (exista muchia sau arcul i&#8594;j).<br>
+                    Gradul nodului i = len(adj[i]).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Graful exemplu &mdash; listele de adiacenta:</div>
+                    <pre>  nod 1: [2, 3]
+  nod 2: [1, 3, 4]
+  nod 3: [1, 2]
+  nod 4: [2]</pre>
+                    <p>Gradul nodului 2 = len(adj[2]) = 3 (vecini: 1, 3, 4).</p>
+                </div>
+                <p>Implementare Python:</p>
+                <pre><span class="code-comment"># Liste de adiacenta -- graf neorientat, n=4</span>
+n = <span class="code-number">4</span>
+adj = [[] <span class="code-keyword">for</span> _ <span class="code-keyword">in</span> <span class="code-function">range</span>(n + <span class="code-number">1</span>)]  <span class="code-comment"># adj[0] neutilizat</span>
+
+muchii = [(<span class="code-number">1</span>, <span class="code-number">2</span>), (<span class="code-number">1</span>, <span class="code-number">3</span>), (<span class="code-number">2</span>, <span class="code-number">3</span>), (<span class="code-number">2</span>, <span class="code-number">4</span>)]
+<span class="code-keyword">for</span> u, v <span class="code-keyword">in</span> muchii:
+    adj[u].<span class="code-function">append</span>(v)
+    adj[v].<span class="code-function">append</span>(u)  <span class="code-comment"># neorientat</span>
+
+<span class="code-function">print</span>(<span class="code-string">"Listele de adiacenta:"</span>)
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>):
+    <span class="code-function">print</span>(f<span class="code-string">"  nod {i}: {adj[i]}"</span>)
+<span class="code-function">print</span>()
+<span class="code-function">print</span>(<span class="code-string">"Gradul nodului 2:"</span>, <span class="code-function">len</span>(adj[<span class="code-number">2</span>]))
+<span class="code-function">print</span>(<span class="code-string">"Vecini ai nodului 1:"</span>, adj[<span class="code-number">1</span>])</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Listele de adiacenta:
+  nod 1: [2, 3]
+  nod 2: [1, 3, 4]
+  nod 3: [1, 2]
+  nod 4: [2]
+
+Gradul nodului 2: 3
+Vecini ai nodului 1: [2, 3]</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-5" data-quiz='[{"question":"Pentru un graf cu n=1000 noduri si m=1500 muchii, care reprezentare economiseste mai mult spatiu?","options":["Sunt egale ca spatiu","Matricea de adiacenta: O(n^2) = 1.000.000 intrari","Depinde de tipul procesorului","Listele de adiacenta: O(n+m) aproximativ 4000 intrari"],"correct":"d","hint":"n=1000, m=1500. Matrice: O(n^2)=1.000.000 celule. Liste: O(n+m)=1000+2*1500=4000 intrari. Listele sunt mult mai eficiente pentru grafuri rare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Comparatie: cand folosim ce?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Alegerea reprezentarii depinde de densitatea grafului si de operatiile frecvente.
+                </div>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Criteriu</th>
+                            <th>Matrice adiacenta</th>
+                            <th>Liste adiacenta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Spatiu</strong></td>
+                            <td>O(n&sup2;)</td>
+                            <td>O(n + m)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Exista muchia (i,j)?</strong></td>
+                            <td>O(1) &mdash; acces direct</td>
+                            <td>O(grad(i)) &mdash; cauta in lista</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Parcurge vecinii lui i</strong></td>
+                            <td>O(n) &mdash; parcurge toata linia</td>
+                            <td>O(grad(i)) &mdash; doar vecinii reali</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Potrivit pentru</strong></td>
+                            <td>Grafuri dense (m &asymp; n&sup2;)</td>
+                            <td>Grafuri rare (m &lt;&lt; n&sup2;)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cazul tipic Bac</strong></td>
+                            <td>n mic (&le; 10), usor de desenat pe foaie</td>
+                            <td>n mare, algoritmi DFS/BFS</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="analogy-box">
+                    <div class="analogy-label">Analogie</div>
+                    <div class="analogy-text">Matricea e ca un tabel de prezenta pentru o clasa: are o casuta pentru fiecare pereche de elevi, chiar si pentru cei care nu se cunosc (spatiu irosit). Listele sunt ca un carnet de adrese: fiecare persoana noteaza DOAR contactele pe care le are &mdash; compact si eficient.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="atom" id="atom-6" data-quiz='[{"question":"In C++, pentru listele de adiacenta folosim de obicei:","options":["vector&lt;int&gt; adj[NMAX]","int adj[NMAX]","double adj[NMAX][NMAX]","string adj[NMAX]"],"correct":"a","hint":"vector&lt;int&gt; adj[NMAX] e idiomul standard: un tablou de NMAX vectori, fiecare vector contine vecinii nodului respectiv."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Implementare C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+                    <p>La profilul intensiv implementam ambele reprezentari in C++. Matricea de adiacenta foloseste un tablou 2D static; listele de adiacenta folosesc <code>vector&lt;int&gt;</code>.</p>
+                </div>
+                <p><strong>Matrice de adiacenta in C++:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n = <span class="code-number">4</span>;
+    <span class="code-keyword">int</span> mat[<span class="code-number">5</span>][<span class="code-number">5</span>] = {};
+    <span class="code-keyword">int</span> u[] = {<span class="code-number">1</span>, <span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">2</span>};
+    <span class="code-keyword">int</span> v[] = {<span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">3</span>, <span class="code-number">4</span>};
+    <span class="code-keyword">int</span> m = <span class="code-number">4</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; m; i++) {
+        mat[u[i]][v[i]] = <span class="code-number">1</span>;
+        mat[v[i]][u[i]] = <span class="code-number">1</span>;
+    }
+    cout &lt;&lt; <span class="code-string">"Matrice adiacenta (n="</span> &lt;&lt; n &lt;&lt; <span class="code-string">"):"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"    "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = <span class="code-number">1</span>; j &lt;= n; j++) cout &lt;&lt; j &lt;&lt; <span class="code-string">" "</span>;
+    cout &lt;&lt; endl;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">1</span>; i &lt;= n; i++) {
+        cout &lt;&lt; <span class="code-string">" "</span> &lt;&lt; i &lt;&lt; <span class="code-string">"  "</span>;
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = <span class="code-number">1</span>; j &lt;= n; j++) cout &lt;&lt; mat[i][j] &lt;&lt; <span class="code-string">" "</span>;
+        cout &lt;&lt; endl;
+    }
+    <span class="code-keyword">int</span> grad2 = <span class="code-number">0</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = <span class="code-number">1</span>; j &lt;= n; j++) grad2 += mat[<span class="code-number">2</span>][j];
+    cout &lt;&lt; <span class="code-string">"Gradul nodului 2: "</span> &lt;&lt; grad2 &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>Matrice adiacenta (n=4):
+    1 2 3 4
+ 1  0 1 1 0
+ 2  1 0 1 1
+ 3  1 1 0 0
+ 4  0 1 0 0
+Gradul nodului 2: 3</pre>
+                </div>
+                <p><strong>Liste de adiacenta in C++ cu vector:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n = <span class="code-number">4</span>;
+    vector&lt;<span class="code-keyword">int</span>&gt; adj[<span class="code-number">5</span>];
+    vector&lt;pair&lt;<span class="code-keyword">int</span>,<span class="code-keyword">int</span>&gt;&gt; muchii = {{<span class="code-number">1</span>,<span class="code-number">2</span>},{<span class="code-number">1</span>,<span class="code-number">3</span>},{<span class="code-number">2</span>,<span class="code-number">3</span>},{<span class="code-number">2</span>,<span class="code-number">4</span>}};
+    <span class="code-keyword">for</span> (<span class="code-keyword">auto</span> [u, v] : muchii) {
+        adj[u].<span class="code-function">push_back</span>(v);
+        adj[v].<span class="code-function">push_back</span>(u);
+    }
+    cout &lt;&lt; <span class="code-string">"Liste de adiacenta (n="</span> &lt;&lt; n &lt;&lt; <span class="code-string">"):"</span> &lt;&lt; endl;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">1</span>; i &lt;= n; i++) {
+        cout &lt;&lt; <span class="code-string">"  nod "</span> &lt;&lt; i &lt;&lt; <span class="code-string">": ["</span>;
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = <span class="code-number">0</span>; j &lt; (<span class="code-keyword">int</span>)adj[i].size(); j++) {
+            <span class="code-keyword">if</span> (j) cout &lt;&lt; <span class="code-string">", "</span>;
+            cout &lt;&lt; adj[i][j];
+        }
+        cout &lt;&lt; <span class="code-string">"]"</span> &lt;&lt; endl;
+    }
+    cout &lt;&lt; <span class="code-string">"Gradul nodului 2: "</span> &lt;&lt; adj[<span class="code-number">2</span>].size() &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>Liste de adiacenta (n=4):
+  nod 1: [2, 3]
+  nod 2: [1, 3, 4]
+  nod 3: [1, 2]
+  nod 4: [2]
+Gradul nodului 2: 3</pre>
+                </div>
+                <p>Ambele programe produc acelasi rezultat. Diferenta: matricea aloca intotdeauna n*n celule, listele aloca doar spatiul pentru muchiile existente.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Citire matrice si grad</h3>
+            <p>Se da graful neorientat G cu n=5 noduri si muchiile: (1,2), (1,4), (2,3), (3,4), (3,5), (4,5).</p>
+            <p><strong>a)</strong> Construieste matricea de adiacenta (5x5) pe foaie sau in Python.</p>
+            <p><strong>b)</strong> Ce este gradul nodului 3? Cum il calculezi din matrice?</p>
+            <p><strong>c)</strong> Este matricea simetrica? De ce?</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Graf orientat si grade</h3>
+            <p>Se da graful orientat cu n=4 noduri si arcele: 1&#8594;2, 2&#8594;3, 3&#8594;1, 1&#8594;4, 4&#8594;3.</p>
+            <p><strong>a)</strong> Scrie matricea de adiacenta.</p>
+            <p><strong>b)</strong> Calculeaza grad+(i) si grad-(i) pentru fiecare nod i.</p>
+            <p><strong>c)</strong> Construieste listele de adiacenta pentru acelasi graf orientat.</p>
+            <p><strong>d)</strong> Suma tuturor grad+(i) este egala cu numarul total de arce?</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Comparatie si decizie</h3>
+            <p>O retea de calculatoare are n=1000 statii cu m aproximativ 1500 conexiuni.</p>
+            <p><strong>a)</strong> Calculeaza spatiul necesar pentru matrice vs. liste de adiacenta.</p>
+            <p><strong>b)</strong> Verifici des daca exista conexiune directa intre doua statii. Ce reprezentare preferi si de ce?</p>
+            <p><strong>c)</strong> <span class="bonus-badge">INTENSIV</span> Scrie in C++ doua functii <code>exista_muchie</code>. Care are complexitate O(1)?</p>
+        </div>
+    </section>
+
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Matricea de adiacenta: A[i][j]=1 daca exista muchia (i,j), 0 altfel; simetrica la neorientat</li>
+                <li>Liste de adiacenta: adj[i] contine lista vecinilor nodului i</li>
+                <li>Gradul unui nod: suma liniei i in matrice = len(adj[i]) in liste</li>
+                <li>Graf orientat: mat[i][j]=1 doar pentru arcul i&#8594;j; grad+ si grad- separate</li>
+                <li>Matrice: O(n&sup2;) spatiu, O(1) verificare muchie; Liste: O(n+m) spatiu, O(grad) parcurgere vecini</li>
+                <li>Grafuri dense &rarr; matrice; grafuri rare &rarr; liste de adiacenta</li>
+            </ul>
+        </div>
+        <div id="lesson-summary" style="display: none;"></div>
+        <div class="next-lesson">
+            <h3>Modulul complet!</h3>
+            <p>Aceasta este ultima lectie din Modulul 1 - Structuri Avansate. Felicitari!</p>
+            <a href="index.html" class="btn-next">Inapoi la Modulul 1 &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls11-m1-structuri-avansate-lectia6-reprezentari-graf');
+        PracticeSimple.init('cls11-m1-structuri-avansate-lectia6-reprezentari-graf');
+        LessonSummary.init('cls11-m1-structuri-avansate-lectia6-reprezentari-graf');
+        Breadcrumb.init({
+            grade: 'cls11',
+            gradeName: 'Clasa a XI-a',
+            module: 'm1-structuri-avansate',
+            moduleName: 'M1 Structuri Avansate',
+            lesson: 'Reprezentari grafuri'
+        });
+        LearningProgress.init('cls11', 'm1-structuri-avansate', 'lectia6-reprezentari-graf.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>
