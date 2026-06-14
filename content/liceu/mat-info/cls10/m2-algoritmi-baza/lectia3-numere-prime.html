@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 3: Numere prime | Clasa a X-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia2-euclid.html" class="nav-btn" title="Lectia anterioara">&#8592; Anterioara</a>
+        <a href="lectia4-factorizare.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Numere prime: verificare eficienta si Ciurul lui Eratostene</h1>
+        <!-- Nota curriculara: conform programei OMEN 3393/2017, numerele prime si ciurul lui Eratostene
+             sunt introduse la clasa a IX-a (domeniu 2.2 - Prelucrari ale numerelor). Aceasta lectie
+             face parte din modulul M2 al cls. X ca recapitulare/aprofundare pentru BAC si concursuri. -->
+        <p class="curriculum-note" style="font-size:0.82em; color:#b45309; background:#fef3c7; border-left:3px solid #f59e0b; margin:0.5rem 0 0 0; padding:0.4rem 0.75rem; border-radius:0 4px 4px 0;">
+            <strong>Nota curriculara:</strong> Conform programei oficiale (OMEN 3393/2017), numerele prime si Ciurul lui Eratostene se predau la <strong>clasa a IX-a</strong> (domeniu 2.2). Aceasta lectie le recapituleaza la cls.&nbsp;X ca fundament necesar pentru algoritmii de clasa a X-a (factorizare, Greedy, Divide et Impera) si pentru pregatirea BAC-ului.
+        </p>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei stapani doua tehnici fundamentale de lucru cu numere prime: verificarea primaltatii unui singur numar in O(&#x221A;n) si generarea tuturor numerelor prime dintr-un interval cu Ciurul lui Eratostene in O(n log log n). Ambele sunt cerute la Bacalaureat si la concursuri.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti un numar prim si sa identifici cazurile limita (0, 1, 2)</li>
+                <li>Sa explici de ce este suficient sa verifici divizori pana la &#x221A;n (nu pana la n)</li>
+                <li>Sa implementezi verificarea primaltatii in O(&#x221A;n) in Python</li>
+                <li>Sa descrii si sa implementezi Ciurul lui Eratostene pas cu pas</li>
+                <li>Sa compari complexitatile O(n) si O(&#x221A;n) si O(n log log n) si sa alegi algoritmul potrivit</li>
+                <li>Sa rezolvi exercitii de tip BAC cu numere prime si ciur</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare de gandire:</div>
+<p>Vrei sa afli daca 97 este prim. Fara calculator, pana la ce numar ar trebui sa verifici daca se divide? Noteaza raspunsul inainte sa citesti lectia.</p>
+<textarea id="tryAnswer" placeholder="Raspunsul meu: trebuie sa verific pana la..." rows="3"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+<div class="hint-content">
+<p>Calculeaza &#x221A;97 &#8776; 9.8. Deci trebuie sa verifici impartiri doar cu 2, 3, 5, 7 (primele numere pana la 9). Daca niciunul nu divide 97, el este prim!</p>
+<p>97 / 2 = 48.5 (nu), 97 / 3 = 32.3 (nu), 97 / 5 = 19.4 (nu), 97 / 7 = 13.8 (nu) &rarr; 97 este prim.</p>
+</div>
+</div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Definitie si cazuri limita -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Care dintre urmatoarele numere NU este prim?", "options": ["2", "7", "1", "97"], "correct": "c", "hint": "Numarul 1 nu este prim prin definitie: un numar prim are exact 2 divizori distincti (1 si el insusi), iar 1 are un singur divizor."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Ce este un numar prim? Cazuri limita</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un numar natural <strong>p</strong> este <strong>prim</strong> daca are exact doi divizori naturali distincti: <strong>1</strong> si <strong>p</strong>.
+                </div>
+                <div class="example-box">
+<div class="example-title">Cazuri importante de retinut:</div>
+<ul>
+<li><strong>0</strong> &#8594; NU este prim (are o infinitate de multipli, nu are exact 2 divizori)</li>
+<li><strong>1</strong> &#8594; NU este prim (are un singur divizor: pe el insusi)</li>
+<li><strong>2</strong> &#8594; ESTE prim si este singurul numar prim par</li>
+<li><strong>3, 5, 7, 11, 13, ...</strong> &#8594; toate prime (impare)</li>
+<li><strong>4, 6, 8, 9, ...</strong> &#8594; compuse (au mai mult de 2 divizori)</li>
+</ul>
+</div>
+                <div class="example-box">
+<div class="example-title">De ce conteaza cazul 1?</div>
+<p>Teorema fundamentala a aritmeticii spune ca orice numar natural mai mare ca 1 se scrie <em>unic</em> ca produs de numere prime. Daca 1 ar fi prim, aceasta unicitate s-ar pierde (am putea scrie 6 = 2 &times; 3 = 1 &times; 2 &times; 3 = 1 &times; 1 &times; 2 &times; 3 etc.). De aceea matematicienii au exclus 1 din definitia numerelor prime.</p>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Verificare naiva vs eficienta -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "De ce este suficient sa verificam divizori pana la sqrt(n)?", "options": ["Pentru ca numerele prime sunt mai mici decat sqrt(n)", "Daca n = a * b si a <= b, atunci a <= sqrt(n), deci gasim intotdeauna factorul mic", "Este o conventie arbitrara, nu o demonstratie matematica", "Pentru ca calculatoarele nu pot calcula mai mult"], "correct": "b", "hint": "Daca n = a * b cu a <= b, atunci a * a <= a * b = n, deci a <= sqrt(n). Cel mai mic factor al lui n (daca exista unul diferit de 1 si n) este mereu <= sqrt(n)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. De ce verificam pana la &radic;n? (demonstratie)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Teorema:</strong> Daca n este compus (are un factor diferit de 1 si n), atunci are un factor mai mic sau egal cu &#x221A;n.
+                </div>
+                <div class="example-box">
+<div class="example-title">Demonstratie:</div>
+<p>Presupunem ca n = a &times; b, unde 1 &lt; a &le; b &lt; n.<br>
+Atunci: a &times; a &le; a &times; b = n, deci a &le; &#x221A;n.<br>
+<strong>Concluzie:</strong> Daca n nu are niciun factor in intervalul [2, &#x221A;n], atunci n este prim.</p>
+</div>
+                <div class="example-box">
+<div class="example-title">Exemplu numeric: n = 36</div>
+<p>&#x221A;36 = 6. Factorizare: 36 = 4 &times; 9 = 2 &times; 18 = 3 &times; 12 = 6 &times; 6.<br>
+Cel mai mic factor (2) este &le; 6. &#10003;<br>
+Deci verificam: 36 % 2 = 0 &rarr; gasit! Nu mai continuam.</p>
+</div>
+                <div class="example-box">
+<div class="example-title">Comparatie de complexitate:</div>
+<ul>
+<li>Varianta naiva (verificare pana la n): <strong>O(n)</strong> pasi</li>
+<li>Varianta eficienta (verificare pana la &#x221A;n): <strong>O(&#x221A;n)</strong> pasi</li>
+<li>Diferenta: pentru n = 1.000.000, naiv = 1.000.000 pasi, eficient = 1.000 pasi</li>
+</ul>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Implementare Python eficienta -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Ce returneaza este_prim(9)?", "options": ["True", "False", "None", "Eroare"], "correct": "b", "hint": "9 = 3 * 3. Verificam d=3: 3*3=9 <= 9, conditia e adevarata. 9 % 3 = 0, deci returnam False. 9 nu este prim."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Implementare Python: verificare in O(&radic;n)</h3>
+            </div>
+            <div class="atom-content">
+                <p>Implementam functia <code>este_prim(n)</code> cu optimizarile: tratam separat cazurile speciale, sarim numerele pare, si verificam doar divisori impari pana la &#x221A;n.</p>
+                <pre><span class="code-comment"># Verificare primalitate eficienta - O(sqrt(n))</span>
+<span class="code-keyword">def</span> <span class="code-function">este_prim</span>(n):
+    <span class="code-keyword">if</span> n &lt; <span class="code-number">2</span>:
+        <span class="code-keyword">return</span> <span class="code-keyword">False</span>        <span class="code-comment"># 0 si 1 nu sunt prime</span>
+    <span class="code-keyword">if</span> n == <span class="code-number">2</span>:
+        <span class="code-keyword">return</span> <span class="code-keyword">True</span>         <span class="code-comment"># 2 este singurul numar prim par</span>
+    <span class="code-keyword">if</span> n % <span class="code-number">2</span> == <span class="code-number">0</span>:
+        <span class="code-keyword">return</span> <span class="code-keyword">False</span>        <span class="code-comment"># numerele pare > 2 nu sunt prime</span>
+    d = <span class="code-number">3</span>
+    <span class="code-keyword">while</span> d * d &lt;= n:       <span class="code-comment"># echivalent: d <= sqrt(n)</span>
+        <span class="code-keyword">if</span> n % d == <span class="code-number">0</span>:
+            <span class="code-keyword">return</span> <span class="code-keyword">False</span>    <span class="code-comment"># am gasit un factor</span>
+        d += <span class="code-number">2</span>              <span class="code-comment"># sarim numerele pare (sunt deja excluse)</span>
+    <span class="code-keyword">return</span> <span class="code-keyword">True</span>
+
+<span class="code-function">print</span>(<span class="code-string">"este_prim(1)  ="</span>, <span class="code-function">este_prim</span>(<span class="code-number">1</span>))
+<span class="code-function">print</span>(<span class="code-string">"este_prim(2)  ="</span>, <span class="code-function">este_prim</span>(<span class="code-number">2</span>))
+<span class="code-function">print</span>(<span class="code-string">"este_prim(7)  ="</span>, <span class="code-function">este_prim</span>(<span class="code-number">7</span>))
+<span class="code-function">print</span>(<span class="code-string">"este_prim(9)  ="</span>, <span class="code-function">este_prim</span>(<span class="code-number">9</span>))
+<span class="code-function">print</span>(<span class="code-string">"este_prim(97) ="</span>, <span class="code-function">este_prim</span>(<span class="code-number">97</span>))
+<span class="code-function">print</span>(<span class="code-string">"este_prim(100)="</span>, <span class="code-function">este_prim</span>(<span class="code-number">100</span>))</pre>
+                <div class="example-box">
+<div class="example-title">Output real (python C:/tmp/prime_check2.py):</div>
+<pre>este_prim(1)  = False
+este_prim(2)  = True
+este_prim(7)  = True
+este_prim(9)  = False
+este_prim(97) = True
+este_prim(100)= False</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Urmarire pas cu pas pentru n=9:</div>
+<p>n=9, n&ge;2 &#10003;, n&ne;2 &#10003;, 9%2=1&ne;0 &#10003;<br>
+d=3: 3&times;3=9 &le; 9 &#10003;, 9%3=0 &rarr; <strong>return False</strong> (9=3&times;3 este compus)</p>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Ciurul lui Eratostene Python -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "In Ciurul lui Eratostene, de ce incepem marcarea multiplilor lui p de la p*p (nu de la 2*p)?", "options": ["Este o optmizare optionala, nu obligatorie", "Multiplii mai mici (2p, 3p, ... (p-1)*p) au fost deja marcati de factori primi anteriori mai mici", "p*p este intotdeauna mai mare decat n si nu mai exista nimic de marcat", "Nu conteaza de unde incepem"], "correct": "b", "hint": "De exemplu, pentru p=5: 2*5=10 a fost marcat de 2, 3*5=15 a fost marcat de 3, 4*5=20 marcat de 2. Primul nemarat este 5*5=25."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Ciurul lui Eratostene: idee si implementare Python</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Ciurul lui Eratostene</strong> genereaza TOATE numerele prime pana la n intr-un singur pas. Complexitate: <strong>O(n log log n)</strong> &mdash; practic aproape liniar.
+                </div>
+                <div class="example-box">
+<div class="example-title">Algoritmul pas cu pas (pentru n=30):</div>
+<ol>
+<li>Cream o lista de n+1 valori <code>True</code> (presupunem ca toate sunt prime)</li>
+<li>Marcam 0 si 1 ca <code>False</code></li>
+<li>Pornim cu p=2: marcam toti multiplii lui 2 (4,6,8,...) ca <code>False</code></li>
+<li>Urmatorul nemarat dupa 2 este 3: marcam 9, 15, 21, 27, ...</li>
+<li>Urmatorul nemarat este 5: marcam 25, ...</li>
+<li>p=6 &rarr; deja marcat; p=7: 7&times;7=49 &gt; 30 &rarr; ne oprim</li>
+<li>Numerele ramase <code>True</code>: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29</li>
+</ol>
+</div>
+                <pre><span class="code-comment"># Ciurul lui Eratostene - O(n log log n)</span>
+<span class="code-keyword">def</span> <span class="code-function">ciur_eratostene</span>(n):
+    <span class="code-comment"># Initializam: presupunem ca toate numerele sunt prime</span>
+    prim = [<span class="code-keyword">True</span>] * (n + <span class="code-number">1</span>)
+    prim[<span class="code-number">0</span>] = <span class="code-keyword">False</span>
+    prim[<span class="code-number">1</span>] = <span class="code-keyword">False</span>
+    p = <span class="code-number">2</span>
+    <span class="code-keyword">while</span> p * p &lt;= n:
+        <span class="code-keyword">if</span> prim[p]:
+            <span class="code-comment"># Marcam multiplii lui p ca non-prime</span>
+            <span class="code-comment"># Incepem de la p*p (multiplii mai mici deja marcati)</span>
+            <span class="code-keyword">for</span> multiplu <span class="code-keyword">in</span> <span class="code-function">range</span>(p * p, n + <span class="code-number">1</span>, p):
+                prim[multiplu] = <span class="code-keyword">False</span>
+        p += <span class="code-number">1</span>
+    <span class="code-comment"># Colectam numerele ramase marcate True</span>
+    <span class="code-keyword">return</span> [i <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n + <span class="code-number">1</span>) <span class="code-keyword">if</span> prim[i]]
+
+prime = <span class="code-function">ciur_eratostene</span>(<span class="code-number">30</span>)
+<span class="code-function">print</span>(<span class="code-string">"Numerele prime pana la 30:"</span>)
+<span class="code-function">print</span>(prime)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (python C:/tmp/prime_sieve.py):</div>
+<pre>Numerele prime pana la 30:
+[2, 3, 5, 7, 11, 13, 17, 19, 23, 29]</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">De ce incepem de la p*p?</div>
+<p>Cand ajungem la p=5, multiplii 2&times;5=10, 3&times;5=15, 4&times;5=20 au fost deja marcati de 2, respectiv de 3 si 2. Primul multiplu al lui 5 care nu a fost marcat este 5&times;5=25. Aceasta optimizare reduce numarul total de operatii.</p>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Aplicatii Python (generare, numarare) -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Cate numere prime sunt in intervalul [10, 50]?", "options": ["10", "11", "12", "9"], "correct": "b", "hint": "Numerele prime intre 10 si 50: 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47. Numara-le: 11 numere."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Aplicatii practice in Python</h3>
+            </div>
+            <div class="atom-content">
+                <p>Folosim functia <code>este_prim</code> pentru aplicatii frecvente la BAC si concursuri.</p>
+                <pre><span class="code-comment"># Primele 10 numere prime</span>
+prime10 = []
+n = <span class="code-number">2</span>
+<span class="code-keyword">while</span> <span class="code-function">len</span>(prime10) &lt; <span class="code-number">10</span>:
+    <span class="code-keyword">if</span> <span class="code-function">este_prim</span>(n):
+        prime10.<span class="code-function">append</span>(n)
+    n += <span class="code-number">1</span>
+<span class="code-function">print</span>(<span class="code-string">"Primele 10 numere prime:"</span>, prime10)
+
+<span class="code-comment"># Numarare prime intr-un interval</span>
+a, b = <span class="code-number">10</span>, <span class="code-number">50</span>
+count = <span class="code-function">sum</span>(<span class="code-number">1</span> <span class="code-keyword">for</span> x <span class="code-keyword">in</span> <span class="code-function">range</span>(a, b + <span class="code-number">1</span>) <span class="code-keyword">if</span> <span class="code-function">este_prim</span>(x))
+<span class="code-function">print</span>(<span class="code-string">f"Numarul de prime in [{a}, {b}]: {count}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (python inline):</div>
+<pre>Primele 10 numere prime: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+Numarul de prime in [10, 50]: 11</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Cand sa folosesti este_prim vs ciur?</div>
+<ul>
+<li><strong>este_prim(n)</strong>: cand testezi un singur numar sau putine numere. Cost: O(&#x221A;n) per apel.</li>
+<li><strong>ciur_eratostene(n)</strong>: cand ai nevoie de TOATE primele pana la n. Cost total: O(n log log n), indiferent de cate prime ai. Mult mai eficient pentru interogari multiple.</li>
+</ul>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: EXCLUSIV INTENSIV - C++ -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, ce tip de date folosim pentru tabloul ciurului cand n este mare (ex: n = 10^7)?", "options": ["int prim[n]", "vector<bool> prim(n+1, true)", "string prim", "float prim[n]"], "correct": "b", "hint": "vector<bool> in C++ este o specializare care stocheaza fiecare element pe 1 bit (nu 1 byte), reducand memoria de 8 ori fata de vector<char>. Pentru n=10^7, un vector<bool> ocupa ~1.25 MB in loc de 10 MB."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Implementare C++ &mdash; verificare si ciur <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+<p>In C++ scriem aceleasi algoritme cu avantajul tipizarii explicite si al optimizarilor de memorie (<code>vector&lt;bool&gt;</code> stocheaza fiecare bit pe 1 bit, de 8x mai eficient decat <code>vector&lt;char&gt;</code>). La intensiv C++ este obligatoriu alaturi de Python.</p>
+</div>
+                <p><strong>Verificare primalitate O(&#x221A;n) in C++:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">bool</span> <span class="code-function">estePrim</span>(<span class="code-keyword">int</span> n) {
+    <span class="code-keyword">if</span> (n &lt; <span class="code-number">2</span>) <span class="code-keyword">return false</span>;
+    <span class="code-keyword">if</span> (n == <span class="code-number">2</span>) <span class="code-keyword">return true</span>;
+    <span class="code-keyword">if</span> (n % <span class="code-number">2</span> == <span class="code-number">0</span>) <span class="code-keyword">return false</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> d = <span class="code-number">3</span>; d * d &lt;= n; d += <span class="code-number">2</span>) {
+        <span class="code-keyword">if</span> (n % d == <span class="code-number">0</span>) <span class="code-keyword">return false</span>;
+    }
+    <span class="code-keyword">return true</span>;
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> teste[] = {<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">7</span>, <span class="code-number">9</span>, <span class="code-number">97</span>, <span class="code-number">100</span>};
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : teste) {
+        cout &lt;&lt; <span class="code-string">"estePrim("</span> &lt;&lt; x &lt;&lt; <span class="code-string">") = "</span>
+             &lt;&lt; (<span class="code-function">estePrim</span>(x) ? <span class="code-string">"true"</span> : <span class="code-string">"false"</span>) &lt;&lt; endl;
+    }
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (g++ -std=c++17 C:/tmp/prime_cpp.cpp -o C:/tmp/prime_cpp.exe &amp;&amp; C:/tmp/prime_cpp.exe):</div>
+<pre>estePrim(1) = false
+estePrim(2) = true
+estePrim(7) = true
+estePrim(9) = false
+estePrim(97) = true
+estePrim(100) = false</pre>
+</div>
+                <p><strong>Ciurul lui Eratostene cu <code>vector&lt;bool&gt;</code> in C++:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n = <span class="code-number">30</span>;
+    <span class="code-comment">// vector&lt;bool&gt;: fiecare element ocupa 1 bit (eficient pentru n mare)</span>
+    vector&lt;<span class="code-keyword">bool</span>&gt; prim(n + <span class="code-number">1</span>, <span class="code-keyword">true</span>);
+    prim[<span class="code-number">0</span>] = <span class="code-keyword">false</span>;
+    prim[<span class="code-number">1</span>] = <span class="code-keyword">false</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> p = <span class="code-number">2</span>; p * p &lt;= n; p++) {
+        <span class="code-keyword">if</span> (prim[p]) {
+            <span class="code-keyword">for</span> (<span class="code-keyword">int</span> m = p * p; m &lt;= n; m += p) {
+                prim[m] = <span class="code-keyword">false</span>;
+            }
+        }
+    }
+    cout &lt;&lt; <span class="code-string">"Numerele prime pana la "</span> &lt;&lt; n &lt;&lt; <span class="code-string">": "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">2</span>; i &lt;= n; i++) {
+        <span class="code-keyword">if</span> (prim[i]) cout &lt;&lt; i &lt;&lt; <span class="code-string">" "</span>;
+    }
+    cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (g++ -std=c++17 C:/tmp/ciur_cpp.cpp -o C:/tmp/ciur_cpp.exe &amp;&amp; C:/tmp/ciur_cpp.exe):</div>
+<pre>Numerele prime pana la 30: 2 3 5 7 11 13 17 19 23 29</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Nota despre tipuri: long long pentru n mare (EXCLUSIV INTENSIV)</div>
+<p>La concursuri, n poate fi pana la 10<sup>9</sup>. Pentru verificarea unui singur numar, schimba <code>int</code> cu <code>long long</code> si conditia ramane <code>d * d &lt;= n</code>. Ciurul se foloseste doar pentru n &le; 10<sup>7</sup>&ndash;10<sup>8</sup> (limitat de memorie RAM).</p>
+</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Urmarire executie</h3>
+            <p>Urmareste manual executia <code>este_prim(25)</code> pas cu pas. Ce valoare are <code>d</code> cand se returneaza <code>False</code>? De ce nu se verifica <code>d=7</code>?</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Numere prime gemene</h3>
+            <p>Doua numere prime care difera prin 2 se numesc <em>prime gemene</em> (ex: 3 si 5, 11 si 13). Scrie un program Python care afiseaza toate perechile de prime gemene mai mici decat 100. Foloseste functia <code>este_prim</code> deja scrisa.</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Ciur cu interogari multiple</h3>
+            <p>Primesti N interogari, fiecare cu un numar x (1 &le; x &le; 10<sup>6</sup>). Pentru fiecare, afiseaza daca x este prim. Compara doua abordari: (a) apelezi <code>este_prim(x)</code> pentru fiecare interogare; (b) precalculezi ciurul o singura data si raspunzi la fiecare interogare in O(1). Scrie ambele variante si discuta complexitatea totala pentru N=100.000 interogari.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Definitia numarului prim: exact 2 divizori (1 si el insusi); 0 si 1 nu sunt prime</li>
+                <li>De ce este suficient sa verifici pana la &#x221A;n: daca n=a&times;b, cel mai mic factor a &le; &#x221A;n</li>
+                <li>Verificare primalitate eficienta: O(&#x221A;n) in Python (si C++ la intensiv)</li>
+                <li>Ciurul lui Eratostene: genereaza toate primele pana la n in O(n log log n)</li>
+                <li>Optimizarea ciurului: marcarea incepe de la p*p (multiplii mai mici deja marcati)</li>
+                <li>Alegerea algoritmului: este_prim pentru un numar, ciur pentru interogari multiple</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu lectia urmatoare: <strong>Descompunere in factori primi</strong> &mdash; vei vedea cum primalitatea si ciurul se combina cu factorizarea pentru a rezolva probleme avansate (numar de divizori, suma divizorilor).</p>
+            <a href="lectia4-factorizare.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls10-m2-algoritmi-baza-lectia3-numere-prime');
+        PracticeSimple.init('cls10-m2-algoritmi-baza-lectia3-numere-prime');
+        LessonSummary.init('cls10-m2-algoritmi-baza-lectia3-numere-prime');
+        Breadcrumb.init({
+            grade: 'cls10',
+            gradeName: 'Clasa a X-a',
+            module: 'm2-algoritmi-baza',
+            moduleName: 'M2 Algoritmi de Baza',
+            lesson: 'Numere prime'
+        });
+        LearningProgress.init('cls10', 'm2-algoritmi-baza', 'lectia3-numere-prime.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

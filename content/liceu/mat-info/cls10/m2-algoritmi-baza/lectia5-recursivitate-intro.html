@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 5: Introducere in recursivitate | Clasa a X-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia4-factorizare.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 4</a>
+        <a href="lectia6-recursivitate-aplicatii.html" class="nav-btn" title="Lectia urmatoare">Lectia 6 &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Introducere in recursivitate</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege ce este recursivitatea, cum functioneaza stiva de apeluri, cum se defineste cazul de baza si vei implementa functii recursive clasice: factorial si Fibonacci.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti recursivitatea si sa enumeri cele doua componente obligatorii ale oricarei functii recursive</li>
+                <li>Sa identifici cazul de baza si cazul recursiv dintr-o functie data</li>
+                <li>Sa urmaresti manual stiva de apeluri pentru un apel recursiv simplu</li>
+                <li>Sa implementezi factorial si Fibonacci recursiv in Python</li>
+                <li>Sa explici de ce recursivitatea fara caz de baza produce eroare de tip <em>RecursionError</em></li>
+                <li>Sa implementezi factorial recursiv in C++ (nivel intensiv)</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Fara a scrie cod, calculeaza manual valoarea expresiei: <strong>3! (3 factorial)</strong>.<br>
+                Stii ca 3! = 3 &times; 2 &times; 1. Dar daca ai defini 3! ca pe "3 &times; (2!)", iar 2! ca pe "2 &times; (1!)", iar 1! ca pe "1 &times; (0!)", iar 0! = 1 prin definitie... cum se inlantuie calculele?</p>
+                <textarea id="tryAnswer" placeholder="Scrie lantul de calcul pas cu pas:
+3! = 3 x 2! = ...
+2! = ...
+..." rows="6"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Descompune problema in subtask-uri mai mici: pentru a calcula 3!, ai nevoie de 2!. Pentru 2!, ai nevoie de 1!. Pentru 1!, ai nevoie de 0!. Iar 0! = 1 este valoarea de start (cazul de baza).</p>
+                    <p>Acesta este exact mecanismul <strong>recursiv</strong>: o problema se rezolva prin rezolvarea unei versiuni mai mici a aceleiasi probleme.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Ce este recursivitatea -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Care sunt cele doua componente OBLIGATORII ale oricarei functii recursive corecte?", "options": ["Bucla for si conditia while", "Cazul de baza si cazul recursiv", "Parametrul si valoarea de retur", "Importul si exportul de date"], "correct": "b", "hint": "O functie recursiva are intotdeauna un caz de baza (care opreste recursivitatea) si un caz recursiv (care apeleaza aceeasi functie cu argumente mai mici)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Ce este recursivitatea?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Recursivitatea</strong> este tehnica prin care o functie se apeleaza pe sine insasi pentru a rezolva o versiune mai mica a aceleiasi probleme. Executia se opreste cand se atinge <strong>cazul de baza</strong>, un caz suficient de simplu incat sa fie rezolvat direct, fara un nou apel recursiv.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Structura generala a unei functii recursive:</div>
+                    <pre><span class="code-keyword">def</span> <span class="code-function">functie_recursiva</span>(parametru):
+    <span class="code-comment"># Cazul de baza: problema cea mai simpla</span>
+    <span class="code-keyword">if</span> &lt;conditie_stop&gt;:
+        <span class="code-keyword">return</span> &lt;valoare_directa&gt;
+    <span class="code-comment"># Cazul recursiv: problema mai mare -> problema mai mica</span>
+    <span class="code-keyword">return</span> &lt;combinatie&gt; + <span class="code-function">functie_recursiva</span>(parametru_mai_mic)</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Analogie sigura:</div>
+                    <p>Gandeste-te la un dictionar: cauti cuvantul "algoritm" si definitia spune "vezi: procedura"; cauti "procedura" si spune "vezi: secventa de pasi"; cauti "secventa" si gasesti explicatia directa. Fiecare cautare te redirectioneaza la o intrare mai simpla, pana ajungi la una care nu mai are redirectionari (cazul de baza).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Cazul de baza si pericolul infinitului -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Ce se intampla daca o functie recursiva NU are caz de baza?", "options": ["Se opreste automat dupa 100 de apeluri", "Se produce o eroare RecursionError (stiva plina)", "Returneaza None", "Ruleaza in bucla for"], "correct": "b", "hint": "Fara caz de baza, functia se apeleaza la infinit. Python are o limita de adancime a stivei (implicit ~1000 apeluri), dupa care arunca RecursionError: maximum recursion depth exceeded."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Cazul de baza &mdash; ancora recursiei</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Cazul de baza</strong> este conditia care opreste recursivitatea. Fara el, functia s-ar apela la infinit, epuizand memoria disponibila pentru stiva de apeluri. In Python, aceasta produce o eroare de tip <code>RecursionError</code>.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">GRESIT &mdash; functie recursiva fara caz de baza:</div>
+                    <pre><span class="code-comment"># ATENTIE: acest cod produce RecursionError!</span>
+<span class="code-keyword">def</span> <span class="code-function">numar_infinit</span>(n):
+    <span class="code-keyword">return</span> n + <span class="code-function">numar_infinit</span>(n - <span class="code-number">1</span>)  <span class="code-comment"># niciodata nu se opreste</span></pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">CORECT &mdash; cu caz de baza explicit:</div>
+                    <pre><span class="code-keyword">def</span> <span class="code-function">numar_corect</span>(n):
+    <span class="code-keyword">if</span> n == <span class="code-number">0</span>:                        <span class="code-comment"># caz de baza: stop!</span>
+        <span class="code-keyword">return</span> <span class="code-number">0</span>
+    <span class="code-keyword">return</span> n + <span class="code-function">numar_corect</span>(n - <span class="code-number">1</span>)  <span class="code-comment"># caz recursiv: n mai mic</span></pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Regula:</strong> la fiecare apel recursiv, argumentul trebuie sa se <em>apropie</em> de cazul de baza (sa scada, sa creasca spre limita, sau sa simplifice problema). Altfel, recursivitatea nu converge.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Factorial recursiv + stiva de apeluri -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Care este valoarea corecta a expresiei factorial(5)?", "options": ["15", "25", "120", "720"], "correct": "c", "hint": "factorial(5) = 5 x 4 x 3 x 2 x 1 = 120. Sau recursiv: 5 x factorial(4) = 5 x 24 = 120."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Factorial recursiv &mdash; exemplul canonic</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Definitia matematica a factorialului</strong> se preteaza perfect la implementarea recursiva:<br>
+                    &nbsp;&nbsp;&nbsp; 0! = 1 &nbsp;&nbsp;&nbsp; (cazul de baza)<br>
+                    &nbsp;&nbsp;&nbsp; n! = n &times; (n&minus;1)! &nbsp;&nbsp;&nbsp; pentru n &ge; 1 (cazul recursiv)
+                </div>
+                <pre><span class="code-comment"># Factorial recursiv in Python</span>
+<span class="code-keyword">def</span> <span class="code-function">factorial</span>(n):
+    <span class="code-keyword">if</span> n == <span class="code-number">0</span>:                          <span class="code-comment"># caz de baza: 0! = 1</span>
+        <span class="code-keyword">return</span> <span class="code-number">1</span>
+    <span class="code-keyword">return</span> n * <span class="code-function">factorial</span>(n - <span class="code-number">1</span>)    <span class="code-comment"># caz recursiv: n! = n * (n-1)!</span>
+
+<span class="code-function">print</span>(<span class="code-string">"factorial(0) ="</span>, <span class="code-function">factorial</span>(<span class="code-number">0</span>))
+<span class="code-function">print</span>(<span class="code-string">"factorial(1) ="</span>, <span class="code-function">factorial</span>(<span class="code-number">1</span>))
+<span class="code-function">print</span>(<span class="code-string">"factorial(5) ="</span>, <span class="code-function">factorial</span>(<span class="code-number">5</span>))
+<span class="code-function">print</span>(<span class="code-string">"factorial(10) ="</span>, <span class="code-function">factorial</span>(<span class="code-number">10</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>factorial(0) = 1
+factorial(1) = 1
+factorial(5) = 120
+factorial(10) = 3628800</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Urmarirea stivei de apeluri pentru factorial(4):</div>
+                    <pre>factorial(4) apelat
+  factorial(3) apelat
+    factorial(2) apelat
+      factorial(1) apelat
+        factorial(0) apelat
+        caz de baza: return 1
+      factorial(1) = 1 * 1 = 1
+    factorial(2) = 2 * 1 = 2
+  factorial(3) = 3 * 2 = 6
+factorial(4) = 4 * 6 = 24</pre>
+                    <p>Observa ca apelurile se <em>adancesc</em> pana la cazul de baza (coborare), apoi rezultatele se <em>combina</em> la intoarcere (urcare). Aceasta structura dubla (dus-intors) este caracteristica recursivitati.</p>
+                </div>
+                <div class="concept-def">
+                    <strong>Complexitate factorial recursiv:</strong> O(n) timp, O(n) spatiu (stiva creste cu n cadre de apel).
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Fibonacci recursiv -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Cate cazuri de baza are functia Fibonacci recursiva standard?", "options": ["Unul: fib(0) = 0", "Doua: fib(0) = 0 si fib(1) = 1", "Trei: fib(0), fib(1), fib(2)", "Niciun caz de baza"], "correct": "b", "hint": "Fibonacci are doua cazuri de baza: fib(0) = 0 si fib(1) = 1. Fara ambele, nu am sti de unde sa pornim lantul de calcul."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Sirul Fibonacci recursiv</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Sirul Fibonacci:</strong> 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, ...<br>
+                    Definitia matematica recursiva:<br>
+                    &nbsp;&nbsp;&nbsp; fib(0) = 0 &nbsp;&nbsp;&nbsp; (caz de baza 1)<br>
+                    &nbsp;&nbsp;&nbsp; fib(1) = 1 &nbsp;&nbsp;&nbsp; (caz de baza 2)<br>
+                    &nbsp;&nbsp;&nbsp; fib(n) = fib(n&minus;1) + fib(n&minus;2) &nbsp;&nbsp;&nbsp; pentru n &ge; 2 (caz recursiv)
+                </div>
+                <pre><span class="code-comment"># Fibonacci recursiv in Python</span>
+<span class="code-keyword">def</span> <span class="code-function">fibonacci</span>(n):
+    <span class="code-keyword">if</span> n == <span class="code-number">0</span>:                                      <span class="code-comment"># caz de baza 1</span>
+        <span class="code-keyword">return</span> <span class="code-number">0</span>
+    <span class="code-keyword">if</span> n == <span class="code-number">1</span>:                                      <span class="code-comment"># caz de baza 2</span>
+        <span class="code-keyword">return</span> <span class="code-number">1</span>
+    <span class="code-keyword">return</span> <span class="code-function">fibonacci</span>(n - <span class="code-number">1</span>) + <span class="code-function">fibonacci</span>(n - <span class="code-number">2</span>)  <span class="code-comment"># caz recursiv</span>
+
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">10</span>):
+    <span class="code-function">print</span>(<span class="code-string">f"fibonacci({i}) = {fibonacci(i)}"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>fibonacci(0) = 0
+fibonacci(1) = 1
+fibonacci(2) = 1
+fibonacci(3) = 2
+fibonacci(4) = 3
+fibonacci(5) = 5
+fibonacci(6) = 8
+fibonacci(7) = 13
+fibonacci(8) = 21
+fibonacci(9) = 34</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Atentie la complexitate!</strong> Fibonacci recursiv naiv are complexitate <strong>O(2<sup>n</sup>)</strong> &mdash; exponentiala. Pentru fib(40), se fac peste un miliard de apeluri, deoarece aceeasi subproblema (ex. fib(20)) este calculata de mii de ori. Aceasta problema se rezolva prin <em>memoizare</em> sau programare dinamica (lecti viitoare).
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Suma cifrelor - alt exemplu recursiv -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Care este suma cifrelor lui 9876, calculata recursiv?", "options": ["21", "30", "9876", "36"], "correct": "b", "hint": "9 + 8 + 7 + 6 = 30. Recursiv: suma_cifre(9876) = 6 + suma_cifre(987) = 6 + 7 + suma_cifre(98) = ... = 30."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Suma cifrelor &mdash; recursivitate pe cifre</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Suma cifrelor unui numar natural: extragem ultima cifra (<code>n % 10</code>), o adaugam, si apelam recursiv pentru restul numarului (<code>n // 10</code>). Cazul de baza: un numar cu o singura cifra este chiar suma sa.
+                </div>
+                <pre><span class="code-comment"># Suma cifrelor unui numar - varianta recursiva</span>
+<span class="code-keyword">def</span> <span class="code-function">suma_cifre</span>(n):
+    <span class="code-keyword">if</span> n &lt; <span class="code-number">10</span>:                                <span class="code-comment"># caz de baza: cifra unica</span>
+        <span class="code-keyword">return</span> n
+    <span class="code-keyword">return</span> n % <span class="code-number">10</span> + <span class="code-function">suma_cifre</span>(n // <span class="code-number">10</span>)  <span class="code-comment"># ultima cifra + suma restului</span>
+
+<span class="code-function">print</span>(<span class="code-string">"suma_cifre(7) ="</span>, <span class="code-function">suma_cifre</span>(<span class="code-number">7</span>))
+<span class="code-function">print</span>(<span class="code-string">"suma_cifre(123) ="</span>, <span class="code-function">suma_cifre</span>(<span class="code-number">123</span>))
+<span class="code-function">print</span>(<span class="code-string">"suma_cifre(9876) ="</span>, <span class="code-function">suma_cifre</span>(<span class="code-number">9876</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>suma_cifre(7) = 7
+suma_cifre(123) = 6
+suma_cifre(9876) = 30</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Urmarire manuala pentru suma_cifre(123):</div>
+                    <pre>suma_cifre(123) = 3 + suma_cifre(12)
+suma_cifre(12)  = 2 + suma_cifre(1)
+suma_cifre(1)   = 1               (caz de baza: 1 &lt; 10)
+                          <strong>intoarcere:</strong>
+suma_cifre(12)  = 2 + 1 = 3
+suma_cifre(123) = 3 + 3 = 6</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: C++ factorial recursiv (EXCLUSIV INTENSIV) -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, tipul de date potrivit pentru factorial(10) = 3628800 este:", "options": ["char", "short", "int", "bool"], "correct": "c", "hint": "factorial(10) = 3628800, care incape in int (max ~2.1 miliarde). Pentru valori mai mari (factorial(20) ~ 2.4 * 10^18) ai nevoie de long long."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Factorial recursiv in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune exclusiv pentru intensiv informatica</div>
+                    <p>La profilul intensiv vei implementa recursivitatea si in C++. Diferente fata de Python: tipurile se declara explicit; functia recursiva are tipul de retur precizat in antet; nu exista limita dinamica de stiva setata software (Python ~1000 cadre), dar stiva hardware este limitata &mdash; apeluri prea adanci produc <em>stack overflow</em>.</p>
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">long long</span> <span class="code-function">factorial</span>(<span class="code-keyword">int</span> n) {
+    <span class="code-keyword">if</span> (n == <span class="code-number">0</span>) <span class="code-keyword">return</span> <span class="code-number">1</span>;          <span class="code-comment">// caz de baza: 0! = 1</span>
+    <span class="code-keyword">return</span> n * <span class="code-function">factorial</span>(n - <span class="code-number">1</span>);    <span class="code-comment">// caz recursiv</span>
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"factorial(0) = "</span> &lt;&lt; <span class="code-function">factorial</span>(<span class="code-number">0</span>)  &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"factorial(1) = "</span> &lt;&lt; <span class="code-function">factorial</span>(<span class="code-number">1</span>)  &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"factorial(5) = "</span> &lt;&lt; <span class="code-function">factorial</span>(<span class="code-number">5</span>)  &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"factorial(10) = "</span> &lt;&lt; <span class="code-function">factorial</span>(<span class="code-number">10</span>) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>factorial(0) = 1
+factorial(1) = 1
+factorial(5) = 120
+factorial(10) = 3628800</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Comparatie Python vs C++:</strong> Structura recursiva este identica. In C++ declari tipul (<code>long long</code> pt valori mari) si parametrul (<code>int n</code>). In Python, tipurile sunt implicite. Algoritmul &mdash; cazul de baza + cazul recursiv &mdash; este acelasi in ambele limbaje.
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Traseaza manual stiva</h3>
+            <p>Urmareste manual executia functiei <code>factorial(3)</code> pas cu pas, scriind ce se pune si ce se scoate din stiva la fiecare apel. Care este valoarea returnata la final?</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Putere recursiva</h3>
+            <p>Scrie o functie recursiva Python <code>putere(baza, exp)</code> care calculeaza <code>baza</code> la puterea <code>exp</code> (exp intreg nenegativ), folosind relatia: putere(b, 0) = 1, putere(b, e) = b &times; putere(b, e&minus;1). Testeaza cu putere(2, 10).</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Fibonacci optimizat</h3>
+            <p>Implementeaza Fibonacci recursiv cu <strong>memoizare</strong> (salveaza rezultatele deja calculate intr-un dictionar). Compara numarul de apeluri efectuate de versiunea naiva vs. versiunea cu memoizare pentru fibonacci(30). Ce complexitate are versiunea optimizata?</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Recursivitatea = functie care se apeleaza pe sine; are <strong>caz de baza</strong> (stop) + <strong>caz recursiv</strong> (apel cu argument mai mic)</li>
+                <li>Fara caz de baza &rarr; RecursionError (stiva de apeluri epuizata)</li>
+                <li>Factorial: O(n) timp, O(n) spatiu; caz de baza: factorial(0) = 1</li>
+                <li>Fibonacci naiv: O(2<sup>n</sup>) timp &mdash; exponential; are <strong>doua</strong> cazuri de baza</li>
+                <li>Suma cifrelor recursiva: extrage ultima cifra + apel recursiv pe n // 10</li>
+                <li>In C++ (intensiv): structura recursiva identica, tipurile se declara explicit</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Lectia 6 &mdash; Aplicatii recursive</strong>: putere rapida, generarea permutarilor si alte aplicatii clasice ale recursivitati.</p>
+            <a href="lectia6-recursivitate-aplicatii.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls10-m2-algoritmi-baza-lectia5-recursivitate-intro');
+        PracticeSimple.init('cls10-m2-algoritmi-baza-lectia5-recursivitate-intro');
+        LessonSummary.init('cls10-m2-algoritmi-baza-lectia5-recursivitate-intro');
+        Breadcrumb.init({
+            grade: 'cls10',
+            gradeName: 'Clasa a X-a',
+            module: 'm2-algoritmi-baza',
+            moduleName: 'M2 Algoritmi de Baza',
+            lesson: 'Introducere in recursivitate'
+        });
+        LearningProgress.init('cls10', 'm2-algoritmi-baza', 'lectia5-recursivitate-intro.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

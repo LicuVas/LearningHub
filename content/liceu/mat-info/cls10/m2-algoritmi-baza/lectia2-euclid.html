@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 2: Algoritmul lui Euclid | Clasa a X-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia1-sortari.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 1</a>
+        <a href="lectia3-numere-prime.html" class="nav-btn" title="Lectia urmatoare">Lectia 3 &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Algoritmul lui Euclid &mdash; CMMDC &amp; CMMMC</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege si implementa algoritmul lui Euclid in doua variante (scaderi repetate si impartiri repetate), vei calcula CMMMC folosind CMMDC si vei analiza complexitatea fiecarei variante.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti CMMDC si CMMMC si sa explici relatia dintre ele</li>
+                <li>Sa implementezi algoritmul lui Euclid prin scaderi repetate</li>
+                <li>Sa implementezi algoritmul lui Euclid prin impartiri repetate (varianta clasica)</li>
+                <li>Sa calculezi CMMMC folosind formula CMMMC(a,b) = (a*b) / CMMDC(a,b)</li>
+                <li>Sa compari complexitatea O(max(a,b)) vs O(log(min(a,b))) pentru cele doua variante</li>
+                <li>Sa rezolvi exercitii de tip BAC privind algoritmul lui Euclid</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Ai doua numere: <strong>a = 48</strong> si <strong>b = 18</strong>. Fara calculator, aplica algoritmul scaderilor repetate pas cu pas pana obtii CMMDC. Scrie fiecare pas.</p>
+                <textarea id="tryAnswer" placeholder="Pas 1: a=48, b=18 => 48 > 18 => a = 48 - 18 = 30&#10;Pas 2: a=30, b=18 => ...&#10;..." rows="6"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>La fiecare pas, scazi numarul mai mic din cel mai mare. Continui pana cand cele doua numere devin egale.</p>
+                    <p>Traseul complet: 48,18 &rarr; 30,18 &rarr; 12,18 &rarr; 12,6 &rarr; 6,6. Gata! CMMDC = <strong>6</strong>.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: CMMDC definitie -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Care este CMMDC al numerelor 12 si 8?", "options": ["2", "4", "6", "24"], "correct": "b", "hint": "Divizorii comuni ai lui 12 si 8 sunt: 1, 2, 4. Cel mai mare este 4."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Ce este CMMDC?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>CMMDC(a, b)</strong> &mdash; Cel Mai Mare Divizor Comun al numerelor a si b &mdash; este cel mai mare numar natural pozitiv care imparte exact atat pe <em>a</em> cat si pe <em>b</em>.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu vizual pentru CMMDC(12, 8):</div>
+                    <p>Divizorii lui 12: 1, 2, 3, <strong>4</strong>, 6, 12</p>
+                    <p>Divizorii lui &nbsp;8: 1, 2, &nbsp; &nbsp; <strong>4</strong>, 8</p>
+                    <p>Divizori comuni: 1, 2, <strong>4</strong> &rarr; CMMDC = <strong>4</strong></p>
+                </div>
+                <div class="concept-def">
+                    <strong>CMMMC(a, b)</strong> &mdash; Cel Mai Mic Multiplu Comun &mdash; este cel mai mic numar natural nenul care este multiplu atat al lui <em>a</em> cat si al lui <em>b</em>. Formula fundamentala:
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Formula de legatura CMMDC &harr; CMMMC:</div>
+                    <p><strong>CMMMC(a, b) = (a &times; b) / CMMDC(a, b)</strong></p>
+                    <p>Exemplu: CMMMC(4, 6) = (4 &times; 6) / CMMDC(4, 6) = 24 / 2 = <strong>12</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Scaderi repetate -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "In algoritmul prin scaderi repetate, cand se opreste bucla?", "options": ["Cand a devine 0", "Cand b devine 0", "Cand a este egal cu b", "Cand a + b < 10"], "correct": "c", "hint": "Bucla continua cat timp a != b. Cand a == b, acel numar este CMMDC."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Euclid prin scaderi repetate</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Idee:</strong> La fiecare pas, scadem numarul mai mic din cel mai mare. Repetam pana cand cele doua numere devin egale. Acel numar comun este CMMDC.
+                    <br><br>
+                    <strong>Proprietate matematica:</strong> CMMDC(a, b) = CMMDC(a &minus; b, b) daca a &gt; b.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Urmarire pas cu pas &mdash; CMMDC(48, 18):</div>
+                    <p>Pas 0: a=48, b=18 &nbsp; (48 &ne; 18, continuam)</p>
+                    <p>Pas 1: 48 &gt; 18 &rarr; a = 48 &minus; 18 = 30 &nbsp;&nbsp; a=30, b=18</p>
+                    <p>Pas 2: 30 &gt; 18 &rarr; a = 30 &minus; 18 = 12 &nbsp;&nbsp; a=12, b=18</p>
+                    <p>Pas 3: 12 &lt; 18 &rarr; b = 18 &minus; 12 = &nbsp;6 &nbsp;&nbsp; a=12, b=6</p>
+                    <p>Pas 4: 12 &gt; &nbsp;6 &rarr; a = 12 &minus; &nbsp;6 = &nbsp;6 &nbsp;&nbsp; a=6, b=6</p>
+                    <p>Pas 5: a == b &rarr; <strong>CMMDC = 6</strong></p>
+                </div>
+                <p>Codul Python corespunzator:</p>
+                <pre><span class="code-comment"># CMMDC prin scaderi repetate</span>
+<span class="code-keyword">def</span> <span class="code-function">cmmdc_scaderi</span>(a, b):
+    <span class="code-keyword">while</span> a != b:
+        <span class="code-keyword">if</span> a &gt; b:
+            a = a - b
+        <span class="code-keyword">else</span>:
+            b = b - a
+    <span class="code-keyword">return</span> a
+
+<span class="code-function">print</span>(<span class="code-string">"cmmdc_scaderi(48, 18) ="</span>, <span class="code-function">cmmdc_scaderi</span>(<span class="code-number">48</span>, <span class="code-number">18</span>))
+<span class="code-function">print</span>(<span class="code-string">"cmmdc_scaderi(12, 8) ="</span>, <span class="code-function">cmmdc_scaderi</span>(<span class="code-number">12</span>, <span class="code-number">8</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>cmmdc_scaderi(48, 18) = 6
+cmmdc_scaderi(12, 8) = 4</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> O(max(a, b) / CMMDC(a, b)) &mdash; in cel mai rau caz proportionala cu max(a, b). Pentru numere mari poate fi extrem de lenta.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Impartiri repetate -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "In algoritmul prin impartiri repetate, cu ce inlocuim perechea (a, b) la fiecare pas?", "options": ["(a-b, b)", "(b, a%b)", "(a%b, b)", "(a, a%b)"], "correct": "b", "hint": "La fiecare pas: noul a devine vechiul b, iar noul b devine restul impartirii a%b."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Euclid prin impartiri repetate (varianta clasica)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Idee:</strong> La fiecare pas inlocuim perechea (a, b) cu (b, a mod b). Cand b devine 0, CMMDC este valoarea curenta a lui a.
+                    <br><br>
+                    <strong>Proprietate matematica:</strong> CMMDC(a, b) = CMMDC(b, a mod b).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Urmarire pas cu pas &mdash; CMMDC(48, 18):</div>
+                    <p>Pas 1: 48 = 18 &times; 2 + <strong>12</strong> &rarr; (a, b) = (18, 12)</p>
+                    <p>Pas 2: 18 = 12 &times; 1 + &nbsp;<strong>6</strong> &rarr; (a, b) = (12, 6)</p>
+                    <p>Pas 3: 12 = &nbsp;6 &times; 2 + &nbsp;<strong>0</strong> &rarr; (a, b) = (6, 0)</p>
+                    <p>b = 0 &rarr; <strong>CMMDC = 6</strong> (valoarea lui a)</p>
+                </div>
+                <p>Codul Python corespunzator:</p>
+                <pre><span class="code-comment"># CMMDC prin impartiri repetate</span>
+<span class="code-keyword">def</span> <span class="code-function">cmmdc_impartiri</span>(a, b):
+    <span class="code-keyword">while</span> b != <span class="code-number">0</span>:
+        a, b = b, a % b
+    <span class="code-keyword">return</span> a
+
+<span class="code-function">print</span>(<span class="code-string">"cmmdc_impartiri(48, 18) ="</span>, <span class="code-function">cmmdc_impartiri</span>(<span class="code-number">48</span>, <span class="code-number">18</span>))
+<span class="code-function">print</span>(<span class="code-string">"cmmdc_impartiri(12, 8) ="</span>, <span class="code-function">cmmdc_impartiri</span>(<span class="code-number">12</span>, <span class="code-number">8</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>cmmdc_impartiri(48, 18) = 6
+cmmdc_impartiri(12, 8) = 4</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> O(log(min(a, b))) &mdash; mult mai eficienta decat varianta prin scaderi, chiar si pentru numere de ordinul miliardelor.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: CMMMC -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Care este CMMMC(12, 8)?", "options": ["4", "12", "24", "96"], "correct": "c", "hint": "CMMDC(12, 8) = 4. CMMMC = (12 * 8) / 4 = 96 / 4 = 24."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Calculul CMMMC folosind CMMDC</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Formula <strong>CMMMC(a, b) = (a &times; b) / CMMDC(a, b)</strong> este valabila pentru orice numere naturale nenule.
+                    <br><br>
+                    <strong>Atentie practica:</strong> In cod, impartim intai pe a la CMMDC, apoi inmultim cu b. Se evita astfel depasirea (overflow) pentru numere mari: <code>(a // cmmdc) * b</code>.
+                </div>
+                <pre><span class="code-comment"># CMMMC folosind CMMDC</span>
+<span class="code-keyword">def</span> <span class="code-function">cmmdc</span>(a, b):
+    <span class="code-keyword">while</span> b != <span class="code-number">0</span>:
+        a, b = b, a % b
+    <span class="code-keyword">return</span> a
+
+<span class="code-keyword">def</span> <span class="code-function">cmmmc</span>(a, b):
+    <span class="code-keyword">return</span> (a // <span class="code-function">cmmdc</span>(a, b)) * b
+
+<span class="code-function">print</span>(<span class="code-string">"cmmmc(4, 6) ="</span>, <span class="code-function">cmmmc</span>(<span class="code-number">4</span>, <span class="code-number">6</span>))
+<span class="code-function">print</span>(<span class="code-string">"cmmmc(12, 8) ="</span>, <span class="code-function">cmmmc</span>(<span class="code-number">12</span>, <span class="code-number">8</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>cmmmc(4, 6) = 12
+cmmmc(12, 8) = 24</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Verificare manuala:</div>
+                    <p>CMMMC(4, 6): CMMDC(4,6)=2; (4&times;6)/2 = 24/2 = <strong>12</strong> &#10003;</p>
+                    <p>CMMMC(12, 8): CMMDC(12,8)=4; (12&times;8)/4 = 96/4 = <strong>24</strong> &#10003;</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Comparatie complexitate -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Care varianta a algoritmului lui Euclid este mai eficienta pentru numere mari?", "options": ["Scaderi repetate, O(max(a,b))", "Impartiri repetate, O(log(min(a,b)))", "Ambele au aceeasi complexitate", "Depinde de marimea memoriei RAM"], "correct": "b", "hint": "log2(1 000 000 000) este aproximativ 30. Scaderile repetate pot necesita miliarde de pasi in cazul cel mai rau."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Comparatie: scaderi vs. impartiri &mdash; complexitate</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Scaderi repetate:</strong> O(max(a, b) / CMMDC(a, b))<br>
+                    <strong>Impartiri repetate:</strong> O(log(min(a, b)))<br><br>
+                    Exemplu concret: a = 1&nbsp;000&nbsp;000&nbsp;000, b = 1<br>
+                    &bull; Scaderi: un miliard de pasi!<br>
+                    &bull; Impartiri: un singur pas (1&nbsp;000&nbsp;000&nbsp;000 mod 1 = 0, CMMDC = 1)
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu numaratoare pasi &mdash; CMMDC(100, 75):</div>
+                    <pre><span class="code-comment"># Numaratoare pasi scaderi</span>
+a, b = <span class="code-number">100</span>, <span class="code-number">75</span>
+pasi = <span class="code-number">0</span>
+<span class="code-keyword">while</span> a != b:
+    <span class="code-keyword">if</span> a &gt; b:
+        a = a - b
+    <span class="code-keyword">else</span>:
+        b = b - a
+    pasi += <span class="code-number">1</span>
+<span class="code-function">print</span>(<span class="code-string">"CMMDC ="</span>, a, <span class="code-string">", pasi scaderi:"</span>, pasi)</pre>
+                    <div class="example-box">
+                        <div class="example-title">Output real (rulat cu python):</div>
+                        <pre>CMMDC = 25 , pasi scaderi: 3</pre>
+                    </div>
+                    <p>In acest caz avem doar 3 pasi, deoarece CMMDC(100,75)=25 este relativ mare. Cel mai rau caz apare la numere consecutive de Fibonacci: CMMDC(Fib(n+1), Fib(n)) necesita n pasi prin impartiri.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Varianta recursiva EXCLUSIV INTENSIV -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In versiunea recursiva a algoritmului lui Euclid, care este cazul de baza (conditia de oprire)?", "options": ["a == b", "a == 0", "b == 0", "a % b == 1"], "correct": "c", "hint": "Cand b devine 0, CMMDC este valoarea lui a. Aceasta este conditia de baza a recursivitatii."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Varianta recursiva &mdash; Python &amp; C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+                    <p>La profilul intensiv, algoritmul lui Euclid se implementeaza si recursiv. Subprogramele recursive sunt in programa clasei a X-a exclusiv pentru matematica-informatica si intensiv (Domeniu 3). Aceasta sectiune arata cum stiva de apeluri executa algoritmul.</p>
+                </div>
+                <div class="concept-def">
+                    <strong>Cazul de baza:</strong> CMMDC(a, 0) = a<br>
+                    <strong>Pasul recursiv:</strong> CMMDC(a, b) = CMMDC(b, a mod b)
+                </div>
+                <p>Implementare Python:</p>
+                <pre><span class="code-comment"># CMMDC recursiv (Python)</span>
+<span class="code-keyword">def</span> <span class="code-function">cmmdc_recursiv</span>(a, b):
+    <span class="code-keyword">if</span> b == <span class="code-number">0</span>:
+        <span class="code-keyword">return</span> a            <span class="code-comment"># caz de baza</span>
+    <span class="code-keyword">return</span> <span class="code-function">cmmdc_recursiv</span>(b, a % b)  <span class="code-comment"># pas recursiv</span>
+
+<span class="code-function">print</span>(<span class="code-string">"cmmdc_recursiv(48, 18) ="</span>, <span class="code-function">cmmdc_recursiv</span>(<span class="code-number">48</span>, <span class="code-number">18</span>))
+<span class="code-function">print</span>(<span class="code-string">"cmmdc_recursiv(12, 8) ="</span>, <span class="code-function">cmmdc_recursiv</span>(<span class="code-number">12</span>, <span class="code-number">8</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>cmmdc_recursiv(48, 18) = 6
+cmmdc_recursiv(12, 8) = 4</pre>
+                </div>
+                <p>Acelasi algoritm in C++:</p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">cmmdc_recursiv</span>(<span class="code-keyword">int</span> a, <span class="code-keyword">int</span> b) {
+    <span class="code-keyword">if</span> (b == <span class="code-number">0</span>) <span class="code-keyword">return</span> a;
+    <span class="code-keyword">return</span> <span class="code-function">cmmdc_recursiv</span>(b, a % b);
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"cmmdc_recursiv(48, 18) = "</span> &lt;&lt; <span class="code-function">cmmdc_recursiv</span>(<span class="code-number">48</span>, <span class="code-number">18</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"cmmdc_recursiv(12, 8) = "</span> &lt;&lt; <span class="code-function">cmmdc_recursiv</span>(<span class="code-number">12</span>, <span class="code-number">8</span>) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>cmmdc_recursiv(48, 18) = 6
+cmmdc_recursiv(12, 8) = 4</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Stiva de apeluri pentru CMMDC(48, 18):</div>
+                    <p>cmmdc_recursiv(48, 18) &rarr; apeleaza</p>
+                    <p>&nbsp;&nbsp;cmmdc_recursiv(18, 12) &rarr; apeleaza</p>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;cmmdc_recursiv(12, 6) &rarr; apeleaza</p>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmmdc_recursiv(6, 0) &rarr; <strong>returneaza 6</strong></p>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;&larr; 6 &nbsp;&larr; 6 &nbsp;&larr; 6 &nbsp; (raspuns propagat inapoi)</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Urmarire manuala</h3>
+            <p>Aplica algoritmul prin <strong>impartiri repetate</strong> pentru a calcula CMMDC(56, 98). Scrie fiecare pas in forma <code>a = b &times; cat + rest</code>. Care este rezultatul?</p>
+            <p><em>Raspuns asteptat:</em> 98 = 56&times;1+42; 56 = 42&times;1+14; 42 = 14&times;3+0; CMMDC = <strong>14</strong>.</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Implementare + CMMMC</h3>
+            <p>Scrie un program Python care citeste doua numere naturale a si b de la tastatura si afiseaza atat CMMDC cat si CMMMC, folosind varianta prin impartiri repetate. Testeaza cu a=36, b=48.</p>
+            <p><em>Rezultat asteptat:</em> CMMDC(36,48) = 12; CMMMC(36,48) = 144.</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Problema BAC</h3>
+            <p>Se considera urmatorul algoritm in pseudocod:</p>
+            <div class="pseudocode">
+                <span class="pseudocode-keyword">CITESTE</span> a, b<br>
+                cat &larr; 0<br>
+                <span class="pseudocode-keyword">CAT TIMP</span> a &ne; b <span class="pseudocode-keyword">EXECUTA</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="pseudocode-keyword">DACA</span> a &gt; b<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="pseudocode-keyword">ATUNCI</span> a &larr; a &minus; b<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="pseudocode-keyword">ALTFEL</span> b &larr; b &minus; a<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;cat &larr; cat + 1<br>
+                <span class="pseudocode-keyword">SCRIE</span> a, cat
+            </div>
+            <p>a) Ce afiseaza pentru a=30, b=12? &nbsp; b) Ce calculeaza variabila <code>cat</code>? &nbsp; c) De ce nu se afiseaza si b la final?</p>
+            <p><em>Raspuns:</em> a) 6 4; b) numarul de scaderi efectuate; c) la final a == b, ambele au valoarea CMMDC deci e suficient sa afisam una.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>CMMDC(a,b) = cel mai mare numar care divide exact atat a cat si b</li>
+                <li>Algoritm Euclid prin scaderi repetate: O(max(a,b)/CMMDC); simplu dar lent</li>
+                <li>Algoritm Euclid prin impartiri repetate: O(log(min(a,b))); rapid si recomandat</li>
+                <li>CMMMC(a,b) = (a &times; b) / CMMDC(a,b); se calculeaza dupa CMMDC</li>
+                <li>[Intensiv] Varianta recursiva: CMMDC(a,0)=a; CMMDC(a,b)=CMMDC(b, a%b)</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Lectia 3 &mdash; Numere prime</strong>: verificare primalitate si Ciurul lui Eratostene.</p>
+            <a href="lectia3-numere-prime.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls10-m2-algoritmi-baza-lectia2-euclid');
+        PracticeSimple.init('cls10-m2-algoritmi-baza-lectia2-euclid');
+        LessonSummary.init('cls10-m2-algoritmi-baza-lectia2-euclid');
+        Breadcrumb.init({
+            grade: 'cls10',
+            gradeName: 'Clasa a X-a',
+            module: 'm2-algoritmi-baza',
+            moduleName: 'M2 Algoritmi de Baza',
+            lesson: 'Algoritmul lui Euclid'
+        });
+        LearningProgress.init('cls10', 'm2-algoritmi-baza', 'lectia2-euclid.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

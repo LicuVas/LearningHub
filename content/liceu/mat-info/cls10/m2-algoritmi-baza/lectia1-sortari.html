@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 1: Algoritmi de sortare | Clasa a X-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8592; Modulul</a>
+        <a href="lectia2-euclid.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Algoritmi de sortare</h1>
+        <div class="curriculum-notice">
+            <strong>Nota de conformitate programa:</strong> Continuturile acestei lectii
+            (sortare prin selectia minimului, sortare cu lista de frecvente, metoda bulelor)
+            sunt prevazute oficial in programa de <strong>clasa a IX-a</strong>
+            (OMEN 4.350/2025, punctul 2.4). Lectia este inclusa in modulul cls X ca
+            recapitulare si pentru compatibilitate cu OMECI 5099/2009 (inca in vigoare
+            la clasa a X-a, capitol &bdquo;Algoritmi fundamentali pe tablouri: cautare,
+            sortare, interclasare&rdquo;). Proiectia curriculara 2025 pentru clasa a X-a
+            introduce teme noi: Divide et Impera, Greedy, structuri de date neliniare,
+            subprograme recursive.
+        </div>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- FRAME SECTION -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege cum functioneaza cei trei algoritmi de sortare prevazuti de programa (selectie, lista de frecvente, bule), vei sti sa ii implementezi corect in Python si vei putea compara eficienta lor.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa implementezi sortarea prin selectie si sa trasezi executia ei pas cu pas</li>
+                <li>Sa implementezi sortarea cu lista de frecvente si sa explici avantajele si limitarile ei</li>
+                <li>Sa implementezi sortarea prin metoda bulelor si sa recunosti optimizarile posibile</li>
+                <li>Sa compari cei trei algoritmi dupa complexitate si cazuri de utilizare</li>
+                <li>Sa rezolvi exercitii de urmarire a executiei unui algoritm de sortare (tip BAC)</li>
+                <li>Sa implementezi aceiasi algoritmi in C++ cu tablouri unidimensionale <span class="bonus-badge">EXCLUSIV INTENSIV</span></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- TRY SECTION -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare initiala:</div>
+<p>Ai aceasta lista de numere: <strong>[5, 3, 8, 1, 9, 2]</strong>. Aranjeaz-o crescator manual, scriind pasii pe care ii faci. Ce strategie ai adoptat? Ai ales mereu minimul? Ai comparat vecinii? Ai numarat de cate ori apare fiecare valoare?</p>
+<textarea id="tryAnswer" placeholder="Pasul 1: ...
+Pasul 2: ..." rows="5"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+<div class="hint-content">
+<p>Exista trei strategii clasice prevazute de programa:</p>
+<ul>
+<li><strong>Selectia minimului</strong> - cauta cel mai mic element si asaza-l la inceput, repeta pentru rest</li>
+<li><strong>Lista de frecvente</strong> - numara de cate ori apare fiecare valoare, apoi reconstituie lista in ordine</li>
+<li><strong>Bulele</strong> - compara vecinii si schimba-i daca sunt in ordine gresita, repeta runde</li>
+</ul>
+<p>Toate trei ajung la acelasi rezultat, dar prin drumuri diferite!</p>
+</div>
+</div>
+        </div>
+    </section>
+
+    <!-- ATOMS -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Sortarea prin selectie -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "La sortarea prin selectie, ce se face la fiecare pas i?", "options": ["Se cauta minimul din pozitia i pana la sfarsit si se asaza pe pozitia i", "Se compara toate perechile de vecini", "Se numara de cate ori apare fiecare valoare", "Se inverseaza lista"], "correct": "a", "hint": "La fiecare pas i cautam minimul din subsirul v[i..n-1] si il mutam pe pozitia i prin interschimbare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Sortarea prin selectie</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Idee:</strong> La fiecare pas <em>i</em>, cauta minimul din subsirul nesortat (pozitiile i..n-1) si plaseaza-l pe pozitia i prin interschimbare. Dupa pasul i, primele i+1 pozitii sunt sortate definitiv.
+                </div>
+
+                <div class="example-box">
+<div class="example-title">Urmarire pas cu pas pe [64, 25, 12, 22, 11]:</div>
+<pre>Start:   [64, 25, 12, 22, 11]
+Pasul 1: [11, 25, 12, 22, 64]  (minim=11, schimba poz 0 cu poz 4)
+Pasul 2: [11, 12, 25, 22, 64]  (minim=12, schimba poz 1 cu poz 2)
+Pasul 3: [11, 12, 22, 25, 64]  (minim=22, schimba poz 2 cu poz 3)
+Pasul 4: [11, 12, 22, 25, 64]  (minim=25, deja pe loc)</pre>
+</div>
+
+                <p>Implementare Python (output verificat):</p>
+                <pre><span class="code-keyword">def</span> <span class="code-function">selectie</span>(v):
+    n = <span class="code-function">len</span>(v)
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n - <span class="code-number">1</span>):
+        min_idx = i
+        <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(i + <span class="code-number">1</span>, n):
+            <span class="code-keyword">if</span> v[j] &lt; v[min_idx]:
+                min_idx = j
+        v[i], v[min_idx] = v[min_idx], v[i]  <span class="code-comment"># interschimbare</span>
+    <span class="code-keyword">return</span> v
+
+lista = [<span class="code-number">64</span>, <span class="code-number">25</span>, <span class="code-number">12</span>, <span class="code-number">22</span>, <span class="code-number">11</span>]
+<span class="code-function">print</span>(<span class="code-string">"Inainte:"</span>, lista)
+<span class="code-function">selectie</span>(lista)
+<span class="code-function">print</span>(<span class="code-string">"Dupa:  "</span>, lista)</pre>
+
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Inainte: [64, 25, 12, 22, 11]
+Dupa:   [11, 12, 22, 25, 64]</pre>
+</div>
+
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> O(n²) - bucla exterioara face n-1 pasi, bucla interioara face n-1-i comparatii la pasul i. Total comparatii: n(n-1)/2. Numarul de interschimbari este cel mult n-1 (avantaj fata de bule).
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Sortarea cu lista de frecvente -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Ce retine lista de frecvente freq[k] dupa parcurgerea listei de sortat?", "options": ["Pozitia primei aparitii a valorii k", "De cate ori apare valoarea k in lista", "Daca valoarea k este mai mica decat media", "Suma tuturor elementelor mai mici decat k"], "correct": "b", "hint": "freq[k] = numarul de aparitii ale valorii k in lista originala. Reconstituim lista sortata afisand fiecare valoare k de freq[k] ori, in ordine crescatoare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Sortarea cu lista de frecvente</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Idee:</strong> In loc sa comparam si sa mutam elemente, numaram de cate ori apare fiecare valoare intr-un tablou auxiliar <em>freq</em>. Apoi parcurgem freq de la 0 la val_max si reconstituim lista sortata: scriem valoarea <em>k</em> de <em>freq[k]</em> ori. <strong>Conditie:</strong> functioneaza doar pentru numere intregi nonnegative cu domeniu cunoscut si rezonabil de mic.
+                </div>
+
+                <div class="example-box">
+<div class="example-title">Pas cu pas pe [3, 1, 4, 1, 5]:</div>
+<pre>Lista initiala: [3, 1, 4, 1, 5]
+val_max = 5
+
+Pasul 1 - construire freq:
+  freq = [0, 0, 0, 0, 0, 0]  (indici 0..5)
+  citim 3  -&gt; freq[3]++  -&gt; freq = [0, 0, 0, 1, 0, 0]
+  citim 1  -&gt; freq[1]++  -&gt; freq = [0, 1, 0, 1, 0, 0]
+  citim 4  -&gt; freq[4]++  -&gt; freq = [0, 1, 0, 1, 1, 0]
+  citim 1  -&gt; freq[1]++  -&gt; freq = [0, 2, 0, 1, 1, 0]
+  citim 5  -&gt; freq[5]++  -&gt; freq = [0, 2, 0, 1, 1, 1]
+
+Pasul 2 - reconstituire lista sortata:
+  val=0: freq[0]=0 -&gt; nimic
+  val=1: freq[1]=2 -&gt; scriem 1, 1
+  val=2: freq[2]=0 -&gt; nimic
+  val=3: freq[3]=1 -&gt; scriem 3
+  val=4: freq[4]=1 -&gt; scriem 4
+  val=5: freq[5]=1 -&gt; scriem 5
+
+Rezultat: [1, 1, 3, 4, 5]</pre>
+</div>
+
+                <p>Implementare Python (output verificat):</p>
+                <pre><span class="code-keyword">def</span> <span class="code-function">sortare_frecvente</span>(v):
+    <span class="code-keyword">if not</span> v:
+        <span class="code-keyword">return</span> []
+    val_max = <span class="code-function">max</span>(v)
+    freq = [<span class="code-number">0</span>] * (val_max + <span class="code-number">1</span>)  <span class="code-comment"># tablou de frecvente</span>
+    <span class="code-keyword">for</span> x <span class="code-keyword">in</span> v:
+        freq[x] += <span class="code-number">1</span>          <span class="code-comment"># numara aparitiile</span>
+    rezultat = []
+    <span class="code-keyword">for</span> val <span class="code-keyword">in</span> <span class="code-function">range</span>(val_max + <span class="code-number">1</span>):
+        rezultat.extend([val] * freq[val])  <span class="code-comment"># adauga val de freq[val] ori</span>
+    <span class="code-keyword">return</span> rezultat
+
+lista = [<span class="code-number">3</span>, <span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">1</span>, <span class="code-number">5</span>, <span class="code-number">9</span>, <span class="code-number">2</span>, <span class="code-number">6</span>, <span class="code-number">5</span>, <span class="code-number">3</span>]
+<span class="code-function">print</span>(<span class="code-string">"Inainte:"</span>, lista)
+<span class="code-function">print</span>(<span class="code-string">"Dupa:  "</span>, <span class="code-function">sortare_frecvente</span>(lista))</pre>
+
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Inainte: [3, 1, 4, 1, 5, 9, 2, 6, 5, 3]
+Dupa:   [1, 1, 2, 3, 3, 4, 5, 5, 6, 9]</pre>
+</div>
+
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> O(n + val_max) - parcurgere lista O(n) + parcurgere freq O(val_max). Daca val_max este proportional cu n, algoritmul devine O(n) - mai rapid decat O(n²)! <strong>Limitari:</strong> necesita memorie extra O(val_max); nu functioneaza pentru numere reale, negative sau cu domeniu foarte mare.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Sortarea prin metoda bulelor -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Dupa o runda completa de bubble sort, ce proprietate este garantata?", "options": ["Primul element este minimul", "Ultimul element din portiunea nesortata este maximul", "Lista este complet sortata", "Elementele sunt inversate"], "correct": "b", "hint": "La fiecare runda, cel mai mare element dintre cele ramase urca (ca o bula) pe ultima pozitie nesortata."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Sortarea prin metoda bulelor (Bubble Sort)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Idee:</strong> La fiecare runda, parcurge lista de la stanga la dreapta si schimba fiecare pereche de vecini aflati in ordine gresita. Dupa runda <em>i</em>, cele mai mari i elemente sunt plasate corect la sfarsit.
+                </div>
+
+                <div class="example-box">
+<div class="example-title">Urmarire runde pe [5, 3, 8, 4, 2]:</div>
+<pre>Start:   [5, 3, 8, 4, 2]
+Runda 1: [3, 5, 4, 2, 8]  (8 a urcat la pozitia finala)
+Runda 2: [3, 4, 2, 5, 8]  (5 a ajuns pe loc)
+Runda 3: [3, 2, 4, 5, 8]
+Runda 4: [2, 3, 4, 5, 8]  (sortat)</pre>
+</div>
+
+                <p>Implementare Python (output verificat):</p>
+                <pre><span class="code-keyword">def</span> <span class="code-function">bule</span>(v):
+    n = <span class="code-function">len</span>(v)
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n - <span class="code-number">1</span>):
+        <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(n - <span class="code-number">1</span> - i):
+            <span class="code-keyword">if</span> v[j] &gt; v[j + <span class="code-number">1</span>]:
+                v[j], v[j + <span class="code-number">1</span>] = v[j + <span class="code-number">1</span>], v[j]
+    <span class="code-keyword">return</span> v
+
+lista = [<span class="code-number">64</span>, <span class="code-number">34</span>, <span class="code-number">25</span>, <span class="code-number">12</span>, <span class="code-number">22</span>, <span class="code-number">11</span>, <span class="code-number">90</span>]
+<span class="code-function">print</span>(<span class="code-string">"Inainte:"</span>, lista)
+<span class="code-function">bule</span>(lista)
+<span class="code-function">print</span>(<span class="code-string">"Dupa:  "</span>, lista)</pre>
+
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Inainte: [64, 34, 25, 12, 22, 11, 90]
+Dupa:   [11, 12, 22, 25, 34, 64, 90]</pre>
+</div>
+
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> O(n²) in cazul mediu si cel mai defavorabil. Numarul de comparatii = n(n-1)/2. Numarul de interschimbari poate fi pana la n(n-1)/2. <strong>Cazul cel mai bun:</strong> cu o optimizare care detecteaza lista deja sortata (flag), complexitatea devine O(n).
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Sortarea prin insertie - BONUS extra-programa -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "In sortarea prin insertie, ce reprezinta variabila cheie (cheie = v[i])?", "options": ["Minimul intregii liste", "Indicele elementului maxim", "Numarul de comparatii facute pana acum", "Elementul curent care se insereaza la locul potrivit in subsirul stang sortat"], "correct": "d", "hint": "La pasul i, cheia este v[i] - il luam si il inseram in subsirul deja sortat v[0..i-1], deplasand elementele mai mari spre dreapta."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Sortarea prin insertie <span class="bonus-badge">BONUS - extra-programa</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9888; Algoritm extra-programa</div>
+<p>Sortarea prin insertie <strong>nu este prevazuta in programa oficiala</strong> (nici OMEN 4.350/2025, nici OMECI 5099/2009 nu o numesc explicit). Este inclusa ca bonus pentru aprofundare, datorita proprietatii utile de complexitate O(n) pe liste aproape sortate. Nu este materie de examen standard.</p>
+</div>
+
+                <div class="concept-def">
+                    <strong>Idee:</strong> Considera ca la pasul <em>i</em>, subsirul v[0..i-1] este deja sortat. Ia elementul v[i] (cheia) si insereaza-l la pozitia corecta in subsirul sortat, deplasand elementele mai mari spre dreapta.
+                </div>
+
+                <div class="example-box">
+<div class="example-title">Urmarire pas cu pas pe [5, 2, 8, 1, 9]:</div>
+<pre>Start:   [5, 2, 8, 1, 9]
+Pasul 1: [2, 5, 8, 1, 9]  (inserat 2 - a trecut de 5)
+Pasul 2: [2, 5, 8, 1, 9]  (inserat 8 - deja la loc)
+Pasul 3: [1, 2, 5, 8, 9]  (inserat 1 - a trecut de 8, 5, 2)
+Pasul 4: [1, 2, 5, 8, 9]  (inserat 9 - deja la loc)</pre>
+</div>
+
+                <p>Implementare Python (output verificat):</p>
+                <pre><span class="code-keyword">def</span> <span class="code-function">insertie</span>(v):
+    n = <span class="code-function">len</span>(v)
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n):
+        cheie = v[i]          <span class="code-comment"># elementul de inserat</span>
+        j = i - <span class="code-number">1</span>
+        <span class="code-keyword">while</span> j &gt;= <span class="code-number">0</span> <span class="code-keyword">and</span> v[j] &gt; cheie:
+            v[j + <span class="code-number">1</span>] = v[j]  <span class="code-comment"># deplaseaza spre dreapta</span>
+            j -= <span class="code-number">1</span>
+        v[j + <span class="code-number">1</span>] = cheie      <span class="code-comment"># plaseaza cheia</span>
+    <span class="code-keyword">return</span> v
+
+lista = [<span class="code-number">12</span>, <span class="code-number">11</span>, <span class="code-number">13</span>, <span class="code-number">5</span>, <span class="code-number">6</span>]
+<span class="code-function">print</span>(<span class="code-string">"Inainte:"</span>, lista)
+<span class="code-function">insertie</span>(lista)
+<span class="code-function">print</span>(<span class="code-string">"Dupa:  "</span>, lista)</pre>
+
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Inainte: [12, 11, 13, 5, 6]
+Dupa:   [5, 6, 11, 12, 13]</pre>
+</div>
+
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> O(n²) in cazul mediu si defavorabil. <strong>Cazul cel mai bun: O(n)</strong> - daca lista e deja sortata, while-ul nu se executa niciodata, facand exact n-1 comparatii. Insertia este preferata pentru liste aproape sortate.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Comparatie algoritmi -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Care algoritm de sortare are complexitatea O(n) in cazul cel mai bun (lista deja sortata)?", "options": ["Selectia", "Bulele fara optimizare", "Insertia (bonus)", "Toti trei din programa au O(n^2) mereu"], "correct": "c", "hint": "Insertia (bonus) verifica in while daca e nevoie de deplasari. Pe o lista sortata while-ul nu se executa niciodata - face doar n-1 comparatii adica O(n)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Comparatie algoritmi</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Algoritmii clasici O(n²) difera in detalii importante. Lista de frecvente are complexitate mai buna dar cu restrictii.
+                </div>
+
+                <div class="example-box">
+<div class="example-title">Tabel comparativ:</div>
+<pre>Algoritm         | Complexitate    | Interschimbari  | Restrictii
+-----------------|-----------------|-----------------|---------------------------
+Selectie         | O(n^2)          | cel mult n-1    | nicio restrictie
+Lista frecvente  | O(n + val_max)  | 0 (tablou aux)  | doar int nonneg, dom. mic
+Bule             | O(n^2)          | pana la n(n-1)/2| nicio restrictie
+Insertie (bonus) | O(n^2) / O(n)*  | pana la n(n-1)/2| nicio restrictie
+*O(n) doar cand lista este aproape sortata</pre>
+</div>
+
+                <div class="example-box">
+<div class="example-title">Numar de comparatii worst case O(n^2), n(n-1)/2:</div>
+<pre>n=5:    10 comparatii
+n=10:   45 comparatii
+n=100:  4950 comparatii
+n=1000: 499500 comparatii</pre>
+</div>
+
+                <div class="concept-def">
+                    <strong>Concluzii practice:</strong>
+                    <ul>
+                        <li>Selectia face <em>putine interschimbari</em> - avantajos cand mutarea de date e costisitoare</li>
+                        <li>Lista de frecvente e <em>liniara</em> cand domeniul valorilor e mic si cunoscut</li>
+                        <li>Bule e <em>usor de inteles si explicat</em>, utila pedagogic</li>
+                        <li>Pentru n mare se folosesc QuickSort sau MergeSort cu O(n log n)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: C++ EXCLUSIV INTENSIV -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, cum se face interschimbarea corecta a lui v[i] cu v[j] fara functia swap()?", "options": ["v[i] = v[j]; v[j] = v[i];", "int tmp = v[i]; v[i] = v[j]; v[j] = tmp;", "v[i] += v[j]; v[j] -= v[i];", "schimb(v[i], v[j]);"], "correct": "b", "hint": "Fara variabila temporara prima atribuire suprascrie v[i] inainte sa salvam valoarea. Avem nevoie de int tmp = v[i] pentru a pastra valoarea initiala."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Implementare C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+<p>In C++ sortam tablouri unidimensionale (int v[]). Diferente fata de Python: tipuri explicite, indici cu [], interschimbare cu variabila temporara. Toate implementarile de mai jos au fost compilate si rulate cu g++ -std=c++17.</p>
+</div>
+
+                <p><strong>Selectie in C++:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> v[] = {<span class="code-number">64</span>, <span class="code-number">25</span>, <span class="code-number">12</span>, <span class="code-number">22</span>, <span class="code-number">11</span>};
+    <span class="code-keyword">int</span> n = <span class="code-number">5</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n - <span class="code-number">1</span>; i++) {
+        <span class="code-keyword">int</span> min_idx = i;
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = i + <span class="code-number">1</span>; j &lt; n; j++)
+            <span class="code-keyword">if</span> (v[j] &lt; v[min_idx]) min_idx = j;
+        <span class="code-keyword">int</span> tmp = v[i]; v[i] = v[min_idx]; v[min_idx] = tmp;
+    }
+    cout &lt;&lt; <span class="code-string">"Sortat: "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++) cout &lt;&lt; v[i] &lt;&lt; <span class="code-string">" "</span>;
+    cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>Sortat: 11 12 22 25 64 </pre>
+</div>
+
+                <p><strong>Lista de frecvente in C++:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> v[] = {<span class="code-number">3</span>, <span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">1</span>, <span class="code-number">5</span>, <span class="code-number">9</span>, <span class="code-number">2</span>, <span class="code-number">6</span>, <span class="code-number">5</span>, <span class="code-number">3</span>};
+    <span class="code-keyword">int</span> n = <span class="code-number">10</span>, val_max = <span class="code-number">9</span>;
+    <span class="code-keyword">int</span> freq[<span class="code-number">10</span>] = {};  <span class="code-comment">// initializat cu 0</span>
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++) freq[v[i]]++;
+    cout &lt;&lt; <span class="code-string">"Sortat: "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> k = <span class="code-number">0</span>; k &lt;= val_max; k++)
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> t = <span class="code-number">0</span>; t &lt; freq[k]; t++) cout &lt;&lt; k &lt;&lt; <span class="code-string">" "</span>;
+    cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>Sortat: 1 1 2 3 3 4 5 5 6 9 </pre>
+</div>
+
+                <p><strong>Bule in C++:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> v[] = {<span class="code-number">64</span>, <span class="code-number">34</span>, <span class="code-number">25</span>, <span class="code-number">12</span>, <span class="code-number">22</span>, <span class="code-number">11</span>, <span class="code-number">90</span>};
+    <span class="code-keyword">int</span> n = <span class="code-number">7</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n - <span class="code-number">1</span>; i++)
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = <span class="code-number">0</span>; j &lt; n - <span class="code-number">1</span> - i; j++)
+            <span class="code-keyword">if</span> (v[j] &gt; v[j + <span class="code-number">1</span>]) {
+                <span class="code-keyword">int</span> tmp = v[j]; v[j] = v[j+<span class="code-number">1</span>]; v[j+<span class="code-number">1</span>] = tmp;
+            }
+    cout &lt;&lt; <span class="code-string">"Sortat: "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++) cout &lt;&lt; v[i] &lt;&lt; <span class="code-string">" "</span>;
+    cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>Sortat: 11 12 22 25 34 64 90 </pre>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 7: Tip BAC - urmarire executie -->
+        <div class="atom" id="atom-7" data-quiz='[{"question": "Aplica bubble sort pe [3, 1, 4, 1, 5]. Dupa prima runda completa care este starea listei?", "options": ["[1, 1, 3, 4, 5]", "[1, 3, 4, 1, 5]", "[1, 3, 1, 4, 5]", "[3, 1, 1, 4, 5]"], "correct": "c", "hint": "Runda 1: v[0],v[1]=3,1 schimba [1,3,4,1,5]; v[1],v[2]=3,4 nu; v[2],v[3]=4,1 schimba [1,3,1,4,5]; v[3],v[4]=4,5 nu. Rezultat: [1,3,1,4,5]."}]'>
+            <div class="atom-header">
+                <div class="atom-number">7</div>
+                <h3 class="atom-title">7. Urmarirea executiei - exercitii tip BAC</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    La BAC, un exercitiu tipic cere sa trasezi executia unui algoritm de sortare pas cu pas sau sa identifici ce algoritm s-a folosit dupa o secventa de stari intermediare.
+                </div>
+
+                <div class="example-box">
+<div class="example-title">Exercitiu rezolvat: Sortare prin selectie pe [29, 10, 14, 37, 13]</div>
+<pre>Start:   [29, 10, 14, 37, 13]
+Pas i=0: minim=10 la poz 1; schimba v[0] cu v[1]
+         -&gt; [10, 29, 14, 37, 13]
+Pas i=1: minim=13 la poz 4; schimba v[1] cu v[4]
+         -&gt; [10, 13, 14, 37, 29]
+Pas i=2: minim=14 la poz 2; deja pe loc
+         -&gt; [10, 13, 14, 37, 29]
+Pas i=3: minim=29 la poz 4; schimba v[3] cu v[4]
+         -&gt; [10, 13, 14, 29, 37]
+Rezultat final: [10, 13, 14, 29, 37]</pre>
+</div>
+
+                <div class="example-box">
+<div class="example-title">Cum recunosti algoritmul dupa starile intermediare:</div>
+<pre>Selectie:       la fiecare pas exact o pozitie din stanga se fixeaza definitiv
+                -&gt; front care avanseaza stanga spre dreapta
+
+Bule:           la fiecare runda maximul ramas ajunge la sfarsit
+                -&gt; front care avanseaza dreapta spre stanga
+
+Lista frecvente: nu exista stari intermediare vizibile - produce direct lista
+                 sortata (nu se poate urma pas cu pas ca celelalte)</pre>
+</div>
+
+                <div class="concept-def">
+                    <strong>Tehnica de urmarire la BAC:</strong>
+                    <ol>
+                        <li>Identifica n (lungimea listei) si algoritmul cerut</li>
+                        <li>Aplica algoritmul pas cu pas, scriind starea dupa fiecare iteratie exterioara</li>
+                        <li>Verifica: dupa n-1 pasi/runde, lista trebuie sa fie sortata complet</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- PRACTICE -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) - Urmarire sortare prin selectie</h3>
+            <p>Aplica sortarea prin selectie pe lista <strong>[8, 3, 7, 1, 5]</strong> si scrie starea listei dupa fiecare pas. Cate interschimbari se efectueaza in total?</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) - Sortare cu lista de frecvente</h3>
+            <p>Scrie un program Python care sorteaza lista <strong>[4, 2, 4, 1, 3, 1, 2]</strong> folosind sortarea cu lista de frecvente. Afiseaza tabloul de frecvente freq dupa prima parcurgere, apoi lista sortata reconstruita. Explica de ce aceasta metoda nu poate fi aplicata pe lista <strong>[1.5, 0.3, 2.7]</strong>.</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) - Bule cu optimizare si comparatie</h3>
+            <p>Scrie un program Python care sorteaza lista <strong>[2, 1, 3, 4, 5]</strong> prin metoda bulelor, adaugand un flag care detecteaza cand nu s-a facut nicio interschimbare intr-o runda si se opreste inainte de termen. Afiseaza lista dupa fiecare runda si numarul total de runde efectuate. Compara cu numarul de runde necesar fara optimizare.</p>
+        </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Sortarea prin selectie: cauta minimul si il plaseaza in stanga; O(n²) comparatii, cel mult n-1 interschimbari</li>
+                <li>Sortarea cu lista de frecvente: numara aparitiile, reconstituie lista; O(n + val_max), fara interschimbari, dar doar pentru int nonneg cu domeniu mic</li>
+                <li>Sortarea prin bule: compara vecinii si ridica maximul la sfarsit; O(n²), mai multe interschimbari</li>
+                <li>Toti trei au utilizari diferite; pentru n mare se folosesc algoritmi O(n log n)</li>
+                <li>Tehnica de urmarire pas cu pas a executiei unui algoritm (esentiala la BAC)</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Algoritmul lui Euclid</strong> pentru calculul CMMDC si CMMMC.</p>
+            <a href="lectia2-euclid.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls10-m2-algoritmi-baza-lectia1-sortari');
+        PracticeSimple.init('cls10-m2-algoritmi-baza-lectia1-sortari');
+        LessonSummary.init('cls10-m2-algoritmi-baza-lectia1-sortari');
+        Breadcrumb.init({
+            grade: 'cls10',
+            gradeName: 'Clasa a X-a',
+            module: 'm2-algoritmi-baza',
+            moduleName: 'M2 Algoritmi de Baza',
+            lesson: 'Algoritmi de sortare'
+        });
+        LearningProgress.init('cls10', 'm2-algoritmi-baza', 'lectia1-sortari.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 5: Operatii pe matrice | Clasa a X-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia4-matrice-intro.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 4</a>
+        <a href="lectia6-siruri-caractere.html" class="nav-btn" title="Lectia urmatoare">Lectia 6 &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Operatii pe matrice: diagonale, transpusa, adunare/inmultire</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- FRAME SECTION -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei stapani cele mai importante operatii pe matrice patrate si dreptunghiulare: citirea diagonalelor, impartirea in zone triunghiulare, calculul transpusei, adunarea si inmultirea matricelor. Vei intelege de ce fiecare algoritm are complexitatea pe care o are.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa identifici si sa extragi diagonala principala si secundara dintr-o matrice patrata</li>
+                <li>Sa distingi cele patru zone ale unei matrice (deasupra/dedesubtul fiecarei diagonale)</li>
+                <li>Sa construiesti transpusa unei matrice m&times;n si sa intelegi schimbarea dimensiunilor</li>
+                <li>Sa aduni doua matrice de aceeasi dimensiune (complexitate O(m&middot;n))</li>
+                <li>Sa inmultesti doua matrice compatibile (complexitate O(n<sup>3</sup>)) si sa intelegi conditia de compatibilitate</li>
+                <li><strong>Intensiv:</strong> sa implementezi toate operatiile in C++ cu tablouri bidimensionale statice</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- TRY SECTION -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare initiala:</div>
+                <p>Ai matricea de 3&times;3 de mai jos. Inainte sa citesti lectia, scrie care crezi ca sunt elementele diagonalei principale si ale diagonalei secundare:</p>
+                <pre>1  2  3
+4  5  6
+7  8  9</pre>
+                <textarea id="tryAnswer" placeholder="Diagonala principala: ...
+Diagonala secundara: ..." rows="4"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Diagonala principala conecteaza coltul stanga-sus cu coltul dreapta-jos: elementele unde numarul liniei este egal cu numarul coloanei (i == j).</p>
+                    <p>Diagonala secundara merge din coltul dreapta-sus spre coltul stanga-jos: unde i + j = n - 1.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ATOMS -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1 -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Intr-o matrice patrata de dimensiune n, elementul de pe diagonala principala de pe linia i are indicele de coloana:", "options": ["n - 1 - i", "i", "i + 1", "n - i"], "correct": "b", "hint": "Pe diagonala principala, linia si coloana au acelasi indice: A[i][i]. Conditia este i == j."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Diagonalele unei matrice patrate</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O <strong>matrice patrata</strong> de ordin n are doua diagonale importante:
+                    <ul>
+                        <li><strong>Diagonala principala</strong>: elementele A[i][i], unde i = 0..n-1 (indice linie = indice coloana)</li>
+                        <li><strong>Diagonala secundara</strong>: elementele A[i][n-1-i], unde i = 0..n-1 (suma indicilor = n-1)</li>
+                    </ul>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Vizualizare (n=3):</div>
+                    <pre>  j=0   j=1   j=2
+i=0 [1]   [2]   [3]   ← A[0][0] pe diag. principala; A[0][2] pe diag. secundara
+i=1 [4]   [5]   [6]   ← A[1][1] pe AMBELE diagonale (centrul)
+i=2 [7]   [8]   [9]   ← A[2][2] pe diag. principala; A[2][0] pe diag. secundara</pre>
+                </div>
+                <pre><span class="code-comment"># Diagonalele unei matrice patrate n x n</span>
+A = [
+    [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>],
+    [<span class="code-number">4</span>, <span class="code-number">5</span>, <span class="code-number">6</span>],
+    [<span class="code-number">7</span>, <span class="code-number">8</span>, <span class="code-number">9</span>]
+]
+n = <span class="code-function">len</span>(A)
+
+<span class="code-comment"># Diagonala principala: i == j</span>
+diag_principala = []
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+    diag_principala.<span class="code-function">append</span>(A[i][i])
+
+<span class="code-comment"># Diagonala secundara: i + j == n - 1</span>
+diag_secundara = []
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+    diag_secundara.<span class="code-function">append</span>(A[i][n<span class="code-number">-1</span>-i])
+
+<span class="code-function">print</span>(<span class="code-string">"Matricea A:"</span>)
+<span class="code-keyword">for</span> linie <span class="code-keyword">in</span> A:
+    <span class="code-function">print</span>(linie)
+<span class="code-function">print</span>(<span class="code-string">"Diagonala principala:"</span>, diag_principala)
+<span class="code-function">print</span>(<span class="code-string">"Diagonala secundara:"</span>, diag_secundara)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Matricea A:
+[1, 2, 3]
+[4, 5, 6]
+[7, 8, 9]
+Diagonala principala: [1, 5, 9]
+Diagonala secundara: [3, 5, 7]</pre>
+                </div>
+                <p><strong>Complexitate:</strong> O(n) &mdash; parcurgem o singura data indicii 0..n-1.</p>
+            </div>
+        </div>
+
+        <!-- ATOM 2 -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Conditia pentru ca elementul A[i][j] sa fie strict deasupra diagonalei principale este:", "options": ["i > j", "i == j", "i < j", "i + j == n-1"], "correct": "c", "hint": "Deasupra diagonalei principale inseamna ca indicele de linie este mai mic decat indicele de coloana: i < j. Sub diagonala: i > j."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Zone triunghiulare (deasupra/dedesubtul diagonalei)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Diagonala principala imparte matricea in doua <strong>triunghiuri</strong>:
+                    <ul>
+                        <li><strong>Deasupra diagonalei principale</strong>: A[i][j] unde i &lt; j</li>
+                        <li><strong>Dedesubtul diagonalei principale</strong>: A[i][j] unde i &gt; j</li>
+                    </ul>
+                    Aceasta partitie este frecventa in probleme de tip BAC care cer suma sau numarul de elemente dintr-o zona.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Hartie impartita (n=3):</div>
+                    <pre>         j=0    j=1    j=2
+i=0   [DIAG]  [SUS]  [SUS]
+i=1   [JOS]   [DIAG] [SUS]
+i=2   [JOS]   [JOS]  [DIAG]
+
+SUS  = {A[0][1], A[0][2], A[1][2]} = {2, 3, 6} → suma = 11
+JOS  = {A[1][0], A[2][0], A[2][1]} = {4, 7, 8} → suma = 19</pre>
+                </div>
+                <pre><span class="code-comment"># Suma elementelor din zonele triunghiulare</span>
+A = [
+    [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>],
+    [<span class="code-number">4</span>, <span class="code-number">5</span>, <span class="code-number">6</span>],
+    [<span class="code-number">7</span>, <span class="code-number">8</span>, <span class="code-number">9</span>]
+]
+n = <span class="code-function">len</span>(A)
+
+suma_sup = <span class="code-number">0</span>
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+    <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+        <span class="code-keyword">if</span> i &lt; j:          <span class="code-comment"># deasupra diagonalei principale</span>
+            suma_sup += A[i][j]
+
+suma_inf = <span class="code-number">0</span>
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+    <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+        <span class="code-keyword">if</span> i &gt; j:          <span class="code-comment"># dedesubtul diagonalei principale</span>
+            suma_inf += A[i][j]
+
+<span class="code-function">print</span>(<span class="code-string">"Suma elementelor de deasupra diagonalei principale:"</span>, suma_sup)
+<span class="code-function">print</span>(<span class="code-string">"Suma elementelor de dedesubtul diagonalei principale:"</span>, suma_inf)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Suma elementelor de deasupra diagonalei principale: 11
+Suma elementelor de dedesubtul diagonalei principale: 19</pre>
+                </div>
+                <p><strong>Verificare manuala:</strong> Sus = 2+3+6 = 11 &#10003; &nbsp; Jos = 4+7+8 = 19 &#10003;</p>
+                <p><strong>Complexitate:</strong> O(n<sup>2</sup>) &mdash; parcurgem toti cei n&middot;n indici si filtram cu conditia.</p>
+            </div>
+        </div>
+
+        <!-- ATOM 3 -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Transpusa unei matrice de dimensiune 2x5 are dimensiunea:", "options": ["2x5", "5x2", "5x5", "2x2"], "correct": "b", "hint": "La transpusa, liniile devin coloane si coloanele devin linii. O matrice m x n are transpusa de dimensiune n x m. Deci 2x5 devine 5x2."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Transpusa unei matrice</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Transpusa</strong> matricei A (notata A<sup>T</sup>) se obtine prin interschimbarea liniilor cu coloanele:
+                    daca A are dimensiunea m&times;n, atunci A<sup>T</sup> are dimensiunea <strong>n&times;m</strong>.
+                    <br>
+                    Regula: A<sup>T</sup>[j][i] = A[i][j]
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu vizual:</div>
+                    <pre>A (2x3):          A^T (3x2):
+[1  2  3]    =>   [1  4]
+[4  5  6]         [2  5]
+                  [3  6]
+Coloana 0 din A (1,4) devine linia 0 din A^T.
+Coloana 1 din A (2,5) devine linia 1 din A^T.
+Coloana 2 din A (3,6) devine linia 2 din A^T.</pre>
+                </div>
+                <pre><span class="code-comment"># Transpusa unei matrice m x n</span>
+A = [
+    [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>],
+    [<span class="code-number">4</span>, <span class="code-number">5</span>, <span class="code-number">6</span>]
+]
+m = <span class="code-function">len</span>(A)       <span class="code-comment"># numar linii: 2</span>
+n = <span class="code-function">len</span>(A[<span class="code-number">0</span>])   <span class="code-comment"># numar coloane: 3</span>
+
+<span class="code-comment"># AT are dimensiunea n x m</span>
+AT = []
+<span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+    linie_noua = []
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(m):
+        linie_noua.<span class="code-function">append</span>(A[i][j])
+    AT.<span class="code-function">append</span>(linie_noua)
+
+<span class="code-function">print</span>(<span class="code-string">"Matricea A (2x3):"</span>)
+<span class="code-keyword">for</span> linie <span class="code-keyword">in</span> A:
+    <span class="code-function">print</span>(linie)
+<span class="code-function">print</span>(<span class="code-string">"Transpusa AT (3x2):"</span>)
+<span class="code-keyword">for</span> linie <span class="code-keyword">in</span> AT:
+    <span class="code-function">print</span>(linie)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>Matricea A (2x3):
+[1, 2, 3]
+[4, 5, 6]
+Transpusa AT (3x2):
+[1, 4]
+[2, 5]
+[3, 6]</pre>
+                </div>
+                <p><strong>Complexitate:</strong> O(m&middot;n) &mdash; fiecare element este copiat exact o data.</p>
+            </div>
+        </div>
+
+        <!-- ATOM 4 -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Doua matrice A (3x4) si B (4x3) pot fi adunate?", "options": ["Da, rezultatul este 3x4", "Da, rezultatul este 4x3", "Nu, dimensiunile sunt diferite", "Da, dar doar daca elementele sunt pozitive"], "correct": "c", "hint": "Adunarea matricelor este definita DOAR daca cele doua matrice au aceeasi dimensiune (acelasi numar de linii SI coloane). 3x4 este diferit de 4x3, deci adunarea nu este posibila."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Adunarea matricelor</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Doua matrice <strong>A si B de aceeasi dimensiune m&times;n</strong> se pot aduna element cu element:
+                    <br>
+                    C[i][j] = A[i][j] + B[i][j], pentru orice i si j
+                    <br>
+                    <strong>Conditie obligatorie:</strong> A si B trebuie sa aiba exact aceleasi dimensiuni!
+                </div>
+                <pre><span class="code-comment"># Adunarea a doua matrice de aceeasi dimensiune</span>
+A = [
+    [<span class="code-number">1</span>, <span class="code-number">2</span>],
+    [<span class="code-number">3</span>, <span class="code-number">4</span>]
+]
+B = [
+    [<span class="code-number">5</span>, <span class="code-number">6</span>],
+    [<span class="code-number">7</span>, <span class="code-number">8</span>]
+]
+m = <span class="code-function">len</span>(A)
+n = <span class="code-function">len</span>(A[<span class="code-number">0</span>])
+
+C = []
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(m):
+    linie = []
+    <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+        linie.<span class="code-function">append</span>(A[i][j] + B[i][j])
+    C.<span class="code-function">append</span>(linie)
+
+<span class="code-function">print</span>(<span class="code-string">"A + B ="</span>)
+<span class="code-keyword">for</span> linie <span class="code-keyword">in</span> C:
+    <span class="code-function">print</span>(linie)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>A + B =
+[6, 8]
+[10, 12]</pre>
+                </div>
+                <p><strong>Verificare manuala:</strong> C[0][0] = 1+5 = 6, C[0][1] = 2+6 = 8, C[1][0] = 3+7 = 10, C[1][1] = 4+8 = 12 &#10003;</p>
+                <p><strong>Complexitate:</strong> O(m&middot;n) &mdash; un singur parcurs dublu prin toti cei m&middot;n indici.</p>
+            </div>
+        </div>
+
+        <!-- ATOM 5 -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Produsul A*B este definit cand A are dimensiunea p x q si B are dimensiunea r x s. Care este conditia de compatibilitate?", "options": ["p == s", "q == r", "p == r", "q == s"], "correct": "b", "hint": "Numarul de COLOANE din A trebuie sa fie egal cu numarul de LINII din B: q == r. Rezultatul are dimensiunea p x s."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Inmultirea matricelor</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Produsul A (p&times;q) &times; B (q&times;s) este definit cand <strong>numarul de coloane din A = numarul de linii din B (= q)</strong>.
+                    <br>
+                    Rezultatul C = A&times;B are dimensiunea <strong>p&times;s</strong>.
+                    <br>
+                    Formula: C[i][j] = &sum;<sub>k=0..q-1</sub> A[i][k] &middot; B[k][j]
+                    <br>
+                    Fiecare element C[i][j] este <strong>produsul scalar</strong> intre linia i din A si coloana j din B.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cum se calculeaza C[0][0]:</div>
+                    <pre>A = [[1,2,3],    B = [[9,8,7],
+     [4,5,6],         [6,5,4],
+     [7,8,9]]         [3,2,1]]
+
+C[0][0] = linia 0 din A . coloana 0 din B
+        = 1*9 + 2*6 + 3*3
+        = 9 + 12 + 9 = 30</pre>
+                </div>
+                <pre><span class="code-comment"># Inmultirea matricelor patrate n x n</span>
+A = [
+    [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>],
+    [<span class="code-number">4</span>, <span class="code-number">5</span>, <span class="code-number">6</span>],
+    [<span class="code-number">7</span>, <span class="code-number">8</span>, <span class="code-number">9</span>]
+]
+B = [
+    [<span class="code-number">9</span>, <span class="code-number">8</span>, <span class="code-number">7</span>],
+    [<span class="code-number">6</span>, <span class="code-number">5</span>, <span class="code-number">4</span>],
+    [<span class="code-number">3</span>, <span class="code-number">2</span>, <span class="code-number">1</span>]
+]
+n = <span class="code-function">len</span>(A)
+
+<span class="code-comment"># Initializare C cu zerouri</span>
+C = [[<span class="code-number">0</span>]*n <span class="code-keyword">for</span> _ <span class="code-keyword">in</span> <span class="code-function">range</span>(n)]
+
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+    <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+        s = <span class="code-number">0</span>
+        <span class="code-keyword">for</span> k <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+            s += A[i][k] * B[k][j]
+        C[i][j] = s
+
+<span class="code-function">print</span>(<span class="code-string">"A x B ="</span>)
+<span class="code-keyword">for</span> linie <span class="code-keyword">in</span> C:
+    <span class="code-function">print</span>(linie)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>A x B =
+[30, 24, 18]
+[84, 69, 54]
+[138, 114, 90]</pre>
+                </div>
+                <p><strong>Complexitate:</strong> O(n<sup>3</sup>) &mdash; trei bucle imbricate. Algoritmul standard la nivel liceu. Exista algoritmi avansati (Strassen: O(n<sup>2.81</sup>)), dar nu fac parte din programa.</p>
+                <p><strong>Atentie:</strong> Inmultirea matricelor nu este comutativa &mdash; in general A&times;B &ne; B&times;A!</p>
+            </div>
+        </div>
+
+        <!-- ATOM 6: C++ EXCLUSIV INTENSIV -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, declaratia corecta a unui tablou bidimensional de 3 linii si 3 coloane de intregi este:", "options": ["int A[3,3];", "int A[3][3];", "int[3][3] A;", "array<int,3> A[3];"], "correct": "b", "hint": "In C++, tablourile bidimensionale se declara cu doua perechi de paranteze patrate: int A[LINII][COLOANE]. Sintaxa cu virgula (int A[3,3]) nu este valida in C++."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Operatii pe matrice in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune exclusiva pentru profil intensiv informatica</div>
+                    <p>In C++, matricele se implementeaza ca tablouri bidimensionale statice. Accesul este identic cu Python (A[i][j]), dar tipul trebuie declarat explicit si dimensiunile sunt fixe la compilare.</p>
+                </div>
+                <p><strong>Diagonale in C++:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n = <span class="code-number">3</span>;
+    <span class="code-keyword">int</span> A[<span class="code-number">3</span>][<span class="code-number">3</span>] = {{<span class="code-number">1</span>,<span class="code-number">2</span>,<span class="code-number">3</span>},{<span class="code-number">4</span>,<span class="code-number">5</span>,<span class="code-number">6</span>},{<span class="code-number">7</span>,<span class="code-number">8</span>,<span class="code-number">9</span>}};
+    cout &lt;&lt; <span class="code-string">"Diagonala principala: "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++) cout &lt;&lt; A[i][i] &lt;&lt; <span class="code-string">" "</span>;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Diagonala secundara: "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++) cout &lt;&lt; A[i][n<span class="code-number">-1</span>-i] &lt;&lt; <span class="code-string">" "</span>;
+    cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+                    <pre>Diagonala principala: 1 5 9
+Diagonala secundara: 3 5 7</pre>
+                </div>
+                <p><strong>Adunare si inmultire in C++:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n = <span class="code-number">2</span>;
+    <span class="code-keyword">int</span> A[<span class="code-number">2</span>][<span class="code-number">2</span>] = {{<span class="code-number">1</span>,<span class="code-number">2</span>},{<span class="code-number">3</span>,<span class="code-number">4</span>}};
+    <span class="code-keyword">int</span> B[<span class="code-number">2</span>][<span class="code-number">2</span>] = {{<span class="code-number">5</span>,<span class="code-number">6</span>},{<span class="code-number">7</span>,<span class="code-number">8</span>}};
+    <span class="code-keyword">int</span> C[<span class="code-number">2</span>][<span class="code-number">2</span>];
+    <span class="code-comment">// Adunare</span>
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++)
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = <span class="code-number">0</span>; j &lt; n; j++)
+            C[i][j] = A[i][j] + B[i][j];
+    cout &lt;&lt; <span class="code-string">"A+B:"</span> &lt;&lt; endl;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++) {
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = <span class="code-number">0</span>; j &lt; n; j++) cout &lt;&lt; C[i][j] &lt;&lt; <span class="code-string">" "</span>;
+        cout &lt;&lt; endl;
+    }
+    <span class="code-comment">// Inmultire</span>
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++)
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = <span class="code-number">0</span>; j &lt; n; j++) {
+            C[i][j] = <span class="code-number">0</span>;
+            <span class="code-keyword">for</span> (<span class="code-keyword">int</span> k = <span class="code-number">0</span>; k &lt; n; k++) C[i][j] += A[i][k] * B[k][j];
+        }
+    cout &lt;&lt; <span class="code-string">"A*B:"</span> &lt;&lt; endl;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++) {
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = <span class="code-number">0</span>; j &lt; n; j++) cout &lt;&lt; C[i][j] &lt;&lt; <span class="code-string">" "</span>;
+        cout &lt;&lt; endl;
+    }
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+                    <pre>A+B:
+6 8
+10 12
+A*B:
+19 22
+43 50</pre>
+                </div>
+                <p>Logica este identica cu Python; diferentele sunt de sintaxa (tipuri explicite, <code>cout</code> in loc de <code>print</code>, <code>;</code> la fiecare instructiune).</p>
+                <p><strong>Transpusa in C++:</strong> AT[j][i] = A[i][j]; &mdash; aceeasi regula si acelasi rezultat ca in Python (output verificat: matricea 2x3 produce transpusa 3x2 corecta).</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- PRACTICE -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Suma diagonalelor</h3>
+            <p>Avand matricea patrata de mai jos, calculeaza suma elementelor de pe diagonala principala si suma elementelor de pe diagonala secundara. Verifica raspunsul executand codul din Atomul 1.</p>
+            <pre>A = [[2, 7, 1],
+     [4, 3, 6],
+     [5, 8, 9]]</pre>
+            <p><em>Raspuns asteptat:</em> diag_principala = [2, 3, 9], suma = 14; diag_secundara = [1, 3, 5], suma = 9.</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Transpusa si dubla transpunere</h3>
+            <p>Fie matricea A de dimensiune 3&times;2:</p>
+            <pre>A = [[1, 4],
+     [2, 5],
+     [3, 6]]</pre>
+            <p>Calculeaza A<sup>T</sup> (dimensiunea va fi 2&times;3). Verifica apoi ca (A<sup>T</sup>)<sup>T</sup> = A &mdash; dubla transpunere returneaza matricea originala.</p>
+            <p><em>Indiciu:</em> Modifica codul din Atomul 3 pentru aceasta matrice, apoi aplica din nou transpusa pe rezultat.</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Inmultire dreptunghiulara si analiza complexitatii</h3>
+            <p>Fie A de dimensiune 2&times;3 si B de dimensiune 3&times;4. Calculeaza C = A&times;B (care va fi o matrice 2&times;4). Extinde codul din Atomul 5 pentru matrice de dimensiuni diferite (nu neaparat patrate). Dupa aceea, raspunde: de cate operatii de inmultire scalara are nevoie algoritmul cu 3 bucle pentru matrice de dimensiuni p&times;q si q&times;s?</p>
+            <p><em>Raspuns asteptat:</em> p &middot; q &middot; s operatii de inmultire (complexitate O(p&middot;q&middot;s)).</p>
+        </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Diagonala principala: A[i][i] (conditie i == j); diagonala secundara: A[i][n-1-i] (conditie i+j == n-1) &mdash; O(n)</li>
+                <li>Zone triunghiulare: deasupra (i &lt; j), dedesubt (i &gt; j) &mdash; utile la probleme BAC</li>
+                <li>Transpusa: A<sup>T</sup>[j][i] = A[i][j]; dimensiunile m&times;n devin n&times;m &mdash; O(m&middot;n)</li>
+                <li>Adunarea matricelor: element cu element, numai daca dimensiunile sunt egale &mdash; O(m&middot;n)</li>
+                <li>Inmultirea matricelor: produs scalar linie &times; coloana; conditie coloane(A) = linii(B) &mdash; O(n<sup>3</sup>)</li>
+                <li><strong>Intensiv C++:</strong> sintaxa identica ca logica, diferente: tipuri explicite, cout, punct-virgula</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu Lectia 6: Siruri de caractere &mdash; string-uri, operatii, comparatii, conversii.</p>
+            <a href="lectia6-siruri-caractere.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls10-m1-structuri-date-lectia5-matrice-operatii');
+        PracticeSimple.init('cls10-m1-structuri-date-lectia5-matrice-operatii');
+        LessonSummary.init('cls10-m1-structuri-date-lectia5-matrice-operatii');
+        Breadcrumb.init({
+            grade: 'cls10',
+            gradeName: 'Clasa a X-a',
+            module: 'm1-structuri-date',
+            moduleName: 'M1 Structuri de Date',
+            lesson: 'Operatii pe matrice'
+        });
+        LearningProgress.init('cls10', 'm1-structuri-date', 'lectia5-matrice-operatii.html');
+    });
+
+    function toggleHint(el) {
+        var content = el.nextElementSibling;
+        content.style.display = content.style.display === 'block' ? 'none' : 'block';
+    }
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

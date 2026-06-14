@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 6: Aplicatii recursive | Clasa a X-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia5-recursivitate-intro.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 5</a>
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">Modulul &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Aplicatii recursive</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei invata sa aplici recursivitatea in probleme concrete: sume recursive, parcurgerea cifrelor unui numar, cautarea binara si sortarea prin interclasare (Divide et Impera).</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa scrii o functie recursiva pentru suma cifrelor unui numar</li>
+                <li>Sa calculezi recursiv suma elementelor unui sir</li>
+                <li>Sa implementezi ridicarea la putere recursiva (inclusiv exponentiere rapida)</li>
+                <li>Sa explici strategia Divide et Impera si sa o aplici in cautarea binara</li>
+                <li>Sa implementezi MergeSort si sa justifici complexitatea O(n log n)</li>
+                <li>(Intensiv) Sa implementezi aceleasi algoritmi in C++ cu tipuri explicite</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Inainte sa citesti lectia, incearca sa scrii o functie recursiva care calculeaza suma cifrelor unui numar. De exemplu, pentru <strong>1234</strong> trebuie sa obtii <strong>10</strong> (1+2+3+4).</p>
+                <p>Hint: ultima cifra a lui <code>n</code> este <code>n % 10</code>, iar numarul fara ultima cifra este <code>n // 10</code>.</p>
+                <textarea id="tryAnswer" placeholder="def suma_cifre(n):&#10;    # cazul de baza: ce se intampla cand n == 0?&#10;    # pasul recursiv: ultima cifra + suma_cifre(restul)&#10;    ..." rows="6"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Cazul de baza: daca <code>n == 0</code>, suma este 0 (nu mai exista cifre).</p>
+                    <p>Pasul recursiv: <code>n % 10</code> iti da ultima cifra, iar <code>n // 10</code> elimina ultima cifra. Suma totala = ultima_cifra + suma_cifre(numarul_ramas).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Suma cifrelor -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Care este cazul de baza pentru suma_cifre(n)?", "options": ["Cand n == 1, returneaza 1", "Cand n == 0, returneaza 0", "Cand n < 10, returneaza n", "Nu exista caz de baza"], "correct": "b", "hint": "Cand n este 0 nu mai exista cifre de adunat, deci suma este 0. Aceasta este conditia de oprire a recursiei."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Suma cifrelor unui numar (recursiv)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Orice numar natural poate fi descompus astfel: <code>n = (n // 10) * 10 + (n % 10)</code>. Ultima cifra este <code>n % 10</code>, restul numarului este <code>n // 10</code>. Recursivitatea aplica acelasi proces pe <code>n // 10</code>, pana cand numarul devine 0.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Urmarire executie pentru suma_cifre(1234):</div>
+                    <p>suma_cifre(1234) = 4 + suma_cifre(123)<br>
+                    suma_cifre(123)  = 3 + suma_cifre(12)<br>
+                    suma_cifre(12)   = 2 + suma_cifre(1)<br>
+                    suma_cifre(1)    = 1 + suma_cifre(0)<br>
+                    suma_cifre(0)    = 0  &larr; caz de baza<br>
+                    Rezultat: 1+2+3+4 = <strong>10</strong></p>
+                </div>
+                <pre><span class="code-comment"># Recursivitate: suma cifrelor unui numar</span>
+<span class="code-keyword">def</span> <span class="code-function">suma_cifre</span>(n):
+    <span class="code-keyword">if</span> n == <span class="code-number">0</span>:
+        <span class="code-keyword">return</span> <span class="code-number">0</span>           <span class="code-comment"># caz de baza</span>
+    <span class="code-keyword">return</span> n % <span class="code-number">10</span> + <span class="code-function">suma_cifre</span>(n // <span class="code-number">10</span>)
+
+<span class="code-function">print</span>(<span class="code-string">"suma_cifre(1234) ="</span>, <span class="code-function">suma_cifre</span>(<span class="code-number">1234</span>))
+<span class="code-function">print</span>(<span class="code-string">"suma_cifre(999)  ="</span>, <span class="code-function">suma_cifre</span>(<span class="code-number">999</span>))
+<span class="code-function">print</span>(<span class="code-string">"suma_cifre(0)    ="</span>, <span class="code-function">suma_cifre</span>(<span class="code-number">0</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>suma_cifre(1234) = 10
+suma_cifre(999)  = 27
+suma_cifre(0)    = 0</pre>
+                </div>
+                <div class="info-box">
+                    <strong>Complexitate:</strong> O(log<sub>10</sub> n) &mdash; numarul de apeluri recursive = numarul de cifre ale lui n.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Suma elementelor unui sir -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "In suma_lista(lst, i), ce reprezinta parametrul i?", "options": ["Lungimea listei", "Suma partiala calculata pana acum", "Indexul elementului curent de la care adunam", "Valoarea maxima din lista"], "correct": "c", "hint": "i este indexul din care incepem sa adunam. La fiecare apel recursiv, i creste cu 1, pana cand ajunge la len(lst) (cazul de baza)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Suma elementelor unui sir (parcurgere recursiva)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Parcurgerea recursiva a unui sir inseamna: procesam elementul curent (indexul <code>i</code>), apoi apelam recursiv pe restul sirului (indexul <code>i+1</code>). Cazul de baza: am ajuns dincolo de sfarsitul sirului (<code>i == len(lst)</code>).
+                </div>
+                <pre><span class="code-comment"># Recursivitate: suma elementelor unei liste</span>
+<span class="code-keyword">def</span> <span class="code-function">suma_lista</span>(lst, i=<span class="code-number">0</span>):
+    <span class="code-keyword">if</span> i == <span class="code-function">len</span>(lst):
+        <span class="code-keyword">return</span> <span class="code-number">0</span>           <span class="code-comment"># caz de baza: am trecut de sfarsit</span>
+    <span class="code-keyword">return</span> lst[i] + <span class="code-function">suma_lista</span>(lst, i + <span class="code-number">1</span>)
+
+v = [<span class="code-number">3</span>, <span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">1</span>, <span class="code-number">5</span>, <span class="code-number">9</span>, <span class="code-number">2</span>, <span class="code-number">6</span>]
+<span class="code-function">print</span>(<span class="code-string">"lista:"</span>, v)
+<span class="code-function">print</span>(<span class="code-string">"suma_lista(v) ="</span>, <span class="code-function">suma_lista</span>(v))
+<span class="code-function">print</span>(<span class="code-string">"suma_lista([]) ="</span>, <span class="code-function">suma_lista</span>([]))
+<span class="code-function">print</span>(<span class="code-string">"suma_lista([7]) ="</span>, <span class="code-function">suma_lista</span>([<span class="code-number">7</span>]))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>lista: [3, 1, 4, 1, 5, 9, 2, 6]
+suma_lista(v) = 31
+suma_lista([]) = 0
+suma_lista([7]) = 7</pre>
+                </div>
+                <div class="info-box">
+                    <strong>Complexitate:</strong> O(n) &mdash; un apel pentru fiecare element. Adancimea stivei de recursie = n.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Ridicare la putere recursiva + exponentiere rapida -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "De ce exponentiere rapida are complexitate O(log e) si nu O(e)?", "options": ["Deoarece la exponent par injumatateste exponentul, reducand adancimea recursiei la log2(e) pasi", "Deoarece imparte baza la 2 la fiecare pas", "Deoarece foloseste inmultire in loc de adunare", "Deoarece e este intotdeauna o putere a lui 2"], "correct": "a", "hint": "La fiecare apel cu exponent par, exponentul se injumatateste (e//2). Dupa log2(e) injumatatiri, exponentul ajunge la 0. Asta reduce numarul de apeluri de la e la log2(e)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Ridicare la putere &mdash; simplu si rapid</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Varianta simpla:</strong> b<sup>e</sup> = b &times; b<sup>e-1</sup>, cu b<sup>0</sup> = 1. Complexitate O(e).<br><br>
+                    <strong>Exponentiere rapida (Divide et Impera):</strong> daca e este par, b<sup>e</sup> = (b<sup>e/2</sup>)<sup>2</sup>. Jumatatea se calculeaza o singura data! Complexitate O(log e).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Comparatie pentru 2<sup>10</sup>:</div>
+                    <p><strong>Simplu:</strong> 11 apeluri (putere(2,10)&rarr;putere(2,9)&rarr;&hellip;&rarr;putere(2,0))<br>
+                    <strong>Rapid:</strong> putere(2,10)&rarr;putere(2,5)&rarr;putere(2,4)&rarr;putere(2,2)&rarr;putere(2,1)&rarr;putere(2,0) = <strong>6 apeluri</strong> (verificat instrumentat)</p>
+                </div>
+                <pre><span class="code-comment"># Recursivitate: ridicare la putere (exponentiere rapida)</span>
+<span class="code-keyword">def</span> <span class="code-function">putere</span>(b, e):
+    <span class="code-keyword">if</span> e == <span class="code-number">0</span>:
+        <span class="code-keyword">return</span> <span class="code-number">1</span>              <span class="code-comment"># b^0 = 1 pentru orice b</span>
+    <span class="code-keyword">if</span> e % <span class="code-number">2</span> == <span class="code-number">0</span>:
+        jum = <span class="code-function">putere</span>(b, e // <span class="code-number">2</span>)
+        <span class="code-keyword">return</span> jum * jum    <span class="code-comment"># jum calculat O DATA, nu de doua ori!</span>
+    <span class="code-keyword">return</span> b * <span class="code-function">putere</span>(b, e - <span class="code-number">1</span>)
+
+<span class="code-function">print</span>(<span class="code-string">"putere(2, 10) ="</span>, <span class="code-function">putere</span>(<span class="code-number">2</span>, <span class="code-number">10</span>))
+<span class="code-function">print</span>(<span class="code-string">"putere(3, 5)  ="</span>, <span class="code-function">putere</span>(<span class="code-number">3</span>, <span class="code-number">5</span>))
+<span class="code-function">print</span>(<span class="code-string">"putere(5, 0)  ="</span>, <span class="code-function">putere</span>(<span class="code-number">5</span>, <span class="code-number">0</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>putere(2, 10) = 1024
+putere(3, 5)  = 243
+putere(5, 0)  = 1</pre>
+                </div>
+                <div class="warning-box">
+                    <strong>Atentie:</strong> <code>jum = putere(b, e // 2)</code> apoi <code>jum * jum</code> este corect. Daca am scrie direct <code>putere(b, e//2) * putere(b, e//2)</code>, am apela functia de doua ori si am pierde avantajul! Adancimea stivei O(log e).
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Divide et Impera - Cautare binara -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Cautarea binara necesita ca sirul sa fie:", "options": ["Ordonat descrescator", "Nesortat - functioneaza pe orice sir", "Ordonat crescator sau descrescator (sortat)", "Format doar din numere pozitive"], "correct": "c", "hint": "Cautarea binara compara cu elementul din mijloc si decide in ce jumatate sa caute mai departe. Aceasta functioneaza corect NUMAI daca sirul este sortat (crescator sau descrescator)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Divide et Impera: Cautarea binara</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Strategia Divide et Impera:</strong> imparte problema in subprobleme mai mici, rezolva fiecare subproblema recursiv, combina rezultatele.<br><br>
+                    <strong>Cautare binara:</strong> pe un sir sortat, compara valoarea cautata cu elementul din mijloc. Daca e egal &rarr; gasit. Daca e mai mic &rarr; cauta in jumatatea stanga. Daca e mai mare &rarr; cauta in jumatatea dreapta. Complexitate: O(log n).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Urmarire pentru cautare 7 in [1,3,5,7,9,11,13,15]:</div>
+                    <p>st=0, dr=7, mij=3, lst[3]=7 == 7 &rarr; gasit la pozitia 3<br>
+                    (in cel mai rau caz, cel mult log2(8)=3 pasi)</p>
+                </div>
+                <pre><span class="code-comment"># Divide et Impera: cautare binara recursiva</span>
+<span class="code-keyword">def</span> <span class="code-function">cautare_binara</span>(lst, val, st, dr):
+    <span class="code-keyword">if</span> st > dr:
+        <span class="code-keyword">return</span> -<span class="code-number">1</span>                       <span class="code-comment"># nu a fost gasit</span>
+    mij = (st + dr) // <span class="code-number">2</span>
+    <span class="code-keyword">if</span> lst[mij] == val:
+        <span class="code-keyword">return</span> mij                      <span class="code-comment"># gasit la pozitia mij</span>
+    <span class="code-keyword">elif</span> val &lt; lst[mij]:
+        <span class="code-keyword">return</span> <span class="code-function">cautare_binara</span>(lst, val, st, mij - <span class="code-number">1</span>)
+    <span class="code-keyword">else</span>:
+        <span class="code-keyword">return</span> <span class="code-function">cautare_binara</span>(lst, val, mij + <span class="code-number">1</span>, dr)
+
+v = [<span class="code-number">1</span>, <span class="code-number">3</span>, <span class="code-number">5</span>, <span class="code-number">7</span>, <span class="code-number">9</span>, <span class="code-number">11</span>, <span class="code-number">13</span>, <span class="code-number">15</span>]
+<span class="code-function">print</span>(<span class="code-string">"lista:"</span>, v)
+<span class="code-function">print</span>(<span class="code-string">"cautare 7  -> pozitia"</span>, <span class="code-function">cautare_binara</span>(v, <span class="code-number">7</span>, <span class="code-number">0</span>, <span class="code-function">len</span>(v)-<span class="code-number">1</span>))
+<span class="code-function">print</span>(<span class="code-string">"cautare 1  -> pozitia"</span>, <span class="code-function">cautare_binara</span>(v, <span class="code-number">1</span>, <span class="code-number">0</span>, <span class="code-function">len</span>(v)-<span class="code-number">1</span>))
+<span class="code-function">print</span>(<span class="code-string">"cautare 15 -> pozitia"</span>, <span class="code-function">cautare_binara</span>(v, <span class="code-number">15</span>, <span class="code-number">0</span>, <span class="code-function">len</span>(v)-<span class="code-number">1</span>))
+<span class="code-function">print</span>(<span class="code-string">"cautare 6  -> pozitia"</span>, <span class="code-function">cautare_binara</span>(v, <span class="code-number">6</span>, <span class="code-number">0</span>, <span class="code-function">len</span>(v)-<span class="code-number">1</span>))</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>lista: [1, 3, 5, 7, 9, 11, 13, 15]
+cautare 7  -> pozitia 3
+cautare 1  -> pozitia 0
+cautare 15 -> pozitia 7
+cautare 6  -> pozitia -1</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: MergeSort -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Care este complexitatea algoritmului MergeSort?", "options": ["O(n log n) - mai rapid decat sortarile simple", "O(n²) - la fel ca BubbleSort", "O(log n) - la fel ca cautarea binara", "O(n) - proportional cu lungimea sirului"], "correct": "a", "hint": "MergeSort imparte sirul in 2 (log n niveluri), iar la fiecare nivel interclaseaza tot sirul in O(n). Total: O(n) * O(log n) = O(n log n). Aceasta il face mai rapid decat BubbleSort (O(n²)) pe siruri mari."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Divide et Impera: MergeSort (sortare prin interclasare)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Principiu:</strong> imparte sirul in doua jumatati, sorteaza recursiv fiecare jumatate, interclaseaza cele doua jumatati sortate intr-un sir sortat final.<br><br>
+                    <strong>Complexitate: O(n log n)</strong> &mdash; log n niveluri de impartire, n operatii de interclasare la fiecare nivel.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Schema impartirii pentru [5,2,8,1,9,3]:</div>
+                    <p>[5,2,8,1,9,3]<br>
+                    &nbsp;&nbsp;[5,2,8] &nbsp;&nbsp; [1,9,3]<br>
+                    &nbsp;&nbsp;[5,2][8] &nbsp; [1,9][3]<br>
+                    &nbsp;&nbsp;[5][2] &nbsp;&nbsp;&nbsp; [1][9]<br>
+                    Interclasare: [2,5] [1,9] &rarr; [1,2,5,8] [1,3,9] &rarr; [1,2,3,5,8,9]</p>
+                </div>
+                <pre><span class="code-comment"># Divide et Impera: MergeSort</span>
+<span class="code-keyword">def</span> <span class="code-function">mergesort</span>(lst):
+    <span class="code-keyword">if</span> <span class="code-function">len</span>(lst) &lt;= <span class="code-number">1</span>:
+        <span class="code-keyword">return</span> lst                  <span class="code-comment"># caz de baza: 0 sau 1 element</span>
+    mij = <span class="code-function">len</span>(lst) // <span class="code-number">2</span>
+    stanga  = <span class="code-function">mergesort</span>(lst[:mij])
+    dreapta = <span class="code-function">mergesort</span>(lst[mij:])
+    <span class="code-keyword">return</span> <span class="code-function">interclaseaza</span>(stanga, dreapta)
+
+<span class="code-keyword">def</span> <span class="code-function">interclaseaza</span>(a, b):
+    rez = []
+    i = j = <span class="code-number">0</span>
+    <span class="code-keyword">while</span> i &lt; <span class="code-function">len</span>(a) <span class="code-keyword">and</span> j &lt; <span class="code-function">len</span>(b):
+        <span class="code-keyword">if</span> a[i] &lt;= b[j]:
+            rez.<span class="code-function">append</span>(a[i]); i += <span class="code-number">1</span>
+        <span class="code-keyword">else</span>:
+            rez.<span class="code-function">append</span>(b[j]); j += <span class="code-number">1</span>
+    <span class="code-keyword">return</span> rez + a[i:] + b[j:]
+
+v = [<span class="code-number">5</span>, <span class="code-number">2</span>, <span class="code-number">8</span>, <span class="code-number">1</span>, <span class="code-number">9</span>, <span class="code-number">3</span>]
+<span class="code-function">print</span>(<span class="code-string">"inainte:"</span>, v)
+sortat = <span class="code-function">mergesort</span>(v)
+<span class="code-function">print</span>(<span class="code-string">"dupa:   "</span>, sortat)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>inainte: [5, 2, 8, 1, 9, 3]
+dupa:    [1, 2, 3, 5, 8, 9]</pre>
+                </div>
+                <div class="tip-box">
+                    <strong>Comparatie cu BubbleSort:</strong> pentru n=1000, BubbleSort face ~500.000 comparatii, MergeSort face ~10.000. La n=1.000.000, diferenta devine uriasa.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Intensiv C++ -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, de ce declaram parametrul v[] ca int v[] in functia cautare_binara?", "options": ["Deoarece C++ nu accepta vectori ca parametri", "Deoarece tabloul se transmite ca pointer, fara a copia toti n elementi", "Deoarece int v[] este echivalent cu int* v si permite acces la elementele tabloului", "Ambele variante b si c sunt corecte"], "correct": "d", "hint": "In C++, cand transmitem un tablou la o functie, se transmite de fapt adresa primului element (pointer). int v[] si int* v sunt echivalente in antetul functiei. Nu se copiaza vectorul, deci este eficient."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Implementare C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+                    <p>La profilul intensiv implementezi acelasi algoritmi in C++. Diferente cheie: tipuri explicite (<code>int</code>, <code>long long</code>), tablouri in loc de liste, transmitere prin pointer.</p>
+                </div>
+
+                <p><strong>Suma cifrelor in C++:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">suma_cifre</span>(<span class="code-keyword">int</span> n) {
+    <span class="code-keyword">if</span> (n == <span class="code-number">0</span>) <span class="code-keyword">return</span> <span class="code-number">0</span>;   <span class="code-comment">// caz de baza</span>
+    <span class="code-keyword">return</span> n % <span class="code-number">10</span> + <span class="code-function">suma_cifre</span>(n / <span class="code-number">10</span>);
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"suma_cifre(1234) = "</span> &lt;&lt; <span class="code-function">suma_cifre</span>(<span class="code-number">1234</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"suma_cifre(999)  = "</span> &lt;&lt; <span class="code-function">suma_cifre</span>(<span class="code-number">999</span>) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+                    <pre>suma_cifre(1234) = 10
+suma_cifre(999)  = 27</pre>
+                </div>
+
+                <p><strong>Exponentiere rapida in C++:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">long long</span> <span class="code-function">putere</span>(<span class="code-keyword">long long</span> b, <span class="code-keyword">int</span> e) {
+    <span class="code-keyword">if</span> (e == <span class="code-number">0</span>) <span class="code-keyword">return</span> <span class="code-number">1</span>;
+    <span class="code-keyword">if</span> (e % <span class="code-number">2</span> == <span class="code-number">0</span>) {
+        <span class="code-keyword">long long</span> jum = <span class="code-function">putere</span>(b, e / <span class="code-number">2</span>);
+        <span class="code-keyword">return</span> jum * jum;       <span class="code-comment">// jum calculat o singura data</span>
+    }
+    <span class="code-keyword">return</span> b * <span class="code-function">putere</span>(b, e - <span class="code-number">1</span>);
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"putere(2, 10) = "</span> &lt;&lt; <span class="code-function">putere</span>(<span class="code-number">2</span>, <span class="code-number">10</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"putere(3, 5)  = "</span> &lt;&lt; <span class="code-function">putere</span>(<span class="code-number">3</span>, <span class="code-number">5</span>) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+                    <pre>putere(2, 10) = 1024
+putere(3, 5)  = 243</pre>
+                </div>
+
+                <p><strong>Cautare binara recursiva in C++:</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">cautare_binara</span>(<span class="code-keyword">int</span> v[], <span class="code-keyword">int</span> n, <span class="code-keyword">int</span> val, <span class="code-keyword">int</span> st, <span class="code-keyword">int</span> dr) {
+    <span class="code-keyword">if</span> (st > dr) <span class="code-keyword">return</span> -<span class="code-number">1</span>;        <span class="code-comment">// nu a fost gasit</span>
+    <span class="code-keyword">int</span> mij = (st + dr) / <span class="code-number">2</span>;
+    <span class="code-keyword">if</span> (v[mij] == val) <span class="code-keyword">return</span> mij;
+    <span class="code-keyword">if</span> (val &lt; v[mij]) <span class="code-keyword">return</span> <span class="code-function">cautare_binara</span>(v, n, val, st, mij - <span class="code-number">1</span>);
+    <span class="code-keyword">return</span> <span class="code-function">cautare_binara</span>(v, n, val, mij + <span class="code-number">1</span>, dr);
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> v[] = {<span class="code-number">1</span>, <span class="code-number">3</span>, <span class="code-number">5</span>, <span class="code-number">7</span>, <span class="code-number">9</span>, <span class="code-number">11</span>, <span class="code-number">13</span>, <span class="code-number">15</span>};
+    <span class="code-keyword">int</span> n = <span class="code-number">8</span>;
+    cout &lt;&lt; <span class="code-string">"cautare 7  -> pozitia "</span> &lt;&lt; <span class="code-function">cautare_binara</span>(v, n, <span class="code-number">7</span>, <span class="code-number">0</span>, n-<span class="code-number">1</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"cautare 6  -> pozitia "</span> &lt;&lt; <span class="code-function">cautare_binara</span>(v, n, <span class="code-number">6</span>, <span class="code-number">0</span>, n-<span class="code-number">1</span>) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+                    <pre>cautare 7  -> pozitia 3
+cautare 6  -> pozitia -1</pre>
+                </div>
+                <p>Aceleasi rezultate ca in Python &mdash; algoritmul este identic, sintaxa difera.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Urmarire executie</h3>
+            <p>Urmareste executia pas cu pas a functiei <code>suma_cifre(352)</code>: scrie toate apelurile recursive si valorile returnate, pana la cazul de baza. Ce valoare finala obtii?</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Produs recursiv</h3>
+            <p>Scrie o functie recursiva <code>produs_lista(lst, i=0)</code> care calculeaza produsul elementelor din lista. Cazul de baza: <code>i == len(lst)</code> returneaza 1 (elementul neutru al inmultirii). Testeaza cu <code>[2, 3, 4]</code> (rezultat asteptat: 24) si cu <code>[]</code> (rezultat: 1).</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Numar de aparitii</h3>
+            <p>Scrie o functie recursiva <code>nr_aparitii(lst, val, i=0)</code> care numara de cate ori apare <code>val</code> in lista <code>lst</code>. Testeaza cu <code>[1,2,3,2,2,4]</code> si <code>val=2</code> (rezultat asteptat: 3). Apoi explica complexitatea (O de ce?). Bonus intensiv: reimplementeaza in C++ cu tablou si indice.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Suma cifrelor unui numar: recursie pe <code>n % 10</code> si <code>n // 10</code>, complexitate O(log n)</li>
+                <li>Parcurgere recursiva a unui sir cu indice <code>i</code>, complexitate O(n)</li>
+                <li>Exponentiere rapida prin injumatatirea exponentului par, complexitate O(log e)</li>
+                <li>Cautare binara (Divide et Impera): O(log n) pe sir sortat</li>
+                <li>MergeSort (Divide et Impera): O(n log n), mai rapid decat sortarile simple</li>
+                <li>(Intensiv) Implementare C++ cu <code>long long</code>, tablouri si transmitere prin pointer</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Ai terminat modulul!</h3>
+            <p>Aceasta este ultima lectie din Modulul 2. Revino la index pentru a vedea toate lectiile parcurse.</p>
+            <a href="index.html" class="btn-next">Inapoi la modul &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls10-m2-algoritmi-baza-lectia6-recursivitate-aplicatii');
+        PracticeSimple.init('cls10-m2-algoritmi-baza-lectia6-recursivitate-aplicatii');
+        LessonSummary.init('cls10-m2-algoritmi-baza-lectia6-recursivitate-aplicatii');
+        Breadcrumb.init({
+            grade: 'cls10',
+            gradeName: 'Clasa a X-a',
+            module: 'm2-algoritmi-baza',
+            moduleName: 'M2 Algoritmi de Baza',
+            lesson: 'Aplicatii recursive'
+        });
+        LearningProgress.init('cls10', 'm2-algoritmi-baza', 'lectia6-recursivitate-aplicatii.html');
+    });
+
+    function toggleHint(el) {
+        var content = el.nextElementSibling;
+        if (content) {
+            content.classList.toggle('open');
+            el.parentElement.classList.toggle('open');
+        }
+    }
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

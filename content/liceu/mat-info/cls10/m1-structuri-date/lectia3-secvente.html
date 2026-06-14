@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 3: Secvente in vectori | Clasa a X-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia2-operatii-vectori.html" class="nav-btn" title="Lectia anterioara">&#8592; Anterioara</a>
+        <a href="lectia4-matrice-intro.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Secvente in vectori</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei invata sa lucrezi cu subsecvente (portiuni consecutive) ale unui vector, sa calculezi sume pe intervale eficient cu sume partiale, sa gasesti secventa de suma maxima si sa aplici aceste tehnici la subiecte de tip Bacalaureat si concurs.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti o subsecventa si sa o distingi de un subsir</li>
+                <li>Sa construiesti vectorul de sume partiale si sa calculezi suma pe orice interval in O(1)</li>
+                <li>Sa determini cea mai lunga secventa cu o proprietate data (crescatoare, constanta, etc.) in O(n)</li>
+                <li>Sa gasesti secventa de suma maxima dintr-un vector cu numere negative (algoritm Kadane, O(n))</li>
+                <li>Sa numarezi subsecvente cu suma data si sa rezolvi probleme tip Bacalaureat</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare initiala:</div>
+<p>Fie vectorul <code>v = [3, -1, 4, -1, 5, -9, 2, 6]</code>. Gaseste prin inspectie vizuala subsecventa formata din elemente consecutive a carei suma este maxima. Noteaza indicii de inceput si sfarsit.</p>
+<textarea id="tryAnswer" placeholder="Raspuns: secventa v[?..?] cu suma = ?" rows="3"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+<div class="hint-content">
+<p>O subsecventa inseamna elemente <strong>consecutive</strong> din vector (nu poti sari peste elemente). Calculeaza suma pentru cateva portiuni: v[0..4] = 3-1+4-1+5 = 10. Este aceasta maxima?</p>
+<p>Vei invata in aceasta lectie algoritmul Kadane care gaseste raspunsul optim in O(n)!</p>
+</div>
+</div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ═ ATOM 1: Definitii ═ -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Care din urmatoarele este o subsecventa a vectorului v = [1, 2, 3, 4, 5]?", "options": ["[2, 3, 4] (indicii 1, 2, 3 consecutivi)", "[1, 3, 5] (indicii 0, 2, 4 cu goluri)", "[5, 4, 3] (in ordine inversa)", "[1, 2, 7] (include element inexistent)"], "correct": "a", "hint": "O subsecventa = portiune CONSECUTIVA fara goluri. [2,3,4] este pe pozitiile 1,2,3 in ordine. [1,3,5] sare elemente (subsir, nu subsecventa)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Subsecventa vs. subsir</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O <strong>subsecventa</strong> (sau <em>secventa</em>) a vectorului <code>v[0..n-1]</code> este portiunea <code>v[l..r]</code> formata din elemente <strong>consecutive</strong>: <code>v[l], v[l+1], ..., v[r]</code>, unde <code>0 &le; l &le; r &le; n-1</code>.<br>
+                    Lungimea subsecventei <code>v[l..r]</code> este <code>r &minus; l + 1</code>.
+                </div>
+                <div class="example-box">
+<div class="example-title">Terminologie exacta:</div>
+<ul>
+    <li><strong>Subsecventa</strong> = portiune continua, fara salturi (<em>contiguous subarray</em> in engleza)</li>
+    <li><strong>Subsir</strong> = elemente extrase in ordine, dar nu neaparat consecutive (pot fi salturi)</li>
+</ul>
+</div>
+                <div class="example-box">
+<div class="example-title">Exemplu concret cu v = [3, 1, 4, 1, 5, 9, 2, 6]:</div>
+<ul>
+    <li><code>v[2..5] = [4, 1, 5, 9]</code> &#8594; subsecventa de lungime 4, suma = 19</li>
+    <li><code>v[0..7]</code> &#8594; intregul vector, suma = 31</li>
+    <li><code>[3, 4, 5]</code> &#8594; <strong>NU este subsecventa</strong> (sare indicii 1 si 3)</li>
+    <li><code>v[5..5] = [9]</code> &#8594; subsecventa de lungime 1 (un singur element)</li>
+</ul>
+</div>
+            </div>
+        </div>
+
+        <!-- ═ ATOM 2: Sume partiale ═ -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Daca sp = [0, 3, 4, 8, 9, 14, 23, 25, 31] pentru v = [3,1,4,1,5,9,2,6], care este suma elementelor v[1..4]?", "options": ["sp[4] - sp[1] = 9 - 3 = 6", "sp[5] - sp[0] = 14", "sp[4] - sp[0] = 9", "sp[5] - sp[1] = 14 - 3 = 11"], "correct": "d", "hint": "Formula: suma(l,r) = sp[r+1] - sp[l]. Aici l=1, r=4: sp[5] - sp[1] = 14 - 3 = 11."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Sume partiale (prefix sums) &mdash; interogare O(1)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Vectorul de <strong>sume partiale</strong> <code>sp</code> are <code>n+1</code> elemente:<br>
+                    <code>sp[0] = 0</code> &nbsp;&nbsp; <code>sp[i] = sp[i-1] + v[i-1]</code> pentru <code>i = 1..n</code><br>
+                    <strong>Formula cheie:</strong> suma subsecventei <code>v[l..r]</code> = <code>sp[r+1] &minus; sp[l]</code> in <strong>O(1)</strong>.
+                </div>
+<pre><span class="code-comment"># Sume partiale pentru vectorul v</span>
+v = [<span class="code-number">3</span>, <span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">1</span>, <span class="code-number">5</span>, <span class="code-number">9</span>, <span class="code-number">2</span>, <span class="code-number">6</span>]
+n = <span class="code-function">len</span>(v)
+
+<span class="code-comment"># Construire O(n): sp[0]=0, sp[i]=sp[i-1]+v[i-1]</span>
+sp = [<span class="code-number">0</span>] * (n + <span class="code-number">1</span>)
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+    sp[i+<span class="code-number">1</span>] = sp[i] + v[i]
+
+<span class="code-function">print</span>(<span class="code-string">"Vector v:      "</span>, v)
+<span class="code-function">print</span>(<span class="code-string">"Sume partiale: "</span>, sp)
+
+<span class="code-comment"># Interogare O(1): suma v[l..r] = sp[r+1] - sp[l]</span>
+l, r = <span class="code-number">2</span>, <span class="code-number">5</span>
+suma_lr = sp[r+<span class="code-number">1</span>] - sp[l]
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"suma({l},{r}) = sp[{r+1}] - sp[{l}] = {sp[r+1]} - {sp[l]} = {suma_lr}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Vector v:       [3, 1, 4, 1, 5, 9, 2, 6]
+Sume partiale:  [0, 3, 4, 8, 9, 14, 23, 25, 31]
+suma(2,5) = sp[6] - sp[2] = 23 - 4 = 19</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">De ce este eficient?</div>
+<ul>
+    <li><strong>Fara sume partiale:</strong> suma(l,r) costa O(r&minus;l+1). Cu Q interogari: O(n&middot;Q) total.</li>
+    <li><strong>Cu sume partiale:</strong> preprocesare O(n), fiecare interogare O(1). Cu Q interogari: O(n+Q) total.</li>
+    <li>La n=100.000 si Q=50.000: diferenta intre 5 miliarde vs 150.000 operatii.</li>
+</ul>
+</div>
+            </div>
+        </div>
+
+        <!-- ═ ATOM 3: Secventa cu proprietate ═ -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Ce valoare are lung_cur dupa procesarea elementului v[4]=5 in v=[2,4,6,3,5,1,7,8,9] cand cautam secventa strict crescatoare?", "options": ["1 (resetat la v[3]=3 care nu e crescator fata de v[2]=6)", "3 (pastreaza [2,4,6])", "2 (secventa [3,5] are lungime 2)", "4"], "correct": "c", "hint": "La i=3: v[3]=3 < v[2]=6, deci lung_cur se reseteaza la 1. La i=4: v[4]=5 > v[3]=3, deci lung_cur devine 2. Secventa curenta este [3,5]."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Cea mai lunga secventa cu proprietate data &mdash; O(n)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Tehnica generala (O(n), O(1) memorie):</strong> parcurgem vectorul mentinand <code>lung_cur</code> (lungimea secventei curente) si <code>lung_max</code> (maximul gasit). La fiecare pas: daca proprietatea continua, incrementam; daca nu, resetam la 1.
+                </div>
+<pre><span class="code-comment"># Cea mai lunga secventa strict crescatoare consecutiva</span>
+v = [<span class="code-number">2</span>, <span class="code-number">4</span>, <span class="code-number">6</span>, <span class="code-number">3</span>, <span class="code-number">5</span>, <span class="code-number">1</span>, <span class="code-number">7</span>, <span class="code-number">8</span>, <span class="code-number">9</span>]
+n = <span class="code-function">len</span>(v)
+
+lung_max = <span class="code-number">1</span>
+lung_cur = <span class="code-number">1</span>
+end_m = <span class="code-number">0</span>   <span class="code-comment"># indicele de sfarsit al secventei maxime</span>
+
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n):
+    <span class="code-keyword">if</span> v[i] &gt; v[i-<span class="code-number">1</span>]:          <span class="code-comment"># proprietatea: strict crescator</span>
+        lung_cur += <span class="code-number">1</span>
+    <span class="code-keyword">else</span>:
+        lung_cur = <span class="code-number">1</span>           <span class="code-comment"># rupe secventa: resetam</span>
+    <span class="code-keyword">if</span> lung_cur &gt; lung_max:
+        lung_max = lung_cur
+        end_m = i
+
+start_m = end_m - lung_max + <span class="code-number">1</span>
+<span class="code-function">print</span>(<span class="code-string">"Vector:"</span>, v)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"Secventa strict crescatoare: v[{start_m}..{end_m}] = {v[start_m:end_m+1]}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"Lungime: {lung_max}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Vector: [2, 4, 6, 3, 5, 1, 7, 8, 9]
+Secventa strict crescatoare: v[5..8] = [1, 7, 8, 9]
+Lungime: 4</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Adaptare pentru alte proprietati &mdash; schimba doar conditia if:</div>
+<ul>
+    <li>Secventa de elemente <strong>egale</strong>: <code>if v[i] == v[i-1]</code></li>
+    <li>Secventa <strong>nedescrescatoare</strong>: <code>if v[i] &ge; v[i-1]</code></li>
+    <li>Secventa de elemente <strong>pare</strong>: <code>if v[i] % 2 == 0</code> (si initializeaza <code>lung_cur = 1 if v[0]%2==0 else 0</code>)</li>
+</ul>
+</div>
+            </div>
+        </div>
+
+        <!-- ═ ATOM 4: Kadane ═ -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "In algoritmul Kadane, cand decidem sa incepem o secventa noua de la pozitia i?", "options": ["Cand suma_cur + v[i] < v[i], adica suma_cur < 0", "Cand v[i] este negativ", "Cand i este par", "Cand suma_cur > suma_max"], "correct": "a", "hint": "Decizia: daca suma_cur este negativa, ea doar scade suma viitoare, deci mai bine incepem de la v[i] singur. Conditia echivalenta este suma_cur + v[i] < v[i]."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Secventa de suma maxima &mdash; Algoritmul Kadane O(n)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Problema:</strong> gaseste subsecventa <code>v[l..r]</code> cu suma maxima (vectorul poate contine si numere negative).<br>
+                    <strong>Algoritmul Kadane:</strong> la fiecare pozitie <code>i</code>, decidem daca extindem secventa curenta sau incepem una noua. Regula: daca <code>suma_cur &lt; 0</code>, ea numai scade suma viitoare, deci incepem de la <code>v[i]</code>.
+                </div>
+<pre><span class="code-comment"># Kadane: secventa de suma maxima O(n)</span>
+v = [<span class="code-number">-2</span>, <span class="code-number">1</span>, <span class="code-number">-3</span>, <span class="code-number">4</span>, <span class="code-number">-1</span>, <span class="code-number">2</span>, <span class="code-number">1</span>, <span class="code-number">-5</span>, <span class="code-number">4</span>]
+n = <span class="code-function">len</span>(v)
+
+suma_max = v[<span class="code-number">0</span>]   <span class="code-comment"># initializare cu v[0], nu cu 0!</span>
+suma_cur = v[<span class="code-number">0</span>]
+s = <span class="code-number">0</span>; e = <span class="code-number">0</span>; ts = <span class="code-number">0</span>   <span class="code-comment"># start/end al secventei maxime; ts = temp_start</span>
+
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n):
+    <span class="code-keyword">if</span> suma_cur + v[i] &lt; v[i]:   <span class="code-comment"># echivalent: suma_cur &lt; 0</span>
+        suma_cur = v[i]           <span class="code-comment"># incepem secventa noua de la i</span>
+        ts = i
+    <span class="code-keyword">else</span>:
+        suma_cur = suma_cur + v[i]  <span class="code-comment"># extindem secventa curenta</span>
+    <span class="code-keyword">if</span> suma_cur &gt; suma_max:
+        suma_max = suma_cur
+        s = ts; e = i
+
+<span class="code-function">print</span>(<span class="code-string">"Vector:"</span>, v)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"Suma maxima = {suma_max}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"Secventa: v[{s}..{e}] = {v[s:e+1]}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Vector: [-2, 1, -3, 4, -1, 2, 1, -5, 4]
+Suma maxima = 6
+Secventa: v[3..6] = [4, -1, 2, 1]</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Urmarire pas cu pas (primele 5 iteratii):</div>
+<table class="data-table">
+<thead><tr><th>i</th><th>v[i]</th><th>suma_cur</th><th>suma_max</th><th>Actiune</th></tr></thead>
+<tbody>
+<tr><td>init</td><td>-2</td><td>-2</td><td>-2</td><td>start</td></tr>
+<tr><td>1</td><td>1</td><td>1</td><td>1</td><td>-2+1&lt;1 &#8594; restart de la i=1</td></tr>
+<tr><td>2</td><td>-3</td><td>-2</td><td>1</td><td>1-3=-2, extinde (1&ge;0)</td></tr>
+<tr><td>3</td><td>4</td><td>4</td><td>4</td><td>-2+4&lt;4 &#8594; restart de la i=3</td></tr>
+<tr><td>4</td><td>-1</td><td>3</td><td>4</td><td>4-1=3, extinde</td></tr>
+</tbody>
+</table>
+</div>
+                <div class="example-box">
+<div class="example-title">Atentie: cazuri limita importante</div>
+<ul>
+    <li>Initializeaza <code>suma_max = v[0]</code>, <strong>nu 0</strong> (altfel dai gres cand toate elementele sunt negative)</li>
+    <li>Daca toate elementele sunt negative, Kadane returneaza corect maximul (cel mai putin negativ)</li>
+</ul>
+</div>
+            </div>
+        </div>
+
+        <!-- ═ ATOM 5: C++ intensiv ═ -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "In C++, expresia int sp[9] = {0}; seteaza toate elementele la:", "options": ["Valori nedefinite (garbage)", "0 pentru toate cele 9 elemente", "0 pentru sp[0] si garbage pentru restul", "1 pentru toate"], "correct": "b", "hint": "In C++, daca initializezi un tablou cu = {0}, TOATE elementele sunt setate la 0. Aceasta este initializarea agregata."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Sume partiale in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+<p>Acelasi algoritm de sume partiale implementat in C++. Diferente fata de Python: declarare explicita de tip si dimensiune, initializare cu <code>= {0}</code> (seteaza TOATE elementele la 0), indexare identica.</p>
+</div>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> v[] = {<span class="code-number">3</span>, <span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">1</span>, <span class="code-number">5</span>, <span class="code-number">9</span>, <span class="code-number">2</span>, <span class="code-number">6</span>};
+    <span class="code-keyword">int</span> n = <span class="code-number">8</span>;
+    <span class="code-keyword">int</span> sp[<span class="code-number">9</span>] = {<span class="code-number">0</span>};  <span class="code-comment">// initializeaza TOATE cele 9 elemente la 0</span>
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++)
+        sp[i+<span class="code-number">1</span>] = sp[i] + v[i];
+    <span class="code-comment">// Afisare sp</span>
+    cout &lt;&lt; <span class="code-string">"sp = ["</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt;= n; i++) {
+        <span class="code-keyword">if</span> (i) cout &lt;&lt; <span class="code-string">", "</span>;
+        cout &lt;&lt; sp[i];
+    }
+    cout &lt;&lt; <span class="code-string">"]"</span> &lt;&lt; endl;
+    <span class="code-comment">// Interogare: suma v[2..5] in O(1)</span>
+    <span class="code-keyword">int</span> l = <span class="code-number">2</span>, r = <span class="code-number">5</span>;
+    cout &lt;&lt; <span class="code-string">"suma(2,5) = sp[6] - sp[2] = "</span>
+         &lt;&lt; sp[r+<span class="code-number">1</span>] &lt;&lt; <span class="code-string">" - "</span> &lt;&lt; sp[l]
+         &lt;&lt; <span class="code-string">" = "</span> &lt;&lt; (sp[r+<span class="code-number">1</span>] - sp[l]) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>sp = [0, 3, 4, 8, 9, 14, 23, 25, 31]
+suma(2,5) = sp[6] - sp[2] = 23 - 4 = 19</pre>
+</div>
+                <p>Rezultatul este identic cu Python. Logica matematica a algoritmului nu depinde de limbaj &mdash; doar sintaxa difera.</p>
+            </div>
+        </div>
+
+        <!-- ═ ATOM 6: Aplicatii ═ -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Cate subsecvente ale vectorului v = [1, 2, 3, 4, 5] au suma egala cu 5?", "options": ["1 (numai [5])", "3 ([1,4], [2,3] si [5])", "4", "2 ([2,3] si [5])"], "correct": "d", "hint": "v[1..2]=[2,3] suma=5; v[4..4]=[5] suma=5. Verifica: v[0..1]=3, v[0..2]=6, v[0..4]=15, v[3..4]=9. Raspuns: 2 subsecvente."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Aplicatie: numararea subsecventelor cu suma data</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Cu sume partiale putem testa eficient toate perechile (l, r) si numara subsecventele care satisfac o conditie de suma. Complexitate: O(n&sup2;) cu sume partiale (O(1) per pereche), fata de O(n&sup3;) fara.
+                </div>
+<pre><span class="code-comment"># Numara subsecventele cu suma egala cu target</span>
+v = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>, <span class="code-number">5</span>]
+n = <span class="code-function">len</span>(v)
+target = <span class="code-number">5</span>
+
+<span class="code-comment"># Construim sume partiale</span>
+sp = [<span class="code-number">0</span>] * (n + <span class="code-number">1</span>)
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+    sp[i+<span class="code-number">1</span>] = sp[i] + v[i]
+
+contor = <span class="code-number">0</span>
+<span class="code-keyword">for</span> l <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+    <span class="code-keyword">for</span> r <span class="code-keyword">in</span> <span class="code-function">range</span>(l, n):
+        <span class="code-keyword">if</span> sp[r+<span class="code-number">1</span>] - sp[l] == target:
+            contor += <span class="code-number">1</span>
+            <span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"  v[{l}..{r}] = {v[l:r+1]}, suma = {target}"</span>)
+
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"Total subsecvente cu suma {target}: {contor}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>  v[1..2] = [2, 3], suma = 5
+  v[4..4] = [5], suma = 5
+Total subsecvente cu suma 5: 2</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Verificare manuala:</div>
+<ul>
+    <li>v[1..2] = [2, 3]: 2 + 3 = 5 &#10003;</li>
+    <li>v[4..4] = [5]: 5 = 5 &#10003;</li>
+    <li>v[0..1] = [1, 2] = 3 &#8800; 5; v[0..2] = 6 &#8800; 5; v[2..3] = 7 &#8800; 5 etc.</li>
+</ul>
+</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Sume partiale pe hartie</h3>
+            <p>Fie <code>v = [5, 2, 8, 1, 3]</code>. Construieste manual vectorul de sume partiale <code>sp</code> (6 elemente, incepand cu 0). Calculeaza suma elementelor din <code>v[1..3]</code> folosind formula <code>sp[r+1] - sp[l]</code>.</p>
+            <p><em>Raspuns asteptat: sp = [0, 5, 7, 15, 16, 19]; suma(1,3) = sp[4] - sp[1] = 16 - 5 = 11.</em></p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Secventa descrescatoare</h3>
+            <p>Scrie un program Python care gaseste cea mai lunga subsecventa <strong>strict descrescatoare</strong> consecutiva dintr-un vector dat. Afiseaza indicii de inceput si sfarsit si lungimea.</p>
+            <p><em>Testare: pentru <code>v = [9, 7, 5, 8, 4, 2, 1, 3]</code>, raspunsul este <code>v[2..6] = [5, 8, 4, 2, 1]</code>? Verifica singur! (Indiciu: conditia trebuie sa fie v[i] &lt; v[i-1].)</em></p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Kadane complet cu cazuri limita</h3>
+            <p>Modifica algoritmul Kadane pentru a trata corect: (a) toate elementele negative &mdash; returneaza maximul (cel mai putin negativ), nu 0; (b) vectorul are un singur element. Testeaza cu <code>v = [-5, -3, -1, -4]</code> (raspuns: suma_max = -1, secventa v[2..2]) si cu <code>v = [7]</code> (raspuns: suma_max = 7).</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Definitia subsecventei (portiune consecutiva) si diferenta fata de subsir</li>
+                <li>Vectorul de sume partiale: construire O(n), interogare suma(l,r) in O(1) cu formula sp[r+1] - sp[l]</li>
+                <li>Tehnica generala pentru cea mai lunga secventa cu proprietate: O(n), O(1) memorie, o singura parcurgere</li>
+                <li>Algoritmul Kadane pentru secventa de suma maxima: O(n), initializare cu v[0], nu cu 0</li>
+                <li>Numararea subsecventelor cu suma data: O(n&sup2;) cu sume partiale</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu Lectia 4 pentru a invata despre matrici (tablouri bidimensionale) si parcurgerile lor.</p>
+            <a href="lectia4-matrice-intro.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls10-m1-structuri-date-lectia3-secvente');
+        PracticeSimple.init('cls10-m1-structuri-date-lectia3-secvente');
+        LessonSummary.init('cls10-m1-structuri-date-lectia3-secvente');
+        Breadcrumb.init({
+            grade: 'cls10',
+            gradeName: 'Clasa a X-a',
+            module: 'm1-structuri-date',
+            moduleName: 'M1 Structuri Date',
+            lesson: 'Secvente in vectori'
+        });
+        LearningProgress.init('cls10', 'm1-structuri-date', 'lectia3-secvente.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

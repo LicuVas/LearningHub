@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 2: HTTP, HTTPS si securitate pe web | Clasa a X-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+</head>
+<body>
+<div class="container">
+<nav class="nav-bar">
+    <a href="lectia1-retele-internet.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 1</a>
+    <a href="lectia3-backup-stocare.html" class="nav-btn" title="Lectia urmatoare">Lectia 3 &#8594;</a>
+</nav>
+<header class="lesson-header">
+    <span class="lesson-badge">Invatare Atomica</span>
+    <h1 class="lesson-title">HTTP, HTTPS si securitate pe web</h1>
+</header>
+<div class="progress-container">
+    <span class="progress-label">Progres lectie:</span>
+    <div class="progress-bar-wrapper"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    <span class="progress-percent" id="progress-percent">0%</span>
+</div>
+<section class="lesson-frame">
+    <div class="goal-section">
+        <div class="goal-header">
+            <span class="goal-icon">&#127919;</span>
+            <h2 class="goal-title">Obiectivul lectiei</h2>
+        </div>
+        <p class="goal-text">Vei intelege cum sa navighezi sigur pe web: de ce conteaza diferenta dintre HTTP si HTTPS, cum recunosti o conexiune securizata, ce riscuri apar pe retele publice si ce decizii de securitate iei in viata de zi cu zi. Contextul tehnic (DNS, TCP/IP) este prezentat la nivel de utilizator informat, nu de inginer de retea.</p>
+    </div>
+    <div class="learning-outcomes">
+        <h3>Dupa aceasta lectie vei putea:</h3>
+        <ul>
+            <li>Sa explici de ce HTTP si HTTPS sunt diferite si cand fiecare conteaza pentru siguranta ta</li>
+            <li>Sa recunosti semnalele vizuale ale unei conexiuni securizate in browser (lacat, https://)</li>
+            <li>Sa intelegi ce face DNS (traduce numele de domeniu in adrese IP) ca utilizator informat</li>
+            <li>Sa intelegi de ce datele trimise pe HTTP pot fi interceptate si citite de altii</li>
+            <li>Sa identifici riscurile concrete pe WiFi public si masurile de protectie adecvate</li>
+            <li>Sa recunosti protocoalele sigure vs nesigure in situatii practice (email, web, acces la distanta)</li>
+        </ul>
+        <p style="font-size:0.85em; color:#666; margin-top:0.5em;"><em>Nota de curriculum: aceasta lectie trateaza protocoalele din perspectiva <strong>securitatii cibernetice si navigarii avansate pe web</strong> (programa TIC cls. X, OMEN 3393/2017). Detaliile tehnice de nivel inginer (straturi TCP/IP, three-way handshake, TLS 1.3) sunt prezentate ca fundal explicativ, nu ca obiective de evaluare pentru cls. X.</em></p>
+    </div>
+</section>
+<section class="try-section">
+    <h2>Incearca singur!</h2>
+    <div class="try-challenge">
+        <div class="challenge-box">
+            <div class="challenge-title">Provocare:</div>
+            <p>Deschide browser-ul si scrie in bara de adrese <strong>https://www.google.com</strong> apoi apasa Enter. In mai putin de o secunda, pagina apare. Ce crezi ca se intampla in acel interval? Noteaza cel putin 3 pasi pe care ii banuiesti ca ii face calculatorul tau inainte ca pagina sa fie afisata.</p>
+            <textarea id="tryAnswer" placeholder="Pasul 1: Calculatorul cauta adresa lui google.com...&#10;Pasul 2: ...&#10;Pasul 3: ..." rows="6"></textarea>
+        </div>
+        <div class="hint-box">
+            <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+            <div class="hint-content">
+                <p>Gandeste-te la o scrisoare trimisa prin posta: are un destinatar (adresa), este impartita in plicuri (pachete), calatoreste prin mai multe oficii postale (routere) si ajunge la destinatie unde este reasamblata.</p>
+                <p>In aceasta lectie vei descoperi ca acesti pasi au nume tehnice: <strong>DNS</strong> (gaseste adresa), <strong>TCP</strong> (imparte in pachete si verifica), <strong>IP</strong> (directioneaza), <strong>HTTP/HTTPS</strong> (formateaza cererea).</p>
+            </div>
+        </div>
+    </div>
+</section>
+<main id="atomic-content">
+<div class="atom" id="atom-1" data-quiz='[{"question": "Ce este un protocol de retea?", "options": ["Un tip de cablu folosit pentru conectarea calculatoarelor", "Un set de reguli acceptate de comun acord care guverneaza comunicarea intre dispozitivele dintr-o retea", "Un program antivirus care protejeaza reteaua", "Un dispozitiv fizic care conecteaza doua retele diferite"], "correct": "b", "hint": "Un protocol este un set de REGULI. Fara reguli comune, doua calculatoare nu ar putea intelege mesajele celuilalt."}]'>
+    <div class="atom-header"><div class="atom-number">1</div><h3 class="atom-title">1. Ce este un protocol? De ce avem nevoie de el?</h3></div>
+    <div class="atom-content">
+        <div class="concept-def">Un <strong>protocol de retea</strong> este un set de reguli standard, acceptate de toti participantii, care defineste cum se initiaza, se desfasoara si se incheie comunicarea intre dispozitivele dintr-o retea de calculatoare.</div>
+        <div class="example-box">
+            <div class="example-title">Analogie: Conventia telefonica</div>
+            <p>Cand raspunzi la telefon spui "Alo", asculti, raspunzi pe rand, la final spui "Pa". Aceasta conventie este un <em>protocol</em>: ambii interlocutori stiu regulile. Fara protocol, unul ar vorbi peste celalalt si nimeni nu ar intelege nimic.</p>
+            <p>In retele, acelasi principiu se aplica: calculatorul care trimite si cel care primeste trebuie sa fie de acord cu <strong>formatul mesajelor</strong>, <strong>ordinea operatiilor</strong>, <strong>cum se trateaza erorile</strong> si <strong>viteza de transmisie</strong>.</p>
+        </div>
+        <div class="concept-def">
+            <strong>De ce sunt necesare protocoalele?</strong>
+            <ul>
+                <li><strong>Interoperabilitate:</strong> un telefon Samsung poate comunica cu un iPhone deoarece ambele respecta aceleasi protocoale (WiFi, Bluetooth, TCP/IP).</li>
+                <li><strong>Standardizare globala:</strong> un calculator din Romania trimite date unui server din Japonia fara probleme, deoarece folosesc aceleasi reguli.</li>
+                <li><strong>Detectarea si corectarea erorilor:</strong> protocoalele includ mecanisme de verificare a integritatii datelor transmise.</li>
+                <li><strong>Securitate:</strong> unele protocoale (HTTPS, SSH) includ criptarea datelor in tranzit.</li>
+            </ul>
+        </div>
+        <div class="example-box">
+            <div class="example-title">Protocoale uzuale si domeniul lor</div>
+            <p><strong>TCP/IP</strong> &mdash; transport date prin Internet<br>
+            <strong>HTTP / HTTPS</strong> &mdash; transfer pagini web<br>
+            <strong>DNS</strong> &mdash; traducere nume domeniu in adresa IP<br>
+            <strong>FTP / SFTP</strong> &mdash; transfer fisiere<br>
+            <strong>SMTP / IMAP / POP3</strong> &mdash; trimitere si receptie email<br>
+            <strong>SSH</strong> &mdash; acces securizat la distanta pe un server</p>
+        </div>
+    </div>
+</div>
+<div class="atom" id="atom-2" data-quiz='[{"question": "In modelul TCP/IP, care strat se ocupa de directionarea pachetelor intre retele diferite?", "options": ["Stratul de aplicatie", "Stratul de transport (TCP)", "Stratul Internet (IP)", "Stratul de acces la retea"], "correct": "c", "hint": "IP = Internet Protocol. Sarcina lui este sa directioneze pachetele de la o retea la alta."}]'>
+    <div class="atom-header"><div class="atom-number">2</div><h3 class="atom-title">2. Modelul TCP/IP &mdash; arhitectura comunicarii pe Internet</h3></div>
+    <div class="atom-content">
+        <div class="concept-def"><strong>TCP/IP</strong> (Transmission Control Protocol / Internet Protocol) este suita de protocoale pe care se bazeaza Internetul. Modelul TCP/IP organizeaza comunicarea in <strong>4 straturi</strong>, fiecare cu responsabilitati clare si bine delimitate.</div>
+        <div class="example-box">
+            <div class="example-title">Cele 4 straturi ale modelului TCP/IP</div>
+            <p><strong>Stratul 4 &mdash; Aplicatie</strong><br>Protocoale folosite direct de aplicatii: HTTP, HTTPS, DNS, FTP, SMTP, SSH.<br><em>Rol:</em> formateaza cererea utilizatorului intr-un mesaj inteles de server.</p>
+            <p><strong>Stratul 3 &mdash; Transport</strong><br><em>TCP</em> (Transmission Control Protocol): imparte datele in <strong>segmente numerotate</strong>, trimite confirmare pentru fiecare, retrimitere automata daca un segment se pierde. <strong>Sigur, dar mai lent.</strong><br><em>UDP</em> (User Datagram Protocol): trimite fara confirmare. <strong>Rapid, fara garantie de livrare.</strong> Folosit la streaming video, jocuri online, VoIP.</p>
+            <p><strong>Stratul 2 &mdash; Internet (IP)</strong><br>Adauga <strong>adresa IP sursa si destinatie</strong> la fiecare pachet. Router-ele folosesc aceasta adresa pentru a directiona pachetul pana la destinatie.<br><em>IPv4:</em> adrese de 32 biti (ex: 93.184.216.34) &mdash; stocul global a fost epuizat.<br><em>IPv6:</em> adrese de 128 biti (ex: 2001:db8::1) &mdash; rezolva problema epuizarii adreselor.</p>
+            <p><strong>Stratul 1 &mdash; Acces la retea (Link)</strong><br>Transmisia fizica a bitilor prin cablu, fibra optica sau unde radio. Include Ethernet (LAN cu cablu) si WiFi (802.11).<br>Adresa <strong>MAC</strong> (Media Access Control) identifica unic placa de retea in reteaua locala.</p>
+        </div>
+        <div class="example-box">
+            <div class="example-title">Analogie: Trimiterea unei scrisori prin posta</div>
+            <p><strong>Strat Aplicatie</strong> = continutul scrisorii (ce vrei sa comunici)<br><strong>Strat Transport (TCP)</strong> = impartirea continutului in plicuri numerotate si confirmarea primirii<br><strong>Strat Internet (IP)</strong> = adresa destinatarului scrisa pe fiecare plic<br><strong>Strat Acces retea</strong> = vehiculul fizic care transporta plicul (camion, avion)</p>
+        </div>
+    </div>
+</div>
+<div class="atom" id="atom-3" data-quiz='[{"question": "Ce face serverul DNS atunci cand browser-ul tau acceseaza www.google.com?", "options": ["Transforma numele www.google.com in adresa IP corespunzatoare", "Cripteaza datele trimise catre google.com", "Stocheaza o copie a paginii web pentru a o incarca mai rapid", "Verifica daca site-ul are certificat HTTPS valid"], "correct": "a", "hint": "DNS = Domain Name System. Calculatoarele comunica prin adrese IP; noi ne amintim mai usor nume. DNS face aceasta traducere."}]'>
+    <div class="atom-header"><div class="atom-number">3</div><h3 class="atom-title">3. DNS &mdash; agenda telefonica a Internetului</h3></div>
+    <div class="atom-content">
+        <div class="concept-def"><strong>DNS</strong> (Domain Name System) este un sistem distribuit de baze de date care traduce <strong>numele de domeniu</strong> (www.google.com) in <strong>adrese IP</strong> numerice (142.250.185.46) pe care calculatoarele le inteleg.</div>
+        <div class="example-box">
+            <div class="example-title">Analogie: Agenda telefonica</div>
+            <p>Stii ca vrei sa suni la "Pizzeria Mario", nu la numarul 0740-123-456. Cauti in agenda dupa nume si gasesti numarul. DNS face exact acelasi lucru: tu scrii un <em>nume</em>, el iti intoarce <em>numarul</em> (adresa IP).</p>
+        </div>
+        <div class="concept-def">
+            <strong>Cum functioneaza rezolutia DNS (pas cu pas):</strong>
+            <ol>
+                <li>Tastezi <code>https://www.wikipedia.org</code> in browser.</li>
+                <li>Browser-ul verifica <strong>cache-ul local DNS</strong> (lista traducerilor retinute recent). Daca gaseste adresa, sare direct la conexiunea TCP.</li>
+                <li>Daca nu gaseste, intreaba <strong>Resolver-ul DNS</strong> al ISP-ului sau un serviciu public (8.8.8.8 Google, 1.1.1.1 Cloudflare).</li>
+                <li>Resolver-ul intreaba un <strong>Root Server</strong> (13 clustere globale): cine administreaza .org? Primeste adresa serverului TLD .org.</li>
+                <li>Resolver-ul intreaba <strong>Serverul TLD .org</strong>: cine administreaza wikipedia.org? Primeste adresele serverelor autoritare Wikipedia.</li>
+                <li>Resolver-ul intreaba <strong>Serverul autoritar Wikipedia</strong>: care e IP-ul www.wikipedia.org? Primeste adresa IP reala.</li>
+                <li>Resolver-ul returneaza adresa IP browser-ului. Browser-ul initiaza conexiunea TCP/IP catre acea adresa.</li>
+            </ol>
+        </div>
+        <div class="example-box">
+            <div class="example-title">Structura unui nume de domeniu</div>
+            <p>Domeniul se citeste de la dreapta la stanga: <code>www.wikipedia.org</code></p>
+            <p><strong>.org</strong> = TLD (Top-Level Domain): tipul organizatiei (.com = comercial, .edu = educational, .ro = Romania)<br><strong>wikipedia</strong> = domeniu de nivel 2: numele organizatiei<br><strong>www</strong> = subdomeniu: serverul web (poate fi si <em>mail</em>, <em>ftp</em>, <em>api</em> etc.)</p>
+        </div>
+        <div class="concept-def"><strong>Cache DNS si TTL:</strong> rezultatele DNS sunt stocate temporar pentru eficienta. Fiecare inregistrare are un <strong>TTL</strong> (Time To Live) in secunde, dupa care trebuie re-interogata sursa autoritara. De aceea o modificare DNS nu se vede imediat in toata lumea.</div>
+    </div>
+</div>
+<div class="atom" id="atom-4" data-quiz='[{"question": "De ce HTTPS este mai sigur decat HTTP?", "options": ["HTTPS incarca paginile web mai rapid", "HTTPS foloseste un alt port decat HTTP ceea ce il face automat mai sigur", "HTTPS verifica daca continutul paginii este corect gramatical", "HTTPS cripteaza datele transmise intre browser si server impiedicand interceptarea lor"], "correct": "d", "hint": "Litera S din HTTPS vine de la Secure. Cu HTTP datele calatoresc in text clar; cu HTTPS sunt criptate cu TLS si ilegibile pentru un atacator."}]'>
+    <div class="atom-header"><div class="atom-number">4</div><h3 class="atom-title">4. HTTP vs HTTPS &mdash; cum circula datele pe web</h3></div>
+    <div class="atom-content">
+        <div class="concept-def"><strong>HTTP</strong> (HyperText Transfer Protocol) este protocolul care defineste formatul cererilor si raspunsurilor dintre un <strong>browser web</strong> (client) si un <strong>server web</strong>. HTTP functioneaza pe modelul <strong>cerere-raspuns</strong> (request-response).</div>
+        <div class="example-box">
+            <div class="example-title">Cum functioneaza HTTP (cerere-raspuns)</div>
+            <p><strong>Cerere HTTP (Request)</strong> trimisa de browser:</p>
+            <pre><span class="code-keyword">GET</span> /index.html HTTP/1.1
+<span class="code-string">Host:</span> www.example.com
+<span class="code-string">Accept:</span> text/html</pre>
+            <p><strong>Raspuns HTTP (Response)</strong> trimis de server:</p>
+            <pre>HTTP/1.1 <span class="code-number">200</span> <span class="code-keyword">OK</span>
+<span class="code-string">Content-Type:</span> text/html
+<span class="code-comment">[... continut pagina HTML ...]</span></pre>
+            <p><strong>Coduri de stare HTTP frecvente:</strong><br><code>200 OK</code> &mdash; cerere procesata cu succes, continut returnat<br><code>301 Moved Permanently</code> &mdash; pagina s-a mutat definitiv la alta adresa<br><code>403 Forbidden</code> &mdash; acces refuzat<br><code>404 Not Found</code> &mdash; pagina nu exista pe server<br><code>500 Internal Server Error</code> &mdash; eroare interna pe serverul web</p>
+        </div>
+        <div class="concept-def">
+            <strong>HTTPS</strong> = HTTP + <strong>TLS</strong> (Transport Layer Security). TLS cripteaza intregul continut al comunicarii, asigurand trei garantii:
+            <ul>
+                <li><strong>Confidentialitate:</strong> datele nu pot fi citite de un atacator care intercepteaza traficul.</li>
+                <li><strong>Integritate:</strong> datele nu pot fi modificate in tranzit fara ca aceasta sa fie detectata.</li>
+                <li><strong>Autentificare:</strong> browser-ul verifica identitatea serverului prin <strong>certificatul digital</strong> emis de o Autoritate de Certificare (CA), confirmand ca esti pe serverul real si nu pe un site fals.</li>
+            </ul>
+        </div>
+        <div class="example-box">
+            <div class="example-title">Porturile standard si semnalele vizuale</div>
+            <p><strong>HTTP</strong> &rarr; portul <strong>80</strong> (canal nesecurizat)<br><strong>HTTPS</strong> &rarr; portul <strong>443</strong> (canal securizat cu TLS)<br>Un port este un canal logic: serverul asculta pe portul 80 cererile HTTP si pe portul 443 cererile HTTPS.</p>
+            <p>In browser, HTTPS se vede ca: <strong>&#128274; (lacatul inchis)</strong> + URL incepe cu <code>https://</code>.</p>
+            <p>&#9888; <strong>Regula de baza:</strong> nu introduce niciodata parole, date bancare sau informatii personale pe un site care nu are HTTPS!</p>
+        </div>
+    </div>
+</div>
+<div class="atom" id="atom-5" data-quiz='[{"question": "Care este ordinea corecta a pasilor cand browser-ul acceseaza https://www.liceu.ro/lectie.html?", "options": ["TCP handshake DNS rezolutie TLS handshake cerere HTTP GET raspuns server", "Cerere HTTP GET DNS rezolutie TCP handshake TLS handshake raspuns server", "DNS rezolutie TCP handshake TLS handshake cerere HTTP GET raspuns server", "TLS handshake DNS rezolutie TCP handshake cerere HTTP GET raspuns server"], "correct": "c", "hint": "Ordinea logica: mai intai aflam adresa IP (DNS), apoi stabilim conexiunea TCP, apoi negociem criptarea TLS, abia apoi trimitem cererea HTTP GET si primim raspunsul."}]'>
+    <div class="atom-header"><div class="atom-number">5</div><h3 class="atom-title">5. Drumul complet al unui pachet &mdash; de la tastatura la server si inapoi</h3></div>
+    <div class="atom-content">
+        <div class="concept-def">Sa urmarim complet ce se intampla intre momentul in care apesi Enter dupa ce tastezi o adresa web si momentul in care pagina apare pe ecran. Fiecare pas implica un protocol specific.</div>
+        <div class="example-box">
+            <div class="example-title">Exemplu: accesezi https://www.liceu-info.ro/admitere.html</div>
+            <p><strong>Pasul 1 &mdash; Rezolutie DNS</strong><br>Browser-ul intreaba serverul DNS: Care este adresa IP a www.liceu-info.ro?<br>Primeste adresa IP a serverului.<br><em>Protocol implicat: DNS pe portul UDP 53</em></p>
+            <p><strong>Pasul 2 &mdash; Conectare TCP (Three-Way Handshake)</strong><br>Browser-ul initiaza o conexiune TCP cu serverul la portul <strong>443</strong>:<br>(1) Browser catre server: SYN (vreau sa ma conectez)<br>(2) Server catre browser: SYN-ACK (sunt disponibil, confirmat)<br>(3) Browser catre server: ACK (confirmat, incepem)<br><em>Protocol implicat: TCP</em></p>
+            <p><strong>Pasul 3 &mdash; Negociere TLS</strong><br>Browser-ul si serverul negociaza algoritmul de criptare si schimba cheile criptografice. Serverul prezinta certificatul digital; browser-ul il verifica.<br><em>Protocol implicat: TLS 1.3</em></p>
+            <p><strong>Pasul 4 &mdash; Cerere HTTP GET</strong><br>Prin tunelul criptat TLS, browser-ul trimite: <code>GET /admitere.html HTTP/1.1</code><br><em>Protocol implicat: HTTP peste TLS = HTTPS</em></p>
+            <p><strong>Pasul 5 &mdash; Raspuns server si rutare IP</strong><br>Serverul trimite codul HTML (200 OK). Datele vin impartite in <strong>pachete IP</strong>. Fiecare pachet trece prin mai multe <strong>routere</strong>; fiecare router citeste adresa IP destinatie si decide urmatorul salt.<br><em>Protocoale implicate: IP, Ethernet sau WiFi</em></p>
+            <p><strong>Pasul 6 &mdash; Reasamblare TCP si afisare</strong><br>Pachetele pot sosi in ordine diferita. TCP le reasambleaza in ordinea numerelor de secventa originale. Browser-ul interpreteaza HTML-ul si afiseaza pagina.<br><em>Protocol implicat: TCP</em></p>
+        </div>
+        <div class="concept-def">
+            <strong>Alte protocoale importante:</strong>
+            <ul>
+                <li><strong>FTP</strong> (portul 21) &mdash; transfer fisiere; versiunea securizata: SFTP (portul 22, peste SSH)</li>
+                <li><strong>SMTP</strong> (portul 587 sau 465) &mdash; trimitere email de la client la server sau intre servere</li>
+                <li><strong>IMAP</strong> (portul 993 cu TLS) &mdash; acces la emailuri stocate pe server; accesibile de oriunde</li>
+                <li><strong>POP3</strong> (portul 995 cu TLS) &mdash; descarca emailurile pe dispozitivul local si le sterge de pe server</li>
+                <li><strong>SSH</strong> (portul 22) &mdash; acces terminal criptat la servere la distanta; inlocuieste Telnet (text clar)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="atom" id="atom-6" data-quiz='[{"question": "Un utilizator se conecteaza la WiFi-ul unui cafe iar conexiunea este HTTP nu HTTPS. Ce risc concret exista?", "options": ["Pagina se va incarca mai greu din cauza latentei WiFi public", "Orice persoana din aceeasi retea poate intercepta si citi datele transmise inclusiv parole", "Site-ul va fi blocat automat de firewall-ul cafenelei", "Adresa IP a utilizatorului va deveni publica pe tot Internetul"], "correct": "b", "hint": "Pe o retea WiFi un atacator cu instrumentele potrivite poate captura pachetele. Daca datele nu sunt criptate (HTTP) sunt in text clar. Cu HTTPS pachetele capturate sunt criptate si ilegibile."}]'>
+    <div class="atom-header"><div class="atom-number">6</div><h3 class="atom-title">6. Securitate si protocoale &mdash; de ce alegerea protocolului conteaza</h3></div>
+    <div class="atom-content">
+        <div class="concept-def">Alegerea protocolului are implicatii directe asupra <strong>securitatii datelor tale</strong>. Protocoalele necriptate transmit datele in text clar, accesibil oricui care le intercepteaza in retea.</div>
+        <div class="example-box">
+            <div class="example-title">Comparatie protocoale sigure vs nesigure</div>
+            <p><strong>HTTP</strong> &rarr; text clar &mdash; de evitat pentru date sensibile<br><strong>HTTPS</strong> &rarr; criptat cu TLS &mdash; <strong>obligatoriu</strong> pentru autentificare si date personale</p>
+            <p><strong>FTP</strong> &rarr; text clar, inclusiv parola! &mdash; de evitat<br><strong>SFTP / FTPS</strong> &rarr; criptat &mdash; variantele sigure recomandate</p>
+            <p><strong>Telnet</strong> &rarr; text clar &mdash; nu se mai foloseste<br><strong>SSH</strong> &rarr; criptat &mdash; standardul actual</p>
+            <p><strong>POP3 / IMAP necriptat</strong> &rarr; parola email in text clar<br><strong>POP3S / IMAPS</strong> &rarr; variantele sigure, porturile 995 si 993</p>
+        </div>
+        <div class="example-box">
+            <div class="example-title">Atacul Man in the Middle (MitM)</div>
+            <p>Intr-un atac MitM, un atacator se interpune intre tine si server, interceptand comunicarea. Pe HTTP, vede totul in text clar: parole, mesaje, date bancare. Pe HTTPS cu TLS, chiar daca intercepteaza pachetele, nu le poate descifra fara cheile private ale serverului.</p>
+            <p>&#9888; <strong>Regula practica:</strong> pe WiFi public (aeroport, cafenea, hotel) foloseste NUMAI site-uri cu HTTPS sau un VPN care cripteaza tot traficul.</p>
+        </div>
+        <div class="concept-def">
+            <strong>Certificatul digital SSL/TLS:</strong>
+            <ul>
+                <li>Emis de o <strong>Autoritate de Certificare (CA)</strong> care verifica identitatea detinatorului domeniului.</li>
+                <li>Contine: numele domeniului, cheia publica a serverului, perioada de valabilitate, semnatura digitala a CA.</li>
+                <li>Browser-ul verifica automat validitatea. Daca certificatul este expirat sau invalid, afiseaza un avertisment rosu.</li>
+                <li>Certificatele <strong>gratuite Let&#39;s Encrypt</strong> au democratizat HTTPS: orice site poate fi securizat fara costuri.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+</main>
+<section class="practice-section" id="practice">
+    <h2>Exercitii practice</h2>
+    <div class="practice-exercise" data-level="minim">
+        <h3>Exercitiul 1 (Nivel minim) &mdash; Identifica protocolul</h3>
+        <p>Asociaza fiecare situatie cu protocolul potrivit din lista: <em>HTTP, HTTPS, DNS, FTP, SMTP, SSH</em>.</p>
+        <ol>
+            <li>Trimiti un email de la contul tau Gmail catre un prieten.</li>
+            <li>Accesezi pagina web a bancii tale pentru o plata online.</li>
+            <li>Browser-ul translateaza "www.youtube.com" in adresa IP pentru a se conecta.</li>
+            <li>Un administrator se conecteaza de la distanta la un server Linux pentru a configura servicii.</li>
+            <li>Un web-designer incarca fisierele site-ului pe serverul de gazduire.</li>
+        </ol>
+    </div>
+    <div class="practice-exercise" data-level="standard">
+        <h3>Exercitiul 2 (Nivel standard) &mdash; Ordinea operatiilor</h3>
+        <p>Numeroteaza pasii in ordinea corecta pentru scenariul urmator:</p>
+        <p><em>Scenariu:</em> Accesezi <code>https://www.liceu-info.ro/admitere.html</code> de pe telefonul conectat la WiFi.</p>
+        <ul>
+            <li>[ ] Serverul trimite codul HTML al paginii (200 OK)</li>
+            <li>[ ] Browser-ul intreaba serverul DNS: Care e IP-ul www.liceu-info.ro?</li>
+            <li>[ ] Browser-ul reasambleaza pachetele TCP si afiseaza pagina</li>
+            <li>[ ] Browser-ul si serverul negociaza criptarea TLS</li>
+            <li>[ ] Browser-ul trimite cererea GET /admitere.html prin tunelul HTTPS</li>
+            <li>[ ] Browser-ul stabileste conexiunea TCP cu serverul (three-way handshake)</li>
+        </ul>
+    </div>
+    <div class="practice-exercise" data-level="performanta">
+        <h3>Exercitiul 3 (Nivel performanta) &mdash; Analiza de securitate</h3>
+        <p>Esti la o cafenea si vrei sa verifici contul bancar de pe laptop. Identifica si explica:</p>
+        <ol>
+            <li>Ce protocol trebuie sa folosesti si cum verifici ca il folosesti inainte de a introduce parola.</li>
+            <li>Ce informatii contine certificatul digital al site-ului bancii (cel putin 3 elemente).</li>
+            <li>Ce se intampla daca un atacator intercepteaza pachetele tale pe WiFi, dar conexiunea este HTTPS? Poate el citi parola?</li>
+            <li>Propune doua masuri suplimentare de securitate (in afara de HTTPS) pentru a-ti proteja sesiunea bancara.</li>
+        </ol>
+    </div>
+</section>
+<section class="review-section">
+    <div class="summary-box">
+        <h2>Ce ai invatat astazi</h2>
+        <ul>
+            <li><strong>Protocol de retea</strong> = set de reguli standard pentru comunicarea intre dispozitive; necesar pentru interoperabilitate si standardizare globala</li>
+            <li><strong>Modelul TCP/IP</strong>: 4 straturi (Aplicatie, Transport, Internet, Acces retea), fiecare cu rol distinct</li>
+            <li><strong>TCP</strong>: transport fiabil cu confirmare si retrimitere; <strong>UDP</strong>: transport rapid fara garantie de livrare</li>
+            <li><strong>DNS</strong>: traduce numele de domeniu in adresa IP; functioneaza ierarhic (Resolver, Root Server, TLD, Autoritar)</li>
+            <li><strong>HTTP</strong>: protocol cerere-raspuns; coduri de stare (200, 404, 500); date in text clar</li>
+            <li><strong>HTTPS</strong> = HTTP + TLS; garanteaza confidentialitate, integritate si autentificare prin certificat digital</li>
+            <li>Drumul unui pachet: DNS rezolutie, TCP handshake, TLS handshake, HTTP GET, raspuns IP, reasamblare TCP, afisare</li>
+            <li>Protocoale sigure: HTTPS, SFTP, SSH, IMAPS, POP3S. De evitat: HTTP, FTP, Telnet (text clar)</li>
+        </ul>
+    </div>
+    <div id="lesson-summary" style="display: none;"></div>
+    <div class="next-lesson">
+        <h3>Urmatoarea lectie</h3>
+        <p>Lectia 3 &mdash; Backup si stocare sigura: strategii de backup, regula 3-2-1 si criptarea datelor.</p>
+        <a href="lectia3-backup-stocare.html" class="btn-next">Continua &#8594;</a>
+    </div>
+</section>
+
+</div>
+
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        AtomicLearning.init("cls10-m3-retele-securitate-lectia2-protocoale");
+        PracticeSimple.init("cls10-m3-retele-securitate-lectia2-protocoale");
+        LessonSummary.init("cls10-m3-retele-securitate-lectia2-protocoale");
+        Breadcrumb.init({
+            grade: "cls10",
+            gradeName: "Clasa a X-a",
+            module: "m3-retele-securitate",
+            moduleName: "M3 Retele si Securitate",
+            lesson: "Protocoale de retea"
+        });
+        LearningProgress.init("cls10", "m3-retele-securitate", "lectia2-protocoale.html");
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>
