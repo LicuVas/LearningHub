@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 4: Recursivitate - Master | Clasa a XII-a BAC Prep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia3-vectori-matrice.html" class="nav-btn" title="Lectia anterioara">&#8592; Vectori si Matrice</a>
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8962; Modul</a>
+        <a href="lectia5-backtracking-complet.html" class="nav-btn" title="Lectia urmatoare">Backtracking &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Recursivitate &mdash; Toate tipurile</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei stapani recursivitatea in toate formele cerute la BAC: directa, indirecta, cu stiva de apeluri, probleme clasice (factorial, Fibonacci, CMMDC, Hanoi, putere rapida) si analiza complexitatii.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti recursivitatea si sa identifici cazul de baza si cazul recursiv in orice functie</li>
+                <li>Sa trasezi manual stiva de apeluri pentru o functie recursiva cu cel mult 5 niveluri</li>
+                <li>Sa scrii in C++ functii recursive pentru factorial, CMMDC, Fibonacci si suma cifrelor</li>
+                <li>Sa rezolvi problema Turnurilor Hanoi si sa explici de ce necesita 2<sup>n</sup>&minus;1 mutari</li>
+                <li>Sa implementezi puterea rapida recursiva cu complexitate O(log n)</li>
+                <li>Sa distingi recursivitatea directa de cea indirecta si sa identifici riscul de stack overflow</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare de incalzire:</div>
+                <p>Calculeaza manual: care este valoarea returnata de apelul <code>f(4)</code> daca functia <code>f</code> este definita astfel?</p>
+                <pre><span class="code-keyword">int</span> <span class="code-function">f</span>(<span class="code-keyword">int</span> n) {
+    <span class="code-keyword">if</span> (n == <span class="code-number">0</span>) <span class="code-keyword">return</span> <span class="code-number">0</span>;
+    <span class="code-keyword">return</span> n + <span class="code-function">f</span>(n - <span class="code-number">1</span>);
+}</pre>
+                <textarea id="tryAnswer" placeholder="f(4) = 4 + f(3) = 4 + 3 + f(2) = ..." rows="5"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Urmareste lantul de apeluri: f(4) = 4 + f(3) = 4 + 3 + f(2) = 4 + 3 + 2 + f(1) = 4 + 3 + 2 + 1 + f(0).</p>
+                    <p>f(0) returneaza 0 (cazul de baza). Rezultatul este suma 4+3+2+1+0 = <strong>10</strong>. Aceasta functie calculeaza suma 1+2+...+n.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Ce este recursivitatea -->
+        <div class="atom" id="atom-1" data-quiz='[{"question":"Care este OBLIGATORIU intr-o functie recursiva corecta?","options":["Un ciclu while in interior","Un caz de baza care opreste recursivitatea","Doua apeluri recursive la fiecare pas","Un parametru de tip string"],"correct":"b","hint":"Fara caz de baza, recursivitatea nu se opreste niciodata => stack overflow. Cazul de baza este conditia care returneaza direct, fara a mai apela functia."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Ce este recursivitatea?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O functie este <strong>recursiva</strong> daca se apeleaza pe sine insasi (direct sau indirect) pentru a rezolva o versiune mai mica a aceleiasi probleme. Orice functie recursiva corecta contine doua parti obligatorii:
+                    <ul>
+                        <li><strong>Cazul de baza</strong> &mdash; conditia care opreste recursivitatea (returneaza direct, fara apel recursiv)</li>
+                        <li><strong>Cazul recursiv</strong> &mdash; reduce problema la o versiune mai simpla si se apeleaza pe sine</li>
+                    </ul>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Analogie sigura: cutia in cutie</div>
+                    <p>Imagine ca ai o cutie care contine fie o alta cutie (mai mica), fie un bilet cu raspunsul. Cauti raspunsul deschizand cutii pana gasesti biletul. Biletul = cazul de baza. Cutia din cutie = cazul recursiv.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Structura universala in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></div>
+                    <pre><span class="code-keyword">tip_returnat</span> <span class="code-function">functie</span>(<span class="code-keyword">parametri</span>) {
+    <span class="code-comment">// CAZUL DE BAZA - opreste recursivitatea</span>
+    <span class="code-keyword">if</span> (conditie_simpla) {
+        <span class="code-keyword">return</span> valoare_directa;
+    }
+    <span class="code-comment">// CAZUL RECURSIV - reduce la subproblema mai mica</span>
+    <span class="code-keyword">return</span> ... + <span class="code-function">functie</span>(parametri_redusi);
+}</pre>
+                </div>
+                <p><strong>Atentie BAC:</strong> Daca lipseste cazul de baza sau parametrii nu se reduc spre el, functia ruleaza la infinit si programul se opreste cu eroare de <em>stack overflow</em> (stiva plina).</p>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Factorial si stiva de apeluri -->
+        <div class="atom" id="atom-2" data-quiz='[{"question":"Ce valoare returneaza factorial(3)?","options":["3","5","6","9"],"correct":"c","hint":"factorial(3) = 3 * factorial(2) = 3 * 2 * factorial(1) = 3 * 2 * 1 * factorial(0) = 3 * 2 * 1 * 1 = 6."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Factorial si stiva de apeluri <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Factorial</strong>: n! = n &times; (n&minus;1) &times; ... &times; 1, cu 0! = 1.<br>
+                    Definitia recursiva: factorial(n) = n &times; factorial(n&minus;1), caz de baza: factorial(0) = 1.<br>
+                    <strong>Complexitate timp:</strong> O(n) &mdash; n apeluri recursive.<br>
+                    <strong>Complexitate spatiu:</strong> O(n) &mdash; stiva de apeluri creste cu n cadre.
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">factorial</span>(<span class="code-keyword">int</span> n) {
+    <span class="code-keyword">if</span> (n == <span class="code-number">0</span>) <span class="code-keyword">return</span> <span class="code-number">1</span>; <span class="code-comment">// caz de baza</span>
+    <span class="code-keyword">return</span> n * <span class="code-function">factorial</span>(n - <span class="code-number">1</span>); <span class="code-comment">// caz recursiv</span>
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"factorial(0) = "</span> &lt;&lt; <span class="code-function">factorial</span>(<span class="code-number">0</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"factorial(1) = "</span> &lt;&lt; <span class="code-function">factorial</span>(<span class="code-number">1</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"factorial(5) = "</span> &lt;&lt; <span class="code-function">factorial</span>(<span class="code-number">5</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"factorial(10) = "</span> &lt;&lt; <span class="code-function">factorial</span>(<span class="code-number">10</span>) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (g++ -std=c++17, rulat):</div>
+                    <pre>factorial(0) = 1
+factorial(1) = 1
+factorial(5) = 120
+factorial(10) = 3628800</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Trasarea stivei de apeluri pentru factorial(4):</div>
+                    <pre>=== Trasarea stivei pentru factorial(4) ===
+factorial(4) apelat
+  factorial(3) apelat
+    factorial(2) apelat
+      factorial(1) apelat
+        factorial(0) apelat
+        factorial(0) returneaza 1
+      factorial(1) returneaza 1
+    factorial(2) returneaza 2
+  factorial(3) returneaza 6
+factorial(4) returneaza 24
+Rezultat final: 24</pre>
+                </div>
+                <p><strong>Citire trasare (tip BAC):</strong> La fiecare apel se <em>suspenda</em> executia functiei curente si se trece la cea nou apelata. Rezultatele se calculeaza la intoarcerea din recursie (de jos in sus). Apelul factorial(0) intoarce 1, care permite factorial(1)=1*1=1, factorial(2)=2*1=2, factorial(3)=3*2=6, factorial(4)=4*6=24.</p>
+            </div>
+        </div>
+
+        <!-- ATOM 3: CMMDC recursiv si Fibonacci -->
+        <div class="atom" id="atom-3" data-quiz='[{"question":"CMMDC(12, 8) calculat recursiv cu algoritmul lui Euclid &mdash; care este secventa de apeluri?","options":["cmmdc(12,8) -> cmmdc(8,4) -> cmmdc(4,0) = 4","cmmdc(12,8) -> cmmdc(12,4) -> cmmdc(4,0) = 4","cmmdc(12,8) -> cmmdc(4,8) -> cmmdc(0,4) = 4","cmmdc(12,8) -> cmmdc(8,12) -> cmmdc(12,8) = infinit"],"correct":"a","hint":"Euclid: cmmdc(a,b) = cmmdc(b, a%b). Deci cmmdc(12,8)=cmmdc(8,12%8)=cmmdc(8,4)=cmmdc(4,8%4)=cmmdc(4,0)=4."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. CMMDC recursiv si Fibonacci <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Algoritmul lui Euclid (recursiv):</strong> cmmdc(a, b) = cmmdc(b, a % b), caz de baza: cmmdc(a, 0) = a.<br>
+                    <strong>Complexitate timp:</strong> O(log min(a,b)) &mdash; mult mai eficient decat scaderile repetate O(max/min).<br><br>
+                    <strong>Fibonacci recursiv:</strong> fib(n) = fib(n-1) + fib(n-2), cazuri de baza: fib(0)=0, fib(1)=1.<br>
+                    <strong>Atentie:</strong> Fibonacci recursiv naiv are complexitate O(2<sup>n</sup>) &mdash; extrem de ineficient pentru n mare.
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-comment">// CMMDC recursiv - O(log min(a,b))</span>
+<span class="code-keyword">int</span> <span class="code-function">cmmdc</span>(<span class="code-keyword">int</span> a, <span class="code-keyword">int</span> b) {
+    <span class="code-keyword">if</span> (b == <span class="code-number">0</span>) <span class="code-keyword">return</span> a; <span class="code-comment">// caz de baza</span>
+    <span class="code-keyword">return</span> <span class="code-function">cmmdc</span>(b, a % b); <span class="code-comment">// caz recursiv</span>
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"cmmdc(12, 8) = "</span> &lt;&lt; <span class="code-function">cmmdc</span>(<span class="code-number">12</span>, <span class="code-number">8</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"cmmdc(100, 75) = "</span> &lt;&lt; <span class="code-function">cmmdc</span>(<span class="code-number">100</span>, <span class="code-number">75</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"cmmdc(17, 13) = "</span> &lt;&lt; <span class="code-function">cmmdc</span>(<span class="code-number">17</span>, <span class="code-number">13</span>) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (g++ -std=c++17, rulat):</div>
+                    <pre>cmmdc(12, 8) = 4
+cmmdc(100, 75) = 25
+cmmdc(17, 13) = 1</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Fibonacci recursiv (Python) &mdash; output real (python):</div>
+                    <pre>fib(0) = 0
+fib(1) = 1
+fib(2) = 1
+fib(3) = 2
+fib(4) = 3
+fib(5) = 5
+fib(6) = 8
+fib(7) = 13</pre>
+                </div>
+                <p><strong>Capcana BAC &mdash; Fibonacci ineficient:</strong> fib(5) calculeaza fib(3) de doua ori, fib(2) de trei ori etc. Pentru n=43 se fac peste un miliard de apeluri (~1,40 mld); pentru n=40 se fac peste 300 de milioane de apeluri. Solutia corecta la concurs: iterativ sau memoizare.</p>
+                <div class="example-box">
+                    <div class="example-title">Arbore de apeluri pentru fib(4):</div>
+                    <pre>               fib(4)
+             /        \
+         fib(3)       fib(2)
+        /     \       /    \
+    fib(2)  fib(1) fib(1) fib(0)
+    /    \
+fib(1) fib(0)</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Recursivitate indirecta si probleme cu cifre -->
+        <div class="atom" id="atom-4" data-quiz='[{"question":"Functia sumaCifre(1234) returneaza:","options":["1234","10","24","4"],"correct":"b","hint":"sumaCifre(1234) = 4 + sumaCifre(123) = 4+3+sumaCifre(12) = 4+3+2+sumaCifre(1) = 4+3+2+1 = 10 (caz de baza: n<10 returneaza n)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Probleme cu cifre si recursivitate indirecta <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Recursivitate directa:</strong> functia se apeleaza pe sine (f apeleaza f).<br>
+                    <strong>Recursivitate indirecta:</strong> f apeleaza g, iar g apeleaza f (ciclul poate fi mai lung).<br>
+                    Ambele tipuri necesita cazuri de baza in fiecare functie implicata.
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-comment">// Suma cifrelor unui numar - recursiv direct</span>
+<span class="code-keyword">int</span> <span class="code-function">sumaCifre</span>(<span class="code-keyword">int</span> n) {
+    <span class="code-keyword">if</span> (n &lt; <span class="code-number">10</span>) <span class="code-keyword">return</span> n; <span class="code-comment">// caz de baza: o singura cifra</span>
+    <span class="code-keyword">return</span> n % <span class="code-number">10</span> + <span class="code-function">sumaCifre</span>(n / <span class="code-number">10</span>); <span class="code-comment">// ultima cifra + rest</span>
+}
+
+<span class="code-comment">// Inversul unui numar - recursiv, afisare directa</span>
+<span class="code-keyword">void</span> <span class="code-function">inversNumar</span>(<span class="code-keyword">int</span> n) {
+    <span class="code-keyword">if</span> (n == <span class="code-number">0</span>) <span class="code-keyword">return</span>; <span class="code-comment">// caz de baza</span>
+    cout &lt;&lt; n % <span class="code-number">10</span>;           <span class="code-comment">// afiseaza ultima cifra</span>
+    <span class="code-function">inversNumar</span>(n / <span class="code-number">10</span>);       <span class="code-comment">// continua cu restul</span>
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"sumaCifre(1234) = "</span> &lt;&lt; <span class="code-function">sumaCifre</span>(<span class="code-number">1234</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"sumaCifre(9999) = "</span> &lt;&lt; <span class="code-function">sumaCifre</span>(<span class="code-number">9999</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"invers(1234) = "</span>;
+    <span class="code-function">inversNumar</span>(<span class="code-number">1234</span>);
+    cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (g++ -std=c++17, rulat):</div>
+                    <pre>sumaCifre(1234) = 10
+sumaCifre(9999) = 36
+invers(1234) = 4321</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Recursivitate indirecta: par/impar <span class="bonus-badge">EXCLUSIV INTENSIV</span></div>
+                    <pre><span class="code-keyword">bool</span> <span class="code-function">este_par</span>(<span class="code-keyword">int</span> n);
+<span class="code-keyword">bool</span> <span class="code-function">este_impar</span>(<span class="code-keyword">int</span> n);
+
+<span class="code-keyword">bool</span> <span class="code-function">este_par</span>(<span class="code-keyword">int</span> n) {
+    <span class="code-keyword">if</span> (n == <span class="code-number">0</span>) <span class="code-keyword">return</span> <span class="code-keyword">true</span>;
+    <span class="code-keyword">return</span> <span class="code-function">este_impar</span>(n - <span class="code-number">1</span>);
+}
+<span class="code-keyword">bool</span> <span class="code-function">este_impar</span>(<span class="code-keyword">int</span> n) {
+    <span class="code-keyword">if</span> (n == <span class="code-number">0</span>) <span class="code-keyword">return</span> <span class="code-keyword">false</span>;
+    <span class="code-keyword">return</span> <span class="code-function">este_par</span>(n - <span class="code-number">1</span>);
+}</pre>
+                    <p>Output real: este_par(4) = true | este_par(7) = false | este_impar(3) = true</p>
+                </div>
+                <p><strong>Observatie importanta:</strong> La recursivitatea indirecta, declaratiile (prototipurile) functiilor trebuie sa apara inainte de definitii (altfel compilatorul nu stie ca <code>este_impar</code> exista cand compileaza <code>este_par</code>).</p>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Turnurile Hanoi -->
+        <div class="atom" id="atom-5" data-quiz='[{"question":"Cate mutari sunt necesare pentru a rezolva Hanoi cu n=4 discuri?","options":["8","15","16","12"],"correct":"b","hint":"Formula este 2^n - 1. Pentru n=4: 2^4 - 1 = 16 - 1 = 15 mutari."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Turnurile Hanoi &mdash; problema clasica BAC <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Problema:</strong> Muta n discuri de pe tija A pe tija C, folosind tija B ca auxiliar, fara a pune un disc mai mare peste unul mai mic.<br>
+                    <strong>Solutia recursiva:</strong>
+                    <ul>
+                        <li>Muta n&minus;1 discuri de pe A pe B (folosind C)</li>
+                        <li>Muta discul n (cel mai mare) de pe A pe C</li>
+                        <li>Muta n&minus;1 discuri de pe B pe C (folosind A)</li>
+                    </ul>
+                    <strong>Complexitate:</strong> O(2<sup>n</sup>) &mdash; numarul exact de mutari este 2<sup>n</sup>&minus;1.
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">void</span> <span class="code-function">hanoi</span>(<span class="code-keyword">int</span> n, <span class="code-keyword">char</span> sursa, <span class="code-keyword">char</span> destinatie, <span class="code-keyword">char</span> auxiliar) {
+    <span class="code-keyword">if</span> (n == <span class="code-number">1</span>) {
+        cout &lt;&lt; <span class="code-string">"Muta discul 1 din "</span> &lt;&lt; sursa &lt;&lt; <span class="code-string">" in "</span> &lt;&lt; destinatie &lt;&lt; endl;
+        <span class="code-keyword">return</span>; <span class="code-comment">// caz de baza: un singur disc</span>
+    }
+    <span class="code-function">hanoi</span>(n - <span class="code-number">1</span>, sursa, auxiliar, destinatie); <span class="code-comment">// muta n-1 pe auxiliar</span>
+    cout &lt;&lt; <span class="code-string">"Muta discul "</span> &lt;&lt; n &lt;&lt; <span class="code-string">" din "</span> &lt;&lt; sursa &lt;&lt; <span class="code-string">" in "</span> &lt;&lt; destinatie &lt;&lt; endl;
+    <span class="code-function">hanoi</span>(n - <span class="code-number">1</span>, auxiliar, destinatie, sursa); <span class="code-comment">// muta n-1 de pe auxiliar</span>
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"=== Hanoi cu 3 discuri ==="</span> &lt;&lt; endl;
+    <span class="code-function">hanoi</span>(<span class="code-number">3</span>, <span class="code-string">'A'</span>, <span class="code-string">'C'</span>, <span class="code-string">'B'</span>);
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (g++ -std=c++17, rulat) &mdash; 7 mutari = 2<sup>3</sup>&minus;1:</div>
+                    <pre>=== Hanoi cu 3 discuri ===
+Muta discul 1 din A in C
+Muta discul 2 din A in B
+Muta discul 1 din C in B
+Muta discul 3 din A in C
+Muta discul 1 din B in A
+Muta discul 2 din B in C
+Muta discul 1 din A in C</pre>
+                </div>
+                <p><strong>De memorat la BAC:</strong> Hanoi cu n discuri = 2<sup>n</sup>&minus;1 mutari. Complexitate exponentiala: pentru n=64 (legenda templului) = 1.8 &times; 10<sup>19</sup> mutari &mdash; imposibil in viata umana.</p>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Putere rapida si analiza complexitatii -->
+        <div class="atom" id="atom-6" data-quiz='[{"question":"Puterea rapida recursiva putere(2, 10) se calculeaza in cate apeluri recursive (aproximativ)?","options":["10 apeluri","5 apeluri","log2(10) ≈ 3-4 apeluri","2 apeluri"],"correct":"c","hint":"Puterea rapida injumatateste exponentul la fiecare pas cand e par: 10->5->4->2->1->0. Aproximativ log2(10) ≈ 4 pasi. Complexitate O(log n)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Puterea rapida recursiva &mdash; O(log n) <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Idee:</strong> In loc de n inmultiri (lent, O(n)), exploateaza faptul ca baza<sup>2k</sup> = (baza<sup>k</sup>)<sup>2</sup>.<br>
+                    Se calculeaza jumatatea o singura data si se inmulteste cu ea insasi &mdash; reducere la O(log n).<br>
+                    <strong>Cazuri:</strong>
+                    <ul>
+                        <li>putere(b, 0) = 1 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(caz de baza)</li>
+                        <li>putere(b, 2k) = putere(b, k) &times; putere(b, k) &nbsp;(exp par &mdash; injumatatire)</li>
+                        <li>putere(b, 2k+1) = b &times; putere(b, 2k) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(exp impar)</li>
+                    </ul>
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-comment">// Putere rapida - O(log n)</span>
+<span class="code-keyword">long long</span> <span class="code-function">putere</span>(<span class="code-keyword">long long</span> baza, <span class="code-keyword">int</span> exp) {
+    <span class="code-keyword">if</span> (exp == <span class="code-number">0</span>) <span class="code-keyword">return</span> <span class="code-number">1</span>; <span class="code-comment">// caz de baza</span>
+    <span class="code-keyword">if</span> (exp % <span class="code-number">2</span> == <span class="code-number">0</span>) {
+        <span class="code-keyword">long long</span> jum = <span class="code-function">putere</span>(baza, exp / <span class="code-number">2</span>); <span class="code-comment">// calculeaza ODATA</span>
+        <span class="code-keyword">return</span> jum * jum; <span class="code-comment">// inmulteste cu sine, nu apela de doua ori!</span>
+    }
+    <span class="code-keyword">return</span> baza * <span class="code-function">putere</span>(baza, exp - <span class="code-number">1</span>); <span class="code-comment">// exp impar</span>
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"putere(2, 10) = "</span> &lt;&lt; <span class="code-function">putere</span>(<span class="code-number">2</span>, <span class="code-number">10</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"putere(3, 5) = "</span> &lt;&lt; <span class="code-function">putere</span>(<span class="code-number">3</span>, <span class="code-number">5</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"putere(2, 0) = "</span> &lt;&lt; <span class="code-function">putere</span>(<span class="code-number">2</span>, <span class="code-number">0</span>) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (g++ -std=c++17, rulat):</div>
+                    <pre>putere(2, 10) = 1024
+putere(3, 5) = 243
+putere(2, 0) = 1</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Capcana frecventa &mdash; NU scrie asa (apel dublu = O(n) nu O(log n)):</div>
+                    <pre><span class="code-comment">// GRESIT: se fac doua apeluri recursive => complexitate O(n) nu O(log n)!</span>
+<span class="code-keyword">if</span> (exp % <span class="code-number">2</span> == <span class="code-number">0</span>)
+    <span class="code-keyword">return</span> <span class="code-function">putere</span>(baza, exp/<span class="code-number">2</span>) * <span class="code-function">putere</span>(baza, exp/<span class="code-number">2</span>); <span class="code-comment">// GRESIT!</span></pre>
+                </div>
+                <p><strong>Comparatie complexitati:</strong></p>
+                <div class="trace-table-wrapper">
+                    <table class="trace-table">
+                        <thead><tr><th>Algoritm</th><th>Timp</th><th>Spatiu (stiva)</th><th>n=30</th></tr></thead>
+                        <tbody>
+                            <tr><td>putere lenta (iterativ)</td><td>O(n)</td><td>O(1)</td><td>30 pasi</td></tr>
+                            <tr><td>putere rapida (recursiv)</td><td>O(log n)</td><td>O(log n)</td><td>5 pasi</td></tr>
+                            <tr><td>Fibonacci naiv</td><td>O(2<sup>n</sup>)</td><td>O(n)</td><td>~10<sup>9</sup> pasi</td></tr>
+                            <tr><td>Fibonacci iterativ</td><td>O(n)</td><td>O(1)</td><td>30 pasi</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Urmarire manuala</h3>
+            <p>Traseaza manual apelurile pentru <code>cmmdc(18, 12)</code> si gaseste rezultatul fara calculator. Scrie fiecare apel pe un rand: cmmdc(18,12) &rarr; cmmdc(?,?) &rarr; ... pana la caz de baza.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Functie recursiva noua</h3>
+            <p>Scrie in C++ o functie recursiva <code>putere_cifre(n)</code> care calculeaza produsul cifrelor unui numar natural n (ex: putere_cifre(234) = 2*3*4 = 24). Caz de baza: n &lt; 10 returneaza n. Testeaza cu 234, 100, 7.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; BAC 2023 tip Subiectul II</h3>
+            <p>Analizeaza functia de mai jos si raspunde: (a) ce valoare afiseaza apelul <code>f(5, 0)</code>? (b) Care este relatia de recurenta? (c) Rescrie iterativ.<br>
+            <code>void f(int n, int s) { if(n==0){ cout&lt;&lt;s; return; } f(n/10, s + n%10); }</code></p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Structura oricarei functii recursive: caz de baza + caz recursiv</li>
+                <li>Trasarea stivei de apeluri (citit de jos in sus la intoarcere)</li>
+                <li>Factorial O(n), CMMDC Euclid O(log n), Fibonacci naiv O(2<sup>n</sup>)</li>
+                <li>Suma cifrelor si inversul unui numar &mdash; recursivitate directa</li>
+                <li>Recursivitate indirecta si necesitatea prototipurilor in C++</li>
+                <li>Turnurile Hanoi: formula 2<sup>n</sup>&minus;1 mutari, complexitate exponentiala</li>
+                <li>Puterea rapida: O(log n) prin injumatatirea exponentului (un singur apel, nu doua!)</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu Backtracking &mdash; generare sistematica de solutii, permutari, combinari si probleme clasice BAC.</p>
+            <a href="lectia5-backtracking-complet.html" class="btn-next">Backtracking &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m-bac-prep-lectia4-recursivitate-master');
+        PracticeSimple.init('cls12-m-bac-prep-lectia4-recursivitate-master');
+        LessonSummary.init('cls12-m-bac-prep-lectia4-recursivitate-master');
+        Breadcrumb.init({
+            grade: 'cls12',
+            gradeName: 'Clasa a XII-a',
+            module: 'm-bac-prep',
+            moduleName: 'BAC Prep',
+            lesson: 'Recursivitate - Master'
+        });
+        LearningProgress.init('cls12', 'm-bac-prep', 'lectia4-recursivitate-master.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

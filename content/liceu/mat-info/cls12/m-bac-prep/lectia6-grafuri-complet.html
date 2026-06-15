@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 6: Grafuri Complet (DFS/BFS) | Clasa a XII-a BAC Prep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+</head>
+<body>
+<div class="container">
+    <nav class="nav-bar">
+        <a href="lectia5-backtracking-complet.html" class="nav-btn">&#8592; Backtracking</a>
+        <a href="index.html" class="nav-btn">Modulul</a>
+        <a href="lectia7-strategii-examen.html" class="nav-btn">Strategii Examen &#8594;</a>
+    </nav>
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Grafuri &mdash; Complet (DFS / BFS)</h1>
+    </header>
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei stapani grafurile de la reprezentare pana la parcurgeri DFS si BFS, cu aplicatii directe la problemele tip BAC: componente conexe, distante minime, detectie cicluri &mdash; toate implementate si verificate in C++.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa reprezentati un graf prin lista de adiacenta in C++ cu vector&lt;vector&lt;int&gt;&gt;</li>
+                <li>Sa implementati DFS recursiv si sa-l aplicati pentru componente conexe si detectie cicluri</li>
+                <li>Sa implementati BFS cu coada si sa calculati distante minime intr-un graf neponderat</li>
+                <li>Sa identificati tipul problemei de graf dintr-un subiect BAC si sa alegeti algoritmul corect</li>
+                <li>Sa scrieti codul C++ complet in timpul examenului pornind de la schema prezentata</li>
+            </ul>
+        </div>
+    </section>
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare initiala:</div>
+                <p>Ai graful neorientat cu nodurile {1,2,3,4,5,6} si muchiile: 1-2, 1-3, 2-4, 3-4, 4-5, 5-6. Scrie ordinea in care DFS (pornind din nodul 1, vecini crescator) viziteaza nodurile.</p>
+                <textarea id="tryAnswer" placeholder="DFS viziteaza: 1, ..." rows="4"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Indiciu</div>
+                <div class="hint-content">
+                    <p>DFS merge cat mai adanc pe primul vecin nevizitat.</p>
+                    <p>Raspuns: <strong>1, 2, 4, 3, 5, 6</strong> (verificat cu g++ -std=c++17).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <main id="atomic-content">
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Care afirmatie despre grafuri neorientate este FALSA?", "options": ["Daca exista muchia (u,v), exista si (v,u)", "Un nod poate avea gradul 0", "Numarul de muchii poate fi mai mare decat n*(n-1)/2", "Intr-un arbore cu n noduri exista exact n-1 muchii"], "correct": "c", "hint": "Numarul MAXIM de muchii intr-un graf simplu neorientat este n*(n-1)/2. Nu poate fi mai mare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Concepte fundamentale de graf</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">Un <strong>graf</strong> G = (V, E) este format din multimea <strong>nodurilor</strong> V si multimea <strong>muchiilor</strong> E. La BAC apar grafuri <strong>neorientate</strong> (fara directie) si <strong>orientate</strong> (arce cu directie).</div>
+                <div class="example-box">
+                    <div class="example-title">Terminologie esentiala BAC:</div>
+                    <ul>
+                        <li><strong>Gradul unui nod</strong> = numarul de muchii incidente</li>
+                        <li><strong>Lant</strong> = secventa u1,u2,...,uk unde fiecare pereche consecutiva e muchie</li>
+                        <li><strong>Ciclu</strong> = lant cu primul si ultimul nod identice, fara repetare intermediara</li>
+                        <li><strong>Graf conex</strong> = exista lant intre oricare doua noduri</li>
+                        <li><strong>Arbore</strong> = graf conex fara cicluri; exact n-1 muchii</li>
+                        <li><strong>Componenta conexa</strong> = submultime maxima de noduri cu lanturi intre ele</li>
+                    </ul>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Graful din lectie vizualizat:</div>
+                    <pre><span class="code-comment">//  1 --- 2   (muchii: 1-2, 1-3, 2-4, 3-4, 4-5, 5-6)</span>
+<span class="code-comment">//  |  X  |   (ciclu existent: 1-2-4-3-1)</span>
+<span class="code-comment">//  3 --- 4</span>
+<span class="code-comment">//        |</span>
+<span class="code-comment">//        5 --- 6</span></pre>
+                </div>
+            </div>
+        </div>
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Care reprezentare e mai eficienta la spatiu pentru un graf RAR?", "options": ["Matricea de adiacenta O(n^2)", "Lista de adiacenta O(n+m)", "Matricea de incidenta O(n*m)", "Ambele sunt echivalente"], "correct": "b", "hint": "Lista de adiacenta ocupa O(n+m). Matricea ocupa O(n^2) indiferent de muchii. Pentru grafuri rare lista e mult mai eficienta."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Reprezentarea grafurilor in C++</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def"><strong>Lista de adiacenta</strong> (recomandata la BAC): <code>vector&lt;vector&lt;int&gt;&gt; adj(n+1)</code> &mdash; spatiu O(n+m). Matricea de adiacenta ocupa O(n&sup2;), ineficienta pentru grafuri rare.</div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n = <span class="code-number">6</span>;
+    vector&lt;vector&lt;<span class="code-keyword">int</span>&gt;&gt; adj(n+<span class="code-number">1</span>);
+    adj[<span class="code-number">1</span>]={<span class="code-number">2</span>,<span class="code-number">3</span>}; adj[<span class="code-number">2</span>]={<span class="code-number">1</span>,<span class="code-number">4</span>}; adj[<span class="code-number">3</span>]={<span class="code-number">1</span>,<span class="code-number">4</span>};
+    adj[<span class="code-number">4</span>]={<span class="code-number">2</span>,<span class="code-number">3</span>,<span class="code-number">5</span>}; adj[<span class="code-number">5</span>]={<span class="code-number">4</span>,<span class="code-number">6</span>}; adj[<span class="code-number">6</span>]={<span class="code-number">5</span>};
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i=<span class="code-number">1</span>; i&lt;=n; i++) {
+        cout &lt;&lt; <span class="code-string">"adj["</span> &lt;&lt; i &lt;&lt; <span class="code-string">"] ="</span>;
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> v:adj[i]) cout &lt;&lt; <span class="code-string">" "</span> &lt;&lt; v;
+        cout &lt;&lt; <span class="code-string">"
+"</span>;
+    }
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (g++ -std=c++17):</div>
+                    <pre>adj[1] = 2 3
+adj[2] = 1 4
+adj[3] = 1 4
+adj[4] = 2 3 5
+adj[5] = 4 6
+adj[6] = 5</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Citire cu cin (varianta examen):</div>
+                    <pre><span class="code-keyword">int</span> n, m; cin &gt;&gt; n &gt;&gt; m;
+vector&lt;vector&lt;<span class="code-keyword">int</span>&gt;&gt; adj(n+<span class="code-number">1</span>);
+<span class="code-keyword">for</span> (<span class="code-keyword">int</span> i=<span class="code-number">0</span>; i&lt;m; i++) {
+    <span class="code-keyword">int</span> u, v; cin &gt;&gt; u &gt;&gt; v;
+    adj[u].push_back(v); adj[v].push_back(u);
+}</pre>
+                </div>
+            </div>
+        </div>
+        <div class="atom" id="atom-3" data-quiz='[{"question": "DFS pe graful 1-2,1-3,2-4,3-4,4-5,5-6 din nodul 1 (vecini crescator) viziteaza:", "options": ["1 2 3 4 5 6", "1 2 4 3 5 6", "1 3 4 2 5 6", "1 2 4 5 6 3"], "correct": "b", "hint": "1->2->4->3(nevizitat al lui 4)->back->5->6. Ordinea: 1 2 4 3 5 6."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. DFS &mdash; Depth First Search</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">DFS exploreaza cat mai adanc inainte de a reveni (backtrack). Implementare prin <strong>recursie</strong>. Complexitate <strong>O(n + m)</strong>.</div>
+                <div class="example-box">
+                    <div class="example-title">Logica DFS in 3 pasi:</div>
+                    <ul>
+                        <li>Marcheaza nodul curent ca vizitat; proceseaza-l</li>
+                        <li>Pentru fiecare vecin nevizitat &rarr; apeleaza recursiv DFS</li>
+                        <li>Toti vecinii vizitati &rarr; return (backtrack automat)</li>
+                    </ul>
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+vector&lt;vector&lt;<span class="code-keyword">int</span>&gt;&gt; adj;
+vector&lt;<span class="code-keyword">bool</span>&gt; visited;
+<span class="code-keyword">void</span> <span class="code-function">dfs</span>(<span class="code-keyword">int</span> u) {
+    visited[u] = <span class="code-keyword">true</span>;
+    cout &lt;&lt; u &lt;&lt; <span class="code-string">" "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> v : adj[u])
+        <span class="code-keyword">if</span> (!visited[v]) <span class="code-function">dfs</span>(v);
+}
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n=<span class="code-number">6</span>;
+    adj.resize(n+<span class="code-number">1</span>); visited.assign(n+<span class="code-number">1</span>,<span class="code-keyword">false</span>);
+    adj[<span class="code-number">1</span>]={<span class="code-number">2</span>,<span class="code-number">3</span>};adj[<span class="code-number">2</span>]={<span class="code-number">1</span>,<span class="code-number">4</span>};adj[<span class="code-number">3</span>]={<span class="code-number">1</span>,<span class="code-number">4</span>};
+    adj[<span class="code-number">4</span>]={<span class="code-number">2</span>,<span class="code-number">3</span>,<span class="code-number">5</span>};adj[<span class="code-number">5</span>]={<span class="code-number">4</span>,<span class="code-number">6</span>};adj[<span class="code-number">6</span>]={<span class="code-number">5</span>};
+    cout &lt;&lt; <span class="code-string">"DFS: "</span>; <span class="code-function">dfs</span>(<span class="code-number">1</span>); cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (g++ -std=c++17):</div>
+                    <pre>DFS: 1 2 4 3 5 6</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Urmarire recursie:</div>
+                    <pre>dfs(1) -&gt; dfs(2) -&gt; dfs(4) -&gt; dfs(3)[return] -&gt; dfs(5) -&gt; dfs(6)[return]
+Ordine vizitare: 1 2 4 3 5 6</pre>
+                </div>
+            </div>
+        </div>
+        <div class="atom" id="atom-4" data-quiz='[{"question": "BFS din nodul 1 pe graful din lectie: distanta minima la nodul 6 este:", "options": ["4", "3", "5", "2"], "correct": "a", "hint": "dist[1]=0,dist[2]=dist[3]=1,dist[4]=2,dist[5]=3,dist[6]=4. Lant minim: 1-2-4-5-6."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. BFS &mdash; Breadth First Search</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">BFS exploreaza nivel cu nivel. Foloseste o <strong>coada</strong> (queue). Garanteaza <strong>distanta minima</strong> in grafuri neponderate. Complexitate <strong>O(n + m)</strong>.</div>
+                <div class="example-box">
+                    <div class="example-title">Logica BFS in 3 pasi:</div>
+                    <ul>
+                        <li>Adauga sursa in coada; dist[sursa] = 0</li>
+                        <li>Cat timp coada nu e goala: extrage u (front + pop)</li>
+                        <li>Pentru vecin v cu dist[v]==-1: dist[v]=dist[u]+1; adauga in coada</li>
+                    </ul>
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;queue&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n=<span class="code-number">6</span>;
+    vector&lt;vector&lt;<span class="code-keyword">int</span>&gt;&gt; adj(n+<span class="code-number">1</span>);
+    adj[<span class="code-number">1</span>]={<span class="code-number">2</span>,<span class="code-number">3</span>};adj[<span class="code-number">2</span>]={<span class="code-number">1</span>,<span class="code-number">4</span>};adj[<span class="code-number">3</span>]={<span class="code-number">1</span>,<span class="code-number">4</span>};
+    adj[<span class="code-number">4</span>]={<span class="code-number">2</span>,<span class="code-number">3</span>,<span class="code-number">5</span>};adj[<span class="code-number">5</span>]={<span class="code-number">4</span>,<span class="code-number">6</span>};adj[<span class="code-number">6</span>]={<span class="code-number">5</span>};
+    vector&lt;<span class="code-keyword">int</span>&gt; dist(n+<span class="code-number">1</span>,-<span class="code-number">1</span>);
+    queue&lt;<span class="code-keyword">int</span>&gt; q;
+    dist[<span class="code-number">1</span>]=<span class="code-number">0</span>; q.push(<span class="code-number">1</span>);
+    <span class="code-keyword">while</span>(!q.empty()) {
+        <span class="code-keyword">int</span> u=q.front(); q.pop();
+        <span class="code-keyword">for</span>(<span class="code-keyword">int</span> v:adj[u])
+            <span class="code-keyword">if</span>(dist[v]==-<span class="code-number">1</span>){dist[v]=dist[u]+<span class="code-number">1</span>;q.push(v);}
+    }
+    <span class="code-keyword">for</span>(<span class="code-keyword">int</span> i=<span class="code-number">1</span>;i&lt;=n;i++)
+        cout&lt;&lt;<span class="code-string">"dist["</span>&lt;&lt;i&lt;&lt;<span class="code-string">"] = "</span>&lt;&lt;dist[i]&lt;&lt;endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (g++ -std=c++17):</div>
+                    <pre>dist[1] = 0
+dist[2] = 1
+dist[3] = 1
+dist[4] = 2
+dist[5] = 3
+dist[6] = 4</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Interpretare: distanta minima de la 1 la 6 = 4. Lant: 1-2-4-5-6 (sau 1-3-4-5-6).</div>
+                </div>
+            </div>
+        </div>
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Cum numaram componentele conexe cu DFS?", "options": ["Numaram nodurile cu grad 0", "Rulam DFS din fiecare nod nevizitat si incrementam un contor la fiecare pornire", "Numaram muchiile si impartim la 2", "Rulam BFS o singura data din nodul 1"], "correct": "b", "hint": "Fiecare pornire DFS din un nod nevizitat acopera exact o componenta. Numarul de porniri = numarul de componente."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Componente conexe si detectia ciclurilor</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def"><strong>Componente conexe</strong>: rulam DFS din fiecare nod nevizitat; fiecare pornire noua = o componenta. <strong>Detectie ciclu</strong>: vecin vizitat diferit de parinte implica ciclu.</div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+vector&lt;vector&lt;<span class="code-keyword">int</span>&gt;&gt; adj;
+vector&lt;<span class="code-keyword">bool</span>&gt; viz;
+<span class="code-keyword">bool</span> hasCycle;
+<span class="code-keyword">void</span> <span class="code-function">dfs</span>(<span class="code-keyword">int</span> u, <span class="code-keyword">int</span> par) {
+    viz[u]=<span class="code-keyword">true</span>;
+    <span class="code-keyword">for</span>(<span class="code-keyword">int</span> v:adj[u]) {
+        <span class="code-keyword">if</span>(!viz[v]) <span class="code-function">dfs</span>(v,u);
+        <span class="code-keyword">else if</span>(v!=par) hasCycle=<span class="code-keyword">true</span>;
+    }
+}
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-comment">// Graf FARA ciclu: 1-2-3-4</span>
+    <span class="code-keyword">int</span> n=<span class="code-number">4</span>; adj.resize(n+<span class="code-number">1</span>); viz.assign(n+<span class="code-number">1</span>,<span class="code-keyword">false</span>);
+    adj[<span class="code-number">1</span>]={<span class="code-number">2</span>};adj[<span class="code-number">2</span>]={<span class="code-number">1</span>,<span class="code-number">3</span>};adj[<span class="code-number">3</span>]={<span class="code-number">2</span>,<span class="code-number">4</span>};adj[<span class="code-number">4</span>]={<span class="code-number">3</span>};
+    hasCycle=<span class="code-keyword">false</span>; <span class="code-function">dfs</span>(<span class="code-number">1</span>,-<span class="code-number">1</span>);
+    cout&lt;&lt;<span class="code-string">"Graf 1-2-3-4 are ciclu: "</span>&lt;&lt;(hasCycle?<span class="code-string">"DA"</span>:<span class="code-string">"NU"</span>)&lt;&lt;endl;
+    <span class="code-comment">// Graf CU ciclu: triunghi 1-2-3-1</span>
+    n=<span class="code-number">3</span>; adj.assign(n+<span class="code-number">1</span>,{}); viz.assign(n+<span class="code-number">1</span>,<span class="code-keyword">false</span>);
+    adj[<span class="code-number">1</span>]={<span class="code-number">2</span>,<span class="code-number">3</span>};adj[<span class="code-number">2</span>]={<span class="code-number">1</span>,<span class="code-number">3</span>};adj[<span class="code-number">3</span>]={<span class="code-number">1</span>,<span class="code-number">2</span>};
+    hasCycle=<span class="code-keyword">false</span>; <span class="code-function">dfs</span>(<span class="code-number">1</span>,-<span class="code-number">1</span>);
+    cout&lt;&lt;<span class="code-string">"Graf 1-2-3-1 are ciclu: "</span>&lt;&lt;(hasCycle?<span class="code-string">"DA"</span>:<span class="code-string">"NU"</span>)&lt;&lt;endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (g++ -std=c++17):</div>
+                    <pre>Graf 1-2-3-4 are ciclu: NU
+Graf 1-2-3-1 are ciclu: DA</pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Numarare componente conexe (output verificat: 3):</div>
+                    <pre><span class="code-keyword">int</span> comp=<span class="code-number">0</span>;
+<span class="code-keyword">for</span>(<span class="code-keyword">int</span> i=<span class="code-number">1</span>;i&lt;=n;i++)
+    <span class="code-keyword">if</span>(!viz[i]){comp++;<span class="code-function">dfs</span>(i,-<span class="code-number">1</span>);}
+cout&lt;&lt;<span class="code-string">"Componente: "</span>&lt;&lt;comp&lt;&lt;endl;
+<span class="code-comment">// Graf cu {1,2,3},{4,5},{6,7} -&gt; Componente: 3</span></pre>
+                </div>
+            </div>
+        </div>
+        <div class="atom" id="atom-6" data-quiz='[{"question": "La BAC: distanta minima intr-un graf neponderat -> ce algoritm?", "options": ["DFS recursiv", "Backtracking", "Greedy general", "BFS cu coada"], "correct": "d", "hint": "BFS garanteaza distanta minima. DFS poate gasi un lant mai lung."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. DFS vs BFS: ghid de decizie BAC</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def"><strong>Distanta minima &rarr; BFS</strong>. <strong>Componente sau cicluri &rarr; DFS</strong>. Alegerea gresita = puncte pierdute.</div>
+                <div class="example-box">
+                    <div class="example-title">Tabel de decizie rapid:</div>
+                    <pre><span class="code-comment">// PROBLEMA                     | ALGORITM</span>
+<span class="code-comment">// -----------------------------|----------</span>
+<span class="code-comment">// Componente conexe            | DFS sau BFS</span>
+<span class="code-comment">// Detectie ciclu               | DFS cu parametru parent</span>
+<span class="code-comment">// Distanta minima neponderat   | BFS</span>
+<span class="code-comment">// Graful este conex?           | DFS; verifica vizitat toate</span>
+<span class="code-comment">// Noduri la distanta k         | BFS; numara dist[i]==k</span></pre>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Complexitati: DFS si BFS O(n+m). La BAC n&le;1000 -> lista adiacenta mereu optima.</div>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Schema C++ completa (copiaza si adapteaza la examen):</div>
+                    <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;queue&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">const int</span> NMAX=<span class="code-number">105</span>;
+vector&lt;<span class="code-keyword">int</span>&gt; adj[NMAX];
+<span class="code-keyword">bool</span> viz[NMAX]; <span class="code-keyword">int</span> dist[NMAX],n,m;
+<span class="code-keyword">void</span> <span class="code-function">dfs</span>(<span class="code-keyword">int</span> u){viz[u]=<span class="code-keyword">true</span>;<span class="code-keyword">for</span>(<span class="code-keyword">int</span> v:adj[u])<span class="code-keyword">if</span>(!viz[v])<span class="code-function">dfs</span>(v);}
+<span class="code-keyword">void</span> <span class="code-function">bfs</span>(<span class="code-keyword">int</span> src){
+    queue&lt;<span class="code-keyword">int</span>&gt; q; dist[src]=<span class="code-number">0</span>; viz[src]=<span class="code-keyword">true</span>; q.push(src);
+    <span class="code-keyword">while</span>(!q.empty()){
+        <span class="code-keyword">int</span> u=q.front();q.pop();
+        <span class="code-keyword">for</span>(<span class="code-keyword">int</span> v:adj[u])
+            <span class="code-keyword">if</span>(!viz[v]){viz[v]=<span class="code-keyword">true</span>;dist[v]=dist[u]+<span class="code-number">1</span>;q.push(v);}
+    }
+}</pre>
+                </div>
+            </div>
+        </div>
+
+    </main>
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Componente conexe</h3>
+            <p>Graf neorientat, n=5, muchii: 1-2, 2-3, 4-5. Scrie pe hartie ordinea DFS si numarul de componente conexe. Implementeaza in C++ si verifica.</p>
+            <div class="example-box">
+                <div class="example-title">Raspuns:</div>
+                <pre>Componente: 2  (componenta 1: {1,2,3}  |  componenta 2: {4,5})</pre>
+            </div>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Distanta minima tip BAC</h3>
+            <p>Graf neorientat, 7 noduri, muchii: 1-2, 1-4, 2-3, 3-5, 4-5, 5-6, 6-7. Determinati distanta minima de la nodul 1 la nodul 7 si un lant de lungime minima. Explicati de ce BFS garanteaza distanta minima (nu DFS).</p>
+            <div class="example-box">
+                <div class="example-title">Analiza BFS:</div>
+                <pre>dist[1]=0, dist[2]=1, dist[4]=1, dist[3]=2, dist[5]=2, dist[6]=3, dist[7]=4
+Distanta minima 1-&gt;7 = 4. Lant: 1-4-5-6-7 sau 1-2-3-5-6-7.</pre>
+            </div>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Problema completa tip Subiect III BAC</h3>
+            <p>Graf neorientat, n&le;100, m muchii. Scrieti program C++ complet: (a) conex sau nu; (b) numar componente conexe; (c) distanta minima de la nodul 1 la fiecare nod.</p>
+            <div class="example-box">
+                <div class="example-title">Solutie completa C++:</div>
+                <pre>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+using namespace std;
+const int NMAX=105;
+vector&lt;int&gt; adj[NMAX];
+bool viz[NMAX]; int d[NMAX],n,m;
+void dfs(int u){viz[u]=true;for(int v:adj[u])if(!viz[v])dfs(v);}
+void bfs(int src){
+    fill(d+1,d+n+1,-1);
+    queue&lt;int&gt; q; d[src]=0; q.push(src);
+    while(!q.empty()){int u=q.front();q.pop();
+        for(int v:adj[u])if(d[v]==-1){d[v]=d[u]+1;q.push(v);}}
+}
+int main(){
+    cin&gt;&gt;n&gt;&gt;m;
+    for(int i=0;i&lt;m;i++){int u,v;cin&gt;&gt;u&gt;&gt;v;adj[u].push_back(v);adj[v].push_back(u);}
+    int comp=0;
+    for(int i=1;i&lt;=n;i++) if(!viz[i]){comp++;dfs(i);}
+    cout&lt;&lt;(comp==1?"CONEX":"NECONEX")&lt;&lt;"
+";
+    cout&lt;&lt;"Componente: "&lt;&lt;comp&lt;&lt;"
+";
+    bfs(1);
+    for(int i=2;i&lt;=n;i++) cout&lt;&lt;"dist[1]["&lt;&lt;i&lt;&lt;"] = "&lt;&lt;d[i]&lt;&lt;"
+";
+    return 0;
+}</pre>
+            </div>
+        </div>
+    </section>
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Terminologia de baza: nod, muchie, grad, lant, ciclu, conexitate, arbore</li>
+                <li>Reprezentarea prin lista de adiacenta cu <code>vector&lt;vector&lt;int&gt;&gt;</code> in C++</li>
+                <li>DFS recursiv O(n+m): componente conexe si detectie cicluri</li>
+                <li>BFS cu coada O(n+m): distanta minima in grafuri neponderate</li>
+                <li>Regula de decizie: distanta minima &rarr; BFS; componente sau cicluri &rarr; DFS</li>
+                <li>Schema C++ completa adaptabila la orice problema BAC cu grafuri</li>
+            </ul>
+        </div>
+        <div id="lesson-summary"></div>
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Strategii pentru Examen</strong> &mdash; time management, ordinea rezolvarii si tehnici de verificare.</p>
+            <a href="lectia7-strategii-examen.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m-bac-prep-lectia6-grafuri-complet');
+        PracticeSimple.init('cls12-m-bac-prep-lectia6-grafuri-complet');
+        LessonSummary.init('cls12-m-bac-prep-lectia6-grafuri-complet');
+        Breadcrumb.init({
+            grade: 'cls12',
+            gradeName: 'Clasa a XII-a',
+            module: 'm-bac-prep',
+            moduleName: 'BAC Prep',
+            lesson: 'Grafuri Complet (DFS/BFS)'
+        });
+        LearningProgress.init('cls12', 'm-bac-prep', 'lectia6-grafuri-complet.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

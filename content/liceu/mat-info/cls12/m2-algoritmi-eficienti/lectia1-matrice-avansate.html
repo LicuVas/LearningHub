@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 1: Algoritmi de clasificare ML (k-NN, Arbore) | Clasa a XII-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+</head>
+<body>
+<div class="container">
+
+    <nav class="nav-bar">
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8592; Modulul</a>
+        <a href="lectia2-factorial-factorizare.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Algoritmi de clasificare in Machine Learning</h1>
+    </header>
+
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header"><span class="goal-icon">&#127919;</span><h2 class="goal-title">Obiectivul lectiei</h2></div>
+            <p class="goal-text">Vei intelege si implementa doi algoritmi fundamentali de clasificare in ML: k-NN si Arborele de decizie &mdash; subiecte din Domeniu 2 al curriculumului cls. XII (algoritmi specializati pentru invatare automata).</p>
+        </div>
+        <div class="learning-outcomes"><h3>Dupa aceasta lectie vei putea:</h3><ul>
+                <li>Sa explici ce este clasificarea in ML si cand se aplica</li>
+                <li>Sa implementezi algoritmul k-NN pas cu pas in Python</li>
+                <li>Sa calculezi distanta euclidiana intre doua puncte</li>
+                <li>Sa intelegi structura unui arbore de decizie si Gini impurity</li>
+                <li>Sa folosesti sklearn pentru k-NN si DecisionTreeClassifier</li>
+                <li>Sa compari k-NN vs Arbore de decizie (avantaje, limite)</li>
+        </ul></div>
+    </section>
+
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare:</div>
+<p>Ai 3 vecini: dist=1.1 (clasa A), dist=1.4 (clasa B), dist=2.1 (clasa B). Cu k=3, ce clasa prezice k-NN?</p>
+<textarea id="tryAnswer" placeholder="Clasa prezisa este ... pentru ca ..." rows="3"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">&#128161; Indiciu</div>
+<div class="hint-content"><p>k-NN voteaza: A=1, B=2 =&gt; Clasa B (vot majoritar).</p></div>
+</div></div>
+    </section>
+
+    <main id="atomic-content">
+
+        <div class="atom" id="atom-1" data-quiz='[{"question":"Ce inseamna clasificare in ML?","options":["Sortarea datelor","Atribuirea unei etichete de clasa unui exemplu nou pe baza datelor de antrenament","Calculul mediei","Stergerea duplicatelor"],"correct":"b","hint":"Clasificarea = predictia clasei unui exemplu nou."}]'>
+            <div class="atom-header"><div class="atom-number">1</div><h3 class="atom-title">1. Ce este clasificarea in Machine Learning?</h3></div>
+            <div class="atom-content">
+                <div class="concept-def"><strong>Clasificarea</strong> este o sarcina de invatare supervizata: avem date cu etichete si vrem sa prezice clasa unui exemplu nou. Exemple: spam/non-spam, bolnav/sanatos.</div>
+                <div class="example-box"><div class="example-title">Concepte cheie:</div>
+<pre>Dataset: [(x1,y1), ..., (xn,yn)]
+  xi = vectorul de trasaturi (features)
+  yi = eticheta de clasa
+
+Model = functie f(xi) -&gt; clasa
+
+Algoritmi cls. XII:
+  - k-NN -- bazat pe distanta euclidiana
+  - Arbore de decizie -- bazat pe reguli if/else</pre></div>
+                <div class="concept-def"><strong>Evaluare:</strong> Acuratetea = predictii corecte / total teste.</div>
+            </div></div>
+
+        <div class="atom" id="atom-2" data-quiz='[{"question":"In k-NN, cum se alege clasa pentru exemplul nou?","options":["Media etichetelor","Clasa majoritara dintre cei mai apropiati k vecini","Clasa cu index cel mai mare","Primul element sortat"],"correct":"b","hint":"k-NN: gaseste k vecini, voteaza clasa majoritara."}]'>
+            <div class="atom-header"><div class="atom-number">2</div><h3 class="atom-title">2. Algoritmul k-NN &mdash; pas cu pas</h3></div>
+            <div class="atom-content">
+                <div class="concept-def"><strong>k-NN:</strong> Pentru exemplul nou q, gaseste cei mai apropiati k vecini si voteaza clasa majoritara.</div>
+                <div class="example-box"><div class="example-title">Pasi algoritmici:</div>
+<pre>1. Calculeaza distanta de la q la fiecare exemplu
+2. Sorteaza dupa distanta (crescator)
+3. Selecteaza primii k vecini
+4. Numara voturile fiecarei clase
+5. Returneaza clasa cu cele mai multe voturi</pre></div>
+                <div class="example-box"><div class="example-title">Distanta euclidiana:</div>
+<pre>dist(p,q) = sqrt((px-qx)^2 + (py-qy)^2)
+Exemplu: p=(1,1), q=(2,3) =&gt; sqrt(1+4) = 2.2361</pre></div>
+                <div class="example-box"><div class="example-title">Implementare Python de la zero:</div>
+<pre>import math
+from collections import Counter
+
+dataset = [(1.0,1.0,"A"),(1.5,2.0,"A"),(3.0,4.0,"B"),
+           (5.0,7.0,"B"),(3.5,5.0,"B"),(4.5,5.0,"B"),(3.5,4.5,"B")]
+query = (2.0, 3.0); k = 3
+
+def euclidean(p1, p2):
+    return math.sqrt((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)
+
+distances = [(euclidean(query,(r[0],r[1])),r[2]) for r in dataset]
+distances.sort(); neighbors = distances[:k]
+votes = Counter(lbl for _,lbl in neighbors)
+print(f"Primii {k} vecini: {neighbors}")
+print(f"Voturi: {dict(votes)}")
+print(f"Clasa prezisa: {votes.most_common(1)[0][0]}")</pre></div>
+                <div class="example-box"><div class="example-title">Output real (verificat Python):</div>
+<pre>Primii 3 vecini: [(1.1180339887498949, "A"), (1.4142135623730951, "B"), (2.1213203435596424, "B")]
+Voturi: {"A": 1, "B": 2}
+Clasa prezisa: B</pre></div>
+                <div class="concept-def"><strong>Complexitate:</strong> O(n*d) per predictie. Fara antrenament (lazy learner).</div>
+            </div></div>
+
+        <div class="atom" id="atom-3" data-quiz='[{"question":"Gini impurity = 0 inseamna?","options":["Dezordine maxima","Nod pur: toate exemplele din aceeasi clasa","Erori in date","Prag gresit"],"correct":"b","hint":"Gini=0: puritate perfecta, 1 - 1^2 = 0."}]'>
+            <div class="atom-header"><div class="atom-number">3</div><h3 class="atom-title">3. Arborele de decizie &mdash; Gini impurity</h3></div>
+            <div class="atom-content">
+                <div class="concept-def"><strong>Arbore de decizie:</strong> Reguli if/else ierarhice. Fiecare nod testeaza o trasatura; frunzele contin clasa. Criteriu: <strong>Gini impurity</strong>.</div>
+                <div class="example-box"><div class="example-title">Formula Gini:</div>
+<pre>Gini(S) = 1 - sum(pi^2), pi = proportia clasei i
+
+Exemplu: S = {3 Da, 3 Nu}
+  p_Da = 0.5, p_Nu = 0.5
+  Gini = 1 - (0.25 + 0.25) = 0.5  (dezordine maxima)
+
+Nod pur (o singura clasa): Gini = 0  (optim)</pre></div>
+                <div class="example-box"><div class="example-title">Selectia splitului optim (valori verificate Python):</div>
+<pre>Dataset: (30,Nu),(28,Nu),(20,Da),(22,Da),(24,Da),(26,Nu)
+Gini total: 0.5000
+
+Split temperatura &lt; 25:
+  Stanga [Da,Da,Da]: Gini = 0.0
+  Dreapta [Nu,Nu,Nu]: Gini = 0.0
+Gini ponderat = 0.0000
+Information Gain = 0.5000  (split perfect)</pre></div>
+                <div class="concept-def">Algoritmul alege featura si pragul care <strong>maximizeaza Information Gain</strong>.</div>
+            </div></div>
+
+        <div class="atom" id="atom-4" data-quiz='[{"question":"Parametrul care controleaza numarul de vecini in KNeighborsClassifier?","options":["neighbors","k","n_neighbors","num_k"],"correct":"c","hint":"KNeighborsClassifier(n_neighbors=3)."}]'>
+            <div class="atom-header"><div class="atom-number">4</div><h3 class="atom-title">4. Implementare cu sklearn</h3></div>
+            <div class="atom-content">
+                <div class="concept-def"><code>scikit-learn</code> este standardul industrial pentru ML in Python. Interfata uniforma: fit(), predict(), score().</div>
+                <div class="example-box"><div class="example-title">k-NN cu sklearn (Iris):</div>
+<pre>from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_iris
+
+iris = load_iris(); X, y = iris.data, iris.target
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42)
+knn = KNeighborsClassifier(n_neighbors=3)
+knn.fit(X_train, y_train)
+print(f"k-NN acuratete: {knn.score(X_test, y_test):.4f}")</pre></div>
+                <div class="example-box"><div class="example-title">Arbore de decizie cu sklearn:</div>
+<pre>from sklearn.tree import DecisionTreeClassifier
+
+dt = DecisionTreeClassifier(criterion="gini", max_depth=3, random_state=42)
+dt.fit(X_train, y_train)
+print(f"Arbore acuratete: {dt.score(X_test, y_test):.4f}")
+print(f"Feature importances: {dt.feature_importances_.round(3)}")</pre></div>
+                <div class="example-box"><div class="example-title">Output asteptat (Iris, random_state=42):</div>
+<pre>k-NN acuratete: 0.9778
+Arbore acuratete: 0.9556
+Feature importances: [0.    0.026 0.056 0.918]</pre></div>
+                <div class="concept-def">max_depth=3 previne overfitting. Petal width contribuie 91.8% la clasificare pe Iris.</div>
+            </div></div>
+
+        <div class="atom" id="atom-5" data-quiz='[{"question":"Marele avantaj al arborelui de decizie vs k-NN?","options":["Mai precis intotdeauna","Interpretabil: poti vedea regulile de clasificare","Mai rapid pentru orice dataset","Nu necesita antrenament"],"correct":"b","hint":"Arborii genereaza reguli if/else explicite. k-NN = cutie neagra."}]'>
+            <div class="atom-header"><div class="atom-number">5</div><h3 class="atom-title">5. Comparatie k-NN vs Arbore + Normalizare</h3></div>
+            <div class="atom-content">
+                <div class="example-box"><div class="example-title">Tabel comparativ:</div>
+<pre>Criteriu           | k-NN              | Arbore de decizie
+-------------------|-------------------|------------------
+Antrenament        | Instantaneu       | Construit recursiv
+Predictie          | O(n*d) per ex.    | O(adancime)
+Interpretabilitate | Scazuta           | Ridicata (reguli)
+Sensibil la scala  | DA (norm. req.)   | Nu
+Control overfitting| k mai mare        | max_depth mai mic</pre></div>
+                <div class="example-box"><div class="example-title">Normalizare obligatorie pentru k-NN:</div>
+<pre>from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+X_train_s = scaler.fit_transform(X_train)
+X_test_s  = scaler.transform(X_test)
+knn_s = KNeighborsClassifier(n_neighbors=3)
+knn_s.fit(X_train_s, y_train)
+print(f"k-NN cu normalizare: {knn_s.score(X_test_s, y_test):.4f}")</pre></div>
+                <div class="concept-def">Intotdeauna normalizeaza pentru k-NN. Arborele nu necesita normalizare.</div>
+            </div></div>
+
+        <div class="atom" id="atom-6" data-quiz='[{"question":"Ce masoara matricea de confuzie?","options":["Viteza de antrenament","Distributia predictiilor corecte si gresite pe clase","Numarul de noduri","Distanta medie"],"correct":"b","hint":"Randuri=clase reale, coloane=clase prezise. Diagonala=predictii corecte."}]'>
+            <div class="atom-header"><div class="atom-number">6</div><h3 class="atom-title">6. Evaluarea modelelor &mdash; Matrice de confuzie</h3></div>
+            <div class="atom-content">
+                <div class="concept-def"><strong>Matricea de confuzie</strong> arata erorile per clasa &mdash; esentiala cand clasele sunt dezechilibrate.</div>
+                <div class="example-box"><div class="example-title">Metrici:</div>
+<pre>Acuratete = (TP + TN) / Total
+Precizie  = TP / (TP + FP)
+Recall    = TP / (TP + FN)
+F1-score  = 2 * Precizie * Recall / (Precizie + Recall)</pre></div>
+                <div class="example-box"><div class="example-title">Cod sklearn:</div>
+<pre>from sklearn.metrics import confusion_matrix, classification_report
+y_pred = knn.predict(X_test)
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred, target_names=iris.target_names))</pre></div>
+                <div class="example-box"><div class="example-title">Output asteptat (Iris k-NN k=3, random_state=42):</div>
+<pre>[[19  0  0]
+ [ 0 12  1]
+ [ 0  0 13]]
+
+              precision  recall  f1-score  support
+      setosa       1.00    1.00      1.00       19
+  versicolor       1.00    0.92      0.96       13
+   virginica       0.93    1.00      0.96       13
+    accuracy                         0.98       45</pre></div>
+                <div class="concept-def">Un singur versicolor clasificat gresit ca virginica. Acuratete 97.8% pe 45 exemple test.</div>
+            </div></div>
+
+    </main>
+
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; k-NN manual</h3>
+            <p>Ai 4 puncte: A(1,1)=c0, B(2,2)=c0, C(5,5)=c1, D(6,6)=c1. Punct nou q=(3,3). Calculeaza distantele si prezice clasa cu k=3.</p>
+            <p><em>Raspuns: dist(A)=2.83, dist(B)=1.41, dist(C)=2.83, dist(D)=4.24. Top 3: B(c0),A(c0),C(c1). Clasa prezisa: c0 (2 vs 1).</em></p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; k-NN sklearn pe dataset propriu</h3>
+            <p>Creeaza un dataset cu 20 exemple si 2 trasaturi cu 2 clase. Antreneaza KNeighborsClassifier cu k=5, split 70/30, afiseaza acuratete si matricea de confuzie.</p>
+            <p><em>Indiciu: train_test_split(X, y, test_size=0.3, random_state=42).</em></p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Comparatie sistematica pe Iris</h3>
+            <p>Testeaza k-NN pentru k in {1,3,5,7,11} si arbore cu max_depth in {1,2,3,5}. Compara k-NN cu/fara StandardScaler. Identifica configuratia optima.</p>
+            <p><em>Indiciu: for-loop, dict rezultate, max() pentru best config.</em></p>
+        </div>
+    </section>
+
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Clasificarea ML: invatare supervizata, predictia clasei unui exemplu nou</li>
+                <li>k-NN: distanta euclidiana, sortare, vot majoritar &mdash; O(n*d) per predictie</li>
+                <li>Gini impurity: masura dezordinii; Information Gain = Gini_inainte - Gini_ponderat</li>
+                <li>Arbore de decizie: reguli if/else interpretabile, max_depth previne overfitting</li>
+                <li>sklearn: KNeighborsClassifier, DecisionTreeClassifier, StandardScaler</li>
+                <li>Evaluare: acuratete, matrice de confuzie, precizie, recall, F1</li>
+            </ul>
+        </div>
+        <div id="lesson-summary" style="display: none;"></div>
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Factorizare n!</strong> pentru formula Legendre.</p>
+            <a href="lectia2-factorial-factorizare.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m2-algoritmi-eficienti-lectia1-clasificare-ml');
+        PracticeSimple.init('cls12-m2-algoritmi-eficienti-lectia1-clasificare-ml');
+        LessonSummary.init('cls12-m2-algoritmi-eficienti-lectia1-clasificare-ml');
+        Breadcrumb.init({
+            grade: 'cls12',
+            gradeName: 'Clasa a XII-a',
+            module: 'm2-algoritmi-eficienti',
+            moduleName: 'M2 Algoritmi Eficienti',
+            lesson: 'Algoritmi de clasificare ML (k-NN, Arbore de decizie)'
+        });
+        LearningProgress.init('cls12', 'm2-algoritmi-eficienti', 'lectia1-matrice-avansate.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

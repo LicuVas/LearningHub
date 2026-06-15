@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 3: Vectori si Matrice - Complet | BAC Prep Cls XII</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline style blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia2-structuri-control.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 2</a>
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8593; Modulul</a>
+        <a href="lectia4-recursivitate-master.html" class="nav-btn" title="Lectia urmatoare">Lectia 4 &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Vectori si Matrice — Complet BAC</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- FRAME SECTION -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei stapani toate operatiile cu vectori si matrice cerute la BAC — de la cautare si sortare pana la interclasare, transpusa si parcurgere in spirala — cu cod C++ complet, verificat si complexitati corecte.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa implementezi corect operatii de baza pe vectori: maxim/minim, cautare liniara si binara</li>
+                <li>Sa explici si sa codezi <strong>selection sort</strong> cu complexitate O(n²)</li>
+                <li>Sa inserezi si sa stergi elemente dintr-un vector la pozitie arbitrara</li>
+                <li>Sa interclasezi doi vectori ordonati in O(n+m)</li>
+                <li>Sa parcurgi o matrice si sa calculezi sume pe diagonale, linii, coloane</li>
+                <li>Sa transpui o matrice patrata in-place in O(n²)</li>
+                <li>Sa inmultesti doua matrice in O(n³) — algoritm clasic BAC</li>
+                <li><span class="bonus-badge">EXCLUSIV INTENSIV</span> Sa parcurgi o matrice in spirala</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- TRY SECTION -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare de incalzire:</div>
+                <p>Ai vectorul <code>v = {5, 3, 8, 1, 9, 2, 7, 4}</code>. Fara sa rulezi cod, simuleaza primul pas din <strong>selection sort</strong>: care element se plaseaza pe pozitia 0 si cum?</p>
+                <textarea id="tryAnswer" placeholder="Gasesc minimul din intregul sir...&#10;Minimul este... la pozitia...&#10;Schimb v[0] cu v[...]&#10;Sirul devine..." rows="6"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Parcurge tot sirul si gaseste pozitia minimului global. Minimul este <strong>1</strong>, aflat la pozitia <strong>3</strong> (0-indexed). Schimbi <code>v[0]</code> cu <code>v[3]</code>. Sirul devine <code>{1, 3, 8, 5, 9, 2, 7, 4}</code>. La pasul urmator repeti de la pozitia 1.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ATOMS -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1 -->
+        <div class="atom" id="atom-1"
+             data-quiz='[{"question": "Care este complexitatea cautarii liniare a maximului intr-un vector de n elemente?", "options": ["O(1)", "O(log n)", "O(n)", "O(n²)"], "correct": "c", "hint": "Cautarea liniara inspecteaza fiecare element o singura data -> O(n). O(log n) este cautarea binara (necesita sir sortat)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Maxim, Minim si Cautare Liniara</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Maximul</strong> se gaseste parcurgand tot sirul si actualizand maximul curent. Complexitate: <strong>O(n)</strong> — obligatoriu pentru un sir neordonat.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Analogie: caseta cu jetoane amestecate</div>
+                    <p>Vrei cel mai mare jeton. Nu exista scurtatura: ridici fiecare jeton si compari cu cel mai mare gasit pana acum. Dupa ce ai ridicat toate jetoanele ai raspunsul. Exact asa functioneaza algoritmul.</p>
+                </div>
+                <pre><span class="code-comment">// Maxim si pozitia lui — O(n)</span>
+<span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> v[] = {<span class="code-number">3</span>, <span class="code-number">7</span>, <span class="code-number">2</span>, <span class="code-number">9</span>, <span class="code-number">4</span>, <span class="code-number">1</span>, <span class="code-number">8</span>, <span class="code-number">5</span>};
+    <span class="code-keyword">int</span> n = <span class="code-number">8</span>;
+
+    <span class="code-keyword">int</span> maxVal = v[<span class="code-number">0</span>], maxIdx = <span class="code-number">0</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">1</span>; i &lt; n; i++) {
+        <span class="code-keyword">if</span> (v[i] &gt; maxVal) {
+            maxVal = v[i];
+            maxIdx = i;
+        }
+    }
+    cout &lt;&lt; <span class="code-string">"Maxim: "</span> &lt;&lt; maxVal
+         &lt;&lt; <span class="code-string">" la pozitia "</span> &lt;&lt; maxIdx &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (g++ -std=c++17, rulat):</div>
+                    <pre>Maxim: 9 la pozitia 3</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Capcana BAC:</strong> initializeaza <code>maxVal = v[0]</code>, nu cu <code>-1</code> sau <code>0</code> — daca toti sunt negativi, codul cu <code>-1</code> greseste.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2 -->
+        <div class="atom" id="atom-2"
+             data-quiz='[{"question": "Cautarea binara functioneaza corect DOAR daca:", "options": ["Vectorul are numar par de elemente", "Vectorul este sortat", "Elementul cautat exista in vector", "Vectorul are cel putin 10 elemente"], "correct": "b", "hint": "Cautarea binara compara cu mijlocul si elimina jumatatea gresita. Asta presupune ca elementele sunt in ordine. Pe un sir nesortat rezultatul este incorect."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Cautare Binara — O(log n)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Cautarea binara</strong> functioneaza pe siruri <em>sortate</em>. La fiecare pas injumatateste spatiul de cautare. Complexitate: <strong>O(log n)</strong>. Pentru n = 1.000.000 sunt necesare cel mult 20 de comparatii.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Analogie: dictionarul tiparit</div>
+                    <p>Cauti cuvantul "soare" in dictionar. Nu incepi de la pagina 1 — deschizi la mijloc. Daca mijlocul e la litera "m", stii ca "soare" e in jumatatea dreapta. Injumatatesti din nou. Asta e cautarea binara.</p>
+                </div>
+                <pre><span class="code-comment">// Cautare binara — returneaza index sau -1</span>
+<span class="code-keyword">int</span> <span class="code-function">cautareBinara</span>(<span class="code-keyword">int</span> v[], <span class="code-keyword">int</span> n, <span class="code-keyword">int</span> x) {
+    <span class="code-keyword">int</span> st = <span class="code-number">0</span>, dr = n - <span class="code-number">1</span>;
+    <span class="code-keyword">while</span> (st &lt;= dr) {
+        <span class="code-keyword">int</span> m = (st + dr) / <span class="code-number">2</span>;
+        <span class="code-keyword">if</span> (v[m] == x)   <span class="code-keyword">return</span> m;
+        <span class="code-keyword">else if</span> (v[m] &lt; x) st = m + <span class="code-number">1</span>;
+        <span class="code-keyword">else</span>              dr = m - <span class="code-number">1</span>;
+    }
+    <span class="code-keyword">return</span> -<span class="code-number">1</span>;
+}
+
+<span class="code-comment">// Test</span>
+<span class="code-keyword">int</span> v[] = {<span class="code-number">1</span>,<span class="code-number">3</span>,<span class="code-number">5</span>,<span class="code-number">7</span>,<span class="code-number">9</span>,<span class="code-number">11</span>,<span class="code-number">13</span>,<span class="code-number">15</span>};
+cout &lt;&lt; <span class="code-string">"Cautare 7: poz "</span>  &lt;&lt; <span class="code-function">cautareBinara</span>(v,<span class="code-number">8</span>,<span class="code-number">7</span>) &lt;&lt; endl;
+cout &lt;&lt; <span class="code-string">"Cautare 6: poz "</span>  &lt;&lt; <span class="code-function">cautareBinara</span>(v,<span class="code-number">8</span>,<span class="code-number">6</span>) &lt;&lt; endl;</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat):</div>
+                    <pre>Cautare 7: poz 3
+Cautare 6: poz -1</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Capcana BAC:</strong> Foloseste <code>m = (st + dr) / 2</code>. Nu uita conditia <code>st &lt;= dr</code> (cu =), altfel ratezi cazul cand st == dr si elementul se afla chiar acolo.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3 -->
+        <div class="atom" id="atom-3"
+             data-quiz='[{"question": "Selection sort are complexitatea O(n²). Daca n se dubleaza (de la 100 la 200), timpul de executie:", "options": ["Se dubleaza", "Creste de 4 ori", "Creste de 8 ori", "Ramane acelasi"], "correct": "b", "hint": "O(n²): daca n se dubleaza, n² se patrupleaza. 100² = 10.000 vs 200² = 40.000 operatii."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Sortare, Inserare si Stergere</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Selection Sort</strong> — la fiecare pas <em>i</em> gaseste minimul din <code>v[i..n-1]</code> si il schimba cu <code>v[i]</code>. Dupa pasul <em>i</em>, primele <em>i+1</em> elemente sunt sortate definitiv. Complexitate: <strong>O(n²)</strong>.
+                </div>
+                <pre><span class="code-comment">// Selection Sort — O(n²)</span>
+<span class="code-keyword">int</span> a[] = {<span class="code-number">5</span>,<span class="code-number">3</span>,<span class="code-number">8</span>,<span class="code-number">1</span>,<span class="code-number">9</span>,<span class="code-number">2</span>,<span class="code-number">7</span>,<span class="code-number">4</span>};
+<span class="code-keyword">int</span> m = <span class="code-number">8</span>;
+<span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; m - <span class="code-number">1</span>; i++) {
+    <span class="code-keyword">int</span> minPos = i;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = i + <span class="code-number">1</span>; j &lt; m; j++)
+        <span class="code-keyword">if</span> (a[j] &lt; a[minPos]) minPos = j;
+    swap(a[i], a[minPos]);
+}
+cout &lt;&lt; <span class="code-string">"Sortat: "</span>;
+<span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; m; i++) cout &lt;&lt; a[i] &lt;&lt; <span class="code-string">" "</span>;</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat):</div>
+                    <pre>Sortat: 1 2 3 4 5 7 8 9</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Stergere la pozitia k</strong> — decaleaza elementele la stanga. <strong>Inserare la pozitia k</strong> — decaleaza la dreapta (de la sfarsit spre k):
+                </div>
+                <pre><span class="code-comment">// Stergere v[k] — O(n)</span>
+<span class="code-keyword">int</span> v[] = {<span class="code-number">10</span>,<span class="code-number">20</span>,<span class="code-number">30</span>,<span class="code-number">40</span>,<span class="code-number">50</span>};
+<span class="code-keyword">int</span> n = <span class="code-number">5</span>, k = <span class="code-number">2</span>;  <span class="code-comment">// sterge v[2]=30</span>
+<span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = k; i &lt; n - <span class="code-number">1</span>; i++) v[i] = v[i + <span class="code-number">1</span>];
+n--;
+<span class="code-comment">// v = {10, 20, 40, 50}, n=4</span>
+
+<span class="code-comment">// Inserare val=99 la pozitia k — O(n)</span>
+<span class="code-keyword">int</span> v2[] = {<span class="code-number">10</span>,<span class="code-number">20</span>,<span class="code-number">40</span>,<span class="code-number">50</span>,<span class="code-number">0</span>};  <span class="code-comment">// loc liber la final</span>
+<span class="code-keyword">int</span> n2 = <span class="code-number">4</span>, k2 = <span class="code-number">1</span>, val = <span class="code-number">99</span>;
+<span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = n2; i &gt; k2; i--) v2[i] = v2[i - <span class="code-number">1</span>];
+v2[k2] = val; n2++;
+<span class="code-comment">// v2 = {10, 99, 20, 40, 50}</span></pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat, verificat):</div>
+                    <pre>Dupa stergere poz 2: 10 20 40 50
+Dupa inserare 99 la poz 1: 10 99 20 40 50</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4 -->
+        <div class="atom" id="atom-4"
+             data-quiz='[{"question": "Interclasarea a doua siruri sortate de lungimi n si m are complexitatea:", "options": ["O(n · m)", "O(n²)", "O(n + m)", "O(log n)"], "correct": "c", "hint": "La interclasare fiecare element din ambele siruri este preluat exact o data. Deci O(n+m) — liniar in suma lungimilor."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Interclasarea Vectorilor Sortati</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Interclasarea</strong> combina doi vectori sortati intr-un al treilea, sortat. Foloseste doi indici (i, j) care avanseaza independent. Complexitate: <strong>O(n+m)</strong>.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Analogie: doua randuri la casierie</div>
+                    <p>Ai doua randuri de oameni in ordine crescatoare a numarului de bon. Iei intotdeauna pe urmatorul din randul cu bonul mai mic. Cand un rand se termina, preiei tot celalalt. Asta e interclasarea.</p>
+                </div>
+                <pre><span class="code-comment">// Interclasare — O(n + m)</span>
+<span class="code-keyword">int</span> a[] = {<span class="code-number">1</span>,<span class="code-number">3</span>,<span class="code-number">5</span>,<span class="code-number">7</span>};
+<span class="code-keyword">int</span> b[] = {<span class="code-number">2</span>,<span class="code-number">4</span>,<span class="code-number">6</span>,<span class="code-number">8</span>};
+<span class="code-keyword">int</span> c[<span class="code-number">8</span>];
+<span class="code-keyword">int</span> na=<span class="code-number">4</span>, nb=<span class="code-number">4</span>, nc=<span class="code-number">0</span>;
+<span class="code-keyword">int</span> i=<span class="code-number">0</span>, j=<span class="code-number">0</span>;
+
+<span class="code-keyword">while</span> (i &lt; na &amp;&amp; j &lt; nb) {
+    <span class="code-keyword">if</span> (a[i] &lt;= b[j]) c[nc++] = a[i++];
+    <span class="code-keyword">else</span>               c[nc++] = b[j++];
+}
+<span class="code-keyword">while</span> (i &lt; na) c[nc++] = a[i++];  <span class="code-comment">// rest din a</span>
+<span class="code-keyword">while</span> (j &lt; nb) c[nc++] = b[j++];  <span class="code-comment">// rest din b</span>
+
+cout &lt;&lt; <span class="code-string">"Interclasare: "</span>;
+<span class="code-keyword">for</span> (<span class="code-keyword">int</span> k=<span class="code-number">0</span>; k&lt;nc; k++) cout &lt;&lt; c[k] &lt;&lt; <span class="code-string">" "</span>;</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat):</div>
+                    <pre>Interclasare: 1 2 3 4 5 6 7 8</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Capcana BAC:</strong> dupa bucla while principala, copiaza restul din sirul ramas neepuizat (cele doua while-uri finale). Omiterea lor e greseala clasica la examen.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5 -->
+        <div class="atom" id="atom-5"
+             data-quiz='[{"question": "Intr-o matrice patrata n×n, conditia i + j == n - 1 identifica elementele de pe:", "options": ["Diagonala principala", "Diagonala secundara", "Prima linie", "Prima coloana"], "correct": "b", "hint": "Diagonala principala: i == j. Diagonala secundara: i + j == n-1. Ex: n=3, secundara: (0,2),(1,1),(2,0) — suma indicilor e mereu 2."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Matrice — Diagonale, Transpusa si Inmultire</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Reguli de aur pentru matrice la BAC:</strong>
+                    <ul>
+                        <li>Diagonala principala: <code>a[i][i]</code> — conditia <code>i == j</code></li>
+                        <li>Diagonala secundara: <code>a[i][n-1-i]</code> — conditia <code>i + j == n-1</code></li>
+                        <li>Transpusa: schimba <code>a[i][j]</code> cu <code>a[j][i]</code> pentru j &gt; i</li>
+                        <li>Inmultire: <code>c[i][j] += a[i][k] * b[k][j]</code> — tripla bucla</li>
+                    </ul>
+                </div>
+                <pre><span class="code-comment">// Sume diagonale — O(n)</span>
+<span class="code-keyword">int</span> a[<span class="code-number">3</span>][<span class="code-number">3</span>] = {{<span class="code-number">1</span>,<span class="code-number">2</span>,<span class="code-number">3</span>},{<span class="code-number">4</span>,<span class="code-number">5</span>,<span class="code-number">6</span>},{<span class="code-number">7</span>,<span class="code-number">8</span>,<span class="code-number">9</span>}};
+<span class="code-keyword">int</span> n = <span class="code-number">3</span>;
+<span class="code-keyword">int</span> sumDP = <span class="code-number">0</span>, sumDS = <span class="code-number">0</span>;
+<span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++) {
+    sumDP += a[i][i];           <span class="code-comment">// principala: i==j</span>
+    sumDS += a[i][n-<span class="code-number">1</span>-i];      <span class="code-comment">// secundara: i+j==n-1</span>
+}
+cout &lt;&lt; <span class="code-string">"Suma diag principala: "</span> &lt;&lt; sumDP &lt;&lt; endl;
+cout &lt;&lt; <span class="code-string">"Suma diag secundara: "</span>  &lt;&lt; sumDS &lt;&lt; endl;</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat):</div>
+                    <pre>Suma diag principala: 15
+Suma diag secundara: 15</pre>
+                </div>
+                <pre><span class="code-comment">// Transpusa in-place — O(n²), j porneste de la i+1 !</span>
+<span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n; i++)
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = i+<span class="code-number">1</span>; j &lt; n; j++)
+        swap(a[i][j], a[j][i]);
+<span class="code-comment">// Afisare dupa transpunere</span>
+cout &lt;&lt; <span class="code-string">"Transpusa:"</span> &lt;&lt; endl;
+<span class="code-keyword">for</span> (<span class="code-keyword">int</span> i=<span class="code-number">0</span>; i&lt;n; i++) {
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j=<span class="code-number">0</span>; j&lt;n; j++) cout &lt;&lt; a[i][j] &lt;&lt; <span class="code-string">" "</span>;
+    cout &lt;&lt; endl;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat, matricea {1,2,3;4,5,6;7,8,9}):</div>
+                    <pre>Transpusa:
+1 4 7 
+2 5 8 
+3 6 9 </pre>
+                </div>
+                <pre><span class="code-comment">// Inmultire A[2x3] * B[3x2] = C[2x2] — O(n³)</span>
+<span class="code-keyword">int</span> am[<span class="code-number">2</span>][<span class="code-number">3</span>] = {{<span class="code-number">1</span>,<span class="code-number">2</span>,<span class="code-number">3</span>},{<span class="code-number">4</span>,<span class="code-number">5</span>,<span class="code-number">6</span>}};
+<span class="code-keyword">int</span> bm[<span class="code-number">3</span>][<span class="code-number">2</span>] = {{<span class="code-number">7</span>,<span class="code-number">8</span>},{<span class="code-number">9</span>,<span class="code-number">10</span>},{<span class="code-number">11</span>,<span class="code-number">12</span>}};
+<span class="code-keyword">int</span> cm[<span class="code-number">2</span>][<span class="code-number">2</span>] = {};  <span class="code-comment">// initializat cu 0</span>
+<span class="code-keyword">for</span> (<span class="code-keyword">int</span> i=<span class="code-number">0</span>; i&lt;<span class="code-number">2</span>; i++)
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j=<span class="code-number">0</span>; j&lt;<span class="code-number">2</span>; j++)
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> k=<span class="code-number">0</span>; k&lt;<span class="code-number">3</span>; k++)
+            cm[i][j] += am[i][k] * bm[k][j];
+<span class="code-comment">// c[0][0] = 1*7+2*9+3*11 = 58</span>
+cout &lt;&lt; <span class="code-string">"A*B:"</span> &lt;&lt; endl;
+<span class="code-keyword">for</span> (<span class="code-keyword">int</span> i=<span class="code-number">0</span>; i&lt;<span class="code-number">2</span>; i++) {
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j=<span class="code-number">0</span>; j&lt;<span class="code-number">2</span>; j++) cout &lt;&lt; cm[i][j] &lt;&lt; <span class="code-string">" "</span>;
+    cout &lt;&lt; endl;
+}</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat):</div>
+                    <pre>A*B:
+58 64
+139 154</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Verificare manuala c[0][0]:</strong> 1&middot;7 + 2&middot;9 + 3&middot;11 = 7 + 18 + 33 = 58. &#10003;
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: EXCLUSIV INTENSIV -->
+        <div class="atom" id="atom-6"
+             data-quiz='[{"question": "In algoritmul de parcurgere in spirala a unei matrice n×n, dupa parcurgerea primului rand de sus (stanga la dreapta), urmatoarea directie este:", "options": ["Al doilea rand stanga la dreapta", "Coloana dreapta de sus in jos", "Ultimul rand dreapta la stanga", "Coloana stanga de jos in sus"], "correct": "b", "hint": "Spirala clasica: 1) Rand sus (st-dr), 2) Coloana dreapta (sus-jos), 3) Rand jos (dr-st), 4) Coloana stanga (jos-sus), apoi reingustezi marginile si repeti."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Parcurgere in Spirala <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+                    <div class="bonus-title">&#9889; Sectiune exclusiv intensiv informatica — apare la BAC subiect III</div>
+                    <p>Parcurgerea in spirala a matricei este o problema clasica BAC la profilul intensiv. Mentii 4 margini dinamice (top, bottom, left, right) si le ingustezi dupa fiecare directie parcursa.</p>
+                </div>
+                <div class="concept-def">
+                    <strong>Algoritmul:</strong> parcurge ciclic cele 4 directii, ingustind marginile. Se opreste cand top &gt; bottom sau left &gt; right. Complexitate: <strong>O(n²)</strong> — fiecare element vizitat exact o data.
+                </div>
+                <pre><span class="code-comment">// Parcurgere in spirala — O(n²)</span>
+<span class="code-keyword">int</span> n = <span class="code-number">4</span>;
+<span class="code-keyword">int</span> a[<span class="code-number">4</span>][<span class="code-number">4</span>] = {
+    { <span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>},
+    {<span class="code-number">12</span>,<span class="code-number">13</span>,<span class="code-number">14</span>, <span class="code-number">5</span>},
+    {<span class="code-number">11</span>,<span class="code-number">16</span>,<span class="code-number">15</span>, <span class="code-number">6</span>},
+    {<span class="code-number">10</span>, <span class="code-number">9</span>, <span class="code-number">8</span>, <span class="code-number">7</span>}
+};
+<span class="code-keyword">int</span> top=<span class="code-number">0</span>, bot=n-<span class="code-number">1</span>, left=<span class="code-number">0</span>, right=n-<span class="code-number">1</span>;
+cout &lt;&lt; <span class="code-string">"Spirala: "</span>;
+<span class="code-keyword">while</span> (top &lt;= bot &amp;&amp; left &lt;= right) {
+    <span class="code-comment">// 1. Randul de sus: stanga → dreapta</span>
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j=left; j&lt;=right; j++) cout &lt;&lt; a[top][j] &lt;&lt; <span class="code-string">" "</span>;
+    top++;
+    <span class="code-comment">// 2. Coloana dreapta: sus → jos</span>
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i=top; i&lt;=bot; i++) cout &lt;&lt; a[i][right] &lt;&lt; <span class="code-string">" "</span>;
+    right--;
+    <span class="code-comment">// 3. Randul de jos: dreapta → stanga</span>
+    <span class="code-keyword">if</span> (top &lt;= bot)
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j=right; j&gt;=left; j--) cout &lt;&lt; a[bot][j] &lt;&lt; <span class="code-string">" "</span>;
+    bot--;
+    <span class="code-comment">// 4. Coloana stanga: jos → sus</span>
+    <span class="code-keyword">if</span> (left &lt;= right)
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i=bot; i&gt;=top; i--) cout &lt;&lt; a[i][left] &lt;&lt; <span class="code-string">" "</span>;
+    left++;
+}
+cout &lt;&lt; endl;</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat):</div>
+                    <pre>Spirala: 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16</pre>
+                </div>
+                <div class="concept-def">
+                    <strong>Capcana:</strong> garda <code>if (top &lt;= bot)</code> inainte de randul de jos si <code>if (left &lt;= right)</code> inainte de coloana stanga sunt obligatorii — altfel reparcurgi elemente la matrice cu dimensiune impara.
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- PRACTICE -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) — Maxim si pozitie</h3>
+            <p>Fie vectorul <code>v = {4, 11, 3, 7, 11, 2, 9}</code>. Scrie codul C++ care afiseaza <strong>prima</strong> pozitie a maximului (0-indexed). Ce afiseaza codul tau? (Atentie: maximul 11 apare de doua ori — prima aparitie e la poz 1.)</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) — Matrice simetrica</h3>
+            <p>Scrie o functie C++ <code>bool esteSimetrica(int a[][100], int n)</code> care returneaza <code>true</code> daca matricea este simetrica (<code>a[i][j] == a[j][i]</code> pentru orice i, j). Testeaz-o pe <code>{{1,2,3},{2,5,4},{3,4,9}}</code>. Complexitate: O(n²).</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) — Interclasare cu eliminare duplicate</h3>
+            <p>Ai doua siruri sortate: <code>a = {1,3,3,5,7}</code> si <code>b = {2,3,4,5,6}</code>. Scrie codul C++ care le interclaseaza <strong>si</strong> elimina duplicatele. Rezultat asteptat: <code>1 2 3 4 5 6 7</code>. Care este complexitatea algoritmului tau?</p>
+        </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Maxim/minim si cautare liniara: O(n) — obligatoriu pe sir nesortat; initializeaza cu v[0]</li>
+                <li>Cautare binara: O(log n) — doar pe sir sortat; conditia bucla <code>st &lt;= dr</code></li>
+                <li>Selection sort: O(n²) — gaseste minimul la fiecare pas si il plaseaza la locul lui</li>
+                <li>Stergere la poz k: decaleaza la stanga (i = k..n-2); inserare: decaleaza la dreapta (i = n..k+1)</li>
+                <li>Interclasare: O(n+m) — doi indici independenti + copiaza restul ambelor siruri</li>
+                <li>Diagonale matrice: principala <code>i==j</code>, secundara <code>i+j==n-1</code></li>
+                <li>Transpusa in-place: swap pentru j &gt; i — evita dubla-schimbare</li>
+                <li>Inmultire matrice: O(n³) tripla bucla; initializeaza C cu 0 inainte de calcul</li>
+                <li><span class="bonus-badge">INTENSIV</span> Spirala: 4 margini dinamice, garda if inainte de randul de jos si coloana stanga</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu recursivitatea — toate tipurile si analiza stivei de apeluri.</p>
+            <a href="lectia4-recursivitate-master.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m-bac-prep-lectia3-vectori-matrice');
+        PracticeSimple.init('cls12-m-bac-prep-lectia3-vectori-matrice');
+        LessonSummary.init('cls12-m-bac-prep-lectia3-vectori-matrice');
+        Breadcrumb.init({
+            grade: 'cls12',
+            gradeName: 'Clasa a XII-a',
+            module: 'm-bac-prep',
+            moduleName: 'BAC Prep',
+            lesson: 'Vectori si Matrice — Complet BAC'
+        });
+        LearningProgress.init('cls12', 'm-bac-prep', 'lectia3-vectori-matrice.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

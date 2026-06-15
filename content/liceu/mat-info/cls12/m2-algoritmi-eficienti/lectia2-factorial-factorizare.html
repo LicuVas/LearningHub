@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 2: Factorial si Factorizare Eficienta | Clasa a IX-a Mat-Info Intensiv</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline style blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+<!-- NAV BAR -->
+<nav class="nav-bar">
+  <a href="lectia1-matrice-avansate.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 1</a>
+  <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8592; Modulul</a>
+  <a href="lectia3-complexitate.html" class="nav-btn" title="Lectia urmatoare">Lectia 3 &#8594;</a>
+</nav>
+
+<!-- HEADER -->
+<header class="lesson-header">
+  <span class="lesson-badge">Invatare Atomica</span>
+  <div class="curriculum-notice" style="background:#fff3cd;border-left:4px solid #f0ad4e;padding:10px 14px;margin:10px 0;border-radius:4px;font-size:0.9em;">
+    <strong>Nota curriculum:</strong> Continuturile acestei lectii (factorial iterativ, formula Legendre, exponentiere rapida, coeficienti binomiali) apartin <strong>clasei a IX-a intensiv informatica</strong>, sectiunea 2.2 (OMEN 4.350/2025). Clasa a XII-a mat-info acopera baze de date relationale avansate, normalizare, algoritmi ML si SQL. Aceasta pagina este plasata temporar in structura cls12 si urmeaza a fi mutata in modulul corespunzator cls9.
+  </div>
+  <h1 class="lesson-title">Factorial, Factorizare Eficienta si Exponentiere Rapida</h1>
+</header>
+
+<!-- PROGRESS BAR -->
+<div class="progress-container">
+  <span class="progress-label">Progres lectie:</span>
+  <div class="progress-bar-wrapper"><div class="progress-bar-fill" id="progress-fill"></div></div>
+  <span class="progress-percent" id="progress-percent">0%</span>
+</div>
+
+<!-- FRAME SECTION -->
+<section class="lesson-frame">
+  <div class="goal-section">
+    <div class="goal-header"><span class="goal-icon">&#127919;</span><h2 class="goal-title">Obiectivul lectiei</h2></div>
+    <p class="goal-text">Vei stapani trei algoritmi fundamentali pentru concursuri si Bacalaureat: calculul eficient al factorialului, descompunerea lui n! in factori primi cu formula Legendre, si exponentierea rapida in O(log n).</p>
+  </div>
+  <div class="learning-outcomes">
+    <h3>Dupa aceasta lectie vei putea:</h3>
+    <ul>
+      <li>Sa implementezi factorial iterativ si sa explici riscul de stack overflow al variantei recursive pentru n mare</li>
+      <li>Sa aplici formula Legendre pentru puterea oricarui prim p in n!</li>
+      <li>Sa determini cate zerouri are n! la final (aplicatie directa Legendre)</li>
+      <li>Sa reconstruiesti descompunerea completa a lui n! ca produs de prime</li>
+      <li>Sa implementezi exponentierea rapida in O(log exp) in Python si C++</li>
+      <li>Sa calculezi a^b mod m pentru valori mari, evitand overflow-ul</li>
+    </ul>
+  </div>
+</section>
+
+<!-- TRY SECTION -->
+<section class="try-section">
+  <h2>Incearca singur!</h2>
+  <div class="try-challenge">
+    <div class="challenge-box">
+      <div class="challenge-title">Provocare de incalzire:</div>
+      <p>Cat de mare crezi ca este 20! ? Estimeaza ordinul de marime. Cate cifre are? Cate zerouri are la final?</p>
+      <textarea id="tryAnswer" placeholder="20! este aproximativ...&#10;Are cam ... cifre...&#10;Are ... zerouri la final..." rows="5"></textarea>
+    </div>
+    <div class="hint-box">
+      <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+      <div class="hint-content">
+        <p>20! = 2.432.902.008.176.640.000 &mdash; are 19 cifre si exact 4 zerouri la final.</p>
+        <p>Zerourile vin din factori 10=2x5. In {1,...,20} sunt 4 multipli de 5 (5,10,15,20) &mdash; deci 4 zerouri.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ATOMS -->
+<main id="atomic-content">
+
+<!-- ATOM 1 -->
+<div class="atom" id="atom-1" data-quiz='[{"question": "Care este valoarea lui 0! ?", "options": ["0", "1", "nedefinit", "infinit"], "correct": "b", "hint": "Prin conventie matematica 0!=1. Aceasta face formulele combinatorice corecte: C(n,0)=1."}]'>
+  <div class="atom-header"><div class="atom-number">1</div><h3 class="atom-title">1. Factorial &mdash; definitie si calcul iterativ</h3></div>
+  <div class="atom-content">
+    <div class="concept-def">
+      <strong>n!</strong> (n factorial) = produsul tuturor intregilor pozitivi de la 1 la n:<br>
+      <strong>n! = 1 &times; 2 &times; 3 &times; &hellip; &times; n</strong>, cu conventia <strong>0! = 1</strong>.
+    </div>
+    <div class="example-box">
+      <div class="example-title">Valori uzuale:</div>
+      <p>0!=1 | 1!=1 | 5!=120 | 10!=3.628.800 | 12!=479.001.600</p>
+      <p>Factorialul creste extrem de rapid: 20! &asymp; 2.4&times;10<sup>18</sup>, depasind <code>long long</code> abia la 21!.</p>
+    </div>
+    <p>Implementarea cea mai sigura este <strong>iterativa, O(n)</strong>:</p>
+<pre><span class="code-comment"># Factorial iterativ - O(n)</span>
+<span class="code-keyword">def</span> <span class="code-function">factorial_iter</span>(n):
+    result = <span class="code-number">1</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">2</span>, n + <span class="code-number">1</span>):
+        result *= i
+    <span class="code-keyword">return</span> result
+
+<span class="code-keyword">for</span> n <span class="code-keyword">in</span> [<span class="code-number">0</span>, <span class="code-number">1</span>, <span class="code-number">5</span>, <span class="code-number">10</span>, <span class="code-number">12</span>]:
+    <span class="code-function">print</span>(<span class="code-string">f"{n}! = {factorial_iter(n)}"</span>)</pre>
+    <div class="example-box">
+      <div class="example-title">Output real (rulat cu python):</div>
+      <pre>0! = 1
+1! = 1
+5! = 120
+10! = 3628800
+12! = 479001600</pre>
+    </div>
+    <div class="bonus-box">
+      <div class="bonus-title">&#9889; C++ &mdash; EXCLUSIV INTENSIV</div>
+      <p>In C++, <code>long long</code> permite n&le;20. Pentru n mai mare se lucreaza modular.</p>
+    </div>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">long long</span> <span class="code-function">factorialIter</span>(<span class="code-keyword">int</span> n) {
+    <span class="code-keyword">long long</span> result = <span class="code-number">1</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">2</span>; i &lt;= n; i++) result *= i;
+    <span class="code-keyword">return</span> result;
+}
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> ns[] = {<span class="code-number">0</span>,<span class="code-number">1</span>,<span class="code-number">5</span>,<span class="code-number">10</span>,<span class="code-number">12</span>};
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> n : ns)
+        cout &lt;&lt; n &lt;&lt; <span class="code-string">"! = "</span> &lt;&lt; <span class="code-function">factorialIter</span>(n) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+    <div class="example-box">
+      <div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+      <pre>0! = 1
+1! = 1
+5! = 120
+10! = 3628800
+12! = 479001600</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ATOM 2 -->
+<div class="atom" id="atom-2" data-quiz='[{"question": "Cate zerouri are 25! la final?", "options": ["4", "5", "6", "10"], "correct": "c", "hint": "Zerouri=puterea lui 5 in 25!. floor(25/5)+floor(25/25)=5+1=6."}]'>
+  <div class="atom-header"><div class="atom-number">2</div><h3 class="atom-title">2. Formula Legendre &mdash; puterea unui prim in n!</h3></div>
+  <div class="atom-content">
+    <div class="concept-def">
+      <strong>Formula Legendre:</strong> Exponentul primului p in n! este:<br>
+      <strong>v<sub>p</sub>(n!) = &lfloor;n/p&rfloor; + &lfloor;n/p<sup>2</sup>&rfloor; + &lfloor;n/p<sup>3</sup>&rfloor; + &hellip;</strong>
+      (suma se opreste cand p<sup>k</sup> &gt; n)
+    </div>
+    <div class="example-box">
+      <div class="example-title">Intuitie:</div>
+      <p>Fiecare multiplu de 5 din {1,...,10} contribuie un factor 5. Dar 25=5<sup>2</sup> contribuie doi, deci il numaram din nou la &lfloor;n/25&rfloor;.</p>
+    </div>
+    <p><strong>Aplicatia clasica: zerouri la finalul lui n!</strong> = v<sub>5</sub>(n!) (factorii de 2 sunt mereu mai multi decat cei de 5).</p>
+<pre><span class="code-comment"># Formula Legendre: exponentul primului p in n!</span>
+<span class="code-keyword">def</span> <span class="code-function">putere_prim_in_factorial</span>(n, p):
+    exp = <span class="code-number">0</span>
+    pk = p
+    <span class="code-keyword">while</span> pk &lt;= n:
+        exp += n // pk
+        pk *= p
+    <span class="code-keyword">return</span> exp
+
+<span class="code-keyword">for</span> n <span class="code-keyword">in</span> [<span class="code-number">10</span>, <span class="code-number">20</span>, <span class="code-number">100</span>]:
+    <span class="code-function">print</span>(<span class="code-string">f"Zerouri in {n}! = {putere_prim_in_factorial(n, 5)}"</span>)
+
+<span class="code-keyword">for</span> p <span class="code-keyword">in</span> [<span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">5</span>, <span class="code-number">7</span>]:
+    <span class="code-function">print</span>(<span class="code-string">f"Puterea lui {p} in 20! = {putere_prim_in_factorial(20, p)}"</span>)</pre>
+    <div class="example-box">
+      <div class="example-title">Output real (rulat cu python):</div>
+      <pre>Zerouri in 10! = 2
+Zerouri in 20! = 4
+Zerouri in 100! = 24
+Puterea lui 2 in 20! = 18
+Puterea lui 3 in 20! = 8
+Puterea lui 5 in 20! = 4
+Puterea lui 7 in 20! = 2</pre>
+    </div>
+    <div class="bonus-box">
+      <div class="bonus-title">&#9889; C++ &mdash; EXCLUSIV INTENSIV &mdash; Atentie la overflow in pk!</div>
+      <p>Declarati <code>long long pk</code>. Pentru n=10<sup>9</sup> si p=2, pk poate depasi int dupa 30 de pasi.</p>
+    </div>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> <span class="code-function">putereInFactorial</span>(<span class="code-keyword">int</span> n, <span class="code-keyword">int</span> p) {
+    <span class="code-keyword">int</span> exp = <span class="code-number">0</span>;
+    <span class="code-keyword">long long</span> pk = p;
+    <span class="code-keyword">while</span> (pk &lt;= n) { exp += (<span class="code-keyword">int</span>)(n/pk); pk *= p; }
+    <span class="code-keyword">return</span> exp;
+}
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; <span class="code-string">"zerouri in 100! = "</span> &lt;&lt; <span class="code-function">putereInFactorial</span>(<span class="code-number">100</span>,<span class="code-number">5</span>) &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"exp(5 in 10!) = "</span>  &lt;&lt; <span class="code-function">putereInFactorial</span>(<span class="code-number">10</span>,<span class="code-number">5</span>)  &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+    <div class="example-box">
+      <div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+      <pre>zerouri in 100! = 24
+exp(5 in 10!) = 2</pre>
+    </div>
+    <div class="concept-def"><strong>Complexitate:</strong> O(log<sub>p</sub> n). Pentru n=10<sup>9</sup>, p=2 &rarr; 30 iteratii.</div>
+  </div>
+</div>
+
+<!-- ATOM 3 -->
+<div class="atom" id="atom-3" data-quiz='[{"question": "Care este descompunerea corecta a lui 10! in factori primi?", "options": ["2^8 * 3^4 * 5^2 * 7^1", "2^5 * 3^3 * 5^2 * 7^1", "2^8 * 3^3 * 5^2 * 7^1", "2^9 * 3^4 * 5^2 * 7^1"], "correct": "a", "hint": "Legendre: v2=5+2+1=8; v3=3+1=4; v5=2; v7=1. Deci 10!=2^8*3^4*5^2*7."}]'>
+  <div class="atom-header"><div class="atom-number">3</div><h3 class="atom-title">3. Descompunerea completa a lui n! in factori primi</h3></div>
+  <div class="atom-content">
+    <p>Combinand ciurul lui Eratostene cu formula Legendre obtinem toti factorii primi ai lui n! si exponentii lor.</p>
+<pre><span class="code-comment"># Descompunerea lui n! ca produs de prime</span>
+<span class="code-keyword">def</span> <span class="code-function">factorizare_factorial</span>(n):
+    sieve = <span class="code-function">list</span>(<span class="code-function">range</span>(n + <span class="code-number">1</span>))
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">2</span>, <span class="code-keyword">int</span>(n**<span class="code-number">0.5</span>) + <span class="code-number">1</span>):
+        <span class="code-keyword">if</span> sieve[i] == i:
+            <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(i*i, n+<span class="code-number">1</span>, i):
+                <span class="code-keyword">if</span> sieve[j] == j: sieve[j] = i
+    rezultat = {}
+    <span class="code-keyword">for</span> p <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">2</span>, n + <span class="code-number">1</span>):
+        <span class="code-keyword">if</span> sieve[p] == p:
+            exp, pk = <span class="code-number">0</span>, p
+            <span class="code-keyword">while</span> pk &lt;= n:
+                exp += n // pk; pk *= p
+            rezultat[p] = exp
+    <span class="code-keyword">return</span> rezultat
+
+<span class="code-keyword">for</span> n <span class="code-keyword">in</span> [<span class="code-number">10</span>, <span class="code-number">12</span>]:
+    d = <span class="code-function">factorizare_factorial</span>(n)
+    parts = [<span class="code-string">f"{p}^{e}"</span> <span class="code-keyword">for</span> p, e <span class="code-keyword">in</span> <span class="code-function">sorted</span>(d.<span class="code-function">items</span>())]
+    <span class="code-function">print</span>(<span class="code-string">f"{n}! = "</span> + <span class="code-string">" * "</span>.<span class="code-function">join</span>(parts))</pre>
+    <div class="example-box">
+      <div class="example-title">Output real (rulat cu python):</div>
+      <pre>10! = 2^8 * 3^4 * 5^2 * 7^1
+12! = 2^10 * 3^5 * 5^2 * 7^1 * 11^1</pre>
+    </div>
+    <div class="example-box">
+      <div class="example-title">Verificare: 2^8 x 3^4 x 5^2 x 7 = 256 x 81 x 25 x 7 = 3.628.800 &#10003;</div>
+    </div>
+    <div class="concept-def"><strong>Complexitate:</strong> O(n log log n) pentru ciur + O(pi(n) log n) pentru Legendre pe fiecare prim. Eficient pentru n &le; 10<sup>6</sup>.</div>
+  </div>
+</div>
+
+<!-- ATOM 4 -->
+<div class="atom" id="atom-4" data-quiz='[{"question": "Cate inmultiri face exponentierea rapida pentru 2^1000?", "options": ["1000", "500", "aproximativ 10", "aproximativ 30"], "correct": "c", "hint": "Exponentierea rapida face O(log2(1000))~10 pasi. Varianta naiva: 999 inmultiri."}]'>
+  <div class="atom-header"><div class="atom-number">4</div><h3 class="atom-title">4. Exponentiere rapida &mdash; Square and Multiply, O(log n)</h3></div>
+  <div class="atom-content">
+    <div class="concept-def">
+      <strong>Problema:</strong> Calculeaza a<sup>b</sup> % m pentru b pana la 10<sup>18</sup>. Varianta naiva (b inmultiri) e impracticabila.<br>
+      <strong>Ideea:</strong> Scriem b in baza 2. Daca b=13=1101<sub>2</sub>=8+4+1, atunci a<sup>13</sup>=a<sup>1</sup>&times;a<sup>4</sup>&times;a<sup>8</sup>.
+    </div>
+    <div class="example-box">
+      <div class="example-title">Pas cu pas: 7^13</div>
+      <p>7<sup>2</sup>=49, 7<sup>4</sup>=2401, 7<sup>8</sup>=5764801</p>
+      <p>7<sup>13</sup> = 7<sup>1</sup> &times; 7<sup>4</sup> &times; 7<sup>8</sup> = 96.889.010.407 (3 ridicari la patrat + 3 inmultiri vs 12 naive)</p>
+    </div>
+<pre><span class="code-comment"># Exponentiere rapida: base^exp % mod  in O(log exp)</span>
+<span class="code-keyword">def</span> <span class="code-function">power_fast</span>(base, exp, mod):
+    result = <span class="code-number">1</span>
+    base %= mod
+    <span class="code-keyword">while</span> exp &gt; <span class="code-number">0</span>:
+        <span class="code-keyword">if</span> exp % <span class="code-number">2</span> == <span class="code-number">1</span>:
+            result = result * base % mod
+        base = base * base % mod
+        exp //= <span class="code-number">2</span>
+    <span class="code-keyword">return</span> result
+
+MOD = <span class="code-number">1_000_000_007</span>
+<span class="code-function">print</span>(<span class="code-string">f"2^10 mod M = {power_fast(2, 10, MOD)}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"7^100 mod M = {power_fast(7, 100, MOD)}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"2^1000000 mod M = {power_fast(2, 1_000_000, MOD)}"</span>)</pre>
+    <div class="example-box">
+      <div class="example-title">Output real (rulat cu python):</div>
+      <pre>2^10 mod M = 1024
+7^100 mod M = 946501044
+2^1000000 mod M = 235042059</pre>
+    </div>
+    <div class="bonus-box">
+      <div class="bonus-title">&#9889; C++ &mdash; EXCLUSIV INTENSIV</div>
+      <p>Aplica % mod dupa fiecare inmultire. Daca base~10<sup>9</sup> si mod~10<sup>9</sup>, produsul intermediar~10<sup>18</sup> e la limita long long.</p>
+    </div>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">long long</span> <span class="code-function">powerMod</span>(<span class="code-keyword">long long</span> base, <span class="code-keyword">long long</span> exp, <span class="code-keyword">long long</span> mod) {
+    <span class="code-keyword">long long</span> result = <span class="code-number">1</span>;
+    base %= mod;
+    <span class="code-keyword">while</span> (exp &gt; <span class="code-number">0</span>) {
+        <span class="code-keyword">if</span> (exp &amp; <span class="code-number">1</span>) result = result * base % mod;
+        base = base * base % mod;
+        exp &gt;&gt;= <span class="code-number">1</span>;
+    }
+    <span class="code-keyword">return</span> result;
+}
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">long long</span> M = <span class="code-number">1000000007LL</span>;
+    cout &lt;&lt; <span class="code-string">"2^10 mod M = "</span>  &lt;&lt; <span class="code-function">powerMod</span>(<span class="code-number">2</span>,<span class="code-number">10</span>,M)  &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"7^100 mod M = "</span> &lt;&lt; <span class="code-function">powerMod</span>(<span class="code-number">7</span>,<span class="code-number">100</span>,M) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+    <div class="example-box">
+      <div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+      <pre>2^10 mod M = 1024
+7^100 mod M = 946501044</pre>
+    </div>
+    <div class="concept-def"><strong>Complexitate:</strong> O(log exp) timp, O(1) spatiu. Pentru exp=10<sup>18</sup> &rarr; 60 pasi.</div>
+  </div>
+</div>
+
+<!-- ATOM 5 -->
+<div class="atom" id="atom-5" data-quiz='[{"question": "De ce nu calculam C(n,k) direct in C++ pentru n mare?", "options": ["Formula e gresita", "n! depaseste long long pentru n>20", "C(n,k) poate fi negativ", "Nu exista nicio problema"], "correct": "b", "hint": "20!~2.4*10^18 intra in long long, dar 21! da overflow. Lucram modular pentru n mare."}]'>
+  <div class="atom-header"><div class="atom-number">5</div><h3 class="atom-title">5. Coeficienti binomiali modular <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3></div>
+  <div class="atom-content">
+    <div class="bonus-box">
+      <div class="bonus-title">&#9889; Sectiune exclusiv intensiv informatica &mdash; concursuri si olimpiada</div>
+      <p>Combinam exponentierea rapida cu inversul modular pentru a calcula C(n,k)%p fara factoriale uriase direct.</p>
+    </div>
+    <div class="concept-def">
+      <strong>Inversul modular (Mica teorema Fermat):</strong> Daca p e prim si gcd(a,p)=1:<br>
+      a<sup>-1</sup> mod p = a<sup>p-2</sup> mod p<br><br>
+      Deci: <strong>C(n,k) mod p = n! &times; (k!)<sup>p-2</sup> &times; ((n-k)!)<sup>p-2</sup> mod p</strong>
+    </div>
+<pre><span class="code-comment"># C(n, k) mod p, pentru p prim</span>
+MOD = <span class="code-number">1_000_000_007</span>
+
+<span class="code-keyword">def</span> <span class="code-function">power_fast</span>(base, exp, mod):
+    result, base = <span class="code-number">1</span>, base % mod
+    <span class="code-keyword">while</span> exp &gt; <span class="code-number">0</span>:
+        <span class="code-keyword">if</span> exp &amp; <span class="code-number">1</span>: result = result * base % mod
+        base = base * base % mod; exp &gt;&gt;= <span class="code-number">1</span>
+    <span class="code-keyword">return</span> result
+
+<span class="code-keyword">def</span> <span class="code-function">factorial_mod</span>(n, mod):
+    r = <span class="code-number">1</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">2</span>, n+<span class="code-number">1</span>): r = r * i % mod
+    <span class="code-keyword">return</span> r
+
+<span class="code-keyword">def</span> <span class="code-function">comb_mod</span>(n, k, mod):
+    <span class="code-keyword">if</span> k &gt; n: <span class="code-keyword">return</span> <span class="code-number">0</span>
+    num = <span class="code-function">factorial_mod</span>(n, mod)
+    den = <span class="code-function">factorial_mod</span>(k, mod) * <span class="code-function">factorial_mod</span>(n-k, mod) % mod
+    <span class="code-keyword">return</span> num * <span class="code-function">power_fast</span>(den, mod-<span class="code-number">2</span>, mod) % mod
+
+<span class="code-function">print</span>(<span class="code-string">f"C(5,2) = {comb_mod(5, 2, MOD)}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"C(10,3) = {comb_mod(10, 3, MOD)}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"C(1000,500) mod M = {comb_mod(1000, 500, MOD)}"</span>)</pre>
+    <div class="example-box">
+      <div class="example-title">Output real (rulat cu python):</div>
+      <pre>C(5,2) = 10
+C(10,3) = 120
+C(1000,500) mod M = 159835829</pre>
+    </div>
+    <div class="concept-def"><strong>Optimizare pentru query-uri multiple:</strong> Precalculeaza fact[i]=i! mod p si inv_fact[i]=(i!)<sup>-1</sup> mod p. Fiecare C(n,k) in O(1) dupa O(n) pregatire.</div>
+  </div>
+</div>
+
+<!-- ATOM 6 -->
+<div class="atom" id="atom-6" data-quiz='[{"question": "Complexitatea formulei Legendre pentru un prim p in n! este:", "options": ["O(n)", "O(sqrt(n))", "O(log_p(n))", "O(n log n)"], "correct": "c", "hint": "Bucla ruleaza de log_p(n) ori. Pentru n=10^9 si p=2 sunt 30 iteratii."}]'>
+  <div class="atom-header"><div class="atom-number">6</div><h3 class="atom-title">6. Tabel complexitati si capcane la BAC si olimpiada</h3></div>
+  <div class="atom-content">
+    <div class="concept-def"><strong>Tabel rezumativ:</strong><ul>
+      <li><strong>Factorial iterativ:</strong> O(n) timp, O(1) spatiu. Sigur pana la n=20 cu long long.</li>
+      <li><strong>Factorial recursiv:</strong> O(n) timp, O(n) stiva. Risc stack overflow pentru n&gt;10.000.</li>
+      <li><strong>Formula Legendre (un prim):</strong> O(log<sub>p</sub> n) timp.</li>
+      <li><strong>Descompunerea lui n! (toti primii):</strong> O(n log log n) ciur + O(pi(n) log n) Legendre.</li>
+      <li><strong>Exponentiere rapida:</strong> O(log exp) timp, O(1) spatiu.</li>
+    </ul></div>
+    <div class="example-box"><div class="example-title">Capcane frecvente la examen:</div><ul>
+      <li><strong>Overflow silent C++:</strong> int max~2.1&times;10<sup>9</sup>. 13!=6.2&times;10<sup>9</sup> depaseste. Folositi long long.</li>
+      <li><strong>pk overflow in Legendre:</strong> Declarati long long pk, nu int pk.</li>
+      <li><strong>Zerouri != n/5:</strong> n/5 uita multiplii de 25, 125 etc. Folositi formula Legendre completa.</li>
+      <li><strong>Modulul la exponentiere:</strong> Aplicati % mod dupa fiecare inmultire, nu la final.</li>
+    </ul></div>
+    <div class="example-box"><div class="example-title">Calcul mental rapid &mdash; zerouri in n!:</div>
+      <p>100!: 100/5=20, 100/25=4, 100/125=0 &rarr; 20+4 = <strong>24 zerouri</strong></p>
+      <p>1000!: 1000/5=200, 1000/25=40, 1000/125=8, 1000/625=1 &rarr; <strong>249 zerouri</strong></p>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- PRACTICE -->
+<section class="practice-section" id="practice">
+  <h2>Exercitii practice</h2>
+  <div class="practice-exercise" data-level="minim">
+    <h3>Exercitiul 1 (Nivel minim) &mdash; Formula Legendre directa</h3>
+    <p>Cate zerouri are 50! la final? Arata calculul pas cu pas: floor(50/5) + floor(50/25) + floor(50/125) + &hellip;</p>
+    <p><em>Raspuns: floor(50/5)=10, floor(50/25)=2, floor(50/125)=0 &rarr; 10+2 = <strong>12 zerouri</strong>.</em></p>
+  </div>
+  <div class="practice-exercise" data-level="standard">
+    <h3>Exercitiul 2 (Nivel standard) &mdash; Implementare si verificare</h3>
+    <p>Scrie o functie care primeste n si returneaza exponentul lui 2 in n!, fara a calcula n! efectiv. Testeaza pentru n=16 (raspuns: 15) si n=32 (raspuns: 31).</p>
+    <p><em>Indiciu: v<sub>2</sub>(16!) = 8+4+2+1 = 15. v<sub>2</sub>(32!) = 16+8+4+2+1 = 31.</em></p>
+  </div>
+  <div class="practice-exercise" data-level="performanta">
+    <h3>Exercitiul 3 (Nivel performanta) &mdash; Coeficienti binomiali si invers modular</h3>
+    <p>Calculeaza C(20, 8) mod (10<sup>9</sup>+7) folosind exponentierea rapida si inversul Fermat. Verifica: C(20,8) = 125.970.</p>
+    <p>Scrie un program care precalculeaza fact[] si inv_fact[] si raspunde la q interogari C(n,k) mod p in O(1) per query (n,k &le; 10<sup>6</sup>).</p>
+  </div>
+</section>
+
+<!-- REVIEW -->
+<section class="review-section">
+  <div class="summary-box">
+    <h2>Ce ai invatat astazi</h2>
+    <ul>
+      <li>Factorial iterativ O(n) si limitele de stocare (long long: n&le;20)</li>
+      <li>Formula Legendre: v<sub>p</sub>(n!) = sum floor(n/p^k) in O(log<sub>p</sub> n)</li>
+      <li>Zerouri la finalul lui n! = v<sub>5</sub>(n!) &mdash; aplicatia directa clasica</li>
+      <li>Descompunerea completa a lui n! (ciur + Legendre pe fiecare prim)</li>
+      <li>Exponentiere rapida Square-and-Multiply in O(log exp)</li>
+      <li>Coeficienti binomiali modular via invers Fermat (intensiv)</li>
+    </ul>
+  </div>
+  <div id="lesson-summary" style="display: none;"></div>
+  <div class="next-lesson">
+    <h3>Urmatoarea lectie</h3>
+    <p>Continua cu <strong>Lectia 3: Analiza complexitatii</strong> &mdash; O(n), O(n<sup>2</sup>), O(log n).</p>
+    <a href="lectia3-complexitate.html" class="btn-next">Continua &#8594;</a>
+  </div>
+</section>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m2-algoritmi-eficienti-lectia2-factorial-factorizare');
+        PracticeSimple.init('cls12-m2-algoritmi-eficienti-lectia2-factorial-factorizare');
+        LessonSummary.init('cls12-m2-algoritmi-eficienti-lectia2-factorial-factorizare');
+        Breadcrumb.init({
+            grade: 'cls9',
+            gradeName: 'Clasa a IX-a',
+            module: 'm2-algoritmi-eficienti',
+            moduleName: 'M2 Algoritmi Eficienti',
+            lesson: 'Factorial si Factorizare Eficienta'
+        });
+        LearningProgress.init('cls12', 'm2-algoritmi-eficienti', 'lectia2-factorial-factorizare.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

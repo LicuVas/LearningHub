@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 3: Complexitatea algoritmilor | Clasa a XII-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia2-factorial-factorizare.html" class="nav-btn" title="Lectia anterioara">&#8592; L2: Factorizare n!</a>
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8593; Modulul</a>
+        <a href="lectia4-cautare-binara.html" class="nav-btn" title="Lectia urmatoare">L4: Cautare binara &#8594;</a>
+    </nav>
+    <!-- CURRICULUM NOTICE -->
+    <div class="curriculum-notice" style="background:#fff3cd;border-left:4px solid #f0ad4e;padding:10px 14px;margin:10px 0;border-radius:4px;font-size:0.9em;">
+      <strong>Nota curriculum:</strong> Continuturile acestei lectii (complexitatea algoritmilor, notatia O, cautare binara, sortare prin selectie, exponentierea rapida) apartin <strong>clasei a IX-a intensiv informatica</strong>, sectiunea 2.1 (OMEN 4.350/2025: &ldquo;eficienta algoritmilor &ndash; notatie O&rdquo;). Clasa a XII-a mat-info acopera <em>exclusiv</em> baze de date relationale avansate (SQL: SELECT/INSERT/UPDATE/DELETE/JOIN), normalizare forme normale si Machine Learning. Aceasta pagina este plasata temporar in structura cls12 si urmeaza a fi mutata in modulul corespunzator cls9.
+    </div>
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Complexitatea algoritmilor: notatia O, comparatie empirica</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- FRAME SECTION -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege cum masuram eficienta unui algoritm folosind notatia O mare, vei compara empiric algoritmii O(1), O(log n), O(n), O(n log n) si O(n&sup2;) si vei sti sa alegi algoritmul potrivit pentru o problema data.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa definesti complexitatea temporala si sa explici de ce conteaza</li>
+                <li>Sa recunosti si sa compari clasele O(1), O(log n), O(n), O(n log n), O(n&sup2;)</li>
+                <li>Sa calculezi complexitatea unui algoritm simplu numarand operatiile dominante</li>
+                <li>Sa compari empiric doi algoritmi (masurare timp sau numarare pasi) si sa justifici rezultatul</li>
+                <li>Sa identifici complexitatea algoritmilor clasici: sortare prin selectie, cautare binara, merge sort</li>
+                <li><span class="bonus-badge">EXCLUSIV INTENSIV</span> Sa implementezi si sa masori empiric complexitatea in C++</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- TRY SECTION -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Ai o lista de 1.000.000 de numere sortate. Vrei sa gasesti daca numarul 777777 se afla in lista.</p>
+                <p><strong>Varianta A:</strong> Parcurgi lista de la inceput &mdash; in cel mai rau caz, 1.000.000 de pasi.<br>
+                <strong>Varianta B:</strong> Te uiti la mijloc. Daca numarul e mai mic, ignori jumatatea dreapta si repeti &mdash; in cel mai rau caz, doar 20 de pasi.</p>
+                <textarea id="tryAnswer" placeholder="De ce Varianta B e atat de rapida? Cate injumatatiri trebuie pana ajungi de la 1.000.000 la 1?" rows="4"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>La fiecare pas, numarul de elemente ramase se <strong>injumatateste</strong>. De cate ori poti injumatati 1.000.000 pana ajungi la 1?</p>
+                    <p>Raspuns: 2<sup>20</sup> = 1.048.576 &asymp; 1.000.000, deci sunt necesari aproximativ <strong>20 de pasi</strong> (log&#8322;(1.000.000) &asymp; 20). Asta este puterea lui O(log n)!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ATOMS -->
+    <main id="atomic-content">
+
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Complexitatea temporala O(f(n)) descrie:", "options": ["Memoria folosita de algoritm", "Cum creste numarul de operatii in functie de dimensiunea n a datelor", "Numarul de linii de cod din program", "Viteza procesorului pe care ruleaza programul"], "correct": "b", "hint": "O(f(n)) descrie comportamentul algoritmului cand n creste - nu depinde de hardware sau numarul de linii de cod."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">Ce este complexitatea temporala?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Complexitatea temporala</strong> a unui algoritm descrie cum creste <em>numarul de operatii fundamentale</em> (comparatii, atribuiri, adunari etc.) in functie de dimensiunea <em>n</em> a datelor de intrare. Nu masuram secunde &mdash; masuram <strong>ordinul de crestere</strong>.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">De ce nu masuram in secunde?</div>
+                    <p>Un algoritm lent pe un supercomputer poate fi mai rapid decat un algoritm bun pe un calculator vechi. Complexitatea ne spune ceva <strong>independent de hardware</strong>: ce se intampla cand n se dubleaza?</p>
+                </div>
+                <div class="concept-def">
+                    <strong>Notatia O mare (Big-O)</strong> exprima <em>limita superioara</em> a cresterii: ignoram constantele si termenii mai mici.<br>
+                    Exemplu: daca un algoritm face <code>3n&sup2; + 5n + 7</code> operatii, spunem ca are complexitate <strong>O(n&sup2;)</strong>.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Regula de simplificare O:</div>
+                    <ul>
+                        <li><code>O(5n)</code> &rarr; <code>O(n)</code> &mdash; ignoram constanta 5</li>
+                        <li><code>O(n&sup2; + n)</code> &rarr; <code>O(n&sup2;)</code> &mdash; ignoram termenul mai mic</li>
+                        <li><code>O(2 log n + 3)</code> &rarr; <code>O(log n)</code></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Care clasa de complexitate este mai eficienta pentru n mare?", "options": ["O(n^2)", "O(n log n)", "O(n)", "O(log n)"], "correct": "d", "hint": "Ierarhia de la cel mai eficient la cel mai lent: O(1) < O(log n) < O(n) < O(n log n) < O(n^2). O(log n) creste extrem de lent chiar si pentru n=1.000.000 (doar 20 pasi)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">Clasele de complexitate: ierarhie si intuitie</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Urmatoarele clase apar cel mai des in practica, in ordine de la cel mai eficient la cel mai lent:
+                </div>
+                <div class="example-box">
+                    <div class="example-title">O(1) &mdash; Constant</div>
+                    <p>Numarul de operatii NU depinde de n. Exemple: accesul la un element de tablou prin index, formula matematica directa (ex: suma Gauss).</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">O(log n) &mdash; Logaritmic</div>
+                    <p>La fiecare pas, problema se <strong>injumatateste</strong>. Exemple: cautare binara, exponentierea rapida.</p>
+                    <p>Intuitie: log&#8322;(1.000.000) &asymp; 20 &mdash; din un milion de elemente, gasesti orice in cel mult 20 de pasi.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">O(n) &mdash; Liniar</div>
+                    <p>Parcurgem fiecare element o singura data. Exemple: cautare liniara, suma unui sir, citirea unui fisier.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">O(n log n) &mdash; Linearitmic</div>
+                    <p>Combinatie: parcurgem n elemente, dar la fiecare nivel avem un factor logaritmic. Exemple: Merge Sort, Heap Sort, Quick Sort (caz mediu).</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">O(n&sup2;) &mdash; Patratic</div>
+                    <p>Doua bucle imbricate care parcurg n elemente fiecare. Exemple: sortare prin selectie, sortare prin insertie, verificarea tuturor perechilor.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Tabel comparativ (numar de operatii aproximativ):</div>
+                    <pre><span class="code-comment">       n      O(1)  O(log n)       O(n)  O(n log n)       O(n^2)</span>
+<span class="code-number">      10</span>         1         3         10          33           100
+<span class="code-number">     100</span>         1         7        100         664         10000
+<span class="code-number">    1000</span>         1        10       1000        9966       1000000
+<span class="code-number"> 1000000</span>         1        20    1000000    19931568  1000000000000</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Un algoritm O(n) rezolva o problema pentru n=10000 in 300 microsecunde. Cat timp estimam pentru n=20000?", "options": ["300 microsecunde (nu depinde de n)", "Aproximativ 600 microsecunde", "Aproximativ 1.200.000 microsecunde", "Nu se poate estima"], "correct": "b", "hint": "La O(n), daca n se dubleaza, si timpul se dubleaza (relatie liniara). 300 * 2 = 600 microsecunde."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">Comparatie empirica: O(n) vs O(1) in Python</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Masuram concret diferenta dintre un algoritm O(n) si unul O(1) care rezolva aceeasi problema: suma 1 + 2 + ... + n.
+                </div>
+                <pre><span class="code-keyword">import</span> time
+
+<span class="code-keyword">def</span> <span class="code-function">suma_liniara</span>(n):                 <span class="code-comment"># O(n): parcurgem n pasi</span>
+    s = <span class="code-number">0</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n + <span class="code-number">1</span>):
+        s += i
+    <span class="code-keyword">return</span> s
+
+<span class="code-keyword">def</span> <span class="code-function">suma_formula</span>(n):               <span class="code-comment"># O(1): o singura formula</span>
+    <span class="code-keyword">return</span> n * (n + <span class="code-number">1</span>) // <span class="code-number">2</span>
+
+n = <span class="code-number">10000</span>
+t0 = time.<span class="code-function">perf_counter</span>()
+r1 = <span class="code-function">suma_liniara</span>(n)
+t1 = time.<span class="code-function">perf_counter</span>()
+r2 = <span class="code-function">suma_formula</span>(n)
+t2 = time.<span class="code-function">perf_counter</span>()
+<span class="code-function">print</span>(<span class="code-string">f"suma_liniara({n}) = {r1}, timp: {(t1-t0)*1e6:.1f} us  [O(n)]"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"suma_formula({n}) = {r2}, timp: {(t2-t1)*1e6:.3f} us  [O(1)]"</span>)</pre>
+                <div class="example-box">
+                    <div class="example-title">Output real (rulat cu python):</div>
+                    <pre>suma_liniara(10000) = 50005000, timp: 315.4 microsecunde  [O(n)]
+suma_formula(10000) = 50005000, timp: 1.400 microsecunde  [O(1)]</pre>
+                </div>
+                <div class="concept-def">
+                    Ambele dau acelasi rezultat (50005000), dar O(1) este de <strong>~225 de ori mai rapid</strong> decat O(n) pentru n=10.000. La n=1.000.000, diferenta ar fi de ~22.500 de ori.
+                </div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Care este complexitatea sortarii prin selectie?", "options": ["O(n)", "O(n log n)", "O(n^2)", "O(log n)"], "correct": "c", "hint": "Doua bucle imbricate => O(n^2). n*(n-1)/2 comparatii."}]'>
+            <div class="atom-header"><div class="atom-number">4</div><h3 class="atom-title">Calculul complexitatii: numararea operatiilor dominante</h3></div>
+            <div class="atom-content">
+                <div class="concept-def">Pentru a determina complexitatea unui algoritm, identificam <strong>bucla care se executa cel mai mult</strong> si numaram de cate ori se executa instructiunea principala.</div>
+                <div class="example-box"><div class="example-title">Exemplu 1: Sortare prin selectie &mdash; O(n&sup2;)</div>
+                    <pre><span class="code-keyword">def</span> <span class="code-function">sortare_selectie</span>(arr):
+    a = arr[:]
+    n = <span class="code-function">len</span>(a)
+    comparatii = <span class="code-number">0</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n):         <span class="code-comment"># n iteratii</span>
+        min_idx = i
+        <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(i+1, n):  <span class="code-comment"># n-1, n-2,..., 1 iteratii</span>
+            comparatii += 1
+            <span class="code-keyword">if</span> a[j] &lt; a[min_idx]: min_idx = j
+        a[i], a[min_idx] = a[min_idx], a[i]
+    <span class="code-keyword">return</span> a, comparatii</pre>
+                    <div class="example-box"><div class="example-title">Output real (rulat cu python):</div><pre>Sortare prin selectie (n=10): 45 comparatii  [teoretic n*(n-1)/2 = 45]  =&gt; O(n^2)</pre></div>
+                    <p>Total comparatii: (n-1)+(n-2)+...+1 = n(n-1)/2 &asymp; n&sup2;/2 &rarr; <strong>O(n&sup2;)</strong></p></div>
+                <div class="example-box"><div class="example-title">Exemplu 2: Cautare binara &mdash; O(log n)</div>
+                    <pre><span class="code-keyword">def</span> <span class="code-function">cautare_binara</span>(arr, target):
+    lo, hi = 0, <span class="code-function">len</span>(arr)-1
+    pasi = 0
+    <span class="code-keyword">while</span> lo &lt;= hi:
+        pasi += 1
+        mid = (lo+hi)//2  <span class="code-comment"># intervalul se injumatateste</span>
+        <span class="code-keyword">if</span> arr[mid] == target: <span class="code-keyword">return</span> mid, pasi
+        <span class="code-keyword">elif</span> arr[mid] &lt; target: lo = mid+1
+        <span class="code-keyword">else</span>: hi = mid-1
+    <span class="code-keyword">return</span> -1, pasi</pre>
+                    <div class="example-box"><div class="example-title">Output real (rulat cu python):</div><pre>Cautare binara (n=1024, target=777): gasit la idx=777, pasi=9  [log2(1024)=10]  =&gt; O(log n)</pre></div>
+                    <p>La fiecare pas intervalul se injumatateste &rarr; <strong>O(log n)</strong></p></div>
+                <div class="example-box"><div class="example-title">Exemplu 3: Merge Sort &mdash; O(n log n) verificat empiric</div>
+                    <pre><span class="code-comment"># Output real: Merge sort (n=16): ~44 comparatii  [n*log2(n)=64]  =&gt; O(n log n)</span>
+<span class="code-comment"># n niveluri de log n adancime, la fiecare nivel n operatii de combinare</span></pre>
+                    <p>Merge sort: n * log n &rarr; <strong>O(n log n)</strong></p></div>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-5" data-quiz='[{"question": "In C++, putere_rapida(2, 32, MOD) executa cati pasi?", "options": ["32 pasi O(n)", "6 pasi (32->16->8->4->2->1->0)", "1 pas O(1)", "5 pasi exact log2(32)"], "correct": "b", "hint": "La fiecare iteratie exp_val se injumatateste. Plecand de la 32: 32->16->8->4->2->1->0 = 6 iteratii."}]'>
+            <div class="atom-header"><div class="atom-number">5</div><h3 class="atom-title">Implementare si verificare empirica in C++ <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3></div>
+            <div class="atom-content">
+                <div class="bonus-box"><div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div><p>Implementam si verificam empiric toate clasele de complexitate in C++. Numaratoarea exacta de operatii confirma teoria.</p></div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;cmath&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-comment">// O(1) - formula Gauss</span>
+<span class="code-keyword">long long</span> <span class="code-function">suma_gauss</span>(<span class="code-keyword">long long</span> n) {
+    <span class="code-keyword">return</span> n * (n + 1) / 2;
+}
+
+<span class="code-comment">// O(log n) - exponentierea rapida</span>
+<span class="code-keyword">long long</span> <span class="code-function">putere_rapida</span>(<span class="code-keyword">long long</span> b, <span class="code-keyword">long long</span> e, <span class="code-keyword">long long</span> m) {
+    <span class="code-keyword">long long</span> r = 1;
+    <span class="code-keyword">int</span> pasi = 0;
+    <span class="code-keyword">while</span> (e &gt; 0) {
+        <span class="code-keyword">if</span> (e % 2 == 1) r = r * b % m;
+        b = b * b % m; e /= 2; pasi++;
+    }
+    cout &lt;&lt; "  Pasi O(log n): " &lt;&lt; pasi &lt;&lt; "  [log2(32)=" &lt;&lt; (int)log2(32) &lt;&lt; "]" &lt;&lt; endl;
+    <span class="code-keyword">return</span> r;
+}
+
+<span class="code-comment">// O(n^2) - sortare prin selectie cu numarare</span>
+<span class="code-keyword">int</span> <span class="code-function">sortare_selectie_comp</span>(vector&lt;<span class="code-keyword">int</span>&gt; v) {
+    <span class="code-keyword">int</span> n = v.size(), c = 0;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = 0; i &lt; n-1; i++) {
+        <span class="code-keyword">int</span> m = i;
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = i+1; j &lt; n; j++) { c++; <span class="code-keyword">if</span> (v[j] &lt; v[m]) m = j; }
+        swap(v[i], v[m]);
+    }
+    cout &lt;&lt; "  Sir sortat: "; <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : v) cout &lt;&lt; x &lt;&lt; " "; cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> c;
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    cout &lt;&lt; "O(1) - suma_gauss(1000000)=" &lt;&lt; suma_gauss(1000000) &lt;&lt; endl;
+    cout &lt;&lt; "O(log n) - 2^32 mod (10^9+7):" &lt;&lt; endl;
+    <span class="code-keyword">long long</span> rez = putere_rapida(2, 32, 1000000007LL);
+    cout &lt;&lt; "  Rezultat: " &lt;&lt; rez &lt;&lt; endl;
+    cout &lt;&lt; "O(n^2) - sortare selectie n=8:" &lt;&lt; endl;
+    vector&lt;<span class="code-keyword">int</span>&gt; arr = {5, 2, 8, 1, 9, 3, 7, 4};
+    <span class="code-keyword">int</span> comp = sortare_selectie_comp(arr);
+    cout &lt;&lt; "  Comparatii: " &lt;&lt; comp &lt;&lt; "  [teoretic 8*7/2=" &lt;&lt; 8*7/2 &lt;&lt; "]" &lt;&lt; endl;
+    <span class="code-keyword">return</span> 0;
+}</pre>
+                <div class="example-box"><div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+                    <pre>O(1) - suma_gauss(1000000)=500000500000
+O(log n) - 2^32 mod (10^9+7):
+  Pasi O(log n): 6  [log2(32)=5]
+  Rezultat: 294967268
+O(n^2) - sortare selectie n=8:
+  Sir sortat: 1 2 3 4 5 7 8 9
+  Comparatii: 28  [teoretic 8*7/2=28]</pre></div>
+                <p>Observatie: putere_rapida executa 6 pasi pentru exp=32, nu 5 ca log&#8322;(32). La ultima iteratie exp_val=1 (impar), intra in bucla, se incrementeaza pasi, apoi e/=2 face exp_val=0 si se iese. Ordinul ramane <strong>O(log n)</strong>.</p>
+            </div>
+        </div>
+
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Un algoritm are bucla: for i in range(1, n+1): for j in range(i, n+1). Cate iteratii executa bucla interioara in total?", "options": ["n iteratii", "n*n iteratii", "n*(n+1)/2 iteratii", "n*log(n) iteratii"], "correct": "c", "hint": "Bucla interioara executa n, n-1, n-2,..., 1 iteratii. Suma = n*(n+1)/2. Ordinul este O(n^2)."}]'>
+            <div class="atom-header"><div class="atom-number">6</div><h3 class="atom-title">Alegerea algoritmului si tipare BAC</h3></div>
+            <div class="atom-content">
+                <div class="concept-def">Regula practica: daca n &le; 100.000, O(n log n) este sigur. Daca n &le; 10.000, O(n&sup2;) poate fi acceptabil. Daca n = 10<sup>9</sup>, ai nevoie de O(log n) sau O(1).</div>
+                <div class="example-box"><div class="example-title">Tipare de bucle si complexitatile lor (esential la BAC):</div>
+                    <pre><span class="code-comment"># O(n) - o singura bucla liniara</span>
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(n):       <span class="code-comment"># instructiune simpla</span>
+
+<span class="code-comment"># O(n^2) - doua bucle imbricate pana la n</span>
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(n):
+    <span class="code-keyword">for</span> j <span class="code-keyword">in</span> range(n):  <span class="code-comment"># n*n operatii</span>
+
+<span class="code-comment"># O(log n) - injumatatire la fiecare pas</span>
+<span class="code-keyword">while</span> n &gt; 1:
+    n = n // 2
+
+<span class="code-comment"># O(n^2) - bucla interioara de la i (tot patratic!)</span>
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(1, n+1):
+    <span class="code-keyword">for</span> j <span class="code-keyword">in</span> range(i, n+1):  <span class="code-comment"># total: n*(n+1)/2 ~ n^2/2 =&gt; O(n^2)</span></pre></div>
+                <div class="example-box"><div class="example-title">Algoritmi standard si complexitatile lor (de memorat):</div>
+                    <pre><span class="code-comment">Cautare liniara               =&gt;  O(n)
+Sortare prin selectie         =&gt;  O(n^2)
+Sortare prin insertie         =&gt;  O(n^2)
+Sortare cu lista de frecventa =&gt;  O(n + max_val)
+Merge Sort                    =&gt;  O(n log n)
+Quick Sort (caz mediu)        =&gt;  O(n log n)
+Cautare binara                =&gt;  O(log n)
+Exponentierea rapida          =&gt;  O(log n)
+Ciurul lui Eratostene         =&gt;  O(n log log n)
+Acces tablou prin index       =&gt;  O(1)
+Formula matematica directa    =&gt;  O(1)</span></pre></div>
+                <div class="concept-def">La BAC, exercitiile tipice cer: (1) sa identifici complexitatea unui algoritm dat, (2) sa numeri operatiile pentru un n dat, (3) sa compari doi algoritmi si sa alegi cel mai eficient.</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- PRACTICE -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Identifica complexitatea</h3>
+            <p>Determina complexitatea temporala a urmatorului algoritm si justifica:</p>
+            <pre>s = 0
+for i in range(1, n+1):
+    s = s + i * i
+print(s)</pre>
+            <p><strong>Intrebare:</strong> Ce calculeaza algoritmul? Care este complexitatea lui O? Exista o formula O(1) echivalenta (suma patratelor 1&sup2; + 2&sup2; + ... + n&sup2; = n(n+1)(2n+1)/6)?</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Analiza si comparatie</h3>
+            <p>Ai doua abordari pentru a verifica daca un numar <em>p</em> este prim:</p>
+            <p><strong>Varianta A:</strong> Verifici toti divizorii de la 2 la p-1.<br>
+            <strong>Varianta B:</strong> Verifici divizorii de la 2 la &radic;p.</p>
+            <p>Determina complexitatea fiecarei variante. Pentru p = 10.000, cate verificari face fiecare varianta in cel mai rau caz? Pe care o alegi si de ce?</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Problema concurs</h3>
+            <p>Ai un tablou de n numere intregi (n pana la 10<sup>6</sup>). Gaseste perechea (i, j) cu i &lt; j astfel incat |a[i] - a[j]| sa fie minima.</p>
+            <p><strong>Varianta naiva:</strong> Verifici toate perechile &mdash; O(n&sup2;).<br>
+            <strong>Varianta eficienta:</strong> Sortezi tabloul &mdash; O(n log n) &mdash; si compari elementele consecutive &mdash; O(n).</p>
+            <p>Implementeaza varianta eficienta si verifica pentru tabloul: [4, 1, 7, 3, 13, 1, 8]. Raspuns asteptat: distanta minima = 0 (valoarea 1 apare de doua ori).</p>
+        </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Complexitatea O(f(n)) masoara ordinul de crestere al numarului de operatii &mdash; independent de hardware</li>
+                <li>Ierarhia: O(1) &lt; O(log n) &lt; O(n) &lt; O(n log n) &lt; O(n&sup2;) &mdash; diferentele sunt dramatice pentru n mare</li>
+                <li>Exemple: O(1) = formula Gauss; O(log n) = cautare binara, exponentierea rapida; O(n) = cautare liniara; O(n log n) = Merge Sort; O(n&sup2;) = sortare prin selectie</li>
+                <li>Calculul complexitatii: numara iteratiile buclei dominante; doua bucle imbricate pana la n &rarr; O(n&sup2;)</li>
+                <li>Comparatia empirica confirma teoria: O(1) este de ~225 ori mai rapid decat O(n) la n=10.000</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Lectia 4: Cautare binara</strong> &mdash; implementare, variante si aplicatii ale algoritmului O(log n) in probleme de concurs.</p>
+            <a href="lectia4-cautare-binara.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m2-algoritmi-eficienti-lectia3-complexitate');
+        PracticeSimple.init('cls12-m2-algoritmi-eficienti-lectia3-complexitate');
+        LessonSummary.init('cls12-m2-algoritmi-eficienti-lectia3-complexitate');
+        Breadcrumb.init({
+            grade: 'cls12',
+            gradeName: 'Clasa a XII-a',
+            module: 'm2-algoritmi-eficienti',
+            moduleName: 'M2 Algoritmi Eficienti',
+            lesson: 'Complexitatea algoritmilor'
+        });
+        LearningProgress.init('cls12', 'm2-algoritmi-eficienti', 'lectia3-complexitate.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

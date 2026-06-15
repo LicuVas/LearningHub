@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 4: Fisiere text | Clasa a IX-a Mat-Info Intensiv</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+</head>
+<body>
+<div class="container">
+
+    <nav class="nav-bar">
+        <a href="lectia3-oop-intro.html" class="nav-btn">&#8592; Lectia 3</a>
+        <a href="index.html" class="nav-btn">Modulul</a>
+        <a href="lectia5-gui-tkinter.html" class="nav-btn">Lectia 5 &#8594;</a>
+    </nav>
+
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Fisiere text: deschidere, citire, scriere</h1>
+        <div class="lesson-notice" style="margin-top:0.75rem;padding:0.6rem 1rem;background:#fff3cd;border-left:4px solid #ffc107;border-radius:4px;font-size:0.85rem;color:#856404;">
+            <strong>Nota curriculum:</strong> Aceasta tema corespunde clasei a IX-a, sectiunea 3.3 (intensiv informatica). Ea apare in modulul cls12 din cauza unei reorganizari de curs; continutul si competentele vizate sunt cele din programa cls IX.
+        </div>
+    </header>
+
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header"><span class="goal-icon">&#127919;</span><h2 class="goal-title">Obiectivul lectiei</h2></div>
+            <p class="goal-text">Vei invata sa deschizi, citesti, scrii si inchizi fisiere text in Python si C++, si sa procesezi date structurate salvate pe disc.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa deschizi un fisier text in Python cu <code>open()</code> si modurile <code>r</code>, <code>w</code>, <code>a</code></li>
+                <li>Sa citesti cu <code>read()</code>, <code>readline()</code>, <code>readlines()</code> si iteratie directa</li>
+                <li>Sa scrii si sa adaugi date cu <code>write()</code> si modul <code>a</code></li>
+                <li>Sa folosesti blocul <code>with</code> pentru inchiderea automata a fisierelor</li>
+                <li>Sa procesezi date structurate (CSV simplu) dintr-un fisier</li>
+                <li><span class="bonus-badge">EXCLUSIV INTENSIV</span> Sa lucrezi cu fisiere in C++ cu <code>ifstream</code> si <code>ofstream</code></li>
+            </ul>
+        </div>
+    </section>
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare:</div>
+                <p>Gandeste-te: de ce salvam date in fisiere si nu doar in variabile? Ce se intampla cu variabilele cand programul se inchide?</p>
+                <textarea id="tryAnswer" placeholder="Scrie raspunsul tau: ce avantaje au fisierele fata de variabilele in memorie?" rows="4"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Variabilele traiesc doar cat ruleaza programul. Un fisier pastreaza datele <strong>permanent pe disc</strong>.</p>
+                    <p>Exemplu: un jurnal de note salvat in fisier poate fi citit maine sau de un alt program.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main id="atomic-content">
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Ce se intampla cu datele dintr-o variabila Python cand programul se termina?", "options": ["Se salveaza automat pe disc", "Se pierd din memorie", "Raman in RAM", "Se trimit in retea"], "correct": "b", "hint": "Variabilele sunt in memorie RAM volatila. La inchidere dispar."}]'>
+            <div class="atom-header"><div class="atom-number">1</div><h3 class="atom-title">1. De ce avem nevoie de fisiere?</h3></div>
+            <div class="atom-content">
+                <div class="concept-def">Un <strong>fisier text</strong> este o secventa de caractere salvata pe disc, organizata pe linii. Spre deosebire de variabile (memorie RAM, volatile), fisierele sunt <strong>persistente</strong>: supravietuiesc inchiderii programului.</div>
+                <div class="example-box"><div class="example-title">Analogie: caietul vs memoria de lucru</div><p>Memoria RAM este ca ce tii minte in cap acum - dispare cand adormi. Fisierul pe disc este ca ce scrii in caiet - ramane si a doua zi. Programele cu date persistente (jurnale, configurari, baze de date simple) au nevoie de fisiere.</p></div>
+                <div class="concept-def"><strong>Ciclul complet de lucru cu un fisier:</strong><ol><li><strong>Deschide</strong> fisierul (specifici numele si modul)</li><li><strong>Citeste sau Scrie</strong> date</li><li><strong>Inchide</strong> fisierul (elibereaza resurse OS, goleste buffer-ul)</li></ol></div>
+            </div>
+        </div>
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Ce mod de deschidere folosesti ca sa adaugi date FARA sa suprascrii?", "options": ["r", "w", "a", "x"], "correct": "c", "hint": "Modul a (append) adauga la sfarsit. Modul w sterge tot continutul."}]'>
+            <div class="atom-header"><div class="atom-number">2</div><h3 class="atom-title">2. Deschiderea fisierelor in Python - open()</h3></div>
+            <div class="atom-content">
+                <div class="concept-def">Functia <code>open(nume_fisier, mod, encoding)</code> returneaza un obiect de tip <code>TextIOWrapper</code>. Specifica intotdeauna <code>encoding="utf-8"</code>.</div>
+                <div class="example-box"><div class="example-title">Moduri de deschidere</div><table><tr><th>Mod</th><th>Actiune</th><th>Daca fisierul nu exista</th></tr><tr><td><code>"r"</code></td><td>Citire</td><td>Eroare FileNotFoundError</td></tr><tr><td><code>"w"</code></td><td>Scriere (suprascrie tot)</td><td>Il creeaza</td></tr><tr><td><code>"a"</code></td><td>Adaugare la sfarsit</td><td>Il creeaza</td></tr><tr><td><code>"r+"</code></td><td>Citire si scriere</td><td>Eroare</td></tr><tr><td><code>"x"</code></td><td>Creare exclusiva</td><td>Il creeaza; eroare daca exista</td></tr></table></div>
+                <pre><span class="code-comment"># Recomandat: blocul with inchide fisierul automat</span>
+<span class="code-keyword">with</span> <span class="code-function">open</span>(<span class="code-string">"jurnal.txt"</span>, <span class="code-string">"w"</span>, encoding=<span class="code-string">"utf-8"</span>) <span class="code-keyword">as</span> f:
+    f.<span class="code-function">write</span>(<span class="code-string">"Prima intrare
+"</span>)
+<span class="code-comment"># Fisierul este deja inchis automat dupa bloc</span>
+
+<span class="code-comment"># Fara with: trebuie close() explicit</span>
+f = <span class="code-function">open</span>(<span class="code-string">"jurnal.txt"</span>, <span class="code-string">"r"</span>, encoding=<span class="code-string">"utf-8"</span>)
+date = f.<span class="code-function">read</span>()
+f.<span class="code-function">close</span>()  <span class="code-comment"># obligatoriu fara with!</span></pre>
+                <div class="example-box"><div class="example-title">Regula de aur: foloseste intotdeauna <code>with</code></div><p>Blocul <code>with</code> garanteaza ca fisierul se inchide chiar si cand apare o eroare. Fara close(), datele pot ramane in buffer.</p></div>
+            </div>
+        </div>
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Ce afiseaza programul dupa open w ABC, apoi open w XYZ?", "options": ["ABCXYZ", "ABC", "Eroare", "XYZ"], "correct": "d", "hint": "Al doilea open cu modul w suprascrie tot continutul. Ramane doar XYZ."}]'>
+            <div class="atom-header"><div class="atom-number">3</div><h3 class="atom-title">3. Scrierea in fisiere - write() si modul append</h3></div>
+            <div class="atom-content">
+                <pre><span class="code-comment"># Scriere initiala (creeaza sau suprascrie fisierul)</span>
+<span class="code-keyword">with</span> <span class="code-function">open</span>(<span class="code-string">"demo.txt"</span>, <span class="code-string">"w"</span>, encoding=<span class="code-string">"utf-8"</span>) <span class="code-keyword">as</span> f:
+    f.<span class="code-function">write</span>(<span class="code-string">"Linia 1: Python fisiere
+"</span>)
+    f.<span class="code-function">write</span>(<span class="code-string">"Linia 2: deschidere si scriere
+"</span>)
+    f.<span class="code-function">write</span>(<span class="code-string">"Linia 3: sfarsit
+"</span>)
+<span class="code-function">print</span>(<span class="code-string">"Fisier creat cu succes."</span>)
+<span class="code-function">print</span>(<span class="code-string">"Continut scris: 3 linii"</span>)</pre>
+                <div class="example-box"><div class="example-title">Output real (rulat cu python):</div><pre>Fisier creat cu succes.
+Continut scris: 3 linii</pre></div>
+                <pre><span class="code-comment"># Adaugare la fisier existent (modul a = append)</span>
+<span class="code-keyword">with</span> <span class="code-function">open</span>(<span class="code-string">"demo.txt"</span>, <span class="code-string">"a"</span>, encoding=<span class="code-string">"utf-8"</span>) <span class="code-keyword">as</span> f:
+    f.<span class="code-function">write</span>(<span class="code-string">"Linia 4: adaugata cu append
+"</span>)
+
+<span class="code-keyword">with</span> <span class="code-function">open</span>(<span class="code-string">"demo.txt"</span>, <span class="code-string">"r"</span>, encoding=<span class="code-string">"utf-8"</span>) <span class="code-keyword">as</span> f:
+    <span class="code-keyword">for</span> i, linie <span class="code-keyword">in</span> <span class="code-function">enumerate</span>(f, <span class="code-number">1</span>):
+        <span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"Linia {i}: {linie.strip()}"</span>)</pre>
+                <div class="example-box"><div class="example-title">Output real (rulat cu python):</div><pre>Linia 1: Linia 1: Python fisiere
+Linia 2: Linia 2: deschidere si scriere
+Linia 3: Linia 3: sfarsit
+Linia 4: Linia 4: adaugata cu append</pre></div>
+                <div class="example-box"><div class="example-title">Atentie: write() nu adauga automat newline!</div><p>write() scrie exact ce ii dai. Adauga explicit backslash-n la sfarsitul fiecarui rand.</p></div>
+            </div>
+        </div>
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Ce returneaza f.readlines() pentru un fisier cu 3 linii?", "options": ["O lista cu 3 elemente string", "Un string cu tot textul", "Numarul de linii", "Un iterator pe caractere"], "correct": "a", "hint": "readlines() returneaza o LISTA de stringuri, cate un element per linie."}]'>
+            <div class="atom-header"><div class="atom-number">4</div><h3 class="atom-title">4. Metode de citire in Python</h3></div>
+            <div class="atom-content">
+                <div class="example-box"><div class="example-title">Premisa: demo.txt exista</div><p>Codul de mai jos citeste fisierul <code>demo.txt</code> creat in <strong>atomul 3</strong> (Scrierea in fisiere). Ruleaza intai atomul 3, apoi acest atom.</p></div>
+                <div class="concept-def">Exista 4 moduri principale de citire, in functie de dimensiunea fisierului si ce vrei sa faci cu datele.</div>
+                <pre><span class="code-comment"># Metoda 1: read() - tot textul ca un singur string</span>
+<span class="code-keyword">with</span> <span class="code-function">open</span>(<span class="code-string">"demo.txt"</span>, <span class="code-string">"r"</span>, encoding=<span class="code-string">"utf-8"</span>) <span class="code-keyword">as</span> f:
+    continut = f.<span class="code-function">read</span>()
+<span class="code-function">print</span>(<span class="code-string">"=== read() ==="</span>)
+<span class="code-function">print</span>(continut)</pre>
+                <div class="example-box"><div class="example-title">Output real (rulat cu python):</div><pre>=== read() ===
+Linia 1: Python fisiere
+Linia 2: deschidere si scriere
+Linia 3: sfarsit
+</pre></div>
+                <pre><span class="code-comment"># Metoda 2: readline() - o linie la un moment dat</span>
+<span class="code-keyword">with</span> <span class="code-function">open</span>(<span class="code-string">"demo.txt"</span>, <span class="code-string">"r"</span>, encoding=<span class="code-string">"utf-8"</span>) <span class="code-keyword">as</span> f:
+    linie = f.<span class="code-function">readline</span>()
+    <span class="code-keyword">while</span> linie:
+        <span class="code-function">print</span>(<span class="code-function">repr</span>(linie))
+        linie = f.<span class="code-function">readline</span>()</pre>
+                <div class="example-box"><div class="example-title">Output real (rulat cu python):</div><pre>'Linia 1: Python fisiere
+'
+'Linia 2: deschidere si scriere
+'
+'Linia 3: sfarsit
+'</pre></div>
+                <pre><span class="code-comment"># Metoda 3: readlines() - toate liniile ca lista</span>
+<span class="code-keyword">with</span> <span class="code-function">open</span>(<span class="code-string">"demo.txt"</span>, <span class="code-string">"r"</span>, encoding=<span class="code-string">"utf-8"</span>) <span class="code-keyword">as</span> f:
+    linii = f.<span class="code-function">readlines</span>()
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"Numar linii: {len(linii)}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"Prima linie: {linii[0].strip()}"</span>)
+
+<span class="code-comment"># Metoda 4: iteratie directa (RECOMANDATA - O(1) memorie)</span>
+<span class="code-keyword">with</span> <span class="code-function">open</span>(<span class="code-string">"demo.txt"</span>, <span class="code-string">"r"</span>, encoding=<span class="code-string">"utf-8"</span>) <span class="code-keyword">as</span> f:
+    <span class="code-keyword">for</span> linie <span class="code-keyword">in</span> f:
+        <span class="code-function">print</span>(linie.<span class="code-function">strip</span>())</pre>
+                <div class="example-box"><div class="example-title">Output real (rulat cu python):</div><pre>Numar linii: 3
+Prima linie: Linia 1: Python fisiere</pre></div>
+                <div class="concept-def"><strong>Complexitate memorie:</strong><ul><li>read() si readlines() - O(N) memorie (incarca TOT fisierul)</li><li>Iteratia directa for linie in f - O(1) memorie per pas (recomandat pentru fisiere mari)</li></ul></div>
+            </div>
+        </div>
+        <div class="atom" id="atom-5" data-quiz='[{"question": "De ce folosim linie.strip() inainte de split la CSV?", "options": ["Ca sa transformam in cifre", "Ca sa sortam liniile", "Ca sa eliminam newline si spatii de la capete", "Nu e necesar"], "correct": "c", "hint": "Fiecare linie include newline la sfarsit. Fara strip(), int() ar arunca ValueError."}]'>
+            <div class="atom-header"><div class="atom-number">5</div><h3 class="atom-title">5. Aplicatie: procesare date structurate (CSV simplu)</h3></div>
+            <div class="atom-content">
+                <div class="concept-def">Format comun: date separate prin virgula, cate un record pe linie (<strong>CSV simplu</strong> - Comma-Separated Values).</div>
+                <pre><span class="code-comment"># Cream fisierul de date (note.txt)</span>
+<span class="code-keyword">with</span> <span class="code-function">open</span>(<span class="code-string">"note.txt"</span>, <span class="code-string">"w"</span>, encoding=<span class="code-string">"utf-8"</span>) <span class="code-keyword">as</span> f:
+    f.<span class="code-function">write</span>(<span class="code-string">"Ana,9
+Bogdan,7
+Carla,10
+Dan,8
+Elena,6
+"</span>)
+
+total = <span class="code-number">0</span>; count = <span class="code-number">0</span>; max_nota = -<span class="code-number">1</span>; max_elev = <span class="code-string">""</span>
+
+<span class="code-keyword">with</span> <span class="code-function">open</span>(<span class="code-string">"note.txt"</span>, <span class="code-string">"r"</span>, encoding=<span class="code-string">"utf-8"</span>) <span class="code-keyword">as</span> f:
+    <span class="code-keyword">for</span> linie <span class="code-keyword">in</span> f:
+        linie = linie.<span class="code-function">strip</span>()
+        <span class="code-keyword">if</span> linie:
+            elev, nota_str = linie.<span class="code-function">split</span>(<span class="code-string">","</span>)
+            nota = <span class="code-function">int</span>(nota_str)
+            total += nota; count += <span class="code-number">1</span>
+            <span class="code-keyword">if</span> nota &gt; max_nota:
+                max_nota = nota; max_elev = elev
+
+media = total / count
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"Numar elevi: {count}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"Media clasei: {media:.2f}"</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">"Cel mai bun elev: {max_elev} cu nota {max_nota}"</span>)
+
+<span class="code-keyword">with</span> <span class="code-function">open</span>(<span class="code-string">"raport.txt"</span>, <span class="code-string">"w"</span>, encoding=<span class="code-string">"utf-8"</span>) <span class="code-keyword">as</span> f:
+    f.<span class="code-function">write</span>(<span class="code-function">f</span><span class="code-string">"Raport note
+Numar elevi: {count}
+Media clasei: {media:.2f}
+"</span>)
+<span class="code-function">print</span>(<span class="code-string">"Raport salvat in raport.txt"</span>)</pre>
+                <div class="example-box"><div class="example-title">Output real (rulat cu python):</div><pre>Numar elevi: 5
+Media clasei: 8.00
+Cel mai bun elev: Carla cu nota 10
+Raport salvat in raport.txt</pre></div>
+                <div class="concept-def"><strong>Complexitate:</strong> O(N) timp, O(1) memorie suplimentara (procesam linie cu linie, nu incarcam tot).</div>
+            </div>
+        </div>
+        <div class="atom" id="atom-6" data-quiz='[{"question": "In C++, ce clasa folosesti pentru CITIRE din fisier?", "options": ["ifstream", "ofstream", "fstream", "iostream"], "correct": "a", "hint": "ifstream = input file stream (citire). ofstream = output file stream (scriere)."}]'>
+            <div class="atom-header"><div class="atom-number">6</div><h3 class="atom-title">6. Fisiere in C++ - ifstream si ofstream <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3></div>
+            <div class="atom-content">
+                <div class="bonus-box"><div class="bonus-title">&#9889; Sectiune exclusiv intensiv informatica</div><p>In C++, fisierele se gestioneaza prin clasele din <code>&lt;fstream&gt;</code>. Verificarea cu <code>is_open()</code> este obligatorie in cod de productie.</p></div>
+                <div class="concept-def"><strong>Header necesar:</strong> <code>#include &lt;fstream&gt;</code> | ofstream = scriere | ifstream = citire</div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;fstream&gt;</span>
+<span class="code-preprocessor">#include &lt;string&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">ofstream</span> fout(<span class="code-string">"demo_cpp.txt"</span>);
+    <span class="code-keyword">if</span> (!fout.<span class="code-function">is_open</span>()) {
+        cerr &lt;&lt; <span class="code-string">"Eroare!"</span> &lt;&lt; endl; <span class="code-keyword">return</span> <span class="code-number">1</span>;
+    }
+    fout &lt;&lt; <span class="code-string">"L1: C++ fisiere text"</span> &lt;&lt; endl;
+    fout &lt;&lt; <span class="code-string">"L2: ofstream pentru scriere"</span> &lt;&lt; endl;
+    fout &lt;&lt; <span class="code-string">"L3: sfarsit"</span> &lt;&lt; endl;
+    fout.<span class="code-function">close</span>();
+    cout &lt;&lt; <span class="code-string">"Fisier creat cu succes."</span> &lt;&lt; endl;
+    <span class="code-keyword">ifstream</span> fin(<span class="code-string">"demo_cpp.txt"</span>);
+    <span class="code-keyword">if</span> (!fin.<span class="code-function">is_open</span>()) {
+        cerr &lt;&lt; <span class="code-string">"Eroare citire!"</span> &lt;&lt; endl; <span class="code-keyword">return</span> <span class="code-number">1</span>;
+    }
+    <span class="code-keyword">string</span> linie; <span class="code-keyword">int</span> nr = <span class="code-number">0</span>;
+    cout &lt;&lt; <span class="code-string">"=== Continut fisier ==="</span> &lt;&lt; endl;
+    <span class="code-keyword">while</span> (<span class="code-function">getline</span>(fin, linie)) {
+        nr++;
+        cout &lt;&lt; <span class="code-string">"Linia "</span> &lt;&lt; nr &lt;&lt; <span class="code-string">": "</span> &lt;&lt; linie &lt;&lt; endl;
+    }
+    fin.<span class="code-function">close</span>();
+    cout &lt;&lt; <span class="code-string">"Total linii citite: "</span> &lt;&lt; nr &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box"><div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div><pre>Fisier creat cu succes.
+=== Continut fisier ===
+Linia 1: L1: C++ fisiere text
+Linia 2: L2: ofstream pentru scriere
+Linia 3: L3: sfarsit
+Total linii citite: 3</pre></div>
+                <div class="concept-def"><strong>Python vs C++ pentru fisiere:</strong><table><tr><th>Aspect</th><th>Python</th><th>C++</th></tr><tr><td>Header</td><td>built-in</td><td>#include fstream</td></tr><tr><td>Scriere</td><td>open(f,w)</td><td>ofstream fout(f)</td></tr><tr><td>Citire</td><td>open(f,r)</td><td>ifstream fin(f)</td></tr><tr><td>Citire linie</td><td>for l in f</td><td>getline(fin, linie)</td></tr><tr><td>Verificare</td><td>try/except</td><td>if (!fin.is_open())</td></tr><tr><td>Inchidere</td><td>automata cu with</td><td>fin.close() explicit</td></tr></table></div>                <div class="bonus-box"><div class="bonus-title">&#9889; Aplicatie C++: procesare CSV cu stringstream</div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;fstream&gt;</span>
+<span class="code-preprocessor">#include &lt;string&gt;</span>
+<span class="code-preprocessor">#include &lt;sstream&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">ifstream</span> fin(<span class="code-string">"note.txt"</span>);
+    <span class="code-keyword">if</span> (!fin.<span class="code-function">is_open</span>()) { cerr &lt;&lt; <span class="code-string">"Eroare!"</span> &lt;&lt; endl; <span class="code-keyword">return</span> <span class="code-number">1</span>; }
+    <span class="code-keyword">string</span> linie, elev, nota_str, max_elev;
+    <span class="code-keyword">int</span> nota, total=<span class="code-number">0</span>, count=<span class="code-number">0</span>, max_nota=-<span class="code-number">1</span>;
+    <span class="code-keyword">while</span> (<span class="code-function">getline</span>(fin, linie)) {
+        <span class="code-keyword">if</span> (linie.<span class="code-function">empty</span>()) <span class="code-keyword">continue</span>;
+        <span class="code-keyword">stringstream</span> ss(linie);
+        <span class="code-function">getline</span>(ss, elev, <span class="code-string">',' </span>);
+        <span class="code-function">getline</span>(ss, nota_str);
+        nota = <span class="code-function">stoi</span>(nota_str);
+        total += nota; count++;
+        <span class="code-keyword">if</span> (nota &gt; max_nota) { max_nota=nota; max_elev=elev; }
+    }
+    fin.<span class="code-function">close</span>();
+    cout &lt;&lt; <span class="code-string">"Numar elevi: "</span> &lt;&lt; count &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Media clasei: "</span> &lt;&lt; (<span class="code-keyword">double</span>)total/count &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Cel mai bun elev: "</span> &lt;&lt; max_elev &lt;&lt; <span class="code-string">" cu nota "</span> &lt;&lt; max_nota &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box"><div class="example-title">Output real (compilat g++ -std=c++17, rulat cu note.txt din atomul 5):</div><pre>Numar elevi: 5
+Media clasei: 8
+Cel mai bun elev: Carla cu nota 10</pre></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Scriere simpla</h3>
+            <p>Scrie un program Python care creeaza fisierul <code>salut.txt</code> si scrie in el 5 salutari, cate una pe linie. Citeste si afiseaza continutul.</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Jurnal de temperaturi</h3>
+            <p>Scrie un program Python care scrie in <code>temperaturi.txt</code> temperaturile din 7 zile in format <code>Zi,Temperatura</code>, citeste fisierul, calculeaza media si ziua cu temperatura maxima si salveaza raportul.</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; <span class="bonus-badge">EXCLUSIV INTENSIV</span> Log parser C++</h3>
+            <p>Program C++ care citeste un fisier de log cu linii de forma <code>NIVEL:mesaj</code>. Numara ERROR/WARNING/INFO, scrie in <code>erori.txt</code> doar liniile ERROR si afiseaza statistici. Indiciu: <code>stringstream</code> si <code>getline(ss, token, ':')</code> pentru a separa nivelul.</p>
+        </div>
+    </section>
+
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>De ce sunt necesare fisierele text (persistenta datelor pe disc)</li>
+                <li>Functia open() cu modurile r, w, a, r+</li>
+                <li>Blocul with ca metoda recomandata (inchidere automata)</li>
+                <li>Metodele de citire: read(), readline(), readlines(), iteratie directa</li>
+                <li>Procesarea datelor CSV: strip() + split(virgula)</li>
+                <li>Complexitatea O(N) timp si O(1) memorie la procesare linie-cu-linie</li>
+                <li><span class="bonus-badge">EXCLUSIV INTENSIV</span> ifstream/ofstream in C++, getline(), is_open(), stringstream</li>
+            </ul>
+        </div>
+        <div id="lesson-summary" style="display: none;"></div>
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>In lectia urmatoare vei invata sa construiesti interfete grafice simple cu Tkinter.</p>
+            <a href="lectia5-gui-tkinter.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+</div>
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m1-oop-lectia4-fisiere');
+        PracticeSimple.init('cls12-m1-oop-lectia4-fisiere');
+        LessonSummary.init('cls12-m1-oop-lectia4-fisiere');
+        Breadcrumb.init({grade:'cls12',gradeName:'Clasa a IX-a (intensiv)',module:'m1-oop',moduleName:'M1 OOP si Aplicatii',lesson:'Fisiere text: deschidere, citire, scriere'});
+        LearningProgress.init('cls12','m1-oop','lectia4-fisiere.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

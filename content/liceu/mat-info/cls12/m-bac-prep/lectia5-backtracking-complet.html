@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 5: Backtracking Complet | Clasa a XII-a BAC Prep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia4-recursivitate-master.html" class="nav-btn" title="Lectia anterioara">&#8592; Recursivitate</a>
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">Modulul</a>
+        <a href="lectia6-grafuri-complet.html" class="nav-btn" title="Lectia urmatoare">Grafuri &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Backtracking &mdash; Complet</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei stapani tehnica backtracking de la schema generala pana la implementarea C++ a permutarilor, combinarilor, aranjamentelor si problemei reginelor &mdash; toate tipurile cerute la Bacalaureat.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa explici schema generala backtracking si cum functioneaza arborele de cautare</li>
+                <li>Sa implementezi in C++ generarea permutarilor, combinarilor si aranjamentelor</li>
+                <li>Sa rezolvi problema reginelor si probleme de tip subset-sum prin backtracking</li>
+                <li>Sa identifici conditia de succes, conditia de continuare si functia de validare</li>
+                <li>Sa analizezi complexitatea O(n!) vs O(C(n,k)) si sa explici pruning-ul</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare initiala:</div>
+<p>Ai 3 bile colorate: <strong>R</strong> (rosie), <strong>G</strong> (galbena), <strong>B</strong> (albastra). In cate moduri le poti aranja in sir? Scrie TOATE sirurile posibile, ordonat.</p>
+<textarea id="tryAnswer" placeholder="RGB
+RBG
+GRB
+..." rows="8"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+<div class="hint-content">
+<p>Porneste de la prima pozitie: poti pune R, G sau B. Pentru fiecare alegere, la pozitia a 2-a poti pune oricare din cele RAMASE. La a 3-a pozitie ramane exact o singura bila.</p>
+<p>Sunt 3 &times; 2 &times; 1 = <strong>6 permutari</strong>. Aceasta explorare sistematica = backtracking!</p>
+</div>
+</div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Schema generala -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "In schema generala backtracking, dupa ce plasam un element valid la nivelul k, urmatorul pas este:", "options": ["Apelam recursiv backtrack(k+1)", "Ne intoarcem la nivelul k-1", "Afisam solutia curenta", "Verificam conditia de succes inainte de plasare"], "correct": "a", "hint": "Dupa ce plasam un element valid, avansam la urmatorul nivel cu backtrack(k+1). Ne intoarcem (backtrack) doar dupa ce am epuizat toate variantele de la nivelul k."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Schema generala backtracking</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Backtracking</strong> = tehnica de generare sistematica a solutiilor prin explorarea unui arbore de cautare, cu <em>revenire</em> (backtrack) cand o ramura nu mai poate duce la o solutie valida.
+                </div>
+                <div class="example-box">
+<div class="example-title">Structura arborelui de cautare (n=3, permutari):</div>
+<pre>
+                   []
+         /          |          \
+       [1]         [2]         [3]
+      /   \       /   \       /   \
+   [1,2] [1,3] [2,1] [2,3] [3,1] [3,2]
+    |      |     |     |     |     |
+ [1,2,3][1,3,2][2,1,3][2,3,1][3,1,2][3,2,1]
+</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Schema generala C++ (pseudocod extins):</strong>
+                    <ul>
+                        <li><code>backtrack(nivel)</code>: construieste solutia pas cu pas</li>
+                        <li>Daca <code>nivel == n+1</code>: solutie completa &rarr; afiseaza</li>
+                        <li>Altfel: incearca toate valorile posibile pentru pozitia <code>nivel</code></li>
+                        <li>Daca valoarea e valida: plaseaz-o, apeleaza <code>backtrack(nivel+1)</code>, retrage-o</li>
+                    </ul>
+                </div>
+                <pre><span class="code-comment">// Schema generala backtracking (C++)</span>
+<span class="code-keyword">void</span> <span class="code-function">backtrack</span>(<span class="code-keyword">int</span> nivel) {
+    <span class="code-keyword">if</span> (conditie_succes(nivel)) {
+        <span class="code-function">afiseaza_solutia</span>();
+        <span class="code-keyword">return</span>;
+    }
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> val = val_min; val &lt;= val_max; val++) {
+        <span class="code-keyword">if</span> (<span class="code-function">valid</span>(nivel, val)) {
+            <span class="code-function">plaseaza</span>(nivel, val);   <span class="code-comment">// adauga in solutie</span>
+            <span class="code-function">backtrack</span>(nivel + <span class="code-number">1</span>);  <span class="code-comment">// avansare</span>
+            <span class="code-function">retrage</span>(nivel, val);    <span class="code-comment">// BACKTRACK propriu-zis</span>
+        }
+    }
+}</pre>
+                <div class="example-box">
+<div class="example-title">Cei 3 pasi cheie la fiecare nivel:</div>
+<p><strong>1. Plaseaza</strong> &rarr; <strong>2. Avanseaza</strong> &rarr; <strong>3. Retrage</strong> (plasare + retragere = stivuire reversibila)</p>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Permutari -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "De ce folosim vectorul boolean `folosit[]` la generarea permutarilor?", "options": ["Pentru a numara solutiile", "Pentru a sorta elementele", "Pentru a evita repetarea aceluiasi element in aceeasi permutare", "Pentru a limita adancimea recursiei"], "correct": "c", "hint": "folosit[val]=true marcheaza ca valoarea val este deja in solutia curenta. Fara acest vector, am putea pune acelasi numar de mai multe ori in aceeasi permutare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Permutari ale multimii {1..n}</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O <strong>permutare</strong> a multimii {1, 2, ..., n} este un sir de lungime n in care fiecare element apare exact o data. Numarul total de permutari = <strong>n!</strong>
+                </div>
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Implementare C++ &mdash; EXCLUSIV INTENSIV</div>
+<p>La profilul intensiv-informatica, implementarea in C++ cu vectorul <code>folosit[]</code> si recursie este esentiala pentru BAC.</p>
+</div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> n = <span class="code-number">3</span>;
+vector&lt;<span class="code-keyword">int</span>&gt; sol;
+<span class="code-keyword">bool</span> folosit[<span class="code-number">10</span>];
+
+<span class="code-keyword">void</span> <span class="code-function">backtrack</span>(<span class="code-keyword">int</span> nivel) {
+    <span class="code-keyword">if</span> (nivel == n + <span class="code-number">1</span>) {       <span class="code-comment">// solutie completa</span>
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : sol) cout &lt;&lt; x &lt;&lt; <span class="code-string">" "</span>;
+        cout &lt;&lt; <span class="code-string">"\n"</span>;
+        <span class="code-keyword">return</span>;
+    }
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> val = <span class="code-number">1</span>; val &lt;= n; val++) {
+        <span class="code-keyword">if</span> (!folosit[val]) {          <span class="code-comment">// val e disponibila</span>
+            sol.<span class="code-function">push_back</span>(val);
+            folosit[val] = <span class="code-keyword">true</span>;
+            <span class="code-function">backtrack</span>(nivel + <span class="code-number">1</span>);
+            sol.<span class="code-function">pop_back</span>();           <span class="code-comment">// retragere</span>
+            folosit[val] = <span class="code-keyword">false</span>;     <span class="code-comment">// retragere</span>
+        }
+    }
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-function">backtrack</span>(<span class="code-number">1</span>);
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>1 2 3
+1 3 2
+2 1 3
+2 3 1
+3 1 2
+3 2 1 </pre>
+</div>
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> O(n &middot; n!) &mdash; n! solutii, fiecare necesita O(n) timp pentru afisare. Numarul total de noduri in arbore (inclusiv interne) este aproximativ e &middot; n! (formula exacta: suma k=0..n din n!/k!).
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Combinari -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "La generarea combinarilor C(n,k), de ce incepem bucla for de la `start` si nu de la 1?", "options": ["Pentru eficienta (mai putine operatii)", "Deoarece combinarile nu includ elementul 1", "Este o conventie arbitrara", "Pentru a genera doar submultimi ordonate crescator si a evita duplicatele"], "correct": "d", "hint": "Daca am incepe mereu de la 1, am genera aceeasi submultime de mai multe ori (ex: {1,2} si {2,1}). Incepand de la `start` garantam ca elementele sunt in ordine strict crescatoare, deci fiecare submultime apare o singura data."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Combinari C(n,k) &mdash; submultimi de k elemente</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Combinarile</strong> C(n,k) = numarul de modalitati de a alege k elemente din {1..n} fara a conta ordinea. Formula: C(n,k) = n! / (k! &middot; (n-k)!). Elementele sunt mereu in ordine crescatoare.
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> n = <span class="code-number">5</span>, k = <span class="code-number">3</span>;
+vector&lt;<span class="code-keyword">int</span>&gt; sol;
+
+<span class="code-keyword">void</span> <span class="code-function">combinari</span>(<span class="code-keyword">int</span> start, <span class="code-keyword">int</span> nivel) {
+    <span class="code-keyword">if</span> (nivel == k + <span class="code-number">1</span>) {       <span class="code-comment">// am ales k elemente</span>
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : sol) cout &lt;&lt; x &lt;&lt; <span class="code-string">" "</span>;
+        cout &lt;&lt; <span class="code-string">"\n"</span>;
+        <span class="code-keyword">return</span>;
+    }
+    <span class="code-comment">// pruning: n-(k-nivel) = ultimul val care mai lasa destule elemente</span>
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> val = start; val &lt;= n - (k - nivel); val++) {
+        sol.<span class="code-function">push_back</span>(val);
+        <span class="code-function">combinari</span>(val + <span class="code-number">1</span>, nivel + <span class="code-number">1</span>);
+        sol.<span class="code-function">pop_back</span>();
+    }
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-function">combinari</span>(<span class="code-number">1</span>, <span class="code-number">1</span>);
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real &mdash; C(5,3) = 10 combinari:</div>
+<pre>1 2 3
+1 2 4
+1 2 5
+1 3 4
+1 3 5
+1 4 5
+2 3 4
+2 3 5
+2 4 5
+3 4 5 </pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Pruning explicat:</div>
+<p>Conditia <code>val &lt;= n - (k - nivel)</code> taie ramuri imposibile: daca mai avem nevoie de (k-nivel) elemente si am ajuns la val, trebuie sa mai existe cel putin (k-nivel-1) elemente dupa val. Altfel ne oprim mai devreme &rarr; <strong>mai putine apeluri</strong>.</p>
+</div>
+                <div class="concept-def">
+                    <strong>Complexitate:</strong> O(C(n,k) &middot; k) &mdash; mult mai eficient decat permutarile cand k &lt;&lt; n.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Aranjamente -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Care este diferenta esentiala intre aranjamente si combinari?", "options": ["La aranjamente elementele se repeta", "La aranjamente CONTEAZA ordinea elementelor alese, la combinari nu conteaza", "Aranjamentele au intotdeauna mai putine solutii decat combinarile", "Nu exista diferenta, sunt acelasi lucru"], "correct": "b", "hint": "La aranjamente A(n,k) alegem k elemente din n si ORDINEA CONTEAZA: {1,2} != {2,1}. La combinari C(n,k) {1,2} = {2,1}. De aceea A(n,k) = k! * C(n,k) intotdeauna."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Aranjamente A(n,k) &mdash; ordinea conteaza</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Aranjamentele</strong> A(n,k) = numarul de siruri ordonate de k elemente distincte din {1..n}. Formula: A(n,k) = n! / (n-k)! = k! &middot; C(n,k). Nota: permutarile sunt cazul special A(n,n) = n!.
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> n = <span class="code-number">4</span>, k = <span class="code-number">2</span>;
+vector&lt;<span class="code-keyword">int</span>&gt; sol;
+<span class="code-keyword">bool</span> folosit[<span class="code-number">10</span>];
+
+<span class="code-keyword">void</span> <span class="code-function">aranjamente</span>(<span class="code-keyword">int</span> nivel) {
+    <span class="code-keyword">if</span> (nivel == k + <span class="code-number">1</span>) {       <span class="code-comment">// am ales k elemente</span>
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : sol) cout &lt;&lt; x &lt;&lt; <span class="code-string">" "</span>;
+        cout &lt;&lt; <span class="code-string">"\n"</span>;
+        <span class="code-keyword">return</span>;
+    }
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> val = <span class="code-number">1</span>; val &lt;= n; val++) {
+        <span class="code-keyword">if</span> (!folosit[val]) {          <span class="code-comment">// ca la permutari</span>
+            sol.<span class="code-function">push_back</span>(val);
+            folosit[val] = <span class="code-keyword">true</span>;
+            <span class="code-function">aranjamente</span>(nivel + <span class="code-number">1</span>);
+            sol.<span class="code-function">pop_back</span>();
+            folosit[val] = <span class="code-keyword">false</span>;
+        }
+    }
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-function">aranjamente</span>(<span class="code-number">1</span>);
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real &mdash; A(4,2) = 12 aranjamente:</div>
+<pre>1 2
+1 3
+1 4
+2 1
+2 3
+2 4
+3 1
+3 2
+3 4
+4 1
+4 2
+4 3 </pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Tabel comparativ:</div>
+<pre>
+Tip          | Formula      | n=4, k=2 | Cod: folosit[]?  | Incepe de la?
+-------------|--------------|----------|------------------|---------------
+Permutari    | n!           | 24       | DA               | 1 (mereu)
+Aranjamente  | n!/(n-k)!   | 12       | DA               | 1 (mereu)
+Combinari    | n!/(k!(n-k)!)| 6        | NU               | start (crescator)
+</pre>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Problema reginelor (N-Queens) -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "In problema reginelor pe tabla 4x4, cate solutii exista?", "options": ["2", "1", "4", "8"], "correct": "a", "hint": "Problema celor 4 regine are exact 2 solutii: (2,4,1,3) si (3,1,4,2) - cele doua siruri de coloane in care nicio regina nu ataca alta."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Problema reginelor &mdash; N-Queens <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Problema clasica BAC &mdash; intensiv informatica</div>
+<p>Plaseaza n regine pe o tabla n&times;n astfel incat nicio doua regine sa nu se atace (aceeasi linie, coloana sau diagonala). Fiecare linie contine exact o regina &rarr; reprezentam solutia ca un vector de coloane.</p>
+</div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> n = <span class="code-number">4</span>;
+vector&lt;<span class="code-keyword">int</span>&gt; col; <span class="code-comment">// col[i] = coloana reginei de pe linia i</span>
+<span class="code-keyword">int</span> solutii = <span class="code-number">0</span>;
+
+<span class="code-keyword">bool</span> <span class="code-function">valid</span>(<span class="code-keyword">int</span> linie, <span class="code-keyword">int</span> coloana) {
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; linie; i++) {
+        <span class="code-keyword">if</span> (col[i] == coloana) <span class="code-keyword">return false</span>; <span class="code-comment">// aceeasi coloana</span>
+        <span class="code-keyword">if</span> (abs(col[i] - coloana) == abs(i - linie))
+            <span class="code-keyword">return false</span>; <span class="code-comment">// aceeasi diagonala</span>
+    }
+    <span class="code-keyword">return true</span>;
+}
+
+<span class="code-keyword">void</span> <span class="code-function">queens</span>(<span class="code-keyword">int</span> linie) {
+    <span class="code-keyword">if</span> (linie == n) {       <span class="code-comment">// toate liniile ocupate</span>
+        solutii++;
+        <span class="code-keyword">if</span> (solutii == <span class="code-number">1</span>) {  <span class="code-comment">// afiseaza prima solutie</span>
+            cout &lt;&lt; <span class="code-string">"Solutia 1: "</span>;
+            <span class="code-keyword">for</span> (<span class="code-keyword">int</span> c : col) cout &lt;&lt; c + <span class="code-number">1</span> &lt;&lt; <span class="code-string">" "</span>;
+            cout &lt;&lt; <span class="code-string">"\n"</span>;
+        }
+        <span class="code-keyword">return</span>;
+    }
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> c = <span class="code-number">0</span>; c &lt; n; c++) {
+        <span class="code-keyword">if</span> (<span class="code-function">valid</span>(linie, c)) {
+            col.<span class="code-function">push_back</span>(c);
+            <span class="code-function">queens</span>(linie + <span class="code-number">1</span>);
+            col.<span class="code-function">pop_back</span>();
+        }
+    }
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-function">queens</span>(<span class="code-number">0</span>);
+    cout &lt;&lt; <span class="code-string">"Total solutii pentru "</span> &lt;&lt; n &lt;&lt; <span class="code-string">"-Queens: "</span> &lt;&lt; solutii &lt;&lt; <span class="code-string">"\n"</span>;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>Solutia 1: 2 4 1 3
+Total solutii pentru 4-Queens: 2</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Functia valid() verifica 2 conditii:</strong>
+                    <ul>
+                        <li><code>col[i] == coloana</code>: aceeasi coloana &rarr; conflict</li>
+                        <li><code>|col[i] - coloana| == |i - linie|</code>: pe aceeasi diagonala &rarr; conflict</li>
+                    </ul>
+                    <strong>Complexitate:</strong> O(n!) in cazul rau, dar pruning reduce semnificativ numarul de apeluri reale.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Subset Sum si Complexitate -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Care este avantajul pruning-ului in backtracking?", "options": ["Reduce spatiul de memorie folosit de stiva recursiei", "Sorteaza solutiile in ordine crescatoare", "Elimina ramuri ale arborelui de cautare care nu pot duce la solutie, reducand numarul de apeluri recursive", "Permite parallelizarea algoritmului"], "correct": "c", "hint": "Pruning (taiere) = abandonam o ramura cat mai devreme, inainte de a explora toate descendentele ei, daca stim ca nu poate duce la o solutie valida. Ex: la subset-sum, daca suma curenta > S, nu mai are sens sa continuam."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Subset Sum &amp; Pruning &mdash; recapitulare BAC</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Subset Sum</strong>: din vectorul v[0..n-1], gaseste toate submultimile cu suma = S. La fiecare element decidem: il includem sau nu &rarr; arbore binar de decizie cu 2^n frunze maxim.
+                </div>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> n = <span class="code-number">5</span>, S = <span class="code-number">7</span>;
+<span class="code-keyword">int</span> v[] = {<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>, <span class="code-number">5</span>};
+vector&lt;<span class="code-keyword">int</span>&gt; sol;
+
+<span class="code-keyword">void</span> <span class="code-function">subset_sum</span>(<span class="code-keyword">int</span> idx, <span class="code-keyword">int</span> suma_curenta) {
+    <span class="code-keyword">if</span> (suma_curenta == S) { <span class="code-comment">// succes</span>
+        cout &lt;&lt; <span class="code-string">"{ "</span>;
+        <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : sol) cout &lt;&lt; x &lt;&lt; <span class="code-string">" "</span>;
+        cout &lt;&lt; <span class="code-string">"}\n"</span>;
+        <span class="code-keyword">return</span>;
+    }
+    <span class="code-comment">// PRUNING: nu mai continuam daca am depasit S sau am epuizat elementele</span>
+    <span class="code-keyword">if</span> (idx &gt;= n || suma_curenta &gt; S) <span class="code-keyword">return</span>;
+
+    <span class="code-comment">// Includem v[idx]</span>
+    sol.<span class="code-function">push_back</span>(v[idx]);
+    <span class="code-function">subset_sum</span>(idx + <span class="code-number">1</span>, suma_curenta + v[idx]);
+    sol.<span class="code-function">pop_back</span>();
+
+    <span class="code-comment">// Excludem v[idx]</span>
+    <span class="code-function">subset_sum</span>(idx + <span class="code-number">1</span>, suma_curenta);
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-function">subset_sum</span>(<span class="code-number">0</span>, <span class="code-number">0</span>);
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real &mdash; submultimi din {1,2,3,4,5} cu suma = 7:</div>
+<pre>{ 1 2 4 }
+{ 2 5 }
+{ 3 4 }</pre>
+</div>
+                <div class="concept-def">
+                    <strong>Complexitati reale (pentru BAC):</strong>
+                    <ul>
+                        <li>Permutari: <strong>O(n!)</strong> solutii &mdash; creste exploziv (10! = 3.628.800)</li>
+                        <li>Combinari C(n,k): <strong>O(C(n,k))</strong> solutii &mdash; mult mai mic cand k e fix</li>
+                        <li>Aranjamente A(n,k): <strong>O(n!/(n-k)!)</strong> = A(n,k) solutii</li>
+                        <li>Subset Sum (fara pruning): <strong>O(2^n)</strong> &mdash; exponential in n</li>
+                        <li>N-Queens: <strong>O(n!)</strong> cazul rau, mult redus de pruning</li>
+                    </ul>
+                    <p>Pruning bun poate reduce O(n!) la practic vizitat &mdash; esential la examen pentru n mare.</p>
+                </div>
+                <div class="example-box">
+<div class="example-title">Regula de aur pentru BAC &mdash; cele 4 intrebari:</div>
+<pre>
+1. Ce e o "solutie"?        -> ce avem in vectorul sol[] cand suntem "gata"
+2. Cand e "gata"?           -> conditia de succes (nivel == n+1, suma == S, etc.)
+3. Ce valori incerc?        -> domeniul de valori posibile pentru pozitia curenta
+4. Ce e "valid"?            -> conditia de compatibilitate cu solutia partiala
+</pre>
+</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) - Urmarire executie permutari</h3>
+            <p>Fie n=3. Arata arborele de cautare complet si ordinea in care sunt gasite solutiile de catre algoritmul de permutari din Atomul 2. Cate apeluri backtrack() se fac in total (inclusiv cele care nu produc solutie)?</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) - Modificare algoritm</h3>
+            <p>Modifica algoritmul de combinari C(5,3) din Atomul 3 pentru a genera <strong>toate perechile (a,b)</strong> cu a &lt; b si a+b par din multimea {1,2,3,4,5,6}. Scrie functia valid() si conditia de succes modificata.</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) - Colorare harta</h3>
+            <p>Dandu-se un graf cu n=4 noduri si muchiile {(1,2),(2,3),(3,4),(4,1),(1,3)}, genereaza prin backtracking toate colorarile valide cu k=3 culori (nodurile adiacente au culori diferite). Implementeaza complet in C++ cu functia valid() care verifica adiacentele.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Schema generala backtracking: plaseaza &rarr; avanseaza &rarr; retrage</li>
+                <li>Permutari O(n!): vectorul <code>folosit[]</code>, incepe de la 1</li>
+                <li>Combinari O(C(n,k)): parametrul <code>start</code> garanteaza ordine crescatoare, fara <code>folosit[]</code></li>
+                <li>Aranjamente O(A(n,k)): ca permutarile dar se opreste la k elemente</li>
+                <li>N-Queens: functia valid() verifica coloana si diagonalele</li>
+                <li>Subset Sum: arbore binar include/exclude cu pruning pe suma</li>
+                <li>Pruning = abandonare ramura inainte de a o explora complet</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Grafuri &mdash; Complet</strong>: reprezentari (matrice adiacenta, liste adiacenta), BFS, DFS, conexitate, arbori partiali.</p>
+            <a href="lectia6-grafuri-complet.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m-bac-prep-lectia5-backtracking-complet');
+        PracticeSimple.init('cls12-m-bac-prep-lectia5-backtracking-complet');
+        LessonSummary.init('cls12-m-bac-prep-lectia5-backtracking-complet');
+        Breadcrumb.init({
+            grade: 'cls12',
+            gradeName: 'Clasa a XII-a',
+            module: 'm-bac-prep',
+            moduleName: 'BAC Prep',
+            lesson: 'Backtracking - Complet'
+        });
+        LearningProgress.init('cls12', 'm-bac-prep', 'lectia5-backtracking-complet.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

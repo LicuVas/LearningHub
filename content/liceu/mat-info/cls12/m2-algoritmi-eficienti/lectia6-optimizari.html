@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 6: Tehnici de optimizare | Clasa a XII-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia5-sortari-avansate.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 5</a>
+        <a href="index.html" class="nav-btn nav-btn--end" title="Inapoi la modul">Modulul &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Tehnici de optimizare: alegerea structurii/algoritmului potrivit</h1>
+        <div class="lesson-scope-notice" style="margin-top:1rem;padding:0.6rem 1rem;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);border-radius:10px;color:#fca5a5;font-size:0.85rem;line-height:1.5;">
+            <strong>&#9888; Nota curriculum:</strong> Tehnicile din aceasta lectie (memoizare, sume prefix, fereastra glisanta, doi pointeri) apartin programei de cls XI intensiv / extensie BAC, nu programei standard cls XII (care acopera baze de date relationale, SQL avansat si Machine Learning). Aceasta lectie este inclusa ca extensie de pregatire BAC &mdash; nu este materie de trunchi comun cls XII.
+        </div>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei invata sa alegi tehnica de optimizare potrivita pentru o problema data — memoizare, precompute (sume prefix), fereastra glisanta si doi pointeri — si sa justifici alegerea prin complexitate.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa explici de ce recursivitatea naiva poate fi exponentiala si sa o transformi prin memoizare in O(n)</li>
+                <li>Sa construiesti un tablou de sume prefix si sa raspunzi la interogari de interval in O(1)</li>
+                <li>Sa aplici tehnica ferestrei glisante pentru subarray-uri de lungime fixa in O(n)</li>
+                <li>Sa rezolvi cu doi pointeri probleme de tip subarray cu suma data in O(n)</li>
+                <li>Sa alegi structura de date potrivita (vector vs map vs set) in functie de operatiile necesare</li>
+                <li>Sa argumentezi cu notatia O() de ce solutia optimizata este superioara celei naive</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare:</div>
+<p>Ai un sir de n numere si primesti q intrebari de forma: "cat este suma elementelor din pozitia l pana la pozitia r?". Daca raspunzi la fiecare intrebare parcurgand sirul, complexitatea totala este O(n*q). Gandeste-te la un mod de a pregati sirul in avans astfel incat fiecare intrebare sa se raspunda in O(1).</p>
+<textarea id="tryAnswer" placeholder="Idee: precomputez un tablou auxiliar P unde P[i] = suma primelor i elemente...
+Atunci suma(l, r) = P[r+1] - P[l]..." rows="6"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+<div class="hint-content">
+<p>Construieste un tablou <code>prefix</code> cu <code>prefix[0] = 0</code> si <code>prefix[i] = prefix[i-1] + arr[i-1]</code>. Atunci suma elementelor din intervalul [l, r] este <code>prefix[r+1] - prefix[l]</code> — calculata in timp O(1), indiferent de lungimea intervalului!</p>
+</div>
+</div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: De ce optimizam? -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Algoritmul naiv Fibonacci fara memoizare are complexitatea:", "options": ["O(n)", "O(n log n)", "O(2^n)", "O(n^2)"], "correct": "c", "hint": "Fara memoizare, fib(n) recalculeaza aceleasi subprobleme de exponential de ori — fiecare apel genereaza 2 apeluri recursice, deci arborele are 2^n noduri in cazul naiv."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. De ce optimizam? — costul alegerii gresite</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O <strong>tehnica de optimizare</strong> reduce complexitatea timpului sau spatiului unui algoritm prin exploatarea structurii problemei. Alegerea gresita a algoritmului sau structurii de date transforma un program corect intr-unul inutilizabil pentru date mari.
+                </div>
+                <div class="example-box">
+<div class="example-title">Exemplu concret — Fibonacci naiv vs memoizat:</div>
+<p>Fibonacci fara memoizare recalculeaza aceleasi valori de milioane de ori. <code>fib(40)</code> face ~330 de milioane de apeluri recursive. Cu memoizare: exact 40 de apeluri.</p>
+</div>
+                <p>Tabel comparativ complexitate pentru probleme tipice:</p>
+                <table>
+                    <tr><th>Tehnica</th><th>Problema tipica</th><th>Naiv</th><th>Optimizat</th></tr>
+                    <tr><td>Memoizare</td><td>Fibonacci, DP pe recursie</td><td>O(2<sup>n</sup>)</td><td>O(n)</td></tr>
+                    <tr><td>Sume prefix</td><td>Suma interval [l, r]</td><td>O(n) per interogare</td><td>O(1) per interogare</td></tr>
+                    <tr><td>Fereastra glisanta</td><td>Max/Min subarray fix k</td><td>O(n*k)</td><td>O(n)</td></tr>
+                    <tr><td>Doi pointeri</td><td>Subarray cu suma data</td><td>O(n<sup>2</sup>)</td><td>O(n)</td></tr>
+                    <tr><td>Hash map</td><td>Cautare/insertie frecventa</td><td>O(n) per op</td><td>O(1) amortizat</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Memoizare -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Memoizarea rezolva problema recalcularii prin:", "options": ["Stocarea rezultatelor subproblemelor deja calculate", "Sortarea recursiei", "Inlocuirea recursiei cu un ciclu for", "Limitarea adancimii recursive la log n"], "correct": "a", "hint": "Memoizarea = memorare: stocam intr-un dictionar/tablou rezultatul fiecarei subprobleme la primul calcul si il returnam direct la urmatoarele cereri."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. Memoizare — evitarea recalcularii</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Memoizarea</strong> este tehnica de a stoca rezultatele apelurilor de functie intr-un dictionar (sau tablou), astfel incat apeluri viitoare cu aceiasi parametri sa returneze imediat valoarea stocata, fara a reparcurge recursiv arborele.
+                </div>
+                <p>Fibonacci fara memoizare (Python), verificat:</p>
+<pre><span class="code-comment"># Fibonacci cu memoizare — dict cache</span>
+memo = {}
+
+<span class="code-keyword">def</span> <span class="code-function">fib</span>(n):
+    <span class="code-keyword">if</span> n <span class="code-keyword">in</span> memo:
+        <span class="code-keyword">return</span> memo[n]
+    <span class="code-keyword">if</span> n &lt;= <span class="code-number">1</span>:
+        <span class="code-keyword">return</span> n
+    memo[n] = fib(n-<span class="code-number">1</span>) + fib(n-<span class="code-number">2</span>)
+    <span class="code-keyword">return</span> memo[n]
+
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> [<span class="code-number">0</span>, <span class="code-number">1</span>, <span class="code-number">5</span>, <span class="code-number">10</span>, <span class="code-number">20</span>, <span class="code-number">40</span>]:
+    <span class="code-function">print</span>(<span class="code-string">f"fib({i}) = {fib(i)}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>fib(0) = 0
+fib(1) = 1
+fib(5) = 5
+fib(10) = 55
+fib(20) = 6765
+fib(40) = 102334155</pre>
+</div>
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; EXCLUSIV INTENSIV — Memoizare in C++</div>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;unordered_map&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+unordered_map&lt;<span class="code-keyword">long long</span>, <span class="code-keyword">long long</span>&gt; memo;
+
+<span class="code-keyword">long long</span> <span class="code-function">fib</span>(<span class="code-keyword">long long</span> n) {
+    <span class="code-keyword">if</span> (n &lt;= <span class="code-number">1</span>) <span class="code-keyword">return</span> n;
+    <span class="code-keyword">auto</span> it = memo.<span class="code-function">find</span>(n);
+    <span class="code-keyword">if</span> (it != memo.<span class="code-function">end</span>()) <span class="code-keyword">return</span> it-&gt;second;
+    memo[n] = <span class="code-function">fib</span>(n-<span class="code-number">1</span>) + <span class="code-function">fib</span>(n-<span class="code-number">2</span>);
+    <span class="code-keyword">return</span> memo[n];
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> n : {<span class="code-number">0</span>, <span class="code-number">1</span>, <span class="code-number">5</span>, <span class="code-number">10</span>, <span class="code-number">20</span>, <span class="code-number">40</span>}) {
+        cout &lt;&lt; <span class="code-string">"fib("</span> &lt;&lt; n &lt;&lt; <span class="code-string">") = "</span> &lt;&lt; <span class="code-function">fib</span>(n) &lt;&lt; endl;
+    }
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+<div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+<pre>fib(0) = 0
+fib(1) = 1
+fib(5) = 5
+fib(10) = 55
+fib(20) = 6765
+fib(40) = 102334155</pre>
+</div>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Sume prefix -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Suma elementelor arr[l..r] folosind sume prefix se calculeaza ca:", "options": ["prefix[r] - prefix[l]", "prefix[r] - prefix[l-1]", "prefix[r+1] - prefix[l+1]", "prefix[r+1] - prefix[l]"], "correct": "d", "hint": "prefix[i] = suma primelor i elemente (prefix[0] = 0). Suma din l pana la r inclusiv = prefix[r+1] - prefix[l]. Retine: prefix are n+1 elemente pentru un sir de n elemente."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. Precompute — sume prefix pentru interogari rapide</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Sumele prefix</strong> (prefix sums) sunt un tablou auxiliar in care <code>prefix[i]</code> stocheaza suma primelor <code>i</code> elemente. Odata construit in O(n), orice interogare de suma pe interval [l, r] se raspunde in O(1).
+                </div>
+                <p>Constructie si interogare (Python), verificat:</p>
+<pre><span class="code-comment"># Precompute prefix sums</span>
+arr = [<span class="code-number">3</span>, <span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">1</span>, <span class="code-number">5</span>, <span class="code-number">9</span>, <span class="code-number">2</span>, <span class="code-number">6</span>, <span class="code-number">5</span>, <span class="code-number">3</span>]
+n = <span class="code-function">len</span>(arr)
+
+<span class="code-comment"># Construire O(n)</span>
+prefix = [<span class="code-number">0</span>] * (n + <span class="code-number">1</span>)
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+    prefix[i+<span class="code-number">1</span>] = prefix[i] + arr[i]
+
+<span class="code-keyword">def</span> <span class="code-function">query</span>(l, r):
+    <span class="code-comment"># Suma arr[l..r] in O(1)</span>
+    <span class="code-keyword">return</span> prefix[r+<span class="code-number">1</span>] - prefix[l]
+
+<span class="code-function">print</span>(<span class="code-string">"Array:"</span>, arr)
+<span class="code-function">print</span>(<span class="code-string">"Prefix:"</span>, prefix)
+<span class="code-function">print</span>(<span class="code-string">"Sum [2..5]:"</span>, <span class="code-function">query</span>(<span class="code-number">2</span>, <span class="code-number">5</span>))
+<span class="code-function">print</span>(<span class="code-string">"Sum [0..3]:"</span>, <span class="code-function">query</span>(<span class="code-number">0</span>, <span class="code-number">3</span>))
+<span class="code-function">print</span>(<span class="code-string">"Sum [6..9]:"</span>, <span class="code-function">query</span>(<span class="code-number">6</span>, <span class="code-number">9</span>))</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Array: [3, 1, 4, 1, 5, 9, 2, 6, 5, 3]
+Prefix: [0, 3, 4, 8, 9, 14, 23, 25, 31, 36, 39]
+Sum [2..5]: 19
+Sum [0..3]: 9
+Sum [6..9]: 16</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Verificare manuala Sum [2..5]: arr[2]+arr[3]+arr[4]+arr[5] = 4+1+5+9 = 19 ✓</div>
+</div>
+                <p><strong>Complexitate:</strong> constructie O(n), spatiu O(n), fiecare interogare O(1). Pentru q interogari: O(n + q) in loc de O(n * q).</p>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Fereastra glisanta -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Fereastra glisanta de lungime k calculeaza suma unui nou subarray fata de cel anterior prin:", "options": ["Recalculand toata suma de la zero O(k)", "Scazand primul element si adaugand noul ultim element O(1)", "Sortand fereastra si luand mediana O(k log k)", "Folosind recursie O(k)"], "correct": "b", "hint": "Principiul ferestrei glisante: cand fereastra se deplaseaza cu o pozitie, scazi elementul care iese din stanga si adaugi elementul care intra din dreapta. O singura operatie in loc de k operatii."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Fereastra glisanta — subarray-uri de lungime fixa</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Fereastra glisanta</strong> (sliding window) mentine o suma (sau alta proprietate) pentru o fereastra de lungime fixa k. La fiecare pas, fereastra se deplaseaza cu o pozitie: se scade elementul care iese din stanga si se adauga elementul nou din dreapta — O(1) per pas, O(n) total in loc de O(n*k).
+                </div>
+                <p>Suma maxima a unui subarray de lungime k (Python), verificat:</p>
+<pre><span class="code-comment"># Sliding window: suma maxima subarray de lungime k</span>
+<span class="code-keyword">def</span> <span class="code-function">max_sum_window</span>(arr, k):
+    n = <span class="code-function">len</span>(arr)
+    <span class="code-comment"># Prima fereastra</span>
+    window_sum = <span class="code-function">sum</span>(arr[:k])
+    max_sum = window_sum
+    max_start = <span class="code-number">0</span>
+    <span class="code-comment"># Deplasam fereastra</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, n - k + <span class="code-number">1</span>):
+        window_sum = window_sum - arr[i-<span class="code-number">1</span>] + arr[i+k-<span class="code-number">1</span>]
+        <span class="code-keyword">if</span> window_sum &gt; max_sum:
+            max_sum = window_sum
+            max_start = i
+    <span class="code-keyword">return</span> max_sum, max_start, arr[max_start:max_start+k]
+
+arr = [<span class="code-number">2</span>, <span class="code-number">1</span>, <span class="code-number">5</span>, <span class="code-number">1</span>, <span class="code-number">3</span>, <span class="code-number">2</span>, <span class="code-number">4</span>, <span class="code-number">3</span>, <span class="code-number">1</span>, <span class="code-number">2</span>]
+k = <span class="code-number">3</span>
+max_sum, start, window = <span class="code-function">max_sum_window</span>(arr, k)
+<span class="code-function">print</span>(<span class="code-string">"Array:"</span>, arr)
+<span class="code-function">print</span>(<span class="code-string">f"k = {k}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Max sum window: {window} starting at index {start}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Max sum: {max_sum}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Array: [2, 1, 5, 1, 3, 2, 4, 3, 1, 2]
+k = 3
+Max sum window: [5, 1, 3] starting at index 2
+Max sum: 9</pre>
+</div>
+                <p><strong>Complexitate:</strong> O(n) timp, O(1) spatiu auxiliar (in afara de input). Varianta naiva cu doua cicluri ar fi O(n*k).</p>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Doi pointeri -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Tehnica doi pointeri functioneaza corect pentru subarray cu suma data NUMAI daca:", "options": ["Sirul este sortat descrescator", "Sirul este sortat crescator", "Sirul contine doar numere pozitive", "Sirul are lungime para"], "correct": "c", "hint": "Doi pointeri pentru subarray cu suma data functioneaza pe siruri cu valori pozitive: suma creste cand extindem la dreapta, scade cand restrângem din stanga. Pe numere negative, suma nu mai e monotona si tehnica nu mai garanteaza corectitudinea."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Doi pointeri — subarray cu suma data</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Doi pointeri</strong> (two pointers) mentine doua pozitii <code>left</code> si <code>right</code> care delimiteaza un subarray. Pe siruri cu valori pozitive, extindem <code>right</code> cand suma e prea mica si avansam <code>left</code> cand suma e prea mare. Fiecare element este vizitat cel mult de doua ori: O(n) total.
+                </div>
+                <p>Gasire subarray cu suma egala cu target (Python), verificat:</p>
+<pre><span class="code-keyword">def</span> <span class="code-function">subarray_with_sum</span>(arr, target):
+    left = <span class="code-number">0</span>
+    current_sum = <span class="code-number">0</span>
+    <span class="code-keyword">for</span> right <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-function">len</span>(arr)):
+        current_sum += arr[right]
+        <span class="code-keyword">while</span> current_sum &gt; target <span class="code-keyword">and</span> left &lt;= right:
+            current_sum -= arr[left]
+            left += <span class="code-number">1</span>
+        <span class="code-keyword">if</span> current_sum == target:
+            <span class="code-keyword">return</span> (left, right)
+    <span class="code-keyword">return</span> <span class="code-function">None</span>
+
+arr = [<span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">6</span>, <span class="code-number">1</span>, <span class="code-number">2</span>]
+result = <span class="code-function">subarray_with_sum</span>(arr, <span class="code-number">9</span>)
+<span class="code-function">print</span>(<span class="code-string">"Array:"</span>, arr)
+<span class="code-function">print</span>(<span class="code-string">"Target: 9"</span>)
+<span class="code-keyword">if</span> result:
+    l, r = result
+    <span class="code-function">print</span>(<span class="code-string">f"Found at indices [{l}, {r}]: {arr[l:r+1]}"</span>)
+    <span class="code-function">print</span>(<span class="code-string">f"Sum: {sum(arr[l:r+1])}"</span>)</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python):</div>
+<pre>Array: [1, 4, 2, 3, 6, 1, 2]
+Target: 9
+Found at indices [1, 3]: [4, 2, 3]
+Sum: 9</pre>
+</div>
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; EXCLUSIV INTENSIV — Doi pointeri in C++</div>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+pair&lt;<span class="code-keyword">int</span>,<span class="code-keyword">int</span>&gt; <span class="code-function">subarrayWithSum</span>(<span class="code-keyword">const</span> vector&lt;<span class="code-keyword">int</span>&gt;&amp; arr, <span class="code-keyword">int</span> target) {
+    <span class="code-keyword">int</span> left = <span class="code-number">0</span>, currentSum = <span class="code-number">0</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> right = <span class="code-number">0</span>; right &lt; (<span class="code-keyword">int</span>)arr.<span class="code-function">size</span>(); right++) {
+        currentSum += arr[right];
+        <span class="code-keyword">while</span> (currentSum &gt; target &amp;&amp; left &lt;= right) {
+            currentSum -= arr[left++];
+        }
+        <span class="code-keyword">if</span> (currentSum == target) <span class="code-keyword">return</span> {left, right};
+    }
+    <span class="code-keyword">return</span> {<span class="code-number">-1</span>, <span class="code-number">-1</span>};
+}
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    vector&lt;<span class="code-keyword">int</span>&gt; arr = {<span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">6</span>, <span class="code-number">1</span>, <span class="code-number">2</span>};
+    <span class="code-keyword">auto</span> [l, r] = <span class="code-function">subarrayWithSum</span>(arr, <span class="code-number">9</span>);
+    cout &lt;&lt; <span class="code-string">"Array: [1, 4, 2, 3, 6, 1, 2]"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Target: 9"</span> &lt;&lt; endl;
+    <span class="code-keyword">if</span> (l != <span class="code-number">-1</span>) {
+        cout &lt;&lt; <span class="code-string">"Gasit la indicii ["</span> &lt;&lt; l &lt;&lt; <span class="code-string">", "</span> &lt;&lt; r &lt;&lt; <span class="code-string">"]"</span> &lt;&lt; endl;
+        cout &lt;&lt; <span class="code-string">"Suma: 9"</span> &lt;&lt; endl;
+    }
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+<div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+<pre>Array: [1, 4, 2, 3, 6, 1, 2]
+Target: 9
+Gasit la indicii [1, 3]
+Suma: 9</pre>
+</div>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Alegerea structurii de date -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Cand folosesti unordered_map (hash map) in loc de vector pentru a stoca frecvente?", "options": ["Cand multimea valorilor posibile este foarte mare sau necunoscuta a priori", "Cand vrei sa iterezi in ordine sortata", "Cand vrei complexitate O(log n) per operatie", "Cand memoria disponibila este limitata"], "correct": "a", "hint": "vector<int> freq(MAX_VAL) functioneaza doar daca valorile sunt in [0, MAX_VAL] cu MAX_VAL mic. Cand valorile pot fi oriunde in int sau sunt siruri, hash map este alegerea corecta: O(1) insertie si cautare, indiferent de domeniu."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Alegerea structurii de date — cum decizi?</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Structura de date potrivita depinde de <strong>operatiile dominante</strong>: daca ai nevoie de cautare frecventa, alege hash map (O(1)); daca ai nevoie de ordine, alege set/map (O(log n)); daca accesezi prin indice, alege vector (O(1)). Alegerea gresita poate schimba complexitatea cu un factor n.
+                </div>
+                <p>Exemplu: gasirea elementului cel mai frecvent (C++), verificat:</p>
+<pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;unordered_map&gt;</span>
+<span class="code-preprocessor">#include &lt;algorithm&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    vector&lt;<span class="code-keyword">int</span>&gt; v = {<span class="code-number">3</span>, <span class="code-number">1</span>, <span class="code-number">4</span>, <span class="code-number">1</span>, <span class="code-number">5</span>, <span class="code-number">9</span>, <span class="code-number">2</span>, <span class="code-number">6</span>, <span class="code-number">5</span>, <span class="code-number">3</span>, <span class="code-number">3</span>};
+    <span class="code-comment">// O(1) amortizat per insertie/cautare</span>
+    unordered_map&lt;<span class="code-keyword">int</span>, <span class="code-keyword">int</span>&gt; freq;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : v) freq[x]++;
+
+    <span class="code-comment">// Gasim elementul cu frecventa maxima</span>
+    <span class="code-keyword">auto</span> it = <span class="code-function">max_element</span>(freq.<span class="code-function">begin</span>(), freq.<span class="code-function">end</span>(),
+        [](<span class="code-keyword">const auto</span>&amp; a, <span class="code-keyword">const auto</span>&amp; b){ <span class="code-keyword">return</span> a.second &lt; b.second; });
+    cout &lt;&lt; <span class="code-string">"Cel mai frecvent: "</span> &lt;&lt; it-&gt;first
+         &lt;&lt; <span class="code-string">" ("</span> &lt;&lt; it-&gt;second &lt;&lt; <span class="code-string">" aparitii)"</span> &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div>
+<pre>Cel mai frecvent: 3 (3 aparitii)</pre>
+</div>
+                <table>
+                    <tr><th>Structura</th><th>Acces index</th><th>Cautare valoare</th><th>Insertie</th><th>Iterare sortata</th></tr>
+                    <tr><td>vector</td><td>O(1)</td><td>O(n)</td><td>O(1) amortizat*</td><td>Nu</td></tr>
+                    <tr><td>unordered_map</td><td>N/A</td><td>O(1) amortizat</td><td>O(1) amortizat</td><td>Nu</td></tr>
+                    <tr><td>map / set</td><td>N/A</td><td>O(log n)</td><td>O(log n)</td><td>Da</td></tr>
+                </table>
+                <p>*Insertie la sfarsit; insertie la inceput/mijloc este O(n).</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) — Sume prefix</h3>
+            <p>Dai un sir <code>arr = [5, 2, 8, 1, 7, 3, 4]</code>. Construieste manual tabloul <code>prefix</code> si calculeaza suma elementelor din intervalul [2, 5] folosind formula O(1). Verifica rezultatul.</p>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) — Fereastra glisanta</h3>
+            <p>Scrie o functie care primeste un sir de numere pozitive si un intreg k si returneaza suma minima a unui subarray de lungime k, folosind tehnica ferestrei glisante. Complexitate: O(n). Testeaza cu <code>arr = [3, 1, 4, 1, 5, 9, 2, 6]</code>, <code>k = 4</code>.</p>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) — Combinatie de tehnici <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            <p>Problema: Dat un sir de numere intregi (pot fi si negative), gaseste numarul de subarray-uri cu suma egala cu un target dat. Complexitate ceruta: O(n). Indiciu: combina prefix sums cu un unordered_map care numara de cate ori a aparut fiecare suma prefix. Implementeaza in C++ cu g++ -std=c++17.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Memoizarea transforma recursivitatea O(2<sup>n</sup>) in O(n) prin stocarea rezultatelor intermediare</li>
+                <li>Sumele prefix se construiesc in O(n) si permit interogari de interval in O(1)</li>
+                <li>Fereastra glisanta reduce O(n*k) la O(n) pentru proprietati pe subarray-uri de lungime fixa</li>
+                <li>Doi pointeri rezolva in O(n) probleme de subarray cu suma data (sir cu valori pozitive)</li>
+                <li>Alegerea structurii (vector vs hash map vs map sortat) depinde de operatiile dominante</li>
+                <li>Justificarea alegerii algoritmului/structurii se face intotdeauna prin notatia O()</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Modulul complet!</h3>
+            <p>Ai terminat toate lectiile din modulul Algoritmi Eficienti. Revino la index pentru a consolida sau a explora alte module.</p>
+            <a href="index.html" class="btn-next">Inapoi la modul &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m2-algoritmi-eficienti-lectia6-optimizari');
+        PracticeSimple.init('cls12-m2-algoritmi-eficienti-lectia6-optimizari');
+        LessonSummary.init('cls12-m2-algoritmi-eficienti-lectia6-optimizari');
+        Breadcrumb.init({
+            grade: 'cls12',
+            gradeName: 'Clasa a XII-a',
+            module: 'm2-algoritmi-eficienti',
+            moduleName: 'M2 Algoritmi Eficienti',
+            lesson: 'Tehnici de optimizare'
+        });
+        LearningProgress.init('cls12', 'm2-algoritmi-eficienti', 'lectia6-optimizari.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

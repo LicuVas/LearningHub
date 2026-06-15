@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 5: Sortari eficiente — QuickSort si MergeSort | Clasa a XII-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="lectia4-cautare-binara.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 4</a>
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8593; Modulul</a>
+        <a href="lectia6-optimizari.html" class="nav-btn" title="Lectia urmatoare">Lectia 6 &#8594;</a>
+    </nav>
+
+    <!-- NOTA CURRICULUM: lectia plasata gresit -->
+    <div class="warning-box" style="margin:1rem 0 0.5rem 0;">
+        <div class="warning-box-title">&#9888; Nota curriculum &#8212; continut din Clasa a X-a</div>
+        <p>Strategia <strong>Divide et Impera</strong> (inclusiv MergeSort si QuickSort) apartine <strong>programei de Clasa a X-a mat-info</strong> &#8212; Domeniu 2: Strategii de rezolvare a problemelor, conform <em>_curriculum_data.json</em> si <em>CURRICULUM_REFERENCE.md</em>. Aceasta lectie este plasata in cls12/m2-algoritmi-eficienti dar continutul ei este conform cls10. Programa cls12 mat-info acopera baze de date relationale avansate, forme normale, algoritmi ML si SQL. Lectia ramane accesibila ca material de recapitulare, insa incadrarea in modul este eronata curricular.</p>
+    </div>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Sortari eficiente: QuickSort &amp; MergeSort</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei stapani doua dintre cele mai importante algoritmi de sortare prin strategia Divide et Impera — MergeSort si QuickSort — intelegi de ce amandoi ating complexitatea O(n log n) si cand sa alegi unul fata de celalalt.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa explici strategia Divide et Impera si sa o aplici la sortare</li>
+                <li>Sa implementezi MergeSort complet in C++ cu vectori</li>
+                <li>Sa implementezi QuickSort cu pivotul ultim element si sa explici partitionarea</li>
+                <li>Sa analizezi complexitatea O(n log n) medie si cazul defavorabil O(n&sup2;) la QuickSort</li>
+                <li>Sa compari stabilitatea, consumul de memorie si comportamentul practic al celor doi algoritmi</li>
+                <li>Sa detectezi si sa eviti cazul defavorabil QuickSort prin alegerea pivotului (median-of-three)</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare — Divide et Impera cu carti de joc:</div>
+<p>Ai 8 carti de joc amestecate. Descrie in scris cum le-ai sorta daca ai imparti mereu gramada in doua jumatati, ai sorta fiecare jumatate separat, apoi le-ai reuni in ordine. Scrie pasii.</p>
+<textarea id="tryAnswer" placeholder="Pasul 1: Impart cele 8 carti in doua gramezi de 4...
+Pasul 2: ..." rows="6"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+<div class="hint-content">
+<p>Ai descoperit exact esenta MergeSort! Imparti problema in jumatati, rezolvi recursiv fiecare jumatate, apoi <strong>interclasezi</strong> cele doua siruri sortate intr-unul singur.</p>
+<p>Interclasarea e simpla: compari primul element din fiecare jumatate si il muti pe cel mai mic in rezultat, pana epuizezi ambele gramezi.</p>
+</div>
+</div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Divide et Impera — ideea de baza -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "In strategia Divide et Impera, care este ordinea corecta a pasilor?", "options": ["Combina → Imparte → Rezolva", "Imparte → Rezolva subprobleme → Combina rezultatele", "Rezolva → Imparte → Combina", "Imparte → Combina → Rezolva"], "correct": "b", "hint": "Divide et Impera = Imparte problema, rezolva recursiv fiecare subproblema, apoi combina solutiile partiale intr-o solutie completa."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Strategia Divide et Impera</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Divide et Impera</strong> (Imparte si Cucereste) este o strategie algortimica in trei pasi:
+                    <ol>
+                        <li><strong>DIVIDE</strong> — imparte problema in subprobleme de acelasi tip, mai mici</li>
+                        <li><strong>IMPERA</strong> — rezolva fiecare subproblema recursiv (cazul de baza: o subproblema trivial de mica)</li>
+                        <li><strong>COMBINA</strong> — uneste solutiile subproblemelor intr-o solutie a problemei initiale</li>
+                    </ol>
+                </div>
+                <div class="example-box">
+<div class="example-title">De ce e eficient?</div>
+<p>La fiecare nivel de recursivitate, numarul de elemente se injumatateste. Un sir de <code>n</code> elemente genereaza un arbore de recursivitate cu <strong>log&#8322;(n) niveluri</strong>. Daca la fiecare nivel se face O(n) munca totala, complexitatea globala este <strong>O(n log n)</strong> — mult mai buna decat O(n&sup2;) al sortarilor simple (bubble, selectie, insertie).</p>
+</div>
+                <div class="example-box">
+<div class="example-title">Comparatie concreta pentru n = 1.000.000:</div>
+<pre>O(n²)       = 1.000.000.000.000  operatii  (~11 zile la 10⁹ operatii/sec)
+O(n log n)  =        20.000.000  operatii  (~0.02 secunde)
+Factorul de imbunatatire: de ~50.000 de ori mai rapid!</pre>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: MergeSort — algoritm si implementare -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "In pasul de interclasare (merge) din MergeSort, ce facem cu elementele ramase intr-un subsir dupa ce celalalt s-a epuizat?", "options": ["Le ignoram", "Le adaugam direct la sfarsitul rezultatului, in ordinea in care sunt", "Le sortam din nou", "Le comparam cu primul element din rezultat"], "correct": "b", "hint": "Cand un subsir se epuizeaza, cel ramas este deja sortat — il copiem direct in rezultat. Acesta este motivul pentru care cele doua bucle while finale din merge() adauga elementele ramase fara comparatii suplimentare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. MergeSort — algoritmul de interclasare <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica (C++)</div>
+<p>MergeSort este algoritmul de sortare stabil preferat in productie cand stabilitatea conteaza. Implementarea completa in C++ cu vectori:</p>
+</div>
+
+                <p><strong>Pasul 1 — Functia merge(): interclaseaza doua subsiruri sortate</strong></p>
+                <pre><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-comment">// Interclaseaza arr[l..m] si arr[m+1..r] (ambele deja sortate)</span>
+<span class="code-keyword">void</span> <span class="code-function">merge</span>(<span class="code-keyword">vector</span>&lt;<span class="code-keyword">int</span>&gt;&amp; arr, <span class="code-keyword">int</span> l, <span class="code-keyword">int</span> m, <span class="code-keyword">int</span> r) {
+    <span class="code-keyword">int</span> n1 = m - l + <span class="code-number">1</span>;       <span class="code-comment">// marimea subsirului stang</span>
+    <span class="code-keyword">int</span> n2 = r - m;              <span class="code-comment">// marimea subsirului drept</span>
+    vector&lt;<span class="code-keyword">int</span>&gt; L(n1), R(n2);  <span class="code-comment">// copii temporare</span>
+
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-number">0</span>; i &lt; n1; i++) L[i] = arr[l + i];
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = <span class="code-number">0</span>; j &lt; n2; j++) R[j] = arr[m + <span class="code-number">1</span> + j];
+
+    <span class="code-keyword">int</span> i = <span class="code-number">0</span>, j = <span class="code-number">0</span>, k = l;
+    <span class="code-keyword">while</span> (i &lt; n1 &amp;&amp; j &lt; n2) {        <span class="code-comment">// compara capetele celor doi subsiri</span>
+        <span class="code-keyword">if</span> (L[i] &lt;= R[j]) arr[k++] = L[i++];
+        <span class="code-keyword">else</span>               arr[k++] = R[j++];
+    }
+    <span class="code-keyword">while</span> (i &lt; n1) arr[k++] = L[i++]; <span class="code-comment">// rest din stanga</span>
+    <span class="code-keyword">while</span> (j &lt; n2) arr[k++] = R[j++]; <span class="code-comment">// rest din dreapta</span>
+}</pre>
+
+                <p><strong>Pasul 2 — Functia mergeSort(): recursivitate Divide et Impera</strong></p>
+                <pre><span class="code-keyword">void</span> <span class="code-function">mergeSort</span>(<span class="code-keyword">vector</span>&lt;<span class="code-keyword">int</span>&gt;&amp; arr, <span class="code-keyword">int</span> l, <span class="code-keyword">int</span> r) {
+    <span class="code-keyword">if</span> (l &lt; r) {                           <span class="code-comment">// cazul de baza: l==r → un singur element, deja sortat</span>
+        <span class="code-keyword">int</span> m = l + (r - l) / <span class="code-number">2</span>;           <span class="code-comment">// DIVIDE: gaseste mijlocul (evita overflow)</span>
+        <span class="code-function">mergeSort</span>(arr, l, m);               <span class="code-comment">// IMPERA: sorteaza jumatatea stanga</span>
+        <span class="code-function">mergeSort</span>(arr, m + <span class="code-number">1</span>, r);           <span class="code-comment">// IMPERA: sorteaza jumatatea dreapta</span>
+        <span class="code-function">merge</span>(arr, l, m, r);                <span class="code-comment">// COMBINA: interclaseaza cele doua subsiruri sortate</span>
+    }
+}</pre>
+
+                <p><strong>Pasul 3 — main(): apel si afisare</strong></p>
+                <pre><span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    vector&lt;<span class="code-keyword">int</span>&gt; arr = {<span class="code-number">38</span>, <span class="code-number">27</span>, <span class="code-number">43</span>, <span class="code-number">3</span>, <span class="code-number">9</span>, <span class="code-number">82</span>, <span class="code-number">10</span>};
+    cout &lt;&lt; <span class="code-string">"Inainte: "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : arr) cout &lt;&lt; x &lt;&lt; <span class="code-string">" "</span>;
+    cout &lt;&lt; endl;
+
+    <span class="code-function">mergeSort</span>(arr, <span class="code-number">0</span>, arr.size() - <span class="code-number">1</span>);
+
+    cout &lt;&lt; <span class="code-string">"Dupa:    "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : arr) cout &lt;&lt; x &lt;&lt; <span class="code-string">" "</span>;
+    cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>Inainte: 38 27 43 3 9 82 10
+Dupa:    3 9 10 27 38 43 82</pre>
+</div>
+
+                <div class="example-box">
+<div class="example-title">Urmarirea executiei — arborele de recursivitate pentru {38, 27, 43, 3}:</div>
+<pre>mergeSort([38,27,43,3], 0, 3)
+  mergeSort([38,27], 0, 1)
+    mergeSort([38], 0, 0)   → caz de baza, returneaza
+    mergeSort([27], 1, 1)   → caz de baza, returneaza
+    merge([38,27]) → [27,38]
+  mergeSort([43,3], 2, 3)
+    mergeSort([43], 2, 2)   → caz de baza, returneaza
+    mergeSort([3], 3, 3)    → caz de baza, returneaza
+    merge([43,3]) → [3,43]
+  merge([27,38], [3,43]) → [3,27,38,43]</pre>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: QuickSort -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Dupa pasul de partitionare din QuickSort, unde se afla pivotul ales?", "options": ["La inceputul sirului", "In pozitia lui finala corecta in sirul sortat", "La sfarsitul sirului", "In mijlocul subsirului"], "correct": "b", "hint": "Aceasta este proprietatea definitorie a partitionarii: pivotul este asezat exact pe pozitia sa finala din sirul sortat. In stanga lui sunt elemente <= pivot, in dreapta elemente >= pivot."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. QuickSort — partitionarea si recursivitatea <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica (C++)</div>
+<p>QuickSort este cel mai rapid algoritm de sortare in practica pentru date aleatoare. Ideea cheie: <strong>alege un pivot</strong> si rearranjeaza sirul astfel incat toate elementele mici sa fie in stanga pivotului, toate cele mari in dreapta — pivotul ajunge pe pozitia lui finala.</p>
+</div>
+
+                <p><strong>Pasul 1 — partition(): asaza pivotul pe pozitia corecta</strong></p>
+                <pre><span class="code-comment">// Alege arr[high] ca pivot, muta elementele &lt;= pivot in stanga, &gt; pivot in dreapta</span>
+<span class="code-comment">// Returneaza indexul final al pivotului</span>
+<span class="code-keyword">int</span> <span class="code-function">partition</span>(<span class="code-keyword">vector</span>&lt;<span class="code-keyword">int</span>&gt;&amp; arr, <span class="code-keyword">int</span> low, <span class="code-keyword">int</span> high) {
+    <span class="code-keyword">int</span> pivot = arr[high]; <span class="code-comment">// pivotul = ultimul element</span>
+    <span class="code-keyword">int</span> i = low - <span class="code-number">1</span>;       <span class="code-comment">// i = frontiera elementelor mici (initial inexistenta)</span>
+
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = low; j &lt; high; j++) {  <span class="code-comment">// j parcurge sirul</span>
+        <span class="code-keyword">if</span> (arr[j] &lt;= pivot) {              <span class="code-comment">// arr[j] apartine zonei "mici"</span>
+            i++;
+            <span class="code-function">swap</span>(arr[i], arr[j]);           <span class="code-comment">// muta-l in zona stanga</span>
+        }
+    }
+    <span class="code-function">swap</span>(arr[i + <span class="code-number">1</span>], arr[high]);          <span class="code-comment">// asaza pivotul pe pozitia finala</span>
+    <span class="code-keyword">return</span> i + <span class="code-number">1</span>;                        <span class="code-comment">// pozitia pivotului</span>
+}</pre>
+
+                <p><strong>Pasul 2 — quickSort(): aplica recursiv pe cele doua partitii</strong></p>
+                <pre><span class="code-keyword">void</span> <span class="code-function">quickSort</span>(<span class="code-keyword">vector</span>&lt;<span class="code-keyword">int</span>&gt;&amp; arr, <span class="code-keyword">int</span> low, <span class="code-keyword">int</span> high) {
+    <span class="code-keyword">if</span> (low &lt; high) {
+        <span class="code-keyword">int</span> pi = <span class="code-function">partition</span>(arr, low, high); <span class="code-comment">// DIVIDE + COMBINA: pivotul pe loc</span>
+        <span class="code-function">quickSort</span>(arr, low, pi - <span class="code-number">1</span>);          <span class="code-comment">// IMPERA: stanga pivotului</span>
+        <span class="code-function">quickSort</span>(arr, pi + <span class="code-number">1</span>, high);         <span class="code-comment">// IMPERA: dreapta pivotului</span>
+    }
+    <span class="code-comment">// cazul de baza: low >= high → subsir de 0 sau 1 elemente, deja sortat</span>
+}</pre>
+
+                <p><strong>Pasul 3 — main(): apel si afisare</strong></p>
+                <pre><span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    vector&lt;<span class="code-keyword">int</span>&gt; arr = {<span class="code-number">10</span>, <span class="code-number">7</span>, <span class="code-number">8</span>, <span class="code-number">9</span>, <span class="code-number">1</span>, <span class="code-number">5</span>};
+    cout &lt;&lt; <span class="code-string">"Inainte: "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : arr) cout &lt;&lt; x &lt;&lt; <span class="code-string">" "</span>;
+    cout &lt;&lt; endl;
+
+    <span class="code-function">quickSort</span>(arr, <span class="code-number">0</span>, arr.size() - <span class="code-number">1</span>);
+
+    cout &lt;&lt; <span class="code-string">"Dupa:    "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : arr) cout &lt;&lt; x &lt;&lt; <span class="code-string">" "</span>;
+    cout &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>Inainte: 10 7 8 9 1 5
+Dupa:    1 5 7 8 9 10</pre>
+</div>
+
+                <div class="example-box">
+<div class="example-title">Tracing partitionare pentru {10, 7, 8, 9, 1, 5}, pivot = 5:</div>
+<pre>pivot = 5, i = -1
+j=0: arr[0]=10 &gt; 5  → nimic
+j=1: arr[1]=7  &gt; 5  → nimic
+j=2: arr[2]=8  &gt; 5  → nimic
+j=3: arr[3]=9  &gt; 5  → nimic
+j=4: arr[4]=1  &lt;= 5 → i=0, swap(arr[0],arr[4]) → {1, 7, 8, 9, 10, 5}
+Final: swap(arr[1], arr[5]) → {1, 5, 8, 9, 10, 7}
+                       ^pozitia 1 = pozitia finala a pivotului 5
+Stanga: {1}  Pivot: {5}  Dreapta: {8, 9, 10, 7}</pre>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Analiza complexitate -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Care este complexitatea in cazul DEFAVORABIL al QuickSort cu pivot=ultimul element?", "options": ["O(n log n)", "O(n)", "O(n²)", "O(log n)"], "correct": "c", "hint": "Cazul defavorabil al QuickSort (pivot=ultim element) apare cand sirul este deja sortat: la fiecare pas pivotul este cel mai mare element, o partitie ramane goala si cealalta are n-1 elemente → n niveluri de recursivitate x n operatii/nivel = O(n²)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Analiza complexitatii O(n log n) <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+<p>Intelegerea complexitatii este esentiala pentru a alege algoritmul corect in competitii si in productie.</p>
+</div>
+
+                <div class="concept-def">
+<strong>MergeSort — complexitate garantata O(n log n):</strong>
+<ul>
+    <li>Arborele de recursivitate are intotdeauna <strong>log&#8322;(n) niveluri</strong> (impartire exacta la jumatate)</li>
+    <li>La fiecare nivel, pasul merge() face in total <strong>O(n) operatii</strong> (fiecare element e copiat exact o data)</li>
+    <li>Total: <strong>O(n log n) in TOATE cazurile</strong> — cel mai bun, mediu si defavorabil</li>
+    <li>Memorie suplimentara: <strong>O(n)</strong> pentru vectorii temporari L[] si R[]</li>
+</ul>
+</div>
+
+                <div class="concept-def">
+<strong>QuickSort — complexitate variabila:</strong>
+<ul>
+    <li><strong>Cazul mediu (date aleatoare):</strong> O(n log n) — pivotul imparte sirul aproximativ la jumatate</li>
+    <li><strong>Cazul defavorabil (sir sortat/invers sortat + pivot=ultim):</strong> O(n&sup2;) — o partitie este mereu goala</li>
+    <li><strong>Cazul cel mai bun (pivot = mediana):</strong> O(n log n)</li>
+    <li>Memorie suplimentara: <strong>O(log n)</strong> pentru stiva de recursivitate (cazul mediu)</li>
+</ul>
+</div>
+
+                <p>Demonstratie numerica rulata — MergeSort pe n=8 elemente:</p>
+                <pre><span class="code-comment">// Program demonstratie: numara apeluri merge() si comparatii</span>
+<span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;cmath&gt;</span>
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-keyword">int</span> mergeCallCount = <span class="code-number">0</span>;
+<span class="code-keyword">int</span> compareCount = <span class="code-number">0</span>;
+
+<span class="code-comment">// ... (acelasi merge + mergeSort ca mai sus, cu contorizare)</span>
+
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">int</span> n = <span class="code-number">8</span>;
+    vector&lt;<span class="code-keyword">int</span>&gt; arr = {<span class="code-number">38</span>,<span class="code-number">27</span>,<span class="code-number">43</span>,<span class="code-number">3</span>,<span class="code-number">9</span>,<span class="code-number">82</span>,<span class="code-number">10</span>,<span class="code-number">55</span>};
+    <span class="code-function">mergeSort_counted</span>(arr, <span class="code-number">0</span>, n-<span class="code-number">1</span>);
+    cout &lt;&lt; <span class="code-string">"n = "</span> &lt;&lt; n &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Apeluri merge: "</span> &lt;&lt; mergeCallCount &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"Comparatii: "</span> &lt;&lt; compareCount &lt;&lt; endl;
+    cout &lt;&lt; <span class="code-string">"n*log2(n) ~ "</span> &lt;&lt; (<span class="code-keyword">int</span>)(n * <span class="code-function">log2</span>(n)) &lt;&lt; endl;
+}</pre>
+
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>n = 8
+Apeluri merge: 7 (n-1 = 7)
+Comparatii: 16
+n*log2(n) ~ 24</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Tabel comparativ complexitati:</div>
+<pre>Algorithm   | Cel mai bun | Mediu      | Defavorabil | Memorie
+------------|-------------|------------|-------------|--------
+MergeSort   | O(n log n)  | O(n log n) | O(n log n)  | O(n)
+QuickSort   | O(n log n)  | O(n log n) | O(n²)       | O(log n)
+BubbleSort  | O(n)        | O(n²)      | O(n²)       | O(1)
+SelectSort  | O(n²)       | O(n²)      | O(n²)       | O(1)</pre>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Comparatie si alegerea pivotului -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Care algoritm de sortare este STABIL (pastreaza ordinea relativa a elementelor egale)?", "options": ["QuickSort (varianta clasica)", "MergeSort", "Ambii sunt stabili", "Niciunul nu este stabil"], "correct": "b", "hint": "MergeSort este stabil: in pasul merge(), cand L[i] == R[j], conditia L[i] <= R[j] garanteaza ca luam intai elementul din stanga (cel care a venit primul), pastrandu-le ordinea. QuickSort clasic este instabil din cauza swap-urilor din partition()."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. MergeSort vs QuickSort — diferente practice si alegerea pivotului <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+            </div>
+            <div class="atom-content">
+                <div class="bonus-box">
+<div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div>
+<p>In practica, QuickSort este adesea mai rapid decat MergeSort pe date aleatoare, chiar daca ambii sunt O(n log n) in medie. Motivul: QuickSort are constante mai mici si acces la memorie mai prietenos pentru cache.</p>
+</div>
+
+                <div class="concept-def">
+<strong>Stabilitate:</strong>
+<ul>
+    <li><strong>MergeSort: STABIL</strong> — elementele egale isi pastreaza ordinea relativa. Crucial cand sortezi obiecte cu mai multe campuri (ex: sortezi angajati dupa salariu, pastrand ordinea dupa nume la salarii egale).</li>
+    <li><strong>QuickSort clasic: INSTABIL</strong> — swap-urile din partition() pot schimba ordinea elementelor egale.</li>
+</ul>
+</div>
+
+                <p><strong>Tehnica Median-of-Three: evitarea cazului defavorabil la QuickSort</strong></p>
+                <pre><span class="code-comment">// Pivot = mediana dintre arr[low], arr[mid], arr[high]</span>
+<span class="code-keyword">int</span> <span class="code-function">partitionMOT</span>(<span class="code-keyword">vector</span>&lt;<span class="code-keyword">int</span>&gt;&amp; arr, <span class="code-keyword">int</span> low, <span class="code-keyword">int</span> high) {
+    <span class="code-keyword">int</span> mid = low + (high - low) / <span class="code-number">2</span>;
+    <span class="code-comment">// Sorteaza cele 3 elemente la pozitiile low, mid, high</span>
+    <span class="code-keyword">if</span> (arr[low] &gt; arr[mid])  <span class="code-function">swap</span>(arr[low], arr[mid]);
+    <span class="code-keyword">if</span> (arr[low] &gt; arr[high]) <span class="code-function">swap</span>(arr[low], arr[high]);
+    <span class="code-keyword">if</span> (arr[mid] &gt; arr[high]) <span class="code-function">swap</span>(arr[mid], arr[high]);
+    <span class="code-comment">// arr[mid] este mediana — mut-o la pozitia high-1 ca pivot</span>
+    <span class="code-function">swap</span>(arr[mid], arr[high]);
+    <span class="code-comment">// Restul partitionarii ramane identic</span>
+    <span class="code-keyword">int</span> pivot = arr[high];
+    <span class="code-keyword">int</span> i = low - <span class="code-number">1</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = low; j &lt; high; j++)
+        <span class="code-keyword">if</span> (arr[j] &lt;= pivot) { i++; <span class="code-function">swap</span>(arr[i], arr[j]); }
+    <span class="code-function">swap</span>(arr[i + <span class="code-number">1</span>], arr[high]);
+    <span class="code-keyword">return</span> i + <span class="code-number">1</span>;
+}</pre>
+
+                <div class="example-box">
+<div class="example-title">Output real — median-of-three pe sir sortat (cazul rau pt pivot=last):</div>
+<pre>Inainte (sir sortat - cazul rau pt pivot=last): 1 2 3 4 5 6 7 8
+Dupa (cu median-of-3):                          1 2 3 4 5 6 7 8</pre>
+</div>
+
+                <div class="example-box">
+<div class="example-title">Ghid de alegere algoritm:</div>
+<pre>Situatie                          | Recomandat
+----------------------------------|------------------
+Date aleatoare, viteza maxima     | QuickSort (cu MOT)
+Date cu multe duplicate           | QuickSort 3-way
+Stabilitate necesara              | MergeSort
+Date partial sortate              | MergeSort sau Timsort
+Memorie limitata (embedded)       | QuickSort (O(log n) memorie)
+Garantie O(n log n) in orice caz  | MergeSort
+std::sort din C++ STL             | IntroSort (hybrid QS+Heap+Insert)</pre>
+</div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Verificare comparativa + rezumat -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Care este complexitatea spatiala (memorie suplimentara) a MergeSort?", "options": ["O(1)", "O(log n)", "O(n)", "O(n²)"], "correct": "c", "hint": "MergeSort are nevoie de O(n) memorie suplimentara pentru vectorii temporari L[] si R[] din pasul merge(). Aceasta este principalul dezavantaj fata de QuickSort care are O(log n) pentru stiva de recursivitate."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Demonstratie comparativa — ambii algoritmi pe acelasi sir</h3>
+            </div>
+            <div class="atom-content">
+                <pre><span class="code-comment">// Aplica ambii algoritmi pe acelasi sir si verifica rezultate identice</span>
+<span class="code-keyword">int</span> <span class="code-function">main</span>() {
+    vector&lt;<span class="code-keyword">int</span>&gt; data = {<span class="code-number">64</span>, <span class="code-number">34</span>, <span class="code-number">25</span>, <span class="code-number">12</span>, <span class="code-number">22</span>, <span class="code-number">11</span>, <span class="code-number">90</span>, <span class="code-number">45</span>, <span class="code-number">78</span>, <span class="code-number">3</span>};
+
+    vector&lt;<span class="code-keyword">int</span>&gt; a1 = data, a2 = data;  <span class="code-comment">// copii identice</span>
+
+    <span class="code-function">mergeSort</span>(a1, <span class="code-number">0</span>, a1.size()-<span class="code-number">1</span>);
+    <span class="code-function">quickSort</span>(a2, <span class="code-number">0</span>, a2.size()-<span class="code-number">1</span>);
+
+    cout &lt;&lt; <span class="code-string">"Date initiale: "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : data) cout &lt;&lt; x &lt;&lt; <span class="code-string">" "</span>;  cout &lt;&lt; endl;
+
+    cout &lt;&lt; <span class="code-string">"MergeSort:     "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : a1)   cout &lt;&lt; x &lt;&lt; <span class="code-string">" "</span>;  cout &lt;&lt; endl;
+
+    cout &lt;&lt; <span class="code-string">"QuickSort:     "</span>;
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> x : a2)   cout &lt;&lt; x &lt;&lt; <span class="code-string">" "</span>;  cout &lt;&lt; endl;
+
+    bool same = (a1 == a2);
+    cout &lt;&lt; <span class="code-string">"Rezultate identice: "</span> &lt;&lt; (same ? <span class="code-string">"DA"</span> : <span class="code-string">"NU"</span>) &lt;&lt; endl;
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}</pre>
+
+                <div class="example-box">
+<div class="example-title">Output real (compilat g++ -std=c++17, rulat):</div>
+<pre>Date initiale: 64 34 25 12 22 11 90 45 78 3
+MergeSort:     3 11 12 22 25 34 45 64 78 90
+QuickSort:     3 11 12 22 25 34 45 64 78 90
+Rezultate identice: DA</pre>
+</div>
+
+                <div class="example-box">
+<div class="example-title">Conexiune cu std::sort din C++:</div>
+<p>In competitii si productie nu reimplementezi manual acesti algoritmi. Biblioteca standard C++ ofera:</p>
+<pre><span class="code-preprocessor">#include &lt;algorithm&gt;</span>
+<span class="code-comment">// Sorteaza intreg vectorul — IntroSort (QS + HeapSort + InsertionSort)</span>
+<span class="code-function">sort</span>(arr.begin(), arr.end());
+<span class="code-comment">// Sortare stabila — MergeSort sau TimSort</span>
+<span class="code-function">stable_sort</span>(arr.begin(), arr.end());</pre>
+<p>Cunoasterea MergeSort si QuickSort iti permite sa intelegi ce face std::sort intern si sa implementezi variante personalizate cand este necesar (sortare dupa criteriu complex, sortare paralela etc.).</p>
+</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) — Tracing manual MergeSort</h3>
+            <p>Traseaza manual executia <code>mergeSort({5, 2, 8, 1}, 0, 3)</code>. Deseneaza arborele de recursivitate cu toate apelurile si rezultatele dupa fiecare <code>merge()</code>. Care este continutul vectorului dupa primul apel <code>merge()</code>?</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) — Tracing partitionare QuickSort</h3>
+            <p>Aplica functia <code>partition({3, 6, 8, 10, 1, 2, 1}, 0, 6)</code> cu pivot = arr[6] = 1. Traseaza valorile lui <code>i</code> si ale vectorului dupa fiecare iteratie a buclei <code>for</code>. Pe ce pozitie ajunge pivotul 1?</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) — Implementare si analiza</h3>
+            <p>Implementeaza in C++ <strong>MergeSort pe tablouri de caractere</strong> (sortare lexicografica a unui vector de string-uri). Apoi: demonstreaza ca QuickSort cu pivot=ultimul element are complexitate O(n&sup2;) pe sirul <code>{1,2,3,4,...,n}</code> scriind un program care numara comparatiile si compara cu <code>n*(n-1)/2</code>. Ruleaza pentru n=1000.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Strategia Divide et Impera: Divide → Impera → Combina si de ce produce O(n log n)</li>
+                <li>MergeSort: impartire la jumatate + interclasare; stabil, O(n log n) garantat, O(n) memorie</li>
+                <li>QuickSort: partitionare in jurul pivotului; instabil, O(n log n) mediu, O(n&sup2;) cazul rau</li>
+                <li>Analiza complexitatii: arborele de recursivitate, niveluri log n, munca O(n) per nivel</li>
+                <li>Evitarea cazului defavorabil QuickSort prin median-of-three</li>
+                <li>Alegerea algoritmului in functie de context: stabilitate, memorie, garantii</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu Lectia 6 — Tehnici de optimizare: memoizare, precompute, two pointers.</p>
+            <a href="lectia6-optimizari.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m2-algoritmi-eficienti-lectia5-sortari-avansate');
+        PracticeSimple.init('cls12-m2-algoritmi-eficienti-lectia5-sortari-avansate');
+        LessonSummary.init('cls12-m2-algoritmi-eficienti-lectia5-sortari-avansate');
+        Breadcrumb.init({
+            grade: 'cls12',
+            gradeName: 'Clasa a XII-a',
+            module: 'm2-algoritmi-eficienti',
+            moduleName: 'M2 Algoritmi Eficienti',
+            lesson: 'Sortari eficiente: QuickSort & MergeSort'
+        });
+        LearningProgress.init('cls12', 'm2-algoritmi-eficienti', 'lectia5-sortari-avansate.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

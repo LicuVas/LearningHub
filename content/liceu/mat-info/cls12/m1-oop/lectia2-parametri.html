@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 2: Transmiterea parametrilor | Clasa a IX-a (capitol Subprograme)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+<nav class="nav-bar">
+<a href="lectia1-subprograme.html" class="nav-btn" title="Lectia anterioara">&#8592; Subprograme</a>
+<a href="index.html" class="nav-btn" title="Inapoi la modul">&#8593; Modulul</a>
+<a href="lectia3-oop-intro.html" class="nav-btn" title="Lectia urmatoare">Introducere OOP &#8594;</a>
+</nav>
+<header class="lesson-header">
+<span class="lesson-badge">Clasa a IX-a &mdash; Capitol 3.1 Subprograme</span>
+<h1 class="lesson-title">Transmiterea parametrilor</h1>
+</header>
+<div class="progress-container">
+<span class="progress-label">Progres lectie:</span>
+<div class="progress-bar-wrapper"><div class="progress-bar-fill" id="progress-fill"></div></div>
+<span class="progress-percent" id="progress-percent">0%</span>
+</div>
+<section class="lesson-frame">
+<div class="goal-section"><div class="goal-header"><span class="goal-icon">&#127919;</span><h2 class="goal-title">Obiectivul lectiei</h2></div>
+<p class="goal-text">Vei intelege exact ce se intampla cu datele cand apelezi o functie: de ce uneori modificarile din functie nu se propaga in exterior, si cum poti controla acest comportament in Python si C++.</p></div>
+<div class="learning-outcomes"><h3>Dupa aceasta lectie vei putea:</h3><ul>
+<li>Sa explici diferenta dintre transmiterea prin valoare si prin referinta</li>
+<li>Sa identifici variabilele locale si globale si domeniul lor de vizibilitate</li>
+<li>Sa scrii functii Python care modifica date prin returnare sau prin obiecte mutabile</li>
+<li>Sa folosesti <code>&amp;</code> in C++ pentru parametri prin referinta (EXCLUSIV intensiv)</li>
+<li>Sa eviti capcanele clasice: swap care nu functioneaza, efecte laterale neasteptate</li>
+<li>Sa analizezi complexitatea O(1) vs O(n) la transmiterea prin valoare vs referinta</li>
+</ul></div>
+</section>
+<section class="try-section"><h2>Incearca singur!</h2>
+<div class="try-challenge"><div class="challenge-box"><div class="challenge-title">Provocare initiala:</div>
+<p>Ce va afisa acest cod Python? Gandeste-te inainte sa rulezi:</p>
+<pre>def modifica(x):
+    x = x + 100
+
+val = 5
+modifica(val)
+print(val)</pre>
+<textarea id="tryAnswer" placeholder="Scrie raspunsul tau: ce va afisa print(val)?" rows="3"></textarea></div>
+<div class="hint-box"><div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+<div class="hint-content"><p>In Python, numerele sunt <strong>imutabile</strong>. Parametrul <code>x</code> este o copie locala. <code>x = x + 100</code> creeaza un nou obiect, nu modifica originalul.</p></div></div>
+</div></section>
+<main id="atomic-content">
+<div class="atom" id="atom-1" data-quiz='[{"question": "Ce va afisa: def f(x):\n    x = 99\nval = 5\nf(val)\nprint(val)", "options": ["5", "99", "None", "Eroare"], "correct": "a", "hint": "Parametrul x este o copie locala. Modificarea lui nu afecteaza val din exterior."}]'>
+<div class="atom-header"><div class="atom-number">1</div><h3 class="atom-title">1. Transmiterea prin valoare</h3></div>
+<div class="atom-content">
+<div class="concept-def">Cand transmiti un argument <strong>prin valoare</strong>, functia primeste o <em>copie</em> a datei originale. Modificarile in interiorul functiei afecteaza doar copia &mdash; originalul ramane neschimbat.</div>
+<div class="analogy-box"><div class="analogy-label">Analogie:</div><div class="analogy-text">E ca si cum dai cuiva o <em>fotografie</em> a unui document. Daca ei scriu pe fotografie, originalul tau ramane intact.</div></div>
+<div class="example-box"><div class="example-title">Exemplu Python &mdash; valoare imutabila (int):</div>
+<pre><span class="code-keyword">def</span> <span class="code-function">dubleaza</span>(x):
+    x = x * <span class="code-number">2</span>
+    <span class="code-function">print</span>(<span class="code-string">f"  In functie, x = {x}"</span>)
+
+valoare = <span class="code-number">5</span>
+<span class="code-function">print</span>(<span class="code-string">f"Inainte de apel: valoare = {valoare}"</span>)
+<span class="code-function">dubleaza</span>(valoare)
+<span class="code-function">print</span>(<span class="code-string">f"Dupa apel: valoare = {valoare}"</span>)</pre>
+<div class="example-box"><div class="example-title">Output real (rulat cu python):</div><pre>Inainte de apel: valoare = 5
+  In functie, x = 10
+Dupa apel: valoare = 5</pre></div></div>
+<div class="info-box"><div class="info-box-header"><span class="info-box-icon">&#128270;</span><span class="info-box-title">Ce se intampla in memorie</span></div>
+<div class="info-box-content"><code>dubleaza(valoare)</code> leaga parametrul <code>x</code> la obiectul <code>5</code>. Instructiunea <code>x = x * 2</code> creeaza un nou obiect <code>10</code> si leaga <code>x</code> de el. <code>valoare</code> inca pointeaza spre <code>5</code>. Complexitate copiere: <strong>O(1)</strong> pentru tipuri primitive.</div></div>
+</div></div>
+<div class="atom" id="atom-2" data-quiz='[{"question": "Ce va afisa: def adauga(lst):\n    lst.append(99)\nnumere = [1, 2, 3]\nadauga(numere)\nprint(numere)", "options": ["[1, 2, 3]", "[1, 2, 3, 99]", "[99]", "Eroare"], "correct": "b", "hint": "Listele sunt mutabile. lst si numere pointeaza spre ACELASI obiect. lst.append() modifica obiectul in loc."}]'>
+<div class="atom-header"><div class="atom-number">2</div><h3 class="atom-title">2. Obiecte mutabile &mdash; efect de referinta implicit</h3></div>
+<div class="atom-content">
+<div class="concept-def">In Python, tipurile <strong>mutabile</strong> (list, dict, set) transmise ca parametri impart acelasi obiect cu apelatorul. Modificarile in-place (append, del, actualizare cheie) sunt vizibile in afara functiei.</div>
+<div class="warning-box"><div class="warning-box-header"><span class="warning-box-title">&#9888; Distinctie importanta</span></div><p>Tehnic Python transmite <em>referinta prin valoare</em>. Daca faci <code>lst = [altceva]</code> in functie (reasignare), originalul NU se schimba. Doar metodele care modifica obiectul in-place au efect exterior.</p></div>
+<div class="example-box"><div class="example-title">Exemplu Python &mdash; lista (obiect mutabil):</div>
+<pre><span class="code-keyword">def</span> <span class="code-function">adauga_element</span>(lst, val):
+    lst.append(val)  <span class="code-comment"># modifica obiectul in-place</span>
+    <span class="code-function">print</span>(<span class="code-string">f"  In functie, lst = {lst}"</span>)
+
+numere = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>]
+<span class="code-function">print</span>(<span class="code-string">f"Inainte de apel: numere = {numere}"</span>)
+<span class="code-function">adauga_element</span>(numere, <span class="code-number">99</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Dupa apel: numere = {numere}"</span>)</pre>
+<div class="example-box"><div class="example-title">Output real (rulat cu python):</div><pre>Inainte de apel: numere = [1, 2, 3]
+  In functie, lst = [1, 2, 3, 99]
+Dupa apel: numere = [1, 2, 3, 99]</pre></div></div>
+<div class="concept-def"><strong>Regula rapida Python:</strong><ul><li><strong>int, float, str, tuple</strong> &rarr; imutabile &rarr; functia nu poate modifica originalul prin reasignare</li><li><strong>list, dict, set</strong> &rarr; mutabile &rarr; metodele in-place modifica originalul</li></ul></div>
+</div></div>
+<div class="atom" id="atom-3" data-quiz='[{"question": "Ce este o variabila locala?", "options": ["O variabila accesibila din orice fisier", "O variabila declarata cu keyword-ul local", "O variabila definita inauntrul unei functii, vizibila doar acolo", "O variabila definita in afara oricarei functii"], "correct": "c", "hint": "Variabilele locale exista doar pe durata executiei functiei. La finalul functiei, sunt distruse din memorie."}]'>
+<div class="atom-header"><div class="atom-number">3</div><h3 class="atom-title">3. Variabile locale si globale</h3></div>
+<div class="atom-content">
+<div class="concept-def"><ul><li><strong>Variabila locala</strong>: definita in interiorul unei functii; vizibila si activa <em>doar</em> pe durata executiei acelei functii. La finalul functiei, este distrusa.</li><li><strong>Variabila globala</strong>: definita in afara oricarei functii; vizibila din toata aplicatia. In Python, ca sa o <em>modifici</em> dintr-o functie, trebuie sa declari <code>global numeVariabila</code>.</li></ul></div>
+<div class="example-box"><div class="example-title">Exemplu Python &mdash; local vs global:</div>
+<pre>contor_global = <span class="code-number">0</span>  <span class="code-comment"># variabila globala</span>
+
+<span class="code-keyword">def</span> <span class="code-function">incrementeaza</span>():
+    <span class="code-keyword">global</span> contor_global        <span class="code-comment"># fara aceasta linie: UnboundLocalError</span>
+    contor_global += <span class="code-number">1</span>
+    variabila_locala = <span class="code-number">42</span>    <span class="code-comment"># exista doar in aceasta functie</span>
+    <span class="code-function">print</span>(<span class="code-string">f"  contor_global={contor_global}, variabila_locala={variabila_locala}"</span>)
+
+<span class="code-function">print</span>(<span class="code-string">f"Inainte: contor_global = {contor_global}"</span>)
+<span class="code-function">incrementeaza</span>()
+<span class="code-function">incrementeaza</span>()
+<span class="code-function">print</span>(<span class="code-string">f"Dupa 2 apeluri: contor_global = {contor_global}"</span>)
+
+<span class="code-keyword">try</span>:
+    <span class="code-function">print</span>(variabila_locala)
+<span class="code-keyword">except</span> NameError:
+    <span class="code-function">print</span>(<span class="code-string">"variabila_locala nu exista in afara functiei"</span>)</pre>
+<div class="example-box"><div class="example-title">Output real (rulat cu python):</div><pre>Inainte: contor_global = 0
+  contor_global=1, variabila_locala=42
+  contor_global=2, variabila_locala=42
+Dupa 2 apeluri: contor_global = 2
+variabila_locala nu exista in afara functiei</pre></div></div>
+<div class="warning-box"><div class="warning-box-header"><span class="warning-box-title">&#128683; Buna practica: evita variabilele globale</span></div><p>Variabilele globale fac codul greu de depanat. Solutia corecta: transmite date prin parametri si returneaza rezultate. Acceptabil doar pentru constante (<code>MAX = 1000</code>).</p></div>
+</div></div>
+<div class="atom" id="atom-4" data-quiz='[{"question": "Care este cel mai Pythonic mod de a interschimba doua variabile?", "options": ["Folosind o variabila temporara temp", "a, b = b, a (unpacking simultan)", "Printr-o functie swap(a, b)", "Nu se poate interschimba in Python"], "correct": "b", "hint": "Python suporta asignare multipla simultana: a, b = b, a evalueaza dreapta complet inainte de asignare. Swap atomic, O(1)."}]'>
+<div class="atom-header"><div class="atom-number">4</div><h3 class="atom-title">4. Capcana swap-ului &mdash; solutii corecte in Python</h3></div>
+<div class="atom-content">
+<div class="concept-def">O greseala frecventa: incerci sa interschimbi doua variabile printr-o functie care le primeste ca parametri simpli (int). Nu functioneaza &mdash; functia primeste copii, nu referinte.</div>
+<div class="example-box"><div class="example-title">Demonstratie &mdash; swap gresit vs corect:</div>
+<pre><span class="code-keyword">def</span> <span class="code-function">swap_gresit</span>(a, b):
+    temp = a
+    a = b
+    b = temp
+    <span class="code-function">print</span>(<span class="code-string">f"  In functie: a={a}, b={b}"</span>)
+
+x, y = <span class="code-number">10</span>, <span class="code-number">20</span>
+<span class="code-function">print</span>(<span class="code-string">f"Inainte: x={x}, y={y}"</span>)
+<span class="code-function">swap_gresit</span>(x, y)
+<span class="code-function">print</span>(<span class="code-string">f"Dupa swap_gresit: x={x}, y={y}  &lt;-- nu s-a schimbat!"</span>)
+
+<span class="code-comment"># Swap corect: returnare multipla</span>
+<span class="code-keyword">def</span> <span class="code-function">swap_corect</span>(a, b):
+    <span class="code-keyword">return</span> b, a
+
+x, y = <span class="code-function">swap_corect</span>(x, y)
+<span class="code-function">print</span>(<span class="code-string">f"Dupa swap_corect: x={x}, y={y}  &lt;-- corect!"</span>)</pre>
+<div class="example-box"><div class="example-title">Output real (rulat cu python):</div><pre>Inainte: x=10, y=20
+  In functie: a=20, b=10
+Dupa swap_gresit: x=10, y=20  &lt;-- nu s-a schimbat!
+Dupa swap_corect: x=20, y=10  &lt;-- corect!</pre></div></div>
+<div class="info-box"><div class="info-box-header"><span class="info-box-icon">&#9889;</span><span class="info-box-title">Cel mai Pythonic swap &mdash; O(1)</span></div><div class="info-box-content"><pre>x, y = y, x  <span class="code-comment"># Python evalueaza dreapta integral, APOI asigneaza</span></pre>Python creeaza un tuplu temporar <code>(y, x)</code> si il dezimpacheteaza. Curat, O(1), fara variabila temporara explicita.</div></div>
+</div></div><div class="atom" id="atom-5" data-quiz='[{"question": "In C++, ce sintaxa folosesti pentru un parametru prin referinta?", "options": ["void f(int& x)", "void f(int *x)", "void f(ref int x)", "void f(int x&)"], "correct": "a", "hint": "In C++, & plasat dupa tipul parametrului declara o referinta: void f(int& x)."}]'><div class="atom-header"><div class="atom-number">5</div><h3 class="atom-title">5. C++: prin valoare vs prin referinta <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3></div><div class="atom-content"><div class="bonus-box"><div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div><p>In C++ ai control explicit: <code>int x</code> = prin valoare (copie), <code>int&amp; x</code> = prin referinta (alias al originalului). Referinta e mai eficienta pentru obiecte mari si necesara cand vrei sa modifici originalul.</p></div><div class="example-box"><div class="example-title">C++ &mdash; valoare vs referinta:</div><pre>#include &lt;iostream&gt;
+using namespace std;
+
+// Prin valoare: primeste COPIA lui x
+void dubleaza_val(int x) {
+    x = x * 2;
+    cout &lt;&lt; &quot;  In functie (val): x = &quot; &lt;&lt; x &lt;&lt; endl;
+}
+
+// Prin referinta: x este alias al argumentului original
+void dubleaza_ref(int&amp; x) {
+    x = x * 2;
+    cout &lt;&lt; &quot;  In functie (ref): x = &quot; &lt;&lt; x &lt;&lt; endl;
+}
+
+int main() {
+    int a = 5;
+    cout &lt;&lt; &quot;Inainte (val): a = &quot; &lt;&lt; a &lt;&lt; endl;
+    dubleaza_val(a);
+    cout &lt;&lt; &quot;Dupa (val): a = &quot; &lt;&lt; a &lt;&lt; &quot; (nemodificat)&quot; &lt;&lt; endl;
+    int b = 5;
+    cout &lt;&lt; &quot;Inainte (ref): b = &quot; &lt;&lt; b &lt;&lt; endl;
+    dubleaza_ref(b);
+    cout &lt;&lt; &quot;Dupa (ref): b = &quot; &lt;&lt; b &lt;&lt; &quot; (modificat!)&quot; &lt;&lt; endl;
+    return 0;
+}</pre><div class="example-box"><div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div><pre>Inainte (val): a = 5
+  In functie (val): x = 10
+Dupa (val): a = 5 (nemodificat)
+Inainte (ref): b = 5
+  In functie (ref): x = 10
+Dupa (ref): b = 10 (modificat!)</pre></div></div><div class="info-box"><div class="info-box-header"><span class="info-box-icon">&#128200;</span><span class="info-box-title">Complexitate: de ce conteaza referinta la structuri mari</span></div><div class="info-box-content"><ul><li><code>void f(int x)</code> &rarr; copie: <strong>O(1)</strong></li><li><code>void f(vector&lt;int&gt; v)</code> &rarr; copie: <strong>O(n)</strong> (copiaza tot vectorul)</li><li><code>void f(const vector&lt;int&gt;&amp; v)</code> &rarr; referinta const: <strong>O(1)</strong> (transmite doar adresa)</li></ul><code>const T&amp;</code> = pattern standard C++ pentru argumente read-only de tip complex.</div></div></div></div><div class="atom" id="atom-6" data-quiz='[{"question": "In C++, o variabila locala este accesibila dupa ce functia s-a terminat?", "options": ["Da, persista intre apeluri, dar ramane inaccesibila din exterior (scop local)", "Intotdeauna da", "Nu, este distrusa la iesirea din functie", "Depinde de compilator"], "correct": "c", "hint": "Variabilele locale au durata de viata limitata la blocul {} al functiei."}]'><div class="atom-header"><div class="atom-number">6</div><h3 class="atom-title">6. C++: globale, locale si swap prin referinta <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3></div><div class="atom-content"><div class="bonus-box"><div class="bonus-title">&#9889; Sectiune doar pentru intensiv informatica</div><p>Swap-ul prin referinta este exemplul clasic al necesitatii parametrilor prin referinta in C++. Fara referinte, swap-ul nu functioneaza pe variabile int.</p></div><div class="example-box"><div class="example-title">C++ &mdash; globale, locale, swap prin referinta:</div><pre>#include &lt;iostream&gt;
+using namespace std;
+
+int global_contor = 0;  // variabila globala
+
+void incrementeaza() {
+    global_contor++;
+    int local_val = 42;  // locala: distrusa la iesire
+    cout &lt;&lt; &quot;  global_contor=&quot; &lt;&lt; global_contor
+         &lt;&lt; &quot;, local_val=&quot; &lt;&lt; local_val &lt;&lt; endl;
+}
+
+void swap_ref(int&amp; a, int&amp; b) {
+    int temp = a; a = b; b = temp;
+}
+
+int main() {
+    cout &lt;&lt; &quot;=== Globale vs Locale ===&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;Inainte: global_contor = &quot; &lt;&lt; global_contor &lt;&lt; endl;
+    incrementeaza(); incrementeaza();
+    cout &lt;&lt; &quot;Dupa 2 apeluri: global_contor = &quot; &lt;&lt; global_contor &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;=== Swap prin referinta ===&quot; &lt;&lt; endl;
+    int x = 10, y = 20;
+    cout &lt;&lt; &quot;Inainte: x=&quot; &lt;&lt; x &lt;&lt; &quot;, y=&quot; &lt;&lt; y &lt;&lt; endl;
+    swap_ref(x, y);
+    cout &lt;&lt; &quot;Dupa: x=&quot; &lt;&lt; x &lt;&lt; &quot;, y=&quot; &lt;&lt; y &lt;&lt; &quot; (modificat!)&quot; &lt;&lt; endl;
+    return 0;
+}</pre><div class="example-box"><div class="example-title">Output real (compilat g++ -std=c++17, apoi rulat):</div><pre>=== Globale vs Locale ===
+Inainte: global_contor = 0
+  global_contor=1, local_val=42
+  global_contor=2, local_val=42
+Dupa 2 apeluri: global_contor = 2
+
+=== Swap prin referinta ===
+Inainte: x=10, y=20
+Dupa: x=20, y=10 (modificat!)</pre></div></div><div class="concept-def"><strong>Rezumat comparativ Python vs C++:</strong><table><thead><tr><th>Aspect</th><th>Python</th><th>C++ (intensiv)</th></tr></thead><tbody><tr><td>Int prin valoare</td><td>implicit (imutabil)</td><td><code>void f(int x)</code></td></tr><tr><td>Modificare variabila</td><td>returnare + reasignare</td><td><code>void f(int&amp; x)</code></td></tr><tr><td>Variabila globala</td><td><code>global x</code> obligatoriu</td><td>acces direct (nivel fisier)</td></tr><tr><td>Swap corect</td><td><code>a, b = b, a</code> sau return</td><td><code>swap_ref(int&amp;, int&amp;)</code></td></tr><tr><td>Obiect mare read-only</td><td>imutabil sau copie</td><td><code>const T&amp;</code> O(1)</td></tr></tbody></table></div></div></div>
+</main>
+<section class="practice-section" id="practice"><h2>Exercitii practice</h2>
+<div class="practice-exercise" data-level="minim">
+<h3>Exercitiul 1 (Nivel minim) &mdash; Analizeaza codul</h3>
+<p>Ce va afisa urmatorul cod? Urmareste pas cu pas ce se intampla cu variabilele:</p>
+<pre><span class="code-keyword">def</span> <span class="code-function">modifica</span>(x, lst):
+    x = x + <span class="code-number">10</span>
+    lst.append(x)
+
+a = <span class="code-number">5</span>
+b = [<span class="code-number">1</span>, <span class="code-number">2</span>]
+<span class="code-function">modifica</span>(a, b)
+<span class="code-function">print</span>(a, b)</pre>
+<p><em>Explica: de ce <code>a</code> nu se modifica, dar <code>b</code> se modifica?</em></p></div>
+<div class="practice-exercise" data-level="standard">
+<h3>Exercitiul 2 (Nivel standard) &mdash; Scrie functia corecta</h3>
+<p>Scrie o functie Python <code>calculeaza_medie(note)</code> care primeste o lista de note (int) si returneaza media (float). Functia nu trebuie sa modifice lista originala. Dupa apel, verifica ca lista nu s-a schimbat.</p>
+<p><em>Bonus: ce complexitate O(?) are functia ta?</em></p></div>
+<div class="practice-exercise" data-level="performanta">
+<h3>Exercitiul 3 (Nivel performanta) &mdash; C++ referinta <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3>
+<p>Scrie in C++ o functie <code>void normalizeaza(vector&lt;int&gt;&amp; v)</code> care imparte fiecare element al vectorului la maximul sau (in-place, fara vector nou). Justifica de ce ai folosit <code>&amp;</code> si care ar fi complexitatea daca ai transmis vectorul prin valoare. Adauga un guard pentru vectorul gol.</p></div>
+</section>
+<section class="review-section"><div class="summary-box"><h2>Ce ai invatat astazi</h2><ul>
+<li>Transmiterea prin valoare: functia primeste o copie, originalul ramane neschimbat</li>
+<li>In Python: int/str/tuple = imutabile (comportament valoare), list/dict = mutabile (efect referinta prin metode in-place)</li>
+<li>Variabile locale: exista doar in corpul functiei, distruse la iesire</li>
+<li>Variabile globale: vizibile global, modificabile in Python cu <code>global</code></li>
+<li>Swap corect in Python: <code>a, b = b, a</code> sau returnare multipla</li>
+<li>C++ (intensiv): <code>int&amp; x</code> = referinta explicita; <code>const T&amp;</code> = O(1) fara risc de modificare</li>
+</ul></div>
+<div id="lesson-summary" style="display: none;"></div>
+<div class="next-lesson"><h3>Urmatoarea lectie</h3>
+<p>Continua cu <strong>Introducere OOP</strong>: clase, obiecte, atribute si metode.</p>
+<a href="lectia3-oop-intro.html" class="btn-next">Continua &#8594;</a></div>
+</section>
+</div>
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m1-oop-lectia2-parametri');
+        PracticeSimple.init('cls12-m1-oop-lectia2-parametri');
+        LessonSummary.init('cls12-m1-oop-lectia2-parametri');
+        Breadcrumb.init({
+            grade: 'cls12',
+            gradeName: 'Clasa a XII-a',
+            module: 'm1-oop',
+            moduleName: 'M1 OOP si Aplicatii',
+            lesson: 'Transmiterea parametrilor'
+        });
+        LearningProgress.init('cls12', 'm1-oop', 'lectia2-parametri.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

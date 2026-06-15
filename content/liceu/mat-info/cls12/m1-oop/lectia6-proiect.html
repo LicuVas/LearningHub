@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 6: Proiect integrat OOP + BD | Cls. XII Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+<nav class="nav-bar">
+<a href="lectia5-gui-tkinter.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 5</a>
+<a href="index.html" class="nav-btn" title="Inapoi la modul">Modulul &#8594;</a>
+</nav>
+<header class="lesson-header">
+<span class="lesson-badge">Invatare Atomica</span>
+<h1 class="lesson-title">Proiect integrat: OOP + baza de date relationala SQL</h1>
+</header>
+<div class="progress-container">
+<span class="progress-label">Progres lectie:</span>
+<div class="progress-bar-wrapper"><div class="progress-bar-fill" id="progress-fill"></div></div>
+<span class="progress-percent" id="progress-percent">0%</span>
+</div>
+<section class="lesson-frame">
+<div class="goal-section">
+<div class="goal-header"><span class="goal-icon">&#127919;</span><h2 class="goal-title">Obiectivul lectiei</h2></div>
+<p class="goal-text">Vei construi o aplicatie completa de catalog scolar care combina clasele Python (OOP) cu o baza de date relationala SQLite. Vei folosi toate cele patru operatii fundamentale SQL &mdash; SELECT, INSERT, UPDATE, DELETE &mdash; plus JOIN intre doua tabele, intr-un proiect real reutilizabil.</p>
+</div>
+<div class="learning-outcomes"><h3>Dupa aceasta lectie vei putea:</h3><ul>
+<li>Sa proiectezi schema unei baze de date relationale pentru un catalog scolar</li>
+<li>Sa scrii o clasa Python care incapsuleaza conexiunea si operatiile SQL</li>
+<li>Sa executi SELECT cu WHERE, ORDER BY si functii agregate (AVG, COUNT)</li>
+<li>Sa modifici date cu UPDATE si sa stergi selectiv cu DELETE</li>
+<li>Sa interogezi doua tabele legate prin cheie straina cu JOIN</li>
+<li>Sa normalizezi datele evitand redundanta (1NF, 2NF) <span class="bonus-badge">EXCLUSIV INTENSIV</span></li>
+</ul></div>
+</section>
+<section class="try-section"><h2>Incearca singur!</h2><div class="try-challenge">
+<div class="challenge-box"><div class="challenge-title">Provocare:</div>
+<p>Inainte sa citesti lectia, gandeste-te: un catalog scolar are studenti si note la mai multe materii. Cum ai proiecta tabelele? Ce coloane ar fi in fiecare? Ce ar lega cele doua tabele?</p>
+<textarea id="tryAnswer" placeholder="Tabelul studenti ar contine...&#10;Tabelul note ar contine...&#10;Legatura intre ele ar fi..." rows="5"></textarea></div>
+<div class="hint-box"><div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+<div class="hint-content"><p>Gandeste-te asa: <strong>studenti</strong> (id, nume, clasa) si <strong>note</strong> (id, student_id, materie, nota). Campul <code>student_id</code> din tabelul <em>note</em> este cheia straina care refera <code>id</code> din <em>studenti</em>. Asa eviti sa reperti numele studentului in fiecare rand de nota.</p></div></div>
+</div></section>
+<main id="atomic-content">
+<div class="atom" id="atom-1" data-quiz='[{"question": "Ce instructiune SQL returneaza toate coloanele si toate randurile dintr-un tabel?", "options": ["SELECT * FROM tabel", "SHOW ALL tabel", "GET * FROM tabel", "FETCH tabel"], "correct": "a", "hint": "SELECT este instructiunea de interogare. Asteriscul (*) inseamna toate coloanele. FROM indica tabelul sursa."}]'>
+<div class="atom-header"><div class="atom-number">1</div><h3 class="atom-title">1. Schema bazei de date &mdash; doua tabele relationale</h3></div>
+<div class="atom-content">
+<div class="concept-def">Un catalog scolar bine proiectat separa <strong>entitatile</strong>: studentii exista independent de note. Relatia se exprima printr-o <strong>cheie straina</strong> (FOREIGN KEY).<ul>
+<li><strong>studenti</strong> &mdash; id, nume, clasa (date despre persoana)</li>
+<li><strong>note</strong> &mdash; id, student_id, materie, nota (date despre evaluare)</li>
+<li><code>note.student_id</code> refera <code>studenti.id</code> &mdash; evita redundanta numelui</li>
+</ul></div>
+<div class="example-box"><div class="example-title">Analogie: fisier Excel cu doua foi legate</div>
+<p>Foaia <strong>Studenti</strong> are un numar unic per rand (ID). Foaia <strong>Note</strong> contine acel numar in loc sa repete numele. Daca studentul isi schimba numele, il schimbi o singura data in foaia Studenti &mdash; notele raman corecte automat. Aceasta este esenta normalizarii.</p></div>
+<pre><span class="code-keyword">import</span> sqlite3
+
+conn = sqlite3.<span class="code-function">connect</span>(<span class="code-string">'catalog.db'</span>)
+cur = conn.<span class="code-function">cursor</span>()
+
+cur.<span class="code-function">execute</span>(<span class="code-string">'''CREATE TABLE IF NOT EXISTS studenti (
+    id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    nume TEXT    NOT NULL,
+    clasa TEXT   NOT NULL
+)'''</span>)
+
+cur.<span class="code-function">execute</span>(<span class="code-string">'''CREATE TABLE IF NOT EXISTS note (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER NOT NULL,
+    materie    TEXT    NOT NULL,
+    nota       REAL    NOT NULL,
+    FOREIGN KEY(student_id) REFERENCES studenti(id)
+)'''</span>)
+conn.<span class="code-function">commit</span>()</pre>
+<div class="concept-def"><strong>AUTOINCREMENT</strong> &mdash; SQLite asigneaza automat un ID unic la fiecare INSERT. <strong>NOT NULL</strong> &mdash; campul este obligatoriu; un INSERT fara aceasta coloana va esua cu eroare.</div>
+</div></div>
+<div class="atom" id="atom-2" data-quiz='[{"question": "Care clauza SQL filtreaza randurile returnate dupa o conditie?", "options": ["ORDER BY", "GROUP BY", "HAVING", "WHERE"], "correct": "d", "hint": "WHERE se aplica inainte de grupare si specifica conditia pe care trebuie sa o indeplineasca fiecare rand. ORDER BY sorteaza, GROUP BY grupeaza, HAVING filtreaza grupuri."}]'>
+<div class="atom-header"><div class="atom-number">2</div><h3 class="atom-title">2. INSERT si SELECT &mdash; adaugare si interogare</h3></div>
+<div class="atom-content">
+<div class="concept-def">INSERT adauga randuri noi. SELECT le recupereaza cu filtre si ordonare. Folosim <strong>parametri legati</strong> (<code>?</code>) ca sa prevenim SQL injection.</div>
+<pre><span class="code-comment"># INSERT cu executemany &mdash; eficient pentru date in lot</span>
+studenti = [
+    (<span class="code-string">'Ana Ionescu'</span>, <span class="code-string">'XII-A'</span>),
+    (<span class="code-string">'Mihai Pop'</span>,   <span class="code-string">'XII-A'</span>),
+    (<span class="code-string">'Elena Radu'</span>,  <span class="code-string">'XII-B'</span>),
+    (<span class="code-string">'Bogdan Stan'</span>, <span class="code-string">'XII-B'</span>),
+]
+cur.<span class="code-function">executemany</span>(
+    <span class="code-string">'INSERT INTO studenti (nume, clasa) VALUES (?, ?)'</span>,
+    studenti
+)
+conn.<span class="code-function">commit</span>()
+
+<span class="code-comment"># SELECT cu WHERE si ORDER BY</span>
+<span class="code-function">print</span>(<span class="code-string">'--- Studenti din XII-A ---'</span>)
+<span class="code-keyword">for</span> row <span class="code-keyword">in</span> cur.<span class="code-function">execute</span>(
+        <span class="code-string">'SELECT id, nume FROM studenti WHERE clasa = ? ORDER BY nume'</span>,
+        (<span class="code-string">'XII-A'</span>,)):
+    <span class="code-function">print</span>(row)</pre>
+<div class="example-box"><div class="example-title">Output real (rulat cu python):</div>
+<pre>--- Studenti din XII-A ---
+(1, 'Ana Ionescu')
+(2, 'Mihai Pop')</pre></div>
+<div class="concept-def"><strong>SQL injection:</strong> Niciodata nu concatena string-uri in interogari (<code>"WHERE nume = '" + x + "'"</code>). Foloseste intotdeauna parametri <code>?</code> &mdash; SQLite le escapeaza automat.</div>
+</div></div>
+<div class="atom" id="atom-3" data-quiz='[{"question": "Ce face instructiunea UPDATE fara clauza WHERE?", "options": ["Nu face nimic, WHERE este obligatoriu", "Actualizeaza doar primul rand", "Actualizeaza TOATE randurile din tabel", "Produce o eroare de sintaxa"], "correct": "c", "hint": "UPDATE fara WHERE aplica modificarea pe fiecare rand din tabel. Acesta este un accident frecvent: uiti WHERE si modifici date pe care nu ai vrut sa le atingi."}]'>
+<div class="atom-header"><div class="atom-number">3</div><h3 class="atom-title">3. UPDATE si DELETE &mdash; modificare si stergere selectiva</h3></div>
+<div class="atom-content">
+<div class="concept-def">UPDATE modifica valori existente. DELETE sterge randuri. Ambele fara WHERE afecteaza INTREGUL tabel &mdash; cel mai comun accident SQL.</div>
+<pre><span class="code-comment"># INSERT note pentru studenti</span>
+note = [
+    (<span class="code-number">1</span>, <span class="code-string">'Informatica'</span>, <span class="code-number">9.5</span>),
+    (<span class="code-number">2</span>, <span class="code-string">'Informatica'</span>, <span class="code-number">4.8</span>),
+    (<span class="code-number">3</span>, <span class="code-string">'Informatica'</span>, <span class="code-number">7.2</span>),
+    (<span class="code-number">4</span>, <span class="code-string">'Informatica'</span>, <span class="code-number">8.0</span>),
+]
+cur.<span class="code-function">executemany</span>(
+    <span class="code-string">'INSERT INTO note (student_id, materie, nota) VALUES (?, ?, ?)'</span>,
+    note
+)
+conn.<span class="code-function">commit</span>()
+
+<span class="code-comment"># UPDATE &mdash; corecteaza nota unui student</span>
+cur.<span class="code-function">execute</span>(
+    <span class="code-string">'UPDATE note SET nota = ? WHERE student_id = ? AND materie = ?'</span>,
+    (<span class="code-number">5.5</span>, <span class="code-number">2</span>, <span class="code-string">'Informatica'</span>)
+)
+conn.<span class="code-function">commit</span>()
+row = cur.<span class="code-function">execute</span>(
+    <span class="code-string">'SELECT nota FROM note WHERE student_id = 2'</span>
+).<span class="code-function">fetchone</span>()
+<span class="code-function">print</span>(<span class="code-string">f'Dupa UPDATE: nota Mihai Pop = {row[0]}'</span>)
+
+<span class="code-comment"># DELETE &mdash; sterge notele sub 5</span>
+cur.<span class="code-function">execute</span>(<span class="code-string">'DELETE FROM note WHERE nota &lt; 5'</span>)
+conn.<span class="code-function">commit</span>()
+cnt = cur.<span class="code-function">execute</span>(<span class="code-string">'SELECT COUNT(*) FROM note'</span>).<span class="code-function">fetchone</span>()[<span class="code-number">0</span>]
+<span class="code-function">print</span>(<span class="code-string">f'Note ramase dupa DELETE(nota&lt;5): {cnt}'</span>)</pre>
+<div class="example-box"><div class="example-title">Output real (rulat cu python):</div>
+<pre>Dupa UPDATE: nota Mihai Pop = 5.5
+Note ramase dupa DELETE(nota&lt;5): 3</pre></div>
+</div></div>
+<div class="atom" id="atom-4" data-quiz='[{"question": "Ce este o cheie straina (FOREIGN KEY) intr-o baza de date relationala?", "options": ["O coloana criptata pentru securitate", "O coloana care refera cheia primara dintr-un alt tabel, creand o relatie intre tabele", "Un index care accelereaza cautarile", "O constrangere care interzice valorile duplicate"], "correct": "b", "hint": "FOREIGN KEY leaga doua tabele: valorile din acea coloana trebuie sa existe ca PRIMARY KEY in tabelul referit. Aceasta garanteaza integritatea referentiala."}]'>
+<div class="atom-header"><div class="atom-number">4</div><h3 class="atom-title">4. JOIN &mdash; interogarea datelor din doua tabele</h3></div>
+<div class="atom-content">
+<div class="concept-def">JOIN combina randuri din doua tabele pe baza unei conditii de legatura. <strong>INNER JOIN</strong> (sau simplu JOIN) returneaza doar randurile cu corespondent in ambele tabele.</div>
+<pre><span class="code-comment"># INNER JOIN &mdash; studenti cu notele lor la Informatica</span>
+<span class="code-function">print</span>(<span class="code-string">'--- Raport note Informatica ---'</span>)
+<span class="code-keyword">for</span> row <span class="code-keyword">in</span> cur.<span class="code-function">execute</span>(<span class="code-string">'''
+    SELECT s.nume, s.clasa, n.nota
+    FROM   studenti s
+    JOIN   note n ON s.id = n.student_id
+    WHERE  n.materie = 'Informatica'
+    ORDER  BY n.nota DESC
+'''</span>):
+    <span class="code-function">print</span>(row)
+
+<span class="code-comment"># Functii agregate: AVG si COUNT</span>
+avg, cnt = cur.<span class="code-function">execute</span>(<span class="code-string">'''
+    SELECT AVG(n.nota), COUNT(*)
+    FROM   studenti s
+    JOIN   note n ON s.id = n.student_id
+    WHERE  n.materie = 'Informatica'
+'''</span>).<span class="code-function">fetchone</span>()
+<span class="code-function">print</span>(<span class="code-string">f'Media Informatica: {avg:.2f}  (din {cnt} note)'</span>)</pre>
+<div class="example-box"><div class="example-title">Output real (rulat cu python):</div>
+<pre>--- Raport note Informatica ---
+('Ana Ionescu', 'XII-A', 9.5)
+('Elena Radu', 'XII-B', 7.2)
+('Mihai Pop', 'XII-A', 5.5)
+Media Informatica: 7.40  (din 3 note)</pre></div>
+<div class="concept-def"><strong>Alias</strong> (<code>s</code>, <code>n</code>) &mdash; prescurtari pentru nume de tabele in interogari lungi. <strong>AVG()</strong> si <strong>COUNT()</strong> sunt functii agregate: calculeaza o singura valoare din mai multe randuri.</div>
+</div></div>
+<div class="atom" id="atom-5" data-quiz='[{"question": "Ce se intampla daca executam DELETE FROM studenti fara clauza WHERE?", "options": ["Se sterg TOATE randurile din tabelul studenti", "Se sterge tabelul studenti impreuna cu structura sa", "Se produce o eroare, DELETE necesita WHERE", "Se sterge doar primul rand"], "correct": "a", "hint": "DELETE fara WHERE goleste tabelul (sterge toate randurile), dar pastreaza structura (coloanele). DROP TABLE ar sterge structura. Acesta este unul dintre cele mai frecvente accidente SQL."}]'>
+<div class="atom-header"><div class="atom-number">5</div><h3 class="atom-title">5. Aplicatia completa &mdash; clasa CatalogDB</h3></div>
+<div class="atom-content">
+<div class="concept-def">Incapsulam toate operatiile intr-o clasa Python. Metodele ascund detaliile SQL &mdash; codul apelant lucreaza cu obiecte si date, nu cu interogari brute.</div>
+<pre><span class="code-keyword">import</span> sqlite3, os
+
+<span class="code-keyword">class</span> <span class="code-function">CatalogDB</span>:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, db_path):
+        <span class="code-keyword">self</span>.conn = sqlite3.<span class="code-function">connect</span>(db_path)
+        <span class="code-keyword">self</span>.conn.row_factory = sqlite3.Row  <span class="code-comment"># acces prin nume coloana</span>
+        <span class="code-keyword">self</span>.<span class="code-function">_creare_tabele</span>()
+
+    <span class="code-keyword">def</span> <span class="code-function">_creare_tabele</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">self</span>.conn.<span class="code-function">executescript</span>(<span class="code-string">'''
+            CREATE TABLE IF NOT EXISTS studenti (
+                id    INTEGER PRIMARY KEY AUTOINCREMENT,
+                nume  TEXT NOT NULL,
+                clasa TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS note (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id INTEGER NOT NULL,
+                materie    TEXT    NOT NULL,
+                nota       REAL    NOT NULL,
+                FOREIGN KEY(student_id) REFERENCES studenti(id)
+            );
+        '''</span>)
+
+    <span class="code-keyword">def</span> <span class="code-function">adauga_student</span>(<span class="code-keyword">self</span>, nume, clasa):
+        cur = <span class="code-keyword">self</span>.conn.<span class="code-function">execute</span>(
+            <span class="code-string">'INSERT INTO studenti (nume, clasa) VALUES (?, ?)'</span>, (nume, clasa))
+        <span class="code-keyword">self</span>.conn.<span class="code-function">commit</span>()
+        <span class="code-keyword">return</span> cur.lastrowid  <span class="code-comment"># ID-ul generat</span>
+
+    <span class="code-keyword">def</span> <span class="code-function">adauga_nota</span>(<span class="code-keyword">self</span>, student_id, materie, nota):
+        <span class="code-keyword">self</span>.conn.<span class="code-function">execute</span>(
+            <span class="code-string">'INSERT INTO note (student_id, materie, nota) VALUES (?, ?, ?)'</span>,
+            (student_id, materie, nota))
+        <span class="code-keyword">self</span>.conn.<span class="code-function">commit</span>()
+
+    <span class="code-keyword">def</span> <span class="code-function">raport</span>(<span class="code-keyword">self</span>, materie):
+        <span class="code-keyword">return</span> <span class="code-keyword">self</span>.conn.<span class="code-function">execute</span>(<span class="code-string">'''
+            SELECT s.nume, s.clasa, n.nota
+            FROM   studenti s JOIN note n ON s.id = n.student_id
+            WHERE  n.materie = ?
+            ORDER  BY n.nota DESC
+        '''</span>, (materie,)).<span class="code-function">fetchall</span>()
+
+    <span class="code-keyword">def</span> <span class="code-function">media</span>(<span class="code-keyword">self</span>, materie):
+        row = <span class="code-keyword">self</span>.conn.<span class="code-function">execute</span>(
+            <span class="code-string">'SELECT AVG(nota), COUNT(*) FROM note WHERE materie = ?'</span>,
+            (materie,)).<span class="code-function">fetchone</span>()
+        <span class="code-keyword">return</span> row[<span class="code-number">0</span>], row[<span class="code-number">1</span>]
+
+    <span class="code-keyword">def</span> <span class="code-function">inchide</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">self</span>.conn.<span class="code-function">close</span>()
+
+<span class="code-comment"># === MAIN ===</span>
+DB = <span class="code-string">'catalog.db'</span>
+cat = <span class="code-function">CatalogDB</span>(DB)
+
+id_ana    = cat.<span class="code-function">adauga_student</span>(<span class="code-string">'Ana Ionescu'</span>,  <span class="code-string">'XII-A'</span>)
+id_mihai  = cat.<span class="code-function">adauga_student</span>(<span class="code-string">'Mihai Pop'</span>,    <span class="code-string">'XII-A'</span>)
+id_elena  = cat.<span class="code-function">adauga_student</span>(<span class="code-string">'Elena Radu'</span>,   <span class="code-string">'XII-B'</span>)
+id_bogdan = cat.<span class="code-function">adauga_student</span>(<span class="code-string">'Bogdan Stan'</span>,  <span class="code-string">'XII-B'</span>)
+
+<span class="code-keyword">for</span> sid, nota <span class="code-keyword">in</span> [(id_ana, <span class="code-number">9.5</span>), (id_mihai, <span class="code-number">5.5</span>),
+                    (id_elena, <span class="code-number">7.2</span>), (id_bogdan, <span class="code-number">8.0</span>)]:
+    cat.<span class="code-function">adauga_nota</span>(sid, <span class="code-string">'Informatica'</span>, nota)
+
+<span class="code-function">print</span>(<span class="code-string">'=== RAPORT INFORMATICA ==='</span>)
+<span class="code-keyword">for</span> r <span class="code-keyword">in</span> cat.<span class="code-function">raport</span>(<span class="code-string">'Informatica'</span>):
+    status = <span class="code-string">'PROMOVAT'</span> <span class="code-keyword">if</span> r[<span class="code-number">2</span>] &gt;= <span class="code-number">5</span> <span class="code-keyword">else</span> <span class="code-string">'RESPINS'</span>
+    <span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">'  {r[0]:&lt;20} {r[1]:&lt;6} nota={r[2]:.1f}  [{status}]'</span>)
+
+avg, cnt = cat.<span class="code-function">media</span>(<span class="code-string">'Informatica'</span>)
+<span class="code-function">print</span>(<span class="code-function">f</span><span class="code-string">'Media: {avg:.2f}  (din {cnt} note)'</span>)
+cat.<span class="code-function">inchide</span>()
+os.<span class="code-function">remove</span>(DB)</pre>
+<div class="example-box"><div class="example-title">Output real (rulat cu python):</div>
+<pre>=== RAPORT INFORMATICA ===
+  Ana Ionescu          XII-A  nota=9.5  [PROMOVAT]
+  Bogdan Stan          XII-B  nota=8.0  [PROMOVAT]
+  Elena Radu           XII-B  nota=7.2  [PROMOVAT]
+  Mihai Pop            XII-A  nota=5.5  [PROMOVAT]
+Media: 7.55  (din 4 note)</pre></div>
+</div></div>
+<div class="atom" id="atom-6" data-quiz='[{"question": "Ce tip de JOIN returneaza DOAR randurile care au corespondent in AMBELE tabele?", "options": ["LEFT JOIN", "RIGHT JOIN", "FULL OUTER JOIN", "INNER JOIN"], "correct": "d", "hint": "INNER JOIN (sau simplu JOIN) pastreaza doar randurile cu match in ambele tabele. LEFT JOIN pastreaza toate din stanga chiar daca nu exista match la dreapta. FULL OUTER JOIN combina ambele directii."}]'>
+<div class="atom-header"><div class="atom-number">6</div><h3 class="atom-title">6. Normalizare si principii de proiectare <span class="bonus-badge">EXCLUSIV INTENSIV</span></h3></div>
+<div class="atom-content">
+<div class="bonus-box"><div class="bonus-title">&#9889; Sectiune pentru intensiv informatica</div><p>Normalizarea reduce redundanta si anomaliile de actualizare. Primele doua forme normale (1NF, 2NF) sunt suficiente pentru proiecte scolare.</p></div>
+<div class="example-box"><div class="example-title">Anti-pattern vs. schema normalizata</div>
+<table style="width:100%;border-collapse:collapse;font-size:0.92em;">
+<tr style="background:var(--color-bg-alt,#f5f5f5)"><th style="padding:4px 8px;text-align:left">Anti-pattern (un singur tabel)</th><th style="padding:4px 8px;text-align:left">Normalizat (doua tabele)</th></tr>
+<tr><td style="padding:4px 8px">Ana Ionescu, XII-A, Informatica, 9.5</td><td style="padding:4px 8px">studenti(1, Ana Ionescu, XII-A)</td></tr>
+<tr><td style="padding:4px 8px">Ana Ionescu, XII-A, Matematica, 8.0</td><td style="padding:4px 8px">note(1, 1, Informatica, 9.5)</td></tr>
+<tr><td style="padding:4px 8px">Ana Ionescu, XII-A, Romana, 7.5</td><td style="padding:4px 8px">note(2, 1, Matematica, 8.0)</td></tr>
+<tr><td style="padding:4px 8px"><em>Numele si clasa repetate de 3 ori!</em></td><td style="padding:4px 8px">note(3, 1, Romana, 7.5)</td></tr>
+</table></div>
+<div class="concept-def"><strong>Probleme rezolvate prin normalizare:</strong><ul>
+<li><strong>Anomalie de actualizare:</strong> in anti-pattern, schimbarea clasei lui Ana necesita UPDATE pe toate randurile ei</li>
+<li><strong>Anomalie de stergere:</strong> stergand toate notele unui student, pierzi si datele despre student</li>
+<li><strong>1NF:</strong> fiecare coloana contine o singura valoare atomica (nu liste)</li>
+<li><strong>2NF:</strong> fiecare coloana non-cheie depinde de INTREAGA cheie primara (nu partial)</li>
+</ul></div>
+<div class="concept-def"><strong>Principii retinute din acest proiect:</strong><ul>
+<li><strong>Separarea datelor:</strong> entitati distincte = tabele distincte</li>
+<li><strong>Integritate referentiala:</strong> FOREIGN KEY garanteaza ca <code>student_id</code> exista intotdeauna in <em>studenti</em></li>
+<li><strong>Parametri legati (<code>?</code>):</strong> previn SQL injection, intotdeauna</li>
+<li><strong>Incapsulare OOP:</strong> clasa <code>CatalogDB</code> ascunde SQL-ul &mdash; codul client nu stie cum sunt stocate datele</li>
+</ul></div>
+</div></div>
+</main>
+<section class="practice-section" id="practice"><h2>Exercitii practice</h2>
+<div class="practice-exercise" data-level="minim">
+<h3>Exercitiul 1 (Nivel minim) &mdash; Creare si interogare</h3>
+<p>Creeaza o baza de date SQLite <code>biblioteca.db</code> cu un singur tabel <code>carti</code> (id, titlu, autor, an). Insereaza 3 carti si scrie un SELECT care returneaza cartile ordonate descrescator dupa an.</p>
+<p><em>Rezultat asteptat: 3 randuri, cel mai recent an primul.</em></p></div>
+<div class="practice-exercise" data-level="standard">
+<h3>Exercitiul 2 (Nivel standard) &mdash; UPDATE si DELETE</h3>
+<p>Pornind de la baza de date <code>biblioteca.db</code> creata anterior:</p><ul>
+<li>Actualizeaza anul uneia dintre carti cu <code>UPDATE</code></li>
+<li>Sterge toate cartile publicate inainte de 2000 cu <code>DELETE WHERE</code></li>
+<li>Afiseaza numarul de carti ramase cu <code>COUNT(*)</code></li>
+</ul><p>Verifica ca UPDATE si DELETE au clauza WHERE corecta inainte de executie.</p></div>
+<div class="practice-exercise" data-level="performanta">
+<h3>Exercitiul 3 (Nivel performanta) <span class="bonus-badge">INTENSIV</span> &mdash; Schema cu doua tabele si JOIN</h3>
+<p>Extinde <code>biblioteca.db</code> cu un tabel <code>imprumuturi</code> (id, carte_id, cititor, data_imprumut). Adauga 4 imprumuturi pentru 3 carti diferite. Scrie un JOIN care afiseaza titlul cartii si cititorul pentru fiecare imprumut, ordonat dupa data. Identifica care carte a fost imprumutata de mai multe ori folosind GROUP BY si COUNT.</p></div>
+</section>
+<section class="review-section">
+<div class="summary-box"><h2>Ce ai invatat astazi</h2><ul>
+<li>Schema relationala: doua tabele legate prin cheie straina (studenti &harr; note)</li>
+<li>INSERT cu parametri legati (<code>?</code>) &mdash; prevenire SQL injection</li>
+<li>SELECT cu WHERE, ORDER BY si functii agregate AVG, COUNT</li>
+<li>UPDATE si DELETE selectiv &mdash; mereu cu WHERE</li>
+<li>INNER JOIN: combina randuri din doua tabele pe baza cheii straine</li>
+<li>Clasa CatalogDB: incapsulare OOP peste operatii SQL &mdash; separarea responsabilitatilor</li>
+<li>Normalizare 1NF/2NF: eliminarea redundantei si a anomaliilor <span class="bonus-badge">INTENSIV</span></li>
+</ul></div>
+<div id="lesson-summary" style="display: none;"></div>
+<div class="next-lesson"><h3>Felicitari! Ai finalizat Modulul M1.</h3>
+<p>Ai parcurs baze de date relationale, SQL complet (SELECT/INSERT/UPDATE/DELETE/JOIN), normalizare si integrarea OOP cu SQLite. Recapituleaza prin exercitiile de mai sus sau continua cu modulul urmator.</p>
+<a href="index.html" class="btn-next">Inapoi la modul &#8594;</a>
+</div></section>
+</div>
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m1-oop-lectia6-proiect');
+        PracticeSimple.init('cls12-m1-oop-lectia6-proiect');
+        LessonSummary.init('cls12-m1-oop-lectia6-proiect');
+        Breadcrumb.init({
+            grade: 'cls12',
+            gradeName: 'Clasa a XII-a',
+            module: 'm1-oop',
+            moduleName: 'M1 OOP si Aplicatii',
+            lesson: 'Proiect integrat: OOP + baza de date relationala SQL'
+        });
+        LearningProgress.init('cls12', 'm1-oop', 'lectia6-proiect.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>
