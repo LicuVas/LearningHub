@@ -10,13 +10,15 @@ export const meta = {
 }
 
 // ── args: { profile, node, flavor, profileLabel, icon } ──
-const A = args || {}
+let A = args
+if (typeof A === 'string') { try { A = JSON.parse(A) } catch (e) { A = {} } }
+if (!A || typeof A !== 'object') A = {}
 const PROFILE = A.profile        // dir name, e.g. "umanist"
 const NODE = A.node || PROFILE   // oracle JSON key
 const FLAVOR = A.flavor || 'exemple potrivite profilului'
 const LABEL = A.profileLabel || PROFILE
 const ICON = A.icon || '📚'
-if (!PROFILE) { return { error: 'args.profile required' } }
+if (!PROFILE) { return { error: 'args.profile required', argsType: typeof args, argsRaw: JSON.stringify(args) } }
 
 const REPO = 'C:/00/Projects/LearningHub'
 const LESSON_TEMPLATE = `${REPO}/content/liceu/mat-info/cls9/m3-tic-baze/lectia1-sisteme-operare.html`
