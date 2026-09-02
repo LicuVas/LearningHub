@@ -113,6 +113,6 @@ Nu am scris 99 de lecții „de mână" într-o singură sesiune care se îngroa
    nu purtat prin conversație. Asta e și motivul pentru care se poate relua după orice întrerupere.
 4. **Valuri de agenți:** fiecare lecție a fost scrisă de un agent ieftin, apoi **atacată** de un verificator
    scump care căuta ce e greșit (conformitate cu programa, corectitudine factuală, dacă lecția chiar stă
-   singură în picioare, cod valid, chestionare), apoi reparată. **314 agenți, 0 erori.**
+   singură în picioare, cod valid, chestionare), apoi reparată. **332 de agenți, 0 erori.**
 
 Refolosire pentru altă materie: schimbi conținutul din `build_plan.py` și rulezi aceleași comenzi.
