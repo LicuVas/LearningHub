@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Structura unei baze de date de farmacie | Postliceal Sanitar, Anul II</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<a href="#atomic-content" class="skip-link">Sari la continut</a>
+<div class="container">
+
+    <nav class="nav-bar">
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8592; Modulul</a>
+        <a href="lectia2-operatii-incarcare.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Structura unei baze de date de farmacie</h1>
+        <p class="lesson-subtitle">Tabelul de produse, tabelul de furnizori si tabelul de intrari — cum se organizeaza informatia de gestiune fara sa o rescrii de fiecare data</p>
+    </header>
+
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei intelege cum este structurata o baza de date folosita la farmacie pentru gestiune: de ce informatia este impartita in mai multe tabele legate intre ele (produse, furnizori, intrari), ce este un camp, ce tipuri de date exista si de ce fiecare tabel are nevoie de o cheie primara — un identificator unic care nu se repeta niciodata.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa explici diferenta dintre un tabel, o inregistrare (rand) si un camp (coloana)</li>
+                <li>Sa descrii ce campuri contine tabelul Produse si ce tip de date are fiecare</li>
+                <li>Sa descrii ce campuri contine tabelul Furnizori si de ce unele coduri se stocheaza ca text</li>
+                <li>Sa descrii ce campuri contine tabelul Intrari si cum leaga produsul de furnizorul care l-a livrat</li>
+                <li>Sa explici ce este o cheie primara si sa recunosti un camp potrivit pentru acest rol</li>
+                <li>Sa recunosti tipurile de date de baza (Text, Number, Currency, Date/Time, AutoNumber) si sa le potrivesti cu un camp corect</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare — inainte sa citesti:</div>
+                <p>La farmacie tineti evidenta pe hartie, intr-un caiet. Rasfoind caietul gasesti trei randuri scrise in zile diferite, toate pentru acelasi produs: o data cu pretul 12,50 lei, alta data 12,80 lei, a treia oara doar "12" fara sa se stie daca sunt lei intregi sau a fost uitata virgula. Nu se stie care e pretul actual, cine a adus marfa ultima data si cand expira lotul aflat pe raft acum. Scrie mai jos: ce informatii separate ar trebui sa existe intr-o evidenta electronica, in ce "tabele" le-ai imparti si de ce crezi ca ar disparea aceasta confuzie.</p>
+                <textarea id="tryAnswer" placeholder="Cred ca ar trebui sa existe urmatoarele informatii, organizate asa..." rows="6"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Ganditi-va la trei liste separate, dar legate intre ele: o lista cu produsele si pretul lor actual (un singur pret pe produs, nu unul pe fiecare rand din caiet), o lista cu furnizorii si datele lor de contact, si o a treia lista cu fiecare livrare in parte — cand a intrat, de la cine, ce lot si cand expira. Confuzia din caiet apare pentru ca aceeasi informatie (pretul) e scrisa de mai multe ori, in locuri diferite, fara reguli.</p>
+                    <p>Subiectul lectiei de azi arata exact cum se construiesc aceste trei liste (tabele) intr-o baza de date.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Tabel = randuri + coloane, de ce trei tabele legate -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Intr-un tabel al unei baze de date, ce reprezinta un rand (o linie)?", "options": ["Numele tabelului", "O inregistrare completa — de exemplu, toate datele despre un singur produs", "O formula de calcul", "Titlul unei coloane"], "correct": "b", "hint": "Randul = o inregistrare (un exemplar complet de date: un produs, un furnizor sau o intrare). Coloana este cea care se numeste camp si contine acelasi tip de informatie pentru toate randurile (de exemplu, toate preturile)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">Tabel, inregistrare, camp — si de ce farmacia foloseste trei tabele legate</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O <strong>baza de date</strong> pastreaza informatia in <strong>tabele</strong>. Un tabel arata ca un tabel obisnuit, cu randuri si coloane, dar cu reguli fixe:<br>
+                    Fiecare <strong>rand</strong> se numeste <strong>inregistrare</strong> — un exemplar complet de date (de exemplu, tot ce stim despre un produs anume).<br>
+                    Fiecare <strong>coloana</strong> se numeste <strong>camp</strong> — o singura categorie de informatie, aceeasi pentru toate randurile (de exemplu, coloana Pret contine numai preturi).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">De ce nu ajunge un singur tabel urias:</div>
+                    <p>Daca ai pune totul intr-un singur tabel de "intrari marfa", ar trebui sa rescrii denumirea furnizorului si adresa lui la fiecare livrare, si denumirea produsului si pretul de vanzare la fiecare rand. Orice greseala de scriere (o virgula in plus, un pret vechi copiat din greseala) creeaza exact confuzia din caietul de hartie: acelasi produs cu preturi diferite scrise in locuri diferite.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Solutia — trei tabele legate intre ele:</div>
+                    <p>
+                        <strong>Produse</strong> — un singur rand pentru fiecare produs din nomenclator, cu pretul lui actual.<br>
+                        <strong>Furnizori</strong> — un singur rand pentru fiecare firma de la care se cumpara marfa.<br>
+                        <strong>Intrari</strong> — un rand pentru fiecare livrare (receptie) — ce produs, de la ce furnizor, in ce lot, cu ce data de expirare.<br>
+                        Tabelul Intrari "citeste" datele produsului si ale furnizorului din celelalte doua tabele, in loc sa le copieze. Detaliem fiecare tabel in atomii urmatori.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Tabelul Produse -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Care dintre urmatoarele campuri ar trebui ales ca CHEIE PRIMARA (identificator unic) a tabelului Produse?", "options": ["denumire_produs", "pret_amanuntul", "cod_produs", "forma_farmaceutica"], "correct": "c", "hint": "Cheia primara trebuie sa fie unica pentru fiecare rand si sa nu se repete niciodata. Denumirea se poate scrie asemanator la doua produse diferite, forma farmaceutica si pretul se repeta la sute de produse — un cod dedicat (cod_produs) e facut special sa fie unic."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">Tabelul Produse — nomenclatorul farmaciei</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Tabelul <strong>Produse</strong> contine un singur rand pentru fiecare produs pe care farmacia il tine in nomenclator, indiferent cate livrari a avut de-a lungul timpului. Campurile tipice:
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Structura tabelului Produse:</div>
+                    <p>
+                        <strong>cod_produs</strong> — cod intern unic (cheia primara), ex: <code>P0001</code><br>
+                        <strong>denumire_produs</strong> — denumirea comerciala afisata pe raft si pe bon<br>
+                        <strong>forma_farmaceutica</strong> — ex: comprimate, sirop, unguent, solutie<br>
+                        <strong>unitate_masura</strong> — ex: cutie, flacon, tub<br>
+                        <strong>pret_amanuntul</strong> — pretul de vanzare actual, in lei<br>
+                        <strong>stoc_minim</strong> — cantitatea sub care produsul trebuie recomandat spre comanda
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu de inregistrare (un rand din tabel):</div>
+                    <p>
+                        cod_produs = <code>P0001</code> · denumire_produs = "Exemplu produs A" · forma_farmaceutica = "comprimate" · unitate_masura = "cutie" · pret_amanuntul = 12,50 · stoc_minim = 20
+                    </p>
+                </div>
+                <div class="tip-box">
+                    <div class="tip-box-title">De retinut</div>
+                    <p>In tabelul Produse exista un singur pret actual pentru fiecare produs — nu unul pentru fiecare livrare. Pretul se actualizeaza pe randul produsului cand se schimba; istoricul livrarilor (cu pretul de achizitie al fiecarui lot) sta in alt tabel, Intrari, pe care il vedem in atomul 4.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Tabelul Furnizori -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "De ce campul cui (Codul Unic de Inregistrare al furnizorului) se stocheaza de obicei ca TEXT si nu ca NUMBER (numar) intr-o baza de date?", "options": ["Pentru ca e mai rapid de cautat ca text", "Poate incepe cu literele RO si nu se fac calcule aritmetice cu el", "Pentru ca ocupa mai putin spatiu pe disc ca text", "Pentru ca un camp Number nu poate contine cifre"], "correct": "b", "hint": "Campurile Number sunt facute pentru valori cu care faci calcule (adunari, medii). CUI-ul unei firme platitoare de TVA poate fi scris cu prefixul RO in fata cifrelor, iar cu codul nu aduni si nu inmultesti niciodata — de aceea, chiar daca arata ca un numar, se stocheaza ca text."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">Tabelul Furnizori — de la cine se cumpara marfa</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Tabelul <strong>Furnizori</strong> contine un singur rand pentru fiecare firma de la care farmacia primeste marfa. Datele de contact se scriu o singura data aici, nu la fiecare livrare.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Structura tabelului Furnizori:</div>
+                    <p>
+                        <strong>cod_furnizor</strong> — cod intern unic (cheia primara), ex: <code>F001</code><br>
+                        <strong>denumire_firma</strong> — numele firmei furnizoare<br>
+                        <strong>cui</strong> — codul unic de inregistrare al firmei (text, nu numar)<br>
+                        <strong>adresa</strong> — adresa sediului sau a depozitului<br>
+                        <strong>telefon</strong> — numarul de contact (text, nu numar)<br>
+                        <strong>email</strong> — adresa de e-mail pentru comenzi
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu de inregistrare:</div>
+                    <p>
+                        cod_furnizor = <code>F001</code> · denumire_firma = "Exemplu Distributie Farma SRL" · cui = "RO12345678" · adresa = "Str. Exemplu nr. 10" · telefon = "0721000000" · email = "comenzi@exemplu-distributie.ro"
+                    </p>
+                </div>
+                <div class="warning-box">
+                    <div class="warning-box-title">&#9888; Greseala tipica</div>
+                    <p>Daca alegi tipul de date Number pentru campul telefon, un numar ca <code>0721000000</code> este interpretat ca valoare numerica si zero-ul din fata dispare automat (ramane <code>721000000</code>), iar numarul nu mai este valid. Solutia: telefonul, ca si CUI-ul, se stocheaza ca Text — un cod de contact, nu o valoare cu care faci calcule.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Tabelul Intrari -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Tabelul Intrari contine coloanele cod_produs si cod_furnizor. La ce foloseste asta?", "options": ["Sa duplice toate datele din celelalte doua tabele pe fiecare rand", "Sa calculeze automat pretul cu amanuntul al produsului", "Sa stearga automat produsele cu stoc zero", "Sa lege fiecare livrare de produsul si de furnizorul corespunzator, fara sa rescrie toate detaliile lor"], "correct": "d", "hint": "Aceasta legatura se numeste cheie externa (foreign key). Permite ca, pentru o intrare, sa afli cine e furnizorul si ce produs a fost livrat uitandu-te in celelalte doua tabele dupa cod, fara sa copiezi denumirea si adresa furnizorului pe fiecare rand din Intrari."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">Tabelul Intrari — fiecare livrare, cu lot si data de expirare</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Tabelul <strong>Intrari</strong> (receptii) are un rand pentru <em>fiecare livrare</em> — chiar daca acelasi produs, de la acelasi furnizor, intra de mai multe ori pe an, fiecare intrare are randul ei, cu propriul lot si propria data de expirare.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Structura tabelului Intrari:</div>
+                    <p>
+                        <strong>id_intrare</strong> — numar generat automat pentru fiecare intrare (cheia primara)<br>
+                        <strong>numar_factura</strong> — numarul facturii de la furnizor<br>
+                        <strong>data_intrare</strong> — data la care marfa a fost receptionata<br>
+                        <strong>cod_produs</strong> — leaga randul de tabelul Produse (ce produs a intrat)<br>
+                        <strong>cod_furnizor</strong> — leaga randul de tabelul Furnizori (de la cine a intrat)<br>
+                        <strong>lot</strong> — seria/lotul de fabricatie a marfii primite<br>
+                        <strong>data_expirare</strong> — data de expirare a acelui lot<br>
+                        <strong>cantitate</strong> — cate unitati au intrat<br>
+                        <strong>pret_achizitie</strong> — pretul platit furnizorului pentru o unitate
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu de calcul complet — de la pretul de achizitie la pretul cu amanuntul:</div>
+                    <p>
+                        La o intrare, pret_achizitie = 10,00 lei/bucata. Farmacia aplica un <strong>adaos comercial</strong> (marja de vanzare) de exemplu 25%.<br>
+                        Formula: pret_amanuntul = pret_achizitie &#215; (1 + adaos_comercial &#247; 100)<br>
+                        Calcul: pret_amanuntul = 10,00 &#215; (1 + 25 &#247; 100) = 10,00 &#215; 1,25 = <strong>12,50 lei</strong><br>
+                        Aceasta valoare de 12,50 lei este cea care se scrie in campul pret_amanuntul din tabelul Produse (atomul 2) — un singur pret actual, actualizat la fiecare schimbare, nu unul separat pentru fiecare intrare.
+                    </p>
+                </div>
+                <div class="tip-box">
+                    <div class="tip-box-title">De retinut</div>
+                    <p>Cod_produs si cod_furnizor din tabelul Intrari sunt aceleasi coduri care apar ca cheie primara in tabelul Produse, respectiv Furnizori. Aceasta este legatura dintre tabele — se numeste cheie externa (foreign key) — si e motivul pentru care nu mai trebuie rescrisa denumirea produsului sau adresa furnizorului la fiecare livrare.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Cheia primara -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Ce se intampla daca incerci sa salvezi doua inregistrari cu acelasi cod_produs (cheia primara) in tabelul Produse din Access?", "options": ["Access afiseaza o eroare si refuza salvarea celei de-a doua inregistrari cu codul repetat", "Access le accepta pe amandoua fara nicio observatie", "Access sterge automat inregistrarea mai veche", "Access le uneste automat intr-un singur rand"], "correct": "a", "hint": "Rolul cheii primare este exact acesta: garanteaza ca fiecare valoare din acel camp este unica in tot tabelul. Access verifica automat la salvare si blocheaza orice incercare de a introduce o valoare deja folosita in campul cheie primara."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">Cheia primara — identificatorul care nu se repeta niciodata</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    <strong>Cheia primara</strong> (Primary Key) este campul (sau combinatia de campuri) care identifica in mod unic fiecare inregistrare dintr-un tabel. Doua reguli obligatorii: valoarea din acest camp <strong>nu se repeta niciodata</strong> in tabel si <strong>nu poate ramane goala</strong>. Datorita ei, tabelele se pot lega intre ele (asa cum am vazut la atomul 4: cod_produs si cod_furnizor).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cum setezi cheia primara in Microsoft Access:</div>
+                    <p>
+                        1. Deschizi tabelul in <strong>Design View</strong> (clic dreapta pe numele tabelului din panoul din stanga &#8594; Design View).<br>
+                        2. Dai clic pe randul cu numele campului pe care il alegi cheie primara (de exemplu cod_produs).<br>
+                        3. Din fila <strong>Design</strong> a panglicii (ribbon), apesi butonul <strong>Primary Key</strong> (are o iconita cu o cheita galbena) — sau clic dreapta pe selectorul randului si alegi <strong>Primary Key</strong> din meniul contextual.<br>
+                        4. Langa numele campului apare simbolul cheitei, semn ca acel camp este acum cheia primara a tabelului.
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">AutoNumber — o cheie primara generata automat:</div>
+                    <p>Pentru tabelul Intrari, unde nu exista niciun cod natural care sa fie mereu unic, se foloseste tipul de date <strong>AutoNumber</strong>: Access genereaza singur un numar nou (1, 2, 3, ...) la fiecare inregistrare noua, fara sa fie nevoie sa il scrii tu. Campul id_intrare din atomul 4 este exact acest tip de cheie.</p>
+                </div>
+                <div class="warning-box">
+                    <div class="warning-box-title">&#9888; Greseala tipica</div>
+                    <p>Alegerea campului denumire_produs ca si cheie primara. Problema: doua produse diferite pot avea denumiri scrise identic din greseala (spatiu in plus, litera mare/mica diferita nu se vede cu ochiul liber), sau denumirea comerciala a unui produs se poate schimba in timp — iar o cheie primara nu ar trebui sa se schimbe niciodata. Solutia sigura este un cod intern stabil (cod_produs) sau un AutoNumber.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Tipurile de date -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Care tip de date este cel mai potrivit pentru campul pret_amanuntul din tabelul Produse?", "options": ["Short Text", "Yes/No", "Date/Time", "Currency"], "correct": "d", "hint": "Currency este tipul de date facut special pentru valori banesti — pastreaza exact doua zecimale si permite calcule corecte (adunari, inmultiri cu procentul de adaos). Daca ai stoca pretul ca Short Text, ai putea scrie din greseala litere in acel camp si nu ai mai putea aduna sau sorta corect valorile."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">Tipurile de date — fiecare camp isi are tipul lui</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    In Microsoft Access, fiecare camp dintr-un tabel are un <strong>tip de date</strong> ales o singura data, la crearea tabelului. Tipul de date controleaza ce se poate scrie in acel camp si ce operatii se pot face cu el (calcule, sortare, cautare).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Tipurile de date de baza si campurile din lectia de azi:</div>
+                    <p>
+                        <strong>Short Text</strong> — text scurt (pana la 255 caractere): denumire_produs, forma_farmaceutica, cod_produs, cui, telefon<br>
+                        <strong>Number</strong> — valori numerice cu care se fac calcule: cantitate, stoc_minim<br>
+                        <strong>Currency</strong> — valori banesti, cu doua zecimale exacte: pret_amanuntul, pret_achizitie<br>
+                        <strong>Date/Time</strong> — date calendaristice: data_intrare, data_expirare<br>
+                        <strong>AutoNumber</strong> — numar generat automat, unic: id_intrare<br>
+                        <strong>Yes/No</strong> — o singura alegere din doua variante, ex: un camp "produs_activ" care arata daca produsul mai este inca in nomenclatorul curent
+                    </p>
+                </div>
+                <div class="warning-box">
+                    <div class="warning-box-title">&#9888; Greseala tipica</div>
+                    <p>Daca stochezi pretul ca Short Text, Access sorteaza valorile alfabetic, nu numeric: sirul "12", "2", "9" apare in aceasta ordine (pentru ca cifra "1" vine inaintea lui "2" si a lui "9" alfabetic), desi numeric 2 &lt; 9 &lt; 12. In plus, nu poti face nicio suma sau medie pe un camp text. Solutia: campurile cu care faci calcule sau sortari numerice folosesc mereu Number sau Currency, niciodata Short Text.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 7 — Recapitulare, fara quiz -->
+        <div class="atom" id="atom-7">
+            <div class="atom-header">
+                <div class="atom-number">7</div>
+                <h3 class="atom-title">Recapitulare si conexiuni</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O baza de date de farmacie functionala se sprijina pe trei tabele legate prin coduri, fiecare cu campurile lui potrivite, fiecare cu o cheie primara unica.
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Harta celor trei tabele:</div>
+                    <p>
+                        <strong>Produse</strong> (cheie primara: cod_produs) — denumire, forma farmaceutica, unitate de masura, pret_amanuntul, stoc_minim<br>
+                        &nbsp;&nbsp;&#8593;&#8595; legat prin cod_produs<br>
+                        <strong>Intrari</strong> (cheie primara: id_intrare, AutoNumber) — numar_factura, data_intrare, cod_produs, cod_furnizor, lot, data_expirare, cantitate, pret_achizitie<br>
+                        &nbsp;&nbsp;&#8593;&#8595; legat prin cod_furnizor<br>
+                        <strong>Furnizori</strong> (cheie primara: cod_furnizor) — denumire_firma, cui, adresa, telefon, email
+                    </p>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Conexiune cu urmatoarea lectie:</div>
+                    <p>Acum ca stii cum arata cele trei tabele, in lectia urmatoare vei invata cum se completeaza efectiv un <strong>formular de receptie</strong> cand soseste marfa noua si ce <strong>validari</strong> se aplica la introducerea datelor, astfel incat sa nu poti salva din greseala un lot fara data de expirare sau o cantitate negativa.</p>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">De retinut pentru activitatile practice:</div>
+                    <p>
+                        Rand = inregistrare, coloana = camp.<br>
+                        Trei tabele, trei roluri: Produse (nomenclator si pret actual), Furnizori (contacte), Intrari (istoricul livrarilor, cu lot si expirare).<br>
+                        Cheia primara: unica, niciodata goala, niciodata schimbata — nu alege un nume ca cheie primara, alege un cod stabil sau un AutoNumber.<br>
+                        Tipul de date potrivit: Currency pentru preturi, Date/Time pentru date calendaristice, Short Text pentru coduri si nume, chiar daca "arata" a numar (cui, telefon).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) — Camp sau inregistrare?</h3>
+            <p>Ai tabelul Produse din farmacie cu randul: cod_produs = P0007, denumire_produs = "Exemplu produs B", forma_farmaceutica = "sirop", pret_amanuntul = 18,40. Raspunde: (a) acest rand intreg reprezinta o inregistrare sau un camp? (b) valoarea "sirop" apartine unui camp — cum se numeste acel camp? (c) care valoare din acest rand este cheia primara?</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) — Alege tabelul si tipul de date corect</h3>
+            <p>Ai urmatoarele sase informatii pe care trebuie sa le introduci in baza de date a farmaciei: (1) denumirea unui produs nou; (2) numele firmei care a livrat marfa; (3) data la care expira lotul primit azi; (4) cate cutii au intrat la ultima livrare; (5) pretul cu amanuntul al unui produs; (6) codul unic de inregistrare (CUI) al furnizorului. Pentru fiecare informatie, spune: in ce tabel intra (Produse, Furnizori sau Intrari) si ce tip de date i-ai da (Short Text, Number, Currency sau Date/Time).</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) — Proiecteaza si calculeaza</h3>
+            <p>Farmacia primeste o livrare noua: produsul cu cod_produs = P0015, de la furnizorul cu cod_furnizor = F003, lot L2027-04, data_expirare 30.11.2028, cantitate 40 cutii, pret_achizitie 8,00 lei/cutie, adaos comercial aplicat de farmacie 30%. Cerinte: (a) scrie randul complet care s-ar adauga in tabelul Intrari, cu toate campurile din atomul 4; (b) calculeaza pretul cu amanuntul rezultat, folosind formula din atomul 4, si arata care camp din tabelul Produse s-ar actualiza cu aceasta valoare; (c) explica de ce tabelul Intrari are nevoie de cod_produs si cod_furnizor si nu de intreaga denumire a produsului si a furnizorului scrisa direct pe rand.</p>
+        </div>
+    </section>
+
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Un tabel are randuri (inregistrari) si coloane (campuri); fiecare camp pastreaza un singur tip de informatie</li>
+                <li>Tabelul Produse: cod_produs, denumire_produs, forma_farmaceutica, unitate_masura, pret_amanuntul, stoc_minim — un singur rand pe produs</li>
+                <li>Tabelul Furnizori: cod_furnizor, denumire_firma, cui, adresa, telefon, email — CUI si telefon se stocheaza ca text, nu ca numar</li>
+                <li>Tabelul Intrari: id_intrare, numar_factura, data_intrare, cod_produs, cod_furnizor, lot, data_expirare, cantitate, pret_achizitie — un rand pe fiecare livrare</li>
+                <li>Cheia primara este unica si nu se schimba niciodata; se seteaza in Access din Design View, butonul Primary Key</li>
+                <li>cod_produs si cod_furnizor din Intrari leaga tabelele intre ele (cheie externa), fara sa duplice datele</li>
+                <li>Tipuri de date: Short Text (nume, coduri), Number (cantitati), Currency (preturi), Date/Time (date), AutoNumber (id generat automat)</li>
+                <li>Calcul de exemplu: pret_amanuntul = pret_achizitie &#215; (1 + adaos_comercial &#247; 100) — 10,00 lei cu adaos 25% devine 12,50 lei</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Operatii si incarcare</strong> — cum completezi formularul de receptie pentru marfa noua si ce validari asigura ca datele introduse sunt corecte (fara date de expirare lipsa, fara cantitati negative).</p>
+            <a href="lectia2-operatii-incarcare.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('an2-farmacie-c3-baze-de-date-lectia1-tipuri-structura');
+        PracticeSimple.init('an2-farmacie-c3-baze-de-date-lectia1-tipuri-structura');
+        LessonSummary.init('an2-farmacie-c3-baze-de-date-lectia1-tipuri-structura');
+        Breadcrumb.init({
+            grade: 'an2-farmacie',
+            gradeName: 'Postliceal, Anul II',
+            module: 'c3-baze-de-date',
+            moduleName: 'C3. Administrarea unei Baze de Date',
+            lesson: 'Structura unei baze de date de farmacie'
+        });
+        LearningProgress.init('an2-farmacie', 'c3-baze-de-date', 'lectia1-tipuri-structura.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

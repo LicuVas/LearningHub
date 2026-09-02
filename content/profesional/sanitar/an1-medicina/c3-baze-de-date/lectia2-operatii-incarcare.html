@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operatii pe tabel si incarcarea bazei | Postliceal Sanitar, Anul I</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<a href="#atomic-content" class="skip-link">Sari la continut</a>
+<div class="container">
+
+    <nav class="nav-bar">
+        <a href="lectia1-tipuri-structura.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia anterioara</a>
+        <a href="lectia3-exploatare.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Operatii pe tabel si incarcarea bazei</h1>
+        <p class="lesson-subtitle">Formular de introducere, validari pe camp, import dintr-o foaie de calcul, corectarea duplicatelor — doua tabele legate: Pacienti si Consultatii</p>
+    </header>
+
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Un tabel gol nu ajuta pe nimeni. In lectia asta inveti sa aduci date reale intr-o baza pe care ai construit-o deja: printr-un <strong>formular</strong>, atunci cand inregistrezi un pacient nou la ghiseu, unul cate unul; cu <strong>validari</strong>, ca sa nu se poata salva un camp obligatoriu gol sau un format gresit (un CNP cu mai putin de 13 cifre, o data de nastere din viitor); prin <strong>import</strong>, atunci cand ai deja o lista mare intr-un Excel (de exemplu, evidenta unui cabinet scolar); si prin <strong>curatarea duplicatelor</strong>, ca acelasi pacient sa nu apara de doua ori sub doua inregistrari diferite. La final vezi cum doua tabele — Pacienti si Consultatii — raman legate corect, fara sa repeti datele pacientului la fiecare vizita.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa creezi un formular simplu in Access pornind de la un tabel existent si sa il folosesti pentru a adauga o inregistrare noua</li>
+                <li>Sa setezi proprietatea Required si o Regula de validare (Validation Rule) pe un camp, ca sa opresti date evident gresite la sursa</li>
+                <li>Sa folosesti o Masca de intrare (Input Mask) pentru un camp cu format fix, precum CNP-ul</li>
+                <li>Sa imparti dintr-o foaie de calcul Excel intr-un tabel existent, folosind expertul de import din Access</li>
+                <li>Sa recunosti si sa elimini inregistrarile duplicate dintr-o lista, inainte sau dupa import</li>
+                <li>Sa explici de ce Pacienti si Consultatii sunt doua tabele separate, legate printr-un camp comun, si nu unul singur</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare — inainte sa citesti:</div>
+                <p>Esti la receptia unui cabinet si primesti un pacient nou. In acelasi timp, o colega iti trimite pe e-mail un Excel cu 40 de pacienti inscrisi la un control de rutina, ca sa ii adaugi si pe ei in evidenta electronica. Scrie mai jos: ce ai face diferit ca sa introduci pacientul de la ghiseu fata de cei 40 din Excel? Ce probleme crezi ca ar putea aparea daca ai retasta manual, unul cate unul, toti cei 40 din Excel?</p>
+                <textarea id="tryAnswer" placeholder="Cred ca as face urmatoarele..." rows="6"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Pentru un singur pacient, un formular clar, cu campurile completate pe rand, e mai sigur decat sa scrii direct in tabel — greu sa confunzi coloanele. Pentru 40 de pacienti dintr-un Excel deja existent, retastarea manuala inseamna 40 de sanse de greseala de tastare si ore de munca in plus — Access poate importa toata lista dintr-o singura operatie.</p>
+                    <p>Subiectul lectiei de azi arata exact cum se fac amandoua, corect.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main id="atomic-content">
+
+        <!-- ATOM 1: De ce un formular, nu scris direct in tabel -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Care este principalul avantaj al introducerii unui pacient nou printr-un formular, fata de a scrie direct in tabelul Pacienti?", "options": ["Formularul sterge automat pacientii vechi din evidenta", "Formularul arata campurile unul sub altul, cu eticheta clara, si poate limita ce se scrie in fiecare camp — deci reduce greselile de tastare", "Formularul este singura metoda prin care Access accepta inregistrari noi", "Formularul face automat o copie de siguranta a bazei la fiecare pacient introdus"], "correct": "b", "hint": "Un formular afiseaza campurile unei singure inregistrari, unul sub altul, cu eticheta clara langa fiecare, si poate restrictiona ce se scrie (de exemplu doar cifre la Telefon). Nu sterge date si nu face backup automat — acelea sunt operatii separate, facute de altcineva."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">De ce un formular, si nu scris direct in tabel</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un <strong>tabel</strong> este locul unde datele sunt stocate — randuri (inregistrari) si coloane (campuri). Poti scrie direct in el, dar la un tabel cu 10-15 campuri (Nume, Prenume, CNP, Data nasterii, Telefon, Adresa...), coloanele late si textul mic fac usor sa scrii intr-o coloana gresita, mai ales cand introduci date sub presiune, la ghiseu. Un <strong>formular</strong> (Form) rezolva asta: afiseaza campurile unei <em>singure</em> inregistrari, unul sub altul, cu eticheta clara in stanga si spatiul de completat in dreapta — fara sa vezi restul tabelului deloc.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cand foloseste receptia formularul:</div>
+                    <p>Un pacient nou se prezinta la cabinet. In loc sa deschizi tabelul Pacienti si sa cauti primul rand liber, deschizi formularul <strong>Formular_Pacienti</strong>, apesi butonul de "inregistrare noua" si completezi campurile unul dupa altul: Nume, Prenume, Data nasterii, CNP, Telefon. Persoana de la receptie nu are nevoie sa cunoasca structura tabelului pe de rost — formularul o ghideaza.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Crearea formularului in Access -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "In Access, ai tabelul Pacienti deja creat, cu campurile completate. Ce faci pentru a genera automat un formular simplu bazat pe el?", "options": ["Selectezi tabelul Pacienti in panoul din stanga, apoi tab-ul Create de pe panglica, butonul Form", "File > Save As > Form", "Tastezi codul formularului direct in HTML", "Database Tools > Compact and Repair Database"], "correct": "a", "hint": "Cu tabelul dorit selectat in panoul din stanga (Navigation Pane), tab-ul Create de pe panglica are un buton Form: un singur clic genereaza automat un formular cu toate campurile acelui tabel, gata de folosit."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">Crearea unui formular simplu in Access</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Access construieste un formular direct din structura unui tabel deja existent — nu trebuie desenat nimic de la zero. Presupunem ca tabelul <strong>Pacienti</strong> exista deja, cu campurile ID_Pacient (AutoNumber, cheia primara), Nume, Prenume, Data_Nasterii, CNP, Telefon.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Pas cu pas — formular nou din tabel:</div>
+                    <p>
+                        1. In panoul din stanga (Navigation Pane), dai clic pe numele tabelului <strong>Pacienti</strong>, ca sa fie selectat (nu trebuie neaparat deschis).<br>
+                        2. Deschizi tab-ul <strong>Create</strong> de pe panglica.<br>
+                        3. Apesi butonul <strong>Form</strong>. Access genereaza automat un formular cu toate campurile tabelului, fiecare pe randul lui, cu eticheta in stanga si spatiul de completat in dreapta.<br>
+                        4. Formularul se deschide in modul <strong>Layout View</strong> — poti trage marginile campurilor mai late sau mai inguste daca un text nu incape.<br>
+                        5. Salvezi formularul cu <strong>Ctrl+S</strong> si ii dai un nume clar, de exemplu <em>Formular_Pacienti</em>.
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Adaugarea unei inregistrari noi:</div>
+                    <p>Deschizi formularul (dublu-clic pe el, in Navigation Pane). La baza ferestrei, in bara de navigare intre inregistrari, apesi butonul cu sageata si asterisc <strong>(New (blank) record)</strong>. Formularul se goleste, gata pentru pacientul nou. Completezi fiecare camp, apoi treci la urmatorul cu tasta <strong>Tab</strong>. Cand ai completat ultimul camp si apesi Tab din nou (sau muti la alta inregistrare), Access salveaza automat randul — nu exista un buton separat de "Salveaza".</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Validari pe camp -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Campul CNP trebuie sa aiba exact 13 cifre. Ce setare din Access impune, la nivel de camp, forma exacta ceruta (13 pozitii, fiecare o cifra) chiar in timp ce utilizatorul tasteaza?", "options": ["Field Size setat pe 13", "Required setat pe Yes", "O Masca de intrare (Input Mask) cu 13 pozitii de tip cifra", "Data Type Number"], "correct": "c", "hint": "O Masca de intrare (Input Mask) defineste forma exacta a textului chiar in timp ce se tasteaza — de exemplu 13 pozitii, fiecare acceptand doar o cifra. Field Size limiteaza doar lungimea MAXIMA (nu obliga la exact 13); Required doar cere ca celula sa nu ramana goala; Number ar sterge zerourile eventuale din fata."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">Validari pe camp — opresti greseala inainte sa se salveze</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O <strong>validare</strong> este o regula setata pe un camp, care refuza sa salveze o valoare care nu respecta regula. Se seteaza in <strong>Design View</strong> al tabelului (clic-dreapta pe numele tabelului → Design View → dai clic pe randul campului dorit → completezi proprietatile jos, in fereastra Field Properties). Trei proprietati sunt cele mai utile pentru un tabel cu date de pacienti:
+                </div>
+                <div class="example-box">
+                    <div class="example-title">1. Required (obligatoriu) — camp care nu poate ramane gol</div>
+                    <p>Pentru campurile Nume, Prenume si CNP, setezi proprietatea <strong>Required</strong> pe <strong>Yes</strong>. Daca cineva incearca sa salveze o inregistrare fara Nume completat, Access afiseaza un mesaj de eroare si nu salveaza randul pana campul nu e completat.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">2. Input Mask (masca de intrare) — forma fixa, cum e CNP-ul</div>
+                    <p>CNP-ul are intotdeauna exact <strong>13 cifre</strong>. In proprietatea <strong>Input Mask</strong> a campului CNP (tip de date Short Text, nu Number — vezi atomul urmator de ce), scrii o masca de 13 pozitii cifra: <code>0000000000000</code> (13 caractere "0" — fiecare "0" in Input Mask cere obligatoriu o cifra pe pozitia respectiva). Cand utilizatorul completeaza formularul, campul afiseaza 13 spatii libere de completat cu cifre; nu poti introduce o litera si nu poti lasa mai putin de 13 pozitii.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">3. Validation Rule (regula de validare) — o conditie logica</div>
+                    <p>Pentru campul <strong>Data_Nasterii</strong> (tip de date Date/Time), o data de nastere nu poate fi in viitor. In proprietatea <strong>Validation Rule</strong> scrii: <code>&lt;=Date()</code> — adica valoarea trebuie sa fie mai mica sau egala cu data de azi. In proprietatea <strong>Validation Text</strong> scrii mesajul care apare cand cineva incalca regula, de exemplu: <em>"Data nasterii nu poate fi in viitor."</em> Daca cineva tasteaza din greseala anul 2036 in loc de 2006, Access respinge salvarea si arata acel mesaj.</p>
+                </div>
+                <div class="mistake-box">
+                    <strong>&#10060; Greseala frecventa:</strong> Campul CNP este setat cu tipul de date <strong>Number</strong>, pentru ca "e format din cifre". Un CNP care incepe cu 0 nu exista in realitate (prima cifra arata sexul si secolul nasterii, 1-8), dar problema similara apare des la campul <strong>Telefon</strong>: un numar romanesc scris "0733123456", salvat ca Number, devine "733123456" — zeroul din fata dispare, pentru ca la un numar matematic zeroul din fata nu are valoare (007 = 7).
+                    <br><strong>Cum recunosti:</strong> numarul de telefon afisat in evidenta are 9 cifre in loc de 10, sau apelul catre acel numar nu functioneaza.
+                    <br><strong>Cum repari:</strong> schimbi tipul de date al campului in <strong>Short Text</strong> inainte de a reintroduce valorile — un numar de telefon sau un CNP este o <em>eticheta</em>, nu o cantitate cu care faci calcule, deci nu are ce sa caute intr-un camp Number.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Importul dintr-o foaie de calcul -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Tabelul Pacienti exista deja in baza de date, cu cateva zeci de inregistrari. Primesti un Excel cu pacienti noi, cu aceleasi coloane. Ce optiune alegi in expertul de import Access, ca sa completezi tabelul existent (nu sa creezi altul nou)?", "options": ["Link to the data source by creating a linked table", "Import the source data into a new table in the current database", "Append a copy of the records to the table (alegi tabelul Pacienti existent)", "Export data to an external file"], "correct": "c", "hint": "Append inseamna adauga inregistrarile noi la un tabel care exista deja — exact ce vrei cand Pacienti e deja construit si doar vrei sa completezi cu randuri noi. Prima optiune ar crea un tabel NOU, separat; a doua doar leaga fisierul Excel, fara sa copieze datele in Access; ultima face exact operatia inversa (scoate date din Access, nu aduce)."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">Importul dintr-o foaie de calcul Excel existenta</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Cand ai deja o lista mare intr-un fisier Excel (.xlsx) — de exemplu evidenta unui control scolar de rutina, tinuta pana acum in Excel de o colega — nu are sens sa o retastezi prin formular, rand cu rand. Access are un <strong>expert de import (Import Wizard)</strong> care citeste direct fisierul Excel si adauga randurile intr-un tabel.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Pas cu pas — import Excel in tabelul Pacienti:</div>
+                    <p>
+                        1. Deschizi tab-ul <strong>External Data</strong> de pe panglica.<br>
+                        2. In grupul Import &amp; Link, apesi <strong>Excel</strong>.<br>
+                        3. In fereastra care se deschide, alegi fisierul Excel (Browse) cu cei 40 de pacienti.<br>
+                        4. Alegi una dintre cele trei optiuni: <em>Import the source data into a new table</em> (creeaza un tabel nou), <em>Append a copy of the records to the table</em> (adauga la un tabel care exista deja — alegi Pacienti din lista) sau <em>Link to the data source</em> (doar conecteaza, fara sa copieze). Pentru situatia noastra — completarea tabelului Pacienti existent — alegi <strong>Append</strong> si selectezi Pacienti.<br>
+                        5. Access iti arata o previzualizare a datelor. Verifici ca fiecare coloana din Excel se potriveste cu campul corespunzator din tabel (Nume cu Nume, CNP cu CNP, nu cumva Telefon cu CNP).<br>
+                        6. Apesi <strong>Finish</strong>. Access confirma cate randuri au fost adaugate.
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Conditia ca importul sa functioneze corect:</div>
+                    <p>Optiunea Append functioneaza corect doar daca denumirile coloanelor din Excel corespund cu numele campurilor din tabelul Access, sau ordinea coloanelor este identica. Daca in Excel scrie "Numar telefon" si in Access campul se numeste "Telefon", expertul poate sa nu potriveasca automat coloana — verifici manual in ecranul de previzualizare, inainte de Finish.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Pregatirea foii de calcul inainte de import -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Care dintre urmatoarele conditii TREBUIE indeplinita de o foaie de calcul Excel, inainte de a o importa in Access?", "options": ["Fiecare coloana sa aiba o culoare de fundal diferita, pentru claritate", "Primul rand contine denumirile coloanelor, iar sub el fiecare rand este o inregistrare completa, fara celule combinate (merged)", "Foaia de calcul trebuie sa contina cel putin 3 sheet-uri", "Toate numele pacientilor trebuie scrise cu majuscule"], "correct": "b", "hint": "Access citeste Excelul ca pe un tabel simplu: un rand de antet (denumirile campurilor) si apoi randuri de date, fiecare celula corespunzand unui camp. Celulele combinate (merged) sau randurile goale intercalate incurca expertul de import si pot produce randuri goale sau date deplasate."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">Pregatirea foii de calcul inainte de import</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un import reuseste doar daca foaia de calcul e "curata" ca structura, adica seamana cu un tabel simplu. Inainte de a lansa expertul din Access, verifici in Excel urmatoarele:
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Checklist de curatenie:</div>
+                    <p>
+                        <strong>Un singur rand de antet</strong> — primul rand contine denumirile coloanelor (ideal, identice cu numele campurilor din tabelul Access: Nume, Prenume, Data_Nasterii, CNP, Telefon), fara randuri goale sau titluri suplimentare deasupra.<br><br>
+                        <strong>Fara celule combinate (merged cells)</strong> — daca cineva a combinat celule pentru un titlu de sectiune (de exemplu "Pacienti control ianuarie" scris peste mai multe coloane), Access nu stie carei coloane ii apartine acea valoare. Se dezactiveaza cu: selectezi zona, apoi <strong>Home &gt; Merge &amp; Center</strong>.<br><br>
+                        <strong>Fara randuri sau coloane goale in mijlocul datelor</strong> — un rand gol intrerupe intervalul pe care Access il citeste, iar restul listei de dedesubt poate ramane neimportat.<br><br>
+                        <strong>Fiecare coloana are un singur tip de continut</strong> — nu amesteci, in aceeasi coloana Telefon, si numere si texte ca "nu are telefon".
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Un detaliu important pentru date de pacienti — informatiile personale in Excel:</div>
+                    <p>Cat timp fisierul Excel cu CNP-uri si telefoane exista pe disc, inainte si dupa import, el ramane un document cu date personale ale pacientilor. Nu il lasi intr-un folder partajat vizibil oricui in retea si il stergi de pe calculator dupa ce importul a fost verificat si confirmat corect — datele au deja o singura locatie sigura, in baza de date.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Duplicatele -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "O lista in Excel are 9 randuri de pacienti pentru controlul lunar. Trei randuri sunt duplicate exacte (acelasi CNP, acelasi nume, aceeasi data). Dupa Data > Remove Duplicates, cate randuri unice raman?", "options": ["9", "3", "6", "7"], "correct": "c", "hint": "9 randuri initiale minus cele 3 randuri care erau duplicate (a doua aparitie a fiecarui rand repetat) = 6 randuri unice ramase. Remove Duplicates pastreaza prima aparitie a fiecarui rand si sterge aparitiile ulterioare identice."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">Gasirea si eliminarea duplicatelor</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un <strong>duplicat</strong> este o inregistrare care apare de doua sau mai multe ori, cu aceleasi valori (sau aproape aceleasi). Duplicatele strica evidenta: un pacient inregistrat de doua ori sub doua ID-uri diferite ajunge cu doua fise separate, fiecare cu o parte din istoricul lui de consultatii, in loc de una singura completa.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu complet — 9 randuri, 3 duplicate:</div>
+                    <p>
+                        Lista din Excel, in ordine: 1) Popescu Ana, CNP 289..., 2) Ionescu Maria, CNP 296..., 3) Popescu Ana, CNP 289... (duplicat al randului 1), 4) Gheorghiu Ion, CNP 178..., 5) Ionescu Maria, CNP 296... (duplicat al randului 2), 6) Dumitrescu Elena, CNP 285..., 7) Popescu Ana, CNP 289... (duplicat al randului 1, a treia aparitie), 8) Radu Vasile, CNP 175..., 9) Stan Georgeta, CNP 291...<br><br>
+                        Selectezi tot intervalul (inclusiv antetul), deschizi tab-ul <strong>Data</strong> si apesi <strong>Remove Duplicates</strong>. In fereastra care apare, lasi bifate toate coloanele (ca sa compare randul intreg, nu doar o coloana) si apesi <strong>OK</strong>. Excel raporteaza: <em>"3 duplicate values found and removed; 6 unique values remain."</em> Raman exact randurile 1, 2, 4, 6, 8, 9 — <strong>9 − 3 = 6 randuri unice</strong>.
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Vezi intai ce se sterge, inainte sa stergi:</div>
+                    <p>Remove Duplicates sterge direct, fara sa iti arate randurile marcate. Ca sa vezi intai ce ar fi considerat duplicat, selectezi coloana CNP, apoi <strong>Home &gt; Conditional Formatting &gt; Highlight Cells Rules &gt; Duplicate Values</strong>. Excel coloreaza toate CNP-urile care se repeta, ca sa le verifici cu ochiul liber inainte sa decizi ce stergi — util cand doi frati au acelasi nume de familie, dar CNP-uri diferite, si nu vrei sa ii confunzi drept duplicat.</p>
+                </div>
+                <div class="mistake-box">
+                    <strong>&#10060; Greseala frecventa:</strong> Se compara doar coloana Nume, iar doi pacienti cu acelasi nume si prenume (posibil, mai ales in familii cu traditie de nume) sunt considerati gresit duplicat si unul e sters.
+                    <br><strong>Cum recunosti:</strong> dupa curatare lipseste un pacient real din evidenta, desi numele lui apare o singura data.
+                    <br><strong>Cum repari:</strong> la Remove Duplicates, lasi bifate <em>toate</em> coloanele relevante (macar Nume + Prenume + CNP + Data nasterii), nu doar Nume — CNP-ul, in particular, este unic pentru fiecare persoana si arata clar daca e vorba de aceeasi persoana sau de doua persoane diferite cu nume asemanator.
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 7 — Doua tabele legate, recapitulare, fara quiz -->
+        <div class="atom" id="atom-7">
+            <div class="atom-header">
+                <div class="atom-number">7</div>
+                <h3 class="atom-title">Doua tabele legate: Pacienti si Consultatii</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un pacient trece prin cabinet de mai multe ori de-a lungul timpului: un control, apoi altul peste cateva luni, apoi altul. Daca ai pune toate consultatiile in acelasi tabel cu datele personale ale pacientului (Nume, CNP, Telefon repetate la fiecare vizita), ai rescrie de fiecare data acelasi CNP si acelasi nume — risc mare de greseala de tastare si spatiu irosit. Solutia: <strong>doua tabele separate</strong>, legate printr-un camp comun.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Structura celor doua tabele:</div>
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Tabel</th><th>Campuri</th><th>Cheie</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Pacienti</td><td>ID_Pacient, Nume, Prenume, Data_Nasterii, CNP, Telefon</td><td>ID_Pacient = cheie primara (AutoNumber)</td></tr>
+                            <tr><td>Consultatii</td><td>ID_Consultatie, Cod_Pacient, Data_Consultatiei, Tip_Consultatie</td><td>ID_Consultatie = cheie primara; Cod_Pacient = cheie externa</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cum se leaga cele doua tabele:</div>
+                    <p>Coloana <strong>Cod_Pacient</strong> din Consultatii se potriveste cu coloana <strong>ID_Pacient</strong> din Pacienti — acesta este <strong>campul de legatura</strong> dintre cele doua tabele, numit <strong>cheie externa</strong> (foreign key). Pentru pacienta Popescu Ana, cu ID_Pacient = 5, tabelul Consultatii poate avea trei randuri diferite, toate cu Cod_Pacient = 5 (un control in martie, o evaluare a parametrilor in iunie, un control de rutina in septembrie): un pacient poate avea mai multe consultatii, dar fiecare consultatie apartine unui singur pacient. Aceasta se numeste relatie <strong>unu-la-multe</strong>. Relatia se construieste in Access din tab-ul <strong>Database Tools &gt; Relationships</strong>, tragand cu mouse-ul din ID_Pacient (Pacienti) peste Cod_Pacient (Consultatii), apoi confirmand cu <strong>Create</strong> in fereastra Edit Relationships.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Rezumat vizual al fluxului de lucru din lectia de azi:</div>
+                    <p>
+                        Pacient nou, unul cate unul → <strong>Formular</strong> (Create &gt; Form), cu Required si Input Mask/Validation Rule active pe camp<br>
+                        &nbsp;&nbsp;↓<br>
+                        Lista mare, deja in Excel → <strong>curatare</strong> (Remove Duplicates, structura fara celule combinate) → <strong>Import</strong> (External Data &gt; Excel &gt; Append la tabelul existent)<br>
+                        &nbsp;&nbsp;↓<br>
+                        Fiecare vizita ulterioara → randuri noi in <strong>Consultatii</strong>, legate de pacient prin Cod_Pacient — datele personale nu se rescriu niciodata
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Conexiune cu urmatoarea lectie:</div>
+                    <p>Odata ce baza are date reale si tabelele sunt legate corect, urmatorul pas este sa scoti informatie utila din ea — nu rasfoind manual tabelul, ci punand intrebari precise. In lectia urmatoare inveti <strong>interogari cu criterii</strong>: cum gasesti, de exemplu, toti pacientii cu o consultatie in luna curenta, fara sa cauti cu ochiul printre sute de randuri.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) — Formular sau tabel direct?</h3>
+            <p>Pentru fiecare situatie, spune daca ai folosi formularul sau ai scrie direct in tabel, si justifica intr-o propozitie: a) un singur pacient nou, la ghiseu; b) o lista de 60 de pacienti, deja intr-un Excel primit de la un cabinet scolar; c) corectarea unui singur numar de telefon gresit tastat, la un pacient existent.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) — Curatarea unei liste inainte de import</h3>
+            <p>Primesti urmatoarea lista de 8 randuri, gata de import in tabelul Pacienti (Nume, Prenume, CNP): <em>1) Ionescu, Radu, 178..., 2) Marin, Elena, 285..., 3) Ionescu, Radu, 178... (identic cu randul 1), 4) Vasilescu, Ioana, 296..., 5) Popa, Mihai, 175..., 6) Ionescu, Radu, 179... (CNP diferit fata de randul 1, la ultima cifra), 7) Marin, Elena, 285... (identic cu randul 2), 8) Dobre, Cristina, 291...</em>. Raspunde: a) cate randuri sunt duplicate exacte si cate raman dupa Remove Duplicates cu toate coloanele bifate; b) randul 6 este sau nu duplicat cu randul 1 — motiveaza folosind CNP-ul; c) ce ai verifica inainte sa consideri sigur ca randul 6 e o persoana diferita, si nu o greseala de tastare la CNP.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) — Proiectarea validarilor si a relatiei</h3>
+            <p>Cabinetul iti cere sa pregatesti tabelul Pacienti pentru import, cu aceste campuri: ID_Pacient, Nume, Prenume, Data_Nasterii, CNP, Telefon. Pentru fiecare din CNP, Data_Nasterii si Telefon: a) alege tipul de date corect si motiveaza (Number, Short Text sau Date/Time); b) propune o validare concreta (Required, Input Mask sau Validation Rule, cu textul mesajului afisat la eroare). Apoi explica, in doua-trei propozitii, ce s-ar strica in evidenta consultatiilor daca ai sterge din greseala tabelul Pacienti si ai pastra doar Consultatii cu coloana Cod_Pacient.</p>
+        </div>
+    </section>
+
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Formularul (Create &gt; Form) e sigur pentru introducere punctuala: un camp pe rand, greu de confundat cu alta coloana</li>
+                <li>Required = Yes opreste salvarea unui camp gol; Input Mask impune o forma fixa (13 cifre la CNP); Validation Rule verifica o conditie logica (data nasterii &lt;=Date())</li>
+                <li>CNP si Telefon trebuie Short Text, nu Number — altfel zerourile din fata dispar</li>
+                <li>Import Excel: External Data &gt; Excel &gt; Append la tabelul existent &gt; previzualizare inainte de Finish</li>
+                <li>Foaia de calcul trebuie curata inainte de import: un singur rand de antet, fara celule combinate, fara randuri goale</li>
+                <li>Duplicatele se gasesc cu Data &gt; Remove Duplicates (toate coloanele bifate) sau se verifica vizual cu Conditional Formatting</li>
+                <li>Pacienti si Consultatii sunt doua tabele separate, legate unu-la-multe prin Cod_Pacient = ID_Pacient — datele personale nu se rescriu la fiecare vizita</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Exploatarea bazei: interogari cu criterii</strong> — cum pui intrebari precise bazei de date, ca sa gasesti rapid exact pacientii sau consultatiile de care ai nevoie.</p>
+            <a href="lectia3-exploatare.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('an1-medicina-c3-baze-de-date-lectia2-operatii-incarcare');
+        PracticeSimple.init('an1-medicina-c3-baze-de-date-lectia2-operatii-incarcare');
+        LessonSummary.init('an1-medicina-c3-baze-de-date-lectia2-operatii-incarcare');
+        Breadcrumb.init({
+            grade: 'an1-medicina',
+            gradeName: 'Postliceal, Anul I',
+            module: 'c3-baze-de-date',
+            moduleName: 'C3. Administrarea unei Baze de Date',
+            lesson: 'Operatii pe tabel si incarcarea bazei'
+        });
+        LearningProgress.init('an1-medicina', 'c3-baze-de-date', 'lectia2-operatii-incarcare.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

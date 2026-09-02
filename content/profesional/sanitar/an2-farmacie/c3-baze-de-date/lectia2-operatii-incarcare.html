@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operatii si incarcare: formular de receptie si import de date | Postliceal Sanitar, Anul II</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<a href="#atomic-content" class="skip-link">Sari la continut</a>
+<div class="container">
+
+    <nav class="nav-bar">
+        <a href="lectia1-tipuri-structura.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia 1</a>
+        <a href="lectia3-exploatare.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Operatii si incarcare: formular de receptie si import de date</h1>
+        <p class="lesson-subtitle">Cum ajung produsele noi corect si curat in baza de date a farmaciei</p>
+    </header>
+
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">De ce conteaza aceasta lectie</h2>
+            </div>
+            <p class="goal-text">O baza de date de farmacie este utila doar daca datele din ea sunt corecte. Fiecare cutie de produs care intra pe stoc trebuie inregistrata cu grija: cu termenul ei de valabilitate, cu cantitatea reala, cu lotul corect. O receptie facuta neatent (termen uitat, cantitate negativa, acelasi produs introdus de doua ori sub doua coduri) strica exact zonele in care ai nevoie de incredere totala: alerta de expirare, calculul de stoc, comanda catre depozit. In aceasta lectie inveti pasii concreti prin care datele intra CORECT in baza de date, de la formularul de receptie pana la importul dintr-un fisier trimis de furnizor.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa explici ce este un formular de receptie si de ce se lucreaza prin formular, nu direct in tabel</li>
+                <li>Sa aplici cele doua validari obligatorii la intrarea unui lot: termen de valabilitate prezent si cantitate strict pozitiva</li>
+                <li>Sa recunosti si sa corectezi o inregistrare respinsa de validare, cu exemplu numeric concret</li>
+                <li>Sa descrii pasii de import al unui fisier de la furnizor (CSV/Excel) intr-un tabel de intrari</li>
+                <li>Sa identifici si sa elimini randurile duplicate rezultate dintr-un import repetat</li>
+                <li>Sa recunosti o greseala tipica de incarcare (unitate de masura amestecata) si sa o corectezi</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare — inainte sa citesti:</div>
+                <p>Este ora 9 dimineata la farmacie. Soferul de la depozit aduce o cutie cu 15 flacoane de ser fiziologic, lot SF2607, termen de valabilitate 03.2027. Colega ta de la receptie deschide programul de gestiune si trebuie sa introduca aceasta intrare in baza de date, ca de acum produsul sa apara pe stoc si sa poata fi vandut/eliberat. Scrie mai jos, in ordine, ce informatii crezi ca trebuie completate in formularul de receptie inainte ca programul sa accepte inregistrarea, si ce crezi ca s-ar intampla daca colega ta ar lasa necompletat campul de termen de valabilitate.</p>
+                <textarea id="tryAnswer" placeholder="Cred ca formularul cere urmatoarele campuri..." rows="6"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Gandeste-te ce s-ar intampla peste 6 luni daca acel flacon NU are termen de valabilitate inregistrat: cum ar putea baza de date sa te avertizeze ca produsul e aproape de expirare, daca nu stie deloc cand expira? O baza de date nu "ghiceste" — respinge orice intrare careia ii lipseste o informatie declarata obligatorie, exact ca sa nu ajunga produse "invizibile" pentru sistemul de alerta.</p>
+                    <p>Subiectul lectiei de azi raspunde exact la aceasta intrebare!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Formularul de receptie -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "De ce se introduce o intrare noua de marfa printr-un formular de receptie, si nu direct in tabelul de intrari?", "options": ["Pentru ca formularul e mai rapid de completat decat tabelul", "Pentru ca formularul controleaza ce se completeaza si in ce ordine, si poate verifica fiecare camp inainte de salvare", "Pentru ca tabelul nu poate fi deschis in timpul programului", "Pentru ca formularul nu are legatura cu tabelul de intrari"], "correct": "b", "hint": "Formularul este un ecran de introducere a datelor care stie EXACT ce campuri sunt obligatorii si poate verifica fiecare camp inainte sa scrie randul in tabel. Introducerea directa in tabel (celula cu celula) ocoleste aceste verificari si lasa loc greselilor."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">Formularul de receptie — poarta de intrare a datelor</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un <strong>formular</strong> este un ecran de introducere a datelor, cu campuri clar etichetate (Produs, Lot, Cantitate, Termen de valabilitate, Furnizor, Pret), pe care aplicatia il foloseste ca sa scrie un rand nou intr-un <strong>tabel</strong> — in cazul nostru, tabelul de intrari din baza de date a farmaciei. Diferenta fata de a scrie direct in tabel: formularul poate <strong>verifica</strong> fiecare camp inainte sa il accepte, in timp ce un tabel deschis liber (ca o foaie Excel needucata) accepta orice tastezi, corect sau nu.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu — campurile unui formular de receptie de farmacie:</div>
+                    <p>
+                        <strong>Cod produs</strong> — se alege din nomenclatorul deja existent (nu se retasteaza denumirea, ca sa nu apara variante gresite ale aceluiasi produs)<br>
+                        <strong>Lot</strong> — codul de lot inscris pe ambalaj de producator<br>
+                        <strong>Cantitate</strong> — numarul de unitati primite in aceasta livrare<br>
+                        <strong>Termen de valabilitate</strong> — data pana la care produsul poate fi eliberat<br>
+                        <strong>Furnizor</strong> — de la cine a venit livrarea<br>
+                        <strong>Data receptiei</strong> — completata automat de aplicatie, cu data curenta
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">De ce nu se scrie direct in tabel:</div>
+                    <p>Daca ai scrie direct intr-un tabel deschis, ai putea uita o coloana, ai putea scrie textul in coloana gresita, sau ai putea scrie o data intr-un format pe care sistemul nu il recunoaste (ex. "azi" in loc de o data reala). Formularul elimina aceste riscuri: iti arata exact ce trebuie completat, cate un camp, si nu te lasa sa salvezi pana cand campurile obligatorii sunt completate corect.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Validarea termenului de valabilitate -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "O colega vrea sa salveze o intrare de produs fara sa completeze campul Termen de valabilitate. Ce ar trebui sa faca aplicatia?", "options": ["Sa salveze intrarea si sa puna automat data de azi ca termen", "Sa refuze salvarea si sa ceara completarea campului, pentru ca e obligatoriu", "Sa salveze intrarea fara termen si sa o marcheze cu galben", "Sa stearga automat produsul din nomenclator"], "correct": "b", "hint": "Termenul de valabilitate este un camp OBLIGATORIU la un produs farmaceutic — fara el, sistemul de alerta pentru produse expirate nu ar putea functiona niciodata pentru acel lot. Aplicatia trebuie sa refuze salvarea (sa faca validare), nu sa inventeze o data sau sa lase campul gol."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">Validare 1 — termenul de valabilitate este obligatoriu</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O <strong>validare</strong> este o regula pe care aplicatia o verifica automat inainte sa accepte o inregistrare, exact ca un control de calitate care opreste o piesa gresita inainte sa iasa pe linia de fabricatie. Prima regula obligatorie la orice intrare de produs farmaceutic: <strong>campul Termen de valabilitate nu poate ramane gol</strong>.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">De ce este exact acest camp obligatoriu:</div>
+                    <p>Baza de date foloseste termenul de valabilitate pentru interogari esentiale de gestiune: "ce loturi expira in urmatoarele 30 de zile?", "ce a expirat deja si trebuie retras?". Daca un singur lot ar avea acest camp gol, acel lot ar deveni <strong>invizibil</strong> pentru orice raport de expirare — un risc pe care o farmacie nu si-l permite.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cum arata validarea, pas cu pas:</div>
+                    <p>
+                        1. Utilizatorul completeaza formularul si apasa butonul Salveaza.<br>
+                        2. Aplicatia verifica: are randul o valoare in campul Termen de valabilitate?<br>
+                        3. Daca DA — verificarea trece la urmatoarea regula (cantitatea, vezi Atomul 3).<br>
+                        4. Daca NU — aplicatia opreste salvarea si afiseaza un mesaj de eroare langa camp, de exemplu: <em>"Campul Termen de valabilitate este obligatoriu."</em> Randul NU ajunge in tabel pana cand campul nu e completat.
+                    </p>
+                </div>
+                <div class="mistake-box">
+                    <div class="mistake-box-header">
+                        <div class="mistake-box-title">Greseala tipica</div>
+                    </div>
+                    <p>O colaboratoare grabita scrie in campul Termen de valabilitate textul <strong>"nescris pe cutie"</strong> in loc sa lase campul gol si sa ceara lamurire. Aplicatia accepta acest text pentru ca nu e camp gol, dar textul nu este o data valida — la raportul de expirare, acest lot nu va aparea niciodata, pentru ca sistemul nu poate compara un text cu data de azi. <strong>Cum se recunoaste:</strong> in lista de produse, coloana Termen de valabilitate arata text in loc de o data (ex. "12.2027"). <strong>Cum se repara:</strong> se cere furnizorului fisa lotului sau se verifica fizic ambalajul, apoi se corecteaza randul cu data reala, in formatul zi.luna.an folosit de aplicatie.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Validarea cantitatii pozitive -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "La receptie se introduce din greseala cantitatea -20 pentru un produs (in loc de 20). Ce inseamna aplicarea regulii \"cantitate strict pozitiva\"?", "options": ["Aplicatia accepta -20 pentru ca e un numar valid din punct de vedere matematic", "Aplicatia respinge -20, pentru ca la o RECEPTIE cantitatea trebuie sa fie mai mare decat zero", "Aplicatia transforma automat -20 in 20 fara sa anunte pe nimeni", "Aplicatia sterge campul cantitate si il lasa gol"], "correct": "b", "hint": "Validarea de cantitate pozitiva verifica valoarea INTRODUSA, nu doar ca e un numar. La o receptie (marfa care intra), cantitatea trebuie sa fie mai mare decat zero — un numar negativ sau zero nu are sens pentru o intrare de marfa si trebuie respins, nu corectat automat pe ascuns."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">Validare 2 — cantitatea trebuie sa fie strict pozitiva</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    A doua regula obligatorie: campul <strong>Cantitate</strong> trebuie sa contina un numar <strong>strict pozitiv</strong> (mai mare decat zero). "Strict" inseamna ca zero nu este acceptat — o receptie de zero bucati nu este o receptie, e o inregistrare fara sens care nu ar trebui sa existe.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu numeric complet:</div>
+                    <p>
+                        Se receptioneaza un lot de comprimate pentru raceala, cod produs C-0148, lot RC0912, cu 3 cutii introduse de la depozit.<br>
+                        Colega scrie in campul Cantitate: <strong>3</strong>. Verificare: 3 &gt; 0 — TRECE. Randul se salveaza in tabelul de intrari.<br>
+                        Daca ar fi scris <strong>0</strong>: verificare 0 &gt; 0 este FALS — aplicatia respinge, mesaj: <em>"Cantitatea trebuie sa fie mai mare decat 0."</em><br>
+                        Daca ar fi scris <strong>-3</strong> (tastand din greseala semnul minus): verificare -3 &gt; 0 este FALS — aplicatia respinge la fel.
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">De ce nu se accepta cantitati negative la receptie:</div>
+                    <p>O cantitate negativa la o intrare de marfa nu descrie o situatie reala — marfa nu poate "intra minus". (Scaderile de stoc, cum ar fi o eliberare catre pacient sau o retragere de lot, se inregistreaza separat, ca operatii de <em>iesire</em>, nu ca o cantitate negativa la receptie.) De aceea validarea de receptie cere strict un numar pozitiv, nu doar "orice numar".</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Ordinea validarilor conteaza:</div>
+                    <p>Daca lipseste si termenul de valabilitate, si cantitatea e gresita, aplicatia ar trebui sa arate <strong>toate</strong> erorile deodata (nu doar prima gasita), ca utilizatorul sa le corecteze pe toate dintr-o singura trecere prin formular, fara sa fie nevoit sa apese Salveaza de mai multe ori.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Importul din fisierul furnizorului -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Depozitul trimite lista de livrare intr-un fisier CSV cu 40 de produse. Care este primul pas corect inainte de a incarca acest fisier direct in tabelul de intrari?", "options": ["Se incarca fisierul direct, fara nicio verificare, pentru ca vine de la un furnizor de incredere", "Se verifica intai ca antetul (numele coloanelor) si formatul datelor din fisier corespund cu ce asteapta baza de date, apoi se face un import de proba", "Se sterge intreg tabelul de intrari existent inainte de import", "Se redenumeste fisierul CSV in fisier Excel, ca sa se deschida mai repede"], "correct": "b", "hint": "Un import direct, fara verificare de antet si format, poate strica datele daca ordinea coloanelor difera sau daca datele (ex. termenele de valabilitate) sunt scrise intr-un alt format. Corect e sa verifici intai potrivirea coloanelor si sa faci un import de proba pe cateva randuri, nu sa incarci tot fisierul orbeste."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">Importul din fisierul furnizorului</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Cand depozitul trimite o livrare mare (zeci sau sute de produse), nu este eficient sa se completeze formularul manual pentru fiecare produs. In loc de asta, se foloseste <strong>importul</strong>: functia programului de gestiune care citeste un fisier (de obicei <strong>CSV</strong> — un fisier text in care valorile sunt separate prin virgula sau punct-si-virgula, sau un fisier <strong>Excel</strong> .xlsx) si adauga automat cate un rand in tabelul de intrari pentru fiecare linie din fisier.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cum arata un fisier CSV trimis de furnizor:</div>
+                    <p>Un fisier CSV este text simplu, deschis in orice editor sau in Excel. O linie de antet arata numele coloanelor, urmata de cate o linie pentru fiecare produs:</p>
+                </div>
+                <div class="code-block-wrapper">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-title">livrare_2026-09-02.csv</span>
+                            <span class="code-lang">csv</span>
+                        </div>
+                        <div class="code-content"><div class="code-line"><span class="code-number">1</span><span class="code-string">cod_produs;lot;cantitate;termen_valabilitate;furnizor</span></div><div class="code-line"><span class="code-number">2</span><span class="code-string">C-0148;RC0912;3;09.2027;FarmaDepo SRL</span></div><div class="code-line"><span class="code-number">3</span><span class="code-string">C-0201;SF2607;15;03.2027;FarmaDepo SRL</span></div><div class="code-line"><span class="code-number">4</span><span class="code-string">C-0339;VT1104;8;11.2026;FarmaDepo SRL</span></div></div>
+                    </div>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Pasii de import, in ordine:</div>
+                    <p>
+                        1. Se deschide in aplicatia de gestiune functia <strong>Import date</strong> (de obicei in meniul Stocuri sau Nomenclator).<br>
+                        2. Se selecteaza fisierul primit de la furnizor (butonul de tip "Alege fisier" / "Browse").<br>
+                        3. Aplicatia arata o previzualizare: cum se potrivesc coloanele din fisier (cod_produs, lot, cantitate, termen_valabilitate) cu campurile din baza de date. Aici se verifica manual ca "termen_valabilitate" din fisier chiar corespunde campului Termen de valabilitate din formular, si nu, de exemplu, cu campul Data receptiei.<br>
+                        4. Se ruleaza un <strong>import de proba</strong> pe primele cateva randuri, ca sa se vada daca validarile (Atomii 2 si 3) trec pentru acele randuri.<br>
+                        5. Daca proba e curata, se importa tot fisierul. Daca apar erori (ex. un rand fara termen de valabilitate), aplicatia trebuie sa arate exact ce randuri au fost respinse, ca sa fie corectate manual sau retrimise catre furnizor.
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Importul TOT trece prin validari:</div>
+                    <p>Un rand adus prin import care nu are termen de valabilitate sau are cantitate 0 trebuie respins de aplicatie exact ca si cum ar fi fost introdus manual prin formular. Importul este doar o alta <strong>cale</strong> de introducere a datelor — regulile de validare din Atomii 2 si 3 raman aceleasi, indiferent daca datele vin dintr-un formular completat de mana sau dintr-un fisier.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Duplicatele -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Un import a fost rulat de doua ori din greseala peste acelasi fisier livrare_2026-09-02.csv. Ce inseamna, cel mai probabil, un \"rand duplicat\" in acest caz?", "options": ["Un rand cu acelasi cod produs, acelasi lot si aceeasi cantitate, aparut de doua ori in tabelul de intrari", "Un rand cu acelasi cod produs, dar lot diferit", "Orice rand care contine cifra 0", "Un rand la care lipseste furnizorul"], "correct": "a", "hint": "Un duplicat de import apare cand acelasi rand din fisier (acelasi produs, acelasi lot, aceeasi cantitate, aceeasi data) este scris de doua ori in tabel, de obicei pentru ca fisierul a fost importat de doua ori. Cod produs + lot diferite sau furnizor lipsa nu inseamna duplicat, ci alte situatii."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">Curatarea duplicatelor</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un <strong>duplicat</strong> este un rand din tabel care repeta o inregistrare deja existenta. La incarcarea datelor, duplicatele apar cel mai frecvent cand acelasi fisier de import este rulat de doua ori (din greseala, sau pentru ca prima incercare a parut ca "nu a mers" si s-a repetat operatia fara sa se verifice ca de fapt reusise).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu numeric — efectul unui duplicat:</div>
+                    <p>
+                        Fisierul <code>livrare_2026-09-02.csv</code> de mai sus a fost importat de doua ori. In tabelul de intrari, produsul C-0148, lot RC0912, apare acum de doua ori, cu cantitate 3 de fiecare data.<br>
+                        Daca aplicatia calculeaza stocul total prin insumarea tuturor intrarilor pentru acel lot, rezultatul gresit va fi <strong>3 + 3 = 6 bucati</strong> in loc de <strong>3 bucati</strong> reale primite. Stocul afisat este cu 3 bucati mai mare decat marfa aflata fizic pe raft.
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cum se identifica un rand duplicat:</div>
+                    <p>Doua randuri sunt considerate duplicat cand au <strong>aceeasi combinatie</strong> de cod produs + lot + cantitate + data receptiei. Daca doar codul produsului e la fel dar lotul difera, NU e duplicat — inseamna doua livrari diferite ale aceluiasi produs, o situatie normala si de dorit (produsul se reaprovizioneaza).</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Pasii de curatare, in ordine:</div>
+                    <p>
+                        1. Se sorteaza tabelul de intrari dupa cod produs, apoi dupa lot (in Excel: Data → Sort, cu doua niveluri de sortare).<br>
+                        2. Randurile identice pe cod produs + lot + cantitate + data ajung alaturate — usor de observat vizual.<br>
+                        3. In Excel exista si o functie dedicata: se selecteaza tabelul, apoi meniul <strong>Data → Remove Duplicates</strong> (Elimina duplicate), bifand coloanele cod produs, lot, cantitate si data ca sa fie exact acele coloane comparate.<br>
+                        4. Se pastreaza un singur rand din fiecare grup identic, iar restul se sterg.<br>
+                        5. Se recalculeaza stocul si se verifica din nou fata de cantitatea reala numarata pe raft.
+                    </p>
+                </div>
+                <div class="mistake-box">
+                    <div class="mistake-box-header">
+                        <div class="mistake-box-title">Greseala tipica</div>
+                    </div>
+                    <p>Se sterge un rand "duplicat" doar pentru ca are acelasi cod de produs cu altul, fara sa se verifice si lotul si cantitatea. Rezultat: se sterge, de fapt, o livrare reala si diferita a aceluiasi produs (alt lot, alt termen de valabilitate), iar stocul acelui lot dispare din baza de date, desi marfa exista fizic pe raft. <strong>Cum se recunoaste:</strong> dupa "curatare", numarul de bucati din baza de date e mai mic decat cel numarat fizic. <strong>Cum se repara:</strong> se verifica intotdeauna toate cele patru campuri (cod, lot, cantitate, data) inainte de a sterge un rand ca duplicat, niciodata doar codul de produs.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Greseala de unitate de masura -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Un furnizor trimite in fisierul CSV cantitatea in \"cutii\", dar baza de date a farmaciei tine stocul in \"flacoane\" (1 cutie = 10 flacoane). Fisierul are randul \"C-0201;SF2607;15;03.2027;FarmaDepo SRL\" (15 = cutii). Ce se intampla daca acest rand este importat exact asa, fara conversie?", "options": ["Baza de date va arata corect 150 de flacoane pe stoc", "Baza de date va arata gresit doar 15 flacoane pe stoc, de 10 ori mai putin decat realitatea", "Aplicatia va respinge automat randul, pentru ca detecteaza unitatea de masura gresita", "Nu conteaza, pentru ca stocul se recalculeaza singur la sfarsitul zilei"], "correct": "b", "hint": "Validarile de care am vorbit (termen prezent, cantitate pozitiva) NU verifica unitatea de masura — 15 e un numar pozitiv valid, deci trece validarile, dar reprezinta 15 cutii, nu 15 flacoane. Fara conversie corecta, stocul afisat va fi de 10 ori mai mic decat cel real (15 in loc de 150), pentru ca aplicatia nu poate ghici singura unitatea folosita de furnizor."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">Greseala tipica de incarcare — unitatea de masura amestecata</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Validarile invatate la Atomii 2 si 3 verifica <strong>forma</strong> a datelor (exista o data? este numarul pozitiv?), dar nu pot verifica <strong>sensul</strong> lor — daca cifra 15 inseamna 15 flacoane sau 15 cutii, aplicatia nu are cum sa stie decat daca i se spune explicit. De aceea, o greseala foarte frecventa la incarcarea datelor de la furnizori diferiti este amestecarea unitatilor de masura.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu numeric complet:</div>
+                    <p>
+                        Ambalajul standard pentru produsul C-0201 (ser fiziologic) este de 1 cutie = 10 flacoane. Baza de date a farmaciei tine evidenta stocului in <strong>flacoane</strong> (unitatea in care se elibereaza produsul).<br>
+                        Furnizorul FarmaDepo trimite in fisierul CSV cantitatea <strong>15</strong>, insemnand 15 <em>cutii</em>.<br>
+                        Daca cel care importa fisierul nu observa diferenta si lasa cifra 15 asa cum e, baza de date inregistreaza <strong>15 flacoane</strong> — desi in depozit au sosit de fapt <strong>15 × 10 = 150 flacoane</strong>.<br>
+                        Diferenta: <strong>150 − 15 = 135 flacoane "lipsa" din baza de date</strong>, desi marfa exista fizic pe raft.
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cum se recunoaste greseala:</div>
+                    <p>Stocul din aplicatie pare mult mai mic decat cel numarat fizic, de obicei intr-un raport constant (de 10 ori mai mic, de 20 ori mai mic — in functie de cate bucati are ambalajul mare). Daca eroarea apare mereu la produsele de la acelasi furnizor, e un semn clar ca unitatea lor de masura difera de cea a bazei de date.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cum se repara si cum se previne:</div>
+                    <p>La corectare: se inmulteste cantitatea gresit introdusa cu factorul de conversie corect (in exemplul nostru, ×10) si se rescrie randul. La prevenire: inainte de orice import nou de la un furnizor, se verifica in ce unitate trimite el cantitatile (se intreaba furnizorul sau se verifica pe factura insotitoare) si, daca difera de unitatea folosita in baza de date, se converteste fisierul <strong>inainte</strong> de import, nu dupa.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 7 — Recapitulare, fara quiz -->
+        <div class="atom" id="atom-7">
+            <div class="atom-header">
+                <div class="atom-number">7</div>
+                <h3 class="atom-title">Recapitulare si conexiuni</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Datele intra corect in baza de date a farmaciei fie manual (formular, cu validari), fie in bloc (import dintr-un fisier al furnizorului, cu aceleasi validari). Indiferent de cale, doua reguli obligatorii tin datele curate — termen de valabilitate prezent si cantitate strict pozitiva — iar dupa import se verifica intotdeauna randurile duplicate si unitatile de masura.
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Rezumat vizual al fluxului de incarcare:</div>
+                    <p>
+                        <strong>Sursa datelor</strong> (formular completat manual SAU fisier CSV/Excel de la furnizor)<br>
+                        &nbsp;&nbsp;↓ trece prin<br>
+                        <strong>Validare 1</strong> — termen de valabilitate obligatoriu<br>
+                        &nbsp;&nbsp;↓ apoi<br>
+                        <strong>Validare 2</strong> — cantitate strict pozitiva<br>
+                        &nbsp;&nbsp;↓ randul valid ajunge in<br>
+                        <strong>Tabelul de intrari</strong><br>
+                        &nbsp;&nbsp;↓ dupa import se verifica<br>
+                        <strong>Duplicate</strong> (acelasi produs+lot+cantitate+data, aparut de doua ori) <strong>si unitatea de masura</strong> (flacoane vs. cutii)
+                    </p>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Conexiune cu urmatoarea lectie:</div>
+                    <p>Odata ce datele sunt incarcate corect si curate, urmeaza sa le folosim: in lectia urmatoare veti invata cum se <strong>exploateaza</strong> baza de date printr-un set de interogari utile pentru gestiunea zilnica — produse expirate sau aproape expirate, stoc sub minim, valoarea stocului pe categorie — si cum se genereaza un raport de gestiune tiparibil.</p>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">De retinut pentru activitatile practice:</div>
+                    <p>
+                        Formularul controleaza datele; introducerea libera intr-un tabel nu.<br>
+                        Termen de valabilitate lipsa = intrare respinsa, intotdeauna.<br>
+                        Cantitate ≤ 0 = intrare respinsa, intotdeauna.<br>
+                        Importul dintr-un fisier trece prin ACELEASI validari ca formularul.<br>
+                        Duplicat = potrivire pe cod produs + lot + cantitate + data, nu doar pe cod produs.<br>
+                        Unitatea de masura a furnizorului se verifica inainte de import, nu se presupune.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) — Trece sau respinge?</h3>
+            <p>Pentru fiecare din urmatoarele patru randuri propuse pentru receptie, spune daca ar trece validarile (termen de valabilitate prezent si cantitate strict pozitiva) sau ar fi respinse, si de ce: <br>
+            a) cod C-0148, lot RC0912, cantitate 5, termen 09.2027 <br>
+            b) cod C-0201, lot SF2607, cantitate 0, termen 03.2027 <br>
+            c) cod C-0339, lot VT1104, cantitate 8, termen (necompletat) <br>
+            d) cod C-0410, lot AB1120, cantitate -2, termen 12.2026</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) — Gaseste duplicatul</h3>
+            <p>In tabelul de intrari al farmaciei apar urmatoarele cinci randuri, dupa un import: <br>
+            1) C-0148, RC0912, 3, 09.2027, receptie 02.09.2026 <br>
+            2) C-0201, SF2607, 15, 03.2027, receptie 02.09.2026 <br>
+            3) C-0148, RC0912, 3, 09.2027, receptie 02.09.2026 <br>
+            4) C-0148, RC0913, 3, 09.2027, receptie 02.09.2026 <br>
+            5) C-0339, VT1104, 8, 11.2026, receptie 02.09.2026 <br>
+            Care rand (sau randuri) sunt duplicat si trebuie sters? Care rand SEAMANA cu un duplicat dar NU este, si de ce? Motiveaza raspunsul folosind cele patru campuri de comparatie invatate in lectie.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) — Corecteaza fisierul de import</h3>
+            <p>Baza de date a farmaciei tine stocul de comprimate in <strong>blistere</strong>. Un furnizor nou trimite fisierul de livrare cu cantitatile exprimate in <strong>cutii</strong>, unde 1 cutie = 6 blistere. Fisierul primit este: <br>
+            <code>cod_produs;lot;cantitate;termen_valabilitate;furnizor</code><br>
+            <code>C-0512;PN0815;4;01.2027;MedExpress SRL</code><br>
+            <code>C-0518;PN0820;7;02.2027;MedExpress SRL</code><br>
+            Calculeaza cate blistere ar trebui sa apara REAL in baza de date pentru fiecare din cele doua produse, dupa conversie. Apoi scrie, in ordine, cei trei pasi pe care i-ai urma inainte de a importa acest fisier ca sa eviti greseala de unitate de masura descrisa in lectie (Atomul 6).</p>
+        </div>
+    </section>
+
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Formularul de receptie controleaza campurile completate, spre deosebire de scrisul liber intr-un tabel</li>
+                <li>Validare obligatorie 1: Termen de valabilitate nu poate fi gol — altfel lotul devine invizibil pentru alertele de expirare</li>
+                <li>Validare obligatorie 2: Cantitatea trebuie sa fie strict pozitiva (mai mare decat 0) la o receptie</li>
+                <li>Importul dintr-un fisier CSV/Excel al furnizorului trece prin aceleasi validari ca formularul manual</li>
+                <li>Pasii de import: alegere fisier → potrivire coloane → import de proba → import complet, cu erorile raportate</li>
+                <li>Duplicat = acelasi cod produs + lot + cantitate + data; se elimina cu Data → Remove Duplicates in Excel</li>
+                <li>Greseala tipica: unitatea de masura a furnizorului (ex. cutii) diferita de cea a bazei de date (ex. flacoane/blistere) — se verifica si se converteste INAINTE de import</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" hidden></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>Exploatarea bazei</strong> — interogari utile pentru gestiunea zilnica (produse expirate sau aproape expirate, stoc sub minim, valoarea stocului pe categorie) si generarea unui raport de gestiune tiparibil.</p>
+            <a href="lectia3-exploatare.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('an2-farmacie-c3-baze-de-date-lectia2-operatii-incarcare');
+        PracticeSimple.init('an2-farmacie-c3-baze-de-date-lectia2-operatii-incarcare');
+        LessonSummary.init('an2-farmacie-c3-baze-de-date-lectia2-operatii-incarcare');
+        Breadcrumb.init({
+            grade: 'an2-farmacie',
+            gradeName: 'Postliceal, Anul II',
+            module: 'c3-baze-de-date',
+            moduleName: 'C3. Administrarea unei Baze de Date',
+            lesson: 'Operatii si incarcare: formular de receptie si import de date'
+        });
+        LearningProgress.init('an2-farmacie', 'c3-baze-de-date', 'lectia2-operatii-incarcare.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exploatarea bazei de date | Postliceal Sanitar, Anul II</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<a href="#atomic-content" class="skip-link">Sari la continut</a>
+<div class="container">
+
+    <nav class="nav-bar">
+        <a href="lectia2-operatii-incarcare.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia anterioara</a>
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">Modulul &#8594;</a>
+    </nav>
+
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Exploatarea bazei de date</h1>
+        <p class="lesson-subtitle">Interogari de gestiune si raport tiparibil pentru farmacie</p>
+    </header>
+
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Un tabel plin cu sute de produse nu-i spune sefei de farmacie nimic direct — ea are nevoie de raspunsuri: ce expira curand, ce trebuie comandat, cat valoreaza stocul. In aceasta lectie inveti sa pui bazei de date exact aceste intrebari, folosind interogari (queries) in Access, si sa transformi rezultatul intr-un raport de gestiune gata de tiparit. Este ultima lectie din modulul C3 — leaga tot ce ai invatat despre structura tabelelor si incarcarea datelor de scopul lor real: informatia utila pentru gestiune.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa explici diferenta dintre a rasfoi un tabel si a rula o interogare asupra lui</li>
+                <li>Sa construiesti o interogare care gaseste produsele expirate sau aproape expirate, folosind functia Date()</li>
+                <li>Sa construiesti o interogare care gaseste produsele cu stocul sub minimul admis, comparand doua coloane</li>
+                <li>Sa construiesti o interogare de totalizare (Totals) care calculeaza valoarea stocului pe fiecare categorie</li>
+                <li>Sa transformi o interogare intr-un raport (Report) formatat, gata de tiparit pentru dosarul de gestiune</li>
+                <li>Sa recunosti si sa corectezi cea mai frecventa greseala la scrierea criteriilor</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare — inainte sa citesti:</div>
+                <p>E sfarsit de luna. Seful de farmacie iti cere trei liste, pana maine: produsele care expira in urmatoarele 30 de zile, produsele al caror stoc a scazut sub minimul admis (trebuie comandate), si valoarea totala a stocului pe fiecare categorie de produse, pentru raportul lunar de gestiune. Ai un tabel Produse cu 400 de randuri in Access. Cum obtii cele trei liste FARA sa rasfoiesti manual tabelul rand cu rand si FARA sa modifici datele originale?</p>
+                <textarea id="tryAnswer" placeholder="Cred ca as face urmatoarele..." rows="6"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Gandeste-te la un dulap cu 400 de dosare: cautarea manuala, dosar cu dosar, dureaza ore si e usor sa scapi ceva din vedere. O interogare este ca un asistent care rasfoieste el toate dosarele in cateva secunde, dupa o regula pe care i-o dai tu (data expirarii, un stoc, o categorie), si iti aduce doar dosarele care se potrivesc — fara sa mute sau sa modifice nimic din dulap.</p>
+                    <p>Subiectul lectiei de azi raspunde exact la aceasta intrebare!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main id="atomic-content">
+
+        <!-- ATOM 1: De la tabel la interogare -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Ai deschis tabelul Produse in Access si vezi 400 de randuri. Vrei sa vezi DOAR produsele din categoria \"Dispozitive medicale\", fara sa modifici tabelul original. Ce folosesti?", "options": ["Redenumesti tabelul Produse in \"Dispozitive medicale\"", "Stergi manual randurile care nu se potrivesc, apoi le rescrii la nevoie", "Creezi o interogare (Query) cu criteriul Categorie = \"Dispozitive medicale\", care filtreaza fara sa schimbe tabelul", "Deschizi tabelul intr-un editor de text"], "correct": "c", "hint": "O interogare este o \"lentila\" peste tabel: arata doar randurile care indeplinesc criteriul tau, dar tabelul original ramane neatins si poate fi refolosit oricand pentru alta interogare. Stergerea manuala ar distruge date reale din gestiune."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">De la tabel la raspuns — ce e o interogare</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Un <strong>tabel</strong> pastreaza toate datele, fara nicio selectie: fiecare produs primit in farmacie are un rand. O <strong>interogare</strong> (Query) este o intrebare pusa tabelului — de exemplu "care produse au stocul sub minim?" — care returneaza doar randurile si coloanele care raspund la intrebare, fara sa modifice, sa stearga sau sa mute vreo data din tabelul original. Poti rula aceeasi interogare oricand, si rezultatul se actualizeaza automat cu datele curente din tabel.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Reamintim structura tabelului Produse (din lectiile anterioare):</div>
+                    <p>
+                        <strong>CodProdus</strong> — codul unic al produsului<br>
+                        <strong>Denumire</strong> — numele produsului<br>
+                        <strong>Categorie</strong> — grupa din care face parte (ex. Analgezice, Dispozitive medicale, Cosmetice)<br>
+                        <strong>Lot</strong> — seria/lotul de fabricatie<br>
+                        <strong>DataExpirare</strong> — data limita de valabilitate a lotului<br>
+                        <strong>PretAchizitie</strong> — pretul platit furnizorului, pe unitate<br>
+                        <strong>Stoc</strong> — cantitatea aflata acum in farmacie<br>
+                        <strong>StocMinim</strong> — cantitatea sub care trebuie facuta o noua comanda<br>
+                        <strong>Furnizor</strong> — firma de la care a fost achizitionat lotul
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cum deschizi o interogare noua in Access:</div>
+                    <p>Din ribbon, fila <strong>Create</strong> (Creare) &rarr; grupul Queries &rarr; <strong>Query Design</strong> (Proiectare interogare). In fereastra "Show Table" alegi tabelul <strong>Produse</strong> si dai Add, apoi Close. In grila de jos, dubla-clic pe fiecare camp pe care vrei sa-l vezi in rezultat, ca sa apara pe o coloana. Rulezi interogarea cu butonul <strong>Run</strong> (semnul "!" rosu) din ribbon — rezultatul apare in Datasheet View, ca un tabel obisnuit, dar filtrat.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Produse expirate sau aproape expirate -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "O interogare foloseste, pe coloana DataExpirare, criteriul Between Date() And Date()+30. Un produs are DataExpirare la 45 de zile fata de ziua curenta. Apare acest produs in rezultat?", "options": ["Nu, pentru ca 45 de zile depaseste intervalul de 30 de zile cerut de criteriu", "Da, pentru ca 45 este mai mare decat 30, deci se incadreaza cu siguranta", "Da, orice data din viitor apare automat in acest tip de interogare", "Nu se poate sti fara sa rulam efectiv interogarea in Access"], "correct": "a", "hint": "Between Date() And Date()+30 defineste o fereastra fixa: de la ziua curenta pana la ziua curenta plus 30. O data aflata la 45 de zile distanta cade in afara acestei ferestre, deci produsul NU apare in rezultat."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">Produse expirate sau aproape expirate</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Access are o functie predefinita, <strong>Date()</strong>, care returneaza data curenta a calculatorului la momentul rularii. O poti folosi direct in criteriul unei coloane de tip data, in grila de proiectare a interogarii (randul <strong>Criteria</strong>, sub numele coloanei).
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Doua criterii, doua interogari separate:</div>
+                    <p>
+                        <strong>Produse deja expirate</strong> — sub coloana DataExpirare, in randul Criteria, scrii: <code>&lt;Date()</code> — inseamna "orice data mai mica (mai veche) decat astazi".<br><br>
+                        <strong>Produse aproape expirate (in urmatoarele 30 de zile)</strong> — sub coloana DataExpirare scrii: <code>Between Date() And Date()+30</code> — inseamna "orice data cuprinsa intre astazi si astazi plus 30 de zile", inclusiv capetele intervalului.
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu numeric complet — presupunem ca astazi este 10 martie 2026:</div>
+                    <p>
+                        Atunci Date() = 10.03.2026, iar Date()+30 = 09.04.2026. Patru produse din tabel:<br><br>
+                        Produs A, DataExpirare 01.02.2026 &rarr; mai veche decat 10.03.2026 &rarr; <strong>apare</strong> la "deja expirate" (&lt;Date()).<br>
+                        Produs B, DataExpirare 25.03.2026 &rarr; cade intre 10.03.2026 si 09.04.2026 &rarr; <strong>apare</strong> la "aproape expirate".<br>
+                        Produs C, DataExpirare 15.04.2026 &rarr; depaseste 09.04.2026 &rarr; <strong>nu apare</strong> in niciuna dintre cele doua interogari, e inca prea departe.<br>
+                        Produs D, DataExpirare 09.03.2026 &rarr; cu o zi inainte de 10.03.2026 &rarr; <strong>apare</strong> la "deja expirate".
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Pasii in Access:</div>
+                    <p>Create &rarr; Query Design &rarr; adaugi tabelul Produse &rarr; adaugi coloanele CodProdus, Denumire, Lot, DataExpirare &rarr; sub DataExpirare, in Criteria, scrii criteriul dorit &rarr; Run. Poti salva interogarea cu Ctrl+S si un nume clar, de exemplu <code>InterogareExpirate</code>, ca sa o rulezi din nou oricand fara sa o construiesti de la zero.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: Stoc sub minim -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Intr-o interogare ai adaugat coloanele Stoc si StocMinim din tabelul Produse. Ce scrii in randul Criteria, sub coloana Stoc, ca sa vezi doar produsele cu stocul sub minimul admis?", "options": ["&lt;StocMinim (fara paranteze drepte)", "Stoc&lt;Minim", "=StocMinim", "&lt;[StocMinim]"], "correct": "d", "hint": "Parantezele drepte [ ] spun Access-ului ca StocMinim este numele unui alt camp din interogare, nu un text oarecare. Fara ele, Access nu recunoaste ce inseamna StocMinim si interogarea nu functioneaza corect."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">Stoc sub minim — compararea a doua coloane</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Pana acum criteriul a comparat o coloana cu o valoare fixa (o data). De data asta trebuie sa comparam <strong>doua coloane intre ele</strong>: Stoc (cat mai este) cu StocMinim (cat ar trebui sa fie minimum). Access permite acest lucru daca scrii numele celuilalt camp intre <strong>paranteze drepte</strong>: <code>[StocMinim]</code>.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Criteriul complet:</div>
+                    <p>Sub coloana <strong>Stoc</strong>, in randul Criteria, scrii: <code>&lt;[StocMinim]</code> — Access citeste asta ca "arata randul doar daca valoarea din Stoc este mai mica decat valoarea din StocMinim, pe ACELASI rand". Compararea se face rand cu rand, automat, pentru toate cele 400 de produse.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu numeric complet:</div>
+                    <p>
+                        Produs, Stoc, StocMinim, rezultat:<br>
+                        Paracetamol 500mg — Stoc 12, StocMinim 20 &rarr; 12&lt;20 &rarr; <strong>apare</strong> (trebuie comandat)<br>
+                        Manusi latex M — Stoc 300, StocMinim 100 &rarr; 300&lt;100 este fals &rarr; <strong>nu apare</strong><br>
+                        Alcool sanitar 100ml — Stoc 8, StocMinim 15 &rarr; 8&lt;15 &rarr; <strong>apare</strong> (trebuie comandat)<br>
+                        Termometru digital — Stoc 25, StocMinim 25 &rarr; 25&lt;25 este fals (sunt egale) &rarr; <strong>nu apare</strong>
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Pasii in Access:</div>
+                    <p>Create &rarr; Query Design &rarr; adaugi Produse &rarr; adaugi coloanele CodProdus, Denumire, Categorie, Stoc, StocMinim &rarr; sub Stoc, in Criteria, scrii <code>&lt;[StocMinim]</code> &rarr; Run. Rezultatul e exact lista pe care o duci mai departe pentru comanda catre depozit.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: Valoarea stocului pe categorie -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Categoria \"Cosmetice\" are doua produse: unul cu PretAchizitie 8 lei si Stoc 25 buc, altul cu PretAchizitie 15 lei si Stoc 10 buc. Cat arata coloana de totalizare (Sum) pentru aceasta categorie?", "options": ["200 lei", "150 lei", "23 lei", "350 lei"], "correct": "d", "hint": "Se calculeaza valoarea fiecarui produs separat (Pret x Stoc), apoi se aduna: 8x25=200, 15x10=150, iar 200+150=350 lei. Optiunile 200 si 150 sunt doar valorile partiale ale fiecarui produs, nu totalul categoriei."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">Valoarea stocului pe categorie — interogare de totalizare</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Pentru raportul de gestiune ai nevoie nu de fiecare produs in parte, ci de un total pe fiecare <strong>categorie</strong>. Access face asta printr-o <strong>interogare de totalizare</strong>: grupezi randurile dupa un camp (Categorie) si calculezi o suma pentru fiecare grup.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Pasii in Access:</div>
+                    <p>
+                        1. Create &rarr; Query Design &rarr; adaugi tabelul Produse.<br>
+                        2. Adaugi coloana <strong>Categorie</strong>.<br>
+                        3. Intr-o coloana noua, in randul Field, scrii un camp calculat: <code>ValoareStoc: [PretAchizitie]*[Stoc]</code> — numele dinaintea celor doua puncte (ValoareStoc) devine titlul coloanei in rezultat, iar formula de dupa calculeaza pretul de achizitie inmultit cu stocul, pentru fiecare produs.<br>
+                        4. In ribbon, fila Query Design Tools &rarr; grupul Show/Hide &rarr; butonul <strong>Totals</strong> (simbolul &Sigma;) — apare un rand nou, <em>Total</em>, in grila.<br>
+                        5. Sub coloana Categorie, in randul Total, lasi <strong>Group By</strong> (grupeaza dupa aceasta categorie).<br>
+                        6. Sub coloana ValoareStoc, in randul Total, schimbi din Group By in <strong>Sum</strong> (aduna valorile din fiecare grup).<br>
+                        7. Run.
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Exemplu numeric complet, dus pana la rezultat:</div>
+                    <p>
+                        Categoria <strong>Analgezice</strong>: Produs 1 (PretAchizitie 3,20 lei, Stoc 150 buc) &rarr; 3,20 &times; 150 = 480,00 lei; Produs 2 (PretAchizitie 5,00 lei, Stoc 80 buc) &rarr; 5,00 &times; 80 = 400,00 lei. Total categorie = 480,00 + 400,00 = <strong>880,00 lei</strong>.<br><br>
+                        Categoria <strong>Dispozitive medicale</strong>: Produs 3 (PretAchizitie 12,50 lei, Stoc 40 buc) &rarr; 12,50 &times; 40 = <strong>500,00 lei</strong> (singurul produs din categorie, deci totalul e chiar aceasta valoare).<br><br>
+                        Interogarea de totalizare va afisa exact doua randuri: Analgezice — 880,00 lei si Dispozitive medicale — 500,00 lei, indiferent cate produse individuale sunt in spatele fiecarei sume.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Rapoarte de gestiune -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Ai deja o interogare de totalizare care arata valoarea stocului pe categorie. Vrei un document formatat, cu titlu, data si pagini numerotate, gata de tiparit pentru dosarul de gestiune. Ce obiect Access folosesti?", "options": ["Inca o interogare (Query), identica cu prima", "Un formular (Form) de introducere de date", "Un raport (Report), construit cu Report Wizard pornind de la interogarea de totalizare", "Tabelul original Produse, tiparit direct"], "correct": "c", "hint": "Interogarea (Query) calculeaza si arata datele pe ecran, in format de tabel simplu. Raportul (Report) preia acele date si le formateaza pentru tiparire: titlu, grupare vizuala, subtotaluri aliniate, numar de pagina. Pentru un document oficial de gestiune, Reportul e obiectul potrivit."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">De la interogare la raport tiparibil</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O interogare arata rezultatul pe ecran, ca un tabel simplu — util pentru lucru, dar nu arata bine pe hartie. Un <strong>raport</strong> (Report) preia datele dintr-o interogare si le aseaza intr-un format gata de tiparit: titlu, grupare vizuala clara, subtotaluri, data generarii, numar de pagina.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Pasii pentru a construi raportul de gestiune:</div>
+                    <p>
+                        1. In ribbon, fila <strong>Create</strong> &rarr; grupul Reports &rarr; <strong>Report Wizard</strong>.<br>
+                        2. La "Tables/Queries" alegi interogarea de totalizare construita la atomul anterior (de exemplu, cea salvata ca <code>InterogareValoareStoc</code>).<br>
+                        3. Muti in coloana "Selected Fields" campurile Categorie si ValoareStoc, apoi Next.<br>
+                        4. La pasul de grupare, alegi gruparea dupa Categorie, ca fiecare categorie sa apara clar separata pe pagina.<br>
+                        5. La pasul de sortare, poti alege sortare crescatoare sau descrescatoare dupa ValoareStoc, ca sa vezi imediat categoria cu cea mai mare valoare.<br>
+                        6. Alegi un layout (Tabular e cel mai potrivit pentru un tabel de gestiune), apoi Finish.<br>
+                        7. Raportul se deschide in Print Preview — verifici cum arata, apoi tiparesti sau exporti ca PDF din fila File &rarr; Print.
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">De ce nu tiparesti direct interogarea:</div>
+                    <p>O interogare tiparita direct din Datasheet View arata ca un tabel brut, fara titlu clar si fara grupare vizuala pe pagina — greu de citit si de semnat. Raportul rezolva exact aceasta problema, fara sa recalculezi nimic: foloseste automat datele curente din interogare la fiecare deschidere.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Greseala tipica -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Rulezi o interogare si Access iti arata o caseta \"Enter Parameter Value: StocMin\", desi tu voiai sa compari cu campul StocMinim. Care e cauza cea mai probabila?", "options": ["Ai scris gresit numele campului in criteriu (StocMin in loc de StocMinim), iar Access il interpreteaza ca pe un parametru necunoscut", "Access cere parola bazei de date inainte de a rula orice interogare", "Tabelul Produse este complet gol, fara niciun rand", "Campul StocMinim a fost sters definitiv din tabel"], "correct": "a", "hint": "Cand scrii intre paranteze drepte un nume care NU se potriveste exact cu niciun camp existent, Access presupune ca vrei sa introduci manual o valoare (un parametru) si iti cere sa o tastezi. Aparitia acestei casete la rulare e semnul clar al unei greseli de scriere a numelui campului, nu al unei probleme cu tabelul."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">Greseala tipica — numele de camp scris gresit</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Cea mai frecventa greseala la interogarile din atomii 3 si 4 este un <strong>nume de camp scris gresit</strong> in paranteze drepte sau in formula unui camp calculat.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cum se recunoaste:</div>
+                    <p>Daca scrii din greseala <code>&lt;[StocMin]</code> in loc de <code>&lt;[StocMinim]</code>, interogarea nu da o eroare la salvare — Access nu stie inca daca greseai sau chiar voiai un parametru introdus manual. Abia cand apesi <strong>Run</strong>, apare o fereastra <strong>"Enter Parameter Value"</strong> care iti cere sa tastezi tu o valoare pentru "StocMin". Aceasta fereastra este semnul sigur ca ai un nume de camp gresit scris — Access nu a gasit un camp cu acel nume exact, asa ca a presupus ca e ceva ce vrei sa completezi manual.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cum se repara:</div>
+                    <p>Apesi <strong>Cancel</strong> pe fereastra de parametru (altfel interogarea ruleaza gresit, cu valoarea pe care ai introdus-o manual). Te intorci in Design View, verifici litera cu litera numele campului din criteriu sau din formula, si il compari cu numele exact al coloanei din tabelul Produse (Field List, panoul din stanga). Corectezi ortografia si rulezi din nou.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Aceeasi capcana la campul calculat din atomul 4:</div>
+                    <p>Daca la <code>ValoareStoc: [PretAchizitie]*[Stoc]</code> scrii gresit <code>[PretAchizitie]</code> ca <code>[PretAchizitei]</code>, se intampla exact acelasi lucru — o fereastra de parametru la rulare, in loc de calculul asteptat. Verificarea e identica: recitesti cu atentie numele exacte ale campurilor.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 7 — Recapitulare, fara quiz -->
+        <div class="atom" id="atom-7">
+            <div class="atom-header">
+                <div class="atom-number">7</div>
+                <h3 class="atom-title">Recapitulare — de la date brute la raport de gestiune</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Aceasta a fost ultima lectie a modulului C3: ai pornit de la structura tabelelor (lectia 1), ai invatat cum se incarca si valideaza datele (lectia 2), iar acum stii sa scoti din ele exact informatia ceruta de gestiune.
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Cele patru unelte invatate azi:</div>
+                    <p>
+                        <strong>Interogare simpla cu criteriu pe data</strong> — <code>&lt;Date()</code> pentru expirate, <code>Between Date() And Date()+30</code> pentru aproape expirate.<br>
+                        <strong>Interogare cu comparare intre doua coloane</strong> — <code>&lt;[StocMinim]</code> sub coloana Stoc, pentru produse sub stocul minim.<br>
+                        <strong>Interogare de totalizare</strong> — buton Totals, Group By pe Categorie, Sum pe campul calculat <code>ValoareStoc: [PretAchizitie]*[Stoc]</code>.<br>
+                        <strong>Raport tiparibil</strong> — Report Wizard pornind de la o interogare, cu grupare si layout gata pentru dosarul de gestiune.
+                    </p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">De retinut pentru activitatile practice:</div>
+                    <p>
+                        Interogarea NU modifica niciodata tabelul original — poti rula si re-rula in siguranta.<br>
+                        Parantezele drepte <code>[NumeCamp]</code> leaga o expresie de un camp real din tabel.<br>
+                        Un camp calculat se scrie <code>NumeNou: formula</code>, cu doua puncte dupa numele nou.<br>
+                        Fereastra "Enter Parameter Value" la rulare = aproape sigur un nume de camp scris gresit.<br>
+                        Query = date pe ecran, pentru lucru; Report = document formatat, pentru tiparit si atasat la dosar.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) — Expirate sau aproape expirate?</h3>
+            <p>Presupune ca astazi este <strong>1 iunie 2026</strong>. Ai patru loturi de produse in tabelul Produse: <em>Lot A</em> — DataExpirare 15 mai 2026; <em>Lot B</em> — DataExpirare 20 iunie 2026; <em>Lot C</em> — DataExpirare 10 iulie 2026; <em>Lot D</em> — DataExpirare 25 iunie 2026. Pentru fiecare lot, precizeaza: (a) daca apare in interogarea cu criteriul <code>&lt;Date()</code> (deja expirate), (b) daca apare in interogarea cu criteriul <code>Between Date() And Date()+30</code> (aproape expirate). Scrie si cele doua criterii, exact cum le-ai introduce in randul Criteria din Access.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) — Stoc sub minim si valoare pe categorie</h3>
+            <p>Ai urmatoarele sase produse in tabelul Produse:</p>
+            <p>
+                1. Ibuprofen 400mg — Categorie "Analgezice", PretAchizitie 4 lei, Stoc 30, StocMinim 40<br>
+                2. Paracetamol 500mg — Categorie "Analgezice", PretAchizitie 2 lei, Stoc 90, StocMinim 50<br>
+                3. Manusi nitril M — Categorie "Dispozitive medicale", PretAchizitie 20 lei, Stoc 15, StocMinim 20<br>
+                4. Termometru digital — Categorie "Dispozitive medicale", PretAchizitie 18 lei, Stoc 25, StocMinim 10<br>
+                5. Crema hidratanta — Categorie "Cosmetice", PretAchizitie 12 lei, Stoc 40, StocMinim 15<br>
+                6. Sapun lichid — Categorie "Cosmetice", PretAchizitie 6 lei, Stoc 5, StocMinim 20
+            </p>
+            <p>Cerinte: (a) Care produse ar aparea intr-o interogare cu criteriul <code>&lt;[StocMinim]</code> pe coloana Stoc? Numeste-le. (b) Calculeaza manual, ca la o interogare de totalizare (Group By pe Categorie, Sum pe PretAchizitie&times;Stoc), valoarea stocului pentru fiecare din cele trei categorii. (c) Scrie formula exacta a campului calculat, asa cum ar aparea in randul Field din Access.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) — Raport de gestiune combinat</h3>
+            <p>Seful de farmacie vrea o singura interogare care sa adune, intr-un raport de gestiune lunar, TOATE produsele care au nevoie de atentie: cele deja expirate SAU aproape expirate (in 30 de zile) SAU cu stocul sub minim — indiferent de motiv. In grila de proiectare a interogarii (QBE) din Access, conditiile scrise pe <strong>aceeasi</strong> linie Criteria se combina cu SI (trebuie indeplinite toate deodata); conditiile scrise pe linii <strong>diferite</strong> (Criteria si randul de dedesubt, "or") se combina cu SAU (e suficient sa fie indeplinita una singura).</p>
+            <p>Cerinte: (a) Descrie exact ce scrii, pe ce coloana si pe ce rand (Criteria sau "or"), ca sa obtii aceasta interogare combinata cu SAU intre cele trei conditii. (b) Foloseste datele din Exercitiul 2 (presupunand ca niciunul dintre cele sase produse nu e aproape de expirare) si precizeaza care dintre cele sase produse ar aparea in acest raport combinat, doar pe baza criteriului de stoc sub minim. (c) Explica in doua propozitii de ce raportul final trebuie construit pornind de la aceasta interogare (cu Report Wizard) si nu direct de la tabelul Produse.</p>
+        </div>
+    </section>
+
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Interogarea (Query) filtreaza sau calculeaza date fara sa modifice tabelul original</li>
+                <li>Functia Date() da data curenta; &lt;Date() = expirate, Between Date() And Date()+30 = aproape expirate</li>
+                <li>Parantezele drepte [NumeCamp] compara doua coloane intre ele, rand cu rand (ex. &lt;[StocMinim])</li>
+                <li>Interogarea de totalizare (buton Totals): Group By pe Categorie, Sum pe un camp calculat (NumeNou: formula)</li>
+                <li>Raportul (Report), construit cu Report Wizard dintr-o interogare, e obiectul potrivit pentru un document tiparibil</li>
+                <li>Fereastra "Enter Parameter Value" la rularea unei interogari inseamna aproape sigur un nume de camp scris gresit</li>
+                <li>Pe linii diferite din grila QBE, conditiile se combina cu SAU; pe aceeasi linie, cu SI</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Ai finalizat modulul C3</h3>
+            <p>Aceasta a fost ultima lectie din <strong>C3. Administrarea unei Baze de Date</strong>. Ai parcurs structura tabelelor, incarcarea si validarea datelor, iar acum si exploatarea lor prin interogari si rapoarte de gestiune. Revino la pagina modulului pentru recapitulare sau pentru a continua cu urmatoarea competenta.</p>
+            <a href="index.html" class="btn-next">Inapoi la modul &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('an2-farmacie-c3-baze-de-date-lectia3-exploatare');
+        PracticeSimple.init('an2-farmacie-c3-baze-de-date-lectia3-exploatare');
+        LessonSummary.init('an2-farmacie-c3-baze-de-date-lectia3-exploatare');
+        Breadcrumb.init({
+            grade: 'an2-farmacie',
+            gradeName: 'Postliceal, Anul II',
+            module: 'c3-baze-de-date',
+            moduleName: 'C3. Administrarea unei Baze de Date',
+            lesson: 'Exploatarea bazei de date'
+        });
+        LearningProgress.init('an2-farmacie', 'c3-baze-de-date', 'lectia3-exploatare.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>
