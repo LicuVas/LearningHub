@@ -93,6 +93,31 @@ si planificarile din `...\Planificari 2026-2027 — T.I.C..md`.
 | `maistri` | Maistru electromecanic auto, an I | **Utilizarea tehnicii de calcul**, Anexa 3 la O.M.Ed.C. 4760/26.07.2006 — 3 competente |
 | `sanitar1` | Postliceal sanitar an I, medicina generala | **Utilizarea calculatorului si tehnologia comunicatiilor** — 5 competente |
 | `sanitar2` | Postliceal sanitar an II, farmacie | **Modulul VII — T.I.C.** — aceleasi 5 competente, alt context |
+| `artistic12` | (Brauner, daca ai a XII-a) | cele 9 pagini care scriau **„In pregatire"** pe situl public: D1–D7 (proba de competente digitale) + proiectele P2 si P3 |
+
+---
+
+## ⛔ BLOCAJ REAL: publicarea nu se poate face fara tine (03.09.2026, ora 01)
+
+Tot continutul e construit si **salvat in git local**, dar **`git push` nu trece**:
+
+- managerul de credentiale Windows (`git-credential-manager`) cere autentificare **interactiva** — un push pornit a stat blocat 40 de minute fara sa urce nimic; nu am atins ecranul tau cat dormeai;
+- tokenul din variabila de mediu `GITHUB_PERSONAL_ACCESS_TOKEN` este **expirat** — `https://api.github.com/user` raspunde **401** (acelasi motiv pentru care si serverul MCP de GitHub a picat la pornirea sesiunii);
+- citirea merge (depozitul e public, `git ls-remote` raspunde instant) — doar scrierea cere identitate.
+
+**Ce ai de facut tu (2 minute):**
+```
+cd C:\00\Projects\LearningHub
+git push
+```
+Daca apare fereastra GitHub, autentifica-te. Ca sa nu se mai repete, genereaza un token nou
+(GitHub → Settings → Developer settings → Personal access tokens, scope `repo`) si inlocuieste-l pe cel vechi.
+
+**Dupa push, verificarea — nu te opri la „am dat push":**
+```
+curl -s -o /dev/null -w "%{http_code}" https://learninghub-8z6.pages.dev/content/profesional/maistri/an1/c1-aplicatii-software/index.html
+```
+Trebuie sa raspunda `200`. Cloudflare Pages reconstruieste in ~1 minut dupa push.
 
 ---
 

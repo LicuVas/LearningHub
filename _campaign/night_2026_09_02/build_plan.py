@@ -239,9 +239,57 @@ P.append(M("sanitar2", "content/profesional/sanitar", "an2-farmacie", "c5-prezen
    ("lectia2-produs-final.html", "Produs final evaluat: dosarul digital al unei gestiuni de farmacie - documente, evidenta cu formule si grafice, mica baza de date, surse oficiale citate si prezentare - cu grila de evaluare pe cele cinci competente."),
   ]))
 
+# ===== G. LICEU ARTISTIC, clasa a XII-a - paginile ramase "In pregatire" pe situl public =====
+# Aici fiecare tema e o pagina index.html intr-un folder propriu (asa e construita sectiunea),
+# deci modulul nu are pagina de index separata: noIndex=True.
+ART = "content/liceu/artistic"
+ART_ITEMS = [
+    ("proba-d/d1-calculator-fisiere", "D1: Calculatorul si Fisierele", "\U0001F4BB",
+     "Proba D, competenta 1", "../../index.html", "../d2-procesare-text/index.html",
+     "Sistemul de operare si gestionarea fisierelor asa cum se cere la proba de competente digitale: foldere, cai, copiere/mutare/redenumire, cautare, extensii, arhivare si dezarhivare, capacitate si unitati de masura. Aplicatia fir rosu: organizarea unei biblioteci digitale de partituri si inregistrari (foldere pe compozitor/perioada, denumiri consecvente, arhiva de trimis)."),
+    ("proba-d/d2-procesare-text", "D2: Procesare Text", "\U0001F4C4",
+     "Proba D, competenta 2", "../d1-calculator-fisiere/index.html", "../d3-calcul-tabelar/index.html",
+     "Procesorul de text la nivelul cerut de proba D: formatare de caracter si paragraf, liste, tabele, imagini cu incadrarea textului, antet si subsol, numerotarea paginilor, export PDF. Aplicatia: programul unui concert (piese, compozitori, durate) si o biografie de artist de o pagina."),
+    ("proba-d/d3-calcul-tabelar", "D3: Calcul Tabelar", "\U0001F4C8",
+     "Proba D, competenta 3", "../d2-procesare-text/index.html", "../d4-prezentari/index.html",
+     "Foaia de calcul la nivelul probei D: tipuri de date, formule, functiile SUM, AVERAGE, MIN, MAX, COUNT si IF, referinte absolute, sortare si filtrare, diagrame. Aplicatia: bugetul unui eveniment muzical - venituri din bilete, cheltuieli cu sala, sonorizarea si afisele, pragul de rentabilitate."),
+    ("proba-d/d4-prezentari", "D4: Prezentari Multimedia", "\U0001F39E",
+     "Proba D, competenta 4", "../d3-calcul-tabelar/index.html", "../d5-internet-comunicare/index.html",
+     "Prezentarea electronica la nivelul probei D: diapozitive si aspecte, teme, text lizibil, imagini, sunet si video incorporat, tranzitii si animatii cu masura, notele prezentatorului, tiparire. Aplicatia: o prezentare de 5 minute despre instrumentul tau - istorie, constructie, repertoriu, un fragment audio."),
+    ("proba-d/d5-internet-comunicare", "D5: Internet si Comunicare", "\U0001F310",
+     "Proba D, competenta 5", "../d4-prezentari/index.html", "../d6-editare-imagini/index.html",
+     "Navigare si cautare eficienta, email profesional cu atasamente, siguranta contului si recunoasterea inselatoriilor, si drepturile de autor pe intelesul unui muzician: ce inseamna o licenta, ce e domeniul public, ce sunt licentele Creative Commons si de ce o inregistrare are doua drepturi separate (compozitia si inregistrarea). Aplicatia: prezenta online corecta pe platformele de muzica."),
+    ("proba-d/d6-editare-imagini", "D6: Editare Imagini", "\U0001F3A8",
+     "Proba D, competenta 6", "../d5-internet-comunicare/index.html", "../d7-simulare/index.html",
+     "Editarea de imagine la nivelul probei D, cu GIMP (gratuit): decupare si redimensionare, rezolutie si DPI, straturi, text, ajustari de luminozitate si contrast, transparenta, export in formatul potrivit (JPG, PNG). Aplicatia: un afis de concert si o coperta de album, pregatite si pentru ecran, si pentru tipar."),
+    ("proba-d/d7-simulare", "D7: Simulare Proba D", "⏱",
+     "Proba D, simulare completa", "../d6-editare-imagini/index.html", "../../index.html",
+     "Simulare completa de proba practica, in formatul examenului: structura probei, cum e organizat timpul, ce se evalueaza si ce se puncteaza. Un set complet de sarcini care trece prin toate cele sase competente, cu barem explicit si cu greselile care costa cele mai multe puncte."),
+    ("proiecte/p2-expo-virtuala", "P2: Expozitia / Concertul Virtual", "\U0001F3AD",
+     "Proiect de clasa", "../p1-portfolio/index.html", "../p3-album-absolventi/index.html",
+     "Proiect de clasa: un singur site pe care fiecare elev are propria pagina-scena, cu lucrari, audio, video si biografie artistica. Se lucreaza pe roluri (structura, design, continut, publicare), cu o conventie de fisiere respectata de toti. Include HTML si CSS real, scurt si corect, si pasii de publicare gratuita."),
+    ("proiecte/p3-album-absolventi", "P3: Albumul Digital de Absolventi", "\U0001F4F7",
+     "Proiect de clasa", "../p2-expo-virtuala/index.html", "../../index.html",
+     "Proiect de clasa: albumul de absolvire in format digital - fotografii pregatite corect, mesaje, o linie a timpului cu momentele clasei. Include organizarea materialului, pregatirea imaginilor pentru web, structura paginii si publicarea. Include si partea delicata: acordul colegilor pentru publicarea fotografiilor si ce se face cu cei care nu vor sa apara."),
+]
+for slug, titlu, icon, desc, prev, nxt, topic in ART_ITEMS:
+    P.append({"group": "artistic12", "base": ART, "cls": "cls12", "module": slug,
+              "title": titlu, "icon": icon, "desc": desc, "noIndex": True,
+              "lessons": [{"file": "index.html", "topic": topic, "prev": prev, "next": nxt}]})
+
 # ---- serializare ----
 mods = []
 for m in P:
+    if m.get("noIndex"):
+        L = m["lessons"][0]
+        L = dict(L)
+        L["idx"], L["of"] = 1, 1
+        L["path"] = "%s/%s/%s/%s" % (m["base"], m["cls"], m["module"], L["file"])
+        mm = dict(m)
+        mm["lessons"] = [L]
+        mm["indexPath"] = L["path"]
+        mods.append(mm)
+        continue
     lessons = []
     n = len(m["lessons"])
     for i, (fname, topic) in enumerate(m["lessons"]):

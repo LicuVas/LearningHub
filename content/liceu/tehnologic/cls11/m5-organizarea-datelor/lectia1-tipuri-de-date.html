@@ -47,7 +47,7 @@
                 <li>Sa recunosti tipul text (sir de caractere) si sa explici de ce un cod scris cu zerouri in fata nu este un numar</li>
                 <li>Sa repari o valoare de tip text pe care programul a interpretat-o gresit ca numar, si invers</li>
                 <li>Sa folosesti tipul logic (adevarat/fals) intr-o formula de conditie</li>
-                <li>Sa introduci corect o data calendaristica si sa calculezi un interval de zile intre doua date</li>
+                <li>Sa introduci corect o data si o ora calendaristica si sa calculezi un interval de zile intre doua date</li>
                 <li>Sa explici de ce o imagine este un tip de date diferit, care nu poate fi calculat</li>
             </ul>
         </div>
@@ -133,7 +133,7 @@
                 </div>
                 <div class="example-box">
                     <div class="example-title">Regula de recunoastere:</div>
-                    <p>Daca zerourile din fata au sens (fac parte din codul propriu-zis, il aduc la o lungime fixa) — valoarea e <strong>text</strong>. Daca zerourile din fata sunt doar niste zecimale sau o rotunjire — valoarea e <strong>numar</strong>. Un numar real (matematic) nu are niciodata zerouri nesemnificative in fata: 045 si 45 sunt aceeasi cantitate, dar "045" si "45" pot fi coduri diferite.</p>
+                    <p>Testul care functioneaza intotdeauna: daca valoarea <strong>masoara o cantitate</strong> — o poti aduna, media sau compara dupa marime (mai mare/mai mic) — e <strong>numar</strong>. Daca valoarea <strong>identifica ceva</strong> — un cod, un numar de inventar, un CNP, un cod postal — si lungimea ei fixa sau zerourile din fata fac parte din identificare, nu din marime, e <strong>text</strong>. Un numar real (matematic) nu are niciodata zerouri nesemnificative in fata: 045 si 45 sunt aceeasi cantitate, dar "045" si "45" pot fi coduri diferite — pentru ca un cod nu masoara nimic, doar identifica.</p>
                 </div>
                 <div class="example-box">
                     <div class="example-title">Cum previi capcana — doua metode, pas cu pas:</div>
@@ -143,7 +143,14 @@
                 <div class="example-box">
                     <div class="example-title">Conversii intre text si numar — cand ai nevoie de ele:</div>
                     <p>Daca ai numarul 7 in celula A2 si vrei sa il afisezi ca un cod de trei cifre pentru un raport, foloseste <code>=TEXT(A2,"000")</code> — rezultatul este textul <strong>"007"</strong>.<br>
-                    Invers, daca ai un cod scris ca text, de exemplu "452" in celula B2, si ai nevoie de valoarea lui numerica intr-un calcul, foloseste <code>=VALUE(B2)</code> — rezultatul este numarul <strong>452</strong> (zerourile nesemnificative dispar, pentru ca acum e vorba de o cantitate, nu de un cod).</p>
+                    Invers, daca ai un cod scris ca text, de exemplu "452" in celula B2, si ai nevoie de valoarea lui numerica intr-un calcul, foloseste <code>=VALUE(B2)</code> — rezultatul este numarul <strong>452</strong>.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Daca zerourile s-au pierdut deja — cum repari o coloana stricata:</div>
+                    <p>Atentie: daca aplici Metoda 1 (Format Cells &rarr; Text) DUPA ce cifrele au fost deja scrise si transformate in numar, formatarea NU aduce zerourile inapoi — valoarea 7 devine textul "7", nu "007", pentru ca schimbarea de format afecteaza doar cum se comporta valorile scrise DE ACUM INAINTE in acea coloana, nu pe cele deja introduse. Ca sa repari cu adevarat o coloana deja stricata, ai trei variante reale:<br>
+                    1. <strong>Retastare</strong>: formatezi coloana ca Text (Metoda 1) si apoi scrii din nou fiecare cod cu mana.<br>
+                    2. <strong>Coloana ajutatoare</strong>: intr-o coloana libera scrii <code>=TEXT(A2,"000")</code>, copiezi formula pe tot randul de valori, apoi selectezi rezultatele, <strong>Copy</strong>, si le lipesti peste coloana originala cu <strong>Paste Special &rarr; Values</strong> (ca sa ramana text fix, nu formula legata de o coloana pe care urmeaza sa o stergi).<br>
+                    3. <strong>Format personalizat 000</strong>: Format Cells &rarr; Custom &rarr; scrii <code>000</code> ca format. Aceasta metoda schimba doar <strong>afisarea</strong> — celula arata "007", dar valoarea stocata ramane numarul 7, deci nu functioneaza daca ai nevoie sa cauti sau sa compari codul ca text.</p>
                 </div>
             </div>
         </div>
@@ -166,29 +173,33 @@
                 </div>
                 <div class="example-box">
                     <div class="example-title">De ce nu poti aduna valori logice ca pe numere obisnuite:</div>
-                    <p>ADEVARAT si FALS pot fi folosite in calcule (Excel le trateaza ca 1, respectiv 0, in interiorul unor formule precum <code>SUM</code> sau <code>COUNTIF</code>), dar sensul lor ramane logic, nu cantitativ. Foloseste-le pentru decizii ("Conform"/"Neconform", "Trece"/"Nu trece"), nu pentru masuratori.</p>
+                    <p>ADEVARAT si FALS pot fi transformate in 1, respectiv 0, dar NU automat oriunde le folosesti. Daca ADEVARAT/FALS stau deja in celule dintr-un interval si il aduni cu <code>=SUM(C2:C10)</code>, Excel <strong>ignora complet</strong> valorile logice din interval — suma iese 0, nu numarul de ADEVARAT-uri, oricat de contraintuitiv pare. Conversia la 1/0 se intampla doar cand valoarea logica e argument direct al functiei (<code>=SUM(ADEVARAT,ADEVARAT)</code> da 2) sau cand o forjezi printr-o operatie aritmetica, de exemplu dublul minus <code>--</code> sau inmultirea cu 1. Ca sa numeri cate celule dintr-un interval sunt ADEVARAT, foloseste <code>=COUNTIF(C2:C10,ADEVARAT)</code> (numara celulele care indeplinesc criteriul, nu converteste nimic), sau, pentru un test facut direct pe numere, <code>=SUMPRODUCT(--(B2:B10&gt;=6.5))</code>, care numara cate valori din B2:B10 sunt cel putin 6.5. Sensul valorilor logice ramane oricum logic, nu cantitativ — foloseste-le pentru decizii ("Conform"/"Neconform", "Trece"/"Nu trece"), nu pentru masuratori.</p>
                 </div>
             </div>
         </div>
 
         <!-- ATOM 5: Data si ora -->
-        <div class="atom" id="atom-5" data-quiz='[{"question": "Doua masuratori de debit au fost facute la 10.08.2026 si la 23.08.2026, ambele recunoscute corect de Excel ca date calendaristice, in celulele A2 si B2. Formula =B2-A2 returneaza:", "options": ["Textul \"13\"", "Eroare #NUME?", "13 (numarul de zile dintre cele doua date)", "2026"], "correct": "c", "hint": "Cand ambele celule contin date calendaristice recunoscute (aliniate la dreapta), scaderea lor da diferenta in zile, un numar intreg simplu — 23 minus 10 = 13. Textul sau eroarea ar aparea doar daca una dintre celule nu ar fi fost recunoscuta ca data."}]'>
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Ai doua date calendaristice recunoscute corect de Excel (aliniate la dreapta) in A2 si B2, iar formula =B2-A2 calculeaza o diferenta de 13 zile. Dupa ce scrii formula, celula rezultat arata insa o data (de exemplu 13.01.1900), nu numarul 13. De ce, si cum repari?", "options": ["Formula e gresita; trebuie scrisa =A2-B2", "Celula rezultat a mostenit formatul de tip Data de la operanzi; schimbi formatul ei (Home, grupul Number) la General sau Number ca sa vezi 13", "Excel nu poate scadea doua date direct; e nevoie de functia DATEDIF", "Diferenta reala nu e 13 de zile, ci 13 de zile plus un an intreg"], "correct": "b", "hint": "Valoarea calculata (13) e corecta din prima clipa — problema e doar de AFISARE: celula rezultat copiaza automat formatul Data al operanzilor folositi in formula. Rezolvi schimband formatul celulei rezultat, nu formula insasi."}]'>
             <div class="atom-header">
                 <div class="atom-number">5</div>
                 <h3 class="atom-title">Tipul data si ora</h3>
             </div>
             <div class="atom-content">
                 <div class="concept-def">
-                    Tipul <strong>data si ora</strong> reprezinta un moment calendaristic. Ca sa poata face calcule cu date (diferente in zile, sortari cronologice, termene), Excel retine intern fiecare data recunoscuta drept un numar crescator — dar o afiseaza pe ecran intr-un format citibil (zi.luna.an). De aceea o data recunoscuta corect se comporta, la calcule, ca un numar.
+                    Tipul <strong>data si ora</strong> reprezinta un moment calendaristic, in doua parti: <strong>data</strong> (ziua calendaristica) si <strong>ora</strong> (momentul din zi). In interior, Excel retine amandoua ca UN SINGUR numar de serie: partea intreaga a numarului este ziua (numarul de zile scurse de la 1 ianuarie 1900), iar partea zecimala este ora din zi — de exemplu 0,5 inseamna exact ora 12:00 (jumatate de zi), iar 0,25 inseamna 06:00. Data si ora sunt, tehnic, acelasi tip de date, doar afisate diferit (zi.luna.an pentru partea intreaga, oo:mm pentru partea zecimala).
                 </div>
                 <div class="example-box">
                     <div class="example-title">Exemplu numeric complet — interval intre doua masuratori:</div>
                     <p>Prima masuratoare de debit: 10.08.2026, in celula A2. A doua masuratoare: 23.08.2026, in celula B2. Ambele au fost scrise in acest format si Excel le-a aliniat automat la dreapta (semn ca le-a recunoscut ca date).<br>
-                    Formula <code>=B2-A2</code> returneaza <strong>13</strong> — numarul de zile dintre cele doua masuratori (23 minus 10 zile, in aceeasi luna).</p>
+                    Formula <code>=B2-A2</code> calculeaza corect diferenta de <strong>13</strong> zile intre cele doua masuratori, dar celula rezultat MOSTENESTE formatul de tip Data de la operanzi — asa ca, in loc sa vezi numarul 13, vei vedea o data ciudata, de genul 13.01.1900 (Excel numara zilele de la 1 ianuarie 1900, iar a 13-a zi de la acel inceput cade pe 13 ianuarie 1900). Valoarea calculata e corecta din prima clipa, doar afisarea e gresita. Ca sa vezi numarul de zile si nu o data: selecteaza celula rezultat &rarr; tab-ul <strong>Home</strong> &rarr; grupul <strong>Number</strong> &rarr; schimba formatul din caseta derulanta (arata "Date") in <strong>General</strong> sau <strong>Number</strong>. Abia atunci celula afiseaza <strong>13</strong>.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Ora — a doua parte a aceluiasi tip:</div>
+                    <p>O ora se scrie cu doua puncte intre ore si minute, de exemplu <code>14:30</code>. Scrisa asa intr-o celula formatata implicit, Excel o recunoaste si o aliniaza la dreapta; intern ea devine 0,604166... (14 ore si 30 de minute impartite la cele 24 de ore ale zilei). Daca scrii ora cu <strong>punct</strong> in loc de doua puncte — <code>14.30</code> — Excel o citeste ca pe numarul 14,30 (paisprezece virgula treizeci) sau, dupa setarile regionale, ca <strong>text simplu</strong>, in niciun caz ca o ora — si orice calcul cu ea (durata, ordine cronologica) iese gresit fara niciun avertisment. O alta capcana: daca aduni durate care depasesc 24 de ore (de exemplu totalul orelor lucrate intr-o saptamana), Excel reseteaza automat la miezul noptii si arata doar restul, nu totalul; solutia este formatul personalizat <code>[h]:mm</code> (orele intre paranteze patrate), care afiseaza numarul real de ore, nu doar partea sub 24.</p>
                 </div>
                 <div class="example-box">
                     <div class="example-title">Capcana — data scrisa intr-un format pe care programul nu-l recunoaste:</div>
-                    <p>Daca scrii data ca <code>2026-23-08</code> (incercand ordinea an-zi-luna, cu 23 in pozitia de luna), Excel nu poate interpreta "luna 23" — nu exista — si pastreaza valoarea ca <strong>text simplu</strong>, aliniat la stanga. O astfel de valoare nu poate fi scazuta din alta data si nu apare corect intr-o sortare cronologica. <strong>Verifica intotdeauna alinierea</strong> dupa ce introduci o data: la dreapta inseamna recunoscuta, la stanga inseamna doar text.</p>
+                    <p>Daca scrii data ca <code>2026-23-08</code> (incercand ordinea an-zi-luna, cu 23 in pozitia de luna), Excel nu poate interpreta "luna 23" — nu exista — si pastreaza valoarea ca <strong>text simplu</strong>, aliniat la stanga. O astfel de valoare nu poate fi scazuta din alta data si nu apare corect intr-o sortare cronologica. <strong>Verifica intotdeauna alinierea</strong> dupa ce introduci o data sau o ora: la dreapta inseamna recunoscuta, la stanga inseamna doar text.</p>
                 </div>
             </div>
         </div>
@@ -233,7 +244,7 @@
                         <strong>Real</strong> — pH masurat: 7.04 — aliniat la dreapta — DA (se aduna, se mediaza)<br>
                         <strong>Text</strong> — cod parcela: 045 — aliniat la stanga — NU (doar se compara, se lipeste)<br>
                         <strong>Logic</strong> — rezultat test: ADEVARAT — centrat — in conditii, DA (1 sau 0 in formule)<br>
-                        <strong>Data si ora</strong> — 23.08.2026 — aliniat la dreapta — DA (ca numar de zile)<br>
+                        <strong>Data si ora</strong> — 23.08.2026 / 14:30 — aliniat la dreapta — DA (ca numar de zile, dupa reformatarea celulei rezultat)<br>
                         <strong>Imagine</strong> — fotografie.jpg — obiect separat, nu e in celula — NU
                     </p>
                 </div>
@@ -278,9 +289,9 @@
                 <li>Tipul de date decide ce operatii are voie sa faca programul cu o valoare; se recunoaste dupa alinierea automata a celulei (numar/data = dreapta, text = stanga, logic = centrat)</li>
                 <li>Numeric intreg = fara zecimale, pentru numarat; numeric real = cu zecimale, pentru masurat; ambele se pot aduna si mediaza (ex. AVERAGE)</li>
                 <li>Text = sir de caractere, chiar daca sunt doar cifre; un cod cu zerouri in fata (007) nu e un numar — Excel il transforma in 7 daca il scrii nefortat intr-o celula numerica</li>
-                <li>Repararea capcanei text/numar: Format Cells (Ctrl+1) &rarr; Text, sau apostrof inainte de cifre; conversii cu functiile TEXT() si VALUE()</li>
-                <li>Logic = doar ADEVARAT/FALS, rezultatul unei comparatii; se combina in IF si AND pentru decizii automate</li>
-                <li>Data si ora = un moment calendaristic recunoscut, care se comporta ca un numar la calcule (scadere = numar de zile); daca formatul nu e recunoscut, ramane text si nu poate fi calculat</li>
+                <li>Repararea capcanei text/numar: pentru valori NOI, Format Cells (Ctrl+1) &rarr; Text sau apostrof inainte de cifre; pentru o coloana DEJA stricata, reformatarea nu ajunge — retastare, coloana ajutatoare cu TEXT()+Paste Values, sau format personalizat 000</li>
+                <li>Logic = doar ADEVARAT/FALS; SUM ignora valorile logice dintr-un interval de celule (da 0), COUNTIF le numara dupa criteriu, iar conversia reala la 1/0 cere argument direct sau dublul minus (--)</li>
+                <li>Data si ora sunt tehnic acelasi tip (un singur numar: partea intreaga = ziua, partea zecimala = ora, 0,5 = 12:00); daca formatul nu e recunoscut (ex. ora scrisa cu punct), ramane text; scaderea a doua date da numarul de zile, dar celula rezultat mosteneste formatul Data — trebuie schimbata manual la General/Number ca sa vezi numarul</li>
                 <li>Imagine = fisier binar, nu se calculeaza; inserata implicit peste foaia de calcul, se poate dezalinia de randul ei la sortare, daca nu e legata explicit de celula</li>
             </ul>
         </div>

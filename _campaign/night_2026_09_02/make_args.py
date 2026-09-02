@@ -74,6 +74,13 @@ PROFIL = {
                    "pret cu amanuntul, nomenclator de produse, comenzi catre depozit, retrageri de lot. Nu da sfaturi "
                    "farmacologice si nu recomanda medicamente - lectia e despre calculator, contextul e farmaceutic."),
     },
+    "artistic12": {
+        "label": "Liceu artistic, clasa a XII-a - proba de competente digitale si proiecte",
+        "gradeName": "Clasa a XII-a",
+        "audienceShort": "Liceu de Arte, Clasa a XII-a",
+        "audience": ("elevi de clasa a XII-a la liceu de arte (muzica, arte plastice), care dau la bacalaureat proba de evaluare a competentelor digitale"),
+        "flavor": ("Exemplele sunt din viata unui artist: partituri si inregistrari, programe de concert, afise, coperte de album, portofoliu online, biografie de artist, bugetul unui eveniment. Foloseste programe GRATUITE acolo unde exista (GIMP, LibreOffice) si spune explicit ca merge la fel si in varianta platita. Elevii sunt buni la altceva decat la calculatoare - explica fara graba, dar fara sa ii tratezi ca pe copii."),
+    },
 }
 
 
@@ -92,15 +99,18 @@ def main():
     for M in plan["modules"]:
         if M["group"] != g:
             continue
-        idx_ok, _ = S.check_index(repo, M)
+        idx_ok = True if M.get("noIndex") else S.check_index(repo, M)[0]
         lessons = []
         for L in M["lessons"]:
             ok, _ = S.check_lesson(repo, L)
             if take_all or not ok:
-                lessons.append(L)
+                LL = dict(L)
+                LL["assets"] = "../" * (len(L["path"].split("/")) - 1) + "assets"
+                lessons.append(LL)
         if not lessons and idx_ok and not take_all:
             continue
         mm = {k: M[k] for k in ("cls", "module", "title", "icon", "desc", "indexPath")}
+        mm["noIndex"] = bool(M.get("noIndex"))
         mm["gradeName"] = prof["gradeName"]
         mm["audienceShort"] = prof["audienceShort"]
         mm["lessons"] = lessons

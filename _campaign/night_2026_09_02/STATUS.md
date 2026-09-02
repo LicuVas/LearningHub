@@ -1,6 +1,6 @@
 STARE TURA DE NOAPTE - LearningHub (liceu / maistri / postliceal)
 
-Gata: 115 din 115 fisiere planificate.
+Gata: 124 din 124 fisiere planificate.
 
 | Grupa | Ce este | Gata | Total |
 |:--|:--|--:|--:|
@@ -10,5 +10,6 @@ Gata: 115 din 115 fisiere planificate.
 | maistri | Scoala de maistri, an I - electromecanic auto | 19 | 19 |
 | sanitar1 | Postliceal sanitar, an I - medicina generala | 22 | 22 |
 | sanitar2 | Postliceal sanitar, an II - farmacie | 18 | 18 |
+| artistic12 | Liceu artistic, clasa a XII-a (proba D + proiecte) | 9 | 9 |
 
 TOTUL E GATA. Ramane doar publicarea (deploy.ps1) si verificarea pe site.

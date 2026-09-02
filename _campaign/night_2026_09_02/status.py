@@ -103,9 +103,10 @@ def main():
     for M in plan["modules"]:
         if only and M["group"] != only:
             continue
-        ok, why = check_index(repo, M)
-        rows.append({"kind": "index", "group": M["group"], "path": M["indexPath"],
-                     "module": M["module"], "cls": M["cls"], "ok": ok, "why": why})
+        if not M.get("noIndex"):
+            ok, why = check_index(repo, M)
+            rows.append({"kind": "index", "group": M["group"], "path": M["indexPath"],
+                         "module": M["module"], "cls": M["cls"], "ok": ok, "why": why})
         for L in M["lessons"]:
             ok, why = check_lesson(repo, L)
             rows.append({"kind": "lesson", "group": M["group"], "path": L["path"],
@@ -140,8 +141,9 @@ def main():
         "maistri": "Scoala de maistri, an I - electromecanic auto",
         "sanitar1": "Postliceal sanitar, an I - medicina generala",
         "sanitar2": "Postliceal sanitar, an II - farmacie",
+        "artistic12": "Liceu artistic, clasa a XII-a (proba D + proiecte)",
     }
-    for g in ["lic10", "lic11", "lic12", "maistri", "sanitar1", "sanitar2"]:
+    for g in ["lic10", "lic11", "lic12", "maistri", "sanitar1", "sanitar2", "artistic12"]:
         gr = [r for r in rows if r["group"] == g]
         if not gr:
             continue
