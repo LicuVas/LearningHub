@@ -81,7 +81,7 @@
             </div>
             <div class="atom-content">
                 <div class="concept-def">
-                    Un <strong>formular</strong> este un ecran de introducere a datelor, cu campuri clar etichetate (Produs, Lot, Cantitate, Termen de valabilitate, Furnizor, Pret), pe care aplicatia il foloseste ca sa scrie un rand nou intr-un <strong>tabel</strong> — in cazul nostru, tabelul de intrari din baza de date a farmaciei. Diferenta fata de a scrie direct in tabel: formularul poate <strong>verifica</strong> fiecare camp inainte sa il accepte, in timp ce un tabel deschis liber (ca o foaie Excel needucata) accepta orice tastezi, corect sau nu.
+                    Un <strong>formular</strong> este un ecran de introducere a datelor, cu campuri clar etichetate (Produs, Lot, Cantitate, Termen de valabilitate, Furnizor, Pret), pe care aplicatia il foloseste ca sa scrie un rand nou intr-un <strong>tabel</strong> — in cazul nostru, tabelul de intrari din baza de date a farmaciei. Chiar si un tabel de baza de date are deja o prima linie de aparare: fiecare coloana are un <strong>tip de date</strong> fix (Text scurt / Numar / Data, vezi Lectia 1), care respinge automat o litera intr-un camp Numar sau un text oarecare intr-un camp Data. Dar tipul de date, singur, nu e de ajuns: un camp Numar accepta la fel de usor 0 sau -20 ca si 3, iar un camp Data poate ramane gol daca nu e marcat separat ca obligatoriu. <strong>Formularul</strong> adauga exact regulile suplimentare de care mai e nevoie (camp obligatoriu completat, numar strict pozitiv) si le <strong>verifica</strong> inainte de salvare, aratand mesajul de eroare potrivit langa campul gresit — spre deosebire de a scrie direct in tabel, unde aceste reguli suplimentare nu se verifica automat.
                 </div>
                 <div class="example-box">
                     <div class="example-title">Exemplu — campurile unui formular de receptie de farmacie:</div>
@@ -128,7 +128,7 @@
                     <div class="mistake-box-header">
                         <div class="mistake-box-title">Greseala tipica</div>
                     </div>
-                    <p>O colaboratoare grabita scrie in campul Termen de valabilitate textul <strong>"nescris pe cutie"</strong> in loc sa lase campul gol si sa ceara lamurire. Aplicatia accepta acest text pentru ca nu e camp gol, dar textul nu este o data valida — la raportul de expirare, acest lot nu va aparea niciodata, pentru ca sistemul nu poate compara un text cu data de azi. <strong>Cum se recunoaste:</strong> in lista de produse, coloana Termen de valabilitate arata text in loc de o data (ex. "12.2027"). <strong>Cum se repara:</strong> se cere furnizorului fisa lotului sau se verifica fizic ambalajul, apoi se corecteaza randul cu data reala, in formatul zi.luna.an folosit de aplicatie.</p>
+                    <p>O colaboratoare grabita nu gaseste termenul pe cutie si, ca sa treaca de validarea "camp obligatoriu", scrie in campul Termen de valabilitate o data <strong>la intamplare</strong>, de exemplu <strong>01.2030</strong>, in loc sa lase campul gol si sa ceara lamurire. Aplicatia accepta randul pentru ca formatul e o data valida si campul nu e gol — dar data nu corespunde realitatii lotului. La raportul de expirare, acest lot va aparea gresit ca fiind valabil inca multi ani, desi nimeni nu stie de fapt cand expira cu adevarat. <strong>Cum se recunoaste:</strong> in lista de produse, coloana Termen de valabilitate arata o data nerealista sau foarte indepartata fata de restul livrarilor de la acelasi furnizor (ex. un termen la 4-5 ani distanta, cand produsul are de obicei valabilitate de 2-3 ani), fara nicio corespondenta cu factura sau cu ambalajul fizic. <strong>Cum se repara:</strong> se cere furnizorului fisa lotului sau se verifica fizic ambalajul, apoi se corecteaza randul cu data reala, in formatul luna.an folosit de aplicatie pentru acest camp (ex. 03.2027).</p>
                 </div>
             </div>
         </div>
@@ -158,7 +158,7 @@
                 </div>
                 <div class="example-box">
                     <div class="example-title">Ordinea validarilor conteaza:</div>
-                    <p>Daca lipseste si termenul de valabilitate, si cantitatea e gresita, aplicatia ar trebui sa arate <strong>toate</strong> erorile deodata (nu doar prima gasita), ca utilizatorul sa le corecteze pe toate dintr-o singura trecere prin formular, fara sa fie nevoit sa apese Salveaza de mai multe ori.</p>
+                    <p>Daca la aceeasi intrare lipseste si termenul de valabilitate, si cantitatea e gresita, aplicatia verifica regulile <strong>in ordine</strong> (Validarea 1 din Atomul 2, apoi Validarea 2 de aici): se opreste la <strong>prima</strong> regula incalcata si arata doar acel mesaj de eroare. Utilizatorul corecteaza campul respectiv si apasa din nou Salveaza — abia atunci aplicatia reia verificarea de la inceput si, daca mai exista o a doua eroare (de exemplu cantitatea), o va semnala la aceasta a doua incercare. De aceea e normal sa vezi mesajul de eroare schimbandu-se de la o incercare la alta, in loc sa apara toate erorile deodata.</p>
                 </div>
             </div>
         </div>
@@ -227,10 +227,10 @@
                 <div class="example-box">
                     <div class="example-title">Pasii de curatare, in ordine:</div>
                     <p>
-                        1. Se sorteaza tabelul de intrari dupa cod produs, apoi dupa lot (in Excel: Data → Sort, cu doua niveluri de sortare).<br>
-                        2. Randurile identice pe cod produs + lot + cantitate + data ajung alaturate — usor de observat vizual.<br>
-                        3. In Excel exista si o functie dedicata: se selecteaza tabelul, apoi meniul <strong>Data → Remove Duplicates</strong> (Elimina duplicate), bifand coloanele cod produs, lot, cantitate si data ca sa fie exact acele coloane comparate.<br>
-                        4. Se pastreaza un singur rand din fiecare grup identic, iar restul se sterg.<br>
+                        1. Se <strong>exporta</strong> tabelul de intrari din aplicatia de gestiune intr-un fisier Excel (de obicei o functie Export / Export in Excel a programului) — aceasta este o copie de lucru, folosita doar ca sa gasim duplicatele mai usor.<br>
+                        2. In Excel, se sorteaza fisierul exportat dupa cod produs, apoi dupa lot (meniul Data → Sort, cu doua niveluri de sortare), ca sa ajunga alaturate randurile identice pe cod produs + lot + cantitate + data.<br>
+                        3. Excel are si o functie dedicata: se selecteaza tabelul exportat, apoi meniul <strong>Data → Remove Duplicates</strong> (Elimina duplicate), bifand coloanele cod produs, lot, cantitate si data ca sa fie exact acele coloane comparate.<br>
+                        4. Randurile identificate ca duplicat se <strong>sterg din aplicatia de gestiune</strong> (nu doar din copia Excel, care era doar pentru identificare) — de obicei printr-o functie de anulare/stergere a intrarii, direct pe randul duplicat din tabelul de intrari.<br>
                         5. Se recalculeaza stocul si se verifica din nou fata de cantitatea reala numarata pe raft.
                     </p>
                 </div>
@@ -244,22 +244,22 @@
         </div>
 
         <!-- ATOM 6: Greseala de unitate de masura -->
-        <div class="atom" id="atom-6" data-quiz='[{"question": "Un furnizor trimite in fisierul CSV cantitatea in \"cutii\", dar baza de date a farmaciei tine stocul in \"flacoane\" (1 cutie = 10 flacoane). Fisierul are randul \"C-0201;SF2607;15;03.2027;FarmaDepo SRL\" (15 = cutii). Ce se intampla daca acest rand este importat exact asa, fara conversie?", "options": ["Baza de date va arata corect 150 de flacoane pe stoc", "Baza de date va arata gresit doar 15 flacoane pe stoc, de 10 ori mai putin decat realitatea", "Aplicatia va respinge automat randul, pentru ca detecteaza unitatea de masura gresita", "Nu conteaza, pentru ca stocul se recalculeaza singur la sfarsitul zilei"], "correct": "b", "hint": "Validarile de care am vorbit (termen prezent, cantitate pozitiva) NU verifica unitatea de masura — 15 e un numar pozitiv valid, deci trece validarile, dar reprezinta 15 cutii, nu 15 flacoane. Fara conversie corecta, stocul afisat va fi de 10 ori mai mic decat cel real (15 in loc de 150), pentru ca aplicatia nu poate ghici singura unitatea folosita de furnizor."}]'>
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Un furnizor trimite in fisierul CSV cantitatea in \"cutii\", dar baza de date a farmaciei tine stocul in \"flacoane\" (1 cutie = 10 flacoane). Fisierul are randul \"C-0275;HD3312;12;04.2027;MedStoc Distribution\" (12 = cutii). Ce se intampla daca acest rand este importat exact asa, fara conversie?", "options": ["Baza de date va arata corect 120 de flacoane pe stoc", "Baza de date va arata gresit doar 12 flacoane pe stoc, de 10 ori mai putin decat realitatea", "Aplicatia va respinge automat randul, pentru ca detecteaza unitatea de masura gresita", "Nu conteaza, pentru ca stocul se recalculeaza singur la sfarsitul zilei"], "correct": "b", "hint": "Validarile de care am vorbit (termen prezent, cantitate pozitiva) NU verifica unitatea de masura — 12 e un numar pozitiv valid, deci trece validarile, dar reprezinta 12 cutii, nu 12 flacoane. Fara conversie corecta, stocul afisat va fi de 10 ori mai mic decat cel real (12 in loc de 120), pentru ca aplicatia nu poate ghici singura unitatea folosita de furnizor."}]'>
             <div class="atom-header">
                 <div class="atom-number">6</div>
                 <h3 class="atom-title">Greseala tipica de incarcare — unitatea de masura amestecata</h3>
             </div>
             <div class="atom-content">
                 <div class="concept-def">
-                    Validarile invatate la Atomii 2 si 3 verifica <strong>forma</strong> a datelor (exista o data? este numarul pozitiv?), dar nu pot verifica <strong>sensul</strong> lor — daca cifra 15 inseamna 15 flacoane sau 15 cutii, aplicatia nu are cum sa stie decat daca i se spune explicit. De aceea, o greseala foarte frecventa la incarcarea datelor de la furnizori diferiti este amestecarea unitatilor de masura.
+                    Validarile invatate la Atomii 2 si 3 verifica <strong>forma</strong> a datelor (exista o data? este numarul pozitiv?), dar nu pot verifica <strong>sensul</strong> lor — daca o cifra inseamna un numar de flacoane sau un numar de cutii, aplicatia nu are cum sa stie decat daca i se spune explicit. De aceea, o greseala foarte frecventa la incarcarea datelor de la furnizori diferiti este amestecarea unitatilor de masura.
                 </div>
                 <div class="example-box">
                     <div class="example-title">Exemplu numeric complet:</div>
                     <p>
-                        Ambalajul standard pentru produsul C-0201 (ser fiziologic) este de 1 cutie = 10 flacoane. Baza de date a farmaciei tine evidenta stocului in <strong>flacoane</strong> (unitatea in care se elibereaza produsul).<br>
-                        Furnizorul FarmaDepo trimite in fisierul CSV cantitatea <strong>15</strong>, insemnand 15 <em>cutii</em>.<br>
-                        Daca cel care importa fisierul nu observa diferenta si lasa cifra 15 asa cum e, baza de date inregistreaza <strong>15 flacoane</strong> — desi in depozit au sosit de fapt <strong>15 × 10 = 150 flacoane</strong>.<br>
-                        Diferenta: <strong>150 − 15 = 135 flacoane "lipsa" din baza de date</strong>, desi marfa exista fizic pe raft.
+                        Ambalajul standard pentru produsul C-0275 (dezinfectant de maini) este de 1 cutie = 10 flacoane. Baza de date a farmaciei tine evidenta stocului in <strong>flacoane</strong> (unitatea in care se elibereaza produsul).<br>
+                        Furnizorul MedStoc Distribution trimite in fisierul CSV cantitatea <strong>12</strong>, insemnand 12 <em>cutii</em>.<br>
+                        Daca cel care importa fisierul nu observa diferenta si lasa cifra 12 asa cum e, baza de date inregistreaza <strong>12 flacoane</strong> — desi in depozit au sosit de fapt <strong>12 × 10 = 120 flacoane</strong>.<br>
+                        Diferenta: <strong>120 − 12 = 108 flacoane "lipsa" din baza de date</strong>, desi marfa exista fizic pe raft.
                     </p>
                 </div>
                 <div class="example-box">
@@ -362,7 +362,7 @@
                 <li>Validare obligatorie 2: Cantitatea trebuie sa fie strict pozitiva (mai mare decat 0) la o receptie</li>
                 <li>Importul dintr-un fisier CSV/Excel al furnizorului trece prin aceleasi validari ca formularul manual</li>
                 <li>Pasii de import: alegere fisier → potrivire coloane → import de proba → import complet, cu erorile raportate</li>
-                <li>Duplicat = acelasi cod produs + lot + cantitate + data; se elimina cu Data → Remove Duplicates in Excel</li>
+                <li>Duplicat = acelasi cod produs + lot + cantitate + data; se identifica exportand tabelul in Excel (Data → Remove Duplicates) si se sterge apoi din aplicatia de gestiune</li>
                 <li>Greseala tipica: unitatea de masura a furnizorului (ex. cutii) diferita de cea a bazei de date (ex. flacoane/blistere) — se verifica si se converteste INAINTE de import</li>
             </ul>
         </div>

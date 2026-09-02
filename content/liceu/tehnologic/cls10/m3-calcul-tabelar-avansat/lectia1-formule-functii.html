@@ -105,7 +105,7 @@
             <div class="atom-content">
                 <div class="concept-def">
                     <strong>SUM(interval)</strong> aduna toate valorile numerice dintr-un interval de celule si returneaza totalul.<br>
-                    <strong>AVERAGE(interval)</strong> calculeaza media aritmetica a valorilor numerice din interval: aduna toate valorile si imparte suma la cate valori numerice a gasit (nu la numarul total de celule din interval — celulele goale sau cu text nu intra la numarator).
+                    <strong>AVERAGE(interval)</strong> calculeaza media aritmetica a valorilor numerice din interval: aduna toate valorile numerice si imparte suma la numitor — numarul de valori numerice gasite (nu numarul total de celule din interval): celulele goale sau cu text nu intra in acest numitor.
                 </div>
                 <div class="example-box">
                     <div class="example-title">Exemplu numeric complet — consum saptamanal de scanduri (metri liniari):</div>
@@ -120,6 +120,12 @@
                     3. Selectezi cu mouse-ul, tinand click apasat, intervalul A1:A5 direct pe foaie (Excel completeaza singur adresele intre paranteze).<br>
                     4. Inchizi paranteza — <code>)</code> — si apesi <strong>Enter</strong>.<br>
                     Aceasta metoda (selectare cu mouse-ul) evita greselile de scriere a adreselor de celule.</p>
+                </div>
+                <div class="example-box">
+                    <div class="example-title">Un argument poate fi mai mult decat un singur interval:</div>
+                    <p>SUM, AVERAGE, MIN, MAX, COUNT si COUNTA nu se opresc la un singur interval — pot primi <strong>mai multe argumente</strong>, separate prin punct si virgula <strong>;</strong> (sau virgula <strong>,</strong>, dupa setarile regionale). Fiecare argument poate fi un interval, o celula singura sau chiar un numar scris direct.<br><br>
+                    Exemplu: intr-un deviz de mobilier ai costurile pe doua coloane neadiacente — materiale in A1:A5 si manopera in C1:C3. <code>=SUM(A1:A5;C1:C3)</code> aduna ambele intervale intr-un singur total, fara sa le muti in coloane vecine.<br>
+                    La fel functioneaza si cu celule razlete: <code>=SUM(A1;A3;A5)</code> aduna doar cele trei celule numite, iar <code>=MAX(B1:B6;D1:D6)</code> gaseste cea mai mare valoare din ambele intervale la un loc.</p>
                 </div>
             </div>
         </div>
@@ -214,18 +220,23 @@
                 </div>
                 <div class="example-box">
                     <div class="example-title">#DIV/0! — impartire la zero:</div>
-                    <p><strong>Cauza:</strong> formula incearca sa imparta un numar la 0 sau la o celula goala (tratata tot ca 0). Exemplu: ai <code>=A1/B1</code>, iar B1 este gol sau contine 0 — apare eroarea daca vrei, de exemplu, sa calculezi pretul pe bucata (total lei impartit la numar de bucati) si numarul de bucati nu a fost completat inca.<br>
-                    <strong>Reparare:</strong> completeaza o valoare valida in celula-numitor, sau protejeaza formula: <code>=IF(B1=0,"N/A",A1/B1)</code> — afiseaza "N/A" in loc de eroare cand B1 e 0.</p>
+                    <p><strong>Cauza 1 (impartire directa):</strong> formula incearca sa imparta un numar la 0 sau la o celula goala (tratata tot ca 0). Exemplu: ai <code>=A1/B1</code>, iar B1 este gol sau contine 0 — apare eroarea daca vrei, de exemplu, sa calculezi pretul pe bucata (total lei impartit la numar de bucati) si numarul de bucati nu a fost completat inca.<br>
+                    <strong>Reparare:</strong> completeaza o valoare valida in celula-numitor, sau protejeaza formula: <code>=IF(B1=0,"N/A",A1/B1)</code> — afiseaza "N/A" in loc de eroare cand B1 e 0.<br><br>
+                    <strong>Cauza 2 (AVERAGE pe un interval fara numere):</strong> AVERAGE imparte intern suma la numarul de valori NUMERICE gasite in interval — nu la numarul de celule. Daca toate preturile dintr-un interval au fost tastate ca text (de exemplu "25 lei" in loc de 25), AVERAGE nu gaseste nicio valoare numerica, numitorul devine 0, si formula afiseaza #DIV/0! desi nu pare sa existe nicio impartire scrisa de tine. Exemplu: <code>=AVERAGE(D1:D9)</code> cu toate cele 9 celule scrise ca text da #DIV/0!.<br>
+                    <strong>Reparare:</strong> verifica daca celulele din interval chiar contin numere (nu text cu unitati de masura lipite) si corecteaza-le.</p>
                 </div>
                 <div class="example-box">
                     <div class="example-title">#VALUE! — valoare de tip gresit:</div>
-                    <p><strong>Cauza:</strong> o formula de calcul numeric (adunare, SUM, AVERAGE) primeste ca argument text care nu poate fi interpretat ca numar. Exemplu: intr-o coloana de costuri (numere), cineva a scris din greseala "25 lei" in loc de 25 (text amestecat cu numar), iar formula <code>=A1+A2</code> nu poate aduna un numar cu un text.<br>
-                    <strong>Reparare:</strong> verifica celulele din interval si sterge orice text sau unitate de masura scrisa direct in celula numerica (unitatea de masura se scrie in antetul coloanei, nu in fiecare celula).</p>
+                    <p><strong>Cauza:</strong> un <strong>operator aritmetic</strong> (+, -, *, /) incearca sa calculeze direct cu o celula care contine text ce nu poate fi interpretat ca numar. Exemplu: intr-o coloana de costuri (numere), cineva a scris din greseala "25 lei" in loc de 25 (text amestecat cu numar), iar formula <code>=A1+A2</code> nu poate aduna un numar cu un text si afiseaza #VALUE!.<br>
+                    <strong>Reparare:</strong> verifica celulele implicate direct in operator si sterge orice text sau unitate de masura scrisa in celula numerica (unitatea de masura se scrie in antetul coloanei, nu in fiecare celula).<br><br>
+                    <strong>Atentie — SUM si AVERAGE NU dau #VALUE! pentru text:</strong> spre deosebire de operatorul +, functiile SUM si AVERAGE aplicate pe un interval <strong>ignora tacut</strong> celulele cu text — nu arunca nicio eroare. Daca in E1:E4 ai E1=120, E2="150 lei", E3=90, E4=200, atunci <code>=SUM(E1:E4)</code> da <strong>410</strong> (ignora E2) si <code>=AVERAGE(E1:E4)</code> da <strong>136,67</strong> (imparte 410 la 3 valori numerice, nu la 4 celule) — fara nicio eroare vizibila, dar cu un rezultat gresit fata de intentie. Doar formula cu operator, <code>=E1+E2+E3+E4</code>, arunca #VALUE! in acest caz.</p>
                 </div>
                 <div class="example-box">
                     <div class="example-title">#NAME? — nume necunoscut (functie scrisa gresit):</div>
-                    <p><strong>Cauza:</strong> Excel nu recunoaste un cuvant din formula ca fiind o functie valida — de obicei numele functiei e scris gresit. Exemplu: <code>=SUMM(A1:A5)</code> (cu doi de M) sau <code>=AVRAGE(A1:A5)</code> (litera lipsa) — Excel nu are aceste functii si afiseaza #NAME?.<br>
-                    <strong>Reparare:</strong> verifica ortografia exacta a numelui functiei (SUM, AVERAGE, MIN, MAX, COUNT, COUNTA, IF — toate in litere mari sau mici, Excel nu face diferenta, dar litera trebuie sa fie corecta) si asigura-te ca ai deschis paranteza imediat dupa nume, fara spatiu.</p>
+                    <p><strong>Cauza 1 (nume de functie scris gresit):</strong> Excel nu recunoaste un cuvant din formula ca fiind o functie valida — de obicei numele functiei e scris gresit. Exemplu: <code>=SUMM(A1:A5)</code> (cu doi de M) sau <code>=AVRAGE(A1:A5)</code> (litera lipsa) — Excel nu are aceste functii si afiseaza #NAME?.<br>
+                    <strong>Reparare:</strong> verifica ortografia exacta a numelui functiei (SUM, AVERAGE, MIN, MAX, COUNT, COUNTA, IF — toate in litere mari sau mici, Excel nu face diferenta, dar litera trebuie sa fie corecta).<br><br>
+                    <strong>Cauza 2 (text scris fara ghilimele):</strong> orice cuvant care nu e nici numele unei functii, nici o adresa de celula, e cautat de Excel ca "nume definit" — si daca nu exista, apare tot #NAME?. Cea mai frecventa varianta: text uitat fara ghilimele intr-o formula, de exemplu <code>=IF(D2&lt;10,Comanda urgent,Stoc OK)</code> in loc de <code>=IF(D2&lt;10,"Comanda urgent","Stoc OK")</code>.<br>
+                    <strong>Reparare:</strong> pune orice text intre ghilimele duble ("...") in formula.</p>
                 </div>
                 <div class="example-box">
                     <div class="example-title">Regula generala de depanare:</div>
@@ -290,7 +301,7 @@
             <h3>Exercitiul 3 (Nivel performanta) — Depanare formula gresita intr-un deviz</h3>
             <p>Un coleg a construit un deviz de materiale pentru o comanda de mobilier si a scris urmatoarele formule, dar toate afiseaza erori:<br>
             — In D10 (pretul mediu pe produs), a scris <code>=AVERAGE(D1:D9)</code>, dar celula D10 afiseaza <strong>#DIV/0!</strong> — colegul stie ca a introdus 9 preturi in D1:D9.<br>
-            — In E5, a scris <code>=SUM(E1:E4)</code> unde E1=120, E2="150 lei", E3=90, E4=200, si celula E5 afiseaza <strong>#VALUE!</strong>.<br>
+            — In E5, a scris <code>=E1+E2+E3+E4</code> unde E1=120, E2="150 lei", E3=90, E4=200, si celula E5 afiseaza <strong>#VALUE!</strong>.<br>
             — In F1, a scris <code>=SOMA(A1:A5)</code> (crezand ca asa se scrie suma), si celula afiseaza <strong>#NAME?</strong>.<br>
             Explica, pentru fiecare din cele 3 formule, care este cauza exacta a erorii si scrie formula CORECTATA care ar rezolva problema.</p>
         </div>

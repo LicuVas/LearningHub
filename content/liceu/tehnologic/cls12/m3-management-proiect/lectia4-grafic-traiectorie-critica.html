@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graficul de activitati de tip Gantt si traiectoria critica | T.I.C. Clasa a XII-a</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<a href="#atomic-content" class="skip-link">Sari la continut</a>
+<div class="container">
+
+    <nav class="nav-bar">
+        <a href="lectia3-plan-wbs.html" class="nav-btn" title="Lectia anterioara">&#8592; Lectia anterioara</a>
+        <a href="lectia5-monitorizare-evaluare.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Graficul de activitati de tip Gantt si traiectoria critica</h1>
+        <p class="lesson-subtitle">De la lista de activitati la data reala de finalizare a unui proiect mic, cu exemplu numeric complet</p>
+    </header>
+
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei invata sa citesti si sa construiesti un grafic Gantt, sa calculezi traiectoria critica a unui proiect mic folosind un exemplu numeric complet, dus pana la rezultat, si sa explici de ce intarzierea unei singure activitati poate intarzia tot proiectul, in timp ce intarzierea alteia nu schimba nimic.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa citesti un grafic Gantt: ce reprezinta axele si barele, si cum afli dependentele dintre activitati din tabelul de predecesori</li>
+                <li>Sa construiesti tabelul de activitati cu predecesori si durate pentru un proiect mic</li>
+                <li>Sa calculezi inceputul si sfarsitul cel mai devreme (ES si EF) al fiecarei activitati</li>
+                <li>Sa calculezi inceputul si sfarsitul cel mai tarziu (LS si LF) si rezerva de timp (float)</li>
+                <li>Sa identifici traiectoria critica a unui proiect si sa explici ce inseamna practic pentru echipa</li>
+                <li>Sa construiesti un grafic Gantt simplu in Excel pornind de la un tabel de date</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+                <div class="challenge-title">Provocare — inainte sa citesti:</div>
+                <p>Lucrezi la un mic proiect de amenajare a unui colt verde cu o pergola de lemn in curtea scolii. Observi ca daca lemnul comandat pentru pergola intarzie cu o zi, tot proiectul se termina cu o zi mai tarziu. Dar daca sapatul fundatiei (o alta activitate, cu durata asemanatoare) intarzie cu una-doua zile, data de finalizare a proiectului ramane exact aceeasi. Cum poate fi adevarat asta, cand ambele activitati apartin aceluiasi proiect? Scrie mai jos ce crezi ca explica aceasta diferenta.</p>
+                <textarea id="tryAnswer" placeholder="Cred ca diferenta se explica prin..." rows="6"></textarea>
+            </div>
+            <div class="hint-box">
+                <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+                <div class="hint-content">
+                    <p>Gandeste-te la un proiect ca la mai multe drumuri paralele care duc spre acelasi punct final. Unele activitati stau pe drumul cel mai lung — cel care decide cat dureaza tot proiectul. Altele stau pe drumuri mai scurte, cu timp de rezerva inainte sa ajunga din urma drumul lung.</p>
+                    <p>Raspunsul exact, cu numere, il vei calcula singur in aceasta lectie, pe exact acest proiect cu pergola.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main id="atomic-content">
+
+        <!-- ATOM 1: Ce este un grafic Gantt -->
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Ce reprezinta axa orizontala a unui grafic Gantt?", "options": ["Numarul de persoane din echipa", "Costul fiecarei activitati", "Timpul (zile, saptamani sau luni)", "Numele responsabilului de activitate"], "correct": "c", "hint": "Axa orizontala este intotdeauna axa timpului; lungimea barei pe aceasta axa arata cat dureaza activitatea, iar pozitia ei arata cand incepe si cand se termina."}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">Graficul Gantt — vizualizarea unui proiect pe o axa a timpului</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Graficul Gantt este o diagrama cu bare orizontale, in care fiecare activitate a unui proiect este reprezentata printr-o bara. Pe axa orizontala este trecut timpul (zile, saptamani sau luni), iar pe axa verticala este trecuta lista activitatilor, una sub alta. Lungimea unei bare arata durata activitatii, iar pozitia ei pe orizontala arata cand incepe si cand se termina. A fost popularizat la inceputul secolului XX de inginerul american Henry Gantt si ramane astazi cea mai folosita reprezentare vizuala pentru planificarea proiectelor mici si mijlocii.
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Proiectul folosit in aceasta lectie:</div>
+                    <p>De-a lungul acestei lectii lucram pe acelasi proiect mic, realist pentru un liceu tehnologic: amenajarea unui colt verde cu o pergola din lemn in curtea scolii. Proiectul are sase activitati:</p>
+                    <table class="example-table">
+                        <thead>
+                            <tr><th>Cod</th><th>Activitate</th><th>Durata (zile)</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>A</strong></td><td>Masurarea terenului si proiectarea pergolei</td><td>3</td></tr>
+                            <tr><td><strong>B</strong></td><td>Comanda si transportul materialului lemnos</td><td>4</td></tr>
+                            <tr><td><strong>C</strong></td><td>Pregatirea terenului (sapat, nivelat)</td><td>2</td></tr>
+                            <tr><td><strong>D</strong></td><td>Debitarea si tratarea lemnului (ignifugare, biocid)</td><td>3</td></tr>
+                            <tr><td><strong>E</strong></td><td>Montajul structurii pergolei</td><td>5</td></tr>
+                            <tr><td><strong>F</strong></td><td>Plantarea vegetatiei si finisajele</td><td>2</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Ce arata, de fapt, un grafic Gantt:</div>
+                    <p>Barele nu incep toate din ziua 0. O activitate care depinde de alta (de exemplu, lemnul nu poate fi tratat inainte sa fie adus) incepe abia dupa ce activitatea de care depinde s-a terminat. Aceasta legatura dintre activitati — cine trebuie sa se termine inainte ca alta sa poata incepe — se numeste dependinta sau relatie de precedenta si este exact subiectul urmatorului atom.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 2: Predecesori si dependinte -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "De ce activitatea E (Montajul structurii pergolei) nu poate incepe imediat ce se termina activitatea C, desi C este unul dintre predecesorii ei?", "options": ["Pentru ca E are nevoie si de activitatea D sa se termine, iar E asteapta dupa predecesorul care se termina ULTIMUL", "Pentru ca activitatea C dureaza prea putin", "Pentru ca activitatea E nu are voie sa inceapa in aceeasi saptamana cu C", "Pentru ca ordinea alfabetica cere ca D sa fie inaintea lui E"], "correct": "a", "hint": "Cand o activitate are mai multi predecesori, ea poate incepe abia dupa ce TOTI s-au terminat — conteaza predecesorul care se termina cel mai tarziu, nu cel mai devreme."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">Predecesori si dependinte intre activitati</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    O activitate are un predecesor cand nu poate incepe decat dupa ce o alta activitate s-a terminat. Tabelul de activitati al unui proiect trebuie sa contina, pentru fiecare activitate: codul, descrierea, durata si predecesorul (predecesorii) — adica activitatea sau activitatile care trebuie terminate inainte ca aceasta sa poata incepe. <strong>Succesorul</strong> este exact inversul predecesorului: daca A este predecesorul lui B, atunci B este succesorul lui A — adica B depinde de A si nu poate incepe pana A nu se termina. O activitate poate avea unul, mai multi sau niciun succesor.
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Tabelul complet de activitati, cu predecesori:</div>
+                    <table class="example-table">
+                        <thead>
+                            <tr><th>Cod</th><th>Activitate</th><th>Predecesor</th><th>Durata (zile)</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>A</strong></td><td>Masurarea terenului si proiectarea</td><td>—</td><td>3</td></tr>
+                            <tr><td><strong>B</strong></td><td>Comanda si transportul lemnului</td><td>A</td><td>4</td></tr>
+                            <tr><td><strong>C</strong></td><td>Pregatirea terenului</td><td>A</td><td>2</td></tr>
+                            <tr><td><strong>D</strong></td><td>Debitarea si tratarea lemnului</td><td>B</td><td>3</td></tr>
+                            <tr><td><strong>E</strong></td><td>Montajul structurii pergolei</td><td>C, D</td><td>5</td></tr>
+                            <tr><td><strong>F</strong></td><td>Plantarea si finisajele</td><td>E</td><td>2</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Cum se citeste tabelul:</div>
+                    <p>Activitatea A nu are predecesor — poate incepe imediat, in ziua 0. Activitatile B si C depind AMBELE de A, dar nu depind una de cealalta — pot fi lucrate in paralel, de doua echipe diferite, imediat ce A s-a terminat. Activitatea E depinde de DOUA activitati simultan (C si D) — nu poate incepe pana nu se termina AMBELE, chiar daca una dintre ele s-a terminat de mult mai devreme. Succesorii unei activitati se gasesc cautand-o in coloana Predecesor a celorlalte randuri: succesorii lui A sunt B si C (fiindca A apare acolo la randurile lui B si C); singurul succesor al lui C este E (fiindca doar randul lui E are C in coloana Predecesor).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 3: ES / EF, pasul inainte -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Activitatea E are doi predecesori: C, cu EF(C) = 5, si D, cu EF(D) = 10. Care este ES (inceputul cel mai devreme) al activitatii E?", "options": ["5", "15", "10", "7"], "correct": "c", "hint": "Cand o activitate are mai multi predecesori, ES este MAXIMUL dintre EF-urile lor, nu suma si nu minimul — activitatea trebuie sa astepte dupa cel mai lent predecesor."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">Pasul inainte: cel mai devreme inceput si sfarsit (ES si EF)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Pentru fiecare activitate calculam doua momente: <strong>ES</strong> (Earliest Start — inceputul cel mai devreme posibil) si <strong>EF</strong> (Earliest Finish — sfarsitul cel mai devreme posibil). Regula: <strong>EF = ES + durata</strong>. Iar <strong>ES</strong> al unei activitati este egal cu cel mai mare (maximul) dintre EF-urile TUTUROR predecesorilor ei. Daca activitatea nu are predecesor, ES = 0. Acest calcul se numeste pasul inainte (forward pass) si se face parcurgand activitatile in ordinea in care se pot incepe.
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Calculul complet pe proiectul cu pergola:</div>
+                    <table class="example-table">
+                        <thead>
+                            <tr><th>Activitate</th><th>ES</th><th>Durata</th><th>EF = ES + durata</th><th>Explicatie</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>A</strong></td><td>0</td><td>3</td><td>3</td><td>fara predecesor, incepe in ziua 0</td></tr>
+                            <tr><td><strong>B</strong></td><td>3</td><td>4</td><td>7</td><td>ES = EF(A) = 3</td></tr>
+                            <tr><td><strong>C</strong></td><td>3</td><td>2</td><td>5</td><td>ES = EF(A) = 3</td></tr>
+                            <tr><td><strong>D</strong></td><td>7</td><td>3</td><td>10</td><td>ES = EF(B) = 7</td></tr>
+                            <tr><td><strong>E</strong></td><td>10</td><td>5</td><td>15</td><td>ES = max(EF(C)=5, EF(D)=10) = 10</td></tr>
+                            <tr><td><strong>F</strong></td><td>15</td><td>2</td><td>17</td><td>ES = EF(E) = 15</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Rezultat:</div>
+                    <p>EF-ul cel mai mare dintre toate activitatile (aici, EF(F) = 17) este durata minima posibila a intregului proiect: <strong>17 zile</strong>. Proiectul nu poate fi terminat mai repede de atat, oricat de bine ar fi organizata munca — pentru ca fiecare activitate depinde de cele dinaintea ei.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 4: LS / LF, pasul inapoi, rezerva -->
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Activitatea C are rezerva de timp (float) de 5 zile. Ce inseamna concret aceasta cifra pe santier?", "options": ["Activitatea C poate incepe cu pana la 5 zile mai tarziu decat inceputul ei cel mai devreme, fara sa intarzie data finala a proiectului", "Activitatea C trebuie repetata de 5 ori", "Proiectul se scurteaza cu 5 zile daca facem activitatea C", "Activitatea C nu mai este necesara"], "correct": "a", "hint": "Rezerva de timp (float) este o marja de intarziere permisa, nu o obligatie si nu o reducere de durata — arata cate zile de intarziere pot fi absorbite fara consecinte asupra datei finale."}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">Pasul inapoi: cel mai tarziu sfarsit si rezerva de timp</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Dupa ce am aflat durata minima a proiectului (17 zile), calculam pentru fiecare activitate cat de tarziu poate incepe si se poate termina FARA sa intarzie data finala. <strong>LF</strong> (Latest Finish) este sfarsitul cel mai tarziu admis, iar <strong>LS = LF − durata</strong>. Pentru activitatile fara succesor, LF este egal cu durata totala a proiectului. Pentru celelalte, LF = cel mai mic (minimul) dintre LS-urile TUTUROR succesorilor ei. Acest calcul se numeste pasul inapoi (backward pass) si se face parcurgand activitatile de la ultima catre prima.
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Calculul complet, plus rezerva de timp (float = LS − ES):</div>
+                    <table class="example-table">
+                        <thead>
+                            <tr><th>Activitate</th><th>LF</th><th>Durata</th><th>LS = LF − durata</th><th>Rezerva = LS − ES</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>F</strong></td><td>17</td><td>2</td><td>15</td><td>15 − 15 = 0</td></tr>
+                            <tr><td><strong>E</strong></td><td>15</td><td>5</td><td>10</td><td>10 − 10 = 0</td></tr>
+                            <tr><td><strong>D</strong></td><td>10</td><td>3</td><td>7</td><td>7 − 7 = 0</td></tr>
+                            <tr><td><strong>C</strong></td><td>10</td><td>2</td><td>8</td><td>8 − 3 = 5</td></tr>
+                            <tr><td><strong>B</strong></td><td>7</td><td>4</td><td>3</td><td>3 − 3 = 0</td></tr>
+                            <tr><td><strong>A</strong></td><td>3</td><td>3</td><td>0</td><td>0 − 0 = 0</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Ce inseamna rezerva de timp (float):</div>
+                    <p>Rezerva de timp arata cu cate zile poate intarzia o activitate fata de inceputul ei cel mai devreme, FARA sa afecteze data finala a proiectului. Activitatea C are rezerva 5: poate incepe oricand intre ziua 3 (cel mai devreme) si ziua 8 (cel mai tarziu, adica 3+5) fara sa schimbe cu nimic data de finalizare din ziua 17. Toate celelalte activitati (A, B, D, E, F) au rezerva 0 — nu au nicio zi de intarziere permisa.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 5: Traiectoria critica -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Care afirmatie descrie corect efectul unei intarzieri de 2 zile la activitatea D (care e pe traiectoria critica, rezerva 0), in exemplul studiat?", "options": ["Proiectul se termina cu exact 2 zile mai tarziu, in ziua 19 in loc de ziua 17", "Proiectul nu este afectat deloc, pentru ca D nu e ultima activitate", "Proiectul se termina mai devreme, pentru ca activitatile urmatoare recupereaza timpul", "Efectul depinde doar de activitatea F, nu de D"], "correct": "a", "hint": "Orice activitate cu rezerva 0 transmite intarzierea ei, zi cu zi, pana la finalul proiectului — pentru ca nu exista nicio marja care sa o absoarba."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">Traiectoria critica — drumul care decide data finala</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Traiectoria critica (drumul critic) este succesiunea de activitati cu rezerva de timp ZERO, de la inceputul pana la sfarsitul proiectului. Este cel mai LUNG drum posibil prin reteaua de activitati — si tocmai pentru ca este cel mai lung, el decide durata minima a intregului proiect. Orice intarziere pe o activitate de pe traiectoria critica se transmite direct in intarzierea datei finale, zi cu zi.
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Traiectoria critica a proiectului cu pergola:</div>
+                    <p>Din tabelul de rezerve de la atomul anterior, activitatile cu rezerva 0 sunt A, B, D, E, F. Ele formeaza traiectoria critica: <strong>A &#8594; B &#8594; D &#8594; E &#8594; F</strong>, cu durata 3+4+3+5+2 = <strong>17 zile</strong> — exact durata totala a proiectului calculata la pasul inainte. Activitatea C NU face parte din traiectoria critica; ea este pe un drum secundar, <strong>A &#8594; C &#8594; E &#8594; F</strong>, cu durata 3+2+5+2 = <strong>12 zile</strong> — mai scurt cu 5 zile decat drumul critic (17 − 12 = 5).</p>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Cum enumeri toate drumurile posibile printr-un proiect:</div>
+                    <p>Pornesti de la activitatea (activitatile) fara predecesor si urmezi, pas cu pas, toate ramificatiile posibile — de fiecare data cand o activitate are mai multi succesori, se deschide un drum nou pentru fiecare — pana ajungi la activitatea (activitatile) fara succesor. Aduni duratele activitatilor de pe fiecare drum obtinut. In proiectul cu pergola exista exact doua drumuri posibile, pentru ca A are doi succesori (B si C) care se reunesc din nou in E: <strong>A &#8594; B &#8594; D &#8594; E &#8594; F</strong> (3+4+3+5+2 = 17 zile) si <strong>A &#8594; C &#8594; E &#8594; F</strong> (3+2+5+2 = 12 zile). Drumul de 17 zile este mai lung, deci el este traiectoria critica — exact rezultatul la care ai ajuns si prin calculul ES/EF/LS/LF de la Atomii 3 si 4. Cele doua metode trebuie sa dea mereu acelasi raspuns; daca nu coincid, ai gresit undeva calculul.</p>
+                </div>
+
+                <div class="mistake-box">
+                    <strong>Greseala tipica:</strong>
+                    <p>Multi elevi cred ca activitatea "critica" este cea cu durata individuala cea mai mare. Este gresit — iata de ce, cu un exemplu clar: imagineaza-ti o activitate G, cu durata 6 zile dar rezerva 4 zile — desi e lunga, mai are 4 zile de marja inainte sa afecteze data finala, deci NU e critica. In schimb, o activitate H, cu durata de doar 1 zi dar rezerva 0, ESTE critica: orice intarziere a ei, fie si de o singura zi, intarzie tot proiectul. Lungimea barei din grafic nu spune nimic despre cat de critica e o activitate — doar rezerva (float), calculata complet cu ES/EF/LS/LF, o arata cu certitudine. Chiar si in proiectul cu pergola, nu presupune ca E e critica doar pentru ca e cea mai lunga (5 zile): verifica in tabelul de rezerve — rezerva ei este 0, la fel ca a lui A, B, D si F, si tocmai asta o face critica, nu durata.</p>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Raspunsul la provocarea de la inceputul lectiei:</div>
+                    <p>Activitatea B (comanda si transportul lemnului) este pe traiectoria critica — rezerva ei este 0, deci orice intarziere a ei se transmite direct in intarzierea proiectului, zi cu zi. Activitatea de sapat fundatia (C) are 5 zile rezerva — poate intarzia cu una-doua zile fara ca proiectul sa se termine mai tarziu, pentru ca rezerva absoarbe intarzierea inainte sa ajunga din urma traiectoria critica.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 6: Constructia graficului Gantt in Excel -->
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Cum se obtine efectul vizual clasic al unui grafic Gantt, pornind de la un grafic Excel de tip bara stivuita (Stacked Bar) construit din coloanele Activitate, Start si Durata?", "options": ["Se sterge complet coloana Start din tabel", "Se seteaza seria Start pe Fara umplere (No Fill), astfel incat sa ramana vizibila doar seria Durata, incepand din ziua de start", "Se schimba tipul graficului in Pie Chart (Placinta)", "Se muta coloana Durata inaintea coloanei Activitate"], "correct": "b", "hint": "Coloana Start ramane in tabel — fara ea, Excel nu ar sti unde sa inceapa bara de Durata. Doar CULOAREA ei se face invizibila (Fara umplere), ca sa para ca bara de Durata pluteste exact din ziua corecta."}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">De la tabelul de calcul la graficul Gantt in Excel</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Odata calculate ES si EF pentru fiecare activitate, graficul Gantt se construieste direct: fiecare bara incepe in ziua ES si are lungimea egala cu durata activitatii, terminandu-se in ziua EF. Mai jos este reprezentarea proiectului cu pergola, unde fiecare caracter dintr-un rand inseamna o zi din cele 17 ale proiectului.
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Atentie la conventia de numerotare a zilelor:</div>
+                    <p>ES si EF calculate la Atomii 3 si 4 folosesc conventia 0-based: ziua 0 este chiar inceputul proiectului, deci activitatea A are ES=0. Tabelul de mai jos, ca orice calendar real, numeroteaza zilele calendaristic incepand de la 1. Asadar, ES=3 (adica "dupa ce au trecut 3 zile intregi") corespunde cu inceputul zilei calendaristice a 4-a: de aceea activitatea B, cu Start=3, ocupa efectiv coloanele 4-7 din tabel, nu 3-6. Retine aceasta diferenta de 1 cand transformi ES/EF in date de calendar reale, altfel gresesti cu o zi la fiecare activitate.</p>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Reprezentare simplificata (1 caracter = 1 zi; &#9644; = activitate in lucru, &#183; = zi neocupata de acea activitate):</div>
+                    <table class="example-table">
+                        <thead>
+                            <tr><th>Activitate</th><th>Start</th><th>Durata</th><th>Ziua 1 &#8594; 17</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>A</strong></td><td>0</td><td>3</td><td><code>&#9644;&#9644;&#9644;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;</code></td></tr>
+                            <tr><td><strong>B</strong></td><td>3</td><td>4</td><td><code>&#183;&#183;&#183;&#9644;&#9644;&#9644;&#9644;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;</code></td></tr>
+                            <tr><td><strong>C</strong></td><td>3</td><td>2</td><td><code>&#183;&#183;&#183;&#9644;&#9644;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;</code></td></tr>
+                            <tr><td><strong>D</strong></td><td>7</td><td>3</td><td><code>&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#9644;&#9644;&#9644;&#183;&#183;&#183;&#183;&#183;&#183;&#183;</code></td></tr>
+                            <tr><td><strong>E</strong></td><td>10</td><td>5</td><td><code>&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#9644;&#9644;&#9644;&#9644;&#9644;&#183;&#183;</code></td></tr>
+                            <tr><td><strong>F</strong></td><td>15</td><td>2</td><td><code>&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#9644;&#9644;</code></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Cum construiesti acest grafic in Excel, pas cu pas:</div>
+                    <div class="steps-list">
+                        <li><span class="step-text"><strong>1. Introdu datele in trei coloane.</strong> Cap de tabel: <code>Activitate</code>, <code>Start</code>, <code>Durata</code>. In coloana Start pui valoarea ES calculata la Atomul 3 (nu EF); in coloana Durata pui durata activitatii, exact ca in tabelul de mai sus.</span></li>
+                        <li><span class="step-text"><strong>2. Selecteaza cele trei coloane, cu antet.</strong> Cu mouse-ul, selecteaza intervalul complet, inclusiv randul cu titlurile coloanelor — ele devin automat legenda graficului.</span></li>
+                        <li><span class="step-text"><strong>3. Insereaza graficul.</strong> Din fila <strong>Insert (Inserare)</strong>, grupul <strong>Charts (Diagrame)</strong>, alege tipul <strong>Bar Chart</strong> (grafic cu bare orizontale) si varianta <strong>Stacked Bar</strong> (Bara stivuita) 2-D. Excel deseneaza pe fiecare rand doua bucati de bara suprapuse: Start si Durata.</span></li>
+                        <li><span class="step-text"><strong>4. Fa invizibila portiunea Start.</strong> Click-dreapta pe portiunea colorata a seriei Start &#8594; <strong>Format Data Series (Formatare serie de date)</strong> &#8594; <strong>Fill (Umplere)</strong> &#8594; <strong>No Fill (Fara umplere)</strong>. Seria Start devine invizibila; ramane vizibila doar seria Durata, incepand exact din ziua Start — acesta este efectul clasic de grafic Gantt.</span></li>
+                        <li><span class="step-text"><strong>5. Corecteaza ordinea activitatilor.</strong> Excel deseneaza implicit prima activitate din tabel jos de tot pe grafic, nu sus. Click-dreapta pe axa verticala (lista activitatilor) &#8594; <strong>Format Axis (Formatare axa)</strong> &#8594; bifeaza <strong>Categories in reverse order (Categorii in ordine inversa)</strong>, ca activitatea A sa apara sus.</span></li>
+                    </div>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">De retinut pentru proba de evaluare a competentelor digitale:</div>
+                    <p>Constructia unui grafic pornind de la un tabel de date — selectarea corecta a intervalului, alegerea tipului de grafic, formatarea unei serii — este exact tipul de sarcina de lucru cu foaie de calcul care poate aparea la proba de evaluare a competentelor digitale de la bacalaureat. Exerseaza pasii de mai sus direct in Excel, pe propriile tale date, nu doar citindu-i.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATOM 7 — Recapitulare, fara quiz -->
+        <div class="atom" id="atom-7">
+            <div class="atom-header">
+                <div class="atom-number">7</div>
+                <h3 class="atom-title">Recapitulare si legatura cu monitorizarea proiectului</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">
+                    Calculul traiectoriei critice se face intotdeauna in aceasi ordine: tabel de activitati cu predecesori si durate &#8594; pasul inainte (ES, EF) &#8594; pasul inapoi (LS, LF) &#8594; rezerva de timp (float) &#8594; identificarea activitatilor cu rezerva 0, care formeaza traiectoria critica.
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Rezumat vizual al pasilor de calcul:</div>
+                    <p>
+                        <strong>Tabel activitati + predecesori + durate</strong><br>
+                        &nbsp;&nbsp;&#8595; pasul inainte<br>
+                        <strong>ES si EF</strong> (cel mai devreme inceput / sfarsit)<br>
+                        &nbsp;&nbsp;&#8595; pasul inapoi, plecand de la durata totala<br>
+                        <strong>LS si LF</strong> (cel mai tarziu inceput / sfarsit)<br>
+                        &nbsp;&nbsp;&#8595; rezerva = LS − ES<br>
+                        <strong>Traiectoria critica</strong> — activitatile cu rezerva 0
+                    </p>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Conexiune cu urmatoarea lectie:</div>
+                    <p>Graficul Gantt cu traiectoria critica pe care tocmai l-ai construit nu este un desen static — este planul fata de care se compara executia reala a proiectului. In lectia urmatoare vei invata cum se monitorizeaza un proiect in timpul executiei, ce se face cand o activitate reala intarzie fata de plan si cum se evalueaza rezultatul final.</p>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">De retinut pentru activitatile practice:</div>
+                    <p>
+                        EF = ES + durata; ES = maximul EF-urilor predecesorilor.<br>
+                        LS = LF − durata; LF = minimul LS-urilor succesorilor.<br>
+                        Rezerva = LS − ES; rezerva 0 inseamna activitate critica.<br>
+                        Traiectoria critica = cel mai lung drum prin retea = durata minima a proiectului.<br>
+                        In Excel: Stacked Bar cu seria Start pe Fara umplere = grafic Gantt.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) — Un lant simplu de activitati</h3>
+            <p>O mica lucrare de amenajare a unei alei pietonale in curtea scolii are trei activitati care se executa STRICT in aceasta ordine, fiecare incepand numai dupa ce se termina precedenta: <strong>A.</strong> Sapare si nivelare teren — 3 zile (fara predecesor); <strong>B.</strong> Turnare fundatie din piatra sparta — 4 zile (predecesor A); <strong>C.</strong> Asezare pavele — 5 zile (predecesor B). Calculeaza ES si EF pentru fiecare activitate, spune cate zile dureaza in total lucrarea si explica de ce, in acest caz, TOATE cele trei activitati sunt critice (rezerva 0).</p>
+        </div>
+
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) — Traiectoria critica a unei banci de gradina</h3>
+            <p>O echipa confectioneaza si monteaza o banca de gradina din lemn reciclat pentru spatiul verde al scolii, cu cinci activitati: <strong>A.</strong> Proiectarea bancii — 2 zile (fara predecesor); <strong>B.</strong> Procurarea lemnului reciclat — 5 zile (predecesor A); <strong>C.</strong> Curatarea si slefuirea lemnului — 3 zile (predecesor A); <strong>D.</strong> Asamblarea structurii bancii — 4 zile (predecesori B si C); <strong>E.</strong> Vopsirea si lacuirea — 2 zile (predecesor D). Construieste tabelul complet cu ES, EF, LS, LF si rezerva pentru fiecare activitate, identifica traiectoria critica si spune cu cate zile poate intarzia activitatea C fara sa afecteze data finala a proiectului.</p>
+        </div>
+
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) — Efectul a doua intarzieri identice ca durata</h3>
+            <p>Foloseste proiectul bancii de gradina din Exercitiul 2 (activitatile A-E, cu duratele si predecesorii de acolo) si traiectoria critica pe care ai calculat-o acolo. Analizeaza SEPARAT doua scenarii de intarziere, fiecare de exact 3 zile: <strong>Scenariul 1</strong> — activitatea B (Procurarea lemnului reciclat) dureaza in realitate 8 zile in loc de 5; <strong>Scenariul 2</strong> — activitatea C (Curatarea si slefuirea lemnului) dureaza in realitate 6 zile in loc de 3. Recalculeaza noua data de finalizare a proiectului in fiecare scenariu si explica, folosind notiunea de rezerva de timp, de ce aceeasi intarziere de 3 zile are un efect DIFERIT asupra datei finale in cele doua scenarii.</p>
+        </div>
+    </section>
+
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Graficul Gantt = bare orizontale; axa orizontala = timp, axa verticala = activitati</li>
+                <li>Predecesor = activitatea care trebuie terminata inainte ca alta sa poata incepe</li>
+                <li>Pasul inainte: EF = ES + durata; ES = maximul EF-urilor predecesorilor</li>
+                <li>Pasul inapoi: LS = LF − durata; LF = minimul LS-urilor succesorilor</li>
+                <li>Rezerva de timp (float) = LS − ES; arata cate zile poate intarzia o activitate fara efect asupra datei finale</li>
+                <li>Traiectoria critica = activitatile cu rezerva 0; e drumul cel mai lung si decide durata minima a proiectului</li>
+                <li>Intarzierea unei activitati critice intarzie proiectul zi cu zi; intarzierea unei activitati cu rezerva se absoarbe partial sau total</li>
+                <li>In Excel, graficul Gantt se face dintr-un grafic Stacked Bar cu seria Start pe Fara umplere</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>monitorizarea si evaluarea proiectului</strong> — cum compari executia reala cu graficul Gantt planificat si cum masori daca proiectul a avut succes.</p>
+            <a href="lectia5-monitorizare-evaluare.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m3-management-proiect-lectia4-grafic-traiectorie-critica');
+        PracticeSimple.init('cls12-m3-management-proiect-lectia4-grafic-traiectorie-critica');
+        LessonSummary.init('cls12-m3-management-proiect-lectia4-grafic-traiectorie-critica');
+        Breadcrumb.init({
+            grade: 'cls12',
+            gradeName: 'Clasa a XII-a',
+            module: 'm3-management-proiect',
+            moduleName: 'Managementul Informatizat al Proiectelor',
+            lesson: 'Graficul de activitati de tip Gantt si traiectoria critica'
+        });
+        LearningProgress.init('cls12', 'm3-management-proiect', 'lectia4-grafic-traiectorie-critica.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>
