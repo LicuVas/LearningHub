@@ -1,3 +1,6 @@
+> WARN **ISTORIC - nu e starea de azi.** Documentul descrie situl din ianuarie-februarie 2026.
+> Pentru ce este acum: `.init.md` - pentru ce s-a lucrat si ce a ramas deschis: `JOURNAL.md`. (marcat 2026-09-03)
+
 # LearningHub - AI Agent Guide
 
 > **IMPORTANT: For lesson creation, modification, or evaluation, the authoritative source is now `LESSON_SPECIFICATION.md` (Format C: Guided Atomic). This file is kept for historical context only. The lesson format described below is SUPERSEDED.**
