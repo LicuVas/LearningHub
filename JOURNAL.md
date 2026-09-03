@@ -35,7 +35,7 @@
 - **Nerulată pe restul de 417 pagini**, fiindcă `requireCorrectToProgress: true` — pornirea ei face lecțiile *cu poartă* pe tot situl. Decizie de luat cu Vasile, nu de aplicat noaptea.
 
 ### Alte lucruri deschise, măsurate
-- **231 de pagini se mișcă lateral pe telefon** (390px), cea mai rea +1069px. O reparație CSS probată în browser rezolvă doar 2 din 5 cazuri de test — cauza nu e doar blocurile de cod. **Cere văzut pe ecran, nu încă o sondă oarbă.** Cel mai lovit: mat-info (69), tic/cls8 (29), tehnologic (21).
+- ~~231 de pagini se mișcă lateral pe telefon~~ — **RETRAS în aceeași zi, ora 22: era artefactul meu de măsurare.** Playwright măsura într-o fereastră îngustă de 390px **fără emulare de telefon**, deci `<meta name=viewport>` nu se aplica și pagina se așeza ca pe desktop. Re-măsurat în Chrome-ul real cu `Emulation.setDeviceMetricsOverride({mobile:true})`: **toate cele 8 pagini „cele mai rele" au depășire 0**, iar captura arată o pagină perfect încadrată. **Regulă: pentru orice verdict despre mobil, folosește emulare de dispozitiv, nu doar o fereastră mică — și confirmă cu o captură.**
 - **Varianta corectă e cea mai lungă în 79,3% din întrebări** (așteptat ~25%). Supraviețuiește amestecării, deci se poate ghici alegând răspunsul cel mai lung.
 - 844 din 852 de pagini fără `meta description`; 10 grupuri de titluri duplicate; `data-correct` vizibil în DOM.
 
