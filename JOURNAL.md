@@ -8,6 +8,35 @@
 
 ---
 
+## 2026-09-04 (noaptea) — proba din perspectiva elevilor: 464 de agenți
+
+**Ce a fost:** tot situl trecut prin patru cititori — elev slab, mediu, bun, și un inspector care caută nod în papură. 121 de loturi de lecții (toate cele 500) + 52 de pagini de navigare. Fiecare semnalare gravă a trecut printr-un **al doilea agent, cu sarcina s-o respingă**; în raport au rămas doar cele care au supraviețuit.
+
+**Cifre:** 464 de agenți, 0 erori, 103 minute, 36,5 milioane de jetoane.
+**Note medii:** elev slab 6,3 · elev mediu 6,7 · elev bun 6,5 · **inspector 5,0**.
+**739 de semnalări confirmate**, din care 54 blocante și 123 majore. Cele mai dese: chestionar 159, pedagogic 138, structură 131, **greșeală factuală 94**.
+
+**Rapoartele:** `_campaign/proba_elevi_2026_09_03/RAPORT_FINAL.md` (verdict + ce se repară azi + 16 tipare de reparat la sursă) · `SINTEZE_SECTIUNI.md` (13 secțiuni) · `confirmate.json`.
+
+### Reparat în aceeași noapte (fiecare verificat pe sursă, apoi live)
+- **O pagină întreagă era invizibilă**: `tic/cls7/extra-web/lectia5-css-intro.html` avea `<style>` scris ca TEXT într-o lecție *despre CSS*; browserul îl lua drept tag real și înghițea restul — 462 de caractere din 5589, cei 13 atomi lipseau. Căutat același tipar pe tot situl (comparând cât text vede browserul cu cât există în fișier): **nu mai există altă pagină trunchiată**.
+- **6 răspunsuri greșite predate ca fiind corecte** — militar cls12 (3), pedagogic cls10 (3), plus stiinte cls12 unde cheia era `"bc"` iar motorul citește o singură literă.
+- **Două greșeli de fond**: K4 dat ca având circuit eulerian („toate grade = 3 — par"; 3 e impar) și 10^12 operații la 10^9/sec calculate ca „11 zile" în loc de ~17 minute.
+- **485 de întrebări** (58 de fișiere, mai ales clasele V-VI) aveau litera de poziție lipită de text („AUn tip de animatie"), peste eticheta pusă de motor.
+- **`.info-box { display: flex }` era global**, dar doar 70 din 551 de casete au structura pe care o presupune — celelalte **481 (în 145 de fișiere)** își așezau paragrafele pe orizontală, în coloane.
+- 7 note interne scăpate în textul elevului (`_curriculum_data.json`, „oracolul de referință", numere de linie).
+
+### ⛔ RĂMÂNE — deciziile de conținut, nu le poate lua un agent
+Din cele 54 de blocante, **restul sunt conținut care nu se potrivește cu titlul**: ~19 lecții unde indexul promite un subiect și fișierul livrează altul (militar 5, pedagogic 4, științe 4, tehnologic 2, cls8 2, umanist 1, mat-info 1), plus module așezate pe altă clasă decât le dă programa. Fiecare cere ori scris conținutul promis, ori corectat titlul — și în al doilea caz rămâne gaura de programă.
+
+### Tiparele care se repară o dată, la sursă (din raport)
+T1 răspunsul corect e cel mai lung (toate cele 13 secțiuni) · T3 indexul promite altceva decât livrează fișierul · T4 cifrele din paginile de navigare sunt scrise de mână și false (`liceu/index.html` zice „380+ lecții", sunt 272) · T6 zero rezolvări model pe tot situl · T7 zero aprofundare pentru elevul bun.
+
+### Unelte rămase
+`tools/lesson_digest.py` — scoate substanța unei lecții (640 KB de HTML → 84 KB). Reluarea probei: `_campaign/proba_elevi_2026_09_03/RESUME.md`.
+
+---
+
 ## 2026-09-03 — audit exigent: tot situl deschis în browser
 
 **De ce:** după campania de noapte, întrebarea era „ce e greșit pe sit, cu ochi de om exigent".
