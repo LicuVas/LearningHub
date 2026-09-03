@@ -46,13 +46,39 @@ const UserSystem = {
     // Available avatars for profiles
     AVATARS: ['🦊', '🐼', '🦁', '🐯', '🐸', '🦉', '🐺', '🦄', '🐲', '🦋', '🐬', '🦅', '🐢', '🦎', '🐙', '🐨', '🦝', '🐹', '🐰', '🦔'],
 
-    // Available grades for evidence reporting
+    // Available grades for evidence reporting.
+    // `group` drives the <optgroup> in the profile selector, `short` the profile badge.
     GRADES: [
-        { id: 'cls5', label: 'Clasa a 5-a' },
-        { id: 'cls6', label: 'Clasa a 6-a' },
-        { id: 'cls7', label: 'Clasa a 7-a' },
-        { id: 'cls8', label: 'Clasa a 8-a' }
+        { id: 'cls5', label: 'Clasa a 5-a', short: '5', group: 'Gimnaziu' },
+        { id: 'cls6', label: 'Clasa a 6-a', short: '6', group: 'Gimnaziu' },
+        { id: 'cls7', label: 'Clasa a 7-a', short: '7', group: 'Gimnaziu' },
+        { id: 'cls8', label: 'Clasa a 8-a', short: '8', group: 'Gimnaziu' },
+        { id: 'cls9', label: 'Clasa a 9-a', short: '9', group: 'Liceu' },
+        { id: 'cls10', label: 'Clasa a 10-a', short: '10', group: 'Liceu' },
+        { id: 'cls11', label: 'Clasa a 11-a', short: '11', group: 'Liceu' },
+        { id: 'cls12', label: 'Clasa a 12-a', short: '12', group: 'Liceu' },
+        { id: 'maistri1', label: 'Scoala de maistri, anul I', short: 'Maistri I', group: 'Maistri si postliceal' },
+        { id: 'sanitar1', label: 'Postliceal sanitar, anul I', short: 'Sanitar I', group: 'Maistri si postliceal' },
+        { id: 'sanitar2', label: 'Postliceal sanitar, anul II (farmacie)', short: 'Farmacie II', group: 'Maistri si postliceal' }
     ],
+
+    /**
+     * Grades grouped in declaration order, for rendering <optgroup> elements.
+     * @returns {Array<{group: string, items: Array}>}
+     */
+    getGradeGroups() {
+        const groups = [];
+        this.GRADES.forEach(g => {
+            const name = g.group || 'Clase';
+            let bucket = groups.find(b => b.group === name);
+            if (!bucket) {
+                bucket = { group: name, items: [] };
+                groups.push(bucket);
+            }
+            bucket.items.push(g);
+        });
+        return groups;
+    },
 
     /**
      * Escape HTML to prevent XSS attacks
@@ -534,7 +560,11 @@ const UserSystem = {
                     <input type="text" id="us-name-input" placeholder="Numele tau (ex: Maria)" maxlength="20" autocomplete="off">
                     <select id="us-grade-select" class="us-grade-select">
                         <option value="" disabled selected>Alege clasa ta</option>
-                        ${this.GRADES.map(g => `<option value="${g.id}">${g.label}</option>`).join('')}
+                        ${this.getGradeGroups().map(b => `
+                            <optgroup label="${this.escapeHtml(b.group)}">
+                                ${b.items.map(g => `<option value="${g.id}">${g.label}</option>`).join('')}
+                            </optgroup>
+                        `).join('')}
                     </select>
                     <button id="us-create-btn" class="us-btn-primary">Creeaza profil</button>
                 </div>
@@ -693,7 +723,7 @@ const UserSystem = {
 
         // Get grade label if available
         const gradeInfo = profile.grade ? this.GRADES.find(g => g.id === profile.grade) : null;
-        const gradeLabel = gradeInfo ? gradeInfo.label.replace('Clasa a ', '').replace('-a', '') : '';
+        const gradeLabel = gradeInfo ? (gradeInfo.short || gradeInfo.label) : '';
 
         const badge = document.createElement('div');
         badge.className = 'us-profile-badge';
@@ -1137,6 +1167,12 @@ const UserSystem = {
                 background: var(--us-bg-secondary);
                 color: var(--us-text-primary);
                 padding: 0.5rem;
+            }
+
+            .us-grade-select optgroup {
+                background: var(--us-bg-secondary);
+                color: var(--us-text-secondary);
+                font-weight: 600;
             }
 
             /* Grade tag in profile list */
