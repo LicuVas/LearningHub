@@ -8,6 +8,48 @@
 
 ---
 
+## 2026-09-04 (dimineața) — chestionarele merg pe TOT situl + cunoștințele salvate
+
+### Chestionarele tăcute: 504 din 504 pagini
+
+Erau **trei** feluri ale aceluiași eșec, găsite unul după altul **doar pentru că am reverificat în browser după fiecare reparație**:
+
+| Ce lipsea | Ce făcea motorul | Cât |
+|:--|:--|--:|
+| containerul `<div class="atom-quiz">` | marca atomul „content-only", **auto-completat cu 100**, ignora datele | **2400 de atomi, 417 pagini** |
+| identificatorul (`data-atom="1"` în loc de `id`/`data-atom-id`) | `console.WARN` + `return` | 23 de atomi, 13 pagini |
+| clasa (`atom-card` în loc de `atom`) | selectorul nu-i prindea | 3 pagini |
+
+**Verificat înainte de a porni poarta:** în `checkAtomCompletion` (linia 408) atomul se completează când toate întrebările au primit **un** răspuns, corect sau nu — elevul care greșește nu rămâne blocat. Altfel n-aș fi pornit-o pe tot situl.
+
+**Măsurat live la final:** 504/504 pagini afișează chestionarele, **3304 întrebări randate** din 3127 de blocuri de date.
+
+### Restul reparat în aceeași dimineață
+- **Cifrele care mințeau:** pagina de liceu anunța „380+ lecții" — sunt **273**. Pagina clasei a X-a științe rămăsese la „7 lecții" după ce adăugasem eu a opta. → **`tools/verifica_cifre.py`** (nou) compară cifrele afișate cu ce e pe disc, pe fiecare pagină de clasă; exit 1 la nepotrivire, `--repara` le scrie corect. **Probat cu control negativ:** am stricat intenționat două cifre, le-a prins pe amândouă, iar fișierul a revenit identic.
+- **17 greșeli de tastare** + **13 litere chirilice** strecurate în cuvinte românești („culeги ciuperci", „predата") + **4 întrebări cu cuvinte lipite** într-un singur fișier.
+
+### Ce am verificat că NU e o problemă (ca să nu se re-investigheze)
+- Cele 455 de „cuvinte lipite" găsite prima dată erau **termeni tehnici legitimi** (LibreOffice, JavaScript, MergeSort, ValueError). Semnătura reală — un cuvânt românesc cu MAJUSCULE lipit — apare în exact un fișier.
+- La `content/profesional`, cifrele sunt per rând și se adună corect (16+17+13=46). Detectorul meu naiv le raporta ca greșite.
+- Maparea chirilică: **„и" se transliterează „i", nu „u"** — verificat pe context înainte de a scrie („culegi", nu „culegu").
+
+### Unde stau cunoștințele acum
+| Ce | Unde |
+|:--|:--|
+| **Regulile de scris conținut nou** (R1 chestionar · R2 exercițiu · R3 structură · R4 programă · R5 ce e bun), fiecare cu cifra din care vine | `C:\00\AI_0\knowledge\learninghub_calitate\00_INDEX.md` — `truth.py where "cum scriu un chestionar bun"` |
+| **Capcanele tehnice**, trans-proiect (7 secțiuni: motor care sare tăcut · date în atribute · build care inserează orb · tag scris ca text · CSS global · măsurare pe mobil · reparații în masă) | `knowledge\webdev_lessons\95_continut_generat_esec_tacut.md`, legat din indexul de simptome |
+| Versiunea citibilă, pentru Vasile | Obsidian `Scoala_2022\LearningHub - Proba de calitate 04.09.2026.md` |
+| Rapoartele brute | `_campaign\proba_elevi_2026_09_03\` |
+
+### ⛔ RĂMÂNE — campanii de conținut, nu reparații
+1. **~19 lecții unde titlul promite un subiect și fișierul livrează altul.**
+2. **T1: răspunsul corect e cel mai lung în 79,3% din întrebări** — rescriere de ~2600 de itemi.
+3. **T6: zero rezolvări model** — modificare de șablon + generare.
+4. **T7: zero aprofundare** pentru elevul bun — casetă de șablon + generare.
+5. Engleza VI-VIII (Țibucani) și artistic IX/XI, din lipsurile de acoperire.
+
+---
+
 ## 2026-09-04 (noaptea) — proba din perspectiva elevilor: 464 de agenți
 
 **Ce a fost:** tot situl trecut prin patru cititori — elev slab, mediu, bun, și un inspector care caută nod în papură. 121 de loturi de lecții (toate cele 500) + 52 de pagini de navigare. Fiecare semnalare gravă a trecut printr-un **al doilea agent, cu sarcina s-o respingă**; în raport au rămas doar cele care au supraviețuit.
