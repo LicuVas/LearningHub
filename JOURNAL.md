@@ -8,6 +8,35 @@
 
 ---
 
+## 2026-09-04 (seara) — oprit la cerere, se reia saptamana viitoare
+
+**Punctul de reluare, cu comenzile exacte: `_campaign/proba_elevi_2026_09_03/RELUARE.md`.**
+
+Ce s-a facut in ultima parte a zilei:
+- **Rezolvari model: 963 din 1606 exercitii (60%).** Valul a fost oprit la mijloc; starea de pe
+  disc e intreaga (3199 de chestionare se parseaza toate, zero goale, toate `<details>` inchise).
+- **4 lectii carora le lipseau sectiuni intregi** sunt complete. Verificatorul a compilat codul
+  C++ din rezolvari si a gasit valori gresite: `cout` afiseaza 6 cifre semnificative, deci
+  103.148 nu 103.147, 79.699 nu 79.70, 2.10982 nu 2.11. Reparate dupa ce am rulat eu insumi codul.
+- **Audit de continut, cea mai mare descoperire a campaniei.** Aceeasi lectie exista in 6 profiluri
+  de liceu, deci celelalte cinci sunt un **oracol independent**. Rezultat: **16 sloturi predau alt
+  subiect decat le cere programa** si **3 lectii sunt duplicate in acelasi profil** (la stiinte,
+  lectia de a XI-a e 97,5% copie a celei de a X-a). `tehnologic/cls12` nu preda calcul tabelar
+  nicaieri, desi e competenta la proba practica de bacalaureat.
+- **Un al doilea defect, gasit de poarta noua:** 21 de chei de progres folosite de 105 lectii cu
+  continut DIFERIT - cheia nu contine profilul.
+- **Am scos clasa a IX-a din campanie.** Metoda votului intre profiluri da raspuns gresit acolo:
+  din 2026-2027 a IX-a e pe programa noua, X-XII pe cea veche, deci majoritatea urma programa
+  veche. Ar fi transformat singura lectie corecta in una gresita, in patru profiluri.
+
+### Lectia metodei
+Fiecare lectie, **citita singura, e buna**. De-aia nici cele patru treceri cu cititori-elevi, nici
+recitirile n-au prins nimic: defectul nu e in lectie, e in **relatia** dintre lectii. Redundanta
+sitului (acelasi slot in 6 profiluri) e cel mai ieftin oracol independent pe care-l avem - dar
+tine doar cat timp fratii raspund la aceeasi intrebare.
+
+---
+
 ## 2026-09-04 (după-amiaza) — chestionarele nu se mai ghicesc: de la 65,3% la 32,8%
 
 **Măsurat pe toate cele 3307 întrebări, înainte și după.** Cea mai bună strategie de ghicit după lungime dădea **65,3%** (alegi mereu varianta cea mai lungă). Acum dă **32,8%** — adică nivelul hazardului pentru itemi cu 3-4 variante.
