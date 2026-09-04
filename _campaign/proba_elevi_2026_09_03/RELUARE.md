@@ -106,3 +106,49 @@ doar jumătate de lecție), tehnologiile emergente (VR/AR), aplicațiile pentru 
 | `tools/verifica_nume_continut.py` | numele fișierului vs. ce predă (semnalează, nu corectează) |
 | `tools/repara_chei_progres.py` | prefixează cheia cu profilul, doar unde există ciocnire |
 | `tools/lesson_digest.py` | 640 KB de HTML → 84 KB de substanță, pentru agenți |
+
+---
+
+# Cum facem asta mai ieftin (măsurat 04.09.2026)
+
+`python tools/agent_cost.py scan 1` pe ziua de azi: **2168 de subagenți, 13 milioane de jetoane scrise**.
+
+| ce am măsurat | cifra |
+|:--|:--|
+| opus, cost la mia de jetoane scrise | **$0,84** |
+| sonnet, aceeași muncă | **$0,15** → de **5,8×** mai ieftin |
+| cei 974 de agenți pe opus | **74% din tot consumul** |
+| ce umple contextul | Bash **44%** · Read **31%** · textul propriu 21% |
+| legea amplificării | 1 jeton scris ⇒ **49,5** jetoane de context re-citite |
+| cei mai scumpi 10% dintre agenți | 24% din consum |
+
+## Greșeala de ieri, deja reparată în scripturi
+
+Pusesem `model: 'sonnet'` pe etapa care **scrie**, dar lăsasem **etapa de verificare pe opus** —
+adică 507 agenți scumpi per campanie, pentru o muncă în mare de bifat.
+
+Reparat în `wf_t6.js` și `wf_t7.js`:
+- **verificarea trece pe sonnet** (≈5,8× mai ieftin)
+- la T6, verificarea **nu mai rulează pe toate lecțiile**: doar unde unealta a sărit peste ceva
+  (semn că ceva n-a mers) **plus 1 din 5 ca eșantion**. Din 507 agenți de verificare rămân ~130.
+- ambele prompturi cer explicit: **comenzile grupate într-un singur apel Bash** și
+  **interzis cititul HTML-ului brut** — se folosește `lesson_digest.py` (640 KB → 84 KB, măsurat).
+
+Efectul așteptat pe restul campaniei: partea de verificare scade de la ~$1.500 la sub $200,
+iar economia de context taie și din partea de scriere.
+
+## Ce mai putem face, dacă vrem și mai puțin
+
+1. **Un agent pe MODUL, nu pe lecție** (4–6 lecții odată). Fiecare agent își plătește o dată
+   pornirea și descoperirea uneltelor, nu de cinci ori. 507 agenți → ~110. E singura schimbare
+   care mai taie mult, dar cere restructurarea workflow-ului — nu am făcut-o ca să nu introduc
+   erori pe care nu le pot testa până luni.
+2. **Verificarea în două trepte:** sonnet trece prin tot, opus se cheamă DOAR pe ce a semnalat
+   sonnet. Judecata scumpă se plătește doar unde chiar e nevoie de ea.
+3. Pentru rescrierea celor 22 de lecții (`wf_rescriere.js`) **las opus la scriere** — acolo se
+   scrie curriculum, e exact munca pentru care merită plătit modelul bun. 22 de lecții e ieftin
+   oricum.
+
+> **Regula de reținut:** modelul se declară la FIECARE `agent()`. Mecanic (extras, formatat,
+> bifat) → `'sonnet'`. Judecată (scrie curriculum, cântărește, decide) → `'opus'`.
+> Poarta care verifică asta: `python tools\agent_cost.py gate`.

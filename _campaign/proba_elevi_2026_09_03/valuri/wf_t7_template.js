@@ -79,7 +79,7 @@ const rez = await pipeline(
       '2. Chiar e MAI MULT decat lectia, sau doar repeta cu alte cuvinte ce scrie deja in recapitulare?\n' +
       '3. Intrebarea de gandit isi da singura raspunsul in text?\n\n' +
       'Nu semnala stil, ton sau lungime. Raporteaza CURAT sau PROBLEME cu lista exacta.',
-      { label: 'verif:' + f.cale.split('/').slice(-1), phase: 'Verifica', schema: V_SCHEMA }
+      { label: 'verif:' + f.cale.split('/').slice(-1), phase: 'Verifica', model: 'sonnet', schema: V_SCHEMA }
     ).then(v => ({ f, r, verificare: v }))
   }
 )

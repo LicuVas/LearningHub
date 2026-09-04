@@ -86,6 +86,11 @@ const rez = await pipeline(
   ),
   (r, f) => {
     if (!r || !r.inserate) return { f, r, verificare: null }
+    // Economie masurata 04.09: opus costa 5,8x cat sonnet pe aceeasi munca, iar
+    // verificarea asta e in mare bifat, nu judecata. Deci: sonnet, si NU pe toate
+    // lectiile - doar pe cele unde unealta a sarit peste ceva (semn ca ceva n-a mers)
+    // plus un esantion de 1 din 5, ca sa prindem si problemele tacute.
+    if (!r.sarite && f.i % 5 !== 0) return { f, r, verificare: null }
     return agent(
       'Esti profesor corector. Cineva a scris rezolvarile model pentru exercitiile unei lectii scolare. Verifica-le.\n\n' +
       'LECTIA: ' + f.cale + '\n\n' +
@@ -97,7 +102,7 @@ const rez = await pipeline(
       '2. Are erori de FOND? Formule care nu functioneaza, scurtaturi de taste inventate, cifre gresite, functii care nu exista.\n' +
       '3. La nivelul PERFORMANTA, da produsul de-a gata in loc de schita? (Ar fi gresit - elevul bun trebuie sa mai aiba ce face.)\n\n' +
       'Nu semnala chestiuni de stil sau de lungime. Raporteaza CURAT sau PROBLEME cu lista exacta.',
-      { label: 'verif:' + f.cale.split('/').slice(-1), phase: 'Verifica', schema: V_SCHEMA }
+      { label: 'verif:' + f.cale.split('/').slice(-1), phase: 'Verifica', model: 'sonnet', schema: V_SCHEMA }
     ).then(v => ({ f, r, verificare: v }))
   }
 )
