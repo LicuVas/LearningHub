@@ -13,7 +13,7 @@ Garzile la scriere (orice incalcare => refuz, exit 2):
 import os, io, re, sys, json, html as _html
 from html.parser import HTMLParser
 
-ATTR = re.compile(r"data-quiz='(.*?)'(?=[\s>])", re.S)
+ATTR = re.compile(r"data-quiz=([\"'])(.*?)\1(?=[\s>])", re.S)
 STOP = set("si sau de la in pe cu un o al ale ai a e ii ul ului care ce este sunt "
            "pentru din prin ca sa se nu mai foarte doar toate toata orice".split())
 
@@ -58,6 +58,7 @@ def dump(path):
                 "variante": opts,
                 "corect": c,
                 "lungimi": L,
+                "indiciu": re.sub(r"\s+", " ", str(q.get("hint", ""))).strip(),
                 "corecta_e_cea_mai_lunga": bool(opts and i >= 0 and i < len(L) and L[i] == max(L) and L.count(max(L)) == 1),
             })
     return out
@@ -66,17 +67,21 @@ def dump(path):
 def enc(o):
     t = json.dumps(o, ensure_ascii=False)
     return (t.replace("&", "&amp;").replace("<", "&lt;")
-             .replace(">", "&gt;").replace("'", "&#39;"))
+             .replace(">", "&gt;").replace("'", "&#39;").replace('"', "&quot;"))
 
 
 def apply(path, schimbari):
-    """schimbari: [{"idx": n, "variante": [...]}]"""
-    prin_idx = {int(s["idx"]): s["variante"] for s in schimbari}
+    """schimbari: [{"idx": n, "variante": [...], "indiciu": "...", "intrebare": "..."}]
+
+    "variante" trece prin garzile stricte (numar, litera corecta, sensul pastrat).
+    "indiciu" si "intrebare" sunt text explicativ: se schimba liber, dar nu pot fi goale.
+    """
+    prin_idx = {int(s["idx"]): s for s in schimbari}
     src = io.open(path, encoding="utf-8", errors="replace").read()
     out, last, n, aplicate, refuzate = [], 0, 0, 0, []
     for m in ATTR.finditer(src):
         try:
-            d = json.loads(_html.unescape(m.group(1)))
+            d = json.loads(_html.unescape(m.group(2)))
         except Exception:
             continue
         lst = d if isinstance(d, list) else [d]
@@ -85,7 +90,23 @@ def apply(path, schimbari):
             if not isinstance(q, dict):
                 continue
             n += 1
-            noi = prin_idx.get(n)
+            cerere = prin_idx.get(n)
+            if not cerere:
+                continue
+
+            # text explicativ: indiciu si enunt, fara garzi stricte (dar nu goale)
+            for camp, cheie in (("indiciu", "hint"), ("intrebare", "question")):
+                v = cerere.get(camp)
+                if v is not None:
+                    v = re.sub(r"\s+", " ", str(v)).strip()
+                    if len(v) >= 10:
+                        q[cheie] = v
+                        schimbat = True
+                        aplicate += 1
+                    else:
+                        refuzate.append((n, "%s prea scurt(a)" % camp))
+
+            noi = cerere.get("variante")
             if not noi:
                 continue
             vechi = [str(o) for o in (q.get("options") or [])]
@@ -111,9 +132,9 @@ def apply(path, schimbari):
             schimbat = True
             aplicate += 1
         if schimbat:
-            out.append(src[last:m.start(1)])
+            out.append(src[last:m.start(2)])
             out.append(enc(d))
-            last = m.end(1)
+            last = m.end(2)
     if aplicate:
         out.append(src[last:])
         io.open(path, "w", encoding="utf-8").write("".join(out))
