@@ -78,7 +78,7 @@ def apply(path, schimbari):
     """
     prin_idx = {int(s["idx"]): s for s in schimbari}
     src = io.open(path, encoding="utf-8", errors="replace").read()
-    out, last, n, aplicate, refuzate = [], 0, 0, 0, []
+    out, last, n, aplicate, refuzate, chei_schimbate = [], 0, 0, 0, [], []
     for m in ATTR.finditer(src):
         try:
             d = json.loads(_html.unescape(m.group(2)))
@@ -93,6 +93,24 @@ def apply(path, schimbari):
             cerere = prin_idx.get(n)
             if not cerere:
                 continue
+
+            # schimbarea CHEII de raspuns: deliberata, cere justificare scrisa
+            ch_noua = cerere.get("cheie")
+            if ch_noua is not None:
+                ch_noua = str(ch_noua).strip().lower()
+                motiv_cheie = str(cerere.get("motiv_cheie", "")).strip()
+                nopt = len(q.get("options") or [])
+                if len(ch_noua) != 1 or ch_noua not in "abcdefgh" or ord(ch_noua) - 97 >= nopt:
+                    refuzate.append((n, "cheie noua invalida: %r" % ch_noua))
+                elif len(motiv_cheie) < 25:
+                    refuzate.append((n, "schimbarea cheii cere motiv_cheie de macar 25 de caractere"))
+                elif ch_noua == str(q.get("correct", "")).lower():
+                    pass  # deja e asa, nimic de facut
+                else:
+                    chei_schimbate.append((n, str(q.get("correct")), ch_noua, motiv_cheie[:120]))
+                    q["correct"] = ch_noua
+                    schimbat = True
+                    aplicate += 1
 
             # text explicativ: indiciu si enunt, fara garzi stricte (dar nu goale)
             for camp, cheie in (("indiciu", "hint"), ("intrebare", "question")):
@@ -138,7 +156,7 @@ def apply(path, schimbari):
     if aplicate:
         out.append(src[last:])
         io.open(path, "w", encoding="utf-8").write("".join(out))
-    return aplicate, refuzate
+    return aplicate, refuzate, chei_schimbate
 
 
 if __name__ == "__main__":
@@ -150,8 +168,10 @@ if __name__ == "__main__":
         print(json.dumps(dump(p), ensure_ascii=False, indent=1))
     elif cmd == "apply":
         sch = json.loads(io.open(sys.argv[3], encoding="utf-8").read())
-        a, r = apply(p, sch)
+        a, r, ch = apply(p, sch)
         print("aplicate: %d" % a)
+        for n, v, nou, motiv in ch:
+            print("  CHEIE SCHIMBATA Q%d: %s -> %s | %s" % (n, v, nou, motiv))
         for n, motiv in r:
             print("  REFUZAT Q%d: %s" % (n, motiv))
         sys.exit(2 if r and not a else 0)
