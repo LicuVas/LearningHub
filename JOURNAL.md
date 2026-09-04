@@ -46,7 +46,8 @@ Erau **trei** feluri ale aceluiași eșec, găsite unul după altul **doar pentr
 2. **T1: răspunsul corect e cel mai lung în 79,3% din întrebări** — rescriere de ~2600 de itemi.
 3. **T6: zero rezolvări model** — modificare de șablon + generare.
 4. **T7: zero aprofundare** pentru elevul bun — casetă de șablon + generare.
-5. Engleza VI-VIII (Țibucani) și artistic IX/XI, din lipsurile de acoperire.
+5. Artistic IX/XI, din lipsurile de acoperire.
+   *(Engleza VI-VIII iese din lista: decis 04.09 — materialele de engleză merg pe situl separat **EnglishHub** `C:/00/Projects/EnglishHub`, nu aici. LearningHub rămâne informatică/T.I.C.)*
 
 ---
 
