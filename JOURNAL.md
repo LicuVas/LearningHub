@@ -8,6 +8,37 @@
 
 ---
 
+## 2026-09-04 (după-amiaza) — chestionarele nu se mai ghicesc: de la 65,3% la 32,8%
+
+**Măsurat pe toate cele 3307 întrebări, înainte și după.** Cea mai bună strategie de ghicit după lungime dădea **65,3%** (alegi mereu varianta cea mai lungă). Acum dă **32,8%** — adică nivelul hazardului pentru itemi cu 3-4 variante.
+
+| Unde stă răspunsul corect | Înainte | Acum |
+|:--|--:|--:|
+| cea mai lungă variantă | 65,3% | **13,4%** |
+| cea mai scurtă | — | 32,8% |
+| la mijloc | — | 53,8% |
+
+### Trei valuri, 1373 de agenți
+
+1. **Reechilibrare** — 1941 de întrebări pe 389 de lecții. **A introdus 277 de defecte noi, în 166 de lecții (43%).** De-aia n-am publicat direct.
+2. **Reparație** — 276 din 277, fiecare agent cu lista exactă a problemelor lui.
+3. **Verificarea CHEILOR** — 186 de lecții (115 neverificate + 71 cu probleme rămase), 1226 de întrebări controlate una câte una. **Doar 2 chei greșite.** Asta e vestea bună: cheile erau, în mare, corecte.
+
+### Două defecte găsite care scăpaseră de toate trecerile anterioare
+
+- `stiinte/cls9/lectia1-identitate-siguranta`: „care e un exemplu de **sistem de operare**" avea bifat **Microsoft Word** în loc de Windows 11 — deși propriul indiciu spunea că Word e aplicație.
+- **Indicii care numesc LITERA răspunsului** („deci răspunsul corect este b") pe un motor care **amestecă variantele la fiecare afișare**. Litera de pe ecran e alta, deci indiciul trimitea greșit *și* dezvăluia răspunsul înainte ca elevul să aleagă. 3 cazuri reale; celelalte 5 potriviri erau conținut legitim (litera D dintr-un cifru Cezar, litera A ca simbol al instrumentului Text din Paint).
+
+### ⛔ Oprit deliberat aici
+Rămân documentate, nereparate: **67 de itemi în care o variantă greșită își anunță singură greșeala** (se rezolvă prin eliminare) și **32 de indicii care nu discriminează** între variante. Slăbesc itemul, dar nu învață pe nimeni ceva fals. Fiecare rescriere în masă costă defecte noi — măsurat: 43% la prima rundă. Nu merită încă o tură pentru asta.
+
+### Unelte rămase
+`tools/quiz_io.py` — citește și scrie chestionarele în siguranță. Poate schimba variante, indiciu, enunț și **cheia** (aceasta doar cu motiv scris de minimum 25 de caractere, care se loghează). Refuză: alt număr de variante, variante duplicate sau goale, varianta corectă cu alt sens (sub 50% cuvinte păstrate), literă inexistentă.
+`tools/verifica_cifre.py` — cifrele afișate pe paginile de clasă vs. ce e pe disc; exit 1 la nepotrivire, `--repara` le scrie corect.
+`tools/practice_io.py` + stilul — gata pentru valul de rezolvări model.
+
+---
+
 ## 2026-09-04 (dimineața) — chestionarele merg pe TOT situl + cunoștințele salvate
 
 ### Chestionarele tăcute: 504 din 504 pagini
