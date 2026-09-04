@@ -1,112 +1,98 @@
-# Lecții care predau altceva decât promite cartonașul
+# Lecții care predau altceva decât slotul lor
 
-**Găsit: 04.09.2026.** Zece cazuri în care elevul dă clic pe un subiect și ajunge la altul.
-Nu sunt greșeli de tipar — sunt lecții întregi așezate în sloturi greșite, iar subiectul
-promis nu se predă nicăieri în acel modul.
+**04.09.2026.** Conținut întreg așezat în sloturi greșite. Subiectele promise nu se predau
+nicăieri, iar unele lecții sunt scrise de două ori.
 
-## Cum le-am găsit
+## Cum am ajuns la dovadă (trei încercări, doar a treia ține)
 
-Prima încercare a comparat cartonașul din index cu conținutul fișierului: **110 semnalări**,
-majoritatea false (titlul cartonașului prinde uneori butonul „Începe →", iar pluralul
-românesc — `sortari` vs `sortare` — strica orice potrivire pe cuvinte).
+**1. Cartonaș din index vs. fișier — 110 semnalări, aproape toate false.** Titlul cartonașului
+prinde uneori butonul („Începe →"), iar potrivirea pe cuvinte se rupe la primul plural
+românesc (`sortari` vs `sortare`). Abandonat.
 
-A doua încercare compară **numele fișierului** cu `<h1>` + titlurile atomilor din acel fișier,
-cu tăiere la rădăcină (6 litere) și o listă de sinonime (`web`≡`pagini`≡`html`,
-`calcul`≡`excel`≡`tabelar`, …): **21 de semnalări**. Din ele, 11 sunt titluri motivaționale
-legitime („Vreau să iau decizii complexe în Excel!" pentru lecția de funcții logice) sau
-sinonime reale (`birotică` = `suite office`). **Rămân 10 reale**, confirmate prin citire.
+**2. Numele fișierului vs. `<h1>` + atomi — 21 de semnalări, 10 reale.** Mai bine, fiindcă
+numele fișierului e fixat de om, nu de generator. Dar ratează cazurile unde un cuvânt generic
+apare în ambele: `lectia1-documente-formatare.html` care predă *Foaia de calcul Excel:
+structura și **formatare*** trece testul, deși e complet pe alt subiect.
+Unealta rămâne utilă: `python tools/verifica_nume_continut.py` (semnalează, nu corectează —
+11 din 21 erau titluri motivaționale legitime).
 
-Unealta: `scratchpad/nume_vs_continut.py` → `nume_vs_continut.json`.
-Clasificarea automată duplicat/gaură a fost **abandonată** — marca „gaură" și acolo unde
-cartonașul e identic cu pagina. Tabelul de mai jos e făcut prin citire, nu prin scor.
+**3. Ce spun CELELALTE profiluri despre același slot — dovada.** Aceeași lecție există în 6
+profiluri de liceu (artistic, militar, pedagogic, științe, tehnologic, umanist). Dacă patru
+profiluri predau procesare de text la `m1-procesare-text/lectia1` și unul predă Excel, cel din
+urmă e greșit — **iar dovada nu vine din euristica mea, ci din celelalte patru.** Un oracol
+independent, nu încă o părere a mea. 21 de sloturi sunt comune la ≥3 profiluri.
 
-## Cele 10, cu ce predau vecinii din modul
+## Ce arată tabelul (16 sloturi cu un profil în contratimp)
 
-### 1. `liceu/mat-info/cls12/m3-web/lectia1-html-css-review.html` — cel mai grav
-Cartonașul: **HTML/CSS Recapitulare**. Pagina: **Baze de date relaționale și SQL**.
-Restul modulului: Design Responsive · Introducere în JavaScript · Proiect pagină web.
-O lecție de la altă materie a căzut în modulul de web. Recapitularea HTML/CSS lipsește,
-iar SQL apare fără să fie anunțat nicăieri.
-
-### 2-3. `liceu/militar/cls11` — două module amestecate între ele
-| fișier | ce promite | ce predă |
+| slot | ce predau majoritatea | cine iese din rând |
 |:--|:--|:--|
-| `m1-prezentari-multimedia/lectia1-prezentare-eficienta` | Prezentări electronice | Fluxuri de producție multimedia |
-| `m1-prezentari-multimedia/lectia2-audio-video` | — | Conținut audio-video |
-| `m2-imagini-web/lectia1-imagine-digitala` | — | Prelucrări audio și audio-video |
-| `m2-imagini-web/lectia2-pagini-web` | Pagina web: structura HTML | Prelucrarea imaginilor digitale |
+| cls9 m1/lectia1 (sisteme de calcul) | componentele sistemului | **pedagogic**: Windows și fișiere |
+| cls9 m1/lectia2 (rețele) | rețele și Internet | **militar**: comunicare/colaborare · **științe**: componenta software |
+| cls9 m2/lectia1 (identitate) | identitate digitală | **științe**: componenta software (a doua oară!) |
+| cls9 m2/lectia2 (drepturi/GDPR) | drepturi de autor | **pedagogic**: internet și comunicare |
+| cls10 m1/lectia1 (procesare text) | procesorul de text | **pedagogic**: Excel · **științe**: HTML |
+| cls10 m1/lectia3 (corespondență) | îmbinare corespondență | **științe**: securitate · **tehnologic**: PowerPoint |
+| cls11 m1/lectia1 (prezentări) | prezentări electronice | **militar**: fluxuri multimedia |
+| cls11 m2/lectia1 (imagine) | imaginea digitală | **militar**: audio · **pedagogic**: documentare Word · **tehnologic**: date și informații |
+| cls11 m2/lectia2 (pagina web) | HTML și CSS | **militar**: prelucrarea imaginilor |
+| cls12 m1/lectia1 (sistem+fișiere) | sistem de calcul | **pedagogic**: documentare · **științe**: rețele · **tehnologic**: site web |
+| cls12 m1/lectia2 (procesare text) | procesare text, probă D | **militar**: UI/UX · **umanist**: hipermedia |
+| cls12 m1/lectia3 (**calcul tabelar**) | calcul tabelar, probă D | **pedagogic**: documentare · **tehnologic**: site web |
+| cls12 m1/lectia4 (prezentări+internet) | prezentări și internet | **științe**: participare civică · **tehnologic**: site + management |
+| cls12 m1/lectia5 (editare imagini) | editare de imagini | **umanist**: obiecte hipermedia |
+| cls12 m1/lectia6 (proiect integrator) | proiect de competențe | **tehnologic**: proiect site web |
 
-Toate patru sunt despre multimedia. **Prezentările nu se predau deloc. Web nu se predă deloc.**
-Iar `m2/lectia1` (audio-video) e o a doua lecție de audio, care ar aparține lui m1.
+Datele brute: `sloturi_toate.py` (fără prag, fără scor — se citește direct).
 
-### 4. `liceu/tehnologic/cls12/m1-competente-digitale` — 3 din 6 lecții pe alt subiect
-| cartonaș (competența de bacalaureat) | ce predă pagina |
-|:--|:--|
-| sistemul de calcul și gestionarea fișierelor | Structura unui site web și HTML de bază |
-| procesare de text | Procesare de text ✅ |
-| **calcul tabelar** | Instrumente și structura unui site web |
-| **prezentări electronice și internet** | Site web și Management de proiect |
-| editare de imagini | Editare de imagini de bază ✅ |
-| proiect integrator | Proiect integrator: site web ✅ |
+## Cele două tipare din spate
 
-Modulul se numește „competențe digitale" și pregătește proba practică de bacalaureat.
-**Calculul tabelar — o competență de examen — nu se predă nicăieri.** În locul lui, modulul
-predă de trei ori construirea unui site.
+**A. `tehnologic` clasa a XII-a a fost generat ca un curs de web.** Patru din șase lecții ale
+modulului `m1-competente-digitale` predau construirea unui site: structura site-ului, instrumente
+de site, site + management de proiect, proiect de site. Modulul pregătește **proba practică de
+bacalaureat**. **Calculul tabelar — competență de examen — nu se predă nicăieri în el.**
 
-### 5. `liceu/pedagogic/cls11/m2-imagini-web/lectia1-imagine-digitala`
-Promite imaginea digitală (raster vs vectorial, DPI, modele de culoare).
-Predă **tehnici de documentare asistată** (stiluri Word, cuprins automat, note de subsol) —
-conținut care aparține modulului de procesare de text. Imaginea digitală lipsește.
-`lectia2` e corectă (pagina web).
+**B. Aceeași lecție scrisă de două ori în același profil.** Test fără ambiguitate: dacă două
+fișiere din același profil au același titlu și aceiași atomi, unul ocupă slotul altcuiva.
 
-### 6. `liceu/pedagogic/cls9/m2-societate-digitala/lectia2-drepturi-gdpr`
-Promite drepturi de autor și licențe. Predă **internet și comunicare digitală** — subiect
-care se suprapune cu `lectia3` (comunicare digitală și AI). Drepturile de autor lipsesc.
-
-### 7. `liceu/stiinte/cls9/m1-sisteme-retele/lectia2-retele-internet`
-Promite rețele de calculatoare. Predă **componenta software** (sisteme de operare și aplicații).
-`lectia1` predă componentele hardware. Deci modulul e „hardware + software", corect ca pereche —
-dar **rețelele, din chiar numele modulului, nu se predau**.
-
-### 8. `liceu/mat-info/cls10/m3-retele-securitate/lectia1-retele-internet`
-Promite „Cum funcționează internetul". Predă **securitate cibernetică**. Celelalte trei lecții:
-HTTP/HTTPS, backup, securitate avansată. Tot modulul e securitate; **partea de rețele lipsește**.
-
-### 9. `tic/cls5/extra-siguranta-backup/lectia4-prezentari-intro`
-Promite „Prima mea prezentare". Predă **cyberbullying**. Aici conținutul e la locul potrivit
-(modulul e despre siguranță online) — **doar eticheta e greșită**. Cel mai ieftin de reparat.
-De notat: `lectia5` din același modul chiar predă design de prezentări, într-un modul de siguranță.
-
-### 10. `liceu/mat-info/cls9/m3-tic-baze/lectia2-suite-office` — de verificat, probabil fals pozitiv
-Cartonașul „Suite Office", pagina „Birotică: documente și prezentări profesionale". Același
-lucru, alt cuvânt. **Nu necesită reparație.**
-
-## Ce se poate repara mecanic și ce nu
-
-**Mecanic, fără să inventez nimic (se poate face oricând):** eticheta cartonașului să spună ce
-predă pagina. Rezolvă minciuna vizibilă — elevul nu mai dă clic pe „calcul tabelar" ca să
-nimerească pe „site web". NU rezolvă golul de programă.
-
-**Nu se poate repara mecanic:** subiectele promise care nu se predau nicăieri. Sunt **7 lecții
-noi de scris**, iar trei dintre ele sunt competențe de examen:
-
-| clasă / modul | ce lipsește | miza |
+| profil | fișierele | cât de identice |
 |:--|:--|:--|
-| tehnologic XII, m1 | **calcul tabelar** | competență la proba practică de bacalaureat |
-| militar XI, m1 | **prezentări electronice** | competență de programă |
-| militar XI, m2 | **pagina web / HTML** | competență de programă |
-| mat-info XII, m3 | recapitulare HTML/CSS | pregătire pentru proiectul final |
-| pedagogic XI, m2 | imaginea digitală (raster/vectorial, DPI) | competență de programă |
-| pedagogic IX, m2 | drepturi de autor și licențe | competență de programă |
-| știinte IX / mat-info X | rețele de calculatoare | competență de programă |
+| **științe** | `cls10/m3/lectia1-imagine-digitala` și `cls11/m2/lectia1-imagine-digitala` | **97,5% fișier la fișier** |
+| **științe** | `cls10/m3/lectia2-editare-imagini` și `cls12/m1/lectia5-editare-imagini` | titlu 100%, atomi 100% |
+| **pedagogic** | `cls11/m2/lectia1`, `cls12/m1/lectia1`, `cls12/m1/lectia3` | toate trei se cheamă „Tehnici de documentare asistată de calculator" |
 
-## De ce s-a întâmplat
+Un elev de a XI-a de la științe primește **exact lecția de a X-a**. Un elev de a XII-a primește,
+la competențe digitale, lecția de editare de imagini din clasa a X-a.
 
-Modulele au fost generate pe loturi, iar numele fișierelor au fost fixate ÎNAINTE de scrierea
-conținutului. Când un agent a primit „scrie lecția 2 din modulul m2-imagini-web" fără să
-i se spună ce predă lecția 1, a scris ce i s-a părut că urmează firesc — și a ieșit a doua
-lecție de audio-video. Nimeni nu a comparat la final numele cu conținutul.
+Fals pozitiv de reținut: `mat-info/cls11` DFS vs BFS — titluri 85% asemănătoare, atomi 13%.
+Sunt două lecții diferite cu nume înrudite. Nu se atinge.
 
-**Regula care lipsea:** după orice generare pe loturi, rulează comparația nume ↔ conținut.
-E ieftină (secunde pe tot situl) și prinde exact eșecul pe care recitirea nu-l vede, fiindcă
-fiecare lecție, citită singură, e bună.
+## Un al doilea defect, găsit de poarta nouă: cheile de progres se ciocnesc
+
+`tools/verifica_lectie.py` verifică unicitatea cheii de progres. Rezultat pe tot situl:
+**21 de chei folosite de 105 lecții**, iar în toate cele 21 de cazuri lecțiile au conținut
+DIFERIT. Cheia arată așa: `cls10-m1-procesare-text-lectia1-documente-formatare` — **nu conține
+profilul**. Deci cele șase versiuni de profil scriu în același loc din memoria browserului:
+cine termină lecția la tehnologic o vede bifată și la umanist, deși e alt conținut.
+
+Reparație: cheia trebuie să includă profilul (`tehnologic-cls10-m1-...`). Mecanică, dar atinge
+105 fișiere — se face după ce se termină valurile care scriu acum în ele.
+
+## De ce nu a prins nimeni asta până acum
+
+Modulele au fost generate pe loturi, cu numele fișierelor fixate ÎNAINTE de conținut. Agentul
+care a primit „scrie lecția 2 din `m2-imagini-web`", fără să știe ce predă lecția 1, a scris ce
+părea firesc — și a ieșit a doua lecție de audio-video.
+
+**Fiecare lecție, citită singură, e bună.** De-aia nici cele patru treceri cu cititori-elevi,
+nici recitirile n-au prins-o. Defectul nu e în lecție, e în **relația** dintre lecții.
+
+> **Regula:** după orice generare pe loturi, compară slotul cu ce predau frații lui din
+> celelalte ramuri. Redundanța sitului e cel mai ieftin oracol independent pe care-l avem.
+
+## Ce urmează
+
+1. **După ce se termină valurile de rezolvări și aprofundare** (scriu acum în aceleași fișiere):
+   rescrierea celor 16 sloturi, fiecare cu subiectul pe care i-l cere programa.
+2. Cheile de progres să includă profilul — 105 fișiere, mecanic.
+3. Golurile rămase de scris ca lecții noi, cu **calculul tabelar la tehnologic XII** primul:
+   e competență de bacalaureat și acum lipsește cu totul.
