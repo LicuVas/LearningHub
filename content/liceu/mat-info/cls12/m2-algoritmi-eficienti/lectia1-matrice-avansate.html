@@ -229,16 +229,31 @@ print(classification_report(y_test, y_pred, target_names=iris.target_names))</pr
             <h3>Exercitiul 1 (Nivel minim) &mdash; k-NN manual</h3>
             <p>Ai 4 puncte: A(1,1)=c0, B(2,2)=c0, C(5,5)=c1, D(6,6)=c1. Punct nou q=(3,3). Calculeaza distantele si prezice clasa cu k=3.</p>
             <p><em>Raspuns: dist(A)=2.83, dist(B)=1.41, dist(C)=2.83, dist(D)=4.24. Top 3: B(c0),A(c0),C(c1). Clasa prezisa: c0 (2 vs 1).</em></p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p>Distanta euclidiana: dist(p,q) = sqrt((px-qx)^2 + (py-qy)^2).</p><ol><li>dist(A,q) = sqrt((3-1)^2+(3-1)^2) = sqrt(8) = <strong>2.83</strong></li><li>dist(B,q) = sqrt((3-2)^2+(3-2)^2) = sqrt(2) = <strong>1.41</strong></li><li>dist(C,q) = sqrt((5-3)^2+(5-3)^2) = sqrt(8) = <strong>2.83</strong></li><li>dist(D,q) = sqrt((6-3)^2+(6-3)^2) = sqrt(18) = <strong>4.24</strong></li></ol><p>Sortez crescator: B (1.41, c0), A (2.83, c0), C (2.83, c1, egal cu A - pastrez ordinea din tabel), D (4.24, c1, exclus, e al 4-lea).</p><p>Top 3 vecini pentru k=3: B=c0, A=c0, C=c1. Voturi: c0 are 2, c1 are 1.</p><p><strong>Clasa prezisa pentru q=(3,3): c0</strong> (2 voturi contra 1).</p></div>
+            </details>
         </div>
         <div class="practice-exercise" data-level="standard">
             <h3>Exercitiul 2 (Nivel standard) &mdash; k-NN sklearn pe dataset propriu</h3>
             <p>Creeaza un dataset cu 20 exemple si 2 trasaturi cu 2 clase. Antreneaza KNeighborsClassifier cu k=5, split 70/30, afiseaza acuratete si matricea de confuzie.</p>
             <p><em>Indiciu: train_test_split(X, y, test_size=0.3, random_state=42).</em></p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p>Pas cu pas, dupa modelul din lectie:</p><ol><li>Creez X (20 exemple, 2 trasaturi x1, x2) si y (2 clase, 0 si 1), cu doua grupuri clar separate spatial - ex. <code>make_blobs(n_samples=20, centers=2, n_features=2, random_state=7)</code> sau 20 perechi (x1,x2) scrise manual.</li><li><code>X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)</code> rezulta 14 exemple antrenament, 6 exemple test.</li><li><code>knn = KNeighborsClassifier(n_neighbors=5); knn.fit(X_train, y_train)</code></li><li><code>knn.score(X_test, y_test)</code> si <code>confusion_matrix(y_test, knn.predict(X_test))</code></li></ol><p>Rezultat obtinut pe un dataset de 20 puncte cu cele 2 clase clar separate: acuratete = <strong>1.0</strong> (toate cele 6 exemple test corecte), matrice de confuzie <strong>[[3,0],[0,3]]</strong> (3 exemple din fiecare clasa, zero erori). Daca clasele se suprapun mai mult, acuratetea scade sub 1.0 - e normal si de asteptat.</p></div>
+            </details>
         </div>
         <div class="practice-exercise" data-level="performanta">
             <h3>Exercitiul 3 (Nivel performanta) &mdash; Comparatie sistematica pe Iris</h3>
             <p>Testeaza k-NN pentru k in {1,3,5,7,11} si arbore cu max_depth in {1,2,3,5}. Compara k-NN cu/fara StandardScaler. Identifica configuratia optima.</p>
             <p><em>Indiciu: for-loop, dict rezultate, max() pentru best config.</em></p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p>Schita de rezolvare (nu cod complet - il scrii tu):</p><ol><li>Incarca Iris si fa UN SINGUR <code>train_test_split</code> (random_state=42), folosit pentru toate testele - altfel configuratiile nu sunt comparabile intre ele.</li><li>For peste k in {1,3,5,7,11}: antreneaza <code>KNeighborsClassifier(n_neighbors=k)</code>, salveaza acuratetea intr-un dict <code>rezultate_knn = {k: acuratete}</code>.</li><li>For similar peste max_depth in {1,2,3,5} pentru <code>DecisionTreeClassifier</code>, alt dict.</li><li>Repeta pasul k-NN dupa <code>StandardScaler</code> (fit_transform pe train, transform pe test) intr-un al treilea dict; compara cu cel fara normalizare.</li><li><code>max(dict, key=dict.get)</code> pentru cea mai buna configuratie din fiecare dict.</li></ol><p>Capcana: daca faci fit pe StandardScaler pe tot X (nu doar pe train), ai data leakage - gresit, chiar daca rezultatul iese mai bun.</p><p>Evaluare: (1) toate cele 9 configuratii testate si afisate, (2) concluzie explicita despre efectul normalizarii la k-NN (arborele nu are nevoie de ea), (3) config optima aleasa cu argument, nu doar cifra, (4) cod care ruleaza fara erori.</p></div>
+            </details>
         </div>
     </section>
 

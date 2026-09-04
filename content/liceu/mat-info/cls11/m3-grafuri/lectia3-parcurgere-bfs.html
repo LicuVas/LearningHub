@@ -437,12 +437,22 @@ Lungime drum: 2</pre>
                 <li>b) Distanta minima de la nodul 1 la nodul 5.</li>
             </ul>
             <p><em>Indiciu:</em> urmareste coada pas cu pas ca in atomul 2. Raspuns asteptat: ordinea 1, 2, 3, 4, 5; distanta 3.</p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p>Lista de adiacenta (graf neorientat): 1:[2,3], 2:[1,4], 3:[1,4], 4:[2,3,5], 5:[4].</p><ol><li>Coada=[1], vizitat={1}</li><li>Extrag 1, vecini 2 si 3 nevizitati, deci ii adaug. Coada=[2,3], vizitat={1,2,3}</li><li>Extrag 2, vecinul 4 nevizitat, deci il adaug. Coada=[3,4], vizitat={1,2,3,4}</li><li>Extrag 3, vecinul 4 e deja vizitat, nimic nou. Coada=[4]</li><li>Extrag 4, vecinul 5 nevizitat, deci il adaug. Coada=[5], vizitat={1,2,3,4,5}</li><li>Extrag 5, fara vecini noi. Coada goala, BFS s-a terminat.</li></ol><p><strong>a)</strong> Ordinea de vizitare: 1, 2, 3, 4, 5.</p><p><strong>b)</strong> Distante (dist[nod] este dist[parinte] plus 1): dist[1]=0, dist[2]=dist[3]=1, dist[4]=2, dist[5]=3. Distanta minima de la nodul 1 la nodul 5 este <strong>3</strong> (drum 1-2-4-5, are 3 muchii).</p></div>
+            </details>
         </div>
 
         <div class="practice-exercise" data-level="standard">
             <h3>Exercitiul 2 (Nivel standard) &mdash; Numararea componentelor conexe</h3>
             <p>Implementeaza in Python functia <code>numar_componente(n, muchii)</code> care primeste numarul de noduri si o lista de perechi (muchii) si returneaza numarul componentelor conexe ale grafului. Foloseste BFS repetat: porneste BFS din fiecare nod nevizitat si incrementeaza contorul.</p>
             <p><em>Exemplu:</em> <code>numar_componente(5, [(1,2),(2,3),(4,5)])</code> returneaza <code>2</code> (componentele {1,2,3} si {4,5}).</p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p>Solutie completa, BFS repetat din fiecare nod nevizitat (ca la atomul 2 din lectie):</p><ol><li><code>from collections import deque</code></li><li><code>def numar_componente(n, muchii):</code></li><li><code>    adj = {i: [] for i in range(1, n+1)}</code></li><li><code>    for u, v in muchii: adj[u].append(v); adj[v].append(u)</code></li><li><code>    vizitat, contor = set(), 0</code></li><li><code>    for nod in range(1, n+1):</code></li><li><code>        if nod in vizitat: continue</code></li><li><code>        contor += 1; coada = deque([nod]); vizitat.add(nod)</code></li><li><code>        while coada:</code></li><li><code>            crt = coada.popleft()</code></li><li><code>            for v in adj[crt]:</code></li><li><code>                if v not in vizitat: vizitat.add(v); coada.append(v)</code></li><li><code>    return contor</code></li></ol><p>Verificare: pentru numar_componente(5, [(1,2),(2,3),(4,5)]), BFS din 1 acopera {1,2,3}, apoi BFS din 4 acopera {4,5}, deci functia returneaza <strong>2</strong>, exact ca in enunt.</p></div>
+            </details>
         </div>
 
         <div class="practice-exercise" data-level="performanta">
@@ -450,6 +460,11 @@ Lungime drum: 2</pre>
             <p>Un labirint este reprezentat ca o matrice n x m de caractere: <code>'.'</code> = liber, <code>'#'</code> = zid. Gaseste numarul minim de pasi pentru a ajunge de la celula start la celula finish (miscare in 4 directii: sus, jos, stanga, dreapta).</p>
             <p>Modeleaza fiecare celula ca un nod si aplica BFS. Starea BFS este o pereche (linie, coloana). Distanta initiala este 0 pentru celula start.</p>
             <p>Implementeaza in C++ sau Python. Testeaza cu labirintul: <code>[".##", "..#", "#.#", "..."]</code>, start=(0,0), finish=(3,2). Raspuns asteptat: 5 pasi. <em>(Drum: (0,0)&rarr;(1,0)&rarr;(1,1)&rarr;(2,1)&rarr;(3,1)&rarr;(3,2))</em></p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p>Nivel performanta: nu primesti cod complet, ci schema de rezolvare. Modeleaza fiecare celula (linie, coloana) ca nod al unui graf implicit; doua celule libere aflate la distanta 1 (sus/jos/stanga/dreapta) sunt legate printr-o muchie.</p><ol><li>Matrice vizitat[n][m] (sau set de perechi (linie,coloana)), initial toate False.</li><li>BFS clasic ca la atomii 2-4 din lectie, dar starea din coada e perechea (linie, coloana), nu un singur numar.</li><li>La extragere, incearca cele 4 directii; verifica intai limitele matricei (linie intre 0 si n-1, coloana intre 0 si m-1), apoi ca celula e libera ('.') si nevizitata.</li><li>Marcheaza vizitat=True in momentul ADAUGARII in coada, nu la extragere (regula de la atomul 3).</li><li>dist[start]=0; cand extragi celula finish din coada, dist[finish] e raspunsul.</li></ol><p>Capcane: uitarea verificarii de limite (index in afara matricei), confuzia (linie,coloana) cu (x,y), marcarea vizitat prea tarziu (acelasi nod intra de mai multe ori in coada).</p><p>Criterii de evaluare: complexitate O(n*m), drum reconstituit corect cu vector de parinti, codul ruleaza pe testul dat si da <strong>5</strong>.</p></div>
+            </details>
         </div>
     </section>
 

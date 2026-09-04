@@ -292,14 +292,29 @@ Dan Radu</pre>
         <div class="practice-exercise" data-level="minim">
             <h3>Exercitiul 1 (Nivel minim) &mdash; SELECT de baza</h3>
             <p>Scrie un SELECT care afiseaza <strong>numele si media</strong> tuturor elevilor cu media peste 7, ordonati alfabetic dupa nume. Tabel: <code>Elevi(id_elev, nume, clasa, medie)</code>.</p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p><strong>Rezolvare:</strong></p><p><code>SELECT nume, medie FROM Elevi WHERE medie &gt; 7 ORDER BY nume ASC;</code></p><p>Explicatie: <code>WHERE medie &gt; 7</code> pastreaza doar randurile cu media strict peste 7 (elevii cu media exact 7 nu apar). <code>ORDER BY nume ASC</code> sorteaza rezultatul alfabetic dupa nume (ASC = crescator, este si valoarea implicita daca nu scrii nimic, dar e bine sa o scrii explicit pentru claritate).</p><p>Ordinea clauzelor respecta regula din lectie: SELECT, FROM, WHERE, apoi ORDER BY.</p></div>
+            </details>
         </div>
         <div class="practice-exercise" data-level="standard">
             <h3>Exercitiul 2 (Nivel standard) &mdash; JOIN si agregari</h3>
             <p>Scrie o interogare care afiseaza <strong>numarul de elevi per clasa</strong> si <strong>media clasei</strong>, doar pentru clasele cu cel putin 3 elevi. Foloseste GROUP BY si HAVING.</p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p><strong>Rezolvare:</strong></p><p><code>SELECT clasa, COUNT(*) AS nr_elevi, AVG(medie) AS medie_clasa FROM Elevi GROUP BY clasa HAVING COUNT(*) &gt;= 3;</code></p><ol><li><code>GROUP BY clasa</code> aduna toti elevii in grupuri, cate un grup pentru fiecare clasa.</li><li><code>COUNT(*)</code> numara cati elevi sunt in fiecare grup.</li><li><code>AVG(medie)</code> calculeaza media notelor din fiecare grup (clasa).</li><li><code>HAVING COUNT(*) &gt;= 3</code> elimina din rezultat clasele cu mai putin de 3 elevi. HAVING se aplica DUPA grupare, spre deosebire de WHERE care ar filtra elevii individual, inainte de GROUP BY.</li></ol></div>
+            </details>
         </div>
         <div class="practice-exercise" data-level="performanta">
             <h3>Exercitiul 3 (Nivel performanta) &mdash; Normalizare + subinterogari</h3>
             <p>Identifica ce forma normala incalca aceasta tabela si propune solutia: <code>Catalog(id_elev, nume_elev, id_materie, denumire_materie, nota)</code>. Scrie si o subinterogare care gaseste elevii cu nota la Matematica peste media notelor la Matematica.</p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p><strong>Schita de rezolvare (nivel performanta):</strong></p><p>1) Forma incalcata: tabela <code>Catalog(id_elev, nume_elev, id_materie, denumire_materie, nota)</code> incalca <strong>2NF</strong>. Cheia primara compusa este <code>(id_elev, id_materie)</code>, dar <code>nume_elev</code> depinde DOAR de <code>id_elev</code> si <code>denumire_materie</code> depinde DOAR de <code>id_materie</code> - dependente partiale, nu de intreaga cheie.</p><p>2) Solutie: sparge in <code>Elevi(id_elev, nume_elev)</code>, <code>Materii(id_materie, denumire_materie)</code>, <code>Note(id_elev, id_materie, nota)</code> cu FK-uri spre primele doua.</p><p>3) Subinterogare: dupa modelul din lectie (subquery in WHERE) - gaseste intai <code>id_materie</code> pentru 'Matematica', apoi media notelor la acea materie, apoi elevii cu nota peste acea medie (2-3 niveluri imbricate).</p><p>Criterii: identificare corecta 2NF cu explicatia dependentei partiale; schema noua cu chei corecte; subinterogarea foloseste AVG() imbricat corect pe materia ceruta, nu pe toate notele.</p></div>
+            </details>
         </div>
     </section>
 

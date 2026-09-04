@@ -362,15 +362,30 @@ Total subsecvente cu suma 5: 2</pre>
             <h3>Exercitiul 1 (Nivel minim) &mdash; Sume partiale pe hartie</h3>
             <p>Fie <code>v = [5, 2, 8, 1, 3]</code>. Construieste manual vectorul de sume partiale <code>sp</code> (6 elemente, incepand cu 0). Calculeaza suma elementelor din <code>v[1..3]</code> folosind formula <code>sp[r+1] - sp[l]</code>.</p>
             <p><em>Raspuns asteptat: sp = [0, 5, 7, 15, 16, 19]; suma(1,3) = sp[4] - sp[1] = 16 - 5 = 11.</em></p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p>Aplicam formulele din lectie: <code>sp[0] = 0</code>, apoi <code>sp[i] = sp[i-1] + v[i-1]</code>.</p><ol><li>sp[0] = 0</li><li>sp[1] = sp[0] + v[0] = 0 + 5 = 5</li><li>sp[2] = sp[1] + v[1] = 5 + 2 = 7</li><li>sp[3] = sp[2] + v[2] = 7 + 8 = 15</li><li>sp[4] = sp[3] + v[3] = 15 + 1 = 16</li><li>sp[5] = sp[4] + v[4] = 16 + 3 = 19</li></ol><p>Deci <code>sp = [0, 5, 7, 15, 16, 19]</code>.</p><p>Pentru suma v[1..3] folosim formula <code>suma(l,r) = sp[r+1] - sp[l]</code> cu l=1, r=3:</p><p><code>suma(1,3) = sp[4] - sp[1] = 16 - 5 = 11</code></p><p>Verificare directa: v[1..3] = [2, 8, 1], iar 2 + 8 + 1 = 11. Rezultatul se confirma pe ambele cai.</p></div>
+            </details>
         </div>
         <div class="practice-exercise" data-level="standard">
             <h3>Exercitiul 2 (Nivel standard) &mdash; Secventa descrescatoare</h3>
             <p>Scrie un program Python care gaseste cea mai lunga subsecventa <strong>strict descrescatoare</strong> consecutiva dintr-un vector dat. Afiseaza indicii de inceput si sfarsit si lungimea.</p>
             <p><em>Testare: pentru <code>v = [9, 7, 5, 8, 4, 2, 1, 3]</code>, raspunsul este <code>v[2..6] = [5, 8, 4, 2, 1]</code>? Verifica singur! (Indiciu: conditia trebuie sa fie v[i] &lt; v[i-1].)</em></p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p>Adaptam tehnica din lectie (secventa cu proprietate data) schimband conditia din <code>v[i] &gt; v[i-1]</code> in <code>v[i] &lt; v[i-1]</code> (strict descrescator):</p><p><code>lung_max = 1; lung_cur = 1; end_m = 0<br>for i in range(1, n):<br>&nbsp;&nbsp;if v[i] &lt; v[i-1]:<br>&nbsp;&nbsp;&nbsp;&nbsp;lung_cur += 1<br>&nbsp;&nbsp;else:<br>&nbsp;&nbsp;&nbsp;&nbsp;lung_cur = 1<br>&nbsp;&nbsp;if lung_cur &gt; lung_max:<br>&nbsp;&nbsp;&nbsp;&nbsp;lung_max = lung_cur; end_m = i<br>start_m = end_m - lung_max + 1</code></p><p>Pentru v = [9, 7, 5, 8, 4, 2, 1, 3], rulare pas cu pas: 9,7,5 formeaza o secventa de lungime 3 (i=0..2), apoi la i=3 (8&gt;5) se rupe si reincepe; 8,4,2,1 formeaza o secventa de lungime 4 (i=3..6), apoi la i=7 (3&gt;1) se rupe.</p><p>Rezultat corect: <strong>v[3..6] = [8, 4, 2, 1], lungime 4</strong>. Atentie: raspunsul sugerat in enunt, v[2..6] = [5, 8, 4, 2, 1], este gresit — acel interval nici macar nu e strict descrescator (5 &lt; 8). Exact asta cere enuntul cand zice "verifica singur": sa nu accepti rezultatul dat fara sa-l testezi cu algoritmul.</p></div>
+            </details>
         </div>
         <div class="practice-exercise" data-level="performanta">
             <h3>Exercitiul 3 (Nivel performanta) &mdash; Kadane complet cu cazuri limita</h3>
             <p>Modifica algoritmul Kadane pentru a trata corect: (a) toate elementele negative &mdash; returneaza maximul (cel mai putin negativ), nu 0; (b) vectorul are un singur element. Testeaza cu <code>v = [-5, -3, -1, -4]</code> (raspuns: suma_max = -1, secventa v[2..2]) si cu <code>v = [7]</code> (raspuns: suma_max = 7).</p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p>Nu iti dau codul complet — doar schema si capcanele, restul il scrii tu.</p><ol><li><strong>Initializarea este cheia.</strong> Codul din lectie deja porneste cu <code>suma_max = v[0]</code> si <code>suma_cur = v[0]</code>, NU cu 0. Aceasta initializare corecta rezolva automat cazul (a): daca toate elementele sunt negative, suma_max ramane cel mai putin negativ element intalnit, niciodata 0. Capcana clasica e sa initializezi cu 0 din reflex — atunci ai gresi la orice vector complet negativ.</li><li><strong>Cazul (b), un singur element</strong> (n=1): bucla <code>for i in range(1, n)</code> nu se executa deloc, deci suma_max si intervalul raman cele din initializare (v[0], indicii 0..0). Nu ai nevoie de cod special — doar sa intelegi de ce merge asa.</li><li>Testeaza explicit ambele cazuri date si afiseaza suma_max plus v[s..e] pentru fiecare.</li></ol><p>Criterii de evaluare: (1) initializare cu v[0], nu 0; (2) demonstrezi ca intelegi de ce cazul n=1 nu cere tratare separata; (3) ambele teste dau exact suma_max=-1 (secventa v[2..2]) si suma_max=7. Bonus, nepredat in lectie: ce faci daca vectorul e complet gol (n=0) — discuta, nu e cerut de lectie.</p></div>
+            </details>
         </div>
     </section>
 

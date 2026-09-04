@@ -373,6 +373,11 @@ Click: Calculeaza IMC</pre></div>
             <h3>Exercitiul 1 (Nivel minim) &mdash; Fereastra de salut</h3>
             <p>Scrie o aplicatie Tkinter cu un <code>Label</code> "Numele tau:", un <code>Entry</code> si un <code>Button</code> "Saluta" care afiseaza "Buna ziua, [nume]!" intr-un al doilea Label.</p>
             <p>Foloseste <code>pack()</code> pentru layout. Testeaza cu campul gol.</p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p>Foloseste tiparul din lectie (Label, Entry, Button + callback) cu <code>pack()</code>:</p><ol><li><code>lbl = tk.Label(root, text="Numele tau:")</code>, apoi <code>lbl.pack()</code>.</li><li><code>camp_nume = tk.Entry(root)</code>, apoi <code>camp_nume.pack()</code>.</li><li><code>lbl_rez = tk.Label(root, text="")</code>, apoi <code>lbl_rez.pack()</code> — labelul de rezultat, initial gol.</li><li>Callback: <code>def saluta(): nume = camp_nume.get(); lbl_rez.config(text=f"Buna ziua, {nume}!")</code>.</li><li><code>btn = tk.Button(root, text="Saluta", command=saluta)</code>, apoi <code>btn.pack()</code> — atentie, <code>command=saluta</code> FARA paranteze.</li><li><code>root.mainloop()</code> ca ultima linie.</li></ol><p>Test cu campul gol: fara verificare apare "Buna ziua, !". Solutia corecta (ca in lectie): <code>if nume.strip(): lbl_rez.config(text=f"Buna ziua, {nume}!") else: lbl_rez.config(text="Scrieti un nume mai intai!")</code>.</p></div>
+            </details>
         </div>
 
         <div class="practice-exercise" data-level="standard">
@@ -380,12 +385,22 @@ Click: Calculeaza IMC</pre></div>
             <p>Construieste o aplicatie care converteste Celsius &harr; Fahrenheit cu doua campuri Entry si doua butoane "C &rarr; F" / "F &rarr; C".</p>
             <p>Formula: F = C &times; 9/5 + 32 si C = (F &minus; 32) &times; 5/9. Foloseste <code>grid()</code>. Trateaza inputul invalid cu <code>try/except ValueError</code>.</p>
             <p><strong>Verificare:</strong> 100&deg;C &rarr; 212&deg;F &nbsp;|&nbsp; 32&deg;F &rarr; 0&deg;C &nbsp;|&nbsp; &minus;40&deg;C &rarr; &minus;40&deg;F</p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p>Foloseste <code>grid()</code> (Atomul 3) si formulele din cerinta:</p><ol><li>Label "Celsius:" pe <code>grid(row=0, column=0)</code>, <code>entry_c = tk.Entry(root)</code> pe <code>grid(row=0, column=1)</code>; la fel Label "Fahrenheit:" si <code>entry_f</code> pe randul 1.</li><li><code>def c_spre_f(): try: c = float(entry_c.get()); f = c*9/5+32; entry_f.delete(0, tk.END); entry_f.insert(0, f"{f:.2f}") except ValueError: lbl_status.config(text="Numar invalid!")</code>.</li><li>Simetric: <code>def f_spre_c(): try: f = float(entry_f.get()); c = (f-32)*5/9; entry_c.delete(0, tk.END); entry_c.insert(0, f"{c:.2f}") except ValueError: lbl_status.config(text="Numar invalid!")</code>.</li><li>Doua butoane pe <code>grid(row=2, ...)</code>: <code>command=c_spre_f</code> si <code>command=f_spre_c</code> (fara paranteze).</li></ol><p>Verificare (aplica formula si citeste rezultatul din entry_f, respectiv entry_c): 100 grade C da 212 grade F (100*9/5+32=212); 32 grade F da 0 grade C ((32-32)*5/9=0); -40 grade C da -40 grade F (punctul unde scalele coincid).</p></div>
+            </details>
         </div>
 
         <div class="practice-exercise" data-level="performanta">
             <h3>Exercitiul 3 (Nivel performanta) &mdash; Mini-agenda cu fisiere</h3>
             <p>Extinde calculatorul IMC cu: camp pentru numele pacientului, buton "Salveaza" care scrie in <code>imc_log.txt</code> formatul <code>[data] Pacient: [Nume] | IMC = X.XX (Categorie)</code>, buton "Istoric" care citeste si afiseaza ultimele 5 intrari intr-un widget <code>tk.Text</code>.</p>
             <p><span class="bonus-badge">EXCLUSIV INTENSIV</span> Refactorizeaza aplicatia ca o clasa Python care mosteneste din <code>tk.Frame</code>.</p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p>Schita, nu solutia completa (nivel performanta):</p><ol><li>Adauga un <code>tk.Entry</code> pentru nume, langa cele pentru inaltime/greutate, pe acelasi <code>grid()</code>.</li><li>Butonul "Salveaza": <code>with open("imc_log.txt", "a", encoding="utf-8") as f: f.write(linie)</code> — modul <code>a</code> (append) e din lectia despre fisiere.</li><li><strong>Capcana 1:</strong> <code>[data]</code> cere modulul <code>datetime</code> (<code>datetime.now().strftime(...)</code>) — nepredat in nicio lectie a modulului; alege un format si documenteaza-l.</li><li>Butonul "Istoric": <code>with open(...) as f: ultimele = f.readlines()[-5:]</code>, apoi afisare in widget.</li><li><strong>Capcana 2:</strong> <code>tk.Text</code> nu a fost predat (doar Label/Entry/Button) — cauta <code>.insert()</code> si <code>.delete()</code> pe Text inainte sa-l folosesti.</li><li>Refactorizare: <code>class AplicatieIMC(tk.Frame): def __init__(self, parinte): super().__init__(parinte)</code> — extinde tiparul de mostenire din Atomul 6 (acolo mostenea din <code>tk.Label</code>, aici din <code>tk.Frame</code>).</li></ol><p>Criterii: logica ramane separata de interfata; clasa incapsuleaza widget-urile ca <code>self.</code>; fisierul se scrie/citeste corect; campuri goale nu dau eroare necontrolata.</p></div>
+            </details>
         </div>
     </section>
     <section class="review-section">

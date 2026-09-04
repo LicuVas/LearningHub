@@ -297,17 +297,32 @@ Media: 7.55  (din 4 note)</pre></div>
 <div class="practice-exercise" data-level="minim">
 <h3>Exercitiul 1 (Nivel minim) &mdash; Creare si interogare</h3>
 <p>Creeaza o baza de date SQLite <code>biblioteca.db</code> cu un singur tabel <code>carti</code> (id, titlu, autor, an). Insereaza 3 carti si scrie un SELECT care returneaza cartile ordonate descrescator dupa an.</p>
-<p><em>Rezultat asteptat: 3 randuri, cel mai recent an primul.</em></p></div>
+<p><em>Rezultat asteptat: 3 randuri, cel mai recent an primul.</em></p>
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p><strong>Pas 1 - creare tabel</strong> (ca in atomul 1): <code>cur.execute('''CREATE TABLE IF NOT EXISTS carti (id INTEGER PRIMARY KEY AUTOINCREMENT, titlu TEXT NOT NULL, autor TEXT NOT NULL, an INTEGER NOT NULL)''')</code></p><p><strong>Pas 2 - inserare 3 carti</strong> (executemany, ca in atomul 2):</p><ol><li><code>carti = [('Ion', 'Liviu Rebreanu', 1920), ('Enigma Otiliei', 'George Calinescu', 1938), ('Baltagul', 'Mihail Sadoveanu', 1930)]</code></li><li><code>cur.executemany('INSERT INTO carti (titlu, autor, an) VALUES (?, ?, ?)', carti); conn.commit()</code></li></ol><p><strong>Pas 3 - SELECT descrescator:</strong> <code>for row in cur.execute('SELECT * FROM carti ORDER BY an DESC'): print(row)</code></p><p><strong>Rezultat:</strong> 3 randuri - Enigma Otiliei (1938), apoi Baltagul (1930), apoi Ion (1920).</p></div>
+            </details>
+        </div>
 <div class="practice-exercise" data-level="standard">
 <h3>Exercitiul 2 (Nivel standard) &mdash; UPDATE si DELETE</h3>
 <p>Pornind de la baza de date <code>biblioteca.db</code> creata anterior:</p><ul>
 <li>Actualizeaza anul uneia dintre carti cu <code>UPDATE</code></li>
 <li>Sterge toate cartile publicate inainte de 2000 cu <code>DELETE WHERE</code></li>
 <li>Afiseaza numarul de carti ramase cu <code>COUNT(*)</code></li>
-</ul><p>Verifica ca UPDATE si DELETE au clauza WHERE corecta inainte de executie.</p></div>
+</ul><p>Verifica ca UPDATE si DELETE au clauza WHERE corecta inainte de executie.</p>
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p><strong>Pas 1 - UPDATE cu WHERE pe id</strong> (ca in atomul 3): <code>cur.execute('UPDATE carti SET an = ? WHERE id = ?', (1939, 2)); conn.commit()</code></p><p><strong>Pas 2 - DELETE cartile dinainte de 2000:</strong> <code>cur.execute('DELETE FROM carti WHERE an &lt; 2000'); conn.commit()</code></p><p><strong>Pas 3 - numarul de carti ramase:</strong> <code>cnt = cur.execute('SELECT COUNT(*) FROM carti').fetchone()[0]; print(f'Carti ramase: {cnt}')</code></p><p><strong>Verificare inainte de executie:</strong> Ambele comenzi de mai sus au clauza WHERE (id=? la UPDATE, an&lt;2000 la DELETE) — fara ea, UPDATE si DELETE afecteaza TOT tabelul, cum arata atomul 3 si intrebarea Q3/Q5 din lectie. Daca toate cele 3 carti au an peste 2000, DELETE nu sterge nimic si COUNT(*) ramane 3 — e un rezultat corect, nu o eroare.</p></div>
+            </details>
+        </div>
 <div class="practice-exercise" data-level="performanta">
 <h3>Exercitiul 3 (Nivel performanta) <span class="bonus-badge">INTENSIV</span> &mdash; Schema cu doua tabele si JOIN</h3>
-<p>Extinde <code>biblioteca.db</code> cu un tabel <code>imprumuturi</code> (id, carte_id, cititor, data_imprumut). Adauga 4 imprumuturi pentru 3 carti diferite. Scrie un JOIN care afiseaza titlul cartii si cititorul pentru fiecare imprumut, ordonat dupa data. Identifica care carte a fost imprumutata de mai multe ori folosind GROUP BY si COUNT.</p></div>
+<p>Extinde <code>biblioteca.db</code> cu un tabel <code>imprumuturi</code> (id, carte_id, cititor, data_imprumut). Adauga 4 imprumuturi pentru 3 carti diferite. Scrie un JOIN care afiseaza titlul cartii si cititorul pentru fiecare imprumut, ordonat dupa data. Identifica care carte a fost imprumutata de mai multe ori folosind GROUP BY si COUNT.</p>
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p><strong>Schita de rezolvare (structura, nu cod complet):</strong></p><ol><li>Tabel nou, dupa acelasi tipar ca <code>note.student_id</code> din atomul 5: <code>imprumuturi(id INTEGER PRIMARY KEY AUTOINCREMENT, carte_id INTEGER NOT NULL, cititor TEXT NOT NULL, data_imprumut TEXT NOT NULL, FOREIGN KEY(carte_id) REFERENCES carti(id))</code></li><li>Insereaza 4 randuri cu executemany; foloseste acelasi carte_id la doua dintre ele, ca sa existe o carte imprumutata de mai multe ori.</li><li>JOIN dupa tiparul din atomul 4: <code>SELECT c.titlu, i.cititor FROM carti c JOIN imprumuturi i ON c.id = i.carte_id ORDER BY i.data_imprumut</code></li><li>Carte cea mai imprumutata, cu GROUP BY pe id (nu pe titlu, evita coliziunile de titluri identice) si COUNT(*), ordonat descrescator — primul rand e raspunsul.</li></ol><p><strong>Capcana:</strong> data_imprumut ca TEXT trebuie scrisa 'AAAA-LL-ZZ' ca ORDER BY sa sorteze cronologic corect, nu alfabetic-gresit.</p><p><strong>Evaluare:</strong> schema cu FOREIGN KEY corecta, JOIN care ruleaza fara eroare si returneaza 4 randuri, identificarea corecta a cartii cu cele mai multe imprumuturi.</p></div>
+            </details>
+        </div>
 </section>
 <section class="review-section">
 <div class="summary-box"><h2>Ce ai invatat astazi</h2><ul>
