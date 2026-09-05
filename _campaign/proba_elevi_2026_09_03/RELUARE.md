@@ -1,6 +1,6 @@
-# Reluare — de unde continuăm (actualizat 05.09.2026, ora 13:45)
+# Reluare — de unde continuăm (actualizat 05.09.2026, ora 17:45)
 
-Situl e **întreg și publicat live** (`0986d08`, verificat pe adresa publică). Nimic pe jumătate scris.
+Situl e **întreg și publicat live**, verificat pe adresa publică. Nimic pe jumătate scris.
 Punctele de mai jos nu depind unul de altul, cu excepția celor marcate.
 
 ## Ce e gata
@@ -13,7 +13,9 @@ Punctele de mai jos nu depind unul de altul, cu excepția celor marcate.
 | **rezolvări model** | **1606 din 1606 (100%)** ✅ terminat 05.09 |
 | rezolvări greșite găsite de corectori și reparate | **13**, verificate independent pe disc (21/21) |
 | **chei de progres care se ciocneau** | **0** (erau 21 de chei folosite de 105 lecții) ✅ |
-| lecții care trec poarta `verifica_lectie.py` | **488 din 510** (erau 325) — din care ~69 „reparate" au fost de fapt alarme false ale porții, nu lecții stricate |
+| lecții care trec poarta `verifica_lectie.py` | **508 din 510** (erau 325 dimineața) |
+| lecții rescrise fiindcă predau alt subiect | **26 din 26** ✅ |
+| chestionare care nu funcționau deloc | **19 reparate** (formatul vechi de atomi) |
 | **caseta „Vrei mai mult?”** | **507 din 507 lecții** ✅ terminat 05.09 |
 | casete greșite găsite de corectori și reparate | **27**, verificate independent pe disc (12/12) |
 | cifrele de pe paginile de clasă | se potrivesc cu discul (`verifica_cifre.py`) |
@@ -33,44 +35,45 @@ Punctele de mai jos nu depind unul de altul, cu excepția celor marcate.
 - **`depth_io.py replace`** — la fel ca la `practice_io`. Ordinea contează: caseta veche se
   decupează abia după ce textul nou trece toate gărzile.
 - **Titlul dublat pe 123 de lecții** — `tools/repara_titlu_dublat.py`, mecanic, control 9/9.
-- **Încă două lecții cu conținut așezat greșit**, găsite căutând copiile unui defect semnalat
-  (lista a crescut de la 22 la 24).
+- **Încă patru lecții cu conținut așezat greșit**, găsite în două feluri: căutând copiile unui
+  defect semnalat (2), și verificând ce predă lecția când cheia de progres o contrazicea (2).
+  Lista a crescut de la 22 la 26 — și **toate 26 sunt acum rescrise**.
+- **19 chestionare care nu funcționau deloc** — 7 lecții în formatul vechi de atomi, pe care
+  motorul nu le pornea. `tools/converteste_atomi_vechi.py`, control 15/15.
+- **9 secțiuni de obiectiv** scrise la lecțiile care n-o aveau.
+- **Poarta**, încă patru orbiri reparate: verifica marcajul, nu lucrul. De la 22 la 2 lecții
+  picate. Control extins la 10/10, cu caz negativ pe fiecare reparație.
 
-## 1. Cele 24 de lecții care predau alt subiect decât slotul lor — pregătit, nepornit
+## 1. Trei decizii care sunt ale tale, nu ale mele
 
-Dosarul: `CONTINUT_ASEZAT_GRESIT.md`. Lista de lucru: `de_rescris_curat.json` (24 de intrări).
+**a) `tic/cls5/extra-siguranta-backup/lectia4-prezentari-intro.html`** — fișierul promite
+introducere în prezentări, lecția predă **cyberbullying**. Cyberbullying-ul se potrivește cu
+tema modulului („Siguranță digitală") și cu proiectul final, dar lecția 5 predă *design de
+prezentări* fără ca introducerea să existe. Fie redenumești fișierul în `lectia4-cyberbullying`
+și muți introducerea în altă parte a anului, fie rescrii lecția 4 ca introducere și muți
+cyberbullying-ul lângă lecția 3. Schimbă ordinea materiei — nu decid eu.
 
-```bash
-Workflow({scriptPath: "<...>/valuri/wf_rescriere.js"})
-```
-⚠ **Rescrie-l întâi pe modul, ca `wf_t6b.js` / `wf_t7b.js`** — și pune-l să caute defectul în
-TOATE profilurile-frate, nu doar unde a fost semnalat.
+**b) `tic/cls5/extra-word-cls7/lectia6-proiect.html`** — duplicat orfan: **79,5% asemănare** cu
+`lectia7-proiect.html`, același titlu „Referatul Complet". Indexul modulului o leagă pe a doua,
+deci prima e nereachabilă. De șters sau de păstrat?
 
-Cel mai important: **`tehnologic/cls12` nu predă calcul tabelar nicăieri**, deși e competență la
-proba practică de bacalaureat. Modulul predă de patru ori construirea unui site.
+**c) `tic/cls8/extra-materiale-suplimentare/tutorial-github-netlify.html`** — tutorial fără
+niciun chestionar. E tutorial, nu lecție; poate rămâne așa, dar atunci poarta îl va semnala
+mereu. Alternativ, primește 2-3 întrebări și devine lecție.
 
-Cele două adăugate pe 05.09, la `cls9/m1-sisteme-retele/lectia2-retele-internet.html`: la
-**științe** lecția predă software (și dublează lecția 1), la **militar** predă comunicare
-digitală. La ambele, competența *rețele și Internet* nu e predată nicăieri. Etaloanele
-(tehnologic, umanist, pedagogic) au deja conținutul corect.
+**Conținutul scos din cele două lecții mat-info nu s-a pierdut:** Machine Learning (k-NN,
+arbori, sklearn) și SQL/baze de date relaționale erau bune în sine și nu se predau nicăieri
+altundeva. Se recuperează din git (`git show 0986d08:<calea>`). Dacă vrei, le găsim un loc.
 
-Confirmat tot pe 05.09: `tehnologic/cls10/m1-procesare-text/lectia3-corespondenta-aplicatie.html`
-promite îmbinare de corespondență și predă integral PowerPoint.
-
-## 2. Cele 22 de lecții care mai pică poarta — defecte reale, netriate
+## 2. Ce a mai rămas la poartă: 2 din 510
 
 ```bash
 python "C:\00\Projects\LearningHub\tools\verifica_lectie.py" <fisier>
 ```
-Lista cu motive: `poarta_lectii.json`. Împărțirea:
-- **9** fără secțiunea *obiectiv*, **9** fără secțiunea *atomi* (mai ales `tic/cls7/extra-baze-date`)
-- **7** fără cheie de progres (`AtomicLearning.init` lipsește — lecția nu se înregistrează
-  în progresul modulului); mai ales `mat-info`
-- **7** fără niciun chestionar
-- **1** nelegată din index-ul modulului (`tic/cls5/extra-word-cls7/lectia6-proiect.html`)
+Cele două sunt exact deciziile (b) și (c) de mai sus. Niciun defect tehnic rămas.
 
-⚠ Contrazice tabelul vechi care spunea „510 din 510 au toate cele 5 secțiuni" — de lămurit
-care număr e bun înainte de a rescrie ceva.
+**Dimineața erau 185.** Din diferență, o parte bună au fost **alarme false ale porții**, nu
+lecții stricate — detaliile în secțiunea despre verificare, la final.
 
 ## 3. Enunțuri defecte — decizie de curriculum, nu reparație
 
@@ -184,3 +187,39 @@ calculatoare și Internet", clasa a IX-a, două profiluri din cinci predau cu to
 la restul au constatat că fișierele nu erau chiar copii și au refuzat să scrie. Acesta e
 răspunsul corect, nu o rateare — de aceea promptul le cere explicit să judece defectul înainte
 de a-l repara, cu „inlocuite=0 + de ce" ca răspuns valid.
+
+## Ce am învățat despre porți (05.09.2026)
+
+**O poartă scrisă pe un MARCAJ, nu pe LUCRU, minte în ambele direcții.** Strigă pe fișiere bune
+și tace pe cele stricate, fiindcă acelea scapă tiparului. Patru cazuri, toate în aceeași zi:
+
+| poarta căuta | ce trebuia să întrebe | alarme false |
+|:--|:--|:--|
+| un container cu un anumit nume | „are lecția atomi?" | 7 |
+| `class="atom"` la început de etichetă | clasa `atom` în lista de clase, ca motorul | (și mai rău: atomii nestandard nu erau verificați de **nimeni**) |
+| cheia de progres doar cu apostrofuri | ambele feluri de ghilimele | 7, plus scăpau de verificarea de unicitate |
+| orice `href="*.html"` | un tag `<a>` real, în afara exemplelor de cod | 81 |
+
+Rețeta: scrie poarta pe **semantica lucrului verificat, copiată din consumatorul real**. Dacă
+motorul face `querySelectorAll('.atom')`, poarta verifică lista de clase, nu un șir literal.
+Și pune la fiecare reparație un **control negativ** — sabotezi fișierul și verifici că poarta
+tot prinde. Altfel schimbi o poartă care strigă degeaba cu una oarbă.
+
+**Aceeași greșeală am făcut-o și eu, de patru ori, în propriile scripturi de măsurare**:
+„am găsit" 3 reparații nefăcute, 6 itemi cu variante duplicate și 2 lecții cu container gol —
+toate fabricate de regexuri prea stricte sau de normalizări care ștergeau exact ce se măsura
+(litere mici la întrebări *despre* majuscule).
+
+## Ce am învățat despre agenți care predau cod (05.09.2026)
+
+Agentul care a scris lecția despre parcurgerea în spirală **a compilat cu g++ și a rulat**
+ambele variante de cod înainte să scrie afirmația din manuale („fără cele două verificări se
+strică la n impar"). E falsă: pe matrice **pătratice** rezultatul e identic cu și fără
+verificări; diferența apare doar pe cele **dreptunghiulare** (la 3×4 se afișează un element în
+plus). A corectat-o în trei locuri și a transformat exercițiul de performanță în experiment:
+*rulează cu și fără, pe pătrat și pe 3×4, și spune ce vezi* — a făcut din bug lecția despre de
+ce testul pe pătrat ascunde bug-ul.
+
+Reverificat independent: pe toate pătratele 1×1…7×7 identic, pe 10 din 20 de dreptunghiulare
+diferă. **Cere agentului să RULEZE codul pe care îl predă — și să testeze și cazul care ar
+trebui să eșueze.**
