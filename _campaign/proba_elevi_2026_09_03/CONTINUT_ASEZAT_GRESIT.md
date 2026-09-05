@@ -124,3 +124,43 @@ reparat doar acolo — am căutat aceeași lecție pe toate profilurile, și aș
 militar, pe care nu-l semnalase nimeni. **Lecțiile de pe profiluri diferite sunt copii: un
 defect găsit într-un profil trebuie căutat în toate.** Aceeași regulă a mărit reparațiile
 casetelor de la 23 de semnalări la 38 de casete reale.
+
+---
+
+## Adăugat 05.09.2026, seara — lista crește de la 24 la 26, plus o decizie deschisă
+
+**Cum au ieșit la iveală:** după rescrierea celor 24, corectorii au semnalat trei lecții în
+care *cheia de progres* numea alt subiect decât fișierul. Prima reacție ar fi fost să rescriu
+cheia. Am verificat întâi **ce predă lecția de fapt** — și la trei din șase cazuri găsite pe
+tot situl, cheia spunea adevărul, iar **numele fișierului mințea**.
+
+Renumirea oarbă a cheii ar fi ascuns două subiecte care nu se predau nicăieri.
+
+| fișierul promite | lecția predă de fapt | verdict |
+|:--|:--|:--|
+| `mat-info/cls12/m2-algoritmi-eficienti/lectia1-matrice-avansate` | clasificare în Machine Learning (k-NN, arbore, sklearn) | ❌ **subiect de bacalaureat lipsă** — operațiile cu matrice nu se predau nicăieri |
+| `mat-info/cls12/m3-web/lectia1-html-css-review` | baze de date relaționale și SQL | ❌ recapitularea HTML/CSS lipsește, deși lecțiile 2–4 se sprijină pe ea |
+| `tic/cls5/extra-siguranta-backup/lectia4-prezentari-intro` | cyberbullying și comportament online | ⚠️ **decizie deschisă** (mai jos) |
+
+Cele două de la mat-info au intrat pe listă. **Conținutul lor actual e bun în sine** (ML și
+SQL nu se predau în altă parte) — de păstrat separat dacă vrei, nu de aruncat. Nu există
+profil-frate cu lecția făcută corect: mat-info e unic, deci etaloanele dau doar forma și
+adâncimea modulului, iar subiectul vine din cartonașul din `index.html`.
+
+### Decizia deschisă — clasa a V-a, modulul „Siguranță digitală și multimedia"
+
+| fișier | ce predă |
+|:--|:--|
+| `lectia3-date-personale` | datele mele personale |
+| **`lectia4-prezentari-intro`** | **cyberbullying și comportament online** |
+| `lectia5-prezentari-design` | design și animații (prezentări) |
+| `lectia6-proiect` | proiect final: siguranță online |
+
+Cyberbullying-ul se potrivește cu tema modulului și cu proiectul final. Dar **introducerea în
+prezentări lipsește**, deși lecția 5 predă *design* de prezentări — deci elevul învață să
+înfrumusețeze ceva ce n-a fost introdus.
+
+Două ieșiri curate, la alegere: **(a)** redenumești fișierul în `lectia4-cyberbullying` și
+muți introducerea în prezentări în altă parte a anului, sau **(b)** rescrii lecția 4 ca
+introducere în prezentări și muți cyberbullying-ul lângă lecția 3 (datele personale).
+Nu e o reparație mecanică — schimbă ordinea materiei.
