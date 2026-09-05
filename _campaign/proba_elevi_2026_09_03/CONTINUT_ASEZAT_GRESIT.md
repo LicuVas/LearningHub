@@ -96,3 +96,31 @@ nici recitirile n-au prins-o. Defectul nu e în lecție, e în **relația** dint
 2. Cheile de progres să includă profilul — 105 fișiere, mecanic.
 3. Golurile rămase de scris ca lecții noi, cu **calculul tabelar la tehnologic XII** primul:
    e competență de bacalaureat și acum lipsește cu totul.
+
+---
+
+## Adăugat 05.09.2026 — încă două lecții, găsite de corectorii valului t7b
+
+Lista a crescut de la 22 la **24**. Ambele sunt în același slot: `cls9 / m1-sisteme-retele /
+lectia2-retele-internet.html`, unde indexul modulului promite, la toate profilurile,
+„Rețele de calculatoare și Internet — tipuri, componente, cum circulă datele".
+
+| profil | ce predă de fapt lecția 2 | verdict |
+|:--|:--|:--|
+| tehnologic | Rețele de calculatoare și Internet | ✅ corect |
+| umanist | Rețele de calculatoare și Internet | ✅ corect |
+| pedagogic | Ce este o rețea, de la LAN la Internet | ✅ corect |
+| **științe** | „Componenta software: sisteme de operare și aplicații" | ❌ **greșit** — și dublează lecția 1 a aceluiași modul |
+| **militar** | „Comunicare și colaborare digitală" (e-mail, netichetă, rețele sociale) | ❌ **greșit**, dar cu alt subiect decât la științe |
+
+**De ce contează:** la două profiluri de clasa a IX-a, competența *rețele și Internet*
+(LAN/WAN, protocoale, adrese IP, siguranță online) **nu e predată nicăieri**. La științe,
+elevul primește de două ori aceeași lecție despre software.
+
+**Etaloanele pentru rescriere** sunt cele trei profiluri corecte, care au deja conținutul bun.
+
+**Cum au ieșit la iveală:** un corector al valului t7b a semnalat cazul de la științe. Nu am
+reparat doar acolo — am căutat aceeași lecție pe toate profilurile, și așa a apărut și cazul
+militar, pe care nu-l semnalase nimeni. **Lecțiile de pe profiluri diferite sunt copii: un
+defect găsit într-un profil trebuie căutat în toate.** Aceeași regulă a mărit reparațiile
+casetelor de la 23 de semnalări la 38 de casete reale.
