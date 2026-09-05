@@ -28,6 +28,26 @@ SECTIUNI = (
 )
 
 
+DIV = re.compile(r"<div\b[^>]*>|</div>", re.I)
+COD = re.compile(r"<(code|pre)\b[^>]*>.*?</\1>", re.I | re.S)
+
+
+def corp_div(src, dupa):
+    """Textul dintre `dupa` si </div>-ul care inchide div-ul deschis inainte de el.
+    Inainte aici era o fereastra fixa de 6000 de caractere: atomii cu exemple lungi
+    de cod isi aveau containerul .atom-quiz DINCOLO de fereastra, iar poarta striga
+    'chestionar mort' pe lectii perfect bune (65 de alarme false, 05.09.2026)."""
+    adanc = 1
+    for m in DIV.finditer(src, dupa):
+        if m.group(0).startswith("</"):
+            adanc -= 1
+            if adanc == 0:
+                return src[dupa:m.start()]
+        else:
+            adanc += 1
+    return src[dupa:]
+
+
 def verifica(path):
     probleme = []
     src = io.open(path, encoding="utf-8", errors="replace").read()
@@ -61,9 +81,9 @@ def verifica(path):
 
     for m in re.finditer(r'<div class="atom"[^>]*>', src):
         cap = m.group(0)
-        bloc = src[m.end():m.end() + 6000]
-        if "data-quiz" in cap or "data-quiz" in bloc[:2000]:
-            if "atom-quiz" not in bloc[:6000]:
+        bloc = corp_div(src, m.end())
+        if "data-quiz" in cap or "data-quiz" in bloc:
+            if "atom-quiz" not in bloc:
                 probleme.append("un atom are chestionar dar n-are container .atom-quiz (ramane mort pe ecran)")
             if not re.search(r'id="[^"]+"|data-atom-id="[^"]+"', cap):
                 probleme.append("un atom are chestionar dar n-are identificator (motorul nu-l gaseste)")
@@ -97,7 +117,10 @@ def verifica(path):
             probleme.append("scriptul nu exista pe disc: %s" % src_attr)
 
     # 6. inainte / inapoi
-    for h in re.findall(r'href="((?:\.\./)*[a-z0-9][^"]*\.html)"', src):
+    # Fara COD.sub, o lectie care PREDA HTML era raportata ca avand legaturi moarte:
+    # <code>&lt;a href="despre.html"&gt;</code> e un exemplu didactic, nu navigare
+    # (69 de alarme false, 05.09.2026).
+    for h in re.findall(r'href="((?:\.\./)*[a-z0-9][^"]*\.html)"', COD.sub("", src)):
         t = os.path.normpath(os.path.join(dp, h.split("#")[0]))
         if not os.path.exists(t):
             probleme.append("legatura moarta: %s" % h)
