@@ -1,8 +1,7 @@
-# Reluare — de unde continuăm (oprit 04.09.2026, ora 18:55, la cerere)
+# Reluare — de unde continuăm (actualizat 05.09.2026, ora 11:45)
 
-Situl e într-o stare **întreagă și publicată** (`f7bacc0`). Nimic pe jumătate scris.
-Se poate relua oricând, în orice ordine — punctele de mai jos nu depind unul de altul,
-cu excepția celor marcate.
+Situl e într-o stare **întreagă și publicată pe disc** (`511ce8f`). Nimic pe jumătate scris.
+Punctele de mai jos nu depind unul de altul, cu excepția celor marcate.
 
 ## Ce e gata
 
@@ -11,27 +10,24 @@ cu excepția celor marcate.
 | chestionare care se afișează | **504/504 pagini, 3199 de întrebări, 0 moarte** |
 | ghicit după lungime | de la **65,3% → 32,8%** (nivelul hazardului) |
 | chei de răspuns verificate una câte una | 1226 de întrebări, 2 chei greșite găsite |
-| **rezolvări model** | **963 din 1606 exerciții (60%)** ← aici s-a oprit |
-| lecții cu toate cele 5 secțiuni | 510 din 510 |
+| **rezolvări model** | **1606 din 1606 (100%)** ✅ terminat 05.09 |
+| rezolvări greșite găsite de corectori și reparate | **13**, verificate independent pe disc (21/21) |
+| **chei de progres care se ciocneau** | **0** (erau 21 de chei folosite de 105 lecții) ✅ |
+| lecții care trec poarta `verifica_lectie.py` | **488 din 510** (erau 325) — din care ~69 „reparate" au fost de fapt alarme false ale porții, nu lecții stricate |
 | cifrele de pe paginile de clasă | se potrivesc cu discul (`verifica_cifre.py`) |
 
-## 1. Rezolvările model — continuă de unde a rămas (643 de exerciții)
+## Ce s-a făcut pe 05.09
 
-Valul se reia **fără să refacă ce e gata**: `practice_io.py` sare peste exercițiile care au
-deja rezolvare, iar workflow-ul are cache pe agenții terminați.
+- **643 de rezolvări model** scrise, cu un val de 82 de agenți. Mutarea cheie: **un agent pe
+  MODUL, nu pe lecție** (`wf_t6b.js`) — 507 agenți planificați au devenit 61 de loturi.
+- **13 rezolvări greșite** reparate (`wf_t6b_reparatii.js`). Cea mai gravă: la
+  `umanist/cls10` calcul tabelar toate trei rezolvările descriau Word, nu Excel.
+- **`practice_io.py replace`** — unealta doar *insera*, deci o rezolvare greșită nu se putea
+  corecta cu ea. Control: `tools/test_practice_replace.py`, 8/8.
+- **Cheile de progres** prefixate cu profilul: 512 chei distincte, 0 ciocniri.
+- **Poarta reparată** — striga defecte inexistente pe 69 de lecții bune (detalii mai jos).
 
-```bash
-# reluare cu cache (cel mai ieftin), partea 1 si partea 2:
-Workflow({scriptPath: "<repo>/_campaign/proba_elevi_2026_09_03/valuri/wf_t6.js",
-          args: {parte: 1}, resumeFromRunId: "wf_75e96386-97a"})
-Workflow({scriptPath: "<repo>/_campaign/proba_elevi_2026_09_03/valuri/wf_t6.js",
-          args: {parte: 2}, resumeFromRunId: "wf_71251196-91b"})
-```
-Fără `resumeFromRunId` merge la fel de bine, doar că re-deschide și lecțiile gata (agenții
-raportează „0 inserate" și trec mai departe). **De ce două părți:** plafonul e 1000 de agenți
-pe rulare, iar aici sunt 2 etape × 507 lecții.
-
-## 2. Caseta „Vrei mai mult?" — pregătită, nepornită (507 lecții)
+## 1. Caseta „Vrei mai mult?" — pregătită, nepornită (507 lecții)
 
 Elevul bun n-are nicio ieșire în sus pe tot situl; asta e reparația. Unealta și stilul sunt
 scrise și probate pe control negativ.
@@ -40,45 +36,62 @@ scrise și probate pe control negativ.
 Workflow({scriptPath: "<...>/valuri/wf_t7.js", args: {parte: 1}})
 Workflow({scriptPath: "<...>/valuri/wf_t7.js", args: {parte: 2}})
 ```
-⚠ **Nu în același timp cu punctul 1** — scriu în aceleași fișiere.
+⚠ **Merită întâi rescris pe modul, ca `wf_t6b.js`** — `wf_t7.js` e încă pe lecție, adică
+507 agenți în loc de ~110. Rețeta: `valuri/scan_ramase.py` + `valuri/gen_t6b_loturi.py` +
+`valuri/gen_t6b.py`, adaptate la ce caută T7.
 
 `tools/depth_io.py` refuză orice legătură pe care n-o poate dovedi: internă care nu există pe
 disc, externă în afara listei scurte (Wikipedia, MDN, w3schools, docs.python.org, pbinfo,
 support.microsoft). Probat: a prins `lectia2-stiluri-sabloane.html` — nume real, dar din altă
 secțiune a sitului.
 
-## 3. Cele 22 de lecții care predau alt subiect decât slotul lor — pregătit, nepornit
+## 2. Cele 22 de lecții care predau alt subiect decât slotul lor — pregătit, nepornit
 
 Dosarul: `CONTINUT_ASEZAT_GRESIT.md`. Lista de lucru: `de_rescris_curat.json`.
 
 ```bash
 Workflow({scriptPath: "<...>/valuri/wf_rescriere.js"})
 ```
-⚠ **După punctele 1 și 2** — aceleași fișiere.
+⚠ **După punctul 1** — aceleași fișiere.
 
 Cel mai important dintre ele: **`tehnologic/cls12` nu predă calcul tabelar nicăieri**, deși e
 competență la proba practică de bacalaureat. Modulul predă de patru ori construirea unui site.
 
-## 4. Cheile de progres care se ciocnesc — mecanic, 105 fișiere
+Confirmat independent pe 05.09 de un corector: `tehnologic/cls10/m1-procesare-text/lectia3-corespondenta-aplicatie.html`
+promite îmbinare de corespondență (mail merge) și predă integral PowerPoint. Competența
+„Îmbinare corespondență" nu mai e predată nicăieri în modul.
+
+## 3. Cele 22 de lecții care mai pică poarta — defecte reale, netriate
 
 ```bash
-python tools/repara_chei_progres.py            # arata ce ar schimba
-python tools/repara_chei_progres.py --aplica   # scrie
+python "C:\00\Projects\LearningHub\tools\verifica_lectie.py" <fisier>
 ```
-21 de chei folosite de 105 lecții cu conținut **diferit**: cine termină lecția la tehnologic o
-vede bifată și la umanist. ⚠ După punctele 1-3.
+Lista cu motive: `poarta_lectii.json`. Împărțirea:
+- **9** fără secțiunea *obiectiv*, **9** fără secțiunea *atomi* (mai ales `tic/cls7/extra-baze-date`)
+- **7** fără cheie de progres (`AtomicLearning.init` lipsește — lecția nu se înregistrează
+  în progresul modulului); mai ales `mat-info`
+- **7** fără niciun chestionar
+- **1** nelegată din index-ul modulului (`tic/cls5/extra-word-cls7/lectia6-proiect.html`)
+
+⚠ Contrazice tabelul vechi care spunea „510 din 510 au toate cele 5 secțiuni" — de lămurit
+care număr e bun înainte de a rescrie ceva.
+
+## 4. Enunțuri defecte — decizie de curriculum, nu reparație
+
+`ENUNTURI_DEFECTE.md`: două cerințe care nu stau în picioare (una dă codul complet la un
+exercițiu de *performanță*, alta cere o mărime care nu intră în nicio formulă). Rezolvarea
+nu le poate repara; enunțul trebuie schimbat.
 
 ## 5. Mărunțișuri măsurate, nereparate
 
-- **12 lecții încarcă `progress.js` dar nu-l pornesc** (nu se înregistrează în progresul
-  modulului); 11 la fel cu `breadcrumb.js`. Motorul de atomi e curat peste tot — 0 lipsă.
-  Cele mai multe sunt în `tic/cls7/extra-baze-date`. Scanare: `scratchpad/lipsa_init.py`.
 - **67 de itemi** în care o variantă greșită își anunță singură greșeala, **32 de indicii** care
   nu discriminează. Slăbesc itemul, nu învață pe nimeni ceva fals. Oprit deliberat: fiecare
   rescriere în masă costă defecte noi (măsurat: 43% la prima rundă).
-- `extra-word-cls7/lectia6-proiect.html` — orfană, n-o leagă nimeni.
+- `extra-word-cls7/lectia6-proiect.html` — orfană, n-o leagă nimeni (o vede și poarta acum).
 - 418 fișiere `.bak_container_*` (13 MB, neurmărite de git). Nu le-am șters: nu se regăsesc
   identic în niciun commit, deci sunt dintr-o stare intermediară.
+- **Situl nu e publicat** de la modificările din 04-05.09. Ultimul deploy cunoscut e mai vechi
+  decât toată munca de azi.
 
 ## 6. Clasa a IX-a — **NU se atinge cu metoda de mai sus**
 
@@ -94,61 +107,65 @@ Plus, textul de programă de pe disc e din consultarea publică 2025, cu antetul
 Ce lipsește cel mai tare la a IX-a: **inteligența artificială** (cea mai mare temă nouă, acum
 doar jumătate de lecție), tehnologiile emergente (VR/AR), aplicațiile pentru învățare.
 
-## Unelte făcute în campania asta
+---
+
+## Unelte
 
 | unealtă | ce face |
 |:--|:--|
 | `tools/quiz_io.py` | citește/scrie chestionarele în siguranță; cheia se schimbă doar cu motiv scris, care se loghează |
-| `tools/practice_io.py` | inserează rezolvări model, refuză cele prea scurte sau cu HTML rupt |
+| `tools/practice_io.py` | inserează (`apply`) sau **înlocuiește** (`replace`) rezolvări model; refuză cele prea scurte sau cu HTML rupt |
 | `tools/depth_io.py` | inserează caseta „Vrei mai mult?"; refuză orice legătură nedovedită |
 | `tools/verifica_lectie.py` | poarta pentru o lecție: 5 secțiuni, chestionare care se parsează, cheie de progres unică, scripturi și legături vii |
 | `tools/verifica_cifre.py` | cifrele afișate vs. discul; `--repara` |
 | `tools/verifica_nume_continut.py` | numele fișierului vs. ce predă (semnalează, nu corectează) |
 | `tools/repara_chei_progres.py` | prefixează cheia cu profilul, doar unde există ciocnire |
 | `tools/lesson_digest.py` | 640 KB de HTML → 84 KB de substanță, pentru agenți |
+| `tools/test_practice_replace.py` | control: `replace` chiar înlocuiește și nu strică restul paginii (8/8) |
+| `tools/test_verifica_lectie.py` | control: poarta nu mai strigă degeaba, dar tot prinde defectul fabricat (5/5) |
+| `valuri/scan_ramase.py` | scanează discul: câte exerciții n-au rezolvare, în ce lecții, în ce module |
+| `valuri/gen_t6b_loturi.py` | grupează lecțiile în loturi de modul, cu plafon de exerciții |
 
 ---
 
-# Cum facem asta mai ieftin (măsurat 04.09.2026)
-
-`python tools/agent_cost.py scan 1` pe ziua de azi: **2168 de subagenți, 13 milioane de jetoane scrise**.
+# Ce am învățat despre cost (măsurat 04–05.09.2026)
 
 | ce am măsurat | cifra |
 |:--|:--|
 | opus, cost la mia de jetoane scrise | **$0,84** |
 | sonnet, aceeași muncă | **$0,15** → de **5,8×** mai ieftin |
-| cei 974 de agenți pe opus | **74% din tot consumul** |
 | ce umple contextul | Bash **44%** · Read **31%** · textul propriu 21% |
 | legea amplificării | 1 jeton scris ⇒ **49,5** jetoane de context re-citite |
-| cei mai scumpi 10% dintre agenți | 24% din consum |
 
-## Greșeala de ieri, deja reparată în scripturi
+**Mutarea care a tăiat cel mai mult: un agent pe MODUL, nu pe lecție.** Campania veche
+deschidea un agent pe fiecare din cele 507 lecții, deși doar 206 mai aveau ceva de făcut.
+Fiecare își plătea o dată pornirea și descoperirea uneltelor, degeaba. Grupate pe modul, cu
+plafon de 18 exerciții pe lot: **61 de loturi**. Aceeași muncă, ~8× mai puțini agenți.
 
-Pusesem `model: 'sonnet'` pe etapa care **scrie**, dar lăsasem **etapa de verificare pe opus** —
-adică 507 agenți scumpi per campanie, pentru o muncă în mare de bifat.
+Celelalte reguli, confirmate:
+- modelul se declară la **fiecare** `agent()`. Mecanic (extras, formatat, bifat) → `'sonnet'`.
+  Judecată (scrie curriculum, cântărește, decide) → `'opus'`. Poartă: `python tools\agent_cost.py gate`.
+- verificarea **nu pe toate** — doar unde unealta a sărit peste ceva, plus un eșantion.
+  Excepție: când repari defecte deja cunoscute, verifici 100%.
+- prompturile cer explicit **comenzi Bash grupate** și **interzis cititul HTML-ului brut**
+  (`lesson_digest.py`, 640 KB → 84 KB).
 
-Reparat în `wf_t6.js` și `wf_t7.js`:
-- **verificarea trece pe sonnet** (≈5,8× mai ieftin)
-- la T6, verificarea **nu mai rulează pe toate lecțiile**: doar unde unealta a sărit peste ceva
-  (semn că ceva n-a mers) **plus 1 din 5 ca eșantion**. Din 507 agenți de verificare rămân ~130.
-- ambele prompturi cer explicit: **comenzile grupate într-un singur apel Bash** și
-  **interzis cititul HTML-ului brut** — se folosește `lesson_digest.py` (640 KB → 84 KB, măsurat).
+## Ce am învățat despre verificare (05.09.2026)
 
-Efectul așteptat pe restul campaniei: partea de verificare scade de la ~$1.500 la sub $200,
-iar economia de context taie și din partea de scriere.
+**Nu crede raportul agentului — verifică end-state-ul cu un oracol independent.** Agenții au
+raportat 643 de rezolvări scrise; am rescanat discul cu unealta și abia atunci am știut.
 
-## Ce mai putem face, dacă vrem și mai puțin
+**Dar oracolul poate greși în cealaltă direcție.** Primul meu control pe reparații a dat 3
+FAIL, toate false: o corectare *bună* NUMEȘTE forma greșită ca să avertizeze împotriva ei
+(„dacă scrii `=SUMIF(A2:A7,...)`, Excel afișează eroare"). Un test „markerul nu apare" nu poate
+deosebi greșeala de avertismentul despre greșeală. Acum testul cere ca fiecare apariție să
+stea lângă o negație, plus o aserțiune **pozitivă** că apare calea corectă.
 
-1. **Un agent pe MODUL, nu pe lecție** (4–6 lecții odată). Fiecare agent își plătește o dată
-   pornirea și descoperirea uneltelor, nu de cinci ori. 507 agenți → ~110. E singura schimbare
-   care mai taie mult, dar cere restructurarea workflow-ului — nu am făcut-o ca să nu introduc
-   erori pe care nu le pot testa până luni.
-2. **Verificarea în două trepte:** sonnet trece prin tot, opus se cheamă DOAR pe ce a semnalat
-   sonnet. Judecata scumpă se plătește doar unde chiar e nevoie de ea.
-3. Pentru rescrierea celor 22 de lecții (`wf_rescriere.js`) **las opus la scriere** — acolo se
-   scrie curriculum, e exact munca pentru care merită plătit modelul bun. 22 de lecții e ieftin
-   oricum.
+**Aceeași greșeală o făcea și poarta**, pe 69 de lecții: raporta legături moarte pentru
+`<code>&lt;a href="despre.html"&gt;</code>` dintr-o lecție care *predă* HTML, și „chestionar
+mort" pentru atomii al căror container cădea dincolo de o fereastră fixă de 6000 de caractere.
+O poartă care strigă degeaba e mai rea decât niciuna: defectul adevărat se pierde în zgomot.
 
-> **Regula de reținut:** modelul se declară la FIECARE `agent()`. Mecanic (extras, formatat,
-> bifat) → `'sonnet'`. Judecată (scrie curriculum, cântărește, decide) → `'opus'`.
-> Poarta care verifică asta: `python tools\agent_cost.py gate`.
+**Regresiile se măsoară față de o bază, nu față de intuiție.** Am făcut worktree la commit-ul
+de dinainte și am rulat aceeași poartă acolo: 185 picau înainte, 91 după munca de conținut,
+**0 regresii**. Fără bază, cele 91 ar fi arătat ca un dezastru făcut de mine.
