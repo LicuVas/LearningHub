@@ -1,6 +1,6 @@
-# Reluare — de unde continuăm (actualizat 05.09.2026, ora 11:45)
+# Reluare — de unde continuăm (actualizat 05.09.2026, ora 13:45)
 
-Situl e într-o stare **întreagă și publicată pe disc** (`511ce8f`). Nimic pe jumătate scris.
+Situl e **întreg și publicat live** (`0986d08`, verificat pe adresa publică). Nimic pe jumătate scris.
 Punctele de mai jos nu depind unul de altul, cu excepția celor marcate.
 
 ## Ce e gata
@@ -14,6 +14,8 @@ Punctele de mai jos nu depind unul de altul, cu excepția celor marcate.
 | rezolvări greșite găsite de corectori și reparate | **13**, verificate independent pe disc (21/21) |
 | **chei de progres care se ciocneau** | **0** (erau 21 de chei folosite de 105 lecții) ✅ |
 | lecții care trec poarta `verifica_lectie.py` | **488 din 510** (erau 325) — din care ~69 „reparate" au fost de fapt alarme false ale porții, nu lecții stricate |
+| **caseta „Vrei mai mult?”** | **507 din 507 lecții** ✅ terminat 05.09 |
+| casete greșite găsite de corectori și reparate | **27**, verificate independent pe disc (12/12) |
 | cifrele de pe paginile de clasă | se potrivesc cu discul (`verifica_cifre.py`) |
 
 ## Ce s-a făcut pe 05.09
@@ -26,42 +28,36 @@ Punctele de mai jos nu depind unul de altul, cu excepția celor marcate.
   corecta cu ea. Control: `tools/test_practice_replace.py`, 8/8.
 - **Cheile de progres** prefixate cu profilul: 512 chei distincte, 0 ciocniri.
 - **Poarta reparată** — striga defecte inexistente pe 69 de lecții bune (detalii mai jos).
+- **507 casete „Vrei mai mult?”** scrise (`wf_t7b.js`, 127 de loturi, 159 de agenți). Elevul bun
+  are acum o ieșire în sus pe fiecare lecție. 27 de casete greșite reparate (`wf_t7b_reparatii.js`).
+- **`depth_io.py replace`** — la fel ca la `practice_io`. Ordinea contează: caseta veche se
+  decupează abia după ce textul nou trece toate gărzile.
+- **Titlul dublat pe 123 de lecții** — `tools/repara_titlu_dublat.py`, mecanic, control 9/9.
+- **Încă două lecții cu conținut așezat greșit**, găsite căutând copiile unui defect semnalat
+  (lista a crescut de la 22 la 24).
 
-## 1. Caseta „Vrei mai mult?" — pregătită, nepornită (507 lecții)
+## 1. Cele 24 de lecții care predau alt subiect decât slotul lor — pregătit, nepornit
 
-Elevul bun n-are nicio ieșire în sus pe tot situl; asta e reparația. Unealta și stilul sunt
-scrise și probate pe control negativ.
-
-```bash
-Workflow({scriptPath: "<...>/valuri/wf_t7.js", args: {parte: 1}})
-Workflow({scriptPath: "<...>/valuri/wf_t7.js", args: {parte: 2}})
-```
-⚠ **Merită întâi rescris pe modul, ca `wf_t6b.js`** — `wf_t7.js` e încă pe lecție, adică
-507 agenți în loc de ~110. Rețeta: `valuri/scan_ramase.py` + `valuri/gen_t6b_loturi.py` +
-`valuri/gen_t6b.py`, adaptate la ce caută T7.
-
-`tools/depth_io.py` refuză orice legătură pe care n-o poate dovedi: internă care nu există pe
-disc, externă în afara listei scurte (Wikipedia, MDN, w3schools, docs.python.org, pbinfo,
-support.microsoft). Probat: a prins `lectia2-stiluri-sabloane.html` — nume real, dar din altă
-secțiune a sitului.
-
-## 2. Cele 22 de lecții care predau alt subiect decât slotul lor — pregătit, nepornit
-
-Dosarul: `CONTINUT_ASEZAT_GRESIT.md`. Lista de lucru: `de_rescris_curat.json`.
+Dosarul: `CONTINUT_ASEZAT_GRESIT.md`. Lista de lucru: `de_rescris_curat.json` (24 de intrări).
 
 ```bash
 Workflow({scriptPath: "<...>/valuri/wf_rescriere.js"})
 ```
-⚠ **După punctul 1** — aceleași fișiere.
+⚠ **Rescrie-l întâi pe modul, ca `wf_t6b.js` / `wf_t7b.js`** — și pune-l să caute defectul în
+TOATE profilurile-frate, nu doar unde a fost semnalat.
 
-Cel mai important dintre ele: **`tehnologic/cls12` nu predă calcul tabelar nicăieri**, deși e
-competență la proba practică de bacalaureat. Modulul predă de patru ori construirea unui site.
+Cel mai important: **`tehnologic/cls12` nu predă calcul tabelar nicăieri**, deși e competență la
+proba practică de bacalaureat. Modulul predă de patru ori construirea unui site.
 
-Confirmat independent pe 05.09 de un corector: `tehnologic/cls10/m1-procesare-text/lectia3-corespondenta-aplicatie.html`
-promite îmbinare de corespondență (mail merge) și predă integral PowerPoint. Competența
-„Îmbinare corespondență" nu mai e predată nicăieri în modul.
+Cele două adăugate pe 05.09, la `cls9/m1-sisteme-retele/lectia2-retele-internet.html`: la
+**științe** lecția predă software (și dublează lecția 1), la **militar** predă comunicare
+digitală. La ambele, competența *rețele și Internet* nu e predată nicăieri. Etaloanele
+(tehnologic, umanist, pedagogic) au deja conținutul corect.
 
-## 3. Cele 22 de lecții care mai pică poarta — defecte reale, netriate
+Confirmat tot pe 05.09: `tehnologic/cls10/m1-procesare-text/lectia3-corespondenta-aplicatie.html`
+promite îmbinare de corespondență și predă integral PowerPoint.
+
+## 2. Cele 22 de lecții care mai pică poarta — defecte reale, netriate
 
 ```bash
 python "C:\00\Projects\LearningHub\tools\verifica_lectie.py" <fisier>
@@ -76,13 +72,13 @@ Lista cu motive: `poarta_lectii.json`. Împărțirea:
 ⚠ Contrazice tabelul vechi care spunea „510 din 510 au toate cele 5 secțiuni" — de lămurit
 care număr e bun înainte de a rescrie ceva.
 
-## 4. Enunțuri defecte — decizie de curriculum, nu reparație
+## 3. Enunțuri defecte — decizie de curriculum, nu reparație
 
 `ENUNTURI_DEFECTE.md`: două cerințe care nu stau în picioare (una dă codul complet la un
 exercițiu de *performanță*, alta cere o mărime care nu intră în nicio formulă). Rezolvarea
 nu le poate repara; enunțul trebuie schimbat.
 
-## 5. Mărunțișuri măsurate, nereparate
+## 4. Mărunțișuri măsurate, nereparate
 
 - **67 de itemi** în care o variantă greșită își anunță singură greșeala, **32 de indicii** care
   nu discriminează. Slăbesc itemul, nu învață pe nimeni ceva fals. Oprit deliberat: fiecare
@@ -90,10 +86,9 @@ nu le poate repara; enunțul trebuie schimbat.
 - `extra-word-cls7/lectia6-proiect.html` — orfană, n-o leagă nimeni (o vede și poarta acum).
 - 418 fișiere `.bak_container_*` (13 MB, neurmărite de git). Nu le-am șters: nu se regăsesc
   identic în niciun commit, deci sunt dintr-o stare intermediară.
-- **Situl nu e publicat** de la modificările din 04-05.09. Ultimul deploy cunoscut e mai vechi
-  decât toată munca de azi.
+- Situl **e publicat** (05.09, ora 13:45), verificat pe adresa curată cu marker de conținut.
 
-## 6. Clasa a IX-a — **NU se atinge cu metoda de mai sus**
+## 5. Clasa a IX-a — **NU se atinge cu metoda de mai sus**
 
 `CLASA_A_IXA_PROGRAMA_NOUA.md`. Din 2026-2027 clasa a IX-a e pe programa **nouă**
 (OMEC 3.716/2026); X–XII rămân pe cea veche. Votul celorlalte profiluri — metoda care a
@@ -123,6 +118,11 @@ doar jumătate de lecție), tehnologiile emergente (VR/AR), aplicațiile pentru 
 | `tools/lesson_digest.py` | 640 KB de HTML → 84 KB de substanță, pentru agenți |
 | `tools/test_practice_replace.py` | control: `replace` chiar înlocuiește și nu strică restul paginii (8/8) |
 | `tools/test_verifica_lectie.py` | control: poarta nu mai strigă degeaba, dar tot prinde defectul fabricat (5/5) |
+| `tools/test_depth_replace.py` | control: după un refuz, caseta veche rămâne pe loc (12/12) |
+| `tools/repara_titlu_dublat.py` | scoate titlul „Vrei mai mult?” repetat în casetă; `--aplica` |
+| `tools/test_titlu_dublat.py` | control: taie doar titlul, nu textul din jurul lui (9/9) |
+| `valuri/scan_t7.py` | câte lecții n-au casetă, grupate în loturi de modul |
+| `valuri/extinde_t7.py` | caută copiile unui defect în toate profilurile-frate |
 | `valuri/scan_ramase.py` | scanează discul: câte exerciții n-au rezolvare, în ce lecții, în ce module |
 | `valuri/gen_t6b_loturi.py` | grupează lecțiile în loturi de modul, cu plafon de exerciții |
 
@@ -169,3 +169,18 @@ O poartă care strigă degeaba e mai rea decât niciuna: defectul adevărat se p
 **Regresiile se măsoară față de o bază, nu față de intuiție.** Am făcut worktree la commit-ul
 de dinainte și am rulat aceeași poartă acolo: 185 picau înainte, 91 după munca de conținut,
 **0 regresii**. Fără bază, cele 91 ar fi arătat ca un dezastru făcut de mine.
+
+## Ce am învățat despre copii (05.09.2026)
+
+**Lecțiile de pe profiluri diferite sunt copii. Un defect găsit într-un profil trebuie căutat
+în toate.** Corectorii au semnalat 23 de casete greșite; căutând fiecare defect după o expresie
+distinctivă, au ieșit 38 de casete candidate — afirmația falsă despre codecul YouTube stătea în
+4 fișiere, nu în unul. Fără pasul ăsta, 15 copii ale acelorași greșeli rămâneau pe sit.
+
+Același pas a scos la iveală un gol pe care nu-l semnalase nimeni: la slotul „Rețele de
+calculatoare și Internet", clasa a IX-a, două profiluri din cinci predau cu totul altceva.
+
+**Dar extinderea se verifică, nu se aplică orb.** Din cele 38 de casete, agenții au înlocuit 27:
+la restul au constatat că fișierele nu erau chiar copii și au refuzat să scrie. Acesta e
+răspunsul corect, nu o rateare — de aceea promptul le cere explicit să judece defectul înainte
+de a-l repara, cu „inlocuite=0 + de ce" ca răspuns valid.
