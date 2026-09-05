@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Adauga la finalul lectiei caseta de aprofundare "Vrei mai mult?".
 
-    python tools/depth_io.py dump  <fisier>          -> ce stie lectia + daca are deja caseta
-    python tools/depth_io.py apply <fisier> <json>   -> insereaza caseta
+    python tools/depth_io.py dump    <fisier>          -> ce stie lectia + daca are deja caseta
+    python tools/depth_io.py apply   <fisier> <json>   -> insereaza caseta
+    python tools/depth_io.py replace <fisier> <json>   -> INLOCUIESTE caseta existenta
 
 JSON-ul asteptat:
     {"corp": "<p>...</p><ul><li>...</li></ul>"}
@@ -102,10 +103,18 @@ def dump(path):
     }
 
 
-def apply(path, corp):
-    """Returneaza (scris: bool, motiv: str)."""
+CASETA = re.compile(r'\s*<div class="depth-box">.*?</div>\s*(?=<div class="next-lesson"|</section>)',
+                    re.I | re.S)
+
+
+def apply(path, corp, inlocuieste=False):
+    """Returneaza (scris: bool, motiv: str).
+
+    inlocuieste=True scoate intai caseta veche. Fara asta, o caseta GRESITA nu se
+    putea corecta cu unealta - garda 'are deja o caseta' o refuza (aceeasi lipsa
+    o avea si practice_io, reparata tot pe 05.09.2026)."""
     src = io.open(path, encoding="utf-8", errors="replace").read()
-    if MARCA in src:
+    if MARCA in src and not inlocuieste:
         return False, "lectia are deja o caseta de aprofundare"
     corp = (corp or "").strip()
     text = vizibil(corp)
@@ -120,6 +129,16 @@ def apply(path, corp):
     rele = _legaturi_rele(corp, path)
     if rele:
         return False, "legaturi care nu se pot dovedi: " + "; ".join(rele[:4])
+
+    # Decupez caseta veche ABIA ACUM, dupa ce textul nou a trecut toate garzile.
+    # Daca as taia mai devreme si o garda ar respinge textul nou, lectia ar ramane
+    # fara nicio caseta - adica reparatia ar strica mai mult decat defectul.
+    if MARCA in src:
+        # Inlocuiesc cu exact spatierea pe care o gaseste inserarea de mai jos,
+        # altfel fiecare replace ar manca cate un rand gol din pagina.
+        src, n = CASETA.subn("\n\n        ", src, count=1)
+        if not n or MARCA in src:
+            return False, "nu pot decupa caseta veche (structura neasteptata)"
 
     m = REVIEW.search(src)
     if not m:
@@ -147,10 +166,10 @@ if __name__ == "__main__":
         f = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), f.replace("/", os.sep))
     if cmd == "dump":
         print(json.dumps(dump(f), ensure_ascii=False, indent=1))
-    elif cmd == "apply":
+    elif cmd in ("apply", "replace"):
         d = json.load(io.open(sys.argv[3], encoding="utf-8"))
         corp = d.get("corp") if isinstance(d, dict) else d
-        ok, motiv = apply(f, corp)
+        ok, motiv = apply(f, corp, inlocuieste=(cmd == "replace"))
         print(json.dumps({"scris": ok, "motiv": motiv}, ensure_ascii=False))
         sys.exit(0 if ok else 1)
     else:
