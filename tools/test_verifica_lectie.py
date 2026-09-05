@@ -56,6 +56,29 @@ io.open(TMP, "w", encoding="utf-8").write(stricat2)
 t("NEGATIV: prinde legatura moarta adevarata (in afara <code>)",
   any("lectie-care-nu-exista.html" in x for x in prob(TMP)))
 
+# 2b. exemplu didactic SCAPAT (&lt;a href="..."&gt;) intr-un paragraf obisnuit, fara <code>:
+#     nu e navigare, deci nu se semnaleaza. Asa arata lectiile care PREDAU HTML.
+stricat2b = src.replace('</body>', '<p>Scrie &lt;a href="pagina-inexistenta-2.html"&gt;Link&lt;/a&gt; in editor.</p></body>', 1)
+assert 'pagina-inexistenta-2.html' in stricat2b, "sabotajul n-a prins"
+io.open(TMP, "w", encoding="utf-8").write(stricat2b)
+t("NEGATIV inversat: exemplul HTML scapat nu e luat drept navigare",
+  not any("pagina-inexistenta-2.html" in x for x in prob(TMP)))
+
+# 2c. cheia de progres scrisa cu GHILIMELE DUBLE trebuie gasita (7 lectii o aveau asa)
+assert "AtomicLearning.init" in src, "controlul presupune un apel AtomicLearning.init"
+stricat2c = re.sub(r"AtomicLearning\.init\(\s*'([^']+)'", r'AtomicLearning.init("\1"', src, count=1)
+assert stricat2c != src, "sabotajul n-a prins - apelul nu era cu apostrofuri"
+io.open(TMP, "w", encoding="utf-8").write(stricat2c)
+t("cheia scrisa cu ghilimele duble e gasita",
+  not any("nu gasesc cheia de progres" in x for x in prob(TMP)))
+
+# 2d. NEGATIV: fara NICIO cheie, poarta trebuie sa strige
+stricat2d = src.replace("AtomicLearning.init", "AtomicLearningXX.init")
+stricat2d = stricat2d.replace("PracticeSimple.init", "PracticeSimpleXX.init").replace("LessonSummary.init", "LessonSummaryXX.init")
+io.open(TMP, "w", encoding="utf-8").write(stricat2d)
+t("NEGATIV: lipsa reala a cheii e tot prinsa",
+  any("nu gasesc cheia de progres" in x for x in prob(TMP)))
+
 # 3. control al controlului: aceeasi legatura, dar INTR-UN <code>, trebuie IGNORATA
 stricat3 = src.replace('</body>', '<code>&lt;a href="lectie-care-nu-exista.html"&gt;&lt;/a&gt;</code></body>', 1)
 io.open(TMP, "w", encoding="utf-8").write(stricat3)

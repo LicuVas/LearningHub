@@ -16,7 +16,10 @@ lectiilor sanatoase.
 import os, io, re, sys, collections
 
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-INIT = re.compile(r"((?:AtomicLearning|PracticeSimple|LessonSummary)\.init\(\s*)'([^']+)'")
+# Ghilimele SIMPLE sau DUBLE. Cu doar apostrof, cheile a 7 lectii (mai ales mat-info)
+# nu erau nici macar VAZUTE de unealta, deci n-au intrat niciodata in verificarea de
+# ciocniri. Aceeasi orbire o avea si poarta verifica_lectie.py (gasit 05.09.2026).
+INIT = re.compile(r"((?:AtomicLearning|PracticeSimple|LessonSummary)\.init\(\s*)(['\"])(.+?)\2")
 
 
 def lectii():
@@ -43,7 +46,7 @@ def profil_de(p):
 chei = collections.defaultdict(set)
 for p in lectii():
     s = io.open(p, encoding="utf-8", errors="replace").read()
-    for _, cheie in set(INIT.findall(s)):
+    for _, _q, cheie in set(INIT.findall(s)):
         chei[cheie].add(p)
 
 ciocnite = {k for k, v in chei.items() if len(v) > 1}
@@ -59,7 +62,7 @@ for p in lectii():
     nou = s
     local = 0
     for m in INIT.finditer(s):
-        cheie = m.group(2)
+        q, cheie = m.group(2), m.group(3)
         if cheie not in ciocnite:
             continue
         if not prof:
@@ -67,8 +70,9 @@ for p in lectii():
             continue
         if cheie.startswith(prof + "-"):
             continue
-        nou = nou.replace(m.group(1) + "'" + cheie + "'",
-                          m.group(1) + "'" + prof + "-" + cheie + "'")
+        # pastrez ghilimelele exact cum erau in fisier
+        nou = nou.replace(m.group(1) + q + cheie + q,
+                          m.group(1) + q + prof + "-" + cheie + q)
         local += 1
     if local:
         schimbari += 1

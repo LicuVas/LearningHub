@@ -30,6 +30,7 @@ SECTIUNI = (
 
 DIV = re.compile(r"<div\b[^>]*>|</div>", re.I)
 COD = re.compile(r"<(code|pre)\b[^>]*>.*?</\1>", re.I | re.S)
+LEGATURA = re.compile(r'<a\b[^>]*?href="((?:\.\./)*[a-z0-9][^"]*\.html)"', re.I | re.S)
 
 
 def corp_div(src, dupa):
@@ -89,7 +90,11 @@ def verifica(path):
                 probleme.append("un atom are chestionar dar n-are identificator (motorul nu-l gaseste)")
 
     # 4. cheia de progres
-    chei = set(re.findall(r"(?:AtomicLearning|PracticeSimple|LessonSummary)\.init\(\s*'([^']+)'", src))
+    # Ghilimele SIMPLE sau DUBLE. Cu doar apostrof, 7 lectii erau raportate ca
+    # "fara cheie de progres" desi o aveau, iar - mai rau - cheile scrise cu ghilimele
+    # duble scapau tacut si de verificarea de unicitate de mai jos (05.09.2026).
+    chei = set(m.group(2) for m in re.finditer(
+        r"(?:AtomicLearning|PracticeSimple|LessonSummary)\.init\(\s*(['\"])(.+?)\1", src))
     if not chei:
         probleme.append("nu gasesc cheia de progres (AtomicLearning.init)")
     for cheie in chei:
@@ -102,7 +107,7 @@ def verifica(path):
                 if not f.endswith(".html") or os.path.abspath(p2) == os.path.abspath(path):
                     continue
                 s2 = io.open(p2, encoding="utf-8", errors="replace").read()
-                if ("'" + cheie + "'") in s2 and "AtomicLearning.init" in s2:
+                if (("'" + cheie + "'") in s2 or ('"' + cheie + '"') in s2) and "AtomicLearning.init" in s2:
                     altele.append(os.path.relpath(p2, R).replace(os.sep, "/"))
         if altele:
             probleme.append("cheia de progres %r e folosita si de: %s" % (cheie, ", ".join(altele[:3])))
@@ -117,10 +122,13 @@ def verifica(path):
             probleme.append("scriptul nu exista pe disc: %s" % src_attr)
 
     # 6. inainte / inapoi
-    # Fara COD.sub, o lectie care PREDA HTML era raportata ca avand legaturi moarte:
-    # <code>&lt;a href="despre.html"&gt;</code> e un exemplu didactic, nu navigare
-    # (69 de alarme false, 05.09.2026).
-    for h in re.findall(r'href="((?:\.\./)*[a-z0-9][^"]*\.html)"', COD.sub("", src)):
+    # Doua straturi de aparare impotriva exemplelor didactice luate drept navigare
+    # (o lectie care PREDA HTML e plina de <a href="...">, si niciunul nu e navigare):
+    #  - COD.sub scoate blocurile <code>/<pre>
+    #  - LEGATURA cere un tag <a> REAL: exemplele scapate (&lt;a href="pagina2.html"&gt;)
+    #    n-au niciun "<a" literal inaintea lui href, deci nu se potrivesc.
+    # Impreuna: 69 + 12 alarme false eliminate (05.09.2026).
+    for h in LEGATURA.findall(COD.sub("", src)):
         t = os.path.normpath(os.path.join(dp, h.split("#")[0]))
         if not os.path.exists(t):
             probleme.append("legatura moarta: %s" % h)
