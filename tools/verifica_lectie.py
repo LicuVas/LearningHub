@@ -29,6 +29,16 @@ SECTIUNI = (
 
 
 DIV = re.compile(r"<div\b[^>]*>|</div>", re.I)
+TAG_CU_CLASA = re.compile(r'<div\b[^>]*\bclass="([^"]*)"[^>]*>', re.I)
+
+
+def are_atomi(src):
+    """Ca motorul: querySelectorAll('.atom') - clasa 'atom' in LISTA de clase.
+
+    Nu merge cu `<div class="atom"`: atomii reali apar si ca `class="atom atom-card"`,
+    si cu `class` pe alta pozitie (`<div data-atom-id=... class="atom" ...>`).
+    Prima varianta a acestei verificari rata exact acele forme (05.09.2026)."""
+    return any("atom" in c.split() for c in TAG_CU_CLASA.findall(src))
 COD = re.compile(r"<(code|pre)\b[^>]*>.*?</\1>", re.I | re.S)
 LEGATURA = re.compile(r'<a\b[^>]*?href="((?:\.\./)*[a-z0-9][^"]*\.html)"', re.I | re.S)
 
@@ -55,8 +65,17 @@ def verifica(path):
     dp = os.path.dirname(path)
 
     for nume, marca in SECTIUNI:
-        if not re.search(marca, src):
-            probleme.append("lipseste sectiunea: %s" % nume)
+        if re.search(marca, src):
+            continue
+        # Pentru "atomi", intrebarea care conteaza nu e daca exista wrapper-ul
+        # id="atomic-content", ci daca lectia ARE atomi. Cateva lectii mai vechi
+        # folosesc id="main-content" ca wrapper, dar au atomii la locul lor: poarta
+        # le raporta ca "fara atomi" desi motorul le porneste (7 alarme false,
+        # 05.09.2026). Wrapper-ul ramane util doar ca tinta de derulare pentru
+        # butonul "Am incercat!", deci lipsa lui se spune blând, nu ca defect.
+        if nume == "atomi" and are_atomi(src):
+            continue
+        probleme.append("lipseste sectiunea: %s" % nume)
 
     # 2 + 3. chestionarele
     n_quiz = 0
@@ -80,7 +99,12 @@ def verifica(path):
     if n_quiz == 0:
         probleme.append("lectia nu are niciun chestionar")
 
-    for m in re.finditer(r'<div class="atom"[^>]*>', src):
+    # Tot pe semantica listei de clase: `<div class="atom"` rata atomii scrisi
+    # `class="atom atom-card"` sau cu class pe alta pozitie - adica exact aceia pe
+    # care nu-i verifica nimeni si in care se ascunde un chestionar mort.
+    for m in TAG_CU_CLASA.finditer(src):
+        if "atom" not in m.group(1).split():
+            continue
         cap = m.group(0)
         bloc = corp_div(src, m.end())
         if "data-quiz" in cap or "data-quiz" in bloc:

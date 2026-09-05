@@ -1232,7 +1232,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
                 // "Am incercat!" → scroll to atoms
-                var target = document.getElementById('atomic-content');
+                // Cateva lectii mai vechi isi numesc containerul 'main-content'.
+                // Fara varianta de rezerva, butonul "Am incercat!" nu duce nicaieri
+                // pe ele; cu ea, derulam pana la primul atom (05.09.2026).
+                var target = document.getElementById('atomic-content')
+                          || document.getElementById('main-content')
+                          || document.querySelector('.atom');
                 if (target) target.scrollIntoView({ behavior: 'smooth' });
             }
         });

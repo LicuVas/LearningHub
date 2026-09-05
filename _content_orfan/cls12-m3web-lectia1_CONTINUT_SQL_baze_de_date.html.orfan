@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectia 1: Baze de date relationale si SQL | Clasa a XII-a Mat-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
+<!-- NO inline <style> blocks. ZERO. -->
+</head>
+<body>
+<div class="container">
+
+    <!-- NAV BAR -->
+    <nav class="nav-bar">
+        <a href="index.html" class="nav-btn" title="Inapoi la modul">&#8592; Modulul</a>
+        <a href="lectia2-responsive.html" class="nav-btn" title="Lectia urmatoare">Urmatoarea &#8594;</a>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="lesson-header">
+        <span class="lesson-badge">Invatare Atomica</span>
+        <h1 class="lesson-title">Baze de date relationale si SQL: structura, interogari, operatii</h1>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <span class="progress-label">Progres lectie:</span>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-percent" id="progress-percent">0%</span>
+    </div>
+
+    <!-- ═══════════════ FRAME SECTION ═══════════════ -->
+    <section class="lesson-frame">
+        <div class="goal-section">
+            <div class="goal-header">
+                <span class="goal-icon">&#127919;</span>
+                <h2 class="goal-title">Obiectivul lectiei</h2>
+            </div>
+            <p class="goal-text">Vei consolida modelul relational al bazelor de date si comenzile SQL fundamentale (SELECT, INSERT, UPDATE, DELETE, JOIN) pentru a interoga si manipula date organizate in tabele.</p>
+        </div>
+        <div class="learning-outcomes">
+            <h3>Dupa aceasta lectie vei putea:</h3>
+            <ul>
+                <li>Sa identifici componentele unui model relational (tabele, coloane, chei primare, chei straine)</li>
+                <li>Sa scrii interogari SELECT cu filtrare WHERE, ordonare ORDER BY si grupare GROUP BY</li>
+                <li>Sa folosesti JOIN pentru a combina date din mai multe tabele</li>
+                <li>Sa aplici INSERT, UPDATE si DELETE pentru modificarea datelor</li>
+                <li>Sa calculezi agregari cu COUNT, SUM, AVG, MIN, MAX</li>
+                <li>Sa descrii normalizarea (1NF, 2NF, 3NF) si sa identifici dependente functionale</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ═══════════════ TRY SECTION ═══════════════ -->
+    <section class="try-section">
+        <h2>Incearca singur!</h2>
+        <div class="try-challenge">
+            <div class="challenge-box">
+<div class="challenge-title">Provocare:</div>
+<p>Ai tabelul <code>Elevi(id, nume, clasa, medie)</code>. Scrie o interogare SQL care returneaza numele si media elevilor din clasa <code>'12A'</code> cu media mai mare decat 8, ordonati descrescator dupa medie.</p>
+<textarea id="tryAnswer" placeholder="SELECT ... FROM ... WHERE ... ORDER BY ...;" rows="5"></textarea>
+</div>
+            <div class="hint-box">
+<div class="hint-toggle" onclick="toggleHint(this)">&#128161; Ai nevoie de un indiciu?</div>
+<div class="hint-content">
+<p>Structura generala: <code>SELECT col1, col2 FROM tabel WHERE conditie ORDER BY col DESC;</code></p>
+<p>Raspuns: <code>SELECT nume, medie FROM Elevi WHERE clasa = '12A' AND medie &gt; 8 ORDER BY medie DESC;</code></p>
+<p>Nota: <strong>ORDER BY medie DESC</strong> sorteaza de la cea mai mare la cea mai mica medie.</p>
+</div>
+</div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ATOMS ═══════════════ -->
+    <main id="atomic-content">
+
+        <!-- ATOM 1 -->
+        <div class="atom" id="atom-1" data-quiz='[{&quot;question&quot;: &quot;Ce este cheia primara (PRIMARY KEY) intr-o tabela?&quot;, &quot;options&quot;: [&quot;O coloana oarecare care poate contine valori NULL sau duplicate, aleasa liber&quot;, &quot;Un identificator unic pentru fiecare rand din tabela&quot;, &quot;O coloana dintr-o tabela care contine o cheie ce refera alta tabela (cheie externa)&quot;, &quot;Primul camp definit in tabela, indiferent de tipul sau continutul datelor din el&quot;], &quot;correct&quot;: &quot;b&quot;, &quot;hint&quot;: &quot;PRIMARY KEY identifica unic fiecare inregistrare. Nu poate fi NULL, nu poate contine duplicate.&quot;}]'>
+            <div class="atom-header">
+                <div class="atom-number">1</div>
+                <h3 class="atom-title">1. Modelul relational: tabele, chei, relatii</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">O <strong>baza de date relationala</strong> organizeaza datele in <em>tabele</em>. Fiecare tabela are o <strong>cheie primara (PK)</strong> care identifica unic fiecare rand. Relatiile intre tabele sunt exprimate prin <strong>chei straine (FK)</strong>.</div>
+                <pre>-- Creare tabele cu PK si FK
+CREATE TABLE Clase (
+    id_clasa INTEGER PRIMARY KEY,
+    denumire TEXT NOT NULL
+);
+CREATE TABLE Elevi (
+    id_elev   INTEGER PRIMARY KEY,
+    nume      TEXT    NOT NULL,
+    clasa     TEXT,
+    medie     REAL,
+    id_clasa  INTEGER REFERENCES Clase(id_clasa)
+);
+CREATE TABLE Note (
+    id_elev    INTEGER REFERENCES Elevi(id_elev),
+    id_materie INTEGER,
+    nota       INTEGER,
+    PRIMARY KEY (id_elev, id_materie)  -- PK compusa
+);</pre>
+                <div class="example-box">
+<div class="example-title">Concepte cheie:</div>
+<p><strong>PK (Primary Key)</strong>: identifica unic fiecare rand; nu poate fi NULL, nu poate contine duplicate.</p>
+<p><strong>FK (Foreign Key)</strong>: refera PK-ul altei tabele; asigura integritatea referentiala.</p>
+<p><strong>PK compusa</strong>: (id_elev, id_materie) impreuna identifica unic fiecare nota.</p>
+</div>
+                            <div class="atom-quiz"></div>
+            </div>
+        </div>
+
+        <!-- ATOM 2 -->
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Care clauza SQL filtreaza randurile DUPA agregare (GROUP BY)?", "options": ["WHERE", "ORDER BY", "HAVING", "LIMIT"], "correct": "c", "hint": "HAVING filtreaza grupurile formate de GROUP BY. WHERE filtreaza INAINTE de grupare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">2</div>
+                <h3 class="atom-title">2. SELECT: filtrare, sortare, grupare</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def"><strong>SELECT</strong> este comanda principala de interogare. Ordinea obligatorie a clauzelor: <code>SELECT &rarr; FROM &rarr; WHERE &rarr; GROUP BY &rarr; HAVING &rarr; ORDER BY &rarr; LIMIT</code>. Functii de agregare: <code>COUNT, SUM, AVG, MIN, MAX</code>.</div>
+                <div class="example-box">
+<div class="example-title">Interogari verificate (SQLite Python):</div>
+<pre>-- 1. Elevi din 12A cu medie &gt; 8, descrescator:
+SELECT nume, medie
+FROM Elevi
+WHERE clasa = '12A' AND medie &gt; 8
+ORDER BY medie DESC;
+
+-- 2. Media pe clase cu HAVING:
+SELECT clasa, AVG(medie) AS medie_clasa, COUNT(*) AS nr_elevi
+FROM Elevi
+GROUP BY clasa
+HAVING AVG(medie) &gt; 8;</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python sqlite3):</div>
+<pre>-- Interogare 1 (12A, medie&gt;8, DESC):
+Ana Popescu  | 9.50
+Maria Popa   | 8.20
+
+-- Interogare 2 (HAVING AVG&gt;8):
+12A | medie_clasa=8.40 | nr_elevi=3
+12B | medie_clasa=8.90 | nr_elevi=2</pre>
+</div>
+                            <div class="atom-quiz"></div>
+            </div>
+        </div>
+
+        <!-- ATOM 3 -->
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Ce tip de JOIN pastreaza NUMAI randurile cu corespondent in ambele tabele?", "options": ["INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "FULL JOIN"], "correct": "a", "hint": "INNER JOIN returneaza numai randurile pentru care conditia ON este satisfacuta in ambele tabele. LEFT JOIN pastreaza toate randurile din stanga plus NULL pentru cele fara corespondent in dreapta."}]'>
+            <div class="atom-header">
+                <div class="atom-number">3</div>
+                <h3 class="atom-title">3. JOIN: combinarea datelor din mai multe tabele</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def"><strong>JOIN</strong> combina randuri din doua sau mai multe tabele pe baza conditiei PK = FK. <strong>INNER JOIN</strong>: returneaza doar randurile cu corespondent in ambele tabele (intersectie). <strong>LEFT JOIN</strong>: returneaza toate randurile din tabela stanga + NULL acolo unde nu exista corespondent.</div>
+                <div class="example-box">
+<div class="example-title">INNER JOIN vs LEFT JOIN (output real):</div>
+<pre>-- INNER JOIN: doar elevii cu clasa existenta in Clase
+SELECT e.nume, c.denumire
+FROM Elevi e INNER JOIN Clase c ON e.id_clasa = c.id_clasa;
+-- Output: Ana-12A | Ion-12B  (Ioana fara clasa - LIPSA)
+
+-- LEFT JOIN: toti elevii, NULL daca clasa nu exista
+SELECT e.nume, c.denumire
+FROM Elevi e LEFT JOIN Clase c ON e.id_clasa = c.id_clasa;
+-- Output: Ana-12A | Ion-12B | Ioana-NULL
+
+-- JOIN pe 3 tabele (note &gt;= 9):
+SELECT e.nume, m.denumire, n.nota
+FROM Elevi e
+JOIN Note n ON e.id_elev = n.id_elev
+JOIN Materii m ON n.id_materie = m.id_materie
+WHERE n.nota &gt;= 9;
+-- Output: Ana-Informatica-10 | Ana-Matematica-9</pre>
+</div>
+                            <div class="atom-quiz"></div>
+            </div>
+        </div>
+
+        <!-- ATOM 4 -->
+        <div class="atom" id="atom-4" data-quiz='[{&quot;question&quot;: &quot;Ce se intampla daca rulezi UPDATE Elevi SET medie=10; fara clauza WHERE?&quot;, &quot;options&quot;: [&quot;Comanda esueaza cu eroare, deoarece clauza WHERE este obligatorie&quot;, &quot;Actualizeaza doar primul rand gasit, ca la o cautare cu un rezultat&quot;, &quot;Actualizeaza doar randul selectat anterior printr-un SELECT separat&quot;, &quot;Toate randurile din tabela primesc medie=10&quot;], &quot;correct&quot;: &quot;d&quot;, &quot;hint&quot;: &quot;Fara WHERE, UPDATE afecteaza TOATE randurile tabelei.&quot;}]'>
+            <div class="atom-header">
+                <div class="atom-number">4</div>
+                <h3 class="atom-title">4. Manipularea datelor: INSERT, UPDATE, DELETE</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">Comenzile <strong>DML (Data Manipulation Language)</strong> modifica datele: <strong>INSERT</strong> adauga randuri noi, <strong>UPDATE</strong> modifica date existente, <strong>DELETE</strong> sterge randuri. Intotdeauna foloseste <code>WHERE</code> la UPDATE si DELETE pentru a evita modificarea tuturor randurilor!</div>
+                <pre>-- INSERT: adauga un elev nou
+INSERT INTO Elevi (id_elev, nume, clasa, medie)
+VALUES (6, 'Elena Mihai', '12A', 8.75);
+
+-- UPDATE: modifica media unui elev specific (WHERE obligatoriu!)
+UPDATE Elevi SET medie = 9.00 WHERE id_elev = 2;
+
+-- DELETE: sterge un elev specific
+DELETE FROM Elevi WHERE id_elev = 5;
+
+-- PERICOL: fara WHERE afecteaza TOATE randurile!
+-- UPDATE Elevi SET medie = 10;  &lt;-- NU face asta!</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python sqlite3):</div>
+<pre># Inainte UPDATE: Ion Ionescu | medie=7.80
+# Dupa UPDATE id_elev=2: Ion Ionescu | medie=9.00
+
+# INSERT verificat (id=6):
+# 6 | Elena Mihai | 12A | 8.75</pre>
+</div>
+                            <div class="atom-quiz"></div>
+            </div>
+        </div>
+
+        <!-- ATOM 5 -->
+        <div class="atom" id="atom-5" data-quiz='[{"question": "O subinterogare in WHERE poate intoarce mai multe valori daca folosim operatorul:", "options": ["= (egal)", "IN", "LIKE", "> (mai mare)"], "correct": "b", "hint": "IN permite comparatia cu o lista de valori returnate de subinterogare."}]'>
+            <div class="atom-header">
+                <div class="atom-number">5</div>
+                <h3 class="atom-title">5. Subinterogari (subqueries)</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def">O <strong>subinterogare (subquery)</strong> este un SELECT plasat in interiorul altui SELECT, WHERE, HAVING sau FROM. Permite interogari complexe fara rezultate intermediare. Operatori: <code>=</code> (o valoare), <code>IN</code> (lista de valori), <code>EXISTS</code> (existenta).</div>
+                <pre>-- Elevii cu media PESTE media generala:
+SELECT nume, medie FROM Elevi
+WHERE medie &gt; (SELECT AVG(medie) FROM Elevi);
+
+-- Elevii care au nota la Informatica (IN + subquery):
+SELECT nume FROM Elevi WHERE id_elev IN (
+    SELECT id_elev FROM Note
+    WHERE id_materie = (
+        SELECT id_materie FROM Materii
+        WHERE denumire = 'Informatica'
+    )
+);</pre>
+                <div class="example-box">
+<div class="example-title">Output real (rulat cu python sqlite3):</div>
+<pre># Media generala: 8.42
+# Elevi cu medie &gt; 8.42:
+Ana Popescu  | 9.50
+Dan Radu     | 9.10
+
+# Elevi cu nota la Informatica:
+Ana Popescu
+Dan Radu</pre>
+</div>
+                            <div class="atom-quiz"></div>
+            </div>
+        </div>
+
+        <!-- ATOM 6 -->
+        <div class="atom" id="atom-6" data-quiz='[{&quot;question&quot;: &quot;Ce proprietate cere Forma Normala 1 (1NF)?&quot;, &quot;options&quot;: [&quot;Fiecare coloana are valori atomice, fara grupuri repetitive de date&quot;, &quot;Fiecare coloana non-cheie depinde de intreaga cheie primara&quot;, &quot;Nu exista dependente tranzitive intre atribute non-cheie&quot;, &quot;Tabela are o singura cheie primara simpla, nu compusa din mai multe coloane&quot;], &quot;correct&quot;: &quot;a&quot;, &quot;hint&quot;: &quot;1NF cere valori atomice si fara grupuri repetitive. 2NF cere dependenta de intreaga PK. 3NF elimina dependentele tranzitive.&quot;}]'>
+            <div class="atom-header">
+                <div class="atom-number">6</div>
+                <h3 class="atom-title">6. Normalizare: 1NF, 2NF, 3NF</h3>
+            </div>
+            <div class="atom-content">
+                <div class="concept-def"><strong>Normalizarea</strong> este procesul de proiectare a bazei de date pentru a elimina redundanta si anomaliile de actualizare. Se aplica in trepte: <strong>1NF &rarr; 2NF &rarr; 3NF</strong>.</div>
+                <div class="example-box">
+<div class="example-title">Treptele normalizarii (cu exemple concrete):</div>
+<pre># NENORMALIZAT (incalca 1NF): valori ne-atomice
+# id | elev | note       | clasa
+#  1 | Ana  | 9, 10, 8   | 12A   &lt;-- lista in celula!
+
+# Dupa 1NF: valori atomice, PK compusa
+# Note(id_elev, id_materie, nota)  PK=(id_elev, id_materie)
+
+# Incalcare 2NF: Elevi(id_elev, id_materie, nota, NUME_ELEV)
+# nume_elev depinde DOAR de id_elev (nu de intreaga PK)
+# Solutie 2NF: Elevi(id_elev, nume) + Note(id_elev, id_materie, nota)
+
+# Incalcare 3NF: Elevi(id_elev, nume, id_clasa, DENUMIRE_CLASA)
+# denumire_clasa depinde tranzitiv: id_elev-&gt;id_clasa-&gt;denumire_clasa
+# Solutie 3NF: Elevi(id_elev, nume, id_clasa) + Clase(id_clasa, denumire)</pre>
+</div>
+                <div class="example-box">
+<div class="example-title">Rezumat forme normale:</div>
+<pre>1NF: valori atomice + fara grupuri repetitive de coloane
+2NF: 1NF + fiecare atribut non-cheie depinde de INTREAGA cheie primara
+3NF: 2NF + nicio dependenta tranzitiva intre atribute non-cheie</pre>
+</div>
+                            <div class="atom-quiz"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════ PRACTICE ═══════════════ -->
+    <section class="practice-section" id="practice">
+        <h2>Exercitii practice</h2>
+        <div class="practice-exercise" data-level="minim">
+            <h3>Exercitiul 1 (Nivel minim) &mdash; SELECT de baza</h3>
+            <p>Scrie un SELECT care afiseaza <strong>numele si media</strong> tuturor elevilor cu media peste 7, ordonati alfabetic dupa nume. Tabel: <code>Elevi(id_elev, nume, clasa, medie)</code>.</p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p><strong>Rezolvare:</strong></p><p><code>SELECT nume, medie FROM Elevi WHERE medie &gt; 7 ORDER BY nume ASC;</code></p><p>Explicatie: <code>WHERE medie &gt; 7</code> pastreaza doar randurile cu media strict peste 7 (elevii cu media exact 7 nu apar). <code>ORDER BY nume ASC</code> sorteaza rezultatul alfabetic dupa nume (ASC = crescator, este si valoarea implicita daca nu scrii nimic, dar e bine sa o scrii explicit pentru claritate).</p><p>Ordinea clauzelor respecta regula din lectie: SELECT, FROM, WHERE, apoi ORDER BY.</p></div>
+            </details>
+        </div>
+        <div class="practice-exercise" data-level="standard">
+            <h3>Exercitiul 2 (Nivel standard) &mdash; JOIN si agregari</h3>
+            <p>Scrie o interogare care afiseaza <strong>numarul de elevi per clasa</strong> si <strong>media clasei</strong>, doar pentru clasele cu cel putin 3 elevi. Foloseste GROUP BY si HAVING.</p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p><strong>Rezolvare:</strong></p><p><code>SELECT clasa, COUNT(*) AS nr_elevi, AVG(medie) AS medie_clasa FROM Elevi GROUP BY clasa HAVING COUNT(*) &gt;= 3;</code></p><ol><li><code>GROUP BY clasa</code> aduna toti elevii in grupuri, cate un grup pentru fiecare clasa.</li><li><code>COUNT(*)</code> numara cati elevi sunt in fiecare grup.</li><li><code>AVG(medie)</code> calculeaza media notelor din fiecare grup (clasa).</li><li><code>HAVING COUNT(*) &gt;= 3</code> elimina din rezultat clasele cu mai putin de 3 elevi. HAVING se aplica DUPA grupare, spre deosebire de WHERE care ar filtra elevii individual, inainte de GROUP BY.</li></ol></div>
+            </details>
+        </div>
+        <div class="practice-exercise" data-level="performanta">
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Normalizare + subinterogari</h3>
+            <p>Identifica ce forma normala incalca aceasta tabela si propune solutia: <code>Catalog(id_elev, nume_elev, id_materie, denumire_materie, nota)</code>. Scrie si o subinterogare care gaseste elevii cu nota la Matematica peste media notelor la Matematica.</p>
+        
+            <details class="practice-solution">
+                <summary>Vezi rezolvarea</summary>
+                <div class="practice-solution-body"><p><strong>Schita de rezolvare (nivel performanta):</strong></p><p>1) Forma incalcata: tabela <code>Catalog(id_elev, nume_elev, id_materie, denumire_materie, nota)</code> incalca <strong>2NF</strong>. Cheia primara compusa este <code>(id_elev, id_materie)</code>, dar <code>nume_elev</code> depinde DOAR de <code>id_elev</code> si <code>denumire_materie</code> depinde DOAR de <code>id_materie</code> - dependente partiale, nu de intreaga cheie.</p><p>2) Solutie: sparge in <code>Elevi(id_elev, nume_elev)</code>, <code>Materii(id_materie, denumire_materie)</code>, <code>Note(id_elev, id_materie, nota)</code> cu FK-uri spre primele doua.</p><p>3) Subinterogare: dupa modelul din lectie (subquery in WHERE) - gaseste intai <code>id_materie</code> pentru 'Matematica', apoi media notelor la acea materie, apoi elevii cu nota peste acea medie (2-3 niveluri imbricate).</p><p>Criterii: identificare corecta 2NF cu explicatia dependentei partiale; schema noua cu chei corecte; subinterogarea foloseste AVG() imbricat corect pe materia ceruta, nu pe toate notele.</p></div>
+            </details>
+        </div>
+    </section>
+
+    <!-- ═══════════════ REVIEW ═══════════════ -->
+    <section class="review-section">
+        <div class="summary-box">
+            <h2>Ce ai invatat astazi</h2>
+            <ul>
+                <li>Modelul relational organizeaza datele in tabele cu PK (identifica unic randul) si FK (refera alta tabela)</li>
+                <li>SELECT + WHERE + ORDER BY + GROUP BY + HAVING formeaza blocul de baza al interogarilor SQL</li>
+                <li>INNER JOIN returneaza intersectia tabelelor; LEFT JOIN pastreaza toate randurile din tabela stanga</li>
+                <li>INSERT adauga, UPDATE modifica, DELETE sterge &mdash; intotdeauna cu WHERE la UPDATE/DELETE</li>
+                <li>Subinterogarile (IN, =, EXISTS) permit filtrari bazate pe rezultatele altor interogari</li>
+                <li>1NF: valori atomice; 2NF: dependenta de intreaga PK; 3NF: fara dependente tranzitive</li>
+            </ul>
+        </div>
+
+        <div id="lesson-summary" style="display: none;"></div>
+
+        
+        <div class="depth-box">
+            <h3>Vrei mai mult?</h3>
+            <p>Porneste de la baza de date cu Elevi, Note si Materii din lectie.</p><ul><li><strong>Provocare:</strong> Adauga o tabela noua Profesori(id_profesor, nume, materie_predata) si leag-o de Materii printr-o cheie straina. Scrie o interogare cu JOIN pe 4 tabele (Elevi, Note, Materii, Profesori) care afiseaza, pentru fiecare materie, numele profesorului si media notelor date la acea materie. Ruleaza-o cu python si sqlite3 ca in lectie si verifica rezultatul cifra cu cifra.</li><li><strong>De gandit:</strong> SQL executa clauzele in ordinea FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY, desi noi le scriem in alta ordine. De ce crezi ca o conditie WHERE care foloseste un alias definit in SELECT da eroare "no such column", dar aceeasi conditie pusa in HAVING functioneaza normal?</li><li><strong>Deschidere:</strong> catalogul electronic pe care il folosesc profesorii tai e, in spate, exact acest model: tabele Elevi, Note, Materii legate prin chei straine, interogate cu SELECT si JOIN de fiecare data cand se genereaza o medie sau o situatie. Orice magazin online sau aplicatie bancara foloseste acelasi principiu, doar la scara mai mare.</li></ul>
+        </div>
+
+        <div class="next-lesson">
+            <h3>Urmatoarea lectie</h3>
+            <p>Continua cu <strong>SQL avansat</strong>: subinterogari corelate, JOIN-uri complexe, viste si tranzactii.</p>
+            <a href="lectia2-responsive.html" class="btn-next">Continua &#8594;</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="../../../../../assets/js/atomic-learning.js"></script>
+<script src="../../../../../assets/js/practice-simple.js"></script>
+<script src="../../../../../assets/js/lesson-summary.js"></script>
+<script src="../../../../../assets/js/breadcrumb.js"></script>
+<script src="../../../../../assets/js/progress.js"></script>
+<script src="../../../../../assets/js/user-system.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AtomicLearning.init('cls12-m3-web-lectia1-sql-bd');
+        PracticeSimple.init('cls12-m3-web-lectia1-sql-bd');
+        LessonSummary.init('cls12-m3-web-lectia1-sql-bd');
+        Breadcrumb.init({
+            grade: 'cls12',
+            gradeName: 'Clasa a XII-a',
+            module: 'm3-web',
+            moduleName: 'M3 Baze de date si SQL',
+            lesson: 'Baze de date relationale si SQL'
+        });
+        LearningProgress.init('cls12', 'm3-web', 'lectia1-html-css-review.html');
+    });
+</script>
+<script src="/assets/js/site-credit.js" defer></script>
+</body>
+</html>

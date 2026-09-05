@@ -79,6 +79,25 @@ io.open(TMP, "w", encoding="utf-8").write(stricat2d)
 t("NEGATIV: lipsa reala a cheii e tot prinsa",
   any("nu gasesc cheia de progres" in x for x in prob(TMP)))
 
+# 2e. wrapper cu ALT nume: daca lectia are atomi, sectiunea EXISTA, oricum s-ar
+#     numi containerul. Sapte lectii vechi folosesc id="main-content".
+assert 'id="atomic-content"' in src, "controlul presupune wrapperul standard"
+assert '<div class="atom"' in src, "controlul presupune atomi reali"
+stricat2e = src.replace('id="atomic-content"', 'id="main-content"')
+io.open(TMP, "w", encoding="utf-8").write(stricat2e)
+t("lectia cu atomi sub alt wrapper NU e raportata ca 'fara atomi'",
+  not any("lipseste sectiunea: atomi" in x for x in prob(TMP)))
+
+# 2f. NEGATIV: fara NICIUN atom, poarta trebuie sa strige.
+#     Sabotajul trebuie sa scoata si wrapperul: altfel poarta trece pe marca de
+#     sectiune si nu ajunge niciodata la verificarea atomilor (asa a picat prima
+#     versiune a acestui control - testul era gresit, nu poarta).
+stricat2f = src.replace('<div class="atom"', '<div class="atomXX"').replace('id="atomic-content"', 'id="gol"')
+assert '<div class="atom"' not in stricat2f and 'id="atomic-content"' not in stricat2f, "sabotajul n-a prins"
+io.open(TMP, "w", encoding="utf-8").write(stricat2f)
+t("NEGATIV: lipsa reala a atomilor e tot prinsa",
+  any("lipseste sectiunea: atomi" in x for x in prob(TMP)))
+
 # 3. control al controlului: aceeasi legatura, dar INTR-UN <code>, trebuie IGNORATA
 stricat3 = src.replace('</body>', '<code>&lt;a href="lectie-care-nu-exista.html"&gt;&lt;/a&gt;</code></body>', 1)
 io.open(TMP, "w", encoding="utf-8").write(stricat3)

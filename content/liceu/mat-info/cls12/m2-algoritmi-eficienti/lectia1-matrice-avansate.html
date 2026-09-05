@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lectia 1: Algoritmi de clasificare ML (k-NN, Arbore) | Clasa a XII-a Mat-Info</title>
+<title>Lectia 1: Operatii avansate cu matrice (Bac) | Clasa a XII-a Mat-Info</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../../../assets/css/lesson-atomic.css">
@@ -18,7 +18,7 @@
 
     <header class="lesson-header">
         <span class="lesson-badge">Invatare Atomica</span>
-        <h1 class="lesson-title">Algoritmi de clasificare in Machine Learning</h1>
+        <h1 class="lesson-title">Operatii avansate cu matrice: inmultire, spirala, zone speciale, bordare</h1>
     </header>
 
     <div class="progress-container">
@@ -30,15 +30,15 @@
     <section class="lesson-frame">
         <div class="goal-section">
             <div class="goal-header"><span class="goal-icon">&#127919;</span><h2 class="goal-title">Obiectivul lectiei</h2></div>
-            <p class="goal-text">Vei intelege si implementa doi algoritmi fundamentali de clasificare in ML: k-NN si Arborele de decizie &mdash; subiecte din Domeniu 2 al curriculumului cls. XII (algoritmi specializati pentru invatare automata).</p>
+            <p class="goal-text">Vei stapani cele patru operatii cu matrice care apar constant in subiectele de Bacalaureat la Informatica: identificarea zonelor delimitate de diagonale, inmultirea a doua matrice, parcurgerea in spirala si bordarea. Toate exemplele sunt scrise in C++, limbajul in care se sustine proba.</p>
         </div>
         <div class="learning-outcomes"><h3>Dupa aceasta lectie vei putea:</h3><ul>
-                <li>Sa explici ce este clasificarea in ML si cand se aplica</li>
-                <li>Sa implementezi algoritmul k-NN pas cu pas in Python</li>
-                <li>Sa calculezi distanta euclidiana intre doua puncte</li>
-                <li>Sa intelegi structura unui arbore de decizie si Gini impurity</li>
-                <li>Sa folosesti sklearn pentru k-NN si DecisionTreeClassifier</li>
-                <li>Sa compari k-NN vs Arbore de decizie (avantaje, limite)</li>
+                <li>Sa scrii conditia pe indici pentru orice zona a unei matrice patratice (diagonale, triunghiuri, zonele N, S, V, E)</li>
+                <li>Sa verifici cand se poate calcula produsul A*B si sa implementezi inmultirea in C++</li>
+                <li>Sa explici de ce inmultirea matricelor nu este comutativa si ce rol are matricea unitate</li>
+                <li>Sa calculezi A la puterea k prin inmultiri repetate, pornind de la matricea unitate</li>
+                <li>Sa parcurgi o matrice in spirala folosind cele patru margini (sus, jos, stanga, dreapta)</li>
+                <li>Sa bordezi o matrice cu un chenar si sa folosesti chenarul ca sa scapi de verificarile de margine</li>
         </ul></div>
     </section>
 
@@ -47,177 +47,339 @@
         <div class="try-challenge">
             <div class="challenge-box">
 <div class="challenge-title">Provocare:</div>
-<p>Ai 3 vecini: dist=1.1 (clasa A), dist=1.4 (clasa B), dist=2.1 (clasa B). Cu k=3, ce clasa prezice k-NN?</p>
-<textarea id="tryAnswer" placeholder="Clasa prezisa este ... pentru ca ..." rows="3"></textarea>
+<p>Ai matricea de mai jos. Porneste din coltul stanga-sus si mergi in spirala, in sensul acelor de ceasornic: intai tot randul de sus, apoi coloana din dreapta, apoi randul de jos invers, apoi coloana din stanga in sus &mdash; si tot asa, spre interior.</p>
+<pre> 1  2  3  4
+ 5  6  7  8
+ 9 10 11 12</pre>
+<p>Scrie ordinea completa a celor 12 numere.</p>
+<textarea id="tryAnswer" placeholder="1, 2, 3, 4, ..." rows="3"></textarea>
 </div>
             <div class="hint-box">
 <div class="hint-toggle" onclick="toggleHint(this)">&#128161; Indiciu</div>
-<div class="hint-content"><p>k-NN voteaza: A=1, B=2 =&gt; Clasa B (vot majoritar).</p></div>
+<div class="hint-content"><p>Dupa ce ai luat primul rand (1 2 3 4), randul acela nu mai exista: cobori pe ultima coloana de la 8 la 12, apoi mergi inapoi pe ultimul rand (11 10 9), apoi urci pe prima coloana (5). Ce a ramas nemarcat este un singur rand: 6 7.</p><p>Ordinea completa: 1 2 3 4 8 12 11 10 9 5 6 7.</p></div>
 </div></div>
     </section>
 
     <main id="atomic-content">
 
-        <div class="atom" id="atom-1" data-quiz='[{"question": "Ce inseamna clasificare in ML?", "options": ["Sortarea datelor in ordine crescatoare sau descrescatoare", "Atribuirea unei etichete de clasa unui exemplu nou", "Calculul mediei aritmetice a valorilor dintr-un set de date", "Stergerea inregistrarilor duplicate dintr-o baza de date"], "correct": "b", "hint": "Clasificarea = predictia clasei unui exemplu nou."}]'>
-            <div class="atom-header"><div class="atom-number">1</div><h3 class="atom-title">1. Ce este clasificarea in Machine Learning?</h3></div>
+        <div class="atom" id="atom-1" data-quiz='[{"question": "Ce conditie pe indici descrie diagonala secundara a unei matrice n x n (indici de la 0)?", "options": ["i == j, adica linia egala cu coloana", "i + j == n - 1, indicii insumati dau n-1", "i + j == n, adica indicii insumati dau chiar n", "i &gt; j, adica elementul e sub diagonala"], "correct": "b", "hint": "Numara pe matricea de 5x5: coltul dreapta-sus are i=0 si j=4, iar coltul stanga-jos are i=4 si j=0. In ambele cazuri suma indicilor este 4, adica n-1, nu n."}]'>
+            <div class="atom-header"><div class="atom-number">1</div><h3 class="atom-title">1. Zone speciale intr-o matrice patratica</h3></div>
             <div class="atom-content">
-                <div class="concept-def"><strong>Clasificarea</strong> este o sarcina de invatare supervizata: avem date cu etichete si vrem sa prezice clasa unui exemplu nou. Exemple: spam/non-spam, bolnav/sanatos.</div>
-                <div class="example-box"><div class="example-title">Concepte cheie:</div>
-<pre>Dataset: [(x1,y1), ..., (xn,yn)]
-  xi = vectorul de trasaturi (features)
-  yi = eticheta de clasa
+                <div class="example-box"><div class="example-title">Intai exemplul: matricea de 5x5 cu numerele 1...25</div>
+<pre>       j=0  j=1  j=2  j=3  j=4
+i=0  [  1    2    3    4    5 ]
+i=1  [  6    7    8    9   10 ]
+i=2  [ 11   12   13   14   15 ]
+i=3  [ 16   17   18   19   20 ]
+i=4  [ 21   22   23   24   25 ]
 
-Model = functie f(xi) -&gt; clasa
+Diagonala principala: 1, 7, 13, 19, 25   (i creste odata cu j)
+Diagonala secundara : 5, 9, 13, 17, 21   (cand i creste, j scade)</pre></div>
+                <div class="concept-def">Pe <strong>diagonala principala</strong> linia si coloana sunt egale: <strong>i == j</strong>. Pe <strong>diagonala secundara</strong> suma indicilor este constanta: <strong>i + j == n - 1</strong> (cu indici de la 0). Cele doua diagonale taie matricea in patru <strong>zone</strong>: nord (N), sud (S), vest (V) si est (E).</div>
+                <div class="example-box"><div class="example-title">Conditia fiecarei zone &mdash; tabelul pe care il inveti pentru Bac</div>
+<pre>Diagonala principala .... i == j
+Diagonala secundara ..... i + j == n - 1
+Triunghi deasupra dp .... i &lt; j
+Triunghi dedesubt dp .... i &gt; j
 
-Algoritmi cls. XII:
-  - k-NN -- bazat pe distanta euclidiana
-  - Arbore de decizie -- bazat pe reguli if/else</pre></div>
-                <div class="concept-def"><strong>Evaluare:</strong> Acuratetea = predictii corecte / total teste.</div>
+Zona N (sus)  .... i &lt; j  si  i + j &lt; n - 1
+Zona S (jos)  .... i &gt; j  si  i + j &gt; n - 1
+Zona V (stanga) .. i &gt; j  si  i + j &lt; n - 1
+Zona E (dreapta) . i &lt; j  si  i + j &gt; n - 1</pre></div>
+                <p>Fiecare zona este intersectia a doua conditii: una data de diagonala principala, cealalta de diagonala secundara. Elementele de <em>pe</em> diagonale nu apartin niciunei zone.</p>
+                <div class="example-box"><div class="example-title">Cod C++ &mdash; sumele pe zone</div>
+<pre>#include &lt;iostream&gt;
+using namespace std;
+int main() {
+    int n = 5, a[5][5];
+    for (int i = 0; i &lt; n; i++)
+        for (int j = 0; j &lt; n; j++)
+            a[i][j] = i * n + j + 1;
+
+    int dp = 0, ds = 0, sus = 0, jos = 0;
+    int nord = 0, sud = 0, vest = 0, est = 0;
+    for (int i = 0; i &lt; n; i++)
+        for (int j = 0; j &lt; n; j++) {
+            if (i == j) dp += a[i][j];
+            if (i + j == n - 1) ds += a[i][j];
+            if (i &lt; j) sus += a[i][j];
+            if (i &gt; j) jos += a[i][j];
+            if (i &lt; j &amp;&amp; i + j &lt; n - 1) nord += a[i][j];
+            if (i &gt; j &amp;&amp; i + j &gt; n - 1) sud  += a[i][j];
+            if (i &gt; j &amp;&amp; i + j &lt; n - 1) vest += a[i][j];
+            if (i &lt; j &amp;&amp; i + j &gt; n - 1) est  += a[i][j];
+        }
+    cout &lt;&lt; "diagonala principala = " &lt;&lt; dp &lt;&lt; endl;
+    cout &lt;&lt; "diagonala secundara  = " &lt;&lt; ds &lt;&lt; endl;
+    cout &lt;&lt; "triunghi de sus      = " &lt;&lt; sus &lt;&lt; endl;
+    cout &lt;&lt; "triunghi de jos      = " &lt;&lt; jos &lt;&lt; endl;
+    cout &lt;&lt; "zona N = " &lt;&lt; nord &lt;&lt; ", S = " &lt;&lt; sud
+         &lt;&lt; ", V = " &lt;&lt; vest &lt;&lt; ", E = " &lt;&lt; est &lt;&lt; endl;
+    return 0;
+}</pre></div>
+                <div class="example-box"><div class="example-title">Output real (compilat cu g++ -std=c++17 si rulat)</div>
+<pre>diagonala principala = 65
+diagonala secundara  = 65
+triunghi de sus      = 90
+triunghi de jos      = 170
+zona N = 17, S = 87, V = 45, E = 59</pre></div>
+                <div class="concept-def"><strong>Autoverificare care te salveaza in examen:</strong> 17 + 87 + 45 + 59 = 208 (cele patru zone), iar cele doua diagonale insumeaza 65 + 65 - 13 = 117, pentru ca elementul central 13 sta pe amandoua. Total 208 + 117 = 325, exact suma numerelor de la 1 la 25. Daca totalul nu se inchide, ai gresit o conditie.</div>
                             <div class="atom-quiz"></div>
             </div></div>
 
-        <div class="atom" id="atom-2" data-quiz='[{"question": "In k-NN, cum se alege clasa pentru exemplul nou?", "options": ["Se calculeaza media aritmetica a etichetelor numerice ale vecinilor", "Clasa majoritara dintre cei mai apropiati k vecini", "Se alege automat clasa cu indexul cel mai mare din setul de date", "Se alege eticheta primului vecin din lista, fara alte comparatii"], "correct": "b", "hint": "k-NN: gaseste k vecini, voteaza clasa majoritara."}]'>
-            <div class="atom-header"><div class="atom-number">2</div><h3 class="atom-title">2. Algoritmul k-NN &mdash; pas cu pas</h3></div>
+        <div class="atom" id="atom-2" data-quiz='[{"question": "Cand se poate calcula produsul A * B?", "options": ["Cand A si B au exact aceleasi dimensiuni, m x n", "Cand A are atatea coloane cate linii are B", "Cand ambele sunt patratice, de acelasi ordin n", "Cand A are atatea linii cate coloane are B"], "correct": "b", "hint": "Elementul C[i][j] se obtine plimband un deget pe linia i din A si un deget pe coloana j din B, in acelasi ritm. Cele doua degete trebuie sa termine odata, deci linia din A si coloana din B au aceeasi lungime."}, {"question": "Cate inmultiri face algoritmul clasic pentru A(m x n) * B(n x p)?", "options": ["m * n * p inmultiri, una pentru fiecare (i,j,k)", "m * p inmultiri, una pentru fiecare element din C", "m + n + p inmultiri, cate una pe dimensiune", "n * n * n inmultiri, oricare ar fi dimensiunile"], "correct": "a", "hint": "Rezultatul C are m * p elemente, dar fiecare element cere o suma de n produse. Inmulteste cele doua numere ca sa afli totalul de inmultiri."}]'>
+            <div class="atom-header"><div class="atom-number">2</div><h3 class="atom-title">2. Inmultirea a doua matrice</h3></div>
             <div class="atom-content">
-                <div class="concept-def"><strong>k-NN:</strong> Pentru exemplul nou q, gaseste cei mai apropiati k vecini si voteaza clasa majoritara.</div>
-                <div class="example-box"><div class="example-title">Pasi algoritmici:</div>
-<pre>1. Calculeaza distanta de la q la fiecare exemplu
-2. Sorteaza dupa distanta (crescator)
-3. Selecteaza primii k vecini
-4. Numara voturile fiecarei clase
-5. Returneaza clasa cu cele mai multe voturi</pre></div>
-                <div class="example-box"><div class="example-title">Distanta euclidiana:</div>
-<pre>dist(p,q) = sqrt((px-qx)^2 + (py-qy)^2)
-Exemplu: p=(1,1), q=(2,3) =&gt; sqrt(1+4) = 2.2361</pre></div>
-                <div class="example-box"><div class="example-title">Implementare Python de la zero:</div>
-<pre>import math
-from collections import Counter
+                <div class="example-box"><div class="example-title">Intai exemplul: A de 2x3 inmultit cu B de 3x2</div>
+<pre>      A (2 x 3)            B (3 x 2)
+   [ 1  2  3 ]          [  7   8 ]
+   [ 4  5  6 ]          [  9  10 ]
+                        [ 11  12 ]
 
-dataset = [(1.0,1.0,"A"),(1.5,2.0,"A"),(3.0,4.0,"B"),
-           (5.0,7.0,"B"),(3.5,5.0,"B"),(4.5,5.0,"B"),(3.5,4.5,"B")]
-query = (2.0, 3.0); k = 3
+Elementul C[0][0]: linia 0 din A cu coloana 0 din B
+   1*7 + 2*9 + 3*11 = 7 + 18 + 33 = 58
 
-def euclidean(p1, p2):
-    return math.sqrt((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)
+Elementul C[1][1]: linia 1 din A cu coloana 1 din B
+   4*8 + 5*10 + 6*12 = 32 + 50 + 72 = 154</pre></div>
+                <div class="concept-def">Produsul <strong>A * B</strong> se poate calcula doar daca <strong>numarul de coloane ale lui A este egal cu numarul de linii ale lui B</strong>. Daca A este m x n si B este n x p, rezultatul C este <strong>m x p</strong>, iar<br><strong>C[i][j] = suma dupa k, de la 0 la n-1, a produselor A[i][k] * B[k][j]</strong>.</div>
+                <p>Cu alte cuvinte: fiecare element al rezultatului este produsul scalar dintre <em>o linie din A</em> si <em>o coloana din B</em>. Dimensiunile se citesc usor asa: (m x <strong>n</strong>) * (<strong>n</strong> x p) = m x p &mdash; dimensiunile din mijloc trebuie sa coincida si dispar.</p>
+                <div class="example-box"><div class="example-title">Cod C++ &mdash; algoritmul clasic cu trei bucle</div>
+<pre>#include &lt;iostream&gt;
+using namespace std;
+int main() {
+    int m = 2, n = 3, p = 2;
+    int a[2][3] = {{1, 2, 3}, {4, 5, 6}};
+    int b[3][2] = {{7, 8}, {9, 10}, {11, 12}};
+    int c[2][2];
+    for (int i = 0; i &lt; m; i++)
+        for (int j = 0; j &lt; p; j++) {
+            c[i][j] = 0;                       // ZERO inainte de a aduna
+            for (int k = 0; k &lt; n; k++)
+                c[i][j] += a[i][k] * b[k][j];
+        }
+    for (int i = 0; i &lt; m; i++) {
+        for (int j = 0; j &lt; p; j++) cout &lt;&lt; c[i][j] &lt;&lt; " ";
+        cout &lt;&lt; endl;
+    }
+    return 0;
+}</pre></div>
+                <div class="example-box"><div class="example-title">Output real (compilat cu g++ -std=c++17 si rulat)</div>
+<pre>58 64
+139 154</pre></div>
+                <div class="concept-def"><strong>Complexitate:</strong> O(m * n * p) inmultiri &mdash; pentru matrice patratice de ordin n inseamna <strong>O(n<sup>3</sup>)</strong>. La n = 100 sunt un milion de inmultiri (instantaneu); la n = 1000 sunt un miliard, adica deja secunde bune.</div>
+                <div class="example-box"><div class="example-title">Greseala numarul 1 la Bac</div>
+<pre>Uitarea liniei c[i][j] = 0;
 
-distances = [(euclidean(query,(r[0],r[1])),r[2]) for r in dataset]
-distances.sort(); neighbors = distances[:k]
-votes = Counter(lbl for _,lbl in neighbors)
-print(f"Primii {k} vecini: {neighbors}")
-print(f"Voturi: {dict(votes)}")
-print(f"Clasa prezisa: {votes.most_common(1)[0][0]}")</pre></div>
-                <div class="example-box"><div class="example-title">Output real (verificat Python):</div>
-<pre>Primii 3 vecini: [(1.1180339887498949, "A"), (1.4142135623730951, "B"), (2.1213203435596424, "B")]
-Voturi: {"A": 1, "B": 2}
-Clasa prezisa: B</pre></div>
-                <div class="concept-def"><strong>Complexitate:</strong> O(n*d) per predictie. Fara antrenament (lazy learner).</div>
+Fara ea, c[i][j] contine gunoi din memorie si toate
+sumele ies aiurea. Alternativa sigura: foloseste o
+variabila locala   int s = 0;   aduni in s, apoi
+c[i][j] = s;   la finalul buclei dupa k.</pre></div>
                             <div class="atom-quiz"></div>
             </div></div>
 
-        <div class="atom" id="atom-3" data-quiz='[{"question": "Gini impurity = 0 inseamna?", "options": ["Impuritate maxima, exemplele sunt distribuite uniform in toate clasele", "Nod pur: toate exemplele apartin aceleiasi clase", "Un numar mare de valori lipsa sau eronate in setul de date", "Pragul de decizie a fost ales gresit la construirea arborelui"], "correct": "b", "hint": "Gini=0: puritate perfecta, 1 - 1^2 = 0."}]'>
-            <div class="atom-header"><div class="atom-number">3</div><h3 class="atom-title">3. Arborele de decizie &mdash; Gini impurity</h3></div>
+        <div class="atom" id="atom-3" data-quiz='[{"question": "Ce se intampla cand inmultesti o matrice patratica A cu matricea unitate I de acelasi ordin?", "options": ["A * I = I * A = A, produsul nu schimba matricea", "A * I = I, rezultatul devine matricea unitate", "A * I = 0, toate elementele rezultatului devin zero", "A * I = transpusa lui A, liniile devin coloane"], "correct": "a", "hint": "Matricea unitate are 1 pe diagonala principala si 0 in rest. Cand calculezi un element al produsului, toate produsele se anuleaza in afara de unul singur, cel inmultit cu 1 - deci elementul ramane cel din A. Este acelasi rol pe care il are numarul 1 la inmultirea numerelor."}]'>
+            <div class="atom-header"><div class="atom-number">3</div><h3 class="atom-title">3. Matricea unitate, necomutativitatea si puterea A<sup>k</sup></h3></div>
             <div class="atom-content">
-                <div class="concept-def"><strong>Arbore de decizie:</strong> Reguli if/else ierarhice. Fiecare nod testeaza o trasatura; frunzele contin clasa. Criteriu: <strong>Gini impurity</strong>.</div>
-                <div class="example-box"><div class="example-title">Formula Gini:</div>
-<pre>Gini(S) = 1 - sum(pi^2), pi = proportia clasei i
+                <div class="example-box"><div class="example-title">Intai exemplul: aceleasi doua matrice, inmultite in ambele ordini</div>
+<pre>A = [ 1  2 ]      B = [ 1  0 ]
+    [ 0  1 ]          [ 3  1 ]
 
-Exemplu: S = {3 Da, 3 Nu}
-  p_Da = 0.5, p_Nu = 0.5
-  Gini = 1 - (0.25 + 0.25) = 0.5  (dezordine maxima)
+A * B = [ 7  2 ]      B * A = [ 1  2 ]
+        [ 3  1 ]              [ 3  7 ]
 
-Nod pur (o singura clasa): Gini = 0  (optim)</pre></div>
-                <div class="example-box"><div class="example-title">Selectia splitului optim (valori verificate Python):</div>
-<pre>Dataset: (30,Nu),(28,Nu),(20,Da),(22,Da),(24,Da),(26,Nu)
-Gini total: 0.5000
+Aceleasi matrice, rezultate diferite.</pre></div>
+                <div class="concept-def">Inmultirea matricelor <strong>nu este comutativa</strong>: in general A * B este diferit de B * A. Uneori nici nu are sens sa le inmultesti in cealalta ordine &mdash; A de 2x3 cu B de 3x2 da un rezultat de 2x2, iar B * A da unul de 3x3. Inmultirea este insa <strong>asociativa</strong>: (A * B) * C = A * (B * C), si de asta are sens sa vorbim despre A<sup>k</sup>.</div>
+                <div class="concept-def"><strong>Matricea unitate I<sub>n</sub></strong> are 1 pe diagonala principala si 0 in rest. Ea joaca la matrice rolul pe care il joaca numarul 1 la numere: <strong>A * I = I * A = A</strong>. De aceea, cand calculezi A<sup>k</sup> prin inmultiri repetate, pornesti cu P = I si inmultesti de k ori &mdash; exact ca la <code>rezultat = 1;</code> inainte de o ridicare la putere obisnuita.</div>
+                <div class="example-box"><div class="example-title">Cod C++ &mdash; A la puterea k, pornind de la matricea unitate</div>
+<pre>#include &lt;iostream&gt;
+using namespace std;
+const int N = 2;
 
-Split temperatura &lt; 25:
-  Stanga [Da,Da,Da]: Gini = 0.0
-  Dreapta [Nu,Nu,Nu]: Gini = 0.0
-Gini ponderat = 0.0000
-Information Gain = 0.5000  (split perfect)</pre></div>
-                <div class="concept-def">Algoritmul alege featura si pragul care <strong>maximizeaza Information Gain</strong>.</div>
+void inmulteste(int A[N][N], int B[N][N], int C[N][N]) {
+    int T[N][N];                      // matrice temporara: A sau B pot fi
+    for (int i = 0; i &lt; N; i++)       // chiar C, si le-am strica pe parcurs
+        for (int j = 0; j &lt; N; j++) {
+            T[i][j] = 0;
+            for (int k = 0; k &lt; N; k++) T[i][j] += A[i][k] * B[k][j];
+        }
+    for (int i = 0; i &lt; N; i++)
+        for (int j = 0; j &lt; N; j++) C[i][j] = T[i][j];
+}
+
+int main() {
+    int F[N][N] = {{1, 1}, {1, 0}};
+    int P[N][N] = {{1, 0}, {0, 1}};   // matricea unitate I2
+    for (int pas = 1; pas &lt;= 5; pas++) {
+        inmulteste(P, F, P);
+        cout &lt;&lt; "F^" &lt;&lt; pas &lt;&lt; " = [" &lt;&lt; P[0][0] &lt;&lt; " " &lt;&lt; P[0][1]
+             &lt;&lt; " ; " &lt;&lt; P[1][0] &lt;&lt; " " &lt;&lt; P[1][1] &lt;&lt; "]" &lt;&lt; endl;
+    }
+    return 0;
+}</pre></div>
+                <div class="example-box"><div class="example-title">Output real (compilat cu g++ -std=c++17 si rulat)</div>
+<pre>F^1 = [1 1 ; 1 0]
+F^2 = [2 1 ; 1 1]
+F^3 = [3 2 ; 2 1]
+F^4 = [5 3 ; 3 2]
+F^5 = [8 5 ; 5 3]</pre></div>
+                <p>Uita-te la numerele care apar: 1, 1, 2, 3, 5, 8 &mdash; sirul lui Fibonacci. Nu e o coincidenta amuzanta, ci proprietatea acestei matrice: in coltul stanga-sus al lui F<sup>k</sup> sta termenul Fibonacci de rang k+1 (cu conventia F(1) = F(2) = 1). Verifica pe output: F<sup>5</sup> are in coltul stanga-sus 8, care este chiar al saselea termen din 1, 1, 2, 3, 5, 8.</p>
+                <div class="concept-def"><strong>Capcana de implementare:</strong> daca scrii rezultatul direct peste una dintre matricele pe care le inmultesti, stricti valorile de care mai ai nevoie in bucla. De aceea functia de mai sus aduna intr-o matrice temporara T si abia la final copiaza in C.</div>
                             <div class="atom-quiz"></div>
             </div></div>
 
-        <div class="atom" id="atom-4" data-quiz='[{"question": "Parametrul care controleaza numarul de vecini in KNeighborsClassifier?", "options": ["n_neighbour", "num_neighbors", "n_neighbors", "neighbors_count"], "correct": "c", "hint": "KNeighborsClassifier(n_neighbors=3)."}]'>
-            <div class="atom-header"><div class="atom-number">4</div><h3 class="atom-title">4. Implementare cu sklearn</h3></div>
+        <div class="atom" id="atom-4" data-quiz='[{"question": "Care este ordinea corecta a elementelor la parcurgerea in spirala a matricei 1 2 3 / 4 5 6 / 7 8 9?", "options": ["1 2 3 6 9 8 7 4 5", "1 2 3 4 5 6 7 8 9", "1 2 3 6 9 8 7 5 4", "1 4 7 8 9 6 3 2 5"], "correct": "a", "hint": "Iei tot randul de sus (1 2 3), cobori pe ultima coloana (6 9), te intorci pe randul de jos de la dreapta la stanga (8 7), urci pe prima coloana (4) si ramane doar centrul. Varianta care pune 5 inaintea lui 4 ar insemna ca ai sarit peste ultimul element al coloanei din stanga."}, {"question": "De ce se verifica sus &lt;= jos inainte de a parcurge randul de jos?", "options": ["Ca sa nu se afiseze a doua oara randul deja parcurs", "Ca sa nu se depaseasca memoria alocata matricei", "Ca sa se schimbe sensul de parcurgere la fiecare tur", "Ca sa se numere de cate ori s-a rotit spirala pana acum"], "correct": "a", "hint": "Gandeste-te la matricea 3x4 din lectie: in ultimul tur mai ramane un singur rand. Dupa ce l-ai parcurs de la stanga la dreapta, marginea de sus a trecut deja dincolo de cea de jos, iar fara verificare acelasi rand ar fi parcurs inca o data, invers."}]'>
+            <div class="atom-header"><div class="atom-number">4</div><h3 class="atom-title">4. Parcurgerea in spirala</h3></div>
             <div class="atom-content">
-                <div class="concept-def"><code>scikit-learn</code> este standardul industrial pentru ML in Python. Interfata uniforma: fit(), predict(), score().</div>
-                <div class="example-box"><div class="example-title">k-NN cu sklearn (Iris):</div>
-<pre>from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris
+                <div class="example-box"><div class="example-title">Intai exemplul: matricea de 3x4 din provocarea de la inceput</div>
+<pre> 1  2  3  4
+ 5  6  7  8
+ 9 10 11 12
 
-iris = load_iris(); X, y = iris.data, iris.target
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.3, random_state=42)
-knn = KNeighborsClassifier(n_neighbors=3)
-knn.fit(X_train, y_train)
-print(f"k-NN acuratete: {knn.score(X_test, y_test):.4f}")</pre></div>
-                <div class="example-box"><div class="example-title">Arbore de decizie cu sklearn:</div>
-<pre>from sklearn.tree import DecisionTreeClassifier
+Tur 1: 1 2 3 4   (randul de sus, stanga -&gt; dreapta)
+       8 12      (coloana din dreapta, in jos)
+       11 10 9   (randul de jos, dreapta -&gt; stanga)
+       5         (coloana din stanga, in sus)
+Tur 2: 6 7       (ce a mai ramas in interior)
 
-dt = DecisionTreeClassifier(criterion="gini", max_depth=3, random_state=42)
-dt.fit(X_train, y_train)
-print(f"Arbore acuratete: {dt.score(X_test, y_test):.4f}")
-print(f"Feature importances: {dt.feature_importances_.round(3)}")</pre></div>
-                <div class="example-box"><div class="example-title">Output asteptat (Iris, random_state=42):</div>
-<pre>k-NN acuratete: 0.9778
-Arbore acuratete: 0.9556
-Feature importances: [0.    0.026 0.056 0.918]</pre></div>
-                <div class="concept-def">max_depth=3 previne overfitting. Petal width contribuie 91.8% la clasificare pe Iris.</div>
+Rezultat: 1 2 3 4 8 12 11 10 9 5 6 7</pre></div>
+                <div class="concept-def">Parcurgerea in spirala se scrie cel mai curat cu <strong>patru margini</strong>: <code>sus</code>, <code>jos</code>, <code>st</code> (stanga) si <code>dr</code> (dreapta). Fiecare tur consuma cate o margine si o strange spre interior. Bucla merge cat timp <strong>sus &lt;= jos si st &lt;= dr</strong>, adica atat timp cat mai exista dreptunghi neparcurs.</div>
+                <div class="example-box"><div class="example-title">Cod C++ &mdash; parcurgere in spirala pentru o matrice m x n</div>
+<pre>#include &lt;iostream&gt;
+using namespace std;
+int main() {
+    int m = 3, n = 4, a[3][4];
+    for (int i = 0; i &lt; m; i++)
+        for (int j = 0; j &lt; n; j++)
+            a[i][j] = i * n + j + 1;
+
+    int sus = 0, jos = m - 1, st = 0, dr = n - 1;
+    while (sus &lt;= jos &amp;&amp; st &lt;= dr) {
+        for (int j = st; j &lt;= dr; j++) cout &lt;&lt; a[sus][j] &lt;&lt; " ";
+        sus++;
+        for (int i = sus; i &lt;= jos; i++) cout &lt;&lt; a[i][dr] &lt;&lt; " ";
+        dr--;
+        if (sus &lt;= jos) {                       // mai exista rand de jos?
+            for (int j = dr; j &gt;= st; j--) cout &lt;&lt; a[jos][j] &lt;&lt; " ";
+            jos--;
+        }
+        if (st &lt;= dr) {                         // mai exista coloana stanga?
+            for (int i = jos; i &gt;= sus; i--) cout &lt;&lt; a[i][st] &lt;&lt; " ";
+            st++;
+        }
+    }
+    cout &lt;&lt; endl;
+    return 0;
+}</pre></div>
+                <div class="example-box"><div class="example-title">Output real (compilat cu g++ -std=c++17 si rulat)</div>
+<pre>1 2 3 4 8 12 11 10 9 5 6 7</pre></div>
+                <div class="example-box"><div class="example-title">Acelasi program cu m = 4 si n = 4 (matrice 4x4 cu 1...16)</div>
+<pre>1 2 3 4 8 12 16 15 14 13 9 5 6 7 11 10</pre></div>
+                <div class="concept-def"><strong>Cele doua verificari din mijloc nu sunt decor.</strong> Ele conteaza cand ultimul tur al spiralei ramane <em>un singur rand</em> (matrice mai lata decat inalta) sau <em>o singura coloana</em>. Exemplu masurat pe matricea 3x4 de mai sus: cu verificari se afiseaza 12 valori, fara ele se afiseaza 13 &mdash; apare un 6 in plus la final, pentru ca randul din ultimul tur este parcurs si invers. <strong>Atentie:</strong> pe o matrice patratica (3x3, 4x4, 5x5) rezultatul iese identic si fara verificari, asa ca un test facut doar pe patrat nu prinde niciodata bug-ul. <strong>Complexitate: O(m * n)</strong> &mdash; fiecare element este atins exact o data.</div>
                             <div class="atom-quiz"></div>
             </div></div>
 
-        <div class="atom" id="atom-5" data-quiz='[{"question": "Marele avantaj al arborelui de decizie vs k-NN?", "options": ["Ofera intotdeauna o precizie mai mare decat orice alt algoritm", "Interpretabil: regulile de clasificare sunt vizibile direct", "Este mereu mai rapid la antrenare decat k-NN, indiferent de date", "Nu necesita deloc un set de date de antrenament pentru a functiona"], "correct": "b", "hint": "Arborii genereaza reguli if/else explicite. k-NN = cutie neagra."}]'>
-            <div class="atom-header"><div class="atom-number">5</div><h3 class="atom-title">5. Comparatie k-NN vs Arbore + Normalizare</h3></div>
+        <div class="atom" id="atom-5" data-quiz='[{"question": "Ce avantaj practic aduce bordarea unei matrice cu un chenar de zerouri?", "options": ["Vecinii se pot aduna fara verificari de margine", "Matricea ocupa mai putina memorie in program", "Elementele se sorteaza automat pe fiecare linie a ei", "Inmultirea a doua matrice devine mai rapida"], "correct": "a", "hint": "Elementele de pe marginea matricei initiale nu au vecini in toate cele opt directii. Daca in jur exista un chenar de zerouri, vecinii lipsa exista totusi ca pozitii in memorie si aduna zero, deci nu strica suma."}]'>
+            <div class="atom-header"><div class="atom-number">5</div><h3 class="atom-title">5. Bordarea unei matrice</h3></div>
             <div class="atom-content">
-                <div class="example-box"><div class="example-title">Tabel comparativ:</div>
-<pre>Criteriu           | k-NN              | Arbore de decizie
--------------------|-------------------|------------------
-Antrenament        | Instantaneu       | Construit recursiv
-Predictie          | O(n*d) per ex.    | O(adancime)
-Interpretabilitate | Scazuta           | Ridicata (reguli)
-Sensibil la scala  | DA (norm. req.)   | Nu
-Control overfitting| k mai mare        | max_depth mai mic</pre></div>
-                <div class="example-box"><div class="example-title">Normalizare obligatorie pentru k-NN:</div>
-<pre>from sklearn.preprocessing import StandardScaler
+                <div class="example-box"><div class="example-title">Intai exemplul: matricea de 2x3 bordata cu un chenar de 0</div>
+<pre>Initiala (2 x 3)      Bordata (4 x 5)
+  1  2  3               0  0  0  0  0
+  4  5  6               0  1  2  3  0
+                        0  4  5  6  0
+                        0  0  0  0  0
 
-scaler = StandardScaler()
-X_train_s = scaler.fit_transform(X_train)
-X_test_s  = scaler.transform(X_test)
-knn_s = KNeighborsClassifier(n_neighbors=3)
-knn_s.fit(X_train_s, y_train)
-print(f"k-NN cu normalizare: {knn_s.score(X_test_s, y_test):.4f}")</pre></div>
-                <div class="concept-def">Intotdeauna normalizeaza pentru k-NN. Arborele nu necesita normalizare.</div>
+Elementul care era pe pozitia (0,0) este acum pe (1,1):
+fiecare indice a crescut cu 1.</pre></div>
+                <div class="concept-def"><strong>A borda</strong> o matrice inseamna a-i adauga un chenar de o linie sus, o linie jos, o coloana la stanga si o coloana la dreapta. O matrice m x n devine <strong>(m+2) x (n+2)</strong>, iar elementul care era la <code>(i, j)</code> ajunge la <code>(i+1, j+1)</code>.</div>
+                <p>Bordarea apare la Bacalaureat in doua feluri. <strong>Ca cerinta in sine</strong> (&bdquo;bordati matricea cu un chenar avand o valoare data si afisati matricea obtinuta&rdquo;) si, mult mai des, <strong>ca truc de implementare</strong>: daca lucrezi cu vecinii unui element, un chenar de zerouri scapa de toate verificarile de tipul <code>if (i &gt; 0 &amp;&amp; j &lt; n - 1 &amp;&amp; ...)</code>, unde se pierd de obicei punctele.</p>
+                <div class="example-box"><div class="example-title">Cod C++ &mdash; bordare si suma celor 8 vecini</div>
+<pre>#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+int main() {
+    int m = 2, n = 3;
+    int b[10][10] = {0};        // totul 0, deci chenarul e deja pus
+    int v[2][3] = {{1, 2, 3}, {4, 5, 6}};
+    for (int i = 1; i &lt;= m; i++)            // datele intra de la (1,1)
+        for (int j = 1; j &lt;= n; j++)
+            b[i][j] = v[i - 1][j - 1];
+
+    cout &lt;&lt; "Matricea bordata (" &lt;&lt; m + 2 &lt;&lt; " x " &lt;&lt; n + 2 &lt;&lt; "):" &lt;&lt; endl;
+    for (int i = 0; i &lt;= m + 1; i++) {
+        for (int j = 0; j &lt;= n + 1; j++) cout &lt;&lt; setw(2) &lt;&lt; b[i][j] &lt;&lt; " ";
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; "Suma celor 8 vecini (fara verificari de margine):" &lt;&lt; endl;
+    for (int i = 1; i &lt;= m; i++) {
+        for (int j = 1; j &lt;= n; j++) {
+            int s = 0;
+            for (int di = -1; di &lt;= 1; di++)
+                for (int dj = -1; dj &lt;= 1; dj++)
+                    if (di || dj) s += b[i + di][j + dj];   // sare peste el insusi
+            cout &lt;&lt; setw(3) &lt;&lt; s;
+        }
+        cout &lt;&lt; endl;
+    }
+    return 0;
+}</pre></div>
+                <div class="example-box"><div class="example-title">Output real (compilat cu g++ -std=c++17 si rulat)</div>
+<pre>Matricea bordata (4 x 5):
+ 0  0  0  0  0
+ 0  1  2  3  0
+ 0  4  5  6  0
+ 0  0  0  0  0
+Suma celor 8 vecini (fara verificari de margine):
+ 11 19 13
+  8 16 10</pre></div>
+                <div class="concept-def"><strong>Verifica un numar cu mana:</strong> elementul 5 are ca vecini pe 1, 2, 3, 4, 6 si trei zerouri din chenar &mdash; 1+2+3+4+6 = 16, exact ce a afisat programul. Singurul <code>if</code> ramas in bucla este <code>if (di || dj)</code>, care sare peste elementul insusi; verificarile de margine au disparut complet.</div>
+                <div class="example-box"><div class="example-title">Atentie la declarare</div>
+<pre>Daca matricea initiala are cel mult 100 x 100,
+declara b[102][102], nu b[100][100]: chenarul
+cere doua linii si doua coloane in plus.
+
+Rezervarea unei margini in plus e mai ieftina
+decat o depasire de indice la corectare.</pre></div>
                             <div class="atom-quiz"></div>
             </div></div>
 
-        <div class="atom" id="atom-6" data-quiz='[{"question": "Ce masoara matricea de confuzie?", "options": ["Timpul necesar pentru a antrena modelul pe toate datele", "Distributia predictiilor corecte si gresite pe clase", "Numarul de noduri si adancimea arborelui de decizie", "Distanta medie dintre exemplele din setul de date"], "correct": "b", "hint": "Randuri=clase reale, coloane=clase prezise. Diagonala=predictii corecte."}]'>
-            <div class="atom-header"><div class="atom-number">6</div><h3 class="atom-title">6. Evaluarea modelelor &mdash; Matrice de confuzie</h3></div>
+        <div class="atom" id="atom-6" data-quiz='[{"question": "Care este complexitatea parcurgerii in spirala a unei matrice m x n?", "options": ["O(m * n), fiecare element e vizitat o singura data", "O(m * n * n), fiindca spirala se reia de n ori la rand", "O(log(m * n)), fiindca zona scade la jumatate", "O(m + n), fiindca se parcurg doar marginile matricei"], "correct": "a", "hint": "Numara cate valori afiseaza programul: exact atatea cate elemente are matricea, nici unul in plus. Buclele interioare arata dese, dar impreuna consuma fiecare pozitie o singura data."}]'>
+            <div class="atom-header"><div class="atom-number">6</div><h3 class="atom-title">6. Recapitulare operationala si capcanele de la Bac</h3></div>
             <div class="atom-content">
-                <div class="concept-def"><strong>Matricea de confuzie</strong> arata erorile per clasa &mdash; esentiala cand clasele sunt dezechilibrate.</div>
-                <div class="example-box"><div class="example-title">Metrici:</div>
-<pre>Acuratete = (TP + TN) / Total
-Precizie  = TP / (TP + FP)
-Recall    = TP / (TP + FN)
-F1-score  = 2 * Precizie * Recall / (Precizie + Recall)</pre></div>
-                <div class="example-box"><div class="example-title">Cod sklearn:</div>
-<pre>from sklearn.metrics import confusion_matrix, classification_report
-y_pred = knn.predict(X_test)
-print(confusion_matrix(y_test, y_pred))
-print(classification_report(y_test, y_pred, target_names=iris.target_names))</pre></div>
-                <div class="example-box"><div class="example-title">Output asteptat (Iris k-NN k=3, random_state=42):</div>
-<pre>[[19  0  0]
- [ 0 12  1]
- [ 0  0 13]]
+                <div class="example-box"><div class="example-title">Tabel de complexitati &mdash; ce inveti pe de rost</div>
+<pre>Operatie                          Complexitate
+--------------------------------  -------------
+Parcurgere completa (m x n)       O(m * n)
+Sume pe zone / diagonale          O(n^2)
+Doar diagonala (o singura bucla)  O(n)
+Inmultire A(m x n) * B(n x p)     O(m * n * p)
+Inmultire matrice patratice       O(n^3)
+Putere A^k prin inmultiri         O(k * n^3)
+Parcurgere in spirala             O(m * n)
+Bordare                           O(m * n)</pre></div>
+                <div class="example-box"><div class="example-title">Capcane care costa puncte la proba</div>
+<pre>1. Indici de la 0 sau de la 1?
+   Diagonala secundara e i + j == n - 1 cu indici
+   de la 0, dar i + j == n + 1 cu indici de la 1.
+   Scrie pe ciorna un exemplu mic si verifica.
 
-              precision  recall  f1-score  support
-      setosa       1.00    1.00      1.00       19
-  versicolor       1.00    0.92      0.96       13
-   virginica       0.93    1.00      0.96       13
-    accuracy                         0.98       45</pre></div>
-                <div class="concept-def">Un singur versicolor clasificat gresit ca virginica. Acuratete 97.8% pe 45 exemple test.</div>
+2. c[i][j] = 0 uitat inainte de suma la inmultire.
+
+3. Conditia de compatibilitate neverificata:
+   A(2x3) * B(2x3) nu se poate calcula.
+
+4. Spirala fara cele doua if-uri din mijloc:
+   duplica randul (sau coloana) din ultimul tur la
+   matricele dreptunghiulare, de exemplu 3 x 4.
+   Pe matrice patratice iese corect si fara ele,
+   deci testul facut doar pe 4 x 4 nu prinde nimic.
+
+5. Bordare fara loc rezervat in declarare:
+   b[100][100] nu incape o matrice bordata 102x102.
+
+6. Zonele N, S, V, E: fiecare cere DOUA conditii,
+   una pe fiecare diagonala. Cu una singura obtii
+   triunghiul, nu zona.</pre></div>
+                <div class="concept-def"><strong>Metoda de control in 30 de secunde:</strong> aplica algoritmul pe o matrice de 3x3 sau 4x4 scrisa cu numerele 1, 2, 3, ... si compara cu ce ai calculat mental. Aproape toate greselile de indice se vad pe un exemplu atat de mic &mdash; nu ai nevoie de calculator ca sa le prinzi.</div>
                             <div class="atom-quiz"></div>
             </div></div>
 
@@ -226,33 +388,44 @@ print(classification_report(y_test, y_pred, target_names=iris.target_names))</pr
     <section class="practice-section" id="practice">
         <h2>Exercitii practice</h2>
         <div class="practice-exercise" data-level="minim">
-            <h3>Exercitiul 1 (Nivel minim) &mdash; k-NN manual</h3>
-            <p>Ai 4 puncte: A(1,1)=c0, B(2,2)=c0, C(5,5)=c1, D(6,6)=c1. Punct nou q=(3,3). Calculeaza distantele si prezice clasa cu k=3.</p>
-            <p><em>Raspuns: dist(A)=2.83, dist(B)=1.41, dist(C)=2.83, dist(D)=4.24. Top 3: B(c0),A(c0),C(c1). Clasa prezisa: c0 (2 vs 1).</em></p>
-        
+            <h3>Exercitiul 1 (Nivel minim) &mdash; Zone si diagonale, pe hartie</h3>
+            <p>Se da matricea de 5x5 de mai jos. Calculeaza: (a) suma elementelor de pe diagonala secundara; (b) lista elementelor din zona de nord si suma lor.</p>
+<pre> 4  7  2  9  1
+ 3  8  5  6  0
+ 1  2  7  4  3
+ 9  5  0  8  6
+ 2  1  4  3  7</pre>
+            <p><em>Indiciu: diagonala secundara are i + j = 4, iar zona de nord cere i &lt; j SI i + j &lt; 4 (indici de la 0).</em></p>
+
             <details class="practice-solution">
                 <summary>Vezi rezolvarea</summary>
-                <div class="practice-solution-body"><p>Distanta euclidiana: dist(p,q) = sqrt((px-qx)^2 + (py-qy)^2).</p><ol><li>dist(A,q) = sqrt((3-1)^2+(3-1)^2) = sqrt(8) = <strong>2.83</strong></li><li>dist(B,q) = sqrt((3-2)^2+(3-2)^2) = sqrt(2) = <strong>1.41</strong></li><li>dist(C,q) = sqrt((5-3)^2+(5-3)^2) = sqrt(8) = <strong>2.83</strong></li><li>dist(D,q) = sqrt((6-3)^2+(6-3)^2) = sqrt(18) = <strong>4.24</strong></li></ol><p>Sortez crescator: B (1.41, c0), A (2.83, c0), C (2.83, c1, egal cu A - pastrez ordinea din tabel), D (4.24, c1, exclus, e al 4-lea).</p><p>Top 3 vecini pentru k=3: B=c0, A=c0, C=c1. Voturi: c0 are 2, c1 are 1.</p><p><strong>Clasa prezisa pentru q=(3,3): c0</strong> (2 voturi contra 1).</p></div>
+                <div class="practice-solution-body"><p><strong>(a) Diagonala secundara: i + j = n - 1 = 4.</strong></p><ol><li>(0,4) = 1</li><li>(1,3) = 6</li><li>(2,2) = 7</li><li>(3,1) = 5</li><li>(4,0) = 2</li></ol><p>Suma = 1 + 6 + 7 + 5 + 2 = <strong>21</strong>.</p><p><strong>(b) Zona de nord: i &lt; j SI i + j &lt; 4.</strong> Iau pozitiile de deasupra diagonalei principale si le pastrez doar pe cele cu suma indicilor sub 4:</p><ol><li>(0,1) = 7 &mdash; suma indicilor 1, trece</li><li>(0,2) = 2 &mdash; suma indicilor 2, trece</li><li>(0,3) = 9 &mdash; suma indicilor 3, trece</li><li>(0,4) &mdash; suma indicilor 4, NU trece (e chiar pe diagonala secundara)</li><li>(1,2) = 5 &mdash; suma indicilor 3, trece</li><li>(1,3) &mdash; suma indicilor 4, NU trece</li><li>(2,3), (2,4), (3,4) &mdash; toate au suma indicilor peste 4, NU trec (sunt in zona de est)</li></ol><p>Zona de nord = {7, 2, 9, 5}, suma = <strong>23</strong>.</p><p><strong>Autocontrol:</strong> zona de nord a unei matrice 5x5 are exact 4 pozitii (le poti numara pe desen: 3 pe primul rand plus 1 pe al doilea), si tot atatea am gasit. Daca iti ies 6 elemente, ai uitat a doua conditie si ai luat tot triunghiul de deasupra diagonalei principale.</p></div>
             </details>
         </div>
         <div class="practice-exercise" data-level="standard">
-            <h3>Exercitiul 2 (Nivel standard) &mdash; k-NN sklearn pe dataset propriu</h3>
-            <p>Creeaza un dataset cu 20 exemple si 2 trasaturi cu 2 clase. Antreneaza KNeighborsClassifier cu k=5, split 70/30, afiseaza acuratete si matricea de confuzie.</p>
-            <p><em>Indiciu: train_test_split(X, y, test_size=0.3, random_state=42).</em></p>
-        
+            <h3>Exercitiul 2 (Nivel standard) &mdash; Inmultirea a doua matrice, cu verificare</h3>
+            <p>Scrie un program C++ care citeste m, n, p, apoi matricea A (m x n) si matricea B (n x p), si afiseaza produsul C = A * B. Programul trebuie sa afiseze mesajul <code>imposibil</code> daca numarul de coloane citit pentru A nu coincide cu numarul de linii citit pentru B.</p>
+            <p>Testeaza pe datele din lectie: A = 1 2 3 / 4 5 6 si B = 7 8 / 9 10 / 11 12. Rezultatul corect este 58 64 / 139 154.</p>
+
             <details class="practice-solution">
                 <summary>Vezi rezolvarea</summary>
-                <div class="practice-solution-body"><p>Pas cu pas, dupa modelul din lectie:</p><ol><li>Creez X (20 exemple, 2 trasaturi x1, x2) si y (2 clase, 0 si 1), cu doua grupuri clar separate spatial - ex. <code>make_blobs(n_samples=20, centers=2, n_features=2, random_state=7)</code> sau 20 perechi (x1,x2) scrise manual.</li><li><code>X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)</code> rezulta 14 exemple antrenament, 6 exemple test.</li><li><code>knn = KNeighborsClassifier(n_neighbors=5); knn.fit(X_train, y_train)</code></li><li><code>knn.score(X_test, y_test)</code> si <code>confusion_matrix(y_test, knn.predict(X_test))</code></li></ol><p>Rezultat obtinut pe un dataset de 20 puncte cu cele 2 clase clar separate: acuratete = <strong>1.0</strong> (toate cele 6 exemple test corecte), matrice de confuzie <strong>[[3,0],[0,3]]</strong> (3 exemple din fiecare clasa, zero erori). Daca clasele se suprapun mai mult, acuratetea scade sub 1.0 - e normal si de asteptat.</p></div>
+                <div class="practice-solution-body"><p>Structura, pas cu pas:</p><ol><li>Citeste m, n1 pentru A si n2, p pentru B. Daca <code>n1 != n2</code>, afiseaza <code>imposibil</code> si iesi din program &mdash; asta e chiar conditia de compatibilitate din Atomul 2.</li><li>Citeste cele doua matrice in doua bucle duble.</li><li>Pentru fiecare pereche (i, j) cu i de la 0 la m-1 si j de la 0 la p-1: pune <code>int s = 0;</code>, apoi aduna in s toate produsele <code>a[i][k] * b[k][j]</code> pentru k de la 0 la n-1, si abia la final scrie <code>c[i][j] = s;</code>.</li><li>Afiseaza matricea C, cate un rand pe linie.</li></ol><p><strong>De ce variabila locala s si nu direct c[i][j] += ...?</strong> Ca sa nu poti uita initializarea cu zero: <code>int s = 0;</code> se afla exact langa bucla care aduna, deci se vede dintr-o privire. Este acelasi algoritm ca in lectie, doar mai greu de gresit.</p><p><strong>Rezultat asteptat pe datele de test:</strong></p><pre>58 64
+139 154</pre><p><strong>Autocontrol rapid, fara sa rulezi:</strong> verifica un singur element cu mana, de exemplu C[1][0] = 4*7 + 5*9 + 6*11 = 28 + 45 + 66 = 139. Daca acel numar iese, restul algoritmului este aproape sigur corect; daca iese altceva, ai gresit ordinea indicilor la <code>b[k][j]</code> (o greseala frecventa este sa scrii <code>b[j][k]</code>).</p><p><strong>Criterii de evaluare:</strong> (1) compatibilitatea e verificata inainte de calcul, (2) fiecare element al lui C porneste de la zero, (3) rezultatul are dimensiunea m x p, (4) programul da 58 64 / 139 154 pe datele de test.</p></div>
             </details>
         </div>
         <div class="practice-exercise" data-level="performanta">
-            <h3>Exercitiul 3 (Nivel performanta) &mdash; Comparatie sistematica pe Iris</h3>
-            <p>Testeaza k-NN pentru k in {1,3,5,7,11} si arbore cu max_depth in {1,2,3,5}. Compara k-NN cu/fara StandardScaler. Identifica configuratia optima.</p>
-            <p><em>Indiciu: for-loop, dict rezultate, max() pentru best config.</em></p>
-        
+            <h3>Exercitiul 3 (Nivel performanta) &mdash; Completarea unei matrice in spirala</h3>
+            <p>Scrie un program C++ care citeste n si completeaza o matrice n x n cu numerele de la 1 la n*n, asezate <strong>in spirala</strong> pornind din coltul stanga-sus, in sensul acelor de ceasornic. Afiseaza matricea.</p>
+            <p>Pentru n = 4 rezultatul trebuie sa fie:</p>
+<pre>  1   2   3   4
+ 12  13  14   5
+ 11  16  15   6
+ 10   9   8   7</pre>
+            <p>Apoi fa un mic experiment: ruleaza programul si <strong>cu</strong>, si <strong>fara</strong> cele doua verificari din mijlocul buclei, pentru n = 3, n = 4 si n = 5, si dupa aceea pentru o matrice dreptunghiulara de 3 linii si 4 coloane. Scrie in comentariu ce ai observat.</p>
+
             <details class="practice-solution">
                 <summary>Vezi rezolvarea</summary>
-                <div class="practice-solution-body"><p>Schita de rezolvare (nu cod complet - il scrii tu):</p><ol><li>Incarca Iris si fa UN SINGUR <code>train_test_split</code> (random_state=42), folosit pentru toate testele - altfel configuratiile nu sunt comparabile intre ele.</li><li>For peste k in {1,3,5,7,11}: antreneaza <code>KNeighborsClassifier(n_neighbors=k)</code>, salveaza acuratetea intr-un dict <code>rezultate_knn = {k: acuratete}</code>.</li><li>For similar peste max_depth in {1,2,3,5} pentru <code>DecisionTreeClassifier</code>, alt dict.</li><li>Repeta pasul k-NN dupa <code>StandardScaler</code> (fit_transform pe train, transform pe test) intr-un al treilea dict; compara cu cel fara normalizare.</li><li><code>max(dict, key=dict.get)</code> pentru cea mai buna configuratie din fiecare dict.</li></ol><p>Capcana: daca faci fit pe StandardScaler pe tot X (nu doar pe train), ai data leakage - gresit, chiar daca rezultatul iese mai bun.</p><p>Evaluare: (1) toate cele 9 configuratii testate si afisate, (2) concluzie explicita despre efectul normalizarii la k-NN (arborele nu are nevoie de ea), (3) config optima aleasa cu argument, nu doar cifra, (4) cod care ruleaza fara erori.</p></div>
+                <div class="practice-solution-body"><p>Ideea: este exact algoritmul cu patru margini din Atomul 4, dar in locul lui <code>cout</code> pui o atribuire. In loc sa <em>citesti</em> pozitiile in ordinea spiralei, le <em>scrii</em> in aceeasi ordine, cu un contor <code>val</code> care creste de la 1.</p><ol><li>Initializezi <code>sus = 0, jos = n - 1, st = 0, dr = n - 1, val = 1</code>.</li><li>Cat timp <code>sus &lt;= jos si st &lt;= dr</code>, in aceeasi ordine ca la parcurgere: randul de sus stanga-dreapta cu <code>a[sus][j] = val++</code>, apoi <code>sus++</code>; coloana din dreapta in jos, apoi <code>dr--</code>; daca <code>sus &lt;= jos</code>, randul de jos dreapta-stanga, apoi <code>jos--</code>; daca <code>st &lt;= dr</code>, coloana din stanga in sus, apoi <code>st++</code>.</li><li>Afisezi matricea cu <code>setw(3)</code> ca sa se alinieze coloanele.</li></ol><p><strong>Rezultatul experimentului</strong> (verificat ruland ambele variante):</p><ul><li>n = 3, n = 4, n = 5 (patratice): rezultatul este <strong>identic</strong> cu si fara verificari. La o matrice patratica, fiecare tur scoate o linie si o coloana din fiecare parte, deci blocul ramas este mereu patrat &mdash; ultimul tur are ori 2 x 2, ori o singura celula, si buclele neprotejate ies goale de la sine.</li><li>3 linii x 4 coloane: rezultatul <strong>difera</strong>. Cu verificari se obtine 1 2 3 4 / 10 11 12 5 / 9 8 7 6; fara ele, celula din mijloc primeste 13 in loc de 11, adica o valoare este suprascrisa si alta lipseste.</li></ul><p><strong>Concluzia care conteaza:</strong> testul pe matrice patratice nu poate demonstra ca algoritmul e corect &mdash; ascunde exact eroarea pe care ar trebui sa o gaseasca. Un algoritm pe matrice se testeaza obligatoriu si pe un caz dreptunghiular, si pe cazurile-limita cu o singura linie sau o singura coloana.</p><p><strong>Verificare a rezultatului, fara sa numeri tot:</strong> ultimul numar asezat trebuie sa fie n*n (la n = 4, valoarea 16). Daca in matrice apar doua valori egale sau lipseste o valoare, ai omis o verificare de margine.</p><p><strong>Criterii de evaluare:</strong> (1) programul da exact matricea din enunt pentru n = 4, (2) merge corect si pentru n = 1, n = 3 si n = 5 (nicio valoare dublata, nicio valoare lipsa), (3) sunt folosite cele patru margini, nu patru bucle scrise separat pentru fiecare dimensiune, (4) comentariul spune concret ce s-a schimbat si ce nu, la fiecare dimensiune incercata.</p></div>
             </details>
         </div>
     </section>
@@ -261,19 +434,19 @@ print(classification_report(y_test, y_pred, target_names=iris.target_names))</pr
         <div class="summary-box">
             <h2>Ce ai invatat astazi</h2>
             <ul>
-                <li>Clasificarea ML: invatare supervizata, predictia clasei unui exemplu nou</li>
-                <li>k-NN: distanta euclidiana, sortare, vot majoritar &mdash; O(n*d) per predictie</li>
-                <li>Gini impurity: masura dezordinii; Information Gain = Gini_inainte - Gini_ponderat</li>
-                <li>Arbore de decizie: reguli if/else interpretabile, max_depth previne overfitting</li>
-                <li>sklearn: KNeighborsClassifier, DecisionTreeClassifier, StandardScaler</li>
-                <li>Evaluare: acuratete, matrice de confuzie, precizie, recall, F1</li>
+                <li>Zonele unei matrice patratice: diagonala principala i == j, diagonala secundara i + j == n - 1, iar zonele N, S, V, E cer cate doua conditii</li>
+                <li>Inmultirea A(m x n) * B(n x p): se poate doar daca dimensiunile din mijloc coincid, rezultatul e m x p, complexitate O(m * n * p)</li>
+                <li>Fiecare element al produsului porneste de la zero &mdash; uitarea initializarii e greseala numarul 1</li>
+                <li>Inmultirea nu e comutativa, dar e asociativa; matricea unitate I este neutrul, deci A<sup>k</sup> se calculeaza pornind cu P = I</li>
+                <li>Parcurgerea in spirala cu patru margini (sus, jos, st, dr) si cele doua verificari care evita duplicarea ultimului tur &mdash; O(m * n)</li>
+                <li>Bordarea: m x n devine (m+2) x (n+2), elementul (i, j) trece la (i+1, j+1), iar chenarul de zerouri elimina verificarile de margine la lucrul cu vecinii</li>
             </ul>
         </div>
         <div id="lesson-summary" style="display: none;"></div>
-        
+
         <div class="depth-box">
             <h3>Vrei mai mult?</h3>
-            <ul><li>Provocare: ia dataset-ul Iris din lectie si antreneaza k-NN pentru <code>n_neighbors</code> = 1, 3, 5, 7, 9, 11, fara si cu <code>StandardScaler</code>. Noteaza acuratetea pentru toate cele 12 combinatii intr-un tabel si gaseste configuratia care da cel mai mare scor pe setul de test.</li><li>De gandit: la k=1, arborele de decizie si k-NN pot ambele sa ajunga la acuratete de 100% pe datele de ANTRENAMENT. De ce nu inseamna asta ca modelul e bun? Ce se intampla cand il testezi pe exemple noi, pe care nu le-a vazut?</li><li>Deschidere: filtrele de spam din Gmail si sistemele care recunosc scris de mana pe plicuri poștale folosesc exact acest tip de clasificare — un exemplu nou primeste o eticheta pe baza asemanarii cu exemple deja cunoscute. Diferenta fata de ce ai facut azi: acolo sunt milioane de exemple si mii de trasaturi, nu doar doua coordonate.</li></ul>
+            <ul><li>Provocare: scrie parcurgerea in spirala <strong>invers</strong>, dinspre centru spre exterior si in sens trigonometric. Nu porni de la zero &mdash; ia algoritmul cu patru margini, colecteaza elementele intr-un vector si apoi afiseaza-l de la coada spre cap. Compara cu varianta in care schimbi direct ordinea buclelor: care dintre cele doua e mai usor de demonstrat ca este corecta?</li><li>De gandit: la inmultirea a doua matrice patratice de ordin n faci n<sup>3</sup> inmultiri. Daca dublezi n, de cate ori creste timpul de calcul? Verifica raspunsul masurand efectiv, cu matrice de ordin 200 si 400 generate aleator.</li><li>Deschidere: puterea unei matrice, pe care ai calculat-o azi prin inmultiri repetate, se poate calcula si in O(log k) pasi, combinand-o cu exponentierea rapida din Lectia 2 &mdash; se ridica matricea la patrat in loc sa se inmulteasca de k ori. Asa se calculeaza al miliardul termen Fibonacci modulo un numar prim, in cateva zeci de inmultiri de matrice 2x2.</li></ul>
         </div>
 
         <div class="next-lesson">
@@ -301,7 +474,7 @@ print(classification_report(y_test, y_pred, target_names=iris.target_names))</pr
             gradeName: 'Clasa a XII-a',
             module: 'm2-algoritmi-eficienti',
             moduleName: 'M2 Algoritmi Eficienti',
-            lesson: 'Algoritmi de clasificare ML (k-NN, Arbore de decizie)'
+            lesson: 'Operatii avansate cu matrice (inmultire, spirala, zone, bordare)'
         });
         LearningProgress.init('cls12', 'm2-algoritmi-eficienti', 'lectia1-matrice-avansate.html');
     });
