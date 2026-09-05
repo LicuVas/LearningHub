@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Citeste exercitiile unei lectii si le adauga o REZOLVARE MODEL pliabila.
 
-    python tools/practice_io.py dump  <fisier>          -> JSON cu exercitiile
-    python tools/practice_io.py apply <fisier> <json>   -> insereaza rezolvarile
+    python tools/practice_io.py dump    <fisier>          -> JSON cu exercitiile
+    python tools/practice_io.py apply   <fisier> <json>   -> insereaza rezolvarile
+    python tools/practice_io.py replace <fisier> <json>   -> INLOCUIESTE rezolvarile existente
 
 Rezolvarea se pune ca <details class="practice-solution"> la finalul exercitiului -
 HTML nativ, fara JavaScript, deci merge oriunde si nu poate strica motorul.
@@ -64,11 +65,38 @@ def dump(path):
     return out
 
 
-def apply(path, rezolvari):
+SOL = re.compile(r'\s*<details class="practice-solution">.*?</details>\s*', re.I | re.S)
+
+
+def sterge_solutii(corp):
+    """Scoate blocul de rezolvare dintr-un corp de exercitiu. Intoarce (corp_curat, cate)."""
+    return SOL.subn("\n        ", corp)
+
+
+def apply(path, rezolvari, inlocuieste=False):
     prin_idx = {int(r["idx"]): r["rezolvare"] for r in rezolvari}
     src = io.open(path, encoding="utf-8", errors="replace").read()
     puncte = bucati(src)
     inserari, sarite = [], []
+    # La inlocuire scoatem intai rezolvarile vechi ale exercitiilor vizate, apoi
+    # recalculam pozitiile - altfel offset-urile de mai jos ar fi gresite.
+    if inlocuieste:
+        taieri = []
+        for i, (a, b, e) in enumerate(puncte, 1):
+            if i not in prin_idx:
+                continue
+            curat, n = sterge_solutii(src[b:e])
+            if n:
+                taieri.append((b, e, curat))
+        if taieri:
+            out, last = [], 0
+            for b, e, curat in sorted(taieri):
+                out.append(src[last:b])
+                out.append(curat)
+                last = e
+            out.append(src[last:])
+            src = "".join(out)
+            puncte = bucati(src)
     for i, (a, b, e) in enumerate(puncte, 1):
         rez = prin_idx.get(i)
         if not rez:
@@ -109,9 +137,9 @@ if __name__ == "__main__":
         p = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), p.replace("/", os.sep))
     if cmd == "dump":
         print(json.dumps(dump(p), ensure_ascii=False, indent=1))
-    elif cmd == "apply":
+    elif cmd in ("apply", "replace"):
         rez = json.loads(io.open(sys.argv[3], encoding="utf-8").read())
-        n, s = apply(p, rez)
+        n, s = apply(p, rez, inlocuieste=(cmd == "replace"))
         print("inserate: %d" % n)
         for i, motiv in s:
             print("  SARIT ex%d: %s" % (i, motiv))
