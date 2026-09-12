@@ -8,6 +8,44 @@
 
 ---
 
+## 2026-09-11 — de ce nu-l folosesc elevii: 4 din 5 solutii ucise de atacul adversarial
+
+**Brief complet: `DECIZIE_UX_2026-09-11.md`.** Analiza ceruta de Vasile (elevii arata prea putin
+interes, drumul pana la o lectie e lung, "Ce invatam acum" e mort). Doi atacatori independenti,
+care nu scrisesera candidatii, au primit sarcina sa-i omoare.
+
+**Defectul real nu e de navigare.** `index.html:194-199`: daca browserul are deja un profil activ,
+situl sare peste selector. Al doilea elev de pe acelasi calculator de laborator primeste numele,
+clasa si progresul primului. Intr-un laborator cu calculatoare impartite, orice "senzatie de
+progres" e a altcuiva. Se repara INAINTEA oricarei imbunatatiri de navigare.
+
+**A doua cauza:** nu exista pe sit nicio unitate de lucru scurta - mediana lectiei 2978 de cuvinte,
+cea mai scurta din 531 are 959, zero sub 800. Dar afisarea pas-cu-pas exista deja in motor
+(`atomic-learning.js:447-465` gating, `:487` unlockNext) si structura e uniforma (531/531 au atomi
+cu `id`). De rezolvat: 239 de atomi in 225 de lectii n-au container de chestionar si se trec singuri
+cu 100 (`atomic-learning.js:98-113`); 44% din textul unei lectii e in afara atomilor.
+
+**Ucise, nu se reincep:** pagina "Ora de azi" generata din orar (ar minti - orarul e provizoriu,
+clasele Brauner sunt deduse, Tibucani e engleza); scriptul mecanic de pliat programa (1239 din 1750
+de cuvinte sunt deja in `<details>` inchise, iar sectiunea contine deja `<details>` la
+`artistic/index.html:306,326,346,376`); "provocarea saptamanii" (o actualizeaza un om, deci moare);
+schimbarea id-urilor din `GRADES` (rupe `index.html:190`, trimite a 12-a in hubul de gimnaziu).
+
+**"Ce invatam acum" se genereaza din structura anului, nu din orar.** Azi = Modulul 1
+(7 sept - 23 oct 2026). Lipseste `curriculum/school_year_2026_2027.json`; exista doar cel de anul
+trecut. Plus 77 de date moarte scrise de mana, inclusiv anul ars in `active-module.js` - fisierul
+scris anume ca "ACTIV ACUM" sa nu poata expira, si care a expirat.
+
+**Corectii de cifre pentru orice sesiune viitoare:** situl are **531 de lectii** si **181 de pagini
+de navigare** in `content/` (nu "510 lectii / 852 de pagini"); `.backup-before-practica/` are 261 de
+copii moarte care otravesc orice `grep -r`; notele "6,3 / 6,7 / 6,5 / 5,0" NU sunt ale sitului -
+`RAPORT_FINAL.md:2` spune "elevi 5,4-8,0; inspector 4,0-6,7", iar setul acela e doar pentru tic/cls5.
+
+### Ramas DESCHIS
+Nimic nu s-a implementat - analiza asteapta decizia lui Vasile pe ordinea din blocul 6 al briefului.
+
+---
+
 ## 2026-09-04 (seara) — oprit la cerere, se reia saptamana viitoare
 
 **Punctul de reluare, cu comenzile exacte: `_campaign/proba_elevi_2026_09_03/RELUARE.md`.**
