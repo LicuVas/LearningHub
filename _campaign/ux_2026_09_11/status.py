@@ -8,6 +8,7 @@ Exit 0 = toti cei 5 pasi trec. Exit 1 = mai e de lucru (si scrie exact ce).
 
 Rulare:  python C:/00/Projects/LearningHub/_campaign/ux_2026_09_11/status.py [--md]
 """
+import glob
 import json
 import os
 import re
@@ -106,39 +107,71 @@ def pas3_pas_cu_pas():
     return ok, detail
 
 
-DEAD_DATE = re.compile(
-    r"2025-2026|2025–2026|15 Aprilie|19 Iunie|MODUL 5|Modulul 5\b|Modul 5\b", re.I)
-
-
 def pas4_date_moarte():
-    """Structura anului 2026-2027 exista, active-module.js n-are anul ars, zero date moarte."""
+    """Nimic despre „acum" nu mai e scris de mana.
+
+    NOTA de masurare (corectata 12.09.2026): prima versiune a portii cauta sirul
+    „Modulul 5" si „2025-2026" oriunde pe sit si raporta 80 de „date moarte".
+    Era gresit: „Modulul 5" e NUMELE real al unui modul de clasa, iar „2025-2026"
+    apare in date fictive dintr-un exercitiu si intr-o nota despre un plan-cadru.
+    Ce conteaza cu adevarat sunt intervalele pe care le CITESTE motorul.
+    """
+    import subprocess
     detail = []
-    sy = os.path.join(ROOT, "curriculum", "school_year_2026_2027.json")
-    has_sy = os.path.exists(sy)
-    if not has_sy:
-        detail.append("lipseste curriculum/school_year_2026_2027.json")
+    an_curent = sorted(glob.glob(os.path.join(ROOT, "curriculum", "school_year_*.json")))
+    if not an_curent:
+        detail.append("nu exista niciun curriculum/school_year_*.json")
+        return False, detail, {}
+    etichete = [os.path.basename(f) for f in an_curent]
 
-    am = os.path.join(ROOT, "assets", "js", "active-module.js")
-    js = read(am)
-    baked = bool(re.search(r"\b202[0-9]\s*:\s*202[0-9]\b", js)) or "new Date(2026, 5, 20)" in js
-    if baked:
-        detail.append("active-module.js are anul scolar ars in cod")
+    # 1. fisierul generat exista si e la zi fata de JSON
+    sy_js = os.path.join(ROOT, "assets", "js", "school-year.js")
+    if not os.path.exists(sy_js):
+        detail.append("lipseste assets/js/school-year.js (ruleaza tools/gen_school_year_js.py)")
+    else:
+        inainte = read(sy_js)
+        subprocess.run([sys.executable, os.path.join(ROOT, "tools", "gen_school_year_js.py")],
+                       capture_output=True)
+        if read(sy_js) != inainte:
+            detail.append("assets/js/school-year.js NU era la zi fata de fisierul JSON")
 
-    hits = set()
-    files = [os.path.join(ROOT, "index.html")]
-    for sub in ("content", "hub", "assets"):
-        files += walk(sub, lambda f: f.endswith((".html", ".js")))
-    for p in files:
-        h = read(p)
-        for m in DEAD_DATE.finditer(h):
-            line = h.count("\n", 0, m.start()) + 1
-            hits.add(f"{os.path.relpath(p, ROOT).replace(chr(92), '/')}:{line}")
-    hits = sorted(hits)
-    if hits:
-        detail.append(f"{len(hits)} date moarte ramase (primele: {', '.join(hits[:5])})")
+    # 2. motorul n-are anul ars in COD. Comentariile se scot intai: documentatia
+    #    fisierului citeaza chiar linia veche („var year = m >= 8 ? 2025 : 2026"),
+    #    iar o poarta care se impiedica de propria explicatie te invata sa nu explici.
+    js = read(os.path.join(ROOT, "assets", "js", "active-module.js"))
+    cod = re.sub(r"(?s)/\*.*?\*/", " ", js)
+    cod = re.sub(r"(?m)^\s*//.*$", " ", cod)
+    if re.search(r"\b202\d\s*:\s*202\d\b", cod) or re.search(r"new Date\(\s*20\d\d\s*,", cod):
+        detail.append("active-module.js are inca anul scolar ars in cod")
 
-    ok = has_sy and not baked and not hits
-    return ok, detail, {"date_moarte": len(hits), "primele": hits[:40]}
+    # 3. harta claselor exista si acopera tot situl
+    nd = os.path.join(ROOT, "assets", "js", "now-data.js")
+    nr_clase = 0
+    if not os.path.exists(nd):
+        detail.append("lipseste assets/js/now-data.js (ruleaza tools/gen_now_data.py)")
+    else:
+        nr_clase = read(nd).count('"cale":')
+        if nr_clase < 30:
+            detail.append(f"now-data.js acopera doar {nr_clase} clase")
+
+    # 4. hub-ul nu mai are modulul scris de mana
+    hub = read(os.path.join(ROOT, "hub", "index.html"))
+    if re.search(r'class="module-badge">\s*MODUL', hub):
+        detail.append("hub/index.html are inca modulul scris de mana in HTML")
+
+    # 5. intervalele de pe paginile de clasa sunt sincrone cu structura anului
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "sync_module_dates.py")],
+                       capture_output=True, text=True)
+    m = re.search(r"(\d+) intervale in (\d+) pagini", r.stdout or "")
+    nesincrone = int(m.group(1)) if m else -1
+    if nesincrone > 0:
+        detail.append(f"{nesincrone} intervale de pe paginile de clasa nu sunt sincrone "
+                      f"cu structura anului (ruleaza tools/sync_module_dates.py --apply)")
+    elif nesincrone < 0:
+        detail.append("nu pot masura sincronizarea intervalelor (sync_module_dates.py a esuat)")
+
+    return (not detail), detail, {"an_folosit": etichete[-1], "clase_in_harta": nr_clase,
+                                  "intervale_nesincrone": max(nesincrone, 0)}
 
 
 def pas5_rutare():
@@ -176,7 +209,7 @@ def main():
     rows.append(("3. Modul pas-cu-pas (un atom = un ecran)", ok3, d3))
 
     ok4, d4, m4 = pas4_date_moarte()
-    rows.append(("4. Anul scolar 2026-2027 + zero date moarte", ok4, d4))
+    rows.append(("4. Nimic despre 'acum' nu mai e scris de mana", ok4, d4))
 
     ok5, d5 = pas5_rutare()
     rows.append(("5. Profil ca al doilea camp + rutare directa", ok5, d5))
@@ -205,7 +238,7 @@ def main():
         print("  nimic — toti pasii trec.")
 
     print("\nMasuratori brute:")
-    print(json.dumps({"atomi": m2, "date_moarte": m4}, ensure_ascii=False, indent=2)[:1500])
+    print(json.dumps({"atomi": m2, "acum": m4}, ensure_ascii=False, indent=2)[:1200])
 
     return 0 if gata == len(rows) else 1
 

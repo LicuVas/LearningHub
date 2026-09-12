@@ -438,6 +438,11 @@
     <style>body { font-family: 'Inter', sans-serif; }</style>
     <!-- User System (must load first) -->
     <script src="../assets/js/user-system.js"></script>
+    <!-- Datele care tin sectiunea „Ce invatam acum" vie. Generate, nu scrise:
+         school-year.js <- tools/gen_school_year_js.py <- curriculum/school_year_*.json
+         now-data.js    <- tools/gen_now_data.py       <- structura reala din content/ -->
+    <script src="../assets/js/school-year.js"></script>
+    <script src="../assets/js/now-data.js"></script>
 </head>
 <body>
     <a href="#main-content" class="skip-link">Sari la continut</a>
@@ -470,7 +475,7 @@
                 <a href="#current-module" class="path-card by-module">
                     <div class="path-icon">📅</div>
                     <div class="path-title">Ce facem acum?</div>
-                    <div class="path-desc">Vezi lectiile din modulul curent (Modul 5) pentru toate clasele.</div>
+                    <div class="path-desc" id="now-path-desc">Vezi unde suntem in anul scolar si sari direct in clasa ta.</div>
                 </a>
                 <a href="ai/index.html" class="path-card by-ai" style="--path-color: #8b5cf6;">
                     <div class="path-icon">🤖</div>
@@ -490,13 +495,28 @@
             </div>
         </div>
 
-        <!-- Current Module -->
+        <!-- Ce invatam acum — GENERAT, nu scris de mana.
+             Vechea varianta scria „MODUL 5 · 15 Aprilie - 19 Iunie 2026" si acoperea
+             4 clase din 34. Acum: modulul real al anului (din assets/js/school-year.js)
+             + toate clasele de pe sit (din assets/js/now-data.js). -->
         <div class="current-module" id="current-module">
             <div class="module-header">
-                <span class="module-badge">MODUL 5</span>
+                <span class="module-badge" id="now-badge">&nbsp;</span>
                 <div>
                     <div class="module-title">Ce invatam acum</div>
-                    <div class="module-dates">15 Aprilie - 19 Iunie 2026</div>
+                    <div class="module-dates" id="now-dates"></div>
+                </div>
+            </div>
+            <div id="now-mine"></div>
+            <div id="now-classes"></div>
+        </div>
+
+        <!-- varianta veche, pastrata ascunsa doar daca datele nu se incarca -->
+        <div class="current-module" id="current-module-fallback" hidden>
+            <div class="module-header">
+                <div>
+                    <div class="module-title">Clasele de pe sit</div>
+                    <div class="module-dates">Alege-ti clasa din lista de mai jos.</div>
                 </div>
             </div>
             <div class="module-content">
@@ -955,6 +975,133 @@
             recordAndGetStats();
         })();
     </script>
+<script>
+/* „Ce invatam acum" — construita din date, nu scrisa de mana.
+   Regula de cinste: nu pretinde niciodata ca stie ce materie se face azi la o
+   anumita clasa. Paginile de liceu n-au calendar pe disc, deci informatia aia
+   NU exista. Ce spune: unde suntem in anul scolar (adevarat, din structura
+   oficiala) si fiecare clasa de pe sit, la un clic, cu cate lectii are. */
+(function () {
+    'use strict';
+
+    var PROFIL_ETICHETA = {
+        'artistic': 'Artistic', 'mat-info': 'Matematica-informatica',
+        'militar': 'Militar', 'pedagogic': 'Pedagogic', 'stiinte': 'Stiintele naturii',
+        'tehnologic': 'Tehnologic', 'umanist': 'Umanist', 'cercetare': 'Cercetare'
+    };
+
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function card(cls, eticheta) {
+        return '<a href="../' + esc(cls.url) + '" class="grade-topic">' +
+               '<div class="grade-label">' + esc(eticheta || cls.sectiune) + '</div>' +
+               '<div class="topic-name">' + esc(cls.eticheta) + '</div>' +
+               '<div class="topic-goal">' + cls.lectii + ' lectii &bull; ' +
+               cls.module.length + ' module</div></a>';
+    }
+
+    function grup(titlu, clase, eticheta) {
+        if (!clase.length) return '';
+        return '<div style="margin-top:1.75rem">' +
+               '<div class="section-title" style="font-size:1rem;margin-bottom:0.75rem">' +
+               esc(titlu) + '</div><div class="module-content">' +
+               clase.map(function (c) { return card(c, eticheta && eticheta(c)); }).join('') +
+               '</div></div>';
+    }
+
+    function claseleMele(clase, grade) {
+        if (!grade) return [];
+        if (/^cls[5-8]$/.test(grade)) {
+            return clase.filter(function (c) { return c.cale === 'tic/' + grade; });
+        }
+        if (/^cls(9|1[0-2])$/.test(grade)) {
+            return clase.filter(function (c) { return c.cale.indexOf('liceu/') === 0 &&
+                                                      c.cale.split('/')[2] === grade; });
+        }
+        var harta = { maistri1: 'profesional/maistri/an1',
+                      sanitar1: 'profesional/sanitar/an1-medicina',
+                      sanitar2: 'profesional/sanitar/an2-farmacie' };
+        return clase.filter(function (c) { return c.cale === harta[grade]; });
+    }
+
+    function run() {
+        var badge = document.getElementById('now-badge');
+        var dates = document.getElementById('now-dates');
+        var mine = document.getElementById('now-mine');
+        var lista = document.getElementById('now-classes');
+        if (!badge || !lista) return;
+
+        var date = (window.NOW_DATA || {}).clase;
+        if (!date || !date.length || !window.SchoolYear) {
+            // Datele n-au ajuns: aratam varianta simpla, nu una inventata.
+            document.getElementById('current-module').hidden = true;
+            var fb = document.getElementById('current-module-fallback');
+            if (fb) fb.hidden = false;
+            return;
+        }
+
+        // --- unde suntem in anul scolar
+        var acum = window.SchoolYear.sentence();
+        if (acum.stare === 'cursuri') {
+            badge.textContent = acum.titlu.toUpperCase();
+            dates.textContent = acum.detaliu;
+            var sapt = window.SchoolYear.weekNumber();
+            if (sapt) dates.textContent += ' • saptamana ' + sapt;
+        } else if (acum.stare === 'vacanta') {
+            badge.textContent = 'VACANTA';
+            dates.textContent = acum.titlu;
+        } else {
+            badge.textContent = 'SCOALA';
+            dates.textContent = 'Exploreaza in ritmul tau.';
+        }
+        var desc = document.getElementById('now-path-desc');
+        if (desc && acum.stare === 'cursuri') {
+            desc.textContent = 'Suntem in ' + acum.titlu + '. Sari direct in clasa ta.';
+        }
+
+        // --- clasa mea (daca elevul si-a spus cine e)
+        var profil = null;
+        try { profil = UserSystem.getActiveProfileData(); } catch (e) { /* fara profil */ }
+        var alemele = profil ? claseleMele(date, profil.grade) : [];
+        if (alemele.length) {
+            mine.innerHTML = grup(alemele.length === 1 ? 'Clasa ta' : 'Clasa ta — alege profilul',
+                                  alemele, function (c) {
+                var p = c.cale.split('/');
+                return p[0] === 'liceu' ? (PROFIL_ETICHETA[p[1]] || p[1]) : 'Clasa ta';
+            });
+        }
+
+        // --- toate clasele, grupate
+        var gimnaziu = date.filter(function (c) { return c.sectiune === 'Gimnaziu'; });
+        var liceu = date.filter(function (c) { return c.sectiune === 'Liceu'; });
+        var prof = date.filter(function (c) { return c.sectiune === 'Maistri si postliceal'; });
+
+        var html = grup('Gimnaziu', gimnaziu, function () { return 'Gimnaziu'; });
+
+        // liceul se grupeaza pe profil - 27 de clase intr-o gramada nu se citesc
+        var profiluri = [];
+        liceu.forEach(function (c) {
+            var p = c.cale.split('/')[1];
+            if (profiluri.indexOf(p) === -1) profiluri.push(p);
+        });
+        profiluri.forEach(function (p) {
+            html += grup('Liceu — profil ' + (PROFIL_ETICHETA[p] || p),
+                         liceu.filter(function (c) { return c.cale.split('/')[1] === p; }),
+                         function (c) { return (c.cale.split('/')[2] || '').replace('cls', 'Clasa '); });
+        });
+
+        html += grup('Maistri si postliceal', prof, function () { return 'Adulti'; });
+        lista.innerHTML = html;
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+    else run();
+})();
+</script>
 <script src="/assets/js/site-credit.js" defer></script>
 </body>
 </html>

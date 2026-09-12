@@ -142,6 +142,85 @@
         .loading-container.ready .status {
             color: var(--accent-green);
         }
+
+        /* „Tu esti?" — calculatoarele de laborator se impart intre elevi, iar
+           progresul se tine in browser. Fara intrebarea asta, al doilea elev
+           care se aseaza mosteneste numele, clasa si progresul primului. */
+        .identity-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 2rem 1.75rem;
+            width: min(420px, calc(100vw - 2rem));
+            /* Fix in mijlocul ecranului: `body` e flex, iar creditul din subsol
+               e frate in acelasi rand si ar impinge cardul spre stanga. */
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+        }
+
+        .identity-card .who {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 0.75rem 0 0.25rem;
+            color: var(--text-primary);
+            overflow-wrap: anywhere;
+        }
+
+        .identity-card .who-grade {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .identity-card .question {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .identity-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .identity-actions button {
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.9rem 1.25rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: transform 0.15s, filter 0.15s;
+        }
+
+        .identity-actions button:hover { filter: brightness(1.12); }
+        .identity-actions button:active { transform: translateY(1px); }
+        .identity-actions button:focus-visible {
+            outline: 3px solid var(--accent-cyan);
+            outline-offset: 2px;
+        }
+
+        .btn-yes {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .btn-no {
+            background: transparent;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 420px) {
+            .identity-card { padding: 1.5rem 1.1rem; }
+            .identity-card .who { font-size: 1.35rem; }
+        }
     </style>
     <link rel="stylesheet" href="assets/css/mobile.css">
     <link rel="stylesheet" href="assets/css/mobile-first.css">
@@ -152,9 +231,24 @@
         <div class="logo-icon">🚀</div>
         <h1>LearningHub</h1>
         <p class="tagline">Invata la ritmul tau</p>
-        <div class="spinner"></div>
+        <div class="spinner" id="spinner"></div>
         <p class="status" id="status">Se incarca...</p>
         <a href="hub/index.html" class="manual-link">Click aici daca nu esti redirectionat</a>
+    </div>
+
+    <!-- „Tu esti?" — se arata DOAR cand browserul are deja un profil salvat. -->
+    <div id="identity-confirm" class="loading-container identity-card"
+         data-ux-identity-confirm hidden
+         role="dialog" aria-modal="true" aria-labelledby="identity-who">
+        <div class="logo-icon" aria-hidden="true">👋</div>
+        <p class="question">Bine ai venit inapoi!</p>
+        <p class="who" id="identity-who">—</p>
+        <p class="who-grade" id="identity-grade"></p>
+        <p class="question"><strong>Tu esti?</strong></p>
+        <div class="identity-actions">
+            <button type="button" class="btn-yes" id="identity-yes">Da, continua</button>
+            <button type="button" class="btn-no" id="identity-no">Nu, sunt alt elev</button>
+        </div>
     </div>
 
     <!-- User System -->
@@ -192,9 +286,44 @@
                 setTimeout(function() { window.location.replace(target); }, 700);
             }
 
-            // If a profile already exists, skip the selector and go straight in.
-            if (UserSystem.getActiveProfile()) {
-                welcomeAndGo(UserSystem.getActiveProfile());
+            // Calculatoarele din laborator se impart, iar progresul se tine in
+            // browser. Daca sarim peste selector cand exista deja un profil, al
+            // doilea elev care se aseaza mosteneste numele, clasa si progresul
+            // primului. Deci NU mai sarim: intrebam scurt „tu esti?".
+            const confirmEl = document.getElementById('identity-confirm');
+            let waitingForAnswer = false;
+
+            function askWhoYouAre(profile) {
+                waitingForAnswer = true;
+                const grade = (UserSystem.GRADES || []).find(g => g.id === profile.grade);
+                document.getElementById('identity-who').textContent = profile.name || 'Vizitator';
+                document.getElementById('identity-grade').textContent = grade ? grade.label : '';
+                if (loadingEl) loadingEl.hidden = true;
+                confirmEl.hidden = false;
+                // Enter alege „Da" — un elev care chiar e el insusi nu pierde timp.
+                document.getElementById('identity-yes').focus();
+
+                document.getElementById('identity-yes').addEventListener('click', function () {
+                    waitingForAnswer = false;
+                    confirmEl.hidden = true;
+                    if (loadingEl) loadingEl.hidden = false;
+                    welcomeAndGo(UserSystem.getActiveProfile());
+                }, { once: true });
+
+                document.getElementById('identity-no').addEventListener('click', function () {
+                    waitingForAnswer = false;
+                    confirmEl.hidden = true;
+                    if (loadingEl) loadingEl.hidden = false;
+                    statusEl.textContent = 'Alege-ti profilul...';
+                    // switchProfile sterge profilul activ si deschide selectorul.
+                    UserSystem.switchProfile(welcomeAndGo);
+                }, { once: true });
+            }
+
+            const activeId = UserSystem.getActiveProfile();
+            const activeData = activeId ? UserSystem.getActiveProfileData() : null;
+            if (activeId && activeData) {
+                askWhoYouAre(activeData);
             } else {
                 statusEl.textContent = 'Selecteaza profilul tau...';
                 setTimeout(() => {
@@ -202,8 +331,11 @@
                 }, 400);
             }
 
-            // Hard safety net: if still on this page after 12s, force the redirect.
+            // Plasa de siguranta: daca dupa 12s tot suntem aici, mergem mai departe.
+            // NU se declanseaza cat timp elevul are intrebarea „tu esti?" pe ecran —
+            // altfel l-ar duce in profilul altcuiva exact cat se gandeste.
             setTimeout(function() {
+                if (waitingForAnswer) return;
                 if (document.getElementById('main-content')) goToHub();
             }, 12000);
         });
