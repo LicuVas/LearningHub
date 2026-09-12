@@ -54,6 +54,31 @@ regulilor din `C:\00\AI_0\knowledge\learninghub_calitate\00_INDEX.md` (deschide-
 corectă nu are voie să fie cea mai lungă, R1.2 distractorii sunt greșeli reale, R1.4-bis indiciul
 NU numește litera, R1.6 cheia e o literă și valoarea o listă).
 
+### ★ CE AM ÎNVĂȚAT DIN VALUL-PILOT (36 de întrebări, 12.09.2026) — citește ASTA înainte de rest
+
+**Rata de defect: 14 din 36 (39%).** Nu la formă — forma trecea impecabil la toate. La fond.
+**Cauza dominantă: 10 din 36 repetau un chestionar care exista DEJA în aceeași lecție.** Uneori
+cu același indiciu; într-un caz, răspunsul era scris în enunțul altui item din lecție.
+
+**Deci instrucțiunea către cel care scrie se schimbă — pasul 0 e obligatoriu:**
+> Înainte să scrii ceva, extrage **toate** întrebările care există deja în lecție
+> (`grep -o "data-quiz='[^']*'" <fisier>`) și citește-le. Întrebarea ta trebuie să testeze
+> ceva pe care **niciuna** dintre ele nu-l testează. Dacă tot ce se putea întreba e deja
+> întrebat, spune asta și sari lecția — nu umple cu o reformulare.
+
+**A doua cauză: faptul inventat.** O întrebare punea formula `=H2*(1-$J$1)` în celula H2 —
+referință circulară, Excel o refuză; iar lecția nici nu numea celulele (coloana corectă era I).
+**Regula:** dacă lecția nu numește o celulă, un meniu, un port sau o cifră, nu le inventa tu.
+
+**A treia: cheia mai categorică decât adevărul.** O întrebare afirma că un antet cu spațiu
+*strică* îmbinarea de corespondență, deși lecția spune doar că „unele versiuni pot trunchia".
+Elevul care a încercat acasă răspunde corect și e punctat greșit.
+
+**Poarta mecanică NU te salvează aici.** `aplica_intrebari.py` are și un detector de duplicate,
+dar măsurat pe cele 36 prinde **una din cinci** (itemii buni: mediană 0,07 / max 0,24; cei
+problematici: mediană 0,12 / max 0,36 — distribuțiile se suprapun). Un duplicat bine reformulat
+nu împarte cuvinte cu originalul, împarte ideea. **Verificarea adversarială rămâne obligatorie.**
+
 ### PAS 3 — „un atom = un ecran"
 Motorul **știe deja** să facă asta: `atomic-learning.js:447-465` (`setupGating`) blochează atomii
 următori, `:487` (`unlockNextAtom`) derulează la următorul. Nu scrie motor nou — pune un mod de
