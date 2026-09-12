@@ -76,6 +76,12 @@ def main():
             # ---------------------------------------------------- B. elevul A
             page.fill("#us-name-input", "AnaTest")
             page.select_option("#us-grade-select", "cls9")
+            # De la pasul 5, liceul cere si profilul (aceeasi clasa a 9-a exista
+            # pe 7 profiluri). Fara el, butonul refuza - si atunci proba asta
+            # nu mai avea ce profil sa confirme.
+            page.wait_for_timeout(400)
+            if page.locator("#us-track-select").is_visible():
+                page.select_option("#us-track-select", "artistic")
             page.click("#us-create-btn")
             page.wait_for_timeout(2000)
             dupa_A = page.url

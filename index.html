@@ -176,6 +176,19 @@
             margin-bottom: 1.5rem;
         }
 
+        .identity-card .resume-line {
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            border-radius: 10px;
+            padding: 0.6rem 0.8rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            overflow-wrap: anywhere;
+        }
+
+        .identity-card .resume-line strong { color: var(--text-primary); }
+
         .identity-card .question {
             color: var(--text-secondary);
             font-size: 1.05rem;
@@ -244,6 +257,7 @@
         <p class="question">Bine ai venit inapoi!</p>
         <p class="who" id="identity-who">—</p>
         <p class="who-grade" id="identity-grade"></p>
+        <p class="resume-line" id="identity-resume" hidden></p>
         <p class="question"><strong>Tu esti?</strong></p>
         <div class="identity-actions">
             <button type="button" class="btn-yes" id="identity-yes">Da, continua</button>
@@ -253,6 +267,8 @@
 
     <!-- User System -->
     <script src="assets/js/user-system.js"></script>
+    <!-- harta lessonId -> adresa lectiei, pentru „continua de unde ai ramas" -->
+    <script src="assets/js/now-data.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const statusEl = document.getElementById('status');
@@ -266,6 +282,10 @@
             // (liceu, maistri, postliceal) ar ateriza intr-un hub de gimnaziu,
             // asa ca sunt duse direct in sectiunea lor.
             const LANDING = {
+                cls5:     'content/tic/cls5/index.html',
+                cls6:     'content/tic/cls6/index.html',
+                cls7:     'content/tic/cls7/index.html',
+                cls8:     'content/tic/cls8/index.html',
                 cls9:     'content/liceu/index.html',
                 cls10:    'content/liceu/index.html',
                 cls11:    'content/liceu/index.html',
@@ -275,15 +295,57 @@
                 sanitar2: 'content/profesional/sanitar/an2-farmacie/index.html'
             };
 
+            // Cu profilul de liceu stim EXACT clasa lui, nu doar anul de studiu.
+            // Inainte, cls9..cls12 duceau toate in selectorul de profiluri, deci
+            // elevul care tocmai spusese cine e mai avea patru clicuri de facut.
+            function destinatie(profile) {
+                if (!profile) return 'hub/index.html';
+                if (profile.track && UserSystem.gradeHasTrack(profile.grade)) {
+                    return 'content/liceu/' + profile.track + '/' + profile.grade + '/index.html';
+                }
+                return LANDING[profile.grade] || 'hub/index.html';
+            }
+
             function welcomeAndGo(profileId) {
                 let target = 'hub/index.html';
                 try {
                     const profile = UserSystem.getActiveProfileData();
                     statusEl.textContent = `Bine ai venit, ${profile?.name || 'Vizitator'}!`;
                     if (loadingEl) loadingEl.classList.add('ready');
-                    if (profile && LANDING[profile.grade]) target = LANDING[profile.grade];
+                    target = destinatie(profile);
                 } catch (e) { /* ignore — redirect anyway */ }
                 setTimeout(function() { window.location.replace(target); }, 700);
+            }
+
+            /* „Continua de unde ai ramas": cea mai recenta lectie atinsa de acest
+               elev. Cheia de progres nu contine calea lectiei, de-aia exista harta
+               generata window.NOW_DATA.lectii (tools/gen_now_data.py). */
+            function ultimaLectie(profileId) {
+                const harta = (window.NOW_DATA || {}).lectii;
+                if (!harta || !profileId) return null;
+                const prefix = 'atomic-progress-' + profileId + '-';
+                let best = null;
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (!k || k.indexOf(prefix) !== 0) continue;
+                    const lid = k.slice(prefix.length);
+                    const info = harta[lid];
+                    if (!info) continue;
+                    let d;
+                    try { d = JSON.parse(localStorage.getItem(k)); } catch (e) { continue; }
+                    if (!d || !d.timestamp) continue;
+                    if (!best || d.timestamp > best.timestamp) {
+                        const sc = d.lessonScore || {};
+                        best = {
+                            timestamp: d.timestamp,
+                            url: info.url,
+                            titlu: info.titlu,
+                            gata: sc.atomsCompleted || (d.completedAtoms || []).length,
+                            total: sc.atomsTotal || 0
+                        };
+                    }
+                }
+                return best;
             }
 
             // Calculatoarele din laborator se impart, iar progresul se tine in
@@ -298,15 +360,38 @@
                 const grade = (UserSystem.GRADES || []).find(g => g.id === profile.grade);
                 document.getElementById('identity-who').textContent = profile.name || 'Vizitator';
                 document.getElementById('identity-grade').textContent = grade ? grade.label : '';
+                // „Continua de unde ai ramas" — aici e locul lui: chiar in
+                // secunda in care elevul spune ca el e. Pana acum, progresul
+                // se salva dar nu se vedea pe nicio pagina de intrare.
+                const ult = ultimaLectie(UserSystem.getActiveProfile());
+                const btnDa = document.getElementById('identity-yes');
+                if (ult) {
+                    const cat = ult.total ? ` (${ult.gata} din ${ult.total})` : '';
+                    document.getElementById('identity-resume').innerHTML =
+                        'Ultima data ai lucrat la <strong></strong>';
+                    document.querySelector('#identity-resume strong').textContent =
+                        ult.titlu + cat;
+                    document.getElementById('identity-resume').hidden = false;
+                    btnDa.textContent = 'Da, continua lectia';
+                    btnDa.dataset.resumeUrl = ult.url;
+                }
+
                 if (loadingEl) loadingEl.hidden = true;
                 confirmEl.hidden = false;
                 // Enter alege „Da" — un elev care chiar e el insusi nu pierde timp.
-                document.getElementById('identity-yes').focus();
+                btnDa.focus();
 
-                document.getElementById('identity-yes').addEventListener('click', function () {
+                btnDa.addEventListener('click', function () {
                     waitingForAnswer = false;
                     confirmEl.hidden = true;
                     if (loadingEl) loadingEl.hidden = false;
+                    const reia = this.dataset.resumeUrl;
+                    if (reia) {
+                        statusEl.textContent = 'Continuam de unde ai ramas...';
+                        if (loadingEl) loadingEl.classList.add('ready');
+                        setTimeout(function () { window.location.replace(reia); }, 500);
+                        return;
+                    }
                     welcomeAndGo(UserSystem.getActiveProfile());
                 }, { once: true });
 

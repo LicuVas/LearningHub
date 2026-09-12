@@ -19,6 +19,7 @@ import os
 import re
 import sys
 
+NL = chr(10)
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 CONTENT = os.path.join(ROOT, "content")
 OUT = os.path.join(ROOT, "assets", "js", "now-data.js")
@@ -91,6 +92,48 @@ def numara_lectii(d):
     return n
 
 
+RX_INIT = re.compile(r"""AtomicLearning\.init\(\s*['"]([^'"]+)['"]""")
+
+
+def harta_lectiilor():
+    """{lessonId: {url, titlu, clasa}} — cheia sub care motorul salveaza progresul,
+    legata de adresa reala a lectiei.
+
+    De ce conteaza: progresul se salveaza sub `atomic-progress-<profil>-<lessonId>`,
+    iar lessonId ('artistic-cls10-m1-...') NU se poate transforma inapoi in cale:
+    ii lipseste radacina (tic / liceu / profesional). Fara harta asta, „continua
+    de unde ai ramas" nu are unde sa trimita elevul. Se construieste aici, o data,
+    din chiar apelul din fiecare lectie.
+    """
+    out = {}
+    coliziuni = []
+    for dirpath, dirnames, filenames in os.walk(CONTENT):
+        dirnames[:] = [d for d in dirnames if d not in SKIP]
+        for f in filenames:
+            if not (f.startswith("lectia") and f.endswith(".html")):
+                continue
+            p = os.path.join(dirpath, f)
+            try:
+                with open(p, encoding="utf-8", errors="replace") as fh:
+                    h = fh.read()
+            except OSError:
+                continue
+            m = RX_INIT.search(h)
+            if not m:
+                continue
+            lid = m.group(1)
+            rel = os.path.relpath(p, CONTENT).replace("\\", "/")
+            if lid in out:
+                coliziuni.append(lid)
+                continue
+            out[lid] = {
+                "url": "content/" + rel,
+                "titlu": titlu_din(p) or os.path.splitext(f)[0],
+                "clasa": "/".join(rel.split("/")[:-2]),
+            }
+    return out, coliziuni
+
+
 def main():
     clase = []
     for sect in SECTIUNI:
@@ -130,17 +173,26 @@ def main():
 
     clase.sort(key=lambda c: (list(SECTIUNI.values()).index(c["sectiune"]), c["cale"]))
 
+    lectii_map, coliziuni = harta_lectiilor()
+
     js = (
-        "/* GENERAT AUTOMAT de tools/gen_now_data.py — NU EDITA DE MANA.\n"
-        "   Harta claselor reale de pe sit: eticheta, link, module, cate lectii.\n"
-        "   Se regenereaza dupa ORICE adaugare de continut, altfel imbatraneste. */\n"
-        "window.NOW_DATA = " + json.dumps({"clase": clase}, ensure_ascii=False, indent=1) + ";\n"
+        "/* GENERAT AUTOMAT de tools/gen_now_data.py - NU EDITA DE MANA." + NL +
+        "   clase:  harta claselor reale (eticheta, link, module, cate lectii)" + NL +
+        "   lectii: lessonId -> adresa reala, ca „continua de unde ai ramas\" sa aiba" + NL +
+        "           unde trimite elevul (cheia de progres nu contine calea)." + NL +
+        "   Se regenereaza dupa ORICE adaugare de continut, altfel imbatraneste. */" + NL +
+        "window.NOW_DATA = " +
+        json.dumps({"clase": clase, "lectii": lectii_map}, ensure_ascii=False, indent=1) +
+        ";" + NL
     )
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(js)
 
     total_lectii = sum(c["lectii"] for c in clase)
+    print("  harta lectiilor: %d id-uri%s" % (
+        len(lectii_map),
+        ("  ATENTIE: %d id-uri duplicate, sarite" % len(coliziuni)) if coliziuni else ""))
     print(f"scris: {os.path.relpath(OUT, ROOT)}")
     print(f"  {len(clase)} clase, {total_lectii} lectii, "
           f"{sum(len(c['module']) for c in clase)} module")

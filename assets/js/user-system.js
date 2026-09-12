@@ -66,6 +66,39 @@ const UserSystem = {
      * Grades grouped in declaration order, for rendering <optgroup> elements.
      * @returns {Array<{group: string, items: Array}>}
      */
+    /**
+     * Profilul de liceu — AL DOILEA camp al identitatii, adaugat 12.09.2026.
+     *
+     * De ce camp separat si nu id-uri noi in GRADES: daca `cls12` ar deveni
+     * `cls12-artistic`, toate profilurile deja salvate raman cu grade:'cls12',
+     * tabela LANDING din index.html nu mai gaseste ruta, si elevul de a 12-a
+     * ajunge in hub-ul de gimnaziu. Ca un camp NOU si optional, profilurile
+     * vechi merg mai departe exact ca inainte.
+     *
+     * Se cere doar la clasele de liceu (cls9-cls12). La gimnaziu si la
+     * postliceal nu exista profiluri, deci nu se intreaba degeaba.
+     */
+    TRACKS: [
+        { id: 'mat-info',   label: 'Matematica-informatica' },
+        { id: 'stiinte',    label: 'Stiintele naturii' },
+        { id: 'tehnologic', label: 'Tehnologic' },
+        { id: 'artistic',   label: 'Artistic' },
+        { id: 'pedagogic',  label: 'Pedagogic' },
+        { id: 'umanist',    label: 'Umanist / Filologie' },
+        { id: 'militar',    label: 'Militar' }
+    ],
+
+    /** Clasele care au profil (liceu). */
+    gradeHasTrack(gradeId) {
+        return /^cls(9|1[0-2])$/.test(String(gradeId || ''));
+    },
+
+    /** Profilul de liceu al profilului activ, sau null. */
+    getActiveTrack() {
+        const p = this.getActiveProfileData();
+        return (p && p.track) || null;
+    },
+
     getGradeGroups() {
         const groups = [];
         this.GRADES.forEach(g => {
@@ -188,7 +221,7 @@ const UserSystem = {
      * @param {string} grade - Student grade (cls5, cls6, cls7, cls8)
      * @returns {string} - The new profile ID
      */
-    createProfile(name, avatar = null, grade = null) {
+    createProfile(name, avatar = null, grade = null, track = null) {
         // Sanitize name - strip HTML tags and trim
         const sanitizedName = name.replace(/<[^>]*>/g, '').trim();
 
@@ -209,6 +242,12 @@ const UserSystem = {
             grade: grade || 'cls6', // Default to cls6 if not specified
             created: new Date().toISOString()
         };
+
+        // Profilul de liceu, doar unde exista. Camp optional: profilurile vechi
+        // n-au campul asta si functioneaza mai departe neschimbate.
+        if (track && this.gradeHasTrack(newProfile.grade)) {
+            newProfile.track = track;
+        }
 
         profiles.push(newProfile);
         this.saveProfiles(profiles);
@@ -566,6 +605,10 @@ const UserSystem = {
                             </optgroup>
                         `).join('')}
                     </select>
+                    <select id="us-track-select" class="us-grade-select" hidden>
+                        <option value="" disabled selected>Alege profilul</option>
+                        ${this.TRACKS.map(t => `<option value="${t.id}">${this.escapeHtml(t.label)}</option>`).join('')}
+                    </select>
                     <button id="us-create-btn" class="us-btn-primary">Creeaza profil</button>
                 </div>
 
@@ -591,10 +634,21 @@ const UserSystem = {
             });
         });
 
+        // Profilul de liceu apare doar cand clasa aleasa are unul.
+        const trackSelect = document.getElementById('us-track-select');
+        document.getElementById('us-grade-select').addEventListener('change', (e) => {
+            const areProfil = this.gradeHasTrack(e.target.value);
+            trackSelect.hidden = !areProfil;
+            if (!areProfil) trackSelect.value = '';
+            trackSelect.classList.remove('us-error');
+            trackSelect.style.borderColor = '';
+        });
+
         document.getElementById('us-create-btn').addEventListener('click', () => {
             const name = document.getElementById('us-name-input').value.trim();
             const gradeSelect = document.getElementById('us-grade-select');
             const grade = gradeSelect.value;
+            const track = trackSelect ? trackSelect.value : '';
 
             // Validate name
             if (name.length < 2) {
@@ -612,7 +666,16 @@ const UserSystem = {
                 return;
             }
 
-            const profileId = this.createProfile(name, null, grade);
+            // La liceu, profilul e obligatoriu: fara el nu stim la ce clasa
+            // sa-l ducem (aceeasi clasa a 9-a exista pe 7 profiluri diferite).
+            if (this.gradeHasTrack(grade) && !track) {
+                trackSelect.hidden = false;
+                trackSelect.style.borderColor = 'var(--us-accent-red)';
+                trackSelect.classList.add('us-error');
+                return;
+            }
+
+            const profileId = this.createProfile(name, null, grade, track);
             this.selectProfile(profileId);
             modal.remove();
             if (onSelect) onSelect(profileId);

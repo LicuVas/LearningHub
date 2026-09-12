@@ -200,22 +200,31 @@ def pas4_date_moarte():
 
 
 def pas5_rutare():
-    """Profilul e al doilea camp (nu id schimbat), iar LANDING duce la clasa, nu la selector."""
+    """Profilul e al doilea camp (nu id schimbat), ruta duce la clasa lui,
+    si ecranul de intrare stie sa reia de unde a ramas."""
     us = read(os.path.join(ROOT, "assets", "js", "user-system.js"))
     idx = read(os.path.join(ROOT, "index.html"))
+    nd = os.path.join(ROOT, "assets", "js", "now-data.js")
     detail = []
+
+    if "TRACKS:" not in us or "gradeHasTrack" not in us:
+        detail.append("user-system.js n-are profilul de liceu ca al doilea camp (TRACKS)")
+    if "us-track-select" not in us:
+        detail.append("selectorul de profil nu apare in fereastra de creare profil")
+    if "function destinatie" not in idx or "content/liceu/' + profile.track" not in idx:
+        detail.append("index.html nu compune ruta din (clasa + profil)")
+    if "identity-resume" not in idx or "ultimaLectie" not in idx:
+        detail.append("ecranul de intrare nu arata 'continua de unde ai ramas'")
+    if not os.path.exists(nd) or '"lectii"' not in read(nd):
+        detail.append("now-data.js n-are harta lessonId -> adresa lectiei "
+                      "(fara ea, 'continua' n-are unde trimite)")
+
     # id-urile vechi TREBUIE sa ramana - altfel profilurile existente se rup
     ids_intacte = all(f"id: '{g}'" in us for g in ("cls9", "cls10", "cls11", "cls12"))
     if not ids_intacte:
-        detail.append("ATENTIE: id-urile de clasa au fost schimbate - rupe profilurile existente")
-    are_profil = "PROFILES_LICEU" in us or "trackId" in us or "profil" in us.lower() and "getActiveTrack" in us
-    if not are_profil:
-        detail.append("user-system.js n-are profilul ca al doilea camp")
-    ruteaza = "LANDING_PROFIL" in idx or bool(re.search(r"cls9-\w+\s*:", idx))
-    if not ruteaza:
-        detail.append("index.html nu ruteaza pe (clasa + profil) catre pagina clasei")
-    ok = ids_intacte and are_profil and ruteaza
-    return ok, detail
+        detail.append("ATENTIE: id-urile de clasa au fost SCHIMBATE - asta rupe "
+                      "profilurile existente (elevul de a 12-a ajunge in hubul de gimnaziu)")
+    return (not detail), detail
 
 
 # ---------------------------------------------------------------- raport
