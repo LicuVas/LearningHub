@@ -99,12 +99,37 @@ def pas2_atomi_fara_intrebare():
 
 
 def pas3_pas_cu_pas():
-    """Modul 'un atom = un ecran' exista in motor si e pornit."""
+    """Modul 'un atom = un ecran' exista, e pornit, si primul pas e o bucata,
+    nu un zid. Cifra care conteaza: cate cuvinte vede elevul cand deschide."""
+    import statistics
     p = os.path.join(ROOT, "assets", "js", "atomic-learning.js")
     js = read(p)
-    ok = "stepByStep" in js and "ux-step-counter" in js
-    detail = [] if ok else ["atomic-learning.js nu are modul pas-cu-pas (stepByStep + ux-step-counter)"]
-    return ok, detail
+    detail = []
+    if "setupStepByStep" not in js or "ux-step-counter" not in js:
+        detail.append("atomic-learning.js nu are modul pas-cu-pas")
+    if not re.search(r"stepByStep:\s*true", js):
+        detail.append("modul pas-cu-pas exista, dar nu e pornit implicit")
+
+    primii = []
+    for f in walk("content", lambda f: f.startswith("lectia") and f.endswith(".html")):
+        chunks = _split_atoms(read(f))
+        if not chunks:
+            continue
+        t = re.sub(r"(?s)<[^>]+>", " ", chunks[0])
+        primii.append(len(re.sub(r"\s+", " ", t).split()))
+
+    masura = {}
+    if primii:
+        mediana = statistics.median(primii)
+        ziduri = sum(1 for x in primii if x > 800)
+        masura = {"lectii": len(primii), "mediana_primului_pas": mediana,
+                  "primul_pas_peste_800": ziduri}
+        if mediana > 400:
+            detail.append(f"primul pas are mediana {mediana} de cuvinte (tinta: sub 400)")
+        if ziduri > 10:
+            detail.append(f"{ziduri} lectii se deschid cu peste 800 de cuvinte")
+
+    return (not detail), detail, masura
 
 
 def pas4_date_moarte():
@@ -205,7 +230,7 @@ def main():
     ok2, d2, m2 = pas2_atomi_fara_intrebare()
     rows.append(("2. Zero atomi care se trec singuri cu 100", ok2, d2))
 
-    ok3, d3 = pas3_pas_cu_pas()
+    ok3, d3, m3 = pas3_pas_cu_pas()
     rows.append(("3. Modul pas-cu-pas (un atom = un ecran)", ok3, d3))
 
     ok4, d4, m4 = pas4_date_moarte()
@@ -238,7 +263,9 @@ def main():
         print("  nimic — toti pasii trec.")
 
     print("\nMasuratori brute:")
-    print(json.dumps({"atomi": m2, "acum": m4}, ensure_ascii=False, indent=2)[:1200])
+    m2.pop("fisiere", None)
+    print(json.dumps({"atomi": m2, "pas_cu_pas": m3, "acum": m4},
+                     ensure_ascii=False, indent=2)[:1400])
 
     return 0 if gata == len(rows) else 1
 

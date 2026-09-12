@@ -27,6 +27,7 @@ const AtomicLearning = {
     // Settings
     settings: {
         requireCorrectToProgress: true,
+        stepByStep: true,  // un atom = un ecran (vezi setupStepByStep)
         maxHints: 1,  // Show hint immediately on wrong answer
         lockAfterAnswer: true,  // Lock answer - no changing allowed
         animationDuration: 300,
@@ -67,6 +68,20 @@ const AtomicLearning = {
         }
 
         this.injectStyles();
+
+        // Un atom = un ecran. DUPA injectStyles, ca stilurile sa fie deja acolo.
+        if (this.settings.stepByStep) {
+            try {
+                this.setupStepByStep();
+            } catch (e) {
+                // Daca pasul-cu-pasul nu se poate monta pe structura paginii,
+                // lectia ramane exact cum era. Nu blocam invatarea pentru un ornament.
+                console.warn('AtomicLearning: step-by-step indisponibil pe pagina asta', e);
+                document.querySelectorAll('.ux-step-hidden').forEach(function (el) {
+                    el.classList.remove('ux-step-hidden');
+                });
+            }
+        }
         console.log(`AtomicLearning: Initialized ${Object.keys(this.atoms).length} atoms`);
     },
 
@@ -97,7 +112,13 @@ const AtomicLearning = {
 
         const quizContainer = atomEl.querySelector('.atom-quiz');
 
-        // Atoms without quiz container are auto-completed (content-only atoms)
+        // Atomi FARA intrebare (de obicei recapitularea de la finalul lectiei).
+        // Se marcheaza CITIT, nu „perfect": elevul n-a fost intrebat nimic, deci
+        // nu are ce sa demonstreze. Inainte primeau score: 100 si clasa
+        // `atom-perfect`, adica exact insigna pe care ceilalti o castiga
+        // raspunzand — masurat 12.09.2026: 239 de atomi in 225 de lectii.
+        // (Procentul lectiei NU era afectat: ei aduc 0 intrebari in
+        // calculateLessonScore. Umflat era doar `atomsPerfect`.)
         if (!quizContainer) {
             this.atoms[atomId] = {
                 element: atomEl,
@@ -105,11 +126,12 @@ const AtomicLearning = {
                 answers: {},
                 hintsUsed: {},
                 completed: true,
+                contentOnly: true,
                 correctCount: 0,
-                score: 100  // Content-only atoms get full score
+                score: null            // null = „nu se noteaza", nu „100"
             };
             this.completedAtoms.add(atomId);
-            atomEl.classList.add('atom-completed', 'atom-perfect');
+            atomEl.classList.add('atom-completed', 'atom-read');
             return;
         }
 
@@ -127,7 +149,8 @@ const AtomicLearning = {
             return;
         }
 
-        // If quiz data is empty, treat as content-only atom (auto-complete)
+        // A doua cale catre acelasi lucru: containerul exista, dar lista de
+        // intrebari e goala. Se trateaza identic — CITIT, nu „perfect".
         if (!quizData || quizData.length === 0) {
             this.atoms[atomId] = {
                 element: atomEl,
@@ -135,11 +158,12 @@ const AtomicLearning = {
                 answers: {},
                 hintsUsed: {},
                 completed: true,
+                contentOnly: true,
                 correctCount: 0,
-                score: 100
+                score: null
             };
             this.completedAtoms.add(atomId);
-            atomEl.classList.add('atom-completed', 'atom-perfect');
+            atomEl.classList.add('atom-completed', 'atom-read');
             return;
         }
 
@@ -444,6 +468,111 @@ const AtomicLearning = {
     /**
      * Setup gating (lock atoms until previous is complete)
      */
+    /* ------------------------------------------------------------------
+       „Un atom = un ecran".
+
+       De ce: masurat pe tot situl (12.09.2026), mediana unei lectii e 2978 de
+       cuvinte, cea mai scurta din 531 are 959, si NICIUNA nu e sub 800. Elevul
+       care deschide o lectie vede un zid. Blocarea pe atomi exista deja
+       (setupGating), dar toti atomii stateau pe ecran, doar acoperiti — deci
+       zidul ramanea zid.
+
+       Ce face: arata un singur atom o data, cu „pasul N din M" si un buton
+       Urmatorul. Nu e motor nou — foloseste aceiasi atomi, aceeasi stare
+       (completedAtoms) si acelasi gating. Textul dinaintea primului atom
+       (introducerea) ramane sus; ce vine dupa ultimul atom (exercitii,
+       recapitulare) apare la final, nu se arunca.
+       ------------------------------------------------------------------ */
+    setupStepByStep: function() {
+        const atomEls = Array.from(document.querySelectorAll('.atom'));
+        if (atomEls.length < 2) return;          // o lectie cu un singur pas n-are ce numara
+
+        const self = this;
+        const parent = atomEls[0].parentNode;
+        const acelasiParinte = atomEls.every(a => a.parentNode === parent);
+
+        // Ce vine DUPA ultimul atom (exercitii, recapitulare) - se arata la final.
+        let dupaAtomi = [];
+        if (acelasiParinte) {
+            let n = atomEls[atomEls.length - 1].nextElementSibling;
+            while (n) { dupaAtomi.push(n); n = n.nextElementSibling; }
+        }
+
+        // --- antetul cu pasul curent
+        const bara = document.createElement('div');
+        bara.className = 'ux-step-counter';
+        bara.setAttribute('data-ux-step-counter', '');
+        bara.innerHTML =
+            '<div class="ux-step-line"><span class="ux-step-text"></span>' +
+            '<span class="ux-step-pct"></span></div>' +
+            '<div class="ux-step-bar"><div class="ux-step-fill"></div></div>';
+        parent.insertBefore(bara, atomEls[0]);
+
+        // --- butonul de inaintare
+        const nav = document.createElement('div');
+        nav.className = 'ux-step-nav';
+        nav.innerHTML =
+            '<button type="button" class="ux-step-back" hidden>&larr; Inapoi</button>' +
+            '<button type="button" class="ux-step-next">Urmatorul pas &rarr;</button>';
+        if (acelasiParinte) parent.insertBefore(nav, dupaAtomi[0] || null);
+        else atomEls[atomEls.length - 1].parentNode.appendChild(nav);
+
+        const btnNext = nav.querySelector('.ux-step-next');
+        const btnBack = nav.querySelector('.ux-step-back');
+
+        // Porneste de la primul atom neterminat - elevul nu reia ce a facut.
+        let i = atomEls.findIndex(a => !self.completedAtoms.has(a.dataset.atomId || a.id));
+        if (i < 0) i = atomEls.length;           // totul terminat -> ecranul de final
+
+        function terminat(idx) {
+            const el = atomEls[idx];
+            return el && self.completedAtoms.has(el.dataset.atomId || el.id);
+        }
+
+        function deseneaza(scroll) {
+            const M = atomEls.length;
+            atomEls.forEach((a, k) => a.classList.toggle('ux-step-hidden', k !== i));
+            dupaAtomi.forEach(e => e.classList.toggle('ux-step-hidden', i < M));
+
+            const gata = atomEls.filter((a, k) => terminat(k)).length;
+            const pct = Math.round((gata / M) * 100);
+            bara.querySelector('.ux-step-fill').style.width = pct + '%';
+            bara.querySelector('.ux-step-pct').textContent = gata + ' din ' + M;
+
+            if (i >= M) {
+                bara.querySelector('.ux-step-text').textContent = 'Ai terminat lectia';
+                bara.classList.add('ux-step-done');
+                nav.hidden = true;
+                return;
+            }
+            bara.classList.remove('ux-step-done');
+            nav.hidden = false;
+            bara.querySelector('.ux-step-text').textContent = 'Pasul ' + (i + 1) + ' din ' + M;
+            btnBack.hidden = i === 0;
+            btnNext.disabled = !terminat(i);
+            btnNext.textContent = (i === M - 1)
+                ? 'Termin lectia →'
+                : (terminat(i) ? 'Urmatorul pas →' : 'Raspunde ca sa mergi mai departe');
+            if (scroll) bara.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        btnNext.addEventListener('click', function () {
+            if (!terminat(i)) return;
+            i++;
+            deseneaza(true);
+        });
+        btnBack.addEventListener('click', function () {
+            if (i > 0) { i--; deseneaza(true); }
+        });
+
+        // Cand un atom se completeaza, butonul se deblocheaza singur.
+        document.addEventListener('atomCompleted', function () { deseneaza(false); });
+        document.addEventListener('atomicProgressSaved', function () { deseneaza(false); });
+
+        this._stepRedraw = deseneaza;
+        deseneaza(false);
+    },
+
     setupGating: function() {
         const atomEls = document.querySelectorAll('.atom');
 
@@ -578,12 +707,19 @@ const AtomicLearning = {
         let totalQuestions = 0;
         let atomsCompleted = 0;
         let atomsPerfect = 0;
+        let atomsReadOnly = 0;
 
         for (const atomId in this.atoms) {
             const atom = this.atoms[atomId];
             totalQuestions += atom.questions.length;
             totalCorrect += atom.correctCount || 0;
 
+            if (atom.contentOnly) {
+                // Citit, nu notat. Nu intra in „perfect" — n-a fost intrebat nimic.
+                atomsReadOnly++;
+                if (atom.completed) atomsCompleted++;
+                continue;
+            }
             if (atom.completed) {
                 atomsCompleted++;
                 if (atom.score === 100) atomsPerfect++;
@@ -596,7 +732,9 @@ const AtomicLearning = {
             percentage: totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0,
             atomsCompleted: atomsCompleted,
             atomsTotal: Object.keys(this.atoms).length,
-            atomsPerfect: atomsPerfect
+            atomsPerfect: atomsPerfect,
+            atomsReadOnly: atomsReadOnly,
+            atomsScored: Object.keys(this.atoms).length - atomsReadOnly
         };
     },
 
@@ -848,6 +986,114 @@ const AtomicLearning = {
 
             .atom-completed.atom-partial {
                 border-left: 4px solid var(--warning, #f59e0b);
+            }
+
+            /* --- „un atom = un ecran" --- */
+            .ux-step-hidden { display: none !important; }
+
+            .ux-step-counter {
+                position: sticky;
+                top: 0;
+                z-index: 30;
+                background: var(--bg-secondary, #12121f);
+                padding: 0.75rem 0 0.6rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .ux-step-line {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 1rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .ux-step-text {
+                font-weight: 700;
+                font-size: 1rem;
+                color: var(--text-primary, #f1f5f9);
+            }
+
+            .ux-step-pct {
+                font-size: 0.85rem;
+                color: var(--text-secondary, #94a3b8);
+            }
+
+            .ux-step-bar {
+                height: 8px;
+                border-radius: 999px;
+                background: var(--border, #2d2d44);
+                overflow: hidden;
+            }
+
+            .ux-step-fill {
+                height: 100%;
+                width: 0;
+                border-radius: 999px;
+                background: linear-gradient(90deg, var(--accent-blue, #3b82f6), var(--success, #22c55e));
+                transition: width 0.35s ease;
+            }
+
+            .ux-step-counter.ux-step-done .ux-step-text { color: var(--success, #22c55e); }
+
+            .ux-step-nav {
+                display: flex;
+                justify-content: space-between;
+                gap: 0.75rem;
+                margin: 1.5rem 0 2rem;
+                flex-wrap: wrap;
+            }
+
+            .ux-step-nav button {
+                font: inherit;
+                font-weight: 600;
+                padding: 0.85rem 1.4rem;
+                border-radius: 12px;
+                border: 1px solid var(--border, #2d2d44);
+                cursor: pointer;
+            }
+
+            .ux-step-next {
+                background: linear-gradient(135deg, var(--accent-blue, #3b82f6), var(--accent-purple, #8b5cf6));
+                color: #fff;
+                border-color: transparent;
+                margin-left: auto;
+            }
+
+            .ux-step-next[disabled] {
+                background: var(--border, #2d2d44);
+                color: var(--text-muted, #64748b);
+                cursor: not-allowed;
+            }
+
+            .ux-step-back {
+                background: transparent;
+                color: var(--text-secondary, #94a3b8);
+            }
+
+            @media (max-width: 480px) {
+                .ux-step-nav button { width: 100%; margin-left: 0; }
+            }
+
+            /* Atom fara intrebare: CITIT. Deliberat altfel decat „perfect" —
+               bifa verde se castiga raspunzand, nu deruland. */
+            .atom-completed.atom-read {
+                border-left: 4px dashed var(--text-muted, #64748b);
+            }
+
+            .atom-completed.atom-read::after {
+                content: 'citit';
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                padding: 0.15rem 0.5rem;
+                font-size: 0.7rem;
+                font-weight: 600;
+                letter-spacing: 0.03em;
+                color: var(--text-muted, #64748b);
+                border: 1px solid var(--text-muted, #64748b);
+                border-radius: 999px;
+                opacity: 0.8;
             }
 
             .atom-completed.atom-perfect::after {
