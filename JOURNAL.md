@@ -8,6 +8,61 @@
 
 ---
 
+## 2026-09-12 — reparatiile: intrarea, unitatea de lucru, si un defect vechi de pe TOT situl
+
+Analiza de ieri (`DECIZIE_UX_2026-09-11.md`) a fost pusa in lucru. Poarta campaniei:
+`python _campaign/ux_2026_09_11/status.py` — de la **0 din 5** la **4 din 5**.
+
+### Defectul mare, gasit din intamplare
+`lesson-summary.js:121` (`hookPracticeVisibility`) ascundea `.practice-section` si o readucea
+DOAR prin ambalarea lui `window.goToStep` — functie din sablonul VECHI de lectie, cu pasi
+numerotati. Lectiile atomice (Format C) n-au goToStep. Masurat: **531 din 531** de lectii
+incarca lesson-summary.js, au sectiune de exercitii, si nu au goToStep. Adica exercitiile au
+stat ascunse pentru totdeauna, pe tot situl, fara nicio eroare in consola. Exact reclamatia
+elevului mediu din proba de calitate: „nu pot lucra acasa".
+**Regula care ramane:** nu ascunde un element daca mecanismul care trebuie sa-l aduca inapoi
+poate lipsi pe acel tip de pagina. Verifica intai ca exista, altfel iesi fara sa ascunzi.
+Gasit parcurgand o lectie pana la capat in browser, nu citind cod.
+
+### Ce s-a facut
+- **Identitatea in laborator.** `index.html` intreaba „Bine ai venit inapoi, <nume>. Tu esti?"
+  cu „Nu, sunt alt elev". Inainte sarea peste selector, deci al doilea elev de pe acelasi
+  calculator primea numele, clasa si progresul primului. Plasa de siguranta de 12s nu se mai
+  declanseaza peste intrebare.
+- **Un atom = un ecran.** Peste `setupGating`, care exista deja. Mediana primului pas:
+  **214 cuvinte** (lectia intreaga are 2978). Drumul pana la „Pasul 1 din N": **1560 px -> 362 px**,
+  fiindca obiectivele au intrat intr-un pliant si contorul a urcat deasupra lor.
+  `.practice-section` si `.review-section` sunt frati cu `<main>`, nu cu atomii — prima versiune
+  le lasa pe ecran de la pasul 1, adica dadea rezumatul inainte de lucru.
+- **„Ce invatam acum" se genereaza.** `curriculum/school_year_2026_2027.json` din fisa canonica
+  ISJ Neamt 2543/19.03.2026 (vacanta mobila 22-26 feb 2027, NU varianta gresita care circula) ->
+  `tools/gen_school_year_js.py` -> `assets/js/school-year.js`. Plus `tools/gen_now_data.py` ->
+  harta celor 34 de clase reale + harta lessonId -> adresa lectiei. Hub-ul listeaza 34 de clase,
+  nu 4. `active-module.js` nu mai are anul ars in cod. `tools/sync_module_dates.py` a adus la zi
+  57 de intervale pe 4 pagini de clasa.
+- **Profilul de liceu ca AL DOILEA camp** (GRADES neatins) + rutare directa la clasa lui +
+  „continua de unde ai ramas" pe ecranul de intrare.
+- **Atomii fara intrebare nu mai iau 100.** Sunt „citit" (score null, clasa `atom-read`).
+  Reparat pe ambele cai care duceau acolo.
+
+### Corectii de masurare (toate prinse verificand, nu presupunand)
+- „80 de date moarte" era FALS: „Modulul 5" e numele real al unui modul, iar „2025-2026" apare
+  in date fictive dintr-un exercitiu. Real: 57 de intervale pe 4 pagini.
+- Prima versiune a portii numara **22.166 de atomi** in loc de 3.539, fiindca potrivirea pe
+  cuvantul „atom" prindea si clasele `atom-content` si `atom-quiz` (o cratima e granita de cuvant).
+  Motorul foloseste `querySelectorAll('.atom')`, deci clasa EXACTA.
+- „1750 de cuvinte de programa" pe pagina de artistic: **1239 stateau deja in pliante inchise**.
+  Vizibile fara clic: 511. Cand masori cat CITESTE un om, scoate intai `<details>` fara `open`.
+
+### RAMAS DESCHIS
+Cele **239 de intrebari de inchidere** (pasul 2 din 5). 91% dintre atomii fara intrebare sunt
+ULTIMUL atom al lectiei, adica recapitularea. Val-pilot pornit pe 36 de lectii; raman 189.
+Agentii scriu DOAR date (JSON), iar `_campaign/ux_2026_09_11/aplica_intrebari.py` le insereaza
+determinist si verifica regulile R1 inainte si dupa scriere — data trecuta o rescriere in masa
+a introdus defecte in 43% din lectiile atinse.
+
+---
+
 ## 2026-09-11 — de ce nu-l folosesc elevii: 4 din 5 solutii ucise de atacul adversarial
 
 **Brief complet: `DECIZIE_UX_2026-09-11.md`.** Analiza ceruta de Vasile (elevii arata prea putin
