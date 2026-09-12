@@ -491,11 +491,25 @@ const AtomicLearning = {
         const parent = atomEls[0].parentNode;
         const acelasiParinte = atomEls.every(a => a.parentNode === parent);
 
-        // Ce vine DUPA ultimul atom (exercitii, recapitulare) - se arata la final.
+        /* Ce vine DUPA ultimul atom (exercitii, recapitulare) - se arata la final.
+           Atentie: in sabloanele lectiilor, `.practice-section` (884 cuvinte) si
+           `.review-section` (357) NU sunt frati cu atomii, ci frati cu <main>-ul
+           care-i contine. O prima versiune se uita doar langa atomi si le lasa pe
+           ecran de la pasul 1 - adica ii dadea elevului rezumatul si raspunsurile
+           inainte sa lucreze. Deci strangem ambele niveluri. */
         let dupaAtomi = [];
+        let dupaInParinte = [];      // doar copiii lui `parent`, pt. inserarea butonului
         if (acelasiParinte) {
             let n = atomEls[atomEls.length - 1].nextElementSibling;
-            while (n) { dupaAtomi.push(n); n = n.nextElementSibling; }
+            while (n) { dupaAtomi.push(n); dupaInParinte.push(n); n = n.nextElementSibling; }
+            let q = parent.nextElementSibling;
+            while (q) {
+                // nu ascundem subsolul / creditul sitului
+                if (!/footer|site-credit|credit/i.test(q.className + ' ' + q.tagName)) {
+                    dupaAtomi.push(q);
+                }
+                q = q.nextElementSibling;
+            }
         }
 
         // --- antetul cu pasul curent
@@ -506,7 +520,26 @@ const AtomicLearning = {
             '<div class="ux-step-line"><span class="ux-step-text"></span>' +
             '<span class="ux-step-pct"></span></div>' +
             '<div class="ux-step-bar"><div class="ux-step-fill"></div></div>';
-        parent.insertBefore(bara, atomEls[0]);
+
+        /* Unde se pune contorul. Masurat pe 10 lectii (12.09.2026): pana la
+           primul pas erau in mediana 1560 px si 265 de cuvinte de derulat —
+           obiectivele lectiei plus „incearca". Deci contorul urca DEASUPRA
+           lor: din prima secunda elevul vede „Pasul 1 din 7", nu un eseu.
+           Obiectivele nu se arunca, se pliaza. */
+        const frame = document.querySelector('.lesson-frame');
+        if (frame && frame.parentNode) {
+            frame.parentNode.insertBefore(bara, frame);
+
+            const fold = document.createElement('details');
+            fold.className = 'ux-frame-fold';
+            const sum = document.createElement('summary');
+            sum.textContent = 'De ce inveti asta (obiectivele lectiei)';
+            fold.appendChild(sum);
+            frame.parentNode.insertBefore(fold, frame);
+            fold.appendChild(frame);       // muta sectiunea intreaga inauntru
+        } else {
+            parent.insertBefore(bara, atomEls[0]);
+        }
 
         // --- butonul de inaintare
         const nav = document.createElement('div');
@@ -514,7 +547,7 @@ const AtomicLearning = {
         nav.innerHTML =
             '<button type="button" class="ux-step-back" hidden>&larr; Inapoi</button>' +
             '<button type="button" class="ux-step-next">Urmatorul pas &rarr;</button>';
-        if (acelasiParinte) parent.insertBefore(nav, dupaAtomi[0] || null);
+        if (acelasiParinte) parent.insertBefore(nav, dupaInParinte[0] || null);
         else atomEls[atomEls.length - 1].parentNode.appendChild(nav);
 
         const btnNext = nav.querySelector('.ux-step-next');
@@ -990,6 +1023,37 @@ const AtomicLearning = {
 
             /* --- „un atom = un ecran" --- */
             .ux-step-hidden { display: none !important; }
+
+            .ux-frame-fold {
+                margin: 0 0 1.5rem;
+                border: 1px solid var(--border, #2d2d44);
+                border-radius: 12px;
+                background: rgba(148, 163, 184, 0.05);
+            }
+
+            .ux-frame-fold > summary {
+                cursor: pointer;
+                padding: 0.8rem 1rem;
+                font-weight: 600;
+                font-size: 0.92rem;
+                color: var(--text-secondary, #94a3b8);
+                list-style: none;
+            }
+
+            .ux-frame-fold > summary::-webkit-details-marker { display: none; }
+
+            .ux-frame-fold > summary::before {
+                content: '\\25B8';
+                display: inline-block;
+                margin-right: 0.5rem;
+                transition: transform 0.2s;
+            }
+
+            .ux-frame-fold[open] > summary::before { transform: rotate(90deg); }
+
+            .ux-frame-fold > summary:hover { color: var(--text-primary, #f1f5f9); }
+
+            .ux-frame-fold .lesson-frame { margin: 0 1rem 1rem; }
 
             .ux-step-counter {
                 position: sticky;

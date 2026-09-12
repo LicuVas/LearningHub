@@ -122,6 +122,17 @@ const LessonSummary = {
         const practiceEl = document.querySelector('.practice-section, #practice.practice-section');
         if (!practiceEl) return;
 
+        /* DEFECT REPARAT 12.09.2026: sectiunea de exercitii era ascunsa AICI, iar
+           singura cale de a o aduce inapoi era ambalarea lui `window.goToStep`.
+           Lectiile atomice (Format C) n-au goToStep — e din sablonul vechi, cu
+           pasi numerotati. Deci pe ele exercitiile ramaneau ascunse PENTRU
+           TOTDEAUNA: 884 de cuvinte de exercitii pe care niciun elev nu le-a
+           vazut vreodata, fara nicio eroare in consola.
+           Regula: nu ascunde ce nu stii sa mai arati. */
+        if (typeof window.goToStep !== 'function') {
+            return;
+        }
+
         // Hide practice initially (unless already on test/complete)
         const activeSection = document.querySelector('.section.active');
         const activeId = activeSection ? activeSection.id : '';
