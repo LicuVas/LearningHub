@@ -34,3 +34,11 @@ Lista completă a celor 25 (ordinea din lanț, în interiorul clasei):
 2. Verificare adversarială a semnalărilor blocante/importante (eșantion pe clasă).
 3. Sinteza: ce lipsește în M1 (pe clase + transversal), ce trebuie altfel.
 4. Lecțiile generale: skill reutilizabil pentru „omul la calculator” la orice lucru AI + regula în `knowledge/learninghub_calitate/00_INDEX.md` (R7) + KB.
+
+## Strat 13.09.2026 seara — faza 2 (cererea 17:43: „Office RO sau EN, virgulă și punct și virgulă, calculatoarele nu se resetează — fă modificările pe site”) — ÎNCHISĂ
+Commit-uri LearningHub (toate publicate, dovadă: conținut live == git HEAD 28/28, `S_reparatii/D_live.py`):
+- `73b1d1d4` motor: răspunsuri scrise pe profil + butonul „Sunt alt elev” + fără „Corect!” sub „Incorect”
+- `bb1f3b46` 25 de lecții reparate (nume RO (EN), ambele separatoare, salvare Clasa_Nume, chestionare) — verificator independent 25/25 fără blocante/importante; `S_poarta.py --toate` 25/25
+- `60cb647f` diacritice: 25 de lecții (`D_toate.py` 25/25) + 194 texte din 15 fișiere JS comune; verificare independentă 4 lecții/4.632 cuvinte → 3 greșeli + 7 scăpări, reparate; `D_final_randare.py` 25/25
+Re-derivă starea: `python S_reparatii/S_stare.py` · `python S_reparatii/D_toate.py` · `python S_reparatii/D_live.py`
+DESCHIS (de știut, nu blocant): greșeli de tipar care cer litere în plus (ordoneza, bifeza, Recreaza, evidentiare...) sunt în `S_reparatii/<cls>/<lectia>/diacritice/observatii.md` — val de corectură separat; breadcrumb-ul și `<title>` rămân fără diacritice (regula sitului; breadcrumb-ul vine din scriptul lecției); `now-data.js`/`school-year.js` sunt generate — diacriticele lor se pun la sursă; `active-module.js:128` caută /in curs/i în HTML.
