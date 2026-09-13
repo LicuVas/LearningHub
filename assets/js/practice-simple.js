@@ -207,8 +207,23 @@ const PracticeSimple = {
     /**
      * Save all progress to localStorage
      */
+    /**
+     * Cheia de salvare, PE ELEV (13.09.2026). Inainte era `practice-<lectie>` pentru oricine:
+     * calculatoarele din laborator nu se reseteaza dupa fiecare ora, deci elevul de la clasa
+     * urmatoare gasea raspunsurile scrise ale colegului. Acum cheia poarta profilul activ,
+     * in aceeasi forma pe care o citeste deja lesson-summary.js (`practice-<lectie>_<profil>`).
+     */
+    storageKey: function() {
+        let suffix = '';
+        if (typeof UserSystem !== 'undefined') {
+            const p = UserSystem.getActiveProfile();
+            if (p && p !== '_guest') suffix = '_' + p;
+        }
+        return `practice-${this.lessonId}${suffix}`;
+    },
+
     saveProgress: function() {
-        const key = `practice-${this.lessonId}`;
+        const key = this.storageKey();
         const status = this.getCompletionStatus();
 
         const data = {
@@ -229,7 +244,7 @@ const PracticeSimple = {
      * Load progress from localStorage
      */
     loadProgress: function() {
-        const key = `practice-${this.lessonId}`;
+        const key = this.storageKey();
         const saved = localStorage.getItem(key);
         if (saved) {
             try {
@@ -341,8 +356,8 @@ const PracticeSimple = {
      */
     reset: function() {
         this.answers = {};
-        const key = `practice-${this.lessonId}`;
-        localStorage.removeItem(key);
+        localStorage.removeItem(this.storageKey());
+        localStorage.removeItem(`practice-${this.lessonId}`);   // si cheia veche, fara profil
 
         // Reset UI
         this.exercises.forEach(ex => {

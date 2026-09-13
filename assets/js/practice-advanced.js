@@ -75,9 +75,19 @@ const AdvancedPractice = {
     /**
      * Load progress from localStorage
      */
+    /** Cheia pe elev - vezi practice-simple.js storageKey (13.09.2026, calculatorul comun). */
+    storageKey: function() {
+        let suffix = '';
+        if (typeof UserSystem !== 'undefined') {
+            const p = UserSystem.getActiveProfile();
+            if (p && p !== '_guest') suffix = '_' + p;
+        }
+        return `practice-${this.lessonId}${suffix}`;
+    },
+
     loadProgress: function() {
         if (!this.lessonId) return;
-        const key = `practice-${this.lessonId}`;
+        const key = this.storageKey();
         const saved = localStorage.getItem(key);
 
         if (saved) {
@@ -102,7 +112,7 @@ const AdvancedPractice = {
      */
     saveProgress: function() {
         if (!this.lessonId) return;
-        const key = `practice-${this.lessonId}`;
+        const key = this.storageKey();
 
         let totalXP = 0;
         let correctCount = 0;
@@ -1039,8 +1049,8 @@ const AdvancedPractice = {
             RPG.addXP(totalXP, 'Practica avansata');
         }
 
-        // Save to localStorage
-        const key = `practice-${this.lessonId}`;
+        // Save to localStorage (pe elev)
+        const key = this.storageKey();
         localStorage.setItem(key, JSON.stringify({
             completed: true,
             xp: totalXP,

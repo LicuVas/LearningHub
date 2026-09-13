@@ -400,6 +400,12 @@ const AtomicLearning = {
             feedbackEl.innerHTML = '<span class="feedback-icon">&#10060;</span> Incorect. Raspunsul corect este marcat cu verde.';
             feedbackEl.className = 'atom-feedback incorrect';
             feedbackEl.style.display = 'block';
+            // Multe indicii din continut incep cu „Corect!" (scrise pentru raspunsul bun). Afisate sub
+            // „Incorect", copilul citea „Incorect. ... Corect!" (13.09.2026, 3 lectii la rand in M1).
+            const hintText = hintEl.querySelector('.atom-hint-text');
+            if (hintText) {
+                hintText.innerHTML = hintText.innerHTML.replace(/^\s*(?:[✓✔]\s*)?(?:corect|exact|bravo)\s*[!.,:]*\s*/i, 'De ce: ');
+            }
             hintEl.style.display = 'block';
 
             // Still allow progression but with penalty recorded
@@ -540,6 +546,26 @@ const AtomicLearning = {
         } else {
             parent.insertBefore(bara, atomEls[0]);
         }
+
+        /* „Sunt alt elev" (13.09.2026). Calculatoarele din laborator nu se reseteaza dupa fiecare ora:
+           elevul urmator gasea pasii rezolvati si raspunsurile colegului, fara nicio cale de a incepe curat.
+           Doua apasari (fara fereastra de confirmare, care blocheaza pagina): prima intreaba, a doua sterge. */
+        const reia = document.createElement('button');
+        reia.type = 'button';
+        reia.className = 'ux-new-student';
+        reia.textContent = 'Sunt alt elev — încep lecția de la zero';
+        reia.style.cssText = 'margin:.4rem 0 0;padding:.35rem .7rem;font-size:.85rem;border:1px solid currentColor;border-radius:6px;background:transparent;color:inherit;opacity:.8;cursor:pointer';
+        let armat = false;
+        reia.addEventListener('click', function () {
+            if (!armat) {
+                armat = true;
+                reia.textContent = 'Apasă din nou: se șterg răspunsurile de pe acest calculator';
+                setTimeout(function () { armat = false; reia.textContent = 'Sunt alt elev — încep lecția de la zero'; }, 6000);
+                return;
+            }
+            self.clearAllForThisLesson();
+        });
+        bara.appendChild(reia);
 
         // --- butonul de inaintare
         const nav = document.createElement('div');
@@ -904,6 +930,26 @@ const AtomicLearning = {
     /**
      * Reset progress for current lesson (full restart)
      */
+    /**
+     * Sterge TOT ce tine de lectia curenta pe acest calculator (pasi, raspunsuri scrise, rezumat),
+     * pentru profilul activ si in formele vechi fara profil, apoi reincarca. Folosit de „Sunt alt elev".
+     */
+    clearAllForThisLesson: function() {
+        const id = this.currentLessonId;
+        if (id) {
+            const prof = this.cachedProfileId;
+            const chei = [
+                `atomic-progress-${id}`, `practice-${id}`, `lesson-summary-${id}`, `quiz-bridge-${id}`
+            ];
+            if (prof) {
+                chei.push(`atomic-progress-${prof}-${id}`, `practice-${id}_${prof}`,
+                          `lesson-summary-${id}_${prof}`, `quiz-bridge-${id}_${prof}`);
+            }
+            chei.forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+        }
+        window.location.reload();
+    },
+
     resetProgress: function() {
         this.completedAtoms.clear();
         this.atoms = {};
