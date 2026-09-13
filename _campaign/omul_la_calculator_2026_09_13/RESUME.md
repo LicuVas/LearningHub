@@ -22,6 +22,13 @@ Lista completă a celor 25 (ordinea din lanț, în interiorul clasei):
 - Amprentele uneltelor: `../omul_la_calculator_2026_09_13_CONTROL/hash_unelte.txt` — la final se compară (un agent nu are voie să-și modifice poarta).
 - `git status -- content` trebuie să fie curat la final (evaluatorii nu ating lecțiile).
 
+## Stare 15:50 (de re-verificat din fișiere)
+- A/B orb FĂCUT: `O_comparatie_AB.md` — v2 „om la calculator”: 44 adevărate / **0 false** / 20 schimbă ora; control: 90 / 4 false / 21; unice importante 3 vs 8. Scor judecători 2–2.
+  Concluzie: v2 repară axa VERIFICARE, strică axa ACOPERIRE.
+- Test remediere PORNIT: `P_protocol_hibrid_v3.md` (două treceri) pe cele 4 lecții → `P_hibrid/<lectie>/`.
+  De punctat: recall față de adevărul judecătorilor (`O_orb/<lectie>/judecata.json`: probleme cu verdict adevarat + ce_au_ratat_amandoua) + false noi (verificate).
+- Clase de defect pe tot situl: `K_rezolvari_nepotrivite/K_raport.md` (100 suspecte, triaj), `M_intrebari_decalate/M_raport.md` (73/525 pagini, 20% fals-pozitiv).
+
 ## După cele 25
 1. Comparația A/B pe cele 4 lecții ★ — judecător orb (opus), care nu a scris niciuna.
 2. Verificare adversarială a semnalărilor blocante/importante (eșantion pe clasă).
