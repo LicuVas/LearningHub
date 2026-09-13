@@ -1,0 +1,16 @@
+# Plan reparatie — cls6/lectia5-tranzitii (13.09.2026)
+
+Surse citite: S_CONVENTII.md, GLOSAR_UI.md (PowerPoint + NECONFIRMAT), F_evaluari/cls6/lectia5-tranzitii/05_evaluare.md, log.json (findings 01-10), 04_mediu.md, surse/s_*.txt si raw/*.miez.txt (timp_ro/en, morph_ro/en, tranzitii_ro/en, mvp2010_en), u3_iesire.json, Q_verdict_blocante.json (rand L5), M_rezultat.csv (randurile L5), K_rezultat.csv (randurile L5 — nimic de reparat, doar lungimi). P_hibrid / O_orb nu au fisier pentru aceasta lectie.
+
+| id | semnalare | decizie | cum |
+|:--|:--|:--|:--|
+| cls6-l5-01 | nu incape in ora 7 (L4+L5) | **sar** | decizie de structura (ora din plan / taiere); Q_verdict: important, nu blocant; ramane la profesor |
+| cls6-l5-02 | rezolvarea Ex.3: „ambele bifate = asteapta click” fals | **aplic** (fond) | inlocuiesc capcana cu: merge singura, clicul doar grabeste; capcana reala = animatiile „La clic”; sursa timp_ro/timp_en („Diapozitivul va avansa automat, dar il puteti avansa mai rapid facand clic”, „Cronometrul porneste atunci cand se termina animatia finala”); adaug aceeasi capcana si in caseta de greseli din atomul 4 |
+| cls6-l5-03 | categorii gresite: Rotate la Exciting, Gallery/Vortex la Dynamic, Morph la Dynamic fara sursa | **aplic** (fond) | atomul 2: Rotate scos din Exciting; Dinamic = cele 7 din lista Microsoft (Pan, Ferris Wheel, Conveyor, Rotate, Window, Orbit, Fly Through) cu descrierea din sursa MVP; Gallery scos; Morph mutat intr-o caseta separata, fara categorie; „De gandit”: Vortex -> Rotate; rezolvarea Ex.2 runda 3 fara categorie; rezumatul refacut |
+| cls6-l5-04 | numai engleza + „Exciting (Incitante)” inventat | **aplic** (nume_comenzi) | nume RO (EN) la prima aparitie pe pas, numai din GLOSAR CONFIRMAT sau din sursele Microsoft ro-ro ale evaluarii (Subtil/Interesant/Dinamic, La clic de mouse, Dupa, Estompare, Metamorfoza, Previzualizare, Alt sunet, Avansare diapozitiv); efectele fara nume RO confirmat (Push, Wipe, Cube...) raman in engleza cu nota „butonul cu aceeasi pictograma” |
+| cls6-l5-05 | 5/10 intrebari puse inainte de predare | **aplic** (intrebare_mutata) | schimb intrebarile intre atomi dupa u3_iesire.json/M_rezultat: A1 = diferenta + „cate tranzitii pe slide” (tabelul A1); A2 = categoria recomandata + Push; A3 = durata + Se aplica tuturor (caseta-sfat A3); A4 = sunete + La clic de mouse; A5 = F5 + Shift+F5 |
+| cls6-l5-06 | Morph: doar 2019/2021/365 + obiect comun | **aplic** (fond) | Ex.2 runda 3 si Ex.3 diapozitivul 4: conditia versiunii + „cel putin un obiect in comun” (morph_ro) + alternativa Estompare pentru PowerPoint 2016; la fel in indiciul 3 si atomul 2 |
+| cls6-l5-07 | „prezentare existenta” nesalvata nicaieri | **aplic** (salvare) | Incearca tu pas 1: fisierul tau de ora trecuta (cu numele tau) SAU una noua cu 3 diapozitive; Ex.1 si Ex.3: salvare cu nume + loc (conventia 3) |
+| cls6-l5-08 | fara diacritice | **sar** | conventia 5: val separat de diacritice, cu poarta proprie |
+| cls6-l5-09 | fraza pe jumatate in engleza in Ex.3 | **aplic** (fond) | „then the subtitle with” -> „apoi subtitlul cu animatia” |
+| cls6-l5-10 | Izvoare fara laborator: fisa pe hartie | **sar** | varianta pe hartie = decizie de structura (conventia 5), ramane la profesor |
