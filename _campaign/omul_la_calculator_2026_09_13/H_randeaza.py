@@ -27,7 +27,11 @@ def main() -> int:
     if not src.is_file():
         print(f"nu exista: {src}")
         return 1
-    profile = (L / "lo_profile").as_uri()
+    import hashlib
+    import tempfile
+    # profil separat per lectie, dar in %TEMP% - nu in dovezi (pilot: 450 KB de gunoi in folderul lectiei)
+    prof_dir = Path(tempfile.gettempdir()) / "lh_lo_profiles" / hashlib.sha1(str(L).encode()).hexdigest()[:12]
+    profile = prof_dir.as_uri()
     if mode == "pdf":
         outdir = L / f"randat_{src.suffix[1:]}"
         target = outdir / (src.stem + ".pdf")

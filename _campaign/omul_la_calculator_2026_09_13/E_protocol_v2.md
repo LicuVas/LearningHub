@@ -2,6 +2,19 @@
 <!-- Forjat cu /promptforge pentru claude-code (subagent). v1 = E_protocol_omul_la_calculator.md, dărâmat de
      E_verificare_adversariala.md (6 blocante). v2 le închide în unelte + poartă, nu în rugăminți. 13.09.2026. -->
 
+> **v2.1 (13.09.2026, după pilotul pe cls7/lectia1):** pas `interfata` cu `gasit: da|nu` cere `sursa_fisier` (citatul copiat de pe pagina
+> deschisă, cu adresa) · `cuvinte_citite` = doar ce citește elevul ÎN AFARA lecției (meniuri, dialoguri, propriul document) — lecția întreagă o numără poarta ·
+> U11 = FACUT când ai scris constrângerile + blocajele-ipoteză (dovada: `03_jurnal_sarcina.md`) · un „blocant” pe timp e permis doar dacă ora nu încape
+> nici la ritm dublu (poarta tipărește ambele) · data orei: `C:/00/Projects/Info_Gimnaziu_2026/planificari/Calendar_ore_*.md` ·
+> programa: `C:/00/AI_0/data/informatica_gimnaziu/curriculum.json` (competențe + conținuturi, cu sursa OMEN 3393/2017) ·
+> în Bash scrie căile cu `/` (un hook local blochează `python -c` cu `C:\...`) · `[ASCUNS: pliat, se deschide la clic: <eticheta>]` — citește eticheta: nu orice pliant e o rezolvare.
+> Checklistul din spec (init, `data-quiz`, `<style>`) se verifică prin Grep în HTML — asta e permis.
+>
+> **★ v2.2 (14:25): WebFetch NU e o sursă.** Întoarce rezumatul unui model mic, nu textul paginii — la pilot a **inventat** „Titlu 1”.
+> Orice citat pus în `sursa_fisier`, în `04_mediu.md` sau într-o semnalare se copiază din **textul brut** al paginii:
+> `curl -sL -A "Mozilla/5.0" "<url>" -o L/surse/raw/<nume>.html`, apoi extragi textul (scoți `<script>/<style>` și etichetele) și cauți fraza.
+> WebFetch e bun doar ca să găsești pagina. Faptele de mai jos (U4) au fost re-verificate astfel la 14:25.
+
 ## De ce există
 
 Un audit AI anterior (464 de agenți, 03.09.2026) a citit lecțiile ca **text**. A văzut că nu au diacritice și a recomandat
@@ -77,8 +90,9 @@ Ai: Bash (Git Bash), Read, Write, Edit, Grep, Glob, WebFetch, WebSearch; Python 
 **4. Specialistul și norma — U3, U4, U16**
    - **U3** → `L\04_a_doua_cale.json`: listă de `{"ce": "...", "cale1": "...", "val1": "...", "cale2": "...", "val2": "..."}`, ≥ 2 rânduri, căi diferite. Ex.: total Excel recalculat de LibreOffice vs recalculat în Python; cheia unui chestionar vs textul atomului; o afirmație tehnică vs o sursă primară de azi. **Cifre din lumea reală** (TVA, prețuri, capacități, legi) → sursă datată.
    - **U4** → `L\04_mediu.md`: ce mediu presupune lecția (Office/LibreOffice, versiune, limba interfeței, separator, Windows), comparat cu ce se știe. Fapte deja stabilite (13.09.2026):
-     - Word în română: fila „Home” = **„Pornire”**, „Insert” = **„Inserați”** (Microsoft Support ro-ro).
-     - Excel în română **NU traduce numele funcțiilor**: pagina ro-ro se numește „Funcția AVERAGE”, sintaxă `AVERAGE(număr1, …)`; contra-probă: pagina fr-fr = „MOYENNE(nombre1; …)”. Deci `SUMA`/`MEDIE` sunt greșite pentru Excel (pentru LibreOffice în română: NEVERIFICAT).
+     - Word în română (text brut, Microsoft Support ro-ro): „Pe fila **Pornire**, în grupul Font” (`F_evaluari/cls7/lectia1-interfata-word/surse/pas03.txt`); „Salt la **Inserați** > simbolul > Mai multe simboluri” (pagina format-text-as-superscript-or-subscript-in-word). Atenție: aceeași documentație scrie și „Accesați pagina de pornire” — traducere inconsecventă; ce vede elevul pe ecran nu se află din documentație, doar din laborator.
+     - „Titlu 1” ca nume al stilului Heading 1 în Word ro: **NECONFIRMAT** pe text brut.
+     - Excel în română **NU traduce numele funcțiilor** (text brut): titlul paginii ro-ro = „Funcția AVERAGE”, exemplu `=AVERAGE(A1:A20)`; „Funcția SUM”, `=SUM(A2:A10)`; `SUMA(` și `MEDIE` nu apar. Contra-probă fr-fr: titlul „MOYENNE”, `=MOYENNE(A1 :A20)`. Deci `SUMA`/`MEDIE` sunt greșite pentru Excel (LibreOffice în română: NEVERIFICAT).
      - Separatorul de argumente depinde de **setarea regională a Windows-ului** din laborator — necunoscută → orice semnalare pe separator e `depinde_de_necunoscut: true`, iar schimbarea propusă acoperă ambele variante.
      - Office-ul de pe PC-ul lui Vasile e în engleză (ProPlus 2021, en-us) — asta NU spune nimic despre laborator.
    - **U16:** câmpul `diacritice_la_1000` în `log.json` (poarta îl recalculează din `innerText.txt`; text românesc normal ≈ 40-60). ș/ț cu virgulă vs ş/ţ cu sedilă. Ce cer spec-ul și programa, cu citat → `L\04_norma.md`.

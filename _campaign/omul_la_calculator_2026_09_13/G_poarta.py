@@ -177,10 +177,17 @@ def check_pasi(d: Path, cls: str, data: dict, masuri: dict) -> list:
             if len(str(p.get("observat") or "")) < 5:
                 errs.append(f"03_pasi[{i}] rezultat fara valoarea observata")
         elif t == "interfata":
-            if not str(p.get("url_ro") or "").startswith("http") and not str(p.get("url_en") or "").startswith("http"):
-                errs.append(f"03_pasi[{i}] interfata fara sursa (url_ro/url_en) pentru numele comenzii")
             if p.get("gasit") not in ("da", "nu", "neclar"):
                 errs.append(f"03_pasi[{i}] interfata fara gasit da/nu/neclar")
+            elif p["gasit"] in ("da", "nu"):
+                # pilot: un URL „plauzibil" necitit trecea. Acum: citatul copiat de pe pagina, salvat in L.
+                sf = str(p.get("sursa_fisier") or "")
+                if not sf or not inside(d, sf) or len((d / sf).read_text(encoding="utf-8", errors="replace")) < 80:
+                    errs.append(f"03_pasi[{i}] interfata gasit={p['gasit']} fara sursa_fisier (citatul copiat de pe pagina deschisa, >=80 caractere)")
+                elif not re.search(r"https?://", (d / sf).read_text(encoding="utf-8", errors="replace")):
+                    errs.append(f"03_pasi[{i}] sursa_fisier nu contine adresa paginii citate")
+            elif len(str(p.get("nota") or "")) < 40:
+                errs.append(f"03_pasi[{i}] interfata neclar fara nota (unde ai cautat, de ce nu s-a gasit)")
         else:
             errs.append(f"03_pasi[{i}] tip invalid {t!r}")
         try:
@@ -192,6 +199,13 @@ def check_pasi(d: Path, cls: str, data: dict, masuri: dict) -> list:
     citire = (masuri.get("cuvinte_total") or 0) / wpm
     total = PORNIRE_MIN + citire + sec / 60
     verdict = "incape" if total <= 50 else "nu incape"
+    total_dublu = PORNIRE_MIN + (citire + sec / 60) / 2
+    print(f"  U12 {d.name}: pornire {PORNIRE_MIN} + citirea lectiei {citire:.1f} + sarcina {sec/60:.1f} = {total:.1f} min -> {verdict}"
+          f" | la ritm DUBLU: {total_dublu:.1f} min (ritmuri {cls} provizorii)")
+    if total_dublu <= 50:
+        for i, f in enumerate(data.get("findings") or []):
+            if f.get("check") == "U12" and f.get("gravitate") == "blocant":
+                errs.append(f"finding[{i}] blocant pe timp, dar la ritm dublu ora incape ({total_dublu:.0f} min) - ritmurile sunt provizorii -> maxim important")
     tm = data.get("timp_estimat_minute") or {}
     if tm.get("verdict") != verdict:
         errs.append(f"U12: verdictul din log ({tm.get('verdict')!r}) difera de cel calculat: {verdict} "
@@ -302,8 +316,8 @@ def check_lesson(d: Path, inv: dict) -> list:
         if not isinstance(a, dict) or a.get("status") not in ("FACUT", "INTREBARE_VASILE", "NU_SE_APLICA"):
             errs.append(f"anexa.{k} lipseste (FACUT / INTREBARE_VASILE / NU_SE_APLICA)")
             continue
-        if a["status"] == "FACUT" and not any(inside(d, p) for p in (a.get("evidence") or [])):
-            errs.append(f"anexa.{k} FACUT fara fisier-dovada in folder")
+        if a["status"] == "FACUT" and not any(inside(d, p) and Path(p).name not in H_VEDE for p in (a.get("evidence") or [])):
+            errs.append(f"anexa.{k} FACUT fara fisier-dovada propriu in folder (iesirea lui H_vede nu conteaza)")
         if a["status"] == "INTREBARE_VASILE" and "?" not in (a.get("intrebare") or ""):
             errs.append(f"anexa.{k}: intrebarea pentru Vasile lipseste")
         if a["status"] == "NU_SE_APLICA" and len(a.get("de_ce") or "") < 30:

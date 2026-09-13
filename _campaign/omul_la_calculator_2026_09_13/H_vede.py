@@ -53,11 +53,14 @@ JS_TEXT = r"""
   const copy = [...clone.querySelectorAll('*')];
   orig.forEach((el, k) => {
     const c = copy[k]; if (!c) return;
-    if (el.tagName === 'DETAILS' && !el.open) c.setAttribute('data-ascuns', 'pliat (rezolvare/detalii)');
+    if (el.tagName === 'DETAILS' && !el.open) c.setAttribute('data-ascuns', 'pliat, se deschide la clic: ' + (((el.querySelector('summary')||{}).innerText)||'').trim().slice(0,60));
     else if (el.classList && el.classList.contains('atom') && !el.offsetParent) c.setAttribute('data-ascuns', 'pas neajuns inca');
     else if (el.classList && (el.classList.contains('atom-hint') || el.classList.contains('atom-feedback'))) c.setAttribute('data-ascuns', 'indiciu/feedback dupa raspuns');
   });
   clone.querySelectorAll('script,style,template,noscript').forEach(n => n.remove());
+  // pilot: textContent lipea elemente vecine („Pasul 1 din 110 din 11") -> separator la elementele de bloc/eticheta
+  clone.querySelectorAll('div,p,li,h1,h2,h3,h4,h5,h6,button,td,th,tr,section,article,summary,label,span.ux-step-text,span.ux-step-pct,pre,br')
+       .forEach(n => { n.insertAdjacentText('beforebegin', '\n'); });
   clone.querySelectorAll('[data-ascuns]').forEach(n => {
     if (n.parentElement && n.parentElement.closest('[data-ascuns]')) return;
     n.insertAdjacentText('afterbegin', '\n[ASCUNS: ' + n.getAttribute('data-ascuns') + ']\n');
@@ -166,6 +169,10 @@ async def main():
             await pg.evaluate("(() => { const a=[...document.querySelectorAll('.atom')].find(x=>x.offsetParent && !x.classList.contains('ux-step-hidden')); if(a) a.scrollIntoView({block:'start'}); })()")
             await pg.wait_for_timeout(300)
             await pg.screenshot(path=str(out / f"pas_{n:02d}.png"))
+            # pilot: la atomii lungi intrebarea era taiata -> si captura atomului INTREG (ce are elevul de parcurs la pasul asta)
+            atom = pg.locator(".atom:not(.ux-step-hidden)").first
+            if await atom.count() > 0 and await atom.is_visible():
+                await atom.screenshot(path=str(out / f"pas_{n:02d}_atom_intreg.png"))
             raspunsuri = await pg.evaluate(JS_RASPUNDE)
             await pg.wait_for_timeout(500)
             nxt = pg.locator(".ux-step-next")
@@ -202,10 +209,12 @@ async def main():
               "pasi_parcursi": len(parc), "pasi_blocati": sum(1 for s in parc if not s["urmatorul_deblocat"]),
               "ecrane_dupa_atomi": k, "linii_innerText": full.count("\n")})
     (out / "masuri.json").write_text(json.dumps(m, ensure_ascii=False, indent=1), encoding="utf-8")
+    # APROXIMARE GROSIERA, nu dovada: proiectorul mareste imaginea si o spala (contrast mic, negru ridicat).
+    # Nu judeca lizibilitatea de la distanta din fisierul asta; masura utila e contrast_paragraf din masuri.json.
     im = Image.open(out / "ecran_prima_vedere.png").convert("RGB")
     im = ImageEnhance.Contrast(im).enhance(0.6)
-    im = Image.blend(im, Image.new("RGB", im.size, (40, 40, 40)), 0.15)
-    im.resize((im.width // 4, im.height // 4)).save(out / "proiector_25.png")
+    im = Image.blend(im, Image.new("RGB", im.size, (90, 90, 90)), 0.25)
+    im.save(out / "proiector_25.png")
     print(json.dumps(m, ensure_ascii=False))
     print("consola:", len(cons), "| pasi:", len(parc))
 
