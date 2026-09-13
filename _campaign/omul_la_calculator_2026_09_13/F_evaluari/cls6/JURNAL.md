@@ -34,3 +34,18 @@
 - Tip nou: **rezolvarea contrazice atomul** și sursa („ambele bifate” → „tot asteapta click”, fals după `s_ambele_bifate.txt`). Citește rezolvările pliate după ce ai făcut sarcina, ca pe o afirmație de verificat.
 - Decalajul întrebărilor e cel mai mare din modul: 5/10 înainte de predare (`lectia5-tranzitii/u3_iesire.json`). Lanțul fișierului rupt, cu dovadă proprie: primul ecran cere „o prezentare existentă”, nicio lecție n-a cerut salvarea (`03_pasi.json` pasul 1) — la L6 întreabă de unde vine prezentarea.
 - Unelte: `lectia5-tranzitii/u1_construieste.py` (`pune_tranzitie`: p14:dur, p159:morph, advClick/advTm) + `u3_verifica.py` (cronologia cu regula „timerul pornește după ultima animație”), `surse/nume_efecte.py` (caută orice nume în tot textul brut). Nume RO încă neconfirmate: Push, Wipe, Cube, Flip, Appear, Grow & Turn.
+
+
+## lectia6-proiect
+- Proiectul se poate construi cap-coadă fără surprize (`lectia6-proiect/produs_elev/Proiect_Albinele.pptx`, 7 diapozitive, 6x6 și 24 pt respectate): **nu cere WordArt, SmartArt sau aspect personalizat**; hyperlinkul intern e nou (0 în L1-L5) dar predat în atomul 4 și prevăzut în programă („legături”). Problema nu e PowerPoint-ul, ci ora.
+- Timpul, cu dovadă proprie (`lectia6-proiect/u12_sensibilitate.txt`): lecție + Ex.1 + Ex.2 = 110 min (59 la ritm dublu); doar Ex.2 = 54 min; susținerile de 3-5 min/elev nu mai au loc. La Izvoare ora 9 nici nu există (`Calendar_ore_VI.md` o comasează), deci varianta pe hârtie e singura.
+- Tip nou: **proiect fără barem** — 18 criterii în trei locuri, 0 puncte, 5 vizibile doar în Slide Show sau ascultând (`lectia6-proiect/u1_notare.md`). Lanțul fișierului rupt se repetă, cu dovadă proprie: singura frază e „fisierul salvat ca .pptx”, fără loc și nume.
+- Rezolvările pliate ca instrucțiuni (tiparul din L5) se agravează: aici propun **poze cu echipa de pe telefon** (date personale ale minorilor, contra regulii din L3) și afirmă că PDF-ul „pierde hyperlinkurile” (Microsoft: web le păstrează, Mac nu; LibreOffice măsurat: 0 linkuri).
+- Surse brute noi (`lectia6-proiect/surse/`): Plasare în acest document, Proiectare, Creare document PDF/XPS, PDF și hyperlinkuri (web/macOS), Imagini de stoc libere de drepturi (Microsoft 365 / parțial Office 2021), GDPR imagini. NEVERIFICATE: temele „Ion/Facet”, butonul Numerotare în română.
+
+## Concluzia modulului
+- **Planul pe ore trebuie scris în modul, nu dedus**: L4+L5 stau pe ora 7, ora 8 (estetică + susținere) e împrăștiată în L3 (atomul 10) și L6 (atomii 5-8), iar L6 pune „realizare + susținere” într-o oră care nu încape; la Izvoare ora 9 lipsește. O pagină de modul „ce se face la ora 2…10” cu drumul minim pe fiecare oră ar rezolva jumătate din semnalări.
+- **Lanțul fișierului**: o singură regulă de la L1 la L6 — „salvează ca Clasa_Nume_Lectia.pptx în folderul clasei” — și o prezentare-starter descărcabilă, ca L5 și L6 să nu depindă de ce a salvat (sau nu) elevul acum trei săptămâni.
+- **Numele din meniuri în ambele limbi** în toate cele 6 lecții (Pornire/Inserare/Proiectare/Tranziții/Animații), plus eliminarea numelor inventate prin simetrie (L4) și a clasificărilor greșite (L5).
+- **Rezolvările pliate se verifică la fel ca atomii**: în L5 contrazic sursa, în L6 propun date personale și reguli absolute greșite.
+- **Diacritice** (0-1,6 la 1.000 în toate) și un barem cu puncte pentru mini-proiect, cu criterii verificabile din ușă, plus o variantă pe hârtie pentru clasele fără laborator.
