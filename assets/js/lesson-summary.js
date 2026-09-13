@@ -35,7 +35,7 @@ const LessonSummary = {
         9: { label: 'Excelent!', color: '#4ade80' },
         8: { label: 'Foarte bine!', color: '#60a5fa' },
         7: { label: 'Bine!', color: '#60a5fa' },
-        6: { label: 'Satisfacator', color: '#fbbf24' },
+        6: { label: 'Satisfăcător', color: '#fbbf24' },
         5: { label: 'Suficient', color: '#f59e0b' },
         4: { label: 'Insuficient', color: '#ef4444' },
         3: { label: 'Slab', color: '#ef4444' },
@@ -446,14 +446,14 @@ const LessonSummary = {
             container.innerHTML = `
                 <div class="ls-header">
                     <span class="ls-icon">&#9889;</span>
-                    <span class="ls-title">Progresul Tau</span>
+                    <span class="ls-title">Progresul Tău</span>
                 </div>
 
                 <div class="ls-grade" style="border-color: var(--accent-blue, #3b82f6);">
                     <div class="ls-grade-number" style="color: var(--accent-blue, #3b82f6); font-size: 1.8rem;">+${scores.atomicPoints} puncte</div>
-                    <div class="ls-grade-label" style="color: var(--text-secondary);">${scores.atomicCorrect}/${scores.atomicTotal} raspunsuri corecte</div>
+                    <div class="ls-grade-label" style="color: var(--text-secondary);">${scores.atomicCorrect}/${scores.atomicTotal} răspunsuri corecte</div>
                     <div class="ls-grade-breakdown">
-                        Continua pentru a strange cat mai multe puncte!
+                        Continuă pentru a strânge cât mai multe puncte!
                     </div>
                 </div>
 
@@ -461,7 +461,7 @@ const LessonSummary = {
                     <div class="ls-section">
                         <div class="ls-section-header">
                             <span class="ls-section-icon">&#9711;</span>
-                            <span class="ls-section-name">Invatare Atomica</span>
+                            <span class="ls-section-name">Învățare Atomică</span>
                             <span class="ls-section-weight">(max ${scores.atomicMaxPoints} puncte)</span>
                         </div>
                         <div class="ls-section-bar">
@@ -474,7 +474,7 @@ const LessonSummary = {
                 </div>
 
                 <div class="ls-status ls-status-incomplete">
-                    &#9888; Completeaza toate sectiunile de invatare atomica pentru a vedea nota finala.
+                    &#9888; Completează toate secțiunile de învățare atomică pentru a vedea nota finală.
                 </div>
             `;
         } else {
@@ -482,18 +482,18 @@ const LessonSummary = {
             container.innerHTML = `
                 <div class="ls-header">
                     <span class="ls-icon">&#128202;</span>
-                    <span class="ls-title">Rezumatul Lectiei</span>
+                    <span class="ls-title">Rezumatul Lecției</span>
                 </div>
 
                 <div class="ls-grade" style="border-color: ${gradeInfo.color};">
                     <div class="ls-grade-number" style="color: ${gradeInfo.color};">Nota${hasPracticeAnswers ? ' provizorie' : ''}: ${scores.grade}</div>
                     <div class="ls-grade-label">${gradeInfo.label}</div>
                     <div class="ls-grade-breakdown">
-                        ${scores.dinOficiuPoints} (oficiu) + ${scores.atomicPoints} (teorie)${scores.practiceStarted ? ` + ${scores.practicePoints} (practica)` : ''} = ${scores.grade} puncte
+                        ${scores.dinOficiuPoints} (oficiu) + ${scores.atomicPoints} (teorie)${scores.practiceStarted ? ` + ${scores.practicePoints} (practică)` : ''} = ${scores.grade} puncte
                     </div>
                     ${hasPracticeAnswers ? `
                         <div class="ls-provisional-notice">
-                            <span>&#128269;</span> Nota finala va fi confirmata de profesor dupa evaluarea raspunsurilor scrise
+                            <span>&#128269;</span> Nota finală va fi confirmată de profesor după evaluarea răspunsurilor scrise
                         </div>
                     ` : ''}
                 </div>
@@ -502,14 +502,14 @@ const LessonSummary = {
                     <div class="ls-section">
                         <div class="ls-section-header">
                             <span class="ls-section-icon">&#10004;</span>
-                            <span class="ls-section-name">Invatare Atomica</span>
+                            <span class="ls-section-name">Învățare Atomică</span>
                             <span class="ls-section-weight">(max ${scores.atomicMaxPoints} puncte)</span>
                         </div>
                         <div class="ls-section-bar">
                             <div class="ls-section-fill" style="width: ${atomicPercent}%; background: var(--accent-blue);"></div>
                         </div>
                         <div class="ls-section-detail">
-                            ${scores.atomicCorrect}/${scores.atomicTotal} corecte = <strong>${scores.atomicPoints} puncte</strong> - <em>nota automata</em>
+                            ${scores.atomicCorrect}/${scores.atomicTotal} corecte = <strong>${scores.atomicPoints} puncte</strong> - <em>notă automată</em>
                         </div>
                     </div>
 
@@ -517,7 +517,7 @@ const LessonSummary = {
                     <div class="ls-section">
                         <div class="ls-section-header">
                             <span class="ls-section-icon">${scores.practiceComplete ? '&#10004;' : '&#9203;'}</span>
-                            <span class="ls-section-name">Practica Avansata</span>
+                            <span class="ls-section-name">Practică Avansată</span>
                             <span class="ls-section-weight">(max 3 puncte)</span>
                         </div>
                         <div class="ls-section-bar">
@@ -525,35 +525,35 @@ const LessonSummary = {
                         </div>
                         <div class="ls-section-detail">
                             ${scores.practiceComplete
-                                ? `${scores.practiceCorrect}/${scores.practiceTotal} completate = <strong>${scores.practicePoints} puncte</strong> - <em>necesita evaluare profesor</em>`
-                                : `${scores.practiceCorrect}/${scores.practiceTotal} in curs = <strong>${scores.practicePoints} puncte</strong>`}
+                                ? `${scores.practiceCorrect}/${scores.practiceTotal} completate = <strong>${scores.practicePoints} puncte</strong> - <em>necesită evaluare profesor</em>`
+                                : `${scores.practiceCorrect}/${scores.practiceTotal} în curs = <strong>${scores.practicePoints} puncte</strong>`}
                         </div>
                     </div>
                     ` : ''}
                 </div>
 
                 <div class="ls-status ls-status-complete">
-                    &#10004; Lectia completa! ${scores.grade >= 5 ? 'Poti continua la urmatoarea lectie.' : 'Recomandat: reia lectia pentru o nota mai buna.'}
+                    &#10004; Lecția completă! ${scores.grade >= 5 ? 'Poți continua la următoarea lecție.' : 'Recomandat: reia lecția pentru o notă mai bună.'}
                 </div>
                 ${!scores.practiceStarted && scores.practiceTotal > 0 ? `
                     <div class="ls-status" style="background: rgba(59, 130, 246, 0.15); border: 1px solid var(--accent-blue, #3b82f6); color: var(--accent-blue, #3b82f6); margin-top: 0.75rem;">
-                        &#128161; <strong>Practica disponibila:</strong> Completeaza exercitiile practice pentru pana la 3 puncte in plus!
+                        &#128161; <strong>Practică disponibilă:</strong> Completează exercițiile practice pentru până la 3 puncte în plus!
                     </div>
                 ` : ''}
                 ${hasPracticeAnswers ? `
                     <div class="ls-teacher-review" style="margin-top: 0.75rem;">
                         <span class="ls-teacher-icon">&#128100;</span>
                         <div>
-                            <strong>Pas urmator:</strong> Descarca fisierul JSON si trimite-l profesorului pentru evaluarea finala a raspunsurilor scrise.
+                            <strong>Pas următor:</strong> Descarcă fișierul JSON și trimite-l profesorului pentru evaluarea finală a răspunsurilor scrise.
                             <button class="ls-download-btn" onclick="LessonSummary.downloadProgress()" style="margin-top: 0.5rem;">
-                                &#128229; Descarca progresul (JSON)
+                                &#128229; Descarcă progresul (JSON)
                             </button>
                         </div>
                     </div>
                 ` : `
                     <div style="text-align: center; margin-top: 0.75rem;">
                         <button class="ls-download-btn" onclick="LessonSummary.downloadProgress()">
-                            &#128229; Descarca progresul (JSON)
+                            &#128229; Descarcă progresul (JSON)
                         </button>
                     </div>
                 `}
@@ -960,7 +960,7 @@ const LessonSummary = {
             console.log('LessonSummary: Progress downloaded with checksum');
         } catch (error) {
             console.error('LessonSummary: Error exporting progress', error);
-            alert('Eroare la exportul progresului. Incearca din nou.');
+            alert('Eroare la exportul progresului. Încearcă din nou.');
         }
     },
 

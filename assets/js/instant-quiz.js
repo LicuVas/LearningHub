@@ -221,16 +221,16 @@ const InstantQuiz = {
 
         if (passed) {
             resultEl.innerHTML = `
-                <strong>🎉 Felicitari!</strong>
-                Ai raspuns corect la ${correct} din ${total} intrebari. Poti continua!
+                <strong>🎉 Felicitări!</strong>
+                Ai răspuns corect la ${correct} din ${total} întrebări. Poți continua!
             `;
         } else {
             resultEl.innerHTML = `
-                <strong>📚 Mai incearca!</strong>
-                Ai raspuns corect la ${correct} din ${total}.
-                Ai nevoie de cel putin ${Math.ceil(total * this.passingScore)} raspunsuri corecte.
+                <strong>📚 Mai încearcă!</strong>
+                Ai răspuns corect la ${correct} din ${total}.
+                Ai nevoie de cel puțin ${Math.ceil(total * this.passingScore)} răspunsuri corecte.
                 <br><small style="opacity: 0.8; margin-top: 0.5rem; display: block;">
-                Poti schimba raspunsurile incorecte facand click pe alta optiune.
+                Poți schimba răspunsurile incorecte făcând click pe altă opțiune.
                 </small>
             `;
         }
@@ -321,7 +321,7 @@ const InlinePractice = {
                         feedbackEl.className = 'practice-feedback correct';
                     } else {
                         this.classList.add('incorrect');
-                        feedbackEl.innerHTML = `✗ ${data.incorrectMessage || 'Incearca din nou.'}`;
+                        feedbackEl.innerHTML = `✗ ${data.incorrectMessage || 'Încearcă din nou.'}`;
                         feedbackEl.className = 'practice-feedback incorrect';
                     }
                     feedbackEl.style.display = 'block';

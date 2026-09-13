@@ -378,7 +378,7 @@ const AdvancedPractice = {
         return `
             <div class="ap-exercise ap-synthesis" data-exercise-id="${idx}" data-type="synthesis">
                 <div class="ap-exercise-header">
-                    <span class="ap-exercise-badge ap-badge-synthesis">Sinteza</span>
+                    <span class="ap-exercise-badge ap-badge-synthesis">Sinteză</span>
                     <span class="ap-exercise-xp">+${this.xpRewards.synthesis.base} XP</span>
                 </div>
                 <p class="ap-question">${ex.question}</p>
@@ -419,7 +419,7 @@ const AdvancedPractice = {
                 <p class="ap-question">${ex.question}</p>
                 <div class="ap-drag-source">${items}</div>
                 <div class="ap-drop-zones">${categories}</div>
-                <button class="ap-check-btn" data-exercise="${idx}">Verifica</button>
+                <button class="ap-check-btn" data-exercise="${idx}">Verifică</button>
                 <div class="ap-feedback" style="display: none;"></div>
             </div>
         `;
@@ -475,7 +475,7 @@ const AdvancedPractice = {
         return `
             <div class="ap-exercise ap-schema" data-exercise-id="${idx}" data-type="schema">
                 <div class="ap-exercise-header">
-                    <span class="ap-exercise-badge ap-badge-schema">Completeaza Schema</span>
+                    <span class="ap-exercise-badge ap-badge-schema">Completează Schema</span>
                     <span class="ap-exercise-xp">+${this.xpRewards.schema.base} XP</span>
                 </div>
                 <p class="ap-question">${ex.question}</p>
@@ -486,7 +486,7 @@ const AdvancedPractice = {
                     </div>
                     <div class="ap-schema-options">${options}</div>
                 </div>
-                <button class="ap-check-btn" data-exercise="${idx}">Verifica</button>
+                <button class="ap-check-btn" data-exercise="${idx}">Verifică</button>
                 <div class="ap-feedback" style="display: none;"></div>
             </div>
         `;
@@ -497,31 +497,31 @@ const AdvancedPractice = {
         return `
             <div class="ap-exercise ap-written" data-exercise-id="${idx}" data-type="written">
                 <div class="ap-exercise-header">
-                    <span class="ap-exercise-badge ap-badge-written">Bonus - Raspuns Scris</span>
+                    <span class="ap-exercise-badge ap-badge-written">Bonus - Răspuns Scris</span>
                     <span class="ap-exercise-xp">+${this.xpRewards.written.base}-${this.xpRewards.written.perfect} XP</span>
                 </div>
                 <div class="ap-written-intro">
                     <span class="ap-written-star">&#11088;</span>
-                    <span>Pentru punctaj maxim, raspunde in propriile tale cuvinte:</span>
+                    <span>Pentru punctaj maxim, răspunde în propriile tale cuvinte:</span>
                 </div>
                 <p class="ap-question">${ex.question}</p>
                 ${ex.context ? `<p class="ap-written-context">${ex.context}</p>` : ''}
                 <div class="ap-written-hints">
-                    <span class="ap-hint-label">Indicii pentru raspuns complet:</span>
+                    <span class="ap-hint-label">Indicii pentru răspuns complet:</span>
                     <ul class="ap-hint-list">
                         ${(ex.hints || []).map(h => `<li>${h}</li>`).join('')}
                     </ul>
                 </div>
                 <textarea class="ap-written-input"
                     data-exercise="${idx}"
-                    placeholder="Scrie raspunsul tau aici... (minim ${ex.minChars || 50} caractere)"
+                    placeholder="Scrie răspunsul tău aici... (minim ${ex.minChars || 50} caractere)"
                     data-min-chars="${ex.minChars || 50}"
                     data-keywords='${JSON.stringify(ex.keywords || [])}'
                 ></textarea>
                 <div class="ap-written-counter">
                     <span class="ap-char-count">0</span> / ${ex.minChars || 50} caractere minime
                 </div>
-                <button class="ap-check-btn ap-written-submit" data-exercise="${idx}" disabled>Trimite raspunsul</button>
+                <button class="ap-check-btn ap-written-submit" data-exercise="${idx}" disabled>Trimite răspunsul</button>
                 <div class="ap-feedback" style="display: none;"></div>
             </div>
         `;
@@ -630,13 +630,13 @@ const AdvancedPractice = {
 
         // Show feedback
         if (totalRatio >= 0.8) {
-            feedback.innerHTML = `<span class="ap-feedback-icon">&#11088;</span> Excelent! Raspuns complet si detaliat. +${xpEarned} XP`;
+            feedback.innerHTML = `<span class="ap-feedback-icon">&#11088;</span> Excelent! Răspuns complet și detaliat. +${xpEarned} XP`;
             feedback.className = 'ap-feedback correct';
         } else if (totalRatio >= 0.5) {
             feedback.innerHTML = `<span class="ap-feedback-icon">&#10004;</span> Bine! Ai acoperit ${keywordsFound}/${keywords.length} concepte cheie. +${xpEarned} XP`;
             feedback.className = 'ap-feedback partial';
         } else {
-            feedback.innerHTML = `<span class="ap-feedback-icon">~</span> Raspunsul tau este acceptat dar incomplet. Ai mentionat ${keywordsFound}/${keywords.length} concepte. +${xpEarned} XP`;
+            feedback.innerHTML = `<span class="ap-feedback-icon">~</span> Răspunsul tău este acceptat dar incomplet. Ai menționat ${keywordsFound}/${keywords.length} concepte. +${xpEarned} XP`;
             feedback.className = 'ap-feedback partial';
         }
 
@@ -692,7 +692,7 @@ const AdvancedPractice = {
                 selectedAnswer: answer,
                 exerciseType: 'synthesis'
             };
-            feedback.innerHTML = `<span class="ap-feedback-icon">&#10060;</span> Incorect. ${exercise.explanation || 'Raspunsul corect este marcat cu verde.'} +0 XP`;
+            feedback.innerHTML = `<span class="ap-feedback-icon">&#10060;</span> Incorect. ${exercise.explanation || 'Răspunsul corect este marcat cu verde.'} +0 XP`;
             feedback.className = 'ap-feedback incorrect';
         }
 
@@ -748,7 +748,7 @@ const AdvancedPractice = {
                 selectedChoice: choiceIdx,
                 exerciseType: 'scenario'
             };
-            feedback.innerHTML = `<span class="ap-feedback-icon">&#10060;</span> ${exercise.choices[choiceIdx].feedback || 'Varianta corecta este marcata cu verde.'} +0 XP`;
+            feedback.innerHTML = `<span class="ap-feedback-icon">&#10060;</span> ${exercise.choices[choiceIdx].feedback || 'Varianta corectă este marcată cu verde.'} +0 XP`;
             feedback.className = 'ap-feedback incorrect';
         }
 
@@ -940,7 +940,7 @@ const AdvancedPractice = {
         };
 
         if (allCorrect) {
-            feedback.innerHTML = `<span class="ap-feedback-icon">✓</span> Perfect! Toate elementele sunt in categoria corecta. +${xp} XP`;
+            feedback.innerHTML = `<span class="ap-feedback-icon">✓</span> Perfect! Toate elementele sunt în categoria corectă. +${xp} XP`;
             feedback.className = 'ap-feedback correct';
         } else {
             feedback.innerHTML = `<span class="ap-feedback-icon">~</span> ${correctCount}/${totalItems} corecte. ${exercise.explanation || ''} +${xp} XP`;
@@ -989,7 +989,7 @@ const AdvancedPractice = {
         };
 
         if (allCorrect) {
-            feedback.innerHTML = `<span class="ap-feedback-icon">✓</span> Excelent! Schema este completa si corecta. +${xp} XP`;
+            feedback.innerHTML = `<span class="ap-feedback-icon">✓</span> Excelent! Schema este completă și corectă. +${xp} XP`;
             feedback.className = 'ap-feedback correct';
         } else {
             feedback.innerHTML = `<span class="ap-feedback-icon">~</span> ${correctCount}/${exercise.slots.length} corecte. ${exercise.explanation || ''} +${xp} XP`;
@@ -1023,7 +1023,7 @@ const AdvancedPractice = {
 
         const progressEl = document.getElementById('practice-progress');
         if (progressEl) {
-            progressEl.textContent = `${completed}/${this.exercises.length} exercitii`;
+            progressEl.textContent = `${completed}/${this.exercises.length} exerciții`;
         }
 
         // Dispatch event for RPG system integration
@@ -1046,7 +1046,7 @@ const AdvancedPractice = {
     onPracticeComplete: function(totalXP, correctCount) {
         // Award XP through RPG system if available
         if (typeof RPG !== 'undefined' && RPG.addXP) {
-            RPG.addXP(totalXP, 'Practica avansata');
+            RPG.addXP(totalXP, 'Practică avansată');
         }
 
         // Save to localStorage (pe elev)

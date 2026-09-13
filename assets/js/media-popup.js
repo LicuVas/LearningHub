@@ -144,8 +144,8 @@ const MediaPopup = {
                 contentDiv.innerHTML = `
                     <div class="media-popup-placeholder">
                         <div class="placeholder-icon">🎬</div>
-                        <div class="placeholder-text">Continut in curand</div>
-                        <div class="placeholder-subtext">${caption || 'Acest continut vizual va fi adaugat in curand.'}</div>
+                        <div class="placeholder-text">Conținut în curând</div>
+                        <div class="placeholder-subtext">${caption || 'Acest conținut vizual va fi adăugat în curând.'}</div>
                     </div>
                 `;
                 caption = ''; // Don't show caption again

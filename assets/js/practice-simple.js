@@ -51,7 +51,7 @@ const PracticeSimple = {
 
             // Get exercise title
             const titleEl = el.querySelector('h4');
-            const title = titleEl ? titleEl.textContent.trim() : `Exercitiu ${idx + 1}`;
+            const title = titleEl ? titleEl.textContent.trim() : `Exercițiu ${idx + 1}`;
 
             // Store exercise info
             this.exercises.push({
@@ -103,16 +103,16 @@ const PracticeSimple = {
         const questionCount = hasNumberedQuestions ? hasNumberedQuestions.querySelectorAll('li').length : 0;
 
         // Build placeholder text based on whether exercise has numbered questions
-        let placeholderText = 'Scrie raspunsul tau aici... (minim 10 caractere pentru a fi considerat complet)';
+        let placeholderText = 'Scrie răspunsul tău aici... (minim 10 caractere pentru a fi considerat complet)';
         if (questionCount > 0) {
-            placeholderText = `Raspunde la toate cele ${questionCount} intrebari, numerotat:\n1. ...\n2. ...\n${questionCount > 2 ? questionCount + '. ...' : ''}\n(minim 10 caractere pentru a fi considerat complet)`;
+            placeholderText = `Răspunde la toate cele ${questionCount} întrebări, numerotat:\n1. ...\n2. ...\n${questionCount > 2 ? questionCount + '. ...' : ''}\n(minim 10 caractere pentru a fi considerat complet)`;
         }
 
         const inputWrapper = document.createElement('div');
         inputWrapper.className = 'ps-input-wrapper';
         inputWrapper.innerHTML = `
             <div class="ps-input-header">
-                <label for="ps-textarea-${exerciseId}">Raspunsul tau:</label>
+                <label for="ps-textarea-${exerciseId}">Răspunsul tău:</label>
                 <span class="ps-char-count" id="ps-charcount-${exerciseId}">${savedAnswer.length} caractere</span>
             </div>
             <textarea
@@ -123,10 +123,10 @@ const PracticeSimple = {
             >${this.escapeHtml(savedAnswer)}</textarea>
             <div class="ps-actions">
                 <button type="button" class="ps-save-btn ${isSaved ? 'saved' : ''}" id="ps-savebtn-${exerciseId}">
-                    ${isSaved ? '&#10004; Salvat' : '&#128190; Salveaza raspunsul'}
+                    ${isSaved ? '&#10004; Salvat' : '&#128190; Salvează răspunsul'}
                 </button>
                 <span class="ps-status" id="ps-status-${exerciseId}">
-                    ${isSaved ? 'Raspuns salvat!' : 'Nesalvat'}
+                    ${isSaved ? 'Răspuns salvat!' : 'Nesalvat'}
                 </span>
             </div>
         `;
@@ -154,8 +154,8 @@ const PracticeSimple = {
             // Mark as unsaved if changed
             if (textarea.value !== this.answers[exerciseId]) {
                 saveBtn.classList.remove('saved');
-                saveBtn.innerHTML = '&#128190; Salveaza raspunsul';
-                statusEl.textContent = 'Modificari nesalvate';
+                saveBtn.innerHTML = '&#128190; Salvează răspunsul';
+                statusEl.textContent = 'Modificări nesalvate';
                 statusEl.classList.add('unsaved');
             }
         });
@@ -178,7 +178,7 @@ const PracticeSimple = {
     /**
      * Show saved state
      */
-    showSaved: function(saveBtn, statusEl, message = 'Raspuns salvat!') {
+    showSaved: function(saveBtn, statusEl, message = 'Răspuns salvat!') {
         saveBtn.classList.add('saved');
         saveBtn.innerHTML = '&#10004; Salvat';
         statusEl.textContent = message;
@@ -294,7 +294,7 @@ const PracticeSimple = {
                     <div class="ps-progress-fill" style="width: ${status.percentage}%"></div>
                 </div>
                 <div class="ps-progress-text">
-                    ${status.completed}/${status.total} exercitii completate
+                    ${status.completed}/${status.total} exerciții completate
                     ${status.isComplete ? '<span class="ps-complete-badge">&#10004; Complet!</span>' : ''}
                 </div>
             `;
@@ -367,7 +367,7 @@ const PracticeSimple = {
             const saveBtn = ex.element.querySelector('.ps-save-btn');
             if (saveBtn) {
                 saveBtn.classList.remove('saved');
-                saveBtn.innerHTML = '&#128190; Salveaza raspunsul';
+                saveBtn.innerHTML = '&#128190; Salvează răspunsul';
             }
 
             const statusEl = ex.element.querySelector('.ps-status');

@@ -252,7 +252,7 @@ class QuizEngine {
      * @returns {string}
      */
     renderQuizHTML() {
-        if (!this.currentQuiz.length) return '<p>Nu sunt intrebari disponibile.</p>';
+        if (!this.currentQuiz.length) return '<p>Nu sunt întrebări disponibile.</p>';
 
         return this.currentQuiz.map((q, idx) => this.renderQuestionHTML(q, idx)).join('');
     }
@@ -299,7 +299,7 @@ class QuizEngine {
         return `
             <div class="qe-question" data-id="${question.id}" data-type="short">
                 <p class="qe-prompt"><strong>${num}.</strong> ${question.prompt}</p>
-                <input type="text" class="qe-input" placeholder="Scrie raspunsul aici...">
+                <input type="text" class="qe-input" placeholder="Scrie răspunsul aici...">
             </div>
         `;
     }
@@ -310,7 +310,7 @@ class QuizEngine {
         return `
             <div class="qe-question" data-id="${question.id}" data-type="ordering">
                 <p class="qe-prompt"><strong>${num}.</strong> ${question.prompt}</p>
-                <p class="qe-hint">Trage elementele in ordinea corecta:</p>
+                <p class="qe-hint">Trage elementele în ordinea corectă:</p>
                 <ul class="qe-sortable" data-items='${JSON.stringify(items)}'>
                     ${shuffled.map(item => `
                         <li class="qe-sortable-item" draggable="true">${item}</li>
@@ -324,7 +324,7 @@ class QuizEngine {
         return `
             <div class="qe-question" data-id="${question.id}" data-type="${question.type}">
                 <p class="qe-prompt"><strong>${num}.</strong> ${question.prompt}</p>
-                <textarea class="qe-textarea" rows="4" placeholder="Scrie raspunsul tau..."></textarea>
+                <textarea class="qe-textarea" rows="4" placeholder="Scrie răspunsul tău..."></textarea>
             </div>
         `;
     }
@@ -477,7 +477,7 @@ class QuizEngine {
                 <div class="qe-results ${passed ? 'passed' : 'failed'}">
                     <div class="qe-results-icon">${passed ? '⭐' : '📚'}</div>
                     <h3>${score}/${total} corecte (${Math.round(percentage * 100)}%)</h3>
-                    <p>${passed ? 'Felicitari! Ai trecut testul.' : 'Mai exerseaza si incearca din nou.'}</p>
+                    <p>${passed ? 'Felicitări! Ai trecut testul.' : 'Mai exersează și încearcă din nou.'}</p>
                 </div>
             `,
             passed,

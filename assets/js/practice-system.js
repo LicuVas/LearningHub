@@ -147,7 +147,7 @@ const PracticeSystem = {
         }
 
         // Award XP
-        this.awardXP(this.XP_PER_PROBLEM, `Problema ${problemId} rezolvata`);
+        this.awardXP(this.XP_PER_PROBLEM, `Problema ${problemId} rezolvată`);
 
         // Show notification
         this.showXPNotification(`+${this.XP_PER_PROBLEM} XP`);
@@ -270,7 +270,7 @@ const PracticeSystem = {
             this.saveData(data);
 
             // Award bonus XP
-            this.awardXP(this.XP_ALL_COMPLETE_BONUS, 'Practica completa');
+            this.awardXP(this.XP_ALL_COMPLETE_BONUS, 'Practică completă');
             this.showXPNotification(`+${this.XP_ALL_COMPLETE_BONUS} XP BONUS!`);
 
             // Show celebration
@@ -347,8 +347,8 @@ const PracticeSystem = {
         celebration.className = 'practice-complete';
         celebration.innerHTML = `
             <div class="practice-complete-icon">🎉</div>
-            <h3>Practica Completa!</h3>
-            <p>Ai rezolvat toate problemele din aceasta lectie.</p>
+            <h3>Practică Completă!</h3>
+            <p>Ai rezolvat toate problemele din această lecție.</p>
             <div class="xp-bonus">+${this.XP_ALL_COMPLETE_BONUS} XP Bonus!</div>
         `;
         practiceTab.appendChild(celebration);
@@ -467,7 +467,7 @@ const PracticeSystem = {
         } catch (e) {
             console.error('[Practice] Error saving data:', e);
             if (e.name === 'QuotaExceededError') {
-                alert('Spatiul de stocare este plin! Progresul nu a putut fi salvat.');
+                alert('Spațiul de stocare este plin! Progresul nu a putut fi salvat.');
             }
         }
     },

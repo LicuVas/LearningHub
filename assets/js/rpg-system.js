@@ -33,16 +33,16 @@ const RPG = {
 
     // Level thresholds (cumulative XP needed)
     LEVELS: [
-        { level: 1, xp: 0, title: 'Incepator', icon: '🌱', color: '#94a3b8' },
+        { level: 1, xp: 0, title: 'Începător', icon: '🌱', color: '#94a3b8' },
         { level: 2, xp: 200, title: 'Explorator', icon: '🔍', color: '#3b82f6' },
         { level: 3, xp: 500, title: 'Ucenic', icon: '📖', color: '#06b6d4' },
-        { level: 4, xp: 1000, title: 'Invatacel', icon: '✏️', color: '#10b981' },
+        { level: 4, xp: 1000, title: 'Învățăcel', icon: '✏️', color: '#10b981' },
         { level: 5, xp: 1800, title: 'Programator Junior', icon: '💻', color: '#8b5cf6' },
         { level: 6, xp: 3000, title: 'Coder', icon: '⌨️', color: '#ec4899' },
         { level: 7, xp: 4500, title: 'Developer', icon: '🚀', color: '#f59e0b' },
         { level: 8, xp: 6500, title: 'Hacker Etic', icon: '🔐', color: '#ef4444' },
         { level: 9, xp: 9000, title: 'Maestru', icon: '🎓', color: '#ffd700' },
-        { level: 10, xp: 12000, title: 'Legenda', icon: '👑', color: '#ffd700' }
+        { level: 10, xp: 12000, title: 'Legendă', icon: '👑', color: '#ffd700' }
     ],
 
     // Achievement definitions
@@ -50,28 +50,28 @@ const RPG = {
         first_lesson: {
             id: 'first_lesson',
             name: 'Primul Pas',
-            desc: 'Ai completat prima lectie!',
+            desc: 'Ai completat prima lecție!',
             icon: '🎯',
             xp: 50
         },
         five_lessons: {
             id: 'five_lessons',
             name: 'Pe Drum',
-            desc: 'Ai completat 5 lectii',
+            desc: 'Ai completat 5 lecții',
             icon: '🏃',
             xp: 100
         },
         ten_lessons: {
             id: 'ten_lessons',
             name: 'Dedicat',
-            desc: 'Ai completat 10 lectii',
+            desc: 'Ai completat 10 lecții',
             icon: '⭐',
             xp: 200
         },
         first_module: {
             id: 'first_module',
             name: 'Modul Complet',
-            desc: 'Ai terminat un modul intreg!',
+            desc: 'Ai terminat un modul întreg!',
             icon: '🏆',
             xp: 300
         },
@@ -85,13 +85,13 @@ const RPG = {
         streak_3: {
             id: 'streak_3',
             name: 'Foc!',
-            desc: '3 zile consecutive de invatare',
+            desc: '3 zile consecutive de învățare',
             icon: '🔥',
             xp: 75
         },
         streak_7: {
             id: 'streak_7',
-            name: 'Saptamana Perfecta',
+            name: 'Săptămâna Perfectă',
             desc: '7 zile consecutive!',
             icon: '💪',
             xp: 200
@@ -99,42 +99,42 @@ const RPG = {
         explorer: {
             id: 'explorer',
             name: 'Explorator',
-            desc: 'Ai incercat toate cele 3 track-uri',
+            desc: 'Ai încercat toate cele 3 track-uri',
             icon: '🧭',
             xp: 100
         },
         night_owl: {
             id: 'night_owl',
-            name: 'Bufnita',
-            desc: 'Ai invatat dupa ora 21:00',
+            name: 'Bufnița',
+            desc: 'Ai învățat după ora 21:00',
             icon: '🦉',
             xp: 25
         },
         early_bird: {
             id: 'early_bird',
             name: 'Matinal',
-            desc: 'Ai invatat inainte de ora 8:00',
+            desc: 'Ai învățat înainte de ora 8:00',
             icon: '🐦',
             xp: 25
         },
         cpp_starter: {
             id: 'cpp_starter',
             name: 'C++ Novice',
-            desc: 'Prima lectie de C++',
+            desc: 'Prima lecție de C++',
             icon: '💠',
             xp: 50
         },
         html_starter: {
             id: 'html_starter',
             name: 'Web Developer',
-            desc: 'Prima lectie de HTML',
+            desc: 'Prima lecție de HTML',
             icon: '🌐',
             xp: 50
         },
         scratch_starter: {
             id: 'scratch_starter',
             name: 'Scratch Cat',
-            desc: 'Prima lectie de Scratch',
+            desc: 'Prima lecție de Scratch',
             icon: '🐱',
             xp: 50
         },
@@ -142,14 +142,14 @@ const RPG = {
         practice_first: {
             id: 'practice_first',
             name: 'Practica Face Perfect',
-            desc: 'Prima problema de practica rezolvata',
+            desc: 'Prima problemă de practică rezolvată',
             icon: '🎯',
             xp: 50
         },
         practice_master: {
             id: 'practice_master',
             name: 'Maestru al Practicii',
-            desc: 'Ai completat practica pentru 10 lectii',
+            desc: 'Ai completat practica pentru 10 lecții',
             icon: '🏆',
             xp: 300
         }
@@ -260,7 +260,7 @@ const RPG = {
         } catch (e) {
             console.error('Error saving RPG data:', e);
             if (e.name === 'QuotaExceededError') {
-                alert('Spatiul de stocare este plin! Progresul XP nu a putut fi salvat.');
+                alert('Spațiul de stocare este plin! Progresul XP nu a putut fi salvat.');
             }
         }
     },
@@ -422,7 +422,7 @@ const RPG = {
         this.saveData();
 
         // Award XP
-        this.addXP(this.XP_REWARDS.lesson_complete, 'Lectie completata!');
+        this.addXP(this.XP_REWARDS.lesson_complete, 'Lecție completată!');
 
         // Check lesson count achievements
         if (this.data.stats.lessonsCompleted === 1) {
@@ -578,8 +578,8 @@ const RPG = {
                 <div class="level-up-icon">${level.icon}</div>
                 <h2>NIVEL ${level.level}!</h2>
                 <p class="level-title" style="color: ${level.color}">${level.title}</p>
-                <p class="level-congrats">Felicitari! Continua tot asa!</p>
-                <button onclick="this.parentElement.parentElement.remove()">Multumesc!</button>
+                <p class="level-congrats">Felicitări! Continuă tot așa!</p>
+                <button onclick="this.parentElement.parentElement.remove()">Mulțumesc!</button>
             </div>
         `;
         document.body.appendChild(popup);
@@ -611,7 +611,7 @@ const RPG = {
      */
     showTrackChange(trackId) {
         const tracks = {
-            support: { name: 'Mai incet', icon: '🐢' },
+            support: { name: 'Mai încet', icon: '🐢' },
             core: { name: 'Standard', icon: '📚' },
             extend: { name: 'Mai rapid', icon: '🚀' }
         };
@@ -644,7 +644,7 @@ const RPG = {
                 <div class="profile-user-info">
                     <span class="profile-user-avatar">${profileAvatar}</span>
                     <span class="profile-user-name">${profileName}</span>
-                    <button class="switch-profile-btn" onclick="RPG.switchProfile()">Schimba</button>
+                    <button class="switch-profile-btn" onclick="RPG.switchProfile()">Schimbă</button>
                 </div>
 
                 <div class="profile-header">
@@ -666,7 +666,7 @@ const RPG = {
                 <div class="profile-stats">
                     <div class="stat-item">
                         <span class="stat-value">${stats.lessonsCompleted}</span>
-                        <span class="stat-label">Lectii</span>
+                        <span class="stat-label">Lecții</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-value">${stats.quizzesPassed}</span>
@@ -698,7 +698,7 @@ const RPG = {
                     <h3>🎮 Track curent</h3>
                     <div class="track-selector">
                         <button class="track-btn ${this.data.currentTrack === 'support' ? 'active' : ''}" onclick="RPG.setTrack('support')">
-                            🐢 Mai incet
+                            🐢 Mai încet
                         </button>
                         <button class="track-btn ${this.data.currentTrack === 'core' ? 'active' : ''}" onclick="RPG.setTrack('core')">
                             📚 Standard
@@ -1232,7 +1232,7 @@ const RPG = {
      * Reset all RPG data (for testing)
      */
     reset() {
-        if (confirm('Sigur vrei sa stergi progresul RPG? Aceasta actiune nu poate fi anulata.')) {
+        if (confirm('Sigur vrei să ștergi progresul RPG? Această acțiune nu poate fi anulată.')) {
             const key = this.getStorageKey();
             localStorage.removeItem(key);
             location.reload();

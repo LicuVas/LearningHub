@@ -61,7 +61,7 @@ const LearningProgress = {
         } catch (e) {
             console.error('Error saving progress:', e);
             if (e.name === 'QuotaExceededError') {
-                alert('Spatiul de stocare este plin! Progresul nu a putut fi salvat.');
+                alert('Spațiul de stocare este plin! Progresul nu a putut fi salvat.');
             }
         }
     },

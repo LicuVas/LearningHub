@@ -35,9 +35,9 @@ class LessonRenderer {
         this.sections = [
             { id: 'why', label: 'De ce?', icon: '🎯' },
             { id: 'competencies', label: 'Ce vei putea?', icon: '📋' },
-            { id: 'learn', label: 'Invata', icon: '📚' },
-            { id: 'practice', label: 'Exerseaza', icon: '✏️' },
-            { id: 'test', label: 'Testeaza', icon: '🧪' }
+            { id: 'learn', label: 'Învață', icon: '📚' },
+            { id: 'practice', label: 'Exersează', icon: '✏️' },
+            { id: 'test', label: 'Testează', icon: '🧪' }
         ];
 
         this.injectStyles();
@@ -86,10 +86,10 @@ class LessonRenderer {
             this.container.innerHTML = `
                 <div class="lr-error">
                     <div class="lr-error-icon">⚠️</div>
-                    <h3>Eroare la incarcarea lectiei</h3>
+                    <h3>Eroare la încărcarea lecției</h3>
                     <p>${e.message}</p>
                     <button class="lr-btn lr-btn-retry" onclick="location.reload()">
-                        🔄 Reincearca
+                        🔄 Reîncearcă
                     </button>
                 </div>
             `;
@@ -214,7 +214,7 @@ class LessonRenderer {
             case 'test':
                 return this.renderTestSection();
             default:
-                return '<p>Sectiune necunoscuta.</p>';
+                return '<p>Secțiune necunoscută.</p>';
         }
     }
 
@@ -223,21 +223,21 @@ class LessonRenderer {
      */
     renderWhySection() {
         const why = this.lessonData.why_this_matters;
-        if (!why) return '<p>Informatii indisponibile.</p>';
+        if (!why) return '<p>Informații indisponibile.</p>';
 
         return `
             <div class="lr-section lr-why">
-                <h2>🎯 De ce conteaza?</h2>
+                <h2>🎯 De ce contează?</h2>
                 <p class="lr-purpose">${why.purpose_ro}</p>
 
-                <h3>Situatii din viata reala:</h3>
+                <h3>Situații din viața reală:</h3>
                 <ul class="lr-scenarios">
                     ${why.real_life_scenarios.map(s => `<li>${s}</li>`).join('')}
                 </ul>
 
                 <div class="lr-nav-buttons">
                     <button class="lr-btn-primary" data-goto="competencies">
-                        Continua ➡️
+                        Continuă ➡️
                     </button>
                 </div>
             </div>
@@ -249,14 +249,14 @@ class LessonRenderer {
      */
     renderCompetenciesSection() {
         const contract = this.lessonData.competency_contract;
-        if (!contract) return '<p>Competente indisponibile.</p>';
+        if (!contract) return '<p>Competențe indisponibile.</p>';
 
         const ican = contract.i_can_statements?.[this.currentLevel] ||
                      contract.i_can_statements?.standard || [];
 
         return `
             <div class="lr-section lr-competencies">
-                <h2>📋 Ce vei putea sa faci?</h2>
+                <h2>📋 Ce vei putea să faci?</h2>
 
                 <div class="lr-ican-list">
                     ${ican.map(statement => `
@@ -269,7 +269,7 @@ class LessonRenderer {
 
                 ${contract.official_specific_competencies?.length ? `
                     <details class="lr-official-comp">
-                        <summary>📜 Competente oficiale (programa)</summary>
+                        <summary>📜 Competențe oficiale (programa)</summary>
                         <ul>
                             ${contract.official_specific_competencies.map(c =>
                                 `<li><strong>${c.id}:</strong> ${c.text_ro}</li>`
@@ -279,8 +279,8 @@ class LessonRenderer {
                 ` : ''}
 
                 <div class="lr-nav-buttons">
-                    <button class="lr-btn-secondary" data-goto="why">⬅️ Inapoi</button>
-                    <button class="lr-btn-primary" data-goto="learn">Continua ➡️</button>
+                    <button class="lr-btn-secondary" data-goto="why">⬅️ Înapoi</button>
+                    <button class="lr-btn-primary" data-goto="learn">Continuă ➡️</button>
                 </div>
             </div>
         `;
@@ -292,11 +292,11 @@ class LessonRenderer {
     renderLearnSection() {
         const flow = this.lessonData.instructional_flow;
         const progression = this.lessonData.knowledge_progression;
-        if (!flow) return '<p>Continut indisponibil.</p>';
+        if (!flow) return '<p>Conținut indisponibil.</p>';
 
         return `
             <div class="lr-section lr-learn">
-                <h2>📚 Invata</h2>
+                <h2>📚 Învață</h2>
 
                 <!-- Hook -->
                 <div class="lr-hook">
@@ -339,7 +339,7 @@ class LessonRenderer {
                                 </ol>
                                 ${ex.teacher_thinks_aloud?.length ? `
                                     <details class="lr-think-aloud">
-                                        <summary>🤔 Cum gandeste profesorul:</summary>
+                                        <summary>🤔 Cum gândește profesorul:</summary>
                                         <ul>
                                             ${ex.teacher_thinks_aloud.map(t => `<li>${t}</li>`).join('')}
                                         </ul>
@@ -353,19 +353,19 @@ class LessonRenderer {
                 <!-- Common misconceptions -->
                 ${progression?.common_misconceptions?.length ? `
                     <div class="lr-misconceptions">
-                        <h3>⚠️ Greseli frecvente:</h3>
+                        <h3>⚠️ Greșeli frecvente:</h3>
                         ${progression.common_misconceptions.map(m => `
                             <div class="lr-misconception">
-                                <p class="lr-wrong"><strong>Greseala:</strong> ${m.misconception}</p>
-                                <p class="lr-fix"><strong>Solutie:</strong> ${m.fix_strategy}</p>
+                                <p class="lr-wrong"><strong>Greșeala:</strong> ${m.misconception}</p>
+                                <p class="lr-fix"><strong>Soluție:</strong> ${m.fix_strategy}</p>
                             </div>
                         `).join('')}
                     </div>
                 ` : ''}
 
                 <div class="lr-nav-buttons">
-                    <button class="lr-btn-secondary" data-goto="competencies">⬅️ Inapoi</button>
-                    <button class="lr-btn-primary" data-goto="practice">Exerseaza ➡️</button>
+                    <button class="lr-btn-secondary" data-goto="competencies">⬅️ Înapoi</button>
+                    <button class="lr-btn-primary" data-goto="practice">Exersează ➡️</button>
                 </div>
             </div>
         `;
@@ -376,7 +376,7 @@ class LessonRenderer {
      */
     renderPracticeSection() {
         const flow = this.lessonData.instructional_flow;
-        if (!flow) return '<p>Exercitii indisponibile.</p>';
+        if (!flow) return '<p>Exerciții indisponibile.</p>';
 
         // Guided practice
         const guided = flow.guided_practice_12min || [];
@@ -392,7 +392,7 @@ class LessonRenderer {
                 <!-- Guided practice -->
                 ${guided.length ? `
                     <div class="lr-guided">
-                        <h3>Practica ghidata:</h3>
+                        <h3>Practică ghidată:</h3>
                         ${guided.map((g, idx) => `
                             <div class="lr-guided-task">
                                 <p class="lr-task-desc">${g.task}</p>
@@ -418,18 +418,18 @@ class LessonRenderer {
                 <!-- Independent practice -->
                 ${independent.length ? `
                     <div class="lr-independent">
-                        <h3>Practica independenta (nivel ${this.currentLevel}):</h3>
+                        <h3>Practică independentă (nivel ${this.currentLevel}):</h3>
                         ${independent.map((task, idx) => `
                             <div class="lr-independent-task">
                                 <p><strong>Sarcina ${idx + 1}:</strong> ${task.task}</p>
-                                <p class="lr-expected"><em>Rezultat asteptat:</em> ${task.expected_output}</p>
+                                <p class="lr-expected"><em>Rezultat așteptat:</em> ${task.expected_output}</p>
                             </div>
                         `).join('')}
                     </div>
                 ` : ''}
 
                 <div class="lr-nav-buttons">
-                    <button class="lr-btn-secondary" data-goto="learn">⬅️ Inapoi</button>
+                    <button class="lr-btn-secondary" data-goto="learn">⬅️ Înapoi</button>
                     <button class="lr-btn-primary" data-goto="test">Test final ➡️</button>
                 </div>
             </div>
@@ -444,9 +444,9 @@ class LessonRenderer {
             return `
                 <div class="lr-section lr-test">
                     <h2>🧪 Test final</h2>
-                    <p>Quiz-ul nu este disponibil pentru aceasta lectie.</p>
+                    <p>Quiz-ul nu este disponibil pentru această lecție.</p>
                     <div class="lr-nav-buttons">
-                        <button class="lr-btn-secondary" data-goto="practice">⬅️ Inapoi</button>
+                        <button class="lr-btn-secondary" data-goto="practice">⬅️ Înapoi</button>
                     </div>
                 </div>
             `;
@@ -469,16 +469,16 @@ class LessonRenderer {
 
                 <div class="lr-quiz-actions">
                     <button class="lr-btn-check" id="lr-check-quiz">
-                        Verifica raspunsurile
+                        Verifică răspunsurile
                     </button>
                 </div>
 
                 <div id="lr-quiz-results"></div>
 
                 <div class="lr-nav-buttons">
-                    <button class="lr-btn-secondary" data-goto="practice">⬅️ Inapoi</button>
+                    <button class="lr-btn-secondary" data-goto="practice">⬅️ Înapoi</button>
                     <button class="lr-btn-primary lr-btn-complete" id="lr-complete-lesson" style="display: none;">
-                        ✅ Marcheaza lectia ca terminata
+                        ✅ Marchează lecția ca terminată
                     </button>
                 </div>
             </div>
@@ -555,7 +555,7 @@ class LessonRenderer {
                     }
                 }
 
-                checkBtn.textContent = 'Incearca din nou';
+                checkBtn.textContent = 'Încearcă din nou';
                 checkBtn.onclick = () => {
                     this.quizEngine.reset();
                     this.navigateToSection('test');
@@ -578,7 +578,7 @@ class LessonRenderer {
                 }
 
                 // Show celebration
-                completeBtn.innerHTML = '🎉 Lectie completata!';
+                completeBtn.innerHTML = '🎉 Lecție completată!';
                 completeBtn.disabled = true;
                 completeBtn.classList.add('completed');
             });

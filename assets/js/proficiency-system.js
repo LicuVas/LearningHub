@@ -23,7 +23,7 @@ const ProficiencySystem = {
             id: 'minim',
             label: 'Minim',
             icon: '🐢',
-            description: 'Concepte de baza, sarcini simple',
+            description: 'Concepte de bază, sarcini simple',
             xp_multiplier: 0.5,
             color: '#f59e0b',    // orange
             pass_threshold: 0.5  // 50% pentru a trece
@@ -39,9 +39,9 @@ const ProficiencySystem = {
         },
         performanta: {
             id: 'performanta',
-            label: 'Performanta',
+            label: 'Performanță',
             icon: '🚀',
-            description: 'Provocari, transfer, aplicatii complexe',
+            description: 'Provocări, transfer, aplicații complexe',
             xp_multiplier: 1.5,
             color: '#10b981',    // green
             pass_threshold: 0.80 // 80% pentru a trece
@@ -336,7 +336,7 @@ const ProficiencySystem = {
         const container = document.createElement('div');
         container.className = 'proficiency-selector';
         container.innerHTML = `
-            <div class="proficiency-label">Alege nivelul tau:</div>
+            <div class="proficiency-label">Alege nivelul tău:</div>
             <div class="proficiency-options">
                 ${Object.values(this.LEVELS).map(level => `
                     <button class="proficiency-option ${level.id === currentLevel ? 'active' : ''}"

@@ -143,7 +143,7 @@ const Quiz = {
                     <h3>Excelent! ${correctCount}/${this.config.totalQuestions} corecte!</h3>
                     <p>Ai trecut testul cu succes!</p>
                     <button class="btn-continue" onclick="Quiz.continue()">
-                        Continua
+                        Continuă
                     </button>
                 </div>
             `;
@@ -152,16 +152,16 @@ const Quiz = {
                 <div class="quiz-result quiz-result-fail">
                     <div class="result-icon">📚</div>
                     <h3>${correctCount}/${this.config.totalQuestions} corecte</h3>
-                    <p>Ai nevoie de cel putin ${this.config.passingScore} raspunsuri corecte.</p>
+                    <p>Ai nevoie de cel puțin ${this.config.passingScore} răspunsuri corecte.</p>
                     <div class="result-actions">
                         <button class="btn-review" onclick="Quiz.reviewLesson()">
-                            📖 Vreau sa revad lectia
+                            📖 Vreau să revăd lecția
                         </button>
                         <button class="btn-retry" onclick="Quiz.retry()">
-                            🔄 Incearca din nou
+                            🔄 Încearcă din nou
                         </button>
                         <a href="index.html" class="btn-exit">
-                            🚪 Iesire la modul
+                            🚪 Ieșire la modul
                         </a>
                     </div>
                 </div>

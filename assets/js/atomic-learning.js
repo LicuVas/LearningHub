@@ -197,11 +197,11 @@ const AtomicLearning = {
             <div class="atom-quiz-wrapper">
                 <div class="atom-quiz-header">
                     <span class="atom-quiz-icon">&#128269;</span>
-                    <span class="atom-quiz-title">Verifica daca ai inteles</span>
+                    <span class="atom-quiz-title">Verifică dacă ai înțeles</span>
                 </div>
                 <div class="atom-quiz-warning">
                     <span class="warning-icon">&#9888;</span>
-                    <span>Atentie! Raspunsul se blocheaza dupa selectare. Citeste cu atentie inainte de a alege!</span>
+                    <span>Atenție! Răspunsul se blochează după selectare. Citește cu atenție înainte de a alege!</span>
                 </div>
                 ${html}
             </div>
@@ -327,7 +327,7 @@ const AtomicLearning = {
                 <div class="atom-feedback" style="display: none;"></div>
                 <div class="atom-hint" style="display: none;">
                     <span class="atom-hint-icon">&#128161;</span>
-                    <span class="atom-hint-text">${question.hint || 'Gandeste-te mai bine...'}</span>
+                    <span class="atom-hint-text">${question.hint || 'Gândește-te mai bine...'}</span>
                 </div>
             </div>
         `;
@@ -397,7 +397,7 @@ const AtomicLearning = {
                 }
             });
 
-            feedbackEl.innerHTML = '<span class="feedback-icon">&#10060;</span> Incorect. Raspunsul corect este marcat cu verde.';
+            feedbackEl.innerHTML = '<span class="feedback-icon">&#10060;</span> Incorect. Răspunsul corect este marcat cu verde.';
             feedbackEl.className = 'atom-feedback incorrect';
             feedbackEl.style.display = 'block';
             // Multe indicii din continut incep cu „Corect!" (scrise pentru raspunsul bun). Afisate sub
@@ -539,7 +539,7 @@ const AtomicLearning = {
             const fold = document.createElement('details');
             fold.className = 'ux-frame-fold';
             const sum = document.createElement('summary');
-            sum.textContent = 'De ce inveti asta (obiectivele lectiei)';
+            sum.textContent = 'De ce înveți asta (obiectivele lecției)';
             fold.appendChild(sum);
             frame.parentNode.insertBefore(fold, frame);
             fold.appendChild(frame);       // muta sectiunea intreaga inauntru
@@ -571,8 +571,8 @@ const AtomicLearning = {
         const nav = document.createElement('div');
         nav.className = 'ux-step-nav';
         nav.innerHTML =
-            '<button type="button" class="ux-step-back" hidden>&larr; Inapoi</button>' +
-            '<button type="button" class="ux-step-next">Urmatorul pas &rarr;</button>';
+            '<button type="button" class="ux-step-back" hidden>&larr; Înapoi</button>' +
+            '<button type="button" class="ux-step-next">Următorul pas &rarr;</button>';
         if (acelasiParinte) parent.insertBefore(nav, dupaInParinte[0] || null);
         else atomEls[atomEls.length - 1].parentNode.appendChild(nav);
 
@@ -599,7 +599,7 @@ const AtomicLearning = {
             bara.querySelector('.ux-step-pct').textContent = gata + ' din ' + M;
 
             if (i >= M) {
-                bara.querySelector('.ux-step-text').textContent = 'Ai terminat lectia';
+                bara.querySelector('.ux-step-text').textContent = 'Ai terminat lecția';
                 bara.classList.add('ux-step-done');
                 nav.hidden = true;
                 return;
@@ -610,8 +610,8 @@ const AtomicLearning = {
             btnBack.hidden = i === 0;
             btnNext.disabled = !terminat(i);
             btnNext.textContent = (i === M - 1)
-                ? 'Termin lectia →'
-                : (terminat(i) ? 'Urmatorul pas →' : 'Raspunde ca sa mergi mai departe');
+                ? 'Termin lecția →'
+                : (terminat(i) ? 'Următorul pas →' : 'Răspunde ca să mergi mai departe');
             if (scroll) bara.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
@@ -663,7 +663,7 @@ const AtomicLearning = {
         overlay.innerHTML = `
             <div class="atom-lock-message">
                 <span class="lock-icon">&#128274;</span>
-                <span>Raspunde corect la intrebarile anterioare pentru a continua</span>
+                <span>Răspunde corect la întrebările anterioare pentru a continua</span>
             </div>
         `;
         atomEl.appendChild(overlay);
@@ -748,7 +748,7 @@ const AtomicLearning = {
         } catch (e) {
             console.error('AtomicLearning: Error saving progress', e);
             if (e.name === 'QuotaExceededError') {
-                alert('Spatiul de stocare este plin! Progresul nu a putut fi salvat.');
+                alert('Spațiul de stocare este plin! Progresul nu a putut fi salvat.');
             }
         }
 
@@ -909,7 +909,7 @@ const AtomicLearning = {
                 feedbackEl.className = 'atom-feedback correct';
                 feedbackEl.style.display = 'block';
             } else {
-                feedbackEl.innerHTML = '<span class="feedback-icon">&#10060;</span> Incorect. Raspunsul corect este marcat cu verde.';
+                feedbackEl.innerHTML = '<span class="feedback-icon">&#10060;</span> Incorect. Răspunsul corect este marcat cu verde.';
                 feedbackEl.className = 'atom-feedback incorrect';
                 feedbackEl.style.display = 'block';
                 hintEl.style.display = 'block';
@@ -1572,7 +1572,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var self = this;
                 navigator.clipboard.writeText(text).then(function() {
                     self.textContent = 'Copiat!';
-                    setTimeout(function() { self.textContent = 'Copiaza'; }, 2000);
+                    setTimeout(function() { self.textContent = 'Copiază'; }, 2000);
                 });
             }
         });
@@ -1664,8 +1664,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         feedback.className = 'order-feedback show ' + (allCorrect ? 'correct' : 'wrong');
         feedback.textContent = allCorrect
-            ? '✓ Felicitari! Ai ordonat corect toti pasii! Continua sa inveti teoria.'
-            : '✗ Nu e chiar asa. Pasii marcati cu rosu sunt pe pozitii gresite. Mai incearca!';
+            ? '✓ Felicitări! Ai ordonat corect toți pașii! Continuă să înveți teoria.'
+            : '✗ Nu e chiar așa. Pașii marcați cu roșu sunt pe poziții greșite. Mai încearcă!';
         if (allCorrect) feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     };
 });

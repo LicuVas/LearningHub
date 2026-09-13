@@ -46,7 +46,10 @@ def main():
     t_ref = re.search(r"<title>(.*?)</title>", ref, re.S)
     if t_new and t_ref and t_new.group(1) != t_ref.group(1):
         errs.append("<title> s-a schimbat (spec: titlurile raman fara diacritice)")
-    for bloc in re.findall(r"(?s)<(?:script|style)[^>]*>.*?</(?:script|style)>", new):
+    # comentariile HTML se scot intai: "<!-- NO inline <style> blocks -->" (198 de lectii) deschidea un fals bloc pana la primul </script>
+    fara_com = re.sub(r"(?s)<!--.*?-->", "", new)
+    for m_bloc in re.finditer(r"(?s)<(script|style)\b[^>]*>.*?</\1>", fara_com):
+        bloc = m_bloc.group(0)
         if re.search(f"[{DIA}]", bloc) and bloc.translate(HARTA) != bloc and bloc not in ref:
             errs.append("diacritice adaugate intr-un <script> sau <style>")
             break

@@ -21,7 +21,7 @@ Numele românești din glosar sunt deja scrise corect — le lași.
 ## Cum lucrezi (fișierul e mare — pe bucăți)
 1. Copiază fișierul original în folderul tău ca `original.html` (referința).
 2. Împarte-l cu un script Python în bucăți de ~120 de linii (`in_01.txt`, `in_02.txt`, …), fără să tai o linie.
-3. Pentru fiecare bucată: o citești, scrii `out_NN.txt` identic, cu diacritice adăugate doar unde e cazul. Lucrează linie cu linie; nu reformula, nu „repara” altceva (nici greșeli de tipar — le notezi în `observatii.md`).
+3. Pentru fiecare bucată: o citești, scrii `out_NN.txt` identic, cu diacritice adăugate doar unde e cazul. **Metoda recomandată (dovedită la pilot):** scrii doar rândurile care se schimbă, în `spec_NN.txt` (număr de linie + linia nouă), iar un `build.py` verifică fiecare rând față de original (după eliminarea diacriticelor trebuie să fie identic) și construiește `out_NN.txt`. Așa nu retastezi tab-uri și spații. Lucrează linie cu linie; nu reformula, nu „repara” altceva (nici greșeli de tipar — le notezi în `observatii.md`).
 4. Lipește bucățile (`out_*` în ordine) într-un `nou.html` și rulează:
    `python C:/00/Projects/LearningHub/_campaign/omul_la_calculator_2026_09_13/S_reparatii/D_poarta_diacritice.py <nou.html> <original.html>`
    Dacă pică pe „difera si in ALTCEVA”: îți arată linia — repari bucata respectivă și rulezi din nou. Până la **exit 0**.

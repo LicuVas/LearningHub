@@ -155,7 +155,7 @@ const EvidenceSystem = {
         } catch (e) {
             console.error('EvidenceSystem: Error saving data', e);
             if (e.name === 'QuotaExceededError') {
-                alert('Spatiul de stocare este plin! Dovezile nu au putut fi salvate.');
+                alert('Spațiul de stocare este plin! Dovezile nu au putut fi salvate.');
             }
         }
     },

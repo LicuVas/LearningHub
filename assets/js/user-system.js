@@ -57,9 +57,9 @@ const UserSystem = {
         { id: 'cls10', label: 'Clasa a 10-a', short: '10', group: 'Liceu' },
         { id: 'cls11', label: 'Clasa a 11-a', short: '11', group: 'Liceu' },
         { id: 'cls12', label: 'Clasa a 12-a', short: '12', group: 'Liceu' },
-        { id: 'maistri1', label: 'Scoala de maistri, anul I', short: 'Maistri I', group: 'Maistri si postliceal' },
-        { id: 'sanitar1', label: 'Postliceal sanitar, anul I', short: 'Sanitar I', group: 'Maistri si postliceal' },
-        { id: 'sanitar2', label: 'Postliceal sanitar, anul II (farmacie)', short: 'Farmacie II', group: 'Maistri si postliceal' }
+        { id: 'maistri1', label: 'Școala de maiștri, anul I', short: 'Maiștri I', group: 'Maiștri și postliceal' },
+        { id: 'sanitar1', label: 'Postliceal sanitar, anul I', short: 'Sanitar I', group: 'Maiștri și postliceal' },
+        { id: 'sanitar2', label: 'Postliceal sanitar, anul II (farmacie)', short: 'Farmacie II', group: 'Maiștri și postliceal' }
     ],
 
     /**
@@ -79,8 +79,8 @@ const UserSystem = {
      * postliceal nu exista profiluri, deci nu se intreaba degeaba.
      */
     TRACKS: [
-        { id: 'mat-info',   label: 'Matematica-informatica' },
-        { id: 'stiinte',    label: 'Stiintele naturii' },
+        { id: 'mat-info',   label: 'Matematică-informatică' },
+        { id: 'stiinte',    label: 'Științele naturii' },
         { id: 'tehnologic', label: 'Tehnologic' },
         { id: 'artistic',   label: 'Artistic' },
         { id: 'pedagogic',  label: 'Pedagogic' },
@@ -184,7 +184,7 @@ const UserSystem = {
         } catch (e) {
             console.error('UserSystem: Error saving profiles', e);
             if (e.name === 'QuotaExceededError') {
-                alert('Spatiul de stocare este plin! Sterge unele profile sau date pentru a continua.');
+                alert('Spațiul de stocare este plin! Șterge unele profile sau date pentru a continua.');
             }
         }
     },
@@ -286,7 +286,7 @@ const UserSystem = {
         } catch (e) {
             console.error('UserSystem: Error initializing profile data', e);
             if (e.name === 'QuotaExceededError') {
-                alert('Spatiul de stocare este plin! Sterge unele profile pentru a continua.');
+                alert('Spațiul de stocare este plin! Șterge unele profile pentru a continua.');
             }
         }
     },
@@ -410,7 +410,7 @@ const UserSystem = {
      * Delete a profile and all its data
      */
     deleteProfile(profileId, confirmFirst = true) {
-        if (confirmFirst && !confirm('Esti sigur ca vrei sa stergi acest profil?\nTot progresul va fi pierdut permanent!')) {
+        if (confirmFirst && !confirm('Ești sigur că vrei să ștergi acest profil?\nTot progresul va fi pierdut permanent!')) {
             return false;
         }
 
@@ -463,7 +463,7 @@ const UserSystem = {
     resetProgress(type = 'all') {
         const profileId = this.getActiveProfile();
         if (!profileId || profileId === '_guest') {
-            alert('Nu poti reseta progresul fara un profil!');
+            alert('Nu poți reseta progresul fără un profil!');
             return false;
         }
 
@@ -472,7 +472,7 @@ const UserSystem = {
 
         switch (type) {
             case 'all':
-                if (!confirm('Esti sigur ca vrei sa stergi TOT progresul?\nAceasta actiune nu poate fi anulata!')) {
+                if (!confirm('Ești sigur că vrei să ștergi TOT progresul?\nAceastă acțiune nu poate fi anulată!')) {
                     return false;
                 }
                 localStorage.setItem(rpgKey, JSON.stringify({
@@ -578,7 +578,7 @@ const UserSystem = {
             <div class="us-modal-content">
                 <div class="us-modal-icon">🎓</div>
                 <h2>Bine ai venit la LearningHub!</h2>
-                <p class="us-modal-subtitle">Pentru a-ti salva progresul, selecteaza sau creeaza un profil.</p>
+                <p class="us-modal-subtitle">Pentru a-ți salva progresul, selectează sau creează un profil.</p>
 
                 ${profiles.length > 0 ? `
                     <div class="us-profiles-list">
@@ -592,11 +592,11 @@ const UserSystem = {
                             </button>
                         `).join('')}
                     </div>
-                    <div class="us-divider"><span>sau creeaza unul nou</span></div>
+                    <div class="us-divider"><span>sau creează unul nou</span></div>
                 ` : ''}
 
                 <div class="us-new-profile">
-                    <input type="text" id="us-name-input" placeholder="Numele tau (ex: Maria)" maxlength="20" autocomplete="off">
+                    <input type="text" id="us-name-input" placeholder="Numele tău (ex: Maria)" maxlength="20" autocomplete="off">
                     <select id="us-grade-select" class="us-grade-select">
                         <option value="" disabled selected>Alege clasa ta</option>
                         ${this.getGradeGroups().map(b => `
@@ -609,10 +609,10 @@ const UserSystem = {
                         <option value="" disabled selected>Alege profilul</option>
                         ${this.TRACKS.map(t => `<option value="${t.id}">${this.escapeHtml(t.label)}</option>`).join('')}
                     </select>
-                    <button id="us-create-btn" class="us-btn-primary">Creeaza profil</button>
+                    <button id="us-create-btn" class="us-btn-primary">Creează profil</button>
                 </div>
 
-                <button id="us-guest-btn" class="us-btn-ghost">Continua fara profil</button>
+                <button id="us-guest-btn" class="us-btn-ghost">Continuă fără profil</button>
             </div>
         `;
 
@@ -690,9 +690,9 @@ const UserSystem = {
         document.getElementById('us-guest-btn').addEventListener('click', () => {
             // Warn user that progress won't be saved
             const proceed = confirm(
-                '⚠️ Fara profil, progresul NU se salveaza!\n\n' +
-                'Daca inchizi browserul, vei pierde tot ce ai invatat.\n\n' +
-                'Sigur vrei sa continui fara profil?'
+                '⚠️ Fără profil, progresul NU se salvează!\n\n' +
+                'Dacă închizi browserul, vei pierde tot ce ai învățat.\n\n' +
+                'Sigur vrei să continui fără profil?'
             );
             if (!proceed) return;
 
@@ -714,22 +714,22 @@ const UserSystem = {
         modal.className = 'us-modal';
         modal.innerHTML = `
             <div class="us-modal-content us-reset-content">
-                <h3>🔧 Reseteaza Progresul</h3>
-                <p class="us-modal-subtitle">Alege ce vrei sa resetezi:</p>
+                <h3>🔧 Resetează Progresul</h3>
+                <p class="us-modal-subtitle">Alege ce vrei să resetezi:</p>
 
                 <button class="us-reset-option" data-reset="all">
                     <span class="us-reset-icon">🌐</span>
                     <div class="us-reset-info">
                         <strong>Tot site-ul</strong>
-                        <small>XP, achievements, toate lectiile</small>
+                        <small>XP, achievements, toate lecțiile</small>
                     </div>
                 </button>
 
                 <button class="us-reset-option" data-reset="xp">
                     <span class="us-reset-icon">⭐</span>
                     <div class="us-reset-info">
-                        <strong>Doar XP si nivel</strong>
-                        <small>Pastreaza lectiile completate</small>
+                        <strong>Doar XP și nivel</strong>
+                        <small>Păstrează lecțiile completate</small>
                     </div>
                 </button>
 
@@ -737,19 +737,19 @@ const UserSystem = {
                     <span class="us-reset-icon">🏆</span>
                     <div class="us-reset-info">
                         <strong>Doar achievements</strong>
-                        <small>Pastreaza XP si progresul</small>
+                        <small>Păstrează XP și progresul</small>
                     </div>
                 </button>
 
                 <button class="us-reset-option" data-reset="progress">
                     <span class="us-reset-icon">📚</span>
                     <div class="us-reset-info">
-                        <strong>Doar lectiile</strong>
-                        <small>Pastreaza XP si achievements</small>
+                        <strong>Doar lecțiile</strong>
+                        <small>Păstrează XP și achievements</small>
                     </div>
                 </button>
 
-                <button class="us-btn-ghost us-cancel-btn">Anuleaza</button>
+                <button class="us-btn-ghost us-cancel-btn">Anulează</button>
             </div>
         `;
 
@@ -821,11 +821,11 @@ const UserSystem = {
         menu.id = 'us-profile-menu';
         menu.className = 'us-menu';
         menu.innerHTML = `
-            <button class="us-menu-item" data-action="switch">🔄 Schimba profilul</button>
+            <button class="us-menu-item" data-action="switch">🔄 Schimbă profilul</button>
             <div class="us-menu-divider"></div>
-            <button class="us-menu-item" data-action="reset">🔧 Reseteaza progresul</button>
+            <button class="us-menu-item" data-action="reset">🔧 Resetează progresul</button>
             <div class="us-menu-divider"></div>
-            <button class="us-menu-item us-menu-danger" data-action="delete">🗑️ Sterge profilul</button>
+            <button class="us-menu-item us-menu-danger" data-action="delete">🗑️ Șterge profilul</button>
         `;
 
         // Position menu with viewport boundary check
