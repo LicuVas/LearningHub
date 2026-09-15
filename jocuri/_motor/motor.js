@@ -233,12 +233,18 @@ TIPURI.hunt=function(Q,body){
   });
   HUNT_T=T;
   const total=T.filter(t=>t.err).length,dots=!!Q.spatii;
+  /* O greșeală cu mai multe cuvinte se desenează tot cuvânt cu cuvânt, ca textul corect: un buton lung ar trăda
+     răspunsul prin lungime (semnalat de evaluator, 15.09.2026). Toate cuvintele ei au același data-k și se marchează împreună. */
+  const btn=(k,x,sp)=>`<button type="button" class="tk ${sp?'sp':''}" data-k="${k}" aria-label="${sp?(x.length>1?'spațiu dublu':'spațiu'):esc(x)}">${sp?x.replace(/ /g,'·'):esc(x)}</button>`;
   body.innerHTML=`<div class="hunt">${T.map((t,k)=>{const sp=!t.x.trim();
     if(sp&&!t.err&&!dots)return ' ';
-    return `<button type="button" class="tk ${sp?'sp':''}" data-k="${k}" aria-label="${sp?(t.x.length>1?'spațiu dublu':'spațiu'):esc(t.x)}">${sp?t.x.replace(/ /g,'·'):esc(t.x)}</button>`}).join('')}</div>
+    if(sp||!t.err||!/ /.test(t.x))return btn(k,t.x,sp);
+    return t.x.split(/( )/).filter(p=>p!=='').map(p=>p===' '?(dots?btn(k,p,true):' '):btn(k,p,false)).join('');
+  }).join('')}</div>
     <p class="hint" style="margin:6px 0 0">Ai marcat <span id="cnt">0</span> din ${total}. Apasă din nou ca să scoți un marcaj.</p>`;
   const marked=new Set();
-  body.querySelectorAll('.tk').forEach(b=>b.onclick=()=>{if(R.done)return;const k=+b.dataset.k;marked.has(k)?marked.delete(k):marked.add(k);b.classList.toggle('marked');document.getElementById('cnt').textContent=marked.size});
+  body.querySelectorAll('.tk').forEach(b=>b.onclick=()=>{if(R.done)return;const k=+b.dataset.k;const on=!marked.has(k);on?marked.add(k):marked.delete(k);
+    body.querySelectorAll(`.tk[data-k="${k}"]`).forEach(x=>x.classList.toggle('marked',on));document.getElementById('cnt').textContent=marked.size});
   const list=()=>`<ul style="margin:.4em 0 0;padding-left:1.2em">${T.map(t=>t.err?`<li><span class="code">${t.x.trim()?esc(t.x):t.x.replace(/ /g,'·')}</span> — ${esc(t.why)}</li>`:'').join('')}</ul>`;
   const showFound=()=>{body.querySelectorAll('.tk').forEach(b=>{b.classList.remove('marked');if(T[+b.dataset.k].err)b.classList.add('found')})};
   const nav=checkButton(()=>{
@@ -249,7 +255,7 @@ TIPURI.hunt=function(Q,body){
   });
 };
 let HUNT_T=[];
-REZOLVA.hunt=(Q,body)=>body.querySelectorAll('.tk').forEach(b=>{if(HUNT_T[+b.dataset.k].err)b.click()});
+REZOLVA.hunt=(Q,body)=>{const seen=new Set();body.querySelectorAll('.tk').forEach(b=>{const k=+b.dataset.k;if(HUNT_T[k].err&&!seen.has(k)){seen.add(k);b.click()}})};
 
 TIPURI.pick=function(Q,body){
   let a=null,b=null;
@@ -282,7 +288,7 @@ function endLevel(){
   const next=R.li+1<C.nivele.length;
   shell(`
     <div class="eyebrow">${esc(Lv.t)} · nivel terminat</div>
-    <div class="end-stars" style="margin:14px 0 6px" aria-label="${stars} stele din 3">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3-stars)}</span></div>
+    <div class="end-stars" style="margin:14px 0 6px" aria-label="${stars===1?'o stea':stars+' stele'} din 3">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3-stars)}</span></div>
     <h2>${stars===3?'Perfect, toate din prima!':stars===2?'Foarte bine!':'Nivel trecut. Poți lua mai multe stele.'}</h2>
     <p class="lede">${R.first} din ${n} răspunsuri corecte din prima · ${R.xp} XP.${stars<3?' Recitește pagina și reia nivelul pentru 3 stele.':''}</p>
     <div class="row" style="margin-top:20px">

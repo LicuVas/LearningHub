@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Misiunea Reporter</title>
+<meta name="description" content="Lecție-joc pentru clasa a VII-a: linia de timp, înregistrarea, formatele audio și video, tăierea, mixajul, tranzițiile, genericele și exportul unui interviu.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500..900&family=Figtree:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="../_motor/motor.css">
+<style>
+:root{
+  --desk:#EEEBF3; --paper:#FFFFFF; --paper2:#F4F1F9; --line:#DAD3E6;
+  --ink:#1D1728; --ink2:#5F5670; --accent:#6B3FD4; --accentInk:#FFFFFF; --sel:#E6DDFB;
+  --mark:#FFD86B; --markInk:#1D1728; --ok:#177245; --okbg:#E1F3E7; --bad:#C0352F; --badbg:#FAE6E4;
+  --wave:#0E8C83; --rec:#E5484D;
+  --fd:"Unbounded","Segoe UI",system-ui,sans-serif; --fb:"Figtree","Segoe UI",system-ui,sans-serif; --fm:"JetBrains Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#120F18; --paper:#1B1724; --paper2:#252031; --line:#372F46;
+  --ink:#ECE8F3; --ink2:#A89FB8; --accent:#A98BFF; --accentInk:#120F18; --sel:#33285A;
+  --mark:#F2CD4E; --markInk:#1D1728; --ok:#5CCB8E; --okbg:#15301F; --bad:#FF7B72; --badbg:#3A1E1D;
+  --wave:#4FD1C5; --rec:#FF6B6F;
+}}
+:root[data-theme="dark"]{
+  --desk:#120F18; --paper:#1B1724; --paper2:#252031; --line:#372F46;
+  --ink:#ECE8F3; --ink2:#A89FB8; --accent:#A98BFF; --accentInk:#120F18; --sel:#33285A;
+  --mark:#F2CD4E; --markInk:#1D1728; --ok:#5CCB8E; --okbg:#15301F; --bad:#FF7B72; --badbg:#3A1E1D;
+  --wave:#4FD1C5; --rec:#FF6B6F;
+}
+/* tema jocului: fâșia de sus e o linie de timp, cu o pistă video (clipuri), o pistă audio (formă de undă) și cursorul de redare */
+.banda{padding:6px 10px}
+.tl{position:relative;display:grid;gap:3px}
+.tl .pv{display:flex;gap:3px;height:13px}
+.tl .pv b{border-radius:2px;background:color-mix(in srgb,var(--accent) 65%,var(--paper));border-left:2px solid var(--accent)}
+.tl .pa{display:flex;align-items:center;gap:2px;height:18px;overflow:hidden}
+.tl .pa i{flex:1 1 2px;min-width:1px;border-radius:1px;background:var(--wave)}
+.tl .ph{position:absolute;top:-6px;bottom:-6px;left:38%;width:2px;background:var(--rec)}
+.tl .ph::before{content:"";position:absolute;top:0;left:-4px;border:5px solid transparent;border-top-color:var(--rec)}
+h1{font-weight:800;letter-spacing:-.03em}
+h2{font-weight:700;letter-spacing:-.02em}
+.recdot{display:inline-block;width:.42em;height:.42em;border-radius:50%;background:var(--rec);margin-right:.22em;vertical-align:.18em;box-shadow:0 0 0 .1em color-mix(in srgb,var(--rec) 30%,transparent)}
+
+/* simulatorul „montaj”: biblioteca, pista video și panoul clipului selectat */
+.mbin{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.mclip{border:1px solid var(--line);background:var(--paper2);border-radius:6px;padding:7px 10px;font-size:.92rem;text-align:left;line-height:1.25;overflow-wrap:anywhere}
+.mclip:hover{border-color:var(--accent)}
+.mclip span{font-family:var(--fm);font-size:.76rem;color:var(--ink2);white-space:nowrap}
+.mtrack{display:flex;gap:3px;min-height:52px;padding:6px;border:1px solid var(--line);border-radius:6px;align-items:stretch;
+  background:repeating-linear-gradient(90deg,var(--paper2) 0 23px,var(--line) 23px 24px)}
+.mtrack .hint{align-self:center}
+.mtk{min-width:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:3px 5px;border:0;border-left:3px solid var(--accent);border-radius:4px;
+  background:color-mix(in srgb,var(--accent) 22%,var(--paper));overflow:hidden;text-align:left;font-size:.74rem;line-height:1.2}
+.mtk b{font-family:var(--fm)}
+.mtk span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mtk.on{background:var(--sel);box-shadow:inset 0 0 0 2px var(--accent)}
+.mpanel{margin-top:12px;border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--paper2)}
+.msrc{position:relative;height:30px;margin:8px 0;border-radius:4px;background:var(--paper);border:1px solid var(--line);overflow:hidden}
+.msrc i{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-family:var(--fm);font-size:.72rem;
+  border-right:1px solid var(--line);background:color-mix(in srgb,var(--wave) 16%,transparent)}
+.msrc u{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--ink) 50%,transparent) 0 4px,transparent 4px 8px)}
+.mlist{margin:0 0 8px;padding-left:1.4em;font-size:.92rem}
+.mlist li{margin:.25em 0}
+.mlist li.out{color:var(--ink2);text-decoration:line-through}
+.mlist .tc{font-family:var(--fm);font-size:.76rem;color:var(--accent);white-space:nowrap}
+.mlist em{font-style:normal;font-family:var(--fm);font-size:.72rem;color:var(--ink2);white-space:nowrap}
+.mctl{display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap}
+.mctl>span:first-child{flex:1 1 9em}
+.mctl .stp{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.mctl button{width:42px;height:40px;border:1px solid var(--line);border-radius:6px;background:var(--paper);font-size:1.2rem;font-weight:700}
+.mctl output{font-family:var(--fm);min-width:3.2em;text-align:center}
+.mmove{margin-top:8px;gap:6px}
+</style>
+</head>
+<body>
+<script src="../_motor/motor.js"></script>
+<script>
+/* Tipul de întrebare „montaj”: o pistă video simulată.
+   Întrebare: {t:'montaj', q, clipuri:[{id, nume, dur (secunde), bucati:[[de_la, până_la, 'ce se vede', 'ok'|'x'], …]}],
+               ordine:[id-urile din scenariu, în ordine], pePista?:[id-uri deja puse pe pistă], why}
+   Verificarea e pe comportament: se calculează ce ar vedea privitorul (ce clipuri, în ce ordine, ce secunde din fiecare)
+   și se cere ca toate bucățile „ok” să fie întregi, iar bucățile „x” să lipsească. Orice tăietură care face asta e bună. */
+const JocMontaj=(function(){
+  let st=null;
+  const byId=(Q,id)=>Q.clipuri.find(c=>c.id===id);
+  function taieri(c){
+    const oks=c.bucati.filter(b=>b[3]==='ok'),a=Math.min(...oks.map(b=>b[0])),z=Math.max(...oks.map(b=>b[1]));
+    let s=0,e=0;
+    c.bucati.forEach(b=>{if(b[3]==='x'){if(b[1]<=a)s=Math.max(s,b[1]);if(b[0]>=z)e=Math.max(e,c.dur-b[0])}});
+    return {s,e};
+  }
+  const solutie=Q=>Q.ordine.map(id=>({id,...taieri(byId(Q,id))}));
+  function problems(Q,esc){
+    const out=[],ids=st.pista.map(p=>p.id);
+    if(!ids.length)return ['Pista e goală. Apasă clipurile din bibliotecă ca să le pui pe pistă.'];
+    ids.filter(id=>!Q.ordine.includes(id)).forEach(id=>out.push(`„${esc(byId(Q,id).nume)}” nu face parte din scenariu. Scoate-l de pe pistă.`));
+    Q.ordine.filter(id=>!ids.includes(id)).forEach(id=>out.push(`Lipsește „${esc(byId(Q,id).nume)}”.`));
+    const inScenariu=ids.filter(id=>Q.ordine.includes(id));
+    if(inScenariu.length===Q.ordine.length&&inScenariu.some((id,i)=>id!==Q.ordine[i]))out.push('Clipurile nu sunt în ordinea din scenariu.');
+    st.pista.forEach(p=>{
+      if(!Q.ordine.includes(p.id))return;
+      const c=byId(Q,p.id),z=c.dur-p.e;
+      c.bucati.forEach(b=>{const inn=Math.min(b[1],z)-Math.max(b[0],p.s);
+        if(b[3]==='ok'&&inn<b[1]-b[0])out.push(`În „${esc(c.nume)}” ai tăiat și din partea bună: ${esc(b[2])}.`);
+        if(b[3]==='x'&&inn>0)out.push(`În „${esc(c.nume)}” încă rămâne: ${esc(b[2])}.`)});
+    });
+    return out;
+  }
+  function render(Q,body,api){
+    const esc=api.esc;
+    st={pista:(Q.pePista||[]).map(id=>({id,s:0,e:0})),sel:(Q.pePista||[]).length?0:-1};
+    function draw(){
+      const pe=new Set(st.pista.map(p=>p.id)),bin=Q.clipuri.filter(c=>!pe.has(c.id));
+      const total=st.pista.reduce((t,p)=>t+byId(Q,p.id).dur-p.s-p.e,0);
+      let h='';
+      if(Q.clipuri.length>1)h+=`<div class="lbl">Biblioteca de materiale · apasă un clip ca să-l pui la capătul pistei</div>
+        <div class="mbin">${bin.map(c=>`<button type="button" class="mclip" data-add="${c.id}">${esc(c.nume)} <span>${c.dur} s</span></button>`).join('')||'<span class="hint">Toate clipurile sunt pe pistă.</span>'}</div>`;
+      h+=`<div class="lbl">Linia de timp · pista video · durata montajului: ${total} s</div>
+        <div class="mtrack">${st.pista.map((p,i)=>{const c=byId(Q,p.id),k=c.dur-p.s-p.e;
+          return `<button type="button" class="mtk${i===st.sel?' on':''}" data-sel="${i}" style="flex:${k} 1 0" aria-label="Clipul ${i+1}: ${esc(c.nume)}, ${k} secunde"><b>${i+1}</b><span>${esc(c.nume)}</span></button>`}).join('')||'<span class="hint">Pista e goală.</span>'}</div>`;
+      const p=st.pista[st.sel];
+      if(p){
+        const c=byId(Q,p.id),z=c.dur-p.e;
+        h+=`<div class="mpanel">
+          <div><strong>${st.sel+1}. ${esc(c.nume)}</strong> <span class="hint">· păstrezi secundele ${p.s}–${z} din ${c.dur}</span></div>
+          <div class="msrc" aria-hidden="true">${c.bucati.map((b,j)=>`<i style="left:${b[0]/c.dur*100}%;width:${(b[1]-b[0])/c.dur*100}%">${j+1}</i>`).join('')}<u style="left:0;width:${p.s/c.dur*100}%"></u><u style="right:0;width:${p.e/c.dur*100}%"></u></div>
+          <ol class="mlist">${c.bucati.map(b=>{const inn=Math.min(b[1],z)-Math.max(b[0],p.s),full=b[1]-b[0];
+            return `<li class="${inn<=0?'out':''}"><span class="tc">${b[0]}–${b[1]} s</span> ${esc(b[2])} <em>· ${inn<=0?'tăiat':inn<full?'tăiat pe o parte':'în montaj'}</em></li>`}).join('')}</ol>
+          <div class="mctl"><span>Tai de la început</span><span class="stp"><button type="button" data-d="s-" aria-label="Taie cu o secundă mai puțin de la început">−</button><output>${p.s} s</output><button type="button" data-d="s+" aria-label="Taie încă o secundă de la început">+</button></span></div>
+          <div class="mctl"><span>Tai de la sfârșit</span><span class="stp"><button type="button" data-d="e-" aria-label="Taie cu o secundă mai puțin de la sfârșit">−</button><output>${p.e} s</output><button type="button" data-d="e+" aria-label="Taie încă o secundă de la sfârșit">+</button></span></div>
+          ${Q.clipuri.length>1?`<div class="row mmove">
+            <button type="button" class="btn sm" data-m="-1" ${st.sel===0?'disabled':''}>◀ Mai devreme</button>
+            <button type="button" class="btn sm" data-m="1" ${st.sel===st.pista.length-1?'disabled':''}>Mai târziu ▶</button>
+            <button type="button" class="btn sm ghost" data-rm="1">Scoate de pe pistă</button></div>`:''}
+        </div>`;
+      }else if(st.pista.length)h+='<p class="hint" style="margin:8px 0 0">Apasă un clip de pe pistă ca să-l tai sau să-l muți.</p>';
+      body.innerHTML=h;
+      body.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{if(api.done())return;st.pista.push({id:b.dataset.add,s:0,e:0});st.sel=st.pista.length-1;draw()});
+      body.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{st.sel=+b.dataset.sel;draw()});
+      body.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{
+        if(api.done())return;const q=st.pista[st.sel],c=byId(Q,q.id),k=b.dataset.d[0];
+        if(b.dataset.d[1]==='+'){if(c.dur-q.s-q.e>1)q[k]++}else if(q[k]>0)q[k]--;
+        draw()});
+      body.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{
+        if(api.done())return;const i=st.sel,j=i+(+b.dataset.m);if(j<0||j>=st.pista.length)return;
+        [st.pista[i],st.pista[j]]=[st.pista[j],st.pista[i]];st.sel=j;draw()});
+      body.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{
+        if(api.done())return;st.pista.splice(st.sel,1);st.sel=Math.min(st.sel,st.pista.length-1);draw()});
+    }
+    draw();
+    const nav=api.checkButton(()=>{
+      const pr=problems(Q,esc);
+      if(!pr.length){nav.innerHTML='';api.resolve(true)}
+      else{api.resolve(false,pr.slice(0,2).join(' ')+(pr.length>2?` (încă ${pr.length-2})`:''));
+        api.revealButton(()=>{st.pista=solutie(Q);st.sel=0;draw();nav.innerHTML='';
+          api.giveUp('montajul corect e acum pe pistă. Apasă pe fiecare clip ca să vezi ce s-a tăiat.')})}
+    });
+  }
+  function rezolva(Q,body){
+    const click=s=>{const b=body.querySelector(s);if(!b)throw new Error('lipsește '+s);b.click()};
+    for(let i=st.pista.length-1;i>=0;i--)if(!Q.ordine.includes(st.pista[i].id)){click(`[data-sel="${i}"]`);click('[data-rm]')}
+    Q.ordine.forEach(id=>{if(!st.pista.some(p=>p.id===id))click(`[data-add="${id}"]`)});
+    Q.ordine.forEach((id,i)=>{let j=st.pista.findIndex(p=>p.id===id);click(`[data-sel="${j}"]`);while(j>i){click('[data-m="-1"]');j--}});
+    solutie(Q).forEach((t,i)=>{click(`[data-sel="${i}"]`);
+      for(let k=0;k<t.s;k++)click('[data-d="s+"]');
+      for(let k=0;k<t.e;k++)click('[data-d="e+"]')});
+  }
+  return {render,rezolva,problems};
+})();
+
+const LEVELS=[
+{t:'Pe linia de timp',text:`
+<p>Un <mark>editor audio-video</mark> nu arată ca Word-ul. În Word textul curge pe pagini, de sus în jos. Aici totul curge <strong>de la stânga la dreapta, în timp</strong>.</p>
+<p>Într-un editor video găsești, de obicei, patru zone:</p>
+<ul>
+<li><strong>biblioteca de materiale</strong>: clipurile, pozele și sunetele pe care le-ai adus în proiect;</li>
+<li><mark>linia de timp</mark> (<em>timeline</em>): banda cu <mark>piste</mark> așezate una sub alta, pentru imagine și pentru sunet;</li>
+<li><strong>previzualizarea</strong>: fereastra în care vezi rezultatul;</li>
+<li><strong>bara de unelte</strong>: tăiere, text, tranziții, efecte.</li>
+</ul>
+<p>Linia verticală de pe linia de timp e <mark>cursorul de redare</mark>. Arată momentul în care ești. De acolo pornește redarea și, în multe editoare, acolo se taie clipul în două.</p>`,
+qs:[
+ {t:'choice',q:'Ce arată linia de timp a unui editor audio-video?',o:['Ordinea în timp a clipurilor și a sunetelor','Folderul în care e salvat proiectul','Lista de fonturi','Câte pagini are documentul'],ok:0,why:'Linia de timp așază materialele de la stânga la dreapta, în ordinea în care vor fi văzute și auzite. Paginile și fonturile țin de editorul de texte.'},
+ {t:'match',q:'Leagă fiecare zonă a editorului de rolul ei.',pairs:[['Biblioteca de materiale','Aici stau clipurile și sunetele aduse în proiect'],['Linia de timp','Banda cu piste pe care așezi materialele în ordine'],['Previzualizarea','Fereastra în care vezi rezultatul'],['Cursorul de redare','Linia verticală care arată momentul curent']],why:'Materialele pleacă din bibliotecă, se așază pe linia de timp și se verifică în previzualizare. Cursorul îți arată în ce secundă ești.'},
+ {t:'tf',q:'Pe linia de timp, un clip așezat mai la dreapta se vede mai devreme.',ok:false,why:'Fals. Timpul curge de la stânga la dreapta, deci ce e mai la dreapta vine mai târziu.'},
+ {t:'classify',q:'Pe ce fel de pistă pui fiecare material?',cats:['Pistă video','Pistă audio'],items:[['Filmarea făcută cu telefonul',0],['Muzica de fundal',1],['O fotografie a școlii',0],['Vocea înregistrată la microfon',1],['Un efect sonor de aplauze',1]],why:'Ce se vede (filmări, poze) merge pe pista video. Ce doar se aude (muzică, voce, efecte sonore) merge pe o pistă audio, ca să-i poți regla volumul separat.'},
+ {t:'choice',q:'Vrei să vezi montajul de la secunda 12 încolo. Ce faci întâi?',o:['Duci cursorul de redare la secunda 12','Exporți proiectul','Muți toate clipurile la începutul pistei','Închizi previzualizarea'],ok:0,why:'Redarea pornește din locul în care stă cursorul, deci îl duci întâi la momentul dorit.'}
+]},
+{t:'Proiectul și microfonul',text:`
+<p>Când începi o lucrare, creezi un <mark>proiect</mark>. Proiectul ține minte ce ai pus pe linia de timp, unde ai tăiat și cât de tare e fiecare pistă. Îl <strong>salvezi des</strong> și îl redeschizi când vrei.</p>
+<p>Proiectul <strong>nu e încă filmul</strong>. Fișierul pe care îl dai altora (de exemplu un <code>.mp4</code> sau un <code>.mp3</code>) apare abia la final, prin <mark>export</mark>.</p>
+<p>Ca să <mark>înregistrezi</mark>, apeși <strong>cercul roșu</strong> (●), vorbești, apoi oprești cu <strong>pătratul</strong> (■). Pe pistă apare <strong>forma de undă</strong>: unde e mai înaltă, sunetul e mai tare. Apoi <strong>redai</strong> cu triunghiul (▶) și asculți.</p>
+<p>Înregistrează într-un loc liniștit, nici lipit de microfon, nici departe. Zgomotul de fond se înregistrează și el, iar apoi se scoate greu.</p>`,
+qs:[
+ {t:'choice',q:'Ai lucrat o oră la montaj și vrei să continui mâine. Ce faci?',o:['Salvezi proiectul','Exporți un MP4 și ștergi proiectul','Închizi editorul fără să salvezi','Faci o captură de ecran a liniei de timp'],ok:0,why:'Proiectul păstrează pistele și tăieturile, deci mâine lucrezi mai departe. Un MP4 exportat are totul lipit laolaltă și nu mai poate fi desfăcut pe piste.'},
+ {t:'tf',q:'Exportul și salvarea proiectului sunt același lucru.',ok:false,why:'Fals. Salvarea păstrează proiectul, care se poate edita în continuare. Exportul face fișierul final, care se deschide oriunde, dar nu mai are piste separate.'},
+ {t:'order',q:'Înregistrezi 20 de secunde de voce. Pune pașii în ordine.',items:['Te așezi într-un loc liniștit, cu microfonul pregătit','Apeși butonul de înregistrare (●)','Vorbești clar','Oprești înregistrarea (■)','Redai (▶) și asculți rezultatul'],why:'Pregătești locul înainte să apeși butonul, altfel prinzi în înregistrare zgomotul și foșnetul. Asculți la final, pentru că doar așa afli dacă trebuie să reînregistrezi.'},
+ {t:'choice',q:'Forma de undă a înregistrării tale e aproape plată de la un capăt la altul. Ce înseamnă, cel mai probabil?',o:['Microfonul a prins foarte puțin sunet','Sunetul e prea tare','Înregistrarea e perfectă','Fișierul e video, nu audio'],ok:0,why:'Înălțimea undei arată cât de tare e sunetul. O undă plată înseamnă aproape liniște: verifică microfonul și cât de departe ești de el.'},
+ {t:'choice',q:'La redare se aude tare ventilatorul din clasă. Care e cea mai bună soluție?',o:['Reînregistrezi într-un loc liniștit','Pui muzică foarte tare peste','Exporți de două ori','Mărești volumul înregistrării'],ok:0,why:'Zgomotul de fond se înregistrează odată cu vocea și se scoate greu. Dacă mărești volumul, crește și zgomotul. Muzica tare acoperă și vocea.'}
+]},
+{t:'Formate și comprimare',text:`
+<p>Sunetul și filmul se păstrează în fișiere, iar <mark>extensia</mark> îți spune formatul:</p>
+<ul>
+<li><code>.wav</code>: sunet, de obicei <strong>necomprimat</strong>. Păstrează tot, dar ocupă mult: un minut de muzică stereo are cam 10 MB.</li>
+<li><code>.mp3</code>: sunet <mark>comprimat cu pierderi</mark>. La o calitate obișnuită, același minut are cam 1 MB.</li>
+<li><code>.mp4</code>: <strong>video</strong>, adică imagine și sunet în același fișier, de obicei comprimate tot cu pierderi.</li>
+</ul>
+<p>Comprimarea <mark>fără pierderi</mark> (de exemplu <code>.flac</code> pentru sunet sau o arhivă <code>.zip</code>) se desface identic, bit cu bit. Comprimarea <strong>cu pierderi</strong> aruncă ce se aude sau se vede mai greu, iar ce s-a aruncat nu se mai întoarce.</p>
+<p>De aceea, un fișier comprimat cu pierderi iar și iar sună tot mai rău.</p>`,
+qs:[
+ {t:'tf',q:'Un fișier MP3 păstrează absolut tot sunetul din înregistrarea originală.',ok:false,why:'Fals. MP3 comprimă cu pierderi: aruncă sunetele pe care urechea le observă greu. Așa ajunge de vreo zece ori mai mic decât un WAV.'},
+ {t:'classify',q:'Ce conține, de obicei, fiecare fișier?',cats:['Doar sunet','Imagine și sunet'],items:[['interviu.mp3',0],['excursie.mp4',1],['voce.wav',0],['clip_scoala.mp4',1],['melodie.flac',0],['filmare.mov',1]],why:'MP3, WAV și FLAC sunt formate audio. MP4 și MOV sunt formate video, care duc imaginea împreună cu sunetul.'},
+ {t:'choice',q:'Păstrezi înregistrarea vocii ca s-o mai editezi de multe ori. În ce format o ții, ca să nu pierzi din calitate?',o:['WAV','MP3','JPG','DOCX'],ok:0,why:'WAV nu aruncă nimic din sunet, deci poți edita și exporta de mai multe ori fără să strici calitatea. JPG e o imagine, iar DOCX e un document Word.'},
+ {t:'choice',q:'Un coleg ia un MP3 și îl comprimă din nou ca MP3, de cinci ori la rând. Ce se întâmplă cu sunetul?',o:['Sună tot mai rău, iar calitatea pierdută nu se mai întoarce','Sună exact la fel','Sună mai bine, fiindcă e mai bine împachetat','Redevine WAV'],ok:0,why:'Fiecare comprimare cu pierderi mai aruncă ceva din sunet. Ce s-a aruncat nu se poate recupera, oricâte comprimări ai face.'},
+ {t:'match',q:'Leagă fiecare fel de fișier de ce se întâmplă cu datele lui.',pairs:[['Comprimat fără pierderi','Se desface identic, bit cu bit'],['Comprimat cu pierderi','Pierde detalii greu de observat, care nu se mai întorc'],['Necomprimat','Păstrează tot și ocupă cel mai mult loc']],why:'Diferența e ce primești înapoi: totul (fără pierderi), aproape totul (cu pierderi) sau totul, fără să fi fost micșorat (necomprimat).'}
+]},
+{t:'Tai, șterg, mut',text:`
+<p>Înainte de orice operație, <mark>selectezi</mark> bucata de lucru: un clip întreg sau doar o porțiune din el.</p>
+<ul>
+<li><mark>tăierea în două</mark> (<em>split</em>): clipul se desparte în două bucăți, fără să dispară nimic;</li>
+<li><mark>scurtarea de la capete</mark> (<em>trim</em>): tragi marginea clipului spre interior și scoți începutul sau sfârșitul;</li>
+<li><strong>ștergerea</strong>: bucata selectată dispare. Unele editoare lasă un <strong>gol</strong> în locul ei, altele lipesc singure ce rămâne;</li>
+<li><strong>mutarea</strong> și <strong>copierea</strong>: tragi clipul în alt loc pe pistă, iar în multe editoare merg și <kbd>Ctrl</kbd>+<kbd>X</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd>, ca în Word.</li>
+</ul>
+<p>Ai greșit? <kbd>Ctrl</kbd>+<kbd>Z</kbd> anulează ultima operație.</p>`,
+qs:[
+ {t:'choice',q:'Vrei să scoți doar primele 3 secunde dintr-un clip. Ce operație e cea mai simplă?',o:['Scurtarea de la capete, la începutul clipului','Ștergerea întregului clip','Copierea clipului','Exportul proiectului'],ok:0,why:'Tragi marginea din stânga a clipului spre interior și scoți doar începutul. Ștergerea ar scoate tot clipul, cu tot cu partea bună.'},
+ {t:'tf',q:'Tăierea în două (<em>split</em>) șterge o bucată din clip.',ok:false,why:'Fals. Tăierea doar desparte clipul în două bucăți. Nimic nu dispare până nu ștergi tu una dintre ele.'},
+ {t:'montaj',q:'Clipul are o pauză stânjenitoare la început și o întrebare de repetiție la final. Scurtează-l de la capete, ca să rămână doar răspunsul. Apasă pe clip, folosește butoanele + și −, apoi verifică.',
+  clipuri:[{id:'r',nume:'Răspunsul Mariei',dur:12,bucati:[[0,3,'liniște, Maria se uită la cameră','x'],[3,10,'Maria răspunde la întrebare','ok'],[10,12,'Maria întreabă: „Mai fac o dată?”','x']]}],
+  ordine:['r'],pePista:['r'],
+  why:'Ai scos începutul și sfârșitul și ai păstrat tot răspunsul. Jocul a verificat ce ar vedea privitorul, nu ce butoane ai apăsat.'},
+ {t:'choice',q:'Ștergi un clip din mijlocul pistei, iar în locul lui rămâne un gol. Ce se va vedea acolo, la redare?',o:['Ecran negru și liniște, cât ține golul','Clipul următor, imediat','Clipul șters, fără sunet','O tranziție pusă automat'],ok:0,why:'Golul de pe linia de timp e tot timp din film, doar că n-are nimic în el. Îl închizi trăgând clipurile de după el spre stânga.'},
+ {t:'classify',q:'Ce operație folosești în fiecare situație?',cats:['Tăiere în două','Scurtare de la capete','Ștergere'],items:[['Vrei să pui o poză între două părți ale aceluiași clip',0],['Clipul începe cu 2 secunde neclare',1],['Un clip întreg a ieșit mișcat și nu-l mai folosești',2],['Clipul se termină cu 3 secunde în care camera filmează podeaua',1]],why:'Tăierea în două îți dă două bucăți între care poți pune altceva. Scurtarea scoate doar un capăt. Ștergerea e pentru un clip de care nu mai ai nevoie deloc.'}
+]},
+{t:'Mixajul',text:`
+<p><mark>Mixarea</mark> înseamnă să combini sunetul de pe mai multe piste într-un singur sunet echilibrat: vocea, muzica de fundal, efectele sonore.</p>
+<p>Fiecare pistă are volumul ei. Regula de bază: <strong>vocea se aude clar</strong>, iar muzica stă mult mai încet, în fundal. Dacă nu mai înțelegi cuvintele, muzica e prea tare.</p>
+<p><mark>Fade in</mark>: sunetul pornește din liniște și crește treptat. <mark>Fade out</mark>: sunetul scade treptat până la liniște. Un fade out la final sună mult mai bine decât o muzică oprită brusc.</p>
+<p>O melodie nu e liberă doar pentru că o găsești pe internet. Folosește piese cu <mark>licență liberă</mark> și citește licența fiecăreia: unele cer să scrii numele autorului, iar cele cu licența <strong>CC0</strong> nu cer nimic.</p>`,
+qs:[
+ {t:'choice',q:'În interviul tău, muzica de fundal acoperă vocea. Ce reglezi?',o:['Scazi volumul pistei cu muzică','Mărești volumul muzicii','Ștergi pista cu vocea','Pui fade in pe voce'],ok:0,why:'Vocea duce mesajul, muzica e doar decorul. Scazi volumul pistei cu muzică până se înțeleg clar cuvintele.'},
+ {t:'match',q:'Leagă fiecare termen de ce înseamnă.',pairs:[['Mixare','Combini mai multe piste într-un sunet echilibrat'],['Fade in','Sunetul crește treptat, pornind din liniște'],['Fade out','Sunetul scade treptat, până la liniște'],['Pistă audio','Rândul de sunet de pe linia de timp, cu volumul lui']],why:'Fade in și fade out sunt oglindite: unul pornește din liniște, celălalt ajunge în liniște. Mixarea le pune pe toate pistele la un loc.'},
+ {t:'tf',q:'Dacă o melodie se poate descărca gratuit, ai voie s-o folosești în clipul tău oricum vrei.',ok:false,why:'Fals. „Gratuit” nu înseamnă „fără reguli”. Licența spune ce ai voie: unele piese cer să scrii autorul, altele nu pot fi folosite deloc în clipurile tale.'},
+ {t:'choice',q:'Clipul se termină, dar muzica se oprește brusc, în mijlocul unei note. Ce aplici?',o:['Fade out la finalul muzicii','Fade in la începutul muzicii','Tăiere în două la mijlocul clipului','Export în WAV'],ok:0,why:'Fade out coboară muzica treptat până la liniște, așa că finalul nu mai sună tăiat.'},
+ {t:'choice',q:'Ce înseamnă o piesă cu licența CC0?',o:['O poți folosi fără să ceri voie și fără să fie obligatoriu să scrii autorul','O poți folosi doar dacă plătești','O poți asculta, dar n-o poți pune în clipuri','Trebuie neapărat să scrii autorul în generic'],ok:0,why:'La CC0 autorul a renunțat la drepturile lui asupra piesei. E frumos să-l menționezi, dar nu ești obligat.'}
+]},
+{t:'Scene, tranziții, generice',text:`
+<p>O <mark>scenă</mark> e o bucată de film cu același loc sau aceeași idee. Între două scene poți pune o <mark>tranziție</mark>, de exemplu o <strong>dizolvare</strong>, în care o imagine trece încet în următoarea.</p>
+<p>Tranzițiile se folosesc <strong>cu măsură</strong>. Un efect diferit la fiecare tăietură obosește privitorul. Adesea, <strong>tăietura simplă</strong> e cea mai bună.</p>
+<p><mark>Coloana sonoră</mark> e sunetul pus peste montaj, pe o pistă audio separată, ca să curgă peste mai multe scene.</p>
+<p><mark>Genericul</mark> e textul suprapus peste imagine. La început pui titlul. La final pui <strong>numele și rolurile</strong> echipei și <strong>sursele</strong> materialelor folosite: muzica, imaginile. Textul trebuie să se deosebească clar de fundal, ca să se citească ușor.</p>`,
+qs:[
+ {t:'choice',q:'Un coleg a pus șase tranziții diferite într-un clip de un minut. Ce îi recomanzi?',o:['Să folosească tranziții cu măsură sau tăieturi simple','Să mai adauge câteva','Să le mute pe pista audio','Nimic: cu cât mai multe, cu atât mai bine'],ok:0,why:'Prea multe efecte iau atenția de la ce se spune. O tranziție discretă sau o tăietură simplă lasă povestea în centru.'},
+ {t:'classify',q:'În ce generic pui fiecare text?',cats:['Genericul de început','Genericul de final'],items:[['Titlul clipului',0],['Numele și rolurile echipei',1],['Sursa muzicii folosite',1],['Tema interviului',0],['Mulțumiri persoanei intervievate',1]],why:'Începutul spune despre ce e filmul. Finalul arată cine l-a făcut și de unde vin materialele, adică le dă autorilor ce li se cuvine.'},
+ {t:'hunt',q:'Genericul de final al colegului are două greșeli. Găsește-le.',src:'Reporter: Ana · Imagine: Mihai · Sunet: [[???|fiecare rol trebuie să aibă numele cuiva din echipă]] · Muzica: [[de pe internet|„de pe internet” nu e o sursă: scrii titlul piesei, autorul și licența]] · Mulțumim doamnei bibliotecare!',why:'Un generic de final bun numește fiecare om din echipă și spune precis de unde vine fiecare material.'},
+ {t:'tf',q:'Muzica de fundal care curge peste mai multe scene se pune pe o pistă audio separată.',ok:true,why:'Adevărat. Pe pista ei, muzica nu se taie odată cu clipurile video, iar volumul i se reglează separat.'},
+ {t:'choice',q:'Titlul alb e pus peste o imagine cu cer alb și nu se citește. Ce faci?',o:['Alegi pentru text o culoare care se deosebește clar de imagine','Micșorezi textul','Adaugi o tranziție','Muți titlul pe pista audio'],ok:0,why:'Textul se citește când contrastează cu fundalul. Un text mai mic ar fi și mai greu de citit.'}
+]},
+{t:'Interviul clasei',final:true,text:`
+<p><strong>Misiunea finală:</strong> echipa ta face un <mark>interviu</mark> scurt cu bibliotecara școlii, despre cartea cea mai citită.</p>
+<ol>
+<li><strong>scenariul</strong>: întrebările și cine ce face (reporter, imagine, sunet, montaj);</li>
+<li><strong>acordul</strong>: îi spui persoanei unde va apărea clipul și filmezi doar dacă e de acord; pentru un elev care apare într-un clip ce iese din clasă, e nevoie și de acordul părinților;</li>
+<li><strong>filmarea</strong> și <strong>înregistrarea</strong>, într-un loc liniștit;</li>
+<li><strong>montajul</strong>: clipurile în ordinea scenariului, fără bucățile ratate, muzica încet, genericele;</li>
+<li><mark>exportul</mark> într-un format pe care îl deschide orice calculator sau telefon, de obicei <code>.mp4</code>.</li>
+</ol>
+<p>La export alegi și <mark>rezoluția</mark>: <strong>1080p</strong> înseamnă 1920×1080 pixeli și e o alegere bună pentru un proiect școlar.</p>`,
+qs:[
+ {t:'choice',q:'În ce format exporți interviul, ca să-l poată deschide oricine?',o:['MP4','WAV','MP3','Fișierul proiectului'],ok:0,why:'MP4 ține imaginea și sunetul împreună și se deschide pe aproape orice dispozitiv. WAV și MP3 au doar sunet, iar fișierul proiectului se deschide doar în editor.'},
+ {t:'order',q:'Pune etapele interviului în ordine.',items:['Scrieți scenariul cu întrebările','Filmați și înregistrați interviul','Montați clipurile pe linia de timp','Exportați clipul final','Prezentați clipul clasei'],why:'Fără scenariu nu știi ce filmezi, fără filmare n-ai ce monta, iar exportul vine abia după ce montajul e gata.'},
+ {t:'montaj',q:'Montează interviul: pune clipurile pe pistă în ordinea scenariului (titlu, întrebare, răspuns, final), lasă deoparte dubla ratată și taie capetele stânjenitoare. Apoi verifică.',
+  clipuri:[
+   {id:'r1',nume:'Răspunsul bibliotecarei',dur:14,bucati:[[0,11,'bibliotecara vorbește despre carte','ok'],[11,14,'cineva trântește ușa','x']]},
+   {id:'fin',nume:'Genericul de final',dur:5,bucati:[[0,5,'echipa și sursa muzicii','ok']]},
+   {id:'rat',nume:'Dubla ratată',dur:6,bucati:[[0,6,'reporterul râde și uită întrebarea','x']]},
+   {id:'tit',nume:'Genericul de început',dur:4,bucati:[[0,4,'titlul „Cartea anului”','ok']]},
+   {id:'i1',nume:'Întrebarea reporterului',dur:8,bucati:[[0,2,'reporterul își drege glasul','x'],[2,8,'„Ce carte se citește cel mai mult?”','ok']]}
+  ],
+  ordine:['tit','i1','r1','fin'],
+  why:'Privitorul vede acum povestea în ordine: titlu, întrebare, răspuns, generic de final. Dubla ratată, glasul dres și ușa trântită au rămas în afara montajului.'},
+ {t:'choice',q:'Care e diferența dintre un export în 1080p și unul în 720p?',o:['1080p are mai mulți pixeli: imagine mai clară, dar fișier mai mare','720p are imaginea mai clară','Nu e nicio diferență','Exportul în 1080p nu are sunet'],ok:0,why:'1080p înseamnă 1920×1080 pixeli, iar 720p înseamnă 1280×720. Mai mulți pixeli dau mai multe detalii, dar și un fișier mai mare.'},
+ {t:'tf',q:'Poți pune interviul pe site-ul școlii fără să întrebi persoana intervievată, pentru că ați filmat la școală.',ok:false,why:'Fals. Chipul și vocea unui om sunt ale lui. Îl întrebi înainte și îi spui unde va apărea clipul.'}
+]}
+];
+
+const unda=Array.from({length:64},(_,i)=>`<i style="height:${Math.round(18+78*Math.abs(Math.sin(i*1.7)*Math.cos(i*.45)))}%"></i>`).join('');
+
+JocMotor.porneste({
+  cheie:'misiunea_reporter_vii',
+  titlu:'Misiunea Reporter',
+  marca:'Misiunea <b>Reporter</b>',
+  h1:'<span class="recdot" aria-hidden="true"></span>Misiunea Reporter',
+  clasa:'a VII-a',
+  unitate:'VII-U2',
+  unitateTitlu:'Aplicații audio și audio-video',
+  competente:['CS.1.2','CS.3.2'],
+  lectii:'11–17',
+  intro:'Șapte niveluri despre aplicațiile audio și audio-video: linia de timp, înregistrarea, formatele, tăierea, mixajul, tranzițiile și genericele. La fiecare nivel citești o pagină scurtă și răspunzi la întrebări. Pe pistele din joc tai și ordonezi clipuri ca într-un editor adevărat, iar la final montezi un interviu și îți iei diploma.',
+  banda:`<div class="tl"><div class="pv"><b style="flex:3"></b><b style="flex:5"></b><b style="flex:2"></b><b style="flex:4"></b></div><div class="pa">${unda}</div><span class="ph"></span></div>`,
+  nivele:LEVELS,
+  tipuri:{montaj:JocMontaj},
+  diploma:{
+    titlu:'Reporter de montaj',
+    rezumat:'linia de timp, înregistrarea, formatele audio și video, tăierea, mixajul, tranzițiile, genericele și exportul',
+    aplicatie:'editorul audio-video de la clasă',
+    provocare:[
+      'Înregistrează o întrebare și răspunsul unui coleg, într-un loc liniștit, după ce colegul e de acord. Dacă vrei să arăți clipul în afara clasei, cere și acordul părinților lui.',
+      'Pune clipurile pe linia de timp în ordine și taie începutul și sfârșitul care nu trebuie.',
+      'Adaugă muzică cu licență liberă, mult mai încet decât vocea, cu fade out la final.',
+      'Pune un generic de început cu titlul și unul de final cu echipa și sursa muzicii.',
+      'Salvează proiectul, apoi exportă clipul ca <code>Nume_Prenume_interviu.mp4</code>.'
+    ]
+  }
+});
+</script>
+</body>
+</html>

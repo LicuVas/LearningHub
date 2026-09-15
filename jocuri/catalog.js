@@ -11,7 +11,16 @@ window.JOCURI_CATALOG = {
      "titlu": "Sisteme de calcul. Lucrez corect și în siguranță",
      "ore": 6,
      "lectii": "2–7",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "calculator-v",
+       "titlu": "Misiunea Tehnician",
+       "descriere": "Lecție-joc pentru clasa a V-a: norme de securitate, poziția corectă, sisteme de calcul, hardware, periferice și unități de măsură.",
+       "unitate": "V-U1",
+       "accent": "#A8460F",
+       "motor": true
+      }
+     ]
     },
     {
      "id": "V-U2",
@@ -58,14 +67,32 @@ window.JOCURI_CATALOG = {
      "titlu": "Prezentări digitale",
      "ore": 9,
      "lectii": "2–10",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "prezentari-vi",
+       "titlu": "Sistemul solar",
+       "descriere": "Lecție-joc despre prezentări digitale pentru clasa a VI-a: interfața, salvarea, diapozitive și obiecte, editare, formatare, animații, tranziții și susținerea prezentării.",
+       "unitate": "VI-U1",
+       "accent": "#0A6C7A",
+       "motor": true
+      }
+     ]
     },
     {
      "id": "VI-U2",
      "titlu": "Comunic prin Internet, în siguranță",
      "ore": 6,
      "lectii": "11–16",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "internet-vi",
+       "titlu": "Misiunea Mesaj Sigur",
+       "descriere": "Lecție-joc pentru clasa a VI-a: antivirus, parole și date personale, e-mail, răspuns și redirecționare, netichetă și semnele unui mesaj-capcană.",
+       "unitate": "VI-U2",
+       "accent": "#8A2F6E",
+       "motor": true
+      }
+     ]
     },
     {
      "id": "VI-U3",
@@ -107,7 +134,16 @@ window.JOCURI_CATALOG = {
      "titlu": "Aplicații audio și audio-video",
      "ore": 7,
      "lectii": "11–17",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "audio-video-vii",
+       "titlu": "Misiunea Reporter",
+       "descriere": "Lecție-joc pentru clasa a VII-a: linia de timp, înregistrarea, formatele audio și video, tăierea, mixajul, tranzițiile, genericele și exportul unui interviu.",
+       "unitate": "VII-U2",
+       "accent": "#6B3FD4",
+       "motor": true
+      }
+     ]
     },
     {
      "id": "VII-U3",
@@ -149,7 +185,16 @@ window.JOCURI_CATALOG = {
      "titlu": "Pagini web",
      "ore": 9,
      "lectii": "14–22",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "web-viii",
+       "titlu": "Misiunea Webmaster",
+       "descriere": "Lecție-joc pentru clasa a VIII-a: pagini web în HTML, de la etichete și schelet la imagini, liste, legături, formatare și siguranța datelor.",
+       "unitate": "VIII-U2",
+       "accent": "#B4441B",
+       "motor": true
+      }
+     ]
     },
     {
      "id": "VIII-U3",

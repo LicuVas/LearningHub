@@ -161,7 +161,7 @@ def run(slug, fails, warns):
 
             overflow("cuprins")
             pg.evaluate("JocMotor.test.deblocheaza()")
-            pg.click("#go-home")
+            pg.evaluate("document.getElementById('go-home').click()")
             # răspuns greșit: prima întrebare choice/tf care deschide un nivel (nu se salvează nimic)
             li_w = next((i for i, lv in enumerate(cfg["nivele"]) if lv["qs"] and lv["qs"][0]["t"] in ("choice", "tf")), None)
             if li_w is None:
@@ -173,7 +173,7 @@ def run(slug, fails, warns):
                 pg.click(f'.opt[data-k="{wrong}"]')
                 if not pg.locator("#fb .fb.bad").count():
                     fails.append(f"{dev} N{li_w+1}Î1: răspunsul greșit nu a primit „Nu încă”")
-                pg.click("#go-home")
+                pg.evaluate("document.getElementById('go-home').click()")
             for li, lv in enumerate(cfg["nivele"]):
                 pg.click(f'.lvl[data-l="{li}"]')
                 pg.click("#go")
@@ -198,7 +198,7 @@ def run(slug, fails, warns):
                     pg.click("#next")
                 else:
                     stars = pg.locator(".end-stars").get_attribute("aria-label") or ""
-                    if not stars.startswith("3"):
+                    if not stars.startswith("3 "):
                         fails.append(f"{dev} N{li+1}: rezolvat din prima, dar dă {stars!r}")
                     if li < len(cfg["nivele"]) - 1:
                         pg.click("#toc")
@@ -208,7 +208,7 @@ def run(slug, fails, warns):
                             fails.append(f"{dev}: diploma nu arată titlul")
                         overflow("diplomă")
                     continue
-                pg.click("#go-home")
+                pg.evaluate("document.getElementById('go-home').click()")
             if errs:
                 fails.append(f"{dev}: erori JS: {errs[:3]}")
             ctx.close()

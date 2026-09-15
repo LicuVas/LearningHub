@@ -147,6 +147,28 @@ Doar avertizează: numărul de cuvinte și de niveluri. Poarta a fost verificat�
 - Pilot înainte de val: Excel VIII portat pe motor a trecut poarta (58 de întrebări jucate pe 2 telefoane).
 - Word VII a rămas încă joc de sine stătător (are editorul și vânătoarea lui). Portarea lui e deschisă (§10).
 
+**15.09.2026 — valul 2: 5 agenți, câte o unitate (V-U1, VI-U1, VI-U2, VII-U2, VIII-U2)**
+- Toți 5 au trecut poarta, fără avertismente. Am rulat eu poarta pe fiecare, independent de raportul agentului (`--toate`: 6 jocuri pe motor TRECUT).
+- **Folderele temporare trebuie separate pe agent.** Agenții care lucrau în paralel și-au suprascris scripturile de test în folderul temporar comun. De acum fiecare agent primește un folder de lucru al lui (ex. `_campaign\<val>\<slug>\`).
+- **Agenții citesc celelalte jocuri care se fac în paralel și își schimbă singuri tema dacă se repetă** (fonturi, accent). Nu era cerut; e bine, dar o listă de „teme luate” în prompt ar evita munca dublă.
+- **Simulatoarele verificate pe comportament au ieșit bine** la toți cei care le-au făcut: `diapozitiv` (contrast calculat + mărimi), `montaj` (ordine + tăieri cu toleranță), `cod` (HTML parsat cu DOMParser, previzualizare în iframe sandbox, fără scripturi). Candidați pentru `_motor\` după ce merg la clasă.
+- **Agenții au găsit contradicții între surse**, pe care un singur autor nu le-ar fi văzut:
+  - regula 20-20-20: „20 de pași” în material vs 6 m în LearningHub;
+  - mărimea textului pe diapozitiv: 24–28 vs 18–28;
+  - un font vs 2–3 fonturi;
+  - stickul USB: intrare-ieșire vs stocare.
+  Soluția bună: formulare compatibilă cu ambele surse + contradicția trecută în raport pentru profesor, nu aleasă tacit.
+- `hunt`: un fragment lung care se rupe pe două rânduri apărea centrat → `.tk{text-align:left}` pus în motor. Un fragment greșit care conține spații e UN singur buton (intenționat).
+- **Evaluatorii independenți au prins ce nu vedeau nici autorii, nici poarta:**
+  - un film de 8 GB dat ca „încape” pe un card de 32 GB, deși cardurile formatate FAT32 nu primesc fișiere de peste 4 GB → scenariul a devenit 3,5 GB vs CD de 700 MB;
+  - parola „minim 8 caractere” → 15 (DNSC);
+  - „Ctrl+N merge în orice aplicație” (în Google Slides nu merge);
+  - numele animațiilor diferite de PowerPoint în română;
+  - greșeli nemarcate într-un text de vânătoare, care penalizau copilul atent;
+  - lipsa acordului părinților la filmarea unui minor.
+- **Scurgerea răspunsului prin formă:** în `hunt`, o greșeală de mai multe cuvinte era UN buton lung, iar textul corect era câte un buton pe cuvânt, deci lungimea butonului trăda răspunsul. Reparat în motor: și greșelile se desenează cuvânt cu cuvânt, cu marcare pe grup. Regula generală: **forma unei variante (lungime, poziție, stil) nu are voie să difere între corect și greșit.**
+- Poarta NU vede faptele și pedagogia → după poartă urmează un **evaluator independent** pe fiecare joc (protocolul hibrid „omul la calculator”, două treceri), care repară doar greșelile clare și dovedite și raportează restul.
+
 ## 10. Deschis / de îmbunătățit
 
 - Portarea Word VII pe motor (editorul → `_motor\tip-editor.js`).
