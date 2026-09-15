@@ -9,13 +9,21 @@ const RO_NAMES={SUMA:'SUM',MEDIE:'AVERAGE',MEDIA:'AVERAGE',DACA:'IF','DACĂ':'IF
 function FErr(msg,show){const e=new Error(msg);e.show=show||'#EROARE';return e}
 function tokenize(src){
   const t=[];let i=0;
+  // setări românești: separatorul e „;”, iar zecimalele se scriu cu virgulă (0,21). Doar atunci virgula dintre cifre e zecimală,
+  // altfel ar strica =IF(B2>5,10,20) scris pe setări englezești (semnalat de evaluatorul antrenamentului Excel, 15.09.2026)
+  const romanesc=src.includes(';');
+  const stack=[];   // 'fn' = paranteza unei funcții (acolo virgula poate fi separator), 'p' = paranteză simplă
   while(i<src.length){
     const c=src[i],rest=src.slice(i);let m;
     if(/\s/.test(c)){i++;continue}
     if(c==='"'||c==='„'||c==='”'){const close=src.slice(i+1).search(/["”“]/);if(close<0)throw FErr('Lipsește ghilimeaua de închidere.');t.push({k:'str',v:src.slice(i+1,i+1+close)});i+=close+2;continue}
-    if((m=rest.match(/^\d+(\.\d+)?/))){t.push({k:'num',v:parseFloat(m[0])});i+=m[0].length;continue}
+    const zecimalaVirgula=romanesc||!stack.includes('fn');   // în afara funcțiilor, 0,21 nu poate fi separator
+    if((m=rest.match(zecimalaVirgula?/^\d+([.,]\d+)?/:/^\d+(\.\d+)?/))){t.push({k:'num',v:parseFloat(m[0].replace(',','.'))});i+=m[0].length;continue}
     if((m=rest.match(/^([A-Za-zĂÂÎȘȚăâîșț]+)(\d+)?/))){if(m[2])t.push({k:'ref',v:(m[1]+m[2]).toUpperCase()});else t.push({k:'name',v:m[1].toUpperCase()});i+=m[0].length;continue}
-    if((m=rest.match(/^(<=|>=|<>|[-+*\/=<>(),;:])/))){t.push({k:'op',v:m[0]});i+=m[0].length;continue}
+    if((m=rest.match(/^(<=|>=|<>|[-+*\/=<>(),;:%])/))){
+      if(m[0]==='(')stack.push(t.length&&t[t.length-1].k==='name'?'fn':'p');
+      if(m[0]===')')stack.pop();
+      t.push({k:'op',v:m[0]});i+=m[0].length;continue}
     throw FErr(`Excel nu înțelege semnul „${c}”.`);
   }
   return t;
@@ -34,7 +42,7 @@ function evaluate(formula,get){
     return a}
   function add(){let a=mul();while(isOp('+')||isOp('-')){const o=T[p++].v,b=mul();a=o==='+'?num(a)+num(b):num(a)-num(b)}return a}
   function mul(){let a=un();while(isOp('*')||isOp('/')){const o=T[p++].v,b=un();if(o==='/'){if(num(b)===0)throw FErr('Împărțire la zero.','#DIV/0!');a=num(a)/num(b)}else a=num(a)*num(b)}return a}
-  function un(){if(isOp('-')){p++;return -num(un())}if(isOp('+')){p++;return num(un())}return prim()}
+  function un(){if(isOp('-')){p++;return -num(un())}if(isOp('+')){p++;return num(un())}let v=prim();while(isOp('%')){p++;v=num(v)/100}return v}  // 21% = 0,21, ca în Excel
   function prim(){const t=T[p];
     if(!t)throw FErr('Formula se termină prea devreme.');
     if(t.k==='num'||t.k==='str'){p++;return t.v}
@@ -63,7 +71,9 @@ function evaluate(formula,get){
   return v;
 }
 const fmt=v=>typeof v==='number'?(Number.isInteger(v)?String(v):v.toLocaleString('ro-RO',{maximumFractionDigits:2})):typeof v==='boolean'?(v?'adevărat':'fals'):String(v??'');
-const same=(a,b)=>typeof a==='number'&&typeof b==='number'?Math.abs(a-b)<1e-6:String(a).trim().toLowerCase()===String(b).trim().toLowerCase();
+// textul rezultat se compară fără diacritice și fără spații în plus: „in buget” = „în buget” (tastatura din laborator poate fi fără diacritice)
+const fara=s=>String(s).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[şș]/g,'s').replace(/[ţț]/g,'t').replace(/\s+/g,' ');
+const same=(a,b)=>typeof a==='number'&&typeof b==='number'?Math.abs(a-b)<1e-6:fara(a)===fara(b);
 const CSS=`.fxrow{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--paper);font-family:var(--fm);margin-bottom:8px}
 .fxrow .nb{padding:8px 10px;background:var(--paper2);border-right:1px solid var(--line);min-width:3.4em;text-align:center;font-weight:600}
 .fxrow .fx{padding:8px;color:var(--ink2);font-style:italic;border-right:1px solid var(--line)}

@@ -5,32 +5,32 @@
 
 ## Clasa a V-a
 
-### V-U1 · Sisteme de calcul. Lucrez corect și în siguranță — jocuri: calculator-v
+### V-U1 · Sisteme de calcul. Lucrez corect și în siguranță — jocuri: calculator-antrenament-v, calculator-v
 
 | Lecția | Titlu | Acoperită de |
 |---|---|---|
-| 2 | Norme de securitate în laboratorul de informatică. Poziția corectă la calculator (predare) | ✅ calculator-v N1, calculator-v N2 |
-| 3 | Sisteme de calcul și de comunicații din viața de zi cu zi. Momente din evoluția lor (predare) | ✅ calculator-v N3 |
-| 4 | Structura generală a unui sistem de calcul. Rolul componentelor hardware (predare) | ✅ calculator-v N4 |
-| 5 | Dispozitive de intrare, de ieșire și de intrare-ieșire (predare) | ✅ calculator-v N5 |
-| 6 | Dispozitive de stocare. Unități de măsură: bit, byte, KB, MB, GB, TB (predare + consolidare) | ✅ calculator-v N6, calculator-v N7 |
+| 2 | Norme de securitate în laboratorul de informatică. Poziția corectă la calculator (predare) | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N1, calculator-v N2 |
+| 3 | Sisteme de calcul și de comunicații din viața de zi cu zi. Momente din evoluția lor (predare) | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N3 |
+| 4 | Structura generală a unui sistem de calcul. Rolul componentelor hardware (predare) | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N4 |
+| 5 | Dispozitive de intrare, de ieșire și de intrare-ieșire (predare) | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N5 |
+| 6 | Dispozitive de stocare. Unități de măsură: bit, byte, KB, MB, GB, TB (predare + consolidare) | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N6, calculator-v N7 |
 | 7 | Evaluare sumativă: sisteme de calcul (evaluare sumativă) | — |
 
 | Conținut din programă | Acoperit de |
 |---|---|
-| Normele de securitate și protecție a muncii în laboratorul de informatică *(Norme de ergonomie și de siguranță)* | ✅ calculator-v N1 |
-| Poziția corectă a corpului la stația de lucru *(Norme de ergonomie și de siguranță)* | ✅ calculator-v N2 |
-| Momente principale în evoluția sistemelor de calcul *(Tipuri de sisteme de calcul și de comunicații)* | ✅ calculator-v N3 |
-| Sisteme de calcul și de comunicații întâlnite în viața cotidiană *(Tipuri de sisteme de calcul și de comunicații)* | ✅ calculator-v N3 |
-| Structura generală a unui sistem de calcul *(Elemente de arhitectură a unui sistem de calcul)* | ✅ calculator-v N4 |
-| Rolul componentelor hardware ale unui sistem de calcul *(Elemente de arhitectură a unui sistem de calcul)* | ✅ calculator-v N4 |
-| Dispozitive de intrare: exemple, rol, mod de utilizare *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-v N5 |
-| Dispozitive de ieșire: exemple, rol, mod de utilizare *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-v N5 |
-| Dispozitive de intrare-ieșire: exemple, rol, mod de utilizare *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-v N5 |
-| Dispozitive de stocare a datelor: *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-v N6 |
-| - exemple de dispozitive de stocare a datelor *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-v N6, calculator-v N7 |
-| - unități de măsură pentru capacitatea de stocare (bit, byte, kilobyte, megabyte, gigabyte, terabyte, petabyte etc.) *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-v N6 |
-| - comparație între dispozitivele de stocare în funcție de capacitate *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-v N6, calculator-v N7 |
+| Normele de securitate și protecție a muncii în laboratorul de informatică *(Norme de ergonomie și de siguranță)* | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-v N1 |
+| Poziția corectă a corpului la stația de lucru *(Norme de ergonomie și de siguranță)* | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N2 |
+| Momente principale în evoluția sistemelor de calcul *(Tipuri de sisteme de calcul și de comunicații)* | ✅ calculator-antrenament-v N2, calculator-v N3 |
+| Sisteme de calcul și de comunicații întâlnite în viața cotidiană *(Tipuri de sisteme de calcul și de comunicații)* | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N3 |
+| Structura generală a unui sistem de calcul *(Elemente de arhitectură a unui sistem de calcul)* | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N4 |
+| Rolul componentelor hardware ale unui sistem de calcul *(Elemente de arhitectură a unui sistem de calcul)* | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N4 |
+| Dispozitive de intrare: exemple, rol, mod de utilizare *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N5 |
+| Dispozitive de ieșire: exemple, rol, mod de utilizare *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N5 |
+| Dispozitive de intrare-ieșire: exemple, rol, mod de utilizare *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N5 |
+| Dispozitive de stocare a datelor: *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N6 |
+| - exemple de dispozitive de stocare a datelor *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N6, calculator-v N7 |
+| - unități de măsură pentru capacitatea de stocare (bit, byte, kilobyte, megabyte, gigabyte, terabyte, petabyte etc.) *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N6 |
+| - comparație între dispozitivele de stocare în funcție de capacitate *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N6, calculator-v N7 |
 
 ### V-U2 · Sistemul de operare. Ordinea în fișierele mele — **fără joc încă**
 
@@ -44,33 +44,33 @@
 
 ## Clasa a VI-a
 
-### VI-U1 · Prezentări digitale — jocuri: prezentari-vi
+### VI-U1 · Prezentări digitale — jocuri: prezentari-antrenament-vi, prezentari-vi
 
 | Lecția | Titlu | Acoperită de |
 |---|---|---|
-| 2 | Ce este o prezentare bună. Interfața aplicației de prezentări (predare) | ✅ prezentari-vi N1 |
-| 3 | Operații de gestionare: creare, deschidere, salvare în diverse formate, închidere (predare) | ✅ prezentari-vi N2 |
-| 4 | Structura unei prezentări: diapozitive și obiecte (predare) | ✅ prezentari-vi N3 |
-| 5 | Editarea prezentării: inserare, copiere, mutare, ștergere (predare) | ✅ prezentari-vi N4 |
-| 6 | Formatarea textului, a obiectelor și a diapozitivelor (predare) | ✅ prezentari-vi N5 |
-| 7 | Efecte de animație și de tranziție. Când ajută și când încurcă (predare) | ✅ prezentari-vi N6 |
-| 8 | Reguli de estetică și ergonomie. Reguli de susținere a unei prezentări (predare) | ✅ prezentari-vi N7, prezentari-vi N8 |
-| 9 | Mini-proiect: prezentare pe o temă la alegere (realizare + susținere) (consolidare (mini-proiect)) | ✅ prezentari-vi N8 |
+| 2 | Ce este o prezentare bună. Interfața aplicației de prezentări (predare) | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-vi N1 |
+| 3 | Operații de gestionare: creare, deschidere, salvare în diverse formate, închidere (predare) | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-vi N2 |
+| 4 | Structura unei prezentări: diapozitive și obiecte (predare) | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-vi N3 |
+| 5 | Editarea prezentării: inserare, copiere, mutare, ștergere (predare) | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-antrenament-vi N3, prezentari-vi N4 |
+| 6 | Formatarea textului, a obiectelor și a diapozitivelor (predare) | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-antrenament-vi N3, prezentari-vi N5 |
+| 7 | Efecte de animație și de tranziție. Când ajută și când încurcă (predare) | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-antrenament-vi N3, prezentari-vi N6 |
+| 8 | Reguli de estetică și ergonomie. Reguli de susținere a unei prezentări (predare) | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-antrenament-vi N3, prezentari-vi N7, prezentari-vi N8 |
+| 9 | Mini-proiect: prezentare pe o temă la alegere (realizare + susținere) (consolidare (mini-proiect)) | ✅ prezentari-antrenament-vi N3, prezentari-vi N8 |
 | 10 | Evaluare sumativă: prezentări digitale (evaluare sumativă) | — |
 
 | Conținut din programă | Acoperit de |
 |---|---|
-| Elemente de interfață a unei aplicații de realizare a prezentărilor *(Prezentări)* | ✅ prezentari-vi N1 |
-| Instrumente de bază ale aplicației de realizare a prezentărilor *(Prezentări)* | ✅ prezentari-vi N1 |
-| Operații de gestionare a prezentărilor: creare, deschidere, expunere, salvare în diverse formate, închidere *(Prezentări)* | ✅ prezentari-vi N2, prezentari-vi N7 |
-| Structura unei prezentări: diapozitive, obiecte utilizate în prezentări (casete de text, imagini importate, forme, sunete, tabele, legături) *(Prezentări)* | ✅ prezentari-vi N3 |
-| Operații de editare a unei prezentări: inserare, copiere, mutare, ștergere a unui diapozitiv/obiect *(Prezentări)* | ✅ prezentari-vi N4 |
-| Formatarea textului, obiectelor, diapozitivelor *(Prezentări)* | ✅ prezentari-vi N5 |
-| Efecte de animație *(Prezentări)* | ✅ prezentari-vi N6 |
-| Efecte de tranziție *(Prezentări)* | ✅ prezentari-vi N6 |
-| Modalități de expunere a unei prezentări *(Prezentări)* | ✅ prezentari-vi N7 |
-| Reguli elementare de estetică și ergonomie utilizate în realizarea unei prezentări *(Prezentări)* | ✅ prezentari-vi N8 |
-| Reguli elementare de susținere a unei prezentări *(Prezentări)* | ✅ prezentari-vi N7, prezentari-vi N8 |
+| Elemente de interfață a unei aplicații de realizare a prezentărilor *(Prezentări)* | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-vi N1 |
+| Instrumente de bază ale aplicației de realizare a prezentărilor *(Prezentări)* | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-vi N1 |
+| Operații de gestionare a prezentărilor: creare, deschidere, expunere, salvare în diverse formate, închidere *(Prezentări)* | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-vi N2, prezentari-vi N7 |
+| Structura unei prezentări: diapozitive, obiecte utilizate în prezentări (casete de text, imagini importate, forme, sunete, tabele, legături) *(Prezentări)* | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-antrenament-vi N3, prezentari-vi N3 |
+| Operații de editare a unei prezentări: inserare, copiere, mutare, ștergere a unui diapozitiv/obiect *(Prezentări)* | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-antrenament-vi N3, prezentari-vi N4 |
+| Formatarea textului, obiectelor, diapozitivelor *(Prezentări)* | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-antrenament-vi N3, prezentari-vi N5 |
+| Efecte de animație *(Prezentări)* | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-antrenament-vi N3, prezentari-vi N6 |
+| Efecte de tranziție *(Prezentări)* | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-antrenament-vi N3, prezentari-vi N6 |
+| Modalități de expunere a unei prezentări *(Prezentări)* | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-antrenament-vi N3, prezentari-vi N7 |
+| Reguli elementare de estetică și ergonomie utilizate în realizarea unei prezentări *(Prezentări)* | ✅ prezentari-antrenament-vi N1, prezentari-antrenament-vi N2, prezentari-antrenament-vi N3, prezentari-vi N8 |
+| Reguli elementare de susținere a unei prezentări *(Prezentări)* | ✅ prezentari-antrenament-vi N2, prezentari-antrenament-vi N3, prezentari-vi N7, prezentari-vi N8 |
 
 ### VI-U2 · Comunic prin Internet, în siguranță — jocuri: internet-vi
 
@@ -152,38 +152,38 @@
 
 ## Clasa a VIII-a
 
-### VIII-U1 · Calcul tabelar — jocuri: excel-viii
+### VIII-U1 · Calcul tabelar — jocuri: excel-antrenament-viii, excel-viii
 
 | Lecția | Titlu | Acoperită de |
 |---|---|---|
-| 2 | Interfața aplicației de calcul tabelar. Structura unui registru (predare) | ✅ excel-viii N1 |
-| 3 | Operații cu registrul și cu foile de calcul (predare) | ✅ excel-viii N1 |
-| 4 | Adresa de celulă. Selectare, copiere, mutare, ștergere (predare) | ✅ excel-viii N2 |
-| 5 | Tipuri de date: numeric, text, dată calendaristică (predare) | ✅ excel-viii N3 |
-| 6 | Formatarea rândurilor, a coloanelor și a celulelor (predare) | ✅ excel-viii N4 |
-| 7 | Formule de calcul cu operatori aritmetici (predare) | ✅ excel-viii N5 |
-| 8 | Funcții: sumă, maxim, minim, medie aritmetică (predare) | ✅ excel-viii N6 |
-| 9 | Funcția de decizie. Rezolv o situație-problemă cu tabelul (predare) | ✅ excel-viii N6 |
-| 10 | Sortarea datelor după unul sau mai multe criterii (predare) | ✅ excel-viii N7 |
-| 11 | Grafice: tipuri de grafice și serii de date (predare) | ✅ excel-viii N8 |
-| 12 | Mini-proiect: produs informatic cu tabel, formule și grafic (consolidare (mini-proiect)) | ✅ excel-viii N8 |
+| 2 | Interfața aplicației de calcul tabelar. Structura unui registru (predare) | ✅ excel-antrenament-viii N1, excel-viii N1 |
+| 3 | Operații cu registrul și cu foile de calcul (predare) | ✅ excel-antrenament-viii N1, excel-viii N1 |
+| 4 | Adresa de celulă. Selectare, copiere, mutare, ștergere (predare) | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-viii N2 |
+| 5 | Tipuri de date: numeric, text, dată calendaristică (predare) | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-viii N3 |
+| 6 | Formatarea rândurilor, a coloanelor și a celulelor (predare) | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-viii N4 |
+| 7 | Formule de calcul cu operatori aritmetici (predare) | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N5 |
+| 8 | Funcții: sumă, maxim, minim, medie aritmetică (predare) | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N6 |
+| 9 | Funcția de decizie. Rezolv o situație-problemă cu tabelul (predare) | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N6 |
+| 10 | Sortarea datelor după unul sau mai multe criterii (predare) | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N7 |
+| 11 | Grafice: tipuri de grafice și serii de date (predare) | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N8 |
+| 12 | Mini-proiect: produs informatic cu tabel, formule și grafic (consolidare (mini-proiect)) | ✅ excel-antrenament-viii N3, excel-viii N8 |
 | 13 | Evaluare sumativă: calcul tabelar (evaluare sumativă) | — |
 
 | Conținut din programă | Acoperit de |
 |---|---|
-| Elemente de interfaţă ale unei aplicaţii de calcul tabelar *(Calcul tabelar)* | ✅ excel-viii N1 |
-| Structura unui registru de calcul (foaie de calcul, coloană, rând, celulă, adresă de celulă) *(Calcul tabelar)* | ✅ excel-viii N1, excel-viii N2 |
-| Operații cu un registru de calcul (deschidere, închidere, salvare, creare) *(Calcul tabelar)* | ✅ excel-viii N1 |
-| Operații cu foi de calcul (accesare, redenumire) *(Calcul tabelar)* | ✅ excel-viii N1 |
-| Operaţii de editare (selectare, copiere, mutare, ştergere) *(Calcul tabelar)* | ✅ excel-viii N2 |
-| Operații de formatare a rândurilor/coloanelor *(Calcul tabelar)* | ✅ excel-viii N4 |
-| Operații de formatare a celulelor (aliniere conținut, borduri, culori de umplere, stiluri predefinite) *(Calcul tabelar)* | ✅ excel-viii N4 |
-| Tipuri de date: numeric, text, dată calendaristică *(Calcul tabelar)* | ✅ excel-viii N3 |
-| Sortarea crescătoare/descrescătoare a datelor dintr-un tabel după unul sau mai multe criterii *(Calcul tabelar)* | ✅ excel-viii N7 |
-| Formule de calcul care utilizează operatori aritmetici (+, -,*, /) *(Calcul tabelar)* | ✅ excel-viii N5, excel-viii N8 |
-| Funcții specifice aplicaţiei de calcul tabelar pentru sumă, maxim, minim, medie aritmetică şi decizie *(Calcul tabelar)* | ✅ excel-viii N6, excel-viii N8 |
-| Grafice: tipuri de grafice *(Calcul tabelar)* | ✅ excel-viii N8 |
-| Serii de date *(Calcul tabelar)* | ✅ excel-viii N8 |
+| Elemente de interfaţă ale unei aplicaţii de calcul tabelar *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-viii N1 |
+| Structura unui registru de calcul (foaie de calcul, coloană, rând, celulă, adresă de celulă) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-viii N1, excel-viii N2 |
+| Operații cu un registru de calcul (deschidere, închidere, salvare, creare) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-viii N1 |
+| Operații cu foi de calcul (accesare, redenumire) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-viii N1 |
+| Operaţii de editare (selectare, copiere, mutare, ştergere) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-viii N2 |
+| Operații de formatare a rândurilor/coloanelor *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-viii N4 |
+| Operații de formatare a celulelor (aliniere conținut, borduri, culori de umplere, stiluri predefinite) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-viii N4 |
+| Tipuri de date: numeric, text, dată calendaristică *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-viii N3 |
+| Sortarea crescătoare/descrescătoare a datelor dintr-un tabel după unul sau mai multe criterii *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N7 |
+| Formule de calcul care utilizează operatori aritmetici (+, -,*, /) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N5, excel-viii N8 |
+| Funcții specifice aplicaţiei de calcul tabelar pentru sumă, maxim, minim, medie aritmetică şi decizie *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N6, excel-viii N8 |
+| Grafice: tipuri de grafice *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N8 |
+| Serii de date *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-viii N8 |
 
 ### VIII-U2 · Pagini web — jocuri: web-viii
 

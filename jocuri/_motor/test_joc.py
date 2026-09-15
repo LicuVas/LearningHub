@@ -183,7 +183,7 @@ def run(slug, fails, warns):
             pg.set_default_timeout(6000)
             errs = []
             pg.on("pageerror", lambda e: errs.append(str(e)))
-            pg.goto(url)
+            pg.goto(url, timeout=30000)  # fonturile Google pot întârzia încărcarea peste 6 s
             pg.wait_for_timeout(300)
             if cfg is None:
                 cfg = pg.evaluate("JSON.parse(JSON.stringify(JocMotor.test.config(),(k,v)=>typeof v==='function'?'[fn]':v))")
@@ -297,7 +297,7 @@ def run(slug, fails, warns):
             ctx = b.new_context(**p.devices["Pixel 7"])
             pg = ctx.new_page()
             pg.set_default_timeout(6000)
-            pg.goto(url); pg.wait_for_timeout(300)
+            pg.goto(url, timeout=30000); pg.wait_for_timeout(300)
             pg.evaluate("JocMotor.test.deblocheaza()"); pg.evaluate("document.getElementById('go-home').click()")
             lv0 = cfg["nivele"][0]
             draws = []

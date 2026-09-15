@@ -21,6 +21,16 @@ window.JOCURI_CATALOG = {
        "motor": true,
        "mod": "invatare",
        "prima_lectie": 2
+      },
+      {
+       "slug": "calculator-antrenament-v",
+       "titlu": "Antrenament: Calculatorul",
+       "descriere": "Antrenament pentru clasa a V-a: întrebări trase la întâmplare despre sistemele de calcul, pe trei runde (De bază, Consolidat, Avansat), altele la fiecare reluare.",
+       "unitate": "V-U1",
+       "accent": "#4A6300",
+       "motor": true,
+       "mod": "antrenament",
+       "prima_lectie": 2
       }
      ]
     },
@@ -78,6 +88,16 @@ window.JOCURI_CATALOG = {
        "accent": "#0A6C7A",
        "motor": true,
        "mod": "invatare",
+       "prima_lectie": 2
+      },
+      {
+       "slug": "prezentari-antrenament-vi",
+       "titlu": "Antrenament: Prezentări",
+       "descriere": "Antrenament pentru clasa a VI-a: întrebări trase la întâmplare despre prezentările digitale, pe trei runde (De bază, Consolidat, Avansat), altele la fiecare reluare.",
+       "unitate": "VI-U1",
+       "accent": "#4F6A00",
+       "motor": true,
+       "mod": "antrenament",
        "prima_lectie": 2
       }
      ]
@@ -208,6 +228,16 @@ window.JOCURI_CATALOG = {
        "accent": "#1B7443",
        "motor": true,
        "mod": "invatare",
+       "prima_lectie": 2
+      },
+      {
+       "slug": "excel-antrenament-viii",
+       "titlu": "Antrenament: Excel",
+       "descriere": "Antrenament pentru clasa a VIII-a: întrebări trase la întâmplare despre calculul tabelar, cu formule adevărate, pe trei runde (De bază, Consolidat, Avansat), altele la fiecare reluare.",
+       "unitate": "VIII-U1",
+       "accent": "#55620F",
+       "motor": true,
+       "mod": "antrenament",
        "prima_lectie": 2
       }
      ]

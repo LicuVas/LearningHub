@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Antrenament: Calculatorul</title>
+<meta name="description" content="Antrenament pentru clasa a V-a: întrebări trase la întâmplare despre sistemele de calcul, pe trei runde (De bază, Consolidat, Avansat), altele la fiecare reluare.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@600;700;800&family=Mulish:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Azeret+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="../_motor/motor.css">
+<style>
+:root{
+  --desk:#ECEFE4; --paper:#FFFFFF; --paper2:#F3F6EC; --line:#D3D9C4;
+  --ink:#1B2011; --ink2:#586150; --accent:#4A6300; --accentInk:#FFFFFF; --sel:#E2ECC4;
+  --mark:#FFE08A; --markInk:#1B2011; --ok:#1F6E3E; --okbg:#E2F1E6; --bad:#B42318; --badbg:#FBE4E1;
+  --fd:"Oxanium","Segoe UI",system-ui,sans-serif; --fb:"Mulish","Segoe UI",system-ui,sans-serif; --fm:"Azeret Mono",Consolas,monospace;
+  --lcd:#141A0C; --lcdOn:#C6E36F; --lcdDim:#56682F;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E110A; --paper:#171B11; --paper2:#1F2518; --line:#343C29;
+  --ink:#E7EDDA; --ink2:#A8B299; --accent:#B8DB5A; --accentInk:#141A06; --sel:#33401C;
+  --mark:#E9C75A; --markInk:#1C1A0E; --ok:#74CF95; --okbg:#16301F; --bad:#FF8A7E; --badbg:#3A1D19;
+  --lcd:#0A0D06; --lcdOn:#B8DB5A; --lcdDim:#3F4D22;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E110A; --paper:#171B11; --paper2:#1F2518; --line:#343C29;
+  --ink:#E7EDDA; --ink2:#A8B299; --accent:#B8DB5A; --accentInk:#141A06; --sel:#33401C;
+  --mark:#E9C75A; --markInk:#1C1A0E; --ok:#74CF95; --okbg:#16301F; --bad:#FF8A7E; --badbg:#3A1D19;
+  --lcd:#0A0D06; --lcdOn:#B8DB5A; --lcdDim:#3F4D22;
+}
+/* tema: panoul de diagnoză al unui tehnician — LED-urile de pe carcasă (PWR, DISC, NET) și un indicator LCD
+   de capacitate, cu treptele unităților de măsură care cresc de la bit la petabyte. Amintește de placa de bază
+   din „Misiunea Tehnician”, dar privită din față, ca pe un aparat de test. */
+.banda{display:flex;align-items:center;gap:9px;min-height:34px;padding:0 10px;white-space:nowrap;overflow:hidden;
+  background:var(--lcd);border-bottom:2px solid var(--accent)}
+.banda .ld{display:inline-flex;align-items:center;gap:4px;font:600 .58rem/1 var(--fm);letter-spacing:.08em;color:#C9D3B6}
+.banda .ld i{display:block;width:7px;height:7px;border-radius:50%;background:#6FD98A;box-shadow:0 0 6px #6FD98A}
+.banda .ld i.am{background:#F2B544;box-shadow:0 0 6px #F2B544}
+.banda .cap{display:flex;align-items:flex-end;gap:3px}
+.banda .cap b{display:block;font:600 .56rem/1 var(--fm);color:var(--lcd);background:var(--lcdOn);border-radius:1px;padding:0 3px;
+  display:flex;align-items:flex-end;justify-content:center}
+.banda .cap b.off{background:var(--lcdDim);color:#C9D3B6}
+h1,h2{font-weight:700;letter-spacing:.01em}
+h1 em{font-style:normal;color:var(--accent)}
+</style>
+</head>
+<body>
+<script src="../_motor/motor.js"></script>
+<script>
+/* Acoperirea programei (OMEN 3393/2017, clasa a V-a, CS.1.1), textul EXACT din curriculum.json / ACOPERIRE.md. */
+const PROG={
+  norme:'Normele de securitate și protecție a muncii în laboratorul de informatică',
+  pozitie:'Poziția corectă a corpului la stația de lucru',
+  evolutie:'Momente principale în evoluția sistemelor de calcul',
+  cotidian:'Sisteme de calcul și de comunicații întâlnite în viața cotidiană',
+  structura:'Structura generală a unui sistem de calcul',
+  hardware:'Rolul componentelor hardware ale unui sistem de calcul',
+  intrare:'Dispozitive de intrare: exemple, rol, mod de utilizare',
+  iesire:'Dispozitive de ieșire: exemple, rol, mod de utilizare',
+  intrareIesire:'Dispozitive de intrare-ieșire: exemple, rol, mod de utilizare',
+  stocare:'Dispozitive de stocare a datelor:',
+  exemple:'- exemple de dispozitive de stocare a datelor',
+  unitati:'- unități de măsură pentru capacitatea de stocare (bit, byte, kilobyte, megabyte, gigabyte, terabyte, petabyte etc.)',
+  comparatie:'- comparație între dispozitivele de stocare în funcție de capacitate'
+};
+
+/* ---------------- Runda 1: De bază ----------------
+   Descriptorul CS.1.1: cu sprijin, periferice de bază (tastatură, mouse, monitor), cunoștințe de bază despre
+   componentele hardware, pași ghidați, contexte familiare. Aici: recunoaștere, o singură idee, pași scriși. */
+const BAZA=[
+ {t:'choice',lectii:[2],q:'Colegul de bancă a vărsat apă pe tastatură. Ce faci primul?',
+  o:['Nu atingi nimic și chemi profesorul','Ștergi repede tastatura cu mâneca ta','Scoți chiar tu calculatorul din priză','Întorci tastatura și o scuturi bine'],ok:0,
+  why:'Apa conduce curentul, deci orice atingere sau buton apăsat te poate pune în pericol. Profesorul oprește calculatorul și îl scoate din priză, iar tu aștepți la distanță.'},
+ {t:'tf',lectii:[2],q:'Sub masă, prelungitorul are firele la vedere. E în regulă să-l împingi mai încolo cu piciorul, ca să nu se împiedice nimeni.',ok:false,
+  why:'Fals. Un cablu rupt sau cu firele la vedere e periculos la orice atingere, și cu mâna, și cu piciorul. Nu îl atingi deloc și îi spui imediat profesorului.'},
+ {t:'order',lectii:[2],q:'Începe ora. Pune în ordine pașii de pornire a calculatorului.',
+  items:['Apeși butonul de pornire de pe carcasă','Aștepți să se încarce sistemul de operare','Scrii parola, dacă ți se cere','Începi lucrul când desktopul e complet'],
+  why:'Fiecare pas așteaptă după cel dinainte: parola ți-o cere sistemul de operare abia după ce s-a încărcat, iar lucrul începe când desktopul (ecranul cu pictograme) e gata.'},
+ {t:'order',lectii:[2],q:'S-a terminat ora. Pune în ordine pașii pentru oprirea calculatorului.',
+  items:['Salvezi ce ai lucrat, cu Ctrl + S','Închizi programele deschise','Din meniul Start alegi închiderea calculatorului','Aștepți până se oprește de tot calculatorul'],
+  why:'Întâi salvezi, ca munca să ajungă pe disc. Apoi închizi programele, ca sistemul de operare să nu mai aibă nimic deschis. Abia după aceea alegi închiderea și aștepți să se termine.'},
+ {t:'choice',lectii:[2],q:'Te-ai așezat la calculator. Cum verifici repede dacă ecranul e destul de departe?',
+  o:['Întinzi brațul: degetele ating ecranul','Te apleci până citești fără să miji ochii','Te uiți dacă vezi ecranul fără să întorci capul','Lipești coatele de marginea mesei'],ok:0,
+  why:'Brațul întins e o riglă pe care o ai mereu la tine: când degetele ating ecranul, ești cam la 50–70 cm. Aplecat spre ecran, ochii obosesc mai repede.'},
+ {t:'classify',lectii:[2],q:'Ioana lucrează la calculator. Sortează ce face bine și ce trebuie schimbat.',cats:['Bine','De schimbat'],
+  items:[['Coatele îndoite cam în unghi drept',0],['Spatele sprijinit de spătar',0],['Încheieturile îndoite pe marginea tastaturii',1],['Marginea de sus a monitorului cam la nivelul ochilor',0],['Lampa aprinsă în spatele ei, care se vede în ecran',1],['Tălpile atârnă, fără să atingă nimic',1]],
+  why:'Poziția bună ține corpul odihnit: coatele cam în unghi drept, spatele sprijinit, tălpile pe podea sau pe un suport. Încheieturile îndoite amorțesc palma, iar lumina din spate face reflexii în ecran. Lumina bună vine dintr-o parte.'},
+ {t:'choice',lectii:[3],q:'Care dintre aceste obiecte din casă are un sistem de calcul în el?',
+  o:['Cuptorul cu microunde din bucătărie','Veioza care se aprinde de la întrerupător','Foarfeca de bucătărie, cu lame de oțel','Lanterna cu baterii și un singur buton'],ok:0,
+  why:'Cuptorul primește datele pe care le alegi (timpul, puterea), le prelucrează după un program și dă un rezultat: pornește, numără invers, se oprește. Veioza și lanterna doar închid și deschid curentul, iar foarfeca nu primește date deloc.'},
+ {t:'tf',lectii:[3],q:'Routerul care aduce internetul în casă este și el un sistem de calcul.',ok:true,
+  why:'Adevărat. Routerul primește date, le prelucrează (hotărăște spre ce dispozitiv merge fiecare) și le trimite mai departe. Nu are tastatură și nici monitor, iar treaba lui ține de partea de comunicații.'},
+ {t:'choice',lectii:[4],q:'Care componentă transformă curentul din priză pentru celelalte componente ale calculatorului?',
+  o:['Sursa de alimentare','Placa de bază','Procesorul','Hard diskul sau SSD-ul'],ok:0,
+  why:'Curentul din priză nu merge direct la piesele din carcasă: sursa de alimentare îl transformă într-un curent potrivit pentru ele. Placa de bază doar leagă componentele, procesorul face calculele, iar discul păstrează fișierele.'},
+ {t:'tf',lectii:[4],q:'Placa de bază face calculele, iar procesorul leagă componentele între ele.',ok:false,
+  why:'Fals, rolurile sunt inversate. Procesorul execută instrucțiunile și face calculele. Placa de bază e ca un sistem de străzi: pe ea sunt legate toate componentele.'},
+ {t:'tf',lectii:[4],q:'Un calculator cu procesor foarte rapid, dar fără niciun disc sau alt dispozitiv de stocare, își amintește temele și după ce îl oprești.',ok:false,
+  why:'Fals. Procesorul doar prelucrează, iar RAM-ul se golește la oprire. Fără un dispozitiv de stocare (HDD, SSD, stick, cloud), nimic nu rămâne pentru a doua zi, oricât de rapid ar fi procesorul.'},
+ {t:'choice',lectii:[4],q:'Desenezi schema oricărui sistem de calcul: INTRARE → ? → IEȘIRE. Ce scrii în căsuța din mijloc?',
+  o:['PRELUCRARE','STOCARE','CURENT','INTERNET'],ok:0,
+  why:'Datele intră, sunt prelucrate de procesor, care folosește memoria RAM, apoi rezultatul iese. Stocarea păstrează rezultatul pentru mai târziu, curentul hrănește toate componentele, iar internetul nu face parte din schema de bază.'},
+ {t:'choice',lectii:[5],q:'La locul tău din laborator ai tastatură, mouse și monitor. Care dintre ele este de ieșire?',
+  o:['Monitorul','Tastatura','Mouse-ul'],ok:0,
+  why:'Monitorul îți arată ce a prelucrat calculatorul: informația merge de la calculator spre tine. Prin tastatură și mouse informația pleacă de la tine spre calculator, deci ele sunt de intrare.'},
+ {t:'match',lectii:[5],q:'Ce obții cu fiecare gest făcut cu mouse-ul sau cu tastatura?',
+  pairs:[['Dublu clic pe o pictogramă','deschizi programul sau dosarul'],['Clic dreapta','apare un meniu cu opțiuni'],['Tasta Backspace','ștergi litera din stânga cursorului'],['Tasta Enter','confirmi sau începi un rând nou']],
+  why:'Tastatura și mouse-ul sunt dispozitive de intrare: fiecare gest îi dă calculatorului o comandă. Dacă nu știi ce face un gest, întrebi, nu apeși la întâmplare.'},
+ {t:'choice',lectii:[5],q:'Pe tabletă desenezi cu degetul și vezi linia apărând chiar sub deget. Ce fel de dispozitiv este ecranul ei?',
+  o:['de intrare-ieșire','doar de intrare','doar de ieșire'],ok:0,amesteca:false,
+  why:'Prin același ecran îi dai tabletei informație (atingerea, adică intrare) și primești informație (desenul afișat, adică ieșire). Informația merge în ambele sensuri.'},
+ {t:'choice',lectii:[6],q:'Cum se numește cea mai mică unitate de informație, care poate fi doar 0 sau 1?',
+  o:['bitul','byte-ul','kilobyte-ul','megabyte-ul'],ok:0,
+  why:'Bitul e cea mai mică informație posibilă: 0 sau 1. Byte-ul e deja un grup de 8 biți, iar kilobyte-ul și megabyte-ul sunt și mai mari.'},
+ {t:'classify',lectii:[6],q:'Care dintre acestea sunt dispozitive de stocare?',cats:['Dispozitiv de stocare','Nu păstrează date'],
+  items:[['Cardul de memorie din telefon',0],['DVD-ul',0],['SSD-ul',0],['Mouse-ul',1],['Boxele',1],['Microfonul',1]],
+  why:'Un dispozitiv de stocare păstrează datele și după ce oprești aparatul: cardul, DVD-ul, SSD-ul. Mouse-ul și microfonul doar trimit informație spre calculator, iar boxele doar o scot afară.'},
+ {t:'tf',lectii:[6],q:'Un kilobyte (KB) are 1024 de bytes.',ok:true,
+  why:'Adevărat. De la byte în sus, la clasă socotim fiecare treaptă de 1024 de ori mai mare: 1 KB = 1024 B, 1 MB = 1024 KB. Doar de la bit la byte treapta e de 8.'}
+];
+
+/* ---------------- Runda 2: Consolidat ----------------
+   Descriptorul: independent, mai multe periferice și dispozitive de stocare, structura generală și principalele
+   componente, contexte familiare. Aici: situații cu mai multe elemente, alegi singur, fără pașii scriși. */
+const CONSOLIDAT=[
+ {t:'choice',lectii:[2],q:'Fereastra e în spatele tău, iar în ecran se vede lumina ei. Miji ochii ca să citești. Ce schimbi?',
+  o:['Așezi ecranul ca lumina să vină dintr-o parte','Te apropii de ecran până când vezi mai clar','Stingi toate luminile și tragi draperiile','Lucrezi mai repede, ca să termini mai devreme'],ok:0,
+  why:'Lumina din spatele tău se oglindește în ecran și obosește ochii. Lumina bună vine dintr-o parte. Aproape de ecran ochii obosesc mai tare, iar într-o cameră întunecată, cu doar lumina ecranului, la fel.'},
+ {t:'hunt',lectii:[2],q:'Mara povestește cum a lucrat azi în laborator. Găsește cele 4 lucruri făcute greșit.',
+  src:'Am intrat în laborator odată cu profesorul. Venisem de la baie și [[am pornit calculatorul cu mâinile ude|Apa conduce curentul: nu atingi calculatorul cu mâinile ude, te ștergi întâi.]]. Am pus ecranul cam la un braț de mine. Când mouse-ul s-a oprit, [[am scos și am pus la loc cablul din spatele carcasei|Cablurile și spatele calculatorului nu se ating. Defecțiunea o anunți profesorului.]]. Am lucrat [[cu umerii ridicați spre urechi|Umerii stau relaxați, lăsați în jos, nu ridicați spre urechi.]], dar la 20 de minute am privit pe geam, departe. La final [[am ținut apăsat butonul de pornire până s-a stins|Calculatorul se oprește din meniul Start. Butonul ținut apăsat e doar pentru urgențe.]].',
+  indiciu:'Verifică pe rând siguranța, poziția corpului și felul în care a terminat lucrul.',
+  why:'Mara a făcut și lucruri bune: a intrat cu profesorul, a ținut ecranul la un braț și a respectat pauza de 20 de minute. Greșelile țin de siguranța electrică, de poziție și de oprirea corectă.'},
+ {t:'match',lectii:[3],q:'Leagă fiecare perioadă de calculatoarele cele mai cunoscute atunci.',
+  pairs:[['anii 1940–1950','primele calculatoare electronice, cât o cameră'],['anii 1960–1970','calculatoare cu tranzistori și circuite integrate, cât un dulap'],['anii 1980–1990','calculatorul personal, în case și școli'],['după 2007','telefonul inteligent, un calculator în buzunar']],
+  why:'Pe măsură ce piesele s-au micșorat, calculatoarele au trecut dintr-o cameră întreagă într-un dulap, apoi pe birou și în buzunar. Au devenit și mai rapide și conectate între ele.'},
+ {t:'choice',lectii:[3],q:'Plătești cu cardul la magazin, iar după câteva secunde banca îți trimite un mesaj pe telefon. Ce arată asta?',
+  o:['Sistemele de calcul schimbă date între ele','Casa de marcat și telefonul au tastatură','Fiecare aparat lucrează singur, fără legături','Un om de la bancă îți scrie mesajul de mână'],ok:0,
+  why:'Aparatul de plată, calculatoarele băncii și telefonul tău sunt legate între ele și își trimit date. Legătura aceasta e partea de „comunicații” din sistemele de calcul de azi.'},
+ {t:'tf',lectii:[3],q:'Un semafor inteligent, care ține verdele mai mult când așteaptă multe mașini, este un sistem de calcul.',ok:true,
+  why:'Adevărat. Primește date (câte mașini așteaptă), le prelucrează (hotărăște cât ține verdele) și dă un rezultat (schimbă culoarea). Nu trebuie să arate ca un calculator ca să fie unul.'},
+ {t:'order',lectii:[4],q:'Scrii o compunere și o salvezi. Pune în ordine drumul textului prin calculator.',
+  items:['Scrii textul de la tastatură','Textul stă în memoria RAM cât lucrezi','Apeși Ctrl + S','Textul e scris pe disc și rămâne după oprire'],
+  why:'Datele intră prin tastatură și stau în RAM, spațiul de lucru. RAM-ul se golește la oprire, așa că abia salvarea le scrie pe disc (SSD sau hard disk), care le păstrează.'},
+ {t:'match',lectii:[4],q:'Fiecare componentă seamănă cu ceva din viața de zi cu zi. Potrivește-le.',
+  pairs:[['Procesorul','creierul care ia deciziile'],['Memoria RAM','biroul pe care lucrezi acum'],['Hard diskul sau SSD-ul','dulapul cu dosare păstrate'],['Placa de bază','străzile care leagă casele între ele']],
+  why:'Pe birou (RAM) ții doar ce folosești acum, iar la sfârșit îl strângi. Ce vrei să păstrezi pui în dulap (discul). Creierul (procesorul) hotărăște, iar pe străzi (placa de bază) circulă totul între componente.'},
+ {t:'classify',lectii:[4],q:'Calculatorul de birou din laborator: ce se află în carcasă și ce e periferic, în afara ei?',cats:['În carcasă','Periferic, în afara carcasei'],
+  items:[['Procesorul',0],['Sursa de alimentare',0],['Memoria RAM',0],['Tastatura',1],['Imprimanta',1],['Camera web',1]],
+  why:'Componentele interne (procesorul, RAM-ul, sursa, placa de bază, discul) stau montate în carcasă. Perifericele se leagă din exterior, prin cablu sau fără fir, și leagă calculatorul de lumea din jur.'},
+ {t:'classify',lectii:[5],q:'Unde pui fiecare dispozitiv? Gândește-te încotro merge informația.',cats:['Intrare','Ieșire','Intrare-ieșire'],
+  items:[['Camera web',0],['Cititorul de coduri de bare de la casă',0],['Joystickul',0],['Imprimanta simplă',1],['Căștile fără microfon',1],['Ecranul tactil al bancomatului',2]],
+  why:'Camera, cititorul de coduri și joystickul aduc informație în calculator. Imprimanta și căștile o scot spre om. Ecranul tactil al bancomatului îți arată meniul și primește atingerea ta, deci merge în ambele sensuri.'},
+ {t:'choice',lectii:[5],q:'La ora de muzică vrei să înregistrezi cum cânți, apoi să te asculți. Ce folosești, în ordine?',
+  o:['Microfonul, apoi boxele','Boxele, apoi microfonul','Microfonul, apoi scanerul','Camera web, apoi monitorul'],ok:0,
+  why:'Înregistrarea aduce sunetul în calculator, deci ai nevoie de un dispozitiv de intrare: microfonul. Ascultarea scoate sunetul spre tine, deci de ieșire: boxele. Scanerul aduce hârtii, iar monitorul arată imagini, nu sunet.'},
+ {t:'choice',lectii:[6],q:'Vrei să iei cu tine, în buzunar, 20 GB de fotografii din tabără. Pe care dispozitiv încap toate?',
+  o:['Pe un stick de 32 GB','Pe un DVD de 4,7 GB','Pe un CD de 700 MB','Pe un card de 16 GB'],ok:0,
+  why:'Compari în aceeași unitate: 20 GB e mai mult decât 16 GB și decât 4,7 GB, iar 700 MB nu ajunge nici la 1 GB. Doar stickul de 32 GB are loc pentru toate.'},
+ {t:'order',lectii:[6],q:'Ordonează fișierele după cât loc ocupă, de la cel mai mic la cel mai mare.',
+  items:['un mesaj de 900 B','o poză de 850 KB','o melodie de 4 MB','un film de 1,5 GB'],
+  why:'Te uiți întâi la unitate, apoi la număr: B < KB < MB < GB. De aceea 900 B e mai puțin decât 850 KB, iar 4 MB e mai puțin decât 1,5 GB, deși numerele par să spună altceva.'},
+ {t:'choice',lectii:[6],q:'Pe un stick au rămas liberi 2 GB. Câte clipuri de câte 256 MB mai încap? (La clasă socotim 1 GB = 1024 MB.)',
+  o:['4','8','16','512'],ok:1,amesteca:false,
+  why:'Aduci la aceeași unitate: 2 GB = 2 × 1024 MB = 2048 MB. Apoi împarți: 2048 : 256 = 8. Rezultatul 4 ar veni dintr-un singur GB, iar 16 dintr-un calcul pe 4 GB.'},
+ {t:'match',lectii:[6],q:'Leagă fiecare mod de a păstra datele de ce îl deosebește.',
+  pairs:[['SSD','foarte rapid, fără piese care se mișcă'],['Hard disk (HDD)','mult spațiu, ieftin, dar mai lent'],['Card de memorie','intră în telefon și în aparatul foto'],['Stocare în cloud','ajungi la ea de oriunde, dar cu internet'],['DVD','capacitate mică și se zgârie']],
+  why:'Nu există un dispozitiv bun la toate. Alegi după ce contează: viteza (SSD), mult spațiu ieftin (HDD), mărimea mică (cardul), accesul de oriunde (cloud) sau un disc ieftin, dar mic, pe care îl poți da cuiva (DVD).'},
+ {t:'choice',lectii:[6],q:'Ce are mai mult loc: 3 DVD-uri de câte 4,7 GB, puse la un loc, sau un stick de 16 GB?',
+  o:['Stickul de 16 GB','Cele 3 DVD-uri','Au exact același loc'],ok:0,amesteca:false,
+  why:'3 × 4,7 GB = 14,1 GB, iar 14,1 GB e mai puțin decât 16 GB. Mai multe bucăți nu înseamnă automat mai mult loc: faci socoteala în aceeași unitate.'},
+ {t:'tf',lectii:[2],q:'La un calculator din biblioteca orașului, unde nu e profesorul de față, regulile din laborator nu se mai aplică.',ok:false,
+  why:'Fals. Regulile te apără pe tine și aparatul oriunde: fără lichide lângă tastatură, fără mâini la cabluri, fără programe instalate fără voie. Acolo, o defecțiune o anunți bibliotecarului.'}
+];
+
+/* ---------------- Runda 3: Avansat (finală) ----------------
+   Descriptorul: independent, periferice și dispozitive de stocare diverse, structura și componentele, contexte NOI.
+   Aici: alegi dispozitivul și capacitatea pentru o sarcină reală, calculezi cu unități, găsești greșelile unui plan. */
+const AVANSAT=[
+ {t:'choice',lectii:[4],q:'Laptopul bunicului merge bine cu o pagină de internet deschisă, dar se mișcă greu când deschide douăzeci deodată. Pe disc are mult loc liber. Ce îmbunătățire îi recomanzi?',
+  o:['Mai multă memorie RAM','Un hard disk mai mare','O placă video mai bună','O sursă de alimentare nouă'],ok:0,
+  why:'RAM-ul e spațiul de lucru: fiecare pagină deschisă ocupă din el. Când nu mai e loc, datele sunt mutate pe disc, care e mult mai lent, și totul merge greu. Discul are deja loc, iar placa video ajută la imagini, nu la multe pagini deschise.'},
+ {t:'classify',lectii:[5],q:'Vorbești cu bunicii într-un apel video, de pe calculatorul de birou. Ce rol are fiecare parte?',cats:['Intrare','Ieșire','Prelucrare','Stocare'],
+  items:[['Camera web care te filmează',0],['Microfonul în care vorbești',0],['Boxele prin care îi auzi',1],['Monitorul pe care îi vezi',1],['Procesorul, cu memoria RAM',2],['SSD-ul pe care e instalat programul de apel',3]],
+  why:'Aceeași schemă merge la orice sarcină nouă: vocea și imaginea ta intră, procesorul le prelucrează, iar vocea și imaginea bunicilor ies spre tine. Programul de apel stă pe SSD și rămâne acolo și după oprire.'},
+ {t:'classify',lectii:[3],q:'Aplicația de navigație (GPS) din mașină. Sortează: ce primește, ce face cu datele și ce îți dă?',cats:['Date primite','Prelucrare','Rezultat'],
+  items:[['Adresa unde vrei să ajungi',0],['Semnalele primite de la sateliți',0],['Calculează cel mai scurt drum',1],['Alege strada pe care o ocolești',1],['Vocea care spune „virați la dreapta”',2],['Traseul desenat pe hartă, pe ecran',2]],
+  why:'Orice sistem de calcul, chiar și unul pe care nu l-ai studiat, se înțelege cu aceeași schemă: date primite, prelucrare, rezultat. Vocea și harta sunt rezultatul, adică ce ajunge la tine.'},
+ {t:'choice',lectii:[3],q:'Un robot de aspirat ocolește scaunele și, când bateria e pe terminate, se întoarce singur la încărcător. Ce arată că în el lucrează un sistem de calcul?',
+  o:['Hotărăște ce face după ce simte în jur','Are un motor care îl duce prin casă','Se încarcă de la o priză din perete','Are perii care se învârt și strâng praful'],ok:0,
+  why:'Motorul, periile și încărcarea le are și un aspirator obișnuit: țin de curent și de mișcare. Sistemul de calcul se vede în schemă: robotul primește date (simte scaunul, vede cât mai are bateria), le prelucrează (alege drumul) și dă un rezultat (ocolește, se întoarce la încărcător).'},
+ {t:'classify',lectii:[4],q:'Maria vrea un calculator pentru montaj video: filmele lungi să se prelucreze repede și să aibă loc pentru multe filme. Ce componentă ajută la fiecare dorință?',cats:['Să lucreze mai repede','Să aibă loc pentru filme'],
+  items:[['Un procesor mai rapid',0],['Mai multă memorie RAM',0],['Un hard disk de 2 TB în carcasă',1],['Un hard disk extern, pe cablu',1]],
+  why:'Viteza vine de la procesor, care face calculele, și de la RAM, spațiul lui de lucru. Locul pentru filme îl dau dispozitivele de stocare, cum sunt hard diskurile, fie în carcasă, fie pe cablu.'},
+ {t:'classify',lectii:[5],q:'La chioșcul de comenzi dintr-un restaurant, comanzi singur mâncarea. Sortează fiecare parte după direcția informației.',cats:['Intrare','Ieșire','Intrare-ieșire'],
+  items:[['Camera care citește codul de pe cupon',0],['Imprimanta mică ce scoate bonul',1],['Difuzorul care îți strigă numărul',1],['Ecranul tactil pe care alegi meniul',2]],
+  why:'Nu contează că n-ai mai folosit un chioșc: întrebi încotro merge informația. Camera aduce codul în calculator. Imprimanta și difuzorul scot informația spre tine. Pe ecranul tactil vezi meniul și atingi alegerea, deci informația merge în ambele sensuri.'},
+ {t:'choice',lectii:[2],q:'Acasă scrii tema pe laptop, ținut pe genunchi în pat, iar ecranul e mult sub ochi. Ce schimbi ca să respecți poziția corectă?',
+  o:['Îl muți pe masă, ridicat pe câteva cărți','Te apleci cu tot corpul mai aproape de ecran','Mărești literele și rămâi tot în pat','Îl sprijini pe o pernă, tot pe genunchi'],ok:0,
+  why:'Pe masă, cu laptopul ridicat pe cărți, marginea de sus a ecranului ajunge cam la nivelul ochilor, iar spatele poate sta sprijinit. Capul aplecat ore în șir obosește ceafa și spatele, oricât de mari ar fi literele.'},
+ {t:'hunt',lectii:[2,6],q:'Radu își pregătește acasă locul de lucru pentru proiectul cu poze. Planul lui are 4 greșeli. Găsește-le.',
+  src:'Pun laptopul pe masă, ridicat pe câteva cărți, cu ecranul cam la un braț de mine. Mă așez [[cu spatele la fereastră|Lumina din spate se oglindește în ecran. Lumina bună vine dintr-o parte.]], ca să am lumină. Scaunul e prea înalt, așa că [[las picioarele să atârne|Pui sub tălpi un suport, de exemplu o cutie sau câteva cărți.]]. Copiez pozele de pe telefon pe laptop, apoi [[le șterg de pe telefon|Așa pozele rămân într-un singur loc. Păstrezi și o copie de rezervă, pe alt dispozitiv.]]. Salvez proiectul des. Seara [[mă joc pe laptop în pat, până adorm|Prea mult timp la jocuri, mai ales seara, strică somnul și atenția.]].',
+  indiciu:'Ia planul propoziție cu propoziție și întreabă-te ce ar spune regulile din laborator.',
+  why:'Regulile din laborator se mută cu tine acasă, unde nu te mai verifică nimeni: poziția corpului, lumina, copia de rezervă și timpul petrecut la jocuri.'},
+ {t:'hunt',lectii:[5,4,6],q:'Fișa lui Tudor la recapitulare are 4 greșeli. Găsește-le.',
+  src:'Tastatura: intrare. Imprimanta: [[intrare|Imprimanta scoate pe hârtie ce e în calculator, deci e de ieșire.]]. Scanerul: intrare. Ecranul tactil al tabletei: [[ieșire|Prin el și vezi, și atingi, deci e de intrare-ieșire.]]. Boxele: ieșire. Memoria RAM [[păstrează fișierele după oprire|RAM-ul se golește la oprire. Fișierele le păstrează hard diskul sau SSD-ul.]]. 1 byte = 8 biți. 1 TB = [[1000 MB|1 TB = 1024 GB, adică 1024 × 1024 MB.]].',
+  indiciu:'Verifică fiecare rând: direcția informației, rolul componentei și treptele unităților.',
+  why:'La recapitulare, fiecare rând se verifică pe criteriul lui: dispozitivele după direcția informației, componentele după rol, unitățile după trepte (8 de la bit la byte, apoi 1024).'},
+ {t:'choice',lectii:[6],q:'Pentru expoziția școlii, 600 de fotografii de câte 5 MB ajung la primărie, unde nu e internet. Ce plan e cel mai bun?',
+  o:['Stick de 16 GB, plus copie pe card de 32 GB','CD de 700 MB, plus o copie păstrată în cloud','DVD de 4,7 GB, fără nicio altă copie în plus','Doar în cloud, în două conturi diferite'],ok:0,
+  why:'600 × 5 = 3000 MB, adică aproape 3 GB (3000 : 1024 ≈ 2,9). Pe CD nu încap. Pe DVD încap, dar un singur exemplar se poate pierde. Cloud-ul nu ajută fără internet. Stickul și cardul au loc, iar unul e copia celuilalt.'},
+ {t:'choice',lectii:[6],q:'Pe cutia stickului scrie 32 GB, dar calculatorul îi arată puțin sub 30 GB. Ce explică diferența?',
+  o:['Producătorul numără din 1000 în 1000','Stickul e stricat și trebuie aruncat','Calculatorul a șters o parte din stick','Stickul pierde loc la fiecare folosire'],ok:0,
+  why:'Pentru producător, 32 GB înseamnă 32 000 000 000 de bytes. Calculatorul numără din 1024 în 1024: 32 000 000 000 : (1024 × 1024 × 1024) ≈ 29,8 GB. Locul e același, doar socoteala e alta.'},
+ {t:'choice',lectii:[6],q:'Pe telefonul Anei, cu setările ei, un minut filmat în 4K ocupă cam 400 MB. Pe telefon mai sunt liberi 4 GB. Cam câte minute mai poate filma?',
+  o:['cam 1','cam 10','cam 40','cam 100'],ok:1,amesteca:false,
+  why:'4 GB = 4 × 1024 MB = 4096 MB. Apoi 4096 : 400 ≈ 10 minute. „Cam 100” iese dacă împarți 400 la 4, fără să aduci întâi totul în MB. Pe alt telefon sau cu alte setări, un minut poate ocupa mai mult sau mai puțin.'},
+ {t:'choice',lectii:[6],q:'Familia vrea să păstreze acasă 1,5 TB de filme, pe un singur dispozitiv, cât mai ieftin. Ce alege?',
+  o:['Un hard disk de 2 TB','Un SSD de 512 GB','Un stick de 256 GB','Zece DVD-uri de 4,7 GB'],ok:0,
+  why:'1,5 TB = 1,5 × 1024 GB = 1536 GB. SSD-ul de 512 GB și stickul de 256 GB sunt prea mici, iar zece DVD-uri au doar 47 GB. Hard diskul de 2 TB (2048 GB) are loc și dă mult spațiu la preț mic.'}
+];
+
+JocMotor.porneste({
+  mod:'antrenament',
+  cheie:'joc_calculator_antrenament_v',
+  titlu:'Antrenament: Calculatorul',
+  marca:'Antrenament: <b>Calculatorul</b>',
+  h1:'Antrenament: <em>Calculatorul</em>',
+  clasa:'a V-a',
+  unitate:'V-U1',
+  unitateTitlu:'Sisteme de calcul. Lucrez corect și în siguranță',
+  competente:['CS.1.1'],
+  lectii:'2–7',
+  intro:'Antrenament pe toată unitatea despre calculator, în trei runde: De bază, Consolidat și Avansat. Nu ai pagini de citit. Primești câteva întrebări trase la întâmplare dintr-un bazin mai mare. Reia o rundă de câte ori vrei: vin alte întrebări, pe aceleași lucruri din lecții.',
+  banda:'<span class="ld"><i></i>PWR</span><span class="ld"><i class="am"></i>DISC</span><span class="ld"><i></i>NET</span><span class="cap"><b style="height:12px">b</b><b style="height:13px">B</b><b style="height:14px">KB</b><b style="height:16px">MB</b><b style="height:18px">GB</b><b class="off" style="height:20px">TB</b><b class="off" style="height:22px">PB</b></span>',
+  nivele:[
+    {t:'De bază',descriptor:'De bază',cate:6,bazin:BAZA,lectii:[2,3,4,5,6],
+     continuturi:[PROG.norme,PROG.pozitie,PROG.cotidian,PROG.structura,PROG.hardware,PROG.intrare,PROG.iesire,PROG.intrareIesire,PROG.stocare,PROG.exemple,PROG.unitati],
+     text:'<p>Tastatura și mouse-ul sunt de <mark>intrare</mark>, monitorul e de <mark>ieșire</mark>. Datele fac drumul: intrare → prelucrare → ieșire. Un defect nu îl repari singur: îl anunți.</p>'},
+    {t:'Consolidat',descriptor:'Consolidat',cate:6,bazin:CONSOLIDAT,lectii:[2,3,4,5,6],
+     continuturi:[PROG.norme,PROG.pozitie,PROG.evolutie,PROG.cotidian,PROG.structura,PROG.hardware,PROG.intrare,PROG.iesire,PROG.intrareIesire,PROG.stocare,PROG.exemple,PROG.unitati,PROG.comparatie],
+     text:'<p>Compari capacități numai în <mark>aceeași unitate</mark>: 1 GB = 1024 MB. Ce e doar în RAM se pierde la oprire. Ce ai salvat pe disc rămâne.</p>'},
+    {t:'Avansat',descriptor:'Avansat',final:true,cate:5,bazin:AVANSAT,lectii:[2,3,4,5,6],
+     continuturi:[PROG.pozitie,PROG.cotidian,PROG.structura,PROG.hardware,PROG.intrare,PROG.iesire,PROG.intrareIesire,PROG.stocare,PROG.exemple,PROG.unitati,PROG.comparatie],
+     text:'<p>Situații pe care nu le-ai mai văzut. Întrebi mereu: <mark>încotro merge informația</mark>, cât loc trebuie și ce se întâmplă dacă se pierde un exemplar.</p>'}
+  ],
+  diploma:{
+    titlu:'Tehnician antrenat',
+    rezumat:'trei runde de antrenament despre calculator: siguranța și poziția corectă, sistemele de calcul din jur, componentele, dispozitivele de intrare și ieșire, stocarea și unitățile de măsură',
+    aplicatie:'calculatorul adevărat din laborator',
+    provocare:[
+      'Pornește calculatorul corect și așteaptă până apare desktopul complet.',
+      'Deschide Managerul de activități (în engleză, Task Manager) cu <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Esc</kbd>, caută partea de performanță și notează în caiet câți GB de RAM are calculatorul.',
+      'Cu ajutorul profesorului, află cât spațiu liber are discul calculatorului și notează-l în GB.',
+      'Calculează câte minute de film 4K, de câte 400 MB pe minut, ar încăpea în acel spațiu (1 GB = 1024 MB).',
+      'Arată-i profesorului caietul, apoi oprește calculatorul din meniul Start și așază scaunul la loc.'
+    ]
+  }
+});
+</script>
+</body>
+</html>
