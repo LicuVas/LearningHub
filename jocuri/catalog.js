@@ -18,7 +18,8 @@ window.JOCURI_CATALOG = {
        "descriere": "Lecție-joc pentru clasa a V-a: norme de securitate, poziția corectă, sisteme de calcul, hardware, periferice și unități de măsură.",
        "unitate": "V-U1",
        "accent": "#A8460F",
-       "motor": true
+       "motor": true,
+       "prima_lectie": 2
       }
      ]
     },
@@ -70,11 +71,12 @@ window.JOCURI_CATALOG = {
      "jocuri": [
       {
        "slug": "prezentari-vi",
-       "titlu": "Sistemul solar",
+       "titlu": "Misiunea Diapozitiv",
        "descriere": "Lecție-joc despre prezentări digitale pentru clasa a VI-a: interfața, salvarea, diapozitive și obiecte, editare, formatare, animații, tranziții și susținerea prezentării.",
        "unitate": "VI-U1",
        "accent": "#0A6C7A",
-       "motor": true
+       "motor": true,
+       "prima_lectie": 2
       }
      ]
     },
@@ -90,7 +92,8 @@ window.JOCURI_CATALOG = {
        "descriere": "Lecție-joc pentru clasa a VI-a: antivirus, parole și date personale, e-mail, răspuns și redirecționare, netichetă și semnele unui mesaj-capcană.",
        "unitate": "VI-U2",
        "accent": "#8A2F6E",
-       "motor": true
+       "motor": true,
+       "prima_lectie": 11
       }
      ]
     },
@@ -120,20 +123,22 @@ window.JOCURI_CATALOG = {
      "lectii": "2–10",
      "jocuri": [
       {
-       "slug": "word-obiecte-vii",
-       "titlu": "Cărți noi",
-       "descriere": "Lecție-joc pentru clasa a VII-a: imagini, tabele și pagina în editorul de texte, până la o diplomă făcută după specificații.",
-       "unitate": "VII-U1",
-       "accent": "#A3174F",
-       "motor": true
-      },
-      {
        "slug": "word-vii",
        "titlu": "Misiunea Tehnoredactor",
        "descriere": "Word: cursor, selecție, caractere, paragrafe, reguli de tehnoredactare și afișul clasei.",
        "unitate": "VII-U1",
        "accent": "#2F55D4",
-       "motor": false
+       "motor": false,
+       "prima_lectie": 2
+      },
+      {
+       "slug": "word-obiecte-vii",
+       "titlu": "Misiunea Machetă",
+       "descriere": "Lecție-joc pentru clasa a VII-a: imagini, tabele și pagina în editorul de texte, până la o diplomă făcută după specificații.",
+       "unitate": "VII-U1",
+       "accent": "#A3174F",
+       "motor": true,
+       "prima_lectie": 3
       }
      ]
     },
@@ -149,7 +154,8 @@ window.JOCURI_CATALOG = {
        "descriere": "Lecție-joc pentru clasa a VII-a: linia de timp, înregistrarea, formatele audio și video, tăierea, mixajul, tranzițiile, genericele și exportul unui interviu.",
        "unitate": "VII-U2",
        "accent": "#6B3FD4",
-       "motor": true
+       "motor": true,
+       "prima_lectie": 11
       }
      ]
     },
@@ -184,7 +190,8 @@ window.JOCURI_CATALOG = {
        "descriere": "Excel: interfața și registrul, editare, tipuri de date, formatare, formule adevărate, funcții, IF, sortare și grafice.",
        "unitate": "VIII-U1",
        "accent": "#1B7443",
-       "motor": true
+       "motor": true,
+       "prima_lectie": 2
       }
      ]
     },
@@ -200,7 +207,8 @@ window.JOCURI_CATALOG = {
        "descriere": "Lecție-joc pentru clasa a VIII-a: pagini web în HTML, de la etichete și schelet la imagini, liste, legături, formatare și siguranța datelor.",
        "unitate": "VIII-U2",
        "accent": "#B4441B",
-       "motor": true
+       "motor": true,
+       "prima_lectie": 14
       }
      ]
     },

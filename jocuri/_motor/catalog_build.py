@@ -97,7 +97,8 @@ def main():
         accent = re.search(r"--accent:\s*(#[0-9A-Fa-f]{6})", src)
         info = {
             "slug": d.name,
-            "titlu": field(src, "titlu") or (title.group(1).strip() if title else d.name),
+            # titlul din <title>: un `titlu:'...'` poate apărea mai devreme în datele întrebărilor (ex. un tabel „Cărți noi”)
+            "titlu": title.group(1).strip() if title else (field(src, "titlu") or d.name),
             "descriere": desc.group(1) if desc else "",
             "unitate": field(src, "unitate"),
             "accent": accent.group(1) if accent else "#2F55D4",
@@ -109,7 +110,18 @@ def main():
         if not info["unitate"]:
             print(f"[SARIT] {d.name}: nu are unitate în configurație")
             continue
+        # ordinea în unitate = prima lecție acoperită (traseul materiei), nu alfabetul
+        m_l = re.search(r"lectii\s*:\s*'(\d+)", src)
+        side = d / "acoperire.json"
+        if m_l:
+            info["prima_lectie"] = int(m_l.group(1))
+        elif side.exists():
+            info["prima_lectie"] = min(n for lv in json.loads(side.read_text(encoding="utf-8"))["nivele"] for n in lv["lectii"])
+        else:
+            info["prima_lectie"] = 999
         games.setdefault(info["unitate"], []).append(info)
+    for lst in games.values():
+        lst.sort(key=lambda g: (g["prima_lectie"], g["slug"]))
 
     clase = []
     for cls in ["V", "VI", "VII", "VIII"]:
