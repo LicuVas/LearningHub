@@ -109,7 +109,8 @@ function evaluate(formula,get){
   if(v&&v.range)throw FErr('O zonă singură nu e un rezultat. Pune-o într-o funcție, de exemplu SUM(…).');
   return v;
 }
-const fmt=v=>typeof v==='number'?(Number.isInteger(v)?String(v):v.toLocaleString('ro-RO',{maximumFractionDigits:2})):typeof v==='boolean'?(v?'adevărat':'fals'):String(v??'');
+// valorile mici (0,002) își păstrează cifrele semnificative; altfel ar apărea „0” deși formula e bună
+const fmt=v=>typeof v==='number'?(Number.isInteger(v)?String(v):v.toLocaleString('ro-RO',Math.abs(v)<1?{maximumSignificantDigits:3}:{maximumFractionDigits:2})):typeof v==='boolean'?(v?'adevărat':'fals'):String(v??'');
 // textul rezultat se compară fără diacritice și fără spații în plus: „in buget” = „în buget” (tastatura din laborator poate fi fără diacritice)
 const fara=s=>String(s).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[şș]/g,'s').replace(/[ţț]/g,'t').replace(/\s+/g,' ');
 const same=(a,b)=>typeof a==='number'&&typeof b==='number'?Math.abs(a-b)<1e-6:fara(a)===fara(b);

@@ -37,6 +37,9 @@ function okList(p){return Array.isArray(p.ok)?p.ok:[p.ok]}
 function render(Q,body,api){
   if(!document.getElementById('tip-traseu-css')){const s=document.createElement('style');s.id='tip-traseu-css';s.textContent=CSS;document.head.appendChild(s)}
   const esc=api.esc;let k=0;const ales=[];const gresite={};
+  // ordinea butoanelor se amestecă o dată pe întrebare: varianta bună nu are voie să stea mereu pe același loc
+  // (evaluatorul pilotului Excel XII: prima variantă era cea bună la 27 din 54 de pași). data-i rămâne indicele din date.
+  const ordine=Q.pasi.map(p=>p.o?(Q.fixa?p.o.map((_,i)=>i):api.shuffle(p.o.map((_,i)=>i))):null);
   function draw(){
     const p=Q.pasi[k];
     const bar=`<div class="bar"><span class="app">${esc(Q.aplicatie||'')}</span>${ales.map(a=>`<span class="sep">›</span><span class="st">${esc(a)}</span>`).join('')}</div>`;
@@ -45,7 +48,7 @@ function render(Q,body,api){
     if(!p){pas='<div class="pas"><div class="zona">Gata</div></div>'}
     else if(p.o){
       pas=`<div class="pas"><div class="zona">Pasul ${k+1} din ${Q.pasi.length} · ${esc(p.zona||'Alege')}</div><div class="ops">${
-        p.o.map((x,i)=>`<button type="button" data-i="${i}" class="${(gresite[k]||[]).includes(i)?'bad':''}" ${(gresite[k]||[]).includes(i)||api.done()?'disabled':''}>${esc(x)}</button>`).join('')}</div></div>`;
+        ordine[k].map(i=>[p.o[i],i]).map(([x,i])=>`<button type="button" data-i="${i}" class="${(gresite[k]||[]).includes(i)?'bad':''}" ${(gresite[k]||[]).includes(i)||api.done()?'disabled':''}>${esc(x)}</button>`).join('')}</div></div>`;
     }else{
       pas=`<div class="pas"><div class="zona">Pasul ${k+1} din ${Q.pasi.length} · ${esc(p.zona||'Scrie valoarea')}</div><div class="val"><label for="trs-in">${esc(p.eticheta||'Valoarea')}</label>
         <input id="trs-in" type="text" autocomplete="off" spellcheck="false" ${api.done()?'disabled':''}>${p.unitate?`<span>${esc(p.unitate)}</span>`:''}<button type="button" id="trs-ok" ${api.done()?'disabled':''}>OK</button></div></div>`;
