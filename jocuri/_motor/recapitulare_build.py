@@ -20,8 +20,12 @@ JOCURI = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).parent))
 from acoperire import game_configs, load_sources  # noqa: E402
 
-TIPURI_OK = {"choice", "tf", "order", "classify", "match", "hunt", "pick", "foaie"}
-CLASE = {"V": ("a V-a", "#8A5A00"), "VI": ("a VI-a", "#0E6E6E"), "VII": ("a VII-a", "#5B3FA8"), "VIII": ("a VIII-a", "#9C2F2F")}
+TIPURI_OK = {"choice", "tf", "order", "classify", "match", "hunt", "pick", "foaie", "traseu", "interogare"}
+# simulatoarele din _motor: tipul -> (obiectul JS, fișierul)
+SIMULATOARE = {"foaie": ("JocFoaie", "tip-foaie.js"), "traseu": ("JocTraseu", "tip-traseu.js"), "interogare": ("JocInterogare", "tip-interogare.js")}
+CLASE = {"V": ("a V-a", "#8A5A00"), "VI": ("a VI-a", "#0E6E6E"), "VII": ("a VII-a", "#5B3FA8"), "VIII": ("a VIII-a", "#9C2F2F"),
+         "XII": ("a XII-a", "#1F5F8B")}  # XII = proba D: jocurile stau pe subcompetente-digitale, build(root=..., clase=["XII"])
+GIMNAZIU = ["V", "VI", "VII", "VIII"]
 RUNDE = [("Amestec ușor", "De bază"), ("Amestec mediu", "Consolidat"), ("Amestec greu", "Avansat")]
 CATE = 8
 
@@ -55,12 +59,15 @@ def completeaza_jocuri_vechi(configs):
         b.close()
 
 
-def build(exclude=()):
+def build(exclude=(), root=None, clase=None):
     un, domains, mp, _ = load_sources()
-    configs = [(s, c) for s, c in game_configs(exclude) if not s.startswith("recapitulare-") and not c.get("_lipsa")]
+    out_root = Path(root) if root else JOCURI
+    configs = [(s, c) for s, c in game_configs(exclude, root) if not s.startswith(("recapitulare-", "simulare-")) and not c.get("_lipsa")]
     completeaza_jocuri_vechi(configs)
     made = []
     for cls, (clasa, accent) in CLASE.items():
+        if cls not in (clase or GIMNAZIU) or cls not in un:
+            continue
         units = {u["id"]: u for u in un[cls]["unitati"]}
         order = [u["id"] for u in un[cls]["unitati"]]
         games = sorted([(s, c) for s, c in configs if str(c.get("unitate", "")).split("-")[0] == cls and "nivele" in c],
@@ -122,20 +129,36 @@ def build(exclude=()):
                                       "Reia acel nivel din jocul de învățare, apoi runda potrivită din antrenament.",
                                       "Peste o săptămână, reia recapitularea: vei primi alte întrebări."]},
         }
-        uses_foaie = any(q.get("t") == "foaie" for r in runde for q in r["bazin"])
-        if uses_foaie:
-            cfg["tipuri"] = "__FOAIE__"
+        if cls == "XII":  # proba D: simularea examenului, pe site-ul de bac
+            titlu = "Simulare proba D"
+            cfg.update({"cheie": "proba_d_simulare", "titlu": titlu, "marca": "Simulare <b>proba D</b>",
+                        "eticheta": "Jocuri proba D", "acasa": {"href": "../../index.html", "text": "Competențe digitale"},
+                        "ancoraText": "Întrebări amestecate din jocurile Word, Excel, PowerPoint și Access, construite din subiectele reale 2013–2026",
+                        "intro": ("Întrebări amestecate din toate jocurile de proba D: " + ", ".join(units[u]["titlu"] for u in unit_ids)
+                                  + ". Fiecare tragere ia din toate aplicațiile, ca la examen. La fiecare reluare primești altele; sub explicație scrie din ce joc vine întrebarea."),
+                        "diploma": {"titlu": "Simulare proba D trecută", "rezumat": "cerințe amestecate din toate aplicațiile examenului",
+                                    "aplicatie": "Word, Excel, PowerPoint și Access",
+                                    "provocare": ["Uită-te la întrebările la care ai greșit: sub explicație scrie jocul și nivelul.",
+                                                  "Reia acel nivel, apoi rezolvă în aplicația reală o variantă de pe site care conține aceeași cerință.",
+                                                  "Peste o săptămână, reia simularea: vei primi alte întrebări."]}})
+            slug = "simulare-proba-d"
+        else:
+            titlu = f"Recapitulare: clasa {clasa}"
+            slug = f"recapitulare-{cls.lower()}"
+        folosite = sorted({q.get("t") for r in runde for q in r["bazin"]} & set(SIMULATOARE))
+        if folosite:
+            cfg["tipuri"] = "__TIPURI__"
         data = json.dumps(cfg, ensure_ascii=False, indent=0).replace("</", "<\\/")
-        data = data.replace('"__FOAIE__"', "{foaie:JocFoaie}")
-        slug = f"recapitulare-{cls.lower()}"
+        data = data.replace('"__TIPURI__"', "{" + ",".join(f"{t}:{SIMULATOARE[t][0]}" for t in folosite) + "}")
+        scripturi = "\n".join(f'<script src="../_motor/{SIMULATOARE[t][1]}"></script>' for t in folosite)
         n_q = sum(len(r["bazin"]) for r in runde)
         page = f'''<!doctype html>
 <html lang="ro">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Recapitulare: clasa {clasa}</title>
-<meta name="description" content="Recapitulare amestecată pentru clasa {clasa}: {n_q} de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.">
+<title>{titlu}</title>
+<meta name="description" content="{'Simulare proba D: ' + str(n_q) + ' de întrebări luate din jocurile Word, Excel, PowerPoint și Access' if cls == 'XII' else 'Recapitulare amestecată pentru clasa ' + clasa + ': ' + str(n_q) + ' de întrebări luate din jocurile clasei'}, trase la întâmplare la fiecare reluare.">
 <!-- GENERAT de jocuri/_motor/recapitulare_build.py din jocurile clasei. NU se editează de mână. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -156,14 +179,14 @@ h1,h2{{font-weight:400}}
 </head>
 <body>
 <script src="../_motor/motor.js"></script>
-{'<script src="../_motor/tip-foaie.js"></script>' if uses_foaie else ''}
+{scripturi}
 <script>
 JocMotor.porneste({data});
 </script>
 </body>
 </html>
 '''
-        d = JOCURI / slug
+        d = out_root / slug
         d.mkdir(exist_ok=True)
         (d / "index.html").write_text(page, encoding="utf-8")
         made.append((slug, len(runde), [len(r["bazin"]) for r in runde], [s for s, _ in games]))
@@ -173,4 +196,7 @@ JocMotor.porneste({data});
 
 if __name__ == "__main__":
     ex = set(sys.argv[sys.argv.index("--exclude") + 1].split(",")) if "--exclude" in sys.argv else set()
-    build(ex)
+    # a XII-a (proba D):  recapitulare_build.py --root C:\00\AI_0\projects\subcompetente-digitale\jocuri --clase XII
+    root = sys.argv[sys.argv.index("--root") + 1] if "--root" in sys.argv else None
+    cls = sys.argv[sys.argv.index("--clase") + 1].split(",") if "--clase" in sys.argv else None
+    build(ex, root=root, clase=cls)

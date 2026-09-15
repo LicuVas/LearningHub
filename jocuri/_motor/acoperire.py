@@ -66,11 +66,12 @@ def load_sources():
     return un, domains, mp, problems
 
 
-def game_configs(exclude=()):
-    """(slug, cfg) pentru fiecare joc: pe motor din pagină (Playwright), vechi din acoperire.json."""
+def game_configs(exclude=(), root=None):
+    """(slug, cfg) pentru fiecare joc: pe motor din pagină (Playwright), vechi din acoperire.json.
+    root = alt folder de jocuri (ex. subcompetente-digitale/jocuri pentru a XII-a)."""
     from playwright.sync_api import sync_playwright
     out = []
-    dirs = sorted(d for d in JOCURI.iterdir() if d.is_dir() and not d.name.startswith("_") and (d / "index.html").exists() and d.name not in exclude)
+    dirs = sorted(d for d in Path(root or JOCURI).iterdir() if d.is_dir() and not d.name.startswith("_") and (d / "index.html").exists() and d.name not in exclude)
     with sync_playwright() as p:
         b = p.chromium.launch()
         pg = b.new_page()
