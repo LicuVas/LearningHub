@@ -9,6 +9,7 @@
         {zona:'Din listă', o:['Normal','Wide (Lat)','Custom Margins… (Margini particularizate…)'], ok:2},
         {zona:'Caseta', eticheta:'Left (Stânga)', ok:'6', unitate:'cm'}          // pas de scris: valoarea se compară
       ], why}
+   Opțional pe pas: indiciu (general, fără să numească distractori) sau indicii:{2:'de ce varianta 2 e greșită'}.
    `ok` poate fi și o listă de indici, când mai multe drumuri sunt bune (ex. clic dreapta › Format Cells sau Ctrl+1).
    La un pas de scris, `ok` poate fi o listă de valori acceptate (ex. ['0 "lei"','0" lei"']).
    Fiecare clic greșit contează ca o încercare (ca la variante); drumul bun rămâne, elevul continuă de unde a greșit. */
@@ -72,7 +73,11 @@ function render(Q,body,api){
   function alege(i){
     if(api.done())return;const p=Q.pasi[k];
     if(okList(p).includes(i)){avans(scurt(p.o[i]))}
-    else{(gresite[k]=gresite[k]||[]).push(i);draw();greseala(p.indiciu?esc(p.indiciu):`„${esc(scurt(p.o[i]))}” nu duce la ce se cere. Gândește-te ce fel de comandă e: ${esc(p.zona||'')}.`)}
+    // indiciul potrivit clicului: p.indicii[i] explică de ce ACEA variantă e greșită; p.indiciu e un indiciu general
+    // (fără să numească alți distractori: evaluatorul PowerPoint XII a găsit indicii care descriau altă comandă decât cea apăsată)
+    else{(gresite[k]=gresite[k]||[]).push(i);draw();
+      const h=(p.indicii&&p.indicii[i])||p.indiciu;
+      greseala(h?`„${esc(scurt(p.o[i]))}” nu e drumul bun. ${esc(h)}`:`„${esc(scurt(p.o[i]))}” nu duce la ce se cere. Gândește-te ce fel de comandă e: ${esc(p.zona||'')}.`)}
   }
   function scrie(v){
     if(api.done())return;const p=Q.pasi[k];
