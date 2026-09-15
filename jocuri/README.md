@@ -106,7 +106,11 @@ JocMotor.porneste({ mod:'antrenament', titlu:'Antrenament: Word', unitate:'VII-U
 - **Bazinul are cel puțin 2 × `cate` întrebări** (poarta verifică). Motorul trage întâi întrebările nevăzute; când bazinul s-a epuizat, ciclul reîncepe.
 - **Întrebările sunt NOI, nu copii din jocul de învățare.** Pasul 0 al agentului: extrage toate întrebările existente ale unității și nu le repeta (lecție din valul-pilot LearningHub, unde 14 din 36 de itemi scriși de agenți dublau itemi existenți).
 - **Acoperire:** fiecare rundă declară `lectii` și `continuturi`, iar toate rundele împreună acoperă toate conținuturile unității.
-- **Poarta joacă tot bazinul**, nu doar ce iese la tragere.
+- **Poarta joacă tot bazinul**, nu doar ce iese la tragere, și verifică tragerea reală: o rundă terminată și reluată trebuie să aducă alte întrebări.
+- **Fiecare întrebare din bazin are `lectii:[n]`.** Motorul trage echilibrat pe lecții (câte una din fiecare lecție, pe rând), ca o rundă de 6 să nu sară lecții întregi.
+- **„Văzut” se scrie abia la finalul rundei.** O rundă deschisă și abandonată nu consumă întrebări.
+- **Pasul 0, mecanic:** `python jocuri\_motor\intrebari_unitate.py <UNITATE>` dă toate întrebările existente ale unității, inclusiv din jocurile vechi. La final, `python jocuri\_motor\intrebari_unitate.py <UNITATE> --verifica jocuri\<slug>\index.html` trebuie să dea 0 perechi prea apropiate (asemănare pe cuvinte de conținut ≥ 0,40, fără formulele de enunț).
+- **Sursele descărcate (curl) se verifică să nu fie pagini de eroare** („page not found”, 404). Pilotul avea două „surse” care erau de fapt pagini 404.
 
 `q`, `why`, `text` și `intro` acceptă HTML (`<code>`, `<kbd>`, `<mark>`, `<strong>`). Variantele (`o`, `items`, `pairs`) sunt text simplu.
 

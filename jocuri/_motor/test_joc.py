@@ -278,6 +278,29 @@ def run(slug, fails, warns):
             if errs:
                 fails.append(f"{dev}: erori JS: {errs[:3]}")
             ctx.close()
+        # antrenament: tragerea reală (fără toateIntrebarile). O rundă TERMINATĂ, reluată, trebuie să aducă alte întrebări.
+        if cfg and cfg.get("mod") == "antrenament":
+            ctx = b.new_context(**p.devices["Pixel 7"])
+            pg = ctx.new_page()
+            pg.set_default_timeout(6000)
+            pg.goto(url); pg.wait_for_timeout(300)
+            pg.evaluate("JocMotor.test.deblocheaza()"); pg.evaluate("document.getElementById('go-home').click()")
+            lv0 = cfg["nivele"][0]
+            draws = []
+            for _ in range(2):
+                pg.click('.lvl[data-l="0"]')
+                draws.append(pg.evaluate("JocMotor.test.config().nivele[0].qs.map(q=>q.q)"))
+                pg.click("#go")
+                for _q in draws[-1]:
+                    pg.evaluate("JocMotor.test.rezolva()")
+                    if pg.locator("#chk").count() and not pg.locator("#fb .fb.ok").count():
+                        pg.click("#chk")
+                    pg.click("#next")
+                pg.evaluate("document.getElementById('go-home').click()")
+            common = set(draws[0]) & set(draws[1])
+            if len(lv0.get("bazin", [])) >= 2 * len(draws[0]) and common:
+                fails.append(f"antrenament N1: a doua tragere după o rundă terminată repetă {len(common)} întrebări (trebuia să aducă altele)")
+            ctx.close()
         b.close()
     return {"slug": slug, "fails": fails, "warns": warns, "intrebari_jucate": played, "diacritice_la_1000": round(dens, 1)}
 

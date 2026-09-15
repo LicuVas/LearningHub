@@ -31,7 +31,7 @@ function setHud(){
   const t=totals();
   if(R){
     const Lv=C.nivele[R.li];
-    const nb=`Nivelul ${R.li+1} din ${C.nivele.length}`;
+    const nb=`${C.mod==='antrenament'?'Runda':'Nivelul'} ${R.li+1} din ${C.nivele.length}`;
     const txt=R.phase==='q'?`Întrebarea ${R.qi+1} din ${Lv.qs.length} · ${R.xp} XP`:R.phase==='read'?`Citire · ${esc(Lv.t)}`:`Nivel terminat · ${R.xp} XP`;
     hud.innerHTML=`<span class="nb">${nb}</span><span class="fv">${txt}${R.streak>=2?` <span class="hot">serie ×${R.streak}</span>`:''}</span>`;
   }else hud.innerHTML=`<span class="nb">TOTAL</span><span class="fv">★ ${t.st}/${C.nivele.length*3} · ${t.xp} XP</span>`;
@@ -56,7 +56,7 @@ function setCrumbs(){
 function nivelEticheta(i){const n=C.nivele.length,w=C.mod==='antrenament'?'Runda':'Nivelul';return C.nivele[i].final?`${w} finală (${i+1} din ${n})`.replace('Nivelul finală','Nivelul final'):`${w} ${i+1} din ${n}`}
 function tabsFor(){
   const Lv=C.nivele[R.li];
-  return `<span class="${R.phase==='read'?'now':'done'}">Citire</span>`+Lv.qs.map((_,k)=>{
+  return `<span class="${R.phase==='read'?'now':'done'}">${Lv.bazin?'Pregătire':'Citire'}</span>`+Lv.qs.map((_,k)=>{
     const cls=R.phase==='end'||(R.phase==='q'&&k<R.qi)?'done':(R.phase==='q'&&k===R.qi?'now':'');
     return `<span class="${cls}">Î${k+1}</span>`}).join('');
 }
@@ -91,21 +91,36 @@ function home(){
 /* ANTRENAMENT (stratul 2 al repetiției): un nivel cu `bazin:[întrebări]` și `cate:N` primește la fiecare pornire N întrebări
    trase la întâmplare, întâi cele nevăzute la reluările anterioare. Așa elevul reia aceleași lucruri, dar nu aceleași întrebări. */
 let TEST_TOATE=false;
+const vazutKey=i=>C.cheie+'_vazut_'+i;
+function citesteVazut(i){try{return JSON.parse(localStorage.getItem(vazutKey(i)))||[]}catch(e){return []}}
+/* Tragerea e echilibrată pe lecții: dacă întrebările au `lectii:[n]`, se ia pe rând câte una din fiecare lecție
+   (întâi cele nevăzute), ca o rundă de 6 să nu sară lecții întregi (observat la pilotul Word, 15.09.2026). */
 function trage(Lv,i){
-  if(TEST_TOATE)return Lv.bazin.slice();
-  const n=Math.min(Lv.cate||5,Lv.bazin.length),key=C.cheie+'_vazut_'+i;
-  let seen=[];try{seen=JSON.parse(localStorage.getItem(key))||[]}catch(e){}
+  if(TEST_TOATE)return {qs:Lv.bazin.slice(),pick:[]};
+  const n=Math.min(Lv.cate||5,Lv.bazin.length),seen=citesteVazut(i);
   const idx=Lv.bazin.map((_,k)=>k);
-  const pick=shuffle(idx.filter(k=>!seen.includes(k))).concat(shuffle(idx.filter(k=>seen.includes(k)))).slice(0,n);
-  let next=seen.filter(k=>!pick.includes(k)).concat(pick);
+  const lesson=k=>{const q=Lv.bazin[k];return q.lectii&&q.lectii.length?q.lectii[0]:'?'};
+  const roundRobin=list=>{
+    const groups={};shuffle(list).forEach(k=>{(groups[lesson(k)]=groups[lesson(k)]||[]).push(k)});
+    const order=shuffle(Object.keys(groups)),out=[];
+    while(out.length<list.length)order.forEach(g=>{if(groups[g].length)out.push(groups[g].shift())});
+    return out;
+  };
+  const pick=roundRobin(idx.filter(k=>!seen.includes(k))).concat(roundRobin(idx.filter(k=>seen.includes(k)))).slice(0,n);
+  return {qs:shuffle(pick).map(k=>Lv.bazin[k]),pick};
+}
+/* „văzut” se scrie abia când runda e TERMINATĂ: o rundă deschisă și abandonată nu consumă întrebările */
+function marcheazaVazut(i,pick){
+  if(!pick||!pick.length)return;
+  const Lv=C.nivele[i],idx=Lv.bazin.map((_,k)=>k);
+  let next=citesteVazut(i).filter(k=>!pick.includes(k)).concat(pick);
   if(idx.every(k=>next.includes(k)))next=pick;   // a văzut tot bazinul: ciclul o ia de la capăt
-  try{localStorage.setItem(key,JSON.stringify(next))}catch(e){}
-  return pick.map(k=>Lv.bazin[k]);
+  try{localStorage.setItem(vazutKey(i),JSON.stringify(next))}catch(e){}
 }
 function startLevel(i){
-  const Lv=C.nivele[i];
-  if(Lv.bazin)Lv.qs=trage(Lv,i);
-  R={li:i,qi:0,xp:0,first:0,streak:0,phase:'read'};readPage();
+  const Lv=C.nivele[i];let pick=null;
+  if(Lv.bazin){const t=trage(Lv,i);Lv.qs=t.qs;pick=t.pick}
+  R={li:i,qi:0,xp:0,first:0,streak:0,phase:'read',pick};readPage();
 }
 function readPage(){
   const Lv=C.nivele[R.li];
@@ -322,6 +337,7 @@ function endLevel(){
   const prev=S.lv[R.li];
   S.lv[R.li]={stars:Math.max(stars,prev?prev.stars:0),xp:Math.max(R.xp,prev?prev.xp:0)};
   save();R.phase='end';
+  if(C.nivele[R.li].bazin)marcheazaVazut(R.li,R.pick);
   const next=R.li+1<C.nivele.length;
   shell(`
     <div class="eyebrow">${nivelEticheta(R.li)} · terminat${(()=>{const rest=C.nivele.length-R.li-1,a=C.mod==='antrenament';return next?` · ${rest===1?(a?'mai e o rundă':'mai e un nivel'):`mai sunt ${rest} ${a?'runde':'niveluri'}`}`:` · ai terminat toate ${a?'rundele':'nivelurile'}`})()}</div>
