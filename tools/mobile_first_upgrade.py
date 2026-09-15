@@ -109,7 +109,7 @@ def upgrade_html_file(file_path):
     return False, ['No changes needed']
 
 def main():
-    base_path = Path(r"C:\AI\Projects\LearningHub")
+    base_path = Path(__file__).resolve().parents[1]
 
     # Directories to process
     dirs = ['content', 'hub']

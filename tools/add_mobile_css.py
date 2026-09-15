@@ -35,7 +35,7 @@ def add_mobile_css_to_file(html_path, css_path):
         return False, "No </head> tag found"
 
 def main():
-    base_dir = Path(r'C:\AI\Projects\LearningHub')
+    base_dir = Path(__file__).resolve().parents[1]
     css_path = base_dir / 'assets' / 'css' / 'mobile.css'
 
     # Find all HTML files

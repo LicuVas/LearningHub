@@ -23,8 +23,8 @@ from pathlib import Path
 from html.parser import HTMLParser
 from collections import defaultdict
 
-CONTENT_ROOT = Path(r"C:\AI\Projects\LearningHub\content")
-PROJECT_ROOT = Path(r"C:\AI\Projects\LearningHub")
+CONTENT_ROOT = (Path(__file__).resolve().parents[1] / "content")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DIR = PROJECT_ROOT / "results"
 
 class HTMLAuditor(HTMLParser):

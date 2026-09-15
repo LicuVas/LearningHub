@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 from collections import defaultdict
 
-SITE_ROOT = Path(r"C:\AI\Projects\LearningHub")
+SITE_ROOT = Path(__file__).resolve().parents[1]
 CONTENT_ROOT = SITE_ROOT / "content" / "tic"
 
 # Required JS files for full-format lessons

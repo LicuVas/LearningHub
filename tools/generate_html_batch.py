@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 
-PROJECT_ROOT = Path(r"C:\AI\Projects\LearningHub")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 HTML_TEMPLATE = '''<!DOCTYPE html>
 <html lang="ro">

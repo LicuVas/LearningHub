@@ -13,7 +13,7 @@ lessons_to_update = [
     "lectia1-interfata.html"
 ]
 
-m2_path = Path(r"C:\AI\Projects\LearningHub\content\tic\cls6\m2-scratch")
+m2_path = (Path(__file__).resolve().parents[1] / "content/tic/cls6/m2-scratch")
 
 def add_scratch_css(content):
     """Add scratch-blocks.css link if not present"""

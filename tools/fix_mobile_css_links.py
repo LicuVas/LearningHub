@@ -99,7 +99,7 @@ def fix_html_file(file_path, base_path):
     return False, ['No changes needed']
 
 def main():
-    base_path = Path(r"C:\AI\Projects\LearningHub")
+    base_path = Path(__file__).resolve().parents[1]
 
     # Process all HTML files
     html_files = list(base_path.rglob('*.html'))

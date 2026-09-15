@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 
 # Base directory
-BASE_DIR = Path(r"C:\AI\Projects\LearningHub")
+BASE_DIR = Path(__file__).resolve().parents[1]
 CONTENT_DIR = BASE_DIR / "content" / "tic"
 
 # Grade display names

@@ -409,7 +409,7 @@ def get_class_info(file_path):
     return clasa, modul, lectie
 
 def main():
-    content_path = Path(r"C:\AI\Projects\LearningHub\content\tic")
+    content_path = (Path(__file__).resolve().parents[1] / "content/tic")
     output_path = Path(r"A:\learninghub_exercises.json")
 
     # Find all lesson files

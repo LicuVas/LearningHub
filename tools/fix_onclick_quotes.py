@@ -134,7 +134,7 @@ def fix_file(filepath):
 
 
 def main():
-    content_dir = Path(r'C:\AI\Projects\LearningHub\content')
+    content_dir = (Path(__file__).resolve().parents[1] / "content")
 
     total_files = 0
     total_lines = 0

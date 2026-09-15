@@ -30,7 +30,7 @@ from pathlib import Path
 from datetime import datetime
 
 # Paths
-LEARNINGHUB_ROOT = Path(r"C:\AI\Projects\LearningHub")
+LEARNINGHUB_ROOT = Path(__file__).resolve().parents[1]
 CONTENT_ROOT = LEARNINGHUB_ROOT / "content" / "tic"
 TOOLS_ROOT = LEARNINGHUB_ROOT / "tools"
 REBUILD_DIR = TOOLS_ROOT / "lesson_rebuild"

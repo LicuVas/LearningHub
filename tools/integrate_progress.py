@@ -5,7 +5,7 @@ import os
 import re
 from pathlib import Path
 
-BASE_DIR = Path(r"C:\AI\Projects\LearningHub\content\tic")
+BASE_DIR = (Path(__file__).resolve().parents[1] / "content/tic")
 
 def get_lesson_info(filepath):
     """Extract grade, module, and lesson ID from file path"""

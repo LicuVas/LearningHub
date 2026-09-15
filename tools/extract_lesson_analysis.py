@@ -298,7 +298,7 @@ def analyze_lesson(file_path):
 
 
 def main():
-    base_path = Path("C:/AI/Projects/LearningHub/content/tic")
+    base_path = (Path(__file__).resolve().parents[1] / "content/tic")
     output_file = Path("A:/learninghub_lessons_full_analysis.json")
 
     all_lessons = []

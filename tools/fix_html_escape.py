@@ -25,8 +25,8 @@ if sys.stdout.encoding != 'utf-8':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-CONTENT_DIR = Path(r"C:\AI\Projects\LearningHub\content")
-RESULTS_DIR = Path(r"C:\AI\Projects\LearningHub\results")
+CONTENT_DIR = (Path(__file__).resolve().parents[1] / "content")
+RESULTS_DIR = (Path(__file__).resolve().parents[1] / "results")
 
 # The escape helper to inject into each file
 ESCAPE_HELPER = """
