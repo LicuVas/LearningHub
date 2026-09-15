@@ -30,8 +30,8 @@ function setHud(){
   const t=totals();
   if(R){
     const Lv=C.nivele[R.li];
-    const nb=R.phase==='q'?`N${R.li+1}·Î${R.qi+1}`:`N${R.li+1}`;
-    const txt=R.phase==='q'?`Întrebarea ${R.qi+1}/${Lv.qs.length} · ${R.xp} XP`:R.phase==='read'?`Citire · ${esc(Lv.t)}`:`Nivel terminat · ${R.xp} XP`;
+    const nb=`Nivelul ${R.li+1} din ${C.nivele.length}`;
+    const txt=R.phase==='q'?`Întrebarea ${R.qi+1} din ${Lv.qs.length} · ${R.xp} XP`:R.phase==='read'?`Citire · ${esc(Lv.t)}`:`Nivel terminat · ${R.xp} XP`;
     hud.innerHTML=`<span class="nb">${nb}</span><span class="fv">${txt}${R.streak>=2?` <span class="hot">serie ×${R.streak}</span>`:''}</span>`;
   }else hud.innerHTML=`<span class="nb">TOTAL</span><span class="fv">★ ${t.st}/${C.nivele.length*3} · ${t.xp} XP</span>`;
 }
@@ -46,11 +46,13 @@ function setCrumbs(){
   const sep='<span class="sep" aria-hidden="true">›</span>';
   const parts=[`<a href="../../hub/index.html">🏠 LearningHub</a>`,`<a href="../index.html">Jocuri TIC</a>`];
   if(cls)parts.push(`<a href="../index.html#clasa-${cls}">Clasa ${esc(C.clasa)}</a>`);
-  if(R){parts.push(`<button type="button" class="crumb-btn" id="crumb-game">${esc(C.titlu)}</button>`);parts.push(`<span class="cur" aria-current="page">${C.nivele[R.li].final?'Nivelul final':'Nivelul '+(R.li+1)}</span>`)}
+  if(R){parts.push(`<button type="button" class="crumb-btn" id="crumb-game">${esc(C.titlu)}</button>`);parts.push(`<span class="cur" aria-current="page">${nivelEticheta(R.li)}</span>`)}
   else parts.push(`<span class="cur" aria-current="page">${esc(C.titlu)}</span>`);
   nav.innerHTML=parts.join(sep);
   const g=document.getElementById('crumb-game');if(g)g.onclick=home;
 }
+/* „Nivelul 3 din 7”, „Nivelul final (7 din 7)” - elevii întreabă câte niveluri sunt */
+function nivelEticheta(i){const n=C.nivele.length;return C.nivele[i].final?`Nivelul final (${i+1} din ${n})`:`Nivelul ${i+1} din ${n}`}
 function tabsFor(){
   const Lv=C.nivele[R.li];
   return `<span class="${R.phase==='read'?'now':'done'}">Citire</span>`+Lv.qs.map((_,k)=>{
@@ -63,13 +65,14 @@ function home(){
   R=null;
   const allDone=C.nivele.every((_,i)=>S.lv[i]);
   const rows=C.nivele.map((Lv,i)=>{const d=S.lv[i],u=unlocked(i);
-    return `<button class="lvl" type="button" data-l="${i}" ${u?'':'disabled'}><span class="n">${Lv.final?'final':'nv. '+(i+1)}</span><span class="t">${esc(Lv.t)}</span><span class="s">${d?starsHtml(d.stars):u?'începe →':'blocat'}</span></button>`}).join('');
+    return `<button class="lvl" type="button" data-l="${i}" ${u?'':'disabled'}><span class="n">${i+1} din ${C.nivele.length}${Lv.final?' · final':''}</span><span class="t">${esc(Lv.t)}</span><span class="s">${d?starsHtml(d.stars):u?'începe →':'blocat'}</span></button>`}).join('');
   shell(`
     <div class="eyebrow">TIC · clasa ${esc(C.clasa)} · ${esc(C.unitateTitlu)}</div>
     <h1 style="margin-top:8px">${C.h1||esc(C.titlu)}</h1>
     <div class="lede">${C.intro}</div>
     <div class="ancora">Programa: ${esc(C.competente.join(', '))} · unitatea ${esc(C.unitate)}${C.lectii?` · lecțiile ${esc(C.lectii)}`:''}</div>
     <div class="namerow"><label for="nume">Numele tău, pentru diplomă</label><input id="nume" type="text" autocomplete="off" maxlength="40" value="${esc(S.nume)}" placeholder="ex. Ana Popescu"></div>
+    <div class="toc-h">${C.nivele.length} niveluri · se deblochează pe rând · ultimul e nivelul final</div>
     <nav class="toc" aria-label="Nivelurile">${rows}</nav>
     <div class="row" style="margin-top:22px">
       ${allDone?'<button class="btn primary" id="dipl" type="button">Vezi diploma</button>':''}
@@ -88,7 +91,7 @@ function startLevel(i){R={li:i,qi:0,xp:0,first:0,streak:0,phase:'read'};readPage
 function readPage(){
   const Lv=C.nivele[R.li];
   shell(`
-    <div class="eyebrow">${Lv.final?'Nivelul final':'Nivelul '+(R.li+1)} · pagina de citit</div>
+    <div class="eyebrow">${nivelEticheta(R.li)} · pagina de citit</div>
     <h2 style="margin:8px 0 18px">${esc(Lv.t)}</h2>
     <div class="reading">${Lv.text}</div>
     <div class="row" style="margin-top:10px"><button class="btn primary" id="go" type="button">Am citit — la întrebări →</button>
@@ -98,7 +101,7 @@ function readPage(){
 function question(){
   const Lv=C.nivele[R.li],Q=Lv.qs[R.qi];R.att=0;R.done=false;
   shell(`
-    <div class="row" style="justify-content:space-between"><div class="eyebrow">${esc(Lv.t)}</div>
+    <div class="row" style="justify-content:space-between"><div class="eyebrow">${nivelEticheta(R.li)} · ${esc(Lv.t)}</div>
     <button class="btn ghost sm" id="peekb" type="button" aria-expanded="false">Recitește pagina</button></div>
     <div class="peek reading" id="peek" hidden>${Lv.text}</div>
     <div class="stack" style="margin-top:14px">
@@ -299,7 +302,7 @@ function endLevel(){
   save();R.phase='end';
   const next=R.li+1<C.nivele.length;
   shell(`
-    <div class="eyebrow">${esc(Lv.t)} · nivel terminat</div>
+    <div class="eyebrow">${nivelEticheta(R.li)} · terminat${next?` · ${C.nivele.length-R.li-1===1?'mai e un nivel':'mai sunt '+(C.nivele.length-R.li-1)+' niveluri'}`:' · ai terminat toate nivelurile'}</div>
     <div class="end-stars" style="margin:14px 0 6px" aria-label="${stars===1?'o stea':stars+' stele'} din 3">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3-stars)}</span></div>
     <h2>${stars===3?'Perfect, toate din prima!':stars===2?'Foarte bine!':'Nivel trecut. Poți lua mai multe stele.'}</h2>
     <p class="lede">${R.first} din ${n} răspunsuri corecte din prima · ${R.xp} XP.${stars<3?' Recitește pagina și reia nivelul pentru 3 stele.':''}</p>

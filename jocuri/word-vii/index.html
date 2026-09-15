@@ -80,7 +80,7 @@ h3{font-size:1.2rem;font-weight:600}
 .toc-row{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;background:none;border:0;padding:11px 6px;border-radius:6px}
 .toc-row:hover:not([disabled]){background:var(--paper2)}
 .toc-row[disabled]{cursor:not-allowed;opacity:.5}
-.toc-n{font-family:var(--fm);font-size:.8rem;color:var(--ink2);width:2.2em;flex:none}
+.toc-n{font-family:var(--fm);font-size:.8rem;color:var(--ink2);width:4.2em;flex:none}
 .toc-t{font-weight:600}
 .toc-lead{flex:1;border-bottom:2px dotted var(--rule);transform:translateY(-4px);min-width:20px}
 .toc-s{font-family:var(--fm);font-size:.85rem;white-space:nowrap;color:var(--ink2)}
@@ -322,7 +322,7 @@ function setHud(){
   const t=totals();
   let h='';
   if(R){
-    h+=`<span class="chip">Nivel ${R.li+1} · ${R.phase==='q'?`întrebarea ${R.qi+1}/${LEVELS[R.li].qs.length}`:R.phase==='read'?'citire':'final'}</span>`;
+    h+=`<span class="chip">Nivelul ${R.li+1} din ${LEVELS.length} · ${R.phase==='q'?`întrebarea ${R.qi+1} din ${LEVELS[R.li].qs.length}`:R.phase==='read'?'citire':'terminat'}</span>`;
     h+=`<span class="chip">${R.xp} XP</span>`;
     if(R.streak>=2)h+=`<span class="chip hot">serie ×${R.streak}</span>`;
   }else{
@@ -340,7 +340,7 @@ function home(){
   LEVELS.forEach((L,i)=>{
     const d=S.lv[i],u=unlocked(i);
     rows+=`<button class="toc-row" type="button" data-l="${i}" ${u?'':'disabled'}>
-      <span class="toc-n">${L.boss?'final':'nv. '+(i+1)}</span><span class="toc-t">${esc(L.t)}</span><span class="toc-lead"></span>
+      <span class="toc-n">${i+1} din ${LEVELS.length}</span><span class="toc-t">${esc(L.t)}</span><span class="toc-lead"></span>
       <span class="toc-s">${d?starsHtml(d.stars):u?'începe →':'blocat'}</span></button>`;
   });
   shell(`
@@ -369,7 +369,7 @@ function startLevel(i){R={li:i,qi:0,xp:0,first:0,streak:0,phase:'read'};readPage
 function readPage(){
   const L=LEVELS[R.li];
   shell(`
-    <div class="eyebrow">${L.boss?'Nivelul final':'Nivelul '+(R.li+1)} · pagina de citit</div>
+    <div class="eyebrow">${L.boss?`Nivelul final (${R.li+1} din ${LEVELS.length})`:`Nivelul ${R.li+1} din ${LEVELS.length}`} · pagina de citit</div>
     <h2 style="margin:8px 0 18px">${esc(L.t)}</h2>
     <div class="reading">${L.text}</div>
     <div class="row" style="margin-top:10px"><button class="btn primary" id="go" type="button">Am citit — la întrebări →</button>
@@ -382,7 +382,7 @@ function question(){
   R.att=0;R.done=false;
   let prog='';L.qs.forEach((_,k)=>prog+=`<i class="${k<R.qi?'done':k===R.qi?'now':''}"></i>`);
   shell(`
-    <div class="row" style="justify-content:space-between"><div class="eyebrow">${esc(L.t)}</div>
+    <div class="row" style="justify-content:space-between"><div class="eyebrow">Nivelul ${R.li+1} din ${LEVELS.length} · ${esc(L.t)}</div>
     <button class="btn ghost" id="peekb" type="button" style="padding:4px 12px;font-size:.85rem" aria-expanded="false">Recitește pagina</button></div>
     <div class="progress" aria-hidden="true">${prog}</div>
     <div class="peek reading" id="peek" hidden>${L.text}</div>
@@ -600,7 +600,7 @@ function endLevel(){
   save();R.phase='end';
   const next=R.li+1<LEVELS.length;
   shell(`
-    <div class="eyebrow">${esc(L.t)} · nivel terminat</div>
+    <div class="eyebrow">Nivelul ${R.li+1} din ${LEVELS.length} · terminat${next?` · ${LEVELS.length-R.li-1===1?'mai e un nivel':'mai sunt '+(LEVELS.length-R.li-1)+' niveluri'}`:' · ai terminat toate nivelurile'}</div>
     <div class="end-stars" style="margin:14px 0 6px" aria-label="${stars} stele din 3">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3-stars)}</span></div>
     <h2>${stars===3?'Perfect, toate din prima!':stars===2?'Foarte bine!':'Nivel trecut. Poți lua mai multe stele.'}</h2>
     <p class="lede">${R.first} din ${n} răspunsuri corecte din prima · ${R.xp} XP câștigați.${stars<3?' Recitește pagina și reia nivelul pentru 3 stele.':''}</p>
