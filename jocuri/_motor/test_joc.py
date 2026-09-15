@@ -116,6 +116,12 @@ def static_checks(slug, cfg, page_html, fails, warns):
                     fails.append(f"{tag}: choice cere minim 3 variante unice")
                 if not isinstance(q.get("ok"), int) or not (0 <= q["ok"] < len(o)):
                     fails.append(f"{tag}: ok în afara variantelor")
+                elif len(o) >= 3:
+                    # varianta corectă nu are voie să se vadă după lungime (evaluatorul pilotului a găsit 3 cazuri)
+                    lens = [len(strip_tags(x)) for x in o]
+                    corect, altele = lens[q["ok"]], [l for k, l in enumerate(lens) if k != q["ok"]]
+                    if corect > 1.5 * max(altele) and corect - max(altele) >= 15:
+                        warns.append(f"{tag}: varianta corectă e vizibil mai lungă ({corect} vs max {max(altele)} caractere) - se poate ghici după formă")
                 texts.append(" ".join(o))
             elif t == "tf":
                 if not isinstance(q.get("ok"), bool):
@@ -189,6 +195,14 @@ def run(slug, fails, warns):
                             fails.append(f"N{li0}: antrenament fără `cate` (câte întrebări se trag, minim 3)")
                         elif len(baz) < 2 * cate:
                             fails.append(f"N{li0}: bazinul are {len(baz)} întrebări, dar trebuie cel puțin {2 * cate} (de două ori `cate`), ca reluarea să aducă întrebări noi")
+                        # fiecare întrebare are lecția ei (tragerea echilibrată pe lecții depinde de asta; pilotul Word n-avea niciuna)
+                        fara = sum(1 for q in baz if not q.get("lectii"))
+                        if fara:
+                            fails.append(f"N{li0}: {fara} din {len(baz)} întrebări din bazin nu au `lectii` (tragerea pe lecții nu poate fi echilibrată)")
+                        for n in lv0.get("lectii", []):
+                            k = sum(1 for q in baz if n in (q.get("lectii") or []))
+                            if k < 2:
+                                warns.append(f"N{li0}: lecția {n} are doar {k} întrebări în bazin (la reluare se epuizează din prima; țintă ≥ 2-3)")
                         lv0["qs"] = baz
                 dens = static_checks(slug, cfg, page_html, fails, warns)
 

@@ -59,11 +59,11 @@ def load_sources():
     return un, domains, mp, problems
 
 
-def game_configs():
+def game_configs(exclude=()):
     """(slug, cfg) pentru fiecare joc: pe motor din pagină (Playwright), vechi din acoperire.json."""
     from playwright.sync_api import sync_playwright
     out = []
-    dirs = sorted(d for d in JOCURI.iterdir() if d.is_dir() and not d.name.startswith("_") and (d / "index.html").exists())
+    dirs = sorted(d for d in JOCURI.iterdir() if d.is_dir() and not d.name.startswith("_") and (d / "index.html").exists() and d.name not in exclude)
     with sync_playwright() as p:
         b = p.chromium.launch()
         pg = b.new_page()
@@ -86,9 +86,9 @@ def game_configs():
     return out
 
 
-def main(strict=False):
+def main(strict=False, exclude=()):
     un, domains, mp, problems = load_sources()
-    games = game_configs()
+    games = game_configs(exclude)
     by_unit = {}
     for slug, cfg in games:
         if cfg.get("_lipsa"):
@@ -166,4 +166,5 @@ def main(strict=False):
 
 
 if __name__ == "__main__":
-    main(strict="--strict" in sys.argv)
+    ex = set(sys.argv[sys.argv.index("--exclude") + 1].split(",")) if "--exclude" in sys.argv else set()
+    main(strict="--strict" in sys.argv, exclude=ex)

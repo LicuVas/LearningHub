@@ -139,7 +139,7 @@ function question(){
   const Lv=C.nivele[R.li],Q=Lv.qs[R.qi];R.att=0;R.done=false;
   shell(`
     <div class="row" style="justify-content:space-between"><div class="eyebrow">${nivelEticheta(R.li)} · ${esc(Lv.t)}</div>
-    <button class="btn ghost sm" id="peekb" type="button" aria-expanded="false" ${Lv.text?'':'hidden'}>Recitește pagina</button></div>
+    <button class="btn ghost sm" id="peekb" type="button" aria-expanded="false" ${Lv.text?'':'hidden'}>${Lv.bazin?'Amintește-ți':'Recitește pagina'}</button></div>
     <div class="peek reading" id="peek" hidden>${Lv.text}</div>
     <div class="stack" style="margin-top:14px">
       <p class="q">${Q.q}</p>
@@ -148,7 +148,7 @@ function question(){
       <div class="row" id="nav"></div>
     </div>`,tabsFor());
   const pb=document.getElementById('peekb'),pk=document.getElementById('peek');
-  pb.onclick=()=>{pk.hidden=!pk.hidden;pb.setAttribute('aria-expanded',String(!pk.hidden));pb.textContent=pk.hidden?'Recitește pagina':'Ascunde pagina'};
+  pb.onclick=()=>{pk.hidden=!pk.hidden;pb.setAttribute('aria-expanded',String(!pk.hidden));pb.textContent=pk.hidden?(Lv.bazin?'Amintește-ți':'Recitește pagina'):'Ascunde'};
   const t=TIPURI[Q.t];
   if(!t){document.getElementById('body').innerHTML=`<p class="toast">Tip de întrebare necunoscut: ${esc(Q.t)}</p>`;return}
   t(Q,document.getElementById('body'),API);
@@ -342,11 +342,11 @@ function endLevel(){
   shell(`
     <div class="eyebrow">${nivelEticheta(R.li)} · terminat${(()=>{const rest=C.nivele.length-R.li-1,a=C.mod==='antrenament';return next?` · ${rest===1?(a?'mai e o rundă':'mai e un nivel'):`mai sunt ${rest} ${a?'runde':'niveluri'}`}`:` · ai terminat toate ${a?'rundele':'nivelurile'}`})()}</div>
     <div class="end-stars" style="margin:14px 0 6px" aria-label="${stars===1?'o stea':stars+' stele'} din 3">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3-stars)}</span></div>
-    <h2>${stars===3?'Perfect, toate din prima!':stars===2?'Foarte bine!':'Nivel trecut. Poți lua mai multe stele.'}</h2>
-    <p class="lede">${R.first} din ${n} răspunsuri corecte din prima · ${R.xp} XP.${stars<3?' Recitește pagina și reia nivelul pentru 3 stele.':''}</p>
+    <h2>${stars===3?'Perfect, toate din prima!':stars===2?'Foarte bine!':(C.mod==='antrenament'?'Rundă trecută. Poți lua mai multe stele.':'Nivel trecut. Poți lua mai multe stele.')}</h2>
+    <p class="lede">${R.first} din ${n} răspunsuri corecte din prima · ${R.xp} XP.${stars<3?(C.mod==='antrenament'?' Reia runda: primești alte întrebări pe aceleași lucruri.':' Recitește pagina și reia nivelul pentru 3 stele.'):''}</p>
     <div class="row" style="margin-top:20px">
-      ${next?'<button class="btn primary" id="nx" type="button">Nivelul următor →</button>':'<button class="btn primary" id="dp" type="button">Vezi diploma</button>'}
-      <button class="btn" id="again" type="button">Reia nivelul</button>
+      ${next?`<button class="btn primary" id="nx" type="button">${C.mod==='antrenament'?'Runda următoare':'Nivelul următor'} →</button>`:'<button class="btn primary" id="dp" type="button">Vezi diploma</button>'}
+      <button class="btn" id="again" type="button">${C.mod==='antrenament'?'Reia runda (alte întrebări)':'Reia nivelul'}</button>
       <button class="btn ghost" id="toc" type="button">Cuprins</button>
     </div>`,tabsFor());
   const nx=document.getElementById('nx');if(nx)nx.onclick=()=>startLevel(R.li+1);
@@ -362,7 +362,7 @@ function diploma(){
       <div class="eyebrow">Diplomă</div>
       <h2 style="margin-top:6px">${esc(D.titlu)}</h2>
       <div class="nm">${esc(S.nume||'Elevul fără nume')}</div>
-      <p style="margin:0 auto 14px;max-width:46ch">a trecut toate cele ${C.nivele.length} niveluri ale jocului „${esc(C.titlu)}”: ${esc(D.rezumat)}.</p>
+      <p style="margin:0 auto 14px;max-width:46ch">a trecut toate cele ${C.nivele.length} ${C.mod==='antrenament'?'runde ale antrenamentului':'niveluri ale jocului'} „${esc(C.titlu)}”: ${esc(D.rezumat)}.</p>
       <div class="facts"><span>★ ${t.st}/${C.nivele.length*3}</span><span>${t.xp} XP</span><span>${data}</span></div>
     </div>
     <h3 style="margin-top:28px">Provocarea din ${esc(D.aplicatie)}</h3>

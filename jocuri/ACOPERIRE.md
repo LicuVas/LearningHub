@@ -98,30 +98,30 @@
 
 ## Clasa a VII-a
 
-### VII-U1 · Tehnoredactare: editorul de texte — jocuri: word-obiecte-vii, word-vii
+### VII-U1 · Tehnoredactare: editorul de texte — jocuri: word-antrenament-vii, word-obiecte-vii, word-vii
 
 | Lecția | Titlu | Acoperită de |
 |---|---|---|
-| 2 | Interfața aplicației de realizare a documentelor. Instrumente de bază (predare) | ✅ word-vii N1 |
-| 3 | Gestionarea unui document: creare, deschidere, vizualizare, salvare, închidere (predare) | ✅ word-obiecte-vii N6, word-vii N1 |
-| 4 | Obiecte într-un document: text, imagini, tabele (predare) | ✅ word-obiecte-vii N1, word-obiecte-vii N3 |
-| 5 | Operații de editare: copiere, mutare, ștergere (predare) | ✅ word-vii N2, word-vii N3 |
-| 6 | Formatarea textului și a paragrafului (predare) | ✅ word-vii N4, word-vii N5, word-vii N7 |
-| 7 | Formatarea imaginii, a tabelului și a paginii (predare) | ✅ word-obiecte-vii N2, word-obiecte-vii N4, word-obiecte-vii N5 |
-| 8 | Reguli de tehnoredactare și estetică a paginii tipărite (predare) | ✅ word-obiecte-vii N6, word-vii N6 |
-| 9 | Document după specificații date: scrisoare, carte de vizită, diplomă, felicitare (consolidare (mini-proiect)) | ✅ word-obiecte-vii N7, word-vii N7 |
+| 2 | Interfața aplicației de realizare a documentelor. Instrumente de bază (predare) | ✅ word-antrenament-vii N1, word-vii N1 |
+| 3 | Gestionarea unui document: creare, deschidere, vizualizare, salvare, închidere (predare) | ✅ word-antrenament-vii N1, word-antrenament-vii N2, word-antrenament-vii N3, word-obiecte-vii N6, word-vii N1 |
+| 4 | Obiecte într-un document: text, imagini, tabele (predare) | ✅ word-antrenament-vii N1, word-antrenament-vii N2, word-obiecte-vii N1, word-obiecte-vii N3 |
+| 5 | Operații de editare: copiere, mutare, ștergere (predare) | ✅ word-antrenament-vii N1, word-antrenament-vii N2, word-vii N2, word-vii N3 |
+| 6 | Formatarea textului și a paragrafului (predare) | ✅ word-antrenament-vii N1, word-antrenament-vii N2, word-vii N4, word-vii N5, word-vii N7 |
+| 7 | Formatarea imaginii, a tabelului și a paginii (predare) | ✅ word-antrenament-vii N2, word-antrenament-vii N3, word-obiecte-vii N2, word-obiecte-vii N4, word-obiecte-vii N5 |
+| 8 | Reguli de tehnoredactare și estetică a paginii tipărite (predare) | ✅ word-antrenament-vii N2, word-antrenament-vii N3, word-obiecte-vii N6, word-vii N6 |
+| 9 | Document după specificații date: scrisoare, carte de vizită, diplomă, felicitare (consolidare (mini-proiect)) | ✅ word-antrenament-vii N3, word-obiecte-vii N7, word-vii N7 |
 | 10 | Evaluare sumativă: tehnoredactare (evaluare sumativă) | — |
 
 | Conținut din programă | Acoperit de |
 |---|---|
-| Interfaţa unei aplicaţii de realizare a documentelor *(Editor de texte)* | ✅ word-vii N1 |
-| Instrumente de bază ale unei aplicații de realizare a documentelor *(Editor de texte)* | ✅ word-vii N1, word-vii N4 |
-| Operații pentru gestionarea unui document: creare, deschidere, vizualizare, salvare, închidere *(Editor de texte)* | ✅ word-obiecte-vii N6, word-vii N1 |
-| Obiecte într-un document: text, imagini, tabele *(Editor de texte)* | ✅ word-obiecte-vii N1, word-obiecte-vii N3 |
-| Operaţii de editare într-un document: copiere, mutare, ștergere *(Editor de texte)* | ✅ word-vii N2, word-vii N3 |
-| Operaţii de formatare a unui document: text, imagine, tabel, pagină *(Editor de texte)* | ✅ word-obiecte-vii N2, word-obiecte-vii N4, word-obiecte-vii N5, word-obiecte-vii N7, word-vii N4, word-vii N5, word-vii N7 |
-| Reguli generale de tehnoredactare şi estetică a paginii tipărite *(Editor de texte)* | ✅ word-obiecte-vii N6, word-vii N6 |
-| Reguli de lucru în realizarea unui document conform unor specificații (dimensiune pagină, dimensiune font, dimensiune imagine, format tabel) *(Editor de texte)* | ✅ word-obiecte-vii N5, word-obiecte-vii N7, word-vii N7 |
+| Interfaţa unei aplicaţii de realizare a documentelor *(Editor de texte)* | ✅ word-antrenament-vii N1, word-vii N1 |
+| Instrumente de bază ale unei aplicații de realizare a documentelor *(Editor de texte)* | ✅ word-antrenament-vii N1, word-vii N1, word-vii N4 |
+| Operații pentru gestionarea unui document: creare, deschidere, vizualizare, salvare, închidere *(Editor de texte)* | ✅ word-antrenament-vii N1, word-antrenament-vii N2, word-antrenament-vii N3, word-obiecte-vii N6, word-vii N1 |
+| Obiecte într-un document: text, imagini, tabele *(Editor de texte)* | ✅ word-antrenament-vii N1, word-antrenament-vii N2, word-obiecte-vii N1, word-obiecte-vii N3 |
+| Operaţii de editare într-un document: copiere, mutare, ștergere *(Editor de texte)* | ✅ word-antrenament-vii N1, word-antrenament-vii N2, word-vii N2, word-vii N3 |
+| Operaţii de formatare a unui document: text, imagine, tabel, pagină *(Editor de texte)* | ✅ word-antrenament-vii N1, word-antrenament-vii N2, word-antrenament-vii N3, word-obiecte-vii N2, word-obiecte-vii N4, word-obiecte-vii N5, word-obiecte-vii N7, word-vii N4, word-vii N5, word-vii N7 |
+| Reguli generale de tehnoredactare şi estetică a paginii tipărite *(Editor de texte)* | ✅ word-antrenament-vii N2, word-antrenament-vii N3, word-obiecte-vii N6, word-vii N6 |
+| Reguli de lucru în realizarea unui document conform unor specificații (dimensiune pagină, dimensiune font, dimensiune imagine, format tabel) *(Editor de texte)* | ✅ word-antrenament-vii N3, word-obiecte-vii N5, word-obiecte-vii N7, word-vii N7 |
 
 ### VII-U2 · Aplicații audio și audio-video — jocuri: audio-video-vii
 

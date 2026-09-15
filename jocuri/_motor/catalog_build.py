@@ -46,7 +46,7 @@ def write_grade_blocks(clase):
                 cards.append(f'''            <a href="../../../jocuri/{esc(g["slug"])}/index.html" class="module-card" style="border-left: 3px solid {esc(g["accent"])};">
                 <div class="module-icon" style="background: {esc(g["accent"])};">🎮</div>
                 <div class="module-content">
-                    <div class="module-title">{"Antrenament · " if g.get("mod") == "antrenament" else ""}{esc(g["titlu"])}</div>
+                    <div class="module-title">{"Antrenament · " if g.get("mod") == "antrenament" and "antrenament" not in g["titlu"].lower() else ""}{esc(g["titlu"])}</div>
                     <div class="module-desc">{esc(g["descriere"])}</div>
                     <div class="module-meta">{esc(u["id"])} &bull; {esc(u["titlu"])} &bull; lecțiile {esc(u["lectii"])}</div>
                 </div>
@@ -84,10 +84,13 @@ def write_grade_blocks(clase):
         print(f"{page.parent.name}: bloc jocuri cu {n} {'joc' if n == 1 else 'jocuri'}")
 
 
-def main():
+def main(exclude=()):
     un = json.loads(UNITATI.read_text(encoding="utf-8"))["clase"]
     games = {}
     for d in sorted(p for p in JOCURI.iterdir() if p.is_dir() and not p.name.startswith("_")):
+        if d.name in exclude:  # joc încă în lucru sau neevaluat: nu intră pe pagini
+            print(f"[EXCLUS] {d.name}")
+            continue
         page = d / "index.html"
         if not page.exists():
             continue
@@ -122,7 +125,7 @@ def main():
             info["prima_lectie"] = 999
         games.setdefault(info["unitate"], []).append(info)
     for lst in games.values():
-        lst.sort(key=lambda g: (g["prima_lectie"], g["slug"]))
+        lst.sort(key=lambda g: (g.get("mod") == "antrenament", g["prima_lectie"], g["slug"]))  # învățarea întâi, antrenamentul după
 
     clase = []
     for cls in ["V", "VI", "VII", "VIII"]:
@@ -147,4 +150,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    ex = sys.argv[sys.argv.index("--exclude") + 1].split(",") if "--exclude" in sys.argv else ()
+    main(exclude=set(ex))

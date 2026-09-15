@@ -144,6 +144,16 @@ window.JOCURI_CATALOG = {
        "motor": true,
        "mod": "invatare",
        "prima_lectie": 3
+      },
+      {
+       "slug": "word-antrenament-vii",
+       "titlu": "Antrenament: Word",
+       "descriere": "Antrenament pentru clasa a VII-a: întrebări trase la întâmplare despre editorul de texte, pe trei runde (De bază, Consolidat, Avansat), altele la fiecare reluare.",
+       "unitate": "VII-U1",
+       "accent": "#7A5200",
+       "motor": true,
+       "mod": "antrenament",
+       "prima_lectie": 2
       }
      ]
     },
