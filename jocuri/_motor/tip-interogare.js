@@ -36,8 +36,11 @@ function parse(src){
   if((m=s.match(/^between\s+(.+?)\s+and\s+(.+)$/i))){const a=lit(m[1]),b=lit(m[2]);return v=>cmp(v,'>=',a)&&cmp(v,'<=',b)}
   if(/^is\s+not\s+null$/i.test(s))return v=>v!==null&&v!==''&&v!==undefined;
   if(/^is\s+null$/i.test(s))return v=>v===null||v===''||v===undefined;
-  if((m=s.match(/^not\s+like\s+(.+)$/i))){const p=lit(m[1]);return v=>!like(v,p)}
-  if((m=s.match(/^like\s+(.+)$/i))){const p=lit(m[1]);return v=>like(v,p)}
+  // după Like, Access pune singur ghilimelele: Like D* = Like "D*"
+  const tipar=x=>{x=x.trim();return /^["“„].*["”]$/.test(x)?x.slice(1,-1):x};
+  if((m=s.match(/^not\s+like\s+(.+)$/i))){const p=tipar(m[1]);return v=>!like(v,p)}
+  if((m=s.match(/^like\s+(.+)$/i))){const p=tipar(m[1]);return v=>like(v,p)}
+  if((m=s.match(/^(not\s+)?in\s*\((.+)\)$/i))){const xs=m[2].split(/[,;]/).map(lit);const f=v=>xs.some(x=>cmp(v,'=',x));return m[1]?v=>!f(v):f}
   if((m=s.match(/^not\s+(.+)$/i))){const f=parse(m[1]);return v=>!f(v)}
   if((m=s.match(/^(<=|>=|<>|<|>|=)\s*(.+)$/))){const x=lit(m[2]);return v=>cmp(v,m[1],x)}
   if(/[*?]/.test(s)&&/^["“„].*["”]$/.test(s))throw CErr(`Semnele * și ? merg doar cu Like: Like ${s}.`);
