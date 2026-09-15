@@ -16,7 +16,7 @@ LEGACY = {"word-vii": {"unitate": "VII-U1", "accent": "#2F55D4"}}  # jocuri de s
 
 
 def field(src, name):
-    m = re.search(name + r"""\s*:\s*(['"])(.*?)\1""", src)
+    m = re.search(r"""\b""" + name + r"""["']?\s*:\s*(['"])(.*?)\1""", src)  # merge și pe configurația scrisă ca JSON („"unitate": "V-R"”)
     return m.group(2) if m else None
 
 
@@ -85,6 +85,9 @@ def write_grade_blocks(clase):
 
 
 def main(exclude=()):
+    # întâi se regenerează recapitulările: ele iau întrebările din jocurile clasei, deci trebuie refăcute la fiecare publicare
+    from recapitulare_build import build as build_recap
+    build_recap(exclude)
     un = json.loads(UNITATI.read_text(encoding="utf-8"))["clase"]
     games = {}
     for d in sorted(p for p in JOCURI.iterdir() if p.is_dir() and not p.name.startswith("_")):
@@ -106,7 +109,8 @@ def main(exclude=()):
             "unitate": field(src, "unitate"),
             "accent": accent.group(1) if accent else "#2F55D4",
             "motor": "_motor/motor.js" in src,
-            "mod": "antrenament" if re.search(r"""mod\s*:\s*['"]antrenament['"]""", src) else "invatare",
+            "mod": ("recapitulare" if re.search(r"""["']?recapitulare["']?\s*:\s*true""", src)
+                    else "antrenament" if re.search(r"""["']?mod["']?\s*:\s*['"]antrenament['"]""", src) else "invatare"),
         }
         for k, v in LEGACY.get(d.name, {}).items():
             if not info.get(k):
@@ -131,8 +135,8 @@ def main(exclude=()):
     for cls in ["V", "VI", "VII", "VIII"]:
         rows = []
         for u in un[cls]["unitati"]:
-            if u["id"].endswith(("-E0", "-R")):
-                continue  # deschiderea anului și recapitularea nu au joc de unitate
+            if u["id"].endswith("-E0") or (u["id"].endswith("-R") and u["id"] not in games):
+                continue  # deschiderea anului nu are joc; recapitularea apare doar când există jocul ei
             ls = u["lectii"]
             rows.append({"id": u["id"], "titlu": u["titlu"], "ore": u["ore"],
                          "lectii": f"{ls[0]['nr']}–{ls[-1]['nr']}", "jocuri": games.pop(u["id"], [])})

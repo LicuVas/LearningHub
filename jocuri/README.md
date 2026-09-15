@@ -112,6 +112,17 @@ JocMotor.porneste({ mod:'antrenament', titlu:'Antrenament: Word', unitate:'VII-U
 - **Pasul 0, mecanic:** `python jocuri\_motor\intrebari_unitate.py <UNITATE>` dă toate întrebările existente ale unității, inclusiv din jocurile vechi. La final, `python jocuri\_motor\intrebari_unitate.py <UNITATE> --verifica jocuri\<slug>\index.html` trebuie să dea 0 perechi prea apropiate (asemănare pe cuvinte de conținut ≥ 0,40, fără formulele de enunț).
 - **Sursele descărcate (curl) se verifică să nu fie pagini de eroare** („page not found”, 404). Pilotul avea două „surse” care erau de fapt pagini 404.
 
+### Recapitularea amestecată (stratul 3, 15.09.2026)
+
+Câte un joc pe clasă, `jocuri\recapitulare-<clasa>\`, **GENERAT** de `python jocuri\_motor\recapitulare_build.py`. Scriptul e chemat automat de `catalog_build.py`. **Nu se editează de mână și nu copiază întrebări:** la fiecare generare le ia din jocurile de învățare și de antrenament ale clasei, deci o întrebare reparată într-un joc ajunge și în recapitulare.
+
+- **3 runde.** „Amestec ușor” = prima treime din nivelurile jocurilor de învățare + runda De bază a antrenamentelor. „Amestec mediu” = treimea din mijloc + Consolidat. „Amestec greu” = ultima treime, cu nivelul final + Avansat. Fiecare rundă trage 8 întrebări, întâi pe cele nevăzute.
+- **Amestecul e garantat.** Fiecare întrebare poartă `grup` = unitatea din care vine, iar motorul trage echilibrat întâi pe unități, apoi pe lecții. Măsurat pe 200 de trageri pe rundă, la clasele VI–VIII: 0 trageri cu o singură unitate. Înainte de `grup` erau 6 din 200 la clasa a VIII-a.
+- **Sub fiecare explicație scrie jocul și nivelul de unde vine întrebarea,** ca elevul să știe unde să revină.
+- **Intră doar tipurile care merg fără pagina jocului lor:** cele incluse în motor + foaia de calcul. Simulatoarele definite într-un singur joc (diapozitiv, montaj, cod, pagina, formatare) nu intră.
+- **Unitatea din configurație e unitatea „Recapitulare” a clasei (`V-R` etc.),** cu toate competențele. Poarta verifică lecțiile și conținuturile pe toată clasa, iar `acoperire.py` nu o socotește la acoperirea unităților, pentru că nu adaugă nimic nou.
+- **Pe măsură ce apar jocuri pentru unitățile următoare, recapitularea crește singură** la următoarea rulare a `catalog_build.py`.
+
 `q`, `why`, `text` și `intro` acceptă HTML (`<code>`, `<kbd>`, `<mark>`, `<strong>`). Variantele (`o`, `items`, `pairs`) sunt text simplu.
 
 ## 5. Tema: aspectul vine din lumea subiectului

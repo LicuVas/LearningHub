@@ -91,6 +91,8 @@ def main(strict=False, exclude=()):
     games = game_configs(exclude)
     by_unit = {}
     for slug, cfg in games:
+        if cfg.get("recapitulare"):  # recapitularea e generată din celelalte jocuri; nu adaugă acoperire proprie
+            continue
         if cfg.get("_lipsa"):
             problems.append(f"{slug}: joc fără motor și fără acoperire.json - acoperirea lui e NEDECLARATĂ")
             continue

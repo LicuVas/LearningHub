@@ -68,6 +68,24 @@ window.JOCURI_CATALOG = {
      "ore": 5,
      "lectii": "31–35",
      "jocuri": []
+    },
+    {
+     "id": "V-R",
+     "titlu": "Recapitulare finală și feedback de progres",
+     "ore": 1,
+     "lectii": "36–36",
+     "jocuri": [
+      {
+       "slug": "recapitulare-v",
+       "titlu": "Recapitulare: clasa a V-a",
+       "descriere": "Recapitulare amestecată pentru clasa a V-a: 84 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "unitate": "V-R",
+       "accent": "#8A5A00",
+       "motor": true,
+       "mod": "recapitulare",
+       "prima_lectie": 999
+      }
+     ]
     }
    ]
   },
@@ -133,6 +151,24 @@ window.JOCURI_CATALOG = {
      "ore": 9,
      "lectii": "27–35",
      "jocuri": []
+    },
+    {
+     "id": "VI-R",
+     "titlu": "Recapitulare finală și feedback de progres",
+     "ore": 1,
+     "lectii": "36–36",
+     "jocuri": [
+      {
+       "slug": "recapitulare-vi",
+       "titlu": "Recapitulare: clasa a VI-a",
+       "descriere": "Recapitulare amestecată pentru clasa a VI-a: 110 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "unitate": "VI-R",
+       "accent": "#0E6E6E",
+       "motor": true,
+       "mod": "recapitulare",
+       "prima_lectie": 999
+      }
+     ]
     }
    ]
   },
@@ -208,6 +244,24 @@ window.JOCURI_CATALOG = {
      "ore": 13,
      "lectii": "23–35",
      "jocuri": []
+    },
+    {
+     "id": "VII-R",
+     "titlu": "Recapitulare finală și feedback de progres",
+     "ore": 1,
+     "lectii": "36–36",
+     "jocuri": [
+      {
+       "slug": "recapitulare-vii",
+       "titlu": "Recapitulare: clasa a VII-a",
+       "descriere": "Recapitulare amestecată pentru clasa a VII-a: 133 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "unitate": "VII-R",
+       "accent": "#5B3FA8",
+       "motor": true,
+       "mod": "recapitulare",
+       "prima_lectie": 999
+      }
+     ]
     }
    ]
   },
@@ -266,6 +320,24 @@ window.JOCURI_CATALOG = {
      "ore": 11,
      "lectii": "23–33",
      "jocuri": []
+    },
+    {
+     "id": "VIII-R",
+     "titlu": "Recapitulare finală de gimnaziu",
+     "ore": 2,
+     "lectii": "34–35",
+     "jocuri": [
+      {
+       "slug": "recapitulare-viii",
+       "titlu": "Recapitulare: clasa a VIII-a",
+       "descriere": "Recapitulare amestecată pentru clasa a VIII-a: 119 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "unitate": "VIII-R",
+       "accent": "#9C2F2F",
+       "motor": true,
+       "mod": "recapitulare",
+       "prima_lectie": 999
+      }
+     ]
     }
    ]
   }

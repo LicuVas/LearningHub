@@ -66,6 +66,9 @@ def static_checks(slug, cfg, page_html, fails, warns):
         unit2 = next((u for u in un2.get(ucls, {}).get("unitati", []) if u["id"] == uid), None)
         allowed = {c for d in mp.get(ucls, {}).get(uid, []) for c in domains.get(ucls, {}).get(d, [])}
         nrs = {l["nr"] for l in unit2["lectii"]} if unit2 else set()
+        if cfg.get("recapitulare"):  # recapitularea amestecă toate unitățile clasei: lecții și conținuturi din toată clasa
+            allowed = {c for cont in domains.get(ucls, {}).values() for c in cont}
+            nrs = {l["nr"] for u in un2.get(ucls, {}).get("unitati", []) for l in u["lectii"]}
         for li, lv in enumerate(cfg.get("nivele", []), 1):
             if not lv.get("lectii"):
                 fails.append(f"N{li}: nu declară lectii (numerele lecțiilor din unitate pe care le acoperă)")

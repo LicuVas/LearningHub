@@ -100,11 +100,17 @@ function trage(Lv,i){
   const n=Math.min(Lv.cate||5,Lv.bazin.length),seen=citesteVazut(i);
   const idx=Lv.bazin.map((_,k)=>k);
   const lesson=k=>{const q=Lv.bazin[k];return q.lectii&&q.lectii.length?q.lectii[0]:'?'};
-  const roundRobin=list=>{
-    const groups={};shuffle(list).forEach(k=>{(groups[lesson(k)]=groups[lesson(k)]||[]).push(k)});
+  const rr=(list,key)=>{   // câte unul din fiecare grup, pe rând
+    const groups={};list.forEach(k=>{(groups[key(k)]=groups[key(k)]||[]).push(k)});
     const order=shuffle(Object.keys(groups)),out=[];
     while(out.length<list.length)order.forEach(g=>{if(groups[g].length)out.push(groups[g].shift())});
     return out;
+  };
+  /* echilibrat pe lecții; în recapitulare (întrebări cu `grup` = unitatea) întâi pe unități, apoi pe lecții în fiecare unitate */
+  const roundRobin=list=>{
+    const byLesson=rr(shuffle(list),lesson);
+    if(!byLesson.some(k=>Lv.bazin[k].grup))return byLesson;
+    return rr(byLesson,k=>Lv.bazin[k].grup||'?');
   };
   const pick=roundRobin(idx.filter(k=>!seen.includes(k))).concat(roundRobin(idx.filter(k=>seen.includes(k)))).slice(0,n);
   return {qs:shuffle(pick).map(k=>Lv.bazin[k]),pick};
