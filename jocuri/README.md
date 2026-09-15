@@ -218,9 +218,38 @@ Doar avertizează: numărul de cuvinte și de niveluri. Poarta a fost verificat�
 - **O unitate mare poate avea două jocuri** (Word VII: „Tehnoredactor” + „Machetă”). Acoperirea unității se socotește pe toate jocurile ei împreună.
 - Poarta NU vede faptele și pedagogia → după poartă urmează un **evaluator independent** pe fiecare joc (protocolul hibrid „omul la calculator”, două treceri), care repară doar greșelile clare și dovedite și raportează restul.
 
+**15.09.2026 (seara) — clasa a XII-a, proba D: Word, Excel, PowerPoint, Access + Simulare**
+- **Ancora nu e o programă, ci examenul.** 635 de cerințe din 45 de rezolvări reale au fost sparte în 92 de operații, cu punctele din barem (`data\proba_d\`, `build_unitati.py` → `unitati_xii.json`, cu aceeași formă ca `unitati.json`). Un evaluator independent a verificat 5 variante: 0 cerințe lipsă, 0 inventate, 0 puncte greșite și 5 etichete greșite (corectate în build; `raw\` rămâne neatins).
+- **Datele au răsturnat intuiția:** la Excel, formulele aduc puțin (IF 24 p). Punctele mari sunt la formatarea celulelor (123 p), la setarea paginii (98 p) și la formatul numerelor (54 p). Referința absolută `$` nu apare în niciun subiect. **Nivelurile se ordonează după punctele din barem, nu după manual.**
+- **Divide et impera la aplicații = drumul prin meniu.** Aproape orice cerință înseamnă: selectezi → ajungi la comandă → alegi opțiunea → scrii valoarea. Pentru asta s-au construit:
+  - `tip-traseu.js` (meniuri, cu drumuri alternative prin `ok:[i,j]`);
+  - `tip-interogare.js` (grila Access rulată pe tabel, cu rânduri de graniță care prind criteriul „aproape bun”).
+- **Lecțiile pilotului Excel, trecute în `_campaign\jocuri_xii_2026_09\BRIEF_CONSTRUCTOR.md`,** au scăzut greșelile valului: Excel a avut 2 care blochează + 9 importante; Word, PowerPoint și Access au avut 0 care blochează și 1–5 importante.
+  - Primesc punctaj toate drumurile pe care le acceptă baremul.
+  - Pagina de citit nu dă răspunsul din nivelul final.
+  - Nu se inventează defalcări de barem.
+  - Distractorii sunt comenzi reale.
+- **Poziția variantei bune** era pe primul loc la 27 din 54 de pași → `tip-traseu` amestecă butoanele.
+- **Indiciile trebuie legate de clicul făcut.** Un indiciu general care numește un distractor apărea la orice clic greșit → `indicii:{i:'...'}` pe fiecare variantă.
+- **Simulatorul trebuie să se poarte ca aplicația reală, altfel respinge elevul care are dreptate.**
+  - În Access, `D*` devine singur `Like "D*"`.
+  - Câmpul gol (Null) nu trece la `<>` sau `Not`.
+  - Între câmpuri diferite există și rândul `or`.
+- **Numele filelor diferă între versiunile de Office** (Table Tools › Design în 2016, Table Design în 365): categoriile și traseele nu au voie să penalizeze cealaltă versiune.
+- **3 evaluatori în paralel s-au blocat fără să scrie nimic.** Cauza: pași lungi de citit PDF-uri și browser, fără nicio scriere. De aceea `BRIEF_EVALUATOR.md` cere: raportul se creează imediat și se completează după fiecare nivel, PDF-urile se citesc pe pagini, browserul rulează cu `timeout`.
+- **Pe un site public, un joc în lucru nu are voie să ajungă live pe nevăzute** → `subcompetente-digitale\jocuri\publicate.json` = lista explicită. Motorul rămâne într-un singur loc (LearningHub) și se copiază prin `jocuri_sync.py`. Simularea se regenerează cu `--simulare`.
+- **Dovada de final (live, iPhone SE emulat):** 31/31 verificări.
+  - Cele 5 jocuri se deschid, iar nivelul 1 dă 3 stele.
+  - Răspunsul greșit e respins.
+  - Butonul apare pe cele 4 lecții.
+  - Simularea amestecă toate 4 aplicațiile, iar a doua tragere are 0 întrebări comune cu prima.
+
 ## 10. Deschis / de îmbunătățit
 
 - Portarea Word VII pe motor (editorul → `_motor\tip-editor.js`).
 - Profesorul vede scorul doar pe ecranul elevului (fără server). Un formular sau un cod de verificare, dacă se cere.
 - Etichetele din aplicațiile în română (Word, Excel, PowerPoint…) de verificat pe calculatoarele din laborator.
 - Evaluatorul independent (pedagogie + fapte) ca pas fix după poartă.
+- XII: antrenamentele pe aplicații (De bază / Consolidat / Avansat) nu sunt încă făcute. Pagina jocurilor le lasă loc automat (`word-antrenament-xii`…).
+- XII: etichetele românești marcate „neverificabil” de evaluatori (ex. „Cu anteriorul”, „Panou animație”, „Vizualizare proiect”) de confirmat pe un Office în română. Până atunci butoanele rămân în engleză.
+- `tip-traseu`: drumuri alternative cu număr diferit de pași (clic dreapta sare peste 2 pași) nu se pot declara.
