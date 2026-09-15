@@ -37,7 +37,19 @@ function setHud(){
 }
 function shell(inner,tabs){
   app.innerHTML=`<div class="book"><div class="banda" aria-hidden="true">${C.banda||''}</div><div class="foaie">${inner}</div>${tabs?`<div class="tabs" aria-hidden="true">${tabs}</div>`:''}</div>`;
-  setHud();window.scrollTo({top:0});
+  setHud();setCrumbs();window.scrollTo({top:0});
+}
+/* breadcrumb: 🏠 LearningHub › Jocuri TIC › Clasa › Jocul [› Nivelul N]. Căile sunt relative la jocuri/<slug>/index.html. */
+function setCrumbs(){
+  const nav=document.getElementById('crumbs');if(!nav)return;
+  const m=String(C.clasa).match(/([IVX]+)/),cls=m?m[1]:'';
+  const sep='<span class="sep" aria-hidden="true">›</span>';
+  const parts=[`<a href="../../hub/index.html">🏠 LearningHub</a>`,`<a href="../index.html">Jocuri TIC</a>`];
+  if(cls)parts.push(`<a href="../index.html#clasa-${cls}">Clasa ${esc(C.clasa)}</a>`);
+  if(R){parts.push(`<button type="button" class="crumb-btn" id="crumb-game">${esc(C.titlu)}</button>`);parts.push(`<span class="cur" aria-current="page">${C.nivele[R.li].final?'Nivelul final':'Nivelul '+(R.li+1)}</span>`)}
+  else parts.push(`<span class="cur" aria-current="page">${esc(C.titlu)}</span>`);
+  nav.innerHTML=parts.join(sep);
+  const g=document.getElementById('crumb-game');if(g)g.onclick=home;
 }
 function tabsFor(){
   const Lv=C.nivele[R.li];
@@ -342,7 +354,7 @@ function porneste(config){
     <button class="brand" id="go-home" type="button">${C.marca||esc(C.titlu)}</button>
     <div class="fbar" id="hud" aria-live="polite"></div>
     <button class="pulldown" id="hdr-pull" type="button" aria-label="Arată bara de sus" title="Arată bara de sus">▾</button>
-  </div></header><main id="app"></main>`);
+  </div></header><main><nav class="crumbs" id="crumbs" aria-label="Unde ești"></nav><div id="app"></div></main>`);
   app=document.getElementById('app');hud=document.getElementById('hud');
   document.getElementById('go-home').onclick=home;
   wireHeader();

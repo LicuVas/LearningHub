@@ -22,6 +22,13 @@ Un joc = **o unitate de învățare** din planificarea anului, în ordinea în c
 
 Harta jocurilor pe an: `jocuri\catalog.js` (generat de `python jocuri\_motor\catalog_build.py`). Nu se editează de mână.
 
+**Centralizarea în LearningHub.** Toate se regenerează, nimic nu se editează de mână.
+- **Hub:** cardul „Jocuri TIC” duce la `/jocuri/`.
+- **`/jocuri/`:** traseul pe clase, iar fiecare unitate are jocurile ei.
+- **Pagina fiecărei clase** (`content\tic\cls5..cls8\index.html`) are blocul „Jocuri TIC” între markerii `JOCURI:START/END`, scris tot de `catalog_build.py`.
+- **Fiecare joc** are breadcrumb generat de motor: 🏠 LearningHub › Jocuri TIC › Clasa › Jocul › Nivelul (numele jocului duce înapoi la cuprins).
+- **După ce adaugi un joc:** rulezi `catalog_build.py`, și toate cele trei locuri se actualizează.
+
 ## 3. Cum construiești un joc (pașii unui agent)
 
 0. Citește acest README întreg + un joc-model (`excel-viii\index.html`).

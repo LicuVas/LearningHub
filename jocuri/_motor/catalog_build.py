@@ -20,6 +20,70 @@ def field(src, name):
     return m.group(2) if m else None
 
 
+GRADE_PAGES = {"V": "cls5", "VI": "cls6", "VII": "cls7", "VIII": "cls8"}
+# unde intră blocul prima dată (înainte de acest element, unic pe pagină); după aceea se înlocuiește între markeri
+GRADE_ANCHORS = ['<div class="curriculum-note">', '<div class="exam-notice"']
+START, END = "<!-- JOCURI:START (generat de jocuri/_motor/catalog_build.py) -->", "<!-- JOCURI:END -->"
+
+
+def esc(s):
+    return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;"))
+
+
+def write_grade_blocks(clase):
+    """Pe pagina fiecărei clase din LearningHub (content/tic/clsN/index.html): blocul „Jocuri TIC” cu jocurile clasei,
+    în ordinea unităților. Folosește clasele existente ale paginii (domain-label, modules-grid, module-card)."""
+    root = JOCURI.parent / "content" / "tic"
+    for c in clase:
+        page = root / GRADE_PAGES[c["clasa"]] / "index.html"
+        if not page.exists():
+            print(f"[ATENȚIE] lipsește {page}")
+            continue
+        src = page.read_text(encoding="utf-8")
+        cards = []
+        for u in c["unitati"]:
+            for g in u["jocuri"]:
+                cards.append(f'''            <a href="../../../jocuri/{esc(g["slug"])}/index.html" class="module-card" style="border-left: 3px solid {esc(g["accent"])};">
+                <div class="module-icon" style="background: {esc(g["accent"])};">🎮</div>
+                <div class="module-content">
+                    <div class="module-title">{esc(g["titlu"])}</div>
+                    <div class="module-desc">{esc(g["descriere"])}</div>
+                    <div class="module-meta">{esc(u["id"])} &bull; {esc(u["titlu"])} &bull; lecțiile {esc(u["lectii"])}</div>
+                </div>
+                <span class="module-status" style="background: var(--border); color: var(--text-muted);">Joc</span>
+            </a>''')
+        n = len(cards)
+        body = "\n".join(cards) if cards else '            <p style="color: var(--text-muted);">Jocurile acestei clase sunt în lucru.</p>'
+        block = f'''{START}
+        <div class="domain-label" style="color: var(--accent-green); border-color: var(--accent-green);">
+            <span>🎮</span> Jocuri TIC &bull; {n} {"joc" if n == 1 else "jocuri"} pe traseul anului
+        </div>
+        <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">
+            Lecții-joc: citești o pagină scurtă, răspunzi la întrebări, iei diploma. <a href="../../../jocuri/index.html#clasa-{c["clasa"]}" style="color: var(--accent-green);">Toate jocurile clasei, în ordinea unităților →</a>
+        </p>
+
+        <div class="modules-grid">
+{body}
+        </div>
+        {END}
+'''
+        if START in src and END in src:
+            a, rest = src.split(START, 1)
+            _, b = rest.split(END, 1)
+            new = a + block.rstrip("\n") + b
+        else:
+            anchor = next((x for x in GRADE_ANCHORS if src.count(x) == 1), None)
+            if not anchor:
+                print(f"[ATENȚIE] {page.parent.name}: nu găsesc un loc unic pentru blocul de jocuri")
+                continue
+            i = src.index(anchor)
+            line_start = src.rfind("\n", 0, i) + 1
+            new = src[:line_start] + "        " + block + "\n" + src[line_start:]
+        if new != src:
+            page.write_text(new, encoding="utf-8")
+        print(f"{page.parent.name}: bloc jocuri cu {n} {'joc' if n == 1 else 'jocuri'}")
+
+
 def main():
     un = json.loads(UNITATI.read_text(encoding="utf-8"))["clase"]
     games = {}
@@ -60,6 +124,7 @@ def main():
     for orphan, g in games.items():
         print(f"[ATENȚIE] unitatea {orphan} a jocului {[x['slug'] for x in g]} nu există în unitati.json")
 
+    write_grade_blocks(clase)
     out = {"generat": date.today().isoformat(), "sursa": "Info_Gimnaziu_2026/data/unitati.json", "clase": clase}
     js = "/* GENERAT de _motor/catalog_build.py - nu edita de mână */\nwindow.JOCURI_CATALOG = " + json.dumps(out, ensure_ascii=False, indent=1) + ";\n"
     (JOCURI / "catalog.js").write_text(js, encoding="utf-8")
