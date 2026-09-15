@@ -86,6 +86,7 @@ const CSS=`.qd .tbl{font-family:var(--fm);font-size:.72rem;color:var(--ink2);mar
 .qd .res table{border-collapse:collapse;font-size:.8rem;background:var(--paper)}
 .qd .res td,.qd .res th{border:1px solid var(--line);padding:3px 8px}
 .qd .res th{background:var(--paper2)}
+@media (max-width:400px){.qd table.qg th:first-child{white-space:normal;max-width:4.5em;font-size:.6rem}.qd table.qg select,.qd table.qg input[type=text]{min-width:5em}}
 .qd .rowbtn{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
 .qd .rowbtn button{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:6px;padding:6px 10px;font:inherit;font-size:.85rem}`;
 function nCols(Q){return Q.coloane||Q.ref.length+1}
@@ -129,7 +130,7 @@ function render(Q,body,api){
     if(exp.sortat&&!same(got,exp,true))return 'Înregistrările sunt bune, dar ordinea nu. Verifică rândul Sort (crescător sau descrescător, pe ce câmp).';
     for(const extra of (Q.variante||[])){
       const T={...Q.tabel,randuri:Q.tabel.randuri.concat(extra)};let g2;try{g2=run(T,G)}catch(e){return e.message}
-      if(!same(g2,run(T,Q.ref),exp.sortat))return 'Pe tabelul acesta iese bine, dar criteriul nu e exact cel cerut: pe alte înregistrări (valori de la graniță) ar da alt rezultat. Recitește cerința: „cel puțin”, „mai mare”, „între”.';
+      if(!same(g2,run(T,Q.ref),exp.sortat))return 'Pe tabelul acesta iese bine, dar criteriul nu e exact cel cerut: pe alte înregistrări (valori de la graniță) ar da alt rezultat. '+(Q.ref.some(r=>r.sau)?'Recitește cerința: ce condiții trebuie să fie adevărate împreună (același rând Criteria) și care sunt variante separate (rândul or).':'Recitește cerința: „cel puțin”, „mai mare”, „între”.');
     }
     return '';
   }
