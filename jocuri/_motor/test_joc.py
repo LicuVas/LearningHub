@@ -44,6 +44,11 @@ def static_checks(slug, cfg, page_html, fails, warns):
     cls = cfg.get("clasa", "").replace("a ", "").replace("-a", "").strip()
     try:
         un = json.loads(UNITATI.read_text(encoding="utf-8"))["clase"]
+        sys.path.insert(0, str(Path(__file__).parent))
+        from acoperire import EXTRA
+        for extra in EXTRA:  # clasele cu ancora în examen (XII = proba D)
+            if extra.exists():
+                un.update(json.loads(extra.read_text(encoding="utf-8"))["clase"])
         unit = next((u for u in un.get(cls, {}).get("unitati", []) if u["id"] == cfg.get("unitate")), None)
         if not unit:
             fails.append(f"unitatea {cfg.get('unitate')!r} nu există la clasa {cls!r} în unitati.json")
@@ -324,6 +329,10 @@ def run(slug, fails, warns):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
+    if "--dir" in args:  # jocuri care stau în alt site (ex. subcompetente-digitale/jocuri), cu _motor copiat lângă ele
+        i = args.index("--dir")
+        JOCURI = Path(args[i + 1]).resolve()
+        del args[i:i + 2]
     if not args:
         print(__doc__); sys.exit(2)
     slugs = [d.name for d in JOCURI.iterdir() if d.is_dir() and not d.name.startswith("_") and (d / "index.html").exists()] if args[0] == "--toate" else args

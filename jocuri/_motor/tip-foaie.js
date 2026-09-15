@@ -5,7 +5,22 @@
    (o variantă automată + variants), ca să prindă numerele scrise de mână și comparațiile greșite. */
 (function(){
 'use strict';
-const RO_NAMES={SUMA:'SUM',MEDIE:'AVERAGE',MEDIA:'AVERAGE',DACA:'IF','DACĂ':'IF',MAXIM:'MAX',MINIM:'MIN'};
+const RO_NAMES={SUMA:'SUM',MEDIE:'AVERAGE',MEDIA:'AVERAGE',DACA:'IF','DACĂ':'IF',MAXIM:'MAX',MINIM:'MIN',ROTUNJIRE:'ROUND',NUMARA:'COUNT','NUMĂRĂ':'COUNT'};
+/* copierea formulei (tragerea în jos / la dreapta): referințele fără $ se mută cu dr rânduri și dc coloane, cele cu $ rămân.
+   Q.umple = {D2:['D3','D4']} : elevul scrie în D2, jocul „trage” formula în D3, D4, exact ca Excel. */
+function shift(f,dr,dc){
+  if(typeof f!=='string'||!f.startsWith('='))return f;
+  return f.replace(/("[^"]*")|(\$?)([A-Za-z]{1,2})(\$?)(\d+)(?![A-Za-z(])/g,(all,str,d1,col,d2,row,off,s)=>{
+    if(str)return str;
+    if(/[A-Za-z]/.test(s[off-1]||''))return all;   // parte dintr-un nume de funcție (ex. LOG10)
+    const C=col.toUpperCase();let ci=C.split('').reduce((a,ch)=>a*26+ch.charCodeAt(0)-64,0);
+    if(!d1)ci+=dc;const r=d2?Number(row):Number(row)+dr;
+    if(ci<1||r<1)return '#REF!';
+    let name='';for(let n=ci;n>0;n=Math.floor((n-1)/26))name=String.fromCharCode(65+(n-1)%26)+name;
+    return d1+name+d2+r;
+  });
+}
+const pos=a=>{const m=a.match(/^([A-Z]+)(\d+)$/);return{c:m[1].split('').reduce((x,ch)=>x*26+ch.charCodeAt(0)-64,0),r:Number(m[2])}};
 function FErr(msg,show){const e=new Error(msg);e.show=show||'#EROARE';return e}
 function tokenize(src){
   const t=[];let i=0;
@@ -19,6 +34,8 @@ function tokenize(src){
     if(c==='"'||c==='„'||c==='”'){const close=src.slice(i+1).search(/["”“]/);if(close<0)throw FErr('Lipsește ghilimeaua de închidere.');t.push({k:'str',v:src.slice(i+1,i+1+close)});i+=close+2;continue}
     const zecimalaVirgula=romanesc||!stack.includes('fn');   // în afara funcțiilor, 0,21 nu poate fi separator
     if((m=rest.match(zecimalaVirgula?/^\d+([.,]\d+)?/:/^\d+(\.\d+)?/))){t.push({k:'num',v:parseFloat(m[0].replace(',','.'))});i+=m[0].length;continue}
+    // referință absolută/mixtă ($B$7, B$7, $B7): valoarea e aceeași celulă; `$` contează doar la copierea formulei (vezi shift)
+    if((m=rest.match(/^\$?[A-Za-z]{1,2}\$?\d+/))&&!/^[A-Za-z]{3,}/.test(rest)){t.push({k:'ref',v:m[0].replace(/\$/g,'').toUpperCase(),abs:m[0].includes('$')});i+=m[0].length;continue}
     if((m=rest.match(/^([A-Za-zĂÂÎȘȚăâîșț]+)(\d+)?/))){if(m[2])t.push({k:'ref',v:(m[1]+m[2]).toUpperCase()});else t.push({k:'name',v:m[1].toUpperCase()});i+=m[0].length;continue}
     if((m=rest.match(/^(<=|>=|<>|[-+*\/=<>(),;:%])/))){
       if(m[0]==='(')stack.push(t.length&&t[t.length-1].k==='name'?'fn':'p');
@@ -53,9 +70,31 @@ function evaluate(formula,get){
     if(isOp('(')){p++;const v=cmp();if(!isOp(')'))throw FErr('Lipsește paranteza de închidere.');p++;return v}
     throw FErr(`Nu mă așteptam la „${t.v}” aici.`)}
   function nums(args){const out=[];args.forEach(a=>{if(a&&a.range)a.range.forEach(r=>{const v=get(r);if(typeof v==='number')out.push(v)});else out.push(num(a))});return out}
+  const zona=(a,fn)=>{if(!a||!a.range)throw FErr(`${fn} are nevoie de o zonă de celule (ex. B2:B10), nu de o singură valoare.`);return a.range};
+  // criteriul din COUNTIF/SUMIF/AVERAGEIF: ">=5", "<>admis", "admis", 5 (ca în Excel: textul fără diferență de litere mari/mici)
+  function potriveste(v,crit){
+    let op='=',val=crit;
+    if(typeof crit==='string'){const m=crit.match(/^(<=|>=|<>|<|>|=)?(.*)$/);op=m[1]||'=';val=m[2];
+      if(val!==''&&!isNaN(Number(val.replace(',','.'))))val=Number(val.replace(',','.'))}
+    if(typeof val==='number'){if(typeof v!=='number')return op==='<>';return {'=':v===val,'<>':v!==val,'<':v<val,'>':v>val,'<=':v<=val,'>=':v>=val}[op]}
+    const a=String(v??'').toLowerCase(),b=String(val).toLowerCase();
+    return op==='<>'?a!==b:op==='='?a===b:false;
+  }
   function call(name,args){
     if(name==='IF'&&args.some(a=>a&&a.range))throw FErr('IF nu primește o zonă, ci o comparație.');
     switch(name){
+      case 'COUNT':{let n=0;args.forEach(a=>{if(a&&a.range)a.range.forEach(r=>{if(typeof get(r)==='number')n++});else if(typeof a==='number')n++});return n}
+      case 'COUNTA':{let n=0;args.forEach(a=>{if(a&&a.range)a.range.forEach(r=>{if(get(r)!=='')n++});else n++});return n}
+      case 'COUNTIF':{if(args.length!==2)throw FErr('COUNTIF are două părți: zona și criteriul, ex. =COUNTIF(C2:C9;">=5").');return zona(args[0],'COUNTIF').filter(r=>potriveste(get(r),args[1])).length}
+      case 'SUMIF':case 'AVERAGEIF':{
+        if(args.length<2||args.length>3)throw FErr(`${name} are zona de verificat, criteriul și (opțional) zona de adunat.`);
+        const z=zona(args[0],name),s=args.length===3?zona(args[2],name):z;
+        if(s.length!==z.length)throw FErr('Zona de adunat trebuie să aibă tot atâtea celule cât zona de verificat.');
+        const vals=z.map((r,i)=>potriveste(get(r),args[1])?get(s[i]):null).filter(v=>typeof v==='number');
+        if(name==='SUMIF')return vals.reduce((a,b)=>a+b,0);
+        if(!vals.length)throw FErr('Nicio celulă nu îndeplinește criteriul, deci media nu se poate calcula.','#DIV/0!');
+        return vals.reduce((a,b)=>a+b,0)/vals.length}
+      case 'ROUND':{if(args.length!==2)throw FErr('ROUND are două părți: valoarea și numărul de zecimale, ex. =ROUND(D2;2).');const k=Math.pow(10,num(args[1]));return Math.round(num(args[0])*k+Math.sign(num(args[0]))*1e-9)/k}
       case 'SUM':return nums(args).reduce((s,x)=>s+x,0);
       case 'AVERAGE':{const n=nums(args);if(!n.length)throw FErr('Media unei zone fără numere nu se poate calcula.','#DIV/0!');return n.reduce((s,x)=>s+x,0)/n.length}
       case 'MAX':{const n=nums(args);return n.length?Math.max(...n):0}
@@ -84,7 +123,8 @@ const CSS=`.fxrow{display:flex;align-items:stretch;border:1px solid var(--line);
 .g td.tgt>button{box-shadow:inset 0 0 0 1.5px var(--accent);background:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in srgb,var(--accent) 9%,transparent) 6px 12px)}
 .g td.tgt.filled>button{background:var(--paper)}
 .g td.tgt.act>button{box-shadow:inset 0 0 0 3px var(--accent);background:var(--sel)}
-.g td.err>button{color:var(--bad)}`;
+.g td.err>button,.g td.err>div{color:var(--bad)}
+.g td.copie>div{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--accent) 45%,transparent);font-style:italic}`;
 
 let F={},act=null,Qc=null;
 function getter(formulas,data){
@@ -102,10 +142,14 @@ function render(Q,body,api){
   if(!document.getElementById('tip-foaie-css')){const s=document.createElement('style');s.id='tip-foaie-css';s.textContent=CSS;document.head.appendChild(s)}
   Qc=Q;F={};Object.keys(Q.targets).forEach(k=>F[k]='');act=Object.keys(Q.targets)[0];
   const L=i=>String.fromCharCode(65+i),esc=api.esc;
+  const copii={};Object.entries(Q.umple||{}).forEach(([src,dests])=>dests.forEach(d=>copii[d]=src));
+  // formulele „trase”: fiecare celulă copiată primește formula sursei, mutată cu distanța dintre ele
+  const efectiv=src=>{const E={...src};Object.entries(copii).forEach(([d,s])=>{const a=pos(s),b=pos(d);E[d]=src[s]===''||src[s]==null?'':shift(src[s],b.r-a.r,b.c-a.c)});return E};
   function shown(addr){
-    if(!(addr in F))return{txt:fmt(Q.cells[addr]??''),num:typeof Q.cells[addr]==='number'};
-    const f=F[addr];if(f==='')return{txt:'',num:false};if(!f.startsWith('='))return{txt:f,num:false};
-    try{const v=getter(F,Q.cells)(addr);return{txt:fmt(v),num:typeof v==='number'}}catch(e){return{txt:e.show,num:false,err:true}}
+    const E=efectiv(F);
+    if(!(addr in E))return{txt:fmt(Q.cells[addr]??''),num:typeof Q.cells[addr]==='number'};
+    const f=E[addr];if(f==='')return{txt:'',num:false};if(!f.startsWith('='))return{txt:f,num:false};
+    try{const v=getter(E,Q.cells)(addr);return{txt:fmt(v),num:typeof v==='number'}}catch(e){return{txt:e.show,num:false,err:true}}
   }
   function draw(){
     let h=`<div class="fxrow"><span class="nb">${act}</span><span class="fx">fx</span>
@@ -115,15 +159,17 @@ function render(Q,body,api){
     for(let c=0;c<Q.cols;c++)h+=`<th>${L(c)}</th>`;
     h+='</tr></thead><tbody>';
     for(let r=1;r<=Q.rows;r++){h+=`<tr><th>${r}</th>`;
-      for(let c=0;c<Q.cols;c++){const ad=L(c)+r,tg=ad in F,s=shown(ad);
-        const cls=[tg?'tgt':'',tg&&F[ad]!==''?'filled':'',ad===act?'act':'',s.err?'err':''].join(' ');
+      for(let c=0;c<Q.cols;c++){const ad=L(c)+r,tg=ad in F,s=shown(ad),cp=ad in copii;
+        const cls=[tg?'tgt':'',tg&&F[ad]!==''?'filled':'',ad===act?'act':'',s.err?'err':'',cp?'copie':''].join(' ');
         const inner=`<span class="${s.num?'num':''} ${r===1?'hdr':''}">${esc(s.txt)}</span>`;
-        h+=tg?`<td class="${cls}"><button type="button" data-a="${ad}" aria-label="Celula ${ad} de completat">${inner}</button></td>`:`<td><div data-a="${ad}">${inner}</div></td>`}
+        h+=tg?`<td class="${cls}"><button type="button" data-a="${ad}" aria-label="Celula ${ad} de completat">${inner}</button></td>`:`<td class="${cls}"><div data-a="${ad}">${inner}</div></td>`}
       h+='</tr>'}
     body.innerHTML=h+`</tbody></table></div><div class="toast" id="toast" aria-live="polite"></div>
       <p class="hint" style="margin:0">Celulele cu chenar sunt ale tale. Funcțiile se scriu în engleză. Între părțile lui IF merge și <code>;</code>, și <code>,</code>.</p>`;
     body.querySelectorAll('.g td>button').forEach(x=>x.onclick=()=>{if(api.done())return;commit(false);act=x.dataset.a;draw();body.querySelector('#fxin').focus()});
-    body.querySelectorAll('.g td>div').forEach(x=>x.onclick=()=>{body.querySelector('#toast').textContent=`${x.dataset.a} are datele tabelului. Tu scrii doar în celulele cu chenar.`});
+    body.querySelectorAll('.g td>div').forEach(x=>x.onclick=()=>{const a=x.dataset.a,t=body.querySelector('#toast');
+      if(a in copii){const E=efectiv(F);t.textContent=E[a]?`${a} are formula trasă din ${copii[a]}: ${E[a]}`:`În ${a} ajunge formula din ${copii[a]} când o scrii acolo (ca la tragerea în jos).`}
+      else t.textContent=`${a} are datele tabelului. Tu scrii doar în celulele cu chenar.`});
     body.querySelector('#fxin').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();commit(true)}});
     body.querySelector('#put').onclick=()=>commit(true);
   }
@@ -146,11 +192,15 @@ function render(Q,body,api){
       if(!f.startsWith('=')){out.push(`În ${ad} ai scris text, nu formulă: formula începe cu =.`);continue}
       let toks;try{toks=tokenize(f.slice(1))}catch(e){out.push(`${ad}: ${e.message}`);continue}
       if(!toks.some(t=>t.k==='ref')){out.push(`${ad} are doar numere scrise de mână. Folosește adresele celulelor, ca rezultatul să se recalculeze.`);continue}
-      let got;try{got=getter(F,Q.cells)(ad)}catch(e){out.push(`${ad}: ${e.message}`);continue}
-      const exp=getter(Q.targets,Q.cells)(ad);
+      const E=efectiv(F),T=efectiv(Q.targets);
+      let got;try{got=getter(E,Q.cells)(ad)}catch(e){out.push(`${ad}: ${e.message}`);continue}
+      const exp=getter(T,Q.cells)(ad);
       if(!same(got,exp)){out.push(`${ad} dă ${fmt(got)||'nimic'}, dar ar trebui să dea ${fmt(exp)}.`);continue}
-      for(const v of variants){const data={...Q.cells,...v};let g2;try{g2=getter(F,data)(ad)}catch(e){g2='#'}
-        if(!same(g2,getter(Q.targets,data)(ad))){out.push(`${ad} dă rezultatul bun acum, dar greșește când se schimbă datele din tabel. Verifică adresele și comparația.`);break}}
+      // celulele în care formula e trasă: aici se vede lipsa lui $ (D2 e bun, D3 mută și referința care trebuia să stea pe loc)
+      const rele=Object.keys(copii).filter(d=>copii[d]===ad).filter(d=>{let g;try{g=getter(E,Q.cells)(d)}catch(e){g='#'}return !same(g,getter(T,Q.cells)(d))});
+      if(rele.length){out.push(`${ad} e bună, dar trasă în jos greșește în ${rele.join(', ')} (acolo devine ${E[rele[0]]}). O referință care trebuie să rămână pe loc la copiere are nevoie de $.`);continue}
+      for(const v of variants){const data={...Q.cells,...v};let g2;try{g2=getter(E,data)(ad)}catch(e){g2='#'}
+        if(!same(g2,getter(T,data)(ad))){out.push(`${ad} dă rezultatul bun acum, dar greșește când se schimbă datele din tabel. Verifică adresele și comparația.`);break}}
     }
     return out;
   }
@@ -169,5 +219,5 @@ function rezolva(Q,body){
 function gresit(Q,body){
   for(const ad of Object.keys(Q.targets)){body.querySelector(`.g td>button[data-a="${ad}"]`).click();const inp=body.querySelector('#fxin');inp.value='=1';inp.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))}
 }
-window.JocFoaie={render,rezolva,gresit,evaluate};
+window.JocFoaie={render,rezolva,gresit,evaluate,shift};
 })();

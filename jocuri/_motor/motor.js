@@ -45,7 +45,9 @@ function setCrumbs(){
   const nav=document.getElementById('crumbs');if(!nav)return;
   const m=String(C.clasa).match(/([IVX]+)/),cls=m?m[1]:'';
   const sep='<span class="sep" aria-hidden="true">›</span>';
-  const parts=[`<a href="../../hub/index.html">🏠 LearningHub</a>`,`<a href="../index.html">Jocuri TIC</a>`];
+  /* C.acasa (opțional, ex. site-ul de bac): {href,text} înlocuiește legătura spre LearningHub; C.eticheta înlocuiește „Jocuri TIC” */
+  const acasa=C.acasa||{href:'../../hub/index.html',text:'LearningHub'};
+  const parts=[`<a href="${esc(acasa.href)}">🏠 ${esc(acasa.text)}</a>`,`<a href="../index.html">${esc(C.eticheta||'Jocuri TIC')}</a>`];
   if(cls)parts.push(`<a href="../index.html#clasa-${cls}">Clasa ${esc(C.clasa)}</a>`);
   if(R){parts.push(`<button type="button" class="crumb-btn" id="crumb-game">${esc(C.titlu)}</button>`);parts.push(`<span class="cur" aria-current="page">${nivelEticheta(R.li)}</span>`)}
   else parts.push(`<span class="cur" aria-current="page">${esc(C.titlu)}</span>`);
@@ -68,10 +70,10 @@ function home(){
   const rows=C.nivele.map((Lv,i)=>{const d=S.lv[i],u=unlocked(i);
     return `<button class="lvl" type="button" data-l="${i}" ${u?'':'disabled'}><span class="n">${i+1} din ${C.nivele.length}${Lv.final?' · final':''}</span><span class="t">${esc(Lv.t)}</span><span class="s">${d?starsHtml(d.stars):u?'începe →':'blocat'}</span></button>`}).join('');
   shell(`
-    <div class="eyebrow">TIC · clasa ${esc(C.clasa)} · ${esc(C.unitateTitlu)}</div>
+    <div class="eyebrow">${esc(C.eticheta?C.eticheta.replace(/^Jocuri\s*/,''):'TIC')} · clasa ${esc(C.clasa)} · ${esc(C.unitateTitlu)}</div>
     <h1 style="margin-top:8px">${C.h1||esc(C.titlu)}</h1>
     <div class="lede">${C.intro}</div>
-    <div class="ancora">Programa: ${esc(C.competente.join(', '))} · unitatea ${esc(C.unitate)}${C.lectii?` · lecțiile ${esc(C.lectii)}`:''}</div>
+    <div class="ancora">${C.ancoraText?esc(C.ancoraText):`Programa: ${esc(C.competente.join(', '))} · unitatea ${esc(C.unitate)}${C.lectii?` · lecțiile ${esc(C.lectii)}`:''}`}</div>
     <div class="namerow"><label for="nume">Numele tău, pentru diplomă</label><input id="nume" type="text" autocomplete="off" maxlength="40" value="${esc(S.nume)}" placeholder="ex. Ana Popescu"></div>
     <div class="toc-h">${C.mod==='antrenament'?`${C.nivele.length} runde · De bază → Consolidat → Avansat · întrebări noi la fiecare reluare`:`${C.nivele.length} niveluri · se deblochează pe rând · ultimul e nivelul final`}</div>
     <nav class="toc" aria-label="Nivelurile">${rows}</nav>

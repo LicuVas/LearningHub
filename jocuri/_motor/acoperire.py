@@ -22,6 +22,7 @@ UNITATI = Path(r"C:\00\Projects\Info_Gimnaziu_2026\data\unitati.json")
 CURRIC = Path(r"C:\00\AI_0\data\informatica_gimnaziu\curriculum.json")
 MAP = Path(__file__).with_name("unitati_domenii.json")
 CLS = {"a V-a": "V", "a VI-a": "VI", "a VII-a": "VII", "a VIII-a": "VIII"}
+EXTRA = [JOCURI.parent / "data" / "proba_d" / "unitati_xii.json"]  # generat de data/proba_d/build_unitati.py
 
 
 def find_grade(o, cl):
@@ -49,6 +50,12 @@ def load_sources():
         g = find_grade(cur, long)
         domains[short] = {d["domeniu"]: d["continuturi"] for d in g["continuturi"]}
     problems = []
+    # clase de liceu cu ancora în subiectele de examen, nu în programa de gimnaziu (ex. XII = proba D):
+    # fișierul generat are aceeași formă (clase / domenii / map), deci restul verificărilor merg neschimbate
+    for extra in EXTRA:
+        if extra.exists():
+            ex = json.loads(extra.read_text(encoding="utf-8"))
+            un.update(ex["clase"]); domains.update(ex["domenii"]); mp.update(ex["map"])
     for cls, units in mp.items():
         if cls.startswith("_"):
             continue
