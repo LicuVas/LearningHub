@@ -56,6 +56,30 @@ def static_checks(slug, cfg, page_html, fails, warns):
     except FileNotFoundError:
         warns.append(f"nu găsesc {UNITATI} - ancora în programă NEVERIFICATĂ")
 
+    # A2. acoperirea declarată: fiecare nivel spune ce lecții și ce conținuturi din programă predă și verifică
+    try:
+        sys.path.insert(0, str(Path(__file__).parent))
+        from acoperire import load_sources
+        un2, domains, mp, _ = load_sources()
+        uid = cfg.get("unitate", "")
+        ucls = uid.split("-")[0]
+        unit2 = next((u for u in un2.get(ucls, {}).get("unitati", []) if u["id"] == uid), None)
+        allowed = {c for d in mp.get(ucls, {}).get(uid, []) for c in domains.get(ucls, {}).get(d, [])}
+        nrs = {l["nr"] for l in unit2["lectii"]} if unit2 else set()
+        for li, lv in enumerate(cfg.get("nivele", []), 1):
+            if not lv.get("lectii"):
+                fails.append(f"N{li}: nu declară lectii (numerele lecțiilor din unitate pe care le acoperă)")
+            if not lv.get("continuturi"):
+                fails.append(f"N{li}: nu declară continuturi (textul exact din programă)")
+            for n in lv.get("lectii", []):
+                if n not in nrs:
+                    fails.append(f"N{li}: lecția {n} nu există în unitatea {uid}")
+            for c in lv.get("continuturi", []):
+                if c not in allowed:
+                    fails.append(f"N{li}: conținutul {c!r} nu e în programa unității {uid}")
+    except Exception as e:  # sursele lipsă nu opresc poarta, dar se văd
+        warns.append(f"acoperirea NEVERIFICATĂ: {e}")
+
     # B. structura
     niv = cfg.get("nivele", [])
     if not (5 <= len(niv) <= 8):
@@ -174,6 +198,33 @@ def run(slug, fails, warns):
                 if not pg.locator("#fb .fb.bad").count():
                     fails.append(f"{dev} N{li_w+1}Î1: răspunsul greșit nu a primit „Nu încă”")
                 pg.evaluate("document.getElementById('go-home').click()")
+            # simulatoare: și răspunsul GREȘIT trebuie respins (prima întrebare din fiecare tip propriu), fără să salveze nimic
+            if dev == "Pixel 7":
+                done_types = set()
+                for li, lv in enumerate(cfg["nivele"]):
+                    for qi, q in enumerate(lv["qs"]):
+                        if q["t"] in BUILTIN or q["t"] in done_types:
+                            continue
+                        done_types.add(q["t"])
+                        pg.click(f'.lvl[data-l="{li}"]'); pg.click("#go")
+                        for _ in range(qi):
+                            pg.evaluate("JocMotor.test.rezolva()")
+                            if pg.locator("#chk").count() and not pg.locator("#fb .fb.ok").count():
+                                pg.click("#chk")
+                            pg.click("#next")
+                        try:
+                            has = pg.evaluate("JocMotor.test.gresit()")
+                        except Exception as e:
+                            fails.append(f"{dev} N{li+1}Î{qi+1}: gresit() a dat eroare: {str(e).splitlines()[0][:140]}")
+                            has = None
+                        if has is False:
+                            warns.append(f"simulatorul {q['t']!r} nu are gresit() - răspunsul greșit NEtestat de poartă")
+                        elif has:
+                            if pg.locator("#chk").count():
+                                pg.click("#chk")
+                            if not pg.locator("#fb .fb.bad").count():
+                                fails.append(f"{dev} N{li+1}Î{qi+1}: simulatorul {q['t']!r} a ACCEPTAT răspunsul greșit din gresit()")
+                        pg.evaluate("document.getElementById('go-home').click()")
             for li, lv in enumerate(cfg["nivele"]):
                 pg.click(f'.lvl[data-l="{li}"]')
                 pg.click("#go")

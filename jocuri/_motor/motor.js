@@ -18,6 +18,7 @@ function expandRange(a,b){
 let C,S,R=null,app,hud;
 const TIPURI={};          // tipurile incluse + cele din config
 const REZOLVA={};         // pentru testul automat: pune răspunsul corect în pagină
+const GRESIT={};          // pentru testul automat: pune un răspuns greșit tipic (simulatoare)
 
 /* ---------------- stare ---------------- */
 function load(){let s=null;try{s=JSON.parse(localStorage.getItem(C.cheie))}catch(e){}if(!s||typeof s!=='object')s={nume:'',lv:{}};if(!s.lv)s.lv={};return s}
@@ -351,7 +352,7 @@ function wireHeader(){
 function porneste(config){
   C=config;
   ['cheie','titlu','clasa','unitate','unitateTitlu','competente','intro','nivele','diploma'].forEach(k=>{if(C[k]==null)throw new Error('JocMotor: lipsește „'+k+'” din configurație')});
-  Object.entries(C.tipuri||{}).forEach(([k,v])=>{TIPURI[k]=v.render;if(v.rezolva)REZOLVA[k]=v.rezolva});
+  Object.entries(C.tipuri||{}).forEach(([k,v])=>{TIPURI[k]=v.render;if(v.rezolva)REZOLVA[k]=v.rezolva;if(v.gresit)GRESIT[k]=v.gresit});
   S=load();
   document.body.insertAdjacentHTML('afterbegin',`<header class="hud"><div class="hud-in">
     <button class="brand" id="go-home" type="button">${C.marca||esc(C.titlu)}</button>
@@ -373,6 +374,12 @@ const testHooks={
     const Q=C.nivele[R.li].qs[R.qi],body=document.getElementById('body');
     if(!REZOLVA[Q.t])return false;
     REZOLVA[Q.t](Q,body,API);return true;
+  },
+  /* pune în pagină un răspuns GREȘIT tipic (doar simulatoarele care declară gresit); poarta verifică apoi că e respins */
+  gresit:()=>{
+    const Q=C.nivele[R.li].qs[R.qi],body=document.getElementById('body');
+    if(!GRESIT[Q.t])return false;
+    GRESIT[Q.t](Q,body,API);return true;
   }
 };
 window.JocMotor={porneste,test:testHooks,esc,expandRange};

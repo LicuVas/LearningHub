@@ -146,23 +146,35 @@ function rezolva(Q,body){
   click(`[data-tx="${s.tx}"]`);click(`[data-bg="${s.bg}"]`);click(`[data-mt="${s.mt}"]`);click(`[data-ms="${s.ms}"]`);
   s.keep.forEach((k,i)=>{const b=body.querySelector(`[data-k="${i}"]`);if(b&&(b.getAttribute('aria-pressed')==='true')!==k)b.click()});
 }
-return {render,rezolva,contrast,words};
+/* Răspuns greșit tipic de copil, pentru poartă: pornește de la o variantă bună și strică un singur lucru,
+   cel verificat de întrebare — text galben pe fundal alb (contrast ~1,8), titlu de 20 sau toate rândurile scoase. */
+function gresit(Q,body){
+  rezolva(Q,body);
+  const V=Q.verifica||['contrast','marime','randuri'];
+  const click=sel=>{const b=body.querySelector(sel);if(b)b.click()};
+  if(V.includes('contrast')){click(`[data-tx="${TXT.findIndex(t=>t[0]==='galben')}"]`);click(`[data-bg="${BG.findIndex(b=>b[0]==='alb')}"]`)}
+  else if(V.includes('marime')){click(`[data-mt="${MT.indexOf(20)}"]`)}
+  else{Q.randuri.forEach((_,i)=>{const b=body.querySelector(`[data-k="${i}"]`);if(b&&b.getAttribute('aria-pressed')==='true')b.click()})}
+}
+return {render,rezolva,gresit,contrast,words};
 })();
 
 const LEVELS=[
-{t:'Prezentarea bună și fereastra aplicației',text:`
-<p>O <mark>prezentare</mark> este un șir de <mark>diapozitive</mark> (în engleză <em>slide-uri</em>) pe care le arăți unui public în timp ce vorbești.</p>
-<p>Diapozitivul nu e textul tău scris, ci <strong>sprijinul</strong> pentru ce spui. Dacă publicul citește paragrafe, nu te mai ascultă. Regula de aur: <strong>pe diapozitiv pui ideea, explicația o spui tu</strong>.</p>
-<p>În fereastra aplicației găsești: <strong>panoul cu miniaturi</strong> (în stânga, lista diapozitivelor), <strong>zona de lucru</strong> (diapozitivul mare, pe care îl editezi), <strong>panglica</strong> cu file de comenzi (sus), <mark>zona de note</mark> (sub diapozitiv: notițele tale, pe care publicul nu le vede) și <strong>bara de stare</strong> (jos).</p>
-<p>PowerPoint, LibreOffice Impress și Google Slides au cam aceleași operații. Înveți operația, nu butonul.</p>`,
+{t:'Prezentarea bună și fereastra aplicației',lectii:[2],continuturi:['Elemente de interfață a unei aplicații de realizare a prezentărilor','Instrumente de bază ale aplicației de realizare a prezentărilor'],text:`
+<p>O <mark>prezentare</mark> este un șir de <mark>diapozitive</mark> pe care le arăți unui public în timp ce vorbești.</p>
+<p>Diapozitivul e <strong>sprijinul</strong> pentru ce spui. Dacă publicul citește paragrafe, nu te mai ascultă. Regula de aur: <strong>pe diapozitiv pui ideea, explicația o spui tu</strong>.</p>
+<p>În fereastra aplicației găsești: <strong>panoul cu miniaturi</strong> (în stânga), <strong>zona de lucru</strong> (diapozitivul mare, pe care îl editezi), <strong>panglica</strong> cu file de comenzi (sus), <mark>zona de note</mark> (sub diapozitiv: notițele tale, nevăzute de public) și <strong>bara de stare</strong> (jos).</p>
+<p><mark>Instrumentele de bază</mark> stau pe filele panglicii. În PowerPoint: <strong>Pornire</strong> (fonturi, paragrafe), <strong>Inserare</strong> (imagini, tabele, linkuri), <strong>Proiectare</strong> (teme), <strong>Tranziții</strong>, <strong>Animații</strong>, <strong>Expunere diapozitive</strong>.</p>
+<p>Google Slides și LibreOffice Impress au cam aceleași operații ca PowerPoint. Înveți operația, nu butonul.</p>`,
 qs:[
  {t:'choice',q:'Ce ar trebui să fie scris pe un diapozitiv?',o:['Ideea principală, pe scurt','Tot ce vei spune, cuvânt cu cuvânt','Un paragraf lung, ca să nu uiți nimic','Doar decoruri frumoase'],ok:0,why:'Publicul nu poate citi și asculta în același timp. Pe ecran stă ideea, iar explicația o dai tu, cu voce tare.'},
  {t:'match',q:'Leagă fiecare parte a ferestrei de ce faci cu ea.',pairs:[['Panoul cu miniaturi','schimbi ordinea diapozitivelor'],['Zona de lucru','editezi diapozitivul curent'],['Panglica','găsești comenzile, pe file'],['Zona de note','îți scrii ce ai de spus']],why:'Miniaturile arată toată prezentarea, zona de lucru arată un singur diapozitiv mare, iar notele sunt doar pentru tine.'},
+ {t:'match',q:'În PowerPoint, pe ce filă a panglicii cauți instrumentul?',pairs:[['Inserare','pui o imagine sau un tabel'],['Proiectare','alegi o temă pentru toată prezentarea'],['Pornire','schimbi fontul unui text'],['Expunere diapozitive','pornești prezentarea pe tot ecranul']],why:'Numele filei spune ce fel de instrumente are: pe Inserare adaugi obiecte, pe Proiectare schimbi aspectul întregii prezentări, pe Pornire formatezi textul, iar pe Expunere diapozitive arăți prezentarea publicului.'},
  {t:'tf',q:'Publicul vede pe ecran ce ai scris în zona de note.',ok:false,why:'Fals. Notele le vezi doar tu. De aceea acolo îți poți scrie explicațiile, fără să aglomerezi diapozitivul.'},
  {t:'classify',q:'E semnul unei prezentări bune sau al uneia slabe?',cats:['Bună','Slabă'],items:[['O idee principală pe diapozitiv',0],['Paragrafe întregi de text',1],['Litere mari, ușor de citit',0],['Cinci idei pe același diapozitiv',1],['O imagine care explică ideea',0],['Fundal care „înghite” textul',1]],why:'O prezentare bună se înțelege dintr-o privire: puțin text, litere mari, contrast și imagini care chiar explică ceva.'},
  {t:'choice',q:'Colegul tău lucrează în Google Slides, iar tu în PowerPoint. Ce e adevărat?',o:['Cele mai multe operații se fac la fel, doar butoanele arată puțin altfel','Aplicațiile nu au nimic în comun','Google Slides nu are diapozitive','Doar PowerPoint poate face prezentări'],ok:0,why:'Toate aplicațiile de prezentări lucrează cu diapozitive, obiecte, formatare și efecte. Dacă știi ce operație vrei, găsești butonul ei.'}
 ]},
-{t:'Creez, salvez, închid',text:`
+{t:'Creez, salvez, închid',lectii:[3],continuturi:['Operații de gestionare a prezentărilor: creare, deschidere, expunere, salvare în diverse formate, închidere'],text:`
 <p>Operațiile de <mark>gestionare</mark> sunt aceleași în orice aplicație: <strong>creare</strong>, <strong>deschidere</strong>, <strong>salvare</strong>, <strong>salvare ca…</strong> (sub alt nume sau în alt format) și <strong>închidere</strong>. În PowerPoint, scurtăturile sunt <kbd>Ctrl</kbd>+<kbd>N</kbd> (nou), <kbd>Ctrl</kbd>+<kbd>O</kbd> (deschide) și <kbd>Ctrl</kbd>+<kbd>S</kbd> (salvează).</p>
 <p>Salvează <strong>des</strong>, nu doar la final. Ce nu ai salvat se pierde dacă se oprește calculatorul. Google Slides e o excepție: salvează singur, în Drive.</p>
 <p>Alegi <mark>formatul</mark> după scop: <code>.pptx</code> (PowerPoint) sau <code>.odp</code> (Impress), dacă vrei să mai <strong>modifici</strong> prezentarea; <code>.pdf</code>, dacă vrei ca aspectul să rămână <strong>la fel pe orice calculator</strong>.</p>
@@ -174,7 +186,7 @@ qs:[
  {t:'tf',q:'„Salvare ca…” te lasă să salvezi prezentarea sub alt nume sau în alt format.',ok:true,why:'Adevărat. Salvarea simplă păstrează numele și formatul. „Salvare ca…” le poate schimba, de exemplu ca să faci și o copie PDF.'},
  {t:'classify',q:'Nume bun sau nume slab pentru fișier?',cats:['Bun','Slab'],items:[['Reciclare_6A_Popescu.pptx',0],['final_final_2.pptx',1],['Prezentare1.pptx',1],['Vulcani_geografie_6B.pptx',0]],why:'Un nume bun spune subiectul și autorul sau clasa. Așa îți găsești fișierul și peste o lună, printre ale colegilor.'}
 ]},
-{t:'Diapozitive și obiecte',text:`
+{t:'Diapozitive și obiecte',lectii:[4],continuturi:['Structura unei prezentări: diapozitive, obiecte utilizate în prezentări (casete de text, imagini importate, forme, sunete, tabele, legături)'],text:`
 <p>Pe un diapozitiv nu „scrii” direct, ci <strong>așezi obiecte</strong>: <mark>casete de text</mark>, imagini, forme, tabele, sunete sau legături. Și titlul stă tot într-o casetă de text. Fiecare obiect se poate muta, mări și formata separat.</p>
 <p>O prezentare bună are o <mark>structură</mark>: diapozitivul de <strong>titlu</strong> (subiectul și autorul), <strong>cuprinsul</strong>, <strong>conținutul</strong> (o idee pe diapozitiv), <strong>concluzia</strong> și <strong>sursele</strong> (de unde ai luat informațiile și imaginile).</p>
 <p>Fiecare diapozitiv are un <mark>aspect</mark>, adică o machetă gata făcută: doar titlu, titlu și conținut, două conținuturi alăturate (bune pentru comparații) sau gol. Numele exacte diferă puțin de la o aplicație la alta.</p>`,
@@ -185,12 +197,12 @@ qs:[
  {t:'classify',q:'Obiect pe diapozitiv sau parte a ferestrei aplicației?',cats:['Obiect pe diapozitiv','Parte a ferestrei'],items:[['Caseta de text',0],['Imaginea',0],['Tabelul',0],['Panglica',1],['Zona de note',1],['O formă (săgeată, stea)',0]],why:'Obiectele stau pe diapozitiv și le vede publicul. Panglica și zona de note țin de fereastra aplicației și sunt pentru tine.'},
  {t:'tf',q:'Dacă o imagine e luată de pe internet, nu trebuie să scrii de unde e.',ok:false,why:'Fals. Sursele se trec și pentru imagini. Așa ești corect față de autorul lor, iar publicul poate verifica.'}
 ]},
-{t:'Editez: inserez, mut, dublez, șterg',text:`
+{t:'Editez: inserez, copiez, mut, șterg',lectii:[5],continuturi:['Operații de editare a unei prezentări: inserare, copiere, mutare, ștergere a unui diapozitiv/obiect'],text:`
 <p>A <mark>edita</mark> înseamnă a schimba <strong>ce</strong> conține prezentarea.</p>
-<p>Un diapozitiv nou apare după cel selectat. În PowerPoint îl adaugi cu <kbd>Ctrl</kbd>+<kbd>M</kbd> sau cu clic dreapta pe o miniatură. Tot din clic dreapta îl poți <strong>dubla</strong> (faci o copie identică) sau <strong>ascunde</strong> (rămâne în fișier, dar nu apare când prezinți).</p>
-<p>Ca să <strong>muți</strong> un diapozitiv, tragi miniatura lui mai sus sau mai jos. Ca să-l <strong>ștergi</strong>, îl selectezi și apeși <kbd>Delete</kbd>. Ai greșit? <kbd>Ctrl</kbd>+<kbd>Z</kbd> anulează ultima acțiune.</p>
-<p>Un obiect selectat are <mark>mânere</mark> pe margini. O imagine o mărești trăgând de <strong>colț</strong>. Din mijlocul laturii se turtește.</p>
-<p>Obiectele stau în <strong>straturi</strong>, unul peste altul.</p>`,
+<p>În PowerPoint, un diapozitiv nou îl adaugi cu <kbd>Ctrl</kbd>+<kbd>M</kbd> sau cu clic dreapta pe o miniatură. Tot din clic dreapta îl poți <strong>dubla</strong> (o copie identică) sau <strong>ascunde</strong> (rămâne în fișier, dar nu apare când prezinți).</p>
+<p>Un diapozitiv sau un obiect îl <mark>copiezi</mark> cu <kbd>Ctrl</kbd>+<kbd>C</kbd> și îl lipești cu <kbd>Ctrl</kbd>+<kbd>V</kbd>, chiar și pe alt diapozitiv. Ca să <strong>muți</strong> un diapozitiv, tragi miniatura lui. Ca să-l <strong>ștergi</strong>, îl selectezi și apeși <kbd>Delete</kbd>. <kbd>Ctrl</kbd>+<kbd>Z</kbd> anulează ultima acțiune.</p>
+<p>Un obiect selectat are <mark>mânere</mark>. O imagine o mărești trăgând de <strong>colț</strong>; din mijlocul laturii se turtește.</p>
+<p>Obiectele stau în <strong>straturi</strong>: cu clic dreapta aduci un obiect în față sau îl trimiți în spate.</p>`,
 qs:[
  {t:'choice',q:'Mărești o poză trăgând de mânerul din mijlocul laturii din dreapta. Ce se întâmplă?',o:['Poza se turtește (se deformează)','Poza se mărește perfect','Poza se șterge','Poza se mută pe alt diapozitiv'],ok:0,why:'Mânerul din mijlocul laturii din dreapta schimbă doar lățimea. Mânerul din colț schimbă lățimea și înălțimea deodată, deci poza își păstrează forma.'},
  {t:'order',q:'Diapozitivul 7 trebuie să devină al doilea. Pune pașii în ordine.',items:['Găsești miniatura diapozitivului 7 în panoul din stânga','Ții apăsat pe ea','O tragi în sus, între diapozitivele 1 și 2','Îi dai drumul și verifici ordinea'],why:'Ordinea se schimbă din panoul cu miniaturi: prinzi miniatura, o tragi, îi dai drumul, apoi verifici că prezentarea are sens.'},
@@ -198,13 +210,12 @@ qs:[
  {t:'tf',q:'Un diapozitiv ascuns dispare din fișier.',ok:false,why:'Fals. Diapozitivul ascuns rămâne în fișier și îl poți face din nou vizibil. Doar nu apare când prezinți.'},
  {t:'choice',q:'Titlul nu se mai vede, pentru că ai pus peste el o imagine mare. Ce faci?',o:['Trimiți imaginea în spate, sub text','Scrii titlul din nou','Ștergi diapozitivul','Mărești și mai mult imaginea'],ok:0,why:'Obiectele stau în straturi. Dacă imaginea trece în stratul din spate, titlul revine deasupra ei. Comanda o găsești cu clic dreapta pe imagine.'}
 ]},
-{t:'Formatez ca să se citească',text:`
-<p><mark>Formatarea</mark> schimbă <strong>cum arată</strong> textul, nu ce scrie. Scopul ei: să se citească ușor din ultima bancă.</p>
-<p><strong>Fontul:</strong> simplu, fără înflorituri, același pe toate diapozitivele.</p>
-<p><strong>Mărimea:</strong> titlul în jur de 32–40, textul în jur de 24–28. Sub 20, textul se citește greu din sală.</p>
+{t:'Formatez ca să se citească',lectii:[6],continuturi:['Formatarea textului, obiectelor, diapozitivelor'],text:`
+<p><mark>Formatarea</mark> schimbă <strong>cum arată</strong> ceva, nu ce scrie. Scopul ei: să se citească ușor din ultima bancă.</p>
+<p><strong>Textul:</strong> font simplu, același peste tot; titlul în jur de 32–40, textul în jur de 24–28 (sub 20 se citește greu). <strong>Aldinul</strong> doar pentru cuvântul-cheie.</p>
 <p><mark>Contrastul</mark>: text închis pe fundal deschis sau text deschis pe fundal închis. Galbenul pe alb și griul pe gri nu se văd.</p>
-<p><strong>Aldinul</strong> doar pentru cuvântul-cheie. Dacă totul e aldin, nimic nu mai iese în evidență.</p>
-<p>O <mark>temă</mark> aplică aceleași culori și fonturi pe toate diapozitivele deodată. În PowerPoint, temele sunt pe fila <strong>Proiectare</strong>.</p>`,
+<p><strong>Obiectele:</strong> la o formă schimbi <mark>umplerea</mark> (culoarea din interior) și <mark>conturul</mark> (linia de margine: culoare, grosime).</p>
+<p><strong>Diapozitivul:</strong> îi schimbi <mark>fundalul</mark>, o culoare sau o imagine ștearsă, care nu înghite textul. O <mark>temă</mark> aplică aceleași culori, fonturi și fundaluri pe toate diapozitivele deodată. În PowerPoint, temele sunt pe fila <strong>Proiectare</strong>.</p>`,
 qs:[
  {t:'choice',q:'Ce pereche de culori se citește cel mai bine?',o:['Text negru pe fundal alb','Text galben pe fundal alb','Text gri pe fundal gri','Text roșu pe fundal portocaliu'],ok:0,why:'Când textul și fundalul sunt foarte diferite ca luminozitate, literele se văd clar, chiar și pe un proiector slab.'},
  {t:'tf',q:'Dacă pui tot textul pe aldin, se vede mai bine ce e important.',ok:false,why:'Fals. Aldinul atrage privirea doar când e folosit puțin. Pus peste tot, nu mai scoate nimic în evidență.'},
@@ -212,9 +223,10 @@ qs:[
   titlu:'Sistemul solar',randuri:['Soarele este o stea','Opt planete','Pământul e a treia planetă'],
   start:{tx:2,bg:0,mt:0,ms:0},verifica:['contrast','marime'],
   why:'Jocul a calculat contrastul dintre culorile alese de tine și a verificat mărimile: titlul cel mai mare, textul destul de mare cât să se citească din sală.'},
+ {t:'classify',q:'Ce formatezi în fiecare caz: textul, un obiect sau diapozitivul?',cats:['Textul','Un obiect','Diapozitivul'],items:[['Mărești literele titlului',0],['Pui aldin pe un cuvânt-cheie',0],['Schimbi culoarea din interiorul unei săgeți',1],['Îngroși linia de margine a unui dreptunghi',1],['Schimbi fundalul în albastru deschis',2],['Pui ca fundal o fotografie ștearsă',2]],why:'Fontul, mărimea și aldinul țin de text. Umplerea și conturul țin de o formă, adică de un obiect. Fundalul ține de diapozitivul întreg, nu de un obiect de pe el.'},
  {t:'choice',q:'Ai 12 diapozitive și vrei aceleași culori și fonturi pe toate. Care e calea cea mai rapidă?',o:['Aplici o temă','Schimbi fiecare diapozitiv, pe rând','Faci o prezentare nouă','Pui tot textul pe aldin'],ok:0,why:'Tema se aplică o singură dată pentru toată prezentarea. Așa nu uiți niciun diapozitiv, iar aspectul rămâne unitar.'}
 ]},
-{t:'Animații și tranziții',text:`
+{t:'Animații și tranziții',lectii:[7],continuturi:['Efecte de animație','Efecte de tranziție'],text:`
 <p>Două efecte care se confundă des:</p>
 <ul>
 <li><mark>tranziția</mark> = trecerea de la un diapozitiv la altul (în PowerPoint, fila <strong>Tranziții</strong>);</li>
@@ -230,7 +242,19 @@ qs:[
  {t:'tf',q:'E bine să pui altă tranziție la fiecare diapozitiv, ca prezentarea să fie variată.',ok:false,why:'Fals. Efectele schimbate mereu atrag atenția asupra lor și o iau de pe ce spui. O singură tranziție păstrează prezentarea unitară.'},
  {t:'choice',q:'Cum verifici că animațiile apar în ordinea bună?',o:['Pornești prezentarea cu F5 și treci prin diapozitive','Te uiți la miniaturi','Salvezi prezentarea ca PDF','Mărești textul'],ok:0,why:'Efectele se văd doar când prezentarea rulează. Miniaturile sunt nemișcate, iar într-un PDF animațiile nu există.'}
 ]},
-{t:'Mini-proiect: prezint un joc',final:true,text:`
+{t:'Expun prezentarea',lectii:[8],continuturi:['Modalități de expunere a unei prezentări','Operații de gestionare a prezentărilor: creare, deschidere, expunere, salvare în diverse formate, închidere','Reguli elementare de susținere a unei prezentări'],text:`
+<p><mark>Expunerea</mark> înseamnă să arăți prezentarea pe tot ecranul, așa cum o vede publicul. În PowerPoint, <kbd>F5</kbd> o pornește de la început, <kbd>Shift</kbd>+<kbd>F5</kbd> de la diapozitivul curent, iar <kbd>Esc</kbd> o încheie.</p>
+<p>În expunere treci mai departe cu clic, <kbd>Enter</kbd> sau săgeata spre dreapta și te întorci cu săgeata spre stânga. Tasta <kbd>B</kbd> face ecranul negru, ca toți să te privească pe tine; o apeși din nou și revii.</p>
+<p>Diapozitivele avansează <mark>la clic</mark>, când decizi tu, sau <mark>automat</mark>, după un număr de secunde (fila Tranziții). Automat e bine pe un ecran din holul școlii, unde nu vorbește nimeni. Când prezinți tu, treci mai departe abia după ce ai terminat ideea.</p>
+<p>Cu un al doilea ecran (videoproiectorul), <mark>Vizualizarea prezentator</mark> îți arată ție notele, iar publicul vede doar diapozitivele.</p>`,
+qs:[
+ {t:'choice',q:'Ai lucrat la diapozitivul 6 și vrei să vezi cum arată pe tot ecranul, fără să treci iar prin primele cinci. Ce apeși?',o:['Shift + F5','F5','Esc','Ctrl + S'],ok:0,why:'Shift + F5 pornește expunerea de la diapozitivul la care ești. F5 ar porni de la primul, Esc încheie expunerea, iar Ctrl + S doar salvează.'},
+ {t:'match',q:'Leagă tasta de ce face în PowerPoint.',pairs:[['F5','pornește expunerea de la început'],['Shift + F5','pornește expunerea de la diapozitivul curent'],['Esc','încheie expunerea'],['B','face ecranul negru, apoi îl readuce']],why:'F5 și Shift + F5 pornesc expunerea din locuri diferite, Esc te scoate din ea, iar B te ajută când vrei ca publicul să se uite la tine, nu la ecran.'},
+ {t:'classify',q:'Cum e mai bine să avanseze diapozitivele?',cats:['La clic','Automat'],items:[['Îți prezinți proiectul în fața clasei',0],['Un ecran din holul școlii arată anunțuri, unul după altul',1],['Te oprești să răspunzi la o întrebare a unui coleg',0],['Pozele de la excursie rulează pe ecran la ședința cu părinții, cât timp se adună lumea',1]],why:'Când vorbește cineva, ritmul îl dă omul, deci la clic. Când nu prezintă nimeni, diapozitivele trec singure, după un număr de secunde.'},
+ {t:'tf',q:'În Vizualizarea prezentator, publicul vede pe ecran și notele tale.',ok:false,why:'Fals. Notele apar doar pe ecranul tău, de exemplu pe laptop. Pe videoproiector publicul vede numai diapozitivele.'},
+ {t:'choice',q:'Ioana explica un grafic, iar diapozitivul a trecut singur mai departe, la jumătatea explicației. Ce setare trebuia să aleagă?',o:['Avansarea la clic','Avansarea automată după 5 secunde','O altă temă','Un font mai mare'],ok:0,why:'La clic, diapozitivul rămâne pe ecran cât timp vorbești și trece mai departe doar când ai terminat. Avansarea automată l-a mutat după câteva secunde, iar tema și fontul schimbă doar cum arată diapozitivul.'}
+]},
+{t:'Mini-proiect: prezint un joc',final:true,lectii:[8,9],continuturi:['Reguli elementare de estetică și ergonomie utilizate în realizarea unei prezentări','Reguli elementare de susținere a unei prezentări'],text:`
 <p><strong>Misiunea finală:</strong> prezinți clasei, în 3–5 minute, jocul tău preferat: <strong>șahul</strong>.</p>
 <p><mark>Estetica</mark>: puțin text (cel mult 6 rânduri, cel mult 6 cuvinte pe rând), contrast puternic, font lizibil, aceleași culori pe toate diapozitivele, imagini care explică.</p>
 <p><mark>Ergonomia</mark>: totul se vede din ultima bancă, iar efectele nu obosesc ochii.</p>
@@ -262,13 +286,13 @@ JocMotor.porneste({
   unitateTitlu:'Prezentări digitale',
   competente:['CS.1.1','CS.3.1'],
   lectii:'2–10',
-  intro:'Șapte niveluri despre prezentări: de la fereastra aplicației până la animații și la prezentarea în fața clasei. La fiecare nivel citești o pagină scurtă și răspunzi la întrebări. De două ori repari singur un diapozitiv, iar jocul verifică dacă se poate citi. La final îți iei diploma.',
+  intro:'Opt niveluri despre prezentări: de la fereastra aplicației până la animații, expunere și prezentarea în fața clasei. La fiecare nivel citești o pagină scurtă și răspunzi la întrebări. De două ori repari singur un diapozitiv, iar jocul verifică dacă se poate citi. La final îți iei diploma.',
   banda:'<span class="tt"></span><span class="on"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span class="tt"></span>',
   nivele:LEVELS,
   tipuri:{diapozitiv:JocDiapozitiv},
   diploma:{
     titlu:'Designer de prezentări',
-    rezumat:'fereastra aplicației, salvarea, diapozitive și obiecte, editare, formatare, animații, tranziții și susținerea unei prezentări',
+    rezumat:'fereastra aplicației, salvarea, diapozitive și obiecte, editare, formatare, animații, tranziții, expunerea și susținerea unei prezentări',
     aplicatie:'aplicația de prezentări de la clasă',
     provocare:[
       'Fă o prezentare de 5–7 diapozitive despre jocul tău preferat: titlu, cuprins, conținut, concluzie, surse.',

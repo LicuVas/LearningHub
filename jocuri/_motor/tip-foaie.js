@@ -155,5 +155,9 @@ function render(Q,body,api){
 function rezolva(Q,body){
   for(const [ad,f] of Object.entries(Q.targets)){body.querySelector(`.g td>button[data-a="${ad}"]`).click();const inp=body.querySelector('#fxin');inp.value=f;inp.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))}
 }
-window.JocFoaie={render,rezolva,evaluate};
+/* greșeala tipică: rezultatul scris de mână în loc de formulă cu adrese (trebuie respinsă) */
+function gresit(Q,body){
+  for(const ad of Object.keys(Q.targets)){body.querySelector(`.g td>button[data-a="${ad}"]`).click();const inp=body.querySelector('#fxin');inp.value='=1';inp.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))}
+}
+window.JocFoaie={render,rezolva,gresit,evaluate};
 })();

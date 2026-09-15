@@ -120,6 +120,14 @@ window.JOCURI_CATALOG = {
      "lectii": "2–10",
      "jocuri": [
       {
+       "slug": "word-obiecte-vii",
+       "titlu": "Cărți noi",
+       "descriere": "Lecție-joc pentru clasa a VII-a: imagini, tabele și pagina în editorul de texte, până la o diplomă făcută după specificații.",
+       "unitate": "VII-U1",
+       "accent": "#A3174F",
+       "motor": true
+      },
+      {
        "slug": "word-vii",
        "titlu": "Misiunea Tehnoredactor",
        "descriere": "Word: cursor, selecție, caractere, paragrafe, reguli de tehnoredactare și afișul clasei.",
@@ -173,7 +181,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "excel-viii",
        "titlu": "Misiunea Analist",
-       "descriere": "Excel: celule, tipuri de date, formule adevărate, funcții, IF, sortare și grafice.",
+       "descriere": "Excel: interfața și registrul, editare, tipuri de date, formatare, formule adevărate, funcții, IF, sortare și grafice.",
        "unitate": "VIII-U1",
        "accent": "#1B7443",
        "motor": true

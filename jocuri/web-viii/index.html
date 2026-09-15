@@ -117,23 +117,49 @@ const JocCod=(function(){
     });
   }
   function rezolva(Q,body){const ta=body.querySelector('#codta');ta.value=Q.solutie;ta.dispatchEvent(new Event('input',{bubbles:true}))}
-  return {render,rezolva,problems};
+  /* răspunsul greșit tipic, pornind de la soluția corectă: prima greșeală de copil pe care verificările ar trebui s-o prindă.
+     Dacă niciuna nu schimbă ceva ce se verifică, rămâne codul de pornire (neterminat). */
+  const GRESELI=[
+    s=>s.replace(/\salt\s*=\s*"[^"]*"/gi,''),                    /* imagine fără text alternativ */
+    s=>s.replace(/<a\s+href=/gi,'<a src='),                      /* src în loc de href la legătură */
+    s=>s.replace(/text-align\s*:\s*center/gi,'align: center'),   /* proprietate inventată */
+    s=>s.replace(/\s*<li>[^<]*<\/li>(?![\s\S]*<li>)/i,'').replace(/\s*<li>[^<]*<\/li>(?![\s\S]*<li>)/i,''), /* listă cu prea puține elemente */
+    s=>s.replace(/(<h1[^>]*>[\s\S]*?<\/h1>)\s*(<p>[^<]*<\/p>)/i,'$1\n$2\n$2')  /* copiat în loc de mutat */
+  ];
+  function gresit(Q,body){
+    const ta=body.querySelector('#codta');
+    let src=Q.start||'';
+    for(const g of GRESELI){const s=g(Q.solutie);if(s!==Q.solutie&&problems(s,Q.checks).length){src=s;break}}
+    ta.value=src;ta.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+  return {render,rezolva,gresit,problems,GRESELI};
 })();
 
+/* conținuturile programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={
+  interfata:'Elemente de interfaţă ale unui editor de pagini web',
+  instrumente:'Instrumente de bază ale editorului de pagini web',
+  structura:'Elemente de structură ale unei pagini web: antet, titlu, corp',
+  editare:'Operații de editare a elementelor de conținut (paragraf, imagini, tabele, liste, legături): inserare, ștergere, mutare, copiere',
+  formatare:'Operații de formatare la nivel de text, paragraf, fundal',
+  securitate:'Securitate cibernetică'
+};
+
 const LEVELS=[
-{t:'Cum e făcută o pagină web',text:`
-<p>O pagină web e un <mark>fișier text</mark> cu extensia <strong>.html</strong>. Îl poți deschide și într-un editor de text, de exemplu Notepad. <strong>Browserul</strong> (Chrome, Edge, Firefox) citește fișierul și desenează pagina pe ecran.</p>
-<p>Textul e scris în <mark>HTML</mark>, un <strong>limbaj de marcare</strong>. HTML nu calculează nimic, doar spune „aici e un titlu”, „aici e un paragraf”.</p>
-<p>Marcajele se numesc <mark>etichete</mark> (în engleză <em>tags</em>). Cele mai multe vin în pereche: <code>&lt;p&gt;</code> deschide, <code>&lt;/p&gt;</code> închide. Eticheta care închide are bara <code>/</code>.</p>
-<p>Pagina o scrii de mână sau într-un <mark>editor vizual</mark>: acolo apeși butoane, iar editorul scrie HTML-ul în locul tău.</p>`,
+{t:'Cum e făcută o pagină web',lectii:[14],continuturi:[P.interfata,P.instrumente],text:`
+<p>O pagină web e un <mark>fișier text</mark> cu extensia <strong>.html</strong>. Îl poți deschide și în Notepad. <strong>Browserul</strong> (Chrome, Edge, Firefox) îl citește și desenează pagina.</p>
+<p>Textul e scris în <mark>HTML</mark>, un <strong>limbaj de marcare</strong>: nu calculează, doar spune „aici e un titlu”, „aici e un paragraf”. Marcajele sunt <mark>etichete</mark>: <code>&lt;p&gt;</code> deschide, <code>&lt;/p&gt;</code> închide, cu bara <code>/</code>.</p>
+<p>Pagina o faci într-un <mark>editor de pagini web</mark>. În cele mai multe găsești: <strong>zona de cod</strong>, <strong>previzualizarea</strong> și <strong>bara de instrumente</strong>. Butoanele ei inserează un titlu, o imagine, o listă sau o legătură și scriu eticheta în locul tău. Apoi <strong>salvezi</strong> fișierul .html și îl deschizi în browser.</p>
+<p>Cutiile de cod din joc sunt un astfel de editor, mai mic.</p>`,
 qs:[
  {t:'choice',q:'Ce este HTML?',o:['Un limbaj de marcare, care arată ce rol are fiecare parte a paginii','Un limbaj de programare, care face calcule','Un browser','Un program de desenat'],ok:0,why:'HTML doar marchează: asta e titlu, asta e paragraf. Calculele și deciziile sunt treaba limbajelor de programare.'},
  {t:'choice',q:'Care etichetă ÎNCHIDE un paragraf?',o:['<p>','</p>','<\\p>','<p/>'],ok:1,why:'Eticheta de închidere repetă numele etichetei, cu bara <code>/</code> imediat după <code>&lt;</code>. Bara inversă <code>\\</code> nu are acest rol în HTML.'},
- {t:'match',q:'Potrivește fiecare termen cu rolul lui.',pairs:[['Browser','Citește fișierul și desenează pagina'],['HTML','Limbajul în care e scrisă pagina'],['.html','Extensia fișierului unei pagini web'],['Editor vizual','Scrie codul în locul tău, cât apeși butoane']],why:'Scrii HTML (de mână sau cu editorul vizual), salvezi fișierul ca .html și îl deschizi în browser.'},
+ {t:'match',q:'Potrivește fiecare parte cu rolul ei.',pairs:[['Browser','Citește fișierul și desenează pagina'],['Zona de cod','Aici scrii și vezi etichetele'],['Previzualizarea','Arată pagina cum o va desena browserul'],['Bara de instrumente','Butoane care scriu etichete în locul tău']],why:'În editor lucrezi în zona de cod sau cu butoanele barei, verifici în previzualizare, apoi deschizi fișierul salvat în browser.'},
+ {t:'choice',q:'În editor apeși butonul care inserează o imagine. Ce se schimbă în zona de cod?',o:['Apare o etichetă <img>, scrisă de editor','Nu se schimbă nimic în cod','Se șterg etichetele de până atunci','Se deschide singur browserul'],ok:0,why:'Butoanele editorului sunt o scurtătură: scriu în cod aceleași etichete pe care le-ai scrie de mână.'},
  {t:'tf',q:'O pagină web e un fișier text, pe care îl poți deschide și în Notepad.',ok:true,why:'Adevărat. În Notepad vezi etichetele, iar în browser vezi pagina desenată după ele.'},
  {t:'classify',q:'Etichetă care deschide sau etichetă care închide?',cats:['Deschide','Închide'],items:[['<h1>',0],['</h1>',1],['<body>',0],['</ul>',1],['<li>',0],['</a>',1]],why:'Bara <code>/</code> apare doar în eticheta care închide.'}
 ]},
-{t:'Antet, titlu, corp',text:`
+{t:'Antet, titlu, corp',lectii:[15],continuturi:[P.structura],text:`
 <p>Orice pagină are același <mark>schelet</mark>. Prima linie, <code>&lt;!doctype html&gt;</code>, anunță browserul că urmează o pagină HTML5.</p>
 <p>Totul stă apoi în <code>&lt;html&gt;</code>, care are două părți:</p>
 <ul>
@@ -149,14 +175,14 @@ qs:[
  {t:'hunt',q:'În codul de mai jos sunt 3 greșeli de etichete. Apasă pe ele.',src:'<html> <head> <title>Clasa mea</title> [[</heat>|Antetul se închide cu </head>.]] <body> [[<h7>Bine ați venit!</h7>|Titlurile merg doar de la <h1> la <h6>.]] <p>Suntem 24 de elevi.</p> [[<body>|Corpul se închide cu </body>, cu bară.]] </html>',why:'Browserul nu afișează erori pentru etichete greșite. Ghicește ce ai vrut, iar pagina iese altfel decât plănuiai.'},
  {t:'tf',q:'<code>&lt;h1&gt;</code> și <code>&lt;title&gt;</code> fac același lucru.',ok:false,why:'Fals. <code>&lt;title&gt;</code> e în antet și apare pe filă. <code>&lt;h1&gt;</code> e în corp și apare pe pagină.'}
 ]},
-{t:'Paragrafe și imagini',text:`
-<p>Textul obișnuit stă în <mark>paragrafe</mark>: <code>&lt;p&gt;Text&lt;/p&gt;</code>. Enter-urile din cod nu contează pentru browser. Pentru un rând nou în același paragraf pui <code>&lt;br&gt;</code>.</p>
-<p>Imaginea se pune cu <code>&lt;img src="carpati.jpg" alt="Munți cu zăpadă"&gt;</code>. <code>src</code> și <code>alt</code> sunt <mark>atribute</mark>: le scrii în eticheta de deschidere, cu valoarea între ghilimele.</p>
+{t:'Paragrafe și imagini',lectii:[16],continuturi:[P.editare],text:`
+<p>Textul stă în <mark>paragrafe</mark>: <code>&lt;p&gt;Text&lt;/p&gt;</code>. Enter-urile din cod nu contează pentru browser. Un rând nou în același paragraf cere <code>&lt;br&gt;</code>.</p>
+<p>Imaginea: <code>&lt;img src="carpati.jpg" alt="Munți cu zăpadă"&gt;</code>, fără etichetă de închidere. <code>src</code> și <code>alt</code> sunt <mark>atribute</mark>, scrise în eticheta de deschidere:</p>
 <ul>
 <li><code>src</code> spune ce fișier se afișează;</li>
-<li><code>alt</code> e <mark>textul alternativ</mark>. Apare dacă imaginea nu se încarcă și e citit cu voce tare pentru persoanele nevăzătoare.</li>
+<li><code>alt</code> e <mark>textul alternativ</mark>: apare dacă imaginea nu se încarcă și e citit cu voce tare pentru nevăzători.</li>
 </ul>
-<p><code>&lt;img&gt;</code> nu are etichetă de închidere. Publică doar imagini pe care ai voie să le folosești.</p>`,
+<p>Un element se <mark>editează întreg</mark>, de la eticheta care deschide la cea care închide. Îl selectezi, apoi: <kbd>Ctrl</kbd>+<kbd>C</kbd> copiază, <kbd>Ctrl</kbd>+<kbd>X</kbd> decupează ca să-l muți, <kbd>Ctrl</kbd>+<kbd>V</kbd> lipește, <kbd>Delete</kbd> șterge.</p>`,
 qs:[
  {t:'choice',q:'Scrii în cod două propoziții pe linii diferite, dar în același <code>&lt;p&gt;</code>, fără <code>&lt;br&gt;</code>. Cum apar în browser?',o:['Pe același rând, una după alta','Pe două rânduri','Ca două paragrafe','Nu apar deloc'],ok:0,why:'Browserul nu ține cont de Enter-urile din cod. Un rând nou îl ceri cu <code>&lt;br&gt;</code> sau cu un paragraf nou.'},
  {t:'choice',q:'Ce face atributul <code>alt</code> al unei imagini?',o:['Dă textul care ține locul imaginii când ea nu se vede','Alege fișierul imaginii','Mărește imaginea','Pune un chenar în jurul imaginii'],ok:0,why:'<code>alt</code> descrie imaginea în cuvinte. Fișierul îl alege <code>src</code>.'},
@@ -170,9 +196,20 @@ qs:[
    {el:'img',attrs:{src:'carpati.jpg',alt:'*'},msg:'Imaginea are nevoie de un text alternativ: alt="…" scris în eticheta <img>.'}
   ],
   solutie:'<h1>Munții Carpați</h1>\n<p>Carpații formează un arc prin România.</p>\n<img src="carpati.jpg" alt="Vârfuri din Munții Carpați">',
-  why:'Jocul a citit codul ca un browser și a găsit un <code>&lt;p&gt;</code> cu text și un <code>&lt;img&gt;</code> cu <code>src</code> și <code>alt</code>. Cuvintele tale pot fi oricare.'}
+  why:'Jocul a citit codul ca un browser și a găsit un <code>&lt;p&gt;</code> cu text și un <code>&lt;img&gt;</code> cu <code>src</code> și <code>alt</code>. Cuvintele tale pot fi oricare.'},
+ {t:'cod',q:'Paragraful despre arc e sub imagine, iar la final a rămas un paragraf de probă. <strong>Mută</strong> paragraful despre arc imediat sub titlu și <strong>șterge</strong> de tot paragraful de probă.',
+  start:'<h1>Munții Carpați</h1>\n<img src="carpati.jpg" alt="Vârfuri din Munții Carpați">\n<p>Carpații formează un arc prin România.</p>\n<p>Paragraf de probă, de șters.</p>',
+  checks:[
+   {el:'h1 + p',text:'Carpații formează un arc prin România.',msg:'Paragraful despre arc nu stă imediat sub titlul <h1>. Mută-l întreg, de la <p> la </p>.'},
+   {absent:'<p[^>]*>[^<]*arc\\s+prin[\\s\\S]*<p[^>]*>[^<]*arc\\s+prin',msg:'Paragraful despre arc apare de două ori: l-ai copiat, nu l-ai mutat. La mutare, originalul dispare de unde era.'},
+   {el:'img',attrs:{src:'carpati.jpg',alt:'*'},msg:'Imaginea cu src="carpati.jpg" și textul ei alternativ au dispărut. Pune-le la loc.'},
+   {absent:'Paragraf de prob',msg:'Paragraful de probă e încă în cod. Șterge-l întreg, cu tot cu <p> și </p>.'},
+   {absent:'<p[^>]*>\\s*</p>',msg:'A rămas în cod un paragraf gol, <p></p>. Șterge și etichetele, nu doar textul.'}
+  ],
+  solutie:'<h1>Munții Carpați</h1>\n<p>Carpații formează un arc prin România.</p>\n<img src="carpati.jpg" alt="Vârfuri din Munții Carpați">',
+  why:'Jocul a verificat ordinea elementelor: paragraful vine imediat după <code>&lt;h1&gt;</code> și apare o singură dată. Paragraful de probă nu mai e nicăieri în cod.'}
 ]},
-{t:'Liste și tabele',text:`
+{t:'Liste și tabele',lectii:[17],continuturi:[P.editare],text:`
 <p>O <mark>listă neordonată</mark>, cu buline, e <code>&lt;ul&gt;</code>. O <mark>listă ordonată</mark>, numerotată 1, 2, 3, e <code>&lt;ol&gt;</code>. Fiecare element stă într-un <code>&lt;li&gt;</code>, înăuntrul listei.</p>
 <p>Un <mark>tabel</mark> se construiește rând cu rând:</p>
 <ul>
@@ -194,7 +231,7 @@ qs:[
   why:'Jocul a numărat elementele <code>&lt;li&gt;</code> care stau direct în <code>&lt;ul&gt;</code>. Unul pus după <code>&lt;/ul&gt;</code> nu mai face parte din listă.'},
  {t:'tf',q:'Un element <code>&lt;li&gt;</code> se scrie înăuntrul unei liste <code>&lt;ul&gt;</code> sau <code>&lt;ol&gt;</code>.',ok:true,why:'Adevărat. <code>&lt;li&gt;</code> înseamnă „element de listă”, deci are nevoie de lista din care face parte.'}
 ]},
-{t:'Legături',text:`
+{t:'Legături',lectii:[18],continuturi:[P.editare],text:`
 <p>O <mark>legătură</mark> (link) se scrie cu eticheta <code>&lt;a&gt;</code>: <code>&lt;a href="orar.html"&gt;Orarul clasei&lt;/a&gt;</code>.</p>
 <ul>
 <li>atributul <code>href</code> spune <strong>unde</strong> duce legătura;</li>
@@ -217,7 +254,7 @@ qs:[
   why:'Jocul a căutat un <code>&lt;a&gt;</code> cu <code>href="orar.html"</code> și a citit textul dintre etichete, exact cum face browserul.'},
  {t:'tf',q:'„Apasă aici” e un text bun pentru o legătură.',ok:false,why:'Fals. Cine citește doar legăturile, sau le ascultă cu un cititor de ecran, nu află unde duce „apasă aici”.'}
 ]},
-{t:'Formatare: text, paragraf, fundal',text:`
+{t:'Formatare: text, paragraf, fundal',lectii:[19],continuturi:[P.formatare],text:`
 <p>Aspectul paginii se schimbă cu <mark>stiluri</mark> (CSS). În editorul vizual apeși butoane de formatare. În cod, stilul se scrie în atributul <code>style</code>: <code>&lt;h1 style="color: navy"&gt;</code>.</p>
 <p>Formatezi pe trei niveluri:</p>
 <ul>
@@ -240,7 +277,7 @@ qs:[
   why:'Jocul a citit atributul <code>style</code> al lui <code>&lt;h1&gt;</code> și al lui <code>&lt;body&gt;</code>. Contează proprietatea potrivită pe elementul potrivit, nu culoarea aleasă.'},
  {t:'tf',q:'Text galben-deschis pe fundal alb se citește ușor.',ok:false,why:'Fals. Culorile prea apropiate nu au contrast, iar textul abia se vede, mai ales pe telefon, în soare.'}
 ]},
-{t:'Pagina clasei, în siguranță',final:true,text:`
+{t:'Pagina clasei, în siguranță',lectii:[20,21],continuturi:[P.securitate,P.editare],final:true,text:`
 <p>Ce publici pe web poate rămâne acolo multă vreme, chiar dacă ștergi mai târziu. Pe pagina clasei <strong>nu</strong> pui niciodată: <mark>parole</mark>, adresa de acasă, numere de telefon, data nașterii sau poze cu colegi fără acordul lor.</p>
 <p>Atenție și la paginile false. <mark>Ingineria socială</mark> te păcălește să îți dai singur datele. Semne: <strong>graba</strong> („doar 10 minute!”), <strong>premii prea bune</strong>, cererea de <strong>parolă sau cod</strong>, o adresă care imită una cunoscută.</p>
 <p>Un site serios nu îți cere parola printr-un mesaj. Închizi pagina și anunți un adult.</p>

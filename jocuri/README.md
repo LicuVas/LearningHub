@@ -87,6 +87,8 @@ JocMotor.porneste({
 | `hunt` | `q, src:'text cu [[fragment greșit|explicație]]', spatii:true?, indiciu?, why` | a găsi greșeli într-un text/mesaj/adresă |
 | `pick` | `q, cols, rows, ans:'C5' sau 'B2:C4', range:true?, cells:{A1:'…'}?, why` | a alege o celulă/zonă dintr-o grilă |
 
+**Acoperirea declarată (obligatorie, verificată de poartă, 15.09.2026):** fiecare nivel are `lectii:[4,7]` (numerele lecțiilor din unitate, din `unitati.json`) și `continuturi:['textul EXACT din programă', …]` (din `curriculum.json`, domeniile unității din `_motor\unitati_domenii.json`). Declari doar ce e adevărat: pagina de citit predă ȘI cel puțin o întrebare verifică. Harta completă: `python jocuri\_motor\acoperire.py` → `jocuri\ACOPERIRE.md` (❌ = lecție sau conținut neacoperit în unitățile care au jocuri). Jocurile fără motor declară în `<slug>\acoperire.json`.
+
 `q`, `why`, `text` și `intro` acceptă HTML (`<code>`, `<kbd>`, `<mark>`, `<strong>`). Variantele (`o`, `items`, `pairs`) sunt text simplu.
 
 ## 5. Tema: aspectul vine din lumea subiectului
@@ -115,7 +117,8 @@ Când unitatea cere un gest, nu doar vocabular, scrie un tip nou în `tipuri`:
 ```js
 tipuri:{ nume:{
   render(Q, body, api){ /* desenezi în body; la verificare: api.checkButton(fn) apoi api.resolve(true|false, mesaj) */ },
-  rezolva(Q, body, api){ /* pune răspunsul corect în pagină, pentru poarta automată */ }
+  rezolva(Q, body, api){ /* pune răspunsul corect în pagină, pentru poarta automată */ },
+  gresit(Q, body, api){ /* pune un răspuns GREȘIT tipic de copil; poarta verifică că e respins */ }
 }}
 ```
 
@@ -174,6 +177,11 @@ Doar avertizează: numărul de cuvinte și de niveluri. Poarta a fost verificat�
   - greșeli nemarcate într-un text de vânătoare, care penalizau copilul atent;
   - lipsa acordului părinților la filmarea unui minor.
 - **Scurgerea răspunsului prin formă:** în `hunt`, o greșeală de mai multe cuvinte era UN buton lung, iar textul corect era câte un buton pe cuvânt, deci lungimea butonului trăda răspunsul. Reparat în motor: și greșelile se desenează cuvânt cu cuvânt, cu marcare pe grup. Regula generală: **forma unei variante (lungime, poziție, stil) nu are voie să difere între corect și greșit.**
+**15.09.2026 — centralizare, „Nivelul X din N”, acoperirea programei**
+- **Elevii întrebau câte niveluri sunt** → motorul scrie „Nivelul 3 din 7” peste tot: în bară, pe pagina de citit, la întrebări, în breadcrumb, în cuprins și la final („mai sunt 4 niveluri”). Nu ascunde numărul total.
+- **Acoperirea programei devine măsurabilă:** nivelurile declară lecțiile și conținuturile, poarta refuză declarațiile care nu există în programă, iar `acoperire.py` arată golurile. Declarația poate minți („declarat, dar nepredat”), așa că o confirmă auditorul sau evaluatorul independent, nu unealta.
+- **Poarta verifica la simulatoare doar că răspunsul corect e acceptat** (semnalat de agentul care a construit al doilea joc de Word). Acum simulatorul declară `gresit()`, iar poarta verifică și respingerea. Control negativ: un simulator care acceptă răspunsul greșit a picat, cu mesaj explicit.
+- **O unitate mare poate avea două jocuri** (Word VII: „Tehnoredactor” + „Machetă”). Acoperirea unității se socotește pe toate jocurile ei împreună.
 - Poarta NU vede faptele și pedagogia → după poartă urmează un **evaluator independent** pe fiecare joc (protocolul hibrid „omul la calculator”, două treceri), care repară doar greșelile clare și dovedite și raportează restul.
 
 ## 10. Deschis / de îmbunătățit
