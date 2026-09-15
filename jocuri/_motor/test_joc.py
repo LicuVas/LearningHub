@@ -82,7 +82,12 @@ def static_checks(slug, cfg, page_html, fails, warns):
 
     # B. structura
     niv = cfg.get("nivele", [])
-    if not (5 <= len(niv) <= 8):
+    if cfg.get("mod") == "antrenament":
+        if not (3 <= len(niv) <= 4):
+            warns.append(f"antrenament cu {len(niv)} runde (obișnuit 3-4: De bază, Consolidat, Avansat [+ amestecat])")
+        if any("bazin" not in l for l in niv):
+            fails.append("antrenament: fiecare rundă are nevoie de `bazin` + `cate`")
+    elif not (5 <= len(niv) <= 8):
         warns.append(f"{len(niv)} niveluri (obișnuit 5-8)")
     if not any(l.get("final") for l in niv):
         fails.append("niciun nivel nu are final:true (nivelul final integrator)")
@@ -90,11 +95,11 @@ def static_checks(slug, cfg, page_html, fails, warns):
     texts = [cfg.get("intro", ""), json.dumps(cfg.get("diploma", {}), ensure_ascii=False)]
     for li, lv in enumerate(niv, 1):
         words = len(strip_tags(lv.get("text", "")).split())
-        if not (40 <= words <= 170):
+        if "bazin" not in lv and not (40 <= words <= 170):
             warns.append(f"N{li}: pagina de citit are {words} cuvinte (obișnuit 60-120)")
         texts.append(lv.get("text", ""))
         qs = lv.get("qs", [])
-        if not (3 <= len(qs) <= 6):
+        if "bazin" not in lv and not (3 <= len(qs) <= 6):
             warns.append(f"N{li}: {len(qs)} întrebări (obișnuit 4-5)")
         for qi, q in enumerate(qs, 1):
             tag = f"N{li}Î{qi}"
@@ -176,6 +181,15 @@ def run(slug, fails, warns):
             pg.wait_for_timeout(300)
             if cfg is None:
                 cfg = pg.evaluate("JSON.parse(JSON.stringify(JocMotor.test.config(),(k,v)=>typeof v==='function'?'[fn]':v))")
+                # antrenament: nivelul are bazin + cate; poarta joacă TOT bazinul (vezi toateIntrebarile mai jos)
+                for li0, lv0 in enumerate(cfg.get("nivele", []), 1):
+                    if "bazin" in lv0:
+                        cate, baz = lv0.get("cate"), lv0["bazin"]
+                        if not isinstance(cate, int) or cate < 3:
+                            fails.append(f"N{li0}: antrenament fără `cate` (câte întrebări se trag, minim 3)")
+                        elif len(baz) < 2 * cate:
+                            fails.append(f"N{li0}: bazinul are {len(baz)} întrebări, dar trebuie cel puțin {2 * cate} (de două ori `cate`), ca reluarea să aducă întrebări noi")
+                        lv0["qs"] = baz
                 dens = static_checks(slug, cfg, page_html, fails, warns)
 
             def overflow(where):
@@ -184,6 +198,7 @@ def run(slug, fails, warns):
                     fails.append(f"{dev} {where}: pagina e mai lată decât ecranul ({w[0]}px > {w[1]}px)")
 
             overflow("cuprins")
+            pg.evaluate("JocMotor.test.toateIntrebarile()")
             pg.evaluate("JocMotor.test.deblocheaza()")
             pg.evaluate("document.getElementById('go-home').click()")
             # răspuns greșit: prima întrebare choice/tf care deschide un nivel (nu se salvează nimic)

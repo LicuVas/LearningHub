@@ -53,7 +53,7 @@ function setCrumbs(){
   const g=document.getElementById('crumb-game');if(g)g.onclick=home;
 }
 /* „Nivelul 3 din 7”, „Nivelul final (7 din 7)” - elevii întreabă câte niveluri sunt */
-function nivelEticheta(i){const n=C.nivele.length;return C.nivele[i].final?`Nivelul final (${i+1} din ${n})`:`Nivelul ${i+1} din ${n}`}
+function nivelEticheta(i){const n=C.nivele.length,w=C.mod==='antrenament'?'Runda':'Nivelul';return C.nivele[i].final?`${w} finală (${i+1} din ${n})`.replace('Nivelul finală','Nivelul final'):`${w} ${i+1} din ${n}`}
 function tabsFor(){
   const Lv=C.nivele[R.li];
   return `<span class="${R.phase==='read'?'now':'done'}">Citire</span>`+Lv.qs.map((_,k)=>{
@@ -73,7 +73,7 @@ function home(){
     <div class="lede">${C.intro}</div>
     <div class="ancora">Programa: ${esc(C.competente.join(', '))} · unitatea ${esc(C.unitate)}${C.lectii?` · lecțiile ${esc(C.lectii)}`:''}</div>
     <div class="namerow"><label for="nume">Numele tău, pentru diplomă</label><input id="nume" type="text" autocomplete="off" maxlength="40" value="${esc(S.nume)}" placeholder="ex. Ana Popescu"></div>
-    <div class="toc-h">${C.nivele.length} niveluri · se deblochează pe rând · ultimul e nivelul final</div>
+    <div class="toc-h">${C.mod==='antrenament'?`${C.nivele.length} runde · De bază → Consolidat → Avansat · întrebări noi la fiecare reluare`:`${C.nivele.length} niveluri · se deblochează pe rând · ultimul e nivelul final`}</div>
     <nav class="toc" aria-label="Nivelurile">${rows}</nav>
     <div class="row" style="margin-top:22px">
       ${allDone?'<button class="btn primary" id="dipl" type="button">Vezi diploma</button>':''}
@@ -88,22 +88,43 @@ function home(){
 }
 
 /* ---------------- nivel ---------------- */
-function startLevel(i){R={li:i,qi:0,xp:0,first:0,streak:0,phase:'read'};readPage()}
+/* ANTRENAMENT (stratul 2 al repetiției): un nivel cu `bazin:[întrebări]` și `cate:N` primește la fiecare pornire N întrebări
+   trase la întâmplare, întâi cele nevăzute la reluările anterioare. Așa elevul reia aceleași lucruri, dar nu aceleași întrebări. */
+let TEST_TOATE=false;
+function trage(Lv,i){
+  if(TEST_TOATE)return Lv.bazin.slice();
+  const n=Math.min(Lv.cate||5,Lv.bazin.length),key=C.cheie+'_vazut_'+i;
+  let seen=[];try{seen=JSON.parse(localStorage.getItem(key))||[]}catch(e){}
+  const idx=Lv.bazin.map((_,k)=>k);
+  const pick=shuffle(idx.filter(k=>!seen.includes(k))).concat(shuffle(idx.filter(k=>seen.includes(k)))).slice(0,n);
+  let next=seen.filter(k=>!pick.includes(k)).concat(pick);
+  if(idx.every(k=>next.includes(k)))next=pick;   // a văzut tot bazinul: ciclul o ia de la capăt
+  try{localStorage.setItem(key,JSON.stringify(next))}catch(e){}
+  return pick.map(k=>Lv.bazin[k]);
+}
+function startLevel(i){
+  const Lv=C.nivele[i];
+  if(Lv.bazin)Lv.qs=trage(Lv,i);
+  R={li:i,qi:0,xp:0,first:0,streak:0,phase:'read'};readPage();
+}
 function readPage(){
   const Lv=C.nivele[R.li];
+  const intro=Lv.bazin
+    ?`<p class="lede" style="margin:0 0 14px">${Lv.qs.length} întrebări alese la întâmplare din ${Lv.bazin.length}. La fiecare reluare primești altele, pe aceleași lucruri din lecții.</p>${Lv.text?`<div class="peek reading" style="display:block"><div class="lbl">Amintește-ți</div>${Lv.text}</div>`:''}`
+    :`<div class="reading">${Lv.text}</div>`;
   shell(`
-    <div class="eyebrow">${nivelEticheta(R.li)} · pagina de citit</div>
+    <div class="eyebrow">${nivelEticheta(R.li)} · ${Lv.bazin?'pregătire':'pagina de citit'}</div>
     <h2 style="margin:8px 0 18px">${esc(Lv.t)}</h2>
-    <div class="reading">${Lv.text}</div>
-    <div class="row" style="margin-top:10px"><button class="btn primary" id="go" type="button">Am citit — la întrebări →</button>
-    <span class="hint">${Lv.qs.length} întrebări · pagina se poate reciti oricând</span></div>`,tabsFor());
+    ${intro}
+    <div class="row" style="margin-top:10px"><button class="btn primary" id="go" type="button">${Lv.bazin?'Încep runda →':'Am citit — la întrebări →'}</button>
+    <span class="hint">${Lv.qs.length} întrebări${Lv.text?' · pagina se poate reciti oricând':''}</span></div>`,tabsFor());
   document.getElementById('go').onclick=()=>{R.phase='q';question()};
 }
 function question(){
   const Lv=C.nivele[R.li],Q=Lv.qs[R.qi];R.att=0;R.done=false;
   shell(`
     <div class="row" style="justify-content:space-between"><div class="eyebrow">${nivelEticheta(R.li)} · ${esc(Lv.t)}</div>
-    <button class="btn ghost sm" id="peekb" type="button" aria-expanded="false">Recitește pagina</button></div>
+    <button class="btn ghost sm" id="peekb" type="button" aria-expanded="false" ${Lv.text?'':'hidden'}>Recitește pagina</button></div>
     <div class="peek reading" id="peek" hidden>${Lv.text}</div>
     <div class="stack" style="margin-top:14px">
       <p class="q">${Q.q}</p>
@@ -303,7 +324,7 @@ function endLevel(){
   save();R.phase='end';
   const next=R.li+1<C.nivele.length;
   shell(`
-    <div class="eyebrow">${nivelEticheta(R.li)} · terminat${next?` · ${C.nivele.length-R.li-1===1?'mai e un nivel':'mai sunt '+(C.nivele.length-R.li-1)+' niveluri'}`:' · ai terminat toate nivelurile'}</div>
+    <div class="eyebrow">${nivelEticheta(R.li)} · terminat${(()=>{const rest=C.nivele.length-R.li-1,a=C.mod==='antrenament';return next?` · ${rest===1?(a?'mai e o rundă':'mai e un nivel'):`mai sunt ${rest} ${a?'runde':'niveluri'}`}`:` · ai terminat toate ${a?'rundele':'nivelurile'}`})()}</div>
     <div class="end-stars" style="margin:14px 0 6px" aria-label="${stars===1?'o stea':stars+' stele'} din 3">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3-stars)}</span></div>
     <h2>${stars===3?'Perfect, toate din prima!':stars===2?'Foarte bine!':'Nivel trecut. Poți lua mai multe stele.'}</h2>
     <p class="lede">${R.first} din ${n} răspunsuri corecte din prima · ${R.xp} XP.${stars<3?' Recitește pagina și reia nivelul pentru 3 stele.':''}</p>
@@ -370,6 +391,7 @@ const testHooks={
   config:()=>C,
   stare:()=>R?{li:R.li,qi:R.qi,phase:R.phase,done:R.done}:null,
   deblocheaza:()=>{C.nivele.forEach((_,i)=>S.lv[i]=S.lv[i]||{stars:1,xp:0});save()},
+  toateIntrebarile:()=>{TEST_TOATE=true},   // antrenament: poarta joacă tot bazinul, nu doar ce iese la tragere
   rezolva:()=>{
     const Q=C.nivele[R.li].qs[R.qi],body=document.getElementById('body');
     if(!REZOLVA[Q.t])return false;

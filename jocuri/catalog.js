@@ -19,6 +19,7 @@ window.JOCURI_CATALOG = {
        "unitate": "V-U1",
        "accent": "#A8460F",
        "motor": true,
+       "mod": "invatare",
        "prima_lectie": 2
       }
      ]
@@ -76,6 +77,7 @@ window.JOCURI_CATALOG = {
        "unitate": "VI-U1",
        "accent": "#0A6C7A",
        "motor": true,
+       "mod": "invatare",
        "prima_lectie": 2
       }
      ]
@@ -93,6 +95,7 @@ window.JOCURI_CATALOG = {
        "unitate": "VI-U2",
        "accent": "#8A2F6E",
        "motor": true,
+       "mod": "invatare",
        "prima_lectie": 11
       }
      ]
@@ -129,6 +132,7 @@ window.JOCURI_CATALOG = {
        "unitate": "VII-U1",
        "accent": "#2F55D4",
        "motor": false,
+       "mod": "invatare",
        "prima_lectie": 2
       },
       {
@@ -138,6 +142,7 @@ window.JOCURI_CATALOG = {
        "unitate": "VII-U1",
        "accent": "#A3174F",
        "motor": true,
+       "mod": "invatare",
        "prima_lectie": 3
       }
      ]
@@ -155,6 +160,7 @@ window.JOCURI_CATALOG = {
        "unitate": "VII-U2",
        "accent": "#6B3FD4",
        "motor": true,
+       "mod": "invatare",
        "prima_lectie": 11
       }
      ]
@@ -191,6 +197,7 @@ window.JOCURI_CATALOG = {
        "unitate": "VIII-U1",
        "accent": "#1B7443",
        "motor": true,
+       "mod": "invatare",
        "prima_lectie": 2
       }
      ]
@@ -208,6 +215,7 @@ window.JOCURI_CATALOG = {
        "unitate": "VIII-U2",
        "accent": "#B4441B",
        "motor": true,
+       "mod": "invatare",
        "prima_lectie": 14
       }
      ]

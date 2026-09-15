@@ -89,6 +89,25 @@ JocMotor.porneste({
 
 **Acoperirea declarată (obligatorie, verificată de poartă, 15.09.2026):** fiecare nivel are `lectii:[4,7]` (numerele lecțiilor din unitate, din `unitati.json`) și `continuturi:['textul EXACT din programă', …]` (din `curriculum.json`, domeniile unității din `_motor\unitati_domenii.json`). Declari doar ce e adevărat: pagina de citit predă ȘI cel puțin o întrebare verifică. Harta completă: `python jocuri\_motor\acoperire.py` → `jocuri\ACOPERIRE.md` (❌ = lecție sau conținut neacoperit în unitățile care au jocuri). Jocurile fără motor declară în `<slug>\acoperire.json`.
 
+### Antrenament (stratul 2 al repetiției, decis 15.09.2026)
+
+Pe lângă jocul de învățare, fiecare unitate primește un **joc de antrenament**: fără pagini de citit, cu **întrebări trase la întâmplare dintr-un bazin**. La fiecare reluare elevul primește altele, pe aceleași lucruri. Rațiunea: reamintirea activă și spațierea fixează materia, iar aceleași întrebări rejucate se învață pe de rost.
+
+```js
+JocMotor.porneste({ mod:'antrenament', titlu:'Antrenament: Word', unitate:'VII-U1', /* ...restul ca la orice joc... */
+  nivele:[
+    {t:'De bază', descriptor:'De bază', cate:6, bazin:[ /* ≥12 întrebări noi */ ], lectii:[…], continuturi:[…], text:'<p>opțional: o amintire de 2-3 rânduri</p>'},
+    {t:'Consolidat', descriptor:'Consolidat', cate:6, bazin:[…], …},
+    {t:'Avansat', descriptor:'Avansat', final:true, cate:5, bazin:[…], …}
+  ]})
+```
+
+- **Rundele urmează descriptorii din programă** (`curriculum.json` → competența → `descriptori`): De bază = cu sprijin, pași ghidați, context familiar; Consolidat = independent, mai multe elemente; Avansat = context nou, după specificații. Aceeași structură ca lucrarea de evaluare (A De bază / B Consolidat / C Avansat).
+- **Bazinul are cel puțin 2 × `cate` întrebări** (poarta verifică). Motorul trage întâi întrebările nevăzute; când bazinul s-a epuizat, ciclul reîncepe.
+- **Întrebările sunt NOI, nu copii din jocul de învățare.** Pasul 0 al agentului: extrage toate întrebările existente ale unității și nu le repeta (lecție din valul-pilot LearningHub, unde 14 din 36 de itemi scriși de agenți dublau itemi existenți).
+- **Acoperire:** fiecare rundă declară `lectii` și `continuturi`, iar toate rundele împreună acoperă toate conținuturile unității.
+- **Poarta joacă tot bazinul**, nu doar ce iese la tragere.
+
 `q`, `why`, `text` și `intro` acceptă HTML (`<code>`, `<kbd>`, `<mark>`, `<strong>`). Variantele (`o`, `items`, `pairs`) sunt text simplu.
 
 ## 5. Tema: aspectul vine din lumea subiectului

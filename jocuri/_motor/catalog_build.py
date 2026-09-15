@@ -46,7 +46,7 @@ def write_grade_blocks(clase):
                 cards.append(f'''            <a href="../../../jocuri/{esc(g["slug"])}/index.html" class="module-card" style="border-left: 3px solid {esc(g["accent"])};">
                 <div class="module-icon" style="background: {esc(g["accent"])};">🎮</div>
                 <div class="module-content">
-                    <div class="module-title">{esc(g["titlu"])}</div>
+                    <div class="module-title">{"Antrenament · " if g.get("mod") == "antrenament" else ""}{esc(g["titlu"])}</div>
                     <div class="module-desc">{esc(g["descriere"])}</div>
                     <div class="module-meta">{esc(u["id"])} &bull; {esc(u["titlu"])} &bull; lecțiile {esc(u["lectii"])}</div>
                 </div>
@@ -103,6 +103,7 @@ def main():
             "unitate": field(src, "unitate"),
             "accent": accent.group(1) if accent else "#2F55D4",
             "motor": "_motor/motor.js" in src,
+            "mod": "antrenament" if re.search(r"""mod\s*:\s*['"]antrenament['"]""", src) else "invatare",
         }
         for k, v in LEGACY.get(d.name, {}).items():
             if not info.get(k):
