@@ -150,7 +150,7 @@ function question(){
     <button class="btn ghost sm" id="peekb" type="button" aria-expanded="false" ${Lv.text?'':'hidden'}>${Lv.bazin?'Amintește-ți':'Recitește pagina'}</button></div>
     <div class="peek reading" id="peek" hidden>${Lv.text}</div>
     <div class="stack" style="margin-top:14px">
-      <p class="q">${Q.q}</p>
+      <div class="q">${Q.q}</div>
       <div id="body"></div>
       <div id="fb" aria-live="polite"></div>
       <div class="row" id="nav"></div>

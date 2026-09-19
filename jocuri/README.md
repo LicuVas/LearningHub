@@ -144,6 +144,26 @@ Câte un joc pe clasă, `jocuri\recapitulare-<clasa>\`, **GENERAT** de `python j
 - **Siguranță online / date personale:** exemple inventate, fără nume reale de elevi, fără linkuri reale spre site-uri dubioase.
 - **Nivelul final** folosește un context din programă (activitățile de învățare din `curriculum.json`).
 
+### 6b. Imagini din aplicația reală (decis 19.09.2026)
+
+**De ce:** un elev de la maiștri a spus că fără imagini „trebuie să-ți imaginezi despre ce e vorba” — bara de unelte, butonul, fereastra. De acum, **fiecare pagină de citit arată lucrul despre care vorbește**, cu o captură EXACTĂ din aplicația reală (nu desen, nu imagine de pe internet, nu imagine generată).
+
+- **Unealta:** `python jocuri\_motor\captura.py lista` (ferestrele deschise) și `python jocuri\_motor\captura.py fereastra "<titlu>" --regiune x,y,l,h --out jocuri\<slug>\img\<nume>.webp --ce "<ce arată>"`. Decupează DOAR zona despre care vorbește textul (fila, grupul de butoane, caseta), nu tot ecranul. Scrie singură rândul de proveniență în `img\SURSE.json`.
+- **Unde stau:** `jocuri\<slug>\img\`, format `.webp`, lățime ≤ 1000 px, **≤ 200 KB**. Nume scurte, fără diacritice: `panglica-home.webp`.
+- **Calea din HTML e mereu `../<slug>/img/<fișier>`**, și în jocul propriu. Recapitularea clasei preia întrebările în alt folder; o cale scurtă `img/x.webp` s-ar rupe acolo.
+- **Forma în text:**
+  ```html
+  <figure class="captura"><a href="../word-vii/img/panglica-home.webp" target="_blank"><img src="../word-vii/img/panglica-home.webp" alt="Fila Pornire (Home) din Word, cu butoanele Aldin, Cursiv și Subliniat încercuite" width="800" height="150" loading="lazy"></a>
+  <figcaption>Fila <b>Pornire (Home)</b>: grupul Font.</figcaption></figure>
+  ```
+  `alt` descrie ce se vede (min. 12 caractere), `width`/`height` = dimensiunile reale ale fișierului. Stilul `.captura` e în `motor.css`; imaginea se deschide mare la atingere.
+- **Limba interfeței:** Office de pe calculatorul de lucru e în **engleză**, Windows în **română**. Laboratoarele au și una, și alta, deci legenda și textul dau **ambele nume**: „Pornire (Home)”, „Inserare (Insert)”. Numele românești doar din surse Microsoft ro-ro sau din lecțiile LearningHub, nu din memorie.
+- **Marcaje pe imagine:** dacă vrei să arăți un buton anume, desenează un chenar/o săgeată cu PIL pe copie (culoare vizibilă pe fundal alb, ex. `#E4002B`, grosime 3-4 px). Nu schimba conținutul capturii.
+- **Date personale:** în captură nu apar numele contului, e-mailuri, fișiere recente cu nume reale, notificări, fila altor site-uri. Documentele se pregătesc cu conținut inventat, iar fereastra se maximizează.
+- **Ce se poate ilustra:** tot ce există pe ecran (meniuri, butoane, casete de dialog, panouri, rezultatul unei operații, înainte/după). Lucrurile fizice (componente, porturi) se ilustrează doar cu fotografii cu licență liberă, cu sursa în `SURSE.json`. Un nivel care chiar nu are ce arăta (idee pur abstractă) primește `ilustratie:'fără imagine: <motiv concret, min. 25 de caractere>'` — criticul verifică motivul.
+- **Oracolul:** `python jocuri\_motor\ilustratii.py` numără nivelurile fără imagine, căile rupte sau greșite, `alt` lipsă, fișierele prea mari și imaginile fără proveniență. Ultima linie = totalul.
+- Întrebările (`q`) pot avea și ele o captură mică („Ce buton e încercuit?”) — tot în `<figure class="captura">`.
+
 ## 7. Simulatoare („fac eu”)
 
 Când unitatea cere un gest, nu doar vocabular, scrie un tip nou în `tipuri`:
