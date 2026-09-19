@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Misiunea Pixel</title>
+<meta name="description" content="Lecție-joc pentru clasa a V-a: editorul grafic, crearea și salvarea imaginilor, instrumente de desenare, selecție, redimensionare, trunchiere, rotație, panoramare, culori, umplere și text.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Outfit:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../_motor/motor.css">
+<style>
+:root{
+  --desk:#EDEFF6; --paper:#FFFFFF; --paper2:#F1F3FA; --line:#D3D8E8;
+  --ink:#181D33; --ink2:#586079; --accent:#2649B5; --accentInk:#FFFFFF; --sel:#DCE3FA;
+  --mark:#FFE27A; --markInk:#181D33; --ok:#23784A; --okbg:#E0F2E7; --bad:#BF3434; --badbg:#FAE5E5;
+  --fd:"Baloo 2","Segoe UI",system-ui,sans-serif; --fb:"Outfit","Segoe UI",system-ui,sans-serif; --fm:"Space Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#10121C; --paper:#181B28; --paper2:#212535; --line:#343A52;
+  --ink:#E6E9F5; --ink2:#A4ABC4; --accent:#93AEFF; --accentInk:#10121C; --sel:#2A3566;
+  --mark:#EFCF5C; --markInk:#181D33; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF8078; --badbg:#3B1E1E;
+}}
+:root[data-theme="dark"]{
+  --desk:#10121C; --paper:#181B28; --paper2:#212535; --line:#343A52;
+  --ink:#E6E9F5; --ink2:#A4ABC4; --accent:#93AEFF; --accentInk:#10121C; --sel:#2A3566;
+  --mark:#EFCF5C; --markInk:#181D33; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF8078; --badbg:#3B1E1E;
+}
+/* tema jocului: paleta de culori a unui editor grafic, cu Culoarea 1 și Culoarea 2 */
+.banda{display:flex;align-items:center;gap:10px;padding:7px 12px;white-space:nowrap;overflow:hidden}
+.c12{flex:none;position:relative;width:26px;height:22px}
+.c12 i{position:absolute;width:15px;height:15px;border:2px solid var(--paper);outline:1px solid var(--line);display:block}
+.c12 i:first-child{left:0;top:0;background:#1C2A6B;z-index:1}
+.c12 i:last-child{right:0;bottom:0;background:#FFFFFF}
+.paleta{display:flex;gap:3px;flex-wrap:nowrap;overflow:hidden}
+.paleta i{flex:none;width:14px;height:14px;border:1px solid rgba(0,0,0,.25);border-radius:2px;display:block}
+.banda .px{font-family:var(--fm);font-size:.66rem;color:var(--ink2);margin-left:auto}
+h1 .pix{display:inline-block;width:.38em;height:.38em;background:var(--accent);margin-left:.18em;box-shadow:.42em 0 0 #E0413A,.84em 0 0 #F2B705;vertical-align:.2em}
+.hunt .tk{text-align:left}
+</style>
+</head>
+<body>
+<script src="../_motor/motor.js"></script>
+<script>
+const LEVELS=[
+{t:'Ce face un editor grafic',lectii:[18],continuturi:['Rolul unui editor grafic','Elemente de interfață specifice'],text:`
+<p>Un <mark>editor grafic</mark> este o aplicație cu care creezi desene și modifici imagini. Exemple: Paint, care vine cu Windows, sau GIMP, care e gratuit.</p>
+<p>O imagine de pe calculator e făcută din <mark>pixeli</mark>: pătrățele mici, fiecare de o singură culoare.</p>
+<p>Fereastra editorului are câteva părți:</p>
+<ul>
+<li><strong>bara de titlu</strong>, sus, cu numele fișierului;</li>
+<li><strong>bara cu instrumente</strong>: creion, pensule, forme, text;</li>
+<li><strong>paleta de culori</strong>;</li>
+<li><strong>zona de desen</strong>, în mijloc;</li>
+<li><strong>bara de stare</strong>, jos: mărimea imaginii în pixeli și cât de mult e mărită vederea.</li>
+</ul>
+<p>Nu știi ce face un buton? Ține mouse-ul pe el și citește eticheta.</p>`,
+qs:[
+ {t:'choice',q:'La ce folosește un editor grafic?',o:['Creezi desene și modifici imagini','Scrii și formatezi un referat lung','Navighezi pe paginile web','Faci calcule în tabele'],ok:0,why:'Editorul grafic lucrează cu imagini. Pentru referat folosești un editor de text, pentru pagini web un browser, iar pentru tabele cu calcule o foaie de calcul.'},
+ {t:'match',q:'Leagă fiecare parte a ferestrei de ce găsești în ea.',pairs:[['Bara de titlu','numele fișierului'],['Bara cu instrumente','creionul, pensulele, formele'],['Paleta de culori','culorile din care alegi'],['Bara de stare','mărimea imaginii în pixeli']],why:'Fiecare parte are rolul ei: sus afli ce fișier ai deschis, în bara cu instrumente alegi ce faci, în paletă alegi culoarea, iar jos citești măsurile.'},
+ {t:'tf',q:'O imagine de pe calculator este formată din pixeli, adică pătrățele mici, fiecare de o singură culoare.',ok:true,why:'Adevărat. Dacă mărești foarte mult vederea, pixelii se văd ca niște pătrățele.'},
+ {t:'choice',q:'Nu știi ce face un buton din bara cu instrumente. Ce faci întâi?',o:['Țin mouse-ul pe el și citesc eticheta','Apăs pe toate butoanele la rând','Închid aplicația și o deschid din nou','Șterg desenul ca să încerc'],ok:0,why:'Eticheta care apare spune numele butonului, fără să schimbi nimic în desen. Așa înveți interfața în siguranță.'}
+]},
+{t:'Creez, deschid, salvez',lectii:[18],continuturi:['Crearea, deschiderea şi salvarea fişierelor grafice'],text:`
+<p>Din meniul <strong>Fișier</strong> (<em>File</em>) faci trei lucruri de bază:</p>
+<ul>
+<li><mark>Nou</mark> (<kbd>Ctrl</kbd>+<kbd>N</kbd>): o imagine albă, nouă;</li>
+<li><mark>Deschidere</mark> (<kbd>Ctrl</kbd>+<kbd>O</kbd>): o imagine care există deja;</li>
+<li><mark>Salvare</mark> (<kbd>Ctrl</kbd>+<kbd>S</kbd>). Prima dată alegi locul, numele și formatul. <strong>Salvare ca</strong> (<em>Save as</em>) face o copie cu alt nume sau alt format.</li>
+</ul>
+<p>Formatele cele mai folosite:</p>
+<ul>
+<li><strong>PNG</strong>: bun pentru desene, nu pierde nimic din calitate;</li>
+<li><strong>JPEG</strong> (<code>.jpg</code>): bun pentru fotografii, fișier mic, dar pierde puțin din calitate;</li>
+<li><strong>BMP</strong>: de obicei nu comprimă, deci fișierul e foarte mare.</li>
+</ul>`,
+qs:[
+ {t:'tf',q:'Când salvezi pentru prima dată, alegi locul, numele și formatul fișierului.',ok:true,why:'Adevărat. La prima salvare aplicația nu știe încă unde și cum să păstreze desenul, așa că te întreabă. Apoi Ctrl+S salvează peste același fișier.'},
+ {t:'match',q:'Leagă fiecare comandă de ce face.',pairs:[['Nou','începi o imagine albă'],['Deschidere','aduci o imagine care există deja'],['Salvare','păstrezi modificările în același fișier'],['Salvare ca','faci o copie cu alt nume sau alt format']],why:'Nou și Deschidere aduc o imagine în editor. Salvare și Salvare ca o păstrează pe disc: una în același fișier, cealaltă într-unul nou.'},
+ {t:'choice',q:'Ai desenat un logo pentru clasă, cu forme și litere. În ce format îl salvezi?',o:['PNG','JPEG','BMP'],ok:0,amesteca:false,why:'PNG păstrează marginile clare ale formelor și literelor, iar fișierul nu iese mare. JPEG ar strica puțin marginile, iar BMP ar face un fișier foarte mare.'},
+ {t:'classify',q:'Ce format se potrivește?',cats:['PNG','JPEG'],items:[['Un desen cu contururi și text',0],['O fotografie de la excursie',1],['O schemă pentru ora de științe',0],['Poze de vacanță de trimis pe e-mail, cât mai mici',1]],why:'Fotografiile au mii de nuanțe și rămân frumoase și în JPEG, care face fișiere mici. Desenele cu margini clare și textul arată cel mai bine în PNG.'},
+ {t:'tf',q:'Dacă apeși Ctrl+N, desenul la care lucrai se salvează singur.',ok:false,why:'Fals. Ctrl+N începe o imagine nouă și nu salvează nimic. Dacă ai modificări nesalvate, aplicația te întreabă ce faci cu ele: citește mesajul înainte să apeși.'}
+]},
+{t:'Instrumente de desenare',lectii:[19],continuturi:['Instrumente de desenare'],text:`
+<p>Fiecare <mark>instrument</mark> face altceva:</p>
+<ul>
+<li><strong>creionul</strong>: linii subțiri, pentru detalii;</li>
+<li><strong>pensulele</strong>: linii mai groase, în stiluri diferite;</li>
+<li><strong>formele</strong>: linie, dreptunghi, elipsă, triunghi, stea…;</li>
+<li><strong>radiera</strong>: șterge o parte din desen;</li>
+<li><strong>umplerea cu culoare</strong> (găleata): colorează o zonă închisă.</li>
+</ul>
+<p>Ții apăsat <kbd>Shift</kbd> când desenezi o formă, iar dreptunghiul iese <mark>pătrat</mark>, iar elipsa iese <mark>cerc</mark>. Grosimea liniei o alegi din <strong>dimensiune</strong>.</p>
+<p>Găleata umple până la margini. Dacă în contur e o gaură, culoarea „curge” afară. Atunci apeși <kbd>Ctrl</kbd>+<kbd>Z</kbd>, adică anulezi.</p>`,
+qs:[
+ {t:'choice',q:'Vrei un cerc perfect, nu un ou turtit. Ce faci?',o:['Aleg elipsa și țin apăsat Shift','Aleg elipsa și țin apăsat Ctrl','Desenez cercul cu creionul','Aleg dreptunghiul și țin apăsat Shift'],ok:0,why:'Shift păstrează lățimea egală cu înălțimea. La elipsă iese un cerc, iar la dreptunghi iese un pătrat.'},
+ {t:'match',q:'Leagă fiecare instrument de ce face.',pairs:[['Creionul','linii subțiri, pentru detalii'],['Pensula','linii mai groase, în stiluri diferite'],['Radiera','șterge o parte din desen'],['Găleata','colorează o zonă închisă']],why:'Alegi instrumentul după gest: detaliu, linie groasă, ștergere sau colorarea unei zone întregi.'},
+ {t:'choice',q:'Ai colorat cu găleata interiorul unei case, dar s-a colorat tot fundalul. De ce?',o:['Conturul casei avea o gaură','Culoarea aleasă era prea deschisă','Găleata colorează mereu tot desenul','Imaginea nu era salvată'],ok:0,why:'Găleata umple zona până la marginile ei. Printr-o gaură în contur, culoarea trece afară. Anulezi cu Ctrl+Z, închizi conturul și umpli din nou.'},
+ {t:'tf',q:'Ctrl+Z anulează ultima acțiune, iar dacă îl apeși de mai multe ori, anulează și acțiunile de dinainte.',ok:true,why:'Adevărat. Fiecare apăsare te duce cu un pas înapoi. De aceea nu-ți fie frică să încerci.'},
+ {t:'classify',q:'Ce instrument folosești?',cats:['Forme','Creion','Găleată'],items:[['Un pătrat pentru fereastra casei',0],['O stea pe cer',0],['Mustățile unei pisici',1],['Semnătura ta mică în colț',1],['Cerul albastru din spatele casei',2],['Acoperișul colorat în roșu, după ce l-ai desenat',2]],why:'Formele gata făcute ies drepte și egale. Creionul e pentru detalii mici. Găleata colorează repede o zonă închisă.'}
+]},
+{t:'Selectez, copiez, mut, șterg',lectii:[19],continuturi:['Comenzi pentru selectare, copiere, mutare, ştergere'],text:`
+<p>Ca să lucrezi cu o parte din desen, întâi o <mark>selectezi</mark>:</p>
+<ul>
+<li><strong>selecția dreptunghiulară</strong>: tragi un dreptunghi peste zonă;</li>
+<li><strong>selecția cu formă liberă</strong>: desenezi conturul zonei cu mouse-ul;</li>
+<li><kbd>Ctrl</kbd>+<kbd>A</kbd>: selectezi tot desenul.</li>
+</ul>
+<p>Cu zona selectată:</p>
+<ul>
+<li><mark>mutare</mark>: tragi selecția cu mouse-ul în alt loc;</li>
+<li><mark>copiere</mark>: <kbd>Ctrl</kbd>+<kbd>C</kbd>, apoi lipire cu <kbd>Ctrl</kbd>+<kbd>V</kbd>. Originalul rămâne pe loc;</li>
+<li><mark>decupare</mark> (tăiere): <kbd>Ctrl</kbd>+<kbd>X</kbd>. Zona dispare de pe loc, dar o poți lipi în altă parte;</li>
+<li><mark>ștergere</mark>: <kbd>Delete</kbd>. Zona rămâne goală, de obicei albă.</li>
+</ul>`,
+qs:[
+ {t:'choice',q:'Ai desenat un copac și vrei încă doi la fel. Ce faci după ce îl selectezi?',o:['Ctrl+C, apoi Ctrl+V de două ori','Ctrl+X, apoi Ctrl+V o dată','Delete, apoi îl desenez din nou','Ctrl+A, apoi Delete'],ok:0,why:'Copierea păstrează originalul, iar fiecare lipire adaugă un copac nou. Ctrl+X ar lua copacul de pe loc, iar Delete l-ar șterge.'},
+ {t:'tf',q:'După Ctrl+C, zona selectată dispare din desen.',ok:false,why:'Fals. Ctrl+C doar copiază în memorie și originalul rămâne. Zona dispare la Ctrl+X (decupare) sau la Delete (ștergere).'},
+ {t:'match',q:'Leagă fiecare comandă de ce se întâmplă cu zona selectată.',pairs:[['Ctrl+C','rămâne pe loc și o copie merge în memorie'],['Ctrl+X','dispare de pe loc și merge în memorie'],['Ctrl+V','apare în desen ce era în memorie'],['Delete','dispare și nu merge în memorie']],why:'Diferența stă în două întrebări: rămâne originalul pe loc? Ajunge zona în memorie, ca s-o poți lipi?'},
+ {t:'order',q:'Mută soarele din colțul din stânga în colțul din dreapta. Pune pașii în ordine.',items:['Alegi instrumentul de selecție','Tragi un dreptunghi peste soare','Tragi zona selectată spre dreapta','Dai clic în afara selecției'],why:'Întâi alegi unealta, apoi prinzi soarele, îl duci la locul nou și abia la final îl lași jos, dând clic în afara lui.'},
+ {t:'choice',q:'Vrei să selectezi doar o pisică cu forma neregulată, fără iarba din jur. Ce folosești?',o:['Selecția cu formă liberă','Selecția dreptunghiulară','Ctrl+A','Găleata'],ok:0,why:'Cu forma liberă urmărești conturul pisicii. Dreptunghiul ar prinde și iarbă, iar Ctrl+A ar prinde tot desenul.'}
+]},
+{t:'Mărime, tăiere, rotire, panoramare',lectii:[20],continuturi:['Redimensionarea, trunchierea, rotaţia unei imagini','Panoramare imagine'],text:`
+<ul>
+<li><mark>Redimensionarea</mark> (<em>Resize</em>) schimbă mărimea reală a imaginii, în pixeli sau în procente. Bifezi păstrarea proporțiilor, ca desenul să nu se turtească.</li>
+<li><mark>Trunchierea</mark> (<em>Crop</em>): selectezi partea care rămâne, iar restul se taie. În Paint în română butonul poate avea alt nume, așa că ține mouse-ul pe butoane și citește eticheta.</li>
+<li><mark>Rotirea</mark> (<em>Rotate</em>) întoarce imaginea cu 90° la dreapta sau la stânga ori cu 180°.</li>
+<li><mark>Panoramarea</mark> (<em>Zoom</em>) mărește sau micșorează doar <strong>vederea</strong>. Imaginea rămâne la fel. Folosești <kbd>Ctrl</kbd> + rotița mouse-ului sau glisorul din bara de stare.</li>
+</ul>
+<p>Atenție: o imagine mică, mărită mult prin redimensionare, devine <mark>neclară</mark>. Pixelii se văd ca niște pătrățele.</p>`,
+qs:[
+ {t:'tf',q:'Panoramarea la 200% face ca imaginea salvată să aibă de două ori mai mulți pixeli.',ok:false,why:'Fals. Panoramarea schimbă doar cât de aproape te uiți. Mărimea reală o schimbă redimensionarea.'},
+ {t:'choice',q:'O fotografie are 800 × 600 pixeli. O rotești cu 90° la dreapta. Ce mărime are acum?',o:['600 × 800 pixeli','800 × 600 pixeli','400 × 300 pixeli','1600 × 1200 pixeli'],ok:0,why:'La o rotire cu 90°, lățimea devine înălțime și invers. Pixelii sunt aceiași, doar așezați altfel.'},
+ {t:'choice',q:'Redimensionezi o imagine de 800 × 600 pixeli la 50%, cu proporțiile păstrate. Ce mărime are?',o:['400 × 300 pixeli','800 × 300 pixeli','400 × 600 pixeli','1600 × 1200 pixeli'],ok:0,why:'50% înseamnă jumătate. Cu proporțiile păstrate, se înjumătățesc ambele: 800 : 2 = 400 și 600 : 2 = 300.'},
+ {t:'classify',q:'Ce operație folosești?',cats:['Redimensionare','Trunchiere','Rotire','Panoramare'],items:[['Poza e prea mare pentru e-mail, vreau mai puțini pixeli',0],['Vreau să scot marginea cu masa din poză',1],['Poza e culcată pe o parte',2],['Vreau să văd de aproape ochii pisicii',3]],why:'Mai puțini pixeli = redimensionare. Tai o margine = trunchiere. Îndrepți poza = rotire. Doar te uiți mai de aproape = panoramare.'},
+ {t:'choice',q:'Ai mărit prin redimensionare o iconiță mică la mărimea unui afiș. Ce observi?',o:['Imaginea devine neclară, cu pătrățele','Imaginea devine mai clară','Imaginea nu se schimbă deloc','Fișierul devine mai mic'],ok:0,why:'Pixelii care lipseau nu pot fi inventați corect. Editorul întinde pixelii existenți, așa că se văd pătrățele sau contururi încețoșate.'}
+]},
+{t:'Culori și umplere',lectii:[21],continuturi:['Utilizarea culorilor în prelucrarea imaginilor; crearea culorilor personalizate','Stiluri de umplere'],text:`
+<p>În Paint lucrezi cu două culori alese: <mark>Culoare 1</mark> (<em>Color 1</em>) pentru linii și contururi și <mark>Culoare 2</mark> (<em>Color 2</em>) pentru interiorul formelor. Numele pot diferi puțin de la o versiune la alta, iar în Paint-ul nou apar doar ca două cercuri colorate.</p>
+<p>Nu găsești nuanța în paletă? Deschizi <strong>Editare culori</strong> (<em>Edit colors</em>) și îți faci o <mark>culoare personalizată</mark>. Poți scrie cât roșu, verde și albastru are (<strong>RGB</strong>), fiecare de la 0 la 255.</p>
+<p><strong>Selectorul de culori</strong> (pipeta) ia o culoare chiar din imagine.</p>
+<p>La o formă alegi <mark>stilul</mark> conturului și al umplerii: fără umplere, culoare solidă sau, în unele versiuni, o textură (de exemplu acuarelă).</p>
+<p>Textul închis pe fundal deschis se citește ușor. Asta înseamnă <mark>contrast</mark>.</p>`,
+qs:[
+ {t:'choice',q:'Ce culoare iese din RGB 255, 0, 0?',o:['Roșu','Verde','Albastru','Alb'],ok:0,amesteca:false,why:'Primul număr e roșul, la maximum (255). Verdele și albastrul sunt 0, deci iese un roșu curat.'},
+ {t:'match',q:'Leagă valorile RGB de culoare.',pairs:[['0, 0, 0','negru'],['255, 255, 255','alb'],['0, 0, 255','albastru'],['255, 255, 0','galben']],why:'0 înseamnă „deloc”, iar 255 înseamnă „cât se poate de mult”. Nicio lumină dă negru, toată lumina dă alb. Roșul amestecat cu verdele, ca lumini, dă galben.'},
+ {t:'choice',q:'Vrei exact culoarea cerului dintr-o fotografie. Ce instrument folosești?',o:['Selectorul de culori (pipeta)','Găleata','Radiera','Selecția dreptunghiulară'],ok:0,why:'Pipeta citește culoarea unui pixel din imagine și o pune în paletă. Apoi o poți folosi la desen.'},
+ {t:'tf',q:'O formă desenată cu stilul „fără umplere” are doar contur, iar interiorul rămâne cum era.',ok:true,why:'Adevărat. Umplerea colorează interiorul. Fără ea, se vede doar marginea formei.'},
+ {t:'choice',q:'Pe afiș vrei un titlu ușor de citit. Care combinație are cel mai bun contrast?',o:['Albastru închis pe galben deschis','Galben pe alb','Gri deschis pe alb','Roșu închis pe maro'],ok:0,why:'Contrastul mare apare între o culoare închisă și una deschisă. Galbenul pe alb sau griul pe alb aproape dispar, iar roșul închis pe maro se amestecă.'}
+]},
+{t:'Felicitarea clasei',final:true,lectii:[22],continuturi:['Inserarea şi formatarea textului','Crearea, deschiderea şi salvarea fişierelor grafice'],text:`
+<p><strong>Misiunea finală.</strong> Faci o <mark>felicitare</mark> pentru ziua școlii.</p>
+<p>Cu instrumentul <strong>Text</strong> (litera A) tragi o casetă și scrii. Înainte să ieși din casetă, alegi <mark>fontul</mark>, <mark>dimensiunea</mark>, culoarea și stilul: aldin, cursiv, subliniat. Fundalul casetei poate fi transparent sau opac.</p>
+<p>Atenție: în Paint, după ce dai clic în afara casetei, textul devine pixeli. Nu-l mai poți corecta ca text, ci doar șterge și scrie din nou.</p>
+<p>La final salvezi felicitarea, cu un nume clar, într-un format bun pentru desene.</p>`,
+qs:[
+ {t:'tf',q:'În Paint, după ce ai dat clic în afara casetei de text, poți corecta oricând o literă ca într-un editor de texte.',ok:false,why:'Fals. Textul a devenit pixeli, ca restul desenului. De aceea verifici textul și aspectul lui cât ești încă în casetă.'},
+ {t:'hunt',q:'Planul Anei pentru felicitare are 3 greșeli. Apasă pe ele.',src:'Scriu titlul „La mulți ani, școala mea!” cu un font mare. Aleg [[galben pe fundal alb|culorile apropiate se citesc greu; e nevoie de contrast]] ca să fie vesel. Corectez o literă greșită [[după ce ies din casetă|după ce ieși din casetă, textul e pixeli; corectezi cât ești în casetă]]. La final salvez felicitarea ca [[imagine1.bmp|un nume clar și formatul PNG: fișier mic și margini clare]].',indiciu:'Gândește-te la contrast, la casetă și la salvare.',why:'Titlul mare e o idee bună. Restul planului pierde contrastul, textul și spațiul pe disc.'},
+ {t:'order',q:'Pune în ordine pașii pentru titlul felicitării.',items:['Alegi instrumentul Text','Tragi caseta pe felicitare','Scrii titlul','Dai clic în afara casetei'],why:'Fără casetă nu ai unde scrie, iar clicul în afară fixează textul. Fontul și dimensiunea le schimbi cât caseta e încă activă.'},
+ {t:'choice',q:'Vrei ca titlul să stea peste desen fără un dreptunghi alb în jurul lui. Ce alegi pentru caseta de text?',o:['Fundal transparent','Fundal opac','Font mai mic','Altă culoare de contur'],ok:0,why:'La fundal opac, caseta are o culoare de fundal care acoperă desenul. Transparent înseamnă că desenul se vede printre litere.'},
+ {t:'classify',q:'Ce e bine pe o felicitare?',cats:['Bine','De evitat'],items:[['Titlul mare, cu contrast bun',0],['Două-trei culori care se potrivesc',0],['Un font ușor de citit',0],['Zece fonturi diferite',1],['Text lipit de marginea foii',1],['Litere mici pe un fundal colorat țipător',1]],why:'Felicitarea trebuie citită dintr-o privire. Contrastul, puține culori și fonturi clare ajută. Aglomerarea, textul lipit de margine și literele mici încurcă.'}
+]}
+];
+
+JocMotor.porneste({
+  cheie:'joc_grafica_v',
+  titlu:'Misiunea Pixel',
+  marca:'Misiunea <b>Pixel</b>',
+  h1:'Misiunea Pixel<span class="pix"></span>',
+  clasa:'a V-a',
+  unitate:'V-U4',
+  unitateTitlu:'Editoare grafice. Fac materiale digitale',
+  competente:['CS.3.1'],
+  lectii:'18–22',
+  intro:'Șapte niveluri despre editorul grafic: interfața, salvarea, instrumentele de desenare, selecția, mărimea și rotirea imaginii, culorile și textul. La fiecare nivel citești o pagină scurtă și răspunzi la întrebări. La final plănuiești o felicitare și îți iei diploma.',
+  banda:'<span class="c12"><i></i><i></i></span><span class="paleta"><i style="background:#000"></i><i style="background:#7F7F7F"></i><i style="background:#E0413A"></i><i style="background:#F28C28"></i><i style="background:#F2B705"></i><i style="background:#2F9E44"></i><i style="background:#1F8FD1"></i><i style="background:#2649B5"></i><i style="background:#8A3FB8"></i><i style="background:#FFFFFF"></i></span><span class="px">800 × 600 px</span>',
+  nivele:LEVELS,
+  diploma:{
+    titlu:'Maestru al pixelilor',
+    rezumat:'rolul editorului grafic și interfața lui, crearea și salvarea imaginilor, instrumente de desenare, selecție, copiere și mutare, redimensionare, trunchiere, rotire și panoramare, culori personalizate, stiluri de umplere și text',
+    aplicatie:'Paint, pe calculatorul din laborator',
+    provocare:[
+      'Deschide Paint și fă o imagine nouă.',
+      'Desenează o felicitare pentru ziua școlii: cel puțin trei forme (una ținând Shift) și o zonă colorată cu găleata.',
+      'Fă-ți o culoare personalizată din Editare culori și folosește-o în desen.',
+      'Scrie un titlu cu instrumentul Text: alege fontul, dimensiunea și o culoare cu contrast bun, înainte să ieși din casetă.',
+      'Salvează ca PNG, cu numele <code>Nume_Prenume_felicitare.png</code>, și arată-i profesorului.'
+    ]
+  }
+});
+</script>
+</body>
+</html>

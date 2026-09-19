@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Misiunea Compilator</title>
+<meta name="description" content="Lecție-joc pentru clasa a VII-a: de la algoritm la program în C++, analiza enunțului, mediul de programare, vocabularul, datele numerice, citirea și afișarea, structurile liniară, alternativă și repetitive, cifrele unui număr, divizibilitatea și depanarea.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;700&family=Barlow:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Mono:wght@400;500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../_motor/motor.css">
+<style>
+:root{
+  --desk:#EDF1EE; --paper:#FFFFFF; --paper2:#F1F5F2; --line:#D2DDD6;
+  --ink:#172019; --ink2:#546158; --accent:#1F7A4D; --accentInk:#FFFFFF; --sel:#D8EEE1;
+  --mark:#FFE17A; --markInk:#172019; --ok:#23784A; --okbg:#E0F2E7; --bad:#B8362E; --badbg:#FBE5E3;
+  --fd:"Kanit","Segoe UI",system-ui,sans-serif; --fb:"Barlow","Segoe UI",system-ui,sans-serif; --fm:"Fira Mono",Consolas,monospace;
+  --ed:#1E2320; --edInk:#D9E6DC; --kw:#7FB7FF; --st:#F2C46D; --cm:#8A9A8E;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E1310; --paper:#161D18; --paper2:#1E2721; --line:#2F3C33;
+  --ink:#E3ECE5; --ink2:#9FB2A4; --accent:#6BD39D; --accentInk:#0E1310; --sel:#1E4430;
+  --mark:#EBC95C; --markInk:#172019; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF8479; --badbg:#3B1E1E;
+  --ed:#0A0E0B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E1310; --paper:#161D18; --paper2:#1E2721; --line:#2F3C33;
+  --ink:#E3ECE5; --ink2:#9FB2A4; --accent:#6BD39D; --accentInk:#0E1310; --sel:#1E4430;
+  --mark:#EBC95C; --markInk:#172019; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF8479; --badbg:#3B1E1E;
+  --ed:#0A0E0B;
+}
+/* tema jocului: bara unui editor de cod, cu numere de rând și cuvinte-cheie colorate */
+.banda{display:flex;align-items:center;gap:0;padding:6px 0;white-space:nowrap;overflow:hidden;background:var(--ed);color:var(--edInk);font-family:var(--fm);font-size:.74rem}
+.banda .nr{flex:none;width:30px;text-align:right;padding-right:8px;margin-right:10px;color:var(--cm);border-right:1px solid #3a463d}
+.banda .kw{color:var(--kw)} .banda .st{color:var(--st)} .banda .cm{color:var(--cm);margin-left:10px}
+h1 .ac{color:var(--accent);font-family:var(--fm)}
+.cod{display:block;white-space:pre-wrap;line-height:1.5;padding:.45em .7em;margin:.5em 0}
+</style>
+</head>
+<body>
+<script src="../_motor/motor.js"></script>
+<script>
+// cod C++ pe mai multe rânduri; se scrie normal, iar funcția îl face sigur pentru HTML.
+// Stilul e pus direct pe element, ca să arate la fel și în recapitularea clasei.
+const C=s=>`<code class="cod" style="display:block;white-space:pre-wrap;line-height:1.5;padding:.45em .7em;margin:.5em 0">${s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code>`;
+const FAC='Facilități ale mediului de dezvoltare pentru un limbaj de programare: editare, rulare și depanare';
+const LIN='Instrucțiuni/comenzi pentru implementarea în limbaj de programare a structurii liniare';
+const ALT='Instrucțiuni/comenzi pentru implementarea în limbaj de programare a structurii alternative';
+const REP='Instrucțiuni/comenzi pentru implementarea în limbaj de programare a structurilor repetitive';
+const LEVELS=[
+{t:'De la enunț la program',lectii:[23,24],continuturi:[FAC,'Structura programelor'],text:`
+<p>Înainte de cod, <mark>citești enunțul</mark> și afli trei lucruri: <mark>datele de intrare</mark> (ce se citește), <mark>datele de ieșire</mark> (ce se afișează) și <mark>operațiile</mark> care duc de la unele la altele.</p>
+<p>Programul îl scrii într-un <mark>mediu de dezvoltare</mark>, de exemplu Code::Blocks. Acolo îl <strong>editezi</strong>, îl <strong>compilezi</strong> (verifică și traduce codul), îl <strong>rulezi</strong> și îl <strong>depanezi</strong> (cauți și repari erorile). În Code::Blocks, <kbd>F9</kbd> (<em>Build and run</em>) compilează și rulează.</p>
+<p>Un program C++ are această <mark>structură</mark>:</p>
+${C('#include <iostream>\nusing namespace std;\nint main()\n{\n    // instrucțiunile programului\n    return 0;\n}')}
+<p>Execuția începe întotdeauna cu <code>main</code>.</p>`,
+qs:[
+ {t:'choice',q:'Enunț: „Se citesc prețul unei cărți și numărul de cărți cumpărate. Afișează suma de plată.” Care sunt datele de intrare?',o:['Prețul unei cărți și numărul de cărți','Suma de plată','Prețul unei cărți și suma de plată','Numai numărul de cărți'],ok:0,why:'Datele de intrare sunt cele care se citesc: prețul și numărul de cărți. Suma de plată e data de ieșire, obținută prin înmulțire.'},
+ {t:'order',q:'Pune în ordine rândurile unui program C++.',items:['#include <iostream>','using namespace std;','int main()','{','    instrucțiunile programului','    return 0;','}'],why:'Întâi biblioteca și spațiul de nume, apoi funcția main. Instrucțiunile stau între acolade, iar return 0; e ultima dinaintea acoladei de închidere.'},
+ {t:'match',q:'Leagă fiecare facilitate a mediului de dezvoltare de ce face.',pairs:[['Editarea','scrii și modifici codul'],['Compilarea','verifică codul și îl transformă în program executabil'],['Rularea','programul pornește și lucrează cu datele'],['Depanarea','cauți și repari erorile']],why:'Scrii, compilezi, rulezi, iar dacă ceva nu merge, depanezi și o iei de la capăt.'},
+ {t:'tf',q:'Execuția unui program C++ începe cu funcția main, oricare ar fi ordinea rândurilor din fișier.',ok:true,why:'Adevărat. main este punctul de pornire al programului. De aceea orice program C++ are o funcție main.'},
+ {t:'choice',q:'În Code::Blocks, ce tastă compilează și rulează programul (Build and run)?',o:['F9','F1','Ctrl+S','F5'],ok:0,why:'F9 face amândouă: întâi compilează, apoi rulează. Ctrl+S doar salvează fișierul, fără să-l compileze.'}
+]},
+{t:'Vocabular, numere, citire și afișare',lectii:[25],continuturi:['Vocabularul limbajului','Date numerice','Operații de citire și afișare a datelor'],text:`
+<p><mark>Vocabularul</mark> limbajului are: <strong>cuvinte-cheie</strong> rezervate (<code>int</code>, <code>if</code>, <code>while</code>, <code>return</code>), <strong>identificatori</strong> (numele alese de tine), <strong>constante</strong> (<code>25</code>, <code>3.14</code>), operatori, separatori (<code>;</code> <code>{ }</code>) și comentarii (<code>//</code>).</p>
+<p>Un identificator începe cu o literă sau cu <code>_</code> și nu are spații. Diacriticele le evităm în nume. Literele mari și mici contează: <code>Nota</code> și <code>nota</code> sunt nume diferite.</p>
+<p><mark>Date numerice</mark>: <code>int</code> pentru numere întregi, <code>double</code> pentru numere reale. Partea zecimală se scrie cu <mark>punct</mark>: <code>2.5</code>.</p>
+<p><mark>Citirea</mark>: <code>cin &gt;&gt; a;</code> · <mark>afișarea</mark>: <code>cout &lt;&lt; a;</code> · <code>endl</code> trece pe rândul următor.</p>`,
+qs:[
+ {t:'choice',q:'Care nume de variabilă este corect în C++?',o:['nota_mea','2note','nota mea','int'],ok:0,why:'Un nume nu începe cu cifră și nu are spații. int e cuvânt-cheie, deci e rezervat și nu poate fi nume de variabilă.'},
+ {t:'classify',q:'Ce este fiecare element din vocabularul limbajului?',cats:['Cuvânt-cheie','Identificator','Constantă'],items:[['int',0],['while',0],['suma',1],['nr_elevi',1],['25',2],['3.14',2]],why:'Cuvintele-cheie au un sens fix în limbaj. Identificatorii sunt nume alese de tine. Constantele sunt valori scrise direct în cod.'},
+ {t:'choice',q:'Ce tip alegi pentru media a două note, care poate fi 8.5?',o:['double','int','cout','main'],ok:0,why:'int ține doar numere întregi, deci ar pierde .5. double ține și partea zecimală. cout și main nu sunt tipuri de date.'},
+ {t:'choice',q:'Cum scrii în C++ numărul două virgulă cinci?',o:['2.5','2,5','2;5','2 5'],ok:0,why:'În C++, partea zecimală se desparte cu punct, ca în engleză. Virgula și punctul și virgula au alt rol în limbaj.'},
+ {t:'match',q:'Leagă fiecare bucată de cod de ce face.',pairs:[['cin >> a;','citește o valoare în variabila a'],['cout << a;','afișează valoarea lui a'],['endl','trece pe rândul următor'],['// text','comentariu, nu se execută']],why:'Săgețile arată drumul datelor: la cin, de la tastatură în variabilă; la cout, de la variabilă spre ecran.'},
+ {t:'tf',q:'În C++, Nota și nota sunt aceeași variabilă.',ok:false,why:'Fals. C++ face diferența între literele mari și cele mici, deci acestea sunt două nume diferite.'}
+]},
+{t:'Structura liniară în C++',lectii:[26],continuturi:[LIN,'Date numerice'],text:`
+<p>Structura liniară se scrie ca <mark>instrucțiuni una după alta</mark>, fiecare terminată cu <code>;</code>.</p>
+<p><mark>Atribuirea</mark> se scrie cu <code>=</code>: <code>s = a + b;</code> înseamnă „s primește valoarea a + b”. Nu e o egalitate din matematică: <code>x = x + 1;</code> mărește x cu 1.</p>
+<p>Operatorii aritmetici sunt <code>+ - * / %</code>. Atenție: între două numere <code>int</code>, <code>/</code> dă doar <mark>câtul</mark> (<code>7 / 2</code> dă 3), iar <code>%</code> dă <mark>restul</mark> (<code>7 % 2</code> dă 1).</p>
+${C('int L, l, P;\ncin >> L >> l;\nP = 2 * (L + l);\ncout << P;')}`,
+qs:[
+ {t:'choice',q:`Ce afișează codul?${C('int a = 7, b = 2;\ncout << a / b;')}`,o:['3','3.5','1','4'],ok:0,why:'a și b sunt de tip int, deci / dă câtul împărțirii întregi: 7 = 2 * 3 + 1. Pentru 3.5 ar trebui ca măcar unul să fie double.'},
+ {t:'choice',q:'Cât dă 23 % 4 în C++?',o:['3','5','5.75','4'],ok:0,why:'23 = 4 * 5 + 3. Operatorul % dă restul, adică 3. Câtul ar fi 5.'},
+ {t:'choice',q:`Ce afișează codul?${C('int x = 5;\nx = x * 2 + 1;\ncout << x;')}`,o:['11','15','5','10'],ok:0,why:'Înmulțirea se face prima: 5 * 2 = 10, apoi + 1 = 11. x primește această valoare nouă.'},
+ {t:'order',q:'Pune în ordine programul care află perimetrul unui dreptunghi.',items:['int L, l, P;','cin >> L >> l;','P = 2 * (L + l);','cout << P;'],why:'Declari variabilele, apoi citești datele, apoi calculezi și abia la final afișezi. O variabilă se folosește doar după ce are valoare.'},
+ {t:'hunt',q:'Programul lui Vlad pentru suma a două numere are 2 greșeli. Apasă pe ele.',src:'int a, b, s; [[cin << a >> b;|la citire operatorul este >> peste tot: cin >> a >> b;]] s = a + b; [[cout >> s;|la afișare operatorul este <<: cout << s;]]',indiciu:'Uită-te la direcția săgeților.',why:'La cin datele merg spre variabile (>>), la cout merg spre ecran (<<). Cu săgeata inversă, programul nu se compilează.'},
+ {t:'tf',q:'Instrucțiunea x = x + 1; e greșită, pentru că x nu poate fi egal cu x + 1.',ok:false,why:'Fals. În C++, = înseamnă atribuire: x primește valoarea lui de acum plus 1. Nu e o ecuație.'}
+]},
+{t:'Structura alternativă în C++',lectii:[27],continuturi:[ALT],text:`
+<p>Decizia se scrie cu <mark>if … else</mark>:</p>
+${C('if (n % 2 == 0)\n    cout << "par";\nelse\n    cout << "impar";')}
+<p>Operatorii de comparare sunt <code>&lt; &lt;= &gt; &gt;= == !=</code>. Atenție: <mark><code>==</code> compară</mark>, iar <code>=</code> atribuie.</p>
+<p>Condițiile se leagă cu operatorii logici <code>&amp;&amp;</code> (și), <code>||</code> (sau) și <code>!</code> (nu).</p>
+<p>Dacă o ramură are mai multe instrucțiuni, le pui între acolade <code>{ }</code>. După <code>if (…)</code> nu se pune <code>;</code>.</p>`,
+qs:[
+ {t:'choice',q:'Cum verifici în C++ dacă a este egal cu b?',o:['a == b','a = b','a := b','a =< b'],ok:0,why:'== compară și dă adevărat sau fals. Cu un singur = i-ai da lui a valoarea lui b, iar := și =< nu există în C++.'},
+ {t:'choice',q:`Ce afișează codul?${C('int n = 15;\nif (n % 3 == 0 && n % 5 == 0)\n    cout << "DA";\nelse\n    cout << "NU";')}`,o:['DA','NU','DANU','nimic'],ok:0,why:'15 se împarte exact și la 3, și la 5, deci ambele condiții sunt adevărate, iar && dă adevărat. Se execută o singură ramură.'},
+ {t:'choice',q:'Ce condiție verifică o notă între 1 și 10, inclusiv 1 și 10?',o:['nota >= 1 && nota <= 10','nota >= 1 || nota <= 10','1 <= nota <= 10','nota > 1 && nota < 10'],ok:0,why:'Ambele limite trebuie respectate, deci &&. Cu || ar trece orice număr. Scrierea 1 <= nota <= 10 nu face în C++ ce crezi, iar > și < ar scoate tocmai notele 1 și 10.'},
+ {t:'classify',q:'Codul: if (t < 0) cout << "inghet"; else cout << "fara inghet"; Ce afișează pentru fiecare valoare a lui t?',cats:['inghet','fara inghet'],items:[['t = -3',0],['t = -1',0],['t = 0',1],['t = 4',1]],why:'Condiția e strict „mai mic decât 0”. La t = 0, 0 < 0 e fals, deci se merge pe ramura else.'},
+ {t:'tf',q:'În codul if (a > b); cout << a; valoarea lui a se afișează doar când a > b.',ok:false,why:'Fals. Punctul și virgula de după if încheie o instrucțiune vidă, deci cout nu mai ține de if și se execută mereu.'}
+]},
+{t:'Structurile repetitive în C++',lectii:[28],continuturi:[REP],text:`
+<p>C++ are trei instrucțiuni repetitive:</p>
+<ul>
+<li><mark>while</mark> (<em>cât timp</em>): verifică condiția <strong>înainte</strong> de fiecare pas;</li>
+<li><mark>do … while</mark>: execută pasul, apoi verifică, deci corpul se execută <strong>cel puțin o dată</strong>;</li>
+<li><mark>for</mark>: pentru un număr cunoscut de pași, cu un <mark>contor</mark>.</li>
+</ul>
+${C('int s = 0;\nfor (int i = 1; i <= 4; i++)\n    s = s + i;\ncout << s;')}
+<p><code>i++</code> înseamnă <code>i = i + 1</code>. Bucla se oprește când condiția devine falsă.</p>`,
+qs:[
+ {t:'choice',q:'Ce afișează programul din pagină?',o:['10','4','15','6'],ok:0,why:'s crește cu 1, apoi cu 2, 3 și 4: 0 + 1 + 2 + 3 + 4 = 10. Pentru i = 5, condiția i <= 4 e falsă și bucla se oprește.'},
+ {t:'choice',q:`Ce afișează codul?${C('int n = 20, k = 0;\nwhile (n > 1)\n{\n    n = n / 2;\n    k++;\n}\ncout << k;')}`,o:['4','5','3','10'],ok:0,why:'n ia valorile 10, 5, 2 și 1. Împărțirea e întreagă, deci 5 / 2 dă 2. După 4 pași, n = 1 și condiția n > 1 e falsă.'},
+ {t:'tf',q:'Corpul lui do … while se execută cel puțin o dată, chiar dacă condiția e falsă de la început.',ok:true,why:'Adevărat. La do … while condiția se verifică după ce corpul s-a executat, deci prima trecere are loc mereu.'},
+ {t:'match',q:'Leagă fiecare instrucțiune repetitivă de cum lucrează.',pairs:[['for','număr cunoscut de pași, cu contor'],['while','verifică condiția înainte de fiecare pas'],['do … while','verifică condiția după fiecare pas']],why:'Alegi for când știi de câte ori, while când repeți cât timp ceva e adevărat, iar do … while când pasul trebuie făcut măcar o dată.'},
+ {t:'choice',q:'De câte ori se execută corpul lui for (int i = 3; i <= 7; i++)?',o:['5','4','7','3'],ok:0,why:'i ia valorile 3, 4, 5, 6 și 7: de 5 ori. Când i devine 8, condiția i <= 7 e falsă.'}
+]},
+{t:'Cifre și divizibilitate',lectii:[29,30],continuturi:[REP,ALT],text:`
+<p><mark>Cifrele</mark> unui număr: <code>n % 10</code> e ultima cifră, iar <code>n / 10</code> taie ultima cifră. Suma cifrelor:</p>
+${C('int n, s = 0;\ncin >> n;\nwhile (n > 0)\n{\n    s = s + n % 10;\n    n = n / 10;\n}\ncout << s;')}
+<p><mark>Divizibilitate</mark>: dacă <code>a % d == 0</code>, atunci d este <mark>divizor</mark> al lui a. Un număr e <mark>prim</mark> dacă are exact doi divizori: 1 și el însuși.</p>
+<p><mark>Cmmdc</mark> (cel mai mare divizor comun) se află cu algoritmul lui Euclid:</p>
+${C('while (b != 0)\n{\n    r = a % b;\n    a = b;\n    b = r;\n}\ncout << a;')}`,
+qs:[
+ {t:'choice',q:'Ce afișează programul pentru suma cifrelor, dacă se citește n = 472?',o:['13','472','7','12'],ok:0,why:'Se adună pe rând 2, 7 și 4 (de la ultima cifră spre prima): 2 + 7 + 4 = 13. Bucla se oprește când n ajunge la 0.'},
+ {t:'match',q:'Leagă fiecare expresie de valoarea ei.',pairs:[['5831 % 10','1'],['5831 / 10','583'],['5831 % 100','31'],['5831 / 1000','5']],why:'% 10 păstrează ultima cifră, % 100 ultimele două. / 10 taie o cifră, / 1000 taie trei.'},
+ {t:'choice',q:'Ce afișează algoritmul lui Euclid pentru a = 12 și b = 18?',o:['6','12','18','3'],ok:0,why:'Resturile sunt 12, 6 și 0. Când b devine 0, a are valoarea 6. 6 e cel mai mare număr care îl împarte și pe 12, și pe 18.'},
+ {t:'classify',q:'Prim sau nu?',cats:['Prim','Nu e prim'],items:[['2',0],['13',0],['29',0],['1',1],['9',1],['21',1]],why:'2, 13 și 29 au exact doi divizori. 1 are un singur divizor, deci nu e prim. 9 = 3 * 3 și 21 = 3 * 7 au mai mult de doi.'},
+ {t:'tf',q:'Condiția n % d == 0 înseamnă că d este divizor al lui n.',ok:true,why:'Adevărat. Restul 0 înseamnă că împărțirea lui n la d se face exact, adică d îl divide pe n.'}
+]},
+{t:'Găsesc și repar erorile',lectii:[31],continuturi:[FAC],text:`
+<p>Sunt două feluri de erori:</p>
+<ul>
+<li><mark>erori de sintaxă</mark>: lipsește <code>;</code> sau o acoladă, un cuvânt e scris greșit (<code>Cout</code>). Programul <strong>nu se compilează</strong>, iar mediul arată rândul cu problema în mesajele de compilare;</li>
+<li><mark>erori de logică</mark>: programul rulează, dar <strong>rezultatul e greșit</strong>.</li>
+</ul>
+<p>Erorile de logică le prinzi cu <mark>teste</mark>: date pentru care știi dinainte rezultatul.</p>
+<p>Sau <mark>rulezi pas cu pas</mark>: pui un <mark>punct de oprire</mark> (<em>breakpoint</em>), execuți un rând odată și urmărești valorile variabilelor. În Code::Blocks găsești aceste comenzi în meniul Debug.</p>`,
+qs:[
+ {t:'tf',q:'Dacă programul se compilează fără erori, rezultatul lui e sigur corect.',ok:false,why:'Fals. Compilarea prinde doar greșelile de scriere. Un program cu o formulă greșită se compilează și dă un rezultat greșit.'},
+ {t:'classify',q:'Ce fel de eroare este fiecare?',cats:['De sintaxă (nu se compilează)','De logică (rezultat greșit)'],items:[['Lipsește ; după cin >> a',0],['Scrii Cout în loc de cout',0],['Lipsește acolada care închide main',0],['Media iese 8 în loc de 8.5, fiindcă ai folosit int',1],['Scrii s = s * i când voiai suma',1],['Scrii if (a = 5) în loc de if (a == 5)',1]],why:'Primele trei încalcă regulile de scriere, deci compilarea se oprește. Celelalte se compilează, dar calculează altceva decât voiai.'},
+ {t:'hunt',q:'Programul Ioanei trebuie să afișeze suma numerelor de la 1 la n. Are 2 greșeli de logică. Apasă pe ele.',src:'int n, s = [[1;|suma pornește de la 0; cu 1 rezultatul iese mai mare cu 1]] cin >> n; for (int i = 1; [[i < n;|cu i < n, numărul n nu se mai adună; corect: i <= n]] i++) s = s + i; cout << s;',indiciu:'Verifică valoarea de pornire a sumei și ultima trecere prin buclă.',why:'Test: pentru n = 3 rezultatul corect e 1 + 2 + 3 = 6. Programul Ioanei afișează 1 + 1 + 2 = 4.'},
+ {t:'choice',q:'Ce te ajută să vezi valoarea fiecărei variabile după fiecare rând?',o:['Rularea pas cu pas, cu urmărirea variabilelor','Salvarea fișierului','Mărirea fontului în editor','Închiderea și redeschiderea mediului'],ok:0,why:'La rularea pas cu pas, programul se oprește după fiecare rând și vezi exact unde o valoare începe să fie greșită.'},
+ {t:'choice',q:'Testezi un program care afișează „par” sau „impar”. Ce pereche de numere de test alegi?',o:['4 și 7','4 și 8','7 și 9','10 și 20'],ok:0,why:'Un test bun încearcă ambele ramuri: un număr par și unul impar. Celelalte perechi verifică de două ori aceeași ramură.'}
+]},
+{t:'Mini-proiectul: viteza medie',final:true,lectii:[32,33,34],continuturi:[LIN,ALT,'Operații de citire și afișare a datelor','Date numerice'],text:`
+<p><strong>Misiunea finală.</strong> La fizică ai învățat că <mark>viteza medie</mark> este distanța împărțită la timp. Maria face un mini-proiect: un biciclist parcurge <code>d</code> km în <code>t</code> ore. Pe pista din parc, limita este 25 km/h.</p>
+${C('double d, t, v;\ncin >> d >> t;\nv = d / t;\ncout << v << endl;\nif (v <= 25)\n    cout << "in limita";\nelse\n    cout << "prea repede";')}
+<p>La prezentare, Maria explică datele, structurile folosite și <mark>testele</mark> făcute. Colegii <mark>analizează</mark> programul și caută greșeli.</p>`,
+qs:[
+ {t:'choice',q:'Ce afișează programul Mariei pentru d = 30 și t = 2?',o:['15 și in limita','15 și prea repede','60 și prea repede','32 și prea repede'],ok:0,why:'v = 30 / 2 = 15. Condiția 15 <= 25 e adevărată, deci se afișează „in limita”.'},
+ {t:'choice',q:'Dacă Maria ar fi declarat d, t și v de tip int, ce ar fi afișat pentru d = 45 și t = 2?',o:['22','22.5','23','90'],ok:0,why:'Între două int, / dă câtul: 45 / 2 = 22. Partea .5 se pierde. De aceea Maria a ales double.'},
+ {t:'classify',q:'Ce rol au datele din programul Mariei?',cats:['Date de intrare','Date de ieșire'],items:[['d, distanța',0],['t, timpul',0],['v, viteza medie',1],['mesajul „in limita” sau „prea repede”',1]],why:'d și t se citesc cu cin. Viteza și mesajul se afișează cu cout.'},
+ {t:'tf',q:'La prezentare, e bine ca Maria să arate și testele, de exemplu d = 30, t = 2 cu rezultatul așteptat 15.',ok:true,why:'Adevărat. Un test cu rezultat știut dinainte le arată colegilor că programul calculează corect, nu doar că rulează.'},
+ {t:'hunt',q:'Colegul lui Maria a scris o variantă cu 2 greșeli. Apasă pe ele.',src:'double d, t, v; cin >> d >> t; v = [[t / d;|viteza este distanța împărțită la timp: v = d / t;]] if [[(v = 25)|= este atribuire; limita se verifică cu v <= 25]] cout << "in limita"; else cout << "prea repede";',indiciu:'Verifică formula vitezei și semnul din condiție.',why:'t / d dă ore pe kilometru, nu kilometri pe oră. Cu = în condiție, v primește 25 și nu se mai compară nimic.'}
+]}
+];
+
+JocMotor.porneste({
+  cheie:'joc_program_vii',
+  titlu:'Misiunea Compilator',
+  marca:'Misiunea <b>Compilator</b>',
+  h1:'Misiunea Compilator<span class="ac"> {}</span>',
+  clasa:'a VII-a',
+  unitate:'VII-U4',
+  unitateTitlu:'De la algoritm la program',
+  competente:['CS.1.4','CS.2.1','CS.2.2','CS.3.3'],
+  lectii:'23–34',
+  intro:'Opt niveluri despre drumul de la algoritm la programul în C++: enunțul, mediul de dezvoltare, vocabularul, citirea și afișarea, structurile liniară, alternativă și repetitive, cifrele, divizibilitatea și depanarea. La fiecare nivel citești o pagină scurtă și răspunzi la întrebări. La final analizezi mini-proiectul Mariei și îți iei diploma.',
+  banda:'<span class="nr">1</span><span class="kw">int</span>&nbsp;main()&nbsp;{&nbsp;<span class="kw">cout</span>&nbsp;&lt;&lt;&nbsp;<span class="st">"Salut!"</span>;&nbsp;}<span class="cm">// primul meu program</span>',
+  nivele:LEVELS,
+  diploma:{
+    titlu:'Programator începător',
+    rezumat:'analiza enunțului, mediul de dezvoltare, vocabularul limbajului, datele numerice, citirea și afișarea, structurile liniară, alternativă și repetitive, cifrele unui număr, divizibilitatea și depanarea',
+    aplicatie:'Code::Blocks, pe calculatorul din laborator',
+    provocare:[
+      'Scrie un program care citește un număr natural n și afișează suma cifrelor lui.',
+      'Adaugă o decizie: dacă suma cifrelor se împarte exact la 3, afișează „divizibil cu 3”, altfel „nu e divizibil cu 3”.',
+      'Alege trei teste pentru care știi dinainte rezultatul, de exemplu 123, 472 și 5, și verifică ce afișează programul.',
+      'Dacă un test nu iese, rulează programul pas cu pas și urmărește variabilele n și s.',
+      'Salvează fișierul ca Nume_Prenume_cifre.cpp și explică-i profesorului ce face fiecare rând.'
+    ]
+  }
+});
+</script>
+</body>
+</html>

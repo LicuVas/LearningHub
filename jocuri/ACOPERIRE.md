@@ -32,15 +32,110 @@
 | - unități de măsură pentru capacitatea de stocare (bit, byte, kilobyte, megabyte, gigabyte, terabyte, petabyte etc.) *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-antrenament-v N1, calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N6 |
 | - comparație între dispozitivele de stocare în funcție de capacitate *(Tipuri de dispozitive: de intrare, de ieșire, de intrare-ieșire, de stocare a datelor)* | ✅ calculator-antrenament-v N2, calculator-antrenament-v N3, calculator-v N6, calculator-v N7 |
 
-### V-U2 · Sistemul de operare. Ordinea în fișierele mele — **fără joc încă**
+### V-U2 · Sistemul de operare. Ordinea în fișierele mele — jocuri: fisiere-v
 
-### V-U3 · Internetul ca sursă de documentare — **fără joc încă**
+| Lecția | Titlu | Acoperită de |
+|---|---|---|
+| 8 | Ce face un sistem de operare. Elemente de interfață (predare) | ✅ fisiere-v N1, fisiere-v N2 |
+| 9 | Organizarea datelor pe suport extern: fișiere și directoare (predare) | ✅ fisiere-v N3 |
+| 10 | Operații cu fișiere și directoare: creare, redenumire, copiere, mutare, ștergere, căutare (predare) | ✅ fisiere-v N4, fisiere-v N5 |
+| 11 | Îmi organizez resursele digitale personale (aplicație practică) (consolidare) | ✅ fisiere-v N6 |
+| 12 | Evaluare sumativă: sistemul de operare (evaluare sumativă) | — |
 
-### V-U4 · Editoare grafice. Fac materiale digitale — **fără joc încă**
+| Conținut din programă | Acoperit de |
+|---|---|
+| Rolul unui sistem de operare *(Sisteme de operare)* | ✅ fisiere-v N1 |
+| Elemente de interfață ale unui sistem de operare *(Sisteme de operare)* | ✅ fisiere-v N2 |
+| Organizarea datelor pe suport extern *(Sisteme de operare)* | ✅ fisiere-v N3, fisiere-v N6 |
+| Operații cu fișiere și directoare *(Sisteme de operare)* | ✅ fisiere-v N4, fisiere-v N5, fisiere-v N6 |
 
-### V-U5 · Algoritmi. Gândesc pas cu pas — **fără joc încă**
+### V-U3 · Internetul ca sursă de documentare — jocuri: documentare-v
 
-### V-U6 · Din algoritm în joc: mediul grafic interactiv (Scratch) — **fără joc încă**
+| Lecția | Titlu | Acoperită de |
+|---|---|---|
+| 13 | Servicii ale rețelei Internet. La ce folosește fiecare (predare) | ✅ documentare-v N1 |
+| 14 | Navigarea pe web. Căutarea informațiilor cu motoare de căutare (predare) | ✅ documentare-v N2, documentare-v N3, documentare-v N7 |
+| 15 | Salvarea informațiilor de pe Internet. Drepturile de autor (predare) | ✅ documentare-v N4, documentare-v N5, documentare-v N7 |
+| 16 | Siguranța pe Internet: pericole, reguli, credibilitatea surselor (predare + consolidare) | ✅ documentare-v N6, documentare-v N7 |
+| 17 | Evaluare sumativă: Internet și documentare (evaluare sumativă) | — |
+
+| Conținut din programă | Acoperit de |
+|---|---|
+| Servicii ale rețelei Internet *(Internet)* | ✅ documentare-v N1 |
+| Serviciul World Wide Web: *(Internet)* | ✅ documentare-v N2 |
+| - navigarea pe Internet; *(Internet)* | ✅ documentare-v N2 |
+| - căutarea informațiilor pe Internet utilizând motoare de căutare; *(Internet)* | ✅ documentare-v N3, documentare-v N7 |
+| - salvarea informațiilor de pe Internet *(Internet)* | ✅ documentare-v N4, documentare-v N7 |
+| Drepturi de autor *(Internet)* | ✅ documentare-v N5, documentare-v N7 |
+| Siguranța pe Internet *(Internet)* | ✅ documentare-v N6, documentare-v N7 |
+
+### V-U4 · Editoare grafice. Fac materiale digitale — jocuri: grafica-v
+
+| Lecția | Titlu | Acoperită de |
+|---|---|---|
+| 18 | Rolul unui editor grafic. Interfața. Creare, deschidere, salvare (predare) | ✅ grafica-v N1, grafica-v N2 |
+| 19 | Selectare, copiere, mutare, ștergere. Instrumente de desenare (predare) | ✅ grafica-v N3, grafica-v N4 |
+| 20 | Redimensionare, trunchiere, rotație, panoramare (predare) | ✅ grafica-v N5 |
+| 21 | Culori și stiluri de umplere. Culori personalizate (predare) | ✅ grafica-v N6 |
+| 22 | Inserarea și formatarea textului. Realizez o felicitare / un afiș (consolidare (mini-proiect)) | ✅ grafica-v N7 |
+| 23 | Evaluare sumativă: editor grafic (produs digital) (evaluare sumativă) | — |
+
+| Conținut din programă | Acoperit de |
+|---|---|
+| Rolul unui editor grafic *(Editoare grafice)* | ✅ grafica-v N1 |
+| Elemente de interfață specifice *(Editoare grafice)* | ✅ grafica-v N1 |
+| Crearea, deschiderea şi salvarea fişierelor grafice *(Editoare grafice)* | ✅ grafica-v N2, grafica-v N7 |
+| Comenzi pentru selectare, copiere, mutare, ştergere *(Editoare grafice)* | ✅ grafica-v N4 |
+| Redimensionarea, trunchierea, rotaţia unei imagini *(Editoare grafice)* | ✅ grafica-v N5 |
+| Panoramare imagine *(Editoare grafice)* | ✅ grafica-v N5 |
+| Instrumente de desenare *(Editoare grafice)* | ✅ grafica-v N3 |
+| Utilizarea culorilor în prelucrarea imaginilor; crearea culorilor personalizate *(Editoare grafice)* | ✅ grafica-v N6 |
+| Stiluri de umplere *(Editoare grafice)* | ✅ grafica-v N6 |
+| Inserarea şi formatarea textului *(Editoare grafice)* | ✅ grafica-v N7 |
+
+### V-U5 · Algoritmi. Gândesc pas cu pas — jocuri: algoritmi-v
+
+| Lecția | Titlu | Acoperită de |
+|---|---|---|
+| 24 | Ce este un algoritm. Algoritmi din viața de zi cu zi (predare) | ✅ algoritmi-v N1 |
+| 25 | Proprietățile algoritmilor: claritate, finitudine, generalitate (predare) | ✅ algoritmi-v N2 |
+| 26 | Datele: de intrare, de ieșire, de manevră. Constante și variabile (predare) | ✅ algoritmi-v N3, algoritmi-v N7 |
+| 27 | Expresii: operatori aritmetici, relaționali, logici. Evaluarea expresiilor (predare) | ✅ algoritmi-v N4, algoritmi-v N7 |
+| 28 | Structura secvențială (liniară). Descriere în limbaj natural (predare) | ✅ algoritmi-v N5, algoritmi-v N7 |
+| 29 | Structura alternativă (decizia). Urmăresc algoritmul pas cu pas (predare + consolidare) | ✅ algoritmi-v N6, algoritmi-v N7 |
+| 30 | Evaluare sumativă: algoritmi în limbaj natural (evaluare sumativă) | — |
+
+| Conținut din programă | Acoperit de |
+|---|---|
+| Noțiunea de algoritm *(Algoritmi)* | ✅ algoritmi-v N1 |
+| Proprietăți ale algoritmilor *(Algoritmi)* | ✅ algoritmi-v N2 |
+| Clasificarea datelor cu care lucrează algoritmii în funcţie de rolul acestora (de intrare, de ieșire, de manevră) *(Algoritmi)* | ✅ algoritmi-v N3, algoritmi-v N7 |
+| Constante și variabile *(Algoritmi)* | ✅ algoritmi-v N3, algoritmi-v N7 |
+| Expresii (operatori aritmetici, relaționali, logici; evaluarea expresiilor) *(Algoritmi)* | ✅ algoritmi-v N4, algoritmi-v N7 |
+| Structura secvenţială (liniară) *(Algoritmi)* | ✅ algoritmi-v N5, algoritmi-v N7 |
+| Structura alternativă (decizională)Medii grafice interactive - elemente de interfață specifice mediului grafic interactiv *(Algoritmi)* | ✅ algoritmi-v N6, algoritmi-v N7 |
+| Modalități de reprezentare a structurilor secvențiale și alternative prin blocuri grafice *(Algoritmi)* | ✅ scratch-v N2, scratch-v N3, scratch-v N4, scratch-v N5, scratch-v N6 |
+
+### V-U6 · Din algoritm în joc: mediul grafic interactiv (Scratch) — jocuri: scratch-v
+
+| Lecția | Titlu | Acoperită de |
+|---|---|---|
+| 31 | Mediul grafic interactiv: interfață, blocuri, personaje, scenă (predare) | ✅ scratch-v N1, scratch-v N2 |
+| 32 | Implementez structura secvențială cu blocuri grafice (predare) | ✅ scratch-v N3 |
+| 33 | Implementez structura alternativă. Evenimente și coliziuni (predare) | ✅ scratch-v N4, scratch-v N5 |
+| 34 | Construiesc un joc digital simplu (mini-proiect, individual sau în echipă) (consolidare (mini-proiect)) | ✅ scratch-v N6 |
+| 35 | Evaluare sumativă: joc digital (produs + explicație) (evaluare sumativă) | — |
+
+| Conținut din programă | Acoperit de |
+|---|---|
+| Noțiunea de algoritm *(Algoritmi)* | ✅ algoritmi-v N1 |
+| Proprietăți ale algoritmilor *(Algoritmi)* | ✅ algoritmi-v N2 |
+| Clasificarea datelor cu care lucrează algoritmii în funcţie de rolul acestora (de intrare, de ieșire, de manevră) *(Algoritmi)* | ✅ algoritmi-v N3, algoritmi-v N7 |
+| Constante și variabile *(Algoritmi)* | ✅ algoritmi-v N3, algoritmi-v N7 |
+| Expresii (operatori aritmetici, relaționali, logici; evaluarea expresiilor) *(Algoritmi)* | ✅ algoritmi-v N4, algoritmi-v N7 |
+| Structura secvenţială (liniară) *(Algoritmi)* | ✅ scratch-v N3 |
+| Structura alternativă (decizională)Medii grafice interactive - elemente de interfață specifice mediului grafic interactiv *(Algoritmi)* | ✅ scratch-v N1, scratch-v N2, scratch-v N4, scratch-v N6 |
+| Modalități de reprezentare a structurilor secvențiale și alternative prin blocuri grafice *(Algoritmi)* | ✅ scratch-v N2, scratch-v N3, scratch-v N4, scratch-v N5, scratch-v N6 |
 
 ## Clasa a VI-a
 
@@ -92,9 +187,58 @@
 | Operații specifice cu mesaje electronice: deschidere, compunere, trimitere, răspuns, redirecționare, atașarea unui fișier *(Internet)* | ✅ internet-vi N4 |
 | Reguli de comunicare în mediul online (netichetă): formule de adresare, reguli de scriere *(Internet)* | ✅ internet-vi N5 |
 
-### VI-U3 · Algoritmi: structuri repetitive — **fără joc încă**
+### VI-U3 · Algoritmi: structuri repetitive — jocuri: algoritmi-vi
 
-### VI-U4 · Animații grafice și modele 3D — **fără joc încă**
+| Lecția | Titlu | Acoperită de |
+|---|---|---|
+| 17 | Recapitulăm: algoritm, date, secvență, decizie (recapitulare) | ✅ algoritmi-vi N1 |
+| 18 | Aplicația de exersare a algoritmilor: interfață și instrumente de bază (predare) | ✅ algoritmi-vi N1 |
+| 19 | De ce avem nevoie de repetiție. Etapele unui exercițiu algoritmic (predare) | ✅ algoritmi-vi N2 |
+| 20 | Structura repetitivă cu contor (număr cunoscut de pași) (predare) | ✅ algoritmi-vi N3 |
+| 21 | Structura repetitivă condiționată anterior (cu test inițial) (predare) | ✅ algoritmi-vi N4 |
+| 22 | Structura repetitivă condiționată posterior (cu test final) (predare) | ✅ algoritmi-vi N5 |
+| 23 | Comparăm cele trei structuri repetitive. Când o folosesc pe fiecare (consolidare) | ✅ algoritmi-vi N6 |
+| 24 | Reprezentarea algoritmilor prin blocuri grafice (predare) | ✅ algoritmi-vi N7 |
+| 25 | Rezolv probleme cu repetiție: sume, numărări, cifre (consolidare) | ✅ algoritmi-vi N8 |
+| 26 | Evaluare sumativă: structuri repetitive (evaluare sumativă) | — |
+
+| Conținut din programă | Acoperit de |
+|---|---|
+| Elemente de interfață ale unei aplicații de exersare a algoritmilor *(Algoritmi)* | ✅ algoritmi-vi N1 |
+| Instrumente de bază utilizate în exersarea algoritmilor *(Algoritmi)* | ✅ algoritmi-vi N1 |
+| Etapele unui exercițiu algoritmic utilizând aplicația aleasă *(Algoritmi)* | ✅ algoritmi-vi N2 |
+| Structura repetitivă condiționată anterior *(Algoritmi)* | ✅ algoritmi-vi N4, algoritmi-vi N6, algoritmi-vi N8 |
+| Structura repetitivă condiționată posterior *(Algoritmi)* | ✅ algoritmi-vi N5, algoritmi-vi N6 |
+| Structura repetitivă cu contor *(Algoritmi)* | ✅ algoritmi-vi N3, algoritmi-vi N6, algoritmi-vi N8 |
+| Modalități de reprezentare a structurilor repetitive prin blocuri grafice *(Algoritmi)* | ✅ algoritmi-vi N7 |
+
+### VI-U4 · Animații grafice și modele 3D — jocuri: animatii-3d-vi
+
+| Lecția | Titlu | Acoperită de |
+|---|---|---|
+| 27 | Aplicația de animație grafică: interfață și instrumente de bază (predare) | ✅ animatii-3d-vi N1 |
+| 28 | Gestionarea animațiilor: creare, salvare, expunere, testare, depanare (predare) | ✅ animatii-3d-vi N2 |
+| 29 | Scenariul unei animații: compoziție, cadre, obiecte animate (predare) | ✅ animatii-3d-vi N3 |
+| 30 | Editarea compoziției și a proprietăților obiectelor (predare) | ✅ animatii-3d-vi N4 |
+| 31 | Efecte de mișcare, temporizare, efecte sonore (predare) | ✅ animatii-3d-vi N5 |
+| 32 | Controlul animației prin structuri de control sau de la tastatură (predare) | ✅ animatii-3d-vi N6 |
+| 33 | Modele 3D: forme geometrice tridimensionale și text 3D (predare) | ✅ animatii-3d-vi N7 |
+| 34 | Mini-proiect: animație pe o temă dată (consolidare (mini-proiect)) | ✅ animatii-3d-vi N8 |
+| 35 | Evaluare sumativă: animație / model 3D (produs + explicație) (evaluare sumativă) | — |
+
+| Conținut din programă | Acoperit de |
+|---|---|
+| Elemente de interfață ale unei aplicații de animație grafică *(Animaţii grafice si modele 3D)* | ✅ animatii-3d-vi N1 |
+| Instrumente de bază ale unei aplicații de animație grafică *(Animaţii grafice si modele 3D)* | ✅ animatii-3d-vi N1 |
+| Operații de gestionare a animațiilor: creare, deschidere, expunere, salvare, închidere, testare, depanare *(Animaţii grafice si modele 3D)* | ✅ animatii-3d-vi N2 |
+| Scenariul unei animații: compoziție, cadre, obiecte animate *(Animaţii grafice si modele 3D)* | ✅ animatii-3d-vi N3, animatii-3d-vi N8 |
+| Operații de editare a unei compoziții: inserare, copiere, mutare, ștergere a obiectelor/cadrelor *(Animaţii grafice si modele 3D)* | ✅ animatii-3d-vi N4 |
+| Operații de editare a proprietăților unui obiect: dimensionare, rotire, transparență, poziționare *(Animaţii grafice si modele 3D)* | ✅ animatii-3d-vi N4 |
+| Operații specifice de realizare a unei animații: efecte de mișcare, temporizare, efecte sonore *(Animaţii grafice si modele 3D)* | ✅ animatii-3d-vi N5, animatii-3d-vi N8 |
+| Controlul animației prin structuri de control sau de la tastatură *(Animaţii grafice si modele 3D)* | ✅ animatii-3d-vi N6, animatii-3d-vi N8 |
+| Forme geometrice tridimensionale *(Animaţii grafice si modele 3D)* | ✅ animatii-3d-vi N7 |
+| Text tridimensional *(Animaţii grafice si modele 3D)* | ✅ animatii-3d-vi N7 |
+| Operații specifice modelării 3D disponibile în aplicațiile pentru copii *(Animaţii grafice si modele 3D)* | ✅ animatii-3d-vi N7 |
 
 ## Clasa a VII-a
 
@@ -146,9 +290,55 @@
 | Suprapunere coloană sonoră peste scene *(Aplicații de prelucrare audio-video)* | ✅ audio-video-vii N6 |
 | Generice – suprapunerea textului peste scene *(Aplicații de prelucrare audio-video)* | ✅ audio-video-vii N6 |
 
-### VII-U3 · Aplicații colaborative — **fără joc încă**
+### VII-U3 · Aplicații colaborative — jocuri: colaborare-vii
 
-### VII-U4 · De la algoritm la program — **fără joc încă**
+| Lecția | Titlu | Acoperită de |
+|---|---|---|
+| 18 | Ce este o aplicație colaborativă. Accesare și conectare (predare) | ✅ colaborare-vii N1, colaborare-vii N2 |
+| 19 | Instrumente de lucru: documente și prezentări în colaborare (predare) | ✅ colaborare-vii N3, colaborare-vii N7 |
+| 20 | Publicare și modificare de conținut. Istoricul editării și contribuția fiecăruia (predare) | ✅ colaborare-vii N4, colaborare-vii N7 |
+| 21 | Etică în mediul colaborativ: hacker și cracker. Protecția împotriva fraudei online (predare + consolidare) | ✅ colaborare-vii N5, colaborare-vii N6, colaborare-vii N7 |
+| 22 | Evaluare sumativă: lucrul colaborativ (produs de echipă + contribuție individuală) (evaluare sumativă) | — |
+
+| Conținut din programă | Acoperit de |
+|---|---|
+| Noțiunea de aplicație colaborativă *(Aplicații colaborative)* | ✅ colaborare-vii N1 |
+| Accesare/conectare în aplicația colaborativă *(Aplicații colaborative)* | ✅ colaborare-vii N2 |
+| Facilități ale aplicațiilor de tip colaborativ *(Aplicații colaborative)* | ✅ colaborare-vii N1 |
+| Interfaţa aplicaţiei colaborative *(Aplicații colaborative)* | ✅ colaborare-vii N3 |
+| Instrumente de lucru: documente, prezentări *(Aplicații colaborative)* | ✅ colaborare-vii N3, colaborare-vii N7 |
+| Operații permise în aplicație: publicare, modificare conținuturi în aplicația colaborativă *(Aplicații colaborative)* | ✅ colaborare-vii N4, colaborare-vii N7 |
+| Noțiuni de etică într-un mediu colaborativ; hacker și cracker *(Aplicații colaborative)* | ✅ colaborare-vii N5, colaborare-vii N7 |
+| Protecția împotriva fraudei în mediul colaborativ online *(Aplicații colaborative)* | ✅ colaborare-vii N6, colaborare-vii N7 |
+
+### VII-U4 · De la algoritm la program — jocuri: program-vii
+
+| Lecția | Titlu | Acoperită de |
+|---|---|---|
+| 23 | Analiza enunțului unei probleme: date de intrare, date de ieșire, operații (predare) | ✅ program-vii N1 |
+| 24 | Mediul de programare: editare, rulare, depanare. Structura unui program (predare) | ✅ program-vii N1 |
+| 25 | Vocabularul limbajului. Date numerice. Citirea și afișarea datelor (predare) | ✅ program-vii N2 |
+| 26 | Implementarea structurii secvențiale (predare) | ✅ program-vii N3 |
+| 27 | Implementarea structurii alternative (predare) | ✅ program-vii N4 |
+| 28 | Implementarea structurii repetitive (predare) | ✅ program-vii N5 |
+| 29 | Combin structurile: algoritmi elementari cu cifrele unui număr (consolidare) | ✅ program-vii N6 |
+| 30 | Algoritmi de divizibilitate: divizori, cmmdc, număr prim (predare) | ✅ program-vii N6 |
+| 31 | Rulare pas cu pas. Găsesc și repar erorile (consolidare) | ✅ program-vii N7 |
+| 32 | Aplicații interdisciplinare: arii, perimetre, viteză medie (consolidare) | ✅ program-vii N8 |
+| 33 | Mini-proiect: program care rezolvă o problemă aleasă de mine (consolidare (mini-proiect)) | ✅ program-vii N8 |
+| 34 | Prezentarea și analiza mini-proiectelor (consolidare) | ✅ program-vii N8 |
+| 35 | Evaluare sumativă: de la algoritm la program (evaluare sumativă) | — |
+
+| Conținut din programă | Acoperit de |
+|---|---|
+| Facilități ale mediului de dezvoltare pentru un limbaj de programare: editare, rulare și depanare *(Limbaj de programare)* | ✅ program-vii N1, program-vii N7 |
+| Structura programelor *(Limbaj de programare)* | ✅ program-vii N1 |
+| Vocabularul limbajului *(Limbaj de programare)* | ✅ program-vii N2 |
+| Date numerice *(Limbaj de programare)* | ✅ program-vii N2, program-vii N3, program-vii N8 |
+| Operații de citire și afișare a datelor *(Limbaj de programare)* | ✅ program-vii N2, program-vii N8 |
+| Instrucțiuni/comenzi pentru implementarea în limbaj de programare a structurii liniare *(Limbaj de programare)* | ✅ program-vii N3, program-vii N8 |
+| Instrucțiuni/comenzi pentru implementarea în limbaj de programare a structurii alternative *(Limbaj de programare)* | ✅ program-vii N4, program-vii N6, program-vii N8 |
+| Instrucțiuni/comenzi pentru implementarea în limbaj de programare a structurilor repetitive *(Limbaj de programare)* | ✅ program-vii N5, program-vii N6 |
 
 ## Clasa a VIII-a
 
@@ -208,4 +398,24 @@
 | Operații de formatare la nivel de text, paragraf, fundal *(Pagini web)* | ✅ web-viii N6 |
 | Securitate cibernetică *(Pagini web)* | ✅ web-viii N7 |
 
-### VIII-U3 · Șiruri de valori. De la algoritm la program — **fără joc încă**
+### VIII-U3 · Șiruri de valori. De la algoritm la program — jocuri: siruri-viii
+
+| Lecția | Titlu | Acoperită de |
+|---|---|---|
+| 23 | Ce este un șir de valori. Unde apar șiruri în viața reală (predare) | ✅ siruri-viii N1 |
+| 24 | Operații cu șiruri: citire, afișare, parcurgere (predare) | ✅ siruri-viii N2 |
+| 25 | Algoritmul de numărare a elementelor cu o proprietate (predare) | ✅ siruri-viii N3 |
+| 26 | Algoritmii de sumă și de produs (predare) | ✅ siruri-viii N4 |
+| 27 | Algoritmii de minim și de maxim (predare) | ✅ siruri-viii N5 |
+| 28 | Verificarea unei proprietăți: pentru toate / pentru cel puțin un element (predare) | ✅ siruri-viii N6 |
+| 29 | Implementez algoritmii pe șiruri în mediul de programare (predare) | ✅ siruri-viii N7 |
+| 30 | Combin algoritmii: probleme cu mai multe prelucrări (consolidare) | ✅ siruri-viii N7 |
+| 31 | Rulare pas cu pas, testare, depanare (consolidare) | ✅ siruri-viii N7 |
+| 32 | Mini-proiect: aplicație care prelucrează un șir de date reale (consolidare (mini-proiect)) | ✅ siruri-viii N8 |
+| 33 | Evaluare sumativă: șiruri de valori (evaluare sumativă) | — |
+
+| Conținut din programă | Acoperit de |
+|---|---|
+| Șir de valori (noțiuni introductive) *(Algoritmi)* | ✅ siruri-viii N1 |
+| Operații cu șiruri de valori: citire, afişare, parcurgere *(Algoritmi)* | ✅ siruri-viii N2, siruri-viii N7, siruri-viii N8 |
+| Algoritmi de bază pentru șiruri de valori: numărare, sumă /produs, minim/maxim, verificare a unei proprietăți. *(Algoritmi)* | ✅ siruri-viii N3, siruri-viii N4, siruri-viii N5, siruri-viii N6, siruri-viii N7, siruri-viii N8 |

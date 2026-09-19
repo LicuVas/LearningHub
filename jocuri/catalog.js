@@ -1,6 +1,6 @@
 /* GENERAT de _motor/catalog_build.py - nu edita de mână */
 window.JOCURI_CATALOG = {
- "generat": "2026-09-15",
+ "generat": "2026-09-19",
  "sursa": "Info_Gimnaziu_2026/data/unitati.json",
  "clase": [
   {
@@ -39,35 +39,90 @@ window.JOCURI_CATALOG = {
      "titlu": "Sistemul de operare. Ordinea în fișierele mele",
      "ore": 5,
      "lectii": "8–12",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "fisiere-v",
+       "titlu": "Misiunea Ordine",
+       "descriere": "Lecție-joc pentru clasa a V-a: rolul sistemului de operare, elementele de interfață, fișiere și directoare, operații cu fișiere și ordinea în resursele digitale personale.",
+       "unitate": "V-U2",
+       "accent": "#0B5CAD",
+       "motor": true,
+       "mod": "invatare",
+       "prima_lectie": 8
+      }
+     ]
     },
     {
      "id": "V-U3",
      "titlu": "Internetul ca sursă de documentare",
      "ore": 5,
      "lectii": "13–17",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "documentare-v",
+       "titlu": "Misiunea Documentare",
+       "descriere": "Lecție-joc pentru clasa a V-a: serviciile Internetului, navigarea, căutarea cu motoare de căutare, salvarea informațiilor, drepturile de autor și credibilitatea surselor.",
+       "unitate": "V-U3",
+       "accent": "#136B66",
+       "motor": true,
+       "mod": "invatare",
+       "prima_lectie": 13
+      }
+     ]
     },
     {
      "id": "V-U4",
      "titlu": "Editoare grafice. Fac materiale digitale",
      "ore": 6,
      "lectii": "18–23",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "grafica-v",
+       "titlu": "Misiunea Pixel",
+       "descriere": "Lecție-joc pentru clasa a V-a: editorul grafic, crearea și salvarea imaginilor, instrumente de desenare, selecție, redimensionare, trunchiere, rotație, panoramare, culori, umplere și text.",
+       "unitate": "V-U4",
+       "accent": "#2649B5",
+       "motor": true,
+       "mod": "invatare",
+       "prima_lectie": 18
+      }
+     ]
     },
     {
      "id": "V-U5",
      "titlu": "Algoritmi. Gândesc pas cu pas",
      "ore": 7,
      "lectii": "24–30",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "algoritmi-v",
+       "titlu": "Misiunea Pas cu Pas",
+       "descriere": "Lecție-joc pentru clasa a V-a: ce este un algoritm, proprietățile lui, datele de intrare, de ieșire și de manevră, constante și variabile, expresii, structura secvențială și structura alternativă, în limbaj natural.",
+       "unitate": "V-U5",
+       "accent": "#3A48B8",
+       "motor": true,
+       "mod": "invatare",
+       "prima_lectie": 24
+      }
+     ]
     },
     {
      "id": "V-U6",
      "titlu": "Din algoritm în joc: mediul grafic interactiv (Scratch)",
      "ore": 5,
      "lectii": "31–35",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "scratch-v",
+       "titlu": "Misiunea Scenă",
+       "descriere": "Lecție-joc pentru clasa a V-a: mediul grafic interactiv Scratch, interfața, categoriile de blocuri, structura secvențială și structura alternativă cu blocuri, evenimente, atingeri și un mini-joc.",
+       "unitate": "V-U6",
+       "accent": "#6D3FC0",
+       "motor": true,
+       "mod": "invatare",
+       "prima_lectie": 31
+      }
+     ]
     },
     {
      "id": "V-R",
@@ -78,7 +133,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "recapitulare-v",
        "titlu": "Recapitulare: clasa a V-a",
-       "descriere": "Recapitulare amestecată pentru clasa a V-a: 84 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "descriere": "Recapitulare amestecată pentru clasa a V-a: 243 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
        "unitate": "V-R",
        "accent": "#8A5A00",
        "motor": true,
@@ -143,14 +198,36 @@ window.JOCURI_CATALOG = {
      "titlu": "Algoritmi: structuri repetitive",
      "ore": 10,
      "lectii": "17–26",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "algoritmi-vi",
+       "titlu": "Misiunea Buclă",
+       "descriere": "Lecție-joc pentru clasa a VI-a: structurile repetitive cu contor, condiționată anterior și condiționată posterior, în pseudocod, în aplicația de exersare și în schema logică, cu probleme de sume, numărări și cifre.",
+       "unitate": "VI-U3",
+       "accent": "#A24A0A",
+       "motor": true,
+       "mod": "invatare",
+       "prima_lectie": 17
+      }
+     ]
     },
     {
      "id": "VI-U4",
      "titlu": "Animații grafice și modele 3D",
      "ore": 9,
      "lectii": "27–35",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "animatii-3d-vi",
+       "titlu": "Misiunea Cadru",
+       "descriere": "Lecție-joc pentru clasa a VI-a: animații grafice în Scratch (interfață, gestionare, scenariu, cadre, proprietăți, mișcare, temporizare, sunet, control de la tastatură) și primele modele 3D.",
+       "unitate": "VI-U4",
+       "accent": "#0B6873",
+       "motor": true,
+       "mod": "invatare",
+       "prima_lectie": 27
+      }
+     ]
     },
     {
      "id": "VI-R",
@@ -161,7 +238,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "recapitulare-vi",
        "titlu": "Recapitulare: clasa a VI-a",
-       "descriere": "Recapitulare amestecată pentru clasa a VI-a: 110 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "descriere": "Recapitulare amestecată pentru clasa a VI-a: 190 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
        "unitate": "VI-R",
        "accent": "#0E6E6E",
        "motor": true,
@@ -236,14 +313,36 @@ window.JOCURI_CATALOG = {
      "titlu": "Aplicații colaborative",
      "ore": 5,
      "lectii": "18–22",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "colaborare-vii",
+       "titlu": "Misiunea Echipa",
+       "descriere": "Lecție-joc pentru clasa a VII-a: aplicații colaborative, conectare, documente și prezentări lucrate în echipă, istoricul versiunilor, etică, hacker și cracker, protecția împotriva fraudei online.",
+       "unitate": "VII-U3",
+       "accent": "#5B3FB8",
+       "motor": true,
+       "mod": "invatare",
+       "prima_lectie": 18
+      }
+     ]
     },
     {
      "id": "VII-U4",
      "titlu": "De la algoritm la program",
      "ore": 13,
      "lectii": "23–35",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "program-vii",
+       "titlu": "Misiunea Compilator",
+       "descriere": "Lecție-joc pentru clasa a VII-a: de la algoritm la program în C++, analiza enunțului, mediul de programare, vocabularul, datele numerice, citirea și afișarea, structurile liniară, alternativă și repetitive, cifrele unui număr, divizibilitatea și depanarea.",
+       "unitate": "VII-U4",
+       "accent": "#1F7A4D",
+       "motor": true,
+       "mod": "invatare",
+       "prima_lectie": 23
+      }
+     ]
     },
     {
      "id": "VII-R",
@@ -254,7 +353,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "recapitulare-vii",
        "titlu": "Recapitulare: clasa a VII-a",
-       "descriere": "Recapitulare amestecată pentru clasa a VII-a: 133 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "descriere": "Recapitulare amestecată pentru clasa a VII-a: 210 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
        "unitate": "VII-R",
        "accent": "#5B3FA8",
        "motor": true,
@@ -319,7 +418,18 @@ window.JOCURI_CATALOG = {
      "titlu": "Șiruri de valori. De la algoritm la program",
      "ore": 11,
      "lectii": "23–33",
-     "jocuri": []
+     "jocuri": [
+      {
+       "slug": "siruri-viii",
+       "titlu": "Misiunea Șirul",
+       "descriere": "Lecție-joc pentru clasa a VIII-a: șiruri de valori în C++, citire, afișare și parcurgere, algoritmii de numărare, sumă, produs, minim, maxim și verificarea unei proprietăți, testare și depanare.",
+       "unitate": "VIII-U3",
+       "accent": "#B4432A",
+       "motor": true,
+       "mod": "invatare",
+       "prima_lectie": 23
+      }
+     ]
     },
     {
      "id": "VIII-R",
@@ -330,7 +440,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "recapitulare-viii",
        "titlu": "Recapitulare: clasa a VIII-a",
-       "descriere": "Recapitulare amestecată pentru clasa a VIII-a: 119 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "descriere": "Recapitulare amestecată pentru clasa a VIII-a: 155 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
        "unitate": "VIII-R",
        "accent": "#9C2F2F",
        "motor": true,
