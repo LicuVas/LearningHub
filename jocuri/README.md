@@ -244,6 +244,11 @@ Doar avertizează: numărul de cuvinte și de niveluri. Poarta a fost verificat�
   - Butonul apare pe cele 4 lecții.
   - Simularea amestecă toate 4 aplicațiile, iar a doua tragere are 0 întrebări comune cu prima.
 
+**19.09.2026 — V-U2 primul joc, din testele de la clasă**
+- Două teste Word fotografiate (hardware/SO + Windows fișiere/foldere, 15+15 itemi) au devenit `jocuri/sistem-operare-v` (antrenament, 30 de întrebări, 3 runde). Itemii cu mai multe variante bune sunt `classify`, nu `choice` cu o singură literă — altfel motorul ar fi marcat greșit elevul care bifa tot ce e corect.
+- Testul 2 era etichetat „clasa a XII-a”; conținutul e V-U2 (CS.1.2). Ancorat la gimnaziu, pe locul gol din catalog.
+- Poarta: `[TRECUT]` 60 de întrebări jucate, 0 avertismente după reechilibrarea lungimii la 4 distractori (enunțurile originale păstrate).
+
 ## 10. Deschis / de îmbunătățit
 
 - Portarea Word VII pe motor (editorul → `_motor\tip-editor.js`).
