@@ -1,6 +1,6 @@
 /* GENERAT de _motor/catalog_build.py - nu edita de mână */
 window.JOCURI_CATALOG = {
- "generat": "2026-09-19",
+ "generat": "2026-09-15",
  "sursa": "Info_Gimnaziu_2026/data/unitati.json",
  "clase": [
   {
@@ -39,18 +39,7 @@ window.JOCURI_CATALOG = {
      "titlu": "Sistemul de operare. Ordinea în fișierele mele",
      "ore": 5,
      "lectii": "8–12",
-     "jocuri": [
-      {
-       "slug": "sistem-operare-v",
-       "titlu": "Test: Sistemul de operare",
-       "descriere": "Test de antrenament pentru clasa a V-a, unitatea despre sistemul de operare: Windows, fișiere și foldere. Întrebări din testele de la clasă, trase pe trei runde, altele la fiecare reluare.",
-       "unitate": "V-U2",
-       "accent": "#1B4FD8",
-       "motor": true,
-       "mod": "antrenament",
-       "prima_lectie": 8
-      }
-     ]
+     "jocuri": []
     },
     {
      "id": "V-U3",
@@ -89,7 +78,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "recapitulare-v",
        "titlu": "Recapitulare: clasa a V-a",
-       "descriere": "Recapitulare amestecată pentru clasa a V-a: 114 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "descriere": "Recapitulare amestecată pentru clasa a V-a: 84 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
        "unitate": "V-R",
        "accent": "#8A5A00",
        "motor": true,
