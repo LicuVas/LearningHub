@@ -264,6 +264,22 @@ Doar avertizează: numărul de cuvinte și de niveluri. Poarta a fost verificat�
   - Butonul apare pe cele 4 lecții.
   - Simularea amestecă toate 4 aplicațiile, iar a doua tragere are 0 întrebări comune cu prima.
 
+**19-20.09.2026 — ilustrarea tuturor jocurilor cu capturi reale (129 niveluri neilustrate → 0)**
+
+Cererea a venit de la un elev de la maiștri: fără imagini, trebuie să-ți *imaginezi* bara de unelte. Lucrul l-a făcut `critic-loop` peste noapte (16 runde de critici, 13 de reparații, 51 de sarcini; rulare `wf_25dddc65-26b`). Ce am învățat:
+
+- **Fundația se face ÎNAINTE de buclă, altfel fiecare agent inventează altă convenție:** unealta de captură (`_motor\captura.py`), oracolul care numără golurile (`_motor\ilustratii.py`), stilul comun (`.captura` în `motor.css`) și regula scrisă (§6b). Bucla a pornit cu un număr, nu cu o părere.
+- **O `<figure>` într-un `<p>` rupe paragraful.** Întrebarea se randa în `<p class="q">`; browserul închide paragraful înainte de figură și rămâne un `<p>` gol. Acum motorul randează `<div class="q">`.
+- **Calea imaginii e MEREU `../<slug>/img/<fișier>`, și în jocul propriu.** Recapitularea clasei preia întrebările în alt folder; o cale `img/x.webp` merge în joc și se rupe în recapitulare. Oracolul respinge orice altă formă.
+- **Oracolul se uită doar în câmpurile randate (`text`, `q`, `why`).** Prima variantă scana tot HTML-ul și raporta ca „imagini rupte” exemplele `<img src="carpati.jpg">` din soluțiile simulatorului de cod (web-viii). Alarme false = bucla repară lucruri care nu există.
+- **Coada de lucru se pune în PERIMETRU, nu într-o lentilă.** Cu 8 unghiuri care se rotesc, acoperirea ar fi avansat o rundă din 8. Formularea „indiferent de unghiul rundei, ia 3 jocuri din coada oracolului” a dus 129 → 0 în 6 runde.
+- **Oracolul la 0 NU oprește bucla** (condiția e „3 runde goale la rând”, iar criticii găseau mereu îmbunătățiri de calitate). Oprirea a fost a omului. Pentru o țintă mare, planifică oprirea externă.
+- **Capturi pe Windows:** `win32gui` nu are `IsZoomed` (e în `ctypes.windll.user32`), iar o fereastră maximizată iese ~8 px în afara ecranului pe fiecare latură — fără corecție, captura prinde marginea altei ferestre.
+- **Dovada că o imagine e publicată = primii octeți** (`RIFF` pentru webp), luați cu `curl -A "Mozilla/5.0"`. Cloudflare Pages întoarce **200 + pagina HTML de rezervă** pentru un fișier care încă nu s-a publicat, iar `urllib` fără User-Agent ia 403.
+- **Limba interfeței e un fapt de verificat, nu de presupus:** Office de pe calculatorul de lucru are doar pachetul englez (`Office16\1033`), Windows e în română. De aici regula „ambele nume” din §6b.
+- **Poza dă context, nu răspunsul.** Lecția criticilor: la întrebări, captura arată fereastra întreagă/fila, fără eticheta care conține chiar răspunsul; unde orice captură ar da răspunsul (fereastra Sortare din Excel), nivelul rămâne fără imagine.
+- **Gardă durabilă:** contractul `jocuri-ilustratii-zero` (`selfcheck.py`) rulează `ilustratii.py --strict`; un joc nou neilustrat sau o imagine ștearsă devine RED la salut.
+
 ## 10. Deschis / de îmbunătățit
 
 - Portarea Word VII pe motor (editorul → `_motor\tip-editor.js`).
