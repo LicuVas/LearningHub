@@ -110,6 +110,8 @@ def main():
             print(f"  ~ {r}")
         print("pe tipuri: " + (", ".join(f"{k} {v}" for k, v in sorted(tipuri.items())) or "niciuna"))
     print(len(probleme))
+    if "--strict" in sys.argv and probleme:  # pentru contractul jocuri-ilustratii-zero (exit 1 = au reapărut goluri)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
