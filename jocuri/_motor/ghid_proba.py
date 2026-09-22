@@ -133,6 +133,25 @@ def main():
         if not a.tacut:
             print("  %-28s %s" % (joc, ", ".join(harta[joc])))
 
+    # Pagina cu TOATE ghidurile, de sine statatoare. Exista pentru ca la diploma
+    # ghidul se vede abia dupa ce termini jocul - prea tarziu pentru cine are nevoie
+    # de el ca sa INCEAPA tema. 22.09.2026: userul nu le-a gasit pe sit, de aici.
+    toate = sorted({g for lista in harta.values() for g in lista})
+    pag, er = ia("%s/jocuri/ghiduri/index.html" % baza)
+    if er:
+        probleme.append("pagina cu toate ghidurile (/jocuri/ghiduri/) nu se descarca (%s)" % er)
+    else:
+        t = pag.decode("utf-8", "replace")
+        for idg in toate:
+            if "../_ghiduri/%s/pasi.js" % idg not in t:
+                probleme.append("/jocuri/ghiduri/ nu incarca ghidul „%s”" % idg)
+    lista_jocuri, er = ia("%s/jocuri/index.html" % baza)
+    if er:
+        probleme.append("pagina jocurilor nu se descarca (%s)" % er)
+    elif "ghiduri/index.html" not in lista_jocuri.decode("utf-8", "replace"):
+        probleme.append("pagina jocurilor nu trimite catre /jocuri/ghiduri/ "
+                        "(ghidurile redevin gasibile doar din diploma)")
+
     if not a.tacut:
         print()
         print("Jocuri: %d · poze cerute prin HTTP: %d · adresa: %s"
