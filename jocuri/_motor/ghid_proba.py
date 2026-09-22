@@ -68,6 +68,7 @@ def main():
 
     probleme = []
     poze_verificate = 0
+    vazute = set()          # ghidurile carora le-am numarat deja capturile orfane
     for joc in sorted(harta):
         pagina, er = ia("%s/jocuri/%s/index.html" % (baza, joc))
         if er:
@@ -105,6 +106,19 @@ def main():
                 if cat != len(poze):
                     probleme.append("%s/%s: %d pasi pe sit, %d in flux.json"
                                     % (joc, idg, len(poze), cat))
+
+            # capturi ramase pe disc din redari vechi: nu le vede nimeni, dar se publica
+            # degeaba si incurca la urmatoarea citire a dosarului (s-a intamplat: pasul nou
+            # inserat a renumerotat pozele si au ramas 4 orfane)
+            dosar_local = os.path.join(GHIDURI, idg)
+            if idg not in vazute and os.path.isdir(dosar_local):
+                vazute.add(idg)
+                pe_disc = {f for f in os.listdir(dosar_local) if f.lower().endswith(".webp")}
+                orfane = sorted(pe_disc - set(poze))
+                if orfane:
+                    probleme.append("_ghiduri/%s: %d capturi ramase din redari vechi, "
+                                    "nefolosite de niciun pas: %s"
+                                    % (idg, len(orfane), ", ".join(orfane)))
 
             de_cerut = ([poze[0], poze[-1]] if a.rapid and len(poze) > 1 else poze)
             for nume in de_cerut:
