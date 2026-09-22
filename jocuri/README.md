@@ -280,8 +280,20 @@ Cererea a venit de la un elev de la maiștri: fără imagini, trebuie să-ți *i
 - **Poza dă context, nu răspunsul.** Lecția criticilor: la întrebări, captura arată fereastra întreagă/fila, fără eticheta care conține chiar răspunsul; unde orice captură ar da răspunsul (fereastra Sortare din Excel), nivelul rămâne fără imagine.
 - **Gardă durabilă:** contractul `jocuri-ilustratii-zero` (`selfcheck.py`) rulează `ilustratii.py --strict`; un joc nou neilustrat sau o imagine ștearsă devine RED la salut.
 
+**22.09.2026 — ghidurile „n-am calculator, am telefon” (`_ghiduri\`)**
+- **Ce sunt:** la diplomă, sub provocare, elevul primește drumul pas cu pas prin aplicația reală de pe telefon. Un ghid = `_ghiduri\<id>\flux.json` (pașii) → `ghid_capturi.py` → capturi `.webp` (360px) + `pasi.js` (pentru site) + `SURSE.json` (proveniența). Harta joc→ghiduri: `_ghiduri\harta.json`, dusă în pagini cu `ghid_leaga.py`.
+- **Capturile se REFAC, nu se colecționează.** `ghid_capturi.py` reface drumul de la zero pe un Android emulat și **verifică ecranul înainte de fiecare poză** (`asteapta`); dacă ecranul nu e cel așteptat, redarea **se oprește** — mai bine niciun ghid decât unul fals. Probat cu control negativ: o mișcare imposibilă la pasul 1 ⇒ pasul 2 nu se mai fotografiază.
+- **Un ghid se leagă doar dacă are și poze.** `ghid_leaga.py` refuză să pună butonul pentru un ghid fără capturi (elevul ar cădea într-un ghid gol) și îl **scoate** din pagină dacă pozele dispar.
+- **Contul de Google al școlii cere blocare de ecran pe telefon.** Fără ea, Drive/Docs stau pe „Nu se poate actualiza”, iar motivul se vede DOAR în jurnal (`adb logcat` → `DeviceManagementScreenLockRequired`). `adb shell locksettings set-pin` **nu e de ajuns** — PIN-ul se pune prin interfață (`am start -a android.settings.INPUT_METHOD_SETTINGS` e altceva; aici: `android.settings.SECURITY_SETTINGS` → Deblocarea dispozitivului).
+- **Emulatorul oglindește clipboardul Windows** și Gboard îl arată într-o pastilă deasupra tastaturii. Așa a intrat un link personal în două capturi. Apărare: în telefonul emulat, Setări → Tastatură pe ecran → Gboard → Clipboard → „Afișează textul și imaginile copiate recent” = **OPRIT**. Un check pe arborele de interfață **nu** prinde asta (uiautomator nu vede fereastra tastaturii) — se prinde uitându-te la capturile cu tastatură.
+- **`adb shell input text` trece prin interpretorul de comenzi al telefonului:** parantezele dintr-o formulă (`=(B2+C2)/2`) se pierd tăcut, iar celula rămâne goală. Bucata se trimite între apostrofuri. Tot el **nu duce diacritice** (keymap US) ⇒ textul care ajunge în capturi se alege corect în română **fără** diacritice („Jocul meu preferat este Minecraft.”); explicațiile de pe site le au normal.
+- **Unele ecrane nu-și expun deloc interfața** (editorul din Prezentări): acolo pasul nu poate fi verificat înainte de captură. E o alegere, nu un accident — unealta o **spune cu voce tare** la final („pași FĂRĂ verificare de ecran”), ca nimeni să nu creadă că ghidul e verificat integral.
+- **Gardă durabilă:** contractul `jocuri-ghiduri-telefon` cere prin HTTP, de pe situl viu, pagina jocului + `pasi.js` + capturile și verifică **conținutul** (antet `RIFF`/`WEBP`, textul `JocMotor.ghid`) — pe Cloudflare un 200 nu dovedește nimic. `ghid_proba.py --rapid` pentru contract (11s), fără `--rapid` după orice modificare (128 de poze).
+
+
 ## 10. Deschis / de îmbunătățit
 
+- `word-vii` nu poate primi butoane de ghid: are motorul scris în propria pagină (nu încarcă `_motor\motor.js`). Scos din `_ghiduri\harta.json` cu motivul scris acolo; se rezolvă odată cu portarea lui pe motor.
 - Portarea Word VII pe motor (editorul → `_motor\tip-editor.js`).
 - Profesorul vede scorul doar pe ecranul elevului (fără server). Un formular sau un cod de verificare, dacă se cere.
 - Etichetele din aplicațiile în română (Word, Excel, PowerPoint…) de verificat pe calculatoarele din laborator.
