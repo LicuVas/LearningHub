@@ -376,8 +376,57 @@ function diploma(){
     <h3 style="margin-top:28px">Provocarea din ${esc(D.aplicatie)}</h3>
     <p class="hint" style="margin:4px 0 10px">Arată-i profesorului diploma, apoi fă asta pe bune:</p>
     <ol class="check">${D.provocare.map(x=>`<li>${x}</li>`).join('')}</ol>
+    ${ghidButoane()}
     <div class="row" style="margin-top:16px"><button class="btn" id="toc" type="button">Înapoi la cuprins</button><a class="btn ghost" href="../index.html">Toate jocurile</a></div>`);
   document.getElementById('toc').onclick=home;
+  wireGhid();
+}
+
+/* ---------------- ghidurile „n-am calculator, am telefon” ----------------
+   Un ghid = drumul pas cu pas prin aplicația reală, cu o captură la fiecare pas.
+   Capturile se fac pe un Android emulat (_motor\ghid_telefon.py) și stau în
+   jocuri\_ghiduri\<id>\, ca să le folosească toate jocurile care cer același lucru.
+   Jocul declară `ghiduri:['cont-drive','docs']` și încarcă fișierele lor de pași. */
+const GHIDURI={};
+function inregistreazaGhid(id,def){GHIDURI[id]=Object.assign({id},def)}
+function ghidListaJoc(){return (C.ghiduri||[]).map(id=>GHIDURI[id]).filter(Boolean)}
+function ghidButoane(){
+  const g=ghidListaJoc();if(!g.length)return '';
+  return `<div class="ghid-oferta">
+    <p class="hint" style="margin:0 0 8px">Nu ai calculator acasă? Se poate și de pe telefon — îți arăt fiecare pas, cu poze de pe ecran:</p>
+    <div class="row">${g.map(x=>`<button class="btn" type="button" data-ghid="${esc(x.id)}">${esc(x.buton||('Cum fac în '+x.app))} →</button>`).join('')}</div>
+  </div>`;
+}
+function wireGhid(){app.querySelectorAll('[data-ghid]').forEach(b=>b.onclick=()=>ghidDeschide(b.dataset.ghid,0))}
+function ghidDeschide(id,i){
+  const G=GHIDURI[id];if(!G)return;
+  R=null;const n=G.pasi.length;i=Math.max(0,Math.min(i,n-1));const P=G.pasi[i];
+  shell(`
+    <div class="eyebrow">Ghid pas cu pas · ${esc(G.app)}</div>
+    <h2 style="margin-top:6px">${esc(G.titlu)}</h2>
+    ${i===0&&G.intro?`<div class="lede" style="margin:10px 0 0">${G.intro}</div>`:''}
+    <div class="ghid">
+      <div class="telefon"><div class="telefon-ecran">
+        <img src="${esc(P.img)}" alt="${esc(P.alt||P.t)}" width="${P.w||360}" height="${P.h||780}" loading="eager">
+      </div></div>
+      <div class="ghid-text">
+        <div class="ghid-nr">Pasul ${i+1} din ${n}</div>
+        <h3>${P.t}</h3>
+        ${P.d?`<div class="reading" style="margin-top:8px">${P.d}</div>`:''}
+        ${P.atentie?`<div class="fb bad" style="margin-top:10px"><strong>Atenție:</strong> ${P.atentie}</div>`:''}
+        <div class="row" style="margin-top:16px">
+          <button class="btn" id="g-prev" type="button" ${i===0?'disabled':''}>← Înapoi</button>
+          ${i<n-1?'<button class="btn primary" id="g-next" type="button">Următorul pas →</button>':'<button class="btn primary" id="g-gata" type="button">Gata, am terminat</button>'}
+        </div>
+      </div>
+    </div>
+    <div class="ghid-pasi" aria-label="Toți pașii">${G.pasi.map((p,k)=>`<button type="button" class="gp${k===i?' on':''}" data-p="${k}"><span class="n">${k+1}</span><span class="t">${esc(p.t.replace(/<[^>]+>/g,''))}</span></button>`).join('')}</div>
+    <div class="row" style="margin-top:18px"><button class="btn ghost" id="g-inapoi" type="button">Înapoi la diplomă</button></div>`);
+  const prev=document.getElementById('g-prev');if(prev)prev.onclick=()=>ghidDeschide(id,i-1);
+  const next=document.getElementById('g-next');if(next)next.onclick=()=>ghidDeschide(id,i+1);
+  const gata=document.getElementById('g-gata');if(gata)gata.onclick=diploma;
+  document.getElementById('g-inapoi').onclick=diploma;
+  app.querySelectorAll('.gp').forEach(b=>b.onclick=()=>ghidDeschide(id,+b.dataset.p));
 }
 
 /* ---------------- bara de sus care se restrânge (mobil; revenire DOAR manuală) ---------------- */
@@ -428,5 +477,5 @@ const testHooks={
     GRESIT[Q.t](Q,body,API);return true;
   }
 };
-window.JocMotor={porneste,test:testHooks,esc,expandRange};
+window.JocMotor={porneste,ghid:inregistreazaGhid,test:testHooks,esc,expandRange};
 })();
