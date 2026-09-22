@@ -4,15 +4,15 @@ JocMotor.ghid("sheets", {
  "app": "Foi de calcul Google",
  "titlu": "Cum faci un tabel cu calcule pe telefon",
  "buton": "Cum fac pe telefon",
- "intro": "<p>Tabelul cu calcule se poate face și de pe telefon. Aplicația <b>Foi de calcul Google</b> face același lucru ca Excel la școală: scrii date în celule, iar formulele socotesc singure.</p><p>Exemplul de aici e cu note și medie, ca să se înțeleagă mecanismul. Pentru tabelul cu plante din provocare faci exact la fel — doar schimbi ce scrii în celule și formula.</p>",
+ "intro": "<p>Tabelul cu calcule se poate face și de pe telefon. Aplicația <b>Foi de calcul Google</b> face același lucru ca Excel la școală: scrii date în celule, iar formulele socotesc singure.</p><p>Exemplul de aici e cu note și medie, ca să se înțeleagă mecanismul. Pentru tabelul cu plante din provocare faci exact la fel — doar schimbi ce scrii în celule și formula.</p><p class=\"hint\"><b>Dacă telefonul tău e în engleză:</b> butoanele stau în aceleași locuri, doar că scriu altfel. În pași, numele englezesc e pus <i>(între paranteze, înclinat)</i> lângă cel românesc.</p><p class=\"hint\"><b>Dacă ai iPhone:</b> aplicațiile Google arată asemănător, dar nu identic, iar contul se adaugă altfel. Pozele de aici sunt făcute pe un telefon cu Android — folosește-le ca idee, nu ca poză la poză.</p>",
  "pasi": [
   {
    "img": "../_ghiduri/sheets/01-lista.webp",
    "w": 360,
    "h": 800,
-   "t": "Deschide aplicația <b>Foi de calcul Google</b>",
+   "t": "Deschide aplicația <b>Foi de calcul Google</b> <i>(Google Sheets)</i>",
    "d": "Butonul <b>+</b> din colțul de jos-dreapta face un registru nou (aplicația îi spune „foaie de calcul”).",
-   "alt": "Deschide aplicația Foi de calcul Google — ecranul aplicației Foi de calcul Google"
+   "alt": "Deschide aplicația Foi de calcul Google (Google Sheets) — ecranul aplicației Foi de calcul Google"
   },
   {
    "img": "../_ghiduri/sheets/02-grila.webp",
@@ -27,7 +27,7 @@ JocMotor.ghid("sheets", {
    "w": 360,
    "h": 800,
    "t": "Scrie capul de tabel",
-   "d": "S-a deschis rândul de scris, sub tabel: <i>„Introdu textul sau formula”</i>. Scrie primul cap de coloană, apoi treci în celula din dreapta — pe telefon, cu tasta <b>Tab</b> dacă ai tastatură, sau atingând direct celula următoare.",
+   "d": "S-a deschis rândul de scris, sub tabel: <i>„Introdu textul sau formula”</i> <i>(Enter text or formula)</i>. Scrie primul cap de coloană, apoi treci în celula din dreapta — pe telefon, cu tasta <b>Tab</b> dacă ai tastatură, sau atingând direct celula următoare.",
    "alt": "Scrie capul de tabel — ecranul aplicației Foi de calcul Google"
   },
   {
@@ -68,7 +68,7 @@ JocMotor.ghid("sheets", {
    "w": 360,
    "h": 800,
    "t": "Pune un nume registrului",
-   "d": "Atinge numele de sus („Foaie de calcul fără titlu”) și scrie-l pe al tău — de obicei <b>Nume_Prenume_tema</b>.",
+   "d": "Atinge numele de sus („Foaie de calcul fără titlu” <i>(Untitled spreadsheet)</i>) și scrie-l pe al tău — de obicei <b>Nume_Prenume_tema</b>.",
    "alt": "Pune un nume registrului — ecranul aplicației Foi de calcul Google"
   },
   {
@@ -84,7 +84,7 @@ JocMotor.ghid("sheets", {
    "w": 360,
    "h": 800,
    "t": "Nu există buton de salvare",
-   "d": "Sub nume scrie <b>„Modificări salvate”</b>. Registrul stă în contul tău de Google, nu pe telefon — îl deschizi de la școală, de pe calculator, cu același cont. De acolo îl poți salva și ca fișier Excel (<code>.xlsx</code>), dacă profesorul cere așa.",
+   "d": "Sub nume scrie <b>„Modificări salvate”</b> <i>(All changes saved)</i>. Registrul stă în contul tău de Google, nu pe telefon — îl deschizi de la școală, de pe calculator, cu același cont. De acolo îl poți salva și ca fișier Excel (<code>.xlsx</code>), dacă profesorul cere așa.",
    "alt": "Nu există buton de salvare — ecranul aplicației Foi de calcul Google"
   },
   {

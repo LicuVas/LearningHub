@@ -268,6 +268,40 @@ def redare(idg, doar=None):
     return 0 if probleme == 0 else 1
 
 
+def doar_textele(idg):
+    """Reface pasi.js din flux.json si din capturile EXISTENTE, fara telefon.
+
+    De ce: o corectura de text (o formulare, numele englezesc al unui buton) nu are
+    de ce sa ceara o redare intreaga pe telefonul emulat. Pozele raman cele de pe
+    disc; se schimba doar ce citeste elevul.
+    """
+    dosar = os.path.join(GHIDURI, idg)
+    flux_cale = os.path.join(dosar, "flux.json")
+    if not os.path.exists(flux_cale):
+        print("Nu exista", flux_cale, file=sys.stderr)
+        print(1)
+        return 1
+    with open(flux_cale, encoding="utf-8") as f:
+        F = json.load(f)
+    lipsa = 0
+    pasi_site = []
+    for i, P in enumerate(F["pasi"], start=1):
+        nume = "%02d-%s.webp" % (i, P.get("fisier") or re.sub(r"[^a-z0-9]+", "-", P["t"].lower())[:28].strip("-"))
+        if not os.path.exists(os.path.join(dosar, nume)):
+            print("PASUL %d: lipseste captura %s" % (i, nume), file=sys.stderr)
+            lipsa += 1
+        pasi_site.append((P, nume, None))
+    if lipsa:
+        print("PROBLEME:", lipsa)
+        print(lipsa)
+        return 1
+    scrie_pasi_js(idg, F, pasi_site, dosar)
+    print("  %s: %d pasi, textele refacute din flux.json (pozele neatinse)" % (idg, len(pasi_site)))
+    print("PROBLEME: 0")
+    print(0)
+    return 0
+
+
 def scrie_pasi_js(idg, F, pasi_site, dosar):
     """Fisierul pe care il incarca jocul: JocMotor.ghid('<id>', {...})."""
     out = []
@@ -301,7 +335,12 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("ghid", help="id-ul ghidului (dosarul din _ghiduri)")
     p.add_argument("--doar", help="doar pasii astia, ex. 3,4,5")
+    p.add_argument("--doar-textele", action="store_true",
+                   help="reface DOAR fisierul pentru sit (pasi.js) din flux.json si din "
+                        "capturile de pe disc, FARA telefon - pentru corecturi de text")
     a = p.parse_args()
+    if a.doar_textele:
+        return doar_textele(a.ghid)
     doar = set(int(x) for x in a.doar.split(",")) if a.doar else None
     return redare(a.ghid, doar)
 

@@ -4,15 +4,15 @@ JocMotor.ghid("docs", {
  "app": "Documente Google",
  "titlu": "Cum faci un document pe telefon",
  "buton": "Cum fac pe telefon",
- "intro": "<p>Dacă acasă nu ai calculator, documentul îl poți face pe telefon — iese exact același lucru, un document adevărat, pe care profesorul îl poate deschide și corecta.</p><p>Ai nevoie de aplicația <b>Documente Google</b> (în magazinul de aplicații o găsești sub numele ăsta) și de contul tău de Google. Pozele de mai jos sunt făcute pe un telefon cu Android, în română.</p>",
+ "intro": "<p>Dacă acasă nu ai calculator, documentul îl poți face pe telefon — iese exact același lucru, un document adevărat, pe care profesorul îl poate deschide și corecta.</p><p>Ai nevoie de aplicația <b>Documente Google</b> (în magazinul de aplicații o găsești sub numele ăsta) și de contul tău de Google. Pozele de mai jos sunt făcute pe un telefon cu Android, în română.</p><p class=\"hint\"><b>Dacă telefonul tău e în engleză:</b> butoanele stau în aceleași locuri, doar că scriu altfel. În pași, numele englezesc e pus <i>(între paranteze, înclinat)</i> lângă cel românesc.</p><p class=\"hint\"><b>Dacă ai iPhone:</b> aplicațiile Google arată asemănător, dar nu identic, iar contul se adaugă altfel. Pozele de aici sunt făcute pe un telefon cu Android — folosește-le ca idee, nu ca poză la poză.</p>",
  "pasi": [
   {
    "img": "../_ghiduri/docs/01-lista.webp",
    "w": 360,
    "h": 800,
-   "t": "Deschide aplicația <b>Documente Google</b>",
-   "d": "Prima dată vezi lista documentelor tale. Dacă n-ai făcut încă niciunul, scrie „Niciun fișier recent” — e în regulă, așa trebuie să arate. Butonul <b>+</b> din colțul de jos-dreapta face un document nou.",
-   "alt": "Deschide aplicația Documente Google — ecranul aplicației Documente Google"
+   "t": "Deschide aplicația <b>Documente Google</b> <i>(Google Docs)</i>",
+   "d": "Prima dată vezi lista documentelor tale. Dacă n-ai făcut încă niciunul, scrie „Niciun fișier recent” <i>(No recent files)</i> — e în regulă, așa trebuie să arate. Butonul <b>+</b> din colțul de jos-dreapta face un document nou.",
+   "alt": "Deschide aplicația Documente Google (Google Docs) — ecranul aplicației Documente Google"
   },
   {
    "img": "../_ghiduri/docs/02-foaie-goala.webp",
@@ -36,7 +36,7 @@ JocMotor.ghid("docs", {
    "w": 360,
    "h": 800,
    "t": "Textul e scris. Acum dă-i un nume",
-   "d": "Documentul are deja text, dar încă se numește „Document fără titlu”. Numele contează: profesorul primește zeci de documente, iar unul fără nume se pierde. Atinge cele <b>trei puncte</b> din colțul de sus-dreapta.",
+   "d": "Documentul are deja text, dar încă se numește „Document fără titlu” <i>(Untitled document)</i>. Numele contează: profesorul primește zeci de documente, iar unul fără nume se pierde. Atinge cele <b>trei puncte</b> din colțul de sus-dreapta.",
    "alt": "Textul e scris. Acum dă-i un nume — ecranul aplicației Documente Google"
   },
   {
@@ -76,7 +76,7 @@ JocMotor.ghid("docs", {
    "w": 360,
    "h": 800,
    "t": "Nu există buton de salvare — se salvează singur",
-   "d": "Sub nume scrie <b>„Modificări salvate”</b>. Asta e tot: documentul stă în contul tău de Google, nu pe telefon. Îl poți deschide de pe orice calculator, cu același cont — inclusiv de la școală.",
+   "d": "Sub nume scrie <b>„Modificări salvate”</b> <i>(All changes saved)</i>. Asta e tot: documentul stă în contul tău de Google, nu pe telefon. Îl poți deschide de pe orice calculator, cu același cont — inclusiv de la școală.",
    "atentie": "Dacă telefonul n-are internet, scrie altceva acolo (de exemplu că modificările se vor salva mai târziu). Atunci intră pe wi-fi înainte să închizi documentul.",
    "alt": "Nu există buton de salvare — se salvează singur — ecranul aplicației Documente Google"
   },

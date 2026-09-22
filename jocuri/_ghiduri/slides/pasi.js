@@ -4,15 +4,15 @@ JocMotor.ghid("slides", {
  "app": "Prezentări Google",
  "titlu": "Cum faci o prezentare pe telefon",
  "buton": "Cum fac pe telefon",
- "intro": "<p>Prezentarea se poate face și de pe telefon, fără calculator. Iese un fișier adevărat, pe care îl deschizi apoi de la școală, de pe orice calculator, cu același cont.</p><p>Ai nevoie de aplicația <b>Prezentări Google</b> și de contul tău de Google. Pozele sunt făcute pe un telefon cu Android, în română.</p>",
+ "intro": "<p>Prezentarea se poate face și de pe telefon, fără calculator. Iese un fișier adevărat, pe care îl deschizi apoi de la școală, de pe orice calculator, cu același cont.</p><p>Ai nevoie de aplicația <b>Prezentări Google</b> și de contul tău de Google. Pozele sunt făcute pe un telefon cu Android, în română.</p><p class=\"hint\"><b>Dacă telefonul tău e în engleză:</b> butoanele stau în aceleași locuri, doar că scriu altfel. În pași, numele englezesc e pus <i>(între paranteze, înclinat)</i> lângă cel românesc.</p><p class=\"hint\"><b>Dacă ai iPhone:</b> aplicațiile Google arată asemănător, dar nu identic, iar contul se adaugă altfel. Pozele de aici sunt făcute pe un telefon cu Android — folosește-le ca idee, nu ca poză la poză.</p>",
  "pasi": [
   {
    "img": "../_ghiduri/slides/01-lista.webp",
    "w": 360,
    "h": 800,
-   "t": "Deschide aplicația <b>Prezentări Google</b>",
-   "d": "Vezi lista prezentărilor tale. Dacă n-ai făcut încă niciuna, scrie „Niciun fișier recent”. Butonul <b>+</b> din colțul de jos-dreapta face o prezentare nouă.",
-   "alt": "Deschide aplicația Prezentări Google — ecranul aplicației Prezentări Google"
+   "t": "Deschide aplicația <b>Prezentări Google</b> <i>(Google Slides)</i>",
+   "d": "Vezi lista prezentărilor tale. Dacă n-ai făcut încă niciuna, scrie „Niciun fișier recent” <i>(No recent files)</i>. Butonul <b>+</b> din colțul de jos-dreapta face o prezentare nouă.",
+   "alt": "Deschide aplicația Prezentări Google (Google Slides) — ecranul aplicației Prezentări Google"
   },
   {
    "img": "../_ghiduri/slides/02-primul-diapozitiv.webp",
@@ -51,7 +51,7 @@ JocMotor.ghid("slides", {
    "w": 360,
    "h": 800,
    "t": "Alege cum arată diapozitivul",
-   "d": "Îți arată din ce e făcut diapozitivul: doar titlu, titlu cu text dedesubt, titlu cu două coloane. Pentru un diapozitiv obișnuit de conținut alege <b>Titlu și corpul textului</b>.",
+   "d": "Îți arată din ce e făcut diapozitivul: doar titlu, titlu cu text dedesubt, titlu cu două coloane. Pentru un diapozitiv obișnuit de conținut alege <b>Titlu și corpul textului</b> <i>(Title and body)</i>.",
    "alt": "Alege cum arată diapozitivul — ecranul aplicației Prezentări Google"
   },
   {
@@ -68,7 +68,7 @@ JocMotor.ghid("slides", {
    "w": 360,
    "h": 800,
    "t": "Deschide meniul și atinge numele",
-   "d": "În lista asta găsești și <b>Schimbă tema</b> (culorile și fonturile prezentării) și <b>Afișează notele vorbitorului</b> (unde scrii ce vei spune la fiecare diapozitiv). Acum însă atinge numele de sus, ca să-l schimbi.",
+   "d": "În lista asta găsești și <b>Schimbă tema</b> <i>(Change theme)</i> (culorile și fonturile prezentării) și <b>Afișează notele vorbitorului</b> <i>(Show speaker notes)</i> (unde scrii ce vei spune la fiecare diapozitiv). Acum însă atinge numele de sus, ca să-l schimbi.",
    "alt": "Deschide meniul și atinge numele — ecranul aplicației Prezentări Google"
   },
   {
