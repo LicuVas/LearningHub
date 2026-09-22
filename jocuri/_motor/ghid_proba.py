@@ -57,6 +57,9 @@ def main():
     p.add_argument("--baza", default="http://127.0.0.1:8777",
                    help="adresa sitului (implicit serverul local)")
     p.add_argument("--tacut", action="store_true", help="doar problemele si numarul")
+    p.add_argument("--rapid", action="store_true",
+                   help="cere doar PRIMA si ULTIMA poza din fiecare ghid (pentru contracte: "
+                        "prinde ghidul disparut sau pagina de rezerva, fara 128 de cereri)")
     a = p.parse_args()
     baza = a.baza.rstrip("/")
 
@@ -103,7 +106,8 @@ def main():
                     probleme.append("%s/%s: %d pasi pe sit, %d in flux.json"
                                     % (joc, idg, len(poze), cat))
 
-            for nume in poze:
+            de_cerut = ([poze[0], poze[-1]] if a.rapid and len(poze) > 1 else poze)
+            for nume in de_cerut:
                 octeti, er = ia("%s/jocuri/_ghiduri/%s/%s" % (baza, idg, nume))
                 poze_verificate += 1
                 if er:
