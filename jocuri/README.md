@@ -143,6 +143,7 @@ Câte un joc pe clasă, `jocuri\recapitulare-<clasa>\`, **GENERAT** de `python j
 - **Fapte despre interfață:** nu inventa nume de butoane, meniuri sau file. Dacă nu ești sigur, formulează prudent și învață-l pe copil să verifice („ține mouse-ul pe buton”). Listează în raport tot ce e NEVERIFICAT. Verificat deja: Excel în română păstrează numele funcțiilor în engleză (SUM, AVERAGE); separatorul din IF e `;` sau `,` după setări.
 - **Siguranță online / date personale:** exemple inventate, fără nume reale de elevi, fără linkuri reale spre site-uri dubioase.
 - **Nivelul final** folosește un context din programă (activitățile de învățare din `curriculum.json`).
+- **La liceu, exemplele vin din DOMENIUL clasei (observat la oră de profesor, 24.09.2026).** Aceeași competență TIC, dar datele, fișierele și situațiile sunt din meseria lor: la Forestier (silvicultură) tabel de inventar al arboretului, prezentare despre o pepinieră, document de fișă de lucrări în parchet; la Transporturi foaie de parcurs, orar de curse; la Brauner (muzică/arte) program de concert, portofoliu. Merge și mai bine decât exemplul generic. Profilul/domeniul clasei se ia din fișa ei (`tools\elevi.py clase`, orarul), nu se ghicește; dacă nu e sigur, întreabă. La gimnaziu rămân exemplele din viața copilului.
 
 ### 6b. Imagini din aplicația reală (decis 19.09.2026)
 
