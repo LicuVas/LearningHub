@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Diploma mea</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,700;1,500&family=Source+Sans+3:wght@400;600&display=swap&subset=latin-ext" rel="stylesheet">
+<!--
+  Pagina de TELEFON a diplomei. Elevul termină un joc pe calculatorul din laborator (unde nu se conectează
+  la e-mail sau WhatsApp), scanează codul QR de pe diplomă și ajunge aici. Tot ce e pe diplomă vine în
+  partea de după „#” a adresei, pe care browserul NU o trimite niciunui server: numele copilului nu
+  pleacă nicăieri. Desenul e aceeași machetă ca în C:\00\AI_0\tools\diplome.py (varianta profesorului).
+-->
+<style>
+:root{--bg:#f3efe4;--ink:#222;--ink2:#555;--card:#fff;--line:#d9d0b8;--accent:#7a5a10;--accentInk:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17150f;--ink:#eee;--ink2:#b9b2a0;--card:#221f17;--line:#3d3726;--accent:#d8b55a;--accentInk:#1a1406}}
+:root[data-theme="dark"]{--bg:#17150f;--ink:#eee;--ink2:#b9b2a0;--card:#221f17;--line:#3d3726;--accent:#d8b55a;--accentInk:#1a1406}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 "Source Sans 3",system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:18px 16px 40px}
+h1{font:700 26px/1.2 Lora,Georgia,serif;margin:6px 0 4px}
+p{margin:6px 0;color:var(--ink2)}
+img#dipl{display:block;width:100%;height:auto;border-radius:8px;box-shadow:0 2px 14px rgba(0,0,0,.18);margin:14px 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+.btn{appearance:none;border:0;border-radius:10px;padding:13px 18px;font:600 17px "Source Sans 3",sans-serif;background:var(--accent);color:var(--accentInk);text-decoration:none;cursor:pointer;flex:1 1 200px;text-align:center}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+label{display:block;font-weight:600;margin-top:14px}
+input{width:100%;font:17px "Source Sans 3",sans-serif;padding:11px 12px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:16px}
+.err{color:#b3261e}
+</style>
+</head>
+<body>
+<main>
+  <h1>Diploma ta</h1>
+  <p id="sub">Salveaz-o pe telefon sau trimite-o cui vrei: părinților, pe WhatsApp, pe e-mail.</p>
+  <img id="dipl" alt="Diploma">
+  <div class="row">
+    <button class="btn" id="share" type="button" hidden>Trimite diploma…</button>
+    <a class="btn ghost" id="save" download="diploma.png">Salvează poza</a>
+  </div>
+  <label for="nume">Numele de pe diplomă (îl poți corecta)</label>
+  <input id="nume" type="text" maxlength="40" autocomplete="off">
+  <div class="box"><p style="margin:0">Pe iPhone: dacă „Salvează poza” deschide imaginea, ține degetul apăsat pe ea → <b>Salvează în Poze</b> (Save to Photos).</p></div>
+</main>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+function citeste(){
+  try{
+    const h=new URLSearchParams(location.hash.slice(1)).get('d');
+    const b=atob(h.replace(/-/g,'+').replace(/_/g,'/'));
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(b,c=>c.charCodeAt(0))));
+  }catch(e){return null}
+}
+const D=citeste();
+if(!D){$('sub').innerHTML='<span class="err">Adresa diplomei nu e întreagă. Scanează din nou codul QR de pe calculator.</span>';$('dipl').hidden=true;$('save').hidden=true;document.querySelector('label').hidden=true;$('nume').hidden=true;return}
+$('nume').value=D.n||'';
+
+/* aceeași machetă ca deseneaza() din tools\diplome.py */
+function rupe(g,text,lat){const out=[];let r='';for(const w of text.split(/\s+/)){const t=(r+' '+w).trim();if(g.measureText(t).width<=lat)r=t;else{out.push(r);r=w}}if(r)out.push(r);return out}
+function deseneaza(){
+  const W=1600,H=1130,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  g.fillStyle='#fbf7ec';g.fillRect(0,0,W,H);
+  g.strokeStyle='#8a6d1f';g.lineWidth=6;g.strokeRect(30,30,W-60,H-60);
+  g.strokeStyle='#c9a94a';g.lineWidth=2;g.strokeRect(48,48,W-96,H-96);
+  g.textAlign='center';g.textBaseline='top';const cx=W/2;
+  const t=(y,s,f,col)=>{g.font=f;g.fillStyle=col;g.fillText(s,cx,y)};
+  t(110,'DIPLOMĂ','700 96px Lora,Georgia,serif','#7a5a10');
+  t(235,D.t||'','italic 500 54px Lora,Georgia,serif','#3b3b3b');
+  t(340,'se acordă elevului / elevei','34px "Source Sans 3",sans-serif','#666');
+  const nume=($('nume').value||'').trim()||'—';let fs=84;
+  do{g.font=`700 ${fs}px Lora,Georgia,serif`;fs-=4}while(g.measureText(nume).width>W-260&&fs>40);
+  g.fillStyle='#1f3a5f';g.fillText(nume,cx,400);
+  g.strokeStyle='#c9a94a';g.lineWidth=3;g.beginPath();g.moveTo(cx-420,510);g.lineTo(cx+420,510);g.stroke();
+  g.font='38px "Source Sans 3",sans-serif';g.fillStyle='#333';
+  let y=545;for(const r of rupe(g,`pentru că a trecut toate cele ${D.v} ${D.u||'niveluri'} ale jocului „${D.j}”.`,W-360).slice(0,3)){g.fillText(r,cx,y);y+=52}
+  t(Math.max(y+30,740),`★ ${D.s} / ${D.m}     ${D.x} XP`,'46px "Source Sans 3",sans-serif','#8a6d1f');
+  g.textAlign='left';g.font='32px "Source Sans 3",sans-serif';g.fillStyle='#555';
+  g.fillText(D.c?`Clasa ${D.c}`:'',110,H-150);
+  g.textAlign='right';g.fillText(D.d||'',W-110,H-150);
+  g.textAlign='left';g.font='26px "Source Sans 3",sans-serif';g.fillStyle='#888';g.fillText('Lecții-joc TIC · prof. Vasile Gurlan',110,H-105);
+  return c;
+}
+let blob=null;
+const fisier=()=>('diploma - '+(($('nume').value||'').trim()||'elev')+' - '+(D.j||'joc')).replace(/[\\/:*?"<>|]+/g,' ').slice(0,90)+'.png';
+function reface(){
+  const c=deseneaza();$('dipl').src=c.toDataURL('image/png');$('save').href=$('dipl').src;$('save').download=fisier();
+  c.toBlob(b=>{blob=b},'image/png');
+}
+(document.fonts&&document.fonts.load?Promise.all(['700 96px Lora','italic 500 54px Lora','38px "Source Sans 3"'].map(f=>document.fonts.load(f,'DIPLOMĂăîșț'))).catch(()=>{}):Promise.resolve()).then(reface);
+$('nume').addEventListener('input',()=>{clearTimeout(reface.t);reface.t=setTimeout(reface,250)});
+const sh=$('share');
+if(navigator.canShare&&navigator.share){
+  sh.hidden=false;
+  sh.onclick=async()=>{
+    if(!blob)return;
+    const f=new File([blob],fisier(),{type:'image/png'});
+    try{
+      if(navigator.canShare({files:[f]}))await navigator.share({files:[f],title:'Diploma mea',text:`Diploma mea: ${D.t} (${D.j})`});
+      else await navigator.share({title:'Diploma mea',text:`Diploma mea: ${D.t} (${D.j})`,url:location.href});
+    }catch(e){/* a închis fereastra de trimitere */}
+  };
+}
+})();
+</script>
+</body>
+</html>

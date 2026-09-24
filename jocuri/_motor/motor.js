@@ -4,6 +4,8 @@
    Tipuri noi (simulatoare) vin prin config.tipuri = { nume: { render(Q, body, api), rezolva(Q, body, api) } }. */
 (function(){
 'use strict';
+/* de unde s-a încărcat motorul: diplome-date.js, qrcode.min.js și pagina diploma/ stau lângă el */
+const MOTOR_URL=(document.currentScript&&document.currentScript.src)||location.href;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const L=i=>String.fromCharCode(65+i);
@@ -373,6 +375,7 @@ function diploma(){
       <p style="margin:0 auto 14px;max-width:46ch">a trecut toate cele ${C.nivele.length} ${C.mod==='antrenament'?'runde ale antrenamentului':'niveluri ale jocului'} „${esc(C.titlu)}”: ${esc(D.rezumat)}.</p>
       <div class="facts"><span>★ ${t.st}/${C.nivele.length*3}</span><span>${t.xp} XP</span><span>${data}</span></div>
     </div>
+    ${trimiteHtml()}
     <h3 style="margin-top:28px">Provocarea din ${esc(D.aplicatie)}</h3>
     <p class="hint" style="margin:4px 0 10px">Arată-i profesorului diploma, apoi fă asta pe bune:</p>
     <ol class="check">${D.provocare.map(x=>`<li>${x}</li>`).join('')}</ol>
@@ -380,6 +383,76 @@ function diploma(){
     <div class="row" style="margin-top:16px"><button class="btn" id="toc" type="button">Înapoi la cuprins</button><a class="btn ghost" href="../index.html">Toate jocurile</a></div>`);
   document.getElementById('toc').onclick=home;
   wireGhid();
+  wireTrimite(t,data);
+}
+
+/* ---------------- diploma pe telefon + trimisă profesorului (24.09.2026) ----------------
+   Calculatoarele din laborator sunt comune: nimeni nu se conectează acolo la e-mail sau WhatsApp.
+   (1) Codul QR duce diploma pe TELEFONUL elevului (../diploma/#d=…): totul stă după „#”, deci
+       nu trece prin niciun server; de acolo o salvează sau o trimite oriunde.
+   (2) „Trimite-o profesorului”: școala + clasa + numele CRIPTAT cu cheia publică a profesorului
+       (diplome-date.js, generat de C:\00\AI_0\tools\diplome.py) -> serverul testelor. Profesorul
+       le descarcă cu `diplome.py descarca`, pe școli / clase / nume. */
+function incarcaScript(nume){
+  return new Promise((ok,nu)=>{const s=document.createElement('script');s.src=new URL(nume,MOTOR_URL).href;s.onload=ok;s.onerror=nu;document.head.appendChild(s)});
+}
+function trimiteHtml(){
+  return `<div class="dipl-plus">
+      <label for="d-nume">Numele tău, așa cum vrei să apară pe diplomă</label>
+      <input id="d-nume" type="text" maxlength="40" autocomplete="off" value="${esc(S.nume)}" placeholder="ex. Ana Popescu">
+      <div class="dipl-cols">
+        <section class="dipl-qr"><h3>Ia diploma pe telefon</h3>
+          <div id="d-qr" class="qr" aria-label="Cod QR pentru diplomă"></div>
+          <p class="hint">Scanează codul cu camera telefonului. Diploma se deschide pe telefonul tău, de unde o salvezi sau o trimiți pe WhatsApp. <a id="d-link" href="#" target="_blank" rel="noopener">Sau deschide-o aici.</a></p>
+        </section>
+        <section class="dipl-prof"><h3>Trimite-o profesorului</h3>
+          <label for="d-scoala">Școala</label><select id="d-scoala"><option value="">— alege —</option></select>
+          <label for="d-clasa">Clasa</label><select id="d-clasa" disabled><option value="">— alege școala întâi —</option></select>
+          <button class="btn primary" id="d-trimite" type="button" disabled>Trimite diploma</button>
+          <p class="hint" id="d-stare" aria-live="polite"></p>
+        </section>
+      </div>
+    </div>`;
+}
+function b64url(obj){const b=new TextEncoder().encode(JSON.stringify(obj));let s='';b.forEach(x=>s+=String.fromCharCode(x));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function wireTrimite(t,data){
+  const $=id=>document.getElementById(id),D=C.diploma,inp=$('d-nume');if(!inp)return;
+  let trimisa=false;
+  const nume=()=>inp.value.trim();
+  const payload=()=>({n:nume(),t:D.titlu,j:C.titlu,u:C.mod==='antrenament'?'runde':'niveluri',v:C.nivele.length,s:t.st,m:C.nivele.length*3,x:t.xp,d:data,c:String(C.clasa)});
+  const linkTel=()=>new URL('../diploma/',MOTOR_URL).href+'#d='+b64url(payload());
+  function qr(){
+    const u=linkTel();$('d-link').href=u;
+    if(!window.qrcode)return;
+    try{const q=qrcode(0,'M');q.addData(u);q.make();$('d-qr').innerHTML=q.createSvgTag({cellSize:4,margin:2,scalable:true})}catch(e){$('d-qr').textContent='Codul QR nu s-a putut face - folosește „deschide-o aici”.'}
+  }
+  function poateTrimite(){$('d-trimite').disabled=trimisa||!(nume().split(/\s+/).length>=2&&$('d-clasa').value)}
+  inp.addEventListener('input',()=>{S.nume=nume();save();const nm=app.querySelector('.diploma .nm');if(nm)nm.textContent=S.nume||'Elevul fără nume';qr();poateTrimite()});
+  incarcaScript('qrcode.min.js').then(qr).catch(()=>qr());
+  qr();
+  incarcaScript('diplome-date.js').then(()=>{
+    const Z=window.DIPLOME;if(!Z||!Z.scoli)throw 0;
+    $('d-scoala').insertAdjacentHTML('beforeend',Z.scoli.map(x=>`<option value="${esc(x.key)}">${esc(x.nume)}</option>`).join(''));
+    $('d-scoala').onchange=()=>{const sc=Z.scoli.find(x=>x.key===$('d-scoala').value),cl=$('d-clasa');
+      cl.innerHTML=sc?'<option value="">— alege —</option>'+sc.clase.map(c=>`<option>${esc(c)}</option>`).join(''):'<option value="">— alege școala întâi —</option>';
+      cl.disabled=!sc;poateTrimite()};
+    $('d-clasa').onchange=poateTrimite;
+    $('d-trimite').onclick=async()=>{
+      const st=$('d-stare'),bt=$('d-trimite');
+      if(nume().split(/\s+/).length<2){st.textContent='Scrie numele și prenumele.';return}
+      bt.disabled=true;st.textContent='Se trimite…';
+      try{
+        const k=await crypto.subtle.importKey('jwk',Z.cheie,{name:'RSA-OAEP',hash:'SHA-256'},false,['encrypt']);
+        const enc=new Uint8Array(await crypto.subtle.encrypt({name:'RSA-OAEP'},k,new TextEncoder().encode(nume())));
+        let bin='';enc.forEach(x=>bin+=String.fromCharCode(x));
+        const r=await fetch(Z.server,{method:'POST',body:JSON.stringify({scoala:$('d-scoala').value,clasa:$('d-clasa').value,joc:C.cheie,
+          titluJoc:C.titlu,titlu:D.titlu,clasaJoc:String(C.clasa),stele:t.st,max:C.nivele.length*3,xp:t.xp,nivele:C.nivele.length,data,numeEnc:btoa(bin)})});
+        const j=await r.json().catch(()=>({}));
+        if(!r.ok||!j.ok)throw new Error(j.eroare||('HTTP '+r.status));
+        trimisa=true;st.innerHTML='<b>✓ Trimisă.</b> Domnul profesor o primește în folderul clasei tale.';
+      }catch(e){bt.disabled=false;st.textContent='Nu s-a trimis ('+(e.message||'fără internet')+'). Mai apasă o dată.'}
+    };
+  }).catch(()=>{$('d-stare').textContent='Lista claselor nu s-a încărcat. Reîncarcă pagina.'});
 }
 
 /* ---------------- ghidurile „n-am calculator, am telefon” ----------------

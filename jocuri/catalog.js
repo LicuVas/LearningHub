@@ -1,6 +1,6 @@
 /* GENERAT de _motor/catalog_build.py - nu edita de mână */
 window.JOCURI_CATALOG = {
- "generat": "2026-09-20",
+ "generat": "2026-09-24",
  "sursa": "Info_Gimnaziu_2026/data/unitati.json",
  "clase": [
   {
