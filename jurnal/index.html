@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jurnalul meu — LearningHub</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#0d1220;--card:#161d30;--line:#2b3654;--txt:#e8ecf4;--mut:#9aa7c2;--acc:#5b8cff;--ok:#34d399}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,Segoe UI,Arial,sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 90px}
+h1{font-size:1.6rem;margin:0 0 4px}h2{font-size:1.1rem;margin:0 0 10px}
+.sub{color:var(--mut)}a{color:#8fb0ff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
+.cifre{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cifra{background:#0f1526;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.cifra b{display:block;font-size:1.7rem}.cifra span{color:var(--mut);font-size:.85rem}
+.zi{display:grid;grid-template-columns:92px 1fr 56px;gap:8px;align-items:center;margin:4px 0;font-size:.9rem}
+.bara{height:12px;background:#0f1526;border-radius:6px;overflow:hidden}.bara i{display:block;height:100%;background:var(--acc)}
+.zi.azi .bara i{background:var(--ok)}
+ul{margin:0;padding-left:18px}li{margin:4px 0}
+.stele{color:#fbbf24;letter-spacing:1px}
+@media (max-width:480px){.cifra b{font-size:1.3rem}.zi{grid-template-columns:70px 1fr 48px}}
+</style>
+</head>
+<body>
+<main>
+  <p><a href="../index.html">← LearningHub</a></p>
+  <h1>Jurnalul meu</h1>
+  <p class="sub" id="cine"></p>
+  <div id="corp"></div>
+  <div class="card">
+    <h2>Ce vede profesorul</h2>
+    <ul>
+      <li>ce lecții și jocuri ai deschis;</li>
+      <li>cât ai <b>lucrat</b> pe fiecare: timpul se numără doar când pagina e în față și lucrezi (dai click, scrii, derulezi). O filă lăsată deschisă nu adună minute;</li>
+      <li>ce niveluri ai terminat și cu câte stele.</li>
+    </ul>
+    <p class="sub">Nu există clasament: fiecare elev își vede doar jurnalul lui. Numele tău pleacă criptat și îl poate citi doar profesorul.
+    Jurnalul de aici e cel de pe <b>calculatorul sau telefonul ăsta</b>; profesorul vede tot ce ai lucrat, de pe toate aparatele.</p>
+  </div>
+</main>
+<script src="../assets/js/prezenta.js" id="lh-prezenta" defer></script>
+<script>
+(function(){
+  var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+  function citeste(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+  function zi(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+  function min(s){var m=Math.round((s||0)/60);return m<60?m+' min':Math.floor(m/60)+' h '+(m%60)+' min'}
+  var ZILE=['dum','lun','mar','mie','joi','vin','sâm'];
+  function arata(){
+    var eu=citeste('lh_prezenta'),j=citeste('lh_prezenta_jurnal');
+    var cine=document.getElementById('cine'),corp=document.getElementById('corp');
+    if(!eu||!eu.id){
+      cine.textContent='Nu ești înscris pe calculatorul ăsta.';
+      corp.innerHTML='<div class="card">Apasă <b>„Spune cine ești”</b> (jos, în stânga) ca profesorul să-ți vadă munca. De atunci încolo, aici vezi minutele tale.</div>';
+      return;
+    }
+    cine.innerHTML=esc(eu.nume)+' · '+esc(eu.clasa)+' · '+esc(eu.scoalaNume||eu.scoala);
+    if(!j||j.id!==eu.id)j={zile:{},pagini:{},jocuri:{}};
+    var azi=new Date(),a=zi(azi),sapt=0,luni=new Date(azi);luni.setDate(azi.getDate()-((azi.getDay()+6)%7));
+    var total=0;Object.keys(j.zile).forEach(function(k){total+=j.zile[k];if(k>=zi(luni))sapt+=j.zile[k]});
+    // zile la rând cu cel puțin 5 minute lucrate (azi contează dacă e deja începută)
+    var sir=0,d=new Date(azi);if((j.zile[a]||0)<300)d.setDate(d.getDate()-1);
+    while((j.zile[zi(d)]||0)>=300){sir++;d.setDate(d.getDate()-1)}
+    var h='<div class="cifre"><div class="cifra"><b>'+min(j.zile[a])+'</b><span>azi</span></div>'+
+      '<div class="cifra"><b>'+min(sapt)+'</b><span>săptămâna asta</span></div>'+
+      '<div class="cifra"><b>'+sir+'</b><span>'+(sir===1?'zi la rând':'zile la rând')+'</span></div></div>';
+    var zile=[],max=1;for(var i=13;i>=0;i--){var x=new Date(azi);x.setDate(azi.getDate()-i);var s=j.zile[zi(x)]||0;max=Math.max(max,s);zile.push([x,s])}
+    h+='<div class="card"><h2>Ultimele două săptămâni</h2>'+zile.map(function(p){var k=zi(p[0]);return '<div class="zi'+(k===a?' azi':'')+'"><span>'+ZILE[p[0].getDay()]+' '+p[0].getDate()+'.'+(p[0].getMonth()+1)+'</span><div class="bara"><i style="width:'+Math.round(100*p[1]/max)+'%"></i></div><span>'+Math.round(p[1]/60)+' min</span></div>'}).join('')+
+      '<p class="sub">În total, pe aparatul ăsta: '+min(total)+'.</p></div>';
+    var jocuri=Object.keys(j.jocuri);
+    if(jocuri.length)h+='<div class="card"><h2>Jocurile mele</h2><ul>'+jocuri.map(function(k){var g=j.jocuri[k],n=Object.keys(g.nivele||{}).length,st=0;Object.keys(g.nivele||{}).forEach(function(x){st+=g.nivele[x]});
+      return '<li><a href="../jocuri/'+esc(k)+'/">'+esc(g.titlu||k)+'</a> — '+(g.gata?'<b>terminat</b>':n+(g.din?' din '+g.din:'')+' niveluri')+' · <span class="stele">★ '+st+'</span></li>'}).join('')+'</ul></div>';
+    var pag=Object.keys(j.pagini).filter(function(p){return j.pagini[p].s>=30}).sort(function(x,y){return j.pagini[y].u-j.pagini[x].u}).slice(0,15);
+    if(pag.length)h+='<div class="card"><h2>Unde am lucrat în ultima vreme</h2><ul>'+pag.map(function(p){return '<li><a href="'+esc(p)+'">'+esc(j.pagini[p].t||p)+'</a> — '+min(j.pagini[p].s)+'</li>'}).join('')+'</ul></div>';
+    corp.innerHTML=h;
+  }
+  arata();addEventListener('prezenta',arata);addEventListener('focus',arata);
+})();
+</script>
+</body>
+</html>

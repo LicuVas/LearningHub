@@ -30,4 +30,15 @@
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
     else run();
+
+    // Evidența activității elevilor (24.09.2026): site-credit.js e pe toate lecțiile, deci aduce și
+    // prezenta.js, fără să mai atingem ~900 de pagini. Stă lângă el, în assets/js/.
+    if (!document.getElementById('lh-prezenta')) {
+        var me = document.currentScript && document.currentScript.src;
+        var s = document.createElement('script');
+        s.id = 'lh-prezenta';
+        s.src = me ? new URL('prezenta.js', me).href : '/assets/js/prezenta.js';
+        s.defer = true;
+        document.head.appendChild(s);
+    }
 })();

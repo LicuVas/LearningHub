@@ -93,7 +93,7 @@ function home(){
   /* LABORATOR (calculatoare comune): elevul următor pornește curat - fără numele și fără nivelurile
      celui dinainte, altfel ar putea primi diploma altcuiva. Două apăsări, ca să nu șteargă din greșeală. */
   const alt=document.getElementById('alt-elev');
-  if(alt)alt.onclick=()=>{if(alt.dataset.sure){S={nume:'',lv:{}};save();home();const n=document.getElementById('nume');if(n)n.focus()}else{alt.dataset.sure=1;alt.textContent='Sigur? Se șterge tot ce e mai sus - apasă din nou'}};
+  if(alt)alt.onclick=()=>{if(alt.dataset.sure){S={nume:'',lv:{}};save();if(window.Prezenta)window.Prezenta.uita();home();const n=document.getElementById('nume');if(n)n.focus()}else{alt.dataset.sure=1;alt.textContent='Sigur? Se șterge tot ce e mai sus - apasă din nou'}};
 }
 
 /* ---------------- nivel ---------------- */
@@ -354,6 +354,8 @@ function endLevel(){
   save();R.phase='end';
   if(C.nivele[R.li].bazin)marcheazaVazut(R.li,R.pick);
   const next=R.li+1<C.nivele.length;
+  raporteaza({tip:'nivel',nivel:R.li+1,stele:S.lv[R.li].stars,max:3});
+  if(!prev&&C.nivele.every((_,i)=>S.lv[i]))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3});
   shell(`
     <div class="eyebrow">${nivelEticheta(R.li)} · terminat${(()=>{const rest=C.nivele.length-R.li-1,a=C.mod==='antrenament';return next?` · ${rest===1?(a?'mai e o rundă':'mai e un nivel'):`mai sunt ${rest} ${a?'runde':'niveluri'}`}`:` · ai terminat toate ${a?'rundele':'nivelurile'}`})()}</div>
     <div class="end-stars" style="margin:14px 0 6px" aria-label="${stars===1?'o stea':stars+' stele'} din 3">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3-stars)}</span></div>
@@ -520,12 +522,30 @@ function wireHeader(){
   bar.addEventListener('pointercancel',()=>{startY=null});
 }
 
+/* ---------------- evidența activității (24.09.2026) ----------------
+   assets/js/prezenta.js (același pe tot LearningHub-ul) numără timpul lucrat și îl trimite profesorului.
+   Jocul îi spune în plus ce nivel s-a terminat și cu câte stele. Numele: dacă elevul s-a înscris deja pe site,
+   îl punem și pe diplomă; „Sunt alt elev” șterge și înscrierea, ca pe calculatorul comun să nu rămână colegul. */
+function prezenta(){
+  if(!document.getElementById('lh-prezenta')){
+    const s=document.createElement('script');s.id='lh-prezenta';s.defer=true;
+    s.src=new URL('../../assets/js/prezenta.js',MOTOR_URL).href;document.head.appendChild(s);
+  }
+  const iaNumele=()=>{const e=window.Prezenta&&window.Prezenta.identitate();if(e&&!S.nume){S.nume=e.nume;save();const n=document.getElementById('nume');if(n&&!n.value)n.value=e.nume}};
+  addEventListener('prezenta',iaNumele);
+  addEventListener('load',iaNumele);
+}
+/* jocul = numele FOLDERULUI (excel-viii), nu C.cheie: jurnalul și panoul fac legătura spre /jocuri/<folder>/ */
+const jocSlug=()=>{const m=location.pathname.match(/\/jocuri\/([a-z0-9_-]+)\//i);return m?m[1]:C.cheie};
+function raporteaza(e){try{if(window.Prezenta)window.Prezenta.eveniment(Object.assign({joc:jocSlug(),titlu:C.titlu,din:C.nivele.length},e))}catch(x){}}
+
 /* ---------------- pornire ---------------- */
 function porneste(config){
   C=config;
   ['cheie','titlu','clasa','unitate','unitateTitlu','competente','intro','nivele','diploma'].forEach(k=>{if(C[k]==null)throw new Error('JocMotor: lipsește „'+k+'” din configurație')});
   Object.entries(C.tipuri||{}).forEach(([k,v])=>{TIPURI[k]=v.render;if(v.rezolva)REZOLVA[k]=v.rezolva;if(v.gresit)GRESIT[k]=v.gresit});
   S=load();
+  prezenta();
   document.body.insertAdjacentHTML('afterbegin',`<header class="hud"><div class="hud-in">
     <button class="brand" id="go-home" type="button">${C.marca||esc(C.titlu)}</button>
     <div class="fbar" id="hud" aria-live="polite"></div>
