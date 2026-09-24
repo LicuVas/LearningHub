@@ -79,6 +79,16 @@ def main():
             verifica("Trimisă" in st, "confirmarea: %s" % st)
             verifica(pc.is_disabled("#d-trimite"), "după trimitere butonul nu mai trimite a doua oară")
         pc.screenshot(path=str(Path(tempfile.gettempdir()) / "qa_diploma_laborator.png"), full_page=True)
+        # elevul următor, pe același calculator
+        pc.reload(wait_until="networkidle")
+        verifica(pc.is_visible("#alt-elev") and NUME in pc.inner_text(".alt-elev"), "cuprinsul arată cine a jucat înainte + „Sunt alt elev”")
+        pc.click("#alt-elev")
+        verifica(pc.input_value("#nume") == NUME, "o singură apăsare NU șterge (cere confirmare)")
+        pc.click("#alt-elev")
+        verifica(pc.input_value("#nume") == "" and pc.locator("#dipl").count() == 0 and pc.locator("#alt-elev").count() == 0,
+                 "a doua apăsare: nume gol, fără diplomă, butonul dispare")
+        verifica(pc.evaluate("document.activeElement.id") == "nume", "cursorul stă în câmpul de nume")
+        verifica(pc.locator(".lvl:not([disabled])").count() == 1, "doar primul nivel e deschis")
         verifica(not erori, "fără erori JS pe pagina jocului %s" % erori[:2])
 
         tel = br.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True)

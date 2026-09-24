@@ -76,6 +76,7 @@ function home(){
     <h1 style="margin-top:8px">${C.h1||esc(C.titlu)}</h1>
     <div class="lede">${C.intro}</div>
     <div class="ancora">${C.ancoraText?esc(C.ancoraText):`Programa: ${esc(C.competente.join(', '))} · unitatea ${esc(C.unitate)}${C.lectii?` · lecțiile ${esc(C.lectii)}`:''}`}</div>
+    ${(S.nume||Object.keys(S.lv).length)?`<div class="alt-elev"><span>Pe calculatorul ăsta s-a jucat ${S.nume?`<b>${esc(S.nume)}</b>`:'deja'}${Object.keys(S.lv).length?` (${Object.keys(S.lv).length} din ${C.nivele.length} ${C.mod==='antrenament'?'runde':'niveluri'})`:''}. Nu ești tu?</span><button class="btn" id="alt-elev" type="button">Sunt alt elev, încep de la zero</button></div>`:''}
     <div class="namerow"><label for="nume">Numele tău, pentru diplomă</label><input id="nume" type="text" autocomplete="off" maxlength="40" value="${esc(S.nume)}" placeholder="ex. Ana Popescu"></div>
     <div class="toc-h">${C.mod==='antrenament'?`${C.nivele.length} runde · De bază → Consolidat → Avansat · întrebări noi la fiecare reluare`:`${C.nivele.length} niveluri · se deblochează pe rând · ultimul e nivelul final`}</div>
     <nav class="toc" aria-label="Nivelurile">${rows}</nav>
@@ -89,6 +90,10 @@ function home(){
   const dp=document.getElementById('dipl');if(dp)dp.onclick=diploma;
   const rs=document.getElementById('reset');
   if(rs)rs.onclick=()=>{if(rs.dataset.sure){S.lv={};save();home()}else{rs.dataset.sure=1;rs.textContent='Sigur? Apasă din nou'}};
+  /* LABORATOR (calculatoare comune): elevul următor pornește curat - fără numele și fără nivelurile
+     celui dinainte, altfel ar putea primi diploma altcuiva. Două apăsări, ca să nu șteargă din greșeală. */
+  const alt=document.getElementById('alt-elev');
+  if(alt)alt.onclick=()=>{if(alt.dataset.sure){S={nume:'',lv:{}};save();home();const n=document.getElementById('nume');if(n)n.focus()}else{alt.dataset.sure=1;alt.textContent='Sigur? Se șterge tot ce e mai sus - apasă din nou'}};
 }
 
 /* ---------------- nivel ---------------- */
