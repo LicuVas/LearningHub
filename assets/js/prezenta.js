@@ -23,7 +23,9 @@
 (function () {
   'use strict';
   if (window.Prezenta || window.top !== window) return;
-  var p0 = location.pathname;
+  /* pagina, în forma SCURTĂ pe care o folosește Cloudflare (/x/index.html -> /x/, /x/lectia1.html -> /x/lectia1):
+     altfel aceeași lecție ar apărea de două ori în panou, după cum a fost deschisă */
+  var p0 = location.pathname.replace(/index\.html$/, '').replace(/\.html$/, '');
   if (/^\/(teacher|jocuri\/diploma)\//.test(p0)) return;
 
   var SELF = (document.currentScript && document.currentScript.src) || (location.origin + '/assets/js/prezenta.js');

@@ -38,6 +38,7 @@ import activitate  # noqa: E402
 
 NUME = "Proba Prezenta Stergere"
 LECTIE = "/content/tic/cls5/index.html"
+CHEIE_LECTIE = "/content/tic/cls5/"      # așa o scrie prezenta.js (forma scurtă, ca pe Cloudflare)
 JOC = "excel-viii"
 probleme = []
 ids = set()
@@ -134,7 +135,7 @@ def ruleaza(br, baza, a):
     pg.wait_for_timeout(3000)
     verifica(any(NUME not in t and eu["id"] in t for t in trimiteri), "a plecat o trimitere, fără numele în clar (%d)" % len(trimiteri))
     r = pe_server(eu["id"])
-    s = ((r or {}).get("pagini") or {}).get(LECTIE, {}).get("s", 0)
+    s = ((r or {}).get("pagini") or {}).get(CHEIE_LECTIE, {}).get("s", 0)
     verifica(r is not None and s >= 25, "pe server: %s s pe lecție, clasa %s" % (s, (r or {}).get("clasa")))
     pg.click("#lhp-pill")
     verifica(pg.is_visible("#lhp-alt") and "Jurnalul meu" in pg.inner_text("#lhp"), "meniul etichetei: Jurnalul meu + Schimbă elevul")
@@ -148,7 +149,7 @@ def ruleaza(br, baza, a):
     p2.route("**/api/activitate", lambda route: route.abort())   # coada rămâne pe loc, o putem citi
     p2.clock.run_for(7 * 60 * 1000)
     c = ls(p2, "lh_prezenta_coada") or {}
-    sec = ((c.get("pag") or {}).get("/content/tic/cls6/index.html") or {}).get("s", 0)
+    sec = ((c.get("pag") or {}).get("/content/tic/cls6/") or {}).get("s", 0)
     verifica(sec <= 130, "7 minute fără nicio mișcare -> %s s numărate (cel mult ~120)" % sec)
     p2.unroute("**/api/activitate")
     p2.close()
@@ -184,7 +185,7 @@ def ruleaza(br, baza, a):
     verifica(NUME in pg.inner_text("#lhp"), "întreabă „Ești tot %s?”" % NUME)
     misca(pg, 12)
     c = ls(pg, "lh_prezenta_coada") or {}
-    verifica(not ((c.get("pag") or {}).get(LECTIE) or {}).get("s"), "până la răspuns nu se numără nimic")
+    verifica(not ((c.get("pag") or {}).get(CHEIE_LECTIE) or {}).get("s"), "până la răspuns nu se numără nimic")
     pg.click("#lhp-da")
     verifica(pg.is_visible("#lhp-pill"), "după „Da” revine eticheta")
 
