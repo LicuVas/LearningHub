@@ -908,26 +908,16 @@
                 comments: document.getElementById('comments').value || ''
             };
 
-            // Send to Google Apps Script
-            // Replace YOUR_SCRIPT_URL with your actual deployed web app URL
-            const scriptUrl = 'https://script.google.com/macros/s/AKfycbxGI_7hz5o2_aluhPgu-Cudi4SRGR5ZJR-SXSQdFLw_1FlbANOQYgegs7ULmsm78qFX2g/exec';
-
-            if (scriptUrl === 'YOUR_SCRIPT_URL') {
-                // Demo mode - simulate success
-                setTimeout(() => {
-                    showSuccess();
-                }, 1000);
-                console.log('Feedback data:', data);
-                return;
-            }
-
-            fetch(scriptUrl, {
+            // 25.09.2026: serverul nostru (teste-vasile.netlify.app/api/feedback); profesorul le citește în
+            // /feedback.html acolo. Vechiul Google Apps Script răspundea 403, iar cu mode:'no-cors' pagina
+            // arăta „Mulțumim!” deși mesajul se pierdea. Acum citim răspunsul: fără 200, elevul vede eroarea.
+            data.pagina = location.pathname;
+            fetch('https://teste-vasile.netlify.app/api/feedback', {
                 method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data)   // text/plain: cerere „simplă” cross-origin, fără preflight
             })
-            .then(() => {
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
                 showSuccess();
             })
             .catch(error => {

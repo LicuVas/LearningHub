@@ -935,48 +935,43 @@
             `;
         }
 
-        // Visitor Counter using visitor.6developer.com (free, cross-domain)
+        // Contorul de vizitatori (25.09.2026): serverul nostru, teste-vasile.netlify.app/api/vizitatori.
+        // Vechiul visitor.6developer.com a murit (pagina rămăsese pe „---”). Numără BROWSERE distincte,
+        // nu reîncărcări: id aleator în localStorage `lh_viz`, același pe care îl trimite site-credit.js.
         (function initVisitorStats() {
             const totalEl = document.getElementById('visitorCount');
             const todayEl = document.getElementById('todayCount');
-            const DOMAIN = 'learninghub-gurlan';
-            const API_BASE = 'https://visitor.6developer.com';
+            const API = 'https://teste-vasile.netlify.app/api/vizitatori';
 
-            // Record this visit and get stats
+            function idViz() {
+                try {
+                    let v = localStorage.getItem('lh_viz');
+                    if (!/^[a-f0-9]{32}$/.test(v || '')) {
+                        const a = new Uint8Array(16); crypto.getRandomValues(a);
+                        v = Array.from(a, x => x.toString(16).padStart(2, '0')).join('');
+                        localStorage.setItem('lh_viz', v);
+                    }
+                    return v;
+                } catch (e) { return null; }  // fără localStorage: doar citim cifrele, nu numărăm
+            }
+
             async function recordAndGetStats() {
                 try {
-                    // Record the visit
-                    await fetch(`${API_BASE}/visit`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            domain: DOMAIN,
-                            path: window.location.pathname,
-                            title: document.title,
-                            referrer: document.referrer || ''
-                        })
-                    });
-
-                    // Get statistics
-                    const response = await fetch(`${API_BASE}/visit?domain=${DOMAIN}`);
-                    const data = await response.json();
-
-                    if (data) {
-                        if (totalEl && data.totalCount !== undefined) {
-                            totalEl.textContent = data.totalCount.toLocaleString('ro-RO');
-                        }
-                        if (todayEl && data.todayCount !== undefined) {
-                            todayEl.textContent = data.todayCount.toLocaleString('ro-RO');
-                        }
-                    }
+                    const v = idViz();
+                    // text/plain = cerere „simplă” cross-origin, fără preflight
+                    const r = v
+                        ? await fetch(API, { method: 'POST', body: JSON.stringify({ v }) })
+                        : await fetch(API);
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    const d = await r.json();
+                    if (v) try { localStorage.setItem('lh_viz_zi', d.zi); } catch (e) {}
+                    if (totalEl && Number.isInteger(d.total)) totalEl.textContent = d.total.toLocaleString('ro-RO');
+                    if (todayEl && Number.isInteger(d.azi)) todayEl.textContent = d.azi.toLocaleString('ro-RO');
                 } catch (err) {
-                    console.log('Visitor counter unavailable:', err);
-                    if (totalEl) totalEl.textContent = '---';
-                    if (todayEl) todayEl.textContent = '---';
+                    console.log('Contorul de vizitatori nu răspunde:', err);
                 }
             }
 
-            // Run on page load
             recordAndGetStats();
         })();
     </script>
