@@ -289,6 +289,10 @@
         }
 
         /* Modal */
+        /* banderola „Spune cine esti” (prezenta.js, #lhp) acoperea pe telefon butonul „Confirma si trimite”:
+           cat e deschisa verificarea, o ascundem; revine dupa (25.09.2026) */
+        body:has(#previewModal.active) #lhp { display: none !important; }
+
         .modal {
             display: none;
             position: fixed;
@@ -493,9 +497,7 @@
                     <label class="form-label">Scoala <span class="required">*</span></label>
                     <select id="school" required>
                         <option value="" disabled selected>Alege scoala...</option>
-                        <option value="Elena Cuza">Scoala Elena Cuza</option>
-                        <option value="Victor Brauner">Liceul Victor Brauner</option>
-                        <option value="Tupilati">Scoala Tupilati</option>
+                        <!-- scolile + clasele vin din /jocuri/_motor/diplome-date.js (aceeasi lista ca la diplome si evidenta activitatii) -->
                         <option value="Alta">Alta scoala...</option>
                     </select>
                 </div>
@@ -589,9 +591,10 @@
                         <option value="" disabled selected>Alege modulul...</option>
                         <option value="M1">Modul 1</option>
                         <option value="M2">Modul 2</option>
-                        <option value="M3">Modul 3 (curent)</option>
+                        <option value="M3">Modul 3</option>
                         <option value="M4">Modul 4</option>
                         <option value="M5">Modul 5</option>
+                        <option value="Jocuri">Lectiile-joc</option>
                         <option value="General">Site-ul in general</option>
                     </select>
                 </div>
@@ -704,12 +707,30 @@
 
     <!-- School/Class Data -->
     <script>
+        // 25.09.2026: scolile si clasele NU se mai scriu aici de mana (lista veche avea Elena Cuza si
+        // n-avea Transporturi, Forestier, Tibucani, Dumbrava). Le luam din diplome-date.js, pe care
+        // tools\diplome.py il tine la zi din orar. „Alta” (clasa scrisa de elev) ramane la fiecare scoala.
         const schoolClasses = {
-            'Elena Cuza': ['5A', '5B', '5C', '5D', '6A', '6B', '6C', '7A', '7B', '8A', '8B', '8C'],
-            'Victor Brauner': ['5A', '5M', '6A', '6MA', '7A', '7M', '8A', '8M', '9A', '9M', '10M', '11M', '12M'],
-            'Tupilati': ['1A', '2A', '3A', '4A', '5A', '6A'],
             'Alta': ['Clasa 1', 'Clasa 2', 'Clasa 3', 'Clasa 4', 'Clasa 5', 'Clasa 6', 'Clasa 7', 'Clasa 8', 'Clasa 9', 'Clasa 10', 'Clasa 11', 'Clasa 12', 'Clasa 13', 'Alta']
         };
+        (function incarcaScolile() {
+            const sel = document.getElementById('school');
+            const alta = sel.querySelector('option[value="Alta"]');
+            function pune(scoli) {
+                scoli.forEach(s => {
+                    if (!s || !s.nume || schoolClasses[s.nume]) return;
+                    schoolClasses[s.nume] = (s.clase || []).concat(['Alta']);
+                    const o = document.createElement('option');
+                    o.value = s.nume; o.textContent = s.nume;
+                    sel.insertBefore(o, alta);
+                });
+            }
+            if (window.DIPLOME) return pune(window.DIPLOME.scoli || []);
+            const sc = document.createElement('script');
+            sc.src = '/jocuri/_motor/diplome-date.js';
+            sc.onload = () => pune((window.DIPLOME && window.DIPLOME.scoli) || []);
+            document.head.appendChild(sc);
+        })();
 
         // School selection handler
         document.getElementById('school').addEventListener('change', function() {
