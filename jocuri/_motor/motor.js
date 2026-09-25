@@ -23,8 +23,21 @@ const REZOLVA={};         // pentru testul automat: pune răspunsul corect în p
 const GRESIT={};          // pentru testul automat: pune un răspuns greșit tipic (simulatoare)
 
 /* ---------------- stare ---------------- */
-function load(){let s=null;try{s=JSON.parse(localStorage.getItem(C.cheie))}catch(e){}if(!s||typeof s!=='object')s={nume:'',lv:{}};if(!s.lv)s.lv={};return s}
-function save(){try{localStorage.setItem(C.cheie,JSON.stringify(S))}catch(e){}}
+/* PROGRES PE ELEV (25.09.2026, el: „să poată continua fiecare de unde a rămas” pe calculatorul comun):
+   progresul jocului stă pe PROFILUL activ al calculatorului (learninghub_active_profile), același pe care îl
+   folosesc și lecțiile; prezenta.js pune profilul elevului înscris. Fără profil (sau „_guest”) = cheia veche.
+   Prima dată pe un profil nou: dacă pe cheia veche e progresul ACESTUI elev (același nume) sau al nimănui
+   (fără nume), îl mută la el - așa nu se pierde nimic la trecere. */
+function profilActiv(){try{const p=localStorage.getItem('learninghub_active_profile');return p&&p!=='_guest'?p:''}catch(e){return ''}}
+function cheieJoc(){const p=profilActiv();return p?C.cheie+'@'+p:C.cheie}
+const normNume=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(' ').sort().join(' ');
+function citesteJoc(k){try{const s=JSON.parse(localStorage.getItem(k));return s&&typeof s==='object'?s:null}catch(e){return null}}
+function load(){
+  const k=cheieJoc();let s=citesteJoc(k);
+  if(!s&&k!==C.cheie){const b=citesteJoc(C.cheie);let eu=null;try{eu=JSON.parse(localStorage.getItem('lh_prezenta'))}catch(e){}
+    if(b&&(!b.nume||(eu&&eu.nume&&normNume(b.nume)===normNume(eu.nume)))){s=b;try{localStorage.setItem(k,JSON.stringify(b));localStorage.removeItem(C.cheie)}catch(e){}}}
+  if(!s)s={nume:'',lv:{}};if(!s.lv)s.lv={};return s}
+function save(){try{localStorage.setItem(cheieJoc(),JSON.stringify(S))}catch(e){}}
 function totals(){let st=0,xp=0;for(const k in S.lv){st+=S.lv[k].stars||0;xp+=S.lv[k].xp||0}return{st,xp}}
 const unlocked=i=>i===0||!!S.lv[i-1];
 const starsHtml=n=>[0,1,2].map(i=>i<n?'<span class="on">★</span>':'<span>☆</span>').join('');
@@ -93,7 +106,10 @@ function home(){
   /* LABORATOR (calculatoare comune): elevul următor pornește curat - fără numele și fără nivelurile
      celui dinainte, altfel ar putea primi diploma altcuiva. Două apăsări, ca să nu șteargă din greșeală. */
   const alt=document.getElementById('alt-elev');
-  if(alt)alt.onclick=()=>{if(alt.dataset.sure){S={nume:'',lv:{}};save();if(window.Prezenta)(window.Prezenta.intreaba||window.Prezenta.uita)();home();const n=document.getElementById('nume');if(n)n.focus()}else{alt.dataset.sure=1;alt.textContent='Sigur? Se șterge tot ce e mai sus - apasă din nou'}};
+  // elev înscris: nu mai ștergem nimic - fiecare elev are progresul lui; întrebăm doar „Ești tot X?”
+  // („Nu” -> înscrierea altui elev -> pagina trece pe profilul lui). Neînscris: ca înainte, se golește jocul.
+  if(alt)alt.onclick=()=>{if(window.Prezenta&&window.Prezenta.identitate&&window.Prezenta.identitate()&&window.Prezenta.intreaba){window.Prezenta.intreaba();return}
+    if(alt.dataset.sure){S={nume:'',lv:{}};save();if(window.Prezenta)(window.Prezenta.intreaba||window.Prezenta.uita)();home();const n=document.getElementById('nume');if(n)n.focus()}else{alt.dataset.sure=1;alt.textContent='Sigur? Se șterge tot ce e mai sus - apasă din nou'}};
 }
 
 /* ---------------- nivel ---------------- */

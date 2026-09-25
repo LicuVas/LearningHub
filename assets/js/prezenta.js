@@ -285,17 +285,60 @@
         eu = { id: idNou(), scoala: sc, scoalaNume: sn, clasa: cl, nume: nm, numeEnc: await cripteaza(nm), ultima: Date.now() };
         if (st) eu.scoalaText = st;
         scrie(K_ID, eu); sterge(K_COADA); sterge(K_JURNAL); confirmat = true; ultimaMiscare = Date.now();
-        adaugaInCoada(0, true); trimite(false); randeaza();
+        adaugaInCoada(0, true);
+        // întâi profilul: dacă s-a schimbat, pagina se reîncarcă pe profilul lui (fără să anunțăm jocul/lecția,
+        // care altfel ar scrie numele noului elev în progresul celui dinainte)
+        if (puneSertar()) { trimite(true); randeaza(); setTimeout(function () { reincarcaDacaTrebuie(true); }, 300); return; }
+        trimite(false); randeaza();
         try { dispatchEvent(new CustomEvent('prezenta', { detail: identitate() })); } catch (e) {}
       } catch (e) { this.disabled = false; $('lhp-e').textContent = 'Nu a mers. Reîncarcă pagina și încearcă din nou.'; }
     };
     $('lhp-n').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('lhp-ok').click(); });
   }
 
+  /* SERTARUL elevului pe calculator (25.09.2026): profilul activ (learninghub_active_profile), pe care își țin
+     progresul lecțiile (atomic-learning, lesson-summary, practice…) și jocurile (motor.js). Harta
+     elev -> profil stă în lh_sertare. PRIMUL elev înscris pe calculator după schimbare moștenește profilul care
+     era deja activ (deci progresul existent), următorii primesc profil nou. Întoarce true dacă profilul s-a
+     schimbat (atunci pagina trebuie reîncărcată, ca lecția/jocul să citească progresul noului elev). */
+  var K_SERTARE = 'lh_sertare', K_PROFIL = 'learninghub_active_profile';
+  function cheieElev(e) {
+    return e.scoala + '|' + e.clasa + '|' + String(e.nume || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').sort().join(' ');
+  }
+  function hashScurt(s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return h.toString(36); }
+  function citesteProfil() { try { return localStorage.getItem(K_PROFIL); } catch (e) { return null; } }
+  function puneProfil(p) { try { if (p) localStorage.setItem(K_PROFIL, p); else localStorage.removeItem(K_PROFIL); } catch (e) {} }
+  function puneSertar() {
+    if (!eElev()) return false;
+    var t = citeste(K_SERTARE, null) || {}, k = cheieElev(eu), vechi = citesteProfil(), p;
+    if (Object.prototype.hasOwnProperty.call(t, k)) p = t[k];
+    else if (!Object.keys(t).length) p = (vechi && vechi !== '_neinscris') ? vechi : '';   // primul elev moștenește
+    else p = 'e_' + hashScurt(k);
+    t[k] = p; scrie(K_SERTARE, t);
+    if (p && p !== '_guest') {   // în lista de profiluri a site-ului, ca numele să apară unde se afișează profilul
+      var L = citeste('learninghub_profiles', []) || [];
+      if (!L.some(function (x) { return x && x.id === p; })) {
+        L.push({ id: p, name: String(eu.nume).slice(0, 20), avatar: '🎒', grade: 'cls6', created: new Date().toISOString() });
+        scrie('learninghub_profiles', L);
+      }
+    }
+    puneProfil(p || null);
+    return (vechi || null) !== (p || null);
+  }
+  function reincarcaDacaTrebuie(schimbat) {
+    if (!schimbat) return;
+    // paza împotriva buclei: o singură reîncărcare pentru aceeași pagină + același profil
+    var semn = location.href + '|' + (citesteProfil() || '');
+    try { if (sessionStorage.getItem('lh_sertar_reincarcat') === semn) return; sessionStorage.setItem('lh_sertar_reincarcat', semn); } catch (e) {}
+    location.reload();
+  }
+
   function uita() {
     trimite(true);
     eu = null; confirmat = false;
     sterge(K_ID); sterge(K_COADA); sterge(K_JURNAL); sterge(K_TINUT);
+    puneProfil('_neinscris');   // până se înscrie următorul, nu lucrează pe profilul celui plecat
     try { dispatchEvent(new CustomEvent('prezenta', { detail: null })); } catch (e) {}
   }
   function identitate() { return eElev() ? { nume: eu.nume, scoala: eu.scoala, clasa: eu.clasa } : null; }
@@ -343,6 +386,7 @@
   };
 
   function porneste() {
+    if (stare() === 'activ') reincarcaDacaTrebuie(puneSertar());
     randeaza();
     if (stare() === 'activ') adaugaInCoada(0, true);
     // nota calculată de lesson-summary.js înainte să ne încărcăm noi
