@@ -214,13 +214,15 @@
     // „Mai târziu” păstrează alegerea de dinainte (vizitatorul rămâne vizitator, cu butonul lui mic)
     $('lhp-x').onclick = function () { if (!(eu && eu.refuz)) eu = null; randeaza(); };
     incarcaDate().then(function (d) {
+      // formularul poate fi deja închis („Mai târziu”) sau redeschis (lista deja pusă) până sosesc datele
+      if (!$('lhp-s') || $('lhp-s').options.length > 1) return;
       $('lhp-s').insertAdjacentHTML('beforeend', d.scoli.map(function (x) { return '<option value="' + esc(x.key) + '">' + esc(x.nume) + '</option>'; }).join(''));
       $('lhp-s').onchange = function () {
         var sc = d.scoli.filter(function (x) { return x.key === $('lhp-s').value; })[0], c = $('lhp-c');
         c.innerHTML = '<option value="">— alege —</option>' + (sc ? sc.clase.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') : '');
         c.disabled = !sc;
       };
-    }, function () { $('lhp-e').textContent = 'Nu s-a putut încărca lista școlilor. Verifică internetul și reîncarcă pagina.'; });
+    }, function () { if ($('lhp-e')) $('lhp-e').textContent ='Nu s-a putut încărca lista școlilor. Verifică internetul și reîncarcă pagina.'; });
     $('lhp-ok').onclick = async function () {
       var sc = $('lhp-s').value, cl = $('lhp-c').value, nm = $('lhp-n').value.trim().replace(/\s+/g, ' ');
       if (!sc || !cl) { $('lhp-e').textContent = 'Alege școala și clasa.'; return; }
