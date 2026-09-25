@@ -209,7 +209,7 @@
     arata('<div class="bar"><b>Cine ești?</b><div class="mic">Pe calculatoarele din laborator, la final apasă pe etichetă → „Schimbă elevul”.</div>' + NOTA +
       '<label for="lhp-s">Școala</label><select id="lhp-s"><option value="">— alege —</option></select>' +
       '<label for="lhp-c">Clasa</label><select id="lhp-c" disabled><option value="">— alege întâi școala —</option></select>' +
-      '<label for="lhp-n">Numele și prenumele</label><input id="lhp-n" maxlength="40" autocomplete="off" placeholder="ex. Popescu Ana">' +
+      '<label for="lhp-n">Numele și prenumele, <b>întregi, ca în catalog</b></label><input id="lhp-n" maxlength="40" autocomplete="off" placeholder="ex. Popescu Ana-Maria">' +
       '<div class="err" id="lhp-e"></div><div class="row"><button id="lhp-ok">Gata</button><button class="g" id="lhp-x">Mai târziu</button></div></div>');
     // „Mai târziu” păstrează alegerea de dinainte (vizitatorul rămâne vizitator, cu butonul lui mic)
     $('lhp-x').onclick = function () { if (!(eu && eu.refuz)) eu = null; randeaza(); };
