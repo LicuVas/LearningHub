@@ -3,24 +3,36 @@
 Porneste un Excel propriu (nu atinge alte Excel-uri deschise), cu un registru nou, si merge pas cu pas:
 - butoanele din panglica le gaseste prin UI Automation, dupa ID-ul Microsoft (TabHome, AutoSum...) -
   acelasi ID in Office romanesc si englezesc;
-- celulele le gaseste prin COM (pozitia pe ecran a celulei);
-- ce a facut elevul citeste tot prin COM (valori, formule, celula selectata) si trece singur la pasul urmator.
+- celulele le gaseste dupa antetele de coloana/rand raportate tot prin UI Automation;
+- ce a facut elevul citeste prin COM (valori, formule, celula selectata) si trece singur la pasul urmator.
+Lectiile stau in lectii/*.yaml (formatul: lectie.py).
 
-Rulare:  python ghid_excel.py
+Rulare:
+  ghid_excel.py                         alegi lectia dintr-o lista
+  ghid_excel.py lectii/01_....yaml      direct lectia
+  ghid_excel.py --verifica [lectie]     elev simulat parcurge lectia (sau toate); ultima linie = pasi blocati
+  ghid_excel.py --verifica --capturi D  ... si salveaza o captura la fiecare pas in D
 """
+import argparse
 import ctypes
+import os
 import re
 import sys
 import tkinter as tk
+from pathlib import Path
 
 ctypes.windll.shcore.SetProcessDpiAwareness(2)  # coordonate in pixeli fizici, ca UI Automation
 
 import pythoncom
 import pywintypes
 import win32com.client
+import win32gui
 from pywinauto import Desktop
 
+import lectie as L
+
 ROSU = "#e8173c"
+GALBEN = "#fffbe6"
 GROS = 4          # grosimea chenarului
 PAS_MS = 350      # cat de des ne uitam la Excel
 
@@ -29,6 +41,11 @@ WS_EX_NOACTIVATE = 0x08000000
 WS_EX_TOOLWINDOW = 0x00000080
 WS_EX_TRANSPARENT = 0x00000020
 WS_EX_LAYERED = 0x00080000
+
+
+def dosar_program():
+    """Langa .exe cand e impachetat (PyInstaller), altfel langa acest fisier."""
+    return Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
 
 
 def fara_focus(win, click_prin=False):
@@ -40,59 +57,6 @@ def fara_focus(win, click_prin=False):
     if click_prin:
         st |= WS_EX_TRANSPARENT | WS_EX_LAYERED
     ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, st)
-
-
-# ---------------------------------------------------------------- lectia
-
-def numere(ws, adresa):
-    vals = ws.Range(adresa).Value
-    return [v[0] for v in vals]
-
-
-def e_nota(v):
-    return isinstance(v, (int, float)) and 1 <= v <= 10
-
-
-PASI = [
-    {
-        "titlu": "Pasul 1 din 6 · Capul de tabel",
-        "text": "Dă clic în celula A1, scrie  Nota  și apasă Enter.",
-        "tinta": ("celula", "A1"),
-        "gata": lambda ws, xl: isinstance(ws.Range("A1").Value, str) and ws.Range("A1").Value.strip() != "",
-    },
-    {
-        "titlu": "Pasul 2 din 6 · Notele",
-        "text": "Scrie 5 note (de la 1 la 10) în celulele A2 … A6.\nDupă fiecare notă apasă Enter — Excel coboară singur.",
-        "tinta": ("celula", "A2:A6"),
-        "gata": lambda ws, xl: all(e_nota(v) for v in numere(ws, "A2:A6")),
-    },
-    {
-        "titlu": "Pasul 3 din 6 · Unde punem suma",
-        "text": "Dă clic în celula A7. Acolo va apărea suma notelor.",
-        "tinta": ("celula", "A7"),
-        "gata": lambda ws, xl: xl.ActiveCell.Address == "$A$7" or ws.Range("A7").HasFormula,
-    },
-    {
-        "titlu": "Pasul 4 din 6 · Butonul AutoSum",
-        "text": "Pe fila Pornire (Home), apasă butonul AutoSum (Σ).\nExcel încercuiește notele — apasă Enter.",
-        "tinta": ("buton", "AutoSum", "TabHome"),
-        "gata": lambda ws, xl: "SUM(" in str(ws.Range("A7").Formula).upper(),
-    },
-    {
-        "titlu": "Pasul 5 din 6 · Media, scrisă de mână",
-        "text": "Dă clic în B7 și scrie formula mediei, apoi Enter:\n"
-                "   =AVERAGE(A2:A6)\n"
-                "(pe unele calculatoare Excel scrie virgulă sau ; — ambele sunt bune aici)",
-        "tinta": ("celula", "B7"),
-        "gata": lambda ws, xl: "AVERAGE(" in str(ws.Range("B7").Formula).upper(),
-    },
-    {
-        "titlu": "Pasul 6 din 6 · Îngroșat",
-        "text": "Selectează din nou A1 și apasă butonul Aldin (Bold, B) din fila Pornire (Home).",
-        "tinta": ("buton", "Bold", "TabHome"),
-        "gata": lambda ws, xl: bool(ws.Range("A1").Font.Bold),
-    },
-]
 
 
 # ---------------------------------------------------------------- unde e tinta pe ecran
@@ -110,7 +74,6 @@ class Grila:
         self.antete = {}
 
     def _citeste(self):
-        import win32gui
         w = self.xl.ActiveWindow
         cheie = (w.ScrollRow, w.ScrollColumn, w.Zoom, win32gui.GetWindowRect(self.xl.Hwnd))
         if cheie == self.cheie:
@@ -133,6 +96,12 @@ class Grila:
         if not (col1 and col2 and rand1 and rand2):
             return None
         return col1[0], rand1[1], col2[2], rand2[3]
+
+    def sus_grila(self):
+        """Marginea de sus a grilei (sub bara de formule) - acolo punem balonul pentru butoanele din panglica."""
+        self._citeste()
+        a = self.antete.get("A") or next((v for k, v in self.antete.items() if k.isalpha()), None)
+        return a[3] if a else None
 
 
 class Panglica:
@@ -201,38 +170,53 @@ class Chenar:
 
 
 class Balon:
-    def __init__(self, root, la_inchidere, la_sari):
+    def __init__(self, root, la_inchidere, la_inapoi, la_inainte, la_sari):
         t = tk.Toplevel(root)
         t.overrideredirect(True)
         t.attributes("-topmost", True)
         t.configure(bg=ROSU)
-        interior = tk.Frame(t, bg="#fffbe6", padx=14, pady=10)
+        interior = tk.Frame(t, bg=GALBEN, padx=14, pady=10)
         interior.pack(padx=2, pady=2)
-        self.titlu = tk.Label(interior, bg="#fffbe6", fg="#8a0f24", font=("Segoe UI", 11, "bold"), anchor="w",
+        self.titlu = tk.Label(interior, bg=GALBEN, fg="#8a0f24", font=("Segoe UI", 11, "bold"), anchor="w",
                               justify="left")
         self.titlu.pack(fill="x")
-        self.text = tk.Label(interior, bg="#fffbe6", fg="#1b1b1b", font=("Segoe UI", 13), anchor="w",
+        self.text = tk.Label(interior, bg=GALBEN, fg="#1b1b1b", font=("Segoe UI", 13), anchor="w",
                              justify="left", wraplength=460)
         self.text.pack(fill="x", pady=(4, 6))
-        self.stare = tk.Label(interior, bg="#fffbe6", fg="#6b6b6b", font=("Segoe UI", 10, "italic"), anchor="w")
+        self.stare = tk.Label(interior, bg=GALBEN, fg="#6b6b6b", font=("Segoe UI", 10, "italic"), anchor="w",
+                              justify="left", wraplength=460)
         self.stare.pack(fill="x")
-        jos = tk.Frame(interior, bg="#fffbe6")
+        jos = tk.Frame(interior, bg=GALBEN)
         jos.pack(fill="x", pady=(6, 0))
-        tk.Button(jos, text="Închide ghidul", command=la_inchidere, relief="flat", bg="#eee").pack(side="left")
-        self.buton_sari = tk.Button(jos, text="Sari pasul ›", command=la_sari, relief="flat", bg="#eee")
-        self.buton_sari.pack(side="right")
+        buton = dict(relief="flat", bg="#eee", activebackground="#ddd", padx=8)
+        tk.Button(jos, text="Închide", command=la_inchidere, **buton).pack(side="left")
+        self.b_inapoi = tk.Button(jos, text="‹ Înapoi", command=la_inapoi, **buton)
+        self.b_sari = tk.Button(jos, text="Sari pasul ›", command=la_sari, **buton)
+        self.b_inainte = tk.Button(jos, text="Înainte ›", command=la_inainte, bg="#1f7a47", fg="white",
+                                   activebackground="#17613a", relief="flat", padx=8)
+        self.jos = jos
         fara_focus(t)
         self.t = t
         self.hwnd = ctypes.windll.user32.GetParent(t.winfo_id())
-        self.ultim = None
 
-    def seteaza(self, titlu, text):
+    def butoane(self, inapoi, inainte, sari):
+        for b in (self.b_inapoi, self.b_sari, self.b_inainte):
+            b.pack_forget()
+        if inainte:
+            self.b_inainte.pack(side="right")
+        if sari:
+            self.b_sari.pack(side="right")
+        if inapoi:
+            self.b_inapoi.pack(side="right", padx=(0, 6))
+
+    def seteaza(self, titlu, text, stare=""):
         self.titlu.config(text=titlu)
         self.text.config(text=text)
-        self.ultim = None
+        self.stare.config(text=stare)
 
-    def aseaza(self, d, ecran_excel):
-        """Langa tinta: dedesubt daca e loc in fereastra Excel, altfel deasupra; nu peste tinta."""
+    def aseaza(self, d, ecran_excel, sub=None):
+        """Langa tinta, fara s-o acopere. `sub` = cel mai sus unde are voie (ex. sub panglica,
+        ca balonul sa nu acopere butoanele vecine ale celui cautat)."""
         self.t.update_idletasks()
         bw, bh = self.t.winfo_reqwidth(), self.t.winfo_reqheight()
         ex1, ey1, ex2, ey2 = ecran_excel
@@ -241,14 +225,14 @@ class Balon:
         else:
             x1, y1, x2, y2 = d
             x = min(max(x1, ex1 + 10), ex2 - bw - 10)
-            y = y2 + 14 if y2 + 14 + bh < ey2 - 10 else y1 - bh - 14
+            y = max(y2 + 14, (sub or 0) + 10)
+            if y + bh > ey2 - 10:
+                y = y1 - bh - 14
             if x1 < x + bw and x2 > x and y1 < y + bh and y2 > y:  # ar acoperi tinta -> la dreapta ei
                 x, y = x2 + 18, y1
         x, y = int(x), int(y)
-        self.ultim = (x, y)
         # Tk muta balonul inapoi la pozitia lui interna (0,0) cand se schimba textul (masurat) ->
         # comparam cu locul REAL din Windows si il mutam direct, la fiecare tic
-        import win32gui
         if win32gui.GetWindowRect(self.hwnd) != (x, y, x + bw, y + bh):
             # win32gui, nu ctypes: -1 (HWND_TOPMOST) trebuie trimis ca pointer pe 64 de biti
             win32gui.SetWindowPos(self.hwnd, -1, x, y, bw, bh,
@@ -258,101 +242,250 @@ class Balon:
 # ---------------------------------------------------------------- bucla
 
 class Ghid:
-    def __init__(self, xl, pasi=PASI, la_final=None):
-        import win32gui
-        self.win32gui = win32gui
+    """i = pasul aratat; max = cel mai departe pas atins. Pe pasul `max` ghidul asteapta ca elevul sa-l faca;
+    pe un pas dinainte (dupa „‹ Înapoi”) doar il arata, cu „Înainte ›” - altfel ar sari imediat inapoi,
+    fiindca pasul e deja facut in foaie."""
+
+    def __init__(self, xl, lectia, la_final=None):
         self.xl = xl
         self.ws = xl.ActiveSheet
-        self.pasi = pasi
+        self.lectia = lectia
+        self.pasi = lectia["pasi"]
         self.i = 0
+        self.max = 0
+        self.gata_tot = False
         self.la_final = la_final
         self.root = tk.Tk()
         self.root.withdraw()
         self.panglica = Panglica(xl.Hwnd)
         self.grila = Grila(xl)
         self.chenar = Chenar(self.root)
-        self.balon = Balon(self.root, self.inchide, self.sari)
+        self.balon = Balon(self.root, self.inchide, self.inapoi, self.inainte, self.sari)
         self.arata_pasul()
-        self.root.after(PAS_MS, self.tic)
+        self.urmator_tic = self.root.after(PAS_MS, self.tic)
+
+    def programeaza(self):
+        self.urmator_tic = self.root.after(PAS_MS, self.tic)
 
     def arata_pasul(self):
         p = self.pasi[self.i]
-        self.balon.seteaza(p["titlu"], p["text"])
-        self.balon.stare.config(text="")
+        revazut = self.i < self.max
+        self.balon.seteaza(p["titlu"], p["text"], "Pas deja făcut ✓ — apasă Înainte când vrei." if revazut else "")
+        self.balon.butoane(inapoi=self.i > 0, inainte=revazut, sari=not revazut)
+
+    def inapoi(self):
+        if self.gata_tot:
+            self.gata_tot = False
+            self.i = len(self.pasi) - 1
+        elif self.i > 0:
+            self.i -= 1
+        self.arata_pasul()
+
+    def inainte(self):
+        if self.i < self.max:
+            self.i += 1
+            self.arata_pasul()
 
     def sari(self):
         self.urmatorul()
 
     def urmatorul(self):
-        self.i += 1
-        if self.i >= len(self.pasi):
+        if self.i + 1 >= len(self.pasi):
+            self.max = len(self.pasi)
+            self.gata_tot = True
             self.chenar.arata(None)
-            self.balon.seteaza("Gata! Bravo!", "Ai făcut tabelul cu suma și media — în Excel-ul adevărat.")
-            self.balon.buton_sari.pack_forget()
-            self.balon.stare.config(text="")
-            self.balon.aseaza(None, self.win32gui.GetWindowRect(self.xl.Hwnd))
+            self.balon.seteaza("Gata! Bravo!", self.lectia["final"])
+            self.balon.butoane(inapoi=True, inainte=False, sari=False)
+            self.balon.aseaza(None, win32gui.GetWindowRect(self.xl.Hwnd))
             if self.la_final:
                 self.root.after(1500, self.la_final)
             return
+        self.i += 1
+        self.max = max(self.max, self.i)
         self.arata_pasul()
 
     def inchide(self):
+        try:
+            self.root.after_cancel(self.urmator_tic)
+        except (tk.TclError, AttributeError):
+            pass
         self.root.destroy()
 
     def tinta(self, p):
-        fel = p["tinta"][0]
-        if fel == "celula":
-            return self.grila.dreptunghi(p["tinta"][1])
+        """(dreptunghi, sub) - sub = cel mai sus unde poate sta balonul."""
+        if p["tinta"][0] == "celula":
+            return self.grila.dreptunghi(p["tinta"][1]), None
         _, buton, fila = p["tinta"]
         d = self.panglica.dreptunghi(buton)
         if d is None:  # panglica e pe alta fila sau strânsă -> aratam fila
-            self.balon.stare.config(text="Întâi dă clic pe fila Pornire (Home).")
-            return self.panglica.dreptunghi(fila)
-        return d
+            self.balon.stare.config(text=f"Întâi dă clic pe fila {L.NUME_FILA.get(fila, fila)}.")
+            return self.panglica.dreptunghi(fila), self.grila.sus_grila()
+        if self.i >= self.max:
+            self.balon.stare.config(text="")
+        return d, self.grila.sus_grila()
 
     def tic(self):
-        if self.i >= len(self.pasi):
+        if self.gata_tot:
+            self.programeaza()
             return
         try:
-            if not self.win32gui.IsWindow(self.xl.Hwnd):
-                raise pywintypes.com_error
+            if not win32gui.IsWindow(self.xl.Hwnd):
+                self.inchide()
+                return
             p = self.pasi[self.i]
-            if p["gata"](self.ws, self.xl):
+            if self.i >= self.max and p["gata"](self.ws, self.xl):
                 self.urmatorul()
             else:
-                if p["tinta"][0] == "celula":
-                    self.balon.stare.config(text="")
-                d = self.tinta(p)
+                d, sub = self.tinta(p)
                 self.chenar.arata(d)
-                self.balon.aseaza(d, self.win32gui.GetWindowRect(self.xl.Hwnd))
+                self.balon.aseaza(d, win32gui.GetWindowRect(self.xl.Hwnd), sub)
         except pywintypes.com_error:
             # Excel refuza apelurile cat timp elevul scrie intr-o celula - e normal
-            try:
-                if not self.win32gui.IsWindow(self.xl.Hwnd):
-                    self.root.destroy()
-                    return
-            except Exception:
-                pass
             self.balon.stare.config(text="… scrii în celulă — apasă Enter când ai terminat.")
-        except AttributeError:
+        except (AttributeError, tk.TclError):
             pass
-        self.root.after(PAS_MS, self.tic)
+        self.programeaza()
 
     def ruleaza(self):
         self.root.mainloop()
 
 
-def porneste_excel():
+def porneste_excel(lectia=None):
     pythoncom.CoInitialize()
     xl = win32com.client.DispatchEx("Excel.Application")  # instanta proprie
     xl.Visible = True
     xl.Workbooks.Add()
     xl.WindowState = -4137  # maximizat
-    xl.ActiveSheet.Range("A1").Select()
+    ws = xl.ActiveSheet
+    for a, v in ((lectia or {}).get("pregatire") or {}).items():
+        ws.Range(a).Value = v
+    ws.Range("A1").Select()
     return xl
 
 
+# ---------------------------------------------------------------- alegerea lectiei
+
+def alege_lectia(fisiere):
+    ales = {}
+    r = tk.Tk()
+    r.title("Ghid Excel — alege lecția")
+    r.configure(bg=GALBEN, padx=18, pady=14)
+    tk.Label(r, text="Ce lecție faci azi?", bg=GALBEN, font=("Segoe UI", 14, "bold")).pack(anchor="w", pady=(0, 8))
+    for f in fisiere:
+        try:
+            titlu = L.incarca(f)["titlu"]
+        except L.LectieGresita as e:
+            titlu = f"{f.stem} (greșită: {e})"
+        tk.Button(r, text=titlu, anchor="w", font=("Segoe UI", 12), relief="flat", bg="white", padx=10, pady=4,
+                  command=lambda f=f: (ales.setdefault("f", f), r.destroy())).pack(fill="x", pady=2)
+    r.mainloop()
+    return ales.get("f")
+
+
+def arata_eroare(text):
+    r = tk.Tk()
+    r.withdraw()
+    from tkinter import messagebox
+    messagebox.showerror("Ghid Excel", text)
+    r.destroy()
+
+
+# ---------------------------------------------------------------- --verifica: elevul simulat
+
+def verifica_lectia(cale, dosar_capturi=None):
+    """Parcurge lectia cu elevul simulat (actiunile `proba`). Intoarce lista pasilor care NU au avansat singuri."""
+    from PIL import ImageGrab
+    lectia = L.incarca(cale)
+    fara_proba = [k + 1 for k, p in enumerate(lectia["pasi"]) if p["proba"] is None]
+    if fara_proba:
+        return [f"{Path(cale).name}: pașii {fara_proba} nu au „proba” — nu pot fi verificați"]
+    xl = porneste_excel(lectia)
+    ghid = Ghid(xl, lectia)
+    blocati = []
+    vx = ctypes.windll.user32.GetSystemMetrics(76)
+    vy = ctypes.windll.user32.GetSystemMetrics(77)
+
+    def captura(nume):
+        if not dosar_capturi:
+            return
+        os.makedirs(dosar_capturi, exist_ok=True)
+        x1, y1, x2, y2 = win32gui.GetWindowRect(xl.Hwnd)
+        img = ImageGrab.grab(all_screens=True)
+        img.crop((x1 - vx, y1 - vy, x2 - vx, y2 - vy)).save(os.path.join(dosar_capturi, f"{Path(cale).stem}_{nume}.png"))
+
+    def pas(k):
+        if k >= len(lectia["pasi"]):
+            captura("final")
+            ghid.root.after(600, final)
+            return
+        if ghid.i != k:
+            blocati.append(f"pasul {k + 1}: ghidul era la {ghid.i + 1}")
+        if lectia["pasi"][k]["gata"](xl.ActiveSheet, xl):
+            blocati.append(f"pasul {k + 1}: era „gata” ÎNAINTE ca elevul să facă ceva (condiție prea largă)")
+        captura(f"{k + 1}")
+        lectia["pasi"][k]["proba"](xl.ActiveSheet, xl)
+        ghid.root.after(1500, lambda: dupa(k))
+
+    def dupa(k):
+        if ghid.i != k + 1 and not (k + 1 == len(lectia["pasi"]) and ghid.gata_tot):
+            blocati.append(f"pasul {k + 1} nu a avansat după acțiunea elevului")
+        pas(k + 1)
+
+    def final():
+        xl.ActiveWorkbook.Saved = True
+        xl.Quit()
+        ghid.inchide()
+
+    ghid.root.after(2500, lambda: pas(0))
+    ghid.ruleaza()
+    return [f"{Path(cale).name}: {b}" for b in blocati]
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Ghid peste Excel-ul real")
+    ap.add_argument("lectie", nargs="?", help="fișierul .yaml al lecției")
+    ap.add_argument("--verifica", action="store_true", help="elev simulat; ultima linie = pași blocați")
+    ap.add_argument("--capturi", help="dosar pentru capturi la --verifica")
+    a = ap.parse_args()
+    dosar_lectii = dosar_program() / "lectii"
+
+    if a.verifica:
+        fisiere = [Path(a.lectie)] if a.lectie else L.lectii(dosar_lectii)
+        probleme = []
+        for f in fisiere:
+            try:
+                p = verifica_lectia(f, a.capturi)
+            except L.LectieGresita as e:
+                p = [str(e)]
+            print(f"{f.name}: {'OK' if not p else 'PROBLEME'}")
+            for x in p:
+                print("   " + x)
+            probleme += p
+        print(len(probleme))
+        return 1 if probleme else 0
+
+    cale = Path(a.lectie) if a.lectie else None
+    if cale is None:
+        fisiere = L.lectii(dosar_lectii)
+        if not fisiere:
+            arata_eroare(f"Nu am găsit nicio lecție în\n{dosar_lectii}")
+            return 1
+        cale = fisiere[0] if len(fisiere) == 1 else alege_lectia(fisiere)
+        if cale is None:
+            return 0
+    try:
+        lectia = L.incarca(cale)
+    except L.LectieGresita as e:
+        arata_eroare(str(e))
+        return 1
+    try:
+        xl = porneste_excel(lectia)
+    except pywintypes.com_error:
+        arata_eroare("Nu pot porni Microsoft Excel pe acest calculator.")
+        return 1
+    Ghid(xl, lectia).ruleaza()
+    return 0
+
+
 if __name__ == "__main__":
-    xl = porneste_excel()
-    Ghid(xl).ruleaza()
-    sys.exit(0)
+    sys.exit(main())
