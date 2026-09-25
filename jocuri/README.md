@@ -8,6 +8,13 @@
 
 Un stil diferit de lecțiile Format C din LearningHub: **o pagină scurtă de citit → întrebări DESPRE ea → nivelul următor**. La final elevul primește o **diplomă** și o **provocare de făcut în aplicația reală**. Scopul nu e să înlocuiască ora, ci să fixeze vocabularul și gesturile unității, jucând.
 
+**Scopul final: elevul să folosească APLICAȚIA ADEVĂRATĂ (decis de profesor, 25.09.2026).** Jocul e un drum spre Excel/Word/PowerPoint cel adevărat, nu un înlocuitor. De aici **regula fidelității**: tot ce face elevul în joc trebuie să fie cât mai fidel aplicației pe care o simulează.
+- **Jocul nu acceptă nimic ce aplicația reală respinge.** Dacă în Excel `=SUMA(B2:B5)` dă `#NAME?`, nici jocul nu-l primește ca bun. Îl respinge și explică de ce.
+- **Jocul nu respinge nimic ce aplicația reală acceptă.** Toate drumurile valide trec: `;` sau `,` după setări, clic dreapta sau meniu, litere mici sau mari la funcții.
+- **Același gest, același loc, același rezultat.** Scrii în celulă sau în bara fx, Enter coboară o celulă, tragi de colțul celulei ca să copiezi formula. Erorile au numele din aplicație (`#NAME?`, `#DIV/0!`, `#VALUE!`), iar explicația pentru elev vine separat, sub ele.
+- **Îngăduința ține de NOTARE, nu de SIMULARE.** Un text fără diacritice poate primi punctaj (tastatura din laborator), dar foaia îl afișează exact cum l-ar afișa aplicația.
+- O abatere de fidelitate, dacă e necesară (de exemplu, pe telefon nu există clic dreapta), **se spune elevului pe ecran**, nu se ascunde.
+
 ## 2. Traseul materiei (de unde vine fiecare joc)
 
 Un joc = **o unitate de învățare** din planificarea anului, în ordinea în care se predă.
@@ -295,6 +302,37 @@ Cererea a venit de la un elev de la maiștri: fără imagini, trebuie să-ți *i
 - **O corectura de text nu cere telefonul.** `ghid_capturi.py <id> --doar-textele` reface `pasi.js` din `flux.json` si din pozele de pe disc, fara emulator.
 - **Gardă durabilă:** contractul `jocuri-ghiduri-telefon` cere prin HTTP, de pe situl viu, pagina jocului + `pasi.js` + capturile și verifică **conținutul** (antet `RIFF`/`WEBP`, textul `JocMotor.ghid`) — pe Cloudflare un 200 nu dovedește nimic. `ghid_proba.py --rapid` pentru contract (11s), fără `--rapid` după orice modificare (128 de poze).
 
+**25.09.2026 — de ce îi prind jocurile de Excel (observat la clasă + măsurat)**
+
+Profesorul a verificat Misiunea Analist la toate clasele de la a VIII-a în sus: elevii sunt atrași și muncesc, **și înainte de monitorizare**. Datele de activitate (24–25.09, doar ce a prins `prezenta.js`, doar Brauner; `tools\activitate.py`):
+- **Timp lucrat pe elev:** jocurile Excel **25,3 min** (67 elevi) · celelalte jocuri 15,5 min (35) · lecțiile obișnuite 9,5 min (135). La `excel-viii`: 9 A **34 min**/elev, XI M 26, 8 A 22.
+- **84 de niveluri RELUATE de bunăvoie** după ce fuseseră trecute (26 cu mai multe stele la reluare). Stelele sunt o invitație la muncă, nu doar o notă.
+- 59 de elevi: majoritatea s-au oprit la nivelul 4–5 din 8, cel mai probabil la sfârșitul orei. 7 au terminat tot.
+- **Rezerve:** două zile, o singură școală. Comparația nu e curată: jocurile Excel le joacă elevi mai mari, într-o oră dedicată.
+
+**Ce îi prinde, în ordinea importanței (ipoteza de lucru):**
+1. **Fac lucrul adevărat, nu îl recunosc.** Scriu formule adevărate într-o foaie, iar jocul le verifică și pe alte date (§7). Dintre cele 28 de pagini din `/jocuri/` (incluzând recapitulările și ghidurile), numai 8 au un simulator „fac eu”. `excel-viii` și antrenamentul lui sunt cele mai bogate.
+2. **Bucla e scurtă:** 60–120 de cuvinte, întrebare, verdict pe loc, explicație.
+3. **Nimeni nu rămâne blocat:** după 2 greșeli, jocul arată soluția și explică de ce.
+4. **Progresul se vede:** „Nivelul X din N”, 3 stele pe nivel, XP, „serie ×N”, „reia pentru 3 stele”.
+5. **Arată ca aplicația** (§5): capete de coloană A B C, foaie, bara fx.
+6. **Premiu real:** diploma cu nume, școală și dată, pe telefon (QR) și la profesor.
+7. **Monitorizarea** („Profesorul vede activitatea ta”) întărește, dar nu e motorul.
+
+**Consecințe pentru jocurile următoare:**
+- **Fiecare joc primește cel puțin un simulator „fac eu” fidel aplicației** (regula fidelității, §1). Lipsesc în: `calculator-v`, `fisiere-v`, `internet-vi`, `algoritmi-v/vi`, `siruri-viii`, `program-vii`, `grafica-v`, `documentare-v`, `colaborare-vii`, `animatii-3d-vi`, `scratch-v`.
+- **Antrenamentul Excel are 0 jucători**, deci nu are drum de acces. Trebuie legat de finalul nivelului și de diplomă („Vrei 3 stele la toate? Antrenamentul îți dă întrebări noi”). Regula din 22.09 se aplică și aici: materialul nou are un drum dintr-o pagină deschisă oricum.
+- **Deciziile se măsoară, nu se ghicesc:** raport pe nivel (unde se opresc, unde reiau, unde greșesc) din datele de activitate, înainte și după o schimbare.
+- Tiparul (sarcină scurtă, verificată pe loc, a doua șansă, ceva de câștigat) se aplică și dincolo de jocuri: fișe, teme cu link, teste.
+
+**Fidelitatea simulatorului de foaie (`_motor\tip-foaie.js`), citită în cod pe 25.09.2026.** Abateri de la Excel-ul adevărat, în §10 ca de reparat:
+- acceptă nume românești de funcții (`SUMA`, `MEDIE`, `DACA`…, `RO_NAMES`), deși Excel-ul din laborator (Office EN) și Excel în română (§6) dau `#NAME?` la ele;
+- acceptă ghilimelele românești `„ ”` ca delimitatori de text, iar Excel nu;
+- se scrie doar în bara fx, nu și direct în celulă;
+- Enter sare la următoarea celulă de completat, nu la cea de dedesubt;
+- copierea formulei („trasă”) o face jocul singur, fără gestul de tragere de colțul celulei;
+- erorile nu au numele din Excel: `#VALOARE` în loc de `#VALUE!`, `#CIRC` (care nu există în Excel) și `#EROARE` generic în loc de `#NAME?`/`#N/A`.
+
 
 ## 10. Deschis / de îmbunătățit
 
@@ -306,3 +344,13 @@ Cererea a venit de la un elev de la maiștri: fără imagini, trebuie să-ți *i
 - XII: antrenamentele pe aplicații (De bază / Consolidat / Avansat) nu sunt încă făcute. Pagina jocurilor le lasă loc automat (`word-antrenament-xii`…).
 - XII: etichetele românești marcate „neverificabil” de evaluatori (ex. „Cu anteriorul”, „Panou animație”, „Vizualizare proiect”) de confirmat pe un Office în română. Până atunci butoanele rămân în engleză.
 - `tip-traseu`: drumuri alternative cu număr diferit de pași (clic dreapta sare peste 2 pași) nu se pot declara.
+- **Fidelitatea `tip-foaie.js` (§9, 25.09.2026):**
+  - funcțiile cu nume românesc și ghilimelele `„ ”` trebuie respinse cu mesajul pe care l-ar da Excel;
+  - scrierea direct în celulă;
+  - Enter în jos;
+  - gestul de tragere de colțul celulei;
+  - erorile cu numele din Excel (`#NAME?`, `#VALUE!`), cu explicația pentru elev dedesubt.
+  Aceeași verificare de fidelitate se face la `tip-traseu`, `tip-interogare` și la simulatoarele din jocuri (`diapozitiv`, `pagina`, `montaj`, `cod`).
+- **Simulator „fac eu” fidel în jocurile care nu au** (lista în §9, 25.09.2026).
+- **Drum spre antrenamentul Excel** (0 jucători) de la finalul nivelului și de la diplomă.
+- **Raport pe nivel din datele de activitate** (unde se opresc, unde reiau, unde greșesc).
