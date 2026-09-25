@@ -104,6 +104,7 @@ def main():
             verifica(not ramase, "curățenia: înregistrările de probă (%d) șterse de pe server" % len(ids))
     print("Rezultat: " + ("TOATE OK" if not probleme else "; ".join(probleme)))
     print(len(probleme))
+    return 1 if probleme else 0
 
 
 def ruleaza(br, baza, a):
@@ -202,7 +203,18 @@ def ruleaza(br, baza, a):
     pg.click("#lhp-viz")
     pg.goto(baza + LECTIE, wait_until="networkidle")
     pg.wait_for_timeout(1500)
-    verifica(not pg.is_visible("#lhp-cine") and not pg.is_visible("#lhp-pill"), "vizitatorul nu mai vede nimic")
+    verifica(not pg.is_visible("#lhp-cine") and not pg.is_visible("#lhp-pill"), "vizitatorul nu mai e întrebat și nu e urmărit")
+    # 25.09.2026: „doar vizitez” apăsat din greșeală nu trebuie să închidă drumul spre înscriere
+    verifica(pg.is_visible("#lhp-elev"), "vizitatorul are butonul mic „Sunt elev — mă înscriu”")
+    pg.click("#lhp-elev")
+    pg.wait_for_selector("#lhp-s", timeout=5000)
+    pg.click("#lhp-x")
+    verifica(pg.is_visible("#lhp-elev") and not pg.is_visible("#lhp-cine"), "„Mai târziu” îl lasă vizitator (butonul mic rămâne)")
+    pg.click("#lhp-elev")
+    pg.select_option("#lhp-s", "forestier"); pg.select_option("#lhp-c", "X E"); pg.fill("#lhp-n", NUME); pg.click("#lhp-ok")
+    pg.wait_for_selector("#lhp-pill", timeout=10000)
+    ids.add((ls(pg, "lh_prezenta") or {}).get("id"))
+    verifica(pg.is_visible("#lhp-pill"), "după butonul mic se înscrie normal și apare eticheta")
     ctx.close()
 
     print("8. telefon + jurnal")
@@ -251,4 +263,4 @@ def ruleaza(br, baza, a):
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

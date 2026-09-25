@@ -169,7 +169,13 @@
 
   function randeaza() {
     var s = stare();
-    if (s === 'vizitator') { if (box) { box.innerHTML = ''; rezerva(); } return; }
+    /* „Nu, doar vizitez” apăsat din greșeală (25.09.2026, el: „pe urmă nu mai poate intra în monitorizare”):
+       rămâne un buton mic și discret, ca elevul să se poată înscrie oricând. */
+    if (s === 'vizitator') {
+      arata('<span class="pill" id="lhp-elev" style="opacity:.75" title="Ești elev? Înscrie-te ca profesorul să-ți vadă munca.">Sunt elev — mă înscriu</span>');
+      $('lhp-elev').onclick = formular;
+      return;
+    }
     if (s === 'activ') {
       arata('<span class="pill" id="lhp-pill" title="Profesorul vede ce pagini deschizi, cât timp lucrezi și ce niveluri termini. Apasă pentru jurnalul tău."><span class="dot"></span>Profesorul vede activitatea ta · <b>' + esc(scurt(eu.nume)) + '</b></span>');
       $('lhp-pill').onclick = meniu;
@@ -179,28 +185,34 @@
       $('lhp-da').onclick = function () { confirmat = true; eu.ultima = Date.now(); scrie(K_ID, eu); ultimaMiscare = Date.now(); randeaza(); };
       $('lhp-nu').onclick = function () { uita(); formular(); };
     } else {
-      arata('<div class="bar">Lucrezi pentru ora de informatică? <b>Spune cine ești</b>: profesorul vede ce lecții deschizi, cât lucrezi și ce niveluri termini.' +
+      arata('<div class="bar">Lucrezi pentru ora de informatică? <b>Spune cine ești</b>: profesorul vede ce lecții deschizi, cât lucrezi și ce niveluri termini.' + NOTA +
         '<div class="row"><button id="lhp-cine">Spune cine ești</button><button class="g" id="lhp-viz">Nu, doar vizitez</button></div></div>');
       $('lhp-cine').onclick = formular;
       $('lhp-viz').onclick = function () { eu = { refuz: Date.now() }; scrie(K_ID, eu); randeaza(); };
     }
   }
 
+  /* Ca să nu se sperie (25.09.2026, el: „să le spunem că monitorizăm doar activitatea de pe siturile mele,
+     nu activitatea lui în general - să nu creăm panică”). Apare la întrebare, în formular și în meniu. */
+  var NOTA = '<div class="mic">🔒 Se vede <b>doar</b> ce faci pe LearningHub (lecțiile și jocurile profesorului). ' +
+    'Nu se vede nimic din alte site-uri, aplicații, mesaje, poze sau fișiere de pe calculator ori telefon.</div>';
+
   function meniu() {
     arata('<div class="bar">Ești înscris ca <b>' + esc(eu.nume) + '</b> · ' + esc(eu.clasa) + ' · ' + esc(eu.scoalaNume || eu.scoala) + '.' +
-      '<div class="mic">Profesorul vede: paginile deschise, minutele lucrate (doar când lucrezi, nu cu fila uitată deschisă) și nivelurile terminate. Numele pleacă criptat.</div>' +
+      '<div class="mic">Profesorul vede: paginile deschise, minutele lucrate (doar când lucrezi, nu cu fila uitată deschisă) și nivelurile terminate. Numele pleacă criptat.</div>' + NOTA +
       '<div class="row"><a href="' + JURNAL_URL + '"><button>Jurnalul meu</button></a><button class="g" id="lhp-alt">Nu ești tu? Schimbă elevul</button><button class="g" id="lhp-x">Închide</button></div></div>');
     $('lhp-alt').onclick = function () { uita(); formular(); };
     $('lhp-x').onclick = randeaza;
   }
 
   function formular() {
-    arata('<div class="bar"><b>Cine ești?</b><div class="mic">Pe calculatoarele din laborator, la final apasă pe etichetă → „Schimbă elevul”.</div>' +
+    arata('<div class="bar"><b>Cine ești?</b><div class="mic">Pe calculatoarele din laborator, la final apasă pe etichetă → „Schimbă elevul”.</div>' + NOTA +
       '<label for="lhp-s">Școala</label><select id="lhp-s"><option value="">— alege —</option></select>' +
       '<label for="lhp-c">Clasa</label><select id="lhp-c" disabled><option value="">— alege întâi școala —</option></select>' +
       '<label for="lhp-n">Numele și prenumele</label><input id="lhp-n" maxlength="40" autocomplete="off" placeholder="ex. Popescu Ana">' +
       '<div class="err" id="lhp-e"></div><div class="row"><button id="lhp-ok">Gata</button><button class="g" id="lhp-x">Mai târziu</button></div></div>');
-    $('lhp-x').onclick = function () { eu = null; randeaza(); };
+    // „Mai târziu” păstrează alegerea de dinainte (vizitatorul rămâne vizitator, cu butonul lui mic)
+    $('lhp-x').onclick = function () { if (!(eu && eu.refuz)) eu = null; randeaza(); };
     incarcaDate().then(function (d) {
       $('lhp-s').insertAdjacentHTML('beforeend', d.scoli.map(function (x) { return '<option value="' + esc(x.key) + '">' + esc(x.nume) + '</option>'; }).join(''));
       $('lhp-s').onchange = function () {
