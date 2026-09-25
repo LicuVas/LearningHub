@@ -105,6 +105,26 @@ const CSS=`.xl{--xlg:#217346;font-family:"Segoe UI",system-ui,sans-serif;user-se
 .xl .dlg{border:1px solid var(--line);border-left:4px solid var(--bad);background:var(--paper);padding:8px 10px;margin-top:6px;font-size:.9rem}
 .xl .dlg b{display:block;margin-bottom:2px}
 .xl .info{font-size:.82rem;color:var(--ink2);margin-top:6px}
+.xl .rb{border:1px solid var(--line);border-bottom:0;background:var(--paper2);border-radius:4px 4px 0 0;font-size:.82rem}
+.xl .rb .tabs{display:flex;gap:2px;padding:3px 4px 0}
+.xl .rb .tabs button{border:0;background:none;color:var(--ink2);padding:4px 10px;border-radius:4px 4px 0 0;cursor:pointer;font:inherit}
+.xl .rb .tabs button.on{background:var(--paper);color:var(--xlg);font-weight:600;box-shadow:inset 0 -2px 0 var(--xlg)}
+.xl .rb .grup{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:5px 6px;background:var(--paper);border-top:1px solid var(--line)}
+.xl .rb .grup button,.xl .rb .grup select{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:4px;padding:3px 7px;font:inherit;cursor:pointer;min-height:28px}
+.xl .rb .grup button:hover{border-color:var(--xlg)}
+.xl .rb .sep{width:1px;height:22px;background:var(--line);margin:0 3px}
+.xl .rb .meniu{position:relative;display:inline-block}
+.xl .rb .meniu .m{position:absolute;top:100%;left:0;z-index:6;background:var(--paper);border:1px solid var(--line);box-shadow:0 4px 12px #0004;border-radius:4px;min-width:12em}
+.xl .rb .meniu .m button{display:flex;gap:6px;align-items:center;width:100%;border:0;text-align:left;border-radius:0}
+.xl .sw{display:inline-block;width:14px;height:14px;border:1px solid var(--line);border-radius:2px}
+.xl .dlgs{border:1px solid var(--line);background:var(--paper);padding:10px 12px;margin-top:6px;font-size:.88rem;box-shadow:0 4px 14px #0003;border-radius:6px}
+.xl .dlgs .niv{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:5px 0}
+.xl .dlgs select,.xl .dlgs button{font:inherit;padding:3px 7px;border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--ink)}
+.xl .dlgs .ok{background:var(--xlg);color:#fff;border-color:var(--xlg)}
+.xl .graf{border:1px solid var(--line);background:var(--paper);margin-top:8px;padding:6px 8px;border-radius:4px;max-width:520px}
+.xl .graf input{font:600 .95rem "Segoe UI",system-ui,sans-serif;border:1px dashed var(--line);background:transparent;color:var(--ink);text-align:center;width:100%;padding:3px}
+.xl .graf svg{width:100%;height:auto;display:block}
+.xl .graf .gbar{display:flex;justify-content:space-between;font-size:.78rem;color:var(--ink2)}
 @media (max-width:520px){.xl td{min-width:4.2em}.xl .nb{width:4.2em}.xl .pop{left:0;max-width:100%}}`;
 
 function render(Q,body,api){
@@ -117,6 +137,10 @@ function render(Q,body,api){
   let curent='',lista=null,caret=0;                // textul în lucru; lista de funcții {items,idx,start}; poziția cursorului
   const gest=new Set(),undo=[],redo=[];
   let fillTo=null,dragSel=false,dragMutat=false,dragPt=null,ultimClic=null,apasat=null,clip=null;
+  // PANGLICA (25.09.2026): formatare, sortare, grafice. FMT[adresă] = {b,i,u,fill,color,bd,al,nf,dec}
+  const FMT={},MERGE=[];let GRAF=null,tab='home',meniu=null,sortDlg=null;const panglica=Q.panglica!==false;
+  const CULORI={galben:'#FFE699',verde:'#C6E0B4',albastru:'#BDD7EE',portocaliu:'#F8CBAD'};
+  const CULORI_TEXT={rosu:'#C00000',albastru:'#1F4E79',verde:'#375623'};
 
   function fmtNum(v){if(!isFinite(v))return String(v);let s=Number.isInteger(v)?String(v):String(Math.round(v*1e10)/1e10);return mod==='ro'?s.replace('.',','):s}
   function valoareScrisa(raw){
@@ -137,10 +161,18 @@ function render(Q,body,api){
     if(mod==='en'&&fara.includes(';'))return 'Pe setări englezești, părțile unei funcții se despart cu , (virgulă). Zecimalele se scriu cu punct: 12.5.';
     return '';
   }
+  function fmtFormat(v,f){   // formatul de număr din panglică, ca în Excel (setările RO: virgulă zecimală, „lei”)
+    const d=f.dec,fix=(x,k)=>{const t=x.toFixed(k);return mod==='ro'?t.replace('.',','):t};
+    if(f.nf==='percent')return fix(v*100,d??0)+'%';
+    if(f.nf==='currency')return mod==='ro'?fix(v,d??2)+' lei':(v<0?'-$':'$')+fix(Math.abs(v),d??2);
+    if(f.nf==='number')return fix(v,d??2);
+    if(d!=null)return fix(v,d);
+    return fmtNum(v);
+  }
   function afisat(a){
     const raw=RAW[a];if(raw==null||raw==='')return{t:'',k:''};
     try{const v=valori()(a);
-      if(typeof v==='number')return{t:fmtNum(v),k:'n'};
+      if(typeof v==='number')return{t:FMT[a]&&(FMT[a].nf||FMT[a].dec!=null)?fmtFormat(v,FMT[a]):fmtNum(v),k:'n'};
       if(typeof v==='boolean')return{t:v?'TRUE':'FALSE',k:'e'};
       return{t:String(v),k:''}}
     catch(e){return{t:e.show||'#VALUE!',k:'e er'}}
@@ -160,6 +192,7 @@ function render(Q,body,api){
       <button type="button" data-mod="ro" class="${mod==='ro'?'on':''}" title="Windows în română: ; între părți, virgulă la zecimale">RO ( ; și 12,5 )</button>
       <button type="button" data-mod="en" class="${mod==='en'?'on':''}" title="Windows în engleză: , între părți, punct la zecimale">EN ( , și 12.5 )</button>
       <button type="button" data-copiaza="1" title="Copiază foaia, ca s-o lipești în Excel sau Google Sheets">📋 Copiază tabelul</button></span></div>
+      ${panglica?ribbonHtml():''}
       <div class="fx"><div class="nb" aria-label="Caseta de nume (Name Box)">${esc(nume)}</div><div class="fxl">fx</div>
       <input class="fxi" id="xfx" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Bara de formule" value="${esc(ed?curent:(RAW[a]??''))}">
       ${popHtml()}</div>
@@ -169,19 +202,130 @@ function render(Q,body,api){
     const ptZ=ptZona(),cz=clip&&clip.z;
     for(let r=0;r<rows;r++){h+=`<tr><th class="${r>=z.r1&&r<=z.r2?'on':''}">${r+1}</th>`;
       for(let c=0;c<cols;c++){const ad=adr(c,r);let s=afisat(ad);
+        const mg=MERGE.find(m=>c>=m.c1&&c<=m.c2&&r>=m.r1&&r<=m.r2);
+        if(mg&&!(c===mg.c1&&r===mg.r1))continue;
         if(ed&&c===act.c&&r===act.r)s={t:curent,k:''};
         const inZ=c>=z.c1&&c<=z.c2&&r>=z.r1&&r<=z.r2&&!(z.c1===z.c2&&z.r1===z.r2)&&!(c===act.c&&r===act.r);
         const inF=fillTo&&inFill(c,r),inP=ptZ&&c>=ptZ.c1&&c<=ptZ.c2&&r>=ptZ.r1&&r<=ptZ.r2;
         const inC=cz&&c>=cz.c1&&c<=cz.c2&&r>=cz.r1&&r<=cz.r2;
         const cls=[s.k,inZ?'z':'',c===act.c&&r===act.r?'act':'',inF?'cp':'',inP?'pt':'',inC?'mq':''].join(' ');
         const handle=!ed&&c===z.c2&&r===z.r2?'<span class="fh" data-fh="1" aria-label="Pătrățelul de umplere (trage-l)"></span>':'';
-        h+=`<td class="${cls}" data-a="${ad}">${esc(s.t)}${handle}</td>`}
+        h+=`<td class="${cls}" data-a="${ad}"${mg?` colspan="${mg.c2-mg.c1+1}" rowspan="${mg.r2-mg.r1+1}"`:''}${stil(ad,s,mg)}>${esc(s.t)}${handle}</td>`}
       h+='</tr>'}
     h+=`</tbody></table></div><div class="st" id="xst"><span>${MODE_TXT[modAcum()]}</span><span class="sd">${stare()}</span></div><div id="xdlg"></div>
+      ${avertSort?`<div class="dlgs" role="dialog" aria-label="Avertisment de sortare"><b>Avertisment de sortare (Sort Warning)</b>
+        Lângă selecție mai sunt date. Dacă sortezi doar ce ai selectat, rândurile se amestecă (un elev rămâne cu notele altuia).
+        <div class="niv"><button class="ok" data-av="extinde">Extinde selecția (Expand the selection)</button><button data-av="curenta">Continuă cu selecția curentă (Continue with the current selection)</button><button data-av="anuleaza">Anulare</button></div></div>`:''}
+      ${sortDlg?sortHtml():''}${GRAF?grafHtml():''}
       ${liber?'<div class="info">Foaia e a ta: încearcă ce vrei în ea (nu se notează), apoi alege răspunsul de mai jos.</div>':''}</div>`;
     body.querySelector('#xwrap').innerHTML=h;wire();
     if(aveaFocus&&!ed){const g=gw();if(g)g.focus({preventScroll:true})}
   }
+  // ---------------- panglica ----------------
+  function stil(a,s,mg){const f=FMT[a]||{};const st=[];
+    if(f.b)st.push('font-weight:700');if(f.i)st.push('font-style:italic');if(f.u)st.push('text-decoration:underline');
+    if(f.fill)st.push('background:'+f.fill);if(f.color)st.push('color:'+f.color);
+    if(f.al||mg)st.push('text-align:'+(mg?'center':f.al));
+    if(f.bd)st.push('border:1.5px solid var(--ink)');
+    return st.length?` style="${st.join(';')}"`:''}
+  function ribbonHtml(){
+    const T=[['home','Pornire (Home)'],['insert','Inserare (Insert)'],['data','Date (Data)']];
+    let g='';
+    if(tab==='home')g=`<button data-rb="b" title="Aldin (Bold) · Ctrl+B"><b>B</b></button><button data-rb="i" title="Cursiv (Italic) · Ctrl+I"><i>I</i></button><button data-rb="u" title="Subliniat (Underline) · Ctrl+U"><u>U</u></button><span class="sep"></span>
+      <span class="meniu"><button data-mn="fill" title="Culoare de umplere (Fill Color)">🪣 Umplere ▾</button>${meniu==='fill'?`<div class="m">${Object.entries(CULORI).map(([n,c])=>`<button data-fill="${c}"><span class="sw" style="background:${c}"></span>${n}</button>`).join('')}<button data-fill="">Fără umplere (No Fill)</button></div>`:''}</span>
+      <span class="meniu"><button data-mn="color" title="Culoarea fontului (Font Color)"><span style="text-decoration:underline;text-decoration-color:#C00000">A</span> ▾</button>${meniu==='color'?`<div class="m">${Object.entries(CULORI_TEXT).map(([n,c])=>`<button data-color="${c}"><span class="sw" style="background:${c}"></span>${n}</button>`).join('')}<button data-color="">Automat (Automatic)</button></div>`:''}</span>
+      <span class="meniu"><button data-mn="bd" title="Borduri (Borders)">▦ Borduri ▾</button>${meniu==='bd'?`<div class="m"><button data-bd="all">Toate bordurile (All Borders)</button><button data-bd="">Fără borduri (No Border)</button></div>`:''}</span>
+      <span class="sep"></span><button data-al="left" title="Aliniere la stânga (Align Left)">⯇≡</button><button data-al="center" title="Centrare (Center)">≡</button><button data-al="right" title="Aliniere la dreapta (Align Right)">≡⯈</button>
+      <button data-rb="merge" title="Îmbinare și centrare (Merge &amp; Center)">⇔ Îmbină și centrează</button><span class="sep"></span>
+      <select data-nf="1" title="Formatul numerelor (Number Format)" aria-label="Formatul numerelor"><option value="">General</option><option value="number">Număr (Number)</option><option value="currency">Monedă (Currency)</option><option value="percent">Procent (Percentage)</option></select>
+      <button data-rb="dec+" title="Mai multe zecimale (Increase Decimal)">.0→.00</button><button data-rb="dec-" title="Mai puține zecimale (Decrease Decimal)">.00→.0</button>
+      <span class="sep"></span><button data-rb="sum" title="Însumare automată (AutoSum)">Σ AutoSum</button>`;
+    if(tab==='insert')g=`<span>Grafic din zona selectată:</span><button data-gr="column" title="Diagramă cu coloane (Column Chart)">📊 Coloane (Column)</button><button data-gr="line" title="Diagramă linie (Line Chart)">📈 Linie (Line)</button><button data-gr="pie" title="Diagramă radială (Pie Chart)">◔ Radială (Pie)</button>`;
+    if(tab==='data')g=`<button data-so="asc" title="Sortare de la A la Z / de la mic la mare (Sort A to Z)">A→Z ↓</button><button data-so="desc" title="Sortare de la Z la A / de la mare la mic (Sort Z to A)">Z→A ↓</button><button data-so="dlg" title="Sortare particularizată (Custom Sort)">⇅ Sortare particularizată (Custom Sort)…</button>`;
+    return `<div class="rb"><div class="tabs">${T.map(([k,t])=>`<button data-tab="${k}" class="${tab===k?'on':''}">${t}</button>`).join('')}</div><div class="grup">${g}</div></div>`;
+  }
+  function peZona(fn){const z=zona();for(let c=z.c1;c<=z.c2;c++)for(let r=z.r1;r<=z.r2;r++){const a=adr(c,r);FMT[a]=FMT[a]||{};fn(FMT[a],a)}}
+  function toate(prop){const z=zona();for(let c=z.c1;c<=z.c2;c++)for(let r=z.r1;r<=z.r2;r++)if(!(FMT[adr(c,r)]||{})[prop])return false;return true}
+  function aplica(k,v){
+    gest.add('panglica');
+    if(k==='b'||k==='i'||k==='u'){const on=!toate(k);peZona(f=>{if(on)f[k]=true;else delete f[k]})}
+    else if(k==='fill'||k==='color'||k==='al'||k==='bd'){peZona(f=>{if(v)f[k]=v;else delete f[k]})}
+    else if(k==='nf'){peZona(f=>{if(v)f.nf=v;else delete f.nf;delete f.dec})}
+    else if(k==='dec+'||k==='dec-'){peZona((f,a)=>{let d=f.dec;if(d==null){const t=afisat(a).t;const m=t.match(/[.,](\d+)/);d=f.nf==='percent'?0:f.nf?2:(m?m[1].length:0)}
+      d=Math.max(0,Math.min(10,d+(k==='dec+'?1:-1)));f.dec=d})}
+    else if(k==='merge'){const z=zona();const i=MERGE.findIndex(m=>m.c1===z.c1&&m.r1===z.r1&&m.c2===z.c2&&m.r2===z.r2);
+      if(i>=0)MERGE.splice(i,1);else if(!(z.c1===z.c2&&z.r1===z.r2)){for(let k2=MERGE.length-1;k2>=0;k2--){const m=MERGE[k2];if(!(m.c2<z.c1||m.c1>z.c2||m.r2<z.r1||m.r1>z.r2))MERGE.splice(k2,1)}MERGE.push({...z});act={c:z.c1,r:z.r1};fin={...act}}}
+    else if(k==='sum'){autoSum();return}
+    meniu=null;draw();
+  }
+  function autoSum(){   // Σ: sub o coloană de numere pune =SUM(zona de deasupra) și așteaptă Enter, ca Excel
+    let r=act.r-1;const c=act.c;while(r>=0&&typeof valoareScrisa(RAW[adr(c,r)])!=='number'&&!(RAW[adr(c,r)]||'').startsWith('='))r--;
+    let r2=r;while(r>=0&&(typeof valoareScrisa(RAW[adr(c,r)])==='number'||(RAW[adr(c,r)]||'').startsWith('=')))r--;
+    const z=r2>=0?adr(c,r+1)+':'+adr(c,r2):'';gest.add('autosum');meniu=null;incepe('=SUM('+z+')','enter');
+    if(z){ed.pt={start:5,end:5+z.length};draw();puneCursor(curent.length)}
+  }
+  // regiunea curentă (blocul de celule pline din jurul celulei active), ca la Sortare/Grafic în Excel
+  function regiune(){const z=zona();if(!(z.c1===z.c2&&z.r1===z.r2))return z;
+    let c1=act.c,c2=act.c,r1=act.r,r2=act.r,sch=true;const p=(c,r)=>c>=0&&r>=0&&c<cols&&r<rows&&plina(c,r);
+    while(sch){sch=false;
+      if(c1>0&&[...Array(r2-r1+1)].some((_,k)=>p(c1-1,r1+k))){c1--;sch=true}
+      if(c2<cols-1&&[...Array(r2-r1+1)].some((_,k)=>p(c2+1,r1+k))){c2++;sch=true}
+      if(r1>0&&[...Array(c2-c1+1)].some((_,k)=>p(c1+k,r1-1))){r1--;sch=true}
+      if(r2<rows-1&&[...Array(c2-c1+1)].some((_,k)=>p(c1+k,r2+1))){r2++;sch=true}}
+    return {c1,c2,r1,r2}}
+  function regiuneCurenta(){const a=act,f=fin;const z0=zona();act={...a};fin={...a};const r=regiune();act=a;fin=f;return z0.c1===z0.c2&&z0.r1===z0.r2?r:r}
+  let avertSort=null;   // {z (selecția), ord} cât e deschis „Sort Warning”
+  function areAntet(z){const get=valori();let text=true,num=false;
+    for(let c=z.c1;c<=z.c2;c++){const v=get(adr(c,z.r1));if(typeof v==='number')text=false;if(z.r2>z.r1&&typeof get(adr(c,z.r1+1))==='number')num=true}
+    return text&&num}
+  function sorteaza(z,chei,antet){   // chei: [{c, ord:'asc'|'desc'}]; rândurile se mută întregi (formulele cu adresele mutate)
+    salveaza();const get=valori();const r0=antet?z.r1+1:z.r1;const rand=[];
+    for(let r=r0;r<=z.r2;r++){const o={r,raw:{},v:{}};for(let c=z.c1;c<=z.c2;c++){o.raw[c]=RAW[adr(c,r)];let v;try{v=get(adr(c,r))}catch(e){v=''}o.v[c]=v}rand.push(o)}
+    const cmp=(x,y)=>{if(x===y)return 0;if(x===''||x==null)return 1;if(y===''||y==null)return -1;
+      if(typeof x==='number'&&typeof y==='number')return x-y;if(typeof x==='number')return -1;if(typeof y==='number')return 1;return String(x).localeCompare(String(y),'ro',{sensitivity:'base'})};
+    rand.sort((a,b)=>{for(const k of chei){let d=cmp(a.v[k.c],b.v[k.c]);if(k.ord==='desc'&&!(a.v[k.c]===''||b.v[k.c]===''))d=-d;if(d)return d}return a.r-b.r});
+    rand.forEach((o,i)=>{const r=r0+i;for(let c=z.c1;c<=z.c2;c++){const x=o.raw[c];const a=adr(c,r);
+      if(x==null||x==='')delete RAW[a];else RAW[a]=typeof x==='string'&&x.startsWith('=')?E().shift(x,r-o.r,0):x}});
+    gest.add('sortare');ultimaSortare={z,chei,antet};
+  }
+  let ultimaSortare=null;
+  function sortHtml(){const z=sortDlg.z;const get=valori();
+    const nume=c=>sortDlg.antet?`${String(get(adr(c,z.r1))??'')} (col. ${COL(c)})`:`Coloana ${COL(c)} (Column ${COL(c)})`;
+    const opt=[];for(let c=z.c1;c<=z.c2;c++)opt.push(c);
+    return `<div class="dlgs" role="dialog" aria-label="Sortare particularizată"><b>Sortare particularizată (Sort) — zona ${adr(z.c1,z.r1)}:${adr(z.c2,z.r2)}</b>
+      <label style="display:block;margin:6px 0"><input type="checkbox" data-sd="antet" ${sortDlg.antet?'checked':''}> Datele mele au antet (My data has headers)</label>
+      ${sortDlg.niv.map((n,i)=>`<div class="niv"><span>${i?'Apoi după (Then by)':'Sortare după (Sort by)'}</span>
+        <select data-sd="col" data-i="${i}">${opt.map(c=>`<option value="${c}" ${n.c===c?'selected':''}>${esc(nume(c))}</option>`).join('')}</select>
+        <select data-sd="ord" data-i="${i}"><option value="asc" ${n.ord==='asc'?'selected':''}>Crescător: A→Z, mic→mare (Smallest to Largest)</option><option value="desc" ${n.ord==='desc'?'selected':''}>Descrescător: Z→A, mare→mic (Largest to Smallest)</option></select>
+        ${i?`<button data-sd="sterge" data-i="${i}">Șterge nivelul</button>`:''}</div>`).join('')}
+      <div class="niv"><button data-sd="adauga">+ Adaugă nivel (Add Level)</button><span style="flex:1"></span><button class="ok" data-sd="ok">OK</button><button data-sd="anuleaza">Anulare (Cancel)</button></div></div>`}
+  function grafHtml(){const d=dateGrafic(GRAF.zona);if(!d)return '';
+    const W=460,H=250,P={l:36,r:10,t:10,b:44},cul=['#4472C4','#ED7D31','#A5A5A5','#FFC000'];let svg='';
+    if(GRAF.tip==='pie'){const s=d.serii[0],tot=s.v.reduce((a,b)=>a+Math.max(0,b),0)||1;let u=-Math.PI/2;const cx=150,cy=H/2,R=95;
+      s.v.forEach((v,i)=>{const a=Math.max(0,v)/tot*2*Math.PI;const x1=cx+R*Math.cos(u),y1=cy+R*Math.sin(u);u+=a;const x2=cx+R*Math.cos(u),y2=cy+R*Math.sin(u);
+        svg+=`<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${a>Math.PI?1:0} 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${['#4472C4','#ED7D31','#A5A5A5','#FFC000','#5B9BD5','#70AD47'][i%6]}" stroke="#fff"/>`;
+        svg+=`<rect x="280" y="${20+i*20}" width="10" height="10" fill="${['#4472C4','#ED7D31','#A5A5A5','#FFC000','#5B9BD5','#70AD47'][i%6]}"/><text x="296" y="${29+i*20}" font-size="11" fill="currentColor">${esc(d.cat[i])}</text>`})}
+    else{const toate=d.serii.flatMap(s=>s.v),mx=Math.max(1,...toate),mn=Math.min(0,...toate);const iw=W-P.l-P.r,ih=H-P.t-P.b,y=v=>P.t+ih-(v-mn)/(mx-mn)*ih;
+      for(let k=0;k<=4;k++){const v=mn+(mx-mn)*k/4;svg+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="currentColor" stroke-opacity=".15"/><text x="${P.l-4}" y="${(y(v)+3).toFixed(1)}" font-size="10" text-anchor="end" fill="currentColor">${fmtNum(Math.round(v*10)/10)}</text>`}
+      const n=d.cat.length,bw=iw/n;
+      d.cat.forEach((c,i)=>svg+=`<text x="${(P.l+bw*i+bw/2).toFixed(1)}" y="${H-P.b+14}" font-size="10" text-anchor="middle" fill="currentColor">${esc(String(c).slice(0,10))}</text>`);
+      d.serii.forEach((s,k)=>{
+        if(GRAF.tip==='column'){const w=bw*0.7/d.serii.length;s.v.forEach((v,i)=>{const x=P.l+bw*i+bw*0.15+w*k;svg+=`<rect x="${x.toFixed(1)}" y="${Math.min(y(v),y(0)).toFixed(1)}" width="${w.toFixed(1)}" height="${Math.abs(y(0)-y(v)).toFixed(1)}" fill="${cul[k%4]}"/>`})}
+        else{svg+=`<polyline fill="none" stroke="${cul[k%4]}" stroke-width="2.5" points="${s.v.map((v,i)=>`${(P.l+bw*i+bw/2).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}"/>`+s.v.map((v,i)=>`<circle cx="${(P.l+bw*i+bw/2).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3" fill="${cul[k%4]}"/>`).join('')}});
+      if(d.serii.length>1||d.serii[0].nume)svg+=d.serii.map((s,k)=>`<rect x="${P.l+k*110}" y="${H-16}" width="10" height="10" fill="${cul[k%4]}"/><text x="${P.l+k*110+14}" y="${H-7}" font-size="11" fill="currentColor">${esc(s.nume||'Seria '+(k+1))}</text>`).join('')}
+    const nume={column:'Coloane (Column)',line:'Linie (Line)',pie:'Radială (Pie)'}[GRAF.tip];
+    return `<div class="graf" aria-label="Grafic"><div class="gbar"><span>Grafic ${nume} · date: ${GRAF.zona}</span><button type="button" data-gr="sterge" style="font-size:.75rem">Șterge graficul</button></div>
+      <input data-gt="1" value="${esc(GRAF.titlu)}" aria-label="Titlul graficului (Chart Title)" title="Scrie titlul graficului">
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(GRAF.titlu)}">${svg}</svg></div>`}
+  function dateGrafic(zt){const [a,b]=zt.split(':').map(pos);if(!a||!b)return null;const get=valori();const z={c1:a.c,c2:b.c,r1:a.r,r2:b.r};
+    const antet=areAntet(z)||(typeof (()=>{try{return get(adr(z.c1+1<=z.c2?z.c1+1:z.c1,z.r1))}catch(e){return 0}})()==='string');
+    const r0=antet?z.r1+1:z.r1;const cat=[],serii=[];
+    for(let r=r0;r<=z.r2;r++){let v;try{v=get(adr(z.c1,r))}catch(e){v=''}cat.push(v===''?'':String(v))}
+    for(let c=z.c1+1;c<=z.c2;c++){const s={nume:antet?String(get(adr(c,z.r1))??''):'',v:[]};for(let r=r0;r<=z.r2;r++){let v;try{v=get(adr(c,r))}catch(e){v=0}s.v.push(typeof v==='number'?v:0)}serii.push(s)}
+    if(!serii.length)return null;return{cat,serii}}
+  function faGrafic(tip){const z=regiune();if(z.c2===z.c1){arataDlg('Graficul are nevoie de două coloane','Selectează o coloană cu etichete (nume) și măcar o coloană cu numere, de exemplu A1:B6.');return}
+    GRAF={tip,zona:adr(z.c1,z.r1)+':'+adr(z.c2,z.r2),titlu:'Titlul diagramei (Chart Title)'};gest.add('grafic');draw()}
+
   function popHtml(){
     if(!ed||!curent.startsWith('='))return '';
     if(lista&&lista.items.length)return `<div class="pop lista" role="listbox" aria-label="Funcții">${lista.items.map((f,i)=>`<div class="${i===lista.idx?'on':''}" data-fn="${f}"><b>${f}</b><span>${esc(FUNC[f][1])}</span></div>`).join('')}<div class="pn">Tab = alege · ↑ ↓ = te miști în listă</div></div>`;
@@ -341,6 +485,34 @@ function render(Q,body,api){
   function wire(){
     body.querySelectorAll('[data-mod]').forEach(b=>b.onclick=()=>{const vechi=mod;mod=b.dataset.mod;if(vechi!==mod)Object.keys(RAW).forEach(a=>{const v=convSetari(RAW[a],vechi);if(v!==null)RAW[a]=v});draw()});
     const cp=body.querySelector('[data-copiaza]');if(cp)cp.onclick=copiazaTabelul;
+    const Q_=sel=>body.querySelectorAll(sel);
+    Q_('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;meniu=null;draw()});
+    Q_('[data-mn]').forEach(b=>b.onclick=()=>{meniu=meniu===b.dataset.mn?null:b.dataset.mn;draw()});
+    Q_('[data-rb]').forEach(b=>b.onclick=()=>{if(ed)termina(null);aplica(b.dataset.rb)});
+    Q_('[data-fill]').forEach(b=>b.onclick=()=>aplica('fill',b.dataset.fill));
+    Q_('[data-color]').forEach(b=>b.onclick=()=>aplica('color',b.dataset.color));
+    Q_('[data-bd]').forEach(b=>b.onclick=()=>aplica('bd',b.dataset.bd));
+    Q_('[data-al]').forEach(b=>b.onclick=()=>aplica('al',b.dataset.al));
+    Q_('[data-nf]').forEach(s=>{const f=FMT[adr(act.c,act.r)]||{};s.value=f.nf||'';s.onchange=()=>aplica('nf',s.value)});
+    Q_('[data-gr]').forEach(b=>b.onclick=()=>{if(b.dataset.gr==='sterge'){GRAF=null;draw()}else faGrafic(b.dataset.gr)});
+    Q_('[data-gt]').forEach(x=>{x.addEventListener('input',()=>{if(GRAF)GRAF.titlu=x.value});x.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();gw().focus()}})});
+    Q_('[data-so]').forEach(b=>b.onclick=()=>{const z=regiune();const antet=areAntet(z);
+      // Excel: dacă ai selectat doar o parte dintr-un tabel (ex. o coloană) întreabă dacă extinde selecția
+      const tot=regiuneCurenta();const sel=zona();
+      if(b.dataset.so!=='dlg'&&!(sel.c1===sel.c2&&sel.r1===sel.r2)&&(tot.c1<sel.c1||tot.c2>sel.c2)){avertSort={z:sel,tot,ord:b.dataset.so};draw();return}
+      if(b.dataset.so==='dlg'){sortDlg={z,antet,niv:[{c:act.c>=z.c1&&act.c<=z.c2?act.c:z.c1,ord:'asc'}]};draw();return}
+      sorteaza(z,[{c:act.c,ord:b.dataset.so}],antet);draw()});
+    Q_('[data-av]').forEach(b=>b.onclick=()=>{const a=avertSort;avertSort=null;if(!a)return draw();
+      if(b.dataset.av==='extinde')sorteaza(a.tot,[{c:act.c,ord:a.ord}],areAntet(a.tot));
+      else if(b.dataset.av==='curenta')sorteaza(a.z,[{c:act.c,ord:a.ord}],areAntet(a.z));draw()});
+    Q_('[data-sd]').forEach(x=>{const k=x.dataset.sd,i=Number(x.dataset.i);
+      if(k==='antet')x.onchange=()=>{sortDlg.antet=x.checked;draw()};
+      if(k==='col')x.onchange=()=>{sortDlg.niv[i].c=Number(x.value)};
+      if(k==='ord')x.onchange=()=>{sortDlg.niv[i].ord=x.value};
+      if(k==='sterge')x.onclick=()=>{sortDlg.niv.splice(i,1);draw()};
+      if(k==='adauga')x.onclick=()=>{sortDlg.niv.push({c:sortDlg.z.c1,ord:'asc'});draw()};
+      if(k==='anuleaza')x.onclick=()=>{sortDlg=null;draw()};
+      if(k==='ok')x.onclick=()=>{sorteaza(sortDlg.z,sortDlg.niv,sortDlg.antet);gest.add('sortare-dlg');sortDlg=null;draw()};});
     body.querySelectorAll('[data-fn]').forEach(x=>x.addEventListener('pointerdown',ev=>{ev.preventDefault();if(lista)alegeFunctia(x.dataset.fn)}));
     const g=gw(),i=fx();
     g.addEventListener('pointerdown',ev=>{if(api.done()&&!liber)return;ev.preventDefault();
@@ -366,6 +538,7 @@ function render(Q,body,api){
     g.addEventListener('keydown',ev=>{ultimClic=null;if((api.done()&&!liber)||ed)return;const k=ev.key,ctrl=ev.ctrlKey||ev.metaKey;
       if(ctrl){const kk=k.toLowerCase();
         if(kk==='d'||kk==='r'){ev.preventDefault();ctrlD(kk==='d');return}
+        if(kk==='b'||kk==='i'||kk==='u'){ev.preventDefault();aplica(kk);return}
         if(kk==='c'||kk==='x'){ev.preventDefault();copiaza(kk==='x');return}
         if(kk==='v'){ev.preventDefault();lipeste();return}
         if(kk==='z'){ev.preventDefault();if(undo.length){redo.push(JSON.stringify(RAW));incarca(undo.pop());draw()}return}
@@ -446,13 +619,41 @@ function render(Q,body,api){
       for(const v of variante){const D={...RAW,...numere(v)},TD={...T,...numere(v)};let g2,x2;try{g2=valoriCu(D)(a)}catch(e){g2='#'}try{x2=valoriCu(TD)(a)}catch(e){x2='?'}
         if(!la(g2,x2)){out.push(`${a} dă rezultatul bun acum, dar greșește când se schimbă datele. Verifică adresele${V.umplut?' și semnul $':''}.`);break}}
     }
+    // FORMATAREA: fiecare proprietate exact pe zona cerută (prea puțin = nu ai selectat tot; prea mult = ai formatat și în afară)
+    if(V.format){const per={};Object.entries(V.format).forEach(([zt,pr])=>{const [a,b]=zt.split(':').map(pos);const B=b||a;
+      for(let c=a.c;c<=B.c;c++)for(let r=a.r;r<=B.r;r++)Object.entries(pr).forEach(([k,v])=>{(per[k]=per[k]||{})[adr(c,r)]=v})});
+      const NUME={b:'aldin (Bold)',i:'cursiv (Italic)',u:'subliniat',fill:'culoarea de umplere',color:'culoarea textului',bd:'bordurile',al:'alinierea',nf:'formatul numerelor',dec:'numărul de zecimale'};
+      Object.entries(per).forEach(([k,cel])=>{const lipsa=[],plus=[];
+        Object.entries(cel).forEach(([a,v])=>{const f=FMT[a]||{};const are=k==='dec'?(f.dec??(f.nf==='percent'?0:f.nf?2:null))===v:v===true?!!f[k]:f[k]===v;if(!are)lipsa.push(a)});
+        if(['b','i','u','fill','bd'].includes(k))Object.entries(FMT).forEach(([a,f])=>{if(f[k]&&!(a in cel))plus.push(a)});
+        if(lipsa.length)out.push(`${NUME[k]||k}: lipsește în ${lipsa.slice(0,4).join(', ')}${lipsa.length>4?'…':''}. Selectează toată zona cerută, apoi apasă butonul din panglică.`);
+        else if(plus.length)out.push(`${NUME[k]||k} e pusă și în afara zonei cerute (${plus.slice(0,3).join(', ')}). Scoate-o de acolo sau selectează exact zona.`)});
+      if(V.format.merge){}}
+    if(V.imbinat&&!MERGE.some(m=>adr(m.c1,m.r1)+':'+adr(m.c2,m.r2)===V.imbinat))out.push(`Celulele ${V.imbinat} nu sunt îmbinate. Selectează-le și apasă „Îmbină și centrează” (Merge & Center).`);
+    // SORTAREA: datele în ordinea cerută și rândurile rămase întregi (fiecare elev cu notele lui)
+    if(V.sortat){const [a,b]=V.sortat.zona.split(':').map(pos);const r0=V.sortat.antet===false?a.r:a.r+1;const get2=valori();
+      const rand=[];for(let r=r0;r<=b.r;r++){const o=[];for(let c=a.c;c<=b.c;c++){let v;try{v=get2(adr(c,r))}catch(e){v='?'}o.push(v)}rand.push(o)}
+      const orig=[];const g0=valoriCu(Object.fromEntries(Object.entries(Q.cells||{}).map(([k,v])=>[k,typeof v==='number'?fmtNum(v):String(v)])));
+      for(let r=r0;r<=b.r;r++){const o=[];for(let c=a.c;c<=b.c;c++){let v;try{v=g0(adr(c,r))}catch(e){v='?'}o.push(v)}orig.push(o)}
+      const k=o=>o.map(x=>typeof x==='number'?x.toFixed(6):String(x)).join('|');
+      const intregi=orig.map(k).sort().join('\n')===rand.map(k).sort().join('\n');
+      const cmp=(x,y)=>typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),'ro',{sensitivity:'base'});
+      const bun=rand.every((o,i)=>{if(!i)return true;const p=rand[i-1];for(const kk of V.sortat.dupa){const c=pos(kk.col+'1').c-a.c;let d=cmp(p[c],o[c]);if(kk.ord==='desc')d=-d;if(d<0)return true;if(d>0)return false}return true});
+      if(!intregi)out.push('Rândurile s-au amestecat: un elev a rămas cu datele altuia. La sortare selectezi TOT tabelul (sau doar o celulă din el), nu o singură coloană.');
+      else if(!bun)out.push(`Tabelul nu e încă în ordinea cerută (${V.sortat.dupa.map(x=>'coloana '+x.col+' '+(x.ord==='desc'?'descrescător':'crescător')).join(', apoi ')}). Folosește Date (Data) → Sortare.`)}
+    // GRAFICUL: tipul, zona de date, titlul
+    if(V.grafic){const NG={column:'cu coloane (Column)',line:'linie (Line)',pie:'radial (Pie)'};
+      if(!GRAF)out.push(`Nu există încă graficul. Selectează ${V.grafic.zona}, apoi Inserare (Insert) → ${NG[V.grafic.tip]}.`);
+      else{if(GRAF.tip!==V.grafic.tip)out.push(`Graficul e ${NG[GRAF.tip]}, dar se cere ${NG[V.grafic.tip]}. Șterge-l și fă-l din nou.`);
+        if(GRAF.zona!==V.grafic.zona)out.push(`Graficul ia datele din ${GRAF.zona}, dar trebuie din ${V.grafic.zona}. Selectează exact zona și refă graficul.`);
+        if(V.grafic.titlu&&GRAF.titlu.trim().toLowerCase()!==V.grafic.titlu.toLowerCase())out.push(`Titlul graficului trebuie să fie „${V.grafic.titlu}”. Apasă pe titlu și scrie-l.`)}}
     (V.gest||[]).forEach(x=>{if(!gest.has(x))out.push({'clic-adresa':'De data asta pune adresele cu mouse-ul: după = (sau după +, *, ;) apasă pe celulă, nu o scrie de mână. Așa lucrezi repede și fără greșeli în Excel.',
       'umple':'Copiază formula TRĂGÂND de pătrățelul verde din colțul celulei (fill handle), ca în Excel, nu scriind-o din nou.',
       'f4':'Pune $ cu tasta F4: scrie adresa (sau apasă pe celulă) și apasă F4.','tastat-in-celula':'Alege celula și începe direct să scrii, fără să apeși în bara de formule.',
       'zona-mouse':'Selectează zona TRĂGÂND cu mouse-ul peste celule, cât scrii formula.',
       'autocompletare':'Scrie doar primele litere ale funcției (=SU) și apasă Tab: Excel o completează singur.',
       'ctrl-d':'Folosește scurtătura Ctrl+D: selectează celula cu formula și celulele de dedesubt, apoi Ctrl+D.',
-      'copiere':'Copiază cu Ctrl+C și lipește cu Ctrl+V.'}[x]||('Folosește gestul cerut: '+x))});
+      'copiere':'Copiază cu Ctrl+C și lipește cu Ctrl+V.','sortare-dlg':'Folosește fereastra Date (Data) → Sortare particularizată (Custom Sort), cu două niveluri.','autosum':'Folosește butonul Σ AutoSum din fila Pornire (Home).'}[x]||('Folosește gestul cerut: '+x))});
     return out;
   }
   const numere=v=>{const o={};Object.entries(v).forEach(([k,x])=>o[k]=typeof x==='number'?fmtNum(x):x);return o};
@@ -464,7 +665,12 @@ function render(Q,body,api){
     Object.entries(V.valori||{}).forEach(([a,v])=>s.push(`în ${a} scrii <code>${esc(typeof v==='number'?fmtNum(v):v)}</code>`));
     Object.entries(V.formule||{}).forEach(([a,f])=>s.push(`în ${a} scrii <code>${esc(roF(f))}</code>`));
     Object.entries(V.umplut||{}).forEach(([a,d])=>s.push(`tragi de colțul lui ${a} până la ${d[d.length-1]}`));
-    (V.gol||[]).forEach(a=>s.push(`alegi ${a} și apeși Delete`));return s.join(', ')+'.'}
+    (V.gol||[]).forEach(a=>s.push(`alegi ${a} și apeși Delete`));
+    Object.entries(V.format||{}).forEach(([z,pr])=>s.push(`selectezi ${z} și pui ${Object.keys(pr).map(k=>({b:'aldin',i:'cursiv',u:'subliniat',fill:'culoare de umplere',color:'culoarea textului',bd:'toate bordurile',al:'alinierea '+pr.al,nf:'formatul '+pr.nf,dec:pr.dec+' zecimale'}[k])).join(', ')}`));
+    if(V.imbinat)s.push(`selectezi ${V.imbinat} și apeși Îmbină și centrează`);
+    if(V.sortat)s.push(`alegi o celulă din tabel și Date (Data) → Sortare după ${V.sortat.dupa.map(x=>'coloana '+x.col+' '+(x.ord==='desc'?'descrescător':'crescător')).join(', apoi ')}`);
+    if(V.grafic)s.push(`selectezi ${V.grafic.zona} și Inserare (Insert) → grafic ${V.grafic.tip}${V.grafic.titlu?', cu titlul „'+V.grafic.titlu+'”':''}`);
+    return s.join(', ')+'.'}
 
   // ---------------- pornirea ----------------
   body.innerHTML='<div id="xwrap"></div>'+(liber?'<div class="opts" id="xopts"></div>':'');
@@ -478,7 +684,7 @@ function render(Q,body,api){
     api.checkButton(()=>{if(ed)termina(null);const p=probleme();
       if(!p.length)api.resolve(true);else{api.resolve(false,p.slice(0,2).join(' '));api.revealButton(()=>api.giveUp(solutie()))}});
   }
-  render._stare={peRO,RAW,gest,setAct:a=>{const p=pos(a);act=p;fin=p},setZona:z=>{const [x,y]=z.split(':').map(pos);act=x;fin=y},draw,mod:()=>mod,liber,Q};
+  render._stare={FMT,MERGE,setGraf:g=>{GRAF=g},sorteaza:(zt,dupa,antet)=>{const [a,b]=zt.split(':').map(pos);sorteaza({c1:a.c,c2:b.c,r1:a.r,r2:b.r},dupa.map(k=>({c:pos(k.col+'1').c,ord:k.ord})),antet!==false)},peRO,RAW,gest,setAct:a=>{const p=pos(a);act=p;fin=p},setZona:z=>{const [x,y]=z.split(':').map(pos);act=x;fin=y},draw,mod:()=>mod,liber,Q};
 }
 function rezolva(Q,body){
   const S=render._stare,V=Q.verifica||{};
@@ -490,6 +696,11 @@ function rezolva(Q,body){
     const dc=b[1].charCodeAt(0)-a[1].charCodeAt(0),dr=Number(b[2])-Number(a[2]);S.RAW[x]=window.JocFoaie.shift(S.RAW[s],dr,dc)}));
   (V.gol||[]).forEach(a=>delete S.RAW[a]);
   (V.gest||[]).forEach(g=>S.gest.add(g));
+  Object.entries(V.format||{}).forEach(([zt,pr])=>{const m=zt.split(':');const a=m[0].match(/^([A-Z]+)(\d+)$/),b=(m[1]||m[0]).match(/^([A-Z]+)(\d+)$/);
+    for(let c=a[1].charCodeAt(0);c<=b[1].charCodeAt(0);c++)for(let r=Number(a[2]);r<=Number(b[2]);r++){const ad=String.fromCharCode(c)+r;S.FMT[ad]=Object.assign(S.FMT[ad]||{},pr)}});
+  if(V.imbinat){const [a,b]=V.imbinat.split(':').map(x=>x.match(/^([A-Z]+)(\d+)$/));S.MERGE.push({c1:a[1].charCodeAt(0)-65,r1:Number(a[2])-1,c2:b[1].charCodeAt(0)-65,r2:Number(b[2])-1})}
+  if(V.sortat)S.sorteaza(V.sortat.zona,V.sortat.dupa,V.sortat.antet);
+  if(V.grafic)S.setGraf({tip:V.grafic.tip,zona:V.grafic.zona,titlu:V.grafic.titlu||'Titlul diagramei (Chart Title)'});
   if(V.sel)S.setAct(V.sel);if(V.zona)S.setZona(V.zona);
   S.draw();
 }
@@ -501,6 +712,7 @@ function gresit(Q,body){
   Object.keys(V.valori||{}).forEach(a=>S.RAW[a]='x');
   Object.keys(V.formule||{}).forEach(a=>S.RAW[a]='=1');
   (V.gol||[]).forEach(a=>S.RAW[a]='x');
+  if(V.format){const z=Object.keys(V.format)[0].split(':')[0];S.FMT['A1']={b:true};if(z==='A1')S.FMT['H9']={b:true,fill:'#FFE699',bd:'all'}}
   S.draw();
 }
 window.JocExcel={render,rezolva,gresit,FUNC};
