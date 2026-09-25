@@ -1,6 +1,6 @@
 /* GENERAT de _motor/catalog_build.py - nu edita de mână */
 window.JOCURI_CATALOG = {
- "generat": "2026-09-24",
+ "generat": "2026-09-25",
  "sursa": "Info_Gimnaziu_2026/data/unitati.json",
  "clase": [
   {
@@ -384,6 +384,16 @@ window.JOCURI_CATALOG = {
        "prima_lectie": 2
       },
       {
+       "slug": "excel-pas-cu-pas-viii",
+       "titlu": "Excel pas cu pas",
+       "descriere": "Excel pas cu pas: celule, date, formule cu adrese, tras de colț, funcții, adrese fixe și IF, într-o foaie care se poartă ca Excel-ul adevărat.",
+       "unitate": "VIII-U1",
+       "accent": "#1B7443",
+       "motor": true,
+       "mod": "invatare",
+       "prima_lectie": 999
+      },
+      {
        "slug": "excel-antrenament-viii",
        "titlu": "Antrenament: Excel",
        "descriere": "Antrenament pentru clasa a VIII-a: întrebări trase la întâmplare despre calculul tabelar, cu formule adevărate, pe trei runde (De bază, Consolidat, Avansat), altele la fiecare reluare.",
@@ -440,7 +450,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "recapitulare-viii",
        "titlu": "Recapitulare: clasa a VIII-a",
-       "descriere": "Recapitulare amestecată pentru clasa a VIII-a: 155 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "descriere": "Recapitulare amestecată pentru clasa a VIII-a: 165 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
        "unitate": "VIII-R",
        "accent": "#9C2F2F",
        "motor": true,
