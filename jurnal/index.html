@@ -46,7 +46,8 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
   var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
   function citeste(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
   function zi(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
-  function min(s){var m=Math.round((s||0)/60);return m<60?m+' min':Math.floor(m/60)+' h '+(m%60)+' min'}
+  // sub un minut lucrat: „sub 1 min”, nu „0 min” (altfel pare că nu s-a numărat nimic)
+  function min(s){if(s>0&&s<60)return 'sub 1 min';var m=Math.round((s||0)/60);return m<60?m+' min':Math.floor(m/60)+' h '+(m%60)+' min'}
   var ZILE=['dum','lun','mar','mie','joi','vin','sâm'];
   function arata(){
     var eu=citeste('lh_prezenta'),j=citeste('lh_prezenta_jurnal');
@@ -66,8 +67,9 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
     var h='<div class="cifre"><div class="cifra"><b>'+min(j.zile[a])+'</b><span>azi</span></div>'+
       '<div class="cifra"><b>'+min(sapt)+'</b><span>săptămâna asta</span></div>'+
       '<div class="cifra"><b>'+sir+'</b><span>'+(sir===1?'zi la rând':'zile la rând')+'</span></div></div>';
-    var zile=[],max=1;for(var i=13;i>=0;i--){var x=new Date(azi);x.setDate(azi.getDate()-i);var s=j.zile[zi(x)]||0;max=Math.max(max,s);zile.push([x,s])}
-    h+='<div class="card"><h2>Ultimele două săptămâni</h2>'+zile.map(function(p){var k=zi(p[0]);return '<div class="zi'+(k===a?' azi':'')+'"><span>'+ZILE[p[0].getDay()]+' '+p[0].getDate()+'.'+(p[0].getMonth()+1)+'</span><div class="bara"><i style="width:'+Math.round(100*p[1]/max)+'%"></i></div><span>'+Math.round(p[1]/60)+' min</span></div>'}).join('')+
+    // bara plină = cel puțin 10 minute; altfel câteva secunde umpleau toată bara (25.09.2026)
+    var zile=[],max=600;for(var i=13;i>=0;i--){var x=new Date(azi);x.setDate(azi.getDate()-i);var s=j.zile[zi(x)]||0;max=Math.max(max,s);zile.push([x,s])}
+    h+='<div class="card"><h2>Ultimele două săptămâni</h2>'+zile.map(function(p){var k=zi(p[0]);return '<div class="zi'+(k===a?' azi':'')+'"><span>'+ZILE[p[0].getDay()]+' '+p[0].getDate()+'.'+(p[0].getMonth()+1)+'</span><div class="bara"><i style="width:'+Math.round(100*p[1]/max)+'%"></i></div><span>'+(p[1]>0&&p[1]<60?'&lt;1':Math.round(p[1]/60))+' min</span></div>'}).join('')+
       '<p class="sub">În total, pe aparatul ăsta: '+min(total)+'.</p></div>';
     var jocuri=Object.keys(j.jocuri);
     if(jocuri.length)h+='<div class="card"><h2>Jocurile mele</h2><ul>'+jocuri.map(function(k){var g=j.jocuri[k],n=Object.keys(g.nivele||{}).length,st=0;Object.keys(g.nivele||{}).forEach(function(x){st+=g.nivele[x]});
