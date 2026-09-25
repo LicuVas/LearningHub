@@ -451,17 +451,26 @@ def main():
 
     if a.verifica:
         fisiere = [Path(a.lectie)] if a.lectie else L.lectii(dosar_lectii)
-        probleme = []
+        probleme, raport = [], []
         for f in fisiere:
             try:
                 p = verifica_lectia(f, a.capturi)
             except L.LectieGresita as e:
                 p = [str(e)]
-            print(f"{f.name}: {'OK' if not p else 'PROBLEME'}")
-            for x in p:
-                print("   " + x)
+            except pywintypes.com_error as e:
+                p = [f"{f.name}: Excel nu a putut fi pornit sau a refuzat o comandă ({e})"]
+            raport.append(f"{f.name}: {'OK' if not p else 'PROBLEME'}")
+            raport += ["   " + x for x in p]
             probleme += p
-        print(len(probleme))
+        raport.append(str(len(probleme)))
+        text = "\n".join(raport)
+        # .exe-ul nu are consolă: raportul se scrie și lângă program, ca profesorul să-l poată deschide
+        try:
+            (dosar_program() / "verificare.txt").write_text(text + "\n", encoding="utf-8")
+        except OSError:
+            pass
+        if sys.stdout:
+            print(text)
         return 1 if probleme else 0
 
     cale = Path(a.lectie) if a.lectie else None

@@ -44,6 +44,21 @@ B rămâne rezervă dacă o școală are doar Google.
 - `proba_ghid.py` — elev simulat prin COM + capturi în `capturi\`; ultima linie = pași blocați (azi 0).
 - `oracol_pozitii.py` — oracolul pozițiilor (azi 0).
 
+## 3b. Făcut în tura de noapte 26.09.2026 (00:00–00:20)
+
+- **Lecții din fișier** (pasul 2 de mai jos): `lectie.py` + `lectii\*.yaml` — 4 lecții (note/sumă/medie, formatare,
+  sortare, grafic). Condiții: are_text, text, numere, valoare, formula, aldin/cursiv/subliniat, umplere, imbinat,
+  sortat, grafic, celula_activa (celulă sau zonă), selectie. Fiecare pas are și `proba:` (elevul simulat).
+  Lecție greșită → mesaj în română cu pasul și ce e greșit (`test_ghid.py`).
+- **Pachet pentru școală** (pasul 3): `_build\GhidExcel\` = `GhidExcel.exe` (21 MB, un singur fișier, fără consolă)
+  + `lectii\` + `CITESTE.txt`. Construit din venv separat (`_build\venv`, PyInstaller 6.22).
+  `GhidExcel.exe --verifica` pe calculatorul nou → `verificare.txt` lângă program, ultima linie 0 = merge.
+  **Probat aici: 4/4 lecții, 0, în 1 min 17 s** (și cu capturi: chenarul + balonul se desenează la fel din .exe).
+- **Balon mai inteligent** (pasul 5): pentru butoane și file stă SUB panglică (sub bara de formule), nu mai acoperă
+  butoanele vecine.
+- **‹ Înapoi / Înainte ›** în balon: pasul revăzut nu sare singur înainte (e deja făcut în foaie).
+- ID-urile reale din panglică, pe file: `id_panglica.txt` (generat de `_id_panglica.py`).
+
 ## 4. Strategia — pașii următori, în ordine
 
 1. **Proba cu mâna lui** pe `porneste_ghidul.bat` (clic real pe AutoSum, scris în celulă). Ce nu merge → reparat.
