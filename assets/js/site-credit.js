@@ -41,4 +41,25 @@
         s.defer = true;
         document.head.appendChild(s);
     }
+
+    // Contorul de vizitatori (25.09.2026): o dată pe zi, browserul spune „am trecut azi” la
+    // teste-vasile.netlify.app/api/vizitatori, cu un id aleator (fără nume). Hub-ul afișează cifrele.
+    // Hub-ul (are #visitorCount) își face singur trimiterea, cu citirea cifrelor.
+    (function () {
+        try {
+            if (window.top !== window || document.getElementById('visitorCount')) return;
+            var d = new Date();
+            var azi = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+            if (localStorage.getItem('lh_viz_zi') === azi) return;
+            var v = localStorage.getItem('lh_viz');
+            if (!/^[a-f0-9]{32}$/.test(v || '')) {
+                var a = new Uint8Array(16); crypto.getRandomValues(a);
+                v = Array.prototype.map.call(a, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+                localStorage.setItem('lh_viz', v);
+            }
+            fetch('https://teste-vasile.netlify.app/api/vizitatori', { method: 'POST', body: JSON.stringify({ v: v, doar: 1 }), keepalive: true })
+                .then(function (r) { if (r.ok) localStorage.setItem('lh_viz_zi', azi); })
+                .catch(function () {});
+        } catch (e) {}
+    })();
 })();
