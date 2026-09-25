@@ -127,6 +127,63 @@ const CSS=`.xl{--xlg:#217346;font-family:"Segoe UI",system-ui,sans-serif;user-se
 .xl .graf .gbar{display:flex;justify-content:space-between;font-size:.78rem;color:var(--ink2)}
 @media (max-width:520px){.xl td{min-width:4.2em}.xl .nb{width:4.2em}.xl .pop{left:0;max-width:100%}}`;
 
+/* ---------------- EXERSEAZĂ PE VARIANTE (25.09.2026) ----------------
+   Cercetarea (_cercetare/ritm_invatare_excel.md): după exemplu și pași ajutați, stăpânirea = 3 corecte LA RÂND pe
+   variante DIFERITE; variantele schimbă numerele, numele, poziția tabelului (deci celulele-țintă), ca elevul să
+   înțeleagă operația, nu să țină minte un răspuns. Verificarea e aceeași ca la sarcina de bază (pe rezultat). */
+const NUME=['Andrei','Bianca','Cristi','Diana','Eric','Flavia','George','Ioana','Luca','Maria','Nicu','Oana','Radu','Sara','Tudor','Vlad'];
+const rnd=n=>Math.floor(Math.random()*n);
+function mutaAdr(a,dr,dc){return String(a).replace(/(\$?)([A-Z]{1,2})(\$?)(\d+)/g,(m,d1,c,d2,r)=>{const ci=c.split('').reduce((x,ch)=>x*26+ch.charCodeAt(0)-64,0)-1+dc;return d1+COL(ci)+d2+(Number(r)+dr)})}
+function mutaFormula(f,dr,dc){let out='',q=false,buf='';const flush=()=>{out+=buf.replace(/(^|[^A-Za-z])(\$?[A-Z]{1,2}\$?\d+)(?![A-Za-z(])/g,(m,pre,ref)=>pre+mutaAdr(ref,dr,dc));buf=''};
+  for(const ch of f){if(ch==='"'){if(!q)flush();else{out+=buf;buf=''}q=!q;out+=ch;continue}buf+=ch}if(q)out+=buf;else flush();return out}
+function varianta(Q){
+  const dr=rnd(3),dc=rnd(2),V=JSON.parse(JSON.stringify(Q.verifica||{}));
+  const cells={},folosite=new Set(),nume={};
+  Object.entries(Q.cells||{}).forEach(([a,v])=>{let x=v;const p=a.match(/^([A-Z]+)(\d+)$/);
+    if(typeof v==='number'){if(Number.isInteger(v)&&v>=1&&v<=10)x=1+rnd(10);else if(Number.isInteger(v))x=Math.max(1,Math.round(v*(0.5+Math.random())));else{const d=(String(v).split('.')[1]||'').length;x=Number((v*(0.6+Math.random()*0.8)).toFixed(d))}}
+    else if(typeof v==='string'&&p[1]==='A'&&Number(p[2])>1&&/^[A-ZĂÂÎȘȚ][a-zăâîșț]+$/.test(v)&&!/^(Suma|Media|Maxim|Minim|Total|Luni|Marți|Miercuri|Joi|Vineri|Sâmbătă|Duminică)$/.test(v)){
+      if(!nume[v]){let n;do{n=NUME[rnd(NUME.length)]}while(folosite.has(n));folosite.add(n);nume[v]=n}x=nume[v]}
+    else if(typeof v==='string'&&v.startsWith('='))x=mutaFormula(v,dr,dc);
+    cells[mutaAdr(a,dr,dc)]=x});
+  const mA=a=>mutaAdr(a,dr,dc),mO=o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[k.includes(':')?k.split(':').map(mA).join(':'):mA(k),typeof v==='string'&&v.startsWith('=')?mutaFormula(v,dr,dc):v]));
+  if(V.sel)V.sel=mA(V.sel);if(V.zona)V.zona=V.zona.split(':').map(mA).join(':');
+  ['valori','formule','format'].forEach(k=>{if(V[k])V[k]=mO(V[k])});
+  if(V.umplut)V.umplut=Object.fromEntries(Object.entries(V.umplut).map(([k,d])=>[mA(k),d.map(mA)]));
+  if(V.gol)V.gol=V.gol.map(mA);if(V.imbinat)V.imbinat=V.imbinat.split(':').map(mA).join(':');
+  if(V.sortat)V.sortat={...V.sortat,zona:V.sortat.zona.split(':').map(mA).join(':'),dupa:V.sortat.dupa.map(k=>({...k,col:mA(k.col+'1').replace(/\d+$/,'')}))};
+  if(V.grafic)V.grafic={...V.grafic,zona:V.grafic.zona.split(':').map(mA).join(':')};
+  // adresele și numele se schimbă în tot textul sarcinii, dar nu în interiorul etichetelor HTML (<b>, <kbd>…)
+  // (textul dintre <kbd> și </kbd> e o tastă, ex. F4 - rămâne neatins)
+  const txt=t=>{let kbd=false;return String(t||'').split(/(<[^>]*>)/).map(bucata=>{
+    if(bucata.startsWith('<')){if(/^<kbd/i.test(bucata))kbd=true;else if(/^<\/kbd/i.test(bucata))kbd=false;return bucata}
+    if(kbd)return bucata;
+    return bucata.replace(/\$?\b[A-Z]{1,2}\$?\d{1,2}\b/g,r=>mutaAdr(r,dr,dc)).replace(/[A-ZĂÂÎȘȚ][a-zăâîșț]+/g,w=>nume[w]||w)}).join('')};
+  const q=txt(Q.q);
+  return {...Q,cells,verifica:V,q,cols:(Q.cols||6)+dc,rows:(Q.rows||8)+dr,variants:(Q.variants||[]).map(v=>mO(v))};
+}
+function cheiePractica(Q){let h=0;const t=(Q.q||'')+JSON.stringify(Q.verifica||{});for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;
+  let p='';try{p=localStorage.getItem('learninghub_active_profile')||''}catch(e){}return 'lh_excel_exersat'+(p&&p!=='_guest'?'@'+p:'')+'|'+h.toString(36)}
+function exerseaza(Q,loc,api){   // o variantă nouă, cu verificare proprie și seria de corecte
+  const k=cheiePractica(Q);let st={serie:0,stapanit:false};try{st=JSON.parse(localStorage.getItem(k))||st}catch(e){}
+  const Qv=varianta(Q);
+  loc.innerHTML=`<div class="xl-ex" style="border-top:2px dashed var(--line);margin-top:14px;padding-top:10px">
+    <div class="eyebrow">Exersează pe o variantă · serie: ${st.serie}/3 corecte la rând${st.stapanit?' · ✓ stăpânit':''}</div>
+    <div class="q" style="margin:6px 0">${Qv.q}</div><div id="xexb"></div><div id="xexf" aria-live="polite"></div><div class="row" id="xexn"></div></div>`;
+  const fb=loc.querySelector('#xexf'),nav=loc.querySelector('#xexn');let gata=false;
+  const apiP={esc:api.esc,shuffle:api.shuffle,done:()=>gata,attempts:()=>0,
+    checkButton:fn=>{nav.innerHTML='<button class="btn primary" type="button" data-exv="1">Verifică varianta</button>';nav.querySelector('[data-exv]').onclick=()=>{if(!gata)fn()};return nav},
+    resolve:(ok,msg)=>{if(ok){gata=true;st.serie++;if(st.serie>=3)st.stapanit=true;
+        fb.innerHTML=`<div class="fb ok"><strong>Corect!</strong> Serie: ${st.serie}/3${st.serie>=3?' — <b>stăpânit ✓</b>. Poți merge mai departe sau mai exersa.':''}</div>`}
+      else{st.serie=0;fb.innerHTML=`<div class="fb bad"><strong>Nu încă.</strong> ${msg||''} Seria o iei de la capăt.</div>`}
+      try{localStorage.setItem(k,JSON.stringify(st))}catch(e){}
+      if(ok){nav.innerHTML='<button class="btn" type="button" data-exa="1">🔁 Altă variantă</button>';nav.querySelector('[data-exa]').onclick=()=>exerseaza(Q,loc,api)}},
+    revealButton:fn=>{if(!nav.querySelector('[data-exr]')){nav.insertAdjacentHTML('beforeend','<button class="btn ghost" type="button" data-exr="1">Arată-mi</button>');nav.querySelector('[data-exr]').onclick=fn}},
+    giveUp:html=>{gata=true;st.serie=0;try{localStorage.setItem(k,JSON.stringify(st))}catch(e){}fb.innerHTML=`<div class="fb bad"><strong>Așa se face:</strong> ${html}</div>`;
+      nav.innerHTML='<button class="btn" type="button" data-exa="1">🔁 Altă variantă</button>';nav.querySelector('[data-exa]').onclick=()=>exerseaza(Q,loc,api)},
+    feedback:()=>{},nav:()=>nav};
+  const sal=render._stare;render(Qv,loc.querySelector('#xexb'),apiP);exerseaza._stare={S:render._stare,Qv,loc};render._stare=sal;   // poarta de testare lucrează pe sarcina de bază
+}
+
 function render(Q,body,api){
   if(!document.getElementById('tip-excel-css')){const s=document.createElement('style');s.id='tip-excel-css';s.textContent=CSS;document.head.appendChild(s)}
   const cols=Q.cols||6,rows=Q.rows||8,liber=Array.isArray(Q.o);
@@ -682,12 +739,17 @@ function render(Q,body,api){
       if(k===Q.ok){b.classList.add('ok');api.resolve(true)}else{b.classList.add('bad');b.disabled=true;api.resolve(false,'Încearcă în foaia de mai sus și uită-te ce se întâmplă.');api.revealButton(()=>api.giveUp(esc(Q.o[Q.ok])))}});
   }else{
     api.checkButton(()=>{if(ed)termina(null);const p=probleme();
-      if(!p.length)api.resolve(true);else{api.resolve(false,p.slice(0,2).join(' '));api.revealButton(()=>api.giveUp(solutie()))}});
+      if(!p.length){api.resolve(true);ofera()}else{api.resolve(false,p.slice(0,2).join(' '));api.revealButton(()=>api.giveUp(solutie()))}});
   }
+  function ofera(){if(Q._practica)return;const loc=document.createElement('div');loc.className='xl-exloc';body.appendChild(loc);
+    const k=cheiePractica(Q);let st={};try{st=JSON.parse(localStorage.getItem(k))||{}}catch(e){}
+    loc.innerHTML=`<button class="btn ghost" type="button" data-exs="1" style="margin-top:10px">🔁 Exersează pe variante${st.stapanit?' (✓ stăpânit)':' (3 la rând = stăpânit)'}</button>`;
+    loc.querySelector('[data-exs]').onclick=()=>exerseaza({...Q,_practica:true},loc,api)}
   render._stare={FMT,MERGE,setGraf:g=>{GRAF=g},sorteaza:(zt,dupa,antet)=>{const [a,b]=zt.split(':').map(pos);sorteaza({c1:a.c,c2:b.c,r1:a.r,r2:b.r},dupa.map(k=>({c:pos(k.col+'1').c,ord:k.ord})),antet!==false)},peRO,RAW,gest,setAct:a=>{const p=pos(a);act=p;fin=p},setZona:z=>{const [x,y]=z.split(':').map(pos);act=x;fin=y},draw,mod:()=>mod,liber,Q};
 }
-function rezolva(Q,body){
-  const S=render._stare,V=Q.verifica||{};
+function rezolva(Q,body,S0){
+  const S=S0&&S0.RAW?S0:render._stare   // al treilea argument poate fi API-ul motorului
+  ,V=Q.verifica||{};
   if(S.liber){const b=body.querySelector(`.opt[data-k="${Q.ok}"]`);if(b)b.click();return}
   const ro=S.mod()==='ro';
   Object.entries(V.valori||{}).forEach(([a,v])=>S.RAW[a]=typeof v==='number'?(ro?String(v).replace('.',','):String(v)):v);
@@ -704,8 +766,9 @@ function rezolva(Q,body){
   if(V.sel)S.setAct(V.sel);if(V.zona)S.setZona(V.zona);
   S.draw();
 }
-function gresit(Q,body){
-  const S=render._stare,V=Q.verifica||{};
+function gresit(Q,body,S0){
+  const S=S0&&S0.RAW?S0:render._stare   // al treilea argument poate fi API-ul motorului
+  ,V=Q.verifica||{};
   if(S.liber){const b=body.querySelector(`.opt:not([data-k="${Q.ok}"])`);if(b)b.click();return}
   if(V.sel)S.setAct(V.sel==='A1'?'B2':'A1');
   if(V.zona)S.setAct('A1');
@@ -715,5 +778,9 @@ function gresit(Q,body){
   if(V.format){const z=Object.keys(V.format)[0].split(':')[0];S.FMT['A1']={b:true};if(z==='A1')S.FMT['H9']={b:true,fill:'#FFE699',bd:'all'}}
   S.draw();
 }
-window.JocExcel={render,rezolva,gresit,FUNC};
+// pentru proba automată a exersării: rezolvă (sau greșește) varianta deschisă acum
+const practica=()=>exerseaza._stare;
+window.JocExcel={render,rezolva,gresit,FUNC,varianta,
+  rezolvaPractica:()=>{const x=practica();rezolva(x.Qv,x.loc,x.S)},gresestePractica:()=>{const x=practica();gresit(x.Qv,x.loc,x.S)},
+  practica:()=>{const x=practica();return x?{q:x.Qv.q,cells:x.Qv.cells,verifica:x.Qv.verifica}:null}};
 })();
