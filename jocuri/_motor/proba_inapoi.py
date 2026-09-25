@@ -1,17 +1,23 @@
 """Proba pentru „Pasul anterior” (motor.js) și Anulare/Refacere (tip-excel.js), cu clicuri reale în browser.
 
-    python jocuri/_motor/proba_inapoi.py [slug]        # implicit excel-pas-cu-pas-viii
+    python jocuri/_motor/proba_inapoi.py [slug]                      # fișierele locale
+    python jocuri/_motor/proba_inapoi.py [slug] --baza https://proba.learninghub-8z6.pages.dev   # site-ul LIVE
 
 Ultima linie = numărul de probleme (0 = totul merge).
 """
+import argparse
 import re
-import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
 JOCURI = Path(__file__).resolve().parent.parent
-slug = sys.argv[1] if len(sys.argv) > 1 else "excel-pas-cu-pas-viii"
+ap = argparse.ArgumentParser()
+ap.add_argument("slug", nargs="?", default="excel-pas-cu-pas-viii")
+ap.add_argument("--baza", help="adresa site-ului (fără ea: fișierele locale)")
+args = ap.parse_args()
+slug = args.slug
+URL = f"{args.baza.rstrip('/')}/jocuri/{slug}/" if args.baza else (JOCURI / slug / "index.html").as_uri()
 probleme = []
 
 
@@ -42,7 +48,8 @@ with sync_playwright() as p:
     pg = b.new_page(viewport={"width": 1280, "height": 900})
     erori = []
     pg.on("pageerror", lambda e: erori.append(str(e)))
-    pg.goto((JOCURI / slug / "index.html").as_uri(), timeout=30000)
+    print(f"pagina: {URL}")
+    pg.goto(URL, timeout=30000)
     pg.wait_for_timeout(300)
     pg.evaluate("JocMotor.test.deblocheaza()")
     pg.evaluate("document.getElementById('go-home').click()")
