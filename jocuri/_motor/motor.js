@@ -93,7 +93,7 @@ function home(){
   /* LABORATOR (calculatoare comune): elevul următor pornește curat - fără numele și fără nivelurile
      celui dinainte, altfel ar putea primi diploma altcuiva. Două apăsări, ca să nu șteargă din greșeală. */
   const alt=document.getElementById('alt-elev');
-  if(alt)alt.onclick=()=>{if(alt.dataset.sure){S={nume:'',lv:{}};save();if(window.Prezenta)window.Prezenta.uita();home();const n=document.getElementById('nume');if(n)n.focus()}else{alt.dataset.sure=1;alt.textContent='Sigur? Se șterge tot ce e mai sus - apasă din nou'}};
+  if(alt)alt.onclick=()=>{if(alt.dataset.sure){S={nume:'',lv:{}};save();if(window.Prezenta)(window.Prezenta.intreaba||window.Prezenta.uita)();home();const n=document.getElementById('nume');if(n)n.focus()}else{alt.dataset.sure=1;alt.textContent='Sigur? Se șterge tot ce e mai sus - apasă din nou'}};
 }
 
 /* ---------------- nivel ---------------- */

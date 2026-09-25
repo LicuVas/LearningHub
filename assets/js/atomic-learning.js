@@ -563,9 +563,9 @@ const AtomicLearning = {
                 setTimeout(function () { armat = false; reia.textContent = 'Sunt alt elev — încep lecția de la zero'; }, 6000);
                 return;
             }
-            // 24.09.2026: și înscrierea din evidența activității (prezenta.js), altfel minutele elevului
-            // următor s-ar scrie pe numele colegului de dinainte
-            if (window.Prezenta) window.Prezenta.uita();
+            // Evidența activității (prezenta.js): NU scoatem elevul (25.09.2026: copiii apasă butonul ca să refacă
+            // lecția și ieșeau din evidență), ci întrebăm „Ești tot X?”; până la răspuns, totul se ține deoparte.
+            if (window.Prezenta) (window.Prezenta.intreaba || window.Prezenta.uita)();
             self.clearAllForThisLesson();
         });
         bara.appendChild(reia);

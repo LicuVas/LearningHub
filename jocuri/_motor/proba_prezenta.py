@@ -201,9 +201,25 @@ def ruleaza(br, baza, a):
     verifica(NUME in pg.inner_text("#lhp"), "întreabă „Ești tot %s?”" % NUME)
     misca(pg, 12)
     c = ls(pg, "lh_prezenta_coada") or {}
-    verifica(not ((c.get("pag") or {}).get(CHEIE_LECTIE) or {}).get("s"), "până la răspuns nu se numără nimic")
+    verifica(not ((c.get("pag") or {}).get(CHEIE_LECTIE) or {}).get("s"), "până la răspuns nu intră nimic în coada elevului")
+    t = ((ls(pg, "lh_prezenta_tinut") or {}).get("pag") or {}).get(CHEIE_LECTIE, {}).get("s", 0)
+    verifica(t >= 5, "dar timpul lucrat se ține DEOPARTE, nu se pierde (%s s)" % t)
+    pg.route("**/api/activitate", lambda route: route.abort())   # ca să citim coada înainte să plece
     pg.click("#lhp-da")
+    c = ls(pg, "lh_prezenta_coada") or {}
+    verifica(((c.get("pag") or {}).get(CHEIE_LECTIE) or {}).get("s", 0) >= t and not ls(pg, "lh_prezenta_tinut"),
+             "după „Da” timpul ținut deoparte trece pe numele lui")
+    pg.unroute("**/api/activitate")
     verifica(pg.is_visible("#lhp-pill"), "după „Da” revine eticheta")
+
+    print("6b. „Sunt alt elev — încep lecția de la zero” NU mai scoate elevul (25.09.2026)")
+    pg.goto(baza + LECTIE_NOTA, wait_until="networkidle")
+    pg.wait_for_selector(".ux-new-student", timeout=10000)
+    pg.click(".ux-new-student"); pg.click(".ux-new-student")
+    pg.wait_for_load_state("networkidle"); pg.wait_for_selector("#lhp-da", timeout=10000)
+    verifica((ls(pg, "lh_prezenta") or {}).get("id") == eu["id"], "înscrierea a rămas (același elev), doar întreabă „Ești tot…?”")
+    pg.click("#lhp-da")
+    verifica(pg.is_visible("#lhp-pill"), "„Da” -> lucrează mai departe pe numele lui")
 
     print("7. „Sunt alt elev” în joc + vizitatorul")
     pg.goto("%s/jocuri/%s/index.html" % (baza, JOC), wait_until="networkidle")
@@ -211,8 +227,10 @@ def ruleaza(br, baza, a):
     if alt:
         alt.click(); alt.click()
         pg.wait_for_timeout(500)
-        verifica(ls(pg, "lh_prezenta") is None, "„Sunt alt elev” a șters și înscrierea de pe site")
-        verifica(pg.is_visible("#lhp-cine"), "iar întrebarea „Spune cine ești” a revenit")
+        verifica(pg.is_visible("#lhp-da") and (ls(pg, "lh_prezenta") or {}).get("intreaba"), "„Sunt alt elev” în joc întreabă „Ești tot…?”")
+        pg.click("#lhp-nu")
+        verifica(ls(pg, "lh_prezenta") is None and pg.is_visible("#lhp-s"), "„Nu, sunt alt elev” -> înscrierea veche dispare, apare formularul")
+        pg.click("#lhp-x")
     else:
         verifica(False, "n-am găsit butonul „Sunt alt elev” în joc")
     pg.click("#lhp-viz")
