@@ -34,7 +34,9 @@ function tokenize(src){
   while(i<src.length){
     const c=src[i],rest=src.slice(i);let m;
     if(/\s/.test(c)){i++;continue}
-    if(c==='"'||c==='„'||c==='”'){const close=src.slice(i+1).search(/["”“]/);if(close<0)throw FErr('Lipsește ghilimeaua de închidere.');t.push({k:'str',v:src.slice(i+1,i+1+close)});i+=close+2;continue}
+    // Excel recunoaște doar ghilimelele drepte "…"; cu „ ” (din Word, din tastatura românească) dă #NAME?
+    if(c==='„'||c==='”'||c==='“')throw FErr('Excel nu recunoaște ghilimelele „ ”. Folosește ghilimelele drepte "…" (Shift + tasta de lângă Enter).','#NAME?');
+    if(c==='"'){const close=src.slice(i+1).search(/"/);if(close<0)throw FErr('Lipsește ghilimeaua de închidere.');t.push({k:'str',v:src.slice(i+1,i+1+close)});i+=close+2;continue}
     const zecimalaVirgula=romanesc||!stack.includes('fn');   // în afara funcțiilor, 0,21 nu poate fi separator
     if((m=rest.match(zecimalaVirgula?/^\d+([.,]\d+)?/:/^\d+(\.\d+)?/))){t.push({k:'num',v:parseFloat(m[0].replace(',','.'))});i+=m[0].length;continue}
     // referință absolută/mixtă ($B$7, B$7, $B7): valoarea e aceeași celulă; `$` contează doar la copierea formulei (vezi shift)

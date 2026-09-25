@@ -81,6 +81,7 @@ FORMULE = [
     "=LEN(\"\")", "=LEN(B2)", "=UPPER(B2)", "=LEFT(A2,10)", "=RIGHT(A3,3)", "=RIGHT(A2,0)", "=MID(A3,2,3)",
     "=CONCATENATE(B2,C2)", "=TRIM(A2)", "=LEFT(A3)", "=COUNTBLANK(A1:E7)", "=MAX(B7:C7)", "=MIN(E2:E7)",
     "=SUM(E2:E7)", "=AVERAGE(D2:D7)", "=COUNT(E2:E7)", "=SUM(B2:B6)*F2", "=ROUND(AVERAGE(B2:C6),2)",
+    "=IF(E2=„Da”,1,0)", "=COUNTIF(E2:E7,„Da”)",
 ]
 
 
