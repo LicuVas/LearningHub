@@ -307,6 +307,8 @@ Cererea a venit de la un elev de la maiștri: fără imagini, trebuie să-ți *i
 Profesorul a verificat Misiunea Analist la toate clasele de la a VIII-a în sus: elevii sunt atrași și muncesc, **și înainte de monitorizare**. Datele de activitate (24–25.09, doar ce a prins `prezenta.js`, doar Brauner; `tools\activitate.py`):
 - **Timp lucrat pe elev:** jocurile Excel **25,3 min** (67 elevi) · celelalte jocuri 15,5 min (35) · lecțiile obișnuite 9,5 min (135). La `excel-viii`: 9 A **34 min**/elev, XI M 26, 8 A 22.
 - **84 de niveluri RELUATE de bunăvoie** după ce fuseseră trecute (26 cu mai multe stele la reluare). Stelele sunt o invitație la muncă, nu doar o notă.
+  - **Mărturie nesolicitată, tot pe 25.09:** un elev i-a spus profesorului, fără să fie întrebat: *„am făcut de 3 ori nivelul ăsta ca să fac 3 steluțe”*. Datele și elevul spun același lucru.
+  - **Consecință:** cele 3 stele trebuie să ceară stăpânirea gestului, nu memoria răspunsului. **Azi, în jocul de învățare, la reluare se amestecă doar ordinea variantelor; întrebările rămân aceleași** (`motor.js`; numai antrenamentul trage din bazin). La a treia reluare, stelele pot veni și din memorie. Deschis (§10): la reluare, foaia primește alte numere, iar întrebările au o variantă-soră.
 - 59 de elevi: majoritatea s-au oprit la nivelul 4–5 din 8, cel mai probabil la sfârșitul orei. 7 au terminat tot.
 - **Rezerve:** două zile, o singură școală. Comparația nu e curată: jocurile Excel le joacă elevi mai mari, într-o oră dedicată.
 
@@ -354,3 +356,4 @@ Profesorul a verificat Misiunea Analist la toate clasele de la a VIII-a în sus:
 - **Simulator „fac eu” fidel în jocurile care nu au** (lista în §9, 25.09.2026).
 - **Drum spre antrenamentul Excel** (0 jucători) de la finalul nivelului și de la diplomă.
 - **Raport pe nivel din datele de activitate** (unde se opresc, unde reiau, unde greșesc).
+- **Reluarea să ceară stăpânire, nu memorie** (§9, 25.09.2026): la reluarea unui nivel din jocul de învățare, foaia să primească alte numere în celule, iar întrebările o variantă-soră. Elevii reiau de 3 ori pentru 3 stele.
