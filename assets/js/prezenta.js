@@ -135,7 +135,7 @@
     if (!c || (!Object.keys(c.pag).length && !c.ev.length)) return;
     var go = function () {
       var corp = JSON.stringify({
-        id: eu.id, scoala: eu.scoala, clasa: eu.clasa, numeEnc: eu.numeEnc,
+        id: eu.id, scoala: eu.scoala, clasa: eu.clasa, numeEnc: eu.numeEnc, scoalaText: eu.scoalaText,
         pag: Object.keys(c.pag).map(function (p) { return { p: p, t: c.pag[p].t, s: c.pag[p].s, n: c.pag[p].n }; }),
         ev: c.ev, acum: document.visibilityState === 'visible' ? { p: p0, t: (document.title || '').slice(0, 120) } : null
       });
@@ -232,10 +232,26 @@
     $('lhp-x').onclick = randeaza;
   }
 
+  /* clasele în ordinea numărului (5 AM, 5 M, 6 A … 8 M, 9 A, 9 M, X A … XII M), cifre sau romane — 25.09.2026;
+     aceeași regulă ca în panoul profesorului (activitate.html cheieClasa) */
+  var ROM = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10, xi: 11, xii: 12, xiii: 13 };
+  function cheieClasa(et) {
+    var w = String(et || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    for (var i = 0; i < w.length; i++) {
+      var n = /^\d+$/.test(w[i]) ? +w[i] : ROM[w[i]];
+      if (n) return [n, w.filter(function (_, j) { return j !== i; }).join(' ')];
+    }
+    return [99, w.join(' ')];
+  }
+  function cmpClasa(a, b) { var x = cheieClasa(a), y = cheieClasa(b); return x[0] - y[0] || x[1].localeCompare(y[1], 'ro'); }
+
   function formular() {
     arata('<div class="bar"><b>Cine ești?</b><div class="mic">Pe calculatoarele din laborator, la final apasă pe etichetă → „Schimbă elevul”.</div>' + NOTA +
       '<label for="lhp-s">Școala</label><select id="lhp-s"><option value="">— alege —</option></select>' +
-      '<label for="lhp-c">Clasa</label><select id="lhp-c" disabled><option value="">— alege întâi școala —</option></select>' +
+      '<div id="lhp-alta" style="display:none"><label for="lhp-as">Numele școlii</label><input id="lhp-as" maxlength="60" autocomplete="off" placeholder="ex. Școala Gimnazială Nr. 3">' +
+      '<label for="lhp-al">Localitatea și județul</label><input id="lhp-al" maxlength="50" autocomplete="off" placeholder="ex. Roman, Neamț">' +
+      '<label for="lhp-ac">Clasa</label><input id="lhp-ac" maxlength="20" autocomplete="off" placeholder="ex. a VI-a B"></div>' +
+      '<div id="lhp-cc"><label for="lhp-c">Clasa</label><select id="lhp-c" disabled><option value="">— alege întâi școala —</option></select></div>' +
       '<label for="lhp-n">Numele și prenumele, <b>întregi, ca în catalog</b></label><input id="lhp-n" maxlength="40" autocomplete="off" placeholder="ex. Popescu Ana-Maria">' +
       '<div class="err" id="lhp-e"></div><div class="row"><button id="lhp-ok">Gata</button><button class="g" id="lhp-x">Mai târziu</button></div></div>');
     // „Mai târziu” păstrează alegerea de dinainte (vizitatorul rămâne vizitator, cu butonul lui mic)
@@ -243,21 +259,31 @@
     incarcaDate().then(function (d) {
       // formularul poate fi deja închis („Mai târziu”) sau redeschis (lista deja pusă) până sosesc datele
       if (!$('lhp-s') || $('lhp-s').options.length > 1) return;
-      $('lhp-s').insertAdjacentHTML('beforeend', d.scoli.map(function (x) { return '<option value="' + esc(x.key) + '">' + esc(x.nume) + '</option>'; }).join(''));
+      $('lhp-s').insertAdjacentHTML('beforeend', d.scoli.map(function (x) { return '<option value="' + esc(x.key) + '">' + esc(x.nume) + '</option>'; }).join('') +
+        '<option value="alta">Altă școală (din altă localitate sau alt județ)</option>');
       $('lhp-s').onchange = function () {
+        var alta = $('lhp-s').value === 'alta';
+        $('lhp-alta').style.display = alta ? '' : 'none'; $('lhp-cc').style.display = alta ? 'none' : '';
         var sc = d.scoli.filter(function (x) { return x.key === $('lhp-s').value; })[0], c = $('lhp-c');
-        c.innerHTML = '<option value="">— alege —</option>' + (sc ? sc.clase.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') : '');
+        c.innerHTML = '<option value="">— alege —</option>' + (sc ? sc.clase.slice().sort(cmpClasa).map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') : '');
         c.disabled = !sc;
+        rezerva();
       };
     }, function () { if ($('lhp-e')) $('lhp-e').textContent ='Nu s-a putut încărca lista școlilor. Verifică internetul și reîncarcă pagina.'; });
     $('lhp-ok').onclick = async function () {
-      var sc = $('lhp-s').value, cl = $('lhp-c').value, nm = $('lhp-n').value.trim().replace(/\s+/g, ' ');
+      var sc = $('lhp-s').value, cl = $('lhp-c').value, nm = $('lhp-n').value.trim().replace(/\s+/g, ' '), st = '';
+      if (sc === 'alta') {
+        var as = $('lhp-as').value.trim(), al = $('lhp-al').value.trim(); cl = $('lhp-ac').value.trim();
+        if (!as || !al || !cl) { $('lhp-e').textContent = 'Scrie numele școlii, localitatea cu județul și clasa.'; return; }
+        st = (as + ', ' + al).slice(0, 120);
+      }
       if (!sc || !cl) { $('lhp-e').textContent = 'Alege școala și clasa.'; return; }
       if (nm.split(' ').length < 2) { $('lhp-e').textContent = 'Scrie numele și prenumele (două cuvinte).'; return; }
       this.disabled = true;
       try {
-        var sn = (DATE.scoli.filter(function (x) { return x.key === sc; })[0] || {}).nume || sc;
+        var sn = st || (DATE.scoli.filter(function (x) { return x.key === sc; })[0] || {}).nume || sc;
         eu = { id: idNou(), scoala: sc, scoalaNume: sn, clasa: cl, nume: nm, numeEnc: await cripteaza(nm), ultima: Date.now() };
+        if (st) eu.scoalaText = st;
         scrie(K_ID, eu); sterge(K_COADA); sterge(K_JURNAL); confirmat = true; ultimaMiscare = Date.now();
         adaugaInCoada(0, true); trimite(false); randeaza();
         try { dispatchEvent(new CustomEvent('prezenta', { detail: identitate() })); } catch (e) {}

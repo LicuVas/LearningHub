@@ -532,8 +532,17 @@ function prezenta(){
     s.src=new URL('../../assets/js/prezenta.js',MOTOR_URL).href;document.head.appendChild(s);
   }
   const iaNumele=()=>{const e=window.Prezenta&&window.Prezenta.identitate();if(e&&!S.nume){S.nume=e.nume;save();const n=document.getElementById('nume');if(n&&!n.value)n.value=e.nume}};
-  addEventListener('prezenta',iaNumele);
-  addEventListener('load',iaNumele);
+  /* 25.09.2026 (Filip: „sunt la nivelul 4 demult”, panoul arăta 1): nivelurile terminate ÎNAINTE de înscriere
+     (sau cât stătea pe ecran „Ești tot…?”) nu plecau niciodată. La deschidere și la fiecare înscriere/„Da”
+     trimitem tot ce e deja făcut (serverul păstrează maximul de stele, deci nu se dublează nimic) - DOAR dacă
+     numele din joc e al elevului înscris, ca pe calculatorul comun să nu primească nivelurile colegului. */
+  const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(' ').sort().join(' ');
+  const sincron=()=>{const e=window.Prezenta&&window.Prezenta.identitate();if(!e||!S.nume||norm(S.nume)!==norm(e.nume))return;
+    const facute=Object.keys(S.lv);if(!facute.length)return;
+    facute.forEach(i=>raporteaza({tip:'nivel',nivel:+i+1,stele:S.lv[i].stars||0,max:3}));
+    if(C.nivele.every((_,i)=>S.lv[i]))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3});};
+  addEventListener('prezenta',()=>{iaNumele();sincron()});
+  addEventListener('load',()=>{iaNumele();sincron()});
 }
 /* jocul = numele FOLDERULUI (excel-viii), nu C.cheie: jurnalul și panoul fac legătura spre /jocuri/<folder>/ */
 const jocSlug=()=>{const m=location.pathname.match(/\/jocuri\/([a-z0-9_-]+)\//i);return m?m[1]:C.cheie};

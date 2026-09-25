@@ -77,6 +77,26 @@ def misca(pg, sec):
         pg.wait_for_timeout(2000)
 
 
+ZBOR = {}
+
+
+def urmareste(pg):
+    """ține evidența cererilor neterminate ale paginii (pentru diagnostic)"""
+    pg.on("request", lambda r: ZBOR.__setitem__(id(r), r.url))
+    pg.on("requestfinished", lambda r: ZBOR.pop(id(r), None))
+    pg.on("requestfailed", lambda r: ZBOR.pop(id(r), None))
+
+
+def linistit(pg, url):
+    """goto până la „rețea liniștită”; dacă nu se liniștește în 15 s, spune ce a rămas deschis și merge mai
+    departe cu pagina încărcată (proba verifică apoi exact ce contează, nu liniștea rețelei)"""
+    try:
+        pg.goto(url, wait_until="networkidle", timeout=15000)
+    except Exception:
+        print("  (notă: pagina nu s-a liniștit în 15 s; cereri deschise: %s)" % [u[:80] for u in list(ZBOR.values())[:5]])
+        pg.wait_for_load_state("load")
+
+
 def inscrie(pg):
     pg.click("#lhp-cine")
     pg.select_option("#lhp-s", "forestier")
@@ -115,9 +135,10 @@ def ruleaza(br, baza, a):
     erori, trimiteri = [], []
     pg.on("pageerror", lambda e: erori.append(str(e)))
     pg.on("request", lambda r: trimiteri.append(r.post_data or "") if "/api/activitate" in r.url else None)
+    urmareste(pg)
 
     print("1. lecția, înainte de înscriere")
-    pg.goto(baza + LECTIE, wait_until="networkidle")
+    linistit(pg, baza + LECTIE)
     pg.evaluate("localStorage.clear()")
     pg.reload(wait_until="networkidle")
     pg.wait_for_selector("#lhp-cine", timeout=10000)
@@ -145,7 +166,7 @@ def ruleaza(br, baza, a):
     pg.click("#lhp-x")
 
     print("3b. nota dintr-o lecție ajunge la profesor (25.09.2026)")
-    pg.goto(baza + LECTIE_NOTA, wait_until="networkidle")
+    linistit(pg, baza + LECTIE_NOTA)
     pg.wait_for_selector("#lhp-pill", timeout=10000)
     # învățarea atomică „terminată”: 5 din 6 corecte, fără exersare -> 1 + round(5/6*6)=5 -> nota 6
     fa = """()=>{LessonSummary.atomicScore={totalCorrect:5,totalQuestions:6,atomsCompleted:6,atomsTotal:6};
@@ -172,7 +193,7 @@ def ruleaza(br, baza, a):
     pg.bring_to_front()
 
     print("5. jocul")
-    pg.goto("%s/jocuri/%s/index.html" % (baza, JOC), wait_until="networkidle")
+    linistit(pg, "%s/jocuri/%s/index.html" % (baza, JOC))
     pg.wait_for_timeout(1500)
     verifica(pg.input_value("#nume") == NUME, "numele e pus singur la diplomă: „%s”" % pg.input_value("#nume"))
     jucat = "gata"
@@ -193,10 +214,17 @@ def ruleaza(br, baza, a):
     r = pe_server(eu["id"]) or {}
     niv = ((r.get("jocuri") or {}).get(JOC) or {}).get("nivele") or {}
     verifica(niv.get("1", 0) >= 1, "pe server: %s nivelul 1 cu %s stele" % (JOC, niv.get("1")))
+    # 25.09.2026 (Filip, „sunt la nivelul 4 demult”): niveluri terminate fără să plece (ex. înainte de înscriere)
+    # trebuie să ajungă la redeschiderea jocului - aici le punem direct în memoria jocului, ca și cum s-ar fi pierdut
+    pg.evaluate("""()=>{const k=JocMotor.test.config().cheie,s=JSON.parse(localStorage.getItem(k));
+        s.lv[1]={stars:2,xp:10};s.lv[2]={stars:3,xp:10};localStorage.setItem(k,JSON.stringify(s))}""")
+    pg.reload(wait_until="load"); pg.wait_for_timeout(6000)
+    niv = (((pe_server(eu["id"]) or {}).get("jocuri") or {}).get(JOC) or {}).get("nivele") or {}
+    verifica(niv.get("2") == 2 and niv.get("3") == 3, "la redeschidere pleacă și nivelurile făcute înainte: %s" % niv)
 
     print("6. „Ești tot X?” după 90 de minute")
     pg.evaluate("()=>{const e=JSON.parse(localStorage.getItem('lh_prezenta'));e.ultima=Date.now()-2*3600e3;localStorage.setItem('lh_prezenta',JSON.stringify(e));localStorage.removeItem('lh_prezenta_coada')}")
-    pg.goto(baza + LECTIE, wait_until="networkidle")
+    linistit(pg, baza + LECTIE)
     pg.wait_for_selector("#lhp-da", timeout=10000)
     verifica(NUME in pg.inner_text("#lhp"), "întreabă „Ești tot %s?”" % NUME)
     misca(pg, 12)
@@ -213,7 +241,7 @@ def ruleaza(br, baza, a):
     verifica(pg.is_visible("#lhp-pill"), "după „Da” revine eticheta")
 
     print("6b. „Sunt alt elev — încep lecția de la zero” NU mai scoate elevul (25.09.2026)")
-    pg.goto(baza + LECTIE_NOTA, wait_until="networkidle")
+    linistit(pg, baza + LECTIE_NOTA)
     pg.wait_for_selector(".ux-new-student", timeout=10000)
     pg.click(".ux-new-student"); pg.click(".ux-new-student")
     pg.wait_for_load_state("networkidle"); pg.wait_for_selector("#lhp-da", timeout=10000)
@@ -222,7 +250,7 @@ def ruleaza(br, baza, a):
     verifica(pg.is_visible("#lhp-pill"), "„Da” -> lucrează mai departe pe numele lui")
 
     print("7. „Sunt alt elev” în joc + vizitatorul")
-    pg.goto("%s/jocuri/%s/index.html" % (baza, JOC), wait_until="networkidle")
+    linistit(pg, "%s/jocuri/%s/index.html" % (baza, JOC))
     alt = pg.query_selector("#alt-elev") or pg.query_selector(".alt-elev button")
     if alt:
         alt.click(); alt.click()
@@ -234,7 +262,7 @@ def ruleaza(br, baza, a):
     else:
         verifica(False, "n-am găsit butonul „Sunt alt elev” în joc")
     pg.click("#lhp-viz")
-    pg.goto(baza + LECTIE, wait_until="networkidle")
+    linistit(pg, baza + LECTIE)
     pg.wait_for_timeout(1500)
     verifica(not pg.is_visible("#lhp-cine") and not pg.is_visible("#lhp-pill"), "vizitatorul nu mai e întrebat și nu e urmărit")
     # 25.09.2026: „doar vizitez” apăsat din greșeală nu trebuie să închidă drumul spre înscriere
