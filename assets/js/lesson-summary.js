@@ -438,6 +438,12 @@ const LessonSummary = {
         const atomicPercent = scores.atomicTotal > 0 ? Math.round((scores.atomicCorrect / scores.atomicTotal) * 100) : 0;
         const practicePercent = scores.practiceTotal > 0 ? Math.round((scores.practiceCorrect / scores.practiceTotal) * 100) : 0;
 
+        // Evidența activității (prezenta.js, 25.09.2026): nota finală ajunge și la profesor
+        if (atomicComplete) {
+            if (window.Prezenta && window.Prezenta.nota) { try { window.Prezenta.nota(scores); } catch (e) {} }
+            else window.__lhNotaAsteapta = scores;   // prezenta.js vine mai târziu (defer): o preia la pornire
+        }
+
         // Two display modes: progress (during lesson) vs final (after atomic complete)
         if (!atomicComplete) {
             // === PROGRESS MODE: Show points earned, not grade ===

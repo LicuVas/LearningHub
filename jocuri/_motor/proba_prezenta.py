@@ -40,6 +40,8 @@ NUME = "Proba Prezenta Stergere"
 LECTIE = "/content/tic/cls5/index.html"
 CHEIE_LECTIE = "/content/tic/cls5/"      # așa o scrie prezenta.js (forma scurtă, ca pe Cloudflare)
 JOC = "excel-viii"
+LECTIE_NOTA = "/content/tic/cls5/m1-sisteme/lectia1-calculator.html"   # o lecție cu lesson-summary.js
+CHEIE_NOTA = "/content/tic/cls5/m1-sisteme/lectia1-calculator"
 probleme = []
 ids = set()
 
@@ -141,6 +143,19 @@ def ruleaza(br, baza, a):
     pg.click("#lhp-pill")
     verifica(pg.is_visible("#lhp-alt") and "Jurnalul meu" in pg.inner_text("#lhp"), "meniul etichetei: Jurnalul meu + Schimbă elevul")
     pg.click("#lhp-x")
+
+    print("3b. nota dintr-o lecție ajunge la profesor (25.09.2026)")
+    pg.goto(baza + LECTIE_NOTA, wait_until="networkidle")
+    pg.wait_for_selector("#lhp-pill", timeout=10000)
+    # învățarea atomică „terminată”: 5 din 6 corecte, fără exersare -> 1 + round(5/6*6)=5 -> nota 6
+    fa = """()=>{LessonSummary.atomicScore={totalCorrect:5,totalQuestions:6,atomsCompleted:6,atomsTotal:6};
+        LessonSummary.interactedThisSession=true;LessonSummary.updateSummaryDisplay();LessonSummary.updateSummaryDisplay();}"""
+    pg.evaluate(fa)
+    pg.wait_for_timeout(4000)
+    r = pe_server(eu["id"]) or {}
+    n = (r.get("note") or {}).get(CHEIE_NOTA) or {}
+    verifica(n.get("nota") == 6 and n.get("incercari") == 1, "pe server: nota 6 la lecție, o singură încercare deși rezumatul s-a redesenat (%s)" % n)
+    verifica("atomic 5/6" in (n.get("detalii") or ""), "detaliile notei: %s" % n.get("detalii"))
 
     print("4. fără mișcare timpul se oprește (ceas simulat)")
     p2 = ctx.new_page()
@@ -258,6 +273,7 @@ def ruleaza(br, baza, a):
     t = pp.inner_text("#corp")
     verifica(NUME in t, "panoul arată numele deschis în browser, la Forestier X E")
     verifica("nu e în catalog" in t, "numele de probă e marcat „nu e în catalog”")
+    verifica("Note la lecții" in t and "6,00" in t, "coloana „Note la lecții” arată media 6,00")
     verifica("N-au lucrat deloc" in t or "au lucrat săptămâna asta" in t, "rezumatul clasei e acolo")
     pp.close()
 

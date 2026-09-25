@@ -263,12 +263,32 @@
         j.jocuri[e.joc] = g; scrie(K_JURNAL, j);
       }
       trimite(false);
+    },
+    /* NOTA dintr-o lecție (25.09.2026, el: „pe LearningHub copiii sunt notați, îi aud «eu am luat 7»”).
+       Chemată de lesson-summary.js când învățarea atomică e gata; pleacă doar când nota se SCHIMBĂ
+       (rezumatul se redesenează des). Ține minte ultima notă trimisă pe pagină, per elev. */
+    nota: function (s) {
+      if (!eElev() || stare() !== 'activ' || !s || !(s.grade >= 1 && s.grade <= 10)) return;
+      var k = 'lh_prezenta_nota', tr = citeste(k, null) || {};
+      if (tr.id !== eu.id) tr = { id: eu.id, p: {} };
+      if (tr.p[p0] === s.grade) return;
+      tr.p[p0] = s.grade; scrie(k, tr);
+      var det = 'atomic ' + (s.atomicCorrect || 0) + '/' + (s.atomicTotal || 0) + (s.practiceStarted ? ' · exersare ' + (s.practiceCorrect || 0) + '/' + (s.practiceTotal || 0) : ' · fără exersare');
+      var c = citeste(K_COADA, null) || { pag: {}, ev: [] };
+      c.ev.push({ tip: 'nota', p: p0, titlu: (document.title || '').slice(0, 120), nota: s.grade, detalii: det, cand: new Date().toISOString() });
+      c.ev = c.ev.slice(-30); if (!c.de) c.de = Date.now();
+      scrie(K_COADA, c);
+      var j = citeste(K_JURNAL, null);
+      if (j && j.id === eu.id) { j.note = j.note || {}; j.note[p0] = { t: document.title, nota: s.grade, u: Date.now() }; scrie(K_JURNAL, j); }
+      trimite(false);
     }
   };
 
   function porneste() {
     randeaza();
     if (stare() === 'activ') adaugaInCoada(0, true);
+    // nota calculată de lesson-summary.js înainte să ne încărcăm noi
+    if (window.__lhNotaAsteapta) { window.Prezenta.nota(window.__lhNotaAsteapta); window.__lhNotaAsteapta = null; }
   }
   if (document.body) porneste(); else document.addEventListener('DOMContentLoaded', porneste);
 })();
