@@ -21,7 +21,10 @@ function shift(f,dr,dc){
   });
 }
 const pos=a=>{const m=a.match(/^([A-Z]+)(\d+)$/);return{c:m[1].split('').reduce((x,ch)=>x*26+ch.charCodeAt(0)-64,0),r:Number(m[2])}};
-function FErr(msg,show){const e=new Error(msg);e.show=show||'#EROARE';return e}
+/* show = ce apare în celulă. Numele erorilor sunt cele din Excel-ul adevărat (#VALUE!, #NAME?, #DIV/0!), verificate
+   cu oracolul (_cercetare/oracol_excel, 25.09.2026). O formulă scrisă greșit Excel n-o primește deloc (fereastra
+   „There's a problem with this formula”): la noi celula arată „⚠” și mesajul spune ce e greșit. */
+function FErr(msg,show){const e=new Error(msg);e.show=show||'⚠';return e}
 function tokenize(src){
   const t=[];let i=0;
   // setări românești: separatorul e „;”, iar zecimalele se scriu cu virgulă (0,21). Doar atunci virgula dintre cifre e zecimală,
@@ -37,7 +40,7 @@ function tokenize(src){
     // referință absolută/mixtă ($B$7, B$7, $B7): valoarea e aceeași celulă; `$` contează doar la copierea formulei (vezi shift)
     if((m=rest.match(/^\$?[A-Za-z]{1,2}\$?\d+/))&&!/^[A-Za-z]{3,}/.test(rest)){t.push({k:'ref',v:m[0].replace(/\$/g,'').toUpperCase(),abs:m[0].includes('$')});i+=m[0].length;continue}
     if((m=rest.match(/^([A-Za-zĂÂÎȘȚăâîșț]+)(\d+)?/))){if(m[2])t.push({k:'ref',v:(m[1]+m[2]).toUpperCase()});else t.push({k:'name',v:m[1].toUpperCase()});i+=m[0].length;continue}
-    if((m=rest.match(/^(<=|>=|<>|[-+*\/=<>(),;:%])/))){
+    if((m=rest.match(/^(<=|>=|<>|[-+*\/=<>(),;:%^&])/))){
       if(m[0]==='(')stack.push(t.length&&t[t.length-1].k==='name'?'fn':'p');
       if(m[0]===')')stack.pop();
       t.push({k:'op',v:m[0]});i+=m[0].length;continue}
@@ -51,20 +54,34 @@ function evaluate(formula,get){
   const T=tokenize(formula.slice(1));let p=0;
   if(!T.length)throw FErr('După = nu ai scris nimic.');
   const isOp=v=>T[p]&&T[p].k==='op'&&T[p].v===v;
-  const num=v=>{if(typeof v==='number')return v;if(v===''||v==null)return 0;if(typeof v==='boolean')return v?1:0;throw FErr('Formula calculează cu un text ca și cum ar fi număr.','#VALOARE')};
-  function cmp(){const a=add(),t=T[p];
-    if(t&&t.k==='op'&&['=','<>','<','>','<=','>='].includes(t.v)){p++;const b=add();let x=a,y=b;
-      if(typeof x==='string'||typeof y==='string'){x=String(x??'').toLowerCase();y=String(y??'').toLowerCase()}else{x=num(x);y=num(y)}
+  // un text care arată ca un număr („12”, rezultatul lui 1&2) intră în calcule ca număr, ca în Excel: =(1&2)+3 dă 15
+  const num=v=>{if(typeof v==='number')return v;if(v===''||v==null)return 0;if(typeof v==='boolean')return v?1:0;
+    if(typeof v==='string'&&/^\s*-?\d+([.,]\d+)?\s*$/.test(v))return Number(v.trim().replace(',','.'));
+    throw FErr('Formula calculează cu un text ca și cum ar fi număr.','#VALUE!')};
+  // textul unei valori, ca la & în Excel: TRUE/FALSE, numerele fără zerouri în plus, celula goală = nimic
+  const txt=v=>typeof v==='boolean'?(v?'TRUE':'FALSE'):v==null?'':String(v);
+  // Excel compară: numerele < textele < TRUE/FALSE; celula goală = 0 lângă un număr și "" lângă un text
+  const rang=v=>typeof v==='number'?0:typeof v==='string'?1:2;
+  function cmp(){const a=cat(),t=T[p];
+    if(t&&t.k==='op'&&['=','<>','<','>','<=','>='].includes(t.v)){p++;const b=cat();let x=a==null?'':a,y=b==null?'':b;
+      if(x===''&&typeof y==='number')x=0;if(y===''&&typeof x==='number')y=0;
+      if(x===''&&typeof y==='boolean')x=false;if(y===''&&typeof x==='boolean')y=false;
+      if(rang(x)!==rang(y)){x=rang(x);y=rang(y)}
+      else if(typeof x==='string'){x=x.toLowerCase();y=y.toLowerCase()}
       return {'=':x===y,'<>':x!==y,'<':x<y,'>':x>y,'<=':x<=y,'>=':x>=y}[t.v]}
     return a}
+  function cat(){let a=add();while(isOp('&')){p++;const b=add();a=txt(a)+txt(b)}return a}   // „Ana”&” ”&B2
   function add(){let a=mul();while(isOp('+')||isOp('-')){const o=T[p++].v,b=mul();a=o==='+'?num(a)+num(b):num(a)-num(b)}return a}
-  function mul(){let a=un();while(isOp('*')||isOp('/')){const o=T[p++].v,b=un();if(o==='/'){if(num(b)===0)throw FErr('Împărțire la zero.','#DIV/0!');a=num(a)/num(b)}else a=num(a)*num(b)}return a}
+  function mul(){let a=pw();while(isOp('*')||isOp('/')){const o=T[p++].v,b=pw();if(o==='/'){if(num(b)===0)throw FErr('Împărțire la zero.','#DIV/0!');a=num(a)/num(b)}else a=num(a)*num(b)}return a}
+  // puterea: 2^3 = 8. Ca în Excel, minusul din față se aplică ÎNAINTE: -2^2 = 4
+  function pw(){let a=un();while(isOp('^')){p++;const b=un();a=Math.pow(num(a),num(b))}return a}
   function un(){if(isOp('-')){p++;return -num(un())}if(isOp('+')){p++;return num(un())}let v=prim();while(isOp('%')){p++;v=num(v)/100}return v}  // 21% = 0,21, ca în Excel
   function prim(){const t=T[p];
     if(!t)throw FErr('Formula se termină prea devreme.');
     if(t.k==='num'||t.k==='str'){p++;return t.v}
     if(t.k==='ref'){p++;if(isOp(':')){p++;const b=T[p];if(!b||b.k!=='ref')throw FErr('După „:” trebuie adresa celuilalt colț.');p++;return{range:expand(t.v,b.v)}}return get(t.v)}
-    if(t.k==='name'){p++;if(!isOp('('))throw FErr(`„${t.v}” nu e o adresă de celulă și nici o funcție urmată de paranteză.`);p++;const args=[];
+    if(t.k==='name'&&(t.v==='TRUE'||t.v==='FALSE')&&!(T[p+1]&&T[p+1].k==='op'&&T[p+1].v==='(')){p++;return t.v==='TRUE'}
+    if(t.k==='name'){p++;if(!isOp('('))throw FErr(`„${t.v}” nu e o adresă de celulă și nici o funcție urmată de paranteză.`,'#NAME?');p++;const args=[];
       if(!isOp(')')){for(;;){args.push(cmp());if(isOp(';')||isOp(',')){p++;continue}break}}
       if(!isOp(')'))throw FErr('Lipsește paranteza de închidere.');p++;return call(t.v,args)}
     if(isOp('(')){p++;const v=cmp();if(!isOp(')'))throw FErr('Lipsește paranteza de închidere.');p++;return v}
@@ -78,11 +95,40 @@ function evaluate(formula,get){
       if(val!==''&&!isNaN(Number(val.replace(',','.'))))val=Number(val.replace(',','.'))}
     if(typeof val==='number'){if(typeof v!=='number')return op==='<>';return {'=':v===val,'<>':v!==val,'<':v<val,'>':v>val,'<=':v<=val,'>=':v>=val}[op]}
     const a=String(v??'').toLowerCase(),b=String(val).toLowerCase();
+    if(/[*?]/.test(b)){   // „A*” = începe cu A, „?” = o literă oarecare
+      const re=new RegExp('^'+b.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.')+'$');
+      const ok=typeof v==='string'&&re.test(a);return op==='<>'?!ok:op==='='?ok:false}
     return op==='<>'?a!==b:op==='='?a===b:false;
   }
+  const vals=args=>{const out=[];args.forEach(a=>{if(a&&a.range)a.range.forEach(r=>out.push(get(r)));else out.push(a)});return out};
+  const logice=(args,fn)=>{const v=vals(args).filter(x=>typeof x==='number'||typeof x==='boolean');
+    if(!v.length)throw FErr(`${fn} nu are nicio condiție de verificat.`,'#VALUE!');return v.map(x=>!!x)};
+  const text1=(a,fn)=>{if(a&&a.range)throw FErr(`${fn} primește o singură celulă sau un text.`,'#VALUE!');return txt(a)};
+  const cel_putin=(fn,n,args)=>{if(args.length<n)throw FErr(`${fn} are nevoie de ${n===1?'cel puțin o valoare':n+' părți'} între paranteze.`)};
   function call(name,args){
     if(name==='IF'&&args.some(a=>a&&a.range))throw FErr('IF nu primește o zonă, ci o comparație.');
+    if(['SUM','AVERAGE','MIN','MAX','COUNT','COUNTA','AND','OR'].includes(name))cel_putin(name,1,args);
     switch(name){
+      // funcțiile din programă care lipseau (găsite de oracolul Excel, 25.09.2026)
+      case 'AND':return logice(args,'AND').every(x=>x);
+      case 'OR':return logice(args,'OR').some(x=>x);
+      case 'NOT':{cel_putin('NOT',1,args);const c=args[0];if(typeof c==='string'&&c!=='')throw FErr('NOT primește o condiție, nu un text.','#VALUE!');return !num(c)}
+      case 'COUNTBLANK':{return zona(args[0],'COUNTBLANK').filter(r=>get(r)==='').length}
+      case 'ROUNDUP':case 'ROUNDDOWN':{cel_putin(name,2,args);const x=num(args[0]),k=Math.pow(10,num(args[1])),a=Math.abs(x)*k;
+        const r=name==='ROUNDUP'?Math.ceil(a-1e-9):Math.floor(a+1e-9);return Math.sign(x)*r/k}
+      case 'INT':cel_putin('INT',1,args);return Math.floor(num(args[0]));
+      case 'ABS':cel_putin('ABS',1,args);return Math.abs(num(args[0]));
+      case 'SQRT':{cel_putin('SQRT',1,args);const x=num(args[0]);if(x<0)throw FErr('Rădăcina unui număr negativ nu există.','#NUM!');return Math.sqrt(x)}
+      case 'POWER':cel_putin('POWER',2,args);return Math.pow(num(args[0]),num(args[1]));
+      case 'MOD':{cel_putin('MOD',2,args);const a=num(args[0]),b=num(args[1]);if(b===0)throw FErr('Împărțire la zero.','#DIV/0!');return a-b*Math.floor(a/b)}
+      case 'LEN':cel_putin('LEN',1,args);return text1(args[0],'LEN').length;
+      case 'UPPER':cel_putin('UPPER',1,args);return text1(args[0],'UPPER').toUpperCase();
+      case 'LOWER':cel_putin('LOWER',1,args);return text1(args[0],'LOWER').toLowerCase();
+      case 'TRIM':cel_putin('TRIM',1,args);return text1(args[0],'TRIM').trim().replace(/ +/g,' ');
+      case 'LEFT':cel_putin('LEFT',1,args);return text1(args[0],'LEFT').slice(0,args.length>1?num(args[1]):1);
+      case 'RIGHT':{cel_putin('RIGHT',1,args);const s=text1(args[0],'RIGHT'),n=args.length>1?num(args[1]):1;return n?s.slice(-n):''}
+      case 'MID':{cel_putin('MID',3,args);const s=text1(args[0],'MID');return s.substr(num(args[1])-1,num(args[2]))}
+      case 'CONCATENATE':case 'CONCAT':cel_putin(name,1,args);return vals(args).map(txt).join('');
       case 'COUNT':{let n=0;args.forEach(a=>{if(a&&a.range)a.range.forEach(r=>{if(typeof get(r)==='number')n++});else if(typeof a==='number')n++});return n}
       case 'COUNTA':{let n=0;args.forEach(a=>{if(a&&a.range)a.range.forEach(r=>{if(get(r)!=='')n++});else n++});return n}
       case 'COUNTIF':{if(args.length!==2)throw FErr('COUNTIF are două părți: zona și criteriul, ex. =COUNTIF(C2:C9;">=5").');return zona(args[0],'COUNTIF').filter(r=>potriveste(get(r),args[1])).length}
@@ -99,18 +145,18 @@ function evaluate(formula,get){
       case 'AVERAGE':{const n=nums(args);if(!n.length)throw FErr('Media unei zone fără numere nu se poate calcula.','#DIV/0!');return n.reduce((s,x)=>s+x,0)/n.length}
       case 'MAX':{const n=nums(args);return n.length?Math.max(...n):0}
       case 'MIN':{const n=nums(args);return n.length?Math.min(...n):0}
-      case 'IF':{if(args.length<2)throw FErr('IF are nevoie de condiție și de cel puțin un rezultat.');const c=args[0];const yes=typeof c==='string'?c!=='':!!num(c);return yes?args[1]:(args.length>2?args[2]:false)}
+      case 'IF':{if(args.length<2)throw FErr('IF are nevoie de condiție și de cel puțin un rezultat.');const c=args[0];if(typeof c==='string'&&c!=='')throw FErr('Condiția din IF e un text, nu o comparație (ex. B2>=5).','#VALUE!');const yes=!!num(c);return yes?args[1]:(args.length>2?args[2]:false)}
     }
     const ro=RO_NAMES[name];
-    throw FErr(`Excel nu cunoaște funcția ${name}.${ro?` Numele funcțiilor sunt în engleză: ${ro}.`:''}`,'#NUME?');
+    throw FErr(`Excel nu cunoaște funcția ${name}.${ro?` Numele funcțiilor sunt în engleză: ${ro}.`:''}`,'#NAME?');
   }
   const v=cmp();
   if(p<T.length){if(T[p].k==='op'&&(T[p].v===';'||T[p].v===','))throw FErr('Semnul „;” sau „,” se folosește doar în interiorul unei funcții.');throw FErr(`Nu mă așteptam la „${T[p].v}” aici.`)}
-  if(v&&v.range)throw FErr('O zonă singură nu e un rezultat. Pune-o într-o funcție, de exemplu SUM(…).');
+  if(v&&v.range)throw FErr('O zonă singură nu e un rezultat. Pune-o într-o funcție, de exemplu SUM(…).','#VALUE!');
   return v;
 }
 // valorile mici (0,002) își păstrează cifrele semnificative; altfel ar apărea „0” deși formula e bună
-const fmt=v=>typeof v==='number'?(Number.isInteger(v)?String(v):v.toLocaleString('ro-RO',Math.abs(v)<1?{maximumSignificantDigits:3}:{maximumFractionDigits:2})):typeof v==='boolean'?(v?'adevărat':'fals'):String(v??'');
+const fmt=v=>typeof v==='number'?(Number.isInteger(v)?String(v):v.toLocaleString('ro-RO',Math.abs(v)<1?{maximumSignificantDigits:3}:{maximumFractionDigits:2})):typeof v==='boolean'?(v?'TRUE':'FALSE'):String(v??'');
 // textul rezultat se compară fără diacritice și fără spații în plus: „in buget” = „în buget” (tastatura din laborator poate fi fără diacritice)
 const fara=s=>String(s).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[şș]/g,'s').replace(/[ţț]/g,'t').replace(/\s+/g,' ');
 const same=(a,b)=>typeof a==='number'&&typeof b==='number'?Math.abs(a-b)<1e-6:fara(a)===fara(b);
@@ -133,7 +179,7 @@ function getter(formulas,data){
   const get=addr=>{
     if(addr in memo)return memo[addr];
     if(addr in formulas){const f=formulas[addr];if(f==='')return '';
-      if(stack.has(addr))throw FErr('Formula trimite la ea însăși.','#CIRC');
+      if(stack.has(addr))throw FErr('Formula trimite la ea însăși (referință circulară). Excel arată 0 și un avertisment.','0');
       stack.add(addr);try{const v=f.startsWith('=')?evaluate(f,get):f;memo[addr]=v;return v}finally{stack.delete(addr)}}
     return addr in data?data[addr]:'';
   };
