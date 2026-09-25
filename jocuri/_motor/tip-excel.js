@@ -113,6 +113,10 @@ const CSS=`.xl{--xlg:#217346;font-family:"Segoe UI",system-ui,sans-serif;user-se
 .xl .rb .grup button,.xl .rb .grup select{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:4px;padding:3px 7px;font:inherit;cursor:pointer;min-height:28px}
 .xl .rb .grup button:hover{border-color:var(--xlg)}
 .xl .rb .sep{width:1px;height:22px;background:var(--line);margin:0 3px}
+.xl .rb .tabs .qat{display:flex;gap:2px;align-items:center;margin-right:10px;padding-right:8px;border-right:1px solid var(--line)}
+.xl .rb .tabs .qat button{padding:2px 8px;border-radius:4px;font-size:1.05rem;line-height:1;color:var(--ink)}
+.xl .rb .tabs .qat button:hover:not(:disabled){background:var(--paper)}
+.xl .rb .tabs .qat button:disabled{opacity:.35;cursor:default}
 .xl .rb .meniu{position:relative;display:inline-block}
 .xl .rb .meniu .m{position:absolute;top:100%;left:0;z-index:6;background:var(--paper);border:1px solid var(--line);box-shadow:0 4px 12px #0004;border-radius:4px;min-width:12em}
 .xl .rb .meniu .m button{display:flex;gap:6px;align-items:center;width:100%;border:0;text-align:left;border-radius:0}
@@ -236,8 +240,15 @@ function render(Q,body,api){
   }
   const zona=()=>({c1:Math.min(act.c,fin.c),c2:Math.max(act.c,fin.c),r1:Math.min(act.r,fin.r),r2:Math.max(act.r,fin.r)});
   const zonaTxt=()=>{const z=zona();return z.c1===z.c2&&z.r1===z.r2?adr(act.c,act.r):adr(z.c1,z.r1)+':'+adr(z.c2,z.r2)};
-  const salveaza=()=>{undo.push(JSON.stringify(RAW));if(undo.length>60)undo.shift();redo.length=0};
-  const incarca=s=>{Object.keys(RAW).forEach(k=>delete RAW[k]);Object.assign(RAW,JSON.parse(s))};
+  // Anulare (Undo) ține toată foaia, ca Excel: conținut + formatare + îmbinări + grafic
+  const instantaneu=()=>JSON.stringify({RAW,FMT,MERGE,GRAF});
+  const salveaza=()=>{undo.push(instantaneu());if(undo.length>60)undo.shift();redo.length=0};
+  const incarca=s=>{const o=JSON.parse(s);
+    Object.keys(RAW).forEach(k=>delete RAW[k]);Object.assign(RAW,o.RAW);
+    Object.keys(FMT).forEach(k=>delete FMT[k]);Object.assign(FMT,o.FMT);
+    MERGE.length=0;MERGE.push(...o.MERGE);GRAF=o.GRAF};
+  function anuleaza(){if(ed)termina(null);if(!undo.length)return;redo.push(instantaneu());incarca(undo.pop());gest.add('undo');meniu=null;draw()}
+  function reface(){if(ed)termina(null);if(!redo.length)return;undo.push(instantaneu());incarca(redo.pop());gest.add('redo');meniu=null;draw()}
 
   // ---------------- desenarea ----------------
   function modAcum(){if(!ed)return 'gata';if(ed.pt||asteaptaAdresa())return 'point';return ed.mode}
@@ -249,7 +260,7 @@ function render(Q,body,api){
       <button type="button" data-mod="ro" class="${mod==='ro'?'on':''}" title="Windows în română: ; între părți, virgulă la zecimale">RO ( ; și 12,5 )</button>
       <button type="button" data-mod="en" class="${mod==='en'?'on':''}" title="Windows în engleză: , între părți, punct la zecimale">EN ( , și 12.5 )</button>
       <button type="button" data-copiaza="1" title="Copiază foaia, ca s-o lipești în Excel sau Google Sheets">📋 Copiază tabelul</button></span></div>
-      ${panglica?ribbonHtml():''}
+      ${panglica?ribbonHtml():`<div class="rb"><div class="tabs">${qatHtml()}</div></div>`}
       <div class="fx"><div class="nb" aria-label="Caseta de nume (Name Box)">${esc(nume)}</div><div class="fxl">fx</div>
       <input class="fxi" id="xfx" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Bara de formule" value="${esc(ed?curent:(RAW[a]??''))}">
       ${popHtml()}</div>
@@ -285,6 +296,8 @@ function render(Q,body,api){
     if(f.al||mg)st.push('text-align:'+(mg?'center':f.al));
     if(f.bd)st.push('border:1.5px solid var(--ink)');
     return st.length?` style="${st.join(';')}"`:''}
+  // Bara de instrumente Acces rapid (Quick Access Toolbar): Anulare / Refacere, gri când nu ai ce anula
+  function qatHtml(){return `<span class="qat" role="group" aria-label="Acces rapid (Quick Access)"><button type="button" data-ud="undo" title="Anulare (Undo) · Ctrl+Z" aria-label="Anulare (Undo)" ${undo.length?'':'disabled'}>↶</button><button type="button" data-ud="redo" title="Refacere (Redo) · Ctrl+Y" aria-label="Refacere (Redo)" ${redo.length?'':'disabled'}>↷</button></span>`}
   function ribbonHtml(){
     const T=[['home','Pornire (Home)'],['insert','Inserare (Insert)'],['data','Date (Data)']];
     let g='';
@@ -299,12 +312,13 @@ function render(Q,body,api){
       <span class="sep"></span><button data-rb="sum" title="Însumare automată (AutoSum)">Σ AutoSum</button>`;
     if(tab==='insert')g=`<span>Grafic din zona selectată:</span><button data-gr="column" title="Diagramă cu coloane (Column Chart)">📊 Coloane (Column)</button><button data-gr="line" title="Diagramă linie (Line Chart)">📈 Linie (Line)</button><button data-gr="pie" title="Diagramă radială (Pie Chart)">◔ Radială (Pie)</button>`;
     if(tab==='data')g=`<button data-so="asc" title="Sortare de la A la Z / de la mic la mare (Sort A to Z)">A→Z ↓</button><button data-so="desc" title="Sortare de la Z la A / de la mare la mic (Sort Z to A)">Z→A ↓</button><button data-so="dlg" title="Sortare particularizată (Custom Sort)">⇅ Sortare particularizată (Custom Sort)…</button>`;
-    return `<div class="rb"><div class="tabs">${T.map(([k,t])=>`<button data-tab="${k}" class="${tab===k?'on':''}">${t}</button>`).join('')}</div><div class="grup">${g}</div></div>`;
+    return `<div class="rb"><div class="tabs">${qatHtml()}${T.map(([k,t])=>`<button data-tab="${k}" class="${tab===k?'on':''}">${t}</button>`).join('')}</div><div class="grup">${g}</div></div>`;
   }
   function peZona(fn){const z=zona();for(let c=z.c1;c<=z.c2;c++)for(let r=z.r1;r<=z.r2;r++){const a=adr(c,r);FMT[a]=FMT[a]||{};fn(FMT[a],a)}}
   function toate(prop){const z=zona();for(let c=z.c1;c<=z.c2;c++)for(let r=z.r1;r<=z.r2;r++)if(!(FMT[adr(c,r)]||{})[prop])return false;return true}
   function aplica(k,v){
     gest.add('panglica');
+    if(k!=='sum')salveaza();   // AutoSum își salvează singur când se termină formula
     if(k==='b'||k==='i'||k==='u'){const on=!toate(k);peZona(f=>{if(on)f[k]=true;else delete f[k]})}
     else if(k==='fill'||k==='color'||k==='al'||k==='bd'){peZona(f=>{if(v)f[k]=v;else delete f[k]})}
     else if(k==='nf'){peZona(f=>{if(v)f.nf=v;else delete f.nf;delete f.dec})}
@@ -381,7 +395,7 @@ function render(Q,body,api){
     for(let c=z.c1+1;c<=z.c2;c++){const s={nume:antet?String(get(adr(c,z.r1))??''):'',v:[]};for(let r=r0;r<=z.r2;r++){let v;try{v=get(adr(c,r))}catch(e){v=0}s.v.push(typeof v==='number'?v:0)}serii.push(s)}
     if(!serii.length)return null;return{cat,serii}}
   function faGrafic(tip){const z=regiune();if(z.c2===z.c1){arataDlg('Graficul are nevoie de două coloane','Selectează o coloană cu etichete (nume) și măcar o coloană cu numere, de exemplu A1:B6.');return}
-    GRAF={tip,zona:adr(z.c1,z.r1)+':'+adr(z.c2,z.r2),titlu:'Titlul diagramei (Chart Title)'};gest.add('grafic');draw()}
+    salveaza();GRAF={tip,zona:adr(z.c1,z.r1)+':'+adr(z.c2,z.r2),titlu:'Titlul diagramei (Chart Title)'};gest.add('grafic');draw()}
 
   function popHtml(){
     if(!ed||!curent.startsWith('='))return '';
@@ -543,6 +557,8 @@ function render(Q,body,api){
     body.querySelectorAll('[data-mod]').forEach(b=>b.onclick=()=>{const vechi=mod;mod=b.dataset.mod;if(vechi!==mod)Object.keys(RAW).forEach(a=>{const v=convSetari(RAW[a],vechi);if(v!==null)RAW[a]=v});draw()});
     const cp=body.querySelector('[data-copiaza]');if(cp)cp.onclick=copiazaTabelul;
     const Q_=sel=>body.querySelectorAll(sel);
+    // un clic în panglică între două clicuri pe aceeași celulă NU face dublu-clic (ca în Excel)
+    Q_('.rb').forEach(r=>r.addEventListener('pointerdown',()=>{ultimClic=null}));
     Q_('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;meniu=null;draw()});
     Q_('[data-mn]').forEach(b=>b.onclick=()=>{meniu=meniu===b.dataset.mn?null:b.dataset.mn;draw()});
     Q_('[data-rb]').forEach(b=>b.onclick=()=>{if(ed)termina(null);aplica(b.dataset.rb)});
@@ -551,7 +567,8 @@ function render(Q,body,api){
     Q_('[data-bd]').forEach(b=>b.onclick=()=>aplica('bd',b.dataset.bd));
     Q_('[data-al]').forEach(b=>b.onclick=()=>aplica('al',b.dataset.al));
     Q_('[data-nf]').forEach(s=>{const f=FMT[adr(act.c,act.r)]||{};s.value=f.nf||'';s.onchange=()=>aplica('nf',s.value)});
-    Q_('[data-gr]').forEach(b=>b.onclick=()=>{if(b.dataset.gr==='sterge'){GRAF=null;draw()}else faGrafic(b.dataset.gr)});
+    Q_('[data-gr]').forEach(b=>b.onclick=()=>{if(b.dataset.gr==='sterge'){salveaza();GRAF=null;draw()}else faGrafic(b.dataset.gr)});
+    Q_('[data-ud]').forEach(b=>b.onclick=()=>{if(b.dataset.ud==='undo')anuleaza();else reface();gw().focus()});
     Q_('[data-gt]').forEach(x=>{x.addEventListener('input',()=>{if(GRAF)GRAF.titlu=x.value});x.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();gw().focus()}})});
     Q_('[data-so]').forEach(b=>b.onclick=()=>{const z=regiune();const antet=areAntet(z);
       // Excel: dacă ai selectat doar o parte dintr-un tabel (ex. o coloană) întreabă dacă extinde selecția
@@ -598,8 +615,8 @@ function render(Q,body,api){
         if(kk==='b'||kk==='i'||kk==='u'){ev.preventDefault();aplica(kk);return}
         if(kk==='c'||kk==='x'){ev.preventDefault();copiaza(kk==='x');return}
         if(kk==='v'){ev.preventDefault();lipeste();return}
-        if(kk==='z'){ev.preventDefault();if(undo.length){redo.push(JSON.stringify(RAW));incarca(undo.pop());draw()}return}
-        if(kk==='y'){ev.preventDefault();if(redo.length){undo.push(JSON.stringify(RAW));incarca(redo.pop());draw()}return}
+        if(kk==='z'){ev.preventDefault();anuleaza();return}
+        if(kk==='y'){ev.preventDefault();reface();return}
         if(kk==='a'){ev.preventDefault();act={c:0,r:0};fin={c:cols-1,r:rows-1};draw();return}
         if(k==='Home'){ev.preventDefault();act={c:0,r:0};fin={...act};draw();return}
         if(k==='End'){ev.preventDefault();let r2=0,c2=0;Object.keys(RAW).forEach(a=>{const p=pos(a);if(p&&RAW[a]!==''){r2=Math.max(r2,p.r);c2=Math.max(c2,p.c)}});act={c:c2,r:r2};fin={...act};draw();return}

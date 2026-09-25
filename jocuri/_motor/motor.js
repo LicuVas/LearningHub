@@ -52,8 +52,8 @@ function setHud(){
   }else hud.innerHTML=`<span class="nb">TOTAL</span><span class="fv">★ ${t.st}/${C.nivele.length*3} · ${t.xp} XP</span>`;
 }
 function shell(inner,tabs){
-  app.innerHTML=`<div class="book"><div class="banda" aria-hidden="true">${C.banda||''}</div><div class="foaie">${inner}</div>${tabs?`<div class="tabs" aria-hidden="true">${tabs}</div>`:''}</div>`;
-  setHud();setCrumbs();window.scrollTo({top:0});
+  app.innerHTML=`<div class="book"><div class="banda" aria-hidden="true">${C.banda||''}</div><div class="foaie">${inner}</div>${tabs?`<nav class="tabs" aria-label="Pașii nivelului">${tabs}</nav>`:''}</div>`;
+  setHud();setCrumbs();wireTabs();window.scrollTo({top:0});
 }
 /* breadcrumb: 🏠 LearningHub › Jocuri TIC › Clasa › Jocul [› Nivelul N]. Căile sunt relative la jocuri/<slug>/index.html. */
 function setCrumbs(){
@@ -71,12 +71,25 @@ function setCrumbs(){
 }
 /* „Nivelul 3 din 7”, „Nivelul final (7 din 7)” - elevii întreabă câte niveluri sunt */
 function nivelEticheta(i){const n=C.nivele.length,w=C.mod==='antrenament'?'Runda':'Nivelul';return C.nivele[i].final?`${w} finală (${i+1} din ${n})`.replace('Nivelul finală','Nivelul final'):`${w} ${i+1} din ${n}`}
+/* Bara de jos: pașii prin care ai trecut deja sunt butoane - te poți întoarce la ei (și înainte, până unde
+   ajunseseși). Un pas refăcut nu mai dă XP a doua oară (R.punctat), iar încercările greșite se țin minte
+   (R.atts), ca „du-te înapoi și revino” să nu șteargă greșelile. */
 function tabsFor(){
-  const Lv=C.nivele[R.li];
-  return `<span class="${R.phase==='read'?'now':'done'}">${Lv.bazin?'Pregătire':'Citire'}</span>`+Lv.qs.map((_,k)=>{
-    const cls=R.phase==='end'||(R.phase==='q'&&k<R.qi)?'done':(R.phase==='q'&&k===R.qi?'now':'');
-    return `<span class="${cls}">Î${k+1}</span>`}).join('');
+  const Lv=C.nivele[R.li],inNivel=R.phase!=='end';
+  const cit=Lv.bazin?'Pregătire':'Citire';
+  const t=inNivel&&R.phase!=='read'?`<button type="button" class="done" data-pas="citire" title="Înapoi la pagina de citit">${cit}</button>`
+    :`<span class="${R.phase==='read'?'now':'done'}">${cit}</span>`;
+  return t+Lv.qs.map((_,k)=>{
+    const acum=R.phase==='q'&&k===R.qi,vazut=k<=R.max;
+    const cls=R.phase==='end'||R.punctat[k]?'done':(acum?'now':'');
+    if(inNivel&&vazut&&!acum)return `<button type="button" class="${cls}" data-pas="${k}" title="Mergi la întrebarea ${k+1}">Î${k+1}</button>`;
+    return `<span class="${cls}${acum?' now':''}">Î${k+1}</span>`}).join('');
 }
+function mergiLa(k){
+  if(k==='citire'){R.phase='read';readPage();return}
+  R.qi=Number(k);R.phase='q';question();
+}
+function wireTabs(){app.querySelectorAll('.tabs [data-pas]').forEach(b=>b.onclick=()=>mergiLa(b.dataset.pas))}
 
 /* ---------------- cuprins ---------------- */
 function home(){
@@ -151,7 +164,7 @@ function marcheazaVazut(i,pick){
 function startLevel(i){
   const Lv=C.nivele[i];let pick=null;
   if(Lv.bazin){const t=trage(Lv,i);Lv.qs=t.qs;pick=t.pick}
-  R={li:i,qi:0,xp:0,first:0,streak:0,phase:'read',pick};readPage();
+  R={li:i,qi:0,max:0,punctat:{},atts:{},xp:0,first:0,streak:0,phase:'read',pick};readPage();
 }
 function readPage(){
   const Lv=C.nivele[R.li];
@@ -167,10 +180,12 @@ function readPage(){
   document.getElementById('go').onclick=()=>{R.phase='q';question()};
 }
 function question(){
-  const Lv=C.nivele[R.li],Q=Lv.qs[R.qi];R.att=0;R.done=false;
+  const Lv=C.nivele[R.li],Q=Lv.qs[R.qi];R.att=R.atts[R.qi]||0;R.done=false;R.max=Math.max(R.max,R.qi);
   shell(`
     <div class="row" style="justify-content:space-between"><div class="eyebrow">${nivelEticheta(R.li)} · ${esc(Lv.t)}</div>
-    <button class="btn ghost sm" id="peekb" type="button" aria-expanded="false" ${Lv.text?'':'hidden'}>${Lv.bazin?'Amintește-ți':'Recitește pagina'}</button></div>
+    <span class="row" style="gap:6px"><button class="btn ghost sm" id="inapoi" type="button" title="${R.qi?`Înapoi la întrebarea ${R.qi}`:'Înapoi la pagina de citit'}">← Pasul anterior</button>
+    <button class="btn ghost sm" id="peekb" type="button" aria-expanded="false" ${Lv.text?'':'hidden'}>${Lv.bazin?'Amintește-ți':'Recitește pagina'}</button></span></div>
+    ${R.punctat[R.qi]?'<p class="hint" style="margin:6px 0 0">Refaci un pas deja rezolvat: exersezi, dar punctele le-ai primit deja.</p>':''}
     <div class="peek reading" id="peek" hidden>${Lv.text}</div>
     <div class="stack" style="margin-top:14px">
       <div class="q">${Q.q}</div>
@@ -178,6 +193,7 @@ function question(){
       <div id="fb" aria-live="polite"></div>
       <div class="row" id="nav"></div>
     </div>`,tabsFor());
+  document.getElementById('inapoi').onclick=()=>mergiLa(R.qi?R.qi-1:'citire');
   const pb=document.getElementById('peekb'),pk=document.getElementById('peek');
   pb.onclick=()=>{pk.hidden=!pk.hidden;pb.setAttribute('aria-expanded',String(!pk.hidden));pb.textContent=pk.hidden?(Lv.bazin?'Amintește-ți':'Recitește pagina'):'Ascunde'};
   const t=TIPURI[Q.t];
@@ -188,16 +204,22 @@ function feedback(kind,html){document.getElementById('fb').innerHTML=`<div class
 function resolve(correct,msg){
   const Q=C.nivele[R.li].qs[R.qi];
   if(R.done)return;
+  if(R.punctat[R.qi]){   // pas refăcut după „Pasul anterior”: doar exercițiu, fără XP a doua oară
+    if(correct){R.done=true;feedback('ok',`<strong>Corect!</strong> (punctele pentru pasul ăsta le-ai primit deja)<br>${Q.why}`);showNext()}
+    else{R.att++;feedback('bad',`<strong>Nu încă.</strong> ${msg||''}`)}
+    setHud();return;
+  }
   if(correct){
+    R.punctat[R.qi]=true;
     let pts=R.att===0?10:4;
     if(R.att===0){R.first++;R.streak++;if(R.streak>=3)pts+=2}else R.streak=0;
     R.xp+=pts;R.done=true;
     feedback('ok',`<strong>Corect! +${pts} XP${R.att===0&&R.streak>=3?' (cu bonus de serie)':''}</strong><br>${Q.why}`);
     showNext();
-  }else{R.att++;R.streak=0;feedback('bad',`<strong>Nu încă.</strong> ${msg||''}`)}
+  }else{R.att++;R.atts[R.qi]=R.att;R.streak=0;feedback('bad',`<strong>Nu încă.</strong> ${msg||''}`)}
   setHud();
 }
-function giveUp(html){const Q=C.nivele[R.li].qs[R.qi];R.done=true;R.streak=0;feedback('bad',`<strong>Răspunsul corect:</strong> ${html}<br>${Q.why}`);showNext();setHud()}
+function giveUp(html){const Q=C.nivele[R.li].qs[R.qi];R.done=true;if(!R.punctat[R.qi]){R.punctat[R.qi]=true;R.streak=0};feedback('bad',`<strong>Răspunsul corect:</strong> ${html}<br>${Q.why}`);showNext();setHud()}
 function showNext(){
   const last=R.qi===C.nivele[R.li].qs.length-1;
   document.getElementById('nav').innerHTML=`<button class="btn primary" id="next" type="button">${last?'Termină nivelul':'Mai departe →'}</button>`;
