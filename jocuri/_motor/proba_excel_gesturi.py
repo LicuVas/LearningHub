@@ -20,7 +20,7 @@ for s in (sys.stdout, sys.stderr):
         pass
 
 SITE = Path(__file__).resolve().parents[2]
-JOC = "excel-pas-cu-pas-viii"
+JOC = "_fixtura-excel"   # 26.09.2026: jocul real a fost rescris pe pași; proba lucrează pe o copie fixă (jocuri/_fixtura-excel)
 probleme = []
 
 
@@ -124,7 +124,8 @@ def main():
         cel("B2").click(); pg.keyboard.type("9"); pg.keyboard.press("Enter")
         pg.keyboard.type("7.5"); pg.keyboard.press("Enter")
         cls = cel("B3").get_attribute("class") or ""
-        verifica(" n" not in (" " + cls) and cel("B3").inner_text().strip() == "7.5", "setări RO: 7.5 cu punct rămâne TEXT, la stânga (ca în Excel)")
+        # 26.09.2026: în Excel RO punctul desparte ziua de lună -> 7.5 devine DATA 07.mai, la dreapta (nu text)
+        verifica(" n" in (" " + cls) and cel("B3").inner_text().strip() == "07.mai", "setări RO: 7.5 cu punct devine DATA „07.mai”, la dreapta (ca în Excel)")
         cel("B3").click(); pg.keyboard.type("7,5"); pg.keyboard.press("Enter")
         verifica(" n" in (" " + (cel("B3").get_attribute("class") or "")), "setări RO: 7,5 cu virgulă e NUMĂR, la dreapta")
         verifica(" n" in (" " + (cel("B2").get_attribute("class") or "")), "9 e număr, la dreapta")
