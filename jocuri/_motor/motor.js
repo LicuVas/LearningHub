@@ -102,7 +102,7 @@ function home(){
     <h1 style="margin-top:8px">${C.h1||esc(C.titlu)}</h1>
     <div class="lede">${C.intro}</div>
     <div class="ancora">${C.ancoraText?esc(C.ancoraText):`Programa: ${esc(C.competente.join(', '))} · unitatea ${esc(C.unitate)}${C.lectii?` · lecțiile ${esc(C.lectii)}`:''}`}</div>
-    ${(S.nume||Object.keys(S.lv).length)?`<div class="alt-elev"><span>Pe calculatorul ăsta s-a jucat ${S.nume?`<b>${esc(S.nume)}</b>`:'deja'}${Object.keys(S.lv).length?` (${Object.keys(S.lv).length} din ${C.nivele.length} ${C.mod==='antrenament'?'runde':'niveluri'})`:''}. Nu ești tu?</span><button class="btn" id="alt-elev" type="button">Sunt alt elev, încep de la zero</button></div>`:''}
+    <div id="cine-lucreaza"></div>
     <div class="namerow"><label for="nume">Numele tău, pentru diplomă</label><input id="nume" type="text" autocomplete="off" maxlength="40" value="${esc(S.nume)}" placeholder="ex. Ana Popescu"></div>
     <div class="toc-h">${C.mod==='antrenament'?`${C.nivele.length} runde · De bază → Consolidat → Avansat · întrebări noi la fiecare reluare`:`${C.nivele.length} niveluri · se deblochează pe rând · ultimul e nivelul final`}</div>
     <nav class="toc" aria-label="Nivelurile">${rows}</nav>
@@ -116,13 +116,27 @@ function home(){
   const dp=document.getElementById('dipl');if(dp)dp.onclick=diploma;
   const rs=document.getElementById('reset');
   if(rs)rs.onclick=()=>{if(rs.dataset.sure){S.lv={};save();home()}else{rs.dataset.sure=1;rs.textContent='Sigur? Apasă din nou'}};
-  /* LABORATOR (calculatoare comune): elevul următor pornește curat - fără numele și fără nivelurile
-     celui dinainte, altfel ar putea primi diploma altcuiva. Două apăsări, ca să nu șteargă din greșeală. */
-  const alt=document.getElementById('alt-elev');
-  // elev înscris: nu mai ștergem nimic - fiecare elev are progresul lui; întrebăm doar „Ești tot X?”
-  // („Nu” -> înscrierea altui elev -> pagina trece pe profilul lui). Neînscris: ca înainte, se golește jocul.
-  if(alt)alt.onclick=()=>{if(window.Prezenta&&window.Prezenta.identitate&&window.Prezenta.identitate()&&window.Prezenta.intreaba){window.Prezenta.intreaba();return}
-    if(alt.dataset.sure){S={nume:'',lv:{}};save();if(window.Prezenta)(window.Prezenta.intreaba||window.Prezenta.uita)();home();const n=document.getElementById('nume');if(n)n.focus()}else{alt.dataset.sure=1;alt.textContent='Sigur? Se șterge tot ce e mai sus - apasă din nou'}};
+  cineLucreaza();
+}
+/* CINE LUCREAZĂ (26.09.2026, el: „să permitem continuarea nivelurilor fără să mai ștergem progresul individual”).
+   Butonul vechi „Sunt alt elev, încep de la zero” ștergea progresul. Acum: elevul își alege numele din lista
+   calculatorului (prezenta.js) și fiecare continuă de unde a rămas; cu codul lui, și pe alt aparat. */
+function cineLucreaza(){
+  const el=document.getElementById('cine-lucreaza');if(!el||R)return;
+  const P=window.Prezenta,e=P&&P.identitate&&P.identitate(),n=Object.keys(S.lv).length;
+  const cat=n?` · ${n} din ${C.nivele.length} ${C.mod==='antrenament'?'runde':'niveluri'} făcute`:'';
+  if(e){
+    el.innerHTML=`<div class="alt-elev"><span>Lucrezi ca <b>${esc(e.nume)}</b> (${esc(e.clasa)})${cat}.${P.areCod&&!P.areCod()?' <br><small>Progresul tău e doar pe calculatorul ăsta.</small>':' <br><small>☁ Progresul tău te urmează pe orice calculator.</small>'}</span>
+      <span class="row" style="gap:6px">${P.areCod&&!P.areCod()?'<button class="btn" id="pastreaza" type="button">Păstrează-l online</button>':''}<button class="btn ghost" id="alt-elev" type="button">Nu ești tu? Alege-te din listă</button></span></div>`;
+  }else if(S.nume||n){
+    el.innerHTML=`<div class="alt-elev"><span>Pe calculatorul ăsta a lucrat ${S.nume?`<b>${esc(S.nume)}</b>`:'cineva'}${cat}. Nu ești tu?</span><button class="btn" id="alt-elev" type="button">${P?'Alege-te din listă sau înscrie-te':'Sunt alt elev, încep de la zero'}</button></div>`;
+  }else{el.innerHTML='';return}
+  const alt=document.getElementById('alt-elev'),ps=document.getElementById('pastreaza');
+  if(ps)ps.onclick=()=>P.cereCod();
+  alt.onclick=()=>{
+    if(window.Prezenta&&window.Prezenta.alege){window.Prezenta.alege();return}
+    // fără prezenta.js (offline): ca înainte, două apăsări și jocul pornește curat
+    if(alt.dataset.sure){S={nume:'',lv:{}};save();home();const nm=document.getElementById('nume');if(nm)nm.focus()}else{alt.dataset.sure=1;alt.textContent='Sigur? Se șterge tot ce e mai sus - apasă din nou'}};
 }
 
 /* ---------------- nivel ---------------- */
@@ -393,6 +407,7 @@ function endLevel(){
   if(C.nivele[R.li].bazin)marcheazaVazut(R.li,R.pick);
   const next=R.li+1<C.nivele.length;
   raporteaza({tip:'nivel',nivel:R.li+1,stele:S.lv[R.li].stars,max:3});
+  try{if(window.Prezenta&&window.Prezenta.salveaza)window.Prezenta.salveaza()}catch(x){}
   if(!prev&&C.nivele.every((_,i)=>S.lv[i]))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3});
   shell(`
     <div class="eyebrow">${nivelEticheta(R.li)} · terminat${(()=>{const rest=C.nivele.length-R.li-1,a=C.mod==='antrenament';return next?` · ${rest===1?(a?'mai e o rundă':'mai e un nivel'):`mai sunt ${rest} ${a?'runde':'niveluri'}`}`:` · ai terminat toate ${a?'rundele':'nivelurile'}`})()}</div>
@@ -579,8 +594,10 @@ function prezenta(){
     const facute=Object.keys(S.lv);if(!facute.length)return;
     facute.forEach(i=>raporteaza({tip:'nivel',nivel:+i+1,stele:S.lv[i].stars||0,max:3}));
     if(C.nivele.every((_,i)=>S.lv[i]))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3});};
-  addEventListener('prezenta',()=>{iaNumele();sincron()});
-  addEventListener('load',()=>{iaNumele();sincron()});
+  addEventListener('prezenta',()=>{iaNumele();sincron();cineLucreaza()});
+  addEventListener('load',()=>{iaNumele();sincron();cineLucreaza()});
+  // progres venit de pe alt aparat (prezenta.js l-a scris deja în localStorage): cuprinsul se redesenează
+  addEventListener('lh-progres',()=>{S=load();if(!R)home()});
 }
 /* jocul = numele FOLDERULUI (excel-viii), nu C.cheie: jurnalul și panoul fac legătura spre /jocuri/<folder>/ */
 const jocSlug=()=>{const m=location.pathname.match(/\/jocuri\/([a-z0-9_-]+)\//i);return m?m[1]:C.cheie};

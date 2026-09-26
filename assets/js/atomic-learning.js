@@ -553,22 +553,30 @@ const AtomicLearning = {
         const reia = document.createElement('button');
         reia.type = 'button';
         reia.className = 'ux-new-student';
-        reia.textContent = 'Sunt alt elev — încep lecția de la zero';
+        reia.textContent = 'Refă lecția de la zero';
         reia.style.cssText = 'margin:.4rem 0 0;padding:.35rem .7rem;font-size:.85rem;border:1px solid currentColor;border-radius:6px;background:transparent;color:inherit;opacity:.8;cursor:pointer';
         let armat = false;
         reia.addEventListener('click', function () {
             if (!armat) {
                 armat = true;
-                reia.textContent = 'Apasă din nou: se șterg răspunsurile de pe acest calculator';
-                setTimeout(function () { armat = false; reia.textContent = 'Sunt alt elev — încep lecția de la zero'; }, 6000);
+                reia.textContent = 'Apasă din nou: se șterg răspunsurile tale la lecția asta';
+                setTimeout(function () { armat = false; reia.textContent = 'Refă lecția de la zero'; }, 6000);
                 return;
             }
             // Evidența activității (prezenta.js): NU scoatem elevul (25.09.2026: copiii apasă butonul ca să refacă
             // lecția și ieșeau din evidență), ci întrebăm „Ești tot X?”; până la răspuns, totul se ține deoparte.
-            if (window.Prezenta) (window.Prezenta.intreaba || window.Prezenta.uita)();
             self.clearAllForThisLesson();
         });
         bara.appendChild(reia);
+        /* 26.09.2026: schimbarea elevului NU mai sterge nimic - lista elevilor calculatorului (prezenta.js).
+           „Refă lecția” sterge doar lecția elevului curent; „Nu ești tu?” trece pe sertarul altui elev. */
+        const altul = document.createElement('button');
+        altul.type = 'button';
+        altul.className = 'ux-new-student';
+        altul.textContent = 'Nu ești tu? Alege-te din listă';
+        altul.style.cssText = reia.style.cssText + ';margin-left:.4rem';
+        altul.addEventListener('click', function () { if (window.Prezenta && window.Prezenta.alege) window.Prezenta.alege(); });
+        bara.appendChild(altul);
 
         // --- butonul de inaintare
         const nav = document.createElement('div');
