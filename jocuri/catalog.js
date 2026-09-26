@@ -261,10 +261,10 @@ window.JOCURI_CATALOG = {
       {
        "slug": "word-vii",
        "titlu": "Misiunea Tehnoredactor",
-       "descriere": "Word: cursor, selecție, caractere, paragrafe, reguli de tehnoredactare și afișul clasei.",
+       "descriere": "Lecție-joc pentru clasa a VII-a: Word pas cu pas, de la fereastra aplicației la cursor, selecție, copiere și mutare, formatarea caracterelor și a paragrafelor, reguli de tehnoredactare și afișul clasei.",
        "unitate": "VII-U1",
        "accent": "#2F55D4",
-       "motor": false,
+       "motor": true,
        "mod": "invatare",
        "prima_lectie": 2
       },
@@ -353,7 +353,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "recapitulare-vii",
        "titlu": "Recapitulare: clasa a VII-a",
-       "descriere": "Recapitulare amestecată pentru clasa a VII-a: 218 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "descriere": "Recapitulare amestecată pentru clasa a VII-a: 221 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
        "unitate": "VII-R",
        "accent": "#5B3FA8",
        "motor": true,

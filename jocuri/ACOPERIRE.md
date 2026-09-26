@@ -342,38 +342,38 @@
 
 ## Clasa a VIII-a
 
-### VIII-U1 · Calcul tabelar — jocuri: excel-antrenament-viii, excel-viii
+### VIII-U1 · Calcul tabelar — jocuri: excel-antrenament-viii, excel-pas-cu-pas-viii, excel-viii
 
 | Lecția | Titlu | Acoperită de |
 |---|---|---|
-| 2 | Interfața aplicației de calcul tabelar. Structura unui registru (predare) | ✅ excel-antrenament-viii N1, excel-viii N1 |
+| 2 | Interfața aplicației de calcul tabelar. Structura unui registru (predare) | ✅ excel-antrenament-viii N1, excel-pas-cu-pas-viii N1, excel-viii N1 |
 | 3 | Operații cu registrul și cu foile de calcul (predare) | ✅ excel-antrenament-viii N1, excel-viii N1 |
-| 4 | Adresa de celulă. Selectare, copiere, mutare, ștergere (predare) | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-viii N2 |
-| 5 | Tipuri de date: numeric, text, dată calendaristică (predare) | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-viii N3 |
-| 6 | Formatarea rândurilor, a coloanelor și a celulelor (predare) | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-viii N4 |
-| 7 | Formule de calcul cu operatori aritmetici (predare) | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N5 |
-| 8 | Funcții: sumă, maxim, minim, medie aritmetică (predare) | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N6 |
-| 9 | Funcția de decizie. Rezolv o situație-problemă cu tabelul (predare) | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N6 |
-| 10 | Sortarea datelor după unul sau mai multe criterii (predare) | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N7 |
-| 11 | Grafice: tipuri de grafice și serii de date (predare) | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N8 |
-| 12 | Mini-proiect: produs informatic cu tabel, formule și grafic (consolidare (mini-proiect)) | ✅ excel-antrenament-viii N3, excel-viii N8 |
+| 4 | Adresa de celulă. Selectare, copiere, mutare, ștergere (predare) | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-pas-cu-pas-viii N2, excel-pas-cu-pas-viii N5, excel-viii N2 |
+| 5 | Tipuri de date: numeric, text, dată calendaristică (predare) | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-pas-cu-pas-viii N2, excel-viii N3 |
+| 6 | Formatarea rândurilor, a coloanelor și a celulelor (predare) | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-pas-cu-pas-viii N3, excel-viii N4 |
+| 7 | Formule de calcul cu operatori aritmetici (predare) | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-antrenament-viii N3, excel-pas-cu-pas-viii N4, excel-pas-cu-pas-viii N5, excel-pas-cu-pas-viii N7, excel-pas-cu-pas-viii N11, excel-pas-cu-pas-viii N12, excel-viii N5 |
+| 8 | Funcții: sumă, maxim, minim, medie aritmetică (predare) | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-pas-cu-pas-viii N6, excel-pas-cu-pas-viii N7, excel-pas-cu-pas-viii N11, excel-pas-cu-pas-viii N12, excel-viii N6 |
+| 9 | Funcția de decizie. Rezolv o situație-problemă cu tabelul (predare) | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-pas-cu-pas-viii N8, excel-pas-cu-pas-viii N11, excel-viii N6 |
+| 10 | Sortarea datelor după unul sau mai multe criterii (predare) | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-pas-cu-pas-viii N9, excel-viii N7 |
+| 11 | Grafice: tipuri de grafice și serii de date (predare) | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-pas-cu-pas-viii N10, excel-viii N8 |
+| 12 | Mini-proiect: produs informatic cu tabel, formule și grafic (consolidare (mini-proiect)) | ✅ excel-antrenament-viii N3, excel-pas-cu-pas-viii N10, excel-viii N8 |
 | 13 | Evaluare sumativă: calcul tabelar (evaluare sumativă) | — |
 
 | Conținut din programă | Acoperit de |
 |---|---|
-| Elemente de interfaţă ale unei aplicaţii de calcul tabelar *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-viii N1 |
-| Structura unui registru de calcul (foaie de calcul, coloană, rând, celulă, adresă de celulă) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-viii N1, excel-viii N2 |
+| Elemente de interfaţă ale unei aplicaţii de calcul tabelar *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-pas-cu-pas-viii N1, excel-viii N1 |
+| Structura unui registru de calcul (foaie de calcul, coloană, rând, celulă, adresă de celulă) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-pas-cu-pas-viii N1, excel-viii N1, excel-viii N2 |
 | Operații cu un registru de calcul (deschidere, închidere, salvare, creare) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-viii N1 |
 | Operații cu foi de calcul (accesare, redenumire) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-viii N1 |
-| Operaţii de editare (selectare, copiere, mutare, ştergere) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-viii N2 |
-| Operații de formatare a rândurilor/coloanelor *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-viii N4 |
-| Operații de formatare a celulelor (aliniere conținut, borduri, culori de umplere, stiluri predefinite) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-viii N4 |
-| Tipuri de date: numeric, text, dată calendaristică *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-viii N3 |
-| Sortarea crescătoare/descrescătoare a datelor dintr-un tabel după unul sau mai multe criterii *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N7 |
-| Formule de calcul care utilizează operatori aritmetici (+, -,*, /) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N5, excel-viii N8 |
-| Funcții specifice aplicaţiei de calcul tabelar pentru sumă, maxim, minim, medie aritmetică şi decizie *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N6, excel-viii N8 |
-| Grafice: tipuri de grafice *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-viii N8 |
-| Serii de date *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-viii N8 |
+| Operaţii de editare (selectare, copiere, mutare, ştergere) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-pas-cu-pas-viii N2, excel-pas-cu-pas-viii N5, excel-pas-cu-pas-viii N11, excel-pas-cu-pas-viii N12, excel-viii N2 |
+| Operații de formatare a rândurilor/coloanelor *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-pas-cu-pas-viii N3, excel-viii N4 |
+| Operații de formatare a celulelor (aliniere conținut, borduri, culori de umplere, stiluri predefinite) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-pas-cu-pas-viii N3, excel-viii N4 |
+| Tipuri de date: numeric, text, dată calendaristică *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-pas-cu-pas-viii N2, excel-viii N3 |
+| Sortarea crescătoare/descrescătoare a datelor dintr-un tabel după unul sau mai multe criterii *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-pas-cu-pas-viii N9, excel-viii N7 |
+| Formule de calcul care utilizează operatori aritmetici (+, -,*, /) *(Calcul tabelar)* | ✅ excel-antrenament-viii N1, excel-antrenament-viii N2, excel-antrenament-viii N3, excel-pas-cu-pas-viii N4, excel-pas-cu-pas-viii N5, excel-pas-cu-pas-viii N7, excel-pas-cu-pas-viii N11, excel-pas-cu-pas-viii N12, excel-viii N5, excel-viii N8 |
+| Funcții specifice aplicaţiei de calcul tabelar pentru sumă, maxim, minim, medie aritmetică şi decizie *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-pas-cu-pas-viii N6, excel-pas-cu-pas-viii N7, excel-pas-cu-pas-viii N8, excel-pas-cu-pas-viii N11, excel-viii N6, excel-viii N8 |
+| Grafice: tipuri de grafice *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-antrenament-viii N3, excel-pas-cu-pas-viii N10, excel-viii N8 |
+| Serii de date *(Calcul tabelar)* | ✅ excel-antrenament-viii N2, excel-pas-cu-pas-viii N10, excel-viii N8 |
 
 ### VIII-U2 · Pagini web — jocuri: web-viii
 
@@ -419,3 +419,8 @@
 | Șir de valori (noțiuni introductive) *(Algoritmi)* | ✅ siruri-viii N1 |
 | Operații cu șiruri de valori: citire, afişare, parcurgere *(Algoritmi)* | ✅ siruri-viii N2, siruri-viii N7, siruri-viii N8 |
 | Algoritmi de bază pentru șiruri de valori: numărare, sumă /produs, minim/maxim, verificare a unei proprietăți. *(Algoritmi)* | ✅ siruri-viii N3, siruri-viii N4, siruri-viii N5, siruri-viii N6, siruri-viii N7, siruri-viii N8 |
+
+## Declarații de verificat
+
+- diploma: joc fără motor și fără acoperire.json - acoperirea lui e NEDECLARATĂ
+- ghiduri: joc fără motor și fără acoperire.json - acoperirea lui e NEDECLARATĂ
