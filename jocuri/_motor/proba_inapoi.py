@@ -62,11 +62,11 @@ with sync_playwright() as p:
     verifica(raspunde(pg), "Î1 rezolvată")
     xp1 = xp(pg)
     pg.click("#next")
-    verifica("Întrebarea 2" in hud(pg), f"am ajuns la Î2 ({hud(pg)!r})")
+    verifica(re.search(r"(Întrebarea|Verificarea) 2", hud(pg)), f"am ajuns la Î2 ({hud(pg)!r})")
 
     # 2. „← Pasul anterior” -> Î1, refăcută fără XP în plus
     pg.click("#inapoi")
-    verifica("Întrebarea 1" in hud(pg), "butonul Pasul anterior duce la Î1")
+    verifica(re.search(r"(Întrebarea|Verificarea) 1 ", hud(pg)), "butonul Pasul anterior duce la Î1")
     verifica(pg.get_by_text("Refaci un pas deja rezolvat").count() > 0, "Î1 spune că e pas refăcut")
     verifica(raspunde(pg), "Î1 refăcută e acceptată")
     verifica("deja" in pg.locator("#fb").inner_text(), "mesajul spune că punctele le-a primit deja")
@@ -75,12 +75,12 @@ with sync_playwright() as p:
     # 3. bara de jos: Î2 e buton (vizitată), Î3 nu (nevizitată); Citire e buton
     verifica(pg.locator('.tabs button[data-pas="1"]').count() == 1, "Î2 din bară se poate apăsa")
     verifica(pg.locator('.tabs button[data-pas="2"]').count() == 0, "Î3 (nevizitată) NU se poate apăsa")
-    pg.click('.tabs button[data-pas="citire"]')
+    pg.click('.tabs button[data-pas="citire"], .tabs button[data-pas="p0"]')
     verifica(pg.locator("#go").count() == 1, "Citire din bară deschide pagina de citit")
     pg.click("#go")
-    verifica("Întrebarea 1" in hud(pg), "din pagina de citit revin unde eram (Î1)")
+    verifica(re.search(r"(Întrebarea|Verificarea) 1 ", hud(pg)), "din pagina de citit revin unde eram (Î1)")
     pg.click('.tabs button[data-pas="1"]')
-    verifica("Întrebarea 2" in hud(pg), "Î2 din bară duce la Î2")
+    verifica(re.search(r"(Întrebarea|Verificarea) 2", hud(pg)), "Î2 din bară duce la Î2")
 
     # 4. anti-truc: greșesc la Î2, plec înapoi și revin -> nu mai primesc 10 XP de „prima încercare”
     are_gresit = pg.evaluate("JocMotor.test.gresit()")

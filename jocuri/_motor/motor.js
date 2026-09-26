@@ -229,9 +229,9 @@ function learnPage(){
     </div>`,tabsFor());
   const af=document.getElementById('altfel');
   if(af)af.onclick=()=>{const t=document.getElementById('altfel-t');t.hidden=!t.hidden;af.setAttribute('aria-expanded',String(!t.hidden));af.textContent=t.hidden?'Nu am înțeles — explică-mi altfel':'Ascunde explicația'};
-  document.getElementById('go').onclick=()=>{R.mode='test';R.qi=0;R.phase='q';question()};
+  document.getElementById('go').onclick=()=>{R.mode='test';R.phase='q';question()};
   document.getElementById('pas-prev').onclick=()=>{if(R.si){R.si--;learnPage()}else home()};
-  document.getElementById('pas-next').onclick=()=>{R.mode='test';if(!ultim){R.si++;learnPage()}else if(Lv.atelier){R.phase='atelier';atelierPage()}else{R.qi=0;R.phase='q';question()}};
+  document.getElementById('pas-next').onclick=()=>{R.mode='test';if(!ultim){R.si++;learnPage()}else if(Lv.atelier){R.phase='atelier';atelierPage()}else{R.phase='q';question()}};
   if(ex.length)renderPractice(ex,'p'+R.si);
 }
 function practiceList(P){return [P.incearca].concat(P.inca||[]).filter(Boolean)}
@@ -268,7 +268,7 @@ function atelierPage(){
       <button class="btn primary" id="go" type="button">La verificare →</button>
     </div>`,tabsFor());
   document.getElementById('pas-prev').onclick=()=>{R.si=Lv.pasi.length-1;R.phase='learn';learnPage()};
-  document.getElementById('go').onclick=()=>{R.mode='test';R.qi=0;R.phase='q';question()};
+  document.getElementById('go').onclick=()=>{R.mode='test';R.phase='q';question()};
   renderPractice([A].concat(A.inca||[]),'atelier');
 }
 function readPage(){

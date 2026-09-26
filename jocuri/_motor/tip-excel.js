@@ -252,10 +252,22 @@ function render(Q,body,api){
   const CULORI_TEXT={rosu:'#C00000',albastru:'#1F4E79',verde:'#375623'};
 
   function fmtNum(v){if(!isFinite(v))return String(v);let s=Number.isInteger(v)?String(v):String(Math.round(v*1e10)/1e10);return mod==='ro'?s.replace('.',','):s}
+  /* DATA pe setări românești (26.09.2026, prins de recenzia jocurilor): în Excel RO punctul desparte ziua de lună,
+     deci „7.5” NU rămâne text — devine data 7 mai (se vede „07.mai”, la dreapta). Valoarea e numărul-serial al zilei,
+     ca în Excel (zile de la 30.12.1899). */
+  const LUNI=['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
+  function dataRo(raw){
+    if(mod!=='ro'||typeof raw!=='string')return null;
+    const m=raw.trim().match(/^(\d{1,2})\.(\d{1,2})(?:\.(\d{2}|\d{4}))?$/);if(!m)return null;
+    const d=+m[1],l=+m[2];let y=m[3]?+m[3]:new Date().getFullYear();if(m[3]&&m[3].length===2)y+=y<30?2000:1900;
+    const t=Date.UTC(y,l-1,d),o=new Date(t);if(o.getUTCMonth()!==l-1||o.getUTCDate()!==d)return null;
+    return {serial:Math.round((t-Date.UTC(1899,11,30))/864e5),t:m[3]?`${String(d).padStart(2,'0')}.${String(l).padStart(2,'0')}.${y}`:`${String(d).padStart(2,'0')}.${LUNI[l-1]}`};
+  }
   function valoareScrisa(raw){
     if(raw==null||raw==='')return '';
     if(typeof raw==='number')return raw;
     if(raw.startsWith('='))return raw;
+    const dt=dataRo(raw);if(dt)return dt.serial;
     const re=mod==='ro'?/^\s*-?\d+(,\d+)?\s*%?\s*$/:/^\s*-?\d+(\.\d+)?\s*%?\s*$/;
     if(re.test(raw)){const p=raw.includes('%');const n=Number(raw.replace('%','').replace(',','.').trim());return p?n/100:n}
     return raw;
@@ -280,7 +292,8 @@ function render(Q,body,api){
   }
   function afisat(a){
     const raw=RAW[a];if(raw==null||raw==='')return{t:'',k:''};
-    try{const v=valori()(a);
+    try{const v=valori()(a);const dt=dataRo(raw);
+      if(dt&&!(FMT[a]&&(FMT[a].nf||FMT[a].dec!=null)))return{t:dt.t,k:'n'};
       if(typeof v==='number')return{t:FMT[a]&&(FMT[a].nf||FMT[a].dec!=null)?fmtFormat(v,FMT[a]):fmtNum(v),k:'n'};
       if(typeof v==='boolean')return{t:v?'TRUE':'FALSE',k:'e'};
       return{t:String(v),k:''}}
@@ -723,7 +736,7 @@ function render(Q,body,api){
     if(V.zona&&zonaTxt()!==V.zona)out.push(`Zona selectată e ${zonaTxt()}, nu ${V.zona}. Apasă pe primul colț și trage până la celălalt.`);
     const get=valori();
     Object.entries(V.valori||{}).forEach(([a,exp])=>{let v;try{v=get(a)}catch(e){v=null}
-      if(typeof exp==='number'){if(typeof v!=='number'||Math.abs(v-exp)>1e-9)out.push(typeof v==='string'&&v!==''?`În ${a} ai scris „${v}”, dar Excel l-a luat ca TEXT (se vede la stânga). Pe setările ${mod.toUpperCase()} zecimalele se scriu cu ${mod==='ro'?'virgulă: '+fmtNum(exp):'punct: '+String(exp)}.`:`În ${a} trebuie numărul ${fmtNum(exp)}.`)}
+      if(typeof exp==='number'){if(typeof v!=='number'||Math.abs(v-exp)>1e-9)out.push(dataRo(RAW[a])?`În ${a} ai scris „${RAW[a]}”, iar Excel a făcut din el o DATĂ (${dataRo(RAW[a]).t}): pe setări românești punctul desparte ziua de lună. Zecimalele se scriu cu virgulă: ${fmtNum(exp)}.`:typeof v==='string'&&v!==''?`În ${a} ai scris „${v}”, dar Excel l-a luat ca TEXT (se vede la stânga). Pe setările ${mod.toUpperCase()} zecimalele se scriu cu ${mod==='ro'?'virgulă: '+fmtNum(exp):'punct: '+String(exp)}.`:`În ${a} trebuie numărul ${fmtNum(exp)}.`)}
       else if(String(v??'').trim().toLowerCase()!==String(exp).toLowerCase())out.push(`În ${a} trebuie scris „${exp}”.`)});
     (V.gol||[]).forEach(a=>{if(RAW[a]!=null&&RAW[a]!=='')out.push(`${a} nu e goală încă. Alege-o și apasă Delete.`)});
     const tinte=Object.assign({},V.formule||{});

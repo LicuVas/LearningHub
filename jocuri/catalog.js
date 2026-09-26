@@ -1,6 +1,6 @@
 /* GENERAT de _motor/catalog_build.py - nu edita de mână */
 window.JOCURI_CATALOG = {
- "generat": "2026-09-25",
+ "generat": "2026-09-26",
  "sursa": "Info_Gimnaziu_2026/data/unitati.json",
  "clase": [
   {
@@ -61,7 +61,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "documentare-v",
        "titlu": "Misiunea Documentare",
-       "descriere": "Lecție-joc pentru clasa a V-a: serviciile Internetului, navigarea, căutarea cu motoare de căutare, salvarea informațiilor, drepturile de autor și credibilitatea surselor.",
+       "descriere": "Lecție-joc pentru clasa a V-a: serviciile Internetului, navigarea, căutarea cu motoare de căutare, salvarea informațiilor, drepturile de autor și credibilitatea surselor, pas cu pas, cu un browser simulat.",
        "unitate": "V-U3",
        "accent": "#136B66",
        "motor": true,
@@ -79,7 +79,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "grafica-v",
        "titlu": "Misiunea Pixel",
-       "descriere": "Lecție-joc pentru clasa a V-a: editorul grafic, crearea și salvarea imaginilor, instrumente de desenare, selecție, redimensionare, trunchiere, rotație, panoramare, culori, umplere și text.",
+       "descriere": "Lecție-joc pentru clasa a V-a: editorul grafic, crearea și salvarea imaginilor, instrumente de desenare, selecție, redimensionare, trunchiere, rotație, panoramare, culori, umplere și text — pas cu pas, cu un Paint simulat.",
        "unitate": "V-U4",
        "accent": "#2649B5",
        "motor": true,
@@ -97,7 +97,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "algoritmi-v",
        "titlu": "Misiunea Pas cu Pas",
-       "descriere": "Lecție-joc pentru clasa a V-a: ce este un algoritm, proprietățile lui, datele de intrare, de ieșire și de manevră, constante și variabile, expresii, structura secvențială și structura alternativă, în limbaj natural.",
+       "descriere": "Lecție-joc pentru clasa a V-a: ce este un algoritm, proprietățile lui, datele de intrare, de ieșire și de manevră, constante și variabile, expresii, structura secvențială și structura alternativă, în limbaj natural și în Scratch, pas cu pas, cu tabel de urmărire.",
        "unitate": "V-U5",
        "accent": "#3A48B8",
        "motor": true,
@@ -115,7 +115,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "scratch-v",
        "titlu": "Misiunea Scenă",
-       "descriere": "Lecție-joc pentru clasa a V-a: mediul grafic interactiv Scratch, interfața, categoriile de blocuri, structura secvențială și structura alternativă cu blocuri, evenimente, atingeri și un mini-joc.",
+       "descriere": "Lecție-joc pentru clasa a V-a: mediul grafic interactiv Scratch, pas cu pas, de la zero. Interfața, categoriile de blocuri, structura secvențială și structura alternativă cu blocuri, evenimente, atingeri și un mini-joc, cu un Scratch simulat în care construiești și rulezi scripturi.",
        "unitate": "V-U6",
        "accent": "#6D3FC0",
        "motor": true,
@@ -133,7 +133,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "recapitulare-v",
        "titlu": "Recapitulare: clasa a V-a",
-       "descriere": "Recapitulare amestecată pentru clasa a V-a: 243 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "descriere": "Recapitulare amestecată pentru clasa a V-a: 255 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
        "unitate": "V-R",
        "accent": "#8A5A00",
        "motor": true,
@@ -184,7 +184,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "internet-vi",
        "titlu": "Misiunea Mesaj Sigur",
-       "descriere": "Lecție-joc pentru clasa a VI-a: antivirus, parole și date personale, e-mail, răspuns și redirecționare, netichetă și semnele unui mesaj-capcană.",
+       "descriere": "Lecție-joc pentru clasa a VI-a, pe pași: antivirus, parole și date personale, adresa de e-mail, răspuns și redirecționare, dosare și netichetă, mesajul-capcană — cu o cutie poștală simulată în care exersezi.",
        "unitate": "VI-U2",
        "accent": "#8A2F6E",
        "motor": true,
@@ -202,7 +202,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "algoritmi-vi",
        "titlu": "Misiunea Buclă",
-       "descriere": "Lecție-joc pentru clasa a VI-a: structurile repetitive cu contor, condiționată anterior și condiționată posterior, în pseudocod, în aplicația de exersare și în schema logică, cu probleme de sume, numărări și cifre.",
+       "descriere": "Lecție-joc pentru clasa a VI-a: structurile repetitive cu contor, condiționată anterior și condiționată posterior, învățate pas cu pas, exersate într-un editor de blocuri ca Scratch și în tabelul de urmărire, cu probleme de sume, numărări și cifre.",
        "unitate": "VI-U3",
        "accent": "#A24A0A",
        "motor": true,
@@ -220,7 +220,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "animatii-3d-vi",
        "titlu": "Misiunea Cadru",
-       "descriere": "Lecție-joc pentru clasa a VI-a: animații grafice în Scratch (interfață, gestionare, scenariu, cadre, proprietăți, mișcare, temporizare, sunet, control de la tastatură) și primele modele 3D.",
+       "descriere": "Lecție-joc pentru clasa a VI-a, pe pași: animații grafice în Scratch (interfață, gestionare, scenariu, cadre, proprietăți, mișcare, temporizare, sunet, control de la tastatură) și primele modele 3D, cu scena și scripturile simulate.",
        "unitate": "VI-U4",
        "accent": "#0B6873",
        "motor": true,
@@ -238,7 +238,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "recapitulare-vi",
        "titlu": "Recapitulare: clasa a VI-a",
-       "descriere": "Recapitulare amestecată pentru clasa a VI-a: 190 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "descriere": "Recapitulare amestecată pentru clasa a VI-a: 201 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
        "unitate": "VI-R",
        "accent": "#0E6E6E",
        "motor": true,
@@ -299,7 +299,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "audio-video-vii",
        "titlu": "Misiunea Reporter",
-       "descriere": "Lecție-joc pentru clasa a VII-a: linia de timp, înregistrarea, formatele audio și video, tăierea, mixajul, tranzițiile, genericele și exportul unui interviu.",
+       "descriere": "Lecție-joc pentru clasa a VII-a, pas cu pas: linia de timp, proiectul și înregistrarea, formatele audio și video, tăierea, mixajul, tranzițiile, genericele și exportul unui interviu.",
        "unitate": "VII-U2",
        "accent": "#6B3FD4",
        "motor": true,
@@ -335,7 +335,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "program-vii",
        "titlu": "Misiunea Compilator",
-       "descriere": "Lecție-joc pentru clasa a VII-a: de la algoritm la program în C++, analiza enunțului, mediul de programare, vocabularul, datele numerice, citirea și afișarea, structurile liniară, alternativă și repetitive, cifrele unui număr, divizibilitatea și depanarea.",
+       "descriere": "Lecție-joc pentru clasa a VII-a, pas cu pas: de la enunț la programul C++ în Code::Blocks. Analiza enunțului, mediul de programare, variabile, citire și afișare, structurile liniară, alternativă și repetitive, cifrele unui număr, divizibilitatea și depanarea, cu un mic Code::Blocks în pagină și teste.",
        "unitate": "VII-U4",
        "accent": "#1F7A4D",
        "motor": true,
@@ -353,7 +353,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "recapitulare-vii",
        "titlu": "Recapitulare: clasa a VII-a",
-       "descriere": "Recapitulare amestecată pentru clasa a VII-a: 210 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "descriere": "Recapitulare amestecată pentru clasa a VII-a: 218 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
        "unitate": "VII-R",
        "accent": "#5B3FA8",
        "motor": true,
@@ -374,6 +374,16 @@ window.JOCURI_CATALOG = {
      "lectii": "2–13",
      "jocuri": [
       {
+       "slug": "excel-pas-cu-pas-viii",
+       "titlu": "Excel pas cu pas",
+       "descriere": "Excel pas cu pas: de la prima celulă la grafice, pe pași mici, cu exemple, exerciții și o foaie care se poartă ca Excel-ul adevărat.",
+       "unitate": "VIII-U1",
+       "accent": "#1B7443",
+       "motor": true,
+       "mod": "invatare",
+       "prima_lectie": 2
+      },
+      {
        "slug": "excel-viii",
        "titlu": "Misiunea Analist",
        "descriere": "Excel: interfața și registrul, editare, tipuri de date, formatare, formule adevărate, funcții, IF, sortare și grafice.",
@@ -382,16 +392,6 @@ window.JOCURI_CATALOG = {
        "motor": true,
        "mod": "invatare",
        "prima_lectie": 2
-      },
-      {
-       "slug": "excel-pas-cu-pas-viii",
-       "titlu": "Excel pas cu pas",
-       "descriere": "Excel pas cu pas: celule, date, formule cu adrese, tras de colț, funcții, adrese fixe și IF, într-o foaie care se poartă ca Excel-ul adevărat.",
-       "unitate": "VIII-U1",
-       "accent": "#1B7443",
-       "motor": true,
-       "mod": "invatare",
-       "prima_lectie": 999
       },
       {
        "slug": "excel-antrenament-viii",
@@ -432,7 +432,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "siruri-viii",
        "titlu": "Misiunea Șirul",
-       "descriere": "Lecție-joc pentru clasa a VIII-a: șiruri de valori în C++, citire, afișare și parcurgere, algoritmii de numărare, sumă, produs, minim, maxim și verificarea unei proprietăți, testare și depanare.",
+       "descriere": "Lecție-joc pentru clasa a VIII-a: șiruri de valori în C++, pas cu pas de la zero: citire, afișare și parcurgere, algoritmii de numărare, sumă, produs, minim, maxim și verificarea unei proprietăți, testare și depanare, cu urmărirea variabilelor ca în Code::Blocks.",
        "unitate": "VIII-U3",
        "accent": "#B4432A",
        "motor": true,
@@ -450,7 +450,7 @@ window.JOCURI_CATALOG = {
       {
        "slug": "recapitulare-viii",
        "titlu": "Recapitulare: clasa a VIII-a",
-       "descriere": "Recapitulare amestecată pentru clasa a VIII-a: 165 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
+       "descriere": "Recapitulare amestecată pentru clasa a VIII-a: 214 de întrebări luate din jocurile clasei, trase la întâmplare la fiecare reluare.",
        "unitate": "VIII-R",
        "accent": "#9C2F2F",
        "motor": true,
