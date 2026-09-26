@@ -37,7 +37,7 @@ JOCURI = RAD / "jocuri"
 HARTA = JOCURI / "_motor" / "prerechizite.json"
 
 sys.path.insert(0, r"C:/00/AI_0/tools/plimbare/oracol")
-from oracol_novice import _regex_termen, _regex_definitie  # noqa: E402  (aceleași forme românești ca la plimbare)
+from oracol_novice import _regex_termen, _regex_definitie, _forme_termen  # noqa: E402  (aceleași forme românești ca la plimbare)
 
 RE_BOLD = re.compile(r"<(b|strong)\b[^>]*>(.*?)</\1\s*>", re.I | re.S)
 # și <pre>: formulele și codul lucrat stau adesea în blocuri <pre> (găsit de bucla 26.09: IF predat în <pre>, raportat nepredat)
@@ -68,7 +68,10 @@ def e_termen(t: str) -> bool:
 
 def fraza(text_plain: str, termen: str) -> str:
     """propoziția care conține termenul — amintirea arătată elevului"""
-    i = text_plain.lower().find(termen.lower())
+    # cuvânt întreg, întâi cu literele exacte: „NU” nu se găsește în „Operatori, … zona …” (bucla 26.09, T1)
+    m = (re.search(rf"(?<!\w){re.escape(termen)}(?!\w)", text_plain)
+         or re.search(rf"(?<!\w){re.escape(termen)}(?!\w)", text_plain, re.I))
+    i = m.start() if m else text_plain.lower().find(termen.lower())
     if i < 0:
         return ""
     a = max(text_plain.rfind(".", 0, i), text_plain.rfind("!", 0, i), text_plain.rfind("?", 0, i)) + 1
@@ -110,6 +113,80 @@ def def_stricta(t: str) -> re.Pattern:
         rf"(?:^|[.!?:;]\s+|\(\s*)(?:un|o|niște)?\s*{T}\s*(?:\([^)]*\)\s*)?(?:este|e|sunt|înseamnă|inseamna|reprezintă|reprezinta|se nume[șs]te|se numesc)\s"
         rf"|(?:numim|se nume[șs]te|se numesc|se cheamă|îi spunem|ii spunem)\s+(?:o|un|niște)?\s*{T}"
         rf"|ce (?:este|e|înseamnă)\s+(?:o|un)?\s*{T}", re.I | re.U)
+
+
+# --- SENSUL termenului (bucla 26.09, T1): același cuvânt poate însemna altceva în alt joc -----------------
+# „SAU” (operatorul logic) ≠ conjuncția „sau”; „închidere” (butonul ✕ al ferestrei) ≠ eticheta </html>;
+# „adresă” de e-mail ≠ adresa unei pagini; „Cursorul” de text ≠ indicatorul mouse-ului; „Variabile” (categoria
+# din Scratch) ≠ variabilele C++. Două filtre, amândouă mecanice:
+#   1. LITERE MARI: un termen scris cu majuscule (SAU, ȘI) sau cu majusculă în mijlocul propoziției în fraza care
+#      îl definește (numele unui buton/unei categorii: „categoria Variabile”) se caută cu literele lui exacte;
+#   2. SENS: în jurul folosirii (±FEREASTRA_SENS caractere) trebuie să apară măcar MIN_SEMNE cuvinte din
+#      fraza-amintire (tulpini de 5 litere, fără diacritice, fără cuvintele de legătură și fără ceilalți termeni
+#      definiți în aceeași frază — „parolă” nu confirmă sensul lui „adresă”). Altfel e un omonim: nu intră în hartă.
+#      Măsurat 26.09 pe cele 30 de intrări: cu UN singur cuvânt comun treceau omonimele („bara” lângă </html>,
+#      „clic” lângă indicatorul mouse-ului, „se numește” lângă scena de film); cu DOUĂ cad toate cele 9 greșite.
+FEREASTRA_SENS = 200
+MIN_SEMNE = 2
+_FARA_DIACRITICE = str.maketrans("ăâîșşțţĂÂÎȘŞȚŢ", "aaisstt" + "AAISSTT")
+CUVINTE_LEGATURA = {  # tulpini (5 litere, fără diacritice) care nu spun nimic despre sens
+    "acest", "aceea", "acolo", "adica", "alege", "altul", "atunc", "avand", "cand", "care", "catre", "ceea", "cele",
+    "celui", "cineva", "ceva", "cum", "dacă", "daca", "decat", "despr", "dintr", "doar", "doua", "dupa", "este",
+    "fiecar", "fieca", "foart", "inain", "intai", "intre", "intr", "mereu", "multe", "nevoi", "numai", "pentr",
+    "poate", "prima", "primu", "sunt", "toate", "totul", "trei", "unde", "unei", "unui", "vreau", "vrei", "asta",
+    "aici", "apoi", "cand", "mult", "fara", "sau", "unul", "una", "lui", "lor", "ei", "tau", "tale", "tine",
+    "numes", "face", "faci", "fac", "exemp", "folos"}
+
+
+def _tulpini(text: str, fara: str = "") -> set[str]:
+    fara_t = {w[:5] for w in re.findall(r"\w{4,}", fara.translate(_FARA_DIACRITICE).lower())}
+    out = set()
+    for w in re.findall(r"[^\W\d_]{4,}", text.translate(_FARA_DIACRITICE).lower()):
+        t = w[:5]
+        if t not in CUVINTE_LEGATURA and t not in fara_t:
+            out.add(t)
+    return out
+
+
+def _e_nume_propriu(fraza_def: str, termen: str) -> bool:
+    """SAU / ȘI (majuscule) sau „categoria Variabile” (majusculă în mijlocul propoziției) = se caută exact"""
+    t = termen.strip()
+    if t.isupper() and len(t) >= 2:
+        return True
+    if not t[:1].isupper():
+        return False
+    i = fraza_def.find(t)
+    if i <= 0:
+        return False
+    inainte = fraza_def[:i].rstrip(" „\"'(")
+    return bool(inainte) and inainte[-1] not in ".!?"
+
+
+def regex_sens(termen: str, fraza_def: str) -> re.Pattern:
+    """ca _regex_termen, dar cu literele exacte pentru nume proprii / majuscule"""
+    if not _e_nume_propriu(fraza_def, termen):
+        return _regex_termen(termen, None)
+    alt = []
+    for f in _forme_termen(termen, None):
+        if f.endswith(r"\w{0,3}"):   # tulpina automată e scrisă mic — îi punem la loc majuscula
+            f = (termen[0] + f[1:]) if termen[:1].isupper() and f[:1].lower() == termen[:1].lower() else f
+            alt.append(f)
+        else:
+            alt.append(re.escape(f))
+    return re.compile(rf"(?<!\w)(?:{'|'.join(alt)})(?!\w)", re.U)
+
+
+def in_sensul(rx: re.Pattern, semne: set[str], text: str, termen: str = "") -> bool:
+    """termenul apare în text ȘI măcar o dată lângă cuvinte din fraza-amintire (același sens). Un nume propriu
+    scris CU MAJUSCULE (regex fără re.I: „SAU”, „ȘI”) e deja potrivit pe literele exacte: îi ajunge UN cuvânt comun.
+    Un nume cu majusculă inițială („Variabile”, „Scenă”) nu: la început de propoziție orice cuvânt are majusculă
+    („Scena 1: intrarea” din filmare ≠ coloana Scenă din animație) — cere tot MIN_SEMNE."""
+    prag = 1 if not (rx.flags & re.I) and termen.isupper() else MIN_SEMNE
+    for m in rx.finditer(text):
+        vecin = text[max(0, m.start() - FEREASTRA_SENS): m.end() + FEREASTRA_SENS]
+        if not semne or len(_tulpini(vecin) & semne) >= min(prag, len(semne)):
+            return True
+    return False
 
 
 def predat_contine(predat: str, c: str) -> bool:
@@ -239,6 +316,11 @@ def main(argv=None) -> int:
                                     "cod": True}
 
     rx_cache = {k: (_regex_termen(v["termen"], None) if not v["cod"] else None) for k, v in intro.items()}
+    # potrivirea pe SENS (T1, 26.09): literele exacte pentru nume proprii/majuscule + vecinătate cu fraza-amintire
+    rx_sens = {k: (regex_sens(v["termen"], v["fraza"]) if not v["cod"] else None) for k, v in intro.items()}
+    semne_sens = {k: (_tulpini(v["fraza"], fara=v["termen"] + " " + " ".join(
+                      w["termen"] for w in intro.values() if not w["cod"] and w["termen"].lower() in v["fraza"].lower()))
+                      if not v["cod"] else set()) for k, v in intro.items()}
     probleme = []
     harta: dict[str, dict] = {}
     doar = set(a.doar.split(",")) if a.doar else None
@@ -271,7 +353,7 @@ def main(argv=None) -> int:
             for k, inf in intro.items():
                 if k in introdus_aici or k in deja or inf["slug"] == slug:
                     continue
-                if not (k in folosite_cod if inf["cod"] else rx_cache[k].search(pl)):
+                if not (k in folosite_cod if inf["cod"] else in_sensul(rx_sens[k], semne_sens[k], pl, inf["termen"])):
                     continue
                 deja.add(k)
                 if inf["gi"] < gi:
