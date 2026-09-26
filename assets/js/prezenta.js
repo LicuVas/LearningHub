@@ -112,6 +112,34 @@
     c.ev = c.ev.concat(t.ev || []).slice(-30); if (!c.de) c.de = Date.now();
     scrie(K_COADA, c);
   }
+  /* NIVELURILE JOCURILOR ținute deoparte (26.09.2026, T1). Cât stă „Ești tot X?” pe ecran, motor.js scrie nivelurile
+     noi în <cheia jocului>@_tinut, nu în sertarul lui X. Ce lucrează cineva neînscris stă în <cheie>@_neinscris.
+     mutaJoc(din, p) le unește în sertarul p (maximul pe fiecare nivel) și șterge sursa: „Da” -> sertarul lui X;
+     „Nu”/„Alege-te din listă” -> @_neinscris; înscrierea sau alegerea din listă -> sertarul celui ales. */
+  function mutaJoc(din, p) {
+    if (!p || p === din) return false;
+    var chei = [], suf = '@' + din, mutat = false;
+    try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.length > suf.length && k.slice(-suf.length) === suf && /^[\w-]+$/.test(k.slice(0, -suf.length))) chei.push(k); } } catch (e) { return false; }
+    chei.forEach(function (k) {
+      var src = citeste(k, null), kd = k.slice(0, -suf.length) + '@' + p, dst = citeste(kd, null);
+      if (!src || typeof src !== 'object' || !src.lv) { sterge(k); return; }
+      if (!dst || typeof dst !== 'object') dst = { nume: '', lv: {} };
+      if (!dst.lv) dst.lv = {};
+      Object.keys(src.lv).forEach(function (n) {
+        var a = src.lv[n] || {}, b = dst.lv[n];
+        dst.lv[n] = b ? Object.assign({}, b, { stars: Math.max(b.stars || 0, a.stars || 0), xp: Math.max(b.xp || 0, a.xp || 0) }) : a;
+      });
+      if (!dst.nume && src.nume && din === '_neinscris') dst.nume = src.nume;
+      scrie(kd, dst); sterge(k); mutat = true;
+    });
+    return mutat;
+  }
+  // la înscriere / alegerea din listă: ce a lucrat neînscris (și ce era ținut deoparte) intră în sertarul lui
+  function primesteNeinscris() {
+    var p = citesteProfil(); if (!p || p.charAt(0) === '_') return false;
+    var a = mutaJoc('_neinscris', p), b = mutaJoc('_tinut', p);
+    return a || b;
+  }
   // unde merge ce se întâmplă acum: în coada lui, deoparte (până răspunde la „Ești tot X?”), sau nicăieri
   function tinta() { var s = stare(); return s === 'activ' ? K_COADA : s === 'intreaba' ? K_TINUT : null; }
 
@@ -160,7 +188,7 @@
   var CSS = '#lhp{position:fixed;left:12px;bottom:12px;z-index:2147483000;font:14px/1.35 system-ui,Segoe UI,Arial,sans-serif;color:#e8ecf4;max-width:calc(100vw - 24px)}' +
     '#lhp .pill{display:inline-flex;align-items:center;gap:6px;background:#1b2234;border:1px solid #33405e;border-radius:999px;padding:5px 11px;cursor:pointer;box-shadow:0 2px 8px #0006;font-size:12.5px}' +
     '#lhp .pill:hover{border-color:#5b8cff}#lhp .dot{width:8px;height:8px;border-radius:50%;background:#34d399;flex:none}' +
-    '#lhp .bar{background:#1b2234;border:1px solid #5b8cff;border-radius:12px;padding:12px 14px;box-shadow:0 4px 16px #0008;max-width:420px}' +
+    '#lhp .bar{background:#1b2234;border:1px solid #5b8cff;border-radius:12px;padding:12px 14px;box-shadow:0 4px 16px #0008;max-width:420px;box-sizing:border-box;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}' +
     '#lhp .bar b{color:#fff}#lhp .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}' +
     '#lhp button{font:inherit;border-radius:8px;padding:7px 12px;border:1px solid #5b8cff;background:#5b8cff;color:#fff;cursor:pointer}' +
     '#lhp button.g{background:transparent;color:#c8d3ea;border-color:#44506c}#lhp a{color:#8fb0ff}' +
@@ -211,7 +239,7 @@
         '<div class="row"><button id="lhp-da">Da, sunt eu</button><button class="g" id="lhp-nu">Nu, sunt alt elev</button></div></div>');
       $('lhp-da').onclick = function () {
         confirmat = true; eu.intreaba = false; eu.ultima = Date.now(); scrie(K_ID, eu); ultimaMiscare = Date.now();
-        mutaTinut(); trimite(false); randeaza();
+        mutaTinut(); mutaJoc('_tinut', citesteProfil()); trimite(false); Nor.impinge(false); randeaza();
         try { dispatchEvent(new CustomEvent('prezenta', { detail: identitate() })); } catch (e) {}
       };
       $('lhp-nu').onclick = function () { sterge(K_TINUT); uita(); alege(); };
@@ -280,6 +308,7 @@
     scrie(K_ID, eu); confirmat = true; ultimaMiscare = Date.now();
     inregistreaza();
     var schimbat = puneSertar();
+    if (primesteNeinscris()) schimbat = true;
     arata('<div class="bar">Salut, <b>' + esc(x.nume) + '</b>! Îți aduc progresul…</div>');
     (eu.h ? Nor.trage() : Promise.resolve(false)).then(function (venit) {
       adaugaInCoada(0, true); trimite(false);
@@ -463,6 +492,7 @@
         // întâi profilul: dacă s-a schimbat, pagina se reîncarcă pe profilul lui (fără să anunțăm jocul/lecția,
         // care altfel ar scrie numele noului elev în progresul celui dinainte). Apoi progresul lui online, dacă are.
         var schimbat = puneSertar();
+        if (primesteNeinscris()) schimbat = true;
         $('lhp-e').textContent = 'Caut progresul tău…';
         var venit = await Nor.trage();
         Nor.impinge(true);
@@ -535,6 +565,8 @@
     trimite(true);
     eu = null; confirmat = false;
     sterge(K_ID); sterge(K_COADA); sterge(K_JURNAL); sterge(K_TINUT);
+    // nivelurile făcute cât stătea „Ești tot X?” nu sunt ale lui X: trec la cel care stă acum la calculator
+    mutaJoc('_tinut', '_neinscris');
     puneProfil('_neinscris');   // până se înscrie următorul, nu lucrează pe profilul celui plecat
     try { dispatchEvent(new CustomEvent('prezenta', { detail: null })); } catch (e) {}
   }
@@ -542,6 +574,8 @@
 
   window.Prezenta = {
     identitate: identitate,
+    /* 'activ' | 'intreaba' | 'vizitator' | 'necunoscut' — motor.js ține nivelurile deoparte cât e 'intreaba' */
+    stare: stare,
     formular: formular,
     uita: function () { uita(); randeaza(); },
     /* „Nu ești tu? Alege-te din listă” din jocuri și lecții (26.09.2026): lista elevilor calculatorului.

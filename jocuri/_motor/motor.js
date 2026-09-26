@@ -32,12 +32,28 @@ function profilActiv(){try{const p=localStorage.getItem('learninghub_active_prof
 function cheieJoc(){const p=profilActiv();return p?C.cheie+'@'+p:C.cheie}
 const normNume=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(' ').sort().join(' ');
 function citesteJoc(k){try{const s=JSON.parse(localStorage.getItem(k));return s&&typeof s==='object'?s:null}catch(e){return null}}
+let SK='';   // cheia din care s-a încărcat S (dacă profilul se schimbă sub joc, S se reîncarcă)
 function load(){
-  const k=cheieJoc();let s=citesteJoc(k);
+  const k=cheieJoc();SK=k;let s=citesteJoc(k);
   if(!s&&k!==C.cheie){const b=citesteJoc(C.cheie);let eu=null;try{eu=JSON.parse(localStorage.getItem('lh_prezenta'))}catch(e){}
     if(b&&(!b.nume||(eu&&eu.nume&&normNume(b.nume)===normNume(eu.nume)))){s=b;try{localStorage.setItem(k,JSON.stringify(b));localStorage.removeItem(C.cheie)}catch(e){}}}
   if(!s)s={nume:'',lv:{}};if(!s.lv)s.lv={};return s}
-function save(){try{localStorage.setItem(cheieJoc(),JSON.stringify(S))}catch(e){}}
+/* „Ești tot X?” pe ecran (26.09.2026, T1): la calculatorul comun poate lucra deja ALT elev. Nivelurile terminate
+   cât stă întrebarea NU intră în sertarul lui X: se țin DEOPARTE în <cheie>@_tinut (doar ce e nou față de sertar).
+   „Da” le trece la X (prezenta.js mutaTinut), „Nu” le dă celui care se alege (prin @_neinscris). Nici „Ia-o de la
+   capăt” apăsat atunci nu atinge sertarul lui X. */
+function inAsteptare(){try{return !!(window.Prezenta&&window.Prezenta.stare&&window.Prezenta.stare()==='intreaba')}catch(e){return false}}
+function save(){try{
+  if(inAsteptare()){
+    const baza=(citesteJoc(cheieJoc())||{}).lv||{},kt=C.cheie+'@_tinut',t=citesteJoc(kt)||{nume:'',lv:{}};if(!t.lv)t.lv={};
+    let nou=false;
+    for(const i in S.lv){const a=S.lv[i]||{},b=baza[i],p=t.lv[i];
+      if(b&&(a.stars||0)<=(b.stars||0)&&(a.xp||0)<=(b.xp||0))continue;
+      if(p&&(a.stars||0)<=(p.stars||0)&&(a.xp||0)<=(p.xp||0))continue;
+      t.lv[i]=p?{stars:Math.max(p.stars||0,a.stars||0),xp:Math.max(p.xp||0,a.xp||0)}:{stars:a.stars||0,xp:a.xp||0};nou=true}
+    if(nou){t.u=Date.now();localStorage.setItem(kt,JSON.stringify(t))}
+    return}
+  localStorage.setItem(cheieJoc(),JSON.stringify(S))}catch(e){}}
 function totals(){let st=0,xp=0;for(const k in S.lv){st+=S.lv[k].stars||0;xp+=S.lv[k].xp||0}return{st,xp}}
 const unlocked=i=>i===0||!!S.lv[i-1];
 const starsHtml=n=>[0,1,2].map(i=>i<n?'<span class="on">★</span>':'<span>☆</span>').join('');
@@ -735,7 +751,9 @@ function prezenta(){
     const facute=Object.keys(S.lv);if(!facute.length)return;
     facute.forEach(i=>raporteaza({tip:'nivel',nivel:+i+1,stele:S.lv[i].stars||0,max:3}));
     if(C.nivele.every((_,i)=>S.lv[i]))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3});};
-  addEventListener('prezenta',()=>{iaNumele();sincron();cineLucreaza()});
+  /* profilul s-a schimbat sub joc (ex. „Nu ești tu?” + „Mai târziu” -> @_neinscris): S nu mai ține nivelurile
+     celui plecat, iar ce lucrează noul elev ajunge în sertarul lui (26.09.2026, T1) */
+  addEventListener('prezenta',()=>{if(cheieJoc()!==SK){S=load();if(!R)home()}iaNumele();sincron();cineLucreaza()});
   addEventListener('load',()=>{iaNumele();sincron();cineLucreaza()});
   // progres venit de pe alt aparat (prezenta.js l-a scris deja în localStorage): cuprinsul se redesenează
   addEventListener('lh-progres',()=>{S=load();if(!R)home()});
