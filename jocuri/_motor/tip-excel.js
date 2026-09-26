@@ -140,8 +140,21 @@ const rnd=n=>Math.floor(Math.random()*n);
 function mutaAdr(a,dr,dc){return String(a).replace(/(\$?)([A-Z]{1,2})(\$?)(\d+)/g,(m,d1,c,d2,r)=>{const ci=c.split('').reduce((x,ch)=>x*26+ch.charCodeAt(0)-64,0)-1+dc;return d1+COL(ci)+d2+(Number(r)+dr)})}
 function mutaFormula(f,dr,dc){let out='',q=false,buf='';const flush=()=>{out+=buf.replace(/(^|[^A-Za-z])(\$?[A-Z]{1,2}\$?\d+)(?![A-Za-z(])/g,(m,pre,ref)=>pre+mutaAdr(ref,dr,dc));buf=''};
   for(const ch of f){if(ch==='"'){if(!q)flush();else{out+=buf;buf=''}q=!q;out+=ch;continue}buf+=ch}if(q)out+=buf;else flush();return out}
+// deplasarea tabelului nu e niciodată 0,0 (altfel varianta repeta întrebarea, cuvânt cu cuvânt - raportat 26.09)
+const DEPL=[[0,1],[1,0],[1,1],[2,0],[2,1]];
+const colIdx=c=>c.split('').reduce((x,ch)=>x*26+ch.charCodeAt(0)-64,0)-1;
+/* Rescrie adresele dintr-un text de sarcină: „B6”, dar și „coloana/coloanei B” și „rândul/rândului 6” (altfel textul
+   rămânea B6 în timp ce verificarea aștepta celula mutată - „varianta corectă e marcată greșită”, 26.09).
+   Nu atinge etichetele HTML și nici textul dintre <kbd> și </kbd> (e o tastă, ex. F4). */
+function rescrieText(t,mA,mC,mR,nume){let kbd=false;return String(t||'').split(/(<[^>]*>)/).map(bucata=>{
+  if(bucata.startsWith('<')){if(/^<kbd/i.test(bucata))kbd=true;else if(/^<\/kbd/i.test(bucata))kbd=false;return bucata}
+  if(kbd)return bucata;
+  return bucata.replace(/\$?\b[A-Z]{1,2}\$?\d{1,2}\b/g,r=>mA(r))
+    .replace(/\b(coloan(?:a|ei|ele))(\s+)([A-Z]{1,2})\b/g,(m,w,s,c)=>w+s+mC(c))
+    .replace(/(rând(?:ul|ului))(\s+)(\d+)\b/g,(m,w,s,n)=>w+s+mR(Number(n)))
+    .replace(/[A-ZĂÂÎȘȚ][a-zăâîșț]+/g,w=>(nume&&nume[w])||w)}).join('')}
 function varianta(Q){
-  const dr=rnd(3),dc=rnd(2),V=JSON.parse(JSON.stringify(Q.verifica||{}));
+  const [dr,dc]=DEPL[rnd(DEPL.length)],V=JSON.parse(JSON.stringify(Q.verifica||{}));
   const cells={},folosite=new Set(),nume={};
   Object.entries(Q.cells||{}).forEach(([a,v])=>{let x=v;const p=a.match(/^([A-Z]+)(\d+)$/);
     if(typeof v==='number'){if(Number.isInteger(v)&&v>=1&&v<=10)x=1+rnd(10);else if(Number.isInteger(v))x=Math.max(1,Math.round(v*(0.5+Math.random())));else{const d=(String(v).split('.')[1]||'').length;x=Number((v*(0.6+Math.random()*0.8)).toFixed(d))}}
@@ -156,13 +169,24 @@ function varianta(Q){
   if(V.gol)V.gol=V.gol.map(mA);if(V.imbinat)V.imbinat=V.imbinat.split(':').map(mA).join(':');
   if(V.sortat)V.sortat={...V.sortat,zona:V.sortat.zona.split(':').map(mA).join(':'),dupa:V.sortat.dupa.map(k=>({...k,col:mA(k.col+'1').replace(/\d+$/,'')}))};
   if(V.grafic)V.grafic={...V.grafic,zona:V.grafic.zona.split(':').map(mA).join(':')};
-  // adresele și numele se schimbă în tot textul sarcinii, dar nu în interiorul etichetelor HTML (<b>, <kbd>…)
-  // (textul dintre <kbd> și </kbd> e o tastă, ex. F4 - rămâne neatins)
-  const txt=t=>{let kbd=false;return String(t||'').split(/(<[^>]*>)/).map(bucata=>{
-    if(bucata.startsWith('<')){if(/^<kbd/i.test(bucata))kbd=true;else if(/^<\/kbd/i.test(bucata))kbd=false;return bucata}
-    if(kbd)return bucata;
-    return bucata.replace(/\$?\b[A-Z]{1,2}\$?\d{1,2}\b/g,r=>mutaAdr(r,dr,dc)).replace(/[A-ZĂÂÎȘȚ][a-zăâîșț]+/g,w=>nume[w]||w)}).join('')};
-  const q=txt(Q.q);
+  // adresele (și în cuvinte) + numele se schimbă în tot textul sarcinii
+  let q=rescrieText(Q.q,r=>mutaAdr(r,dr,dc),c=>COL(colIdx(c)+dc),n=>n+dr,nume);
+  /* „Alege celula …”: mutarea tabelului păstrează aceeași celulă FAȚĂ DE TABEL, deci e aceeași întrebare.
+     Varianta cere altă celulă din tabel, iar textul și verificarea se schimbă împreună. */
+  if(Object.keys(V).length===1&&V.sel){
+    const p=V.sel.match(/^([A-Z]+)(\d+)$/),poz=Object.keys(cells).map(a=>a.match(/^([A-Z]+)(\d+)$/)).filter(Boolean);
+    if(p&&poz.length>1){
+      const cs=poz.map(m=>colIdx(m[1])),rs=poz.map(m=>Number(m[2]));
+      const c1=Math.min(...cs),c2=Math.max(...cs),r1=Math.min(...rs),r2=Math.max(...rs);
+      // nici celula mutată, nici celula din întrebarea INIȚIALĂ (altfel textul ar ieși identic cu originalul)
+      const orig=String((Q.verifica||{}).sel||'');let nc,nr,g=0;
+      do{nc=c1+rnd(c2-c1+1);nr=r1+rnd(r2-r1+1);g++}
+      while(g<200&&(COL(nc)+nr===V.sel||COL(nc)+nr===orig||(COL(nc)===p[1]||nr===Number(p[2]))&&rnd(3)));
+      const nou=COL(nc)+nr,vc=p[1],vr=Number(p[2]);
+      q=rescrieText(q,r=>r.replace(/\$/g,'')===V.sel?nou:r,c=>c===vc?COL(nc):c,n=>n===vr?nr:n,null);
+      V.sel=nou;
+    }
+  }
   return {...Q,cells,verifica:V,q,cols:(Q.cols||6)+dc,rows:(Q.rows||8)+dr,variants:(Q.variants||[]).map(v=>mO(v))};
 }
 function cheiePractica(Q){let h=0;const t=(Q.q||'')+JSON.stringify(Q.verifica||{});for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;
@@ -170,9 +194,17 @@ function cheiePractica(Q){let h=0;const t=(Q.q||'')+JSON.stringify(Q.verifica||{
 function exerseaza(Q,loc,api){   // o variantă nouă, cu verificare proprie și seria de corecte
   const k=cheiePractica(Q);let st={serie:0,stapanit:false};try{st=JSON.parse(localStorage.getItem(k))||st}catch(e){}
   const Qv=varianta(Q);
-  loc.innerHTML=`<div class="xl-ex" style="border-top:2px dashed var(--line);margin-top:14px;padding-top:10px">
-    <div class="eyebrow">Exersează pe o variantă · serie: ${st.serie}/3 corecte la rând${st.stapanit?' · ✓ stăpânit':''}</div>
+  /* O singură foaie pe ecran (26.09: „nu ar trebui să se vadă și originalul și varianta - pagina devine lungă”):
+     cât exersează, întrebarea și foaia sarcinii de bază stau ascunse; „Gata cu exersarea” le readuce. */
+  const corp=loc.parentElement,stiva=corp&&corp.closest('.stack'),qOrig=stiva&&stiva.querySelector(':scope > .q');
+  const ascunse=[...(corp?corp.children:[])].filter(x=>x!==loc).concat(qOrig?[qOrig]:[]);
+  ascunse.forEach(x=>{x.style.display='none'});
+  loc.innerHTML=`<div class="xl-ex" style="margin-top:4px">
+    <div class="row" style="justify-content:space-between;align-items:center"><div class="eyebrow">Exersează pe o variantă · serie: ${st.serie}/3 corecte la rând${st.stapanit?' · ✓ stăpânit':''}</div>
+    <button class="btn ghost sm" type="button" data-exg="1">✕ Gata cu exersarea</button></div>
     <div class="q" style="margin:6px 0">${Qv.q}</div><div id="xexb"></div><div id="xexf" aria-live="polite"></div><div class="row" id="xexn"></div></div>`;
+  loc.querySelector('[data-exg]').onclick=()=>{ascunse.forEach(x=>{x.style.display=''});if(loc._ofera)loc._ofera();else loc.innerHTML=''};
+  try{loc.scrollIntoView({block:'start',behavior:'smooth'})}catch(e){}
   const fb=loc.querySelector('#xexf'),nav=loc.querySelector('#xexn');let gata=false;
   const apiP={esc:api.esc,shuffle:api.shuffle,done:()=>gata,attempts:()=>0,
     checkButton:fn=>{nav.innerHTML='<button class="btn primary" type="button" data-exv="1">Verifică varianta</button>';nav.querySelector('[data-exv]').onclick=()=>{if(!gata)fn()};return nav},
@@ -759,9 +791,11 @@ function render(Q,body,api){
       if(!p.length){api.resolve(true);ofera()}else{api.resolve(false,p.slice(0,2).join(' '));api.revealButton(()=>api.giveUp(solutie()))}});
   }
   function ofera(){if(Q._practica)return;const loc=document.createElement('div');loc.className='xl-exloc';body.appendChild(loc);
-    const k=cheiePractica(Q);let st={};try{st=JSON.parse(localStorage.getItem(k))||{}}catch(e){}
-    loc.innerHTML=`<button class="btn ghost" type="button" data-exs="1" style="margin-top:10px">🔁 Exersează pe variante${st.stapanit?' (✓ stăpânit)':' (3 la rând = stăpânit)'}</button>`;
-    loc.querySelector('[data-exs]').onclick=()=>exerseaza({...Q,_practica:true},loc,api)}
+    const k=cheiePractica(Q);
+    loc._ofera=()=>{let st={};try{st=JSON.parse(localStorage.getItem(k))||{}}catch(e){}
+      loc.innerHTML=`<button class="btn ghost" type="button" data-exs="1" style="margin-top:10px">🔁 Exersează pe variante${st.stapanit?' (✓ stăpânit)':' (3 la rând = stăpânit)'}</button>`;
+      loc.querySelector('[data-exs]').onclick=()=>exerseaza({...Q,_practica:true},loc,api)};
+    loc._ofera()}
   render._stare={FMT,MERGE,setGraf:g=>{GRAF=g},sorteaza:(zt,dupa,antet)=>{const [a,b]=zt.split(':').map(pos);sorteaza({c1:a.c,c2:b.c,r1:a.r,r2:b.r},dupa.map(k=>({c:pos(k.col+'1').c,ord:k.ord})),antet!==false)},peRO,RAW,gest,setAct:a=>{const p=pos(a);act=p;fin=p},setZona:z=>{const [x,y]=z.split(':').map(pos);act=x;fin=y},draw,mod:()=>mod,liber,Q};
 }
 function rezolva(Q,body,S0){
