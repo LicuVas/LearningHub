@@ -40,7 +40,8 @@ sys.path.insert(0, r"C:/00/AI_0/tools/plimbare/oracol")
 from oracol_novice import _regex_termen, _regex_definitie  # noqa: E402  (aceleași forme românești ca la plimbare)
 
 RE_BOLD = re.compile(r"<(b|strong)\b[^>]*>(.*?)</\1\s*>", re.I | re.S)
-RE_COD = re.compile(r"<(code|kbd)\b[^>]*>(.*?)</\1\s*>", re.I | re.S)
+# și <pre>: formulele și codul lucrat stau adesea în blocuri <pre> (găsit de bucla 26.09: IF predat în <pre>, raportat nepredat)
+RE_COD = re.compile(r"<(code|kbd|pre)\b[^>]*>(.*?)</\1\s*>", re.I | re.S)
 RE_TAG = re.compile(r"<[^>]+>")
 # îngroșări care NU sunt termeni (accent, instrucțiuni, etichete de pas)
 NU_TERMEN = re.compile(r"^(nu|da|atenție|atentie|important|sfat|exemplu|corect|greșit|gresit|pasul?\s*\d*|"
