@@ -369,6 +369,13 @@ Profesorul a verificat Misiunea Analist la toate clasele de la a VIII-a în sus:
 - copierea formulei („trasă”) o face jocul singur, fără gestul de tragere de colțul celulei;
 - erorile nu au numele din Excel: `#VALOARE` în loc de `#VALUE!`, `#CIRC` (care nu există în Excel) și `#EROARE` generic în loc de `#NAME?`/`#N/A`.
 
+### 26.09.2026 seara — prerechizitele între jocuri + panglica reală Excel (ramura proba)
+
+- **„Ce trebuie să știi dinainte”** (cerut: „ce se presupune să știi până în acel moment, unde cauți dacă nu știi — în ce lecții”). `_tests\prereq_jocuri.py` citește jocurile în ORDINEA PROGRAMEI (catalog.js) și scrie harta `_motor\prerechizite.json/.js`: la fiecare nivel, noțiunile din jocurile de DINAINTE pe care nivelul le folosește, cu fraza-amintire și jocul/nivelul care le predă. Motorul o arată restrâns la primul pas al nivelului (`blocPrereq()`). **După orice schimbare de conținut: `python _tests\prereq_jocuri.py --scrie`** (altfel oracolul numără harta veche). Noțiune = termen îngroșat URMAT DE DEFINIȚIE, nu orice îngroșare (prima rulare: 1.953 de „termeni” de accent); omonimele din alt domeniu nu contează („Direcția” din Scratch nu e prerechizit pentru Excel — familii: bază / program / web / birou / media). Verificarea exercițiilor pe **construcții** (cuvinte-cheie, etichete, funcții, operatori), nu pe tot blocul de cod.
+- Oracolul pentru bucle: `_tests\oracol_plimbare.py` (oracol_jocuri + prereq_jocuri). Probe: `_tests\proba_prereq_bloc.py`, `_tests\proba_panglica_reala.py`.
+- **Panglica reală Excel** în `tip-excel.js`: `_motor\ui-panglica.js` desenează din `_motor\panglica-excel.js`, generat de `_cercetare\office_comenzi\panglica_build.py` (dump UI Automation al Excel-ului instalat, pe DESKTOP ASCUNS, + lista oficială Microsoft) și `icoane_build.py` (Fluent, MIT). Etichetele = cele din aplicație (engleză); butoanele știute de simulator păstrează mânerele vechi (`data-rb/mn/al/nf/gr/so`), celelalte spun pe ecran că nu le folosim. Word/PowerPoint: dump-ul NU a mers (o singură instanță — s-a lipit de un proces existent); se reia în etapa Word.
+- Cititorii cu carte închisă (T1, `C:\00\AI_0\tools\plimbare`) pe jocuri: `_tests\exporta_jocuri_md.py` face din fiecare nivel o pagină de citit (fără răspunsuri). Codul se scoate ÎNAINTE de curățarea etichetelor (altfel `&lt;html&gt;` decodat dispare).
+
 
 ## 10. Deschis / de îmbunătățit
 
