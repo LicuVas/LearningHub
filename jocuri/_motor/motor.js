@@ -464,10 +464,12 @@ function huntCod(Q,body){
   plain(Q.src.slice(last));
   HUNT_T=T;
   const total=T.filter(t=>t.err).length;
-  body.innerHTML=`<pre class="hunt cod">${T.map((t,k)=>t.ws?esc(t.x):`<button type="button" class="tk" data-k="${k}">${esc(t.x)}</button>`).join('')}</pre>
+  // o greșeală cu spații (<a src="x">) se desenează cuvânt cu cuvânt, ca restul codului: un buton lung ar trăda răspunsul
+  const btn=(k,x)=>`<button type="button" class="tk" data-k="${k}">${esc(x)}</button>`;
+  body.innerHTML=`<pre class="hunt cod">${T.map((t,k)=>t.ws?esc(t.x):t.err&&/\s/.test(t.x)?t.x.split(/(\s+)/).filter(p=>p!=='').map(p=>/^\s+$/.test(p)?esc(p):btn(k,p)).join(''):btn(k,t.x)).join('')}</pre>
     <p class="hint" style="margin:6px 0 0">Ai marcat <span id="cnt">0</span> din ${total}. Apasă din nou ca să scoți un marcaj.</p>`;
   const marked=new Set();
-  body.querySelectorAll('.tk').forEach(b=>b.onclick=()=>{if(R.done)return;const k=+b.dataset.k,on=!marked.has(k);on?marked.add(k):marked.delete(k);b.classList.toggle('marked',on);document.getElementById('cnt').textContent=marked.size});
+  body.querySelectorAll('.tk').forEach(b=>b.onclick=()=>{if(R.done)return;const k=+b.dataset.k,on=!marked.has(k);on?marked.add(k):marked.delete(k);body.querySelectorAll(`.tk[data-k="${k}"]`).forEach(x=>x.classList.toggle('marked',on));document.getElementById('cnt').textContent=marked.size});
   const list=()=>`<ul style="margin:.4em 0 0;padding-left:1.2em">${T.map(t=>t.err?`<li><span class="code">${esc(t.x)}</span> — ${esc(t.why)}</li>`:'').join('')}</ul>`
     +(Q.corect?`<div class="cod-corect"><div class="lbl">Codul corect</div><pre class="hunt cod">${esc(Q.corect)}</pre></div>`:'');
   const showFound=()=>{body.querySelectorAll('.tk').forEach(b=>{b.classList.remove('marked');if(T[+b.dataset.k].err)b.classList.add('found')})};

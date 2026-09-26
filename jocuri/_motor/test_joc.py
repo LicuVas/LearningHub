@@ -182,7 +182,7 @@ def static_checks(slug, cfg, page_html, fails, warns):
                     check_q(f"N{li}A{ei}", e)
             # EVALUARE CONFORMĂ CU CE S-A PREDAT (el, 26.09.2026: „notiuni nepredate - exemplu </heat>”):
             # tot ce e în <code>/<kbd> în verificare trebuie să apară în pașii de până aici
-            nt = lambda x: re.sub(r"\s+", " ", html.unescape(x)).strip().lower()
+            nt = lambda x: re.sub(r"\s+", " ", htmlmod.unescape(x)).strip().lower()
             T = nt(taught)
             for qi, q in enumerate(lv.get("qs", []), 1):
                 src = q.get("q", "") + " " + " ".join(q.get("o", []) if isinstance(q.get("o"), list) else [])

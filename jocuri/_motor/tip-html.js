@@ -131,7 +131,7 @@ function render(Q,body,api){
   function arataTeste(){
     if(!checks.length)return [];
     const rez=testeaza(ta.value,checks);
-    rez.forEach((x,i)=>{const li=body.querySelector(`.hx-teste li[data-i="${i}"]`);li.className=x.ok?'ok':'rau';li.querySelector('.s').textContent=x.ok?'✓':'✗';
+    rez.forEach((x,i)=>{const li=body.querySelector(`.hx-teste li[data-i="${i}"]`);if(!li)return;li.className=x.ok?'ok':'rau';li.querySelector('.s').textContent=x.ok?'✓':'✗';
       const m=li.querySelector('.m');m.hidden=x.ok;m.textContent=x.ok?'':(x.c.msg||'')});
     body.querySelector('.hx-teste .nr').textContent=`${rez.filter(x=>x.ok).length} din ${rez.length} trec`;
     return rez;
@@ -142,7 +142,8 @@ function render(Q,body,api){
     lint.hidden=false;lint.className='hx-lint';
     lint.innerHTML=`<b>Corectorul a găsit ${L.length===1?'o problemă':L.length+' probleme'}</b> (browserul nu ți le-ar spune — ar ghici ce ai vrut):<ul>${L.slice(0,6).map(x=>`<li>rândul ${x.rand}: ${x.text}</li>`).join('')}</ul>`;
   }
-  const upd=()=>{fr.srcdoc=previewDoc(ta.value);tab.textContent=titluPagina(ta.value);numere();if(testat){arataTeste();arataCorector()}};
+  // după „Încă un exercițiu” editorul vechi dispare din pagină; o actualizare rămasă în așteptare nu mai are ce desena
+  const upd=()=>{if(!ta.isConnected)return;fr.srcdoc=previewDoc(ta.value);tab.textContent=titluPagina(ta.value);numere();if(testat){arataTeste();arataCorector()}};
   ta.addEventListener('input',()=>{numere();clearTimeout(tm);tm=setTimeout(upd,200)});
   ta.addEventListener('scroll',()=>{nr.scrollTop=ta.scrollTop});
   // editorul: Tab / Shift+Tab / Enter cu indentare, ca în Notepad++
