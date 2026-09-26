@@ -82,6 +82,40 @@ JocMotor.porneste({
 </html>
 ```
 
+### Nivelurile PE PAȘI — de la novice la expert (decis 26.09.2026, OBLIGATORIU pentru jocurile de învățare)
+
+**De ce.** Profesorul, 26.09.2026: „Informația e prea condensată — nu e beginner friendly — e mai mult test decât asistență de învățare. Vreau ca aceste misiuni să îl conducă pe fiecare de la novice la expertiză. Să ofere informații și sarcini simple (cu variante reale pentru consolidare — la cerere) și posibilitatea efectivă a exersării — simulare a aplicației adevărate. [...] pași săriți — evaluare neconformă cu ce s-a predat.” Exemplul lui: un „găsește 3 greșeli” cu `</heat>` și `<h7>`, cod neindentat, noțiuni nepredate. **Modelul:** `web-viii\index.html`.
+
+Un nivel nu mai are o singură pagină densă (`text`), ci **pași**, apoi **atelier**, apoi **verificare**:
+
+```js
+{t:'Antet, titlu, corp', lectii:[15], continuturi:[…],
+ obiectiv:'ce știe să facă elevul la final (o propoziție)',
+ pasi:[                                   // 3-5 pași; UN pas = O idee
+   {t:'Titlul pasului',
+    text:`30-110 cuvinte, o singură idee, cu captura din aplicația reală`,
+    exemplu:`„Uite cum”: exemplu lucrat (cod indentat în <pre>, rezultat, înainte/după)`,   // aproape mereu
+    altfel:`„Nu am înțeles — explică-mi altfel”: o analogie din viața copilului`,        // la pașii grei
+    incearca:{…o întrebare MICĂ, cu ajutor:'indiciu'…},      // după fiecare pas; fără puncte
+    inca:[{…}, {…}]                                          // „Încă un exercițiu”: variante reale, la cerere
+   }, …],
+ atelier:{t:'<simulator>', titlu, intro:'Sarcina, în cuvinte simple', …, inca:[…]},   // aplicația simulată, cu TESTE
+ qs:[ …verificarea: 5 întrebări, fiecare cu ajutor opțional… ]}
+```
+
+Ce face motorul: pașii se deschid oricând (bara P1…Pn · Atelier · Î1…Î5); „Știu deja — la verificare” pentru cine știe deja; la exerciții, după **o** greșeală apare singur indiciul, după două „Arată-mi răspunsul” — tot fără puncte. La verificare, „Am nevoie de un indiciu” e mereu la îndemână (răspunsul nu mai contează „din prima”: 7 XP în loc de 10, fără stea).
+
+**Regulile conținutului pe pași** (poarta le verifică pe cele marcate ✔):
+1. ✔ **Evaluarea = ce s-a predat.** Tot ce apare în `<code>`/`<kbd>` într-o întrebare de verificare trebuie să apară în pașii acelui nivel sau ai celor dinainte. Fără noțiuni nepredate; o greșeală de „găsește greșeala” e dintr-o regulă predată explicit (bara lipsă, pereche lipsă, `<h7>` după ce pasul a spus „doar h1–h6”). O literă greșită în nume e voie numai dacă un pas a arătat asta ca tip de greșeală.
+2. ✔ Fiecare nivel are cel puțin un `incearca`; ⚠ și cel puțin un `inca`. Fiecare exercițiu și fiecare întrebare trece prin poarta automată (corect acceptat, greșit respins).
+3. **Strategia se predă, nu doar faptul.** Unde elevul trebuie să caute sau să construiască ceva, un pas îi dă metoda în 3-4 pași numerotați („nume, bară, pereche”; „citește cerințele, una câte una, rulează testele, recitește”).
+4. **Codul și formulele se arată ca în aplicație**: indentate, aliniate la stânga, pe rânduri (`<pre>`, `hunt` cu `cod:true` și `corect:'…'` = varianta fără greșeli, arătată alături după răspuns).
+5. **Pas cu pas, fără salturi**: fiecare pas se sprijină doar pe pașii dinainte. Primul nivel presupune zero cunoștințe.
+6. **Atelierul = aplicația reală, simulată**, cu TESTE numite pe care elevul le vede bifându-se (`ce:` la fiecare verificare). Pentru HTML: `_motor\tip-html.js` (editor cu numere de rând, indentare Tab/Enter, pagina desenată live, corector de etichete, descărcare `.html`). Pentru Excel: `tip-foaie`/`tip-excel`. Pentru celelalte aplicații, simulatoarele existente ale jocului; dacă nu are, `order`/`classify`/`pick` pe capturi reale — și scrii în raport ce simulator ar trebui construit.
+7. **Diploma → lucrul real**: provocarea spune exact cum faci același lucru în aplicația adevărată (ce deschizi, ce meniu, cum salvezi).
+
+Nivelurile vechi (`text` + `qs`) merg în continuare; antrenamentele (`bazin`) și recapitulările rămân cum sunt.
+
 ### Tipurile de întrebări incluse
 
 | `t` | Câmpuri | Folosește-l când |
