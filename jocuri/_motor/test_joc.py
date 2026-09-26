@@ -180,6 +180,21 @@ def static_checks(slug, cfg, page_html, fails, warns):
             if lv.get("atelier"):
                 for ei, e in enumerate([lv["atelier"]] + list(lv["atelier"].get("inca") or []), 1):
                     check_q(f"N{li}A{ei}", e)
+            # VERIFICAREA NU REPETĂ EXERCIȚIUL (26.09.2026, găsit după bucla de critici: 112 întrebări de verificare
+            # erau identice cu exerciții rezolvate deja în pași -> elevul trecea din memorie, nu din înțelegere)
+            _K = ("t", "q", "o", "items", "pairs", "src", "cats", "ans", "start", "cells")
+            _sig = lambda x: json.dumps({k: x.get(k) for k in _K}, ensure_ascii=False, sort_keys=True)
+            _prac = set()
+            for pas in P:
+                for e in [pas.get("incearca")] + list(pas.get("inca") or []):
+                    if e:
+                        _prac.add(_sig(e))
+            if lv.get("atelier"):
+                for e in [lv["atelier"]] + list(lv["atelier"].get("inca") or []):
+                    _prac.add(_sig(e))
+            for qi, q in enumerate(lv.get("qs", []), 1):
+                if _sig(q) in _prac:
+                    fails.append(f"N{li}Î{qi}: întrebarea de verificare e IDENTICĂ cu un exercițiu din pași/atelier (se trece din memorie; fă o variantă-soră: același concept, alte date/context)")
             # EVALUARE CONFORMĂ CU CE S-A PREDAT (el, 26.09.2026: „notiuni nepredate - exemplu </heat>”):
             # tot ce e în <code>/<kbd> în verificare trebuie să apară în pașii de până aici
             nt = lambda x: re.sub(r"\s+", " ", htmlmod.unescape(x)).strip().lower()
