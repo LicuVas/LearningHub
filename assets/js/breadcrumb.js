@@ -283,6 +283,11 @@ const Breadcrumb = {
                     padding: 0.2rem 0.4rem;
                 }
 
+                /* numele lungi de modul se rup pe doua randuri, nu mai imping pagina lateral */
+                .breadcrumb-item:not(.current) {
+                    white-space: normal;
+                }
+
                 /* Hide lesson name on mobile to save space */
                 .breadcrumb-item.current {
                     max-width: 150px;

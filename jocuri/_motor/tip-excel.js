@@ -137,6 +137,14 @@ const CSS=`.xl{--xlg:#217346;font-family:"Segoe UI",system-ui,sans-serif;user-se
    înțeleagă operația, nu să țină minte un răspuns. Verificarea e aceeași ca la sarcina de bază (pe rezultat). */
 const NUME=['Andrei','Bianca','Cristi','Diana','Eric','Flavia','George','Ioana','Luca','Maria','Nicu','Oana','Radu','Sara','Tudor','Vlad'];
 const rnd=n=>Math.floor(Math.random()*n);
+/* Numele se schimbă DOAR în tabelele cu elevi (capul coloanei A = „Elev”/„Nume”) - produsele și cheltuielile
+   (Caiet, Mâncare ...) rămân, altfel „TVA-ul caietului” cădea pe un rând „Luca” (26.09). Numele nou are același gen
+   ca cel vechi, ca să se potrivească și formele din text: „notelor Anei” → „notelor Ioanei”, „lui Bogdan” → „lui Radu”
+   (nu „lui Oana”). */
+const MASC=new Set(['Andrei','Cristi','Eric','George','Luca','Nicu','Radu','Tudor','Vlad','Dan','Bogdan','Mihai','Matei','Ion']);
+const esteFem=n=>!MASC.has(n)&&/(a|Carmen)$/.test(n);
+const genitivFem=n=>/ca$/.test(n)?n.slice(0,-1)+'ăi':/a$/.test(n)?n.slice(0,-1)+'ei':n+'ei';
+const CAP_ELEVI=/^(Elev|Elevul|Elevi|Nume|Numele)$/;
 function mutaAdr(a,dr,dc){return String(a).replace(/(\$?)([A-Z]{1,2})(\$?)(\d+)/g,(m,d1,c,d2,r)=>{const ci=c.split('').reduce((x,ch)=>x*26+ch.charCodeAt(0)-64,0)-1+dc;return d1+COL(ci)+d2+(Number(r)+dr)})}
 function mutaFormula(f,dr,dc){let out='',q=false,buf='';const flush=()=>{out+=buf.replace(/(^|[^A-Za-z])(\$?[A-Z]{1,2}\$?\d+)(?![A-Za-z(])/g,(m,pre,ref)=>pre+mutaAdr(ref,dr,dc));buf=''};
   for(const ch of f){if(ch==='"'){if(!q)flush();else{out+=buf;buf=''}q=!q;out+=ch;continue}buf+=ch}if(q)out+=buf;else flush();return out}
@@ -156,10 +164,15 @@ function rescrieText(t,mA,mC,mR,nume){let kbd=false;return String(t||'').split(/
 function varianta(Q){
   const [dr,dc]=DEPL[rnd(DEPL.length)],V=JSON.parse(JSON.stringify(Q.verifica||{}));
   const cells={},folosite=new Set(),nume={};
+  // rândul capului „Elev”/„Nume” din coloana A; fără el, tabelul nu e cu elevi și numele nu se ating
+  const capElevi=Object.entries(Q.cells||{}).filter(([a,v])=>/^A\d+$/.test(a)&&typeof v==='string'&&CAP_ELEVI.test(v.trim())).map(([a])=>Number(a.slice(1))).sort((x,y)=>x-y)[0];
   Object.entries(Q.cells||{}).forEach(([a,v])=>{let x=v;const p=a.match(/^([A-Z]+)(\d+)$/);
     if(typeof v==='number'){if(Number.isInteger(v)&&v>=1&&v<=10)x=1+rnd(10);else if(Number.isInteger(v))x=Math.max(1,Math.round(v*(0.5+Math.random())));else{const d=(String(v).split('.')[1]||'').length;x=Number((v*(0.6+Math.random()*0.8)).toFixed(d))}}
-    else if(typeof v==='string'&&p[1]==='A'&&Number(p[2])>1&&/^[A-ZĂÂÎȘȚ][a-zăâîșț]+$/.test(v)&&!/^(Suma|Media|Maxim|Minim|Total|Luni|Marți|Miercuri|Joi|Vineri|Sâmbătă|Duminică)$/.test(v)){
-      if(!nume[v]){let n;do{n=NUME[rnd(NUME.length)]}while(folosite.has(n));folosite.add(n);nume[v]=n}x=nume[v]}
+    else if(typeof v==='string'&&capElevi&&p[1]==='A'&&Number(p[2])>capElevi&&/^[A-ZĂÂÎȘȚ][a-zăâîșț]+$/.test(v)&&!/^(Suma|Media|Maxim|Minim|Total|Luni|Marți|Miercuri|Joi|Vineri|Sâmbătă|Duminică)$/.test(v)){
+      if(!nume[v]){const f=esteFem(v),pool=NUME.filter(n=>esteFem(n)===f&&!folosite.has(n)),din=pool.length?pool:NUME.filter(n=>!folosite.has(n));
+        const n=din[rnd(din.length)];folosite.add(n);nume[v]=n;
+        if(f&&esteFem(n))nume[genitivFem(v)]=genitivFem(n)}   // „Anei” → „Ioanei”
+      x=nume[v]}
     else if(typeof v==='string'&&v.startsWith('='))x=mutaFormula(v,dr,dc);
     cells[mutaAdr(a,dr,dc)]=x});
   const mA=a=>mutaAdr(a,dr,dc),mO=o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[k.includes(':')?k.split(':').map(mA).join(':'):mA(k),typeof v==='string'&&v.startsWith('=')?mutaFormula(v,dr,dc):v]));
@@ -196,8 +209,11 @@ function exerseaza(Q,loc,api){   // o variantă nouă, cu verificare proprie și
   const Qv=varianta(Q);
   /* O singură foaie pe ecran (26.09: „nu ar trebui să se vadă și originalul și varianta - pagina devine lungă”):
      cât exersează, întrebarea și foaia sarcinii de bază stau ascunse; „Gata cu exersarea” le readuce. */
-  const corp=loc.parentElement,stiva=corp&&corp.closest('.stack'),qOrig=stiva&&stiva.querySelector(':scope > .q');
-  const ascunse=[...(corp?corp.children:[])].filter(x=>x!==loc).concat(qOrig?[qOrig]:[]);
+  /* 26.09 (r2): se ascund și mesajul sarcinii de bază (#fb, „Corect! +10 XP”) și „Mai departe” (#nav/#next) —
+     altfel elevul vedea roșu la variantă și verde la original pe același ecran. */
+  const corp=loc.parentElement,stiva=corp&&corp.closest('.stack');
+  const frati=stiva?[...stiva.children].filter(x=>x!==corp&&!x.contains(loc)):[];
+  const ascunse=[...(corp?corp.children:[])].filter(x=>x!==loc).concat(frati);
   ascunse.forEach(x=>{x.style.display='none'});
   loc.innerHTML=`<div class="xl-ex" style="margin-top:4px">
     <div class="row" style="justify-content:space-between;align-items:center"><div class="eyebrow">Exersează pe o variantă · serie: ${st.serie}/3 corecte la rând${st.stapanit?' · ✓ stăpânit':''}</div>

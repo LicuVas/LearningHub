@@ -54,6 +54,8 @@ def main():
     ap.add_argument("--baza")
     ap.add_argument("--joc", default="excel-pas-cu-pas-viii")
     ap.add_argument("--n", type=int, default=25)
+    ap.add_argument("--lat", type=int, default=1366)
+    ap.add_argument("--inalt", type=int, default=900)
     a = ap.parse_args()
     if not a.baza:
         srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8774), functools.partial(Tacut, directory=str(SITE)))
@@ -62,7 +64,7 @@ def main():
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         br = p.chromium.launch()
-        ctx = br.new_context(viewport={"width": 1366, "height": 900})
+        ctx = br.new_context(viewport={"width": a.lat, "height": a.inalt})
         ctx.route("**/api/activitate", lambda r: r.fulfill(status=200, body='{"ok":true}', headers={"access-control-allow-origin": "*"}))
         pg = ctx.new_page()
         erori = []
@@ -94,6 +96,10 @@ def main():
                 vizibile = pg.evaluate("[...document.querySelectorAll('.xl')].filter(x=>x.offsetParent!==null).length")
                 verifica(vizibile == 1, "%s: cât exersează se văd %d foi (trebuie 1)" % (et, vizibile))
                 verifica(not pg.locator(".stack > .q").is_visible(), "%s: întrebarea inițială rămâne vizibilă lângă variantă" % et)
+                FB_AFARA = "[...document.querySelectorAll('.fb')].filter(x=>x.offsetParent!==null&&!x.closest('.xl-ex')).length"
+                NEXT_VIZ = "(()=>{const n=document.getElementById('next');return !!(n&&n.offsetParent!==null)})()"
+                verifica(pg.evaluate(FB_AFARA) == 0, "%s: mesajul sarcinii inițiale (#fb) rămâne vizibil lângă variantă" % et)
+                verifica(not pg.evaluate(NEXT_VIZ), "%s: „Mai departe” (#next) rămâne vizibil cât exersează" % et)
                 for k in range(a.n):
                     if k:
                         pg.click("[data-exa]")
@@ -102,17 +108,25 @@ def main():
                     t = tinta_din_text(text)
                     if not verifica(t is not None, "%s v%d: nu pot citi celula din text: %r" % (et, k + 1, text)):
                         break
+                    if k == 0:   # un răspuns GREȘIT la variantă: mesajul roșu nu trebuie să stea lângă verdele originalului
+                        pg.evaluate("JocExcel.gresestePractica()"); pg.click("[data-exv]")
+                        verifica(pg.locator(".xl-ex .fb.bad").count() == 1, "%s: varianta greșită nu e respinsă" % et)
+                        verifica(pg.evaluate(FB_AFARA) == 0, "%s: după varianta greșită, #fb al originalului e vizibil" % et)
+                        verifica(not pg.evaluate(NEXT_VIZ), "%s: după varianta greșită, #next e vizibil" % et)
                     celula = pg.locator("#xexb td[data-a='%s']" % t)
                     if not verifica(celula.count() == 1, "%s v%d: celula %s din text nu e în foaie" % (et, k + 1, t)):
                         break
                     celula.click()
                     pg.click("[data-exv]")
+                    verifica(pg.evaluate(FB_AFARA) == 0, "%s v%d: după verificarea variantei, #fb al originalului e vizibil" % (et, k + 1))
                     if not verifica(pg.locator(".xl-ex .fb.ok").count() == 1,
                                     "%s v%d: textul cere %s, clic acolo, dar e respins: %s" % (et, k + 1, t, pg.inner_text("#xexf")[:160])):
                         pg.evaluate("JocExcel.rezolvaPractica()"); pg.click("[data-exv]")
                 pg.click("[data-exg]")
                 verifica(pg.locator(".stack > .q").is_visible() and pg.locator("[data-exs]").count() == 1,
                          "%s: „Gata cu exersarea” nu readuce sarcina inițială" % et)
+                verifica(pg.locator("#fb .fb").first.is_visible() and pg.evaluate(NEXT_VIZ),
+                         "%s: „Gata cu exersarea” nu readuce #fb și „Mai departe”" % et)
         verifica(sarcini > 0, "nicio sarcină „Alege celula” găsită (proba n-a verificat nimic)")
         verifica(not erori, "erori JavaScript: %s" % erori[:3])
         br.close()
