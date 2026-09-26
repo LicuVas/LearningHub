@@ -39,6 +39,7 @@ h1 .eq{color:var(--accent);font-weight:500;font-stretch:80%}
 <script src="../_ghiduri/cont-drive/pasi.js"></script>
 <script src="../_ghiduri/sheets/pasi.js"></script>
 <script src="../_motor/tip-foaie.js"></script>
+<script src="../_motor/tip-excel.js"></script>
 <script>
 /* Tipul de întrebare „formatare”: un tabel brut, pe care elevul îl formatează ca în Excel.
    Gestul: întâi selectezi (clic pe un colț, apoi pe colțul opus; sau clic pe litera coloanei / numărul rândului), apoi apeși butonul.
@@ -137,170 +138,672 @@ const P={
   serii:'Serii de date'
 };
 
+/* ajutoare de desen pentru pași: captura reală, o mică foaie „Uite cum”, cod/formule pe rânduri */
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="../excel-viii/img/${f}" target="_blank"><img src="../excel-viii/img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const grila=(cells,cols,rows,mark,cap)=>{
+  const L=i=>String.fromCharCode(65+i);
+  const M=new Set(!mark?[]:mark.includes(':')?JocMotor.expandRange(...mark.split(':')):mark.split(','));
+  let h='<div class="gridwrap" style="max-width:460px"><table class="g"><thead><tr><th></th>';
+  for(let c=0;c<cols;c++)h+=`<th>${L(c)}</th>`;
+  h+='</tr></thead><tbody>';
+  for(let r=1;r<=rows;r++){h+=`<tr><th>${r}</th>`;
+    for(let c=0;c<cols;c++){const a=L(c)+r,v=cells[a];
+      h+=`<td class="${M.has(a)?'pick':''}"><div style="text-align:${typeof v==='number'?'right':'left'};min-height:30px">${v==null?'':typeof v==='number'?String(v).replace('.',','):v}</div></td>`}
+    h+='</tr>'}
+  return h+`</tbody></table></div>${cap?`<p class="hint" style="margin:4px 0 8px">${cap}</p>`:''}`;
+};
+const pre=s=>`<pre>${s}</pre>`;
+
+/* datele de lucru, refolosite în foi */
+const NOTE={A1:'Elev',B1:'Nota 1',C1:'Nota 2',A2:'Ana',B2:9,C2:8,A3:'Bogdan',B3:5,C3:7,A4:'Cristi',B4:10,C4:9,A5:'Dana',B5:6,C5:6,A6:'Elena',B6:8,C6:10};
+const MAG={A1:'Produs',B1:'Cantitate',C1:'Preț (lei)',D1:'Total',A2:'Caiet',B2:3,C2:5,A3:'Pix',B3:2,C3:4,A4:'Riglă',B4:1,C4:7};
+const CLASA={A1:'Elev',B1:'Clasa',C1:'Media',A2:'Bogdan',B2:'8A',C2:7.5,A3:'Ana',B3:'8B',C3:9,A4:'Elena',B4:'8A',C4:8,A5:'Cristi',B5:'8B',C5:6,A6:'Dana',B6:'8A',C6:9.5};
+const PLANTE={A1:'Planta',B1:'Săpt. 1',C1:'Săpt. 2',D1:'Săpt. 3',A2:'La lumină',B2:2,C2:5,D2:9,A3:'La umbră',B3:2,C3:3,D3:5,A4:'Fără apă',B4:2,C4:2,D4:1};
+
 const LEVELS=[
-{t:'Interfața, registrul și foile',lectii:[2,3],continuturi:[P.interfata,P.structura,P.registru,P.foi],text:`
-<p><strong>Excel</strong> e o aplicație de <mark>calcul tabelar</mark>. Fișierul lui e un <mark>registru</mark> (.xlsx), cu una sau mai multe <strong>foi de calcul</strong>.</p>
-<p>Sus e <mark>panglica</mark>, cu file ca Pornire (Home), Inserare (Insert), Formule (Formulas), Date (Data). Sub ea, în stânga, <strong>caseta de nume</strong> (Name Box) arată adresa celulei alese. Lângă ea e <strong>bara de formule</strong> (Formula Bar), cu ce e scris în celulă.</p>
-<p>Foaia e o grilă: coloane cu litere, rânduri cu numere. La întâlnirea lor stă o <mark>celulă</mark>, cu <strong>adresa</strong> literă + număr: <code>B3</code>.</p>
-<figure class="captura"><a href="../excel-viii/img/interfata.webp" target="_blank"><img src="../excel-viii/img/interfata.webp" alt="Fereastra Excel cu filele panglicii Home, Insert, Formulas, Data încadrate, caseta de nume care arată B3, bara de formule care arată 7 și celula B3 selectată" width="1000" height="460" loading="lazy"></a>
-<figcaption>Excel în engleză. Sus, filele panglicii: Pornire (Home), Inserare (Insert), Formule (Formulas), Date (Data). Celula aleasă e <b>B3</b>: caseta de nume (Name Box) arată B3, iar bara de formule arată ce e scris în ea, 7.</figcaption></figure>
-<p>În Excel instalat pe calculator: <kbd>Ctrl</kbd>+<kbd>N</kbd> creează un registru, <kbd>Ctrl</kbd>+<kbd>O</kbd> deschide unul, <kbd>Ctrl</kbd>+<kbd>S</kbd> îl salvează. Închizi abia după salvare.</p>
-<p>Filele foilor sunt jos. Clic pe filă = treci pe acea foaie. Dublu-clic pe ea = o <strong>redenumești</strong>.</p>
-<figure class="captura"><a href="../excel-viii/img/file-foi.webp" target="_blank"><img src="../excel-viii/img/file-foi.webp" alt="Filele foilor din josul ferestrei Excel: foaia Note, activă, foaia Absente și butonul plus" width="480" height="42" loading="lazy"></a>
-<figcaption>Jos, filele foilor: <b>Note</b> (foaia deschisă acum) și <b>Absente</b>. Butonul <b>+</b> adaugă o foaie nouă.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Unde vezi adresa celulei în care ești?',o:['În caseta de nume','Pe fila foii, jos','În panglică, pe fila Date','În titlul ferestrei'],ok:0,why:'Caseta de nume, în stânga barei de formule, arată mereu adresa celulei alese.'},
- {t:'pick',q:'Apasă pe celula <code>C5</code>, apoi verifică.',cols:5,rows:6,ans:'C5',why:'Întâi coloana (litera C), apoi rândul (5).'},
- {t:'match',q:'Potrivește fiecare parte cu rolul ei.',pairs:[['Registrul','Fișierul Excel, salvat ca .xlsx'],['Panglica','Filele cu butoane, sus'],['Bara de formule','Arată ce e scris în celula aleasă'],['Fila unei foi','Clic pe ea și treci pe acea foaie']],why:'Registrul e fișierul. Panglica și bara de formule sunt sus, iar filele foilor sunt jos.'},
- {t:'choice',q:'Vrei să continui catalogul salvat ieri. Ce apeși?',o:['Ctrl+O','Ctrl+N','Ctrl+S','Ctrl+Z'],ok:0,why:'Ctrl+O deschide un registru existent. Ctrl+N ar crea unul nou, gol.'},
- {t:'choice',q:'Închizi registrul, iar Excel te întreabă ce faci cu modificările. Ce alegi, ca să nu pierzi munca?',o:['Salvezi modificările','Nu salvezi nimic','Deschizi alt registru','Creezi o foaie nouă'],ok:0,why:'Fără salvare, tot ce ai lucrat de la ultima salvare se pierde la închidere.'},
- {t:'choice',q:'Vrei ca foaia să se numească „Note”. Ce faci?',o:['Dublu-clic pe fila foii, jos','Scrii „Note” în celula A1','Salvare ca…','Ștergi foaia și faci alta'],ok:0,why:'Numele foii se schimbă din fila ei. Merge și clic dreapta pe filă, apoi comanda de redenumire.'}
-]},
-{t:'Selectare, copiere, mutare, ștergere',lectii:[4],continuturi:[P.editare,P.structura],text:`
-<p>O <mark>zonă</mark> de celule se scrie cu două puncte între colțuri: <code>B2:D4</code>. O selectezi cu clic și tragere. Clic pe <strong>litera</strong> unei coloane selectează coloana, clic pe <strong>numărul</strong> unui rând selectează rândul.</p>
-<p>Cu ce ai selectat poți face trei lucruri:</p>
-<ul>
-<li><mark>copiere</mark>: <kbd>Ctrl</kbd>+<kbd>C</kbd>, clic în locul nou, <kbd>Ctrl</kbd>+<kbd>V</kbd>. Originalul rămâne;</li>
-<li><mark>mutare</mark>: <kbd>Ctrl</kbd>+<kbd>X</kbd>, clic în locul nou, <kbd>Ctrl</kbd>+<kbd>V</kbd>. Originalul dispare de unde era;</li>
-<li><mark>ștergere</mark>: <kbd>Delete</kbd> golește celulele, dar ele rămân în foaie.</li>
-</ul>
-<p>În jurul celulelor copiate apare o margine animată. Dispare cu <kbd>Esc</kbd>. Ai greșit? <kbd>Ctrl</kbd>+<kbd>Z</kbd> anulează.</p>
-<figure class="captura"><a href="../excel-viii/img/zona-copiata.webp" target="_blank"><img src="../excel-viii/img/zona-copiata.webp" alt="Zona B2:D4 selectată în Excel, cu marginea punctată animată care apare după Ctrl+C" width="760" height="290" loading="lazy"></a>
-<figcaption>Zona <code>B2:D4</code> (3 coloane × 3 rânduri) după <kbd>Ctrl</kbd>+<kbd>C</kbd>: marginea punctată din jur „se mișcă” pe ecran. Caseta de nume arată prima celulă, B2.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Vrei ca tabelul să nu mai stea în A1:C5, ci în E1:G5. Cu ce începi, după ce l-ai selectat?',o:['Ctrl+X','Ctrl+C','Delete','Ctrl+Z'],ok:0,why:'Mutarea începe cu Ctrl+X. Cu Ctrl+C l-ai avea de două ori, iar Delete doar îl golește.'},
- {t:'pick',q:'Selectează zona <code>B2:C4</code>: apasă pe un colț, apoi pe colțul opus.',cols:5,rows:6,range:true,ans:'B2:C4',why:'B2:C4 are colțurile B2 (stânga-sus) și C4 (dreapta-jos).'},
- {t:'choice',q:'Câte celule are zona <code>B2:D4</code>?',o:['6','8','9','12'],ok:2,why:'3 coloane (B, C, D) × 3 rânduri (2, 3, 4) = 9 celule.'},
- {t:'match',q:'Potrivește tasta cu ce face.',pairs:[['Ctrl+C','Copiază selecția'],['Ctrl+X','Decupează selecția, ca s-o muți'],['Ctrl+V','Lipește în locul nou'],['Delete','Golește celulele selectate'],['Ctrl+Z','Anulează ultima operație']],why:'C, X și V stau alături pe tastatură: copiez, decupez, lipesc.'},
- {t:'tf',q:'După <kbd>Delete</kbd>, celulele dispar din foaie, iar cele de dedesubt urcă în locul lor.',ok:false,why:'Fals. Delete doar golește conținutul. Celulele rămân la locul lor, goale.'}
-]},
-{t:'Tipuri de date',lectii:[5],continuturi:[P.tipuri],text:`
-<p>În celule scrii trei tipuri de date: <mark>numere</mark> (12, 250), <mark>text</mark> (Ana, clasa a VIII-a) și <mark>date calendaristice</mark> (de exemplu 15.09.2026, dacă așa scrie data calculatorul tău).</p>
-<p>Cum le deosebești dintr-o privire? Dacă nu schimbi tu alinierea, Excel pune <strong>numerele și datele la dreapta</strong>, iar <strong>textul la stânga</strong>.</p>
-<p>Un număr aliniat la stânga e un semn de alarmă: probabil Excel îl vede ca <strong>text</strong> și nu va calcula cu el.</p>
-<p>O celulă cu număr care arată <code>#####</code> nu e stricată: <strong>coloana e prea îngustă</strong>. O lărgești și numărul apare.</p>
-<figure class="captura"><a href="../excel-viii/img/tipuri-date.webp" target="_blank"><img src="../excel-viii/img/tipuri-date.webp" alt="Celule Excel: numărul 250 la dreapta, textul Ana la stânga, data 15.09.2026 la dreapta, 250 văzut ca text la stânga, cu un triunghi verde în colțul celulei B5, și ##### în coloana C îngustă" width="967" height="428" loading="lazy"></a>
-<figcaption>Numărul și data stau la dreapta, textul la stânga. Rândul 5: „250” lipit la stânga, cu un triunghi verde în colțul din stânga-sus, e văzut ca <b>text</b>. În coloana C, prea îngustă, numărul 12345678 apare ca <code>#####</code>.</figcaption></figure>`,
-qs:[
- {t:'classify',q:'Ce tip de date e fiecare valoare?',cats:['Număr','Text','Dată'],items:[['250',0],['Ana',1],['15.09.2026',2],['7B',1],['-4',0],['3 mere',1]],why:'Tot ce conține litere e text. „7B” și „3 mere” sunt text, deși încep cu o cifră.'},
- {t:'choice',q:'Scrii <code>12</code> în A1 și <code>Ana</code> în A2, fără nicio formatare. Cum apar?',o:['12 la dreapta, Ana la stânga','Amândouă la stânga','Amândouă centrate','12 la stânga, Ana la dreapta'],ok:0,why:'Numerele se aliniază la dreapta, textul la stânga.'},
- {t:'choice',q:'O celulă cu un număr mare arată <code>#####</code>. Ce faci?',o:['Scrii numărul din nou','Lărgești coloana','Pui numărul pe aldin','Închizi registrul'],ok:1,why:'##### înseamnă doar că numărul nu încape în lățimea coloanei.'},
- {t:'tf',q:'Un număr aliniat la stânga poate fi semn că Excel îl vede ca text.',ok:true,why:'Adevărat. Cu un astfel de „număr” formulele nu vor calcula corect.'}
-]},
-{t:'Formatarea rândurilor, coloanelor și celulelor',lectii:[6],continuturi:[P.randuri,P.celule],text:`
-<p>Un tabel brut devine ușor de citit prin <mark>formatare</mark>. Regula: <strong>întâi selectezi, apoi formatezi</strong>.</p>
-<p><strong>Rânduri și coloane.</strong> Lățimea unei coloane o schimbi trăgând marginea din dreapta literei ei. Înălțimea unui rând o schimbi trăgând marginea de sub numărul lui. <strong>Dublu-clic</strong> pe margine o potrivește după conținut.</p>
-<p><strong>Celule.</strong> Pe fila <strong>Pornire</strong> (Home) găsești:</p>
-<ul>
-<li><mark>alinierea</mark> conținutului: stânga, centru, dreapta (grupul Aliniere (Alignment));</li>
-<li><mark>bordurile</mark> (Borders), liniile din jurul celulelor;</li>
-<li><mark>culoarea de umplere</mark> (Fill Color, găleata), fundalul celulei;</li>
-<li><mark>stilurile predefinite</mark> (Stiluri de celule, în engleză Cell Styles), formatări gata făcute, de exemplu pentru capul de tabel.</li>
-</ul>
-<figure class="captura"><a href="../excel-viii/img/pornire-formatare.webp" target="_blank"><img src="../excel-viii/img/pornire-formatare.webp" alt="Fila Home din Excel cu butoanele Borders și Fill Color încadrate în grupul Font și grupul Aliniere (Alignment) încadrat" width="860" height="165" loading="lazy"></a>
-<figcaption>Fila Pornire (Home): butoanele <b>Borders</b> (borduri) și <b>Fill Color</b> (culoare de umplere) sunt în grupul Font; butoanele de aliniere sunt în grupul <b>Aliniere (Alignment)</b>.</figcaption></figure>
-<figure class="captura"><a href="../excel-viii/img/stiluri-celula.webp" target="_blank"><img src="../excel-viii/img/stiluri-celula.webp" alt="Grupul Stiluri (Styles) din fila Pornire (Home), cu butonul Stiluri de celule (Cell Styles) încadrat" width="245" height="125" loading="lazy"></a>
-<figcaption>Tot pe Pornire (Home), în grupul Stiluri (Styles): <b>Stiluri de celule (Cell Styles)</b>, stilurile predefinite.</figcaption></figure>
-<figure class="captura"><a href="../excel-viii/img/tabel-formatat.webp" target="_blank"><img src="../excel-viii/img/tabel-formatat.webp" alt="Tabel Excel cu capul de tabel colorat și îngroșat, borduri pe toate celulele și note centrate" width="520" height="245" loading="lazy"></a>
-<figcaption>Rezultatul: umplere și aldin pe capul de tabel, borduri pe tot tabelul, note centrate.</figcaption></figure>
-<p>Liniile gri ale grilei, de obicei, nu se tipăresc. Bordurile se tipăresc.</p>`,
-qs:[
- {t:'choice',q:'Tabelul trebuie să aibă linii când îl tipărești. Ce aplici?',o:['Borduri','Culoare de umplere','Aldin','O coloană mai lată'],ok:0,why:'Grila gri nu se tipărește de obicei. Bordurile se tipăresc.'},
- {t:'formatare',q:'Formatează tabelul brut: <strong>culoare de umplere</strong> doar pe capul de tabel (A1:C1), <strong>aliniere la centru</strong> doar pentru note (B2:C4) și <strong>borduri</strong> pe tot tabelul (A1:C4).',
-  cells:{A1:'Elev',B1:'Nota 1',C1:'Nota 2',A2:'Ana',B2:9,C2:10,A3:'Bogdan',B3:7,C3:8,A4:'Cristi',B4:10,C4:6},
-  cols:3,rows:4,targets:{umplere:'A1:C1',centru:'B2:C4',borduri:'A1:C4'},
-  why:'Fiecare formatare are zona ei. De aceea selecția vine întâi: butonul lucrează doar pe ce ai selectat.'},
- {t:'choice',q:'Numele elevilor nu încap în coloana A. Care e gestul cel mai rapid?',o:['Dublu-clic pe marginea din dreapta literei A','Dublu-clic pe celula A1, cea cu primul nume','Scurtezi numele până încap în coloană','Clic pe numărul rândului 1 din stânga foii'],ok:0,why:'Dublu-clicul pe marginea coloanei îi potrivește lățimea după cel mai lung conținut.'},
- {t:'classify',q:'Formatare de rând sau coloană, ori formatare de celule?',cats:['Rând sau coloană','Celule'],items:[['Lățimea coloanei B',0],['Înălțimea rândului 1',0],['Borduri în jurul tabelului',1],['Notele centrate',1],['Fundal galben în capul de tabel',1]],why:'Lățimea și înălțimea privesc coloane și rânduri întregi. Alinierea, bordurile și umplerea se pun pe celulele selectate.'},
- {t:'match',q:'Potrivește formatarea cu efectul ei.',pairs:[['Aliniere','Unde stă conținutul în celulă'],['Bordură','Linie în jurul celulei, care se tipărește'],['Culoare de umplere','Fundalul celulei'],['Stil predefinit','Formatare gata făcută, aplicată dintr-un clic']],why:'Stilul predefinit adună mai multe formatări într-una singură, gata pregătită.'}
-]},
-{t:'Formule',lectii:[7],continuturi:[P.formule],text:`
-<p>O <mark>formulă</mark> începe <strong>întotdeauna</strong> cu semnul <code>=</code>. Folosește operatorii <code>+</code> <code>-</code> <code>*</code> <code>/</code> (înmulțirea e steluța, împărțirea e bara) și <strong>adresele celulelor</strong>: <code>=B2*C2</code>, nu <code>=3*5</code>.</p>
-<p>De ce adrese? Când schimbi un număr din tabel, rezultatul <strong>se recalculează singur</strong>.</p>
-<p>Ordinea operațiilor e cea de la matematică: întâi <code>*</code> și <code>/</code>, apoi <code>+</code> și <code>-</code>. Parantezele schimbă ordinea.</p>
-<p>În celulă vezi <strong>rezultatul</strong>, iar formula o vezi în <strong>bara de formule</strong> (<em>fx</em>).</p>
-<p>Pătrățelul din colțul celulei selectate e <mark>mânerul de umplere</mark>. Dacă îl tragi în jos, formula se copiază, iar adresele coboară și ele: <code>=B2*C2</code> devine <code>=B3*C3</code>.</p>
-<figure class="captura"><a href="../excel-viii/img/formula-maner.webp" target="_blank"><img src="../excel-viii/img/formula-maner.webp" alt="Celula D2 arată 15, bara fx arată formula =B2*C2, iar mânerul de umplere e încadrat în colțul din dreapta-jos al celulei" width="900" height="240" loading="lazy"></a>
-<figcaption>În celulă vezi rezultatul, <b>15</b>; formula <code>=B2*C2</code> o vezi în bara <em>fx</em>. Pătrățelul verde din colț e mânerul de umplere.</figcaption></figure>
-<figure class="captura"><a href="../excel-viii/img/formula-copiata.webp" target="_blank"><img src="../excel-viii/img/formula-copiata.webp" alt="După tragerea mânerului de umplere, D3 e selectată și bara fx arată =B3*C3; coloana D are 15, 8 și 7" width="900" height="240" loading="lazy"></a>
-<figcaption>După ce am tras mânerul până în D4: în D3 formula a devenit <code>=B3*C3</code>.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Cantitatea e în B2, prețul în C2. Ce scrii în D2 pentru total?',o:['B2*C2','=B2*C2','=B2xC2','=3*5'],ok:1,why:'Fără = Excel vede text. „x” nu e operator. Cu numere scrise de mână, rezultatul nu se mai recalculează.'},
- {t:'choice',q:'Ce rezultat dă <code>=2+3*4</code>?',o:['20','14','24','9'],ok:1,why:'Întâi 3*4 = 12, apoi 2+12 = 14.'},
- {t:'choice',q:'Copiezi <code>=B2*C2</code> din D2 în D3, cu mânerul de umplere. Ce formulă apare în D3?<figure class="captura"><a href="../excel-viii/img/formula-maner.webp" target="_blank"><img src="../excel-viii/img/formula-maner.webp" alt="Excel: celula D2 cu rezultatul 15, formula =B2*C2 în bara de formule și mânerul de umplere din colțul de jos-dreapta" width="900" height="240" loading="lazy"></a><figcaption>Celula D2 și <b>mânerul de umplere</b> din colțul ei de jos-dreapta.</figcaption></figure>',o:['=B2*C2','=B3*C3','=B2*C3','=C3*D3'],ok:1,why:'Formula coboară un rând, deci și adresele coboară un rând.'},
- {t:'foaie',q:'Completează coloana Total (D2, D3, D4) și totalul general din D5. Apasă pe o celulă cu chenar, scrie formula în bara fx, apoi Enter.',
-  cells:{A1:'Produs',B1:'Cantitate',C1:'Preț (lei)',D1:'Total',A2:'Caiet',B2:3,C2:5,A3:'Pix',B3:2,C3:4,A4:'Riglă',B4:1,C4:7,A5:'Total general'},
-  cols:4,rows:5,targets:{D2:'=B2*C2',D3:'=B3*C3',D4:'=B4*C4',D5:'=D2+D3+D4'},
-  why:'Formulele folosesc adrese, deci se recalculează dacă se schimbă prețurile.'}
-]},
-{t:'Funcții și decizie',lectii:[8,9],continuturi:[P.functii],text:`
-<p>O <mark>funcție</mark> e o formulă gata făcută: <code>SUM</code> (suma), <code>AVERAGE</code> (media aritmetică), <code>MAX</code> (cea mai mare valoare), <code>MIN</code> (cea mai mică). Între paranteze pui zona: <code>=AVERAGE(B2:B6)</code>.</p>
-<p>Și în Excel-ul în limba română, numele funcțiilor sunt <strong>în engleză</strong>. <code>=SUMA(B2:B6)</code> dă eroare.</p>
-<figure class="captura"><a href="../excel-viii/img/functie-average.webp" target="_blank"><img src="../excel-viii/img/functie-average.webp" alt="Celula B7 arată media 6,85, iar bara fx arată funcția =AVERAGE(B2:B6)" width="900" height="340" loading="lazy"></a>
-<figcaption>Celula B7 arată <b>6,85</b>; în bara <em>fx</em> se vede funcția <code>=AVERAGE(B2:B6)</code>.</figcaption></figure>
-<p>Funcția de <mark>decizie</mark>, <code>IF</code>, alege între două rezultate: <code>=IF(B2&gt;=5;"promovat";"corigent")</code>. Citești: <em>dacă</em> B2 e cel puțin 5, scrie „promovat”, <em>altfel</em> „corigent”. Textul stă între ghilimele.</p>
-<p>Comparații: <code>&gt;</code> <code>&lt;</code> <code>&gt;=</code> <code>&lt;=</code> <code>=</code>, iar <code>&lt;&gt;</code> înseamnă diferit. Între părțile lui IF pui <code>;</code> sau <code>,</code>, după setările calculatorului.</p>
-<figure class="captura"><a href="../excel-viii/img/functie-if.webp" target="_blank"><img src="../excel-viii/img/functie-if.webp" alt="Celula C3 arată corigent, iar bara fx arată =IF(B3&gt;=5;&quot;promovat&quot;;&quot;corigent&quot;)" width="900" height="340" loading="lazy"></a>
-<figcaption>Media lui Bogdan e 4,5, deci IF scrie <b>corigent</b>. Pe acest calculator, părțile lui IF sunt despărțite cu <code>;</code>. Dana are exact 5: promovat.</figcaption></figure>
-<p>Verifică decizia și cu o valoare fix la limită, de exemplu media 5.</p>`,
-qs:[
- {t:'choice',q:'Ce funcție găsește cea mai mare notă din zona B2:B20?',o:['SUM','AVERAGE','MAX','MIN'],ok:2,why:'MAX = maximul, adică cea mai mare valoare.'},
- {t:'choice',q:'În B2:B4 sunt notele 6, 8 și 10. Ce afișează <code>=AVERAGE(B2:B4)</code>?',o:['24','8','10','3'],ok:1,why:'(6 + 8 + 10) : 3 = 8.'},
- {t:'tf',q:'În Excel-ul în limba română, suma se scrie <code>=SUMA(B2:B6)</code>.',ok:false,why:'Fals. Numele funcțiilor rămân în engleză: =SUM(B2:B6).'},
- {t:'foaie',q:'Situația școlară la informatică: calculează media clasei (B7), nota maximă (B8) și nota minimă (B9), cu funcții.',
-  cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Bogdan',B3:7,A4:'Cristi',B4:10,A5:'Dana',B5:6,A6:'Elena',B6:8,A7:'Media',A8:'Nota maximă',A9:'Nota minimă'},
-  cols:2,rows:9,targets:{B7:'=AVERAGE(B2:B6)',B8:'=MAX(B2:B6)',B9:'=MIN(B2:B6)'},
-  why:'AVERAGE, MAX și MIN pe aceeași zonă, B2:B6.'},
- {t:'choice',q:'B2 conține 4,50. Ce afișează <code>=IF(B2&gt;=5;"promovat";"corigent")</code>?',o:['promovat','corigent','4,50','nimic'],ok:1,why:'4,50 nu e ≥ 5, deci IF alege a doua variantă.'},
- {t:'foaie',q:'Scrie în C2 și C3 situația fiecărui elev, cu IF: „promovat” de la media 5 în sus, altfel „corigent”.',
-  cells:{A1:'Elev',B1:'Media',C1:'Situația',A2:'Ana',B2:7.25,A3:'Bogdan',B3:4.5},
-  cols:3,rows:3,targets:{C2:'=IF(B2>=5;"promovat";"corigent")',C3:'=IF(B3>=5;"promovat";"corigent")'},
-  variants:[{B2:4,B3:9},{B2:5,B3:4.99}],
-  why:'Formula verifică media din celulă, deci merge și după ce se schimbă notele. Jocul a testat-o și cu media 5 fix.'}
-]},
-{t:'Sortare după mai multe criterii',lectii:[10],continuturi:[P.sortare],text:`
-<p><mark>Sortarea</mark> aranjează rândurile unui tabel <strong>crescător</strong> (A→Z, 1→10) sau <strong>descrescător</strong> (Z→A, 10→1).</p>
-<p>Faci clic într-o celulă a tabelului, apoi fila <strong>Date</strong> (Data) → <strong>Sortare</strong> (Sort). Capul de tabel trebuie să rămână sus. Dacă a coborât printre date, anulezi cu <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</p>
-<p>Pentru <mark>mai multe criterii</mark>, în fereastra de sortare adaugi un nivel (<em>Adăugare nivel</em>, în engleză <em>Add Level</em>). De exemplu: întâi după clasă, A→Z, apoi după notă, descrescător. Al doilea criteriu ordonează doar rândurile care au aceeași clasă.</p>
-<figure class="captura"><a href="../excel-viii/img/sortare-doua-criterii.webp" target="_blank"><img src="../excel-viii/img/sortare-doua-criterii.webp" alt="Fereastra Sort din Excel cu butonul Add Level încadrat și două criterii: Sort by Clasa A to Z (de la A la Z), Then by Nota Largest to Smallest (de la cel mai mare la cel mai mic)" width="750" height="344" loading="lazy"></a>
-<figcaption>Fereastra Sortare (Sort). Întâi după Clasa, <i>de la A la Z (A to Z)</i>, apoi după Nota, <i>de la cel mai mare la cel mai mic (Largest to Smallest)</i>, adică descrescător. Butonul <b>Adăugare nivel (Add Level)</b> a adăugat al doilea rând.</figcaption></figure>
-<figure class="captura"><a href="../excel-viii/img/tabel-sortat.webp" target="_blank"><img src="../excel-viii/img/tabel-sortat.webp" alt="Tabelul sortat: întâi elevii din 8A cu notele 10, 8, 7, apoi cei din 8B cu notele 10, 9" width="600" height="280" loading="lazy"></a>
-<figcaption>Rezultatul: întâi toată clasa 8A, apoi 8B; în fiecare clasă, nota mai mare e prima.</figcaption></figure>
-<p><strong>Nu sorta o singură coloană.</strong> Rândurile se desperechează: notele ajung la alți elevi. Suma notelor rămâne aceeași, deci nu observi ușor.</p>`,
-qs:[
- {t:'choice',q:'Vrei clasamentul clasei, cu cea mai mare medie sus. Ce ordine alegi pentru coloana Media?',o:['Descrescătoare','Crescătoare','Alfabetică','Nu contează'],ok:0,why:'Descrescător înseamnă de la cea mai mare valoare la cea mai mică.'},
- {t:'order',q:'Tabelul e sortat întâi după Clasa (A→Z), apoi după Nota (descrescător). Pune rândurile în ordinea rezultată.',items:['8A · Ioana · 10','8A · Radu · 7','8B · Maria · 9','8B · Dan · 6'],why:'Întâi toate rândurile din 8A, apoi din 8B. În fiecare clasă, nota mai mare vine prima.'},
- {t:'order',q:'Faci sortarea după două criterii. Pune pașii în ordine.',items:['Faci clic într-o celulă a tabelului','Deschizi fila Date → Sortare','Alegi primul criteriu: Clasa, A→Z','Adaugi un nivel: Nota, descrescător','Apeși OK'],why:'Primul criteriu decide grupele mari. Nivelul adăugat ordonează în interiorul fiecărei grupe.'},
- {t:'choice',q:'Doi elevi au aceeași medie, 9. Cum stabilești cine apare primul?',o:['Adaugi un al doilea criteriu, de exemplu numele','Sortezi încă o dată doar coloana Media','Îi muți la întâmplare cu mouse-ul','Ștergi rândul unuia dintre ei'],ok:0,why:'Al doilea criteriu contează exact la valorile egale ale primului.'},
- {t:'tf',q:'Poți sorta doar coloana Nota: numele rămân lângă notele lor.',ok:false,why:'Fals. Dacă sortezi o singură coloană, notele se mută, iar numele rămân pe loc. Rândurile se desperechează.'}
-]},
-{t:'Experimentul cu plante',lectii:[11,12],continuturi:[P.grafice,P.serii,P.formule,P.functii],final:true,text:`
-<p>Un <mark>grafic</mark> face datele ușor de înțeles. Alegi tipul după întrebare și după cine îl privește:</p>
-<ul>
-<li><strong>coloane</strong> → <strong>compari</strong> valori;</li>
-<li><strong>linie</strong> → urmărești o <strong>evoluție în timp</strong>;</li>
-<li><strong>radial</strong> (plăcinta) → <strong>părți dintr-un întreg</strong>.</li>
-</ul>
-<p>O <mark>serie de date</mark> e un șir de valori care merg împreună, de obicei un rând sau o coloană din tabel: de exemplu înălțimile unei plante, săptămână de săptămână. Fiecare serie primește o culoare și un nume în <strong>legendă</strong>.</p>
-<p>Selectezi datele <strong>cu tot cu etichete</strong>, apoi fila <strong>Inserare</strong> (Insert) → tipul de grafic, din grupul <strong>Diagrame</strong> (Charts). Adaugi un titlu.</p>
-<figure class="captura"><a href="../excel-viii/img/inserare-diagrame.webp" target="_blank"><img src="../excel-viii/img/inserare-diagrame.webp" alt="Fila Inserare (Insert) din Excel, încadrată, cu grupul Diagrame (Charts) încadrat: Diagrame recomandate (Recommended Charts) și butoanele pentru tipurile de grafic" width="1000" height="160" loading="lazy"></a>
-<figcaption>Fila Inserare (Insert), grupul <b>Diagrame (Charts)</b>: aici alegi coloane, linie, radial și celelalte tipuri.</figcaption></figure>
-<figure class="captura"><a href="../excel-viii/img/grafic-plante.webp" target="_blank"><img src="../excel-viii/img/grafic-plante.webp" alt="Datele celor trei plante selectate cu etichete și graficul cu coloane Înălțimea plantelor, cu legenda jos: La lumină, La umbră, Fără apă" width="1000" height="389" loading="lazy"></a>
-<figcaption>Datele selectate cu tot cu etichete (A1:D4) și graficul cu coloane. Fiecare plantă e o serie, cu culoarea și numele ei în <b>legendă</b>.</figcaption></figure>
-<p><strong>Misiunea finală:</strong> trei plante, la lumină, la umbră și fără apă, măsurate trei săptămâni.</p>`,
-qs:[
- {t:'choice',q:'Vrei să arăți cum a crescut o plantă de la o săptămână la alta. Ce grafic alegi?',o:['Coloane','Linie','Radial','Niciunul'],ok:1,why:'Evoluția în timp se vede cel mai bine pe o linie.'},
- {t:'choice',q:'Ce grafic arată cel mai bine ce parte din clasă a ales fiecare sport?',o:['Linie','Coloane','Radial','Tabel'],ok:2,why:'Radialul (plăcinta) arată părțile unui întreg.'},
- {t:'pick',q:'Selectează seria de date a plantei „La umbră”: doar valorile ei din cele trei săptămâni.',cols:4,rows:4,range:true,
-  cells:{A1:'Planta',B1:'Săpt. 1',C1:'Săpt. 2',D1:'Săpt. 3',A2:'La lumină',B2:2,C2:5,D2:9,A3:'La umbră',B3:2,C3:3,D3:5,A4:'Fără apă',B4:2,C4:2,D4:1},
-  ans:'B3:D3',why:'Seria plantei „La umbră” e rândul ei de valori, B3:D3. Numele din A3 devine numele seriei în legendă.'},
- {t:'choice',q:'Faci un grafic linie cu cele trei plante, câte o serie pentru fiecare. Câte nume apar în legendă?',o:['3','9','1','4'],ok:0,why:'Fiecare serie are un nume în legendă: 3 plante, 3 serii, 3 nume.'},
- {t:'foaie',q:'Calculează creșterea fiecărei plante (E2:E4 = săptămâna 3 minus săptămâna 1) și creșterea maximă în E5.',
-  cells:{A1:'Planta',B1:'Săpt. 1',C1:'Săpt. 2',D1:'Săpt. 3',E1:'Creștere (cm)',A2:'La lumină',B2:2,C2:5,D2:9,A3:'La umbră',B3:2,C3:3,D3:5,A4:'Fără apă',B4:2,C4:2,D4:1,A5:'Creșterea maximă'},
-  cols:5,rows:5,targets:{E2:'=D2-B2',E3:'=D3-B3',E4:'=D4-B4',E5:'=MAX(E2:E4)'},
-  why:'Planta fără apă a „crescut” cu −1 cm: s-a ofilit. Asta e o concluzie trasă din date.'},
- {t:'choice',q:'Selectezi datele pentru graficul plantelor. Ce incluzi?',o:['Numerele și etichetele lor','Doar numerele, fără etichete','Doar etichetele, fără numere','Tot tabelul și rândurile goale'],ok:0,why:'Din etichete Excel scrie numele seriilor în legendă și categoriile de pe axă.'}
-]}
+/* ================= 1. Interfața, registrul și foile (lecțiile 2-3) ================= */
+{t:'Interfața, registrul și foile',lectii:[2,3],continuturi:[P.interfata,P.structura,P.registru,P.foi],
+ obiectiv:'recunoști părțile ferestrei Excel, găsești orice celulă după adresa ei, scrii în ea și lucrezi cu registrul și foile lui.',
+ pasi:[
+  {t:'Excel face tabele care calculează',
+   text:`<p><strong>Excel</strong> e o aplicație de <mark>calcul tabelar</mark>: scrii date într-un tabel mare, iar Excel face socotelile în locul tău (totaluri, medii, clasamente, grafice).</p>
+<p>Fișierul Excel se numește <mark>registru</mark> (în engleză <em>workbook</em>) și se salvează cu terminația <strong>.xlsx</strong>, de exemplu <code>Catalog.xlsx</code>.</p>
+<p>Un registru are una sau mai multe <mark>foi de calcul</mark>, ca un caiet cu mai multe pagini. Pe fiecare foaie poți avea alt tabel.</p>`,
+   altfel:`<p>Gândește-te la un <strong>dosar</strong> cu mai multe foi de matematică. Dosarul întreg e registrul (fișierul .xlsx). Fiecare foaie din dosar e o foaie de calcul, cu tabelul ei.</p>`,
+   incearca:{t:'choice',q:'Cum se numește fișierul Excel?',o:['Registru','Foaie','Celulă','Panglică'],ok:0,ajutor:'Recitește al doilea paragraf: fișierul se salvează ca .xlsx și se numește…',why:'Fișierul Excel e registrul. În el stau una sau mai multe foi de calcul.'},
+   inca:[
+    {t:'tf',q:'Un registru Excel poate avea mai multe foi de calcul.',ok:true,ajutor:'Gândește-te la caietul cu mai multe pagini.',why:'Adevărat. Un registru poate avea oricâte foi, fiecare cu tabelul ei.'},
+    {t:'choice',q:'Ce terminație are un registru Excel?',o:['.xlsx','.docx','.pptx','.html'],ok:0,ajutor:'Caută terminația în al doilea paragraf.',why:'.xlsx e registrul Excel. .docx e document Word, .pptx e prezentare, .html e pagină web.'}
+   ]},
+  {t:'Foaia: coloane, rânduri, celule',
+   text:`<p>Foaia de calcul e o <mark>grilă</mark>:</p>
+<ul><li><strong>coloanele</strong> merg de sus în jos și au <strong>litere</strong>: A, B, C…;</li>
+<li><strong>rândurile</strong> merg de la stânga la dreapta și au <strong>numere</strong>: 1, 2, 3….</li></ul>
+<p>Căsuța de la întâlnirea unei coloane cu un rând se numește <mark>celulă</mark>. Fiecare celulă are o <mark>adresă</mark>: întâi <strong>litera coloanei</strong>, apoi <strong>numărul rândului</strong>. Celula din coloana B și rândul 3 are adresa <code>B3</code>.</p>`,
+   exemplu:`${grila({},4,4,'B3','Coloana B, rândul 3: celula colorată are adresa B3. Mereu litera întâi: B3, niciodată 3B.')}`,
+   altfel:`<p>E ca la jocul <strong>Vaporașe</strong> (bătălia navală): „B3” înseamnă coloana B, rândul 3. Sau ca la cinema: ca să-ți găsești locul, ai nevoie de rând și de loc.</p>`,
+   incearca:{t:'pick',q:'Apasă pe celula <b>C5</b>, apoi verifică.',cols:5,rows:6,ans:'C5',ajutor:'Întâi mergi pe coloana C (a treia literă), apoi cobori până la rândul 5.',why:'Întâi coloana (litera C), apoi rândul (5).'},
+   inca:[
+    {t:'pick',q:'Apasă pe celula <b>D2</b>.',cols:5,rows:6,ans:'D2',ajutor:'Coloana D, rândul 2.',why:'D2: coloana D, rândul 2.'},
+    {t:'choice',q:'Ce adresă are celula din coloana A și rândul 7?',o:['A7','7A','A-7','G1'],ok:0,ajutor:'Litera coloanei vine prima.',why:'Adresa se scrie litera coloanei + numărul rândului, lipite: A7.'}
+   ]},
+  {t:'Fereastra Excel: panglica, caseta de nume, bara de formule',
+   text:`<p>Sus e <mark>panglica</mark> (Ribbon), cu file: <strong>Pornire (Home)</strong>, <strong>Inserare (Insert)</strong>, <strong>Formule (Formulas)</strong>, <strong>Date (Data)</strong>. Clic pe o filă și vezi butoanele ei.</p>
+<p>Sub panglică, în stânga, e <mark>caseta de nume</mark> (Name Box): arată <strong>adresa</strong> celulei alese.</p>
+<p>Lângă ea, după semnul <em>fx</em>, e <mark>bara de formule</mark> (Formula Bar): arată <strong>ce e scris</strong> în celula aleasă.</p>
+${fig('interfata.webp',1000,460,'Fereastra Excel cu filele panglicii Home, Insert, Formulas, Data încadrate, caseta de nume care arată B3, bara de formule care arată 7 și celula B3 selectată','Excel în engleză. Sus, filele panglicii: Pornire (Home), Inserare (Insert), Formule (Formulas), Date (Data). Celula aleasă e <b>B3</b>: caseta de nume arată B3, iar bara de formule arată ce e scris în ea, 7.')}`,
+   incearca:{t:'choice',q:'Unde vezi adresa celulei în care ești?',o:['În caseta de nume','Pe fila foii, jos','În panglică, pe fila Date','În titlul ferestrei'],ok:0,ajutor:'Uită-te în captură: ce arată B3, în stânga, sub panglică?',why:'Caseta de nume, în stânga barei de formule, arată mereu adresa celulei alese.'},
+   inca:[
+    {t:'choice',q:'Alegi celula D4, în care scrie 12. Ce apare în bara de formule?',o:['12','D4','Numele foii','Numele fișierului'],ok:0,ajutor:'Bara de formule arată CE e scris în celulă, nu unde e.',why:'Bara de formule arată conținutul (12). Adresa, D4, apare în caseta de nume.'}
+   ]},
+  {t:'Alegi o celulă și scrii în ea',
+   text:`<p>Ca să scrii într-o celulă:</p>
+<ol><li><strong>clic</strong> pe celulă: are acum un chenar gros, verde;</li>
+<li><strong>tastezi</strong> textul sau numărul;</li>
+<li>apeși <kbd>Enter</kbd>: scrisul rămâne în celulă și treci la celula de <strong>dedesubt</strong>. Cu <kbd>Tab</kbd> treci la celula din <strong>dreapta</strong>.</li></ol>
+<p>Ai greșit? Alegi iar celula și scrii peste: vechiul conținut dispare. Cu <kbd>Esc</kbd> renunți la ce scrii acum.</p>`,
+   exemplu:`<p>Clic pe A1, scrii <b>Elev</b>, apeși <kbd>Tab</kbd>, scrii <b>Nota</b>, apeși <kbd>Enter</kbd>:</p>${grila({A1:'Elev',B1:'Nota'},3,2,'','Capul unui tabel, scris în A1 și B1.')}`,
+   incearca:{t:'excel',q:'Foaia de mai jos se poartă ca Excel-ul. Scrie capul de tabel: în <b>A1</b> scrie <code>Elev</code>, apasă <kbd>Tab</kbd>, apoi în <b>B1</b> scrie <code>Nota</code> și <kbd>Enter</kbd>.',cols:4,rows:4,cells:{},verifica:{valori:{A1:'Elev',B1:'Nota'}},ajutor:'Clic pe A1 și începe direct să tastezi. Tab te duce în B1.',why:'Alegi celula și tastezi. Tab trece la dreapta, Enter în jos.'},
+   inca:[
+    {t:'excel',q:'Nota lui Bogdan e greșită: în <b>B3</b> scrie <b>8</b> peste ce e acolo.',cols:4,rows:4,cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Bogdan',B3:3},verifica:{valori:{B3:8}},ajutor:'Clic pe B3, tastezi 8, Enter. Nu trebuie să ștergi întâi.',why:'Alegi celula și scrii peste: vechea valoare dispare.'}
+   ]},
+  {t:'Registrul și foile: creare, deschidere, salvare, redenumire',
+   text:`<p>În Excel-ul instalat pe calculator:</p>
+<ul><li><kbd>Ctrl</kbd>+<kbd>N</kbd> creează un registru <strong>nou</strong>, gol;</li>
+<li><kbd>Ctrl</kbd>+<kbd>O</kbd> <strong>deschide</strong> un registru salvat;</li>
+<li><kbd>Ctrl</kbd>+<kbd>S</kbd> îl <strong>salvează</strong>. Prima dată alegi folderul și scrii numele.</li></ul>
+<p>Închizi registrul abia după salvare. Dacă Excel te întreabă ce faci cu modificările, alegi să le <strong>salvezi</strong>.</p>
+<p>Filele foilor sunt jos. <strong>Clic</strong> pe o filă = treci pe acea foaie. <strong>Dublu-clic</strong> pe filă = o <mark>redenumești</mark>: scrii numele nou și apeși <kbd>Enter</kbd>. Butonul <strong>+</strong> adaugă o foaie.</p>
+${fig('file-foi.webp',480,42,'Filele foilor din josul ferestrei Excel: foaia Note, activă, foaia Absente și butonul plus','Jos, filele foilor: <b>Note</b> (foaia deschisă acum) și <b>Absente</b>. Butonul <b>+</b> adaugă o foaie nouă.')}`,
+   exemplu:`<p><b>Catalogul tău, pas cu pas:</b></p><ol><li><kbd>Ctrl</kbd>+<kbd>N</kbd>: registru nou.</li><li>Dublu-clic pe fila primei foi (Sheet1), scrii <b>Note</b>, <kbd>Enter</kbd>.</li><li>Scrii tabelul.</li><li><kbd>Ctrl</kbd>+<kbd>S</kbd>: alegi folderul clasei, numele <b>Catalog</b>, salvezi.</li><li>A doua zi: <kbd>Ctrl</kbd>+<kbd>O</kbd> și alegi Catalog.</li></ol>`,
+   incearca:{t:'choice',q:'Vrei să continui catalogul salvat ieri. Ce apeși?',o:['Ctrl+O','Ctrl+N','Ctrl+S','Ctrl+Z'],ok:0,ajutor:'O vine de la „open” (deschide).',why:'Ctrl+O deschide un registru existent. Ctrl+N ar crea unul nou, gol.'},
+   inca:[
+    {t:'choice',q:'Închizi registrul, iar Excel te întreabă ce faci cu modificările. Ce alegi, ca să nu pierzi munca?',o:['Salvezi modificările','Nu salvezi nimic','Deschizi alt registru','Creezi o foaie nouă'],ok:0,ajutor:'Ce se întâmplă cu munca nesalvată când închizi?',why:'Fără salvare, tot ce ai lucrat de la ultima salvare se pierde la închidere.'},
+    {t:'choice',q:'Vrei ca foaia să se numească „Note”. Ce faci?',o:['Dublu-clic pe fila foii, jos','Scrii „Note” în celula A1','Apeși Ctrl+S','Ștergi foaia și faci alta'],ok:0,ajutor:'Numele foii stă pe fila ei, jos.',why:'Numele foii se schimbă din fila ei: dublu-clic, scrii numele, Enter.'},
+    {t:'match',q:'Potrivește fiecare parte cu rolul ei.',pairs:[['Registrul','Fișierul Excel, salvat ca .xlsx'],['Panglica','Filele cu butoane, sus'],['Bara de formule','Arată ce e scris în celula aleasă'],['Fila unei foi','Clic pe ea și treci pe acea foaie']],ajutor:'Registrul e fișierul; filele foilor sunt jos.',why:'Registrul e fișierul. Panglica și bara de formule sunt sus, iar filele foilor sunt jos.'}
+   ]}
+ ],
+ atelier:{t:'excel',titlu:'Prima ta foaie',
+  intro:`<p>Foaia de mai jos se poartă ca Excel-ul: sus panglica, apoi caseta de nume și bara <em>fx</em>, apoi grila. <strong>Sarcina:</strong> scrie un catalog mic, celulă cu celulă. Folosește <kbd>Tab</kbd> ca să mergi la dreapta și <kbd>Enter</kbd> ca să cobori. La final apasă <b>Verifică</b>.</p>`,
+  q:'Scrie tabelul: în <b>A1</b> <code>Elev</code>, în <b>B1</b> <code>Nota</code>; în <b>A2</b> <code>Ana</code> cu nota <b>9</b> în B2; în <b>A3</b> <code>Bogdan</code> cu nota <b>8</b> în B3.',
+  cols:4,rows:4,cells:{},verifica:{valori:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Bogdan',B3:8}},
+  ajutor:'Clic pe A1: Elev, Tab, Nota, Enter. Excel te duce în A2: Ana, Tab, 9, Enter. Apoi Bogdan, Tab, 8, Enter.',
+  why:'Ai scris un tabel adevărat: capul de tabel pe rândul 1, iar fiecare elev pe rândul lui.',
+  inca:[
+   {t:'excel',q:'Încă unul: alege celula de la întâlnirea <b>coloanei C</b> cu <b>rândul 4</b>. Uită-te apoi în caseta de nume.',cols:5,rows:6,cells:NOTE,verifica:{sel:'C4'},ajutor:'Coloana C e a treia; cobori până la rândul 4.',why:'Coloana C, rândul 4. Caseta de nume arată mereu unde ești: C4.'},
+   {t:'excel',q:'Încă unul: alege celula <b>B3</b> și citește bara de formule. Ce e scris în ea?',cols:4,rows:6,cells:NOTE,o:['5','B3','Bogdan','Nota 1'],ok:0,ajutor:'Bara de formule, după fx, arată conținutul celulei.',why:'În B3 e nota 5 a lui Bogdan. Adresa B3 apare în caseta de nume, iar conținutul, 5, în bara de formule.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Ce este un registru Excel?',o:['Fișierul Excel, cu una sau mai multe foi','O singură celulă din tabel','Fila Pornire din panglică','Bara în care scrii formule'],ok:0,ajutor:'Gândește-te la dosarul cu foi.',why:'Registrul e fișierul .xlsx; în el stau foile de calcul.'},
+  {t:'pick',q:'Apasă pe celula <b>D3</b>, apoi verifică.',cols:5,rows:6,ans:'D3',why:'Coloana D, rândul 3.'},
+  {t:'choice',q:'Unde vezi ce e scris în celula aleasă?',o:['În bara de formule','În caseta de nume','Pe fila foii','În titlul ferestrei'],ok:0,ajutor:'Una arată adresa, cealaltă conținutul.',why:'Bara de formule arată conținutul; caseta de nume arată adresa.'},
+  {t:'choice',q:'Vrei să începi un tabel într-un fișier nou, gol. Ce apeși?',o:['Ctrl+N','Ctrl+O','Ctrl+S','Ctrl+Z'],ok:0,ajutor:'N vine de la „new” (nou).',why:'Ctrl+N creează un registru nou. Ctrl+O deschide unul salvat, Ctrl+S salvează.'},
+  {t:'tf',q:'Adresa unei celule se scrie cu numărul rândului întâi, de exemplu 3B.',ok:false,ajutor:'Recitește pasul 2.',why:'Fals. Întâi litera coloanei, apoi numărul rândului: B3.'},
+  {t:'choice',q:'Vrei ca foaia a doua să se numească „Absente”. Ce faci?',o:['Dublu-clic pe fila ei, jos, scrii numele, Enter','Scrii „Absente” în celula A1','Salvezi registrul cu numele Absente','Apeși butonul +'],ok:0,why:'Numele foii se schimbă din fila ei. Butonul + ar adăuga o foaie nouă.'}
+ ]},
+
+/* ================= 2. Selectare, copiere, mutare, ștergere (lecția 4) ================= */
+{t:'Selectare, copiere, mutare, ștergere',lectii:[4],continuturi:[P.editare,P.structura],
+ obiectiv:'selectezi o celulă sau o zonă și copiezi, muți sau ștergi date fără să strici tabelul.',
+ pasi:[
+  {t:'Zona de celule',
+   text:`<p>O <mark>zonă</mark> e un dreptunghi de celule. O scrii cu adresa colțului din <strong>stânga-sus</strong>, <strong>două puncte</strong>, apoi adresa colțului din <strong>dreapta-jos</strong>: <code>B2:D4</code>.</p>
+<p>Câte celule are o zonă? Numeri coloanele (B, C, D = 3), numeri rândurile (2, 3, 4 = 3) și le înmulțești: 3 × 3 = <strong>9</strong> celule.</p>`,
+   exemplu:`${grila({},5,5,'B2:D4','Zona B2:D4: colțul stânga-sus B2, colțul dreapta-jos D4. 3 coloane × 3 rânduri = 9 celule.')}`,
+   altfel:`<p>E ca atunci când spui „de la banca a doua la banca a patra, rândurile B până la D”: dai doar cele două colțuri, iar tot ce e între ele intră în zonă.</p>`,
+   incearca:{t:'choice',q:'Câte celule are zona A1:B3?',o:['6','5','3','9'],ok:0,ajutor:'Coloanele A, B = 2. Rândurile 1, 2, 3 = 3. Înmulțește.',why:'2 coloane × 3 rânduri = 6 celule.'},
+   inca:[
+    {t:'choice',q:'Cum scrii zona cu colțurile A1 (stânga-sus) și C2 (dreapta-jos)?',o:['A1:C2','A1-C2','A1;C2','A1+C2'],ok:0,ajutor:'Între colțuri stau două puncte.',why:'Zona se scrie cu două puncte între colțuri: A1:C2.'},
+    {t:'pick',q:'Selectează zona <b>B2:C4</b>: apasă pe un colț, apoi pe colțul opus.',cols:5,rows:6,range:true,ans:'B2:C4',ajutor:'Colțul stânga-sus e B2, colțul dreapta-jos e C4.',why:'B2:C4 are colțurile B2 (stânga-sus) și C4 (dreapta-jos).'}
+   ]},
+  {t:'Cum selectezi',
+   text:`<ul><li><strong>Clic</strong> pe o celulă = o alegi.</li>
+<li>O <strong>zonă</strong>: apeși pe primul colț și, cu butonul mouse-ului ținut apăsat, <strong>tragi</strong> până la colțul opus. Sau: clic pe primul colț, apoi <kbd>Shift</kbd>+clic pe colțul opus.</li>
+<li>În Excel, clic pe <strong>litera</strong> unei coloane selectează toată coloana; clic pe <strong>numărul</strong> unui rând selectează tot rândul.</li></ul>
+<p>Zona selectată se colorează. Celula din care ai pornit rămâne albă: ea e <mark>celula activă</mark>, iar caseta de nume arată adresa ei.</p>`,
+   exemplu:`<p>Selectezi <code>B2:C4</code>: apeși pe B2, ții apăsat, tragi până la C4, ridici degetul. B2 rămâne albă, restul zonei e colorat, iar caseta de nume arată B2.</p>`,
+   incearca:{t:'excel',q:'Selectează în foaie zona <b>B2:C4</b> (notele primilor trei elevi), trăgând de la B2 la C4.',cols:4,rows:6,cells:NOTE,verifica:{zona:'B2:C4'},ajutor:'Apasă pe B2 și, fără să ridici degetul, trage până la C4. Sau clic pe B2 și Shift+clic pe C4.',why:'Zona B2:C4: două coloane de note, trei elevi.'},
+   inca:[
+    {t:'excel',q:'Selectează de la <b>B2</b> până la <b>C4</b>. Ce arată caseta de nume <b>după</b> ce ridici degetul de pe mouse?',cols:5,rows:6,cells:NOTE,o:['B2','B2:C4','C4','Nota 1'],ok:0,ajutor:'Caseta de nume arată adresa celulei active, cea din care ai pornit.',why:'După selectare, caseta de nume arată celula activă, B2.'}
+   ]},
+  {t:'Copierea: Ctrl+C, apoi Ctrl+V',
+   text:`<p>Copierea face un <strong>duplicat</strong>: originalul rămâne unde era.</p>
+<ol><li>selectezi celulele;</li>
+<li><kbd>Ctrl</kbd>+<kbd>C</kbd>: în jurul lor apare o margine punctată care „se mișcă”;</li>
+<li>clic pe celula unde vrei să înceapă copia (colțul stânga-sus al locului nou);</li>
+<li><kbd>Ctrl</kbd>+<kbd>V</kbd>: lipești.</li></ol>
+<p>Marginea punctată dispare cu <kbd>Esc</kbd>.</p>
+${fig('zona-copiata.webp',760,290,'Zona B2:D4 selectată în Excel, cu marginea punctată animată care apare după Ctrl+C','Zona <code>B2:D4</code> după <kbd>Ctrl</kbd>+<kbd>C</kbd>: marginea punctată din jur „se mișcă” pe ecran.')}`,
+   incearca:{t:'excel',q:'Copiază tabelul <b>A1:B2</b> începând din <b>D1</b>: selectează A1:B2, <kbd>Ctrl</kbd>+<kbd>C</kbd>, clic pe D1, <kbd>Ctrl</kbd>+<kbd>V</kbd>.',cols:5,rows:3,cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9},verifica:{valori:{D1:'Elev',E1:'Nota',D2:'Ana',E2:9,A1:'Elev',B2:9},gest:['copiere']},ajutor:'Locul nou îl dai printr-o singură celulă: colțul stânga-sus, D1.',why:'Copia începe din D1 și ocupă tot D1:E2. Originalul A1:B2 a rămas.'},
+   inca:[
+    {t:'choice',q:'După Ctrl+C și Ctrl+V, ce se întâmplă cu celulele de unde ai copiat?',o:['Rămân la locul lor, neschimbate','Dispar','Se golesc','Se mută în locul nou'],ok:0,ajutor:'Copierea face un duplicat.',why:'La copiere originalul rămâne. Doar la mutare pleacă de unde era.'}
+   ]},
+  {t:'Mutarea: Ctrl+X, apoi Ctrl+V',
+   text:`<p>La <mark>mutare</mark>, datele pleacă de unde erau și ajung în locul nou. Pașii sunt ca la copiere, doar că începi cu <kbd>Ctrl</kbd>+<kbd>X</kbd> (decupare).</p>
+<p>Tastele C, X și V stau alături pe tastatură: copiez, decupez, lipesc.</p>
+<p>Cum alegi:</p>
+<ul><li>vrei datele în <strong>două</strong> locuri → <strong>copiezi</strong> (<kbd>Ctrl</kbd>+<kbd>C</kbd>);</li>
+<li>vrei datele în <strong>alt</strong> loc → <strong>muți</strong> (<kbd>Ctrl</kbd>+<kbd>X</kbd>).</li></ul>`,
+   exemplu:`<p>Înainte: numele sunt în A1:A2. Selectezi A1:A2, <kbd>Ctrl</kbd>+<kbd>X</kbd>, clic pe C1, <kbd>Ctrl</kbd>+<kbd>V</kbd>.</p>${grila({A1:'Ana',A2:'Bogdan'},3,2,'A1:A2','Înainte')}${grila({C1:'Ana',C2:'Bogdan'},3,2,'C1:C2','După: coloana A e goală, numele sunt în C1:C2.')}`,
+   altfel:`<p>Copierea e ca o <strong>fotocopie</strong>: originalul rămâne la tine. Mutarea e ca atunci când îți muți <strong>ghiozdanul</strong> de pe o bancă pe alta: pe prima bancă nu mai e.</p>`,
+   incearca:{t:'choice',q:'Vrei ca tabelul să nu mai stea în A1:C5, ci în E1:G5. Cu ce începi, după ce l-ai selectat?',o:['Ctrl+X','Ctrl+C','Delete','Ctrl+Z'],ok:0,ajutor:'Tabelul trebuie să plece din A1:C5.',why:'Mutarea începe cu Ctrl+X. Cu Ctrl+C l-ai avea de două ori, iar Delete doar îl golește.'},
+   inca:[
+    {t:'excel',q:'Mută notele din <b>A1:A3</b> în <b>C1:C3</b>: selectezi A1:A3, <kbd>Ctrl</kbd>+<kbd>X</kbd>, clic pe C1, <kbd>Ctrl</kbd>+<kbd>V</kbd>.',cols:4,rows:3,cells:{A1:'Nota',A2:9,A3:7},verifica:{valori:{C1:'Nota',C2:9,C3:7},gol:['A1','A2','A3']},ajutor:'Mutarea începe cu X, nu cu C: coloana A trebuie să rămână goală.',why:'După mutare, datele sunt doar în C1:C3; coloana A a rămas goală.'}
+   ]},
+  {t:'Ștergerea și Anularea',
+   text:`<p><kbd>Delete</kbd> <strong>golește</strong> celulele selectate: conținutul dispare, dar celulele rămân la locul lor, goale. Nimic nu urcă și nimic nu se mută.</p>
+<p>Ai greșit ceva? <kbd>Ctrl</kbd>+<kbd>Z</kbd> <mark>anulează</mark> ultima operație. O apeși de mai multe ori ca să mergi mai înapoi. Același lucru face butonul <strong>Anulare (Undo)</strong>, cu săgeata întoarsă ↶.</p>`,
+   exemplu:`${grila({A1:'Elev',B1:'Nota',A2:'Ana',B2:9,C2:'greșit'},3,2,'C2','Alegi C2 și apeși Delete: C2 rămâne pe loc, doar goală.')}`,
+   incearca:{t:'excel',q:'În <b>C3</b> a rămas un cuvânt scris din greșeală. Golește celula: alege-o și apasă <kbd>Delete</kbd>.',cols:4,rows:4,cells:{A1:'Elev',B1:'Nota',A3:'Bogdan',B3:8,C3:'greșit'},verifica:{gol:['C3']},ajutor:'Clic pe C3, apoi tasta Delete (sau Del).',why:'Delete golește celulele alese, fără să le mute pe celelalte.'},
+   inca:[
+    {t:'tf',q:'După <kbd>Delete</kbd>, celulele dispar din foaie, iar cele de dedesubt urcă în locul lor.',ok:false,ajutor:'Recitește prima propoziție a pasului.',why:'Fals. Delete doar golește conținutul. Celulele rămân la locul lor, goale.'},
+    {t:'match',q:'Potrivește tasta cu ce face.',pairs:[['Ctrl+C','Copiază selecția'],['Ctrl+X','Decupează selecția, ca s-o muți'],['Ctrl+V','Lipește în locul nou'],['Delete','Golește celulele selectate'],['Ctrl+Z','Anulează ultima operație']],ajutor:'C, X, V stau alături: copiez, decupez, lipesc.',why:'C, X și V stau alături pe tastatură: copiez, decupez, lipesc.'}
+   ]}
+ ],
+ atelier:{t:'excel',titlu:'Reorganizează tabelul',
+  intro:`<p>Tabelul de mai jos are nevoie de ordine. <strong>Sarcina:</strong> fă o copie a tabelului A1:B3 care să înceapă în <b>A5</b> (pentru semestrul al doilea) și golește celula <b>D1</b>, scrisă din greșeală. Folosește <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd> și <kbd>Delete</kbd>, ca în Excel.</p>`,
+  q:'Copiază A1:B3 începând din A5 și golește D1.',
+  cols:4,rows:7,cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Bogdan',B3:7,D1:'de șters'},
+  verifica:{valori:{A1:'Elev',A5:'Elev',B5:'Nota',A6:'Ana',B6:9,A7:'Bogdan',B7:7},gol:['D1'],gest:['copiere']},
+  ajutor:'Selectezi A1:B3 trăgând, Ctrl+C, clic pe A5, Ctrl+V. Apoi clic pe D1 și Delete.',
+  why:'Copia a ocupat A5:B7, originalul a rămas, iar D1 e goală.',
+  inca:[
+   {t:'excel',q:'Încă unul: mută tabelul <b>A1:B2</b> ca să înceapă din <b>C3</b>. În A1:B2 nu trebuie să mai rămână nimic.',cols:4,rows:4,cells:{A1:'Produs',B1:'Preț',A2:'Caiet',B2:5},verifica:{valori:{C3:'Produs',D3:'Preț',C4:'Caiet',D4:5},gol:['A1','B1','A2','B2']},ajutor:'Mutare = Ctrl+X, clic pe C3, Ctrl+V.',why:'Mutarea a golit locul vechi și a pus tabelul în C3:D4.'},
+   {t:'excel',q:'Încă unul: golește toate notele lui Bogdan, <b>B3:C3</b>, dintr-o dată: selectează zona și apasă <kbd>Delete</kbd>.',cols:4,rows:6,cells:NOTE,verifica:{gol:['B3','C3']},ajutor:'Tragi de la B3 la C3, apoi Delete.',why:'Delete golește toată zona selectată deodată.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Vrei aceeași listă de nume și pe foaia a doua, dar să rămână și pe prima. Ce folosești?',o:['Ctrl+C, apoi Ctrl+V','Ctrl+X, apoi Ctrl+V','Delete','Ctrl+Z'],ok:0,ajutor:'Datele trebuie să fie în două locuri.',why:'Copierea lasă originalul pe loc. Mutarea (Ctrl+X) l-ar lua de pe prima foaie.'},
+  {t:'pick',q:'Selectează zona <code>B2:C4</code>: apasă pe un colț, apoi pe colțul opus.',cols:5,rows:6,range:true,ans:'B2:C4',why:'B2:C4 are colțurile B2 (stânga-sus) și C4 (dreapta-jos).'},
+  {t:'choice',q:'Câte celule are zona <code>B2:D4</code>?',o:['6','8','9','12'],ok:2,ajutor:'Numără coloanele, numără rândurile, înmulțește.',why:'3 coloane (B, C, D) × 3 rânduri (2, 3, 4) = 9 celule.'},
+  {t:'match',q:'Potrivește tasta cu ce face.',pairs:[['Ctrl+C','Copiază selecția'],['Ctrl+X','Decupează selecția, ca s-o muți'],['Ctrl+V','Lipește în locul nou'],['Delete','Golește celulele selectate'],['Ctrl+Z','Anulează ultima operație']],why:'C, X și V stau alături pe tastatură: copiez, decupez, lipesc.'},
+  {t:'tf',q:'După <kbd>Delete</kbd>, celulele dispar din foaie, iar cele de dedesubt urcă în locul lor.',ok:false,why:'Fals. Delete doar golește conținutul. Celulele rămân la locul lor, goale.'},
+  {t:'choice',q:'Ai golit din greșeală tot tabelul. Ce apeși imediat?',o:['Ctrl+Z','Ctrl+S','Delete','Ctrl+V'],ok:0,ajutor:'Care tastă anulează ultima operație?',why:'Ctrl+Z anulează ștergerea și tabelul revine.'}
+ ]},
+
+/* ================= 3. Tipuri de date (lecția 5) ================= */
+{t:'Tipuri de date',lectii:[5],continuturi:[P.tipuri],
+ obiectiv:'deosebești numerele, textul și datele calendaristice, le scrii corect și recunoști când Excel nu le-a înțeles.',
+ pasi:[
+  {t:'Trei tipuri de date',
+   text:`<p>În celule scrii trei tipuri de date:</p>
+<ul><li><mark>numere</mark>: 12, 250, -4, 7,5. Cu ele Excel face calcule;</li>
+<li><mark>text</mark>: Ana, clasa a VIII-a, 7B. Tot ce conține litere e text;</li>
+<li><mark>date calendaristice</mark>: 15.09.2026, dacă așa scrie data calculatorul tău. Excel le știe ca zile din calendar.</li></ul>
+<p>Atenție: „7B” și „3 mere” sunt <strong>text</strong>, deși încep cu o cifră.</p>`,
+   altfel:`<p>Gândește-te la un formular: la „Vârsta” scrii un număr, la „Numele” scrii text, la „Data nașterii” scrii o dată. Excel face la fel: fiecare celulă „știe” ce fel de lucru ai scris în ea.</p>`,
+   incearca:{t:'classify',q:'Ce tip de date e fiecare valoare?',cats:['Număr','Text','Dată'],items:[['250',0],['Ana',1],['15.09.2026',2],['7B',1]],ajutor:'Are litere? Atunci e text, chiar dacă începe cu o cifră.',why:'250 e număr, Ana și 7B sunt text, 15.09.2026 e dată.'},
+   inca:[
+    {t:'classify',q:'Ce tip de date e fiecare valoare?',cats:['Număr','Text','Dată'],items:[['-4',0],['3 mere',1],['01.12.2026',2],['clasa a VIII-a',1],['7,5',0]],ajutor:'Tot ce conține litere e text.',why:'-4 și 7,5 sunt numere; „3 mere” și „clasa a VIII-a” au litere, deci sunt text; 01.12.2026 e dată.'},
+    {t:'choice',q:'Care dintre acestea e un număr, cu care Excel poate calcula?',o:['-4','3 mere','7B','Ana'],ok:0,ajutor:'Caută valoarea fără nicio literă.',why:'-4 e număr. Celelalte conțin litere, deci sunt text.'}
+   ]},
+  {t:'Cum le recunoști: alinierea',
+   text:`<p>Dacă nu schimbi tu alinierea, Excel pune:</p>
+<ul><li><strong>numerele și datele la dreapta</strong> celulei;</li>
+<li><strong>textul la stânga</strong>.</li></ul>
+<p>Așa vezi dintr-o privire ce a înțeles Excel din ce ai scris.</p>
+${fig('tipuri-date.webp',967,428,'Celule Excel: numărul 250 la dreapta, textul Ana la stânga, data 15.09.2026 la dreapta, 250 văzut ca text la stânga, cu un triunghi verde în colțul celulei B5, și ##### în coloana C îngustă','Numărul și data stau la dreapta, textul la stânga. Rândul 5: „250” lipit la stânga, cu un triunghi verde în colț, e văzut ca <b>text</b>. În coloana C, prea îngustă, numărul apare ca <code>#####</code>.')}`,
+   exemplu:`${grila({A1:12,A2:'Ana'},2,2,'','Scrii 12 în A1 și Ana în A2: 12 se duce la dreapta, Ana la stânga.')}`,
+   incearca:{t:'choice',q:'Scrii <code>12</code> în A1 și <code>Ana</code> în A2, fără nicio formatare. Cum apar?',o:['12 la dreapta, Ana la stânga','Amândouă la stânga','Amândouă centrate','12 la stânga, Ana la dreapta'],ok:0,ajutor:'Numerele la dreapta, textul la…',why:'Numerele se aliniază la dreapta, textul la stânga.'},
+   inca:[
+    {t:'tf',q:'Data 15.09.2026, recunoscută de Excel, stă la dreapta celulei, ca numerele.',ok:true,ajutor:'Recitește prima regulă din listă.',why:'Adevărat. Numerele și datele se aliniază la dreapta.'}
+   ]},
+  {t:'Zecimalele: virgulă sau punct?',
+   text:`<p>Zecimalele se scriu după <strong>setările calculatorului</strong>:</p>
+<ul><li>pe setări <strong>românești</strong> scrii <code>7,5</code>, cu virgulă;</li>
+<li>pe setări <strong>englezești</strong> scrii <code>7.5</code>, cu punct.</li></ul>
+<p>Cu semnul greșit, Excel nu recunoaște numărul: îl ține ca <strong>text</strong> și îl lipește la stânga. Un număr aliniat la stânga e un semn de alarmă: cu el formulele nu vor calcula corect. În colțul celulei poate apărea și un triunghi verde.</p>`,
+   exemplu:`<p>Pe setări românești: <code>7,5</code> → număr, la dreapta. <code>7.5</code> → text, la stânga. Foaia din joc are sus butoanele <b>RO</b> și <b>EN</b>, ca să vezi diferența.</p>`,
+   incearca:{t:'excel',q:'Setările sunt <b>RO</b>. Scrie nota <b>9</b> în B2 și nota <b>7,5</b> în B3 (cu virgulă!). Privește unde se așază.',cols:4,rows:4,cells:{A1:'Elev',B1:'Nota',A2:'Ana',A3:'Bogdan'},mod:'ro',verifica:{valori:{B2:9,B3:7.5}},ajutor:'Pe RO, zecimala se scrie cu virgulă: 7,5.',why:'Pe setări românești, 7,5 cu virgulă e număr și stă la dreapta.'},
+   inca:[
+    {t:'excel',q:'Încearcă tu: setările sunt <b>RO</b>. Scrie în B2 <code>7.5</code> (cu punct) și apasă Enter. Unde se așază?',cols:3,rows:3,cells:{A1:'Elev',B1:'Nota',A2:'Ana'},mod:'ro',o:['La stânga: Excel îl vede ca text','La dreapta: e număr','În centru','Dispare'],ok:0,ajutor:'Pe RO, zecimala corectă e cu virgulă. Ce face Excel cu un număr scris greșit?',why:'Cu punct, pe setări românești, 7.5 nu e recunoscut ca număr: rămâne text, la stânga.'},
+    {t:'tf',q:'Un număr aliniat la stânga poate fi semn că Excel îl vede ca text.',ok:true,ajutor:'Recitește ultimul paragraf.',why:'Adevărat. Cu un astfel de „număr” formulele nu vor calcula corect.'}
+   ]},
+  {t:'##### nu e o greșeală',
+   text:`<p>O celulă cu un număr sau o dată care arată <code>#####</code> nu e stricată: <strong>coloana e prea îngustă</strong> și numărul nu încape.</p>
+<p>Lărgești coloana, trăgând de marginea din dreapta literei ei (sus), și numărul apare întreg.</p>
+<p>Textul prea lung nu face asta: el se întinde peste celula vecină, dacă aceea e goală.</p>`,
+   exemplu:`<p>12345678 într-o coloană îngustă → <code>#####</code>. Tragi marginea dintre literele C și D spre dreapta → apare 12345678.</p>`,
+   incearca:{t:'choice',q:'O celulă cu un număr mare arată <code>#####</code>. Ce faci?',o:['Scrii numărul din nou','Lărgești coloana','Pui numărul pe aldin','Închizi registrul'],ok:1,ajutor:'Ce înseamnă #####?',why:'##### înseamnă doar că numărul nu încape în lățimea coloanei.'},
+   inca:[
+    {t:'tf',q:'Un text lung, care nu încape în celulă, apare ca #####.',ok:false,ajutor:'Recitește ultimul paragraf.',why:'Fals. ##### apare la numere și date. Textul se întinde peste celula vecină goală.'}
+   ]}
+ ],
+ atelier:{t:'excel',titlu:'Catalogul, cu numere adevărate',
+  intro:`<p>Foaia are setările <b>RO</b>. <strong>Sarcina:</strong> completează catalogul. Scrie numele ca text și notele ca numere, cu zecimala corectă, apoi verifică: toate notele trebuie să stea la dreapta.</p>`,
+  q:'Scrie în A2 <code>Ana</code> cu nota <b>9,5</b> în B2, și în A3 <code>Bogdan</code> cu nota <b>8</b> în B3.',
+  cols:3,rows:4,cells:{A1:'Elev',B1:'Nota'},mod:'ro',
+  verifica:{valori:{A2:'Ana',B2:9.5,A3:'Bogdan',B3:8}},
+  ajutor:'Pe RO: 9,5 cu virgulă. Dacă nota se lipește la stânga, ai scris-o greșit: alege celula și scrie din nou.',
+  why:'Notele sunt numere adevărate, la dreapta: cu ele Excel poate calcula media.',
+  inca:[
+   {t:'excel',q:'Același lucru pe un calculator cu setări <b>EN</b> (butonul e deja apăsat): scrie nota <b>9,5</b> a Anei în B2, cu semnul potrivit pentru EN.',cols:3,rows:3,cells:{A1:'Elev',B1:'Nota',A2:'Ana'},mod:'en',verifica:{valori:{B2:9.5}},ajutor:'Pe EN, zecimala se scrie cu punct: 9.5.',why:'Pe setări englezești, 9.5 cu punct e număr și stă la dreapta.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Într-o coloană cu note, o notă stă lipită la stânga, iar celelalte la dreapta. Ce înseamnă?',o:['Excel o vede ca text, nu ca număr','E cea mai mare notă','E o dată calendaristică','Coloana e prea îngustă'],ok:0,ajutor:'Unde stau numerele și unde textul?',why:'Numerele stau la dreapta. Una lipită la stânga e text și nu va intra corect în calcule.'},
+  {t:'classify',q:'Ce tip de date e fiecare valoare?',cats:['Număr','Text','Dată'],items:[['250',0],['Ana',1],['15.09.2026',2],['7B',1],['-4',0],['3 mere',1]],why:'Tot ce conține litere e text. „7B” și „3 mere” sunt text, deși încep cu o cifră.'},
+  {t:'choice',q:'O celulă cu un număr mare arată <code>#####</code>. Ce faci?',o:['Scrii numărul din nou','Lărgești coloana','Pui numărul pe aldin','Închizi registrul'],ok:1,why:'##### înseamnă doar că numărul nu încape în lățimea coloanei.'},
+  {t:'choice',q:'Calculatorul are setări românești. Cum scrii nota șapte și jumătate, ca Excel s-o vadă număr?',o:['7,5','7.5','7 și 5','7/5'],ok:0,ajutor:'Pe setări românești zecimala se scrie cu…',why:'Pe setări românești zecimala e virgula: 7,5.'},
+  {t:'tf',q:'Un număr aliniat la stânga poate fi semn că Excel îl vede ca text.',ok:true,why:'Adevărat. Cu un astfel de „număr” formulele nu vor calcula corect.'}
+ ]},
+
+/* ================= 4. Formatarea (lecția 6) ================= */
+{t:'Formatarea rândurilor, coloanelor și celulelor',lectii:[6],continuturi:[P.randuri,P.celule],
+ obiectiv:'faci dintr-un tabel brut unul ușor de citit: coloane potrivite, aliniere, borduri, cap de tabel colorat și stiluri gata făcute.',
+ pasi:[
+  {t:'Întâi selectezi, apoi formatezi',
+   text:`<p><mark>Formatarea</mark> schimbă cum <strong>arată</strong> celulele, nu ce conțin: nota 9 rămâne 9, doar că poate fi centrată, colorată sau încadrată.</p>
+<p>Regula de aur: <strong>întâi selectezi</strong> celulele, <strong>apoi</strong> apeși butonul. Butonul lucrează doar pe ce e selectat.</p>
+<p>Strategia pentru un tabel: 1. capul de tabel (rândul 1); 2. datele; 3. tot tabelul, pentru linii. Aproape toate butoanele sunt pe fila <strong>Pornire (Home)</strong>.</p>
+${fig('tabel-formatat.webp',520,245,'Tabel Excel cu capul de tabel colorat și îngroșat, borduri pe toate celulele și note centrate','Ținta: umplere și aldin pe capul de tabel, borduri pe tot tabelul, note centrate.')}`,
+   altfel:`<p>E ca la colorat într-o carte: întâi alegi conturul pe care îl colorezi, apoi pui culoarea. Dacă nu alegi nimic, creionul nu știe unde să coloreze.</p>`,
+   incearca:{t:'tf',q:'Poți apăsa întâi butonul de culoare și abia apoi selecta celulele.',ok:false,ajutor:'Recitește regula de aur.',why:'Fals. Butonul lucrează pe ce e selectat în momentul apăsării. Întâi selectezi.'},
+   inca:[
+    {t:'choice',q:'Ai formatat nota 9 cu aldin și culoare. Ce s-a schimbat?',o:['Doar cum arată; valoarea rămâne 9','Valoarea a devenit 10','Nota a devenit text','Nota s-a mutat în altă celulă'],ok:0,ajutor:'Formatarea schimbă aspectul, nu conținutul.',why:'Formatarea schimbă doar aspectul. În calcule, nota rămâne 9.'}
+   ]},
+  {t:'Lățimea coloanelor, înălțimea rândurilor',
+   text:`<ul><li><strong>Lățimea unei coloane</strong>: tragi de marginea din dreapta literei ei, sus.</li>
+<li><strong>Înălțimea unui rând</strong>: tragi de marginea de sub numărul lui, în stânga.</li>
+<li><strong>Dublu-clic</strong> pe margine: coloana se potrivește singură după cel mai lung conținut. E cel mai rapid mod când numele nu încap.</li></ul>
+<p>Aceste formatări privesc <strong>toată</strong> coloana sau <strong>tot</strong> rândul, nu o singură celulă.</p>`,
+   exemplu:`<p>Numele „Alexandra” nu încape în coloana A. Dublu-clic pe linia dintre literele <b>A</b> și <b>B</b>, sus → coloana A se lărgește exact cât trebuie.</p>`,
+   incearca:{t:'choice',q:'Numele elevilor nu încap în coloana A. Care e gestul cel mai rapid?',o:['Dublu-clic pe marginea din dreapta literei A','Dublu-clic pe celula A1, cea cu primul nume','Scurtezi numele până încap în coloană','Clic pe numărul rândului 1 din stânga foii'],ok:0,ajutor:'Marginea coloanei e sus, lângă literă.',why:'Dublu-clicul pe marginea coloanei îi potrivește lățimea după cel mai lung conținut.'},
+   inca:[
+    {t:'choice',q:'Vrei ca rândul 1 (capul de tabel) să fie mai înalt. De unde tragi?',o:['De marginea de sub numărul 1','De marginea din dreapta literei A','De colțul celulei A1','Din bara de formule'],ok:0,ajutor:'Rândurile au numere, în stânga.',why:'Înălțimea rândului se schimbă de la marginea de sub numărul lui.'}
+   ]},
+  {t:'Alinierea conținutului',
+   text:`<p><mark>Alinierea</mark> spune unde stă conținutul în celulă: la <strong>stânga</strong>, la <strong>centru</strong> sau la <strong>dreapta</strong>.</p>
+<p>Butoanele sunt pe fila <strong>Pornire (Home)</strong>, în grupul <strong>Aliniere (Alignment)</strong>. De obicei, notele arată bine centrate, iar numele rămân la stânga.</p>
+${fig('pornire-formatare.webp',860,165,'Fila Home din Excel cu butoanele Borders și Fill Color încadrate în grupul Font și grupul Aliniere (Alignment) încadrat','Fila Pornire (Home): în dreapta, grupul <b>Aliniere (Alignment)</b>; în grupul Font, butoanele <b>Borders</b> (borduri) și <b>Fill Color</b> (culoare de umplere).')}`,
+   incearca:{t:'excel',q:'Centrează notele din <b>B2:C6</b>: selectează zona trăgând, apoi fila Pornire (Home) → butonul de centrare (≡).',cols:4,rows:7,cells:NOTE,verifica:{format:{'B2:C6':{al:'center'}}},ajutor:'Întâi selecția B2:C6, apoi butonul ≡ din panglică.',why:'Alinierea la centru se pune doar pe zona cu note.'},
+   inca:[
+    {t:'choice',q:'În ce grup de pe fila Pornire (Home) sunt butoanele de aliniere?',o:['Aliniere (Alignment)','Stiluri (Styles)','Diagrame (Charts)','Sortare (Sort)'],ok:0,ajutor:'Numele grupului seamănă cu ce fac butoanele.',why:'Butoanele de aliniere stau în grupul Aliniere (Alignment).'}
+   ]},
+  {t:'Borduri, culoare de umplere și aldin',
+   text:`<ul><li><mark>Bordurile</mark> (Borders) sunt liniile din jurul celulelor. Liniile gri ale grilei, de obicei, <strong>nu</strong> se tipăresc; bordurile se tipăresc. Pentru toate liniile unui tabel: Borduri → <strong>Toate bordurile (All Borders)</strong>.</li>
+<li><mark>Culoarea de umplere</mark> (Fill Color, butonul cu găleata) colorează <strong>fundalul</strong> celulei, de exemplu la capul de tabel.</li>
+<li><mark>Aldin</mark> (Bold, butonul <b>B</b>) face literele <strong>îngroșate</strong>. Îl pui de obicei pe capul de tabel.</li></ul>
+<p>Toate trei sunt pe fila <strong>Pornire (Home)</strong>, în grupul <strong>Font</strong> (vezi captura de la pasul anterior).</p>`,
+   exemplu:`<p>Capul de tabel: selectezi A1:C1 → <b>B</b> (aldin) → găleata → o culoare. Tot tabelul: selectezi A1:C6 → Borduri → Toate bordurile.</p>`,
+   incearca:{t:'choice',q:'Ce face culoarea de umplere?',o:['Colorează fundalul celulei','Colorează literele','Pune linii în jurul celulei','Lărgește coloana'],ok:0,ajutor:'Găleata „varsă” culoare în celulă.',why:'Umplerea colorează fundalul. Liniile sunt bordurile.'},
+   inca:[
+    {t:'excel',q:'Pune borduri pe tot tabelul <b>A1:C6</b>: selectează-l și alege ▦ Borduri → Toate bordurile (All Borders).',cols:4,rows:7,cells:NOTE,verifica:{format:{'A1:C6':{bd:'all'}}},ajutor:'Selectezi de la A1 la C6, apoi meniul Borduri din Pornire (Home).',why:'Toate bordurile desenează liniile fiecărei celule din zonă. Pe hârtie, tabelul arată abia așa ca un tabel.'},
+    {t:'excel',q:'Pune o culoare de umplere doar pe capul de tabel, <b>A1:C1</b>.',cols:4,rows:7,cells:NOTE,verifica:{format:{'A1:C1':{fill:true}}},ajutor:'Selectezi A1:C1, apoi 🪣 Umplere și alegi o culoare.',why:'Doar capul de tabel e colorat, ca să se deosebească de date.'},
+    {t:'classify',q:'Formatare de rând sau coloană, ori formatare de celule?',cats:['Rând sau coloană','Celule'],items:[['Lățimea coloanei B',0],['Înălțimea rândului 1',0],['Borduri în jurul tabelului',1],['Notele centrate',1],['Fundal galben în capul de tabel',1]],ajutor:'Lățimea și înălțimea privesc coloane și rânduri întregi.',why:'Lățimea și înălțimea privesc coloane și rânduri întregi. Alinierea, bordurile și umplerea se pun pe celulele selectate.'}
+   ]},
+  {t:'Stilurile predefinite',
+   text:`<p>Un <mark>stil predefinit</mark> e o formatare gata făcută (culoare, font, borduri) pe care o aplici dintr-un clic, de exemplu pentru capul de tabel sau pentru un rând de total.</p>
+<p>Pe fila <strong>Pornire (Home)</strong>, în grupul <strong>Stiluri (Styles)</strong>, apeși <strong>Stiluri de celule (Cell Styles)</strong> și alegi unul din listă. Întâi selectezi, ca de obicei.</p>
+${fig('stiluri-celula.webp',245,125,'Grupul Stiluri (Styles) din fila Pornire (Home), cu butonul Stiluri de celule (Cell Styles) încadrat','Pe Pornire (Home), în grupul Stiluri (Styles): <b>Stiluri de celule (Cell Styles)</b>.')}`,
+   incearca:{t:'choice',q:'Unde găsești Stiluri de celule (Cell Styles)?',o:['Pe fila Pornire (Home), grupul Stiluri (Styles)','Pe fila Date (Data), lângă butoanele de sortare','Pe fila Inserare (Insert), lângă grafice','În bara de formule, lângă semnul fx'],ok:0,ajutor:'Uită-te în captură.',why:'Stilurile de celule sunt pe Pornire (Home), în grupul Stiluri (Styles).'},
+   inca:[
+    {t:'match',q:'Potrivește formatarea cu efectul ei.',pairs:[['Aliniere','Unde stă conținutul în celulă'],['Bordură','Linie în jurul celulei, care se tipărește'],['Culoare de umplere','Fundalul celulei'],['Stil predefinit','Formatare gata făcută, aplicată dintr-un clic']],ajutor:'Stilul predefinit adună mai multe formatări.',why:'Stilul predefinit adună mai multe formatări într-una singură, gata pregătită.'}
+   ]}
+ ],
+ atelier:{t:'formatare',titlu:'Tabelul plantelor, formatat',
+  intro:`<p>Aici exersezi regula „întâi selectezi, apoi formatezi”. Clic pe un colț, apoi pe colțul opus (sau pe litera unei coloane, pe numărul unui rând), apoi apeși butonul. <strong>Sarcina</strong> e mai jos.</p>`,
+  q:'Formatează tabelul: <strong>culoare de umplere</strong> doar pe capul de tabel (A1:D1), <strong>aliniere la centru</strong> doar pentru înălțimi (B2:D4) și <strong>borduri</strong> pe tot tabelul (A1:D4).',
+  cells:{A1:'Planta',B1:'Săpt. 1',C1:'Săpt. 2',D1:'Săpt. 3',A2:'Lumină',B2:2,C2:5,D2:9,A3:'Umbră',B3:2,C3:3,D3:5,A4:'Fără apă',B4:2,C4:2,D4:1},
+  cols:4,rows:4,targets:{umplere:'A1:D1',centru:'B2:D4',borduri:'A1:D4'},
+  ajutor:'Trei selecții, trei butoane: A1:D1 → Culoare de umplere; B2:D4 → Aliniere la centru; A1:D4 → Borduri.',
+  why:'Fiecare formatare are zona ei. Selecția vine întâi: butonul lucrează doar pe ce ai selectat.',
+  inca:[
+   {t:'excel',q:'Încă unul, în foaia ca Excel-ul: fă capul de tabel <b>A1:C1</b> aldin (<b>B</b>) și pune-i o culoare de umplere.',cols:4,rows:7,cells:NOTE,verifica:{format:{'A1:C1':{b:true,fill:true}}},ajutor:'Selectezi A1:C1, apoi B și 🪣 Umplere, din Pornire (Home).',why:'Doar capul de tabel: aldin și umplere, ca să iasă în evidență.'},
+   {t:'excel',q:'Încă unul: centrează notele <b>B2:C6</b> și pune borduri pe tot tabelul <b>A1:C6</b>.',cols:4,rows:7,cells:NOTE,verifica:{format:{'B2:C6':{al:'center'},'A1:C6':{bd:'all'}}},ajutor:'Două selecții: B2:C6 → centrare; A1:C6 → Borduri → Toate bordurile.',why:'Fiecare formatare pe zona ei: centrarea pe note, bordurile pe tot.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Tabelul trebuie să aibă linii când îl tipărești. Ce aplici?',o:['Borduri','Culoare de umplere','Aldin','O coloană mai lată'],ok:0,ajutor:'Grila gri nu se tipărește.',why:'Grila gri nu se tipărește de obicei. Bordurile se tipăresc.'},
+  {t:'formatare',q:'Formatează tabelul brut: <strong>culoare de umplere</strong> doar pe capul de tabel (A1:C1), <strong>aliniere la centru</strong> doar pentru note (B2:C4) și <strong>borduri</strong> pe tot tabelul (A1:C4).',
+   cells:{A1:'Elev',B1:'Nota 1',C1:'Nota 2',A2:'Ana',B2:9,C2:10,A3:'Bogdan',B3:7,C3:8,A4:'Cristi',B4:10,C4:6},
+   cols:3,rows:4,targets:{umplere:'A1:C1',centru:'B2:C4',borduri:'A1:C4'},
+   why:'Fiecare formatare are zona ei. De aceea selecția vine întâi: butonul lucrează doar pe ce ai selectat.'},
+  {t:'choice',q:'Numele elevilor nu încap în coloana A. Care e gestul cel mai rapid?',o:['Dublu-clic pe marginea din dreapta literei A','Dublu-clic pe celula A1, cea cu primul nume','Scurtezi numele până încap în coloană','Clic pe numărul rândului 1 din stânga foii'],ok:0,why:'Dublu-clicul pe marginea coloanei îi potrivește lățimea după cel mai lung conținut.'},
+  {t:'classify',q:'Formatare de rând sau coloană, ori formatare de celule?',cats:['Rând sau coloană','Celule'],items:[['Lățimea coloanei C',0],['Înălțimea rândului 3',0],['Linii în jurul tabelului',1],['Numele aliniate la stânga',1],['Fundal verde în capul de tabel',1]],why:'Lățimea și înălțimea privesc coloane și rânduri întregi. Alinierea, bordurile și umplerea se pun pe celulele selectate.'},
+  {t:'match',q:'Potrivește formatarea cu efectul ei.',pairs:[['Aliniere','Unde stă conținutul în celulă'],['Bordură','Linie în jurul celulei, care se tipărește'],['Culoare de umplere','Fundalul celulei'],['Stil predefinit','Formatare gata făcută, aplicată dintr-un clic']],why:'Stilul predefinit adună mai multe formatări într-una singură, gata pregătită.'}
+ ]},
+
+/* ================= 5. Formule (lecția 7) ================= */
+{t:'Formule',lectii:[7],continuturi:[P.formule],
+ obiectiv:'scrii formule cu + - * / și adrese de celule, le copiezi cu mânerul de umplere și verifici singur dacă sunt corecte.',
+ pasi:[
+  {t:'O formulă începe cu =',
+   text:`<p>O <mark>formulă</mark> e un calcul pe care îl face Excel. Începe <strong>întotdeauna</strong> cu semnul <code>=</code>. Fără <code>=</code>, Excel crede că ai scris text și îl lasă așa.</p>
+<p>Operatorii:</p>
+<ul><li><code>+</code> adunare, <code>-</code> scădere;</li>
+<li><code>*</code> înmulțire (steluța, <strong>nu</strong> litera x);</li>
+<li><code>/</code> împărțire (bara).</li></ul>
+<p>Scrii formula în celulă și apeși <kbd>Enter</kbd>: în celulă apare <strong>rezultatul</strong>.</p>`,
+   exemplu:pre(`=2+3    →  5
+=10-4   →  6
+=3*5    →  15
+=12/4   →  3`),
+   altfel:`<p>Semnul = e ca și cum i-ai spune lui Excel: „atenție, acum calculează!”. Fără el, Excel doar copiază ce ai scris, ca pe o etichetă.</p>`,
+   incearca:{t:'choice',q:'Scrii =3*5 într-o celulă și apeși Enter. Ce apare în celulă?',o:['15','=3*5','35','8'],ok:0,ajutor:'Steluța înseamnă înmulțire.',why:'Excel calculează 3 × 5 și arată rezultatul, 15.'},
+   inca:[
+    {t:'choice',q:'Ce semn înseamnă înmulțire în Excel?',o:['*','x','·',':'],ok:0,ajutor:'Recitește lista operatorilor.',why:'Înmulțirea se scrie cu steluța *. Litera x nu e operator.'},
+    {t:'tf',q:'Dacă scrii 2+3, fără =, Excel afișează 5.',ok:false,ajutor:'Ce face Excel când lipsește = ?',why:'Fals. Fără = Excel vede text și afișează chiar „2+3”.'}
+   ]},
+  {t:'Adrese în loc de numere',
+   text:`<p>Formulele bune folosesc <mark>adresele celulelor</mark>, nu numere scrise de mână: <code>=B2*C2</code>, nu <code>=3*5</code>.</p>
+<p>De ce? Dacă schimbi numărul din B2, rezultatul se <strong>recalculează singur</strong>.</p>
+<p>Cel mai sigur pui adresele <strong>cu mouse-ul</strong>: scrii <code>=</code>, apeși pe celula B2, scrii <code>*</code>, apeși pe C2, apoi <kbd>Enter</kbd>. Adresa apare singură în formulă, fără greșeli de tastare.</p>`,
+   exemplu:`${grila({A1:'Produs',B1:'Cantitate',C1:'Preț',D1:'Total',A2:'Caiet',B2:3,C2:5,D2:15},4,2,'D2','În D2 scrie =B2*C2, iar celula arată 15. Schimbi cantitatea din B2 în 4 → D2 arată singură 20.')}`,
+   incearca:{t:'excel',q:'În <b>D2</b> calculează totalul pentru caiete: scrie <code>=</code>, <b>apasă pe B2</b>, scrie <code>*</code>, <b>apasă pe C2</b>, apoi <kbd>Enter</kbd>.',cols:4,rows:5,cells:MAG,verifica:{formule:{D2:'=B2*C2'},gest:['clic-adresa']},ajutor:'După =, nu scrie B2 de mână: apasă pe celula B2 din foaie.',why:'=B2*C2 folosește adresele: dacă schimbi cantitatea sau prețul, totalul se refac singur.'},
+   inca:[
+    {t:'choice',q:'Cantitatea e în B2, prețul în C2. Ce scrii în D2 pentru total?',o:['B2*C2','=B2*C2','=B2xC2','=3*5'],ok:1,ajutor:'Trei reguli: =, steluța, adrese.',why:'Fără = Excel vede text. „x” nu e operator. Cu numere scrise de mână, rezultatul nu se mai recalculează.'},
+    {t:'excel',q:'În <b>D3</b> calculează cu cât e mai mare Nota 2 decât Nota 1 la Bogdan (Nota 2 minus Nota 1).',cols:4,rows:6,cells:{...NOTE,D1:'Diferență'},verifica:{formule:{D3:'=C3-B3'}},ajutor:'Nota 2 a lui Bogdan e în C3, Nota 1 în B3.',why:'=C3-B3: întâi Nota 2, apoi scazi Nota 1.'}
+   ]},
+  {t:'Ordinea operațiilor',
+   text:`<p>Excel calculează ca la matematică: întâi <strong>înmulțirile și împărțirile</strong>, apoi <strong>adunările și scăderile</strong>.</p>
+<p><strong>Parantezele</strong> schimbă ordinea: ce e în paranteză se calculează primul.</p>
+<p>De aceea media a două note se scrie <code>=(B2+C2)/2</code>, nu <code>=B2+C2/2</code>. Fără paranteză, Excel ar împărți doar C2 la 2.</p>`,
+   exemplu:pre(`=2+3*4     →  2+12  =  14
+=(2+3)*4   →  5*4   =  20`),
+   incearca:{t:'choice',q:'Ce rezultat dă =10-2*3 ?',o:['4','24','30','8'],ok:0,ajutor:'Întâi înmulțirea: 2*3.',why:'Întâi 2*3 = 6, apoi 10-6 = 4.'},
+   inca:[
+    {t:'choice',q:'Care formulă calculează corect media notelor din B2 și C2?',o:['=(B2+C2)/2','=B2+C2/2','=B2+C2:2','=(B2+C2)*2'],ok:0,ajutor:'Adunarea trebuie făcută prima, deci stă în paranteză.',why:'Paranteza face întâi suma, apoi o împarte la 2.'},
+    {t:'excel',q:'În <b>D2</b> calculează media celor două note ale Anei.',cols:4,rows:6,cells:{...NOTE,D1:'Media'},verifica:{formule:{D2:'=(B2+C2)/2'}},ajutor:'Suma în paranteză, apoi împărțit la 2.',why:'=(B2+C2)/2: paranteza face întâi suma.'}
+   ]},
+  {t:'Rezultatul, bara fx și mânerul de umplere',
+   text:`<p>În celulă vezi <strong>rezultatul</strong>. Formula o vezi în <strong>bara de formule</strong> (<em>fx</em>), când alegi celula.</p>
+<p>Pătrățelul din colțul din dreapta-jos al celulei alese e <mark>mânerul de umplere</mark> (fill handle). Îl <strong>tragi în jos</strong> și formula se copiază, iar adresele coboară cu ea: <code>=B2*C2</code> devine <code>=B3*C3</code>, apoi <code>=B4*C4</code>. Așa calculezi o coloană întreagă cu o singură formulă.</p>
+${fig('formula-maner.webp',900,240,'Celula D2 arată 15, bara fx arată formula =B2*C2, iar mânerul de umplere e încadrat în colțul din dreapta-jos al celulei','În celulă, rezultatul <b>15</b>; formula <code>=B2*C2</code> e în bara <em>fx</em>. Pătrățelul din colț e mânerul de umplere.')}
+${fig('formula-copiata.webp',900,240,'După tragerea mânerului de umplere, D3 e selectată și bara fx arată =B3*C3; coloana D are 15, 8 și 7','După tragere, până în D4: în D3 formula a devenit <code>=B3*C3</code>.')}`,
+   incearca:{t:'choice',q:'Copiezi =B2*C2 din D2 în D3, trăgând de mânerul de umplere. Ce formulă apare în D3?',o:['=B2*C2','=B3*C3','=B2*C3','=C3*D3'],ok:1,ajutor:'Formula coboară un rând; adresele coboară și ele.',why:'Formula coboară un rând, deci și adresele coboară un rând.'},
+   inca:[
+    {t:'excel',q:'În <b>D2</b> scrie <code>=B2*C2</code>, apoi alege iar D2 și <b>trage de pătrățelul din colț</b> până la <b>D4</b>.',cols:4,rows:5,cells:MAG,verifica:{formule:{D2:'=B2*C2'},umplut:{D2:['D3','D4']},gest:['umple']},ajutor:'Pătrățelul e în colțul din dreapta-jos al celulei D2. Îl apuci și tragi în jos.',why:'O formulă trasă în jos calculează toată coloana: B3*C3, B4*C4.'},
+    {t:'excel',q:'Încearcă tu: în D2 e deja <code>=B2*C2</code>. Trage-o până la D4, apoi alege <b>D4</b> și citește bara de formule. Ce formulă a ajuns acolo?',cols:4,rows:5,cells:{...MAG,D2:'=B2*C2'},o:['=B4*C4','=B2*C2','=B2*C4','=D2*4'],ok:0,ajutor:'Din rândul 2 în rândul 4: adresele coboară cu două rânduri.',why:'Adresele coboară cu formula: în rândul 4, =B4*C4.'}
+   ]},
+  {t:'Strategia: cum verifici o formulă',
+   text:`<p>Înainte să spui „gata”, verifică fiecare formulă în 4 pași:</p>
+<ol><li>Începe cu <code>=</code>?</li>
+<li>Operatorii sunt <code>+</code> <code>-</code> <code>*</code> <code>/</code>? (nu x, nu :)</li>
+<li>Adresele sunt ale celulelor potrivite? Alege celula și citește bara <em>fx</em>.</li>
+<li><strong>Proba</strong>: schimbă un număr din tabel. Rezultatul trebuie să se schimbe și el. Dacă nu se schimbă, formula are un număr scris de mână.</li></ol>`,
+   exemplu:`<p>Coloana D trebuie să fie Cantitate × Preț. Trecem prin cei 4 pași:</p>${pre(`D2   =B2*C2     corect
+D3   B3*C3      pasul 1: lipsește =, Excel arată textul „B3*C3”
+D4   =B4xC4     pasul 2: x nu e operator, Excel nu poate calcula
+D5   =3*5       pasul 4: număr scris de mână, nu se recalculează`)}`,
+   altfel:`<p>E ca la verificarea unui exercițiu la mate: întâi te uiți dacă ai scris semnele bine, apoi încerci cu alte numere ca să vezi dacă metoda ține.</p>`,
+   incearca:{t:'hunt',cod:true,q:'Pe foaie sunt trei formule pentru Cantitate × Preț. Găsește-le pe cele <b>2 greșite</b> (apasă pe ele), apoi verifică.',
+    src:`D2   =B2*C2
+D3   [[B3*C3|Lipsește = la început: Excel îl ia drept text.]]
+D4   [[=B4xC4|x nu e operator; înmulțirea se scrie cu *.]]`,
+    corect:`D2   =B2*C2
+D3   =B3*C3
+D4   =B4*C4`,ajutor:'Treci prin pașii 1 și 2 ai strategiei: începe cu = ? are doar + - * / ?',indiciu:'Uită-te la începutul fiecărei formule și la semnul dintre adrese.',why:'O formulă începe cu =, iar înmulțirea se scrie cu steluța.'},
+   inca:[
+    {t:'hunt',cod:true,q:'Încă una: una dintre formule nu se recalculează când schimbi prețul. Găsește-o.',
+     src:`D2   =B2*C2
+D3   =B3*C3
+D4   [[=1*7|Numere scrise de mână: dacă schimbi cantitatea sau prețul, rezultatul rămâne 7.]]`,
+     corect:`D2   =B2*C2
+D3   =B3*C3
+D4   =B4*C4`,ajutor:'Pasul 4 al strategiei: care formulă nu folosește adrese?',why:'Formula cu numere scrise de mână nu se schimbă când se schimbă datele.'}
+   ]}
+ ],
+ atelier:{t:'excel',titlu:'Magazinul clasei',
+  intro:`<p>La magazinul clasei calculezi totalurile ca în Excel. <strong>Sarcina:</strong> în <b>D2</b> scrie formula pentru total (Cantitate × Preț), trage-o cu mânerul de umplere până în <b>D4</b>, iar în <b>D5</b> adună cele trei totaluri. La final, fă proba: schimbă o cantitate și urmărește totalul.</p>`,
+  q:'Completează coloana Total (D2:D4) cu o singură formulă trasă în jos și totalul general în D5.',
+  cols:4,rows:5,cells:{...MAG,A5:'Total general'},
+  verifica:{formule:{D2:'=B2*C2',D5:'=D2+D3+D4'},umplut:{D2:['D3','D4']},gest:['umple']},
+  ajutor:'D2: =B2*C2, Enter. Alege D2 și trage pătrățelul până la D4. În D5: =D2+D3+D4.',
+  why:'Jocul a verificat formulele și pe alte cantități și prețuri: merg pentru că folosesc adrese.',
+  inca:[
+   {t:'foaie',q:'Încă una: completează coloana Total (D2, D3, D4) și totalul general din D5. Apasă pe o celulă cu chenar, scrie formula în bara fx, apoi Enter.',
+    cells:{A1:'Produs',B1:'Cantitate',C1:'Preț (lei)',D1:'Total',A2:'Caiet',B2:4,C2:6,A3:'Pix',B3:3,C3:2,A4:'Riglă',B4:2,C4:5,A5:'Total general'},
+    cols:4,rows:5,targets:{D2:'=B2*C2',D3:'=B3*C3',D4:'=B4*C4',D5:'=D2+D3+D4'},ajutor:'Fiecare total: cantitatea din rândul lui × prețul din rândul lui.',
+    why:'Formulele folosesc adrese, deci se recalculează dacă se schimbă prețurile.'},
+   {t:'excel',q:'Încă una: în <b>D2</b> e media Anei. Copiaz-o pentru toți elevii: alege D2 și trage de colț până la <b>D6</b>.',cols:4,rows:6,cells:{...NOTE,D1:'Media',D2:'=(B2+C2)/2'},verifica:{formule:{D2:'=(B2+C2)/2'},umplut:{D2:['D3','D4','D5','D6']},gest:['umple']},ajutor:'Pătrățelul din colțul lui D2, tras până la D6.',why:'Fiecare rând își calculează media lui.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Cantitatea e în B2, prețul în C2. Ce scrii în D2 pentru total?',o:['B2*C2','=B2*C2','=B2xC2','=3*5'],ok:1,ajutor:'Verifică variantele cu strategia din pasul 5.',why:'Fără = Excel vede text. „x” nu e operator. Cu numere scrise de mână, rezultatul nu se mai recalculează.'},
+  {t:'choice',q:'Ce rezultat dă <code>=2+3*4</code>?',o:['20','14','24','9'],ok:1,ajutor:'Întâi înmulțirea.',why:'Întâi 3*4 = 12, apoi 2+12 = 14.'},
+  {t:'choice',q:'Copiezi <code>=B2*C2</code> din D2 în D3, cu mânerul de umplere. Ce formulă apare în D3?',o:['=B2*C2','=B3*C3','=B2*C3','=C3*D3'],ok:1,why:'Formula coboară un rând, deci și adresele coboară un rând.'},
+  {t:'hunt',cod:true,q:'Coloana D trebuie să calculeze Cantitate × Preț. Găsește cele <b>3 greșeli</b>, apoi verifică.',
+   src:`D2   =B2*C2
+D3   [[B3*C3|Lipsește = la început: Excel îl ia drept text.]]
+D4   [[=B4xC4|x nu e operator; înmulțirea se scrie cu *.]]
+D5   [[=2*9|Numere scrise de mână: nu se recalculează când se schimbă datele.]]`,
+   corect:`D2   =B2*C2
+D3   =B3*C3
+D4   =B4*C4
+D5   =B5*C5`,ajutor:'Treci fiecare rând prin cei 4 pași ai strategiei.',indiciu:'Una nu începe cu =, una are un semn greșit, una nu folosește adrese.',why:'Strategia: =, operatori, adrese, proba cu alte numere.'},
+  {t:'foaie',q:'Completează coloana Total (D2, D3, D4) și totalul general din D5. Apasă pe o celulă cu chenar, scrie formula în bara fx, apoi Enter.',
+   cells:{A1:'Produs',B1:'Cantitate',C1:'Preț (lei)',D1:'Total',A2:'Caiet',B2:3,C2:5,A3:'Pix',B3:2,C3:4,A4:'Riglă',B4:1,C4:7,A5:'Total general'},
+   cols:4,rows:5,targets:{D2:'=B2*C2',D3:'=B3*C3',D4:'=B4*C4',D5:'=D2+D3+D4'},
+   why:'Formulele folosesc adrese, deci se recalculează dacă se schimbă prețurile.'},
+  {t:'tf',q:'Dacă schimbi un număr din tabel, o formulă scrisă cu adrese se recalculează singură.',ok:true,why:'Adevărat. De aceea formulele se scriu cu adrese, nu cu numere.'}
+ ]},
+
+/* ================= 6. Funcții și decizie (lecțiile 8-9) ================= */
+{t:'Funcții și decizie',lectii:[8,9],continuturi:[P.functii],
+ obiectiv:'calculezi suma, media, maximul și minimul cu funcții și lași Excel să decidă singur cu IF.',
+ pasi:[
+  {t:'Ce e o funcție',
+   text:`<p>O <mark>funcție</mark> e o formulă gata făcută, cu nume. Scrii <code>=</code>, numele funcției, apoi <strong>între paranteze</strong> zona de celule: <code>=SUM(B2:B6)</code> adună toate numerele din B2:B6.</p>
+<p>Patru funcții de bază:</p>
+<ul><li><code>SUM</code> — suma;</li>
+<li><code>AVERAGE</code> — media aritmetică;</li>
+<li><code>MAX</code> — cea mai mare valoare;</li>
+<li><code>MIN</code> — cea mai mică valoare.</li></ul>
+${fig('functie-average.webp',900,340,'Celula B7 arată media 6,85, iar bara fx arată funcția =AVERAGE(B2:B6)','Celula B7 arată <b>6,85</b>; în bara <em>fx</em> se vede funcția <code>=AVERAGE(B2:B6)</code>.')}`,
+   exemplu:`<p>Notele 6, 8 și 10 sunt în B2:B4.</p>${pre(`=SUM(B2:B4)       →  24
+=AVERAGE(B2:B4)   →  8
+=MAX(B2:B4)       →  10
+=MIN(B2:B4)       →  6`)}`,
+   altfel:`<p>O funcție e ca un buton de pe calculatorul de buzunar: în loc să scrii 6+8+10 și apoi împărțit la 3, apeși „media” și îi spui doar unde sunt numerele.</p>`,
+   incearca:{t:'choice',q:'Ce funcție calculează media aritmetică?',o:['AVERAGE','SUM','MAX','MIN'],ok:0,ajutor:'Recitește lista celor patru funcții.',why:'AVERAGE = media aritmetică.'},
+   inca:[
+    {t:'choice',q:'În B2:B4 sunt notele 4, 6 și 8. Ce afișează =AVERAGE(B2:B4)?',o:['6','18','8','3'],ok:0,ajutor:'Suma împărțită la câte note sunt.',why:'(4 + 6 + 8) : 3 = 6.'},
+    {t:'match',q:'Potrivește funcția cu ce calculează.',pairs:[['SUM','Suma'],['AVERAGE','Media aritmetică'],['MAX','Cea mai mare valoare'],['MIN','Cea mai mică valoare']],ajutor:'MAX = maxim, MIN = minim.',why:'SUM adună, AVERAGE face media, MAX și MIN găsesc extremele.'}
+   ]},
+  {t:'Cum scrii o funcție, fără greșeli',
+   text:`<p>Și în Excel-ul în limba română, numele funcțiilor rămân în <strong>engleză</strong>: <code>=SUMA(B2:B6)</code> dă eroare.</p>
+<p>Cum scrii repede și fără greșeli:</p>
+<ol><li>alegi celula în care vrei rezultatul;</li>
+<li>scrii <code>=SUM</code>: sub celulă apare o listă cu funcțiile care încep așa, iar <code>SUM</code> e prima, marcată;</li>
+<li><kbd>Tab</kbd> alege funcția marcată și scrie <code>=SUM(</code>. (Dacă scrii mai puține litere, de exemplu doar <code>=SU</code>, în Excel prima din listă e altă funcție; cobori cu săgeata <kbd>↓</kbd> până la cea dorită.)</li>
+<li><strong>tragi cu mouse-ul</strong> peste zonă;</li>
+<li><kbd>Enter</kbd>: Excel închide singur paranteza.</li></ol>`,
+   exemplu:`<p>În B7: <code>=SUM</code> → <kbd>Tab</kbd> → tragi de la B2 la B6 → <kbd>Enter</kbd>. În celulă apare suma, iar în bara fx scrie <code>=SUM(B2:B6)</code>.</p>`,
+   incearca:{t:'excel',q:'În <b>B7</b> fă suma notelor 1: scrie <code>=SUM</code>, apasă <kbd>Tab</kbd> (apare <code>=SUM(</code>), trage peste B2:B6 și apasă <kbd>Enter</kbd>.',cols:4,rows:8,cells:{...NOTE,A7:'Suma'},verifica:{formule:{B7:'=SUM(B2:B6)'},gest:['autocompletare']},ajutor:'Tab completează funcția aleasă din listă. Paranteza de la final o pune Excel.',why:'Tab completează funcția; la Enter, Excel închide singur paranteza uitată.'},
+   inca:[
+    {t:'tf',q:'În Excel-ul în limba română, suma se scrie <code>=SUMA(B2:B6)</code>.',ok:false,ajutor:'În ce limbă sunt numele funcțiilor?',why:'Fals. Numele funcțiilor rămân în engleză: =SUM(B2:B6).'},
+    {t:'excel',q:'Nota cea mai mare în <b>C7</b>, nota cea mai mică în <b>C8</b> (din coloana Nota 2).',cols:4,rows:8,cells:{...NOTE,A7:'Maxim',A8:'Minim'},verifica:{formule:{C7:'=MAX(C2:C6)',C8:'=MIN(C2:C6)'}},ajutor:'=MAX(C2:C6) și =MIN(C2:C6).',why:'=MAX găsește cea mai mare notă, =MIN pe cea mai mică.'}
+   ]},
+  {t:'IF: Excel ia o decizie',
+   text:`<p>Funcția de <mark>decizie</mark>, <code>IF</code>, alege între două rezultate după o condiție:</p>
+${pre('=IF(B2&gt;=5;"promovat";"corigent")')}
+<p>Citești: <em>dacă</em> B2 e cel puțin 5, scrie „promovat”, <em>altfel</em> scrie „corigent”. IF are trei părți: <strong>condiția</strong>; ce scrie dacă e <strong>adevărată</strong>; ce scrie dacă e <strong>falsă</strong>, despărțite prin <code>;</code> (pasul următor îți spune când pui virgulă în loc). Textul stă între ghilimele drepte <code>"…"</code>.</p>
+${fig('functie-if.webp',900,340,'Celula C3 arată corigent, iar bara fx arată =IF(B3&gt;=5;&quot;promovat&quot;;&quot;corigent&quot;)','Media lui Bogdan e 4,5, deci IF scrie <b>corigent</b>. Dana are exact 5: promovat.')}`,
+   exemplu:`<p>Aceeași formulă, pe trei medii:</p>${pre(`B2 = 7,25   →  promovat   (7,25 e cel puțin 5)
+B2 = 4,5    →  corigent   (4,5 e sub 5)
+B2 = 5      →  promovat   (5 e cel puțin 5)`)}`,
+   altfel:`<p>IF e ca un semafor cu două culori: dacă ai media cel puțin 5, mergi pe drumul „promovat”; altfel, pe drumul „corigent”. Condiția e întrebarea de la intersecție.</p>`,
+   incearca:{t:'choice',q:'B2 conține 8. Ce afișează <code>=IF(B2&gt;=5;"promovat";"corigent")</code>?',o:['promovat','corigent','8','nimic'],ok:0,ajutor:'8 e cel puțin 5?',why:'8 ≥ 5, deci condiția e adevărată: IF scrie „promovat”.'},
+   inca:[
+    {t:'choice',q:'B2 conține exact 5. Ce afișează <code>=IF(B2&gt;=5;"promovat";"corigent")</code>?',o:['promovat','corigent','5','eroare'],ok:0,ajutor:'>= înseamnă „cel puțin”: îl include și pe 5.',why:'5 ≥ 5 e adevărat, deci „promovat”.'}
+   ]},
+  {t:'Comparații, separatorul și strategia pentru IF',
+   text:`<p>Comparațiile: <code>&gt;</code> mai mare, <code>&lt;</code> mai mic, <code>&gt;=</code> cel puțin, <code>&lt;=</code> cel mult, <code>=</code> egal, <code>&lt;&gt;</code> diferit.</p>
+<p>Între părțile lui IF pui <code>;</code> pe setări românești sau <code>,</code> pe setări englezești. Excel îți arată, într-o bulă sub formulă, ce semn așteaptă.</p>
+<p><strong>Strategia pentru IF:</strong> 1. spune condiția în cuvinte („media e cel puțin 5”); 2. traduce-o: <code>B2&gt;=5</code>; 3. scrie cele două rezultate între ghilimele; 4. probează cu o valoare fix la limită (5) și cu câte una de fiecare parte.</p>`,
+   incearca:{t:'match',q:'Potrivește semnul cu înțelesul lui.',pairs:[['>=','cel puțin'],['<=','cel mult'],['<>','diferit'],['<','mai mic']],ajutor:'Recitește primul paragraf.',why:'>= cel puțin, <= cel mult, <> diferit, < mai mic.'},
+   inca:[
+    {t:'choice',q:'Condiția „nota e sub 5” se scrie:',o:['B2<5','B2>5','B2>=5','B2<>5'],ok:0,ajutor:'„Sub” înseamnă mai mic.',why:'„Sub 5” = mai mic decât 5: B2<5.'},
+    {t:'choice',q:'Ai scris un IF pentru „promovat de la 5 în sus”. Cu ce valoare îl probezi, ca să vezi dacă ai ales bine între > și >=?',o:['Exact 5','10','1','Nu trebuie probat'],ok:0,ajutor:'Pasul 4 al strategiei: valoarea fix la limită.',why:'Doar la 5 fix se vede diferența dintre >5 (corigent) și >=5 (promovat).'}
+   ]}
+ ],
+ atelier:{t:'excel',titlu:'Concursul de matematică',
+  intro:`<p>Cinci elevi au dat un concurs. <strong>Sarcina:</strong> calculează cu funcții punctajul mediu (B7), cel mai mare (B8) și cel mai mic (B9). Folosește lista de funcții (<code>=AVERA</code> + <kbd>Tab</kbd>) și trage zona cu mouse-ul.</p>`,
+  q:'Media în B7, maximul în B8, minimul în B9, pentru punctajele din B2:B6.',
+  cols:2,rows:9,cells:{A1:'Elev',B1:'Punctaj',A2:'Ana',B2:85,A3:'Bogdan',B3:70,A4:'Cristi',B4:95,A5:'Dana',B5:60,A6:'Elena',B6:80,A7:'Media',A8:'Maxim',A9:'Minim'},
+  verifica:{formule:{B7:'=AVERAGE(B2:B6)',B8:'=MAX(B2:B6)',B9:'=MIN(B2:B6)'}},
+  ajutor:'B7: =AVERAGE(B2:B6). B8: =MAX(B2:B6). B9: =MIN(B2:B6).',
+  why:'AVERAGE, MAX și MIN pe aceeași zonă, B2:B6. Jocul le-a verificat și pe alte punctaje.',
+  inca:[
+   {t:'excel',q:'Încă unul: setările sunt <b>RO</b>. În <b>C2</b> scrie situația Anei cu IF: „promovat” de la media 5 în sus, altfel „corigent”. Apoi trage formula până la <b>C5</b>.',cols:3,rows:5,cells:{A1:'Elev',B1:'Media',C1:'Situația',A2:'Ana',B2:7.25,A3:'Bogdan',B3:4.5,A4:'Cristi',B4:5,A5:'Dana',B5:9},mod:'ro',verifica:{formule:{C2:'=IF(B2>=5,"promovat","corigent")'},umplut:{C2:['C3','C4','C5']}},ajutor:'Pe setări RO: =IF(B2>=5;"promovat";"corigent"), cu ghilimele drepte. Apoi mânerul de umplere până la C5.',why:'O singură formulă IF, trasă în jos, decide pentru fiecare elev. Cristi, cu 5 fix, e promovat.'},
+   {t:'foaie',q:'Încă unul: scrie în C2 și C3 situația fiecărui elev, cu IF: „promovat” de la media 5 în sus, altfel „corigent”.',
+    cells:{A1:'Elev',B1:'Media',C1:'Situația',A2:'Ana',B2:6.5,A3:'Bogdan',B3:3.75},
+    cols:3,rows:3,targets:{C2:'=IF(B2>=5;"promovat";"corigent")',C3:'=IF(B3>=5;"promovat";"corigent")'},
+    variants:[{B2:4,B3:9},{B2:5,B3:4.99}],ajutor:'Condiția: B2>=5. Rezultatele între ghilimele drepte.',
+    why:'Formula verifică media din celulă, deci merge și după ce se schimbă notele. Jocul a testat-o și cu media 5 fix.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Ce funcție găsește cea mai mare notă din zona B2:B20?',o:['SUM','AVERAGE','MAX','MIN'],ok:2,why:'MAX = maximul, adică cea mai mare valoare.'},
+  {t:'choice',q:'În B2:B4 sunt notele 6, 8 și 10. Ce afișează <code>=AVERAGE(B2:B4)</code>?',o:['24','8','10','3'],ok:1,ajutor:'Suma notelor, împărțită la câte sunt.',why:'(6 + 8 + 10) : 3 = 8.'},
+  {t:'tf',q:'În Excel-ul în limba română, suma se scrie <code>=SUMA(B2:B6)</code>.',ok:false,why:'Fals. Numele funcțiilor rămân în engleză: =SUM(B2:B6).'},
+  {t:'foaie',q:'Situația școlară la informatică: calculează media clasei (B7), nota maximă (B8) și nota minimă (B9), cu funcții.',
+   cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Bogdan',B3:7,A4:'Cristi',B4:10,A5:'Dana',B5:6,A6:'Elena',B6:8,A7:'Media',A8:'Nota maximă',A9:'Nota minimă'},
+   cols:2,rows:9,targets:{B7:'=AVERAGE(B2:B6)',B8:'=MAX(B2:B6)',B9:'=MIN(B2:B6)'},
+   why:'AVERAGE, MAX și MIN pe aceeași zonă, B2:B6.'},
+  {t:'choice',q:'B2 conține 4,50. Ce afișează <code>=IF(B2&gt;=5;"promovat";"corigent")</code>?',o:['promovat','corigent','4,50','nimic'],ok:1,ajutor:'4,50 e cel puțin 5?',why:'4,50 nu e ≥ 5, deci IF alege a doua variantă.'},
+  {t:'foaie',q:'Scrie în C2 și C3 situația fiecărui elev, cu IF: „promovat” de la media 5 în sus, altfel „corigent”.',
+   cells:{A1:'Elev',B1:'Media',C1:'Situația',A2:'Ana',B2:7.25,A3:'Bogdan',B3:4.5},
+   cols:3,rows:3,targets:{C2:'=IF(B2>=5;"promovat";"corigent")',C3:'=IF(B3>=5;"promovat";"corigent")'},
+   variants:[{B2:4,B3:9},{B2:5,B3:4.99}],ajutor:'Strategia din pasul 4: condiția în cuvinte, apoi tradusă.',
+   why:'Formula verifică media din celulă, deci merge și după ce se schimbă notele. Jocul a testat-o și cu media 5 fix.'}
+ ]},
+
+/* ================= 7. Sortare (lecția 10) ================= */
+{t:'Sortare după mai multe criterii',lectii:[10],continuturi:[P.sortare],
+ obiectiv:'ordonezi un tabel crescător sau descrescător, după unul sau mai multe criterii, fără să amesteci rândurile.',
+ pasi:[
+  {t:'Crescător și descrescător',
+   text:`<p><mark>Sortarea</mark> aranjează rândurile unui tabel după o coloană, numită <mark>criteriu</mark>.</p>
+<ul><li><strong>crescător</strong>: de la mic la mare (1 → 10) sau alfabetic (A → Z);</li>
+<li><strong>descrescător</strong>: de la mare la mic (10 → 1) sau Z → A.</li></ul>
+<p>Un clasament, cu cea mai mare medie sus, e o sortare <strong>descrescătoare</strong> după medie.</p>`,
+   exemplu:`${grila({A1:'Elev',B1:'Media',A2:'Dana',B2:9.5,A3:'Ana',B3:9,A4:'Bogdan',B4:7.5},2,4,'','Descrescător după Media: 9,5, apoi 9, apoi 7,5. Fiecare elev și-a păstrat media.')}`,
+   incearca:{t:'choice',q:'Vrei clasamentul clasei, cu cea mai mare medie sus. Ce ordine alegi pentru coloana Media?',o:['Descrescătoare','Crescătoare','Alfabetică','Nu contează'],ok:0,ajutor:'Cea mai mare sus = de la mare la mic.',why:'Descrescător înseamnă de la cea mai mare valoare la cea mai mică.'},
+   inca:[
+    {t:'classify',q:'Șirul e în ordine crescătoare sau descrescătoare?',cats:['Crescătoare','Descrescătoare'],items:[['1, 2, 3',0],['Z, M, A',1],['Ana, Bogdan, Cristi',0],['10, 9, 7',1]],ajutor:'Crescător: de la mic la mare, de la A la Z.',why:'1, 2, 3 și A → Z sunt crescătoare; 10, 9, 7 și Z → A sunt descrescătoare.'}
+   ]},
+  {t:'Sortarea după un criteriu',
+   text:`<p>Pașii:</p>
+<ol><li>faci clic într-o <strong>singură celulă</strong> din coloana după care sortezi (de exemplu Media);</li>
+<li>deschizi fila <strong>Date (Data)</strong>;</li>
+<li>apeși <strong>A→Z</strong> pentru crescător sau <strong>Z→A</strong> pentru descrescător.</li></ol>
+<p>Excel ia singur tot tabelul și mută <strong>rândurile întregi</strong>, iar capul de tabel rămâne sus. Dacă a coborât printre date, anulezi cu <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</p>`,
+   exemplu:`<p>Clic pe C3 (o medie) → Date (Data) → Z→A: elevul cu media cea mai mare urcă pe rândul 2, cu numele și clasa lui cu tot.</p>`,
+   incearca:{t:'excel',q:'Ordonează elevii de la <b>cea mai mare medie</b> la cea mai mică: alege o celulă din coloana <b>Media</b> și Date (Data) → <b>Z→A</b>.',cols:3,rows:6,cells:CLASA,verifica:{sortat:{zona:'A1:C6',dupa:[{col:'C',ord:'desc'}]}},ajutor:'O singură celulă aleasă, din coloana C. Apoi fila Date (Data) din panglică.',why:'Z→A pe coloana Media, cu o singură celulă aleasă: Excel ia singur tot tabelul și mută rândurile întregi.'},
+   inca:[
+    {t:'excel',q:'Pune elevii în <b>ordine alfabetică</b> (coloana Elev, A→Z).',cols:3,rows:6,cells:CLASA,verifica:{sortat:{zona:'A1:C6',dupa:[{col:'A',ord:'asc'}]}},ajutor:'Clic pe un nume, apoi Date (Data) → A→Z.',why:'A→Z pe coloana Elev. Capul de tabel rămâne sus.'}
+   ]},
+  {t:'Nu sorta o singură coloană',
+   text:`<p>Dacă selectezi doar coloana cu medii și sortezi, mediile se mută, dar numele rămân pe loc: fiecare elev ajunge cu media <strong>altcuiva</strong>. Suma mediilor rămâne aceeași, deci greșeala nu se vede ușor.</p>
+<p>Excel te avertizează: apare fereastra <strong>Avertisment de sortare (Sort Warning)</strong>. Alegi <strong>Extinde selecția (Expand the selection)</strong>, ca să se mute rândurile întregi.</p>`,
+   altfel:`<p>E ca și cum ai reordona pozele dintr-un album, dar etichetele cu nume de sub ele ar rămâne pe loc: la final, sub poza Anei scrie „Bogdan”.</p>`,
+   incearca:{t:'choice',q:'Ai selectat doar coloana Media și ai apăsat Z→A. Apare Avertismentul de sortare. Ce alegi?',o:['Extinde selecția (Expand the selection)','Continuă cu selecția curentă','Închizi Excel','Ștergi coloana Elev'],ok:0,ajutor:'Vrei ca rândurile să se mute întregi.',why:'Extinde selecția ia tot tabelul, iar fiecare elev rămâne cu media lui.'},
+   inca:[
+    {t:'excel',q:'Încearcă ce NU trebuie făcut: selectează doar <b>C2:C6</b> (mediile) și apasă Z→A. Citește avertismentul și alege „Continuă cu selecția curentă”. Ce s-a întâmplat?',cols:3,rows:6,cells:CLASA,o:['Mediile s-au mutat, dar numele au rămas pe loc: s-au amestecat','Totul s-a sortat corect','Excel a șters mediile','Nu s-a întâmplat nimic'],ok:0,ajutor:'Uită-te cine are acum media 9,5.',why:'Sortând doar o coloană, fiecare elev primește media altcuiva. De aceea alegi „Extinde selecția” sau sortezi dintr-o singură celulă.'},
+    {t:'tf',q:'Poți sorta doar coloana Media: numele rămân lângă mediile lor.',ok:false,ajutor:'Recitește prima propoziție a pasului.',why:'Fals. Dacă sortezi o singură coloană, mediile se mută, iar numele rămân pe loc. Rândurile se desperechează.'}
+   ]},
+  {t:'Mai multe criterii: fereastra Sortare (Sort)',
+   text:`<p>Când mai mulți elevi sunt în aceeași clasă, sortezi după <strong>două criterii</strong>:</p>
+<ol><li>clic într-o celulă din tabel;</li>
+<li>fila <strong>Date (Data)</strong> → butonul <strong>Sortare (Sort)</strong>; se deschide fereastra de sortare. În joc, butonul se numește <strong>Sortare particularizată (Custom Sort)</strong>;</li>
+<li>primul rând, <em>Sortare după (Sort by)</em>: Clasa, de la A la Z;</li>
+<li><strong>Adăugare nivel (Add Level)</strong>; pe rândul nou, <em>Apoi după (Then by)</em>: Media, de la cel mai mare la cel mai mic (Largest to Smallest);</li>
+<li><strong>OK</strong>.</li></ol>
+<p>Al doilea criteriu ordonează doar rândurile care au <strong>aceeași</strong> valoare la primul.</p>
+${fig('sortare-doua-criterii.webp',750,344,'Fereastra Sort din Excel cu butonul Add Level încadrat și două criterii: Sort by Clasa A to Z (de la A la Z), Then by Nota Largest to Smallest (de la cel mai mare la cel mai mic)','Fereastra Sortare (Sort): întâi după Clasa, <i>A to Z</i>, apoi după Nota, <i>Largest to Smallest</i>. <b>Adăugare nivel (Add Level)</b> a adăugat al doilea rând.')}
+${fig('tabel-sortat.webp',600,280,'Tabelul sortat: întâi elevii din 8A cu notele 10, 8, 7, apoi cei din 8B cu notele 10, 9','Rezultatul: întâi toată clasa 8A, apoi 8B; în fiecare clasă, nota mai mare e prima.')}`,
+   incearca:{t:'order',q:'Tabelul e sortat întâi după Echipa (A→Z), apoi după Puncte (descrescător). Pune rândurile în ordinea rezultată.',items:['Albaștri · Mihai · 12','Albaștri · Ioana · 8','Roșii · Dan · 15','Roșii · Ana · 3'],ajutor:'Întâi toate rândurile echipei care începe cu A; în fiecare echipă, punctele mai mari sus.',why:'Primul criteriu face grupele (Albaștri, apoi Roșii). Al doilea ordonează în interiorul fiecărei grupe.'},
+   inca:[
+    {t:'order',q:'Faci sortarea după două criterii. Pune pașii în ordine.',items:['Faci clic într-o celulă a tabelului','Deschizi fila Date → Sortare','Alegi primul criteriu: Clasa, A→Z','Adaugi un nivel: Media, descrescător','Apeși OK'],ajutor:'Urmează lista numerotată din pas.',why:'Primul criteriu decide grupele mari. Nivelul adăugat ordonează în interiorul fiecărei grupe.'},
+    {t:'choice',q:'Doi elevi au aceeași medie, 9. Cum stabilești cine apare primul?',o:['Adaugi un al doilea criteriu, de exemplu numele','Sortezi încă o dată doar coloana Media','Îi muți la întâmplare cu mouse-ul','Ștergi rândul unuia dintre ei'],ok:0,ajutor:'Când contează al doilea criteriu?',why:'Al doilea criteriu contează exact la valorile egale ale primului.'}
+   ]}
+ ],
+ atelier:{t:'excel',titlu:'Clasamentul pe clase',
+  intro:`<p><strong>Sarcina:</strong> ordonează tabelul întâi pe clase (A→Z), iar în fiecare clasă de la media cea mai mare la cea mai mică. Folosește fereastra de sortare cu <strong>două niveluri</strong>: Date (Data) → Sortare particularizată (Custom Sort) → Adaugă nivel (Add Level).</p>`,
+  q:'Sortează după Clasa (crescător), apoi după Media (descrescător).',
+  cols:3,rows:6,cells:CLASA,
+  verifica:{sortat:{zona:'A1:C6',dupa:[{col:'B',ord:'asc'},{col:'C',ord:'desc'}]},gest:['sortare-dlg']},
+  ajutor:'Nivelul 1: coloana Clasa, crescător. + Adaugă nivel. Nivelul 2: coloana Media, descrescător. OK.',
+  why:'8A vine prima, cu elevii ordonați după medie; apoi 8B. Fiecare elev și-a păstrat clasa și media.',
+  inca:[
+   {t:'excel',q:'Încă unul: la concursul de sărituri, ordonează sportivii de la <b>cea mai lungă săritură</b> la cea mai scurtă.',cols:2,rows:5,cells:{A1:'Sportiv',B1:'Săritura (m)',A2:'Radu',B2:3.2,A3:'Ioana',B3:3.8,A4:'Mihai',B4:2.9,A5:'Sara',B5:3.5},verifica:{sortat:{zona:'A1:B5',dupa:[{col:'B',ord:'desc'}]}},ajutor:'Clic pe o săritură, Date (Data) → Z→A.',why:'Descrescător după săritură: Ioana (3,8) urcă prima.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Ce înseamnă o sortare descrescătoare după notă?',o:['De la nota cea mai mare la cea mai mică','De la nota cea mai mică la cea mai mare','În ordinea alfabetică a numelor','Notele se șterg'],ok:0,why:'Descrescător = de la mare la mic.'},
+  {t:'order',q:'Tabelul e sortat întâi după Clasa (A→Z), apoi după Nota (descrescător). Pune rândurile în ordinea rezultată.',items:['8A · Ioana · 10','8A · Radu · 7','8B · Maria · 9','8B · Dan · 6'],ajutor:'Întâi toată clasa 8A.',why:'Întâi toate rândurile din 8A, apoi din 8B. În fiecare clasă, nota mai mare vine prima.'},
+  {t:'order',q:'Faci sortarea după două criterii. Pune pașii în ordine.',items:['Faci clic într-o celulă a tabelului','Deschizi fila Date → Sortare','Alegi primul criteriu: Clasa, A→Z','Adaugi un nivel: Nota, descrescător','Apeși OK'],why:'Primul criteriu decide grupele mari. Nivelul adăugat ordonează în interiorul fiecărei grupe.'},
+  {t:'choice',q:'Doi elevi au aceeași medie, 9. Cum stabilești cine apare primul?',o:['Adaugi un al doilea criteriu, de exemplu numele','Sortezi încă o dată doar coloana Media','Îi muți la întâmplare cu mouse-ul','Ștergi rândul unuia dintre ei'],ok:0,why:'Al doilea criteriu contează exact la valorile egale ale primului.'},
+  {t:'tf',q:'Poți sorta doar coloana Nota: numele rămân lângă notele lor.',ok:false,ajutor:'Ce face avertismentul de sortare?',why:'Fals. Dacă sortezi o singură coloană, notele se mută, iar numele rămân pe loc. Rândurile se desperechează.'},
+  {t:'choice',q:'După sortare, capul de tabel a coborât printre date. Ce faci întâi?',o:['Ctrl+Z, ca să anulezi sortarea','Ctrl+S, ca să salvezi','Delete pe capul de tabel','Nimic, așa rămâne'],ok:0,ajutor:'Recitește ultima propoziție de la pasul 2.',why:'Ctrl+Z anulează sortarea greșită; apoi o refaci dintr-o celulă a tabelului.'}
+ ]},
+
+/* ================= 8. Grafice + misiunea finală (lecțiile 11-12) ================= */
+{t:'Experimentul cu plante',lectii:[11,12],continuturi:[P.grafice,P.serii,P.formule,P.functii],final:true,
+ obiectiv:'alegi graficul potrivit, îl faci din datele selectate cu etichete și tragi o concluzie din date cu formule.',
+ pasi:[
+  {t:'Graficul potrivit pentru întrebare',
+   text:`<p>Un <mark>grafic</mark> face datele ușor de înțeles dintr-o privire. Tipul îl alegi după <strong>întrebarea</strong> la care vrei să răspunzi:</p>
+<ul><li><strong>coloane</strong> → <strong>compari</strong> valori (cine a citit mai multe cărți?);</li>
+<li><strong>linie</strong> → urmărești o <strong>evoluție în timp</strong> (cum a crescut planta, săptămână de săptămână?);</li>
+<li><strong>radial</strong> (plăcinta) → <strong>părți dintr-un întreg</strong> (ce parte din clasă preferă fiecare sport?).</li></ul>`,
+   exemplu:`<p>„Care plantă e cea mai înaltă acum?” → <b>coloane</b>. „Cum a crescut planta de la lumină?” → <b>linie</b>. „Din 20 de elevi, câți aleg fotbal, baschet, înot?” → <b>radial</b>.</p>`,
+   incearca:{t:'choice',q:'Vrei să compari câte cărți a citit fiecare elev luna asta. Ce grafic alegi?',o:['Coloane','Linie','Radial','Niciunul'],ok:0,ajutor:'Compari valori între ele.',why:'Coloanele pun valorile una lângă alta, ca să le compari.'},
+   inca:[
+    {t:'classify',q:'Ce grafic se potrivește fiecărei întrebări?',cats:['Coloane','Linie','Radial'],items:[['Cine a strâns mai mulți bani la târg?',0],['Cum a variat temperatura în fiecare zi a săptămânii?',1],['Ce parte din buget merge pe mâncare?',2],['Ce clasă are mai mulți elevi?',0]],ajutor:'Compari → coloane; în timp → linie; parte din întreg → radial.',why:'Compararea merge pe coloane, evoluția pe linie, părțile unui întreg pe radial.'}
+   ]},
+  {t:'Seria de date și legenda',
+   text:`<p>O <mark>serie de date</mark> e un șir de valori care merg împreună, de obicei un rând sau o coloană din tabel: de exemplu înălțimile unei plante, săptămână de săptămână (B3:D3 pentru planta „La umbră”).</p>
+<p>Fiecare serie primește în grafic o <strong>culoare</strong> și un <strong>nume</strong> în <mark>legendă</mark>. Numele vine din eticheta de lângă valori (A3: „La umbră”). Trei plante = trei serii = trei nume în legendă.</p>
+${fig('grafic-plante.webp',1000,389,'Datele celor trei plante selectate cu etichete și graficul cu coloane Înălțimea plantelor, cu legenda jos: La lumină, La umbră, Fără apă','Datele selectate cu tot cu etichete (A1:D4) și graficul cu coloane. Fiecare plantă e o serie, cu culoarea și numele ei în <b>legendă</b>.')}`,
+   exemplu:`${grila(PLANTE,4,4,'B2:D2','Seria plantei „La lumină”: valorile B2:D2. Numele ei, din A2, apare în legendă.')}`,
+   incearca:{t:'pick',q:'Selectează seria de date a plantei „La lumină”: doar valorile ei din cele trei săptămâni.',cols:4,rows:4,range:true,cells:PLANTE,ans:'B2:D2',ajutor:'Rândul plantei, fără eticheta din A.',why:'Seria plantei „La lumină” e rândul ei de valori, B2:D2. Numele din A2 devine numele seriei în legendă.'},
+   inca:[
+    {t:'choice',q:'Faci un grafic cu patru elevi, câte o serie pentru fiecare. Câte nume apar în legendă?',o:['4','1','8','2'],ok:0,ajutor:'O serie = un nume în legendă.',why:'Fiecare serie are un nume în legendă: 4 serii, 4 nume.'}
+   ]},
+  {t:'Cum faci graficul, pas cu pas',
+   text:`<ol><li><strong>selectezi datele cu tot cu etichete</strong>: capul de tabel și numele, fără rânduri goale (de exemplu A1:D4);</li>
+<li>deschizi fila <strong>Inserare (Insert)</strong>, grupul <strong>Diagrame (Charts)</strong>;</li>
+<li>alegi tipul: coloane (Column), linie (Line) sau radial (Pie);</li>
+<li>apeși pe titlul graficului și scrii unul care spune ce se vede.</li></ol>
+<p>Din etichete, Excel scrie singur numele seriilor în legendă și categoriile de pe axă.</p>
+${fig('inserare-diagrame.webp',1000,160,'Fila Inserare (Insert) din Excel, încadrată, cu grupul Diagrame (Charts) încadrat: Diagrame recomandate (Recommended Charts) și butoanele pentru tipurile de grafic','Fila Inserare (Insert), grupul <b>Diagrame (Charts)</b>: aici alegi coloane, linie, radial și celelalte tipuri.')}`,
+   incearca:{t:'choice',q:'Din ce filă a panglicii inserezi un grafic?',o:['Inserare (Insert)','Pornire (Home)','Date (Data)','Formule (Formulas)'],ok:0,ajutor:'Uită-te în captură.',why:'Graficele sunt în fila Inserare (Insert), grupul Diagrame (Charts).'},
+   inca:[
+    {t:'choice',q:'Selectezi datele pentru graficul plantelor. Ce incluzi?',o:['Numerele și etichetele lor','Doar numerele, fără etichete','Doar etichetele, fără numere','Tot tabelul și rândurile goale'],ok:0,ajutor:'Pasul 1 din listă.',why:'Din etichete Excel scrie numele seriilor în legendă și categoriile de pe axă.'},
+    {t:'order',q:'Pune pașii pentru un grafic în ordine.',items:['Selectezi datele cu tot cu etichete','Deschizi fila Inserare (Insert)','Alegi tipul de grafic','Scrii titlul graficului'],ajutor:'Întâi selecția, la final titlul.',why:'Ca la formatare: întâi selectezi, apoi alegi ce faci cu selecția.'}
+   ]},
+  {t:'Concluzia din date',
+   text:`<p>Graficul <strong>arată</strong>, formulele <strong>măsoară</strong>. Creșterea unei plante = înălțimea din săptămâna 3 minus cea din săptămâna 1: <code>=D2-B2</code>.</p>
+<p>Tragi formula în jos pentru toate plantele, iar cu <code>=MAX(E2:E4)</code> afli creșterea cea mai mare. Un număr negativ înseamnă că planta a <strong>scăzut</strong> (s-a ofilit).</p>
+<p>La final scrii concluzia în cuvinte: „Planta de la lumină a crescut cel mai mult.”</p>`,
+   exemplu:`${grila({...PLANTE,E1:'Creștere',E2:7,E3:3,E4:-1},5,4,'E2:E4','E2: =D2-B2 → 7. Trasă în jos: 3 și −1. Planta fără apă s-a ofilit.')}`,
+   incearca:{t:'excel',q:'În <b>E2</b> calculează creșterea plantei de la lumină: săptămâna 3 minus săptămâna 1.',cols:5,rows:4,cells:{...PLANTE,E1:'Creștere'},verifica:{formule:{E2:'=D2-B2'}},ajutor:'Săptămâna 3 e în D2, săptămâna 1 în B2.',why:'=D2-B2 = 9 - 2 = 7 cm.'},
+   inca:[
+    {t:'choice',q:'Planta fără apă are creșterea −1. Ce înseamnă?',o:['A scăzut cu 1 cm: s-a ofilit','A crescut cu 1 cm','Formula e greșită','Nu a fost măsurată'],ok:0,ajutor:'Un număr negativ la creștere…',why:'Negativ = înălțimea din săptămâna 3 e mai mică decât în săptămâna 1.'}
+   ]}
+ ],
+ atelier:{t:'excel',titlu:'Graficul experimentului',
+  intro:`<p><strong>Sarcina:</strong> fă graficul cu coloane al experimentului. Selectează datele <b>cu tot cu etichete</b> (A1:D4), apoi Inserare (Insert) → Coloane (Column), și scrie titlul <code>Înălțimea plantelor</code>.</p>`,
+  q:'Grafic cu coloane din A1:D4, cu titlul „Înălțimea plantelor”.',
+  cols:4,rows:4,cells:PLANTE,
+  verifica:{grafic:{tip:'column',zona:'A1:D4',titlu:'Înălțimea plantelor'}},
+  ajutor:'Tragi de la A1 la D4. Fila Inserare (Insert) → 📊 Coloane (Column). Apoi apeși pe titlul graficului și scrii.',
+  why:'Trei plante = trei serii, fiecare cu culoarea și numele ei în legendă.',
+  inca:[
+   {t:'excel',q:'Încă unul: cum a crescut doar planta de la lumină? Fă un grafic <b>linie</b> din <b>A1:D2</b>, cu titlul <code>Planta la lumină</code>.',cols:4,rows:4,cells:PLANTE,verifica:{grafic:{tip:'line',zona:'A1:D2',titlu:'Planta la lumină'}},ajutor:'Evoluție în timp → Linie (Line). Zona A1:D2: capul de tabel și rândul plantei.',why:'Linia arată cum a urcat planta de la o săptămână la alta.'},
+   {t:'foaie',q:'Încă unul: calculează creșterea fiecărei plante (E2:E4 = săptămâna 3 minus săptămâna 1) și creșterea maximă în E5.',
+    cells:{...PLANTE,E1:'Creștere (cm)',A5:'Creșterea maximă'},
+    cols:5,rows:5,targets:{E2:'=D2-B2',E3:'=D3-B3',E4:'=D4-B4',E5:'=MAX(E2:E4)'},ajutor:'E2: =D2-B2, la fel pe rândurile 3 și 4. E5: =MAX(E2:E4).',
+    why:'Planta fără apă a „crescut” cu −1 cm: s-a ofilit. Asta e o concluzie trasă din date.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Vrei să arăți cum a crescut o plantă de la o săptămână la alta. Ce grafic alegi?',o:['Coloane','Linie','Radial','Niciunul'],ok:1,ajutor:'Evoluție în timp.',why:'Evoluția în timp se vede cel mai bine pe o linie.'},
+  {t:'choice',q:'Ce grafic arată cel mai bine ce parte din clasă a ales fiecare sport?',o:['Linie','Coloane','Radial','Tabel'],ok:2,why:'Radialul (plăcinta) arată părțile unui întreg.'},
+  {t:'pick',q:'Selectează seria de date a plantei „La umbră”: doar valorile ei din cele trei săptămâni.',cols:4,rows:4,range:true,cells:PLANTE,ans:'B3:D3',why:'Seria plantei „La umbră” e rândul ei de valori, B3:D3. Numele din A3 devine numele seriei în legendă.'},
+  {t:'choice',q:'Faci un grafic linie cu cele trei plante, câte o serie pentru fiecare. Câte nume apar în legendă?',o:['3','9','1','4'],ok:0,why:'Fiecare serie are un nume în legendă: 3 plante, 3 serii, 3 nume.'},
+  {t:'foaie',q:'Calculează creșterea fiecărei plante (E2:E4 = săptămâna 3 minus săptămâna 1) și creșterea maximă în E5.',
+   cells:{A1:'Planta',B1:'Săpt. 1',C1:'Săpt. 2',D1:'Săpt. 3',E1:'Creștere (cm)',A2:'La lumină',B2:2,C2:5,D2:9,A3:'La umbră',B3:2,C3:3,D3:5,A4:'Fără apă',B4:2,C4:2,D4:1,A5:'Creșterea maximă'},
+   cols:5,rows:5,targets:{E2:'=D2-B2',E3:'=D3-B3',E4:'=D4-B4',E5:'=MAX(E2:E4)'},ajutor:'Pasul 4: creșterea = săptămâna 3 minus săptămâna 1; maximul cu MAX.',
+   why:'Planta fără apă a „crescut” cu −1 cm: s-a ofilit. Asta e o concluzie trasă din date.'},
+  {t:'choice',q:'Selectezi datele pentru graficul plantelor. Ce incluzi?',o:['Numerele și etichetele lor','Doar numerele, fără etichete','Doar etichetele, fără numere','Tot tabelul și rândurile goale'],ok:0,why:'Din etichete Excel scrie numele seriilor în legendă și categoriile de pe axă.'}
+ ]}
 ];
 
 JocMotor.porneste({
@@ -314,21 +817,28 @@ JocMotor.porneste({
   unitateTitlu:'Calcul tabelar',
   competente:['CS.1.1','CS.3.1'],
   lectii:'2–12',
-  intro:'Opt niveluri despre Excel: interfața și registrul, selectarea și copierea, tipurile de date, formatarea, formulele, funcțiile și decizia, sortarea și graficele. La fiecare citești o pagină scurtă și răspunzi la întrebări. În foile din joc scrii formule adevărate și formatezi tabele, iar jocul verifică. La final îți iei diploma.',
+  intro:'Opt niveluri, de la „ce e Excel” până la experimentul cu plante: interfața și foile, selectarea și copierea, tipurile de date, formatarea, formulele, funcțiile și decizia, sortarea și graficele. Nu trebuie să știi nimic dinainte: fiecare nivel te ia pas cu pas, cu imagini din Excel-ul adevărat, iar în atelier lucrezi într-o foaie care se poartă ca Excel-ul. La final îți iei diploma.',
+  cum:`<b>Cum lucrezi în fiecare nivel</b><ol>
+<li><b>Învață</b> — pași scurți, câte o idee, cu imagini din Excel-ul adevărat și un exemplu „Uite cum”. Nu ai înțeles? Apasă „Explică-mi altfel”.</li>
+<li><b>Încearcă tu</b> — după fiecare pas, un exercițiu mic, fără note. Greșești? Primești un indiciu. Vrei să exersezi mai mult? „Încă un exercițiu”.</li>
+<li><b>Atelier</b> — lucrezi într-o foaie care se poartă ca Excel-ul: panglică, caseta de nume, bara fx, formule, formatare, sortare, grafice. Apeși „Verifică” și foaia îți spune ce e gata și ce mai lipsește.</li>
+<li><b>Verificare</b> — câteva întrebări doar din ce ai învățat în pași. Stele pentru răspunsurile din prima; un indiciu e mereu la îndemână.</li></ol>`,
   banda:'<span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span>',
   nivele:LEVELS,
-  tipuri:{foaie:JocFoaie,formatare:JocFormatare},
+  tipuri:{foaie:JocFoaie,formatare:JocFormatare,excel:JocExcel},
   diploma:{
     titlu:'Analist de date',
     rezumat:'interfață, registre și foi, editare, tipuri de date, formatare, formule, funcții, IF, sortare și grafice',
     aplicatie:'Excel-ul adevărat',
     provocare:[
-      'Creează un registru nou și redenumește prima foaie „Plante”. Copiază în ea tabelul plantelor (3 plante × 3 săptămâni).',
-      'Calculează creșterea fiecărei plante cu o formulă și creșterea maximă cu MAX.',
-      'Adaugă o coloană „Verdict” cu IF: „crește bine” de la 5 cm în sus, altfel „nu crește”.',
-      'Sortează tabelul descrescător după creștere, cu toate rândurile odată.',
-      'Pune culoare de umplere pe capul de tabel, borduri pe tot tabelul și fă un grafic linie cu titlu.',
-      'Salvează ca <code>Nume_Prenume_plante.xlsx</code> în folderul clasei.'
+      'Deschide Excel și creează un registru nou (<kbd>Ctrl</kbd>+<kbd>N</kbd>, sau Fișier (File) → Nou (New) → registrul gol). Dublu-clic pe fila primei foi, jos, scrie <b>Plante</b> și apasă <kbd>Enter</kbd>.',
+      'Scrie tabelul: în A1 <b>Planta</b>, în B1:D1 <b>Săpt. 1</b>, <b>Săpt. 2</b>, <b>Săpt. 3</b>, iar pe rândurile 2-4 cele trei plante cu înălțimile lor. Verifică: toate numerele stau la dreapta.',
+      'În E1 scrie <b>Creștere</b>, în E2 <code>=D2-B2</code>, apoi trage de mânerul de umplere până în E4. Lasă rândul 5 gol, iar în E6 scrie <code>=MAX(E2:E4)</code> (în A6: „Creșterea maximă”).',
+      'În F1 scrie <b>Verdict</b>, iar în F2 <code>=IF(E2&gt;=5;"crește bine";"nu crește")</code> (cu virgule în loc de ; dacă Excel ți le cere în bulă). Trage formula până în F4.',
+      'Clic într-o celulă din tabel → Date (Data) → Sortare (Sort) → Sortare după Creștere, de la cel mai mare la cel mai mic (Largest to Smallest) → OK. Verifică: fiecare plantă are tot înălțimile ei.',
+      'Selectează A1:F1 → Pornire (Home) → Aldin și o Culoare de umplere (Fill Color). Selectează A1:F4 → Borduri (Borders) → Toate bordurile (All Borders). Dublu-clic pe marginile coloanelor, ca să încapă tot.',
+      'Selectează A1:D4 → Inserare (Insert) → grafic linie (Line). Apasă pe titlul graficului și scrie <b>Creșterea plantelor</b>.',
+      'Salvează cu <kbd>Ctrl</kbd>+<kbd>S</kbd> (Fișier (File) → Salvare ca (Save As)) în folderul clasei, cu numele <code>Nume_Prenume_plante.xlsx</code>.'
     ]
   }
 });

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Misiunea Cadru</title>
-<meta name="description" content="Lecție-joc pentru clasa a VI-a: animații grafice în Scratch (interfață, gestionare, scenariu, cadre, proprietăți, mișcare, temporizare, sunet, control de la tastatură) și primele modele 3D.">
+<meta name="description" content="Lecție-joc pentru clasa a VI-a, pe pași: animații grafice în Scratch (interfață, gestionare, scenariu, cadre, proprietăți, mișcare, temporizare, sunet, control de la tastatură) și primele modele 3D, cu scena și scripturile simulate.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grandstander:wght@600;800&family=Readex+Pro:wght@400;600;700&family=Courier+Prime:wght@400;700&display=swap&subset=latin-ext">
@@ -16,18 +16,21 @@
   --mark:#FFD86B; --markInk:#13232A; --ok:#1F7A45; --okbg:#DFF2E6; --bad:#B8323A; --badbg:#F9E3E4;
   --fd:"Grandstander","Segoe UI",system-ui,sans-serif; --fb:"Readex Pro","Segoe UI",system-ui,sans-serif; --fm:"Courier Prime",Consolas,monospace;
   --film:#1B1F22; --cadru:#F4EBD6; --bila:#E0662B;
+  --scena:#FFFFFF; --grila:#E3E9EA;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --desk:#0E1618; --paper:#152023; --paper2:#1B292D; --line:#2E4146;
   --ink:#E6EFF0; --ink2:#A2B6BA; --accent:#5CC6D0; --accentInk:#0E1618; --sel:#1D4046;
   --mark:#EBC654; --markInk:#13232A; --ok:#6FCF94; --okbg:#173022; --bad:#FF8A8F; --badbg:#3A1D20;
   --film:#050708; --cadru:#D9CFB8; --bila:#E0662B;
+  --scena:#F6F8F8; --grila:#DDE4E5;
 }}
 :root[data-theme="dark"]{
   --desk:#0E1618; --paper:#152023; --paper2:#1B292D; --line:#2E4146;
   --ink:#E6EFF0; --ink2:#A2B6BA; --accent:#5CC6D0; --accentInk:#0E1618; --sel:#1D4046;
   --mark:#EBC654; --markInk:#13232A; --ok:#6FCF94; --okbg:#173022; --bad:#FF8A8F; --badbg:#3A1D20;
   --film:#050708; --cadru:#D9CFB8; --bila:#E0662B;
+  --scena:#F6F8F8; --grila:#DDE4E5;
 }
 /* tema jocului: o bandă de film cu perforații; în cadrele ei o minge urcă și coboară, cadru cu cadru */
 .banda{position:relative;display:flex;gap:6px;padding:9px 10px;overflow:hidden;background:var(--film)}
@@ -38,167 +41,888 @@
 .cd i{position:absolute;left:12px;width:10px;height:10px;border-radius:50%;background:var(--bila)}
 .cd b{position:absolute;left:3px;right:3px;bottom:2px;height:2px;background:#8C8270}
 h1 .sag{color:var(--accent)}
+
+/* ===== simulatoarele: scena Scratch și scriptul din blocuri ===== */
+.sc{display:flex;flex-direction:column;gap:10px;max-width:100%}
+.sc-stage{border:2px solid var(--line);border-radius:8px;overflow:hidden;background:var(--scena);max-width:420px;width:100%;touch-action:none}
+.sc-stage svg{display:block;width:100%;height:auto}
+.sc-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sc-bar .btn{padding:6px 12px;font-size:.9rem}
+.sc-flag{background:#3E9E4F !important;color:#fff !important;border-color:transparent !important}
+.sc-stop{background:#C9403A !important;color:#fff !important;border-color:transparent !important}
+.sc-lbl{font-family:var(--fd);font-weight:700;font-size:.9rem;color:var(--ink2);margin-top:4px}
+.sc-pal{display:flex;flex-wrap:wrap;gap:6px}
+.blk{display:inline-block;max-width:100%;padding:6px 10px;border-radius:8px;color:#fff;font-family:var(--fb);font-size:.88rem;font-weight:600;line-height:1.25;border:0;text-align:left;overflow-wrap:anywhere}
+button.blk{cursor:pointer}
+.blk.ev{background:#C88A00}.blk.mi{background:#3D6FD1}.blk.as{background:#7E55D6}.blk.su{background:#B143B5}.blk.co{background:#C27514}
+.blk.hat{border-top-left-radius:18px;border-top-right-radius:18px}
+.sc-scr{list-style:none;margin:0;padding:8px;border:2px dashed var(--line);border-radius:8px;min-height:44px;background:var(--paper2)}
+.sc-scr li{display:flex;align-items:center;gap:6px;margin:4px 0;flex-wrap:wrap}
+.sc-scr li.in{margin-left:26px;border-left:4px solid #C27514;padding-left:6px}
+.sc-scr .gol{color:var(--ink2);font-size:.9rem}
+.sc-bt{display:inline-flex;gap:4px}
+.sc-bt button{min-width:34px;height:32px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font-weight:700;cursor:pointer}
+.sc-teste{list-style:none;margin:0;padding:0;font-size:.92rem}
+.sc-teste li{padding:3px 0 3px 26px;position:relative}
+.sc-teste li::before{content:"○";position:absolute;left:4px;color:var(--ink2)}
+.sc-teste li.ok::before{content:"✓";color:var(--ok);font-weight:700}
+.sc-teste li.nu::before{content:"✗";color:var(--bad);font-weight:700}
+.sc-panou{display:flex;flex-wrap:wrap;gap:8px 12px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper2)}
+.sc-panou label{display:flex;align-items:center;gap:6px;font-size:.92rem;font-weight:600}
+.sc-panou input{width:5.2em;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font-family:var(--fm);font-size:1rem}
+.sc-stare{font-family:var(--fm);font-size:.85rem;color:var(--ink2)}
 </style>
 </head>
 <body>
 <script src="../_motor/motor.js"></script>
 <script>
+/* MISIUNEA CADRU, rescrisă PE PAȘI (26.09.2026), după doctrina din jocuri/README.md („Nivelurile PE PAȘI”).
+   Profesorul: „informația e prea condensată - nu e beginner friendly - e mai mult test decât asistență”;
+   „să ofere informații și sarcini simple (cu variante la cerere) și posibilitatea efectivă a exersării -
+   simulare a aplicației adevărate”. De aceea: fiecare nivel = pași mici, exemplu, „explică-mi altfel”,
+   exercițiu după fiecare pas, ATELIER (scena Scratch sau scriptul din blocuri, simulate, cu teste bifate),
+   apoi verificarea — doar pe ce s-a predat. */
+
 // banda: 12 cadre, mingea sare (poziția de sus în pixeli pe fiecare cadru)
 const SUS=[12,7,3,1,3,7,12,7,3,1,3,7];
 const BANDA=SUS.map(t=>`<span class="cd"><i style="top:${t}px"></i><b></b></span>`).join('');
 
+const X=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const pre=s=>`<pre>${X(s)}</pre>`;          // scriptul ca text: un rând = un bloc, blocurile din „repetă” împinse la dreapta
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="../animatii-3d-vi/img/${f}" target="_blank"><img src="../animatii-3d-vi/img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+
+/* ================= SIMULATOARELE ================= */
+/* Blocurile Scratch simulate (textul, ca în Scratch în română, din capturile jocului).
+   cat: ev=Evenimente, mi=Mișcare, as=Aspect, su=Sunet, co=Control. k = ce face blocul. */
+const BL={
+  steag:{txt:'când se dă click pe steag',cat:'ev',k:'hat',ev:'steag'},
+  spatiu:{txt:'când tasta spațiu este apăsată',cat:'ev',k:'hat',ev:'spatiu'},
+  dreapta:{txt:'când tasta săgeată dreapta este apăsată',cat:'ev',k:'hat',ev:'dreapta'},
+  stanga:{txt:'când tasta săgeată stânga este apăsată',cat:'ev',k:'hat',ev:'stanga'},
+  sus:{txt:'când tasta săgeată sus este apăsată',cat:'ev',k:'hat',ev:'sus'},
+  jos:{txt:'când tasta săgeată jos este apăsată',cat:'ev',k:'hat',ev:'jos'},
+  x10:{txt:'modifică x cu 10',cat:'mi',k:'dx',v:10},
+  xm10:{txt:'modifică x cu -10',cat:'mi',k:'dx',v:-10},
+  y10:{txt:'modifică y cu 10',cat:'mi',k:'dy',v:10},
+  ym10:{txt:'modifică y cu -10',cat:'mi',k:'dy',v:-10},
+  m10:{txt:'mergi 10 pași',cat:'mi',k:'move',v:10},
+  rot15:{txt:'rotește-te 15 grade',cat:'mi',k:'turn',v:15},
+  g2_150:{txt:'glisează în 2 secunde la x: 150 y: 0',cat:'mi',k:'glide',s:2,x:150,y:0},
+  g4_m150:{txt:'glisează în 4 secunde la x: -150 y: 0',cat:'mi',k:'glide',s:4,x:-150,y:0},
+  g1_m150:{txt:'glisează în 1 secunde la x: -150 y: 0',cat:'mi',k:'glide',s:1,x:-150,y:0},
+  next:{txt:'costumul următor',cat:'as',k:'next'},
+  boboc:{txt:'schimbă costumul la boboc',cat:'as',k:'setcost',v:1},
+  gata:{txt:'spune Gata! pentru 1 secunde',cat:'as',k:'say',s:1,m:'Gata!'},
+  miau:{txt:'pornește sunetul Miau',cat:'su',k:'snd',m:'Miau'},
+  miauF:{txt:'redă sunetul Miau până la final',cat:'su',k:'sndw',s:1,m:'Miau'},
+  pop:{txt:'redă sunetul pop până la final',cat:'su',k:'sndw',s:.5,m:'pop'},
+  popS:{txt:'pornește sunetul pop',cat:'su',k:'snd',m:'pop'},
+  w02:{txt:'așteaptă 0.2 secunde',cat:'co',k:'wait',s:.2},
+  w1:{txt:'așteaptă 1 secunde',cat:'co',k:'wait',s:1},
+  w2:{txt:'așteaptă 2 secunde',cat:'co',k:'wait',s:2},
+  r3:{txt:'repetă 3',cat:'co',k:'rep',n:3},
+  r4:{txt:'repetă 4',cat:'co',k:'rep',n:4},
+  r5:{txt:'repetă 5',cat:'co',k:'rep',n:5},
+  r10:{txt:'repetă 10',cat:'co',k:'rep',n:10},
+  r20:{txt:'repetă 20',cat:'co',k:'rep',n:20}
+};
+const TASTE={steag:'Steagul verde',spatiu:'Tasta spațiu',dreapta:'Săgeata →',stanga:'Săgeata ←',sus:'Săgeata ↑',jos:'Săgeata ↓'};
+const NUME_K={hat:'un bloc „când…”',dx:'modifică x',dy:'modifică y',move:'mergi … pași',turn:'rotește-te',glide:'glisează',next:'costumul următor',setcost:'schimbă costumul la',say:'spune',snd:'pornește sunetul',sndw:'redă sunetul … până la final',wait:'așteaptă',rep:'repetă'};
+
+/* personajele desenate pe scenă (desen simplu, nu captură): pisica are 2 costume, Pomul 4 */
+function desenPersonaj(tip,c){
+  if(tip==='pom'){
+    const cor=`<rect x="-7" y="0" width="14" height="46" fill="#7A5230"/><circle cx="0" cy="-12" r="34" fill="#3F9A48"/>`;
+    const extra=c===1?`<circle cx="10" cy="-20" r="6" fill="#F3A6C4"/>`
+      :c===2?`<g transform="translate(10,-20)"><circle r="6" cx="0" cy="-8" fill="#fff"/><circle r="6" cx="8" cy="0" fill="#fff"/><circle r="6" cx="0" cy="8" fill="#fff"/><circle r="6" cx="-8" cy="0" fill="#fff"/><circle r="5" fill="#F2C12E"/></g>`
+      :c===3?`<g transform="translate(10,-20)"><circle r="6" cx="0" cy="-8" fill="#fff"/><circle r="6" cx="8" cy="0" fill="#fff"/><circle r="6" cx="0" cy="8" fill="#fff"/><circle r="6" cx="-8" cy="0" fill="#fff"/><circle r="5" fill="#F2C12E"/></g><g transform="translate(-16,-40)"><ellipse rx="8" ry="6" fill="#F2C12E"/><rect x="-3" y="-6" width="3" height="12" fill="#222"/><ellipse cx="0" cy="-8" rx="6" ry="4" fill="#CFE8FF" opacity=".9"/></g>`
+      :`<circle cx="10" cy="-14" r="15" fill="#D6282E"/><rect x="8" y="-34" width="4" height="8" fill="#6B4423"/>`;
+    return cor+extra;
+  }
+  const picioare=c===2?`<rect x="-14" y="18" width="8" height="18" rx="3" fill="#E8892B" transform="rotate(18 -10 18)"/><rect x="8" y="18" width="8" height="18" rx="3" fill="#E8892B" transform="rotate(-18 12 18)"/>`
+    :`<rect x="-10" y="18" width="8" height="18" rx="3" fill="#E8892B"/><rect x="4" y="18" width="8" height="18" rx="3" fill="#E8892B"/>`;
+  return `${picioare}<ellipse cx="0" cy="8" rx="24" ry="17" fill="#F29A38"/><path d="M22 4 q18 -10 12 -28" stroke="#F29A38" stroke-width="6" fill="none" stroke-linecap="round"/>
+<circle cx="-14" cy="-16" r="17" fill="#F29A38"/><path d="M-28 -26 l4 -18 l10 12 z M-12 -30 l8 -15 l6 16 z" fill="#F29A38"/>
+<circle cx="-19" cy="-19" r="3" fill="#222"/><circle cx="-8" cy="-19" r="3" fill="#222"/><path d="M-17 -10 q3 3 6 0" stroke="#222" stroke-width="2" fill="none"/>`;
+}
+function scenaSVG(){
+  return `<svg viewBox="-240 -180 480 360" role="img" aria-label="Scena Scratch, 480 pe 360 de pixeli, cu centrul în x 0, y 0">
+<rect x="-240" y="-180" width="480" height="360" fill="var(--scena)"/>
+<g stroke="var(--grila)" stroke-width="1">${[-180,-120,-60,60,120,180].map(v=>`<line x1="${v}" y1="-180" x2="${v}" y2="180"/>`).join('')}${[-120,-60,60,120].map(v=>`<line x1="-240" y1="${v}" x2="240" y2="${v}"/>`).join('')}</g>
+<line x1="-240" y1="0" x2="240" y2="0" stroke="#9FB1B4" stroke-width="2"/><line x1="0" y1="-180" x2="0" y2="180" stroke="#9FB1B4" stroke-width="2"/>
+<g font-family="Consolas,monospace" font-size="15" fill="#5B6E73"><text x="-236" y="-4">x: -240</text><text x="176" y="-4">x: 240</text><text x="4" y="-164">y: 180</text><text x="4" y="174">y: -180</text><text x="4" y="-4">0, 0</text></g>
+<g class="tinta"></g><g class="pers"></g><g class="bula"></g></svg>`;
+}
+function pozaPersonaj(svg,tip,S){
+  const g=svg.querySelector('.pers');
+  g.setAttribute('transform',`translate(${S.x},${-S.y}) rotate(${(S.dir??90)-90}) scale(${(S.dim??100)/100})`);
+  g.setAttribute('opacity',String(1-Math.min(100,Math.max(0,S.fantoma||0))/100));
+  g.innerHTML=desenPersonaj(tip,S.c||1);
+}
+function bula(svg,S,text){
+  const g=svg.querySelector('.bula');if(!text){g.innerHTML='';return}
+  const x=Math.max(-230,Math.min(120,S.x+20)),y=Math.max(-170,-S.y-90);
+  g.innerHTML=`<rect x="${x}" y="${y}" width="${Math.max(70,text.length*12+24)}" height="36" rx="12" fill="#fff" stroke="#888"/><text x="${x+12}" y="${y+24}" font-size="18" font-family="Segoe UI,sans-serif" fill="#222">${X(text)}</text>`;
+}
+
+/* --- scriptul: rânduri [id, 0|1]; 1 = în interiorul lui „repetă” de deasupra --- */
+function parseaza(rows){
+  const scripturi=[],libere=[];let cur=null,rep=null;
+  rows.forEach(([id,ind])=>{const b=BL[id];if(!b)return;
+    if(b.k==='hat'){cur={ev:b.ev,corp:[]};scripturi.push(cur);rep=null;return}
+    if(!cur){libere.push(id);return}
+    if(ind&&rep){rep.copii.push(Object.assign({id},b));return}
+    const n=Object.assign({id},b);if(b.k==='rep'){n.copii=[];rep=n}else rep=null;cur.corp.push(n)});
+  return {scripturi,libere};
+}
+function executa(corp,start){
+  const S=Object.assign({x:0,y:0,dir:90,c:1,nc:2},start),ev=[];let t=0,pasi=0;
+  const unul=b=>{if(++pasi>2000)return;
+    let d=0;
+    if(b.k==='dx')S.x+=b.v;else if(b.k==='dy')S.y+=b.v;
+    else if(b.k==='move'){S.x=Math.round(S.x+b.v*Math.sin(S.dir*Math.PI/180));S.y=Math.round(S.y+b.v*Math.cos(S.dir*Math.PI/180))}
+    else if(b.k==='turn')S.dir+=b.v;
+    else if(b.k==='glide'){d=b.s;S.x=b.x;S.y=b.y}
+    else if(b.k==='next')S.c=S.c%S.nc+1;
+    else if(b.k==='setcost')S.c=b.v;
+    else if(b.k==='say'||b.k==='sndw'||b.k==='wait')d=b.s;
+    ev.push({k:b.k,id:b.id,t,d,m:b.m,x:S.x,y:S.y,c:S.c,dir:S.dir,inRep:!!b._inRep});t+=d};
+  corp.forEach(b=>{if(b.k==='rep'){ev.push({k:'rep',id:b.id,t,d:0,x:S.x,y:S.y,c:S.c,dir:S.dir,copii:b.copii.map(x=>x.k)});
+      for(let i=0;i<b.n;i++)b.copii.forEach(ch=>unul(Object.assign({_inRep:true},ch)))}
+    else unul(b)});
+  return {ev,S,durata:t};
+}
+function verificaScript(Q,rows){
+  const P=parseaza(rows),start=Object.assign({x:0,y:0,dir:90,c:1,nc:Q.personaj==='pom'?4:2},Q.stare||{});
+  const rulare=ev=>{const s=P.scripturi.find(x=>x.ev===ev);return s?executa(s.corp,start):null};
+  return (Q.checks||[]).map(ch=>{
+    let ok=false;
+    if(ch.curat)ok=!P.libere.length&&P.scripturi.every(s=>s.corp.every(b=>b.k!=='rep'||b.copii.length));
+    else if(ch.hat&&!ch.dupa)ok=P.scripturi.some(s=>s.ev===ch.hat);
+    else{const r=rulare(ch.dupa);
+      if(r){const E=r.ev,F=r.S;ok=true;
+        if(ch.dx==='+')ok=ok&&F.x>start.x;if(ch.dx==='-')ok=ok&&F.x<start.x;if(ch.dx===0)ok=ok&&F.x===start.x;
+        if(ch.dy==='+')ok=ok&&F.y>start.y;if(ch.dy==='-')ok=ok&&F.y<start.y;if(ch.dy===0)ok=ok&&F.y===start.y;
+        if(ch.final)ok=ok&&Object.entries(ch.final).every(([k,v])=>F[k]===v);
+        if(ch.schimbari)ok=ok&&E.filter(e=>e.k==='next').length>=ch.schimbari;
+        if(ch.schimbariExact!=null)ok=ok&&E.filter(e=>e.k==='next').length===ch.schimbariExact;
+        if(ch.inRep)ok=ok&&E.some(e=>e.k==='rep'&&e.copii.includes(ch.inRep));
+        if(ch.are)ok=ok&&E.some(e=>e.k===ch.are);
+        if(ch.fara)ok=ok&&!E.some(e=>e.k===ch.fara);
+        if(ch.inainte){const a=E.findIndex(e=>e.k===ch.inainte[0]),b=E.findIndex(e=>e.k===ch.inainte[1]);ok=ok&&a>=0&&b>=0&&a<b}
+        if(ch.glideS)ok=ok&&E.some(e=>e.k==='glide'&&e.d===ch.glideS);
+        if(ch.primul){const e=E.find(e=>e.k!=='rep');ok=ok&&!!e&&e.k===ch.primul}
+        if(ch.ultimul){const e=E.filter(e=>e.k!=='rep').pop();ok=ok&&!!e&&e.k===ch.ultimul}
+      }}
+    return ok;
+  });
+}
+let RULARE=0;   // un singur film pe scenă odată; „Stop” și schimbarea paginii îl opresc
+function joaca(svg,Q,rows,ev0,stareEl){
+  const id=++RULARE,P=parseaza(rows),s=P.scripturi.find(x=>x.ev===ev0);
+  const start=Object.assign({x:0,y:0,dir:90,c:1,nc:Q.personaj==='pom'?4:2},Q.stare||{});
+  const tip=Q.personaj||'pisica';
+  if(!s){stareEl.textContent=`Niciun script nu începe cu „${BL[Object.keys(BL).find(k=>BL[k].ev===ev0)].txt}”.`;return}
+  const r=executa(s.corp,start),E=r.ev.filter(e=>e.k!=='rep');
+  let S=Object.assign({},start),i=0;pozaPersonaj(svg,tip,S);bula(svg,S,'');
+  const viu=()=>id===RULARE&&svg.isConnected;
+  const pas=()=>{if(!viu())return;
+    if(i>=E.length){bula(svg,S,'');stareEl.textContent=`Gata. x: ${S.x}, y: ${S.y}, costumul ${S.c}.`;return}
+    const e=E[i++],prev=Object.assign({},S);
+    stareEl.textContent=`Rulează: ${BL[e.id].txt}`;
+    if(e.k==='glide'){const t0=performance.now(),ms=e.d*700;
+      const f=now=>{if(!viu())return;const p=Math.min(1,(now-t0)/ms);S.x=Math.round(prev.x+(e.x-prev.x)*p);S.y=Math.round(prev.y+(e.y-prev.y)*p);pozaPersonaj(svg,tip,S);
+        if(p<1)requestAnimationFrame(f);else{S.x=e.x;S.y=e.y;setTimeout(pas,30)}};
+      requestAnimationFrame(f);return}
+    S.x=e.x;S.y=e.y;S.c=e.c;S.dir=e.dir;pozaPersonaj(svg,tip,S);
+    if(e.k==='snd'||e.k==='sndw'){bula(svg,S,'♪ '+e.m);setTimeout(()=>{if(viu())bula(svg,S,'')},e.k==='sndw'?e.d*700:500)}
+    if(e.k==='say'){bula(svg,S,e.m);setTimeout(()=>{if(viu())bula(svg,S,'')},e.d*700)}
+    setTimeout(pas,e.d?e.d*700:(e.inRep?60:120))};
+  pas();
+}
+const TIPURI_SIM={
+  /* SCENA: panoul personajului de sub scena Scratch (x, y, Dimensiune, Direcția, efectul fantomă).
+     Elevul scrie valorile sau trage personajul pe scenă; testele verifică fiecare valoare. */
+  scena:{
+    render(Q,body,api){
+      body.onclick=null;
+      const campuri=Q.campuri||['x','y'],S=Object.assign({x:0,y:0,dim:100,dir:90,fantoma:0,c:1},Q.start||{});
+      const et={x:'x',y:'y',dim:'Dimensiune',dir:'Direcția',fantoma:'Efect fantomă'};
+      const ce={x:v=>`x = ${v}`,y:v=>`y = ${v}`,dim:v=>`Dimensiune = ${v}`,dir:v=>`Direcția = ${v}`,fantoma:v=>`efectul fantomă = ${v}`};
+      body.innerHTML=`<div class="sc"><div class="sc-stage">${scenaSVG()}</div>
+<div class="sc-panou">${campuri.map(k=>`<label>${et[k]} <input type="number" inputmode="numeric" data-k="${k}" value="${S[k]}" aria-label="${et[k]}"></label>`).join('')}</div>
+<div class="sc-stare">Poți scrie numerele în panou sau poți trage pisica pe scenă.${Q.arata?' Conturul punctat arată unde trebuie să ajungă.':''}</div>
+<div class="sc-lbl">Testele</div><ul class="sc-teste">${Object.entries(Q.tinta).map(([k,v])=>`<li data-k="${k}">${ce[k](v)}</li>`).join('')}</ul></div>`;
+      const svg=body.querySelector('svg');
+      if(Q.arata){const T=Object.assign({},S,Q.tinta);svg.querySelector('.tinta').innerHTML=`<g transform="translate(${T.x},${-T.y}) rotate(${T.dir-90}) scale(${T.dim/100})" opacity=".45" style="filter:grayscale(1)">${desenPersonaj('pisica',1)}</g><circle cx="${T.x}" cy="${-T.y}" r="5" fill="#E4002B"/>`}
+      const draw=()=>pozaPersonaj(svg,'pisica',S);draw();
+      body.querySelectorAll('input').forEach(inp=>inp.oninput=()=>{const v=parseFloat(inp.value);if(!isNaN(v)){S[inp.dataset.k]=v;draw()}});
+      const setIn=()=>body.querySelectorAll('input').forEach(inp=>inp.value=S[inp.dataset.k]);
+      if(campuri.includes('x')){
+        const move=ev=>{const r=svg.getBoundingClientRect();S.x=Math.max(-240,Math.min(240,Math.round(((ev.clientX-r.left)/r.width*480-240)/10)*10));
+          S.y=Math.max(-180,Math.min(180,Math.round((180-(ev.clientY-r.top)/r.height*360)/10)*10));setIn();draw()};
+        let jos=false;svg.onpointerdown=ev=>{jos=true;move(ev)};svg.onpointermove=ev=>{if(jos)move(ev)};svg.onpointerup=svg.onpointerleave=()=>{jos=false}}
+      body._S=S;body._set=v=>{Object.assign(S,v);setIn();draw()};
+      const nav=api.checkButton(()=>{
+        const gresite=[];
+        Object.entries(Q.tinta).forEach(([k,v])=>{const ok=S[k]===v;const li=body.querySelector(`.sc-teste li[data-k="${k}"]`);li.className=ok?'ok':'nu';if(!ok)gresite.push(k)});
+        if(!gresite.length){nav.innerHTML='';api.resolve(true);return}
+        const k=gresite[0],v=Q.tinta[k],a=S[k];
+        const sfat={x:a<v?'mai spre dreapta (x mai mare)':'mai spre stânga (x mai mic)',y:a<v?'mai sus (y mai mare)':'mai jos (y mai mic)',
+          dim:a<v?'mai mare (Dimensiune mai mare)':'mai mică (Dimensiune mai mică)',dir:'întoarsă altfel: 90 = dreapta, -90 = stânga, 0 = sus, 180 = jos',
+          fantoma:a<v?'mai transparentă (fantomă mai mare)':'mai vizibilă (fantomă mai mică)'}[k];
+        api.resolve(false,`Pisica trebuie ${sfat}. Testele bifate cu ✓ sunt deja bune.`);
+        api.revealButton(()=>{body._set(Q.tinta);body.querySelectorAll('.sc-teste li').forEach(li=>li.className='ok');nav.innerHTML='';api.giveUp('valorile corecte sunt acum în panou: '+Object.entries(Q.tinta).map(([k,v])=>ce[k](v)).join(', ')+'.')});
+      },'Rulează testele');
+    },
+    rezolva(Q,body){body._set(Q.tinta)},
+    gresit(Q,body){   // confuzia tipică: x și y inversate (sau semnul lui x uitat)
+      const T=Object.assign({},Q.tinta);
+      if(T.x!==undefined&&T.y!==undefined&&T.x!==T.y){const a=T.x;T.x=T.y;T.y=a}else if(T.x!==undefined)T.x=-T.x-10;else{const k=Object.keys(T)[0];T[k]=T[k]+30}
+      body._set(T);
+    }
+  },
+  /* SCRIPT: construiești scriptul din blocuri (paleta), îl rulezi pe scenă cu steagul verde sau cu tastele,
+     iar testele verifică ce FACE scriptul (poziția finală, costumele, ordinea sunet/mișcare), nu cum arată. */
+  script:{
+    render(Q,body,api){
+      const rows=(Q.start||[]).map(r=>r.slice());body._rows=rows;
+      const hats=[...new Set(Q.paleta.filter(id=>BL[id].k==='hat').map(id=>BL[id].ev).concat((Q.start||[]).map(r=>BL[r[0]]).filter(b=>b.k==='hat').map(b=>b.ev)))];
+      body.innerHTML=`<div class="sc"><div class="sc-stage">${scenaSVG()}</div>
+<div class="sc-bar">${hats.map(ev=>`<button type="button" class="btn${ev==='steag'?' sc-flag':''}" data-ev="${ev}">${ev==='steag'?'▶ Steagul verde':TASTE[ev]}</button>`).join('')}<button type="button" class="btn sc-stop" data-stop="1">■ Stop</button></div>
+<div class="sc-stare" aria-live="polite">Apasă ${hats.map(ev=>TASTE[ev]).join(' sau ')} ca să vezi ce face scriptul.</div>
+<div class="sc-lbl">Blocuri — apasă un bloc ca să-l adaugi la finalul scriptului</div>
+<div class="sc-pal">${Q.paleta.map(id=>`<button type="button" class="blk ${BL[id].cat}${BL[id].k==='hat'?' hat':''}" data-add="${id}">${X(BL[id].txt)}</button>`).join('')}</div>
+<div class="sc-lbl">Scriptul tău (↑ mută mai sus, ⇥ bagă blocul în „repetă”, ✕ șterge)</div><ol class="sc-scr"></ol>
+<div class="sc-lbl">Testele</div><ul class="sc-teste">${Q.checks.map(c=>`<li>${c.ce}</li>`).join('')}</ul></div>`;
+      const svg=body.querySelector('svg'),stareEl=body.querySelector('.sc-stare'),scr=body.querySelector('.sc-scr');
+      const S0=Object.assign({x:0,y:0,dir:90,c:1},Q.stare||{});pozaPersonaj(svg,Q.personaj||'pisica',S0);
+      const poateIntra=i=>{for(let j=i-1;j>=0;j--){const b=BL[rows[j][0]];if(b.k==='hat')return false;if(b.k==='rep')return true;if(!rows[j][1])return false}return false};
+      const draw=()=>{
+        scr.innerHTML=rows.length?rows.map(([id,ind],i)=>{const b=BL[id];const inR=ind&&poateIntra(i);
+          return `<li class="${inR?'in':''}"><span class="blk ${b.cat}${b.k==='hat'?' hat':''}">${X(b.txt)}</span><span class="sc-bt">${i>0?`<button type="button" data-up="${i}" aria-label="Mută mai sus">↑</button>`:''}${b.k!=='hat'&&b.k!=='rep'&&(inR||poateIntra(i))?`<button type="button" data-in="${i}" aria-label="${inR?'Scoate din repetă':'Bagă în repetă'}">${inR?'⇤':'⇥'}</button>`:''}<button type="button" data-del="${i}" aria-label="Șterge blocul">✕</button></span></li>`}).join('')
+          :'<li class="gol">Scriptul e gol. Apasă blocurile de mai sus, în ordine.</li>';
+        rows.forEach((r,i)=>{if(r[1]&&!poateIntra(i))r[1]=0});
+        body.querySelectorAll('.sc-teste li').forEach(li=>li.className='');
+      };
+      body._draw=draw;draw();
+      body.onclick=ev=>{const t=ev.target.closest('button');if(!t)return;
+        if(t.dataset.add){const b=BL[t.dataset.add];const i=rows.length;const ind=b.k!=='hat'&&b.k!=='rep'&&i>0&&(rows[i-1][1]||BL[rows[i-1][0]].k==='rep')?1:0;rows.push([t.dataset.add,ind]);draw()}
+        else if(t.dataset.up){const i=+t.dataset.up;[rows[i-1],rows[i]]=[rows[i],rows[i-1]];draw()}
+        else if(t.dataset.in){const i=+t.dataset.in;rows[i][1]=rows[i][1]?0:1;draw()}
+        else if(t.dataset.del){rows.splice(+t.dataset.del,1);draw()}
+        else if(t.dataset.ev){joaca(svg,Q,rows,t.dataset.ev,stareEl)}
+        else if(t.dataset.stop){RULARE++;pozaPersonaj(svg,Q.personaj||'pisica',S0);bula(svg,S0,'');stareEl.textContent='Oprit.'}};
+      const nav=api.checkButton(()=>{
+        const rez=verificaScript(Q,rows);
+        body.querySelectorAll('.sc-teste li').forEach((li,i)=>li.className=rez[i]?'ok':'nu');
+        if(rez.every(Boolean)){nav.innerHTML='';api.resolve(true);return}
+        const k=rez.findIndex(x=>!x);
+        api.resolve(false,`Testul „${Q.checks[k].ce.replace(/<[^>]+>/g,'')}” nu trece încă. Rulează scriptul și urmărește pisica.`);
+        api.revealButton(()=>{rows.splice(0,rows.length,...Q.solutie.map(r=>r.slice()));draw();body.querySelectorAll('.sc-teste li').forEach(li=>li.className='ok');nav.innerHTML='';
+          api.giveUp('scriptul corect e acum construit mai sus. Apasă '+hats.map(e=>TASTE[e]).join(' / ')+' și urmărește ce face.')});
+      },'Rulează testele');
+    },
+    rezolva(Q,body){body._rows.splice(0,body._rows.length,...Q.solutie.map(r=>r.slice()));body._draw()},
+    gresit(Q,body){body._rows.splice(0,body._rows.length,...(Q.gresit||Q.start||[]).map(r=>r.slice()));body._draw()}
+  }
+};
+
+/* ================= NIVELURILE ================= */
 const LEVELS=[
-{t:'Studioul de animație',lectii:[27],continuturi:['Elemente de interfață ale unei aplicații de animație grafică','Instrumente de bază ale unei aplicații de animație grafică'],text:`
-<p>La ore facem animații în <mark>Scratch</mark>. Interfața lui în română are câteva zone:</p>
-<ul>
-<li><mark>scena</mark>, de 480 × 360 de pixeli, unde se joacă animația;</li>
-<li><mark>personajele</mark>, adică obiectele pe care le animăm (în engleză <em>sprites</em>);</li>
-<li><mark>decorul</mark>, adică fundalul scenei.</li>
-</ul>
-<p>Sus ai trei file: <strong>Cod</strong>, <strong>Costume</strong> și <strong>Sunete</strong> (în engleză <em>Code, Costumes, Sounds</em>). Instrumentele de bază sunt blocurile, așezate pe categorii (Mișcare, Aspect, Sunet, Evenimente, Control…), și editorul de desen de la Costume, cu pensulă, radieră și umplere.</p>
-<p><strong>Steagul verde</strong> pornește animația, iar butonul roșu <strong>Stop</strong> o oprește.</p>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-file-categorii.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-file-categorii.webp" alt="Scratch în română: filele Cod, Costume și Sunete încadrate sus, iar în stânga blocurile pe categorii încadrate" width="640" height="385" loading="lazy"></a>
-<figcaption>Sus, filele <b>Cod</b>, <b>Costume</b> și <b>Sunete</b>. Dedesubt, blocurile, așezate pe categorii colorate: Mișcare, Aspect, Sunet, Evenimente, Control…</figcaption></figure>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-scena-personaje.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-scena-personaje.webp" alt="Partea dreaptă a editorului Scratch cu etichete: steagul verde, Stop, scena, x și y, personajele și decorul" width="490" height="752" loading="lazy"></a>
-<figcaption>În dreapta: <b>steagul verde</b> și <b>Stop</b>, <b>scena</b>, apoi panoul personajului, cu <b>x</b> și <b>y</b>. Dedesubt, lista de <b>personaje</b>, iar în coloana <b>Scenă</b>, <b>decorul</b>.</figcaption></figure>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-desen-unelte.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-desen-unelte.webp" alt="Editorul de desen din fila Costume, cu uneltele pensulă, radieră și umplere încadrate și etichetate" width="480" height="260" loading="lazy"></a>
-<figcaption>Fila <b>Costume</b>: editorul de desen, cu <b>Pensulă</b>, <b>Radieră</b> și <b>Umplere</b>. Numele apare când ții mouse-ul pe unealtă.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'În ce zonă vezi animația în timp ce rulează?',o:['Pe scenă','În zona de cod','În fila Sunete','În lista de categorii de blocuri'],ok:0,why:'Scena e „ecranul” animației. În zona de cod doar construiești scripturile, iar fila Sunete e pentru sunete.'},
- {t:'match',q:'Leagă fiecare parte din Scratch de ce faci acolo.',pairs:[['Cod','îmbini blocurile în scripturi'],['Costume','desenezi sau alegi înfățișările personajului'],['Sunete','adaugi și modifici sunete'],['Decor','fundalul din spatele personajelor']],why:'Fiecare filă are treaba ei. Dacă nu găsești ceva, uită-te întâi dacă ești pe fila potrivită.'},
- {t:'classify',q:'În ce categorie de blocuri cauți?',cats:['Mișcare','Aspect','Sunet'],items:[['mergi 10 pași',0],['glisează în 1 secunde la x: 0 y: 0',0],['costumul următor',1],['spune Salut! pentru 2 secunde',1],['pornește sunetul Miau',2],['modifică volumul cu -10',2]],why:'Mișcare = unde se află personajul. Aspect = cum arată și ce spune. Sunet = ce se aude. Categoriile au și culori diferite.'},
- {t:'tf',q:'În Scratch în română, ce în engleză se numește „sprite” apare ca „personaj”.',ok:true,why:'Adevărat. În interfața în română vezi „Personaj”, „Alege un personaj”, „Încarcă personaj”.'},
- {t:'choice',q:'Un personaj are x: 0 și y: 0. Unde se află pe scenă?',o:['În mijlocul scenei','În colțul din stânga sus','În colțul din stânga jos','Pe marginea din dreapta'],ok:0,why:'Punctul x: 0, y: 0 e centrul scenei. Spre dreapta x crește, spre stânga scade. Spre sus y crește, spre jos scade.'}
-]},
-{t:'Proiectul meu: creez, salvez, testez',lectii:[28],continuturi:['Operații de gestionare a animațiilor: creare, deschidere, expunere, salvare, închidere, testare, depanare'],text:`
-<p>Toate operațiile cu proiectul pornesc din meniul <strong>Fișier</strong>:</p>
-<ul>
-<li><strong>Nou</strong> începe un proiect gol.</li>
-<li><strong>Salvează pe calculatorul tău</strong> păstrează proiectul într-un fișier <code>.sb3</code>. Data viitoare îl <mark>deschizi</mark> tot din meniul Fișier, cu comanda de încărcare de pe calculator.</li>
-<li>Dacă lucrezi online, cu cont, ai și <strong>Salvează acum</strong>.</li>
-</ul>
-<p><mark>Expunerea</mark>: butonul de ecran complet de deasupra scenei arată animația mare.</p>
-<p><mark>Testarea</mark>: pornești cu steagul verde și urmărești dacă se întâmplă ce ai plănuit.</p>
-<p><mark>Depanarea</mark>: găsești blocul greșit, îl repari și testezi din nou.</p>
-<p>La <mark>închidere</mark>: întâi salvezi, apoi închizi.</p>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-meniu-fisier.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-meniu-fisier.webp" alt="Meniul Fișier din Scratch deschis, cu Nou, Load from your computer și Salvează pe calculatorul tău; ultimele două încadrate" width="330" height="160" loading="lazy"></a>
-<figcaption>Meniul <b>Fișier</b>: <i>Nou</i>, <i>Load from your computer</i> (încarcă de pe calculator; în editorul online apare netradus) și <i>Salvează pe calculatorul tău</i>.</figcaption></figure>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-ecran-complet.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-ecran-complet.webp" alt="Scena Scratch cu butonul de ecran complet din dreapta sus încadrat și etichetat" width="490" height="410" loading="lazy"></a>
-<figcaption>Butonul de <b>ecran complet</b>, deasupra scenei, în dreapta.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce fel de fișier primești când salvezi un proiect Scratch pe calculator?',o:['.sb3','.pptx','.docx','.png'],ok:0,why:'.sb3 e formatul proiectelor Scratch 3. .pptx e o prezentare, .docx un document Word, iar .png o singură imagine, fără scripturi.'},
- {t:'order',q:'Pune în ordine lucrul la o animație nouă.',items:['Fișier › Nou','Construiești scripturile','Testezi cu steagul verde','Repari ce nu merge (depanare)'],why:'Nu poți testa ce n-ai construit și nu poți repara o greșeală pe care n-ai văzut-o încă la test.'},
- {t:'tf',q:'Lucrezi fără cont. Dacă închizi fereastra fără să salvezi pe calculator, animația se pierde.',ok:true,why:'Adevărat. Fără cont, Scratch nu păstrează singur proiectul. Salvezi pe calculator înainte să închizi.'},
- {t:'match',q:'Leagă operația de ce înseamnă.',pairs:[['Testare','rulezi și urmărești ce se întâmplă'],['Depanare','găsești greșeala și o repari'],['Expunere','arăți animația pe tot ecranul'],['Salvare','păstrezi proiectul într-un fișier']],why:'Testarea arată că e o problemă. Depanarea o rezolvă. Apoi testezi din nou.'},
- {t:'choice',q:'Pisica trebuia să meargă spre dreapta, dar merge spre stânga. Ce faci întâi?',o:['Cauți blocul care o mișcă și verifici numărul','Ștergi tot proiectul și o iei de la capăt','Schimbi decorul','Salvezi încă o dată proiectul'],ok:0,why:'Depanarea începe de la blocul vinovat. Un număr cu minus (de exemplu -10) o trimite spre stânga.'}
-]},
-{t:'Scenariul și cadrele',lectii:[29],continuturi:['Scenariul unei animații: compoziție, cadre, obiecte animate'],text:`
-<p>Înainte de blocuri, scrii <mark>scenariul</mark>: ce se întâmplă, în ce ordine și cine apare.</p>
-<p><mark>Compoziția</mark> înseamnă cum așezi pe scenă decorul și personajele. <mark>Obiectele animate</mark> sunt personajele care se mișcă sau se schimbă.</p>
-<p>Un <mark>cadru</mark> este o singură imagine. Când imagini puțin diferite se schimbă repede, ochiul vede mișcare, ca la un caiet cu desene răsfoit repede. La cinema trec 24 de cadre pe secundă. Scratch redesenează scena de aproximativ 30 de ori pe secundă.</p>
-<p>În Scratch, cadrele unui personaj sunt <strong>costumele</strong> lui. Blocul <em>costumul următor</em> trece la cadrul următor.</p>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-costume-cadre.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-costume-cadre.webp" alt="Fila Costume din Scratch: costume1 și costume2 ale pisicii, încadrate, cu eticheta 2 costume = 2 cadre" width="470" height="262" loading="lazy"></a>
-<figcaption>Fila <b>Costume</b>: pisica are 2 costume, adică 2 cadre, cu picioarele în poziții diferite.</figcaption></figure>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-costumul-urmator.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-costumul-urmator.webp" alt="Script Scratch: repetă 10 cu mergi 10 pași, costumul următor încadrat și așteaptă 0.2 secunde" width="760" height="325" loading="lazy"></a>
-<figcaption>Cu <em>costumul următor</em> în repetiție, pisica schimbă cadrul la fiecare pas și pare că merge.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce este un cadru?',o:['O singură imagine din animație','Toată animația, de la început la sfârșit','Sunetul de fundal','Personajul principal'],ok:0,why:'Animația e făcută din multe cadre. Fiecare cadru e o imagine nemișcată; mișcarea apare când ele se schimbă repede.'},
- {t:'tf',q:'Cu cât cadrele sunt mai asemănătoare și se schimbă mai des, cu atât mișcarea pare mai lină.',ok:true,why:'Adevărat. Diferențe mari între cadre sau cadre prea rare fac mișcarea să „sară”.'},
- {t:'order',q:'Scenariul „Golul”: pune scenele în ordine.',items:['Apare terenul de fotbal','Copilul lovește mingea','Mingea zboară spre poartă','Mingea intră în poartă și se aude „Gol!”'],why:'Ordinea vine din poveste: mingea nu poate zbura înainte să fie lovită, iar golul vine la sfârșit.'},
- {t:'classify',q:'Stă pe loc în decor sau e obiect animat?',cats:['Parte din decor','Obiect animat'],items:[['copacii desenați în fundal',0],['pasărea care zboară',1],['casa pictată în fundal',0],['câinele care aleargă',1],['munții din spate',0],['iepurele care sare',1]],why:'Decorul e fundalul, nu se mișcă. Obiectele animate sunt personaje cu scripturi sau costume care se schimbă.'},
- {t:'choice',q:'Pisica are 2 costume, cu picioarele în poziții diferite. Cum o faci să pară că merge?',o:['Schimbi costumele pe rând în timp ce o muți','O faci mai mare la fiecare pas pe care îl face','Schimbi decorul de fiecare dată când o muți','Îi adaugi un sunet de pași și o lași pe loc'],ok:0,why:'Costumele sunt cadrele pisicii. Schimbate pe rând, în timp ce pisica înaintează, dau impresia de pași.'}
-]},
-{t:'Editez compoziția și obiectele',lectii:[30],continuturi:['Operații de editare a unei compoziții: inserare, copiere, mutare, ștergere a obiectelor/cadrelor','Operații de editare a proprietăților unui obiect: dimensionare, rotire, transparență, poziționare'],text:`
-<p><mark>Editarea compoziției</mark>: <strong>inserezi</strong> un personaj (îl alegi, îl desenezi sau îl încarci), îl <strong>copiezi</strong> (clic dreapta › duplică), îl <strong>muți</strong> trăgându-l pe scenă sau îl <strong>ștergi</strong> (clic dreapta › șterge). La fel faci cu costumele, adică cu cadrele, în fila Costume.</p>
-<p><mark>Proprietățile</mark> personajului se văd sub scenă:</p>
-<ul>
-<li><strong>x</strong> și <strong>y</strong> = poziția;</li>
-<li><strong>Dimensiune</strong> = mărimea, în procente (100 = normal);</li>
-<li><strong>Direcția</strong> = încotro e întors (90 = spre dreapta).</li>
-</ul>
-<p><mark>Transparența</mark> se face cu efectul <em>fantomă</em>: 0 = se vede complet, 100 = nu se mai vede.</p>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-proprietati.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-proprietati.webp" alt="Scratch: blocul setează efectul fantomă la 50, pisica pe jumătate transparentă, iar sub scenă x 60, y -40, Dimensiune 120 și Direcția 90 încadrate" width="760" height="411" loading="lazy"></a>
-<figcaption>Sub scenă: <b>x</b> = 60, <b>y</b> = -40, <b>Dimensiune</b> 120, <b>Direcția</b> 90. Blocul <em>setează efectul fantomă la 50</em> a făcut pisica pe jumătate transparentă.</figcaption></figure>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-duplica-sterge.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-duplica-sterge.webp" alt="Meniul deschis cu clic dreapta pe personaj: duplică, exportă, șterge" width="260" height="150" loading="lazy"></a>
-<figcaption>Clic dreapta pe personaj: <i>duplică</i>, <i>exportă</i>, <i>șterge</i>.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Vrei 5 copaci la fel pe scenă. Care e calea cea mai rapidă?',o:['Faci un copac și îl duplici','Desenezi 5 copaci, pe rând','Schimbi decorul de 5 ori','Mărești dimensiunea copacului'],ok:0,why:'Duplicarea face o copie cu tot ce are personajul: costume, sunete și scripturi. Apoi doar muți copiile.'},
- {t:'match',q:'Leagă proprietatea de ce schimbă.',pairs:[['x','poziția spre stânga sau spre dreapta'],['y','poziția în sus sau în jos'],['Dimensiune','mărimea, în procente'],['Direcția','încotro e întors personajul']],why:'Cu aceste patru proprietăți așezi orice personaj exact unde și cum vrei.'},
- {t:'choice',q:'Ce face blocul „setează efectul fantomă la 100”?',o:['Personajul nu se mai vede, dar rămâne în proiect','Personajul devine de 100 de ori mai mare','Personajul devine alb','Personajul e șters din proiect'],ok:0,why:'Fantoma e transparența. La 100 personajul e complet transparent, dar există în continuare. Îl readuci cu efectul fantomă la 0.'},
- {t:'tf',q:'Dimensiune 200 înseamnă că personajul e de două ori mai mare decât normal.',ok:true,why:'Adevărat. 100 e mărimea normală, 200 e dublul, iar 50 e jumătate.'},
- {t:'classify',q:'Editezi compoziția sau o proprietate a personajului?',cats:['Compoziția','Proprietate'],items:[['duplici personajul',0],['ștergi un costum',0],['inserezi un personaj nou',0],['schimbi Direcția la 180',1],['pui Dimensiune 50',1],['îl faci pe jumătate transparent',1]],why:'Compoziția = ce obiecte și cadre ai. Proprietățile = cum e un anumit obiect: unde, cât de mare, cum e întors, cât se vede.'}
-]},
-{t:'Mișcare, timp și sunet',lectii:[31],continuturi:['Operații specifice de realizare a unei animații: efecte de mișcare, temporizare, efecte sonore'],text:`
-<p><mark>Efecte de mișcare</mark>:</p>
-<ul>
-<li><em>mergi 10 pași</em> face un salt mic, dintr-odată;</li>
-<li><em>glisează în 2 secunde la x: 200 y: 0</em> alunecă lin până acolo;</li>
-<li><em>rotește-te 15 grade</em> întoarce personajul.</li>
-</ul>
-<p><mark>Temporizarea</mark> stabilește când se întâmplă ceva și cât durează. <em>așteaptă 1 secunde</em> face o pauză. Numărul de secunde din <em>glisează</em> dă viteza: mai multe secunde = mai încet.</p>
-<p><mark>Efecte sonore</mark>: <em>pornește sunetul</em> lasă scriptul să meargă mai departe cât timp se aude. <em>redă sunetul … până la final</em> așteaptă întâi să se termine sunetul.</p>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-miscare-timp-sunet.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-miscare-timp-sunet.webp" alt="Script Scratch cu glisează în 2 secunde la x 150 y 0, așteaptă 1 secunde și redă sunetul Miau până la final, încadrate și etichetate" width="760" height="325" loading="lazy"></a>
-<figcaption>Un script cu toate trei: <em>glisează în 2 secunde</em> (mișcare lină), <em>așteaptă 1 secunde</em> (pauză) și <em>redă sunetul Miau până la final</em>.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce bloc duce mingea lin, în 3 secunde, până la poartă?',o:['glisează în 3 secunde la x: 200 y: 0','mergi 200 de pași, dintr-odată','așteaptă 3 secunde, apoi mergi 200 de pași','repetă 3 și, în el, rotește-te 15 grade'],ok:0,why:'Glisarea mută lin, pe durata aleasă. „mergi” sare dintr-odată, „așteaptă” doar face o pauză, iar rotirea nu mută mingea din loc.'},
- {t:'tf',q:'Dacă mărești numărul de secunde din „glisează”, personajul ajunge mai repede.',ok:false,why:'Fals. Aceeași distanță parcursă în mai multe secunde înseamnă mers mai încet.'},
- {t:'choice',q:'Pisica spune „Miau” și abia după ce se termină sunetul pleacă. Ce bloc de sunet folosești?',o:['redă sunetul Miau până la final','pornește sunetul Miau','oprește toate sunetele','modifică volumul cu 10'],ok:0,why:'„redă sunetul … până la final” ține scriptul pe loc până se termină sunetul. Cu „pornește sunetul”, pisica ar pleca în timp ce miaună.'},
- {t:'match',q:'Leagă blocul de ce face.',pairs:[['mergi 10 pași','un salt mic, dintr-odată'],['glisează în 2 secunde','o alunecare lină'],['așteaptă 1 secunde','o pauză'],['pornește sunetul','sunetul începe, iar scriptul merge mai departe']],why:'Mișcarea, pauza și sunetul se combină: din ele se face ritmul animației.'}
-]},
-{t:'Controlez animația',lectii:[32],continuturi:['Controlul animației prin structuri de control sau de la tastatură'],text:`
-<p>Animația o poți controla tu, <mark>de la tastatură</mark>. Blocul <em>când tasta săgeată dreapta este apăsată</em> pornește un script la fiecare apăsare. Sub el pui <em>modifică x cu 10</em>, iar personajul se mută spre dreapta. Pentru stânga pui <em>modifică x cu -10</em>.</p>
-<p><mark>Structurile de control</mark> repetă sau aleg:</p>
-<ul>
-<li><em>repetă 10</em> face pașii de 10 ori;</li>
-<li><em>la infinit</em> îi face mereu, până apeși Stop;</li>
-<li><em>dacă … atunci</em> face pașii doar când condiția e adevărată, de exemplu <em>dacă atinge marginea?</em>.</li>
-</ul>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-tastatura-control.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-tastatura-control.webp" alt="Scripturi Scratch: când tasta săgeată dreapta este apăsată modifică x cu 10, când tasta săgeată stânga este apăsată modifică x cu -10, și la infinit cu dacă atinge marginea? atunci" width="760" height="408" loading="lazy"></a>
-<figcaption>Săgețile mută pisica: <em>modifică x cu 10</em> spre dreapta, <em>cu -10</em> spre stânga. Dedesubt, <em>la infinit</em> cu <em>dacă atinge marginea? atunci</em>.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce bloc pornește un script când apeși săgeata stânga?',o:['când tasta săgeată stânga este apăsată','când se dă click pe steagul verde','la infinit','repetă 10'],ok:0,why:'Blocurile care încep cu „când” sunt evenimente: pornesc scriptul. „la infinit” și „repetă” doar repetă ce e în ele.'},
- {t:'choice',q:'Sub „când tasta săgeată stânga este apăsată” ce pui ca personajul să meargă spre stânga?',o:['modifică x cu -10','modifică x cu 10','modifică y cu 10','modifică y cu -10'],ok:0,why:'Stânga-dreapta e axa x. Spre stânga x scade, deci adaugi un număr negativ. y ar muta personajul în sus sau în jos.'},
- {t:'classify',q:'Ce structură de control potrivești?',cats:['repetă …','la infinit','dacă … atunci'],items:[['pisica sare de exact 3 ori',0],['morișca se învârte tot timpul',1],['mingea ricoșează doar când atinge marginea',2],['steaua clipește de 5 ori',0],['norii plutesc până apeși Stop',1],['se aude „Au!” doar când liliacul atinge pisica',2]],why:'Știi de câte ori? „repetă”. Mereu? „la infinit”. Doar uneori, când ceva e adevărat? „dacă … atunci”.'},
- {t:'tf',q:'Blocul „la infinit” oprește singur animația după 10 repetări.',ok:false,why:'Fals. „la infinit” nu se oprește singur. Îl oprești cu butonul Stop. Pentru un număr fix de repetări folosești „repetă”.'}
-]},
-{t:'Modele 3D',lectii:[33],continuturi:['Forme geometrice tridimensionale','Text tridimensional','Operații specifice modelării 3D disponibile în aplicațiile pentru copii'],text:`
-<p>Scena din Scratch e <mark>2D</mark>: are lățime și înălțime. Un model <mark>3D</mark> are și <mark>adâncime</mark>, deci îl poți roti și privi din toate părțile. Cele trei direcții se numesc axele <strong>X</strong>, <strong>Y</strong> și <strong>Z</strong>. În orice aplicație 3D, <mark>Z</mark> este înălțimea.</p>
-<figure class="captura"><a href="../animatii-3d-vi/img/blender-axe-xyz.webp" target="_blank"><img src="../animatii-3d-vi/img/blender-axe-xyz.webp" alt="Un cub într-o aplicație 3D, cu săgeata roșie X, săgeata verde Y și săgeata albastră Z în sus; în panoul Transform scrie Location X 0 m, Y 0 m, Z 1 m" width="1000" height="494" loading="lazy"></a>
-<figcaption>În <b>Blender</b> (aplicație 3D gratuită, în engleză): săgeata albastră <b>Z</b> urcă în sus — înălțimea. În panoul <b>Transform</b> (Transformare) scrie <b>Location Z = 1 m</b>.</figcaption></figure>
-<p>Modelăm într-o aplicație 3D: <strong>Tinkercad</strong> merge în browser, iar <strong>Paint 3D</strong> și <strong>Blender</strong> se instalează pe calculator. Formele de bază sunt corpuri: cub, cilindru, sferă, con, piramidă. Forma <mark>Text</mark> face litere cu grosime.</p>
-<figure class="captura"><a href="../animatii-3d-vi/img/paint3d-forme.webp" target="_blank"><img src="../animatii-3d-vi/img/paint3d-forme.webp" alt="Cinci corpuri 3D colorate, așezate unul lângă altul și etichetate cub, sferă, cilindru, con și piramidă" width="1000" height="365" loading="lazy"></a>
-<figcaption>Corpurile de bază, făcute în <b>Paint 3D</b> din panoul <b>Forme 3D</b> → <b>Obiecte 3D</b>.</figcaption></figure>
-<figure class="captura"><a href="../animatii-3d-vi/img/paint3d-text3d.webp" target="_blank"><img src="../animatii-3d-vi/img/paint3d-text3d.webp" alt="Cuvintele TEXT 3D scrise cu litere groase, rotite, așa încât se vede partea laterală a fiecărei litere" width="900" height="310" loading="lazy"></a>
-<figcaption>Text 3D în <b>Paint 3D</b>, rotit: se vede <b>grosimea</b> literelor.</figcaption></figure>
-<p>O formă se trage cu mouse-ul, se mărește din pătrățelele albe și se rotește.</p>
-<figure class="captura"><a href="../animatii-3d-vi/img/paint3d-manere.webp" target="_blank"><img src="../animatii-3d-vi/img/paint3d-manere.webp" alt="Obiect 3D selectat: pătrățele albe în colțuri, marcate ca mânere de redimensionare, și inele rotunde marcate ca inele de rotire" width="1000" height="369" loading="lazy"></a>
-<figcaption>Obiect selectat în <b>Paint 3D</b>: pătrățelele albe din colțuri schimbă mărimea, inelele rotesc.</figcaption></figure>
-<p>În Tinkercad, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplică forma, forma trecută pe <mark>gaură</mark> (<em>Hole</em>) decupează, iar <kbd>Ctrl</kbd>+<kbd>G</kbd> grupează formele. Paint 3D, din manualele mai vechi, nu se mai poate descărca din Microsoft Store din noiembrie 2024.</p>`,
-qs:[
- {t:'choice',q:'Ce are în plus un model 3D față de un desen 2D?',o:['Adâncime','Culoare','Sunet','Mai mulți pixeli'],ok:0,why:'Și un desen 2D are culori și pixeli. A treia dimensiune, adâncimea, îți permite să rotești obiectul și să-l vezi din spate.'},
- {t:'classify',q:'Formă plană (2D) sau corp (3D)?',cats:['2D','3D'],items:[['pătrat',0],['cub',1],['cerc',0],['sferă',1],['triunghi',0],['piramidă',1]],why:'Cubul e „pătratul cu adâncime”, sfera e „cercul cu adâncime”, piramida are fețe triunghiulare.'},
- {t:'match',q:'Leagă operația din Tinkercad de rezultatul ei.',pairs:[['Ctrl+D','face o copie a formei'],['Ctrl+G','unește formele selectate într-un grup'],['Gaură (Hole)','decupează din forma cu care e grupată'],['pătrățelele albe','schimbă mărimea formei']],why:'Cu forme de bază, copii, găuri și grupări construiești aproape orice: o cană e un cilindru din care scoți un cilindru-gaură.'},
- {t:'tf',q:'În Scratch poți face un model 3D pe care să-l rotești ca să-l vezi din spate.',ok:false,why:'Fals. Scena din Scratch e plană (2D). Pentru modele pe care le rotești în spațiu îți trebuie o aplicație 3D, de exemplu Tinkercad.'},
- {t:'choice',q:'Un manual mai vechi îți cere să instalezi Paint 3D din Microsoft Store. Ce e adevărat?',o:['A fost scos din Store în 2024; folosești altă aplicație 3D','E cea mai nouă aplicație 3D, primită cu fiecare Windows','Face parte din Scratch și se deschide din fila Costume','E doar alt nume pentru Paint-ul obișnuit din Windows'],ok:0,why:'Microsoft a scos Paint 3D din Microsoft Store pe 4 noiembrie 2024. Pentru modele 3D folosim acum altă aplicație, de exemplu Tinkercad.'},
- {t:'choice',q:'În Tinkercad ridici o formă mai sus. Care coordonată se schimbă?',o:['Z','X','Y','Niciuna'],ok:0,why:'În Tinkercad, X și Y sunt pe planul de lucru, iar Z este înălțimea. Când ridici forma, crește Z.'}
-]},
-{t:'Mini-proiect: De la floare la fruct',final:true,lectii:[34],continuturi:['Scenariul unei animații: compoziție, cadre, obiecte animate','Operații specifice de realizare a unei animații: efecte de mișcare, temporizare, efecte sonore','Controlul animației prin structuri de control sau de la tastatură'],text:`
-<p>Faci pentru colegii de clasa a V-a o animație în Scratch: <mark>„De la floare la fruct”</mark>.</p>
-<p><strong>Scenariul:</strong> personajul „Pom” are 4 costume (cadre): boboc, floare, floare cu albină, măr. Între costume e o pauză de 2 secunde. O albină glisează spre floare. Când apare mărul, se aude un sunet.</p>
+/* ================= 1. Studioul de animație (lecția 27) ================= */
+{t:'Studioul de animație',lectii:[27],continuturi:['Elemente de interfață ale unei aplicații de animație grafică','Instrumente de bază ale unei aplicații de animație grafică'],
+ obiectiv:'recunoști zonele din Scratch, pornești și oprești o animație și așezi un personaj pe scenă cu x și y.',
+ pasi:[
+  {t:'Scena, personajele și decorul',
+   text:`<p>O <mark>animație</mark> e un desen care se mișcă. La ore o facem în <strong>Scratch</strong>, o aplicație gratuită care merge în browser (scratch.mit.edu) sau instalată pe calculator.</p>
+<p>În partea dreaptă a ferestrei sunt trei lucruri de care ai nevoie mereu:</p>
+<ul><li><mark>scena</mark>: dreptunghiul alb în care se joacă animația;</li>
+<li><mark>personajele</mark>: obiectele pe care le animăm (pisica, o minge, un copac); în engleză se numesc <em>sprites</em>;</li>
+<li><mark>decorul</mark>: fundalul scenei, care stă în spate.</li></ul>
+${fig('scratch-scena-personaje.webp',490,752,'Partea dreaptă a editorului Scratch cu etichete: steagul verde, Stop, scena, x și y, personajele și decorul','În dreapta: <b>scena</b>, sub ea panoul personajului, lista de <b>personaje</b>, iar în coloana <b>Scenă</b>, <b>decorul</b>.')}`,
+   exemplu:`<p>Deschizi Scratch: pe scenă apare pisica portocalie pe fundal alb. <b>Pisica</b> e un personaj. Dacă alegi un decor cu cer și iarbă, <b>cerul și iarba</b> sunt decorul. Tot ce vezi împreună, în dreptunghi, e <b>scena</b>.</p>`,
+   altfel:`<p>Gândește-te la o piesă de teatru: <b>scena</b> e locul unde se joacă, <b>actorii</b> sunt personajele, iar pânza pictată din spate e <b>decorul</b>. Scratch e un mic teatru pe calculator.</p>`,
+   incearca:{t:'choice',q:'În ce zonă vezi animația în timp ce rulează?',o:['Pe scenă','În lista de personaje','În coloana Scenă, la decor','Sub scenă, la x și y'],ok:0,ajutor:'E „ecranul” teatrului, dreptunghiul alb.',why:'Scena e locul unde se joacă animația. Lista de personaje și decorul doar arată ce ai în proiect.'},
+   inca:[
+    {t:'classify',q:'Personaj sau decor?',cats:['Personaj','Decor'],items:[['pisica',0],['cerul albastru din fundal',1],['mingea',0],['munții pictați în spate',1]],ajutor:'Personajele sunt obiectele pe care le animăm; decorul e fundalul.',why:'Obiectele care pot primi mișcări sunt personaje. Fundalul din spate e decorul.'},
+    {t:'tf',q:'În Scratch în română, ce în engleză se numește „sprite” apare ca „personaj”.',ok:true,ajutor:'Recitește a doua liniuță din pas.',why:'Adevărat. În interfața în română vezi „Personaj”, „Alege un personaj”.'}
+   ]},
+  {t:'Steagul verde pornește, Stop oprește',
+   text:`<p>Deasupra scenei, în stânga, sunt două butoane:</p>
+<ul><li><mark>steagul verde</mark> pornește animația: toate scripturile care încep cu „când se dă click pe steag” pornesc deodată;</li>
+<li>butonul roșu <mark>Stop</mark> oprește tot ce se mișcă.</li></ul>
+<p>Un <mark>script</mark> e un șir de blocuri îmbinate, ca piesele de puzzle. Pe el îl construiești tu, iar Scratch îl face bloc cu bloc, de sus în jos.</p>
+<p>Obișnuiește-te așa: construiești puțin, apeși steagul, te uiți pe scenă, apeși Stop.</p>`,
+   exemplu:`<p>Pisica are scriptul:</p>${pre('când se dă click pe steag\nspune Salut! pentru 2 secunde')}<p>Apeși steagul verde: pe scenă, pisica spune „Salut!” într-un balon, apoi balonul dispare.</p>`,
+   incearca:{t:'choice',q:'Ce buton pornește animația?',o:['Steagul verde','Butonul roșu Stop','Fila Sunete','Lista de personaje'],ok:0,ajutor:'E verde și stă deasupra scenei, în stânga.',why:'Steagul verde pornește scripturile care încep cu „când se dă click pe steag”. Stop le oprește.'},
+   inca:[
+    {t:'tf',q:'Scratch face blocurile unui script de sus în jos, unul după altul.',ok:true,ajutor:'Recitește a treia propoziție a pasului.',why:'Adevărat. Ordinea blocurilor contează: ce e sus se face primul.'}
+   ]},
+  {t:'Filele Cod, Costume, Sunete și blocurile',
+   text:`<p>Sus, în stânga, ai trei <mark>file</mark>: <strong>Cod</strong>, <strong>Costume</strong> și <strong>Sunete</strong> (în engleză <em>Code, Costumes, Sounds</em>).</p>
+<p>În fila <strong>Cod</strong> găsești <mark>blocurile</mark>, așezate pe categorii colorate. Fiecare categorie are treaba ei:</p>
+<ul><li><strong>Mișcare</strong> (albastru): <em>mergi 10 pași</em>, <em>glisează…</em>;</li>
+<li><strong>Aspect</strong> (mov): <em>costumul următor</em>, <em>spune Salut!</em>;</li>
+<li><strong>Sunet</strong> (roz): <em>pornește sunetul Miau</em>, <em>modifică volumul</em>;</li>
+<li><strong>Evenimente</strong> și <strong>Control</strong> (galben, portocaliu): <em>când se dă click pe steag</em>, <em>repetă</em>.</li></ul>
+<p>Un bloc îl <strong>tragi</strong> cu mouse-ul în zona de cod și îl lipești sub altul.</p>
+${fig('scratch-file-categorii.webp',640,385,'Scratch în română: filele Cod, Costume și Sunete încadrate sus, iar în stânga blocurile pe categorii încadrate','Sus, filele <b>Cod</b>, <b>Costume</b> și <b>Sunete</b>. Dedesubt, blocurile, pe categorii colorate.')}`,
+   exemplu:`<p>Vrei ca pisica să spună „Salut!”: fila <b>Cod</b> → categoria <b>Aspect</b> → tragi blocul <em>spune Salut! pentru 2 secunde</em> în zona de cod, sub <em>când se dă click pe steag</em>.</p>`,
+   altfel:`<p>E ca o cutie cu piese de Lego sortate pe culori: toate piesele de mișcare într-un sertar albastru, cele de sunet în sertarul roz. Știi ce vrei să facă personajul? Deschizi sertarul potrivit.</p>`,
+   incearca:{t:'match',q:'Leagă fiecare parte din Scratch de ce faci acolo.',pairs:[['Cod','îmbini blocurile în scripturi'],['Costume','desenezi sau alegi înfățișările personajului'],['Sunete','adaugi și modifici sunete'],['Decor','fundalul din spatele personajelor']],ajutor:'Numele filei spune ce găsești în ea.',why:'Fiecare filă are treaba ei. Dacă nu găsești ceva, uită-te întâi dacă ești pe fila potrivită.'},
+   inca:[
+    {t:'classify',q:'În ce categorie de blocuri cauți?',cats:['Mișcare','Aspect','Sunet'],items:[['mergi 10 pași',0],['glisează în 1 secunde la x: 0 y: 0',0],['costumul următor',1],['spune Salut! pentru 2 secunde',1],['pornește sunetul Miau',2],['modifică volumul cu -10',2]],ajutor:'Mișcare = unde e personajul; Aspect = cum arată și ce spune; Sunet = ce se aude.',why:'Mișcare = unde se află personajul. Aspect = cum arată și ce spune. Sunet = ce se aude.'}
+   ]},
+  {t:'Editorul de desen',
+   text:`<p>În fila <strong>Costume</strong> e un mic program de desen. Cu el schimbi cum arată personajul sau desenezi unul nou.</p>
+<ul><li><mark>Pensula</mark> trasează linii libere, ca un creion;</li>
+<li><mark>Radiera</mark> șterge o bucată din desen;</li>
+<li><mark>Umplerea</mark> (găleata) colorează dintr-o dată tot interiorul unei forme închise.</li></ul>
+<p>Nu știi ce face un buton? <strong>Ține mouse-ul deasupra lui</strong> o secundă: apare numele lui.</p>
+${fig('scratch-desen-unelte.webp',480,260,'Editorul de desen din fila Costume, cu uneltele pensulă, radieră și umplere încadrate și etichetate','Fila <b>Costume</b>: <b>Pensulă</b>, <b>Radieră</b> și <b>Umplere</b>.')}`,
+   exemplu:`<p>Pisicii îi pui o pălărie: fila <b>Costume</b> → <b>Pensulă</b>, desenezi conturul pălăriei pe cap → <b>Umplere</b>, alegi roșu și dai clic în interiorul conturului. Greșești o linie? <b>Radieră</b>.</p>`,
+   incearca:{t:'choice',q:'Vrei să colorezi tot interiorul unui cerc dintr-o singură apăsare. Ce unealtă alegi?',o:['Umplerea','Pensula','Radiera','Steagul verde'],ok:0,ajutor:'E găleata cu vopsea.',why:'Umplerea colorează dintr-o dată interiorul unei forme închise. Cu pensula ai colora linie cu linie.'},
+   inca:[
+    {t:'choice',q:'Nu știi ce face un buton din editorul de desen. Ce faci?',o:['Ții mouse-ul deasupra lui până apare numele','Apeși steagul verde','Ștergi personajul și o iei de la capăt','Închizi Scratch fără să salvezi'],ok:0,ajutor:'Ultima propoziție din pas.',why:'Numele apare când ții mouse-ul pe unealtă. Merge la aproape orice buton din orice aplicație.'}
+   ]},
+  {t:'Unde e personajul: x și y',
+   text:`<p>Scena are 480 × 360 de pixeli. Fiecare punct are două numere: <mark>x</mark> (stânga-dreapta) și <mark>y</mark> (jos-sus).</p>
+<ul><li>Centrul scenei e <strong>x: 0, y: 0</strong>.</li>
+<li>Spre <strong>dreapta</strong> x crește (până la 240), spre stânga scade (până la -240).</li>
+<li>Spre <strong>sus</strong> y crește (până la 180), spre jos scade (până la -180).</li></ul>
+<p><strong>Strategia</strong> ca să pui personajul unde vrei:</p>
+<ol><li>Stânga sau dreapta? Asta dă semnul lui x (minus = stânga).</li>
+<li>Sus sau jos? Asta dă semnul lui y (minus = jos).</li>
+<li>Cât de departe de centru? Asta dă numărul.</li>
+<li>Scrii x și y în panoul de sub scenă și te uiți unde a ajuns.</li></ol>`,
+   exemplu:`<p>Vrei pisica în <b>dreapta sus</b>: dreapta → x pozitiv, sus → y pozitiv. Alegi <b>x: 150, y: 100</b>.</p><p>În <b>stânga jos</b>: <b>x: -150, y: -100</b>. Exact pe mijloc: <b>x: 0, y: 0</b>.</p>`,
+   altfel:`<p>Ca la termometru: deasupra lui zero sunt numerele cu plus, dedesubt cele cu minus. Axa <b>y</b> e un termometru culcat în picioare, iar axa <b>x</b> e același termometru culcat pe orizontală, cu minus în stânga.</p>`,
+   incearca:{t:'choice',q:'Un personaj are x: 0 și y: 0. Unde se află pe scenă?',o:['În mijlocul scenei','În colțul din stânga sus','În colțul din stânga jos','Pe marginea din dreapta'],ok:0,ajutor:'Prima liniuță din pas.',why:'Punctul x: 0, y: 0 e centrul scenei.'},
+   inca:[
+    {t:'choice',q:'Personajul are x: -200, y: 0. Unde e?',o:['În stânga, la jumătatea înălțimii','În dreapta, la jumătatea înălțimii','Sus, la mijloc','Jos, la mijloc'],ok:0,ajutor:'Minus la x înseamnă…',why:'x negativ = stânga; y: 0 = la jumătatea înălțimii scenei.'},
+    {t:'tf',q:'Un personaj cu y: 100 e mai sus decât unul cu y: -100.',ok:true,ajutor:'Spre sus, y crește.',why:'Adevărat. y crește în sus, deci 100 e deasupra lui -100.'}
+   ]}
+ ],
+ atelier:{t:'scena',titlu:'Așază pisica pe scenă',
+  intro:`<p>Mai jos e scena Scratch, cu panoul personajului dedesubt, ca în aplicația reală. <strong>Sarcina:</strong> mută pisica în <b>dreapta sus</b>, la <b>x: 150, y: 100</b>. Scrie numerele în panou sau trage pisica pe scenă, apoi apasă <b>Rulează testele</b>.</p>`,
+  q:'Mută pisica la x: 150, y: 100 (dreapta sus).',arata:true,campuri:['x','y'],start:{x:0,y:0},tinta:{x:150,y:100},
+  ajutor:'Dreapta → x cu plus. Sus → y cu plus. x e primul număr.',why:'x: 150 o duce spre dreapta, y: 100 spre sus. Exact așa scrii și în panoul de sub scena din Scratch.',
+  inca:[
+   {t:'scena',q:'Încă una: pune pisica în <b>stânga jos</b>, la x: -180, y: -120.',arata:true,campuri:['x','y'],start:{x:0,y:0},tinta:{x:-180,y:-120},ajutor:'Stânga și jos înseamnă minus la amândouă.',why:'Stânga = x negativ, jos = y negativ.'},
+   {t:'scena',q:'Acum fără contur ajutător: pune pisica <b>sus, pe mijloc</b>, la 150 de pixeli deasupra centrului.',campuri:['x','y'],start:{x:-100,y:-50},tinta:{x:0,y:150},ajutor:'Pe mijloc înseamnă x: 0. Sus înseamnă y pozitiv.',why:'Mijlocul pe orizontală e x: 0; 150 deasupra centrului e y: 150.'}
+  ]},
+ qs:[
+  {t:'choice',q:'În ce zonă vezi animația în timp ce rulează?',o:['Pe scenă','În zona de cod','În fila Sunete','În lista de categorii de blocuri'],ok:0,why:'Scena e „ecranul” animației. În zona de cod doar construiești scripturile, iar fila Sunete e pentru sunete.'},
+  {t:'match',q:'Leagă fiecare filă sau zonă de ce faci acolo.',pairs:[['Cod','îmbini blocurile în scripturi'],['Costume','desenezi înfățișările personajului'],['Sunete','adaugi și modifici sunete'],['Scena','vezi animația rulând']],ajutor:'Numele spune treaba.',why:'Fiecare zonă are treaba ei; dacă nu găsești ceva, verifică întâi dacă ești pe fila potrivită.'},
+  {t:'classify',q:'În ce categorie de blocuri cauți?',cats:['Mișcare','Aspect','Sunet'],items:[['mergi 10 pași',0],['glisează în 1 secunde la x: 0 y: 0',0],['costumul următor',1],['spune Salut! pentru 2 secunde',1],['pornește sunetul Miau',2],['modifică volumul cu -10',2]],ajutor:'Mișcare = unde e; Aspect = cum arată și ce spune; Sunet = ce se aude.',why:'Mișcare = unde se află personajul. Aspect = cum arată și ce spune. Sunet = ce se aude.'},
+  {t:'choice',q:'Ce unealtă din editorul de desen șterge o bucată din desen?',o:['Radiera','Umplerea','Pensula','Steagul verde'],ok:0,why:'Radiera șterge; pensula trasează; umplerea colorează interiorul unei forme închise.'},
+  {t:'choice',q:'Vrei pisica în colțul din dreapta jos. Ce valori alegi?',o:['x: 180, y: -140','x: -180, y: 140','x: -180, y: -140','x: 180, y: 140'],ok:0,ajutor:'Strategia: întâi semnul lui x (dreapta), apoi semnul lui y (jos).',why:'Dreapta = x pozitiv, jos = y negativ.'}
+ ]},
+
+/* ================= 2. Proiectul meu (lecția 28) ================= */
+{t:'Proiectul meu: creez, salvez, testez',lectii:[28],continuturi:['Operații de gestionare a animațiilor: creare, deschidere, expunere, salvare, închidere, testare, depanare'],
+ obiectiv:'creezi un proiect, îl salvezi pe calculator ca .sb3, îl redeschizi, îl testezi, repari o greșeală și îl arăți pe tot ecranul.',
+ pasi:[
+  {t:'Proiect nou și salvarea pe calculator',
+   text:`<p>Toate operațiile cu proiectul pornesc din meniul <strong>Fișier</strong>, sus, în stânga:</p>
+<ul><li><strong>Nou</strong> începe un proiect gol (<mark>creare</mark>);</li>
+<li><strong>Salvează pe calculatorul tău</strong> păstrează proiectul într-un fișier cu terminația <code>.sb3</code> (<mark>salvare</mark>).</li></ul>
+<p>În browser, fișierul ajunge de obicei în folderul <strong>Descărcări</strong> (<em>Downloads</em>). Dă-i un nume care spune ce e, de exemplu <code>Popescu_Ana_pisica.sb3</code>.</p>
+<p>Dacă lucrezi online, cu cont, ai și <strong>Salvează acum</strong>.</p>
+${fig('scratch-meniu-fisier.webp',330,160,'Meniul Fișier din Scratch deschis, cu Nou, Load from your computer și Salvează pe calculatorul tău; ultimele două încadrate','Meniul <b>Fișier</b>: <i>Nou</i>, <i>Load from your computer</i> și <i>Salvează pe calculatorul tău</i>.')}`,
+   exemplu:`<p>Ai făcut pisica să spună „Salut!”. <b>Fișier › Salvează pe calculatorul tău</b> → în Descărcări apare <code>Proiect Scratch.sb3</code>. Îl redenumești <code>Popescu_Ana_salut.sb3</code>, ca să-l găsești ușor.</p>`,
+   incearca:{t:'choice',q:'Ce fel de fișier primești când salvezi un proiect Scratch pe calculator?',o:['.sb3','.pptx','.docx','.png'],ok:0,ajutor:'Terminația apare în pas, scrisă cu litere de cod.',why:'.sb3 e formatul proiectelor Scratch. .pptx e o prezentare, .docx un document Word, .png o imagine.'},
+   inca:[
+    {t:'tf',q:'Lucrezi fără cont. Dacă închizi fereastra fără să salvezi pe calculator, animația se pierde.',ok:true,ajutor:'Fără cont, Scratch nu păstrează nimic singur.',why:'Adevărat. Fără cont, salvezi pe calculator înainte să închizi.'}
+   ]},
+  {t:'Deschizi proiectul data viitoare',
+   text:`<p>Ora viitoare vrei să continui. Proiectul îl <mark>deschizi</mark> tot din meniul <strong>Fișier</strong>, cu comanda de încărcare de pe calculator. În editorul online apare netradusă: <strong>Load from your computer</strong> (Încarcă de pe calculator).</p>
+<p>Pașii:</p>
+<ol><li>Deschizi Scratch.</li>
+<li><strong>Fișier › Load from your computer</strong>.</li>
+<li>În fereastra care se deschide, cauți fișierul tău <code>.sb3</code> (de obicei în Descărcări).</li>
+<li>Îl alegi și confirmi. Proiectul apare cu tot ce aveai: personaje, costume, scripturi.</li></ol>`,
+   altfel:`<p>E ca la un caiet: <b>salvarea</b> înseamnă să-l pui în ghiozdan, <b>deschiderea</b> înseamnă să-l scoți ora viitoare la pagina unde ai rămas. Dacă n-ai pus caietul în ghiozdan, nu ai ce scoate.</p>`,
+   incearca:{t:'order',q:'Pune în ordine pașii ca să continui un proiect salvat.',items:['Deschizi Scratch','Fișier › Load from your computer','Cauți fișierul .sb3 în Descărcări','Alegi fișierul și confirmi'],ajutor:'Întâi aplicația, apoi meniul, apoi fișierul.',why:'Nu poți alege fișierul până nu s-a deschis fereastra de încărcare din meniul Fișier.'}},
+  {t:'Testarea: rulezi și te uiți',
+   text:`<p>A <mark>testa</mark> înseamnă să rulezi animația și să verifici dacă face ce ai plănuit. Merge așa:</p>
+<ol><li>Spune cu voce tare ce <strong>trebuie</strong> să se întâmple („pisica merge spre dreapta și miaună”).</li>
+<li>Apasă <strong>steagul verde</strong>.</li>
+<li>Urmărește scena până la capăt.</li>
+<li>Notează ce e <strong>diferit</strong> de plan.</li></ol>
+<p>Testezi după fiecare bucată nouă de script, nu doar la final: o greșeală găsită devreme se repară ușor.</p>`,
+   exemplu:`<p>Plan: „pisica merge spre dreapta”. Apeși steagul: pisica pleacă spre <b>stânga</b>. Testul a arătat o problemă. O notezi: „merge în partea greșită”. Pasul următor e s-o repari.</p>`,
+   incearca:{t:'tf',q:'Testezi doar o dată, la finalul proiectului, ca să nu pierzi timp.',ok:false,ajutor:'Ultima propoziție din pas.',why:'Fals. Testezi după fiecare bucată nouă: greșelile găsite devreme se repară mai ușor.'}},
+  {t:'Depanarea: găsești blocul vinovat',
+   text:`<p>A <mark>depana</mark> înseamnă să găsești greșeala și s-o repari. Strategia:</p>
+<ol><li><strong>Ce</strong> e greșit? (merge spre stânga în loc de dreapta)</li>
+<li><strong>Care bloc</strong> face lucrul ăla? (unul de Mișcare)</li>
+<li><strong>Citești</strong> blocul cu atenție: numărul, semnul, tasta.</li>
+<li><strong>Repari</strong> și <strong>testezi din nou</strong>.</li></ol>
+<p>În lecțiile de aici scriem scripturile și ca text: <strong>un rând = un bloc</strong>, iar blocurile împinse la dreapta sunt în interiorul lui <em>repetă</em>. Blocul <em>modifică x cu 10</em> mută personajul cu 10 pixeli spre dreapta; cu <em>-10</em>, spre stânga.</p>`,
+   exemplu:`<p>Scriptul cu greșeala:</p>${pre('când se dă click pe steag\nrepetă 10\n  modifică x cu -10')}<p>Minusul trimite pisica spre stânga. Reparat:</p>${pre('când se dă click pe steag\nrepetă 10\n  modifică x cu 10')}`,
+   altfel:`<p>Ca un mecanic: mașina trage în dreapta (ce e greșit), el se uită la roți (care piesă), vede o roată strâmbă (citește), o îndreaptă și pleacă la o probă (repară și testează).</p>`,
+   incearca:{t:'hunt',cod:true,q:'Pisica trebuia să meargă spre <b>dreapta</b>, dar merge spre stânga. Apasă pe blocul vinovat.',src:`când se dă click pe steag
+repetă 10
+  [[modifică x cu -10|Minusul micșorează x, deci pisica merge spre stânga. Pentru dreapta: modifică x cu 10.]]
+  așteaptă 0.2 secunde`,corect:`când se dă click pe steag
+repetă 10
+  modifică x cu 10
+  așteaptă 0.2 secunde`,ajutor:'Strategia, pasul 2: care bloc e de Mișcare?',why:'Blocul de mișcare are semnul greșit: -10 duce spre stânga, 10 spre dreapta.'},
+   inca:[
+    {t:'hunt',cod:true,q:'Pisica trebuia să <b>urce</b>, dar merge spre dreapta. Apasă pe blocul vinovat.',src:`când se dă click pe steag
+repetă 5
+  [[modifică x cu 10|x e stânga-dreapta. Ca să urce, trebuie modifică y cu 10.]]`,corect:`când se dă click pe steag
+repetă 5
+  modifică y cu 10`,ajutor:'Sus-jos e axa y, nu x.',why:'Urcarea înseamnă y mai mare, deci blocul trebuia să modifice y, nu x.'},
+    {t:'choice',q:'Pisica trebuia să meargă spre dreapta, dar merge spre stânga. Ce faci întâi?',o:['Cauți blocul care o mișcă și îi citești numărul','Ștergi tot proiectul și o iei de la capăt','Schimbi decorul cu altul','Salvezi încă o dată proiectul'],ok:0,ajutor:'Pașii 2 și 3 din strategie.',why:'Depanarea începe de la blocul vinovat, nu de la zero.'}
+   ]},
+  {t:'Ecran complet și închiderea',
+   text:`<p><mark>Expunerea</mark> înseamnă să arăți animația: butonul de <strong>ecran complet</strong>, deasupra scenei, în dreapta, o face mare. Ieși din ecran complet cu același buton sau cu tasta <kbd>Esc</kbd>.</p>
+<p>La <mark>închidere</mark> ordinea e mereu aceeași: întâi <strong>salvezi</strong> (Fișier › Salvează pe calculatorul tău), apoi <strong>închizi</strong> fereastra. Dacă închizi întâi, pierzi ce ai lucrat de la ultima salvare.</p>
+${fig('scratch-ecran-complet.webp',490,410,'Scena Scratch cu butonul de ecran complet din dreapta sus încadrat și etichetat','Butonul de <b>ecran complet</b>, deasupra scenei, în dreapta.')}`,
+   incearca:{t:'order',q:'Termini ora. Pune în ordine ce faci.',items:['Testezi o ultimă dată cu steagul verde','Fișier › Salvează pe calculatorul tău','Închizi fereastra Scratch'],ajutor:'Închiderea e mereu ultima; salvarea vine înaintea ei.',why:'Testezi, salvezi, abia apoi închizi: altfel pierzi lucrul nesalvat.'},
+   inca:[
+    {t:'match',q:'Leagă operația de ce înseamnă.',pairs:[['Testare','rulezi și urmărești ce se întâmplă'],['Depanare','găsești greșeala și o repari'],['Expunere','arăți animația pe tot ecranul'],['Salvare','păstrezi proiectul într-un fișier']],ajutor:'Recitește cuvintele marcate din pașii 1, 3, 4 și 5.',why:'Testarea arată problema, depanarea o rezolvă, expunerea arată rezultatul, salvarea îl păstrează.'}
+   ]}
+ ],
+ atelier:{t:'script',titlu:'Depanează scriptul pisicii',
+  intro:`<p>Mai jos e un script din Scratch, cu scena alături. Pisica trebuia să meargă spre <b>dreapta</b>. <strong>Sarcina:</strong> 1) apasă <b>Steagul verde</b> și uită-te ce face; 2) găsește blocul vinovat și șterge-l (✕); 3) adaugă blocul bun din paletă (se bagă singur în <em>repetă</em>); 4) testează din nou, apoi <b>Rulează testele</b>.</p>`,
+  q:'Repară scriptul ca pisica să meargă spre dreapta.',stare:{x:-60,y:0},
+  paleta:['x10','xm10','y10','w02'],
+  start:[['steag',0],['r10',0],['xm10',1],['w02',1]],
+  solutie:[['steag',0],['r10',0],['x10',1],['w02',1]],
+  checks:[{hat:'steag',ce:'Scriptul pornește cu „când se dă click pe steag”'},{dupa:'steag',dx:'+',ce:'La steagul verde, pisica ajunge mai la dreapta decât a pornit'},{dupa:'steag',dy:0,ce:'Pisica nu urcă și nu coboară'},{curat:true,ce:'Niciun bloc nu stă liber, fără un „când…” deasupra'}],
+  ajutor:'Blocul vinovat are un minus. Șterge-l cu ✕ și apasă „modifică x cu 10” din paletă.',why:'Ai făcut depanare adevărată: ai văzut problema la test, ai găsit blocul, l-ai înlocuit și ai testat din nou.',
+  inca:[{t:'script',q:'Încă una: pisica trebuia să <b>urce</b> 5 pași de câte 10, dar merge în lateral. Repară scriptul.',stare:{x:0,y:-80},
+   paleta:['x10','y10','ym10'],start:[['steag',0],['r5',0],['x10',1]],solutie:[['steag',0],['r5',0],['y10',1]],
+   checks:[{dupa:'steag',dy:'+',ce:'La steagul verde, pisica urcă'},{dupa:'steag',dx:0,ce:'Pisica nu se mută în lateral'},{curat:true,ce:'Niciun bloc nu stă liber'}],
+   ajutor:'Sus-jos e axa y. Șterge „modifică x cu 10” și pune „modifică y cu 10”.',why:'Urcarea înseamnă y mai mare, deci blocul trebuie să schimbe y.'}]},
+ qs:[
+  {t:'choice',q:'Ce fel de fișier primești când salvezi un proiect Scratch pe calculator?',o:['.sb3','.pptx','.docx','.png'],ok:0,why:'.sb3 e formatul proiectelor Scratch 3. .pptx e o prezentare, .docx un document Word, iar .png o singură imagine, fără scripturi.'},
+  {t:'order',q:'Pune în ordine lucrul la o animație nouă.',items:['Fișier › Nou','Construiești scripturile','Testezi cu steagul verde','Repari ce nu merge (depanare)'],why:'Nu poți testa ce n-ai construit și nu poți repara o greșeală pe care n-ai văzut-o încă la test.'},
+  {t:'choice',q:'Cu ce comandă din meniul Fișier redeschizi proiectul salvat ora trecută?',o:['Load from your computer','Nou (începe un proiect gol)','Salvează acum (online, cu cont)','Salvează pe calculatorul tău'],ok:0,ajutor:'Pasul 2: deschiderea.',why:'„Nou” începe un proiect gol, iar comenzile de salvare păstrează; deschiderea se face cu încărcarea de pe calculator.'},
+  {t:'match',q:'Leagă operația de ce înseamnă.',pairs:[['Testare','rulezi și urmărești ce se întâmplă'],['Depanare','găsești greșeala și o repari'],['Expunere','arăți animația pe tot ecranul'],['Închidere','salvezi, apoi închizi fereastra']],why:'Testarea arată că e o problemă, depanarea o rezolvă, apoi testezi din nou.'},
+  {t:'hunt',cod:true,q:'Pisica trebuia să meargă spre <b>stânga</b>. Apasă pe blocul vinovat.',src:`când se dă click pe steag
+repetă 10
+  [[modifică x cu 10|Fără minus, x crește și pisica merge spre dreapta. Pentru stânga: modifică x cu -10.]]`,corect:`când se dă click pe steag
+repetă 10
+  modifică x cu -10`,ajutor:'Spre stânga, x scade: îi trebuie minus.',why:'Spre stânga x scade, deci numărul din bloc trebuie să aibă minus.'}
+ ]},
+
+/* ================= 3. Scenariul și cadrele (lecția 29) ================= */
+{t:'Scenariul și cadrele',lectii:[29],continuturi:['Scenariul unei animații: compoziție, cadre, obiecte animate'],
+ obiectiv:'scrii scenariul unei animații pe scene și faci un personaj să „meargă” schimbându-i cadrele (costumele).',
+ pasi:[
+  {t:'Scenariul: povestea pe scurt',
+   text:`<p>Înainte de orice bloc, scrii <mark>scenariul</mark>: povestea animației, pe scurt, în ordine. Îl scrii în caiet, ca pe o listă numerotată.</p>
+<p><strong>Strategia</strong> pentru un scenariu:</p>
+<ol><li><strong>Cine</strong> apare? (personajele)</li>
+<li><strong>Unde</strong>? (decorul)</li>
+<li><strong>Ce se întâmplă</strong>, pe rând, câte o propoziție pe rând?</li>
+<li><strong>Ce se aude</strong> și când?</li></ol>
+<p>Scenariul te scapă de ghicit: când construiești scripturile, doar le urmezi rândurile.</p>`,
+   exemplu:`<p>Scenariul „Golul”:</p><ol><li>Apare terenul de fotbal (decorul).</li><li>Copilul lovește mingea.</li><li>Mingea zboară spre poartă.</li><li>Mingea intră în poartă și se aude „Gol!”.</li></ol>`,
+   incearca:{t:'order',q:'Scenariul „Golul”: pune scenele în ordine.',items:['Apare terenul de fotbal','Copilul lovește mingea','Mingea zboară spre poartă','Mingea intră în poartă și se aude „Gol!”'],ajutor:'Ce trebuie să se întâmple înainte ca mingea să zboare?',why:'Ordinea vine din poveste: mingea nu zboară înainte să fie lovită, iar golul vine la sfârșit.'},
+   inca:[
+    {t:'order',q:'Scenariul „Pisica flămândă”: pune scenele în ordine.',items:['Apare bucătăria','Pisica vede bolul gol','Pisica miaună','Copilul pune mâncare în bol','Pisica mănâncă'],ajutor:'Întâi locul, apoi problema, apoi rezolvarea.',why:'Un scenariu bun are un început (locul), o problemă (bolul gol) și un final (pisica mănâncă).'}
+   ]},
+  {t:'Compoziția și obiectele animate',
+   text:`<p><mark>Compoziția</mark> înseamnă cum așezi pe scenă decorul și personajele: cine e în stânga, cine în dreapta, cine e mare, cine e mic.</p>
+<p>Pe scenă sunt două feluri de lucruri:</p>
+<ul><li>ce stă pe loc, pictat în <strong>decor</strong> (copaci, case, munți);</li>
+<li><mark>obiectele animate</mark>: personajele care se mișcă sau se schimbă, pentru că au scripturi sau costume care se schimbă.</li></ul>
+<p>Întrebarea de control: <strong>se mișcă sau se schimbă în poveste?</strong> Dacă da, e obiect animat, deci îl faci personaj separat.</p>`,
+   exemplu:`<p>În „Golul”: terenul și poarta stau pe loc, deci sunt în <b>decor</b>. <b>Copilul</b> și <b>mingea</b> se mișcă, deci sunt obiecte animate, adică personaje separate.</p>`,
+   incearca:{t:'classify',q:'Stă pe loc în decor sau e obiect animat?',cats:['Parte din decor','Obiect animat'],items:[['copacii desenați în fundal',0],['pasărea care zboară',1],['casa pictată în fundal',0],['câinele care aleargă',1]],ajutor:'Întrebarea de control: se mișcă în poveste?',why:'Decorul nu se mișcă. Obiectele animate sunt personaje cu scripturi sau costume care se schimbă.'},
+   inca:[
+    {t:'tf',q:'Mingea care zboară spre poartă trebuie să fie un personaj separat, nu desenată în decor.',ok:true,ajutor:'Se mișcă în poveste?',why:'Adevărat. Doar personajele pot primi scripturi care le mișcă; decorul stă pe loc.'}
+   ]},
+  {t:'Cadrul: o singură imagine',
+   text:`<p>Un <mark>cadru</mark> este o singură imagine nemișcată. Când imagini puțin diferite se schimbă repede, una după alta, ochiul vede <strong>mișcare</strong>.</p>
+<p>La cinema trec 24 de cadre pe secundă. Scratch redesenează scena de aproximativ 30 de ori pe secundă.</p>
+<p>Două reguli pentru o mișcare frumoasă:</p>
+<ul><li>cadrele vecine sunt <strong>puțin</strong> diferite (diferențe mari fac mișcarea să „sară”);</li>
+<li>se schimbă <strong>destul de des</strong>.</li></ul>`,
+   altfel:`<p>Ia un caiet și desenează pe colțul fiecărei foi un omuleț, cu mâna puțin mai sus de la o foaie la alta. Răsfoiești repede: omulețul face cu mâna! Fiecare foaie e un <b>cadru</b>.</p>`,
+   incearca:{t:'choice',q:'Ce este un cadru?',o:['O singură imagine din animație','Toată animația, de la început la sfârșit','Sunetul de fundal','Personajul principal'],ok:0,ajutor:'Gândește-te la o foaie din caietul răsfoit.',why:'Animația e făcută din multe cadre; fiecare e o imagine nemișcată.'},
+   inca:[
+    {t:'tf',q:'Cu cât cadrele sunt mai asemănătoare și se schimbă mai des, cu atât mișcarea pare mai lină.',ok:true,ajutor:'Cele două reguli din pas.',why:'Adevărat. Diferențe mari între cadre sau cadre prea rare fac mișcarea să „sară”.'}
+   ]},
+  {t:'În Scratch, cadrele sunt costumele',
+   text:`<p>Un personaj din Scratch poate avea mai multe <mark>costume</mark>: înfățișări puțin diferite. Ele sunt <strong>cadrele</strong> personajului. Le vezi în fila <strong>Costume</strong>.</p>
+<p>Blocul <em>costumul următor</em> (categoria Aspect) trece la cadrul următor. După ultimul costum, se întoarce la primul.</p>
+${fig('scratch-costume-cadre.webp',470,262,'Fila Costume din Scratch: costume1 și costume2 ale pisicii, încadrate, cu eticheta 2 costume = 2 cadre','Fila <b>Costume</b>: pisica are 2 costume, adică 2 cadre, cu picioarele în poziții diferite.')}`,
+   exemplu:`<p>Pisica are <b>costume1</b> (picioarele depărtate) și <b>costume2</b> (picioarele apropiate). <em>costumul următor</em>: 1 → 2. Încă o dată: 2 → 1. Pe rând, pare că pășește.</p>`,
+   incearca:{t:'choice',q:'Pisica are 2 costume, cu picioarele în poziții diferite. Cum o faci să pară că merge?',o:['Schimbi costumele pe rând în timp ce o muți','O faci mai mare la fiecare pas pe care îl face','Schimbi decorul de fiecare dată când o muți','Îi adaugi un sunet de pași și o lași pe loc'],ok:0,ajutor:'Costumele sunt cadrele.',why:'Costumele schimbate pe rând, în timp ce pisica înaintează, dau impresia de pași.'},
+   inca:[
+    {t:'choice',q:'Pisica are 2 costume și e la costumul 2. Ce face <em>costumul următor</em>?',o:['Trece la costumul 1','Rămâne la costumul 2','Face un costum 3 nou','Șterge costumul 2'],ok:0,ajutor:'Ultima propoziție din pas.',why:'După ultimul costum, Scratch se întoarce la primul.'}
+   ]},
+  {t:'Pisica merge: repetă, mergi, costumul următor, așteaptă',
+   text:`<p>Ca pisica să meargă, repeți de mai multe ori trei blocuri: un pas, un cadru nou, o pauză mică. Blocul <em>repetă 10</em> (categoria Control) are forma unei guri de C: face de 10 ori blocurile puse <strong>în interiorul</strong> lui.</p>
+<ul><li><em>mergi 10 pași</em> o mută puțin;</li>
+<li><em>costumul următor</em> schimbă cadrul;</li>
+<li><em>așteaptă 0.2 secunde</em> lasă timp să vezi cadrul.</li></ul>
+<p>Fără pauză, cele 10 repetări trec atât de repede încât abia vezi cadrele.</p>
+${fig('scratch-costumul-urmator.webp',760,325,'Script Scratch: repetă 10 cu mergi 10 pași, costumul următor încadrat și așteaptă 0.2 secunde','Cu <em>costumul următor</em> în repetiție, pisica schimbă cadrul la fiecare pas și pare că merge.')}`,
+   exemplu:`${pre('când se dă click pe steag\nrepetă 10\n  mergi 10 pași\n  costumul următor\n  așteaptă 0.2 secunde')}<p>Cele trei blocuri împinse la dreapta sunt în interiorul lui <em>repetă 10</em>: pisica face 10 pași, fiecare cu cadrul lui.</p>`,
+   altfel:`<p>Când mergi pe jos, faci la fel, iar și iar: un pas (<em>mergi</em>), piciorul celălalt în față (<em>costumul următor</em>), o clipă de echilibru (<em>așteaptă</em>). <em>repetă</em> e „fă asta de 10 ori”.</p>`,
+   incearca:{t:'choice',q:'Ce se întâmplă dacă scoți <em>așteaptă 0.2 secunde</em> din script?',o:['Pisica ajunge foarte repede, iar cadrele abia se văd','Pisica nu se mai mișcă deloc de pe loc','Pisica pleacă spre stânga, nu spre dreapta','Pisica schimbă singură decorul scenei'],ok:0,ajutor:'Ultima propoziție din pas.',why:'Pauza lasă timp ochiului să vadă fiecare cadru; fără ea, repetările trec foarte repede.'},
+   inca:[
+    {t:'tf',q:'Blocurile puse în interiorul lui <em>repetă 10</em> se fac de 10 ori.',ok:true,ajutor:'Gura de C.',why:'Adevărat. Tot ce e în interiorul lui repetă se reia de câte ori scrie în el.'}
+   ]}
+ ],
+ atelier:{t:'script',titlu:'Fă-o pe pisică să meargă',
+  intro:`<p>Construiește scriptul din pasul 5 cu blocurile de mai jos, ca în Scratch. <strong>Cum lucrezi:</strong> apasă blocurile <b>în ordine</b>; după <em>repetă 10</em>, blocurile următoare intră singure în interiorul lui (le vezi împinse la dreapta, cu dungă portocalie). Greșești? ✕ șterge, ↑ mută mai sus, ⇥ / ⇤ bagă sau scoate din <em>repetă</em>. Apasă <b>Steagul verde</b> ca să vezi pisica, apoi <b>Rulează testele</b>.</p>`,
+  q:'Construiește scriptul care o face pe pisică să meargă spre dreapta, pas cu pas.',stare:{x:-180,y:-40},
+  paleta:['steag','r10','m10','next','w02'],start:[],
+  solutie:[['steag',0],['r10',0],['m10',1],['next',1],['w02',1]],
+  gresit:[['steag',0],['m10',0],['next',0],['w02',0]],
+  checks:[{hat:'steag',ce:'Scriptul pornește cu „când se dă click pe steag”'},{dupa:'steag',dx:'+',ce:'Pisica ajunge mai la dreapta'},{dupa:'steag',inRep:'next',ce:'<em>costumul următor</em> e în interiorul lui <em>repetă</em>'},{dupa:'steag',schimbari:10,ce:'Cadrele se schimbă de cel puțin 10 ori'},{dupa:'steag',inRep:'wait',ce:'Fiecare cadru are o pauză (<em>așteaptă</em> în <em>repetă</em>)'}],
+  ajutor:'Ordinea: când se dă click pe steag → repetă 10 → mergi 10 pași → costumul următor → așteaptă 0.2 secunde.',why:'Asta e o animație adevărată: pas, cadru nou, pauză, de 10 ori.',
+  inca:[{t:'script',q:'Încă una: pisica să facă <b>20</b> de pași, tot cu cadre și pauze.',stare:{x:-220,y:-40},paleta:['steag','r10','r20','m10','next','w02'],start:[],
+   solutie:[['steag',0],['r20',0],['m10',1],['next',1],['w02',1]],gresit:[['steag',0],['r10',0],['m10',1],['next',1],['w02',1]],
+   checks:[{dupa:'steag',schimbari:20,ce:'Cadrele se schimbă de cel puțin 20 de ori'},{dupa:'steag',final:{x:-20},ce:'Pisica ajunge la x: -20 (20 de pași de câte 10)'},{dupa:'steag',inRep:'wait',ce:'Fiecare cadru are o pauză'}],
+   ajutor:'Același script, dar cu repetă 20.',why:'Numărul din repetă spune de câte ori se reiau pasul, cadrul și pauza.'}]},
+ qs:[
+  {t:'choice',q:'Ce este un cadru?',o:['O singură imagine din animație','Toată animația, de la început la sfârșit','Sunetul de fundal','Personajul principal'],ok:0,why:'Animația e făcută din multe cadre. Fiecare cadru e o imagine nemișcată; mișcarea apare când ele se schimbă repede.'},
+  {t:'tf',q:'Cu cât cadrele sunt mai diferite între ele, cu atât mișcarea pare mai lină.',ok:false,ajutor:'Prima regulă din pasul 3.',why:'Fals. Cadrele vecine trebuie să fie PUȚIN diferite; diferențele mari fac mișcarea să „sară”.'},
+  {t:'order',q:'Pune în ordine pașii strategiei pentru un scenariu.',items:['Cine apare','Unde (decorul)','Ce se întâmplă, pe rând','Ce se aude și când'],ajutor:'Strategia din pasul 1.',why:'Întâi personajele și locul, apoi acțiunea, apoi sunetele pe acțiune.'},
+  {t:'classify',q:'Stă pe loc în decor sau e obiect animat?',cats:['Parte din decor','Obiect animat'],items:[['munții din spate',0],['iepurele care sare',1],['gardul pictat',0],['fluturele care zboară',1],['soarele desenat în colț, care nu se mișcă',0]],why:'Decorul e fundalul, nu se mișcă. Obiectele animate sunt personaje cu scripturi sau costume care se schimbă.'},
+  {t:'choice',q:'În Scratch, unde vezi cadrele unui personaj?',o:['În fila Costume','În fila Sunete','În meniul Fișier','Sub scenă, la x și y'],ok:0,why:'Cadrele personajului sunt costumele lui, deci le vezi și le desenezi în fila Costume.'}
+ ]},
+
+/* ================= 4. Editez compoziția și obiectele (lecția 30) ================= */
+{t:'Editez compoziția și obiectele',lectii:[30],continuturi:['Operații de editare a unei compoziții: inserare, copiere, mutare, ștergere a obiectelor/cadrelor','Operații de editare a proprietăților unui obiect: dimensionare, rotire, transparență, poziționare'],
+ obiectiv:'inserezi, duplici, muți și ștergi personaje și costume și le schimbi poziția, mărimea, direcția și transparența.',
+ pasi:[
+  {t:'Inserezi un personaj',
+   text:`<p>A <mark>insera</mark> înseamnă să adaugi un obiect nou în compoziție. Sub scenă, în colțul listei de personaje, e butonul <strong>Alege un personaj</strong>. Ține mouse-ul pe el: apar variantele:</p>
+<ul><li>îl <strong>alegi</strong> din biblioteca Scratch;</li>
+<li>îl <strong>desenezi</strong> tu, în editorul de desen;</li>
+<li>îl <strong>încarci</strong> de pe calculator (<strong>Încarcă personaj</strong>), dintr-o imagine.</li></ul>
+<p>Personajul nou apare în mijlocul scenei și în lista de personaje. La fel se inserează un <strong>costum</strong> nou, din fila Costume.</p>`,
+   exemplu:`<p>Vrei o minge pentru „Golul”: <b>Alege un personaj</b> → cauți „ball” sau răsfoiești categoria Sport → dai clic pe minge. Mingea apare pe scenă, gata de animat.</p>`,
+   incearca:{t:'tf',q:'Un personaj îl poți doar alege din bibliotecă; nu îl poți desena singur.',ok:false,ajutor:'Lista din pas are trei variante.',why:'Fals. Îl poți alege, desena sau încărca de pe calculator.'}},
+  {t:'Duplici, muți, ștergi',
+   text:`<p>Pe un personaj din lista de sub scenă dai <strong>clic dreapta</strong>:</p>
+<ul><li><strong>duplică</strong> face o copie cu tot ce are: costume, sunete, scripturi (<mark>copiere</mark>);</li>
+<li><strong>șterge</strong> îl scoate din proiect (<mark>ștergere</mark>).</li></ul>
+<p>Îl <mark>muți</mark> trăgându-l cu mouse-ul pe scenă: x și y de sub scenă se schimbă singure.</p>
+<p>Aceleași operații merg și cu <strong>costumele</strong> (cadrele), cu clic dreapta în fila Costume.</p>
+<p>Inserarea, duplicarea și ștergerea schimbă <mark>compoziția</mark>: <strong>ce</strong> personaje și ce costume ai. În pașii următori schimbi <strong>cum</strong> e un singur personaj (unde stă, cât de mare e, încotro privește): acestea sunt <strong>proprietățile</strong> lui.</p>
+${fig('scratch-duplica-sterge.webp',260,150,'Meniul deschis cu clic dreapta pe personaj: duplică, exportă, șterge','Clic dreapta pe personaj: <i>duplică</i>, <i>exportă</i>, <i>șterge</i>.')}`,
+   exemplu:`<p>Vrei 5 copaci la fel: faci unul, apoi de 4 ori <b>clic dreapta › duplică</b>. Copiile apar una peste alta; le tragi pe scenă, fiecare la locul ei.</p>`,
+   incearca:{t:'choice',q:'Vrei 5 copaci la fel pe scenă. Care e calea cea mai rapidă?',o:['Faci un copac și îl duplici','Desenezi 5 copaci, pe rând','Schimbi decorul de 5 ori','Mărești dimensiunea copacului'],ok:0,ajutor:'Care operație face o copie?',why:'Duplicarea face o copie cu tot ce are personajul. Apoi doar muți copiile.'},
+   inca:[
+    {t:'tf',q:'Când duplici un personaj, copia are și scripturile lui.',ok:true,ajutor:'Prima liniuță: „cu tot ce are”.',why:'Adevărat. Copia primește costumele, sunetele și scripturile originalului.'}
+   ]},
+  {t:'Poziția și mărimea: x, y, Dimensiune',
+   text:`<p>Sub scenă e <mark>panoul personajului</mark>, cu <mark>proprietățile</mark> lui. Le poți scrie direct acolo:</p>
+<ul><li><strong>x</strong> și <strong>y</strong> = poziția (le știi din primul nivel);</li>
+<li><strong>Dimensiune</strong> = mărimea, în procente: <strong>100</strong> = normal, <strong>200</strong> = de două ori mai mare, <strong>50</strong> = jumătate.</li></ul>
+<p>A schimba mărimea se numește <mark>dimensionare</mark>; a schimba x și y, <mark>poziționare</mark>.</p>
+${fig('scratch-proprietati.webp',760,411,'Scratch: blocul setează efectul fantomă la 50, pisica pe jumătate transparentă, iar sub scenă x 60, y -40, Dimensiune 120 și Direcția 90 încadrate','Sub scenă: <b>x</b> = 60, <b>y</b> = -40, <b>Dimensiune</b> 120, <b>Direcția</b> 90.')}`,
+   exemplu:`<p>Pisica e prea mare lângă un șoricel. Scrii <b>Dimensiune 50</b>: acum e jumătate. Vrei un uriaș? <b>Dimensiune 200</b>.</p>`,
+   incearca:{t:'tf',q:'Dimensiune 200 înseamnă că personajul e de două ori mai mare decât normal.',ok:true,ajutor:'100 = normal.',why:'Adevărat. 100 e mărimea normală, 200 e dublul, 50 e jumătate.'},
+   inca:[
+    {t:'choice',q:'Ce Dimensiune pui ca personajul să fie de patru ori mai mic decât normal?',o:['25','50','400','4'],ok:0,ajutor:'Normal = 100. Împarte la 4.',why:'100 : 4 = 25. 50 e jumătate, 400 e de patru ori mai MARE.'}
+   ]},
+  {t:'Direcția și transparența',
+   text:`<p><strong>Direcția</strong> spune încotro e întors personajul (<mark>rotire</mark>):</p>
+<ul><li><strong>90</strong> = spre dreapta (așa pornește pisica);</li>
+<li><strong>-90</strong> = spre stânga;</li>
+<li><strong>0</strong> = în sus; <strong>180</strong> = în jos.</li></ul>
+<p><mark>Transparența</mark> se face cu efectul <strong>fantomă</strong>, din blocul <em>setează efectul fantomă la …</em> (categoria Aspect): <strong>0</strong> = se vede complet, <strong>50</strong> = pe jumătate, <strong>100</strong> = nu se mai vede, dar e tot acolo.</p>`,
+   exemplu:`<p>O fantomă care apare încet: pornești cu <em>setează efectul fantomă la 100</em> (nu se vede), apoi o scazi puțin câte puțin până la 0. În captura de la pasul 3, fantoma e la 50: pisica e pe jumătate transparentă.</p>`,
+   altfel:`<p>Direcția e ca acul unui ceas: <b>0</b> e sus (la 12), <b>90</b> e la dreapta, <b>180</b> e jos. Fantoma e ca un geam aburit: la 0 e curat, la 100 nu mai vezi nimic prin el.</p>`,
+   incearca:{t:'choice',q:'Ce face blocul <em>setează efectul fantomă la 100</em>?',o:['Personajul nu se mai vede, dar rămâne în proiect','Personajul devine de 100 de ori mai mare','Personajul se întoarce spre stânga','Personajul e șters din proiect'],ok:0,ajutor:'100 = nu se mai vede, dar…',why:'Fantoma e transparența; la 100 personajul e invizibil, dar există. Îl readuci cu fantomă 0.'},
+   inca:[
+    {t:'choice',q:'Ce Direcție pui ca personajul să fie întors în jos?',o:['180','90','0','-90'],ok:0,ajutor:'0 e sus; opusul lui…',why:'90 = dreapta, -90 = stânga, 0 = sus, 180 = jos.'}
+   ]}
+ ],
+ atelier:{t:'scena',titlu:'Panoul personajului',
+  intro:`<p>Mai jos e scena și panoul personajului, cu toate proprietățile. <strong>Sarcina:</strong> pisica trebuie să stea în <b>stânga sus</b> (x: -120, y: 100), să fie <b>de două ori mai mare</b>, <b>întoarsă în jos</b> și <b>pe jumătate transparentă</b>. Conturul gri arată unde trebuie să ajungă. Apoi <b>Rulează testele</b>.</p>`,
+  q:'Pune proprietățile: x: -120, y: 100, de două ori mai mare, întoarsă în jos, pe jumătate transparentă.',arata:true,
+  campuri:['x','y','dim','dir','fantoma'],start:{x:0,y:0,dim:100,dir:90,fantoma:0},tinta:{x:-120,y:100,dim:200,dir:180,fantoma:50},
+  ajutor:'De două ori mai mare = Dimensiune 200. În jos = Direcția 180. Pe jumătate = fantomă 50.',why:'Ai folosit toate proprietățile din panou: poziția, dimensiunea, direcția și transparența.',
+  inca:[
+   {t:'scena',q:'Încă una: pisica <b>mică, cât jumătate</b>, întors <b>spre stânga</b>, în <b>dreapta jos</b> la x: 150, y: -100, complet vizibil.',campuri:['x','y','dim','dir','fantoma'],start:{x:0,y:0,dim:100,dir:90,fantoma:30},tinta:{x:150,y:-100,dim:50,dir:-90,fantoma:0},ajutor:'Jumătate = 50. Stânga = -90. Complet vizibil = fantomă 0.',why:'Dimensiune 50, Direcția -90, fantomă 0, iar x pozitiv și y negativ pentru dreapta jos.'},
+   {t:'scena',q:'Și una scurtă: pisica să fie <b>invizibilă</b>, dar să rămână la locul ei, întoarsă <b>în sus</b>.',campuri:['dir','fantoma'],start:{x:0,y:0,dim:100,dir:90,fantoma:0},tinta:{dir:0,fantoma:100},ajutor:'În sus = 0. Invizibilă = fantomă 100.',why:'Fantoma 100 o face invizibilă fără s-o șteargă; Direcția 0 o întoarce în sus.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Vrei 5 copaci la fel pe scenă. Care e calea cea mai rapidă?',o:['Faci un copac și îl duplici','Desenezi 5 copaci, pe rând','Schimbi decorul de 5 ori','Mărești dimensiunea copacului'],ok:0,why:'Duplicarea face o copie cu tot ce are personajul: costume, sunete și scripturi. Apoi doar muți copiile.'},
+  {t:'match',q:'Leagă proprietatea de ce schimbă.',pairs:[['x','poziția spre stânga sau spre dreapta'],['y','poziția în sus sau în jos'],['Dimensiune','mărimea, în procente'],['Direcția','încotro e întors personajul']],why:'Cu aceste patru proprietăți așezi orice personaj exact unde și cum vrei.'},
+  {t:'choice',q:'Ce face blocul „setează efectul fantomă la 100”?',o:['Personajul nu se mai vede, dar rămâne în proiect','Personajul devine de 100 de ori mai mare','Personajul devine alb','Personajul e șters din proiect'],ok:0,why:'Fantoma e transparența. La 100 personajul e complet transparent, dar există în continuare. Îl readuci cu efectul fantomă la 0.'},
+  {t:'choice',q:'Personajul e întors spre dreapta. Ce Direcție pui ca să fie întors spre stânga?',o:['-90','90','0','180'],ok:0,ajutor:'Lista din pasul 4.',why:'90 e dreapta, -90 e stânga; 0 e sus, 180 e jos.'},
+  {t:'classify',q:'Editezi compoziția sau o proprietate a personajului?',cats:['Compoziția','Proprietate'],items:[['duplici personajul',0],['ștergi un costum',0],['inserezi un personaj nou',0],['schimbi Direcția la 180',1],['pui Dimensiune 50',1],['îl faci pe jumătate transparent',1]],why:'Compoziția = ce obiecte și cadre ai. Proprietățile = cum e un anumit obiect: unde, cât de mare, cum e întors, cât se vede.'}
+ ]},
+
+/* ================= 5. Mișcare, timp și sunet (lecția 31) ================= */
+{t:'Mișcare, timp și sunet',lectii:[31],continuturi:['Operații specifice de realizare a unei animații: efecte de mișcare, temporizare, efecte sonore'],
+ obiectiv:'alegi blocul potrivit pentru mișcare, pauză și sunet și le pui în ordine ca animația să aibă ritmul plănuit.',
+ pasi:[
+  {t:'Trei feluri de mișcare',
+   text:`<p>În categoria <strong>Mișcare</strong> ai trei <mark>efecte de mișcare</mark> de bază:</p>
+<ul><li><em>mergi 10 pași</em> face un salt mic, <strong>dintr-odată</strong>;</li>
+<li><em>glisează în 2 secunde la x: 150 y: 0</em> <strong>alunecă lin</strong> până în punctul dat, în timpul dat;</li>
+<li><em>rotește-te 15 grade</em> <strong>întoarce</strong> personajul pe loc.</li></ul>
+<p>Alegi după întrebarea: vreau un salt, o alunecare sau o întoarcere?</p>`,
+   exemplu:`<p>O minge care se rostogolește lin până la poartă: <em>glisează în 3 secunde la x: 200 y: 0</em>. O minge care „țopăie” din loc în loc: mai multe <em>mergi 10 pași</em>. O roată care se învârte: <em>rotește-te 15 grade</em> repetat.</p>`,
+   incearca:{t:'choice',q:'Ce bloc duce mingea lin, în 3 secunde, până la poartă?',o:['glisează în 3 secunde la x: 200 y: 0','mergi 200 de pași, dintr-odată','așteaptă 3 secunde','rotește-te 15 grade'],ok:0,ajutor:'„Lin” și „în 3 secunde” sunt cuvintele-cheie.',why:'Glisarea mută lin, pe durata aleasă. „mergi” sare dintr-odată, „așteaptă” doar face pauză, iar rotirea nu mută mingea.'},
+   inca:[
+    {t:'classify',q:'Salt, alunecare sau întoarcere?',cats:['mergi … pași','glisează','rotește-te'],items:[['o broască sare dintr-o dată puțin mai încolo',0],['o barcă alunecă lin până la mal',1],['o morișcă se învârte pe loc',2],['o sanie coboară lin dealul, în 4 secunde',1]],ajutor:'Dintr-odată = mergi; lin = glisează; pe loc = rotește-te.',why:'Saltul, alunecarea și întoarcerea au fiecare blocul lor.'}
+   ]},
+  {t:'Temporizarea: când și cât',
+   text:`<p><mark>Temporizarea</mark> stabilește <strong>când</strong> se întâmplă ceva și <strong>cât</strong> durează.</p>
+<ul><li><em>așteaptă 1 secunde</em> (categoria Control) face o <strong>pauză</strong>: scriptul stă pe loc o secundă, apoi merge mai departe.</li>
+<li>Numărul de secunde din <em>glisează</em> dă <strong>viteza</strong>: aceeași distanță în mai multe secunde = mai încet.</li></ul>`,
+   exemplu:`<p>Același drum, de la x: -150 la x: 150:</p><ul><li><em>glisează în 1 secunde</em> → fuge;</li><li><em>glisează în 4 secunde</em> → se plimbă.</li></ul>`,
+   altfel:`<p>Drumul de acasă la școală e același. Dacă îl faci în 5 minute, ai alergat; dacă îl faci în 20, te-ai plimbat. Mai mult timp pe același drum = mai încet.</p>`,
+   incearca:{t:'tf',q:'Dacă mărești numărul de secunde din „glisează”, personajul ajunge mai repede.',ok:false,ajutor:'Gândește-te la drumul spre școală.',why:'Fals. Aceeași distanță parcursă în mai multe secunde înseamnă mers mai încet.'},
+   inca:[
+    {t:'choice',q:'Ce bloc face o pauză de o secundă între două mișcări?',o:['așteaptă 1 secunde','glisează în 1 secunde la x: 0 y: 0','mergi 1 pași','rotește-te 1 grade'],ok:0,ajutor:'Pauza = scriptul stă pe loc.',why:'„așteaptă” oprește scriptul pentru timpul dat; celelalte mișcă personajul.'}
+   ]},
+  {t:'Sunetul: pornește sau redă până la final',
+   text:`<p>În categoria <strong>Sunet</strong> ai două blocuri care seamănă, dar fac lucruri diferite (<mark>efecte sonore</mark>):</p>
+<ul><li><em>pornește sunetul Miau</em>: sunetul începe, iar scriptul <strong>merge mai departe imediat</strong>, cât timp se aude;</li>
+<li><em>redă sunetul Miau până la final</em>: scriptul <strong>așteaptă</strong> să se termine sunetul, abia apoi face blocul următor.</li></ul>
+<p>Întrebarea: vreau ca personajul să se miște <strong>în timp ce</strong> se aude sunetul, sau <strong>după</strong>?</p>
+${fig('scratch-miscare-timp-sunet.webp',760,325,'Script Scratch cu glisează în 2 secunde la x 150 y 0, așteaptă 1 secunde și redă sunetul Miau până la final, încadrate și etichetate','Un script cu toate trei: <em>glisează în 2 secunde</em>, <em>așteaptă 1 secunde</em> și <em>redă sunetul Miau până la final</em>.')}`,
+   exemplu:`${pre('redă sunetul Miau până la final\nglisează în 2 secunde la x: 150 y: 0')}<p>Pisica miaună, <b>apoi</b> pleacă.</p>${pre('pornește sunetul Miau\nglisează în 2 secunde la x: 150 y: 0')}<p>Pisica pleacă <b>în timp ce</b> miaună.</p>`,
+   incearca:{t:'choice',q:'Pisica spune „Miau” și abia după ce se termină sunetul pleacă. Ce bloc de sunet folosești?',o:['redă sunetul Miau până la final','pornește sunetul Miau','oprește toate sunetele','modifică volumul cu 10'],ok:0,ajutor:'Care bloc AȘTEAPTĂ sunetul?',why:'„redă … până la final” ține scriptul pe loc până se termină sunetul.'},
+   inca:[
+    {t:'match',q:'Leagă blocul de ce face.',pairs:[['mergi 10 pași','un salt mic, dintr-odată'],['glisează în 2 secunde','o alunecare lină'],['așteaptă 1 secunde','o pauză'],['pornește sunetul','sunetul începe, iar scriptul merge mai departe']],ajutor:'Recitește pașii 1-3.',why:'Mișcarea, pauza și sunetul se combină: din ele se face ritmul animației.'}
+   ]},
+  {t:'Strategia: planul pe secunde',
+   text:`<p>Ca animația să aibă ritmul dorit, o planifici ca pe o <strong>linie a timpului</strong>:</p>
+<ol><li>Scrii ce se întâmplă, pe rând („întâi miaună, apoi pleacă, apoi stă”).</li>
+<li>Pentru fiecare rând alegi blocul: mișcare, pauză sau sunet.</li>
+<li>La sunete te întrebi: <em>în timp ce</em> (pornește) sau <em>după</em> (redă … până la final)?</li>
+<li>Pui blocurile în aceeași ordine și testezi cu steagul verde.</li></ol>`,
+   exemplu:`<p>Plan: „miaună, apoi alunecă 2 secunde spre dreapta, apoi stă o secundă și spune Gata!”</p>${pre('când se dă click pe steag\nredă sunetul Miau până la final\nglisează în 2 secunde la x: 150 y: 0\nașteaptă 1 secunde\nspune Gata! pentru 1 secunde')}`,
+   incearca:{t:'order',q:'Plan: „miaună, APOI alunecă 2 secunde spre dreapta, apoi stă o secundă”. Pune blocurile în ordine.',items:['când se dă click pe steag','redă sunetul Miau până la final','glisează în 2 secunde la x: 150 y: 0','așteaptă 1 secunde'],ajutor:'Evenimentul e mereu primul; apoi rândurile planului, pe rând.',why:'Scriptul face blocurile de sus în jos, deci ordinea blocurilor = ordinea din plan.'}}
+ ],
+ atelier:{t:'script',titlu:'Ritmul unei scene',
+  intro:`<p><strong>Sarcina:</strong> pisica <b>miaună</b>, abia <b>după</b> ce se termină sunetul <b>alunecă în 2 secunde</b> până la x: 150, y: 0, apoi <b>stă o secundă</b>. Construiește scriptul, apasă <b>Steagul verde</b> ca să-l vezi, apoi <b>Rulează testele</b>.</p>`,
+  q:'Construiește scriptul: miaună, apoi alunecă în 2 secunde la x: 150 y: 0, apoi pauză o secundă.',stare:{x:-150,y:0},
+  paleta:['steag','miau','miauF','g2_150','m10','w1'],start:[],
+  solutie:[['steag',0],['miauF',0],['g2_150',0],['w1',0]],
+  gresit:[['steag',0],['miau',0],['g2_150',0],['w1',0]],
+  checks:[{hat:'steag',ce:'Scriptul pornește cu steagul verde'},{dupa:'steag',final:{x:150,y:0},ce:'Pisica ajunge la x: 150, y: 0'},{dupa:'steag',are:'glide',ce:'Mișcarea e lină (<em>glisează</em>)'},{dupa:'steag',inainte:['sndw','glide'],ce:'Pisica pleacă abia DUPĂ ce s-a terminat sunetul'},{dupa:'steag',fara:'snd',ce:'Nu folosești „pornește sunetul” (acela nu așteaptă)'},{dupa:'steag',inainte:['glide','wait'],ce:'Pauza de o secundă vine după alunecare'}],
+  ajutor:'Ordinea: steag → redă sunetul Miau până la final → glisează în 2 secunde → așteaptă 1 secunde.',why:'„redă … până la final” ține scriptul pe loc cât se aude sunetul; abia apoi pornește glisarea.',
+  inca:[{t:'script',q:'Încă una: pisica pleacă <b>în timp ce</b> se aude „pop” și <b>se plimbă încet</b>, în 4 secunde, până la x: -150, y: 0.',personaj:'pisica',stare:{x:150,y:0},
+   paleta:['steag','popS','pop','g1_m150','g4_m150'],start:[],solutie:[['steag',0],['popS',0],['g4_m150',0]],gresit:[['steag',0],['popS',0],['g1_m150',0]],
+   checks:[{dupa:'steag',final:{x:-150},ce:'Ajunge la x: -150'},{dupa:'steag',are:'snd',ce:'Sunetul pornește fără să oprească scriptul (<em>pornește sunetul</em>)'},{dupa:'steag',fara:'sndw',ce:'Nu aștepți sunetul („redă … până la final”)'},{dupa:'steag',inainte:['snd','glide'],ce:'Sunetul pornește înainte de alunecare'},{dupa:'steag',glideS:4,ce:'Alunecarea e cea lentă, de 4 secunde'}],
+   ajutor:'„În timp ce” = pornește sunetul. „Încet” = mai multe secunde: 4.',why:'„pornește sunetul” lasă scriptul să meargă mai departe, iar 4 secunde pe același drum înseamnă mers încet.'}]},
+ qs:[
+  {t:'choice',q:'Ce bloc duce personajul lin, în 2 secunde, până la x: 150 y: 0?',o:['glisează în 2 secunde la x: 150 y: 0','mergi 150 de pași, dintr-odată','așteaptă 2 secunde','rotește-te 150 de grade'],ok:0,why:'Glisarea mută lin, pe durata aleasă. „mergi” sare dintr-odată, „așteaptă” doar face pauză, iar rotirea nu mută personajul.'},
+  {t:'tf',q:'„glisează în 4 secunde” face drumul mai încet decât „glisează în 1 secunde”, pe aceeași distanță.',ok:true,why:'Adevărat. Mai multe secunde pe același drum înseamnă mers mai încet.'},
+  {t:'choice',q:'Pisica trebuie să plece ÎN TIMP CE miaună. Ce bloc de sunet pui înaintea mișcării?',o:['pornește sunetul Miau','redă sunetul Miau până la final','așteaptă 1 secunde','oprește toate sunetele'],ok:0,ajutor:'Care bloc NU așteaptă sunetul?',why:'„pornește sunetul” lasă scriptul să meargă mai departe imediat, deci pisica pleacă în timp ce se aude.'},
+  {t:'match',q:'Leagă blocul de ce face.',pairs:[['mergi 10 pași','un salt mic, dintr-odată'],['glisează în 2 secunde','o alunecare lină'],['așteaptă 1 secunde','o pauză'],['redă sunetul până la final','scriptul așteaptă să se termine sunetul']],why:'Mișcarea, pauza și sunetul se combină: din ele se face ritmul animației.'},
+  {t:'order',q:'Pune în ordine strategia de planificare pe secunde.',items:['Scrii ce se întâmplă, pe rând','Alegi blocul pentru fiecare rând','Alegi la sunete: în timp ce sau după','Pui blocurile în ordine și testezi'],ajutor:'Strategia din pasul 4.',why:'Planul vine întâi, blocurile după el, testul la final.'}
+ ]},
+
+/* ================= 6. Controlez animația (lecția 32) ================= */
+{t:'Controlez animația',lectii:[32],continuturi:['Controlul animației prin structuri de control sau de la tastatură'],
+ obiectiv:'miști un personaj cu săgețile de la tastatură și alegi între repetă, la infinit și dacă … atunci.',
+ pasi:[
+  {t:'Evenimentele: blocurile care încep cu „când”',
+   text:`<p>Un script pornește doar când se întâmplă ceva: un <mark>eveniment</mark>. Blocurile-eveniment sunt în categoria <strong>Evenimente</strong> (galben), încep cu „când” și au capul rotunjit, ca o pălărie: nimic nu se pune deasupra lor.</p>
+<ul><li><em>când se dă click pe steag</em>: pornește la steagul verde;</li>
+<li><em>când tasta spațiu este apăsată</em>: pornește la fiecare apăsare a tastei alese. Tasta o schimbi din lista din bloc: spațiu, săgeată dreapta, săgeată stânga, o literă…</li></ul>`,
+   exemplu:`${pre('când tasta spațiu este apăsată\nspune Hop! pentru 1 secunde')}<p>De fiecare dată când apeși <kbd>Spațiu</kbd>, pisica spune „Hop!”.</p>`,
+   incearca:{t:'choice',q:'Ce bloc pornește un script când apeși săgeata stânga?',o:['când tasta săgeată stânga este apăsată','când se dă click pe steag','repetă 10','modifică x cu -10'],ok:0,ajutor:'Blocurile-eveniment încep cu „când”.',why:'Blocurile „când …” pornesc scripturile. Celelalte doar fac ceva după ce scriptul a pornit.'},
+   inca:[
+    {t:'tf',q:'Poți pune un bloc deasupra lui „când se dă click pe steag”.',ok:false,ajutor:'Forma de pălărie.',why:'Fals. Blocurile-eveniment stau mereu primele: au capul rotunjit tocmai ca să nu se pună nimic deasupra.'}
+   ]},
+  {t:'Săgețile mută personajul',
+   text:`<p>Ca să muți un personaj de la tastatură, faci câte un script pentru fiecare tastă. <strong>Strategia</strong>, pentru fiecare tastă:</p>
+<ol><li>Pui evenimentul: <em>când tasta săgeată … este apăsată</em>.</li>
+<li>Alegi <strong>axa</strong>: stânga-dreapta = <strong>x</strong>, sus-jos = <strong>y</strong>.</li>
+<li>Alegi <strong>semnul</strong>: dreapta și sus = plus; stânga și jos = minus.</li>
+<li>Sub eveniment pui <em>modifică x cu …</em> sau <em>modifică y cu …</em>.</li></ol>
+${fig('scratch-tastatura-control.webp',760,408,'Scripturi Scratch: când tasta săgeată dreapta este apăsată modifică x cu 10, când tasta săgeată stânga este apăsată modifică x cu -10, și la infinit cu dacă atinge marginea? atunci','Săgețile mută pisica: <em>modifică x cu 10</em> spre dreapta, <em>cu -10</em> spre stânga.')}`,
+   exemplu:`${pre('când tasta săgeată dreapta este apăsată\nmodifică x cu 10\n\ncând tasta săgeată stânga este apăsată\nmodifică x cu -10')}<p>Două scripturi separate, câte unul pe tastă.</p>`,
+   altfel:`<p>E ca o telecomandă cu butoane: fiecare buton (tastă) are treaba lui. Butonul „dreapta” adună 10 la x, butonul „stânga” scade 10.</p>`,
+   incearca:{t:'choice',q:'Sub <em>când tasta săgeată stânga este apăsată</em>, ce pui ca personajul să meargă spre stânga?',o:['modifică x cu -10','modifică x cu 10','modifică y cu 10','modifică y cu -10'],ok:0,ajutor:'Strategia: axa (stânga-dreapta = x), apoi semnul (stânga = minus).',why:'Stânga-dreapta e axa x; spre stânga x scade, deci adaugi un număr negativ.'},
+   inca:[
+    {t:'choice',q:'Ce pui sub <em>când tasta săgeată sus este apăsată</em>?',o:['modifică y cu 10','modifică y cu -10','modifică x cu 10','modifică x cu -10'],ok:0,ajutor:'Sus-jos = y; sus = plus.',why:'Spre sus y crește, deci modifici y cu un număr pozitiv.'}
+   ]},
+  {t:'Repetă și la infinit',
+   text:`<p><mark>Structurile de control</mark> (categoria Control) spun de câte ori se fac blocurile din interiorul lor:</p>
+<ul><li><em>repetă 10</em> le face de <strong>exact 10</strong> ori, apoi scriptul merge mai departe;</li>
+<li><em>la infinit</em> le face <strong>mereu</strong>, fără oprire, până apeși <strong>Stop</strong>.</li></ul>
+<p>Întrebarea: <strong>știu de câte ori?</strong> Da → <em>repetă</em>. Mereu → <em>la infinit</em>.</p>`,
+   exemplu:`<p>O stea care clipește de 5 ori: <em>repetă 5</em>. Norii care plutesc tot timpul: <em>la infinit</em>.</p>`,
+   incearca:{t:'tf',q:'Blocul „la infinit” oprește singur animația după 10 repetări.',ok:false,ajutor:'Cine îl oprește?',why:'Fals. „la infinit” nu se oprește singur; îl oprești cu Stop. Pentru un număr fix folosești „repetă”.'}},
+  {t:'dacă … atunci: doar uneori',
+   text:`<p><em>dacă … atunci</em> face blocurile din interiorul lui <strong>doar când condiția e adevărată</strong>. Condiția e un bloc cu colțuri ascuțite, de exemplu <em>atinge marginea?</em> (categoria Detectare).</p>
+<p>Ca să verifice condiția tot timpul, pui <em>dacă … atunci</em> în interiorul lui <em>la infinit</em>: la fiecare repetare, Scratch se uită din nou.</p>
+<p>Acum ai trei întrebări pentru orice structură: <strong>de câte ori știu?</strong> (repetă) · <strong>mereu?</strong> (la infinit) · <strong>doar uneori, când ceva e adevărat?</strong> (dacă … atunci).</p>`,
+   exemplu:`${pre('când se dă click pe steag\nla infinit\n  mergi 10 pași\n  dacă atinge marginea? atunci\n    rotește-te 180 grade')}<p>Pisica merge mereu; doar când atinge marginea, se întoarce.</p>`,
+   incearca:{t:'classify',q:'Ce structură de control potrivești?',cats:['repetă …','la infinit','dacă … atunci'],items:[['pisica sare de exact 3 ori',0],['morișca se învârte tot timpul',1],['mingea ricoșează doar când atinge marginea',2],['steaua clipește de 5 ori',0]],ajutor:'Cele trei întrebări din pas.',why:'Știi de câte ori? „repetă”. Mereu? „la infinit”. Doar uneori? „dacă … atunci”.'},
+   inca:[
+    {t:'choice',q:'De ce pui <em>dacă atinge marginea? atunci</em> în interiorul lui <em>la infinit</em>?',o:['Ca Scratch să verifice condiția tot timpul','Ca scriptul să se oprească imediat','Ca personajul să devină invizibil','Ca să nu mai trebuiască steagul verde'],ok:0,ajutor:'A doua propoziție din pas.',why:'Singur, „dacă” verifică o singură dată. În „la infinit” verifică la fiecare repetare.'}
+   ]}
+ ],
+ atelier:{t:'script',titlu:'Telecomanda: pisica pe săgeți',
+  intro:`<p><strong>Sarcina:</strong> fă două scripturi: la <b>săgeata dreapta</b> pisica merge 10 pixeli spre dreapta, la <b>săgeata stânga</b> 10 spre stânga. Pune evenimentul, apoi blocul de sub el, apoi al doilea eveniment și blocul lui. Probează cu butoanele <b>Săgeata →</b> și <b>Săgeata ←</b>, apoi <b>Rulează testele</b>.</p>`,
+  q:'Fă scripturile pentru săgeata dreapta și săgeata stânga.',stare:{x:0,y:0},
+  paleta:['dreapta','stanga','x10','xm10','y10','ym10'],start:[],
+  solutie:[['dreapta',0],['x10',0],['stanga',0],['xm10',0]],
+  gresit:[['dreapta',0],['xm10',0],['stanga',0],['x10',0]],
+  checks:[{hat:'dreapta',ce:'Există scriptul „când tasta săgeată dreapta este apăsată”'},{hat:'stanga',ce:'Există scriptul „când tasta săgeată stânga este apăsată”'},{dupa:'dreapta',dx:'+',dy:0,ce:'Săgeata dreapta o mută spre dreapta'},{dupa:'stanga',dx:'-',dy:0,ce:'Săgeata stânga o mută spre stânga'},{curat:true,ce:'Niciun bloc nu stă liber'}],
+  ajutor:'Strategia: evenimentul, axa x, semnul (dreapta = plus, stânga = minus).',why:'Fiecare tastă are scriptul ei; axa x și semnul hotărăsc direcția.',
+  inca:[{t:'script',q:'Încă una: acum <b>sus</b> și <b>jos</b>, cu câte 10 pixeli.',stare:{x:0,y:0},paleta:['sus','jos','x10','xm10','y10','ym10'],start:[],
+   solutie:[['sus',0],['y10',0],['jos',0],['ym10',0]],gresit:[['sus',0],['x10',0],['jos',0],['xm10',0]],
+   checks:[{dupa:'sus',dy:'+',dx:0,ce:'Săgeata sus o urcă'},{dupa:'jos',dy:'-',dx:0,ce:'Săgeata jos o coboară'},{curat:true,ce:'Niciun bloc nu stă liber'}],
+   ajutor:'Sus-jos = axa y. Sus = plus, jos = minus.',why:'Pentru sus și jos schimbi y, nu x.'}]},
+ qs:[
+  {t:'choice',q:'Ce bloc pornește un script când apeși tasta spațiu?',o:['când tasta spațiu este apăsată','când se dă click pe steag','la infinit','repetă 10'],ok:0,why:'Blocurile care încep cu „când” sunt evenimente: pornesc scriptul. „la infinit” și „repetă” doar repetă ce e în ele.'},
+  {t:'choice',q:'Sub „când tasta săgeată stânga este apăsată” ce pui ca personajul să meargă spre stânga?',o:['modifică x cu -10','modifică x cu 10','modifică y cu 10','modifică y cu -10'],ok:0,why:'Stânga-dreapta e axa x. Spre stânga x scade, deci adaugi un număr negativ. y ar muta personajul în sus sau în jos.'},
+  {t:'classify',q:'Ce structură de control potrivești?',cats:['repetă …','la infinit','dacă … atunci'],items:[['iepurele sare de exact 4 ori',0],['elicea se învârte tot timpul',1],['se aude „Au!” doar când liliacul atinge pisica',2],['becul clipește de 3 ori',0],['norii plutesc până apeși Stop',1],['pisica se întoarce doar când atinge marginea',2]],ajutor:'De câte ori știu? Mereu? Doar uneori?',why:'Știi de câte ori? „repetă”. Mereu? „la infinit”. Doar uneori, când ceva e adevărat? „dacă … atunci”.'},
+  {t:'tf',q:'„la infinit” se oprește doar când apeși Stop.',ok:true,why:'Adevărat. „la infinit” nu se oprește singur. Pentru un număr fix de repetări folosești „repetă”.'},
+  {t:'choice',q:'Ce pui sub „când tasta săgeată jos este apăsată”?',o:['modifică y cu -10','modifică y cu 10','modifică x cu -10','modifică x cu 10'],ok:0,ajutor:'Sus-jos = y; jos = minus.',why:'Spre jos y scade, deci modifici y cu un număr negativ.'}
+ ]},
+
+/* ================= 7. Modele 3D (lecția 33) ================= */
+{t:'Modele 3D',lectii:[33],continuturi:['Forme geometrice tridimensionale','Text tridimensional','Operații specifice modelării 3D disponibile în aplicațiile pentru copii'],
+ obiectiv:'deosebești 2D de 3D, știi axele X, Y, Z și construiești din corpuri simple un obiect, cu copiere, gaură și grupare.',
+ pasi:[
+  {t:'2D și 3D: adâncimea',
+   text:`<p>Scena din Scratch e <mark>2D</mark> (două dimensiuni): are lățime și înălțime, ca o foaie.</p>
+<p>Un model <mark>3D</mark> (trei dimensiuni) are în plus <mark>adâncime</mark>. De aceea îl poți <strong>roti</strong> și privi din toate părțile, și din spate, ca pe o jucărie ținută în mână.</p>
+<p>Formele 2D sunt plane: pătrat, cerc, triunghi. Corpurile 3D au volum: cub, sferă, piramidă.</p>`,
+   exemplu:`<p>Un <b>pătrat</b> desenat pe foaie e 2D. Un <b>zar</b> e un cub, 3D: îl întorci și vezi alte fețe. Un <b>cerc</b> e 2D; o <b>minge</b> e o sferă, 3D.</p>`,
+   altfel:`<p>O fotografie cu o minge e 2D: oricum ai întoarce foaia, nu vezi spatele mingii. Mingea adevărată e 3D: o întorci și vezi partea cealaltă.</p>`,
+   incearca:{t:'choice',q:'Ce are în plus un model 3D față de un desen 2D?',o:['Adâncime','Culoare','Sunet','Mai mulți pixeli'],ok:0,ajutor:'A treia dimensiune.',why:'Și un desen 2D are culori și pixeli. Adâncimea îți permite să rotești obiectul și să-l vezi din spate.'},
+   inca:[
+    {t:'classify',q:'Formă plană (2D) sau corp (3D)?',cats:['2D','3D'],items:[['pătrat',0],['cub',1],['cerc',0],['sferă',1]],ajutor:'Are volum? Atunci e 3D.',why:'Cubul e „pătratul cu adâncime”, sfera e „cercul cu adâncime”.'},
+    {t:'tf',q:'În Scratch poți face un model 3D pe care să-l rotești ca să-l vezi din spate.',ok:false,ajutor:'Scena din Scratch e ca o foaie.',why:'Fals. Scena din Scratch e 2D. Pentru modele 3D îți trebuie o aplicație 3D.'}
+   ]},
+  {t:'Axele X, Y, Z',
+   text:`<p>Într-o aplicație 3D, fiecare punct are <strong>trei</strong> numere, câte unul pe fiecare <mark>axă</mark>: <strong>X</strong>, <strong>Y</strong> și <strong>Z</strong>.</p>
+<ul><li>X și Y sunt pe „podea”, pe planul de lucru: stânga-dreapta și față-spate;</li>
+<li><strong>Z</strong> este <strong>înălțimea</strong>: cât de sus e obiectul.</li></ul>
+<p>Așa e în <strong>Tinkercad</strong> și în <strong>Blender</strong>. Săgețile axelor au culori: X roșu, Y verde, Z albastru.</p>
+${fig('blender-axe-xyz.webp',1000,494,'Un cub într-o aplicație 3D, cu săgeata roșie X, săgeata verde Y și săgeata albastră Z în sus; în panoul Transform scrie Location X 0 m, Y 0 m, Z 1 m','În <b>Blender</b> (gratuit, în engleză): săgeata albastră <b>Z</b> urcă în sus. În panoul <b>Transform</b> scrie <b>Location Z = 1 m</b>.')}`,
+   exemplu:`<p>Cubul din captură stă cu centrul la <b>Z = 1 m</b>, adică la un metru deasupra podelei. Dacă îl ridici, crește Z; X și Y rămân la fel.</p>`,
+   incearca:{t:'choice',q:'În Tinkercad ridici o formă mai sus. Care coordonată se schimbă?',o:['Z','X','Y','Niciuna'],ok:0,ajutor:'Care axă e înălțimea?',why:'X și Y sunt pe planul de lucru, iar Z este înălțimea. Când ridici forma, crește Z.'}},
+  {t:'Aplicațiile și corpurile de bază',
+   text:`<p>Pentru modele 3D folosim o <strong>aplicație 3D</strong>:</p>
+<ul><li><strong>Tinkercad</strong> merge în browser (tinkercad.com), cu un cont gratuit; la clasă îl faci împreună cu profesorul;</li>
+<li><strong>Blender</strong> se instalează, e gratuit, dar e pentru avansați.</li>
+<li><strong>Paint 3D</strong>, din manualele mai vechi, <strong>nu se mai poate descărca</strong> din Microsoft Store din noiembrie 2024.</li></ul>
+<p>Construiești din <mark>corpuri de bază</mark>: <strong>cub, cilindru, sferă, con, piramidă</strong>. Tragi corpul din panoul de forme pe planul de lucru.</p>
+${fig('paint3d-forme.webp',1000,365,'Cinci corpuri 3D colorate, așezate unul lângă altul și etichetate cub, sferă, cilindru, con și piramidă','Corpurile de bază (făcute în <b>Paint 3D</b>): cub, sferă, cilindru, con, piramidă.')}`,
+   exemplu:`<p>Un <b>om de zăpadă</b>: trei sfere, una peste alta (fiecare mai sus pe Z), plus un con portocaliu pentru nas.</p>`,
+   incearca:{t:'choice',q:'Un manual mai vechi îți cere să instalezi Paint 3D din Microsoft Store. Ce e adevărat?',o:['A fost scos din Store în 2024; folosești altă aplicație 3D','E cea mai nouă aplicație 3D, primită cu fiecare Windows','Face parte din Scratch și se deschide din fila Costume','E doar alt nume pentru Paint-ul obișnuit din Windows'],ok:0,ajutor:'Ultima liniuță din listă.',why:'Microsoft a scos Paint 3D din Microsoft Store în noiembrie 2024. Folosim acum Tinkercad.'},
+   inca:[
+    {t:'match',q:'Din ce corp de bază faci obiectul?',pairs:[['zarul','cub'],['mingea','sferă'],['un creion ascuțit (vârful)','con'],['o conservă','cilindru']],ajutor:'Uită-te la captura cu cele cinci corpuri.',why:'Obiectele din jur seamănă cu corpurile de bază; de aceea construiești din ele.'}
+   ]},
+  {t:'Text 3D',
+   text:`<p>Pe lângă corpuri, aplicațiile 3D au o formă <mark>Text</mark>: scrii un cuvânt, iar literele primesc <strong>grosime</strong>, ca niște litere tăiate din lemn.</p>
+<p>Textul 3D se mută, se rotește și se mărește la fel ca orice corp. Când îl rotești, vezi partea laterală a literelor: acolo se vede că sunt 3D.</p>
+${fig('paint3d-text3d.webp',900,310,'Cuvintele TEXT 3D scrise cu litere groase, rotite, așa încât se vede partea laterală a fiecărei litere','Text 3D (în <b>Paint 3D</b>), rotit: se vede <b>grosimea</b> literelor.')}`,
+   exemplu:`<p>Faci o plăcuță pentru ușa clasei: un cub turtit (lat și subțire) și, deasupra lui, textul „6B” cu litere în relief.</p>`,
+   incearca:{t:'tf',q:'Literele unui text 3D au grosime, deci le vezi și din lateral când le rotești.',ok:true,ajutor:'Uită-te la captură.',why:'Adevărat. Asta îl deosebește de textul scris pe o foaie, care e plat.'}},
+  {t:'Mânere, copiere, gaură, grupare',
+   text:`<p>O formă selectată are <strong>pătrățele albe</strong> (mânere) cu care o mărești sau o micșorezi și inele cu care o rotești.</p>
+<p>În Tinkercad:</p>
+<ul><li><kbd>Ctrl</kbd>+<kbd>D</kbd> <strong>duplică</strong> forma;</li>
+<li>o formă trecută pe <mark>gaură</mark> (<em>Hole</em>) <strong>decupează</strong> din forma cu care o grupezi;</li>
+<li><kbd>Ctrl</kbd>+<kbd>G</kbd> <strong>grupează</strong> formele selectate într-un singur obiect.</li></ul>
+<p><strong>Strategia</strong> pentru un obiect cu gol (o cană): 1) corpul plin; 2) <kbd>Ctrl</kbd>+<kbd>D</kbd>, apoi micșorezi copia; 3) tragi copia exact în mijlocul corpului plin, ca pereții să iasă la fel de groși peste tot; 4) copia devine gaură și o ridici puțin pe Z, ca să rămână fundul; 5) le selectezi pe amândouă și <kbd>Ctrl</kbd>+<kbd>G</kbd>.</p>
+${fig('paint3d-manere.webp',1000,369,'Obiect 3D selectat: pătrățele albe în colțuri, marcate ca mânere de redimensionare, și inele rotunde marcate ca inele de rotire','Obiect selectat (în <b>Paint 3D</b>): pătrățelele albe schimbă mărimea, inelele rotesc.')}`,
+   altfel:`<p>Gaura e ca un tăietor de fursecuri: îl apeși în aluat (grupezi) și scoate exact forma lui. Dacă îl ridici puțin, nu taie până jos, și rămâne fundul.</p>`,
+   incearca:{t:'match',q:'Leagă operația din Tinkercad de rezultatul ei.',pairs:[['Ctrl+D','face o copie a formei'],['Ctrl+G','unește formele selectate într-un grup'],['Gaură (Hole)','decupează din forma cu care e grupată'],['pătrățelele albe','schimbă mărimea formei']],ajutor:'D de la duplică, G de la grupează.',why:'Cu forme de bază, copii, găuri și grupări construiești aproape orice.'},
+   inca:[
+    {t:'choice',q:'Ai un cilindru-gaură în interiorul unui cilindru plin, dar nu s-a decupat nimic. Ce ai uitat?',o:['Să le grupezi cu Ctrl+G','Să apeși Ctrl+D','Să le colorezi la fel','Să le rotești'],ok:0,ajutor:'Gaura decupează doar din forma cu care e…',why:'Gaura decupează abia după ce o grupezi cu forma plină.'}
+   ]}
+ ],
+ atelier:{t:'order',titlu:'Construiește o cană în Tinkercad',
+  intro:`<p>Nu avem aici Tinkercad-ul adevărat, dar poți exersa <strong>ordinea gesturilor</strong> exact ca acolo, după strategia din pasul 5. Apoi fă cana de-adevăratelea la calculator.</p>`,
+  q:'Pune în ordine pașii pentru o cană (cilindru din care scoți un cilindru mai mic).',
+  items:['Tragi un cilindru pe planul de lucru','Ctrl+D: faci o copie a cilindrului','Micșorezi copia din pătrățelele albe','Tragi copia în mijlocul cilindrului mare','Treci copia pe Gaură (Hole) și o ridici puțin pe Z','Selectezi ambele forme și apeși Ctrl+G'],
+  ajutor:'Întâi forma plină, apoi copia, apoi gaura, iar gruparea la final.',why:'Gruparea vine ultima: abia atunci gaura decupează din cilindrul plin.',
+  inca:[
+   {t:'order',q:'Încă una: un ghiveci cu farfurioară. Pune pașii în ordine.',items:['Tragi un con răsturnat sau un cilindru pentru ghiveci','Ctrl+D, micșorezi copia și o tragi în mijlocul ghiveciului','Copia devine Gaură și o ridici puțin pe Z','Ctrl+G: grupezi ghiveciul cu gaura','Adaugi dedesubt un cilindru turtit, farfurioara'],ajutor:'Aceeași strategie ca la cană, iar farfurioara vine după ce ghiveciul e gata.',why:'Obiectul cu gol se face la fel: plin, copie, gaură, grupare.'},
+   {t:'classify',q:'Ce operație folosești?',cats:['Ctrl+D','Gaură (Hole)','Ctrl+G'],items:[['vrei încă un copac la fel',0],['vrei o fereastră decupată în perete',1],['vrei ca roțile și mașina să se miște împreună',2],['vrei 4 picioare la fel pentru masă',0]],ajutor:'Copie, decupare sau unire?',why:'Copie = Ctrl+D, decupare = gaură, unire într-un obiect = Ctrl+G.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Ce are în plus un model 3D față de un desen 2D?',o:['Adâncime','Culoare','Sunet','Mai mulți pixeli'],ok:0,why:'Și un desen 2D are culori și pixeli. A treia dimensiune, adâncimea, îți permite să rotești obiectul și să-l vezi din spate.'},
+  {t:'classify',q:'Formă plană (2D) sau corp (3D)?',cats:['2D','3D'],items:[['pătrat',0],['cub',1],['cerc',0],['sferă',1],['triunghi',0],['piramidă',1]],why:'Cubul e „pătratul cu adâncime”, sfera e „cercul cu adâncime”, piramida are fețe triunghiulare.'},
+  {t:'match',q:'Leagă operația din Tinkercad de rezultatul ei.',pairs:[['Ctrl+D','face o copie a formei'],['Ctrl+G','unește formele selectate într-un grup'],['Gaură (Hole)','decupează din forma cu care e grupată'],['pătrățelele albe','schimbă mărimea formei']],why:'Cu forme de bază, copii, găuri și grupări construiești aproape orice: o cană e un cilindru din care scoți un cilindru-gaură.'},
+  {t:'tf',q:'Textul 3D se poate roti și muta la fel ca un cub.',ok:true,why:'Adevărat. Textul 3D e tot un corp, doar că are forma literelor.'},
+  {t:'choice',q:'Un manual mai vechi îți cere să instalezi Paint 3D din Microsoft Store. Ce e adevărat?',o:['A fost scos din Store în 2024; folosești altă aplicație 3D','E cea mai nouă aplicație 3D, primită cu fiecare Windows','Face parte din Scratch și se deschide din fila Costume','E doar alt nume pentru Paint-ul obișnuit din Windows'],ok:0,why:'Microsoft a scos Paint 3D din Microsoft Store pe 4 noiembrie 2024. Pentru modele 3D folosim acum altă aplicație, de exemplu Tinkercad.'},
+  {t:'choice',q:'În Tinkercad ridici o formă mai sus. Care coordonată se schimbă?',o:['Z','X','Y','Niciuna'],ok:0,why:'În Tinkercad, X și Y sunt pe planul de lucru, iar Z este înălțimea. Când ridici forma, crește Z.'}
+ ]},
+
+/* ================= 8. Mini-proiect (lecția 34) ================= */
+{t:'Mini-proiect: De la floare la fruct',final:true,lectii:[34],continuturi:['Scenariul unei animații: compoziție, cadre, obiecte animate','Operații specifice de realizare a unei animații: efecte de mișcare, temporizare, efecte sonore','Controlul animației prin structuri de control sau de la tastatură'],
+ obiectiv:'planifici, construiești și testezi o animație completă, „De la floare la fruct”, pentru colegii de clasa a V-a.',
+ pasi:[
+  {t:'Scenariul proiectului',
+   text:`<p>Faci pentru colegii de clasa a V-a o animație în Scratch: <mark>„De la floare la fruct”</mark>. Întâi scenariul, după strategia din nivelul 3:</p>
+<ol><li><strong>Cine:</strong> personajul „Pom”, cu 4 costume (cadre): boboc, floare, floare cu albină, măr; și o albină.</li>
+<li><strong>Unde:</strong> un decor cu iarbă și cer.</li>
+<li><strong>Ce se întâmplă:</strong> între costume e o pauză de 2 secunde; albina glisează spre floare.</li>
+<li><strong>Ce se aude:</strong> un sunet când apare mărul.</li></ol>
 <p><strong>Controlul:</strong> tasta spațiu pornește din nou povestea.</p>
-<p><strong>La final:</strong> testezi, repari, salvezi proiectul <code>.sb3</code> și îl arăți pe ecran complet.</p>
-<p>Pentru bonus poți modela mărul și în 3D.</p>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-pom-costume.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-pom-costume.webp" alt="Fila Costume din Scratch: personajul Pom cu 4 costume, boboc, floare, floare cu albină și măr, încadrate ca 4 cadre" width="470" height="440" loading="lazy"></a>
-<figcaption>Personajul „Pom” cu cele 4 costume (cadre): boboc, floare, floare cu albină, măr.</figcaption></figure>
-<figure class="captura"><a href="../animatii-3d-vi/img/scratch-pom-scripturi.webp" target="_blank"><img src="../animatii-3d-vi/img/scratch-pom-scripturi.webp" alt="Scripturile Pomului: când se dă click pe steag și când tasta spațiu este apăsată, schimbă costumul la boboc, repetă 3 cu așteaptă 2 secunde și costumul următor, redă sunetul pop; pe scenă mărul" width="760" height="559" loading="lazy"></a>
-<figcaption>Steagul verde și tasta <b>spațiu</b> pornesc povestea: de 3 ori <em>așteaptă 2 secunde</em> și <em>costumul următor</em>, apoi sunetul. Pe scenă, ultimul cadru: mărul.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce bloc face pauza de 2 secunde între boboc și floare?',o:['așteaptă 2 secunde','glisează în 2 secunde','mergi 2 pași','repetă 2'],ok:0,why:'Pauza e temporizare, deci „așteaptă”. „glisează” ar muta Pomul, iar „repetă 2” ar face de două ori aceiași pași.'},
- {t:'order',q:'Pune în ordine etapele mini-proiectului.',items:['Scrii scenariul','Pregătești decorul și personajele','Construiești scripturile','Testezi și repari','Salvezi .sb3 și prezinți pe ecran complet'],why:'Planul vine primul, prezentarea la urmă. Nu prezinți o animație netestată.'},
- {t:'choice',q:'Cu ce bloc începi scriptul „tasta spațiu pornește din nou povestea”?',o:['când tasta spațiu este apăsată','când se dă click pe acest personaj','la infinit','dacă … atunci'],ok:0,why:'E un eveniment de la tastatură, deci un bloc „când tasta … este apăsată”, cu tasta spațiu aleasă din listă.'},
- {t:'tf',q:'Ca mărul să apară încet, poți porni cu efectul fantomă la 100 și să-l scazi treptat până la 0.',ok:true,why:'Adevărat. La 100 mărul nu se vede. Scăzând puțin câte puțin, de exemplu cu „repetă”, devine vizibil treptat.'},
- {t:'classify',q:'În ce aplicație faci fiecare parte?',cats:['Scratch','Tinkercad'],items:[['albina care zboară spre floare',0],['mărul pe care îl rotești din toate părțile',1],['tasta spațiu care pornește povestea',0],['numele clasei cu litere în relief',1]],why:'Scratch = animație 2D cu scripturi și taste. Tinkercad = modele 3D, inclusiv text cu grosime.'}
-]}
+${fig('scratch-pom-costume.webp',470,440,'Fila Costume din Scratch: personajul Pom cu 4 costume, boboc, floare, floare cu albină și măr, încadrate ca 4 cadre','Personajul „Pom” cu cele 4 costume (cadre).')}`,
+   incearca:{t:'choice',q:'Ce bloc face pauza de 2 secunde între boboc și floare?',o:['așteaptă 2 secunde','glisează în 2 secunde','mergi 2 pași','repetă 2'],ok:0,ajutor:'Pauza e temporizare.',why:'Pauza e „așteaptă”. „glisează” ar muta Pomul, iar „repetă 2” ar face de două ori aceiași pași.'}},
+  {t:'Scriptul Pomului',
+   text:`<p>Pomul are 4 costume, deci trece de <strong>3</strong> ori la costumul următor: boboc → floare → floare cu albină → măr. De aici <em>repetă 3</em>.</p>
+<ol><li><em>schimbă costumul la boboc</em>: la fiecare pornire, povestea începe de la primul cadru, chiar dacă data trecută s-a oprit la măr.</li>
+<li><em>repetă 3</em>, cu <em>așteaptă 2 secunde</em> și <em>costumul următor</em> în interior.</li>
+<li><em>redă sunetul pop până la final</em>, după repetă: se aude când a apărut mărul.</li></ol>
+${fig('scratch-pom-scripturi.webp',760,559,'Scripturile Pomului: când se dă click pe steag și când tasta spațiu este apăsată, schimbă costumul la boboc, repetă 3 cu așteaptă 2 secunde și costumul următor, redă sunetul pop; pe scenă mărul','Steagul verde și tasta <b>spațiu</b> pornesc povestea: de 3 ori <em>așteaptă 2 secunde</em> și <em>costumul următor</em>, apoi sunetul.')}`,
+   exemplu:`${pre('când se dă click pe steag\nschimbă costumul la boboc\nrepetă 3\n  așteaptă 2 secunde\n  costumul următor\nredă sunetul pop până la final')}`,
+   altfel:`<p>Ca la numărătoarea pe degete: între 4 degete sunt doar 3 spații. Între 4 cadre sunt 3 schimbări, deci <em>repetă 3</em>, nu <em>repetă 4</em>.</p>`,
+   incearca:{t:'choice',q:'De ce scriptul Pomului începe cu <em>schimbă costumul la boboc</em>?',o:['Ca povestea să înceapă mereu de la primul cadru','Ca Pomul să se mute în mijlocul scenei','Ca să se audă sunetul','Ca Pomul să devină invizibil'],ok:0,ajutor:'Punctul 1 din pas.',why:'Fără el, a doua oară povestea ar porni de la măr, unde se oprise.'},
+   inca:[
+    {t:'choice',q:'Pomul are 4 costume. De câte ori trebuie să se repete <em>costumul următor</em> ca să ajungi de la boboc la măr?',o:['3','4','2','5'],ok:0,ajutor:'Numără schimbările, nu cadrele.',why:'Între 4 cadre sunt 3 schimbări: boboc → floare → floare cu albină → măr.'}
+   ]},
+  {t:'Albina și tasta spațiu',
+   text:`<p><strong>Albina</strong> e un personaj separat, pentru că se mișcă (obiect animat). Scriptul ei: <em>când se dă click pe steag</em>, apoi <em>glisează în 2 secunde la x: … y: …</em>, cu x și y ale florii (le citești sub scenă, cu Pomul selectat).</p>
+<p><strong>Tasta spațiu</strong>: faci încă un script la Pom, identic, dar care începe cu <em>când tasta spațiu este apăsată</em>. Cel mai rapid: clic dreapta pe <strong>primul bloc de sub steag</strong> (<em>schimbă costumul la boboc</em>) → <strong>duplică</strong>: se copiază el și tot ce e sub el, fără steag. Lipești copia sub <em>când tasta spațiu este apăsată</em>. (Dacă duplici chiar blocul cu steagul, copia are și ea steagul, iar deasupra unui „când…” nu se poate pune nimic.)</p>
+<p>Bonus: mărul poate apărea încet, cu efectul fantomă pornit de la 100 și scăzut treptat.</p>`,
+   exemplu:`${pre('când tasta spațiu este apăsată\nschimbă costumul la boboc\nrepetă 3\n  așteaptă 2 secunde\n  costumul următor\nredă sunetul pop până la final')}`,
+   incearca:{t:'choice',q:'Cu ce bloc începi scriptul „tasta spațiu pornește din nou povestea”?',o:['când tasta spațiu este apăsată','când se dă click pe steag','repetă 3','așteaptă 2 secunde'],ok:0,ajutor:'Evenimentele încep cu „când”.',why:'E un eveniment de la tastatură, deci un bloc „când tasta … este apăsată”, cu tasta spațiu aleasă din listă.'},
+   inca:[
+    {t:'tf',q:'Ca mărul să apară încet, poți porni cu efectul fantomă la 100 și să-l scazi treptat până la 0.',ok:true,ajutor:'Fantomă 100 = nu se vede.',why:'Adevărat. La 100 mărul nu se vede; scăzând puțin câte puțin devine vizibil treptat.'}
+   ]},
+  {t:'Lista de control și predarea',
+   text:`<p>Înainte să-l arăți, treci proiectul prin <strong>lista de control</strong>:</p>
+<ol><li>Apeși steagul verde: apar toate cele 4 cadre, cu pauze, iar sunetul vine la măr?</li>
+<li>Albina ajunge la floare?</li>
+<li>Apeși <kbd>Spațiu</kbd>: povestea pornește iar de la boboc?</li>
+<li>Ceva nu merge? Depanezi: ce e greșit, care bloc, citești, repari, testezi iar.</li>
+<li><strong>Fișier › Salvează pe calculatorul tău</strong>, cu numele <code>Nume_Prenume_floare.sb3</code>.</li>
+<li>Îl arăți colegilor pe <strong>ecran complet</strong>.</li></ol>`,
+   incearca:{t:'order',q:'Pune în ordine etapele mini-proiectului.',items:['Scrii scenariul','Pregătești decorul și personajele','Construiești scripturile','Testezi și repari','Salvezi .sb3 și prezinți pe ecran complet'],ajutor:'Planul e primul, prezentarea ultima.',why:'Planul vine primul, prezentarea la urmă. Nu prezinți o animație netestată.'}}
+ ],
+ atelier:{t:'script',titlu:'Scriptul Pomului',personaj:'pom',
+  intro:`<p>Construiește scriptul Pomului din pasul 2. Pomul are 4 costume: boboc, floare, floare cu albină, măr (îl vezi pe scenă la primul cadru după <b>Steagul verde</b>). Apasă blocurile în ordine; după <em>repetă 3</em> blocurile intră singure în el, iar pe ultimul (sunetul) îl scoți cu ⇤. Apoi <b>Rulează testele</b>.</p>`,
+  q:'Construiește scriptul Pomului: boboc, de 3 ori pauză și costumul următor, apoi sunetul.',stare:{x:0,y:-40,c:4},
+  paleta:['steag','boboc','r3','r4','w2','next','pop','g2_150'],start:[],
+  solutie:[['steag',0],['boboc',0],['r3',0],['w2',1],['next',1],['pop',0]],
+  gresit:[['steag',0],['r3',0],['w2',1],['next',1],['pop',0]],
+  checks:[{hat:'steag',ce:'Scriptul pornește cu steagul verde'},{dupa:'steag',primul:'setcost',ce:'Povestea începe de la boboc (<em>schimbă costumul la boboc</em> e primul)'},{dupa:'steag',schimbariExact:3,final:{c:4},ce:'Costumul se schimbă de exact 3 ori și ajunge la măr'},{dupa:'steag',inRep:'wait',ce:'Fiecare schimbare are pauza ei (<em>așteaptă 2 secunde</em> în <em>repetă</em>)'},{dupa:'steag',ultimul:'sndw',ce:'Sunetul se aude la final, când a apărut mărul'},{dupa:'steag',fara:'glide',ce:'Pomul nu se mută din loc'}],
+  ajutor:'Ordinea: steag → schimbă costumul la boboc → repetă 3 → (așteaptă 2 secunde, costumul următor) → redă sunetul pop până la final, scos din repetă cu ⇤.',why:'Ai construit scriptul real al proiectului: exact aceleași blocuri le pui în Scratch.',
+  inca:[{t:'script',q:'Încă una: același script, dar pornit de <b>tasta spațiu</b>.',personaj:'pom',stare:{x:0,y:-40,c:4},paleta:['spatiu','steag','boboc','r3','w2','next','pop'],start:[],
+   solutie:[['spatiu',0],['boboc',0],['r3',0],['w2',1],['next',1],['pop',0]],gresit:[['spatiu',0],['boboc',0],['r4',0],['w2',1],['next',1],['pop',0]],
+   checks:[{hat:'spatiu',ce:'Scriptul pornește cu „când tasta spațiu este apăsată”'},{dupa:'spatiu',primul:'setcost',ce:'Începe de la boboc'},{dupa:'spatiu',schimbariExact:3,final:{c:4},ce:'Exact 3 schimbări, până la măr'},{dupa:'spatiu',ultimul:'sndw',ce:'Sunetul la final'}],
+   ajutor:'Doar evenimentul se schimbă: când tasta spațiu este apăsată.',why:'Același script sub alt eveniment: tasta spațiu repornește povestea.'}]},
+ qs:[
+  {t:'choice',q:'Ce bloc face pauza de 2 secunde între boboc și floare?',o:['așteaptă 2 secunde','glisează în 2 secunde','mergi 2 pași','repetă 2'],ok:0,why:'Pauza e temporizare, deci „așteaptă”. „glisează” ar muta Pomul, iar „repetă 2” ar face de două ori aceiași pași.'},
+  {t:'order',q:'Pune în ordine blocurile scriptului Pomului.',items:['când se dă click pe steag','schimbă costumul la boboc','repetă 3 (cu așteaptă 2 secunde și costumul următor)','redă sunetul pop până la final'],ajutor:'Evenimentul, pornirea de la boboc, schimbările, sunetul.',why:'Întâi evenimentul, apoi primul cadru, apoi cele 3 schimbări cu pauză, iar sunetul când a apărut mărul.'},
+  {t:'choice',q:'Cu ce bloc începi scriptul „tasta spațiu pornește din nou povestea”?',o:['când tasta spațiu este apăsată','când se dă click pe acest personaj','la infinit','dacă … atunci'],ok:0,why:'E un eveniment de la tastatură, deci un bloc „când tasta … este apăsată”, cu tasta spațiu aleasă din listă.'},
+  {t:'tf',q:'Albina se desenează în decor, pentru că apare doar puțin.',ok:false,ajutor:'Se mișcă în poveste?',why:'Fals. Albina glisează spre floare, deci e obiect animat: personaj separat, cu scriptul ei.'},
+  {t:'classify',q:'În ce aplicație faci fiecare parte?',cats:['Scratch','Tinkercad'],items:[['albina care zboară spre floare',0],['mărul pe care îl rotești din toate părțile',1],['tasta spațiu care pornește povestea',0],['numele clasei cu litere în relief',1]],why:'Scratch = animație 2D cu scripturi și taste. Tinkercad = modele 3D, inclusiv text cu grosime.'}
+ ]}
 ];
 
 JocMotor.porneste({
@@ -211,20 +935,27 @@ JocMotor.porneste({
   unitateTitlu:'Animații grafice și modele 3D',
   competente:['CS.1.2','CS.3.2','CS.3.3'],
   lectii:'27–34',
-  intro:'Opt niveluri despre animații: studioul Scratch, proiectul tău, scenariul și cadrele, proprietățile personajelor, mișcarea, timpul și sunetul, controlul de la tastatură și primele modele 3D. La fiecare nivel citești o pagină scurtă și răspunzi la întrebări. La final plănuiești o animație adevărată și îți iei diploma.',
+  intro:'Opt niveluri, de la „ce e Scratch” până la o animație întreagă făcută de tine, plus primele modele 3D. Nu trebuie să știi nimic dinainte: fiecare nivel te ia de mână, pas cu pas. Construiești scripturi din blocuri pe o scenă Scratch simulată, care îți arată pe loc ce face pisica, iar testele îți bifează ce e bine.',
+  cum:`<b>Cum lucrezi în fiecare nivel</b><ol>
+<li><b>Învață</b> — pași scurți, câte o idee, cu un exemplu și cu imagini din Scratch. Nu ai înțeles? Apasă „Explică-mi altfel”.</li>
+<li><b>Încearcă tu</b> — după fiecare pas, un exercițiu mic, fără note. Greșești? Primești un indiciu. Vrei să exersezi mai mult? „Încă un exercițiu”.</li>
+<li><b>Atelier</b> — lucrezi ca în Scratch: așezi pisica pe scenă din panoul ei sau construiești scriptul din blocuri și îl pornești cu steagul verde. <b>Testele</b> îți bifează ce ai făcut bine.</li>
+<li><b>Verificare</b> — câteva întrebări doar din ce ai învățat în pași. Stele pentru răspunsurile din prima.</li></ol>`,
   banda:BANDA,
   nivele:LEVELS,
+  tipuri:TIPURI_SIM,
   diploma:{
     titlu:'Regizor de animații',
     rezumat:'interfața Scratch, gestionarea proiectului, scenariul și cadrele, editarea compoziției și a proprietăților, mișcarea, temporizarea și sunetul, controlul de la tastatură și modelele 3D',
     aplicatie:'Scratch (iar pentru bonusul 3D, Tinkercad)',
     provocare:[
-      'Scrie în caiet scenariul „De la floare la fruct”: 4 cadre, cine apare și ce se aude.',
-      'În Scratch, fă personajul „Pom” cu 4 costume: boboc, floare, floare cu albină, măr.',
-      'Schimbă costumele cu pauze de 2 secunde, fă albina să gliseze spre floare și pune un sunet la apariția mărului.',
-      'Adaugă scriptul: când tasta spațiu este apăsată, povestea pornește din nou.',
-      'Testează, repară și salvează ca <code>Nume_Prenume_floare.sb3</code>.',
-      'Bonus: în Tinkercad, modelează un măr din sferă și cilindru.'
+      'Scrie în caiet scenariul „De la floare la fruct”, cu cei 4 pași: cine, unde, ce se întâmplă, ce se aude.',
+      'Deschide Scratch (scratch.mit.edu sau aplicația de pe calculator) și alege <b>Fișier › Nou</b>. Alege un decor cu iarbă din butonul de decor de sub coloana <b>Scenă</b>.',
+      'Fă personajul „Pom”: ține mouse-ul pe <b>Alege un personaj</b> și alege varianta de desen. În fila <b>Costume</b> desenează 4 costume (boboc, floare, floare cu albină, măr) cu <b>Pensulă</b> și <b>Umplere</b>; clic dreapta › <b>duplică</b> pe un costum te scutește să desenezi pomul de 4 ori.',
+      'În fila <b>Cod</b> construiește scriptul Pomului: <em>când se dă click pe steag</em>, <em>schimbă costumul la boboc</em>, <em>repetă 3</em> cu <em>așteaptă 2 secunde</em> și <em>costumul următor</em>, apoi <em>redă sunetul … până la final</em>. Apoi clic dreapta pe <em>schimbă costumul la boboc</em> › duplică și lipește copia sub <em>când tasta spațiu este apăsată</em>.',
+      'Adaugă albina și scriptul ei: <em>când se dă click pe steag</em>, <em>glisează în 2 secunde la x: … y: …</em> (x și y ale florii).',
+      'Testează cu steagul verde și cu <kbd>Spațiu</kbd>, repară ce nu merge, apoi <b>Fișier › Salvează pe calculatorul tău</b> ca <code>Nume_Prenume_floare.sb3</code> și arată-l pe ecran complet.',
+      'Bonus: în Tinkercad, un măr dintr-o sferă roșie și un cilindru subțire pentru codiță, grupate cu <kbd>Ctrl</kbd>+<kbd>G</kbd>.'
     ]
   }
 });

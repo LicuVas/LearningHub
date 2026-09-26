@@ -36,6 +36,10 @@
 h1{font-size:clamp(1.9rem,8.5vw,3.4rem);font-weight:850;letter-spacing:-.01em}
 h1 .acc{color:var(--accent);font-style:normal;font-weight:650}
 h2{font-weight:750}
+/* diapozitive mici desenate, pentru exemplele „Uite cum” (nu sunt capturi) */
+.mini-dz{max-width:340px;aspect-ratio:16/9;border:1px solid var(--line);border-radius:4px;background:#fff;color:#1F1F1F;padding:10px 14px;font-family:Arial,"Segoe UI",sans-serif;overflow:hidden;margin:6px 0 12px;box-shadow:0 2px 0 var(--line);text-align:left}
+.mini-dz b{display:block;font-size:1.15rem;margin-bottom:4px}
+.mini-dz ul{margin:0;padding-left:1.1em;font-size:.85rem;line-height:1.3}
 </style>
 </head>
 <body>
@@ -44,7 +48,7 @@ h2{font-weight:750}
 <script src="../_ghiduri/slides/pasi.js"></script>
 <script>
 /* Tipul de întrebare „diapozitiv”: elevul repară un diapozitiv (culori, mărimi, rânduri) și vede rezultatul pe loc.
-   Întrebare: {t:'diapozitiv', q, titlu, randuri:[...], start:{tx,bg,mt,ms}, verifica:['contrast','marime','randuri'], min, why}
+   Întrebare: {t:'diapozitiv', q, dz (titlul de pe diapozitiv; `titlu` rămâne pentru titlul atelierului), randuri:[...], start:{tx,bg,mt,ms}, verifica:['contrast','marime','randuri'], min, why}
    Verificare pe comportament: contrastul se CALCULEAZĂ din culorile alese (formula de luminanță WCAG, prag 4,5),
    mărimile se compară cu regulile din pagina de citit, cuvintele se numără pe fiecare rând păstrat.
    Nu există „răspunsul unic” memorat: orice combinație care respectă regulile e acceptată. */
@@ -91,7 +95,7 @@ function render(Q,body,api){
     const sw=(arr,key)=>arr.map(([n,c],i)=>`<button type="button" class="dz-sw ${i===st[key]?'on':''}" data-${key}="${i}" aria-pressed="${i===st[key]}"><i style="background:${c}"></i>${esc(n)}</button>`).join('');
     const sz=(arr,key)=>arr.map((v,i)=>`<button type="button" class="dz-sw ${i===st[key]?'on':''}" data-${key}="${i}" aria-pressed="${i===st[key]}">${v}</button>`).join('');
     body.innerHTML=`<div class="dz-wrap"><div class="dz-slide" role="img" aria-label="Diapozitivul, așa cum arată acum" style="background:${BG[st.bg][1]};color:${TXT[st.tx][1]}">
-        <div class="dz-t" style="--pt:${MT[st.mt]}">${esc(Q.titlu)}</div>
+        <div class="dz-t" style="--pt:${MT[st.mt]}">${esc(Q.dz||Q.titlu)}</div>
         <ul class="dz-l" style="--pt:${MS[st.ms]}">${Q.randuri.map((r,k)=>st.keep[k]?`<li>${esc(r)}</li>`:'').join('')}</ul>
       </div></div>
       <div class="dz-ctl">
@@ -161,151 +165,884 @@ function gresit(Q,body){
 return {render,rezolva,gresit,contrast,words};
 })();
 
+/* Tipul „ppt”: o fereastră PowerPoint SIMULATĂ (interfața în engleză, ca pe calculatorul de lucru; filele au și numele românesc).
+   Elevul face pașii din Q.sarcini, pe rând; fiecare pas se bifează când apasă ce trebuie. Verificarea e pe comportament:
+   pasul contează doar dacă gestul chiar a mers în simulator (Add Animation e gri fără obiect selectat, Save refuză un nume slab,
+   fundalul cere întâi Solid fill...). Q:{t:'ppt', q, sarcini:[{ce, t:'id emis', drum?:[id-uri de apăsat], unde?}], start?:{cur,tab,pozaPeste,tr,modificat}, why}.
+   Numele butoanelor = cele din capturile din img/ (PowerPoint în engleză); nu am pus butoane pe care nu le-am văzut sau nu le știu sigur. */
+const JocPPT=(function(){
+'use strict';
+const TABS=[['file','File','Fișier'],['home','Home','Pornire'],['insert','Insert','Inserare'],['design','Design','Proiectare'],['transitions','Transitions','Tranziții'],['animations','Animations','Animații'],['slideshow','Slide Show','Expunere diapozitive']];
+const RIB={
+  home:[['new-slide','New Slide'],['layout','Layout ▾'],['font-size','Font Size ▾','text'],['font-color','Font Color ▾','text'],['bold','B','text'],['shape-fill','Shape Fill ▾','forma'],['shape-outline','Shape Outline ▾','forma']],
+  insert:[['ins-table','Table'],['ins-pictures','Pictures'],['ins-shapes','Shapes'],['ins-textbox','Text Box'],['ins-link','Link'],['ins-audio','Audio']],
+  design:[['tema-1','Temă albă'],['tema-2','Temă bleumarin'],['tema-3','Temă verde'],['bg-styles','Background Styles ▾']],
+  transitions:[['tr-none','None'],['tr-morph','Morph'],['tr-fade','Fade'],['on-click','On Mouse Click','chk'],['after','After: 00:05','chk']],
+  animations:[['add-anim','Add Animation ▾','obj']],
+  slideshow:[['from-begin','From Beginning'],['from-current','From Current Slide'],['presenter','Use Presenter View','chk']]
+};
+const MENU={
+  file:{titlu:'File',items:[['f-new','New'],['f-open','Open'],['f-save','Save'],['f-saveas','Save As'],['f-close','Close']]},
+  layout:{titlu:'Layout',items:[['lay-title','Title Slide'],['lay-tc','Title and Content'],['lay-two','Two Content'],['lay-comp','Comparison'],['lay-to','Title Only'],['lay-blank','Blank']]},
+  'font-size':{titlu:'Font Size',sw:true,items:[['fs-12','12'],['fs-20','20'],['fs-28','28'],['fs-40','40']]},
+  'font-color':{titlu:'Font Color',sw:true,items:[['fc-negru','negru'],['fc-alb','alb'],['fc-galben','galben']],cul:{'fc-negru':'#1F1F1F','fc-alb':'#FFFFFF','fc-galben':'#F2C300'}},
+  'shape-fill':{titlu:'Shape Fill',sw:true,items:[['sf-rosu','roșu'],['sf-verde','verde'],['sf-galben','galben'],['sf-none','No Fill']],cul:{'sf-rosu':'#D62828','sf-verde':'#2E8B57','sf-galben':'#F2C300','sf-none':'transparent'}},
+  'shape-outline':{titlu:'Shape Outline',sw:true,items:[['so-negru','negru'],['so-rosu','roșu'],['so-none','No Outline']],cul:{'so-negru':'#1F1F1F','so-rosu':'#D62828','so-none':'transparent'}},
+  'bg-styles':{titlu:'Background Styles',items:[['format-bg','Format Background...']]},
+  'add-anim':{titlu:'Add Animation',groups:[['Entrance',[['an-appear','Appear'],['an-fade','Fade'],['an-flyin','Fly In']]],['Emphasis',[['an-pulse','Pulse'],['an-spin','Spin']]],['Exit',[['an-disappear','Disappear'],['an-flyout','Fly Out']]],['Motion Paths',[['an-lines','Lines'],['an-arcs','Arcs']]]]},
+  'ctx-thumb':{titlu:'Meniul miniaturii (clic dreapta)',items:[['ctx-new','New Slide'],['ctx-dup','Duplicate Slide'],['ctx-del','Delete Slide'],['ctx-hide','Hide Slide']]},
+  'ctx-obj':{titlu:'Meniul obiectului (clic dreapta)',items:[['ctx-front','Bring to Front'],['ctx-back','Send to Back']]}
+};
+const GRUP={};MENU['add-anim'].groups.forEach(([g,it])=>it.forEach(([id])=>GRUP[id]=g.toLowerCase().replace(/\s+/g,'')));
+const TEME=[{bg:'#FFFFFF',fg:'#1F1F1F'},{bg:'#1E3A5F',fg:'#FFFFFF'},{bg:'#E8F3EA',fg:'#1B3A24'}];
+const BGC=[['bgc-alb','alb','#FFFFFF'],['bgc-bleumarin','bleumarin','#1E3A5F'],['bgc-negru','negru','#111111']];
+const TIPF=[['tip-pptx','PowerPoint Presentation (*.pptx)','pptx'],['tip-pdf','PDF (*.pdf)','pdf'],['tip-odp','OpenDocument Presentation (*.odp)','odp']];
+const LBL={};
+TABS.forEach(([id,en,ro])=>LBL['tab-'+id]=`fila ${en} (${ro})`);
+Object.values(RIB).forEach(a=>a.forEach(([id,l])=>LBL[id]=l.replace(' ▾','')));
+Object.values(MENU).forEach(m=>{(m.items||[]).forEach(([id,l])=>LBL[id]=l);(m.groups||[]).forEach(([g,it])=>it.forEach(([id,l])=>LBL[id]=`${l} (${g})`))});
+BGC.forEach(([id,n])=>LBL[id]='culoarea '+n);TIPF.forEach(([id,l])=>LBL[id]=l);
+Object.assign(LBL,{bold:'B (Bold, aldin)','zona-panglica':'panglica','zona-miniaturi':'panoul cu miniaturi','zona-lucru':'zona de lucru','zona-note':'zona de note','bara-stare':'bara de stare',
+  'obj-titlu':'titlul','obj-text':'caseta cu rânduri','obj-poza':'poza','obj-forma':'săgeata','obj-tabel':'tabelul','obj-caseta':'caseta de text','obj-link':'legătura','obj-audio':'sunetul',
+  'k-next':'→ (înainte)','k-prev':'← (înapoi)','k-b':'B (ecran negru)','k-esc':'Esc (ieșire)','btn-save':'Save','btn-cancel':'Cancel','q-save':'Save','q-dont':'Don’t Save','q-cancel':'Cancel',
+  'solid-fill':'Solid fill','pane-close':'închiderea panoului','menu-close':'închiderea meniului','redeschide':'Redeschide','zona-dlg':'fereastra Save As','zona-show':'ecranul expunerii'});
+const label=id=>LBL[id]||(id.startsWith('mini-')?`miniatura diapozitivului ${id.slice(5)}`:id);
+const dark=hex=>{const c=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));return (0.299*c[0]+0.587*c[1]+0.114*c[2])<128};
+const strip=s=>String(s).replace(/<[^>]+>/g,'');
+const numeBun=n=>{n=String(n).trim();return n.length>=5&&!/\s/.test(n)&&/[_-]/.test(n)&&!/^(prezentare|presentation)\d*$/i.test(n)};
+const CSS=`.pp-root{max-width:680px;margin:0 auto}
+.pp{border:1px solid #AEB8BB;border-radius:6px;overflow:hidden;background:#F3F3F3;color:#222;font:13px/1.3 "Segoe UI",system-ui,sans-serif;text-align:left}
+.pp button{font:inherit;color:inherit;cursor:pointer;margin:0}
+.pp-bar{background:#B7472A;color:#fff;padding:4px 8px;font-size:12px;overflow-wrap:anywhere}
+.pp-tabs{display:flex;flex-wrap:wrap;gap:0 2px;padding:3px 3px 0;background:#fff}
+.pp-tab{border:0;border-bottom:3px solid transparent;background:none;padding:3px 6px;display:flex;flex-direction:column;align-items:flex-start;line-height:1.1}
+.pp-tab small{font-size:10px;color:#6B6B6B}
+.pp-tab.on{border-bottom-color:#B7472A}.pp-tab.on b{color:#B7472A}
+.pp-btns{display:flex;flex-wrap:wrap;gap:4px;padding:6px;background:#fff;border-bottom:1px solid #D0D0D0;min-height:24px}
+.pp-b{border:1px solid #D2D2D2;background:#FAFAFA;border-radius:3px;padding:5px 8px;overflow-wrap:anywhere}
+.pp-b.on{background:#FBE3DB;border-color:#B7472A}
+.pp-b.gri{color:#A0A0A0;border-style:dashed}
+.pp-b .bx{display:inline-block;width:13px;height:13px;border:1px solid #555;margin-right:5px;vertical-align:-2px;background:#fff;font-size:11px;line-height:12px;text-align:center}
+.pp-b.pp-prim{background:#B7472A;color:#fff;border-color:#B7472A}
+.pp-menu,.pp-dlg{background:#fff;border:1px solid #9E9E9E;margin:6px;box-shadow:0 2px 8px rgba(0,0,0,.18);padding:4px 4px 6px}
+.pp-mt{display:flex;justify-content:space-between;align-items:center;font-weight:700;padding:3px 6px;background:#F0F0F0;margin-bottom:4px}
+.pp-x{border:0;background:none;font-size:18px;line-height:1;padding:0 4px}
+.pp-mi{display:block;width:100%;text-align:left;border:0;background:none;padding:6px 8px;border-radius:3px;overflow-wrap:anywhere}
+.pp-mi:hover,.pp-mi.on{background:#FBE3DB}
+.pp-grid{display:flex;flex-wrap:wrap;gap:4px}
+.pp-grid .pp-mi{width:auto;border:1px solid #E0E0E0}
+.pp-gr{font-weight:700;font-size:12px;padding:4px 6px 2px;color:#444}
+.pp-c{display:inline-block;width:12px;height:12px;border:1px solid #777;margin-right:5px;vertical-align:-2px}
+.pp-dlg label{display:block;font-size:12px;margin:4px 4px 8px}
+.pp-in{display:block;width:100%;box-sizing:border-box;margin-top:3px;padding:5px 6px;border:1px solid #888;border-radius:2px;font:13px "Segoe UI",system-ui,sans-serif;color:#111;background:#fff}
+.pp-lbl{font-size:12px;margin:2px 4px}
+.pp-row2{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin-top:8px}
+.pp-dlg p{margin:4px 6px 8px}
+.pp-main{display:grid;grid-template-columns:58px minmax(0,1fr);gap:6px;padding:6px;background:#E4E4E4}
+.pp-thumbs{display:flex;flex-direction:column;gap:5px;min-width:0}
+.pp-th{display:flex;gap:2px;border:0;background:none;padding:0;align-items:flex-start;text-align:left}
+.pp-th i{font-style:normal;font-size:10px;width:11px;flex:none;display:flex;flex-direction:column;align-items:center}
+.pp-th i small{font-size:9px;color:#B7472A}
+.pp-mini{flex:1;min-width:0;aspect-ratio:16/9;border:1px solid #B5B5B5;font:5px/1.25 Arial,sans-serif;overflow:hidden;padding:2px}
+.pp-mini b{font-size:6px}
+.pp-th.on .pp-mini{outline:2px solid #B7472A}
+.pp-th.asc{opacity:.45}.pp-th.asc i{text-decoration:line-through}
+.pp-work{min-width:0}
+.pp-sw{container-type:inline-size;min-width:0}
+.pp-slide{position:relative;aspect-ratio:16/9;box-shadow:0 1px 3px rgba(0,0,0,.3);padding:4cqw 5cqw;overflow:hidden;font-family:Arial,sans-serif;line-height:1.2}
+.pp-o{position:relative;z-index:1;border:1px dashed transparent;padding:.2em .3em;cursor:pointer;overflow-wrap:anywhere}
+.pp-o.sel{border:1.5px dashed #B7472A;background-color:rgba(183,71,42,.06)}
+.pp-titlu{--pt:40;font-size:calc(var(--pt) * 100cqw / 640);margin-bottom:1.5cqw}
+.pp-text{--pt:24;font-size:calc(var(--pt) * 100cqw / 640)}
+.pp-text ul{margin:0;padding-left:1.1em}
+.lay-title .pp-titlu{text-align:center;margin-top:12cqw}
+.pp-ph{color:#8A8A8A;font-style:italic}
+.pp-rowo{display:flex;flex-wrap:wrap;gap:2cqw;margin-top:2cqw;align-items:flex-start}
+.pp-two{display:grid;grid-template-columns:1fr 1fr;gap:3cqw}
+.pp-poza{width:20cqw;aspect-ratio:1;background:conic-gradient(#333 25%,#EEE 0 50%,#333 0 75%,#EEE 0) 0 0/25% 25%;border:1px solid #333}
+.pp-forma{width:18cqw}.pp-forma svg{display:block;width:100%;height:auto}
+.pp-tabel table{border-collapse:collapse;font-size:2.4cqw}.pp-tabel td{border:1px solid currentColor;padding:.3em .8em}
+.pp-caseta,.pp-link,.pp-audio{font-size:3.2cqw}
+.pp-an{position:absolute;top:-1px;left:-1px;background:#B7472A;color:#fff;font:700 9px/1 sans-serif;padding:2px 3px;z-index:5}
+.pp-notes{background:#fff;border-top:1px solid #C8C8C8;padding:5px 8px;font-size:12px;color:#444;min-height:24px;cursor:pointer}
+.pp-status{display:flex;justify-content:space-between;gap:8px;background:#EDEDED;border-top:1px solid #C8C8C8;padding:3px 8px;font-size:11px;cursor:pointer;overflow-wrap:anywhere}
+.pp-show{background:#000;color:#fff;padding:8px}
+.pp-sh-top{font-size:11px;color:#BDBDBD;margin-bottom:6px}
+.pp-sh-negru{aspect-ratio:16/9;background:#000;border:1px solid #333;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;color:#DDD}
+.pp-show .pp-o{cursor:default}
+.pp-pv{margin-top:6px;padding:6px 8px;background:#1E1E1E;border:1px solid #444;font-size:12px}
+.pp-keys{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pp .pp-key{font-family:Consolas,monospace;background:#F5F5F5;color:#111;border-radius:4px;padding:5px 11px;border:1px solid #999;border-bottom-width:3px}
+.pp-gol{padding:22px 12px;text-align:center;background:#fff}
+.pp-msg{margin:10px 0 4px;padding:7px 10px;border-radius:6px;background:var(--paper2);border:1px solid var(--line);font-size:.93rem;min-height:1.4em}
+.pp-lista{margin-top:8px}
+.pp-pasi{margin:4px 0 8px;padding-left:1.5em}
+.pp-pasi li{margin:3px 0;color:var(--ink2)}
+.pp-pasi li.acum{color:var(--ink);font-weight:700}
+.pp-pasi li.gata{color:var(--ok)}
+.pp-pasi li.gata::marker{content:"✓  "}`;
+
+function deck(){return [
+  {titlu:'Șahul',text:['Regulile de bază','Ana Pop, clasa a VI-a A'],lay:'title',obj:[],note:'Salut! Azi vă prezint șahul.'},
+  {titlu:'Tabla și piesele',text:['Tabla are 64 de pătrățele','Fiecare jucător are 16 piese','Albul mută primul'],lay:'tc',obj:['poza'],note:'Spun că tabla are 8 rânduri și 8 coloane.'},
+  {titlu:'Cum câștigi',text:['Regele atacat e în șah','Șah-mat: regele nu mai scapă'],lay:'tc',obj:['forma'],note:'Arăt pe tablă un șah-mat simplu.'},
+  {titlu:'Surse',text:['Manualul de informatică, clasa a VI-a','Clubul de șah al școlii'],lay:'tc',obj:[],note:''}
+].map(s=>Object.assign({hidden:false,tr:null,anim:{},bg:null,jos:{},fill:null,outline:null,f:{},peste:false},s))}
+function nou(){return {titlu:'',text:[],lay:'tc',obj:[],note:'',hidden:false,tr:null,anim:{},bg:null,jos:{},fill:null,outline:null,f:{},peste:false}}
+function init(Q){
+  const s0=Q.start||{};
+  const S={tab:s0.tab||'home',menu:null,pane:null,dlg:false,ask:false,closing:false,inchis:false,sel:null,cur:s0.cur||0,slides:deck(),show:null,black:false,
+    tip:'pptx',nume:'Presentation1',salvat:null,modificat:!!s0.modificat,chk:{'on-click':true,after:false,presenter:false},tema:0,solid:false,step:0,msg:''};
+  if(s0.pozaPeste){const sl=S.slides[S.cur];sl.peste=true;if(!sl.obj.includes('poza'))sl.obj.push('poza')}
+  if(s0.tr)S.slides[S.cur].tr=s0.tr;
+  return S;
+}
+function nextVis(S,i,d){while(i>=0&&i<S.slides.length){if(!S.slides[i].hidden)return i;i+=d}return -1}
+
+/* un gest în simulator: întoarce id-urile „emise” (ce s-a întâmplat) sau false, dacă gestul nu merge (cu S.msg = de ce) */
+function act(S,id){
+  const sl=S.slides[S.cur];
+  const blocat=m=>{S.msg=m;return false};
+  if(id==='redeschide'){S.inchis=false;S.salvat=S.salvat;return [id]}
+  if(S.inchis)return blocat('Prezentarea e închisă. Apasă „Redeschide”.');
+  if(S.show!==null){
+    if(id==='k-esc'||(id==='zona-show'&&S.show==='end')){S.show=null;S.black=false;return ['k-esc']}
+    if(id==='k-b'){if(S.show==='end')return [id];S.black=!S.black;return [id,S.black?'negru-on':'negru-off']}
+    if(id==='k-next'){if(S.show!=='end'){const n=nextVis(S,S.show+1,1);S.show=n<0?'end':n}S.black=false;return [id]}
+    if(id==='k-prev'){const p=S.show==='end'?nextVis(S,S.slides.length-1,-1):nextVis(S,S.show-1,-1);if(p>=0)S.show=p;S.black=false;return [id]}
+    return blocat('Ești în expunere: folosește tastele de sub ecran. Esc te scoate.');
+  }
+  if(S.dlg){
+    if(id.startsWith('tip-')){S.tip=id.slice(4);return [id]}
+    if(id==='btn-cancel'){S.dlg=false;S.closing=false;return [id]}
+    if(id==='btn-save'){
+      if(!numeBun(S.nume))return blocat('Numele nu e bun încă. Un nume bun spune subiectul, clasa și numele tău, despărțite cu _ și fără spații, de exemplu Sahul_6A_Pop.');
+      S.dlg=false;S.salvat=S.nume.trim()+'.'+S.tip;S.modificat=false;S.msg=`Salvat: ${S.salvat}.`;
+      const r=[id,'salvat-'+S.tip];if(S.closing){S.closing=false;S.inchis=true;r.push('inchis')}return r;
+    }
+    if(id==='zona-dlg')return [id];
+    return blocat('Fereastra Save As e deschisă: termin-o întâi (Save sau Cancel).');
+  }
+  if(S.ask){
+    if(id==='q-save'){S.ask=false;if(S.salvat){S.inchis=true;S.modificat=false;return [id,'salvat-'+S.tip,'inchis']}S.dlg=true;S.closing=true;return [id]}
+    if(id==='q-dont'){S.ask=false;S.inchis=true;S.msg='Închis fără salvare: modificările s-au pierdut.';return [id,'inchis']}
+    if(id==='q-cancel'){S.ask=false;return [id]}
+    return blocat('Răspunde întâi la întrebare: Save, Don’t Save sau Cancel.');
+  }
+  if(id.startsWith('tab-')){S.tab=id.slice(4);S.menu=S.tab==='file'?'file':null;S.pane=null;return [id]}
+  if(id==='menu-close'){if(S.menu==='file')S.tab='home';S.menu=null;return [id]}
+  if(id.startsWith('mini-')){S.cur=+id.slice(5)-1;S.sel=null;S.menu='ctx-thumb';return [id,'meniu-mini']}
+  if(id.startsWith('obj-')){const o=id.slice(4);if(S.sel===o){S.menu='ctx-obj';return [id,'meniu-obj']}S.sel=o;S.menu=null;return [id]}
+  if(id==='zona-lucru'){S.sel=null;S.menu=null;return [id]}
+  if(['zona-panglica','zona-miniaturi','zona-note','bara-stare'].includes(id)){S.menu=null;return [id]}
+  if(gri(S,id))return blocat(`Butonul ${label(id)} e gri: ${ce_lipseste(id)}`);
+  if(MENU[id]&&id!=='file'){S.menu=S.menu===id?null:id;return [id]}
+  S.menu=S.menu&&(id.startsWith('ctx-')||MENU[S.menu].items&&MENU[S.menu].items.some(x=>x[0]===id)||MENU[S.menu].groups)?null:S.menu;
+  const fo=S.sel&&(sl.f[S.sel]=sl.f[S.sel]||{});
+  if(id==='bold'){fo.b=!fo.b;S.modificat=true;return [id]}
+  if(id.startsWith('fs-')){fo.fs=+id.slice(3);S.menu=null;S.modificat=true;return [id]}
+  if(id.startsWith('fc-')){fo.fc=MENU['font-color'].cul[id];S.menu=null;S.modificat=true;return [id]}
+  if(id.startsWith('sf-')){sl.fill=MENU['shape-fill'].cul[id];S.menu=null;S.modificat=true;return [id]}
+  if(id.startsWith('so-')){sl.outline=MENU['shape-outline'].cul[id];S.menu=null;S.modificat=true;return [id]}
+  if(id==='new-slide'||id==='ctx-new'){S.slides.splice(S.cur+1,0,nou());S.cur++;S.sel=null;S.menu=null;S.modificat=true;return [id,'slide-nou']}
+  if(id==='ctx-dup'){S.slides.splice(S.cur+1,0,JSON.parse(JSON.stringify(sl)));S.cur++;S.menu=null;S.modificat=true;return [id]}
+  if(id==='ctx-del'){if(S.slides.length<2)return blocat('Nu poți șterge singurul diapozitiv.');S.slides.splice(S.cur,1);S.cur=Math.min(S.cur,S.slides.length-1);S.menu=null;S.modificat=true;return [id]}
+  if(id==='ctx-hide'){sl.hidden=!sl.hidden;S.menu=null;S.modificat=true;return [id,sl.hidden?'ascuns':'vizibil']}
+  if(id==='ctx-back'||id==='ctx-front'){if(S.sel)sl.jos[S.sel]=id==='ctx-back';S.menu=null;S.modificat=true;return [id]}
+  if(id.startsWith('lay-')){sl.lay=id.slice(4);S.menu=null;S.modificat=true;return [id]}
+  if(id.startsWith('ins-')){const o={'ins-table':'tabel','ins-pictures':'poza','ins-shapes':'forma','ins-textbox':'caseta','ins-link':'link','ins-audio':'audio'}[id];
+    if(!sl.obj.includes(o))sl.obj.push(o);S.sel=o;S.modificat=true;return [id]}
+  if(id.startsWith('tema-')){S.tema=+id.slice(5)-1;S.slides.forEach(s=>s.bg=null);S.modificat=true;return [id]}
+  if(id==='format-bg'){S.pane='fundal';S.menu=null;return [id]}
+  if(id==='solid-fill'){S.solid=true;return [id]}
+  if(id.startsWith('bgc-')){if(!S.solid)return blocat('Alege întâi Solid fill (umplere solidă), apoi culoarea.');sl.bg=BGC.find(b=>b[0]===id)[2];S.modificat=true;return [id]}
+  if(id==='pane-close'){S.pane=null;return [id]}
+  if(id.startsWith('tr-')){sl.tr=id;S.modificat=true;return [id]}
+  if(id==='on-click'||id==='after'||id==='presenter'){S.chk[id]=!S.chk[id];S.modificat=true;return [id,id+(S.chk[id]?'-on':'-off')]}
+  if(id.startsWith('an-')){sl.anim[S.sel]=id;S.menu=null;S.modificat=true;return [id,'an-'+GRUP[id]]}
+  if(id==='from-begin'){const f=nextVis(S,0,1);S.show=f<0?'end':f;S.menu=null;S.black=false;return [id]}
+  if(id==='from-current'){S.show=S.cur;S.menu=null;S.black=false;return [id]}
+  if(id==='f-saveas'){S.dlg=true;S.menu=null;S.tab='home';return [id]}
+  if(id==='f-save'){S.menu=null;S.tab='home';
+    if(S.salvat){S.modificat=false;S.msg=`Salvat din nou în ${S.salvat}, fără nicio întrebare.`;return [id,'salvat-'+S.tip]}
+    S.dlg=true;S.msg='Prima salvare: aplicația te întreabă sub ce nume și în ce format.';return [id]}
+  if(id==='f-close'){S.menu=null;S.tab='home';if(S.modificat){S.ask=true;return [id]}S.inchis=true;return [id,'inchis']}
+  if(id==='f-new'){S.menu=null;S.tab='home';S.msg='În aplicația reală se deschide o prezentare nouă, goală, într-o fereastră nouă.';return [id]}
+  if(id==='f-open'){S.menu=null;S.tab='home';S.msg='În aplicația reală alegi acum fișierul dintr-un folder.';return [id]}
+  return [id];
+}
+function gri(S,id){
+  const need={'font-size':'text','font-color':'text',bold:'text','shape-fill':'forma','shape-outline':'forma','add-anim':'obj'}[id];
+  if(need==='text')return !['titlu','text','caseta'].includes(S.sel);
+  if(need==='forma')return S.sel!=='forma';
+  if(need==='obj')return !S.sel;
+  return false;
+}
+function ce_lipseste(id){
+  return {'font-size':'selectează întâi un text de pe diapozitiv (titlul sau rândurile).','font-color':'selectează întâi un text de pe diapozitiv.',bold:'selectează întâi un text.',
+    'shape-fill':'selectează întâi o formă (săgeata).','shape-outline':'selectează întâi o formă (săgeata).','add-anim':'selectează întâi un obiect de pe diapozitiv.'}[id]||'';
+}
+
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function forma(sl){const f=sl.fill||'#2F6DB5',o=sl.outline||'#1F3F6B';
+  return `<svg viewBox="0 0 100 50" aria-hidden="true"><polygon points="2,16 60,16 60,3 98,25 60,47 60,34 2,34" fill="${f==='transparent'?'none':f}" stroke="${o==='transparent'?'none':o}" stroke-width="3"/></svg>`}
+function slideHTML(S,k,inter){
+  const sl=S.slides[k],T=TEME[S.tema],bg=sl.bg||T.bg,fg=sl.bg?(dark(sl.bg)?'#FFFFFF':'#1F1F1F'):T.fg;
+  const OBJ={poza:'',forma:forma(sl),tabel:'<table><tr><td>Piesa</td><td>Câte</td></tr><tr><td>Pion</td><td>8</td></tr></table>',caseta:'Text nou',link:'<u>www.exemplu.ro</u>',audio:'♪ sunet'};
+  const O=(n,inner,extra='')=>{const f=sl.f[n]||{};
+    const st=`${f.fs?`--pt:${f.fs};`:''}${f.fc?`color:${f.fc};`:''}${f.b?'font-weight:700;':''}${extra}`;
+    const an=inter&&S.tab==='animations'&&sl.anim[n]?'<span class="pp-an">1</span>':'';
+    const sel=inter&&k===S.cur&&S.sel===n?' sel':'';
+    return `<div class="pp-o pp-${n}${sel}"${inter?` data-t="obj-${n}" role="button" tabindex="0" aria-label="${label('obj-'+n)}"`:''}${st?` style="${st}"`:''}>${an}${inner}</div>`};
+  const lista=sl.text.length?`<ul>${sl.text.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<span class="pp-ph">Click to add text</span>';
+  const titlu=sl.lay==='blank'?'':O('titlu',sl.titlu?esc(sl.titlu):'<span class="pp-ph">Click to add title</span>');
+  const objs=sl.obj.filter(n=>!(n==='poza'&&sl.peste)).map(n=>O(n,OBJ[n])).join('');
+  let corp='';
+  if(sl.lay==='title')corp=O('text',sl.text.map(esc).join('<br>')||'<span class="pp-ph">Click to add subtitle</span>','text-align:center');
+  else if(sl.lay==='tc')corp=O('text',lista)+(objs?`<div class="pp-rowo">${objs}</div>`:'');
+  else if(sl.lay==='two'||sl.lay==='comp')corp=`<div class="pp-two">${O('text',lista)}<div>${objs||'<span class="pp-ph">Click to add text</span>'}</div></div>`;
+  else corp=objs?`<div class="pp-rowo">${objs}</div>`:'';
+  const peste=sl.peste&&sl.obj.includes('poza')?O('poza','',`position:absolute;left:4%;top:3%;width:92%;height:46%;aspect-ratio:auto;z-index:${sl.jos.poza?0:3}`):'';
+  return `<div class="pp-slide lay-${sl.lay}" style="background:${bg};color:${fg}">${peste}${titlu}${corp}</div>`;
+}
+function menuHTML(S){
+  const m=MENU[S.menu];if(!m)return '';
+  const tit=S.menu==='ctx-thumb'?`Meniul miniaturii ${S.cur+1} (clic dreapta)`:m.titlu;
+  let h=`<div class="pp-menu" role="menu"><div class="pp-mt"><span>${tit}</span><button type="button" class="pp-x" data-t="menu-close" aria-label="Închide meniul">×</button></div>`;
+  if(m.groups)h+=m.groups.map(([g,it])=>`<div class="pp-gr">${g}</div><div class="pp-grid">${it.map(([id,l])=>`<button type="button" class="pp-mi" data-t="${id}">${l}</button>`).join('')}</div>`).join('');
+  else h+=`<div class="${m.sw?'pp-grid':''}">${m.items.map(([id,l])=>`<button type="button" class="pp-mi" data-t="${id}">${m.cul?`<i class="pp-c" style="background:${m.cul[id]}"></i>`:''}${l}</button>`).join('')}</div>`;
+  return h+'</div>';
+}
+function appHTML(S){
+  const titluF=(S.salvat||'Presentation1')+' - PowerPoint';
+  if(S.inchis)return `<div class="pp"><div class="pp-bar">PowerPoint</div><div class="pp-gol">Prezentarea s-a închis.${S.salvat?` Fișierul <b>${esc(S.salvat)}</b> e salvat pe disc.`:''}<br><br><button type="button" class="pp-b" data-t="redeschide">Redeschide</button></div></div>`;
+  const sl=S.slides[S.cur];
+  const tabs=TABS.map(([id,en,ro])=>`<button type="button" class="pp-tab${S.tab===id?' on':''}" data-t="tab-${id}" aria-pressed="${S.tab===id}"><b>${en}</b><small>${ro}</small></button>`).join('');
+  const rib=S.tab==='file'?'<span style="color:#777;padding:4px">Fila File deschide lista de mai jos.</span>':RIB[S.tab].map(([id,l,k])=>{
+    if(k==='chk')return `<button type="button" class="pp-b${S.chk[id]?' on':''}" data-t="${id}" aria-pressed="${!!S.chk[id]}"><span class="bx">${S.chk[id]?'✓':''}</span>${l}</button>`;
+    const on=S.menu===id||(id.startsWith('tr-')&&sl.tr===id)||(id.startsWith('tema-')&&S.tema===+id.slice(5)-1);
+    return `<button type="button" class="pp-b${gri(S,id)?' gri':''}${on?' on':''}" data-t="${id}">${id==='bold'?'<b>B</b>':l}</button>`}).join('');
+  const pane=S.pane==='fundal'?`<div class="pp-menu"><div class="pp-mt"><span>Format Background</span><button type="button" class="pp-x" data-t="pane-close" aria-label="Închide panoul">×</button></div>
+    <div class="pp-gr">Fill</div><button type="button" class="pp-mi${S.solid?' on':''}" data-t="solid-fill">${S.solid?'◉':'○'} Solid fill</button>
+    <div class="pp-gr">Color</div><div class="pp-grid">${BGC.map(([id,n,c])=>`<button type="button" class="pp-mi" data-t="${id}"><i class="pp-c" style="background:${c}"></i>${n}</button>`).join('')}</div></div>`:'';
+  const dlg=S.dlg?`<div class="pp-dlg" data-t="zona-dlg"><div class="pp-mt"><span>Save As</span></div>
+    <label>File name<input type="text" class="pp-in" value="${esc(S.nume)}" spellcheck="false" autocomplete="off" aria-label="File name, numele fișierului"></label>
+    <div class="pp-lbl">Save as type</div>${TIPF.map(([id,l,x])=>`<button type="button" class="pp-mi${S.tip===x?' on':''}" data-t="${id}">${S.tip===x?'◉':'○'} ${l}</button>`).join('')}
+    <div class="pp-row2"><button type="button" class="pp-b pp-prim" data-t="btn-save">Save</button><button type="button" class="pp-b" data-t="btn-cancel">Cancel</button></div></div>`:'';
+  const ask=S.ask?`<div class="pp-dlg"><p>Want to save your changes? <small>(Salvezi modificările?)</small></p><div class="pp-row2"><button type="button" class="pp-b pp-prim" data-t="q-save">Save</button><button type="button" class="pp-b" data-t="q-dont">Don’t Save</button><button type="button" class="pp-b" data-t="q-cancel">Cancel</button></div></div>`:'';
+  let main;
+  if(S.show!==null){
+    let ec;
+    if(S.black)ec='<div class="pp-sh-negru" aria-label="Ecran negru"></div>';
+    else if(S.show==='end')ec='<div class="pp-sh-negru">End of slide show, click to exit.<br>(Sfârșitul expunerii: Esc ca să ieși.)</div>';
+    else ec=`<div class="pp-sw">${slideHTML(S,S.show,false)}</div>`;
+    const nr=S.show==='end'?'sfârșitul expunerii':`diapozitivul ${S.show+1} din ${S.slides.length}`;
+    const pv=S.chk.presenter&&S.show!=='end'?`<div class="pp-pv"><b>Presenter View</b>, doar pe ecranul tău. Notele: „${esc(S.slides[S.show].note||'(fără note)')}”</div>`:'';
+    const keys=[['k-prev','←'],['k-next','→ / Enter'],['k-b','B'],['k-esc','Esc']].map(([id,l])=>`<button type="button" class="pp-key" data-t="${id}" aria-label="${label(id)}">${l}</button>`).join('');
+    main=`<div class="pp-show" data-t="zona-show"><div class="pp-sh-top">Expunere pe tot ecranul · ${nr}</div>${ec}${pv}<div class="pp-keys">${keys}</div></div>`;
+  }else{
+    const th=S.slides.map((s,k)=>{const bg=s.bg||TEME[S.tema].bg,fg=s.bg?(dark(s.bg)?'#fff':'#1F1F1F'):TEME[S.tema].fg;
+      return `<button type="button" class="pp-th${k===S.cur?' on':''}${s.hidden?' asc':''}" data-t="mini-${k+1}" aria-label="Miniatura diapozitivului ${k+1}${s.hidden?', ascuns':''}"><i>${k+1}${s.tr&&s.tr!=='tr-none'?'<small>★</small>':''}</i><span class="pp-mini" style="background:${bg};color:${fg}"><b>${esc(s.titlu||'')}</b>${s.text.slice(0,3).map(x=>'<br>'+esc(x)).join('')}</span></button>`}).join('');
+    main=`<div class="pp-main"><div class="pp-thumbs" data-t="zona-miniaturi">${th}</div><div class="pp-work" data-t="zona-lucru"><div class="pp-sw">${slideHTML(S,S.cur,true)}</div></div></div>
+      <div class="pp-notes" data-t="zona-note">${sl.note?esc(sl.note):'<span class="pp-ph">Click to add notes</span>'}</div>
+      <div class="pp-status" data-t="bara-stare"><span>Slide ${S.cur+1} of ${S.slides.length}</span><span>English (United States)</span></div>`;
+  }
+  return `<div class="pp"><div class="pp-bar">${esc(titluF)}</div><div data-t="zona-panglica"><div class="pp-tabs">${tabs}</div><div class="pp-btns">${rib}</div></div>${S.menu?menuHTML(S):''}${pane}${dlg}${ask}${main}</div>`;
+}
+
+function render(Q,body,api){
+  if(!document.getElementById('tip-ppt-css')){const s=document.createElement('style');s.id='tip-ppt-css';s.textContent=CSS;document.head.appendChild(s)}
+  let S=init(Q);const n=Q.sarcini.length;
+  body.innerHTML=`<div class="pp-root"><div class="pp-app"></div><div class="pp-msg" aria-live="polite"></div>
+    <div class="pp-lista"><div class="lbl">Pașii tăi (se bifează singuri)</div><ol class="pp-pasi"></ol></div>
+    <button type="button" class="btn ghost sm pp-reset">Ia-o de la capăt</button></div>`;
+  const app=body.querySelector('.pp-app'),msg=body.querySelector('.pp-msg'),ol=body.querySelector('.pp-pasi');
+  function side(){
+    ol.innerHTML=Q.sarcini.map((s,i)=>`<li class="${i<S.step?'gata':i===S.step?'acum':''}">${s.ce}</li>`).join('');
+    msg.innerHTML=S.msg?esc(S.msg):(S.step<n?'Fă pasul scris îngroșat în listă.':'Toți pașii sunt făcuți. Apasă „Verifică”.');
+  }
+  function draw(){app.innerHTML=appHTML(S);side()}
+  function advance(ids){const s=Q.sarcini[S.step];if(s&&ids.includes(s.t)){S.step++;S.msg=`✓ ${strip(s.ce)}.`+(S.step===n?' Toți pașii sunt făcuți: apasă „Verifică”.':'');return true}return false}
+  function gest(el){
+    const ids=[];let p=el;while(p&&p!==app){if(p.dataset&&p.dataset.t)ids.push(p.dataset.t);p=p.parentElement}
+    if(!ids.length)return;
+    S.msg='';const r=act(S,ids[0]);
+    if(r!==false&&!advance(r.concat(ids.slice(1)))&&!S.msg)S.msg=`Ai apăsat: ${label(ids[0])}.`;
+    draw();
+  }
+  app.addEventListener('click',e=>{if(api.done()||e.target.closest('.pp-in'))return;const el=e.target.closest('[data-t]');if(el&&app.contains(el))gest(el)});
+  app.addEventListener('contextmenu',e=>{const el=e.target.closest('[data-t^="mini-"],[data-t^="obj-"]');if(!el||api.done())return;e.preventDefault();
+    if(el.dataset.t.startsWith('obj-'))S.sel=el.dataset.t.slice(4);gest(el)});   // clic dreapta adevărat, pe calculator
+  app.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-t]')){e.preventDefault();gest(e.target)}});
+  app.addEventListener('input',e=>{if(!e.target.classList.contains('pp-in'))return;S.nume=e.target.value;S.msg='';
+    if(numeBun(S.nume)){if(!advance(['nume']))S.msg='Numele e bun.'}else S.msg='Un nume bun: subiect, clasă, nume, despărțite cu _ (fără spații).';side()});
+  body.querySelector('.pp-reset').onclick=()=>{if(api.done())return;S=init(Q);draw()};
+  draw();
+  const nav=api.checkButton(()=>{
+    if(S.step>=n){nav.innerHTML='';api.resolve(true);return}
+    const s=Q.sarcini[S.step];
+    api.resolve(false,`Ai făcut ${S.step} din ${n} pași. Urmează: ${strip(s.ce)}.${s.unde?' '+s.unde:''}`);
+    api.revealButton(()=>{S=init(Q);draw();faPasii(Q,app,n);nav.innerHTML='';
+      api.giveUp('pașii s-au făcut acum în simulator, unul câte unul: '+Q.sarcini.map(x=>strip(x.ce)).join(' → ')+'.')});
+  });
+}
+function faPasii(Q,app,k){
+  for(let i=0;i<k;i++){const s=Q.sarcini[i];
+    for(const id of (s.drum||[s.t])){
+      if(id==='nume'){const inp=app.querySelector('.pp-in');if(inp){inp.value=s.valoare||'Sahul_6A_Pop';inp.dispatchEvent(new Event('input',{bubbles:true}))}continue}
+      const el=app.querySelector(`[data-t="${id}"]`);if(el)el.click();
+    }}
+}
+function rezolva(Q,body){faPasii(Q,body.querySelector('.pp-app'),Q.sarcini.length)}
+/* greșeala tipică: se oprește înainte de ultimul pas (de ex. deschide meniul, dar nu alege efectul) */
+function gresit(Q,body){faPasii(Q,body.querySelector('.pp-app'),Q.sarcini.length-1)}
+return {render,rezolva,gresit};
+})();
+
+/* ---------------- ajutoare pentru pași ---------------- */
+const IMG={fereastra:[1000,699],'fereastra-zone':[1000,581],'salvare-ca-formate':[890,620],'aspect-machete':[660,510],'meniu-miniatura':[450,630],'obiect-manere':[440,240],
+  'marime-culoare-text':[276,246],'contrast-inainte-dupa':[685,834],'umplere-contur-butoane':[640,125],'umplere-contur':[700,660],'fundal-proiectare':[322,726],
+  'fila-tranzitii':[218,116],'animatii-familii':[545,805],'fila-expunere':[192,203],'avansare-automata':[400,125],'diapozitiv-sah':[1000,529]};
+const fig=(f,alt,cap)=>`<figure class="captura"><a href="../prezentari-vi/img/${f}.webp" target="_blank"><img src="../prezentari-vi/img/${f}.webp" alt="${alt}" width="${IMG[f][0]}" height="${IMG[f][1]}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+/* un diapozitiv mic, desenat (nu captură), pentru exemplele „Uite cum” */
+const mini=(t,r,st)=>`<div class="mini-dz"${st?` style="${st}"`:''}><b>${t}</b><ul>${r.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
+const P={
+  interfata:'Elemente de interfață a unei aplicații de realizare a prezentărilor',
+  instrumente:'Instrumente de bază ale aplicației de realizare a prezentărilor',
+  gestionare:'Operații de gestionare a prezentărilor: creare, deschidere, expunere, salvare în diverse formate, închidere',
+  structura:'Structura unei prezentări: diapozitive, obiecte utilizate în prezentări (casete de text, imagini importate, forme, sunete, tabele, legături)',
+  editare:'Operații de editare a unei prezentări: inserare, copiere, mutare, ștergere a unui diapozitiv/obiect',
+  formatare:'Formatarea textului, obiectelor, diapozitivelor',
+  animatie:'Efecte de animație',tranzitie:'Efecte de tranziție',
+  expunere:'Modalități de expunere a unei prezentări',
+  estetica:'Reguli elementare de estetică și ergonomie utilizate în realizarea unei prezentări',
+  sustinere:'Reguli elementare de susținere a unei prezentări'
+};
+const DZ_INTRO='<p>Mai jos e o fereastră <strong>PowerPoint simulată</strong>, cu interfața în engleză, ca pe calculatorul de lucru (sub fiecare filă scrie și numele românesc). Fă pașii din listă, pe rând: pasul la care ești e scris îngroșat și se bifează singur când îl faci. Greșești un clic? Nu se întâmplă nimic rău: citește mesajul și încearcă din nou. La final apasă <b>Verifică</b>.</p>';
+
 const LEVELS=[
-{t:'Prezentarea bună și fereastra aplicației',lectii:[2],continuturi:['Elemente de interfață a unei aplicații de realizare a prezentărilor','Instrumente de bază ale aplicației de realizare a prezentărilor'],text:`
-<p>O <mark>prezentare</mark> este un șir de <mark>diapozitive</mark> pe care le arăți unui public în timp ce vorbești.</p>
-<p>Diapozitivul e <strong>sprijinul</strong> pentru ce spui. Dacă publicul citește paragrafe, nu te mai ascultă. Regula de aur: <strong>pe diapozitiv pui ideea, explicația o spui tu</strong>.</p>
-<p>În fereastra aplicației găsești: <strong>panoul cu miniaturi</strong> (în stânga), <strong>zona de lucru</strong> (diapozitivul mare, pe care îl editezi), <strong>panglica</strong> cu file de comenzi (sus), <mark>zona de note</mark> (sub diapozitiv: notițele tale, nevăzute de public) și <strong>bara de stare</strong> (jos).</p>
-<figure class="captura"><a href="../prezentari-vi/img/fereastra.webp" target="_blank"><img src="../prezentari-vi/img/fereastra.webp" alt="Fereastra PowerPoint cu cinci zone încadrate cu roșu: panglica sus, miniaturile în stânga, zona de lucru cu diapozitivul mare, zona de note sub diapozitiv și bara de stare jos" width="1000" height="699" loading="lazy"></a>
-<figcaption>PowerPoint (în engleză): <b>panglica</b> sus, <b>miniaturile</b> în stânga, <b>zona de lucru</b> cu diapozitivul mare, <b>notele</b> (Notes) dedesubt și <b>bara de stare</b> jos, unde scrie „Slide 1 of 4”, adică diapozitivul 1 din 4.</figcaption></figure>
-<p><mark>Instrumentele de bază</mark> stau pe filele panglicii. În PowerPoint: <strong>Pornire</strong> (Home: fonturi, paragrafe), <strong>Inserare</strong> (Insert: imagini, tabele, linkuri), <strong>Proiectare</strong> (Design: teme), <strong>Tranziții</strong> (Transitions), <strong>Animații</strong> (Animations), <strong>Expunere diapozitive</strong> (Slide Show).</p>
-<p>Google Slides și LibreOffice Impress au cam aceleași operații ca PowerPoint. Înveți operația, nu butonul.</p>`,
-qs:[
- {t:'choice',q:'Ce ar trebui să fie scris pe un diapozitiv?',o:['Ideea principală, pe scurt','Tot ce vei spune, cuvânt cu cuvânt','Un paragraf lung, ca să nu uiți nimic','Doar decoruri frumoase'],ok:0,why:'Publicul nu poate citi și asculta în același timp. Pe ecran stă ideea, iar explicația o dai tu, cu voce tare.'},
- {t:'match',q:'Leagă fiecare parte a ferestrei de ce faci cu ea.',pairs:[['Panoul cu miniaturi','schimbi ordinea diapozitivelor'],['Zona de lucru','editezi diapozitivul curent'],['Panglica','găsești comenzile, pe file'],['Zona de note','îți scrii ce ai de spus']],why:'Miniaturile arată toată prezentarea, zona de lucru arată un singur diapozitiv mare, iar notele sunt doar pentru tine.'},
- {t:'match',q:'În PowerPoint, pe ce filă a panglicii cauți instrumentul?',pairs:[['Inserare','pui o imagine sau un tabel'],['Proiectare','alegi o temă pentru toată prezentarea'],['Pornire','schimbi fontul unui text'],['Expunere diapozitive','pornești prezentarea pe tot ecranul']],why:'Numele filei spune ce fel de instrumente are: pe Inserare adaugi obiecte, pe Proiectare schimbi aspectul întregii prezentări, pe Pornire formatezi textul, iar pe Expunere diapozitive arăți prezentarea publicului.'},
- {t:'tf',q:'Publicul vede pe ecran ce ai scris în zona de note.',ok:false,why:'Fals. Notele le vezi doar tu. De aceea acolo îți poți scrie explicațiile, fără să aglomerezi diapozitivul.'},
- {t:'classify',q:'E semnul unei prezentări bune sau al uneia slabe?',cats:['Bună','Slabă'],items:[['O idee principală pe diapozitiv',0],['Paragrafe întregi de text',1],['Litere mari, ușor de citit',0],['Cinci idei pe același diapozitiv',1],['O imagine care explică ideea',0],['Fundal care „înghite” textul',1]],why:'O prezentare bună se înțelege dintr-o privire: puțin text, litere mari, contrast și imagini care chiar explică ceva.'},
- {t:'choice',q:'Colegul tău lucrează în Google Slides, iar tu în PowerPoint. Ce e adevărat?',o:['Cele mai multe operații se fac la fel, doar butoanele arată puțin altfel','Aplicațiile nu au nimic în comun, fiecare face altceva','Google Slides nu are diapozitive, doar pagini de text','Doar PowerPoint poate face prezentări cu teme și animații'],ok:0,why:'Toate aplicațiile de prezentări lucrează cu diapozitive, obiecte, formatare și efecte. Dacă știi ce operație vrei, găsești butonul ei.'}
-]},
-{t:'Creez, salvez, închid',lectii:[3],continuturi:['Operații de gestionare a prezentărilor: creare, deschidere, expunere, salvare în diverse formate, închidere'],text:`
-<p>Operațiile de <mark>gestionare</mark> sunt aceleași în orice aplicație: <strong>creare</strong>, <strong>deschidere</strong>, <strong>salvare</strong>, <strong>salvare ca…</strong> (sub alt nume sau în alt format) și <strong>închidere</strong>. În PowerPoint, scurtăturile sunt <kbd>Ctrl</kbd>+<kbd>N</kbd> (nou), <kbd>Ctrl</kbd>+<kbd>O</kbd> (deschide) și <kbd>Ctrl</kbd>+<kbd>S</kbd> (salvează).</p>
-<p>Salvează <strong>des</strong>, nu doar la final. Ce nu ai salvat se pierde dacă se oprește calculatorul. Google Slides e o excepție: salvează singur, în Drive.</p>
-<p>Alegi <mark>formatul</mark> după scop: <code>.pptx</code> (PowerPoint) sau <code>.odp</code> (Impress), dacă vrei să mai <strong>modifici</strong> prezentarea; <code>.pdf</code>, dacă vrei ca aspectul să rămână <strong>la fel pe orice calculator</strong>.</p>
-<figure class="captura"><a href="../prezentari-vi/img/salvare-ca-formate.webp" target="_blank"><img src="../prezentari-vi/img/salvare-ca-formate.webp" alt="Fereastra Save As din PowerPoint cu lista Save as type deschisă; încadrate: PowerPoint Presentation .pptx, PDF .pdf și OpenDocument Presentation .odp" width="890" height="620" loading="lazy"></a>
-<figcaption>Salvare ca (Save As, tasta <kbd>F12</kbd>): în lista <b>Salvare cu tipul</b> (Save as type) alegi <code>.pptx</code>, <code>.pdf</code> sau, ultimul, <code>.odp</code>.</figcaption></figure>
-<p>Dă fișierului un nume care spune ce conține: <code>Reciclare_6A_Popescu.pptx</code>, nu <code>final_bun_2.pptx</code>.</p>`,
-qs:[
- {t:'choice',q:'Lucrezi de 20 de minute la prezentare. Ce apeși des, ca să nu pierzi munca?',o:['Ctrl + S','Ctrl + N','Ctrl + O','Esc'],ok:0,why:'Ctrl + S scrie modificările pe disc. Ctrl + N face o prezentare nouă, iar Ctrl + O deschide una salvată, deci niciuna nu îți păstrează munca.'},
- {t:'match',q:'Leagă scurtătura de operația ei.',pairs:[['Ctrl + N','prezentare nouă'],['Ctrl + O','deschiderea unei prezentări'],['Ctrl + S','salvare']],why:'Literele vin din engleză: N de la „new” (nou), O de la „open” (deschide), S de la „save” (salvează). Așa le ții minte mai ușor.'},
- {t:'choice',q:'Trimiți prezentarea profesorului, care doar o citește. Vrei să arate exact ca la tine. Ce format alegi?',o:['.pdf','.pptx','.txt','.odp'],ok:0,why:'Un PDF păstrează aspectul pe orice calculator, chiar dacă acolo lipsesc fonturile tale. Un fișier .pptx sau .odp se poate modifica, dar poate arăta altfel pe alt calculator.'},
- {t:'tf',q:'„Salvare ca…” te lasă să salvezi prezentarea sub alt nume sau în alt format.',ok:true,why:'Adevărat. Salvarea simplă păstrează numele și formatul. „Salvare ca…” le poate schimba, de exemplu ca să faci și o copie PDF.'},
- {t:'classify',q:'Nume bun sau nume slab pentru fișier?',cats:['Bun','Slab'],items:[['Reciclare_6A_Popescu.pptx',0],['final_final_2.pptx',1],['Prezentare1.pptx',1],['Vulcani_geografie_6B.pptx',0]],why:'Un nume bun spune subiectul și autorul sau clasa. Așa îți găsești fișierul și peste o lună, printre ale colegilor.'}
-]},
-{t:'Diapozitive și obiecte',lectii:[4],continuturi:['Structura unei prezentări: diapozitive, obiecte utilizate în prezentări (casete de text, imagini importate, forme, sunete, tabele, legături)'],text:`
-<p>Pe un diapozitiv nu „scrii” direct, ci <strong>așezi obiecte</strong>: <mark>casete de text</mark>, imagini, forme, tabele, sunete sau legături. Și titlul stă tot într-o casetă de text. Fiecare obiect se poate muta, mări și formata separat.</p>
-<p>O prezentare bună are o <mark>structură</mark>: diapozitivul de <strong>titlu</strong> (subiectul și autorul), <strong>cuprinsul</strong>, <strong>conținutul</strong> (o idee pe diapozitiv), <strong>concluzia</strong> și <strong>sursele</strong> (de unde ai luat informațiile și imaginile).</p>
-<p>Fiecare diapozitiv are un <mark>aspect</mark>, adică o machetă gata făcută: doar titlu, titlu și conținut, două conținuturi alăturate (bune pentru comparații) sau gol. Numele exacte diferă puțin de la o aplicație la alta.</p>
-<figure class="captura"><a href="../prezentari-vi/img/aspect-machete.webp" target="_blank"><img src="../prezentari-vi/img/aspect-machete.webp" alt="Butonul Layout din fila Home al PowerPoint, deschis, cu machetele Title Slide, Title and Content, Two Content încadrată, Comparison, Title Only, Blank" width="660" height="510" loading="lazy"></a>
-<figcaption>În PowerPoint: Pornire (Home) → <b>Aspect</b> (Layout). <i>Title Only</i> = doar titlu, <i>Title and Content</i> = titlu și conținut, <i>Two Content</i> = două conținuturi alăturate, <i>Blank</i> = gol.</figcaption></figure>`,
-qs:[
- {t:'tf',q:'Titlul unui diapozitiv stă tot într-o casetă de text.',ok:true,why:'Adevărat. De aceea titlul se poate selecta, muta și formata la fel ca orice altă casetă.'},
- {t:'order',q:'Pune părțile unei prezentări în ordine.',items:['Titlul: subiectul și autorul','Cuprinsul','Conținutul: o idee pe diapozitiv','Concluzia','Sursele'],why:'Publicul află întâi despre ce e vorba, apoi urmărește ideile. La final vede ce trebuie să rețină și de unde ai luat informațiile.'},
- {t:'choice',q:'Vrei să arăți „înainte” și „după”, una lângă alta. Ce aspect alegi?',o:['Două conținuturi alăturate','Doar titlu','Gol','Titlu și conținut'],ok:0,why:'Două zone de conținut puse alături fac comparația ușor de văzut dintr-o privire.'},
- {t:'classify',q:'Obiect pe diapozitiv sau parte a ferestrei aplicației?',cats:['Obiect pe diapozitiv','Parte a ferestrei'],items:[['Caseta de text',0],['Imaginea',0],['Tabelul',0],['Panglica',1],['Zona de note',1],['O formă (săgeată, stea)',0]],why:'Obiectele stau pe diapozitiv și le vede publicul. Panglica și zona de note țin de fereastra aplicației și sunt pentru tine.'},
- {t:'tf',q:'Dacă o imagine e luată de pe internet, nu trebuie să scrii de unde e.',ok:false,why:'Fals. Sursele se trec și pentru imagini. Așa ești corect față de autorul lor, iar publicul poate verifica.'}
-]},
-{t:'Editez: inserez, copiez, mut, șterg',lectii:[5],continuturi:['Operații de editare a unei prezentări: inserare, copiere, mutare, ștergere a unui diapozitiv/obiect'],text:`
-<p>A <mark>edita</mark> înseamnă a schimba <strong>ce</strong> conține prezentarea.</p>
-<p>În PowerPoint, un diapozitiv nou îl adaugi cu <kbd>Ctrl</kbd>+<kbd>M</kbd> sau cu clic dreapta pe o miniatură. Tot din clic dreapta îl poți <strong>dubla</strong> (o copie identică) sau <strong>ascunde</strong> (rămâne în fișier, dar nu apare când prezinți).</p>
-<figure class="captura"><a href="../prezentari-vi/img/meniu-miniatura.webp" target="_blank"><img src="../prezentari-vi/img/meniu-miniatura.webp" alt="Meniul de clic dreapta pe o miniatură în PowerPoint, cu New Slide, Duplicate Slide, Delete Slide și Hide Slide încadrate" width="450" height="630" loading="lazy"></a>
-<figcaption>Clic dreapta pe miniatură: <i>New Slide</i> (diapozitiv nou), <i>Duplicate Slide</i> (dublare), <i>Delete Slide</i> (ștergere), <i>Hide Slide</i> (ascundere).</figcaption></figure>
-<p>Un diapozitiv sau un obiect îl <mark>copiezi</mark> cu <kbd>Ctrl</kbd>+<kbd>C</kbd> și îl lipești cu <kbd>Ctrl</kbd>+<kbd>V</kbd>, chiar și pe alt diapozitiv. Ca să <strong>muți</strong> un diapozitiv, tragi miniatura lui. Ca să-l <strong>ștergi</strong>, îl selectezi și apeși <kbd>Delete</kbd>. <kbd>Ctrl</kbd>+<kbd>Z</kbd> anulează ultima acțiune.</p>
-<p>Un obiect selectat are <mark>mânere</mark>. O imagine o mărești trăgând de <strong>colț</strong>; din mijlocul laturii se turtește.</p>
-<figure class="captura"><a href="../prezentari-vi/img/obiect-manere.webp" target="_blank"><img src="../prezentari-vi/img/obiect-manere.webp" alt="O formă albastră selectată în PowerPoint, cu mânerele albe din colțuri și de pe laturi; un mâner de colț și unul de latură sunt încadrate" width="440" height="240" loading="lazy"></a>
-<figcaption>Forma selectată are mânere albe: în <b>colțuri</b> și la <b>mijlocul laturilor</b>. Săgeata rotundă de sus o rotește.</figcaption></figure>
-<p>Obiectele stau în <strong>straturi</strong>: cu clic dreapta aduci un obiect în față sau îl trimiți în spate.</p>`,
-qs:[
- {t:'choice',q:'Mărești o poză trăgând de mânerul din mijlocul laturii din dreapta. Ce se întâmplă?<figure class="captura"><a href="../prezentari-vi/img/obiect-manere.webp" target="_blank"><img src="../prezentari-vi/img/obiect-manere.webp" alt="PowerPoint: o formă selectată, cu mânerele albe din colțuri și de pe mijlocul laturilor" width="440" height="240" loading="lazy"></a><figcaption>Un obiect selectat: <b>mânerele</b> din colțuri și cele de pe mijlocul laturilor.</figcaption></figure>',o:['Poza se turtește (se deformează)','Poza se mărește perfect','Poza se șterge','Poza se mută pe alt diapozitiv'],ok:0,why:'Mânerul din mijlocul laturii din dreapta schimbă doar lățimea. Mânerul din colț schimbă lățimea și înălțimea deodată, deci poza își păstrează forma.'},
- {t:'order',q:'Diapozitivul 7 trebuie să devină al doilea. Pune pașii în ordine.',items:['Găsești miniatura diapozitivului 7 în panoul din stânga','Ții apăsat pe ea','O tragi în sus, între diapozitivele 1 și 2','Îi dai drumul și verifici ordinea'],why:'Ordinea se schimbă din panoul cu miniaturi: prinzi miniatura, o tragi, îi dai drumul, apoi verifici că prezentarea are sens.'},
- {t:'match',q:'Leagă ce vrei să faci de tasta sau scurtătura potrivită.',pairs:[['Anulezi ultima greșeală','Ctrl + Z'],['Ștergi diapozitivul selectat','Delete'],['Adaugi un diapozitiv nou în PowerPoint','Ctrl + M'],['Copiezi un obiect selectat','Ctrl + C']],why:'Scurtăturile te scapă de căutat prin meniuri. Ctrl + Z e cea mai utilă, fiindcă repară aproape orice greșeală.'},
- {t:'tf',q:'Un diapozitiv ascuns dispare din fișier.',ok:false,why:'Fals. Diapozitivul ascuns rămâne în fișier și îl poți face din nou vizibil. Doar nu apare când prezinți.'},
- {t:'choice',q:'Titlul nu se mai vede, pentru că ai pus peste el o imagine mare. Ce faci?',o:['Trimiți imaginea în spate, sub text','Scrii titlul din nou','Ștergi diapozitivul','Mărești și mai mult imaginea'],ok:0,why:'Obiectele stau în straturi. Dacă imaginea trece în stratul din spate, titlul revine deasupra ei. Comanda o găsești cu clic dreapta pe imagine.'}
-]},
-{t:'Formatez ca să se citească',lectii:[6],continuturi:['Formatarea textului, obiectelor, diapozitivelor'],text:`
-<p><mark>Formatarea</mark> schimbă <strong>cum arată</strong> ceva, nu ce scrie. Scopul ei: să se citească ușor din ultima bancă.</p>
-<p><strong>Textul:</strong> font simplu, același peste tot; titlul în jur de 32–40, textul în jur de 24–28 (sub 20 se citește greu). <strong>Aldinul</strong> doar pentru cuvântul-cheie.</p>
-<p><mark>Contrastul</mark>: text închis pe fundal deschis sau text deschis pe fundal închis. Galbenul pe alb și griul pe gri nu se văd.</p>
-<figure class="captura"><a href="../prezentari-vi/img/marime-culoare-text.webp" target="_blank"><img src="../prezentari-vi/img/marime-culoare-text.webp" alt="Două decupaje din fila Home a PowerPoint: caseta cu mărimea fontului, în care scrie 40, încadrată cu roșu, și butonul A cu bară colorată dedesubt, tot încadrat" width="276" height="246" loading="lazy"></a>
-<figcaption>Pornire (Home): caseta <b>Dimensiune font</b> (Font Size) — aici scrie 40 — și butonul pentru <b>culoarea fontului</b> (Font Color), litera A cu bara colorată sub ea.</figcaption></figure>
-<figure class="captura"><a href="../prezentari-vi/img/contrast-inainte-dupa.webp" target="_blank"><img src="../prezentari-vi/img/contrast-inainte-dupa.webp" alt="Același diapozitiv Sistemul solar de două ori: sus cu titlu galben pe alb și text gri mic, abia vizibil, jos cu text alb pe fundal bleumarin și litere mari" width="685" height="834" loading="lazy"></a>
-<figcaption>Același diapozitiv, înainte și după. Sus: galben pe alb și gri pe alb, cu litere mici — abia se citește. Jos: alb pe bleumarin, titlu 40 și text 26 — se citește din ultima bancă.</figcaption></figure>
-<p><strong>Obiectele:</strong> la o formă schimbi <mark>umplerea</mark> (culoarea din interior; Shape Fill, Umplere formă) și <mark>conturul</mark> (linia de margine: culoare, grosime; Shape Outline, Contur formă).</p>
-<figure class="captura"><a href="../prezentari-vi/img/umplere-contur-butoane.webp" target="_blank"><img src="../prezentari-vi/img/umplere-contur-butoane.webp" alt="Grupul Drawing din fila Home a PowerPoint, cu butoanele Shape Fill și Shape Outline încadrate" width="640" height="125" loading="lazy"></a>
-<figcaption>Pornire (Home), grupul <b>Desen</b> (Drawing): <b>Umplere formă</b> (Shape Fill) și <b>Contur formă</b> (Shape Outline). Butoanele merg doar când e selectată o formă.</figcaption></figure>
-<figure class="captura"><a href="../prezentari-vi/img/umplere-contur.webp" target="_blank"><img src="../prezentari-vi/img/umplere-contur.webp" alt="Lista Shape Fill deschisă în PowerPoint, cu culorile temei, culorile standard și No Fill, deasupra unei forme albastre selectate" width="700" height="660" loading="lazy"></a>
-<figcaption><b>Umplere formă</b> (Shape Fill) deschis: alegi culoarea interiorului formei selectate. <i>No Fill</i> = fără umplere.</figcaption></figure>
-<p><strong>Diapozitivul:</strong> îi schimbi <mark>fundalul</mark>, o culoare sau o imagine ștearsă, care nu înghite textul. O <mark>temă</mark> aplică aceleași culori, fonturi și fundaluri pe toate diapozitivele deodată. În PowerPoint, temele sunt pe fila <strong>Proiectare</strong>.</p>
-<figure class="captura"><a href="../prezentari-vi/img/fundal-proiectare.webp" target="_blank"><img src="../prezentari-vi/img/fundal-proiectare.webp" alt="Patru decupaje din PowerPoint, unul sub altul: fila Design încadrată, butonul Background Styles încadrat, comanda Format Background din lista lui și panoul Format Background cu Solid fill și Color încadrate" width="322" height="726" loading="lazy"></a>
-<figcaption>Drumul spre fundalul diapozitivului: fila <b>Proiectare</b> (Design) → butonul <b>Stiluri de fundal</b> (Background Styles) → <b>Formatare fundal</b> (Format Background). În panoul care se deschide, sub <b>Umplere</b> (Fill) alegi <b>Umplere solidă</b> (Solid fill), apoi culoarea de la <b>Culoare</b> (Color). Fundalul ține de diapozitiv, nu de o formă, deci nu se schimbă cu Umplere formă.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce pereche de culori se citește cel mai bine?',o:['Text negru pe fundal alb','Text galben pe fundal alb','Text gri pe fundal gri','Text roșu pe fundal portocaliu'],ok:0,why:'Când textul și fundalul sunt foarte diferite ca luminozitate, literele se văd clar, chiar și pe un proiector slab.'},
- {t:'tf',q:'Dacă pui tot textul pe aldin, se vede mai bine ce e important.',ok:false,why:'Fals. Aldinul atrage privirea doar când e folosit puțin. Pus peste tot, nu mai scoate nimic în evidență.'},
- {t:'diapozitiv',q:'Repară diapozitivul lui Mihai: alege culori cu contrast puternic și mărimi potrivite pentru titlu și text, apoi verifică.',
-  titlu:'Sistemul solar',randuri:['Soarele este o stea','Opt planete','Pământul e a treia planetă'],
+/* ================= 1. Prezentarea și fereastra aplicației (lecția 2) ================= */
+{t:'Prezentarea și fereastra aplicației',lectii:[2],continuturi:[P.interfata,P.instrumente],
+ obiectiv:'știi ce este o prezentare, ce se scrie pe un diapozitiv și găsești singur zonele ferestrei și filele panglicii.',
+ pasi:[
+  {t:'Ce este o prezentare',
+   text:`<p>O <mark>prezentare</mark> este un șir de <mark>diapozitive</mark>. Un diapozitiv e ca o pagină care apare pe tot ecranul sau, prin videoproiector, pe tabla albă.</p>
+<p>Le arăți unui <strong>public</strong> (colegii, profesorul, părinții) în timp ce <strong>vorbești</strong>. Tu explici, iar diapozitivele te ajută să se înțeleagă.</p>
+<p>Prezentările se fac în aplicații anume: <strong>PowerPoint</strong> (de la Microsoft), <strong>Google Slides</strong> (în browser, cu un cont Google) sau <strong>LibreOffice Impress</strong> (gratuită).</p>`,
+   exemplu:`<p>Ana prezintă „Vulcanii” la geografie, în patru diapozitive:</p><ol><li>titlul: „Vulcanii” și numele ei;</li><li>„Cum se formează un vulcan”, cu un desen;</li><li>„Vulcani din lume”, cu o hartă;</li><li>„Ce am aflat”.</li></ol><p>În timp ce diapozitivele trec pe ecran, Ana explică, cu voce tare.</p>`,
+   incearca:{t:'tf',q:'O prezentare este un șir de diapozitive pe care le arăți în timp ce vorbești.',ok:true,ajutor:'Recitește prima propoziție a pasului.',why:'Adevărat. Diapozitivele sunt sprijinul, iar tu ești cel care prezintă.'},
+   inca:[
+    {t:'choice',q:'Care dintre aceste aplicații face prezentări?',o:['PowerPoint','Calculator','Paint','Notepad'],ok:0,ajutor:'Pasul numește trei aplicații de prezentări.',why:'PowerPoint, Google Slides și LibreOffice Impress fac prezentări. Paint desenează, Notepad scrie text simplu.'},
+    {t:'choice',q:'Cine vorbește în timpul unei prezentări?',o:['Tu, iar diapozitivele te ajută','Diapozitivele, singure','Nimeni, publicul doar citește','Doar profesorul'],ok:0,ajutor:'Cine „prezintă” în exemplul cu vulcanii?',why:'Prezentarea o susții tu, cu voce tare. Diapozitivele arată doar ideile, ca să fie ușor de urmărit.'}
+   ]},
+  {t:'Regula de aur: puțin pe ecran, restul spui tu',
+   text:`<p>Publicul nu poate <strong>citi</strong> și <strong>asculta</strong> în același timp. Dacă pui paragrafe lungi pe diapozitiv, colegii citesc și nu te mai aud.</p>
+<p>De aceea, regula de aur: <strong>pe diapozitiv pui ideea, pe scurt; explicația o spui tu</strong>.</p>
+<p>O prezentare bună se înțelege dintr-o privire: puține cuvinte, <strong>litere mari</strong>, culori care se văd bine și o <strong>imagine care explică</strong>.</p>`,
+   exemplu:`<p><b>Prea mult:</b></p>${mini('Vulcanii',['Un vulcan este o deschidere în scoarța Pământului prin care iese lavă fierbinte, cenușă și gaze, iar în timp, din materialul ieșit, se formează un munte.'])}<p><b>Bine:</b></p>${mini('Vulcanii',['Deschidere în scoarța Pământului','Iese lavă, cenușă, gaze','Se formează un munte'])}<p>Restul („fierbinte”, „în timp”) îl spune Ana.</p>`,
+   altfel:`<p>Gândește-te la un indicator de pe drum: scrie „Piatra Neamț 12 km”, nu istoria orașului. Șoferul îl înțelege dintr-o privire. Diapozitivul e indicatorul, iar tu ești ghidul care povestește.</p>`,
+   incearca:{t:'tf',q:'Dacă scrii tot ce spui pe diapozitiv, publicul te ascultă mai atent.',ok:false,ajutor:'Poate publicul să citească și să asculte în același timp?',why:'Fals. Publicul citește paragraful și nu te mai ascultă. Pe ecran stă doar ideea.'},
+   inca:[
+    {t:'classify',q:'Ajută sau încurcă pe un diapozitiv?',cats:['Ajută','Încurcă'],items:[['Trei rânduri scurte',0],['Un paragraf de zece rânduri',1],['Litere mari',0],['Litere mici, înghesuite',1]],ajutor:'Se înțelege dintr-o privire?',why:'Puțin text și litere mari se citesc repede; paragrafele și literele mici îl obligă pe public să citească, nu să te asculte.'}
+   ]},
+  {t:'Fereastra aplicației: cinci zone',
+   text:`<p>Când deschizi PowerPoint, fereastra are cinci zone. Învață-le numele, ca să știi unde să te uiți:</p>
+<ul><li><strong>panglica</strong>, sus: filele cu comenzi;</li><li><strong>panoul cu miniaturi</strong>, în stânga: toate diapozitivele, mici, în ordine;</li><li><strong>zona de lucru</strong>, în mijloc: diapozitivul ales, mare, pe care îl modifici;</li><li><mark>zona de note</mark>, sub diapozitiv: ce ai de spus; publicul nu o vede;</li><li><strong>bara de stare</strong>, jos: de exemplu „Slide 1 of 4”, adică diapozitivul 1 din 4.</li></ul>
+${fig('fereastra','Fereastra PowerPoint cu cinci zone încadrate cu roșu și numite: panglica sus, miniaturile în stânga, zona de lucru cu diapozitivul mare, zona de note sub diapozitiv și bara de stare jos','PowerPoint (în engleză): <b>panglica</b> sus, <b>miniaturile</b> în stânga, <b>zona de lucru</b> cu diapozitivul mare, <b>notele</b> (Notes) dedesubt și <b>bara de stare</b> jos, cu „Slide 1 of 4”.')}`,
+   exemplu:`<p>Uite cum lucrezi cu ele: apeși în stânga pe miniatura diapozitivului 2 → el apare mare în zona de lucru → îi schimbi titlul → sub el, în note, scrii „Aici spun că tabla are 8 rânduri”. În bara de stare scrie acum „Slide 2 of 4”.</p>`,
+   incearca:{t:'choice',q:'Unde scrii ce vei spune, fără ca publicul să vadă?',o:['În zona de note','În panoul cu miniaturi','Pe panglică','În bara de stare'],ok:0,ajutor:'Care zonă „nu o vede publicul”?',why:'Zona de note, sub diapozitiv, e doar pentru tine: acolo îți scrii explicațiile.'},
+   inca:[
+    {t:'choice',q:`În captura de mai jos zonele sunt încadrate, dar fără nume. Unde scrie pe ce diapozitiv ești („Slide 1 of 4”)?${fig('fereastra-zone','Fereastra PowerPoint cu cinci zone încadrate cu roșu, fără nume; jos de tot scrie Slide 1 of 4','Aceeași fereastră, cu zonele încadrate, dar nenumite.')}`,o:['În bara de stare, jos de tot','Pe panglică, sus','În panoul cu miniaturi, în stânga','În zona de note'],ok:0,ajutor:'Caută textul „Slide 1 of 4” în captură.',why:'Bara de stare, jos, arată pe ce diapozitiv ești și câte are prezentarea.'}
+   ]},
+  {t:'Panglica: filele și cum găsești un buton',
+   text:`<p>Pe <strong>panglică</strong>, comenzile sunt grupate pe <mark>file</mark>. Numele filei îți spune ce găsești pe ea (în română și, în paranteză, în engleză):</p>
+<ul><li><strong>Pornire</strong> (Home): textul, diapozitiv nou;</li><li><strong>Inserare</strong> (Insert): imagini, tabele, forme, legături;</li><li><strong>Proiectare</strong> (Design): teme și fundal;</li><li><strong>Tranziții</strong> (Transitions) și <strong>Animații</strong> (Animations): efecte;</li><li><strong>Expunere diapozitive</strong> (Slide Show): pornești prezentarea.</li></ul>
+<p>Google Slides și LibreOffice Impress au aceleași operații, cu butoane puțin altfel. Înveți operația, nu butonul.</p>`,
+   exemplu:`<p><b>Cum găsești un buton, în 4 pași:</b></p><ol><li>Spune în cuvinte ce vrei: „vreau să pun o poză”.</li><li>Ce fel de operație e? Adaugi ceva nou, deci <b>Inserare (Insert)</b>.</li><li>Deschide fila și citește butoanele. Ține mouse-ul pe un buton și îi apare numele.</li><li>Nu e acolo? Încearcă fila care mai are sens.</li></ol>`,
+   altfel:`<p>Panglica e ca un dulap cu sertare etichetate: „Inserare”, „Proiectare”, „Animații”. Nu scotocești prin toate: citești eticheta și deschizi sertarul potrivit.</p>`,
+   incearca:{t:'choice',q:'Vrei să pui o imagine pe diapozitiv. Ce filă deschizi?',o:['Inserare (Insert)','Proiectare (Design)','Animații (Animations)','Expunere diapozitive (Slide Show)'],ok:0,ajutor:'Pasul 2 al strategiei: adaugi ceva nou.',why:'Imaginile, tabelele și formele se adaugă de pe fila Inserare (Insert).'},
+   inca:[
+    {t:'choice',q:'Vrei aceleași culori pe toată prezentarea, cu o temă. Ce filă deschizi?',o:['Proiectare (Design)','Inserare (Insert)','Expunere diapozitive (Slide Show)','Pornire (Home)'],ok:0,ajutor:'Care filă are „teme și fundal”?',why:'Temele și fundalul sunt pe Proiectare (Design).'}
+   ]}
+ ],
+ atelier:{t:'ppt',titlu:'Găsește zonele ferestrei',intro:DZ_INTRO,
+  q:'Apasă pe fiecare zonă cerută, apoi deschide filele cerute.',
+  sarcini:[{ce:'Apasă în <b>panoul cu miniaturi</b> (stânga)',t:'zona-miniaturi'},{ce:'Apasă în <b>zona de note</b> (sub diapozitiv)',t:'zona-note'},{ce:'Apasă pe <b>bara de stare</b> (jos de tot)',t:'bara-stare'},
+   {ce:'Deschide fila <b>Inserare</b> (Insert)',t:'tab-insert'},{ce:'Deschide fila <b>Expunere diapozitive</b> (Slide Show)',t:'tab-slideshow'}],
+  why:'Ai găsit zonele și filele în fereastra aplicației: exact aceleași sunt în PowerPoint-ul adevărat.',
+  inca:[{t:'ppt',q:'Încă una: găsește zona de lucru și filele cu efecte și teme.',
+   sarcini:[{ce:'Apasă pe diapozitivul mare, în <b>zona de lucru</b>',t:'zona-lucru'},{ce:'Deschide fila <b>Tranziții</b> (Transitions)',t:'tab-transitions'},{ce:'Deschide fila <b>Animații</b> (Animations)',t:'tab-animations'},{ce:'Deschide fila <b>Proiectare</b> (Design)',t:'tab-design'}],
+   why:'Tranzițiile și animațiile au file separate, iar temele sunt pe Proiectare (Design).'}]},
+ qs:[
+  {t:'choice',q:'Ce ar trebui să fie scris pe un diapozitiv?',o:['Ideea principală, pe scurt','Tot ce vei spune, cuvânt cu cuvânt','Un paragraf lung, ca să nu uiți nimic','Doar decoruri frumoase'],ok:0,why:'Publicul nu poate citi și asculta în același timp. Pe ecran stă ideea, iar explicația o dai tu, cu voce tare.'},
+  {t:'match',q:'Leagă fiecare parte a ferestrei de ce faci cu ea.',pairs:[['Panoul cu miniaturi','vezi toate diapozitivele, în ordine'],['Zona de lucru','editezi diapozitivul curent'],['Panglica','găsești comenzile, pe file'],['Zona de note','îți scrii ce ai de spus']],ajutor:'Recitește lista din pasul 3.',why:'Miniaturile arată toată prezentarea, zona de lucru arată un singur diapozitiv mare, iar notele sunt doar pentru tine.'},
+  {t:'match',q:'În PowerPoint, pe ce filă a panglicii cauți instrumentul?',pairs:[['Inserare','pui o imagine sau un tabel'],['Proiectare','alegi o temă pentru toată prezentarea'],['Pornire','adaugi un diapozitiv nou'],['Expunere diapozitive','pornești prezentarea pe tot ecranul']],ajutor:'Recitește lista filelor din pasul 4.',why:'Numele filei spune ce fel de instrumente are: pe Inserare adaugi obiecte, pe Proiectare schimbi aspectul întregii prezentări, pe Pornire lucrezi cu textul și diapozitivele, iar pe Expunere diapozitive arăți prezentarea publicului.'},
+  {t:'tf',q:'Publicul vede pe ecran ce ai scris în zona de note.',ok:false,why:'Fals. Notele le vezi doar tu. De aceea acolo îți poți scrie explicațiile, fără să aglomerezi diapozitivul.'},
+  {t:'classify',q:'E semnul unei prezentări bune sau al uneia slabe?',cats:['Bună','Slabă'],items:[['O idee principală pe diapozitiv',0],['Paragrafe întregi de text',1],['Litere mari, ușor de citit',0],['Cinci idei pe același diapozitiv',1],['O imagine care explică ideea',0]],why:'O prezentare bună se înțelege dintr-o privire: puțin text, litere mari și imagini care chiar explică ceva.'},
+  {t:'choice',q:'Colegul tău lucrează în Google Slides, iar tu în PowerPoint. Ce e adevărat?',o:['Cele mai multe operații se fac la fel, doar butoanele arată puțin altfel','Aplicațiile nu au nimic în comun, fiecare face altceva','Google Slides nu are diapozitive, doar pagini de text','Doar PowerPoint poate face prezentări cu teme și efecte'],ok:0,ajutor:'Ultimul paragraf din pasul 4.',why:'Toate aplicațiile de prezentări lucrează cu diapozitive, obiecte, formatare și efecte. Dacă știi ce operație vrei, găsești butonul ei.'}
+ ]},
+
+/* ================= 2. Creez, salvez, închid (lecția 3) ================= */
+{t:'Creez, salvez, închid',lectii:[3],continuturi:[P.gestionare],
+ obiectiv:'creezi, deschizi, salvezi și închizi o prezentare, alegi formatul potrivit și îi dai un nume bun.',
+ pasi:[
+  {t:'Cinci operații cu fișierul',
+   text:`<p>Orice prezentare e un <strong>fișier</strong>. Cu el faci mereu aceleași cinci <mark>operații de gestionare</mark>:</p>
+<ul><li><strong>creare</strong>: o prezentare nouă, goală;</li><li><strong>deschidere</strong>: una salvată mai demult;</li><li><strong>salvare</strong>: scrii pe disc ce ai lucrat;</li><li><strong>salvare ca…</strong>: salvezi sub alt nume sau în alt format;</li><li><strong>închidere</strong>.</li></ul>
+<p>Toate stau pe fila <strong>Fișier</strong> (File), prima din stânga: <i>New</i>, <i>Open</i>, <i>Save</i>, <i>Save As</i>, <i>Close</i>. Scurtături: <kbd>Ctrl</kbd>+<kbd>N</kbd> (nou), <kbd>Ctrl</kbd>+<kbd>O</kbd> (deschide), <kbd>Ctrl</kbd>+<kbd>S</kbd> (salvează).</p>`,
+   exemplu:`<p>O oră de lucru la calculator:</p><ol><li><kbd>Ctrl</kbd>+<kbd>O</kbd>: deschizi „Vulcanii”, începută ieri;</li><li>lucrezi și apeși din când în când <kbd>Ctrl</kbd>+<kbd>S</kbd>;</li><li>la final: Fișier (File) → <i>Close</i>.</li></ol>`,
+   altfel:`<p>Literele vin din engleză: <b>N</b> de la „new” (nou), <b>O</b> de la „open” (deschide), <b>S</b> de la „save” (salvează). E ca la un caiet: iei unul nou, deschizi unul vechi, scrii în el, îl închizi.</p>`,
+   incearca:{t:'match',q:'Leagă scurtătura de operația ei.',pairs:[['Ctrl + N','prezentare nouă'],['Ctrl + O','deschiderea unei prezentări'],['Ctrl + S','salvare']],ajutor:'N = new, O = open, S = save.',why:'Literele vin din engleză: N de la „new” (nou), O de la „open” (deschide), S de la „save” (salvează).'},
+   inca:[
+    {t:'choice',q:'Vrei o prezentare nouă, goală. Ce apeși?',o:['Ctrl + N','Ctrl + O','Ctrl + S','Esc'],ok:0,ajutor:'„Nou” în engleză e „new”.',why:'Ctrl + N face o prezentare nouă. Ctrl + O deschide una existentă, Ctrl + S salvează.'}
+   ]},
+  {t:'Salvează des',
+   text:`<p>Ce nu ai salvat se pierde dacă se oprește curentul sau se blochează calculatorul. Salvează <strong>des</strong>, nu doar la final: după fiecare diapozitiv terminat, <kbd>Ctrl</kbd>+<kbd>S</kbd>.</p>
+<p>Prima dată când salvezi, aplicația te întreabă <strong>sub ce nume</strong> și <strong>unde</strong>. De atunci, <kbd>Ctrl</kbd>+<kbd>S</kbd> salvează în același fișier, fără să mai întrebe.</p>
+<p><strong>Google Slides</strong> e o excepție: salvează singur, în Drive, cât lucrezi.</p>`,
+   exemplu:`<p>Mihai a lucrat 40 de minute fără să salveze. S-a oprit curentul: a pierdut tot. Ioana a apăsat <kbd>Ctrl</kbd>+<kbd>S</kbd> după fiecare diapozitiv: a pierdut doar ultimele două minute.</p>`,
+   incearca:{t:'choice',q:'Lucrezi de 20 de minute la prezentare. Ce apeși des, ca să nu pierzi munca?',o:['Ctrl + S','Ctrl + N','Ctrl + O','Esc'],ok:0,ajutor:'S = save (salvează).',why:'Ctrl + S scrie modificările pe disc. Ctrl + N face o prezentare nouă, iar Ctrl + O deschide una salvată, deci niciuna nu îți păstrează munca.'},
+   inca:[
+    {t:'tf',q:'Google Slides salvează singur prezentarea, în Drive.',ok:true,ajutor:'Ultimul paragraf al pasului.',why:'Adevărat. Google Slides salvează automat, cât lucrezi. PowerPoint și Impress așteaptă să salvezi tu.'},
+    {t:'tf',q:'La a doua salvare cu Ctrl + S, aplicația te întreabă din nou numele fișierului.',ok:false,ajutor:'Doar prima salvare întreabă.',why:'Fals. Numele îl alegi o singură dată; apoi Ctrl + S salvează în același fișier, fără întrebări.'}
+   ]},
+  {t:'Salvare ca… și formatul',
+   text:`<p><strong>Salvare ca…</strong> (Save As, tasta <kbd>F12</kbd>) te lasă să alegi alt nume sau alt <mark>format</mark>. Formatul e terminația de după punct și îl alegi după scop:</p>
+<ul><li><code>.pptx</code> (PowerPoint) sau <code>.odp</code> (LibreOffice Impress), dacă vrei să mai <strong>modifici</strong> prezentarea;</li><li><code>.pdf</code>, dacă vrei să arate <strong>la fel pe orice calculator</strong>, doar de citit.</li></ul>
+${fig('salvare-ca-formate','Fereastra Save As din PowerPoint cu lista Save as type deschisă; încadrate: PowerPoint Presentation .pptx, PDF .pdf și OpenDocument Presentation .odp','Salvare ca (Save As): în lista <b>Salvare cu tipul</b> (Save as type) alegi <code>.pptx</code>, <code>.pdf</code> sau, ultimul, <code>.odp</code>.')}`,
+   exemplu:`<p><b>Salvare ca PDF, pas cu pas:</b></p><ol><li>Fișier (File) → <i>Save As</i> (sau <kbd>F12</kbd>);</li><li>alegi folderul;</li><li>scrii numele fișierului;</li><li>la <b>Save as type</b> alegi <code>.pdf</code>;</li><li>apeși <i>Save</i>.</li></ol><p>Fișierul <code>.pptx</code> rămâne și el pe disc, neschimbat: acum ai două fișiere.</p>`,
+   altfel:`<p><code>.pptx</code> e ca aluatul: îl mai poți frământa. <code>.pdf</code> e prăjitura coaptă: arată la fel oriunde o duci, dar nu mai schimbi rețeta.</p>`,
+   incearca:{t:'choice',q:'Trimiți prezentarea profesorului, care doar o citește. Vrei să arate exact ca la tine. Ce format alegi?',o:['.pdf','.pptx','.txt','.odp'],ok:0,ajutor:'Care format arată „la fel pe orice calculator”?',why:'Un PDF păstrează aspectul pe orice calculator, chiar dacă acolo lipsesc fonturile tale. Un fișier .pptx sau .odp se poate modifica, dar poate arăta altfel pe alt calculator.'},
+   inca:[
+    {t:'tf',q:'„Salvare ca…” te lasă să salvezi prezentarea sub alt nume sau în alt format.',ok:true,ajutor:'Prima propoziție a pasului.',why:'Adevărat. Salvarea simplă păstrează numele și formatul. „Salvare ca…” le poate schimba, de exemplu ca să faci și o copie PDF.'},
+    {t:'classify',q:'Ce format alegi?',cats:['.pptx sau .odp','.pdf'],items:[['Vrei să mai lucrezi mâine la prezentare',0],['O trimiți bunicii, doar s-o vadă',1],['Colegul o continuă în LibreOffice Impress',0],['O pui pe site-ul școlii, ca să fie citită',1]],ajutor:'Mai modifică cineva prezentarea? Atunci nu PDF.',why:'Dacă prezentarea se mai modifică, rămâne .pptx sau .odp. Dacă doar se citește, PDF-ul o păstrează neschimbată.'}
+   ]},
+  {t:'Un nume bun pentru fișier',
+   text:`<p>Dă fișierului un nume care spune <strong>ce</strong> conține și <strong>al cui</strong> e: subiectul, clasa, numele tău. Desparte cuvintele cu liniuța de jos <code>_</code>, fără spații: <code>Reciclare_6A_Popescu.pptx</code>. Un nume ca <code>final_bun_2.pptx</code> nu spune nimic peste o lună.</p>`,
+   exemplu:`<p>În folderul clasei, printre 25 de fișiere:</p><ul><li><code>Prezentare1.pptx</code> — a cui e? despre ce?</li><li><code>Vulcani_6B_Ionescu.pptx</code> — se vede imediat.</li></ul>`,
+   incearca:{t:'classify',q:'Nume bun sau nume slab pentru fișier?',cats:['Bun','Slab'],items:[['Reciclare_6A_Popescu.pptx',0],['final_final_2.pptx',1],['Prezentare1.pptx',1],['Vulcani_geografie_6B.pptx',0]],ajutor:'Spune numele subiectul și al cui e?',why:'Un nume bun spune subiectul și autorul sau clasa. Așa îți găsești fișierul și peste o lună, printre ale colegilor.'},
+   inca:[
+    {t:'choice',q:'Ce desparte cuvintele într-un nume bun de fișier?',o:['Liniuța de jos _','Un spațiu','Nimic, cuvintele stau lipite','Un punct'],ok:0,ajutor:'Uită-te la Reciclare_6A_Popescu.pptx.',why:'Liniuța de jos desparte cuvintele fără spații. Punctul e rezervat pentru format, de exemplu .pptx.'}
+   ]},
+  {t:'Închiderea prezentării',
+   text:`<p>Când termini, <strong>închizi</strong>: Fișier (File) → <i>Close</i>.</p>
+<p>Dacă ai modificări nesalvate, aplicația te întreabă ce faci cu ele. Ai trei butoane:</p>
+<ul><li><i>Save</i>: le salvezi, apoi prezentarea se închide;</li><li><i>Don’t Save</i>: nu le salvezi, se pierd;</li><li><i>Cancel</i>: renunți la închidere și te întorci la lucru.</li></ul>`,
+   exemplu:`<p>Ai mai adăugat un diapozitiv și apeși File → <i>Close</i>. Apare întrebarea. Vrei să-l păstrezi, deci apeși <i>Save</i>. Dacă e prima salvare, aplicația îți cere și numele fișierului.</p>`,
+   incearca:{t:'choice',q:'Închizi prezentarea și aplicația te întreabă dacă salvezi modificările. Vrei să le păstrezi. Ce apeși?',o:['Save','Don’t Save','Cancel','Nimic, se salvează singure'],ok:0,ajutor:'Care buton „le salvează”?',why:'Save păstrează modificările. Don’t Save le aruncă, iar Cancel te întoarce la prezentare, fără să închidă.'},
+   inca:[
+    {t:'choice',q:'Ai apăsat Close din greșeală și vrei să mai lucrezi. Ce apeși la întrebare?',o:['Cancel','Don’t Save','Save','Esc de trei ori'],ok:0,ajutor:'Care buton „renunță la închidere”?',why:'Cancel oprește închiderea și te lasă să lucrezi mai departe. Don’t Save ar închide și ar pierde modificările.'}
+   ]}
+ ],
+ atelier:{t:'ppt',titlu:'Salvează prezentarea ca PDF',
+  intro:DZ_INTRO+'<p>Prezentarea „Șahul” e gata, iar profesorul vrea s-o citească pe telefon. <strong>Sarcina:</strong> salveaz-o ca PDF, cu un nume bun. În PowerPoint-ul adevărat, după <i>Save As</i> alegi întâi locul, apoi apare fereastra cu numele și tipul, ca aici.</p>',
+  q:'Salvează prezentarea ca PDF, cu un nume bun.',
+  sarcini:[{ce:'Deschide fila <b>File</b> (Fișier)',t:'tab-file'},{ce:'Alege <i>Save As</i> (Salvare ca)',t:'f-saveas'},
+   {ce:'La <b>File name</b> scrie un nume bun: subiect, clasă, nume, cu _ între ele',t:'nume',unde:'De exemplu: Sahul_6A_Pop.'},{ce:'La <b>Save as type</b> alege <b>PDF</b>',t:'tip-pdf'},{ce:'Apasă <i>Save</i>',t:'salvat-pdf',drum:['btn-save']}],
+  why:'Ai făcut exact drumul din PowerPoint: File → Save As → nume → tip → Save. Bara de sus arată acum numele fișierului nou.',
+  inca:[
+   {t:'ppt',q:'Încă una: colegul tău lucrează în LibreOffice Impress și vrea să continue prezentarea. Salveaz-o în formatul lui.',
+    sarcini:[{ce:'Deschide fila <b>File</b>',t:'tab-file'},{ce:'Alege <i>Save As</i>',t:'f-saveas'},{ce:'Scrie un nume bun',t:'nume',valoare:'Sahul_6A_Pop_impress'},{ce:'Alege tipul <b>OpenDocument Presentation (*.odp)</b>',t:'tip-odp'},{ce:'Apasă <i>Save</i>',t:'salvat-odp',drum:['btn-save']}],
+    why:'.odp e formatul LibreOffice Impress: colegul o poate deschide și modifica.'},
+   {t:'ppt',q:'Și încă una: ai lucrat la prezentare și n-ai salvat. Închide-o fără să pierzi nimic.',start:{modificat:true},
+    sarcini:[{ce:'Deschide fila <b>File</b>',t:'tab-file'},{ce:'Alege <i>Close</i>',t:'f-close'},{ce:'La întrebare, alege <i>Save</i>',t:'q-save'},{ce:'Scrie un nume bun',t:'nume'},{ce:'Apasă <i>Save</i> (tipul rămâne .pptx)',t:'salvat-pptx',drum:['btn-save']}],
+    why:'Aplicația te-a întrebat, pentru că aveai modificări nesalvate. Cu Save le-ai păstrat, apoi prezentarea s-a închis.'}]},
+ qs:[
+  {t:'choice',q:'Ce se întâmplă cu munca nesalvată dacă se oprește curentul?',o:['Se pierde','Se salvează singură în PowerPoint','Rămâne în bara de stare','Se mută în zona de note'],ok:0,why:'PowerPoint scrie pe disc doar când salvezi. De aceea salvezi des, cu Ctrl + S.'},
+  {t:'match',q:'Leagă operația de ce face.',pairs:[['Salvare','scrie pe disc ce ai lucrat'],['Salvare ca…','alt nume sau alt format'],['Deschidere','aduce o prezentare salvată'],['Creare','o prezentare nouă, goală']],ajutor:'Lista din pasul 1.',why:'Fiecare operație are rolul ei; Salvare ca… e singura care schimbă numele sau formatul.'},
+  {t:'choice',q:'Vrei ca bunica să vadă prezentarea exact ca la tine, pe calculatorul ei, fără s-o modifice. Ce format alegi?',o:['.pdf','.pptx','.odp','.txt'],ok:0,ajutor:'„La fel pe orice calculator.”',why:'PDF-ul arată la fel pe orice calculator și e făcut pentru citit, nu pentru modificat.'},
+  {t:'tf',q:'Prima dată când salvezi o prezentare nouă, aplicația te întreabă sub ce nume o salvezi.',ok:true,why:'Adevărat. La prima salvare alegi numele și locul; apoi Ctrl + S salvează fără să mai întrebe.'},
+  {t:'classify',q:'Nume bun sau nume slab?',cats:['Bun','Slab'],items:[['Plante_6A_Marin.pptx',0],['aaa.pptx',1],['Prezentare2.pptx',1],['Apa_in_natura_6C_Dinu.pptx',0]],why:'Numele bun spune subiectul, clasa și autorul. „aaa” și „Prezentare2” nu spun nimic.'},
+  {t:'order',q:'Salvezi prezentarea ca PDF. Pune pașii în ordine.',items:['Deschizi fila Fișier (File)','Alegi Save As','Alegi tipul PDF la Save as type','Apeși Save'],ajutor:'Exemplul „Uite cum” din pasul 3.',why:'Întâi ajungi la fereastra Save As, alegi tipul, iar Save încheie.'}
+ ]},
+
+/* ================= 3. Diapozitive și obiecte (lecția 4) ================= */
+{t:'Diapozitive și obiecte',lectii:[4],continuturi:[P.structura],
+ obiectiv:'știi ce obiecte pui pe un diapozitiv, adaugi un diapozitiv cu aspectul potrivit și construiești structura unei prezentări.',
+ pasi:[
+  {t:'Pe diapozitiv așezi obiecte',
+   text:`<p>Pe un diapozitiv nu scrii direct, ca pe o foaie. Așezi <mark>obiecte</mark>, fiecare în chenarul lui:</p>
+<ul><li><mark>casete de text</mark> (și titlul stă tot într-o casetă);</li><li>imagini, forme (săgeți, stele), tabele;</li><li>sunete și legături (linkuri).</li></ul>
+<p>Le găsești pe fila <strong>Inserare</strong> (Insert): <i>Pictures</i> (imagini), <i>Shapes</i> (forme), <i>Table</i> (tabel), <i>Text Box</i> (casetă de text), <i>Audio</i> (sunet), <i>Link</i> (legătură). Fiecare obiect se poate muta, mări și formata separat.</p>`,
+   exemplu:`<p>Diapozitivul „Tabla și piesele” are patru obiecte:</p><ol><li>caseta de titlu: „Tabla și piesele”;</li><li>o casetă cu trei rânduri scurte;</li><li>o imagine cu tabla de șah;</li><li>o săgeată (o formă) care arată spre regină.</li></ol><p>Poți muta imaginea fără să miști textul.</p>`,
+   incearca:{t:'tf',q:'Titlul unui diapozitiv stă tot într-o casetă de text.',ok:true,ajutor:'Citește paranteza din primul punct al listei.',why:'Adevărat. De aceea titlul se poate selecta, muta și formata la fel ca orice altă casetă.'},
+   inca:[
+    {t:'choice',q:'Pe ce filă găsești butonul Table (tabel)?',o:['Inserare (Insert)','Pornire (Home)','Animații (Animations)','Expunere diapozitive (Slide Show)'],ok:0,ajutor:'Un tabel e un obiect nou, pe care îl adaugi.',why:'Toate obiectele noi (tabele, imagini, forme) se adaugă de pe Inserare (Insert).'}
+   ]},
+  {t:'Diapozitiv nou și aspectul lui',
+   text:`<p>Un diapozitiv nou îl adaugi de pe fila <strong>Pornire</strong> (Home), cu butonul <i>New Slide</i>.</p>
+<p>Fiecare diapozitiv are un <mark>aspect</mark> (Layout): o machetă gata făcută, cu locuri pregătite pentru obiecte. Îl schimbi din Pornire (Home) → <i>Layout</i>:</p>
+<ul><li><i>Title Slide</i>: diapozitivul de titlu;</li><li><i>Title and Content</i>: titlu și conținut (cel mai des folosit);</li><li><i>Two Content</i>: două conținuturi alăturate, bune pentru comparații;</li><li><i>Title Only</i>: doar titlu; <i>Blank</i>: gol.</li></ul>
+${fig('aspect-machete','Butonul Layout din fila Home al PowerPoint, deschis, cu machetele Title Slide, Title and Content, Two Content încadrată, Comparison, Title Only, Blank','În PowerPoint: Pornire (Home) → <b>Aspect</b> (Layout). Aici e încadrată <i>Two Content</i>.')}`,
+   exemplu:`<p>Vrei să arăți „tabla goală” și „tabla la începutul jocului”, una lângă alta:</p><ol><li>Pornire (Home) → <i>New Slide</i>;</li><li>Pornire (Home) → <i>Layout</i> → <i>Two Content</i>;</li><li>în stânga pui prima imagine, în dreapta a doua.</li></ol>`,
+   incearca:{t:'choice',q:'Vrei să arăți „înainte” și „după”, una lângă alta. Ce aspect alegi?',o:['Two Content','Title Only','Blank','Title and Content'],ok:0,ajutor:'Care aspect are două conținuturi alăturate?',why:'Two Content are două zone de conținut puse alături: comparația se vede dintr-o privire.'},
+   inca:[
+    {t:'match',q:'Leagă aspectul de ce are pe el.',pairs:[['Title Only','doar titlu'],['Title and Content','titlu și conținut'],['Blank','nimic, e gol'],['Two Content','două conținuturi alăturate']],ajutor:'Lista din pas.',why:'Numele englezești spun chiar ce are macheta: „only” = doar, „blank” = gol, „two” = două.'}
+   ]},
+  {t:'Structura unei prezentări',
+   text:`<p>O prezentare bună are o <mark>structură</mark>: părți puse într-o ordine care ajută publicul.</p>
+<ol><li>diapozitivul de <strong>titlu</strong>: subiectul și autorul;</li><li><strong>cuprinsul</strong>: ce vei prezenta;</li><li><strong>conținutul</strong>: câte o idee pe diapozitiv;</li><li><strong>concluzia</strong>: ce trebuie să rețină publicul;</li><li><strong>sursele</strong>: de unde ai luat informațiile <em>și imaginile</em>.</li></ol>`,
+   exemplu:`<p><b>Cum construiești structura, în 4 pași:</b></p><ol><li>Scrii pe o foaie ideile, fiecare pe un rând.</li><li>O idee = un diapozitiv de conținut.</li><li>Pui în față titlul și cuprinsul.</li><li>La final pui concluzia și sursele.</li></ol><p>„Șahul”: titlu · cuprins · tabla și piesele · cum mută piesele · cum câștigi · concluzie · surse = 7 diapozitive.</p>`,
+   altfel:`<p>E ca la o compunere: are introducere, dezvoltare și încheiere. Titlul și cuprinsul sunt introducerea, diapozitivele de conținut sunt dezvoltarea, concluzia e încheierea. Sursele sunt ca lista de cărți de la finalul unui manual.</p>`,
+   incearca:{t:'order',q:'Pune părțile unei prezentări în ordine.',items:['Titlul: subiectul și autorul','Cuprinsul','Conținutul: o idee pe diapozitiv','Concluzia','Sursele'],ajutor:'Lista numerotată din pas.',why:'Publicul află întâi despre ce e vorba, apoi urmărește ideile. La final vede ce trebuie să rețină și de unde ai luat informațiile.'},
+   inca:[
+    {t:'choice',q:'Ai 3 idei despre piesele de șah. Câte diapozitive de conținut faci pentru ele?',o:['3, câte unul pentru fiecare idee','1, cu toate ideile','Niciunul, le spui doar','6, câte două pentru fiecare idee'],ok:0,ajutor:'Pasul 2 al strategiei.',why:'O idee = un diapozitiv. Așa fiecare diapozitiv rămâne scurt și clar.'}
+   ]},
+ ],
+ atelier:{t:'ppt',titlu:'Construiește un diapozitiv de comparație',
+  intro:DZ_INTRO+'<p><strong>Sarcina:</strong> adaugă după diapozitivul 1 un diapozitiv nou, fă-l cu două conținuturi alăturate (pentru o comparație) și pune pe el un tabel.</p>',
+  q:'Diapozitiv nou → aspect Two Content → un tabel.',
+  sarcini:[{ce:'Adaugă un diapozitiv nou: Pornire (Home) → <i>New Slide</i>',t:'new-slide'},{ce:'Deschide lista <i>Layout</i>, tot pe Pornire (Home)',t:'layout'},{ce:'Alege aspectul <i>Two Content</i>',t:'lay-two'},
+   {ce:'Deschide fila <b>Inserare</b> (Insert)',t:'tab-insert'},{ce:'Pune un tabel: <i>Table</i>',t:'ins-table'}],
+  why:'Diapozitiv nou, aspect ales, obiect inserat: exact pașii din PowerPoint. Miniatura nouă a apărut în stânga, pe locul 2.',
+  inca:[{t:'ppt',q:'Încă una: pe diapozitivul 3 („Cum câștigi”) adaugă o imagine și o casetă de text.',
+   sarcini:[{ce:'Alege diapozitivul 3 din miniaturi',t:'mini-3'},{ce:'Deschide fila <b>Inserare</b> (Insert)',t:'tab-insert'},{ce:'Pune o imagine: <i>Pictures</i>',t:'ins-pictures'},{ce:'Pune o casetă de text: <i>Text Box</i>',t:'ins-textbox'}],
+   why:'Fiecare obiect a apărut separat pe diapozitiv: le poți muta și formata unul câte unul.'}]},
+ qs:[
+  {t:'order',q:'Pune părțile unei prezentări în ordine.',items:['Titlul: subiectul și autorul','Cuprinsul','Conținutul: o idee pe diapozitiv','Concluzia','Sursele'],why:'Publicul află întâi despre ce e vorba, apoi urmărește ideile, iar la final vede ce trebuie să rețină și de unde ai luat informațiile.'},
+  {t:'choice',q:'Vrei un diapozitiv cu un singur titlu mare, de exemplu „Întrebări?”, fără alt conținut. Ce aspect alegi?',o:['Title Only','Two Content','Comparison','Title and Content'],ok:0,ajutor:'„Only” înseamnă „doar”.',why:'Title Only are doar locul pentru titlu. Celelalte aspecte au și zone de conținut.'},
+  {t:'classify',q:'Obiect pe diapozitiv sau parte a ferestrei aplicației?',cats:['Obiect pe diapozitiv','Parte a ferestrei'],items:[['Caseta de text',0],['Imaginea',0],['Tabelul',0],['Panglica',1],['Zona de note',1],['O formă (săgeată, stea)',0]],why:'Obiectele stau pe diapozitiv și le vede publicul. Panglica și zona de note țin de fereastra aplicației și sunt pentru tine.'},
+  {t:'tf',q:'Fiecare obiect de pe diapozitiv se poate muta separat, fără să le miști pe celelalte.',ok:true,why:'Adevărat. Fiecare obiect are chenarul lui, deci îl muți, îl mărești și îl formatezi singur.'},
+  {t:'tf',q:'Dacă o imagine e luată de pe internet, nu trebuie să scrii de unde e.',ok:false,ajutor:'Ce scrie pe ultimul diapozitiv, „sursele”?',why:'Fals. Sursele se trec și pentru imagini. Așa ești corect față de autorul lor, iar publicul poate verifica.'},
+  {t:'choice',q:'Vrei să adaugi un sunet pe diapozitiv. Unde cauți?',o:['Inserare (Insert) → Audio','Pornire (Home) → Layout','Proiectare (Design)','Expunere diapozitive (Slide Show)'],ok:0,why:'Sunetul e un obiect nou, deci îl adaugi de pe Inserare (Insert), cu Audio.'}
+ ]},
+
+/* ================= 4. Editez (lecția 5) ================= */
+{t:'Editez: inserez, copiez, mut, șterg',lectii:[5],continuturi:[P.editare],
+ obiectiv:'adaugi, dublezi, ascunzi, muți, copiezi și ștergi diapozitive și obiecte, iar o greșeală o anulezi imediat.',
+ pasi:[
+  {t:'Meniul miniaturii',
+   text:`<p>A <mark>edita</mark> înseamnă a schimba <strong>ce</strong> conține prezentarea: adaugi, copiezi, muți, ștergi.</p>
+<p>Pentru diapozitive, cel mai scurt drum e <strong>clic dreapta pe miniatură</strong>, în panoul din stânga. Apare un meniu:</p>
+<ul><li><i>New Slide</i>: diapozitiv nou, după acesta (sau <kbd>Ctrl</kbd>+<kbd>M</kbd>);</li><li><i>Duplicate Slide</i>: o copie identică (<mark>dublare</mark>);</li><li><i>Delete Slide</i>: ștergere;</li><li><i>Hide Slide</i>: <mark>ascundere</mark>, rămâne în fișier, dar nu apare când prezinți.</li></ul>
+${fig('meniu-miniatura','Meniul de clic dreapta pe o miniatură în PowerPoint, cu New Slide, Duplicate Slide, Delete Slide și Hide Slide încadrate','Clic dreapta pe miniatură: <i>New Slide</i>, <i>Duplicate Slide</i>, <i>Delete Slide</i>, <i>Hide Slide</i>.')}`,
+   exemplu:`<p>Ai un diapozitiv „Piesele” reușit și vrei încă unul la fel, pentru alte piese. Clic dreapta pe miniatura lui → <i>Duplicate Slide</i>. Copia apare imediat după el; îi schimbi doar textul.</p>`,
+   altfel:`<p>Un diapozitiv ascuns e ca o carte întoarsă cu fața în jos într-un teanc: e tot acolo, dar nu se vede. O întorci la loc cu aceeași comandă, <i>Hide Slide</i>.</p>`,
+   incearca:{t:'tf',q:'Duplicate Slide face o copie identică a diapozitivului.',ok:true,ajutor:'„Duplicate” = a dubla.',why:'Adevărat. Copia apare imediat după original, cu tot ce are el.'},
+   inca:[
+    {t:'match',q:'Leagă comanda din meniul miniaturii de ce face.',pairs:[['New Slide','diapozitiv nou'],['Duplicate Slide','o copie identică'],['Delete Slide','șterge diapozitivul'],['Hide Slide','nu apare când prezinți']],ajutor:'Lista din pas.',why:'Toate patru sunt în meniul de clic dreapta al miniaturii.'}
+   ]},
+  {t:'Copiez, lipesc, șterg, anulez',
+   text:`<p>Un diapozitiv sau un obiect <strong>selectat</strong> se poate:</p>
+<ul><li><mark>copia</mark> cu <kbd>Ctrl</kbd>+<kbd>C</kbd> și <strong>lipi</strong> cu <kbd>Ctrl</kbd>+<kbd>V</kbd>, chiar și pe alt diapozitiv;</li><li><strong>șterge</strong> cu tasta <kbd>Delete</kbd>.</li></ul>
+<p>Ai greșit? <kbd>Ctrl</kbd>+<kbd>Z</kbd> <strong>anulează</strong> ultima acțiune. Apăsat de mai multe ori, anulează pe rând și acțiunile dinainte.</p>
+<p>Regula: întâi <strong>selectezi</strong> (un clic pe obiect sau pe miniatură), abia apoi dai comanda.</p>`,
+   exemplu:`<p>Vrei sigla clubului de șah pe diapozitivul următor:</p><ol><li>clic pe siglă (o selectezi);</li><li><kbd>Ctrl</kbd>+<kbd>C</kbd>;</li><li>clic pe miniatura diapozitivului următor;</li><li><kbd>Ctrl</kbd>+<kbd>V</kbd>.</li></ol><p>Ai lipit-o de două ori din greșeală? <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</p>`,
+   altfel:`<p><kbd>Ctrl</kbd>+<kbd>Z</kbd> e ca butonul „înapoi în timp” dintr-un joc: te întoarce la o clipă înainte de greșeală.</p>`,
+   incearca:{t:'match',q:'Leagă ce vrei să faci de tasta sau scurtătura potrivită.',pairs:[['Anulezi ultima greșeală','Ctrl + Z'],['Ștergi obiectul selectat','Delete'],['Adaugi un diapozitiv nou','Ctrl + M'],['Copiezi un obiect selectat','Ctrl + C']],ajutor:'Ctrl + M e în pasul 1, celelalte în pasul 2.',why:'Scurtăturile te scapă de căutat prin meniuri. Ctrl + Z e cea mai utilă, fiindcă repară aproape orice greșeală.'},
+   inca:[
+    {t:'choice',q:'Ai șters din greșeală un diapozitiv. Ce apeși imediat?',o:['Ctrl + Z','Ctrl + C','Delete','Ctrl + M'],ok:0,ajutor:'Care scurtătură „anulează”?',why:'Ctrl + Z anulează ultima acțiune, deci diapozitivul șters revine.'}
+   ]},
+  {t:'Mut un diapozitiv: tragi miniatura',
+   text:`<p>Ordinea diapozitivelor se schimbă în <strong>panoul cu miniaturi</strong>. Nu copiezi și nu ștergi nimic: doar <strong>tragi</strong> miniatura în locul nou.</p>
+<p><b>Pașii:</b></p><ol><li>găsești miniatura în panoul din stânga;</li><li>ții apăsat pe ea (butonul stâng al mouse-ului);</li><li>o tragi în sus sau în jos, până ajunge între diapozitivele unde o vrei;</li><li>îi dai drumul și verifici ordinea.</li></ol>`,
+   exemplu:`<p>Concluzia a ajuns din greșeală pe locul 2. Tragi miniatura ei în jos, după ultimul diapozitiv de conținut, înainte de surse. Numerele din stânga miniaturilor se schimbă singure.</p>`,
+   incearca:{t:'order',q:'Diapozitivul 7 trebuie să devină al doilea. Pune pașii în ordine.',items:['Găsești miniatura diapozitivului 7 în panoul din stânga','Ții apăsat pe ea','O tragi în sus, între diapozitivele 1 și 2','Îi dai drumul și verifici ordinea'],ajutor:'Pașii numerotați din pas.',why:'Ordinea se schimbă din panoul cu miniaturi: prinzi miniatura, o tragi, îi dai drumul, apoi verifici că prezentarea are sens.'},
+   inca:[
+    {t:'choice',q:'Unde schimbi ordinea diapozitivelor?',o:['În panoul cu miniaturi, din stânga','În zona de note','În bara de stare','Pe fila Proiectare (Design)'],ok:0,ajutor:'Prima propoziție a pasului.',why:'În panoul cu miniaturi vezi toate diapozitivele și le poți trage în altă ordine.'}
+   ]},
+  {t:'Mânerele: mărești fără să deformezi',
+   text:`<p>Un obiect selectat are <mark>mânere</mark>: cerculețe albe pe margine.</p>
+<ul><li>tragi de un mâner din <strong>colț</strong>: obiectul se mărește și își păstrează forma;</li><li>tragi de mânerul de la <strong>mijlocul unei laturi</strong>: se lățește sau se lungește doar într-o parte, deci o poză se <strong>turtește</strong>;</li><li>săgeata rotundă de sus îl rotește.</li></ul>
+${fig('obiect-manere','O formă albastră selectată în PowerPoint, cu mânerele albe din colțuri și de pe laturi; un mâner de colț și unul de latură sunt încadrate','Forma selectată are mânere albe: în <b>colțuri</b> și la <b>mijlocul laturilor</b>. Săgeata rotundă de sus o rotește.')}`,
+   exemplu:`<p>Poza cu tabla de șah e prea mică. Clic pe ea, apoi tragi în afară de mânerul din colțul din dreapta-jos. Tabla se mărește și rămâne pătrată.</p>`,
+   incearca:{t:'choice',q:`Mărești o poză trăgând de mânerul din mijlocul laturii din dreapta. Ce se întâmplă?${fig('obiect-manere','PowerPoint: o formă selectată, cu mânerele albe din colțuri și de pe mijlocul laturilor','Un obiect selectat: <b>mânerele</b> din colțuri și cele de pe mijlocul laturilor.')}`,o:['Poza se turtește (se deformează)','Poza se mărește perfect','Poza se șterge','Poza se mută pe alt diapozitiv'],ok:0,ajutor:'Mijlocul laturii schimbă o singură dimensiune.',why:'Mânerul din mijlocul laturii schimbă doar lățimea. Mânerul din colț schimbă lățimea și înălțimea deodată, deci poza își păstrează forma.'},
+   inca:[
+    {t:'choice',q:'Ce face săgeata rotundă de deasupra unui obiect selectat?',o:['Îl rotește','Îl șterge','Îl copiază','Îl mută pe alt diapozitiv'],ok:0,ajutor:'Ultimul punct al listei.',why:'Săgeata rotundă rotește obiectul. Ștergerea e cu Delete, iar copierea cu Ctrl + C.'}
+   ]},
+  {t:'Straturile: ce stă deasupra',
+   text:`<p>Obiectele de pe diapozitiv stau în <mark>straturi</mark>, unul peste altul. Cel pus ultimul stă deasupra și îl poate acoperi pe cel de dedesubt.</p>
+<p>Schimbi stratul din <strong>clic dreapta pe obiect</strong>:</p>
+<ul><li><i>Bring to Front</i>: aduce obiectul <strong>în față</strong>, deasupra tuturor;</li><li><i>Send to Back</i>: trimite obiectul <strong>în spate</strong>, sub toate.</li></ul>`,
+   exemplu:`<p>Ai pus o poză mare, iar titlul a dispărut sub ea. Clic dreapta pe poză → <i>Send to Back</i>. Poza trece în stratul din spate, iar titlul apare iar deasupra.</p>`,
+   altfel:`<p>Straturile sunt ca foile puse una peste alta pe bancă: vezi doar ce e deasupra. <i>Send to Back</i> pune foaia dedesubtul teancului.</p>`,
+   incearca:{t:'choice',q:'O săgeată a ajuns sub o poză și nu se mai vede. Vrei s-o aduci deasupra. Ce alegi din meniul de clic dreapta al săgeții?',o:['Bring to Front','Send to Back','Delete Slide','Duplicate Slide'],ok:0,ajutor:'„Front” = față.',why:'Bring to Front aduce săgeata în stratul de deasupra, peste poză. Send to Back ar trimite-o și mai jos.'},
+   inca:[
+    {t:'tf',q:'Send to Back trimite obiectul selectat sub celelalte obiecte.',ok:true,ajutor:'„Back” = spate.',why:'Adevărat. Obiectul trece în stratul din spate, iar celelalte se văd deasupra lui.'}
+   ]}
+ ],
+ atelier:{t:'ppt',titlu:'Editează din panoul cu miniaturi',
+  intro:DZ_INTRO+'<p><strong>Sarcina:</strong> dublează diapozitivul 2, apoi ascunde diapozitivul cu sursele (ultimul), ca să nu apară acum la expunere. <b>În simulator, o atingere pe miniatură deschide meniul de clic dreapta</b>; în PowerPoint faci clic dreapta pe ea.</p>',
+  q:'Dublează diapozitivul 2 și ascunde ultimul diapozitiv.',
+  sarcini:[{ce:'Deschide meniul miniaturii 2',t:'mini-2'},{ce:'Alege <i>Duplicate Slide</i>',t:'ctx-dup'},{ce:'Deschide meniul ultimei miniaturi (acum e a 5-a: „Surse”)',t:'mini-5'},{ce:'Alege <i>Hide Slide</i>',t:'ctx-hide'}],
+  why:'Copia a apărut pe locul 3, iar miniatura ascunsă s-a estompat și are numărul tăiat, ca în PowerPoint.',
+  inca:[
+   {t:'ppt',q:'Încă una: pe diapozitivul 2, poza acoperă titlul. Trimite poza în spate.',start:{cur:1,pozaPeste:true},
+    sarcini:[{ce:'Selectează poza (o atingere pe ea)',t:'obj-poza'},{ce:'Deschide meniul de clic dreapta al pozei (în simulator: atinge-o încă o dată)',t:'meniu-obj',drum:['obj-poza']},{ce:'Alege <i>Send to Back</i>',t:'ctx-back'}],
+    why:'Poza a trecut în stratul din spate, iar titlul se vede din nou deasupra ei.'},
+   {t:'ppt',q:'Și încă una: adaugă un diapozitiv nou după diapozitivul 3, apoi șterge-l.',
+    sarcini:[{ce:'Deschide meniul miniaturii 3',t:'mini-3'},{ce:'Alege <i>New Slide</i>',t:'ctx-new'},{ce:'Deschide meniul miniaturii noi (a 4-a)',t:'mini-4'},{ce:'Alege <i>Delete Slide</i>',t:'ctx-del'}],
+    why:'Inserare și ștergere din același meniu: prezentarea are din nou 4 diapozitive.'}]},
+ qs:[
+  {t:'choice',q:'Vrei să mărești poza fără s-o deformezi. De unde tragi?',o:['De un mâner din colț','De mânerul de la mijlocul unei laturi','De săgeata rotundă de sus','De mijlocul pozei'],ok:0,ajutor:'Care mâner schimbă lățimea și înălțimea deodată?',why:'Mânerul din colț schimbă ambele dimensiuni deodată, deci poza își păstrează forma.'},
+  {t:'order',q:'Vrei sigla pe diapozitivul 3. Pune pașii în ordine.',items:['Clic pe siglă, ca s-o selectezi','Apeși Ctrl + C','Clic pe miniatura diapozitivului 3','Apeși Ctrl + V'],ajutor:'Exemplul din pasul 2.',why:'Întâi selectezi și copiezi, apoi alegi unde lipești.'},
+  {t:'match',q:'Leagă scurtătura de ce face.',pairs:[['Ctrl + Z','anulează ultima acțiune'],['Ctrl + V','lipește'],['Ctrl + M','diapozitiv nou'],['Delete','șterge ce e selectat']],why:'Sunt scurtăturile de editare din pașii 1 și 2.'},
+  {t:'tf',q:'Un diapozitiv ascuns dispare din fișier.',ok:false,why:'Fals. Diapozitivul ascuns rămâne în fișier și îl poți face din nou vizibil. Doar nu apare când prezinți.'},
+  {t:'choice',q:'Titlul nu se mai vede, pentru că ai pus peste el o imagine mare. Ce faci?',o:['Trimiți imaginea în spate, sub text','Scrii titlul din nou','Ștergi diapozitivul','Mărești și mai mult imaginea'],ok:0,ajutor:'Straturile, din pasul 5.',why:'Obiectele stau în straturi. Dacă imaginea trece în stratul din spate (Send to Back), titlul revine deasupra ei.'},
+  {t:'choice',q:'Care e primul lucru înainte să apeși Ctrl + C?',o:['Selectezi obiectul','Apeși Ctrl + V','Salvezi prezentarea','Deschizi fila Inserare (Insert)'],ok:0,why:'Regula din pasul 2: întâi selectezi, apoi dai comanda. Fără selecție, aplicația nu știe ce să copieze.'}
+ ]},
+
+/* ================= 5. Formatez (lecția 6) ================= */
+{t:'Formatez ca să se citească',lectii:[6],continuturi:[P.formatare],
+ obiectiv:'formatezi textul, formele și fundalul, astfel încât diapozitivul să se citească din ultima bancă.',
+ pasi:[
+  {t:'Formatarea: cum arată, nu ce scrie',
+   text:`<p><mark>Formatarea</mark> schimbă <strong>cum arată</strong> ceva, nu ce scrie. Scopul: diapozitivul să se citească ușor din <strong>ultima bancă</strong>.</p>
+<p>Formatezi trei feluri de lucruri:</p><ul><li><strong>textul</strong>: fontul, mărimea, culoarea, aldinul;</li><li><strong>obiectele</strong>, de exemplu o formă: culoarea din interior și marginea;</li><li><strong>diapozitivul</strong>: fundalul.</li></ul>
+<p>Regula de la editare rămâne: întâi <strong>selectezi</strong>, apoi formatezi.</p>`,
+   exemplu:`<p>Același rând, formatat în două feluri. Cuvintele sunt aceleași; s-a schimbat doar formatarea:</p>${mini('Tabla și piesele',['Tabla are 64 de pătrățele'],'color:#9E9E9E;font-size:.8rem')}${mini('Tabla și piesele',['Tabla are 64 de pătrățele'],'color:#111')}`,
+   incearca:{t:'choice',q:'Ce schimbă formatarea?',o:['Cum arată textul','Ce scrie în text','Numărul de diapozitive','Numele fișierului'],ok:0,ajutor:'Prima propoziție a pasului.',why:'Formatarea schimbă aspectul (mărime, culoare, fundal), nu conținutul.'},
+   inca:[
+    {t:'tf',q:'Dacă schimbi culoarea unui titlu, se schimbă și ce scrie în el.',ok:false,ajutor:'Culoarea e formatare.',why:'Fals. Culoarea ține de cum arată titlul; cuvintele rămân aceleași.'}
+   ]},
+  {t:'Mărimea și culoarea textului',
+   text:`<p>Pe fila <strong>Pornire</strong> (Home), în grupul <i>Font</i>:</p>
+<ul><li>caseta <strong>Dimensiune font</strong> (Font Size): scrii un număr sau alegi din listă;</li><li>butonul pentru <strong>culoarea fontului</strong> (Font Color): litera A cu bara colorată;</li><li>butonul <strong>B</strong>, <mark>aldin</mark> (Bold): litere groase.</li></ul>
+<p>Mărimi bune: <strong>titlul în jur de 32–40</strong>, <strong>textul în jur de 24–28</strong>; sub 20 se citește greu din sală. Titlul e mereu mai mare decât textul. Aldinul îl pui doar pe <strong>cuvântul-cheie</strong>.</p>
+${fig('marime-culoare-text','Două decupaje din fila Home a PowerPoint: caseta cu mărimea fontului, în care scrie 40, încadrată cu roșu, și butonul A cu bară colorată dedesubt, tot încadrat','Pornire (Home): caseta <b>Dimensiune font</b> (Font Size) — aici scrie 40 — și butonul <b>Font Color</b>, litera A cu bara colorată sub ea.')}`,
+   exemplu:`<p><b>Strategia, în 4 pași:</b></p><ol><li>Selectezi titlul (clic pe el).</li><li>Pornire (Home) → Font Size: <b>40</b>.</li><li>Selectezi rândurile de dedesubt → Font Size: <b>26</b>.</li><li>Te uiți de la câțiva pași de ecran: se citește?</li></ol>`,
+   incearca:{t:'tf',q:'Dacă pui tot textul pe aldin, se vede mai bine ce e important.',ok:false,ajutor:'Unde pui aldinul, după pas?',why:'Fals. Aldinul atrage privirea doar când e folosit puțin. Pus peste tot, nu mai scoate nimic în evidență.'},
+   inca:[
+    {t:'choice',q:'Ce mărime alegi pentru rândurile de sub titlu?',o:['26','12','16','60'],ok:0,ajutor:'Textul: în jur de 24–28.',why:'26 se citește din ultima bancă și rămâne mai mic decât titlul. 12 și 16 sunt prea mici, 60 e mai mare decât un titlu.'}
+   ]},
+  {t:'Contrastul',
+   text:`<p><mark>Contrastul</mark> e diferența de luminozitate dintre text și fundal. Cu cât e mai mare, cu atât literele se văd mai clar, chiar și pe un proiector slab.</p>
+<p>Regula simplă: <strong>text închis pe fundal deschis</strong> (negru pe alb) sau <strong>text deschis pe fundal închis</strong> (alb pe bleumarin). Nu merg culorile la fel de luminoase: galben pe alb, gri pe gri, roșu pe portocaliu.</p>
+${fig('contrast-inainte-dupa','Același diapozitiv Sistemul solar de două ori: sus cu titlu galben pe alb și text gri mic, abia vizibil, jos cu text alb pe fundal bleumarin și litere mari','Același diapozitiv, înainte și după. Sus: galben pe alb și gri pe alb, cu litere mici — abia se citește. Jos: alb pe bleumarin, titlu 40 și text 26.')}`,
+   exemplu:`<p>Testul ochilor mijiți: te uiți la diapozitiv cu ochii mijiți. Dacă literele se „topesc” în fundal, contrastul e prea mic; schimbi culoarea textului sau a fundalului.</p>`,
+   incearca:{t:'choice',q:'Ce pereche de culori se citește cel mai bine?',o:['Text negru pe fundal alb','Text galben pe fundal alb','Text gri pe fundal gri','Text roșu pe fundal portocaliu'],ok:0,ajutor:'Închis pe deschis sau deschis pe închis.',why:'Când textul și fundalul sunt foarte diferite ca luminozitate, literele se văd clar, chiar și pe un proiector slab.'},
+   inca:[
+    {t:'classify',q:'Se citește bine sau greu?',cats:['Bine','Greu'],items:[['alb pe bleumarin',0],['galben pe alb',1],['negru pe alb',0],['gri pe gri',1]],ajutor:'Sunt cele două culori foarte diferite ca luminozitate?',why:'Negru pe alb și alb pe bleumarin au contrast mare. Galben pe alb și gri pe gri sunt la fel de luminoase, deci se „topesc”.'}
+   ]},
+  {t:'Umplerea și conturul unei forme',
+   text:`<p>O formă (dreptunghi, săgeată, stea) are două lucruri de formatat:</p>
+<ul><li><mark>umplerea</mark>, culoarea din interior: <strong>Umplere formă</strong> (Shape Fill);</li><li><mark>conturul</mark>, linia de margine, cu culoare și grosime: <strong>Contur formă</strong> (Shape Outline).</li></ul>
+<p>Le găsești pe Pornire (Home), grupul <strong>Desen</strong> (Drawing). Butoanele merg doar când e <strong>selectată o formă</strong>. <i>No Fill</i> înseamnă fără umplere: se vede ce e în spate.</p>
+${fig('umplere-contur-butoane','Grupul Drawing din fila Home a PowerPoint, cu butoanele Shape Fill și Shape Outline încadrate','Pornire (Home), grupul <b>Desen</b> (Drawing): <b>Shape Fill</b> și <b>Shape Outline</b>.')}
+${fig('umplere-contur','Lista Shape Fill deschisă în PowerPoint, cu culorile temei, culorile standard și No Fill, deasupra unei forme albastre selectate','<b>Shape Fill</b> deschis: alegi culoarea interiorului formei selectate.')}`,
+   exemplu:`<ol><li>Clic pe săgeată (o selectezi).</li><li>Pornire (Home) → <i>Shape Fill</i> → roșu.</li><li><i>Shape Outline</i> → negru.</li></ol><p>Săgeata e acum roșie, cu margine neagră.</p>`,
+   incearca:{t:'choice',q:'Vrei ca săgeata să fie verde pe dinăuntru. Ce buton folosești?',o:['Shape Fill (Umplere formă)','Shape Outline (Contur formă)','Font Color','Layout'],ok:0,ajutor:'Umplerea = culoarea din interior.',why:'Shape Fill colorează interiorul formei. Shape Outline colorează doar marginea.'},
+   inca:[
+    {t:'tf',q:'Shape Fill și Shape Outline merg și când nu e selectată nicio formă.',ok:false,ajutor:'Pasul spune când merg butoanele.',why:'Fals. Butoanele sunt gri până selectezi o formă: aplicația trebuie să știe pe ce formă lucrezi.'}
+   ]},
+  {t:'Fundalul și tema',
+   text:`<p><strong>Fundalul</strong> ține de diapozitiv, nu de o formă. Drumul: fila <strong>Proiectare</strong> (Design) → <strong>Stiluri de fundal</strong> (Background Styles) → <strong>Formatare fundal</strong> (Format Background). În panoul care se deschide alegi <strong>Umplere solidă</strong> (Solid fill), apoi culoarea. Poți pune și o imagine ștearsă, care nu „înghite” textul.</p>
+<p>O <mark>temă</mark> (tot pe Proiectare) pune dintr-odată aceleași culori, fonturi și fundaluri pe <strong>toate</strong> diapozitivele.</p>
+${fig('fundal-proiectare','Patru decupaje din PowerPoint, unul sub altul: fila Design încadrată, butonul Background Styles încadrat, comanda Format Background din lista lui și panoul Format Background cu Solid fill și Color încadrate','Drumul spre fundal: <b>Design</b> → <b>Background Styles</b> → <b>Format Background</b> → <b>Solid fill</b> → <b>Color</b>.')}`,
+   exemplu:`<p>Ai 12 diapozitive. Varianta lentă: schimbi fundalul la fiecare, de 12 ori, și sigur uiți unul. Varianta rapidă: un clic pe o temă, pe Proiectare (Design), și toate arată la fel.</p>`,
+   incearca:{t:'tf',q:'O temă schimbă culorile și fonturile pe toate diapozitivele deodată.',ok:true,ajutor:'Ultimul paragraf al pasului.',why:'Adevărat. De aceea tema e cel mai rapid drum spre o prezentare unitară.'},
+   inca:[
+    {t:'order',q:'Pui un fundal colorat pe un diapozitiv. Pune pașii în ordine.',items:['Fila Proiectare (Design)','Background Styles (Stiluri de fundal)','Format Background (Formatare fundal)','Solid fill (Umplere solidă)','Alegi culoarea'],ajutor:'Urmează legenda capturii, de sus în jos.',why:'Drumul coboară de la filă la buton, apoi la panou, unde alegi felul umplerii și culoarea.'}
+   ]}
+ ],
+ atelier:{t:'diapozitiv',titlu:'Repară diapozitivul lui Mihai',
+  intro:'<p>Mai jos e diapozitivul lui Mihai: galben pe alb, cu litere mici. Alegi culorile și mărimile, ca din fila Pornire (Home), și vezi rezultatul pe loc. Jocul <strong>calculează</strong> contrastul dintre culorile alese și verifică mărimile după regulile din pași. Orice variantă care respectă regulile e bună.</p>',
+  q:'Repară diapozitivul: culori cu contrast puternic și mărimi potrivite pentru titlu și text, apoi verifică.',
+  dz:'Sistemul solar',randuri:['Soarele este o stea','Opt planete','Pământul e a treia planetă'],
   start:{tx:2,bg:0,mt:0,ms:0},verifica:['contrast','marime'],
-  why:'Jocul a calculat contrastul dintre culorile alese de tine și a verificat mărimile: titlul cel mai mare, textul destul de mare cât să se citească din sală.'},
- {t:'classify',q:'Ce formatezi în fiecare caz: textul, un obiect sau diapozitivul?',cats:['Textul','Un obiect','Diapozitivul'],items:[['Mărești literele titlului',0],['Pui aldin pe un cuvânt-cheie',0],['Schimbi culoarea din interiorul unei săgeți',1],['Îngroși linia de margine a unui dreptunghi',1],['Schimbi fundalul în albastru deschis',2],['Pui ca fundal o fotografie ștearsă',2]],why:'Fontul, mărimea și aldinul țin de text. Umplerea și conturul țin de o formă, adică de un obiect. Fundalul ține de diapozitivul întreg, nu de un obiect de pe el.'},
- {t:'choice',q:'Ai 12 diapozitive și vrei aceleași culori și fonturi pe toate. Care e calea cea mai rapidă?',o:['Aplici o temă','Schimbi fiecare diapozitiv, pe rând','Faci o prezentare nouă','Pui tot textul pe aldin'],ok:0,why:'Tema se aplică o singură dată pentru toată prezentarea. Așa nu uiți niciun diapozitiv, iar aspectul rămâne unitar.'}
-]},
-{t:'Animații și tranziții',lectii:[7],continuturi:['Efecte de animație','Efecte de tranziție'],text:`
-<p>Două efecte care se confundă des:</p>
-<ul>
-<li><mark>tranziția</mark> = trecerea de la un diapozitiv la altul (în PowerPoint, fila <strong>Tranziții</strong>);</li>
-<li><mark>animația</mark> = mișcarea unui <strong>obiect</strong> pe același diapozitiv (fila <strong>Animații</strong>).</li>
-</ul>
-<figure class="captura"><a href="../prezentari-vi/img/fila-tranzitii.webp" target="_blank"><img src="../prezentari-vi/img/fila-tranzitii.webp" alt="Două decupaje din panglica PowerPoint, unul sub altul: rândul de file cu Transitions încadrată între Design și Animations, iar dedesubt trei efecte din galerie, None, Morph și Fade" width="218" height="116" loading="lazy"></a>
-<figcaption>Sus, rândul de file: <b>Tranziții</b> (Transitions) încadrată, între Proiectare (Design) și Animații (Animations). Jos, trei efecte din galeria ei: <i>None</i> = niciunul, <i>Morph</i>, <i>Fade</i> = estompare.</figcaption></figure>
-<p>Animațiile sunt de patru feluri: de <strong>intrare</strong> (obiectul apare), de <strong>evidențiere</strong> (atrage atenția), de <strong>ieșire</strong> (dispare) și pe o <strong>cale definită</strong>, adică o traiectorie (se deplasează pe un drum).</p>
-<figure class="captura"><a href="../prezentari-vi/img/animatii-familii.webp" target="_blank"><img src="../prezentari-vi/img/animatii-familii.webp" alt="Lista Add Animation din fila Animations: grupurile Entrance și Emphasis cu efecte, titlul Exit și comenzile More Entrance, Emphasis, Exit Effects și More Motion Paths" width="545" height="805" loading="lazy"></a>
-<figcaption>Fila <b>Animații</b> (Animations) → <b>Adăugare animație</b> (Add Animation): <i>Entrance</i> = intrare, <i>Emphasis</i> = evidențiere, <i>Exit</i> = ieșire, <i>Motion Paths</i> = căi definite.</figcaption></figure>
-<p>Un efect ajută când are un <strong>motiv</strong>: punctele unei liste apar pe rând, ca publicul să nu citească înainte. Fără motiv, efectul încurcă.</p>
-<p>Reguli: aceeași tranziție în toată prezentarea, efecte scurte, fără sunete la fiecare pas. Verifici totul pornind prezentarea cu <kbd>F5</kbd>.</p>`,
-qs:[
- {t:'choice',q:'Punctele unei liste apar unul câte unul, pe același diapozitiv. Ce efect e acesta?',o:['Animație','Tranziție','Temă','Aspect'],ok:0,why:'Se mișcă obiecte de pe același diapozitiv, deci e animație. O tranziție ar schimba diapozitivul întreg.'},
- {t:'classify',q:'Tranziție sau animație?',cats:['Tranziție','Animație'],items:[['Diapozitivul 3 se estompează și apare diapozitivul 4',0],['O săgeată se mișcă pe hartă',1],['Titlul pulsează o clipă',1],['Diapozitivul întreg alunecă spre stânga',0],['O imagine dispare de pe diapozitiv',1]],why:'Întreabă-te: se schimbă diapozitivul întreg (tranziție) sau doar un obiect de pe el (animație)?'},
- {t:'match',q:'Leagă felul animației de ce face obiectul.',pairs:[['Intrare','apare'],['Evidențiere','atrage atenția, deși se vede deja'],['Ieșire','dispare'],['Cale definită','se deplasează pe un drum']],why:'Numele spune ce se întâmplă: intrarea aduce obiectul, ieșirea îl scoate, evidențierea îl scoate în față, iar calea definită îl plimbă pe un drum.'},
- {t:'tf',q:'E bine să pui altă tranziție la fiecare diapozitiv, ca prezentarea să fie variată.',ok:false,why:'Fals. Efectele schimbate mereu atrag atenția asupra lor și o iau de pe ce spui. O singură tranziție păstrează prezentarea unitară.'},
- {t:'choice',q:'Cum verifici că animațiile apar în ordinea bună?',o:['Pornești prezentarea cu F5 și treci prin diapozitive','Te uiți la miniaturile din stânga ferestrei','Salvezi prezentarea ca PDF și o deschizi','Mărești textul ca să vezi animațiile mai bine'],ok:0,why:'Efectele se văd doar când prezentarea rulează. Miniaturile sunt nemișcate, iar într-un PDF animațiile nu există.'}
-]},
-{t:'Expun prezentarea',lectii:[8],continuturi:['Modalități de expunere a unei prezentări','Operații de gestionare a prezentărilor: creare, deschidere, expunere, salvare în diverse formate, închidere','Reguli elementare de susținere a unei prezentări'],text:`
-<p><mark>Expunerea</mark> înseamnă să arăți prezentarea pe tot ecranul, așa cum o vede publicul. În PowerPoint, <kbd>F5</kbd> o pornește de la început, <kbd>Shift</kbd>+<kbd>F5</kbd> de la diapozitivul curent, iar <kbd>Esc</kbd> o încheie.</p>
-<figure class="captura"><a href="../prezentari-vi/img/fila-expunere.webp" target="_blank"><img src="../prezentari-vi/img/fila-expunere.webp" alt="Trei decupaje din panglica PowerPoint, unul sub altul: fila Slide Show încadrată lângă Record, butoanele From Beginning și From Current Slide încadrate, iar jos bifa Use Presenter View încadrată" width="192" height="203" loading="lazy"></a>
-<figcaption>Fila <b>Expunere diapozitive</b> (Slide Show): <i>From Beginning</i> = de la început (<kbd>F5</kbd>), <i>From Current Slide</i> = de la diapozitivul curent (<kbd>Shift</kbd>+<kbd>F5</kbd>), <i>Use Presenter View</i> = vizualizarea prezentator.</figcaption></figure>
-<p>În expunere treci mai departe cu clic, <kbd>Enter</kbd> sau săgeata spre dreapta și te întorci cu săgeata spre stânga. Tasta <kbd>B</kbd> face ecranul negru, ca toți să te privească pe tine; o apeși din nou și revii.</p>
-<p>Diapozitivele avansează <mark>la clic</mark>, când decizi tu, sau <mark>automat</mark>, după un număr de secunde (fila Tranziții). Automat e bine pe un ecran din holul școlii, unde nu vorbește nimeni. Când prezinți tu, treci mai departe abia după ce ai terminat ideea.</p>
-<figure class="captura"><a href="../prezentari-vi/img/avansare-automata.webp" target="_blank"><img src="../prezentari-vi/img/avansare-automata.webp" alt="Grupul Timing din fila Transitions: Advance Slide cu On Mouse Click bifat și After cu 00:00,00 nebifat" width="400" height="125" loading="lazy"></a>
-<figcaption>Fila Tranziții (Transitions), grupul <b>Temporizare</b> (Timing): <i>On Mouse Click</i> = la clic; <i>After</i> = automat, după timpul scris în casetă.</figcaption></figure>
-<p>Cu un al doilea ecran (videoproiectorul), <mark>Vizualizarea prezentator</mark> (Presenter View) îți arată ție notele, iar publicul vede doar diapozitivele.</p>`,
-qs:[
- {t:'choice',q:'Ai lucrat la diapozitivul 6 și vrei să vezi cum arată pe tot ecranul, fără să treci iar prin primele cinci. Ce apeși?',o:['Shift + F5','F5','Esc','Ctrl + S'],ok:0,why:'Shift + F5 pornește expunerea de la diapozitivul la care ești. F5 ar porni de la primul, Esc încheie expunerea, iar Ctrl + S doar salvează.'},
- {t:'match',q:'Leagă tasta de ce face în PowerPoint.',pairs:[['F5','pornește expunerea de la început'],['Shift + F5','pornește expunerea de la diapozitivul curent'],['Esc','încheie expunerea'],['B','face ecranul negru, apoi îl readuce']],why:'F5 și Shift + F5 pornesc expunerea din locuri diferite, Esc te scoate din ea, iar B te ajută când vrei ca publicul să se uite la tine, nu la ecran.'},
- {t:'classify',q:'Cum e mai bine să avanseze diapozitivele?',cats:['La clic','Automat'],items:[['Îți prezinți proiectul în fața clasei',0],['Un ecran din holul școlii arată anunțuri, unul după altul',1],['Te oprești să răspunzi la o întrebare a unui coleg',0],['Pozele de la excursie rulează pe ecran la ședința cu părinții, cât timp se adună lumea',1]],why:'Când vorbește cineva, ritmul îl dă omul, deci la clic. Când nu prezintă nimeni, diapozitivele trec singure, după un număr de secunde.'},
- {t:'tf',q:'În Vizualizarea prezentator, publicul vede pe ecran și notele tale.',ok:false,why:'Fals. Notele apar doar pe ecranul tău, de exemplu pe laptop. Pe videoproiector publicul vede numai diapozitivele.'},
- {t:'choice',q:'Ioana explica un grafic, iar diapozitivul a trecut singur mai departe, la jumătatea explicației. Ce setare trebuia să aleagă?',o:['Avansarea la clic','Avansarea automată după 5 secunde','O altă temă','Un font mai mare'],ok:0,why:'La clic, diapozitivul rămâne pe ecran cât timp vorbești și trece mai departe doar când ai terminat. Avansarea automată l-a mutat după câteva secunde, iar tema și fontul schimbă doar cum arată diapozitivul.'}
-]},
-{t:'Mini-proiect: prezint un joc',final:true,lectii:[8,9],continuturi:['Reguli elementare de estetică și ergonomie utilizate în realizarea unei prezentări','Reguli elementare de susținere a unei prezentări'],text:`
-<p><strong>Misiunea finală:</strong> prezinți clasei, în 3–5 minute, jocul tău preferat: <strong>șahul</strong>.</p>
-<p><mark>Estetica</mark>: puțin text (cel mult 6 rânduri, cel mult 6 cuvinte pe rând), contrast puternic, font lizibil, aceleași culori pe toate diapozitivele, imagini care explică.</p>
-<p><mark>Ergonomia</mark>: totul se vede din ultima bancă, iar efectele nu obosesc ochii.</p>
-<figure class="captura"><a href="../prezentari-vi/img/diapozitiv-sah.webp" target="_blank"><img src="../prezentari-vi/img/diapozitiv-sah.webp" alt="Diapozitiv-model despre șah în PowerPoint: titlul Șahul regulile de bază, patru rânduri scurte cu text alb pe fundal albastru închis, o tablă de șah desenată și notele vorbitorului dedesubt" width="1000" height="529" loading="lazy"></a>
-<figcaption>Un diapozitiv-model: titlu, patru rânduri scurte, text alb pe fundal închis, o imagine care explică. Ce ai de spus stă în note, dedesubt.</figcaption></figure>
-<p><strong>Când susții prezentarea:</strong> privești <strong>publicul</strong>, nu ecranul; vorbești rar și clar. Ai o <strong>introducere</strong> (saluți, spui subiectul), <strong>conținutul</strong> și o <strong>încheiere</strong> (rezumi, mulțumești, primești întrebări). Ce ai de spus stă în notele tale, nu pe diapozitiv.</p>
-<p>Înainte de oră, <strong>repeți</strong> o dată și te cronometrezi.</p>`,
-qs:[
- {t:'choice',q:'În timp ce prezinți, unde te uiți cel mai mult?',o:['La colegi, adică la public','La ecran, ca să citești','În foaia ta','În podea'],ok:0,why:'Când privești colegii, ei simt că le vorbești lor și te urmăresc. Ecranul e pentru public, nu pentru tine.'},
- {t:'hunt',q:'Planul lui Andrei are 4 greșeli. Apasă pe fiecare, apoi verifică.',
-  src:'Diapozitivul 1: [[fără titlu|Primul diapozitiv spune subiectul și autorul.]], doar o poză cu o tablă de șah. Diapozitivul 2: cuprinsul. Diapozitivul 3: regulile, scrise în [[trei paragrafe lungi|Pe diapozitiv pui ideea pe scurt, iar explicația o spui tu.]]. Diapozitivul 4: piesele, cu câte o imagine. La fiecare diapozitiv, [[altă tranziție și un sunet|O singură tranziție, fără sunete, ține atenția pe conținut.]]. Ultimul diapozitiv: concluzia și „Mulțumesc!”, [[fără surse|Sursele informațiilor și ale imaginilor se trec la final.]].',
-  indiciu:'Gândește-te la structură, la cantitatea de text, la efecte și la final.',
-  why:'Un plan bun are titlu, puțin text pe fiecare diapozitiv, efecte puține și sursele la final.'},
- {t:'diapozitiv',q:'Repară diapozitivul despre șah: contrast puternic, mărimi potrivite și doar rândurile de cel mult 6 cuvinte. Apasă pe un rând ca să-l scoți.',
-  titlu:'Șahul',
+  why:'Jocul a calculat contrastul dintre culorile alese de tine și a verificat mărimile: titlul cel mai mare, textul destul de mare cât să se citească din sală.',
+  inca:[
+   {t:'ppt',q:'Încă una, în PowerPoint simulat: fă săgeata de pe diapozitivul 3 roșie.',start:{cur:2},
+    sarcini:[{ce:'Selectează săgeata de pe diapozitiv',t:'obj-forma'},{ce:'Deschide <i>Shape Fill</i> (pe Pornire / Home)',t:'shape-fill'},{ce:'Alege roșu',t:'sf-rosu'}],
+    why:'Shape Fill a colorat interiorul formei selectate. Fără selecție, butonul ar fi rămas gri.'},
+   {t:'ppt',q:'Și încă una: pune fundal bleumarin pe diapozitivul 2.',start:{cur:1},
+    sarcini:[{ce:'Deschide fila <b>Design</b> (Proiectare)',t:'tab-design'},{ce:'Apasă <i>Background Styles</i>',t:'bg-styles'},{ce:'Alege <i>Format Background...</i>',t:'format-bg'},{ce:'Bifează <i>Solid fill</i>',t:'solid-fill'},{ce:'La <i>Color</i> alege bleumarin',t:'bgc-bleumarin'}],
+    why:'Fundalul ține de diapozitiv. Pe fundal închis, textul a devenit alb, ca să rămână contrastul mare.'}]},
+ qs:[
+  {t:'choice',q:'Diapozitivul are fundal bleumarin. Ce culoare alegi pentru text?',o:['Alb','Bleumarin','Albastru închis','Negru'],ok:0,ajutor:'Fundal închis → text …',why:'Pe fundal închis merge text deschis. Bleumarin, albastru închis și negru se topesc în fundal.'},
+  {t:'tf',q:'Titlul trebuie să fie mai mare decât textul de dedesubt.',ok:true,why:'Adevărat. Titlul e cel mai mare, ca să se vadă dintr-o privire despre ce e vorba.'},
+  {t:'classify',q:'Ce formatezi în fiecare caz: textul, un obiect sau diapozitivul?',cats:['Textul','Un obiect','Diapozitivul'],items:[['Mărești literele titlului',0],['Pui aldin pe un cuvânt-cheie',0],['Schimbi culoarea din interiorul unei săgeți',1],['Îngroși linia de margine a unui dreptunghi',1],['Schimbi fundalul în albastru deschis',2]],ajutor:'Lista din pasul 1.',why:'Fontul, mărimea și aldinul țin de text. Umplerea și conturul țin de o formă, adică de un obiect. Fundalul ține de diapozitivul întreg.'},
+  {t:'choice',q:'Ai 12 diapozitive și vrei aceleași culori și fonturi pe toate. Care e calea cea mai rapidă?',o:['Aplici o temă','Schimbi fiecare diapozitiv, pe rând','Faci o prezentare nouă','Pui tot textul pe aldin'],ok:0,why:'Tema se aplică o singură dată pentru toată prezentarea. Așa nu uiți niciun diapozitiv, iar aspectul rămâne unitar.'},
+  {t:'choice',q:'Butonul Shape Fill e gri și nu merge. De ce?',o:['Nu ai selectat nicio formă','Prezentarea nu e salvată','Fundalul e prea închis','Ai ales o temă'],ok:0,ajutor:'Pasul 4 spune când merg butoanele.',why:'Shape Fill lucrează pe forma selectată. Fără selecție, aplicația nu știe ce să coloreze.'},
+  {t:'choice',q:'Care mărime e prea mică pentru textul unui diapozitiv?',o:['14','26','28','24'],ok:0,why:'Sub 20 se citește greu din sală. 24–28 e mărimea potrivită pentru text.'}
+ ]},
+
+/* ================= 6. Animații și tranziții (lecția 7) ================= */
+{t:'Animații și tranziții',lectii:[7],continuturi:[P.animatie,P.tranzitie],
+ obiectiv:'deosebești tranziția de animație, pui o animație pe un obiect și o tranziție pe un diapozitiv, doar acolo unde ajută.',
+ pasi:[
+  {t:'Tranziție sau animație?',
+   text:`<p>Două efecte care se confundă des:</p>
+<ul><li><mark>tranziția</mark> = felul în care se trece de la un diapozitiv la <strong>altul</strong> (se estompează, alunecă). Fila <strong>Tranziții</strong> (Transitions).</li><li><mark>animația</mark> = mișcarea unui <strong>obiect</strong> pe același diapozitiv (un rând apare, o săgeată se mișcă). Fila <strong>Animații</strong> (Animations).</li></ul>
+<p>Întrebarea care te ajută: se schimbă <strong>diapozitivul întreg</strong> sau doar <strong>un obiect</strong> de pe el?</p>
+${fig('fila-tranzitii','Două decupaje din panglica PowerPoint, unul sub altul: rândul de file cu Transitions încadrată între Design și Animations, iar dedesubt trei efecte din galerie, None, Morph și Fade','Sus: fila <b>Transitions</b> încadrată, între Design și Animations. Jos, trei efecte din galeria ei: <i>None</i> = niciunul, <i>Morph</i>, <i>Fade</i> = estompare.')}`,
+   altfel:`<p>La teatru, tranziția e schimbarea decorului între acte. Animația e un actor care intră sau iese din scenă, în timp ce decorul rămâne același.</p>`,
+   incearca:{t:'choice',q:'Punctele unei liste apar unul câte unul, pe același diapozitiv. Ce efect e acesta?',o:['Animație','Tranziție','Temă','Aspect'],ok:0,ajutor:'Se schimbă diapozitivul întreg sau doar un obiect?',why:'Se mișcă obiecte de pe același diapozitiv, deci e animație. O tranziție ar schimba diapozitivul întreg.'},
+   inca:[
+    {t:'tf',q:'Tranziția mișcă un singur obiect pe același diapozitiv.',ok:false,ajutor:'Tranziția e între diapozitive.',why:'Fals. Tranziția e trecerea de la un diapozitiv la altul; mișcarea unui obiect e animație.'}
+   ]},
+  {t:'Patru feluri de animații',
+   text:`<p>Pe fila Animații (Animations), butonul <strong>Adăugare animație</strong> (Add Animation) deschide o listă cu patru grupuri:</p>
+<ul><li><strong>intrare</strong> (Entrance): obiectul <strong>apare</strong>, de exemplu <i>Appear</i>, <i>Fade</i>, <i>Fly In</i>;</li><li><strong>evidențiere</strong> (Emphasis): obiectul, deja vizibil, <strong>atrage atenția</strong>, de exemplu <i>Pulse</i>;</li><li><strong>ieșire</strong> (Exit): obiectul <strong>dispare</strong>;</li><li><strong>cale definită</strong> (Motion Paths): obiectul <strong>se deplasează pe un drum</strong>.</li></ul>
+${fig('animatii-familii','Lista Add Animation din fila Animations: grupurile Entrance și Emphasis cu efecte, titlul Exit și comenzile More Entrance, Emphasis, Exit Effects și More Motion Paths','Fila <b>Animations</b> → <b>Add Animation</b>: <i>Entrance</i> = intrare, <i>Emphasis</i> = evidențiere, <i>Exit</i> = ieșire, <i>Motion Paths</i> = căi definite.')}`,
+   incearca:{t:'choice',q:'Vrei ca o poză să apară pe diapozitiv abia când ajungi cu vorba la ea. Din ce grup alegi efectul?',o:['Intrare (Entrance)','Ieșire (Exit)','Evidențiere (Emphasis)','Cale definită (Motion Paths)'],ok:0,ajutor:'„Apare” = intră.',why:'Efectele de intrare fac obiectul să apară. Ieșirea l-ar face să dispară.'},
+   inca:[
+    {t:'choice',q:'Titlul e deja pe ecran și vrei să „pulseze” o clipă. Din ce grup alegi?',o:['Evidențiere (Emphasis)','Intrare (Entrance)','Ieșire (Exit)','Cale definită (Motion Paths)'],ok:0,ajutor:'Obiectul e deja vizibil.',why:'Evidențierea atrage atenția asupra unui obiect care se vede deja. Pulse e un astfel de efect.'}
+   ]},
+  {t:'Cum pui o animație și o tranziție',
+   text:`<p>O animație se pune pe un <strong>obiect</strong>, deci primul pas e mereu selecția:</p>
+<ol><li><strong>selectezi</strong> obiectul (clic pe el);</li><li>fila <strong>Animații</strong> (Animations) → <strong>Add Animation</strong>;</li><li>alegi efectul din grupul potrivit;</li><li>verifici: pornești prezentarea cu <kbd>F5</kbd>.</li></ol>
+<p>Fără obiect selectat, butonul <i>Add Animation</i> e gri. Lângă obiectul animat apare un număr mic: ordinea în care pornesc animațiile.</p>
+<p>O <strong>tranziție</strong> se pune pe diapozitiv: alegi miniatura, apoi fila Tranziții (Transitions) și un efect.</p>`,
+   exemplu:`<p>Rândurile de pe „Tabla și piesele” să apară pe rând: clic pe caseta cu rânduri → Animații (Animations) → <i>Add Animation</i> → <i>Appear</i> (grupul Entrance). Apoi, pentru trecerea spre diapozitivul următor: Tranziții (Transitions) → <i>Fade</i>.</p>`,
+   incearca:{t:'order',q:'Pui o animație pe o poză. Pune pașii în ordine.',items:['Selectezi poza','Deschizi fila Animații (Animations)','Apeși Add Animation','Alegi efectul','Verifici cu F5'],ajutor:'Lista numerotată din pas.',why:'Selecția e mereu prima; verificarea cu F5, ultima, pentru că efectele se văd doar în expunere.'},
+   inca:[
+    {t:'choice',q:'Butonul Add Animation e gri. Ce ai uitat?',o:['Să selectezi un obiect','Să salvezi prezentarea','Să alegi o temă','Să pui o tranziție'],ok:0,ajutor:'Care e primul pas?',why:'Animația se pune pe un obiect. Fără obiect selectat, butonul nu are pe ce lucra.'}
+   ]},
+  {t:'Când ajută un efect',
+   text:`<p>Un efect ajută când are un <strong>motiv</strong>: punctele unei liste apar pe rând, ca publicul să nu citească înainte; o săgeată arată drumul unei piese. Fără motiv, efectul doar încurcă.</p>
+<p>Reguli:</p><ul><li><strong>aceeași tranziție</strong> în toată prezentarea;</li><li>efecte <strong>scurte</strong>;</li><li><strong>fără sunete</strong> la fiecare pas;</li><li>verifici totul cu <kbd>F5</kbd>: efectele se văd doar când prezentarea rulează, nu în miniaturi și nici într-un PDF.</li></ul>`,
+   incearca:{t:'choice',q:'Când ajută o animație?',o:['Când are un motiv, de exemplu rândurile apar pe rând','Mereu: cu cât mai multe, cu atât mai bine','Când are și un sunet','Doar pe diapozitivul de titlu'],ok:0,ajutor:'Primul cuvânt îngroșat din pas.',why:'Efectul ajută doar când are un motiv. Altfel atrage atenția asupra lui, nu asupra ideii.'},
+   inca:[
+    {t:'tf',q:'Animațiile se văd și într-un PDF.',ok:false,ajutor:'Ultimul punct al listei.',why:'Fals. PDF-ul e nemișcat: efectele se văd doar când prezentarea rulează.'}
+   ]}
+ ],
+ atelier:{t:'ppt',titlu:'Animează titlul și pune o tranziție',
+  intro:DZ_INTRO+'<p><strong>Sarcina:</strong> pe diapozitivul 2, titlul să „zboare” înăuntru (un efect de intrare), iar trecerea spre diapozitiv să fie o estompare (Fade). Atenție: <i>Add Animation</i> merge doar după ce selectezi obiectul.</p>',
+  q:'Titlul diapozitivului 2: animație de intrare Fly In. Diapozitivul 2: tranziția Fade.',start:{cur:1},
+  sarcini:[{ce:'Selectează <b>titlul</b> diapozitivului',t:'obj-titlu'},{ce:'Deschide fila <b>Animations</b> (Animații)',t:'tab-animations'},{ce:'Apasă <i>Add Animation</i>',t:'add-anim'},{ce:'Alege <i>Fly In</i>, din grupul Entrance',t:'an-flyin'},
+   {ce:'Deschide fila <b>Transitions</b> (Tranziții)',t:'tab-transitions'},{ce:'Alege tranziția <i>Fade</i>',t:'tr-fade'}],
+  why:'Lângă titlu a apărut numărul 1 (ordinea animației), iar miniatura are o steluță: semnul că diapozitivul are un efect.',
+  inca:[
+   {t:'ppt',q:'Încă una: pe diapozitivul 3, fă săgeata să „pulseze” (evidențiere).',start:{cur:2},
+    sarcini:[{ce:'Selectează săgeata',t:'obj-forma'},{ce:'Deschide fila <b>Animations</b>',t:'tab-animations'},{ce:'Apasă <i>Add Animation</i>',t:'add-anim'},{ce:'Alege <i>Pulse</i>, din grupul Emphasis',t:'an-pulse'}],
+    why:'Pulse e un efect de evidențiere: săgeata se vede deja și doar atrage atenția.'},
+   {t:'ppt',q:'Și încă una: diapozitivul 2 are o tranziție de care nu e nevoie. Scoate-o.',start:{cur:1,tr:'tr-fade'},
+    sarcini:[{ce:'Deschide fila <b>Transitions</b>',t:'tab-transitions'},{ce:'Alege <i>None</i> (niciun efect)',t:'tr-none'}],
+    why:'None scoate tranziția: steluța de lângă miniatură a dispărut.'}]},
+ qs:[
+  {t:'choice',q:'Diapozitivul 3 se estompează și apare diapozitivul 4. Ce efect e acesta?',o:['Tranziție','Animație','Temă','Aspect'],ok:0,why:'Se schimbă diapozitivul întreg, deci e tranziție.'},
+  {t:'classify',q:'Tranziție sau animație?',cats:['Tranziție','Animație'],items:[['Diapozitivul 3 se estompează și apare diapozitivul 4',0],['O săgeată se mișcă pe hartă',1],['Titlul pulsează o clipă',1],['Diapozitivul întreg alunecă spre stânga',0],['O imagine dispare de pe diapozitiv',1]],ajutor:'Diapozitivul întreg sau un obiect?',why:'Întreabă-te: se schimbă diapozitivul întreg (tranziție) sau doar un obiect de pe el (animație)?'},
+  {t:'match',q:'Leagă felul animației de ce face obiectul.',pairs:[['Intrare','apare'],['Evidențiere','atrage atenția, deși se vede deja'],['Ieșire','dispare'],['Cale definită','se deplasează pe un drum']],why:'Numele spune ce se întâmplă: intrarea aduce obiectul, ieșirea îl scoate, evidențierea îl scoate în față, iar calea definită îl plimbă pe un drum.'},
+  {t:'tf',q:'E bine să pui altă tranziție la fiecare diapozitiv, ca prezentarea să fie variată.',ok:false,why:'Fals. Efectele schimbate mereu atrag atenția asupra lor și o iau de pe ce spui. O singură tranziție păstrează prezentarea unitară.'},
+  {t:'choice',q:'Cum verifici că animațiile apar în ordinea bună?',o:['Pornești prezentarea cu F5 și treci prin diapozitive','Te uiți la miniaturile din stânga ferestrei','Salvezi prezentarea ca PDF și o deschizi','Mărești textul ca să vezi animațiile mai bine'],ok:0,ajutor:'Unde se văd efectele?',why:'Efectele se văd doar când prezentarea rulează. Miniaturile sunt nemișcate, iar într-un PDF animațiile nu există.'},
+  {t:'choice',q:'Care e primul pas când pui o animație?',o:['Selectezi obiectul','Apeși F5','Alegi o tranziție','Salvezi ca PDF'],ok:0,why:'Animația se pune pe un obiect, deci întâi îl selectezi. Fără selecție, Add Animation e gri.'}
+ ]},
+
+/* ================= 7. Expun prezentarea (lecția 8) ================= */
+{t:'Expun prezentarea',lectii:[8],continuturi:[P.expunere,P.gestionare,P.sustinere],
+ obiectiv:'pornești, conduci și închei expunerea, alegi cum avansează diapozitivele și îți folosești notele fără ca publicul să le vadă.',
+ pasi:[
+  {t:'Pornești și oprești expunerea',
+   text:`<p><mark>Expunerea</mark> înseamnă să arăți prezentarea pe tot ecranul, așa cum o vede publicul. În PowerPoint, de pe fila <strong>Expunere diapozitive</strong> (Slide Show) sau din taste:</p>
+<ul><li><kbd>F5</kbd>: pornește <strong>de la început</strong> (<i>From Beginning</i>);</li><li><kbd>Shift</kbd>+<kbd>F5</kbd>: pornește <strong>de la diapozitivul curent</strong> (<i>From Current Slide</i>);</li><li><kbd>Esc</kbd>: <strong>încheie</strong> expunerea.</li></ul>
+${fig('fila-expunere','Trei decupaje din panglica PowerPoint, unul sub altul: fila Slide Show încadrată lângă Record, butoanele From Beginning și From Current Slide încadrate, iar jos bifa Use Presenter View încadrată','Fila <b>Slide Show</b>: <i>From Beginning</i> (<kbd>F5</kbd>), <i>From Current Slide</i> (<kbd>Shift</kbd>+<kbd>F5</kbd>), <i>Use Presenter View</i>.')}`,
+   exemplu:`<p>Ai reparat diapozitivul 6 și vrei să vezi cum arată mare: rămâi pe el și apeși <kbd>Shift</kbd>+<kbd>F5</kbd>. Nu mai treci prin primele cinci. Apoi <kbd>Esc</kbd> și continui lucrul.</p>`,
+   incearca:{t:'choice',q:'Ce tastă pornește prezentarea de la început?',o:['F5','Esc','B','Delete'],ok:0,ajutor:'Primul rând al listei.',why:'F5 pornește expunerea de la primul diapozitiv. Esc o încheie.'},
+   inca:[
+    {t:'choice',q:'Cum ieși din expunere, înapoi la lucru?',o:['Esc','F5','Ctrl + S','Delete'],ok:0,ajutor:'Ultimul rând al listei.',why:'Esc încheie expunerea și te întoarce în fereastra de lucru.'}
+   ]},
+  {t:'Te miști prin prezentare',
+   text:`<p>În timpul expunerii:</p>
+<ul><li><strong>înainte</strong>: clic, <kbd>Enter</kbd> sau săgeata spre dreapta <kbd>→</kbd>;</li><li><strong>înapoi</strong>: săgeata spre stânga <kbd>←</kbd>;</li><li><kbd>B</kbd> face ecranul <strong>negru</strong>, ca toți să te privească pe tine; o apeși din nou și revii.</li></ul>
+<p>Diapozitivele ascunse (<i>Hide Slide</i>) sunt sărite. După ultimul diapozitiv apare un ecran negru: sfârșitul expunerii.</p>`,
+   exemplu:`<p>Un coleg întreabă ceva despre diapozitivul de dinainte: apeși <kbd>←</kbd>, răspunzi, apoi <kbd>→</kbd>. Vrei să vorbești fără ca ei să se uite la ecran: <kbd>B</kbd>; când termini, încă o dată <kbd>B</kbd>.</p>`,
+   incearca:{t:'choice',q:'Cum te întorci la diapozitivul anterior, în expunere?',o:['Cu săgeata spre stânga','Cu Enter','Cu tasta B','Cu F5'],ok:0,ajutor:'„Înapoi”, în listă.',why:'Săgeata spre stânga te duce înapoi. Enter merge înainte, B face ecranul negru, iar F5 repornește de la început.'},
+   inca:[
+    {t:'choice',q:'Ce face tasta B în expunere?',o:['Face ecranul negru, apoi îl readuce','Închide prezentarea','Pune textul pe aldin','Trece la diapozitivul următor'],ok:0,ajutor:'Al treilea punct al listei.',why:'B întunecă ecranul, ca publicul să se uite la tine; a doua apăsare readuce diapozitivul.'}
+   ]},
+  {t:'La clic sau automat',
+   text:`<p>Diapozitivele pot avansa în două feluri, setate pe fila Tranziții (Transitions), grupul <strong>Temporizare</strong> (Timing):</p>
+<ul><li><mark>la clic</mark> (<i>On Mouse Click</i>): trece mai departe când decizi tu;</li><li><mark>automat</mark> (<i>After</i>): trece singur, după timpul scris în casetă.</li></ul>
+<p>Când prezinți tu, alegi <strong>la clic</strong>: treci mai departe abia după ce ai terminat ideea. Automat e bine pe un ecran din holul școlii, unde nu vorbește nimeni.</p>
+${fig('avansare-automata','Grupul Timing din fila Transitions: Advance Slide cu On Mouse Click bifat și After cu 00:00,00 nebifat','Fila Transitions, grupul <b>Timing</b>: <i>On Mouse Click</i> = la clic; <i>After</i> = automat, după timpul din casetă.')}`,
+   incearca:{t:'choice',q:'Prezinți proiectul în fața clasei. Cum e bine să avanseze diapozitivele?',o:['La clic, când decizi tu','Automat, la 2 secunde','Automat, la 10 secunde','Nu avansează deloc'],ok:0,ajutor:'Cine vorbește? Atunci cine dă ritmul?',why:'Când vorbești tu, tu dai ritmul: treci mai departe abia după ce ai terminat ideea.'},
+   inca:[
+    {t:'classify',q:'Cum e mai bine să avanseze diapozitivele?',cats:['La clic','Automat'],items:[['Îți prezinți proiectul în fața clasei',0],['Un ecran din holul școlii arată anunțuri, unul după altul',1],['Te oprești să răspunzi la o întrebare a unui coleg',0],['Pozele de la excursie rulează pe ecran la ședința cu părinții, cât timp se adună lumea',1]],ajutor:'Vorbește cineva?',why:'Când vorbește cineva, ritmul îl dă omul, deci la clic. Când nu prezintă nimeni, diapozitivele trec singure.'}
+   ]},
+  {t:'Vizualizarea prezentator',
+   text:`<p>Când calculatorul are un al doilea ecran (videoproiectorul), <mark>Vizualizarea prezentator</mark> (Presenter View) îți arată <strong>ție</strong>, pe laptop, notele, diapozitivul următor și un ceas. <strong>Publicul</strong>, pe videoproiector, vede doar diapozitivele.</p>
+<p>O pornești de pe fila Expunere diapozitive (Slide Show), bifând <i>Use Presenter View</i>. Așa, notele din zona de note devin planul tău, pe care nu-l vede nimeni.</p>`,
+   exemplu:`<p>Ioana prezintă la ședința cu părinții. Pe laptop vede diapozitivul curent, nota „spun că am strâns 120 kg de hârtie” și diapozitivul următor. Pe tabla albă, părinții văd doar diapozitivul.</p>`,
+   incearca:{t:'choice',q:'Unde vezi notele, în Presenter View?',o:['Pe ecranul tău, de exemplu pe laptop','Pe videoproiector, pentru public','Nicăieri','Doar după ce salvezi ca PDF'],ok:0,ajutor:'„Îți arată ție…”',why:'Presenter View arată notele doar pe ecranul tău; publicul vede numai diapozitivele.'},
+   inca:[
+    {t:'choice',q:'Unde scrii ce vrei să vezi în Presenter View?',o:['În zona de note','Pe diapozitiv, cu litere mici','În bara de stare','În numele fișierului'],ok:0,ajutor:'Ultima propoziție a pasului.',why:'Notele scrise sub diapozitiv apar în Presenter View, doar pentru tine.'}
+   ]}
+ ],
+ atelier:{t:'ppt',titlu:'Repetă expunerea',
+  intro:DZ_INTRO+'<p><strong>Sarcina:</strong> pornește expunerea de la diapozitivul 2, treci la următorul, fă ecranul negru o clipă, apoi ieși. În expunere, tastele sunt butoanele de sub ecran.</p>',
+  q:'Expunere de la diapozitivul 2: înainte, ecran negru, ieșire.',
+  sarcini:[{ce:'Alege diapozitivul 2 din miniaturi',t:'mini-2'},{ce:'Deschide fila <b>Slide Show</b> (Expunere diapozitive)',t:'tab-slideshow'},{ce:'Pornește <i>From Current Slide</i> (în PowerPoint: <kbd>Shift</kbd>+<kbd>F5</kbd>)',t:'from-current'},
+   {ce:'Treci la diapozitivul următor (<kbd>→</kbd>)',t:'k-next'},{ce:'Fă ecranul negru (<kbd>B</kbd>)',t:'negru-on',drum:['k-b']},{ce:'Ieși din expunere (<kbd>Esc</kbd>)',t:'k-esc'}],
+  why:'Ai condus expunerea ca în fața clasei: ai pornit de unde ai vrut, ai mers înainte, ai întunecat ecranul și ai ieșit.',
+  inca:[
+   {t:'ppt',q:'Încă una: diapozitivul 2 să treacă singur mai departe, apoi pornește de la început și ieși.',start:{cur:1},
+    sarcini:[{ce:'Deschide fila <b>Transitions</b>',t:'tab-transitions'},{ce:'Bifează <i>After</i> (automat)',t:'after-on',drum:['after']},{ce:'Deschide fila <b>Slide Show</b>',t:'tab-slideshow'},{ce:'Pornește <i>From Beginning</i>',t:'from-begin'},{ce:'Ieși cu <kbd>Esc</kbd>',t:'k-esc'}],
+    why:'After face diapozitivul să treacă singur; e bun pentru un ecran fără prezentator.'},
+   {t:'ppt',q:'Și încă una: pornește Presenter View și uită-te la note în expunere.',
+    sarcini:[{ce:'Deschide fila <b>Slide Show</b>',t:'tab-slideshow'},{ce:'Bifează <i>Use Presenter View</i>',t:'presenter-on',drum:['presenter']},{ce:'Pornește <i>From Beginning</i>',t:'from-begin'},{ce:'Treci la diapozitivul 2 și citește nota',t:'k-next'},{ce:'Ieși cu <kbd>Esc</kbd>',t:'k-esc'}],
+    why:'În expunere ai văzut notele sub diapozitiv: în realitate ele apar doar pe ecranul tău.'}]},
+ qs:[
+  {t:'match',q:'Leagă tasta de ce face în expunere.',pairs:[['F5','pornește expunerea de la început'],['Shift + F5','pornește expunerea de la diapozitivul curent'],['Esc','încheie expunerea'],['B','face ecranul negru, apoi îl readuce']],ajutor:'Pașii 1 și 2.',why:'F5 și Shift + F5 pornesc expunerea din locuri diferite, Esc te scoate din ea, iar B te ajută când vrei ca publicul să se uite la tine.'},
+  {t:'choice',q:'Ioana explica un grafic, iar diapozitivul a trecut singur mai departe, la jumătatea explicației. Ce setare trebuia să aleagă?',o:['Avansarea la clic','Avansarea automată după 5 secunde','O altă temă','Un font mai mare'],ok:0,why:'La clic, diapozitivul rămâne pe ecran cât timp vorbești. Avansarea automată l-a mutat după câteva secunde.'},
+  {t:'tf',q:'În Vizualizarea prezentator, publicul vede pe ecran și notele tale.',ok:false,why:'Fals. Notele apar doar pe ecranul tău, de exemplu pe laptop. Pe videoproiector publicul vede numai diapozitivele.'},
+  {t:'choice',q:'Ai lucrat la diapozitivul 6 și vrei să-l vezi pe tot ecranul, fără să treci iar prin primele cinci. Ce apeși?',o:['Shift + F5','F5','Esc','Ctrl + S'],ok:0,why:'Shift + F5 pornește expunerea de la diapozitivul la care ești. F5 ar porni de la primul, Esc încheie expunerea, iar Ctrl + S doar salvează.'},
+  {t:'tf',q:'Un diapozitiv ascuns apare în expunere.',ok:false,why:'Fals. Diapozitivele ascunse cu Hide Slide sunt sărite când prezinți.'}
+ ]},
+
+/* ================= 8. Mini-proiect: prezint un joc (lecțiile 8-9) ================= */
+{t:'Mini-proiect: prezint un joc',final:true,lectii:[8,9],continuturi:[P.estetica,P.sustinere],
+ obiectiv:'faci și susții o prezentare de 3–5 minute despre șah, după regulile de estetică, ergonomie și susținere.',
+ pasi:[
+  {t:'Estetica: îngrijit și limpede',
+   text:`<p><strong>Misiunea finală:</strong> prezinți clasei, în 3–5 minute, jocul tău preferat: <strong>șahul</strong>.</p>
+<p><mark>Estetica</mark> înseamnă că prezentarea arată îngrijit și limpede:</p>
+<ul><li>puțin text: <strong>cel mult 6 rânduri</strong>, <strong>cel mult 6 cuvinte pe rând</strong> (regula 6 × 6);</li><li>contrast puternic, font simplu;</li><li>aceleași culori pe toate diapozitivele (o temă);</li><li>imagini care explică, nu doar decorează.</li></ul>
+${fig('diapozitiv-sah','Diapozitiv-model despre șah în PowerPoint: titlul Șahul regulile de bază, patru rânduri scurte cu text alb pe fundal albastru închis, o tablă de șah desenată și notele vorbitorului dedesubt','Un diapozitiv-model: titlu, patru rânduri scurte, text alb pe fundal închis, o imagine care explică. Ce ai de spus stă în note, dedesubt.')}`,
+   exemplu:`<p>Rândul „Fiecare jucător începe cu 16 piese: un rege, o damă, două ture, doi nebuni, doi cai și opt pioni” are 17 cuvinte. Pe diapozitiv rămâne „Fiecare jucător are 16 piese”, adică 5 cuvinte. Lista pieselor o spui tu, cu ajutorul notelor.</p>`,
+   incearca:{t:'choice',q:'Câte cuvinte are voie un rând, după regula 6 × 6?',o:['Cel mult 6','Cel puțin 6','Exact 12','Oricâte'],ok:0,ajutor:'Primul punct al listei.',why:'Regula 6 × 6: cel mult 6 rânduri, cel mult 6 cuvinte pe rând.'},
+   inca:[
+    {t:'classify',q:'Rândul respectă regula de cel mult 6 cuvinte?',cats:['Da','Nu'],items:[['Albul mută primul',0],['Regele e piesa cea mai importantă',0],['Șahul este un joc foarte vechi, inventat acum multe secole',1],['Tabla are 64 de pătrățele',0]],ajutor:'Numără cuvintele pe degete.',why:'Primele rânduri au 3–6 cuvinte. Rândul despre vechimea șahului are 10: ideea lui o spui tu.'}
+   ]},
+  {t:'Ergonomia: să se vadă și să nu obosească',
+   text:`<p><mark>Ergonomia</mark> înseamnă că prezentarea se urmărește ușor, fără efort:</p>
+<ul><li>totul se vede din <strong>ultima bancă</strong>: titlul 32–40, textul 24–28;</li><li>efectele sunt puține și scurte, ca să nu obosească ochii;</li><li>fără sunete la fiecare pas;</li><li>un diapozitiv stă pe ecran cât vorbești despre el.</li></ul>
+<p>Testul ultimei bănci: pornești cu <kbd>F5</kbd>, te duci în spatele clasei și citești. Dacă trebuie să mijești ochii, mărești textul.</p>`,
+   incearca:{t:'tf',q:'Dacă fiecare diapozitiv are alt sunet și altă tranziție, prezentarea se urmărește mai ușor.',ok:false,ajutor:'Al doilea și al treilea punct.',why:'Fals. Efectele multe obosesc și atrag atenția asupra lor, nu asupra ideilor.'},
+   inca:[
+    {t:'choice',q:'Colegul din ultima bancă nu poate citi textul. Ce faci?',o:['Mărești textul, în jur de 24–28','Adaugi încă un paragraf','Pui o animație','Schimbi tranziția'],ok:0,ajutor:'Testul ultimei bănci.',why:'Textul trebuie să fie destul de mare cât să se citească din sală: 24–28.'}
+   ]},
+  {t:'Planul prezentării despre șah',
+   text:`<p>Înainte să deschizi aplicația, fă <strong>planul</strong>, pe hârtie. Pașii:</p>
+<ol><li>alegi 3–4 idei despre șah (tabla, piesele, cum mută, cum câștigi);</li><li>faci structura: titlu, cuprins, câte un diapozitiv pe idee, concluzie, surse;</li><li>pentru fiecare diapozitiv scrii rândurile scurte și alegi o imagine;</li><li>în note scrii ce spui la fiecare;</li><li>verifici: temă, contrast, mărimi, o singură tranziție, apoi <kbd>F5</kbd>.</li></ol>`,
+   exemplu:`<p>Planul Anei:</p><ol><li>Șahul — Ana Pop, a VI-a A</li><li>Cuprins</li><li>Tabla și piesele (poză cu tabla)</li><li>Cum mută piesele</li><li>Cum câștigi: șah-mat</li><li>Ce am aflat</li><li>Surse: manualul, clubul de șah</li></ol>`,
+   incearca:{t:'choice',q:'Ai scos de pe diapozitiv un rând prea lung. Unde pui ce voiai să spui în el?',o:['În note, și îl spui tu','Pe alt diapozitiv, tot ca paragraf','Nicăieri, îl uiți','În numele fișierului'],ok:0,ajutor:'Pasul 4 al planului.',why:'Ideea nu se pierde: o scrii în note și o spui cu voce tare.'},
+   inca:[
+    {t:'tf',q:'Planul îl faci după ce ai pus toate efectele.',ok:false,ajutor:'Prima propoziție a pasului.',why:'Fals. Planul e primul, pe hârtie; efectele și verificarea vin la final.'}
+   ]},
+  {t:'Susținerea: tu ești prezentarea',
+   text:`<p>Când <strong>susții</strong> prezentarea:</p>
+<ul><li>privești <strong>publicul</strong>, nu ecranul;</li><li>vorbești rar și clar;</li><li>ai o <strong>introducere</strong> (saluți, spui subiectul), <strong>conținutul</strong> (ideile, pe rând) și o <strong>încheiere</strong> (rezumi, mulțumești, primești întrebări);</li><li>notele sunt planul tău, nu un text de citit.</li></ul>
+<p>Înainte de oră: verifici prezentarea cu <kbd>F5</kbd>, o <strong>repeți</strong> o dată cu voce tare și te <strong>cronometrezi</strong>.</p>`,
+   altfel:`<p>Gândește-te la un ghid într-un muzeu: nu citește de pe tăblițe, ci se uită la vizitatori și le povestește. Tăblițele (diapozitivele) îl ajută doar să nu se piardă.</p>`,
+   incearca:{t:'choice',q:'În timp ce prezinți, unde te uiți cel mai mult?',o:['La colegi, adică la public','La ecran, ca să citești','În foaia ta','În podea'],ok:0,ajutor:'Primul punct al listei.',why:'Când privești colegii, ei simt că le vorbești lor și te urmăresc. Ecranul e pentru public, nu pentru tine.'},
+   inca:[
+    {t:'choice',q:'Ce faci în încheiere?',o:['Rezumi, mulțumești și primești întrebări','Saluți și spui subiectul','Citești toate notele','Pornești prezentarea cu F5'],ok:0,ajutor:'Paranteza de după „încheiere”.',why:'Încheierea fixează ideile: un rezumat scurt, mulțumiri și întrebările publicului.'}
+   ]}
+ ],
+ atelier:{t:'diapozitiv',titlu:'Repară diapozitivul despre șah',
+  intro:'<p>Diapozitivul de mai jos încalcă toate regulile: roșu pe portocaliu, titlu mic, rânduri lungi. Alegi culorile și mărimile și <strong>apeși pe un rând ca să-l scoți</strong> sau să-l păstrezi. Jocul calculează contrastul și numără cuvintele de pe fiecare rând păstrat.</p>',
+  q:'Repară diapozitivul despre șah: contrast puternic, mărimi potrivite și doar rândurile de cel mult 6 cuvinte.',
+  dz:'Șahul',
   randuri:['Joc pentru doi jucători','Tabla are 64 de pătrățele','Fiecare jucător începe cu 16 piese: un rege, o damă, două ture, doi nebuni, doi cai și opt pioni','Regele e piesa cea mai importantă','Câștigi când dai șah-mat regelui adversarului','Șahul este un joc foarte vechi, inventat acum multe secole și jucat astăzi în toată lumea'],
   start:{tx:3,bg:2,mt:0,ms:1},verifica:['contrast','marime','randuri'],min:3,
-  why:'Jocul a măsurat contrastul și a numărat cuvintele de pe fiecare rând păstrat. Informația din rândurile lungi nu se pierde: o spui tu, cu ajutorul notelor.'},
- {t:'order',q:'Ziua prezentării. Pune pașii în ordine.',items:['Verifici prezentarea pornind-o cu F5','Saluți și spui subiectul','Prezinți ideile, câte una pe diapozitiv','Rezumi pe scurt ce ai arătat','Mulțumești și răspunzi la întrebări'],why:'Verificarea se face înainte, ca să nu ai surprize. Introducerea spune despre ce e vorba, conținutul ține ideile în ordine, iar încheierea fixează ce reține publicul.'},
- {t:'tf',q:'E în regulă să citești prezentarea de pe ecran, cu spatele la clasă.',ok:false,why:'Fals. Colegii citesc mai repede decât vorbești și nu te mai ascultă. Privește-i și folosește notele doar ca plan.'}
-]}
+  why:'Jocul a măsurat contrastul și a numărat cuvintele de pe fiecare rând păstrat. Informația din rândurile lungi nu se pierde: o spui tu, cu ajutorul notelor.',
+  inca:[
+   {t:'ppt',q:'Încă una: verificarea finală, în PowerPoint simulat. Treci o dată prin prezentare, apoi salveaz-o cu un nume bun.',
+    sarcini:[{ce:'Deschide fila <b>Slide Show</b>',t:'tab-slideshow'},{ce:'Pornește <i>From Beginning</i> (<kbd>F5</kbd>)',t:'from-begin'},{ce:'Treci la diapozitivul următor',t:'k-next'},{ce:'Ieși cu <kbd>Esc</kbd>',t:'k-esc'},
+     {ce:'Deschide fila <b>File</b>',t:'tab-file'},{ce:'Alege <i>Save As</i>',t:'f-saveas'},{ce:'Scrie un nume bun: subiect, clasă, nume, de exemplu Sahul_6A_Pop',t:'nume',valoare:'Sahul_6A_Pop'},{ce:'Apasă <i>Save</i> (tipul .pptx)',t:'salvat-pptx',drum:['btn-save']}],
+    why:'Ai verificat prezentarea în expunere și ai salvat-o cu un nume care spune al cui e și despre ce.'}]},
+ qs:[
+  {t:'hunt',q:'Planul lui Andrei are 4 greșeli. Apasă pe fiecare, apoi verifică.',
+   src:'Diapozitivul 1: [[fără titlu|Primul diapozitiv spune subiectul și autorul.]], doar o poză cu o tablă de șah. Diapozitivul 2: cuprinsul. Diapozitivul 3: regulile, scrise în [[trei paragrafe lungi|Pe diapozitiv pui ideea pe scurt, iar explicația o spui tu.]]. Diapozitivul 4: piesele, cu câte o imagine. La fiecare diapozitiv, [[altă tranziție și un sunet|O singură tranziție, fără sunete, ține atenția pe conținut.]]. Ultimul diapozitiv: concluzia și „Mulțumesc!”, [[fără surse|Sursele informațiilor și ale imaginilor se trec la final.]].',
+   indiciu:'Gândește-te la structură, la cantitatea de text, la efecte și la final.',ajutor:'Verifică pe rând: titlul, textul, efectele, sursele.',
+   why:'Un plan bun are titlu, puțin text pe fiecare diapozitiv, efecte puține și sursele la final.'},
+  {t:'tf',q:'E în regulă să citești prezentarea de pe ecran, cu spatele la clasă.',ok:false,why:'Fals. Colegii citesc mai repede decât vorbești și nu te mai ascultă. Privește-i și folosește notele doar ca plan.'},
+  {t:'order',q:'Ziua prezentării. Pune pașii în ordine.',items:['Verifici prezentarea pornind-o cu F5','Saluți și spui subiectul','Prezinți ideile, câte una pe diapozitiv','Rezumi pe scurt ce ai arătat','Mulțumești și răspunzi la întrebări'],ajutor:'Înainte de oră, introducere, conținut, încheiere.',why:'Verificarea se face înainte, ca să nu ai surprize. Introducerea spune despre ce e vorba, conținutul ține ideile în ordine, iar încheierea fixează ce reține publicul.'},
+  {t:'choice',q:'Ce înseamnă regula 6 × 6?',o:['Cel mult 6 rânduri, cel mult 6 cuvinte pe rând','Cel mult 6 diapozitive, cu câte 6 imagini','Exact 6 culori și 6 fonturi diferite','Cel mult 6 minute și 6 întrebări la final'],ok:0,why:'E o regulă de estetică: puțin text pe diapozitiv, ca să se înțeleagă dintr-o privire.'},
+  {t:'choice',q:'Prezentarea arată îngrijit, dar textul e mic și nu se vede din ultima bancă. Ce regulă nu respectă?',o:['Ergonomia','Structura','Salvarea','Tranziția'],ok:0,ajutor:'Care regulă cere „totul se vede din ultima bancă”?',why:'Ergonomia cere ca prezentarea să se urmărească fără efort, deci textul trebuie să se vadă din ultima bancă.'},
+  {t:'classify',q:'Ține de estetica diapozitivelor sau de susținerea prezentării?',cats:['Estetica diapozitivelor','Susținerea prezentării'],items:[['Contrast puternic',0],['Privești publicul',1],['Aceleași culori peste tot',0],['Vorbești rar și clar',1]],why:'Estetica e despre cum arată diapozitivele; susținerea e despre cum vorbești tu.'}
+ ]}
 ];
 
 JocMotor.porneste({
@@ -319,20 +1056,25 @@ JocMotor.porneste({
   unitateTitlu:'Prezentări digitale',
   competente:['CS.1.1','CS.3.1'],
   lectii:'2–10',
-  intro:'Opt niveluri despre prezentări: de la fereastra aplicației până la animații, expunere și prezentarea în fața clasei. La fiecare nivel citești o pagină scurtă și răspunzi la întrebări. De două ori repari singur un diapozitiv, iar jocul verifică dacă se poate citi. La final îți iei diploma.',
+  intro:'Opt niveluri despre prezentări, de la zero până la prezentarea în fața clasei. Fiecare nivel te duce pas cu pas: citești o idee, vezi un exemplu, încerci pe loc. La atelier lucrezi într-un PowerPoint simulat sau repari singur un diapozitiv, iar la final răspunzi la câteva întrebări, doar din ce ai învățat. La sfârșit îți iei diploma.',
+  cum:`<b>Cum lucrezi în fiecare nivel</b><ol>
+<li><b>Învață</b> — pași scurți, câte o idee, cu capturi din PowerPoint și un exemplu „Uite cum”. Nu ai înțeles? Apasă „Explică-mi altfel”.</li>
+<li><b>Încearcă tu</b> — după fiecare pas, un exercițiu mic, fără note. Greșești? Primești un indiciu. Vrei să exersezi mai mult? „Încă un exercițiu”.</li>
+<li><b>Atelier</b> — lucrezi într-un PowerPoint simulat (file, butoane, miniaturi, expunere) sau repari un diapozitiv. Pașii tăi se bifează singuri, pe măsură ce îi faci.</li>
+<li><b>Verificare</b> — câteva întrebări doar din ce ai învățat în pași. Stele pentru răspunsurile din prima.</li></ol>`,
   banda:'<span class="tt"></span><span class="on"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span class="tt"></span>',
   nivele:LEVELS,
-  tipuri:{diapozitiv:JocDiapozitiv},
+  tipuri:{diapozitiv:JocDiapozitiv,ppt:JocPPT},
   diploma:{
     titlu:'Designer de prezentări',
-    rezumat:'fereastra aplicației, salvarea, diapozitive și obiecte, editare, formatare, animații, tranziții, expunerea și susținerea unei prezentări',
-    aplicatie:'aplicația de prezentări de la clasă',
+    rezumat:'fereastra aplicației, salvarea în mai multe formate, diapozitive și obiecte, editare, formatare, animații, tranziții, expunerea și susținerea unei prezentări',
+    aplicatie:'PowerPoint-ul adevărat (sau LibreOffice Impress / Google Slides)',
     provocare:[
-      'Fă o prezentare de 5–7 diapozitive despre jocul tău preferat: titlu, cuprins, conținut, concluzie, surse.',
-      'Pe fiecare diapozitiv de conținut: o singură idee, cel mult 6 rânduri scurte și o imagine care explică.',
-      'Aplică o temă, verifică contrastul și mărimea textului, apoi pune o singură tranziție pe toate diapozitivele.',
-      'Scrie în zona de note ce vei spune la fiecare diapozitiv și verifică totul cu <kbd>F5</kbd>.',
-      'Salvează ca <code>Nume_Prenume_joc</code> (în PowerPoint: <code>.pptx</code>) în folderul clasei și repetă prezentarea o dată, cu cronometrul.'
+      'Deschide <b>PowerPoint</b> și fă o prezentare nouă: Fișier (File) → <i>New</i> → prezentare goală (sau <kbd>Ctrl</kbd>+<kbd>N</kbd>).',
+      'Fă 5–7 diapozitive despre jocul tău preferat: titlu, cuprins, conținut (o idee pe diapozitiv), concluzie, surse. Diapozitiv nou: Pornire (Home) → <i>New Slide</i>; aspectul: <i>Layout</i>.',
+      'Pe Proiectare (Design) alege o temă. Verifică pe fiecare diapozitiv: titlu 32–40, text 24–28, contrast puternic, regula 6 × 6 și o imagine care explică (Inserare / Insert → <i>Pictures</i>).',
+      'Pune o singură tranziție (Tranziții / Transitions) și cel mult o animație cu motiv (Animații / Animations → <i>Add Animation</i>). Scrie în zona de note ce spui la fiecare diapozitiv.',
+      'Verifică totul cu <kbd>F5</kbd>, apoi Fișier (File) → <i>Save As</i> → un nume bun (subiect, clasă, nume), de exemplu <code>Sah_6A_Popescu.pptx</code>, în folderul clasei. Repetă prezentarea o dată, cu voce tare și cu cronometrul.'
     ]
   }
 });

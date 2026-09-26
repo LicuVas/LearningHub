@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Misiunea Șirul</title>
-<meta name="description" content="Lecție-joc pentru clasa a VIII-a: șiruri de valori în C++, citire, afișare și parcurgere, algoritmii de numărare, sumă, produs, minim, maxim și verificarea unei proprietăți, testare și depanare.">
+<meta name="description" content="Lecție-joc pentru clasa a VIII-a: șiruri de valori în C++, pas cu pas de la zero: citire, afișare și parcurgere, algoritmii de numărare, sumă, produs, minim, maxim și verificarea unei proprietăți, testare și depanare, cu urmărirea variabilelor ca în Code::Blocks.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Manrope:wght@400;600;700;800&family=Roboto+Mono:wght@400;500&display=swap&subset=latin-ext">
@@ -38,148 +38,695 @@
 .banda .nm{flex:none;align-self:center;margin-right:6px;color:var(--accent);font-weight:500}
 h1 .ac{color:var(--accent)}
 .cod{display:block;white-space:pre-wrap;line-height:1.5;padding:.45em .7em;margin:.5em 0}
+/* șirul desenat ca sertare cu indici (în pași) */
+.vec{display:flex;flex-wrap:wrap;align-items:flex-end;gap:4px;margin:.6em 0;font-family:var(--fm)}
+.vec .nm{align-self:center;margin-right:4px;color:var(--accent);font-weight:500}
+.vec span{display:flex;flex-direction:column;align-items:center}
+.vec b{display:block;min-width:34px;text-align:center;padding:4px 6px;border:2px solid var(--accent);background:var(--cel);color:var(--ink);font-weight:500}
+.vec i{font-style:normal;font-size:.72rem;color:var(--idx)}
+.vec .on b{background:var(--accent);color:var(--accentInk)}
+.vec .gol b{border-style:dashed;opacity:.6}
+/* simulatorul „urmarire”: programul, consola și fereastra Watches din Code::Blocks, cu teste */
+.urm-lbl{font-weight:700;font-size:.85rem;color:var(--ink2);margin:.7em 0 .2em}
+.urm pre{font-family:var(--fm);font-size:.88rem;line-height:1.5;background:var(--paper2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:0;overflow:auto;white-space:pre;text-align:left;tab-size:4;font-variant-ligatures:none}
+.urm-cons{font-family:var(--fm);font-size:.88rem;background:#1E1E1E;color:#EDEDED;border-radius:6px;padding:6px 10px;display:inline-block;max-width:100%}
+.urm-cons small{color:#A9A9A9;font-family:var(--fb)}
+.urm-w{overflow-x:auto;max-width:100%}
+.urm-t{border-collapse:collapse;font-family:var(--fm);font-size:.86rem}
+.urm-t th,.urm-t td{border:1px solid var(--line);padding:3px 3px;text-align:center}
+.urm-t th{background:var(--paper2);font-weight:500}
+.urm-t td.dat{color:var(--ink2)}
+.urm-t tr.start td{background:var(--paper2);font-style:italic}
+.urm-t td.ok{background:var(--okbg)} .urm-t td.no{background:var(--badbg)}
+.urm input{font:inherit;font-family:var(--fm);width:3em;max-width:100%;padding:2px 2px;border:1.5px solid var(--line);border-radius:5px;background:var(--paper);color:var(--ink);text-align:center}
+.urm .urm-af input{width:10em;text-align:left}
+.urm .urm-af{display:block;margin-top:.6em}
+.urm .urm-af.ok input{border-color:var(--ok);background:var(--okbg)} .urm .urm-af.no input{border-color:var(--bad);background:var(--badbg)}
+.teste{list-style:none;padding:0;margin:.3em 0 0;font-size:.9rem}
+.teste li{padding:2px 0}
+.teste li::before{content:"○ ";color:var(--ink2)}
+.teste li.ok::before{content:"✓ ";color:var(--ok);font-weight:700}
+.teste li.no::before{content:"✗ ";color:var(--bad);font-weight:700}
 </style>
 </head>
 <body>
 <script src="../_motor/motor.js"></script>
 <script>
-// cod C++ pe mai multe rânduri; se scrie normal, iar funcția îl face sigur pentru HTML.
-// Stilul e pus direct pe element, ca să arate la fel și în recapitularea clasei.
-const C=s=>`<code class="cod" style="display:block;white-space:pre-wrap;line-height:1.5;padding:.45em .7em;margin:.5em 0">${s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code>`;
+/* MISIUNEA ȘIRUL, rescrisă pe PAȘI (26.09.2026).
+   Profesorul: „informația e prea condensată - nu e beginner friendly - e mai mult test decât asistență de învățare”.
+   De aceea: fiecare nivel = pași mici (o idee, un exemplu lucrat, „explică-mi altfel”, exercițiu cu indiciu și variante),
+   un ATELIER care simulează rularea pas cu pas din Code::Blocks (fereastra Watches: elevul scrie valorile variabilelor
+   după fiecare trecere prin buclă, pe date alese la întâmplare, iar TESTELE se bifează), apoi verificarea, doar pe ce
+   s-a predat. Codul se arată mereu pe rânduri, indentat. */
+const X=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// cod C++ pe mai multe rânduri, în întrebări; stilul e pus pe element, ca să arate la fel și în recapitularea clasei
+const C=s=>`<code class="cod" style="display:block;white-space:pre-wrap;line-height:1.5;padding:.45em .7em;margin:.5em 0">${X(s)}</code>`;
+const pre=s=>`<pre>${X(s)}</pre>`;                        // cod în pași, indentat, aliniat la stânga
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="../siruri-viii/img/${f}" target="_blank"><img src="../siruri-viii/img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+/* șirul desenat ca sertare: vec('v',[4,7,2,9,5],2) - al treilea argument = indicele evidențiat */
+const vec=(nm,a,on)=>`<div class="vec" aria-label="Șirul ${nm}: ${a.join(' ')}"><span class="nm">${nm}</span>${a.map((x,i)=>`<span class="${i===on?'on':''}"><b>${x}</b><i>${i}</i></span>`).join('')}</div>`;
+
 const SIR='Șir de valori (noțiuni introductive)';
 const OPS='Operații cu șiruri de valori: citire, afişare, parcurgere';
 const ALG='Algoritmi de bază pentru șiruri de valori: numărare, sumă /produs, minim/maxim, verificare a unei proprietăți.';
+
+/* ---------------- simulatorul „urmarire”: rularea pas cu pas, ca în Code::Blocks ----------------
+   Q: cod (programul arătat), date:[[...],[...]] (unul ales la întâmplare = ce scrie elevul în consolă),
+   nume ('v' implicit), init:{var:'expresie'}, pas:'instrucțiunea din buclă' (C++ simplu, valid și în JS),
+   de (primul i), invers:true, salt (pasul lui i), cols:[variabilele din Watches], scrie:[ce completează elevul:
+   'i', 'vi' = elementul, sau numele variabilelor; implicit cols], afis:'expresia afișată la final'.
+   Verificarea e pe COMPORTAMENT: valorile corecte se calculează rulând chiar instrucțiunea, pe datele de acum. */
+function urmRun(Q,a){
+  const nm=Q.nume||'v',n=a.length,sc={n,v:a};sc[nm]=a;
+  const ev=e=>new Function('sc','with(sc){return ('+e+')}')(sc);
+  const vars=Object.keys(Q.init||{});vars.forEach(k=>{sc[k]=ev(Q.init[k])});
+  const start={};vars.forEach(k=>start[k]=sc[k]);
+  const f=Q.pas?new Function('sc','with(sc){'+Q.pas+'}'):null,idx=[],d=Q.salt||1;
+  if(Q.invers){for(let i=n-1;i>=0;i-=d)idx.push(i)}else{for(let i=(Q.de||0);i<n;i+=d)idx.push(i)}
+  const rows=idx.map(i=>{sc.i=i;if(f)f(sc);const r={i,vi:a[i]};vars.forEach(k=>r[k]=sc[k]);return r});
+  return {rows,start,afis:Q.afis?String(ev(Q.afis)):null};
+}
+const urmFmt=x=>x===true?'true':x===false?'false':String(x);
+function urmOk(inp,exp){
+  const s=String(inp==null?'':inp).trim().toLowerCase().replace(/\s+/g,' ');
+  if(typeof exp==='boolean')return exp?['true','1','adevărat','adevarat'].includes(s):['false','0','fals'].includes(s);
+  if(typeof exp==='number')return /^-?\d+([.,]\d+)?$/.test(s)&&Math.abs(parseFloat(s.replace(',','.'))-exp)<1e-9;
+  return s===String(exp).trim().toLowerCase().replace(/\s+/g,' ');
+}
+const URMARIRE={
+  render(Q,body,api){
+    const a=Q.date[Math.floor(Math.random()*Q.date.length)],nm=Q.nume||'v',T=urmRun(Q,a);
+    const cols=Q.cols||[],scrie=Q.scrie||cols;
+    const keys=['i','vi'].concat(cols),head=k=>k==='vi'?nm+'[i]':k;
+    const cel=(ri,k,x)=>scrie.includes(k)?`<td data-c="${ri}-${k}"><input data-r="${ri}" data-k="${k}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${api.esc(head(k))} la trecerea ${ri+1}"></td>`:`<td class="dat">${api.esc(urmFmt(x))}</td>`;
+    body._T=T;body._scrie=scrie;
+    body.innerHTML=`<div class="urm">
+      <div class="urm-lbl">Programul</div>${pre(Q.cod)}
+      <div class="urm-lbl">Consola: ce scrii la tastatură</div>
+      <div class="urm-cons"><small>n, apoi elementele:</small><br>${a.length}<br>${a.join(' ')}</div>
+      <div class="urm-lbl">Watches: valorile după fiecare trecere prin buclă${scrie.length?' (completezi căsuțele albe)':''}</div>
+      <div class="urm-w"><table class="urm-t"><thead><tr>${keys.map(k=>`<th>${api.esc(head(k))}</th>`).join('')}</tr></thead><tbody>
+      ${cols.length?`<tr class="start"><td colspan="2">înainte</td>${cols.map(k=>`<td>${api.esc(urmFmt(T.start[k]))}</td>`).join('')}</tr>`:''}
+      ${T.rows.map((r,ri)=>`<tr>${keys.map(k=>cel(ri,k,r[k])).join('')}</tr>`).join('')}
+      </tbody></table></div>
+      ${T.afis!=null?`<label class="urm-af" id="urm-af">Ce afișează programul la final? <input data-k="afis" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`:''}
+      <div class="urm-lbl">Testele</div><ul class="teste">
+      ${scrie.length?T.rows.map((r,ri)=>`<li data-t="${ri}">Trecerea ${ri+1} (i = ${r.i}): valorile sunt corecte</li>`).join(''):''}
+      ${T.afis!=null?'<li data-t="afis">Afișarea de la final e corectă</li>':''}</ul></div>`;
+    const inp=(ri,k)=>body.querySelector(ri==='afis'?'input[data-k="afis"]':`input[data-r="${ri}"][data-k="${k}"]`);
+    const marcheaza=()=>{let bune=0,tot=0;
+      if(scrie.length)T.rows.forEach((r,ri)=>{tot++;let ok=true;
+        scrie.forEach(k=>{const b=urmOk(inp(ri,k).value,r[k]);ok=ok&&b;body.querySelector(`td[data-c="${ri}-${k}"]`).className=b?'ok':'no'});
+        if(ok)bune++;body.querySelector(`li[data-t="${ri}"]`).className=ok?'ok':'no'});
+      if(T.afis!=null){tot++;const b=urmOk(inp('afis').value,T.afis);if(b)bune++;
+        body.querySelector('#urm-af').className='urm-af '+(b?'ok':'no');body.querySelector('li[data-t="afis"]').className=b?'ok':'no'}
+      return [bune,tot]};
+    body._umple=()=>{if(scrie.length)T.rows.forEach((r,ri)=>scrie.forEach(k=>{inp(ri,k).value=urmFmt(r[k])}));if(T.afis!=null)inp('afis').value=T.afis};
+    const nav=api.checkButton(()=>{
+      const [bune,tot]=marcheaza();
+      if(bune===tot){nav.innerHTML='';api.resolve(true)}
+      else{api.resolve(false,`${bune} din ${tot} teste trec. La rândurile roșii, ia pe rând: ce valoare are i, ce element e ${nm}[i], ce face instrucțiunea din buclă cu valoarea de ACUM a variabilei.`);
+        api.revealButton(()=>{body._umple();marcheaza();nav.innerHTML='';api.giveUp('valorile corecte sunt acum în tabel, cu verde. Parcurge-le trecere cu trecere, ca la rularea pas cu pas.')})}
+    },'Rulează testele');
+  },
+  rezolva(Q,body){body._umple()},
+  gresit(Q,body){
+    body._umple();const T=body._T,sc=body._scrie;
+    if(sc.length){const ri=T.rows.length-1,k=sc[sc.length-1],e=body.querySelector(`input[data-r="${ri}"][data-k="${k}"]`),x=T.rows[ri][k];
+      e.value=typeof x==='boolean'?String(!x):String(Number(x)+1)}
+    else body.querySelector('input[data-k="afis"]').value=T.afis+' 0';
+  }
+};
+
 const LEVELS=[
-{t:'Ce este un șir de valori',lectii:[23],continuturi:[SIR],text:`
-<p>Un <mark>șir de valori</mark> (numit și <mark>vector</mark> sau tablou unidimensional) ține mai multe valori de <strong>același tip</strong> sub un singur nume. Îl găsești peste tot: notele din catalog, temperaturile unei săptămâni, scorurile unui clasament.</p>
-<p>Fiecare valoare e un <mark>element</mark> și are o poziție, numită <mark>indice</mark>. În C++, primul element are indicele <strong>0</strong>:</p>
-${C('int v[100];   // loc pentru cel mult 100 de numere întregi\n// v = 4 7 2 9 5\n// v[0] = 4, v[1] = 7, ..., v[4] = 5')}
-<p>Dacă șirul are <code>n</code> elemente, indicii merg de la <code>0</code> la <code>n - 1</code>.</p>
-<p>La unele exerciții, pozițiile se numără de la 1 la n, iar <code>v[0]</code> rămâne nefolosit. Important este să rămâi consecvent în tot programul.</p>
-<figure class="captura"><a href="../siruri-viii/img/cb-sir.webp" target="_blank"><img src="../siruri-viii/img/cb-sir.webp" alt="Editorul Code::Blocks cu un program care citește n și cele n elemente ale șirului v, apoi afișează v[0], v[1] și v[n - 1]" width="680" height="295" loading="lazy"></a>
-<figcaption>Un program care citește șirul și afișează trei elemente, deschis în Code::Blocks.</figcaption></figure>
-<figure class="captura"><a href="../siruri-viii/img/cb-consola-sir.webp" target="_blank"><img src="../siruri-viii/img/cb-consola-sir.webp" alt="Consola: s-au scris 5 și 4 7 2 9 5, iar programul afișează v[0] = 4, v[1] = 7 și v[4] = 5" width="552" height="187" loading="lazy"></a>
-<figcaption>În consolă: n = 5 și șirul 4 7 2 9 5. Primul element e <code>v[0]</code>, iar ultimul e <code>v[4]</code>, adică <code>v[n - 1]</code>.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Care situație se potrivește cel mai bine cu un șir de valori?',o:['Temperaturile unei săptămâni','Numele școlii tale','Vârsta ta de azi, în ani','Culoarea preferată a unui coleg'],ok:0,why:'Un șir ține mai multe valori de același tip, puse în ordine: 7 temperaturi, una pe zi. Celelalte sunt o singură valoare.'},
- {t:'choice',q:'Șirul v are elementele 4 7 2 9 5, cu indicii de la 0. Cât este v[2]?',o:['2','7','9','4'],ok:0,why:'Numărătoarea începe de la 0: v[0] = 4, v[1] = 7, v[2] = 2. 7 ar fi al doilea element, adică v[1].'},
- {t:'tf',q:'Într-un șir declarat int v[100] pot pune și numere întregi, și cuvinte, amestecate.',ok:false,why:'Fals. Toate elementele unui șir au același tip. int v[100] ține doar numere întregi.'},
- {t:'choice',q:'Șirul are n = 6 elemente, cu indicii de la 0. Care e indicele ultimului element?',o:['5','6','7','0'],ok:0,why:'Indicii sunt 0, 1, 2, 3, 4 și 5: tot 6 poziții. Ultimul indice e n - 1 = 5.'},
- {t:'match',q:'Leagă fiecare termen de ce înseamnă.',pairs:[['element','o valoare din șir'],['indice','poziția unui element'],['n','numărul de elemente'],['v[i]','elementul de pe poziția i']],why:'Un șir are n elemente. Fiecare stă pe o poziție, iar v[i] îți dă valoarea de pe poziția i.'}
-]},
-{t:'Citire, afișare, parcurgere',lectii:[24],continuturi:[OPS],text:`
-<p>A <mark>parcurge</mark> un șir înseamnă a trece pe rând prin elementele lui. De obicei folosim <code>for</code>, cu indicele <code>i</code> ca și contor:</p>
-${C('int n, v[100];\ncin >> n;\nfor (int i = 0; i < n; i++)\n    cin >> v[i];          // citire\nfor (int i = 0; i < n; i++)\n    cout << v[i] << " ";   // afișare')}
-<p>Întâi se citește <mark>n</mark>, ca programul să știe câte elemente urmează. Apoi elementele, unul câte unul.</p>
-<p>Parcurgerea poate merge și <mark>invers</mark>, de la ultimul element la primul: <code>for (int i = n - 1; i &gt;= 0; i--)</code>.</p>
-<figure class="captura"><a href="../siruri-viii/img/cb-parcurgere.webp" target="_blank"><img src="../siruri-viii/img/cb-parcurgere.webp" alt="Code::Blocks: citirea șirului cu for, afișarea de la primul la ultimul element și afișarea inversă cu i de la n - 1 la 0" width="700" height="335" loading="lazy"></a>
-<figcaption>Citirea, afișarea și parcurgerea inversă, în același program.</figcaption></figure>
-<figure class="captura"><a href="../siruri-viii/img/cb-consola-parcurgere.webp" target="_blank"><img src="../siruri-viii/img/cb-consola-parcurgere.webp" alt="Consola: datele 4 și 3 8 1 6, apoi rândul 3 8 1 6 și rândul 6 1 8 3" width="552" height="167" loading="lazy"></a>
-<figcaption>Pentru 3 8 1 6: întâi afișarea în ordine, apoi, de la ultimul element la primul, <b>6 1 8 3</b>.</figcaption></figure>`,
-qs:[
- {t:'tf',q:'Înainte de a citi elementele șirului, programul trebuie să știe câte sunt, deci n se citește primul.',ok:true,why:'Adevărat. Bucla for merge până la n, deci n trebuie să aibă deja o valoare când bucla pornește.'},
- {t:'order',q:'Pune în ordine rândurile care citesc un șir și îl afișează.',items:['int n, v[100];','cin >> n;','for (int i = 0; i < n; i++) cin >> v[i];','for (int i = 0; i < n; i++) cout << v[i] << " ";'],why:'Declari, afli câte elemente sunt, le citești, apoi le afișezi. Nu poți afișa ce n-ai citit încă.'},
- {t:'choice',q:`Se citește n = 4 și șirul 3 8 1 6. Ce afișează codul?${C('for (int i = n - 1; i >= 0; i--)\n    cout << v[i] << " ";')}`,o:['6 1 8 3','3 8 1 6','1 8 3 6','6 8 1 3'],ok:0,why:'i pornește de la n - 1 = 3 și scade până la 0, deci elementele se afișează de la ultimul la primul.'},
- {t:'choice',q:'Ce greșeală are bucla for (int i = 0; i <= n; i++) cin >> v[i]; pentru un șir cu n elemente, indicii de la 0?',o:['Citește un element în plus, pe poziția n','Sare peste primul element, v[0]','Citește elementele în ordine inversă','Nu are nicio greșeală, e corectă'],ok:0,why:'Cu i <= n, bucla trece și prin i = n, deci face n + 1 citiri. Pozițiile bune sunt doar 0 … n - 1.'},
- {t:'choice',q:`Ce afișează codul pentru șirul 5 10 15 20 (n = 4)?${C('for (int i = 0; i < n; i = i + 2)\n    cout << v[i] << " ";')}`,o:['5 15','10 20','5 10 15 20','5 10'],ok:0,why:'i ia valorile 0 și 2, apoi 4, când bucla se oprește. v[0] = 5 și v[2] = 15.'}
-]},
-{t:'Numărarea',lectii:[25],continuturi:[ALG],text:`
-<p>Algoritmul de <mark>numărare</mark> află câte elemente au o anumită <mark>proprietate</mark>. Folosește un <mark>contor</mark> care pornește de la 0 și crește cu 1 la fiecare element potrivit:</p>
-${C('int k = 0;\nfor (int i = 0; i < n; i++)\n    if (v[i] % 2 == 0)\n        k++;\ncout << k;')}
-<p>Codul de mai sus numără elementele <mark>pare</mark>. Schimbi doar condiția din <code>if</code> și numeri altceva: elementele mai mari decât 5, notele de 10, zilele cu ger.</p>
-<figure class="captura"><a href="../siruri-viii/img/cb-numarare.webp" target="_blank"><img src="../siruri-viii/img/cb-numarare.webp" alt="Code::Blocks: programul care citește șirul și numără elementele pare cu contorul k pornit de la 0" width="680" height="340" loading="lazy"></a>
-<figcaption>Numărarea elementelor pare, în Code::Blocks.</figcaption></figure>
-<figure class="captura"><a href="../siruri-viii/img/cb-consola-numarare.webp" target="_blank"><img src="../siruri-viii/img/cb-consola-numarare.webp" alt="Consola: datele 5 și 4 7 2 9 5, apoi rezultatul 2" width="552" height="147" loading="lazy"></a>
-<figcaption>Pentru 4 7 2 9 5 sunt pare doar 4 și 2, deci programul afișează <b>2</b>.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce afișează codul din pagină pentru șirul 4 7 2 9 5?',o:['2','3','5','6'],ok:0,why:'Sunt pare doar 4 și 2, deci contorul crește de două ori. 6 ar fi suma lor, nu numărul lor.'},
- {t:'tf',q:'Contorul k se pune la 0 înainte de buclă, nu în interiorul ei.',ok:true,why:'Adevărat. Dacă l-ai pune la 0 în buclă, s-ar șterge la fiecare pas și ai număra cel mult un element.'},
- {t:'choice',q:'Vrei să numeri elementele mai mari decât 5. Ce condiție pui în if?',o:['v[i] > 5','i > 5','v[i] >= 5','k > 5'],ok:0,why:'Proprietatea privește valoarea elementului, v[i], nu poziția i. „Mai mari decât 5” nu include 5, deci >, nu >=.'},
- {t:'classify',q:'Numeri elementele divizibile cu 3 din șirul 9 4 12 7 3. Care intră la numărare?',cats:['Se numără','Nu se numără'],items:[['9',0],['12',0],['3',0],['4',1],['7',1]],why:'Se numără elementele cu v[i] % 3 == 0: 9, 12 și 3. La 4 și 7, restul împărțirii la 3 nu e 0. Rezultatul e 3.'}
-]},
-{t:'Suma și produsul',lectii:[26],continuturi:[ALG],text:`
-<p>Algoritmul de <mark>sumă</mark> adună toate elementele. Suma pornește de la <mark>0</mark>, pentru că 0 nu schimbă o adunare:</p>
-${C('int s = 0;\nfor (int i = 0; i < n; i++)\n    s = s + v[i];')}
-<p>Algoritmul de <mark>produs</mark> înmulțește elementele. Produsul pornește de la <mark>1</mark>, pentru că 1 nu schimbă o înmulțire. Dacă ar porni de la 0, ar rămâne 0 orice ar urma.</p>
-<p>Cu suma afli și <mark>media</mark>: împarți suma la n. Ca să nu pierzi zecimalele, media se calculează ca număr real, de exemplu <code>(double)s / n</code>.</p>
-<figure class="captura"><a href="../siruri-viii/img/cb-suma-produs.webp" target="_blank"><img src="../siruri-viii/img/cb-suma-produs.webp" alt="Code::Blocks: suma s pornită de la 0, produsul p pornit de la 1 și afișarea mediei cu (double)s / n" width="680" height="430" loading="lazy"></a>
-<figcaption>Suma, produsul și media, în același program.</figcaption></figure>
-<figure class="captura"><a href="../siruri-viii/img/cb-consola-suma-produs.webp" target="_blank"><img src="../siruri-viii/img/cb-consola-suma-produs.webp" alt="Consola: datele 4 7 2 9 5, apoi suma = 27, produsul = 2520 și media = 5.4" width="552" height="187" loading="lazy"></a>
-<figcaption>Pentru 4 7 2 9 5: suma 27, produsul 2520 și media 27 / 5 = <b>5.4</b>, cu zecimale datorită lui <code>(double)</code>.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce sumă se obține pentru șirul 4 7 2 9 5?',o:['27','5','25','22'],ok:0,why:'4 + 7 + 2 + 9 + 5 = 27. 5 e numărul de elemente, nu suma lor.'},
- {t:'choice',q:'De la ce valoare pornește variabila p în algoritmul de produs?',o:['1','0','v[0] + 1','n'],ok:0,why:'1 e elementul neutru la înmulțire. Cu p = 0, orice înmulțire ar da tot 0.'},
- {t:'choice',q:'Cât este produsul elementelor șirului 2 3 4?',o:['24','9','0','234'],ok:0,why:'2 * 3 = 6, apoi 6 * 4 = 24. 9 ar fi suma, iar 0 ar ieși doar dacă produsul pornea greșit de la 0.'},
- {t:'tf',q:'Pentru șirul 7 8 (n = 2), cu s de tip int, calculul s / n dă 7.5.',ok:false,why:'Fals. s = 15 și n = 2 sunt int, deci / dă câtul: 7. Pentru 7.5 calculezi (double)s / n.'},
- {t:'match',q:'Leagă fiecare algoritm de valoarea lui de pornire.',pairs:[['sumă','s = 0'],['produs','p = 1'],['numărare','k = 0']],why:'Pornești de la valoarea care nu strică operația: 0 pentru adunare și numărare, 1 pentru înmulțire.'}
-]},
-{t:'Minimul și maximul',lectii:[27],continuturi:[ALG],text:`
-<p>Ca să afli <mark>maximul</mark>, presupui că primul element e cel mai mare. Apoi îl compari cu fiecare element rămas și îl înlocuiești când găsești unul mai mare:</p>
-${C('int mx = v[0];\nfor (int i = 1; i < n; i++)\n    if (v[i] > mx)\n        mx = v[i];')}
-<p><mark>Minimul</mark> se află la fel, cu <code>&lt;</code> în loc de <code>&gt;</code>.</p>
-<p>De ce <mark>pornim de la v[0]</mark> și nu de la 0? Dacă toate numerele sunt negative, de exemplu temperaturi de iarnă, un maxim pornit de la 0 ar rămâne 0, un număr care nici nu e în șir.</p>
-<figure class="captura"><a href="../siruri-viii/img/cb-minmax.webp" target="_blank"><img src="../siruri-viii/img/cb-minmax.webp" alt="Code::Blocks: maximul mx și minimul mn, amândouă pornite de la v[0], cu buclele de la i = 1" width="680" height="452" loading="lazy"></a>
-<figcaption>Maximul și minimul, amândouă pornite de la <code>v[0]</code>.</figcaption></figure>
-<figure class="captura"><a href="../siruri-viii/img/cb-consola-minmax.webp" target="_blank"><img src="../siruri-viii/img/cb-consola-minmax.webp" alt="Consola: temperaturile -3 -8 -1 -5, apoi maxim = -1 și minim = -8" width="552" height="167" loading="lazy"></a>
-<figcaption>Test cu temperaturi de iarnă, toate negative: maximul corect e <b>-1</b>. Un maxim pornit de la 0 ar fi afișat 0.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce valoare are mx la final pentru șirul 4 7 2 9 5?',o:['9','5','4','2'],ok:0,why:'mx pornește de la 4, devine 7, apoi 9. 5 nu e mai mare decât 9, deci mx rămâne 9.'},
- {t:'choice',q:'Temperaturile sunt -3 -8 -1 -5. Dacă mx ar porni de la 0 în loc de v[0], ce ar afișa programul?',o:['0','-1','-8','-3'],ok:0,why:'Niciun element nu e mai mare decât 0, deci mx rămâne 0. Maximul corect e -1 și îl obții dacă pornești de la v[0].'},
- {t:'tf',q:'Pentru minim, singura schimbare față de maxim este semnul din comparație: < în loc de >.',ok:true,why:'Adevărat. Pornești tot de la v[0] și parcurgi restul șirului, dar păstrezi elementul mai mic.'},
- {t:'choice',q:'De ce bucla pentru maxim pornește de la i = 1?',o:['v[0] e deja în mx, deci nu mai trebuie comparat','v[0] nu face parte din șir','Pentru că indicii încep de la 1','Ca să fie mai scurt codul, altfel dă eroare'],ok:0,why:'mx a primit deja valoarea lui v[0]. Dacă bucla ar porni de la 0, rezultatul ar fi același, doar ai face o comparație în plus.'}
-]},
-{t:'Toți sau măcar unul?',lectii:[28],continuturi:[ALG],text:`
-<p>Uneori vrei să afli dacă o proprietate e adevărată <mark>pentru toate</mark> elementele sau <mark>pentru cel puțin unul</mark>.</p>
-<p><strong>Pentru toate:</strong> presupui că da și cauți un contraexemplu.</p>
-${C('bool toate = true;\nfor (int i = 0; i < n; i++)\n    if (v[i] < 5)\n        toate = false;')}
-<p><strong>Pentru cel puțin unul:</strong> presupui că nu și cauți un exemplu.</p>
-${C('bool exista = false;\nfor (int i = 0; i < n; i++)\n    if (v[i] == 10)\n        exista = true;')}
-<p>Un singur element e de ajuns ca să schimbe răspunsul. Tipul <code>bool</code> ține <code>true</code> (adevărat) sau <code>false</code> (fals).</p>
-<figure class="captura"><a href="../siruri-viii/img/cb-toate-exista.webp" target="_blank"><img src="../siruri-viii/img/cb-toate-exista.webp" alt="Code::Blocks: verificarea toate cu bool toate = true și verificarea există cu bool exista = false" width="680" height="452" loading="lazy"></a>
-<figcaption>Cele două verificări din pagină, în același program.</figcaption></figure>
-<figure class="captura"><a href="../siruri-viii/img/cb-consola-toate-exista.webp" target="_blank"><img src="../siruri-viii/img/cb-consola-toate-exista.webp" alt="Consola: notele 7 9 4 10, apoi toate &gt;= 5: 0 și exista un 10: 1" width="552" height="167" loading="lazy"></a>
-<figcaption>Pentru notele 7 9 4 10: nota 4 face <code>toate</code> fals, iar nota 10 face <code>exista</code> adevărat. <code>cout</code> afișează un <code>bool</code> ca <b>0</b> (false) sau <b>1</b> (true).</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Notele sunt 7 9 4 8. Ce valoare are toate după primul cod din pagină („toate notele ≥ 5”)?',o:['false','true','4','7'],ok:0,why:'Nota 4 e mai mică decât 5, deci e un contraexemplu și toate devine false. Ajunge un singur element.'},
- {t:'choice',q:'Pentru aceleași note, 7 9 4 8, ce valoare are exista după al doilea cod („există un 10”)?',o:['false','true','0 note','8'],ok:0,why:'Niciun element nu e egal cu 10, deci exista rămâne false, cum a pornit.'},
- {t:'match',q:'Leagă fiecare întrebare de valoarea de pornire potrivită.',pairs:[['Sunt toate elementele pozitive?','ok = true, apoi caut un contraexemplu'],['Există măcar un element negativ?','gasit = false, apoi caut un exemplu'],['Câte elemente sunt negative?','k = 0, apoi număr']],why:'„Toate” pornește de la da, „măcar unul” pornește de la nu, iar „câte” pornește de la zero.'},
- {t:'tf',q:'În codul pentru „toate”, dacă pui și un else toate = true;, rezultatul rămâne corect.',ok:false,why:'Fals. Un element bun venit după unul rău ar pune toate înapoi pe true și ar ascunde contraexemplul. Odată false, trebuie să rămână false.'}
-]},
-{t:'În mediul de programare: combin și depanez',lectii:[29,30,31],continuturi:[OPS,ALG],text:`
-<p>Algoritmii se <mark>combină</mark>: în aceeași parcurgere poți face suma și, în același timp, să numeri elementele pare.</p>
-${C('int s = 0, k = 0;\nfor (int i = 0; i < n; i++)\n{\n    s = s + v[i];\n    if (v[i] % 2 == 0)\n        k++;\n}')}
-<p>Când implementezi în mediul de programare, <mark>testezi</mark> cu șiruri mici, pentru care știi rezultatul. Alege și cazuri speciale: un singur element, numai numere negative.</p>
-<p>Greșeli frecvente: <mark>indice în afara șirului</mark> (<code>i &lt;= n</code>), sumă nepornită de la 0, acolade uitate în buclă. <mark>Rularea pas cu pas</mark> îți arată valorile lui <code>i</code> și ale variabilelor la fiecare trecere.</p>
-<figure class="captura"><a href="../siruri-viii/img/cb-dep-consola.webp" target="_blank"><img src="../siruri-viii/img/cb-dep-consola.webp" alt="Consola programului greșit: pentru 4 și 3 6 1 8 afișează 1877968038 3 în loc de 18 2" width="552" height="147" loading="lazy"></a>
-<figcaption>Programul din pagină, scris greșit cu <code>i &lt;= n</code> la a doua buclă. Testul 3 6 1 8 trebuia să dea <b>18 2</b>, dar apare un număr uriaș. Greșeala se vede la rulare.</figcaption></figure>
-<figure class="captura"><a href="../siruri-viii/img/cb-dep-meniu.webp" target="_blank"><img src="../siruri-viii/img/cb-dep-meniu.webp" alt="Meniul Debug din Code::Blocks cu Next line F7 încadrat și submeniul Debugging windows deschis, cu Watches încadrat" width="505" height="535" loading="lazy"></a>
-<figcaption>Meniul <b>Debug</b>: <i>Toggle breakpoint</i> (<kbd>F5</kbd>) pune punctul de oprire, <i>Start / Continue</i> (<kbd>F8</kbd>) pornește rularea, <i>Next line</i> (<kbd>F7</kbd>) merge un rând mai departe. Fereastra <i>Watches</i> (urmărirea variabilelor) se deschide din <i>Debugging windows</i>. Rularea pas cu pas merge când programul e într-un proiect Code::Blocks.</figcaption></figure>
-<figure class="captura"><a href="../siruri-viii/img/cb-dep-pas.webp" target="_blank"><img src="../siruri-viii/img/cb-dep-pas.webp" alt="Code::Blocks în rularea pas cu pas: i &lt;= n încadrat la rândul 9, săgeata galbenă la rândul 12; în Watches sunt încadrate i = 4, s = 17173666 și v[i] = 17173648" width="700" height="270" loading="lazy"></a>
-<figcaption>Rulare pas cu pas: săgeata galbenă arată rândul care urmează. În <i>Watches</i> se vede că bucla a ajuns la <b>i = 4</b>, deși șirul are doar 4 elemente (indicii 0-3). <code>v[4]</code> nu face parte din șir, iar <code>s</code> s-a stricat.</figcaption></figure>
-<figure class="captura"><a href="../siruri-viii/img/cb-dep-corect.webp" target="_blank"><img src="../siruri-viii/img/cb-dep-corect.webp" alt="Consola după corectură: pentru 4 și 3 6 1 8 programul afișează 18 2" width="552" height="147" loading="lazy"></a>
-<figcaption>După corectura <code>i &lt; n</code>, același test dă rezultatul așteptat: <b>18 2</b>.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce valori au s și k după codul din pagină, pentru șirul 3 6 1 8?',o:['s = 18, k = 2','s = 18, k = 4','s = 14, k = 2','s = 4, k = 18'],ok:0,why:'3 + 6 + 1 + 8 = 18. Pare sunt 6 și 8, deci k = 2. O singură parcurgere face ambele lucruri.'},
- {t:'classify',q:'Ce test e bun pentru a prinde greșeala?',cats:['Prinde greșeala','Nu o prinde'],items:[['Maxim pornit de la 0, testat pe -4 -2 -9',0],['Maxim pornit de la 0, testat pe 3 8 5',1],['Produs pornit de la 0, testat pe 2 3',0],['Numărare cu v[i] > 5 în loc de v[i] >= 5, testată pe 5 7 5',0],['Numărare cu v[i] > 5 în loc de v[i] >= 5, testată pe 7 8 9',1]],why:'O greșeală se vede doar pe un test care ajunge la ea: maximul pornit de la 0 greșește pe numere negative, iar > în loc de >= greșește doar când în șir apare chiar 5. Produsul pornit de la 0 dă 0 pe orice șir.'},
- {t:'hunt',q:'Programul lui Radu trebuie să afișeze suma elementelor. Are 2 greșeli. Apasă pe ele.',src:'int n, v[100], s; cin >> n; for (int i = 0; i < n; i++) cin >> v[i]; [[s = 1;|suma pornește de la 0; cu 1 iese mai mare cu 1]] for (int i = 0; [[i <= n;|cu i <= n se adună și v[n], care nu face parte din șir; corect: i < n]] i++) s = s + v[i]; cout << s;',indiciu:'Verifică valoarea de pornire și ultima trecere prin buclă.',why:'Test: pentru 2 3 rezultatul corect e 5. Cu s = 1 și i <= n, programul ar aduna 1 și o valoare din afara șirului.'},
- {t:'tf',q:'Dacă programul trece un test, sigur e corect pentru orice șir.',ok:false,why:'Fals. Un test arată doar că programul merge pe acel exemplu. De aceea alegi mai multe teste, inclusiv cazuri speciale.'}
-]},
-{t:'Mini-proiectul: stația meteo a școlii',final:true,lectii:[32],continuturi:[OPS,ALG],text:`
-<p><strong>Misiunea finală.</strong> Stația meteo a școlii a măsurat temperatura la prânz, 7 zile la rând:</p>
-${C('n = 7\nt = 3 -2 5 0 -4 6 2')}
-<p>Faci o aplicație care citește temperaturile și afișează: <mark>media</mark>, <mark>temperatura minimă</mark>, <mark>câte zile au fost sub 0 grade</mark> și dacă <mark>a existat o zi cu peste 5 grade</mark>.</p>
-<p>Alegi pentru fiecare cerință algoritmul potrivit și calculezi rezultatele pe datele reale de mai sus, ca să le poți compara cu ce afișează programul.</p>
-<figure class="captura"><a href="../siruri-viii/img/cb-meteo.webp" target="_blank"><img src="../siruri-viii/img/cb-meteo.webp" alt="Code::Blocks: programul stației meteo care citește temperaturile și calculează suma, minima, zilele sub 0 și dacă a fost o zi cu peste 5 grade" width="680" height="587" loading="lazy"></a>
-<figcaption>Aplicația stației meteo, cu o singură parcurgere pentru toate cerințele.</figcaption></figure>
-<figure class="captura"><a href="../siruri-viii/img/cb-consola-meteo.webp" target="_blank"><img src="../siruri-viii/img/cb-consola-meteo.webp" alt="Consola: datele 7 și 3 -2 5 0 -4 6 2, apoi media 1.42857, minima -4, zile sub 0: 2 și peste 5 grade: 1" width="552" height="208" loading="lazy"></a>
-<figcaption>Rezultatele pentru datele de mai sus: media ≈ <b>1.43</b>, minima <b>-4</b>, <b>2</b> zile sub 0 și <b>1</b> (true) pentru „peste 5 grade”.</figcaption></figure>`,
-qs:[
- {t:'classify',q:'Ce algoritm folosești pentru fiecare cerință?',cats:['Sumă','Minim','Numărare','Verificare „există”'],items:[['Media temperaturilor',0],['Temperatura cea mai scăzută',1],['Câte zile au fost sub 0 grade',2],['A fost vreo zi cu peste 5 grade?',3]],why:'Media pornește de la sumă. Cea mai scăzută valoare e minimul. „Câte” cere numărare, iar „a fost vreo zi” cere o verificare pentru cel puțin un element.'},
- {t:'choice',q:'Cât este suma temperaturilor 3 -2 5 0 -4 6 2?',o:['10','22','18','7'],ok:0,why:'3 - 2 + 5 + 0 - 4 + 6 + 2 = 10. 22 ar ieși dacă ai aduna numerele fără semnul minus.'},
- {t:'choice',q:'Care este temperatura minimă și câte zile au fost sub 0 grade?',o:['-4 și 2 zile','-4 și 3 zile','-2 și 2 zile','0 și 3 zile'],ok:0,why:'Sub 0 sunt doar -2 și -4, deci 2 zile. Ziua cu 0 grade nu e sub 0. Cea mai mică valoare e -4.'},
- {t:'tf',q:'Pentru aceste date, verificarea „a existat o zi cu peste 5 grade” dă true.',ok:true,why:'Adevărat. A șasea zi are 6 grade, iar 6 > 5. Un singur exemplu e de ajuns.'},
- {t:'choice',q:'Media este 10 / 7. Cum o calculezi ca să nu pierzi zecimalele?',o:['(double)s / n','s / n, cu s și n de tip int','s % n','n / s'],ok:0,why:'Între două int, 10 / 7 dă 1. Cu (double)s împărțirea se face cu zecimale: aproximativ 1.43. % dă restul, nu media.'}
-]}
+/* ================= 1. Ce este un șir de valori (lecția 23) ================= */
+{t:'Ce este un șir de valori',lectii:[23],continuturi:[SIR],
+ obiectiv:'știi ce este un șir de valori, ce sunt elementul și indicele și găsești orice element după poziția lui.',
+ pasi:[
+  {t:'Multe valori, un singur nume',
+   text:`<p>Până acum, o variabilă ținea <strong>o singură</strong> valoare: <code>int t;</code> ține o temperatură.</p>
+<p>Dar dacă vrei temperaturile unei săptămâni? Ai avea nevoie de 7 variabile: <code>t1</code>, <code>t2</code>, …, <code>t7</code>. Pentru notele unei clase de 28 de elevi, de 28!</p>
+<p>Un <mark>șir de valori</mark> (numit și <mark>vector</mark> sau tablou unidimensional) ține mai multe valori de <strong>același tip</strong> sub <strong>un singur nume</strong>, puse în ordine. Îl găsești peste tot: notele din catalog, temperaturile unei săptămâni, scorurile unui clasament.</p>`,
+   exemplu:`<p>Fără șir, 7 variabile separate:</p>${pre('int t1, t2, t3, t4, t5, t6, t7;')}<p>Cu șir, un singur nume pentru toate 7:</p>${pre('int t[7];')}`,
+   altfel:`<p>Gândește-te la un <b>tren</b>: are un singur nume („trenul de Iași”), dar e format din mai multe vagoane, puse unul după altul. Fiecare vagon duce același fel de marfă. Șirul e trenul, iar valorile sunt vagoanele.</p>`,
+   incearca:{t:'classify',q:'Ce se potrivește cu un șir de valori și ce e o singură valoare?',cats:['Șir de valori','O singură valoare'],items:[['Notele tale la matematică pe semestru',0],['Scorurile echipelor dintr-un campionat',0],['Vârsta ta de azi, în ani',1],['Numele școlii tale',1]],ajutor:'Un șir are MAI MULTE valori de același fel, puse în ordine.',why:'Notele și scorurile sunt mai multe valori de același tip. Vârsta și numele școlii sunt câte una.'},
+   inca:[
+    {t:'tf',q:'Într-un șir declarat int v[100] pot pune și numere întregi, și cuvinte, amestecate.',ok:false,ajutor:'Recitește: ce tip au valorile unui șir?',why:'Fals. Toate elementele unui șir au același tip. int v[100] ține doar numere întregi.'},
+    {t:'choice',q:'Care situație NU cere un șir de valori?',o:['Anul nașterii tale','Temperaturile din fiecare zi a lunii','Timpii alergătorilor dintr-o cursă','Prețurile produselor dintr-un coș'],ok:0,ajutor:'Căutăm lucrul care e o singură valoare.',why:'Anul nașterii e un singur număr. Celelalte sunt liste de valori de același fel.'}
+   ]},
+  {t:'Element și indice: numărăm de la 0',
+   text:`<p>Fiecare valoare din șir se numește <mark>element</mark>. Fiecare element stă pe o poziție, numită <mark>indice</mark>.</p>
+<p>În C++, <strong>primul</strong> element are indicele <strong>0</strong>, al doilea are indicele 1, și tot așa.</p>
+<p>Ca să folosești un element, scrii numele șirului și indicele între paranteze drepte: <code>v[0]</code> e primul element, <code>v[1]</code> al doilea. În general, <code>v[i]</code> este elementul de pe poziția <code>i</code>.</p>`,
+   exemplu:`<p>Șirul <code>v</code> cu elementele 4 7 2 9 5. Sub fiecare căsuță e indicele:</p>${vec('v',[4,7,2,9,5],2)}<p><code>v[0]</code> = 4, <code>v[1]</code> = 7, <code>v[2]</code> = 2 (căsuța colorată), <code>v[3]</code> = 9, <code>v[4]</code> = 5.</p>`,
+   altfel:`<p>Gândește-te la un bloc: primul nivel e <b>parterul</b>, adică etajul 0. Deasupra lui e etajul 1, apoi etajul 2. Dacă locuiești „la al treilea nivel”, ești la etajul 2. La fel, al treilea element al șirului e <code>v[2]</code>.</p>`,
+   incearca:{t:'choice',q:'Șirul v are elementele 4 7 2 9 5, cu indicii de la 0. Cât este v[3]?',o:['9','2','5','7'],ok:0,ajutor:'Numără căsuțele de la 0: 0, 1, 2, 3.',why:'v[0] = 4, v[1] = 7, v[2] = 2, v[3] = 9. Al patrulea element are indicele 3.'},
+   inca:[
+    {t:'choice',q:'Șirul v are elementele 8 3 6 1. Pe ce indice stă elementul 6?',o:['2','3','6','1'],ok:0,ajutor:'8 stă pe indicele 0. Mergi mai departe câte o căsuță.',why:'8 e pe 0, 3 e pe 1, 6 e pe 2. Indicele e poziția, nu valoarea.'},
+    {t:'match',q:'Șirul v = 5 0 8 2. Leagă fiecare element de valoarea lui.',pairs:[['v[0]','5'],['v[1]','0'],['v[2]','8'],['v[3]','2']],ajutor:'Primul element are indicele 0.',why:'Indicii pornesc de la 0: v[0] e primul element, v[3] e al patrulea.'}
+   ]},
+  {t:'Câte elemente și ultimul indice',
+   text:`<p>Numărul de elemente al șirului se notează de obicei cu <mark>n</mark>.</p>
+<p>Pentru că numărăm de la 0, dacă șirul are <code>n</code> elemente, indicii merg de la <code>0</code> la <code>n - 1</code>. Ultimul element este <code>v[n - 1]</code>.</p>
+<p>Atenție: <code>v[n]</code> <strong>nu</strong> face parte din șir. Acolo e o căsuță în plus, cu o valoare necunoscută.</p>
+<p>La unele exerciții, pozițiile se numără de la 1 la n, iar <code>v[0]</code> rămâne nefolosit. Important este să rămâi consecvent în tot programul. În misiunea asta numărăm de la 0.</p>`,
+   exemplu:`<p>Șirul are n = 5 elemente. Indicii: 0, 1, 2, 3, 4. Ultimul e <code>v[4]</code>, adică <code>v[n - 1]</code>. Căsuța punctată <code>v[5]</code> nu e a șirului:</p><div class="vec"><span class="nm">v</span><span><b>4</b><i>0</i></span><span><b>7</b><i>1</i></span><span><b>2</b><i>2</i></span><span><b>9</b><i>3</i></span><span class="on"><b>5</b><i>4</i></span><span class="gol"><b>?</b><i>5</i></span></div>`,
+   incearca:{t:'choice',q:'Un șir are n = 8 elemente, cu indicii de la 0. Care e indicele ultimului element?',o:['7','8','9','0'],ok:0,ajutor:'Ultimul indice este n - 1.',why:'Indicii sunt 0, 1, …, 7: tot 8 poziții. Ultimul indice e n - 1 = 7.'},
+   inca:[
+    {t:'tf',q:'Un șir are 5 elemente, cu indicii de la 0. v[5] este ultimul lui element.',ok:false,ajutor:'Care sunt indicii pentru 5 elemente?',why:'Fals. Indicii sunt 0 … 4, deci ultimul e v[4]. v[5] e în afara șirului.'},
+    {t:'choice',q:'Ultimul element al unui șir este v[9]. Câte elemente are șirul (indicii de la 0)?',o:['10','9','8','11'],ok:0,ajutor:'Numără și poziția 0.',why:'Indicii 0, 1, …, 9 înseamnă 10 poziții. n - 1 = 9, deci n = 10.'}
+   ]},
+  {t:'Șirul în program: int v[100];',
+   text:`<p>Un șir se <mark>declară</mark> ca o variabilă, dar cu numărul maxim de elemente între paranteze drepte:</p>
+${pre('int n, v[100];   // loc pentru cel mult 100 de numere întregi')}
+<p>Cele 100 de căsuțe sunt doar <strong>locul rezervat</strong>. Câte folosim de fapt ne spune <code>n</code>, citit de la tastatură.</p>
+<p>Programul din imagine citește <code>n</code>, apoi elementele: primul număr scris în consolă ajunge în <code>v[0]</code>, al doilea în <code>v[1]</code>, și tot așa. Rândul cu <code>for</code> repetă citirea pentru <code>i</code> = 0, 1, 2, …, până la <code>n - 1</code>; cum funcționează el înveți pe larg în nivelul următor. La final programul afișează trei elemente.</p>
+${fig('cb-sir.webp',680,295,'Editorul Code::Blocks cu un program care citește n și cele n elemente ale șirului v, apoi afișează v[0], v[1] și v[n - 1]','Programul, deschis în Code::Blocks.')}
+${fig('cb-consola-sir.webp',552,187,'Consola: s-au scris 5 și 4 7 2 9 5, iar programul afișează v[0] = 4, v[1] = 7 și v[4] = 5','În consolă: n = 5 și șirul 4 7 2 9 5. Ultimul element e <code>v[4]</code>, adică <code>v[n - 1]</code>.')}`,
+   altfel:`<p>E ca la un dulap cu 100 de sertare numerotate de la 0: nu ești obligat să le umpli pe toate. Dacă ai doar 5 caiete, le pui în sertarele 0, 1, 2, 3, 4, iar pe un bilet scrii „am 5 caiete”. Biletul acela e <code>n</code>.</p>`,
+   incearca:{t:'match',q:'Leagă fiecare termen de ce înseamnă.',pairs:[['element','o valoare din șir'],['indice','poziția unui element'],['n','numărul de elemente folosite'],['v[i]','elementul de pe poziția i']],ajutor:'Recitește pașii 2 și 3.',why:'Un șir are n elemente. Fiecare stă pe o poziție, iar v[i] îți dă valoarea de pe poziția i.'},
+   inca:[
+    {t:'choice',q:'Ce înseamnă 100 în declarația int v[100]; ?',o:['Câte elemente încap cel mult în șir','Câte elemente citește programul','Valoarea primului element','Ultimul indice folosit'],ok:0,ajutor:'Câte folosim de fapt ne spune altă variabilă.',why:'100 e locul rezervat. Câte elemente folosește programul ne spune n.'},
+    {t:'choice',q:'În consolă scrii 3, apoi 6 2 8. Ce valoare ajunge în v[1]?',o:['2','6','8','3'],ok:0,ajutor:'3 e n. Primul element citit ajunge în v[0].',why:'n = 3; apoi 6 intră în v[0], 2 în v[1], 8 în v[2].'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Consola și sertarele șirului',
+  intro:`<p>Aici „rulezi” programul în gând, ca în Code::Blocks. Sus e programul, dedesubt ce scrii în consolă. <strong>Sarcina:</strong> pentru fiecare trecere prin buclă, scrie ce element ajunge în <code>v[i]</code>. La final, scrie ce afișează programul. Apoi apasă <b>Rulează testele</b>. Datele se schimbă la fiecare exercițiu.</p>`,
+  q:'Completează ce ajunge în fiecare v[i], apoi ce se afișează.',
+  cod:'int n, v[100];\ncin >> n;\nfor (int i = 0; i < n; i++)\n    cin >> v[i];\ncout << v[0] << " " << v[1] << " " << v[n - 1];',
+  date:[[4,7,2,9,5],[8,3,6,1],[12,5,9,4,7,3],[6,2,8]],scrie:['vi'],afis:'v[0]+" "+v[1]+" "+v[n-1]',
+  ajutor:'Primul număr de după n ajunge în v[0], al doilea în v[1]… La final: v[0], v[1] și ultimul element, cu spațiu între ele.',
+  why:'Citirea umple sertarele în ordine, de la indicele 0. Ultimul element e v[n - 1].',
+  inca:[{t:'urmarire',q:'Încă unul: alt program afișează alte elemente. Atenție la ordinea afișării.',
+   cod:'int n, v[100];\ncin >> n;\nfor (int i = 0; i < n; i++)\n    cin >> v[i];\ncout << v[n - 1] << " " << v[2] << " " << v[0];',
+   date:[[5,1,9,3],[10,20,30,40,50],[7,4,2,8,6]],scrie:['vi'],afis:'v[n-1]+" "+v[2]+" "+v[0]',
+   ajutor:'v[2] e al treilea element. v[n - 1] e ultimul.',why:'Ordinea din cout decide ordinea afișării: întâi ultimul element, apoi v[2], apoi primul.'}]},
+ qs:[
+  {t:'choice',q:'Care situație se potrivește cel mai bine cu un șir de valori?',o:['Temperaturile unei săptămâni','Numele școlii tale','Vârsta ta de azi, în ani','Culoarea preferată a unui coleg'],ok:0,why:'Un șir ține mai multe valori de același tip, puse în ordine: 7 temperaturi, una pe zi. Celelalte sunt o singură valoare.'},
+  {t:'choice',q:'Șirul v are elementele 4 7 2 9 5, cu indicii de la 0. Cât este v[2]?',o:['2','7','9','4'],ok:0,ajutor:'Primul element e v[0].',why:'Numărătoarea începe de la 0: v[0] = 4, v[1] = 7, v[2] = 2. 7 ar fi al doilea element, adică v[1].'},
+  {t:'tf',q:'Într-un șir declarat int v[100], toate elementele sunt numere întregi.',ok:true,why:'Adevărat. Toate elementele unui șir au același tip, iar int înseamnă număr întreg.'},
+  {t:'choice',q:'Șirul are n = 6 elemente, cu indicii de la 0. Care e indicele ultimului element?',o:['5','6','7','0'],ok:0,ajutor:'Ultimul indice e n - 1.',why:'Indicii sunt 0, 1, 2, 3, 4 și 5: tot 6 poziții. Ultimul indice e n - 1 = 5.'},
+  {t:'match',q:'Leagă fiecare termen de ce înseamnă.',pairs:[['element','o valoare din șir'],['indice','poziția unui element'],['n','numărul de elemente'],['v[i]','elementul de pe poziția i']],why:'Un șir are n elemente. Fiecare stă pe o poziție, iar v[i] îți dă valoarea de pe poziția i.'}
+ ]},
+
+/* ================= 2. Citire, afișare, parcurgere (lecția 24) ================= */
+{t:'Citire, afișare, parcurgere',lectii:[24],continuturi:[OPS],
+ obiectiv:'citești un șir de la tastatură, îl afișezi și îl parcurgi de la primul la ultimul element și invers.',
+ pasi:[
+  {t:'Parcurgerea: trec pe la fiecare element',
+   text:`<p>A <mark>parcurge</mark> un șir înseamnă a trece, pe rând, pe la fiecare element. Folosim instrucțiunea <code>for</code>, cu indicele <code>i</code> ca și contor:</p>
+${pre('for (int i = 0; i < n; i++)\n    // aici lucrezi cu v[i]')}
+<p>Citește-o așa: <code>i</code> pornește de la <code>0</code>; cât timp <code>i &lt; n</code>, face instrucțiunea; apoi <code>i++</code> îl crește cu 1.</p>
+<p>Condiția e <code>i &lt; n</code>, nu <code>i &lt;= n</code>: ultimul indice bun e <code>n - 1</code>.</p>`,
+   exemplu:`<p>Pentru n = 4, <code>i</code> ia pe rând valorile:</p>${pre('i = 0   0 < 4 da  -> lucrez cu v[0]\ni = 1   1 < 4 da  -> lucrez cu v[1]\ni = 2   2 < 4 da  -> lucrez cu v[2]\ni = 3   3 < 4 da  -> lucrez cu v[3]\ni = 4   4 < 4 NU  -> bucla se oprește')}`,
+   altfel:`<p>E ca profesorul care strigă catalogul: începe cu primul elev, apoi trece la următorul, și tot așa, până la ultimul. Nu sare pe nimeni și nu strigă un elev care nu există. <code>i</code> e degetul care arată pe rând fiecare nume.</p>`,
+   incearca:{t:'choice',q:`Ce valori ia i în bucla de mai jos, pentru n = 3?${C('for (int i = 0; i < n; i++)')}`,o:['0, 1, 2','1, 2, 3','0, 1, 2, 3','0, 1'],ok:0,ajutor:'i pornește de la 0 și se oprește când i < 3 nu mai e adevărat.',why:'0, 1 și 2 sunt mai mici decât 3. La i = 3 condiția e falsă și bucla se oprește.'},
+   inca:[
+    {t:'choice',q:`Ce valori ia i în bucla greșită de mai jos, pentru n = 3?${C('for (int i = 0; i <= n; i++)')}`,o:['0, 1, 2, 3','0, 1, 2','1, 2, 3','0, 1, 2, 3, 4'],ok:0,ajutor:'Cu <=, și i = 3 trece condiția.',why:'Cu i <= n, bucla trece și prin i = 3 = n. Dar v[3] nu e în șirul de 3 elemente.'}
+   ]},
+  {t:'Citirea: întâi n, apoi elementele',
+   text:`<p>Programul trebuie să știe <strong>câte</strong> elemente urmează, ca bucla să știe unde să se oprească. De aceea se citește întâi <mark>n</mark>. Apoi, cu o parcurgere, se citește fiecare element în <code>v[i]</code>:</p>
+${pre('int n, v[100];\ncin >> n;\nfor (int i = 0; i < n; i++)\n    cin >> v[i];')}
+<p>La fiecare trecere, <code>cin &gt;&gt; v[i]</code> pune următorul număr scris în consolă în sertarul <code>i</code>.</p>`,
+   exemplu:`<p>În consolă scrii <b>4</b>, apoi <b>3 8 1 6</b>. Se întâmplă:</p>${pre('n = 4\ni = 0: v[0] = 3\ni = 1: v[1] = 8\ni = 2: v[2] = 1\ni = 3: v[3] = 6')}`,
+   incearca:{t:'tf',q:'Înainte de a citi elementele șirului, programul trebuie să știe câte sunt, deci n se citește primul.',ok:true,ajutor:'Până unde merge bucla for?',why:'Adevărat. Bucla for merge până la n, deci n trebuie să aibă deja o valoare când bucla pornește.'},
+   inca:[
+    {t:'choice',q:'În consolă scrii 5, apoi 2 4 6 8 10. Ce valoare are v[4] după citire?',o:['10','8','5','4'],ok:0,ajutor:'5 e n. Numără elementele de la indicele 0.',why:'v[0] = 2, v[1] = 4, v[2] = 6, v[3] = 8, v[4] = 10. 5 e n, nu un element.'}
+   ]},
+  {t:'Afișarea, cu spațiu între elemente',
+   text:`<p>Afișarea e tot o parcurgere, cu <code>cout</code> în loc de <code>cin</code>:</p>
+${pre('for (int i = 0; i < n; i++)\n    cout << v[i] << " ";')}
+<p>Spațiul <code>" "</code> de după fiecare element e important. Fără el, numerele se lipesc: pentru 3 8 1 6 ar apărea <b>3816</b>, care pare un singur număr.</p>
+<p>Ordinea rândurilor contează: declari, citești <code>n</code>, citești elementele, abia apoi afișezi. Nu poți afișa ce n-ai citit încă.</p>
+${fig('cb-parcurgere.webp',700,335,'Code::Blocks: citirea șirului cu for, afișarea de la primul la ultimul element și afișarea inversă cu i de la n - 1 la 0','Citirea, afișarea și (jos) parcurgerea inversă, în același program.')}`,
+   incearca:{t:'order',q:'Pune în ordine rândurile care citesc un șir și îl afișează.',items:['int n, v[100];','cin >> n;','for (int i = 0; i < n; i++) cin >> v[i];','for (int i = 0; i < n; i++) cout << v[i] << " ";'],ajutor:'Declari, afli câte sunt, le citești, apoi le afișezi.',why:'Declari, afli câte elemente sunt, le citești, apoi le afișezi. Nu poți afișa ce n-ai citit încă.'},
+   inca:[
+    {t:'choice',q:`Șirul e 5 1 7. Ce apare pe ecran cu codul de mai jos, fără spațiu?${C('for (int i = 0; i < n; i++)\n    cout << v[i];')}`,o:['517','5 1 7','7 1 5','5'],ok:0,ajutor:'Nu se afișează nimic între elemente.',why:'Fără " ", elementele se lipesc: 517. Pare un singur număr, deși sunt trei.'}
+   ]},
+  {t:'Parcurgerea inversă și din 2 în 2',
+   text:`<p>Parcurgerea poate merge și <mark>invers</mark>, de la ultimul element la primul. Pornești de la ultimul indice, <code>n - 1</code>, și scazi câte 1 cât timp <code>i &gt;= 0</code>, adică până ajungi la indicele 0, inclusiv:</p>
+${pre('for (int i = n - 1; i >= 0; i--)\n    cout << v[i] << " ";')}
+<p><code>i--</code> scade <code>i</code> cu 1. Poți sări și din 2 în 2, cu <code>i = i + 2</code>: atunci treci doar pe la indicii 0, 2, 4…</p>
+${fig('cb-consola-parcurgere.webp',552,167,'Consola: datele 4 și 3 8 1 6, apoi rândul 3 8 1 6 și rândul 6 1 8 3','Pentru 3 8 1 6: întâi afișarea în ordine, apoi, invers, <b>6 1 8 3</b>.')}`,
+   exemplu:`<p>n = 4, șirul 3 8 1 6, parcurs invers:</p>${pre('i = 3 -> 6\ni = 2 -> 1\ni = 1 -> 8\ni = 0 -> 3\ni = -1: -1 >= 0 NU, bucla se oprește')}<p>Pe ecran: <b>6 1 8 3</b>.</p>`,
+   altfel:`<p>E ca atunci când cobori scările: pornești de la ultimul etaj și cobori câte unul, până la parter (etajul 0). Nu cobori mai jos de parter.</p>`,
+   incearca:{t:'choice',q:`Se citește n = 4 și șirul 3 8 1 6. Ce afișează codul?${C('for (int i = n - 1; i >= 0; i--)\n    cout << v[i] << " ";')}`,o:['6 1 8 3','3 8 1 6','1 8 3 6','6 8 1 3'],ok:0,ajutor:'Primul i este n - 1 = 3. Cât e v[3]?',why:'i pornește de la n - 1 = 3 și scade până la 0, deci elementele se afișează de la ultimul la primul.'},
+   inca:[
+    {t:'choice',q:`Ce afișează codul pentru șirul 2 4 6 8 10 (n = 5)?${C('for (int i = 0; i < n; i = i + 2)\n    cout << v[i] << " ";')}`,o:['2 6 10','4 8','2 4 6 8 10','2 6'],ok:0,ajutor:'i ia valorile 0, 2, 4. Cât e v[4]?',why:'i = 0, 2, 4 (la 6 se oprește). v[0] = 2, v[2] = 6, v[4] = 10.'},
+    {t:'choice',q:'Ce valoare are i la prima trecere într-o parcurgere inversă a unui șir cu n = 7 elemente?',o:['6','7','0','1'],ok:0,ajutor:'Ultimul indice e n - 1.',why:'Parcurgerea inversă pornește de la ultimul indice: n - 1 = 6.'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Parcurgerea inversă, pas cu pas',
+  intro:`<p>Programul citește șirul, apoi îl afișează <strong>invers</strong>. <strong>Sarcina:</strong> pentru fiecare trecere prin a doua buclă, scrie valoarea lui <code>i</code> și elementul <code>v[i]</code>. La final, scrie tot ce apare pe ecran, cu spații între numere. Datele se schimbă la fiecare exercițiu.</p>`,
+  q:'Completează i și v[i] la fiecare trecere, apoi ce se afișează.',
+  cod:'int n, v[100];\ncin >> n;\nfor (int i = 0; i < n; i++)\n    cin >> v[i];\nfor (int i = n - 1; i >= 0; i--)\n    cout << v[i] << " ";',
+  date:[[3,8,1,6],[5,2,9],[7,4,10,1,6]],invers:true,scrie:['i','vi'],afis:'v.slice(0,n).reverse().join(" ")',
+  ajutor:'Prima trecere are i = n - 1. La fiecare trecere, i scade cu 1, până la 0.',
+  why:'Parcurgerea inversă pornește de la n - 1 și coboară până la 0, deci afișează ultimul element primul.',
+  inca:[{t:'urmarire',q:'Încă unul: acum i crește din 2 în 2. Scrie i și v[i] doar la trecerile care au loc.',
+   cod:'for (int i = 0; i < n; i = i + 2)\n    cout << v[i] << " ";',
+   date:[[5,10,15,20],[2,4,6,8,10],[9,1,8,2,7,3]],salt:2,scrie:['i','vi'],afis:'v.filter((x,k)=>k%2==0).join(" ")',
+   ajutor:'i ia valorile 0, 2, 4… cât timp i < n.',why:'Cu i = i + 2, bucla trece doar pe la indicii pari: 0, 2, 4…'}]},
+ qs:[
+  {t:'tf',q:'Înainte de a citi elementele șirului, programul trebuie să știe câte sunt, deci n se citește primul.',ok:true,why:'Adevărat. Bucla for merge până la n, deci n trebuie să aibă deja o valoare când bucla pornește.'},
+  {t:'order',q:'Pune în ordine rândurile care citesc un șir și îl afișează.',items:['int n, v[100];','cin >> n;','for (int i = 0; i < n; i++) cin >> v[i];','for (int i = 0; i < n; i++) cout << v[i] << " ";'],why:'Declari, afli câte elemente sunt, le citești, apoi le afișezi. Nu poți afișa ce n-ai citit încă.'},
+  {t:'choice',q:`Se citește n = 5 și șirul 1 3 5 7 9. Ce afișează codul?${C('for (int i = n - 1; i >= 0; i--)\n    cout << v[i] << " ";')}`,o:['9 7 5 3 1','1 3 5 7 9','9 7 5 3','7 5 3 1'],ok:0,ajutor:'Parcurgerea inversă pornește de la n - 1 și ajunge până la 0.',why:'i pornește de la 4 și scade până la 0, inclusiv, deci apar toate cele 5 elemente, de la ultimul la primul.'},
+  {t:'choice',q:'Ce greșeală are bucla for (int i = 0; i <= n; i++) cin >> v[i]; pentru un șir cu n elemente, indicii de la 0?',o:['Citește un element în plus, pe poziția n','Sare peste primul element, v[0]','Citește elementele în ordine inversă','Nu are nicio greșeală, e corectă'],ok:0,ajutor:'Ce valori ia i cu <= în loc de <?',why:'Cu i <= n, bucla trece și prin i = n, deci face n + 1 citiri. Pozițiile bune sunt doar 0 … n - 1.'},
+  {t:'choice',q:`Ce afișează codul pentru șirul 5 10 15 20 (n = 4)?${C('for (int i = 0; i < n; i = i + 2)\n    cout << v[i] << " ";')}`,o:['5 15','10 20','5 10 15 20','5 10'],ok:0,why:'i ia valorile 0 și 2, apoi 4, când bucla se oprește. v[0] = 5 și v[2] = 15.'}
+ ]},
+
+/* ================= 3. Numărarea (lecția 25) ================= */
+{t:'Numărarea',lectii:[25],continuturi:[ALG],
+ obiectiv:'numeri elementele unui șir care au o proprietate, cu un contor, și scrii singur condiția potrivită.',
+ pasi:[
+  {t:'Contorul: pornește de la 0, crește cu 1',
+   text:`<p>Algoritmul de <mark>numărare</mark> află <strong>câte</strong> elemente au o anumită proprietate (câte sunt pare, câte sunt de 10…).</p>
+<p>Folosește un <mark>contor</mark>, o variabilă, de obicei <code>k</code>:</p>
+<ol><li><strong>înainte</strong> de buclă, <code>k = 0</code>: încă n-am găsit nimic;</li>
+<li>în buclă, la fiecare element potrivit, <code>k++</code>: crește cu 1;</li>
+<li><strong>după</strong> buclă, afișezi <code>k</code>.</li></ol>
+<p>Dacă ai pune <code>k = 0</code> în buclă, s-ar șterge la fiecare trecere și ai număra cel mult un element.</p>`,
+   exemplu:`<p>Programul numără elementele <strong>pare</strong>. Condiția <code>v[i] % 2 == 0</code> înseamnă „v[i] se împarte exact la 2”, adică e par; o explicăm în pasul următor.</p>${pre('int k = 0;\nfor (int i = 0; i < n; i++)\n    if (v[i] % 2 == 0)\n        k++;\ncout << k;')}<p>Pentru 4 7 2 9 5: k pornește de la 0, devine 1 la 4, rămâne 1 la 7, devine 2 la 2, rămâne 2 la 9 și la 5. Se afișează <b>2</b>.</p>`,
+   altfel:`<p>Stai la fereastră și numeri mașinile roșii. Pornești de la 0. Treci cu privirea pe la fiecare mașină: dacă e roșie, adaugi 1. Dacă nu, nu faci nimic. La final, numărul din minte e rezultatul. Nu o iei de la 0 la fiecare mașină!</p>`,
+   incearca:{t:'tf',q:'Contorul k se pune la 0 înainte de buclă, nu în interiorul ei.',ok:true,ajutor:'Ce s-ar întâmpla cu k dacă l-ai face 0 la fiecare trecere?',why:'Adevărat. Dacă l-ai pune la 0 în buclă, s-ar șterge la fiecare pas și ai număra cel mult un element.'},
+   inca:[
+    {t:'choice',q:'Șirul e 6 3 8 10 1. Codul din „Uite cum” numără elementele pare. Cât afișează?',o:['3','2','4','24'],ok:0,ajutor:'Care dintre ele se împart exact la 2?',why:'Pare sunt 6, 8 și 10, deci k crește de 3 ori. 24 ar fi suma lor, nu numărul lor.'}
+   ]},
+  {t:'Condiția din if = proprietatea',
+   text:`<p>Ce numeri decide <strong>condiția din if</strong>. Restul algoritmului rămâne la fel.</p>
+<ul><li><code>v[i] % 2 == 0</code>: elementul e <strong>par</strong> (<code>%</code> dă restul împărțirii, iar la numerele pare restul la 2 e 0);</li>
+<li><code>v[i] % 3 == 0</code>: elementul se împarte exact la 3;</li>
+<li><code>v[i] &gt; 5</code>: elementul e mai mare decât 5 (5 nu intră; cu <code>&gt;=</code> ar intra);</li>
+<li><code>v[i] == 10</code>: elementul e egal cu 10 (două semne egal!).</li></ul>
+<p>Proprietatea e despre <strong>valoarea</strong> elementului, <code>v[i]</code>, nu despre poziția lui, <code>i</code>.</p>
+${fig('cb-numarare.webp',680,340,'Code::Blocks: programul care citește șirul și numără elementele pare cu contorul k pornit de la 0','Numărarea elementelor pare, în Code::Blocks.')}
+${fig('cb-consola-numarare.webp',552,147,'Consola: datele 5 și 4 7 2 9 5, apoi rezultatul 2','Pentru 4 7 2 9 5 sunt pare doar 4 și 2: se afișează <b>2</b>.')}`,
+   incearca:{t:'choice',q:'Vrei să numeri elementele mai mari decât 5. Ce condiție pui în if?',o:['v[i] > 5','i > 5','v[i] >= 5','k > 5'],ok:0,ajutor:'Proprietatea e despre valoare, v[i]. „Mai mare decât 5” include sau nu pe 5?',why:'Proprietatea privește valoarea elementului, v[i], nu poziția i. „Mai mari decât 5” nu include 5, deci >, nu >=.'},
+   inca:[
+    {t:'classify',q:'Numeri elementele divizibile cu 3 din șirul 9 4 12 7 3. Care intră la numărare?',cats:['Se numără','Nu se numără'],items:[['9',0],['12',0],['3',0],['4',1],['7',1]],ajutor:'Împarte fiecare număr la 3: restul e 0?',why:'Se numără elementele cu v[i] % 3 == 0: 9, 12 și 3. La 4 și 7, restul împărțirii la 3 nu e 0. Rezultatul e 3.'},
+    {t:'choice',q:'Ce condiție numără notele de 10 din șirul notelor?',o:['v[i] == 10','v[i] = 10','i == 10','v[i] > 10'],ok:0,ajutor:'Comparația „egal cu” se scrie cu două semne egal.',why:'== compară. Un singur = ar pune 10 în element. i == 10 ar privi poziția, nu nota.'}
+   ]},
+  {t:'Strategia: cum scrii o numărare',
+   text:`<p>Când o problemă întreabă „<strong>câte</strong>…?”, urmezi 4 pași:</p>
+<ol><li><strong>Găsește proprietatea</strong> din cerință: „câte temperaturi sunt <em>sub 0</em>”.</li>
+<li><strong>Scrie-o ca o condiție despre v[i]</strong>: <code>v[i] &lt; 0</code>.</li>
+<li><strong>Pune scheletul</strong>: <code>k = 0</code> înainte, <code>if</code> cu condiția și <code>k++</code> în buclă, <code>cout</code> după.</li>
+<li><strong>Testează pe un șir mic</strong>: numără tu, cu degetul, și compară cu ce afișează programul.</li></ol>`,
+   exemplu:`<p>Cerința: „Câte temperaturi sunt sub 0 grade?” Pentru șirul 3 -2 5 -4:</p>${pre('int k = 0;\nfor (int i = 0; i < n; i++)\n    if (v[i] < 0)\n        k++;\ncout << k;')}<p>Cu degetul: -2 și -4 sunt sub 0, deci trebuie să apară <b>2</b>.</p>`,
+   incearca:{t:'order',q:'Pune în ordine pașii strategiei de numărare.',items:['Găsesc proprietatea din cerință','O scriu ca o condiție despre v[i]','Pun k = 0, bucla cu if și k++, apoi cout','Testez pe un șir mic, numărând eu'],ajutor:'Întâi înțelegi ce numeri, abia apoi scrii cod, iar la final verifici.',why:'Înțelegi cerința, o traduci în condiție, scrii scheletul și verifici pe un exemplu mic.'},
+   inca:[
+    {t:'choice',q:'Cerința: „Câți elevi au luat cel puțin nota 5?” Ce condiție scrii?',o:['v[i] >= 5','v[i] > 5','v[i] == 5','v[i] < 5'],ok:0,ajutor:'„Cel puțin 5” înseamnă 5 sau mai mult.',why:'„Cel puțin 5” include și nota 5, deci >=. Cu > ar rămâne pe dinafară elevii cu 5.'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Contorul în fereastra Watches',
+  intro:`<p>La rularea pas cu pas, fereastra <b>Watches</b> din Code::Blocks îți arată valorile variabilelor după fiecare rând. Aici o completezi tu. <strong>Sarcina:</strong> scrie valoarea lui <code>k</code> după fiecare trecere prin buclă, apoi ce se afișează. Datele se schimbă la fiecare exercițiu.</p>`,
+  q:'Programul numără elementele pare. Scrie k după fiecare trecere și rezultatul.',
+  cod:'int k = 0;\nfor (int i = 0; i < n; i++)\n    if (v[i] % 2 == 0)\n        k++;\ncout << k;',
+  date:[[4,7,2,9,5],[6,3,8,10,1],[1,3,5,2],[12,14,7,9,20,3]],init:{k:'0'},pas:'if (v[i] % 2 == 0) k++;',cols:['k'],afis:'k',
+  ajutor:'La fiecare rând: e v[i] par? Dacă da, k crește cu 1; dacă nu, k rămâne cum era în rândul de deasupra.',
+  why:'Contorul crește doar la elementele cu proprietatea cerută și nu se șterge niciodată în buclă.',
+  inca:[
+   {t:'urmarire',q:'Încă unul: acum se numără elementele mai mari decât 5.',cod:'int k = 0;\nfor (int i = 0; i < n; i++)\n    if (v[i] > 5)\n        k++;\ncout << k;',
+    date:[[5,7,5,9],[8,2,6,5,11],[1,6,5,3]],init:{k:'0'},pas:'if (v[i] > 5) k++;',cols:['k'],afis:'k',ajutor:'5 nu e mai mare decât 5.',why:'Cu > , elementele egale cu 5 nu se numără.'},
+   {t:'urmarire',q:'Încă unul: se numără elementele divizibile cu 3.',cod:'int k = 0;\nfor (int i = 0; i < n; i++)\n    if (v[i] % 3 == 0)\n        k++;\ncout << k;',
+    date:[[9,4,12,7,3],[5,6,10,15],[3,3,8,1,30]],init:{k:'0'},pas:'if (v[i] % 3 == 0) k++;',cols:['k'],afis:'k',ajutor:'Restul împărțirii la 3 e 0?',why:'Se numără doar elementele cu restul 0 la împărțirea cu 3.'}]},
+ qs:[
+  {t:'choice',q:'Codul numără elementele pare. Ce afișează pentru șirul 4 7 2 9 5?',o:['2','3','5','6'],ok:0,why:'Sunt pare doar 4 și 2, deci contorul crește de două ori. 6 ar fi suma lor, nu numărul lor.'},
+  {t:'tf',q:'Contorul k se pune la 0 înainte de buclă, nu în interiorul ei.',ok:true,why:'Adevărat. Dacă l-ai pune la 0 în buclă, s-ar șterge la fiecare pas și ai număra cel mult un element.'},
+  {t:'choice',q:'Vrei să numeri elementele mai mari decât 5. Ce condiție pui în if?',o:['v[i] > 5','i > 5','v[i] >= 5','k > 5'],ok:0,ajutor:'Proprietatea privește valoarea, nu poziția.',why:'Proprietatea privește valoarea elementului, v[i], nu poziția i. „Mai mari decât 5” nu include 5, deci >, nu >=.'},
+  {t:'classify',q:'Numeri elementele divizibile cu 3 din șirul 6 10 15 8 21. Care intră la numărare?',cats:['Se numără','Nu se numără'],items:[['6',0],['15',0],['21',0],['10',1],['8',1]],why:'Se numără elementele cu v[i] % 3 == 0: 6, 15 și 21. La 10 și 8, restul împărțirii la 3 nu e 0. Rezultatul e 3.'},
+  {t:'hunt',cod:true,q:'Programul trebuie să numere elementele mai mari decât 5. Are <b>2</b> greșeli. Apasă pe ele.',src:`[[int k = 1;|Contorul pornește de la 0: încă n-ai găsit nimic.]]
+for (int i = 0; i < n; i++)
+    if ([[i > 5)|Proprietatea e despre valoare: v[i] > 5, nu despre poziția i.]]
+        k++;
+cout << k;`,corect:`int k = 0;
+for (int i = 0; i < n; i++)
+    if (v[i] > 5)
+        k++;
+cout << k;`,ajutor:'Verifică valoarea de pornire a contorului și despre ce e condiția: valoare sau poziție?',why:'Contorul pornește de la 0, iar condiția privește elementul v[i].'}
+ ]},
+
+/* ================= 4. Suma și produsul (lecția 26) ================= */
+{t:'Suma și produsul',lectii:[26],continuturi:[ALG],
+ obiectiv:'aduni și înmulțești elementele unui șir, alegi corect valoarea de pornire și calculezi media cu zecimale.',
+ pasi:[
+  {t:'Suma: s pornește de la 0',
+   text:`<p>Algoritmul de <mark>sumă</mark> adună toate elementele. Folosește o variabilă <code>s</code>:</p>
+<ol><li>înainte de buclă, <code>s = 0</code>: suma a „nimic” e 0, iar 0 nu schimbă o adunare;</li>
+<li>la fiecare trecere, adaugi elementul curent: <code>s = s + v[i]</code>;</li>
+<li>după buclă, <code>s</code> are suma tuturor.</li></ol>
+${pre('int s = 0;\nfor (int i = 0; i < n; i++)\n    s = s + v[i];\ncout << s;')}`,
+   exemplu:`<p>Pentru șirul 2 3 4, urmărești <code>s</code> după fiecare trecere:</p>${pre('înainte: s = 0\ni = 0: s = 0 + 2 = 2\ni = 1: s = 2 + 3 = 5\ni = 2: s = 5 + 4 = 9')}<p>Se afișează <b>9</b>.</p>`,
+   altfel:`<p>E ca o pușculiță: la început e goală (0 lei). Pui pe rând fiecare monedă, iar suma din pușculiță crește cu valoarea ei. La final numeri ce e înăuntru.</p>`,
+   incearca:{t:'choice',q:'Ce sumă se obține pentru șirul 4 7 2 9 5?',o:['27','5','25','22'],ok:0,ajutor:'Adună pe rând: 4 + 7 = 11, apoi mai departe.',why:'4 + 7 + 2 + 9 + 5 = 27. 5 e numărul de elemente, nu suma lor.'},
+   inca:[
+    {t:'choice',q:'Șirul e 10 -3 5. Cât este s după a doua trecere prin buclă (i = 1)?',o:['7','10','12','13'],ok:0,ajutor:'După prima trecere s = 10. Apoi adaugi -3.',why:'s = 0 + 10 = 10, apoi 10 + (-3) = 7. A treia trecere l-ar face 12.'}
+   ]},
+  {t:'Produsul: p pornește de la 1',
+   text:`<p>Algoritmul de <mark>produs</mark> înmulțește elementele. Seamănă cu suma, cu două schimbări:</p>
+<ul><li>în buclă înmulțești: <code>p = p * v[i]</code>;</li>
+<li><code>p</code> pornește de la <strong>1</strong>, pentru că 1 nu schimbă o înmulțire.</li></ul>
+<p>De ce nu de la 0? Pentru că 0 înmulțit cu orice dă 0: produsul ar rămâne 0, orice ar urma.</p>`,
+   exemplu:`${pre('int p = 1;\nfor (int i = 0; i < n; i++)\n    p = p * v[i];')}<p>Pentru 2 3 4: p = 1, apoi 1 · 2 = 2, apoi 2 · 3 = 6, apoi 6 · 4 = <b>24</b>.</p>`,
+   incearca:{t:'choice',q:'De la ce valoare pornește variabila p în algoritmul de produs?',o:['1','0','v[0] + 1','n'],ok:0,ajutor:'Ce număr nu schimbă nimic la înmulțire?',why:'1 e elementul neutru la înmulțire. Cu p = 0, orice înmulțire ar da tot 0.'},
+   inca:[
+    {t:'choice',q:'Cât este produsul elementelor șirului 3 2 5?',o:['30','10','0','325'],ok:0,ajutor:'3 · 2, apoi rezultatul · 5.',why:'3 · 2 = 6, apoi 6 · 5 = 30. 10 ar fi suma, iar 0 ar ieși doar dacă p pornea greșit de la 0.'},
+    {t:'match',q:'Leagă fiecare algoritm de valoarea lui de pornire.',pairs:[['sumă','s = 0'],['produs','p = 1'],['numărare','k = 0']],ajutor:'Pornești de la valoarea care nu strică operația.',why:'0 pentru adunare și numărare, 1 pentru înmulțire.'}
+   ]},
+  {t:'Media: suma împărțită la n, cu zecimale',
+   text:`<p>Cu suma afli și <mark>media</mark>: împarți suma la numărul de elemente, <code>n</code>.</p>
+<p>Atenție la o capcană: când împarți două numere <code>int</code>, C++ păstrează doar <strong>câtul</strong>. <code>15 / 2</code> dă 7, nu 7.5.</p>
+<p>Ca să păstrezi zecimalele, transformi suma în număr real înainte de împărțire: <code>(double)s / n</code>.</p>
+${fig('cb-suma-produs.webp',680,430,'Code::Blocks: suma s pornită de la 0, produsul p pornit de la 1 și afișarea mediei cu (double)s / n','Suma, produsul și media, în același program.')}
+${fig('cb-consola-suma-produs.webp',552,187,'Consola: datele 4 7 2 9 5, apoi suma = 27, produsul = 2520 și media = 5.4','Pentru 4 7 2 9 5: suma 27, produsul 2520 și media 27 / 5 = <b>5.4</b>, cu zecimale datorită lui <code>(double)</code>.')}`,
+   altfel:`<p>Împărțirea între <code>int</code>-uri e ca împărțirea bomboanelor între copii: 15 bomboane la 2 copii înseamnă câte 7 fiecare (una rămâne). Pentru medie vrei „7 și jumătate”, deci îi spui calculatorului să lucreze cu zecimale: <code>(double)</code>.</p>`,
+   incearca:{t:'tf',q:'Pentru șirul 7 8 (n = 2), cu s de tip int, calculul s / n dă 7.5.',ok:false,ajutor:'Ce păstrează împărțirea a două int?',why:'Fals. s = 15 și n = 2 sunt int, deci / dă câtul: 7. Pentru 7.5 calculezi (double)s / n.'},
+   inca:[
+    {t:'choice',q:'Șirul e 4 5 (n = 2), deci s = 9. Cât afișează (double)s / n?',o:['4.5','4','5','9'],ok:0,ajutor:'Cu (double), împărțirea păstrează zecimalele.',why:'9 / 2 cu zecimale e 4.5. Fără (double), ar fi 4.'}
+   ]},
+  {t:'Suma doar a unora',
+   text:`<p>Poți aduna nu toate elementele, ci doar pe cele cu o proprietate. Combini suma cu un <code>if</code>, ca la numărare:</p>
+${pre('int s = 0;\nfor (int i = 0; i < n; i++)\n    if (v[i] % 2 == 0)\n        s = s + v[i];')}
+<p>Diferența față de numărare: la numărare adaugi <strong>1</strong> (<code>k++</code>), aici adaugi <strong>elementul</strong> (<code>s = s + v[i]</code>).</p>`,
+   exemplu:`<p>Pentru 4 7 2 9 5, suma elementelor pare: s = 0, apoi 4 (4 e par), rămâne 4 la 7, devine 6 la 2, rămâne 6. Rezultat: <b>6</b>. Numărarea lor ar fi dat 2.</p>`,
+   incearca:{t:'choice',q:'Cât este suma elementelor pare din șirul 3 8 1 6?',o:['14','2','18','4'],ok:0,ajutor:'Pare sunt 8 și 6. Adună-le.',why:'8 + 6 = 14. 2 ar fi câte sunt (numărarea), iar 18 e suma tuturor.'},
+   inca:[
+    {t:'choice',q:'Ce instrucțiune pui în if ca să aduni elementele mai mari decât 5?',o:['s = s + v[i];','k++;','s = s + i;','s = v[i];'],ok:0,ajutor:'Aduni elementul, nu poziția și nu 1.',why:'s = s + v[i] adaugă valoarea elementului. s = s + i ar aduna poziții, iar s = v[i] ar șterge suma de până atunci.'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Suma, pas cu pas',
+  intro:`<p><strong>Sarcina:</strong> ca în fereastra <b>Watches</b>, scrie valoarea lui <code>s</code> după fiecare trecere prin buclă, apoi ce se afișează. Rândul „înainte” îți arată de unde pornește. Datele se schimbă la fiecare exercițiu.</p>`,
+  q:'Scrie s după fiecare trecere și rezultatul.',
+  cod:'int s = 0;\nfor (int i = 0; i < n; i++)\n    s = s + v[i];\ncout << s;',
+  date:[[2,3,4],[4,7,2,9,5],[10,-3,5,8],[6,6,1,12]],init:{s:'0'},pas:'s = s + v[i];',cols:['s'],afis:'s',
+  ajutor:'Noul s = s-ul din rândul de deasupra + elementul din rândul curent.',
+  why:'Suma crește la fiecare trecere cu valoarea elementului curent.',
+  inca:[
+   {t:'urmarire',q:'Încă unul: produsul. Atenție de unde pornește p.',cod:'int p = 1;\nfor (int i = 0; i < n; i++)\n    p = p * v[i];\ncout << p;',
+    date:[[2,3,4],[3,2,5],[1,4,2,3],[5,2,10]],init:{p:'1'},pas:'p = p * v[i];',cols:['p'],afis:'p',ajutor:'Noul p = p-ul de deasupra înmulțit cu elementul curent.',why:'Produsul pornește de la 1 și se înmulțește cu fiecare element.'},
+   {t:'urmarire',q:'Încă unul: suma elementelor pare.',cod:'int s = 0;\nfor (int i = 0; i < n; i++)\n    if (v[i] % 2 == 0)\n        s = s + v[i];\ncout << s;',
+    date:[[4,7,2,9,5],[3,8,1,6],[10,5,12,3,2]],init:{s:'0'},pas:'if (v[i] % 2 == 0) s = s + v[i];',cols:['s'],afis:'s',ajutor:'La elementele impare, s rămâne neschimbat.',why:'Doar elementele pare intră în sumă.'}]},
+ qs:[
+  {t:'choice',q:'Ce sumă se obține pentru șirul 6 1 8 5?',o:['20','4','19','48'],ok:0,ajutor:'Adună pe rând, pornind de la 0.',why:'6 + 1 + 8 + 5 = 20. 4 e numărul de elemente, nu suma lor.'},
+  {t:'choice',q:'De la ce valoare pornește variabila p în algoritmul de produs?',o:['1','0','v[0] + 1','n'],ok:0,why:'1 e elementul neutru la înmulțire. Cu p = 0, orice înmulțire ar da tot 0.'},
+  {t:'choice',q:'Cât este produsul elementelor șirului 2 3 4?',o:['24','9','0','234'],ok:0,why:'2 · 3 = 6, apoi 6 · 4 = 24. 9 ar fi suma, iar 0 ar ieși doar dacă produsul pornea greșit de la 0.'},
+  {t:'tf',q:'Pentru șirul 3 4 (n = 2), cu s de tip int, calculul s / n dă 3.5.',ok:false,ajutor:'Între două int, împărțirea păstrează doar câtul.',why:'Fals. s = 7 și n = 2 sunt int, deci / dă câtul: 3. Pentru 3.5 calculezi (double)s / n.'},
+  {t:'choice',q:'Cât este suma elementelor pare din șirul 5 2 9 4 10?',o:['16','3','30','14'],ok:0,ajutor:'Care sunt pare? Adună doar valorile lor.',why:'2 + 4 + 10 = 16. 3 ar fi câte sunt pare (numărarea), iar 30 e suma tuturor.'},
+  {t:'match',q:'Leagă fiecare algoritm de valoarea lui de pornire.',pairs:[['sumă','s = 0'],['produs','p = 1'],['numărare','k = 0']],why:'Pornești de la valoarea care nu strică operația: 0 pentru adunare și numărare, 1 pentru înmulțire.'}
+ ]},
+
+/* ================= 5. Minimul și maximul (lecția 27) ================= */
+{t:'Minimul și maximul',lectii:[27],continuturi:[ALG],
+ obiectiv:'afli cel mai mare și cel mai mic element al unui șir, chiar și când toate sunt negative, și poziția lor.',
+ pasi:[
+  {t:'Maximul: campionul de până acum',
+   text:`<p>Ca să afli <mark>maximul</mark> (cel mai mare element), procedezi ca la un concurs:</p>
+<ol><li><strong>presupui</strong> că primul element e cel mai mare: <code>mx = v[0]</code>;</li>
+<li>îl compari pe rând cu fiecare element rămas, de la <code>i = 1</code>;</li>
+<li>când găsești unul <strong>mai mare</strong>, el devine noul <code>mx</code>.</li></ol>
+${pre('int mx = v[0];\nfor (int i = 1; i < n; i++)\n    if (v[i] > mx)\n        mx = v[i];')}
+<p>Bucla pornește de la 1 pentru că <code>v[0]</code> e deja în <code>mx</code>.</p>`,
+   exemplu:`<p>Pentru 4 7 2 9 5:</p>${pre('înainte:      mx = 4\ni = 1 (7):  7 > 4 da   -> mx = 7\ni = 2 (2):  2 > 7 nu   -> mx = 7\ni = 3 (9):  9 > 7 da   -> mx = 9\ni = 4 (5):  5 > 9 nu   -> mx = 9')}`,
+   altfel:`<p>Ca la un concurs de înălțime: primul copil urcă pe podium. Vine următorul: dacă e mai înalt, îi ia locul; dacă nu, pleacă. La final, pe podium stă cel mai înalt dintre toți.</p>`,
+   incearca:{t:'choice',q:'Ce valoare are mx la final pentru șirul 3 11 6 8?',o:['11','8','3','6'],ok:0,ajutor:'Pornește de la 3 și schimbă doar când găsești ceva mai mare.',why:'mx = 3, devine 11, apoi 6 și 8 nu sunt mai mari decât 11. Rămâne 11.'},
+   inca:[
+    {t:'choice',q:'De câte ori se schimbă mx (după ce a primit v[0]) pentru șirul 4 7 2 9 5?',o:['de 2 ori','o dată','de 4 ori','niciodată'],ok:0,ajutor:'Urmărește tabelul din „Uite cum”.',why:'mx se schimbă la 7 și la 9. La 2 și 5 rămâne neschimbat.'},
+    {t:'choice',q:'De ce bucla pentru maxim pornește de la i = 1?',o:['v[0] e deja în mx, deci nu mai trebuie comparat','v[0] nu face parte din șir','Pentru că indicii încep de la 1','Ca să fie mai scurt codul, altfel dă eroare'],ok:0,ajutor:'Ce valoare a primit mx înainte de buclă?',why:'mx a primit deja valoarea lui v[0]. Dacă bucla ar porni de la 0, rezultatul ar fi același, doar ai face o comparație în plus.'}
+   ]},
+  {t:'De ce pornim de la v[0], nu de la 0',
+   text:`<p>Ai putea fi tentat să scrii <code>mx = 0</code>. Merge pe numere pozitive, dar greșește pe cele negative.</p>
+<p>Temperaturile de iarnă: -3 -8 -1 -5. Niciuna nu e mai mare decât 0, deci un maxim pornit de la 0 ar rămâne 0, un număr care <strong>nici nu e în șir</strong>. Maximul corect e -1.</p>
+<p>Pornind de la <code>v[0]</code>, pornești de la un element adevărat al șirului, deci rezultatul e mereu unul dintre elemente.</p>
+${fig('cb-consola-minmax.webp',552,167,'Consola: temperaturile -3 -8 -1 -5, apoi maxim = -1 și minim = -8','Test cu temperaturi de iarnă, toate negative: maximul corect e <b>-1</b>. Un maxim pornit de la 0 ar fi afișat 0.')}`,
+   incearca:{t:'choice',q:'Temperaturile sunt -3 -8 -1 -5. Dacă mx ar porni de la 0 în loc de v[0], ce ar afișa programul?',o:['0','-1','-8','-3'],ok:0,ajutor:'Este vreun element mai mare decât 0?',why:'Niciun element nu e mai mare decât 0, deci mx rămâne 0. Maximul corect e -1 și îl obții dacă pornești de la v[0].'},
+   inca:[
+    {t:'tf',q:'Maximul pornit de la v[0] dă mereu un număr care se află în șir.',ok:true,ajutor:'De unde vin toate valorile pe care le primește mx?',why:'Adevărat. mx primește doar valori de elemente: întâi v[0], apoi elemente mai mari.'}
+   ]},
+  {t:'Minimul: aceeași idee, cu <',
+   text:`<p><mark>Minimul</mark> (cel mai mic element) se află la fel: pornești de la <code>v[0]</code>, parcurgi restul și păstrezi elementul <strong>mai mic</strong>. Singura schimbare e semnul din comparație: <code>&lt;</code> în loc de <code>&gt;</code>.</p>
+${pre('int mn = v[0];\nfor (int i = 1; i < n; i++)\n    if (v[i] < mn)\n        mn = v[i];')}
+${fig('cb-minmax.webp',680,452,'Code::Blocks: maximul mx și minimul mn, amândouă pornite de la v[0], cu buclele de la i = 1','Maximul și minimul, amândouă pornite de la <code>v[0]</code>.')}`,
+   incearca:{t:'tf',q:'Pentru minim, singura schimbare față de maxim este semnul din comparație: < în loc de >.',ok:true,ajutor:'Compară cele două bucăți de cod.',why:'Adevărat. Pornești tot de la v[0] și parcurgi restul șirului, dar păstrezi elementul mai mic.'},
+   inca:[
+    {t:'choice',q:'Ce valoare are mn la final pentru șirul 6 3 8 1 4?',o:['1','3','4','6'],ok:0,ajutor:'mn = 6, apoi se schimbă la fiecare element mai mic.',why:'mn = 6, devine 3, apoi 1. 8 și 4 nu sunt mai mici decât 1.'}
+   ]},
+  {t:'Unde e maximul? Poziția lui',
+   text:`<p>Uneori vrei să știi și <strong>pe ce poziție</strong> e maximul (în ce zi a fost cel mai cald). Ții minte, alături de <code>mx</code>, și indicele lui, într-o variabilă <code>p</code>. Când schimbi <code>mx</code>, schimbi și <code>p</code>, deci ai nevoie de acolade: două instrucțiuni în același <code>if</code>.</p>
+${pre('int mx = v[0], p = 0;\nfor (int i = 1; i < n; i++)\n    if (v[i] > mx)\n    {\n        mx = v[i];\n        p = i;\n    }')}`,
+   exemplu:`<p>Pentru 4 7 2 9 5: la i = 1, mx = 7 și p = 1; la i = 3, mx = 9 și p = 3. Rezultat: maximul <b>9</b>, pe poziția <b>3</b> (a patra zi).</p>`,
+   incearca:{t:'choice',q:'Pentru șirul 5 12 3 12 8, ce valoare are p la final (indicii de la 0)?',o:['1','3','4','12'],ok:0,ajutor:'Condiția e v[i] > mx. Al doilea 12 e MAI MARE decât 12?',why:'mx devine 12 la i = 1. Al doilea 12 nu e mai mare decât 12, deci p rămâne 1: prima apariție a maximului.'},
+   inca:[
+    {t:'choice',q:'Temperaturile unei săptămâni sunt 2 5 9 4 1 7 3 (ziua 1 are indicele 0). În ce zi a fost cel mai cald?',o:['în ziua 3 (p = 2)','în ziua 2 (p = 1)','în ziua 9','în ziua 6 (p = 5)'],ok:0,ajutor:'Găsește maximul, apoi indicele lui. Ziua = indicele + 1.',why:'Maximul e 9, pe indicele 2, adică a treia zi. 9 e temperatura, nu ziua.'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Maximul, pas cu pas',
+  intro:`<p><strong>Sarcina:</strong> scrie valoarea lui <code>mx</code> după fiecare trecere, apoi ce se afișează. Bucla pornește de la <code>i = 1</code>; rândul „înainte” arată <code>mx = v[0]</code>. Datele se schimbă la fiecare exercițiu, uneori cu numere negative.</p>`,
+  q:'Scrie mx după fiecare trecere și rezultatul.',
+  cod:'int mx = v[0];\nfor (int i = 1; i < n; i++)\n    if (v[i] > mx)\n        mx = v[i];\ncout << mx;',
+  date:[[4,7,2,9,5],[3,11,6,8],[-3,-8,-1,-5],[10,4,10,2,15]],init:{mx:'v[0]'},de:1,pas:'if (v[i] > mx) mx = v[i];',cols:['mx'],afis:'mx',
+  ajutor:'La fiecare rând: e v[i] mai mare decât mx-ul de deasupra? Dacă da, mx = v[i]; altfel rămâne.',
+  why:'mx ține mereu cel mai mare element văzut până acum.',
+  inca:[
+   {t:'urmarire',q:'Încă unul: minimul.',cod:'int mn = v[0];\nfor (int i = 1; i < n; i++)\n    if (v[i] < mn)\n        mn = v[i];\ncout << mn;',
+    date:[[6,3,8,1,4],[-3,-8,-1,-5],[5,5,7,2]],init:{mn:'v[0]'},de:1,pas:'if (v[i] < mn) mn = v[i];',cols:['mn'],afis:'mn',ajutor:'Păstrezi elementul mai mic.',why:'mn ține cel mai mic element văzut până acum.'},
+   {t:'urmarire',q:'Încă unul: maximul și poziția lui.',cod:'int mx = v[0], p = 0;\nfor (int i = 1; i < n; i++)\n    if (v[i] > mx)\n    {\n        mx = v[i];\n        p = i;\n    }\ncout << mx << " " << p;',
+    date:[[4,7,2,9,5],[5,12,3,12,8],[1,2,3]],init:{mx:'v[0]',p:'0'},de:1,pas:'if (v[i] > mx) { mx = v[i]; p = i; }',cols:['mx','p'],afis:'mx+" "+p',ajutor:'p se schimbă doar odată cu mx și primește valoarea lui i.',why:'p ține minte indicele la care s-a schimbat ultima oară mx.'}]},
+ qs:[
+  {t:'choice',q:'Ce valoare are mx la final pentru șirul 4 7 2 9 5?',o:['9','5','4','2'],ok:0,why:'mx pornește de la 4, devine 7, apoi 9. 5 nu e mai mare decât 9, deci mx rămâne 9.'},
+  {t:'choice',q:'Temperaturile sunt -6 -2 -9 -4. Dacă mx ar porni de la 0 în loc de v[0], ce ar afișa programul?',o:['0','-2','-9','-6'],ok:0,ajutor:'Este vreun element mai mare decât 0?',why:'Niciun element nu e mai mare decât 0, deci mx rămâne 0. Maximul corect e -2 și îl obții dacă pornești de la v[0].'},
+  {t:'tf',q:'Pentru minim, singura schimbare față de maxim este semnul din comparație: < în loc de >.',ok:true,why:'Adevărat. Pornești tot de la v[0] și parcurgi restul șirului, dar păstrezi elementul mai mic.'},
+  {t:'choice',q:'De ce bucla pentru maxim pornește de la i = 1?',o:['v[0] e deja în mx, deci nu mai trebuie comparat','v[0] nu face parte din șir','Pentru că indicii încep de la 1','Ca să fie mai scurt codul, altfel dă eroare'],ok:0,why:'mx a primit deja valoarea lui v[0]. Dacă bucla ar porni de la 0, rezultatul ar fi același, doar ai face o comparație în plus.'},
+  {t:'choice',q:'Pentru șirul 8 3 15 6, cu indicii de la 0, pe ce poziție p se află maximul?',o:['2','3','15','1'],ok:0,ajutor:'p e indicele, nu valoarea.',why:'Maximul e 15, pe indicele 2 (v[0] = 8, v[1] = 3, v[2] = 15). 15 e valoarea, nu poziția.'}
+ ]},
+
+/* ================= 6. Toți sau măcar unul? (lecția 28) ================= */
+{t:'Toți sau măcar unul?',lectii:[28],continuturi:[ALG],
+ obiectiv:'verifici dacă o proprietate e adevărată pentru toate elementele sau pentru cel puțin unul, cu o variabilă bool.',
+ pasi:[
+  {t:'Două întrebări diferite',
+   text:`<p>Uneori nu vrei un număr, ci un răspuns <strong>da sau nu</strong>:</p>
+<ul><li>„Au luat <mark>toți</mark> elevii cel puțin nota 5?”</li>
+<li>„A luat <mark>măcar unul</mark> (cel puțin un elev) nota 10?”</li></ul>
+<p>Răspunsul se ține într-o variabilă de tip <code>bool</code>, care are doar două valori: <code>true</code> (adevărat) sau <code>false</code> (fals).</p>
+<p>Atenție: <code>cout</code> afișează un <code>bool</code> ca <b>1</b> (pentru true) sau <b>0</b> (pentru false).</p>`,
+   altfel:`<p>„Toți au adus tema?” e altă întrebare decât „A adus cineva tema?”. Dacă 27 din 28 au adus-o, la prima răspunzi <b>nu</b>, la a doua <b>da</b>.</p>`,
+   incearca:{t:'classify',q:'Ce fel de întrebare este?',cats:['Pentru toate','Pentru cel puțin unul'],items:[['Sunt toate temperaturile peste 0?',0],['Au toți elevii nota de trecere?',0],['Există vreo notă de 10?',1],['A fost măcar o zi cu ploaie?',1]],ajutor:'Caută cuvintele „toate/toți” și „există/vreo/măcar”.',why:'„Toate/toți” cere ca fiecare element să aibă proprietatea. „Există/vreo/măcar” cere un singur element.'},
+   inca:[
+    {t:'choice',q:'Variabila gasit e de tip bool și are valoarea true. Ce afișează cout << gasit; ?',o:['1','true','0','adevărat'],ok:0,ajutor:'Recitește ultima propoziție a pasului.',why:'cout afișează true ca 1 și false ca 0.'}
+   ]},
+  {t:'Pentru toate: presupun DA, caut un contraexemplu',
+   text:`<p>Pornești de la <code>true</code> („da, toate”) și parcurgi șirul. Dacă găsești <strong>un singur</strong> element fără proprietate (un <mark>contraexemplu</mark>), răspunsul devine <code>false</code>.</p>
+${pre('bool toate = true;\nfor (int i = 0; i < n; i++)\n    if (v[i] < 5)\n        toate = false;')}
+<p>Codul verifică „toate notele sunt cel puțin 5”. Condiția din <code>if</code> descrie contraexemplul: o notă sub 5.</p>`,
+   exemplu:`<p>Notele 7 9 4 8: la 7 și 9 nu se schimbă nimic; la 4 (sub 5), <code>toate</code> devine false; la 8 rămâne false. Răspuns: <b>false</b>.</p>`,
+   altfel:`<p>E ca profesorul care întreabă „Ați adus toți tema?”: presupune că da. Trece printre bănci; e de ajuns un singur elev fără temă ca răspunsul să fie „nu”.</p>`,
+   incearca:{t:'choice',q:'Notele sunt 7 9 4 8. Ce valoare are toate după codul din pas („toate notele ≥ 5”)?',o:['false','true','4','7'],ok:0,ajutor:'Există vreo notă sub 5?',why:'Nota 4 e mai mică decât 5, deci e un contraexemplu și toate devine false. Ajunge un singur element.'},
+   inca:[
+    {t:'choice',q:'Notele sunt 6 7 10 5. Ce valoare are toate la final?',o:['true','false','5','0'],ok:0,ajutor:'Căutăm o notă MAI MICĂ decât 5. 5 e mai mică decât 5?',why:'Nicio notă nu e sub 5 (5 nu e mai mic decât 5), deci toate rămâne true.'}
+   ]},
+  {t:'Cel puțin unul: presupun NU, caut un exemplu',
+   text:`<p>Invers: pornești de la <code>false</code> („nu există”) și cauți <strong>un singur</strong> element cu proprietatea. Când îl găsești, răspunsul devine <code>true</code>.</p>
+${pre('bool exista = false;\nfor (int i = 0; i < n; i++)\n    if (v[i] == 10)\n        exista = true;')}
+${fig('cb-toate-exista.webp',680,452,'Code::Blocks: verificarea toate cu bool toate = true și verificarea există cu bool exista = false','Cele două verificări, în același program.')}
+${fig('cb-consola-toate-exista.webp',552,167,'Consola: notele 7 9 4 10, apoi toate >= 5: 0 și exista un 10: 1','Pentru notele 7 9 4 10: nota 4 face <code>toate</code> fals (0), iar nota 10 face <code>exista</code> adevărat (1).')}`,
+   incearca:{t:'choice',q:'Pentru notele 7 9 4 8, ce valoare are exista după codul din pas („există un 10”)?',o:['false','true','0 note','8'],ok:0,ajutor:'Este vreo notă egală cu 10?',why:'Niciun element nu e egal cu 10, deci exista rămâne false, cum a pornit.'},
+   inca:[
+    {t:'match',q:'Leagă fiecare întrebare de valoarea de pornire potrivită.',pairs:[['Sunt toate elementele pozitive?','ok = true, apoi caut un contraexemplu'],['Există măcar un element negativ?','gasit = false, apoi caut un exemplu'],['Câte elemente sunt negative?','k = 0, apoi număr']],ajutor:'„Toate” pornește de la da, „măcar unul” de la nu, „câte” de la zero.',why:'„Toate” pornește de la da, „măcar unul” pornește de la nu, iar „câte” pornește de la zero.'}
+   ]},
+  {t:'Greșeala cu else',
+   text:`<p>O greșeală des întâlnită: să pui un <code>else</code> care „repară” răspunsul.</p>
+${pre('bool toate = true;\nfor (int i = 0; i < n; i++)\n    if (v[i] < 5)\n        toate = false;\n    else\n        toate = true;   // GREȘIT')}
+<p>Pentru notele 4 8: la 4, <code>toate</code> devine false; la 8, <code>else</code> îl pune înapoi pe true. Contraexemplul s-a pierdut! Rezultatul depinde doar de <strong>ultimul</strong> element.</p>
+<p>Regula: odată ce ai găsit contraexemplul, răspunsul rămâne <code>false</code>. Deci <strong>fără else</strong>.</p>`,
+   incearca:{t:'tf',q:'În codul pentru „toate”, dacă pui și un else toate = true;, rezultatul rămâne corect.',ok:false,ajutor:'Ce se întâmplă dacă după un element rău vine unul bun?',why:'Fals. Un element bun venit după unul rău ar pune toate înapoi pe true și ar ascunde contraexemplul. Odată false, trebuie să rămână false.'},
+   inca:[
+    {t:'hunt',cod:true,q:'Codul verifică dacă toate notele sunt cel puțin 5. Are <b>o</b> greșeală. Apasă pe ea.',src:`bool toate = true;
+for (int i = 0; i < n; i++)
+    if (v[i] < 5)
+        toate = false;
+    [[else|Else-ul pune toate înapoi pe true și șterge contraexemplul găsit.]]
+        toate = true;`,corect:`bool toate = true;
+for (int i = 0; i < n; i++)
+    if (v[i] < 5)
+        toate = false;`,ajutor:'Recitește regula de la finalul pasului.',why:'Odată găsit un contraexemplu, toate trebuie să rămână false: fără else.'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Toate notele ≥ 5? Pas cu pas',
+  intro:`<p><strong>Sarcina:</strong> scrie valoarea lui <code>toate</code> (true sau false) după fiecare trecere, apoi ce afișează <code>cout</code> la final (1 sau 0). Datele se schimbă la fiecare exercițiu.</p>`,
+  q:'Scrie toate după fiecare trecere și ce se afișează.',
+  cod:'bool toate = true;\nfor (int i = 0; i < n; i++)\n    if (v[i] < 5)\n        toate = false;\ncout << toate;',
+  date:[[7,9,4,8],[6,7,10,5],[3,8,9],[10,9,8,2,7]],init:{toate:'true'},pas:'if (v[i] < 5) toate = false;',cols:['toate'],afis:'toate?1:0',
+  ajutor:'Odată ce ai scris false, rămâne false până la final. cout afișează true ca 1 și false ca 0.',
+  why:'Un singur contraexemplu face răspunsul false, și nimic nu-l mai schimbă înapoi.',
+  inca:[
+   {t:'urmarire',q:'Încă unul: există vreo notă de 10?',cod:'bool exista = false;\nfor (int i = 0; i < n; i++)\n    if (v[i] == 10)\n        exista = true;\ncout << exista;',
+    date:[[7,9,4,10],[7,9,4,8],[10,6,10,5],[5,6,7]],init:{exista:'false'},pas:'if (v[i] == 10) exista = true;',cols:['exista'],afis:'exista?1:0',ajutor:'Odată ce ai găsit un 10, exista rămâne true.',why:'Un singur exemplu face răspunsul true.'}]},
+ qs:[
+  {t:'choice',q:'Notele sunt 8 6 3 9. Ce valoare are toate după codul „toate notele ≥ 5”?',o:['false','true','3','8'],ok:0,ajutor:'Caută un contraexemplu: o notă sub 5.',why:'Nota 3 e mai mică decât 5, deci e un contraexemplu și toate devine false. Ajunge un singur element.'},
+  {t:'choice',q:'Pentru notele 7 9 4 8, ce valoare are exista după codul „există un 10”?',o:['false','true','0 note','8'],ok:0,why:'Niciun element nu e egal cu 10, deci exista rămâne false, cum a pornit.'},
+  {t:'match',q:'Leagă fiecare întrebare de valoarea de pornire potrivită.',pairs:[['Sunt toate elementele pare?','ok = true, apoi caut un contraexemplu'],['Există măcar un element par?','gasit = false, apoi caut un exemplu'],['Câte elemente sunt pare?','k = 0, apoi număr']],why:'„Toate” pornește de la da, „măcar unul” pornește de la nu, iar „câte” pornește de la zero.'},
+  {t:'tf',q:'În codul pentru „toate”, dacă pui și un else toate = true;, rezultatul rămâne corect.',ok:false,why:'Fals. Un element bun venit după unul rău ar pune toate înapoi pe true și ar ascunde contraexemplul. Odată false, trebuie să rămână false.'},
+  {t:'choice',q:'Pentru notele 7 9 4 10, ce afișează cout << exista; după codul „există un 10”?',o:['1','0','true','10'],ok:0,ajutor:'cout afișează un bool ca 1 sau 0.',why:'Nota 10 există, deci exista e true, iar cout îl afișează ca 1.'}
+ ]},
+
+/* ================= 7. Combin și depanez (lecțiile 29-31) ================= */
+{t:'În mediul de programare: combin și depanez',lectii:[29,30,31],continuturi:[OPS,ALG],
+ obiectiv:'faci mai multe prelucrări într-o singură parcurgere, alegi teste care prind greșelile și urmărești programul pas cu pas în Code::Blocks.',
+ pasi:[
+  {t:'Mai multe prelucrări într-o parcurgere',
+   text:`<p>Algoritmii se <mark>combină</mark>: în aceeași parcurgere poți face suma și, în același timp, să numeri elementele pare.</p>
+${pre('int s = 0, k = 0;\nfor (int i = 0; i < n; i++)\n{\n    s = s + v[i];\n    if (v[i] % 2 == 0)\n        k++;\n}\ncout << s << " " << k;')}
+<p>Pentru că în buclă sunt acum <strong>două</strong> instrucțiuni, ele stau între <mark>acolade</mark> <code>{ }</code>. Fără acolade, în buclă ar intra doar prima: suma s-ar face, dar <code>if</code>-ul ar rula o singură dată, după buclă.</p>`,
+   exemplu:`<p>Pentru 3 6 1 8: s = 3, 9, 10, 18; k crește la 6 și la 8, deci k = 2. Pe ecran: <b>18 2</b>.</p>`,
+   incearca:{t:'choice',q:'Ce valori au s și k după codul din pas, pentru șirul 3 6 1 8?',o:['s = 18, k = 2','s = 18, k = 4','s = 14, k = 2','s = 4, k = 18'],ok:0,ajutor:'s adună tot; k numără doar pe cele pare.',why:'3 + 6 + 1 + 8 = 18. Pare sunt 6 și 8, deci k = 2. O singură parcurgere face ambele lucruri.'},
+   inca:[
+    {t:'choice',q:'Același cod, șirul 2 5 4. Ce se afișează?',o:['11 2','11 3','6 2','2 11'],ok:0,ajutor:'Suma tuturor, apoi câte sunt pare.',why:'2 + 5 + 4 = 11; pare sunt 2 și 4, deci 2. cout afișează întâi s, apoi k.'}
+   ]},
+  {t:'Testarea: alege teste care prind greșeala',
+   text:`<p>Un program care merge pe un exemplu nu e sigur corect pe toate. De aceea <mark>testezi</mark>, cu o strategie în 4 pași:</p>
+<ol><li><strong>Un test mic</strong>, cu rezultatul calculat de tine pe hârtie.</li>
+<li><strong>Un singur element</strong>: n = 1.</li>
+<li><strong>Numai numere negative</strong>: prinde maximul pornit de la 0. Pentru minim e invers: un minim pornit de la 0 greșește pe numere <strong>numai pozitive</strong> (pe 4 9 6 ar da 0, care nici nu e în șir), deci îl testezi pe pozitive.</li>
+<li><strong>Valori „la limită”</strong>: dacă cerința spune „≥ 5”, pune și un 5 în test.</li></ol>
+<p>O greșeală se vede doar pe un test care <strong>ajunge</strong> la ea.</p>`,
+   exemplu:`<p>Programul numără notele „cel puțin 5”, dar are greșit <code>v[i] &gt; 5</code>. Testul 7 8 9 dă 3, corect, deci nu prinde greșeala. Testul 5 7 5 dă 1 în loc de 3: acesta o prinde.</p>`,
+   incearca:{t:'classify',q:'Ce test e bun pentru a prinde greșeala?',cats:['Prinde greșeala','Nu o prinde'],items:[['Maxim pornit de la 0, testat pe -4 -2 -9',0],['Maxim pornit de la 0, testat pe 3 8 5',1],['Produs pornit de la 0, testat pe 2 3',0],['Numărare cu v[i] > 5 în loc de v[i] >= 5, testată pe 5 7 5',0],['Numărare cu v[i] > 5 în loc de v[i] >= 5, testată pe 7 8 9',1]],ajutor:'Testul ajunge la greșeală? Maximul pornit de la 0 greșește doar pe negative; > în loc de >= doar când apare chiar 5.',why:'O greșeală se vede doar pe un test care ajunge la ea: maximul pornit de la 0 greșește pe numere negative, iar > în loc de >= greșește doar când în șir apare chiar 5. Produsul pornit de la 0 dă 0 pe orice șir.'},
+   inca:[
+    {t:'tf',q:'Dacă programul trece un test, sigur e corect pentru orice șir.',ok:false,ajutor:'Recitește ultima propoziție a pasului.',why:'Fals. Un test arată doar că programul merge pe acel exemplu. De aceea alegi mai multe teste, inclusiv cazuri speciale.'},
+    {t:'choice',q:'Un minim a fost pornit greșit de la 0, nu de la v[0]. Pe ce test se vede greșeala?',o:['5 8 3 (numai pozitive)','-2 -7 -4 (numai negative)','-1 6 2 (amestecate)','pe niciun test'],ok:0,ajutor:'Pe ce date niciun element nu e mai mic decât 0?',why:'Pe 5 8 3 niciun element nu e mai mic decât 0, deci minimul rămâne 0 în loc de 3. Pe date cu negative, minimul iese corect și greșeala nu se vede.'}
+   ]},
+  {t:'Greșelile frecvente și cum le găsești',
+   text:`<p>Trei greșeli apar cel mai des:</p>
+<ol><li><mark>indice în afara șirului</mark>: <code>i &lt;= n</code> în loc de <code>i &lt; n</code>;</li>
+<li>sumă sau contor care nu pornesc de la 0 (sau produs care nu pornește de la 1);</li>
+<li>acolade uitate când în buclă sunt două instrucțiuni.</li></ol>
+<p>Cu <code>i &lt;= n</code>, programul folosește <code>v[n]</code>, o căsuță cu o valoare necunoscută. Rezultatul iese un număr ciudat, uriaș:</p>
+${fig('cb-dep-consola.webp',552,147,'Consola programului greșit: pentru 4 și 3 6 1 8 afișează 1877968038 3 în loc de 18 2','Programul din pasul 1, scris greșit cu <code>i &lt;= n</code>. Testul 3 6 1 8 trebuia să dea <b>18 2</b>.')}`,
+   incearca:{t:'hunt',cod:true,q:'Programul lui Radu trebuie să afișeze suma elementelor. Are <b>2</b> greșeli. Apasă pe ele.',src:`int n, v[100], s;
+cin >> n;
+for (int i = 0; i < n; i++)
+    cin >> v[i];
+[[s = 1;|Suma pornește de la 0; cu 1 iese mai mare cu 1.]]
+for (int i = 0; [[i <= n;|Cu i <= n se adună și v[n], care nu face parte din șir; corect: i < n.]] i++)
+    s = s + v[i];
+cout << s;`,corect:`int n, v[100], s;
+cin >> n;
+for (int i = 0; i < n; i++)
+    cin >> v[i];
+s = 0;
+for (int i = 0; i < n; i++)
+    s = s + v[i];
+cout << s;`,ajutor:'Verifică valoarea de pornire a sumei și condiția din a doua buclă.',why:'Test: pentru 2 3 rezultatul corect e 5. Cu s = 1 și i <= n, programul ar aduna 1 și o valoare din afara șirului.'},
+   inca:[
+    {t:'hunt',cod:true,q:'Programul caută produsul elementelor. Are <b>o</b> greșeală. Apasă pe ea.',src:`[[int p = 0;|Produsul pornește de la 1; cu 0 rezultatul e mereu 0.]]
+for (int i = 0; i < n; i++)
+    p = p * v[i];
+cout << p;`,corect:`int p = 1;
+for (int i = 0; i < n; i++)
+    p = p * v[i];
+cout << p;`,ajutor:'De la ce valoare pornește un produs?',why:'Cu p = 0, orice înmulțire dă 0. Produsul pornește de la 1.'}
+   ]},
+  {t:'Rularea pas cu pas în Code::Blocks',
+   text:`<p><mark>Rularea pas cu pas</mark> oprește programul la fiecare rând și îți arată valorile variabilelor. Strategia, în meniul <b>Debug</b>:</p>
+<ol><li>pune cursorul pe rândul buclei și alege <i>Toggle breakpoint</i> (<kbd>F5</kbd>): punctul de oprire;</li>
+<li><i>Start / Continue</i> (<kbd>F8</kbd>): programul rulează până la punctul de oprire;</li>
+<li>deschide <i>Debugging windows</i> → <i>Watches</i>: fereastra cu valorile variabilelor;</li>
+<li>apasă <i>Next line</i> (<kbd>F7</kbd>) și urmărește cum se schimbă <code>i</code> și <code>s</code>.</li></ol>
+<p>Rularea pas cu pas merge când programul e într-un <strong>proiect</strong> Code::Blocks.</p>
+${fig('cb-dep-meniu.webp',505,535,'Meniul Debug din Code::Blocks cu Next line F7 încadrat și submeniul Debugging windows deschis, cu Watches încadrat','Meniul <b>Debug</b>, cu <i>Next line</i> și <i>Watches</i> încadrate.')}
+${fig('cb-dep-pas.webp',700,270,'Code::Blocks în rularea pas cu pas: i <= n încadrat la rândul 9, săgeata galbenă la rândul 12; în Watches sunt încadrate i = 4, s = 17173666 și v[i] = 17173648','Săgeata galbenă arată rândul care urmează. În <i>Watches</i>: <b>i = 4</b>, deși șirul are doar 4 elemente (indicii 0-3). Așa se vede greșeala <code>i &lt;= n</code>.')}
+${fig('cb-dep-corect.webp',552,147,'Consola după corectură: pentru 4 și 3 6 1 8 programul afișează 18 2','După corectura <code>i &lt; n</code>, același test dă <b>18 2</b>.')}`,
+   incearca:{t:'order',q:'Pune în ordine pașii rulării pas cu pas în Code::Blocks.',items:['Toggle breakpoint (F5) pe rândul buclei','Start / Continue (F8)','Debugging windows → Watches','Next line (F7), urmărind variabilele'],ajutor:'Întâi pui punctul de oprire, apoi pornești, apoi deschizi fereastra, apoi mergi rând cu rând.',why:'Punctul de oprire, pornirea, fereastra Watches, apoi rând cu rând cu Next line.'},
+   inca:[
+    {t:'match',q:'Leagă fiecare comandă din meniul Debug de ce face.',pairs:[['Toggle breakpoint (F5)','pune punctul de oprire'],['Start / Continue (F8)','pornește rularea'],['Next line (F7)','merge un rând mai departe'],['Watches','arată valorile variabilelor']],ajutor:'Recitește lista numerotată din pas.',why:'Cu ele urmărești programul exact ca în tabelele din ateliere.'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Fereastra Watches: suma și numărarea',
+  intro:`<p>Aceasta e fereastra <b>Watches</b>, simulată. <strong>Sarcina:</strong> după fiecare trecere prin buclă (fiecare <i>Next line</i> peste corpul buclei), scrie valorile lui <code>s</code> și <code>k</code>. Apoi scrie ce apare în consolă. Datele se schimbă la fiecare exercițiu.</p>`,
+  q:'Scrie s și k după fiecare trecere și ce se afișează.',
+  cod:'int s = 0, k = 0;\nfor (int i = 0; i < n; i++)\n{\n    s = s + v[i];\n    if (v[i] % 2 == 0)\n        k++;\n}\ncout << s << " " << k;',
+  date:[[3,6,1,8],[2,5,4],[10,7,6,3,1],[-2,4,-5,9]],init:{s:'0',k:'0'},pas:'s = s + v[i]; if (v[i] % 2 == 0) k++;',cols:['s','k'],afis:'s+" "+k',
+  ajutor:'Pe fiecare rând: s = s de deasupra + v[i]; k crește doar dacă v[i] e par.',
+  why:'Ambele variabile se schimbă în aceeași trecere: așa arată și fereastra Watches la rularea pas cu pas.',
+  inca:[
+   {t:'urmarire',q:'Încă unul: maximul și câte elemente sunt negative, în aceeași parcurgere.',cod:'int mx = v[0], k = 0;\nfor (int i = 0; i < n; i++)\n{\n    if (v[i] > mx)\n        mx = v[i];\n    if (v[i] < 0)\n        k++;\n}\ncout << mx << " " << k;',
+    date:[[-3,-8,-1,-5],[4,-2,7,-6,1],[2,9,3]],init:{mx:'v[0]',k:'0'},pas:'if (v[i] > mx) mx = v[i]; if (v[i] < 0) k++;',cols:['mx','k'],afis:'mx+" "+k',ajutor:'Aici bucla pornește de la i = 0, deci la prima trecere v[0] se compară cu el însuși: mx nu se schimbă.',why:'Două prelucrări, o singură parcurgere: maximul și numărarea.'}]},
+ qs:[
+  {t:'choice',q:'Ce valori au s și k după codul „suma și numărul elementelor pare”, pentru șirul 5 4 2 7?',o:['s = 18, k = 2','s = 18, k = 4','s = 6, k = 2','s = 4, k = 18'],ok:0,ajutor:'s adună tot; k numără doar pe cele pare.',why:'5 + 4 + 2 + 7 = 18. Pare sunt 4 și 2, deci k = 2. O singură parcurgere face ambele lucruri.'},
+  {t:'classify',q:'Ce test e bun pentru a prinde greșeala?',cats:['Prinde greșeala','Nu o prinde'],items:[['Minim pornit de la 0, testat pe 4 9 6',0],['Minim pornit de la 0, testat pe -3 -7 -1',1],['Sumă pornită de la 1, testată pe 2 3',0],['Numărare cu v[i] < 5 în loc de v[i] <= 5, testată pe 5 2',0],['Numărare cu v[i] < 5 în loc de v[i] <= 5, testată pe 1 2 3',1]],ajutor:'Un minim pornit de la 0 greșește când toate numerele sunt pozitive.',why:'Minimul pornit de la 0 dă 0 pe numere pozitive, dar pe negative iese corect. Suma pornită de la 1 greșește pe orice test. < în loc de <= greșește doar când în șir apare chiar 5.'},
+  {t:'hunt',cod:true,q:'Programul trebuie să afișeze suma elementelor. Are <b>2</b> greșeli. Apasă pe ele.',src:`int s = 0;
+for (int i = 0; [[i <= n;|Cu i <= n se adună și v[n], care nu face parte din șir; corect: i < n.]] i++)
+    [[s = v[i];|Așa s-ar șterge suma la fiecare trecere; corect: s = s + v[i].]]
+cout << s;`,corect:`int s = 0;
+for (int i = 0; i < n; i++)
+    s = s + v[i];
+cout << s;`,ajutor:'Verifică condiția buclei și instrucțiunea care adună.',why:'Suma adaugă elementul la ce avea deja (s = s + v[i]) și trece doar prin indicii 0 … n - 1.'},
+  {t:'order',q:'Pune în ordine pașii rulării pas cu pas în Code::Blocks.',items:['Toggle breakpoint (F5) pe rândul buclei','Start / Continue (F8)','Debugging windows → Watches','Next line (F7), urmărind variabilele'],why:'Punctul de oprire, pornirea, fereastra Watches, apoi rând cu rând.'},
+  {t:'tf',q:'Dacă programul trece un test, sigur e corect pentru orice șir.',ok:false,why:'Fals. Un test arată doar că programul merge pe acel exemplu. De aceea alegi mai multe teste, inclusiv cazuri speciale.'}
+ ]},
+
+/* ================= 8. Mini-proiectul (lecția 32) ================= */
+{t:'Mini-proiectul: stația meteo a școlii',final:true,lectii:[32],continuturi:[OPS,ALG],
+ obiectiv:'faci singur, de la cerință la program testat, o aplicație care prelucrează datele reale ale unei stații meteo.',
+ pasi:[
+  {t:'Cerințele, una câte una',
+   text:`<p><strong>Misiunea finală.</strong> Stația meteo a școlii a măsurat temperatura la prânz, 7 zile la rând:</p>
+${pre('n = 7\nt = 3 -2 5 0 -4 6 2')}
+<p>Aplicația citește temperaturile și afișează: <mark>media</mark>, <mark>temperatura minimă</mark>, <mark>câte zile au fost sub 0 grade</mark> și dacă <mark>a existat o zi cu peste 5 grade</mark>.</p>
+<p>Primul pas al strategiei: pentru fiecare cerință, alegi <strong>algoritmul</strong> potrivit, după cuvântul-cheie: „media” = sumă, „cea mai mică” = minim, „câte” = numărare, „a existat” = verificare pentru cel puțin unul.</p>`,
+   incearca:{t:'classify',q:'Ce algoritm folosești pentru fiecare cerință?',cats:['Sumă','Minim','Numărare','Verificare „există”'],items:[['Media temperaturilor',0],['Temperatura cea mai scăzută',1],['Câte zile au fost sub 0 grade',2],['A fost vreo zi cu peste 5 grade?',3]],ajutor:'Caută cuvântul-cheie din fiecare cerință.',why:'Media pornește de la sumă. Cea mai scăzută valoare e minimul. „Câte” cere numărare, iar „a fost vreo zi” cere o verificare pentru cel puțin un element.'},
+   inca:[
+    {t:'choice',q:'Cerința: „A fost cald în TOATE zilele (peste 0 grade)?” Cu ce valoare pornește variabila bool?',o:['true','false','0','t[0]'],ok:0,ajutor:'„Toate” pornește de la da.',why:'Pentru „toate” presupui da (true) și cauți un contraexemplu: o zi cu cel mult 0 grade.'}
+   ]},
+  {t:'Calculează întâi pe hârtie',
+   text:`<p>Înainte să scrii cod, calculezi rezultatele de mână. Așa știi ce <strong>trebuie</strong> să afișeze programul și îl poți verifica.</p>
+<ul><li>suma: 3 − 2 + 5 + 0 − 4 + 6 + 2 = <b>10</b>, deci media = 10 / 7 ≈ <b>1.43</b>;</li>
+<li>minimul: <b>-4</b>;</li>
+<li>zile sub 0: -2 și -4, adică <b>2</b> (ziua cu 0 grade <strong>nu</strong> e sub 0);</li>
+<li>peste 5 grade: ziua cu 6, deci <b>da</b> (true).</li></ul>
+${fig('cb-consola-meteo.webp',552,208,'Consola: datele 7 și 3 -2 5 0 -4 6 2, apoi media 1.42857, minima -4, zile sub 0: 2 și peste 5 grade: 1','Programul terminat afișează exact ce ai calculat: media ≈ <b>1.43</b>, minima <b>-4</b>, <b>2</b> zile sub 0 și <b>1</b> (true).')}`,
+   incearca:{t:'choice',q:'Cât este suma temperaturilor 3 -2 5 0 -4 6 2?',o:['10','22','18','7'],ok:0,ajutor:'Atenție la semnul minus: scazi 2 și 4.',why:'3 - 2 + 5 + 0 - 4 + 6 + 2 = 10. 22 ar ieși dacă ai aduna numerele fără semnul minus.'},
+   inca:[
+    {t:'choice',q:'Alte date: 1 -3 0 -1 4. Câte zile au fost sub 0 grade?',o:['2','3','1','5'],ok:0,ajutor:'0 nu e sub 0.',why:'Sub 0 sunt -3 și -1. Ziua cu 0 grade nu se numără.'}
+   ]},
+  {t:'Programul: o singură parcurgere',
+   text:`<p>Toate cerințele se rezolvă în <strong>aceeași</strong> parcurgere, cu câte o variabilă pentru fiecare: <code>s</code> pentru sumă, <code>mn</code> pentru minim, <code>k</code> pentru numărare și <code>cald</code> pentru verificare.</p>
+${pre('int s = 0, mn = t[0], k = 0;\nbool cald = false;\nfor (int i = 0; i < n; i++)\n{\n    s = s + t[i];\n    if (t[i] < mn)\n        mn = t[i];\n    if (t[i] < 0)\n        k++;\n    if (t[i] > 5)\n        cald = true;\n}\ncout << (double)s / n << " " << mn << " " << k << " " << cald;')}
+<p>Fiecare variabilă pornește de unde ai învățat: 0, <code>t[0]</code>, 0 și <code>false</code>.</p>
+${fig('cb-meteo.webp',680,587,'Code::Blocks: programul stației meteo care citește temperaturile și calculează suma, minima, zilele sub 0 și dacă a fost o zi cu peste 5 grade','Aplicația stației meteo în Code::Blocks, tot cu o singură parcurgere.')}`,
+   incearca:{t:'match',q:'Leagă fiecare variabilă de valoarea ei de pornire.',pairs:[['s (suma)','0'],['mn (minimul)','t[0]'],['cald (există o zi peste 5)','false']],ajutor:'Suma de la 0, minimul de la primul element, „există” de la nu.',why:'Fiecare algoritm pornește de la valoarea învățată la nivelul lui.'},
+   inca:[
+    {t:'choice',q:'Media este 10 / 7. Cum o calculezi ca să nu pierzi zecimalele?',o:['(double)s / n','s / n, cu s și n de tip int','s % n','n / s'],ok:0,ajutor:'Recitește nivelul „Suma și produsul”, pasul despre medie.',why:'Între două int, 10 / 7 dă 1. Cu (double)s împărțirea se face cu zecimale: aproximativ 1.43. % dă restul, nu media.'}
+   ]},
+  {t:'Testează și cu alte date',
+   text:`<p>Programul a dat rezultatele calculate pe hârtie. E gata? Nu încă: aplică strategia de testare.</p>
+<ol><li><strong>Numai temperaturi negative</strong> (-3 -8 -1): minimul trebuie să fie -8, zile sub 0: 3.</li>
+<li><strong>O singură zi</strong> (n = 1, temperatura 4): media 4, minimul 4.</li>
+<li><strong>Valoarea la limită</strong>: o zi cu exact 5 grade <strong>nu</strong> e „peste 5”, iar o zi cu 0 nu e „sub 0”.</li></ol>
+<p>Dacă un rezultat nu se potrivește, rulează pas cu pas și urmărește variabilele în <i>Watches</i>.</p>`,
+   incearca:{t:'tf',q:'Pentru temperaturile 2 5 4, verificarea „a existat o zi cu peste 5 grade” dă true.',ok:false,ajutor:'5 e mai mare decât 5?',why:'Fals. 5 nu e peste 5, iar celelalte sunt mai mici. cald rămâne false.'},
+   inca:[
+    {t:'choice',q:'Pentru temperaturile -3 -8 -1, ce afișează programul pentru minim și pentru zile sub 0?',o:['-8 și 3','-1 și 3','-8 și 0','0 și 3'],ok:0,ajutor:'Toate sunt negative, deci toate sunt sub 0.',why:'Cea mai mică e -8, iar toate trei zilele sunt sub 0.'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Stația meteo în fereastra Watches',
+  intro:`<p>Programul complet al stației meteo, rulat pas cu pas. <strong>Sarcina:</strong> după fiecare trecere, scrie <code>s</code>, <code>mn</code>, <code>k</code> și <code>cald</code>. La final, scrie ce se afișează pentru minim, zile sub 0 și <code>cald</code> (1 sau 0), cu spații între ele. Datele se schimbă la fiecare exercițiu.</p>`,
+  q:'Completează Watches pentru toate cele patru variabile, apoi ce se afișează.',
+  cod:'int s = 0, mn = t[0], k = 0;\nbool cald = false;\nfor (int i = 0; i < n; i++)\n{\n    s = s + t[i];\n    if (t[i] < mn)\n        mn = t[i];\n    if (t[i] < 0)\n        k++;\n    if (t[i] > 5)\n        cald = true;\n}\ncout << mn << " " << k << " " << cald;',
+  nume:'t',date:[[3,-2,5,0,-4,6,2],[1,-3,0,-1,4],[-3,-8,-1],[2,5,4,7]],init:{s:'0',mn:'t[0]',k:'0',cald:'false'},pas:'s = s + t[i]; if (t[i] < mn) mn = t[i]; if (t[i] < 0) k++; if (t[i] > 5) cald = true;',cols:['s','mn','k','cald'],afis:'mn+" "+k+" "+(cald?1:0)',
+  ajutor:'Un rând odată: întâi s, apoi minimul, apoi contorul (doar sub 0), apoi cald (devine true la prima zi peste 5 și rămâne true).',
+  why:'Patru algoritmi într-o singură parcurgere: fiecare variabilă își face treaba ei la fiecare trecere.',
+  inca:[
+   {t:'urmarire',q:'Încă unul: varianta cu maximul și cu „toate zilele peste 0”.',cod:'int mx = t[0];\nbool toate = true;\nfor (int i = 0; i < n; i++)\n{\n    if (t[i] > mx)\n        mx = t[i];\n    if (t[i] <= 0)\n        toate = false;\n}\ncout << mx << " " << toate;',
+    nume:'t',date:[[3,-2,5,0,-4,6,2],[4,7,1],[2,9,-1,3]],init:{mx:'t[0]',toate:'true'},pas:'if (t[i] > mx) mx = t[i]; if (t[i] <= 0) toate = false;',cols:['mx','toate'],afis:'mx+" "+(toate?1:0)',ajutor:'toate devine false la prima zi cu 0 grade sau mai puțin și rămâne false.',why:'Maximul și verificarea „pentru toate”, în aceeași parcurgere.'}]},
+ qs:[
+  {t:'classify',q:'Ce algoritm folosești pentru fiecare cerință?',cats:['Sumă','Maxim','Numărare','Verificare „toate”'],items:[['Media punctajelor unei echipe',0],['Cel mai mare punctaj',1],['Câte meciuri au fost câștigate',2],['Au marcat în toate meciurile?',3]],ajutor:'Caută cuvântul-cheie: media, cel mai mare, câte, toate.',why:'Media pornește de la sumă. Cel mai mare punctaj e maximul. „Câte” cere numărare, iar „toate” cere o verificare pentru toate elementele.'},
+  {t:'choice',q:'Cât este suma temperaturilor 3 -2 5 0 -4 6 2?',o:['10','22','18','7'],ok:0,why:'3 - 2 + 5 + 0 - 4 + 6 + 2 = 10. 22 ar ieși dacă ai aduna numerele fără semnul minus.'},
+  {t:'choice',q:'Temperaturile sunt 3 -2 5 0 -4 6 2. Care este temperatura minimă și câte zile au fost sub 0 grade?',o:['-4 și 2 zile','-4 și 3 zile','-2 și 2 zile','0 și 3 zile'],ok:0,ajutor:'Ziua cu 0 grade nu e sub 0.',why:'Sub 0 sunt doar -2 și -4, deci 2 zile. Ziua cu 0 grade nu e sub 0. Cea mai mică valoare e -4.'},
+  {t:'tf',q:'Pentru temperaturile 3 -2 5 0 -4 6 2, verificarea „a existat o zi cu peste 5 grade” dă true.',ok:true,why:'Adevărat. A șasea zi are 6 grade, iar 6 > 5. Un singur exemplu e de ajuns.'},
+  {t:'choice',q:'Media este 10 / 7. Cum o calculezi ca să nu pierzi zecimalele?',o:['(double)s / n','s / n, cu s și n de tip int','s % n','n / s'],ok:0,why:'Între două int, 10 / 7 dă 1. Cu (double)s împărțirea se face cu zecimale: aproximativ 1.43. % dă restul, nu media.'},
+  {t:'choice',q:'Ce test prinde greșeala unui minim pornit de la 0 în loc de t[0]?',o:['Temperaturi numai pozitive: 4 7 2','Temperaturi numai negative: -3 -8 -1','Temperaturi amestecate: 3 -2 5','Orice test o prinde'],ok:0,ajutor:'Pe ce date un minim pornit de la 0 rămâne 0, deși 0 nu e în șir?',why:'Pe 4 7 2 niciun element nu e mai mic decât 0, deci minimul ar rămâne 0 în loc de 2. Pe date cu negative, rezultatul iese corect, deci greșeala nu se vede.'}
+ ]}
 ];
 
 JocMotor.porneste({
@@ -192,19 +739,25 @@ JocMotor.porneste({
   unitateTitlu:'Șiruri de valori. De la algoritm la program',
   competente:['CS.2.1','CS.2.2','CS.3.3'],
   lectii:'23–32',
-  intro:'Opt niveluri despre șirurile de valori în C++: ce sunt, cum le citești, afișezi și parcurgi, apoi algoritmii de numărare, sumă și produs, minim și maxim, verificarea unei proprietăți, testarea și depanarea. La fiecare nivel citești o pagină scurtă și răspunzi la întrebări. La final prelucrezi datele stației meteo și îți iei diploma.',
+  intro:'Opt niveluri, de la „ce este un șir de valori” până la aplicația stației meteo a școlii, scrisă de tine. Nu trebuie să știi nimic despre șiruri dinainte: fiecare nivel te ia pas cu pas. În ateliere rulezi programele în gând, ca în Code::Blocks, și completezi fereastra cu valorile variabilelor, pe date care se schimbă la fiecare încercare.',
+  cum:`<b>Cum lucrezi în fiecare nivel</b><ol>
+<li><b>Învață</b> — pași scurți, câte o idee, cu un exemplu lucrat și cod scris ca în Code::Blocks. Nu ai înțeles? Apasă „Explică-mi altfel”.</li>
+<li><b>Încearcă tu</b> — după fiecare pas, un exercițiu mic, fără note. Greșești? Primești un indiciu. Vrei să exersezi mai mult? „Încă un exercițiu”.</li>
+<li><b>Atelier</b> — rulezi programul pas cu pas, ca în fereastra <b>Watches</b> din Code::Blocks: scrii valorile variabilelor după fiecare trecere prin buclă, iar <b>testele</b> îți bifează ce e bine. Datele se schimbă la fiecare exercițiu.</li>
+<li><b>Verificare</b> — câteva întrebări doar din ce ai învățat în pași. Stele pentru răspunsurile din prima.</li></ol>`,
   banda:'<span class="nm">v</span><span class="c"><b>4</b><i>0</i></span><span class="c"><b>7</b><i>1</i></span><span class="c"><b>2</b><i>2</i></span><span class="c on"><b>9</b><i>3</i></span><span class="c"><b>5</b><i>4</i></span><span class="c"><b>…</b><i>n-1</i></span>',
   nivele:LEVELS,
+  tipuri:{urmarire:URMARIRE},
   diploma:{
     titlu:'Stăpânul șirurilor',
-    rezumat:'șirurile de valori, citirea, afișarea și parcurgerea lor, numărarea, suma și produsul, minimul și maximul, verificarea unei proprietăți, testarea și depanarea',
+    rezumat:'șirurile de valori, citirea, afișarea și parcurgerea lor, numărarea, suma și produsul, minimul și maximul, verificarea unei proprietăți, testarea și rularea pas cu pas',
     aplicatie:'Code::Blocks, pe calculatorul din laborator',
     provocare:[
-      'Scrie un program care citește n și cele n temperaturi ale unei săptămâni.',
-      'Afișează media, cu zecimale, și temperatura maximă.',
-      'Afișează câte zile au avut temperatura sub 0 grade și dacă toate zilele au avut peste -10 grade.',
-      'Testează-l pe datele din misiunea finală și pe un șir numai cu numere negative.',
-      'Salvează fișierul ca Nume_Prenume_meteo.cpp și explică-i profesorului ce algoritm ai folosit pentru fiecare cerință.'
+      'Deschide <b>Code::Blocks</b> și fă un proiect nou: <b>File → New → Project → Console Application → C++</b>. Pune proiectului numele <code>Nume_Prenume_meteo</code>. În <code>main.cpp</code> scrii programul (rularea pas cu pas merge doar într-un proiect).',
+      'Programul citește <code>n</code> și cele <code>n</code> temperaturi ale unei săptămâni în șirul <code>t</code>.',
+      'Într-o singură parcurgere calculează: suma (pentru media cu zecimale, <code>(double)s / n</code>), temperatura maximă (pornită de la <code>t[0]</code>), câte zile au fost sub 0 grade și dacă toate zilele au avut peste -10 grade (<code>bool</code> pornit de la <code>true</code>).',
+      'Rulează cu <b>Build and run</b> (<kbd>F9</kbd>) pe datele 3 -2 5 0 -4 6 2 și compară cu ce ai calculat pe hârtie. Apoi testează pe un șir numai cu numere negative și pe un șir cu un singur element.',
+      'Pune un punct de oprire pe rândul buclei (<kbd>F5</kbd>), pornește cu <kbd>F8</kbd>, deschide <b>Debug → Debugging windows → Watches</b> și mergi cu <kbd>F7</kbd>: arată-i profesorului cum se schimbă variabilele și ce algoritm ai folosit pentru fiecare cerință.'
     ]
   }
 });

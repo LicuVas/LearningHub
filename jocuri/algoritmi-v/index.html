@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Misiunea Pas cu Pas</title>
-<meta name="description" content="Lecție-joc pentru clasa a V-a: ce este un algoritm, proprietățile lui, datele de intrare, de ieșire și de manevră, constante și variabile, expresii, structura secvențială și structura alternativă, în limbaj natural.">
+<meta name="description" content="Lecție-joc pentru clasa a V-a: ce este un algoritm, proprietățile lui, datele de intrare, de ieșire și de manevră, constante și variabile, expresii, structura secvențială și structura alternativă, în limbaj natural și în Scratch, pas cu pas, cu tabel de urmărire.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Anonymous+Pro:wght@400;700&display=swap&subset=latin-ext">
@@ -37,6 +37,35 @@
 .banda .romb{flex:none;width:14px;height:14px;border:2px solid var(--accent);transform:rotate(45deg);margin:0 4px}
 h1 .sag{color:var(--accent)}
 .alg{display:block;white-space:pre-wrap;line-height:1.55;padding:.45em .7em;margin:.5em 0}
+/* tabelul de urmărire: static (în pași) și simulatorul „urmarire” (în atelier) */
+.tu-w{overflow-x:auto;margin:.5em 0}
+.tu{border-collapse:collapse;font-size:.92rem;min-width:0;width:100%}
+.tu th,.tu td{border:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:middle}
+.tu th{background:var(--paper2);font-weight:700}
+.tu:not(.sim) th,.tu:not(.sim) td{min-width:4.5em;word-break:normal;overflow-wrap:break-word;hyphens:manual}
+@media (max-width:560px){.tu:not(.sim){font-size:.8rem}.tu:not(.sim) th,.tu:not(.sim) td{padding:4px 5px}}
+.tu td.nr{color:var(--ink2);font-family:var(--fm);width:1.6em;text-align:center}
+.tu code.pl{font-family:var(--fm);white-space:pre-wrap;background:none;border:0;border-radius:0;padding:0;font-size:.95em;color:var(--ink)}
+.tu code.pl{word-break:normal;overflow-wrap:normal}
+.tu code.pl.ind{padding-left:1.6em;border-left:2px solid var(--line)}
+@media (max-width:560px){
+  .tu.sim thead{display:none}
+  .tu.sim tr{display:grid;grid-template-columns:2em 1fr;border-bottom:1px solid var(--line)}
+  .tu.sim td{border:0;padding:4px 6px}
+  .tu.sim td[data-c]{grid-column:2;padding-top:0}
+  .tu.sim td[data-c]:empty{display:none}
+}
+.tu input,.tu select{font:inherit;font-family:var(--fm);width:5.2em;max-width:100%;padding:3px 5px;border:1.5px solid var(--line);border-radius:5px;background:var(--paper);color:var(--ink)}
+.tu select{width:auto}
+.tu td.ok{background:var(--okbg)} .tu td.no{background:var(--badbg)}
+.tu .dat{font-family:var(--fm);color:var(--ink2)}
+.tu tr.gri td{opacity:.75}
+.teste{list-style:none;padding:0;margin:.6em 0 0;font-size:.9rem}
+.teste li{padding:2px 0}
+.teste li::before{content:"○ ";color:var(--ink2)}
+.teste li.ok::before{content:"✓ ";color:var(--ok);font-weight:700}
+.teste li.no::before{content:"✗ ";color:var(--bad);font-weight:700}
+.datele{font-family:var(--fm);font-weight:700;background:var(--sel);border-radius:6px;padding:4px 8px;display:inline-block;margin:.2em 0 .5em}
 </style>
 </head>
 <body>
@@ -44,130 +73,642 @@ h1 .sag{color:var(--accent)}
 <script>
 // algoritm pe mai multe rânduri; stilul e pus direct pe element, ca să arate la fel și în recapitularea clasei
 const A=s=>`<code class="alg" style="display:block;white-space:pre-wrap;line-height:1.55;padding:.45em .7em;margin:.5em 0">${s}</code>`;
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="../algoritmi-v/img/${f}" target="_blank"><img src="../algoritmi-v/img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+// tabel de urmărire static (pentru exemplele din pași)
+const TT=(cap,rows)=>`<div class="tu-w"><table class="tu"><thead><tr>${cap.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+
+/* ================= Simulatorul „urmarire”: tabelul de urmărire, ca pe caiet =================
+   Calculatorul alege datele de intrare (altele la fiecare deschidere), elevul execută algoritmul rând cu rând.
+   Verificarea e pe COMPORTAMENT: algoritmul e chiar textul afișat, interpretat aici, deci răspunsul
+   corect se calculează pentru datele de acum, nu e scris de mână. */
+function urmEval(expr,v){
+  const js=expr.replace(/[≥≤≠=]/g,c=>({'≥':'>=','≤':'<=','≠':'!=','=':'=='})[c])
+    .replace(/\sȘI\s/g,' && ').replace(/\sSAU\s/g,' || ').replace(/NU\s*\(/g,'!(');
+  return new Function('v','with(v){return ('+js+')}')(v);
+}
+function urmTrace(prog,d){
+  const v=Object.assign({},d);let cond=null,br=null;
+  return prog.map((raw,i)=>{
+    const ind=/^\s/.test(raw),s=raw.trim();let m;
+    if(!ind&&!/^altfel$/i.test(s))br=null;
+    const exec=!ind||(br==='da'&&cond)||(br==='nu'&&!cond);
+    const r={i,raw,exec,ind,k:'nimic'};
+    if(/^altfel$/i.test(s)){br='nu';return r}
+    if((m=s.match(/^Citește (.+?)\.?$/))){r.k='cit';r.names=m[1].split(/\s*,\s*|\s+și\s+/);r.names.forEach(n=>v[n]=d[n]);return r}
+    if((m=s.match(/^Dacă (.+) atunci$/))){r.k='daca';cond=!!urmEval(m[1],v);br='da';r.val=cond;return r}
+    if((m=s.match(/^Afișează (.+?)\.?$/))){r.k='afis';const t=m[1].match(/^„(.*)”$/);r.val=exec?(t?t[1]:urmEval(m[1],v)):'';return r}
+    if((m=s.match(/^([\p{L}_][\p{L}\d_]*) ← (.+)$/u))){r.k='set';r.name=m[1];if(exec){r.val=urmEval(m[2],v);v[m[1]]=r.val}else r.val='';return r}
+    return r;
+  });
+}
+const urmFmt=x=>x===true?'adevărat':x===false?'fals':typeof x==='number'?String(Math.round(x*1000)/1000).replace('.',','):String(x);
+function urmOk(inp,exp){
+  const s=String(inp==null?'':inp).trim().toLowerCase().replace(/[„”"“]/g,'').replace(/\s+/g,' ');
+  if(exp===''||exp==null)return s===''||s==='-'||s==='—';
+  if(typeof exp==='boolean')return exp?(s==='adevărat'||s==='adevarat'):s==='fals';
+  if(typeof exp==='number')return /^-?\d+([.,]\d+)?$/.test(s)&&Math.abs(parseFloat(s.replace(',','.'))-exp)<1e-9;
+  return s===String(exp).trim().toLowerCase();
+}
+const URMARIRE={
+  render(Q,body,api){
+    const d=Q.date[Math.floor(Math.random()*Q.date.length)],tr=urmTrace(Q.prog,d);
+    body._tr=tr;
+    const dateTxt=Object.entries(d).map(([k,x])=>`${k} = ${urmFmt(x)}`).join(', ');
+    const cell=r=>{
+      if(r.k==='cit')return `<span class="dat">${r.names.map(n=>`${api.esc(n)} = ${urmFmt(d[n])}`).join(', ')}</span>`;
+      if(r.k==='daca'||(r.k==='set'&&typeof r.val==='boolean'))return `${r.k==='set'?api.esc(r.name)+' = ':''}<select data-i="${r.i}" aria-label="Rândul ${r.i+1}: condiția"><option value="">alege…</option><option value="adevărat">adevărat</option><option value="fals">fals</option></select>`;
+      if(r.k==='set')return `<label>${api.esc(r.name)} = <input data-i="${r.i}" autocomplete="off" aria-label="Rândul ${r.i+1}: noua valoare a lui ${api.esc(r.name)}"></label>`;
+      if(r.k==='afis')return `<label>se afișează: <input data-i="${r.i}" autocomplete="off" aria-label="Rândul ${r.i+1}: ce se afișează"></label>`;
+      return '';
+    };
+    const ck=tr.filter(r=>r.k==='daca'||r.k==='set'||r.k==='afis');
+    const et=r=>r.k==='daca'?`Rândul ${r.i+1}: condiția e adevărată sau falsă`:r.k==='afis'?`Rândul ${r.i+1}: ce se afișează${r.ind?' (sau gol, dacă ramura nu se execută)':''}`:`Rândul ${r.i+1}: noua valoare a lui ${api.esc(r.name)}${r.ind?' (sau gol, dacă ramura nu se execută)':''}`;
+    body.innerHTML=`<div class="datele">Datele de intrare de acum: ${api.esc(dateTxt)}</div>
+      <div class="tu-w"><table class="tu sim"><thead><tr><th>Nr.</th><th>Pasul</th><th>Ce se întâmplă</th></tr></thead><tbody>
+      ${tr.map(r=>`<tr><td class="nr">${r.i+1}</td><td><code class="pl${r.ind?' ind':''}">${api.esc(r.raw.trim())}</code></td><td data-c="${r.i}">${cell(r)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <p class="hint" style="margin:6px 0 0">Scrie numere simple (5 sau 5,5). Pe o ramură care <b>nu</b> se execută, lași căsuța goală.</p>
+      <div class="lbl" style="margin-top:8px">Testele</div><ul class="teste">${ck.map(r=>`<li data-t="${r.i}">${et(r)}</li>`).join('')}</ul>`;
+    const val=i=>{const e=body.querySelector(`[data-i="${i}"]`);return e?e.value:''};
+    const marcheaza=()=>{let bune=0;ck.forEach(r=>{const ok=urmOk(val(r.i),r.val);if(ok)bune++;
+      body.querySelector(`td[data-c="${r.i}"]`).className=ok?'ok':'no';body.querySelector(`li[data-t="${r.i}"]`).className=ok?'ok':'no'});return bune};
+    const umple=()=>ck.forEach(r=>{const e=body.querySelector(`[data-i="${r.i}"]`);e.value=r.k==='daca'?urmFmt(r.val):r.val===''?'':urmFmt(r.val)});
+    body._umple=umple;
+    const nav=api.checkButton(()=>{
+      const bune=marcheaza();
+      if(bune===ck.length){nav.innerHTML='';api.resolve(true)}
+      else{api.resolve(false,`${bune} din ${ck.length} teste trec. Rândurile roșii mai au nevoie de o privire: calculează partea din dreapta săgeții cu valorile de ACUM.`);
+        api.revealButton(()=>{umple();marcheaza();nav.innerHTML='';api.giveUp('valorile corecte sunt acum în tabel, cu verde. Parcurge-le rând cu rând.')})}
+    },'Verifică tabelul');
+  },
+  rezolva(Q,body){body._umple()},
+  gresit(Q,body){
+    body._umple();
+    const tr=body._tr,r=[...tr].reverse().find(x=>x.k==='set'||x.k==='afis'||x.k==='daca');
+    const e=body.querySelector(`[data-i="${r.i}"]`);
+    if(r.k==='daca')e.value=r.val?'fals':'adevărat';
+    else if(typeof r.val==='number')e.value=String(r.val+1);
+    else e.value=r.val===''?'7':'altceva';
+  }
+};
+
 const LEVELS=[
-{t:'Ce este un algoritm',lectii:[24],continuturi:['Noțiunea de algoritm'],text:`
-<p>Un <mark>algoritm</mark> este un șir de <mark>pași clari</mark>, scriși în ordine, care rezolvă o problemă.</p>
-<p>Folosești algoritmi în fiecare zi: rețeta unei prăjituri, drumul de acasă la școală, instrucțiunile de montare a unei jucării.</p>
-<p>Un algoritm pornește de la ce știi la început (<mark>datele</mark>) și ajunge la un <mark>rezultat</mark>.</p>
-<p>Calculatorul nu ghicește ce ai vrut să spui. Face <strong>exact</strong> ce scrie în pași. De aceea pașii pentru calculator trebuie să fie foarte preciși.</p>
-<p>Pozele de mai jos sunt făcute în <mark>Scratch</mark>, un mediu grafic în care pașii unui algoritm sunt blocuri colorate pe care le îmbini.</p>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-pasi-ordine.webp" target="_blank"><img src="../algoritmi-v/img/scratch-pasi-ordine.webp" alt="Scratch: trei blocuri „glisează în 0.4 secunde la x y”, încadrate și etichetate „pașii, în ordine”, iar pe scenă traseul albastru desenat de pisică" width="760" height="345" loading="lazy"></a>
-<figcaption>Algoritmul „drumul spre școală” în Scratch: <b>pașii, în ordine</b>, iar pe scenă <b>rezultatul</b> — traseul desenat.</figcaption></figure>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-alta-ordine.webp" target="_blank"><img src="../algoritmi-v/img/scratch-alta-ordine.webp" alt="Scratch: aceleași blocuri, cu două glisări schimbate între ele, încadrate; pe scenă traseul desenat este cu totul altul" width="760" height="345" loading="lazy"></a>
-<figcaption>Aceiași pași, dar doi dintre ei <b>schimbați între ei</b>: iese alt drum. Calculatorul face exact ce scrie, nu ce ai vrut tu să scrii.</figcaption></figure>`,
-qs:[
- {t:'tf',q:'Algoritmii există doar în calculatoare.',ok:false,why:'Fals. O rețetă sau drumul spre școală, scris pas cu pas, sunt tot algoritmi. Calculatorul doar execută algoritmi foarte precis.'},
- {t:'classify',q:'Sortează exemplele: care au pași în ordine ce duc la un rezultat?',cats:['Este algoritm','Nu este algoritm'],items:[['Instrucțiunile de montare a unui raft',0],['Pașii adunării a două numere în coloană',0],['Traseul pas cu pas de la școală la bibliotecă',0],['Un desen cu un peisaj',1],['Lista cu numele colegilor',1]],why:'Un algoritm are pași în ordine și un scop: ajungi la un rezultat. Un desen sau o listă de nume nu spun ce să faci.'},
- {t:'order',q:'Pune în ordine pașii algoritmului: îl suni pe un prieten de pe telefonul tău.',items:['Deblochezi telefonul','Deschizi agenda','Cauți numele prietenului','Apeși butonul de apel'],why:'Fiecare pas are nevoie de cel dinainte: fără telefon deblocat nu deschizi agenda, iar fără nume găsit nu ai pe cine să suni.'},
- {t:'choice',q:'De ce pașii pentru calculator trebuie să fie foarte preciși?',o:['Calculatorul face exact ce scrie, nu ghicește ce ai vrut','Calculatorul refuză pașii scurți','Pașii preciși se execută mai încet','Calculatorul are nevoie de pași în limba engleză'],ok:0,why:'Calculatorul nu înțelege „cam așa” sau „știi tu”. Execută pașii exact cum sunt scriși, deci orice pas vag duce la un rezultat greșit.'},
- {t:'choice',q:'Într-o rețetă de clătite, ce este rezultatul?',o:['Clătitele gata făcute','Ouăle, laptele și făina','Tigaia','Pasul „amestecă”'],ok:0,why:'Ingredientele sunt datele de la care pornești, iar pașii sunt algoritmul. Rezultatul e ce obții la final: clătitele.'}
-]},
-{t:'Proprietățile unui algoritm',lectii:[25],continuturi:['Proprietăți ale algoritmilor'],text:`
-<p>Un algoritm bun are trei <mark>proprietăți</mark>:</p>
-<ul>
-<li><mark>claritatea</mark>: fiecare pas are un singur înțeles. „Pune puțină sare” nu e clar: cât înseamnă „puțină”?</li>
-<li><mark>finitudinea</mark>: algoritmul se oprește după un număr de pași. „Mergi înainte și nu te opri” nu se termină niciodată.</li>
-<li><mark>generalitatea</mark>: algoritmul rezolvă toate problemele de același fel, nu doar una. Unul care află aria <em>oricărui</em> dreptunghi e mai bun decât unul care o află doar pentru dreptunghiul de 3 pe 5.</li>
-</ul>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-infinit.webp" target="_blank"><img src="../algoritmi-v/img/scratch-infinit.webp" alt="Scratch: blocul „la infinit” încadrat, cu eticheta „nu se oprește singur”, și semnul roșu de oprire de deasupra scenei, încadrat" width="760" height="333" loading="lazy"></a>
-<figcaption>Aici finitudinea e încălcată: blocul <b>la infinit</b> repetă pașii la nesfârșit. Se oprește doar dacă apeși tu <b>semnul roșu</b>.</figcaption></figure>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-finit.webp" target="_blank"><img src="../algoritmi-v/img/scratch-finit.webp" alt="Scratch: blocul „repetă 10” încadrat, cu eticheta „de 10 ori, apoi gata”, iar pe scenă pisica spune „Gata: 10 pași.”" width="760" height="333" loading="lazy"></a>
-<figcaption>Același lucru, dar cu <b>repetă (10)</b>: algoritmul se oprește singur după 10 pași, deci are finitudine.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Pasul „Fierbe apa puțin” încalcă o proprietate. Care?',o:['Claritatea','Finitudinea','Generalitatea'],ok:0,why:'„Puțin” poate însemna un minut pentru cineva și zece minute pentru altcineva. Pasul are mai multe înțelesuri, deci nu e clar.'},
- {t:'match',q:'Leagă fiecare proprietate de ce cere ea.',pairs:[['Claritatea','fiecare pas are un singur înțeles'],['Finitudinea','algoritmul se oprește după un număr de pași'],['Generalitatea','rezolvă toate problemele de același fel']],why:'Cele trei proprietăți răspund la trei întrebări: se înțelege? se termină? merge și pentru alte date?'},
- {t:'classify',q:'Ce proprietate încalcă fiecare algoritm?',cats:['Claritatea','Finitudinea','Generalitatea'],items:[['Adaugă „câteva” linguri de făină',0],['Mergi „cam pe acolo” până la școală',0],['Numără din 1 în 1 și nu te opri niciodată',1],['Apasă butonul din nou și din nou, fără să spui când te oprești',1],['Calculează doar suma numerelor 4 și 7',2],['Află perimetrul doar pentru pătratul cu latura 5',2]],why:'Cuvintele vagi strică claritatea. Lipsa unui moment de oprire strică finitudinea. Un algoritm legat de un singur caz nu are generalitate.'},
- {t:'tf',q:'Un algoritm care primește lungimea și lățimea și află aria oricărui dreptunghi are proprietatea de generalitate.',ok:true,why:'Adevărat. Merge pentru orice dreptunghi: schimbi datele și obții aria noului dreptunghi, fără să schimbi pașii.'},
- {t:'hunt',q:'Algoritmul Anei pentru ceai are 2 pași care încalcă proprietățile. Apasă pe ei.',src:'1. Pune apă în fierbător. 2. Pornește fierbătorul și așteaptă să fiarbă apa. 3. Pune în cană [[o cantitate potrivită de zahăr|„potrivită” nu e clar: câte lingurițe?]]. 4. Toarnă apa fierbinte în cană. 5. [[Amestecă fără oprire|algoritmul nu se mai termină: trebuie spus când te oprești]].',indiciu:'Caută un pas vag și un pas care nu se termină.',why:'„Potrivită” lasă loc de ghicit, deci strică claritatea. „Fără oprire” strică finitudinea. Corect ar fi „o linguriță de zahăr” și „amestecă de 5 ori”.'}
-]},
-{t:'Datele și variabilele',lectii:[26],continuturi:['Clasificarea datelor cu care lucrează algoritmii în funcţie de rolul acestora (de intrare, de ieșire, de manevră)','Constante și variabile'],text:`
-<p>Un algoritm lucrează cu <mark>date</mark>. După rolul lor, ele sunt:</p>
-<ul>
-<li><mark>de intrare</mark>: le primește la început (le <em>citește</em>);</li>
-<li><mark>de ieșire</mark>: rezultatele pe care le dă la final (le <em>afișează</em>);</li>
-<li><mark>de manevră</mark>: valori ajutătoare, calculate pe drum.</li>
-</ul>
-<p>O <mark>variabilă</mark> are un nume și o valoare care se poate schimba, ca scorul dintr-un joc. O <mark>constantă</mark> are o valoare care nu se schimbă, de exemplu 60 de minute într-o oră.</p>
-<p>Scriem <code>scor ← 10</code> și citim „scor primește valoarea 10”.</p>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-variabile.webp" target="_blank"><img src="../algoritmi-v/img/scratch-variabile.webp" alt="Scratch, categoria Variabile: butonul Creează o variabilă încadrat și blocurile setează scor la 0 și modifică scor cu 1, încadrate" width="500" height="400" loading="lazy"></a>
-<figcaption>În Scratch, variabila se face din categoria <b>Variabile</b>: apeși <b>Creează o variabilă</b> și îi dai un nume. Blocul <b>setează scor la 0</b> e chiar <code>scor ← 0</code>.</figcaption></figure>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-roluri-date.webp" target="_blank"><img src="../algoritmi-v/img/scratch-roluri-date.webp" alt="Scratch: perimetrul dreptunghiului; pe scenă lungime 8 și lățime 3 încadrate ca date de intrare, s 11 ca dată de manevră, P 22 ca dată de ieșire" width="760" height="333" loading="lazy"></a>
-<figcaption>Perimetrul dreptunghiului, rulat: <b>lungime</b> și <b>lățime</b> sunt datele <b>de intrare</b>, <code>s</code> e o dată <b>de manevră</b>, iar <code>P</code> e data <b>de ieșire</b>.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Algoritmul citește numărul de caiete și prețul unui caiet, apoi afișează cât ai de plătit. Care este data de ieșire?',o:['Suma de plătit','Prețul unui caiet','Numărul de caiete'],ok:0,why:'Numărul de caiete și prețul sunt date de intrare: le primește la început. Suma de plătit e rezultatul pe care îl afișează.'},
- {t:'classify',q:'Perimetrul dreptunghiului: citești L și l, calculezi s ← L + l, apoi P ← 2 * s și afișezi P. Ce rol are fiecare dată?',cats:['De intrare','De ieșire','De manevră'],items:[['Lungimea L',0],['Lățimea l',0],['Suma s, calculată pe drum',2],['Perimetrul P, afișat la final',1]],why:'L și l se citesc la început. P se afișează. s e o valoare ajutătoare: o folosești ca să ajungi la P, dar nu o primești și nu o afișezi.'},
- {t:'classify',q:'Constantă sau variabilă?',cats:['Constantă','Variabilă'],items:[['Numărul de minute dintr-o oră (60)',0],['Numărul de zile dintr-o săptămână (7)',0],['Scorul dintr-un joc',1],['Temperatura de afară',1],['Numărul de mere rămase în coș',1]],why:'O oră are mereu 60 de minute și o săptămână 7 zile. Scorul, temperatura și merele din coș se schimbă.'},
- {t:'tf',q:'O variabilă poate avea valori diferite în momente diferite ale algoritmului.',ok:true,why:'Adevărat. De aceea se numește variabilă, de la „a varia”, adică a se schimba. Numele rămâne același, valoarea se poate schimba.'},
- {t:'choice',q:`Urmărește pașii. Ce valoare are scor la final?${A('scor ← 10\nscor ← scor + 5')}`,o:['15','10','5','105'],ok:0,why:'La primul pas scor devine 10. La al doilea, scor primește valoarea lui veche plus 5, adică 10 + 5 = 15. Nu se lipesc cifrele, ca în 105.'}
-]},
-{t:'Expresii și operatori',lectii:[27],continuturi:['Expresii (operatori aritmetici, relaționali, logici; evaluarea expresiilor)'],text:`
-<p>O <mark>expresie</mark> leagă numere și variabile prin <mark>operatori</mark>. A evalua expresia înseamnă a-i afla valoarea.</p>
-<ul>
-<li><strong>aritmetici</strong>: <code>+ - * /</code> și <code>%</code>, <mark>restul împărțirii</mark> (<code>17 % 5</code> = 2);</li>
-<li><strong>relaționali</strong>: <code>&lt; ≤ &gt; ≥ = ≠</code>. Rezultatul e <em>adevărat</em> sau <em>fals</em>;</li>
-<li><strong>logici</strong>: <mark>ȘI</mark> e adevărat doar dacă ambele părți sunt adevărate; <mark>SAU</mark>, dacă cel puțin una e adevărată; <mark>NU</mark> schimbă adevărat în fals și invers.</li>
-</ul>
-<p>Ordinea e ca la matematică: întâi parantezele, apoi <code>* / %</code>, apoi <code>+ -</code>. Comparațiile vin după calcule, iar operatorii logici la urmă.</p>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-operatori.webp" target="_blank"><img src="../algoritmi-v/img/scratch-operatori.webp" alt="Scratch, categoria Operatori: blocurile plus minus înmulțit împărțit încadrate ca aritmetici, blocurile mai mare mai mic egal ca relaționali, blocurile și sau nu ca logici, iar blocul mod ca restul împărțirii" width="500" height="700" loading="lazy"></a>
-<figcaption>Categoria <b>Operatori</b> din Scratch: sus cei <b>aritmetici</b>, apoi cei <b>relaționali</b>, apoi cei <b>logici</b>. Blocul <b>mod</b> dă restul împărțirii, adică <code>%</code>.</figcaption></figure>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-expresii.webp" target="_blank"><img src="../algoritmi-v/img/scratch-expresii.webp" alt="Scratch: setează e la 2 + 3 * 4 și rest la 17 mod 5; pe scenă e = 14 și rest = 2; blocul „7 &gt; 3 și 2 &gt; 5” încadrat, iar pisica spune fals" width="760" height="333" loading="lazy"></a>
-<figcaption>Expresiile evaluate chiar în Scratch: <code>2 + 3 * 4</code> dă <b>14</b> (înmulțirea prima), iar <code>17 mod 5</code> dă <b>2</b>. Blocul încadrat, <code>7 &gt; 3 și 2 &gt; 5</code>, e <em>fals</em>: la ȘI trebuie ambele adevărate.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Cât este 2 + 3 * 4?',o:['14','20','9','24'],ok:0,why:'Înmulțirea se face înaintea adunării: 3 * 4 = 12, apoi 2 + 12 = 14. Rezultatul 20 ar fi corect doar pentru (2 + 3) * 4.'},
- {t:'choice',q:'Cât este 17 % 5?',o:['2','3','3,4','85'],ok:0,why:'17 împărțit la 5 dă câtul 3 și restul 2, pentru că 5 * 3 = 15 și 17 - 15 = 2. Operatorul % dă restul, nu câtul.'},
- {t:'classify',q:'Ce fel de operator este fiecare?',cats:['Aritmetic','Relațional','Logic'],items:[['+',0],['%',0],['≥',1],['≠',1],['ȘI',2],['SAU',2]],why:'Operatorii aritmetici calculează numere. Cei relaționali compară și dau adevărat sau fals. Cei logici leagă mai multe condiții.'},
- {t:'match',q:'Leagă fiecare expresie de valoarea ei.',pairs:[['(2 + 3) * 4','20'],['10 - 4 / 2','8'],['9 % 2','1'],['6 ≠ 6','fals']],why:'Parantezele se fac primele. Împărțirea vine înaintea scăderii: 4 / 2 = 2, apoi 10 - 2 = 8. 9 împărțit la 2 are restul 1. 6 este egal cu 6, deci „6 ≠ 6” e fals.'},
- {t:'tf',q:'Expresia „7 &gt; 3 ȘI 2 &gt; 5” este adevărată.',ok:false,why:'Fals. 7 &gt; 3 e adevărat, dar 2 &gt; 5 e fals. Cu ȘI, expresia e adevărată doar dacă ambele părți sunt adevărate.'},
- {t:'choice',q:'Variabila nota are valoarea 8. Care expresie este adevărată?',o:['nota ≥ 5 SAU nota = 10','nota < 5','nota = 10 ȘI nota ≥ 5','NU (nota ≥ 5)'],ok:0,why:'La SAU ajunge ca o parte să fie adevărată, iar 8 ≥ 5 e adevărat. La ȘI, partea „nota = 10” e falsă. NU schimbă „nota ≥ 5”, care e adevărat, în fals.'}
-]},
-{t:'Structura secvențială',lectii:[28],continuturi:['Structura secvenţială (liniară)'],text:`
-<p>În <mark>structura secvențială</mark> (liniară), pașii se execută <mark>unul după altul</mark>, în ordinea scrisă. Fiecare pas se execută o singură dată. Niciunul nu se sare.</p>
-<p>Scriem algoritmul în <mark>limbaj natural</mark>, adică în cuvinte, cu pași numerotați:</p>
-${A('Început\n1. Citește lungimea și lățimea.\n2. Calculează aria ← lungime * lățime.\n3. Afișează aria.\nSfârșit')}
-<p>Ca să verifici un algoritm, îl <mark>urmărești pas cu pas</mark>: scrii valoarea fiecărei variabile după fiecare pas.</p>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-secventa.webp" target="_blank"><img src="../algoritmi-v/img/scratch-secventa.webp" alt="Scratch: scriptul ariei, încadrat și etichetat „unul după altul”; pe scenă lungime 6, lățime 4 și aria 24" width="760" height="333" loading="lazy"></a>
-<figcaption>Aceiași pași, în Scratch: blocurile sunt lipite <b>unul după altul</b> și se execută în ordine. Pentru 6 și 4, <b>aria</b> iese 24.</figcaption></figure>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-urmarire.webp" target="_blank"><img src="../algoritmi-v/img/scratch-urmarire.webp" alt="Scratch: schimbul valorilor lui x și y prin variabila aux; pe scenă x = 8, y = 5, aux = 5" width="760" height="333" loading="lazy"></a>
-<figcaption>Urmărirea pas cu pas se vede pe scenă: <code>aux</code> păstrează valoarea veche a lui <code>x</code>, iar la final <b>x și y s-au schimbat</b> între ele.</figcaption></figure>`,
-qs:[
- {t:'tf',q:'În structura secvențială, un pas poate fi sărit dacă ți se pare inutil.',ok:false,why:'Fals. În secvență fiecare pas se execută o dată, în ordinea scrisă. Dacă un pas e inutil, îl scoți din algoritm, nu îl sari.'},
- {t:'order',q:'Pune în ordine algoritmul care află aria unui dreptunghi.',items:['Început','Citește lungimea și lățimea','Calculează aria ← lungime * lățime','Afișează aria','Sfârșit'],why:'Nu poți calcula fără date și nu poți afișa un rezultat pe care încă nu l-ai calculat. Început și Sfârșit închid algoritmul.'},
- {t:'choice',q:`Urmărește pas cu pas. Ce se afișează?${A('a ← 4\nb ← a * 3\na ← b - 2\nAfișează a')}`,o:['10','4','12','2'],ok:0,why:'a = 4. Apoi b = 4 * 3 = 12. Apoi a primește 12 - 2 = 10, iar valoarea veche, 4, se pierde. Se afișează 10.'},
- {t:'choice',q:`Urmărește pas cu pas. Ce valori au x și y la final?${A('x ← 5\ny ← 8\naux ← x\nx ← y\ny ← aux')}`,o:['x = 8, y = 5','x = 5, y = 8','x = 8, y = 8','x = 5, y = 5'],ok:0,why:'aux păstrează 5. x primește 8. y primește ce era în aux, adică 5. Valorile s-au schimbat între ele, iar aux e o dată de manevră.'},
- {t:'hunt',q:'Algoritmul lui Mihai pentru media a două note are 2 greșeli. Apasă pe ele.',src:'Început. 1. Citește nota1 și nota2. 2. [[Afișează media.|media nu e încă calculată: afișarea vine după calcul]] 3. Calculează media ← [[nota1 + nota2 / 2|fără paranteze se împarte doar nota2 la 2; corect: (nota1 + nota2) / 2]]. Sfârșit.',indiciu:'Uită-te la ordinea pașilor și la paranteze.',why:'Un rezultat se afișează doar după ce a fost calculat. Împărțirea se face înaintea adunării, deci suma trebuie pusă în paranteze.'}
-]},
-{t:'Structura alternativă',lectii:[29],continuturi:['Structura alternativă (decizională)Medii grafice interactive - elemente de interfață specifice mediului grafic interactiv'],text:`
-<p>Uneori algoritmul trebuie să <mark>aleagă</mark>. Pentru asta folosim <mark>structura alternativă</mark> (decizia):</p>
+/* ================= 1. Ce este un algoritm (lecția 24) ================= */
+{t:'Ce este un algoritm',lectii:[24],continuturi:['Noțiunea de algoritm'],
+ obiectiv:'știi ce este un algoritm, recunoști unul în viața de zi cu zi și scrii singur pașii unui algoritm simplu, în ordine.',
+ pasi:[
+  {t:'Un algoritm = pași în ordine',
+   text:`<p>Un <mark>algoritm</mark> este un șir de <mark>pași clari</mark>, scriși <strong>în ordine</strong>, care rezolvă o problemă.</p>
+<p>Folosești algoritmi în fiecare zi, chiar dacă nu le spui așa: rețeta unei prăjituri, drumul de acasă la școală, instrucțiunile de montare a unei jucării, pașii adunării a două numere în coloană.</p>
+<p>Ce au toate în comun? Sunt <strong>pași</strong>, unul după altul, și te duc la un <strong>scop</strong>. Un desen sau o listă de nume nu sunt algoritmi: nu îți spun ce să faci.</p>`,
+   exemplu:`<p>Algoritmul „Fac un ceai”:</p>${A('1. Pun apă în fierbător.\n2. Pornesc fierbătorul și aștept să fiarbă apa.\n3. Pun un plic de ceai în cană.\n4. Torn apa fierbinte în cană.\n5. Aștept 3 minute și scot plicul.')}<p>Sunt pași, în ordine, și la final am un ceai.</p>`,
+   altfel:`<p>Gândește-te că explici drumul spre casa ta unui prieten care n-a mai fost niciodată acolo: „Ieși din școală, mergi la dreapta până la farmacie, treci strada la semafor…”. Ce îi spui tu e un algoritm: pași în ordine care îl duc la scop.</p>`,
+   incearca:{t:'classify',q:'Sortează: care sunt algoritmi?',cats:['Este algoritm','Nu este algoritm'],items:[['Instrucțiunile de montare a unui raft',0],['Rețeta de clătite',0],['Un desen cu un peisaj',1],['Lista cu numele colegilor',1]],ajutor:'Întreabă-te: îmi spune ce să fac, pas cu pas, ca să ajung la ceva?',why:'Un algoritm are pași în ordine și un scop. Un desen sau o listă de nume nu spun ce să faci.'},
+   inca:[
+    {t:'tf',q:'Pașii adunării a două numere „în coloană” formează un algoritm.',ok:true,ajutor:'Are pași în ordine? Te duce la un rezultat?',why:'Adevărat. Aduni unitățile, apoi zecile, ții minte ce trece peste 9… sunt pași în ordine care duc la sumă.'},
+    {t:'choice',q:'Care dintre acestea este un algoritm?',o:['Pașii pentru a spăla o cană','O fotografie de la mare','Numele zilelor săptămânii','Culoarea preferată'],ok:0,why:'Doar spălatul cănii are pași de făcut, în ordine, cu un scop: o cană curată.'}
+   ]},
+  {t:'De la date la rezultat',
+   text:`<p>Orice algoritm pornește de la ce ai <strong>la început</strong> și ajunge la ce vrei <strong>la final</strong>.</p>
+<ul><li><mark>datele</mark> = ce ai la început, de la care pornești;</li>
+<li><mark>pașii</mark> = ce faci cu datele (algoritmul propriu-zis);</li>
+<li><mark>rezultatul</mark> = ce obții la final.</li></ul>
+<p>Când citești un algoritm, caută întâi aceste trei lucruri. Te ajută să înțelegi ce face.</p>`,
+   exemplu:`<p>Rețeta de clătite:</p>${TT(['Datele','Pașii','Rezultatul'],[['ouă, lapte, făină','amesteci, torni în tigaie, întorci','clătitele gata făcute']])}<p>Adunarea în coloană: datele sunt cele două numere, rezultatul este suma.</p>`,
+   incearca:{t:'choice',q:'Într-o rețetă de sandvișuri, ce este <b>rezultatul</b>?',o:['Sandvișul gata făcut','Pâinea și cașcavalul','Cuțitul','Pasul „taie pâinea”'],ok:0,ajutor:'Rezultatul e ce obții la FINAL.',why:'Pâinea și cașcavalul sunt datele, „taie pâinea” e un pas. La final obții sandvișul.'},
+   inca:[
+    {t:'match',q:'Algoritmul „adunarea în coloană a lui 25 și 13”. Leagă fiecare parte de rolul ei.',pairs:[['25 și 13','datele'],['aduni unitățile, apoi zecile','pașii'],['38','rezultatul']],why:'Numerele de la început sunt datele, adunarea pe coloane e algoritmul, iar 38 e rezultatul.'}
+   ]},
+  {t:'Calculatorul face EXACT ce scrie',
+   text:`<p>Calculatorul nu ghicește ce ai vrut să spui. Face <strong>exact</strong> ce scrie în pași, în ordinea scrisă. De aceea pașii pentru calculator trebuie să fie foarte preciși.</p>
+<p>Pozele sunt din <mark>Scratch</mark>, un program în care pașii sunt <strong>blocuri colorate</strong> lipite unul sub altul. Apeși <strong>steagul verde</strong>, de deasupra scenei, și pisica execută blocurile de sus în jos.</p>
+${fig('scratch-pasi-ordine.webp',760,345,'Scratch: trei blocuri „glisează în 0.4 secunde la x y”, încadrate și etichetate „pașii, în ordine”, iar pe scenă traseul albastru desenat de pisică','Algoritmul „drumul spre școală”: <b>pașii, în ordine</b>, iar pe scenă <b>rezultatul</b>, traseul desenat.')}`,
+   exemplu:`<p>Aceiași pași, dar doi dintre ei <strong>schimbați între ei</strong>. Calculatorul nu observă „greșeala”: execută ce scrie și desenează alt drum.</p>${fig('scratch-alta-ordine.webp',760,345,'Scratch: aceleași blocuri, cu două glisări schimbate între ele, încadrate; pe scenă traseul desenat este cu totul altul','Doi pași schimbați: iese alt drum.')}`,
+   altfel:`<p>E ca atunci când îi spui unui robot-jucărie „du-te la ușă”. Nu știe unde e ușa. Trebuie să-i spui: „mergi 3 pași înainte, întoarce-te la dreapta, mergi 2 pași”. Și dacă încurci ordinea, ajunge în altă parte.</p>`,
+   incearca:{t:'tf',q:'Dacă schimbi între ei doi pași ai unui algoritm, calculatorul își dă seama și îi execută tot în ordinea bună.',ok:false,ajutor:'Uită-te la a doua poză: ce a desenat pisica?',why:'Fals. Calculatorul execută pașii exact în ordinea scrisă. Altă ordine înseamnă alt rezultat.'},
+   inca:[
+    {t:'choice',q:'De ce pașii pentru calculator trebuie să fie foarte preciși?',o:['Pentru că face exact ce scrie, nu ghicește','Pentru că refuză pașii scurți','Pentru că pașii preciși merg mai încet','Pentru că vrea pași în limba engleză'],ok:0,why:'Calculatorul nu înțelege „cam așa” sau „știi tu”. Orice pas vag duce la un rezultat greșit.'}
+   ]},
+  {t:'Strategia: cum scrii un algoritm',
+   text:`<p>Când trebuie să scrii <strong>tu</strong> un algoritm, lucrează în patru pași:</p>
+<ol><li><strong>Datele</strong>: ce am la început?</li>
+<li><strong>Rezultatul</strong>: ce vreau să obțin la final?</li>
+<li><strong>Pașii</strong>: împart drumul în acțiuni mici, <strong>câte una pe rând</strong>, și le numerotez.</li>
+<li><strong>Proba robotului</strong>: citesc pașii ca un robot. Poate face fiecare pas fără să ghicească? Ordinea e bună?</li></ol>`,
+   exemplu:`<p>„Îl sun pe un prieten.” Date: telefonul și numele prietenului. Rezultat: vorbim la telefon.</p>${A('1. Deblochez telefonul.\n2. Deschid agenda.\n3. Caut numele prietenului.\n4. Apăs butonul de apel.')}<p>Proba robotului: fără telefon deblocat nu pot deschide agenda, deci ordinea e bună.</p>`,
+   incearca:{t:'order',q:'Pune în ordine pașii algoritmului: îți speli mâinile.',items:['Deschizi robinetul','Îți uzi mâinile','Te freci cu săpun','Clătești săpunul','Închizi robinetul','Te ștergi cu prosopul'],ajutor:'Fă proba robotului: ce trebuie să fie gata înainte de fiecare pas?',why:'Nu poți uda mâinile fără apă, nu clătești săpunul înainte să-l pui, iar ștersul vine la sfârșit.'},
+   inca:[
+    {t:'order',q:'Pune în ordine pașii: trimiți un desen la tema de informatică pe calculator.',items:['Pornești calculatorul','Deschizi programul de desen','Desenezi','Salvezi desenul','Îl trimiți profesorului'],why:'Fiecare pas are nevoie de cel dinainte: nu poți trimite un desen care încă nu e salvat.'}
+   ]}
+ ],
+ atelier:{t:'order',titlu:'Refă scriptul din Scratch',
+  intro:`<p>Uită-te la script: pisica pornește din stânga jos și desenează drumul spre școală: întâi <b>la dreapta</b>, apoi <b>în sus</b>, apoi iar <b>la dreapta</b>. Fiecare bloc <b>glisează</b> face o bucată din drum, în ordinea din poză. <strong>Sarcina:</strong> pune blocurile în ordinea în care trebuie executate, ca drumul să iasă exact ca în poză. Folosește proba robotului: ce trebuie să se întâmple înainte de fiecare bloc?</p>
+${fig('scratch-pasi-ordine.webp',760,345,'Scriptul din Scratch pentru drumul spre școală, cu blocurile glisează încadrate, și traseul albastru desenat pe scenă','Scriptul și drumul desenat.')}`,
+  q:'Ordonează blocurile scriptului.',items:['când se dă click pe steagul verde','stilou jos (de acum pisica desenează)','glisează la x: -60 y: -110','glisează la x: -60 y: 40','glisează la x: 120 y: 40','spune „Am ajuns la școală!”'],
+  ajutor:'Scriptul pornește mereu cu steagul verde. Stiloul trebuie coborât înainte să meargă pisica, altfel nu desenează nimic. „Spune” vine când a ajuns.',
+  why:'Steagul pornește scriptul, stiloul coborât desenează, cele trei glisări fac drumul în ordinea din poză, iar mesajul vine la final.',
+  inca:[
+   {t:'order',q:'Încă una: algoritmul adunării în coloană a lui 47 și 25.',items:['Scrii numerele unul sub altul','Aduni unitățile: 7 + 5 = 12','Scrii 2 și ții minte 1','Aduni zecile și pe 1 ținut minte: 4 + 2 + 1 = 7','Scrii 7: rezultatul este 72'],ajutor:'Începi de la unități, de la dreapta.',why:'Adunarea în coloană începe cu unitățile; ce trece peste 9 se adaugă la zeci.'},
+   {t:'classify',q:'Încă una: ce este dată, pas sau rezultat în algoritmul „fac o limonadă”?',cats:['Dată','Pas','Rezultat'],items:[['o lămâie și apă',0],['stoarce lămâia',1],['amestecă cu apa',1],['limonada gata făcută',2]],why:'Datele sunt ce ai la început, pașii sunt ce faci, rezultatul e ce obții.'}
+  ]},
+ qs:[
+  {t:'tf',q:'Algoritmii există doar în calculatoare.',ok:false,ajutor:'Gândește-te la rețete sau la drumul spre școală.',why:'Fals. O rețetă sau drumul spre școală, scris pas cu pas, sunt tot algoritmi. Calculatorul doar execută algoritmi foarte precis.'},
+  {t:'classify',q:'Sortează exemplele: care au pași în ordine ce duc la un rezultat?',cats:['Este algoritm','Nu este algoritm'],items:[['Instrucțiunile de montare a unui raft',0],['Pașii adunării a două numere în coloană',0],['Traseul pas cu pas de la școală la bibliotecă',0],['Un desen cu un peisaj',1],['Lista cu numele colegilor',1]],why:'Un algoritm are pași în ordine și un scop: ajungi la un rezultat. Un desen sau o listă de nume nu spun ce să faci.'},
+  {t:'order',q:'Pune în ordine pașii algoritmului: îl suni pe un prieten de pe telefonul tău.',items:['Deblochezi telefonul','Deschizi agenda','Cauți numele prietenului','Apeși butonul de apel'],why:'Fiecare pas are nevoie de cel dinainte: fără telefon deblocat nu deschizi agenda, iar fără nume găsit nu ai pe cine să suni.'},
+  {t:'choice',q:'De ce pașii pentru calculator trebuie să fie foarte preciși?',o:['Calculatorul face exact ce scrie, nu ghicește ce ai vrut','Calculatorul refuză pașii scurți','Pașii preciși se execută mai încet','Calculatorul are nevoie de pași în limba engleză'],ok:0,why:'Calculatorul nu înțelege „cam așa” sau „știi tu”. Execută pașii exact cum sunt scriși, deci orice pas vag duce la un rezultat greșit.'},
+  {t:'choice',q:'Într-o rețetă de clătite, ce este rezultatul?',o:['Clătitele gata făcute','Ouăle, laptele și făina','Tigaia','Pasul „amestecă”'],ok:0,why:'Ingredientele sunt datele de la care pornești, iar pașii sunt algoritmul. Rezultatul e ce obții la final: clătitele.'}
+ ]},
+
+/* ================= 2. Proprietățile unui algoritm (lecția 25) ================= */
+{t:'Proprietățile unui algoritm',lectii:[25],continuturi:['Proprietăți ale algoritmilor'],
+ obiectiv:'verifici dacă un algoritm e clar, se termină și merge pentru orice date de același fel, și îl repari când nu e așa.',
+ pasi:[
+  {t:'Claritatea: fiecare pas are un singur înțeles',
+   text:`<p>Un algoritm bun are trei <mark>proprietăți</mark>. Prima este <mark>claritatea</mark>: fiecare pas trebuie înțeles <strong>la fel</strong> de oricine îl citește.</p>
+<p>Cuvintele vagi strică claritatea: <em>puțin, câteva, potrivit, cam, mult</em>. „Pune puțină sare” nu e clar: pentru cineva „puțin” e un vârf de linguriță, pentru altcineva o lingură plină.</p>
+<p>Cum repari: înlocuiești cuvântul vag cu un <strong>număr</strong> sau cu o regulă exactă.</p>`,
+   exemplu:`${TT(['Nu e clar','E clar'],[['Pune puțină sare.','Pune o linguriță de sare.'],['Fierbe apa puțin.','Fierbe apa 5 minute.'],['Mergi cam pe acolo.','Mergi 200 de metri, până la farmacie.']])}`,
+   altfel:`<p>Dacă zece colegi citesc același pas, ar face toți <strong>exact același lucru</strong>? Dacă da, pasul e clar. Dacă unul pune o linguriță și altul trei, pasul nu e clar.</p>`,
+   incearca:{t:'choice',q:'Care pas este <b>clar</b>?',o:['Adaugă 2 linguri de zahăr.','Adaugă zahăr cât trebuie.','Adaugă puțin zahăr.','Adaugă zahăr după gust.'],ok:0,ajutor:'Caută pasul pe care l-ar face toți la fel.',why:'Doar „2 linguri” are un singur înțeles. „Cât trebuie”, „puțin” și „după gust” diferă de la om la om.'},
+   inca:[
+    {t:'classify',q:'Clar sau neclar?',cats:['Clar','Neclar'],items:[['Citește două numere.',0],['Mergi 3 pași înainte.',0],['Adaugă câteva linguri de făină.',1],['Așteaptă un timp potrivit.',1]],why:'„Câteva” și „potrivit” lasă loc de ghicit. Numerele fac pasul clar.'}
+   ]},
+  {t:'Finitudinea: algoritmul se oprește',
+   text:`<p>A doua proprietate este <mark>finitudinea</mark>: algoritmul se <strong>oprește</strong> după un număr de pași. „Mergi înainte și nu te opri” nu se termină niciodată, deci nu e un algoritm bun.</p>
+<p>În Scratch, blocul <strong>la infinit</strong> repetă pașii la nesfârșit. Programul se oprește doar dacă apeși tu <strong>semnul roșu</strong> de lângă steagul verde.</p>
+${fig('scratch-infinit.webp',760,333,'Scratch: blocul „la infinit” încadrat, cu eticheta „nu se oprește singur”, și semnul roșu de oprire de deasupra scenei, încadrat','Blocul <b>la infinit</b>: nu se oprește singur. Semnul roșu îl oprește.')}`,
+   exemplu:`<p>Același lucru, dar cu blocul <strong>repetă 10</strong>: pisica face 10 pași și algoritmul se oprește singur. Are finitudine.</p>${fig('scratch-finit.webp',760,333,'Scratch: blocul „repetă 10” încadrat, cu eticheta „de 10 ori, apoi gata”, iar pe scenă pisica spune „Gata: 10 pași.”','<b>repetă 10</b>: de 10 ori, apoi gata.')}<p>Cum repari un pas fără sfârșit: spui <strong>de câte ori</strong> sau <strong>până când</strong>. „Amestecă fără oprire” devine „amestecă de 5 ori”.</p>`,
+   incearca:{t:'tf',q:'Algoritmul „Numără 1, 2, 3, … și nu te opri niciodată” are finitudine.',ok:false,ajutor:'Finitudine = se oprește.',why:'Fals. Nu are un moment de oprire, deci nu se termină niciodată.'},
+   inca:[
+    {t:'choice',q:'Cum repari pasul „Bate ouăle fără oprire”?',o:['Bate ouăle de 20 de ori','Bate ouăle mult','Bate ouăle repede','Bate ouăle mereu'],ok:0,why:'„De 20 de ori” spune când te oprești. „Mult”, „repede” și „mereu” nu dau un sfârșit.'}
+   ]},
+  {t:'Generalitatea: merge pentru orice date',
+   text:`<p>A treia proprietate este <mark>generalitatea</mark>: algoritmul rezolvă <strong>toate</strong> problemele de același fel, nu doar una.</p>
+<p>Un algoritm care află aria doar pentru dreptunghiul de 3 pe 5 e bun o singură dată. Unul care <strong>citește</strong> lungimea și lățimea și calculează <em>lungime * lățime</em> merge pentru <strong>orice</strong> dreptunghi. (Semnul <strong>*</strong> înseamnă <strong>ori</strong>, înmulțire, ca pe calculator: <em>3 * 5</em> = 15.)</p>
+<p>Semnul că lipsește generalitatea: în pași apar numere fixe acolo unde ar trebui date citite.</p>`,
+   exemplu:`${TT(['Fără generalitate','Cu generalitate'],[['Calculează 3 * 5.','Citește lungimea și lățimea. Calculează lungime * lățime.'],['Calculează suma numerelor 4 și 7.','Citește a și b. Calculează a + b.']])}<p>În coloana a doua schimbi datele și obții alt rezultat, fără să schimbi pașii.</p>`,
+   incearca:{t:'tf',q:'Un algoritm care primește lungimea și lățimea și află aria oricărui dreptunghi are proprietatea de generalitate.',ok:true,ajutor:'Merge și pentru alte dreptunghiuri?',why:'Adevărat. Schimbi datele și obții aria noului dreptunghi, fără să schimbi pașii.'},
+   inca:[
+    {t:'choice',q:'Care algoritm are generalitate?',o:['Citește un număr n și afișează n * 2','Afișează dublul numărului 6','Afișează numărul 12 pe ecran','Calculează 6 + 6 și afișează'],ok:0,why:'Doar primul merge pentru orice număr. Celelalte dau mereu 12.'}
+   ]},
+  {t:'Strategia: verifici și repari un algoritm',
+   text:`<p>Ca să verifici un algoritm, pune-i trei întrebări, pe rând, la fiecare pas:</p>
+<ol><li><strong>Se înțelege?</strong> Caută cuvinte vagi (puțin, câteva, potrivit). → claritate</li>
+<li><strong>Se termină?</strong> Caută „fără oprire”, „mereu”, „la nesfârșit”. → finitudine</li>
+<li><strong>Merge și pentru alte date?</strong> Caută numere fixe unde ar trebui date citite. → generalitate</li></ol>
+<p>Apoi repari: cuvântul vag devine număr, pasul fără sfârșit primește „de câte ori”, numărul fix devine dată citită.</p>`,
+   exemplu:`<p>Pasul „Amestecă fără oprire”: se înțelege? da. Se termină? <strong>nu</strong>. Deci încalcă finitudinea. Reparat: „Amestecă de 5 ori.”</p>`,
+   incearca:{t:'hunt',cod:true,q:'Algoritmul Anei pentru ceai are 2 pași care încalcă proprietățile. Apasă pe ei.',src:`1. Pune apă în fierbător.
+2. Pornește fierbătorul și așteaptă să fiarbă apa.
+3. Pune în cană [[o cantitate potrivită de zahăr|„potrivită” nu e clar: câte lingurițe?]].
+4. Toarnă apa fierbinte în cană.
+5. [[Amestecă fără oprire|algoritmul nu se mai termină: trebuie spus când te oprești]].`,corect:`1. Pune apă în fierbător.
+2. Pornește fierbătorul și așteaptă să fiarbă apa.
+3. Pune în cană o linguriță de zahăr.
+4. Toarnă apa fierbinte în cană.
+5. Amestecă de 5 ori.`,ajutor:'Întrebarea 1: e vreun cuvânt vag? Întrebarea 2: se termină fiecare pas?',indiciu:'Caută un pas vag și un pas care nu se termină.',why:'„Potrivită” lasă loc de ghicit, deci strică claritatea. „Fără oprire” strică finitudinea. Corect: „o linguriță de zahăr” și „amestecă de 5 ori”.'},
+   inca:[
+    {t:'classify',q:'Ce proprietate încalcă fiecare pas?',cats:['Claritatea','Finitudinea','Generalitatea'],items:[['Adaugă „câteva” linguri de făină',0],['Numără din 1 în 1 și nu te opri niciodată',1],['Calculează doar suma numerelor 4 și 7',2],['Mergi „cam pe acolo”',0]],why:'Cuvintele vagi strică claritatea, lipsa opririi strică finitudinea, un singur caz fix strică generalitatea.'}
+   ]}
+ ],
+ atelier:{t:'hunt',cod:true,titlu:'Repară algoritmul ariei',
+  intro:`<p>Colegul tău a scris un algoritm pentru aria unui dreptunghi, dar a greșit în <b>3</b> locuri. <strong>Sarcina:</strong> ia-l rând cu rând și pune-i cele trei întrebări (se înțelege? se termină? merge pentru alte date?). Apasă pe fiecare greșeală. După răspuns vezi alături algoritmul reparat.</p>`,
+  q:'Apasă pe cele 3 greșeli.',src:`Început
+1. Citește lungimea și lățimea.
+2. Calculează aria = [[3 * 5|Merge doar pentru dreptunghiul de 3 pe 5. Folosește datele citite: lungime * lățime (generalitate).]]
+3. Afișează aria [[de câteva ori|„de câteva ori” nu e clar: afișează aria o dată (claritate).]]
+4. [[Repetă pasul 3 la nesfârșit.|Algoritmul nu se mai oprește: pasul se șterge (finitudine).]]
+Sfârșit`,corect:`Început
+1. Citește lungimea și lățimea.
+2. Calculează aria = lungime * lățime
+3. Afișează aria
+Sfârșit`,
+  ajutor:'Un număr fix, un cuvânt vag și un pas care nu se termină.',indiciu:'Caută un număr fix, un cuvânt vag și un „la nesfârșit”.',
+  why:'Algoritmul reparat citește datele, le folosește în calcul, afișează o dată și se oprește.',
+  inca:[
+   {t:'hunt',cod:true,q:'Încă una: algoritmul „Fac o limonadă” are <b>2</b> greșeli. Apasă pe ele.',src:`1. Stoarce o lămâie într-un pahar.
+2. Adaugă [[puțină apă|„puțină” nu e clar: câți mililitri? (claritate)]]
+3. Pune 2 lingurițe de zahăr.
+4. [[Amestecă mereu.|„mereu” nu se termină: amestecă de 10 ori (finitudine).]]`,corect:`1. Stoarce o lămâie într-un pahar.
+2. Adaugă 200 ml de apă.
+3. Pune 2 lingurițe de zahăr.
+4. Amestecă de 10 ori.`,ajutor:'Un cuvânt vag și un pas care nu se oprește.',indiciu:'„puțin” și „mereu” sunt semne rele.',why:'Numerele fac pașii clari, iar „de 10 ori” dă un sfârșit.'},
+   {t:'classify',q:'Încă una: ce proprietate încalcă fiecare algoritm?',cats:['Claritatea','Finitudinea','Generalitatea'],items:[['Află perimetrul doar pentru pătratul cu latura 5',2],['Apasă butonul din nou și din nou, fără să spui când te oprești',1],['Pune „o cantitate potrivită” de apă',0],['Afișează suma lui 2 și 3',2]],why:'Numere fixe = fără generalitate; fără oprire = fără finitudine; cuvinte vagi = fără claritate.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Pasul „Fierbe apa puțin” încalcă o proprietate. Care?',o:['Claritatea','Finitudinea','Generalitatea'],ok:0,why:'„Puțin” poate însemna un minut pentru cineva și zece minute pentru altcineva. Pasul are mai multe înțelesuri, deci nu e clar.'},
+  {t:'match',q:'Leagă fiecare proprietate de ce cere ea.',pairs:[['Claritatea','fiecare pas are un singur înțeles'],['Finitudinea','algoritmul se oprește după un număr de pași'],['Generalitatea','rezolvă toate problemele de același fel']],why:'Cele trei proprietăți răspund la trei întrebări: se înțelege? se termină? merge și pentru alte date?'},
+  {t:'classify',q:'Ce proprietate încalcă fiecare algoritm?',cats:['Claritatea','Finitudinea','Generalitatea'],items:[['Adaugă „câteva” linguri de făină',0],['Mergi „cam pe acolo” până la școală',0],['Numără din 1 în 1 și nu te opri niciodată',1],['Apasă butonul din nou și din nou, fără să spui când te oprești',1],['Calculează doar suma numerelor 4 și 7',2],['Află perimetrul doar pentru pătratul cu latura 5',2]],ajutor:'Folosește cele trei întrebări: se înțelege? se termină? merge pentru alte date?',why:'Cuvintele vagi strică claritatea. Lipsa unui moment de oprire strică finitudinea. Un algoritm legat de un singur caz nu are generalitate.'},
+  {t:'tf',q:'În Scratch, un script cu blocul „la infinit” se oprește singur după câțiva pași.',ok:false,why:'Fals. „La infinit” repetă la nesfârșit; se oprește doar când apeși semnul roșu. Cu „repetă 10” s-ar opri singur.'},
+  {t:'choice',q:'Care este varianta reparată a pasului „Calculează aria pentru dreptunghiul de 3 pe 5”?',o:['Citește lungimea și lățimea, apoi calculează lungime * lățime','Calculează aria de mai multe ori, ca să fii sigur','Calculează 3 * 5 cu mare atenție la fiecare cifră','Calculează aria cam cât trebuie pentru orice caz'],ok:0,why:'Pasul nu avea generalitate. Reparat, citește datele și le folosește, deci merge pentru orice dreptunghi.'}
+ ]},
+
+/* ================= 3. Datele și variabilele (lecția 26) ================= */
+{t:'Datele și variabilele',lectii:[26],continuturi:['Clasificarea datelor cu care lucrează algoritmii în funcţie de rolul acestora (de intrare, de ieșire, de manevră)','Constante și variabile'],
+ obiectiv:'recunoști datele de intrare, de ieșire și de manevră, deosebești o variabilă de o constantă și urmărești cum se schimbă valoarea unei variabile.',
+ pasi:[
+  {t:'Date de intrare și date de ieșire',
+   text:`<p>Un algoritm lucrează cu <mark>date</mark>. După rolul lor, le împărțim în grupe. Primele două:</p>
+<ul><li><mark>datele de intrare</mark>: le primește <strong>la început</strong>. Spunem că algoritmul le <strong>citește</strong> (pasul „Citește…”);</li>
+<li><mark>datele de ieșire</mark>: rezultatele pe care le dă <strong>la final</strong>. Spunem că le <strong>afișează</strong> (pasul „Afișează…”).</li></ul>
+<p>Truc: caută cuvintele <strong>Citește</strong> și <strong>Afișează</strong>. Ce e după „Citește” intră; ce e după „Afișează” iese.</p>`,
+   exemplu:`${A('Citește numărul de caiete și prețul unui caiet.\nCalculează suma ← număr * preț.\nAfișează suma.')}<p>Săgeata <strong>←</strong> se citește „primește”: <em>suma</em> primește rezultatul calculului. O înveți pe larg la pasul 4.</p>${TT(['Dată','Rol'],[['numărul de caiete','de intrare (se citește)'],['prețul unui caiet','de intrare (se citește)'],['suma','de ieșire (se afișează)']])}`,
+   incearca:{t:'choice',q:'Algoritmul citește numărul de caiete și prețul unui caiet, apoi afișează cât ai de plătit. Care este data de ieșire?',o:['Suma de plătit','Prețul unui caiet','Numărul de caiete'],ok:0,ajutor:'Ce vine după „Afișează”?',why:'Numărul de caiete și prețul sunt date de intrare. Suma de plătit se afișează, deci e de ieșire.'},
+   inca:[
+    {t:'classify',q:'Algoritmul: „Citește vârsta ta. Calculează anul nașterii. Afișează anul nașterii.” Ce rol au datele?',cats:['De intrare','De ieșire'],items:[['vârsta',0],['anul nașterii',1],['anul în care suntem, citit și el',0],['mesajul afișat cu anul',1]],why:'Ce se citește intră, ce se afișează iese.'}
+   ]},
+  {t:'Date de manevră: ajutoarele de pe drum',
+   text:`<p>A treia grupă sunt <mark>datele de manevră</mark>: valori <strong>ajutătoare</strong>, calculate pe drum. Nu le primești la început și nu le afișezi la final, dar fără ele n-ai ajunge la rezultat.</p>
+<p>La perimetrul dreptunghiului, poți aduna întâi lungimea cu lățimea (o sumă <code>s</code>), apoi dublezi suma. <code>s</code> e o dată de manevră: o folosești doar ca să ajungi la perimetrul <code>P</code>.</p>
+${fig('scratch-roluri-date.webp',760,333,'Scratch: perimetrul dreptunghiului; pe scenă lungime 8 și lățime 3 încadrate ca date de intrare, s 11 ca dată de manevră, P 22 ca dată de ieșire','În Scratch: <b>lungime</b> și <b>lățime</b> de intrare, <code>s</code> de manevră, <code>P</code> de ieșire.')}`,
+   exemplu:`${A('Citește L și l.\ns ← L + l\nP ← 2 * s\nAfișează P.')}<p>Pentru L = 8 și l = 3: s = 11 (de manevră), P = 22 (de ieșire).</p>`,
+   altfel:`<p>Când faci un tort, blatul copt e un „ajutor pe drum”: nu l-ai cumpărat așa (nu e dată de intrare) și nu-l servești singur (nu e rezultatul). E doar o etapă spre tort. Așa e o dată de manevră.</p>`,
+   incearca:{t:'classify',q:'Perimetrul: citești L și l, calculezi s ← L + l, apoi P ← 2 * s și afișezi P. Ce rol are fiecare dată?',cats:['De intrare','De ieșire','De manevră'],items:[['Lungimea L',0],['Lățimea l',0],['Suma s, calculată pe drum',2],['Perimetrul P, afișat la final',1]],ajutor:'Care se citește? Care se afișează? Care nu se citește și nici nu se afișează?',why:'L și l se citesc. P se afișează. s e o valoare ajutătoare.'},
+   inca:[
+    {t:'choice',q:'Media a două note: citești a și b, calculezi s ← a + b, apoi m ← s / 2 și afișezi m. Care este data de manevră?',o:['s','a','b','m'],ok:0,why:'a și b se citesc, m se afișează. s e calculată pe drum, doar ca să ajungi la m.'}
+   ]},
+  {t:'Variabile și constante',
+   text:`<p>O <mark>variabilă</mark> este ca o cutie cu <strong>nume</strong>, în care stă o <strong>valoare care se poate schimba</strong>. Exemplu: scorul dintr-un joc. Numele rămâne „scor”, valoarea crește pe parcurs.</p>
+<p>O <mark>constantă</mark> are o valoare care <strong>nu se schimbă</strong>: 60 de minute într-o oră, 7 zile într-o săptămână.</p>
+<p>În Scratch, o variabilă nouă se face din categoria <strong>Variabile</strong>, cu butonul <strong>Creează o variabilă</strong>. Îi dai un nume și apoi îi pui valori cu blocul <strong>setează … la …</strong>.</p>
+${fig('scratch-variabile.webp',500,400,'Scratch, categoria Variabile: butonul Creează o variabilă încadrat și blocurile setează scor la 0 și modifică scor cu 1, încadrate','Categoria <b>Variabile</b>: <b>Creează o variabilă</b>, apoi <b>setează scor la 0</b>.')}`,
+   exemplu:`${TT(['Mărimea','Se schimbă?','Deci e'],[['scorul din joc','da, la fiecare punct','variabilă'],['vârsta ta','da, în fiecare an','variabilă'],['minute într-o oră (60)','niciodată','constantă'],['zile într-o săptămână (7)','niciodată','constantă']])}`,
+   altfel:`<p>Pe tabla de scor de la un meci de fotbal scrie „Gazde” și un număr. Cuvântul „Gazde” e numele, numărul se schimbă la fiecare gol: e o variabilă. Durata unei reprize, 45 de minute, e aceeași la fiecare meci: e o constantă.</p>`,
+   incearca:{t:'classify',q:'Constantă sau variabilă?',cats:['Constantă','Variabilă'],items:[['Numărul de minute dintr-o oră (60)',0],['Numărul de zile dintr-o săptămână (7)',0],['Scorul dintr-un joc',1],['Temperatura de afară',1]],ajutor:'Se poate schimba? Atunci e variabilă.',why:'O oră are mereu 60 de minute și o săptămână 7 zile. Scorul și temperatura se schimbă.'},
+   inca:[
+    {t:'tf',q:'O variabilă poate avea valori diferite în momente diferite ale algoritmului.',ok:true,why:'Adevărat. De aceea se numește variabilă, de la „a varia”, adică a se schimba.'}
+   ]},
+  {t:'Săgeata ←: o variabilă primește o valoare',
+   text:`<p>Scriem <code>scor ← 10</code> și citim „scor <strong>primește</strong> valoarea 10”. Pasul se numește <mark>atribuire</mark>. Valoarea veche se <strong>pierde</strong>, ca atunci când ștergi ce era pe tablă și scrii altceva.</p>
+<p>Ce face <code>scor ← scor + 5</code>? <strong>Strategia</strong>, mereu în această ordine:</p>
+<ol><li>Te uiți în <strong>dreapta</strong> săgeții și pui valorile de ACUM: scor + 5 = 10 + 5.</li>
+<li>Calculezi: 15.</li>
+<li>Scrii rezultatul în variabila din <strong>stânga</strong>: scor devine 15.</li></ol>
+<p>Pe caiet ții un <mark>tabel de urmărire</mark>: un rând pentru fiecare pas, cu noua valoare.</p>`,
+   exemplu:`${A('scor ← 10\nscor ← scor + 5\nscor ← scor * 2')}${TT(['Pasul','Calcul (dreapta săgeții)','scor devine'],[['1','10','10'],['2','10 + 5','15'],['3','15 * 2','30']])}`,
+   altfel:`<p>Gândește-te la pușculiță. Ai 10 lei. „pușculiță ← pușculiță + 5” înseamnă: te uiți cât ai acum (10), adaugi 5 și pui la loc: acum ai 15. Nu apar două pușculițe, ci aceeași, cu altă sumă.</p>`,
+   incearca:{t:'choice',q:`Urmărește pașii. Ce valoare are scor la final?${A('scor ← 10\nscor ← scor + 5')}`,o:['15','10','5','105'],ok:0,ajutor:'Pasul 2: pune în dreapta valoarea de acum a lui scor.',why:'La primul pas scor devine 10. La al doilea, scor primește 10 + 5 = 15. Nu se lipesc cifrele, ca în 105.'},
+   inca:[
+    {t:'choice',q:`Ce valoare are x la final?${A('x ← 3\nx ← x * 4\nx ← x - 2')}`,o:['10','12','3','1'],ok:0,why:'x = 3, apoi 3 * 4 = 12, apoi 12 - 2 = 10.'},
+    {t:'choice',q:`Ce valoare are b la final?${A('a ← 6\nb ← a + 1\na ← 20')}`,o:['7','21','6','20'],ok:0,why:'b primește 6 + 1 = 7 în pasul 2. Schimbarea lui a de după nu mai atinge b.'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Tabelul de urmărire: scorul',
+  intro:`<p>Așa verifici un algoritm la ora de informatică: îl execuți <strong>tu</strong>, ca un calculator, și scrii în tabel ce se întâmplă la fiecare rând. <strong>Sarcina:</strong> calculatorul îți dă o valoare de intrare pentru <code>scor</code>. Completează căsuțele rând cu rând, cu strategia săgeții: dreapta cu valorile de acum, calculezi, scrii în stânga. Apasă „Verifică tabelul”: testele se bifează.</p>`,
+  q:'Execută algoritmul pentru datele de mai jos.',
+  prog:['Început','Citește scor','scor ← scor + 5','scor ← scor * 2','Afișează scor','Sfârșit'],
+  date:[{scor:10},{scor:4},{scor:7},{scor:0}],
+  ajutor:'Rândul 3: la valoarea citită adaugi 5. Rândul 4: dublezi ce ai obținut la rândul 3. Rândul 5: afișezi valoarea de acum.',
+  why:'Fiecare atribuire folosește valoarea de ACUM a lui scor, iar valoarea veche se pierde.',
+  inca:[
+   {t:'urmarire',q:'Încă unul: perimetrul dreptunghiului. Scrie valorile lui s și P și ce se afișează.',prog:['Început','Citește L, l','s ← L + l','P ← 2 * s','Afișează P','Sfârșit'],date:[{L:8,l:3},{L:5,l:2},{L:10,l:6},{L:7,l:7}],ajutor:'s e suma lui L și l; P e dublul lui s.',why:'s e dată de manevră, P e dată de ieșire.'},
+   {t:'urmarire',q:'Încă unul: două variabile. Atenție la valoarea de ACUM a lui a.',prog:['Început','Citește a','b ← a + 1','a ← b * 3','Afișează a','Afișează b','Sfârșit'],date:[{a:2},{a:5},{a:0}],ajutor:'La rândul 4 folosești b de la rândul 3.',why:'După rândul 4, a are o valoare nouă, iar cea citită s-a pierdut.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Algoritmul citește lungimea unei laturi a unui pătrat și afișează perimetrul. Care este data de intrare?',o:['Lungimea laturii','Perimetrul','Numărul 4','Mesajul afișat'],ok:0,ajutor:'Ce se citește?',why:'Latura se citește, deci e de intrare. Perimetrul se afișează, deci e de ieșire.'},
+  {t:'classify',q:'Perimetrul dreptunghiului: citești L și l, calculezi s ← L + l, apoi P ← 2 * s și afișezi P. Ce rol are fiecare dată?',cats:['De intrare','De ieșire','De manevră'],items:[['Lungimea L',0],['Lățimea l',0],['Suma s, calculată pe drum',2],['Perimetrul P, afișat la final',1]],why:'L și l se citesc la început. P se afișează. s e o valoare ajutătoare: o folosești ca să ajungi la P, dar nu o primești și nu o afișezi.'},
+  {t:'classify',q:'Constantă sau variabilă?',cats:['Constantă','Variabilă'],items:[['Numărul de minute dintr-o oră (60)',0],['Numărul de zile dintr-o săptămână (7)',0],['Scorul dintr-un joc',1],['Temperatura de afară',1],['Numărul de mere rămase în coș',1]],why:'O oră are mereu 60 de minute și o săptămână 7 zile. Scorul, temperatura și merele din coș se schimbă.'},
+  {t:'tf',q:'O variabilă poate avea valori diferite în momente diferite ale algoritmului.',ok:true,why:'Adevărat. De aceea se numește variabilă, de la „a varia”, adică a se schimba. Numele rămâne același, valoarea se poate schimba.'},
+  {t:'choice',q:`Urmărește pașii. Ce valoare are scor la final?${A('scor ← 10\nscor ← scor + 5')}`,o:['15','10','5','105'],ok:0,ajutor:'Dreapta săgeții, cu valoarea de acum, apoi scrii în stânga.',why:'La primul pas scor devine 10. La al doilea, scor primește valoarea lui veche plus 5, adică 10 + 5 = 15. Nu se lipesc cifrele, ca în 105.'}
+ ]},
+
+/* ================= 4. Expresii și operatori (lecția 27) ================= */
+{t:'Expresii și operatori',lectii:[27],continuturi:['Expresii (operatori aritmetici, relaționali, logici; evaluarea expresiilor)'],
+ obiectiv:'calculezi o expresie cu operatori aritmetici, relaționali și logici, în ordinea corectă, și spui dacă o condiție e adevărată sau falsă.',
+ pasi:[
+  {t:'Operatorii aritmetici și restul împărțirii',
+   text:`<p>O <mark>expresie</mark> leagă numere și variabile prin <mark>operatori</mark>. A <mark>evalua</mark> expresia înseamnă a-i afla valoarea.</p>
+<p><strong>Operatorii aritmetici</strong> calculează numere: <code>+</code> adunare, <code>-</code> scădere, <code>*</code> înmulțire, <code>/</code> împărțire și <code>%</code>, <mark>restul împărțirii</mark>.</p>
+<p><code>17 % 5</code> se citește „17 modulo 5” și înseamnă: ce rest rămâne când împarți 17 la 5?</p>`,
+   exemplu:`<p><code>17 % 5</code>: 5 încape în 17 de 3 ori (5 * 3 = 15). Rămân 17 - 15 = <strong>2</strong>. Deci <code>17 % 5</code> = 2.</p><p><code>12 % 4</code> = 0, pentru că 4 * 3 = 12 și nu rămâne nimic.</p>`,
+   altfel:`<p>Ai 17 bomboane și le împarți la 5 copii, fiecare primind la fel. Fiecare primește 3 și îți rămân <strong>2</strong> în mână. Cele 2 sunt restul: <code>17 % 5</code>.</p>`,
+   incearca:{t:'choice',q:'Cât este <code>9 % 2</code>?',o:['1','4','4,5','0'],ok:0,ajutor:'2 încape în 9 de 4 ori. Cât rămâne?',why:'2 * 4 = 8, iar 9 - 8 = 1. Restul este 1.'},
+   inca:[
+    {t:'choice',q:'Cât este <code>20 % 6</code>?',o:['2','3','0','14'],ok:0,why:'6 * 3 = 18, iar 20 - 18 = 2.'},
+    {t:'match',q:'Leagă fiecare expresie de restul ei.',pairs:[['12 % 4','0'],['13 % 4','1'],['14 % 4','2'],['15 % 4','3']],why:'4 * 3 = 12; de la 12 la 15 restul crește cu câte 1.'}
+   ]},
+  {t:'Ordinea operațiilor',
+   text:`<p>Ordinea e ca la matematică:</p>
+<ol><li>întâi <strong>parantezele</strong>;</li>
+<li>apoi <code>*</code>, <code>/</code> și <code>%</code>, de la stânga la dreapta;</li>
+<li>apoi <code>+</code> și <code>-</code>, de la stânga la dreapta.</li></ol>
+<p>Calculatorul respectă mereu ordinea asta. Dacă vrei să aduni întâi, pui paranteze.</p>
+${fig('scratch-expresii.webp',760,333,'Scratch: setează e la 2 + 3 * 4 și rest la 17 mod 5; pe scenă e = 14 și rest = 2; blocul „7 > 3 și 2 > 5” încadrat, iar pisica spune fals','În Scratch: <code>2 + 3 * 4</code> dă <b>14</b>, iar <code>17 mod 5</code> dă <b>2</b>.')}`,
+   exemplu:`${TT(['Expresia','Primul calcul','Rezultatul'],[['2 + 3 * 4','3 * 4 = 12','2 + 12 = 14'],['(2 + 3) * 4','2 + 3 = 5','5 * 4 = 20'],['10 - 4 / 2','4 / 2 = 2','10 - 2 = 8']])}`,
+   incearca:{t:'choice',q:'Cât este 2 + 3 * 4?',o:['14','20','9','24'],ok:0,ajutor:'Înmulțirea se face înaintea adunării.',why:'3 * 4 = 12, apoi 2 + 12 = 14. 20 ar fi corect doar pentru (2 + 3) * 4.'},
+   inca:[
+    {t:'choice',q:'Cât este (6 + 4) / 2?',o:['5','8','6','10'],ok:0,why:'Parantezele întâi: 6 + 4 = 10, apoi 10 / 2 = 5.'},
+    {t:'choice',q:'Cât este 5 + 10 % 3?',o:['6','0','15','3'],ok:0,why:'% se face înaintea adunării: 10 % 3 = 1, apoi 5 + 1 = 6.'}
+   ]},
+  {t:'Operatorii relaționali: adevărat sau fals',
+   text:`<p><strong>Operatorii relaționali</strong> compară două valori: <code>&lt;</code> mai mic, <code>≤</code> mai mic sau egal, <code>&gt;</code> mai mare, <code>≥</code> mai mare sau egal, <code>=</code> egal, <code>≠</code> diferit.</p>
+<p>Rezultatul unei comparații nu e un număr, ci <mark>adevărat</mark> sau <mark>fals</mark>. <code>7 &gt; 3</code> e adevărat, <code>10 &lt; 10</code> e fals (10 nu e mai mic decât el însuși), dar <code>10 ≤ 10</code> e adevărat.</p>
+<p>Comparațiile se fac <strong>după</strong> calcule: la <code>2 + 3 &gt; 4</code> calculezi întâi 5, apoi compari: 5 &gt; 4, adevărat.</p>`,
+   exemplu:`${TT(['Comparația','Rezultat'],[['8 ≥ 5','adevărat'],['5 ≥ 5','adevărat'],['5 &gt; 5','fals'],['6 ≠ 6','fals'],['2 * 3 = 6','adevărat']])}`,
+   incearca:{t:'tf',q:'Comparația 10 &lt; 10 este adevărată.',ok:false,ajutor:'10 e mai mic decât 10?',why:'Fals. 10 nu e mai mic decât el însuși. Ar fi adevărat 10 ≤ 10.'},
+   inca:[
+    {t:'classify',q:'Adevărat sau fals?',cats:['Adevărat','Fals'],items:[['9 ≥ 9',0],['4 ≠ 5',0],['3 &gt; 8',1],['2 + 2 = 5',1]],why:'≥ acceptă egalitatea; 4 e diferit de 5; 3 nu e mai mare ca 8; 2 + 2 = 4, nu 5.'}
+   ]},
+  {t:'Operatorii logici: ȘI, SAU, NU',
+   text:`<p><strong>Operatorii logici</strong> leagă mai multe condiții:</p>
+<ul><li><mark>ȘI</mark> e adevărat doar dacă <strong>ambele</strong> părți sunt adevărate;</li>
+<li><mark>SAU</mark> e adevărat dacă <strong>cel puțin una</strong> e adevărată;</li>
+<li><mark>NU</mark> întoarce valoarea: adevărat devine fals și invers.</li></ul>
+<p>Operatorii logici se fac <strong>la urmă</strong>, după calcule și comparații.</p>
+${fig('scratch-operatori.webp',500,700,'Scratch, categoria Operatori: blocurile plus minus înmulțit împărțit încadrate ca aritmetici, blocurile mai mare mai mic egal ca relaționali, blocurile și sau nu ca logici, iar blocul mod ca restul împărțirii','Categoria <b>Operatori</b> din Scratch: aritmetici, relaționali, logici și <b>mod</b> (restul, adică <code>%</code>).')}`,
+   exemplu:`<p>nota = 8:</p>${TT(['Expresia','Pe rând','Rezultat'],[['nota ≥ 5 ȘI nota = 10','adevărat ȘI fals','fals'],['nota ≥ 5 SAU nota = 10','adevărat SAU fals','adevărat'],['NU (nota ≥ 5)','NU adevărat','fals']])}`,
+   altfel:`<p>Mama spune: „Mergi la film dacă ți-ai făcut temele <b>ȘI</b> ai strâns camera.” Trebuie amândouă. Dacă spune „<b>SAU</b>”, ajunge una dintre ele. Iar „<b>NU</b> plouă” e adevărat exact când „plouă” e fals.</p>`,
+   incearca:{t:'tf',q:'Expresia „7 &gt; 3 ȘI 2 &gt; 5” este adevărată.',ok:false,ajutor:'Evaluează fiecare parte. La ȘI trebuie ambele adevărate.',why:'Fals. 7 &gt; 3 e adevărat, dar 2 &gt; 5 e fals, iar la ȘI trebuie ambele adevărate.'},
+   inca:[
+    {t:'tf',q:'Expresia „7 &gt; 3 SAU 2 &gt; 5” este adevărată.',ok:true,why:'Adevărat. La SAU ajunge o parte adevărată: 7 &gt; 3.'},
+    {t:'choice',q:'x = 4. Cât este NU (x &gt; 10)?',o:['adevărat','fals','4','10'],ok:0,why:'x &gt; 10 e fals (4 nu e mai mare ca 10), iar NU îl face adevărat.'}
+   ]},
+  {t:'Strategia: evaluezi orice expresie',
+   text:`<p>Pentru orice expresie, lucrezi în ordinea asta:</p>
+<ol><li><strong>Înlocuiești</strong> fiecare variabilă cu valoarea ei.</li>
+<li>Calculezi <strong>parantezele</strong>.</li>
+<li>Faci <code>*</code> <code>/</code> <code>%</code>, apoi <code>+</code> <code>-</code>.</li>
+<li>Faci <strong>comparațiile</strong>: fiecare dă adevărat sau fals.</li>
+<li>La urmă, <strong>ȘI</strong>, <strong>SAU</strong>, <strong>NU</strong>.</li></ol>
+<p>Scrie fiecare etapă pe un rând nou, ca să nu pierzi nimic.</p>`,
+   exemplu:`<p>a = 17, b = 5. Evaluăm <code>a % b = 2 ȘI a &gt; 10</code>:</p>${A('17 % 5 = 2 ȘI 17 &gt; 10      (1. înlocuiesc)\n2 = 2 ȘI 17 &gt; 10           (3. calculez restul)\nadevărat ȘI adevărat       (4. compar)\nadevărat                   (5. ȘI)')}`,
+   incearca:{t:'choice',q:'Variabila nota are valoarea 8. Care expresie este adevărată?',o:['nota ≥ 5 SAU nota = 10','nota < 5','nota = 10 ȘI nota ≥ 5','NU (nota ≥ 5)'],ok:0,ajutor:'Înlocuiește nota cu 8 în fiecare variantă și compară.',why:'La SAU ajunge ca o parte să fie adevărată, iar 8 ≥ 5 e adevărat. La ȘI, partea „nota = 10” e falsă. NU schimbă adevărat în fals.'},
+   inca:[
+    {t:'choice',q:'n = 12. Cât este n % 2 = 0 ȘI n &gt; 10?',o:['adevărat','fals','0','12'],ok:0,why:'12 % 2 = 0, deci 0 = 0 e adevărat; 12 &gt; 10 e adevărat; adevărat ȘI adevărat = adevărat.'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Evaluează ca un calculator',
+  intro:`<p>Calculatorul alege două numere, <code>a</code> și <code>b</code>. <strong>Sarcina:</strong> calculează fiecare expresie cu strategia în 5 pași (înlocuiești, paranteze, <code>*</code> <code>/</code> <code>%</code>, <code>+</code> <code>-</code>, comparații, ȘI/SAU/NU). La rândurile care dau adevărat sau fals, scrie <b>adevărat</b> sau <b>fals</b>.</p>`,
+  q:'Completează valorile expresiilor.',
+  prog:['Început','Citește a, b','s ← a + b * 2','r ← a % b','c ← a > b ȘI r = 0','Afișează s - r','Sfârșit'],
+  date:[{a:17,b:5},{a:12,b:4},{a:9,b:2},{a:20,b:6}],
+  ajutor:'Rândul 3: întâi b * 2, apoi aduni a. Rândul 4: restul împărțirii lui a la b. Rândul 5: două comparații legate cu ȘI.',
+  why:'Ai aplicat ordinea operațiilor: înmulțirea înaintea adunării, comparațiile după calcule, ȘI la urmă.',
+  inca:[
+   {t:'urmarire',q:'Încă unul: paranteze sau nu? Compară e și f.',prog:['Început','Citește x','e ← (x + 3) * 2','f ← x + 3 * 2','g ← x % 3','Afișează e - f','Sfârșit'],date:[{x:4},{x:10},{x:7},{x:2}],ajutor:'e: întâi paranteza. f: întâi 3 * 2.',why:'Parantezele schimbă ordinea, deci și rezultatul.'},
+   {t:'urmarire',q:'Încă unul: SAU și NU. Scrie adevărat sau fals.',prog:['Început','Citește nota','p ← nota ≥ 5','z ← nota = 10 SAU nota < 3','q ← NU (nota ≥ 5)','Sfârșit'],date:[{nota:8},{nota:10},{nota:2},{nota:5}],ajutor:'La SAU ajunge o parte adevărată. NU întoarce valoarea.',why:'q e mereu opusul lui p.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Cât este 2 + 3 * 4?',o:['14','20','9','24'],ok:0,why:'Înmulțirea se face înaintea adunării: 3 * 4 = 12, apoi 2 + 12 = 14. Rezultatul 20 ar fi corect doar pentru (2 + 3) * 4.'},
+  {t:'choice',q:'Cât este 17 % 5?',o:['2','3','3,4','85'],ok:0,ajutor:'% dă restul, nu câtul.',why:'17 împărțit la 5 dă câtul 3 și restul 2, pentru că 5 * 3 = 15 și 17 - 15 = 2. Operatorul % dă restul, nu câtul.'},
+  {t:'classify',q:'Ce fel de operator este fiecare?',cats:['Aritmetic','Relațional','Logic'],items:[['+',0],['%',0],['≥',1],['≠',1],['ȘI',2],['SAU',2]],why:'Operatorii aritmetici calculează numere. Cei relaționali compară și dau adevărat sau fals. Cei logici leagă mai multe condiții.'},
+  {t:'match',q:'Leagă fiecare expresie de valoarea ei.',pairs:[['(2 + 3) * 4','20'],['10 - 4 / 2','8'],['9 % 2','1'],['6 ≠ 6','fals']],ajutor:'Parantezele întâi; împărțirea înaintea scăderii.',why:'Parantezele se fac primele. Împărțirea vine înaintea scăderii: 4 / 2 = 2, apoi 10 - 2 = 8. 9 împărțit la 2 are restul 1. 6 este egal cu 6, deci „6 ≠ 6” e fals.'},
+  {t:'tf',q:'Expresia „7 &gt; 3 ȘI 2 &gt; 5” este adevărată.',ok:false,why:'Fals. 7 &gt; 3 e adevărat, dar 2 &gt; 5 e fals. Cu ȘI, expresia e adevărată doar dacă ambele părți sunt adevărate.'},
+  {t:'choice',q:'Variabila nota are valoarea 8. Care expresie este adevărată?',o:['nota ≥ 5 SAU nota = 10','nota < 5','nota = 10 ȘI nota ≥ 5','NU (nota ≥ 5)'],ok:0,ajutor:'Înlocuiește nota cu 8 și evaluează fiecare variantă.',why:'La SAU ajunge ca o parte să fie adevărată, iar 8 ≥ 5 e adevărat. La ȘI, partea „nota = 10” e falsă. NU schimbă „nota ≥ 5”, care e adevărat, în fals.'}
+ ]},
+
+/* ================= 5. Structura secvențială (lecția 28) ================= */
+{t:'Structura secvențială',lectii:[28],continuturi:['Structura secvenţială (liniară)'],
+ obiectiv:'scrii un algoritm liniar în limbaj natural, îl urmărești pas cu pas într-un tabel și găsești greșelile de ordine și de calcul.',
+ pasi:[
+  {t:'Pașii, unul după altul',
+   text:`<p>În <mark>structura secvențială</mark> (liniară), pașii se execută <mark>unul după altul</mark>, în ordinea scrisă, de sus în jos.</p>
+<ul><li>fiecare pas se execută <strong>o singură dată</strong>;</li>
+<li><strong>niciun</strong> pas nu se sare;</li>
+<li>niciun pas nu se repetă.</li></ul>
+<p>Dacă un pas e inutil, nu îl sari: îl scoți din algoritm.</p>
+${fig('scratch-secventa.webp',760,333,'Scratch: scriptul ariei, încadrat și etichetat „unul după altul”; pe scenă lungime 6, lățime 4 și aria 24','În Scratch, blocurile lipite <b>unul după altul</b> se execută în ordine. Pentru 6 și 4, <b>aria</b> iese 24.')}`,
+   altfel:`<p>E ca o coadă la cantină: fiecare copil trece o dată, în ordinea în care stă. Nimeni nu e sărit și nimeni nu trece de două ori.</p>`,
+   incearca:{t:'tf',q:'În structura secvențială, un pas poate fi sărit dacă ți se pare inutil.',ok:false,ajutor:'Recitește regulile: fiecare pas…',why:'Fals. Fiecare pas se execută o dată, în ordinea scrisă. Un pas inutil se scoate din algoritm.'},
+   inca:[
+    {t:'choice',q:'Un algoritm liniar are 5 pași. De câte ori se execută pasul 3?',o:['o dată','de 3 ori','deloc','de 5 ori'],ok:0,why:'În secvență fiecare pas se execută exact o dată.'}
+   ]},
+  {t:'Limbajul natural: Început, Citește, Calculează, Afișează, Sfârșit',
+   text:`<p>Scriem algoritmul în <mark>limbaj natural</mark>, adică în cuvinte, cu pași numerotați, între <strong>Început</strong> și <strong>Sfârșit</strong>.</p>
+<p>Aproape orice algoritm liniar are aceeași formă, în trei părți:</p>
+<ol><li><strong>Citește</strong> datele de intrare;</li>
+<li><strong>Calculează</strong> ce trebuie, cu săgeata ←;</li>
+<li><strong>Afișează</strong> rezultatul.</li></ol>
+<p>Nu poți calcula fără date și nu poți afișa ceva ce nu ai calculat încă.</p>`,
+   exemplu:`${A('Început\n1. Citește lungimea și lățimea.\n2. Calculează aria ← lungime * lățime.\n3. Afișează aria.\nSfârșit')}`,
+   incearca:{t:'order',q:'Pune în ordine algoritmul care află aria unui dreptunghi.',items:['Început','Citește lungimea și lățimea','Calculează aria ← lungime * lățime','Afișează aria','Sfârșit'],ajutor:'Citește → Calculează → Afișează, între Început și Sfârșit.',why:'Nu poți calcula fără date și nu poți afișa un rezultat pe care încă nu l-ai calculat.'},
+   inca:[
+    {t:'order',q:'Pune în ordine algoritmul care află perimetrul unui pătrat.',items:['Început','Citește latura','Calculează P ← 4 * latura','Afișează P','Sfârșit'],why:'Aceeași formă: citești, calculezi, afișezi.'}
+   ]},
+  {t:'Urmărirea pas cu pas, în tabel',
+   text:`<p>Ca să verifici un algoritm, îl <mark>urmărești pas cu pas</mark>: îl execuți tu, ca un calculator, și scrii într-un tabel valoarea fiecărei variabile după fiecare pas.</p>
+<p>Regula de aur: când o variabilă primește o valoare nouă, <strong>valoarea veche se pierde</strong>. Folosești mereu valoarea de <strong>acum</strong>.</p>`,
+   exemplu:`${A('a ← 4\nb ← a * 3\na ← b - 2\nAfișează a')}${TT(['Pasul','Calcul','a','b'],[['1','4','4','–'],['2','4 * 3','4','12'],['3','12 - 2','10','12'],['4','se afișează 10','10','12']])}`,
+   altfel:`<p>Tabelul e ca jurnalul unui detectiv: după fiecare pas notezi ce s-a schimbat. La final citești din ultimul rând valorile finale.</p>`,
+   incearca:{t:'choice',q:`Urmărește pas cu pas. Ce se afișează?${A('a ← 4\nb ← a * 3\na ← b - 2\nAfișează a')}`,o:['10','4','12','2'],ok:0,ajutor:'Uită-te în tabelul din exemplu.',why:'a = 4. Apoi b = 12. Apoi a primește 12 - 2 = 10, iar 4 se pierde.'},
+   inca:[
+    {t:'choice',q:`Ce se afișează?${A('x ← 2\ny ← x + 5\nx ← y * 2\nAfișează x')}`,o:['14','7','4','2'],ok:0,why:'x = 2, y = 7, apoi x = 7 * 2 = 14.'}
+   ]},
+  {t:'Schimbul a două valori, cu aux',
+   text:`<p>Vrei ca <code>x</code> și <code>y</code> să-și schimbe valorile. Dacă scrii direct <code>x ← y</code>, valoarea veche a lui x se pierde!</p>
+<p>Soluția: o variabilă ajutătoare, <code>aux</code>, care păstrează valoarea lui x:</p>
+${A('aux ← x\nx ← y\ny ← aux')}
+<p><code>aux</code> e o dată de manevră: nu o citești și nu o afișezi.</p>
+${fig('scratch-urmarire.webp',760,333,'Scratch: schimbul valorilor lui x și y prin variabila aux; pe scenă x = 8, y = 5, aux = 5','În Scratch: <code>aux</code> păstrează valoarea veche a lui <code>x</code>, iar la final <b>x și y s-au schimbat</b>.')}`,
+   exemplu:`${TT(['Pasul','x','y','aux'],[['x ← 5','5','–','–'],['y ← 8','5','8','–'],['aux ← x','5','8','5'],['x ← y','8','8','5'],['y ← aux','8','5','5']])}`,
+   altfel:`<p>Ai suc de mere într-un pahar și suc de portocale în altul și vrei să le schimbi. Îți trebuie un <b>al treilea pahar, gol</b>: torni merele în el, portocalele în paharul mărului, apoi merele din paharul ajutător în paharul portocalelor.</p>`,
+   incearca:{t:'choice',q:`Urmărește pas cu pas. Ce valori au x și y la final?${A('x ← 5\ny ← 8\naux ← x\nx ← y\ny ← aux')}`,o:['x = 8, y = 5','x = 5, y = 8','x = 8, y = 8','x = 5, y = 5'],ok:0,ajutor:'Uită-te în tabelul din exemplu, pe ultimul rând.',why:'aux păstrează 5, x primește 8, y primește ce era în aux: 5.'},
+   inca:[
+    {t:'choice',q:`Ce valori au x și y la final, FĂRĂ aux?${A('x ← 5\ny ← 8\nx ← y\ny ← x')}`,o:['x = 8, y = 8','x = 8, y = 5','x = 5, y = 8','x = 5, y = 5'],ok:0,why:'x ← y face x = 8 și pierde 5. Apoi y ← x dă tot 8. De aceea e nevoie de aux.'}
+   ]},
+  {t:'Strategia: găsești greșelile unui algoritm',
+   text:`<p>Când verifici un algoritm scris de altcineva, treci prin patru întrebări:</p>
+<ol><li>Fiecare dată e <strong>citită înainte</strong> să fie folosită?</li>
+<li>Fiecare rezultat e <strong>calculat înainte</strong> să fie afișat?</li>
+<li><strong>Parantezele</strong>: se calculează ce ai vrut? <code>nota1 + nota2 / 2</code> împarte doar nota2!</li>
+<li><strong>Proba cu numere</strong>: urmărește-l în tabel cu date mici și verifică rezultatul de mână.</li></ol>`,
+   exemplu:`<p>Media notelor 6 și 8 trebuie să fie 7. Proba cu numere:</p>${TT(['Expresia','Calcul','Rezultat'],[['nota1 + nota2 / 2','6 + 8 / 2 = 6 + 4','10 (greșit!)'],['(nota1 + nota2) / 2','14 / 2','7 (corect)']])}`,
+   incearca:{t:'hunt',cod:true,q:'Algoritmul lui Mihai pentru media a două note are 2 greșeli. Apasă pe ele.',src:`Început
+1. Citește nota1 și nota2.
+2. [[Afișează media.|media nu e încă calculată: afișarea vine după calcul]]
+3. Calculează media ← [[nota1 + nota2 / 2|fără paranteze se împarte doar nota2 la 2; corect: (nota1 + nota2) / 2]]
+Sfârșit`,corect:`Început
+1. Citește nota1 și nota2.
+2. Calculează media ← (nota1 + nota2) / 2
+3. Afișează media.
+Sfârșit`,ajutor:'Întrebarea 2: ce se afișează înainte să fie calculat? Întrebarea 3: parantezele.',indiciu:'Uită-te la ordinea pașilor și la paranteze.',why:'Un rezultat se afișează doar după calcul, iar suma se pune în paranteze.'},
+   inca:[
+    {t:'hunt',cod:true,q:'Aici e <b>o</b> greșeală. Apasă pe ea.',src:`Început
+1. [[Calculează aria ← lungime * lățime|lungimea și lățimea nu au fost încă citite: citirea vine întâi]]
+2. Citește lungimea și lățimea.
+3. Afișează aria.
+Sfârșit`,corect:`Început
+1. Citește lungimea și lățimea.
+2. Calculează aria ← lungime * lățime
+3. Afișează aria.
+Sfârșit`,ajutor:'Întrebarea 1: e vreo dată folosită înainte să fie citită?',indiciu:'Ce se folosește înainte de a fi citit?',why:'Nu poți calcula cu date pe care încă nu le ai.'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Urmărește schimbul',
+  intro:`<p>Calculatorul îți dă două valori, <code>x</code> și <code>y</code>. <strong>Sarcina:</strong> execută algoritmul de schimb rând cu rând și completează tabelul. Ține minte regula de aur: la fiecare rând folosești valorile de <b>acum</b>, iar cea veche se pierde.</p>`,
+  q:'Completează tabelul de urmărire.',
+  prog:['Început','Citește x, y','aux ← x','x ← y','y ← aux','Afișează x','Afișează y','Sfârșit'],
+  date:[{x:5,y:8},{x:3,y:9},{x:12,y:4},{x:1,y:6}],
+  ajutor:'aux primește x-ul citit. Apoi x primește y. Apoi y primește ce e în aux.',
+  why:'Valorile s-au schimbat între ele, iar aux a păstrat valoarea care altfel s-ar fi pierdut.',
+  inca:[
+   {t:'urmarire',q:'Încă unul: media a două note, cu paranteze.',prog:['Început','Citește nota1, nota2','s ← nota1 + nota2','media ← s / 2','Afișează media','Sfârșit'],date:[{nota1:6,nota2:8},{nota1:4,nota2:7},{nota1:9,nota2:10},{nota1:5,nota2:5}],ajutor:'s e suma, media e jumătate din s. Poate ieși cu virgulă: 5,5.',why:'Cu suma calculată separat, nu mai ai probleme cu parantezele.'},
+   {t:'urmarire',q:'Încă unul: atenție, a se schimbă pe drum.',prog:['Început','Citește a','b ← a * 3','a ← b - 2','Afișează a','Sfârșit'],date:[{a:4},{a:2},{a:5},{a:10}],ajutor:'La rândul 4 folosești b de la rândul 3.',why:'Valoarea citită a lui a se pierde la rândul 4.'}
+  ]},
+ qs:[
+  {t:'tf',q:'În structura secvențială, fiecare pas se execută o singură dată, în ordinea scrisă.',ok:true,why:'Adevărat. Niciun pas nu se sare și niciunul nu se repetă.'},
+  {t:'order',q:'Pune în ordine algoritmul care află aria unui dreptunghi.',items:['Început','Citește lungimea și lățimea','Calculează aria ← lungime * lățime','Afișează aria','Sfârșit'],why:'Nu poți calcula fără date și nu poți afișa un rezultat pe care încă nu l-ai calculat. Început și Sfârșit închid algoritmul.'},
+  {t:'choice',q:`Urmărește pas cu pas. Ce se afișează?${A('a ← 3\nb ← a + 4\na ← b * 2\nAfișează a')}`,o:['14','7','3','6'],ok:0,ajutor:'Fă tabelul: a, apoi b, apoi noul a.',why:'a = 3, b = 3 + 4 = 7, apoi a = 7 * 2 = 14. Valoarea veche, 3, se pierde.'},
+  {t:'choice',q:`Urmărește pas cu pas. Ce valori au x și y la final?${A('x ← 2\ny ← 9\naux ← x\nx ← y\ny ← aux')}`,o:['x = 9, y = 2','x = 2, y = 9','x = 9, y = 9','x = 2, y = 2'],ok:0,why:'aux păstrează 2. x primește 9. y primește ce era în aux, adică 2. Valorile s-au schimbat între ele.'},
+  {t:'hunt',cod:true,q:'Algoritmul Ioanei pentru perimetrul unui dreptunghi are 2 greșeli. Apasă pe ele.',src:`Început
+1. [[Afișează P.|P nu e încă calculat: afișarea vine la final]]
+2. Citește L și l.
+3. Calculează P ← [[2 * L + l|fără paranteze se dublează doar L; corect: 2 * (L + l)]]
+Sfârșit`,corect:`Început
+1. Citește L și l.
+2. Calculează P ← 2 * (L + l)
+3. Afișează P.
+Sfârșit`,ajutor:'Folosește strategia: ce se afișează înainte de calcul? Ce fac parantezele?',indiciu:'Uită-te la ordinea pașilor și la paranteze.',why:'Un rezultat se afișează doar după ce a fost calculat, iar suma L + l trebuie pusă în paranteze ca să fie dublată toată.'}
+ ]},
+
+/* ================= 6. Structura alternativă (lecția 29) ================= */
+{t:'Structura alternativă',lectii:[29],continuturi:['Structura alternativă (decizională)Medii grafice interactive - elemente de interfață specifice mediului grafic interactiv'],
+ obiectiv:'scrii și urmărești un algoritm cu decizie, alegi semnul corect pentru o condiție și recunoști în Scratch blocurile și zonele care o construiesc.',
+ pasi:[
+  {t:'Când algoritmul trebuie să aleagă',
+   text:`<p>Uneori algoritmul trebuie să <mark>aleagă</mark> ce face, după date. Pentru asta folosim <mark>structura alternativă</mark> (decizia):</p>
 ${A('Dacă nota ≥ 5 atunci\n    afișează „Promovat”\naltfel\n    afișează „Nepromovat”')}
-<p>Întâi se verifică <mark>condiția</mark>. Dacă e adevărată, se execută ramura <strong>atunci</strong>. Dacă e falsă, se execută ramura <strong>altfel</strong>.</p>
-<p>Se execută <mark>o singură ramură</mark>, niciodată amândouă. Ramura <em>altfel</em> poate lipsi: atunci, când condiția e falsă, nu se face nimic și algoritmul merge mai departe.</p>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-impar.webp" target="_blank"><img src="../algoritmi-v/img/scratch-impar.webp" alt="Scratch: n este 7, condiția n mod 2 = 0 încadrată, blocul spune impar încadrat ca ramura altfel, iar pisica spune impar" width="760" height="333" loading="lazy"></a>
-<figcaption>Același algoritm în Scratch, pentru <b>n = 7</b>: <b>condiția</b> <code>n mod 2 = 0</code> e falsă, deci se execută <b>ramura altfel</b>. Pisica spune „impar”.</figcaption></figure>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-par.webp" target="_blank"><img src="../algoritmi-v/img/scratch-par.webp" alt="Scratch: n este 8, blocul spune par încadrat ca ramura atunci, iar pisica spune par" width="760" height="333" loading="lazy"></a>
-<figcaption>Aceleași blocuri, pentru <b>n = 8</b>: condiția e adevărată, deci se execută <b>ramura atunci</b>. Se schimbă doar datele, nu și pașii.</figcaption></figure>`,
-qs:[
- {t:'tf',q:'Într-o structură alternativă se execută ambele ramuri, una după alta.',ok:false,why:'Fals. Condiția alege: dacă e adevărată merge pe „atunci”, dacă e falsă pe „altfel”. Niciodată pe amândouă.'},
- {t:'choice',q:`Ce se afișează pentru n = 7?${A('Citește n\nDacă n % 2 = 0 atunci\n    afișează „par”\naltfel\n    afișează „impar”')}`,o:['impar','par','7','nimic'],ok:0,why:'7 % 2 = 1, deci condiția „1 = 0” e falsă și se execută ramura altfel. Un număr cu restul 0 la împărțirea cu 2 e par.'},
- {t:'choice',q:`Ce se afișează pentru a = 4 și b = 9?${A('Citește a, b\nDacă a &gt; b atunci\n    afișează a\naltfel\n    afișează b')}`,o:['9','4','13','4 și 9'],ok:0,why:'4 &gt; 9 e fals, deci se afișează b, adică 9. Algoritmul afișează mereu numărul mai mare dintre cele două.'},
- {t:'classify',q:'Algoritmul: „Dacă temperatura &lt; 10 atunci afișează «Ia geaca» altfel afișează «Nu e nevoie de geacă»”. Ce afișează pentru fiecare temperatură?',cats:['Ia geaca','Nu e nevoie de geacă'],items:[['3 grade',0],['9 grade',0],['-2 grade',0],['10 grade',1],['18 grade',1]],why:'Condiția e „mai mic decât 10”. La 10 grade, „10 &lt; 10” e fals, deci se merge pe ramura altfel. Și -2 e mai mic decât 10.'},
- {t:'choice',q:'Copiii sub 14 ani primesc bilet redus. Ce condiție scrii?',o:['vârsta < 14','vârsta > 14','vârsta ≤ 14','vârsta = 14'],ok:0,why:'„Sub 14 ani” înseamnă mai puțin de 14, fără 14. Cu „≤ 14” ar primi reducere și copiii care au împlinit 14 ani.'}
-]},
-{t:'Casa de bilete de la grădina zoologică',final:true,lectii:[26,27,28,29],continuturi:['Clasificarea datelor cu care lucrează algoritmii în funcţie de rolul acestora (de intrare, de ieșire, de manevră)','Constante și variabile','Expresii (operatori aritmetici, relaționali, logici; evaluarea expresiilor)','Structura secvenţială (liniară)','Structura alternativă (decizională)Medii grafice interactive - elemente de interfață specifice mediului grafic interactiv'],text:`
-<p><strong>Misiunea finală.</strong> Casiera de la grădina zoologică vrea un algoritm care să calculeze cât plătește o familie.</p>
-${A('Început\n1. Citește vârsta.\n2. Dacă vârsta &lt; 14 atunci preț ← 10\n   altfel preț ← 25\n3. Citește numărul de bilete n.\n4. Calculează total ← preț * n.\n5. Afișează total.\nSfârșit')}
-<p>Prețurile 10 și 25 de lei sunt fixe. Algoritmul are și pași în secvență, și o decizie.</p>
-<p>Urmărește-l pas cu pas, ca un calculator, și găsește greșelile colegilor.</p>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-bilete-12.webp" target="_blank"><img src="../algoritmi-v/img/scratch-bilete-12.webp" alt="Scratch: algoritmul casei de bilete cu vârsta 12; condiția vârsta &lt; 14 încadrată, blocul setează preț la 10 încadrat, iar pe scenă total 30" width="760" height="384" loading="lazy"></a>
-<figcaption>Algoritmul casierei, rulat pentru <b>vârsta 12</b> și 3 bilete: condiția <code>vârsta &lt; 14</code> e adevărată, deci prețul e 10, iar <b>totalul</b> iese 30.</figcaption></figure>
-<figure class="captura"><a href="../algoritmi-v/img/scratch-bilete-14.webp" target="_blank"><img src="../algoritmi-v/img/scratch-bilete-14.webp" alt="Scratch: același algoritm cu vârsta 14; blocul setează preț la 25 încadrat, iar pe scenă total 50" width="760" height="384" loading="lazy"></a>
-<figcaption>Aceiași pași, pentru <b>vârsta 14</b> și 2 bilete: condiția e falsă, deci se merge pe ramura <em>altfel</em>, prețul e 25, iar totalul 50.</figcaption></figure>`,
-qs:[
- {t:'classify',q:'Ce rol are fiecare dată din algoritmul casierei?',cats:['De intrare','De ieșire','De manevră','Constantă'],items:[['vârsta',0],['numărul de bilete n',0],['total',1],['preț, stabilit în pasul 2',2],['10 și 25 (prețurile fixe)',3]],why:'Vârsta și n se citesc. Totalul se afișează. Prețul e o valoare ajutătoare, aleasă de decizie și folosită la calcul. 10 și 25 nu se schimbă.'},
- {t:'choice',q:'Ce se afișează pentru vârsta 12 și n = 3?',o:['30','75','36','10'],ok:0,why:'12 &lt; 14 e adevărat, deci preț = 10. Total = 10 * 3 = 30.'},
- {t:'choice',q:'Ce se afișează pentru vârsta 14 și n = 2?',o:['50','20','28','25'],ok:0,why:'14 &lt; 14 e fals, deci preț = 25. Total = 25 * 2 = 50. La 14 ani nu se mai primește bilet redus.'},
- {t:'tf',q:'Algoritmul are proprietatea de generalitate: merge pentru orice vârstă și orice număr de bilete.',ok:true,why:'Adevărat. Pașii nu sunt legați de o anumită familie: schimbi vârsta sau numărul de bilete și obții alt total, fără să schimbi algoritmul.'},
- {t:'hunt',q:'Algoritmul scris de Radu are 2 greșeli. Apasă pe ele.',src:'1. Citește vârsta. 2. Dacă vârsta [[> 14|copiii sub 14 ani au vârsta mai mică: condiția este vârsta < 14]] atunci preț ← 10 altfel preț ← 25. 3. Citește n. 4. Calculează total ← preț [[+ n|totalul este prețul înmulțit cu numărul de bilete: preț * n]]. 5. Afișează total.',indiciu:'Verifică semnul comparației și operația din calcul.',why:'Cu „&gt; 14”, copiii ar plăti mai mult decât adulții. Cu „+”, trei bilete de 10 lei ar costa 13 lei în loc de 30.'}
-]}
+<p>Întâi se verifică <mark>condiția</mark> (aici <strong>nota ≥ 5</strong>). Dacă e <strong>adevărată</strong>, se execută ramura <strong>atunci</strong>. Dacă e <strong>falsă</strong>, se execută ramura <strong>altfel</strong>.</p>
+<p>Rândurile unei ramuri se scriu mai la dreapta, ca să se vadă ale cui sunt.</p>`,
+   exemplu:`${TT(['nota','nota ≥ 5','Se afișează'],[['9','adevărat','Promovat'],['5','adevărat','Promovat'],['4','fals','Nepromovat']])}`,
+   altfel:`<p>E ca la o răscruce: „Dacă plouă, iau umbrela, altfel iau șapca.” Te uiți pe geam (condiția) și faci <b>un singur</b> lucru, în funcție de ce vezi.</p>`,
+   incearca:{t:'choice',q:`Ce se afișează pentru a = 4 și b = 9?${A('Citește a, b\nDacă a &gt; b atunci\n    afișează a\naltfel\n    afișează b')}`,o:['9','4','13','4 și 9'],ok:0,ajutor:'Evaluează condiția: 4 &gt; 9?',why:'4 &gt; 9 e fals, deci se afișează b, adică 9.'},
+   inca:[
+    {t:'choice',q:'Pentru nota = 3, ce afișează algoritmul „Dacă nota ≥ 5 atunci Promovat, altfel Nepromovat”?',o:['Nepromovat','Promovat','Promovat și Nepromovat','nimic'],ok:0,why:'3 ≥ 5 e fals, deci ramura altfel.'}
+   ]},
+  {t:'O singură ramură se execută',
+   text:`<p>Se execută <mark>o singură ramură</mark>, niciodată amândouă. Condiția alege.</p>
+<p>În pozele din Scratch, același algoritm e rulat pentru două numere. Condiția <code>n mod 2 = 0</code> întreabă: „n se împarte exact la 2?”. Dacă da, n e <strong>par</strong>.</p>
+${fig('scratch-impar.webp',760,333,'Scratch: n este 7, condiția n mod 2 = 0 încadrată, blocul spune impar încadrat ca ramura altfel, iar pisica spune impar','Pentru <b>n = 7</b>: condiția e falsă, deci se execută <b>ramura altfel</b>. Pisica spune „impar”.')}`,
+   exemplu:`${fig('scratch-par.webp',760,333,'Scratch: n este 8, blocul spune par încadrat ca ramura atunci, iar pisica spune par','Pentru <b>n = 8</b>: condiția e adevărată, deci se execută <b>ramura atunci</b>.')}<p>Se schimbă doar datele, nu și pașii. De fiecare dată, <strong>o singură</strong> ramură.</p>`,
+   incearca:{t:'tf',q:'Într-o structură alternativă se execută ambele ramuri, una după alta.',ok:false,ajutor:'Uită-te la cele două poze: câte mesaje spune pisica?',why:'Fals. Condiția alege o singură ramură: atunci sau altfel.'},
+   inca:[
+    {t:'choice',q:`Ce se afișează pentru n = 7?${A('Citește n\nDacă n % 2 = 0 atunci\n    afișează „par”\naltfel\n    afișează „impar”')}`,o:['impar','par','7','nimic'],ok:0,why:'7 % 2 = 1, deci 1 = 0 e fals: ramura altfel.'}
+   ]},
+  {t:'Ramura altfel poate lipsi',
+   text:`<p>Uneori nu ai nimic de făcut când condiția e falsă. Atunci ramura <strong>altfel</strong> lipsește:</p>
+${A('Citește temperatura\nDacă temperatura &lt; 10 atunci\n    afișează „Ia geaca”\nAfișează „Drum bun!”')}
+<p>Dacă condiția e falsă, nu se face nimic din ramură, iar algoritmul merge <strong>mai departe</strong>, la pasul de după decizie.</p>`,
+   exemplu:`${TT(['temperatura','temperatura &lt; 10','Se afișează'],[['3','adevărat','Ia geaca, apoi Drum bun!'],['18','fals','doar Drum bun!']])}`,
+   incearca:{t:'choice',q:'Pentru temperatura 18, ce afișează algoritmul de mai sus?',o:['doar „Drum bun!”','„Ia geaca” și „Drum bun!”','doar „Ia geaca”','nimic'],ok:0,ajutor:'18 &lt; 10? Dacă nu, sari ramura și mergi mai departe.',why:'18 &lt; 10 e fals, deci ramura nu se execută, dar pasul de după decizie da.'},
+   inca:[
+    {t:'tf',q:'Dacă ramura altfel lipsește și condiția e falsă, algoritmul se oprește.',ok:false,why:'Fals. Nu se face nimic din ramură, dar algoritmul continuă cu pasul următor.'}
+   ]},
+  {t:'Strategia: scrii condiția corect',
+   text:`<p>Cea mai des întâlnită greșeală e semnul greșit în condiție. Lucrează așa:</p>
+<ol><li>Găsește în cerință <strong>pragul</strong> (numărul de care depinde decizia).</li>
+<li>Traduce cuvintele în semn: <strong>sub / mai mic decât</strong> → <code>&lt;</code>; <strong>peste / mai mare decât</strong> → <code>&gt;</code>; <strong>cel puțin</strong> → <code>≥</code>; <strong>cel mult</strong> → <code>≤</code>.</li>
+<li><strong>Testează pragul</strong>: ce se întâmplă exact la prag? Și cu un număr de fiecare parte.</li></ol>`,
+   exemplu:`<p>„Copiii sub 14 ani primesc bilet redus.” Pragul: 14. „Sub” → <code>vârsta &lt; 14</code>.</p>${TT(['vârsta','vârsta &lt; 14','Redus?'],[['13','adevărat','da'],['14','fals','nu (a împlinit 14)'],['15','fals','nu']])}`,
+   incearca:{t:'choice',q:'Copiii sub 14 ani primesc bilet redus. Ce condiție scrii?',o:['vârsta < 14','vârsta > 14','vârsta ≤ 14','vârsta = 14'],ok:0,ajutor:'„Sub” → ce semn? Testează vârsta 14.',why:'„Sub 14 ani” înseamnă mai puțin de 14, fără 14. Cu „≤ 14” ar primi reducere și cei de 14 ani.'},
+   inca:[
+    {t:'choice',q:'Promovezi dacă media este cel puțin 5. Ce condiție scrii?',o:['media ≥ 5','media > 5','media < 5','media ≤ 5'],ok:0,why:'„Cel puțin 5” înseamnă 5 sau mai mult: ≥. Cu > 5, media 5 n-ar promova.'},
+    {t:'classify',q:'Algoritmul: „Dacă temperatura &lt; 10 atunci «Ia geaca» altfel «Nu e nevoie de geacă»”. Ce afișează?',cats:['Ia geaca','Nu e nevoie de geacă'],items:[['9 grade',0],['-2 grade',0],['10 grade',1],['18 grade',1]],why:'La pragul 10, „10 &lt; 10” e fals. Și -2 e mai mic decât 10.'}
+   ]},
+  {t:'Decizia în Scratch: unde găsești blocurile',
+   text:`<p>Scratch este un <mark>mediu grafic interactiv</mark>: construiești algoritmul trăgând blocuri cu mouse-ul. Fereastra are trei zone:</p>
+<ol><li>în stânga, <strong>categoriile de blocuri</strong>, pe culori: Mișcare, Aspect, Control, Operatori, Variabile și altele;</li>
+<li>la mijloc, <strong>zona de script</strong>, unde lipești blocurile;</li>
+<li>în dreapta, <strong>scena</strong>, cu steagul verde (pornește) și semnul roșu (oprește).</li></ol>
+<p>Decizia e blocul <strong>dacă … atunci … altfel</strong>, din categoria <strong>Control</strong>. Condiția (hexagonul verde) vine din <strong>Operatori</strong>.</p>`,
+   exemplu:`${fig('scratch-variabile.webp',500,400,'Scratch: coloana de categorii din stânga (Mișcare, Aspect, Sunet, Evenimente, Control, Detectare, Operatori, Variabile) și blocurile categoriei Variabile','Coloana de <b>categorii</b>, din stânga ferestrei.')}<p>Atenție: în Scratch există doar <code>&gt;</code>, <code>&lt;</code> și <code>=</code>. Pentru „cel puțin 5” (<code>≥</code>) folosești <strong>NU</strong>: <code>NU (media &lt; 5)</code> înseamnă același lucru ca <code>media ≥ 5</code>.</p>`,
+   incearca:{t:'match',q:'Leagă fiecare lucru de locul lui în Scratch.',pairs:[['blocul dacă … atunci … altfel','categoria Control'],['blocul mod și comparațiile','categoria Operatori'],['Creează o variabilă','categoria Variabile'],['pornirea programului','steagul verde']],ajutor:'Recitește lista de mai sus: decizia în Control, condiția în Operatori.',why:'Fiecare categorie are culoarea ei; decizia e în Control, condițiile în Operatori, variabilele în Variabile.'},
+   inca:[
+    {t:'choice',q:'În Scratch nu există blocul ≥. Cum scrii condiția „nota ≥ 5”?',o:['NU (nota < 5)','nota > 5','nota < 5','nota = 5'],ok:0,why:'„Nu e mai mic decât 5” înseamnă „5 sau mai mult”. nota > 5 ar scăpa exact nota 5.'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Par sau impar?',
+  intro:`<p>Calculatorul alege un număr <code>n</code>. <strong>Sarcina:</strong> execută algoritmul: evaluează condiția (adevărat sau fals), apoi completează <b>doar</b> ramura care se execută. Căsuța ramurii care nu se execută rămâne <b>goală</b>.</p>`,
+  q:'Completează tabelul de urmărire.',
+  prog:['Început','Citește n','Dacă n % 2 = 0 atunci','    Afișează „par”','altfel','    Afișează „impar”','Sfârșit'],
+  date:[{n:7},{n:8},{n:15},{n:20},{n:0}],
+  ajutor:'Calculează n % 2: dacă e 0, condiția e adevărată și se afișează „par”; altfel se afișează „impar”. Cealaltă căsuță rămâne goală.',
+  why:'O singură ramură se execută; cealaltă rămâne goală în tabel.',
+  inca:[
+   {t:'urmarire',q:'Încă unul: cel mai mare dintre două numere.',prog:['Început','Citește a, b','Dacă a > b atunci','    max ← a','altfel','    max ← b','Afișează max','Sfârșit'],date:[{a:4,b:9},{a:12,b:5},{a:6,b:6},{a:3,b:1}],ajutor:'Dacă a > b e adevărat, max primește a; altfel max primește b. La a = b, a > b e fals.',why:'Algoritmul afișează mereu numărul mai mare; la numere egale merge pe altfel, dar rezultatul e același.'},
+   {t:'urmarire',q:'Încă unul: testează pragul! Prețul biletului.',prog:['Început','Citește vârsta','Dacă vârsta < 14 atunci','    preț ← 10','altfel','    preț ← 25','Afișează preț','Sfârșit'],date:[{'vârsta':14},{'vârsta':13},{'vârsta':8},{'vârsta':30}],ajutor:'La 14: 14 < 14 e fals.',why:'Pragul 14 nu e „sub 14”, deci se merge pe altfel.'},
+   {t:'urmarire',q:'Încă unul: fără ramura altfel.',prog:['Început','Citește temperatura','Dacă temperatura < 10 atunci','    Afișează „Ia geaca”','Afișează „Drum bun!”','Sfârșit'],date:[{temperatura:3},{temperatura:18},{temperatura:10},{temperatura:-2}],ajutor:'Dacă condiția e falsă, căsuța ramurii rămâne goală, dar „Drum bun!” se afișează mereu.',why:'Pasul de după decizie se execută oricum.'}
+  ]},
+ qs:[
+  {t:'tf',q:'Într-o structură alternativă se execută ambele ramuri, una după alta.',ok:false,why:'Fals. Condiția alege: dacă e adevărată merge pe „atunci”, dacă e falsă pe „altfel”. Niciodată pe amândouă.'},
+  {t:'choice',q:`Ce se afișează pentru n = 9?${A('Citește n\nDacă n % 2 = 0 atunci\n    afișează „par”\naltfel\n    afișează „impar”')}`,o:['impar','par','9','nimic'],ok:0,ajutor:'Cât este 9 % 2?',why:'9 % 2 = 1, deci condiția „1 = 0” e falsă și se execută ramura altfel. Un număr cu restul 0 la împărțirea cu 2 e par.'},
+  {t:'choice',q:`Ce se afișează pentru a = 11 și b = 6?${A('Citește a, b\nDacă a &gt; b atunci\n    afișează a\naltfel\n    afișează b')}`,o:['11','6','17','11 și 6'],ok:0,why:'11 &gt; 6 e adevărat, deci se afișează a, adică 11. Algoritmul afișează mereu numărul mai mare dintre cele două.'},
+  {t:'classify',q:'Algoritmul: „Dacă temperatura &lt; 10 atunci afișează «Ia geaca» altfel afișează «Nu e nevoie de geacă»”. Ce afișează pentru fiecare temperatură?',cats:['Ia geaca','Nu e nevoie de geacă'],items:[['3 grade',0],['9 grade',0],['-2 grade',0],['10 grade',1],['18 grade',1]],ajutor:'Testează pragul: 10 &lt; 10?',why:'Condiția e „mai mic decât 10”. La 10 grade, „10 &lt; 10” e fals, deci se merge pe ramura altfel. Și -2 e mai mic decât 10.'},
+  {t:'choice',q:'Copiii sub 14 ani primesc bilet redus. Ce condiție scrii?',o:['vârsta < 14','vârsta > 14','vârsta ≤ 14','vârsta = 14'],ok:0,why:'„Sub 14 ani” înseamnă mai puțin de 14, fără 14. Cu „≤ 14” ar primi reducere și copiii care au împlinit 14 ani.'},
+  {t:'choice',q:'În Scratch, din ce categorie iei blocul „dacă … atunci … altfel”?',o:['Control','Operatori','Variabile','Mișcare'],ok:0,why:'Decizia e un bloc de control al pașilor, deci stă în Control. Din Operatori iei doar condiția.'}
+ ]},
+
+/* ================= 7. Final: Casa de bilete (lecțiile 26-29) ================= */
+{t:'Casa de bilete de la grădina zoologică',final:true,lectii:[26,27,28,29],continuturi:['Clasificarea datelor cu care lucrează algoritmii în funcţie de rolul acestora (de intrare, de ieșire, de manevră)','Constante și variabile','Expresii (operatori aritmetici, relaționali, logici; evaluarea expresiilor)','Structura secvenţială (liniară)','Structura alternativă (decizională)Medii grafice interactive - elemente de interfață specifice mediului grafic interactiv'],
+ obiectiv:'pui laolaltă tot ce ai învățat: analizezi o problemă reală, înțelegi algoritmul care o rezolvă și îl testezi ca un calculator, inclusiv la prag.',
+ pasi:[
+  {t:'Problema casierei: întâi datele',
+   text:`<p><strong>Misiunea finală.</strong> Casiera de la grădina zoologică vrea un algoritm care să calculeze cât plătește o familie. Copiii sub 14 ani plătesc 10 lei biletul, ceilalți 25 de lei.</p>
+<p>Înainte de pași, afli <strong>datele</strong>, cu patru întrebări:</p>
+<ol><li>Ce primesc la început? → <strong>de intrare</strong>: vârsta și numărul de bilete <code>n</code>;</li>
+<li>Ce trebuie să dau la final? → <strong>de ieșire</strong>: <code>total</code>;</li>
+<li>Ce calculez pe drum? → <strong>de manevră</strong>: <code>preț</code>;</li>
+<li>Ce nu se schimbă? → <strong>constante</strong>: 10 și 25.</li></ol>`,
+   exemplu:`${TT(['Întrebarea','Răspunsul','Rolul'],[['Ce primesc?','vârsta, n','de intrare'],['Ce dau la final?','total','de ieșire'],['Ce calculez pe drum?','preț','de manevră'],['Ce nu se schimbă?','10, 25','constante']])}`,
+   incearca:{t:'classify',q:'Ce rol are fiecare dată din algoritmul casierei?',cats:['De intrare','De ieșire','De manevră','Constantă'],items:[['vârsta',0],['numărul de bilete n',0],['total',1],['preț, ales de decizie',2],['10 și 25 (prețurile fixe)',3]],ajutor:'Folosește cele patru întrebări din pas.',why:'Vârsta și n se citesc. Totalul se afișează. Prețul e ajutător. 10 și 25 nu se schimbă.'},
+   inca:[
+    {t:'choice',q:'Care dată NU se citește și NU se afișează?',o:['preț','vârsta','n','total'],ok:0,why:'Prețul e calculat pe drum de decizie: e o dată de manevră.'}
+   ]},
+  {t:'Algoritmul: secvență și decizie',
+   text:`<p>Algoritmul pune laolaltă tot ce știi: pași în <strong>secvență</strong> și o <strong>decizie</strong>.</p>
+${A('Început\n1. Citește vârsta.\n2. Dacă vârsta &lt; 14 atunci\n       preț ← 10\n   altfel\n       preț ← 25\n3. Citește numărul de bilete n.\n4. Calculează total ← preț * n.\n5. Afișează total.\nSfârșit')}
+${fig('scratch-bilete-12.webp',760,384,'Scratch: algoritmul casei de bilete cu vârsta 12; condiția vârsta &lt; 14 încadrată, blocul setează preț la 10 încadrat, iar pe scenă total 30','În Scratch, pentru <b>vârsta 12</b> și 3 bilete: condiția e adevărată, prețul e 10, <b>totalul</b> e 30.')}`,
+   exemplu:`<p>Urmărit pas cu pas pentru vârsta 12 și 3 bilete:</p>${TT(['Pasul','Ce se întâmplă'],[['1','vârsta = 12'],['2','12 &lt; 14 e adevărat → preț = 10 (altfel nu se execută)'],['3','n = 3'],['4','total = 10 * 3 = 30'],['5','se afișează 30']])}`,
+   incearca:{t:'order',q:'Pune în ordine pașii algoritmului casierei.',items:['Citește vârsta și numărul de bilete n','Alege prețul: 10 dacă vârsta < 14, altfel 25','Calculează total ← preț * n','Afișează total'],ajutor:'Prețul se poate alege doar după ce știi vârsta; totalul are nevoie de preț; afișarea vine ultima.',why:'Decizia are nevoie de vârstă, calculul are nevoie de preț și de n, afișarea vine la final.'},
+   inca:[
+    {t:'choice',q:'Ce se afișează pentru vârsta 12 și n = 3?',o:['30','75','36','10'],ok:0,why:'12 &lt; 14 e adevărat, deci preț = 10. Total = 10 * 3 = 30.'}
+   ]},
+  {t:'Testează-l la prag',
+   text:`<p>Un algoritm cu decizie se testează <strong>de fiecare parte a pragului</strong> și <strong>exact la prag</strong>. Pentru casieră: o vârstă sub 14, vârsta 14 și o vârstă peste 14.</p>
+<p>La 14 ani: <code>14 &lt; 14</code> e fals, deci se merge pe altfel. Copilul care a împlinit 14 ani plătește 25 de lei.</p>
+${fig('scratch-bilete-14.webp',760,384,'Scratch: același algoritm cu vârsta 14; blocul setează preț la 25 încadrat, iar pe scenă total 50','Pentru <b>vârsta 14</b> și 2 bilete: condiția e falsă, prețul e 25, totalul 50.')}`,
+   exemplu:`${TT(['vârsta','n','vârsta &lt; 14','preț','total'],[['12','3','adevărat','10','30'],['14','2','fals','25','50'],['30','1','fals','25','25']])}`,
+   incearca:{t:'choice',q:'Ce se afișează pentru vârsta 14 și n = 2?',o:['50','20','28','25'],ok:0,ajutor:'14 &lt; 14? Uită-te în tabel.',why:'14 &lt; 14 e fals, deci preț = 25. Total = 25 * 2 = 50.'},
+   inca:[
+    {t:'tf',q:'Algoritmul are proprietatea de generalitate: merge pentru orice vârstă și orice număr de bilete.',ok:true,why:'Adevărat. Schimbi vârsta sau numărul de bilete și obții alt total, fără să schimbi pașii.'}
+   ]}
+ ],
+ atelier:{t:'urmarire',titlu:'Casa de bilete, la lucru',
+  intro:`<p>La casă vin familii diferite. <strong>Sarcina:</strong> execută algoritmul casierei pentru datele primite: evaluează condiția, completează doar ramura care se execută (cealaltă rămâne goală), apoi totalul. Testează-l de mai multe ori: la „Încă un exercițiu” vin alte date.</p>`,
+  q:'Completează tabelul de urmărire al casierei.',
+  prog:['Început','Citește vârsta, n','Dacă vârsta < 14 atunci','    preț ← 10','altfel','    preț ← 25','total ← preț * n','Afișează total','Sfârșit'],
+  date:[{'vârsta':12,n:3},{'vârsta':14,n:2},{'vârsta':9,n:4},{'vârsta':30,n:1},{'vârsta':13,n:5}],
+  ajutor:'Întâi condiția: vârsta < 14? Apoi prețul pe ramura aleasă. Totalul = preț * n.',
+  why:'Algoritmul a ales prețul după vârstă și l-a înmulțit cu numărul de bilete.',
+  inca:[
+   {t:'urmarire',q:'Încă unul: aceiași pași, alte date.',prog:['Început','Citește vârsta, n','Dacă vârsta < 14 atunci','    preț ← 10','altfel','    preț ← 25','total ← preț * n','Afișează total','Sfârșit'],date:[{'vârsta':14,n:3},{'vârsta':6,n:2},{'vârsta':40,n:2},{'vârsta':15,n:1}],ajutor:'La 14 ani nu mai e bilet redus.',why:'Aceiași pași merg pentru orice familie: asta e generalitatea.'},
+   {t:'urmarire',q:'Încă unul, pregătire pentru diplomă: media și decizia.',prog:['Început','Citește nota1, nota2','media ← (nota1 + nota2) / 2','Dacă media ≥ 5 atunci','    Afișează „Promovat”','altfel','    Afișează „Nepromovat”','Sfârșit'],date:[{nota1:4,nota2:7},{nota1:3,nota2:4},{nota1:9,nota2:10},{nota1:5,nota2:5}],ajutor:'Media poate ieși cu virgulă (5,5). Apoi compari cu 5.',why:'Paranteza face ca suma să fie împărțită toată la 2.'}
+  ]},
+ qs:[
+  {t:'classify',q:'Ce rol are fiecare dată din algoritmul casierei?',cats:['De intrare','De ieșire','De manevră','Constantă'],items:[['vârsta',0],['numărul de bilete n',0],['total',1],['preț, stabilit în pasul 2',2],['10 și 25 (prețurile fixe)',3]],why:'Vârsta și n se citesc. Totalul se afișează. Prețul e o valoare ajutătoare, aleasă de decizie și folosită la calcul. 10 și 25 nu se schimbă.'},
+  {t:'choice',q:'Ce se afișează pentru vârsta 9 și n = 4?',o:['40','100','36','13'],ok:0,why:'9 &lt; 14 e adevărat, deci preț = 10. Total = 10 * 4 = 40.'},
+  {t:'choice',q:'Ce se afișează pentru vârsta 14 și n = 3?',o:['75','30','42','25'],ok:0,ajutor:'Testează pragul: 14 &lt; 14?',why:'14 &lt; 14 e fals, deci preț = 25. Total = 25 * 3 = 75. La 14 ani nu se mai primește bilet redus.'},
+  {t:'tf',q:'Algoritmul are proprietatea de generalitate: merge pentru orice vârstă și orice număr de bilete.',ok:true,why:'Adevărat. Pașii nu sunt legați de o anumită familie: schimbi vârsta sau numărul de bilete și obții alt total, fără să schimbi algoritmul.'},
+  {t:'hunt',cod:true,q:'Algoritmul scris de Radu are 2 greșeli. Apasă pe ele.',src:`Început
+1. Citește vârsta.
+2. Dacă vârsta [[> 14|copiii sub 14 ani au vârsta mai mică: condiția este vârsta < 14]] atunci
+       preț ← 10
+   altfel
+       preț ← 25
+3. Citește numărul de bilete n.
+4. Calculează total ← preț [[+ n|totalul este prețul înmulțit cu numărul de bilete: preț * n]]
+5. Afișează total.
+Sfârșit`,corect:`Început
+1. Citește vârsta.
+2. Dacă vârsta < 14 atunci
+       preț ← 10
+   altfel
+       preț ← 25
+3. Citește numărul de bilete n.
+4. Calculează total ← preț * n
+5. Afișează total.
+Sfârșit`,ajutor:'Strategia condiției: „sub” → ce semn? Și totalul: ce operație?',indiciu:'Verifică semnul comparației și operația din calcul.',why:'Cu „&gt; 14”, copiii ar plăti mai mult decât adulții. Cu „+”, trei bilete de 10 lei ar costa 13 lei în loc de 30.'}
+ ]}
 ];
 
 JocMotor.porneste({
@@ -180,19 +721,27 @@ JocMotor.porneste({
   unitateTitlu:'Algoritmi. Gândesc pas cu pas',
   competente:['CS.2.1','CS.2.2','CS.2.3'],
   lectii:'24–29',
-  intro:'Șapte niveluri despre algoritmi: ce sunt, ce proprietăți au, cu ce date lucrează, cum calculezi expresii, cum urmărești pașii unul după altul și cum alege un algoritm. La fiecare nivel citești o pagină scurtă și răspunzi la întrebări. La final verifici algoritmul casei de bilete și îți iei diploma.',
+  intro:'Șapte niveluri despre algoritmi, de la „ce este un algoritm” până la algoritmul casei de bilete. Nu trebuie să știi nimic dinainte: fiecare nivel te ia de mână, pas cu pas, cu exemple din Scratch. În ateliere execuți algoritmi ca un calculator, rând cu rând, pe date mereu noi.',
+  cum:`<b>Cum lucrezi în fiecare nivel</b><ol>
+<li><b>Învață</b> — pași scurți, câte o idee, cu un exemplu „Uite cum”. Nu ai înțeles? Apasă „Nu am înțeles — explică-mi altfel”.</li>
+<li><b>Încearcă tu</b> — după fiecare pas, un exercițiu mic, fără note. Greșești? Primești un indiciu. Vrei mai mult? „Încă un exercițiu”.</li>
+<li><b>Atelier</b> — lucrezi ca la ora de informatică: pui blocurile în ordine, repari algoritmi și completezi <b>tabelul de urmărire</b>. Calculatorul îți dă datele, tu execuți algoritmul rând cu rând, iar <b>testele</b> îți bifează fiecare rând corect.</li>
+<li><b>Verificare</b> — câteva întrebări doar din ce ai învățat în pași. Stele pentru răspunsurile din prima.</li></ol>`,
   banda:'<span class="cap">Început</span><span class="sg">→</span><span class="pas">1. Citește</span><span class="sg">→</span><span class="pas">2. Calculează</span><span class="sg">→</span><span class="romb"></span><span class="sg">→</span><span class="pas">3. Afișează</span><span class="sg">→</span><span class="cap">Sfârșit</span>',
   nivele:LEVELS,
+  tipuri:{urmarire:URMARIRE},
   diploma:{
     titlu:'Gânditor pas cu pas',
-    rezumat:'noțiunea de algoritm, claritatea, finitudinea și generalitatea, datele de intrare, de ieșire și de manevră, constantele și variabilele, expresiile, structura secvențială și structura alternativă',
-    aplicatie:'caietul de informatică',
+    rezumat:'noțiunea de algoritm, claritatea, finitudinea și generalitatea, datele de intrare, de ieșire și de manevră, constantele și variabilele, expresiile, structura secvențială și structura alternativă, urmărirea pas cu pas și blocurile din Scratch',
+    aplicatie:'caietul de informatică și Scratch',
     provocare:[
-      'Scrie în limbaj natural, cu pași numerotați, un algoritm care citește două note și afișează media lor.',
-      'Adaugă o decizie: dacă media este cel puțin 5, afișează „Promovat”, altfel „Nepromovat”.',
+      '<b>Pe caiet:</b> scrie în limbaj natural, între Început și Sfârșit, un algoritm care citește două note, calculează <code>media ← (nota1 + nota2) / 2</code> și, dacă media este cel puțin 5, afișează „Promovat”, altfel „Nepromovat”.',
       'Scrie lângă algoritm care sunt datele de intrare, de ieșire și de manevră.',
-      'Urmărește-l pas cu pas pentru notele 4 și 7, apoi pentru 9 și 10, și scrie ce afișează de fiecare dată.',
-      'Dă-i algoritmul unui coleg și verificați împreună dacă e clar, dacă se termină și dacă merge pentru orice note.'
+      'Fă tabelul de urmărire pentru notele 4 și 7, apoi pentru 3 și 4, și scrie ce se afișează de fiecare dată.',
+      '<b>În Scratch:</b> din categoria <b>Variabile</b>, cu <b>Creează o variabilă</b>, fă variabilele nota1, nota2 și media. Pune în zona de script blocul „când se dă click pe steagul verde” (din categoria <b>Evenimente</b>), apoi blocuri <b>setează … la …</b> pentru note și pentru medie (împărțirea și adunarea sunt în <b>Operatori</b>).',
+      'Din <b>Control</b> ia blocul <b>dacă … atunci … altfel</b>. Condiția: <b>nu (media &lt; 5)</b>, din Operatori (Scratch nu are ≥). Pe fiecare ramură pune blocul <b>spune</b> (din categoria <b>Aspect</b>) cu mesajul potrivit. Apasă steagul verde, apoi schimbă notele și verifică pe scenă că iese ce ai scris în tabel.',
+      'Salvează proiectul: din meniul <b>Fișier</b> alegi salvarea pe calculator. Se descarcă un fișier <b>.sb3</b>, pe care îl deschizi data viitoare tot din meniul Fișier.',
+      'Dă-i algoritmul unui coleg și verificați împreună: e clar? se termină? merge pentru orice note?'
     ]
   }
 });

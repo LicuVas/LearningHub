@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Misiunea Buclă</title>
-<meta name="description" content="Lecție-joc pentru clasa a VI-a: structurile repetitive cu contor, condiționată anterior și condiționată posterior, în pseudocod, în aplicația de exersare și în schema logică, cu probleme de sume, numărări și cifre.">
+<meta name="description" content="Lecție-joc pentru clasa a VI-a: structurile repetitive cu contor, condiționată anterior și condiționată posterior, învățate pas cu pas, exersate într-un editor de blocuri ca Scratch și în tabelul de urmărire, cu probleme de sume, numărări și cifre.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Albert+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@500;600&display=swap&subset=latin-ext">
@@ -39,152 +39,861 @@
 .banda .gura{flex:none;width:10px;height:18px;border:3px solid var(--bctl);border-right:0;border-radius:5px 0 0 5px}
 h1 .sag{color:var(--accent)}
 .ps{display:block;white-space:pre-wrap;line-height:1.55;padding:.45em .7em;margin:.5em 0}
+/* schemele logice desenate în pagină (nivelul 7) */
+.schema{display:block;width:100%;max-width:330px;height:auto;margin:.4em auto 1em;color:var(--ink)}
+.schema text{font-family:var(--fm);font-size:13px;fill:currentColor}
+.schema .f{fill:var(--paper2);stroke:currentColor;stroke-width:1.6}
+.schema .s{fill:none;stroke:currentColor;stroke-width:1.6}
+.schema .da{fill:var(--ok);font-weight:700} .schema .nu{fill:var(--bad);font-weight:700}
+.tab-mic{border-collapse:collapse;margin:.4em 0 .8em;font-size:.93rem}
+.tab-mic th,.tab-mic td{border:1px solid var(--line);padding:4px 10px;text-align:center}
+.tab-mic th{background:var(--paper2)}
 </style>
 </head>
 <body>
 <script src="../_motor/motor.js"></script>
 <script>
-// pseudocod pe mai multe rânduri; stilul e pus direct pe element, ca să arate la fel și în recapitularea clasei
+/* ================= SIMULATOARELE JOCULUI (26.09.2026) =================
+   El: „posibilitatea efectivă a exersării - simulare a aplicației adevărate”.
+   1) scratch   - un editor de blocuri ca Scratch: blocurile sunt gata puse, elevul completează câmpurile albe,
+                  apasă steagul verde, vede scena (desenul, variabilele, ce spune pisica) și TESTELE bifate.
+                  Q: {t:'scratch', q, prog:[blocuri], start?:{x,y,dir}, teste:[{ce, f(st), msg}], sol:[valori], gresit:[valori], why}
+                  Blocuri: mergi n · roteste n · sterge · stilou · set v x · schimba v x · repeta n [c] · pana cond [c] · daca cond [c] · spune x
+                  Valori: număr · 'nume de variabilă' · {e:'', text?:true} câmp de completat · {op:'mod'|'div'|'*', a, b}
+                  Condiție: {a, op:'<'|'>'|'=', b}. Rularea se oprește după 10 000 de pași: buclă infinită.
+   2) urmarire  - tabelul de urmărire pas cu pas: codul în stânga, un rând pe trecere, elevul scrie valorile.
+                  Q: {t:'urmarire', q, cod, cols:[…], start?:[…], rows:[[…]], et?:[etichete rânduri], dat?:k rânduri date, afis?:'…', why}
+   Amândouă au rezolva() și gresit() pentru poarta automată. */
+(function(){
+const CSS=`
+.scr{border:1px solid var(--line);border-radius:10px;background:var(--paper);overflow:hidden;min-width:0}
+.scr-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:6px 10px;background:var(--paper2);border-bottom:1px solid var(--line);font-size:.8rem;color:var(--ink2)}
+.scr-bar .flag{border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px;font:inherit;font-weight:700;color:var(--ink);cursor:pointer}
+.scr-bar .flag svg{width:18px;height:18px}
+.scr-grid{display:grid;grid-template-columns:minmax(0,1fr)}
+@media(min-width:760px){.scr-grid{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}}
+.scr-cod{padding:10px;overflow-x:auto;min-width:0;background-image:radial-gradient(color-mix(in srgb,var(--line) 80%,transparent) 1px,transparent 1px);background-size:14px 14px}
+.scr-scena{border-top:1px solid var(--line);position:relative;background:#fff;min-width:0}
+@media(min-width:760px){.scr-scena{border-top:0;border-left:1px solid var(--line)}}
+.scr-scena svg{display:block;width:100%;height:auto}
+.scr-mon{position:absolute;left:6px;top:6px;display:flex;flex-direction:column;gap:3px}
+.scr-mon div{background:#eef1f6;border:1px solid #c9d2e0;border-radius:4px;font:600 .74rem var(--fb);color:#333;padding:1px 5px;display:flex;gap:6px;align-items:center}
+.scr-mon b{background:#FF8C1A;color:#fff;border-radius:4px;padding:0 6px;min-width:1.6em;text-align:center}
+.scr-zice{position:absolute;right:8px;top:8px;background:#fff;color:#222;border:2px solid #bbb;border-radius:14px;padding:4px 10px;font:600 .85rem var(--fb);max-width:60%}
+.sb{display:block;width:max-content;color:#fff;font:600 .82rem/1.25 var(--fb);padding:5px 9px;border-radius:5px;margin:0 0 2px;white-space:nowrap}
+.sb.hat{border-radius:16px 16px 5px 5px;background:#C88330;padding-top:8px}
+.sb.hat svg{width:14px;height:14px;vertical-align:-2px}
+.sb.mis{background:#3373CC}.sb.var{background:#C46200}.sb.pen{background:#0B8E69}.sb.asp{background:#774DCB}
+.sb.c{padding:0;background:transparent}
+.sb.c>.hd{background:#C88330;padding:5px 9px;border-radius:5px 5px 0 0}
+.sb.c>.in{border-left:16px solid #C88330;padding:2px 0 2px 3px;min-height:14px}
+.sb.c>.ft{background:#C88330;height:12px;border-radius:0 0 5px 5px;width:70px}
+.sb input,.sb select{font:600 .85rem var(--fm);border:2px solid transparent;border-radius:10px;padding:1px 5px;width:4.4em;text-align:center;background:#fff;color:#222;margin:0 2px}
+.sb input:focus,.sb select:focus{outline:none;border-color:#FFD500}
+.sb input.txt{width:6.5em}
+.sb select{width:auto}
+.sb .nr{display:inline-block;background:#fff;color:#222;border-radius:10px;padding:0 7px;margin:0 2px;font-family:var(--fm)}
+.sb .vr{display:inline-block;background:#FF8C1A;color:#fff;border:1px solid rgba(0,0,0,.15);border-radius:10px;padding:0 7px;margin:0 2px}
+.sb .op{display:inline-block;background:#389438;border-radius:12px;padding:2px 6px;margin:0 2px}
+.sb .cond{display:inline-block;background:#389438;padding:2px 10px;margin:0 2px;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%)}
+.scr-teste{margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--paper2)}
+.scr-teste ol{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:4px}
+.scr-teste li{display:flex;gap:8px;align-items:flex-start;font-size:.93rem}
+.scr-teste li .s{flex:none;width:1.4em;text-align:center;font-weight:700}
+.scr-teste li.ok .s{color:var(--ok)} .scr-teste li.rau .s{color:var(--bad)}
+.urm{display:grid;gap:10px;min-width:0}
+.urm pre{font-family:var(--fm);font-size:.9rem;line-height:1.5;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:0;overflow:auto;white-space:pre;font-variant-ligatures:none}
+.urm-tw{overflow-x:auto;min-width:0}
+.urm-t{border-collapse:collapse;font-family:var(--fm);font-size:.9rem}
+.urm-t th,.urm-t td{border:1px solid var(--line);padding:3px 6px;text-align:center}
+.urm-t thead th{background:var(--paper2);font-weight:600}
+.urm-t tbody th{font-family:var(--fb);font-weight:600;font-size:.8rem;color:var(--ink2);text-align:left;white-space:nowrap}
+.urm-t tr.st td,.urm-t td.dat{color:var(--ink2);background:var(--paper2)}
+.urm-t input,.urm-af input{font:600 .9rem var(--fm);width:4.2em;text-align:center;border:1px solid var(--line);border-radius:5px;padding:4px 2px;background:var(--paper);color:var(--ink)}
+.urm-t input.rau,.urm-af input.rau{border-color:var(--bad);background:var(--badbg)}
+.urm-t input.ok,.urm-af input.ok{border-color:var(--ok);background:var(--okbg)}
+.urm-af{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-weight:600}`;
+function css(){if(!document.getElementById('sim-bucla-css')){const s=document.createElement('style');s.id='sim-bucla-css';s.textContent=CSS;document.head.appendChild(s)}}
+const FLAG='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1v14" stroke="#2E8B3A" stroke-width="2"/><path d="M4 2c3-1.5 5 1.5 9 0v6c-4 1.5-6-1.5-9 0z" fill="#4CBF56" stroke="#2E8B3A"/></svg>';
+
+/* ---------- scratch ---------- */
+function E(m){const e=new Error(m);e.sim=true;return e}
+function html(Q,esc,slots){
+  const slot=sp=>{const k=slots.length;slots.push(sp);
+    if(sp.o)return `<select data-s="${k}" aria-label="câmpul ${k+1}">${sp.o.map(x=>`<option${x===sp.e?' selected':''}>${esc(x)}</option>`).join('')}</select>`;
+    return `<input data-s="${k}" class="${sp.text?'txt':''}" type="text" autocomplete="off" spellcheck="false" value="${esc(sp.e||'')}" aria-label="câmpul alb ${k+1}">`};
+  const v=x=>typeof x==='number'?`<span class="nr">${x}</span>`:typeof x==='string'?`<span class="vr">${esc(x)}</span>`
+    :x.op==='mod'?`<span class="op">${v(x.a)} mod ${v(x.b)}</span>`
+    :x.op==='div'?`<span class="op">partea întreagă din <span class="op">${v(x.a)} / ${v(x.b)}</span></span>`
+    :x.op?`<span class="op">${v(x.a)} ${esc(x.op)} ${v(x.b)}</span>`:slot(x);
+  const vn=x=>typeof x==='string'?`<span class="nr">${esc(x)} ▾</span>`:slot(x);
+  const cond=c=>`<span class="cond">${v(c.a)} ${typeof c.op==='string'?esc(c.op):slot(c.op)} ${v(c.b)}</span>`;
+  const bl=b=>{
+    switch(b.b){
+      case'mergi':return `<div class="sb mis">mergi ${v(b.n)} pași</div>`;
+      case'roteste':return `<div class="sb mis">rotește-te ↻ ${v(b.n)} grade</div>`;
+      case'sterge':return `<div class="sb pen">șterge tot</div>`;
+      case'stilou':return `<div class="sb pen">stilou jos</div>`;
+      case'set':return `<div class="sb var">setează ${vn(b.v)} la ${v(b.x)}</div>`;
+      case'schimba':return `<div class="sb var">modifică ${vn(b.v)} cu ${v(b.x)}</div>`;
+      case'spune':return `<div class="sb asp">spune ${v(b.x)}</div>`;
+      case'repeta':return `<div class="sb c"><div class="hd">repetă ${v(b.n)}</div><div class="in">${b.c.map(bl).join('')}</div><div class="ft"></div></div>`;
+      case'pana':return `<div class="sb c"><div class="hd">repetă până când ${cond(b.cond)}</div><div class="in">${b.c.map(bl).join('')}</div><div class="ft"></div></div>`;
+      case'daca':return `<div class="sb c"><div class="hd">dacă ${cond(b.cond)} atunci</div><div class="in">${b.c.map(bl).join('')}</div><div class="ft"></div></div>`;
+    }return ''};
+  return `<div class="sb hat">când se dă click pe ${FLAG}</div>`+Q.prog.map(bl).join('');
+}
+function run(Q,body){
+  const sl=body._slots,raw=sp=>{const k=sl.indexOf(sp);const el=body.querySelector(`[data-s="${k}"]`);return (el?el.value:String(sp.e||'')).trim()};
+  const s0=Object.assign({x:0,y:0,dir:90},Q.start||{});
+  const st={v:{},x:s0.x,y:s0.y,x0:s0.x,y0:s0.y,dir:s0.dir,rot:0,seg:[],pen:false,spus:'',pasi:0,infinit:false,err:'',sl:sl.map(raw)};
+  const tick=()=>{if(++st.pasi>10000){st.infinit=true;throw E('inf')}};
+  const val=x=>{
+    if(typeof x==='number')return x;
+    if(typeof x==='string'){if(x in st.v)return st.v[x];throw E(`Variabila ${x} nu are încă o valoare: pune întâi un bloc „setează ${x} la …”.`)}
+    if(x.op){const a=val(x.a),b=val(x.b);
+      if(x.op==='mod'){if(b===0)throw E('Nu se poate împărți la 0.');return ((a%b)+b)%b}
+      if(x.op==='div'){if(b===0)throw E('Nu se poate împărți la 0.');return Math.floor(a/b)}
+      if(x.op==='*')return a*b;if(x.op==='+')return a+b;if(x.op==='-')return a-b}
+    const r=raw(x);
+    if(r==='')throw E('Un câmp alb e gol. Scrie ceva în el.');
+    const n=Number(r.replace(',','.'));
+    if(!isNaN(n))return n;
+    if(r in st.v)return st.v[r];
+    if(x.text)return r;
+    throw E(`„${r}” nu e un număr. În câmpurile albe de aici scrii numere.`);
+  };
+  const nume=x=>typeof x==='string'?x:raw(x);
+  const cond=c=>{const a=val(c.a),b=val(c.b),op=typeof c.op==='string'?c.op:raw(c.op);
+    return op==='<'?a<b:op==='>'?a>b:a===b};
+  const exec=list=>{for(const b of list){tick();
+    switch(b.b){
+      case'mergi':{const n=val(b.n),r=st.dir*Math.PI/180,nx=st.x+n*Math.sin(r),ny=st.y+n*Math.cos(r);
+        if(st.pen&&n!==0)st.seg.push([st.x,st.y,nx,ny]);st.x=nx;st.y=ny;break}
+      case'roteste':{const n=val(b.n);st.dir+=n;st.rot+=n;break}
+      case'sterge':st.seg=[];break;
+      case'stilou':st.pen=true;break;
+      case'set':st.v[nume(b.v)]=val(b.x);break;
+      case'schimba':{const k=nume(b.v);if(!(k in st.v))throw E(`Variabila ${k} nu are încă o valoare.`);st.v[k]+=val(b.x);break}
+      case'spune':st.spus=val(b.x);break;
+      case'repeta':{const n=Math.round(val(b.n));for(let i=0;i<n;i++){tick();exec(b.c)}break}
+      case'pana':{while(!cond(b.cond)){tick();exec(b.c)}break}
+      case'daca':if(cond(b.cond))exec(b.c);break;
+    }}};
+  try{exec(Q.prog)}catch(e){if(!e.sim)throw e;if(!st.infinit)st.err=e.message}
+  st.laturi=st.seg.filter(s=>Math.hypot(s[2]-s[0],s[3]-s[1])>0.01).length;
+  st.inchis=st.laturi>0&&Math.abs(st.x-st.x0)<0.5&&Math.abs(st.y-st.y0)<0.5;
+  return st;
+}
+function scena(body,st,Q,esc){
+  const sc=body.querySelector('.scr-scena');
+  const lines=st?st.seg.map(s=>`<line x1="${s[0].toFixed(1)}" y1="${(-s[1]).toFixed(1)}" x2="${s[2].toFixed(1)}" y2="${(-s[3]).toFixed(1)}" stroke="#1E40D8" stroke-width="4" stroke-linecap="round"/>`).join(''):'';
+  const s0=Object.assign({x:0,y:0,dir:90},Q.start||{}),x=st?st.x:s0.x,y=st?st.y:s0.y,d=st?st.dir:s0.dir;
+  const vars=st?Object.keys(st.v):[];
+  sc.innerHTML=`<svg viewBox="-240 -180 480 360" role="img" aria-label="Scena: ${st?`${st.laturi} linii desenate`:'încă nu ai rulat'}">
+    <circle cx="${s0.x}" cy="${-s0.y}" r="4" fill="#bbb"/>${lines}
+    <g transform="translate(${x.toFixed(1)} ${(-y).toFixed(1)}) rotate(${d-90})"><polygon points="16,0 -10,-11 -5,0 -10,11" fill="#FF9F1C" stroke="#8A4B00" stroke-width="2"/></g></svg>
+    ${vars.length?`<div class="scr-mon">${vars.map(k=>`<div>${esc(k)} <b>${esc(String(Math.round(st.v[k]*1000)/1000))}</b></div>`).join('')}</div>`:''}
+    ${st&&String(st.spus)!==''?`<div class="scr-zice">${esc(String(st.spus))}</div>`:''}`;
+}
+const Scratch={
+  render(Q,body,api){css();const esc=api.esc,slots=[];
+    body.innerHTML=`<div class="scr"><div class="scr-bar"><button type="button" class="flag" id="scr-go">${FLAG} Rulează</button><span>Completează câmpurile albe, apoi apasă steagul verde.</span></div>
+      <div class="scr-grid"><div class="scr-cod">${html(Q,esc,slots)}</div><div class="scr-scena"></div></div></div>
+      <div class="scr-teste"><div class="lbl">Testele sarcinii · <span class="nr">0 din ${Q.teste.length} trec</span></div><ol>${Q.teste.map((t,i)=>`<li data-i="${i}"><span class="s">○</span><span>${t.ce}</span></li>`).join('')}</ol></div>`;
+    body._slots=slots;scena(body,null,Q,esc);
+    const verifica=(doarRuleaza)=>{
+      const st=run(Q,body);scena(body,st,Q,esc);
+      const rez=Q.teste.map(t=>{try{return !st.err&&!st.infinit&&!!t.f(st)}catch(e){return false}});
+      rez.forEach((ok,i)=>{const li=body.querySelector(`.scr-teste li[data-i="${i}"]`);li.className=ok?'ok':'rau';li.querySelector('.s').textContent=ok?'✓':'✗'});
+      body.querySelector('.scr-teste .nr').textContent=`${rez.filter(Boolean).length} din ${rez.length} trec`;
+      if(doarRuleaza)return;
+      if(st.err){api.resolve(false,st.err)}
+      else if(st.infinit){api.resolve(false,'Algoritmul a trecut de 10 000 de pași și nu s-a oprit: e o <b>buclă infinită</b>. În Scratch ai apăsa semnul roșu (Stop). Verifică: pașii din repetiție schimbă ce se testează în condiție?')}
+      else if(rez.every(Boolean)){body.querySelectorAll('[data-s]').forEach(el=>el.disabled=true);api.resolve(true)}
+      else{const k=rez.indexOf(false);api.resolve(false,Q.teste[k].msg||'Un test nu trece încă.')}
+      if(!api.done())api.revealButton(()=>{Scratch.rezolva(Q,body,api);verifica(true);body.querySelectorAll('[data-s]').forEach(el=>el.disabled=true);api.giveUp('câmpurile completate corect sunt acum în blocuri: '+Q.sol.map(x=>`<code>${esc(x)}</code>`).join(', '))});
+    };
+    body.querySelector('#scr-go').onclick=()=>verifica(true);
+    api.checkButton(()=>verifica(false),'Rulează testele');
+  },
+  rezolva(Q,body){Q.sol.forEach((x,k)=>{const el=body.querySelector(`[data-s="${k}"]`);if(el)el.value=x})},
+  gresit(Q,body){Q.gresit.forEach((x,k)=>{const el=body.querySelector(`[data-s="${k}"]`);if(el)el.value=x})}
+};
+
+/* ---------- urmarire (tabelul de urmărire) ---------- */
+const norm=s=>String(s).trim().toLowerCase().replace(',','.').replace(/^adevărat$/,'da').replace(/^fals$/,'nu').replace(/^[–—]$/,'-');
+const Urmarire={
+  render(Q,body,api){css();const esc=api.esc,dat=Q.dat||0;
+    body.innerHTML=`<div class="urm"><pre>${esc(Q.cod)}</pre>
+      <div class="urm-tw"><table class="urm-t"><thead><tr><th>${esc(Q.cap||'Trecerea')}</th>${Q.cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>
+      ${Q.start?`<tr class="st"><th>la început</th>${Q.start.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`:''}
+      ${Q.rows.map((r,i)=>`<tr><th>${esc(Q.et?Q.et[i]:String(i+1))}</th>${r.map((x,j)=>i<dat?`<td class="dat">${esc(x)}</td>`:`<td><input data-r="${i}" data-c="${j}" type="text" autocomplete="off" spellcheck="false" aria-label="${esc(Q.cols[j])}, rândul ${i+1}"></td>`).join('')}</tr>`).join('')}
+      </tbody></table></div>
+      ${Q.afis!==undefined?`<label class="urm-af">Se afișează: <input data-af="1" type="text" autocomplete="off" spellcheck="false"></label>`:''}</div>`;
+    const cells=()=>[...body.querySelectorAll('input[data-r]')].map(el=>[el,Q.rows[+el.dataset.r][+el.dataset.c]]).concat(Q.afis!==undefined?[[body.querySelector('input[data-af]'),Q.afis]]:[]);
+    api.checkButton(()=>{
+      let rau=0,gol=0;
+      cells().forEach(([el,ok])=>{const g=norm(el.value)!==norm(ok);if(el.value.trim()==='')gol++;if(g)rau++;el.classList.toggle('rau',g);el.classList.toggle('ok',!g)});
+      if(!rau){body.querySelectorAll('input').forEach(el=>el.disabled=true);api.resolve(true);return}
+      api.resolve(false,gol?`Mai ai ${gol} ${gol===1?'căsuță goală':'căsuțe goale'}. Completează tot tabelul, rând cu rând.`:`${rau} ${rau===1?'căsuță nu se potrivește':'căsuțe nu se potrivesc'} (sunt roșii). Reia calculul de la prima căsuță roșie: folosește valorile din rândul de deasupra.`);
+      api.revealButton(()=>{Urmarire.rezolva(Q,body);body.querySelectorAll('input').forEach(el=>{el.disabled=true;el.classList.remove('rau')});api.giveUp('tabelul e completat acum cu valorile corecte. Urmărește-l rând cu rând.')});
+    },'Verifică tabelul');
+  },
+  rezolva(Q,body){body.querySelectorAll('input[data-r]').forEach(el=>el.value=Q.rows[+el.dataset.r][+el.dataset.c]);const a=body.querySelector('input[data-af]');if(a)a.value=Q.afis},
+  gresit(Q,body){Urmarire.rezolva(Q,body);
+    const ins=[...body.querySelectorAll('input[data-r]')],el=ins[ins.length-1];
+    if(el){const v=el.value,n=Number(v);el.value=!isNaN(n)&&v!==''?String(n+1):(norm(v)==='da'?'nu':'da')}}
+};
+window.SIM_BUCLA={scratch:Scratch,urmarire:Urmarire};
+})();
+</script>
+<script>
+/* MISIUNEA BUCLĂ, rescrisă pe PAȘI (26.09.2026).
+   El: „informația e prea condensată - nu e beginner friendly - e mai mult test decât asistență de învățare”,
+   „pași săriți - evaluare neconformă cu ce s-a predat”. De aceea: fiecare nivel = pași mici (o idee, un exemplu,
+   „explică-mi altfel”, exercițiu cu indiciu și variante), atelier (editorul de blocuri ca Scratch cu scena și
+   TESTE bifate, sau tabelul de urmărire), abia apoi verificarea - doar pe ce s-a predat în pași.
+   Capturile din img/ sunt din Scratch 3 în română (SURSE.json). */
+// pseudocod pe mai multe rânduri în întrebări; stilul e pus direct pe element, ca să arate la fel și în recapitularea clasei
 const P=s=>`<code class="ps" style="display:block;white-space:pre-wrap;line-height:1.55;padding:.45em .7em;margin:.5em 0">${s}</code>`;
+const X=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const pre=s=>`<pre>${X(s)}</pre>`;                               // pseudocod în pași, indentat
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="../algoritmi-vi/img/${f}" target="_blank"><img src="../algoritmi-vi/img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const tab=(cap,rows)=>`<div style="overflow-x:auto;max-width:100%"><table class="tab-mic"><thead><tr>${cap.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+
+/* conținuturile programei, textul exact din curriculum.json */
+const C={
+  interfata:'Elemente de interfață ale unei aplicații de exersare a algoritmilor',
+  instrumente:'Instrumente de bază utilizate în exersarea algoritmilor',
+  etape:'Etapele unui exercițiu algoritmic utilizând aplicația aleasă',
+  contor:'Structura repetitivă cu contor',
+  anterior:'Structura repetitivă condiționată anterior',
+  posterior:'Structura repetitivă condiționată posterior',
+  grafice:'Modalități de reprezentare a structurilor repetitive prin blocuri grafice'
+};
+
+/* schemele logice, desenate (nu sunt capturi: schema logică se desenează pe caiet) */
+const DEFS=id=>`<defs><marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>`;
+const SCHEMA_CAT_TIMP=`<svg class="schema" viewBox="0 0 320 400" role="img" aria-label="Schema logică pentru suma 1 + 2 + 3 cu cât timp: START, s ← 0 și i ← 1, rombul i ≤ 3, pe DA pașii repetați și săgeata înapoi la romb, pe NU scrie s, apoi STOP">${DEFS('ah1')}
+<ellipse class="f" cx="160" cy="24" rx="46" ry="17"/><text x="160" y="29" text-anchor="middle">START</text>
+<path class="s" d="M160 41V60" marker-end="url(#ah1)"/>
+<rect class="f" x="90" y="62" width="140" height="34"/><text x="160" y="84" text-anchor="middle">s ← 0, i ← 1</text>
+<path class="s" d="M160 96V118" marker-end="url(#ah1)"/>
+<polygon class="f" points="160,120 222,156 160,192 98,156"/><text x="160" y="161" text-anchor="middle">i ≤ 3 ?</text>
+<path class="s" d="M160 192V224" marker-end="url(#ah1)"/><text class="da" x="168" y="213">DA</text>
+<rect class="f" x="90" y="226" width="140" height="46"/><text x="160" y="245" text-anchor="middle">s ← s + i</text><text x="160" y="263" text-anchor="middle">i ← i + 1</text>
+<path class="s" d="M160 272V290H40V156H96" marker-end="url(#ah1)"/>
+<path class="s" d="M222 156H270V300" marker-end="url(#ah1)"/><text class="nu" x="230" y="149">NU</text>
+<polygon class="f" points="232,302 316,302 304,334 220,334"/><text x="268" y="323" text-anchor="middle">scrie s</text>
+<path class="s" d="M268 334V356" marker-end="url(#ah1)"/>
+<ellipse class="f" cx="268" cy="375" rx="42" ry="17"/><text x="268" y="380" text-anchor="middle">STOP</text></svg>`;
+const SCHEMA_PANA_CAND=`<svg class="schema" viewBox="0 0 320 370" role="img" aria-label="Schema logică pentru repetă x ← x * 2 până când x > 20: START, x ← 1, x ← x * 2, rombul x > 20 după pași, pe NU săgeata înapoi la x ← x * 2, pe DA scrie x, apoi STOP">${DEFS('ah2')}
+<ellipse class="f" cx="160" cy="24" rx="46" ry="17"/><text x="160" y="29" text-anchor="middle">START</text>
+<path class="s" d="M160 41V60" marker-end="url(#ah2)"/>
+<rect class="f" x="100" y="62" width="120" height="32"/><text x="160" y="83" text-anchor="middle">x ← 1</text>
+<path class="s" d="M160 94V118" marker-end="url(#ah2)"/>
+<rect class="f" x="100" y="120" width="120" height="34"/><text x="160" y="142" text-anchor="middle">x ← x * 2</text>
+<path class="s" d="M160 154V174" marker-end="url(#ah2)"/>
+<polygon class="f" points="160,176 222,212 160,248 98,212"/><text x="160" y="217" text-anchor="middle">x > 20 ?</text>
+<path class="s" d="M98 212H40V137H98" marker-end="url(#ah2)"/><text class="nu" x="52" y="204">NU</text>
+<path class="s" d="M160 248V274" marker-end="url(#ah2)"/><text class="da" x="168" y="266">DA</text>
+<polygon class="f" points="118,276 216,276 204,306 106,306"/><text x="160" y="296" text-anchor="middle">scrie x</text>
+<path class="s" d="M160 306V326" marker-end="url(#ah2)"/>
+<ellipse class="f" cx="160" cy="345" rx="42" ry="17"/><text x="160" y="350" text-anchor="middle">STOP</text></svg>`;
+const FORME=`<svg class="schema" viewBox="0 0 320 120" role="img" aria-label="Cele patru blocuri ale schemei logice: ovalul, paralelogramul, dreptunghiul și rombul">
+<ellipse class="f" cx="42" cy="40" rx="36" ry="16"/><text x="42" y="45" text-anchor="middle">START</text><text x="42" y="95" text-anchor="middle">oval</text>
+<polygon class="f" points="100,24 160,24 150,56 90,56"/><text x="125" y="45" text-anchor="middle">scrie</text><text x="125" y="95" text-anchor="middle">paralelogram</text>
+<rect class="f" x="178" y="24" width="56" height="32"/><text x="206" y="45" text-anchor="middle">s ← 0</text><text x="206" y="95" text-anchor="middle">dreptunghi</text>
+<polygon class="f" points="284,14 316,40 284,66 252,40"/><text x="284" y="45" text-anchor="middle">?</text><text x="284" y="95" text-anchor="middle">romb</text></svg>`;
+
 const LEVELS=[
-{t:'Recapitulez și pornesc aplicația',lectii:[17,18],continuturi:['Elemente de interfață ale unei aplicații de exersare a algoritmilor','Instrumente de bază utilizate în exersarea algoritmilor'],text:`
-<p>Un <mark>algoritm</mark> este un șir de pași clari, în ordine, care rezolvă o problemă. Pornește de la <mark>datele de intrare</mark> și ajunge la <mark>rezultat</mark> (datele de ieșire).</p>
-<p>Știi deja două structuri: <strong>secvența</strong> (pașii unul după altul) și <strong>decizia</strong> (<em>dacă … atunci … altfel</em>).</p>
-<p>Acum le construim într-o <mark>aplicație de exersare a algoritmilor</mark>, de exemplu Scratch:</p>
-<ul>
-<li><strong>zona cu blocuri</strong>, pe categorii (Mișcare, Control…);</li>
-<li><strong>zona de cod</strong>, unde îmbini blocurile;</li>
-<li><strong>scena</strong>, unde vezi ce face personajul;</li>
-<li><strong>steagul verde</strong> pornește algoritmul, iar <strong>semnul roșu</strong> îl oprește.</li>
-</ul>
-<figure class="captura"><a href="../algoritmi-vi/img/scratch-zone-cod.webp" target="_blank"><img src="../algoritmi-vi/img/scratch-zone-cod.webp" alt="Editorul Scratch în română: în stânga categoriile și blocurile, încadrate ca zona cu blocuri, în mijloc zona de cod cu un script mic" width="640" height="311" loading="lazy"></a>
-<figcaption>În stânga, <b>zona cu blocuri</b>: categoriile (Mișcare, Aspect, Control…) și blocurile lor. În mijloc, <b>zona de cod</b>, unde îmbini blocurile.</figcaption></figure>
-<figure class="captura"><a href="../algoritmi-vi/img/scratch-scena-steag.webp" target="_blank"><img src="../algoritmi-vi/img/scratch-scena-steag.webp" alt="Scena Scratch cu pisica; deasupra ei steagul verde și semnul roșu, fiecare încadrat și etichetat" width="490" height="410" loading="lazy"></a>
-<figcaption>În dreapta, <b>scena</b>. Deasupra ei, <b>steagul verde</b> pornește algoritmul, iar <b>semnul roșu</b> (Stop) îl oprește.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce este un algoritm?',o:['Pași clari, în ordine, care rezolvă o problemă','Orice program instalat pe un calculator','O listă de numere scrise fără nicio ordine','Un desen făcut într-o aplicație grafică'],ok:0,why:'Algoritmul e rețeta: pașii, ordinea lor și un scop. Programul e doar un algoritm scris pentru calculator.'},
- {t:'classify',q:'Secvență sau decizie?',cats:['Secvență','Decizie'],items:[['Pui ghiozdanul în spate, apoi ieși pe ușă',0],['Dacă plouă, iei umbrela, altfel iei șapca',1],['Citești un număr, apoi îl dublezi',0],['Dacă nota e cel puțin 5, scrii „promovat”',1]],why:'Secvența face pașii mereu, unul după altul. Decizia alege un drum după o condiție.'},
- {t:'choice',q:'Problema: „Citește lungimea și lățimea unui dreptunghi și afișează aria.” Care sunt datele de intrare?',o:['Lungimea și lățimea','Aria','Lungimea, lățimea și aria','Doar lungimea'],ok:0,why:'Datele de intrare le primești la început: lungimea și lățimea. Aria e rezultatul, adică data de ieșire.'},
- {t:'match',q:'Leagă fiecare parte a aplicației de rolul ei.',pairs:[['Zona cu blocuri','de aici alegi instrucțiunile, pe categorii'],['Zona de cod','aici îmbini blocurile în algoritm'],['Scena','aici vezi ce face personajul'],['Steagul verde','pornește algoritmul']],why:'Alegi blocuri, le îmbini, pornești și urmărești rezultatul pe scenă. Așa arată orice exercițiu în aplicație.'},
- {t:'choice',q:'Algoritmul pornit în Scratch nu se mai oprește. Ce apeși?',o:['Semnul roșu de oprire','Steagul verde','Încă un bloc de mișcare','Nimic, se oprește singur'],ok:0,why:'Semnul roșu oprește tot ce rulează. Steagul verde l-ar porni din nou de la început.'}
-]},
-{t:'De ce repetăm',lectii:[19],continuturi:['Etapele unui exercițiu algoritmic utilizând aplicația aleasă'],text:`
-<p>Vrei ca personajul să deseneze un <mark>pătrat</mark>. Fără repetiție scrii de 4 ori aceleași două blocuri: <em>mergi 100 de pași</em> și <em>rotește-te 90 de grade</em>. Cu blocul <strong>repetă (4)</strong> le scrii o singură dată.</p>
-<p>Un ocol complet are 360°. La un poligon regulat cu <em>n</em> laturi te rotești la fiecare colț cu <mark>360 : n</mark> grade.</p>
-<p>Orice exercițiu algoritmic are aceleași <mark>etape</mark>:</p>
-<ol>
-<li>citești cerința și stabilești datele de intrare și rezultatul;</li>
-<li>construiești algoritmul din blocuri;</li>
-<li>îl rulezi;</li>
-<li>verifici rezultatul pe mai multe exemple și corectezi ce nu merge.</li>
-</ol>
-<figure class="captura"><a href="../algoritmi-vi/img/scratch-patrat.webp" target="_blank"><img src="../algoritmi-vi/img/scratch-patrat.webp" alt="Scratch: scriptul cu repetă 4 care conține mergi 100 pași și rotește-te 90 grade, iar pe scenă pătratul albastru desenat" width="760" height="391" loading="lazy"></a>
-<figcaption>Pătratul în Scratch: <em>mergi 100 pași</em> și <em>rotește-te 90 grade</em>, puse o singură dată în blocul <strong>repetă (4)</strong>. Blocurile verzi sunt din extensia <b>Stilou</b>, care lasă urmă pe scenă.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce se repetă când personajul desenează un pătrat?',o:['Mergi 100 de pași, apoi rotește-te 90 de grade','Doar rotește-te 90 de grade','Doar mergi 400 de pași','Pornește steagul verde de 4 ori'],ok:0,why:'Fiecare latură înseamnă același lucru: mergi, apoi te rotești la colț. Perechea aceasta se repetă de 4 ori.'},
- {t:'choice',q:'Cu ce număr completezi blocul „repetă ( )” ca să iasă un pătrat?',o:['4','90','100','360'],ok:0,why:'Pătratul are 4 laturi, deci perechea „mergi, rotește-te” se repetă de 4 ori. 90 este unghiul, iar 100 este lungimea laturii.'},
- {t:'choice',q:'Pentru un triunghi echilateral, cu câte grade se rotește personajul la fiecare colț?',o:['120','60','90','180'],ok:0,why:'360 : 3 = 120. Unghiul triunghiului e de 60°, dar personajul se întoarce cu unghiul din afara colțului: 180 − 60 = 120.'},
- {t:'order',q:'Pune în ordine etapele unui exercițiu algoritmic.',items:['Citești cerința și stabilești datele și rezultatul','Construiești algoritmul din blocuri','Rulezi algoritmul','Verifici rezultatul și corectezi'],why:'Nu poți construi până nu știi ce ți se cere. Nu poți verifica până nu ai rulat.'},
- {t:'tf',q:'Dacă algoritmul a mers o dată, pe un singur exemplu, sigur e corect.',ok:false,why:'Fals. Un singur exemplu poate ascunde o greșeală. Îl verifici pe mai multe date, și pe unele „ciudate”, de exemplu 0.'}
-]},
-{t:'Repetiția cu contor',lectii:[20],continuturi:['Structura repetitivă cu contor'],text:`
-<p>Când știi dinainte <mark>de câte ori</mark> repeți, folosești structura <mark>cu contor</mark>:</p>
-${P('pentru i ← 1, n execută\n   pași\n■')}
-<p><mark>Contorul</mark> <code>i</code> ia pe rând valorile 1, 2, 3, …, n. Pentru fiecare valoare, pașii se execută o dată. Deci se execută de <strong>n</strong> ori. Semnul <code>■</code> arată unde se termină pașii repetați.</p>
-<p>Exemplu: pornești cu <code>s ← 0</code>, iar la fiecare pas faci <code>s ← s + i</code>. Așa aduni numerele de la 1 la n.</p>
-<p>În Scratch, blocul <strong>repetă (10)</strong> face același lucru, dar contorul nu se vede.</p>
-<figure class="captura"><a href="../algoritmi-vi/img/scratch-repeta-10.webp" target="_blank"><img src="../algoritmi-vi/img/scratch-repeta-10.webp" alt="Scratch: s și i setate la 0 și 1, apoi repetă 10 cu modifică s cu i și modifică i cu 1; pe scenă s = 55 și i = 11" width="760" height="368" loading="lazy"></a>
-<figcaption>Suma 1 + 2 + … + 10 în Scratch. Blocul <strong>repetă (10)</strong> nu are contor, așa că îl facem noi: variabila <code>i</code> crește cu 1 la fiecare trecere. Pe scenă se văd <b>s = 55</b> și <b>i = 11</b>.</figcaption></figure>`,
-qs:[
- {t:'tf',q:'Structura cu contor se folosește când știi dinainte de câte ori se repetă pașii.',ok:true,why:'Adevărat. Numărul de repetări e fixat la început, de valoarea inițială și de cea finală ale contorului.'},
- {t:'choice',q:'Ce se afișează?'+P('s ← 0\npentru i ← 1, 4 execută\n   s ← s + i\n■\nscrie s'),o:['10','4','9','15'],ok:0,why:'s crește pe rând: 0 + 1 = 1, 1 + 2 = 3, 3 + 3 = 6, 6 + 4 = 10. Contorul ia valorile 1, 2, 3, 4.'},
- {t:'choice',q:'De câte ori se afișează steluța?'+P('pentru i ← 3, 7 execută\n   scrie \'*\'\n■'),o:['5','4','7','3'],ok:0,why:'Contorul ia valorile 3, 4, 5, 6, 7: sunt 5 valori. Numărul de pași e 7 − 3 + 1, nu 7 − 3.'},
- {t:'match',q:'Leagă fiecare parte a structurii de rolul ei.',pairs:[['pentru … execută','repetă pașii pentru fiecare valoare a contorului'],['i','contorul, care numără trecerile'],['1 și n','valoarea de început și valoarea de final'],['■','sfârșitul pașilor repetați']],why:'Fiecare parte răspunde la o întrebare: ce se repetă, cine numără, de unde până unde și unde se termină.'},
- {t:'choice',q:'În Scratch, ce număr pui în blocul „repetă ( )” ca pașii să se execute la fel ca în „pentru i ← 1, 6 execută”?',o:['6','5','7','1'],ok:0,why:'Contorul ia valorile 1, 2, 3, 4, 5, 6, deci pașii se execută de 6 ori. Blocul „repetă (6)” face la fel, fără contor vizibil.'}
-]},
-{t:'Cât timp: testul la început',lectii:[21],continuturi:['Structura repetitivă condiționată anterior'],text:`
-<p>Uneori nu știi de câte ori repeți, știi doar o <mark>condiție</mark>. Atunci folosești structura <mark>condiționată anterior</mark>:</p>
-${P('cât timp condiție execută\n   pași\n■')}
-<p>Condiția se verifică <strong>înainte</strong> de fiecare trecere. Cât timp e adevărată, pașii se repetă. Când devine falsă, structura se termină.</p>
-<p>Dacă e falsă de la început, pașii nu se execută <mark>niciodată</mark>. Pașii trebuie să schimbe ceva din condiție, altfel repetiția nu se oprește: <mark>buclă infinită</mark>.</p>
-<p>În Scratch, blocul <strong>repetă până când</strong> verifică și el condiția înainte, dar se oprește când ea devine <em>adevărată</em>.</p>
-<figure class="captura"><a href="../algoritmi-vi/img/scratch-pana-cand.webp" target="_blank"><img src="../algoritmi-vi/img/scratch-pana-cand.webp" alt="Scratch: n setat la 17, repetă până când n &lt; 5 cu modifică n cu -5 în interior; pe scenă n = 2" width="760" height="325" loading="lazy"></a>
-<figcaption>„cât timp n ≥ 5 execută n ← n - 5” scris în Scratch: <strong>repetă până când</strong> primește condiția inversă, <code>n &lt; 5</code>. Pentru n = 17 rezultatul e <b>2</b>.</figcaption></figure>`,
-qs:[
- {t:'tf',q:'La „cât timp”, dacă condiția e falsă de la început, pașii se execută o dată.',ok:false,why:'Fals. Condiția se verifică înainte de pași. Dacă e falsă de la început, se sare direct după ■, iar pașii se execută de 0 ori.'},
- {t:'choice',q:'Ce se afișează?'+P('n ← 17\ncât timp n ≥ 5 execută\n   n ← n - 5\n■\nscrie n'),o:['2','7','0','17'],ok:0,why:'n scade: 17, 12, 7, 2. La 2, condiția 2 ≥ 5 e falsă și repetiția se oprește. Ai scăzut de 3 ori, iar 2 e restul împărțirii lui 17 la 5.'},
- {t:'choice',q:'Ce se afișează?'+P('x ← 1\ncât timp x < 20 execută\n   x ← x * 3\n■\nscrie x'),o:['27','9','20','81'],ok:0,why:'x devine 3, apoi 9, apoi 27. La 27, condiția 27 < 20 e falsă și repetiția se oprește. Se afișează 27, nu ultima valoare mai mică decât 20.'},
- {t:'choice',q:'Care algoritm nu se oprește niciodată?',o:['a ← 5; cât timp a > 0 execută a ← a + 1 ■','a ← 5; cât timp a > 0 execută a ← a - 1 ■','a ← 0; cât timp a > 0 execută a ← a + 1 ■','a ← 5; cât timp a > 9 execută a ← a + 1 ■'],ok:0,why:'Dacă a pornește de la 5 și tot crește, a > 0 rămâne adevărată mereu. În celelalte, a ajunge la 0 sau condiția e falsă de la început.'},
- {t:'match',q:'Leagă fiecare situație de ce se întâmplă.',pairs:[['„cât timp”, condiția adevărată','pașii se execută încă o dată'],['„cât timp”, condiția falsă de la început','pașii nu se execută deloc'],['pașii nu schimbă nimic din condiție','repetiția nu se oprește'],['„repetă până când” din Scratch, condiția adevărată','repetiția se oprește']],why:'Toate se lămuresc cu o întrebare: când se verifică condiția și ce valoare are atunci?'}
-]},
-{t:'Repetă până când: testul la final',lectii:[22],continuturi:['Structura repetitivă condiționată posterior'],text:`
-<p>La structura <mark>condiționată posterior</mark>, pașii vin întâi, iar condiția se verifică <strong>după</strong> ei:</p>
-${P('repetă\n   pași\npână când condiție')}
-<p>De aceea pașii se execută <mark>cel puțin o dată</mark>. Repetiția continuă cât timp condiția e falsă și se oprește când devine <mark>adevărată</mark>.</p>
-<p>E utilă când verifici un răspuns: ceri o notă și o ceri din nou până când e între 1 și 10.</p>
-<p>Atenție: Scratch nu are un bloc cu testul la final. Blocul lui <em>repetă până când</em> verifică înainte de pași.</p>
-<figure class="captura"><a href="../algoritmi-vi/img/scratch-test-final.webp" target="_blank"><img src="../algoritmi-vi/img/scratch-test-final.webp" alt="Scratch: x setat la 1, apoi setează x la x * 2 o dată înainte, încadrat, apoi repetă până când x &gt; 20; pe scenă x = 32" width="760" height="325" loading="lazy"></a>
-<figcaption>Testul la final se poate imita: pui pașii <b>o dată înainte</b>, apoi <strong>repetă până când</strong>. Pentru x = 1 rezultatul e <b>32</b>, ca la „repetă x ← x * 2 până când x &gt; 20”.</figcaption></figure>`,
-qs:[
- {t:'tf',q:'La „repetă … până când”, pașii se execută cel puțin o dată.',ok:true,why:'Adevărat. Condiția se verifică abia după pași, deci prima trecere are loc mereu.'},
- {t:'choice',q:'Ce se afișează?'+P('x ← 1\nrepetă\n   x ← x * 2\npână când x > 20\nscrie x'),o:['32','16','20','64'],ok:0,why:'x devine 2, 4, 8, 16, 32. Abia 32 > 20 e adevărat, deci repetiția se oprește la 32.'},
- {t:'choice',q:'Ce se afișează?'+P('x ← 100\nrepetă\n   x ← x * 2\npână când x > 20\nscrie x'),o:['200','100','20','400'],ok:0,why:'Pașii se execută întâi: x devine 200. Apoi 200 > 20 e adevărat și repetiția se oprește. Condiția era adevărată de la început, dar se verifică abia la final.'},
- {t:'choice',q:'Ceri o notă până când e corectă. Ce scrii după „până când”?',o:['nota ≥ 1 și nota ≤ 10','nota < 1 sau nota > 10','nota = 10','nota ≥ 5'],ok:0,why:'După „până când” scrii condiția de oprire, adică nota bună: între 1 și 10. A doua variantă e condiția de a repeta, bună pentru „cât timp”, nu aici.'},
- {t:'classify',q:'Test la început sau test la final?',cats:['Test la început (cât timp)','Test la final (repetă … până când)'],items:[['Pașii pot să nu se execute deloc',0],['Pașii se execută cel puțin o dată',1],['Se oprește când condiția devine falsă',0],['Se oprește când condiția devine adevărată',1]],why:'Diferențele vin din locul testului și din ce înseamnă condiția: la „cât timp” e condiția de a continua, la „până când” e condiția de oprire.'}
-]},
-{t:'Trei structuri, o alegere',lectii:[23],continuturi:['Structura repetitivă cu contor','Structura repetitivă condiționată anterior','Structura repetitivă condiționată posterior'],text:`
-<p>Ai acum trei <mark>structuri repetitive</mark>:</p>
-<ul>
-<li><strong>cu contor</strong> (<em>pentru</em>): știi dinainte de câte ori repeți;</li>
-<li><strong>condiționată anterior</strong> (<em>cât timp</em>): testul e la început, deci pașii se pot executa de 0 ori;</li>
-<li><strong>condiționată posterior</strong> (<em>repetă … până când</em>): testul e la final, deci pașii se execută cel puțin o dată.</li>
-</ul>
-<p>Aceeași problemă se poate rezolva, de multe ori, cu oricare dintre ele. Alegi structura care se potrivește cel mai <mark>firesc</mark> cu cerința: „de 10 ori”, „cât timp…”, „până când…”.</p>
-<figure class="captura"><a href="../algoritmi-vi/img/scratch-control.webp" target="_blank"><img src="../algoritmi-vi/img/scratch-control.webp" alt="Categoria Control din Scratch cu blocurile repetă 10, la infinit, dacă atunci, dacă atunci altfel, așteaptă până când și repetă până când; repetă 10 și repetă până când sunt încadrate" width="560" height="540" loading="lazy"></a>
-<figcaption>Categoria <b>Control</b> din Scratch: <em>repetă (10)</em> e structura cu contor, iar <em>repetă până când</em> are testul la început. Un bloc cu testul la final nu există.</figcaption></figure>`,
-qs:[
- {t:'tf',q:'Aceeași problemă poate fi rezolvată, de multe ori, cu mai multe structuri repetitive.',ok:true,why:'Adevărat. De exemplu, numerele de la 1 la 5 le poți afișa cu „pentru” sau cu „cât timp”, dacă ai grijă de contor.'},
- {t:'classify',q:'Ce structură se potrivește cel mai firesc?',cats:['Cu contor','Condiționată anterior','Condiționată posterior'],items:[['Afișezi de 10 ori „Bravo!”',0],['Aduni notele celor 25 de elevi',0],['Scazi 5 dintr-un număr cât timp mai poți',1],['Mergi înainte cât timp nu e un zid în față',1],['Ceri parola din nou până când e scrisă corect',2],['Arunci zarul până când iese 6',2]],why:'Număr cunoscut = contor. „Cât timp”, poate de 0 ori = test la început. Măcar o dată, apoi „până când” = test la final.'},
- {t:'choice',q:'Care algoritm afișează tot 1 2 3 4 5, ca „pentru i ← 1, 5 execută scrie i ■”?',o:['i ← 1; cât timp i ≤ 5 execută scrie i; i ← i + 1 ■','i ← 1; cât timp i < 5 execută scrie i; i ← i + 1 ■','i ← 0; cât timp i ≤ 5 execută scrie i; i ← i + 1 ■','i ← 1; cât timp i ≤ 5 execută scrie i ■'],ok:0,why:'La „cât timp”, contorul îl pornești, îl verifici și îl crești tu. Cu „&lt;” se oprește la 4, cu pornire de la 0 afișează și 0, iar fără i ← i + 1 nu se mai oprește.'},
- {t:'match',q:'Leagă fiecare structură de ce o deosebește.',pairs:[['pentru','numărul de treceri se știe dinainte'],['cât timp','testul e înaintea pașilor'],['repetă … până când','testul e după pași']],why:'Cu aceste trei deosebiri alegi repede structura potrivită.'},
- {t:'choice',q:'Citești numere până la primul 0, și sigur citești măcar unul. Ce structură folosești?',o:['repetă … până când','pentru i ← 1, 10','dacă … atunci … altfel'],ok:0,why:'Nu știi câte numere vin, dar măcar unul citești: test la final. „Pentru” ar citi fix 10 numere, iar decizia nu repetă nimic.'}
-]},
-{t:'Repetiția în blocuri grafice',lectii:[24],continuturi:['Modalități de reprezentare a structurilor repetitive prin blocuri grafice'],text:`
-<p>Un algoritm se poate desena ca <mark>schemă logică</mark>, din <mark>blocuri grafice</mark> legate cu săgeți:</p>
-<ul>
-<li><strong>ovalul</strong>: START și STOP;</li>
+/* ================= 1. Recapitulez și pornesc aplicația (lecțiile 17-18) ================= */
+{t:'Recapitulez și pornesc aplicația',lectii:[17,18],continuturi:[C.interfata,C.instrumente],
+ obiectiv:'știi ce e un algoritm, deosebești datele de intrare de rezultat, recunoști secvența și decizia și rulezi primul tău script într-o aplicație ca Scratch.',
+ pasi:[
+  {t:'Ce este un algoritm',
+   text:`<p>Un <mark>algoritm</mark> este un șir de <strong>pași clari</strong>, făcuți <strong>în ordine</strong>, care rezolvă o problemă.</p>
+<p>Clar înseamnă că oricine îi citește face exact același lucru. În ordine înseamnă că nu poți sări și nu poți amesteca pașii: nu poți turna ceaiul înainte să fiarbă apa.</p>
+<p>Un <strong>program</strong> este un algoritm scris pentru calculator, într-o limbă pe care calculatorul o înțelege.</p>`,
+   exemplu:`<p>Problema: aria unui dreptunghi cu lungimea 5 și lățimea 3.</p><ol><li>Citești lungimea: 5.</li><li>Citești lățimea: 3.</li><li>Calculezi aria: 5 × 3 = 15.</li><li>Scrii rezultatul: 15.</li></ol>`,
+   altfel:`<p>Gândește-te la o rețetă de clătite. Are pași clari („pune 2 ouă”), într-o ordine („amesteci, apoi prăjești”) și un scop: clătitele. Rețeta e algoritmul, iar tu ești cel care îl execută.</p>`,
+   incearca:{t:'choice',q:'Ce este un algoritm?',o:['Pași clari, în ordine, care rezolvă o problemă','Orice program instalat pe un calculator','O listă de numere scrise fără nicio ordine','Un desen făcut într-o aplicație grafică'],ok:0,ajutor:'Recitește prima propoziție a pasului: trei cuvinte-cheie, „pași”, „ordine”, „problemă”.',why:'Algoritmul e rețeta: pașii, ordinea lor și un scop. Programul e doar un algoritm scris pentru calculator.'},
+   inca:[
+    {t:'order',q:'Pune în ordine pașii algoritmului pentru perimetrul unui pătrat.',items:['Citești latura pătratului','Calculezi perimetrul: 4 × latura','Scrii perimetrul'],ajutor:'Nu poți calcula nimic până nu știi latura.',why:'Întâi primești datele, apoi calculezi, apoi afișezi rezultatul.'},
+    {t:'tf',q:'Pașii unui algoritm se pot face în orice ordine, rezultatul iese la fel.',ok:false,ajutor:'Gândește-te la ceai: poți turna apa înainte să fiarbă?',why:'Fals. Ordinea face parte din algoritm. Schimbată, rezultatul iese greșit sau nu iese deloc.'}
+   ]},
+  {t:'Datele de intrare și rezultatul',
+   text:`<p>Orice algoritm primește ceva la început și dă ceva la final:</p>
+<ul><li><mark>datele de intrare</mark> sunt ce primești (citești) la început;</li>
+<li><mark>rezultatul</mark>, numit și <strong>date de ieșire</strong>, e ce afișezi (scrii) la final.</li></ul>
+<p><strong>Strategia</strong> când citești o problemă:</p>
+<ol><li>Ce primesc? Acelea sunt datele de intrare.</li><li>Ce trebuie să aflu? Acela e rezultatul.</li><li>Ce pași mă duc de la unul la altul?</li></ol>`,
+   exemplu:`<p>„Citește prețul unui caiet și numărul de caiete. Afișează cât plătești.”</p><ul><li>Date de intrare: prețul unui caiet, numărul de caiete.</li><li>Rezultat: suma de plată.</li><li>Pasul: suma = preț × număr.</li></ul>`,
+   incearca:{t:'classify',q:'Problema: „Citește vârstele a doi frați. Afișează suma și diferența vârstelor.” Ce sunt?',cats:['Date de intrare','Rezultat (date de ieșire)'],items:[['vârsta primului frate',0],['vârsta celui de-al doilea frate',0],['suma vârstelor',1],['diferența vârstelor',1]],ajutor:'Ce se citește la început? Ce se afișează la final?',why:'Vârstele le primești la început. Suma și diferența le calculezi și le afișezi.'},
+   inca:[
+    {t:'choice',q:'„Citește două note și afișează media lor.” Care e rezultatul?',o:['Media celor două note','Prima notă','A doua notă','Amândouă notele'],ok:0,ajutor:'Rezultatul e ce se afișează la final.',why:'Notele sunt datele de intrare. Media e ce afișezi: rezultatul.'}
+   ]},
+  {t:'Secvența și decizia',
+   text:`<p>Pașii unui algoritm se leagă în câteva feluri, numite <mark>structuri</mark>. Pe două le știi:</p>
+<ul><li><mark>secvența</mark>: pașii se fac unul după altul, mereu, toți;</li>
+<li><mark>decizia</mark>: <em>dacă</em> o condiție e adevărată, faci un lucru, <em>altfel</em> faci alt lucru. Se face <strong>doar una</strong> dintre cele două ramuri.</li></ul>
+<p>În pseudocod, decizia se scrie așa:</p>
+${pre('dacă plouă atunci\n   iei umbrela\naltfel\n   iei șapca\n■')}
+<p>Semnul <code>■</code> arată unde se termină structura.</p>`,
+   altfel:`<p>Secvența e ca drumul spre școală: ieși din casă, mergi până la colț, treci strada. Decizia e ca o răscruce: dacă e verde, treci; altfel aștepți. Nu le faci pe amândouă.</p>`,
+   incearca:{t:'classify',q:'Secvență sau decizie?',cats:['Secvență','Decizie'],items:[['Pui ghiozdanul în spate, apoi ieși pe ușă',0],['Dacă plouă, iei umbrela, altfel iei șapca',1],['Citești un număr, apoi îl dublezi',0],['Dacă nota e cel puțin 5, scrii „promovat”',1]],ajutor:'Caută cuvântul „dacă”.',why:'Secvența face pașii mereu, unul după altul. Decizia alege un drum după o condiție.'},
+   inca:[
+    {t:'tf',q:'La o decizie se execută ambele ramuri, și „atunci”, și „altfel”.',ok:false,ajutor:'Poți lua și umbrela, și șapca, după aceeași regulă?',why:'Fals. Condiția alege o singură ramură: „atunci” când e adevărată, „altfel” când e falsă.'}
+   ]},
+  {t:'Aplicația: zona cu blocuri și zona de cod',
+   text:`<p>Algoritmii îi construim într-o <mark>aplicație de exersare a algoritmilor</mark>. Noi folosim <strong>Scratch</strong>, în care pașii sunt <strong>blocuri colorate</strong>.</p>
+<ul><li>În stânga e <mark>zona cu blocuri</mark>. Blocurile sunt pe <strong>categorii</strong>: Mișcare, Aspect, Control, Variabile…</li>
+<li>În mijloc e <mark>zona de cod</mark>. Aici <strong>tragi</strong> blocurile cu mouse-ul și le lipești unul sub altul. Se îmbină singure când ajung aproape.</li></ul>
+${fig('scratch-zone-cod.webp',640,311,'Editorul Scratch în română: în stânga categoriile și blocurile, încadrate ca zona cu blocuri, în mijloc zona de cod cu un script mic','În stânga, <b>zona cu blocuri</b>: categoriile și blocurile lor. În mijloc, <b>zona de cod</b>, unde îmbini blocurile.')}`,
+   exemplu:`<p>Vrei ca pisica să meargă. Dai clic pe categoria <b>Mișcare</b>, prinzi blocul <em>mergi (10) pași</em> și îl tragi în zona de cod, sub blocul galben de start. În cercul alb poți scrie alt număr, de exemplu 50.</p>`,
+   incearca:{t:'choice',q:'Unde îmbini blocurile ca să construiești algoritmul?',o:['În zona de cod','În zona cu blocuri','Pe scenă','În bara de sus a browserului'],ok:0,ajutor:'Zona cu blocuri e „raftul” de unde iei. Unde le așezi?',why:'Din zona cu blocuri iei, în zona de cod construiești.'},
+   inca:[
+    {t:'choice',q:'În ce categorie găsești blocul „mergi (10) pași”?',o:['Mișcare','Aspect','Sunet','Control'],ok:0,ajutor:'Uită-te în captură: care categorie e deschisă și ce blocuri are?',why:'Blocurile care mută personajul sunt în categoria Mișcare.'}
+   ]},
+  {t:'Scena, steagul verde și semnul roșu',
+   text:`<p>În dreapta e <mark>scena</mark>: acolo vezi ce face personajul (pisica).</p>
+<ul><li>Primul bloc al scriptului e <em>când se dă click pe</em> <strong>steag</strong>, din categoria Evenimente.</li>
+<li><mark>Steagul verde</mark>, deasupra scenei, pornește algoritmul.</li>
+<li><mark>Semnul roșu</mark> (Stop) îl oprește, oricând.</li></ul>
+${fig('scratch-scena-steag.webp',490,410,'Scena Scratch cu pisica; deasupra ei steagul verde și semnul roșu, fiecare încadrat și etichetat','Deasupra scenei, <b>steagul verde</b> pornește algoritmul, iar <b>semnul roșu</b> (Stop) îl oprește.')}`,
+   exemplu:`<p>Scriptul din captura de la pasul anterior:</p>${pre('când se dă click pe steag\nmergi 10 pași\nspune Salut! pentru 2 secunde')}<p>Apeși steagul verde: pisica face 10 pași și spune „Salut!”.</p>`,
+   incearca:{t:'choice',q:'Algoritmul pornit în Scratch nu se mai oprește. Ce apeși?',o:['Semnul roșu de oprire','Steagul verde','Încă un bloc de mișcare','Nimic, se oprește singur'],ok:0,ajutor:'Unul pornește, celălalt oprește.',why:'Semnul roșu oprește tot ce rulează. Steagul verde l-ar porni din nou de la început.'},
+   inca:[
+    {t:'match',q:'Leagă fiecare parte a aplicației de rolul ei.',pairs:[['Zona cu blocuri','de aici alegi instrucțiunile, pe categorii'],['Zona de cod','aici îmbini blocurile în algoritm'],['Scena','aici vezi ce face personajul'],['Steagul verde','pornește algoritmul']],ajutor:'Alegi, îmbini, pornești, privești.',why:'Alegi blocuri, le îmbini, pornești și urmărești rezultatul pe scenă.'}
+   ]}
+ ],
+ atelier:{t:'scratch',titlu:'Primul tău script',
+  intro:`<p>Mai jos e un editor ca Scratch. Blocurile sunt deja îmbinate; tu scrii numerele și textul în <strong>câmpurile albe</strong>. <strong>Sarcina:</strong> pisica (săgeata portocalie) face <b>50 de pași</b> și spune <b>Salut!</b>. Apasă <b>Rulează</b> ca să vezi scena, apoi <b>Rulează testele</b>.</p>`,
+  q:'Fă pisica să meargă 50 de pași și să spună „Salut!”.',start:{x:-120,y:0,dir:90},
+  prog:[{b:'mergi',n:{e:''}},{b:'spune',x:{e:'',text:true}}],
+  teste:[{ce:'Pisica a mers 50 de pași spre dreapta',f:st=>Math.round(st.x-st.x0)===50,msg:'Pisica n-a ajuns unde trebuie: în primul câmp scrie numărul de pași, 50.'},
+   {ce:'Pisica spune „Salut!”',f:st=>String(st.spus).trim().toLowerCase().replace(/[!.]/g,'')==='salut',msg:'În câmpul blocului „spune” scrie Salut!'}],
+  sol:['50','Salut!'],gresit:['5','Salut!'],ajutor:'Primul câmp alb: câți pași. Al doilea: ce spune pisica.',
+  why:'Ai construit și ai rulat un script: blocurile se execută de sus în jos, în ordine.',
+  inca:[{t:'scratch',q:'Încă una: cu <b>două</b> blocuri „mergi”, fă pisica să ajungă la <b>120 de pași</b> de locul de pornire. Niciun câmp nu are voie să fie 0.',start:{x:-120,y:0,dir:90},
+   prog:[{b:'mergi',n:{e:''}},{b:'mergi',n:{e:''}}],
+   teste:[{ce:'Pisica e la 120 de pași de pornire',f:st=>Math.round(st.x-st.x0)===120,msg:'Adună cei doi pași: trebuie să dea 120.'},
+    {ce:'Ambele blocuri mută pisica (niciun câmp 0)',f:st=>st.sl.every(v=>Number(v)!==0),msg:'Fiecare bloc trebuie să facă măcar un pas.'}],
+   sol:['60','60'],gresit:['60','50'],ajutor:'Două numere care adunate dau 120, de exemplu 100 și 20.',why:'Blocurile se execută unul după altul, deci pașii se adună: secvența.'}]},
+ qs:[
+  {t:'choice',q:'Ce este un program?',o:['Un algoritm scris pentru calculator','Orice listă de numere','Un desen de pe scenă','O categorie de blocuri'],ok:0,why:'Programul e un algoritm scris într-o limbă pe care calculatorul o înțelege.'},
+  {t:'classify',q:'Secvență sau decizie?',cats:['Secvență','Decizie'],items:[['Speli mâinile, apoi te așezi la masă',0],['Dacă e cald, deschizi geamul',1],['Scrii numele, apoi scrii clasa',0],['Dacă ai terminat tema, te joci, altfel mai lucrezi',1]],why:'Secvența face pașii mereu, unul după altul. Decizia alege un drum după o condiție.'},
+  {t:'choice',q:'Problema: „Citește lungimea și lățimea unui dreptunghi și afișează aria.” Care sunt datele de intrare?',o:['Lungimea și lățimea','Aria','Lungimea, lățimea și aria','Doar lungimea'],ok:0,ajutor:'Ce primești la început?',why:'Datele de intrare le primești la început: lungimea și lățimea. Aria e rezultatul, adică data de ieșire.'},
+  {t:'match',q:'Leagă fiecare parte a aplicației de rolul ei.',pairs:[['Zona cu blocuri','de aici alegi instrucțiunile, pe categorii'],['Zona de cod','aici îmbini blocurile în algoritm'],['Scena','aici vezi ce face personajul'],['Semnul roșu','oprește algoritmul']],why:'Alegi blocuri, le îmbini, pornești și urmărești rezultatul pe scenă; semnul roșu oprește tot.'},
+  {t:'choice',q:'Cum pornești algoritmul din zona de cod?',o:['Apeși steagul verde de deasupra scenei','Apeși semnul roșu','Tragi încă un bloc în zona de cod','Închizi și redeschizi aplicația'],ok:0,why:'Steagul verde pornește scriptul care începe cu „când se dă click pe steag”.'}
+ ]},
+
+/* ================= 2. De ce repetăm (lecția 19) ================= */
+{t:'De ce repetăm',lectii:[19],continuturi:[C.etape],
+ obiectiv:'desenezi un poligon regulat cu blocul „repetă”, calculezi unghiul de rotire cu 360 : n și parcurgi etapele unui exercițiu: cerință, construiești, rulezi, verifici.',
+ pasi:[
+  {t:'Rotirea personajului',
+   text:`<p>Blocul <em>rotește-te ↻ (90) grade</em> întoarce personajul spre dreapta, pe loc.</p>
+<ul><li><strong>90 de grade</strong> e un sfert de tură: un colț de pătrat.</li>
+<li><strong>180 de grade</strong> e o jumătate de tură: te întorci cu spatele.</li>
+<li><strong>360 de grade</strong> e o tură completă: ajungi cu fața exact unde erai.</li></ul>
+<p>Ca personajul să lase urmă când merge, pui din categoria <strong>Stilou</strong> blocul <em>stilou jos</em>. Blocul <em>șterge tot</em> curăță scena.</p>`,
+   exemplu:`${pre('stilou jos\nmergi 100 pași\nrotește-te ↻ 90 grade\nmergi 100 pași')}<p>Pe scenă apare un colț în formă de L: o linie spre dreapta, apoi una în jos.</p>`,
+   incearca:{t:'choice',q:'Câte grade are o tură completă?',o:['360','90','180','100'],ok:0,ajutor:'După o tură completă ai fața exact unde o aveai.',why:'O tură completă are 360 de grade: patru sferturi de câte 90.'},
+   inca:[
+    {t:'choice',q:'Cu câte grade te rotești ca să te întorci cu spatele?',o:['180','90','360','45'],ok:0,ajutor:'Cu spatele = jumătate de tură.',why:'Jumătate din 360 este 180.'}
+   ]},
+  {t:'Pătratul, fără repetiție',
+   text:`<p>Vrei ca personajul să deseneze un <mark>pătrat</mark> cu latura de 100 de pași. Pătratul are 4 laturi și 4 colțuri. La fiecare latură faci același lucru:</p>
+<ol><li>mergi 100 de pași;</li><li>te rotești 90 de grade.</li></ol>
+<p>Fără altă unealtă, scrii perechea aceasta de <strong>4 ori</strong>: 8 blocuri. Merge, dar e lung, și e ușor să greșești un număr într-una dintre copii.</p>`,
+   exemplu:pre('mergi 100 pași\nrotește-te ↻ 90 grade\nmergi 100 pași\nrotește-te ↻ 90 grade\nmergi 100 pași\nrotește-te ↻ 90 grade\nmergi 100 pași\nrotește-te ↻ 90 grade'),
+   incearca:{t:'choice',q:'Ce se repetă când personajul desenează un pătrat?',o:['Mergi 100 de pași, apoi rotește-te 90 de grade','Doar rotește-te 90 de grade','Doar mergi 400 de pași','Pornește steagul verde de 4 ori'],ok:0,ajutor:'Ce faci la fiecare latură?',why:'Fiecare latură înseamnă același lucru: mergi, apoi te rotești la colț. Perechea se repetă de 4 ori.'}},
+  {t:'Blocul „repetă”',
+   text:`<p>Blocul <mark>repetă (4)</mark>, din categoria <strong>Control</strong>, are o „gură”. Blocurile puse <strong>în gura lui</strong> se execută de câte ori scrie în cerc, apoi scriptul merge mai departe, cu blocul de sub el.</p>
+<p>Pătratul devine: <em>repetă (4)</em>, iar în gură <em>mergi 100 pași</em> și <em>rotește-te 90 grade</em>. Scrii perechea <strong>o singură dată</strong>.</p>
+${fig('scratch-patrat.webp',760,391,'Scratch: scriptul cu repetă 4 care conține mergi 100 pași și rotește-te 90 grade, iar pe scenă pătratul albastru desenat','Pătratul în Scratch: perechea pusă o singură dată în blocul <strong>repetă (4)</strong>. Blocurile verzi sunt din categoria <b>Stilou</b>.')}`,
+   exemplu:pre('repetă 4\n   mergi 100 pași\n   rotește-te ↻ 90 grade'),
+   altfel:`<p>E ca refrenul unui cântec: pe foaie scrie o singură dată și lângă el „× 4”. Tu îl cânți de 4 ori. Blocul repetă e acel „× 4”.</p>`,
+   incearca:{t:'choice',q:'Cu ce număr completezi blocul „repetă ( )” ca să iasă un pătrat?',o:['4','90','100','360'],ok:0,ajutor:'Câte laturi are pătratul?',why:'Pătratul are 4 laturi, deci perechea se repetă de 4 ori. 90 e unghiul, iar 100 e lungimea laturii.'},
+   inca:[
+    {t:'tf',q:'Un bloc pus sub blocul „repetă”, în afara gurii lui, se repetă și el.',ok:false,ajutor:'Care blocuri se repetă: cele din gură sau toate?',why:'Fals. Se repetă doar blocurile din gura lui. Cel de dedesubt se execută o dată, după ce repetiția s-a terminat.'}
+   ]},
+  {t:'Orice poligon regulat: 360 : n',
+   text:`<p>Un <mark>poligon regulat</mark> are toate laturile egale și toate colțurile egale. Cu n laturi, <strong>strategia</strong> e:</p>
+<ol><li>numeri laturile, n: scrii n în <em>repetă (n)</em>;</li>
+<li>calculezi rotirea: <mark>360 : n</mark> grade, pentru că după toate colțurile ai făcut o tură completă;</li>
+<li>alegi o lungime a laturii, aceeași la fiecare pas.</li></ol>
+${tab(['Figura','n','Rotirea'],[['triunghi echilateral','3','120'],['pătrat','4','90'],['pentagon','5','72'],['hexagon','6','60'],['octogon','8','45']])}`,
+   altfel:`<p>La triunghi, colțul are 60°, dar personajul se rotește cu 120°. De ce? El mergea înainte și trebuie să se întoarcă mult ca să apuce pe latura următoare: rotirea e unghiul <em>din afara</em> colțului, 180 − 60 = 120. Regula 360 : n îți dă direct rotirea bună.</p>`,
+   incearca:{t:'choice',q:'Pentru un triunghi echilateral, cu câte grade se rotește personajul la fiecare colț?',o:['120','60','90','180'],ok:0,ajutor:'360 : 3 = ?',why:'360 : 3 = 120. Unghiul triunghiului e de 60°, dar personajul se întoarce cu unghiul din afara colțului.'},
+   inca:[
+    {t:'choice',q:'Un pentagon regulat are 5 laturi. Cu câte grade se rotește personajul la fiecare colț?',o:['72','60','90','108'],ok:0,ajutor:'360 : 5 = ?',why:'360 : 5 = 72.'},
+    {t:'choice',q:'Un octogon regulat are 8 laturi. Ce scrii în „repetă ( )” și în „rotește-te ( ) grade”?',o:['repetă 8, rotește-te 45','repetă 45, rotește-te 8','repetă 8, rotește-te 90','repetă 4, rotește-te 45'],ok:0,ajutor:'În „repetă” scrii câte laturi; rotirea e 360 : 8.',why:'8 laturi, deci repetă 8. Rotirea: 360 : 8 = 45.'}
+   ]},
+  {t:'Etapele unui exercițiu algoritmic',
+   text:`<p>Orice exercițiu în aplicație are aceleași patru <mark>etape</mark>:</p>
+<ol><li><strong>citești cerința</strong> și stabilești datele de intrare și rezultatul;</li>
+<li><strong>construiești</strong> algoritmul din blocuri;</li>
+<li><strong>rulezi</strong> (steagul verde);</li>
+<li><strong>verifici</strong> rezultatul pe mai multe exemple și corectezi ce nu merge.</li></ol>
+<p>La a patra etapă nu te grăbi: un algoritm care merge pe un exemplu poate greși pe altul.</p>`,
+   exemplu:`<p>Cerința: un hexagon cu latura 80. (1) n = 6, rotirea 360 : 6 = 60. (2) <em>repetă 6</em>, în gură <em>mergi 80</em> și <em>rotește-te 60</em>. (3) Steagul verde. (4) S-a închis figura? Are 6 laturi? Dacă ai scris 90 în loc de 60, figura nu se închide și corectezi.</p>`,
+   incearca:{t:'order',q:'Pune în ordine etapele unui exercițiu algoritmic.',items:['Citești cerința și stabilești datele și rezultatul','Construiești algoritmul din blocuri','Rulezi algoritmul','Verifici rezultatul și corectezi'],ajutor:'Nu poți construi până nu știi ce ți se cere. Nu poți verifica până nu ai rulat.',why:'Nu poți construi până nu știi ce ți se cere. Nu poți verifica până nu ai rulat.'},
+   inca:[
+    {t:'tf',q:'Dacă algoritmul a mers o dată, pe un singur exemplu, sigur e corect.',ok:false,ajutor:'Recitește ultima propoziție a pasului.',why:'Fals. Un singur exemplu poate ascunde o greșeală. Îl verifici pe mai multe date.'}
+   ]}
+ ],
+ atelier:{t:'scratch',titlu:'Hexagonul',
+  intro:`<p>Blocurile sunt îmbinate ca în Scratch. <strong>Sarcina:</strong> desenează un <b>hexagon regulat</b> (6 laturi), cu latura între 30 și 100 de pași. Folosește strategia: câte repetări, ce rotire (360 : n), ce lungime. Apasă <b>Rulează</b> și privește scena, apoi <b>Rulează testele</b>.</p>`,
+  q:'Desenează un hexagon regulat.',start:{x:-40,y:80,dir:90},
+  prog:[{b:'sterge'},{b:'stilou'},{b:'repeta',n:{e:''},c:[{b:'mergi',n:{e:''}},{b:'roteste',n:{e:''}}]}],
+  teste:[{ce:'Figura are 6 laturi',f:st=>st.laturi===6,msg:'Numără laturile desenate: hexagonul are 6. Ce ai scris în „repetă”?'},
+   {ce:'Latura are între 30 și 100 de pași',f:st=>{const n=Number(st.sl[1]);return n>=30&&n<=100},msg:'Alege o latură între 30 și 100, ca figura să încapă pe scenă.'},
+   {ce:'Personajul face exact o tură completă (6 × rotirea = 360)',f:st=>Math.abs(st.rot-360)<0.01,msg:'Rotirea nu e bună: la hexagon e 360 : 6.'},
+   {ce:'Figura se închide (personajul revine de unde a plecat)',f:st=>st.inchis,msg:'Figura nu se închide: verifică rotirea.'}],
+  sol:['6','80','60'],gresit:['6','80','90'],ajutor:'repetă 6; rotirea = 360 : 6.',
+  why:'repetă 6, latura aceeași, rotirea 360 : 6 = 60: după 6 colțuri personajul a făcut o tură completă și figura se închide.',
+  inca:[
+   {t:'scratch',q:'Încă una: un <b>triunghi echilateral</b> cu latura 100.',start:{x:-50,y:60,dir:90},
+    prog:[{b:'sterge'},{b:'stilou'},{b:'repeta',n:{e:''},c:[{b:'mergi',n:{e:''}},{b:'roteste',n:{e:''}}]}],
+    teste:[{ce:'Figura are 3 laturi',f:st=>st.laturi===3,msg:'Triunghiul are 3 laturi.'},
+     {ce:'Latura are 100 de pași',f:st=>Number(st.sl[1])===100,msg:'Latura cerută e 100.'},
+     {ce:'Figura se închide',f:st=>st.inchis&&Math.abs(st.rot-360)<0.01,msg:'Figura nu se închide: rotirea e 360 : 3, nu unghiul triunghiului.'}],
+    sol:['3','100','120'],gresit:['3','100','60'],ajutor:'Rotirea NU e 60 (unghiul triunghiului), ci 360 : 3.',why:'360 : 3 = 120: personajul se întoarce cu unghiul din afara colțului.'},
+   {t:'scratch',q:'Și încă una: un <b>octogon</b> regulat (8 laturi), cu latura 50.',start:{x:-25,y:110,dir:90},
+    prog:[{b:'sterge'},{b:'stilou'},{b:'repeta',n:{e:''},c:[{b:'mergi',n:{e:''}},{b:'roteste',n:{e:''}}]}],
+    teste:[{ce:'Figura are 8 laturi',f:st=>st.laturi===8,msg:'Octogonul are 8 laturi.'},
+     {ce:'Latura are 50 de pași',f:st=>Number(st.sl[1])===50,msg:'Latura cerută e 50.'},
+     {ce:'Figura se închide după o tură completă',f:st=>st.inchis&&Math.abs(st.rot-360)<0.01,msg:'Rotirea: 360 : 8.'}],
+    sol:['8','50','45'],gresit:['8','50','40'],ajutor:'360 : 8 = ?',why:'repetă 8 și rotirea 360 : 8 = 45.'}
+  ]},
+ qs:[
+  {t:'choice',q:'De ce folosim blocul „repetă” la pătrat?',o:['Ca să scriem o singură dată pașii care se repetă','Ca pătratul să iasă mai mare','Ca personajul să meargă mai repede','Pentru că fără el pătratul nu se poate desena deloc'],ok:0,why:'Fără repetă se poate, dar scrii aceiași pași de 4 ori. Cu repetă îi scrii o dată.'},
+  {t:'choice',q:'Un hexagon regulat are 6 laturi. Cu câte grade se rotește personajul la fiecare colț?',o:['60','120','90','36'],ok:0,ajutor:'Strategia: 360 : n.',why:'360 : 6 = 60.'},
+  {t:'tf',q:'Blocurile din gura blocului „repetă (4)” se execută de 4 ori.',ok:true,why:'Adevărat. Tot ce e în gura lui se execută de câte ori scrie în cerc.'},
+  {t:'order',q:'Pune în ordine etapele exercițiului „desenează un pentagon”.',items:['Citești cerința: 5 laturi, rotirea 360 : 5','Construiești: repetă 5, mergi, rotește-te 72','Apeși steagul verde','Verifici dacă figura s-a închis și corectezi'],why:'Cerință, construcție, rulare, verificare, în această ordine.'},
+  {t:'tf',q:'La a patra etapă verifici rezultatul pe mai multe exemple, nu doar pe unul.',ok:true,why:'Adevărat. Un singur exemplu poate ascunde o greșeală.'}
+ ]},
+
+/* ================= 3. Repetiția cu contor (lecția 20) ================= */
+{t:'Repetiția cu contor',lectii:[20],continuturi:[C.contor],
+ obiectiv:'scrii și urmărești pas cu pas un algoritm cu „pentru i ← 1, n execută”, spui de câte ori se repetă și faci o sumă cu contor în Scratch.',
+ pasi:[
+  {t:'Variabila și atribuirea ←',
+   text:`<p>O <mark>variabilă</mark> e o cutie cu nume, de exemplu <code>s</code>, în care ții un număr. Numărul se poate schimba pe parcurs.</p>
+<p>Săgeata <code>←</code> se citește „primește”:</p>
+<ul><li><code>s ← 0</code>: s primește 0;</li>
+<li><code>s ← s + 3</code>: iei valoarea veche a lui s, aduni 3 și pui rezultatul înapoi în s.</li></ul>
+<p>În pseudocod, <code>*</code> înseamnă înmulțire: <code>a * 3</code> e „a ori 3”. În Scratch, <em>setează s la 0</em> face <code>s ← 0</code>, iar <em>modifică s cu 3</em> face <code>s ← s + 3</code>.</p>`,
+   exemplu:`${pre('s ← 5\ns ← s + 3')}<p>La început s = 5. Apoi s primește 5 + 3, adică <b>8</b>. Valoarea veche, 5, s-a pierdut.</p>`,
+   altfel:`<p>Gândește-te la pușculiță: <code>s ← 5</code> înseamnă „în pușculiță sunt 5 lei”. <code>s ← s + 3</code> înseamnă „mai pui 3 lei”: acum sunt 8. Nu faci o pușculiță nouă, schimbi ce e în ea.</p>`,
+   incearca:{t:'choice',q:'Cât valorează x la final?'+P('x ← 4\nx ← x + 1'),o:['5','4','1','41'],ok:0,ajutor:'Valoarea veche e 4. Adaugi 1.',why:'x primește 4 + 1 = 5.'},
+   inca:[
+    {t:'choice',q:'Cât valorează a la final?'+P('a ← 2\na ← a * 3'),o:['6','5','3','23'],ok:0,ajutor:'* înseamnă înmulțire.',why:'a primește 2 · 3 = 6.'},
+    {t:'choice',q:'Cât valorează s la final?'+P('s ← 0\ns ← s + 4\ns ← s + 5'),o:['9','5','4','0'],ok:0,ajutor:'Mergi rând cu rând: 0, apoi 4, apoi?',why:'s: 0, apoi 0 + 4 = 4, apoi 4 + 5 = 9.'}
+   ]},
+  {t:'pentru i ← 1, n execută',
+   text:`<p>Când știi dinainte <mark>de câte ori</mark> repeți, folosești structura <mark>cu contor</mark>:</p>
+${pre('pentru i ← 1, n execută\n   pași\n■')}
+<p><mark>Contorul</mark> <code>i</code> e o variabilă care ia pe rând valorile 1, 2, 3, …, n. Pentru <strong>fiecare</strong> valoare, pașii se execută o dată. Deci se execută de <strong>n</strong> ori. Pașii repetați se scriu puțin mai la dreapta, iar <code>■</code> arată unde se termină.</p>`,
+   exemplu:`${pre('pentru i ← 1, 3 execută\n   scrie i\n■')}<p>i ia valorile 1, 2, 3. Se afișează: <b>1 2 3</b>.</p>`,
+   altfel:`<p>E ca strigarea catalogului: profesorul numără de la 1 la 25 și pentru fiecare număr face același lucru, strigă elevul. Numărul care crește e contorul.</p>`,
+   incearca:{t:'tf',q:'Structura cu contor se folosește când știi dinainte de câte ori se repetă pașii.',ok:true,ajutor:'Recitește prima propoziție a pasului.',why:'Adevărat. Numărul de repetări e fixat de la început, de valoarea de început și de cea de final ale contorului.'},
+   inca:[
+    {t:'choice',q:'Ce se afișează?'+P('pentru i ← 1, 4 execută\n   scrie i\n■'),o:['1 2 3 4','4','1 2 3','0 1 2 3 4'],ok:0,ajutor:'i ia valorile de la 1 până la 4, inclusiv.',why:'Contorul ia valorile 1, 2, 3, 4, iar pentru fiecare se afișează i.'}
+   ]},
+  {t:'De câte ori? final − început + 1',
+   text:`<p>Contorul nu pornește mereu de la 1. În <code>pentru i ← 3, 7 execută</code> ia valorile 3, 4, 5, 6, 7.</p>
+<p>Câte sunt? Le poți număra pe degete: <strong>5</strong>. Sau folosești regula:</p>
+<p><mark>numărul de treceri = final − început + 1</mark> = 7 − 3 + 1 = 5.</p>
+<p>Greșeala des întâlnită e să faci doar 7 − 3 = 4 și să uiți că și 3, și 7 se numără.</p>`,
+   altfel:`<p>Gândește-te la un gard de la stâlpul 3 la stâlpul 7: stâlpii 3, 4, 5, 6, 7 sunt 5 stâlpi, deși 7 − 3 = 4. Primul stâlp se numără și el, de aici „+ 1”.</p>`,
+   incearca:{t:'choice',q:'De câte ori se afișează steluța?'+P("pentru i ← 3, 7 execută\n   scrie '*'\n■"),o:['5','4','7','3'],ok:0,ajutor:'final − început + 1.',why:'Contorul ia valorile 3, 4, 5, 6, 7: sunt 5 valori. 7 − 3 + 1 = 5.'},
+   inca:[
+    {t:'choice',q:'De câte ori se execută pașii în „pentru i ← 10, 12 execută”?',o:['3','2','12','22'],ok:0,ajutor:'Scrie valorile: 10, 11, …',why:'10, 11, 12: trei valori. 12 − 10 + 1 = 3.'}
+   ]},
+  {t:'Urmărești pas cu pas: tabelul',
+   text:`<p>Ca să afli ce face un algoritm cu repetiție, îl <mark>urmărești pas cu pas</mark> într-un tabel. <strong>Strategia</strong>:</p>
+<ol><li>faci câte o coloană pentru fiecare variabilă;</li>
+<li>pe primul rând scrii valorile <strong>de la început</strong>;</li>
+<li>la fiecare trecere adaugi un rând: întâi valoarea contorului, apoi calculezi cu valorile de pe rândul de deasupra;</li>
+<li>la final citești ce se afișează.</li></ol>`,
+   exemplu:`${pre('s ← 0\npentru i ← 1, 4 execută\n   s ← s + i\n■\nscrie s')}${tab(['Trecerea','i','s'],[['la început','–','0'],['1','1','0 + 1 = 1'],['2','2','1 + 2 = 3'],['3','3','3 + 3 = 6'],['4','4','6 + 4 = 10']])}<p>Se afișează <b>10</b>: suma 1 + 2 + 3 + 4.</p>`,
+   incearca:{t:'urmarire',q:'Completează tabelul. Primul rând e făcut.',cod:'s ← 0\npentru i ← 1, 3 execută\n   s ← s + i\n■\nscrie s',cols:['i','s'],start:['–','0'],rows:[['1','1'],['2','3'],['3','6']],dat:1,afis:'6',ajutor:'Pe fiecare rând: i crește cu 1, iar s nou = s de deasupra + i.',why:'s crește cu 1, apoi cu 2, apoi cu 3: 1, 3, 6.'},
+   inca:[
+    {t:'urmarire',q:'Completează tot tabelul.',cod:'p ← 1\npentru i ← 1, 4 execută\n   p ← p * 2\n■\nscrie p',cols:['i','p'],start:['–','1'],rows:[['1','2'],['2','4'],['3','8'],['4','16']],afis:'16',ajutor:'La fiecare trecere, p se dublează.',why:'p se dublează de 4 ori: 2, 4, 8, 16.'},
+    {t:'urmarire',q:'Și încă unul: contorul pornește de la 2.',cod:'k ← 0\npentru i ← 2, 5 execută\n   k ← k + 10\n■\nscrie k',cols:['i','k'],start:['–','0'],rows:[['2','10'],['3','20'],['4','30'],['5','40']],afis:'40',ajutor:'i ia valorile 2, 3, 4, 5. k crește de fiecare dată cu 10.',why:'Sunt 5 − 2 + 1 = 4 treceri, deci k = 4 × 10 = 40.'}
+   ]},
+  {t:'Contorul în Scratch',
+   text:`<p>În Scratch, blocul <em>repetă (10)</em> repetă de 10 ori, dar <strong>nu are un contor pe care să-l vezi</strong>. Dacă ai nevoie de el, îl faci tu, din categoria <strong>Variabile</strong>:</p>
+<ol><li>în categoria Variabile apeși butonul <b>Creează o variabilă</b>, scrii numele <code>i</code> și apeși OK; blocurile de mai jos apar apoi cu i în ele;</li>
+<li>înainte de repetă: <em>setează i la 1</em>;</li>
+<li>în gura lui repetă, la final: <em>modifică i cu 1</em>.</li></ol>
+<p>Așa i crește cu 1 la fiecare trecere, exact ca în <code>pentru i ← 1, 10 execută</code>.</p>
+${fig('scratch-repeta-10.webp',760,368,'Scratch: s și i setate la 0 și 1, apoi repetă 10 cu modifică s cu i și modifică i cu 1; pe scenă s = 55 și i = 11','Suma 1 + 2 + … + 10 în Scratch. Pe scenă se văd <b>s = 55</b> și <b>i = 11</b>: după ultima trecere i a mai crescut o dată.')}`,
+   incearca:{t:'choice',q:'Ce număr pui în blocul „repetă ( )” ca pașii să se execute la fel ca în „pentru i ← 1, 6 execută”?',o:['6','5','7','1'],ok:0,ajutor:'Câte valori ia contorul de la 1 la 6?',why:'Contorul ia valorile 1, 2, 3, 4, 5, 6: 6 treceri. Blocul „repetă (6)” face la fel.'},
+   inca:[
+    {t:'choice',q:'În captură, după „repetă (10)”, de ce se vede i = 11, nu 10?',o:['i a mai crescut o dată după ultima adunare','Scratch numără greșit uneori','Repetiția s-a făcut de 11 ori','i a pornit de la 2, nu de la 1'],ok:0,ajutor:'Care e ultimul bloc din gura lui repetă?',why:'La a zecea trecere s-a adunat i = 10, apoi „modifică i cu 1” l-a făcut 11. Repetiția s-a oprit după aceea.'}
+   ]}
+ ],
+ atelier:{t:'scratch',titlu:'Suma 1 + 2 + 3 + 4 + 5',
+  intro:`<p><strong>Sarcina:</strong> pisica spune suma numerelor de la 1 la 5. Completează blocurile ca în captura de la pasul 5: s pornește de la 0, contorul i de la 1, repetiția de câte ori trebuie, iar i crește cu 1. Privește variabilele pe scenă după <b>Rulează</b>.</p>`,
+  q:'Suma numerelor de la 1 la 5.',
+  prog:[{b:'set',v:'s',x:{e:''}},{b:'set',v:'i',x:{e:''}},{b:'repeta',n:{e:''},c:[{b:'schimba',v:'s',x:'i'},{b:'schimba',v:'i',x:{e:''}}]},{b:'spune',x:'s'}],
+  teste:[{ce:'La final s = 15',f:st=>st.v.s===15,msg:'Suma nu e 15. Verifică: s pornește de la 0? Câte treceri?'},
+   {ce:'Contorul i a luat valorile 1…5 (la final i = 6)',f:st=>st.v.i===6,msg:'i trebuie să pornească de la 1 și să crească cu 1, de 5 ori.'},
+   {ce:'Pisica spune 15',f:st=>String(st.spus)==='15',msg:'Pisica nu spune 15.'}],
+  sol:['0','1','5','1'],gresit:['1','1','5','1'],ajutor:'s de la 0, i de la 1, repetă 5, i crește cu 1.',
+  why:'s ← 0, i ← 1, apoi de 5 ori: s ← s + i și i ← i + 1. Se adună 1 + 2 + 3 + 4 + 5 = 15.',
+  inca:[{t:'scratch',q:'Încă una: suma numerelor de la <b>1 la 20</b>.',
+   prog:[{b:'set',v:'s',x:{e:''}},{b:'set',v:'i',x:{e:''}},{b:'repeta',n:{e:''},c:[{b:'schimba',v:'s',x:'i'},{b:'schimba',v:'i',x:{e:''}}]},{b:'spune',x:'s'}],
+   teste:[{ce:'La final s = 210',f:st=>st.v.s===210,msg:'Suma de la 1 la 20 e 210. Câte treceri ai pus?'},
+    {ce:'La final i = 21',f:st=>st.v.i===21,msg:'i trebuie să treacă prin 1…20.'}],
+   sol:['0','1','20','1'],gresit:['0','1','19','1'],ajutor:'De la 1 la 20 sunt 20 − 1 + 1 treceri.',why:'20 de treceri: 1 + 2 + … + 20 = 210.'}]},
+ qs:[
+  {t:'tf',q:'Contorul din „pentru i ← 1, n execută” ia pe rând valorile 1, 2, …, n.',ok:true,why:'Adevărat. Pentru fiecare valoare a contorului, pașii se execută o dată.'},
+  {t:'choice',q:'Ce se afișează?'+P('s ← 0\npentru i ← 1, 5 execută\n   s ← s + i\n■\nscrie s'),o:['15','5','10','20'],ok:0,ajutor:'Fă tabelul: i și s, rând cu rând.',why:'s: 1, 3, 6, 10, 15. Se afișează 15.'},
+  {t:'choice',q:'De câte ori se afișează steluța?'+P("pentru i ← 2, 9 execută\n   scrie '*'\n■"),o:['8','7','9','2'],ok:0,ajutor:'final − început + 1.',why:'9 − 2 + 1 = 8. Greșeala tipică: 9 − 2 = 7.'},
+  {t:'match',q:'Leagă fiecare parte a structurii de rolul ei.',pairs:[['pentru … execută','repetă pașii pentru fiecare valoare a contorului'],['i','contorul, care numără trecerile'],['1 și n','valoarea de început și valoarea de final'],['■','sfârșitul pașilor repetați']],why:'Ce se repetă, cine numără, de unde până unde și unde se termină.'},
+  {t:'choice',q:'Cât valorează x la final?'+P('x ← 10\nx ← x - 3\nx ← x * 2'),o:['14','7','20','4'],ok:0,ajutor:'Rând cu rând: 10, apoi 10 − 3, apoi dublu.',why:'x: 10, apoi 7, apoi 7 · 2 = 14.'},
+  {t:'choice',q:'Ce număr pui în „repetă ( )” din Scratch ca pașii să se execute la fel ca în „pentru i ← 1, 8 execută”?',o:['8','7','9','1'],ok:0,why:'Contorul ia 8 valori, deci repetă 8.'}
+ ]},
+
+/* ================= 4. Cât timp: testul la început (lecția 21) ================= */
+{t:'Cât timp: testul la început',lectii:[21],continuturi:[C.anterior],
+ obiectiv:'urmărești un algoritm cu „cât timp … execută”, spui de câte ori se repetă (chiar și 0 ori), recunoști o buclă infinită și îl scrii în Scratch cu condiția inversă.',
+ pasi:[
+  {t:'Condiția: adevărată sau falsă',
+   text:`<p>O <mark>condiție</mark> e o comparație care, pentru valorile de acum, e fie <strong>adevărată</strong>, fie <strong>falsă</strong>. Semnele:</p>
+${tab(['Semn','Se citește'],[['&lt;','mai mic decât'],['&gt;','mai mare decât'],['=','egal cu'],['≤','mai mic sau egal'],['≥','mai mare sau egal']])}
+<p>Aceeași condiție poate fi adevărată acum și falsă peste un pas, dacă variabila se schimbă.</p>`,
+   exemplu:`<p>Pentru n = 7: <b>n ≥ 5</b> e adevărată (7 e mai mare decât 5), iar <b>n &lt; 5</b> e falsă. Pentru n = 5: <b>n ≥ 5</b> e tot adevărată, pentru că „sau egal”.</p>`,
+   incearca:{t:'classify',q:'Pentru x = 12, condiția e adevărată sau falsă?',cats:['Adevărată','Falsă'],items:[['x > 10',0],['x < 5',1],['x = 12',0],['x ≤ 11',1]],ajutor:'Pune 12 în locul lui x și citește cu voce tare.',why:'12 > 10 da; 12 < 5 nu; 12 = 12 da; 12 ≤ 11 nu.'},
+   inca:[
+    {t:'tf',q:'Pentru n = 5, condiția n ≥ 5 e adevărată.',ok:true,ajutor:'≥ înseamnă „mai mare SAU egal”.',why:'Adevărat. 5 e egal cu 5, iar „sau egal” intră.'}
+   ]},
+  {t:'cât timp condiție execută',
+   text:`<p>Uneori nu știi de câte ori repeți, știi doar o <mark>condiție</mark>. Atunci folosești structura <mark>condiționată anterior</mark>:</p>
+${pre('cât timp condiție execută\n   pași\n■')}
+<p>Condiția se verifică <strong>înainte</strong> de fiecare trecere (de aceea „anterior”). Cât timp e adevărată, pașii se execută. Când devine falsă, structura se termină și algoritmul merge după <code>■</code>.</p>`,
+   exemplu:`${pre('n ← 17\ncât timp n ≥ 5 execută\n   n ← n - 5\n■\nscrie n')}${tab(['Testul','n ≥ 5 ?','n după pas'],[['1','17 ≥ 5 da','12'],['2','12 ≥ 5 da','7'],['3','7 ≥ 5 da','2'],['4','2 ≥ 5 nu','se oprește']])}<p>Se afișează <b>2</b>: e restul împărțirii lui 17 la 5.</p>`,
+   altfel:`<p>„Cât timp ți-e foame, mai iei o felie.” Înainte de fiecare felie te întrebi dacă ți-e foame. Când răspunsul e nu, te oprești.</p>`,
+   incearca:{t:'tf',q:'La „cât timp”, condiția se verifică înainte de fiecare trecere.',ok:true,ajutor:'„Anterior” înseamnă „înainte”.',why:'Adevărat. Întâi testul, apoi (dacă e adevărat) pașii.'},
+   inca:[
+    {t:'choice',q:'Ce se afișează?'+P('x ← 1\ncât timp x < 20 execută\n   x ← x * 3\n■\nscrie x'),o:['27','9','20','81'],ok:0,ajutor:'Fă tabelul: x devine 3, 9, … Când se oprește?',why:'x devine 3, 9, 27. La 27, condiția 27 < 20 e falsă și repetiția se oprește. Se afișează 27.'},
+    {t:'urmarire',q:'Completează tabelul. „da” = condiția e adevărată, „nu” = e falsă. Pe ultimul rând, testul e fals, iar n rămâne cum era.',cod:'n ← 17\ncât timp n ≥ 5 execută\n   n ← n - 5\n■\nscrie n',cap:'Testul',cols:['n ≥ 5 ?','n'],start:['–','17'],rows:[['da','12'],['da','7'],['da','2'],['nu','2']],afis:'2',ajutor:'Testezi cu n de pe rândul de deasupra. Dacă e da, scazi 5.',why:'17, 12, 7, 2: la 2 testul e fals și se afișează 2.'}
+   ]},
+  {t:'Zero treceri',
+   text:`<p>Pentru că testul e <strong>înainte</strong> de pași, se poate întâmpla ca pașii să nu se execute <mark>niciodată</mark>: dacă condiția e falsă chiar de la început, algoritmul sare direct după <code>■</code>.</p>
+<p>Deci la „cât timp” numărul de treceri poate fi 0, 1, 2 sau mai multe.</p>`,
+   exemplu:`${pre('a ← 0\ncât timp a > 0 execută\n   a ← a + 1\n■\nscrie a')}<p>Testul 0 &gt; 0 e fals de la început: pașii se fac de 0 ori. Se afișează <b>0</b>.</p>`,
+   incearca:{t:'tf',q:'La „cât timp”, dacă condiția e falsă de la început, pașii se execută o dată.',ok:false,ajutor:'Când se face testul: înainte sau după pași?',why:'Fals. Testul e înainte. Dacă e fals de la început, pașii se execută de 0 ori.'},
+   inca:[
+    {t:'choice',q:'De câte ori se execută pasul?'+P('n ← 3\ncât timp n > 10 execută\n   n ← n + 1\n■'),o:['0','1','7','8'],ok:0,ajutor:'Testează 3 > 10.',why:'3 > 10 e fals de la început, deci pasul nu se execută deloc.'}
+   ]},
+  {t:'Bucla infinită și cum o eviți',
+   text:`<p>Dacă pașii <strong>nu schimbă</strong> nimic din condiție, ea rămâne adevărată mereu și repetiția nu se mai oprește: <mark>buclă infinită</mark>. În Scratch o oprești cu semnul roșu.</p>
+<p><strong>Strategia</strong> ca să o prinzi înainte să rulezi:</p>
+<ol><li>ce variabile apar în condiție?</li>
+<li>pașii le schimbă?</li>
+<li>le schimbă <strong>spre</strong> oprire (condiția ajunge falsă)?</li></ol>`,
+   exemplu:`${pre('a ← 5\ncât timp a > 0 execută\n   a ← a + 1\n■')}<p>(1) În condiție e a. (2) Pașii îl schimbă. (3) Dar îl cresc: 6, 7, 8… și a &gt; 0 rămâne adevărată. Buclă infinită. Cu <code>a ← a - 1</code> ar ajunge la 0 și s-ar opri.</p>`,
+   altfel:`<p>E ca pe banda de alergare: alergi, dar nu ajungi niciodată la capăt, pentru că banda te duce înapoi. Pașii tăi trebuie să te apropie de capăt.</p>`,
+   incearca:{t:'choice',q:'Care algoritm nu se oprește niciodată?',o:['a ← 5; cât timp a > 0 execută a ← a + 1 ■','a ← 5; cât timp a > 0 execută a ← a - 1 ■','a ← 0; cât timp a > 0 execută a ← a + 1 ■','a ← 5; cât timp a > 9 execută a ← a + 1 ■'],ok:0,ajutor:'Aplică strategia: pașii duc a spre oprire?',why:'a pornește de la 5 și tot crește, deci a > 0 rămâne adevărată. În celelalte, a ajunge la 0 sau condiția e falsă de la început.'},
+   inca:[
+    {t:'tf',q:'Dacă pașii din „cât timp” nu schimbă nicio variabilă din condiție, repetiția nu se oprește (condiția fiind adevărată la început).',ok:true,ajutor:'Poate o condiție să se schimbe singură?',why:'Adevărat. Condiția rămâne adevărată la fiecare test: buclă infinită.'}
+   ]},
+  {t:'În Scratch: „repetă până când” cu condiția inversă',
+   text:`<p>Scratch nu are un bloc „cât timp”. Are <em>repetă până când</em>, care testează tot <strong>înainte</strong> de pași, dar <strong>se oprește când condiția devine adevărată</strong>.</p>
+<p>De aceea, <strong>strategia</strong>: în Scratch scrii <mark>condiția inversă</mark>, adică situația în care vrei să te oprești.</p>
+${tab(['În pseudocod: cât timp …','În Scratch: repetă până când …'],[['n ≥ 5','n &lt; 5'],['n &gt; 0 (n natural)','n = 0'],['x &lt; 50 (x natural)','x &gt; 49']])}
+<p>Scratch are doar semnele &lt;, &gt; și =. De aceea, pentru numere naturale, „x ≥ 50” se scrie „x &gt; 49”: e același lucru.</p>
+${fig('scratch-pana-cand.webp',760,325,'Scratch: n setat la 17, repetă până când n &lt; 5 cu modifică n cu -5 în interior; pe scenă n = 2','„cât timp n ≥ 5 execută n ← n - 5” scris în Scratch: <strong>repetă până când</strong> primește condiția inversă, <code>n &lt; 5</code>. Pentru n = 17 rezultatul e <b>2</b>.')}`,
+   incearca:{t:'choice',q:'În pseudocod ai „cât timp n ≥ 5 execută”. Ce condiție pui în blocul „repetă până când” din Scratch?',o:['n < 5','n ≥ 5','n = 5','n > 5'],ok:0,ajutor:'Scrii situația în care te oprești.',why:'Te oprești când n ≥ 5 devine falsă, adică atunci când n < 5.'},
+   inca:[
+    {t:'match',q:'Leagă fiecare situație de ce se întâmplă.',pairs:[['„cât timp”, condiția adevărată','pașii se execută încă o dată'],['„cât timp”, condiția falsă de la început','pașii nu se execută deloc'],['pașii nu schimbă nimic din condiție','repetiția nu se oprește'],['„repetă până când” din Scratch, condiția adevărată','repetiția se oprește']],ajutor:'Când se verifică condiția și ce valoare are atunci?',why:'Toate se lămuresc cu o întrebare: când se verifică condiția și ce valoare are atunci?'}
+   ]}
+ ],
+ atelier:{t:'scratch',titlu:'Restul prin scăderi',
+  intro:`<p><strong>Sarcina:</strong> scrie în Scratch algoritmul</p>${pre('n ← 23\ncât timp n ≥ 4 execută\n   n ← n - 4\n■\nscrie n')}<p>Completează condiția inversă din <em>repetă până când</em> și cât se adaugă la n la fiecare trecere (ca să scadă, adaugi un număr negativ, ca în captură). Dacă rulezi o buclă infinită, simulatorul o oprește și îți spune.</p>`,
+  q:'Restul împărțirii lui 23 la 4, prin scăderi repetate.',
+  prog:[{b:'set',v:'n',x:23},{b:'pana',cond:{a:'n',op:'<',b:{e:''}},c:[{b:'schimba',v:'n',x:{e:''}}]},{b:'spune',x:'n'}],
+  teste:[{ce:'Algoritmul se oprește (nu e buclă infinită)',f:st=>!st.infinit,msg:'Algoritmul nu se oprește.'},
+   {ce:'La final n = 3 (restul împărțirii lui 23 la 4)',f:st=>st.v.n===3,msg:'n trebuie să ajungă la 3: 23, 19, 15, 11, 7, 3.'},
+   {ce:'Pisica spune 3',f:st=>String(st.spus)==='3',msg:'Pisica nu spune 3.'}],
+  sol:['4','-4'],gresit:['4','4'],ajutor:'Condiția inversă a lui n ≥ 4 este n < 4. Ca n să scadă cu 4, îl modifici cu -4.',
+  why:'Repetă până când n < 4, modifică n cu -4: 23, 19, 15, 11, 7, 3, iar la 3 se oprește.',
+  inca:[{t:'urmarire',q:'Urmărește și tu algoritmul pe hârtie. „da” = testul e adevărat.',cod:'n ← 23\ncât timp n ≥ 4 execută\n   n ← n - 4\n■\nscrie n',cap:'Testul',cols:['n ≥ 4 ?','n'],start:['–','23'],rows:[['da','19'],['da','15'],['da','11'],['da','7'],['da','3'],['nu','3']],afis:'3',ajutor:'Testezi cu n de pe rândul de deasupra; dacă e da, scazi 4.',why:'Cinci scăderi: 23 = 5 · 4 + 3, deci restul e 3.'}]},
+ qs:[
+  {t:'tf',q:'La „cât timp”, dacă condiția e falsă de la început, pașii nu se execută deloc.',ok:true,why:'Adevărat. Testul e înainte de pași, deci pașii se pot executa de 0 ori.'},
+  {t:'choice',q:'Ce se afișează?'+P('x ← 2\ncât timp x < 30 execută\n   x ← x * 2\n■\nscrie x'),o:['32','16','30','64'],ok:0,ajutor:'Fă tabelul: 2, 4, 8, …',why:'x: 4, 8, 16, 32. La 32, testul 32 < 30 e fals și se afișează 32.'},
+  {t:'choice',q:'Ce se afișează?'+P('n ← 20\ncât timp n ≥ 6 execută\n   n ← n - 6\n■\nscrie n'),o:['2','8','0','14'],ok:0,ajutor:'20, 14, …',why:'n: 14, 8, 2. La 2, testul 2 ≥ 6 e fals. 2 e restul împărțirii lui 20 la 6.'},
+  {t:'choice',q:'Care algoritm are buclă infinită?',o:['b ← 1; cât timp b < 10 execută b ← b - 1 ■','b ← 1; cât timp b < 10 execută b ← b + 1 ■','b ← 20; cât timp b < 10 execută b ← b - 1 ■','b ← 1; cât timp b < 10 execută b ← b + 3 ■'],ok:0,ajutor:'Strategia în trei întrebări: pașii duc b spre oprire?',why:'b pornește de la 1 și scade, deci b < 10 rămâne adevărată mereu. La b ← 20, testul e fals de la început; în celelalte două, b crește până când b < 10 devine falsă.'},
+  {t:'choice',q:'În pseudocod ai „cât timp x < 30 execută”. Ce condiție pui în „repetă până când” din Scratch, pentru numere naturale?',o:['x > 29','x < 30','x = 30','x > 30'],ok:0,ajutor:'Te oprești când x < 30 devine falsă, adică x ≥ 30. Scratch are doar <, > și =.',why:'x ≥ 30 înseamnă, pentru numere naturale, x > 29. Cu x = 30 te-ai opri doar dacă nimerești exact 30.'}
+ ]},
+
+/* ================= 5. Repetă până când: testul la final (lecția 22) ================= */
+{t:'Repetă până când: testul la final',lectii:[22],continuturi:[C.posterior],
+ obiectiv:'urmărești „repetă … până când”, știi că pașii se execută cel puțin o dată, scrii corect condiția de oprire și imiți testul la final în Scratch.',
+ pasi:[
+  {t:'Testul vine după pași',
+   text:`<p>La structura <mark>condiționată posterior</mark>, pașii vin întâi, iar condiția se verifică <strong>după</strong> ei (de aceea „posterior”):</p>
+${pre('repetă\n   pași\npână când condiție')}
+<p>După fiecare trecere te uiți la condiție:</p>
+<ul><li>dacă e <strong>falsă</strong>, mai faci o trecere;</li>
+<li>dacă e <strong>adevărată</strong>, te oprești.</li></ul>`,
+   exemplu:`${pre('x ← 1\nrepetă\n   x ← x * 2\npână când x > 20\nscrie x')}${tab(['Trecerea','x','x > 20 ?'],[['1','2','nu'],['2','4','nu'],['3','8','nu'],['4','16','nu'],['5','32','da, stop']])}<p>Se afișează <b>32</b>.</p>`,
+   incearca:{t:'choice',q:'La „repetă … până când”, ce faci când condiția e falsă?',o:['Mai faci o trecere','Te oprești','Sari peste pași','Pornești algoritmul de la început'],ok:0,ajutor:'„Până când” = te oprești când devine adevărată.',why:'Falsă = încă nu ai ajuns unde voiai, deci repeți.'},
+   inca:[
+    {t:'urmarire',q:'Completează tabelul. Ultimul rând e cel la care condiția devine adevărată.',cod:'x ← 3\nrepetă\n   x ← x * 2\npână când x > 40\nscrie x',cols:['x','x > 40 ?'],start:['3','–'],rows:[['6','nu'],['12','nu'],['24','nu'],['48','da']],afis:'48',ajutor:'Întâi dublezi x, abia apoi testezi.',why:'x: 6, 12, 24, 48. Abia 48 > 40, deci se oprește la 48.'}
+   ]},
+  {t:'Cel puțin o dată',
+   text:`<p>Pentru că testul e după pași, prima trecere are loc <mark>mereu</mark>, chiar dacă condiția era adevărată de la început. Deci la „repetă … până când” pașii se execută <strong>cel puțin o dată</strong>.</p>
+<p>Asta e marea deosebire față de „cât timp”, unde pașii pot să nu se execute deloc.</p>`,
+   exemplu:`${pre('x ← 100\nrepetă\n   x ← x * 2\npână când x > 20\nscrie x')}<p>x era deja mai mare decât 20, dar pașii se fac întâi: x = 200. Abia apoi testul 200 &gt; 20 e adevărat. Se afișează <b>200</b>.</p>`,
+   altfel:`<p>Guști ciorba, apoi hotărăști dacă mai pui sare. Chiar dacă ciorba era perfectă, ai gustat-o o dată. Gustatul sunt pașii, hotărârea e testul de la final.</p>`,
+   incearca:{t:'tf',q:'La „repetă … până când”, pașii se execută cel puțin o dată.',ok:true,ajutor:'Unde e testul: înainte sau după pași?',why:'Adevărat. Condiția se verifică abia după pași, deci prima trecere are loc mereu.'},
+   inca:[
+    {t:'choice',q:'Ce se afișează?'+P('n ← 50\nrepetă\n   n ← n - 10\npână când n < 100\nscrie n'),o:['40','50','100','0'],ok:0,ajutor:'Întâi pașii, abia apoi testul.',why:'Pașii se fac o dată: n = 40. Testul 40 < 100 e adevărat, deci se oprește.'}
+   ]},
+  {t:'Condiția de oprire',
+   text:`<p>După „până când” scrii <mark>condiția de oprire</mark>: situația bună, la care vrei să ajungi. <strong>Strategia</strong>:</p>
+<ol><li>Ce vreau să fie adevărat la final?</li><li>Scriu exact asta după „până când”.</li></ol>
+<p>Uneori ai nevoie de două condiții deodată. Le legi cu <strong>și</strong>: <code>nota ≥ 1 și nota ≤ 10</code> e adevărată doar când amândouă sunt adevărate.</p>
+<p>Atenție la <strong>sau</strong>: <code>nota &lt; 1 sau nota &gt; 10</code> e adevărată când <strong>măcar una</strong> e adevărată, adică atunci când nota e <em>greșită</em>. Aceea e situația rea, nu cea la care te oprești, deci nu o scrii după „până când”.</p>`,
+   exemplu:`<p>Ceri o notă până când e corectă (între 1 și 10):</p>${pre('repetă\n   citește nota\npână când nota ≥ 1 și nota ≤ 10')}<p>Dacă se scrie 12, a doua condiție e falsă, deci se cere din nou.</p>`,
+   incearca:{t:'choice',q:'Ceri o notă până când e corectă. Ce scrii după „până când”?',o:['nota ≥ 1 și nota ≤ 10','nota < 1 sau nota > 10','nota = 10','nota ≥ 5'],ok:0,ajutor:'Scrii situația BUNĂ, la care te oprești.',why:'După „până când” scrii condiția de oprire, adică nota bună: între 1 și 10.'},
+   inca:[
+    {t:'choice',q:'Arunci zarul până iese 6. Ce scrii după „până când”?',o:['zar = 6','zar < 6','zar > 6','zar = 1'],ok:0,ajutor:'La ce te oprești?',why:'Te oprești când iese 6.'}
+   ]},
+  {t:'Cele două, față în față. Și în Scratch?',
+   text:`${tab(['','cât timp','repetă … până când'],[['testul','înainte de pași','după pași'],['treceri','0 sau mai multe','cel puțin 1'],['se oprește când condiția e','falsă','adevărată']])}
+<p>Scratch <strong>nu are</strong> un bloc cu testul la final. Blocul lui <em>repetă până când</em> testează înainte. Testul la final se imită: pui pașii <strong>o dată înainte</strong> de blocul repetă până când, apoi aceiași pași în gura lui.</p>
+${fig('scratch-test-final.webp',760,325,'Scratch: x setat la 1, apoi setează x la x * 2 o dată înainte, încadrat, apoi repetă până când x &gt; 20; pe scenă x = 32','Pașii <b>o dată înainte</b>, apoi <strong>repetă până când</strong>. Pentru x = 1 rezultatul e <b>32</b>, ca la „repetă x ← x * 2 până când x &gt; 20”.')}`,
+   incearca:{t:'classify',q:'Test la început sau test la final?',cats:['Test la început (cât timp)','Test la final (repetă … până când)'],items:[['Pașii pot să nu se execute deloc',0],['Pașii se execută cel puțin o dată',1],['Se oprește când condiția devine falsă',0],['Se oprește când condiția devine adevărată',1]],ajutor:'Uită-te la tabel.',why:'La „cât timp” condiția spune când continui, la „până când” spune când te oprești.'},
+   inca:[
+    {t:'tf',q:'Scratch are un bloc de repetiție cu testul la final.',ok:false,ajutor:'Recitește a doua propoziție de sub tabel.',why:'Fals. „Repetă până când” din Scratch testează înainte. Testul la final îl imiți punând pașii o dată înainte.'}
+   ]}
+ ],
+ atelier:{t:'scratch',titlu:'Testul la final, imitat în Scratch',
+  intro:`<p><strong>Sarcina:</strong> scrie în Scratch</p>${pre('x ← 1\nrepetă\n   x ← x * 2\npână când x > 20\nscrie x')}<p>Blocul <em>setează x la x * 2</em> e pus o dată înainte, ca în captură. Completează valoarea de pornire și condiția de oprire.</p>`,
+  q:'Imită „repetă … până când” în Scratch.',
+  prog:[{b:'set',v:'x',x:{e:''}},{b:'set',v:'x',x:{op:'*',a:'x',b:2}},{b:'pana',cond:{a:'x',op:'>',b:{e:''}},c:[{b:'set',v:'x',x:{op:'*',a:'x',b:2}}]},{b:'spune',x:'x'}],
+  teste:[{ce:'x pornește de la 1',f:st=>Number(st.sl[0])===1,msg:'În pseudocod, x ← 1.'},
+   {ce:'La final x = 32',f:st=>st.v.x===32,msg:'x trebuie să se oprească la 32: prima valoare mai mare decât 20.'},
+   {ce:'Pisica spune 32',f:st=>String(st.spus)==='32',msg:'Pisica nu spune 32.'}],
+  sol:['1','20'],gresit:['1','40'],ajutor:'Condiția de oprire e aceeași ca în pseudocod: x > 20.',
+  why:'Pașii o dată înainte (x = 2), apoi repetă până când x > 20: 4, 8, 16, 32.',
+  inca:[{t:'urmarire',q:'Pe hârtie: pașii se fac o dată chiar dacă testul era deja adevărat.',cod:'x ← 100\nrepetă\n   x ← x * 2\npână când x > 20\nscrie x',cols:['x','x > 20 ?'],start:['100','–'],rows:[['200','da']],afis:'200',ajutor:'Întâi pasul, apoi testul.',why:'O singură trecere: x = 200, apoi 200 > 20 e adevărat.'}]},
+ qs:[
+  {t:'tf',q:'La „repetă … până când”, condiția se verifică înaintea pașilor.',ok:false,why:'Fals. Se verifică după pași, de aceea pașii se execută cel puțin o dată.'},
+  {t:'choice',q:'Ce se afișează?'+P('x ← 5\nrepetă\n   x ← x + 7\npână când x > 30\nscrie x'),o:['33','30','26','40'],ok:0,ajutor:'Fă tabelul: 12, 19, …',why:'x: 12, 19, 26, 33. Abia 33 > 30, deci se afișează 33.'},
+  {t:'choice',q:'Ce se afișează?'+P('x ← 50\nrepetă\n   x ← x * 3\npână când x > 10\nscrie x'),o:['150','50','10','450'],ok:0,ajutor:'Pașii se fac cel puțin o dată.',why:'Pașii întâi: x = 150. Testul 150 > 10 e adevărat, se oprește.'},
+  {t:'choice',q:'Ceri vârsta până când e un număr între 1 și 120. Ce scrii după „până când”?',o:['vârsta ≥ 1 și vârsta ≤ 120','vârsta < 1 sau vârsta > 120','vârsta = 120','vârsta ≥ 1'],ok:0,ajutor:'Scrii situația bună, cu „și”.',why:'După „până când” scrii condiția de oprire: vârsta e bună când amândouă condițiile sunt adevărate.'},
+  {t:'match',q:'Leagă fiecare frază de ce e adevărat.',pairs:[['La „cât timp”, testul e','înainte de pași'],['La „repetă … până când”, testul e','după pași'],['La „cât timp”, pașii se execută cel puțin','de 0 ori (pot să nu se execute deloc)'],['La „repetă … până când”, pașii se execută cel puțin','o dată']],why:'Deosebirile vin din locul testului: testul înainte permite 0 treceri, testul după face măcar o trecere.'}
+ ]},
+
+/* ================= 6. Trei structuri, o alegere (lecția 23) ================= */
+{t:'Trei structuri, o alegere',lectii:[23],continuturi:[C.contor,C.anterior,C.posterior],
+ obiectiv:'alegi structura repetitivă potrivită pentru o cerință și rescrii un „pentru” cu „cât timp” fără greșeli de contor.',
+ pasi:[
+  {t:'Trei structuri, trei întrebări',
+   text:`<p>Ai trei <mark>structuri repetitive</mark>. Ca să alegi, pune-ți întrebările <strong>în ordine</strong>:</p>
+<ol><li>Știu dinainte <strong>de câte ori</strong>? Atunci <strong>cu contor</strong> (<em>pentru</em>).</li>
+<li>Nu știu, și se poate să nu fie nevoie <strong>deloc</strong>? Atunci <strong>condiționată anterior</strong> (<em>cât timp</em>).</li>
+<li>Trebuie făcut <strong>măcar o dată</strong>, apoi verific? Atunci <strong>condiționată posterior</strong> (<em>repetă … până când</em>).</li></ol>
+${fig('scratch-control.webp',560,540,'Categoria Control din Scratch cu blocurile repetă 10, la infinit, dacă atunci, dacă atunci altfel, așteaptă până când și repetă până când; repetă 10 și repetă până când sunt încadrate','Categoria <b>Control</b> din Scratch: <em>repetă (10)</em> e structura cu contor, iar <em>repetă până când</em> are testul la început. Un bloc cu testul la final nu există.')}`,
+   exemplu:`<p>„Citești numere până la primul 0, și măcar unul citești.” (1) Nu știi câte. (2) Măcar unul se citește. (3) Deci <em>repetă … până când număr = 0</em>.</p>`,
+   incearca:{t:'classify',q:'Ce structură se potrivește cel mai firesc?',cats:['Cu contor','Condiționată anterior','Condiționată posterior'],items:[['Afișezi de 10 ori „Bravo!”',0],['Aduni notele celor 25 de elevi',0],['Scazi 5 dintr-un număr cât timp mai poți',1],['Mergi înainte cât timp nu e un zid în față',1],['Ceri parola din nou până când e scrisă corect',2],['Arunci zarul până când iese 6',2]],ajutor:'Pune-ți cele trei întrebări, în ordine.',why:'Număr cunoscut = contor. Poate de 0 ori = test la început. Măcar o dată = test la final.'},
+   inca:[
+    {t:'choice',q:'Citești numere până la primul 0, și sigur citești măcar unul. Ce structură folosești?',o:['repetă … până când','pentru i ← 1, 10','dacă … atunci … altfel'],ok:0,ajutor:'Măcar unul = măcar o dată.',why:'Nu știi câte numere vin, dar măcar unul citești: test la final. Decizia nu repetă nimic.'}
+   ]},
+  {t:'Aceeași problemă, mai multe structuri',
+   text:`<p>De multe ori, aceeași problemă se poate rezolva cu <strong>oricare</strong> dintre structuri. Alegi structura care se potrivește cel mai <mark>firesc</mark> cu cerința: „de 10 ori” cere contor, „cât timp…” cere test la început, „până când…” și „măcar o dată” cer test la final.</p>
+<p>Rezultatul trebuie să fie același. Dacă nu e, una dintre variante are o greșeală.</p>`,
+   exemplu:`<p>Afișezi 1 2 3 în două feluri:</p>${pre('pentru i ← 1, 3 execută\n   scrie i\n■')}${pre('i ← 1\ncât timp i ≤ 3 execută\n   scrie i\n   i ← i + 1\n■')}`,
+   incearca:{t:'match',q:'Leagă fiecare structură de ce o deosebește.',pairs:[['pentru','numărul de treceri se știe dinainte'],['cât timp','testul e înaintea pașilor'],['repetă … până când','testul e după pași']],ajutor:'Contor, test înainte, test după.',why:'Cu aceste trei deosebiri alegi repede structura potrivită.'},
+   inca:[
+    {t:'tf',q:'Aceeași problemă poate fi rezolvată, de multe ori, cu mai multe structuri repetitive.',ok:true,ajutor:'Uită-te la exemplul „Uite cum”.',why:'Adevărat. Numerele 1, 2, 3 le afișezi și cu „pentru”, și cu „cât timp”.'}
+   ]},
+  {t:'„pentru” rescris cu „cât timp”: trei lucruri de făcut singur',
+   text:`<p>La „pentru”, contorul e pornit, verificat și crescut <strong>automat</strong>. La „cât timp” le faci <strong>tu</strong>. <strong>Strategia</strong>, în trei pași:</p>
+<ol><li><strong>pornești</strong> contorul înainte: <code>i ← 1</code>;</li>
+<li><strong>verifici</strong> în condiție până unde merge: <code>i ≤ 5</code>;</li>
+<li><strong>crești</strong> contorul la finalul pașilor: <code>i ← i + 1</code>.</li></ol>
+<p>Greșelile tipice: pornești de la 0 (apare un număr în plus), scrii &lt; în loc de ≤ (lipsește ultimul) sau uiți să crești (buclă infinită).</p>`,
+   exemplu:pre('i ← 1\ncât timp i ≤ 5 execută\n   scrie i\n   i ← i + 1\n■'),
+   altfel:`<p>„Pentru” e ca liftul cu butoane: apeși 5 și te duce singur, etaj cu etaj. „Cât timp” e ca scara: tu pornești de la etajul 1, tu verifici dacă ai ajuns la 5 și tu urci treaptă cu treaptă. Dacă uiți să urci, stai pe loc la nesfârșit.</p>`,
+   incearca:{t:'choice',q:'Care algoritm afișează tot 1 2 3 4 5, ca „pentru i ← 1, 5 execută scrie i ■”?',o:['i ← 1; cât timp i ≤ 5 execută scrie i; i ← i + 1 ■','i ← 1; cât timp i < 5 execută scrie i; i ← i + 1 ■','i ← 0; cât timp i ≤ 5 execută scrie i; i ← i + 1 ■','i ← 1; cât timp i ≤ 5 execută scrie i ■'],ok:0,ajutor:'Verifică cele trei lucruri: pornire, condiție, creștere.',why:'Cu < se oprește la 4, cu pornire de la 0 afișează și 0, iar fără i ← i + 1 nu se mai oprește.'},
+   inca:[
+    {t:'hunt',cod:true,q:'Algoritmul trebuie să afișeze 1 2 3 4 5, dar are <b>2</b> greșeli. Apasă pe ele.',src:`i ← [[0|Contorul pornește de la 1; cu 0 se afișează și 0.]]
+cât timp i [[<|Cu semnul mai mic, 5 nu se mai afișează; trebuie ≤.]] 5 execută
+   scrie i
+   i ← i + 1
+■`,corect:`i ← 1
+cât timp i ≤ 5 execută
+   scrie i
+   i ← i + 1
+■`,ajutor:'Verifică pe rând: pornirea, condiția, creșterea.',why:'Pornirea e 1, iar condiția e i ≤ 5. Creșterea era bună.'}
+   ]}
+ ],
+ atelier:{t:'scratch',titlu:'„pentru” scris în Scratch cu „repetă până când”',
+  intro:`<p><strong>Sarcina:</strong> fă în Scratch ce face</p>${pre('s ← 0\npentru i ← 1, 5 execută\n   s ← s + i\n■\nscrie s')}<p>dar cu blocul <em>repetă până când</em> și contorul făcut de tine: pornești i, scrii condiția de oprire (când a trecut de 5) și crești i. Rezultatul trebuie să fie 15.</p>`,
+  q:'Suma de la 1 la 5 cu „repetă până când”.',
+  prog:[{b:'set',v:'s',x:0},{b:'set',v:'i',x:{e:''}},{b:'pana',cond:{a:'i',op:'>',b:{e:''}},c:[{b:'schimba',v:'s',x:'i'},{b:'schimba',v:'i',x:{e:''}}]},{b:'spune',x:'s'}],
+  teste:[{ce:'La final s = 15',f:st=>st.v.s===15,msg:'Suma nu e 15: verifică pornirea și condiția.'},
+   {ce:'Contorul a trecut prin 1…5 (la final i = 6)',f:st=>st.v.i===6,msg:'i pornește de la 1 și se oprește când trece de 5.'},
+   {ce:'Pisica spune 15',f:st=>String(st.spus)==='15',msg:'Pisica nu spune 15.'}],
+  sol:['1','5','1'],gresit:['1','4','1'],ajutor:'Pornești de la 1, te oprești când i > 5, crești cu 1.',
+  why:'Cele trei lucruri: i pornește de la 1, repetiția se oprește când i > 5, iar i crește cu 1. Suma: 15.',
+  inca:[{t:'urmarire',q:'Urmărește varianta cu „cât timp”. „da” = testul e adevărat.',cod:'i ← 1\ns ← 0\ncât timp i ≤ 4 execută\n   s ← s + i\n   i ← i + 1\n■\nscrie s',cap:'Testul',cols:['i ≤ 4 ?','s','i'],start:['–','0','1'],rows:[['da','1','2'],['da','3','3'],['da','6','4'],['da','10','5'],['nu','10','5']],afis:'10',ajutor:'Pe fiecare rând: testezi cu i de deasupra; dacă e da, aduni i la s, apoi crești i.',why:'s: 1, 3, 6, 10. La i = 5 testul e fals și se afișează 10.'}]},
+ qs:[
+  {t:'tf',q:'Aceeași problemă poate fi rezolvată, de multe ori, cu mai multe structuri repetitive.',ok:true,why:'Adevărat. Alegi structura cea mai firească pentru cerință.'},
+  {t:'classify',q:'Ce structură se potrivește cel mai firesc?',cats:['Cu contor','Condiționată anterior','Condiționată posterior'],items:[['Scrii de 3 ori numele tău',0],['Aduni prețurile a 12 produse',0],['Împarți un număr la 2 cât timp e par',1],['Ceri un număr până când e pozitiv',2]],why:'Număr cunoscut = contor. Poate de 0 ori = test la început. Măcar o dată = test la final.'},
+  {t:'choice',q:'Care algoritm afișează 1 2 3, ca „pentru i ← 1, 3 execută scrie i ■”?',o:['i ← 1; cât timp i ≤ 3 execută scrie i; i ← i + 1 ■','i ← 1; cât timp i < 3 execută scrie i; i ← i + 1 ■','i ← 0; cât timp i ≤ 3 execută scrie i; i ← i + 1 ■','i ← 1; cât timp i ≤ 3 execută scrie i ■'],ok:0,ajutor:'Pornire, condiție, creștere.',why:'Cu < se oprește la 2, cu 0 afișează și 0, iar fără creștere nu se oprește.'},
+  {t:'choice',q:'Ai rescris un „pentru” cu „cât timp” și ai uitat i ← i + 1. Ce se întâmplă?',o:['Repetiția nu se mai oprește','Se afișează un număr în plus','Lipsește ultimul număr','Nu se afișează nimic'],ok:0,why:'Fără creștere, i rămâne 1, condiția rămâne adevărată: buclă infinită.'},
+  {t:'choice',q:'Ceri parola din nou până când e scrisă corect. Ce structură folosești?',o:['repetă … până când','pentru i ← 1, 3','cât timp, cu testul înainte de prima cerere'],ok:0,why:'Parola se cere măcar o dată, apoi verifici: test la final.'}
+ ]},
+
+/* ================= 7. Repetiția în blocuri grafice (lecția 24) ================= */
+{t:'Repetiția în blocuri grafice',lectii:[24],continuturi:[C.grafice],
+ obiectiv:'citești și construiești o schemă logică cu repetiție și recunoști, după locul rombului, dacă testul e la început sau la final.',
+ pasi:[
+  {t:'Blocurile schemei logice',
+   text:`<p>Un algoritm se poate desena ca <mark>schemă logică</mark>: <mark>blocuri grafice</mark> legate cu săgeți. Forma blocului spune ce fel de pas e:</p>
+<ul><li><strong>ovalul</strong>: START și STOP;</li>
 <li><strong>paralelogramul</strong>: citire sau scriere;</li>
-<li><strong>dreptunghiul</strong>: un calcul, o atribuire;</li>
-<li><strong>rombul</strong>: o condiție, cu două ieșiri, DA și NU.</li>
-</ul>
-<p>Repetiția se vede ca o <mark>săgeată care se întoarce</mark> înapoi. La <em>cât timp</em>, rombul stă <strong>înaintea</strong> pașilor repetați. La <em>repetă … până când</em>, rombul stă <strong>după</strong> ei.</p>
-<p>Și blocurile din Scratch sunt blocuri grafice: pașii repetați stau în interiorul blocului <strong>repetă</strong>.</p>
-<figure class="captura"><a href="../algoritmi-vi/img/scratch-pasi-repetati.webp" target="_blank"><img src="../algoritmi-vi/img/scratch-pasi-repetati.webp" alt="Scratch: s = 0, i = 1, repetă până când i &gt; 3 cu modifică s cu i și modifică i cu 1 în interior, încadrate ca pașii repetați; pisica spune 6" width="760" height="374" loading="lazy"></a>
-<figcaption>Suma 1 + 2 + 3 din exercițiul cu schema, în blocuri Scratch: <b>pașii repetați</b> stau în interiorul blocului <strong>repetă până când</strong>. Pisica spune 6.</figcaption></figure>`,
-qs:[
- {t:'match',q:'Leagă fiecare bloc al schemei logice de ce scrii în el.',pairs:[['Ovalul','START sau STOP'],['Paralelogramul','citire sau scriere'],['Dreptunghiul','un calcul, o atribuire'],['Rombul','o condiție, cu DA și NU']],why:'Forma blocului spune ce fel de pas e. Cine citește schema recunoaște repede o întrebare (rombul) sau un calcul (dreptunghiul).'},
- {t:'tf',q:'Într-o schemă logică, condiția unei repetiții se desenează într-un dreptunghi.',ok:false,why:'Fals. Orice condiție stă într-un romb, pentru că are două ieșiri: DA și NU. Dreptunghiul are o singură ieșire.'},
- {t:'choice',q:'În schema logică a structurii „cât timp”, unde stă rombul?',o:['Înaintea pașilor care se repetă','După pașii care se repetă','Lângă blocul START, înainte de toate','Nicăieri, schema nu are romb'],ok:0,why:'La „cât timp” testul e la început. De aceea săgeata care se întoarce ajunge din nou la romb, înaintea pașilor.'},
- {t:'choice',q:'La „repetă … până când”, ce ieșire a rombului duce înapoi, la pașii repetați?',o:['NU','DA','Amândouă'],ok:0,amesteca:false,why:'Repetiția continuă cât timp condiția de oprire e falsă, deci pe NU. Pe DA, condiția e îndeplinită și schema merge mai departe.'},
- {t:'order',q:'Pune blocurile schemei în ordine. Algoritmul adună 1, 2 și 3 cu „cât timp”.',items:['START','s ← 0 și i ← 1','romb: i ≤ 3 ?','pe DA: s ← s + i, i ← i + 1, înapoi la romb','pe NU: scrie s','STOP'],why:'Inițializările vin înainte de romb. Pe DA se repetă pașii și se revine la romb, iar pe NU se iese din repetiție. Se afișează 6.'}
-]},
-{t:'Sume, numărări, cifre',final:true,lectii:[25],continuturi:['Structura repetitivă cu contor','Structura repetitivă condiționată anterior'],text:`
-<p><strong>Misiunea finală.</strong> Rezolvi probleme cu repetiție.</p>
-<p><mark>Suma</mark>: pornești cu <code>s ← 0</code> și aduni pe rând. <mark>Numărarea</mark>: pornești cu <code>k ← 0</code> și crești <code>k</code> cu 1 când găsești ce cauți.</p>
-<p><mark>Cifrele</mark> unui număr: ultima cifră e restul împărțirii la 10, <code>n % 10</code>. O tai cu câtul împărțirii la 10, <code>[n / 10]</code>. Repeți cât timp <code>n > 0</code>.</p>
-<p>Și o ecuație o poți rezolva <mark>prin încercări</mark>: iei pe rând fiecare număr dintr-un interval și îl verifici.</p>
-<figure class="captura"><a href="../algoritmi-vi/img/scratch-cifre.webp" target="_blank"><img src="../algoritmi-vi/img/scratch-cifre.webp" alt="Scratch: n = 472, s = 0, repetă până când n = 0 cu modifică s cu n mod 10 și setează n la partea întreagă din n / 10; pe scenă s = 13" width="760" height="336" loading="lazy"></a>
-<figcaption>Suma cifrelor lui 472: <em>n mod 10</em> dă ultima cifră, iar <em>partea întreagă din n / 10</em> o taie. Se repetă până când n = 0. Rezultatul: <b>s = 13</b>.</figcaption></figure>
-<figure class="captura"><a href="../algoritmi-vi/img/scratch-numarare.webp" target="_blank"><img src="../algoritmi-vi/img/scratch-numarare.webp" alt="Scratch: k = 0, i = 1, repetă 20 cu dacă i mod 5 = 0 atunci modifică k cu 1, apoi modifică i cu 1; pe scenă k = 4" width="760" height="379" loading="lazy"></a>
-<figcaption>Numărarea: câte numere de la 1 la 20 se împart exact la 5. Dacă <em>i mod 5 = 0</em>, k crește cu 1. Rezultatul: <b>k = 4</b>.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Ce valoare pui în s înainte să aduni numerele?',o:['0','1','n','10'],ok:0,why:'0 nu schimbă suma. Dacă pornești de la 1, rezultatul iese cu 1 mai mare.'},
- {t:'choice',q:'Ce se afișează? (<code>i % 5 = 0</code> înseamnă că i se împarte exact la 5.)'+P('k ← 0\npentru i ← 1, 20 execută\n   dacă i % 5 = 0 atunci\n      k ← k + 1\n   ■\n■\nscrie k'),o:['4','5','20','0'],ok:0,why:'Între 1 și 20 se împart exact la 5 numerele 5, 10, 15 și 20. De fiecare dată k crește cu 1, deci k = 4.'},
- {t:'choice',q:'Ce se afișează?'+P('n ← 472\ns ← 0\ncât timp n > 0 execută\n   s ← s + n % 10\n   n ← [n / 10]\n■\nscrie s'),o:['13','472','7','4'],ok:0,why:'Se adună pe rând 2, 7 și 4: 2 + 7 + 4 = 13. Numărul se scurtează 472, 47, 4, 0, iar la 0 repetiția se oprește.'},
- {t:'choice',q:'Ce se afișează?'+P('n ← 2027\nk ← 0\ncât timp n > 0 execută\n   k ← k + 1\n   n ← [n / 10]\n■\nscrie k'),o:['4','11','2027','3'],ok:0,why:'La fiecare trecere se taie o cifră și k crește cu 1: 2027, 202, 20, 2, 0. Sunt 4 treceri, deci 4 cifre. 11 ar fi suma cifrelor.'},
- {t:'match',q:'Leagă fiecare bucată de algoritm de ce face.',pairs:[['n % 10','ultima cifră a lui n'],['[n / 10]','n fără ultima cifră'],['s ← s + c','adaugă cifra c la sumă'],['k ← k + 1','mai numără una']],why:'Cu aceste patru bucăți rezolvi aproape orice problemă cu cifre: iei cifra, o folosești, o tai.'},
- {t:'choice',q:'Cauți prin încercări numărul natural x, de la 0 la 10, pentru care 3 * x + 2 = 17. Ce se afișează?'+P('pentru x ← 0, 10 execută\n   dacă 3 * x + 2 = 17 atunci\n      scrie x\n   ■\n■'),o:['5','17','15','3'],ok:0,why:'Pentru x = 5: 3 · 5 + 2 = 17, adevărat. Pentru celelalte valori de la 0 la 10, egalitatea e falsă, deci se afișează doar 5.'}
-]}
+<li><strong>dreptunghiul</strong>: un calcul, o atribuire (<code>s ← 0</code>);</li>
+<li><strong>rombul</strong>: o condiție, cu două ieșiri, DA și NU.</li></ul>
+${FORME}`,
+   incearca:{t:'match',q:'Leagă fiecare bloc al schemei logice de ce scrii în el.',pairs:[['Ovalul','START sau STOP'],['Paralelogramul','citire sau scriere'],['Dreptunghiul','un calcul, o atribuire'],['Rombul','o condiție, cu DA și NU']],ajutor:'Uită-te la desenul cu cele patru forme.',why:'Forma spune ce fel de pas e: o întrebare (rombul) sau un calcul (dreptunghiul).'},
+   inca:[
+    {t:'tf',q:'Într-o schemă logică, condiția unei repetiții se desenează într-un dreptunghi.',ok:false,ajutor:'Care formă are două ieșiri?',why:'Fals. Orice condiție stă într-un romb, pentru că are două ieșiri: DA și NU.'}
+   ]},
+  {t:'„cât timp” în schemă: rombul înainte, săgeata înapoi',
+   text:`<p>Repetiția se vede ca o <mark>săgeată care se întoarce</mark> înapoi. La <em>cât timp</em>, rombul stă <strong>înaintea</strong> pașilor repetați:</p>
+<ul><li>pe <strong>DA</strong> faci pașii, apoi săgeata te duce înapoi la romb;</li>
+<li>pe <strong>NU</strong> ieși din repetiție.</li></ul>
+${SCHEMA_CAT_TIMP}`,
+   exemplu:`<p>Urmărește schema cu degetul: s = 0, i = 1. 1 ≤ 3 DA: s = 1, i = 2, înapoi. 2 ≤ 3 DA: s = 3, i = 3. 3 ≤ 3 DA: s = 6, i = 4. 4 ≤ 3 NU: scrie <b>6</b>, STOP.</p>`,
+   incearca:{t:'choice',q:'În schema logică a structurii „cât timp”, unde stă rombul?',o:['Înaintea pașilor care se repetă','După pașii care se repetă','Lângă blocul START, înainte de toate','Nicăieri, schema nu are romb'],ok:0,ajutor:'Testul e la început.',why:'La „cât timp” testul e la început. De aceea săgeata care se întoarce ajunge din nou la romb, înaintea pașilor.'},
+   inca:[
+    {t:'order',q:'Pune blocurile schemei în ordinea în care le parcurgi prima dată.',items:['START','s ← 0, i ← 1','rombul i ≤ 3 ?','pe DA: s ← s + i, i ← i + 1'],ajutor:'Inițializările vin înainte de romb.',why:'START, inițializări, testul, apoi pașii de pe DA.'}
+   ]},
+  {t:'„repetă … până când” în schemă: rombul după',
+   text:`<p>La <em>repetă … până când</em>, rombul stă <strong>după</strong> pașii repetați. În romb e condiția de oprire:</p>
+<ul><li>pe <strong>NU</strong> (încă nu te oprești) săgeata te duce înapoi, la pași;</li>
+<li>pe <strong>DA</strong> ieși din repetiție.</li></ul>
+${SCHEMA_PANA_CAND}`,
+   altfel:`<p>Uită-te unde ajunge săgeata care se întoarce: la „cât timp” ajunge la romb, la „până când” ajunge la pași. Iar ieșirea e pe ramura opusă: NU la „cât timp”, DA la „până când”.</p>`,
+   incearca:{t:'choice',q:'La „repetă … până când”, ce ieșire a rombului duce înapoi, la pașii repetați?',o:['NU','DA','Amândouă'],ok:0,amesteca:false,ajutor:'În romb e condiția de OPRIRE. Când nu e îndeplinită…',why:'Repetiția continuă cât timp condiția de oprire e falsă, deci pe NU.'},
+   inca:[
+    {t:'classify',q:'Pune fiecare bloc al schemei „x ← 1; repetă x ← x * 2 până când x > 20” la locul lui.',cats:['Înaintea pașilor','Pasul repetat','Rombul, după pas','După ieșirea pe DA'],items:[['x ← 1',0],['x ← x * 2',1],['x > 20 ?',2],['scrie x',3]],ajutor:'Uită-te la a doua schemă, de sus în jos.',why:'Inițializarea, pasul, testul de după pas, apoi ieșirea.'}
+   ]},
+  {t:'Și Scratch e făcut din blocuri grafice',
+   text:`<p>Și blocurile din Scratch sunt <mark>blocuri grafice</mark>, doar că în loc de săgeată care se întoarce au o „gură”: <strong>pașii repetați stau în interiorul blocului repetă</strong>. Tot ce e sub bloc se face după repetiție.</p>
+${fig('scratch-pasi-repetati.webp',760,374,'Scratch: s = 0, i = 1, repetă până când i &gt; 3 cu modifică s cu i și modifică i cu 1 în interior, încadrate ca pașii repetați; pisica spune 6','Suma 1 + 2 + 3 în blocuri Scratch: <b>pașii repetați</b> stau în interiorul blocului <strong>repetă până când</strong>. Pisica spune 6, ca schema de la pasul 2.')}`,
+   incearca:{t:'tf',q:'În Scratch, pașii repetați stau în interiorul blocului repetă.',ok:true,ajutor:'Uită-te la chenarul din captură.',why:'Adevărat. Gura blocului ține pașii repetați; ce e dedesubt se face după.'}}
+ ],
+ atelier:{t:'classify',titlu:'Construiește schema',
+  intro:`<p><strong>Sarcina:</strong> desenezi schema logică pentru „suma 1 + 2 + 3 + 4 cu cât timp”. Mai întâi hotărăști unde stă fiecare bloc: înainte de romb, în bucla de pe DA sau după ieșirea pe NU. Apoi o poți desena în caiet.</p>`,
+  q:'Unde stă fiecare bloc în schema „suma 1 + 2 + 3 + 4 cu cât timp”?',cats:['Înainte de romb','În bucla de pe DA','După ieșirea pe NU'],items:[['s ← 0',0],['i ← 1',0],['s ← s + i',1],['i ← i + 1',1],['scrie s',2],['STOP',2]],ajutor:'Inițializările înainte; ce se repetă pe DA; rezultatul și STOP după ieșire.',why:'Pornirea variabilelor e înainte de romb, pașii repetați sunt pe DA (cu săgeata înapoi), iar afișarea e după ieșirea pe NU.',
+  inca:[{t:'order',q:'Încă una: ordonează blocurile schemei „x ← 1; repetă x ← x * 2 până când x > 20; scrie x”, de sus în jos, pe drumul care ajunge la STOP (fără întoarcerile pe NU).',items:['START','x ← 1','x ← x * 2','rombul x > 20 ?','pe DA: scrie x','STOP'],ajutor:'Rombul vine după pas; ieși pe DA.',why:'La „până când” pasul e înaintea rombului, iar ieșirea e pe DA.'}]},
+ qs:[
+  {t:'match',q:'Leagă fiecare bloc de un exemplu.',pairs:[['Ovalul','STOP'],['Paralelogramul','scrie s'],['Dreptunghiul','i ← i + 1'],['Rombul','i ≤ 3 ?']],why:'START/STOP = oval, scriere = paralelogram, atribuire = dreptunghi, condiție = romb.'},
+  {t:'tf',q:'Rombul are două ieșiri: DA și NU.',ok:true,why:'Adevărat. Condiția poate fi adevărată sau falsă, deci are două drumuri.'},
+  {t:'choice',q:'Într-o schemă, rombul stă după pașii repetați, iar săgeata de pe NU se întoarce la pași. Ce structură e?',o:['repetă … până când','cât timp','pentru','secvența'],ok:0,ajutor:'Unde e testul?',why:'Testul după pași și întoarcerea pe NU: condiționată posterior.'},
+  {t:'choice',q:'La „cât timp”, pe ce ieșire a rombului ieși din repetiție?',o:['NU','DA','Pe niciuna'],ok:0,amesteca:false,why:'La „cât timp” repeți cât timp condiția e adevărată (DA). Când e falsă (NU), ieși.'},
+  {t:'order',q:'Pune blocurile schemei în ordine. Algoritmul adună 1, 2 și 3 cu „cât timp”.',items:['START','s ← 0 și i ← 1','romb: i ≤ 3 ?','pe DA: s ← s + i, i ← i + 1, înapoi la romb','după ieșirea pe NU: scrie s','STOP'],why:'Inițializările vin înainte de romb. Pe DA se repetă pașii și se revine la romb, iar după ieșirea pe NU se afișează 6.'}
+ ]},
+
+/* ================= 8. Sume, numărări, cifre (lecția 25) ================= */
+{t:'Sume, numărări, cifre',final:true,lectii:[25],continuturi:[C.contor,C.anterior],
+ obiectiv:'rezolvi singur probleme cu sume, numărări și cifrele unui număr: le urmărești în tabel și le construiești în Scratch.',
+ pasi:[
+  {t:'Cum pornești o problemă nouă',
+   text:`<p><strong>Misiunea finală.</strong> Când primești o problemă cu repetiție, folosește <strong>strategia în patru pași</strong>:</p>
+<ol><li>stabilește datele de intrare și rezultatul;</li>
+<li>recunoaște tipul: <mark>sumă</mark>, <mark>numărare</mark> sau <mark>cifrele unui număr</mark>;</li>
+<li>alege structura (cele trei întrebări de la nivelul 6);</li>
+<li>urmărește algoritmul în tabel pe un exemplu mic, înainte să-l scrii în aplicație.</li></ol>`,
+   exemplu:`<p>„Câte numere de la 1 la 20 se împart exact la 5?” (1) Intrare: 20; rezultat: un număr. (2) E o numărare. (3) Știi dinainte: 20 de numere, deci <em>pentru</em>. (4) Verifici pe mână: 5, 10, 15, 20 = 4.</p>`,
+   incearca:{t:'order',q:'Pune în ordine strategia pentru o problemă nouă.',items:['Stabilești datele de intrare și rezultatul','Recunoști tipul: sumă, numărare sau cifre','Alegi structura repetitivă','Urmărești algoritmul în tabel pe un exemplu mic'],ajutor:'Întâi înțelegi, apoi alegi, apoi verifici.',why:'Nu poți alege structura până nu știi ce ți se cere; tabelul îți arată greșelile înainte de aplicație.'}},
+  {t:'Suma: pornești de la 0',
+   text:`<p>La o <mark>sumă</mark>, variabila în care aduni pornește de la <code>s ← 0</code>, pentru că 0 nu schimbă suma. La fiecare trecere aduni numărul curent: <code>s ← s + i</code>.</p>
+<p>Dacă ai porni de la 1, rezultatul ar ieși cu 1 mai mare.</p>`,
+   exemplu:`${pre('s ← 0\npentru i ← 1, 10 execută\n   s ← s + i\n■\nscrie s')}<p>Se afișează <b>55</b> (1 + 2 + … + 10), ca în captura Scratch de la nivelul 3.</p>`,
+   incearca:{t:'choice',q:'Ce valoare pui în s înainte să aduni numerele?',o:['0','1','n','10'],ok:0,ajutor:'Ce număr nu schimbă o sumă?',why:'0 nu schimbă suma. Dacă pornești de la 1, rezultatul iese cu 1 mai mare.'},
+   inca:[
+    {t:'choice',q:'Ce se afișează?'+P('s ← 0\npentru i ← 1, 4 execută\n   s ← s + 5\n■\nscrie s'),o:['20','10','5','9'],ok:0,ajutor:'De câte ori aduni 5?',why:'Aduni 5 de 4 ori: 20.'}
+   ]},
+  {t:'Restul împărțirii: semnul %',
+   text:`<p>Semnul <code>%</code> dă <mark>restul</mark> împărțirii: <code>17 % 5</code> = 2, pentru că 17 = 3 · 5 + 2.</p>
+<p>Un număr se împarte <strong>exact</strong> la 5 când restul e 0: <code>i % 5 = 0</code>. De exemplu <code>15 % 5</code> = 0, dar <code>16 % 5</code> = 1.</p>
+<p>În Scratch, restul e blocul <em>mod</em>, din categoria <strong>Operatori</strong>: <em>17 mod 5</em> dă 2.</p>`,
+   exemplu:`<p><code>20 % 10</code> = 0 (20 se împarte exact la 10). <code>23 % 10</code> = 3. <code>7 % 2</code> = 1, deci 7 e impar; <code>8 % 2</code> = 0, deci 8 e par.</p>`,
+   altfel:`<p>Ai 17 bomboane și le pui în pungi de câte 5. Umpli 3 pungi și îți rămân 2 bomboane pe masă: acelea sunt restul. Dacă nu rămâne nimic pe masă, restul e 0: s-au împărțit exact.</p>`,
+   incearca:{t:'choice',q:'Cât este 23 % 10?',o:['3','2','13','0'],ok:0,ajutor:'% dă restul împărțirii.',why:'23 = 2 · 10 + 3, deci restul e 3.'},
+   inca:[
+    {t:'tf',q:'Un număr i se împarte exact la 5 când i % 5 = 0.',ok:true,ajutor:'Ce rest rămâne când împărțirea e exactă?',why:'Adevărat. Restul 0 înseamnă că nu rămâne nimic: împărțirea e exactă.'}
+   ]},
+  {t:'Numărarea: k ← k + 1 când găsești',
+   text:`<p>La o <mark>numărare</mark>, pornești cu <code>k ← 0</code> și crești <code>k</code> cu 1 doar <strong>când</strong> găsești ce cauți. De aceea, în repetiție pui o <strong>decizie</strong>, fără ramura „altfel”: dacă nu găsești, nu faci nimic.</p>
+<p>Ca să numeri numerele care se împart exact la 5, decizia e <code>dacă i % 5 = 0 atunci k ← k + 1</code>.</p>
+${fig('scratch-numarare.webp',760,379,'Scratch: k = 0, i = 1, repetă 20 cu dacă i mod 5 = 0 atunci modifică k cu 1, apoi modifică i cu 1; pe scenă k = 4','Câte numere de la 1 la 20 se împart exact la 5. Dacă <em>i mod 5 = 0</em>, k crește cu 1. Rezultatul: <b>k = 4</b>.')}`,
+   exemplu:pre('k ← 0\npentru i ← 1, 20 execută\n   dacă i % 5 = 0 atunci\n      k ← k + 1\n   ■\n■\nscrie k'),
+   incearca:{t:'choice',q:'Câte numere de la 1 la 30 se împart exact la 7?',o:['4','3','7','30'],ok:0,ajutor:'Scrie-le: 7, 14, …',why:'7, 14, 21, 28: patru numere. 35 e deja mai mare decât 30.'},
+   inca:[
+    {t:'choice',q:'Ce se afișează?'+P('k ← 0\npentru i ← 1, 10 execută\n   dacă i % 2 = 0 atunci\n      k ← k + 1\n   ■\n■\nscrie k'),o:['5','10','2','4'],ok:0,ajutor:'Se împart exact la 2 numerele pare.',why:'2, 4, 6, 8, 10: cinci numere pare.'}
+   ]},
+  {t:'Cifrele unui număr',
+   text:`<p>Ca să lucrezi cu cifrele unui număr n:</p>
+<ul><li><code>n % 10</code> e <strong>ultima cifră</strong> (restul împărțirii la 10);</li>
+<li><code>[n / 10]</code> e n <strong>fără ultima cifră</strong> (câtul împărțirii la 10, fără virgulă). În Scratch: <em>partea întreagă din n / 10</em>.</li></ul>
+<p>Repeți <strong>cât timp</strong> <code>n > 0</code>: iei ultima cifră, o folosești, o tai. Când n ajunge 0, s-au terminat cifrele.</p>
+${fig('scratch-cifre.webp',760,336,'Scratch: n = 472, s = 0, repetă până când n = 0 cu modifică s cu n mod 10 și setează n la partea întreagă din n / 10; pe scenă s = 13','Suma cifrelor lui 472: <em>n mod 10</em> dă ultima cifră, iar <em>partea întreagă din n / 10</em> o taie. Rezultatul: <b>s = 13</b>.')}`,
+   exemplu:`${pre('n ← 472\ns ← 0\ncât timp n > 0 execută\n   s ← s + n % 10\n   n ← [n / 10]\n■\nscrie s')}${tab(['n > 0 ?','cifra n % 10','s','n'],[['da','2','2','47'],['da','7','9','4'],['da','4','13','0'],['nu','','13','0']])}`,
+   altfel:`<p>E ca un carnet de bilete: rupi ultimul bilet (<code>n % 10</code>), îl pui deoparte, iar carnetul rămâne mai scurt (<code>[n / 10]</code>). Te oprești când nu mai are bilete (n = 0).</p>`,
+   incearca:{t:'urmarire',q:'Suma cifrelor lui 305. Completează tabelul.',cod:'n ← 305\ns ← 0\ncât timp n > 0 execută\n   s ← s + n % 10\n   n ← [n / 10]\n■\nscrie s',cap:'Testul',cols:['n > 0 ?','s','n'],start:['–','0','305'],rows:[['da','5','30'],['da','5','3'],['da','8','0'],['nu','8','0']],afis:'8',ajutor:'Ultima cifră a lui 305 e 5. Apoi n devine 30, iar ultima cifră a lui 30 e 0.',why:'Cifrele 5, 0 și 3: suma 8. Cifra 0 se adună și ea, doar că nu schimbă suma.'},
+   inca:[
+    {t:'match',q:'Leagă fiecare bucată de algoritm de ce face.',pairs:[['n % 10','ultima cifră a lui n'],['[n / 10]','n fără ultima cifră'],['s ← s + n % 10','adaugă ultima cifră la sumă'],['k ← k + 1','mai numără una']],ajutor:'% = rest, [ / ] = cât fără virgulă.',why:'Cu aceste bucăți rezolvi aproape orice problemă cu cifre: iei cifra, o folosești, o tai.'},
+    {t:'choice',q:'Cât este [586 / 10]?',o:['58','6','586','5'],ok:0,ajutor:'Tai ultima cifră.',why:'586 : 10 = 58,6; fără virgulă: 58. Ultima cifră, 6, s-a tăiat.'}
+   ]},
+  {t:'Prin încercări',
+   text:`<p>Unele probleme le rezolvi <mark>prin încercări</mark>: iei pe rând fiecare număr dintr-un interval și îl verifici cu o decizie. Contorul e numărul încercat.</p>
+<p>Merge când intervalul e mic și știi sigur că răspunsul e în el.</p>`,
+   exemplu:`<p>Cauți x natural, de la 0 la 10, pentru care 3 * x + 2 = 17:</p>${pre('pentru x ← 0, 10 execută\n   dacă 3 * x + 2 = 17 atunci\n      scrie x\n   ■\n■')}<p>Pentru x = 5: 3 · 5 + 2 = 17, adevărat. Se afișează <b>5</b>.</p>`,
+   incearca:{t:'choice',q:'Cauți prin încercări x de la 0 la 10 pentru care 2 * x + 1 = 9. Ce se afișează?',o:['4','9','5','8'],ok:0,ajutor:'Încearcă pe rând: 2 · 3 + 1 = 7, 2 · 4 + 1 = ?',why:'2 · 4 + 1 = 9, deci se afișează 4.'}}
+ ],
+ atelier:{t:'scratch',titlu:'Suma cifrelor, în Scratch',
+  intro:`<p><strong>Sarcina:</strong> pisica spune suma cifrelor lui <b>2027</b>. Blocurile sunt ca în captura de la pasul 5. Completează: n de la ce număr pornește, s de la ce valoare, și condiția de oprire (când nu mai sunt cifre). Dacă pui o condiție care nu se îndeplinește niciodată, simulatorul îți arată bucla infinită.</p>`,
+  q:'Suma cifrelor lui 2027.',
+  prog:[{b:'set',v:'n',x:{e:''}},{b:'set',v:'s',x:{e:''}},{b:'pana',cond:{a:'n',op:'=',b:{e:''}},c:[{b:'schimba',v:'s',x:{op:'mod',a:'n',b:10}},{b:'set',v:'n',x:{op:'div',a:'n',b:10}}]},{b:'spune',x:'s'}],
+  teste:[{ce:'n pornește de la 2027',f:st=>Number(st.sl[0])===2027,msg:'Primul câmp: numărul, 2027.'},
+   {ce:'La final s = 11 (2 + 0 + 2 + 7)',f:st=>st.v.s===11,msg:'Suma nu e 11: de la cât pornește s?'},
+   {ce:'Toate cifrele au fost tăiate (la final n = 0)',f:st=>st.v.n===0,msg:'n trebuie să ajungă la 0.'},
+   {ce:'Pisica spune 11',f:st=>String(st.spus)==='11',msg:'Pisica nu spune 11.'}],
+  sol:['2027','0','0'],gresit:['2027','1','0'],ajutor:'n = 2027, s = 0, te oprești când n = 0.',
+  why:'Cifrele se iau de la dreapta: 7, 2, 0, 2. Suma e 11, iar la final n = 0.',
+  inca:[
+   {t:'scratch',q:'Încă una: câte numere de la <b>1 la 30</b> se împart exact la <b>3</b>?',
+    prog:[{b:'set',v:'k',x:0},{b:'set',v:'i',x:1},{b:'repeta',n:{e:''},c:[{b:'daca',cond:{a:{op:'mod',a:'i',b:{e:''}},op:'=',b:0},c:[{b:'schimba',v:'k',x:1}]},{b:'schimba',v:'i',x:1}]},{b:'spune',x:'k'}],
+    teste:[{ce:'Se încearcă toate numerele de la 1 la 30 (la final i = 31)',f:st=>st.v.i===31,msg:'Câte numere sunt de la 1 la 30?'},
+     {ce:'La final k = 10',f:st=>st.v.k===10,msg:'Sunt 10 numere: 3, 6, …, 30.'},
+     {ce:'Pisica spune 10',f:st=>String(st.spus)==='10',msg:'Pisica nu spune 10.'}],
+    sol:['30','3'],gresit:['29','3'],ajutor:'repetă 30; restul împărțirii la 3 trebuie să fie 0.',why:'30 de încercări; la fiecare, dacă i mod 3 = 0, k crește. 3, 6, …, 30: 10 numere.'},
+   {t:'urmarire',q:'Și pe hârtie: câte cifre are 2027?',cod:'n ← 2027\nk ← 0\ncât timp n > 0 execută\n   k ← k + 1\n   n ← [n / 10]\n■\nscrie k',cap:'Testul',cols:['n > 0 ?','k','n'],start:['–','0','2027'],rows:[['da','1','202'],['da','2','20'],['da','3','2'],['da','4','0'],['nu','4','0']],afis:'4',ajutor:'La fiecare trecere k crește cu 1 și tai ultima cifră.',why:'Patru treceri, patru cifre tăiate: k = 4.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Ce valoare pui în k înainte să numeri?',o:['0','1','n','10'],ok:0,why:'Încă n-ai găsit nimic, deci k pornește de la 0.'},
+  {t:'choice',q:'Ce se afișează? (<code>i % 5 = 0</code> înseamnă că i se împarte exact la 5.)'+P('k ← 0\npentru i ← 1, 20 execută\n   dacă i % 5 = 0 atunci\n      k ← k + 1\n   ■\n■\nscrie k'),o:['4','5','20','0'],ok:0,why:'Se împart exact la 5 numerele 5, 10, 15 și 20. De fiecare dată k crește cu 1, deci k = 4.'},
+  {t:'choice',q:'Ce se afișează?'+P('n ← 472\ns ← 0\ncât timp n > 0 execută\n   s ← s + n % 10\n   n ← [n / 10]\n■\nscrie s'),o:['13','472','7','4'],ok:0,ajutor:'E exemplul din pasul 5.',why:'Se adună 2, 7 și 4: 13. Numărul se scurtează 472, 47, 4, 0.'},
+  {t:'choice',q:'Ce se afișează?'+P('n ← 90210\nk ← 0\ncât timp n > 0 execută\n   k ← k + 1\n   n ← [n / 10]\n■\nscrie k'),o:['5','12','90210','4'],ok:0,ajutor:'La fiecare trecere se taie o cifră și k crește cu 1. Și 0 e cifră.',why:'90210, 9021, 902, 90, 9, 0: cinci treceri, deci 5 cifre. 12 ar fi suma cifrelor.'},
+  {t:'match',q:'Leagă fiecare bucată de algoritm de ce face.',pairs:[['n % 10','ultima cifră a lui n'],['[n / 10]','n fără ultima cifră'],['s ← s + c','adaugă cifra c la sumă'],['k ← k + 1','mai numără una']],why:'Iei cifra, o folosești, o tai.'},
+  {t:'choice',q:'Cauți prin încercări numărul natural x, de la 0 la 10, pentru care 3 * x + 2 = 17. Ce se afișează?'+P('pentru x ← 0, 10 execută\n   dacă 3 * x + 2 = 17 atunci\n      scrie x\n   ■\n■'),o:['5','17','15','3'],ok:0,why:'Pentru x = 5: 3 · 5 + 2 = 17. Pentru celelalte valori egalitatea e falsă.'}
+ ]}
 ];
 
 JocMotor.porneste({
@@ -197,19 +906,25 @@ JocMotor.porneste({
   unitateTitlu:'Algoritmi: structuri repetitive',
   competente:['CS.2.1','CS.2.2','CS.2.3'],
   lectii:'17–25',
-  intro:'Opt niveluri despre repetiție: aplicația de exersare, etapele unui exercițiu, structura cu contor, „cât timp”, „repetă … până când”, alegerea structurii și schema logică. La fiecare nivel citești o pagină scurtă și urmărești algoritmi pas cu pas. La final rezolvi probleme cu sume, numărări și cifre și îți iei diploma.',
+  intro:'Opt niveluri despre repetiție, de la „ce e un algoritm” până la probleme cu sume, numărări și cifre. Nu trebuie să știi nimic dinainte: fiecare nivel te ia pas cu pas. Construiești algoritmi într-un editor de blocuri ca Scratch, cu scena alături, și îi urmărești rând cu rând în tabel.',
+  cum:`<b>Cum lucrezi în fiecare nivel</b><ol>
+<li><b>Învață</b> — pași scurți, câte o idee, cu un exemplu. Nu ai înțeles? Apasă „Explică-mi altfel”.</li>
+<li><b>Încearcă tu</b> — după fiecare pas, un exercițiu mic, fără note. Greșești? Primești un indiciu. Vrei mai mult? „Încă un exercițiu”.</li>
+<li><b>Atelier</b> — lucrezi ca în aplicația adevărată: completezi câmpurile albe din blocuri, apeși steagul verde și vezi scena, iar <b>testele</b> îți bifează ce e bine. Sau urmărești algoritmul în <b>tabel</b>, rând cu rând.</li>
+<li><b>Verificare</b> — câteva întrebări doar din ce ai învățat în pași. Stele pentru răspunsurile din prima.</li></ol>`,
   banda:'<span class="bl ctl">repetă <span class="nr">4</span></span><span class="gura"></span><span class="bl mis">mergi <span class="nr">100</span> pași</span><span class="bl mis">rotește-te ↻ <span class="nr">90</span> grade</span>',
   nivele:LEVELS,
+  tipuri:window.SIM_BUCLA,
   diploma:{
     titlu:'Maestru al buclelor',
     rezumat:'algoritm, date, secvență și decizie, aplicația de exersare, etapele unui exercițiu algoritmic, structura cu contor, structurile condiționate anterior și posterior, schema logică și probleme cu sume, numărări și cifre',
-    aplicatie:'aplicația de exersare a algoritmilor din laborator (de exemplu Scratch)',
+    aplicatie:'Scratch, aplicația de exersare a algoritmilor din laborator',
     provocare:[
-      'Construiește un algoritm care desenează un hexagon regulat cu blocul „repetă”. Calculează întâi unghiul: 360 : 6.',
-      'Rulează-l și verifică: s-a închis figura?',
-      'Scrie în caiet, în pseudocod, un algoritm care citește un număr n și afișează suma cifrelor lui.',
-      'Urmărește-l pas cu pas pentru n = 305 și scrie valorile lui n și s la fiecare trecere.',
-      'Arată-i profesorului desenul și tabelul.'
+      'Deschide <b>Scratch</b>. Din categoria <b>Evenimente</b> trage în zona de cod blocul <em>când se dă click pe steag</em>.',
+      'Din categoria <b>Stilou</b> pune <em>șterge tot</em> și <em>stilou jos</em>. Dacă nu vezi categoria Stilou în listă, cere-i profesorului să-ți arate cum o adaugi.',
+      'Din <b>Control</b> pune <em>repetă (6)</em>, iar în gura lui, din <b>Mișcare</b>, <em>mergi (80) pași</em> și <em>rotește-te ↻ (60) grade</em>. Apasă steagul verde: s-a închis hexagonul? Dacă nu, verifică 360 : 6.',
+      'Din <b>Variabile</b> fă variabilele n și s (butonul <b>Creează o variabilă</b>, apoi numele și OK) și construiește suma cifrelor ca în atelierul ultimului nivel: <em>setează n la 305</em>, <em>setează s la 0</em>, <em>repetă până când n = 0</em>, în gură <em>modifică s cu (n mod 10)</em> și <em>setează n la partea întreagă din (n / 10)</em>, la final <em>spune s</em>. Blocurile <em>mod</em> și <em>partea întreagă</em> sunt în <b>Operatori</b>. Pisica trebuie să spună 8.',
+      'În caiet, fă tabelul de urmărire pentru n = 305 (coloanele n, s) și arată-i profesorului desenul, scriptul și tabelul. Salvează proiectul pe calculator din meniul <b>Fișier</b>, cu numele <code>Nume_Prenume_bucla</code>.'
     ]
   }
 });

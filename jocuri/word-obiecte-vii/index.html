@@ -38,6 +38,11 @@
 h1{font-weight:800;letter-spacing:-.02em}
 h1 em{color:var(--accent);font-weight:600}
 h2{font-weight:700}
+/* tabelele-exemplu din „Uite cum” (ca un tabel Word: antet colorat, borduri subțiri) */
+.ex-tab{border-collapse:collapse;margin:6px 0 10px;font-size:.9rem;max-width:100%}
+.ex-tab td{border:1px solid var(--ink2);padding:4px 8px;min-width:2.4em;height:1.8em}
+.ex-tab td.hd{background:var(--sel);font-weight:700}
+.ex-tab td.mg{background:var(--sel);font-weight:700;text-align:center}
 </style>
 </head>
 <body>
@@ -251,157 +256,505 @@ const PROG={
   reguli:'Reguli generale de tehnoredactare şi estetică a paginii tipărite',
   specificatii:'Reguli de lucru în realizarea unui document conform unor specificații (dimensiune pagină, dimensiune font, dimensiune imagine, format tabel)'
 };
+/* ajutoare de scriere: captura (calea mereu ../word-obiecte-vii/img/, vezi README §6b) și tabelul-exemplu din „Uite cum” */
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="../word-obiecte-vii/img/${f}" target="_blank"><img src="../word-obiecte-vii/img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const tab=(rows,opt={})=>`<table class="ex-tab">${rows.map((r,i)=>`<tr>${r.map(c=>typeof c==='object'?`<td colspan="${c.span}" class="mg">${c.x}</td>`:`<td class="${i===(opt.antet??0)&&opt.antet!==false?'hd':''}">${c}</td>`).join('')}</tr>`).join('')}</table>`;
+
 const LEVELS=[
-{t:'Obiecte într-un document',lectii:[4],continuturi:[PROG.obiecte],text:`
-<p>Un document nu e doar text. În el așezi <mark>obiecte</mark>: <strong>text</strong>, <strong>imagini</strong>, <strong>tabele</strong>, forme. Fiecare are regulile lui de așezare.</p>
-<p>Obiectele noi le adaugi din fila <mark>Inserare</mark> (Insert): <strong>Imagini</strong> pentru o poză din calculator, <strong>Tabel</strong> pentru un tabel. O imagine copiată o poți lipi și cu <kbd>Ctrl</kbd>+<kbd>V</kbd>.</p>
-<p>Alegi obiectul după ce ai de arătat: <strong>imaginea</strong> arată cum arată ceva, <strong>tabelul</strong> așază <mark>date</mark> pe rânduri și coloane, iar <strong>textul</strong> explică.</p>
-<p>O imagine luată de pe internet are un autor. Sub ea scrii <strong>sursa</strong>, adică de unde ai luat-o.</p>
-<figure class="captura"><a href="../word-obiecte-vii/img/inserare-imagini-tabel.webp" target="_blank"><img src="../word-obiecte-vii/img/inserare-imagini-tabel.webp" alt="Fila Inserare (Insert) din Word cu butoanele Tabel (Table) și Imagini (Pictures) încadrate cu roșu" width="600" height="140" loading="lazy"></a>
-<figcaption>Fila <b>Inserare</b> (Insert): de aici pui un <b>Tabel</b> (Table) sau o <b>Imagine</b> (Pictures).</figcaption></figure>
-<figure class="captura"><a href="../word-obiecte-vii/img/obiecte-document.webp" target="_blank"><img src="../word-obiecte-vii/img/obiecte-document.webp" alt="Document Word cu trei zone încadrate cu roșu: paragraful de text, imaginea cu floarea-soarelui și tabelul cu trei coloane" width="670" height="540" loading="lazy"></a>
-<figcaption>Același document, trei obiecte: <b>textul</b>, <b>imaginea</b>, <b>tabelul</b>.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Vrei să pui în referat o fotografie salvată în calculator. De pe ce filă pornești?',o:['Inserare','Pornire','Fișier','Vizualizare'],ok:0,why:'Pe fila Inserare stau obiectele pe care le adaugi în document: imagini, tabele, forme. Pe Pornire sunt formatările de zi cu zi, iar Fișier ține salvarea și tipărirea.'},
- {t:'classify',q:'Ce obiect folosești pentru fiecare informație?',cats:['Tabel','Imagine','Text'],items:[['Notele a 5 elevi la 3 probe',0],['Cum arată frunza de arțar',1],['Orarul clasei, pe zile și ore',0],['Traseul excursiei, pe hartă',1],['Povestea excursiei, pe scurt',2],['De ce e bine să reciclăm',2]],why:'Datele care se citesc pe rânduri și pe coloane merg în tabel. Ce trebuie văzut merge în imagine. Ce trebuie explicat sau povestit rămâne text.'},
- {t:'tf',q:'Ca să centrezi un titlu, cel mai bine îl pui într-un tabel cu o singură celulă.',ok:false,why:'Fals. Titlul se centrează cu butonul de aliniere. Un tabel pus doar ca să mute text se strică ușor când schimbi marginile sau fontul, iar tabelul e făcut pentru date.'},
- {t:'choice',q:'Ai pus în referat o fotografie găsită pe un site. Ce mai scrii sub ea?',o:['Sursa, adică de unde e luată','Numele tău, ca autor al ei','Nimic, se înțelege singură','Data la care ai găsit-o'],ok:0,why:'Fotografia are un autor, iar sursa arată cinstit de unde ai luat-o. Așa cititorul o poate și verifica.'},
- {t:'match',q:'Leagă fiecare obiect de rolul lui în document.',pairs:[['Imaginea','arată cum arată ceva'],['Tabelul','așază date pe rânduri și coloane'],['Textul','explică și povestește'],['Sursa','spune de unde e luată o imagine']],why:'Fiecare obiect are treaba lui. Când alegi obiectul potrivit, documentul se înțelege dintr-o privire.'}
-]},
-{t:'Imaginea și încadrarea textului',lectii:[7],continuturi:[PROG.formatare],text:`
-<p>O imagine selectată are <mark>mânere</mark> pe margini. O mărești trăgând de un <strong>colț</strong>: așa își păstrează forma. Mânerul din mijlocul unei laturi o <strong>turtește</strong>.</p>
-<p>Cel mai important reglaj e <mark>încadrarea textului</mark>, adică felul în care stă textul față de imagine:</p>
-<ul>
-<li><strong>În linie cu textul</strong> (In Line with Text): imaginea stă în rând, ca o literă;</li>
-<li><strong>Pătrat</strong> (Square) sau <strong>Strâns</strong> (Tight): textul curge pe lângă imagine;</li>
-<li><strong>Printre</strong> (Through): ca la Strâns, dar textul poate intra și în golurile imaginii;</li>
+/* ================= 1. Obiecte într-un document (lecția 4) ================= */
+{t:'Obiecte într-un document',lectii:[4],continuturi:[PROG.obiecte],
+ obiectiv:'recunoști textul, imaginea și tabelul dintr-un document, alegi obiectul potrivit și știi de unde îl adaugi.',
+ pasi:[
+  {t:'Un document are mai multe feluri de obiecte',
+   text:`<p>Până acum ai scris în Word doar <strong>text</strong>. Un document poate avea însă și alte lucruri. Fiecare bucată separată din el se numește <mark>obiect</mark>.</p>
+<p>Cele trei obiecte cu care lucrăm în această misiune:</p>
+<ul><li><strong>textul</strong>: rânduri și paragrafe;</li>
+<li><strong>imaginea</strong>: o fotografie sau un desen;</li>
+<li><strong>tabelul</strong>: căsuțe așezate pe rânduri și coloane.</li></ul>
+${fig('obiecte-document.webp',670,540,'Document Word cu trei zone încadrate cu roșu: paragraful de text, imaginea cu floarea-soarelui și tabelul cu trei coloane','Același document, trei obiecte: <b>textul</b>, <b>imaginea</b>, <b>tabelul</b>.')}`,
+   exemplu:`<p>Referatul „Floarea-soarelui” din captură are:</p><ol><li>un <strong>paragraf de text</strong> care spune ce e planta;</li><li>o <strong>imagine</strong> cu floarea;</li><li>un <strong>tabel</strong> cu înălțimea plantei, săptămână de săptămână.</li></ol>`,
+   altfel:`<p>Gândește-te la un caiet de proiect: scrii cu pixul (text), lipești o poză (imagine) și desenezi cu rigla un tabel. În Word faci aceleași trei lucruri, doar că pe ecran.</p>`,
+   incearca:{t:'classify',q:'Ce fel de obiect e fiecare?',cats:['Text','Imagine','Tabel'],items:[['Un paragraf despre excursie',0],['O fotografie cu muntele',1],['Căsuțe cu notele, pe rânduri și coloane',2],['Un desen cu o frunză',1]],ajutor:'Recitește lista din pas: textul are rânduri de scris, imaginea se vede, tabelul are căsuțe.',why:'Textul se citește, imaginea se privește, iar tabelul are căsuțe pe rânduri și coloane.'},
+   inca:[
+    {t:'choice',q:'Câte feluri de obiecte are referatul „Floarea-soarelui” din captură?',o:['Trei: text, imagine și tabel','Unul singur: textul','Două: text și imagine','Patru: text, imagine, tabel și titlu'],ok:0,ajutor:'Numără zonele încadrate cu roșu.',why:'Captura are trei zone: paragraful, imaginea și tabelul. Titlul face parte tot din text.'},
+    {t:'tf',q:'Un tabel este tot un obiect al documentului, ca și imaginea.',ok:true,ajutor:'Ce trei obiecte numește pasul?',why:'Adevărat. Textul, imaginea și tabelul sunt obiecte ale documentului.'}
+   ]},
+  {t:'Alegi obiectul după ce ai de arătat',
+   text:`<p>Înainte să adaugi ceva, întreabă-te: <strong>ce vreau să afle cititorul?</strong></p>
+<ul><li>Trebuie să <strong>vadă</strong> cum arată ceva? Pui o <mark>imagine</mark>.</li>
+<li>Are de citit <strong>date</strong> pe rânduri și coloane (note, ore, înălțimi)? Faci un <mark>tabel</mark>.</li>
+<li>Trebuie să <strong>înțeleagă</strong> sau să afle o poveste? Scrii <mark>text</mark>.</li></ul>
+<p>Tabelul e doar pentru date. Un titlu nu îl pui într-un tabel ca să-l muți la mijloc: îl <strong>centrezi</strong> cu butonul de aliniere, ca pe orice rând de text.</p>`,
+   exemplu:`<p>Faci un referat despre excursia la Bicaz:</p><ul><li>„Cum arată barajul” → <strong>imagine</strong>;</li><li>„Cât a costat fiecare lucru” → <strong>tabel</strong> (Lucru, Preț);</li><li>„Ce ne-a plăcut” → <strong>text</strong>.</li></ul>`,
+   incearca:{t:'classify',q:'Ce obiect folosești pentru fiecare informație?',cats:['Tabel','Imagine','Text'],items:[['Notele a 5 elevi la 3 probe',0],['Cum arată frunza de arțar',1],['Orarul clasei, pe zile și ore',0],['Traseul excursiei, pe hartă',1],['Povestea excursiei, pe scurt',2],['De ce e bine să reciclăm',2]],ajutor:'Pune-ți întrebarea din pas: cititorul trebuie să vadă, să citească date sau să înțeleagă?',why:'Datele care se citesc pe rânduri și pe coloane merg în tabel. Ce trebuie văzut merge în imagine. Ce trebuie explicat sau povestit rămâne text.'},
+   inca:[
+    {t:'tf',q:'Ca să centrezi un titlu, cel mai bine îl pui într-un tabel cu o singură celulă.',ok:false,ajutor:'Ce spune ultima propoziție a pasului despre titlu?',why:'Fals. Titlul se centrează cu butonul de aliniere. Tabelul e pentru date.'},
+    {t:'choice',q:'Vrei să arăți câte kilograme de hârtie a strâns fiecare clasă. Ce obiect alegi?',o:['Un tabel cu Clasa și Kilograme','O imagine cu un teanc de hârtie','Un paragraf lung cu toate cifrele','Un titlu mare, centrat'],ok:0,ajutor:'Sunt date: clasă și număr, pentru mai multe clase.',why:'Datele pentru mai multe clase se citesc cel mai ușor pe rânduri și coloane, deci într-un tabel.'}
+   ]},
+  {t:'De unde adaugi un obiect: fila Inserare',
+   text:`<p>Obiectele noi le adaugi de pe fila <mark>Inserare</mark> (Insert), sus, pe panglică. Pașii sunt mereu aceiași:</p>
+<ol><li><strong>Pui cursorul</strong> exact unde vrei obiectul (clic la finalul paragrafului, apoi <kbd>Enter</kbd>).</li>
+<li>Deschizi fila <strong>Inserare</strong> (Insert).</li>
+<li>Apeși <strong>Imagini</strong> (Pictures) pentru o poză din calculator sau <strong>Tabel</strong> (Table) pentru un tabel.</li>
+<li>Pentru poză, alegi fișierul și apeși <strong>Inserare</strong> (Insert). Pentru tabel, alegi pe grilă câte coloane și rânduri vrei și dai clic.</li></ol>
+<p>O imagine copiată o poți lipi și cu <kbd>Ctrl</kbd>+<kbd>V</kbd>.</p>
+${fig('inserare-imagini-tabel.webp',600,140,'Fila Inserare (Insert) din Word cu butoanele Tabel (Table) și Imagini (Pictures) încadrate cu roșu','Fila <b>Inserare</b> (Insert): <b>Tabel</b> (Table) și <b>Imagini</b> (Pictures).')}`,
+   altfel:`<p>Cursorul e ca degetul cu care arăți unde să lipească cineva poza în caiet. Dacă nu arăți întâi locul, poza ajunge unde era degetul ultima dată.</p>`,
+   incearca:{t:'choice',q:'Vrei să pui în referat o fotografie salvată în calculator. De pe ce filă pornești?',o:['Inserare (Insert)','Pornire (Home)','Fișier (File)','Vizualizare (View)'],ok:0,ajutor:'Numele filei înseamnă „a adăuga ceva nou”.',why:'Pe fila Inserare stau obiectele pe care le adaugi în document: imagini, tabele.'},
+   inca:[
+    {t:'order',q:'Pui o fotografie sub primul paragraf. Așază pașii în ordine.',items:['Dai clic la finalul primului paragraf și apeși Enter','Deschizi fila Inserare (Insert)','Apeși Imagini (Pictures)','Alegi fișierul și apeși Inserare (Insert)'],ajutor:'Primul pas e mereu locul: unde e cursorul?',why:'Obiectul apare unde e cursorul, deci locul îl alegi primul. Abia apoi deschizi fila și alegi poza.'},
+    {t:'order',q:'Pui un tabel în document. Așază pașii în ordine.',items:['Pui cursorul unde vrei tabelul','Deschizi fila Inserare (Insert)','Apeși Tabel (Table)','Alegi pe grilă coloanele și rândurile și dai clic'],ajutor:'Aceiași pași ca la imagine, doar butonul diferă.',why:'Locul, fila, butonul, apoi mărimea tabelului.'}
+   ]},
+  {t:'O imagine luată de altundeva are o sursă',
+   text:`<p>O fotografie găsită pe internet are un <strong>autor</strong>, chiar dacă nu îl vezi. Când o pui în lucrare, scrii sub ea <mark>sursa</mark>: de unde ai luat-o (site-ul, autorul sau cartea).</p>
+<p>Așa ești cinstit față de cel care a făcut-o, iar profesorul sau colegii pot verifica de unde vine. Un desen făcut de tine nu are nevoie de sursă: e al tău.</p>`,
+   exemplu:`<p>Sub fotografie, cu litere mai mici:</p><p><em>Floarea-soarelui în câmp. Sursa: atlasul de botanică al școlii, pagina 12.</em></p>`,
+   incearca:{t:'choice',q:'Ai pus în referat o fotografie găsită pe un site. Ce mai scrii sub ea?',o:['Sursa, adică de unde e luată','Numele tău, ca autor al ei','Nimic, se înțelege singură','Data la care ai găsit-o'],ok:0,ajutor:'Cine a făcut fotografia: tu sau altcineva?',why:'Fotografia are un autor, iar sursa arată cinstit de unde ai luat-o. Așa cititorul o poate și verifica.'},
+   inca:[
+    {t:'tf',q:'Un desen făcut chiar de tine are nevoie de sursă scrisă sub el.',ok:false,ajutor:'Cine e autorul desenului?',why:'Fals. Sursa arată de unde ai luat o imagine a altcuiva. Desenul tău e al tău.'}
+   ]}
+ ],
+ atelier:{t:'order',titlu:'Pune poza la locul ei',
+  intro:`<p>Referatul „Floarea-soarelui” are un paragraf, iar poza trebuie să apară <strong>imediat sub el</strong>, cu sursa dedesubt. <strong>Sarcina:</strong> așază gesturile exact în ordinea în care le faci în Word. Uită-te la captură: acolo sunt butoanele.</p>${fig('inserare-imagini-tabel.webp',600,140,'Fila Inserare (Insert) din Word cu butoanele Tabel (Table) și Imagini (Pictures) încadrate cu roșu','Fila <b>Inserare</b> (Insert).')}`,
+  q:'Ordinea gesturilor în Word:',items:['Clic la finalul paragrafului, apoi Enter','Fila Inserare (Insert)','Butonul Imagini (Pictures)','Alegi fișierul și apeși Inserare (Insert)','Sub poză scrii sursa'],
+  ajutor:'Locul întâi, apoi fila, butonul, fișierul, iar la sfârșit ce scrii sub poză.',
+  why:'Obiectul apare unde e cursorul, deci locul vine primul. Sursa o scrii după ce poza e deja în pagină, chiar sub ea.',
+  inca:[
+   {t:'order',q:'Încă una: în același referat faci tabelul cu înălțimea plantei, sub poză.',items:['Clic sub sursa pozei','Fila Inserare (Insert)','Butonul Tabel (Table)','Alegi pe grilă coloanele și rândurile','Scrii datele în căsuțe'],ajutor:'Aceiași pași, cu butonul Tabel.',why:'Locul, fila, butonul, mărimea, apoi conținutul.'},
+   {t:'classify',q:'Încă una: ce obiect pui în referatul despre clasa ta?',cats:['Text','Imagine','Tabel'],items:[['Lista colegilor cu data nașterii',2],['Fotografia clasei (cu acordul tuturor)',1],['Ce ne dorim în acest an',0],['Rezultatele la concursul de desen',2],['Desenul emblemei clasei',1]],ajutor:'Vede, citește date sau înțelege?',why:'Datele pe rânduri și coloane merg în tabel, ce se vede în imagine, ce se explică în text.'}
+  ]},
+ qs:[
+  {t:'choice',q:'De pe ce filă adaugi un tabel nou în document?',o:['Inserare (Insert)','Pornire (Home)','Fișier (File)','Vizualizare (View)'],ok:0,ajutor:'Aceeași filă ca pentru imagini.',why:'Pe fila Inserare stau obiectele noi: imagini, tabele. Pe Pornire sunt formatările de zi cu zi, iar Fișier ține salvarea și tipărirea.'},
+  {t:'classify',q:'Ce obiect folosești pentru fiecare informație?',cats:['Tabel','Imagine','Text'],items:[['Prețurile a 4 cărți',0],['Cum arată castelul Peleș',1],['Programul concursului, pe zile și ore',0],['Ce ai simțit la concurs',2],['Harta orașului',1]],why:'Datele pe rânduri și coloane merg în tabel, ce se vede în imagine, ce se explică în text.'},
+  {t:'tf',q:'Ca să centrezi un titlu, cel mai bine îl pui într-un tabel cu o singură celulă.',ok:false,why:'Fals. Titlul se centrează cu butonul de aliniere. Un tabel pus doar ca să mute text se strică ușor, iar tabelul e făcut pentru date.'},
+  {t:'choice',q:'Unde apare imaginea pe care o inserezi?',o:['Acolo unde era cursorul','Mereu la începutul documentului','Mereu la sfârșitul documentului','Într-o fereastră separată'],ok:0,ajutor:'Care e primul pas din strategia de inserare?',why:'Obiectul se pune la cursor. De aceea primul pas e să alegi locul.'},
+  {t:'match',q:'Leagă fiecare obiect de rolul lui în document.',pairs:[['Imaginea','arată cum arată ceva'],['Tabelul','așază date pe rânduri și coloane'],['Textul','explică și povestește'],['Sursa','spune de unde e luată o imagine']],why:'Fiecare obiect are treaba lui. Când alegi obiectul potrivit, documentul se înțelege dintr-o privire.'}
+ ]},
+
+/* ================= 2. Imaginea și încadrarea textului (lecția 7) ================= */
+{t:'Imaginea și încadrarea textului',lectii:[7],continuturi:[PROG.formatare],
+ obiectiv:'mărești o imagine fără s-o deformezi și alegi cum stă textul față de ea.',
+ pasi:[
+  {t:'Selectezi imaginea: apar mânerele',
+   text:`<p>Ca să lucrezi cu o imagine, întâi <strong>dai clic pe ea</strong>. Imaginea devine <mark>selectată</mark>: în jurul ei apare un chenar cu <mark>mânere</mark>, niște cerculețe albe.</p>
+<p>Sunt <strong>opt mânere</strong>: patru în <strong>colțuri</strong> și patru la mijlocul <strong>laturilor</strong>. Trăgând de ele, schimbi mărimea imaginii.</p>
+<p>Clic în afara imaginii, pe text: mânerele dispar.</p>
+${fig('manere-poza.webp',880,498,'Imagine selectată în Word, cu cele opt mânere albe: unul în fiecare colț și unul la mijlocul fiecărei laturi','Poza selectată: patru mânere în <b>colțuri</b>, patru la mijlocul <b>laturilor</b>.')}`,
+   incearca:{t:'choice',q:'Câte mânere are o imagine selectată?',o:['Opt','Patru','Două','Niciunul'],ok:0,ajutor:'Numără: colțurile, apoi mijloacele laturilor.',why:'Patru în colțuri și patru pe laturi: opt.'},
+   inca:[
+    {t:'tf',q:'Mânerele apar după ce dai clic pe imagine.',ok:true,ajutor:'Ce faci întâi, după primul rând al pasului?',why:'Adevărat. Clicul selectează imaginea, iar mânerele arată că e selectată.'}
+   ]},
+  {t:'Mărești din colț, ca să nu se turtească',
+   text:`<p>Mânerul din <mark>colț</mark> schimbă <strong>lățimea și înălțimea deodată</strong>, în aceeași proporție. Poza se mărește sau se micșorează, dar își păstrează forma.</p>
+<p>Mânerul de la mijlocul unei <mark>laturi</mark> schimbă <strong>o singură dimensiune</strong>. Tragi de latura din dreapta: poza se lățește, dar nu și crește în înălțime. Rezultatul: o poză <strong>turtită</strong>, cu oameni lați și scunzi.</p>`,
+   exemplu:`<p>Poza are 4 cm lățime și 3 cm înălțime.</p><ul><li>Tragi de <strong>colț</strong> până la 8 cm lățime → înălțimea devine singură 6 cm. Aceeași poză, mai mare.</li><li>Tragi de <strong>latura din dreapta</strong> până la 8 cm → înălțimea rămâne 3 cm. Poza e turtită.</li></ul>`,
+   altfel:`<p>E ca atunci când mărești o poză pe telefon cu două degete: se mărește toată, egal. Mânerul de pe latură e ca și cum ai trage doar de o margine a unei bucăți de gumă: se lungește într-o singură parte.</p>`,
+   incearca:{t:'choice',q:'Poza e prea mică. De unde tragi ca să n-o deformezi?',o:['De mânerul dintr-un colț','De mânerul de pe latura de jos','De mânerul de pe latura din dreapta','De mijlocul pozei'],ok:0,ajutor:'Care mâner schimbă ambele dimensiuni deodată?',why:'Colțul schimbă lățimea și înălțimea deodată, deci forma rămâne.'},
+   inca:[
+    {t:'choice',q:'O poză de 6 × 4 cm e mărită din colț până la 9 cm lățime. Ce înălțime are?',o:['6 cm','4 cm','9 cm','5 cm'],ok:0,ajutor:'Lățimea a crescut de 1,5 ori. Înălțimea crește la fel.',why:'Din colț, ambele dimensiuni cresc în aceeași proporție: 4 × 1,5 = 6 cm.'},
+    {t:'tf',q:'Dacă tragi de mânerul de pe latura din dreapta, poza își păstrează forma.',ok:false,ajutor:'Câte dimensiuni schimbă un mâner de pe latură?',why:'Fals. Mânerul de pe latură schimbă doar lățimea, iar poza se turtește.'}
+   ]},
+  {t:'Încadrarea textului: cum stă textul lângă imagine',
+   text:`<p><mark>Încadrarea textului</mark> spune cum se așază textul față de imagine. Opțiunile, cu numele din Word:</p>
+<ul><li><strong>În linie cu textul</strong> (In Line with Text): imaginea stă în rând, ca o literă mare;</li>
+<li><strong>Pătrat</strong> (Square): textul curge pe lângă imagine, lăsând o margine dreaptă în jurul ei;</li>
+<li><strong>Strâns</strong> (Tight): tot pe lângă imagine, dar mai <strong>lipit</strong> de ea;</li>
+<li><strong>Printre</strong> (Through): ca la Strâns, dar textul intră și în golurile imaginii;</li>
 <li><strong>Sus și jos</strong> (Top and Bottom): textul se oprește deasupra imaginii și continuă dedesubt;</li>
-<li><strong>În spatele textului</strong> (Behind Text): imaginea devine fundal, deci textul trebuie să se citească bine;</li>
-<li><strong>În fața textului</strong> (In Front of Text): imaginea stă peste text și îl acoperă.</li>
-</ul>
-<p>Când selectezi imaginea, lângă ea apare butonul <mark>Opțiuni aspect</mark> (Layout Options), cu aceleași opțiuni. Le găsești și pe fila <strong>Format imagine</strong> (Picture Format), la <strong>Încadrare text</strong> (Wrap Text). Numele pot diferi puțin de la o versiune la alta: ține mouse-ul pe pictogramă ca să vezi cum se numesc la tine.</p>
-<figure class="captura"><a href="../word-obiecte-vii/img/optiuni-aspect.webp" target="_blank"><img src="../word-obiecte-vii/img/optiuni-aspect.webp" alt="Imagine selectată în Word, cu mânerele rotunde pe colțuri și pe laturi, și panoul Opțiuni aspect deschis lângă ea" width="500" height="370" loading="lazy"></a>
-<figcaption>Imaginea selectată are <b>mânere</b> pe colțuri și pe laturi. Butonul încadrat deschide <b>Opțiuni aspect</b> (Layout Options): sus, În linie cu textul (In Line with Text); dedesubt, cele cu încadrarea textului.</figcaption></figure>
-<figure class="captura"><a href="../word-obiecte-vii/img/incadrare-text.webp" target="_blank"><img src="../word-obiecte-vii/img/incadrare-text.webp" alt="Meniul Wrap Text din fila Picture Format, cu opțiunile In Line with Text, Square, Tight, Through, Top and Bottom, Behind Text și In Front of Text" width="250" height="380" loading="lazy"></a>
-<figcaption>Toate cele <b>șapte</b> opțiuni încadrate cu roșu, pe fila <b>Format imagine</b> (Picture Format) → <b>Încadrare text</b> (Wrap Text), de sus în jos: În linie cu textul (In Line with Text), Pătrat (Square), Strâns (Tight), Printre (Through), Sus și jos (Top and Bottom), În spatele textului (Behind Text), În fața textului (In Front of Text).</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Poza e prea mică. Cum o mărești fără să se deformeze?<figure class="captura"><a href="../word-obiecte-vii/img/manere-poza.webp" target="_blank"><img src="../word-obiecte-vii/img/manere-poza.webp" alt="Imagine selectată în Word, cu cele opt mânere albe: unul în fiecare colț și unul la mijlocul fiecărei laturi; mânerul din colțul stânga-sus și cel de pe latura din dreapta sunt încercuite cu roșu și numite" width="880" height="498" loading="lazy"></a><figcaption>Poza selectată are <b>opt mânere</b>: patru în <b>colțuri</b> și patru la mijlocul <b>laturilor</b>.</figcaption></figure>',o:['Tragi de mânerul dintr-un colț','Tragi de mânerul de pe latura de jos','Tragi de mânerul de pe latura din dreapta','Apeși Enter deasupra ei de câteva ori'],ok:0,why:'Mânerul din colț schimbă lățimea și înălțimea deodată, deci poza își păstrează forma. Mânerul din mijlocul unei laturi schimbă o singură dimensiune și poza se turtește.'},
- {t:'match',q:'Leagă încadrarea de ce se întâmplă cu textul.',pairs:[['În linie cu textul','imaginea stă în rând, ca o literă'],['Pătrat','textul curge pe lângă imagine'],['Sus și jos','textul sare peste rândul imaginii'],['În spatele textului','imaginea devine fundal']],why:'Numele spun ce face textul: stă în rând, curge pe lângă, sare peste imagine sau trece peste ea.'},
- {t:'classify',q:'Ce încadrare alegi în fiecare situație?',cats:['În linie cu textul','Pătrat','Sus și jos','În spatele textului'],items:[['Iconiță mică în mijlocul unei fraze',0],['Poză lângă paragraful care o explică',1],['Fotografie lată cât pagina',2],['Fundal deschis pe coperta revistei',3],['Hartă mare, cu text deasupra și dedesubt',2]],why:'Imaginea mică merge în rând, poza explicată stă lângă paragraf, imaginea lată are nevoie de tot rândul, iar fundalul stă în spatele textului.'},
- {t:'tf',q:'Cu încadrarea „Sus și jos”, textul curge pe lângă imagine, în stânga și în dreapta ei.',ok:false,why:'Fals. La „Sus și jos” textul se oprește deasupra imaginii și continuă dedesubt, deci lângă imagine rămâne loc gol. Textul curge pe lângă imagine la „Pătrat” sau „Strâns”.'},
- {t:'choice',q:'Ai pus o poză în spatele textului, dar textul abia se mai citește. Ce ajută cel mai mult?',o:['O imagine mai deschisă, cu textul pe o zonă liniștită','Textul pus pe aldin, cu imaginea neschimbată','Imaginea mărită, până acoperă toată pagina','Încă o imagine, pusă peste prima'],ok:0,why:'Textul se citește când se deosebește clar de ce e sub el. O imagine deschisă sau o zonă fără detalii îl lasă să iasă în față. Aldinul singur nu repară un fundal încărcat.'}
-]},
-{t:'Tabelul: rânduri, coloane, antet',lectii:[4],continuturi:[PROG.obiecte],text:`
-<p>Un <mark>tabel</mark> are <strong>rânduri</strong> (orizontale) și <strong>coloane</strong> (verticale). Căsuța în care se întâlnesc se numește <mark>celulă</mark>: acolo scrii.</p>
-<p>Îl creezi din <strong>Inserare → Tabel</strong>, alegând câte rânduri și câte coloane are. Un tabel cu 3 coloane și 4 rânduri are 3 × 4 = 12 celule.</p>
-<p>Primul rând, cu numele coloanelor, este <mark>antetul</mark>. Fără el, cititorul nu știe ce înseamnă cifrele.</p>
-<p>Cum numeri? O <strong>coloană</strong> pentru fiecare informație (Nume, Clasa, Nota), un <strong>rând</strong> pentru fiecare elev, plus rândul de antet.</p>
-<p>În tabel treci la celula următoare cu <kbd>Tab</kbd>. Apăsat în <strong>ultima celulă</strong>, <kbd>Tab</kbd> adaugă un rând nou.</p>
-<figure class="captura"><a href="../word-obiecte-vii/img/inserare-tabel-grila.webp" target="_blank"><img src="../word-obiecte-vii/img/inserare-tabel-grila.webp" alt="Meniul Table din fila Insert cu grila de pătrățele: trei coloane și patru rânduri colorate, eticheta 3x4 Table și tabelul gol apărut în document" width="1000" height="521" loading="lazy"></a>
-<figcaption><b>Inserare</b> (Insert) → <b>Tabel</b> (Table): treci mouse-ul peste grilă. Aici sunt alese <b>3 coloane × 4 rânduri</b> („3x4 Table”), iar tabelul gol se vede deja în document.</figcaption></figure>
-<figure class="captura"><a href="../word-obiecte-vii/img/tabel-antet.webp" target="_blank"><img src="../word-obiecte-vii/img/tabel-antet.webp" alt="Tabel Word cu trei coloane, marcate cu roșu rândul de antet, un rând, o coloană și o celulă" width="900" height="172" loading="lazy"></a>
-<figcaption>Același tabel: <b>rândul de antet</b> (Săptămâna, Înălțimea, Frunze), un <b>rând</b>, o <b>coloană</b> și o <b>celulă</b>.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Un tabel are 4 coloane și 5 rânduri. Câte celule are?<figure class="captura"><a href="../word-obiecte-vii/img/tabel-antet.webp" target="_blank"><img src="../word-obiecte-vii/img/tabel-antet.webp" alt="Tabel în Word cu antet, la care sunt marcate cu roșu un rând întreg, o coloană întreagă și o singură celulă" width="900" height="172" loading="lazy"></a><figcaption>Într-un tabel: un <b>rând</b> merge în lățime, o <b>coloană</b> în înălțime, iar căsuța unde se întâlnesc e o <b>celulă</b>. (Tabelul din poză are alte dimensiuni decât cel din întrebare.)</figcaption></figure>',o:['20','9','45','16'],ok:0,why:'Numărul de celule e coloane × rânduri: 4 × 5 = 20. Adunarea 4 + 5 = 9 numără doar coloanele și rândurile, nu căsuțele.'},
- {t:'choice',q:'Treci în tabel 6 elevi, fiecare cu Nume, Clasa și Nota. Ce tabel alegi, cu tot cu antet?',o:['3 coloane și 7 rânduri','6 coloane și 3 rânduri','3 coloane și 6 rânduri','7 coloane și 3 rânduri'],ok:0,why:'O coloană pentru fiecare informație (3) și un rând pentru fiecare elev (6), plus rândul de antet: 7 rânduri.'},
- {t:'order',q:'Faci un tabel nou. Pune pașii în ordine.',items:['Pui cursorul unde vrei tabelul','Deschizi Inserare → Tabel','Alegi numărul de rânduri și de coloane','Scrii în celule, trecând mai departe cu Tab'],why:'Tabelul apare unde e cursorul, deci locul îl alegi primul. Abia după ce tabelul există poți scrie în celulele lui.'},
- {t:'pagina',q:'Construiește tabelul concursului de șah. Alege rândurile și coloanele, pune rândul de antet, apoi verifică. Datele le așază jocul, singur.',
-  parti:['tabel'],
+<li><strong>În spatele textului</strong> (Behind Text): imaginea devine fundal;</li>
+<li><strong>În fața textului</strong> (In Front of Text): imaginea acoperă textul.</li></ul>
+${fig('incadrare-text.webp',250,380,'Meniul Wrap Text din fila Picture Format, cu opțiunile In Line with Text, Square, Tight, Through, Top and Bottom, Behind Text și In Front of Text','Cele <b>șapte</b> opțiuni, de sus în jos. Lista are și Sus și jos, și În fața textului.')}`,
+   altfel:`<p>Gândește-te la o piatră într-un pârâu. „Pătrat”: apa (textul) ocolește piatra pe margini. „Sus și jos”: apa se oprește și continuă după piatră. „În spatele textului”: piatra e pe fundul apei, iar apa curge peste ea.</p>`,
+   incearca:{t:'match',q:'Leagă încadrarea de ce se întâmplă cu textul.',pairs:[['În linie cu textul','imaginea stă în rând, ca o literă'],['Pătrat','textul curge pe lângă imagine'],['Sus și jos','textul se oprește deasupra și continuă dedesubt'],['În spatele textului','imaginea devine fundal']],ajutor:'Recitește lista: fiecare rând începe cu numele opțiunii.',why:'Numele spun ce face textul: stă în rând, curge pe lângă, sare peste imagine sau trece peste ea.'},
+   inca:[
+    {t:'classify',q:'Ce încadrare alegi în fiecare situație?',cats:['În linie cu textul','Pătrat','Sus și jos','În spatele textului'],items:[['Iconiță mică în mijlocul unei fraze',0],['Poză lângă paragraful care o explică',1],['Fotografie lată cât pagina',2],['Fundal deschis pe coperta revistei',3]],ajutor:'Mică → în rând; lângă paragraf → textul curge pe lângă; lată → textul sus și jos; fundal → în spate.',why:'Imaginea mică merge în rând, poza explicată stă lângă paragraf, imaginea lată are nevoie de tot rândul, iar fundalul stă în spatele textului.'},
+    {t:'tf',q:'Cu încadrarea „În fața textului”, imaginea acoperă textul de sub ea.',ok:true,ajutor:'„În fața” = deasupra textului.',why:'Adevărat. De aceea „În fața textului” se folosește rar: ascunde ce e dedesubt.'}
+   ]},
+  {t:'Unde schimbi încadrarea (pașii)',
+   text:`<p>Ai două drumuri spre aceleași opțiuni:</p>
+<ol><li><strong>Dai clic pe imagine</strong>, ca să o selectezi.</li>
+<li>Lângă colțul ei apare butonul <mark>Opțiuni aspect</mark> (Layout Options). Îl apeși.<br>Sau: sus apare fila <strong>Format imagine</strong> (Picture Format), iar acolo <strong>Încadrare text</strong> (Wrap Text).</li>
+<li>Alegi opțiunea.</li>
+<li><strong>Te uiți la text.</strong> Nu stă cum voiai? Încerci alta.</li></ol>
+<p>Pictogramele pot arăta puțin altfel în alte versiuni de Word: ține mouse-ul pe ele și citește numele.</p>
+${fig('optiuni-aspect.webp',500,370,'Imagine selectată în Word, cu mânerele pe colțuri și pe laturi, și panoul Opțiuni aspect deschis lângă ea','Butonul încadrat deschide <b>Opțiuni aspect</b> (Layout Options).')}`,
+   incearca:{t:'order',q:'Schimbi încadrarea unei poze. Așază pașii în ordine.',items:['Dai clic pe imagine','Apeși Opțiuni aspect (Layout Options)','Alegi încadrarea','Te uiți cum stă textul'],ajutor:'Nimic nu merge înainte să selectezi imaginea.',why:'Selectezi, deschizi opțiunile, alegi, apoi verifici cu ochii tăi.'},
+   inca:[
+    {t:'choice',q:'Nu vezi butonul Opțiuni aspect lângă imagine. Ce faci?',o:['Dai clic pe imagine, ca s-o selectezi','Închizi Word-ul și îl deschizi iar','Apeși Enter de câteva ori','Ștergi imaginea și o pui din nou'],ok:0,ajutor:'Când apare butonul?',why:'Butonul apare doar lângă o imagine selectată.'}
+   ]},
+  {t:'Imaginea ca fundal: textul trebuie să se citească',
+   text:`<p>La <strong>În spatele textului</strong>, literele stau chiar peste poză. Dacă poza e închisă la culoare sau plină de detalii, textul <strong>nu se mai citește</strong>.</p>
+<p>Regula: pentru fundal alegi o imagine <mark>deschisă</mark> la culoare, iar textul îl pui pe o <strong>zonă liniștită</strong> a ei (cer, perete, fără detalii). Nici literele îngroșate (<strong>aldin</strong>, Bold) nu repară singure un fundal încărcat.</p>`,
+   exemplu:`<p>Coperta revistei clasei: un cer albastru-deschis ca fundal și titlul negru pe cer → se citește. Aceeași copertă cu o pădure deasă, verde-închis → titlul se pierde printre frunze.</p>`,
+   incearca:{t:'choice',q:'Ai pus o poză în spatele textului, dar textul abia se mai citește. Ce ajută cel mai mult?',o:['O imagine mai deschisă, cu textul pe o zonă liniștită','Textul pus pe aldin, cu imaginea neschimbată','Imaginea mărită, până acoperă toată pagina','Încă o imagine, pusă peste prima'],ok:0,ajutor:'Recitește regula din pas.',why:'Textul se citește când se deosebește clar de ce e sub el. Aldinul singur nu repară un fundal încărcat.'}}
+ ],
+ atelier:{t:'pagina',titlu:'Așază poza pe foaie',
+  intro:`<p>Mai jos e o foaie de referat cu o fotografie a munților, <strong>lată cât pagina</strong>. <strong>Sarcina:</strong> alege încadrarea textului astfel încât textul să stea deasupra pozei și să continue dedesubt, fără să se înghesuie lângă ea. Apasă pe opțiuni și privește foaia: se schimbă pe loc. Apoi verifică.</p>`,
+  q:'Alege încadrarea potrivită pentru fotografia lată.',parti:['imagine'],
+  cere:{incadrare:['susjos'],incadrareCe:'fotografia e lată cât pagina, deci textul stă deasupra ei și continuă dedesubt'},
+  ajutor:'Care încadrare oprește textul deasupra imaginii și îl continuă dedesubt?',
+  why:'La „Sus și jos” poza are tot rândul ei, iar textul continuă curat dedesubt.',
+  inca:[
+   {t:'pagina',q:'Încă una: poza cu frunza de arțar trebuie să stea lângă paragraful care o explică, cu textul curgând pe lângă ea.',parti:['imagine'],cere:{incadrare:['patrat','strans'],incadrareCe:'textul curge pe lângă poză'},ajutor:'Căutăm una din cele două la care textul curge pe lângă.',why:'„Pătrat” și „Strâns” lasă textul să curgă pe lângă imagine.'},
+   {t:'pagina',q:'Încă una: sigla școlii e un fundal discret pe foaia de titlu, sub text.',parti:['imagine'],cere:{incadrare:['spate'],incadrareCe:'sigla stă sub text, ca un fundal'},ajutor:'Fundal = imaginea stă în spatele textului.',why:'„În spatele textului” face din imagine un fundal. Alege o siglă deschisă, ca textul să se citească.'},
+   {t:'pagina',q:'Încă una: o iconiță mică de telefon stă în mijlocul frazei „Sună la [telefon] pentru detalii”.',parti:['imagine'],start:{inc:'spate'},cere:{incadrare:['aliniat'],incadrareCe:'iconița stă în rând, ca o literă'},ajutor:'Care încadrare ține imaginea în rând, ca o literă?',why:'„În linie cu textul” ține iconița în rând și se mută odată cu textul.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Poza e prea mică. Cum o mărești fără să se deformeze?'+fig('manere-poza.webp',880,498,'Imagine selectată în Word, cu cele opt mânere albe: unul în fiecare colț și unul la mijlocul fiecărei laturi; mânerul din colțul stânga-sus și cel de pe latura din dreapta sunt încercuite cu roșu și numite','Poza selectată are <b>opt mânere</b>: patru în <b>colțuri</b> și patru la mijlocul <b>laturilor</b>.'),o:['Tragi de mânerul dintr-un colț','Tragi de mânerul de pe latura de jos','Tragi de mânerul de pe latura din dreapta','Apeși Enter deasupra ei de câteva ori'],ok:0,why:'Mânerul din colț schimbă lățimea și înălțimea deodată, deci poza își păstrează forma. Mânerul din mijlocul unei laturi schimbă o singură dimensiune și poza se turtește.'},
+  {t:'match',q:'Leagă încadrarea de ce se întâmplă cu textul.',pairs:[['În linie cu textul','imaginea stă în rând, ca o literă'],['Strâns','textul curge pe lângă imagine, lipit de ea'],['Sus și jos','textul se oprește deasupra și continuă dedesubt'],['În fața textului','imaginea acoperă textul']],ajutor:'Gândește-te la pârâul cu piatra din pasul 3.',why:'Numele spun ce face textul: stă în rând, curge pe lângă, sare peste imagine sau e acoperit de ea.'},
+  {t:'classify',q:'Ce încadrare alegi în fiecare situație?',cats:['În linie cu textul','Pătrat','Sus și jos','În spatele textului'],items:[['Emoticon mic într-o propoziție',0],['Fotografia vulpii lângă paragraful despre vulpi',1],['Panoramă a orașului, lată cât pagina',2],['Fundal pal pe invitația la serbare',3],['Hartă mare, cu text deasupra și dedesubt',2]],why:'Imaginea mică merge în rând, poza explicată stă lângă paragraf, imaginea lată are nevoie de tot rândul, iar fundalul stă în spatele textului.'},
+  {t:'tf',q:'Cu încadrarea „Sus și jos”, textul curge pe lângă imagine, în stânga și în dreapta ei.',ok:false,why:'Fals. La „Sus și jos” textul se oprește deasupra imaginii și continuă dedesubt, deci lângă imagine rămâne loc gol. Textul curge pe lângă imagine la „Pătrat” sau „Strâns”.'},
+  {t:'order',q:'Schimbi încadrarea unei poze. Pune pașii în ordine.',items:['Dai clic pe imagine','Deschizi Opțiuni aspect (Layout Options)','Alegi încadrarea','Te uiți cum stă textul'],ajutor:'Selectezi întâi.',why:'Butonul apare doar lângă imaginea selectată; la final verifici cu ochii tăi.'}
+ ]},
+
+/* ================= 3. Tabelul: rânduri, coloane, antet (lecția 4) ================= */
+{t:'Tabelul: rânduri, coloane, antet',lectii:[4],continuturi:[PROG.obiecte],
+ obiectiv:'numeri singur câte rânduri și coloane îți trebuie și creezi tabelul în Word.',
+ pasi:[
+  {t:'Rând, coloană, celulă',
+   text:`<p>Un <mark>tabel</mark> e făcut din căsuțe așezate în linii:</p>
+<ul><li><strong>rândul</strong> merge în lățime, de la stânga la dreapta (orizontal);</li>
+<li><strong>coloana</strong> merge în înălțime, de sus în jos (vertical);</li>
+<li><strong>celula</strong> e o singură căsuță, acolo unde un rând se întâlnește cu o coloană. În ea scrii.</li></ul>
+${fig('tabel-antet.webp',900,172,'Tabel Word cu trei coloane, marcate cu roșu rândul de antet, un rând, o coloană și o celulă','Un <b>rând</b>, o <b>coloană</b> și o <b>celulă</b>, marcate cu roșu.')}`,
+   altfel:`<p>Gândește-te la sala de clasă: <strong>rândul</strong> de bănci e de-a latul clasei, <strong>coloana</strong> (șirul) merge de la catedră spre spate, iar <strong>celula</strong> e o singură bancă.</p>`,
+   incearca:{t:'match',q:'Leagă fiecare parte de ce este.',pairs:[['Rând','căsuțe de la stânga la dreapta'],['Coloană','căsuțe de sus în jos'],['Celulă','o singură căsuță']],ajutor:'Rândul e ca rândul dintr-un caiet: de-a latul.',why:'Rândul e orizontal, coloana e verticală, iar celula e locul unde se întâlnesc.'},
+   inca:[
+    {t:'tf',q:'Coloana unui tabel merge de la stânga la dreapta.',ok:false,ajutor:'Coloanele unei clădiri stau în picioare.',why:'Fals. Coloana merge de sus în jos; rândul merge de la stânga la dreapta.'}
+   ]},
+  {t:'Câte celule are un tabel',
+   text:`<p>Fiecare rând are câte o celulă în fiecare coloană. Deci numărul de celule se află cu o <strong>înmulțire</strong>:</p>
+<p><mark>celule = coloane × rânduri</mark></p>
+<p>Atenție la greșeala des întâlnită: <strong>adunarea</strong> coloanelor cu rândurile nu numără căsuțele, ci doar liniile.</p>`,
+   exemplu:`<p>3 coloane și 4 rânduri: 3 × 4 = <strong>12</strong> celule.</p>${tab([['','',''],['','',''],['','',''],['','','']],{antet:false})}<p>Numără-le cu degetul: 3 pe fiecare rând, 4 rânduri, 12 căsuțe. Nu 3 + 4 = 7.</p>`,
+   altfel:`<p>E ca la o cutie de ouă cu 2 rânduri a câte 5 locuri: 2 × 5 = 10 ouă, nu 2 + 5 = 7.</p>`,
+   incearca:{t:'choice',q:'Un tabel are 2 coloane și 5 rânduri. Câte celule are?',o:['10','7','25','3'],ok:0,ajutor:'Înmulțești, nu aduni.',why:'2 × 5 = 10. Adunarea 2 + 5 = 7 numără doar liniile, nu căsuțele.'},
+   inca:[
+    {t:'choice',q:'Un tabel are 4 coloane și 3 rânduri. Câte celule are?',o:['12','7','43','16'],ok:0,ajutor:'coloane × rânduri',why:'4 × 3 = 12 celule.'},
+    {t:'choice',q:'Un tabel are 5 coloane și 5 rânduri. Câte celule are?',o:['25','10','55','20'],ok:0,ajutor:'5 × 5',why:'5 × 5 = 25 celule.'}
+   ]},
+  {t:'Rândul de antet',
+   text:`<p>Primul rând al tabelului are un rol special: în el scrii <strong>numele coloanelor</strong> (de exemplu Nume, Clasa, Nota). Acest rând se numește <mark>antetul</mark> tabelului.</p>
+<p>Fără antet, cititorul vede doar cifre și nu știe ce înseamnă ele: e nota? e vârsta? e numărul din catalog?</p>
+<p>Antetul e <strong>un rând în plus</strong> deasupra datelor. Îl numeri și pe el când faci tabelul.</p>`,
+   exemplu:`<p>Fără antet:</p>${tab([['Ana','7A','9'],['Bogdan','7B','8']],{antet:false})}<p>Cu antet (rândul colorat):</p>${tab([['Nume','Clasa','Nota'],['Ana','7A','9'],['Bogdan','7B','8']])}`,
+   incearca:{t:'tf',q:'Rândul de antet al unui tabel conține numele coloanelor.',ok:true,ajutor:'Uită-te la rândul colorat din exemplu.',why:'Adevărat. Antetul spune ce e în fiecare coloană.'},
+   inca:[
+    {t:'choice',q:'Un tabel are 5 elevi și rândul de antet. Câte rânduri are?',o:['6','5','4','10'],ok:0,ajutor:'Antetul e un rând în plus.',why:'Câte un rând pentru fiecare elev (5) plus antetul: 6.'}
+   ]},
+  {t:'Strategia: cum numeri rândurile și coloanele',
+   text:`<p>Înainte să faci tabelul, îl numeri. Patru pași:</p>
+<ol><li>Scrie ce afli despre <strong>un singur</strong> lucru (un elev: Nume, Clasa, Nota). Fiecare informație = <strong>o coloană</strong>.</li>
+<li>Numără câte lucruri ai (câți elevi). Fiecare = <strong>un rând</strong> de date.</li>
+<li>Adaugă <strong>un rând</strong> pentru antet.</li>
+<li>Verifică: fiecare informație are coloana ei și fiecare elev rândul lui, fără rânduri goale.</li></ol>`,
+   exemplu:`<p>6 elevi, fiecare cu Nume, Clasa și Nota:</p><ol><li>3 informații → <strong>3 coloane</strong>;</li><li>6 elevi → 6 rânduri de date;</li><li>+ 1 antet → <strong>7 rânduri</strong>;</li><li>tabel de 3 coloane × 7 rânduri.</li></ol>`,
+   incearca:{t:'choice',q:'Treci în tabel 6 elevi, fiecare cu Nume, Clasa și Nota. Ce tabel alegi, cu tot cu antet?',o:['3 coloane și 7 rânduri','6 coloane și 3 rânduri','3 coloane și 6 rânduri','7 coloane și 3 rânduri'],ok:0,ajutor:'Urmează exemplul: informații → coloane, elevi → rânduri, +1.',why:'O coloană pentru fiecare informație (3) și un rând pentru fiecare elev (6), plus rândul de antet: 7 rânduri.'},
+   inca:[
+    {t:'choice',q:'Faci lista a 4 cărți, fiecare cu Titlu, Autor, An și Pagini. Ce tabel alegi, cu antet?',o:['4 coloane și 5 rânduri','4 coloane și 4 rânduri','5 coloane și 4 rânduri','8 coloane și 1 rând'],ok:0,ajutor:'Câte informații are o carte? Câte cărți sunt? Plus antetul.',why:'4 informații → 4 coloane; 4 cărți + antet → 5 rânduri.'},
+    {t:'choice',q:'Orarul pe o zi: 6 ore, fiecare cu Ora și Materia. Ce tabel alegi, cu antet?',o:['2 coloane și 7 rânduri','6 coloane și 2 rânduri','2 coloane și 6 rânduri','7 coloane și 7 rânduri'],ok:0,ajutor:'Informațiile unei ore sunt Ora și Materia.',why:'2 informații → 2 coloane; 6 ore + antet → 7 rânduri.'}
+   ]},
+  {t:'Faci tabelul în Word',
+   text:`<ol><li>Pui cursorul unde vrei tabelul.</li>
+<li><strong>Inserare</strong> (Insert) → <strong>Tabel</strong> (Table).</li>
+<li>Treci mouse-ul peste grilă. Sus scrie de exemplu „3x4 Table”: <strong>întâi coloanele</strong> (3), apoi rândurile (4). Dai clic.</li>
+<li>Scrii în celule. Treci la celula următoare cu <kbd>Tab</kbd>. Apăsat în <strong>ultima celulă</strong>, <kbd>Tab</kbd> adaugă un rând nou.</li></ol>
+${fig('inserare-tabel-grila.webp',1000,521,'Meniul Table din fila Insert cu grila de pătrățele: trei coloane și patru rânduri colorate, eticheta 3x4 Table și tabelul gol apărut în document','Grila: <b>3 coloane × 4 rânduri</b> („3x4 Table”), iar tabelul gol se vede deja în document.')}`,
+   incearca:{t:'order',q:'Faci un tabel nou. Pune pașii în ordine.',items:['Pui cursorul unde vrei tabelul','Deschizi Inserare → Tabel','Alegi pe grilă coloanele și rândurile','Scrii în celule, trecând mai departe cu Tab'],ajutor:'Locul întâi, conținutul la final.',why:'Tabelul apare unde e cursorul, deci locul îl alegi primul. Abia după ce tabelul există poți scrie în celulele lui.'},
+   inca:[
+    {t:'choice',q:'Pe grilă scrie „2x5 Table”. Ce tabel primești?',o:['2 coloane și 5 rânduri','5 coloane și 2 rânduri','2 rânduri și 2 coloane','10 coloane'],ok:0,ajutor:'Primul număr sunt coloanele.',why:'Word scrie întâi coloanele, apoi rândurile: 2 coloane, 5 rânduri.'},
+    {t:'tf',q:'Dacă apeși Tab în ultima celulă a tabelului, apare un rând nou.',ok:true,ajutor:'Recitește pasul 4 din listă.',why:'Adevărat. Așa lungești tabelul din mers, când mai ai un elev de trecut.'}
+   ]}
+ ],
+ atelier:{t:'pagina',titlu:'Construiește tabelul',
+  intro:`<p>Mai jos e un editor de tabel simplificat, ca grila din Word. <strong>Sarcina:</strong> construiește tabelul concursului de șah. Folosește strategia: câte informații are un elev (coloane), câți elevi sunt (rânduri) și încă un rând pentru antet. Datele le așază jocul, singur; tu vezi pe loc dacă încap.</p>`,
+  q:'Tabelul concursului de șah: Nume, Clasa, Puncte pentru Ana, Bogdan, Cristi și Dana.',parti:['tabel'],
   cere:{tabel:{cap:['Nume','Clasa','Puncte'],date:[['Ana','7A','7'],['Bogdan','7B','5'],['Cristi','7A','6'],['Dana','7C','4']]}},
-  start:{r:2,c:2},
-  why:'Jocul a numărat din date: câte o coloană pentru fiecare informație, câte un rând pentru fiecare elev și încă un rând pentru antet, fără rânduri goale.'},
- {t:'tf',q:'Dacă apeși Tab în ultima celulă a tabelului, apare un rând nou.',ok:true,why:'Adevărat. Așa lungești tabelul din mers, fără să-l faci din nou, când mai ai un elev de trecut.'}
-]},
-{t:'Formatez tabelul',lectii:[7],continuturi:[PROG.formatare],text:`
-<p>După ce datele sunt în tabel, îl faci ușor de citit.</p>
-<p><mark>Antetul</mark> trebuie să se deosebească de restul: aldin, centrat sau cu fundal colorat. Când cursorul e în tabel, apar file noi, doar pentru tabel. Acolo găsești <strong>stiluri de tabel</strong> gata făcute, care aplică dintr-o dată culori și linii.</p>
-<p>Liniile care se văd pe hârtie sunt <mark>bordurile</mark>. Le poți îngroșa, colora sau ascunde. <strong>Lățimea unei coloane</strong> o schimbi trăgând linia dintre coloane.</p>
-<p>Un titlu care stă deasupra tuturor coloanelor are nevoie de un rând cu <mark>celulele îmbinate</mark>: selectezi celulele, dai clic dreapta și alegi comanda de îmbinare (în engleză, <em>Merge Cells</em>).</p>
-<p>La un tabel lung, rândul de antet se poate repeta pe fiecare pagină.</p>
-<figure class="captura"><a href="../word-obiecte-vii/img/proiectare-tabel.webp" target="_blank"><img src="../word-obiecte-vii/img/proiectare-tabel.webp" alt="Trei decupaje din aceeași panglică Word, unul sub altul: fila Table Design încadrată, grupul Table Style Options cu bifa Header Row încadrată și o felie din galeria Table Styles" width="208" height="195" loading="lazy"></a>
-<figcaption>Când cursorul e în tabel apare fila <b>Proiectare tabel</b> (Table Design). Trei decupaje din aceeași panglică, de sus în jos: fila, grupul <b>Opțiuni stil tabel</b> (Table Style Options) cu bifa <b>Rând antet</b> (Header Row) și o felie din galeria de <b>Stiluri de tabel</b> (Table Styles).</figcaption></figure>
-<figure class="captura"><a href="../word-obiecte-vii/img/imbinare-celule.webp" target="_blank"><img src="../word-obiecte-vii/img/imbinare-celule.webp" alt="Primul rând al unui tabel selectat și meniul de clic dreapta cu comanda Merge Cells încadrată" width="660" height="430" loading="lazy"></a>
-<figcaption>Selectezi celulele primului rând, clic dreapta → <b>Îmbinare celule</b> (Merge Cells).</figcaption></figure>
-<figure class="captura"><a href="../word-obiecte-vii/img/tabel-imbinat.webp" target="_blank"><img src="../word-obiecte-vii/img/tabel-imbinat.webp" alt="Tabel Word cu titlul Creșterea plantei pe un rând îmbinat, deasupra celor trei coloane" width="845" height="135" loading="lazy"></a>
-<figcaption>Rezultatul: titlul stă pe un singur rând, <b>deasupra tuturor coloanelor</b>, iar dedesubt rămâne rândul de antet.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Titlul „Rezultatele concursului” trebuie să stea deasupra celor 3 coloane, într-o singură căsuță. Ce faci?',o:['Îmbini celulele unui rând de deasupra','Scrii titlul în prima celulă, cu spații după el','Lărgești prima coloană cât tot tabelul','Ștergi coloana a doua și coloana a treia'],ok:0,why:'Celulele îmbinate devin o singură căsuță, lată cât toate coloanele. Spațiile se strică la prima schimbare de font, iar ștergerea coloanelor îți pierde datele.'},
- {t:'match',q:'Leagă fiecare problemă a tabelului de reparația ei.',pairs:[['Antetul nu iese în evidență','aldin sau fundal pe primul rând'],['Pe hârtie nu se văd liniile','pui borduri'],['Un nume lung nu încape','tragi linia dintre coloane'],['Titlul trebuie să acopere toate coloanele','îmbini celulele'],['Pe pagina 3 nu mai știi ce e în coloane','repeți rândul de antet pe fiecare pagină']],why:'Fiecare reglaj rezolvă o singură problemă. Dacă știi ce nu merge, știi și ce comandă cauți.'},
- {t:'tf',q:'Dacă îmbini toate celulele primului rând, numele coloanelor pot rămâne tot acolo, fiecare deasupra coloanei lui.',ok:false,why:'Fals. După îmbinare, rândul acela are o singură celulă, deci nu mai are loc pentru fiecare nume de coloană. De aceea titlul comun stă pe un rând separat, deasupra antetului.'},
- {t:'pagina',q:'Tabelul bibliotecii are nevoie de titlul „Cărți noi” deasupra tuturor coloanelor. Construiește-l: rânduri, coloane, antet și rândul cu celulele îmbinate.',
-  parti:['tabel'],
+  start:{r:2,c:2},ajutor:'3 informații → 3 coloane. 4 elevi + antet → 5 rânduri. Și pornește „Rând de antet”.',
+  why:'Ai numărat din date: câte o coloană pentru fiecare informație, câte un rând pentru fiecare elev și încă un rând pentru antet, fără rânduri goale.',
+  inca:[
+   {t:'pagina',q:'Încă una: tabelul fructelor de la cantină: Fruct, Preț, Cantitate, Furnizor, pentru mere, pere și prune.',parti:['tabel'],
+    cere:{tabel:{cap:['Fruct','Preț','Cantitate','Furnizor'],date:[['mere','3 lei','20 kg','Ferma A'],['pere','4 lei','10 kg','Ferma B'],['prune','5 lei','8 kg','Ferma A']]}},start:{r:2,c:2},ajutor:'4 informații, 3 fructe, plus antet.',why:'4 coloane și 3 + 1 = 4 rânduri.'},
+   {t:'pagina',q:'Încă una: orarul de luni: Ora și Materia, pentru 5 ore.',parti:['tabel'],
+    cere:{tabel:{cap:['Ora','Materia'],date:[['8','Română'],['9','Matematică'],['10','TIC'],['11','Engleză'],['12','Sport']]}},start:{r:3,c:3},ajutor:'2 informații, 5 ore, plus antet.',why:'2 coloane și 5 + 1 = 6 rânduri.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Un tabel are 4 coloane și 5 rânduri. Câte celule are?'+fig('tabel-antet.webp',900,172,'Tabel în Word cu antet, la care sunt marcate cu roșu un rând întreg, o coloană întreagă și o singură celulă','Un <b>rând</b> merge în lățime, o <b>coloană</b> în înălțime, iar căsuța unde se întâlnesc e o <b>celulă</b>. (Tabelul din poză are alte dimensiuni decât cel din întrebare.)'),o:['20','9','45','16'],ok:0,ajutor:'celule = coloane × rânduri',why:'Numărul de celule e coloane × rânduri: 4 × 5 = 20. Adunarea 4 + 5 = 9 numără doar coloanele și rândurile, nu căsuțele.'},
+  {t:'choice',q:'Treci în tabel 8 elevi, fiecare cu Nume și Nota. Ce tabel alegi, cu tot cu antet?',o:['2 coloane și 9 rânduri','8 coloane și 2 rânduri','2 coloane și 8 rânduri','9 coloane și 2 rânduri'],ok:0,ajutor:'Strategia din pasul 4: informații → coloane, elevi → rânduri, plus antet.',why:'O coloană pentru fiecare informație (2) și un rând pentru fiecare elev (8), plus antetul: 9 rânduri.'},
+  {t:'order',q:'Faci un tabel nou. Pune pașii în ordine.',items:['Pui cursorul unde vrei tabelul','Deschizi Inserare → Tabel','Alegi numărul de rânduri și de coloane','Scrii în celule, trecând mai departe cu Tab'],why:'Tabelul apare unde e cursorul, deci locul îl alegi primul. Abia după ce tabelul există poți scrie în celulele lui.'},
+  {t:'choice',q:'Pe grila de la Inserare → Tabel scrie „4x3 Table”. Câte coloane are tabelul?',o:['4','3','7','12'],ok:0,ajutor:'Word scrie întâi coloanele.',why:'Primul număr sunt coloanele (4), al doilea rândurile (3).'},
+  {t:'tf',q:'Dacă apeși Tab în ultima celulă a tabelului, apare un rând nou.',ok:true,why:'Adevărat. Așa lungești tabelul din mers, fără să-l faci din nou, când mai ai un elev de trecut.'}
+ ]},
+
+/* ================= 4. Formatez tabelul (lecția 7) ================= */
+{t:'Formatez tabelul',lectii:[7],continuturi:[PROG.formatare],
+ obiectiv:'faci un tabel ușor de citit: antet care iese în evidență, linii vizibile, coloane potrivite și un titlu pe rând îmbinat.',
+ pasi:[
+  {t:'Filele tabelului apar doar când ești în el',
+   text:`<p>Dai clic într-o celulă a tabelului. Sus, pe panglică, apar <strong>file noi</strong>, doar pentru tabel. Una dintre ele e <mark>Proiectare tabel</mark> (Table Design).</p>
+<p>Pe ea găsești:</p>
+<ul><li><strong>Stiluri de tabel</strong> (Table Styles): modele gata făcute, care pun dintr-o dată culori și linii;</li>
+<li>bifa <strong>Rând antet</strong> (Header Row), în grupul Opțiuni stil tabel (Table Style Options): face ca primul rând să arate altfel, ca antet.</li></ul>
+<p>Clic în afara tabelului: filele dispar.</p>
+${fig('proiectare-tabel.webp',208,195,'Trei decupaje din aceeași panglică Word, unul sub altul: fila Table Design încadrată, grupul Table Style Options cu bifa Header Row încadrată și o felie din galeria Table Styles','De sus în jos: fila <b>Proiectare tabel</b> (Table Design), bifa <b>Rând antet</b> (Header Row), galeria <b>Stiluri de tabel</b> (Table Styles).')}`,
+   incearca:{t:'tf',q:'Fila Proiectare tabel (Table Design) se vede doar când cursorul e în tabel.',ok:true,ajutor:'Ce se întâmplă când dai clic în afara tabelului?',why:'Adevărat. Filele tabelului apar doar când lucrezi în tabel.'},
+   inca:[
+    {t:'choice',q:'Vrei să pui dintr-o dată culori și linii frumoase pe tot tabelul. Ce folosești?',o:['Un stil de tabel, din Proiectare tabel','Fila Inserare → Tabel, încă o dată','Tasta Tab în ultima celulă','Fila Fișier (File)'],ok:0,ajutor:'Modele gata făcute...',why:'Stilurile de tabel aplică deodată culorile și liniile.'}
+   ]},
+  {t:'Antetul iese în evidență, liniile se văd',
+   text:`<p>Două reglaje care fac tabelul ușor de citit:</p>
+<ol><li><strong>Antetul</strong> se deosebește de date. Selectezi primul rând și îl faci cu litere îngroșate (<strong>aldin</strong>, Bold), centrat sau cu fundal colorat. Cel mai repede: bifa <strong>Rând antet</strong> plus un stil de tabel, de pe fila Proiectare tabel.</li>
+<li><mark>Bordurile</mark> sunt liniile tabelului care se văd pe hârtie. Le pui tot de pe fila <strong>Proiectare tabel</strong> (Table Design), cu butonul <strong>Borduri</strong> (Borders) → <strong>Toate bordurile</strong> (All Borders). Tot de acolo le poți îngroșa sau colora.</li></ol>`,
+   exemplu:`<p>Înainte: antetul arată ca datele și liniile nu se văd. După: antet colorat, aldin, cu borduri pe toate celulele.</p>${tab([['Nume','Nota'],['Ana','10']])}`,
+   incearca:{t:'match',q:'Leagă fiecare problemă a tabelului de reparația ei.',pairs:[['Antetul nu iese în evidență','aldin sau fundal pe primul rând'],['Pe hârtie nu se văd liniile','pui borduri'],['Liniile sunt prea subțiri','le îngroși din Borduri (Borders)']],ajutor:'Fiecare punct din listă rezolvă o problemă.',why:'Fiecare reglaj rezolvă o singură problemă. Dacă știi ce nu merge, știi și ce cauți.'},
+   inca:[
+    {t:'tf',q:'Bordurile sunt liniile tabelului care se văd pe hârtie.',ok:true,ajutor:'Punctul 2 din listă.',why:'Adevărat. Fără borduri, pe hârtie tabelul arată ca niște cuvinte risipite.'}
+   ]},
+  {t:'Coloana prea îngustă: tragi de linie',
+   text:`<p>Un nume lung se rupe pe două rânduri când coloana e prea îngustă. Lățimea unei coloane o schimbi cu mouse-ul:</p>
+<ol><li>Duci mouse-ul pe <strong>linia dintre două coloane</strong>, până cursorul devine o săgeată cu două capete (↔).</li>
+<li>Ții apăsat și <strong>tragi</strong> spre dreapta (coloana se lățește) sau spre stânga (se îngustează).</li>
+<li>Dai drumul și te uiți: încape numele pe un rând?</li></ol>`,
+   exemplu:`<p>„Alexandra-Maria” se rupe pe două rânduri. Tragi spre dreapta linia dintre coloana Nume și coloana Nota: prima coloană se lățește și numele încape pe un singur rând.</p>${tab([['Nume','Nota'],['Alexandra-Maria','10']])}`,
+   incearca:{t:'choice',q:'Numele „Alexandra-Maria” se rupe pe două rânduri în prima coloană. Ce faci?',o:['Tragi spre dreapta linia dintre coloane','Pui borduri pe toate celulele','Bifezi Rând antet la tabel','Apeși Tab în ultima celulă'],ok:0,ajutor:'Coloana e prea îngustă. Cum o lățești?',why:'Linia dintre coloane, trasă spre dreapta, lățește prima coloană, iar numele încape pe un rând.'},
+   inca:[
+    {t:'order',q:'Lățești o coloană. Pune pașii în ordine.',items:['Duci mouse-ul pe linia dintre coloane','Aștepți săgeata cu două capete','Ții apăsat și tragi spre dreapta','Te uiți dacă a încăput textul'],ajutor:'Întâi cursorul trebuie să-și schimbe forma.',why:'Săgeata cu două capete arată că poți trage de linie; la final verifici cu ochii tăi.'}
+   ]},
+  {t:'Titlul peste toate coloanele: celule îmbinate',
+   text:`<p>Un titlu comun, de exemplu „Rezultate”, trebuie să stea <strong>deasupra tuturor coloanelor</strong>, într-o singură căsuță lată. Pentru asta <mark>îmbini celulele</mark> unui rând. Pașii:</p>
+<ol><li>Când numeri rândurile, pui <strong>încă un rând sus</strong>, pentru titlu, deasupra antetului.</li>
+<li>Selectezi toate celulele acelui rând (tragi cu mouse-ul peste ele).</li>
+<li>Clic dreapta → <strong>Îmbinare celule</strong> (Merge Cells).</li>
+<li>Scrii titlul și îl centrezi.</li></ol>
+${fig('imbinare-celule.webp',660,430,'Primul rând al unui tabel selectat și meniul de clic dreapta cu comanda Merge Cells încadrată','Clic dreapta → <b>Îmbinare celule</b> (Merge Cells).')}`,
+   exemplu:`${fig('tabel-imbinat.webp',845,135,'Tabel Word cu titlul Creșterea plantei pe un rând îmbinat, deasupra celor trei coloane','Rezultatul: titlul pe un rând îmbinat, <b>deasupra tuturor coloanelor</b>; dedesubt, rândul de antet.')}<p>Tabelul are acum: rândul cu titlul + rândul de antet + rândurile de date.</p>`,
+   altfel:`<p>Gândește-te la un zid din cărămizi: trei cărămizi mici puse una lângă alta, înlocuite cu una singură, lungă. Îmbinarea face din mai multe căsuțe una singură.</p>`,
+   incearca:{t:'order',q:'Pui titlul „Rezultate” deasupra tabelului. Pune pașii în ordine.',items:['Adaugi un rând sus, deasupra antetului','Selectezi toate celulele acelui rând','Clic dreapta → Îmbinare celule (Merge Cells)','Scrii titlul și îl centrezi'],ajutor:'Nu poți îmbina celule care încă nu există.',why:'Întâi rândul, apoi selecția, îmbinarea, și abia la final titlul.'},
+   inca:[
+    {t:'tf',q:'După ce îmbini toate celulele unui rând, acel rând are o singură celulă.',ok:true,ajutor:'Gândește-te la cărămizi.',why:'Adevărat. De aceea numele coloanelor stau pe alt rând, dedesubt.'},
+    {t:'choice',q:'Tabelul are un rând de titlu îmbinat, un rând de antet și 3 rânduri de date. Câte rânduri are în total?',o:['5','4','3','6'],ok:0,ajutor:'Adună: titlu + antet + date.',why:'1 + 1 + 3 = 5 rânduri.'}
+   ]},
+  {t:'Tabelul lung: antetul pe fiecare pagină',
+   text:`<p>Un tabel lung trece pe pagina 2 sau 3. Acolo cititorul vede doar cifre și trebuie să dea înapoi ca să afle ce e în coloane.</p>
+<p>Soluția: <mark>rândul de antet se repetă</mark> sus, pe fiecare pagină. Pașii:</p>
+<ol><li>Pui cursorul în rândul de antet.</li>
+<li>Când ești în tabel, lângă Proiectare tabel apare a doua filă a tabelului: <strong>Aspect</strong> (Layout, numită uneori Table Layout). O deschizi.</li>
+<li>Apeși <strong>Repetare rânduri antet</strong> (Repeat Header Rows). Numele exact poate diferi puțin de la o versiune la alta: ține mouse-ul pe butoane și citește.</li></ol>`,
+   incearca:{t:'choice',q:'Tabelul cu notele are 3 pagini. Pe paginile 2 și 3 nu mai știi ce e în fiecare coloană. Ce reglaj ajută?',o:['Rândul de antet repetat pe fiecare pagină','Un font mai mic, ca tabelul să încapă pe o pagină','Borduri mai groase pe toate celulele tabelului','Coloanele puse în altă ordine, pe lățime'],ok:0,ajutor:'Ce lipsește sus, pe pagina 2?',why:'Rândul de antet repetat pune numele coloanelor sus pe fiecare pagină.'}}
+ ],
+ atelier:{t:'pagina',titlu:'Tabel cu titlu îmbinat',
+  intro:`<p><strong>Sarcina:</strong> tabelul bibliotecii are nevoie de titlul „Cărți noi” deasupra tuturor coloanelor. Construiește-l: coloane, rânduri (nu uita rândul de titlu!), rândul de antet și primul rând cu celulele îmbinate. Privește tabelul mărit: vezi exact ce iese.</p>`,
+  q:'Tabelul „Cărți noi”: Carte, Autor, Raft, pentru 3 cărți.',parti:['tabel'],
   cere:{tabel:{cap:['Carte','Autor','Raft'],date:[['Amintiri din copilărie','Ion Creangă','A2'],['Micul prinț','Saint-Exupéry','B1'],['Cireșarii','Constantin Chiriță','A4']],titlu:'Cărți noi'}},
-  start:{r:3,c:2},
-  why:'Jocul a numărat: rândul îmbinat cu titlul, rândul de antet și câte un rând pentru fiecare carte. Coloanele sunt tot atâtea câte informații are fiecare carte.'},
- {t:'choice',q:'Tabelul cu notele are 3 pagini. Pe paginile 2 și 3 nu mai știi ce e în fiecare coloană. Ce reglaj ajută?',o:['Rândul de antet repetat pe fiecare pagină','Un font mai mic, ca tabelul să încapă pe o pagină','Borduri mai groase pe toate celulele tabelului','Coloanele puse în altă ordine, pe lățime'],ok:0,why:'Rândul de antet repetat pune numele coloanelor sus pe fiecare pagină, deci cititorul nu mai dă înapoi la prima pagină ca să vadă ce înseamnă cifrele.'}
-]},
-{t:'Pagina: orientare și margini',lectii:[7],continuturi:[PROG.formatare,PROG.specificatii],text:`
-<p>Ultimul nivel de formatare este <mark>pagina</mark>. În școală folosim hârtie <strong>A4</strong>: 21 × 29,7 cm.</p>
-<p><mark>Orientarea</mark> poate fi <strong>portret</strong> (foaia în picioare, lată de 21 cm) sau <strong>vedere</strong>, cum îi spune Word în română, adică „peisaj” (foaia culcată, lată de 29,7 cm). Un tabel cu multe coloane încape mai bine pe foaia culcată.</p>
-<p><mark>Marginile</mark> sunt spațiul alb din jurul textului, de obicei 2–2,5 cm. O lucrare care se <strong>îndosariază</strong> are marginea din <strong>stânga</strong> mai mare, ca găurile să nu prindă textul.</p>
-<p>Cât loc rămâne pentru text? Lățimea foii minus cele două margini: 21 − 2,5 − 2 = 16,5 cm.</p>
-<p>Marginile și orientarea sunt pe fila <strong>Aspect</strong> (Layout): butonul <strong>Orientare</strong> (Orientation) și butonul <strong>Margini</strong> (Margins).</p>
-<figure class="captura"><a href="../word-obiecte-vii/img/orientare.webp" target="_blank"><img src="../word-obiecte-vii/img/orientare.webp" alt="Fila Layout din Word cu butonul Orientation deschis și cele două opțiuni: Portrait și Landscape" width="400" height="225" loading="lazy"></a>
-<figcaption>Fila <b>Aspect</b> (Layout) → <b>Orientare</b> (Orientation): <b>Portret</b> (Portrait) sau <b>Vedere</b> (Landscape), adică foaia culcată.</figcaption></figure>
-<figure class="captura"><a href="../word-obiecte-vii/img/margini.webp" target="_blank"><img src="../word-obiecte-vii/img/margini.webp" alt="Fila Layout din Word cu butonul Margins deschis: lista de margini gata făcute și Custom Margins jos" width="610" height="580" loading="lazy"></a>
-<figcaption><b>Margini</b> (Margins): setul <i>Normal</i> are 2,5 cm pe toate laturile, iar <b>Margini particularizate</b> (Custom Margins), jos, le lasă să fie scrise exact.</figcaption></figure>`,
-qs:[
- {t:'tf',q:'Pe orientarea portret, o foaie A4 e lată de 21 cm.',ok:true,why:'Adevărat. În picioare, latura scurtă (21 cm) e lățimea. Pe foaia culcată, lățimea devine latura lungă, de 29,7 cm.'},
- {t:'choice',q:'Foaie portret, margine de 3 cm în stânga și de 2 cm în dreapta. Cât loc rămâne pentru text, pe lățime?',o:['16 cm','21 cm','26 cm','19 cm'],ok:0,why:'Din lățimea foii scazi amândouă marginile: 21 − 3 − 2 = 16 cm. Dacă scazi doar una, ieși 19 cm, ceea ce e prea mult.'},
- {t:'classify',q:'Pe ce orientare se așază mai bine fiecare document?',cats:['Portret','Vedere'],items:[['Compunere de două pagini',0],['Tabel cu 8 coloane late',1],['Referat pus în dosar',0],['Pliant împăturit în trei, cu trei coloane',1],['Scrisoare către un prieten',0]],why:'Textul obișnuit se citește ușor pe foaia în picioare. Ce e lat, de exemplu multe coloane sau un pliant în trei, are nevoie de foaia culcată.'},
- {t:'pagina',q:'Orarul clasei are 6 coloane de câte 3,5 cm și se pune în dosarul clasei. Alege orientarea și marginile (între 2 și 3 cm, cu stânga mai mare), astfel încât tabelul să încapă între margini.',
-  parti:['orientare','margini'],
+  start:{r:3,c:2},ajutor:'3 coloane. Rânduri: titlu + antet + 3 cărți = 5. Pornește și antetul, și rândul îmbinat.',
+  why:'Ai numărat: rândul îmbinat cu titlul, rândul de antet și câte un rând pentru fiecare carte.',
+  inca:[
+   {t:'pagina',q:'Încă una: tabelul „Crosul școlii”, cu Nume, Clasa, Timp, Locul, pentru 2 alergători.',parti:['tabel'],
+    cere:{tabel:{cap:['Nume','Clasa','Timp','Locul'],date:[['Ioana','7B','4:10','I'],['Matei','7A','4:25','II']],titlu:'Crosul școlii'}},start:{r:2,c:2},ajutor:'4 coloane; titlu + antet + 2 = 4 rânduri.',why:'4 coloane, 4 rânduri, cu titlul îmbinat sus.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Titlul „Rezultatele concursului” trebuie să stea deasupra celor 3 coloane, într-o singură căsuță. Ce faci?',o:['Îmbini celulele unui rând de deasupra','Scrii titlul în prima celulă, cu spații după el','Lărgești prima coloană cât tot tabelul','Ștergi coloana a doua și coloana a treia'],ok:0,why:'Celulele îmbinate devin o singură căsuță, lată cât toate coloanele. Spațiile se strică la prima schimbare de font, iar ștergerea coloanelor îți pierde datele.'},
+  {t:'match',q:'Leagă fiecare problemă a tabelului de reparația ei.',pairs:[['Antetul nu iese în evidență','aldin sau fundal pe primul rând'],['Pe hârtie nu se văd liniile','pui borduri'],['Un nume lung nu încape','tragi linia dintre coloane'],['Titlul trebuie să acopere toate coloanele','îmbini celulele'],['Pe pagina 3 nu mai știi ce e în coloane','repeți rândul de antet pe fiecare pagină']],ajutor:'Fiecare reparație e într-un pas.',why:'Fiecare reglaj rezolvă o singură problemă. Dacă știi ce nu merge, știi și ce comandă cauți.'},
+  {t:'tf',q:'Dacă îmbini toate celulele primului rând, numele coloanelor pot rămâne tot acolo, fiecare deasupra coloanei lui.',ok:false,ajutor:'Câte celule are rândul după îmbinare?',why:'Fals. După îmbinare, rândul acela are o singură celulă. De aceea titlul comun stă pe un rând separat, deasupra antetului.'},
+  {t:'choice',q:'Unde apare fila Proiectare tabel (Table Design)?',o:['Pe panglică, doar când cursorul e în tabel','Mereu, lângă fila Pornire (Home)','Doar în fereastra de tipărire','În meniul de clic dreapta al unei imagini'],ok:0,why:'Filele tabelului apar doar când lucrezi în tabel.'},
+  {t:'choice',q:'Tabelul cu notele are 3 pagini. Pe paginile 2 și 3 nu mai știi ce e în fiecare coloană. Ce reglaj ajută?',o:['Rândul de antet repetat pe fiecare pagină','Un font mai mic, ca tabelul să încapă pe o pagină','Borduri mai groase pe toate celulele tabelului','Coloanele puse în altă ordine, pe lățime'],ok:0,why:'Rândul de antet repetat pune numele coloanelor sus pe fiecare pagină, deci cititorul nu mai dă înapoi la prima pagină.'}
+ ]},
+
+/* ================= 5. Pagina: orientare și margini (lecția 7) ================= */
+{t:'Pagina: orientare și margini',lectii:[7],continuturi:[PROG.formatare,PROG.specificatii],
+ obiectiv:'alegi orientarea foii și marginile și calculezi dacă un tabel încape între margini.',
+ pasi:[
+  {t:'Foaia A4 și orientarea',
+   text:`<p>În școală tipărim pe hârtie <strong>A4</strong>: <strong>21 × 29,7 cm</strong>.</p>
+<p><mark>Orientarea</mark> spune cum stă foaia:</p>
+<ul><li><strong>Portret</strong> (Portrait): foaia în picioare, lată de <strong>21 cm</strong>;</li>
+<li><strong>Vedere</strong> (Landscape), adică „peisaj”: foaia culcată, lată de <strong>29,7 cm</strong>.</li></ul>
+<p>Textul obișnuit merge pe portret. Ce e lat (un tabel cu multe coloane, un pliant în trei) încape mai bine pe foaia culcată.</p>
+${fig('orientare.webp',400,225,'Fila Layout din Word cu butonul Orientation deschis și cele două opțiuni: Portrait și Landscape','<b>Orientare</b> (Orientation): <b>Portret</b> (Portrait) sau <b>Vedere</b> (Landscape).')}`,
+   altfel:`<p>Ia o foaie de caiet: ținută în picioare, e îngustă și înaltă (portret, ca un tablou cu un om). Întoarsă pe o parte, e lată (peisaj, ca o fotografie cu munți).</p>`,
+   incearca:{t:'tf',q:'Pe orientarea portret, o foaie A4 e lată de 21 cm.',ok:true,ajutor:'Portret = în picioare.',why:'Adevărat. În picioare, latura scurtă (21 cm) e lățimea.'},
+   inca:[
+    {t:'classify',q:'Pe ce orientare se așază mai bine fiecare document?',cats:['Portret','Vedere'],items:[['Compunere de două pagini',0],['Tabel cu 8 coloane late',1],['Scrisoare către un prieten',0],['Pliant împăturit în trei',1]],ajutor:'Ce e lat merge pe foaia culcată.',why:'Textul obișnuit merge în picioare; ce e lat are nevoie de foaia culcată.'}
+   ]},
+  {t:'Marginile',
+   text:`<p><mark>Marginile</mark> sunt spațiul alb din jurul textului, pe cele patru laturi ale foii. De obicei au <strong>2–2,5 cm</strong>. Nimic din document (text, imagine, tabel) nu iese în afara lor.</p>
+<p>O lucrare care se <strong>îndosariază</strong> (se pune în dosar cu găuri) are marginea din <strong>stânga mai mare</strong>, ca găurile să nu prindă textul.</p>
+${fig('margini.webp',610,580,'Fila Layout din Word cu butonul Margins deschis: lista de margini gata făcute și Custom Margins jos','<b>Margini</b> (Margins): setul <i>Normal</i> are 2,5 cm pe toate laturile; <b>Margini particularizate</b> (Custom Margins), jos, le lasă să fie scrise exact.')}`,
+   incearca:{t:'tf',q:'O lucrare care se îndosariază are nevoie de margine mai mare în dreapta.',ok:false,ajutor:'Pe ce parte a foii sunt găurile dosarului?',why:'Fals. Găurile dosarului se fac pe latura din stânga, deci acolo lași mai mult spațiu alb.'},
+   inca:[
+    {t:'choice',q:'Care margini sunt potrivite pentru un referat pus în dosar?',o:['Stânga 3 cm, dreapta 2 cm','Stânga 2 cm, dreapta 3 cm','Stânga 0,5 cm, dreapta 0,5 cm','Stânga 2 cm, dreapta 2 cm'],ok:0,ajutor:'Stânga mai mare.',why:'La îndosariere, stânga are mai mult loc pentru găuri.'}
+   ]},
+  {t:'Strategia: încape tabelul între margini?',
+   text:`<p>Un tabel nu are voie să iasă din margini. Ca să afli dacă încape, faci patru pași:</p>
+<ol><li>Iei <strong>lățimea foii</strong>: 21 cm (portret) sau 29,7 cm (vedere).</li>
+<li>Scazi <strong>marginea din stânga</strong> și <strong>marginea din dreapta</strong>. Ce rămâne e <mark>locul pentru text</mark>.</li>
+<li>Calculezi <strong>lățimea tabelului</strong>: coloane × lățimea unei coloane.</li>
+<li>Compari: dacă tabelul e mai lat decât locul pentru text, schimbi orientarea sau marginile.</li></ol>`,
+   exemplu:`<p>Orar cu 6 coloane de câte 3,5 cm → tabelul are 6 × 3,5 = <strong>21 cm</strong>.</p><ul><li>Portret, margini 2,5 și 2: 21 − 2,5 − 2 = <strong>16,5 cm</strong>. 21 &gt; 16,5 → <strong>nu încape</strong>.</li><li>Vedere, aceleași margini: 29,7 − 2,5 − 2 = <strong>25,2 cm</strong>. 21 &lt; 25,2 → <strong>încape</strong>.</li></ul>`,
+   altfel:`<p>E ca atunci când muți un dulap: măsori întâi peretele (foaia), scazi locul de lângă ușă și calorifer (marginile), și abia apoi vezi dacă intră dulapul (tabelul).</p>`,
+   incearca:{t:'choice',q:'Foaie portret, margine de 3 cm în stânga și de 2 cm în dreapta. Cât loc rămâne pentru text, pe lățime?',o:['16 cm','21 cm','26 cm','19 cm'],ok:0,ajutor:'21 − 3 − 2',why:'Din lățimea foii scazi amândouă marginile: 21 − 3 − 2 = 16 cm.'},
+   inca:[
+    {t:'choice',q:'Foaie vedere (29,7 cm), margini de 2,5 cm în ambele părți. Cât loc rămâne pentru text?',o:['24,7 cm','27,2 cm','29,7 cm','16 cm'],ok:0,ajutor:'29,7 − 2,5 − 2,5',why:'29,7 − 2,5 − 2,5 = 24,7 cm.'},
+    {t:'choice',q:'Un tabel are 5 coloane de câte 4 cm. Foaia e portret, cu margini de 2 cm. Încape?',o:['Nu: tabelul are 20 cm, locul doar 17 cm','Da: tabelul are 20 cm, foaia are 21 cm','Da: tabelul are 9 cm','Nu: tabelul are 45 cm'],ok:0,ajutor:'Tabel: 5 × 4. Loc: 21 − 2 − 2.',why:'5 × 4 = 20 cm, iar între margini sunt 21 − 2 − 2 = 17 cm. Nu încape: treci pe vedere.'}
+   ]},
+  {t:'Unde le schimbi în Word',
+   text:`<p>Orientarea și marginile stau pe fila <mark>Aspect</mark> (Layout):</p>
+<ol><li>Deschizi fila <strong>Aspect</strong> (Layout).</li>
+<li>Apeși <strong>Orientare</strong> (Orientation) și alegi Portret sau Vedere.</li>
+<li>Apeși <strong>Margini</strong> (Margins). Alegi un set gata făcut sau, jos, <strong>Margini particularizate</strong> (Custom Margins), unde scrii exact câți centimetri vrei pe fiecare latură.</li>
+<li>Te uiți la pagină: tabelul și textul stau între margini?</li></ol>`,
+   incearca:{t:'choice',q:'Pe ce filă găsești butonul Margini (Margins)?',o:['Aspect (Layout)','Inserare (Insert)','Pornire (Home)','Proiectare tabel (Table Design)'],ok:0,ajutor:'Aceeași filă ca Orientare.',why:'Orientarea și marginile, adică „aspectul” paginii, sunt pe fila Aspect (Layout).'},
+   inca:[
+    {t:'order',q:'Vrei marginea din stânga de exact 3 cm. Pune pașii în ordine.',items:['Deschizi fila Aspect (Layout)','Apeși Margini (Margins)','Alegi Margini particularizate (Custom Margins)','Scrii 3 cm la marginea din stânga'],ajutor:'Un număr exact se scrie în Margini particularizate.',why:'Fila, butonul, varianta particularizată, apoi valoarea exactă.'}
+   ]}
+ ],
+ atelier:{t:'pagina',titlu:'Pune orarul pe foaie',
+  intro:`<p><strong>Sarcina:</strong> orarul clasei are 6 coloane de câte 3,5 cm și se pune în dosarul clasei. Alege orientarea și marginile (între 2 și 3 cm, cu stânga mai mare) astfel încât tabelul să încapă între margini. Sub foaie jocul îți arată locul pentru text; tabelul iese cu roșu când nu încape.</p>`,
+  q:'Orientarea și marginile pentru orar.',parti:['orientare','margini'],
   cere:{marg:[2,3],stangaMaiMare:true,tabel:{cap:['Ora','Luni','Marți','Mier.','Joi','Vineri'],date:[['8','Mate','Rom.','TIC','Engl.','Ist.'],['9','Rom.','Mate','Bio.','Fiz.','Mate'],['10','Geo.','Sport','Rom.','Mate','Muz.']],latCol:3.5}},
-  start:{or:'portret',ms:2,md:2},
-  why:'Jocul a calculat: tabelul are 6 × 3,5 = 21 cm, iar între margini rămâne lățimea foii minus cele două margini. Pe foaia în picioare nu ajunge niciodată, pe cea culcată ajunge.'},
- {t:'tf',q:'O lucrare care se îndosariază are nevoie de margine mai mare în dreapta.',ok:false,why:'Fals. Găurile dosarului se fac pe latura din stânga, deci acolo lași mai mult spațiu alb, ca să nu prindă textul.'}
-]},
-{t:'Antet, subsol și verificarea finală',lectii:[3,8],continuturi:[PROG.gestionare,PROG.reguli],text:`
-<p><mark>Antetul</mark> și <mark>subsolul</mark> sunt zonele de sus și de jos care se <strong>repetă pe fiecare pagină</strong>: titlul lucrării, numele tău, <strong>numărul paginii</strong>. Le găsești pe fila Inserare. Nu le confunda cu rândul de antet al unui tabel. Numerele de pagină se pun <strong>automat</strong>, nu scriind cifra de mână.</p>
-<p>Vrei să începi o pagină nouă? Apeși <kbd>Ctrl</kbd>+<kbd>Enter</kbd>, nu un șir de <kbd>Enter</kbd>-uri goale, care se mută când adaugi text.</p>
-<p>Înainte să tipărești, apeși <kbd>Ctrl</kbd>+<kbd>P</kbd> (imprimare) și te uiți în <mark>previzualizare</mark>. Acolo vezi ce va vedea cititorul: a rămas o pagină cu două rânduri? Un titlu singur jos, cu textul lui pe pagina următoare?</p>
-<p>La final salvezi cu <kbd>Ctrl</kbd>+<kbd>S</kbd>, iar cu <kbd>F12</kbd> (Salvare ca…) faci și o copie PDF.</p>
-<figure class="captura"><a href="../word-obiecte-vii/img/antet-subsol-inserare.webp" target="_blank"><img src="../word-obiecte-vii/img/antet-subsol-inserare.webp" alt="Grupul Header & Footer din fila Insert, cu butoanele Header, Footer și Page Number încadrate" width="520" height="140" loading="lazy"></a>
-<figcaption>Fila <b>Inserare</b> (Insert), grupul <b>Antet și subsol</b> (Header &amp; Footer): <b>Antet</b> (Header), <b>Subsol</b> (Footer), <b>Număr de pagină</b> (Page Number).</figcaption></figure>
-<figure class="captura"><a href="../word-obiecte-vii/img/antet-subsol-pagina.webp" target="_blank"><img src="../word-obiecte-vii/img/antet-subsol-pagina.webp" alt="Pagină Word în modul de lucru la antet și subsol: sus antetul cu titlul referatului, jos subsolul cu numărul paginii" width="820" height="795" loading="lazy"></a>
-<figcaption>Pagina în lucru: sus <b>antetul</b> (titlul referatului și clasa), jos <b>subsolul</b> cu <b>numărul paginii</b> pus automat.</figcaption></figure>
-<figure class="captura"><a href="../word-obiecte-vii/img/previzualizare.webp" target="_blank"><img src="../word-obiecte-vii/img/previzualizare.webp" alt="Fereastra Print din Word: în stânga setările de imprimare, în dreapta previzualizarea paginii" width="1000" height="697" loading="lazy"></a>
-<figcaption><kbd>Ctrl</kbd>+<kbd>P</kbd>: în dreapta, <b>previzualizarea</b> — exact ce va vedea cititorul, cu antet, tabel și numărul paginii.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Unde pui numărul paginii, ca să apară singur pe fiecare pagină?',o:['În antet sau în subsol','Scris de mână, la finalul fiecărei pagini','În primul paragraf al lucrării','Într-un tabel, pe ultima pagină'],ok:0,why:'Antetul și subsolul se repetă pe fiecare pagină, iar numărul pus acolo se schimbă singur. Cifrele scrise de mână ajung în alt loc când adaugi text.'},
- {t:'choice',q:'Capitolul 2 trebuie să înceapă pe o pagină nouă. Ce faci?',o:['Ctrl + Enter înaintea titlului','Enter de multe ori, până sare pagina','Ctrl + S înaintea titlului','Spații până la capătul paginii'],ok:0,why:'Ctrl + Enter pune un sfârșit de pagină care rămâne la locul lui. Enter-urile goale se mută de îndată ce adaugi sau ștergi text mai sus.'},
- {t:'hunt',q:'Previzualizarea referatului lui Radu arată 4 greșeli de așezare. Apasă pe fiecare, apoi verifică.',
+  start:{or:'portret',ms:2,md:2},ajutor:'Tabelul are 21 cm. Pe portret, între margini rămân sub 21 cm. Și stânga trebuie să fie mai mare.',
+  why:'Tabelul are 6 × 3,5 = 21 cm. Pe foaia în picioare nu ajunge niciodată, pe cea culcată ajunge.',
+  inca:[
+   {t:'pagina',q:'Încă una: un referat pentru dosar, fără tabel lat. Alege marginile între 2 și 3 cm, cu stânga mai mare.',parti:['margini'],cere:{marg:[2,3],stangaMaiMare:true},start:{ms:2,md:2},ajutor:'Stânga mai mare decât dreapta, ambele între 2 și 3.',why:'De exemplu 3 cm în stânga și 2 cm în dreapta: găurile nu prind textul.'},
+   {t:'pagina',q:'Încă una: un tabel cu 8 coloane de câte 3 cm, pe o foaie cu margini de 2 cm. Alege orientarea.',parti:['orientare'],cere:{tabel:{cap:['A','B','C','D','E','F','G','H'],date:[['1','2','3','4','5','6','7','8']],latCol:3}},start:{or:'portret',ms:2,md:2},ajutor:'8 × 3 = 24 cm. Cât loc e pe portret? Dar pe vedere?',why:'Pe portret sunt 17 cm, pe vedere 25,7 cm; 24 cm încap doar pe vedere.'}
+  ]},
+ qs:[
+  {t:'tf',q:'Pe orientarea vedere (peisaj), o foaie A4 e lată de 29,7 cm.',ok:true,why:'Adevărat. Culcată, latura lungă (29,7 cm) devine lățimea.'},
+  {t:'choice',q:'Foaie portret, margine de 2,5 cm în stânga și de 2 cm în dreapta. Cât loc rămâne pentru text, pe lățime?',o:['16,5 cm','21 cm','18,5 cm','25,2 cm'],ok:0,ajutor:'Scazi amândouă marginile din 21.',why:'21 − 2,5 − 2 = 16,5 cm. Dacă scazi doar una, ieși prea mult.'},
+  {t:'classify',q:'Pe ce orientare se așază mai bine fiecare document?',cats:['Portret','Vedere'],items:[['Compunere de două pagini',0],['Tabel cu 8 coloane late',1],['Referat pus în dosar',0],['Pliant împăturit în trei, cu trei coloane',1],['Scrisoare către un prieten',0]],why:'Textul obișnuit se citește ușor pe foaia în picioare. Ce e lat are nevoie de foaia culcată.'},
+  {t:'tf',q:'O lucrare care se îndosariază are nevoie de margine mai mare în dreapta.',ok:false,why:'Fals. Găurile dosarului se fac pe latura din stânga, deci acolo lași mai mult spațiu alb, ca să nu prindă textul.'},
+  {t:'choice',q:'Vrei marginile de exact 2,7 cm. Unde le scrii?',o:['Aspect → Margini → Margini particularizate','Aspect → Margini → setul Normal','Inserare → Tabel → grila de pătrățele','Aspect → Orientare → Vedere'],ok:0,ajutor:'Un număr exact, nu un set gata făcut.',why:'Seturile gata făcute au valori fixe; un număr exact îl scrii în Margini particularizate (Custom Margins).'}
+ ]},
+
+/* ================= 6. Antet, subsol și verificarea finală (lecțiile 3, 8) ================= */
+{t:'Antet, subsol și verificarea finală',lectii:[3,8],continuturi:[PROG.gestionare,PROG.reguli],
+ obiectiv:'numerotezi paginile automat, începi o pagină nouă corect, verifici lucrarea în previzualizare și o salvezi și ca PDF.',
+ pasi:[
+  {t:'Antetul și subsolul paginii',
+   text:`<p><mark>Antetul</mark> e zona de <strong>sus</strong> a paginii, iar <mark>subsolul</mark> e zona de <strong>jos</strong>. Ce scrii acolo se <strong>repetă pe fiecare pagină</strong>: titlul lucrării, numele tău, numărul paginii.</p>
+<p>Le găsești pe fila <strong>Inserare</strong> (Insert), în grupul Antet și subsol (Header &amp; Footer): <strong>Antet</strong> (Header), <strong>Subsol</strong> (Footer), <strong>Număr de pagină</strong> (Page Number). Numărul paginii se pune <strong>automat</strong> și se schimbă singur.</p>
+<p>Atenție: antetul paginii nu e rândul de antet al unui tabel.</p>
+${fig('antet-subsol-inserare.webp',520,140,'Grupul Header & Footer din fila Insert, cu butoanele Header, Footer și Page Number încadrate','<b>Antet</b> (Header), <b>Subsol</b> (Footer), <b>Număr de pagină</b> (Page Number).')}`,
+   exemplu:`${fig('antet-subsol-pagina.webp',820,795,'Pagină Word în modul de lucru la antet și subsol: sus antetul cu titlul referatului, jos subsolul cu numărul paginii','Sus <b>antetul</b> (titlul referatului și clasa), jos <b>subsolul</b> cu <b>numărul paginii</b> pus automat.')}`,
+   altfel:`<p>E ca ștampila de pe fiecare filă a unui caiet de teme: o pui o dată, iar ea apare pe toate paginile.</p>`,
+   incearca:{t:'choice',q:'Unde pui numărul paginii, ca să apară singur pe fiecare pagină?',o:['În antet sau în subsol','Scris de mână, la finalul fiecărei pagini','În primul paragraf al lucrării','Într-un tabel, pe ultima pagină'],ok:0,ajutor:'Ce zone se repetă pe fiecare pagină?',why:'Antetul și subsolul se repetă pe fiecare pagină, iar numărul pus acolo se schimbă singur.'},
+   inca:[
+    {t:'tf',q:'Antetul paginii și rândul de antet al unui tabel sunt același lucru.',ok:false,ajutor:'Recitește ultima propoziție a pasului.',why:'Fals. Antetul paginii e zona de sus a fiecărei pagini; rândul de antet e primul rând al unui tabel.'}
+   ]},
+  {t:'Pagină nouă: Ctrl + Enter',
+   text:`<p>Vrei ca un capitol să înceapă pe o pagină nouă? Pui cursorul înaintea titlului și apeși <kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Word pune un <mark>sfârșit de pagină</mark> care rămâne la locul lui.</p>
+<p>Greșeala des întâlnită: apeși <kbd>Enter</kbd> de multe ori, până „sare” pagina. Rândurile goale se mută de îndată ce adaugi sau ștergi text mai sus, iar titlul ajunge la mijlocul paginii.</p>`,
+   exemplu:`<p>Cu 10 Enter-uri: adaugi o propoziție pe pagina 1 → titlul „Capitolul 2” coboară și ajunge al doilea rând pe pagina 2. Cu <kbd>Ctrl</kbd>+<kbd>Enter</kbd>: titlul rămâne primul pe pagina 2, orice ai adăuga mai sus.</p>`,
+   incearca:{t:'choice',q:'Capitolul 2 trebuie să înceapă pe o pagină nouă. Ce faci?',o:['Ctrl + Enter înaintea titlului','Enter de multe ori, până sare pagina','Ctrl + S înaintea titlului','Spații până la capătul paginii'],ok:0,ajutor:'Care variantă rămâne la locul ei când adaugi text?',why:'Ctrl + Enter pune un sfârșit de pagină care rămâne la locul lui. Enter-urile goale se mută.'}},
+  {t:'Previzualizarea: verifici înainte să tipărești',
+   text:`<p>Apeși <kbd>Ctrl</kbd>+<kbd>P</kbd>. În dreapta apare <mark>previzualizarea</mark>: paginile exact cum le va vedea cititorul. Nu consumă hârtie: se vede doar pe ecran.</p>
+<p>Strategia de verificare, pagină cu pagină:</p>
+<ol><li><strong>Titluri:</strong> a rămas un titlu singur jos, cu textul lui pe pagina următoare?</li>
+<li><strong>Pagini aproape goale:</strong> o pagină cu doar două rânduri?</li>
+<li><strong>Margini:</strong> iese ceva (tabel, imagine) peste margine?</li>
+<li><strong>Numere de pagină:</strong> sunt puse automat, în antet sau subsol?</li></ol>
+${fig('previzualizare.webp',1000,697,'Fereastra Print din Word: în stânga setările de imprimare, în dreapta previzualizarea paginii','În dreapta, <b>previzualizarea</b>, cu antet, tabel și numărul paginii.')}`,
+   incearca:{t:'tf',q:'Previzualizarea consumă hârtie, așa că e bine s-o folosești cât mai rar.',ok:false,ajutor:'Unde se vede previzualizarea?',why:'Fals. Previzualizarea se vede doar pe ecran și te ajută să prinzi greșelile înainte să tipărești.'},
+   inca:[
+    {t:'hunt',q:'Previzualizarea arată 2 greșeli de așezare. Apasă pe fiecare, apoi verifică.',src:'Pagina 1: titlul, un paragraf și o poză cu sursa ei. Pagina 2: un tabel care [[iese peste marginea din dreapta|Nimic nu iese din margini: schimbi orientarea sau lățimea coloanelor.]]. Pagina 3: [[un singur rând|O pagină aproape goală se evită.]]. Numerele paginilor sunt în subsol.',indiciu:'Folosește lista de verificare din pas: titluri, pagini goale, margini, numere.',why:'Obiectele stau între margini și nicio pagină nu rămâne aproape goală.'},
+    {t:'order',q:'Pune în ordine verificarea din previzualizare, cum e în strategie.',items:['Titluri rămase singure jos','Pagini aproape goale','Ceva ieșit peste margini','Numere de pagină puse automat'],ajutor:'Urmează lista din pas.',why:'O listă fixă te face să nu sari nimic.'}
+   ]},
+  {t:'Salvezi și faci o copie PDF',
+   text:`<p>La final:</p>
+<ul><li><kbd>Ctrl</kbd>+<kbd>S</kbd> <strong>salvează</strong> documentul (fișier .docx);</li>
+<li><kbd>F12</kbd> deschide <strong>Salvare ca…</strong> (Save As): acolo alegi un alt nume, alt loc sau alt tip de fișier. În lista cu tipul fișierului (Save as type) alegi <strong>PDF</strong>.</li></ul>
+<p>Un <mark>PDF</mark> arată la fel pe orice calculator sau telefon, chiar dacă acolo nu e Word. E bun de trimis profesorului.</p>`,
+   incearca:{t:'match',q:'Leagă scurtătura de ce face.',pairs:[['Ctrl + P','previzualizare și tipărire'],['F12','Salvare ca…'],['Ctrl + Enter','pagină nouă'],['Ctrl + S','salvare']],ajutor:'Caută-le în pașii acestui nivel.',why:'Patru scurtături pentru finalul unei lucrări: o împarți pe pagini, o verifici, o salvezi și îi faci o copie în alt format.'},
+   inca:[
+    {t:'choice',q:'Vrei ca diriginta să vadă lucrarea exact cum arată, chiar dacă nu are Word. Ce îi trimiți?',o:['O copie PDF','Documentul nesalvat','O fotografie a ecranului făcută cu telefonul','Doar titlul lucrării'],ok:0,ajutor:'Ce format arată la fel pe orice calculator?',why:'PDF-ul păstrează aspectul pe orice calculator sau telefon.'}
+   ]}
+ ],
+ atelier:{t:'hunt',titlu:'Verifică referatul lui Radu',
+  intro:`<p>Ai în față descrierea previzualizării (<kbd>Ctrl</kbd>+<kbd>P</kbd>) pentru referatul lui Radu. <strong>Sarcina:</strong> folosește lista de verificare (titluri, pagini goale, margini, numere de pagină) și apasă pe fiecare greșeală. Sunt 4.</p>${fig('previzualizare.webp',1000,697,'Fereastra Print din Word: în stânga setările de imprimare, în dreapta previzualizarea paginii','Așa arată previzualizarea în Word.')}`,
+  q:'Previzualizarea referatului lui Radu arată 4 greșeli de așezare. Apasă pe fiecare, apoi verifică.',
   src:'Pagina 1: titlul și primele două paragrafe. Jos, pe pagina 1, [[titlul „Concluzii” rămas singur|Un titlu nu rămâne singur la baza paginii, cu textul lui pe pagina următoare.]]. Pagina 2: concluziile și o fotografie cu legenda și sursa ei. Pagina 3: [[doar două rânduri|O pagină cu două rânduri se evită: strângi textul sau refaci așezarea.]]. Numerele paginilor sunt [[scrise de mână la finalul textului|Numerotarea se pune automat, în antet sau în subsol.]]. Marginile au 2,5 cm în stânga și 2 cm în dreapta. Pe pagina 2, un tabel [[iese peste marginea din dreapta|Nimic nu iese în afara marginilor.]].',
-  indiciu:'Gândește-te la titluri, la paginile aproape goale, la numerotare și la margini.',
-  why:'O pagină bine așezată nu are titluri rămase singure, pagini aproape goale sau obiecte ieșite din margini, iar numerele paginilor sunt puse automat.'},
- {t:'tf',q:'Previzualizarea consumă hârtie, așa că e bine s-o folosești cât mai rar.',ok:false,why:'Fals. Previzualizarea se vede doar pe ecran. E cea mai ieftină economie de hârtie, fiindcă prinzi greșelile înainte să tipărești.'},
- {t:'match',q:'Leagă scurtătura de ce face.',pairs:[['Ctrl + P','previzualizare și tipărire'],['F12','Salvare ca…'],['Ctrl + Enter','pagină nouă'],['Ctrl + S','salvare']],why:'Patru scurtături pentru finalul unei lucrări: o împarți pe pagini, o verifici, o salvezi și îi faci o copie în alt format.'}
-]},
-{t:'Diploma după specificații',final:true,lectii:[9],continuturi:[PROG.specificatii,PROG.formatare],text:`
-<p><strong>Misiunea finală:</strong> faci diploma pentru „Concursul de lectură” al școlii. O <mark>specificație</mark> spune exact cum trebuie să arate documentul: pagina, fontul, imaginea, tabelul.</p>
-<p>Specificația diplomei:</p>
-<ul>
-<li>foaie A4, cu orientarea în care încape tabelul;</li>
+  indiciu:'Treci prin lista din pasul 3: titluri, pagini aproape goale, margini, numere de pagină.',
+  ajutor:'O greșeală pentru fiecare punct din lista de verificare.',
+  why:'O pagină bine așezată nu are titluri rămase singure, pagini aproape goale sau obiecte ieșite din margini, iar numerele paginilor sunt puse automat.',
+  inca:[
+   {t:'hunt',q:'Încă una: previzualizarea referatului Mariei arată 3 greșeli.',src:'Pagina 1: [[titlul „Capitolul 2” rămas singur jos|Capitolul nou începe pe pagină nouă, cu Ctrl + Enter.]]. Pagina 2: textul capitolului și o imagine care [[trece peste marginea din stânga|Imaginea se micșorează din colț până încape între margini.]]. Numărul paginii e în subsol, pe fiecare pagină. Pagina 3: [[un singur rând, „Mulțumesc!”|O pagină aproape goală se evită.]].',indiciu:'Aceeași listă: titluri, margini, pagini goale, numere.',why:'Trei greșeli din listă: titlu singur, obiect peste margine, pagină aproape goală. Numerele erau bune.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Unde pui numărul paginii, ca să se schimbe singur când adaugi pagini?',o:['În subsol, cu Număr de pagină (Page Number)','Scris de mână, jos pe fiecare pagină','În rândul de antet al tabelului','În titlul lucrării'],ok:0,ajutor:'Fila Inserare, grupul Antet și subsol.',why:'Numărul pus automat în antet sau subsol se schimbă singur; cel scris de mână ajunge în alt loc când adaugi text.'},
+  {t:'choice',q:'Capitolul 3 trebuie să înceapă sus, pe o pagină nouă, și să rămână acolo. Ce apeși înaintea titlului?',o:['Ctrl + Enter','Enter de 15 ori','Ctrl + P','Tab'],ok:0,why:'Ctrl + Enter pune un sfârșit de pagină care rămâne la locul lui. Enter-urile goale se mută de îndată ce adaugi sau ștergi text mai sus.'},
+  {t:'tf',q:'Previzualizarea consumă hârtie, așa că e bine s-o folosești cât mai rar.',ok:false,why:'Fals. Previzualizarea se vede doar pe ecran. E cea mai ieftină economie de hârtie, fiindcă prinzi greșelile înainte să tipărești.'},
+  {t:'classify',q:'În previzualizare: e bine sau trebuie reparat?',cats:['E bine','De reparat'],items:[['Numărul paginii în subsol, pe fiecare pagină',0],['Un titlu singur la baza paginii',1],['Tabel ieșit peste margine',1],['Pagina 4 cu un singur rând',1],['Poza cu sursa scrisă sub ea',0]],ajutor:'Folosește lista de verificare din pasul 3.',why:'Titlurile singure, obiectele peste margini și paginile aproape goale se repară înainte de tipărire.'},
+  {t:'match',q:'Leagă scurtătura de ce face.',pairs:[['Ctrl + P','previzualizare și tipărire'],['F12','Salvare ca…'],['Ctrl + Enter','pagină nouă'],['Ctrl + S','salvare']],why:'Patru scurtături pentru finalul unei lucrări: o împarți pe pagini, o verifici, o salvezi și îi faci o copie în alt format.'}
+ ]},
+
+/* ================= 7. Diploma după specificații (lecția 9) — nivelul final ================= */
+{t:'Diploma după specificații',final:true,lectii:[9],continuturi:[PROG.specificatii,PROG.formatare],
+ obiectiv:'faci un document după o specificație și îl verifici punct cu punct.',
+ pasi:[
+  {t:'Ce e o specificație',
+   text:`<p>O <mark>specificație</mark> e lista de cerințe pe care trebuie să le respecte un document: pagina, fontul, imaginea, tabelul. Fiecare cerință se poate <strong>verifica</strong>: e sau nu e așa.</p>
+<p>Misiunea finală: diploma pentru „Concursul de lectură”. Specificația ei:</p>
+<ul><li>foaie A4, cu orientarea în care încape tabelul;</li>
 <li>marginile din stânga și din dreapta între 2 și 3 cm;</li>
 <li>numele premiantului cu <strong>28 pt</strong>, aldin, centrat;</li>
 <li>sigla școlii ca <strong>fundal discret</strong>, în spatele textului;</li>
-<li>un tabel cu rezultatele: 4 coloane de câte 5,5 cm (Proba, Data, Punctaj, Premiul), un rând de antet și titlul „Rezultate”, pe un rând cu celulele îmbinate.</li>
-</ul>
-<p>La fel lucrezi la o scrisoare, o carte de vizită sau o felicitare: citești specificația, apoi o bifezi punct cu punct.</p>
-<figure class="captura"><a href="../word-obiecte-vii/img/diploma-model.webp" target="_blank"><img src="../word-obiecte-vii/img/diploma-model.webp" alt="Diplomă-model în Word, pe foaie culcată, cu numele premiantei mare și centrat, sigla palidă în spatele textului și un tabel cu titlu îmbinat" width="940" height="672" loading="lazy"></a>
-<figcaption>Diploma-model, făcută după specificație: foaie <b>A4 culcată</b> (Vedere), numele la <b>28 pt</b> aldin și centrat, sigla <b>în spatele textului</b> și tabelul cu titlul pe un rând îmbinat.</figcaption></figure>`,
-qs:[
- {t:'choice',q:'Tabelul diplomei are 4 coloane de câte 5,5 cm, adică 22 cm. Ce orientare alegi?',o:['Vedere, fiindcă foaia culcată are 29,7 cm','Portret, fiindcă e orientarea obișnuită','Portret, cu marginile puse la 1 cm','Portret, cu textul scris mai mărunt'],ok:0,why:'Foaia în picioare are doar 21 cm, deci 22 cm nu încap nici fără margini. Foaia culcată are 29,7 cm, iar după margini rămân peste 22 cm.'},
- {t:'pagina',q:'Așază diploma după specificație: orientarea, marginile, încadrarea siglei și tabelul cu rezultatele. Apoi verifică.',
+<li>un tabel: 4 coloane de câte 5,5 cm (Proba, Data, Punctaj, Premiul), rând de antet și titlul „Rezultate” pe un rând cu celulele îmbinate.</li></ul>`,
+   exemplu:`${fig('diploma-model.webp',940,672,'Diplomă-model în Word, pe foaie culcată, cu numele premiantei mare și centrat, sigla palidă în spatele textului și un tabel cu titlu îmbinat','Diploma-model: foaie <b>A4 culcată</b> (Vedere), numele la <b>28 pt</b> aldin și centrat, sigla <b>în spatele textului</b>, tabelul cu titlul pe un rând îmbinat.')}`,
+   altfel:`<p>E ca o rețetă de prăjitură: „200 g făină, 2 ouă, 30 de minute la cuptor”. Nu scrie „cam multă făină”, ci exact cât. Specificația îți spune exact cum trebuie să arate documentul.</p>`,
+   incearca:{t:'tf',q:'„Numele cu 28 pt, aldin, centrat” este o cerință care se poate verifica.',ok:true,ajutor:'Poți spune sigur „da” sau „nu”?',why:'Adevărat. Te uiți la mărimea fontului, la aldin și la aliniere: fiecare e sau nu e așa.'},
+   inca:[
+    {t:'choice',q:'Care dintre acestea e o cerință bună de specificație?',o:['Marginile între 2 și 3 cm','Pagina să arate frumos','Tabelul să nu fie prea mare','Poza să fie cam la mijloc'],ok:0,ajutor:'Care se poate măsura?',why:'O cerință bună se poate măsura. „Frumos” sau „cam la mijloc” nu se pot verifica.'}
+   ]},
+  {t:'Strategia: lucrezi în ordine și bifezi',
+   text:`<p>Cum faci un document după specificație, fără să sari nimic:</p>
+<ol><li><strong>Citești toată specificația</strong> și o transformi într-o listă de bifat.</li>
+<li><strong>Pagina întâi</strong>: orientarea și marginile. Ele decid cât loc ai pentru tot restul.</li>
+<li><strong>Textul</strong>: scrii și formatezi (mărimea fontului, aldin, aliniere).</li>
+<li><strong>Imaginea</strong>: o inserezi, o mărești din colț, alegi încadrarea.</li>
+<li><strong>Tabelul</strong>: numeri, îl inserezi, îmbini titlul, verifici că încape.</li>
+<li><strong>Previzualizare</strong> cu <kbd>Ctrl</kbd>+<kbd>P</kbd> și bifezi punct cu punct.</li></ol>`,
+   altfel:`<p>La construirea unei case pui întâi fundația (pagina), apoi zidurile (textul) și abia la final mobila (imaginea și tabelul). Dacă schimbi fundația la final, se mută tot.</p>`,
+   incearca:{t:'order',q:'Pune în ordine lucrul la diplomă.',items:['Citești specificația și faci lista de bifat','Alegi orientarea și marginile','Scrii și formatezi textul','Pui imaginea și tabelul','Verifici în previzualizare, punct cu punct'],ajutor:'Pagina e fundația.',why:'Pagina decide locul pentru tot restul, deci vine prima; verificarea vine la final.'},
+   inca:[
+    {t:'choice',q:'De ce alegi orientarea și marginile ÎNAINTE de tabel?',o:['Ele decid cât loc ai pentru tabel','Așa cere Word, altfel nu merge','Tabelul nu se poate face pe portret','Marginile se pot alege doar la început'],ok:0,ajutor:'Gândește-te la strategia de la nivelul 5: loc pentru text.',why:'Locul pentru text = lățimea foii minus marginile. Tabelul trebuie să încapă în el.'}
+   ]},
+  {t:'Calculul care decide orientarea',
+   text:`<p>Aplici strategia de la nivelul „Pagina”:</p>
+<ol><li>Lățimea tabelului: 4 coloane × 5,5 cm = <strong>22 cm</strong>.</li>
+<li>Pe <strong>portret</strong> foaia are doar 21 cm. Chiar fără margini, 22 cm nu încap.</li>
+<li>Pe <strong>vedere</strong>, cu margini de 2,5 cm: 29,7 − 2,5 − 2,5 = <strong>24,7 cm</strong>. 22 cm încap.</li></ol>
+<p>Concluzia: diploma se face pe foaia <mark>culcată</mark> (Vedere / Landscape).</p>`,
+   incearca:{t:'choice',q:'Tabelul diplomei are 4 coloane de câte 5,5 cm, adică 22 cm. Ce orientare alegi?',o:['Vedere, fiindcă foaia culcată are 29,7 cm','Portret, fiindcă e orientarea obișnuită','Portret, cu marginile puse la 1 cm','Portret, cu textul scris mai mărunt'],ok:0,ajutor:'Cât de lată e foaia portret, fără nicio margine?',why:'Foaia în picioare are doar 21 cm, deci 22 cm nu încap nici fără margini.'},
+   inca:[
+    {t:'choice',q:'Pe vedere, cu margini de 3 cm în stânga și 2 cm în dreapta, încape tabelul de 22 cm?',o:['Da, rămân 24,7 cm','Nu, rămân doar 16 cm','Da, rămân 29,7 cm','Nu, rămân 21 cm'],ok:0,ajutor:'29,7 − 3 − 2',why:'29,7 − 3 − 2 = 24,7 cm, mai mult decât 22 cm.'}
+   ]},
+  {t:'Numele la 28 pt și sigla ca fundal',
+   text:`<p><strong>Numele premiantului:</strong> îl selectezi, apoi pe fila <strong>Pornire</strong> (Home), în grupul Font, scrii <strong>28</strong> în caseta cu mărimea fontului, apeși butonul <strong>Aldin</strong> (Bold) și butonul de centrare din grupul Paragraf (Paragraph).</p>
+<p><strong>Sigla:</strong> o inserezi din <strong>Inserare → Imagini</strong>, o mărești <strong>din colț</strong> și alegi încadrarea <strong>În spatele textului</strong> (Behind Text). Ca să fie <mark>discretă</mark>, folosești o siglă deschisă la culoare, cu numele pus pe o zonă liniștită a ei.</p>`,
+   incearca:{t:'classify',q:'Respectă specificația diplomei sau nu?',cats:['Respectă','Nu respectă'],items:[['Numele cu 28 pt, aldin, centrat',0],['Numele cu 14 pt',1],['Sigla în spatele textului, deschisă la culoare',0],['Sigla mărită din mijlocul laturii, turtită',1]],ajutor:'Compară fiecare rând cu specificația din pasul 1.',why:'Tot ce diferă de specificație (alt font, imagine deformată) înseamnă „nu respectă”.'}}
+ ],
+ atelier:{t:'pagina',titlu:'Așază diploma',
+  intro:`<p><strong>Sarcina:</strong> așază diploma după specificație: orientarea, marginile (2–3 cm), încadrarea siglei (fundal discret, sub text) și tabelul cu rezultatele (4 coloane, antet, titlul „Rezultate” pe rând îmbinat). Lucrează în ordinea din strategie: întâi pagina, apoi imaginea, apoi tabelul. Apoi verifică.</p>`,
+  q:'Diploma „Concursul de lectură”, după specificație.',
   parti:['orientare','margini','imagine','tabel'],
   cere:{marg:[2,3],incadrare:['spate'],incadrareCe:'sigla e un fundal discret, așezat sub text',
     tabel:{cap:['Proba','Data','Punctaj','Premiul'],date:[['Lectură','12 mai','95','I'],['Rezumat','13 mai','88','II'],['Recitare','14 mai','90','I']],titlu:'Rezultate',latCol:5.5}},
   start:{or:'portret',ms:2,md:2,inc:'aliniat',r:2,c:2},
-  why:'Jocul a verificat fiecare punct: a calculat dacă tabelul încape între margini, a comparat marginile cu intervalul cerut, a verificat încadrarea siglei și a numărat rândurile tabelului.'},
- {t:'classify',q:'Respectă specificația diplomei sau nu?',cats:['Respectă','Nu respectă'],items:[['Foaie A4 culcată',0],['Marginea din stânga de 1 cm',1],['Sigla în spatele textului, deschisă la culoare',0],['Tabel fără rândul de antet',1],['Titlul „Rezultate” pe un rând cu celulele îmbinate',0],['Sigla mărită din mijlocul laturii, turtită',1],['Numele premiantului scris cu 14 pt',1]],why:'Specificația se bifează punct cu punct. O margine prea mică, un font mai mic decât cel cerut, un antet lipsă sau o imagine deformată înseamnă că documentul nu e gata, chiar dacă restul arată bine.'},
- {t:'tf',q:'Specificația cere „tabel cu antet”. E respectată și dacă numele coloanelor sunt scrise într-un paragraf, sub tabel.',ok:false,why:'Fals. Antetul e primul rând al tabelului, deasupra datelor. Cititorul trebuie să afle ce e în coloane înainte să citească cifrele.'},
- {t:'choice',q:'Ai terminat diploma și vrei s-o trimiți dirigintei exact cum arată. Ce faci la final?',o:['Salvezi și o copie PDF, cu F12 (Salvare ca…)','Trimiți o fotografie a ecranului, făcută cu telefonul','Închizi documentul cu Ctrl + W, fără să salvezi','Tipărești direct, fără să te uiți în previzualizare'],ok:0,why:'Un PDF păstrează aspectul pe orice calculator. O fotografie a ecranului iese strâmbă, documentul nesalvat se pierde, iar fără previzualizare nu vezi dacă pagina a ieșit bine.'}
-]}
+  ajutor:'Vedere; margini între 2 și 3; În spatele textului; 4 coloane, 5 rânduri (titlu + antet + 3), antet și rând îmbinat pornite.',
+  why:'Ai bifat fiecare punct: tabelul încape între margini, marginile sunt în interval, sigla e fundal și rândurile sunt numărate corect.',
+  inca:[
+   {t:'pagina',q:'Încă una: afișul târgului de carte. Specificație: margini între 2 și 2,5 cm, poza lângă text (textul curge pe lângă ea) și tabelul standurilor: 3 coloane de câte 6 cm (Stand, Clasa, Ora), antet, fără titlu.',
+    parti:['orientare','margini','imagine','tabel'],
+    cere:{marg:[2,2.5],incadrare:['patrat','strans'],incadrareCe:'textul curge pe lângă poză',tabel:{cap:['Stand','Clasa','Ora'],date:[['Povești','5A','10'],['Benzi desenate','6B','11']],latCol:6}},
+    start:{or:'portret',ms:2,md:2,inc:'aliniat',r:2,c:2},ajutor:'Tabel: 3 × 6 = 18 cm. Pe portret rămân cel mult 17 cm.',why:'18 cm încap doar pe foaia culcată; textul curge pe lângă poză la Pătrat sau Strâns; 3 coloane și 3 rânduri.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Un tabel are 4 coloane de câte 5,5 cm. Ce orientare alegi, cu margini de 2 cm?',o:['Vedere: rămân 25,7 cm, tabelul are 22 cm','Portret: rămân 17 cm, tabelul are 22 cm','Portret: e orientarea obișnuită','Vedere: tabelul are 9,5 cm'],ok:0,ajutor:'Tabel: 4 × 5,5. Loc: lățimea foii minus marginile.',why:'4 × 5,5 = 22 cm. Pe portret rămân 21 − 2 − 2 = 17 cm, pe vedere 29,7 − 2 − 2 = 25,7 cm.'},
+  {t:'classify',q:'Respectă specificația diplomei sau nu?',cats:['Respectă','Nu respectă'],items:[['Foaie A4 culcată',0],['Marginea din stânga de 1 cm',1],['Sigla în spatele textului, deschisă la culoare',0],['Tabel fără rândul de antet',1],['Titlul „Rezultate” pe un rând cu celulele îmbinate',0],['Sigla mărită din mijlocul laturii, turtită',1],['Numele premiantului scris cu 14 pt',1]],why:'Specificația se bifează punct cu punct. O margine prea mică, un font mai mic decât cel cerut, un antet lipsă sau o imagine deformată înseamnă că documentul nu e gata.'},
+  {t:'order',q:'Pune în ordine lucrul după specificație.',items:['Citești specificația și faci lista de bifat','Alegi orientarea și marginile','Scrii și formatezi textul','Pui imaginea și tabelul','Verifici în previzualizare, punct cu punct'],ajutor:'Pagina e fundația.',why:'Pagina decide locul pentru tot restul, iar verificarea încheie lucrul.'},
+  {t:'tf',q:'Specificația cere „tabel cu antet”. E respectată și dacă numele coloanelor sunt scrise într-un paragraf, sub tabel.',ok:false,why:'Fals. Antetul e primul rând al tabelului, deasupra datelor. Cititorul trebuie să afle ce e în coloane înainte să citească cifrele.'},
+  {t:'choice',q:'Ai terminat diploma și vrei s-o trimiți dirigintei exact cum arată. Ce faci la final?',o:['Salvezi și o copie PDF, cu F12 (Salvare ca…)','Trimiți o fotografie a ecranului, făcută cu telefonul','Închizi documentul fără să-l salvezi','Tipărești direct, fără să te uiți în previzualizare'],ok:0,why:'Un PDF păstrează aspectul pe orice calculator. O fotografie a ecranului iese strâmbă, documentul nesalvat se pierde, iar fără previzualizare nu vezi dacă pagina a ieșit bine.'}
+ ]}
 ];
 
 JocMotor.porneste({
@@ -415,20 +768,26 @@ JocMotor.porneste({
   unitateTitlu:'Tehnoredactare: editorul de texte',
   competente:['CS.1.1','CS.3.1'],
   lectii:'3, 4, 7, 8, 9',
-  intro:'Șapte niveluri despre ce pui într-un document în afară de text: imagini, tabele și pagina însăși. La fiecare nivel citești o pagină scurtă și răspunzi la întrebări. De patru ori așezi singur o foaie sau un tabel, iar jocul verifică dacă respectă cerința. La final faci o diplomă după specificații și îți iei propria diplomă.',
+  intro:'Șapte niveluri despre ce pui într-un document în afară de text: imagini, tabele și pagina însăși. Nu trebuie să știi nimic dinainte: fiecare nivel te ia pas cu pas, cu capturi din Word. În atelier așezi singur foaia, poza sau tabelul pe o pagină simulată, iar jocul îți spune ce e bine și ce nu. La final faci o diplomă după specificații.',
+  cum:`<b>Cum lucrezi în fiecare nivel</b><ol>
+<li><b>Învață</b> — pași scurți, câte o idee, cu captura din Word (numele butoanelor le ai în română și în engleză). Nu ai înțeles? Apasă „Explică-mi altfel”.</li>
+<li><b>Încearcă tu</b> — după fiecare pas, un exercițiu mic, fără note. Greșești? Primești un indiciu. Vrei să exersezi mai mult? „Încă un exercițiu”.</li>
+<li><b>Atelier</b> — faci gestul ca în Word: alegi încadrarea pozei, numeri și construiești tabelul, pui foaia pe orientarea și marginile potrivite. Foaia se schimbă pe loc, iar verificarea îți spune exact ce nu respectă cerința.</li>
+<li><b>Verificare</b> — câteva întrebări doar din ce ai învățat în pași. Stele pentru răspunsurile din prima.</li></ol>`,
   banda:'<span class="mz l"></span><span class="tx"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span></span><span class="mz r"></span>',
   nivele:LEVELS,
   tipuri:{pagina:JocPagina},
   diploma:{
     titlu:'Arhitect de pagină',
     rezumat:'obiecte într-un document, încadrarea imaginii, tabele cu antet și celule îmbinate, orientarea și marginile paginii, verificarea înainte de tipărire și o diplomă după specificații',
-    aplicatie:'editorul de texte de la clasă',
+    aplicatie:'Word (sau editorul de texte de la clasă)',
     provocare:[
-      'Deschide un document nou și pune foaia A4 pe orientarea vedere (peisaj), cu marginile între 2 și 3 cm.',
-      'Inserează un tabel cu rezultatele unui concurs inventat: 4 coloane, un rând de antet, 3 rânduri de date și un rând de titlu cu celulele îmbinate.',
-      'Adaugă o imagine desenată de tine (sau una cu sursa scrisă), mărită din colț, cu încadrarea potrivită.',
-      'Deschide previzualizarea cu <kbd>Ctrl</kbd>+<kbd>P</kbd> și verifică: nimic nu iese din margini, nicio pagină nu e aproape goală.',
-      'Salvează ca <code>Nume_Prenume_diploma.docx</code> în folderul clasei și fă și o copie PDF.'
+      'Deschide Word și un document nou. Pe fila <b>Aspect</b> (Layout): <b>Orientare</b> (Orientation) → <b>Vedere</b> (Landscape), apoi <b>Margini</b> (Margins) → <b>Margini particularizate</b> (Custom Margins): 2,5 cm în stânga și în dreapta.',
+      'Scrie numele unui premiant inventat, selectează-l și, pe fila <b>Pornire</b> (Home), pune mărimea fontului <b>28</b>, <b>Aldin</b> (Bold) și centrat.',
+      'Pune cursorul sub nume: <b>Inserare</b> (Insert) → <b>Tabel</b> (Table), grila <b>4x5</b> (4 coloane, 5 rânduri). Selectează primul rând, clic dreapta → <b>Îmbinare celule</b> (Merge Cells) și scrie „Rezultate”; pe rândul 2 scrie antetul Proba, Data, Punctaj, Premiul, apoi 3 rânduri de date.',
+      'Inserează o siglă desenată de tine: <b>Inserare</b> (Insert) → <b>Imagini</b> (Pictures). Mărește-o din colț, apoi <b>Opțiuni aspect</b> (Layout Options) → <b>În spatele textului</b> (Behind Text).',
+      'Apasă <kbd>Ctrl</kbd>+<kbd>P</kbd> și verifică: nimic peste margini, nicio pagină aproape goală, numele se citește peste siglă.',
+      'Salvează cu <kbd>Ctrl</kbd>+<kbd>S</kbd> ca <code>Nume_Prenume_diploma.docx</code> în folderul clasei, apoi <kbd>F12</kbd> și, la tipul fișierului (Save as type), <b>PDF</b>.'
     ]
   }
 });
