@@ -372,8 +372,9 @@ Profesorul a verificat Misiunea Analist la toate clasele de la a VIII-a în sus:
 
 ## 10. Deschis / de îmbunătățit
 
-- `word-vii` nu poate primi butoane de ghid: are motorul scris în propria pagină (nu încarcă `_motor\motor.js`). Scos din `_ghiduri\harta.json` cu motivul scris acolo; se rezolvă odată cu portarea lui pe motor.
-- Portarea Word VII pe motor (editorul → `_motor\tip-editor.js`).
+- Portarea Word VII pe motor: **făcută 26.09.2026** (pe pași; simulatoarele `editor` și `corectura` stau în `config.tipuri` al jocului). Rămân: mutarea editorului în `_motor\tip-editor.js` după ce merge la clasă și readăugarea lui `word-vii` în `_ghiduri\harta.json` (acum are motorul, deci poate primi butoane de ghid).
+- **Simulatoare cerute de recenzenții valului din 26.09.2026** (atelierele folosesc până atunci capturi reale + order/classify/pick): Manager de activități și Acest PC/Proprietăți (calculator-v), fereastra de salvare (grafica-v, word-vii nivelul 1), editor C++ cu teste ca `tip-html.js` (program-vii, siruri-viii), editor de blocuri Scratch (algoritmi-v/vi, scratch-v), Tinkercad (animatii-3d-vi), tăiere de clip + generic (audio-video-vii), lățimea coloanei și stilurile de celulă în `tip-excel.js`, mutarea simulatoarelor proprii (poștă, browser, partajare) în `_motor\`.
+- Numele românești ale butoanelor Office/Windows marcate „neverificat” de agenți (lista în raportul valului) — de confirmat pe un calculator din laborator cu Office în română.
 - Profesorul vede scorul doar pe ecranul elevului (fără server). Un formular sau un cod de verificare, dacă se cere.
 - Etichetele din aplicațiile în română (Word, Excel, PowerPoint…) de verificat pe calculatoarele din laborator.
 - Evaluatorul independent (pedagogie + fapte) ca pas fix după poartă.
