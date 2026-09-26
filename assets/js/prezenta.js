@@ -162,6 +162,9 @@
     var c = citeste(K_COADA, null);
     if (!c || (!Object.keys(c.pag).length && !c.ev.length)) return;
     var go = function () {
+      // între apel și trimitere elevul se poate fi schimbat („Nu ești tu?”): atunci nu trimitem nimic și coada rămâne
+      // pe loc, ca la ieșirea de mai sus (găsit 26.09.2026: „null.id” când pagina se încarcă mai încet)
+      if (!eu || !eElev() || stare() !== 'activ') { inZbor = false; return; }
       var corp = JSON.stringify({
         id: eu.id, scoala: eu.scoala, clasa: eu.clasa, numeEnc: eu.numeEnc, scoalaText: eu.scoalaText,
         pag: Object.keys(c.pag).map(function (p) { return { p: p, t: c.pag[p].t, s: c.pag[p].s, n: c.pag[p].n }; }),

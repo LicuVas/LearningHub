@@ -108,7 +108,9 @@ def main():
             if not a.nor_real:
                 ctx.route("**/api/progres", nor_simulat)
             pg = ctx.new_page()
-            pg.on("pageerror", lambda e: erori.append(str(e)))
+            # pagina + primul rând din stivă: altfel „null.id” nu spune de unde vine (26.09.2026)
+            pg.on("pageerror", lambda e, pg=pg: erori.append(f"{str(e)} @ {pg.url.split('/jocuri/')[-1].split('/content/')[-1]} "
+                                                               f"{(getattr(e, 'stack', '') or '').splitlines()[1:2]}"))
             return pg
 
         joc = "%s/jocuri/%s/index.html" % (baza, JOC)
