@@ -47,7 +47,7 @@ function setHud(){
   if(R){
     const Lv=C.nivele[R.li];
     const nb=`${C.mod==='antrenament'?'Runda':'Nivelul'} ${R.li+1} din ${C.nivele.length}`;
-    const txt=R.phase==='q'?`Verificarea ${R.qi+1} din ${Lv.qs.length} · ${R.xp} XP`:R.phase==='read'?`Citire · ${esc(Lv.t)}`
+    const txt=R.phase==='q'?`${Lv.pasi?'Verificarea':'Întrebarea'} ${R.qi+1} din ${Lv.qs.length} · ${R.xp} XP`:R.phase==='read'?`Citire · ${esc(Lv.t)}`
       :R.phase==='learn'?`Învață · pasul ${R.si+1} din ${Lv.pasi.length}`:R.phase==='atelier'?'Atelier · fă-o ca în aplicația reală':`Nivel terminat · ${R.xp} XP`;
     hud.innerHTML=`<span class="nb">${nb}</span><span class="fv">${txt}${R.streak>=2?` <span class="hot">serie ×${R.streak}</span>`:''}</span>`;
   }else hud.innerHTML=`<span class="nb">TOTAL</span><span class="fv">★ ${t.st}/${C.nivele.length*3} · ${t.xp} XP</span>`;

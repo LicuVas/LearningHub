@@ -10,7 +10,7 @@ Joacă „ca un elev” pe un calculator de laborator (1366 px) și pe un telefo
   4. fără mișcare, timpul se OPREȘTE (ceas simulat: 7 minute fără nimic -> cel mult 2 minute numărate)
   5. un joc: numele e pus singur la diplomă; nivelul terminat ajunge pe server cu stelele lui
   6. „Ești tot X?” după 90 de minute fără activitate; până la răspuns nu se numără nimic
-  7. „Sunt alt elev” (în joc) șterge și înscrierea; vizitatorul („doar vizitez”) nu mai vede nimic
+  7. „Nu ești tu?” (în joc) deschide lista elevilor calculatorului; vizitatorul nu mai e urmărit
   8. /jurnal/ arată minutele; pe telefon nimic nu iese din ecran
   9. panoul profesorului (activitate.html) deschide numele în browser și îl arată la Forestier X E
 Înregistrările de probă se șterg de pe server la final. Ultima linie = numărul de probleme.
@@ -102,8 +102,10 @@ def inscrie(pg):
     pg.select_option("#lhp-s", "forestier")
     pg.select_option("#lhp-c", "X E")
     pg.fill("#lhp-n", NUME)
+    pg.fill("#lhp-k", "4827")   # 26.09.2026: codul de 4 cifre (progresul pe orice aparat)
     pg.click("#lhp-ok")
-    pg.wait_for_selector("#lhp-pill", timeout=10000)
+    pg.wait_for_selector("#lhp-pill", timeout=20000)   # primul elev primește sertar nou -> pagina se reîncarcă
+    pg.wait_for_load_state("load")
 
 
 def main():
@@ -140,7 +142,7 @@ def ruleaza(br, baza, a):
     print("1. lecția, înainte de înscriere")
     linistit(pg, baza + LECTIE)
     pg.evaluate("localStorage.clear()")
-    pg.reload(wait_until="networkidle")
+    pg.reload(wait_until="load")   # contorul de vizitatori poate ține rețeaua „neliniștită” (26.09.2026)
     pg.wait_for_selector("#lhp-cine", timeout=10000)
     verifica(pg.is_visible("#lhp-cine") and pg.is_visible("#lhp-viz"), "apare „Spune cine ești” + „Nu, doar vizitez”")
     pg.wait_for_timeout(6000)
@@ -216,7 +218,7 @@ def ruleaza(br, baza, a):
     verifica(niv.get("1", 0) >= 1, "pe server: %s nivelul 1 cu %s stele" % (JOC, niv.get("1")))
     # 25.09.2026 (Filip, „sunt la nivelul 4 demult”): niveluri terminate fără să plece (ex. înainte de înscriere)
     # trebuie să ajungă la redeschiderea jocului - aici le punem direct în memoria jocului, ca și cum s-ar fi pierdut
-    pg.evaluate("""()=>{const k=JocMotor.test.config().cheie,s=JSON.parse(localStorage.getItem(k));
+    pg.evaluate("""()=>{const p=localStorage.getItem('learninghub_active_profile'),k=JocMotor.test.config().cheie+(p&&p.charAt(0)!=='_'?'@'+p:''),s=JSON.parse(localStorage.getItem(k));
         s.lv[1]={stars:2,xp:10};s.lv[2]={stars:3,xp:10};localStorage.setItem(k,JSON.stringify(s))}""")
     pg.reload(wait_until="load"); pg.wait_for_timeout(6000)
     niv = (((pe_server(eu["id"]) or {}).get("jocuri") or {}).get(JOC) or {}).get("nivele") or {}
@@ -240,28 +242,25 @@ def ruleaza(br, baza, a):
     pg.unroute("**/api/activitate")
     verifica(pg.is_visible("#lhp-pill"), "după „Da” revine eticheta")
 
-    print("6b. „Sunt alt elev — încep lecția de la zero” NU mai scoate elevul (25.09.2026)")
+    print("6b. „Refă lecția de la zero” NU scoate elevul (25.09 + 26.09.2026)")
     linistit(pg, baza + LECTIE_NOTA)
     pg.wait_for_selector(".ux-new-student", timeout=10000)
-    pg.click(".ux-new-student"); pg.click(".ux-new-student")
-    pg.wait_for_load_state("networkidle"); pg.wait_for_selector("#lhp-da", timeout=10000)
-    verifica((ls(pg, "lh_prezenta") or {}).get("id") == eu["id"], "înscrierea a rămas (același elev), doar întreabă „Ești tot…?”")
-    pg.click("#lhp-da")
-    verifica(pg.is_visible("#lhp-pill"), "„Da” -> lucrează mai departe pe numele lui")
+    pg.click(".ux-new-student >> nth=0"); pg.click(".ux-new-student >> nth=0")
+    pg.wait_for_load_state("load"); pg.wait_for_selector("#lhp-pill", timeout=10000)
+    verifica((ls(pg, "lh_prezenta") or {}).get("id") == eu["id"], "înscrierea a rămas (același elev) după „Refă lecția”")
+    verifica(pg.is_visible("#lhp-pill"), "lucrează mai departe pe numele lui, fără întrebări")
 
     print("7. „Sunt alt elev” în joc + vizitatorul")
     linistit(pg, "%s/jocuri/%s/index.html" % (baza, JOC))
     alt = pg.query_selector("#alt-elev") or pg.query_selector(".alt-elev button")
     if alt:
-        alt.click(); alt.click()
-        pg.wait_for_timeout(500)
-        verifica(pg.is_visible("#lhp-da") and (ls(pg, "lh_prezenta") or {}).get("intreaba"), "„Sunt alt elev” în joc întreabă „Ești tot…?”")
-        pg.click("#lhp-nu")
-        verifica(ls(pg, "lh_prezenta") is None and pg.is_visible("#lhp-s"), "„Nu, sunt alt elev” -> înscrierea veche dispare, apare formularul")
-        pg.click("#lhp-x")
+        alt.click()
+        pg.wait_for_selector("#lhp-lista", timeout=5000)
+        verifica(NUME in pg.inner_text("#lhp-lista") and ls(pg, "lh_prezenta") is None,
+                 "„Nu ești tu?” în joc -> lista elevilor calculatorului (cu el în ea), înscrierea curentă se închide")
+        pg.click("#lhp-x")   # „Mai târziu” din listă = vizitator
     else:
-        verifica(False, "n-am găsit butonul „Sunt alt elev” în joc")
-    pg.click("#lhp-viz")
+        verifica(False, "n-am găsit butonul „Nu ești tu?” în joc")
     linistit(pg, baza + LECTIE)
     pg.wait_for_timeout(1500)
     verifica(not pg.is_visible("#lhp-cine") and not pg.is_visible("#lhp-pill"), "vizitatorul nu mai e întrebat și nu e urmărit")
@@ -272,8 +271,8 @@ def ruleaza(br, baza, a):
     pg.click("#lhp-x")
     verifica(pg.is_visible("#lhp-elev") and not pg.is_visible("#lhp-cine"), "„Mai târziu” îl lasă vizitator (butonul mic rămâne)")
     pg.click("#lhp-elev")
-    pg.select_option("#lhp-s", "forestier"); pg.select_option("#lhp-c", "X E"); pg.fill("#lhp-n", NUME); pg.click("#lhp-ok")
-    pg.wait_for_selector("#lhp-pill", timeout=10000)
+    pg.select_option("#lhp-s", "forestier"); pg.select_option("#lhp-c", "X E"); pg.fill("#lhp-n", NUME); pg.fill("#lhp-k", "4827"); pg.click("#lhp-ok")
+    pg.wait_for_selector("#lhp-pill", timeout=20000)
     ids.add((ls(pg, "lh_prezenta") or {}).get("id"))
     verifica(pg.is_visible("#lhp-pill"), "după butonul mic se înscrie normal și apare eticheta")
     ctx.close()
@@ -282,19 +281,19 @@ def ruleaza(br, baza, a):
     tel = br.new_context(viewport={"width": 390, "height": 800}, is_mobile=True, has_touch=True)
     pt = tel.new_page()
     pt.on("pageerror", lambda e: erori.append(str(e)))
-    pt.goto(baza + LECTIE, wait_until="networkidle")
+    pt.goto(baza + LECTIE, wait_until="load")
     pt.wait_for_selector("#lhp-cine", timeout=10000)
     lat = pt.evaluate("()=>{const b=document.getElementById('lhp').getBoundingClientRect();return [b.left,b.right,innerWidth]}")
     verifica(lat[0] >= 0 and lat[1] <= lat[2], "telefon: întrebarea încape în ecran (%s)" % lat)
     pt.click("#lhp-cine")
     lat = pt.evaluate("()=>{const b=document.getElementById('lhp').getBoundingClientRect();return [b.left,b.right,b.top,innerWidth]}")
     verifica(lat[0] >= 0 and lat[1] <= lat[3] and lat[2] >= 0, "telefon: formularul încape în ecran (%s)" % lat)
-    pt.select_option("#lhp-s", "forestier"); pt.select_option("#lhp-c", "X E"); pt.fill("#lhp-n", NUME); pt.click("#lhp-ok")
-    pt.wait_for_selector("#lhp-pill", timeout=10000)
+    pt.select_option("#lhp-s", "forestier"); pt.select_option("#lhp-c", "X E"); pt.fill("#lhp-n", NUME); pt.fill("#lhp-k", "4827"); pt.click("#lhp-ok")
+    pt.wait_for_selector("#lhp-pill", timeout=20000)
     ids.add((ls(pt, "lh_prezenta") or {}).get("id"))
     for i in range(20):
         pt.touchscreen.tap(200, 400); pt.wait_for_timeout(2000)
-    pt.goto(baza + "/jurnal/", wait_until="networkidle")
+    pt.goto(baza + "/jurnal/", wait_until="load")
     pt.wait_for_timeout(800)
     txt = pt.inner_text("main")
     verifica(NUME in txt and "săptămâna asta" in txt and "Ce vede profesorul" in txt, "jurnalul arată elevul, minutele și ce vede profesorul")

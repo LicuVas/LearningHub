@@ -81,14 +81,14 @@ def main():
         pc.screenshot(path=str(Path(tempfile.gettempdir()) / "qa_diploma_laborator.png"), full_page=True)
         # elevul următor, pe același calculator
         pc.reload(wait_until="networkidle")
-        verifica(pc.is_visible("#alt-elev") and NUME in pc.inner_text(".alt-elev"), "cuprinsul arată cine a jucat înainte + „Sunt alt elev”")
+        pc.wait_for_selector("#alt-elev", timeout=10000)
+        verifica(pc.is_visible("#alt-elev") and NUME in pc.inner_text(".alt-elev"), "cuprinsul arată cine a lucrat înainte + „Nu ești tu?”")
+        # 26.09.2026 (el: „să permitem continuarea nivelurilor fără să mai ștergem progresul individual”):
+        # „Nu ești tu?” deschide înscrierea / lista elevilor calculatorului și NU mai șterge progresul celui dinainte
         pc.click("#alt-elev")
-        verifica(pc.input_value("#nume") == NUME, "o singură apăsare NU șterge (cere confirmare)")
-        pc.click("#alt-elev")
-        verifica(pc.input_value("#nume") == "" and pc.locator("#dipl").count() == 0 and pc.locator("#alt-elev").count() == 0,
-                 "a doua apăsare: nume gol, fără diplomă, butonul dispare")
-        verifica(pc.evaluate("document.activeElement.id") == "nume", "cursorul stă în câmpul de nume")
-        verifica(pc.locator(".lvl:not([disabled])").count() == 1, "doar primul nivel e deschis")
+        pc.wait_for_selector("#lhp-s, #lhp-lista", timeout=10000)
+        verifica(pc.locator("#lhp-s, #lhp-lista").count() > 0, "„Nu ești tu?” deschide înscrierea (lista elevilor sau formularul)")
+        verifica(pc.input_value("#nume") == NUME and pc.locator("#dipl").count() == 1, "progresul celui dinainte NU s-a șters (nume + diplomă rămân pe sertarul lui)")
         verifica(not erori, "fără erori JS pe pagina jocului %s" % erori[:2])
 
         tel = br.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True)
