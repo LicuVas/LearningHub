@@ -225,6 +225,15 @@ function textNivel(Lv){
    a aplicației adevărate.” Un nivel cu `pasi:[…]` se învață întâi: o idee pe pagină, un exemplu lucrat,
    o explicație altfel la cerere, un exercițiu mic cu indiciu (fără puncte, fără stele) și „încă unul” cât vrea.
    Apoi atelierul (aplicația simulată, cu teste), apoi verificarea — doar pe ce s-a predat în pași. */
+/* Blocul „Ce trebuie să știi” (26.09.2026): ce presupune nivelul din jocurile de DINAINTE (programa V→VIII), cu
+   fraza-amintire și locul unde se învață. Harta = prerechizite.js, generată de _tests/prereq_jocuri.py --scrie.
+   Restrâns (un rând); se deschide la clic. Fără hartă sau fără prerechizite: nimic. */
+function blocPrereq(){
+  const H=(window.JOCURI_PREREQ||{})[jocSlug()]||{},Q=H[String(R.li+1)]||[];
+  if(!Q.length)return '';
+  return `<details class="prereq"><summary>Ce trebuie să știi dinainte (${Q.length})</summary><ul>${Q.map(e=>
+    `<li><b>${esc(e.termen)}</b>${e.amintire?` — ${esc(e.amintire)}`:''}<br><span class="unde">Dacă nu-ți amintești: <a href="../${encodeURIComponent(e.joc)}/">${esc(e.joc_titlu)}</a>, nivelul ${esc(e.nivel)}${e.nivel_titlu?` („${esc(e.nivel_titlu)}”)`:''}</span></li>`).join('')}</ul></details>`;
+}
 function learnPage(){
   const Lv=C.nivele[R.li],n=Lv.pasi.length,P=Lv.pasi[R.si];R.vazutPas[R.si]=true;
   const ultim=R.si===n-1,urm=ultim?(Lv.atelier?'La atelier →':'La verificare →'):'Pasul următor →';
@@ -234,6 +243,7 @@ function learnPage(){
     <button class="btn ghost sm" id="go" type="button" title="Dacă știi deja tot ce e în pași, poți trece direct la verificare">Știu deja — la verificare</button></div>
     <h2 style="margin:8px 0 6px">${esc(P.t)}</h2>
     ${R.si===0&&Lv.obiectiv?`<p class="obiectiv"><b>La finalul nivelului:</b> ${Lv.obiectiv}</p>`:''}
+    ${R.si===0?blocPrereq():''}
     <div class="reading">${P.text||''}</div>
     ${P.exemplu?`<div class="exemplu"><div class="lbl">Uite cum</div>${P.exemplu}</div>`:''}
     ${P.altfel?`<button class="btn ghost sm" id="altfel" type="button" aria-expanded="false">Nu am înțeles — explică-mi altfel</button><div class="altfel reading" id="altfel-t" hidden>${P.altfel}</div>`:''}
@@ -768,6 +778,7 @@ const EXT={};
 function tipNou(nume,def){EXT[nume]=def}
 function porneste(config){
   C=config;
+  if(!window.JOCURI_PREREQ)incarcaScript('prerechizite.js').catch(()=>{});   // blocul „Ce trebuie să știi”; primul pas vine după un clic
   ['cheie','titlu','clasa','unitate','unitateTitlu','competente','intro','nivele','diploma'].forEach(k=>{if(C[k]==null)throw new Error('JocMotor: lipsește „'+k+'” din configurație')});
   Object.entries(Object.assign({},EXT,C.tipuri||{})).forEach(([k,v])=>{TIPURI[k]=v.render;if(v.rezolva)REZOLVA[k]=v.rezolva;if(v.gresit)GRESIT[k]=v.gresit});
   S=load();
