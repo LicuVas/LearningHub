@@ -99,69 +99,108 @@ def static_checks(slug, cfg, page_html, fails, warns):
         warns.append(f"{len(niv)} niveluri (obișnuit 5-8)")
     if not any(l.get("final") for l in niv):
         fails.append("niciun nivel nu are final:true (nivelul final integrator)")
-    tipuri = BUILTIN | set((cfg.get("tipuri") or {}).keys())
+    tipuri = BUILTIN | set((cfg.get("tipuri") or {}).keys()) | set(cfg.get("_ext") or [])
     texts = [cfg.get("intro", ""), json.dumps(cfg.get("diploma", {}), ensure_ascii=False)]
+    def check_q(tag, q):
+        t = q.get("t")
+        texts.append(q.get("q", "") + " " + q.get("why", ""))
+        if t not in tipuri:
+            fails.append(f"{tag}: tip necunoscut {t!r}")
+            return
+        if not strip_tags(q.get("why", "")).strip():
+            fails.append(f"{tag}: lipsește explicația why")
+        if t == "choice":
+            o = q.get("o", [])
+            if len(o) < 3 or len(set(o)) != len(o):
+                fails.append(f"{tag}: choice cere minim 3 variante unice")
+            if not isinstance(q.get("ok"), int) or not (0 <= q["ok"] < len(o)):
+                fails.append(f"{tag}: ok în afara variantelor")
+            elif len(o) >= 3:
+                # varianta corectă nu are voie să se vadă după lungime (evaluatorul pilotului a găsit 3 cazuri)
+                lens = [len(strip_tags(x)) for x in o]
+                corect, altele = lens[q["ok"]], [l for k, l in enumerate(lens) if k != q["ok"]]
+                if corect > 1.5 * max(altele) and corect - max(altele) >= 15:
+                    warns.append(f"{tag}: varianta corectă e vizibil mai lungă ({corect} vs max {max(altele)} caractere) - se poate ghici după formă")
+            texts.append(" ".join(o))
+        elif t == "tf":
+            if not isinstance(q.get("ok"), bool):
+                fails.append(f"{tag}: tf cere ok true/false")
+        elif t == "order":
+            it = q.get("items", [])
+            if len(it) < 3 or len(set(it)) != len(it):
+                fails.append(f"{tag}: order cere minim 3 pași unici")
+            texts.append(" ".join(it))
+        elif t == "classify":
+            cats, items = q.get("cats", []), q.get("items", [])
+            if len(cats) < 2 or len(items) < 4:
+                fails.append(f"{tag}: classify cere minim 2 categorii și 4 rânduri")
+            if any(not (0 <= i[1] < len(cats)) for i in items):
+                fails.append(f"{tag}: classify are un indice de categorie greșit")
+            if len({i[1] for i in items}) < len(cats):
+                warns.append(f"{tag}: o categorie nu e folosită de niciun rând")
+            texts.append(" ".join(i[0] for i in items))
+        elif t == "match":
+            p = q.get("pairs", [])
+            if len(p) < 3 or len({a for a, _ in p}) != len(p) or len({b for _, b in p}) != len(p):
+                fails.append(f"{tag}: match cere minim 3 perechi cu ambele părți unice")
+            texts.append(" ".join(a + " " + b for a, b in p))
+        elif t == "hunt":
+            if not re.search(r"\[\[.*?\|.+?\]\]", q.get("src", "")):
+                fails.append(f"{tag}: hunt fără nicio greșeală [[text|explicație]]")
+            texts.append(q.get("src", ""))
+        elif t == "pick":
+            a = q.get("ans", "")
+            ok = re.fullmatch(r"([A-Z])(\d+)(:([A-Z])(\d+))?", a)
+            if not ok or ord(ok.group(1)) - 64 > q.get("cols", 0) or int(ok.group(2)) > q.get("rows", 0):
+                fails.append(f"{tag}: pick ans {a!r} nu e în grilă")
+
+    taught = strip_tags(cfg.get("intro", "") + " " + cfg.get("cum", ""))   # ce s-a predat până la nivelul curent
     for li, lv in enumerate(niv, 1):
-        words = len(strip_tags(lv.get("text", "")).split())
-        if "bazin" not in lv and not (40 <= words <= 170):
-            warns.append(f"N{li}: pagina de citit are {words} cuvinte (obișnuit 60-120)")
-        texts.append(lv.get("text", ""))
+        if lv.get("pasi"):
+            # NIVEL PE PAȘI (26.09.2026): o idee pe pas, exemplu, exercițiu mic, variante la cerere, atelier
+            P = lv["pasi"]
+            if len(P) < 2:
+                fails.append(f"N{li}: nivel pe pași cu {len(P)} pas (minim 2)")
+            for si, pas in enumerate(P, 1):
+                w = len(strip_tags(pas.get("text", "")).split())
+                if not pas.get("t") or w < 15:
+                    fails.append(f"N{li}P{si}: pasul are nevoie de titlu și de text (are {w} cuvinte)")
+                elif w > 150:
+                    warns.append(f"N{li}P{si}: pasul are {w} cuvinte - prea mult pentru o singură idee (țintă 30-110)")
+                texts.append(pas.get("text", "") + " " + pas.get("exemplu", "") + " " + pas.get("altfel", ""))
+                taught += " " + strip_tags(pas.get("text", "") + " " + pas.get("exemplu", "") + " " + pas.get("altfel", ""))
+                ex = [pas.get("incearca")] + list(pas.get("inca") or [])
+                ex = [e for e in ex if e]
+                for ei, e in enumerate(ex, 1):
+                    check_q(f"N{li}P{si}E{ei}", e)
+            if not any(p.get("incearca") for p in P):
+                fails.append(f"N{li}: niciun pas nu are exercițiu „Încearcă tu” (incearca)")
+            if not any(p.get("inca") for p in P):
+                warns.append(f"N{li}: niciun pas nu are variante „Încă un exercițiu” (inca) pentru consolidare")
+            if lv.get("atelier"):
+                for ei, e in enumerate([lv["atelier"]] + list(lv["atelier"].get("inca") or []), 1):
+                    check_q(f"N{li}A{ei}", e)
+            # EVALUARE CONFORMĂ CU CE S-A PREDAT (el, 26.09.2026: „notiuni nepredate - exemplu </heat>”):
+            # tot ce e în <code>/<kbd> în verificare trebuie să apară în pașii de până aici
+            nt = lambda x: re.sub(r"\s+", " ", html.unescape(x)).strip().lower()
+            T = nt(taught)
+            for qi, q in enumerate(lv.get("qs", []), 1):
+                src = q.get("q", "") + " " + " ".join(q.get("o", []) if isinstance(q.get("o"), list) else [])
+                for m in re.findall(r"<(?:code|kbd)>(.*?)</(?:code|kbd)>", src):
+                    term = nt(re.sub(r"<[^>]+>", "", m))
+                    if term and len(term) > 1 and term not in T:
+                        fails.append(f"N{li}Î{qi}: „{term}” apare în verificare, dar nu e predat în pașii de până aici")
+        else:
+            words = len(strip_tags(lv.get("text", "")).split())
+            if "bazin" not in lv and not (40 <= words <= 170):
+                warns.append(f"N{li}: pagina de citit are {words} cuvinte (obișnuit 60-120)")
+            texts.append(lv.get("text", ""))
+            taught += " " + strip_tags(lv.get("text", ""))
         qs = lv.get("qs", [])
-        if "bazin" not in lv and not (3 <= len(qs) <= 6):
-            warns.append(f"N{li}: {len(qs)} întrebări (obișnuit 4-5)")
+        if "bazin" not in lv and not (3 <= len(qs) <= 7):
+            warns.append(f"N{li}: {len(qs)} întrebări (obișnuit 4-6)")
         for qi, q in enumerate(qs, 1):
-            tag = f"N{li}Î{qi}"
-            t = q.get("t")
-            texts.append(q.get("q", "") + " " + q.get("why", ""))
-            if t not in tipuri:
-                fails.append(f"{tag}: tip necunoscut {t!r}")
-                continue
-            if not strip_tags(q.get("why", "")).strip():
-                fails.append(f"{tag}: lipsește explicația why")
-            if t == "choice":
-                o = q.get("o", [])
-                if len(o) < 3 or len(set(o)) != len(o):
-                    fails.append(f"{tag}: choice cere minim 3 variante unice")
-                if not isinstance(q.get("ok"), int) or not (0 <= q["ok"] < len(o)):
-                    fails.append(f"{tag}: ok în afara variantelor")
-                elif len(o) >= 3:
-                    # varianta corectă nu are voie să se vadă după lungime (evaluatorul pilotului a găsit 3 cazuri)
-                    lens = [len(strip_tags(x)) for x in o]
-                    corect, altele = lens[q["ok"]], [l for k, l in enumerate(lens) if k != q["ok"]]
-                    if corect > 1.5 * max(altele) and corect - max(altele) >= 15:
-                        warns.append(f"{tag}: varianta corectă e vizibil mai lungă ({corect} vs max {max(altele)} caractere) - se poate ghici după formă")
-                texts.append(" ".join(o))
-            elif t == "tf":
-                if not isinstance(q.get("ok"), bool):
-                    fails.append(f"{tag}: tf cere ok true/false")
-            elif t == "order":
-                it = q.get("items", [])
-                if len(it) < 3 or len(set(it)) != len(it):
-                    fails.append(f"{tag}: order cere minim 3 pași unici")
-                texts.append(" ".join(it))
-            elif t == "classify":
-                cats, items = q.get("cats", []), q.get("items", [])
-                if len(cats) < 2 or len(items) < 4:
-                    fails.append(f"{tag}: classify cere minim 2 categorii și 4 rânduri")
-                if any(not (0 <= i[1] < len(cats)) for i in items):
-                    fails.append(f"{tag}: classify are un indice de categorie greșit")
-                if len({i[1] for i in items}) < len(cats):
-                    warns.append(f"{tag}: o categorie nu e folosită de niciun rând")
-                texts.append(" ".join(i[0] for i in items))
-            elif t == "match":
-                p = q.get("pairs", [])
-                if len(p) < 3 or len({a for a, _ in p}) != len(p) or len({b for _, b in p}) != len(p):
-                    fails.append(f"{tag}: match cere minim 3 perechi cu ambele părți unice")
-                texts.append(" ".join(a + " " + b for a, b in p))
-            elif t == "hunt":
-                if not re.search(r"\[\[.*?\|.+?\]\]", q.get("src", "")):
-                    fails.append(f"{tag}: hunt fără nicio greșeală [[text|explicație]]")
-                texts.append(q.get("src", ""))
-            elif t == "pick":
-                a = q.get("ans", "")
-                ok = re.fullmatch(r"([A-Z])(\d+)(:([A-Z])(\d+))?", a)
-                if not ok or ord(ok.group(1)) - 64 > q.get("cols", 0) or int(ok.group(2)) > q.get("rows", 0):
-                    fails.append(f"{tag}: pick ans {a!r} nu e în grilă")
+            check_q(f"N{li}Î{qi}", q)
     D = cfg.get("diploma") or {}
     if not D.get("provocare"):
         fails.append("diploma fără provocare în aplicația reală")
@@ -212,6 +251,7 @@ def run(slug, fails, warns):
                             if k < 2:
                                 warns.append(f"N{li0}: lecția {n} are doar {k} întrebări în bazin (la reluare se epuizează din prima; țintă ≥ 2-3)")
                         lv0["qs"] = baz
+                cfg["_ext"] = pg.evaluate("JocMotor.test.tipuri?JocMotor.test.tipuri():[]")
                 dens = static_checks(slug, cfg, page_html, fails, warns)
 
             def overflow(where):
@@ -262,6 +302,54 @@ def run(slug, fails, warns):
                             if not pg.locator("#fb .fb.bad").count():
                                 fails.append(f"{dev} N{li+1}Î{qi+1}: simulatorul {q['t']!r} a ACCEPTAT răspunsul greșit din gresit()")
                         pg.evaluate("document.getElementById('go-home').click()")
+            # NIVELURILE PE PAȘI: fiecare pas se deschide, fiecare exercițiu („încă unul”) și atelierul se rezolvă
+            if dev == "Pixel 7":
+                def exersa(tag, n):
+                    nonlocal played
+                    for ei in range(n):
+                        t2 = f"{tag}E{ei+1}"
+                        pg.evaluate(f"JocMotor.test.exercitiu({ei})")
+                        overflow(t2)
+                        if ei == 0 and pg.evaluate("JocMotor.test.stare().mode") == "practice":
+                            try:
+                                has = pg.evaluate("JocMotor.test.gresit()")
+                            except Exception as e:
+                                fails.append(f"{t2}: gresit() a dat eroare: {str(e).splitlines()[0][:140]}"); has = None
+                            if has:
+                                if pg.locator("#chk").count():
+                                    pg.click("#chk")
+                                if not pg.locator("#fb .fb.bad").count():
+                                    fails.append(f"{t2}: exercițiul a ACCEPTAT răspunsul greșit din gresit()")
+                                pg.evaluate(f"JocMotor.test.exercitiu({ei})")
+                        try:
+                            ok = pg.evaluate("JocMotor.test.rezolva()")
+                        except Exception as e:
+                            fails.append(f"{t2}: rezolvarea automată a dat eroare: {str(e).splitlines()[0][:160]}"); continue
+                        if not ok:
+                            fails.append(f"{t2}: exercițiul nu are rezolvare automată"); continue
+                        if pg.locator("#chk").count() and not pg.locator("#fb .fb.ok").count():
+                            pg.click("#chk")
+                        if not pg.locator("#fb .fb.ok").count():
+                            fb = pg.locator("#fb").inner_text()[:160] if pg.locator("#fb").count() else ""
+                            fails.append(f"{t2}: răspunsul corect la exercițiu nu a fost acceptat. Mesaj: {fb!r}")
+                        else:
+                            played += 1
+                            if n > 1 and not pg.locator("#inca").count():
+                                fails.append(f"{t2}: după exercițiul rezolvat lipsește „Încă un exercițiu”")
+                for li, lv in enumerate(cfg["nivele"]):
+                    if not lv.get("pasi"):
+                        continue
+                    pg.click(f'.lvl[data-l="{li}"]')
+                    for si, pas in enumerate(lv["pasi"]):
+                        pg.evaluate(f"JocMotor.test.pas({si})")
+                        overflow(f"{dev} N{li+1}P{si+1}")
+                        n = len([e for e in [pas.get("incearca")] + list(pas.get("inca") or []) if e])
+                        if n:
+                            exersa(f"{dev} N{li+1}P{si+1}", n)
+                    if lv.get("atelier"):
+                        pg.evaluate("JocMotor.test.atelier()")
+                        exersa(f"{dev} N{li+1}A", 1 + len(lv["atelier"].get("inca") or []))
+                    pg.evaluate("document.getElementById('go-home').click()")
             for li, lv in enumerate(cfg["nivele"]):
                 pg.click(f'.lvl[data-l="{li}"]')
                 pg.click("#go")
