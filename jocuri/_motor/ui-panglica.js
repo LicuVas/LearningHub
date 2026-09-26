@@ -20,6 +20,8 @@
 const SCARA=0.667;
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const px=n=>Math.round(n*SCARA)+'px';
+// butoanele fără icoană Fluent potrivită: simbolul de pe butonul din Excel, altfel inițiala etichetei
+const GLIFE={PercentStyle:'%',TextDirectionLeftToRight:'¶→'};
 function svg(cai,m){return cai?`<svg viewBox="0 0 20 20" width="${m}" height="${m}" aria-hidden="true" focusable="false">${cai.map(d=>`<path d="${d}"/>`).join('')}</svg>`:''}
 function buton(b,date,opt){
   const L=(opt.legaturi||{})[b.id],ic=(date.icoane||{})[b.id],[x,y,w,h]=b.rect;
@@ -32,9 +34,9 @@ function buton(b,date,opt){
   if(b.lansator)corp=`<span class="pg-lans" aria-hidden="true"></span>`;
   else if(b.tip_uia==='ComboBox')corp=`<span class="pg-cb">${b.id==='FontSize'?'11':''}</span><span class="pg-sag">▾</span>`;
   else if(b.marime==='mare')corp=`${svg(ic,26)||''}<span class="pg-et">${esc(b.eticheta)}${b.split||b.meniu?' ▾':''}</span>`;
-  else corp=`${svg(ic,16)||(arata?'':`<span class="pg-txt">${esc(b.eticheta.slice(0,3))}</span>`)}${arata?`<span class="pg-et">${esc(b.eticheta)}</span>`:''}${b.split||b.meniu?'<span class="pg-sag">▾</span>':''}`;
+  else corp=`${svg(ic,16)||(arata?'':`<span class="pg-txt">${esc(GLIFE[b.id]||b.eticheta.charAt(0))}</span>`)}${arata?`<span class="pg-et">${esc(b.eticheta)}</span>`:''}${b.split||b.meniu?'<span class="pg-sag">▾</span>':''}`;
   const m=(opt.meniu||{})[b.id];
-  return `<span class="pg-slot" style="${pos}"><button type="button" class="pg-b ${b.marime==='mare'?'pg-mare':''} ${L?'':'pg-nesim'}" ${attr} title="${tit}" aria-label="${esc(b.eticheta)}">${corp}</button>${m?`<div class="m pg-meniu">${m}</div>`:''}</span>`;
+  return `<span class="pg-slot" style="${pos}"><button type="button" class="pg-b ${b.marime==='mare'?'pg-mare':''} ${L?'':'pg-nesim'} ${m?'pg-deschis':''}" ${attr} title="${tit}" aria-label="${esc(b.eticheta)}"${m?' aria-expanded="true"':''}>${corp}</button></span>`;
 }
 function html(date,opt){
   opt=opt||{};
@@ -42,9 +44,15 @@ function html(date,opt){
   const file=date.file.map(x=>`<button type="button" data-tab="${esc(tb[x.id]||x.id)}" class="${x===f?'on':''}" role="tab" aria-selected="${x===f}">${esc(x.eticheta)}</button>`).join('');
   const gr=f.grupuri.map(g=>`<div class="pg-grup" role="group" aria-label="${esc(g.eticheta)}" style="width:${px(g.latime)};height:${px(g.inaltime)}">
     ${g.butoane.map(b=>buton(b,date,opt)).join('')}<div class="pg-nume">${esc(g.eticheta)}</div></div>`).join('');
-  return `<div class="rb pg" data-aplicatie="${esc(date.aplicatie)}"><div class="tabs" role="tablist">${opt.inainte||''}<span class="pg-fisier">File</span>${file}</div><div class="pg-banda">${gr}</div></div>`;
+  return `<div class="rb pg" data-aplicatie="${esc(date.aplicatie)}"><div class="tabs" role="tablist">${opt.inainte||''}<span class="pg-fisier">File</span>${file}</div><div class="pg-banda">${gr}</div>`+
+    // meniul deschis stă SUB bandă: banda se derulează lateral, deci ar tăia orice iese din ea
+    Object.entries(opt.meniu||{}).map(([id,m])=>{const b=f.grupuri.flatMap(g=>g.butoane).find(x=>x.id===id);
+      return b?`<div class="pg-jos"><div class="pg-jos-t">${esc(b.eticheta)} ▾</div><div class="m">${m}</div></div>`:''}).join('')+
+    `<div class="pg-ingust">Pe ecran îngust, panglica se derulează în lateral. În aplicația de pe calculator o vezi întreagă.</div>${opt.nota?`<div class="pg-nota" role="status">${opt.nota}</div>`:''}</div>`;
 }
 const CSS=`
+.pg,.pg button,.pg select{font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif}
+.rb.pg .tabs button,.rb.pg .tabs .pg-fisier,.xl .rb.pg .tabs button{font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;text-decoration:none;letter-spacing:0}
 .pg .pg-fisier{padding:4px 10px;color:var(--ink2);font-size:.82rem;align-self:center}
 .pg .pg-banda{display:flex;align-items:stretch;overflow-x:auto;overflow-y:visible;background:var(--paper);border-top:1px solid var(--line);padding:2px 0;scrollbar-width:thin}
 .pg .pg-grup{position:relative;flex:0 0 auto;border-right:1px solid var(--line)}
@@ -63,7 +71,13 @@ const CSS=`
 .pg .pg-camp select{width:100%;height:100%;font:inherit;font-size:.72rem;border:1px solid var(--line);border-radius:2px;background:var(--paper);color:var(--ink);padding:0 2px}
 .pg .pg-lans{width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;opacity:.7}
 .pg .pg-nesim{opacity:.92}
-.pg .pg-meniu{position:absolute;top:100%;left:0;z-index:30;min-width:170px}
+.pg .pg-deschis{border-color:var(--xlg,#217346);background:var(--sel)}
+.pg .pg-jos{padding:4px 6px;border-top:1px solid var(--line);background:var(--paper)}
+.pg .pg-jos-t{font-size:.72rem;color:var(--ink2);margin-bottom:2px}
+.pg .pg-jos .m{position:static;display:flex;flex-wrap:wrap;gap:3px;box-shadow:none}
+.pg .pg-ingust{display:none;font-size:.72rem;color:var(--ink2);padding:2px 6px;border-top:1px dashed var(--line)}
+@media (max-width:760px){.pg .pg-ingust{display:block}}
+.pg .pg-nota{font-size:.8rem;padding:4px 8px;background:var(--sel);border-top:1px solid var(--line)}
 `;
 function stil(){if(document.getElementById('ui-panglica-css'))return;const s=document.createElement('style');s.id='ui-panglica-css';s.textContent=CSS;document.head.appendChild(s)}
 window.UiPanglica={html,stil,SCARA};

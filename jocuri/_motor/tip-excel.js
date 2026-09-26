@@ -236,7 +236,17 @@ function exerseaza(Q,loc,api){   // o variantă nouă, cu verificare proprie și
   const sal=render._stare;render(Qv,loc.querySelector('#xexb'),apiP);exerseaza._stare={S:render._stare,Qv,loc};render._stare=sal;   // poarta de testare lucrează pe sarcina de bază
 }
 
+/* Panglica reală (26.09.2026): ui-panglica.js + panglica-excel.js, lângă acest fișier, încărcate o dată, în fundal.
+   Un <script> (nu fetch) ca să meargă și din file:// (poarta). Lipsesc? rămâne panglica simplă. */
+const TIP_EXCEL_URL=(document.currentScript&&document.currentScript.src)||location.href;
+let panglicaCeruta=false;
+function cerePanglica(){
+  if(panglicaCeruta||(window.PANGLICA_EXCEL&&window.UiPanglica))return;panglicaCeruta=true;
+  const ia=n=>new Promise((ok,nu)=>{const s=document.createElement('script');s.src=new URL(n,TIP_EXCEL_URL).href;s.onload=ok;s.onerror=nu;document.head.appendChild(s)});
+  Promise.all([ia('ui-panglica.js'),ia('panglica-excel.js')]).then(()=>window.dispatchEvent(new Event('panglica-excel'))).catch(()=>{});
+}
 function render(Q,body,api){
+  cerePanglica();
   if(!document.getElementById('tip-excel-css')){const s=document.createElement('style');s.id='tip-excel-css';s.textContent=CSS;document.head.appendChild(s)}
   const cols=Q.cols||6,rows=Q.rows||8,liber=Array.isArray(Q.o);
   let mod=Q.mod||'ro';
@@ -247,7 +257,9 @@ function render(Q,body,api){
   const gest=new Set(),undo=[],redo=[];
   let fillTo=null,dragSel=false,dragMutat=false,dragPt=null,ultimClic=null,apasat=null,clip=null;
   // PANGLICA (25.09.2026): formatare, sortare, grafice. FMT[adresă] = {b,i,u,fill,color,bd,al,nf,dec}
-  const FMT={},MERGE=[];let GRAF=null,tab='home',meniu=null,sortDlg=null;const panglica=Q.panglica!==false;
+  const FMT={},MERGE=[];let GRAF=null,tab='home',meniu=null,sortDlg=null,nesim=null;const panglica=Q.panglica!==false;
+  // panglica reală vine în fundal (panglica-excel.js); când ajunge, foaia se redesenează cu ea
+  if(panglica&&!(window.PANGLICA_EXCEL&&window.UiPanglica))window.addEventListener('panglica-excel',()=>{if(body.isConnected&&!ed&&!fillTo&&!dragSel)draw()},{once:true});   // nu în mijlocul unei scrieri/trageri; altfel o ia următoarea desenare
   const CULORI={galben:'#FFE699',verde:'#C6E0B4',albastru:'#BDD7EE',portocaliu:'#F8CBAD'};
   const CULORI_TEXT={rosu:'#C00000',albastru:'#1F4E79',verde:'#375623'};
 
@@ -359,7 +371,41 @@ function render(Q,body,api){
     return st.length?` style="${st.join(';')}"`:''}
   // Bara de instrumente Acces rapid (Quick Access Toolbar): Anulare / Refacere, gri când nu ai ce anula
   function qatHtml(){return `<span class="qat" role="group" aria-label="Acces rapid (Quick Access)"><button type="button" data-ud="undo" title="Anulare (Undo) · Ctrl+Z" aria-label="Anulare (Undo)" ${undo.length?'':'disabled'}>↶</button><button type="button" data-ud="redo" title="Refacere (Redo) · Ctrl+Y" aria-label="Refacere (Redo)" ${redo.length?'':'disabled'}>↷</button></span>`}
+  /* Panglica REALĂ a Excel-ului (26.09.2026): file, grupuri, butoane, etichete și proporții din Excel-ul instalat
+     (panglica-excel.js, generat din dump UI Automation + lista oficială Microsoft; icoane Fluent). Butoanele pe care
+     simulatorul le știe păstrează aceleași mânere ca înainte (data-rb/mn/al/nf/gr/so), deci gesturile și probele
+     rămân valabile; celelalte se văd ca în Excel și, la clic, spun pe ecran că în exercițiu nu le folosim.
+     Dacă datele n-au ajuns (fișier lipsă), rămâne panglica simplă de mai jos. */
+  const TABURI_PG={TabHome:'home',TabInsert:'insert',TabPageLayoutExcel:'pagelayout',TabFormulas:'formulas',TabData:'data',TabReview:'review',TabView:'view'};
+  function ribbonReal(){
+    const P=window.PANGLICA_EXCEL,U=window.UiPanglica;if(!P||!U)return null;U.stil();
+    const fila=Object.keys(TABURI_PG).find(k=>TABURI_PG[k]===tab)||'TabHome';
+    const nf=`<select data-nf="1" title="Formatul numerelor (Number Format)" aria-label="Formatul numerelor"><option value="">General</option><option value="number">Număr (Number)</option><option value="currency">Monedă (Currency)</option><option value="percent">Procent (Percentage)</option></select>`;
+    const L=(attr,title)=>({attr,title});
+    const leg={
+      Bold:L('data-rb="b"','Aldin (Bold) · Ctrl+B'),Italic:L('data-rb="i"','Cursiv (Italic) · Ctrl+I'),Underline:L('data-rb="u"','Subliniat (Underline) · Ctrl+U'),
+      CellFillColorPicker:L('data-mn="fill"','Culoare de umplere (Fill Color)'),FontColorPicker:L('data-mn="color"','Culoarea fontului (Font Color)'),
+      BorderBottomNoToggle:L('data-mn="bd"','Borduri (Borders)'),
+      AlignLeft:L('data-al="left"','Aliniere la stânga (Align Left)'),AlignCenter:L('data-al="center"','Centrare (Center)'),AlignRight:L('data-al="right"','Aliniere la dreapta (Align Right)'),
+      MergeCenter:L('data-rb="merge"','Îmbinare și centrare (Merge & Center)'),
+      NumberFormatGallery:{html:nf,title:'Formatul numerelor (Number Format)'},
+      DecimalsIncrease:L('data-rb="dec+"','Mai multe zecimale (Increase Decimal)'),DecimalsDecrease:L('data-rb="dec-"','Mai puține zecimale (Decrease Decimal)'),
+      AutoSum:L('data-rb="sum"','Însumare automată (AutoSum) · Alt+='),
+      ChartTypeColumnInsertGallery:L('data-gr="column"','Diagramă cu coloane (Column Chart) din zona selectată'),
+      ChartTypeLineInsertGallery:L('data-gr="line"','Diagramă linie (Line Chart) din zona selectată'),
+      ChartTypePieInsertGallery:L('data-gr="pie"','Diagramă radială (Pie Chart) din zona selectată'),
+      SortAscendingExcel:L('data-so="asc"','Sortare de la A la Z / de la mic la mare (Sort A to Z)'),
+      SortDescendingExcel:L('data-so="desc"','Sortare de la Z la A / de la mare la mic (Sort Z to A)'),
+      SortDialog:L('data-so="dlg"','Sortare particularizată (Custom Sort)…')};
+    const m={};
+    if(meniu==='fill')m.CellFillColorPicker=`${Object.entries(CULORI).map(([n,c])=>`<button data-fill="${c}"><span class="sw" style="background:${c}"></span>${n}</button>`).join('')}<button data-fill="">Fără umplere (No Fill)</button>`;
+    if(meniu==='color')m.FontColorPicker=`${Object.entries(CULORI_TEXT).map(([n,c])=>`<button data-color="${c}"><span class="sw" style="background:${c}"></span>${n}</button>`).join('')}<button data-color="">Automat (Automatic)</button>`;
+    if(meniu==='bd')m.BorderBottomNoToggle=`<button data-bd="all">Toate bordurile (All Borders)</button><button data-bd="">Fără borduri (No Border)</button>`;
+    const nota=nesim?`„${esc(nesim)}” e aici și în Excel, dar în exercițiile de azi nu-l folosim.`:'';
+    return U.html(P,{fila,taburi:TABURI_PG,legaturi:leg,meniu:m,inainte:qatHtml(),nota});
+  }
   function ribbonHtml(){
+    const real=ribbonReal();if(real)return real;
     const T=[['home','Pornire (Home)'],['insert','Inserare (Insert)'],['data','Date (Data)']];
     let g='';
     if(tab==='home')g=`<button data-rb="b" title="Aldin (Bold) · Ctrl+B"><b>B</b></button><button data-rb="i" title="Cursiv (Italic) · Ctrl+I"><i>I</i></button><button data-rb="u" title="Subliniat (Underline) · Ctrl+U"><u>U</u></button><span class="sep"></span>
@@ -620,8 +666,10 @@ function render(Q,body,api){
     const Q_=sel=>body.querySelectorAll(sel);
     // un clic în panglică între două clicuri pe aceeași celulă NU face dublu-clic (ca în Excel)
     Q_('.rb').forEach(r=>r.addEventListener('pointerdown',()=>{ultimClic=null}));
-    Q_('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;meniu=null;draw()});
-    Q_('[data-mn]').forEach(b=>b.onclick=()=>{meniu=meniu===b.dataset.mn?null:b.dataset.mn;draw()});
+    Q_('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;meniu=null;nesim=null;draw()});
+    Q_('[data-mn]').forEach(b=>b.onclick=()=>{meniu=meniu===b.dataset.mn?null:b.dataset.mn;nesim=null;draw()});
+    // butoanele reale pe care simulatorul nu le folosește: spun asta pe ecran (nu par stricate)
+    Q_('[data-nesim]').forEach(b=>b.onclick=()=>{nesim=b.getAttribute('aria-label');meniu=null;draw()});
     Q_('[data-rb]').forEach(b=>b.onclick=()=>{if(ed)termina(null);aplica(b.dataset.rb)});
     Q_('[data-fill]').forEach(b=>b.onclick=()=>aplica('fill',b.dataset.fill));
     Q_('[data-color]').forEach(b=>b.onclick=()=>aplica('color',b.dataset.color));
