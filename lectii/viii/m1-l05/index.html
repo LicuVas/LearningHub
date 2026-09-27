@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tipuri de date: numeric, text, dată calendaristică</title>
+<meta name="description" content="Clasa a VIII-a, lecția 5 (Excel): numerele, textul și datele calendaristice, cum le scrii pe setări românești ca Excel să le recunoască și cum vezi după aliniere ce a înțeles, exersate într-o foaie care se poartă ca Excel-ul.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Noto+Sans:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF1EC; --paper:#FFFFFF; --paper2:#EDF2EC; --line:#D2DAD0;
+  --ink:#16211A; --ink2:#56645A; --accent:#107C41; --accentInk:#FFFFFF; --sel:#D6EEDD;
+  --mark:#FFE58A; --markInk:#16211A; --ok:#11703C; --okbg:#E0F2E6; --bad:#C23B33; --badbg:#FAE5E3;
+  --fd:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif; --fb:"Noto Sans","Segoe UI",system-ui,sans-serif; --fm:"DM Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E1310; --paper:#17201A; --paper2:#212C24; --line:#2E3B32;
+  --ink:#E3EBE5; --ink2:#9BAAA0; --accent:#4FC987; --accentInk:#0E1310; --sel:#1D4330;
+  --mark:#EFD25A; --markInk:#16211A; --ok:#4FC987; --okbg:#14301F; --bad:#FF7D73; --badbg:#3A1E1C;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E1310; --paper:#17201A; --paper2:#212C24; --line:#2E3B32;
+  --ink:#E3EBE5; --ink2:#9BAAA0; --accent:#4FC987; --accentInk:#0E1310; --sel:#1D4330;
+  --mark:#EFD25A; --markInk:#16211A; --ok:#4FC987; --okbg:#14301F; --bad:#FF7D73; --badbg:#3A1E1C;
+}
+/* tema: un rând de celule în fâșia de sus, fiecare așezat cum îl așază Excel (numerele la dreapta, textul la stânga) */
+.banda{display:grid;grid-template-columns:repeat(8,1fr);font-family:var(--fm);font-size:.7rem;color:var(--ink2)}
+.banda span{padding:3px 4px;border-left:1px solid var(--line);white-space:nowrap;overflow:hidden;text-align:left}
+.banda span:first-child{border-left:0}
+.banda span.r{text-align:right}
+h1,h2{letter-spacing:-.01em}
+.doua-foi{display:grid;grid-template-columns:1fr;gap:6px}
+@media (min-width:640px){.doua-foi{grid-template-columns:1fr 1fr}}
+/* mini-foaia „Uite cum”: triunghiul verde al numărului păstrat ca text, ca în Excel */
+.g td.g-tri{background-image:linear-gradient(135deg,#1E8C45 0,#1E8C45 6px,transparent 6px)}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/tip-foaie.js"></script>
+<script src="../../../jocuri/_motor/tip-excel.js"></script>
+<!-- foaia „excelx” comună clasei a VIII-a: gesturile din lecția 4 + tipurile de date pe setări românești (lecția 5) -->
+<script src="../../_sim/excelx.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={tipuri:'Tipuri de date: numeric, text, dată calendaristică'};
+
+/* ajutoare de desen: captura reală și mini-foaia „Uite cum”, desenată cu aceleași reguli ca foaia (ce ai tastat -> ce arată Excel) */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG='../../../jocuri/excel-viii/img/',IMG5='../m1-l05/img/';
+const grila=(cells,cols,rows,cap,mark)=>{
+  const L=i=>String.fromCharCode(65+i),M=new Set((mark||'').split(',').filter(Boolean));
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  let h='<div class="gridwrap" style="max-width:460px"><table class="g"><thead><tr><th></th>';
+  for(let c=0;c<cols;c++)h+=`<th>${L(c)}</th>`;
+  h+='</tr></thead><tbody>';
+  for(let r=1;r<=rows;r++){h+=`<tr><th>${r}</th>`;
+    for(let c=0;c<cols;c++){const a=L(c)+r,x=cells[a],raw=x&&typeof x==='object'?x.raw:x,ax=x&&typeof x==='object'?x.ax:null;
+      const i=raw==null?{afisat:'',dreapta:false}:ExcelTipuri.afisare(String(raw),ax);
+      h+=`<td class="${[M.has(a)?'pick':'',i.tri?'g-tri':''].join(' ').trim()}"><div style="text-align:${i.dreapta?'right':'left'};min-height:30px">${esc(i.afisat||'')}</div></td>`}
+    h+='</tr>'}
+  return h+`</tbody></table></div>${cap?`<p class="hint" style="margin:4px 0 8px">${cap}</p>`:''}`;
+};
+
+const PROVOCARE=[
+  'Deschide Excel și fă un registru nou, gol (<kbd>Ctrl</kbd>+<kbd>N</kbd>).',
+  'Întâi afli ce setări are calculatorul. Clic pe <b>A1</b>, scrie <b>7,5</b> (cu virgulă) și apasă <kbd>Enter</kbd>. În <b>A2</b> scrie <b>7.5</b> (cu punct) și <kbd>Enter</kbd>. Pe setări românești, A1 arată nota 7,5, iar A2 arată <b>07.mai</b>, o dată. Dacă A2 arată tot 7.5, fără să devină dată, calculatorul are setări englezești: acolo zecimala se scrie cu punct, iar datele cu puncte nu sunt recunoscute; notează ce ai văzut și continuă.',
+  'Pe setări românești: apasă imediat <kbd>Ctrl</kbd>+<kbd>Z</kbd>, iar data din A2 dispare. Clic pe <b>A2</b>, scrie <b>7,5</b> și <kbd>Enter</kbd>: acum e nota 7,5.',
+  'În <b>A3</b> scrie <b>12</b> și <kbd>Enter</kbd>. În <b>A4</b> scrie <b>Ana</b> și <kbd>Enter</kbd>. În <b>A5</b> scrie data de azi, cu puncte (de exemplu <b>05.10.2026</b>), și <kbd>Enter</kbd>. Uită-te: 12 și data stau la dreapta, Ana stă la stânga.',
+  "În <b>A6</b> scrie <b>007</b>, iar în <b>A7</b> scrie <b>'007</b>, cu apostrof în față (dacă îți apare ț, ține apăsată AltGr și apasă aceeași tastă). Compară: A6 arată 7, la dreapta; A7 arată 007, la stânga, cu un triunghi verde în colț.",
+  'Salvează cu <kbd>Ctrl</kbd>+<kbd>S</kbd>, cu numele <code>Nume_Prenume_lectia5.xlsx</code>.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m1_l05',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/viii/, „Lecția 5”, „Acum în aplicația adevărată” înainte de verificare
+  titlu:'Tipuri de date: numeric, text, dată calendaristică',
+  marca:'Lecția <b>5</b> · Excel · a VIII-a',
+  h1:'Tipuri de date: numeric, text, dată calendaristică',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U1', unitateTitlu:'Calcul tabelar',
+  competente:['CS.1.1','CS.3.1'], lectii:'5',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VIII-U1 „Calcul tabelar” · lecția 5 · conținutul: „Tipuri de date: numeric, text, dată calendaristică”',
+  intro:`<p>Lecția 5 din modulul 1. Înveți cele trei tipuri de date din Excel: <b>numeric</b>, <b>text</b> și <b>dată calendaristică</b>. Afli cum le scrii ca Excel să le recunoască și cum vezi, după aliniere, ce a înțeles.</p>
+<p><b>Ai nevoie de:</b> lecția 2, „Interfața aplicației de calcul tabelar. Structura unui registru” (celula și adresa ei, clic pe celulă și scrii, <kbd>Enter</kbd> te duce în celula de dedesubt, bara de formule arată ce e scris în celulă), lecția 3, „Operații cu registrul și cu foile de calcul” (registru nou, salvare) și lecția 4, „Adresa de celulă. Selectare, copiere, mutare, ștergere” (<kbd>Delete</kbd> golește o celulă; <kbd>Ctrl</kbd>+<kbd>Z</kbd> sau butonul <b>Anulare (Undo)</b> ↶ anulează ultima operație).</p>`,
+  cum:`<p><b>Cum lucrezi:</b> după pagina „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”. Apoi atelierul, într-o foaie care se poartă ca Excel-ul pe setări românești, apoi aceleași încercări în Excel-ul adevărat, iar la sfârșit 5 întrebări.</p>`,
+  banda:'<span class="r">12</span><span>Ana</span><span class="r">7,5</span><span>7B</span><span class="r">05.oct</span><span>007</span><span class="r">-4</span><span>Text</span>',
+  tipuri:{excelx:ExcelX},
+  nivele:[
+  {t:'Tipuri de date: numeric, text, dată calendaristică', final:true, lectii:[5], continuturi:[P.tipuri],
+   obiectiv:'scrii în Excel numere, text și date calendaristice așa încât Excel să le recunoască, și vezi după aliniere ce a înțeles.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>Diriginta ține în Excel lista pentru excursia clasei: numele elevilor, suma plătită de fiecare, data plății și codul biletului, de exemplu 007.</p>
+<p>Excel nu vede ce vezi tu. El vede un <mark>tip de date</mark>: număr, text sau dată calendaristică. Cu numerele poate face calcule, iar datele le știe din calendar. Dacă scrii nota 7,5 cu punct, adică 7.5, Excel o ia drept data de 7 mai.</p>
+<p>Azi înveți să scrii fiecare tip așa încât Excel să-l recunoască și să vezi ce a înțeles.</p>
+${fig(IMG+'tabel-sortat.webp',600,280,'Tabel în Excel cu coloanele Clasa, Elev și Nota: clasele 8A și 8B și numele stau la stânga, notele 10, 8, 7, 10, 9, 6 stau la dreapta','Un tabel adevărat din Excel: clasa (8A) și numele stau la stânga, notele stau la dreapta. Așa le așază Excel singur, după tip, dacă nu schimbi tu alinierea.')}`},
+
+    /* ---------- PASUL 1: cele trei tipuri ---------- */
+    {t:'Trei tipuri de date',
+     text:`<p>În fiecare celulă, Excel ține un singur lucru, de un anumit tip:</p>
+<ul><li><mark>numeric</mark> (număr): 12, -4, 7,5. Cu numerele, Excel poate face calcule;</li>
+<li><mark>text</mark>: Ana, 7B, 12 elevi. Cuvintele și cifrele amestecate cu litere sunt de obicei text. Excel doar le arată;</li>
+<li><mark>dată calendaristică</mark>: 05.10.2026. Scrii ziua, luna și anul, despărțite prin puncte. Excel știe că e o zi din calendar.</li></ul>
+<p><strong>Atenție:</strong> câteva cuvinte Excel le recunoaște. „12 octombrie 2026” e o dată, iar „12 lei” e un număr. Nu ești sigur ce a înțeles? Uită-te unde s-a așezat (pasul următor).</p>`,
+     exemplu:`${grila({A1:'Elev',B1:'Clasa',C1:'Suma',D1:'Data plății',A2:'Ana',B2:'8B',C2:'150',D2:'28.09.2026'},4,2,'Rândul Anei din lista excursiei: „Ana” și „8B” sunt text, 150 e număr, 28.09.2026 e dată calendaristică. Observă unde s-a așezat fiecare; afli de ce la pasul următor.')}`,
+     altfel:`<p>Gândește-te la un formular de înscriere: la „Vârsta” scrii un număr, la „Numele” scrii litere, la „Data nașterii” scrii o dată. Excel face la fel: fiecare celulă ține un lucru de un anumit fel.</p>`,
+     incearca:{t:'classify',q:'Ce tip de date e fiecare valoare, scrisă singură într-o celulă?',cats:['Număr','Text','Dată calendaristică'],items:[['-12',0],['Maria',1],['17.03.2027',2],['5 caiete',1]],
+       ajutor:'Cifre amestecate cu litere, ca „5 caiete”, sunt de obicei text. Ziua, luna și anul despărțite prin puncte fac o dată.',why:'-12 e număr; „Maria” și „5 caiete” sunt text; 17.03.2027 e dată calendaristică.'},
+     inca:[
+      {t:'classify',q:'Ce tip de date e fiecare valoare, scrisă singură într-o celulă?',cats:['Număr','Text','Dată calendaristică'],items:[['7,5',0],['7B',1],['01.12.2026',2],['clasa a VIII-a',1],['250',0]],
+       ajutor:'Cifre amestecate cu litere sunt de obicei text.',why:'7,5 și 250 sunt numere; „7B” și „clasa a VIII-a” sunt text; 01.12.2026 e dată calendaristică.'},
+      {t:'choice',q:'Cu care dintre acestea poate Excel să facă un calcul?',o:['-4','3 mere','7B','Ana'],ok:0,
+       ajutor:'Caută valoarea care e doar un număr.',why:'-4 e număr. „3 mere”, „7B” și „Ana” sunt text: Excel doar le arată.'}
+     ]},
+
+    /* ---------- PASUL 2: alinierea ---------- */
+    {t:'Alinierea îți arată tipul',
+     text:`<p>Cum afli ce a înțeles Excel? Te uiți unde s-a așezat conținutul în celulă, după <kbd>Enter</kbd>. Dacă nu ai aliniat tu nimic, Excel pune:</p>
+<ul><li><strong>numerele și datele la dreapta</strong>;</li><li><strong>textul la stânga</strong>.</li></ul>
+<p>De ce și datele la dreapta? Pentru Excel, o dată e tot un număr: numărul zilei în calendarul lui. De exemplu, 05.10.2026 e, pentru el, ziua 46300.</p>
+${fig(IMG5+'tipuri-trei.webp',967,289,'Excel: în coloana B, numărul 250 aliniat la dreapta, textul Ana la stânga și data 15.09.2026 la dreapta','În Excel: numărul 250 și data 15.09.2026 stau la dreapta, textul „Ana” stă la stânga.')}`,
+     exemplu:`${grila({A1:'12',A2:'Ana',A3:'05.10.2026'},2,3,'Ai scris 12 în A1, Ana în A2 și 05.10.2026 în A3: 12 și data s-au dus la dreapta, Ana la stânga.')}`,
+     altfel:`<p>Alinierea e ca eticheta de pe un borcan: fără să-l deschizi, știi ce e înăuntru. Te uiți de care margine s-a lipit conținutul și afli ce tip a înțeles Excel.</p>`,
+     incearca:{t:'excelx',q:'Scrie în <b>B2</b> numărul <b>12</b>, în <b>B3</b> cuvântul <b>Ana</b> și în <b>B4</b> data <b>05.10.2026</b>. După fiecare apeși <kbd>Enter</kbd>. Uită-te unde se așază fiecare.',
+       cols:3,rows:4,cells:{A1:'Ce scrii',B1:'În celulă',A2:'număr',A3:'text',A4:'dată'},panglica:false,
+       verifica:{tip:{B2:{numar:12},B3:{text:'Ana'},B4:{data:'05.10.2026'}}},
+       ajutor:'Clic pe B2, scrie 12 și apasă Enter: ajungi singur în B3. Data se scrie cu puncte între zi, lună și an.',why:'12 și data stau la dreapta, „Ana” stă la stânga: Excel le-a recunoscut pe toate trei.'},
+     inca:[
+      {t:'excelx',q:'Scrie <b>7B</b> în <b>A1</b> și apasă <kbd>Enter</kbd>. Unde s-a așezat?',cols:3,rows:3,cells:{},panglica:false,
+       o:['La stânga, pentru că e text','La dreapta, pentru că e număr','La mijlocul celulei','A dispărut din celulă'],ok:0,
+       ajutor:'Încearcă în foaie și uită-te de care margine s-a lipit.',why:'„7B” amestecă o cifră cu o literă: Excel îl ține ca text și îl pune la stânga.'},
+      {t:'tf',q:'Data 05.10.2026, recunoscută de Excel, stă la stânga celulei, ca textul.',ok:false,
+       ajutor:'Recitește prima regulă din listă.',why:'Fals. Datele stau la dreapta, ca numerele: pentru Excel, o dată e tot un număr.'}
+     ]},
+
+    /* ---------- PASUL 3: zecimalele ---------- */
+    {t:'Zecimalele se scriu cu virgulă',
+     text:`<p>Cu ce semn scrii zecimalele și datele hotărăsc <strong>setările regionale</strong> ale Windows-ului: țara pentru care e pregătit calculatorul. Pe setări românești, zecimalele se scriu cu <mark>virgulă</mark>: <code>7,5</code>. Excel îl înțelege ca număr și îl pune la dreapta.</p>
+<p>Cu punct nu merge. La noi, punctul e semnul din date (05.10.2026), așa că Excel face din <code>7.5</code> data de 7 mai: în celulă apare <code>07.mai</code>. Stă tot la dreapta, dar nu mai e nota ta!</p>
+<p>Pe setări englezești e invers: zecimala se scrie cu punct. Foaia din pagină are setări românești.</p>`,
+     exemplu:`${grila({A1:'Elev',B1:'Nota',A2:'Ana',B2:'7,5',A3:'Bogdan',B3:'7.5'},2,3,'În B2 s-a scris 7,5 (cu virgulă): e nota. În B3 s-a scris 7.5 (cu punct): a devenit data de 7 mai.')}
+<p>La fel pățesc <code>9.5</code>, care devine <code>09.mai</code>, și <code>6.75</code>, care devine <code>iun.75</code>, adică iunie 1975.</p>`,
+     altfel:`<p>Pe bonul de la magazin scrie 7,50 lei, cu virgulă. Excel-ul cu setări românești citește numerele la fel ca noi: virgula desparte zecimalele.</p>`,
+     incearca:{t:'excelx',q:'Scrie notele: <b>9,5</b> în <b>B2</b> (Ana) și <b>7,5</b> în <b>B3</b> (Bogdan).',
+       cols:3,rows:4,cells:{A1:'Elev',B1:'Nota',A2:'Ana',A3:'Bogdan'},panglica:false,
+       verifica:{tip:{B2:{numar:9.5},B3:{numar:7.5}}},
+       ajutor:'Zecimala se scrie cu virgulă: 9,5 și 7,5. Dacă a apărut o dată, apasă Ctrl+Z și scrie din nou.',why:'Cu virgulă, 9,5 și 7,5 sunt numere: stau la dreapta și Excel poate calcula cu ele.'},
+     inca:[
+      {t:'excelx',q:'Scrie în <b>B2</b> <b>7.5</b>, cu punct, și apasă <kbd>Enter</kbd>. Ce apare în celulă?',cols:3,rows:3,cells:{A1:'Elev',B1:'Nota',A2:'Ana'},panglica:false,
+       o:['07.mai, la dreapta','7,5, la dreapta','7.5, la stânga','Nimic, celula rămâne goală'],ok:0,
+       ajutor:'Încearcă în foaie. Pe setări românești, punctul e semnul din date.',why:'Pe setări românești, punctul desparte ziua de lună: 7.5 devine data de 7 mai. Nota se scrie 7,5.'},
+      {t:'choice',q:'Pe un calculator cu setări românești, cum scrii nota opt și jumătate?',o:['8,5','8.5','8 și 5','8/5'],ok:0,
+       ajutor:'Cu ce semn se scriu zecimalele pe setări românești?',why:'Cu virgulă: 8,5. Scrisă cu punct sau cu bară, Excel face din ea o dată: 08.mai.'}
+     ]},
+
+    /* ---------- PASUL 4: repararea ---------- */
+    {t:'Ai greșit tipul? Ctrl+Z sau Golire totală',
+     text:`<p>Ai scris 7.5 și a apărut 07.mai? Nu scrie 7,5 peste! Celula a primit de la Excel <strong>forma de dată</strong> și o păstrează: 7,5 scris peste apare ca <code>07.ian</code>. Nici <kbd>Delete</kbd> nu scoate forma: golește doar conținutul.</p>
+<p><strong>Observi imediat</strong>, înainte să faci altceva? Apasă <kbd>Ctrl</kbd>+<kbd>Z</kbd> sau butonul <b>Anulare (Undo)</b> ↶: dispar și data, și forma ei.</p>
+<p><strong>Ai făcut între timp altceva</strong> (ai scris peste, ai apăsat Delete, ai scris în altă celulă)? Selectezi celula, apoi pe fila <b>Pornire (Home)</b> butonul cu radieră <b>Golire (Clear)</b>, al treilea din grupul <b>Editare (Editing)</b>, apoi <b>Golire totală (Clear All)</b>. Celula rămâne goală, fără formă. Apoi scrii din nou.</p>`,
+     exemplu:`<div class="doua-foi">${grila({A1:'Nota',A2:{raw:'7,5',ax:'dd.mmm'}},2,2,'Greșit: după 07.mai, ai scris 7,5 peste. Celula a păstrat forma de dată și arată 07.ian.','A2')}${grila({A1:'Nota',A2:'7,5'},2,2,'Bine: Golire totală pe A2 (sau Ctrl+Z imediat după 07.mai), apoi 7,5. Acum e nota 7,5.','A2')}</div>
+<p><b>De ce Golire totală:</b> lucrează doar pe celula selectată și nu numeri apăsări. Grupul Editare (Editing) e la capătul din dreapta al filei Pornire (Home): dacă nu-l vezi, derulează panglica spre dreapta, și pe calculator, și pe telefon.</p>`,
+     altfel:`<p>E ca o căsuță dintr-un formular pe care cineva a pus ștampila „DATA”. Orice număr scrii apoi în ea se citește ca dată, chiar dacă ștergi ce ai scris cu guma (Delete). Golire totală e ca o căsuță nouă, fără ștampilă. Ctrl+Z dat imediat îți ia înapoi chiar greșeala, cu ștampilă cu tot.</p>`,
+     incearca:{t:'excelx',q:'Fă greșeala și repar-o. <b>1.</b> Scrie în <b>B2</b> <b>7.5</b> (cu punct) și <kbd>Enter</kbd>: apare 07.mai. <b>2.</b> Apasă <kbd>Ctrl</kbd>+<kbd>Z</kbd> (sau ↶). <b>3.</b> Clic pe B2, scrie <b>7,5</b> și <kbd>Enter</kbd>.',
+       cols:3,rows:4,cells:{A1:'Elev',B1:'Nota',A2:'Ana'},gresitLipit:['B2'],
+       verifica:{tip:{B2:{numar:7.5}}},
+       ajutor:'Dacă în B2 scrie 07.ian, ai făcut altceva între timp: selectează B2, apoi pe fila Pornire (Home) butonul cu radieră Golire (Clear), al treilea din grupul Editare (Editing), apoi Golire totală (Clear All); apoi scrie 7,5.',why:'Ctrl+Z a scos și data, și forma ei. Acum 7,5 e numărul 7,5, la dreapta.'},
+     inca:[
+      {t:'tf',q:'Excel a făcut din 7.5 data 07.mai. Apeși <kbd>Delete</kbd> pe celulă și scrii 7,5: acum în celulă apare 7,5.',ok:false,
+       ajutor:'Recitește ce face Delete cu forma de dată.',why:'Fals. Delete golește doar conținutul. Forma de dată rămâne, iar 7,5 apare ca 07.ian. Golire totală (Clear All) scoate și forma.'},
+      {t:'excelx',q:'În foaia de mai jos, în B2 s-a scris 9.5 (a apărut 09.mai), apoi s-a scris 9,5 peste: acum B2 arată 09.ian. Repar-o cu Golire totală (Clear All), ca în B2 să fie nota 9,5.',
+       cols:3,rows:3,cells:{A1:'Elev',B1:'Nota',A2:'Bogdan'},inainte:[['B2','9.5'],['B2','9,5']],gresitLipit:['B2'],
+       verifica:{tip:{B2:{numar:9.5}}},
+       ajutor:'Selectează B2, apoi pe fila Pornire (Home) butonul cu radieră Golire (Clear), al treilea din grupul Editare (Editing) (dacă nu vezi grupul, derulează panglica spre dreapta), apoi Golire totală (Clear All). Apoi scrie 9,5 și Enter.',why:'Golire totală a scos și conținutul, și forma de dată. Acum 9,5 e numărul 9,5, la dreapta.'},
+      {t:'choice',q:'Ai scris 6.75 și a apărut iun.75. Ce faci ca să ai numărul 6,75?',o:['Apeși imediat Ctrl+Z, apoi scrii 6,75','Scrii 6,75 peste iun.75','Apeși Delete, apoi scrii 6,75','Scrii 6.75 încă o dată'],ok:0,
+       ajutor:'Care comandă scoate și valoarea, și forma?',why:'Ctrl+Z scoate și data, și forma ei. Scris peste, 6,75 ar apărea ca ian.00; la fel și după Delete.'}
+     ]},
+
+    /* ---------- PASUL 5: apostroful ---------- */
+    {t:'Numere care rămân text: apostroful',
+     text:`<p>Unele numere nu sunt de socotit: codul biletului, 007, sau un număr de telefon care începe cu 0. Scrise simplu, Excel le face numere și pierde zerourile din față: 007 devine 7.</p>
+<p>Ca să rămână exact cum le scrii, începi cu un <mark>apostrof</mark>: <code>'007</code>. În celulă apostroful nu se vede, doar în bara de formule (Formula Bar).</p>
+<p>Celula arată 007 la stânga, ca textul, cu un <strong>triunghi verde</strong> în colțul din stânga-sus: Excel te anunță că ai un număr păstrat ca text. Aici chiar asta vrei.</p>
+${fig(IMG5+'numar-ca-text.webp',967,79,'Excel, rândul 5: în B5, 250 păstrat ca text, aliniat la stânga, cu un triunghi verde mic în colțul din stânga-sus','Așa arată în Excel un număr păstrat ca text: 250 stă la stânga și are triunghiul verde în colț.')}`,
+     exemplu:`<p><b>Unde e apostroful ':</b> pe tastatura obișnuită, e tasta din stânga lui Enter, cea cu ghilimelele. Dacă tasta aceea îți scrie ț, calculatorul are tastatura românească: ține apăsată tasta AltGr (Alt din dreapta) și apasă aceeași tastă. Pe unele calculatoare, ' apare abia după ce apeși tasta următoare.</p>
+${grila({A1:'Cod bilet',A2:'007',A3:"'007"},2,3,"În A2 s-a scris 007: a rămas 7, la dreapta. În A3 s-a scris '007: se vede 007, la stânga, cu triunghiul verde în colț.")}`,
+     altfel:`<p>Un număr de telefon nu se adună cu alt număr de telefon: e ca un nume, o etichetă. De aceea îl păstrezi ca text, cu toate cifrele lui.</p>`,
+     incearca:{t:'excelx',q:'Scrie în <b>B2</b> codul biletului Anei, <b>007</b>, așa încât să rămână cu zerourile din față.',
+       cols:3,rows:3,cells:{A1:'Elev',B1:'Cod bilet',A2:'Ana'},panglica:false,
+       verifica:{tip:{B2:{text:'007'}}},
+       ajutor:"Începe cu apostroful: '007, apoi Enter. Dacă apare ț, ține apăsată AltGr și apasă aceeași tastă.",why:'Cu apostrof, 007 rămâne text: se vede întreg, la stânga, cu triunghiul verde.'},
+     inca:[
+      {t:'excelx',q:'Scrie în <b>B2</b> codul de acces la sala de sport, <b>0042</b>, cu zerourile din față.',cols:3,rows:3,cells:{A1:'Sala',B1:'Cod',A2:'Sport'},panglica:false,
+       verifica:{tip:{B2:{text:'0042'}}},ajutor:"Apostroful întâi: '0042.",why:"Cu apostrof, 0042 rămâne exact cum l-ai scris."},
+      {t:'excelx',q:'Scrie <b>007</b> fără apostrof în <b>A1</b> și apasă <kbd>Enter</kbd>. Ce apare?',cols:3,rows:3,cells:{},panglica:false,
+       o:['7, la dreapta','007, la stânga','007, la dreapta','Nimic, celula rămâne goală'],ok:0,
+       ajutor:'Încearcă în foaie.',why:'Fără apostrof, Excel face din 007 numărul 7 și îl pune la dreapta: zerourile din față se pierd.'}
+     ]}
+   ],
+   atelier:{t:'excelx',titlu:'Atelier: lista pentru excursia clasei',
+    intro:`<p>Foaia de mai jos se poartă ca Excel-ul pe setări românești. Deasupra ei sunt <strong>testele</strong>: fiecare se bifează singur când ce ai scris are tipul potrivit. Ai greșit? <kbd>Ctrl</kbd>+<kbd>Z</kbd> sau ↶, imediat. O celulă a rămas cu forma de dată? Golire totală (Clear All). La final apasă <b>Verifică</b>.</p>`,
+    q:'Completează lista. <b>1.</b> În <b>B2</b>, <b>B3</b> și <b>B4</b> scrie sumele plătite: <b>150</b>, <b>75,5</b> și <b>120</b>. <b>2.</b> În <b>C2</b>, <b>C3</b> și <b>C4</b> scrie datele plății: <b>28.09.2026</b>, <b>01.10.2026</b> și <b>05.10.2026</b>. <b>3.</b> În <b>D2</b>, <b>D3</b> și <b>D4</b> scrie codurile biletelor, <b>001</b>, <b>002</b> și <b>003</b>, cu zerourile din față.',
+    cols:4,rows:5,
+    cells:{A1:'Elev',B1:'Suma',C1:'Data plății',D1:'Cod bilet',A2:'Ana',A3:'Bogdan',A4:'Cristi'},
+    verifica:{tip:{B2:{numar:150},B3:{numar:75.5},B4:{numar:120},C2:{data:'28.09.2026'},C3:{data:'01.10.2026'},C4:{data:'05.10.2026'},D2:{text:'001'},D3:{text:'002'},D4:{text:'003'}}},
+    teste:[
+     {ce:'Sumele din coloana B sunt numere (stau la dreapta)',tip:{B2:{numar:150},B3:{numar:75.5},B4:{numar:120}}},
+     {ce:'Datele din coloana C sunt date calendaristice',tip:{C2:{data:'28.09.2026'},C3:{data:'01.10.2026'},C4:{data:'05.10.2026'}}},
+     {ce:'Codurile din coloana D și-au păstrat zerourile',tip:{D2:{text:'001'},D3:{text:'002'},D4:{text:'003'}}}],
+    ajutor:"Sumele: doar cifrele, cu virgulă la 75,5. Datele: ziua, luna și anul, cu puncte între ele. Codurile: cu apostrof în față, de exemplu '001.",
+    why:'Lista e gata: sumele sunt numere (cu ele Excel va putea face totalul), datele sunt zile din calendar, iar codurile au rămas exact cum le-ai scris.',
+    inca:[
+     {t:'excelx',q:'Jurnalul fasolei de la biologie. <b>1.</b> În <b>B2</b> și <b>B3</b> scrie datele <b>12.10.2026</b> și <b>13.10.2026</b>. <b>2.</b> În <b>C2</b> și <b>C3</b> scrie înălțimea plantei, în centimetri: <b>3,5</b> și <b>4,25</b>. <b>3.</b> În <b>D2</b> scrie <b>a răsărit</b>.',
+      cols:4,rows:3,cells:{A1:'Ziua',B1:'Data',C1:'Înălțime',D1:'Observație',A2:'1',A3:'2'},
+      verifica:{tip:{B2:{data:'12.10.2026'},B3:{data:'13.10.2026'},C2:{numar:3.5},C3:{numar:4.25},D2:{text:'a răsărit'}}},
+      teste:[
+       {ce:'Datele din coloana B sunt date calendaristice',tip:{B2:{data:'12.10.2026'},B3:{data:'13.10.2026'}}},
+       {ce:'Înălțimile din coloana C sunt numere cu zecimale',tip:{C2:{numar:3.5},C3:{numar:4.25}}},
+       {ce:'Observația din D2 e text',tip:{D2:{text:'a răsărit'}}}],
+      ajutor:'Datele cu puncte, înălțimile cu virgulă: 3,5 și 4,25.',
+      why:'Datele stau la dreapta ca zile din calendar, înălțimile sunt numere cu virgulă, iar observația e text, la stânga.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Într-o coloană cu note, o notă stă lipită la stânga, iar celelalte la dreapta. Ce înseamnă?',o:['Excel o vede ca text, nu ca număr','E cea mai mare notă din coloană','E o dată calendaristică','E o notă cu zecimale'],ok:0,
+     ajutor:'Unde stau numerele și unde stă textul?',why:'Numerele stau la dreapta. O notă lipită la stânga e text: Excel nu va calcula cu ea.'},
+    {t:'excelx',q:'Scrie în <b>B3</b> înălțimea lui Bogdan, <b>1,62</b> metri, ca număr.',cols:3,rows:4,cells:{A1:'Elev',B1:'Înălțime',A2:'Ana',B2:'1,55',A3:'Bogdan'},
+     verifica:{tip:{B3:{numar:1.62}}},ajutor:'Pe setări românești zecimala se scrie cu virgulă.',why:'1,62 cu virgulă e număr și stă la dreapta, lângă 1,55.'},
+    {t:'excelx',q:'Scrie în <b>C2</b> data concursului de robotică, <b>12 octombrie 2026</b>, așa încât Excel s-o recunoască drept dată.',cols:3,rows:3,cells:{A1:'Concurs',B1:'Oraș',C1:'Data',A2:'Robotică',B2:'Piatra Neamț'},panglica:false,
+     verifica:{tip:{C2:{data:'12.10.2026'}}},ajutor:'Ziua, luna și anul, despărțite prin puncte.',why:'Scrisă cu puncte, 12.10.2026 e o dată calendaristică și stă la dreapta. Merge și „12 octombrie 2026”: Excel o recunoaște tot ca dată.'},
+    {t:'excelx',q:'Scrie în <b>B2</b> numărul de pe tricoul lui Cristi, <b>07</b>, ca să se vadă exact 07.',cols:3,rows:3,cells:{A1:'Jucător',B1:'Tricou',A2:'Cristi'},panglica:false,
+     verifica:{tip:{B2:{text:'07'}}},ajutor:'Cum păstrezi zeroul din față?',why:"Cu apostrof, '07 rămâne text și se vede 07."},
+    {t:'excelx',q:'În foaia de mai jos, în B2 s-a scris nota 8.5 (a apărut 08.mai), s-a apăsat Delete și s-a scris 8,5: acum B2 arată 08.ian. Adu în B2 nota 8,5, ca număr.',
+     cols:3,rows:3,cells:{A1:'Elev',B1:'Nota',A2:'Dana'},inainte:[['B2','8.5'],['B2','DEL'],['B2','8,5']],gresitLipit:['B2'],
+     verifica:{tip:{B2:{numar:8.5}}},ajutor:'Forma de dată rămâne și după Delete. Ce comandă scoate și conținutul, și forma?',
+     why:'Golire totală (Clear All) scoate și conținutul, și forma de dată; apoi 8,5 rămâne număr. Merge și Ctrl+Z de trei ori: până reapare 08.mai, apoi până dispare și el.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Excel-ul adevărat',titlu:'Acum în Excel-ul adevărat',
+    intro:'<p>Faci aceleași încercări în Excel, pe calculator. La fiecare pas, uită-te unde s-a așezat ce ai scris.</p>',
+    pasi:PROVOCARE},
+  diploma:{titlu:'Detectiv de date',
+    rezumat:'a deosebit numerele, textul și datele calendaristice după aliniere, a scris zecimale cu virgulă și date cu puncte, a reparat cu Ctrl+Z o notă care se făcuse dată și a păstrat zerourile unui cod cu apostroful',
+    aplicatie:'Excel-ul adevărat',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
