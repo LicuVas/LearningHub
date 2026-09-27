@@ -44,6 +44,8 @@ h2{font-weight:750}
 </head>
 <body>
 <script src="../_motor/motor.js"></script>
+<script src="../_motor/ui-panglica.js"></script>
+<script src="../_motor/panglica-powerpoint.js"></script>
 <script src="../_ghiduri/cont-drive/pasi.js"></script>
 <script src="../_ghiduri/slides/pasi.js"></script>
 <script>
@@ -413,6 +415,33 @@ function menuHTML(S){
   else h+=`<div class="${m.sw?'pp-grid':''}">${m.items.map(([id,l])=>`<button type="button" class="pp-mi" data-t="${id}">${m.cul?`<i class="pp-c" style="background:${m.cul[id]}"></i>`:''}${l}</button>`).join('')}</div>`;
   return h+'</div>';
 }
+/* PANGLICA REALĂ PowerPoint (27.09.2026): file, grupuri, butoane, galerii (tranziții, animații, teme) din PowerPoint-ul
+   instalat (_motor/panglica-powerpoint.js). Butoanele pe care exercițiul le cunoaște primesc ACELAȘI data-t ca în
+   panglica simplă, deci pașii se bifează la fel; restul se văd ca în PowerPoint (clicul pe ele cade pe „zona-panglica”,
+   ca un clic pe un loc gol). Temele exercițiului (albă / bleumarin / verde) nu există cu aceste nume în PowerPoint:
+   stau într-o fâșie separată, spusă pe ecran. Fără date: panglica simplă. */
+const TAB_PG={TabHome:'home',TabInsert:'insert',TabDesign:'design',TabTransitions:'transitions',TabAnimations:'animations',TabSlideShow:'slideshow'};
+const PG_LEG={
+  home:{SlideNewGallery:'new-slide',SlideLayoutGallery:'layout',FontSize:'font-size',FontColorPicker:'font-color',Bold:'bold',ShapeFillColorPicker:'shape-fill',OutlineColorPicker:'shape-outline'},
+  insert:{TableInsertGallery:'ins-table',FlyoutAnchorInsertPictures:'ins-pictures',ShapesInsertGallery:'ins-shapes',TextBoxInsert:'ins-textbox',HyperlinkInsert:'ins-link',SoundInsertMenu02:'ins-audio'},
+  design:{SlideBackgroundStylesGallery:'bg-styles'},
+  transitions:{'galerie:None':'tr-none','galerie:Morph':'tr-morph','galerie:Fade':'tr-fade',SlideTransitionOnMouseClick:'on-click',SlideTransitionAutomaticallyAfter:'after'},
+  animations:{AnimationAddGallery:'add-anim'},
+  slideshow:{SlideShowFromBeginning:'from-begin',SlideShowFromCurrent:'from-current',SlideShowUsePresenterView:'presenter'}};
+function panglicaReala(S,sl){
+  const P=window.PANGLICA_POWERPOINT,U=window.UiPanglica;if(!P||!U)return '';U.stil();
+  const tab=S.tab==='file'?'home':S.tab,fila=Object.keys(TAB_PG).find(k=>TAB_PG[k]===tab)||'TabHome',leg={};
+  const chk=Object.fromEntries(Object.values(RIB).flat().filter(r=>r[2]==='chk').map(r=>[r[0],1]));
+  Object.entries(PG_LEG[tab]||{}).forEach(([idm,t])=>{
+    const on=S.menu===t||(t.startsWith('tr-')&&sl.tr===t)||(chk[t]&&S.chk[t]);
+    leg[idm]={attr:`data-t="${t}"${chk[t]?` aria-pressed="${!!S.chk[t]}"`:''}`,title:label(t),clasa:(on?'pg-on ':'')+(gri(S,t)?'pg-gri':'')}});
+  const extra=tab==='design'?`<div class="pp-btns"><span style="color:#555;font-size:12px;align-self:center">Temele din exercițiu (în PowerPoint au alte nume):</span>${
+    RIB.design.filter(([id])=>id.startsWith('tema-')).map(([id,l])=>`<button type="button" class="pp-b${S.tema===+id.slice(5)-1?' on':''}" data-t="${id}">${l}</button>`).join('')}</div>`:'';
+  return U.html(P,{fila,taburi:TAB_PG,legaturi:leg,
+    atribFila:k=>TABS.some(([id])=>id===k)?`data-t="tab-${k}"`:'data-nesim="fila"',
+    fisier:`<button type="button" class="pg-fisier${S.tab==='file'?' on':''}" data-t="tab-file">File</button>`,
+    bandaInlocuita:S.tab==='file'?'<span style="color:#777;padding:6px">Fila File deschide lista de mai jos.</span>':''})+extra;
+}
 function appHTML(S){
   const titluF=(S.salvat||'Presentation1')+' - PowerPoint';
   if(S.inchis)return `<div class="pp"><div class="pp-bar">PowerPoint</div><div class="pp-gol">Prezentarea s-a închis.${S.salvat?` Fișierul <b>${esc(S.salvat)}</b> e salvat pe disc.`:''}<br><br><button type="button" class="pp-b" data-t="redeschide">Redeschide</button></div></div>`;
@@ -422,6 +451,7 @@ function appHTML(S){
     if(k==='chk')return `<button type="button" class="pp-b${S.chk[id]?' on':''}" data-t="${id}" aria-pressed="${!!S.chk[id]}"><span class="bx">${S.chk[id]?'✓':''}</span>${l}</button>`;
     const on=S.menu===id||(id.startsWith('tr-')&&sl.tr===id)||(id.startsWith('tema-')&&S.tema===+id.slice(5)-1);
     return `<button type="button" class="pp-b${gri(S,id)?' gri':''}${on?' on':''}" data-t="${id}">${id==='bold'?'<b>B</b>':l}</button>`}).join('');
+  const real=panglicaReala(S,sl);
   const pane=S.pane==='fundal'?`<div class="pp-menu"><div class="pp-mt"><span>Format Background</span><button type="button" class="pp-x" data-t="pane-close" aria-label="Închide panoul">×</button></div>
     <div class="pp-gr">Fill</div><button type="button" class="pp-mi${S.solid?' on':''}" data-t="solid-fill">${S.solid?'◉':'○'} Solid fill</button>
     <div class="pp-gr">Color</div><div class="pp-grid">${BGC.map(([id,n,c])=>`<button type="button" class="pp-mi" data-t="${id}"><i class="pp-c" style="background:${c}"></i>${n}</button>`).join('')}</div></div>`:'';
@@ -447,7 +477,7 @@ function appHTML(S){
       <div class="pp-notes" data-t="zona-note">${sl.note?esc(sl.note):'<span class="pp-ph">Click to add notes</span>'}</div>
       <div class="pp-status" data-t="bara-stare"><span>Slide ${S.cur+1} of ${S.slides.length}</span><span>English (United States)</span></div>`;
   }
-  return `<div class="pp"><div class="pp-bar">${esc(titluF)}</div><div data-t="zona-panglica"><div class="pp-tabs">${tabs}</div><div class="pp-btns">${rib}</div></div>${S.menu?menuHTML(S):''}${pane}${dlg}${ask}${main}</div>`;
+  return `<div class="pp"><div class="pp-bar">${esc(titluF)}</div><div data-t="zona-panglica">${real||`<div class="pp-tabs">${tabs}</div><div class="pp-btns">${rib}</div>`}</div>${S.menu?menuHTML(S):''}${pane}${dlg}${ask}${main}</div>`;
 }
 
 function render(Q,body,api){

@@ -58,6 +58,13 @@ h1{font-size:clamp(1.9rem,7vw,3.2rem);font-weight:800}
 .wd-tb button:hover{border-color:var(--line);background:var(--paper)}
 .wd-tb button.act,.wd-tb button[aria-pressed="true"]{background:var(--sel);border-color:var(--accent)}
 .wd-tb .sep{width:1px;height:24px;background:var(--line);margin:0 3px}
+/* panglica reală Word (27.09.2026): butoanele au mărimea și locul din Word, nu cele ale barei simple */
+.wd-tb.wd-real{display:block;padding:0;border:0;background:none}
+.wd-tb.wd-real .pg-b{min-width:0;height:auto;font-family:'Segoe UI',system-ui,sans-serif}
+.wd-tb.wd-real .wd-qat{display:flex;gap:2px;align-items:center;margin-right:8px;padding-right:6px;border-right:1px solid var(--line)}
+.wd-tb.wd-real .wd-qat button{min-width:30px;height:28px}
+.wd-tb.wd-real .size{min-width:0;font-size:.7rem;width:100%;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:2px;background:var(--paper)}
+.wd-tb.wd-real .pg-b{font-size:.66rem}
 .wd-tb .size{font-family:var(--fm);font-size:.82rem;min-width:50px;text-align:center;font-variant-numeric:tabular-nums}
 .wd-al{display:inline-block;width:16px;height:12px;background:
   linear-gradient(currentColor 0 0) var(--p1) 0/var(--w1) 2px no-repeat,
@@ -84,6 +91,8 @@ h1{font-size:clamp(1.9rem,7vw,3.2rem);font-weight:800}
 </head>
 <body>
 <script src="../_motor/motor.js"></script>
+<script src="../_motor/ui-panglica.js"></script>
+<script src="../_motor/panglica-word.js"></script>
 <script>
 /* MISIUNEA TEHNOREDACTOR, portată pe motorul comun și rescrisă PE PAȘI (26.09.2026).
    Profesorul: „informația e prea condensată — nu e beginner friendly — e mai mult test decât asistență de învățare”;
@@ -170,11 +179,25 @@ const TipEditor={
     if(alOn)tb+=['left','center','right','justify'].map(a=>B(`data-a="${a}"`,'Aliniere '+AL[a],alIcon(a))).join('')+'<span class="sep"></span>';
     if(clipOn)tb+=B('data-k="x"','Decupează (Ctrl+X)','Ctrl+X')+B('data-k="c"','Copiază (Ctrl+C)','Ctrl+C')+B('data-k="v"','Lipește (Ctrl+V)','Ctrl+V')+B('data-k="del"','Șterge selecția (Delete)','Delete')+'<span class="sep"></span>';
     tb+=B('data-k="z"','Anulează ultima acțiune (Ctrl+Z)','↶');
+    /* PANGLICA REALĂ Word (27.09.2026): din Word-ul instalat (_motor/panglica-word.js). Butoanele pe care exercițiul le
+       folosește păstrează mânerele barei simple (data-c/a/k), deci verificarea rămâne aceeași; restul se văd ca în Word
+       și, la clic, spun că în exercițiu nu le folosim. Fără date: rămâne bara simplă de mai sus. */
+    const PW=window.PANGLICA_WORD,UP=window.UiPanglica,real=!!(PW&&UP);let fila='TabHome';
+    const L=(attr,title)=>({attr,title}),leg={};
+    if(fontOn)Object.assign(leg,{Bold:L('data-c="b"','Aldin (Bold) · Ctrl+B'),Italic:L('data-c="i"','Cursiv (Italic) · Ctrl+I'),
+      UnderlineGallery:L('data-c="u"','Subliniat (Underline) · Ctrl+U'),FontSizeDecreaseWord:L('data-c="dn"','Micșorează fontul (Decrease Font Size)'),
+      FontSizeIncreaseWord:L('data-c="up"','Mărește fontul (Increase Font Size)'),FontSize:{html:'<span class="size" data-sz>— pt</span>',title:'Mărimea fontului (Font Size)'}});
+    if(alOn)Object.assign(leg,{AlignLeft:L('data-a="left"','Aliniere la stânga (Align Left)'),AlignCenter:L('data-a="center"','Centrat (Center)'),
+      AlignRight:L('data-a="right"','Aliniere la dreapta (Align Right)'),AlignJustifyMenu:L('data-a="justify"','Aliniere stânga-dreapta (Justify)')});
+    if(clipOn)Object.assign(leg,{Cut:L('data-k="x"','Decupează (Cut) · Ctrl+X'),Copy:L('data-k="c"','Copiază (Copy) · Ctrl+C'),Paste:L('data-k="v"','Lipește (Paste) · Ctrl+V')});
+    const qat=`<span class="wd-qat">${B('data-k="z"','Anulează ultima acțiune (Undo) · Ctrl+Z','↶')}${clipOn?B('data-k="del"','Șterge selecția (Delete)','Del'):''}</span>`;
+    const panglica=nota=>{UP.stil();return UP.html(PW,{fila,legaturi:leg,inainte:qat,nota})};
+    if(real)tb=panglica('');
     const hint='Atinge un cuvânt ca să-l selectezi (atinge-l iar ca să-l deselectezi). ¶ selectează tot paragraful.'
       +(clipOn?' Liniuța subțire dintre cuvinte pune cursorul acolo.':'')+(fontOn?' Mărimi: 11 · 14 · 18 · 24 pt.':'');
     body.innerHTML=`<div class="wd-two">
       <div class="wd-ed"><div class="lbl">Documentul tău</div>
-        <div class="wd-tb" role="toolbar" aria-label="Butoanele din Word">${tb}</div>
+        <div class="wd-tb${real?' wd-real':''}" role="toolbar" aria-label="Butoanele din Word">${tb}</div>
         <div class="wd-doc" tabindex="0" aria-label="Documentul tău"></div>
         <div class="toast" aria-live="polite"></div>
         <p class="hint" style="margin:0">${hint}</p></div>
@@ -191,7 +214,8 @@ const TipEditor={
       ed.querySelectorAll('[data-c]').forEach(b=>{const c=b.dataset.c;if('biu'.includes(c))b.classList.toggle('act',ws.length>0&&ws.every(w=>w[c]))});
       const paras=new Set(keys().map(k=>k[0]));if(!paras.size&&cur)paras.add(cur.p);
       ed.querySelectorAll('[data-a]').forEach(b=>b.classList.toggle('act',paras.size>0&&[...paras].every(p=>doc[p]&&doc[p].al===b.dataset.a)));
-      if(sz){const s=[...new Set(ws.map(w=>w.s))];sz.textContent=ws.length?(s.length===1?s[0]+' pt':'mixt'):'— pt'}
+      const szEl=ed.querySelector('[data-sz]');   // se caută din nou: panglica reală se redesenează la schimbarea filei
+      if(szEl){const s=[...new Set(ws.map(w=>w.s))];szEl.textContent=ws.length?(s.length===1?s[0]+' pt':'mixt'):'— pt'}
     }
     /* șterge cuvintele selectate; întoarce locul unde rămâne cursorul. Un paragraf golit dispare (ca la triplu-clic + Delete). */
     function stergeSel(){
@@ -249,7 +273,11 @@ const TipEditor={
     });
     ed.querySelector('.wd-tb').addEventListener('click',e=>{
       const b=e.target.closest('button');if(!b)return;
-      if(b.dataset.k)comanda(b.dataset.k);else formateaza(b.dataset.c,b.dataset.a);
+      if(b.dataset.tab||b.dataset.nesim){   // panglica reală: altă filă, sau un buton pe care exercițiul nu-l folosește
+        if(b.dataset.tab)fila=b.dataset.tab;
+        ed.querySelector('.wd-tb').innerHTML=panglica(b.dataset.nesim?`„${esc(b.getAttribute('aria-label'))}” e aici și în Word, dar în exercițiul ăsta nu-l folosim.`:'');
+        paint();return}
+      if(b.dataset.k)comanda(b.dataset.k);else if(b.dataset.c||b.dataset.a)formateaza(b.dataset.c,b.dataset.a);
     });
     /* pe calculator merg și scurtăturile adevărate, cât timp documentul e activ */
     ed.addEventListener('keydown',e=>{

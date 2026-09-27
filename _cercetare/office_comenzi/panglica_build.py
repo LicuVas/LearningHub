@@ -32,8 +32,29 @@ NU_GRUP = {"Quick Access Toolbar", "Add-ins"}          # bara de acces rapid și
 fara_sursa = 0
 file_ = []
 for f in dump["file"]:
-    grupuri_uia = [g for g in f["grupuri"] if g["eticheta"] not in NU_GRUP and g["eticheta"] != f["eticheta"]
-                   and g["rect"][2] < 800]
+    toate = [g for g in f["grupuri"] if g["eticheta"] not in NU_GRUP and g["eticheta"] != f["eticheta"]]
+
+    def contine(a, b):   # a conține complet b (și nu e același dreptunghi)
+        return a is not b and a["rect"][0] <= b["rect"][0] and a["rect"][1] <= b["rect"][1] and \
+            a["rect"][0] + a["rect"][2] >= b["rect"][0] + b["rect"][2] and a["rect"][1] + a["rect"][3] >= b["rect"][1] + b["rect"][3]
+    # un grup cuprins COMPLET în altul e doar un container (galeria „Transition Effects” din „Transition to This Slide”,
+    # „Styles” interior din „Styles”): conținutul lui trece la grupul vizibil, cel cu numele scris dedesubt
+    parinte = {}
+    for g in toate:
+        cand = [h for h in toate if contine(h, g)]
+        if cand:
+            parinte[id(g)] = min(cand, key=lambda h: h["rect"][2] * h["rect"][3])
+    grupuri_uia = [g for g in toate if id(g) not in parinte]
+    redenumire = {}
+    for g in toate:
+        p = g
+        while id(p) in parinte:
+            p = parinte[id(p)]
+        if p is not g:
+            redenumire[g["eticheta"]] = p["eticheta"]
+    for c in f["controale"] + f.get("galerie", []):
+        if c.get("grup") in redenumire and not any(x["eticheta"] == c["grup"] for x in grupuri_uia):
+            c["grup"] = redenumire[c["grup"]]
     etichete_ok = {g["eticheta"] for g in grupuri_uia}
     baza = {c["id"]: c for c in f["controale"] if not c["id"].endswith("_Dropdown")}
     grupuri = []
@@ -67,9 +88,23 @@ for f in dump["file"]:
             })
             if c["id"] not in baza:
                 fara_sursa += 1
-        if not id_grupuri:
-            continue   # grup fără niciun buton din lista oficială a filei = supliment instalat (ex. „Claude”), nu Excel standard
-        grupuri.append({"eticheta": g["eticheta"], "id_oficial": id_grupuri.most_common(1)[0][0],
+        # GALERIILE (27.09.2026): tranzițiile, animațiile, stilurile, temele — elementele au nume, nu id; fiecare
+        # devine o „dală” la poziția ei reală din grup (sursa = aplicația; lista oficială nu le enumeră)
+        # doar dalele VIZIBILE în panglică: rândurile ascunse ale galeriei (derulate) au dreptunghiul sub grup
+        dale = [it for it in f.get("galerie", []) if it["grup"] == g["eticheta"]
+                and it["rect"][1] + it["rect"][3] <= gy + g["rect"][3] - 8]
+        vazute_d = set()
+        for it in dale:
+            if it["eticheta"] in vazute_d:
+                continue
+            vazute_d.add(it["eticheta"])
+            butoane.append({"id": "galerie:" + it["eticheta"], "eticheta": it["eticheta"], "tip_uia": "ListItem",
+                            "tip_oficial": "galleryItem", "split": False, "meniu": False, "lansator": False,
+                            "galerie": True, "marime": "mare" if it["rect"][3] >= 80 else "mic",
+                            "rect": [it["rect"][0] - gx, it["rect"][1] - gy, it["rect"][2], it["rect"][3]]})
+        if not id_grupuri and not dale:
+            continue   # grup fără niciun buton din lista oficială a filei și fără galerie = supliment instalat (ex. „Claude”)
+        grupuri.append({"eticheta": g["eticheta"], "id_oficial": id_grupuri.most_common(1)[0][0] if id_grupuri else None,
                         "latime": g["rect"][2], "inaltime": g["rect"][3], "butoane": butoane})
     file_.append({"id": f["id"], "eticheta": f["eticheta"], "grupuri": grupuri})
 
