@@ -1,0 +1,328 @@
+{
+ "lectie": "VII · M1 · lecția 5 — Operații de editare: copiere, mutare, ștergere",
+ "scris": "2026-09-27",
+ "cum_am_probat": "Word 16.0 build 16.0.20326 (interfață EN, LCID 1033), instanță NOUĂ și INVIZIBILĂ prin COM (DispatchEx), documente noi închise fără salvare, Quit doar pe instanța mea; clipboardul Windows salvat la început și pus la loc la final. Opțiunile implicite măsurate: ReplaceSelection=True, SmartCutPaste=True, AllowDragAndDrop=True, AutoWordSelection=True, SmartParaSelection=True. COM imită comenzile (Selection.Delete = Delete, TypeBackspace = Backspace, Cut/Copy/Paste = Ctrl+X/C/V, Document.Undo = Ctrl+Z, TypeText = tastarea, Range.Expand(wdWord/wdSentence/wdParagraph) = unitatea pe care o ia dublu-clicul / Ctrl+clicul / triplu-clicul). Gesturile de mouse și ce se vede pe ecran (culoarea selecției, meniuri, bara galbenă) sunt NETESTABILE prin COM. Scripturile și rezultatele: _proba/proba_word_editare.py → rezultate_word.json; _proba/proba_word_spatii.py → cazuri_word.json (138 de cazuri); _proba/proba_exercitii_word.py → proba_exercitii_word.json (15 exerciții, 0 diferențe); _proba/fa_docx_si_proba_provocare.py → proba_provocare.json (provocarea, pas cu pas, pe documentul de descărcat). Simulatorul (lectii/_sim/wordobj.js) e verificat pe aceleași cazuri: _proba/proba_sim_vs_word.js → 243 de comparații, 0 diferențe. După judecător: _proba/proba_semn_paragraf.py și proba_semn_paragraf2.py (selecțiile care trec peste semnul de paragraf, reparațiile cu ⌫) → 17 cazuri, iar simulatorul le reproduce pe toate (_proba/proba_sim_paragrafe.py: 0 diferențe); _proba/optiuni_lipire.py (DisplayPasteOptions=True, SmartParaSelection=True).",
+ "afirmatii": [
+  {
+   "id": "A01",
+   "loc": "pasul 1 (text + captură) · simulatorul",
+   "actiune": "Selectezi un text în Word.",
+   "rezultat_promis": "Textul selectat stă pe un fundal gri.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT de captura reală jocuri/word-vii/img/selectie-paragraf.webp (Word 365 EN, 1920×1080): paragraful selectat are fundal gri. Simulatorul folosește același gri (#C8C8C8). Culoarea exactă poate depinde de tema Office."
+  },
+  {
+   "id": "A02",
+   "loc": "pasul 1 (text: „tragi”) · încearcă P1 (încă 1) · provocarea 5-6",
+   "actiune": "Ții apăsat butonul din stânga al mouse-ului la începutul textului, muți mouse-ul până la capătul lui și dai drumul.",
+   "rezultat_promis": "Se selectează textul de la începutul până la capătul tragerii. Dacă tragerea trece de capătul ultimului rând al paragrafului, selecția prinde și sfârșitul de paragraf (în simulator: la peste 10 px după ultimul caracter).",
+   "aplicatie": "Word",
+   "proba_autor": "NETESTABIL prin COM (gest de mouse). Opțiunea „When selecting, automatically select entire word” e PORNITĂ (AutoWordSelection=True, măsurat): când tragerea trece de un cuvânt, Word ia cuvinte întregi. Simulatorul face la fel (proba_ui_l05: tragere pornită din mijlocul lui „Aduceți” → „Aduceți un pahar.”). Că tragerea DUPĂ capătul rândului prinde semnul de paragraf e NETESTABIL prin COM; simulatorul o face (cerut de dirijor, ca să se exerseze reparația). Selecția inteligentă a paragrafului (SmartParaSelection=True) poate prinde semnul și când tragi peste tot textul unui paragraf; simulatorul NU face asta (nedovedit), iar provocarea nu mai are propoziții la capăt de paragraf."
+  },
+  {
+   "id": "A03",
+   "loc": "pasul 1 (text + „Uite cum”: „vineri ”, „Bravo” fără „!”) · încearcă P1 · P4 încă 2 · provocarea 4",
+   "actiune": "Dublu-clic pe un cuvânt.",
+   "rezultat_promis": "Se selectează cuvântul, cu spațiul de după el; semnul lipit de cuvânt rămâne pe dinafară („vineri,” → „vineri”, „Bravo!” → „Bravo”); ca să iei și semnul, tragi până după el.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM pentru unitatea „cuvânt” (Range.Expand(wdWord) și Document.Words): „vine ” cu spațiu, „Bicaz” fără punct, „lei” fără virgulă, „Floarea” / „-” / „soarelui ” separate (rezultate_word.json: cuvinte_word, expand_cuvant). Că dublu-clicul ia exact această unitate e NETESTABIL prin COM (comportament Word cunoscut). „Bravo” și „! ” sunt cuvinte Word separate (cuvinte_word). Judecătorul a probat și el, în simulator, că dublu-clicul pe „Bravo!” ia „Bravo”."
+  },
+  {
+   "id": "A04",
+   "loc": "pasul 1 (text) · încearcă P1 (încă 2)",
+   "actiune": "Ai un text selectat și dai un clic simplu în alt loc din text.",
+   "rezultat_promis": "Selecția dispare, iar cursorul se mută acolo.",
+   "aplicatie": "Word",
+   "proba_autor": "NETESTABIL prin COM (gest de mouse); comportamentul obișnuit al oricărui editor Windows."
+  },
+  {
+   "id": "A05",
+   "loc": "pasul 2 (text + „Uite cum”) · încearcă P2 (încă 1: „lap|te”) · verificarea Î1 („cre|ion”)",
+   "actiune": "Cursorul stă între litere: „pisi|ca”. Apeși o dată Delete; separat, o dată Backspace.",
+   "rezultat_promis": "Delete șterge litera din dreapta („pisia”); Backspace pe cea din stânga („pisca”).",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (rezultate_word.json: delete_backspace: „pisia” / „pisca”). Aceeași regulă dă „maina”/„mașna”, „lape”, „crion”."
+  },
+  {
+   "id": "A06",
+   "loc": "pasul 2 (text) · încearcă P2 · atelier",
+   "actiune": "Selectezi un cuvânt sau o propoziție și apeși o singură dată Delete (sau Backspace).",
+   "rezultat_promis": "Dispare tot textul selectat.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (stergere_selectie; cazuri_word.json: 90 de ștergeri cu Delete / Backspace / Cut, același rezultat pentru toate trei)."
+  },
+  {
+   "id": "A07",
+   "loc": "pasul 2 (text: „Word are grijă de spații”) · pasul 5 (încă 1, explicația)",
+   "actiune": "Ștergi (sau decupezi) un cuvânt selectat fără spațiul lui, dintre alte două cuvinte.",
+   "rezultat_promis": "Între cuvintele rămase rămâne un singur spațiu.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM cu SmartCutPaste=True (implicit): „Mâine vine vine și” − „vine” → „Mâine vine și”; „Mergem la munte mâine.” − „mâine” → „Mergem la munte.” (cazuri_word.json)."
+  },
+  {
+   "id": "A08",
+   "loc": "pasul 2 („Uite cum”)",
+   "actiune": "„Mâine vine vine și echipa.”: al doilea „vine” selectat cu spațiul lui, apoi Delete.",
+   "rezultat_promis": "„Mâine vine și echipa.”",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (aceeași propoziție cu „de la Bicaz”: „Mâine vine și echipa de la Bicaz.”)."
+  },
+  {
+   "id": "A09",
+   "loc": "pasul 3 (text) · încearcă P3",
+   "actiune": "Ștergi un cuvânt, apoi apeși Ctrl+Z.",
+   "rezultat_promis": "Textul șters revine exact unde era.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (ctrl_z.stergere: „Mâine vine și…” → Undo → „Mâine vine vine și…”; proba_exercitii_word: P3)."
+  },
+  {
+   "id": "A10",
+   "loc": "pasul 3 (text: „Mai apeși o dată…”) · încearcă P3 (încă 2) · verificarea Î5",
+   "actiune": "Faci două operații (de exemplu decupezi și lipești), apoi apeși Ctrl+Z de două ori.",
+   "rezultat_promis": "Primul Ctrl+Z anulează ultima operație (lipirea), al doilea pe cea de dinainte (decuparea): textul e iar ca la început.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (ctrl_z.mutare: ctrl_z_1 scoate textul lipit, ctrl_z_2 aduce propoziția la locul ei; proba_exercitii_word: „Verificarea Î5”)."
+  },
+  {
+   "id": "A11",
+   "loc": "pasul 3 (text + „Uite cum”) · încearcă P3 (încă 1)",
+   "actiune": "„luni” e selectat și tastezi o literă („m”, „a”); apoi Ctrl+Z.",
+   "rezultat_promis": "Litera ia locul textului selectat („Plecăm m la munte.”); Ctrl+Z aduce „luni” înapoi.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM cu ReplaceSelection=True (tastare_peste_selectie: „Plecăm marți la munte.”; ctrl_z.tastare_peste_selectie: Undo → „Plecăm luni la munte.”; proba_exercitii_word: „Pasul 3, exemplul”). Gruparea tastării la Ctrl+Z (o literă / un cuvânt / tot textul tastat) NU se poate proba prin COM; simulatorul anulează dintr-o dată tot ce ai tastat legat."
+  },
+  {
+   "id": "A12",
+   "loc": "pasul 4 (text, pașii 2-4) · încearcă P4",
+   "actiune": "Selectezi un text, apeși Ctrl+C, dai clic în alt loc, apeși Ctrl+V.",
+   "rezultat_promis": "După Ctrl+C documentul nu se schimbă; după Ctrl+V copia apare la cursor, iar originalul rămâne.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (copiere_lipire: dupa_ctrl_c neschimbat, dupa_ctrl_v_la_capat cu copia; proba_exercitii_word: P4, P4 încă)."
+  },
+  {
+   "id": "A13",
+   "loc": "pasul 4 (text) · pasul 5 (text) · legenda simulatorului · P4 încă 2",
+   "actiune": "Fila Pornire (Home), grupul Clipboard.",
+   "rezultat_promis": "Are butoanele Lipire (Paste) — mare, în stânga —, Decupare (Cut) și Copiere (Copy), mai mici, în dreapta lui; Decupare (Cut) are foarfeca, Copiere (Copy) două foi, Lipire (Paste) un clipboard.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT de dump-ul UI Automation al Word-ului instalat (jocuri/_motor/panglica-word.json: TabHome / Clipboard: Paste rect [8,2,42,76], Cut [52,2,52,24], Copy [52,28,61,24], Format Painter). Numele RO din calibrare/meniuri_ro_en.json (Pornire, Clipboard, Decupare, Copiere, Lipire: CONFIRMAT). Iconițele (foarfecă, două foi, clipboard) NETESTABILE prin COM: în simulator sunt icoanele Fluent din dump; de văzut în Word pe ecran."
+  },
+  {
+   "id": "A14",
+   "loc": "pasul 4 („Uite cum”) · încearcă P4 · atelier (3) · provocarea 6",
+   "actiune": "Lipești un text care începe cu literă imediat după un punct sau după o literă (la capătul rândului).",
+   "rezultat_promis": "Word pune singur spațiul dinaintea textului lipit („frumoasă. La mulți ani!”, „Elevii clasei a VII-a”, „Încă o dată: Luați apă și o gustare.”).",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM cu SmartCutPaste=True (copiere_lipire smart=True: „nivel. Bravo!”; cu SmartCutPaste=False: „nivel.Bravo!”; proba_provocare.json pasul 6b; proba_exercitii_word: atelierul)."
+  },
+  {
+   "id": "A15",
+   "loc": "pasul 5 (text, pasul 2) · încearcă P5 (încă 2)",
+   "actiune": "Selectezi un text și apeși Ctrl+X.",
+   "rezultat_promis": "Textul dispare din document și stă în clipboard, până îl lipești cu Ctrl+V.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (mutare_propozitie: dupa_ctrl_x fără propoziție, clipboard = „Plecăm luni la ora 8.”)."
+  },
+  {
+   "id": "A16",
+   "loc": "pasul 6 („Verifici după lipire”, pasul 2 din listă, „Uite cum”) · încearcă P6 · atelier (2) · verificarea Î4 · provocarea 5 (condiționat: „dacă punctul s-a lipit”)",
+   "actiune": "Decupezi o propoziție care se termină cu punct și o lipești la începutul paragrafului, în fața altui cuvânt.",
+   "rezultat_promis": "Word NU pune spațiu după punct („ora 8.Aduceți”, „luni.Aduceți”, „8.Plecăm”); îl pui tu: clic după punct și bara de spațiu.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (mutare_propozitie smart=True și smart=False: „Plecăm luni la ora 8.Aduceți…”; cazuri_word: lipire la început și înaintea unui cuvânt; proba_provocare.json: dupa_lipire_punctul_lipit_de_Plecam=true, apoi TypeText(' ') → „8. Plecăm”). În documentul nou al provocării, tragerea „până chiar după punct” poate lua și spațiul de după punct (cuvinte întregi); atunci punctul NU se lipește (proba_provocare.json, varianta b). De aceea pasul 5 al provocării întreabă „s-a lipit punctul?”, nu îl dă ca sigur."
+  },
+  {
+   "id": "A17",
+   "loc": "pasul 5 (încearcă: „mâine”; încă: „ieri”; „Uite cum”: „luni”) · atelier",
+   "actiune": "„Mergem la munte mâine.”: decupezi „mâine” și îl lipești după „Mergem” (sau înaintea lui „la”).",
+   "rezultat_promis": "„Mergem mâine la munte.”: Word scoate spațiul rămas în plus la decupare și pune spațiul lipsă la lipire.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (cazuri_word: ștergerea „mâine” → „Mergem la munte.”; lipirea „mâine” după „Mergem” → „Mergem mâine la munte.”; proba_exercitii_word: ambele locuri de clic). Runda 2: „ieri” mutat înaintea punctului → „Am văzut la muzeu un dinozaur ieri.” și exemplul „luni ” mutat înaintea lui „la” → „Plecăm dimineața luni la ora 8.”, ambele identice în Word (proba_exercitii_word.json)."
+  },
+  {
+   "id": "A18",
+   "loc": "pasul 5 (text: „un text selectat se mută și dacă îl tragi cu mouse-ul… Ctrl+Z”) · simulatorul",
+   "actiune": "Tragi cu mouse-ul un text deja selectat în alt loc.",
+   "rezultat_promis": "Textul se mută acolo (cu Ctrl ținut la eliberare: se copiază); clipboardul nu se schimbă; un Ctrl+Z îl întoarce.",
+   "aplicatie": "Word",
+   "proba_autor": "NETESTABIL prin COM (gest de mouse, drag and drop OLE). Opțiunea „Allow text to be dragged and dropped” e PORNITĂ (AllowDragAndDrop=True, măsurat). De văzut în Word pe ecran: că un singur Ctrl+Z anulează tragerea și că spațiile se potrivesc ca la Ctrl+X/Ctrl+V (simulatorul presupune asta)."
+  },
+  {
+   "id": "A19",
+   "loc": "atelierul și varianta lui (rezultatul final)",
+   "actiune": "Rețetele din indicii: dublu-clic + Delete; tragere + Ctrl+X, clic, Ctrl+V, spațiu; tragere + Ctrl+C, clic la capăt, Ctrl+V.",
+   "rezultat_promis": "Documentul din `tinta` („Serbarea este vineri, în sala de sport. Începem la ora 12.” / „Elevii clasei a VII-a”; „Tema este toamna. Aduceți creioane colorate.” / „Te așteptăm la concursul de desen”).",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (proba_exercitii_word.json: „Atelier: invitația”, „Atelier încă: concursul” → identice cu ținta; doar un spațiu invizibil la capătul paragrafului mutat)."
+  },
+  {
+   "id": "A20",
+   "loc": "Acum în aplicația adevărată, pasul 3",
+   "actiune": "Deschizi în Word documentul .docx descărcat din pagină.",
+   "rezultat_promis": "Poate apărea sub panglică o bară galbenă „Vizualizare protejată (Protected View)”; până apeși „Activare editare (Enable Editing)”, Word nu te lasă să schimbi textul.",
+   "aplicatie": "Word",
+   "proba_autor": "NETESTABIL prin COM (deschiderea din COM nu trece prin marcajul „descărcat de pe internet”). Numele RO: pagina Microsoft ro-ro „Ce este Vizualizarea protejată?” („Pe Bara de mesaje, selectați Activare editare”; „Bara de mesaje galbenă”) — O SINGURĂ sursă Microsoft, deci de confirmat pe Office RO. Textul exact scris pe bară în RO nu e confirmat (surse.md). Judecătorul a trecut numele ca neconfirmat în calibrare; rămâne NESIGUR."
+  },
+  {
+   "id": "A21",
+   "loc": "Acum în aplicația adevărată, pașii 4-8 (documentul NOU: propozițiile mutată și copiată nu mai stau la capătul paragrafului)",
+   "actiune": "Pe excursia-la-bicaz.docx: dublu-clic pe al doilea „sâmbătă” + Delete; selectezi „Plecarea este sâmbătă, la ora 8.” (până chiar pe punct sau cu spațiul de după), Ctrl+X, clic înaintea lui „Plecăm”, Ctrl+V, spațiul dacă s-a lipit punctul; selectezi „Luați apă și o gustare.”, Ctrl+C, clic după „Încă o dată:”, Ctrl+V; titlul + Delete, apoi Ctrl+Z.",
+   "rezultat_promis": "Paragraful cu plecarea: „Plecarea este sâmbătă, la ora 8. Plecăm de la poarta școlii. Ne întoarcem seara.”; ultimul rând: „Încă o dată: Luați apă și o gustare.”; fără rând nou și fără rând gol; titlul revine aldin și centrat.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM pe o copie a fișierului publicat, în AMBELE feluri de selecție (proba_provocare.json: a_selectie_pana_pe_punct → punctul lipit, reparat cu spațiul; b_selectie_cu_spatiul_de_dupa_punct → punctul nelipit; final_ca_in_lectie_toate=true, rând nou=false, rând gol=false)."
+  },
+  {
+   "id": "A22",
+   "loc": "Acum în aplicația adevărată, pașii 1-2",
+   "actiune": "Descarci excursia-la-bicaz.docx din pagină și îl deschizi din lista de descărcări a browserului sau cu dublu-clic în folderul Descărcări (Downloads).",
+   "rezultat_promis": "Fișierul ajunge în Descărcări (Downloads) și se deschide în Word.",
+   "aplicatie": "browser + Windows + Word",
+   "proba_autor": "NETESTABIL aici: depinde de browserul și de asocierile de fișiere din laborator (ca A30-A31 la lecția 4). Fișierul: .docx făcut de Word 16, 13,5 KB, fără autor / companie (docProps verificat: nume_personale_in_fisier=[])."
+  },
+  {
+   "id": "A23",
+   "loc": "Acum în aplicația adevărată, pasul 9",
+   "actiune": "Fișier (File) › Salvare ca (Save As) › Răsfoire (Browse); în fereastră, în stânga, Documente (Documents); scrii numele și apeși Salvare (Save).",
+   "rezultat_promis": "Documentul se salvează cu numele nou.",
+   "aplicatie": "Word",
+   "proba_autor": "NETESTABIL prin COM (pagina Backstage și fereastra de salvare). Numele RO „Răsfoire” și „Salvare” nu sunt în calibrare: NESIGUR. În Word 2016 și 365, „Salvare ca” deschide întâi pagina Backstage, de unde „Răsfoire” deschide fereastra (judecătorul, m8)."
+  },
+  {
+   "id": "A24",
+   "loc": "simulatorul: butoanele gri",
+   "actiune": "Nu ai nimic selectat / n-ai copiat încă nimic.",
+   "rezultat_promis": "Cut și Copy sunt gri fără selecție; Paste e gri cu clipboardul gol; Ctrl+X / Ctrl+C fără selecție nu fac nimic.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM că fără selecție Cut/Copy nu se pot face („no text is selected”, clipboardul rămâne neatins: fara_selectie). Starea gri a butoanelor e NETESTABILĂ prin COM (de văzut pe ecran)."
+  },
+  {
+   "id": "A25",
+   "loc": "simulatorul: Enter cu text selectat",
+   "actiune": "„luni” e selectat și apeși Enter.",
+   "rezultat_promis": "Textul selectat dispare, iar paragraful se rupe acolo („Plecăm ” / „ la munte.”).",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (tastare_peste_selectie.enter)."
+  },
+  {
+   "id": "A26",
+   "loc": "simulatorul: Delete la capătul paragrafului / Backspace la început",
+   "actiune": "Cursorul la capătul unui paragraf + Delete; sau la începutul paragrafului următor + Backspace.",
+   "rezultat_promis": "Cele două paragrafe se unesc („A venit toamna.Frunzele…”), iar paragraful unit păstrează aspectul celui de sus.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (uneste_paragrafe; unire_aliniere: titlul centrat + paragraf → paragraful unit rămâne centrat, în ambele feluri)."
+  },
+  {
+   "id": "A27",
+   "loc": "simulatorul: Ctrl+Backspace / Ctrl+Delete",
+   "actiune": "Cursorul după / înaintea unui cuvânt; Ctrl+Backspace / Ctrl+Delete.",
+   "rezultat_promis": "Se șterge cuvântul întreg, cu spațiul potrivit („Mâine vine și echipa.”).",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (Selection.Delete(wdWord, ±1), ctrl_backspace_delete)."
+  },
+  {
+   "id": "A28",
+   "loc": "simulatorul: Shift + săgeți",
+   "actiune": "„la |mare”: Shift+→ de 4 ori; apoi Shift+← o dată; apoi → fără Shift.",
+   "rezultat_promis": "Se selectează „mare”, apoi „mar”; → fără Shift anulează selecția și pune cursorul la capătul ei.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (shift_sageti: „mare”, „mar”, poziția 6,6)."
+  },
+  {
+   "id": "A29",
+   "loc": "simulatorul: Ctrl+clic și triplu-clic",
+   "actiune": "Ctrl+clic pe o propoziție; triplu-clic într-un paragraf.",
+   "rezultat_promis": "Ctrl+clic ia propoziția cu spațiul de după ea; triplu-clicul ia paragraful cu semnul lui de sfârșit (mutat, devine paragraf separat).",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM pentru unități (Range.Expand(wdSentence) → „Mâine vine vine și echipa de la Bicaz. ”; Expand(wdParagraph) include „\\r”; mutare_paragraf_intreg: paragraful lipit la începutul altuia devine paragraf separat). Gesturile (Ctrl+clic, triplu-clic) NETESTABILE prin COM."
+  },
+  {
+   "id": "A30",
+   "loc": "simulatorul: lipirea peste o selecție",
+   "actiune": "Ai copiat „vineri”; selectezi „luni” și apeși Ctrl+V.",
+   "rezultat_promis": "„luni” e înlocuit: „Plecăm vineri la munte.”",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (lipire_peste_selectie)."
+  },
+  {
+   "id": "A31",
+   "loc": "simulatorul: tastarea peste un cuvânt luat cu dublu-clic (cu spațiul de după)",
+   "actiune": "Selectezi „luni ” (cu spațiul) și tastezi „marți”.",
+   "rezultat_promis": "Tastarea peste „luni ” (luat cu dublu-clic, cu spațiul) îl înlocuiește cu tot cu spațiu: „Plecăm marțila munte.”; simulatorul face la fel.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: prin COM (TypeText) și de judecător cu tastarea adevărată (mesaje WM_CHAR, ca de la tastatură: „Mergem xla bibliotecă.”, „Plecăm marțila munte.”, _verificare/j_com_tastare.json). Lecția nu cere acest gest."
+  },
+  {
+   "id": "A32",
+   "loc": "simulatorul: dublu-clic / triplu-clic",
+   "actiune": "Două (trei) clicuri la rând.",
+   "rezultat_promis": "Contează ca dublu-clic dacă vin în 500 ms și în pătratul de 4×4 px din jurul primului clic.",
+   "aplicatie": "Windows",
+   "proba_autor": "CONFIRMAT pe acest calculator: GetDoubleClickTime()=500, SM_CXDOUBLECLK=SM_CYDOUBLECLK=4 (valorile implicite Windows). Pe ecranul atins, simulatorul primește ±26 px."
+  },
+  {
+   "id": "A33",
+   "loc": "simulatorul: clic dreapta",
+   "actiune": "Clic dreapta pe textul selectat.",
+   "rezultat_promis": "Meniul are Cut, Copy și Paste Options (cu trei iconițe); oricare iconiță lipește textul.",
+   "aplicatie": "Word",
+   "proba_autor": "NETESTABIL prin COM (meniu de ecran). În simulator e un singur „Paste”, iar abaterea e scrisă sub meniu."
+  },
+  {
+   "id": "A34",
+   "loc": "pasul 4 (text) · provocarea 5",
+   "actiune": "Lipești un text cu Ctrl+V în Word.",
+   "rezultat_promis": "Lângă textul lipit apare un buton mic cu un clipboard și „(Ctrl)”, Opțiuni lipire (Paste Options); dacă lucrezi mai departe, dispare singur.",
+   "aplicatie": "Word",
+   "proba_autor": "Opțiunea care îl arată e PORNITĂ (Options.DisplayPasteOptions=True, măsurat: _proba/optiuni_lipire.py). Aspectul butonului și dispariția lui sunt NETESTABILE prin COM. Numele RO „Opțiuni lipire” nu e în calibrare: NESIGUR. Simulatorul nu desenează butonul (nu-l folosim)."
+  },
+  {
+   "id": "A35",
+   "loc": "simulatorul (Delete / ⌫ / Ctrl+X pe o selecție care trece peste semnul de paragraf)",
+   "actiune": "Selecția începe în mijlocul unui paragraf și trece peste semnul lui (până la începutul sau în mijlocul paragrafului următor); apeși Delete, ⌫ sau Ctrl+X.",
+   "rezultat_promis": "Paragrafele NU se unesc: rămâne începutul paragrafului de sus și, separat, restul celui de jos. Doar semnul singur, selectat, unește paragrafele; o selecție de la începutul paragrafului îl scoate cu totul; tastarea peste o asemenea selecție unește.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (proba_semn_paragraf.json, proba_semn_paragraf2.json: 11 + 6 cazuri); simulatorul: 17 din 17 identice (proba_sim_paragrafe.py)."
+  },
+  {
+   "id": "A36",
+   "loc": "pasul 6 (pasul 1 din listă + „Uite cum”) · încearcă P6 (indiciul) · P6 încă 1 · atelier (introducerea) · provocarea 5",
+   "actiune": "Ai decupat o propoziție cu tot cu sfârșitul paragrafului și ai lipit-o la începutul paragrafului: textul de după a sărit pe rândul de dedesubt. Dai clic chiar la începutul lui și apeși o dată ⌫.",
+   "rezultat_promis": "Rândurile se unesc, dar punctul rămâne lipit („Plecăm luni la ora 8.Aduceți apă…”); ABIA APOI pui spațiul după punct. Ordinea predată: ⌫ întâi, apoi spațiul.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (proba_semn_paragraf.json: 2b și 3 — lipire → două paragrafe → TypeBackspace la începutul celui de jos → unite → spațiu → documentul promis). Și judecătorul a probat lipirea pe rând separat (_verificare/j_com_provocare.json, varianta B). Probat și cu degetul în simulator (proba_ui_l05: „tel P5 mutare cu rând nou, reparată cu ⌫ + spațiu” → Corect). Runda 2: și rețeta „P6 încă 1” (⌫ la începutul rândului de jos, apoi spațiul) dă ținta în Word (proba_exercitii_word.json)."
+  },
+  {
+   "id": "A37",
+   "loc": "provocarea 6 · atelier (introducerea) · indiciul simulatorului",
+   "actiune": "Ai copiat un paragraf întreg cu semnul lui și l-ai lipit la capătul ultimului rând: a rămas dedesubt un rând gol. Dai clic pe el și apeși o dată ⌫.",
+   "rezultat_promis": "Rândul gol dispare.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (proba_semn_paragraf.json: 4 — „…frumoasă. La mulți ani!” + rând gol → TypeBackspace → fără rând gol); simulatorul la fel (proba_sim_paragrafe.py: 4, 4b)."
+  },
+  {
+   "id": "A38",
+   "loc": "pasul 6 (pasul 3 din listă: „decuparea și lipirea sunt două operații”) · P6 încă 2 · verificarea Î5",
+   "actiune": "Muți un text cu Ctrl+X și Ctrl+V, apoi apeși Ctrl+Z de două ori.",
+   "rezultat_promis": "Primul Ctrl+Z scoate textul lipit, al doilea îl pune înapoi la locul vechi.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM (rezultate_word.json: ctrl_z.mutare; judecătorul: q5_dupa_1_undo, q5_dupa_2_undo)."
+  },
+  {
+   "id": "A39",
+   "loc": "pasul 1 (legenda capturii)",
+   "actiune": "Te uiți la captura cu paragraful selectat.",
+   "rezultat_promis": "Cuvintele îngroșate sau subliniate și linia roșie de sub „Pipirig” nu vin de la selecție.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT de proveniența capturii (jocuri/word-vii/img/SURSE.json: textul era pregătit cu aldin, cursiv și subliniat pentru alt nivel; „Pipirig” e subliniat de corectorul ortografic)."
+  },
+  {
+   "id": "A40",
+   "loc": "provocarea (documentul de lucru)",
+   "actiune": "Tragi peste „Luați apă și o gustare.” de la „L” până după punctul ei.",
+   "rezultat_promis": "Nu prinzi sfârșitul de paragraf: după propoziție urmează „Nu uitați pelerina.”, deci la lipire nu apare rând gol.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin COM pentru selecțiile cu și fără spațiul de după punct (proba_provocare.json: rand_gol_la_final=false în ambele variante). Gestul de mouse însuși e NETESTABIL prin COM."
+  }
+ ],
+ "reparat": "2026-09-27, după judecător (_verificare/judecator.md): A02, A03, A13, A16, A20-A23, A31 actualizate; A34-A40 noi. Runda 2 (judecătorul, a doua trecere): pasul 5 împărțit în pașii 5 și 6; ordinea ⌫ → spațiu; locurile A16-A18, A36, A38 actualizate."
+}

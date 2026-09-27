@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Operații de editare: copiere, mutare, ștergere</title>
+<meta name="description" content="Lecția 5, clasa a VII-a: selectezi text în Word, îl ștergi, îl copiezi, îl muți și anulezi o greșeală cu Ctrl+Z, pas cu pas, cu Word simulat în pagină și un document de lucru pentru Word-ul adevărat.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Work+Sans:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+/* TEMA: un rând de text din Word, cu o bucată selectată (gri) și linia punctată a foarfecii */
+:root{
+  --desk:#E9EDF3; --paper:#FFFFFF; --paper2:#F1F4F9; --line:#C8D1DE;
+  --ink:#172233; --ink2:#4E5B6E; --accent:#2F5597; --accentInk:#FFFFFF; --sel:#DCE6F5;
+  --mark:#FFE27A; --markInk:#172233; --ok:#1B7A4A; --okbg:#E2F4EA; --bad:#B42318; --badbg:#FBE7E4;
+  --fd:"Zilla Slab",Georgia,"Times New Roman",serif; --fb:"Work Sans","Segoe UI",system-ui,sans-serif; --fm:"Space Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#10161F; --paper:#182130; --paper2:#1F2A3B; --line:#34435A; --ink:#E5ECF6; --ink2:#A6B3C6;
+  --accent:#8DB3F2; --accentInk:#10161F; --sel:#24385A; --mark:#F2C94C; --markInk:#172233;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#10161F; --paper:#182130; --paper2:#1F2A3B; --line:#34435A; --ink:#E5ECF6; --ink2:#A6B3C6;
+  --accent:#8DB3F2; --accentInk:#10161F; --sel:#24385A; --mark:#F2C94C; --markInk:#172233;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+/* banda: rânduri de text; una e „selectată” (gri), iar deasupra ei trece linia punctată a tăieturii */
+.banda{min-height:30px;padding:0 10px;display:flex;align-items:center;gap:8px;background:var(--paper)}
+.banda .bt{flex:1 1 22%;height:10px;background:repeating-linear-gradient(90deg,var(--ink2) 0 18px,transparent 18px 23px);opacity:.5}
+.banda .bs{flex:0 0 26%;height:16px;background:#C8C8C8;border-radius:2px;position:relative}
+.banda .bs::before{content:"";position:absolute;left:-6px;right:-6px;top:50%;border-top:2px dashed var(--accent)}
+.banda .bc{flex:0 0 3px;height:18px;background:var(--ink)}
+h1{font-weight:700;letter-spacing:-.01em}
+h1 em{color:var(--accent);font-style:normal}
+h2{font-weight:600}
+.tasta{font-family:var(--fm);font-size:.85em;padding:1px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;background:var(--paper2);white-space:nowrap}
+/* „înainte / după”, desenate ca în Word (nu capturi) */
+.doua{display:grid;gap:8px;grid-template-columns:1fr}
+@media (min-width:640px){.doua{grid-template-columns:1fr 1fr}}
+.doua .et{font-weight:600;font-size:.88rem;color:var(--ink2)}
+.sageata{font-family:var(--fm);font-size:.85rem;color:var(--ink2);margin:2px 0}
+.descarca{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/ui-panglica.js"></script>
+<script src="../../../jocuri/_motor/panglica-word.js"></script>
+<script src="../../_sim/wordobj.js"></script>
+<script>
+/* LECȚIA 5, clasa a VII-a, modulul 1 (revizuirea LearningHub, standardul din 27.09.2026).
+   Un singur nivel pe pași: pasul 0 „La ce folosește”, 5 pași cu „Încearcă”, atelierul în Word simulat, pasul „Acum în
+   aplicația adevărată” (documentul de lucru se descarcă din pagină), 5 întrebări.
+   Simulatorul e comun: lectii/_sim/wordobj.js (selectare, Delete/Backspace, Ctrl+C/X/V, Ctrl+Z, tragere, meniul de la clic
+   dreapta), cu regulile de spații ale Word-ului probate pe 138 de cazuri în Word-ul real (_proba/cazuri_word.json).
+   Afirmațiile „dacă faci X, apare Y” și proba lor: afirmatii.json. */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG_SELECTIE='../../../jocuri/word-vii/img/selectie-paragraf.webp';
+const K=s=>s.split('+').map(k=>`<kbd>${k}</kbd>`).join('+');
+const CAR='<span class="wo-car" aria-hidden="true"></span>';
+const SL=t=>`<span class="wo-sl">${t}</span>`;
+const mini=(...p)=>`<div class="wo-mini">${p.map(x=>`<p>${x}</p>`).join('')}</div>`;
+const PROG='Operaţii de editare într-un document: copiere, mutare, ștergere';
+const UNELTE=['text','stergere','anulare','clipboard'];
+const DOCX='excursia-la-bicaz.docx';
+/* documentul de lucru pentru Word-ul adevărat (același text e și în fișierul .docx de descărcat) */
+const TEXT_LUCRU=['Excursia la Bicaz','Dragi colegi, mergem în excursie la barajul Bicaz.','Plecăm de la poarta școlii. Plecarea este sâmbătă sâmbătă, la ora 8. Ne întoarcem seara.','Luați apă și o gustare. Nu uitați pelerina.','Încă o dată:'];
+const BS='<span class="tasta">⌫</span>';
+const PROVOCARE=[
+  `Descarcă documentul de lucru: <a href="${DOCX}" download="${DOCX}">${DOCX}</a>. Ajunge în folderul <b>Descărcări (Downloads)</b>.`,
+  `Deschide-l în Word: dă clic pe el în lista de descărcări a browserului sau, în folderul <b>Descărcări (Downloads)</b>, dă dublu-clic pe el.`,
+  `Dacă sub panglică apare o bară galbenă cu <b>Vizualizare protejată (Protected View)</b>, apasă pe ea butonul <b>Activare editare (Enable Editing)</b>. Până atunci, Word nu te lasă să schimbi textul.`,
+  `<b>Șterge:</b> în paragraful care începe cu „Plecăm”, „sâmbătă” apare de două ori. Dă dublu-clic pe al doilea „sâmbătă” și apasă o dată <kbd>Delete</kbd>.`,
+  `<b>Mută:</b> selectează propoziția „Plecarea este sâmbătă, la ora 8.”: ții apăsat butonul mouse-ului pe „P”, tragi până chiar după punctul de după 8 și dai drumul. Apasă ${K('Ctrl+X')}. Dă clic chiar înaintea cuvântului „Plecăm” și apasă ${K('Ctrl+V')}. Butonul mic <b>Opțiuni lipire (Paste Options)</b> care apare lângă text nu-l atingi. Verifică, ca la pasul 6: „Plecăm…” a sărit pe un rând nou? Dă clic chiar înaintea lui „Plecăm” și apasă o dată ${BS}: rândurile se unesc. Apoi, dacă punctul s-a lipit de „Plecăm”, dă clic după punct și apasă bara de spațiu.`,
+  `<b>Copiază:</b> selectează propoziția „Luați apă și o gustare.”, trăgând de la „L” până după punctul ei, și apasă ${K('Ctrl+C')}. Dă clic la capătul ultimului rând, după „Încă o dată:”, și apasă ${K('Ctrl+V')}. Word pune singur spațiul dinainte. A apărut dedesubt un rând gol? Dă clic pe el și apasă o dată ${BS}.`,
+  `<b>Anulează:</b> selectează titlul „Excursia la Bicaz” și apasă <kbd>Delete</kbd>: titlul dispare. Apasă ${K('Ctrl+Z')}: titlul revine.`,
+  `Verifică de sus în jos. Paragraful cu plecarea e acum „Plecarea este sâmbătă, la ora 8. Plecăm de la poarta școlii. Ne întoarcem seara.”, iar ultimul rând e „Încă o dată: Luați apă și o gustare.”. Ceva nu e bine? Apasă ${K('Ctrl+Z')} de câte ori trebuie și reia pasul.`,
+  `Salvează documentul cu numele tău (lecția 3): <b>Fișier (File)</b> › <b>Salvare ca (Save As)</b> › <b>Răsfoire (Browse)</b>. În fereastra care se deschide, alegi în stânga folderul <b>Documente (Documents)</b>, dacă profesorul n-a scris pe tablă alt folder, scrii numele, de exemplu <code>Popescu_Ana_editare.docx</code>, și apeși <b>Salvare (Save)</b>.`
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vii_m1_l05',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/vii/, „Lecția 5”, „Acum în aplicația adevărată” înainte de verificare
+  titlu:'Operații de editare: copiere, mutare, ștergere',
+  marca:'Lecția 5 · <b>Copiez, mut, șterg</b>',
+  h1:'Operații de editare: <em>copiere, mutare, ștergere</em>',
+  clasa:'a VII-a', unitate:'VII-U1', unitateTitlu:'Tehnoredactare: editorul de texte',
+  competente:['CS.1.1','CS.3.1'], lectii:'5',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VII-U1 „Tehnoredactare: editorul de texte” · lecția 5 din modulul 1 · conținutul: „Operații de editare într-un document: copiere, mutare, ștergere”',
+  banda:'<span class="bt"></span><span class="bs"></span><span class="bc"></span><span class="bt"></span>',
+  intro:`<p>Înveți să <b>selectezi</b> un text în Word și apoi să-l <b>ștergi</b>, să-l <b>copiezi</b> sau să-l <b>muți</b>. O greșeală o anulezi cu ${K('Ctrl+Z')}. Exersezi întâi în Word-ul simulat din pagină, apoi în Word-ul adevărat.</p>
+<p><b>Ai nevoie de:</b> lecția 2 (panglica din Word și fila <b>Pornire (Home)</b>), lecția 3 (deschizi un document și îl salvezi cu alt nume, cu <b>Salvare ca (Save As)</b>) și lecția 4 (<b>cursorul</b>, <b>paragraful</b>, tasta <kbd>Enter</kbd> și tasta <span class="tasta">⌫</span> Backspace).</p>`,
+  cum:`<p><b>Poți lucra singur, fără profesor.</b> Citești un pas, te uiți la „Uite cum”, faci exercițiul „Încearcă tu”. În exerciții, după o greșeală apare singur un indiciu, iar după două poți cere răspunsul. Urmează atelierul (Word-ul simulat), apoi pasul „Acum în aplicația adevărată”: lucrezi singur în Word, pe un document pe care îl descarci din pagină. La final ai 5 întrebări de verificare. La întrebări, indiciul îl ceri cu „Am nevoie de un indiciu”, iar după a doua greșeală vezi răspunsul.</p>`,
+  nivele:[
+{t:'Operații de editare: copiere, mutare, ștergere',lectii:[5],continuturi:[PROG],final:true,
+ obiectiv:'selectezi un text în Word și îl ștergi, îl copiezi sau îl muți în alt loc, iar o greșeală o anulezi cu Ctrl+Z.',
+ pasi:[
+  /* ---------- pasul 0 ---------- */
+  {t:'La ce folosește',
+   text:`<p>Ai scris invitația la serbarea clasei și observi că ai tastat un cuvânt de două ori, că ziua serbării ar trebui să stea la început și că vrei să repeți o urare la final. Pe hârtie ai scrie totul din nou.</p>
+<p>În Word nu rescrii nimic. <strong>Ștergi</strong> ce e în plus, <strong>muți</strong> o propoziție în alt loc și <strong>copiezi</strong> un text ca să apară de două ori. Numele comenzilor vin de la hârtie: <strong>Decupare (Cut)</strong>, ca atunci când tai cu foarfeca, și <strong>Lipire (Paste)</strong>, ca atunci când lipești.</p>
+<div class="doua"><div><span class="et">Înainte</span>${mini('Începem la ora 12. Serbarea este vineri vineri.')}</div><div><span class="et">După ștergere și mutare</span>${mini('Serbarea este vineri. Începem la ora 12.')}</div></div>`},
+  /* ---------- pasul 1 ---------- */
+  {t:'Selectezi textul',
+   text:`<p>Înainte să ștergi, să copiezi sau să muți un text, îi arăți lui Word <strong>care</strong> text: îl <mark>selectezi</mark>. Textul selectat stă pe un fundal gri.</p>
+<ul><li><strong>tragi</strong>: ții apăsat butonul din stânga al mouse-ului la începutul textului, muți mouse-ul până la capătul lui și dai drumul;</li>
+<li><strong>dublu-clic</strong> pe un cuvânt: se selectează cuvântul, cu spațiul de după el. Semnul lipit de cuvânt (. , ! ?) rămâne pe dinafară; ca să-l iei și pe el, tragi până după el;</li>
+<li>un <strong>clic</strong> simplu în alt loc anulează selecția.</li></ul>
+${fig(IMG_SELECTIE,870,80,'Un paragraf în Word, cu tot textul pe un fundal gri: e selectat','Un paragraf <b>selectat</b>: fundalul gri. Cuvintele îngroșate sau subliniate și linia roșie de sub „Pipirig” nu vin de la selecție.')}`,
+   exemplu:`<p>Dublu-clic pe „vineri”: se selectează cuvântul și spațiul de după el.</p>${mini(`Serbarea este ${SL('vineri ')}la ora 12.`)}
+<p>Dublu-clic pe „Bravo”: semnul „!” rămâne pe dinafară. Ca să-l iei și pe el, tragi de la „B” până după „!”.</p>${mini(`Ai terminat. ${SL('Bravo')}!`)}${mini(`Ai terminat. ${SL('Bravo!')}`)}`,
+   altfel:`<p>Selectarea e ca atunci când arăți cu degetul un rând din fișa de lucru: colegul știe exact la ce te referi, iar ce spui mai departe e despre acel rând. Când iei degetul de pe foaie, nu mai arăți nimic. La fel, un clic în alt loc anulează selecția.</p>`,
+   incearca:{t:'wordobj',unelte:['selectare'],
+    q:'Selectează cuvântul <b>vineri</b>: dublu-clic pe el (pe telefon: două atingeri repezi) sau trage peste el. Apoi apasă „Verifică”.',
+    start:[{titlu:'Invitație'},'Serbarea clasei este vineri, la ora 12.'],
+    verif:[{ce:'Cuvântul „vineri” e selectat',selectat:'vineri'}],tipicSel:'Serbarea',
+    ajutor:'Dă dublu-clic chiar pe „vineri” (pe telefon: atinge-l de două ori, repede). Dacă tragi, pornește de la „v” și oprește-te după „i”, înainte de virgulă.',
+    why:'Dublu-clicul a luat exact cuvântul. Acum Word știe cu ce text lucrezi.'},
+   inca:[
+    {t:'wordobj',unelte:['selectare'],q:'Selectează toată propoziția <b>Aduceți un pahar.</b>, cu tot cu punct, trăgând peste ea.',
+     start:['Serbarea este vineri. Aduceți un pahar.'],verif:[{ce:'Propoziția „Aduceți un pahar.” e selectată',selectat:'Aduceți un pahar.'}],tipicSel:'Aduceți un pahar',
+     ajutor:'Pune mouse-ul (sau degetul) pe „A” din „Aduceți”, ține apăsat și trage până după punctul de la capăt.',
+     why:'Ai tras de la primul cuvânt până după punct: s-a selectat toată propoziția.'},
+    {t:'choice',q:'Ai selectat un cuvânt și dai un clic simplu în alt loc din text. Ce se întâmplă?',
+     o:['Selecția dispare, iar cursorul se mută acolo','Cuvântul se șterge, iar cursorul rămâne pe loc','Cuvântul se mută acolo, unde ai dat clic','Se mai selectează un cuvânt, cel de acolo'],ok:0,
+     ajutor:'Recitește ultimul rând din listă.',why:'Un clic simplu anulează selecția și pune cursorul acolo unde ai dat clic.'}
+   ]},
+  /* ---------- pasul 2 ---------- */
+  {t:'Ștergi: Delete și Backspace',
+   text:`<p>Tasta <span class="tasta">⌫</span> <strong>Backspace</strong> o știi: șterge litera din <strong>stânga</strong> cursorului. Tasta <kbd>Delete</kbd> (pe unele tastaturi scrie <kbd>Del</kbd>) șterge litera din <strong>dreapta</strong> cursorului.</p>
+<p>Ca să ștergi un cuvânt sau o propoziție întreagă, nu apeși de 20 de ori. <strong>Selectezi</strong> textul și apeși <strong>o singură dată</strong> <kbd>Delete</kbd> (sau <span class="tasta">⌫</span>): dispare tot ce era selectat.</p>
+<p>Word are grijă de spații: dacă ștergi un cuvânt dintre alte două, între ele rămâne un singur spațiu.</p>`,
+   exemplu:`<p>Cursorul stă în „maș${CAR}ina”: <span class="tasta">⌫</span> dă „maina”, iar <kbd>Delete</kbd> dă „mașna”.</p>
+<p>Al doilea „vine” e selectat. Apeși o dată <kbd>Delete</kbd>:</p>${mini(`Mâine vine ${SL('vine ')}și echipa.`)}<p class="sageata">↓</p>${mini('Mâine vine și echipa.')}`,
+   altfel:`<p><b>Back</b> înseamnă „înapoi”: Backspace șterge ce ai lăsat în urmă, la stânga cursorului. Delete șterge ce ai în față, la dreapta. Când ai un text selectat, amândouă șterg tot textul selectat, dintr-o dată.</p>`,
+   incearca:{t:'wordobj',unelte:['text','stergere'],
+    q:'Cuvântul <b>mare</b> apare de două ori. Șterge-l pe al doilea: selectează-l, apoi apasă o dată <b>Delete</b>.',
+    start:['Am văzut o casă mare mare lângă lac.'],tinta:['Am văzut o casă mare lângă lac.'],
+    verif:[{ce:'Cuvântul „mare” apare o singură dată',text:'mare',de:1},{ce:'Ai șters cuvântul selectat dintr-o dată (Delete sau ⌫)',foloseste:'stergere'}],
+    tipic:['Am văzut o casă lângă lac.'],
+    ajutor:'Dublu-clic pe al doilea „mare” (pe telefon: două atingeri repezi), apoi butonul Delete. Un singur „mare” trebuie să rămână.',
+    why:'Ai selectat doar cuvântul în plus și l-ai șters cu o singură apăsare. Word a lăsat un singur spațiu între „mare” și „lângă”.'},
+   inca:[
+    {t:'choice',q:`Cursorul stă între „p” și „t”: „lap${CAR}te”. Apeși o dată Delete. Ce rămâne?`,o:['lape','late','lapte','lat'],ok:0,
+     ajutor:'Delete șterge litera din DREAPTA cursorului.',why:'În dreapta cursorului era „t”: rămâne „lap” + „e” = „lape”. Backspace ar fi șters „p” și ar fi rămas „late”.'},
+    {t:'wordobj',unelte:['text','stergere'],q:'Șterge toată propoziția <b>Nu uitați.</b> cu o singură apăsare de <b>Delete</b>.',
+     start:['Aduceți un pahar. Nu uitați. Vă așteptăm!'],tinta:['Aduceți un pahar. Vă așteptăm!'],
+     verif:[{ce:'Propoziția „Nu uitați.” nu mai e în document',text:'Nu uitați.',de:0},{ce:'Ai șters-o dintr-o dată (selectată, apoi Delete sau ⌫)',foloseste:'stergere'}],
+     tipic:['Aduceți un pahar.  Vă așteptăm!'],
+     ajutor:'Trage de la „N” până după punctul de după „uitați”, apoi apasă Delete.',
+     why:'Selecția a cuprins toată propoziția, iar Delete a șters-o dintr-o dată. Între „pahar.” și „Vă” a rămas un singur spațiu.'}
+   ]},
+  /* ---------- pasul 3 ---------- */
+  {t:'Ai greșit? Ctrl+Z',
+   text:`<p>Ai șters din greșeală un cuvânt? Apasă ${K('Ctrl+Z')}: ții apăsată tasta <kbd>Ctrl</kbd>, ca la ${K('Ctrl+S')}, și apeși o dată <kbd>Z</kbd>. Word <mark>anulează</mark> ultima operație: textul șters revine exact unde era.</p>
+<p>Mai apeși o dată ${K('Ctrl+Z')}? Se anulează și operația de dinainte.</p>
+<p>O greșeală des întâlnită: ai un text selectat și tastezi o literă. Litera <strong>ia locul</strong> textului selectat. Tot ${K('Ctrl+Z')} aduce textul înapoi.</p>`,
+   exemplu:`<p>„luni” e selectat și, din greșeală, tastezi „m”:</p>${mini(`Plecăm ${SL('luni')} la munte.`)}<p class="sageata">↓ tastezi „m”</p>${mini(`Plecăm m${CAR} la munte.`)}<p class="sageata">↓ ${K('Ctrl+Z')}</p>${mini('Plecăm luni la munte.')}`,
+   altfel:`<p>${K('Ctrl+Z')} e ca butonul „înapoi” dintr-un joc: te întoarce cu un pas, dinainte de greșeală. Fiecare apăsare te mai duce un pas înapoi.</p>`,
+   incearca:{t:'wordobj',unelte:['text','stergere','anulare'],
+    q:'Selectează și șterge cuvântul <b>mâine</b>. Apoi apasă <b>Ctrl+Z</b>, ca să-l aduci înapoi.',
+    start:['Mergem mâine la bibliotecă.'],tinta:['Mergem mâine la bibliotecă.'],tintaCe:'Cuvântul „mâine” e din nou la locul lui',tintaDupa:['stergere','anulare'],
+    verif:[{ce:'Ai șters cuvântul „mâine” (selectat, apoi Delete sau ⌫)',sters:'mâine'},{ce:'Apoi ai apăsat Ctrl+Z',foloseste:'anulare'}],
+    tipic:['Mergem la bibliotecă.'],
+    ajutor:'Dublu-clic pe „mâine”, butonul Delete, apoi butonul Ctrl+Z.',
+    why:'Delete a șters cuvântul, iar Ctrl+Z a anulat ștergerea: cuvântul a revenit exact unde era.'},
+   inca:[
+    {t:'tf',q:'Ai selectat cuvântul „luni” și tastezi litera „a”. În text rămân și „luni”, și „a”.',ok:false,
+     ajutor:'Recitește ultimul paragraf al pasului.',why:'Fals. Litera ia locul textului selectat, deci „luni” dispare. Ctrl+Z îl aduce înapoi.'},
+    {t:'choice',q:'Ai șters din greșeală două cuvinte, pe rând (două ștergeri). Cum le aduci înapoi pe amândouă?',
+     o:['Apeși Ctrl+Z de două ori','Apeși Ctrl+Z o singură dată','Apeși Delete de două ori','Le tastezi din nou: altă cale nu există'],ok:0,
+     ajutor:'O apăsare de Ctrl+Z anulează o singură operație.',why:'Fiecare Ctrl+Z anulează câte o operație, de la ultima spre prima. Două ștergeri → două apăsări.'}
+   ]},
+  /* ---------- pasul 4 ---------- */
+  {t:'Copiezi: Ctrl+C, apoi Ctrl+V',
+   text:`<p>A <mark>copia</mark> înseamnă a pune același text și în alt loc, iar originalul rămâne unde era.</p>
+<ol><li>Selectezi textul.</li>
+<li>Apeși ${K('Ctrl+C')} (Copiere): Word ține o copie în <mark>clipboard</mark>, o memorie pe care n-o vezi. În document nu se schimbă nimic.</li>
+<li>Dai clic acolo unde vrei copia.</li>
+<li>Apeși ${K('Ctrl+V')} (Lipire): copia apare la cursor.</li></ol>
+<p>Butoanele sunt pe fila <strong>Pornire (Home)</strong>, grupul <strong>Clipboard</strong>: <strong>Copiere (Copy)</strong> și <strong>Lipire (Paste)</strong>.</p>
+<p>După lipire, lângă text apare un buton mic cu un clipboard și „(Ctrl)”: <strong>Opțiuni lipire (Paste Options)</strong>. Azi nu-l folosim: lucrezi mai departe, iar el dispare singur.</p>`,
+   exemplu:`<p>„La mulți ani!” e selectat. ${K('Ctrl+C')}, apoi clic la capătul ultimului rând:</p>${mini(SL('La mulți ani!'),`Îți doresc o vacanță frumoasă.${CAR}`)}<p class="sageata">↓ ${K('Ctrl+V')}</p>${mini('La mulți ani!',`Îți doresc o vacanță frumoasă. La mulți ani!${CAR}`)}<p>Originalul a rămas sus, iar Word a pus singur spațiul dinaintea copiei.</p>`,
+   altfel:`<p>Copierea e ca la xerox: foaia ta rămâne la tine, iar tu mai primești una la fel, pe care o pui unde vrei.</p>`,
+   incearca:{t:'wordobj',unelte:UNELTE,
+    q:'Copiază urarea <b>La mulți ani!</b> și la capătul ultimului rând. Pe primul rând trebuie să rămână.',
+    start:[{titlu:'Felicitare'},'La mulți ani!','Îți doresc o vacanță frumoasă.'],
+    tinta:[{titlu:'Felicitare'},'La mulți ani!','Îți doresc o vacanță frumoasă. La mulți ani!'],
+    verif:[{ce:'„La mulți ani!” apare de două ori',text:'La mulți ani!',de:2},{ce:'Ai folosit Ctrl+C (Copiere) și Ctrl+V (Lipire)',foloseste:'copiere'}],
+    tipic:[{titlu:'Felicitare'},'','Îți doresc o vacanță frumoasă. La mulți ani!'],
+    ajutor:'Trage peste „La mulți ani!”, până după „!”, apoi butonul Ctrl+C, atinge capătul ultimului rând (după „frumoasă.”) și butonul Ctrl+V.',
+    why:'Ctrl+C a lăsat originalul pe loc, iar Ctrl+V a pus copia la cursor, la capătul ultimului rând.'},
+   inca:[
+    {t:'order',q:'Vrei să copiezi titlul și la finalul documentului. Pune pașii în ordine.',items:['Selectezi titlul','Apeși Ctrl+C','Dai clic la finalul documentului','Apeși Ctrl+V'],
+     ajutor:'Întâi arăți textul, apoi faci copia, apoi alegi locul, apoi lipești.',why:'Selectezi → Ctrl+C → clic la locul nou → Ctrl+V. Fără clic, copia s-ar lipi acolo unde era cursorul.'},
+    {t:'wordobj',unelte:UNELTE,q:'Copiază <b>Bravo!</b>, cu tot cu semnul exclamării, și la capătul celui de-al doilea rând. Selectează-l trăgând de la „B” până după „!” (cu dublu-clic, „!” ar rămâne pe dinafară). Apoi folosește butoanele de pe fila <b>Pornire (Home)</b>, grupul <b>Clipboard</b>: <b>Copiere (Copy)</b>, apoi <b>Lipire (Paste)</b>.',
+     start:['Ana a terminat primul nivel. Bravo!','Dan a terminat al doilea nivel.'],tinta:['Ana a terminat primul nivel. Bravo!','Dan a terminat al doilea nivel. Bravo!'],
+     verif:[{ce:'„Bravo!” apare de două ori',text:'Bravo!',de:2},{ce:'Ai copiat și ai lipit: Copiere (Copy), apoi Lipire (Paste)',foloseste:'copiere'}],
+     tipic:['Ana a terminat primul nivel.','Dan a terminat al doilea nivel. Bravo!'],
+     ajutor:'Trage de la „B” până după „!”, apasă Copiere (Copy, cele două foi), atinge capătul rândului al doilea, apasă Lipire (Paste, clipboardul mare din stânga).',
+     why:'Butoanele fac exact ce fac tastele: Copiere (Copy) ține copia în clipboard, Lipire (Paste) o pune la cursor. Tragerea până după „!” a luat și semnul.'}
+   ]},
+  /* ---------- pasul 5 ---------- */
+  {t:'Muți: Ctrl+X, apoi Ctrl+V',
+   text:`<p>A <mark>muta</mark> înseamnă a scoate textul de unde e și a-l pune în alt loc:</p>
+<ol><li>Selectezi textul.</li>
+<li>${K('Ctrl+X')} (<strong>Decupare (Cut)</strong>, butonul cu foarfeca): textul dispare și așteaptă în clipboard.</li>
+<li>Dai clic la locul nou.</li>
+<li>${K('Ctrl+V')} (Lipire): textul apare la cursor.</li></ol>
+<p>Pe calculator, un text selectat se mută și dacă îl tragi cu mouse-ul. Se poate întâmpla din greșeală, când vrei să-l selectezi din nou: atunci apeși ${K('Ctrl+Z')}.</p>`,
+   exemplu:`<p>Dublu-clic pe „luni”, apoi ${K('Ctrl+X')}:</p>${mini(`Plecăm ${SL('luni ')}dimineața la ora 8.`)}<p class="sageata">↓</p>${mini(`Plecăm ${CAR}dimineața la ora 8.`)}
+<p>Clic înaintea lui „la”, apoi ${K('Ctrl+V')}:</p>${mini(`Plecăm dimineața luni ${CAR}la ora 8.`)}<p>Între cuvinte, Word a potrivit singur spațiile.</p>`,
+   altfel:`<p>Mutarea e ca atunci când iei o carte de pe un raft și o pui pe altul: pe primul raft nu mai e. La copiere (pasul 4) cartea rămâne pe raft, iar tu mai primești una la fel.</p>`,
+   incearca:{t:'wordobj',unelte:UNELTE,q:'Mută cuvântul <b>mâine</b> imediat după „Mergem”, ca propoziția să devină „Mergem mâine la munte.”.',
+    start:['Mergem la munte mâine.'],tinta:['Mergem mâine la munte.'],
+    verif:[{ce:'„mâine” apare o singură dată',text:'mâine',de:1},{ce:'Ai mutat cu Ctrl+X și Ctrl+V',foloseste:'mutare'}],
+    tipic:['Mergem mâine la munte mâine.'],
+    ajutor:'Dublu-clic pe „mâine”, Ctrl+X, atinge chiar după „Mergem”, Ctrl+V. Word pune singur spațiile dintre cuvinte.',
+    why:'Între cuvinte, Word potrivește singur spațiile: la decupare a scos spațiul rămas în plus, la lipire l-a pus pe cel lipsă.'},
+   inca:[
+    {t:'wordobj',unelte:UNELTE,q:'Mută cuvântul <b>ieri</b> la capătul propoziției, înaintea punctului, ca să devină „Am văzut la muzeu un dinozaur ieri.”.',
+     start:['Am văzut ieri la muzeu un dinozaur.'],tinta:['Am văzut la muzeu un dinozaur ieri.'],
+     verif:[{ce:'„ieri” apare o singură dată',text:'ieri',de:1},{ce:'Ai mutat cu Ctrl+X și Ctrl+V',foloseste:'mutare'}],
+     tipic:['Am văzut ieri la muzeu un dinozaur ieri.'],
+     ajutor:'Dublu-clic pe „ieri”, Ctrl+X, atinge chiar după „dinozaur” (înaintea punctului), Ctrl+V.',
+     why:'Decuparea a scos cuvântul și spațiul în plus, iar lipirea l-a pus înaintea punctului, cu un spațiu în față.'},
+    {t:'choice',q:'Ai apăsat Ctrl+X pe o propoziție selectată. Unde e acum propoziția?',
+     o:['În clipboard; apare din nou când apeși Ctrl+V','Nicăieri: s-a șters pentru totdeauna','Tot în document, doar că nu se vede','La finalul documentului'],ok:0,
+     ajutor:'Ce face Ctrl+X cu textul, după pas?',why:'Decuparea scoate textul din document și îl ține în clipboard, până îl lipești cu Ctrl+V.'}
+   ]},
+  /* ---------- pasul 6 ---------- */
+  {t:'Verifici după lipire',
+   text:`<p>După ce lipești, citește rândul. Word potrivește singur spațiile dintre cuvinte, dar nu mereu. Verifici în ordinea asta:</p>
+<ol><li><strong>A sărit textul de după pe un rând nou?</strong> Se întâmplă când tragi prea departe, după capătul rândului. Dai clic chiar la începutul rândului de jos și apeși <span class="tasta">⌫</span>: rândurile se unesc.</li>
+<li><strong>Apoi</strong>, dacă punctul s-a lipit de cuvântul următor („8.Aduceți”), dai clic după punct și apeși bara de spațiu.</li>
+<li>Ai lipit în locul greșit? Pentru ${K('Ctrl+Z')}, decuparea și lipirea sunt două operații: primul ${K('Ctrl+Z')} scoate textul lipit, al doilea îl pune la locul vechi.</li></ol>`,
+   exemplu:`<p>„Plecăm luni.” a fost mutat înaintea lui „Aduceți”, dar „Aduceți apă.” a sărit pe rândul de jos. Clic chiar înaintea lui „Aduceți”:</p>${mini('Plecăm luni.',`${CAR}Aduceți apă.`)}
+<p class="sageata">↓ <span class="tasta">⌫</span>: rândurile s-au unit, dar punctul e încă lipit</p>${mini(`Plecăm luni.${CAR}Aduceți apă.`)}
+<p class="sageata">↓ clic după punct, apoi bara de spațiu</p>${mini('Plecăm luni. Aduceți apă.')}`,
+   altfel:`<p>E ca la puzzle: după ce pui o piesă, te uiți dacă s-a potrivit. A căzut un rând mai jos? O urci la loc (⌫). S-a lipit prea strâns de vecina ei? Îi faci loc (spațiul).</p>`,
+   incearca:{t:'wordobj',unelte:UNELTE,
+    q:'Mută propoziția <b>Plecăm luni la ora 8.</b> la începutul paragrafului. Apoi verifică rândul: dacă ceva a sărit pe un rând nou, unește cu ⌫; apoi pune spațiul de după punct.',
+    start:['Aduceți apă și un sandviș. Plecăm luni la ora 8.'],tinta:['Plecăm luni la ora 8. Aduceți apă și un sandviș.'],
+    verif:[{ce:'Primul rând începe cu „Plecăm luni la ora 8.”',par:1,incepe:'Plecăm luni la ora 8.'},{ce:'„Plecăm luni la ora 8.” apare o singură dată',text:'Plecăm luni la ora 8.',de:1},
+           {ce:'Ai mutat cu Ctrl+X (Decupare) și Ctrl+V (Lipire)',foloseste:'mutare'}],
+    tipic:['Plecăm luni la ora 8.Aduceți apă și un sandviș. Plecăm luni la ora 8.'],
+    ajutor:'Trage de la „Plecăm” până după „8.”, butonul Ctrl+X, atinge chiar înaintea lui „Aduceți”, butonul Ctrl+V. Dacă „Aduceți…” a sărit pe un rând nou, atinge chiar înaintea lui și apasă ⌫. Apoi atinge după punctul de după 8 și tastează un spațiu în caseta „Tastatura”.',
+    why:'Ctrl+X a scos propoziția de la capăt, iar Ctrl+V a pus-o la început. Spațiul de după punct l-ai pus tu: Word nu-l pune singur aici.'},
+   inca:[
+    {t:'wordobj',unelte:['text','stergere','anulare'],q:'Propoziția mutată a ajuns la locul ei, dar „Aduceți apă și un sandviș.” a sărit pe rândul de jos. Unește rândurile, apoi pune spațiul după punct, ca să rămână un singur rând.',
+     start:['Plecăm luni la ora 8.','Aduceți apă și un sandviș.'],tinta:['Plecăm luni la ora 8. Aduceți apă și un sandviș.'],tintaCe:'Totul e pe un singur rând, cu spațiu după punct',
+     verif:[{ce:'Primul rând se termină cu „Aduceți apă și un sandviș.”',par:1,termina:'Aduceți apă și un sandviș.'}],
+     tipic:['Plecăm luni la ora 8.Aduceți apă și un sandviș.'],
+     ajutor:'Atinge chiar înaintea lui „Aduceți” și apasă ⌫. Apoi atinge după punctul de după 8 și tastează un spațiu.',
+     why:'⌫ la începutul rândului de jos l-a urcat lângă cel de sus; spațiul l-ai pus după aceea, după punct.'},
+    {t:'choice',q:'Ai decupat un cuvânt și l-ai lipit în alt loc. Apeși o singură dată Ctrl+Z. Ce se întâmplă?',
+     o:['Cuvântul lipit dispare; încă un Ctrl+Z îl aduce la loc','Cuvântul revine dintr-o dată la locul lui vechi','Nu se întâmplă nimic, fiindcă ai lipit deja','Dispare tot rândul pe care ai lipit cuvântul'],ok:0,
+     ajutor:'Câte operații ai făcut? Fiecare Ctrl+Z anulează una, de la ultima.',why:'Primul Ctrl+Z anulează lipirea (textul lipit dispare), al doilea anulează decuparea (cuvântul revine unde era).'}
+   ]}
+ ],
+ atelier:{t:'wordobj',unelte:UNELTE,titlu:'Atelier: invitația la serbare',
+  intro:`<p>Acum repari singur o invitație, în Word-ul simulat. Sub sarcină vezi <strong>testele</strong>: fiecare se bifează ✔ când partea lui e gata.</p>
+<p><b>Cum lucrezi aici:</b> un clic (o atingere) pune cursorul. Selectezi trăgând peste text sau cu dublu-clic (două atingeri repezi). Pe telefon nu ai tasta Ctrl: folosești butoanele <b>Delete</b>, <b>Ctrl+X</b>, <b>Ctrl+C</b>, <b>Ctrl+V</b> și <b>Ctrl+Z</b> de sub document. Spațiul îl tastezi în caseta „Tastatura”. Pe fila <b>Pornire (Home)</b> ai și butoanele <b>Decupare (Cut)</b>, <b>Copiere (Copy)</b> și <b>Lipire (Paste)</b>; panglica din simulator e în engleză.</p>
+<p><b>Dacă după lipire</b> un text a sărit pe un rând nou sau a rămas un rând gol, repari cu <span class="tasta">⌫</span>, ca la pasul 6 (întâi ⌫, apoi spațiul după punct).</p>
+<p>După atelier urmează pasul „Acum în aplicația adevărată”: faci același fel de lucru în <strong>Word</strong>, pe un document pe care îl descarci. Apoi 5 întrebări de verificare.</p>`,
+  q:'Repară invitația, pe rând: (1) în paragraful care începe cu „Începem”, „vineri” apare de două ori: șterge unul; (2) mută propoziția <b>Serbarea este vineri, în sala de sport.</b> la începutul aceluiași paragraf, înainte de „Începem” (verifică spațiul de după punct); (3) copiază cuvintele <b>clasei a VII-a</b>, fără punct, la capătul ultimului rând, după „Elevii”.',
+  start:[{titlu:'Invitație'},'Dragi părinți, vă așteptăm la serbarea clasei a VII-a.','Începem la ora 12. Serbarea este vineri vineri, în sala de sport.','Vă așteptăm cu drag!','Elevii'],
+  tinta:[{titlu:'Invitație'},'Dragi părinți, vă așteptăm la serbarea clasei a VII-a.','Serbarea este vineri, în sala de sport. Începem la ora 12.','Vă așteptăm cu drag!','Elevii clasei a VII-a'],
+  verif:[{ce:'„vineri” apare o singură dată',text:'vineri',de:1},
+         {ce:'Paragraful cu ora începe cu „Serbarea este vineri, în sala de sport.”',par:3,incepe:'Serbarea este vineri, în sala de sport.'},
+         {ce:'Propoziția despre sala de sport apare o singură dată',text:'în sala de sport.',de:1},
+         {ce:'Ultimul rând este „Elevii clasei a VII-a”',par:5,egal:'Elevii clasei a VII-a',cum:'Ultimul rând trebuie să fie exact „Elevii clasei a VII-a”, fără punct. Selectează în primul paragraf doar „clasei a VII-a”, Ctrl+C, clic după „Elevii”, Ctrl+V.'},
+         {ce:'Ai mutat cu Ctrl+X și Ctrl+V',foloseste:'mutare'},{ce:'Ai copiat cu Ctrl+C și Ctrl+V',foloseste:'copiere'}],
+  tipic:[{titlu:'Invitație'},'Dragi părinți, vă așteptăm la serbarea clasei a VII-a.','Serbarea este vineri, în sala de sport.Începem la ora 12.','Vă așteptăm cu drag!','Elevii clasei a VII-a'],
+  ajutor:'(1) Dublu-clic pe al doilea „vineri”, Delete. (2) Trage de la „Serbarea” până după „sport.”, Ctrl+X, atinge chiar înaintea lui „Începem”, Ctrl+V, apoi atinge după „sport.” și tastează un spațiu. (3) Trage peste „clasei a VII-a” din primul paragraf (fără punct), Ctrl+C, atinge după „Elevii”, Ctrl+V.',
+  why:'Ai șters cuvântul în plus, ai mutat propoziția cu decupare și lipire și ai copiat cuvintele cu copiere și lipire. Spațiul de după „sport.” l-ai pus tu; restul spațiilor le-a potrivit Word.',
+  inca:[
+   {t:'wordobj',unelte:UNELTE,q:'Încă una: anunțul concursului, pe rând: (1) în paragraful „Concursul de desen…”, „joi” apare de două ori: șterge unul; (2) mută propoziția <b>Tema este toamna.</b> la începutul paragrafului ei, înainte de „Aduceți” (verifică spațiul); (3) copiază cuvintele <b>de desen</b> la capătul ultimului rând, după „concursul”.',
+    start:[{titlu:'Concurs'},'Concursul de desen este joi joi, la ora 13.','Aduceți creioane colorate. Tema este toamna.','Te așteptăm la concursul'],
+    tinta:[{titlu:'Concurs'},'Concursul de desen este joi, la ora 13.','Tema este toamna. Aduceți creioane colorate.','Te așteptăm la concursul de desen'],
+    verif:[{ce:'„joi” apare o singură dată',text:'joi',de:1},{ce:'Paragraful cu creioanele începe cu „Tema este toamna.”',par:3,incepe:'Tema este toamna.'},
+           {ce:'„de desen” apare de două ori',text:'de desen',de:2},{ce:'Ai mutat cu Ctrl+X și Ctrl+V',foloseste:'mutare'},{ce:'Ai copiat cu Ctrl+C și Ctrl+V',foloseste:'copiere'}],
+    tipic:[{titlu:'Concurs'},'Concursul de desen este joi, la ora 13.','Aduceți creioane colorate. Tema este toamna.','Te așteptăm la concursul de desen'],
+    ajutor:'Ca la invitație: ștergi cu dublu-clic și Delete, muți cu Ctrl+X și Ctrl+V (apoi spațiul după punct), copiezi cu Ctrl+C și Ctrl+V.',
+    why:'Aceleași trei operații: ștergere, mutare, copiere. Ce ai mutat nu mai e la locul vechi; ce ai copiat e acum în două locuri.'}
+  ]},
+ qs:[
+  {t:'choice',q:`Cursorul stă între „e” și „i”: „cre${CAR}ion”. Apeși o dată Backspace. Ce rămâne?`,o:['crion','creon','creion','cron'],ok:0,
+   ajutor:'Backspace șterge litera din STÂNGA cursorului.',why:'În stânga cursorului era „e”: rămâne „cr” + „ion” = „crion”. Delete ar fi șters „i”.'},
+  {t:'choice',q:'Vrei ca urarea „Te așteptăm!” să apară și la începutul, și la sfârșitul invitației. Ce faci după ce o selectezi?',
+   o:['Ctrl+C, clic la locul nou, Ctrl+V','Ctrl+X, clic la locul nou, Ctrl+V','Delete, clic la locul nou, Ctrl+V','Ctrl+Z, clic la locul nou, Ctrl+V'],ok:0,
+   ajutor:'Originalul trebuie să rămână: copiere sau mutare?',why:'Copierea (Ctrl+C) lasă originalul pe loc, iar Ctrl+V pune încă o dată textul, la cursor.'},
+  {t:'order',q:'Vrei să muți cuvântul „azi” la începutul propoziției. Pune pașii în ordine.',items:['Dai dublu-clic pe „azi”','Apeși Ctrl+X','Dai clic la începutul propoziției','Apeși Ctrl+V'],
+   ajutor:'Întâi arăți cuvântul, apoi îl scoți, apoi alegi locul nou.',why:'Selectezi → decupezi → pui cursorul la locul nou → lipești.'},
+  {t:'wordobj',unelte:UNELTE,q:'Mută propoziția <b>Adu și o minge.</b> la începutul paragrafului și verifică spațiile.',
+   start:['Ne jucăm în curte. Adu și o minge.'],tinta:['Adu și o minge. Ne jucăm în curte.'],
+   verif:[{ce:'„Adu și o minge.” apare o singură dată',text:'Adu și o minge.',de:1},{ce:'Ai mutat cu Ctrl+X și Ctrl+V',foloseste:'mutare'}],
+   tipic:['Adu și o minge.Ne jucăm în curte.'],
+   ajutor:'Mutare = Ctrl+X, clic la locul nou, Ctrl+V. După lipire, uită-te după punct: lipsește spațiul?',why:'Decupare, cursorul la început, lipire, apoi spațiul de după punct: propoziția e o singură dată, la început.'},
+  {t:'choice',q:'Ai mutat o propoziție cu Ctrl+X și apoi Ctrl+V, dar ai lipit-o în locul greșit. Cum o aduci exact unde era?',
+   o:['Apeși Ctrl+Z de două ori','Apeși Ctrl+Z o singură dată','Apeși Ctrl+V încă o dată','Apeși Delete de două ori'],ok:0,
+   ajutor:'Câte operații ai făcut? Fiecare Ctrl+Z anulează una.',why:'Mutarea a fost făcută din două operații: decuparea și lipirea. Primul Ctrl+Z anulează lipirea, al doilea anulează decuparea, iar propoziția revine la locul ei.'}
+ ]}
+  ],
+  aplicatieReala:{aplicatie:'Word-ul adevărat (Microsoft Word)',titlu:'Acum în Word-ul adevărat: anunțul excursiei',
+   intro:`<p>Ai exersat în simulator. Acum lucrezi în Word, pe un anunț pregătit, cu aceleași trei greșeli de reparat. Documentul îl iei chiar de aici:</p>
+<p class="descarca"><a class="btn primary" href="${DOCX}" download="${DOCX}">Descarcă documentul de lucru (${DOCX})</a></p>
+<p>Așa arată documentul când îl deschizi:</p><div class="wo-mini"><p class="titlu">${TEXT_LUCRU[0]}</p>${TEXT_LUCRU.slice(1).map(x=>`<p>${x}</p>`).join('')}</div>
+<p><b>Nu se descarcă sau nu se deschide?</b> Fă un document nou cu ${K('Ctrl+N')} și scrie tu textul de mai sus, exact așa, cu „sâmbătă” de două ori: la capătul fiecărui rând apeși <kbd>Enter</kbd>. Apoi continui de la pasul 4.</p>`,
+   pasi:PROVOCARE},
+  diploma:{titlu:'Editor de documente',
+   rezumat:'a selectat text trăgând și cu dublu-clic, a șters cu Delete și Backspace, a anulat greșelile cu Ctrl+Z, a copiat cu Ctrl+C și Ctrl+V și a mutat cu Ctrl+X și Ctrl+V, verificând spațiile',
+   aplicatie:'Word-ul adevărat',
+   provocare:PROVOCARE},
+  tipuri:{wordobj:TipWordObiecte}
+});
+</script>
+</body>
+</html>
