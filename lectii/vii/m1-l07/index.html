@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Formatarea imaginii, a tabelului și a paginii</title>
+<meta name="description" content="Lecția 7, clasa a VII-a: mărești o poză în Word fără s-o turtești, alegi cum stă textul lângă ea, dai tabelului un stil, lățești o coloană și așezi foaia în picioare sau culcată, cu marginile potrivite, în Word-ul simulat din pagină și în Word-ul adevărat.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Inconsolata:wght@500;700&family=Carlito:wght@400;700&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+/* TEMA: o foaie culcată, cu o poză în stânga, rândurile de text care curg lângă ea și un tabel cu antet colorat */
+:root{
+  --desk:#EAEFF0; --paper:#FFFFFF; --paper2:#F0F4F5; --line:#C5D1D4;
+  --ink:#16272B; --ink2:#4A5C61; --accent:#1F6F78; --accentInk:#FFFFFF; --sel:#D9ECEE;
+  --mark:#FFE08A; --markInk:#16272B; --ok:#1B7A4A; --okbg:#E2F4EA; --bad:#B42318; --badbg:#FBE7E4;
+  --fd:"Bitter",Georgia,"Times New Roman",serif; --fb:"Source Sans 3","Segoe UI",system-ui,sans-serif; --fm:"Inconsolata",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F1719; --paper:#172226; --paper2:#1D2B30; --line:#34494F; --ink:#E3EEF0; --ink2:#A3B7BC;
+  --accent:#7CC8D0; --accentInk:#0F1719; --sel:#21414A; --mark:#F2C94C; --markInk:#16272B;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F1719; --paper:#172226; --paper2:#1D2B30; --line:#34494F; --ink:#E3EEF0; --ink2:#A3B7BC;
+  --accent:#7CC8D0; --accentInk:#0F1719; --sel:#21414A; --mark:#F2C94C; --markInk:#16272B;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+/* banda: o foaie culcată: poza în stânga, rândurile lângă ea, iar la dreapta un tabel cu antet colorat */
+.banda{min-height:34px;padding:4px 10px;display:flex;align-items:center;gap:10px;background:var(--paper)}
+.banda .bp{flex:0 0 34px;height:24px;border-radius:2px;background:linear-gradient(#9FD0EE 0 58%,#6BAA5C 58%)}
+.banda .br{flex:1 1 30%;display:flex;flex-direction:column;gap:4px}
+.banda .br i{display:block;height:3px;background:var(--ink2);opacity:.55;border-radius:2px}
+.banda .bt{flex:0 0 76px;height:24px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);border:1px solid #8EAADB}
+.banda .bt span{border:1px solid #C9D6EE}
+.banda .bt span:nth-child(-n+3){background:#4472C4;border-color:#4472C4}
+.banda .bt span:nth-child(n+4):nth-child(-n+6){background:#D9E2F3}
+h1{font-weight:700;letter-spacing:-.01em}
+h1 em{color:var(--accent);font-style:normal}
+h2{font-weight:600}
+.doua{display:grid;gap:8px;grid-template-columns:1fr}
+@media (min-width:640px){.doua{grid-template-columns:1fr 1.4fr;align-items:end}}
+.doua .et{font-weight:700;font-size:.88rem;color:var(--ink2)}
+.descarca{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/ui-panglica.js"></script>
+<script src="../../../jocuri/_motor/panglica-word.js"></script>
+<script src="../../_sim/wordobj.js"></script>
+<script src="../../_sim/wordobj-formatare.js"></script>
+<script src="../../_sim/wordobj-pagina.js"></script>
+<script>
+/* LECȚIA 7, clasa a VII-a, modulul 1 (revizuirea LearningHub, standardul din 27.09.2026).
+   Un singur nivel pe pași: pasul 0 „La ce folosește”, 5 pași cu „Încearcă”, atelierul în Word simulat, pasul „Acum în
+   Word-ul adevărat” (documentul de lucru se descarcă din pagină), 5 întrebări.
+   Simulatorul: lectii/_sim/wordobj-pagina.js (tipul `wordpag`), încărcat după wordobj.js și wordobj-formatare.js.
+   Faptele „dacă faci X, apare Y”: afirmatii.json, cu proba din Word-ul real (_proba/rezultate_word.json,
+   _proba/proba_provocare.json, _proba/stiluri_tabel.json, _proba/dump_contextual_uia.json). */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const J='../../../jocuri/word-obiecte-vii/img/';
+const K=s=>s.split('+').map(k=>`<kbd>${k}</kbd>`).join('+');
+const PROG='Operaţii de formatare a unui document: text, imagine, tabel, pagină';
+const DOCX='excursia-cetate.docx';
+TipWordPagina.poza='img/cetatea.png';
+/* documentul de lucru (același text e în fișierul .docx de descărcat) */
+const P1='Sâmbătă, clasa noastră a vizitat Cetatea Neamțului. Am trecut podul de lemn, am intrat pe poarta mare și am ajuns în curtea interioară. Fiecare echipă a făcut fotografii pentru concursul clasei.';
+const P_LUNG='Cetatea a fost construită acum peste șase sute de ani, pe un deal de lângă orașul Târgu Neamț. Zidurile ei groase au apărat oamenii de atacuri. Din turnuri, străjerii vedeau departe, peste dealuri. În sala mare se țineau sfaturile, iar în beciuri se păstrau proviziile. Ghidul ne-a arătat și fântâna, adâncă de peste o sută de metri.';
+const ECHIPE=[['Nume și prenume','Clasa','Titlul fotografiei','Puncte'],['Popescu Andrei','a VII-a A','Zidurile la apus','8'],['Constantinescu Ioana','a VII-a B','Poarta cetății','9'],['Mureșan Dan','a VII-a A','Podul de lemn','7']];
+const FISA=[{titlu:'Excursia la Cetatea Neamțului'},P1,'Echipele concursului de fotografie:',{tabel:{cols:[2.8,4.2,9,5],rows:ECHIPE}},'Fotografia care a câștigat:',{poza:{w:4,h:3,alt:'poza cetății'}},P_LUNG];
+const SAH=[['Nume și prenume','Clasa','Puncte'],['Popescu Andrei','a VII-a A','7'],['Constantinescu Ioana','a VII-a B','5'],['Mureșan Dan','a VII-a A','6']];
+const AFIS_DUPA=fig('img/pagina-dupa.webp',620,439,'Pagina fișei în Word, culcată: tabelul cu antet albastru încape între margini, iar poza mare a cetății are textul alături, în dreapta','<b>După</b>: foaia culcată, tabelul cu stil, poza mare, cu textul lângă ea.');
+const PROVOCARE=[
+  `Descarcă documentul de lucru: <a href="${DOCX}" download="${DOCX}">${DOCX}</a>. Ajunge în folderul <b>Descărcări (Downloads)</b>.`,
+  `Deschide-l în Word: clic pe el în lista de descărcări a browserului sau dublu-clic pe el în folderul <b>Descărcări (Downloads)</b>. Dacă sub panglică apare bara galbenă <b>Vizualizare protejată (Protected View)</b>, apasă pe ea <b>Activare editare (Enable Editing)</b>.`,
+  `<b>Pagina:</b> tabelul iese din foaie, în dreapta. Fila <b>Layout</b> (Aspect) › <b>Orientation</b> (Orientare) › <b>Landscape</b> (Vedere). Foaia se culcă, iar tabelul încape.`,
+  `<b>Stilul tabelului:</b> clic într-o celulă a tabelului, apoi fila <b>Table Design</b> (Proiectare tabel). Deschide toată galeria <b>Table Styles</b> (Stiluri de tabel) cu butonul <b>More</b> din dreapta-jos a ei și alege <b>Grid Table 4 - Accent 1</b>: la <b>Grid Tables</b>, în primul rând care începe cu antetul negru (al patrulea rând), al doilea model, cu antet albastru și rânduri în dungi (ține mouse-ul pe el ca să-i vezi numele). Bifa <b>Header Row</b> rămâne pusă.`,
+  `<b>Coloana:</b> numele se rup pe două rânduri. Du mouse-ul pe linia dintre coloana „Nume și prenume” și coloana „Clasa”, până devine o săgeată cu două capete, ține apăsat și trage spre dreapta, cam 1,5 cm, până încape fiecare nume pe un rând.`,
+  `<b>Poza:</b> clic pe poză, apoi clic pe fila <b>Picture Format</b> (Format imagine), apărută în dreapta filelor. Trage de mânerul din colțul din dreapta-jos până când, în grupul <b>Size</b> (Dimensiune), la <b>Width</b> (Lățime) scrie cam 8 cm.`,
+  `<b>Încadrarea:</b> cu poza selectată, apasă butonul <b>Layout Options</b> (Opțiuni aspect) de lângă ea și alege <b>Square</b> (Pătrat). Paragraful de sub poză urcă lângă ea.`,
+  `Compară cu poza „Așa trebuie să arate la final”: foaia culcată, tabelul albastru între margini, fiecare nume pe un rând, poza mare, cu textul alături. Ceva nu e bine? Apasă ${K('Ctrl+Z')} și reia pasul.`,
+  `Salvează documentul cu numele tău, cum ai învățat la lecția 3: <b>Fișier (File)</b> › <b>Salvare ca (Save As)</b>, în folderul <b>Documente (Documents)</b>, dacă profesorul n-a scris pe tablă alt folder. Numele, de exemplu, <code>Popescu_Ana_pagina.docx</code>.`
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vii_m1_l07',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/vii/, „Lecția 7”, pasul din aplicația adevărată înainte de verificare
+  titlu:'Formatarea imaginii, a tabelului și a paginii',
+  marca:'Lecția 7 · <b>Poză, tabel, pagină</b>',
+  h1:'Formatarea <em>imaginii</em>, a <em>tabelului</em> și a <em>paginii</em>',
+  clasa:'a VII-a', unitate:'VII-U1', unitateTitlu:'Tehnoredactare: editorul de texte',
+  competente:['CS.1.1','CS.3.1'], lectii:'7',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VII-U1 „Tehnoredactare: editorul de texte” · lecția 7 din modulul 1 · conținutul: „Operații de formatare a unui document: text, imagine, tabel, pagină” (azi: imaginea, tabelul și pagina)',
+  banda:'<span class="bp"></span><span class="br"><i style="width:92%"></i><i style="width:80%"></i><i style="width:88%"></i></span><span class="bt"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>',
+  intro:`<p>Înveți să formatezi în Word <b>poza</b> (o mărești fără s-o turtești și alegi cum stă textul lângă ea), <b>tabelul</b> (un stil cu culori și linii, coloane destul de late) și <b>pagina</b> (foaia în picioare sau culcată, marginile). Exersezi întâi în Word-ul simulat din pagină, apoi în Word-ul adevărat.</p>
+<p><b>Ai nevoie de:</b> lecția 2 (panglica din Word și filele ei), lecția 3 (salvezi cu alt nume, cu <b>Salvare ca (Save As)</b>), lecția 4 (pui o poză și un tabel; <b>rândul</b>, <b>coloana</b> și <b>celula</b> unui tabel), lecția 5 (anulezi o greșeală cu ${K('Ctrl+Z')}, deschizi un document descărcat și apeși <b>Activare editare (Enable Editing)</b>) și lecția 6 (<b>formatarea</b> schimbă doar cum arată documentul; literele <b>aldine</b>).</p>`,
+  cum:`<p><b>Poți lucra singur, fără profesor.</b> Citești un pas, te uiți la „Uite cum”, faci exercițiul „Încearcă tu”. În exerciții, după o greșeală apare singur un indiciu, iar după două poți cere răspunsul. Urmează atelierul (Word-ul simulat), apoi pasul „Acum în Word-ul adevărat”: lucrezi singur în Word, pe un document pe care îl descarci din pagină. La final ai 5 întrebări de verificare. La întrebări, indiciul îl ceri cu „Am nevoie de un indiciu”, iar după a doua greșeală vezi răspunsul.</p>`,
+  nivele:[
+{t:'Formatarea imaginii, a tabelului și a paginii',lectii:[7],continuturi:[PROG],final:true,
+ obiectiv:'mărești o poză fără s-o turtești și alegi cum stă textul lângă ea, dai tabelului un stil și coloane destul de late și așezi foaia în picioare sau culcată, cu marginile potrivite.',
+ pasi:[
+  /* ---------- pasul 0 ---------- */
+  {t:'La ce folosește',
+   text:`<p>Ai primit de la un coleg fișa excursiei la Cetatea Neamțului. Poza e cât un timbru, numele din tabel se rup pe două rânduri, iar tabelul iese din foaie, în dreapta.</p>
+<p>Azi înveți să formatezi <strong>poza</strong> (cât de mare e și cum stă textul lângă ea), <strong>tabelul</strong> (culorile, liniile, lățimea coloanelor) și <strong>pagina</strong> (foaia în picioare sau culcată, marginile albe). Nu scrii nimic nou: schimbi doar cum arată documentul.</p>
+<div class="doua"><div><span class="et">Înainte</span>${fig('img/pagina-inainte.webp',439,620,'Pagina fișei în Word, în picioare: o poză mică, tabelul cu numele rupte pe două rânduri, tăiat de marginea din dreapta a foii','<b>Înainte</b>: pagina din Word.')}</div><div><span class="et">După</span>${AFIS_DUPA}</div></div>`},
+  /* ---------- pasul 1 ---------- */
+  {t:'Poza: o selectezi și o mărești din colț',
+   text:`<p>Dai un <strong>clic pe poză</strong>: poza e <mark>selectată</mark>. În jurul ei apare un chenar cu opt cerculețe albe, numite <mark>mânere</mark>: patru în <strong>colțuri</strong> și patru la mijlocul <strong>laturilor</strong>. Ții apăsat pe un mâner și tragi: poza se mărește sau se micșorează.</p>
+<ul><li>mânerul din <strong>colț</strong> schimbă lățimea și înălțimea deodată, în aceeași proporție: forma pozei rămâne;</li>
+<li>mânerul de pe <strong>latură</strong> schimbă o singură dimensiune: poza se turtește sau se lungește.</li></ul>
+<p>Cât de mare e poza vezi pe fila nouă <strong>Picture Format</strong> (Format imagine), grupul <strong>Size</strong> (Dimensiune): <strong>Height</strong> (Înălțime) și <strong>Width</strong> (Lățime).</p>
+${fig(J+'manere-poza.webp',880,498,'Imagine selectată în Word, cu cele opt mânere albe; mânerul din colț și cel de pe latură sunt încercuite și numite','Poza selectată: un <b>mâner de colț</b> și un <b>mâner de latură</b>, încercuite.')}`,
+   exemplu:`<p>Poza are 4 cm lățime și 3 cm înălțime.</p><ul><li>Tragi de <strong>colț</strong> până la 8 cm lățime: înălțimea devine singură 6 cm. Aceeași poză, de două ori mai mare.</li><li>Tragi de <strong>latura din dreapta</strong> până la 8 cm: înălțimea rămâne 3 cm. Poza e turtită, cu cetatea lată și joasă.</li></ul>`,
+   altfel:`<p>E ca atunci când mărești o fotografie pe telefon cu două degete: se mărește toată, la fel în toate părțile. Mânerul de pe latură e ca și cum ai trage de o singură margine a unei bucăți de plastilină: se lungește doar într-o parte.</p>`,
+   incearca:{t:'wordpag',
+    q:'Fă poza mai mare: dă clic pe ea, apoi trage de mânerul din <b>colțul din dreapta-jos</b> spre exterior, până are cel puțin <b>8 cm</b> lățime (pe telefon, tragi cu degetul). Lățimea o vezi sub pagină și pe fila <b>Picture Format</b>, la <b>Width</b>. Pe telefon, dacă mânerele sunt prea mici, mărește întâi pagina cu butonul <b>+</b> de sub ea.',
+    start:{bl:[{titlu:'Cetatea Neamțului'},'Cetatea are ziduri groase și două turnuri înalte.',{poza:{w:4,h:3,alt:'poza cetății'}},'Am vizitat-o sâmbătă, cu toată clasa.']},
+    verif:[{ce:'Poza are cel puțin 8 cm lățime',poza:{wmin:8}},{ce:'Poza nu e turtită: forma a rămas aceeași',poza:{prop:true}}],
+    tipic:{poza:{w:8,h:3}},
+    ajutor:'Clic pe poză: apar mânerele. Pune mouse-ul (sau degetul) pe cerculețul din colțul din dreapta-jos, ține apăsat și trage în jos și spre dreapta. Dacă poza s-a turtit, apasă Ctrl+Z și trage de colț, nu de latură.',
+    why:'Lățimea și înălțimea au crescut deodată, în aceeași proporție: poza e mai mare și are aceeași formă.'},
+   inca:[
+    {t:'wordpag',q:'Poza e prea mare. Micșoreaz-o din colț până are cel mult <b>6 cm</b> lățime, fără s-o turtești.',
+     start:{bl:['Poza de mai jos acoperă aproape toată lățimea foii.',{poza:{w:12,h:9,alt:'poza cetății'}},'Sub ea urmează programul excursiei.']},
+     verif:[{ce:'Poza are cel mult 6 cm lățime',poza:{wmax:6}},{ce:'Poza nu e turtită',poza:{prop:true}}],
+     tipic:{poza:{w:6,h:9}},
+     ajutor:'Clic pe poză, apoi trage mânerul dintr-un colț spre mijlocul pozei, până scade lățimea sub 6 cm.',
+     why:'Tras spre interior, colțul a micșorat poza în aceeași proporție, deci forma ei a rămas.'},
+    {t:'choice',q:'Tragi în jos de mânerul de la mijlocul laturii de jos a pozei. Ce se întâmplă?',
+     o:['Crește doar înălțimea: poza se lungește','Poza se mărește toată, cu aceeași formă','Poza se mută mai jos, la fel de mare','Scade doar lățimea: poza se îngustează'],ok:0,
+     ajutor:'Câte dimensiuni schimbă un mâner de pe latură?',why:'Mânerul de pe latură schimbă o singură dimensiune; cel de jos, înălțimea. Lățimea rămâne, deci poza se lungește.'}
+   ]},
+  /* ---------- pasul 2 ---------- */
+  {t:'Încadrarea: cum stă textul lângă poză',
+   text:`<p><mark>Încadrarea textului</mark> spune cum stă textul lângă poză. O poză pusă cu Inserare (Insert) stă <strong>În linie cu textul</strong> (In Line with Text): pe rândul ei, ca o literă foarte mare. Alte feluri:</p>
+<ul><li><strong>Pătrat</strong> (Square): textul de dedesubt urcă lângă poză;</li>
+<li><strong>Strâns</strong> (Tight): tot lângă poză, puțin mai aproape de ea;</li>
+<li><strong>Sus și jos</strong> (Top and Bottom): textul stă doar deasupra și dedesubt;</li>
+<li><strong>În spatele textului</strong> (Behind Text): poza devine fundal;</li>
+<li><strong>În fața textului</strong> (In Front of Text): poza acoperă textul.</li></ul>
+<p>Le alegi cu butonul <strong>Opțiuni aspect</strong> (Layout Options) de lângă poza selectată sau din <strong>Picture Format › Wrap Text</strong> (Încadrare text).</p>
+${fig(J+'optiuni-aspect.webp',500,370,'Imagine selectată în Word, cu mânerele pe colțuri și pe laturi, și panoul Opțiuni aspect deschis lângă ea','Butonul încadrat deschide <b>Layout Options</b> (Opțiuni aspect): sus <b>In Line with Text</b>, jos felurile cu textul pe lângă.')}`,
+   exemplu:`${fig('img/incadrare-linie-patrat.webp',900,233,'Aceeași pagină în Word de două ori: la stânga poza stă pe rândul ei, cu textul dedesubt; la dreapta textul a urcat lângă poză','Aceeași pagină în Word: <b>In Line with Text</b> (stânga) și <b>Square</b> (dreapta).')}
+<p>La <b>Square</b>, textul de sub poză a urcat lângă ea. Rândul pe care stătea poza a rămas gol, deasupra textului.</p>`,
+   altfel:`<p>Gândește-te la o piatră într-un pârâu. La „Pătrat”, apa (textul) ocolește piatra. La „Sus și jos”, apa se oprește deasupra pietrei și curge mai departe sub ea. La „În spatele textului”, piatra e pe fundul apei, iar apa trece peste ea.</p>`,
+   incearca:{t:'wordpag',
+    q:'Pune textul lângă poză: dă clic pe poză, apoi butonul <b>Layout Options</b> de lângă ea (sau <b>Picture Format › Wrap Text</b>) și alege <b>Square</b> (Pătrat). Pe telefon, numele sunt scrise sub pictograme.',
+    start:{bl:[{titlu:'Cetatea Neamțului'},{poza:{w:5,h:3.75,alt:'poza cetății'}},P_LUNG]},
+    verif:[{ce:'Încadrarea pozei e Pătrat (Square)',poza:{wrap:'square'}}],
+    tipic:{poza:{wrap:'topbottom'}},
+    ajutor:'Clic pe poză: lângă colțul ei din dreapta-sus apare butonul Layout Options. Apasă-l și alege prima pictogramă din „With Text Wrapping”: Square.',
+    why:'La Pătrat, poza a trecut în stânga, iar paragraful de dedesubt a urcat lângă ea.'},
+   inca:[
+    {t:'wordpag',q:'Poza trebuie să fie <b>fundal</b>, cu textul peste ea: încadrarea <b>Behind Text</b> (În spatele textului).',
+     start:{bl:[{titlu:'Concursul de fotografie'},{poza:{w:6,h:4.5,alt:'poza cetății'}},'Trimite cea mai frumoasă fotografie din excursie până vineri.']},
+     verif:[{ce:'Încadrarea pozei e În spatele textului (Behind Text)',poza:{wrap:'behind'}}],
+     tipic:{poza:{wrap:'front'}},
+     ajutor:'Clic pe poză, Layout Options, apoi pictograma cu poza sub rândurile de text: Behind Text. Pe calculator, ține mouse-ul pe pictograme ca să le vezi numele.',
+     why:'În spatele textului, poza stă sub rânduri, ca un fundal, iar textul se vede peste ea.'},
+    {t:'match',q:'Leagă încadrarea de ce se întâmplă cu textul.',
+     pairs:[['În linie cu textul','poza stă pe rândul ei, ca o literă'],['Pătrat','textul urcă lângă poză'],['Sus și jos','textul stă doar deasupra și dedesubt'],['În fața textului','poza acoperă textul']],
+     ajutor:'Recitește lista din pas: fiecare rând începe cu numele încadrării.',why:'Numele spun ce face textul: stă pe rândul lui, urcă lângă poză, sare peste ea sau e acoperit de ea.'}
+   ]},
+  /* ---------- pasul 3 ---------- */
+  {t:'Tabelul: un stil, dintr-un clic',
+   text:`<p>Dai un clic într-o celulă a tabelului. Sus apar două file noi, doar pentru tabel: <strong>Table Design</strong> (Proiectare tabel) și <strong>Table Layout</strong> (Aspect tabel). Clic în afara tabelului: filele dispar.</p>
+<p>Pe <strong>Table Design</strong>, galeria <mark>Stiluri de tabel</mark> (Table Styles) are modele gata făcute. Un clic pe un model schimbă dintr-o dată culorile și liniile tabelului. Liniile se numesc <mark>borduri</mark>. Un tabel nou are stilul <strong>Table Grid</strong>: borduri negre subțiri, fără culori.</p>
+<p>Bifa <strong>Header Row</strong> (Rând antet), în stânga filei, face primul rând, cel cu numele coloanelor, să arate altfel: de exemplu, albastru, cu litere aldine.</p>
+${fig(J+'proiectare-tabel.webp',208,195,'Trei decupaje din panglica Word, unul sub altul: fila Table Design, grupul Table Style Options cu bifa Header Row încadrată și o felie din galeria Table Styles','De sus în jos: fila <b>Table Design</b>, bifa <b>Header Row</b>, galeria <b>Table Styles</b>.')}`,
+   exemplu:`${fig('img/tabel-stiluri.webp',801,310,'Același tabel în Word de două ori: sus cu linii negre și fără culori, jos cu antetul albastru și rândurile în dungi','Același tabel în Word: <b>Table Grid</b> (sus) și <b>Grid Table 4 - Accent 1</b> (jos).')}
+<p>Toate stilurile le vezi cu butonul <b>More</b> (▾), din dreapta galeriei. Pe calculator, ține mouse-ul pe un stil ca să-i vezi numele.</p>`,
+   altfel:`<p>Un stil de tabel e ca echipamentul unei echipe de fotbal: îl alegi o dată, iar toți jucătorii, adică toate celulele, primesc aceleași culori. Portarul are un echipament aparte, ca să se vadă: așa face bifa Header Row cu primul rând.</p>`,
+   incearca:{t:'wordpag',
+    q:'Dă tabelului stilul <b>Grid Table 4 - Accent 1</b> (antet albastru, rânduri în dungi): clic într-o celulă, fila <b>Table Design</b>, apoi butonul <b>More</b> (▾) din dreapta galeriei <b>Table Styles</b>, ca s-o deschizi toată. Fiecare model e un pătrățel cu un tabel mic desenat pe el: la <b>Grid Tables</b>, în primul rând care începe cu antetul negru, e al doilea model (pe telefon, numele e scris sub el).',
+    start:{bl:['Rezultatele la șah:',{tabel:{cols:[5.33,5.33,5.34],rows:SAH}},'Felicitări tuturor!']},
+    verif:[{ce:'Tabelul are stilul Grid Table 4 - Accent 1',tabel:{stil:'Grid Table 4 - Accent 1'}},{ce:'Bifa Header Row (Rând antet) e pusă',tabel:{antet:true}}],
+    tipic:{tabel:{stil:'Grid Table 4 - Accent 6'}},
+    ajutor:'Clic într-o celulă: în dreapta filelor apare Table Design. Deschide-o, apasă ▾ (More) la capătul galeriei; la „Grid Tables”, primul rând care începe cu antetul negru, al doilea model (antet albastru-închis). Pe calculator, numele apare când ții mouse-ul pe model; pe telefon e scris sub ea.',
+    why:'Stilul a pus dintr-o dată antetul albastru, bordurile și dungile. Bifa Header Row face primul rând albastru.'},
+   inca:[
+    {t:'wordpag',q:'Tabelul acesta nu are rând cu numele coloanelor: primul rând e deja un elev. Scoate bifa <b>Header Row</b> (Rând antet), ca primul rând să arate ca celelalte.',
+     start:{bl:['Elevii care au adus fotografii:',{tabel:{cols:[8,8],rows:[['Ana','3 fotografii'],['Bogdan','2 fotografii'],['Carmen','4 fotografii']],stil:'Grid Table 4 - Accent 1'}}]},
+     verif:[{ce:'Bifa Header Row e scoasă',tabel:{antet:false}},{ce:'Stilul a rămas Grid Table 4 - Accent 1',tabel:{stil:'Grid Table 4 - Accent 1'}}],
+     tipic:{tabel:{stil:'Table Grid'}},
+     ajutor:'Clic într-o celulă, fila Table Design, apoi clic pe caseta din fața lui Header Row, în stânga panglicii.',
+     why:'Fără bifă, primul rând e un rând obișnuit de date: nu mai e albastru-închis, ci în dungi, ca restul.'},
+    {t:'choice',q:'Vrei ca tabelul să aibă doar linii negre, subțiri, fără nicio culoare. Ce stil alegi?',
+     o:['Table Grid','Grid Table 4 - Accent 1','Grid Table 4 - Accent 6','Grid Table 4 - Accent 2'],ok:0,
+     ajutor:'Recitește pasul: ce stil are un tabel nou?',why:'Table Grid, stilul tabelului nou, are doar borduri negre subțiri. Celelalte trei au antet colorat și dungi.'}
+   ]},
+  /* ---------- pasul 4 ---------- */
+  {t:'Coloana prea îngustă: tragi de linie',
+   text:`<p>Un nume lung se rupe pe două rânduri când coloana e prea îngustă. Coloana o lățești cu mouse-ul:</p>
+<ol><li>duci mouse-ul pe <strong>linia din dreapta coloanei</strong>, până devine o săgeată cu două capete;</li>
+<li>ții apăsat și tragi spre dreapta: coloana se lățește, iar coloana de lângă ea se îngustează cu tot atât;</li>
+<li>dai drumul și te uiți: încape fiecare nume pe un rând?</li></ol>
+<p>Linia din dreapta <strong>ultimei</strong> coloane schimbă doar ultima coloană, deci tot tabelul se lățește sau se îngustează. Pe telefon, în simulator, tragi linia cu degetul.</p>
+${fig('img/coloana-lata.webp',801,396,'Același tabel în Word de două ori: cu prima coloană îngustă, numele se rup pe două rânduri; cu linia trasă spre dreapta, fiecare nume stă pe un rând','Același tabel în Word: prima coloană de <b>2,8 cm</b> (sus), apoi linia trasă cu 1,5 cm: <b>4,3 cm</b> (jos); a doua coloană a scăzut cu tot atât.')}`,
+   exemplu:`<p>„Constantinescu Ioana” se rupe când prima coloană are 2,8 cm. Tragi linia dintre prima și a doua coloană cu 1,5 cm spre dreapta: prima coloană are acum 4,3 cm, a doua are 1,5 cm mai puțin, iar tabelul a rămas la fel de lat.</p>`,
+   altfel:`<p>E ca atunci când muți peretele dintre două camere: una se face mai mare, cealaltă mai mică, iar casa rămâne la fel de mare.</p>`,
+   incearca:{t:'wordpag',
+    q:'Lățește prima coloană până încape fiecare nume pe un rând: trage spre dreapta linia dintre coloana <b>Nume și prenume</b> și coloana <b>Clasa</b>, cam 1,5 cm (lățimile coloanelor le vezi sub pagină).',
+    start:{bl:['Rezultatele la șah:',{tabel:{cols:[2.8,6.2,7],rows:SAH}},'Felicitări tuturor!']},
+    verif:[{ce:'Prima coloană e destul de lată: fiecare nume stă pe un rând',tabel:{col:1,min:3.8}},{ce:'Tabelul a rămas între margini',tabel:{incape:true}}],
+    tipic:{tabel:{cols:[3,6,7]}},
+    ajutor:'Du mouse-ul (sau degetul) pe linia verticală dintre „Nume și prenume” și „Clasa”, ține apăsat și trage spre dreapta, până când „Constantinescu Ioana” încape pe un rând.',
+    why:'Prima coloană s-a lățit cât îi trebuia celui mai lung nume, iar a doua s-a îngustat cu tot atât: tabelul are aceeași lățime.'},
+   inca:[
+    {t:'wordpag',q:'Coloana <b>Puncte</b>, ultima, e prea lată. Îngusteaz-o până are cel mult <b>3 cm</b>: trage spre stânga linia din dreapta tabelului.',
+     start:{bl:['Rezultatele la șah:',{tabel:{cols:[4,5,7],rows:SAH}}]},
+     verif:[{ce:'Coloana Puncte are cel mult 3 cm',tabel:{col:3,max:3}},{ce:'Prima coloană a rămas destul de lată pentru nume',tabel:{col:1,min:3.8}}],
+     tipic:{tabel:{cols:[2.5,6.5,7]}},
+     ajutor:'Linia cea mai din dreapta a tabelului: du mouse-ul (sau degetul) pe ea și trage spre stânga, până coloana Puncte are cel mult 3 cm.',
+     why:'Linia din dreapta tabelului a schimbat doar ultima coloană, deci tot tabelul s-a îngustat.'},
+    {t:'choice',q:'Tragi linia dintre prima și a doua coloană cu 1 cm spre dreapta. Ce se întâmplă cu a doua coloană?',
+     o:['Se îngustează cu 1 cm','Se lățește cu 1 cm','Rămâne la fel, iar tabelul se lățește','Dispare din tabel'],ok:0,
+     ajutor:'Ce se întâmplă cu coloana de lângă linie, după pas?',why:'Linia dintre două coloane lățește una și o îngustează pe cealaltă cu tot atât, deci tabelul rămâne la fel de lat.'}
+   ]},
+  /* ---------- pasul 5 ---------- */
+  {t:'Pagina: în picioare sau culcată, și marginile',
+   text:`<p>Pe fila <strong>Layout</strong> (Aspect) așezi foaia:</p>
+<ul><li><strong>Orientation</strong> (Orientare): <strong>Portrait</strong> (Portret), foaia A4 în picioare, lată de 21 cm, sau <strong>Landscape</strong> (Vedere), foaia culcată, lată de 29,7 cm. Ce e lat, ca un tabel cu multe coloane, încape pe foaia culcată;</li>
+<li><strong>Margins</strong> (Margini): spațiul alb de pe marginile foii. <strong>Normal</strong> are 2,5 cm pe fiecare parte, <strong>Narrow</strong> (Îngust) 1,27 cm. <strong>Custom Margins...</strong> (Margini particularizate) deschide fereastra <strong>Page Setup</strong> (Inițializare pagină): scrii la <strong>Top</strong> (sus), <strong>Bottom</strong> (jos), <strong>Left</strong> (stânga), <strong>Right</strong> (dreapta), apoi <strong>OK</strong>.</li></ul>
+<p>Când întorci foaia, poza și tabelul rămân la fel de mari; doar rândurile de text se lungesc.</p>
+${fig(J+'margini.webp',610,580,'Fila Layout din Word cu butonul Margins deschis: lista de margini gata făcute și Custom Margins jos','<b>Margins</b>: <i>Normal</i> are 2,5 cm pe toate laturile; jos, <b>Custom Margins...</b>. Lângă el, butonul <b>Orientation</b>.')}`,
+   exemplu:`${fig('img/orientare-tabel.webp',900,547,'Aceeași pagină în Word de două ori: în picioare, tabelul cu șase coloane iese din foaie la dreapta; culcată, tabelul încape','Aceeași pagină în Word: <b>Portrait</b> (stânga) și <b>Landscape</b> (dreapta).')}
+<p>Tabelul are 6 coloane de câte 3,5 cm, adică 21 cm. Pe Portret, între margini sunt 21 − 2,5 − 2,5 = 16 cm: tabelul iese din foaie. Pe Vedere sunt 29,7 − 5 = 24,7 cm: încape.</p>`,
+   altfel:`<p>Ia o foaie de caiet. Ținută în picioare, e înaltă și îngustă, ca un tablou cu un om: portret. Întoarsă pe o parte, e lată, ca o fotografie cu munți: vedere. Marginile sunt ca rama albă din jurul unei fotografii.</p>`,
+   incearca:{t:'wordpag',
+    q:'Tabelul cu programul iese din foaie. Întoarce foaia: fila <b>Layout</b> › <b>Orientation</b> › <b>Landscape</b>.',
+    start:{bl:[{titlu:'Programul concursului'},'Fiecare clasă are o zi de concurs.',{tabel:{cols:[3.5,3.5,3.5,3.5,3.5,3.5],rows:[['Ora','Luni','Marți','Miercuri','Joi','Vineri'],['8','V A','VI A','VII A','VIII A','V B'],['9','V C','VI B','VII B','VIII B','VI C']]}},'Premiile se dau vineri.']},
+    verif:[{ce:'Foaia e culcată (Landscape)',pagina:{or:'vedere'}},{ce:'Tabelul încape între margini',tabel:{incape:true}}],
+    tipic:{m:[2.5,2.5,1.27,1.27]},
+    ajutor:'Fila Layout (pe telefon, derulează filele), butonul Orientation, apoi Landscape.',
+    why:'Culcată, foaia are 24,7 cm între margini, iar tabelul de 21 cm încape.'},
+   inca:[
+    {t:'wordpag',q:'Referatul merge într-un dosar cu găuri, deci marginea din stânga trebuie să fie de <b>3 cm</b>: Layout › Margins › <b>Custom Margins...</b>, la <b>Left</b> scrie 3 cm, apoi OK. Celelalte margini rămân de 2,5 cm.',
+     start:{bl:[{titlu:'Referat: Cetatea Neamțului'},P_LUNG]},
+     verif:[{ce:'Marginea din stânga are 3 cm',pagina:{m:{st:3}}},{ce:'Celelalte margini au rămas de 2,5 cm',pagina:{m:{sus:2.5,jos:2.5,dr:2.5}}}],
+     tipic:{m:[2.5,2.5,2.5,3]},
+     ajutor:'Layout, Margins, jos Custom Margins... În fereastra Page Setup, șterge ce scrie la Left, scrie 3 cm și apasă OK. La Right nu schimbi nimic.',
+     why:'Marginea din stânga e acum mai lată, ca găurile dosarului să nu prindă textul.'},
+    {t:'choice',q:'Treci foaia de pe Portret pe Vedere. Ce se întâmplă cu o poză de 8 cm lățime?',
+     o:['Rămâne tot de 8 cm','Se lățește singură până la margini','Se micșorează la jumătate','Dispare de pe pagină'],ok:0,
+     ajutor:'Recitește ultimul rând al pasului.',why:'Word nu schimbă mărimea pozei când întorci foaia: poza rămâne de 8 cm, doar rândurile de text se lungesc.'}
+   ]}
+ ],
+ atelier:{t:'wordpag',titlu:'Atelier: fișa excursiei',
+  intro:`<p>Acum formatezi singur fișa excursiei, în Word-ul simulat. Sub sarcină vezi <strong>testele</strong>: fiecare se bifează ✔ când partea lui e gata.</p>
+<p><b>Cum lucrezi aici:</b> un clic (o atingere) pe poză o selectează; un clic într-o celulă pune cursorul în tabel. Filele <b>Picture Format</b>, <b>Table Design</b> și <b>Table Layout</b> apar în dreapta filelor obișnuite, ca în Word. Pe telefon, panglica se derulează în lateral, iar pagina o mărești cu butonul <b>+</b> de sub ea. Ai greșit? ${K('Ctrl+Z')}.</p>
+<p>După atelier urmează pasul „Acum în Word-ul adevărat”, pe un document pe care îl descarci. Apoi 5 întrebări de verificare.</p>`,
+  q:'Formatează fișa, pe rând: (1) întoarce foaia pe <b>Landscape</b>, ca tabelul să încapă; (2) dă tabelului stilul <b>Grid Table 4 - Accent 1</b>, cu <b>Header Row</b> bifat; (3) lățește prima coloană până încape fiecare nume pe un rând (cel puțin 4 cm: trage linia ei cam 1,5 cm spre dreapta); (4) mărește poza din colț până are cel puțin <b>7 cm</b> lățime, fără s-o turtești; (5) pune textul lângă poză: încadrarea <b>Square</b> (Pătrat). Pe telefon, dacă nu vezi butonul Layout Options, apasă ↔ de sub pagină sau folosește <b>Picture Format › Wrap Text</b>.',
+  start:{bl:FISA},
+  verif:[{ce:'Foaia e culcată (Landscape)',pagina:{or:'vedere'}},
+         {ce:'Tabelul încape între margini',tabel:{incape:true}},
+         {ce:'Tabelul are stilul Grid Table 4 - Accent 1',tabel:{stil:'Grid Table 4 - Accent 1'}},
+         {ce:'Bifa Header Row e pusă',tabel:{antet:true}},
+         {ce:'Prima coloană are cel puțin 4 cm: numele încap pe un rând',tabel:{col:1,min:4}},
+         {ce:'Poza are cel puțin 7 cm lățime',poza:{wmin:7}},
+         {ce:'Poza nu e turtită',poza:{prop:true}},
+         {ce:'Textul stă lângă poză (Square)',poza:{wrap:'square'}}],
+  sol:{or:'vedere',poza:{w:8,h:6,wrap:'square'},tabel:{stil:'Grid Table 4 - Accent 1',cols:[4.3,2.7,9,5]}},
+  tipic:{or:'vedere',poza:{w:8,h:3,wrap:'square'},tabel:{stil:'Grid Table 4 - Accent 1',cols:[4.3,2.7,9,5]}},
+  ajutor:'(1) Layout › Orientation › Landscape. (2) Clic în tabel, Table Design, butonul ▾ (More) al galeriei; la Grid Tables, primul rând cu antetul negru, al doilea model: Grid Table 4 - Accent 1. (3) Trage spre dreapta linia dintre prima și a doua coloană. (4) Clic pe poză, trage de mânerul din colțul din dreapta-jos. (5) Butonul Layout Options de lângă poză › Square.',
+  why:'Ai formatat pagina (orientarea), tabelul (stilul, lățimea primei coloane) și poza (mărimea, încadrarea). Textul a rămas același.',
+  inca:[
+   {t:'wordpag',q:'Încă una: fișa bibliotecii, pe rând: (1) marginea din stânga de <b>3 cm</b> (Custom Margins), restul rămân de 2,5 cm; (2) tabelul cu stilul verde <b>Grid Table 4 - Accent 6</b>; (3) poza, micșorată din colț, la cel mult <b>6 cm</b> lățime, fără s-o turtești; (4) încadrarea pozei <b>Top and Bottom</b> (Sus și jos).',
+    start:{bl:[{titlu:'Cărți noi la biblioteca școlii'},'Au sosit cărți noi. Le poți împrumuta câte două, pentru două săptămâni.',{tabel:{cols:[6,6,4],rows:[['Titlul','Autorul','Raftul'],['Amintiri din copilărie','Ion Creangă','A2'],['Micul prinț','Antoine de Saint-Exupéry','B1']]}},'Coperta cărții săptămânii:',{poza:{w:10,h:7.5,alt:'poza cetății'}},'Cartea săptămânii e despre o cetate veche și despre oamenii care au trăit acolo.']},
+    verif:[{ce:'Marginea din stânga are 3 cm',pagina:{m:{st:3}}},{ce:'Celelalte margini au rămas de 2,5 cm',pagina:{m:{sus:2.5,jos:2.5,dr:2.5}}},
+           {ce:'Tabelul are stilul Grid Table 4 - Accent 6',tabel:{stil:'Grid Table 4 - Accent 6'}},
+           {ce:'Poza are cel mult 6 cm lățime',poza:{wmax:6}},{ce:'Poza nu e turtită',poza:{prop:true}},{ce:'Încadrarea pozei e Sus și jos (Top and Bottom)',poza:{wrap:'topbottom'}}],
+    tipic:{m:[2.5,2.5,3,2.5],tabel:{stil:'Grid Table 4 - Accent 6'},poza:{w:6,h:4.5,wrap:'square'}},
+    ajutor:'Marginea: Layout › Margins › Custom Margins..., Left: 3 cm, OK. Stilul: clic în tabel, Table Design, ▾ (More), stilul cu antetul verde. Poza: clic pe ea, mânerul din colț spre interior; apoi Layout Options › Top and Bottom.',
+    why:'Aceleași trei feluri de formatare: pagina (marginea), tabelul (stilul) și poza (mărimea, încadrarea).'}
+  ]},
+ qs:[
+  {t:'choice',q:'Vrei ca poza să fie mai mică, dar cu aceeași formă. De unde tragi?',
+   o:['De mânerul dintr-un colț','De mânerul de la mijlocul laturii de sus','De mânerul de la mijlocul laturii din stânga','De mijlocul pozei, cu tot cu ea'],ok:0,
+   ajutor:'Care mâner schimbă lățimea și înălțimea deodată?',why:'Mânerul din colț schimbă lățimea și înălțimea în aceeași proporție, deci forma rămâne. Mânerele de pe laturi schimbă o singură dimensiune.'},
+  {t:'wordpag',q:'Textul să stea lângă poză, cât mai aproape de ea: încadrarea <b>Tight</b> (Strâns).',
+   start:{bl:[{titlu:'Fântâna cetății'},{poza:{w:5,h:3.75,alt:'poza cetății'}},'Fântâna cetății e adâncă de peste o sută de metri. Apa era scoasă cu o găleată legată de un lanț lung, iar oamenii o cărau în butoaie până la bucătărie.']},
+   verif:[{ce:'Încadrarea pozei e Strâns (Tight)',poza:{wrap:'tight'}}],
+   tipic:{poza:{wrap:'square'}},
+   ajutor:'Clic pe poză, apoi Layout Options sau Picture Format › Wrap Text. Alege Tight, nu Square: în Wrap Text numele e scris lângă pictogramă, iar pe telefon și în Layout Options.',why:'La Strâns, textul curge lângă poză, puțin mai aproape de ea decât la Pătrat.'},
+  {t:'wordpag',q:'Dă tabelului cu note stilul portocaliu <b>Grid Table 4 - Accent 2</b> și păstrează bifa <b>Header Row</b>.',
+   start:{bl:['Notele la lucrarea de TIC:',{tabel:{cols:[8,8],rows:[['Elevul','Nota'],['Ana','9'],['Bogdan','10'],['Carmen','8']]}}]},
+   verif:[{ce:'Tabelul are stilul Grid Table 4 - Accent 2',tabel:{stil:'Grid Table 4 - Accent 2'}},{ce:'Bifa Header Row e pusă',tabel:{antet:true}}],
+   tipic:{tabel:{stil:'Grid Table 4 - Accent 2',antet:false}},
+   ajutor:'Clic în tabel, fila Table Design, butonul ▾ (More) al galeriei; stilul cu antetul portocaliu, din același rând cu cel albastru.',why:'Stilul a pus culorile și liniile, iar bifa Header Row a păstrat primul rând portocaliu, cu litere aldine.'},
+  {t:'tf',q:'Ai un tabel făcut cu grila Inserare (Insert) › Tabel (Table). Treci foaia de pe Portret pe Vedere: tabelul se lățește singur până la noile margini.',ok:false,
+   ajutor:'Ce rămâne la fel de mare când întorci foaia?',why:'Fals. Coloanele își păstrează lățimea, deci tabelul rămâne la fel de lat; doar rândurile de text se lungesc. Pe foaia culcată, tabelul lasă loc liber în dreapta.'},
+  {t:'wordpag',q:'Afișul se pune pe avizier, culcat, și are nevoie de loc: foaia pe <b>Landscape</b> și marginile <b>Narrow</b> (Îngust), din Layout › Margins.',
+   start:{bl:[{titlu:'Expoziția de fotografii'},'Vino să vezi fotografiile din excursia la Cetatea Neamțului, pe holul de la etajul întâi.',{poza:{w:9,h:6.75,alt:'poza cetății'}}]},
+   verif:[{ce:'Foaia e culcată (Landscape)',pagina:{or:'vedere'}},{ce:'Marginile sunt Narrow: 1,27 cm pe fiecare parte',pagina:{m:{sus:1.27,jos:1.27,st:1.27,dr:1.27}}}],
+   tipic:{or:'vedere',m:[2.54,2.54,1.91,1.91]},
+   ajutor:'Layout › Orientation › Landscape; apoi Layout › Margins › Narrow (1,27 cm peste tot).',why:'Culcată, foaia e lată, iar marginile înguste lasă mai mult loc pentru afiș.'}
+ ]}
+  ],
+  aplicatieReala:{aplicatie:'Word-ul adevărat (Microsoft Word)',titlu:'Acum în Word-ul adevărat: fișa excursiei',
+   intro:`<p>Ai exersat în simulator. Acum formatezi în Word fișa excursiei, cu aceleași probleme de reparat. Documentul îl iei chiar de aici:</p>
+<p class="descarca"><a class="btn primary" href="${DOCX}" download="${DOCX}">Descarcă documentul de lucru (${DOCX})</a></p>
+<p><b>Așa trebuie să arate la final:</b></p>${AFIS_DUPA}
+<p><b>Nu se descarcă sau nu se deschide?</b> Deschide un document al tău care are o poză și un tabel, de exemplu referatul din lecția 4, și fă pe el pașii 3-7.</p>`,
+   pasi:PROVOCARE},
+  diploma:{titlu:'Arhitect de pagină',
+   rezumat:'a mărit poza din colț fără s-o turtească, a ales cum stă textul lângă ea (Pătrat, Sus și jos, În spatele textului), a dat tabelului un stil cu antet, a lățit o coloană trăgând de linia ei și a așezat foaia în picioare sau culcată, cu marginile potrivite',
+   aplicatie:'Word-ul adevărat',
+   provocare:PROVOCARE},
+  tipuri:{wordpag:TipWordPagina}
+});
+</script>
+</body>
+</html>
