@@ -309,7 +309,7 @@ function learnPage(){
     <div class="row" style="justify-content:space-between"><div class="eyebrow">${nivelEticheta(R.li)} · învață · pasul ${R.si+1} din ${n}</div>
     <button class="btn ghost sm" id="go" type="button" title="Dacă știi deja tot ce e în pași, poți trece direct la verificare">Știu deja — la verificare</button></div>
     <h2 style="margin:8px 0 6px">${esc(P.t)}</h2>
-    ${R.si===0&&Lv.obiectiv?`<p class="obiectiv"><b>La finalul nivelului:</b> ${Lv.obiectiv}</p>`:''}
+    ${R.si===0&&Lv.obiectiv?`<p class="obiectiv"><b>${eLectie()?'La finalul lecției:':'La finalul nivelului:'}</b> ${Lv.obiectiv}</p>`:''}
     ${R.si===0?blocPrereq():''}
     <div class="reading">${P.text||''}</div>
     ${P.exemplu?`<div class="exemplu"><div class="lbl">Uite cum</div>${P.exemplu}</div>`:''}

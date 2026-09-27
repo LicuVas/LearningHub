@@ -37,7 +37,7 @@ function buton(b,date,opt){
   else corp=`${svg(ic,16)||(arata?'':`<span class="pg-txt">${esc(GLIFE[b.id]||b.eticheta.charAt(0))}</span>`)}${arata?`<span class="pg-et">${esc(b.eticheta)}</span>`:''}${b.split||b.meniu?'<span class="pg-sag">▾</span>':''}`;
   const m=(opt.meniu||{})[b.id];
   // b.galerie = o dală dintr-o galerie (o tranziție, un stil, o temă); L.clasa = starea dată de simulator (ex. „on”)
-  return `<span class="pg-slot" style="${pos}"><button type="button" class="pg-b ${b.marime==='mare'?'pg-mare':''} ${b.galerie?'pg-dala':''} ${L?'':'pg-nesim'} ${m?'pg-deschis':''} ${L&&L.clasa?esc(L.clasa):''}" ${attr} title="${tit}" aria-label="${esc(b.eticheta)}"${m?' aria-expanded="true"':''}>${corp}</button></span>`;
+  return `<span class="pg-slot${b.lansator?' pg-slot-lans':''}" style="${pos}"><button type="button" class="pg-b ${b.marime==='mare'?'pg-mare':''} ${b.galerie?'pg-dala':''} ${L?'':'pg-nesim'} ${m?'pg-deschis':''} ${L&&L.clasa?esc(L.clasa):''}" ${attr} title="${tit}" aria-label="${esc(b.eticheta)}"${m?' aria-expanded="true"':''}>${corp}</button></span>`;
 }
 function html(date,opt){
   opt=opt||{};
@@ -77,6 +77,16 @@ const CSS=`
 .pg .pg-cb{flex:1;min-width:0;height:100%;border:1px solid var(--line);border-radius:2px;background:var(--paper);display:flex;align-items:center;padding-left:3px}
 .pg .pg-camp select{width:100%;height:100%;font:inherit;font-size:.72rem;border:1px solid var(--line);border-radius:2px;background:var(--paper);color:var(--ink);padding:0 2px}
 .pg .pg-lans{width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;opacity:.7}
+/* săgeata mică ↘ (dialog launcher) din colțul grupului (27.09.2026, lecția VII/6): numele grupului, pus peste ea,
+   îi lua clicul. Numele nu mai prinde clicuri, săgeata stă deasupra, iar pe telefon zona ei de atingere are 32 x 32 px:
+   crește spre stânga (peste nume) și în jos, într-o fâșie de 12 px adăugată sub grupuri, ca să nu acopere butoanele
+   de deasupra (ex. „Convert to SmartArt” din PowerPoint); săgeata rămâne desenată în colț. */
+.pg .pg-nume{pointer-events:none}
+.pg .pg-slot-lans{z-index:2}
+@media (max-width:760px),(pointer:coarse){
+  .pg .pg-banda{padding-bottom:14px}
+  .pg .pg-slot-lans>.pg-b{inset:auto;right:0;bottom:-12px;width:32px;height:32px;align-items:flex-end;justify-content:flex-end;padding:0 3px 15px 0}
+}
 .pg .pg-nesim{opacity:.92}
 .pg .pg-dala{border-color:var(--line);background:var(--paper);flex-direction:column;justify-content:flex-end;padding-bottom:2px;font-size:.66rem;white-space:normal}
 .pg .pg-dala .pg-et{white-space:normal;text-align:center}
