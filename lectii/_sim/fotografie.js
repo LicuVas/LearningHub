@@ -1,8 +1,11 @@
 /* Simulatorul „fotografie” pentru lecțiile LearningHub — fișier comun (lectii/_sim/fotografie.js).
-   PROPRIETAR: autorul lecției V · M1 · nr. 5 (standardul 05_STANDARD_LECTIE.md, „Simulatoarele din lecțiile nr. 4”).
+   PROPRIETAR: autorul lecției V · M1 · nr. 5 până la 27.09.2026 seara; de atunci autorul lecției V · M1 · nr. 6 (predat de dirijor).
    Copiat pe 27.09.2026 din lectii/v/m1-l04/index.html, DUPĂ lectii/v/m1-l04/_verificare/reparatii.md
    (cu reparațiile judecătorului: M1 „placa de bază pe o bucată liberă”, m10 „Mărește fotografia”).
    Lecția 4 rămâne deocamdată cu copia ei din pagină.
+   27.09.2026 (lecția V/6, judecătorul): zone ROTUNDE (z.c), mărire aleasă de lecție (Q.marire),
+   iar numele care încep cu o prescurtare („CD-ul”, „DVD-ul”) nu mai primesc literă mică („cD-ul”).
+   Probat pe V/5 (LIVE) și V/6: test_joc TRECUT + atelierul cu atingeri; lecțiile fără z.c / Q.marire merg exact ca înainte.
 
    Folosire în pagină (după motor.js):
      <script src="../../_sim/fotografie.js"></script>
@@ -31,6 +34,13 @@
       Q.alte:{idZona:'mesaj'}         ce spune pagina când elevul atinge o zonă care nu e în listă (unitatea centrală…)
       Q.punct:{idObiect:[x,y]}        unde se pune cercul la „Arată-mi răspunsul” / poartă
       Q.gresit:{idObiect:'idCategorieGreșită'}   greșelile tipice (poarta verifică respingerea)
+
+   COMUNE ambelor moduri (27.09.2026, lecția V/6):
+      Q.zone:[{id, c:[[cx,cy,r],…]}]  zone ROTUNDE (discuri, obiecte rotunde): cx, cy în procente din lățime/înălțime,
+                                      r în procente din LĂȚIMEA imaginii (cercul e cerc pe imagine; se folosesc Q.w/Q.h).
+                                      O zonă poate avea și r (dreptunghiuri), și c (cercuri); ordinea zonelor = prioritatea.
+      Q.marire?                       cât de mult se mărește fotografia la „Mărește fotografia” (procente; implicit 190).
+                                      Pentru fotografii cu multe lucruri mici (atelierul V/6: 280).
 
    Fidelitate: nu există „aplicație” de imitat; fidelitatea = zonele cad pe lucrurile reale din fotografie
    (verificate cu grila și suprapunerea din _proba/ a fiecărei lecții). */
@@ -66,17 +76,23 @@ function stil(){
   if(document.getElementById('sim-fotografie-css'))return;
   const s=document.createElement('style');s.id='sim-fotografie-css';s.textContent=CSS;document.head.appendChild(s);
 }
-const zonaLa=(Q,x,y)=>{for(const z of Q.zone){if(z.r.some(r=>x>=r[0]&&x<=r[2]&&y>=r[1]&&y<=r[3]))return z.id}return null};
-const mic=s=>s?s[0].toLowerCase()+s.slice(1):s;
+/* cerc pe imagine: dy e trecut în procente din lățime (× h/w), ca raza să fie aceeași pe orizontală și pe verticală */
+const inCerc=(Q,c,x,y)=>{const k=(Q.h||1)/(Q.w||1),dx=x-c[0],dy=(y-c[1])*k;return dx*dx+dy*dy<=c[2]*c[2]};
+const zonaLa=(Q,x,y)=>{for(const z of Q.zone){if((z.r||[]).some(r=>x>=r[0]&&x<=r[2]&&y>=r[1]&&y<=r[3])||(z.c||[]).some(c=>inCerc(Q,c,x,y)))return z.id}return null};
+/* prima literă mică, dar nu la prescurtări („CD-ul”, „DVD-ul”, „USB”) */
+const mic=s=>s&&!/^[A-ZĂÂÎȘȚ]{2}/.test(s)?s[0].toLowerCase()+s.slice(1):s;
 /* partea comună: fotografia, butonul de mărire, coordonatele atingerii în procente */
 function fotografie(Q,api){
   return `<div class="foto-scroll"><div class="foto-wrap"><img src="img/${Q.img}" width="${Q.w}" height="${Q.h}" alt="${api.esc(Q.alt)}" draggable="false"><div class="foto-pins"></div></div></div>
       <p class="foto-credit"><button class="btn ghost sm foto-zoom" type="button" aria-pressed="false">Mărește fotografia</button> ${Q.credit}</p>`;
 }
-function leaga(body,onTap){
+function leaga(body,onTap,Q){
   const wrap=body.querySelector('.foto-wrap'),img=wrap.querySelector('img'),sc=body.querySelector('.foto-scroll'),zb=body.querySelector('.foto-zoom');
-  /* pe telefon, lucrurile mici sunt greu de nimerit: fotografia se mărește și se derulează în lateral */
-  zb.onclick=()=>{const m=sc.classList.toggle('mare');zb.textContent=m?'Micșorează fotografia':'Mărește fotografia';zb.setAttribute('aria-pressed',String(m))};
+  /* pe telefon, lucrurile mici sunt greu de nimerit: fotografia se mărește și se derulează în lateral.
+     Q.marire (opțional) = cât se mărește; fără el, 190% (clasa .mare), exact ca înainte. */
+  zb.onclick=()=>{const m=sc.classList.toggle('mare');
+    if(Q&&Q.marire){wrap.style.width=m?Q.marire+'%':'';wrap.style.maxWidth=m?Math.round((Q.w||1000)*1.4)+'px':''}
+    zb.textContent=m?'Micșorează fotografia':'Mărește fotografia';zb.setAttribute('aria-pressed',String(m))};
   wrap.addEventListener('click',e=>{
     const r=img.getBoundingClientRect();
     onTap(Math.round((e.clientX-r.left)/r.width*1000)/10,Math.round((e.clientY-r.top)/r.height*1000)/10);
@@ -104,7 +120,7 @@ function renderEtichete(Q,body,api){
     if(!st.activ){body.querySelector('.foto-acum').innerHTML='Întâi apasă numele unei etichete, de deasupra fotografiei.';return}
     st.puse[st.activ]=[x,y];
     const urm=T.find(t=>!st.puse[t.id]);st.activ=urm?urm.id:null;draw();
-  });
+  },Q);
   function marcheaza(){
     let ok=0;
     T.forEach(t=>{const li=body.querySelector(`.foto-teste li[data-id="${t.id}"]`),p=st.puse[t.id],w=p?zonaLa(Q,p[0],p[1]):null,bun=w===t.id;
@@ -150,7 +166,7 @@ function renderCategorii(Q,body,api){
       const rest=O.filter(q=>!st.puse[q.id]).length;
       acum.innerHTML=`Ai pus ${ales()} pe: ${api.esc(mic(o.nume))}. `+(rest?`Mai ai ${rest===1?'un dispozitiv':rest+' dispozitive'} fără etichetă. Ca să schimbi o etichetă, alegi alta și atingi din nou dispozitivul.`:'Toate dispozitivele din listă au o etichetă. Apasă „Verifică etichetele”.');
     }else acum.innerHTML=w&&Q.alte&&Q.alte[w]?Q.alte[w]:'Acolo nu e niciun dispozitiv din lista testelor. Atinge chiar dispozitivul.';
-  });
+  },Q);
   function marcheaza(){
     let ok=0;
     O.forEach(o=>{const li=body.querySelector(`.foto-teste li[data-id="${o.id}"]`),p=st.puse[o.id],bun=!!p&&p.cat===o.cat;
