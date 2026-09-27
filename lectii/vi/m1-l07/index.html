@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Efecte de animație și de tranziție. Când ajută și când încurcă</title>
+<meta name="description" content="Lecția 7, clasa a VI-a (TIC): pui o tranziție pe diapozitive și o animație pe un obiect în PowerPoint, alegi ordinea și momentul lor și judeci, ca publicul, când efectul ajută ideea și când încurcă. Cu PowerPoint simulat în pagină și o prezentare de reparat în PowerPoint-ul adevărat.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600..800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#F3EEEC; --paper:#FFFFFF; --paper2:#F9F2F0; --line:#E4D3CF;
+  --ink:#231619; --ink2:#634F53; --accent:#9E1B32; --accentInk:#FFFFFF; --sel:#F6DADF;
+  --mark:#FFE08A; --markInk:#231619; --ok:#1E7A4A; --okbg:#E2F3E8; --bad:#B3261E; --badbg:#FBE6E3;
+  --fd:"Fraunces",Georgia,serif; --fb:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif; --fm:"JetBrains Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#17100F; --paper:#221716; --paper2:#2B1E1D; --line:#43302E;
+  --ink:#F3E6E4; --ink2:#C2ACA9; --accent:#FF8FA0; --accentInk:#17100F; --sel:#4A2328;
+  --mark:#F2C94C; --markInk:#231619; --ok:#6FD19A; --okbg:#173226; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#17100F; --paper:#221716; --paper2:#2B1E1D; --line:#43302E;
+  --ink:#F3E6E4; --ink2:#C2ACA9; --accent:#FF8FA0; --accentInk:#17100F; --sel:#4A2328;
+  --mark:#F2C94C; --markInk:#231619; --ok:#6FD19A; --okbg:#173226; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+/* banda de sus: o cortină strânsă în stânga și în dreapta; între ele, diapozitive care apar din ce în ce mai clar
+   (o tranziție de tip estompare) și o steluță de efect — doar CSS */
+.banda{display:flex;gap:7px;padding:6px 12px;min-height:36px;align-items:center;
+  background:linear-gradient(90deg,var(--accent) 0 10px,transparent 10px calc(100% - 10px),var(--accent) calc(100% - 10px))}
+.banda span{flex:0 0 auto;width:38px;height:22px;border:1px solid var(--ink2);border-radius:2px;
+  background:linear-gradient(var(--ink2),var(--ink2)) 5px 5px/20px 2px no-repeat,linear-gradient(var(--line),var(--line)) 5px 11px/26px 2px no-repeat}
+.banda span:nth-child(1){opacity:.2}.banda span:nth-child(2){opacity:.4}.banda span:nth-child(3){opacity:.65}
+.banda .stea{width:14px;height:14px;border:0;background:var(--accent);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+h1{font-size:clamp(1.6rem,6.4vw,2.8rem);font-weight:800;letter-spacing:-.01em}
+h1 .acc{color:var(--accent)}
+h2{font-weight:750}
+.nevoie{border-left:4px solid var(--accent);padding:6px 10px;background:var(--paper2);border-radius:0 6px 6px 0}
+figure.captura.ingusta img{max-width:280px}
+figure.captura.mica img{max-width:220px}
+.reading ol li,.reading ul li{margin:.2em 0}
+.descarca{display:inline-block;padding:6px 12px;border:1px solid var(--accent);border-radius:6px;font-weight:600;text-decoration:none}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/ui-panglica.js"></script>
+<script src="../../../jocuri/_motor/panglica-powerpoint.js"></script>
+<script src="../../_sim/simppt.js"></script>
+<script src="../../_sim/simppt-animatii.js"></script>
+<script>
+/* ======================================================================================================
+   Lecția VI · M1 · nr. 7 — „Efecte de animație și de tranziție. Când ajută și când încurcă”.
+   Simulatorul: lectii/_sim/simppt-animatii.js (tipul ppta; folosește geometria machetelor din simppt.js).
+   Faptele despre PowerPoint sunt probate în PowerPoint-ul real (afirmatii.json, _proba/).
+   ====================================================================================================== */
+const DP=SimPPTAnim.diap;
+const CAS=(ref,x,y,txt,pt,w,nume)=>Object.assign({tip:'caseta',ref,x,y,pt:pt||28,txt},w?{w}:{},nume?{nume}:{});
+const STEA=(ref,x,y)=>({tip:'forma',forma:'star5',culoare:'aur',ref,x,y,w:7.5,h:13.33});
+const SOARE={tip:'imagine',fis:'soare',ref:'soare',x:68,y:26,w:22,h:39};
+const NOR={tip:'imagine',fis:'nor',ref:'nor',x:64,y:8,w:26,h:32};
+const ETAPE=()=>[CAS('e1',7,30,'1. Apa se evaporă',28,50,'Etapa 1'),CAS('e2',7,46,'2. Se formează norii',28,50,'Etapa 2'),CAS('e3',7,62,'3. Plouă',28,50,'Etapa 3')];
+const FASOLE=(fx)=>[DP('d1','title',{titlu:'Fasolea mea',sub:'Dan Pop, clasa a VI-a'},[],fx[0]),
+  DP('d2','to',{titlu:'Ziua 1: sămânța'},[CAS('t',7,32,'Am pus o boabă de fasole\nîn pământ umed.',28)],fx[1]),
+  DP('d3','to',{titlu:'Ziua 5: tulpina'},[CAS('t',7,32,'Din pământ a ieșit\no tulpină verde.',28)],fx[2]),
+  DP('d4','to',{titlu:'Ziua 10: frunzele'},[CAS('t',7,32,'Tulpina are acum\ndouă frunze.',28)],fx[3]),
+  DP('d5','to',{titlu:'Ce am învățat'},[CAS('t',7,32,'O plantă are nevoie\nde apă, lumină și căldură.',28)],fx[4])];
+const TITLU_GHIC=DP('d1','title',{titlu:'Ghicitori',sub:'Clasa a VI-a'});
+SimPPTAnim.prezentari({
+  /* pasul 1: o tranziție pe diapozitivul care vine (exemplul: „Ziua 5”; exercițiul: „Ce am învățat”) */
+  l7_fasole:()=>FASOLE([{},{},{},{},{}]),
+  /* pasul 2: exemplul (tranziții amestecate la Dan) */
+  l7_fasole_mix:()=>FASOLE([{},{tr:{ef:'Push',dur:1}},{tr:{ef:'Fade',dur:0.7}},{tr:{ef:'Shape',dur:2}},{tr:{ef:'Cover',dur:1}}]),
+  /* pasul 2: exercițiul (altă prezentare, alt efect cerut) */
+  l7_toamna:()=>[DP('d1','title',{titlu:'Toamna în parc',sub:'Ioana Dinu, clasa a VI-a'}),
+    DP('d2','to',{titlu:'Frunzele'},[CAS('t',7,32,'Frunzele se fac galbene\nși roșii.',28)],{tr:{ef:'Fade',dur:0.7}}),
+    DP('d3','to',{titlu:'Castanele'},[CAS('t',7,32,'Castanele cad din copaci.',28)],{tr:{ef:'Cover',dur:1}}),
+    DP('d4','to',{titlu:'Ploaia'},[CAS('t',7,32,'Plouă mai des\nși e mai frig.',28)],{tr:{ef:'Shape',dur:2}}),
+    DP('d5','to',{titlu:'Ce îmi place'},[CAS('t',7,32,'Îmi plac culorile toamnei.',28)])],
+  /* pasul 3: animația unui obiect */
+  l7_ghicitoare:()=>[TITLU_GHIC,DP('d2','to',{titlu:'Ghicitoarea 1'},[CAS('q',7,30,'Am dinți,\ndar nu mușc.\nCe sunt?',32),CAS('r',58,62,'Pieptenele!',40)])],
+  /* pasul 4: exemplul (ordinea 3, 1, 2) și exercițiul (ordinea 2, 3, 1: etapa 1 urcă de două ori) */
+  l7_apa:()=>[DP('d1','title',{titlu:'Ciclul apei',sub:'Ana Pop, clasa a VI-a'}),
+    DP('d2','to',{titlu:'Cum circulă apa'},ETAPE().concat([SOARE]),{an:[{t:'ref:e3',ef:'Fade'},{t:'ref:e1',ef:'Fade'},{t:'ref:e2',ef:'Fade'}]})],
+  l7_apa2:()=>[DP('d1','title',{titlu:'Ciclul apei',sub:'Ana Pop, clasa a VI-a'}),
+    DP('d2','to',{titlu:'Cum circulă apa'},ETAPE().concat([SOARE]),{an:[{t:'ref:e2',ef:'Fade'},{t:'ref:e3',ef:'Fade'},{t:'ref:e1',ef:'Fade'}]})],
+  /* pasul 5: pornirea (norul După precedentul) */
+  l7_apa_nor:()=>[DP('d1','title',{titlu:'Ciclul apei',sub:'Ana Pop, clasa a VI-a'}),
+    DP('d2','to',{titlu:'Cum circulă apa'},ETAPE().concat([NOR]),{an:[{t:'ref:e1',ef:'Fade'},{t:'ref:e2',ef:'Fade'},{t:'ref:e3',ef:'Fade'},{t:'ref:nor',ef:'Fade'}]})],
+  /* pasul 6: trei efecte, unul singur ajută */
+  l7_decor:()=>[TITLU_GHIC,DP('d2','to',{titlu:'Ghicitoarea 2'},[CAS('q',7,28,'Cu cât îi iei mai mult,\ncu atât se face mai mare.\nCe este?',30),CAS('r',58,64,'Groapa!',40),STEA('stea',86,6)],
+    {an:[{t:'ref:q',ef:'Spin',start:'dupa'},{t:'ref:stea',ef:'Bounce',start:'dupa'},{t:'ref:r',ef:'Appear'}]})],
+  /* atelierul = prezentarea de lucru descărcabilă (ciclul-apei-de-reparat.pptx, făcută prin COM: _proba/fa_pptx.py) */
+  l7_atelier:()=>[DP('d1','title',{titlu:'Ciclul apei',sub:'Ana Pop, clasa a VI-a'},[],{tr:{ef:'Shape',dur:2},an:[{t:'ph:titlu',ef:'Spin',start:'dupa'}]}),
+    DP('d2','to',{titlu:'Cum circulă apa'},ETAPE().concat([Object.assign({},SOARE,{nume:'Soarele'})]),{tr:{ef:'Push',dur:1},an:[{t:'ref:e3',ef:'Fade'},{t:'ref:e1',ef:'Fade',start:'cu'},{t:'ref:e2',ef:'Fade',start:'cu'}]}),
+    DP('d3','to',{titlu:'Ghicitoare'},[CAS('q',7,30,'Zboară fără aripi,\nplânge fără ochi.\nCe este?',32,50,'Intrebarea'),CAS('r',60,62,'Norul!',44,30,'Raspunsul')],{tr:{ef:'Cover',dur:3}}),
+    DP('d4','tc',{titlu:'De ce e importantă apa',c1:'Bem apă în fiecare zi\nPlantele au nevoie de apă\nPeștii trăiesc în apă'},[],{tr:{ef:'Random Bars',dur:2.5}}),
+    DP('d5','tc',{titlu:'Surse',c1:'Manualul de Științe ale naturii\nro.wikipedia.org, articolul „Ciclul apei”'})],
+  /* verificarea (variante-soră, alte date) */
+  l7_excursie:()=>[DP('d1','title',{titlu:'Excursia la munte',sub:'Clasa a VI-a'}),DP('d2','to',{titlu:'Ziua 1: urcarea'}),DP('d3','to',{titlu:'Ziua 2: cabana'}),DP('d4','to',{titlu:'Ce am învățat'})],
+  l7_zoo:()=>[DP('d1','title',{titlu:'La grădina zoologică',sub:'Clasa a VI-a'}),DP('d2','to',{titlu:'Leii'}),DP('d3','to',{titlu:'Girafele'}),DP('d4','to',{titlu:'Ce am văzut'})],
+  l7_ghicitoare3:()=>[TITLU_GHIC,DP('d2','to',{titlu:'Ghicitoarea 3'},[CAS('q',7,30,'Are ochi,\ndar nu vede.\nCe este?',32),CAS('r',58,62,'Acul!',40),STEA('stea',86,6)])]
+});
+
+/* ---------------- lecția ---------------- */
+const IMG={'cortina-teatru':[800,533],'ghicitoare-inainte-dupa':[1000,330],'expunere-de-la-inceput':[384,300]};
+const fig=(f,alt,cap,cls)=>`<figure class="captura${cls?' '+cls:''}"><a href="../m1-l07/img/${f}.webp" target="_blank"><img src="../m1-l07/img/${f}.webp" alt="${alt}" width="${IMG[f][0]}" height="${IMG[f][1]}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const figJoc=(f,w,h,alt,cap,cls)=>`<figure class="captura${cls?' '+cls:''}"><a href="../../../jocuri/prezentari-vi/img/${f}.webp" target="_blank"><img src="../../../jocuri/prezentari-vi/img/${f}.webp" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const CONT=['Efecte de animație','Efecte de tranziție'];
+/* textul de sub fiecare simulator: F5 abia după pasul 6 (judecătorul, MINOR 8); durata pe telefon, fără Enter (MAJOR 2) */
+const simScurt=(o)=>{o=o||{};return `<span class="hint" style="display:block;font-weight:400;margin-bottom:4px">PowerPoint simulat: efectele sunt desenate aproximativ (în PowerPoint arată puțin altfel). Pe telefon, tastele ${o.f5?'Delete, Ctrl+Z și F5':'Delete și Ctrl+Z'} le ai ca butoane sub fereastră.${o.f5?' F5 pornește expunerea chiar dacă ai dat clic în altă parte a paginii; dacă totuși vezi că se reîncarcă pagina, dă întâi clic în fereastra simulată.':''}${o.dur?' Pe telefon, după ce scrii durata, atinge în afara casetei sau direct butonul următor (tastatura telefonului poate să nu aibă Enter).':''} Testele se bifează singure; la final apeși <b>Verifică</b>.</span>`};
+const SIM_SCURT=simScurt();
+const SIM_INTRO=`<p>Mai jos e un <strong>PowerPoint simulat</strong>, cu panglica în engleză, ca pe unele calculatoare din laborator (pe altele PowerPoint e în română; numele românești le ai în pași). Lucrează în fereastră: <strong>testele se bifează singure</strong>, apoi apeși <b>Verifică</b>.</p>
+<ul><li><b>Efectele</b> sunt desenate aproximativ: în PowerPoint arată puțin altfel. Ordinea, numerele și clicurile sunt ca în PowerPoint.</li>
+<li><b>Pe telefon:</b> panglica se derulează în lateral. Tastele <kbd>Delete</kbd>, <kbd>Ctrl</kbd>+<kbd>Z</kbd> și <kbd>F5</kbd> le ai ca butoane sub fereastră. După ce scrii o durată, atinge în afara casetei (tastatura telefonului poate să nu aibă Enter). În expunere atingi ecranul ca să mergi înainte, iar butonul „Esc: ieși” te scoate.</li>
+<li><b>Pe calculator:</b> tasta <kbd>F5</kbd> pornește expunerea simulată. Dacă vezi că se reîncarcă pagina, dă întâi clic în fereastra simulată, apoi apasă din nou <kbd>F5</kbd>.</li></ul>`;
+const ETAPA=n=>({ref:'e'+n});
+
+const LECTIA={
+ t:'Efecte de animație și de tranziție. Când ajută și când încurcă',lectii:[7],continuturi:CONT,final:true,
+ obiectiv:'pui o tranziție pe diapozitive și o animație pe un obiect, le alegi ordinea și momentul, apoi judeci ca publicul dacă efectul ajută ideea sau o încurcă.',
+ pasi:[
+  /* ---------- pasul 0: la ce folosește ---------- */
+  {t:'La ce folosește',
+   text:`<p>La teatru, între două acte, cortina se închide și se redeschide: publicul înțelege că urmează altceva. Pe scenă, actorii nu intră toți deodată. Fiecare apare când îi vine rândul.</p>
+<p>Într-o prezentare e la fel. Felul în care apare un diapozitiv întreg se numește <strong>tranziție</strong>. Un obiect care apare pe diapozitiv abia când vrei tu are o <strong>animație</strong>.</p>
+<p>Puse cu rost, ajută publicul să urmărească ideile. Puse peste tot, doar ca decor, îl încurcă. Azi înveți să le pui și să judeci când ajută.</p>
+${fig('cortina-teatru','Cortina roșie, închisă, a unei scene de teatru, luminată de un reflector','Cortina închisă a unei scene de teatru: între acte, publicul știe că urmează altceva. Fotografie: tommybuddy, CC0, Wikimedia Commons.','ingusta')}
+<p class="nevoie"><b>Ai nevoie de:</b> lecția 2 (filele panglicii, Expunere diapozitive), lecția 4 (diapozitive, obiecte, substituenți) și lecția 5 (alegi o miniatură sau un obiect cu un clic; anulezi cu <kbd>Ctrl</kbd>+<kbd>Z</kbd>).</p>`},
+  /* ---------- pasul 1: tranziția ---------- */
+  {t:'Tranziția: cum apare diapozitivul',
+   text:`<p>O <mark>tranziție</mark> este efectul cu care apare un diapozitiv întreg, în expunere, când treci la el: se estompează, alunecă, se desface. Tranziția se pune pe diapozitivul care <strong>vine</strong>.</p>
+<ol><li>Clic pe miniatura diapozitivului.</li><li>Fila <strong>Tranziții (Transitions)</strong>.</li><li>Clic pe un efect din galerie, de exemplu <strong>Fade</strong> (se estompează) sau <strong>Push</strong> (alunecă).</li></ol>
+<p>PowerPoint îți arată efectul o dată. Lângă miniatură apare o <strong>steluță</strong>: diapozitivul are un efect. Primul efect din galerie, <strong>Fără (None)</strong>, scoate tranziția.</p>
+${figJoc('fila-tranzitii',218,116,'Două decupaje din panglica PowerPoint: rândul de file cu Transitions încadrată între Design și Animations, iar dedesubt trei efecte din galerie, None, Morph și Fade','Fila <b>Tranziții (Transitions)</b>, între Proiectare (Design) și Animații (Animations). Dedesubt, primele efecte din galerie: <i>None</i> = Fără, <i>Morph</i>, <i>Fade</i>. Captură din PowerPoint în engleză.','mica')}`,
+   exemplu:`<p>Dan vrea ca diapozitivul 3, „Ziua 5: tulpina”, să apară estompându-se după diapozitivul 2.</p>
+<ol><li>clic pe miniatura 3;</li><li>Tranziții (Transitions) → <b>Fade</b>;</li><li>diapozitivul 3 se estompează o dată, iar lângă miniatura 3 apare steluța.</li></ol>
+<p>Diapozitivul 2 rămâne fără tranziție: Dan nu l-a atins.</p>`,
+   altfel:`<p>Gândește-te la ușa clasei: tranziția e felul în care intră cel care vine (încet, în fugă, cu o plecăciune). Felul acesta îl alegi pentru cel care intră, nu pentru cel care iese.</p>`,
+   incearca:{t:'ppta',q:SIM_SCURT+'În prezentarea lui Dan, după „Ziua 10: frunzele”, diapozitivul <b>Ce am învățat</b> trebuie să apară estompându-se (efectul <b>Fade</b>). Celelalte diapozitive rămân fără tranziție.',start:{deck:'l7_fasole',cur:0},
+     teste:[{ce:'„Ce am învățat” are tranziția Fade',c:[{k:'tr',d:5,ef:'Fade'}],ajutor:'Tranziția e a diapozitivului care vine: clic pe miniatura „Ce am învățat”, fila Transitions (Tranziții), apoi Fade.'},
+       {ce:'Celelalte diapozitive nu au tranziție',c:[{k:'faraTr',d:1},{k:'faraTr',d:2},{k:'faraTr',d:3},{k:'faraTr',d:4}],ajutor:'Ai pus-o și pe altul? Clic pe miniatura lui, apoi None (Fără). Sau Ctrl+Z.'}],
+     rez:['mini-5','tab-transitions','tr:Fade'],gresit:['mini-4','tab-transitions','tr:Fade'],
+     rezText:'clic pe miniatura 5, „Ce am învățat” → fila Transitions (Tranziții) → Fade',ajutor:'Tranziția se pune pe diapozitivul care VINE. Care vine: „Ziua 10” sau „Ce am învățat”?',
+     why:'Tranziția e a diapozitivului care vine: ai ales „Ce am învățat”, deci el apare estompându-se după „Ziua 10”. Steluța de lângă miniatura 5 arată că are un efect.'},
+   inca:[
+    {t:'choice',q:'Vrei ca, în expunere, diapozitivul 4 să apară alunecând (efectul Push) după diapozitivul 3. Pe ce miniatură dai clic înainte să alegi Push?',
+     o:['Pe miniatura 4','Pe miniatura 3','Pe miniaturile 3 și 4','Pe miniatura 1'],ok:0,ajutor:'Care diapozitiv VINE?',
+     why:'Tranziția se pune pe diapozitivul care vine, adică pe 4. Diapozitivul 3 e cel care pleacă.'}
+   ]},
+  /* ---------- pasul 2: aceeași tranziție, scurtă, pe toate ---------- */
+  {t:'O singură tranziție, scurtă, pe toate',
+   text:`<p>Dacă fiecare diapozitiv intră altfel, publicul se uită la efecte, nu la idei. De obicei alegi <strong>o singură tranziție</strong>, <strong>scurtă</strong>, pentru toată prezentarea.</p>
+<ol><li>Alegi un diapozitiv și îi pui tranziția.</li><li>În caseta <strong>Durată (Duration)</strong> scrii câte secunde ține efectul, de exemplu <code>0,5</code>, și apeși <kbd>Enter</kbd>. Un număr mai mare face efectul mai lent. Caseta e în grupul <strong>Temporizare</strong> (Timing): temporizarea înseamnă când pornește efectul și cât ține.</li><li>Apeși <strong>Se aplică pentru toate (Apply To All)</strong>: toate diapozitivele primesc aceeași tranziție, cu aceeași durată.</li></ol>
+<p><strong>Previzualizare (Preview)</strong>, primul buton din stânga filei, îți arată din nou efectul.</p>`,
+   exemplu:`<p>În prezentarea lui Dan, diapozitivul 2 are Push, al 4-lea Shape, al 5-lea Cover. Ca să fie la fel peste tot:</p>
+<ol><li>clic pe miniatura 1 → Tranziții (Transitions) → <b>Fade</b>;</li><li>Durată (Duration): <code>0,5</code>, apoi <kbd>Enter</kbd>;</li><li>Se aplică pentru toate (Apply To All).</li></ol>
+<p>Acum toate cele 5 diapozitive au Fade, de 0,5 secunde. Pe calculatoarele care arată durata cu punct, scrii <code>0.5</code>.</p>`,
+   altfel:`<p>E ca într-o carte: toate paginile se întorc la fel. Dacă fiecare pagină s-ar deschide altfel, te-ai uita la pagini și n-ai mai citi povestea.</p>`,
+   incearca:{t:'ppta',q:simScurt({dur:1})+'În prezentarea Ioanei, „Toamna în parc”, diapozitivele intră fiecare altfel. Pune pe <b>toate</b> aceeași tranziție, <b>Push</b>, cu durata de <b>0,5</b> secunde.',start:{deck:'l7_toamna',cur:0},
+     teste:[{ce:'Toate diapozitivele au tranziția Push',c:[{k:'trToate',ef:'Push'}],ajutor:'Pune Push pe un diapozitiv, apoi Apply To All (Se aplică pentru toate).'},
+       {ce:'Fiecare tranziție ține 0,5 secunde',c:[{k:'trDur',v:0.5}],ajutor:'Scrie 0,5 în caseta Duration (Durată) ÎNAINTE de Apply To All: butonul copiază și durata.'}],
+     rez:['mini-1','tab-transitions','tr:Push',{trDur:0.5},'apply-all'],gresit:['mini-1','tab-transitions','tr:Push','apply-all'],
+     rezText:'miniatura 1 → Transitions (Tranziții) → Push → Duration (Durată): 0,5 → Apply To All (Se aplică pentru toate)',ajutor:'Un singur buton pune aceeași tranziție pe toate diapozitivele. Ce trebuie să fie gata înainte să-l apeși?',
+     why:'Ai pus Push de 0,5 secunde pe un diapozitiv, iar Apply To All (Se aplică pentru toate) a copiat efectul și durata pe toate. Fade, Cover și Shape au dispărut.'},
+   inca:[
+    {t:'choice',q:'Pui Fade cu durata 0,5 pe diapozitivul 2, apoi apeși Apply To All (Se aplică pentru toate). Diapozitivul 5 avea Push, cu durata 1. Ce are acum diapozitivul 5?',
+     o:['Fade, 0,5 secunde','Push, 1 secundă, ca înainte','Nicio tranziție','Fade, dar 1 secundă'],ok:0,ajutor:'Ce copiază butonul pe toate diapozitivele?',
+     why:'Apply To All copiază pe toate diapozitivele tranziția diapozitivului ales, cu tot cu durata ei: Fade, 0,5 secunde.'}
+   ]},
+  /* ---------- pasul 3: animația unui obiect ---------- */
+  {t:'Animația: un obiect apare când vrei tu',
+   text:`<p>O <mark>animație</mark> este un efect pus pe un <strong>obiect</strong> de pe diapozitiv: un titlu, o casetă de text, o imagine. Azi folosim efectele de <strong>intrare</strong>: obiectul <strong>apare</strong> abia când vrei tu.</p>
+<ol><li>Clic pe obiect, ca să aibă chenar.</li><li>Fila <strong>Animații (Animations)</strong>.</li><li>Clic pe un efect din galerie: <strong>Appear</strong> (apare), <strong>Fade</strong> (se estompează), <strong>Fly In</strong> (intră de jos).</li></ol>
+<p>Lângă obiect apare un număr mic, <strong>1</strong>, doar cât e deschisă fila Animații. Publicul nu îl vede. <strong>Fără (None)</strong> scoate animațiile obiectului ales.</p>
+${figJoc('animatii-familii',545,805,'Lista mare de efecte din fila Animations: grupurile Entrance, cu stele verzi (Appear, Fade, Fly In și altele), Emphasis, cu stele galbene, și titlul Exit','Lista mare de efecte: <i>Entrance</i> = intrare (stele verzi), <i>Emphasis</i> = evidențiere (stele galbene), <i>Exit</i> = ieșire. Azi folosim intrarea. Captură din PowerPoint în engleză.','ingusta')}`,
+   exemplu:`<p>La ghicitoarea „Are gât, dar nu are cap”, răspunsul „Sticla!” se vedea de la început și strica ghicitoarea.</p>
+<ol><li>clic pe caseta cu răspunsul;</li><li>Animații (Animations) → <b>Fade</b>;</li><li>lângă casetă a apărut <b>1</b>: răspunsul apare la primul clic.</li></ol>
+<p>Întrebarea nu are efect: se vede de la început.</p>`,
+   altfel:`<p>E ca la tablă, când profesorul acoperă răspunsul cu o foaie. Toată clasa vede întrebarea. Foaia se ridică abia când a venit momentul.</p>`,
+   incearca:{t:'ppta',q:SIM_SCURT+'Pe diapozitivul <b>Ghicitoarea 1</b>, răspunsul („Pieptenele!”) trebuie să apară abia la clic, cu efectul de intrare <b>Fade</b>. Întrebarea rămâne pe ecran de la început.',start:{deck:'l7_ghicitoare',cur:1},
+     teste:[{ce:'Răspunsul are efectul Fade și apare la primul clic',c:[{k:'an',d:2,o:{ref:'r'},ef:'Fade'},{k:'laClic',d:2,o:{ref:'r'},n:1}],ajutor:'Clic pe caseta „Pieptenele!”, fila Animations (Animații), Fade.'},
+       {ce:'Întrebarea nu are animație: se vede de la început',c:[{k:'vizibil',d:2,o:{ref:'q'}}],ajutor:'Ai pus efectul pe întrebare? Clic pe ea, apoi None (Fără) din galerie.'}],
+     rez:['tab-animations',{alege:{ref:'r'}},'an:Fade'],gresit:['tab-animations',{alege:{ref:'q'}},'an:Fade'],
+     rezText:'clic pe caseta „Pieptenele!” → fila Animations (Animații) → Fade',ajutor:'Ce trebuie să apară abia la clic: întrebarea sau răspunsul?',
+     why:'Efectul de intrare e pe răspuns, cu numărul 1: publicul vede întâi întrebarea, iar răspunsul apare la primul clic.'},
+   inca:[
+    {t:'tf',q:'Numărul 1 de lângă caseta animată se vede și pe ecranul publicului, în expunere.',ok:false,ajutor:'Când se vede numărul?',
+     why:'Fals. Numărul se vede doar la tine, în fereastra de lucru, cât e deschisă fila Animații. Publicul vede doar obiectul care apare.'}
+   ]},
+  /* ---------- pasul 4: ordinea ---------- */
+  {t:'Ordinea: Panou animație și butoanele ▲ ▼',
+   text:`<p>Numărul de lângă obiect spune la <strong>al câtelea clic</strong> pornește efectul, în expunere: 1 la primul clic, 2 la al doilea.</p>
+<p>Toate efectele diapozitivului stau, în ordine, în <strong>Panou animație (Animation Pane)</strong>. Butonul lui e pe fila Animații. Ordinea din listă e ordinea din expunere. Ca s-o schimbi:</p>
+<ol><li>deschizi Panou animație;</li><li>dai clic pe efect, în listă;</li><li>butonul <strong>▲</strong> din capul panoului îl urcă un loc, butonul <strong>▼</strong> îl coboară.</li></ol>
+<p>Numerele de pe diapozitiv se schimbă singure.</p>`,
+   exemplu:`<p>Pe „Cum circulă apa”, etapele apăreau în ordinea 3, 1, 2. În panou, primul rând era „3. Plouă”.</p>
+<ol><li>Ana a ales „3. Plouă” în listă;</li><li>a apăsat ▼ de două ori.</li></ol>
+<p>Acum ordinea e 1, 2, 3, iar pe diapozitiv scrie 1, 2, 3.</p>`,
+   altfel:`<p>E ca șirul de la cantina școlii: cine e primul în șir e servit primul. Butonul ▲ mută pe cineva cu un loc mai în față, ▼ cu un loc mai în spate. Nimeni nu iese din șir și nu intră nimeni nou.</p>`,
+   incearca:{t:'ppta',q:SIM_SCURT+'Aici etapele apar în ordinea <b>2, 3, 1</b>. Fă-le să apară <b>1, 2, 3</b>, fiecare la clicul ei. Deschide <b>Animation Pane</b> (Panou animație) și folosește butoanele ▲ ▼.',start:{deck:'l7_apa2',cur:1,tab:'animations'},
+     teste:[{ce:'Ordinea: 1. Apa se evaporă, 2. Se formează norii, 3. Plouă',c:[{k:'ordine',d:2,val:[ETAPA(1),ETAPA(2),ETAPA(3)]}],ajutor:'Care etapă trebuie să ajungă prima? Alege-o în panou și apasă ▲ până urcă sus.'},
+       {ce:'Fiecare etapă are clicul ei: pe diapozitiv sunt 3 clicuri',c:[{k:'clicuri',d:2,n:3},{k:'nrAn',d:2,n:3}],ajutor:'Ai scos un efect? Ctrl+Z.'}],
+     rez:['panou',{ef:ETAPA(1)},'mai-devreme','mai-devreme'],gresit:['panou',{ef:ETAPA(1)},'mai-devreme'],
+     rezText:'Animation Pane (Panou animație) → clic pe „Etapa 1: 1. Apa se evaporă” → ▲ → ▲',ajutor:'Care efect trebuie să ajungă primul în listă, și cu câte locuri trebuie să urce?',
+     why:'Ordinea din Panou animație e ordinea din expunere: etapa 1 a urcat două locuri, deci acum are numărul 1, etapa 2 numărul 2, etapa 3 numărul 3.'},
+   inca:[
+    {t:'choice',q:'În Panou animație sunt, de sus în jos: titlul, imaginea, caseta. Alegi caseta și apeși o dată butonul ▲. Care e acum ordinea?',
+     o:['Titlul, caseta, imaginea','Caseta, titlul, imaginea','Titlul, imaginea, caseta','Imaginea, titlul, caseta'],ok:0,ajutor:'▲ urcă efectul ales cu un singur loc.',
+     why:'Caseta a urcat un singur loc, peste imagine: titlul rămâne primul, apoi caseta, apoi imaginea.'}
+   ]},
+  /* ---------- pasul 5: pornirea ---------- */
+  {t:'Pornirea: La clic, Cu precedentul, După precedentul',
+   text:`<p>Lista <strong>Pornire (Start)</strong>, din grupul Temporizare (Timing) al filei Animații, spune când pornește efectul ales în Panou animație:</p>
+<ul><li><strong>La clic (On Click)</strong>: la un clic nou; primește numărul următor;</li><li><strong>Cu precedentul (With Previous)</strong>: odată cu efectul de deasupra lui din listă;</li><li><strong>După precedentul (After Previous)</strong>: imediat după ce s-a terminat efectul de deasupra.</li></ul>
+<p>Ultimele două nu cer clic: iau numărul efectului de deasupra. Dacă sunt primele în listă, au numărul 0: pornesc singure, când apare diapozitivul.</p>`,
+   exemplu:`<p>Pe „Cum circulă apa”, soarele are deja un efect, Fade, ultimul în listă. (Fără efect, n-ar apărea în Panou animație.) Ana vrea ca soarele să apară odată cu etapa 1.</p>
+<ol><li>în Panou animație alege soarele și îl urcă cu ▲ chiar sub etapa 1;</li><li>la Pornire (Start) alege <b>Cu precedentul (With Previous)</b>.</li></ol>
+<p>Soarele are acum tot numărul 1: la primul clic apar amândouă.</p>`,
+   altfel:`<p>Gândește-te la ora de sport, când ieșiți pe rând la exercițiu. „La clic”: pornești doar când fluieră profesorul. „După precedentul”: pornești singur, imediat ce a terminat colegul dinaintea ta. „Cu precedentul”: pornești odată cu colegul dinaintea ta, umăr la umăr.</p>`,
+   incearca:{t:'ppta',q:SIM_SCURT+'Etapele sunt în ordine. Norul trebuie să apară <b>imediat după</b> etapa 2 („Se formează norii”), <b>fără clic nou</b>.',start:{deck:'l7_apa_nor',cur:1,tab:'animations'},
+     teste:[{ce:'Norul vine în listă imediat după etapa 2',c:[{k:'ordine',d:2,val:[ETAPA(2),{ref:'nor'},ETAPA(3)]}],ajutor:'În Animation Pane, alege norul și apasă ▲ o dată.'},
+       {ce:'Norul pornește After Previous (După precedentul): pe diapozitiv rămân 3 clicuri',c:[{k:'an',d:2,o:{ref:'nor'},start:'dupa'},{k:'clicuri',d:2,n:3}],ajutor:'Cu efectul norului ales, lista Start (Pornire): After Previous (După precedentul).'}],
+     rez:['panou',{ef:{ref:'nor'}},'mai-devreme',{start:'dupa'}],gresit:['panou',{ef:{ref:'nor'}},{start:'dupa'}],
+     rezText:'Animation Pane → norul → ▲ → Start (Pornire): After Previous (După precedentul)',ajutor:'Întâi locul în listă, apoi pornirea.',
+     why:'Norul stă imediat sub etapa 2 și pornește După precedentul: apare singur, după ea, cu același număr, 2.'},
+   inca:[
+    {t:'choice',q:'În Panou animație sunt, de sus în jos: caseta A, care pornește La clic; o formă-săgeată desenată pe diapozitiv, care pornește După precedentul; caseta B, care pornește La clic. Ce număr scrie pe diapozitiv lângă forma-săgeată?',
+     o:['1','2','0','3'],ok:0,ajutor:'Efectele Cu/După precedentul iau numărul efectului de deasupra.',
+     why:'Forma-săgeată nu cere clic: pornește după caseta A și ia numărul ei, 1. Caseta B cere un clic nou, deci are 2.'},
+    {t:'choice',q:'Primul efect din Panou animație pornește După precedentul. Ce număr are pe diapozitiv și când pornește, în expunere?',
+     o:['0: pornește singur, când apare diapozitivul','1: pornește la primul clic pe diapozitiv','0: nu pornește deloc în expunere','2: pornește la al doilea clic pe diapozitiv'],ok:0,ajutor:'Ce număr au efectele fără clic care sunt primele în listă?',
+     why:'Deasupra lui nu e niciun efect La clic, deci are 0: nu așteaptă niciun clic și pornește singur, când apare diapozitivul.'}
+   ]},
+  /* ---------- pasul 6: ce vede publicul; ajută sau încurcă ---------- */
+  {t:'Privește ca publicul: ajută sau încurcă?',
+   text:`<p>Efectele se văd cu adevărat doar în <strong>expunere</strong>, pe tot ecranul: tasta <kbd>F5</kbd> sau fila <strong>Expunere diapozitive (Slide Show)</strong> → <strong>De la început (From Beginning)</strong>. Fiecare clic pornește numărul următor; după ultimul vine diapozitivul următor. <kbd>Esc</kbd> te scoate.</p>
+${fig('expunere-de-la-inceput','Fila Slide Show din PowerPoint, încadrată, iar dedesubt butoanele From Beginning și From Current Slide, încadrate','Fila <b>Expunere diapozitive (Slide Show)</b> → <b>De la început (From Beginning)</b>, la fel ca tasta F5. Captură din PowerPoint în engleză.','mica')}
+<p>Privește ca publicul: efectul ajută ideea?</p>
+<ul><li><strong>Ajută</strong> când arată ordinea (pașii apar pe rând, când vorbești despre ei) sau ascunde un răspuns până îl spui.</li><li><strong>Încurcă</strong> când e doar decor: altă tranziție la fiecare diapozitiv, obiecte care se învârt sau sar, sunete, efecte lente. Cât rulează un efect lent, clicul tău doar îl termină: nu vine nimic nou.</li></ul>
+${fig('ghicitoare-inainte-dupa','Același diapozitiv Ghicitoare, desenat de PowerPoint de două ori: în stânga doar întrebarea Are gât, dar nu are cap, în dreapta și răspunsul Sticla','Desenat de PowerPoint: ce vede publicul <b>înainte de clic</b> și <b>după primul clic</b>. Efectul ajută: ascunde răspunsul până îl spui.')}`,
+   exemplu:`<p>Ana își privește prezentarea cu <kbd>F5</kbd>. Titlul se învârte singur și nu se poate citi: încurcă. „Ghicitoare” intră în 3 secunde: Ana dă clic, dar clicul doar termină tranziția. Încurcă și asta. La ghicitoare, răspunsul apare abia la clic: ajută, deci îl păstrează.</p>
+<p>Iese cu <kbd>Esc</kbd> și scoate efectul titlului: clic pe titlu → Animații (Animations) → Fără (None).</p>`,
+   altfel:`<p>Un efect e ca un gest când vorbești. Arăți cu mâna spre hartă: ajută. Dai din mâini tot timpul: colegii se uită la mâini, nu te mai ascultă.</p>`,
+   incearca:{t:'ppta',f5:true,q:simScurt({f5:1})+'Pe „Ghicitoarea 2” sunt trei efecte. Privește-le cu <b>Preview</b> (Previzualizare) de pe fila Animations. Păstrează doar efectul care ajută ideea și scoate-le pe celelalte, fără să ștergi obiecte. Apoi apasă <kbd>F5</kbd> și privește ghicitoarea ca publicul, clic cu clic; <kbd>Esc</kbd> te scoate.',start:{deck:'l7_decor',cur:1,tab:'animations'},
+     teste:[{ce:'A rămas doar efectul care ajută ideea',c:[{k:'nrAn',d:2,n:1},{k:'laClic',d:2,o:{ref:'r'},n:1}],ajutor:'Care efect ascunde ceva până îl spui? Pe celelalte le scoți: clic pe obiect, apoi None (Fără) din galerie.'},
+       {ce:'Obiectele au rămas toate pe diapozitiv (întrebarea, răspunsul, steaua)',c:[{k:'nobj',d:2,n:3}],ajutor:'Ai șters un obiect? Ctrl+Z. Ca să scoți doar efectul: clic pe obiect, apoi None (Fără) din galerie. Delete pe obiectul ales șterge tot obiectul.'},
+       {ce:'Ai privit ghicitoarea în expunere (F5)',c:[{k:'ev',e:'expunere'}],ajutor:'Apasă F5 (pe telefon, butonul F5 de sub fereastră) sau fila Slide Show → From Beginning.'}],
+     rez:['tab-animations',{alege:{ref:'q'}},'an:None',{alege:{ref:'stea'}},'an:None','f5','next','next','esc'],gresit:['tab-animations',{alege:{ref:'q'}},'an:None',{alege:{ref:'r'}},'an:None','f5','esc'],
+     rezText:'clic pe întrebare → None (Fără); clic pe stea → None (Fără); răspunsul își păstrează efectul; apoi F5, clic, clic, Esc',ajutor:'Întrebarea care se învârte se poate citi? Steaua care sare spune ceva despre ghicitoare?',
+     why:'Întrebarea care se învârte nu se poate citi, iar steaua care sare e doar decor: amândouă încurcă. Răspunsul care apare la clic ajută: în expunere ai văzut întâi întrebarea și abia la clic răspunsul.'},
+   inca:[
+    {t:'classify',q:'Ajută sau încurcă?',cats:['Ajută','Încurcă'],items:[['Răspunsul unei ghicitori apare abia la clic',0],['Etapele unui experiment apar pe rând, când le explici',0],['Fiecare diapozitiv intră cu altă tranziție',1],['Titlul se învârte când apare',1],['O tranziție care ține 5 secunde',1]],
+     ajutor:'Întreabă-te la fiecare: efectul arată ordinea sau ascunde ceva până îl spui?',why:'Ajută efectele care arată ordinea sau ascund ceva până îl spui. Încurcă cele puse doar ca decor: tranziții schimbate mereu, efecte lente, obiecte care se învârt.'},
+    {t:'choice',q:'În expunere, ești pe un diapozitiv din mijlocul prezentării, cu 2 efecte La clic, iar efectele s-au terminat. Ai dat deja 2 clicuri. Ce face al treilea clic?',
+     o:['Aduce diapozitivul următor, cu tranziția lui','Pornește din nou primul efect al diapozitivului','Nu face nimic: diapozitivul rămâne pe ecran','Închide expunerea și te întoarce la lucru'],ok:0,ajutor:'Ce vine după ultimul număr?',
+     why:'După ultimul efect al diapozitivului, clicul următor aduce diapozitivul următor, cu tranziția lui. Expunerea se închide abia după ultimul diapozitiv și ecranul negru de final.'}
+   ]}
+ ],
+ atelier:{t:'ppta',titlu:'Repară prezentarea „Ciclul apei”',
+  intro:SIM_INTRO+'<p><strong>Sarcina:</strong> prezentarea Anei, „Ciclul apei”, are efecte care încurcă. Fiecare diapozitiv intră cu altă tranziție, unele lente. Titlul se învârte. Etapele apei apar toate deodată, în ordinea greșită. La ghicitoare, răspunsul se vede de la început. Repar-o, apoi privește-o ca publicul, cu <kbd>F5</kbd>, până la ecranul negru de final. Urmează testele de sub fereastră; ordinea în care le faci o alegi tu.</p>',
+  q:'Repară prezentarea „Ciclul apei”.',f5:true,start:{deck:'l7_atelier',cur:0},
+  teste:[
+   {ce:'Toate diapozitivele au aceeași tranziție (una singură, nu None)',c:[{k:'trToate'}],ajutor:'Pune o tranziție pe un diapozitiv, apoi Apply To All (Se aplică pentru toate).'},
+   {ce:'Tranzițiile sunt scurte: fiecare ține cel mult 1 secundă',c:[{k:'trToate'},{k:'trDurMax',max:1}],ajutor:'Caseta Duration (Durată): un număr cel mult 1, de exemplu 0,5, Enter, apoi din nou Apply To All.'},
+   {ce:'Titlul „Ciclul apei” nu se mai învârte (nu mai are animație)',c:[{k:'faraAn',d:1,o:{ph:'titlu'}},{k:'titlu',d:1,val:'Ciclul apei'}],ajutor:'Diapozitivul 1: clic pe titlu, fila Animations (Animații), None (Fără).'},
+   {ce:'Pe „Cum circulă apa”, etapele apar în ordinea 1, 2, 3, fiecare la clicul ei',c:[{k:'ordine',d:'Cum circulă apa',val:[ETAPA(1),ETAPA(2),ETAPA(3)]},{k:'laClic',d:'Cum circulă apa',o:ETAPA(1),n:1},{k:'laClic',d:'Cum circulă apa',o:ETAPA(2),n:2},{k:'laClic',d:'Cum circulă apa',o:ETAPA(3),n:3}],ajutor:'Animation Pane: pune etapele în ordine cu ▲ ▼; apoi fiecăreia Start (Pornire): On Click (La clic).'},
+   {ce:'Pe „Ghicitoare”, răspunsul apare abia la clic, iar întrebarea se vede de la început',c:[{k:'laClic',d:'Ghicitoare',o:{ref:'r'},n:1},{k:'vizibil',d:'Ghicitoare',o:{ref:'q'}}],ajutor:'Clic pe caseta „Norul!”, apoi un efect de intrare din galerie, de exemplu Fade.'},
+   {ce:'Nu ai șters niciun obiect: ai reparat doar efectele',c:[{k:'nobj',d:'Cum circulă apa',n:4},{k:'nobj',d:'Ghicitoare',n:2},{k:'nr',n:5}],ajutor:'Ai șters ceva? Ctrl+Z.'},
+   {ce:'Ai privit prezentarea ca publicul: expunere (F5), clic după clic, până la ecranul negru de final',c:[{k:'ev',e:'expunereFinal'}],ajutor:'Apasă F5 (sau fila Slide Show → From Beginning) și dă clic până apare ecranul negru.'}],
+  rez:['mini-1','tab-transitions','tr:Fade','apply-all','tab-animations','mini-1',{alege:{ph:'titlu'}},'an:None',
+   'mini-2','panou',{ef:ETAPA(1)},'mai-devreme',{ef:ETAPA(2)},'mai-devreme',{ef:ETAPA(1)},{start:'clic'},{ef:ETAPA(2)},{start:'clic'},
+   'mini-3',{alege:{ref:'r'}},'an:Fade','f5','next','next','next','next','next','next','next','next','next'],
+  gresit:['mini-1','tab-transitions','tr:Fade','tab-animations','mini-1',{alege:{ph:'titlu'}},'an:None',
+   'mini-2','panou',{ef:ETAPA(1)},'mai-devreme',{ef:ETAPA(2)},'mai-devreme',{ef:ETAPA(1)},{start:'clic'},{ef:ETAPA(2)},{start:'clic'},
+   'mini-3',{alege:{ref:'r'}},'an:Fade','f5','next','next','next','next','next','next','next','next','next'],
+  rezText:'miniatura 1 → Fade → Apply To All; titlul de pe diapozitivul 1 → None; pe „Cum circulă apa”, în Animation Pane, etapele 1 și 2 urcate cu ▲ și puse On Click; pe „Ghicitoare”, răspunsul → Fade; apoi F5 și clic până la ecranul negru',
+  ajutor:'Lucrează test cu test. Ai greșit? Ctrl+Z.',
+  why:'Ai scos decorul și ai păstrat efectele care ajută. <b>Ce am învățat:</b> tranziția se pune pe diapozitivul care vine, iar pe toate pui aceeași tranziție, scurtă (Durată, Se aplică pentru toate); animația se pune pe un obiect, iar numărul ei e clicul la care pornește; ordinea o schimbi în Panou animație, pornirea din lista Pornire (Start); privești totul ca publicul, cu <kbd>F5</kbd>, și păstrezi doar efectele care arată ordinea sau ascund ceva până îl spui.'},
+ qs:[
+  {t:'choice',q:'În Panou animație sunt, de sus în jos: titlul, care pornește La clic; o imagine, care pornește Cu precedentul; caseta A, care pornește La clic; caseta B, care pornește După precedentul. Ce numere scrie pe diapozitiv lângă imagine și lângă caseta B?',
+   o:['1 și 2','2 și 3','0 și 2','1 și 3'],ok:0,ajutor:'Doar efectele La clic primesc un număr nou.',
+   why:'Titlul are 1, iar imaginea pornește odată cu el, deci tot 1. Caseta A cere un clic nou: 2. Caseta B pornește după ea, fără clic: tot 2.'},
+  {t:'ppta',q:simScurt({dur:1})+'Prezentarea „Excursia la munte” nu are tranziții. Pune pe <b>toate</b> diapozitivele tranziția <b>Wipe</b>, cu durata de <b>0,75</b> secunde.',start:{deck:'l7_excursie',cur:0},
+   teste:[{ce:'Toate diapozitivele au tranziția Wipe',c:[{k:'trToate',ef:'Wipe'}]},{ce:'Fiecare tranziție ține 0,75 secunde',c:[{k:'trDur',v:0.75}]}],
+   rez:['tab-transitions','tr:Wipe',{trDur:0.75},'apply-all'],gresit:['tab-transitions','tr:Wipe','apply-all'],
+   rezText:'Transitions (Tranziții) → Wipe → Duration (Durată): 0,75 → Apply To All (Se aplică pentru toate)',ajutor:'Întâi efectul și durata pe un diapozitiv, apoi butonul care le copiază peste tot.',
+   why:'Apply To All (Se aplică pentru toate) copiază tranziția diapozitivului ales, cu durata ei, pe toate diapozitivele. Dacă apeși înainte să schimbi durata, se copiază durata veche.'},
+  {t:'ppta',q:SIM_SCURT+'Pe „Ghicitoarea 3”, răspunsul („Acul!”) trebuie să apară la primul clic, cu efectul <b>Fly In</b>. Steaua să apară <b>odată cu</b> răspunsul, fără alt clic. Întrebarea rămâne pe ecran de la început.',start:{deck:'l7_ghicitoare3',cur:1},
+   teste:[{ce:'Răspunsul apare la primul clic, cu Fly In',c:[{k:'an',d:2,o:{ref:'r'},ef:'Fly In'},{k:'laClic',d:2,o:{ref:'r'},n:1}]},
+     {ce:'Steaua apare odată cu răspunsul (With Previous, Cu precedentul), nu la un clic separat',c:[{k:'an',d:2,o:{ref:'stea'},fam:'in',start:'cu'},{k:'ordine',d:2,val:[{ref:'r'},{ref:'stea'}]},{k:'clicuri',d:2,n:1}]},
+     {ce:'Întrebarea se vede de la început',c:[{k:'vizibil',d:2,o:{ref:'q'}}]}],
+   rez:['tab-animations',{alege:{ref:'r'}},'an:Fly In',{alege:{ref:'stea'}},'an:Appear',{start:'cu'}],gresit:['tab-animations',{alege:{ref:'r'}},'an:Fly In',{alege:{ref:'stea'}},'an:Appear'],
+   rezText:'clic pe „Acul!” → Animations (Animații) → Fly In; clic pe stea → un efect de intrare (de exemplu Appear) → Start (Pornire): With Previous (Cu precedentul)',ajutor:'Ce număr are steaua? Trebuie să fie același cu al răspunsului.',
+   why:'Răspunsul are 1. Steaua pornește Cu precedentul, deci tot la clicul 1: pe diapozitiv e un singur clic, iar cele două apar împreună.'},
+  {t:'ppta',q:SIM_SCURT+'În prezentarea „La grădina zoologică”, după „Leii”, diapozitivul <b>Girafele</b> trebuie să apară alunecând (efectul <b>Push</b>). Celelalte diapozitive rămân fără tranziție.',start:{deck:'l7_zoo',cur:0},
+   teste:[{ce:'„Girafele” are tranziția Push',c:[{k:'tr',d:3,ef:'Push'}]},{ce:'Celelalte diapozitive nu au tranziție',c:[{k:'faraTr',d:1},{k:'faraTr',d:2},{k:'faraTr',d:4}]}],
+   rez:['mini-3','tab-transitions','tr:Push'],gresit:['mini-2','tab-transitions','tr:Push'],
+   rezText:'clic pe miniatura 3, „Girafele” → Transitions (Tranziții) → Push',ajutor:'Care diapozitiv vine: „Leii” sau „Girafele”?',
+   why:'Tranziția e a diapozitivului care vine: „Girafele” apare alunecând după „Leii”, iar „Leii” rămâne neatins.'},
+  {t:'choice',q:'Care efect ajută publicul?',
+   o:['Punctele unei liste apar pe rând, la clic, când vorbești despre ele','Fiecare literă a titlului intră separat, una după alta, încet','Fiecare diapozitiv intră cu altă tranziție și cu alt sunet','O poză cu o minge sare de trei ori când apare pe diapozitiv'],ok:0,
+   ajutor:'Care efect arată ordinea în care vorbești?',
+   why:'Punctele care apar pe rând țin atenția pe ce spui. Celelalte sunt decor: se văd efectele, nu ideile.'}
+ ]
+};
+
+/* „Acum în PowerPoint-ul adevărat”: aceeași prezentare, descărcată (făcută în PowerPoint prin COM, _proba/fa_pptx.py) */
+const DESCARCA='<a class="descarca" href="ciclul-apei-de-reparat.pptx" download>⬇ ciclul-apei-de-reparat.pptx</a>';
+const PASI_REAL=[
+  `Descarcă prezentarea de lucru: ${DESCARCA}. E aceeași ca în atelier. Deschide fișierul descărcat (clic pe el, în lista de descărcări a browserului): se deschide în PowerPoint.`,
+  'Dacă sus apare o bară galbenă, <b>Vizualizare protejată (Protected View)</b>, apasă pe ea butonul <b>Activare editare (Enable Editing)</b>. Fără el nu poți schimba nimic.',
+  'Clic pe miniatura 1. Fila <b>Tranziții (Transitions)</b> → <b>Fade</b>. În caseta <b>Durată (Duration)</b> scrie <code>0,5</code> (sau <code>0.5</code>, dacă acolo scrie cu punct) și apasă <kbd>Enter</kbd>. Apoi <b>Se aplică pentru toate (Apply To All)</b>.',
+  'Pe diapozitivul 1, clic pe titlul „Ciclul apei”. Fila <b>Animații (Animations)</b> → <b>Fără (None)</b>: titlul nu se mai învârte.',
+  'Clic pe miniatura 2, „Cum circulă apa”. Pe fila Animații apasă <b>Panou animație (Animation Pane)</b>. În listă alege „Etapa 1” și apasă ▲ până ajunge prima; apoi „Etapa 2”, până ajunge a doua.',
+  'Tot în panou, alege pe rând fiecare etapă și, în lista <b>Pornire (Start)</b>, alege <b>La clic (On Click)</b>. Pe diapozitiv trebuie să vezi numerele 1, 2, 3.',
+  'Clic pe miniatura 3, „Ghicitoare”. Clic pe caseta „Norul!” → Animații (Animations) → <b>Fade</b>. Lângă ea apare 1.',
+  'Apasă <kbd>F5</kbd> și privește ca publicul, clic după clic: etapele apar pe rând, iar răspunsul ghicitorii abia la clic. La ecranul negru de final, încă un clic te scoate. Ceva nu e bine? <kbd>Esc</kbd>, repari, apoi din nou <kbd>F5</kbd>.',
+  'Salvează cu un nume nou (lecția 3): <b>Fișier (File) → Salvare ca (Save As)</b>, de exemplu <code>Ciclul_apei_6A_Popescu.pptx</code>.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vi_m1_l07',
+  mod:'lectie',
+  titlu:'Efecte de animație și de tranziție. Când ajută și când încurcă',
+  marca:'Lecția <b>7</b> · clasa a VI-a',
+  h1:'Efecte de animație și de tranziție. <span class="acc">Când ajută și când încurcă</span>',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VI-a',
+  unitate:'VI-U1',
+  unitateTitlu:'Prezentări digitale',
+  competente:['CS.1.1','CS.3.1'],
+  lectii:'7',
+  ancoraText:'Programa (OMEN 3393/2017), clasa a VI-a, CS.1.1 și CS.3.1 · unitatea VI-U1 „Prezentări digitale” · lecția 7 din modulul 1 · conținuturile: „Efecte de animație”, „Efecte de tranziție”',
+  intro:'Lecția 7 din modulul 1. Înveți să pui <b>tranziții</b> pe diapozitive și <b>animații</b> pe obiecte, să le alegi ordinea și momentul, apoi să judeci ca publicul: efectul <b>ajută</b> ideea sau o <b>încurcă</b>? Exersezi într-un PowerPoint simulat chiar în pagină, apoi în PowerPoint-ul adevărat, pe o prezentare pe care o descarci de aici. <b>Ai nevoie de:</b> lecțiile 2, 4 și 5. Poți lucra singur: fiecare pas are un exemplu și un exercițiu cu indiciu.',
+  cum:`<b>Cum lucrezi</b><ol>
+<li><b>Învață</b>: primul pas îți spune la ce folosește lecția; apoi urmează 6 pași scurți, câte o idee, cu un exemplu „Uite cum”. Nu ai înțeles? „Explică-mi altfel”.</li>
+<li><b>Încearcă tu</b>: după fiecare pas, un exercițiu în PowerPoint-ul simulat, fără note. Greșești? Primești un indiciu. „Încă un exercițiu” îți dă altele.</li>
+<li><b>Atelier</b>: repari o prezentare întreagă în simulator și o privești ca publicul. Testele se bifează singure.</li>
+<li><b>Acum în PowerPoint-ul adevărat</b>: descarci aceeași prezentare și o repari în PowerPoint, pas cu pas.</li>
+<li><b>Verificare</b>: 5 întrebări, doar din ce ai învățat în pași. Stele pentru răspunsurile din prima.</li></ol>`,
+  banda:'<span></span><span></span><span></span><span></span><span class="stea"></span><span></span><span></span>',
+  nivele:[LECTIA],
+  tipuri:{ppta:SimPPTAnim},
+  aplicatieReala:{aplicatie:'PowerPoint-ul de pe calculator',titlu:'Acum în PowerPoint-ul adevărat',
+    intro:'<p>Ai exersat în simulator. Acum repari aceeași prezentare în PowerPoint-ul de pe calculator. Nu ai nevoie de profesor: descarci fișierul de mai jos și urmezi pașii, unul câte unul. În PowerPoint efectele arată puțin altfel decât în simulator; ordinea, numerele și clicurile sunt aceleași.</p>',
+    pasi:PASI_REAL},
+  diploma:{
+    titlu:'Regizor de prezentări',
+    rezumat:'tranziția pusă pe diapozitivul care vine, aceeași și scurtă pe toate (Durată, Se aplică pentru toate), animația de intrare pe un obiect, numerele care arată clicurile, ordinea din Panou animație, pornirea La clic, Cu precedentul sau După precedentul, expunerea cu F5. Ce am învățat: păstrezi doar efectele care arată ordinea sau ascund ceva până îl spui; decorul încurcă',
+    aplicatie:'PowerPoint-ul de pe calculator',
+    provocare:PASI_REAL
+  }
+});
+</script>
+</body>
+</html>
