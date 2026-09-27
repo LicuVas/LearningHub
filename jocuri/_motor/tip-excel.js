@@ -161,13 +161,19 @@ function rescrieText(t,mA,mC,mR,nume){let kbd=false;return String(t||'').split(/
     .replace(/\b(coloan(?:a|ei|ele))(\s+)([A-Z]{1,2})\b/g,(m,w,s,c)=>w+s+mC(c))
     .replace(/(rând(?:ul|ului))(\s+)(\d+)\b/g,(m,w,s,n)=>w+s+mR(Number(n)))
     .replace(/[A-ZĂÂÎȘȚ][a-zăâîșț]+/g,w=>(nume&&nume[w])||w)}).join('')}
+/* 27.09.2026 (defect LIVE, excel-viii nivelul 2: o copiere corectă respinsă cu „În E2 trebuie scris „Ana””, deși în foaie
+   scria „Bianca”): valorile AȘTEPTATE urmează aceeași substituție ca foaia și textul. Numele schimbate în foaie se
+   schimbă și în verifica.valori și în textul dintre ghilimele al formulelor; un număr pe care verificarea îl așteaptă
+   ca atare (ex. nota copiată, 9) rămâne neschimbat în foaie, altfel verificarea ar cere un număr care nu mai e pe ecran. */
+const areCheie=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 function varianta(Q){
   const [dr,dc]=DEPL[rnd(DEPL.length)],V=JSON.parse(JSON.stringify(Q.verifica||{}));
   const cells={},folosite=new Set(),nume={};
+  const ramanNr=new Set(Object.values((Q.verifica||{}).valori||{}).filter(v=>typeof v==='number'));
   // rândul capului „Elev”/„Nume” din coloana A; fără el, tabelul nu e cu elevi și numele nu se ating
   const capElevi=Object.entries(Q.cells||{}).filter(([a,v])=>/^A\d+$/.test(a)&&typeof v==='string'&&CAP_ELEVI.test(v.trim())).map(([a])=>Number(a.slice(1))).sort((x,y)=>x-y)[0];
   Object.entries(Q.cells||{}).forEach(([a,v])=>{let x=v;const p=a.match(/^([A-Z]+)(\d+)$/);
-    if(typeof v==='number'){if(Number.isInteger(v)&&v>=1&&v<=10)x=1+rnd(10);else if(Number.isInteger(v))x=Math.max(1,Math.round(v*(0.5+Math.random())));else{const d=(String(v).split('.')[1]||'').length;x=Number((v*(0.6+Math.random()*0.8)).toFixed(d))}}
+    if(typeof v==='number'){if(ramanNr.has(v))x=v;else if(Number.isInteger(v)&&v>=1&&v<=10)x=1+rnd(10);else if(Number.isInteger(v))x=Math.max(1,Math.round(v*(0.5+Math.random())));else{const d=(String(v).split('.')[1]||'').length;x=Number((v*(0.6+Math.random()*0.8)).toFixed(d))}}
     else if(typeof v==='string'&&capElevi&&p[1]==='A'&&Number(p[2])>capElevi&&/^[A-ZĂÂÎȘȚ][a-zăâîșț]+$/.test(v)&&!/^(Suma|Media|Maxim|Minim|Total|Luni|Marți|Miercuri|Joi|Vineri|Sâmbătă|Duminică)$/.test(v)){
       if(!nume[v]){const f=esteFem(v),pool=NUME.filter(n=>esteFem(n)===f&&!folosite.has(n)),din=pool.length?pool:NUME.filter(n=>!folosite.has(n));
         const n=din[rnd(din.length)];folosite.add(n);nume[v]=n;
@@ -178,6 +184,13 @@ function varianta(Q){
   const mA=a=>mutaAdr(a,dr,dc),mO=o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[k.includes(':')?k.split(':').map(mA).join(':'):mA(k),typeof v==='string'&&v.startsWith('=')?mutaFormula(v,dr,dc):v]));
   if(V.sel)V.sel=mA(V.sel);if(V.zona)V.zona=V.zona.split(':').map(mA).join(':');
   ['valori','formule','format'].forEach(k=>{if(V[k])V[k]=mO(V[k])});
+  if(Object.keys(nume).length){   // aceeași schimbare de nume în ce se AȘTEAPTĂ (valori, text între ghilimele în formule)
+    const nn=s=>typeof s==='string'&&areCheie(nume,s)?nume[s]:s;
+    const nf=f=>typeof f==='string'&&f.startsWith('=')?f.replace(/"([^"]*)"/g,(m,s)=>'"'+s.replace(/[A-ZĂÂÎȘȚ][a-zăâîșț]+/g,w=>areCheie(nume,w)?nume[w]:w)+'"'):f;
+    if(V.valori)V.valori=Object.fromEntries(Object.entries(V.valori).map(([k,v])=>[k,nn(v)]));
+    if(V.formule)V.formule=Object.fromEntries(Object.entries(V.formule).map(([k,v])=>[k,nf(v)]));
+    Object.keys(cells).forEach(a=>{cells[a]=nf(cells[a])});
+  }
   if(V.umplut)V.umplut=Object.fromEntries(Object.entries(V.umplut).map(([k,d])=>[mA(k),d.map(mA)]));
   if(V.gol)V.gol=V.gol.map(mA);if(V.imbinat)V.imbinat=V.imbinat.split(':').map(mA).join(':');
   if(V.sortat)V.sortat={...V.sortat,zona:V.sortat.zona.split(':').map(mA).join(':'),dupa:V.sortat.dupa.map(k=>({...k,col:mA(k.col+'1').replace(/\d+$/,'')}))};
@@ -325,6 +338,7 @@ function render(Q,body,api){
 
   // ---------------- desenarea ----------------
   function modAcum(){if(!ed)return 'gata';if(ed.pt||asteaptaAdresa())return 'point';return ed.mode}
+  let stMax=0;   // cea mai mare înălțime a barei de stare de până acum (vezi finalul lui draw)
   function draw(){
     const aveaFocus=document.activeElement&&document.activeElement.id==='xgw';
     const z=zona(),a=adr(act.c,act.r);
@@ -360,6 +374,10 @@ function render(Q,body,api){
       ${sortDlg?sortHtml():''}${GRAF?grafHtml():''}
       ${liber?'<div class="info">Foaia e a ta: încearcă ce vrei în ea (nu se notează), apoi alege răspunsul de mai jos.</div>':''}</div>`;
     body.querySelector('#xwrap').innerHTML=h;wire();
+    /* Bara de stare (Medie / Număr / Sumă) nu se mai strânge la loc (27.09.2026): pe telefon, cu pagina derulată până la
+       capăt, bara scădea la primul clic al unei noi trageri, pagina se scurta, browserul o derula ~54 px, iar celula de
+       sub deget se schimba. Ca în Excel, bara își păstrează înălțimea. */
+    const stb=body.querySelector('#xst');if(stb){stb.style.boxSizing='border-box';stMax=Math.max(stMax,stb.getBoundingClientRect().height);stb.style.minHeight=stMax+'px'}
     if(aveaFocus&&!ed){const g=gw();if(g)g.focus({preventScroll:true})}
   }
   // ---------------- panglica ----------------
@@ -583,9 +601,9 @@ function render(Q,body,api){
     salveaza();
     if(peZona){const z=zona();for(let c=z.c1;c<=z.c2;c++)for(let r=z.r1;r<=z.r2;r++){const t=f.startsWith('=')?E().shift(f,r-act.r,c-act.c):f;if(t==='')delete RAW[adr(c,r)];else RAW[adr(c,r)]=t}}
     else{const a=adr(act.c,act.r);if(f==='')delete RAW[a];else RAW[a]=f}
-    ed=null;curent='';lista=null;if(!peZona)muta(dir);draw();gw().focus();return true;
+    ed=null;curent='';lista=null;if(!peZona)muta(dir);draw();gw().focus({preventScroll:true});return true;
   }
-  function renunta(){ed=null;curent='';lista=null;draw();gw().focus()}
+  function renunta(){ed=null;curent='';lista=null;draw();gw().focus({preventScroll:true})}
   function muta(dir,extinde){
     if(!dir)return;const d={jos:[0,1],sus:[0,-1],dreapta:[1,0],stanga:[-1,0]}[dir];
     if(extinde){fin={c:lim(fin.c+d[0],cols),r:lim(fin.r+d[1],rows)};return}
@@ -622,7 +640,8 @@ function render(Q,body,api){
     if(umpleDin(src,jos?{c:z.c2,r:z.r2}:{c:z.c2,r:z.r2}))gest.add('ctrl-d');draw();
   }
   function copiaza(taie){const z=zona();clip={z,taie,date:{}};for(let c=z.c1;c<=z.c2;c++)for(let r=z.r1;r<=z.r2;r++)clip.date[adr(c-z.c1,r-z.r1)]=RAW[adr(c,r)]??'';
-    gest.add('copiere');try{navigator.clipboard&&navigator.clipboard.writeText(tsv(z))}catch(e){}draw()}
+    // writeText întoarce o promisiune: un clipboard refuzat (fără permisiune, fără focus) nu mai scapă ca eroare în consolă (27.09.2026)
+    gest.add('copiere');try{if(navigator.clipboard&&navigator.clipboard.writeText){const pr=navigator.clipboard.writeText(tsv(z));if(pr&&pr.catch)pr.catch(()=>{})}}catch(e){}draw()}
   function lipeste(){if(!clip)return;salveaza();const z=clip.z,h=z.r2-z.r1+1,w=z.c2-z.c1+1;
     for(let dc=0;dc<w;dc++)for(let dr=0;dr<h;dr++){const v=clip.date[adr(dc,dr)];const c=act.c+dc,r=act.r+dr;if(c>=cols||r>=rows)continue;
       const t=v.startsWith('=')&&!clip.taie?E().shift(v,r-(z.r1+dr),c-(z.c1+dc)):v;if(t==='')delete RAW[adr(c,r)];else RAW[adr(c,r)]=t}
@@ -677,8 +696,8 @@ function render(Q,body,api){
     Q_('[data-al]').forEach(b=>b.onclick=()=>aplica('al',b.dataset.al));
     Q_('[data-nf]').forEach(s=>{const f=FMT[adr(act.c,act.r)]||{};s.value=f.nf||'';s.onchange=()=>aplica('nf',s.value)});
     Q_('[data-gr]').forEach(b=>b.onclick=()=>{if(b.dataset.gr==='sterge'){salveaza();GRAF=null;draw()}else faGrafic(b.dataset.gr)});
-    Q_('[data-ud]').forEach(b=>b.onclick=()=>{if(b.dataset.ud==='undo')anuleaza();else reface();gw().focus()});
-    Q_('[data-gt]').forEach(x=>{x.addEventListener('input',()=>{if(GRAF)GRAF.titlu=x.value});x.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();gw().focus()}})});
+    Q_('[data-ud]').forEach(b=>b.onclick=()=>{if(b.dataset.ud==='undo')anuleaza();else reface();gw().focus({preventScroll:true})});
+    Q_('[data-gt]').forEach(x=>{x.addEventListener('input',()=>{if(GRAF)GRAF.titlu=x.value});x.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();gw().focus({preventScroll:true})}})});
     Q_('[data-so]').forEach(b=>b.onclick=()=>{const z=regiune();const antet=areAntet(z);
       // Excel: dacă ai selectat doar o parte dintr-un tabel (ex. o coloană) întreabă dacă extinde selecția
       const tot=regiuneCurenta();const sel=zona();
@@ -707,7 +726,8 @@ function render(Q,body,api){
       const acum=Date.now(),dublu=ultimClic&&ultimClic.c===p.c&&ultimClic.r===p.r&&acum-ultimClic.t<450;
       ultimClic=null;apasat={c:p.c,r:p.r,t:acum};
       if(dublu&&!ev.shiftKey){act=p;fin=p;incepe(RAW[adr(p.c,p.r)]??'','edit');return}
-      if(ev.shiftKey){fin=p}else{act=p;fin=p}dragSel=true;dragMutat=false;draw();gw().focus();
+      // preventScroll (27.09.2026, lecția VIII/4): fără el, focus() derula pagina la începutul tragerii și celula de sub mouse se schimba
+      if(ev.shiftKey){fin=p}else{act=p;fin=p}dragSel=true;dragMutat=false;draw();gw().focus({preventScroll:true});
     });
     g.addEventListener('pointermove',ev=>{
       if(fillTo){const p=celulaDin(ev);if(p){const z=zona();fillTo=p.r-z.r2>=p.c-z.c2?{c:z.c2,r:Math.max(z.r2,p.r)}:{c:Math.max(z.c2,p.c),r:z.r2};draw()}return}

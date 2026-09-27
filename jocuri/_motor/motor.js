@@ -58,13 +58,56 @@ function totals(){let st=0,xp=0;for(const k in S.lv){st+=S.lv[k].stars||0;xp+=S.
 const unlocked=i=>i===0||!!S.lv[i-1];
 const starsHtml=n=>[0,1,2].map(i=>i<n?'<span class="on">★</span>':'<span>☆</span>').join('');
 
+/* ---------------- MODUL LECȚIE (27.09.2026) ----------------
+   Situl se reface: o lecție din plan = o pagină în lectii/<clasa>/m1-lNN/ = UN nivel pe pași pe motorul ăsta.
+   `mod:'lectie'` în configurație schimbă DOAR ce ar spune „joc”: firimiturile (LearningHub › Lecții › Clasa a VII-a ›
+   Lecția 4) și butoanele duc la pagina clasei (../index.html, „Toate lecțiile clasei”), textele spun „Lecția 4” în loc
+   de „Nivelul 1 din 1”, iar după atelier vine pasul „Acum în aplicația adevărată”, ÎNAINTE de verificare (standardul
+   lecției, 05_STANDARD_LECTIE.md). Conținutul lui: `aplicatieReala:{aplicatie, titlu?, intro?, pasi:[…]}` (în
+   configurație sau pe nivel); fără el, `diploma.aplicatie` + `diploma.provocare`. Diploma îl repetă pe scurt.
+   Opționale: `clasaSlug:'vii'` (implicit din cale /lectii/<clasa>/, apoi din `clasa`), `lectiaNr:4` (implicit din
+   cheia `…_lNN`, apoi din cale, apoi din `lectii`). Fără `mod:'lectie'` nimic de aici nu se folosește. */
+const eLectie=()=>!!C&&C.mod==='lectie';
+function lectieInfo(){
+  const pm=location.pathname.match(/\/lectii\/([a-z]+)\/m(\d+)-l(\d+)\//i),cm=String(C.clasa||'').match(/([IVX]+)/);
+  const km=String(C.cheie||'').match(/_m(\d+)_l(\d+)$/);
+  const slug=String(C.clasaSlug||(pm?pm[1]:cm?cm[1]:'')).toLowerCase();
+  const nr=C.lectiaNr!=null?+C.lectiaNr:km?+km[2]:pm?+pm[3]:(parseInt(C.lectii,10)||'');
+  return {slug,nr,modul:pm?+pm[2]:km?+km[1]:1,pm};
+}
+/* „Pasul 2”, „Atelier”… : unde e elevul în lecție (ultima firimitură) */
+function etapaLectie(){
+  const n=C.nivele.length,pre=n>1?`Partea ${R.li+1} · `:'';
+  const e=R.phase==='learn'?`Pasul ${R.si+1} din ${C.nivele[R.li].pasi.length}`:R.phase==='atelier'?'Atelier':R.phase==='real'?esc(numeReal(C.nivele[R.li],'În aplicația adevărată'))
+    :R.phase==='q'?'Verificare':R.phase==='end'?'Gata':'Citire';
+  return pre+e;
+}
+/* pasul „Acum în aplicația adevărată” (doar în modul lecție și doar dacă are pași) */
+function aplicatieReala(Lv){
+  if(!eLectie()||!Lv)return null;
+  const A=Lv.aplicatieReala||C.aplicatieReala||{},D=C.diploma||{},pasi=A.pasi||D.provocare||[];
+  if(!pasi.length)return null;
+  return {aplicatie:A.aplicatie||D.aplicatie||'',titlu:A.titlu||'',scurt:A.scurt||'',intro:A.intro||'',pasi};
+}
+/* Numele pasului (27.09.2026, judecătorul lecției V/4: „aplicația adevărată” într-o lecție care tocmai a predat că
+   aplicație = program, deși pasul se face la calculatorul din laborator): dacă `aplicatieReala.titlu` există, EL e
+   textul pe buton, în titlu, în firimituri, în bara de sus, pe diplomă și în cuprins; `aplicatieReala.scurt` e
+   eticheta filei (implicit „Aplicația”). Fără `titlu`, textele implicite de mai jos. Întoarce text simplu (nu HTML). */
+function numeReal(Lv,implicit){const A=aplicatieReala(Lv);return A&&A.titlu?A.titlu:implicit}
+/* numele din panoul profesorului și din jurnalul elevului: să se vadă că e o lecție, nu un joc */
+function titluRaport(){
+  if(!eLectie())return C.titlu;
+  const I=lectieInfo();return `Lecția ${I.nr} (clasa ${C.clasa}): ${C.titlu}`;
+}
+
 function setHud(){
   const t=totals();
   if(R){
     const Lv=C.nivele[R.li];
-    const nb=`${C.mod==='antrenament'?'Runda':'Nivelul'} ${R.li+1} din ${C.nivele.length}`;
+    const nb=eLectie()?nivelEticheta(R.li):`${C.mod==='antrenament'?'Runda':'Nivelul'} ${R.li+1} din ${C.nivele.length}`;
     const txt=R.phase==='q'?`${Lv.pasi?'Verificarea':'Întrebarea'} ${R.qi+1} din ${Lv.qs.length} · ${R.xp} XP`:R.phase==='read'?`Citire · ${esc(Lv.t)}`
-      :R.phase==='learn'?`Învață · pasul ${R.si+1} din ${Lv.pasi.length}`:R.phase==='atelier'?'Atelier · fă-o ca în aplicația reală':`Nivel terminat · ${R.xp} XP`;
+      :R.phase==='learn'?`Învață · pasul ${R.si+1} din ${Lv.pasi.length}`:R.phase==='atelier'?'Atelier · fă-o ca în aplicația reală'
+      :R.phase==='real'?esc(numeReal(Lv,'Acum în aplicația adevărată')):`${eLectie()?'Lecție terminată':'Nivel terminat'} · ${R.xp} XP`;
     hud.innerHTML=`<span class="nb">${nb}</span><span class="fv">${txt}${R.streak>=2?` <span class="hot">serie ×${R.streak}</span>`:''}</span>`;
   }else hud.innerHTML=`<span class="nb">TOTAL</span><span class="fv">★ ${t.st}/${C.nivele.length*3} · ${t.xp} XP</span>`;
 }
@@ -77,6 +120,16 @@ function setCrumbs(){
   const nav=document.getElementById('crumbs');if(!nav)return;
   const m=String(C.clasa).match(/([IVX]+)/),cls=m?m[1]:'';
   const sep='<span class="sep" aria-hidden="true">›</span>';
+  /* LECȚIE: 🏠 LearningHub › Lecții › Clasa a VII-a › Lecția 4 [› Pasul 2 din 5]. Căile sunt relative la lectii/<clasa>/m1-lNN/index.html. */
+  if(eLectie()){
+    const acasa=C.acasa||{href:'../../../hub/index.html',text:'LearningHub'},nume=`Lecția ${lectieInfo().nr}`;
+    const parts=[`<a href="${esc(acasa.href)}">🏠 ${esc(acasa.text)}</a>`,'<a href="../../index.html">Lecții</a>',`<a href="../index.html">Clasa ${esc(C.clasa)}</a>`];
+    if(R){parts.push(`<button type="button" class="crumb-btn" id="crumb-game" title="${esc(C.titlu)}">${nume}</button>`);parts.push(`<span class="cur" aria-current="page">${etapaLectie()}</span>`)}
+    else parts.push(`<span class="cur" aria-current="page">${nume}</span>`);
+    nav.innerHTML=parts.join(sep);
+    const g=document.getElementById('crumb-game');if(g)g.onclick=home;
+    return;
+  }
   /* C.acasa (opțional, ex. site-ul de bac): {href,text} înlocuiește legătura spre LearningHub; C.eticheta înlocuiește „Jocuri TIC” */
   const acasa=C.acasa||{href:'../../hub/index.html',text:'LearningHub'};
   const parts=[`<a href="${esc(acasa.href)}">🏠 ${esc(acasa.text)}</a>`,`<a href="../index.html">${esc(C.eticheta||'Jocuri TIC')}</a>`];
@@ -87,7 +140,9 @@ function setCrumbs(){
   const g=document.getElementById('crumb-game');if(g)g.onclick=home;
 }
 /* „Nivelul 3 din 7”, „Nivelul final (7 din 7)” - elevii întreabă câte niveluri sunt */
-function nivelEticheta(i){const n=C.nivele.length,w=C.mod==='antrenament'?'Runda':'Nivelul';return C.nivele[i].final?`${w} finală (${i+1} din ${n})`.replace('Nivelul finală','Nivelul final'):`${w} ${i+1} din ${n}`}
+function nivelEticheta(i){
+  if(eLectie()){const n=C.nivele.length,nr=lectieInfo().nr;return n>1?`Lecția ${nr} · partea ${i+1} din ${n}`:`Lecția ${nr}`}
+  const n=C.nivele.length,w=C.mod==='antrenament'?'Runda':'Nivelul';return C.nivele[i].final?`${w} finală (${i+1} din ${n})`.replace('Nivelul finală','Nivelul final'):`${w} ${i+1} din ${n}`}
 /* Bara de jos: pașii prin care ai trecut deja sunt butoane - te poți întoarce la ei (și înainte, până unde
    ajunseseși). Un pas refăcut nu mai dă XP a doua oară (R.punctat), iar încercările greșite se țin minte
    (R.atts), ca „du-te înapoi și revino” să nu șteargă greșelile. */
@@ -101,6 +156,9 @@ function tabsFor(){
       return inNivel&&!acum?`<button type="button" class="${R.vazutPas[k]?'done':''}" data-pas="p${k}" title="${esc(p.t)}">P${k+1}</button>`:`<span class="${acum?'now':'done'}">P${k+1}</span>`}).join('');
     if(Lv.atelier){const acum=R.phase==='atelier';
       t+=inNivel&&!acum?`<button type="button" class="${R.atelierGata?'done':''}" data-pas="atelier" title="Atelier: fă-o ca în aplicația reală">Atelier</button>`:`<span class="${acum?'now':'done'}">Atelier</span>`}
+    const AR=aplicatieReala(Lv);
+    if(AR){const acum=R.phase==='real',et=esc(AR.scurt||'Aplicația');   // doar în modul lecție
+      t+=inNivel&&!acum?`<button type="button" class="${R.realVazut?'done':''}" data-pas="real" title="${esc(AR.titlu||'Acum în aplicația adevărată')}">${et}</button>`:`<span class="${acum?'now':'done'}">${et}</span>`}
   }else{
     const cit=Lv.bazin?'Pregătire':'Citire';
     t=inNivel&&R.phase!=='read'?`<button type="button" class="done" data-pas="citire" title="Înapoi la pagina de citit">${cit}</button>`
@@ -116,6 +174,7 @@ function mergiLa(k){
   if(k==='citire'){if(C.nivele[R.li].pasi){R.si=0;R.phase='learn';learnPage()}else{R.phase='read';readPage()}return}
   if(/^p\d+$/.test(k)){R.si=+k.slice(1);R.phase='learn';learnPage();return}
   if(k==='atelier'){R.phase='atelier';atelierPage();return}
+  if(k==='real'){R.phase='real';realPage();return}
   R.qi=Number(k);R.phase='q';question();
 }
 function wireTabs(){app.querySelectorAll('.tabs [data-pas]').forEach(b=>b.onclick=()=>mergiLa(b.dataset.pas))}
@@ -124,23 +183,25 @@ function wireTabs(){app.querySelectorAll('.tabs [data-pas]').forEach(b=>b.onclic
 function home(){
   R=null;
   const allDone=C.nivele.every((_,i)=>S.lv[i]);
+  const LE=eLectie(),nrL=LE?lectieInfo().nr:'';
   const rows=C.nivele.map((Lv,i)=>{const d=S.lv[i],u=unlocked(i);
-    const drum=Lv.pasi?`<span class="drum">${Lv.pasi.length} pași de învățat${Lv.atelier?' · atelier':''} · ${Lv.qs.length} întrebări de verificare</span>`:'';
-    return `<button class="lvl" type="button" data-l="${i}" ${u?'':'disabled'}><span class="n">${i+1} din ${C.nivele.length}${Lv.final?' · final':''}</span><span class="t">${esc(Lv.t)}${drum}</span><span class="s">${d?starsHtml(d.stars):u?'începe →':'blocat'}</span></button>`}).join('');
+    const drum=Lv.pasi?`<span class="drum">${Lv.pasi.length} pași de învățat${Lv.atelier?' · atelier':''}${aplicatieReala(Lv)?' · '+esc(numeReal(Lv,'în aplicația adevărată')):''} · ${Lv.qs.length} întrebări de verificare</span>`:'';
+    const nr=LE?(C.nivele.length>1?`Partea ${i+1}`:`Lecția ${nrL}`):`${i+1} din ${C.nivele.length}${Lv.final?' · final':''}`;
+    return `<button class="lvl" type="button" data-l="${i}" ${u?'':'disabled'}><span class="n">${nr}</span><span class="t">${esc(Lv.t)}${drum}</span><span class="s">${d?starsHtml(d.stars):u?'începe →':'blocat'}</span></button>`}).join('');
   shell(`
-    <div class="eyebrow">${esc(C.eticheta?C.eticheta.replace(/^Jocuri\s*/,''):'TIC')} · clasa ${esc(C.clasa)} · ${esc(C.unitateTitlu)}</div>
+    <div class="eyebrow">${LE?`Lecția ${nrL}`:esc(C.eticheta?C.eticheta.replace(/^Jocuri\s*/,''):'TIC')} · clasa ${esc(C.clasa)} · ${esc(C.unitateTitlu)}</div>
     <h1 style="margin-top:8px">${C.h1||esc(C.titlu)}</h1>
     <div class="lede">${C.intro}</div>
     <div class="ancora">${C.ancoraText?esc(C.ancoraText):`Programa: ${esc(C.competente.join(', '))} · unitatea ${esc(C.unitate)}${C.lectii?` · lecțiile ${esc(C.lectii)}`:''}`}</div>
     <div id="cine-lucreaza"></div>
     <div class="namerow"><label for="nume">Numele tău, pentru diplomă</label><input id="nume" type="text" autocomplete="off" maxlength="40" value="${esc(S.nume)}" placeholder="ex. Ana Popescu"></div>
     ${C.cum?`<div class="cum-inveti">${C.cum}</div>`:''}
-    <div class="toc-h">${C.mod==='antrenament'?`${C.nivele.length} runde · De bază → Consolidat → Avansat · întrebări noi la fiecare reluare`:`${C.nivele.length} niveluri · se deblochează pe rând · ultimul e nivelul final`}</div>
-    <nav class="toc" aria-label="Nivelurile">${rows}</nav>
+    <div class="toc-h">${LE?(C.nivele.length>1?`Lecția are ${C.nivele.length} părți · se deschid pe rând`:numeReal(C.nivele[0],'')?`Drumul lecției: pașii → ${C.nivele[0].atelier?'atelierul → ':''}${esc(numeReal(C.nivele[0],''))} → verificarea`:'Drumul lecției: înveți pe pași, exersezi, o faci în aplicația adevărată, apoi verifici'):C.mod==='antrenament'?`${C.nivele.length} runde · De bază → Consolidat → Avansat · întrebări noi la fiecare reluare`:`${C.nivele.length} niveluri · se deblochează pe rând · ultimul e nivelul final`}</div>
+    <nav class="toc" aria-label="${LE?'Lecția':'Nivelurile'}">${rows}</nav>
     <div class="row" style="margin-top:22px">
       ${allDone?'<button class="btn primary" id="dipl" type="button">Vezi diploma</button>':''}
       ${Object.keys(S.lv).length?'<button class="btn ghost" id="reset" type="button">Ia-o de la capăt</button>':''}
-      <a class="btn ghost" href="../index.html">Toate jocurile</a>
+      ${LE?'<a class="btn ghost" href="../index.html">Toate lecțiile clasei</a>':'<a class="btn ghost" href="../index.html">Toate jocurile</a>'}
     </div>`);
   const inp=document.getElementById('nume');inp.addEventListener('input',()=>{S.nume=inp.value.trim();save()});
   app.querySelectorAll('.lvl').forEach(b=>b.addEventListener('click',()=>startLevel(+b.dataset.l)));
@@ -155,7 +216,8 @@ function home(){
 function cineLucreaza(){
   const el=document.getElementById('cine-lucreaza');if(!el||R)return;
   const P=window.Prezenta,e=P&&P.identitate&&P.identitate(),n=Object.keys(S.lv).length;
-  const cat=n?` · ${n} din ${C.nivele.length} ${C.mod==='antrenament'?'runde':'niveluri'} făcute`:'';
+  const cat=!n?'':eLectie()?(C.nivele.length>1?` · ${n} din ${C.nivele.length} părți făcute`:' · lecția e terminată')
+    :` · ${n} din ${C.nivele.length} ${C.mod==='antrenament'?'runde':'niveluri'} făcute`;
   if(e){
     el.innerHTML=`<div class="alt-elev"><span>Lucrezi ca <b>${esc(e.nume)}</b> (${esc(e.clasa)})${cat}.${P.areCod&&!P.areCod()?' <br><small>Progresul tău e doar pe calculatorul ăsta.</small>':' <br><small>☁ Progresul tău te urmează pe orice calculator.</small>'}</span>
       <span class="row" style="gap:6px">${P.areCod&&!P.areCod()?'<button class="btn" id="pastreaza" type="button">Păstrează-l online</button>':''}<button class="btn ghost" id="alt-elev" type="button">Nu ești tu? Alege-te din listă</button></span></div>`;
@@ -232,11 +294,12 @@ function blocPrereq(){
   const H=(window.JOCURI_PREREQ||{})[jocSlug()]||{},Q=H[String(R.li+1)]||[];
   if(!Q.length)return '';
   return `<details class="prereq"><summary>Ce trebuie să știi dinainte (${Q.length})</summary><ul>${Q.map(e=>
-    `<li><b>${esc(e.termen)}</b>${e.amintire?` — ${esc(e.amintire)}`:''}<br><span class="unde">Dacă nu-ți amintești: <a href="../${encodeURIComponent(e.joc)}/">${esc(e.joc_titlu)}</a>, nivelul ${esc(e.nivel)}${e.nivel_titlu?` („${esc(e.nivel_titlu)}”)`:''}</span></li>`).join('')}</ul></details>`;
+    `<li><b>${esc(e.termen)}</b>${e.amintire?` — ${esc(e.amintire)}`:''}<br><span class="unde">Dacă nu-ți amintești: <a href="${eLectie()?esc(new URL('../'+encodeURIComponent(e.joc)+'/',MOTOR_URL).href):`../${encodeURIComponent(e.joc)}/`}">${esc(e.joc_titlu)}</a>, nivelul ${esc(e.nivel)}${e.nivel_titlu?` („${esc(e.nivel_titlu)}”)`:''}</span></li>`).join('')}</ul></details>`;
 }
 function learnPage(){
   const Lv=C.nivele[R.li],n=Lv.pasi.length,P=Lv.pasi[R.si];R.vazutPas[R.si]=true;
-  const ultim=R.si===n-1,urm=ultim?(Lv.atelier?'La atelier →':'La verificare →'):'Pasul următor →';
+  const AR=aplicatieReala(Lv);   // doar în modul lecție: fără atelier, după ultimul pas vine „Acum în aplicația adevărată”
+  const ultim=R.si===n-1,urm=ultim?(Lv.atelier?'La atelier →':AR?esc(numeReal(Lv,'Acum în aplicația adevărată'))+' →':'La verificare →'):'Pasul următor →';
   const ex=practiceList(P);
   shell(`
     <div class="row" style="justify-content:space-between"><div class="eyebrow">${nivelEticheta(R.li)} · învață · pasul ${R.si+1} din ${n}</div>
@@ -257,7 +320,7 @@ function learnPage(){
   if(af)af.onclick=()=>{const t=document.getElementById('altfel-t');t.hidden=!t.hidden;af.setAttribute('aria-expanded',String(!t.hidden));af.textContent=t.hidden?'Nu am înțeles — explică-mi altfel':'Ascunde explicația'};
   document.getElementById('go').onclick=()=>{R.mode='test';R.phase='q';question()};
   document.getElementById('pas-prev').onclick=()=>{if(R.si){R.si--;learnPage()}else home()};
-  document.getElementById('pas-next').onclick=()=>{R.mode='test';if(!ultim){R.si++;learnPage()}else if(Lv.atelier){R.phase='atelier';atelierPage()}else{R.phase='q';question()}};
+  document.getElementById('pas-next').onclick=()=>{R.mode='test';if(!ultim){R.si++;learnPage()}else if(Lv.atelier){R.phase='atelier';atelierPage()}else if(AR){R.phase='real';realPage()}else{R.phase='q';question()}};
   if(ex.length)renderPractice(ex,'p'+R.si);
 }
 function practiceList(P){return [P.incearca].concat(P.inca||[]).filter(Boolean)}
@@ -283,7 +346,7 @@ function ajutorButon(Q,body){
 }
 /* ATELIERUL: aplicația simulată (tip-html, tip-foaie…), fără puncte; testele simulatorului arată ce e gata */
 function atelierPage(){
-  const Lv=C.nivele[R.li],A=Lv.atelier;
+  const Lv=C.nivele[R.li],A=Lv.atelier,AR=aplicatieReala(Lv);
   shell(`
     <div class="eyebrow">${nivelEticheta(R.li)} · atelier</div>
     <h2 style="margin:8px 0 6px">${esc(A.titlu||'Fă-o ca în aplicația reală')}</h2>
@@ -291,11 +354,30 @@ function atelierPage(){
     <section class="incearca atelier"><div class="q" id="pq"></div><div id="body"></div><div id="fb" aria-live="polite"></div><div class="row" id="nav"></div></section>
     <div class="row pas-nav" style="margin-top:22px">
       <button class="btn" id="pas-prev" type="button">← Înapoi la pași</button>
-      <button class="btn primary" id="go" type="button">La verificare →</button>
+      <button class="btn primary" id="go" type="button">${AR?esc(numeReal(Lv,'Acum în aplicația adevărată'))+' →':'La verificare →'}</button>
     </div>`,tabsFor());
   document.getElementById('pas-prev').onclick=()=>{R.si=Lv.pasi.length-1;R.phase='learn';learnPage()};
-  document.getElementById('go').onclick=()=>{R.mode='test';R.phase='q';question()};
+  document.getElementById('go').onclick=()=>{R.mode='test';if(AR){R.phase='real';realPage()}else{R.phase='q';question()}};
   renderPractice([A].concat(A.inca||[]),'atelier');
+}
+/* MODUL LECȚIE: „Acum în aplicația adevărată” - după atelier, înainte de verificare (standardul lecției, 27.09.2026).
+   Pașii sunt cei din `aplicatieReala.pasi` (sau `diploma.provocare`); fără puncte, elevul îi face în aplicația reală. */
+function realPage(){
+  const Lv=C.nivele[R.li],A=aplicatieReala(Lv);R.realVazut=true;
+  if(!A){R.phase='q';question();return}
+  shell(`
+    <div class="eyebrow">${nivelEticheta(R.li)} · ${esc(A.titlu||'în aplicația adevărată')}</div>
+    <h2 style="margin:8px 0 6px">${esc(A.titlu||'Acum în aplicația adevărată')}</h2>
+    <div class="reading">${A.intro||(A.titlu?'<p>Ai exersat în simulator. Acum faci același lucru pe bune. Urmează pașii de mai jos, unul câte unul.</p>':'<p>Ai exersat în simulator. Acum faci același lucru pe bune, în aplicația adevărată. Urmează pașii de mai jos, unul câte unul.</p>')}</div>
+    ${A.aplicatie?`<p class="hint" style="margin:0 0 6px">Unde lucrezi: <b>${esc(A.aplicatie)}</b></p>`:''}
+    <ol class="check aplicatie-reala">${A.pasi.map(x=>`<li>${x}</li>`).join('')}</ol>
+    <p class="hint">Nu ai acum calculatorul în față? Treci la verificare; pașii îi găsești din nou pe diplomă.</p>
+    <div class="row pas-nav" style="margin-top:22px">
+      <button class="btn" id="pas-prev" type="button">${Lv.atelier?'← Înapoi la atelier':'← Înapoi la pași'}</button>
+      <button class="btn primary" id="go" type="button">La verificare →</button>
+    </div>`,tabsFor());
+  document.getElementById('pas-prev').onclick=()=>{if(Lv.atelier){R.phase='atelier';atelierPage()}else{R.si=Lv.pasi.length-1;R.phase='learn';learnPage()}};
+  document.getElementById('go').onclick=()=>{R.mode='test';R.phase='q';question()};
 }
 function readPage(){
   const Lv=C.nivele[R.li];
@@ -312,7 +394,7 @@ function readPage(){
 }
 function question(){
   const Lv=C.nivele[R.li],Q=Lv.qs[R.qi];R.mode='test';R.att=R.atts[R.qi]||0;R.done=false;R.max=Math.max(R.max,R.qi);
-  const tn=textNivel(Lv),inapoiLa=R.qi?String(R.qi-1):Lv.pasi?(Lv.atelier?'atelier':'p'+(Lv.pasi.length-1)):'citire';
+  const tn=textNivel(Lv),inapoiLa=R.qi?String(R.qi-1):Lv.pasi?(aplicatieReala(Lv)?'real':Lv.atelier?'atelier':'p'+(Lv.pasi.length-1)):'citire';
   shell(`
     <div class="row" style="justify-content:space-between"><div class="eyebrow">${nivelEticheta(R.li)} · ${Lv.pasi?'verificare · ':''}${esc(Lv.t)}</div>
     <span class="row" style="gap:6px"><button class="btn ghost sm" id="inapoi" type="button" title="${R.qi?`Înapoi la întrebarea ${R.qi}`:'Înapoi'}">← Pasul anterior</button>
@@ -576,15 +658,16 @@ function endLevel(){
   raporteaza({tip:'nivel',nivel:R.li+1,stele:S.lv[R.li].stars,max:3});
   try{if(window.Prezenta&&window.Prezenta.salveaza)window.Prezenta.salveaza()}catch(x){}
   if(!prev&&C.nivele.every((_,i)=>S.lv[i]))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3});
+  const LE=eLectie();
   shell(`
-    <div class="eyebrow">${nivelEticheta(R.li)} · terminat${(()=>{const rest=C.nivele.length-R.li-1,a=C.mod==='antrenament';return next?` · ${rest===1?(a?'mai e o rundă':'mai e un nivel'):`mai sunt ${rest} ${a?'runde':'niveluri'}`}`:` · ai terminat toate ${a?'rundele':'nivelurile'}`})()}</div>
+    <div class="eyebrow">${nivelEticheta(R.li)} · ${LE?`terminată${next?` · ${C.nivele.length-R.li-1===1?'mai e o parte':`mai sunt ${C.nivele.length-R.li-1} părți`}`:''}`:`terminat${(()=>{const rest=C.nivele.length-R.li-1,a=C.mod==='antrenament';return next?` · ${rest===1?(a?'mai e o rundă':'mai e un nivel'):`mai sunt ${rest} ${a?'runde':'niveluri'}`}`:` · ai terminat toate ${a?'rundele':'nivelurile'}`})()}`}</div>
     <div class="end-stars" style="margin:14px 0 6px" aria-label="${stars===1?'o stea':stars+' stele'} din 3">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3-stars)}</span></div>
-    <h2>${stars===3?'Perfect, toate din prima!':stars===2?'Foarte bine!':(C.mod==='antrenament'?'Rundă trecută. Poți lua mai multe stele.':'Nivel trecut. Poți lua mai multe stele.')}</h2>
-    <p class="lede">${R.first} din ${n} răspunsuri corecte din prima · ${R.xp} XP.${stars<3?(C.mod==='antrenament'?' Reia runda: primești alte întrebări pe aceleași lucruri.':' Recitește pagina și reia nivelul pentru 3 stele.'):''}</p>
+    <h2>${stars===3?'Perfect, toate din prima!':stars===2?'Foarte bine!':(C.mod==='antrenament'?'Rundă trecută. Poți lua mai multe stele.':LE?'Ai terminat lecția. Poți lua mai multe stele.':'Nivel trecut. Poți lua mai multe stele.')}</h2>
+    <p class="lede">${R.first} din ${n} răspunsuri corecte din prima · ${R.xp} XP.${stars<3?(C.mod==='antrenament'?' Reia runda: primești alte întrebări pe aceleași lucruri.':LE?' Recitește pașii și reia lecția pentru 3 stele.':' Recitește pagina și reia nivelul pentru 3 stele.'):''}</p>
     <div class="row" style="margin-top:20px">
-      ${next?`<button class="btn primary" id="nx" type="button">${C.mod==='antrenament'?'Runda următoare':'Nivelul următor'} →</button>`:'<button class="btn primary" id="dp" type="button">Vezi diploma</button>'}
-      <button class="btn" id="again" type="button">${C.mod==='antrenament'?'Reia runda (alte întrebări)':'Reia nivelul'}</button>
-      <button class="btn ghost" id="toc" type="button">Cuprins</button>
+      ${next?`<button class="btn primary" id="nx" type="button">${C.mod==='antrenament'?'Runda următoare':LE?'Partea următoare':'Nivelul următor'} →</button>`:'<button class="btn primary" id="dp" type="button">Vezi diploma</button>'}
+      <button class="btn" id="again" type="button">${C.mod==='antrenament'?'Reia runda (alte întrebări)':LE?'Reia lecția':'Reia nivelul'}</button>
+      <button class="btn ghost" id="toc" type="button">${LE?'Începutul lecției':'Cuprins'}</button>
     </div>`,tabsFor());
   const nx=document.getElementById('nx');if(nx)nx.onclick=()=>startLevel(R.li+1);
   const dp=document.getElementById('dp');if(dp)dp.onclick=diploma;
@@ -594,20 +677,28 @@ function endLevel(){
 function diploma(){
   R=null;const t=totals(),d=new Date(),D=C.diploma;
   const data=`${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+  /* modul lecție: „a terminat lecția 4”, iar pașii din aplicația adevărată (făcuți ÎNAINTE de verificare) se repetă pe scurt, restrânși */
+  const LE=eLectie(),AR=LE?aplicatieReala(C.nivele[C.nivele.length-1]):null;
+  const cePrin=LE?`a terminat lecția ${esc(lectieInfo().nr)}, „${esc(C.titlu)}”: ${esc(D.rezumat)}.`
+    :`a trecut toate cele ${C.nivele.length} ${C.mod==='antrenament'?'runde ale antrenamentului':'niveluri ale jocului'} „${esc(C.titlu)}”: ${esc(D.rezumat)}.`;
+  const provocare=!LE?`<h3 style="margin-top:28px">Provocarea din ${esc(D.aplicatie)}</h3>
+    <p class="hint" style="margin:4px 0 10px">Arată-i profesorului diploma, apoi fă asta pe bune:</p>
+    <ol class="check">${D.provocare.map(x=>`<li>${x}</li>`).join('')}</ol>`
+    :AR?`<h3 style="margin-top:28px">${esc(AR.titlu||'Acum în aplicația adevărată')}</h3>
+    <p class="hint" style="margin:4px 0 10px">Ai văzut pașii înainte de verificare. Dacă nu i-ai făcut încă${AR.aplicatie?` (${esc(AR.aplicatie)})`:''}, fă-i acum și verifică-i singur cu lista de la ultimul pas.</p>
+    <details class="real-recap"><summary>Pașii, încă o dată (${AR.pasi.length})</summary><ol class="check">${AR.pasi.map(x=>`<li>${x}</li>`).join('')}</ol></details>`:'';
   shell(`
     <div class="diploma">
       <div class="eyebrow">Diplomă</div>
       <h2 style="margin-top:6px">${esc(D.titlu)}</h2>
       <div class="nm">${esc(S.nume||'Elevul fără nume')}</div>
-      <p style="margin:0 auto 14px;max-width:46ch">a trecut toate cele ${C.nivele.length} ${C.mod==='antrenament'?'runde ale antrenamentului':'niveluri ale jocului'} „${esc(C.titlu)}”: ${esc(D.rezumat)}.</p>
+      <p style="margin:0 auto 14px;max-width:46ch">${cePrin}</p>
       <div class="facts"><span>★ ${t.st}/${C.nivele.length*3}</span><span>${t.xp} XP</span><span>${data}</span></div>
     </div>
     ${trimiteHtml()}
-    <h3 style="margin-top:28px">Provocarea din ${esc(D.aplicatie)}</h3>
-    <p class="hint" style="margin:4px 0 10px">Arată-i profesorului diploma, apoi fă asta pe bune:</p>
-    <ol class="check">${D.provocare.map(x=>`<li>${x}</li>`).join('')}</ol>
+    ${provocare}
     ${ghidButoane()}
-    <div class="row" style="margin-top:16px"><button class="btn" id="toc" type="button">Înapoi la cuprins</button><a class="btn ghost" href="../index.html">Toate jocurile</a></div>`);
+    <div class="row" style="margin-top:16px"><button class="btn" id="toc" type="button">${LE?'Înapoi la începutul lecției':'Înapoi la cuprins'}</button><a class="btn ghost" href="../index.html">${LE?'Toate lecțiile clasei':'Toate jocurile'}</a></div>`);
   document.getElementById('toc').onclick=home;
   wireGhid();
   wireTrimite(t,data);
@@ -646,7 +737,9 @@ function wireTrimite(t,data){
   const $=id=>document.getElementById(id),D=C.diploma,inp=$('d-nume');if(!inp)return;
   let trimisa=false;
   const nume=()=>inp.value.trim();
-  const payload=()=>({n:nume(),t:D.titlu,j:C.titlu,u:C.mod==='antrenament'?'runde':'niveluri',v:C.nivele.length,s:t.st,m:C.nivele.length*3,x:t.xp,d:data,c:String(C.clasa)});
+  /* modul lecție: k:'lectie' + l:<nr>, ca pagina diploma/ să poată scrie „a terminat lecția 4” (azi le ignoră) */
+  const payload=()=>Object.assign({n:nume(),t:D.titlu,j:C.titlu,u:C.mod==='antrenament'?'runde':'niveluri',v:C.nivele.length,s:t.st,m:C.nivele.length*3,x:t.xp,d:data,c:String(C.clasa)},
+    eLectie()?{k:'lectie',l:lectieInfo().nr}:{});
   const linkTel=()=>new URL('../diploma/',MOTOR_URL).href+'#d='+b64url(payload());
   function qr(){
     const u=linkTel();$('d-link').href=u;
@@ -769,8 +862,12 @@ function prezenta(){
   addEventListener('lh-progres',()=>{S=load();if(!R)home()});
 }
 /* jocul = numele FOLDERULUI (excel-viii), nu C.cheie: jurnalul și panoul fac legătura spre /jocuri/<folder>/ */
-const jocSlug=()=>{const m=location.pathname.match(/\/jocuri\/([a-z0-9_-]+)\//i);return m?m[1]:C.cheie};
-function raporteaza(e){try{if(window.Prezenta)window.Prezenta.eveniment(Object.assign({joc:jocSlug(),titlu:C.titlu,din:C.nivele.length},e))}catch(x){}}
+/* modul lecție: cheia vine din CALE (lectii/vii/m1-l04/ -> lectie_vii_m1_l04), aceeași formă pe care jurnal/ o duce
+   înapoi la /lectii/vii/m1-l04/; în afara căii standard, cheia din configurație */
+const jocSlug=()=>{
+  if(eLectie()){const p=lectieInfo().pm;return p?`lectie_${p[1].toLowerCase()}_m${p[2]}_l${p[3]}`:C.cheie}
+  const m=location.pathname.match(/\/jocuri\/([a-z0-9_-]+)\//i);return m?m[1]:C.cheie};
+function raporteaza(e){try{if(window.Prezenta)window.Prezenta.eveniment(Object.assign({joc:jocSlug(),titlu:titluRaport(),din:C.nivele.length},e))}catch(x){}}
 
 /* ---------------- pornire ---------------- */
 /* simulatoarele reutilizabile din _motor (tip-html.js…) se înregistrează singure, înainte de porneste() */
@@ -804,6 +901,8 @@ const testHooks={
   tipuri:()=>Object.keys(TIPURI),
   pas:k=>{R.si=k;R.phase='learn';learnPage()},
   atelier:()=>{R.phase='atelier';atelierPage()},
+  real:()=>{R.phase='real';realPage()},                     // modul lecție: pasul „Acum în aplicația adevărată”
+  lectie:()=>eLectie()?Object.assign(lectieInfo(),{pm:undefined,cheieActivitate:jocSlug(),titluPanou:titluRaport()}):null,
   exercitiu:k=>{R.pv[R.pKey]=k;renderPractice(R.pList,R.pKey)},
   rezolva:()=>{
     const Q=R.mode==='practice'?R.pQ:C.nivele[R.li].qs[R.qi],body=document.getElementById('body');

@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Adresa de celulă. Selectare, copiere, mutare, ștergere</title>
+<meta name="description" content="Clasa a VIII-a, lecția 4 (Excel): adresa de celulă, selectarea unei zone ca A1:B3, copierea, mutarea și ștergerea datelor, exersate într-o foaie care se poartă ca Excel-ul.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Noto+Sans:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF1EC; --paper:#FFFFFF; --paper2:#EDF2EC; --line:#D2DAD0;
+  --ink:#16211A; --ink2:#56645A; --accent:#107C41; --accentInk:#FFFFFF; --sel:#D6EEDD;
+  --mark:#FFE58A; --markInk:#16211A; --ok:#11703C; --okbg:#E0F2E6; --bad:#C23B33; --badbg:#FAE5E3;
+  --fd:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif; --fb:"Noto Sans","Segoe UI",system-ui,sans-serif; --fm:"DM Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E1310; --paper:#17201A; --paper2:#212C24; --line:#2E3B32;
+  --ink:#E3EBE5; --ink2:#9BAAA0; --accent:#4FC987; --accentInk:#0E1310; --sel:#1D4330;
+  --mark:#EFD25A; --markInk:#16211A; --ok:#4FC987; --okbg:#14301F; --bad:#FF7D73; --badbg:#3A1E1C;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E1310; --paper:#17201A; --paper2:#212C24; --line:#2E3B32;
+  --ink:#E3EBE5; --ink2:#9BAAA0; --accent:#4FC987; --accentInk:#0E1310; --sel:#1D4330;
+  --mark:#EFD25A; --markInk:#16211A; --ok:#4FC987; --okbg:#14301F; --bad:#FF7D73; --badbg:#3A1E1C;
+}
+/* tema: capul de coloane al foii, cu zona B2:C4 „selectată” în fâșia de sus */
+.banda{display:grid;grid-template-columns:repeat(8,1fr);font-family:var(--fm);font-size:.7rem;color:var(--ink2)}
+.banda span{text-align:center;padding:3px 0;border-left:1px solid var(--line)}
+.banda span:first-child{border-left:0}
+.banda span.s{background:var(--sel);color:var(--ink)}
+h1,h2{letter-spacing:-.01em}
+/* mini-foaia „Uite cum”: celula activă rămâne albă în zonă, ca în Excel */
+.g td.g-act{background:var(--paper);box-shadow:inset 0 0 0 2px var(--accent)}
+.doua-foi{display:grid;grid-template-columns:1fr;gap:6px}
+@media (min-width:640px){.doua-foi{grid-template-columns:1fr 1fr}}
+/* foaia „excelx”: degetul trage peste celule (selectează), derulează pe numerele rândurilor și pe literele coloanelor */
+.xl .gw td{touch-action:none}
+.xl .gw tbody th{touch-action:pan-y}
+.xl .gw thead th{touch-action:pan-x}
+/* panglica se derulează în lateral și pe ecran lat (grupul Celule / Cells nu încape): spus mereu */
+.xl .pg .pg-ingust{display:block}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/tip-foaie.js"></script>
+<script src="../../../jocuri/_motor/tip-excel.js"></script>
+<script>
+/* tip-excel.js pune copia și în clipboardul calculatorului (navigator.clipboard.writeText) într-un try{}, dar
+   promisiunea respinsă (fără permisiune: file://, fereastră fără focus) scapă ca eroare în consolă. O prindem aici,
+   fără să schimbăm ce face foaia. CERERE pentru _motor: .catch(()=>{}) în copiaza(). */
+try{const cb=navigator.clipboard;if(cb&&cb.writeText){const scrie=cb.writeText.bind(cb);cb.writeText=t=>scrie(t).catch(()=>{})}}catch(e){}
+/* Panglica reală vine din dump-ul UI Automation, unde butonul mare din grupul Cells se numește „Delete Cells...”;
+   pe ecranul Excel scrie „Delete” (și „Insert”). Corectăm doar eticheta, în memorie, înainte să se deseneze
+   (ascultătorul ăsta e pus înaintea celui din tip-excel.js, deci rulează primul). */
+function corecteazaPanglica(){const P=window.PANGLICA_EXCEL;if(!P||P._xp)return;P._xp=1;
+  (P.file||[]).forEach(f=>(f.grupuri||[]).forEach(g=>(g.butoane||[]).forEach(b=>{if(b.id==='CellsDeleteSmart')b.eticheta='Delete';if(b.id==='CellsInsertSmart')b.eticheta='Insert'})))}
+addEventListener('panglica-excel',corecteazaPanglica);
+/* ============================================================================================
+   Tipul „excelx” = foaia „excel” din motor (_motor/tip-excel.js), NESCHIMBATĂ, plus drumurile din Excel-ul
+   adevărat de care are nevoie lecția 4 și pe care foaia nu le avea încă (regula fidelității, jocuri/README.md §1):
+   - clic dreapta pe celulă / pe numărul rândului / pe litera coloanei: meniul cu Decupare (Cut), Copiere (Copy),
+     Lipire (Paste), Ștergere… (Delete…), Golire conținut (Clear Contents); clic dreapta în zonă păstrează zona;
+   - clic pe numărul rândului / pe litera coloanei = tot rândul / toată coloana (Shift+clic extinde);
+   - panglica, fila Pornire (Home): Lipire (planșeta lipește, cuvântul „Paste ▾” deschide lista; gri cât nu e nimic
+     copiat), Decupare, Copiere; Ștergere (pictograma scoate imediat celulele, ca în Excel; „Delete ▾” deschide lista);
+     Golire (Clear);
+   - fereastra Ștergere (Delete): deplasare în sus / la stânga, rând întreg, coloană întreagă;
+   - lipirea: pe o singură celulă, pe o zonă de aceeași mărime sau (la copiere) pe un multiplu exact, repetată ca în
+     Excel; altfel mesajul Excel-ului; Enter după copiere lipește și oprește copierea;
+   - golirea (Delete), ștergerea de rânduri/celule opresc copierea (marginea punctată), ca în Excel;
+   - Backspace pe o zonă golește doar celula activă și intră în scriere, ca în Excel;
+   - telefonul: tragerea cu degetul selectează; atingerea lungă deschide meniul; notă pe ecran;
+   - tastele Ctrl+- (ștergere), Shift+Spațiu (rândul), Ctrl+Spațiu (coloana), tasta Meniu / Shift+F10;
+   - caseta de nume se poate scrie: B2 sau B2:C4 + Enter selectează.
+   Totul trece prin gesturile foii (clic, tragere, Ctrl+X/C/V, Delete, Esc), trimise ca evenimente: foaia își face
+   singură Anularea (Undo) și desenul. Ștergerea unui rând = decuparea rândurilor de dedesubt, lipită un rând mai
+   sus (o singură operație pentru Ctrl+Z, ca în Excel). CERERE pentru _motor: mutat în tip-excel.js (vezi surse.md).
+   Câmpuri noi pe întrebare: `teste:[{ce, valori, gol, fara}]` (testele numite ale atelierului, bifate pe loc);
+   `doarMouse:true` (copierea și lipirea trebuie date din meniu sau din panglică); `variante:true` (lasă butonul
+   „Exersează pe variante”: la sarcinile cu valori, varianta() din motor schimbă numele și numerele din foaie, dar nu
+   și valorile așteptate, deci acolo e oprit). */
+const ExcelPlus=(function(){
+'use strict';
+const COL=i=>{let s='';for(let n=i+1;n>0;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s};
+const pos=a=>{const m=String(a).toUpperCase().match(/^([A-Z]{1,3})(\d+)$/);return m?{c:m[1].split('').reduce((x,ch)=>x*26+ch.charCodeAt(0)-64,0)-1,r:Number(m[2])-1}:null};
+const adr=(c,r)=>COL(c)+(r+1);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const bun=v=>typeof v==='number'&&isFinite(v)&&v>0;
+const CSS=`.xp-meniu{position:fixed;z-index:80;min-width:250px;max-width:94vw;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.28);padding:4px 0;font-family:var(--fb);font-size:.92rem}
+.xp-meniu button{display:block;width:100%;text-align:left;border:0;background:none;color:inherit;font:inherit;padding:8px 14px;cursor:pointer}
+.xp-meniu button:hover,.xp-meniu button:focus-visible{background:var(--sel);outline:none}
+.xp-meniu button[disabled]{opacity:.45;cursor:default;background:none}
+.xp-meniu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.xp-meniu .xp-lbl{padding:5px 14px 1px;font-size:.78rem;color:var(--ink2)}
+.xp-fundal{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:16px}
+.xp-dlg{background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:14px 16px;max-width:360px;width:100%;box-shadow:0 12px 32px rgba(0,0,0,.3);font-family:var(--fb)}
+.xp-dlg b{display:block;margin-bottom:8px}
+.xp-dlg label{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:.94rem;cursor:pointer}
+.xp-dlg .xp-bt{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.xp-nota{margin:6px 0 0;font-size:.88rem;color:var(--ink2)}
+.xp-nota:empty{display:none}
+.xp-tel{margin:0 0 8px;padding:6px 10px;font-size:.86rem;border-radius:6px;background:var(--sel);color:var(--ink)}
+.xp-nb-in{width:100%;min-width:0;box-sizing:border-box;font:inherit;border:0;outline:2px solid var(--accent);background:var(--paper);color:var(--ink);padding:0 2px}
+.xp-teste{margin:0 0 10px;padding:10px 12px;border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:8px;background:var(--paper)}
+.xp-teste .lbl{font-weight:700;font-size:.9rem;margin-bottom:4px}
+.xp-teste ul{list-style:none;margin:0;padding:0}
+.xp-teste li{padding:3px 0;color:var(--ink2)}
+.xp-teste li.ok{color:var(--ok);font-weight:600}
+.xp-teste li span[aria-hidden]{display:inline-block;width:1.3em}
+.xp-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}`;
+function css(){if(!document.getElementById('xp-css')){const s=document.createElement('style');s.id='xp-css';s.textContent=CSS;document.head.appendChild(s)}}
+
+/* ---- starea, citită din foaia desenată (tip-excel redesenează tot la fiecare schimbare) ----
+   Toate funcțiile de mai jos primesc învelișul stabil #xwrap (îi zic tot „xl”) și caută în el foaia de ACUM:
+   .xl se înlocuiește la fiecare desen, iar un meniu deschis ar citi altfel selecția veche. */
+const wrapDe=el=>{const x=el&&el.closest&&el.closest('.xl');return x?x.parentElement:null};
+const grid=xl=>xl&&xl.querySelector('.gw');
+const td=(xl,a)=>xl.querySelector(`.gw td[data-a="${a}"]`);
+const dim=xl=>({cols:xl.querySelectorAll('.gw thead th').length-1,rows:xl.querySelectorAll('.gw tbody tr').length});
+function cadru(celule){let c1=1e9,c2=-1,r1=1e9,r2=-1;celule.forEach(t=>{const p=pos(t.dataset.a);if(!p)return;c1=Math.min(c1,p.c);c2=Math.max(c2,p.c);r1=Math.min(r1,p.r);r2=Math.max(r2,p.r)});return c2<0?null:{c1,c2,r1,r2}}
+function zona(xl){const z=cadru(xl.querySelectorAll('.gw td.act, .gw td.z'));if(!z)return null;const a=xl.querySelector('.gw td.act');z.act=a?pos(a.dataset.a):{c:z.c1,r:z.r1};return z}
+const zonaCopiata=xl=>cadru(xl.querySelectorAll('.gw td.mq'));
+const eGata=xl=>{const s=xl.querySelector('.st span');return !s||/^Gata/.test(s.textContent)};   // modul Gata (Ready), nu în scriere
+const areCopie=xl=>!!xl.querySelector('.gw td.mq');   // marginea punctată = ceva copiat/decupat
+const randuriIntregi=(z,D)=>z&&z.c1===0&&z.c2===D.cols-1;
+const coloaneIntregi=(z,D)=>z&&z.r1===0&&z.r2===D.rows-1;
+
+/* ---- gesturile foii, trimise ca evenimente (marcate _xp, ca să nu le prindă tot aici) ---- */
+function pe(el,tip,o){if(!el)return;const e=new PointerEvent(tip,Object.assign({bubbles:true,cancelable:true,composed:true,pointerId:1,pointerType:'mouse',isPrimary:true,button:0,buttons:tip==='pointerup'?0:1},o||{}));e._xp=1;el.dispatchEvent(e)}
+function tasta(xl,key,o){const g=grid(xl);if(!g)return;try{g.focus({preventScroll:true})}catch(e){}
+  const e=new KeyboardEvent('keydown',Object.assign({key,bubbles:true,cancelable:true},o||{}));e._xp=1;g.dispatchEvent(e)}
+/* selectează de la „a” (celula activă) la „b”; tasta Shift trimisă înainte uită clicul precedent (altfel un clic pe
+   aceeași celulă în 450 ms ar fi luat drept dublu-clic) */
+function selecteaza(xl,a,b){tasta(xl,'Shift');pe(td(xl,a),'pointerdown');if(b&&b!==a)pe(td(xl,b),'pointermove');pe(grid(xl),'pointerup');tasta(xl,'Shift')}
+const selZ=(xl,z)=>selecteaza(xl,adr(z.c1,z.r1),adr(z.c2,z.r2));
+const opresteCopierea=xl=>{if(areCopie(xl))tasta(xl,'Escape')};
+function copiaza(xl,dinMeniu){xl._taiat=false;if(dinMeniu)xl._mc=1;tasta(xl,'c',{ctrlKey:true})}
+function taie(xl,dinMeniu){xl._taiat=true;if(dinMeniu)xl._mc=1;tasta(xl,'x',{ctrlKey:true})}
+/* LIPIREA, ca în Excel: pe o celulă (colțul stânga-sus al locului nou), pe o zonă de aceeași mărime, sau — doar la
+   copiere — pe o zonă care e un multiplu exact (copia se repetă, probat în Excel real de judecător); altfel Excel dă
+   mesajul „nu au aceeași mărime și formă” și nu lipește nimic. `siOpreste` = Enter: lipește și oprește copierea. */
+function lipeste(xl,dinMeniu,siOpreste){
+  if(!areCopie(xl))return;if(dinMeniu)xl._mp=1;
+  const s=zonaCopiata(xl),z=zona(xl);if(!s||!z)return tasta(xl,'v',{ctrlKey:true});
+  const h=s.r2-s.r1+1,w=s.c2-s.c1+1,H=z.r2-z.r1+1,W=z.c2-z.c1+1;
+  if(H===1&&W===1)tasta(xl,'v',{ctrlKey:true});
+  else if(H===h&&W===w){selecteaza(xl,adr(z.c1,z.r1));tasta(xl,'v',{ctrlKey:true});selZ(xl,z)}
+  else if(!xl._taiat&&H%h===0&&W%w===0){for(let r=z.r1;r<=z.r2;r+=h)for(let c=z.c1;c<=z.c2;c+=w){selecteaza(xl,adr(c,r));tasta(xl,'v',{ctrlKey:true})}selZ(xl,z)}
+  else{nota(xl,`Excel nu lipește aici: zona ${xl._taiat?'decupată':'copiată'} are ${h}×${w} celule, iar zona selectată are ${H}×${W}, deci nu au aceeași mărime și formă. Fă clic pe <b>o singură celulă</b> (colțul stânga-sus al locului nou) și lipește din nou.`);return}
+  if(siOpreste)opresteCopierea(xl)}
+function taieSiLipeste(xl,src,dst){selZ(xl,src);taie(xl);selecteaza(xl,adr(dst.c,dst.r));tasta(xl,'v',{ctrlKey:true})}
+function goleste(xl,z){if(z)selZ(xl,z);tasta(xl,'Delete');opresteCopierea(xl)}   // golirea oprește copierea (Excel: CutCopyMode 1 → 0)
+function stergeRanduri(xl,r1,r2){const D=dim(xl);
+  if(r2<D.rows-1)taieSiLipeste(xl,{c1:0,c2:D.cols-1,r1:r2+1,r2:D.rows-1},{c:0,r:r1});else goleste(xl,{c1:0,c2:D.cols-1,r1,r2});
+  selZ(xl,{c1:0,c2:D.cols-1,r1,r2})}
+function stergeColoane(xl,c1,c2){const D=dim(xl);
+  if(c2<D.cols-1)taieSiLipeste(xl,{c1:c2+1,c2:D.cols-1,r1:0,r2:D.rows-1},{c:c1,r:0});else goleste(xl,{c1,c2,r1:0,r2:D.rows-1});
+  selZ(xl,{c1,c2,r1:0,r2:D.rows-1})}
+function deplaseazaSus(xl,z){const D=dim(xl);
+  if(z.r2<D.rows-1)taieSiLipeste(xl,{c1:z.c1,c2:z.c2,r1:z.r2+1,r2:D.rows-1},{c:z.c1,r:z.r1});else goleste(xl,z);selZ(xl,z)}
+function deplaseazaStanga(xl,z){const D=dim(xl);
+  if(z.c2<D.cols-1)taieSiLipeste(xl,{c1:z.c2+1,c2:D.cols-1,r1:z.r1,r2:z.r2},{c:z.c1,r:z.r1});else goleste(xl,z);selZ(xl,z)}
+/* pictograma butonului Pornire › Ștergere (Delete): în Excel scoate DIRECT, fără meniu (probat în Excel real):
+   rânduri întregi → rândurile; coloane întregi → coloanele; o zonă mai înaltă decât lată → celulele din dreapta vin
+   la stânga; altfel (o celulă, o zonă lată sau pătrată) → celulele de dedesubt urcă */
+function stergeDirect(xl){const z=zona(xl),D=dim(xl);if(!z)return;
+  if(randuriIntregi(z,D))stergeRanduri(xl,z.r1,z.r2);else if(coloaneIntregi(z,D))stergeColoane(xl,z.c1,z.c2);
+  else if(z.r2-z.r1>z.c2-z.c1)deplaseazaStanga(xl,z);else deplaseazaSus(xl,z)}
+
+/* ---- mesajele de sub foaie ---- */
+function nota(xl,html){const w=xl;if(!w)return;let n=w.nextElementSibling;
+  if(!n||!n.classList.contains('xp-nota')){n=document.createElement('div');n.className='xp-nota';n.setAttribute('aria-live','polite');w.after(n)}n.innerHTML=html||''}
+const nesim=(xl,nume)=>nota(xl,`„${esc(nume)}” e și în Excel, dar în exercițiile de azi nu-l folosim.`);
+
+/* ---- meniurile (clic dreapta, săgețile din panglică) ---- */
+let M=null,Mt=0;
+function inchide(){if(M){M.remove();M=null}}
+/* derularea închide meniul, ca în Excel; nu și derularea pe care o face chiar clicul care l-a deschis */
+const inchideLaDerulare=()=>{if(M&&Date.now()-Mt>300)inchide()};
+function meniu(xl,x,y,items){inchide();css();const m=document.createElement('div');m.className='xp-meniu';m.setAttribute('role','menu');
+  m.innerHTML=items.map((it,i)=>it==='-'?'<hr>':it.lbl?`<div class="xp-lbl">${it.lbl}</div>`:`<button type="button" role="menuitem" data-i="${i}" ${it.off?'disabled':''}>${it.t}</button>`).join('');
+  document.body.appendChild(m);M=m;Mt=Date.now();const r=m.getBoundingClientRect();
+  x=isFinite(x)?x:innerWidth/2-r.width/2;y=isFinite(y)?y:innerHeight/3;
+  m.style.left=Math.max(4,Math.min(x,innerWidth-r.width-4))+'px';m.style.top=Math.max(4,Math.min(y,innerHeight-r.height-4))+'px';
+  m.querySelectorAll('button[data-i]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();const it=items[+b.dataset.i];inchide();nota(xl,'');it.fn()}));
+  const f=m.querySelector('button:not([disabled])');if(f)try{f.focus({preventScroll:true})}catch(e){}}
+const LIPIRE=xl=>[{lbl:'Opțiuni lipire (Paste Options):'},{t:'📋 Lipire (Paste)',off:!areCopie(xl),fn:()=>lipeste(xl,true)}];
+function itemiCelula(xl){return [
+  {t:'✂ Decupare (Cut)',fn:()=>taie(xl,true)},{t:'⧉ Copiere (Copy)',fn:()=>copiaza(xl,true)},...LIPIRE(xl),'-',
+  {t:'Inserare… (Insert…)',fn:()=>nesim(xl,'Inserare… (Insert…)')},{t:'Ștergere… (Delete…)',fn:()=>dialogSterge(xl)},
+  {t:'Golire conținut (Clear Contents)',fn:()=>goleste(xl)},'-',{t:'Formatare celule… (Format Cells…)',fn:()=>nesim(xl,'Formatare celule… (Format Cells…)')}]}
+function itemiAntet(xl,tip){return [
+  {t:'✂ Decupare (Cut)',fn:()=>taie(xl,true)},{t:'⧉ Copiere (Copy)',fn:()=>copiaza(xl,true)},...LIPIRE(xl),'-',
+  {t:'Inserare (Insert)',fn:()=>nesim(xl,'Inserare (Insert)')},
+  {t:'Ștergere (Delete)',fn:()=>{const z=zona(xl);if(!z)return;if(tip==='col')stergeColoane(xl,z.c1,z.c2);else stergeRanduri(xl,z.r1,z.r2)}},
+  {t:'Golire conținut (Clear Contents)',fn:()=>goleste(xl)}]}
+function itemiStergere(xl){return [
+  {t:'Ștergere celule… (Delete Cells…)',fn:()=>dialogSterge(xl)},
+  {t:'Ștergere rânduri foaie (Delete Sheet Rows)',fn:()=>{const z=zona(xl);if(z)stergeRanduri(xl,z.r1,z.r2)}},
+  {t:'Ștergere coloane foaie (Delete Sheet Columns)',fn:()=>{const z=zona(xl);if(z)stergeColoane(xl,z.c1,z.c2)}},'-',
+  {t:'Ștergere foaie (Delete Sheet)',fn:()=>nesim(xl,'Ștergere foaie (Delete Sheet)')}]}
+function itemiGolire(xl){return [
+  {t:'Golire totală (Clear All)',fn:()=>goleste(xl)},{t:'Golire formate (Clear Formats)',fn:()=>nesim(xl,'Golire formate (Clear Formats)')},
+  {t:'Golire conținut (Clear Contents)',fn:()=>goleste(xl)},{t:'Golire comentarii și note (Clear Comments and Notes)',fn:()=>nesim(xl,'Golire comentarii și note')}]}
+function itemiPaste(xl){return [...LIPIRE(xl),'-',{t:'Lipire specială… (Paste Special…)',fn:()=>nesim(xl,'Lipire specială… (Paste Special…)')}]}
+function itemiCopy(xl){return [{t:'⧉ Copiere (Copy)',fn:()=>copiaza(xl,true)},{t:'Copiere ca imagine… (Copy as Picture…)',fn:()=>nesim(xl,'Copiere ca imagine… (Copy as Picture…)')}]}
+function dialogSterge(xl){const z=zona(xl);if(!z)return;inchide();css();
+  const d=document.createElement('div');d.className='xp-fundal';
+  d.innerHTML=`<div class="xp-dlg" role="dialog" aria-modal="true" aria-label="Ștergere (Delete)"><b>Ștergere (Delete)</b>
+    <label><input type="radio" name="xp-del" value="stanga"> Deplasare celule la stânga (Shift cells left)</label>
+    <label><input type="radio" name="xp-del" value="sus" checked> Deplasare celule în sus (Shift cells up)</label>
+    <label><input type="radio" name="xp-del" value="rand"> Rând întreg (Entire row)</label>
+    <label><input type="radio" name="xp-del" value="col"> Coloană întreagă (Entire column)</label>
+    <div class="xp-bt"><button class="btn primary" type="button" data-ok="1">OK</button><button class="btn" type="button" data-no="1">Revocare (Cancel)</button></div></div>`;
+  document.body.appendChild(d);
+  const gata=()=>{d.remove();const g=grid(xl);if(g)try{g.focus({preventScroll:true})}catch(e){}};
+  d.querySelector('[data-no]').onclick=gata;d.addEventListener('keydown',e=>{if(e.key==='Escape')gata()});
+  d.querySelector('[data-ok]').onclick=()=>{const v=(d.querySelector('input[name="xp-del"]:checked')||{}).value;gata();
+    if(v==='sus')deplaseazaSus(xl,z);else if(v==='stanga')deplaseazaStanga(xl,z);else if(v==='rand')stergeRanduri(xl,z.r1,z.r2);else if(v==='col')stergeColoane(xl,z.c1,z.c2)};
+  try{d.querySelector('[data-ok]').focus()}catch(e){}}
+
+/* ---- antetele: numărul rândului, litera coloanei, colțul (tot) ---- */
+function antet(th){const tr=th.parentElement;
+  if(th.closest('thead')){const i=[...tr.children].indexOf(th)-1;return i>=0?{tip:'col',i}:{tip:'tot'}}
+  return {tip:'rand',i:[...tr.parentElement.children].indexOf(tr)}}
+function selecteazaAntet(xl,h,shift){const D=dim(xl),z=zona(xl),a=z?z.act:{c:0,r:0};
+  if(h.tip==='tot')return selecteaza(xl,'A1',adr(D.cols-1,D.rows-1));
+  if(h.tip==='rand'){if(shift&&z)selecteaza(xl,adr(0,a.r),adr(D.cols-1,h.i));else selecteaza(xl,adr(0,h.i),adr(D.cols-1,h.i))}
+  else{if(shift&&z)selecteaza(xl,adr(a.c,0),adr(h.i,D.rows-1));else selecteaza(xl,adr(h.i,0),adr(h.i,D.rows-1))}}
+
+/* ---- caseta de nume: scrii B2 sau B2:C4 și Enter ---- */
+function scrieInCaseta(xl,nb){const vechi=nb.textContent;nb.textContent='';const i=document.createElement('input');i.className='xp-nb-in';i.value=vechi;
+  i.setAttribute('aria-label','Caseta de nume: scrie o adresă, de exemplu B2 sau B2:C4, și apasă Enter');i.autocomplete='off';i.spellcheck=false;nb.appendChild(i);
+  let gata=false;const iesi=()=>{if(gata)return;gata=true;if(nb.isConnected&&nb.contains(i))nb.textContent=vechi};
+  i.addEventListener('keydown',e=>{e.stopPropagation();
+    if(e.key==='Enter'){e.preventDefault();gata=true;du(xl,i.value.trim(),vechi,nb)}
+    else if(e.key==='Escape'){e.preventDefault();iesi();const g=grid(xl);if(g)g.focus()}});
+  i.addEventListener('blur',iesi);try{i.focus();i.select()}catch(e){}}
+function du(xl,t,vechi,nb){const D=dim(xl),m=t.toUpperCase().match(/^([A-Z]{1,3})(\d+)(?::([A-Z]{1,3})(\d+))?$/);
+  if(nb.isConnected)nb.textContent=vechi;
+  if(!m){nota(xl,!t||/^\d/.test(t)?'Excel nu primește asta: scrie întâi litera coloanei, apoi numărul rândului, de exemplu <b>B2</b>, sau o zonă ca <b>B2:C4</b>.'
+    :`În Excel, „${esc(t)}” ar deveni un NUME pentru celulele selectate (îl vei folosi în clasele mari). Azi scrie o adresă, de exemplu <b>B2</b> sau <b>B2:C4</b>.`);return}
+  const a=pos(m[1]+m[2]),b=m[3]?pos(m[3]+m[4]):a;
+  if(!a||!b||a.r<0||b.r<0||Math.max(a.c,b.c)>=D.cols||Math.max(a.r,b.r)>=D.rows){nota(xl,`În Excel ai sări acolo. Foaia din exercițiu are doar coloanele A–${COL(D.cols-1)} și rândurile 1–${D.rows}.`);return}
+  nota(xl,'');selZ(xl,{c1:Math.min(a.c,b.c),c2:Math.max(a.c,b.c),r1:Math.min(a.r,b.r),r2:Math.max(a.r,b.r)})}
+
+/* ---- după fiecare desen al foii: Lipire gri cât nu e nimic copiat, sfaturile butoanelor, nota despre derulare ---- */
+const SFAT={Cut:'Decupare (Cut) · Ctrl+X',Copy:'Copiere (Copy) · Ctrl+C',Paste:'Lipire (Paste) · Ctrl+V — planșeta lipește; cuvântul „Paste ▾” deschide lista',
+  CellsDeleteSmart:'Ștergere (Delete): pictograma scoate IMEDIAT celulele selectate; „Delete ▾” deschide lista',ClearMenu:'Golire (Clear) ▾'};
+const TXT_ING='Panglica se derulează în lateral: mai la dreapta sunt grupurile Celule (Cells) și Editare (Editing). În Excel-ul de pe calculator o vezi întreagă.';
+function ajusteaza(xl){
+  const p=xl.querySelector('[data-nesim="Paste"]');if(p){const gri=!areCopie(xl);p.classList.toggle('pg-gri',gri);p.setAttribute('aria-disabled',String(gri))}
+  for(const [id,t] of Object.entries(SFAT)){const b=xl.querySelector(`[data-nesim="${id}"]`);if(b&&b.title!==t)b.title=t}
+  const i=xl.querySelector('.pg-ingust');if(i&&i.textContent!==TXT_ING)i.textContent=TXT_ING}
+/* butoanele despărțite (mari): partea de sus (pictograma) face comanda, partea de jos (eticheta ▾) deschide lista */
+function susPeButon(b,ev){const s=b.querySelector('svg'),r=b.getBoundingClientRect();const lim=s?s.getBoundingClientRect().bottom+1:r.top+r.height/2;return !bun(ev.clientY)||ev.clientY<=lim}
+
+/* ---- legăturile, o singură dată pe elementul-gazdă (motorul refolosește #body la „Încă un exercițiu”) ---- */
+let globale=false;
+function leaga(body){
+  if(!globale){globale=true;
+    document.addEventListener('pointerdown',ev=>{if(M&&!M.contains(ev.target))inchide()},true);
+    document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&M){inchide()}},true);
+    addEventListener('resize',inchideLaDerulare);addEventListener('scroll',inchideLaDerulare,true)}
+  if(body._xp)return;body._xp=1;
+  const xlDin=ev=>{const g=ev.target&&ev.target.closest&&ev.target.closest('.gw');return g?wrapDe(g):null};
+  let deget=null;   // tragerea cu degetul: {xl, id, ultima}
+  body.addEventListener('pointerdown',ev=>{if(ev._xp)return;const xl=xlDin(ev);if(!xl)return;xl._tip=ev.pointerType;
+    if(ev.button===2){ev.stopPropagation();return}                 // clic dreapta: meniul hotărăște (păstrează zona)
+    const th=ev.target.closest('th'),cel=ev.target.closest('td[data-a]');
+    if(th&&ev.button===0&&eGata(xl)){ev.stopPropagation();ev.preventDefault();if(ev.pointerType!=='touch')selecteazaAntet(xl,antet(th),ev.shiftKey);return}   // la deget: la „click” (altfel derularea ar selecta)
+    if(cel&&ev.button===0&&(ev.ctrlKey||ev.metaKey))nota(xl,'În Excel, Ctrl+clic adaugă celula la selecție (mai multe zone deodată). Foaia de aici ține o singură zonă, iar lecția nu are nevoie de asta.');
+    if(cel&&ev.pointerType==='touch'){deget={xl,id:ev.pointerId,ultima:cel.dataset.a};try{cel.releasePointerCapture(ev.pointerId)}catch(e){}}},true);
+  body.addEventListener('pointermove',ev=>{if(ev._xp||!deget||ev.pointerId!==deget.id)return;ev.stopPropagation();
+    const el=document.elementFromPoint(ev.clientX,ev.clientY),t=el&&el.closest&&el.closest('td[data-a]');
+    if(t&&wrapDe(t)===deget.xl&&t.dataset.a!==deget.ultima){deget.ultima=t.dataset.a;pe(t,'pointermove')}},true);
+  const gataDeget=ev=>{if(!deget||ev.pointerId!==deget.id)return;const d=deget;deget=null;
+    if(!(ev.target&&ev.target.closest&&grid(d.xl)&&grid(d.xl).contains(ev.target)))pe(grid(d.xl),'pointerup')};
+  document.addEventListener('pointerup',gataDeget,true);document.addEventListener('pointercancel',gataDeget,true);
+  body.addEventListener('pointerup',ev=>{if(!ev._xp&&ev.button===2&&xlDin(ev))ev.stopPropagation()},true);
+  body.addEventListener('contextmenu',ev=>{const xl=xlDin(ev);if(!xl)return;ev.preventDefault();ev.stopPropagation();if(!eGata(xl))return;
+    const rt=ev.target.getBoundingClientRect();
+    const x=bun(ev.clientX)?ev.clientX:rt.left+rt.width/2,y=bun(ev.clientY)?ev.clientY:rt.bottom,cel=ev.target.closest('td[data-a]'),th=ev.target.closest('th');
+    if(cel){if(!(cel.classList.contains('act')||cel.classList.contains('z')))selecteaza(xl,cel.dataset.a);meniu(xl,x,y,itemiCelula(xl));return}
+    if(th){const h=antet(th),D=dim(xl),z=zona(xl);
+      if(h.tip==='tot'){selecteazaAntet(xl,h);meniu(xl,x,y,itemiCelula(xl));return}
+      const inZ=h.tip==='rand'?randuriIntregi(z,D)&&h.i>=z.r1&&h.i<=z.r2:coloaneIntregi(z,D)&&h.i>=z.c1&&h.i<=z.c2;
+      if(!inZ)selecteazaAntet(xl,h,false);meniu(xl,x,y,itemiAntet(xl,h.tip))}},true);
+  body.addEventListener('keydown',ev=>{if(ev._xp)return;const g=ev.target&&ev.target.closest&&ev.target.closest('.gw');if(!g)return;const xl=wrapDe(g);if(!xl)return;
+    if(!eGata(xl))return;const k=ev.key,kk=k.toLowerCase(),ctrl=ev.ctrlKey||ev.metaKey,stop=()=>{ev.preventDefault();ev.stopPropagation()};
+    if(ctrl&&kk==='c'&&!ev.shiftKey){xl._taiat=false;return}          // foaia copiază; ținem minte doar că e copiere
+    if(ctrl&&kk==='x'){xl._taiat=true;return}
+    if(ctrl&&kk==='v'){stop();lipeste(xl,false,false);return}
+    if(k==='Enter'&&!ctrl&&!ev.shiftKey&&!ev.altKey&&areCopie(xl)){stop();lipeste(xl,false,true);return}   // Enter după copiere = lipește
+    if(k==='Delete'&&!ctrl){if(areCopie(xl)){stop();goleste(xl)}return}                                     // golirea oprește copierea
+    if(k==='Backspace'&&!ctrl){const z=zona(xl);if(z&&(z.c1!==z.c2||z.r1!==z.r2)){stop();opresteCopierea(xl);selecteaza(xl,adr(z.act.c,z.act.r));tasta(xl,'Backspace')}return}   // doar celula activă
+    if(k==='ContextMenu'||(k==='F10'&&ev.shiftKey)){stop();const a=xl.querySelector('.gw td.act'),r=(a||g).getBoundingClientRect();meniu(xl,r.left+r.width/2,r.bottom,itemiCelula(xl));return}
+    if(ctrl&&(k==='-'||k==='Subtract')){stop();const z=zona(xl),D=dim(xl);if(!z)return;
+      if(randuriIntregi(z,D))stergeRanduri(xl,z.r1,z.r2);else if(coloaneIntregi(z,D))stergeColoane(xl,z.c1,z.c2);else dialogSterge(xl);return}
+    if(k===' '&&(ev.shiftKey!==ctrl)){stop();const z=zona(xl),D=dim(xl);if(!z)return;
+      if(ev.shiftKey)selZ(xl,{c1:0,c2:D.cols-1,r1:z.r1,r2:z.r2});else selZ(xl,{c1:z.c1,c2:z.c2,r1:0,r2:D.rows-1})}},true);
+  body.addEventListener('click',ev=>{const t=ev.target;if(!t||!t.closest)return;const xl=wrapDe(t);if(!xl)return;
+    const th=t.closest('.gw th');
+    if(th&&xl._tip==='touch'&&eGata(xl)){ev.stopPropagation();selecteazaAntet(xl,antet(th),false);return}
+    const b=t.closest('[data-nesim]');
+    if(b){const id=b.getAttribute('data-nesim'),r=b.getBoundingClientRect(),sus=susPeButon(b,ev),sag=!!t.closest('.pg-sag');
+      const f={Paste:()=>{if(sus)lipeste(xl,true);else meniu(xl,r.left,r.bottom+2,itemiPaste(xl))},
+        Cut:()=>taie(xl,true),Copy:()=>{if(sag)meniu(xl,r.left,r.bottom+2,itemiCopy(xl));else copiaza(xl,true)},
+        CellsDeleteSmart:()=>{if(sus)stergeDirect(xl);else meniu(xl,r.left,r.bottom+2,itemiStergere(xl))},
+        ClearMenu:()=>meniu(xl,r.left,r.bottom+2,itemiGolire(xl))}[id];
+      if(f){ev.stopPropagation();ev.preventDefault();nota(xl,'');f()}return}
+    const nb=t.closest('.nb');if(nb&&!nb.querySelector('input')&&eGata(xl))scrieInCaseta(xl,nb)},true);
+}
+
+/* ---- testele numite ale atelierului: se bifează singure, după ce e acum în foaie ---- */
+function teste(body,Q,w){const box=document.createElement('div');box.className='xp-teste';box.setAttribute('aria-live','polite');body.insertBefore(box,w);
+  const f=()=>{const xl=w.querySelector('.xl');if(!xl)return;const val={};xl.querySelectorAll('.gw td[data-a]').forEach(t=>val[t.dataset.a]=t.textContent.trim());
+    const toate=Object.values(val).map(x=>x.toLowerCase()),eq=(x,y)=>String(x??'').trim().toLowerCase()===String(y).trim().toLowerCase();
+    const rez=Q.teste.map(T=>({ce:T.ce,ok:Object.entries(T.valori||{}).every(([a,v])=>eq(val[a],v))&&(T.gol||[]).every(a=>!val[a])&&(T.fara||[]).every(x=>!toate.includes(String(x).toLowerCase()))}));
+    const n=rez.filter(x=>x.ok).length;
+    box.innerHTML=`<div class="lbl">Testele atelierului: ${n} din ${rez.length} gata</div><ul>${rez.map(x=>`<li class="${x.ok?'ok':''}"><span aria-hidden="true">${x.ok?'✔':'○'}</span>${x.ce}<span class="xp-sr">${x.ok?' (gata)':' (încă nu)'}</span></li>`).join('')}</ul>`};
+  f();new MutationObserver(f).observe(w,{childList:true,subtree:true,characterData:true})}
+
+const TEL='Pe telefon: <b>tragi cu degetul</b> peste celule ca să selectezi o zonă; <b>ții degetul apăsat</b> pe o celulă sau pe numărul unui rând în loc de clic dreapta. Pagina o derulezi trăgând de numerele rândurilor sau de textul de deasupra foii.';
+function render(Q,body,api){css();corecteazaPanglica();
+  if(!window.JocExcel){body.innerHTML='<p class="toast">Foaia Excel nu s-a încărcat. Reîncarcă pagina.</p>';return}
+  /* doarMouse: Verifică cere ca Copiere și Lipire să fi fost date din meniu sau din panglică */
+  const api2=!Q.doarMouse?api:Object.assign({},api,{checkButton:(fn,l)=>api.checkButton(()=>{const w=body.querySelector('#xwrap');
+    if(w&&!(w._mc&&w._mp)){api.resolve(false,'De data asta dă comenzile cu mouse-ul: clic dreapta pe zonă › Copiere (Copy), apoi clic dreapta pe celula nouă › Lipire (Paste), sau butoanele din fila Pornire (Home).');return}fn()},l)});
+  window.JocExcel.render(Q.variante?Q:Object.assign({},Q,{_practica:true}),body,api2);
+  leaga(body);const w=body.querySelector('#xwrap');if(!w)return;
+  ajusteaza(w);new MutationObserver(()=>ajusteaza(w)).observe(w,{childList:true});
+  if(Q.teste)teste(body,Q,w);
+  try{if(matchMedia('(pointer: coarse)').matches||navigator.maxTouchPoints>0){const n=document.createElement('p');n.className='xp-tel';n.innerHTML=TEL;body.insertBefore(n,w)}}catch(e){}}
+const rezolva=(Q,body,api)=>{const w=body.querySelector('#xwrap');if(w&&Q.doarMouse){w._mc=w._mp=1}return window.JocExcel.rezolva(Q,body,api)};
+const gresit=(Q,body,api)=>window.JocExcel.gresit(Q,body,api);
+return {render,rezolva,gresit};
+})();
+
+/* conținuturile programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={
+  structura:'Structura unui registru de calcul (foaie de calcul, coloană, rând, celulă, adresă de celulă)',
+  editare:'Operaţii de editare (selectare, copiere, mutare, ştergere)'
+};
+
+/* ajutoare de desen: captura reală, mini-foaia „Uite cum” (zona colorată, celula activă albă) */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG='../../../jocuri/excel-viii/img/';
+const grila=(cells,cols,rows,mark,cap,act)=>{
+  const L=i=>String.fromCharCode(65+i);
+  const M=new Set(!mark?[]:mark.includes(':')?JocMotor.expandRange(...mark.split(':')):mark.split(','));
+  let h='<div class="gridwrap" style="max-width:460px"><table class="g"><thead><tr><th></th>';
+  for(let c=0;c<cols;c++)h+=`<th>${L(c)}</th>`;
+  h+='</tr></thead><tbody>';
+  for(let r=1;r<=rows;r++){h+=`<tr><th>${r}</th>`;
+    for(let c=0;c<cols;c++){const a=L(c)+r,v=cells[a];
+      h+=`<td class="${a===act?'g-act':M.has(a)?'pick':''}"><div style="text-align:${typeof v==='number'?'right':'left'};min-height:30px">${v==null?'':typeof v==='number'?String(v).replace('.',','):v}</div></td>`}
+    h+='</tr>'}
+  return h+`</tbody></table></div>${cap?`<p class="hint" style="margin:4px 0 8px">${cap}</p>`:''}`;
+};
+
+/* datele de lucru: același catalog ca în capturile reale (interfata.webp, tabel-formatat.webp) */
+const NOTE={A1:'Elev',B1:'Nota 1',C1:'Nota 2',A2:'Ana',B2:9,C2:10,A3:'Bogdan',B3:7,C3:8,A4:'Cristi',B4:10,C4:6,A5:'Dana',B5:6,C5:9,A6:'Elena',B6:8,C6:7};
+const SCURT={A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Bogdan',B3:7,A4:'Cristi',B4:10,A5:'Dana',B5:6};
+/* provocarea din Excel-ul adevărat: pasul „Acum în aplicația adevărată” (modul lecție) și diploma */
+const PROVOCARE=[
+  'Deschide Excel și fă un registru nou, gol (<kbd>Ctrl</kbd>+<kbd>N</kbd>).',
+  'Clic pe A1, scrie <b>Elev</b>, apasă <kbd>Tab</kbd>, scrie <b>Nota</b>, apasă <kbd>Enter</kbd>. În A2:A5 scrie patru nume inventate, iar în B2:B5 câte o notă.',
+  'Selectează <b>A1:B5</b> trăgând cu mouse-ul, dă <b>Copiere (Copy)</b> (<kbd>Ctrl</kbd>+<kbd>C</kbd>), clic pe <b>D1</b> și <b>Lipire (Paste)</b> (<kbd>Ctrl</kbd>+<kbd>V</kbd>). Apasă <kbd>Esc</kbd> ca să oprești marginea punctată.',
+  'Mută copia: selectează <b>D1:E5</b>, <b>Decupare (Cut)</b> (<kbd>Ctrl</kbd>+<kbd>X</kbd>), clic pe <b>G1</b>, <b>Lipire (Paste)</b>. Coloanele D și E rămân goale.',
+  'Clic pe o notă din coloana B și apasă <kbd>Delete</kbd>: celula rămâne goală. Apoi <kbd>Ctrl</kbd>+<kbd>Z</kbd>: nota revine.',
+  'Clic dreapta pe numărul rândului <b>3</b>, apoi <b>Ștergere (Delete)</b>: elevul de pe rândul 3 dispare din ambele tabele (A și G), iar cei de dedesubt urcă.',
+  'Salvează cu <kbd>Ctrl</kbd>+<kbd>S</kbd>, cu numele <code>Nume_Prenume_lectia4.xlsx</code>.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m1_l04',
+  mod:'lectie',   // motorul în modul lecție (27.09.2026): firimituri spre lectii/viii/, „Lecția 4”, „Acum în aplicația adevărată” înainte de verificare
+  titlu:'Adresa de celulă. Selectare, copiere, mutare, ștergere',
+  marca:'Lecția <b>4</b> · Excel · a VIII-a',
+  h1:'Adresa de celulă. Selectare, copiere, mutare, ștergere',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U1', unitateTitlu:'Calcul tabelar',
+  competente:['CS.1.1','CS.3.1'], lectii:'4',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VIII-U1 „Calcul tabelar” · lecția 4 · conținuturi: „Operaţii de editare (selectare, copiere, mutare, ştergere)” și „Structura unui registru de calcul (foaie de calcul, coloană, rând, celulă, adresă de celulă)”',
+  intro:`<p>Lecția 4 din modulul 1. Înveți să spui exact unde e o celulă, să selectezi o zonă ca <b>A1:B3</b> și să copiezi, să muți și să ștergi date fără să scrii tabelul din nou. Lucrezi cu text și cu numere.</p>
+<p><b>Ai nevoie de:</b> lecția 2, „Interfața aplicației de calcul tabelar. Structura unui registru” (coloanele au litere, rândurile au numere, celula, caseta de nume, clic pe celulă și scrii, <kbd>Enter</kbd>, <kbd>Tab</kbd>) și lecția 3, „Operații cu registrul și cu foile de calcul” (registru nou, salvare, foile de jos).</p>`,
+  cum:`<p><b>Cum lucrezi:</b> după pagina „La ce folosește” urmează 7 pași scurți, fiecare cu „Încearcă tu”. Apoi atelierul, într-o foaie care se poartă ca Excel-ul, apoi aceleași lucruri în Excel-ul adevărat, iar la sfârșit 5 întrebări de verificare.</p>`,
+  banda:'<span>A</span><span class="s">B</span><span class="s">C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span>',
+  tipuri:{excelx:ExcelPlus},
+  aplicatieReala:{aplicatie:'Excel-ul adevărat',titlu:'Acum în Excel-ul adevărat',
+    intro:'<p>Deschide Excel pe calculator și fă pașii în ordine. Dacă greșești, <kbd>Ctrl</kbd>+<kbd>Z</kbd>. Pe calculatoarele cu Office în engleză, comenzile au numele din paranteză (Copy, Paste, Delete).</p>',
+    pasi:PROVOCARE},
+  nivele:[
+  {t:'Adresa de celulă. Selectare, copiere, mutare, ștergere', final:true, lectii:[4], continuturi:[P.editare,P.structura],
+   obiectiv:'găsești orice celulă după adresa ei, selectezi o zonă și copiezi, muți sau ștergi date într-un tabel, fără să-l scrii din nou.',
+   pasi:[
+    /* ---------- P1 (pasul 0 din standard): la ce folosește, fără acțiuni ---------- */
+    {t:'La ce folosește',
+     text:`<p>Diriginta ține catalogul clasei într-un tabel Excel, ca cel de mai jos. Des are de făcut schimbări:</p>
+<ul><li>vrea același tabel și pentru semestrul al doilea;</li>
+<li>vrea o coloană mutată în alt loc;</li>
+<li>un elev s-a mutat la altă școală, deci rândul lui trebuie scos.</li></ul>
+<p>Dacă ar scrie totul din nou, celulă cu celulă, ar pierde mult timp și ar greși. Cu <mark>selectarea</mark>, <mark>copierea</mark>, <mark>mutarea</mark> și <mark>ștergerea</mark> termină în câteva secunde. Azi le înveți pe toate, pe rând.</p>
+${fig(IMG+'tabel-formatat.webp',520,245,'Tabel adevărat în Excel: coloanele Elev, Nota 1, Nota 2, Media, cu cinci elevi pe rândurile 2-6','Un tabel adevărat din Excel: catalogul unei clase, cu elevii pe rânduri și notele pe coloane.')}`},
+
+    /* ---------- P2: adresa celulei ---------- */
+    {t:'Adresa celulei și caseta de nume',
+     text:`<p>Din lecția 2 știi: coloanele au <strong>litere</strong> (A, B, C…), iar rândurile au <strong>numere</strong> (1, 2, 3…). Căsuța de la întâlnirea lor e o <mark>celulă</mark>.</p>
+<p><mark>Adresa</mark> celulei = litera coloanei, lipită de numărul rândului: <code>C4</code> e în coloana C, rândul 4. Niciodată <code>4C</code>.</p>
+<p>Adresa spune exact <strong>unde</strong> e ceva. Când faci clic pe o celulă, Excel îi scrie adresa în <mark>caseta de nume</mark> (Name Box), în stânga, deasupra coloanei A.</p>
+${fig(IMG+'interfata.webp',1000,460,'Fereastra Excel cu celula B3 aleasă: caseta de nume arată B3, bara de formule arată 7','Clic pe nota 7 a lui Bogdan: caseta de nume arată <b>B3</b> (coloana B, rândul 3). Bara de formule (Formula Bar) arată ce e scris în celulă: 7.')}`,
+     exemplu:`${grila(NOTE,3,6,'C4','Nota 2 a lui Cristi: coloana C, rândul 4. Adresa ei e <b>C4</b>.')}`,
+     altfel:`<p>E ca la jocul <strong>Vaporașe</strong>: „C4” înseamnă coloana C, rândul 4. Întâi litera, apoi numărul.</p>`,
+     incearca:{t:'excelx',q:'În foaia de mai jos, fă clic pe celula cu <b>Nota 2</b> a <b>Danei</b>. Apoi uită-te în caseta de nume: ce adresă are?',cols:3,rows:6,cells:NOTE,panglica:false,verifica:{sel:'C5'},
+       ajutor:'Caută întâi rândul Danei (numărul din stânga), apoi coloana „Nota 2” (litera de sus).',why:'Dana e pe rândul 5, iar „Nota 2” e în coloana C: adresa e <b>C5</b>. Exact asta scrie în caseta de nume.'},
+     inca:[
+      {t:'excelx',q:'Fă clic pe celula în care scrie <b>Bogdan</b>. Ce adresă apare în caseta de nume?',cols:3,rows:6,cells:NOTE,panglica:false,o:['A3','3A','Bogdan','B3'],ok:0,
+       ajutor:'Numele stau în coloana A. Pe ce rând e Bogdan?',why:'Bogdan e în coloana A, rândul 3: adresa e A3. Caseta de nume arată adresa, nu ce scrie în celulă.'},
+      {t:'choice',q:'Care e adresa celulei din coloana D și rândul 12?',o:['D12','12D','D-12','L4'],ok:0,
+       ajutor:'Întâi litera coloanei, apoi numărul rândului, lipite.',why:'Litera coloanei, apoi numărul rândului: D12. „L4” ar fi coloana L, rândul 4.'}
+     ]},
+
+    /* ---------- P3: selectarea unei zone ---------- */
+    {t:'Selectezi o celulă sau o zonă',
+     text:`<p>Înainte să copiezi, să muți sau să ștergi, îi arăți lui Excel pe ce lucrezi: <mark>selectezi</mark>. O celulă: clic pe ea.</p>
+<p>Un dreptunghi de celule e o <mark>zonă</mark> (range). Apeși pe un colț, <strong>ții apăsat</strong>, <strong>tragi</strong> până la colțul opus și abia acolo dai drumul. Două clicuri separate NU fac zona: al doilea alege doar celula lui.</p>
+<p>Zona se scrie cu două colțuri opuse și <strong>două puncte</strong>: <code>A1:B3</code> = de la A1 la B3, 2 coloane × 3 rânduri = 6 celule.</p>
+<p>Celula de unde ai pornit rămâne albă: e <mark>celula activă</mark>. Caseta de nume arată adresa ei.</p>`,
+     exemplu:`${grila(NOTE,3,6,'B2:C4','Zona B2:C4, trasă de la B2: 6 celule; B2 e celula activă.','B2')}`,
+     altfel:`<p>E ca atunci când încadrezi cu creionul un dreptunghi pe o foaie de matematică: îți ajung două colțuri opuse ca să știi exact ce pătrățele intră. Zona <code>A1:B3</code> spune doar colțurile; tot ce e între ele intră.</p>`,
+     incearca:{t:'excelx',q:'Selectează zona <b>A2:B4</b>, trăgând de la A2 la B4.',cols:3,rows:6,cells:NOTE,panglica:false,verifica:{zona:'A2:B4'},variante:true,
+       ajutor:'Apasă pe A2, ține apăsat și trage până la B4; abia acolo dă drumul.',why:'A2:B4 = numele și Nota 1 ale lui Ana, Bogdan și Cristi: 2 coloane × 3 rânduri = 6 celule. Ai văzut? Cât trăgeai, caseta de nume arăta mărimea zonei: 3R x 2C (3 rânduri, 2 coloane).'},
+     inca:[
+      {t:'excelx',q:'Selectează toate notele lui <b>Cristi</b>, <b>Dana</b> și <b>Elena</b>, din ambele coloane de note.',cols:3,rows:6,cells:NOTE,panglica:false,verifica:{zona:'B4:C6'},variante:true,
+       ajutor:'Colțul stânga-sus e prima notă a lui Cristi, colțul dreapta-jos e a doua notă a Elenei.',why:'Zona e B4:C6: coloanele B și C, rândurile 4, 5 și 6.'},
+      {t:'excelx',q:'Altă cale, fără tragere (bună pe laptop): fă clic pe <b>A1</b>, apoi ține apăsată tasta <kbd>Shift</kbd> (pe ea scrie Shift sau are o săgeată groasă ⇧; stă în stânga tastaturii, pe al doilea rând de jos) și fă clic pe <b>C6</b>. Așa selectezi tot tabelul, <b>A1:C6</b>.',cols:3,rows:6,cells:NOTE,panglica:false,verifica:{zona:'A1:C6'},variante:true,
+       ajutor:'Clic simplu pe A1. Apoi ții apăsată tasta Shift și faci clic pe C6.',why:'Cu Shift+clic, zona merge de la celula activă (A1) până la celula pe care ai făcut clic (C6).'},
+      {t:'choice',q:'Câte celule are zona <b>C2:E5</b>?',o:['12','9','8','15'],ok:0,
+       ajutor:'Numără coloanele (C, D, E), numără rândurile (2, 3, 4, 5), apoi înmulțește.',why:'3 coloane × 4 rânduri = 12 celule.'},
+      {t:'excelx',q:'Pornește din <b>C5</b> și trage până la <b>A3</b> (de jos în sus, spre stânga). Ce arată caseta de nume <b>după</b> ce dai drumul?',cols:3,rows:6,cells:NOTE,panglica:false,o:['C5','A3','A3:C5','9'],ok:0,
+       ajutor:'Caseta de nume arată adresa celulei active. Din ce celulă ai pornit?',why:'Celula activă e cea din care ai pornit, C5, chiar dacă zona se scrie A3:C5.'}
+     ]},
+
+    /* ---------- P4: copierea, cu tastele ---------- */
+    {t:'Copierea: Copiere (Copy), apoi Lipire (Paste)',
+     text:`<p><mark>Copierea</mark> face un duplicat: datele apar în locul nou, iar originalul rămâne unde era.</p>
+<ol><li>Selectezi celulele.</li>
+<li>Apeși <kbd>Ctrl</kbd>+<kbd>C</kbd>, comanda <b>Copiere (Copy)</b>: ții apăsată tasta Ctrl, din stânga-jos, și apeși o dată C. În jurul zonei apare o margine punctată care „se mișcă”.</li>
+<li>Faci clic pe colțul <strong>stânga-sus</strong> al locului nou. O singură celulă ajunge.</li>
+<li>Apeși <kbd>Ctrl</kbd>+<kbd>V</kbd>, comanda <b>Lipire (Paste)</b>.</li></ol>
+<p>Ce era deja acolo se <strong>înlocuiește</strong>, fără întrebare. La final, <kbd>Esc</kbd> oprește marginea punctată.</p>
+${fig(IMG+'zona-copiata.webp',760,290,'Zona B2:D4 din Excel după comanda Copiere, cu marginea punctată în jur; caseta de nume arată B2','Zona B2:D4 după comanda Copiere (Copy): marginea punctată din jur „se mișcă” pe ecran.')}`,
+     exemplu:`<p>Copiezi A1:B2 în D1:</p>
+<div class="doua-foi">${grila({A1:'Elev',B1:'Nota',A2:'Ana',B2:9},5,2,'A1:B2','Înainte: tabelul e în A1:B2.','A1')}${grila({A1:'Elev',B1:'Nota',A2:'Ana',B2:9,D1:'Elev',E1:'Nota',D2:'Ana',E2:9},5,2,'D1:E2','După: copia e în D1:E2, originalul a rămas.','D1')}</div>`,
+     altfel:`<p>Copierea e ca o <strong>fotocopie</strong>: foaia ta rămâne la tine, iar colegul primește una la fel. Dacă o pui peste altă foaie din dosar, aceea nu se mai vede.</p>`,
+     incearca:{t:'excelx',q:'Copiază tabelul <b>A1:B3</b> ca să înceapă în <b>D1</b>, cu <kbd>Ctrl</kbd>+<kbd>C</kbd> și <kbd>Ctrl</kbd>+<kbd>V</kbd>.',cols:5,rows:4,
+       cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Bogdan',B3:7},verifica:{valori:{D1:'Elev',E1:'Nota',D2:'Ana',E2:9,D3:'Bogdan',E3:7,A1:'Elev',A3:'Bogdan',B3:7}},
+       ajutor:'Selectezi A1:B3 trăgând, Ctrl+C, clic pe D1, Ctrl+V. Originalul din A1:B3 trebuie să rămână.',why:'Copia ocupă D1:E3, iar originalul A1:B3 a rămas pe loc.'},
+     inca:[
+      {t:'excelx',q:'În coloana C e o echipă scrisă greșit (<b>Mihai</b> și <b>Ioana</b>). Copiază numele din <b>A2:A4</b> peste ea, începând din <b>C2</b>.',cols:4,rows:5,
+       cells:{A1:'Elev',A2:'Ana',A3:'Bogdan',A4:'Cristi',C1:'Echipa',C2:'Mihai',C3:'Ioana'},verifica:{valori:{C2:'Ana',C3:'Bogdan',C4:'Cristi',A2:'Ana',A4:'Cristi',C1:'Echipa'}},
+       ajutor:'Selectezi A2:A4, Ctrl+C, clic pe C2, Ctrl+V.',why:'Mihai și Ioana au fost înlocuiți fără nicio întrebare: lipirea scrie peste ce era în locul nou.'},
+      {t:'excelx',q:'Copiază <b>A1:B2</b> și lipește în <b>D1</b>. Apoi fă clic pe <b>D4</b> și mai apasă o dată <kbd>Ctrl</kbd>+<kbd>V</kbd>. Ce se întâmplă?',cols:5,rows:6,
+       cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9},o:['Tabelul apare încă o dată, din D4','Nu se mai lipește nimic','Tabelul dispare din A1:B2','Apare un mesaj de eroare'],ok:0,
+       ajutor:'Încearcă în foaie și uită-te la marginea punctată după prima lipire.',why:'După Copiere (Copy), marginea punctată rămâne și poți lipi de câte ori vrei, până apeși Esc.'}
+     ]},
+
+    /* ---------- P5: aceleași comenzi, cu mouse-ul ---------- */
+    {t:'Aceleași comenzi, cu mouse-ul',
+     text:`<p>Copiere și Lipire nu sunt doar taste. Le găsești și cu mouse-ul, în două locuri:</p>
+<ul><li><strong>Clic dreapta</strong>: apeși butonul din <em>dreapta</em> al mouse-ului pe zona selectată și apare un meniu. Alegi <b>Copiere (Copy)</b>. În locul nou, clic dreapta și, sub „Opțiuni lipire (Paste Options)”, prima pictogramă, planșeta: <b>Lipire (Paste)</b>.</li>
+<li><strong>Panglica</strong>: fila <b>Pornire (Home)</b>, primul grup din stânga, <b>Memorie temporară (Clipboard)</b>. Pentru lipire apeși pe <em>planșetă</em>; cuvântul „Paste ▾” de sub ea deschide doar o listă.</li></ul>
+${fig('../m1-l04/img/memorie-temporara.webp',760,226,'Grupul Clipboard din fila Home a Excel-ului: butoanele Paste (planșeta), Cut (foarfeca) și Copy, cu etichete','Fila Pornire (Home), grupul Memorie temporară (Clipboard). Aici Lipire (Paste) e gri: încă nu era nimic copiat.')}`,
+     incearca:{t:'excelx',q:'Copiază <b>A1:B2</b> ca să înceapă în <b>D1</b>, <b>doar cu mouse-ul</b>: meniul de clic dreapta sau butoanele din fila Pornire (Home). Fără <kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>V</kbd>.',cols:5,rows:3,doarMouse:true,
+       cells:{A1:'Produs',B1:'Preț',A2:'Caiet',B2:5},verifica:{valori:{D1:'Produs',E1:'Preț',D2:'Caiet',E2:5,A1:'Produs',B2:5}},
+       ajutor:'Selectezi A1:B2 trăgând, clic dreapta pe zonă › Copiere (Copy), apoi clic dreapta pe D1 › Lipire (Paste).',why:'Aceeași copiere, cu meniul: copia e în D1:E2, originalul a rămas.'},
+     inca:[
+      {t:'choice',q:'Unde găsești butonul Copiere (Copy) în panglică?',o:['Pornire (Home), Memorie temporară','Inserare (Insert), la început','În caseta de nume','Pe fila foii, jos'],ok:0,
+       ajutor:'E primul grup din stânga al primei file.',why:'Copiere, Decupare și Lipire stau împreună în grupul Memorie temporară (Clipboard) de pe fila Pornire (Home).'}
+     ]},
+
+    /* ---------- P6: mutarea ---------- */
+    {t:'Mutarea: Decupare (Cut), apoi Lipire (Paste)',
+     text:`<p>La <mark>mutare</mark>, datele pleacă din locul vechi și ajung în locul nou. Pașii sunt ca la copiere, doar că începi cu <b>Decupare (Cut)</b>: <kbd>Ctrl</kbd>+<kbd>X</kbd> (X seamănă cu o foarfecă), clic dreapta › Decupare (Cut) sau foarfeca din fila Pornire (Home).</p>
+<p>Apoi clic pe colțul stânga-sus al locului nou și Lipire (Paste). Locul vechi rămâne gol, iar marginea punctată dispare singură: după o decupare lipești <strong>o singură dată</strong>.</p>
+<p>Cum alegi: datele îți trebuie în <strong>două</strong> locuri? Copiezi. Le vrei în <strong>alt</strong> loc? Muți.</p>`,
+     exemplu:`<div class="doua-foi">${grila({A1:'Ana',A2:'Bogdan'},3,2,'A1:A2','Înainte: numele în A1:A2.','A1')}${grila({C1:'Ana',C2:'Bogdan'},3,2,'C1:C2','După mutare: coloana A e goală.','C1')}</div>`,
+     altfel:`<p>Copierea e ca o <strong>fotocopie</strong>: originalul rămâne la tine. Mutarea e ca atunci când îți muți <strong>ghiozdanul</strong> de pe o bancă pe alta: pe prima bancă nu mai e.</p>`,
+     incearca:{t:'excelx',q:'Mută tabelul <b>A1:B2</b> ca să înceapă în <b>C3</b>. În A1:B2 nu trebuie să mai rămână nimic.',cols:4,rows:4,
+       cells:{A1:'Produs',B1:'Preț',A2:'Caiet',B2:5},verifica:{valori:{C3:'Produs',D3:'Preț',C4:'Caiet',D4:5},gol:['A1','B1','A2','B2']},
+       ajutor:'Selectezi A1:B2, Decupare (Ctrl+X), clic pe C3, Lipire (Ctrl+V).',why:'Mutarea a pus tabelul în C3:D4 și a golit locul vechi.'},
+     inca:[
+      {t:'excelx',q:'Coloana cu note stă prea departe de nume. Mut-o din <b>D1:D4</b> în <b>B1:B4</b>.',cols:4,rows:4,
+       cells:{A1:'Elev',A2:'Ana',A3:'Bogdan',A4:'Cristi',D1:'Nota',D2:9,D3:7,D4:10},verifica:{valori:{B1:'Nota',B2:9,B3:7,B4:10,A2:'Ana'},gol:['D1','D2','D3','D4']},
+       ajutor:'Selectezi D1:D4, Decupare, clic pe B1, Lipire.',why:'Notele sunt acum în B1:B4, lângă nume, iar coloana D a rămas goală.'},
+      {t:'excelx',q:'Decupează <b>A1:A2</b> și lipește în <b>C1</b>. Apoi fă clic pe <b>E1</b> și mai dă o dată Lipire (Paste). Ce se întâmplă?',cols:5,rows:3,
+       cells:{A1:'Ana',A2:'Bogdan'},o:['Nu se mai lipește nimic','Numele apar și în E1:E2','Numele se întorc în A1:A2','Apare un mesaj de eroare'],ok:0,
+       ajutor:'Încearcă în foaie. Ce s-a întâmplat cu marginea punctată după prima lipire?',why:'După o decupare lipești o singură dată: marginea punctată dispare, iar a doua Lipire (Paste) nu mai aduce nimic.'},
+      {t:'choice',q:'Vrei aceeași listă de nume și pe foaia „Semestrul 2”, dar să rămână și pe foaia „Semestrul 1”. Cu ce comandă începi, după ce ai selectat lista?',
+       o:['Copiere (Copy), Ctrl+C','Decupare (Cut), Ctrl+X','Lipire (Paste), Ctrl+V'],ok:0,
+       ajutor:'Lista trebuie să fie în două locuri.',why:'Copierea lasă originalul pe loc. Decuparea ar lua lista de pe foaia „Semestrul 1”.'}
+     ]},
+
+    /* ---------- P7: golirea și anularea ---------- */
+    {t:'Golești celule și anulezi o greșeală',
+     text:`<p><strong>Golești</strong> celule: le selectezi și apeși tasta <kbd>Delete</kbd> (pe unele tastaturi scrie <kbd>Del</kbd>). Conținutul dispare, dar celulele rămân la locul lor, goale: nimic nu urcă. La fel face clic dreapta › <b>Golire conținut (Clear Contents)</b>.</p>
+<p>Tasta <kbd>Backspace</kbd> (săgeata ← de deasupra lui Enter) golește doar celula activă, nu toată zona. Pentru o zonă folosești Delete.</p>
+<p>Ai greșit? <kbd>Ctrl</kbd>+<kbd>Z</kbd> sau butonul <b>Anulare (Undo)</b> ↶, sus în stânga, anulează ultima operație. Apeși de mai multe ori ca să mergi mai înapoi.</p>`,
+     exemplu:`${grila({A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Bogdan',A4:'Cristi',B4:10},2,4,'B3','Delete pe B3: B3 rămâne goală, nota lui Cristi stă tot în B4.')}`,
+     altfel:`<p>Tasta Delete e ca guma pe o fișă: ștergi ce e scris, dar fișa rămâne la locul ei, în teanc.</p>`,
+     incearca:{t:'excelx',q:'În <b>C3</b> a rămas o observație scrisă din greșeală. Golește celula, dar observația lui Cristi trebuie să rămână în <b>C4</b>.',cols:3,rows:4,
+       cells:{A1:'Elev',B1:'Nota',C1:'Observații',A2:'Ana',B2:9,A3:'Bogdan',B3:7,C3:'de șters',A4:'Cristi',B4:10,C4:'premiul I'},verifica:{gol:['C3'],valori:{C4:'premiul I',A4:'Cristi',B3:7}},
+       ajutor:'Clic pe C3 și tasta Delete (sau clic dreapta › Golire conținut).',why:'Delete golește doar C3. Nimic nu urcă: observația lui Cristi a rămas în C4.'},
+     inca:[
+      {t:'excelx',q:'Golește dintr-o dată notele lui <b>Bogdan</b>, <b>B3:C3</b>: selectează zona și apasă <kbd>Delete</kbd>.',cols:3,rows:6,cells:NOTE,verifica:{gol:['B3','C3'],valori:{A3:'Bogdan',B4:10}},
+       ajutor:'Tragi de la B3 la C3, apoi Delete.',why:'Delete golește toată zona selectată deodată; numele lui Bogdan și rândul de dedesubt au rămas pe loc.'},
+      {t:'excelx',q:'Selectează <b>B2:C4</b> și apasă <kbd>Delete</kbd>. Apoi apasă <kbd>Ctrl</kbd>+<kbd>Z</kbd>. Ce se întâmplă cu notele?',cols:3,rows:6,cells:NOTE,
+       o:['Revin exact cum erau','Rămân șterse','Se golește tot tabelul','Revin, dar în altă coloană'],ok:0,
+       ajutor:'Încearcă în foaie. Ctrl+Z anulează ultima operație.',why:'Ctrl+Z, adică Anulare (Undo), anulează ultima operație, golirea: notele revin la locul lor.'}
+     ]},
+
+    /* ---------- P8: scoaterea unui rând sau a unei coloane ---------- */
+    {t:'Scoți un rând sau o coloană din tabel',
+     text:`<p>Un elev s-a mutat, iar rândul lui trebuie <strong>scos</strong> din tabel, nu doar golit. Clic dreapta pe <strong>numărul</strong> rândului, în stânga › <b>Ștergere (Delete)</b>: rândul dispare, iar rândurile de dedesubt urcă cu unul.</p>
+<p>La fel pentru o coloană: clic dreapta pe <strong>litera</strong> ei, sus › <b>Ștergere (Delete)</b>. Coloanele din dreapta ei vin spre stânga.</p>
+<p><strong>Capcană:</strong> clic dreapta pe o <em>celulă</em> › „Ștergere… (Delete…)” nu golește celula: o scoate și mută celulele vecine. Pentru golire rămâi la tasta Delete.</p>`,
+     exemplu:`<div class="doua-foi">${grila(SCURT,2,5,'','Înainte.')}${grila({A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Cristi',B3:10,A4:'Dana',B4:6},2,5,'','După ștergerea rândului 3: Cristi și Dana au urcat.')}</div>`,
+     altfel:`<p>E ca lista de pe ușa clasei: scoți numele unui elev plecat, iar numele de sub el urcă fiecare cu un loc și astupă golul.</p>`,
+     incearca:{t:'excelx',q:'<b>Bogdan</b> s-a mutat la altă școală. Scoate tot rândul lui din tabel: clic dreapta pe numărul rândului lui, apoi <b>Ștergere (Delete)</b>.',cols:3,rows:6,cells:NOTE,
+       verifica:{valori:{A2:'Ana',A3:'Cristi',B3:10,C3:6,A4:'Dana',B4:6,A5:'Elena',C5:7},gol:['A6','B6','C6']},
+       ajutor:'Bogdan e pe rândul 3. Clic dreapta pe cifra 3 din stânga, apoi Ștergere (Delete).',why:'Rândul 3 a dispărut, iar Cristi, Dana și Elena au urcat cu câte un rând. Rândul 6 a rămas gol.'},
+     inca:[
+      {t:'excelx',q:'Coloana <b>Absențe</b> nu mai trebuie. Scoate toată coloana ei, ca notele să vină în locul ei.',cols:3,rows:3,
+       cells:{A1:'Elev',B1:'Absențe',C1:'Nota',A2:'Ana',B2:2,C2:9,A3:'Bogdan',B3:0,C3:7},verifica:{valori:{A1:'Elev',B1:'Nota',B2:9,B3:7},gol:['C1','C2','C3']},
+       ajutor:'Absențele sunt în coloana B. Clic dreapta pe litera B, sus, apoi Ștergere (Delete).',why:'Coloana B a dispărut, iar notele au venit din C în B.'},
+      {t:'excelx',q:'Vezi capcana: clic dreapta pe <b>C3</b>, alege „Ștergere… (Delete…)” și apasă <b>OK</b>. Ce se întâmplă cu observația „premiul I” din C4?',cols:3,rows:4,
+       cells:{A1:'Elev',B1:'Nota',C1:'Observații',A2:'Ana',B2:9,A3:'Bogdan',B3:7,C3:'de șters',A4:'Cristi',B4:10,C4:'premiul I'},
+       o:['Urcă în C3, lângă Bogdan','Rămâne în C4','Dispare de tot','Apare și în C3, și în C4'],ok:0,
+       ajutor:'Fă-o în foaie și uită-te la coloana C.',why:'„Ștergere…” scoate celula C3 și urcă celulele de sub ea: observația lui Cristi ajunge greșit lângă Bogdan. Ctrl+Z o repune. Pentru golire: tasta Delete.'}
+     ]}
+   ],
+   atelier:{t:'excelx',titlu:'Atelier: pregătești catalogul pentru semestrul al doilea',
+    intro:`<p>Foaia de mai jos se poartă ca Excel-ul: merg tastele, clic dreapta (pe celule, pe numerele rândurilor și pe literele coloanelor) și fila <b>Pornire (Home)</b>. Deasupra foii sunt <strong>testele</strong>: fiecare se bifează singur când sarcina lui e gata. Între Copiere și Lipire nu da alte comenzi: o golire sau o ștergere oprește copierea, ca în Excel. Ai greșit? <kbd>Ctrl</kbd>+<kbd>Z</kbd>. La final apasă <b>Verifică</b>.</p>`,
+    q:'Fă cele patru sarcini, în ce ordine vrei: <b>1.</b> Mută absențele din <b>F1:F6</b> în <b>D1:D6</b>, lângă note. <b>2.</b> Dana s-a mutat la altă școală: scoate tot rândul ei. <b>3.</b> Copiază lista de nume, <b>A1:A6</b>, în <b>E1</b>: acolo începe lista pentru semestrul al doilea. <b>4.</b> Golește celula în care scrie „ciornă”.',
+    cols:6,rows:8,
+    cells:{A1:'Elev',B1:'Nota 1',C1:'Nota 2',A2:'Ana',B2:9,C2:10,A3:'Bogdan',B3:7,C3:8,A4:'Cristi',B4:10,C4:6,A5:'Dana',B5:6,C5:9,A6:'Elena',B6:8,C6:7,
+      F1:'Absențe',F2:2,F3:0,F4:1,F5:3,F6:0,B8:'ciornă'},
+    verifica:{valori:{A1:'Elev',A2:'Ana',A3:'Bogdan',A4:'Cristi',A5:'Elena',B2:9,B3:7,B4:10,B5:8,C2:10,C3:8,C4:6,C5:7,
+      D1:'Absențe',D2:2,D3:0,D4:1,D5:0,E1:'Elev',E2:'Ana',E3:'Bogdan',E4:'Cristi',E5:'Elena'},
+      gol:['A6','B6','C6','D6','E6','F1','F2','F3','F4','F5','F6','B7','B8']},
+    teste:[
+     {ce:'Absențele stau în coloana D, lângă note, iar coloana F e goală',valori:{D1:'Absențe'},gol:['F1','F2','F3','F4','F5','F6']},
+     {ce:'Rândul Danei e scos: Elena a urcat pe rândul 5',valori:{A4:'Cristi',A5:'Elena'},gol:['A6'],fara:['Dana']},
+     {ce:'Lista de nume e copiată în E1, iar originalul a rămas în coloana A',valori:{E1:'Elev',E2:'Ana',E3:'Bogdan',E4:'Cristi',A2:'Ana',A4:'Cristi'}},
+     {ce:'Nicio celulă nu mai conține „ciornă”',fara:['ciornă']}],
+    ajutor:'Mutare: selectezi F1:F6, Ctrl+X, clic pe D1, Ctrl+V. Rândul Danei: clic dreapta pe numărul 5, apoi Ștergere (Delete). Copiere: A1:A6, Ctrl+C, clic pe E1, Ctrl+V. Ciorna: clic pe ea, apoi Delete.',
+    why:'Catalogul e gata: absențele stau lângă note, Dana nu mai e în tabel, iar lista de nume pentru semestrul al doilea începe în E1.',
+    inca:[
+     {t:'excelx',q:'Magazinul clasei. Rigla nu se mai vinde. <b>1.</b> Scoate tot rândul ei. <b>2.</b> Apoi copiază tabelul rămas, <b>A1:C3</b>, ca să înceapă în <b>A6</b>: e modelul pentru luna viitoare.',cols:3,rows:8,
+      cells:{A1:'Produs',B1:'Preț',C1:'Stoc',A2:'Caiet',B2:5,C2:20,A3:'Riglă',B3:4,C3:0,A4:'Pix',B4:2,C4:35},
+      verifica:{valori:{A1:'Produs',A2:'Caiet',A3:'Pix',B3:2,C3:35,A6:'Produs',B6:'Preț',C6:'Stoc',A7:'Caiet',B7:5,C7:20,A8:'Pix',B8:2,C8:35},gol:['A4','B4','C4']},
+      teste:[
+       {ce:'Rândul riglei e scos, iar pixul a urcat pe rândul 3',valori:{A3:'Pix'},gol:['A4','B4','C4'],fara:['Riglă']},
+       {ce:'Copia tabelului începe în A6',valori:{A6:'Produs',C6:'Stoc',A7:'Caiet',A8:'Pix'}},
+       {ce:'Originalul a rămas în A1:C3',valori:{A1:'Produs',A2:'Caiet',A3:'Pix'}}],
+      ajutor:'Clic dreapta pe numărul 3 (rândul riglei), apoi Ștergere (Delete). Apoi selectezi A1:C3, Ctrl+C, clic pe A6, Ctrl+V.',
+      why:'Întâi ai scos rândul riglei, apoi ai copiat tabelul rămas. Invers, copia ar fi avut și rigla.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Care e adresa celulei din coloana F și rândul 9?',o:['F9','9F','F-9','I6'],ok:0,
+     ajutor:'Întâi litera coloanei, apoi numărul rândului.',why:'Litera coloanei, apoi numărul rândului, lipite: F9.'},
+    {t:'excelx',q:'Selectează zona <b>A3:C5</b>: Bogdan, Cristi și Dana, cu toate notele lor.',cols:3,rows:6,cells:NOTE,panglica:false,verifica:{zona:'A3:C5'},
+     ajutor:'Apeși pe A3, ții apăsat și tragi până la C5.',why:'A3:C5 are colțurile A3 (stânga-sus) și C5 (dreapta-jos): 3 coloane × 3 rânduri = 9 celule.'},
+    {t:'excelx',q:'Copiază orarul, <b>A1:C3</b>, ca să înceapă în <b>A5</b>. Originalul rămâne pe loc.',cols:3,rows:7,
+     cells:{A1:'Ora',B1:'Luni',C1:'Marți',A2:'Ora 1',B2:'TIC',C2:'Română',A3:'Ora 2',B3:'Mate',C3:'Engleză'},
+     verifica:{valori:{A5:'Ora',B5:'Luni',C5:'Marți',A6:'Ora 1',B6:'TIC',C6:'Română',A7:'Ora 2',B7:'Mate',C7:'Engleză',A1:'Ora',C3:'Engleză'}},
+     ajutor:'Copiere, nu Decupare: originalul trebuie să rămână.',why:'Copia ocupă A5:C7, iar originalul A1:C3 a rămas.'},
+    {t:'excelx',q:'Mută coloana cu absențe din <b>E1:E4</b> în <b>C1:C4</b>, lângă note.',cols:5,rows:4,
+     cells:{A1:'Elev',B1:'Nota',E1:'Absențe',A2:'Ana',B2:9,E2:2,A3:'Bogdan',B3:7,E3:0,A4:'Cristi',B4:10,E4:1},verifica:{valori:{C1:'Absențe',C2:2,C3:0,C4:1,B2:9},gol:['E1','E2','E3','E4']},
+     ajutor:'Mutare = Decupare (Ctrl+X), clic pe C1, Lipire (Ctrl+V).',why:'Absențele sunt acum în C1:C4, iar coloana E a rămas goală.'},
+    {t:'excelx',q:'<b>1.</b> Cristi s-a mutat: scoate tot rândul lui. <b>2.</b> Golește Nota 2 a Anei, scrisă greșit, fără ca notele de sub ea să se miște.',cols:3,rows:6,cells:NOTE,
+     verifica:{valori:{A2:'Ana',B2:9,A3:'Bogdan',C3:8,A4:'Dana',B4:6,C4:9,A5:'Elena',B5:8,C5:7},gol:['C2','A6','B6','C6']},
+     ajutor:'Rândul lui Cristi: clic dreapta pe numărul lui, apoi Ștergere (Delete). Nota Anei: clic pe ea și tasta Delete.',
+     why:'Dana și Elena au urcat în locul lui Cristi, iar Nota 2 a Anei e goală, fără să se fi mutat ceva.'}
+   ]}
+  ],
+  diploma:{titlu:'Editor de tabele',
+    rezumat:'a găsit celule după adresă, a selectat zone ca A1:B3, a copiat și a mutat date, a golit celule cu Delete și a scos rânduri întregi dintr-un tabel, cu Ctrl+Z la îndemână',
+    aplicatie:'Excel-ul adevărat',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>

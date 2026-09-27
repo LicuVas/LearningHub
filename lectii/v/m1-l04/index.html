@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 4, clasa a V-a: Structura generală a unui sistem de calcul</title>
+<meta name="description" content="Lecția 4, clasa a V-a: structura generală a unui sistem de calcul (intră, prelucrare și memorare, iese) și rolul componentelor hardware, pe fotografii reale.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,800;1,6..12,400&family=Red+Hat+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EFECE8; --paper:#FFFFFF; --paper2:#F4EFE9; --line:#DDD4CA;
+  --ink:#231C18; --ink2:#665A52; --accent:#A8460F; --accentInk:#FFFFFF; --sel:#F6E1D2;
+  --mark:#FFE17A; --markInk:#231C18; --ok:#2F7A4B; --okbg:#E2F2E8; --bad:#BF3434; --badbg:#FAE5E5;
+  --fd:"Chakra Petch","Segoe UI",system-ui,sans-serif; --fb:"Nunito Sans","Segoe UI",system-ui,sans-serif; --fm:"Red Hat Mono",Consolas,monospace;
+  --pcb:#2C3A36; --trace:#C98A4B;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#121012; --paper:#1C191A; --paper2:#262123; --line:#3A3235;
+  --ink:#EDE6E1; --ink2:#AFA39B; --accent:#F29A5C; --accentInk:#1C1310; --sel:#4A2C1C;
+  --mark:#F0CF55; --markInk:#231C18; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF8078; --badbg:#3B1E1E;
+  --pcb:#16201D; --trace:#B7773A;
+}}
+:root[data-theme="dark"]{
+  --desk:#121012; --paper:#1C191A; --paper2:#262123; --line:#3A3235;
+  --ink:#EDE6E1; --ink2:#AFA39B; --accent:#F29A5C; --accentInk:#1C1310; --sel:#4A2C1C;
+  --mark:#F0CF55; --markInk:#231C18; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF8078; --badbg:#3B1E1E;
+  --pcb:#16201D; --trace:#B7773A;
+}
+/* tema: spatele unui calculator, ca in lectia-joc „Misiunea Tehnician” (aceeasi unitate V-U1) */
+.banda{display:flex;align-items:center;gap:14px;padding:7px 14px;white-space:nowrap;overflow:hidden;
+  background:repeating-linear-gradient(90deg,transparent 0 22px,color-mix(in srgb,var(--trace) 35%,transparent) 22px 23px),var(--pcb);
+  border-bottom:2px solid var(--trace)}
+.banda span{display:inline-flex;align-items:center;gap:5px;font-family:var(--fm);font-size:.62rem;letter-spacing:.06em;color:#D9CFC6}
+.banda i{display:block;flex:none;background:#0B0F0E;border:2px solid #9AA3A0}
+.banda .usb{width:20px;height:9px;border-radius:2px;box-shadow:inset 0 -3px 0 #3E78C9}
+.banda .hdmi{width:26px;height:10px;clip-path:polygon(0 0,100% 0,88% 100%,12% 100%);border:0;background:#9AA3A0;position:relative}
+.banda .hdmi::after{content:"";position:absolute;inset:2px 4px;background:#0B0F0E;clip-path:polygon(0 0,100% 0,88% 100%,12% 100%)}
+.banda .lan{width:15px;height:13px;border-radius:1px;box-shadow:inset 0 -4px 0 #0B0F0E,inset 0 3px 0 #C9A13B}
+h1,h2{font-weight:700;letter-spacing:0}
+/* schema „drumul datelor” (HTML, nu imagine) */
+.schema{display:grid;gap:6px;justify-items:center;margin:12px auto 14px;max-width:520px}
+.sc-box{border:2px solid var(--accent);border-radius:10px;background:var(--paper);padding:6px 12px;text-align:center;min-width:9em;line-height:1.3}
+.sc-box b{display:block;font-family:var(--fd);font-size:1.02rem}
+.sc-box span{display:block;font-size:.88rem;color:var(--ink2)}
+.sc-mij{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;width:100%}
+.sc-mij .sc-box{min-width:0}
+.sc-sag{font-size:1.35rem;line-height:1;color:var(--accent);font-weight:700}
+.sc-jos{font-size:.9rem;color:var(--ink2);text-align:center;margin:2px 0 0}
+/* simulatorul „fotografie”: etichete puse pe o fotografie reala, cu teste numite */
+.foto-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.foto-chips button{font:inherit;font-size:.9rem;padding:6px 11px;border-radius:999px;border:2px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.foto-chips button.activ{border-color:var(--accent);background:var(--sel);font-weight:800}
+.foto-chips button.pus::after{content:" ✓";color:var(--ok);font-weight:800}
+.foto-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.foto-wrap{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:6px;line-height:0;cursor:crosshair;touch-action:manipulation;max-width:620px}
+.foto-scroll.mare .foto-wrap{width:190%;max-width:1100px}
+.foto-zoomrow{margin:0 0 6px;line-height:1.35}
+.foto-zoomhint[hidden]{display:none}
+.foto-zoom{margin-right:6px;vertical-align:middle}
+.foto-wrap img{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
+.foto-pin{position:absolute;pointer-events:none;line-height:1.15}
+/* pe fotografie stă doar NUMĂRUL etichetei (pe telefon, numele întregi s-ar suprapune); numele e pe butonul cu același număr */
+.foto-pin i{position:absolute;left:-12px;top:-12px;width:24px;height:24px;border-radius:50%;background:#E4002B;border:2px solid #fff;box-shadow:0 0 0 1px #000;color:#fff;font:800 .8rem/20px var(--fb);text-align:center;font-style:normal}
+.foto-chips .nr,.foto-teste .nr{display:inline-block;width:1.5em;height:1.5em;line-height:1.5em;border-radius:50%;background:#E4002B;color:#fff;font-weight:800;font-size:.78rem;text-align:center;margin-right:5px;vertical-align:.05em}
+.foto-credit{font-size:.8rem;color:var(--ink2);margin:4px 0 0;line-height:1.35}
+.foto-teste{margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--paper2)}
+.foto-teste ol{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:4px}
+.foto-teste li{display:flex;gap:8px;align-items:flex-start;font-size:.93rem;line-height:1.35}
+.foto-teste li .s{flex:none;width:1.4em;text-align:center;font-weight:800}
+.foto-teste li.ok .s{color:var(--ok)}.foto-teste li.rau .s{color:var(--bad)}
+.foto-teste li .m{display:block;font-size:.85rem;color:var(--bad)}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script>
+/* Lecția 4, clasa a V-a (M1): „Structura generală a unui sistem de calcul. Rolul componentelor hardware”.
+   Standardul: LearningHub\_campaign\revizuire_completa_2026_09\05_STANDARD_LECTIE.md. Sursele: surse.md. */
+const LIC={
+  pd:'domeniu public',
+  by4:'<a href="https://creativecommons.org/licenses/by/4.0/deed.ro" target="_blank" rel="noopener">CC BY 4.0</a>',
+  bysa4:'<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ro" target="_blank" rel="noopener">CC BY-SA 4.0</a>',
+  bysa3:'<a href="https://creativecommons.org/licenses/by-sa/3.0/deed.ro" target="_blank" rel="noopener">CC BY-SA 3.0</a>'
+};
+const wc=(file,nume)=>`<a href="https://commons.wikimedia.org/wiki/File:${file}" target="_blank" rel="noopener">${nume}</a>`;
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const CR={
+  dell:`<small>Foto: Ente75, ${wc('Dell_Desktop_Computer_in_school_classroom.jpg','Wikimedia Commons')}, ${LIC.pd}.</small>`,
+  c2008:`<small>Foto: DmitroCzegovets, ${wc('Computer_2008_inside.jpg','Commons')}, ${LIC.by4}; marcaje adăugate.</small>`,
+  bq:`<small>Foto: Tim Sheerman-Chase, ${wc('Be_Quiet_PC_Case_Interior_with_GTX_3060_and_P40.jpg','Commons')}, ${LIC.by4}; marcaje adăugate.</small>`,
+  piese:`<small>Foto, Commons: ${wc('Intel_CPU_Celeron_G3930_Kaby_Lake_perspective.jpg','Eric Gaba')} (${LIC.bysa4}), ${wc('2*8Go_DDR4_Corsair_-_2018-05-08.jpg','Bretwa')} (${LIC.bysa4}), ${wc('Crucial_CT256M4SSD2_rear_20120123.jpg','Djsumdog')} (${LIC.bysa3}); decupate și puse alături de noi.</small>`,
+  kal:`Foto: kallerna, ${wc('Computer_from_inside_018.jpg','Wikimedia Commons')}, ${LIC.pd}; decupată.`,
+  mb:`Foto: www.elbpresse.de, ${wc('Mainboard_in_Computer.JPG','Wikimedia Commons')}, ${LIC.bysa4}.`
+};
+const IMG={
+  clasa:fig('calculator-clasa.webp',800,600,'Un calculator pe o masă dintr-o sală de clasă: în stânga o cutie înaltă, în mijloc un ecran, în față o tastatură, în dreapta un mouse',`Un calculator de birou, într-o sală de clasă. Al tău poate arăta altfel: ecranul poate fi subțire, iar cutia, mai mică. ${CR.dell}`),
+  parti:fig('calculator-parti.webp',900,675,'Același calculator, cu patru chenare roșii și etichete: Unitatea centrală (cutia înaltă din stânga), Monitorul, Tastatura și Mouse-ul',`Cele patru părți mari: <b>unitatea centrală</b> (cutia), <b>monitorul</b>, <b>tastatura</b> și <b>mouse-ul</b>. ${CR.dell} <small>Chenarele și etichetele sunt adăugate de noi.</small>`),
+  piese:fig('piese-procesor-memorie-disc.webp',900,220,'Trei fotografii alăturate: un procesor (o plăcuță pătrată cu multe puncte aurii), două piese lungi de memorie RAM și un disc dreptunghiular, plat',`Scoase din calculator, de la stânga la dreapta: <b>procesorul</b>, <b>memoria RAM</b> (două bucăți) și un <b>disc</b>. ${CR.piese}`),
+  unit1:fig('in-unitate-procesor-memorie-disc.webp',800,701,'Interiorul unei unități centrale: un cerc roșu în jurul unui ventilator rotund, un chenar roșu pe o piesă lungă și subțire, în picioare, lângă el, și un chenar jos, pe disc',`La locul lor, într-o unitate centrală: <b>ventilatorul</b> (sub el, procesorul), <b>memoria RAM</b>, <b>discul</b>. ${CR.c2008}`),
+  unit2:fig('in-unitate-placa-sursa-video.webp',800,657,'Interiorul altei unități centrale: chenare roșii pe placa de bază (sus), pe placa video albă și pe sursa de alimentare (jos, scrie RM850x); un cerc roșu pe ventilatorul din stânga, al carcasei',`Alt calculator: <b>placa de bază</b>, <b>placa video</b> (înfiptă în placa de bază, care continuă în spatele ei) și <b>sursa</b>. În stânga, un <b>ventilator al carcasei</b>: stă pe perete, nu pe placa de bază. ${CR.bq}`)
+};
+/* schema generală, ca text + CSS (nu e imagine) */
+const SCHEMA=(i,p,m,e,jos)=>`<div class="schema" role="img" aria-label="Schema: intră ${i}; urmează prelucrarea, împreună cu memorarea; iese ${e}">
+  <div class="sc-box"><b>Intră</b><span>${i}</span></div>
+  <div class="sc-sag" aria-hidden="true">↓</div>
+  <div class="sc-mij"><div class="sc-box"><b>Prelucrare</b><span>${p}</span></div><div class="sc-sag" aria-hidden="true">⇄</div><div class="sc-box"><b>Memorare</b><span>${m}</span></div></div>
+  <div class="sc-sag" aria-hidden="true">↓</div>
+  <div class="sc-box"><b>Iese</b><span>${e}</span></div>
+  ${jos?`<p class="sc-jos">${jos}</p>`:''}
+</div>`;
+
+/* ---------- simulatorul „fotografie”: pui etichete pe piesele dintr-o fotografie reală; testele se bifează ----------
+   Q.img/w/h/alt/credit, Q.tinte:[{id,et}], Q.zone:[{id,r:[[x1,y1,x2,y2]]}] în procente, în ORDINEA priorității
+   (piesele mici înaintea plăcii de bază pe care stau), Q.nume:{id:'cum se cheamă locul'}, Q.punct = locul corect
+   al fiecărei etichete (pentru „Arată-mi răspunsul” și poarta), Q.gresit = etichete puse greșit, ca un copil. */
+const FOTO={
+  render(Q,body,api){
+    const T=Q.tinte,st={puse:{},activ:T[0].id};
+    const ce=(x,y)=>{for(const z of Q.zone){if(z.r.some(r=>x>=r[0]&&x<=r[2]&&y>=r[1]&&y<=r[3]))return z.id}return null};
+    body.innerHTML=`<div class="foto-chips" role="group" aria-label="Etichetele de pus pe fotografie">${T.map((t,n)=>`<button type="button" data-id="${t.id}"><span class="nr">${n+1}</span>${api.esc(t.et)}</button>`).join('')}</div>
+      <p class="hint foto-acum" style="margin:0 0 6px"></p>
+      <p class="foto-zoomrow"><button class="btn ghost sm foto-zoom" type="button" aria-pressed="false">Mărește fotografia</button> <span class="hint foto-zoomhint" hidden>Fotografia e acum mai lată decât ecranul: trage de ea spre stânga ca să vezi și restul.</span></p>
+      <div class="foto-scroll"><div class="foto-wrap"><img src="img/${Q.img}" width="${Q.w}" height="${Q.h}" alt="${api.esc(Q.alt)}" draggable="false"><div class="foto-pins"></div></div></div>
+      <p class="foto-credit">${Q.credit}</p>
+      <div class="foto-teste"><b>Testele</b> <span class="hint">· se bifează când apeși „Verifică etichetele”</span><ol>${T.map((t,n)=>`<li data-id="${t.id}"><span class="s">○</span><span><span class="nr">${n+1}</span>${t.test?api.esc(t.test):`„${api.esc(t.et)}” stă pe ${api.esc(Q.nume[t.id])}`}<span class="m"></span></span></li>`).join('')}</ol></div>`;
+    const wrap=body.querySelector('.foto-wrap'),img=wrap.querySelector('img'),sc=body.querySelector('.foto-scroll'),zb=body.querySelector('.foto-zoom');
+    /* pe telefon, piesele mici (memoria RAM) sunt greu de nimerit: fotografia se mărește și se derulează în lateral */
+    zb.onclick=()=>{const m=sc.classList.toggle('mare');zb.textContent=m?'Micșorează fotografia':'Mărește fotografia';zb.setAttribute('aria-pressed',String(m));
+      body.querySelector('.foto-zoomhint').hidden=!(m&&sc.scrollWidth>sc.clientWidth+2)};
+    function draw(){
+      body.querySelectorAll('.foto-chips button').forEach(b=>{b.classList.toggle('activ',b.dataset.id===st.activ);b.classList.toggle('pus',!!st.puse[b.dataset.id])});
+      const a=T.find(t=>t.id===st.activ);
+      const na=a?T.indexOf(a)+1:0;
+      body.querySelector('.foto-acum').innerHTML=a?`Acum pui eticheta <b>${na} · ${api.esc(a.et)}</b>: atinge locul ei pe fotografie. Pe fotografie apare cercul roșu cu numărul ${na}.`:'Toate etichetele sunt pe fotografie. Apasă „Verifică etichetele”. Ca să muți una, apasă-i numele, apoi atinge alt loc.';
+      body.querySelector('.foto-pins').innerHTML=T.map((t,n)=>{if(!st.puse[t.id])return '';const [x,y]=st.puse[t.id];
+        return `<span class="foto-pin" style="left:${x}%;top:${y}%" title="${api.esc(t.et)}"><i>${n+1}</i></span>`}).join('');
+    }
+    body.querySelectorAll('.foto-chips button').forEach(b=>b.onclick=()=>{if(api.done())return;st.activ=b.dataset.id;draw()});
+    wrap.addEventListener('click',e=>{
+      if(api.done())return;
+      if(!st.activ){body.querySelector('.foto-acum').innerHTML='Întâi apasă numele unei etichete, de deasupra fotografiei.';return}
+      const r=img.getBoundingClientRect();
+      st.puse[st.activ]=[Math.round((e.clientX-r.left)/r.width*1000)/10,Math.round((e.clientY-r.top)/r.height*1000)/10];
+      const urm=T.find(t=>!st.puse[t.id]);st.activ=urm?urm.id:null;draw();
+    });
+    function marcheaza(){
+      let ok=0;
+      T.forEach(t=>{const li=body.querySelector(`.foto-teste li[data-id="${t.id}"]`),p=st.puse[t.id],w=p?ce(p[0],p[1]):null,bun=w===t.id;
+        li.classList.toggle('ok',bun);li.classList.toggle('rau',!bun);li.querySelector('.s').textContent=bun?'✓':'✗';
+        li.querySelector('.m').textContent=bun?'':!p?'Încă n-ai pus-o pe fotografie.'
+          :w&&t.id==='placa'&&(Q.pePlaca||[]).includes(w)?`Acum stă pe ${Q.nume[w]}. Piesa aceea e prinsă de placa de bază, dar eticheta plăcii merge pe o bucată liberă a ei.`
+          :w?`Acum stă pe ${Q.nume[w]}.`:'Acum nu stă pe nicio piesă din listă: acolo e carcasa sau un cablu.';
+        if(bun)ok++});
+      return ok;
+    }
+    const nav=api.checkButton(()=>{
+      const ok=marcheaza();
+      if(ok===T.length){nav.innerHTML='';api.resolve(true)}
+      else{api.resolve(false,`${ok} din ${T.length} teste trecute. Mută etichetele cu ✗: apasă-le numele, apoi atinge alt loc.`);
+        api.revealButton(()=>{T.forEach(t=>st.puse[t.id]=Q.punct[t.id].slice());st.activ=null;draw();marcheaza();nav.innerHTML='';api.giveUp('fiecare etichetă stă acum pe piesa ei, în fotografie.')})}
+    },'Verifică etichetele');
+    body._foto={pune(p){T.forEach(t=>{if(p[t.id])st.puse[t.id]=p[t.id].slice()});st.activ=null;draw()}};
+    draw();
+  },
+  rezolva(Q,body){body._foto.pune(Q.punct)},
+  gresit(Q,body){body._foto.pune(Object.assign({},Q.punct,Q.gresit))}
+};
+/* „Acum la calculatorul din laborator” (modul lecție: vine după atelier, înainte de verificare; diploma îl repetă).
+   Totul se face DE PE SCAUN, fără aplecat sub masă (judecătorul, 27.09.2026: prizele și cablurile sunt acolo). */
+const LABORATOR=[
+  'Stai pe scaun, la locul tău. <b>Nu desfaci nimic și nu atingi cablurile</b> (regula din lecția 2). Azi te uiți, vorbești cu colegul și scrii în caiet.',
+  'Arată cu degetul, pe rând, și spune-i colegului de bancă numele lor: <b>monitorul</b>, <b>tastatura</b>, <b>mouse-ul</b>.',
+  'Caută din ochi <b>unitatea centrală</b>: o cutie pe masă, lângă monitor, sau jos, sub masă. <b>Nu te apleca și nu intra sub masă</b>: acolo sunt prize și cabluri. Dacă de pe scaun nu vezi nicio cutie, întreabă-l pe profesor unde stau piesele la calculatorul tău: poate sub masă, poate sub tastatura unui laptop, poate în spatele ecranului. Scrie în caiet ce ai aflat.',
+  'Cu calculatorul pornit, stai liniștit câteva secunde. Auzi un zumzet ușor? Sunt <b>ventilatoarele</b> care răcesc piesele. La unele calculatoare abia se aud.',
+  'Profesorul îți deschide, pe ecranul calculatorului tău, un program în care se poate scrie. Când îți spune, apasă o literă. Spune-i colegului drumul ei, cu numele pieselor: pe unde intră, cine o prelucrează, unde e ținută minte, cum ajunge pe ecran.',
+  'Desenează în caiet schema: <b>Intră → Prelucrare și memorare → Iese</b>. Sub fiecare cuvânt, scrie piesele care au lucrat pentru litera ta.',
+  'Arată-i profesorului caietul.'
+];
+const NUME={procesor:'procesor',memorie:'memoria RAM',placa:'placa de bază',video:'placa video',sursa:'sursa de alimentare',carcasa_vent:'un ventilator prins de carcasă, nu pe placa de bază'};
+
+JocMotor.porneste({
+  cheie:'lectie_v_m1_l04',
+  mod:'lectie',   // motorul în modul lecție (27.09.2026): firimituri spre lectii/v/, „Lecția 4”, „Acum în aplicația adevărată” înainte de verificare
+  titlu:'Structura generală a unui sistem de calcul. Rolul componentelor hardware',
+  marca:'Lecția <b>4</b> · clasa a V-a',
+  h1:'Structura generală a unui sistem de calcul. Rolul componentelor hardware',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a V-a', unitate:'V-U1', unitateTitlu:'Sisteme de calcul. Lucrez corect și în siguranță',
+  competente:['CS.1.1'], lectii:'4',
+  ancoraText:'Din programă (CS.1.1, unitatea V-U1, lecția 4): Structura generală a unui sistem de calcul · Rolul componentelor hardware ale unui sistem de calcul',
+  intro:`<p>Afli din ce piese e făcut un calculator, unde stau ele și ce face fiecare. Înveți pe pași, cu fotografii adevărate. Apoi cauți piesele pe fotografia unui calculator desfăcut, apoi la calculatorul tău din laborator. La sfârșit verifici ce știi, cu 5 întrebări.</p>
+<p><b>La final știi:</b> să spui drumul datelor prin calculator și ce face fiecare piesă principală.</p>
+<p><b>Ai nevoie de:</b> lecția 3 — un <b>sistem de calcul</b> primește date, le prelucrează după un <b>program</b> și dă un rezultat; lecția 2 — în laborator nu deschizi carcasa calculatorului și nu atingi cablurile.</p>`,
+  cum:`<b>Cum lucrezi</b><ol><li>Citești 6 pași scurți. După fiecare, un exercițiu mic, fără puncte.</li><li>La atelier pui etichete pe fotografia unui calculator desfăcut.</li><li>Acum la calculatorul din laborator: cauți piesele la locul tău, fără să desfaci nimic.</li><li>Răspunzi la 5 întrebări de verificare: pentru ele primești stele.</li></ol>`,
+  banda:'<span><i class="usb"></i><i class="usb"></i>USB</span><span><i class="hdmi"></i>HDMI</span><span><i class="lan"></i>LAN</span><span><i class="usb"></i><i class="usb"></i>USB</span>',
+  nivele:[
+{t:'Structura generală a unui sistem de calcul. Rolul componentelor hardware',final:true,lectii:[4],
+ continuturi:['Structura generală a unui sistem de calcul','Rolul componentelor hardware ale unui sistem de calcul'],
+ obiectiv:'spui drumul datelor prin calculator (intră, sunt prelucrate și memorate, ies) și ce face fiecare piesă principală.',
+ pasi:[
+  /* ---- pasul 0: la ce folosește (fără acțiuni) ---- */
+  {t:'La ce folosește: ce se întâmplă când apeși o tastă',
+   text:`<p>Apeși tasta <b>A</b>. Într-o clipă, litera A apare pe ecran.</p>
+<p>Pare simplu. Dar în clipa aceea au lucrat împreună mai multe piese ale calculatorului. Una a primit apăsarea. Alta a aflat ce literă e. Alta a ținut-o minte. Alta a arătat-o pe ecran.</p>
+<p>Azi afli care sunt aceste piese, unde stau și ce face fiecare. Apoi le recunoști pe fotografia unui calculator desfăcut și le cauți la calculatorul tău din laborator.</p>
+${IMG.clasa}`},
+  /* ---- pasul 1: hardware + cele patru părți mari ---- */
+  {t:'Piesele calculatorului: hardware-ul',
+   text:`<p>Un calculator e făcut din <strong>piese</strong>. Toate piesele lui, la un loc, se numesc <mark>hardware</mark> (se citește „hard-uer”).</p>
+<p><strong>Regula:</strong> dacă e un obiect, o piesă, face parte din hardware. Un <strong>program</strong> nu e un obiect: e un șir de instrucțiuni pe care piesele le urmează. Programele se mai numesc <strong>aplicații</strong>.</p>
+<p>Un calculator de birou are patru părți mari: <strong>monitorul</strong> (ecranul), <strong>tastatura</strong>, <strong>mouse-ul</strong> și <mark>unitatea centrală</mark>. Unitatea centrală e cutia mare. Cutia ei se numește <strong>carcasă</strong>. În carcasă stau piesele care prelucrează datele. La un laptop, aceste piese stau sub tastatură.</p>
+${IMG.parti}`,
+   altfel:`<p>Gândește-te la o bicicletă. Roțile, ghidonul și pedalele sunt piesele ei: sunt obiecte. La calculator, piesele se numesc hardware.</p><p>Regulile de circulație nu sunt obiecte, dar îți spun ce să faci. Programele sunt ca aceste reguli: le spun pieselor ce să facă.</p>`,
+   incearca:{t:'classify',q:'Folosește regula: e o piesă sau nu? Sortează.',cats:['Hardware (e o piesă)','Program (nu e o piesă)'],items:[['Căștile',0],['Jocul de șah de pe calculator',1],['Cablul mouse-ului',0],['Programul cu care asculți muzică',1]],ajutor:'Întreabă-te: e un obiect, pe care l-ai putea ține în mână?',why:'Căștile și cablul sunt obiecte, deci hardware. Jocul și programul de muzică sunt șiruri de instrucțiuni, nu obiecte.'},
+   inca:[
+    {t:'tf',q:'Un joc pe calculator este hardware, pentru că îl vezi pe ecran.',ok:false,ajutor:'Jocul e un obiect sau un program?',why:'Fals. Pe ecran vezi ce face jocul, dar jocul e un program. Obiectul pe care se vede, monitorul, e hardware.'}
+   ]},
+  /* ---- pasul 2: structura generală ---- */
+  {t:'Drumul datelor: intră, sunt prelucrate, ies',
+   text:`<p>Ți-amintești de la lecția 3: un sistem de calcul primește date, le prelucrează și dă un rezultat. În calculator, datele fac mereu același drum:</p>
+<ol><li><strong>intră</strong>: de exemplu, apeși o tastă;</li>
+<li>sunt <strong>prelucrate</strong>: calculatorul lucrează cu ele, după program;</li>
+<li>sunt <strong>memorate</strong>: calculatorul le ține minte cât lucrează cu ele. Ce salvezi rămâne ținut minte și după oprire;</li>
+<li><strong>iese</strong> rezultatul: de exemplu, apare pe ecran.</li></ol>
+<p>Drumul acesta este <mark>structura generală</mark> a oricărui calculator. Prelucrarea și memorarea merg împreună.</p>
+${SCHEMA('datele','lucrează cu datele','ține minte datele','rezultatul')}`,
+   exemplu:`<p>Socotești <b>2 + 3</b> în aplicația Calculator:</p><ul><li>intră: apeși 2, apoi +, apoi 3, apoi =;</li><li>prelucrare: calculatorul face adunarea;</li><li>memorare: ține minte 2 și 3 cât socotește;</li><li>iese: după =, pe ecran apare <b>5</b>.</li></ul>`,
+   altfel:`<p>E ca la o brutărie. Intră făina și apa (datele). Brutarul frământă aluatul (prelucrarea). Aluatul stă pe masă până e gata (memorarea). Iese pâinea (rezultatul).</p>`,
+   incearca:{t:'order',q:'Într-un joc pe calculator apeși tasta cu săgeata spre dreapta, iar personajul se mută la dreapta. Pune în ordine ce se întâmplă.',items:['Apeși tasta cu săgeata spre dreapta','Jocul calculează unde ajunge personajul','Personajul apare mai la dreapta, pe ecran'],ajutor:'Întâi intră datele, apoi sunt prelucrate, apoi iese rezultatul.',why:'Apăsarea e ce intră, calculul e prelucrarea, iar imaginea nouă de pe ecran e ce iese.'},
+   inca:[
+    {t:'classify',q:'Faci o poză cu telefonul (și el e un sistem de calcul). Ce parte din drumul datelor este fiecare?',cats:['Intră','Prelucrare','Memorare','Iese'],items:[['Apeși butonul și camera prinde imaginea',0],['Telefonul face poza mai luminoasă',1],['Poza rămâne salvată în telefon',2],['Poza apare pe ecran',3]],ajutor:'Ce vine din afară intră. Ce se schimbă e prelucrare. Ce rămâne ținut minte e memorare. Ce vezi la final iese.',why:'Imaginea prinsă de cameră intră, luminarea ei e prelucrarea, poza salvată e memorarea, iar poza de pe ecran e ce iese.'}
+   ]},
+  /* ---- pasul 3: procesorul, memoria RAM, discul ---- */
+  {t:'Procesorul, memoria RAM și discul',
+   text:`<p>În unitatea centrală, trei piese lucrează direct cu datele:</p>
+<ul><li><mark>procesorul</mark> <strong>prelucrează</strong> datele: face calculele, după program. E „creierul” calculatorului;</li>
+<li><mark>memoria RAM</mark> (se citește „ram”) <strong>ține minte</strong> datele cât lucrezi: desenul deschis, textul pe care îl scrii. Când calculatorul se oprește, ea <strong>se golește</strong>;</li>
+<li><mark>discul</mark> <strong>păstrează</strong> ce ai salvat, și după oprire.</li></ul>
+<p>Procesorul se încălzește când lucrează. Peste el stă un <strong>ventilator</strong> (o elice mică) care îl răcește. Într-un calculator desfăcut vezi ventilatorul, nu procesorul.</p>
+${IMG.piese}${IMG.unit1}`,
+   exemplu:`<p>Scrii o compunere. Fiecare literă trece prin <b>procesor</b>. Textul stă în <b>memoria RAM</b> cât scrii. Când salvezi, compunerea e scrisă pe <b>disc</b>. Mâine o găsești acolo, chiar dacă ai oprit calculatorul.</p>`,
+   altfel:`<p>Procesorul e ca un bucătar: el face treaba. Memoria RAM e masa de lucru: pe ea stau lucrurile cât gătește. Discul e cămara: acolo păstrezi ce vrei să ai și mâine. Seara, masa se strânge; ce n-ai pus în cămară nu mai găsești.</p>`,
+   incearca:{t:'choice',q:'Desenezi pe un calculator de birou de 20 de minute și încă n-ai salvat. Se ia curentul. Ce se întâmplă cu desenul?',o:['Se pierde: stătea doar în memoria RAM','Rămâne pe disc: l-ai făcut pe calculator','Rămâne în procesor, care l-a prelucrat','Rămâne pe monitor, unde îl vedeai'],ok:0,ajutor:'Unde stă desenul cât lucrezi, înainte să-l salvezi?',why:'Nesalvat, desenul stătea doar în memoria RAM. Fără curent, memoria RAM se golește. Rămâne doar ce ai salvat pe disc.'},
+   inca:[
+    {t:'classify',q:'Ce piesă se ocupă de fiecare treabă?',cats:['Procesorul','Memoria RAM','Discul'],items:[['Socotește cât fac 125 + 380',0],['Ține deschisă pagina pe care o citești acum',1],['Păstrează pozele din excursia de anul trecut',2],['Calculează scorul tău într-un joc',0],['Ține textul pe care îl scrii chiar acum',1],['Păstrează jocul pe care l-ai salvat ieri',2]],ajutor:'Face calcule: procesorul. Ține minte acum, cât lucrezi: memoria RAM. Păstrează și după oprire: discul.',why:'Procesorul face calculele. Memoria RAM ține ce folosești acum. Discul păstrează ce ai salvat, chiar și după oprire.'},
+    {t:'tf',q:'Ventilatorul care răcește procesorul este chiar procesorul.',ok:false,ajutor:'Ce face ventilatorul pentru procesor?',why:'Fals. Ventilatorul stă peste procesor și îl răcește. Procesorul e dedesubt, ascuns.'}
+   ]},
+  /* ---- pasul 4: placa de bază, sursa, placa video ---- */
+  {t:'Placa de bază, sursa și placa video',
+   text:`<p>Alte trei piese le ajută pe primele:</p>
+<ul><li><mark>placa de bază</mark> e placa mare de care se prind sau se leagă prin cabluri celelalte piese. Prin ea circulă datele. Procesorul, cu ventilatorul lui, și memoria RAM stau pe ea;</li>
+<li><mark>sursa de alimentare</mark> transformă curentul din priză în curentul potrivit pentru piesele din carcasă și îl duce la ele prin cabluri. Fără ea, nu pornesc;</li>
+<li><mark>placa video</mark> pregătește imaginea pe care o vezi pe monitor. Unele calculatoare n-au o placă video separată: treaba ei o face o parte din procesor sau din placa de bază.</li></ul>
+<p>Alte ventilatoare, prinse de pereții carcasei, scot aerul cald afară.</p>
+${IMG.unit2}`,
+   exemplu:`<p>Apeși butonul de pornire. <b>Sursa</b> dă curent pieselor din carcasă. Prin <b>placa de bază</b>, procesorul primește datele de la tastatură și de la memoria RAM. <b>Placa video</b> trimite imaginea la monitor. Monitorul își ia curentul separat, prin cablul lui.</p>`,
+   altfel:`<p>Placa de bază e ca străzile unui oraș: pe ele circulă datele, de la o piesă la alta. Sursa e ca uzina care dă curent întregului oraș.</p>`,
+   incearca:{t:'choice',q:'Cablul calculatorului e în priză, iar priza are curent. Apeși butonul de pornire, dar nu pornește nimic: nici ventilatoarele, nici luminițele. Care piesă s-a stricat, cel mai probabil?',o:['Sursa de alimentare','Memoria RAM','Discul','Placa video'],ok:0,ajutor:'Care piesă dă curent tuturor celorlalte piese din carcasă?',why:'Dacă nicio piesă din carcasă nu primește curent, de vină e piesa care îl împarte: sursa de alimentare. Cu memoria, discul sau placa video stricate, sursa tot ar da curent, iar ventilatoarele s-ar învârti.'},
+   inca:[
+    {t:'match',q:'Ce s-ar întâmpla fără fiecare piesă? Leagă.',pairs:[['Fără sursa de alimentare','piesele din carcasă n-ar primi curent'],['Fără placa de bază','piesele n-ar fi legate între ele'],['Fără procesor','datele n-ar fi prelucrate'],['Fără disc','n-ai unde păstra ce salvezi']],ajutor:'Amintește-ți treaba fiecărei piese. Fără piesă, treaba ei nu se mai face.',why:'Fiecare piesă are treaba ei. Dacă piesa lipsește, lipsește și treaba.'}
+   ]},
+  /* ---- pasul 5: toate împreună ---- */
+  {t:'Toate împreună: drumul literei A',
+   text:`<p>Acum poți spune ce s-a întâmplat când ai apăsat tasta A:</p>
+<ol><li><strong>Intră:</strong> tastatura trimite apăsarea în unitatea centrală (prin cablu sau fără fir).</li>
+<li>Prin <strong>placa de bază</strong>, apăsarea ajunge la <strong>procesor</strong>.</li>
+<li><strong>Prelucrare și memorare:</strong> procesorul pune litera A în text. Textul stă în <strong>memoria RAM</strong>.</li>
+<li><strong>Iese:</strong> <strong>placa video</strong> pregătește imaginea nouă, iar <strong>monitorul</strong> o arată.</li>
+<li>Când salvezi, textul e scris pe <strong>disc</strong>.</li></ol>
+<p>Tot timpul, <strong>sursa</strong> dă curent pieselor din carcasă.</p>`,
+   exemplu:`<p><b>Ce am învățat, pe scurt:</b></p>${SCHEMA('tastatura, mouse-ul','procesorul','memoria RAM (cât lucrezi), discul (ce salvezi)','placa video → monitorul','Placa de bază le leagă pe toate. Sursa dă curent pieselor din carcasă. Toate piesele, la un loc, sunt hardware-ul.')}`,
+   incearca:{t:'order',q:'Miști mouse-ul, iar săgeata de pe ecran se mută. Pune în ordine ce se întâmplă.',items:['Mouse-ul trimite mișcarea în unitatea centrală','Procesorul calculează unde ajunge săgeata','Placa video pregătește imaginea nouă','Monitorul arată săgeata în locul nou'],ajutor:'Același drum ca la litera A: intră, prelucrare, iese.',why:'Mișcarea intră prin mouse, procesorul o prelucrează, apoi placa video și monitorul arată rezultatul.'},
+   inca:[
+    {t:'choice',q:'Apeși tasta B, dar pe ecran nu apare nimic. Afli că e scos cablul tastaturii. Ce nu se mai întâmplă pe drumul datelor?',o:['Datele nu intră','Datele nu sunt prelucrate','Datele nu sunt memorate','Rezultatul nu iese'],ok:0,ajutor:'Pe unde ar fi trebuit să intre apăsarea?',why:'Prin tastatură intră apăsarea. Cu cablul scos, datele nici nu intră, deci calculatorul nu are ce prelucra și ce arăta.'}
+   ]}
+ ],
+ atelier:{t:'fotografie',titlu:'Atelier: găsește piesele într-un calculator desfăcut',
+  intro:`<p><strong>Sarcina:</strong> fotografia arată o unitate centrală fără peretele din lateral. N-ai mai văzut-o până acum. Pune fiecare etichetă pe piesa ei.</p>
+<ol><li>Apasă o etichetă de deasupra fotografiei (prima e deja aleasă).</li>
+<li>Atinge pe fotografie locul piesei. Acolo apare un cerc roșu cu numărul etichetei. Ca s-o muți, apeși din nou numele ei și atingi alt loc.</li>
+<li>Eticheta <b>Placa de bază</b> o pui pe o <b>bucată liberă</b> a plăcii, unde nu stă nicio altă piesă din listă.</li>
+<li>Când ai pus toate cele 5 etichete, apasă <b>Verifică etichetele</b>. Fiecare test se bifează când eticheta lui stă pe piesa potrivită.</li></ol>`,
+  q:'Pune cele 5 etichete pe piesele lor. „Placa de bază” merge pe o bucată liberă a plăcii.',
+  img:'calculator-desfacut.webp',w:800,h:831,
+  alt:'Unitate centrală fără peretele din lateral: sus, o placă mare roșie cu un ventilator rotund și, lângă el, piese lungi și subțiri, în picioare; sub ele, o placă lungă, culcată; jos în stânga, o cutie de metal; în dreapta, suporturi goale de metal',
+  credit:CR.kal,
+  tinte:[{id:'procesor',et:'Procesorul'},{id:'memorie',et:'Memoria RAM'},{id:'placa',et:'Placa de bază',test:'„Placa de bază” stă pe o bucată liberă a plăcii de bază'},{id:'video',et:'Placa video'},{id:'sursa',et:'Sursa de alimentare'}],
+  pePlaca:['procesor','memorie','video'],
+  zone:[{id:'procesor',r:[[15.4,15.3,32.1,32.3]]},{id:'memorie',r:[[35.2,11.4,44.4,42.3]]},{id:'video',r:[[7.7,42.1,52.5,53.1]]},{id:'sursa',r:[[7.1,74.6,32.1,94.7]]},{id:'placa',r:[[11.0,10.6,49.2,63.3]]}],
+  nume:NUME,
+  punct:{procesor:[23.6,23.8],memorie:[39.8,26.5],video:[29.7,47.8],sursa:[19.2,84.7],placa:[27.5,59.3]},
+  gresit:{procesor:[27.5,36.0],memorie:[29.7,47.8]},
+  ajutor:'Procesorul nu se vede: e sub ventilatorul rotund. Memoria RAM sunt piesele lungi și subțiri, în picioare, de lângă el. Placa video e culcată, prinsă în placa de bază. Sursa e cutia de metal de jos, din stânga. Placa de bază: o bucată roșie liberă, de exemplu sub placa video.',
+  why:'Placa de bază e placa mare, aici roșie. Pe ea stau ventilatorul (sub el, procesorul) și memoria RAM (piesele lungi și subțiri, în picioare, de lângă ventilator). Placa video e placa lungă, culcată, prinsă în placa de bază. Sursa e cutia de metal de jos, din stânga.',
+  inca:[
+   {t:'classify',q:'Ce piesă lucrează? Sortează.',cats:['Procesorul','Memoria RAM','Discul','Sursa de alimentare'],items:[['Calculează media notelor tale',0],['Ține minte jocul deschis, cât te joci',1],['Păstrează filmul de la serbare, salvat anul trecut',2],['Dă curent pieselor din carcasă când apeși butonul de pornire',3],['Hotărăște unde sare personajul, după tasta apăsată',0],['Păstrează poza făcută azi și după ce oprești calculatorul',2]],ajutor:'Calculează sau hotărăște: procesorul. Acum, cât lucrezi: memoria RAM. Și după oprire: discul. Curentul: sursa.',why:'Procesorul face calculele și hotărăște ce urmează, după program. Memoria RAM ține ce folosești acum. Discul păstrează ce ai salvat. Sursa dă curent pieselor din carcasă.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Ai scris o poezie pe calculator și ai salvat-o. Apoi s-a luat curentul. Unde o găsești mâine?',o:['Pe disc, unde ai salvat-o','În memoria RAM, unde ai scris-o','În procesor, care a prelucrat-o','În sursa de alimentare'],ok:0,ajutor:'Ce piesă păstrează și după oprire?',why:'Salvarea scrie poezia pe disc, iar discul păstrează și fără curent. Memoria RAM s-a golit când s-a luat curentul.'},
+  {t:'classify',q:'Hardware sau program? Sortează.',cats:['Hardware (e o piesă)','Program (nu e o piesă)'],items:[['Placa video',0],['Aplicația de desen',1],['Ventilatorul din carcasă',0],['Jocul cu mașini',1],['Sursa de alimentare',0],['Programul care arată filme',1]],ajutor:'Regula: e un obiect, o piesă? Atunci e hardware.',why:'Placa video, ventilatorul și sursa sunt obiecte: hardware. Aplicația de desen, jocul și programul de filme sunt șiruri de instrucțiuni pe care piesele le urmează.'},
+  {t:'order',q:'Ieri ai salvat un desen. Azi îl deschizi, iar el apare pe ecran. Pune în ordine ce se întâmplă.',items:['Faci clic pe desenul salvat','Desenul e luat de pe disc și pus în memoria RAM','Placa video pregătește imaginea desenului','Monitorul arată desenul'],ajutor:'Unde stă desenul salvat? Unde stă un desen deschis, cât lucrezi la el? Abia apoi ajunge pe ecran.',why:'Clicul tău intră. Desenul salvat stă pe disc; ca să lucrezi la el, trebuie adus în memoria RAM. Apoi placa video pregătește imaginea, iar monitorul o arată.'},
+  {t:'fotografie',q:'Fotografia arată o parte dintr-un alt calculator desfăcut. Pune cele 3 etichete pe piesele lor. „Placa de bază” merge pe o bucată liberă a plăcii.',
+   img:'placa-memorie-ventilatoare.webp',w:800,h:600,
+   alt:'Interiorul unei unități centrale: în stânga, un ventilator mare, prins de carcasă; în mijloc, o placă neagră mare cu un ventilator rotund și, lângă el, patru piese lungi, verzi, în picioare',
+   credit:CR.mb,
+   tinte:[{id:'procesor',et:'Procesorul'},{id:'memorie',et:'Memoria RAM'},{id:'placa',et:'Placa de bază',test:'„Placa de bază” stă pe o bucată liberă a plăcii de bază'}],
+   pePlaca:['procesor','memorie'],
+   zone:[{id:'procesor',r:[[30.8,19.7,59.2,59.5]]},{id:'memorie',r:[[58.2,12.3,70.6,66.1]]},{id:'carcasa_vent',r:[[0,8.0,30.0,61.6]]},{id:'placa',r:[[29.8,11.7,81.2,100]]}],
+   nume:NUME,
+   punct:{procesor:[45.0,40.0],memorie:[64.0,40.0],placa:[47.0,80.0]},
+   gresit:{procesor:[15.0,34.7]},
+   ajutor:'Ventilatorul procesorului stă pe placa de bază, lângă memoria RAM. Un ventilator prins de peretele carcasei nu e al procesorului. Eticheta plăcii de bază: pe o bucată neagră liberă a plăcii, de exemplu jos.',
+   why:'Placa de bază e placa neagră mare. Pe ea stau ventilatorul rotund, sub care e procesorul, și cele patru piese lungi ale memoriei RAM. Ventilatorul mare din stânga e prins de carcasă: el scoate aerul cald afară.'},
+  {t:'choice',q:'Un ceas inteligent îți numără pașii toată ziua. La fiecare pas nou, ceasul adaugă 1 la numărul de până atunci. Seara, pe ecranul lui scrie: 6.000 de pași. Ce parte din drumul datelor este „adaugă 1 la numărul de până atunci”?',o:['Datele sunt prelucrate','Datele intră','Datele sunt memorate','Rezultatul iese'],ok:0,ajutor:'Ceasul face ceva cu numărul: îl schimbă, după o regulă. Ce parte din drum lucrează cu datele?',why:'Adăugarea e o socoteală: ceasul lucrează cu datele după programul lui, deci le prelucrează. Pasul simțit de ceas e ce intră, numărul păstrat de la un pas la altul e memorat, iar numărul de pe ecran e rezultatul care iese.'}
+ ]}
+  ],
+  diploma:{titlu:'Cunosc piesele calculatorului',
+   rezumat:'a învățat structura generală a unui calculator (intră, prelucrare și memorare, iese) și ce face fiecare piesă: procesorul, memoria RAM, discul, placa de bază, sursa de alimentare, placa video, monitorul, tastatura și mouse-ul',
+   aplicatie:'calculatorul tău din laborator',
+   provocare:LABORATOR},
+  aplicatieReala:{aplicatie:'calculatorul tău din laborator (stai pe scaun; nu desfaci nimic)',titlu:'Acum la calculatorul din laborator',
+   intro:'<p>Ai găsit piesele pe fotografii. Acum le cauți la calculatorul tău. Faci pașii unul câte unul, când îți spune profesorul.</p>',
+   pasi:LABORATOR},
+  tipuri:{fotografie:FOTO}
+});
+</script>
+</body>
+</html>

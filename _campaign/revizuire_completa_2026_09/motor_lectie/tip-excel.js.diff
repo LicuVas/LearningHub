@@ -1,0 +1,51 @@
+163a164,168
+> /* 27.09.2026 (defect LIVE, excel-viii nivelul 2: o copiere corectă respinsă cu „În E2 trebuie scris „Ana””, deși în foaie
+>    scria „Bianca”): valorile AȘTEPTATE urmează aceeași substituție ca foaia și textul. Numele schimbate în foaie se
+>    schimbă și în verifica.valori și în textul dintre ghilimele al formulelor; un număr pe care verificarea îl așteaptă
+>    ca atare (ex. nota copiată, 9) rămâne neschimbat în foaie, altfel verificarea ar cere un număr care nu mai e pe ecran. */
+> const areCheie=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+166a172
+>   const ramanNr=new Set(Object.values((Q.verifica||{}).valori||{}).filter(v=>typeof v==='number'));
+170c176
+<     if(typeof v==='number'){if(Number.isInteger(v)&&v>=1&&v<=10)x=1+rnd(10);else if(Number.isInteger(v))x=Math.max(1,Math.round(v*(0.5+Math.random())));else{const d=(String(v).split('.')[1]||'').length;x=Number((v*(0.6+Math.random()*0.8)).toFixed(d))}}
+---
+>     if(typeof v==='number'){if(ramanNr.has(v))x=v;else if(Number.isInteger(v)&&v>=1&&v<=10)x=1+rnd(10);else if(Number.isInteger(v))x=Math.max(1,Math.round(v*(0.5+Math.random())));else{const d=(String(v).split('.')[1]||'').length;x=Number((v*(0.6+Math.random()*0.8)).toFixed(d))}}
+180a187,193
+>   if(Object.keys(nume).length){   // aceeași schimbare de nume în ce se AȘTEAPTĂ (valori, text între ghilimele în formule)
+>     const nn=s=>typeof s==='string'&&areCheie(nume,s)?nume[s]:s;
+>     const nf=f=>typeof f==='string'&&f.startsWith('=')?f.replace(/"([^"]*)"/g,(m,s)=>'"'+s.replace(/[A-ZĂÂÎȘȚ][a-zăâîșț]+/g,w=>areCheie(nume,w)?nume[w]:w)+'"'):f;
+>     if(V.valori)V.valori=Object.fromEntries(Object.entries(V.valori).map(([k,v])=>[k,nn(v)]));
+>     if(V.formule)V.formule=Object.fromEntries(Object.entries(V.formule).map(([k,v])=>[k,nf(v)]));
+>     Object.keys(cells).forEach(a=>{cells[a]=nf(cells[a])});
+>   }
+327a341
+>   let stMax=0;   // cea mai mare înălțime a barei de stare de până acum (vezi finalul lui draw)
+362a377,380
+>     /* Bara de stare (Medie / Număr / Sumă) nu se mai strânge la loc (27.09.2026): pe telefon, cu pagina derulată până la
+>        capăt, bara scădea la primul clic al unei noi trageri, pagina se scurta, browserul o derula ~54 px, iar celula de
+>        sub deget se schimba. Ca în Excel, bara își păstrează înălțimea. */
+>     const stb=body.querySelector('#xst');if(stb){stb.style.boxSizing='border-box';stMax=Math.max(stMax,stb.getBoundingClientRect().height);stb.style.minHeight=stMax+'px'}
+586c604
+<     ed=null;curent='';lista=null;if(!peZona)muta(dir);draw();gw().focus();return true;
+---
+>     ed=null;curent='';lista=null;if(!peZona)muta(dir);draw();gw().focus({preventScroll:true});return true;
+588c606
+<   function renunta(){ed=null;curent='';lista=null;draw();gw().focus()}
+---
+>   function renunta(){ed=null;curent='';lista=null;draw();gw().focus({preventScroll:true})}
+625c643,644
+<     gest.add('copiere');try{navigator.clipboard&&navigator.clipboard.writeText(tsv(z))}catch(e){}draw()}
+---
+>     // writeText întoarce o promisiune: un clipboard refuzat (fără permisiune, fără focus) nu mai scapă ca eroare în consolă (27.09.2026)
+>     gest.add('copiere');try{if(navigator.clipboard&&navigator.clipboard.writeText){const pr=navigator.clipboard.writeText(tsv(z));if(pr&&pr.catch)pr.catch(()=>{})}}catch(e){}draw()}
+680,681c699,700
+<     Q_('[data-ud]').forEach(b=>b.onclick=()=>{if(b.dataset.ud==='undo')anuleaza();else reface();gw().focus()});
+<     Q_('[data-gt]').forEach(x=>{x.addEventListener('input',()=>{if(GRAF)GRAF.titlu=x.value});x.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();gw().focus()}})});
+---
+>     Q_('[data-ud]').forEach(b=>b.onclick=()=>{if(b.dataset.ud==='undo')anuleaza();else reface();gw().focus({preventScroll:true})});
+>     Q_('[data-gt]').forEach(x=>{x.addEventListener('input',()=>{if(GRAF)GRAF.titlu=x.value});x.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();gw().focus({preventScroll:true})}})});
+710c729,730
+<       if(ev.shiftKey){fin=p}else{act=p;fin=p}dragSel=true;dragMutat=false;draw();gw().focus();
+---
+>       // preventScroll (27.09.2026, lecția VIII/4): fără el, focus() derula pagina la începutul tragerii și celula de sub mouse se schimba
+>       if(ev.shiftKey){fin=p}else{act=p;fin=p}dragSel=true;dragMutat=false;draw();gw().focus({preventScroll:true});
