@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Editarea prezentării: inserare, copiere, mutare, ștergere</title>
+<meta name="description" content="Lecția 5, clasa a VI-a (TIC): editezi o prezentare PowerPoint — dublezi, ștergi și muți diapozitive în panoul cu miniaturi, copiezi, muți și ștergi obiecte, anulezi greșelile cu Ctrl+Z. Cu PowerPoint simulat în pagină și o prezentare de lucru pentru PowerPoint-ul adevărat.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Lexend:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#F2EEEA; --paper:#FFFFFF; --paper2:#F8F3EF; --line:#E2D6CD;
+  --ink:#231A16; --ink2:#62554E; --accent:#A83A1C; --accentInk:#FFFFFF; --sel:#F7DED3;
+  --mark:#FFE08A; --markInk:#231A16; --ok:#1E7A4A; --okbg:#E2F3E8; --bad:#B3261E; --badbg:#FBE6E3;
+  --fd:"Bricolage Grotesque",Georgia,serif; --fb:"Lexend","Segoe UI",system-ui,sans-serif; --fm:"JetBrains Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#17120F; --paper:#211A16; --paper2:#2A221D; --line:#3D322B;
+  --ink:#F1E8E2; --ink2:#BCAEA5; --accent:#FF9A74; --accentInk:#17120F; --sel:#4A2A1E;
+  --mark:#F2C94C; --markInk:#231A16; --ok:#6FD19A; --okbg:#173226; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#17120F; --paper:#211A16; --paper2:#2A221D; --line:#3D322B;
+  --ink:#F1E8E2; --ink2:#BCAEA5; --accent:#FF9A74; --accentInk:#17120F; --sel:#4A2A1E;
+  --mark:#F2C94C; --markInk:#231A16; --ok:#6FD19A; --okbg:#173226; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+/* banda de sus: miniaturi de diapozitive, una scoasă din rând (mutată), una dublată — doar CSS */
+.banda{display:flex;gap:7px;padding:6px 12px;min-height:36px;align-items:center}
+.banda span{flex:0 0 auto;width:38px;height:22px;border:1px solid var(--ink2);border-radius:2px;opacity:.75;
+  background:linear-gradient(var(--ink2),var(--ink2)) 5px 5px/20px 2px no-repeat,linear-gradient(var(--line),var(--line)) 5px 11px/26px 2px no-repeat,linear-gradient(var(--line),var(--line)) 5px 15px/18px 2px no-repeat}
+.banda .sus{transform:translateY(-5px) rotate(-4deg);border-color:var(--accent);border-width:2px;opacity:1}
+.banda .dub{box-shadow:4px 4px 0 -1px var(--paper),4px 4px 0 0 var(--ink2)}
+.banda .gol{border-style:dashed;background:none;opacity:.5}
+h1{font-size:clamp(1.7rem,7vw,3rem);font-weight:800;letter-spacing:-.01em}
+h1 .acc{color:var(--accent)}
+h2{font-weight:750}
+.nevoie{border-left:4px solid var(--accent);padding:6px 10px;background:var(--paper2);border-radius:0 6px 6px 0}
+figure.captura.ingusta img{max-width:250px}
+.reading ol li,.reading ul li{margin:.2em 0}
+.descarca{display:inline-block;padding:6px 12px;border:1px solid var(--accent);border-radius:6px;font-weight:600;text-decoration:none}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/ui-panglica.js"></script>
+<script src="../../../jocuri/_motor/panglica-powerpoint.js"></script>
+<script src="../../_sim/simppt.js"></script>
+<script>
+/* ======================================================================================================
+   Lecția VI · M1 · nr. 5 — „Editarea prezentării: inserare, copiere, mutare, ștergere”.
+   Simulatorul: lectii/_sim/simppt.js (SimPPT, comun clasei a VI-a). Aici stau doar prezentările de lucru ale lecției.
+   Faptele despre PowerPoint sunt probate în PowerPoint-ul real (afirmatii.json, _proba/).
+   ====================================================================================================== */
+const DP=SimPPT.diap;
+const STEA=(x,y)=>({tip:'forma',forma:'star5',culoare:'aur',x:x==null?90:x,y:y==null?3:y,w:7.5,h:13.33});
+const SAGEATA=(x,y)=>({tip:'forma',forma:'arrowR',x,y,w:15.6,h:14.8});
+const TITLU1=()=>DP('d1','title',{titlu:'Sistemul solar',sub:'Ana Pop, clasa a VI-a'});
+const SOARE_PESTE=()=>[{tip:'caseta',x:6.9,y:30,pt:24,txt:'Steaua din centrul\nSistemului solar'},{tip:'imagine',fis:'soare.png',x:8,y:27,w:26,h:46.3}];
+SimPPT.prezentari({
+  /* pasul 1: dublare */
+  l5_concurs:()=>[DP('d1','title',{titlu:'Concurs: Sistemul solar',sub:'Clasa a VI-a'}),
+    DP('d2','tc',{titlu:'Întrebarea 1',c1:'Care planetă e cea mai aproape de Soare?'},[STEA()])],
+  /* pasul 2: ștergere și anulare */
+  l5_stergere:()=>[TITLU1(),DP('d2','to',{titlu:'Soarele'},[{tip:'imagine',fis:'soare.png',x:62,y:27,w:26,h:46.3}]),
+    DP('d3','to',{titlu:'Pisica mea'},[{tip:'caseta',x:6.9,y:30,pt:24,txt:'Mia doarme toată ziua.'}]),
+    DP('d4','tc',{titlu:'Planetele',c1:'Mercur\nVenus\nPământul\nMarte'},[SAGEATA(72,70)]),DP('d5','to',{titlu:'Ce reținem'})],
+  /* pasul 3: mutarea unui diapozitiv */
+  l5_mutare:()=>[TITLU1(),DP('d2','to',{titlu:'Ce reținem'}),DP('d3','tc',{titlu:'Cuprins',c1:'Soarele\nPlanetele\nCe reținem'}),
+    DP('d4','to',{titlu:'Soarele'}),DP('d5','to',{titlu:'Planetele'})],
+  /* pasul 4: copierea unui obiect */
+  l5_copiere:()=>[TITLU1(),DP('d2','tc',{titlu:'Cuprins',c1:'Soarele\nPlanetele\nCe reținem'}),
+    DP('d3','to',{titlu:'Soarele'},[{tip:'caseta',x:6.9,y:30,pt:24,txt:'Steaua din centrul\nSistemului solar'},{tip:'imagine',fis:'soare.png',x:62,y:27,w:26,h:46.3},STEA()]),
+    DP('d4','to',{titlu:'Planetele'}),DP('d5','to',{titlu:'Ce reținem'})],
+  /* pasul 5: mutarea unui obiect */
+  l5_mutobj:()=>[TITLU1(),DP('d2','tc',{titlu:'Cuprins',c1:'Soarele\nPlanetele\nCe reținem'},[STEA(80,62)]),DP('d3','to',{titlu:'Soarele'},SOARE_PESTE())],
+  /* atelierul = prezentarea de lucru descărcabilă (sistemul-solar-de-editat.pptx, făcută prin COM) */
+  l5_atelier:()=>[TITLU1(),DP('d2','to',{titlu:'Ce reținem'},[{tip:'caseta',x:6.9,y:30,pt:24,txt:'Soarele e o stea.\nPlanetele se rotesc în jurul Soarelui.'}]),
+    DP('d3','tc',{titlu:'Cuprins',c1:'Soarele\nPlanetele\nLuna\nCe reținem'},[SAGEATA(70,60)]),
+    DP('d4','to',{titlu:'Soarele'},SOARE_PESTE().concat([STEA()])),
+    DP('d5','to',{titlu:'Pisica mea'},[{tip:'caseta',x:6.9,y:30,pt:24,txt:'Mia doarme toată ziua.'}]),
+    DP('d6','tc',{titlu:'Planetele'})],
+  /* verificarea (variante-soră, alte date) */
+  l5_anotimpuri:()=>[DP('d1','title',{titlu:'Anotimpurile',sub:'Dan Pop, clasa a VI-a'}),DP('d2','to',{titlu:'Vara'}),DP('d3','to',{titlu:'Primăvara'}),
+    DP('d4','to',{titlu:'Toamna'}),DP('d5','to',{titlu:'Tema la mate'}),DP('d6','to',{titlu:'Iarna'})],
+  l5_excursie:()=>[DP('d1','title',{titlu:'Excursia la munte',sub:'Clasa a VI-a'}),DP('d2','to',{titlu:'Ziua 1'},[SAGEATA(78,72)]),
+    DP('d3','to',{titlu:'Ziua 2'}),DP('d4','to',{titlu:'Ziua 3'})]
+});
+
+/* ---------------- lecția ---------------- */
+const IMG={'biletele-perete':[600,800],'meniu-miniatura-editare':[450,364],'soare-inainte-dupa':[1000,318]};
+const fig=(f,alt,cap,cls)=>`<figure class="captura${cls?' '+cls:''}"><a href="../m1-l05/img/${f}.webp" target="_blank"><img src="../m1-l05/img/${f}.webp" alt="${alt}" width="${IMG[f][0]}" height="${IMG[f][1]}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const CONT='Operații de editare a unei prezentări: inserare, copiere, mutare, ștergere a unui diapozitiv/obiect';
+const SIM_SCURT='<span class="hint" style="display:block;font-weight:400;margin-bottom:4px">PowerPoint simulat. Clic dreapta pe o miniatură sau pe un obiect deschide meniul lui (pe telefon: ții degetul apăsat, apoi îl ridici). Tastele le ai și ca butoane sub fereastră. Testele se bifează singure; la final apeși <b>Verifică</b>.</span>';
+const SIM_INTRO=`<p>Mai jos e un <strong>PowerPoint simulat</strong>, cu panglica în engleză, ca pe unele calculatoare din laborator (pe altele PowerPoint e în română; numele românești le ai în pași). Lucrează în fereastră: <strong>testele se bifează singure</strong>, apoi apeși <b>Verifică</b>.</p>
+<ul><li><b>Meniul unei miniaturi sau al unui obiect:</b> clic dreapta pe el. Pe telefon: ții degetul apăsat o clipă, apoi îl ridici.</li>
+<li><b>Tragerea:</b> cu mouse-ul, ții apăsat și tragi. Pe telefon, la o miniatură ții degetul o clipă, până i se colorează chenarul, apoi tragi; un obiect îl atingi întâi o dată, ca să aibă chenar, apoi îl tragi.</li>
+<li><b>Tastele</b> <kbd>Delete</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd>, <kbd>Ctrl</kbd>+<kbd>Z</kbd> le ai și ca butoane sub fereastră: pe telefon nu există.</li></ul>`;
+const ORD_FINAL=['Sistemul solar','Cuprins','Soarele','Planetele','Luna','Ce reținem'];
+const STELUTA={tip:'forma',forma:'star5'};
+
+const LECTIA={
+ t:'Editarea prezentării: inserare, copiere, mutare, ștergere',lectii:[5],continuturi:[CONT],final:true,
+ obiectiv:'repari o prezentare fără s-o iei de la capăt: dublezi, ștergi și muți diapozitive, copiezi, muți și ștergi obiecte, iar o greșeală o anulezi cu Ctrl+Z.',
+ pasi:[
+  /* ---------- pasul 0: la ce folosește ---------- */
+  {t:'La ce folosește',
+   text:`<p>În lecția 4 ai construit o prezentare. Rar iese bună din prima: un diapozitiv stă în locul greșit, unul e în plus, altul îți trebuie încă o dată.</p>
+<p>Nu o iei de la capăt. O <strong>editezi</strong>, adică schimbi ce conține: adaugi, copiezi, muți și ștergi diapozitive și obiecte. E ca la un perete cu bilețele: pe unul îl muți mai sus, pe altul îl scrii încă o dată, pe altul îl dezlipești.</p>
+${fig('biletele-perete','Un perete de sticlă cu multe bilețele lipicioase colorate, așezate pe coloane; fiecare bilețel poate fi mutat sau dezlipit','Bilețele pe un perete: le poți muta, dubla sau dezlipi, fără să rescrii tot. Fotografie: embljusocmedia, domeniu public, Wikimedia Commons.','ingusta')}
+<p class="nevoie"><b>Ai nevoie de:</b> lecția 2 (panoul cu miniaturi, zona de lucru), lecția 3 (deschidere, salvare), lecția 4 (diapozitive, obiecte, substituenți, Diapozitiv nou) și clasa a V-a (clic dreapta, tragere, copiere și mutare de fișiere).</p>`},
+  /* ---------- pasul 1: dublare ---------- */
+  {t:'Dublezi un diapozitiv',
+   text:`<p>Uneori îți trebuie încă un diapozitiv la fel cu unul făcut deja. Nu îl refaci: îl <mark>dublezi</mark>, adică îi faci o copie.</p>
+<ol><li>În panoul cu miniaturi (stânga) dai <strong>clic dreapta</strong> pe miniatura lui.</li><li>Din meniu alegi <strong>Dublare diapozitiv (Duplicate Slide)</strong>.</li></ol>
+<p>Copia apare <strong>imediat după original</strong>, cu tot ce are el, și devine cea aleasă. Diapozitivele de după ea primesc un număr mai mare cu 1. Apoi schimbi în copie doar ce e diferit.</p>
+<p>În același meniu e și <strong>Diapozitiv nou (New Slide)</strong>, din lecția 4.</p>
+${fig('meniu-miniatura-editare','Meniul de clic dreapta pe miniatura diapozitivului 2 în PowerPoint: Cut, Copy, Paste Options, apoi New Slide, Duplicate Slide și Delete Slide, încadrate cu roșu','Clic dreapta pe miniatura 2: <b>Diapozitiv nou (New Slide)</b>, <b>Dublare diapozitiv (Duplicate Slide)</b>, <b>Ștergere diapozitiv (Delete Slide)</b>. Captură din PowerPoint în engleză.')}`,
+   exemplu:`<p>Ana face un concurs. Diapozitivul 2, „Întrebarea 1”, are o stea în colț. Pentru a doua întrebare:</p>
+<ol><li>clic dreapta pe miniatura 2 → <b>Dublare diapozitiv (Duplicate Slide)</b>;</li><li>copia apare pe locul 3, cu steaua în același colț;</li><li>clic în titlul copiei, șterge cifra 1 și scrie 2.</li></ol>`,
+   altfel:`<p>E ca la copiator: pui o fișă, iese o copie la fel, iar pe copie scrii doar ce e altfel. Fișa de la care ai pornit rămâne cum era.</p>`,
+   incearca:{t:'ppt',q:SIM_SCURT+'Dublează diapozitivul 2 („Întrebarea 1”), apoi schimbă titlul copiei în <b>Întrebarea 2</b>.',start:{deck:'l5_concurs',cur:0},
+     teste:[{ce:'Prezentarea are 3 diapozitive',c:[{k:'nr',n:3}],ajutor:'Dublează un singur diapozitiv. Ai pus prea multe? Apasă Ctrl+Z (butonul de sub fereastră).'},
+       {ce:'Diapozitivul 3 e copia diapozitivului 2 (făcut prin dublarea lui)',c:[{k:'copieDin',d:3,din:2}],ajutor:'Clic dreapta pe miniatura 2 → Duplicate Slide (Dublare diapozitiv). Un diapozitiv nou, gol, nu e o copie.'},
+       {ce:'Titlul diapozitivului 3 este <b>Întrebarea 2</b>, iar al diapozitivului 2 a rămas „Întrebarea 1”',c:[{k:'text',d:3,ph:'titlu',val:'Întrebarea 2'},{k:'text',d:2,ph:'titlu',val:'Întrebarea 1'}],ajutor:'Clic în titlul copiei (diapozitivul 3), șterge cifra 1 și scrie 2.'}],
+     rez:[{ctx:2},'cm:dup',{ph:'titlu',scrie:'Întrebarea 2'}],gresit:['mini-2','new-slide',{ph:'titlu',scrie:'Întrebarea 2'}],
+     rezText:'clic dreapta pe miniatura 2 → Duplicate Slide (Dublare diapozitiv) → clic în titlul copiei → „Întrebarea 2”',ajutor:'Copia apare imediat după original. Pe care miniatură dai clic dreapta?',
+     why:'Copia a apărut imediat după original, cu aceeași întrebare și aceeași stea. Ai schimbat doar titlul, iar originalul a rămas neatins.'},
+   inca:[
+    {t:'choice',q:'Prezentarea are 5 diapozitive. Dublezi diapozitivul 2. Pe ce loc apare copia și câte diapozitive are acum prezentarea?',
+     o:['Pe locul 3; sunt 6 diapozitive','Pe locul 6, la sfârșit; sunt 6 diapozitive','Pe locul 2; sunt 5 diapozitive','Pe locul 3; sunt 5 diapozitive'],ok:0,ajutor:'Copia apare imediat după original și se adaugă la celelalte.',
+     why:'Copia vine imediat după diapozitivul 2, deci pe locul 3. Prezentarea avea 5 și a primit încă unul: 6.'}
+   ]},
+  /* ---------- pasul 2: ștergere și anulare ---------- */
+  {t:'Ștergi ce e în plus. Anulezi o greșeală',
+   text:`<p>Ce nu-și are locul se <mark>șterge</mark>: întâi alegi, apoi apeși tasta <kbd>Delete</kbd>.</p>
+<ul><li><strong>Un diapozitiv:</strong> clic pe miniatura lui, apoi <kbd>Delete</kbd>. Sau clic dreapta pe ea → <strong>Ștergere diapozitiv (Delete Slide)</strong>. Cele de după el primesc un număr mai mic cu 1.</li>
+<li><strong>Un obiect:</strong> clic pe el, ca să aibă chenar, apoi <kbd>Delete</kbd>.</li></ul>
+<p>Ai șters din greșeală? <kbd>Ctrl</kbd>+<kbd>Z</kbd> (ții apăsată tasta <kbd>Ctrl</kbd> și apeși <kbd>Z</kbd>) <mark>anulează</mark> ultima acțiune. Dacă mai apeși o dată, anulează și acțiunea dinainte.</p>`,
+   exemplu:`<p>În prezentarea Anei a intrat din greșeală diapozitivul „Pisica mea”, pe locul 3.</p>
+<ol><li>clic pe miniatura 3 → <kbd>Delete</kbd>: „Planetele” trece de pe locul 4 pe locul 3;</li><li>pe „Planetele” e o săgeată rătăcită: clic pe ea → <kbd>Delete</kbd>;</li><li>a șters din greșeală și „Soarele”? <kbd>Ctrl</kbd>+<kbd>Z</kbd> îl aduce înapoi, pe locul lui.</li></ol>`,
+   altfel:`<p>Gândește-te la o listă cu tot ce ai făcut, pas cu pas. <kbd>Ctrl</kbd>+<kbd>Z</kbd> scoate ultimul pas din listă, ca și cum nu l-ai fi făcut. Încă un <kbd>Ctrl</kbd>+<kbd>Z</kbd> îl scoate și pe cel dinainte.</p>`,
+   incearca:{t:'ppt',q:SIM_SCURT+'Șterge diapozitivul <b>Pisica mea</b> și săgeata rătăcită de pe <b>Planetele</b>. Apoi exersează anularea: șterge diapozitivul <b>Soarele</b> și adu-l înapoi cu <kbd>Ctrl</kbd>+<kbd>Z</kbd>.',start:{deck:'l5_stergere',cur:0},
+     teste:[{ce:'Diapozitivul „Pisica mea” nu mai e în prezentare',c:[{k:'faraTitlu',val:'Pisica mea'}],ajutor:'Clic pe miniatura „Pisica mea”, apoi Delete.'},
+       {ce:'Pe „Planetele” nu mai e săgeata',c:[{k:'nobj',d:'Planetele',tip:'forma',forma:'arrowR',n:0}],ajutor:'Alege diapozitivul „Planetele”, dă clic pe săgeată (să aibă chenar), apoi Delete.'},
+       {ce:'Ai anulat o ștergere cu Ctrl+Z, iar „Soarele” e pe locul 2',c:[{k:'ev',e:'undo'},{k:'loc',val:'Soarele',n:2}],ajutor:'Clic pe miniatura „Soarele”, Delete, apoi Ctrl+Z.'},
+       {ce:'Au rămas 4 diapozitive, în ordinea: Sistemul solar, Soarele, Planetele, Ce reținem',c:[{k:'ordine',val:['Sistemul solar','Soarele','Planetele','Ce reținem']}],ajutor:'Ai șters ce nu trebuia? Ctrl+Z, până revine.'}],
+     rez:['mini-3','k:del',{alege:{tip:'forma',forma:'arrowR'}},'k:del','mini-2','k:del','k:undo'],gresit:['mini-3','k:del'],
+     rezText:'miniatura „Pisica mea” → Delete; pe „Planetele”, clic pe săgeată → Delete; miniatura „Soarele” → Delete → Ctrl+Z',ajutor:'Întâi alegi (clic), apoi Delete.',
+     why:'Ai șters un diapozitiv și un obiect, fiecare după ce l-ai ales. Ștergerea greșită ai reparat-o cu Ctrl+Z: „Soarele” s-a întors pe locul lui.'},
+   inca:[
+    {t:'choice',q:'Prezentarea are 6 diapozitive. Ștergi diapozitivul 2. Ce număr are acum diapozitivul care era al 4-lea?',o:['3','4','5','2'],ok:0,
+     ajutor:'Cele de după diapozitivul șters primesc un număr mai mic cu 1.',why:'Toate diapozitivele de după cel șters urcă un loc: al 4-lea devine al 3-lea.'}
+   ]},
+  /* ---------- pasul 3: mutarea unui diapozitiv ---------- */
+  {t:'Muți un diapozitiv: tragi miniatura',
+   text:`<p>Ordinea diapozitivelor se schimbă în panoul cu miniaturi, prin <mark>tragere</mark>, ca la fișierele din clasa a V-a:</p>
+<ol><li>pui mouse-ul pe miniatură;</li><li>ții apăsat butonul din stânga;</li><li>tragi în sus sau în jos; PowerPoint îți arată unde va ajunge: între miniaturi apare un spațiu sau o linie;</li><li>îi dai drumul.</li></ol>
+<p>Diapozitivul nu se copiază și nu se șterge: doar își schimbă locul. Numerele din stânga miniaturilor se schimbă singure.</p>`,
+   exemplu:`<p>„Ce reținem” a ajuns din greșeală pe locul 2, dar trebuie să fie ultimul.</p>
+<ol><li>prinzi miniatura 2 și o tragi în jos;</li><li>când ajunge sub ultima miniatură, îi dai drumul acolo;</li><li>„Ce reținem” e acum ultimul, iar „Cuprins” a trecut de pe locul 3 pe locul 2.</li></ol>`,
+   altfel:`<p>E ca atunci când schimbi ordinea cărților pe un raft: scoți o carte, o bagi între altele două, iar celelalte se dau puțin la o parte. Nicio carte nu se pierde și nu apare una nouă.</p>`,
+   incearca:{t:'ppt',q:SIM_SCURT+'Mută diapozitivul <b>Ce reținem</b> la sfârșit, după „Planetele”. (Pe telefon: ții degetul pe miniatură până i se colorează chenarul, apoi tragi.)',start:{deck:'l5_mutare',cur:0},
+     teste:[{ce:'„Ce reținem” e ultimul diapozitiv',c:[{k:'ultimul',val:'Ce reținem'}],ajutor:'Trage miniatura 2 în jos și las-o sub ultima miniatură.'},
+       {ce:'Ordinea: Sistemul solar, Cuprins, Soarele, Planetele, Ce reținem (niciunul în plus sau în minus)',c:[{k:'ordine',val:['Sistemul solar','Cuprins','Soarele','Planetele','Ce reținem']}],ajutor:'Tragerea nu copiază și nu șterge. Ai greșit? Ctrl+Z.'}],
+     rez:[{muta:[2,5]}],gresit:[{muta:[2,4]}],
+     rezText:'ții apăsat pe miniatura 2 („Ce reținem”), o tragi sub ultima miniatură și îi dai drumul',ajutor:'Unde trebuie să fie semnul de loc (spațiul sau linia dintre miniaturi) când îi dai drumul?',
+     why:'Diapozitivul și-a schimbat doar locul: acum „Ce reținem” încheie prezentarea, iar celelalte au urcat un loc.'},
+   inca:[
+    {t:'choice',q:'Tragi miniatura 5 și îi dai drumul între miniaturile 1 și 2. Ce se întâmplă?',
+     o:['Mutatul ajunge al 2-lea; fostul al 2-lea devine al 3-lea','Mutatul rămâne al 5-lea; restul nu se schimbă','Mutatul ajunge primul; fostul al 2-lea rămâne pe loc','Mutatul ajunge al 2-lea; fostul al 2-lea dispare'],ok:0,
+     ajutor:'Diapozitivul ajunge acolo unde i-ai dat drumul, iar celelalte se dau un loc mai jos.',why:'I-ai dat drumul între 1 și 2 (acolo era spațiul sau linia), deci mutatul ia locul 2. Cele care erau de la 2 la 4 coboară câte un loc, iar niciunul nu dispare.'}
+   ]},
+  /* ---------- pasul 4: copierea unui obiect ---------- */
+  {t:'Copiezi un obiect pe alt diapozitiv',
+   text:`<p>Un obiect (lecția 4) se copiază cu <mark>Copiere</mark> și <mark>Lipire</mark>, ca fișierele:</p>
+<ol><li>clic pe obiect, ca să aibă chenar;</li><li><kbd>Ctrl</kbd>+<kbd>C</kbd> sau <strong>Pornire (Home) → Copiere (Copy)</strong>;</li><li>clic pe miniatura diapozitivului unde îl vrei;</li><li><kbd>Ctrl</kbd>+<kbd>V</kbd> sau <strong>Pornire (Home) → Lipire (Paste)</strong>.</li></ol>
+<p>Copia apare pe diapozitivul ales, <strong>în același loc</strong> ca originalul, iar originalul rămâne unde era. Poți lipi de câte ori vrei: fiecare <kbd>Ctrl</kbd>+<kbd>V</kbd> pune încă o copie.</p>`,
+   exemplu:`<p>Ana vrea steaua din colțul diapozitivului „Soarele” și pe „Planetele”:</p>
+<ol><li>clic pe stea → <kbd>Ctrl</kbd>+<kbd>C</kbd>;</li><li>clic pe miniatura „Planetele” → <kbd>Ctrl</kbd>+<kbd>V</kbd>.</li></ol>
+<p>Steaua apare pe „Planetele”, în același colț ca pe „Soarele”, iar pe „Soarele” rămâne și ea.</p>`,
+   incearca:{t:'ppt',q:SIM_SCURT+'Copiază steaua de pe diapozitivul <b>Soarele</b> pe <b>Planetele</b> și pe <b>Ce reținem</b>.',start:{deck:'l5_copiere',cur:0},
+     teste:[{ce:'Pe „Planetele” e steaua, în același loc ca pe „Soarele”',c:[{k:'acelasiLoc',d:'Planetele',tip:'forma',forma:'star5',ca:'Soarele'}],ajutor:'Clic pe stea → Ctrl+C; clic pe miniatura „Planetele” → Ctrl+V.'},
+       {ce:'Pe „Ce reținem” e steaua, în același loc',c:[{k:'acelasiLoc',d:'Ce reținem',tip:'forma',forma:'star5',ca:'Soarele'}],ajutor:'Steaua e încă în clipboard: clic pe miniatura „Ce reținem” → Ctrl+V.'},
+       {ce:'Pe „Soarele” a rămas steaua (una singură)',c:[{k:'nobj',d:'Soarele',tip:'forma',forma:'star5',n:1}],ajutor:'Copierea (Ctrl+C) lasă originalul pe loc. A dispărut steaua de pe „Soarele” sau ai lipit-o de două ori? Ctrl+Z.'}],
+     rez:['mini-3',{alege:STELUTA},'k:copy','mini-4','k:paste','mini-5','k:paste'],gresit:['mini-3',{alege:STELUTA},'k:cut','mini-4','k:paste','mini-5','k:paste'],
+     rezText:'miniatura „Soarele” → clic pe stea → Ctrl+C → miniatura „Planetele” → Ctrl+V → miniatura „Ce reținem” → Ctrl+V',ajutor:'Întâi alegi steaua și o copiezi, apoi alegi diapozitivul și lipești.',
+     why:'Copia a ajuns pe fiecare diapozitiv ales, în același colț, iar steaua de pe „Soarele” a rămas pe loc.'},
+   inca:[
+    {t:'tf',q:'Copiezi o poză cu <kbd>Ctrl</kbd>+<kbd>C</kbd> și o lipești cu <kbd>Ctrl</kbd>+<kbd>V</kbd> pe alt diapozitiv. Poza dispare de pe diapozitivul de unde ai copiat-o.',ok:false,
+     ajutor:'Ce se întâmplă cu originalul la copiere?',why:'Fals. Copierea lasă originalul unde era; pe celălalt diapozitiv apare încă o poză, la fel.'}
+   ]},
+  /* ---------- pasul 5: mutarea unui obiect ---------- */
+  {t:'Muți un obiect',
+   text:`<p>Un obiect se <mark>mută</mark> în două feluri:</p>
+<ul><li><strong>Pe același diapozitiv, îl tragi:</strong> pui mouse-ul pe el, ții apăsat butonul din stânga, îl duci unde vrei și îi dai drumul. La caseta de text prinzi chenarul, nu textul.</li>
+<li><strong>Pe alt diapozitiv:</strong> clic pe el, apoi <kbd>Ctrl</kbd>+<kbd>X</kbd> sau <strong>Pornire (Home) → Decupare (Cut)</strong>. Obiectul dispare de aici. Apoi clic pe miniatura celuilalt diapozitiv și <kbd>Ctrl</kbd>+<kbd>V</kbd>.</li></ul>
+<p>Nu trage de cerculețele albe de pe chenar: ele schimbă mărimea obiectului.</p>`,
+   exemplu:`${fig('soare-inainte-dupa','Același diapozitiv Soarele din PowerPoint, de două ori: în stânga imaginea soarelui acoperă textul, în dreapta imaginea e mutată în partea dreaptă și textul se vede','Desenat de PowerPoint: <b>înainte</b>, imaginea acoperă textul; <b>după</b>, imaginea trasă la dreapta.')}
+<p>Pe „Soarele”, Ana a tras imaginea la dreapta: acum textul se vede. Altă greșeală: o stea a ajuns pe „Cuprins”, dar locul ei e pe „Soarele”. Ana dă clic pe stea, apasă <kbd>Ctrl</kbd>+<kbd>X</kbd>, apoi clic pe miniatura „Soarele” și <kbd>Ctrl</kbd>+<kbd>V</kbd>. Steaua e acum doar pe „Soarele”.</p>`,
+   altfel:`<p>Gândește-te la o fișă pe bancă. Pe aceeași bancă, o împingi unde vrei: asta e tragerea. Pe altă bancă, o iei de pe prima și o pui pe a doua: asta e decuparea și lipirea. În ambele cazuri rămâne o singură fișă.</p>`,
+   incearca:{t:'ppt',q:SIM_SCURT+'Pe <b>Soarele</b>, trage imaginea în jumătatea din dreapta, ca să nu mai acopere textul. Apoi mută steaua de pe <b>Cuprins</b> pe <b>Soarele</b>. (Pe telefon: atinge întâi imaginea o dată, ca să aibă chenar, apoi trage-o.)',start:{deck:'l5_mutobj',cur:2},
+     teste:[{ce:'Imaginea stă în jumătatea din dreapta a diapozitivului „Soarele” (marginea ei din stânga a trecut de mijloc)',c:[{k:'pozitie',d:'Soarele',tip:'imagine',xmin:50}],ajutor:'Pe telefon: atinge întâi imaginea o dată, apoi trage-o.'},
+       {ce:'Steaua nu mai e pe „Cuprins”',c:[{k:'nobj',d:'Cuprins',tip:'forma',forma:'star5',n:0}],ajutor:'Clic pe miniatura „Cuprins”, clic pe stea, Ctrl+X.'},
+       {ce:'Steaua e pe „Soarele”, una singură',c:[{k:'nobj',d:'Soarele',tip:'forma',forma:'star5',n:1}],ajutor:'După Ctrl+X: clic pe miniatura „Soarele”, apoi Ctrl+V.'}],
+     rez:[{trage:{tip:'imagine'},dx:55},'mini-2',{alege:STELUTA},'k:cut','mini-3','k:paste'],gresit:[{trage:{tip:'imagine'},dx:20},'mini-2',{alege:STELUTA},'k:copy','mini-3','k:paste'],
+     rezText:'trage imaginea spre dreapta, după mijlocul diapozitivului; miniatura „Cuprins” → clic pe stea → Ctrl+X → miniatura „Soarele” → Ctrl+V',ajutor:'Pe același diapozitiv tragi; pe alt diapozitiv decupezi și lipești.',
+     why:'Imaginea s-a mutat pe același diapozitiv, prin tragere. Steaua s-a mutat pe alt diapozitiv: decupată de pe „Cuprins”, lipită pe „Soarele”, deci a rămas una singură.'},
+   inca:[
+    {t:'choice',q:'Ai decupat (<kbd>Ctrl</kbd>+<kbd>X</kbd>) poza de pe diapozitivul 2, apoi ai dat clic pe miniatura 4 și ai apăsat <kbd>Ctrl</kbd>+<kbd>V</kbd>. Unde e acum poza?',
+     o:['Doar pe diapozitivul 4','Pe diapozitivele 2 și 4','Doar pe diapozitivul 2','Nicăieri, s-a pierdut'],ok:0,ajutor:'Decuparea scoate obiectul de unde era.',
+     why:'Decuparea a scos poza de pe diapozitivul 2, iar lipirea a pus-o pe 4. Rămâne una singură, în locul nou.'}
+   ]}
+ ],
+ atelier:{t:'ppt',titlu:'Repară prezentarea „Sistemul solar”',
+  intro:SIM_INTRO+'<p><strong>Sarcina:</strong> prezentarea Anei e încurcată: „Ce reținem” e pe locul 2, „Pisica mea” nu e despre Sistemul solar, pe „Cuprins” e o săgeată în plus, pe „Soarele” imaginea acoperă textul, iar diapozitivul „Luna” lipsește. Repar-o fără s-o iei de la capăt. Urmează testele de sub fereastră; ordinea în care le faci o alegi tu.</p>',
+  q:'Repară prezentarea „Sistemul solar”.',start:{deck:'l5_atelier',cur:0},
+  teste:[
+   {ce:'Diapozitivul „Pisica mea” nu mai e în prezentare',c:[{k:'faraTitlu',val:'Pisica mea'}],ajutor:'Clic pe miniatura lui, apoi Delete.'},
+   {ce:'„Ce reținem” e ultimul diapozitiv',c:[{k:'ultimul',val:'Ce reținem'}],ajutor:'Trage miniatura lui în jos, sub ultima miniatură.'},
+   {ce:'Pe „Cuprins” nu mai e săgeata',c:[{k:'nobj',d:'Cuprins',tip:'forma',forma:'arrowR',n:0}],ajutor:'Clic pe săgeată, apoi Delete.'},
+   {ce:'Pe „Soarele”, imaginea stă în jumătatea din dreapta',c:[{k:'pozitie',d:'Soarele',tip:'imagine',xmin:50}],ajutor:'Trage imaginea spre dreapta, după mijlocul diapozitivului.'},
+   {ce:'Există diapozitivul „Luna”, imediat după „Planetele”, făcut prin dublarea lui',c:[{k:'existaTitlu',val:'Luna'},{k:'dupa',d:'Luna',dupa:'Planetele'},{k:'copieDin',d:'Luna',din:'Planetele'}],ajutor:'Clic dreapta pe miniatura „Planetele” → Duplicate Slide (Dublare diapozitiv); în copie, titlul devine Luna.'},
+   {ce:'Steaua de pe „Soarele” e și pe „Planetele”, și pe „Luna”, în același colț, câte una pe fiecare',c:[{k:'acelasiLoc',d:'Planetele',tip:'forma',forma:'star5',ca:'Soarele'},{k:'acelasiLoc',d:'Luna',tip:'forma',forma:'star5',ca:'Soarele'},{k:'nobj',d:'Soarele',tip:'forma',forma:'star5',n:1},{k:'nobj',d:'Planetele',tip:'forma',forma:'star5',n:1},{k:'nobj',d:'Luna',tip:'forma',forma:'star5',n:1}],ajutor:'Clic pe stea → Ctrl+C → miniatura „Planetele” → Ctrl+V (și la fel pe „Luna”, dacă n-a venit odată cu copia). Două stele pe același diapozitiv? Ctrl+Z.'},
+   {ce:'Ordinea finală: Sistemul solar, Cuprins, Soarele, Planetele, Luna, Ce reținem',c:[{k:'ordine',val:ORD_FINAL}],ajutor:'Verifică panoul cu miniaturi, de sus în jos.'}],
+  rez:['mini-5','k:del','mini-3',{alege:{tip:'forma',forma:'arrowR'}},'k:del','mini-4',{trage:{tip:'imagine'},dx:55},'mini-4',{alege:STELUTA},'k:copy','mini-5','k:paste',
+   {ctx:5},'cm:dup',{ph:'titlu',scrie:'Luna'},{muta:[2,6]}],
+  gresit:['mini-5','k:del','mini-3',{alege:{tip:'forma',forma:'arrowR'}},'k:del','mini-4',{trage:{tip:'imagine'},dx:55},'mini-5','new-slide',{ph:'titlu',scrie:'Luna'},{muta:[2,6]}],
+  rezText:'Delete pe „Pisica mea”; Delete pe săgeata de pe „Cuprins”; imaginea de pe „Soarele” trasă la dreapta; steaua copiată (Ctrl+C) și lipită (Ctrl+V) pe „Planetele”; „Planetele” dublat, cu titlul Luna; „Ce reținem” tras la sfârșit',
+  ajutor:'Lucrează test cu test. Ai greșit? Ctrl+Z.',
+  why:'Ai reparat prezentarea fără s-o iei de la capăt. <b>Ce am învățat:</b> întâi alegi (miniatura sau obiectul), apoi dai comanda; dublarea pune copia imediat după original; <kbd>Delete</kbd> șterge ce e ales, iar <kbd>Ctrl</kbd>+<kbd>Z</kbd> anulează; un diapozitiv îl muți trăgând miniatura; un obiect îl copiezi cu <kbd>Ctrl</kbd>+<kbd>C</kbd> și <kbd>Ctrl</kbd>+<kbd>V</kbd>, îl muți trăgându-l sau cu <kbd>Ctrl</kbd>+<kbd>X</kbd> și <kbd>Ctrl</kbd>+<kbd>V</kbd>.'},
+ qs:[
+  {t:'choice',q:'O prezentare are 8 diapozitive. Dai clic dreapta pe miniatura 6 și alegi <b>Dublare diapozitiv (Duplicate Slide)</b>. Pe ce loc e copia și câte diapozitive are acum prezentarea?',
+   o:['Pe locul 7; sunt 9 diapozitive','Pe locul 9, la sfârșit; sunt 9 diapozitive','Pe locul 6; sunt 8 diapozitive','Pe locul 1; sunt 9 diapozitive'],ok:0,
+   ajutor:'Unde apare copia față de original?',why:'Copia apare imediat după original: după 6 vine 7. Diapozitivele de după se dau un loc mai jos, iar prezentarea are cu unul mai mult: 9.'},
+  {t:'ppt',q:SIM_SCURT+'Prezentarea lui Dan are anotimpurile amestecate și un diapozitiv care nu e al ei. Pune <b>Primăvara</b> înaintea <b>Verii</b> și șterge diapozitivul <b>Tema la mate</b>.',start:{deck:'l5_anotimpuri',cur:0},
+   teste:[{ce:'Diapozitivul „Tema la mate” nu mai e în prezentare',c:[{k:'faraTitlu',val:'Tema la mate'}]},
+     {ce:'Ordinea: Anotimpurile, Primăvara, Vara, Toamna, Iarna',c:[{k:'ordine',val:['Anotimpurile','Primăvara','Vara','Toamna','Iarna']}]}],
+   rez:[{muta:[3,2]},'mini-5','k:del'],gresit:['mini-5','k:del'],
+   rezText:'trage miniatura „Primăvara” între miniaturile 1 și 2; clic pe miniatura „Tema la mate” → Delete',ajutor:'Un diapozitiv se mută trăgându-i miniatura; se șterge cu Delete.',
+   why:'Primăvara și-a schimbat locul prin tragere, fără să se copieze, iar diapozitivul în plus l-ai ales și l-ai șters.'},
+  {t:'ppt',q:SIM_SCURT+'Pe diapozitivul <b>Ziua 1</b> e o săgeată. Pune o săgeată la fel și pe <b>Ziua 3</b>, în același loc. Pe „Ziua 1” săgeata trebuie să rămână.',start:{deck:'l5_excursie',cur:0},
+   teste:[{ce:'Pe „Ziua 3” e săgeata, în același loc ca pe „Ziua 1”',c:[{k:'acelasiLoc',d:'Ziua 3',tip:'forma',forma:'arrowR',ca:'Ziua 1'}]},
+     {ce:'Pe „Ziua 1” a rămas o săgeată, iar pe „Ziua 2” nu e niciuna',c:[{k:'nobj',d:'Ziua 1',tip:'forma',forma:'arrowR',n:1},{k:'nobj',d:'Ziua 2',tip:'forma',forma:'arrowR',n:0}]}],
+   rez:['mini-2',{alege:{tip:'forma',forma:'arrowR'}},'k:copy','mini-4','k:paste'],gresit:['mini-2',{alege:{tip:'forma',forma:'arrowR'}},'k:cut','mini-4','k:paste'],
+   rezText:'miniatura „Ziua 1” → clic pe săgeată → Ctrl+C → miniatura „Ziua 3” → Ctrl+V',ajutor:'Vrei ca originalul să rămână: copiezi, nu decupezi.',
+   why:'Ai copiat, nu ai decupat: săgeata a rămas pe „Ziua 1”, iar copia a apărut pe „Ziua 3” în același loc.'},
+  {t:'choice',q:'Ai șters un diapozitiv, apoi ai șters o imagine de pe alt diapozitiv. Apeși o singură dată <kbd>Ctrl</kbd>+<kbd>Z</kbd>. Ce se întâmplă?',
+   o:['Revine imaginea; diapozitivul rămâne șters','Revine diapozitivul; imaginea rămâne ștearsă','Revin amândouă','Nu revine nimic'],ok:0,
+   ajutor:'Care a fost ultima acțiune?',why:'Ctrl+Z anulează doar ultima acțiune: ștergerea imaginii. Ca să revină și diapozitivul, mai apeși o dată Ctrl+Z.'},
+  {t:'choice',q:'Vrei aceeași poză și pe diapozitivul 2, și pe diapozitivul 6. Ai ales-o pe diapozitivul 2. Ce faci?',
+   o:['Ctrl+C, apoi clic pe miniatura 6 și Ctrl+V','Ctrl+X, apoi clic pe miniatura 6 și Ctrl+V','Delete, apoi clic pe miniatura 6 și Ctrl+V','Tragi miniatura 2 după miniatura 6'],ok:0,
+   ajutor:'Poza trebuie să rămână și pe diapozitivul 2.',why:'Copierea lasă poza pe 2 și pune încă una pe 6. Decuparea ar scoate-o de pe 2, iar tragerea miniaturii ar muta tot diapozitivul.'}
+ ]
+};
+
+/* „Acum în aplicația adevărată”: aceeași prezentare, descărcată (făcută în PowerPoint prin COM, _proba/fa_pptx.py) */
+const DESCARCA='<a class="descarca" href="sistemul-solar-de-editat.pptx" download>⬇ sistemul-solar-de-editat.pptx</a>';
+const PASI_REAL=[
+  `Descarcă prezentarea de lucru: ${DESCARCA}. E aceeași ca în atelier. Deschide fișierul descărcat (clic pe el, în lista de descărcări a browserului): se deschide în PowerPoint.`,
+  'Dacă sus apare o bară galbenă, <b>Vizualizare protejată (Protected View)</b>, apasă pe ea butonul <b>Activare editare (Enable Editing)</b>. Fără el nu poți schimba nimic.',
+  'Diapozitivul „Pisica mea”: clic dreapta pe miniatura lui → <b>Ștergere diapozitiv (Delete Slide)</b>.',
+  'Pe „Cuprins”, clic pe săgeată (să aibă chenar), apoi <kbd>Delete</kbd>.',
+  'Pe „Soarele”, pune mouse-ul pe imagine, ține apăsat și trage-o în partea dreaptă, până nu mai acoperă textul.',
+  'Tot pe „Soarele”: clic pe steaua din colț, <kbd>Ctrl</kbd>+<kbd>C</kbd>. Clic pe miniatura „Planetele”, <kbd>Ctrl</kbd>+<kbd>V</kbd>: steaua apare în același colț.',
+  'Clic dreapta pe miniatura „Planetele” → <b>Dublare diapozitiv (Duplicate Slide)</b>. În copie, clic în titlu, șterge cuvântul Planetele și scrie <b>Luna</b>. Steaua a venit odată cu copia.',
+  'Trage miniatura „Ce reținem” (acum a doua) în jos, până sub ultima miniatură („Luna”), și dă-i drumul acolo.',
+  'Verifică panoul cu miniaturi, de sus în jos: Sistemul solar, Cuprins, Soarele, Planetele, Luna, Ce reținem. Ai greșit ceva? <kbd>Ctrl</kbd>+<kbd>Z</kbd>.',
+  'Salvează cu un nume nou (lecția 3): <b>Fișier (File) → Salvare ca (Save As)</b>, de exemplu <code>Sistemul_solar_editat_6A_Popescu.pptx</code>.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vi_m1_l05',
+  mod:'lectie',
+  titlu:'Editarea prezentării: inserare, copiere, mutare, ștergere',
+  marca:'Lecția <b>5</b> · clasa a VI-a',
+  h1:'Editarea prezentării: <span class="acc">inserare, copiere, mutare, ștergere</span>',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VI-a',
+  unitate:'VI-U1',
+  unitateTitlu:'Prezentări digitale',
+  competente:['CS.1.1','CS.3.1'],
+  lectii:'5',
+  ancoraText:'Programa (OMEN 3393/2017), clasa a VI-a, CS.1.1 și CS.3.1 · unitatea VI-U1 „Prezentări digitale” · lecția 5 din modulul 1 · conținutul: „'+CONT+'”',
+  intro:'Lecția 5 din modulul 1. Înveți să repari o prezentare fără s-o iei de la capăt: <b>dublezi, ștergi și muți diapozitive</b>, <b>copiezi, muți și ștergi obiecte</b>, iar o greșeală o anulezi cu <kbd>Ctrl</kbd>+<kbd>Z</kbd>. Exersezi într-un PowerPoint simulat chiar în pagină, apoi în PowerPoint-ul adevărat, pe o prezentare pe care o descarci de aici. <b>Ai nevoie de:</b> lecțiile 2, 3 și 4. Poți lucra singur: fiecare pas are un exemplu și un exercițiu cu indiciu.',
+  cum:`<b>Cum lucrezi</b><ol>
+<li><b>Învață</b>: primul pas îți spune la ce folosește lecția; apoi urmează 5 pași scurți, câte o idee, cu un exemplu „Uite cum”. Nu ai înțeles? „Explică-mi altfel”.</li>
+<li><b>Încearcă tu</b>: după fiecare pas, un exercițiu în PowerPoint-ul simulat, fără note. Greșești? Primești un indiciu. „Încă un exercițiu” îți dă altele.</li>
+<li><b>Atelier</b>: repari o prezentare întreagă în simulator. Testele se bifează singure.</li>
+<li><b>Acum în aplicația adevărată</b>: descarci aceeași prezentare și o repari în PowerPoint, pas cu pas.</li>
+<li><b>Verificare</b>: 5 întrebări, doar din ce ai învățat în pași. Stele pentru răspunsurile din prima.</li></ol>`,
+  banda:'<span></span><span class="dub"></span><span class="sus"></span><span></span><span class="gol"></span><span></span><span class="dub"></span><span></span><span class="sus"></span><span></span>',
+  nivele:[LECTIA],
+  tipuri:{ppt:SimPPT},
+  aplicatieReala:{aplicatie:'PowerPoint-ul de pe calculator',titlu:'Acum în PowerPoint-ul adevărat',
+    intro:'<p>Ai exersat în simulator. Acum repari aceeași prezentare în PowerPoint-ul de pe calculator. Nu ai nevoie de profesor: descarci fișierul de mai jos și urmezi pașii, unul câte unul.</p>',
+    pasi:PASI_REAL},
+  diploma:{
+    titlu:'Editor de prezentări',
+    rezumat:'dublarea, ștergerea și mutarea diapozitivelor în panoul cu miniaturi, copierea, mutarea și ștergerea obiectelor, anularea greșelilor cu Ctrl+Z. Ce am învățat: întâi alegi, apoi dai comanda; copia apare imediat după original sau în același loc; Ctrl+C lasă originalul, Ctrl+X îl mută',
+    aplicatie:'PowerPoint-ul de pe calculator',
+    provocare:PASI_REAL
+  }
+});
+</script>
+</body>
+</html>
