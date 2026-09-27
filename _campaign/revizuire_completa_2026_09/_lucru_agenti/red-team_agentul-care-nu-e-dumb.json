@@ -1,0 +1,118 @@
+{
+ "gauri": [
+  {
+   "gaura": "Canarul și momeala se pun o dată pe RULARE, dar agentul e chemat separat pentru fiecare PAS, iar apelurile nu știu unul de altul. Un canar trecut dovedește ceva doar pentru apelul în care a stat, nu pentru celelalte ~13. Pe deasupra, canarul prinde doar copierea acolo unde textul EXISTĂ. Nu prinde umplerea golului acolo unde textul LIPSEȘTE, și exact acolo trișează agentul deștept.",
+   "exemplu_concret": "Lecția din 27.09, TRY pasul 2 (r. 82-84): „In celula E1 ... =A1*B1 ... Ar trebui sa obtii 600”. Canarul 600→640 pus în apelul pentru P2 trece. Apelul pentru P1 n-are niciun canar, deci acolo nu se verifică nimic. Proba de gol: scot din copie „Ar trebui sa obtii 600”. Agentul dumb trebuie să scrie „lecția nu spune ce trebuie să apară”. Agentul deștept scrie ce_astept = „600”, pe care l-a calculat singur (5×120). Nicio regulă din plan nu-l prinde: 600 nu e în dosar și nu e dat ca citat, deci nu există citat de verificat.",
+   "gravitate": "GRAV",
+   "reparatie": "dosar_dumb.py pune în FIECARE apel (sau în cel puțin 30% dintre ele, alese cu o sămânță secretă) o perturbare, iar regexul ei stă în secret.json. (a) Canar de fapt: schimbă un număr din fereastră (B1 120→130). Validatorul cere ca acțiunile să tasteze 130; dacă agentul tastează 120, apelul e invalid. (b) Canar de gol: șterge promisiunea sau o valoare de intrare. Orice număr din ce_astept sau din actiuni care nu apare exact în fereastră sau în caiet face apelul invalid. Validitatea se socotește pe APEL în valideaza_pas.py: un apel invalid face ca pasul să se reia, iar peste X% apeluri invalide lotul se aruncă. Momeala se pune tot pe apel."
+  },
+  {
+   "gaura": "Dosarul scurge cheia chiar prin exportorul de la care pornește dosar_dumb.py (exporta_jocuri_md.py). Validatorul de citate nu vede o scurgere pe care agentul n-o citează: agentul citește cheia, apoi citează enunțul.",
+   "exemplu_concret": "(1) exercitiu() (r. 50-52) scrie opțiunile „o” în ordinea din configurație. În jocuri, răspunsul corect e ok:0 la 906 din 932 de întrebări choice (52 din 52 în excel-pas-cu-pas-viii). Deci în dosar răspunsul corect e aproape mereu „A)”, deși pe pagină motorul amestecă opțiunile. (2) La „order” elementele sunt salvate în ordinea corectă (motor.js r. 437, REZOLVA.order apasă k=0..n-1). În excel-pas-cu-pas-viii r. 291, „Selectezi celulele… / Deschizi fila Pornire / Apeși B” intră în dosar gata ordonate. (3) „ajutor” se scrie în text („Indiciu (la cerere)”, r. 63-64) înainte ca agentul să încerce pasul. La r. 115, indiciul „Coloana C e a treia literă de sus; rândul 4…” este tocmai explicația care lipsește din pas. La lecția veche, același risc îl au hint-content (r. 127-147) și practice-solution (r. 503-531), dacă adaptorul B ia HTML-ul și nu textul afișat.",
+   "gravitate": "GRAV",
+   "reparatie": "dosar_dumb.py alege câmpurile după o LISTĂ ALBĂ (q, text, exemplu, celulele vizibile), nu după o listă neagră de tipul „solutie, why, ok”: altfel verifica, ajutor și ok:0 trec prin ea. Opțiunile „o” și elementele „items” se amestecă cu o sămânță secretă, iar răspunsul agentului se traduce înapoi. ajutor, why, verifica și rezolvarea intră numai în apelul de DUPĂ încercare. Înainte de acel apel, acțiunile primei încercări se îngheață cu un hash. Testul de scurgere rulează înainte de orice apel. Nicio bucată de 12 caractere din câmpurile ascunse la pasul k nu are voie să apară în dosar. Poziția răspunsului corect trebuie să fie uniformă pe lot. Dacă una dintre condiții pică: exit≠0 și nu pornește niciun agent."
+  },
+  {
+   "gaura": "Acțiunile agentului sunt la nivel de expert: {selectez:'A1'}, {panglica:['Formulas','Trace Precedents']}, {copiez}. Executorul găsește celula după adresă și butonul după nume. Așa, pașii care predau CUM găsești o celulă sau UNDE e butonul nu pot pica. Iar verificarea „elementul-cheie apare în citat” trece mereu, pentru că adresa e scrisă în instrucțiune. În plus, lista de simboluri din plan (=, $, referință, paranteză, %) nu are *, /, :, ^, !, >.",
+   "exemplu_concret": "TRY pasul 1 (r. 72-76) cere A1…D1, dar lecția nu spune nicăieri ce e o adresă de celulă sau că A1 înseamnă coloana A, rândul 1. {selectez:'A1'} cu citatul „A1 = Cantitate: 5” iese FĂCUT. În excel-pas-cu-pas-viii, la nivelul „Cum găsești o celulă (strategie)” (r. 120-130), poți șterge toată strategia și pasul tot trece: {selectez:'D5'} cu citatul „alege celula D5”. Semnul „*” e folosit la r. 82 și explicat abia la r. 172. SUM și „:” din „E2:E4” (r. 461), cerute în Ex. 1 (r. 490, „folosind SUM”), nu sunt explicate nicăieri în lecție.",
+   "gravitate": "GRAV",
+   "reparatie": "În valideaza_pas.py intră un tabel „acțiune → ce trebuie să știi pentru ea”. selectez cere „adresa celulei”. tastez „=…” cere „=”, fiecare operator și fiecare funcție din șir, plus „:” pentru zone. panglica cere numele filei și al butonului în limba profilului. copiez/lipesc cer gestul. Pentru fiecare acțiune, scriptul verifică: fiecare lucru cerut e în ȘTIE sau are un loc unde e definit (din glosar_<U>.json) ÎNAINTE de pasul k. Dacă nu, scriptul pune BLOCAJ, orice ar scrie agentul. La nivelurile „de la zero” executorul primește și gestul descris după reperele de pe ecran, de exemplu {clic:{antet_coloana:'C', antet_rand:4}}. {selectez:'C4'} e permis abia după ce adresa a fost predată. Lista de simboluri se completează: * / : ^ ! > < &."
+  },
+  {
+   "gaura": "Executorul face singur gesturile pe care lecția nu le scrie: confirmă celula fără Enter, pornește cu Excel deschis, cu o foaie goală și A1 selectat. Iar executor_excel.py atribuie formula prin .FormulaLocal/.Formula, adică o pune direct în celulă, nu o tastează. Deci nu poate vedea un „Enter” care lipsește.",
+   "exemplu_concret": "În lecția din 27.09, cuvântul „Enter” nu apare deloc (grep: 0; cele 5 potriviri pentru „enter” sunt „center” din stil). La r. 176-177 scrie: „click pe o celula goala (ex: C1), tasteaza: =5+3 → Excel afiseaza 8”. În Excel-ul real, fără Enter celula rămâne în editare și arată „=5+3”, nu 8. Dacă elevul dă apoi clic pe altă celulă în timp ce formula e încă deschisă, Excel adaugă în formulă adresa acelei celule. Un executor care confirmă singur celula afișează 8, deci pasul iese FĂCUT. La fel la r. 72, „Deschide Google Sheets … sau Excel”: nu scrie nicăieri cum se deschide.",
+   "gravitate": "GRAV",
+   "reparatie": "Pe simulator, executa_pasi.py lucrează strict. {tastez} doar scrie în celula aflată în editare. Celula se confirmă numai cu {apas:'Enter'|'Tab'} sau cu un clic, după regula reală din Excel: un clic în timp ce scrii o formulă îi adaugă adresa celulei. Un pas care se termină cu celula încă în editare devine NEFĂCUT („celula a rămas în editare”). Starea de pornire se declară: la primul pas al unității Excel e închis, iar {deschid} cere citat. Fiecare gest cere un citat care conține tasta lui („Enter”). executor_excel.py rămâne arbitrul VALORILOR, nu al gesturilor, iar raportul spune asta explicit, fără formularea „tastează ca elevul”."
+  },
+  {
+   "gaura": "„NU ȘTIE = limbă străină” este doar o instrucțiune din prompt, iar un model nu poate uita ce știe. Blocajele și termeni_noi sunt declarate chiar de agent: agentul deștept nu le raportează. Nivelul 0 prinde numai termenii din glosar, iar ciorna glosarului o scriu în faza 1 tot agenți experți, care lasă pe dinafară ce li se pare evident.",
+   "exemplu_concret": "r. 66: „cu cantitate, pret unitar, discount si TVA”. Un agent care știe ce e discountul nu raportează nimic, iar „subtotal” (r. 82) și „pret unitar” pot lipsi din glosar. La r. 381 și 383 scrie „Formulas → Trace Precedents” și „Formulas → Remove Arrows”. Pe profilul RO, agentul traduce singur în „Formule → Urmărire precedenți” și apasă butonul, deși regula din prompt spune că asta e BLOCAJ.",
+   "gravitate": "GRAV",
+   "reparatie": "(1) Mascare mecanică în dosar_dumb.py. Fiecare termen din NU ȘTIE și fiecare nume de meniu din cealaltă limbă se înlocuiește cu un cuvânt inventat, mereu același („discount” → „plintu”, „TVA” → „zorvel”, „Trace Precedents” → „kavro midel”), până la locul unde e definit. După definiție rămâne tot inventat, dar acum textul îl explică. Scriptul pune numele reale înapoi în acțiuni înainte să le dea executorului. Așa, agentul nu mai are nimic de adus din afară. (2) BLOCAJ și termeni_noi îi calculează scriptul. Orice cuvânt din fereastră care nu e în ȘTIE, nici în lexiconul clasei (o listă de frecvență din manualele claselor ≤ N), nici printre termenii definiți înainte, devine automat candidat. Lista agentului doar adaugă la ea. L06 și U11 se socotesc pe lista scriptului."
+  },
+  {
+   "gaura": "Verificarea, întrebările de înțelegere și sarcinile de transfer se pot rezolva din memorie. Agentul dă întâi răspunsul și abia apoi caută o frază cu cuvântul potrivit, ca s-o citeze. Validatorul verifică doar că citatul există. Asta e chiar plângerea omului: lecția testează ce n-a predat, iar agentul trece testul.",
+   "exemplu_concret": "Atom-1 (r. 164): „Ce rezultat da formula =10+5*2 in Excel?”. Orice model răspunde 20 fără să citească lecția. Citatul „* se executa INAINTE de +” (r. 186) există, deci pasul iese FĂCUT, chiar dacă lecția ar fi fost ștearsă. La Ex. 1 (r. 490, „TOTAL GENERAL folosind SUM”), agentul scrie =SUM(E2:E6) din ce știe și citează „=SUM(E2:E4)” (r. 461), deși lecția nu explică nici SUM, nici „:”.",
+   "gravitate": "GRAV",
+   "reparatie": "Două reguli noi în valideaza_pas.py. (1) Proba fără lecție: fiecare întrebare și fiecare sarcină de transfer se pune o dată și FĂRĂ lecție, doar întrebarea plus profilul. Dacă răspunsul e corect și așa, itemul e „neinformativ” și nu poate dovedi L03 sau L26. Nivelul trece doar dacă are cel puțin N itemi informativi. (2) Canar pe fiecare întrebare: într-o copie se inversează fraza care predă („adunarea se face înaintea înmulțirii”). Un agent care urmează textul răspunde 30. Dacă răspunde tot 20, răspunde din memorie, iar itemul se aruncă."
+  },
+  {
+   "gaura": "Filtrele împotriva zgomotului lucrează numai pe rezultatele negative, iar cel care judecă e un expert. NEFĂCUT, BLOCAJ și CONTRADICTIE trec prin al doilea agent, apoi la judecătorul Opus, care „în caz de dubiu, RESPINGE”. FĂCUT trece doar printr-un eșantion de 10%, la același expert. Cifra finală numără numai ce a fost confirmat. Expertul umple aceleași goluri pe care le umple și agentul deștept.",
+   "exemplu_concret": "Constatarea 9: BLOCAJ pe „=” la TRY pasul 2 (r. 83); semnul e explicat abia la r. 172. Judecătorul poate spune „semnul = se vede în formulă, contextul e clar” și îl respinge, iar în cifră ajunge 0. La fel cu „orice copil știe ce e o celulă”.",
+   "gravitate": "GRAV",
+   "reparatie": "Validatorul lui judecator.json primește o regulă: un BLOCAJ se poate respinge NUMAI arătând locul unde e definit termenul, iar scriptul verifică că e înaintea folosirii. Singura altă cale e termenul aflat în ȘTIE-ul aprobat de Vasile. „Se înțelege din context” sau „e evident” nu sunt motive: fără acel loc, blocajul rămâne. Verificarea devine simetrică: 20% din FĂCUT se reiau pe dosarul mascat (vezi mascarea de mai sus), iar un dezacord devine NESIGUR și se numără. Negativele pe care judecătorul nu le confirmă intră în cifră ca NESIGUR, nu ca 0."
+  },
+  {
+   "gaura": "Verificarea „citatul conține elementul-cheie” e slabă, din trei motive. (1) Cheia poate apărea „în citat SAU în câmpul ancorat”, iar câmpul e tot pasul. (2) valideaza_pas.py moștenește normalizarea din valideaza_verdict.py: _norm scoate * # _ > și ghilimelele și ignoră majusculele. (3) Playwright caută implicit butonul după o bucată din text, fără să țină cont de majuscule.",
+   "exemplu_concret": "Pentru toate acțiunile din TRY pasul 1, agentul citează „Completeaza celulele astfel:” (r. 72, peste 12 caractere). „A1”, „5” și „B1” sunt în câmpul ancorat, deci toate trec drept susținute, deși citatul nu spune nimic despre ele. Pe profilul RO, agentul repară tacit formula și tastează =IF(B2=0; 0; B2*C2*(1-D2/100)), citând r. 469, unde formula e cu virgule. Dacă cheia e doar „IF”, pasul trece, iar reparația tacită (constatarea 2) nu se mai vede la nivelul 3. _norm face „=IF(B1=0,\"N/A\",A1/B1)” egal cu „=IF(B1=0,N/A,A1/B1)”, deși a doua dă #NAME?.",
+   "gravitate": "GRAV",
+   "reparatie": "Cheia trebuie să fie ÎN citat sau la cel mult ±40 de caractere de el în sursă, nu oriunde în câmp. La {tastez}, tot textul tastat trebuie să fie o bucată din citat, cu normalizare NUMAI de spații: fără coborât majusculele, fără semne scoase. La formulele adaptate din exerciții se compară forma lor, cu referințele înlocuite prin R, iar fiecare funcție și fiecare operator are nevoie de citatul lui. Numele butonului trebuie să fie identic cu textul lecției, iar executorul îl caută cu getByText(..., {exact:true})."
+  },
+  {
+   "gaura": "Canarul acceptă răspunsul care le pune pe amândouă. valideaza_verdict.py aruncă rularea numai când apare faptul din lume FĂRĂ cel din pagină (`if din_lume and not din_pagina`). Un agent care le scrie pe amândouă trece, deși tocmai și-a arătat cunoștințele din afară.",
+   "exemplu_concret": "Canarul 600→640 la TRY pasul 2. Agentul scrie: ce_astept = „640 (textul spune 640; 5×120 ar da 600)”. Validatorul găsește și faptul din pagină, și cel din lume și notează „canar: OK, a citit textul”.",
+   "gravitate": "MEDIU",
+   "reparatie": "Regula devine `if din_lume: invalid`, iar scriptul caută în tot JSON-ul (json.dumps(v)), nu doar în raspuns și în citate. Orice număr sau fapt din lume care apare oriunde în răspuns aruncă apelul."
+  },
+  {
+   "gaura": "Cu Grep pe dosar și cu tot caietul la dispoziție, agentul „știe ce să caute”. Găsește o frază care conține cheia într-o lecție fără legătură cu pasul și o dă drept sursă.",
+   "exemplu_concret": "Când lecția aceasta ajunge în caietul lecției nr. 7 de la a VIII-a, iar un pas cere confirmarea celulei, agentul caută „Enter” și citează din Word VII „apasă Enter ca să treci pe rândul următor”. Acolo e vorba de paragraf nou, nu de confirmarea unei celule, dar cheia „Enter” e în citat, deci pasul trece. Chiar și cu caietul gol, agentul caută „SUM” în pagină și găsește r. 327, „Verifica numele functiei: =SUM(A1:A5)”: un tabel de erori, dat drept explicație.",
+   "gravitate": "MEDIU",
+   "reparatie": "Sarcinile pe pas rulează fără unelte: dosarul intră direct în prompt, fără Grep. Un citat „anterior” se primește numai dacă (a) lecția citată e legată din fereastră („Ai nevoie de”, prerechizite.json) sau (b) citatul definește un cuvânt care apare literal în instrucțiunea curentă. Altfel pasul e NESIGUR: agentul a găsit ceva ce un începător n-ar ști să caute. Ce anume faci (celula, textul tastat) trebuie citat din pasul k al lecției curente (sursa „curent”)."
+  },
+  {
+   "gaura": "Resetarea foii („foaie nouă / exemplu nou”) o poate face agentul printr-un citat, și așa dezamorsează CONTRADICTIE, pe care planul o pune automat.",
+   "exemplu_concret": "Constatarea 3: la Concept 5 (r. 369, „D1 (result)”), agentul citează drept exemplu nou titlul „Exemplu real — pret cu discount si TVA:” (r. 188, un comentariu dintr-un bloc de cod). Scriptul golește foaia și nu mai semnalează că D1 a fost întâi TVA (r. 76), iar acum e rezultatul 540.",
+   "gravitate": "MEDIU",
+   "reparatie": "Semnul de foaie nouă îl caută scriptul în textul lecției, strict între locurile celor două folosiri, după o listă închisă: „foaie nouă”, „registru nou”, „șterge tot”, „exemplu nou: folosim alte celule”. Un titlu „Exemplu” nu ajunge, iar citatul agentului nu poate goli foaia."
+  },
+  {
+   "gaura": "Un pas reușit abia după indiciu sau după mai multe încercări se numără FĂCUT. Pentru un începător, asta înseamnă că pasul singur nu ajunge.",
+   "exemplu_concret": "BONUS-ul de la r. 123: „Obtii acelasi rezultat? (Spoiler: NU!) De ce?”. Explicația stă doar în Indiciul 2 (r. 140). După prima încercare, indiciul intră în dosar și pasul iese FĂCUT. În atelier, „Nu încă” urmat de o nouă încercare lasă agentul să ghicească până primește „Corect”.",
+   "gravitate": "MEDIU",
+   "reparatie": "Din jurnalul executorului, scriptul scrie FACUT_CU_INDICIU sau FACUT_LA_INCERCAREA_n. Acțiunile primei încercări se îngheață (hash) înainte să intre indiciul. La lecțiile care promit „de la zero”, FACUT_CU_INDICIU intră în cifra finală. În celelalte lecții are prag separat."
+  },
+  {
+   "gaura": "Întrebările din lecție la care lecția nu dă răspuns nicăieri primesc răspuns din memorie. Validatorul cere doar un citat care să existe, oricare ar fi el.",
+   "exemplu_concret": "TRY pasul 5 (r. 106): „Pune B1 la 0. Ce se intampla?”. Răspunsul nu e scris nicăieri. Agentul răspunde „toate rezultatele devin 0” și citează chiar întrebarea, care are peste 12 caractere, deci trece. Același lucru la r. 545: „care formula da eroare si care nu? De ce?”.",
+   "gravitate": "MEDIU",
+   "reparatie": "La nivelul 0, o regulă nouă semnalează orice „?” dintr-un pas care n-are răspunsul nicăieri în lecție: nici în pas, nici în indiciu, nici în rezolvare. valideaza_pas.py cere ca fiecare număr și fiecare cuvânt cu conținut din RĂSPUNS să apară în citatele date. Un răspuns FĂCUT la o întrebare fără răspuns în lecție face apelul invalid: e canarul de gol, care apare aici de la sine."
+  },
+  {
+   "gaura": "Ecranul pe care îl scrie executorul (celulă → valoare afișată) e în dosar, deci poate fi citat. Agentul răspunde „văd unde se face? da” citând ecranul, nu lecția. Forma de listă „A1: …” îi mai spune și ce înseamnă o adresă, lucru pe care lecția poate nu-l explică.",
+   "exemplu_concret": "După TRY pasul 1, ecran.json conține „A1: Cantitate: 5”. La pasul 2, agentul citează această linie ca dovadă că știe unde e A1, deși lecția n-a spus nicăieri cum se găsește o celulă.",
+   "gravitate": "MEDIU",
+   "reparatie": "Validatorul respinge citatele care se găsesc NUMAI în ecran.json: la „știu”, „văd unde” și „înțeleg” se primesc doar citate din lecție și din caiet. Ecranul se arată ca o grilă cu litere deasupra și numere în stânga, ca în aplicație, nu ca o listă de adrese."
+  },
+  {
+   "gaura": "Trecerea automată de la Haiku la Sonnet, când peste 20% din rulări sunt aruncate, alege tocmai modelul mai deștept. Acesta trece mai des canarul de copiere și umple golurile mai bine, adică exact comportamentul de care ne ferim.",
+   "exemplu_concret": "Pe lecția din 27.09, Haiku pică un canar și trece la Sonnet. Sonnet copiază corect 640, dar nu mai raportează BLOCAJ pe „=” la TRY pasul 2 și nici pe „discount”/„TVA”. Lotul pare mai curat, cu mai puține blocaje, iar schimbarea e socotită reușită.",
+   "gravitate": "MEDIU",
+   "reparatie": "Modelul se schimbă numai dacă noul model trece și un set fix de calibrare: blocajele cunoscute din lecția din 27.09 și din mutanți, plus canarii de gol. Trebuie să găsească cel puțin X% din blocajele cunoscute. Dacă găsește mai puține decât modelul vechi, schimbarea se refuză și lotul merge la judecător."
+  },
+  {
+   "gaura": "Promptul agentului și regulile pot fi contaminate cu bancul. Constructorul știe cele 9 constatări și le pune ca exemple, iar atunci 9 din 9 la lecția din 27.09 nu mai dovedesc nimic.",
+   "exemplu_concret": "Chiar planul scrie în reguli_carte_inchisa: „Dacă scrie „A1 = Cantitate: 5”, tastezi „Cantitate: 5” în A1”. Aceasta e constatarea 1 din bancul B0. Canarul „600 → 640” e luat tot din lecția din bancul B0.",
+   "gravitate": "MEDIU",
+   "reparatie": "banc_masina.py primește o poartă de contaminare. Orice bucată de peste 20 de caractere (sau de 8 cuvinte) din _banc/, confirmate.json sau mutanti/ găsită în elev-pas-cu-pas.md, în prompturile generatorului sau în mesajele regulilor din verif_lectie.py anulează rezultatul bancului. Exemplele din prompt se iau dintr-o lecție care nu e în banc."
+  },
+  {
+   "gaura": "Când lecția oferă două aplicații, agentul o alege pe cea pe care o suportă executorul. Cealaltă cale nu se verifică niciodată, deși linkul duce elevul exact pe ea.",
+   "exemplu_concret": "r. 72: „Deschide Google Sheets (gratuit) sau Excel”, iar Google Sheets are link. Un elev care dă clic ajunge în Sheets. Agentul alege Excel, singurul pentru care există executor, iar pasul trece. Planul nu pomenește nicăieri de Google Sheets.",
+   "gravitate": "MEDIU",
+   "reparatie": "extrage_sarcini.py și sarcini_din_nivel.py recunosc alternativele de forma „X sau Y” din comenzi, iar fiecare aplicație numită devine o lectură obligatorie. O aplicație fără executor face pasul NESIGUR. La nivelul 0 intră regula „aplicație fără executor”: ori lecția renunță la ea, ori primește executor."
+  },
+  {
+   "gaura": "Validatorul existent, pe care planul spune că îl extinde, nu aruncă o cale cu „../”, deși planul susține că o aruncă. Sit.text face `.lstrip(\"./\")`, deci „../../x” devine „x”. Dacă fișierul nu există la calea dată, caută orice fișier cu același nume în copie și îl ia.",
+   "exemplu_concret": "Agentul citează din „../lectia2-referinte-celule.html”. Validatorul taie „../”, caută după nume și acceptă citatul dacă fișierul se află oriunde în copie, fără să semnaleze ieșirea din dosar.",
+   "gravitate": "MIC",
+   "reparatie": "În valideaza_pas.py: orice cale care conține „..” sau e absolută face rularea invalidă. Calea se rezolvă și se verifică cu is_relative_to(dosarul apelului). Căutarea după numele fișierului dispare."
+  },
+  {
+   "gaura": "Un citat care lipsește din dosar, dar există mai jos în lecție, e tratat mereu ca scurgere în harness, adică se repară harness-ul. Poate fi însă memoria modelului: lecțiile sunt publice pe pages.dev. Atunci diagnosticul e greșit, iar trișatul nu e numărat ca trișat.",
+   "exemplu_concret": "Agentul scrie la TRY pasul 2 citatul „Operatorii aritmetici disponibili in Excel sunt aceiasi ca in matematica”, care e la r. 172, în afara ferestrei. Planul aruncă rularea și „repară” harness-ul, deși dosarul nu conținea acel text.",
+   "gravitate": "MIC",
+   "reparatie": "Harness-ul scrie pentru fiecare apel o listă cu sha256 pentru fiecare fișier primit. Dacă textul citat nu e în niciunul dintre ele, cazul se clasifică AGENT_MEMORIE: se numără la schimbarea modelului sau la aruncarea apelului, iar harness-ul nu se repară."
+  }
+ ]
+}

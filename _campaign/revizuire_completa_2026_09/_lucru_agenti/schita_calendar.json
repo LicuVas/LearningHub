@@ -1,0 +1,690 @@
+{
+ "titlu": "LearningHub, lecție cu lecție în ordinea orelor: planul de verificare „la sânge” (27.09.2026)",
+ "principii": [
+  "Ordinea vine din plan și din calendar, nu din foldere: unitati.json dă ordinea lecțiilor, Calendar_ore_*.md dă data fiecăreia. Refacem și verificăm exact în ordinea în care se predau.",
+  "O lecție din plan = O singură pagină canonică (cea care contează). Dublurile (m1-excel-fundamente și m2-formule-functii, m3-grafice-web și m4-html-css) nu mai sunt pagini de predare.",
+  "Fereastra de 14 zile: tot ce se predă în următoarele 14 zile trebuie să fie verificat complet cu cel puțin 3 zile înainte de oră. Ce nu se predă curând trece doar prin scripturi și poartă vizibil banda „nerevizuit”.",
+  "Cine scrie lecția nu o verifică. Sarcinile agentului „dumb” (cititorul fără cunoștințe) le scrie un script din textul lecției plus un agent independent, niciodată autorul.",
+  "Agentul dumb doar FACE și CITEAZĂ. Rezultatul îl măsoară aplicația reală (Excel prin COM) sau simulatorul, printr-un „executor”, adică un script care face efectiv acțiunea. Agentul nu are voie să spună ce a ieșit.",
+  "Cartea închisă e garantată mecanic, nu pe cuvânt: agentul primește lecția tăiată exact la pasul curent, plus lecțiile anterioare din plan. Ce e explicat mai jos nu există pentru el.",
+  "Fiecare problemă găsită e o CLASĂ de probleme (R6.4 din 00_INDEX.md). Devine o verificare mecanică și se caută peste tot, nu se repară doar locul semnalat.",
+  "Faptele din lume (cota TVA, numele meniurilor în română) se fixează O dată, din sursă primară sau de la om, într-un fișier de constante. Nu vin din memoria unui model.",
+  "Nicio pagină nu primește insigna „verificat” fără dosar de dovezi complet. Până când mașina trece bancul de test, maximul este „verificat parțial”.",
+  "Orice comandă de verificare tipărește pe ultima linie UN număr (câte probleme). 0 = trece.",
+  "Orice semnalare gravă (blochează elevul sau îl învață greșit) trece printr-un adversar, adică un agent care încearcă s-o respingă.",
+  "După orice reparație globală se rulează din nou executorul și agentul dumb, nu doar verificările de formă (R6.7: conformitatea nu garantează că sarcina se mai poate rezolva).",
+  "Publicarea: întâi pe proba.learninghub-8z6.pages.dev, apoi verificare live (curl + marcaj), apoi OK-ul lui la prima publicare a fiecărei secțiuni, apoi producție. Adresele vechi nu se rup: progresul elevilor și evidența activității depind de ele.",
+  "Office în laborator poate fi RO sau EN, deci fiecare material dă ambele variante. Separatorul din formule se declară o dată pe unitate. Numele funcțiilor rămân englezești."
+ ],
+ "niveluri_verificare": [
+  {
+   "nivel": 0,
+   "nume": "Scripturi gratuite (forma, ordinea, faptele fixe)",
+   "cine": "scripturi, fără AI: site_audit.py și oracol_novice.py (există), plus un pachet NOU C:/00/Projects/LearningHub/tools/verif/verif_lectie.py care preia regula E din prereq_jocuri.py, ilustratii.py portat la lecții și K_scan.py extins",
+   "ce_verifica": [
+    "ancora: unitate + nr + titlu identic cu unitati.json; fiecare conținut din plan are cel puțin o sarcină",
+    "ordinea: niciun termen sau simbol (=, referință, paranteză, %) folosit într-o sarcină înainte de explicația lui; se verifică ORDINEA, nu doar prezența",
+    "pas = 30-110 cuvinte, cel mult un termen nou pe pas; fiecare pas despre o aplicație are captură reală documentată în SURSE.json sau simulator",
+    "zecimale scrise cu punct; formule cu „,” fără varianta cu „;”; meniuri englezești fără perechea românească (dicționar NOU meniuri_ro_en.json)",
+    "fapte din lume diferite de constante.json (NOU): TVA 19 / 0,19 / 1,19 și rezultatele calculate cu ele",
+    "o formulă prezentată ca „protecție la împărțire” care nu conține „/”; aceeași formulă IF(X=0;...) cu rezultate de rezervă diferite (0 față de N/A)",
+    "enunț ↔ rezolvare: numărul de elemente cerute (<li>) față de numărul din rezolvare (Literă=)",
+    "filtru de contradicții: frază de cel puțin 4 cuvinte prezentă și cu „nu” în față, și fără; doar semnalează, decide nivelul 2 sau 3",
+    "blocuri Copiază care conțin comentarii (span.cmt în .code-block)",
+    "diacritice (cel puțin 15 la 1000 de litere), răspunsul corect recunoscut după formă (>20% mai lung), linkuri, sintaxă JS",
+    "după publicare: curl 200 + marcajul versiunii pe proba"
+   ],
+   "iesire": "raport_n0.jsonl pe lecție (regulă, rând, citat); ultima linie = numărul de probleme",
+   "criteriu_trecere": "0 pe regulile tari. Alarmele din filtre (contradicții, două roluri) nu opresc singure: merg obligatoriu la nivelul 2 sau 3.",
+   "cost": "gratuit; T0 ~1 s pe un sit întreg (măsurat pe kitul plimbare), deci secunde pe lecție (extrapolat)"
+  },
+  {
+   "nivel": 1,
+   "nume": "Aplicația reală și simulatorul (executorul)",
+   "cine": "scripturi NOI: executor_excel.py extinde oracol.py cu FormulaLocal, adică formula tastată exact ca de elev pe setările PC-ului, într-o instanță Excel invizibilă închisă fără salvare. executor_pagina.py extinde H_vede.py: servește pagina prin http, apasă butoanele Copiază, citește clipboardul, rulează atelierul cu soluția și cu un răspuns greșit. Pentru jocuri: test_joc.py și proba_exersare.py (există).",
+   "ce_verifica": [
+    "fiecare rezultat promis („ar trebui să obții 600”, „apare #DIV/0!”) iese la fel în Excel, în 3 așezări: cea literală, cea firească a elevului (denumiri pe rândul 1, numere pe rândul 2) și cea cu numere în celule",
+    "formula și rezultatul, în sintaxa RO („;”, virgulă zecimală) și EN; un refuz sau text în loc de număr este problemă dacă lecția nu dă și varianta românească",
+    "„fiecare formulă are o eroare”: fiecare formulă dă cod # sau fereastră de refuz, iar rezolvarea numește exact ce dă Excel",
+    "ce ajunge în clipboard după Copiază și ce apare în foaie după lipire",
+    "regula fidelității: pe cazurile lecției, tip-excel.js în mod „ro” dă ce dă Excel; atelierul acceptă soluția și respinge greșitul (control negativ)",
+    "HTML: pagina scrisă de elev se desenează în browser real (fără server de fișiere locale, R6: mediul greșit inventează defecte)"
+   ],
+   "iesire": "dosar executor/<lectie>/: log.jsonl pe acțiune (ce s-a tastat, ce a afișat aplicația), .xlsx rezultat, clipboard_<bloc>.txt; ultima linie = numărul de diferențe promis ≠ obținut",
+   "criteriu_trecere": "0 diferențe între ce promite lecția și ce dă aplicația reală; 100% soluții acceptate și 100% greșeli respinse în atelier",
+   "cost": "fără bani; rulează numai pe PC-ul lui (Excel instalat), noaptea. Proba din R2 pe o lecție a mers fără om. Durata pe lecție nemăsurată. Limită: Excel-ul de aici are interfața în engleză (1033), deci numele meniurilor RO vin din dicționar, nu de aici."
+  },
+  {
+   "nivel": 2,
+   "nume": "Agentul dumb (cititorul cu carte închisă)",
+   "cine": "agentul cititor-incepator (există, sonnet, doar Read/Grep/Glob), un agent pe sarcină, într-un dosar de lucru construit de dosar_cititor.py (NOU); verificat de valideaza_pas.py (NOU, extinde valideaza_verdict.py) și de canar.py (există)",
+   "ce_verifica": [
+    "poate un începător să facă FIECARE pas folosind numai ce i s-a spus înainte (în lecție sau în lecțiile anterioare din plan)?",
+    "pentru fiecare acțiune: de unde a știut (citat verbatim cu rândul)",
+    "unde se blochează: termen necunoscut fără explicație anterioară",
+    "contradicții găsite ca două citate opuse la aceeași întrebare",
+    "foaia elevului: aceeași celulă primește alt rol fără „exemplu nou”",
+    "promisiunile lecției („la final știi să...”) făcute fără pașii în față"
+   ],
+   "iesire": "verdicte.jsonl (un rând pe pas, formatul de mai jos) + validare.txt; ultima linie = numărul de pași NEFĂCUT+BLOCAJ confirmați",
+   "criteriu_trecere": "100% pași FĂCUT cu citate anterioare. Canarul și momeala trecute; dacă una pică, rularea se aruncă și nu contează. Orice NEFĂCUT/BLOCAJ e rulat a doua oară de un agent proaspăt; dacă cele două nu se potrivesc, decide adversarul.",
+   "cost": "măsurat: T1 = 8 sarcini + 1 notare cu Haiku = 0,47 USD, 2-3 min. O lecție are 18-62 instrucțiuni (măsurat pe 3 lecții în R1), deci 3-8 astfel de rulări pe lecție (extrapolat). Cu sonnet costă mai mult, nemăsurat; bancul decide modelul."
+  },
+  {
+   "nivel": 3,
+   "nume": "Judecător independent și adversar",
+   "cine": "agenți opus care nu au scris și nu au verificat lecția: adversar pe fiecare semnalare gravă; pe unitate, protocolul P_protocol_hibrid_v3.md cu G_poarta.py (există); critic-loop sau reprompt din /bucla la închiderea unității",
+   "ce_verifica": [
+    "e reală semnalarea gravă? Adversarul încearcă s-o respingă cu citate",
+    "contradicțiile semnalate de filtru: e o contradicție sau o nuanță legitimă (ex. „de la stânga la dreapta” în interiorul aceluiași nivel de operații)?",
+    "unitatea ca întreg: exercițiile făcute efectiv, norma adusă din afară (R6: citirea singură inventează, facerea singură sare peste probleme)",
+    "exemplele din domeniul clasei la liceu (silvicultură, mecanică, farmacie)"
+   ],
+   "iesire": "adversar.jsonl (semnalare, CONFIRMAT sau RESPINS, citate) + raportul hibrid pe unitate; ultima linie = numărul de semnalări grave confirmate și nereparate",
+   "criteriu_trecere": "0 semnalări grave confirmate deschise; 2 runde goale la rând în critic-loop pe unitate",
+   "cost": "măsurat: o rundă critic-loop ~18-20 min cu 7 agenți; reprompt 10 min cu 16 agenți; hibrid v3 pe 25 de lecții = 89% probleme importante prinse, 4 alarme false"
+  },
+  {
+   "nivel": 4,
+   "nume": "Omul (Vasile)",
+   "cine": "Vasile",
+   "ce_verifica": [
+    "calibrarea, o singură dată pe clasă: profilul cititorului (ce ȘTIE și ce NU ȘTIE elevul la intrare), glosarul, faptul-canar",
+    "constantele din lume, o dată: cota TVA în vigoare, limba Office din laboratoare",
+    "OK la prima publicare în producție a fiecărei secțiuni",
+    "opțional: unde s-au blocat copiii la oră (nu se poate simula, R6)"
+   ],
+   "iesire": "profil_<clasa>.json aprobat; constante.json semnat cu data; linie OK datată în stare_lectii.json (NOU)",
+   "criteriu_trecere": "aprobare scrisă (un mesaj ajunge)",
+   "cost": "calibrarea: estimat 20-30 min pe clasă, o singură dată; OK-ul: minute pe secțiune"
+  }
+ ],
+ "agent_dumb": {
+  "ce_primeste": "Un dosar de lucru construit mecanic de dosar_cititor.py (NOU), unul pe sarcină, fără nimic altceva (fără Internet, fără memorie; unelte doar Read/Grep/Glob, ca la cititor-incepator.md de azi). Conține: (1) profil.json al clasei, aprobat de Vasile la calibrare: ce ȘTIE elevul la intrare și lista NU ȘTIE (glosarul); (2) caiet/: textul vizibil, nu HTML, al lecțiilor ANTERIOARE în ordinea din unitati.json, luat prin H_vede.py (innerText de pe pagina servită prin http). Fiecare rând are un id stabil L<unitate>-<nr>:<rând>. Pentru lecțiile 1-3 deja predate, caietul folosește nivelurile de joc cu lectii:[2],[3] până când acele lecții sunt refăcute; (3) lectie_curenta.txt TĂIAT exact la pasul curent (restul lecției nu există în dosar); (4) O singură sarcină; (5) foaia_elevului.json: starea lăsată de pașii anteriori (celulă → conținut, fișier → nume), ținută de script; (6) ce a raportat executorul la pasul anterior. O variantă a dosarului conține canarul: o copie cu un fapt schimbat (ex. rezultatul promis 600 → 700).",
+  "cum_se_genereaza_sarcinile": "Trei surse, niciuna autorul lecției. (A) Mecanic, script NOU sarcini_din_lectie.py: parcurge pagina în ordinea citirii și scoate fiecare instrucțiune (verbe la imperativ: scrie, tastează, apasă, selectează, deschide, notează; pași numerotați; câmpurile incearca, atelier.intro, atelier.checks și qs din modelul nou; în paginile vechi TRY, blocurile „Pasul” și exercițiile), plus fiecare rezultat promis („ar trebui să obții”, „apare”, „rezultatul este”, „vei vedea”). Fiecare devine o sarcină cu rândul-sursă. Scriptul nu poate sări peste ce e incomod. (B) Un agent independent (sonnet; nu scrie lecția, nu o citește ca dumb) scrie „sarcini de promisiune”. Pornește de la titlul și conținuturile lecției din unitati.json și de la obiectivul paginii: fiecare „vei ști să...” devine o sarcină de transfer („fă X fără pașii în față”), iar fiecare concept primește o întrebare de înțelegere (ex. „În ce ordine face Excel calculele?”). Așa se prinde ce promite planul și lecția nu predă. (C) O sarcină WALK (parcurgere) pe toată lecția, cu foaia elevului păstrată de la un pas la altul, plus una pe toată unitatea la poarta de unitate. dosar_cititor.py adaugă mecanic o momeală (o sarcină despre un text care nu există, ex. „apasă butonul verde de la pasul 3”) și copia-canar. Formatul fișierului: sarcini.json, ca în kitul plimbare (id, tip, text), plus rand_sursa și rezultat_promis.",
+  "format_raspuns_per_pas": [
+   "sarcina_id și pas_nr",
+   "actiune: în vocabularul fix al aplicației (TASTEZ «5» ÎN A2; APĂS Enter; CLIC pe fila «Formule/Formulas»; APĂS butonul «Copiază» din pagină; LIPESC în A1) sau RĂSPUNS: <text>, la sarcinile de gândire",
+   "lecturi_posibile: dacă instrucțiunea se poate citi în mai multe feluri, toate lecturile (cel mult 3), fiecare cu citatul care o permite; executorul le rulează pe toate",
+   "de_unde_stiu: 1-3 citate verbatim de cel puțin 12 caractere, cu id-ul rândului, numai din rândurile de ÎNAINTE de pas sau din caiet",
+   "ce_astept: rezultatul promis de lecție, cu citat, sau „lecția nu spune ce trebuie să apară”",
+   "trei_intrebari: știu ce să încerc? / văd unde se face acțiunea? / înțeleg ce s-a întâmplat? Fiecare cu da/nu și citat",
+   "ce_s_a_intamplat: completat NUMAI de executor (Excel real, browser, simulator); dacă agentul scrie ceva aici, scriptul suprascrie",
+   "blocaje: termenii NU ȘTIE întâlniți fără explicație anterioară, cu citatul rândului (o trimitere de tipul „vom învăța în lecția 3” nu e blocaj)",
+   "foaia_elevului_dupa: starea după pas (celulă → conținut)",
+   "verdict: FACUT / NEFACUT (rezultat diferit sau text contradictoriu, cu ambele citate) / BLOCAJ / NU_GASESC"
+  ],
+  "reguli_carte_inchisa": [
+   "Ce e în dosar e tot ce știu. Restul lecției nu există pentru mine (e tăiat mecanic).",
+   "Fac literal ce scrie. Nu completez un pas lipsă, nu „repar” o instrucțiune, nu presupun că „așa se face de obicei”.",
+   "Dacă o instrucțiune are mai multe citiri, le scriu pe toate. Nu o aleg pe cea deșteaptă.",
+   "Nu spun ce a ieșit în aplicație; asta o citește executorul. Eu spun doar ce aștept, cu citat.",
+   "Cuvintele din lista NU ȘTIE sunt limbă străină până când textul le explică ÎNAINTE de locul unde le folosește.",
+   "Nu aduc fapte din lume (TVA, separatorul, numele meniurilor). Acelea le verifică nivelurile 0 și 1; eu sunt orb la ele prin construcție.",
+   "O singură sarcină pe apel. Fără stil, fără sugestii, fără evaluarea lecției.",
+   "Răspunsul e doar JSON-ul din format. Orice text în afara lui invalidează pasul."
+  ],
+  "validator_mecanic": [
+   "valideaza_pas.py (NOU, extinde valideaza_verdict.py): fiecare citat există verbatim în dosar (normalizez doar spațiile) și are cel puțin 12 caractere",
+   "Poziția citatului: în lecția curentă, rândul lui e înaintea rândului pasului; altfel e în caiet, la o lecție anterioară în ordinea din unitati.json. Un citat de după pas sau dintr-o lecție ulterioară aruncă rularea (agentul a folosit ce nu trebuia să vadă).",
+   "FACUT e acceptat numai dacă de_unde_stiu are cel puțin un citat valid ȘI ce_s_a_intamplat (de la executor) = ce_astept, comparate mecanic pe valoarea afișată. Altfel scriptul schimbă verdictul în NEFACUT.",
+   "Câmpul ce_s_a_intamplat vine numai din logul executorului; ce scrie agentul acolo se ignoră.",
+   "Canar (canar.py): pe copia cu faptul schimbat, răspunsul trebuie să urmeze copia. Dacă urmează lumea reală, agentul a folosit cunoștințe proprii și rularea se aruncă.",
+   "Momeală: sarcina despre textul inexistent trebuie să primească NU_GASESC. Orice citat inventat aruncă rularea.",
+   "Blocaj verificat: termenul apare efectiv în text înaintea oricărei explicații (grep). Altfel blocajul e respins ca fals și se numără la alarmele false.",
+   "Orice NEFACUT sau BLOCAJ se reia cu un agent proaspăt. Acord = confirmat; dezacord = trimis adversarului (nivelul 3).",
+   "Ultima linie tipărită = numărul de pași NEFACUT+BLOCAJ confirmați (contractul /bucla)."
+  ],
+  "cum_prinde_cele_9": [
+   {
+    "nr": 1,
+    "prins_prin": "Executor (nivelul 1), nu judecată. Agentul citește „A1 = Cantitate: 5” și scrie două lecturi: literală (tastează „Cantitate: 5” în A1) și firească (denumiri pe rândul 1, numere pe rândul 2). executor_excel.py le tastează prin FormulaLocal și obține #VALUE! în E1, F1, G1, confirmat deja în R2. ce_astept („600”) ≠ ce_s_a_intamplat, deci validatorul dă NEFACUT."
+   },
+   {
+    "nr": 2,
+    "prins_prin": "Nivelul 0 semnalează zecimala cu punct („642.6”), formula cu „,” fără pereche „;” și meniurile „Formulas →”, „Trace Precedents” fără pereche din meniuri_ro_en.json. Executorul pe setări RO confirmă: „=IF(B1=0, 0, A1/B1)” e refuzat, „642.6” tastat rămâne text, G1 se afișează „642,6” (confirmat în R2). Agentul dumb e orb aici prin construcție și nu i se cere."
+   },
+   {
+    "nr": 3,
+    "prins_prin": "Foaia elevului. La Concept 5, agentul are în foaie D1 = 19 (TVA), cu citatul „D1 = TVA (%): 19”. Pasul nou cere D1 = 540 fără „exemplu nou” scris în text. Validatorul vede aceeași celulă cu rol diferit și dă NEFACUT, cu ambele citate. Pre-lista mecanică a tuturor „X1 = ...” (nivelul 0) marchează locul dinainte."
+   },
+   {
+    "nr": 4,
+    "prins_prin": "Nivelul 0: formula prezentată ca protecție #DIV/0! nu conține „/”. Nivelul 1: sarcina de promisiune „arată că formula te protejează când cantitatea e 0” pune 0 în formulă și obține 0, nu #DIV/0! (confirmat în R2). Promisiunea nu se poate arăta, deci NEFACUT."
+   },
+   {
+    "nr": 5,
+    "prins_prin": "Sarcinile scoase mecanic din Ex.2: câte una pe formulă. Executorul dă f1 = fereastră de refuz (nu cod #), f5 = 106, fără eroare (confirmat în R2). Enunțul „fiecare formulă are o eroare” e contrazis, iar rezolvarea nu numește ce dă Excel. Separat, nivelul 0 prinde protecția cu rezervă 0 în tabel și „N/A” în indiciu."
+   },
+   {
+    "nr": 6,
+    "prins_prin": "Nivelul 0 (K_scan.py extins): 6 elemente <li> în enunț față de 5 perechi „Literă=” în rezolvare. Nivelul 1: tabelul din rezolvare e construit în Excel și capul lui e comparat cu lista din enunț."
+   },
+   {
+    "nr": 7,
+    "prins_prin": "Filtrul de contradicții (nivelul 0) semnalează perechea „nu de la stânga la dreapta” / „de la stânga la dreapta”. Sarcina de înțelegere scrisă de agentul independent („În ce ordine face Excel calculele?”) duce la două citate opuse, deci NEFACUT „textul se contrazice”. Adversarul decide dacă a doua frază e o nuanță legitimă („în interiorul aceluiași nivel”)."
+   },
+   {
+    "nr": 8,
+    "prins_prin": "Numai nivelul 0: constante.json (cota TVA cu valoare, dată și sursă primară, fixată O dată de om sau din textul brut al actului normativ) comparată cu „TVA” lângă 19 / 0,19 / 1,19 și cu rezultatele calculate cu ele (642.6, 714 se recalculează). Agentul dumb e orb aici prin construcție; o spunem explicit."
+   },
+   {
+    "nr": 9,
+    "prins_prin": "Tăierea mecanică. La pasul 2 din TRY („=A1*B1”), dosarul conține lecția numai până acolo, iar semnul „=” e explicat abia la r. 172. Agentul nu are citat pentru „=” și termenii „formula”, „celula”, „discount”, „TVA” din NU ȘTIE, deci BLOCAJ. Nivelul 0 (regula E portată) semnalează același loc. Pentru Copiază, agentul scrie „APĂS Copiază, LIPESC în A1”; executor_pagina.py citește clipboardul și găsește „✏ Date de intrare (pune in A1:D1):” lipit în foaie, deci NEFACUT."
+   }
+  ]
+ },
+ "lista_verificare": {
+  "lectie": [
+   {
+    "id": "L01",
+    "ce": "Pagina e legată de o lecție din plan: unitate + nr din unitati.json, titlul identic cu cel din plan. Fiecare conținut din plan pentru acel nr are cel puțin o sarcină în pagină.",
+    "cum": "S",
+    "dovada": "ancora.json (unitate, nr, titlu_plan, titlu_pagina, conținut → sarcină) scris de verif_lectie.py (NOU)",
+    "prag": "titlu identic; 0 conținuturi fără sarcină"
+   },
+   {
+    "id": "L02",
+    "ce": "Obiectivul promite doar ce se exersează în pagină: fiecare „la final știi să...” are o sarcină de promisiune FĂCUTĂ de agentul dumb.",
+    "cum": "S+A",
+    "dovada": "sarcini.json (sursa B) + verdicte.jsonl",
+    "prag": "0 promisiuni fără sarcină FĂCUTĂ"
+   },
+   {
+    "id": "L03",
+    "ce": "Un pas = o idee: câmpul text are 30-110 cuvinte și cel mult un termen nou din NU ȘTIE.",
+    "cum": "S",
+    "dovada": "raport_pasi.csv",
+    "prag": "0 pași în afara intervalului; 0 pași cu doi sau mai mulți termeni noi"
+   },
+   {
+    "id": "L04",
+    "ce": "Fiecare pas despre o aplicație are captură reală documentată (captura.py → SURSE.json) sau simulator în pagină.",
+    "cum": "S",
+    "dovada": "raportul ilustratii.py portat la lecții",
+    "prag": "0 NEILUSTRAT / RUPTA / CALE / ALT / SURSA / EXTERNA"
+   },
+   {
+    "id": "L05",
+    "ce": "Ordinea în fiecare pas: explicație, apoi „Uite cum”, apoi „Încearcă”. Nicio sarcină nu apare înaintea explicației ei (cazul TRY de la începutul lecțiilor vechi).",
+    "cum": "S",
+    "dovada": "raport_ordine.jsonl",
+    "prag": "0"
+   },
+   {
+    "id": "L06",
+    "ce": "Nicio sarcină nu folosește un termen sau simbol (=, $, referință, paranteză, %) explicat abia mai jos sau deloc.",
+    "cum": "S+A",
+    "dovada": "raport_ordine.jsonl (regula E portată) + blocajele din verdicte.jsonl",
+    "prag": "0 BLOCAJ confirmate"
+   },
+   {
+    "id": "L07",
+    "ce": "Agentul dumb face TOATE sarcinile extrase din pagină, cu citate din rândurile anterioare sau din lecțiile anterioare din plan.",
+    "cum": "A",
+    "dovada": "verdicte.jsonl + valideaza_pas.py (ultima linie 0)",
+    "prag": "100% FACUT; canarul și momeala trecute, altfel rularea nu contează"
+   },
+   {
+    "id": "L08",
+    "ce": "Fiecare rezultat promis iese identic în aplicația reală, în așezarea literală ȘI în așezările firești ale elevului.",
+    "cum": "R",
+    "dovada": "executor/<lectie>/log.jsonl + .xlsx rezultat",
+    "prag": "0 diferențe"
+   },
+   {
+    "id": "L09",
+    "ce": "Formulele și numerele merg pe setări RO și EN: fiecare formulă cu „,” are alături varianta cu „;” sau urmează separatorul declarat în capul unității; zecimale cu virgulă în varianta RO; numele funcțiilor englezești.",
+    "cum": "S+R",
+    "dovada": "raport_n0.jsonl + log executor în sintaxa RO",
+    "prag": "0"
+   },
+   {
+    "id": "L10",
+    "ce": "Meniurile și butoanele apar în ambele limbi (Formule/Formulas, Urmărire precedenți/Trace Precedents).",
+    "cum": "S",
+    "dovada": "raport pe meniuri_ro_en.json (NOU, construit o dată)",
+    "prag": "0 nume fără pereche"
+   },
+   {
+    "id": "L11",
+    "ce": "Butonul Copiază pune în clipboard exact ce se lipește în aplicație, fără comentarii.",
+    "cum": "R",
+    "dovada": "clipboard_<bloc>.txt de la executor_pagina.py",
+    "prag": "0 blocuri cu text în plus"
+   },
+   {
+    "id": "L12",
+    "ce": "Aceeași celulă sau același obiect nu primește două roluri sau valori fără „foaie nouă / exemplu nou” scris în text.",
+    "cum": "A+S",
+    "dovada": "foaia_elevului.json pe pas + pre-lista „X1 = ...”",
+    "prag": "0 NEFACUT"
+   },
+   {
+    "id": "L13",
+    "ce": "Nicio contradicție internă: aceeași frază cu și fără „nu”, aceeași formulă cu rezultat de rezervă diferit, cifre care nu se leagă între ele.",
+    "cum": "S+A+J",
+    "dovada": "alarme din filtru + verdicte + adversar.jsonl",
+    "prag": "0 contradicții confirmate"
+   },
+   {
+    "id": "L14",
+    "ce": "Enunțul și rezolvarea se potrivesc: același număr de elemente; o eroare promisă chiar apare; rezolvarea numește exact ce dă aplicația.",
+    "cum": "S+R",
+    "dovada": "raport K_scan extins + log executor",
+    "prag": "0"
+   },
+   {
+    "id": "L15",
+    "ce": "Faptele din lume (TVA, legi, versiuni) sunt egale cu valorile din constante.json, cu sursă și dată.",
+    "cum": "S",
+    "dovada": "raport_n0.jsonl (regula constante)",
+    "prag": "0 abateri"
+   },
+   {
+    "id": "L16",
+    "ce": "Atelierul din pagină: soluția trece, greșitul e respins, iar pe cazurile lecției simulatorul dă ce dă aplicația reală (regula fidelității).",
+    "cum": "S+R",
+    "dovada": "test_joc.py, proba_exersare.py + comparația tip-excel.js (mod „ro”) cu Excel",
+    "prag": "100% acceptate, 100% respinse, 0 diferențe"
+   },
+   {
+    "id": "L17",
+    "ce": "Pasul „în aplicația adevărată” există: o sarcină de făcut în Excel/Word/browser real, cu ambele variante RO/EN.",
+    "cum": "S+A",
+    "dovada": "ancora.json + verdictul agentului pe acea sarcină",
+    "prag": "prezent; FACUT"
+   },
+   {
+    "id": "L18",
+    "ce": "Verificarea finală nu trădează răspunsul prin formă (varianta corectă cu >20% mai lungă, poziție fixă).",
+    "cum": "S",
+    "dovada": "raport_n0.jsonl",
+    "prag": "0"
+   },
+   {
+    "id": "L19",
+    "ce": "Diacritice: cel puțin 15 la 1000 de litere.",
+    "cum": "S",
+    "dovada": "regula D din test_joc.py aplicată paginii",
+    "prag": "≥15/1000"
+   },
+   {
+    "id": "L20",
+    "ce": "La liceu, exemplele practice sunt din domeniul clasei (silvicultură, mecanică, farmacie...).",
+    "cum": "J",
+    "dovada": "adversar.jsonl pe lista de termeni ai domeniului",
+    "prag": "cel puțin un exemplu din domeniu pe pas practic"
+   },
+   {
+    "id": "L21",
+    "ce": "Fiecare semnalare gravă a trecut prin adversar.",
+    "cum": "J",
+    "dovada": "adversar.jsonl cu citate",
+    "prag": "0 grave confirmate deschise"
+   },
+   {
+    "id": "L22",
+    "ce": "Pagina e live pe proba (curl 200 + marcajul versiunii) și merge pe 2 telefoane simulate fără erori în consolă.",
+    "cum": "S",
+    "dovada": "curl.txt + raport test_joc.py",
+    "prag": "200 + marcaj; 0 erori"
+   },
+   {
+    "id": "L23",
+    "ce": "Insigna de stare (verificat / verificat parțial / nerevizuit, cu data) e generată din stare_lectii.json și corespunde dovezilor din dosar.",
+    "cum": "S",
+    "dovada": "insigne_build.py (NOU) → raport",
+    "prag": "100% pagini cu insignă; 0 „verificat” fără dosar complet"
+   }
+  ],
+  "unitate": [
+   {
+    "id": "U01",
+    "ce": "Fiecare lecție din unitati.json are exact o pagină canonică. Cele încă negata arată nivelul de joc corespunzător (lectii:[N]) și banda „în revizie”.",
+    "cum": "S",
+    "dovada": "harta_unitate.json",
+    "prag": "100%; 0 dubluri"
+   },
+   {
+    "id": "U02",
+    "ce": "Parcurgerea cumulativă: agentul dumb trece prin unitate de la prima la ultima lecție, cu caietul crescând. Fiecare termen folosit are explicație anterioară, în unitate sau în unitățile dinainte.",
+    "cum": "A+S",
+    "dovada": "verdicte_WALK_unitate.jsonl + validare",
+    "prag": "0 BLOCAJ"
+   },
+   {
+    "id": "U03",
+    "ce": "Nicio idee predată de două ori în formulări diferite (cazul m1-excel-fundamente / m2-formule-functii). O repetare e marcată „recapitulare” și trimite la locul unde s-a predat.",
+    "cum": "S+J",
+    "dovada": "raport de asemănare (metoda din intrebari_unitate.py) + adversar",
+    "prag": "0 dubluri nemarcate"
+   },
+   {
+    "id": "U04",
+    "ce": "De la generic la complex: prerechizitele fiecărei lecții arată numai înapoi.",
+    "cum": "S",
+    "dovada": "prerechizite.json extins de la jocuri la lecții",
+    "prag": "0 trimiteri înainte"
+   },
+   {
+    "id": "U05",
+    "ce": "Separatorul de formule și limba Office sunt declarate o dată, la începutul unității, și respectate în toate lecțiile.",
+    "cum": "S",
+    "dovada": "raport_n0 pe unitate",
+    "prag": "0 abateri"
+   },
+   {
+    "id": "U06",
+    "ce": "Evaluarea sumativă cere numai ce s-a predat în unitate.",
+    "cum": "S+A",
+    "dovada": "termenii din itemi comparați cu termenii explicați + verdictele agentului pe itemi",
+    "prag": "0 itemi nepredați"
+   },
+   {
+    "id": "U07",
+    "ce": "Jocul unității acoperă conținuturile din plan; legăturile lecție → nivel de joc → aplicația reală (diploma) merg live.",
+    "cum": "S",
+    "dovada": "acoperire.py + curl pe legături",
+    "prag": "100%; 0 linkuri moarte"
+   },
+   {
+    "id": "U08",
+    "ce": "Proba hibrid v3 („omul la calculator”) pe unitate: exercițiile făcute efectiv, norma adusă din afară, pagina servită prin http.",
+    "cum": "J",
+    "dovada": "dosarul P_protocol_hibrid_v3 + G_poarta.py",
+    "prag": "0 grave deschise"
+   },
+   {
+    "id": "U09",
+    "ce": "Unitatea e verificată complet cu cel puțin 3 zile înainte de prima ei oră din Calendar_ore_*.md sau din orarul de liceu.",
+    "cum": "S",
+    "dovada": "fereastra_calendar.py (NOU)",
+    "prag": "0 lecții sub nivel în fereastră"
+   },
+   {
+    "id": "U10",
+    "ce": "OK-ul lui la prima publicare în producție a unității.",
+    "cum": "O",
+    "dovada": "linie datată în stare_lectii.json",
+    "prag": "OK scris"
+   }
+  ],
+  "sit": [
+   {
+    "id": "T01",
+    "ce": "Meniul fiecărei clase = unitățile și lecțiile din unitati.json, în ordinea lor, cu datele din Calendar_ore_*.md. Nicio lecție din afara planului în traseul clasei.",
+    "cum": "S",
+    "dovada": "raport_traseu.json",
+    "prag": "100% potrivire; 0 intruși"
+   },
+   {
+    "id": "T02",
+    "ce": "Nicio temă la clasa greșită în traseu: extra-birotice-cls7 și extra-word-cls7 la clasa a V-a, web și șiruri la a VII-a, baze de date oriunde.",
+    "cum": "S",
+    "dovada": "raport_traseu.json",
+    "prag": "0"
+   },
+   {
+    "id": "T03",
+    "ce": "Paginile din afara planului (57 de lecții din 9 foldere) și lecțiile vechi înlocuite stau în /arhiva/, cu banda „nerevizuit” și link spre lecția din plan.",
+    "cum": "S",
+    "dovada": "raport_arhiva.json",
+    "prag": "100%"
+   },
+   {
+    "id": "T04",
+    "ce": "Cifrele din paginile de navigare (câte lecții, câte unități, progres) sunt generate din disc.",
+    "cum": "S",
+    "dovada": "comparație între numărătoarea de pe disc și paginile generate",
+    "prag": "0 diferențe"
+   },
+   {
+    "id": "T05",
+    "ce": "Fiecare adresă veche încă merge (redirecționare sau bandă), ca să nu se piardă progresul elevilor și evidența activității.",
+    "cum": "S",
+    "dovada": "curl pe lista adreselor vechi + activitate.py panou",
+    "prag": "0 răspunsuri 404; panoul citește la fel"
+   },
+   {
+    "id": "T06",
+    "ce": "Fereastra de 14 zile: toate lecțiile care se predau în următoarele 14 zile au insigna „verificat”. Rulat zilnic prin contractul selfcheck (NOU learninghub-fereastra-14z); o abatere apare în greeting.",
+    "cum": "S",
+    "dovada": "fereastra_calendar.py → ultima linie",
+    "prag": "0"
+   },
+   {
+    "id": "T07",
+    "ce": "Mașina trece bancul de test.",
+    "cum": "S",
+    "dovada": "banc_masina.py (NOU) → ultima linie",
+    "prag": "9/9; 100% mutanți; 0 ratări neexplicate din cele 739"
+   },
+   {
+    "id": "T08",
+    "ce": "Liceu: fiecare clasă pe care o predă are traseu în ordinea planificării din vaultul Transporturi. Profilurile pe care nu le predă au banda „nerevizuit”.",
+    "cum": "S",
+    "dovada": "raport_traseu_liceu.json",
+    "prag": "100%"
+   },
+   {
+    "id": "T09",
+    "ce": "Promisiunea „de la zero” de pe paginile de intrare apare numai pe secțiunile cu insigna „verificat”.",
+    "cum": "S",
+    "dovada": "grep pe paginile generate + stare_lectii.json",
+    "prag": "0"
+   },
+   {
+    "id": "T10",
+    "ce": "site_audit.py: 0 CRITICAL, 0 linkuri moarte, sintaxa JS corectă.",
+    "cum": "S",
+    "dovada": "audit_report.json",
+    "prag": "0"
+   },
+   {
+    "id": "T11",
+    "ce": "Producția e identică cu proba aprobată: aceleași fișiere (sumă de control), curl + marcaj pe producție.",
+    "cum": "S+O",
+    "dovada": "sume.txt + curl.txt + OK-ul lui",
+    "prag": "identic"
+   }
+  ]
+ },
+ "reorganizare": {
+  "model_lectie": "Pagina lecției nr N din unitatea U are aceeași formă ca nivelul de joc din web-viii (README.md, liniile 87-101): antet (unitatea, nr, titlul din plan, „ce știi deja” cu linkuri la lecțiile de care depinde, luate din prerechizite.json, și un obiectiv într-o propoziție); 3-6 pași (o idee pe pas, 30-110 cuvinte, captură reală prin captura.py sau simulatorul în pagină, exemplu „Uite cum”, „Nu am înțeles — explică-mi altfel” la pașii grei, „Încearcă” DUPĂ explicație, „Încă un exercițiu”); atelier în simulator (tip-excel, tip-html, JocPPT, editorul Word, Explorer, urmărirea pas cu pas etc.) cu teste numite; verificarea (5 întrebări); pasul „În aplicația adevărată”, cu variantele RO și EN și separatorul declarat pe unitate; insigna de stare generată. Recomandare: pagina se GENEREAZĂ din aceeași configurație JocMotor ca nivelul de joc cu lectii:[N], deci conținutul se scrie o singură dată. Jocul rămâne varianta cu puncte. Toate cele 25 de unități reale au deja joc, iar nivelurile sunt legate de nr lecției (ex. excel-viii lectii:[4], word-obiecte-vii lectii:[4]).",
+  "ordine_sursa": "Gimnaziu: C:/00/Projects/Info_Gimnaziu_2026/data/unitati.json (ordinea unităților și a lecțiilor), programa OMEN 3393/2017 din C:/00/AI_0/data/informatica_gimnaziu/curriculum.json (atenție: constrângerea o pune în Info_Gimnaziu_2026/data, unde NU există, verificat acum) și datele din cele 8 fișiere C:/00/Projects/Info_Gimnaziu_2026/planificari/Calendar_ore_*.md (ultima oră: 18.06.2027 la V-VII Brauner, 11.06.2027 la VIII Brauner, 15.06 și 08.06 la Izvoare). Prerechizitele dintre niveluri: jocuri/_motor/prerechizite.json, generat de prereq_jocuri.py. Liceu: „Planificari 2026-2027 — TIC (Transporturi).md” și „Incadrare 2026-2027 — Colegiul Transporturi.md” din vaultul Scoala; zilele reale din C:/00/AI_0/data/_orar_grila.csv (joi: Forestier 10 E, 11 C, 11 D, 12 C, 12 D, Transporturi X B și anul I F; marți: SPS II C-AMF). Tupilați (luni, în grilă) NU are Calendar_ore: de confirmat de el. Nu se inventează nicio ordine.",
+  "ce_pastram": "Cele 26 de jocuri live și motorul lor (tip-excel.js, tip-foaie.js, tip-html.js, ui-panglica.js și panglicile reale Excel/Word/PowerPoint; tip-interogare.js și tip-traseu.js, azi nefolosite, primesc rol la liceu pentru Access și drumul prin meniuri). Capturile documentate (captura.py, ghid_capturi.py, SURSE.json). Uneltele de verificare existente: site_audit.py, oracol_novice.py, cititor-incepator, canar.py, valideaza_verdict.py, oracol.py, H_vede.py, test_joc.py, proba_exersare.py, acoperire.py, prereq_jocuri.py, ilustratii.py, P_protocol_hibrid_v3. Regulile din knowledge/learninghub_calitate/00_INDEX.md. Proiectele de unitate (Proiectul_unitatii_*.md). Sistemele din jur (teste online, evidența activității, diplome), cu adresele stabile.",
+  "ce_refacem": "Cele 143 de lecții de gimnaziu din plan, pe modelul nou, în ordinea calendarului. Unde nivelul de joc există, pornim de la el. Se scriu de la zero, pe baza jocului unității: V-U2 întreagă (5 lecții, azi doar 3 teste; fisiere-v are simulatorul Explorer), VI-U4 (9 lecții; folderul actual predă Scratch), lecțiile lipsă din VI-U3 și VIII-U3, cele 4 lecții E0 și evaluările sumative lipsă. Paginile de navigare, generate din disc. La liceu, doar clasele pe care le predă (X, XI, XII, maiștri / anul I F, AMF II C, iar AMG I A și I B în semestrul II), în ordinea planificării, cu exemple din domeniul clasei și cu simulatoarele refolosite (tip-excel pentru calcul tabelar, tip-interogare pentru baze de date, Explorer din fisiere-v pentru sistemul de operare, editorul din word-vii).",
+  "ce_aruncam": "Nu ștergem, arhivăm (excepție: folderul gol cls8/extra-materiale-suplimentare, care se șterge). Cele 335 de lecții TIC vechi ies din traseul claselor și merg în /arhiva/, cu banda „nerevizuit — lecția din plan e aici: ...”. La fel cele 9 foldere din afara planului (57 de lecții: extra-birotice-cls7, extra-word-cls7, extra-siguranta-backup la V; extra-web, extra-proiect-web, extra-baze-date, m4-algoritmi-siruri la VII; extra-databases, extra-subprograme la VIII). Dublurile nu mai sunt pagini de predare. Butoanele Copiază care copiază comentarii dispar. Cele 279 de lecții de liceu și cele 46 profesionale de pe profiluri pe care nu le predă rămân cu banda „nerevizuit” și trec doar prin nivelul 0; dacă rămân publice, decide el.",
+  "decizii_pentru_vasile": [
+   {
+    "intrebare": "Lecția și nivelul de joc: aceeași sursă sau două texte separate?",
+    "recomandare": "Aceeași sursă: pagina de lecție se generează din configurația nivelului (pași + atelier + verificare). Se scrie o dată, se verifică o dată și nu se mai pot contrazice (cum s-au contrazis m1 și m2 la Excel).",
+    "alternative": "(a) Lecții scrise separat pe același model: dublă întreținere și risc de contradicții. (b) Fără pagini de lecție: traseul clasei duce direct în jocuri (mai simplu, dar fără pagina de citit acasă fără puncte și presiune)."
+   },
+   {
+    "intrebare": "Ce facem cu cele 335 de lecții TIC vechi?",
+    "recomandare": "Arhivă vizibilă: scoase din meniuri, cu banda „nerevizuit” și link spre lecția din plan; adresele rămân, ca progresul elevilor să nu se piardă.",
+    "alternative": "(a) Ștergere: se pierd adresele și progresul. (b) Păstrate în traseu ca „aprofundare”: contradicțiile rămân la vedere."
+   },
+   {
+    "intrebare": "Liceul: cât refacem?",
+    "recomandare": "Numai clasele pe care le predă, în ordinea orelor lui. Celelalte profiluri (artistic, pedagogic, militar etc.) rămân publice cu banda „nerevizuit”.",
+    "alternative": "(a) Refacerea tuturor celor 279 de lecții (luni de muncă, fără elevi care să le folosească acum). (b) Scoaterea lor de pe sit până la revizie."
+   },
+   {
+    "intrebare": "Ce vede elevul dacă o lecție nu e gata la timp?",
+    "recomandare": "Pagina lecției arată nivelul de joc corespunzător (deja atomic, cu simulator) și banda „în revizie”, niciodată o pagină refăcută pe jumătate.",
+    "alternative": "(a) Lecția veche cu banda „nerevizuit”. (b) Pagina ascunsă până e gata."
+   },
+   {
+    "intrebare": "Ce insignă publică arătăm elevilor?",
+    "recomandare": "„Verificat <data>” numai după nivelurile 0-3 cu bancul trecut. Înainte ca mașina să treacă bancul: „verificat parțial”. Restul: „nerevizuit”.",
+    "alternative": "(a) Nicio insignă publică, doar registrul intern. (b) Insignă numai pe ce e verificat, fără „nerevizuit” (mai curat, dar ascunde starea reală)."
+   },
+   {
+    "intrebare": "VI-U4 Animații și modele 3D: aplicația reală sau simulator propriu?",
+    "recomandare": "Tinkercad real, cu ghid pe capturi reale (captura.py) și o probă a contului de elev. Un mini-simulator doar dacă agentul dumb arată blocaje la mutare/rotire. Unitatea vine târziu în an, deci e timp.",
+    "alternative": "(a) Simulator 3D propriu (scump, greu de ținut fidel). (b) Altă aplicație 3D (de verificat ce merge pe PC-urile din laborator)."
+   },
+   {
+    "intrebare": "Ce model citește ca elev dumb?",
+    "recomandare": "Decide bancul: rulăm cele 9 constatări și mutanții cu Haiku (T1 măsurat: 0,47 USD pe 8 sarcini) și cu sonnet (cititor-incepator de azi). Păstrăm cel mai ieftin care prinde tot, cu cele mai puține alarme false.",
+    "alternative": "(a) Sonnet fix (mai scump, nemăsurat pe lecții). (b) Doi cititori diferiți pe fiecare sarcină (dublu cost, mai puține ratări)."
+   },
+   {
+    "intrebare": "Ritmul: numai fereastra de 14 zile, sau și avans?",
+    "recomandare": "Fereastra de 14 zile, plus o unitate în avans în fiecare weekend în care fereastra e curată. Așa sunt acoperite bolile, vacanțele și surprizele.",
+    "alternative": "(a) Numai fereastra (risc la orice întârziere). (b) Sprint pe toată VIII-U1 acum (Excel e sursa plângerii), apoi fereastra."
+   }
+  ]
+ },
+ "faze": [
+  {
+   "nr": 0,
+   "nume": "Lotul de urgență pentru săptămâna 28.09-02.10",
+   "ce_se_face": "Săptămâna viitoare se predă lecția nr 4 la toate clasele (verificat în Calendar_ore): marți 29.09 la Izvoare (VIII „Adresa de celulă. Selectare, copiere, mutare, ștergere”, VII A și VII B „Obiecte într-un document: text, imagini, tabele”, VI „Structura unei prezentări: diapozitive și obiecte”), vineri 02.10 la Brauner (aceleași + V „Structura generală a unui sistem de calcul”). (1) Pe cele 335 de lecții TIC vechi se pune banda „în revizie”, cu link spre nivelul de joc care are lectii:[N]; lecția din 27.09 (m2 lectia1) primește banda „nu o folosi, e în revizie”. (2) Nivelurile pentru nr 4 (calculator-v, prezentari-vi, word-obiecte-vii, excel-viii și excel-pas-cu-pas-viii) trec prin test_joc.py, proba_exersare.py și ilustratii.py. Apoi un agent independent scrie câte ~8 sarcini pe nivel, cititor-incepator le face cu profil PROVIZORIU (scris de un agent, marcat ca atare), cu canar, momeală și valideaza_verdict.py. Formulele din nivelul Excel se tastează prin FormulaLocal (proba din R2). (3) Liceu de marți (AMF) și joi: doar nivelul 0 și banda. Tupilați (luni): de confirmat ce clase și ce plan are.",
+   "ce_produce": "banda pe paginile vechi; raport pe 4 niveluri de joc; insigna „verificat parțial” pe ele; lista semnalărilor grave și reparațiile lor",
+   "poarta_iesire": "0 semnalări grave deschise pe cele 4 niveluri; publicare pe proba cu curl + marcaj; OK-ul lui pentru bandă (prima publicare a secțiunii); producție înainte de marți 29.09, ora 8:00",
+   "durata": "o seară (luni 28.09). Extrapolat: T1 măsurat 2-3 min pe 8 sarcini, deci 4 niveluri × ~8 sarcini ≈ 10-15 min de rulare; restul e generarea benzii, reparații și publicare.",
+   "agenti": "~4 generatori de sarcini (sonnet) + ~32 cititori (sonnet, o sarcină pe agent) + 1-3 adversari (opus) ≈ 40 (extrapolat)",
+   "cine": "eu orchestrez; agenții citesc și verifică; Vasile dă OK-ul pe bandă și spune ce se predă la Tupilați"
+  },
+  {
+   "nr": 1,
+   "nume": "Mașina minimă și bancul de test",
+   "ce_se_face": "Construiesc uneltele NOI în C:/00/Projects/LearningHub/tools/verif/: dosar_cititor.py (tăiere la pas, caiet, canar, momeală), sarcini_din_lectie.py, valideaza_pas.py, executor_excel.py (oracol.py + FormulaLocal + 3 așezări + comparație cu tip-excel.js în mod „ro”), executor_pagina.py (H_vede.py + Copiază/clipboard + atelier cu soluția și cu greșitul), verif_lectie.py (toate regulile nivelului 0), constante.json, meniuri_ro_en.json, banc_masina.py, mutanti_lectie.py. Îngheț bancul. Calibrarea cu el pentru V, VI, VII, VIII (profil, glosar, canar). Etichetarea celor 739 de semnalări.",
+   "ce_produce": "uneltele de mai sus, fiecare cu ultima linie un număr; profil_<clasa>.json aprobat; bancul înghețat în C:/00/Projects/LearningHub/_banc/2026-09-27/ (NOU)",
+   "poarta_iesire": "banc_masina.py: 9/9 la rândul corect, 100% mutanți, fiecare ratare din cele 739 relevante devenită verificare nouă sau explicată lui; alarme false pe lecțiile curate ≤ cele 4 ale hibridului v3. Un reprompt independent pe mașină (treapta 1 din /bucla) fără DESCHIS.",
+   "durata": "3-5 nopți, în paralel cu fazele 2 și 3 (extrapolat: nu avem măsurători pentru construcția de unelte; verificarea lor costă 10 min/16 agenți la reprompt și 18-20 min/7 agenți pe rundă de critic-loop, măsurat)",
+   "agenti": "~30 etichetatori pentru cele 739 (sonnet, ~25 de semnalări pe agent, extrapolat) + 2-3 runde critic-loop × 7 + 16 la reprompt ≈ 70",
+   "cine": "eu construiesc; agenții verifică; Vasile: calibrarea (estimat 20-30 min pe clasă, o singură dată) și constantele (cota TVA din sursă, limba Office din laborator)"
+  },
+  {
+   "nr": 2,
+   "nume": "Structura sitului (ordinea lucrurilor)",
+   "ce_se_face": "Meniurile claselor generate din unitati.json și Calendar_ore_*.md; o pagină canonică pe lecție din plan (la început, nivelul de joc + banda, până la refacere); /arhiva/ pentru lecțiile vechi și cele 9 foldere din afara planului; stare_lectii.json (NOU) și insigne_build.py (NOU); redirecționări pentru adresele vechi; fereastra_calendar.py (NOU) și contractul selfcheck learninghub-fereastra-14z (NOU).",
+   "ce_produce": "traseul nou pe clase, arhiva, registrul de stare, contractul zilnic",
+   "poarta_iesire": "T01-T05 și T10 la 0; activitate.py panou citește ca înainte; publicare pe proba cu curl + marcaj; OK-ul lui la prima publicare a traseului nou",
+   "durata": "1-2 nopți (extrapolat), în săptămâna 28.09-04.10",
+   "agenti": "~10 (scripturile fac munca; 1 reprompt la final, 16 agenți, măsurat 10 min)",
+   "cine": "eu + scripturi; Vasile: OK la prima publicare"
+  },
+  {
+   "nr": 3,
+   "nume": "Loturile săptămânale, în ordinea calendarului",
+   "ce_se_face": "În fiecare joi seara și în weekend, lotul = lecțiile din următoarele 14 zile care nu au insigna „verificat”. Ordinea din Calendar_ore: 06-09.10 nr 5 (V dispozitive de intrare/ieșire, VI editarea prezentării, VII operații de editare, VIII tipuri de date); 13-16.10 nr 6; 20-23.10 nr 7 (VIII „Formule de calcul”, lecția din plângerea de azi); după vacanța din Calendar_ore (23.10 → 03/06.11), nr 8, care deschide V-U2, scrisă nou, fără material vechi; ... 15-18.12 nr 14; apoi mai departe până în iunie. Plus liceul, săptămânal (X, XI, XII, maiștri/anul I F, AMF II C). Pe fiecare lecție: un agent scrie (pornind de la nivelul de joc), apoi nivelul 0, executorul (nivelul 1), agentul dumb (nivelul 2), adversarul pe grave (nivelul 3), un alt agent repară, apoi se reiau nivelurile 1 și 2. Publicare pe proba, curl + marcaj, producție.",
+   "ce_produce": "~9 lecții verificate pe săptămână (4 de gimnaziu + ~5 de liceu, numărate din grilă), fiecare cu dosar de dovezi și insignă",
+   "poarta_iesire": "fereastra_calendar.py = 0 (tot ce se predă în 14 zile e verificat cu 3 zile înainte); pentru fiecare lecție, rândurile L01-L23 la prag",
+   "durata": "o noapte pe lot (extrapolat din campania 02-03.09: 99 de lecții Format C cu 332 de agenți într-o noapte; aici verificarea e mai grea, așa că primul lot MĂSOARĂ și planul se corectează după el)",
+   "agenti": "~150-250 pe lot (extrapolat: pe lecție 1 autor + ~15-25 cititori + 1-3 adversari + 1 reparator), majoritatea sonnet; opus doar la adversar",
+   "cine": "agenți + scripturi, noaptea; Vasile: OK doar la prima publicare a fiecărei unități"
+  },
+  {
+   "nr": 4,
+   "nume": "Poarta de unitate",
+   "ce_se_face": "Înainte de prima oră a fiecărei unități noi: U01-U10. Parcurgerea cumulativă a agentului dumb pe toată unitatea, căutarea dublurilor (m1/m2 la Excel), proba hibrid v3 pe lecțiile unității, critic-loop până la 2 runde goale. După ultima oră a unității, ce a spus el despre blocajele copiilor intră în banc.",
+   "ce_produce": "raportul unității (FĂCUT / NEFĂCUT / NESIGUR), insigna de unitate, clase noi de probleme adăugate la nivelul 0",
+   "poarta_iesire": "U01-U09 la prag; 0 grave deschise; OK-ul lui (U10)",
+   "durata": "o rundă critic-loop 18-20 min (măsurat) × cel puțin 2 runde; hibrid v3 pe lecțiile unității (durata nemăsurată)",
+   "agenti": "~15-30 (7 pe rundă de critic-loop, măsurat, + hibridul)",
+   "cine": "agenți; Vasile: OK-ul"
+  },
+  {
+   "nr": 5,
+   "nume": "Recuperare și avans",
+   "ce_se_face": "În weekendurile în care fereastra e curată: (1) lecțiile deja predate (E0 și nr 2-3 la fiecare clasă), ca să intre refăcute în caietul agentului dumb; (2) o unitate în avans, în ordinea calendarului; (3) pe tot restul (lecțiile care nu se predau curând, liceul pe alte profiluri, arhiva): doar nivelul 0, cu banda „nerevizuit” vizibilă.",
+   "ce_produce": "fereastra care se lărgește; raportul nivelului 0 pe tot situl",
+   "poarta_iesire": "aceleași praguri pe lecție ca în faza 3; nivelul 0 pe tot situl rulat săptămânal, cu ultima linie urmărită",
+   "durata": "per lecție, ca în faza 3 (extrapolat); nivelul 0 pe tot situl în secunde-minute",
+   "agenti": "ca în faza 3, pe lecțiile în avans",
+   "cine": "agenți + scripturi"
+  },
+  {
+   "nr": 6,
+   "nume": "Reverificarea lunară a mașinii",
+   "ce_se_face": "Lunar și după orice schimbare a uneltelor: banc_masina.py; alarmele false măsurate pe lecții curate; fiecare problemă nouă găsită de el la clasă devine o clasă de probleme (verificare nouă pe tot situl) și intră în banc.",
+   "ce_produce": "bancul crescut; scorul mașinii în timp",
+   "poarta_iesire": "banc_masina.py = 0 ratări; dacă pică, insignele noi „verificat” se opresc până la reparare",
+   "durata": "nivelurile 0 și 1: minute; nivelul 2 pe banc: câteva rulări T1 (0,47 USD pe 8 sarcini, măsurat)",
+   "agenti": "~10-20 pe rulare (extrapolat)",
+   "cine": "scripturi + agenți; Vasile: propoziția „unde s-au blocat”, când are"
+  },
+  {
+   "nr": 7,
+   "nume": "Închiderea anului",
+   "ce_se_face": "În mai-iunie 2027 (ultima oră: 18.06.2027): toate lecțiile predate sunt la „verificat”; T01-T11 pe tot situl; hotărâre pentru ce rămâne „nerevizuit” (arhivă, profiluri de liceu nepredate); raportul final.",
+   "ce_produce": "situl complet pe planul anului; raportul în 3 liste FĂCUT / NEFĂCUT / NESIGUR",
+   "poarta_iesire": "T01-T11 la prag; 0 lecții din plan fără insigna „verificat”",
+   "durata": "1-2 nopți (extrapolat)",
+   "agenti": "~20 (reprompt + critic-loop pe sit)",
+   "cine": "eu + agenți; Vasile: deciziile despre arhivă"
+  }
+ ],
+ "banc_de_test_al_masinii": "Cinci părți; o mașină care pică oricare dintre ele nu are voie să pună insigna „verificat”. (1) Cele 9 constatări din 27.09 pe o copie ÎNGHEȚATĂ (sha256 notat) a lecției content/tic/cls8/m2-formule-functii/lectia1-introducere-formule.html, în C:/00/Projects/LearningHub/_banc/2026-09-27/ (NOU), plus asteptat.json cu numărul constatării, rândul, clasa de problemă și nivelul care trebuie s-o prindă (1, 2, 5 → aplicația reală; 4, 6, 8 → script; 3, 7, 9 → agentul dumb, cu filtru de script înainte). Lecția reală se rescrie, copia nu, deci ținta nu se mișcă. (2) Cele 739 de semnalări confirmate din C:/00/Projects/LearningHub/_campaign/proba_elevi_2026_09_03/confirmate.json, pe paginile înghețate la commitul de azi. Un agent care NU construiește mașina etichetează fiecare semnalare: mai e relevantă în modelul nou? ce nivel ar trebui s-o prindă? (3) Mutanți NOI (mutanti_lectie.py): 20-30 de defecte injectate într-un nivel de joc curat: rezultat promis schimbat, explicație mutată după sarcină, meniu EN fără pereche, zecimală cu punct, frază contrazisă, TVA 19, Copiază cu comentariu, celulă cu două roluri, enunț cu 6 coloane și rezolvare cu 5, răspuns corect mai lung. (4) Control curat: 3 niveluri sau lecții fără defecte cunoscute, pe care se numără alarmele false. (5) Linia de bază măsurată: hibridul v3 pe 25 de lecții a prins 89% din problemele importante și 94% din cele care schimbă ora, cu 4 alarme false. Criteriul de acceptare: 9/9 la rândul corect; 100% mutanți; pe cele 739 relevante, fiecare ratare devine o verificare nouă sau i se explică lui una câte una; pe lecțiile hibridului, mașina prinde cel puțin cât hibridul; alarme false pe controlul curat cel mult 4. Canarul și momeala trebuie să arunce rularea când sunt încălcate (probă negativă inclusă). Comanda: python C:/00/Projects/LearningHub/tools/verif/banc_masina.py (NOU); ultima linie = numărul de ratări. Rulează la orice schimbare a mașinii și lunar (faza 6).",
+ "riscuri": [
+  {
+   "risc": "Mașina se construiește din mers, deci primele loturi sunt verificate de o mașină incompletă.",
+   "semnal": "banc_masina.py > 0 la data unui lot",
+   "parare": "Lotul primește doar „verificat parțial” și un adversar în plus pe fiecare lecție. Nicio insignă „verificat” până la bancul trecut. Lotul 0 folosește nivelurile de joc, deja atomice, nu pagini refăcute în grabă."
+  },
+  {
+   "risc": "Calendarul fuge: o lecție care se predă în mai puțin de 3 zile nu e gata.",
+   "semnal": "fereastra_calendar.py > 0; abaterea apare în greeting prin contractul selfcheck",
+   "parare": "Pagina arată nivelul de joc și banda „în revizie”, nu o pagină pe jumătate. Lotul următor pornește cu lecția întârziată. Avansul din weekend (faza 5) face rezerva."
+  },
+  {
+   "risc": "Agentul dumb e prea deștept: umple golurile din ce știe.",
+   "semnal": "canarul sau momeala pică; 0 blocaje pe lecția din banc care are blocaje cunoscute",
+   "parare": "Rularea se aruncă. Tăierea la pas e mecanică, nu pe onoare. Modelul cititorului îl decide bancul."
+  },
+  {
+   "risc": "Agentul dumb e prea prost: blocaje false pe lucruri pe care orice copil le știe.",
+   "semnal": "blocaje pe cuvinte din lista ȘTIE; multe semnalări respinse de adversar; alarme false pe controlul curat",
+   "parare": "Profilul se recalibrează cu el. Adversarul filtrează. Rata de alarme false se măsoară lunar."
+  },
+  {
+   "risc": "Mediul de test diferă de laborator (Office RO sau EN, setări regionale). Pe acest PC, Excel are interfața în engleză și setările regionale românești.",
+   "semnal": "diferențe între executor și ce vede el la clasă; nume de meniu contestate",
+   "parare": "Executorul rulează ambele sintaxe. Meniurile RO vin din dicționarul făcut o dată din textul brut Microsoft RO sau de la el. Limba Office din laborator o verifică el o dată (R6: faptul de mediu nu se presupune)."
+  },
+  {
+   "risc": "Ancora e incompletă: Tupilați nu are Calendar_ore; grila și Calendar_ore dau ore diferite la Izvoare; la liceu hotarul de semestru nu e scris.",
+   "semnal": "fereastra_calendar.py raportează ore din grilă fără lecție potrivită",
+   "parare": "Scriptul listează orele nepotrivite. El confirmă o dată. Până atunci, pe ele merg doar nivelul 0 și banda."
+  },
+  {
+   "risc": "Dublurile rămân accesibile, iar elevul ajunge pe pagina veche (din căutare, favorite, linkuri din teste).",
+   "semnal": "T02 sau T03 > 0; vizite pe /arhiva/ în evidența activității",
+   "parare": "O singură pagină canonică pe lecție; banda cu link spre lecția din plan pe fiecare pagină veche; linkurile din teste și din panoul clasei regenerate."
+  },
+  {
+   "risc": "Reparațiile strică la distanță (R6.7): o poartă de formă trece, dar sarcina nu se mai poate face.",
+   "semnal": "după o reparație globală, executorul sau agentul dumb dă NEFACUT pe lecții neatinse direct",
+   "parare": "După orice reparație globală se reiau obligatoriu nivelurile 1 și 2 pe lecțiile afectate, nu doar nivelul 0."
+  },
+  {
+   "risc": "Costul și limitele de folosire la ~150-250 de agenți pe noapte.",
+   "semnal": "agent_cost.py scan; loturi neterminate dimineața",
+   "parare": "Modelul declarat la fiecare agent (sonnet pentru muncă mecanică, opus doar la adversar). Haiku la cititor, dacă bancul arată că ajunge. Primul lot măsoară costul real."
+  },
+  {
+   "risc": "Lecțiile scrise de AI rămân pe „voce de expert”, dense.",
+   "semnal": "pași peste 110 cuvinte; „înțeleg ce s-a întâmplat? nu” des la agentul dumb",
+   "parare": "Limitele pe pas sunt tari (nivelul 0). Reparația o face alt agent decât autorul. Criteriul e rezolvabilitatea, nu stilul."
+  },
+  {
+   "risc": "Schimbarea adreselor rupe progresul elevilor, diplomele și evidența activității.",
+   "semnal": "404 pe adrese vechi; panoul activitate.py scade brusc",
+   "parare": "Adrese păstrate sau redirecționate (T05), verificat înainte de producție."
+  }
+ ],
+ "ce_ramane_omului": [
+  "Calibrarea, o singură dată pe clasă (V, VI, VII, VIII și fiecare grupă de liceu): aprobă profilul cititorului (ce ȘTIE și ce NU ȘTIE elevul la intrare), glosarul și faptul-canar. Drafturile le fac eu. Estimat 20-30 min pe clasă.",
+  "Faptele din lume, o dată: cota TVA în vigoare (azi nu e verificată pe sursă) și limba Office de pe PC-urile din fiecare laborator (o captură ajunge).",
+  "Să confirme orarul care nu e în fișiere: ce clase are la Tupilați lunea (grila spune V și VIII, testele din data/teste spun V și VI) și după ce planificare; dacă orele de la Brauner liceu (9 A, 9 M, X M, XII M din grilă) intră pe sit.",
+  "OK la prima publicare în producție a fiecărei secțiuni: banda „în revizie” (luni 28.09), traseul nou al claselor, prima lecție refăcută din fiecare unitate. Primește linkul de pe proba.",
+  "Cele 8 decizii din reorganizare (fiecare are o recomandare).",
+  "Opțional, dar singurul lucru care nu se poate simula: după oră, o propoziție (vocal sau Telegram) despre unde s-au blocat copiii. Intră în bancul de test."
+ ]
+}

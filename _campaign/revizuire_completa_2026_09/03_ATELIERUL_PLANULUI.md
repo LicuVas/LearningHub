@@ -1,0 +1,28 @@
+# Cum s-a făcut planul (atelierul cu agenți, 27.09.2026)
+
+Workflow `plan-revizuire-learninghub` (rulare `wf_c137a5bc-cb1`): 18 agenți, 0 erori, 70 de minute, ~2,9 milioane de jetoane.
+
+1. **Cercetare (6 cititori, Sonnet/Opus):** anatomia instrucțiunilor din 3 lecții · ce prinde fiecare unealtă existentă (matricea celor 9 constatări) · planul anului față de materialul existent · modelul-țintă din jocuri · calendarul următoarelor săptămâni · lecțiile de metodă din auditurile trecute. Raport: `02_CERCETARE.md`.
+2. **Trei schițe independente (Opus):** „mașina de verificat întâi” · „reconstruim pe motorul jocurilor” · „în ordinea calendarului”.
+3. **Trei judecători (Opus), fiecare din alt unghi:**
+   - judecator 1: a ales **motor** — masina 55 · motor 57 · calendar 52. Motiv: Motorul pornește de la materialul atomic care există deja: ~141 de niveluri pe pași în 19 jocuri (am verificat). Deci drumul cel mai scurt spre „elevul chiar învață” e să verifice și să repare ce e aproape bun, nu să scrie de la zero 660 de lecții. Are și cel mai mecanic agent dumb: sarcinile se sco
+   - judecator 2: a ales **masina** — masina 54.5 · motor 54 · calendar 52.5. Motiv: Am judecat din unghiul inginerului de verificare. Doar schița „mașina” descrie o mașină care poate rula, așa cum e scrisă, pe propriul banc de test. Citește HTML-ul vechi ca text afișat, prin H_vede. Cele 739 de semnalări le verifică la commitul 147b684a (am verificat: 03.09 ora 22:29, înainte ca 13
+   - judecator 3: a ales **calendar** — masina 52 · motor 52 · calendar 55. Motiv: Am judecat ca omul care rulează planul noaptea, singur. Calendarul e singurul plan care cedează fără pagubă. Un lot neterminat lasă pe pagină nivelul de joc cu banda „în revizie”, niciodată o lecție pe jumătate. Întârzierea apare singură: contractul fereastra-14z o aduce în mesajul de început de ses
+   Niciun câștigător majoritar → sinteza a pornit de la „motor” și a altoit grefele celorlalte două (calendarul de 14 zile, bancul de test înghețat înaintea mașinii).
+4. **Red-team (4 lentile, Opus):** 49 găuri, din care 22 GRAVE — lecția-capcană care ar trece · agentul care nu e dumb · omul ascuns (ce cade pe Vasile) · completitudinea față de cererea verbatim. Toate în `_lucru_agenti/red-team_*.json`.
+5. **Integrator (Opus):** a închis găurile în plan și a scris `01_PLAN.md` + `lista_verificare.json`. Găuri rămase deschise (cer decizia lui Vasile):
+   - Tupilați (gaura MEDIU „predare simultană”): Ce predai mâine, luni 28.09, la Tupilați? După grilă: cls. 5 la 12:00, cls. 8 la 13:00, cls. 6/7 simultan la 14:00. După ce planificare lucrezi acolo? La ora simultană 6/7, cărei clase îi explici tu direct și care lucrează singură pe sit? Fără răspuns, Tupilați nu are Calendar_ore și nu intră în fereastra de 14 zile.
+   - Plafonul nopților (gaura MEDIU „abonament”): Câți agenți pe noapte, sau ce parte din limita săptămânală a abonamentului Claude, am voie să folosesc pentru LearningHub? Limita e aceeași pe care o folosești ziua. Până răspunzi, loturile rulează doar noaptea și consumul apare duminica.
+   - Capturile (gaura MEDIU „desktop ascuns neprobat”): Dacă proba captura_ascunsa.py pe desktopul ascuns pică, îmi dai o singură dată un acord permanent pentru capturi noaptea pe desktopul vizibil? Ecranul nu adoarme la priză. Varianta cealaltă e să strângem capturile pentru o fereastră de zi aprobată de tine.
+   - Ordinea din planificare (gaura GRAV „ordinea nu e verificată”): Mecanismul e închis (auditul ordinii, S04b), dar fiecare caz cere decizia ta. Ca regulă implicită, preferi (a) un pas mic de pregătire în lecție, cu planificarea depusă la școală neschimbată, sau (b) mutarea lecției, cu Planificare_calendaristica și Calendar_ore modificate? Primii candidați: VIII nr. 4 înainte de nr. 5; VII nr. 31 după nr. 25-30; VI nr. 24 după nr. 20-22.
+   - Semnalele elevilor (gaura MIC „minori”): După avizul /legal (temei, informarea școlii și a părinților, cât se păstrează datele), accepți colectarea pe pas legată de amprenta din /api/progres? Sau rămânem definitiv la numere adunate pe pas, fără amprentă? Până la aviz rulează doar varianta fără amprentă.
+   - Liceu (gaura GRAV „liceu fără programă și date”): Unde e hotarul semestrului I/II la X, XI, XII? Orele de liceu de la Brauner din grilă (9 A, XI M etc.) intră pe sit? Nu sunt în fișiere, deci fereastra de 14 zile nu le poate calcula.
+   - Lecțiile de liceu și profesionale de pe profiluri pe care nu le predai (279 + 46): rămân publice cu banda „nerevizuit” și doar nivelurile 0-1, sau le scoatem de pe sit? Recomandarea mea: rămân publice cu bandă.
+   - cls8/extra-subprograme (nu e în planul de gimnaziu): rămâne „opțional” cu etichetă, trece în arhivă cu bandă sau se mută la liceu? Până decizi rămâne „opțional”.
+
+## Probe făcute de mine în aceeași sesiune (nu de agenți)
+
+- `proba_t0_excel_m2/` — oracolul de novice (treapta 0 din /plimbare) rulat pe modulul cls8/m2 așa cum e, cu un config de 10 minute: **25 de probleme** (termeni înainte de definiție, „funcție” predată înaintea „referinței”, 6 lecții fără „Ce trebuie să știi”, mini-factura fără rezolvare). Nu prinde niciuna din cele 9 constatări (cer execuție).
+- `proba_excel_real_lectia_27_09/` — formulele lecției tastate în Excel-ul real (invizibil, setări RO): reproduce mecanic constatările 1, 2, 4, 5.
+- `masuratori_lectii.csv` (scratchpad → copiat aici ca `masuratori_lectii_2026-09-27.csv`): 660 de lecții, mediana 2.340 de cuvinte, 653 fără nicio imagine, 0 cu simulator, 26 cu bloc de prerechizite.
+- TVA: cota standard 21% de la 01.08.2025 (Legea 141/2025, M.Of. 25.07.2025; normele HG 602/2025) — verificat pe web în sesiune.
