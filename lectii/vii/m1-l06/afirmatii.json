@@ -1,0 +1,287 @@
+{
+ "lectie": "VII · M1 · lecția 6 — Formatarea textului și a paragrafului",
+ "scris": "2026-09-27",
+ "cum_am_probat": "Word 16.0 build 16.0.20326 (interfață EN, LCID 1033; Windows cu setări regionale românești: unitatea de măsură cm, separatorul zecimal virgulă), instanță NOUĂ și INVIZIBILĂ prin COM (DispatchEx), documente noi închise fără salvare, Quit doar pe instanța mea; clipboardul Windows salvat la început și pus la loc la final (probă: la_fel=true). BUTOANELE: CommandBars.ExecuteMso(idMso) = apăsarea butonului din panglică (merge pe instanța invizibilă). SCURTĂTURILE: FindKey(BuildKeyCode(Ctrl, tasta)).Command = comanda legată de tastă, iar FindKey(...).Execute() o rulează ca tasta. CASETELE Font / Font Size nu se pot apăsa prin COM: am folosit fereastra Font (Dialogs(174), comanda Ctrl+D), aceeași comandă de formatare. FEREASTRA Paragraph: Dialogs(175) cu câmpurile ei (FirstIndent, LineSpacingRule), fără s-o arăt. WordBasic NU merge prin legare târzie (a doua rulare a arătat că nu face nimic) și n-a fost folosit la nicio concluzie. Gesturile de mouse/deget, textul de pe butoane și din ferestre, culorile din meniuri sunt NETESTABILE prin COM: sunt marcate așa mai jos. Scripturile și rezultatele: _proba/proba_word_formatare.py, _proba/proba_word_formatare_2.py, _proba/proba_word_formatare_3.py -> _proba/rezultate_word.json; _proba/fa_docx_si_proba_provocare.py -> _proba/proba_provocare.json (0 nepotriviri, două variante de selecție). Simulatorul (lectii/_sim/wordobj-formatare.js) e verificat cu gesturi reale: _proba/proba_ui_l06.py -> _proba/proba_ui_l06.json (0 probleme, 0 erori în consolă, 390 px atingere + 1280 px mouse/tastatură, inclusiv ce se VEDE pe ecran: grosime, mărime, culoare, subliniere calculate de browser). ADĂUGAT DUPĂ JUDECĂTOR (27.09.2026): FindKey(...).Execute() rulează comanda FĂRĂ comutarea pe care o face tasta (concluzia veche A25 era falsă). Orice comportament de TASTĂ e acum probat cu TASTE REALE: WM_KEYDOWN/WM_KEYUP postate în fereastra documentului (_WwG) a instanței invizibile, cu Ctrl/Shift în starea tastaturii firului lui Word (AttachThreadInput + SetKeyboardState), metoda judecătorului (_verificare/j3_word_com.py); validare: Ctrl+B pe o selecție dă aldin doar pe ea. Script: _proba/proba_word_taste_reale.py -> cheile „taste_reale_*” din _proba/rezultate_word.json.",
+ "afirmatii": [
+  {
+   "id": "A01",
+   "loc": "pasul 0 · Acum în Word-ul adevărat, pașii 3-7",
+   "actiune": "Formatezi anunțul (aldin, mărime, aliniere, subliniere, alineat, spațiere).",
+   "rezultat_promis": "Se schimbă doar cum arată textul; cuvintele rămân aceleași.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: proba_provocare.json, text_final == textul inițial în ambele variante."
+  },
+  {
+   "id": "A02",
+   "loc": "pasul 1 (text + captură) · pasul 2",
+   "actiune": "Te uiți pe fila Home (Pornire), grupul Font.",
+   "rezultat_promis": "Acolo sunt caseta Font, caseta Font Size, butoanele B, I, U și butonul Font Color (litera A cu bară colorată).",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT de dump-ul UI Automation al Word-ului instalat (jocuri/_motor/panglica-word.json, grupul Font: Font, FontSize, Bold, Italic, UnderlineGallery, FontColorPicker) și de captura jocuri/word-vii/img/grup-font.webp."
+  },
+  {
+   "id": "A03",
+   "loc": "pasul 1 · întrebarea 1",
+   "actiune": "Apeși Ctrl+B / Ctrl+I / Ctrl+U.",
+   "rezultat_promis": "Aldin / Cursiv / Subliniat (aceleași comenzi ca butoanele B, I, U).",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: FindKey -> Bold, Italic, Underline (rezultate_word.json › scurtaturi); rulate cu Execute() pe o selecție: aldin, cursiv și subliniat exact pe „vineri” (taste_BIU_rulate_selectie)."
+  },
+  {
+   "id": "A04",
+   "loc": "pasul 1 · încearcă P1",
+   "actiune": "Selectezi „vineri” și apeși B.",
+   "rezultat_promis": "Doar „vineri” devine aldin.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: bold_pe_selectie -> „_______vineri____________”."
+  },
+  {
+   "id": "A05",
+   "loc": "pasul 1 (text) · încă P1 (choice)",
+   "actiune": "Apeși încă o dată B pe același text aldin.",
+   "rezultat_promis": "Textul nu mai e aldin.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: bold_de_doua_ori -> niciun caracter aldin. Nuanță (nespusă elevului, simulată): pe o selecție AMESTECATĂ, B urmează PRIMUL caracter (bold_amestecat_primul_aldin -> totul normal; bold_amestecat_primul_normal -> totul aldin)."
+  },
+  {
+   "id": "A06",
+   "loc": "pasul 1, „Uite cum”",
+   "actiune": "Dublu-clic pe „vineri”, apoi U.",
+   "rezultat_promis": "Se selectează cuvântul cu spațiul de după, iar Word subliniază și spațiul.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: dublu_clic_subliniat: selectat „vineri ”, subliniat „vineri ” (cu spațiul). Dublu-clicul = Range.Expand(wdWord), ca în lecția 5."
+  },
+  {
+   "id": "A07",
+   "loc": "încă P1 (Atenție!) · ajutorul",
+   "actiune": "Dublu-clic pe „Atenție!”.",
+   "rezultat_promis": "Se selectează „Atenție” fără „!” (de aceea sarcina cere tragere).",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: dublu_clic_cu_punctuatie -> „Atenție” și „mâine” (fără „!” și fără „.”)."
+  },
+  {
+   "id": "A08",
+   "loc": "pasul 2 (text)",
+   "actiune": "Deschizi un document nou.",
+   "rezultat_promis": "Textul obișnuit are 11 sau 12 pt.",
+   "aplicatie": "Word",
+   "proba_autor": "PARȚIAL: documentul nou aici = Calibri 11 pt (implicit_document_nou). 12 pt = Aptos, fontul implicit din Word 365 mai nou: NEPROBAT pe acest calculator (Normal.dotm de aici are Calibri 11)."
+  },
+  {
+   "id": "A09",
+   "loc": "pasul 2 · încearcă P2 · atelier · întrebarea 2 · provocarea 3",
+   "actiune": "Selectezi textul și alegi 18 / 20 / 22 / 24 în caseta de mărime.",
+   "rezultat_promis": "Textul selectat are mărimea aleasă; restul nu se schimbă.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin fereastra Font (aceeași comandă de formatare ca respectiva casetă): fereastra_font_selectie -> 20 pt doar pe „vineri”. Valorile 18-24 sunt în lista Word (pașii Grow Font: 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72). Deschiderea listei casetei = NETESTABIL prin COM."
+  },
+  {
+   "id": "A10",
+   "loc": "pasul 2 (text)",
+   "actiune": "Scrii un număr în caseta de mărime și apeși Enter.",
+   "rezultat_promis": "Textul selectat primește mărimea scrisă.",
+   "aplicatie": "Word",
+   "proba_autor": "NETESTABIL prin COM (e un gest în casetă). Probat: Word primește mărimi scrise ca 13 (13 pt), 13,5, 72, 100; 13,3 devine 13; 0 și 2000 sunt respinse (marime_valori). Simulatorul face la fel; mesajele de eroare din simulator („This is not a valid number.”, „The number must be between 1 and 1638.”) sunt din memorie: NESIGURE."
+  },
+  {
+   "id": "A11",
+   "loc": "pasul 2 (text + „Uite cum”) · încearcă P2 · atelier (încă)",
+   "actiune": "Apeși săgeata ▾ de lângă butonul A (Font Color) și alegi pătrățelul roșu / albastru.",
+   "rezultat_promis": "Se deschid culorile, cu rândul Standard Colors; textul selectat ia culoarea aleasă.",
+   "aplicatie": "Word",
+   "proba_autor": "NETESTABIL prin COM (meniul de culori). Probat: partea din stânga a butonului pune roșu (RGB 238,0,0) pe selecție sau pe cuvântul cu cursorul în el (buton_culoare_selectie, buton_culoare_mijloc). Rândul Standard Colors și valorile lui din simulator (Red = FF0000, Blue = 0070C0 etc.) sunt din memorie: NESIGURE ca valori exacte; testele acceptă roșu = FF0000 sau EE0000."
+  },
+  {
+   "id": "A12",
+   "loc": "încă P2 (Arial) · ajutorul",
+   "actiune": "Selectezi „Reguli” și alegi Arial din caseta Font.",
+   "rezultat_promis": "„Reguli” are fontul Arial; restul nu se schimbă.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT prin fereastra Font: fereastra_font_selectie -> Arial doar pe „vineri”. Arial e instalat (fonturi_instalate)."
+  },
+  {
+   "id": "A13",
+   "loc": "pasul 3 (text + „Uite cum”) · încearcă P3 · întrebarea 3",
+   "actiune": "Cursorul în mijlocul unui cuvânt, nimic selectat; apeși B / I / U (Ctrl+B / I / U).",
+   "rezultat_promis": "Se formatează tot cuvântul, fără spațiul de după.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: fara_selectie_Bold/Italic/Underline_mijloc -> „vineri” întreg; cu tastele rulate: taste_BIU_rulate_mijloc; la fel Grow Font (grow_fara_selectie_mijloc), Font Color (buton_culoare_mijloc) și fereastra Font (fereastra_font_mijloc)."
+  },
+  {
+   "id": "A14",
+   "loc": "pasul 3 (text) · încă P3 (choice)",
+   "actiune": "Cursorul la începutul sau la capătul unui cuvânt (sau după un spațiu), nimic selectat; apeși B / I / U.",
+   "rezultat_promis": "Textul nu se schimbă.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: fara_selectie_*_inceput și fara_selectie_*_capat -> niciun caracter formatat; capat_paragraf_bold_fara_text -> nimic aldin."
+  },
+  {
+   "id": "A15",
+   "loc": "pasul 3 (text + „Uite cum”) · încă P3 (Diriginta)",
+   "actiune": "Cursorul la capătul rândului, apeși Ctrl+B, tastezi „ Vineri”, apeși iar Ctrl+B, tastezi „ seara.”.",
+   "rezultat_promis": "Doar textul tastat între cele două apăsări e aldin.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: mod_tastare_bold -> „ Vineri” aldin, „ seara.” normal; intre_doua_spatii_bold_si_tastez -> „azi” aldin; fereastra_font_capat -> „X” tastat are 20 pt, Arial."
+  },
+  {
+   "id": "A16",
+   "loc": "pasul 4 (text + captură)",
+   "actiune": "Te uiți în grupul Paragraph (Paragraf), rândul de jos.",
+   "rezultat_promis": "Patru butoane de aliniere: Align Left, Center, Align Right, Justify.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT de dump (grupul Paragraph: AlignLeft, AlignCenter, AlignRight, AlignJustifyMenu) și de captura jocuri/word-vii/img/grup-paragraf.webp. Pe calculatorul profesorului, lângă Justify e o săgeată ▾ (AlignJustifyMenu); în Word 2016 e un buton simplu."
+  },
+  {
+   "id": "A17",
+   "loc": "pasul 4 · încearcă P4 · întrebarea 4 · provocarea 3 și 5",
+   "actiune": "Clic oriunde în paragraf, fără selecție; Ctrl+L / Ctrl+E / Ctrl+R / Ctrl+J (sau butoanele), o dată.",
+   "rezultat_promis": "Tot paragraful se aliniază la stânga / la mijloc / la dreapta / stânga-dreapta; celelalte paragrafe nu se schimbă.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT cu TASTE REALE (taste_reale_aliniere_de_3_ori, prima apăsare): Ctrl+E -> centrat, Ctrl+R -> dreapta, Ctrl+J -> stânga-dreapta, doar paragraful cu cursorul; butoanele la fel (butoane_aliniere_de_3_ori). Ctrl+L pe un paragraf DEJA la stânga nu-l lasă la stânga (vezi A30). O selecție care atinge două paragrafe le aliniază pe amândouă; Ctrl+Z anulează (aliniere_selectie_pe_doua_paragrafe, aliniere_undo)."
+  },
+  {
+   "id": "A18",
+   "loc": "pasul 4 (text + „Uite cum”) · încă P4 · provocarea 5",
+   "actiune": "Aliniezi stânga-dreapta un paragraf de trei rânduri.",
+   "rezultat_promis": "Rândurile ating ambele margini; ultimul rând stă la stânga.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT pe poziții (stanga_dreapta_pozitii): marginea dreaptă 523,3 pt; ultima literă de pe rândurile 1-2 la 519,0 și 522,4 pt (justify) față de 515,7 și 514,0 pt (la stânga); ultimul rând se termină la 121,4 pt în ambele."
+  },
+  {
+   "id": "A19",
+   "loc": "pasul 4, „Uite cum”",
+   "actiune": "Centrezi un titlu cu Center.",
+   "rezultat_promis": "Titlul stă la mijloc orice ai scrie în el.",
+   "aplicatie": "Word",
+   "proba_autor": "Adevărat prin definiția alinierii (alinierea e a paragrafului, A17). Proba cu spații vs buton (proba 3) a dat poziții vechi pe instanța invizibilă, deci afirmația „spațiile se strică la mărire” a fost SCOASĂ din lecție."
+  },
+  {
+   "id": "A20",
+   "loc": "pasul 5 (text) · încearcă P5 · atelier · întrebarea 5 · provocarea (pasul în plus)",
+   "actiune": "Clic în paragraf, săgeata mică ↘ din colțul grupului Paragraph; Special: First line, By: 1,25 cm; OK.",
+   "rezultat_promis": "Doar primul rând al paragrafului intră spre dreapta cu 1,25 cm; celelalte paragrafe nu se schimbă.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT pe câmpurile ferestrei (Dialogs(175)): FirstLineIndent 1,251 cm, LeftIndent 0, al doilea paragraf neatins (fereastra_paragraph); „1,25 cm” și „1.25 cm” dau amândouă 1,251 cm pe acest calculator (fereastra_paragraph_punct_sau_virgula). Butonul-săgeată există (dump: ParagraphDialog, „Paragraph...”, colțul de jos al grupului). Etichetele ferestrei (Special, First line, By, Line spacing, 1.5 lines, Double, OK) = NETESTABILE prin COM, scrise din Word EN: NESIGURE ca text exact; numele românești NU sunt date în lecție (fără sursă), doar sensul lor („retrage primul rând”, „rânduri mai rare”) și nota că într-un Word în română sunt traduse, în aceleași locuri (NESIGUR: așezarea ferestrei românești n-am văzut-o). Ce pune Word singur la By când alegi First line = NESIGUR (simulatorul pune 1,27 cm; lecția îi cere elevului să scrie 1,25; testele acceptă 1,22-1,28)."
+  },
+  {
+   "id": "A21",
+   "loc": "pasul 5 · încearcă P5 · atelier (încă) · provocarea (pasul în plus)",
+   "actiune": "Line spacing: 1.5 lines (sau Double), OK.",
+   "rezultat_promis": "Rândurile paragrafului se răresc (Double: și mai rare); celelalte paragrafe nu se schimbă.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT cu regulile echivalente rulate de la tastatură (câmpul de spațiere al ferestrei nu se completează curat prin COM): Ctrl+5 = regula „1.5 lines”, înălțimea paragrafului 36,8 -> 47,8 pt; Ctrl+2 = „Double”, 61,2 pt; al doilea paragraf rămâne 1,08 (spatiere_taste_rulate). Fereastra deschisă arată implicit Multiple 1,08, After 8 pt (fereastra_paragraph › campuri_la_deschidere)."
+  },
+  {
+   "id": "A22",
+   "loc": "provocarea, pasul 7 · simulatorul",
+   "actiune": "Apeși Ctrl+Z după două formatări (B, apoi I).",
+   "rezultat_promis": "Fiecare Ctrl+Z anulează o singură comandă.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: undo_formatare -> un Ctrl+Z scoate cursivul, al doilea aldinul; fereastra Paragraph (OK) se anulează dintr-un Ctrl+Z (fereastra_paragraph_un_undo); alinierea la fel (aliniere_undo)."
+  },
+  {
+   "id": "A23",
+   "loc": "Acum în Word-ul adevărat, pașii 1-9",
+   "actiune": "Descarci anunt-serbare.docx, îl deschizi și faci pașii 3-6 și pasul în plus exact cum scrie.",
+   "rezultat_promis": "Documentul arată ca în poza țintă (titlu aldin 24 pt centrat, „Vineri,” aldin, paragraf stânga-dreapta, „joi.” subliniat), apoi primul rând al paragrafului lung are alineat 1,25 cm și spațiere 1,5.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: proba_provocare.json, 0 nepotriviri, în două variante: selecții exacte și selecții cu spațiul de după (cum le ia tragerea cu AutoWordSelection). Documentul se deschide neformatat (Calibri 11, totul la stânga). Mărimea 24 prin fereastra Font (caseta nu se poate apăsa prin COM). Bara „Vizualizare protejată (Protected View)” = NETESTABIL (se predă în lecția 5)."
+  },
+  {
+   "id": "A24",
+   "loc": "simulatorul (mesajul la greșeala Increase Indent)",
+   "actiune": "Apeși Increase Indent cu cursorul în paragraf.",
+   "rezultat_promis": "Tot paragraful (nu doar primul rând) se retrage cu 1,25 cm; Decrease Indent îl aduce înapoi, nu sub 0.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: buton_increase_indent -> 1,249 / 2,498 / 1,249 / 0 / 0 cm, FirstLineIndent 0, al doilea paragraf neatins."
+  },
+  {
+   "id": "A25",
+   "loc": "pasul 4 (text + „Uite cum”) · întrebarea 4 (explicația) · simulatorul (tastele și butoanele)",
+   "actiune": "Apeși a doua oară aceeași aliniere pe un paragraf deja aliniat așa (tasta sau butonul).",
+   "rezultat_promis": "Paragraful revine la stânga — la TASTE și la BUTOANE deopotrivă (Center, Align Right, Justify / Ctrl+E, Ctrl+R, Ctrl+J); Align Left / Ctrl+L pe un paragraf deja la stânga îl face stânga-dreapta.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT cu TASTE REALE (taste_reale_aliniere_de_3_ori): Ctrl+L -> stânga-dreapta, stânga, stânga-dreapta; Ctrl+E -> centrat, stânga, centrat; Ctrl+R -> dreapta, stânga, dreapta; Ctrl+J -> stânga-dreapta, stânga, stânga-dreapta; butoanele AlignLeft/AlignCenter/AlignRight la fel (butoane_aliniere_de_3_ori). Regula: comută doar dacă TOATE paragrafele atinse au deja alinierea cerută (taste_reale_selectie_amestecata_1_centrat_2_stanga: Ctrl+E pe [centrat, stânga] -> ambele centrate, a doua oară ambele la stânga; Ctrl+L -> ambele la stânga, a doua oară ambele stânga-dreapta); trecerea J, E, R, J, L nu trece prin stânga (taste_reale_trecere_J_E_R_J_L). CORECȚIE: versiunea veche a acestei afirmații spunea că tastele NU comută — FALS, probat greșit cu FindKey().Execute() (judecătorul, _verificare/j3_word.json). Simulatorul comută acum exact așa (proba_ui_l06.json › pc_G1_*). Butonul Justify nu se poate apăsa prin ExecuteMso: îl simulez ca tasta Ctrl+J (NESIGUR doar pentru buton)."
+  },
+  {
+   "id": "A26",
+   "loc": "simulatorul (Enter, Backspace)",
+   "actiune": "Enter la capătul unui titlu centrat; Backspace la începutul paragrafului de sub un titlu centrat.",
+   "rezultat_promis": "Paragraful nou e tot centrat; la unire rămâne alinierea paragrafului de sus.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: enter_dupa_titlu_centrat -> al_nou center (textul tastat după Enter n-a luat aldinul literelor de deasupra: bold 0, 11 pt); backspace_unire_primul_centrat -> center, backspace_unire_al_doilea_centrat -> left."
+  },
+  {
+   "id": "A27",
+   "loc": "simulatorul (Tab / Backspace la începutul paragrafului)",
+   "actiune": "Tab la începutul unui paragraf cu text; Backspace la începutul unui paragraf cu alineat.",
+   "rezultat_promis": "Tab pune alineat de 1,25 cm; Backspace scoate întâi alineatul, fără să unească paragrafele.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT de judecător cu TASTE REALE (_verificare/j3_word.json › c_tab_la_inceput, c_tab_de_doua_ori, c_backspace_1..3): Tab -> alineat 1,25 cm; al doilea Tab -> și retragerea 1,25 cm; Backspace -> scoate întâi alineatul, apoi retragerea, apoi unește paragrafele. Simulatorul face la fel (judecătorul: fidel). Prin COM (TypeBackspace) Word unea direct: COM ocolește opțiunea „Set left- and first-indent with tabs and backspaces”. Lecția nu predă și nu cere nimic de aici."
+  },
+  {
+   "id": "A28",
+   "loc": "simulatorul (copiere)",
+   "actiune": "Copiezi un cuvânt aldin și îl lipești în alt loc.",
+   "rezultat_promis": "Copia e tot aldină; Word pune singur spațiul dinainte.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: copiere_pastreaza_aldin -> „Rezultat: Bravo” cu „Bravo” aldin (clipboardul pus la loc după probă)."
+  },
+  {
+   "id": "A29",
+   "loc": "simulatorul (documentul nou)",
+   "actiune": "Începi un exercițiu.",
+   "rezultat_promis": "Textul are Calibri (Body) 11 pt, la stânga, 8 pt după paragraf, spațiere Multiple 1,08.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: implicit_document_nou (Calibri 11, LineSpacingRule 5, 12,95 pt = 1,08 × 12, SpaceAfter 8) și fereastra_paragraph › campuri_la_deschidere (After 8 pt, 1,08); fereastra Font arată „+Body”, 11."
+  },
+  {
+   "id": "A30",
+   "loc": "pasul 2 (text) · încearcă P2 (ajutorul)",
+   "actiune": "Cauți butonul Culoare font (Font Color) în grupul Font.",
+   "rezultat_promis": "E pe AL DOILEA rând, ultimul, după B, I, U; pe primul rând sunt caseta Font și caseta de mărime (și alte butoane cu „A”: Grow Font, Shrink Font, Change Case).",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT de dump (jocuri/_motor/panglica-word.json, grupul Font): Font [8,10], FontSize [135,10], FontSizeIncreaseWord [180,10], FontSizeDecreaseWord [206,10], ChangeCaseGallery [235,10] pe rândul de sus (y=10); Bold [8,42] … FontColorPicker [265,42] pe rândul de jos (y=42), ultimul; și de captura grup-font.webp. Textul vechi („pe primul rând”) era greșit (judecător, M1)."
+  },
+  {
+   "id": "A31",
+   "loc": "pasul 3 (text)",
+   "actiune": "Cursorul la capătul rândului, Ctrl+B, apoi muți cursorul (săgeată stânga, săgeată dreapta) și abia apoi tastezi.",
+   "rezultat_promis": "Textul tastat NU mai e aldin: formatarea de tastare se pierde când muți cursorul.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT cu TASTE REALE: taste_reale_tastare_cu_mutare -> „x” normal; martorul fără mutare (taste_reale_tastare_fara_mutare) -> „x” aldin. Simulatorul: pune() șterge formatarea de tastare."
+  },
+  {
+   "id": "A32",
+   "loc": "pasul 4, „Uite cum” · întrebarea 4",
+   "actiune": "Ai greșit alinierea (de exemplu Ctrl+E de două ori) și apeși Ctrl+Z.",
+   "rezultat_promis": "Se anulează ultima comandă de aliniere.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: aliniere_undo (un Ctrl+Z după Center -> la stânga); c_undo_B_I (judecător, taste reale): câte un Ctrl+Z pe comandă."
+  },
+  {
+   "id": "A33",
+   "loc": "simulatorul (Ctrl+5 / Ctrl+2 / Ctrl+1, nepredate)",
+   "actiune": "Apeși Ctrl+5 (sau Ctrl+2, Ctrl+1) de două ori.",
+   "rezultat_promis": "Spațierea devine 1,5 (dublă, simplă) și rămâne așa: aici NU e comutare.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT cu TASTE REALE: taste_reale_spatiere_de_2_ori (regula 1 / 2 / 0 la ambele apăsări). Ctrl+M / Ctrl+Shift+M și Ctrl+Shift+> / < au dat rezultate NECONCLUDENTE cu tastele postate (prima apăsare cu Shift a ieșit ca fără Shift; o apăsare n-a avut efect, alta da, de la o rulare la alta): NESIGURE ca taste; butoanele echivalente (Increase Indent, Grow / Shrink Font) sunt probate (A24, grow_shrink_de_la_11). Lecția nu le predă."
+  },
+  {
+   "id": "A34",
+   "loc": "simulatorul (mesajele testelor „doar el”)",
+   "actiune": "Tragi selecția cu un semn prea departe (pe punctul de după „octombrie”) și apeși B.",
+   "rezultat_promis": "Se face aldin și punctul (Word selectează pe cuvinte când tragi); mesajul spune asta și dă reparația: dublu-clic pe punct (se selectează doar el, cu spațiul de după) și încă o dată B. Dacă bucata în plus are mai mult de un cuvânt sau semn (de ex. „. Cele”), mesajul cere tragerea peste ea, nu dublu-clicul (dublu-clicul ia un singur cuvânt) — judecătorul 2, R1; probat: pc_R1_mesaj + „Corect” după tragere.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: dublu-clicul pe un semn de punctuație ia doar semnul (dublu_clic_cu_punctuatie și regula cuvântului din lecția 5); B pe o selecție care începe cu un caracter aldin scoate aldinul (bold_amestecat_primul_aldin). Drumul întreg, cu gesturi reale pe telefon, trece (proba_ui_l06.json › tel_atelier_mesaj_prea_departe, tel atelier: Corect)."
+  },
+  {
+   "id": "A35",
+   "loc": "simulatorul (mesajul când formatarea e doar pe o parte a textului cerut)",
+   "actiune": "„Atenție” e cursiv, „!” nu; selectezi tot „Atenție!” și apeși I.",
+   "rezultat_promis": "Prima apăsare scoate cursivul de peste tot (Word se ia după primul caracter), abia a doua îl pune pe tot; de aceea mesajul cere să selectezi doar „!” (dublu-clic pe el) și să apeși I.",
+   "aplicatie": "Word",
+   "proba_autor": "CONFIRMAT: bold_amestecat_primul_aldin (primul caracter formatat -> apăsarea scoate formatarea de pe toată selecția) și, cu butonul, d_bold_amestecat_primul_aldin_buton (judecător); dublu-clicul pe „!” ia doar semnul (dublu_clic_cu_punctuatie). Drumul din mesaj, cu gesturi reale: pc_N1_mesaj -> „Corect”."
+  }
+ ]
+}

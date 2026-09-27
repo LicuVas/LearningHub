@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Formatarea textului și a paragrafului</title>
+<meta name="description" content="Lecția 6, clasa a VII-a: faci textul aldin, cursiv sau subliniat, îi schimbi fontul, mărimea și culoarea, apoi aliniezi paragrafele și le pui alineat și spațiere, în Word-ul simulat din pagină și în Word-ul adevărat.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito+Sans:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+/* TEMA: o foaie de Word pe care același cuvânt apare aldin, cursiv și subliniat, iar rândurile de dedesubt au alinieri diferite */
+:root{
+  --desk:#ECEFF4; --paper:#FFFFFF; --paper2:#F2F4F8; --line:#C9D0DC;
+  --ink:#1A2233; --ink2:#4F5B70; --accent:#2B579A; --accentInk:#FFFFFF; --sel:#DDE7F6;
+  --mark:#FFE58A; --markInk:#1A2233; --ok:#1B7A4A; --okbg:#E2F4EA; --bad:#B42318; --badbg:#FBE7E4;
+  --fd:"Fraunces",Georgia,"Times New Roman",serif; --fb:"Nunito Sans","Segoe UI",system-ui,sans-serif; --fm:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#11161F; --paper:#19212E; --paper2:#202A3A; --line:#35435A; --ink:#E6ECF5; --ink2:#A7B3C6;
+  --accent:#93B6F0; --accentInk:#11161F; --sel:#26395A; --mark:#F2C94C; --markInk:#1A2233;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#11161F; --paper:#19212E; --paper2:#202A3A; --line:#35435A; --ink:#E6ECF5; --ink2:#A7B3C6;
+  --accent:#93B6F0; --accentInk:#11161F; --sel:#26395A; --mark:#F2C94C; --markInk:#1A2233;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+/* banda: B I U, apoi trei rânduri: la stânga, centrat, la dreapta */
+.banda{min-height:30px;padding:0 10px;display:flex;align-items:center;gap:10px;background:var(--paper)}
+.banda .bl{font-family:Georgia,serif;font-size:1rem;color:var(--ink);line-height:1}
+.banda .bl.b{font-weight:700}.banda .bl.i{font-style:italic}.banda .bl.u{text-decoration:underline}
+.banda .rd{flex:1 1 20%;display:flex;flex-direction:column;gap:3px}
+.banda .rd i{display:block;height:3px;background:var(--ink2);opacity:.55;border-radius:2px}
+.banda .rd.c i{margin:0 auto}.banda .rd.r i{margin-left:auto}
+h1{font-weight:700;letter-spacing:-.01em}
+h1 em{color:var(--accent);font-style:normal}
+h2{font-weight:600}
+.doua{display:grid;gap:8px;grid-template-columns:1fr}
+@media (min-width:640px){.doua{grid-template-columns:1fr 1fr}}
+.doua .et{font-weight:700;font-size:.88rem;color:var(--ink2)}
+.sageata{font-family:var(--fm);font-size:.85rem;color:var(--ink2);margin:2px 0}
+.descarca{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/ui-panglica.js"></script>
+<script src="../../../jocuri/_motor/panglica-word.js"></script>
+<script src="../../_sim/wordobj.js"></script>
+<script src="../../_sim/wordobj-formatare.js"></script>
+<script>
+/* LECȚIA 6, clasa a VII-a, modulul 1 (revizuirea LearningHub, standardul din 27.09.2026).
+   Un singur nivel pe pași: pasul 0 „La ce folosește”, 5 pași cu „Încearcă”, atelierul în Word simulat, pasul „Acum în
+   Word-ul adevărat” (documentul de lucru se descarcă din pagină), 5 întrebări.
+   Simulatorul: lectii/_sim/wordobj-formatare.js (tipul `wordfmt`), încărcat după lectii/_sim/wordobj.js.
+   Fiecare afirmație „dacă faci X, apare Y” e în afirmatii.json, cu proba din Word-ul real (_proba/rezultate_word.json). */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG_AFIS='../../../jocuri/word-vii/img/afis-model.webp';
+const IMG_FONT='../../../jocuri/word-vii/img/grup-font.webp';
+const IMG_PARAGRAF='../../../jocuri/word-vii/img/grup-paragraf.webp';
+const K=s=>s.split('+').map(k=>`<kbd>${k}</kbd>`).join('+');
+const CAR='<span class="wo-car" aria-hidden="true"></span>';
+const SL=t=>`<span class="wo-sl">${t}</span>`;
+const mini=(...p)=>`<div class="wo-mini">${p.map(x=>x.startsWith('<p')?x:`<p>${x}</p>`).join('')}</div>`;
+const PROG='Operaţii de formatare a unui document: text, imagine, tabel, pagină';
+const DOCX='anunt-serbare.docx';
+const TEXT_LUCRU=['Serbarea de iarnă','Vineri, 18 decembrie, ora 17:00, în sala de festivități. Vin colinde, scenete și o tombolă cu premii mici. Intrarea e liberă pentru toți părinții și pentru colegii din celelalte clase.','Repetiția generală este joi.'];
+const AFIS=(cap)=>fig(IMG_AFIS,900,209,'Anunțul Serbarea de iarnă în Word: titlul mare, aldin, la mijloc; paragraful are ambele margini drepte, cu Vineri aldin; în ultimul rând, joi e subliniat',cap);
+const PROVOCARE=[
+  `Descarcă documentul de lucru: <a href="${DOCX}" download="${DOCX}">${DOCX}</a>. Ajunge în folderul <b>Descărcări (Downloads)</b>.`,
+  `Deschide-l în Word: clic pe el în lista de descărcări a browserului sau dublu-clic pe el în folderul <b>Descărcări (Downloads)</b>. Dacă sub panglică apare bara galbenă <b>Vizualizare protejată (Protected View)</b>, apasă pe ea <b>Activare editare (Enable Editing)</b>.`,
+  `<b>Titlul:</b> selectează „Serbarea de iarnă”, trăgând de la „S” până după „iarnă”. Apasă ${K('Ctrl+B')}. Apoi, în caseta de mărime (<b>Font Size</b>), alege <b>24</b>. La final apasă ${K('Ctrl+E')} (<b>Center</b>).`,
+  `<b>Ziua:</b> selectează „Vineri,” cu tot cu virgulă (trage de la „V” până după virgulă) și apasă ${K('Ctrl+B')}.`,
+  `<b>Paragraful lung:</b> dă un clic oriunde în el și apasă ${K('Ctrl+J')} (<b>Justify</b>). Marginea lui din dreapta devine dreaptă.`,
+  `<b>Ultimul rând:</b> selectează „joi.” cu tot cu punct (trage de la „j” până după punct) și apasă ${K('Ctrl+U')}.`,
+  `Compară cu poza de la începutul pasului: titlul mare, aldin și la mijloc; „Vineri,” aldin; paragraful cu ambele margini drepte; „joi.” subliniat. Ceva nu e bine? Apasă ${K('Ctrl+Z')}: fiecare apăsare anulează o singură comandă (de exemplu aldinul sau alinierea). Apoi reia pasul.`,
+  `<b>Pasul în plus</b> (în poză nu apare): dă clic în paragraful lung și deschide fereastra <b>Paragraph</b> cu săgeata mică ↘ din colțul grupului <b>Paragraf (Paragraph)</b>. La <b>Special</b> alege <b>First line</b>, la <b>By</b> scrie <b>1,25 cm</b>, la <b>Line spacing</b> alege <b>1.5 lines</b>, apoi <b>OK</b>. Primul rând intră spre dreapta, iar rândurile se răresc. (Pe un Word în română, etichetele sunt traduse, dar stau în aceleași locuri ale ferestrei.)`,
+  `Salvează documentul cu numele tău, cum ai învățat la lecția 3: apasă <b>Fișier (File)</b>, apoi <b>Salvare ca (Save As)</b>, și alege folderul <b>Documente (Documents)</b>, dacă profesorul n-a scris pe tablă alt folder. Numele, de exemplu, <code>Popescu_Ana_formatare.docx</code>.`
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vii_m1_l06',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/vii/, „Lecția 6”, pasul din aplicația adevărată înainte de verificare
+  titlu:'Formatarea textului și a paragrafului',
+  marca:'Lecția 6 · <b>Formatez textul</b>',
+  h1:'Formatarea <em>textului</em> și a <em>paragrafului</em>',
+  clasa:'a VII-a', unitate:'VII-U1', unitateTitlu:'Tehnoredactare: editorul de texte',
+  competente:['CS.1.1','CS.3.1'], lectii:'6',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VII-U1 „Tehnoredactare: editorul de texte” · lecția 6 din modulul 1 · conținutul: „Operații de formatare a unui document: text, imagine, tabel, pagină” (azi: textul și paragraful)',
+  banda:'<span class="bl b">B</span><span class="bl i">I</span><span class="bl u">U</span><span class="rd"><i style="width:80%"></i><i style="width:55%"></i></span><span class="rd c"><i style="width:70%"></i><i style="width:45%"></i></span><span class="rd r"><i style="width:75%"></i><i style="width:50%"></i></span>',
+  intro:`<p>Înveți să schimbi <b>cum arată</b> textul în Word: litere aldine, cursive sau subliniate, alt font, altă mărime, altă culoare. Apoi așezi <b>paragrafele</b> în pagină: aliniere, alineat și spațiere între rânduri. Exersezi întâi în Word-ul simulat din pagină, apoi în Word-ul adevărat.</p>
+<p><b>Ai nevoie de:</b> lecția 2 (panglica din Word și fila <b>Pornire (Home)</b>), lecția 3 (salvezi cu alt nume, cu <b>Salvare ca (Save As)</b>), lecția 4 (<b>cursorul</b>, <b>paragraful</b>, tasta <kbd>Enter</kbd>) și lecția 5 (<b>selectezi</b> textul trăgând peste el sau cu dublu-clic, anulezi o greșeală cu ${K('Ctrl+Z')}, deschizi un document descărcat și apeși <b>Activare editare (Enable Editing)</b>).</p>`,
+  cum:`<p><b>Poți lucra singur, fără profesor.</b> Citești un pas, te uiți la „Uite cum”, faci exercițiul „Încearcă tu”. În exerciții, după o greșeală apare singur un indiciu, iar după două poți cere răspunsul. Urmează atelierul (Word-ul simulat), apoi pasul „Acum în Word-ul adevărat”: lucrezi singur în Word, pe un document pe care îl descarci din pagină. La final ai 5 întrebări de verificare. La întrebări, indiciul îl ceri cu „Am nevoie de un indiciu”, iar după a doua greșeală vezi răspunsul.</p>`,
+  nivele:[
+{t:'Formatarea textului și a paragrafului',lectii:[6],continuturi:[PROG],final:true,
+ obiectiv:'schimbi cum arată literele (aldin, cursiv, subliniat, font, mărime, culoare) și cum stă un paragraf în pagină (aliniere, alineat, spațiere între rânduri).',
+ pasi:[
+  /* ---------- pasul 0 ---------- */
+  {t:'La ce folosește',
+   text:`<p>Ai scris anunțul serbării. Toate literele sunt la fel de mici și stau lipite de marginea din stânga: nu se văd nici titlul, nici ziua.</p>
+<p>Cu <strong>formatarea</strong> schimbi doar <strong>cum arată</strong> textul, nu ce scrie în el: titlul devine mare și stă la mijloc, ziua iese în evidență, paragraful are marginile drepte.</p>
+<div class="doua"><div><span class="et">Înainte</span>${mini(...TEXT_LUCRU)}</div><div><span class="et">După formatare, în Word</span>${AFIS('În chenare: titlul, ziua și un cuvânt cu linie dedesubt. Paragraful are acum marginile drepte.')}</div></div>`},
+  /* ---------- pasul 1 ---------- */
+  {t:'Aldin, cursiv, subliniat',
+   text:`<p>Pe fila <strong>Pornire (Home)</strong>, în grupul <strong>Font</strong>, trei butoane schimbă literele:</p>
+<ul><li><b>B</b> = <mark>Aldin</mark> (<em>Bold</em>): literele se îngroașă. Scurtătura: ${K('Ctrl+B')}.</li>
+<li><i>I</i> = <mark>Cursiv</mark> (<em>Italic</em>): literele se înclină. Scurtătura: ${K('Ctrl+I')}.</li>
+<li><u>U</u> = <mark>Subliniat</mark> (<em>Underline</em>): apare o linie dedesubt. Scurtătura: ${K('Ctrl+U')}.</li></ul>
+<p>Regula: <strong>întâi selectezi</strong> textul, <strong>apoi</strong> apeși butonul. Același buton, apăsat încă o dată pe același text, scoate formatarea.</p>
+${fig(IMG_FONT,308,90,'Grupul Font din panglica Word; jos, butoanele B, I și U sunt încadrate cu roșu','Grupul <b>Font</b> de pe fila <b>Pornire (Home)</b>. Jos, încadrate: <b>B</b>, <b>I</b>, <b>U</b>.')}`,
+   exemplu:`<p>Dublu-clic pe „vineri”: se selectează cuvântul, cu spațiul de după el.</p>${mini(`Serbarea este ${SL('vineri ')}la ora 12.`)}<p class="sageata">↓ ${K('Ctrl+B')}</p>${mini('Serbarea este <b>vineri</b> la ora 12.')}
+<p>La <b>U</b>, Word subliniază și spațiul selectat: „<u>vineri </u>la”. Vrei doar cuvântul? Selectează-l trăgând de la prima până la ultima literă.</p>`,
+   altfel:`<p>Literele de pe butoane vin din engleză: <b>B</b> de la <em>Bold</em> (gros), <b>I</b> de la <em>Italic</em> (înclinat), <b>U</b> de la <em>Underline</em> (linie dedesubt). Scurtăturile folosesc aceleași litere, cu ${K('Ctrl')} ținut apăsat, ca la ${K('Ctrl+S')}. Și aici, întâi arăți textul, apoi apeși.</p>`,
+   incearca:{t:'wordfmt',unelte:['caractere'],
+    q:'Fă cuvântul <b>vineri</b> aldin: selectează-l (dublu-clic pe el, pe telefon două atingeri repezi), apoi apasă <b>B</b> din panglică sau butonul <b>Ctrl+B</b> de sub document. Apoi apasă „Verifică”.',
+    start:['Serbarea clasei este vineri, la ora 12.'],
+    verif:[{ce:'„vineri” e aldin',text:'vineri',b:1},{ce:'Restul rândului nu e aldin',text:'vineri',b:1,doar:true}],
+    tipic:[{text:'Serbarea clasei este vineri, la ora 12.',b:1}],
+    ajutor:'Dublu-clic chiar pe „vineri” (pe telefon: două atingeri repezi), apoi butonul B din panglică sau Ctrl+B de sub document. Dacă s-a îngroșat tot rândul, apasă Ctrl+Z și selectează doar cuvântul.',
+    why:'Ai selectat doar cuvântul, iar B l-a îngroșat doar pe el.'},
+   inca:[
+    {t:'wordfmt',unelte:['caractere'],q:'Fă <b>Atenție!</b> cursiv, cu tot cu semnul exclamării, și <b>mâine</b> subliniat.',
+     start:['Atenție! Lucrarea este mâine.'],
+     verif:[{ce:'„Atenție!” e cursiv, cu tot cu „!”',text:'Atenție!',i:1,doar:true},{ce:'„mâine” e subliniat, doar el',text:'mâine',u:1,doar:true}],
+     tipic:[{text:'Atenție! Lucrarea este mâine.',i:1},{text:'mâine',u:1}],
+     ajutor:'Dublu-clicul ia „Atenție” fără „!”: aici trage de la „A” până după „!”, apoi I (Ctrl+I). Apoi dublu-clic pe „mâine” și U (Ctrl+U).',
+     why:'Fiecare formatare s-a aplicat doar textului selectat în acel moment.'},
+    {t:'choice',q:'Cuvântul „Felicitări” e deja aldin. Îl selectezi și apeși încă o dată <b>B</b>. Ce se întâmplă?',
+     o:['Nu mai e aldin','Devine și mai gros','Se șterge','Nu se schimbă nimic'],ok:0,
+     ajutor:'Recitește ultima propoziție a pasului.',why:'Butonul B pornește și oprește aldinul: apăsat pe un text aldin, îl face din nou normal.'}
+   ]},
+  /* ---------- pasul 2 ---------- */
+  {t:'Fontul, mărimea și culoarea',
+   text:`<p>Tot în grupul <strong>Font</strong>:</p>
+<ul><li>pe primul rând, caseta <mark>Font</mark>: forma literelor (Calibri, Arial, Times New Roman);</li>
+<li>lângă ea, caseta de <mark>mărime</mark> (<em>Font Size</em>), în <strong>puncte</strong> (pt): număr mai mare, litere mai mari. Textul obișnuit are 11 sau 12 pt, un titlu 18–24 pt;</li>
+<li>pe al doilea rând, ultimul, după <b>B</b>, <b>I</b>, <b>U</b>: butonul <mark>Culoare font</mark> (<em>Font Color</em>), litera <b>A</b> cu o bară colorată dedesubt. Săgeata ▾ de lângă el deschide culorile.</li></ul>
+<p>Selectezi textul, dai clic pe săgeata ▾ a casetei și alegi din listă. La mărime poți și să scrii numărul în casetă, apoi apeși <kbd>Enter</kbd>.</p>`,
+   exemplu:`${mini('<span style="font-size:11pt">Calibri, 11 pt: textul obișnuit</span>','<span style="font-family:Arial,sans-serif;font-size:18pt">Arial, 18 pt</span>','<span style="font-family:\'Times New Roman\',serif;font-size:24pt;color:#0070C0">Times New Roman, 24 pt, albastru</span>')}
+<p>Același text, trei fonturi, trei mărimi. Culoarea o alegi din rândul de culori standard (<em>Standard Colors</em>).</p>`,
+   altfel:`<p>Gândește-te la un pix: fontul e felul scrisului, mărimea e cât de mari faci literele, iar culoarea e culoarea pastei. Word schimbă „pixul” doar pentru textul pe care l-ai selectat.</p>`,
+   incearca:{t:'wordfmt',unelte:['caractere'],
+    q:'Titlul <b>Concursul de desen</b> trebuie să aibă <b>20</b> pt și să fie roșu. Selectează tot titlul, alege 20 în caseta de mărime (a doua casetă din grupul Font), apoi apasă săgeata ▾ de lângă <b>A</b> și alege al doilea pătrățel din rândul <em>Standard Colors</em>: roșu (<em>Red</em>). Primul, roșu închis, nu e cel bun.',
+    start:['Concursul de desen','Înscrierile se fac până joi.'],
+    verif:[{ce:'Titlul are 20 pt',text:'Concursul de desen',sz:20,doar:true},{ce:'Titlul e roșu',text:'Concursul de desen',col:'rosu',doar:true}],
+    tipic:[{text:'Concursul',sz:20,col:'rosu'}],
+    ajutor:'Trage peste tot titlul, de la „C” până după „desen” (pe telefon, cu degetul). În caseta cu 11 alege 20. Apoi săgeata ▾ de lângă A (ultimul buton de pe al doilea rând al grupului Font) și al doilea pătrățel din Standard Colors (Red). Panglica se derulează în lateral pe telefon.',
+    why:'Mărimea și culoarea s-au aplicat întregului titlu, pentru că l-ai selectat pe tot.'},
+   inca:[
+    {t:'wordfmt',unelte:['caractere'],q:'Scrie cuvântul <b>Reguli</b> cu fontul <b>Arial</b>: selectează-l, apoi alege Arial din prima casetă a grupului Font.',
+     start:['Reguli','Păstrăm liniștea în laborator.'],
+     verif:[{ce:'„Reguli” are fontul Arial',text:'Reguli',font:'Arial',doar:true}],
+     tipic:[{text:'Reguli',font:'Times New Roman'}],
+     ajutor:'Dublu-clic pe „Reguli”, apoi săgeata ▾ din caseta Font și Arial din listă.',
+     why:'Caseta Font schimbă forma literelor doar pentru textul selectat.'},
+    {t:'choice',q:'Care mărime face literele cele mai mari?',o:['28 pt','12 pt','16 pt','20 pt'],ok:0,
+     ajutor:'Număr mai mare înseamnă litere mai mari.',why:'28 e cel mai mare număr, deci literele cele mai mari.'}
+   ]},
+  /* ---------- pasul 3 ---------- */
+  {t:'Fără selecție: cuvântul sau ce tastezi',
+   text:`<p>Ce se întâmplă dacă apeși <b>B</b>, <b>I</b> sau <b>U</b> fără să selectezi nimic? Depinde unde stă <strong>cursorul</strong>:</p>
+<ul><li><strong>în mijlocul unui cuvânt</strong>, între două litere: Word formatează <mark>tot cuvântul</mark>;</li>
+<li><strong>la capătul unui cuvânt</strong>, după un spațiu sau la capătul rândului: textul nu se schimbă, dar <mark>ce tastezi de acum</mark> are formatarea, până apeși din nou butonul sau până muți cursorul în altă parte.</li></ul>
+<p>Așa scrii direct un cuvânt aldin: ${K('Ctrl+B')}, tastezi cuvântul, apoi iar ${K('Ctrl+B')}.</p>`,
+   exemplu:`<p>Cursorul stă în „vi${CAR}neri”. Apeși ${K('Ctrl+U')}, fără selecție:</p>${mini('Mergem <u>vineri</u> la teatru.')}
+<p>Cursorul stă la capătul rândului, după „teatru.”. Apeși ${K('Ctrl+B')} și tastezi „ Vino!”:</p>${mini('Mergem la teatru.<b> Vino!</b>')}`,
+   altfel:`<p>Dacă stai în mijlocul unui cuvânt, Word înțelege că te referi la el și îl formatează pe tot. Dacă stai între cuvinte, n-are ce cuvânt să formateze, așa că formatează ce scrii de acum încolo.</p>`,
+   incearca:{t:'wordfmt',unelte:['caractere','text'],
+    q:'Fără să selectezi nimic: dă un singur clic (o atingere) în mijlocul cuvântului <b>lucrare</b>, între două litere, apoi apasă <b>U</b> (Ctrl+U).',
+    start:['Mâine avem lucrare la TIC.'],
+    verif:[{ce:'Tot cuvântul „lucrare” e subliniat, doar el',text:'lucrare',u:1,doar:true},{ce:'Ai formatat fără selecție, cu cursorul în cuvânt',foloseste:'cursor'}],
+    tipic:[{text:'lucrare la',u:1}],
+    ajutor:'Un singur clic (o atingere) între „c” și „r” din „lucrare”: cursorul clipește acolo. Apoi U din panglică sau Ctrl+U de sub document.',
+    why:'Cursorul era în mijlocul cuvântului, deci Word a subliniat tot cuvântul, fără să-l selectezi.'},
+   inca:[
+    {t:'wordfmt',unelte:['caractere','text'],q:'Dă clic la capătul ultimului rând, după „Semnat:”. Apasă <b>B</b> (Ctrl+B), apoi tastează în caseta „Tastatura” un spațiu și cuvântul <b>Diriginta</b>.',
+     start:['Anunț pentru clasa a VII-a','Semnat:'],
+     adauga:[{adauga:' Diriginta',par:2,f:{b:1}}],
+     verif:[{ce:'După „Semnat:” scrie „Diriginta”',text:'Semnat: Diriginta',cum:'După „Semnat:” trebuie întâi un spațiu, apoi „Diriginta”, scris exact așa. Apasă Ctrl+Z (sau „Ia-o de la capăt”) și tastează din nou: un spațiu, apoi Diriginta.'},{ce:'„Diriginta” e aldin',text:'Diriginta',b:1},{ce:'„Semnat:” a rămas normal',text:'Semnat:',b:0}],
+     tipic:[{adauga:' Diriginta',par:2}],
+     ajutor:'Clic după „Semnat:” (cursorul la capătul rândului), butonul Ctrl+B, apoi atinge caseta „Tastatura” și scrie un spațiu și „Diriginta”.',
+     why:'Ai apăsat B înainte să scrii, deci doar textul nou e aldin.'},
+    {t:'choice',q:'Cursorul stă la capătul cuvântului „teatru”, fără selecție. Apeși Ctrl+I. Ce se schimbă imediat în text?',
+     o:['Nimic; cursiv va fi ce tastezi de acum','Tot cuvântul „teatru” devine cursiv','Tot rândul devine cursiv','Doar ultima literă devine cursivă'],ok:0,
+     ajutor:'Capătul cuvântului nu e „în mijlocul” lui.',why:'La capătul cuvântului, Word nu schimbă textul: formatarea se aplică la ce tastezi de acum.'}
+   ]},
+  /* ---------- pasul 4 ---------- */
+  {t:'Alinierea paragrafului',
+   text:`<p><mark>Alinierea</mark> spune unde stau rândurile unui paragraf între margini. În grupul <strong>Paragraf (Paragraph)</strong>, jos, sunt patru butoane:</p>
+<ul><li><b>la stânga</b> (<em>Align Left</em>), ${K('Ctrl+L')}: ca de obicei;</li>
+<li><b>centrat</b> (<em>Center</em>), ${K('Ctrl+E')}: pentru titluri;</li>
+<li><b>la dreapta</b> (<em>Align Right</em>), ${K('Ctrl+R')}: pentru dată, semnătură;</li>
+<li><b>stânga-dreapta</b> (<em>Justify</em>), ${K('Ctrl+J')}: ambele margini drepte, ca în cărți; ultimul rând stă la stânga.</li></ul>
+<p>Alinierea e a <strong>întregului paragraf</strong>: ajunge un clic în el. <strong>Atenție:</strong> Center, Align Right sau Justify, apăsat a doua oară, întoarce paragraful la stânga.</p>
+${fig(IMG_PARAGRAF,302,90,'Grupul Paragraph din panglica Word; jos, cele patru butoane de aliniere sunt încadrate cu roșu','Grupul <b>Paragraf (Paragraph)</b>. Jos, încadrate: cele patru alinieri (sus: alte butoane).')}`,
+   exemplu:`<div class="wo-mini"><p style="text-align:left">La stânga.</p><p style="text-align:center">Centrat.</p><p style="text-align:right">La dreapta.</p><p style="text-align:justify">Stânga-dreapta: rândurile lungi se întind de la o margine la alta, iar marginea din dreapta iese dreaptă, ca în cărțile tale. Ultimul rând stă la stânga.</p></div>
+<p>Ai apăsat de două ori ${K('Ctrl+E')}? Titlul se întoarce la stânga. Iar ${K('Ctrl+L')} pe un paragraf care e deja la stânga îl face stânga-dreapta. În ambele cazuri repari cu ${K('Ctrl+Z')}.</p>`,
+   altfel:`<p>Gândește-te la cărțile de pe un raft: le poți împinge spre peretele din stânga, spre cel din dreapta, le poți strânge la mijloc sau le poți întinde de la un perete la altul. Rândurile paragrafului fac la fel, între marginile paginii.</p>`,
+   incearca:{t:'wordfmt',unelte:['paragraf'],
+    q:'Centrează titlul <b>Excursie la Bicaz</b> și aliniază la dreapta ultimul rând, <b>Diriginta</b>. Pentru fiecare: un clic în paragraf, apoi butonul.',
+    start:['Excursie la Bicaz','Plecăm sâmbătă la ora 8, de la poarta școlii.','Diriginta'],
+    verif:[{ce:'Titlul e centrat',par:1,al:'center'},{ce:'„Diriginta” e aliniat la dreapta',par:3,al:'right'},{ce:'Paragraful din mijloc a rămas la stânga',par:2,al:'left'}],
+    tipic:[{par:1,al:'center'},{par:2,al:'center'},{par:3,al:'center'}],
+    ajutor:'Clic în „Excursie la Bicaz”, apoi Center (Ctrl+E). Clic în „Diriginta”, apoi Align Right (Ctrl+R). Paragraful din mijloc nu-l atingi.',
+    why:'Fiecare paragraf are alinierea lui, iar ca s-o schimbi ajunge cursorul în el.'},
+   inca:[
+    {t:'wordfmt',unelte:['paragraf'],q:'Aliniază stânga-dreapta paragraful lung: un clic în el, apoi <b>Justify</b> (Ctrl+J). Uită-te apoi la marginea lui din dreapta.',
+     start:['Regulile laboratorului','Nu mâncăm și nu bem lângă calculatoare. Închidem aplicațiile înainte de a opri calculatorul. Salvăm lucrările în folderul clasei, ca să le găsim ora viitoare.'],
+     verif:[{ce:'Paragraful lung e aliniat stânga-dreapta',par:2,al:'justify'},{ce:'Titlul a rămas la stânga',par:1,al:'left'}],
+     tipic:[{par:1,al:'justify'},{par:2,al:'center'}],
+     ajutor:'Clic oriunde în paragraful lung, apoi Justify din grupul Paragraph (sau Ctrl+J de sub document). Titlul nu-l atingi.',
+     why:'Rândurile paragrafului ating acum ambele margini; ultimul rând stă la stânga.'},
+    {t:'choice',q:'Vrei ca data de la finalul unei scrisori să stea lângă marginea din dreapta. Ai dat clic în rândul cu data. Ce apeși?',
+     o:['Ctrl+R','Ctrl+E','Ctrl+L','Ctrl+J'],ok:0,
+     ajutor:'R vine de la Right (dreapta).',why:'Ctrl+R (Align Right) duce rândurile paragrafului la marginea din dreapta.'}
+   ]},
+  /* ---------- pasul 5 ---------- */
+  {t:'Alineatul și spațierea dintre rânduri',
+   text:`<p><mark>Alineatul</mark> e retragerea <strong>primului rând</strong> al paragrafului, ca în caiet (nu e același lucru cu alinierea din pasul 4). <mark>Spațierea dintre rânduri</mark> e distanța de la un rând la altul.</p>
+<p>Pe amândouă le pui din fereastra <strong>Paragraph</strong> (Paragraf):</p>
+<ol><li>dai clic în paragraf;</li>
+<li>dai clic pe săgeata mică ↘ din colțul de jos al grupului <strong>Paragraf (Paragraph)</strong>;</li>
+<li>la <b>Special</b> alegi <b>First line</b> (retrage primul rând), iar la <b>By</b> scrii <b>1,25 cm</b> (merge și cu punct: 1.25 cm);</li>
+<li>la <b>Line spacing</b> alegi <b>1.5 lines</b> (rânduri mai rare) sau <b>Double</b> (și mai rare);</li>
+<li>apeși <b>OK</b>.</li></ol>
+<p>Etichetele sunt cele din Word-ul în engleză; într-un Word în română sunt traduse, în aceleași locuri.</p>`,
+   exemplu:`<div class="doua"><div><span class="et">Fără alineat, spațiere obișnuită</span><div class="wo-mini"><p>Frunzele cad încet din copacii din parc. Aerul miroase a mere coapte și a fum de la focurile din grădini.</p></div></div>
+<div><span class="et">Alineat de 1,25 cm, spațiere 1,5</span><div class="wo-mini"><p style="text-indent:1.25cm;line-height:2.1">Frunzele cad încet din copacii din parc. Aerul miroase a mere coapte și a fum de la focurile din grădini.</p></div></div></div>`,
+   altfel:`<p>În caiet, fiecare paragraf nou începe puțin mai la dreapta: acela e alineatul. Iar când lași mai mult loc între rânduri, ca să se citească ușor, aceea e spațierea.</p>`,
+   incearca:{t:'wordfmt',unelte:['paragraf'],
+    q:'Paragraful care începe cu „Vin colinde” are nevoie de alineat de <b>1,25 cm</b> și de spațiere <b>1,5</b> între rânduri. Folosește fereastra <b>Paragraph</b>.',
+    start:['Serbarea de iarnă','Vin colinde, scenete și o tombolă cu premii mici. Intrarea e liberă pentru toți părinții și pentru colegii din celelalte clase.'],
+    verif:[{ce:'Primul rând al paragrafului are alineat de 1,25 cm',par:2,prim:1.25},{ce:'Spațierea dintre rânduri e 1,5',par:2,rand:1.5},{ce:'Titlul a rămas fără alineat',par:1,prim:0}],
+    tipic:[{par:2,st:1.25,rand:1.5}],
+    ajutor:'Clic în paragraful lung. Apoi săgeata mică ↘ din colțul de jos al grupului Paragraph (pe telefon, derulează panglica spre dreapta). În fereastră: Special: First line, By: 1,25 cm; Line spacing: 1.5 lines; OK.',
+    why:'Primul rând a intrat spre dreapta cu 1,25 cm, iar rândurile s-au rărit. Titlul a rămas cum era.'},
+   inca:[
+    {t:'choice',q:'Ce este alineatul?',o:['Retragerea primului rând al paragrafului','Felul în care stau rândurile între margini (la stânga, centrat…)','Distanța dintre două rânduri','Linia de sub un cuvânt subliniat'],ok:0,
+     ajutor:'Recitește prima propoziție a pasului.',why:'Alineatul e retragerea primului rând, ca în caiet. Felul în care stau rândurile între margini e alinierea, iar distanța dintre rânduri e spațierea.'},
+    {t:'wordfmt',unelte:['paragraf'],q:'Pune spațiere <b>dublă</b> între rândurile paragrafului lung: fereastra Paragraph, la <b>Line spacing</b> alegi <b>Double</b>, apoi OK.',
+     start:['Toamna','Frunzele cad încet din copacii din parc. Aerul miroase a mere coapte și a fum de la focurile din grădini.'],
+     verif:[{ce:'Spațierea dintre rânduri e dublă',par:2,rand:2},{ce:'Titlul a rămas cum era',par:1,rand:1.08}],
+     tipic:[{par:2,rand:1.5}],
+     ajutor:'Clic în paragraful lung, săgeata mică ↘ din colțul grupului Paragraph, Line spacing: Double, OK.',
+     why:'Double lasă între rânduri cât un rând întreg în plus.'}
+   ]}
+ ],
+ atelier:{t:'wordfmt',unelte:['caractere','paragraf'],titlu:'Atelier: afișul concursului',
+  intro:`<p>Acum formatezi singur un afiș, în Word-ul simulat. Sub sarcină vezi <strong>testele</strong>: fiecare se bifează ✔ când partea lui e gata.</p>
+<p><b>Cum lucrezi aici:</b> un clic (o atingere) pune cursorul; selectezi trăgând peste text sau cu dublu-clic (două atingeri repezi). Pe telefon nu ai tasta Ctrl: folosești butoanele de sub document. Panglica se derulează în lateral: grupul <b>Paragraph</b> e în dreapta grupului <b>Font</b>.</p>
+<p>După atelier urmează pasul „Acum în Word-ul adevărat”, pe un document pe care îl descarci. Apoi 5 întrebări de verificare.</p>`,
+  q:'Formatează afișul, pe rând: (1) titlul <b>Concursul de desen</b>: aldin, 24 pt, centrat; (2) <b>vineri, 23 octombrie</b> aldin; (3) paragraful lung: stânga-dreapta și alineat de 1,25 cm; (4) <b>luni</b> subliniat; (5) ultimul rând, <b>Diriginta clasei a VII-a</b>, aliniat la dreapta.',
+  start:['Concursul de desen','Tema concursului este „Toamna în satul meu”. Desenele se predau doamnei diriginte până vineri, 23 octombrie. Cele mai frumoase trei desene vor fi expuse pe holul școlii.','Premiile se dau luni.','Diriginta clasei a VII-a'],
+  verif:[{ce:'Titlul e aldin',text:'Concursul de desen',b:1},
+         {ce:'Titlul are 24 pt, doar el',text:'Concursul de desen',sz:24,doar:true},
+         {ce:'Titlul e centrat',par:1,al:'center'},
+         {ce:'„vineri, 23 octombrie” e aldin (în paragraf, doar el)',text:'vineri, 23 octombrie',b:1,doar:true},
+         {ce:'Paragraful lung e aliniat stânga-dreapta',par:2,al:'justify'},
+         {ce:'Paragraful lung are alineat de 1,25 cm',par:2,prim:1.25},
+         {ce:'„luni” e subliniat, doar el',text:'luni',u:1,doar:true},
+         {ce:'Ultimul rând e aliniat la dreapta',par:4,al:'right'},
+         {ce:'Textul a rămas același (ai schimbat doar aspectul)',textulNeschimbat:true}],
+  tipic:[{text:'Concursul de desen',b:1,sz:24},{par:1,al:'center'},{par:2,al:'center'},{text:'luni',u:1},{par:4,al:'right'}],
+  ajutor:'(1) Trage peste titlu, B, caseta de mărime: 24, Center. (2) Trage de la „vineri” până după „octombrie”, B. (3) Clic în paragraful lung, Justify; apoi săgeata mică ↘ a grupului Paragraph: Special: First line, By: 1,25 cm, OK. (4) Dublu-clic pe „luni”, U. (5) Clic în ultimul rând, Align Right.',
+  why:'Ai formatat caracterele (aldin, mărime, subliniat) pe textul selectat și paragrafele (aliniere, alineat) cu cursorul în ele.',
+  inca:[
+   {t:'wordfmt',unelte:['caractere','paragraf'],q:'Încă un afiș, pe rând: (1) titlul <b>Târgul de toamnă</b>: 22 pt, albastru (<em>Blue</em>: al optulea pătrățel din <em>Standard Colors</em>), centrat; (2) <b>sâmbătă</b> cursiv; (3) paragraful lung: spațiere 1,5 între rânduri; (4) ultimul rând, <b>Consiliul elevilor</b>, aliniat la dreapta.',
+    start:['Târgul de toamnă','Vă așteptăm sâmbătă, în curtea școlii, cu legume, fructe și prăjituri făcute acasă. Banii strânși merg la biblioteca școlii.','Consiliul elevilor'],
+    verif:[{ce:'Titlul are 22 pt, doar el',text:'Târgul de toamnă',sz:22,doar:true},{ce:'Titlul e albastru',text:'Târgul de toamnă',col:'albastru',doar:true},
+           {ce:'Titlul e centrat',par:1,al:'center'},{ce:'„sâmbătă” e cursiv, doar el',text:'sâmbătă',i:1,doar:true},
+           {ce:'Paragraful lung are spațiere 1,5',par:2,rand:1.5},{ce:'Ultimul rând e aliniat la dreapta',par:3,al:'right'},
+           {ce:'Textul a rămas același',textulNeschimbat:true}],
+    tipic:[{text:'Târgul de toamnă',sz:22,col:'albastru'},{par:1,al:'center'},{text:'sâmbătă',b:1},{par:2,rand:1.5},{par:3,al:'right'}],
+    ajutor:'Titlul: trage peste el, mărimea 22, săgeata ▾ de lângă A și al optulea pătrățel din Standard Colors (Blue), Center. „sâmbătă”: dublu-clic, I. Paragraful lung: fereastra Paragraph, Line spacing: 1.5 lines. Ultimul rând: Align Right.',
+    why:'Aceleași două feluri de formatare: a caracterelor (pe selecție) și a paragrafelor (cu cursorul în ele).'}
+  ]},
+ qs:[
+  {t:'choice',q:'Vrei ca „Bravo!” să apară cu litere înclinate. L-ai selectat deja. Ce apeși?',o:['Ctrl+I','Ctrl+B','Ctrl+U','Ctrl+E'],ok:0,
+   ajutor:'Înclinat = cursiv = Italic.',why:'Ctrl+I face textul cursiv (înclinat). Ctrl+B îl îngroașă, Ctrl+U îl subliniază, iar Ctrl+E centrează paragraful.'},
+  {t:'wordfmt',unelte:['caractere','paragraf'],q:'Titlul <b>Ziua cărții</b>: 18 pt, aldin și centrat. Al doilea paragraf rămâne cum e.',
+   start:['Ziua cărții','Fiecare elev aduce o carte preferată și povestește colegilor despre ea.'],
+   verif:[{ce:'Titlul are 18 pt, doar el',text:'Ziua cărții',sz:18,doar:true},{ce:'Titlul e aldin, doar el',text:'Ziua cărții',b:1,doar:true},
+          {ce:'Titlul e centrat',par:1,al:'center'},{ce:'Al doilea paragraf a rămas la stânga',par:2,al:'left'}],
+   tipic:[{text:'Ziua',sz:18,b:1},{par:1,al:'center'}],
+   ajutor:'Mărimea și aldinul sunt ale literelor: selectezi tot titlul. Alinierea e a paragrafului: cursorul în titlu, apoi Center.',
+   why:'Titlul are mărimea și aldinul pe toate literele lui și e centrat; al doilea paragraf n-a fost atins.'},
+  {t:'choice',q:'Cursorul clipește între „t” și „e” din cuvântul „caiete”. Nimic nu e selectat. Apeși Ctrl+U. Ce se subliniază?',
+   o:['Tot cuvântul „caiete”','Doar litera „e”','Tot rândul','Nimic, nici acum, nici mai târziu'],ok:0,
+   ajutor:'Cursorul e în mijlocul cuvântului.',why:'Cu cursorul în mijlocul unui cuvânt, Word formatează tot cuvântul, fără spațiul de după el.'},
+  {t:'choice',q:'Titlul unui referat trebuie să stea la mijlocul rândului. Ai dat clic în titlu. Ce apeși?',o:['Ctrl+E','Ctrl+L','Ctrl+R','Ctrl+J'],ok:0,
+   ajutor:'Caută butonul Center: la mijloc.',why:'Ctrl+E (Center) centrează paragraful. Ctrl+R îl duce la dreapta, Ctrl+J îl întinde între margini. Ctrl+L îl aduce la stânga, dar pe un paragraf care e deja la stânga îl face stânga-dreapta.'},
+  {t:'wordfmt',unelte:['paragraf'],q:'Pune alineat de <b>1,25 cm</b> doar primului rând al paragrafului lung.',
+   start:['Cartea preferată','Îmi place cartea „Micul Prinț”, pentru că vorbește despre prietenie. O recitesc în fiecare vară și găsesc de fiecare dată ceva nou.'],
+   verif:[{ce:'Primul rând al paragrafului lung are alineat de 1,25 cm',par:2,prim:1.25},{ce:'Restul rândurilor nu sunt retrase',par:2,st:0},{ce:'Titlul a rămas fără alineat',par:1,prim:0}],
+   tipic:[{par:2,st:1.25}],
+   ajutor:'Alineatul e în fereastra Paragraph: Special: First line, By: 1,25 cm.',
+   why:'Doar primul rând e retras cu 1,25 cm; celelalte rânduri pornesc de la margine.'}
+ ]}
+  ],
+  aplicatieReala:{aplicatie:'Word-ul adevărat (Microsoft Word)',titlu:'Acum în Word-ul adevărat: anunțul serbării',
+   intro:`<p>Ai exersat în simulator. Acum formatezi în Word un anunț pregătit, fără nicio formatare. Documentul îl iei chiar de aici:</p>
+<p class="descarca"><a class="btn primary" href="${DOCX}" download="${DOCX}">Descarcă documentul de lucru (${DOCX})</a></p>
+<p><b>Așa trebuie să arate la final</b> (fără pasul în plus):</p>${AFIS('Ținta: anunțul formatat în Word. Chenarele roșii arată ce schimbi tu.')}
+<p><b>Nu se descarcă sau nu se deschide?</b> Deschide Word din meniul Start și alege documentul gol (<em>Blank document</em>); dacă Word e deja deschis, apasă ${K('Ctrl+N')}. Scrie tu cele trei paragrafe, apăsând <kbd>Enter</kbd> la capătul fiecăruia:</p><div class="wo-mini">${TEXT_LUCRU.map(x=>`<p>${x}</p>`).join('')}</div><p>Dacă tastatura nu scrie ă, î, â, ș, ț, scrie fără ele. Dacă Word-ul tău pornește cu alt font sau altă mărime (de exemplu Aptos, 12), nu contează: faci aceiași pași. Apoi continui de la pasul 3.</p>`,
+   pasi:PROVOCARE},
+  diploma:{titlu:'Tehnoredactor',
+   rezumat:'a făcut textul aldin, cursiv și subliniat, i-a schimbat fontul, mărimea și culoarea, a formatat cuvântul cu cursorul în el și textul tastat, a aliniat paragrafele la stânga, la mijloc, la dreapta și stânga-dreapta și le-a pus alineat și spațiere între rânduri',
+   aplicatie:'Word-ul adevărat',
+   provocare:PROVOCARE},
+  tipuri:{wordfmt:TipWordFormat}
+});
+</script>
+</body>
+</html>
