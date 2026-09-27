@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Formule de calcul cu operatori aritmetici</title>
+<meta name="description" content="Clasa a VIII-a, lecția 7 (Excel): formula care începe cu =, adresele celulelor și operatorii + - * /, recalcularea, ordinea operațiilor cu paranteze și codurile de eroare #VALUE!, #DIV/0! și #NAME?, exersate într-o foaie care se poartă ca Excel-ul.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;700&family=Hanken+Grotesk:ital,wght@0,400;0,600;0,700;1,400&family=Courier+Prime:wght@400;700&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#F1F0EA; --paper:#FFFFFF; --paper2:#F2F1EA; --line:#D8D5CA;
+  --ink:#1B1D1A; --ink2:#5B5F57; --accent:#1D6B43; --accentInk:#FFFFFF; --sel:#DCEEDF;
+  --mark:#FFE58A; --markInk:#1B1D1A; --ok:#15703E; --okbg:#E1F2E6; --bad:#B8322B; --badbg:#FAE4E2;
+  --fd:"Instrument Sans","Segoe UI",system-ui,sans-serif; --fb:"Hanken Grotesk","Segoe UI",system-ui,sans-serif; --fm:"Courier Prime",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#101310; --paper:#191D19; --paper2:#222822; --line:#313A31;
+  --ink:#E6EAE4; --ink2:#A0A99E; --accent:#5CCB8E; --accentInk:#101310; --sel:#1E4430;
+  --mark:#EFD25A; --markInk:#1B1D1A; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}}
+:root[data-theme="dark"]{
+  --desk:#101310; --paper:#191D19; --paper2:#222822; --line:#313A31;
+  --ink:#E6EAE4; --ink2:#A0A99E; --accent:#5CCB8E; --accentInk:#101310; --sel:#1E4430;
+  --mark:#EFD25A; --markInk:#1B1D1A; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}
+/* tema: fâșia de sus e foaia lecției în mic: numele coloanelor pe rândul 1, numerele DEDESUBT, pe rândul 2 (așezarea din
+   pasul 1), iar în ultima coloană semnele de calcul */
+.banda{display:grid;grid-template-columns:repeat(4,1fr);font-family:var(--fm);font-size:.72rem;color:var(--ink2);border-bottom:1px dashed var(--line)}
+.banda span{padding:2px 5px;border-left:1px dashed var(--line);white-space:nowrap;overflow:hidden;text-overflow:clip;text-align:left}
+.banda span:nth-child(4n+1){border-left:0}
+.banda span:nth-child(-n+4){border-bottom:1px dashed var(--line)}
+.banda span.r{text-align:right}
+h1,h2{letter-spacing:-.01em}
+.doua-foi{display:grid;grid-template-columns:1fr;gap:6px}
+@media (min-width:640px){.doua-foi{grid-template-columns:1fr 1fr}}
+.g td.g-tri{background-image:linear-gradient(135deg,#1E8C45 0,#1E8C45 6px,transparent 6px)}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/tip-foaie.js"></script>
+<script src="../../../jocuri/_motor/tip-excel.js"></script>
+<!-- foaia „excelx” comună clasei a VIII-a (lecțiile 4-5) + extensia lecției 7: formulele, fidele Excel-ului pe setări românești -->
+<script src="../../_sim/excelx.js"></script>
+<script src="../../_sim/excelx-formule.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={formule:'Formule de calcul care utilizează operatori aritmetici (+, -,*, /)'};
+
+/* captura reală și mini-foaia „Uite cum”, desenată cu aceleași reguli ca foaia (ce ai tastat -> ce arată Excel) */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG7='../m1-l07/img/';
+const grila=(cells,cols,rows,cap)=>{
+  const L=i=>String.fromCharCode(65+i);
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  let h='<div class="gridwrap" style="max-width:460px"><table class="g"><thead><tr><th></th>';
+  for(let c=0;c<cols;c++)h+=`<th>${L(c)}</th>`;
+  h+='</tr></thead><tbody>';
+  for(let r=1;r<=rows;r++){h+=`<tr><th>${r}</th>`;
+    for(let c=0;c<cols;c++){const a=L(c)+r,raw=cells[a];
+      const i=raw==null?{afisat:'',dreapta:false}:String(raw)[0]==='='?ExcelFormule.afisare(cells,a):ExcelTipuri.afisare(String(raw));
+      h+=`<td class="${i.tri?'g-tri':''}"><div style="text-align:${i.dreapta?'right':'left'};min-height:30px">${esc(i.afisat||'')}</div></td>`}
+    h+='</tr>'}
+  return h+`</tbody></table></div>${cap?`<p class="hint" style="margin:4px 0 8px">${cap}</p>`:''}`;
+};
+
+const PROVOCARE=[
+  'Deschide Excel și fă un registru nou, gol (<kbd>Ctrl</kbd>+<kbd>N</kbd>).',
+  'În <b>A1</b> scrie <b>Cantitate</b>, în <b>B1</b> scrie <b>Preț</b>, în <b>C1</b> scrie <b>Total</b>. În <b>A2</b> scrie doar numărul <b>5</b>, iar în <b>B2</b> doar numărul <b>120</b>. După fiecare apeși <kbd>Enter</kbd>.',
+  'Clic pe <b>C2</b>, scrie <code>=A2*B2</code> și apasă <kbd>Enter</kbd>. În C2 trebuie să vezi <b>600</b>. Clic din nou pe C2: sus, în bara de formule, vezi <code>=A2*B2</code>.',
+  'Ghicește întâi, apoi verifică: clic pe <b>A2</b>, scrie <b>10</b> și apasă <kbd>Enter</kbd>. Fără să atingi formula, C2 trebuie să arate <b>1200</b>.',
+  'În <b>A3</b> scrie <b>4</b>, iar în <b>B3</b> scrie <b>7</b>: 4 caiete, de câte 7 lei. În <b>C3</b> scrie singur formula care calculează cât costă caietele și apasă <kbd>Enter</kbd>. Trebuie să apară <b>28</b>.',
+  'Fă o greșeală, ca s-o recunoști: în <b>A2</b> scrie <b>5 bucăți</b> și apasă <kbd>Enter</kbd>. În C2 apare <b>#VALUE!</b>. Apasă <kbd>Ctrl</kbd>+<kbd>Z</kbd>: în A2 e din nou 10, iar C2 arată iar 1200.',
+  'Alături, un tabel mic de note: în <b>E1</b> scrie <b>Nota 1</b>, în <b>F1</b> <b>Nota 2</b>, în <b>G1</b> <b>Media</b>. În <b>E2</b> scrie <b>9</b>, în <b>F2</b> <b>8</b>, iar în <b>G2</b> formula <code>=(E2+F2)/2</code>; după fiecare apeși <kbd>Enter</kbd>. Trebuie să apară <b>8,5</b> (pe un calculator cu setări englezești apare 8.5).',
+  'Salvează cu <kbd>Ctrl</kbd>+<kbd>S</kbd>, cu numele, prenumele și clasa ta, de exemplu <code>Popescu_Ana_8A_lectia7.xlsx</code>.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m1_l07',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/viii/, „Lecția 7”, „Acum în Excel-ul adevărat” înainte de verificare
+  titlu:'Formule de calcul cu operatori aritmetici',
+  marca:'Lecția <b>7</b> · Excel · a VIII-a',
+  h1:'Formule de calcul cu operatori aritmetici',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U1', unitateTitlu:'Calcul tabelar',
+  competente:['CS.1.1','CS.3.1'], lectii:'7',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VIII-U1 „Calcul tabelar” · lecția 7 · conținutul: „Formule de calcul care utilizează operatori aritmetici (+, -,*, /)”',
+  intro:`<p>Lecția 7 din modulul 1. Scrii primele tale formule în Excel: reguli de calcul care iau numerele din alte celule și le adună, le scad, le înmulțesc sau le împart.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 2, „Interfața aplicației de calcul tabelar. Structura unui registru”: celula, clic pe celulă și scrii, <kbd>Enter</kbd> te duce în celula de dedesubt, bara de formule arată ce e scris în celulă;</li>
+<li>lecția 3, „Operații cu registrul și cu foile de calcul”: registru nou, salvare;</li>
+<li>lecția 4, „Adresa de celulă. Selectare, copiere, mutare, ștergere”: adresa A2, zona B2:C4, <kbd>Ctrl</kbd>+<kbd>Z</kbd> anulează;</li>
+<li>lecția 5, „Tipuri de date: numeric, text, dată calendaristică”: numărul se așază la dreapta, textul la stânga, zecimala se scrie cu virgulă.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după pagina „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”. Apoi atelierul, într-o foaie care se poartă ca Excel-ul pe setări românești, apoi aceleași lucruri în Excel-ul adevărat, iar la sfârșit 5 întrebări.</p>`,
+  banda:'<span>Cantitate</span><span>Preț</span><span>Total</span><span>Semne</span><span class="r">5</span><span class="r">120</span><span class="r">600</span><span>+ - * / ( )</span>',
+  tipuri:{excelx:ExcelF},
+  nivele:[
+  {t:'Formule de calcul cu operatori aritmetici', final:true, lectii:[7], continuturi:[P.formule],
+   obiectiv:'scrii o formulă care calculează din alte celule, cu + - * / și paranteze, și o repari când apare un cod de eroare.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>La casa de marcat, bonul se face singur. Pentru fiecare produs, casa înmulțește cantitatea cu prețul, apoi adună totul. Nimeni nu socotește de mână.</p>
+<p>Excel poate face la fel. Tu scrii o singură dată regula de calcul, adică o <mark>formulă</mark>. Excel face socoteala și arată rezultatul. Când schimbi un număr, Excel reface singur calculul.</p>
+<p>Azi scrii formule care adună, scad, înmulțesc și împart.</p>
+${fig(IMG7+'bon-excel.webp',690,210,'Excel: tabel cu Produs, Cantitate, Preț și Total; la Caiet, 4 caiete de câte 7 lei dau 28 în D2, iar bara de formule arată =B2*C2','Un bon mic, în Excel. În D2 se vede rezultatul, 28. Sus, în bara de formule, e regula care l-a calculat. La sfârșitul lecției o scrii singur.')}`},
+
+    /* ---------- PASUL 1: datele, fiecare număr în celula lui ---------- */
+    {t:'Datele: fiecare număr în celula lui',
+     text:`<p>Clasa cumpără 5 mingi, de câte 120 de lei. Înainte de calcul, scrii datele într-o foaie nouă.</p>
+<p>Pe rândul 1 pui numele coloanelor: în <b>A1</b> scrii <b>Cantitate</b>, în <b>B1</b> <b>Preț</b>, în <b>C1</b> <b>Total</b>. Pe rândul 2 pui numerele: în <b>A2</b> doar <b>5</b>, în <b>B2</b> doar <b>120</b>. După fiecare apeși <kbd>Enter</kbd>.</p>
+<p><strong>Regula:</strong> o celulă ține un singur lucru. Cuvântul are celula lui (aici, deasupra), iar numărul stă singur în celula lui. Așa Excel îl vede ca număr (îl așază la dreapta, ca în lecția 5) și poate calcula cu el.</p>
+${fig(IMG7+'date-5-120.webp',690,162,'Excel: A1 Cantitate, B1 Preț, C1 Total; în A2 5 și în B2 120, amândouă la dreapta; B2 e aleasă, iar bara de formule arată 120','Datele în Excel: 5 și 120 stau la dreapta, deci sunt numere.')}`,
+     exemplu:`<div class="doua-foi">${grila({A1:'Cantitate: 5'},2,2,'Greșit: totul într-o singură celulă. Excel vede un text, la stânga, și nu poate calcula cu el.')}${grila({A1:'Cantitate',A2:'5'},2,2,'Bine: cuvântul în A1, numărul în A2. 5 e număr și stă la dreapta.')}</div>`,
+     altfel:`<p>Gândește-te la catalogul clasei. Sus, pe coloană, e tipărit „Nota”. În căsuță, profesorul scrie doar nota, ca număr, fără cuvinte. Așa se pot face apoi mediile.</p>`,
+     incearca:{t:'excelx',q:'Clasa mai cumpără 4 caiete, de câte 7 lei. Scrie aceste date pe rândul 3, fiecare număr sub numele coloanei lui. După fiecare apeși <kbd>Enter</kbd>.',
+       cols:3,rows:4,cells:{A1:'Cantitate',B1:'Preț',C1:'Total',A2:5,B2:120},panglica:false,
+       verifica:{tip:{A3:{numar:4},B3:{numar:7}}},
+       ajutor:'Cantitatea, 4, merge în A3, sub Cantitate. Prețul, 7, merge în B3, sub Preț. Scrii doar cifrele, fără cuvinte.',
+       why:'4 și 7 stau la dreapta: sunt numere, fiecare sub numele coloanei lui. Cu ele Excel poate calcula.'},
+     inca:[
+      {t:'choice',q:'Cum scrii cantitatea, ca Excel să poată calcula cu ea?',o:['Cantitate în A1 și 5 în A2','Cantitate: 5, totul în A1','5 bucăți în A2, sub Cantitate','cinci, cu litere, în A2'],ok:0,
+       ajutor:'O celulă ține un singur lucru. Unde stă numărul?',why:'Numărul stă singur în celula lui. „Cantitate: 5”, „5 bucăți” și „cinci” sunt text: Excel nu poate calcula cu ele.'}
+     ]},
+
+    /* ---------- PASUL 2: prima formulă ---------- */
+    {t:'Prima formulă: semnul = și adresele',
+     text:`<p>O <mark>formulă</mark> începe mereu cu semnul <code>=</code>. Așa știe Excel că trebuie să calculeze. Începi mereu cu <code>=</code>: fără el, A2*B2 rămâne scris ca text.</p>
+<p>După <code>=</code> scrii adresele celulelor cu numere și, între ele, semnul calculului. Semnele de calcul se numesc <mark>operatori</mark>:</p>
+<ul><li><code>+</code> adunare, <code>-</code> scădere;</li>
+<li><code>*</code> înmulțire (steluța, nu litera x);</li>
+<li><code>/</code> împărțire (bara, nu două puncte: în Excel, <code>:</code> face o zonă, ca B2:C4).</li></ul>
+<p>Apeși <kbd>Enter</kbd> și în celulă apare rezultatul. Formula o vezi sus, în bara de formule (Formula Bar), când alegi din nou celula.</p>`,
+     exemplu:`<p>În <b>C2</b> scrii <code>=A2*B2</code>. Cât scrii, Excel încadrează în culori celulele A2 și B2. Apeși <kbd>Enter</kbd>: în C2 apare <b>600</b>. Clic din nou pe C2: bara de formule arată <code>=A2*B2</code>.</p>
+${fig(IMG7+'formula-scriu.webp',690,100,'Excel, cât scrii formula în C2: în celulă se vede =A2*B2, cu A2 încadrată în albastru și B2 în roșu','Cât scrii formula, A2 și B2 sunt încadrate în culori.')}
+${fig(IMG7+'formula-600.webp',690,162,'Excel: C2 e aleasă și arată 600, iar bara de formule arată =A2*B2','După Enter: în celulă e rezultatul, 600; în bara de formule e formula.')}
+<p>Steluța e <kbd>Shift</kbd>+<kbd>8</kbd> sau tasta <kbd>*</kbd> din dreapta, lângă cifre. Bara <kbd>/</kbd> e tasta din stânga lui <kbd>Shift</kbd> din dreapta. Pe telefon, alege steluța <code>*</code> și bara <code>/</code> dintre simboluri. Dacă alegi totuși × sau ÷, Excel 365 le schimbă singur.</p>`,
+     altfel:`<p>Formula e ca o rețetă. Rețeta nu spune „600 de lei”, ci „cantitatea înmulțită cu prețul”. Excel citește rețeta, se uită în A2 și în B2 și face socoteala.</p>`,
+     incearca:{t:'excelx',q:'În <b>C2</b> scrie formula <code>=A2*B2</code> și apasă <kbd>Enter</kbd>. Apoi clic din nou pe C2 și uită-te în bara de formule.',
+       cols:3,rows:4,cells:{A1:'Cantitate',B1:'Preț',C1:'Total',A2:5,B2:120},panglica:false,
+       verifica:{formule:{C2:'=A2*B2'}},
+       ajutor:'Clic pe C2. Scrie întâi semnul =, apoi A2, steluța * (Shift + 8) și B2. Apoi apasă Enter.',
+       why:'În C2 se vede 600, iar bara de formule arată =A2*B2: Excel a înmulțit ce e în A2 cu ce e în B2.'},
+     inca:[
+      {t:'excelx',q:'Pe rândul 3 sunt 4 caiete, de câte 7 lei. Scrie în <b>C3</b> formula care calculează cât costă caietele.',
+       cols:3,rows:4,cells:{A1:'Cantitate',B1:'Preț',C1:'Total',A2:5,B2:120,C2:'=A2*B2',A3:4,B3:7},panglica:false,
+       verifica:{formule:{C3:'=A3*B3'}},ajutor:'Ca în C2, dar cu adresele de pe rândul 3.',why:'=A3*B3 dă 28: 4 caiete ori 7 lei.'},
+      {t:'excelx',q:'Ana are 45 de lei, în A2, iar Bogdan are 30 de lei, în B2. Scrie în <b>C2</b> formula care arată câți lei au împreună.',
+       cols:3,rows:3,cells:{A1:'Ana',B1:'Bogdan',C1:'Împreună',A2:45,B2:30},panglica:false,
+       verifica:{formule:{C2:'=A2+B2'}},ajutor:'Împreună înseamnă adunare: semnul +.',why:'=A2+B2 dă 75 de lei.'},
+      {t:'excelx',q:'O pizza costă 60 de lei, în A2, și o plătesc 4 prieteni, în B2. Scrie în <b>C2</b> formula care arată cât dă fiecare.',
+       cols:3,rows:3,cells:{A1:'Pizza',B1:'Prieteni',C1:'De fiecare',A2:60,B2:4},panglica:false,
+       verifica:{formule:{C2:'=A2/B2'}},ajutor:'Împarți prețul la numărul de prieteni: semnul /.',why:'=A2/B2 dă 15 lei de fiecare.'}
+     ]},
+
+    /* ---------- PASUL 3: recalcularea ---------- */
+    {t:'Schimbi un număr, rezultatul se schimbă singur',
+     text:`<p>Formula <code>=A2*B2</code> nu ține minte numerele 5 și 120. Ține minte <strong>adresele</strong>: „înmulțește ce e în A2 cu ce e în B2”. Când schimbi un număr din A2 sau din B2, Excel reface singur calculul.</p>
+<p>Dacă scrii <code>=5*120</code>, rezultatul e tot 600, dar nu se mai schimbă: numerele sunt scrise în formulă, nu luate din celule. De aceea, numerele din tabel le iei mereu prin adresele lor.</p>
+<p><strong>Ghicește înainte să încerci:</strong> dacă în A2 scrii 10 în loc de 5, ce apare în C2?</p>`,
+     exemplu:`<p>Aici s-a schimbat prețul: în B2 s-a scris 100 în loc de 120. Formula din C2 a rămas aceeași, <code>=A2*B2</code>, iar rezultatul s-a refăcut singur: 5 ori 100 fac 500.</p>
+${fig(IMG7+'schimb-500.webp',690,162,'Excel: în B2 e 100; C2 e aleasă și arată 500, iar bara de formule arată tot =A2*B2','După ce în B2 s-a scris 100: C2 arată 500, iar în bara de formule e tot =A2*B2.')}`,
+     altfel:`<p>Formula lucrează ca un poștaș. Poștașul are adresa, nu numele: duce scrisoarea la apartamentul 2 din blocul A, oricine ar locui acolo acum. Formula merge la adresa A2 și ia numărul care e acolo acum.</p>`,
+     incearca:{t:'excelx',q:'Foaia are deja formula <code>=A2*B2</code> în C2. Ghicește întâi: dacă în <b>A2</b> scrii <b>10</b>, ce arată C2? Apoi încearcă în foaie și alege răspunsul.',
+       cols:3,rows:3,cells:{A1:'Cantitate',B1:'Preț',C1:'Total',A2:5,B2:120,C2:'=A2*B2'},panglica:false,
+       o:['1200','600','10','Nimic: formula trebuie scrisă din nou'],ok:0,
+       ajutor:'Formula ia ce e acum în A2: 10 ori 120.',why:'C2 arată 1200: formula a luat noul număr din A2 și a refăcut singură calculul.'},
+     inca:[
+      {t:'excelx',q:'Prețul unei mingi a crescut la <b>150</b> de lei. Schimbă prețul din <b>B2</b>, fără să atingi formula din C2.',
+       cols:3,rows:3,cells:{A1:'Cantitate',B1:'Preț',C1:'Total',A2:5,B2:120,C2:'=A2*B2'},panglica:false,
+       verifica:{tip:{B2:{numar:150}},formule:{C2:'=A2*B2'}},
+       ajutor:'Clic pe B2, scrie 150 și apasă Enter. Formula din C2 o lași cum e.',why:'C2 arată acum 750, adică 5 ori 150, fără să fi scris formula din nou.'},
+      {t:'tf',q:'În C2 este formula <code>=5*120</code>. Schimbi A2 din 5 în 10, iar C2 arată 1200.',ok:false,
+       ajutor:'Formula aceasta ia numerele din celule sau le are scrise în ea?',why:'Fals. În <code>=5*120</code> numerele sunt scrise în formulă, deci C2 rămâne 600. Cu <code>=A2*B2</code> ar fi arătat 1200.'}
+     ]},
+
+    /* ---------- PASUL 4: ordinea operațiilor ---------- */
+    {t:'Ordinea operațiilor și parantezele',
+     text:`<p>Când o formulă are mai multe semne, Excel face întâi înmulțirile și împărțirile (<code>*</code> și <code>/</code>). Abia apoi face adunările și scăderile (<code>+</code> și <code>-</code>). Înmulțirea și împărțirea sunt de același fel; adunarea și scăderea, la fel. Între semne de același fel, Excel merge de la stânga la dreapta. E ordinea de la matematică.</p>
+<p>Vrei altă ordine? Pui <mark>paranteze</mark>: ce e între paranteze se calculează primul.</p>
+<p>Exemplu: media notelor 9, din A2, și 8, din B2, adică suma lor împărțită la 2. <code>=A2+B2/2</code> dă 13, pentru că Excel împarte întâi 8 la 2. Corect e <code>=(A2+B2)/2</code>, care dă 8,5.</p>`,
+     exemplu:`${fig(IMG7+'media.webp',690,162,'Excel: Nota 1 este 9, Nota 2 este 8; C2, cu formula fără paranteze, arată 13; D2 e aleasă și arată 8,5, iar bara de formule arată =(A2+B2)/2','În C2, fără paranteze: 13. În D2, cu paranteze: 8,5, media corectă.')}
+<p>Pe rând: la <code>=A2+B2/2</code>, întâi 8 împărțit la 2 fac 4, apoi 9 plus 4 fac 13. La <code>=(A2+B2)/2</code>, întâi 9 plus 8 fac 17, apoi 17 împărțit la 2 fac 8,5.</p>
+<p>De la stânga la dreapta: la <code>=10-4-3</code>, 10 minus 4 fac 6, apoi 6 minus 3 fac 3. La <code>=20/4*2</code>, 20 împărțit la 4 fac 5, apoi 5 ori 2 fac 10.</p>`,
+     altfel:`<p>E ca la ora de matematică: (9 + 8) : 2 înseamnă „adun întâi, apoi împart”, iar 9 + 8 : 2 înseamnă 9 + 4. Excel face la fel; doar că la el împărțirea se scrie cu /.</p>`,
+     incearca:{t:'excelx',q:'Ana are notele 9, în A2, și 10, în B2. Scrie în <b>C2</b> formula pentru media lor: suma celor două note, împărțită la 2.',
+       cols:3,rows:3,cells:{A1:'Nota 1',B1:'Nota 2',C1:'Media',A2:9,B2:10},panglica:false,
+       verifica:{formule:{C2:'=(A2+B2)/2'}},
+       ajutor:'Adunarea trebuie făcută prima, deci o pui între paranteze. Apoi împarți la 2.',why:'=(A2+B2)/2 dă 9,5: întâi 9 plus 10 fac 19, apoi 19 împărțit la 2.'},
+     inca:[
+      {t:'choice',q:'În A2 e 10, iar în B2 e 4. Ce arată formula <code>=A2-B2*2</code>?',o:['2','12','6','16'],ok:0,
+       ajutor:'Întâi înmulțirea: 4 ori 2.',why:'Întâi 4 ori 2 fac 8, apoi 10 minus 8 fac 2. Rezultatul 12 ar ieși doar cu paranteze: <code>=(A2-B2)*2</code>.'},
+      {t:'choice',q:'În A2 e 12, în B2 e 3, iar în C2 e 2. Ce arată formula <code>=A2/B2*C2</code>?',o:['8','2','18','6'],ok:0,
+       ajutor:'Împărțirea și înmulțirea sunt de același fel. În ce ordine le face Excel?',why:'De la stânga la dreapta: 12 împărțit la 3 fac 4, apoi 4 ori 2 fac 8.'}
+     ]},
+
+    /* ---------- PASUL 5: codurile de eroare ---------- */
+    {t:'Când apare un cod de eroare',
+     text:`<p>Uneori, în locul rezultatului apare un <mark>cod de eroare</mark>: Excel nu poate face calculul. Trei coduri și reparația lor:</p>
+<ul><li><code>#VALUE!</code>: o celulă din formulă are un text cu litere, de exemplu „5 bucăți”. Lași în ea doar numărul. Atenție: „150 lei” nu e text, e număr (lecția 5), deci merge.</li>
+<li><code>#DIV/0!</code>: împarți la 0 sau la o celulă goală. Pentru Excel, celula goală valorează 0. Scrii numărul bun în locul lui 0 sau în celula goală.</li>
+<li><code>#NAME?</code>: în formulă e un cuvânt necunoscut pentru Excel, de exemplu =A2xB2, cu x în loc de <code>*</code>. Schimbi x cu <code>*</code>.</li></ul>
+<p>Repari cauza, iar rezultatul apare singur.</p>`,
+     exemplu:`${fig(IMG7+'eroare-value.webp',690,162,'Excel: în A2 e textul 5 bucăți, la stânga; C2 e aleasă și arată #VALUE!, iar bara de formule arată =A2*B2','În A2 e textul „5 bucăți”, deci C2 arată #VALUE!. Scrii în A2 doar 5 și C2 arată 600.')}
+${fig(IMG7+'eroare-div0.webp',690,162,'Excel: în A2 e 60, B2 e goală; C2 e aleasă și arată #DIV/0!, iar bara de formule arată =A2/B2','B2 e goală, deci =A2/B2 arată #DIV/0!. Scrii 4 în B2 și apare 15.')}
+<p>Triunghiul verde din colțul lui C2 e semnul lui Excel că ceva nu e în regulă. L-ai mai văzut la lecția 5, la numerele păstrate ca text.</p>`,
+     altfel:`<p>Codul de eroare e ca un bec aprins la bordul mașinii: îți spune ce fel de problemă e. Nu-l acoperi, ci repari cauza: textul din celulă, celula goală sau semnul greșit.</p>`,
+     incearca:{t:'excelx',q:'C2 arată <code>#VALUE!</code>. Găsește celula cu problema și repar-o, ca C2 să arate cât costă cele 5 mingi.',
+       cols:3,rows:3,cells:{A1:'Cantitate',B1:'Preț',C1:'Total',A2:'5 bucăți',B2:120,C2:'=A2*B2'},panglica:false,
+       verifica:{tip:{A2:{numar:5}},formule:{C2:'=A2*B2'}},
+       ajutor:'Uită-te în A2: are un text cu litere. Lasă în el doar numărul 5.',why:'Cu 5 în A2, formula a putut înmulți: C2 arată 600, fără să fi schimbat formula.'},
+     inca:[
+      {t:'excelx',q:'C2 arată <code>#DIV/0!</code>. Pizza de 60 de lei o împart 4 prieteni. Repară foaia, ca C2 să arate cât dă fiecare.',
+       cols:3,rows:3,cells:{A1:'Pizza',B1:'Prieteni',C1:'De fiecare',A2:60,C2:'=A2/B2'},panglica:false,
+       verifica:{tip:{B2:{numar:4}},formule:{C2:'=A2/B2'}},
+       ajutor:'B2 e goală, iar Excel nu poate împărți la o celulă goală. Scrie în ea numărul prietenilor.',why:'Cu 4 în B2, C2 arată 15.'},
+      {t:'choice',q:'În C2 ai scris <code>=A2xB2</code> și a apărut <code>#NAME?</code>. Ce schimbi?',o:['Litera x cu steluța: =A2*B2','Numărul din A2','Mai pui un = la început','Golești B2'],ok:0,
+       ajutor:'Ce cuvânt nu cunoaște Excel?',why:'Excel nu cunoaște „A2xB2”: înmulțirea se scrie cu steluța, <code>=A2*B2</code>.'}
+     ]}
+   ],
+   atelier:{t:'excelx',titlu:'Atelier: bugetul excursiei',
+    intro:`<p>Foaia de mai jos se poartă ca Excel-ul pe setări românești. Deasupra ei sunt <strong>testele</strong>. Fiecare se bifează singur când formula ta calculează bine, chiar și dacă se schimbă numerele din tabel. Un rezultat scris de mână nu bifează testul. La final apasă <b>Verifică</b>.</p>`,
+    q:'Clasa merge în excursie: 25 de elevi, cu trenul, 40 de lei de elev, și la muzeu, 12 lei de elev. <b>1.</b> În <b>D2</b> și <b>D3</b> scrie formulele care calculează cât costă trenul și muzeul pentru toți elevii. <b>2.</b> În <b>D4</b> scrie formula care adună cele două costuri. <b>3.</b> În <b>D5</b> scrie formula care arată cât plătește fiecare elev: totalul din D4, împărțit la numărul de elevi din B2.',
+    cols:4,rows:5,panglica:false,
+    cells:{A1:'Plătim',B1:'Elevi',C1:'Preț',D1:'Total',A2:'Tren',B2:25,C2:40,A3:'Muzeu',B3:25,C3:12,A4:'Total',A5:'Fiecare'},
+    verifica:{formule:{D2:'=B2*C2',D3:'=B3*C3',D4:'=D2+D3',D5:'=D4/B2'}},
+    teste:[
+     {ce:'D2 și D3 înmulțesc numărul de elevi cu prețul',formule:{D2:'=B2*C2',D3:'=B3*C3'}},
+     {ce:'D4 adună costul trenului cu al muzeului',formule:{D4:'=D2+D3'}},
+     {ce:'D5 împarte totalul la numărul de elevi',formule:{D5:'=D4/B2'}}],
+    ajutor:'D2: elevii din B2 ori prețul din C2. D3: la fel, pe rândul 3. D4: D2 plus D3. D5: D4 împărțit la B2. Fiecare formulă începe cu =.',
+    why:'Bugetul e gata: trenul costă 1000 de lei, muzeul 300, în total 1300, adică 52 de lei de fiecare elev. Schimbă un preț și vezi cum se refac toate.',
+    inca:[
+     {t:'excelx',q:'Mediile a doi elevi. <b>1.</b> În <b>D2</b> scrie formula pentru media Anei. <b>2.</b> În <b>D3</b> scrie formula pentru media lui Radu. <b>3.</b> În <b>D4</b> scrie formula pentru media celor două medii, din D2 și D3.',
+      cols:4,rows:4,panglica:false,cells:{A1:'Elev',B1:'Nota 1',C1:'Nota 2',D1:'Media',A2:'Ana',B2:8,C2:9,A3:'Radu',B3:6,C3:9,A4:'Toți'},
+      verifica:{formule:{D2:'=(B2+C2)/2',D3:'=(B3+C3)/2',D4:'=(D2+D3)/2'}},
+      teste:[
+       {ce:'D2 e media notelor Anei',formule:{D2:'=(B2+C2)/2'}},
+       {ce:'D3 e media notelor lui Radu',formule:{D3:'=(B3+C3)/2'}},
+       {ce:'D4 e media celor două medii',formule:{D4:'=(D2+D3)/2'}}],
+      ajutor:'Suma notelor între paranteze, apoi împărțit la 2: =(B2+C2)/2.',
+      why:'Ana are 8,5, Radu are 7,5, iar media lor e 8.'}
+    ]},
+   qs:[
+    {t:'choice',q:'În A4 e numărul de bilete, iar în B4 prețul unui bilet. Ce scrii în C4 ca să afli cât costă toate biletele?',o:['=A4*B4','A4*B4','=A4xB4','=A4:B4'],ok:0,
+     ajutor:'Formula începe cu =, iar înmulțirea are un semn anume.',why:'<code>=A4*B4</code>: începe cu =, iar înmulțirea se scrie cu *. Fără =, Excel ține A4*B4 ca text; cu x apare #NAME?; : face o zonă, nu calculează.'},
+    {t:'excelx',q:'Ai 50 de lei, în A2, și cumperi o carte de 18 lei, în B2. Scrie în <b>C2</b> formula care arată câți lei îți rămân.',
+     cols:3,rows:3,cells:{A1:'Am',B1:'Cartea',C1:'Rămân',A2:50,B2:18},panglica:false,
+     verifica:{formule:{C2:'=A2-B2'}},ajutor:'Din ce ai scazi prețul cărții: semnul -.',why:'<code>=A2-B2</code> dă 32 de lei.'},
+    {t:'choice',q:'În A2 e 6, în B2 e 4, iar în C2 e 2. Ce arată o celulă cu formula <b>=A2+B2*C2</b>?',o:['14','20','12','8'],ok:0,
+     ajutor:'Ce face Excel întâi: adunarea sau înmulțirea?',why:'Întâi 4 ori 2 fac 8, apoi 6 plus 8 fac 14. Ar fi 20 doar cu paranteze: <code>=(A2+B2)*C2</code>.'},
+    {t:'excelx',q:'Maria are trei note: 9, în A2, 7, în B2, și 8, în C2. Scrie în <b>D2</b> formula pentru media lor: suma celor trei note, împărțită la 3.',
+     cols:4,rows:3,cells:{A1:'Nota 1',B1:'Nota 2',C1:'Nota 3',D1:'Media',A2:9,B2:7,C2:8},panglica:false,
+     verifica:{formule:{D2:'=(A2+B2+C2)/3'}},ajutor:'Care operații trebuie făcute primele? Pune-le între paranteze.',why:'<code>=(A2+B2+C2)/3</code> dă 8: întâi suma, 24, apoi 24 împărțit la 3.'},
+    {t:'excelx',q:'C2 arată <code>#VALUE!</code>. Repară foaia, ca C2 să arate cât costă cele 10 kilograme de mere, de câte 3 lei.',
+     cols:3,rows:3,cells:{A1:'Kilograme',B1:'Preț',C1:'Total',A2:'10 kg',B2:3,C2:'=A2*B2'},panglica:false,
+     verifica:{tip:{A2:{numar:10}},formule:{C2:'=A2*B2'}},ajutor:'Care celulă are un text cu litere?',why:'Cu 10 în A2, fără „kg”, C2 arată 30.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Excel-ul adevărat',titlu:'Acum în Excel-ul adevărat',
+    intro:'<p>Faci aceleași lucruri în Excel, pe calculator. La fiecare pas îți spunem ce trebuie să vezi, ca să verifici singur.</p>',
+    pasi:PROVOCARE},
+  diploma:{titlu:'Constructor de formule',
+    rezumat:'a scris formule care încep cu =, cu adresele celulelor și cu operatorii + - * /, a văzut cum se refac singure când se schimbă datele, a folosit parantezele ca să calculeze o medie și a reparat codurile de eroare #VALUE!, #DIV/0! și #NAME?',
+    aplicatie:'Excel-ul adevărat',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
