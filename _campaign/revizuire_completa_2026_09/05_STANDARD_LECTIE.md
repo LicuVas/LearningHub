@@ -58,6 +58,17 @@ Pune `mod:'lectie'` în configurație (vezi `jocuri\README.md` §4 „Modul LEC�
    - Separatorul `;`/`,` vine din Windows.
    - Nu scrie niciun fapt de acest fel din memorie: îl probezi în Excel real.
 12. **Scripturile tale le ții în dosarul lecției (`_proba\`)**, nu în scratchpad-ul comun, unde alți agenți suprascriu fișiere.
+13. **Anularea (Ctrl+Z) nu înseamnă „un pas înapoi” de fiecare dată** (lecțiile nr. 5).
+   - În Excel, o corectură după o dată greșită cere mai multe anulări, pentru că forma de dată rămâne în celulă.
+   - În Word, o mutare făcută cu Ctrl+X și Ctrl+V se anulează cu două Ctrl+Z.
+   - Orice instrucțiune de tipul „apasă Ctrl+Z până…” o probezi în aplicația reală, pe drumul greșit pe care îl face de obicei un copil.
+14. **După „Verifică”, focusul se întoarce pe foaie sau pe document.** Altfel, tastele cerute chiar de mesaj (Ctrl+Z, Delete) nu mai fac nimic.
+15. **Tastatura românească diferă de cea americană.**
+   - Pe tastatura Română (Standard), tasta de lângă Enter scrie „ț”, iar apostroful cere AltGr.
+   - Pe telefon nu există Ctrl, Shift sau Enter ca taste: dai drumul prin butoanele de pe ecran și îl spui în text.
+16. **O regulă predată nu are voie să aibă excepții nespuse.** De exemplu, „are litere, deci e text” e fals pentru „12 octombrie 2026”, care e o dată, și pentru „12 lei”, care e un număr.
+17. **Clipboardul e comun tuturor proceselor de pe PC.** Înainte de o probă cu lipire, verifici ce e în clipboard.
+18. **Word ajustează singur spațiile la ștergere și la lipire, dar nu mereu.** De exemplu, „ora 8.Aduceți”. Lecția spune elevului să verifice spațiul.
 
 ## Simulatoarele din lecțiile nr. 4
 Cele patru simulatoare au fost scrise în paginile lecțiilor nr. 4:

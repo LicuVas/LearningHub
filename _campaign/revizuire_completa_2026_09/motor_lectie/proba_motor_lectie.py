@@ -197,6 +197,11 @@ def lectii():
                         texte_chrome.append(pg.evaluate(TEXTE))
                         if st["phase"] == "atelier":
                             cap("3atelier")
+                            # bara de sus a atelierului: neutră dacă titlul pasului real există și nu spune „aplicația”
+                            r["atelier_hud"] = pg.inner_text("#hud")
+                            bara_ast = "Atelier: exersezi aici, în pagină" if AR["titlu"] and "aplicația" not in AR["titlu"].lower() else "Atelier · fă-o ca în aplicația reală"
+                            if bara_ast not in r["atelier_hud"]:
+                                P(f"bara atelierului: {r['atelier_hud']!r}, trebuia {bara_ast!r}")
                             if not rezolva(pg):  # simulatorul din pagină (wordobj, fotografie, excelx, ppt) merge în modul lecție
                                 P("atelierul: răspunsul corect nu a fost acceptat: " + (pg.locator("#fb").inner_text()[:150] if pg.locator("#fb").count() else ""))
                             else:

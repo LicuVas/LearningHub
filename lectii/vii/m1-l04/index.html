@@ -246,12 +246,12 @@ function render(Q,body,api){
   const PW=window.PANGLICA_WORD,UP=window.UiPanglica,real=!!(PW&&UP);
   let doc=mk(Q.start),cur={b:0},sel=null,pend='',fila='TabHome',meniu=null,dlg=null,ales=null,gc=0,gr=0,dosar='img',gAtins=null;
   const id='wo-in-'+(++NR);
-  let ultimulPointer='mouse';
+  let ultimulPointer='mouse',spusAtingere=false;
   body.innerHTML=`<div class="wo">
     ${cuRb?'<div class="wo-rb" role="toolbar" aria-label="Panglica din Word"></div><p class="hint wo-leg">Aici butoanele panglicii au doar iconițe (în Word au și numele dedesubt). Pe fila <b>Insert</b> (Inserare): <b>Table</b> (Tabel) = iconița cu pătrățele; <b>Pictures</b> (Imagini) = iconița cu o poză cu munte. Pe calculator, ține mouse-ul pe un buton ca să-i vezi numele.</p><div class="wo-dlg"></div>':''}
     <div class="wo-pag${cuRb?'':' fara-rb'}"><div class="wo-doc" role="document" aria-label="Documentul Word simulat"></div></div>
     <div class="wo-kbd"><label class="wo-kl" for="${id}">Tastatura: atinge caseta și tastează — literele apar în document, la cursor</label>
-      <input class="wo-in" id="${id}" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="tastează aici">
+      <input class="wo-in" id="${id}" type="text" enterkeyhint="enter" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="tastează aici">
       <button type="button" class="wo-k" data-k="enter" aria-label="Tasta Enter">Enter ↵</button>
       <button type="button" class="wo-k" data-k="tab" aria-label="Tasta Tab">Tab ⇥</button>
       <button type="button" class="wo-k" data-k="bs" aria-label="Tasta Backspace, șterge litera din stânga cursorului">⌫</button></div>
@@ -395,6 +395,7 @@ function render(Q,body,api){
     else return;
     draw();
     if(ultimulPointer==='mouse')inp.focus({preventScroll:true});
+    else if(!spusAtingere){spusAtingere=true;spune('Pe telefon: rândul nou îl faci cu butonul <b>Enter ↵</b> de sub document, iar ca să tastezi atingi caseta „Tastatura”.')}
   });
   inp.addEventListener('input',()=>{
     if(api.done()){inp.value='';return}
@@ -538,17 +539,17 @@ ${fig(IMG_OBIECTE,670,540,'Un referat în Word despre floarea-soarelui: sus un p
 <p>Apeși <kbd>Enter</kbd> și tastezi „Plouă des.”. Rândul nou apare între cele două paragrafe:</p><div class="wo-mini"><p>A venit toamna.</p><p>Plouă des.${CAR}</p><p>Frunzele cad din copaci.</p></div>`,
    altfel:`<p>Cursorul e ca vârful pixului pe foaie: scrie doar acolo unde l-ai pus. <kbd>Enter</kbd> e ca atunci când treci pe rândul următor din caiet.</p>`,
    incearca:{t:'wordobj',unelte:['text'],
-    q:'Sub titlul „Floarea-soarelui” scrie, pe un rând nou, <b>Clasa a VII-a</b>. Atinge titlul (cursorul se pune la capătul lui), apasă <b>Enter ↵</b>, apoi tastează în caseta „Tastatura”.',
+    q:'Sub titlul „Floarea-soarelui” scrie, pe un rând nou, <b>Clasa a VII-a</b>. Atinge titlul (cursorul se pune la capătul lui), apasă butonul <b>Enter ↵</b> de sub document (pe calculator merge și tasta Enter), apoi atinge caseta „Tastatura” și tastează.',
     start:[{titlu:'Floarea-soarelui'},'Floarea-soarelui este o plantă înaltă, cu flori mari și galbene.'],
     cere:[{tip:'text',dupa:'Floarea-soarelui',text:'Clasa a VII-a'}],
-    ajutor:'Cursorul trebuie să clipească după „soarelui”. Apoi Enter ↵, apoi tastezi Clasa a VII-a.',
+    ajutor:'Cursorul trebuie să clipească după „soarelui”. Apoi butonul Enter ↵ de sub document, apoi tastezi Clasa a VII-a în caseta „Tastatura”.',
     why:'Enter a făcut un rând nou sub titlu, iar textul a apărut acolo unde era cursorul. Paragraful de dedesubt a rămas neatins.'},
    inca:[
     {t:'choice',q:'Cursorul clipește la capătul primului paragraf. Apeși <kbd>Enter</kbd> și tastezi „Mulțumesc!”. Unde apare textul?',o:['Pe un rând nou, sub primul paragraf','La finalul documentului','Deasupra primului paragraf','În locul primului paragraf'],ok:0,
      ajutor:'Enter coboară cursorul pe un rând nou. Textul apare unde e cursorul.',why:'Enter a făcut un rând nou chiar sub paragraf, iar textul apare acolo unde e cursorul acum.'},
     {t:'wordobj',unelte:['text'],q:'Sub rândul „Te așteptăm vineri la serbare.” scrie, pe un rând nou, <b>Ora 17</b>.',
      start:[{titlu:'Invitație'},'Te așteptăm vineri la serbare.'],cere:[{tip:'text',dupa:'Te așteptăm vineri',text:'Ora 17'}],
-     ajutor:'Atinge rândul „Te așteptăm…”, apasă Enter ↵, tastează Ora 17.',why:'Cursorul la capătul paragrafului, Enter pentru rândul nou, apoi textul.'}
+     ajutor:'Atinge rândul „Te așteptăm…”, apasă butonul Enter ↵ de sub document, apoi tastează Ora 17 în caseta „Tastatura”.',why:'Cursorul la capătul paragrafului, Enter pentru rândul nou, apoi textul.'}
    ]},
   /* ---------- pasul 3 ---------- */
   {t:'Inserezi o imagine din calculator',
@@ -567,10 +568,10 @@ ${fig(IMG_INSERARE,600,140,'Fila Insert din Word, deschisă, cu butoanele Table 
 <p>Poza e în alt folder? În fereastră alegi întâi folderul, de exemplu <strong>Descărcări (Downloads)</strong>, apoi fișierul.</p>`,
    altfel:`<p>E ca atunci când lipești o poză în caiet: întâi alegi locul (cursorul, pe un rând liber), apoi iei poza din sertar (fila Inserare, fereastra cu fișiere) și o pui acolo.</p>`,
    incearca:{t:'wordobj',
-    q:'Pune poza <b>floarea-soarelui.png</b> pe un rând al ei, sub paragraful despre plantă. Panglica de mai jos e cea din Word, în engleză: <b>Insert</b> = Inserare, <b>Pictures</b> = Imagini.',
+    q:'Pune poza <b>floarea-soarelui.png</b> pe un rând al ei, sub paragraful despre plantă. Rândul nou îl faci cu butonul <b>Enter ↵</b> de sub document (pe calculator merge și tasta Enter). Panglica de mai jos e cea din Word, în engleză: <b>Insert</b> = Inserare, <b>Pictures</b> = Imagini.',
     start:[{titlu:'Floarea-soarelui'},'Floarea-soarelui este o plantă înaltă, cu flori mari și galbene.'],
     cere:[{tip:'poza',dupa:'Floarea-soarelui este',fisier:'floarea-soarelui.png'}],
-    ajutor:'Atinge paragraful, apasă Enter ↵. Apoi Inserare (Insert) › Imagini (Pictures) › Acest dispozitiv… (This Device…), clic pe floarea-soarelui.png, apoi Inserare (Insert).',
+    ajutor:'Atinge paragraful, apasă butonul Enter ↵ de sub document. Apoi Inserare (Insert) › Imagini (Pictures) › Acest dispozitiv… (This Device…), clic pe floarea-soarelui.png, apoi Inserare (Insert).',
     why:'Ai făcut loc cu Enter, apoi ai inserat poza la cursor. De aceea stă singură pe rândul ei, sub paragraf.'},
    inca:[
     {t:'choice',q:'Ai apăsat <b>Imagini (Pictures)</b> și s-a deschis o listă cu trei variante. Pe care o alegi pentru o poză salvată în calculator?',
@@ -579,7 +580,7 @@ ${fig(IMG_INSERARE,600,140,'Fila Insert din Word, deschisă, cu butoanele Table 
     {t:'wordobj',q:'Pune poza <b>lacul-bicaz.jpg</b> pe un rând al ei, <b>între</b> cele două paragrafe: sub „Am mers cu autocarul…”.',
      start:[{titlu:'Excursia noastră'},'Am mers cu autocarul până la Bicaz.','Apoi am urcat pe baraj.'],
      cere:[{tip:'poza',dupa:'Am mers cu autocarul',fisier:'lacul-bicaz.jpg'}],
-     ajutor:'Atinge „Am mers cu autocarul…”, Enter ↵, apoi Inserare (Insert) › Imagini (Pictures) › Acest dispozitiv… (This Device…), lacul-bicaz.jpg, Inserare (Insert).',
+     ajutor:'Atinge „Am mers cu autocarul…”, butonul Enter ↵ de sub document, apoi Inserare (Insert) › Imagini (Pictures) › Acest dispozitiv… (This Device…), lacul-bicaz.jpg, Inserare (Insert).',
      why:'Cursorul pe rândul gol dintre paragrafe a hotărât locul pozei.'}
    ]},
   /* ---------- pasul 4 ---------- */
@@ -645,7 +646,7 @@ ${fig(IMG_GRILA,1000,521,'Word: meniul de la Table deschis, cu grila de pătră�
   start:[{titlu:'Excursia la Cetatea Neamțului'},'Sâmbătă am urcat la cetate. Ghidul ne-a arătat zidurile vechi.'],
   cere:[{tip:'poza',dupa:'Sâmbătă am urcat',fisier:'cetatea-neamt.jpg'},{tip:'text',dupa:{poza:'cetatea-neamt.jpg'},text:'Ce am cheltuit:'},
         {tip:'tabel',dupa:'Ce am cheltuit',c:2,r:3,celule:[['Lucru','Preț'],['Bilet','10 lei'],['Suc','5 lei']]}],
-  ajutor:'Pe rând: (a) atinge paragraful „Sâmbătă…”, Enter ↵, tastează Ce am cheltuit: (b) Inserare (Insert) › Tabel (Table) › 2x3, apoi celulele, cu Tab ⇥ între ele. (c) Atinge din nou paragraful „Sâmbătă…”, Enter ↵, Inserare (Insert) › Imagini (Pictures) › Acest dispozitiv… (This Device…), cetatea-neamt.jpg, Inserare (Insert).',
+  ajutor:'Pe rând: (a) atinge paragraful „Sâmbătă…”, butonul Enter ↵, tastează Ce am cheltuit: în caseta „Tastatura”. (b) Inserare (Insert) › Tabel (Table) › 2x3, apoi celulele, cu Tab ⇥ între ele. (c) Atinge din nou paragraful „Sâmbătă…”, butonul Enter ↵, Inserare (Insert) › Imagini (Pictures) › Acest dispozitiv… (This Device…), cetatea-neamt.jpg, Inserare (Insert).',
   why:'Fiecare obiect a ajuns unde era cursorul: poza pe rândul ei, textul sub poză, tabelul sub text, cu celulele completate rând cu rând.',
   inca:[
    {t:'wordobj',q:'Încă unul, ca în Word-ul adevărat: referatul „Animalul meu”, de sus în jos: (1) paragraful „Am o pisică…”; (2) sub el, pe rândul ei, poza <b>pisica.png</b>, care e în folderul <b>Descărcări (Downloads)</b>; (3) sub poză, textul <b>Ce mănâncă:</b>; (4) sub el, un tabel cu 2 coloane și 3 rânduri: pe primul rând <b>Hrana</b> și <b>Când</b>, pe al doilea <b>Lapte</b> și <b>dimineața</b>, pe al treilea <b>Pește</b> și <b>seara</b>.',

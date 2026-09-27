@@ -51,4 +51,15 @@ Consecințe: standardul `05_STANDARD_LECTIE.md`; secțiunea nouă `/lectii/` (o 
   - VII: judecător 0 GRAV / 5 MAJOR (focus tastare după tabel, notație cu bare, provocarea cere profesorul) ; arbitru Word 20 CONFIRMAT / 0 INFIRMAT / 2 PARTIAL / 5 netestabil → reparare la autor.
   - VIII: judecător **1 GRAV** (butonul Pornire › Ștergere șterge direct în Excel, fără meniu) + 4 MAJOR (tragere pe telefon imposibilă, pași de 200+ cuvinte); arbitru Excel 25 CONFIRMAT / 0 INFIRMAT / 3 PARTIAL / 20 netestabil → reparare la autor.
 - **Mașina 1** (opus): dosar_dumb + valideaza_pas + canar/momeală; teste 44/44 (→ 0, rulat de dirijor), 9/9 mutanți proprii prinși; 324 dosare reale fără scurgere; apelul real haiku INVALID din cauza ghilimelelor → decizie: normalizare ghilimele/liniuțe, distanța configurabilă.
-- **Atenție la sigilare:** agenții de mutanți și-au lăsat scripturile de construcție în scratchpad-ul sesiunii (`scratchpad\build_mutanti.py`, `scratchpad\p2\`) — se mută în bancă și se șterg din scratchpad la sigilare, înainte ca orice constructor al mașinii să le poată vedea.
+- **Atenție la sigilare:** agenții de mutanți și-au lăsat scripturile de construcție în scratchpad-ul sesiunii (`scratchpad\build_mutanti.py`, `scratchpad\p2\`). Rezolvat: 20 de fișiere mutate în `LearningHub_banc\_unelte_constructie\`.
+
+## Seara, 27.09
+- **Bancul SIGILAT** (`907bb1d`, integritate 0). Judecata 2: 44/50, după care reparațiile de sistem (R3 pe fiecare întrebare, DE VERIFICAT, unirile, citatele ambigue). Judecata 3: 47/50, după aceeași regulă de numărare fixată dinainte; strict ar fi 42. Regula R5 privind gravitatea a fost aplicată pe tot bancul, iar cele 16 etichete surori ale lui B3-096c au ieșit pentru consecvență. Poarta de contaminare: cu o bucată secretă plantată dă 1, în stare curată dă 0; pragul e de 40 de caractere copiate (decizia dirijorului, motivată în `SIGILARE.md`).
+- **Calibrarea** reparată: validatorul verifică acum conținutul (pe cel vechi îl pica 140 din 141 de intrări), cu 115 CONFIRMAT, 25 NESIGUR, 22 de verificări de laborator și pachetul de limbă RO posibil (decizia lui).
+- **PUBLICAT** `a24281db` (18:0x): /lectii/, M1 nr. 4 la V/VI/VII/VIII (insigna „verificat parțial”), benzile, hub-ul, motorul în mod lecție (titlul din `aplicatieReala`, diploma, `preventScroll`), jurnalul și diploma. Verificat LIVE, 10/10 marcaje (`scratchpad\dirijor_verifica_live.py`; prima rulare a raportat 10 lipsă din cauza User-Agent-ului Python, iar curl a confirmat publicarea; greșeala e trecută în KB). Panoul: linkurile nr. 4 trimit la /lectii/ (`AI_0\data\panou\lectii.json`, copie `.inainte_lectii_noi`).
+- **Starea lecțiilor pentru publicare**:
+  - nr. 4: V a doua trecere, 0 GRAV / 0 MAJOR; VI a doua trecere, 0/0; VII a doua trecere, 0/0 (runda 3 pentru telefon făcută, nepublicată); VIII a doua trecere, 0 GRAV / 1 MAJOR pe telefon (runda 3 în lucru).
+  - nr. 5: V 0 GRAV / 2 MAJOR (în reparare); VI 0/1 (în reparare); VII la judecată; VIII 1 GRAV (Ctrl+Z după dată) / 3 MAJOR (în reparare).
+  - nr. 6: 4 autori pornit ~18:20.
+- **Linia de verificare**: trierea a arătat că toate cele 19 semnalări erau alarme false. Calibrarea e în lucru; condiția este să prindă 3 defecte plantate.
+- **Mașina**: 57/57 de teste, executorul în pagină și primul FĂCUT real. Au fost găsite 2 probleme reale de telefon pe lecțiile noi, predate autorilor.

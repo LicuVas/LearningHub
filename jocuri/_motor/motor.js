@@ -94,6 +94,10 @@ function aplicatieReala(Lv){
    textul pe buton, în titlu, în firimituri, în bara de sus, pe diplomă și în cuprins; `aplicatieReala.scurt` e
    eticheta filei (implicit „Aplicația”). Fără `titlu`, textele implicite de mai jos. Întoarce text simplu (nu HTML). */
 function numeReal(Lv,implicit){const A=aplicatieReala(Lv);return A&&A.titlu?A.titlu:implicit}
+/* Bara atelierului (27.09.2026, dirijorul): „fă-o ca în aplicația reală” e fals unde nu e nicio aplicație (clasa a V-a:
+   atelierul e pe fotografii). În modul lecție, dacă `aplicatieReala.titlu` există și NU conține cuvântul „aplicația”,
+   bara spune ceva neutru; altfel (și în jocuri) rămâne textul vechi. */
+function atelierBara(Lv){const A=aplicatieReala(Lv);return A&&A.titlu&&!/aplicația/i.test(A.titlu)?'Atelier: exersezi aici, în pagină':'Atelier · fă-o ca în aplicația reală'}
 /* numele din panoul profesorului și din jurnalul elevului: să se vadă că e o lecție, nu un joc */
 function titluRaport(){
   if(!eLectie())return C.titlu;
@@ -106,7 +110,7 @@ function setHud(){
     const Lv=C.nivele[R.li];
     const nb=eLectie()?nivelEticheta(R.li):`${C.mod==='antrenament'?'Runda':'Nivelul'} ${R.li+1} din ${C.nivele.length}`;
     const txt=R.phase==='q'?`${Lv.pasi?'Verificarea':'Întrebarea'} ${R.qi+1} din ${Lv.qs.length} · ${R.xp} XP`:R.phase==='read'?`Citire · ${esc(Lv.t)}`
-      :R.phase==='learn'?`Învață · pasul ${R.si+1} din ${Lv.pasi.length}`:R.phase==='atelier'?'Atelier · fă-o ca în aplicația reală'
+      :R.phase==='learn'?`Învață · pasul ${R.si+1} din ${Lv.pasi.length}`:R.phase==='atelier'?atelierBara(Lv)
       :R.phase==='real'?esc(numeReal(Lv,'Acum în aplicația adevărată')):`${eLectie()?'Lecție terminată':'Nivel terminat'} · ${R.xp} XP`;
     hud.innerHTML=`<span class="nb">${nb}</span><span class="fv">${txt}${R.streak>=2?` <span class="hot">serie ×${R.streak}</span>`:''}</span>`;
   }else hud.innerHTML=`<span class="nb">TOTAL</span><span class="fv">★ ${t.st}/${C.nivele.length*3} · ${t.xp} XP</span>`;
@@ -155,7 +159,7 @@ function tabsFor(){
     t=Lv.pasi.map((p,k)=>{const acum=R.phase==='learn'&&R.si===k;
       return inNivel&&!acum?`<button type="button" class="${R.vazutPas[k]?'done':''}" data-pas="p${k}" title="${esc(p.t)}">P${k+1}</button>`:`<span class="${acum?'now':'done'}">P${k+1}</span>`}).join('');
     if(Lv.atelier){const acum=R.phase==='atelier';
-      t+=inNivel&&!acum?`<button type="button" class="${R.atelierGata?'done':''}" data-pas="atelier" title="Atelier: fă-o ca în aplicația reală">Atelier</button>`:`<span class="${acum?'now':'done'}">Atelier</span>`}
+      t+=inNivel&&!acum?`<button type="button" class="${R.atelierGata?'done':''}" data-pas="atelier" title="${atelierBara(Lv).replace(' · ',': ')}">Atelier</button>`:`<span class="${acum?'now':'done'}">Atelier</span>`}
     const AR=aplicatieReala(Lv);
     if(AR){const acum=R.phase==='real',et=esc(AR.scurt||'Aplicația');   // doar în modul lecție
       t+=inNivel&&!acum?`<button type="button" class="${R.realVazut?'done':''}" data-pas="real" title="${esc(AR.titlu||'Acum în aplicația adevărată')}">${et}</button>`:`<span class="${acum?'now':'done'}">${et}</span>`}

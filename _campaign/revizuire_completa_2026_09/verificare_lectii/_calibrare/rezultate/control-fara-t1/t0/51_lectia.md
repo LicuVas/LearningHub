@@ -1,0 +1,555 @@
+## Pasul 1: La ce folosește
+
+Uită-te la documentele din jurul tău. **Meniul** de la cantină are numele felurilor scrise cu litere, o **poză** cu mâncarea și prețurile așezate ordonat, în căsuțe. Un **referat** are un text, o fotografie și, uneori, căsuțe cu date. Pe avizierul clasei, **orarul** stă tot în căsuțe: zilele de-a latul, orele de sus în jos.
+
+Toate se pot face în Word. Azi afli din ce bucăți e făcut un document și cum pui în el, pe lângă text, o imagine și un tabel.
+
+[Imagine]
+
+Legenda imaginii: Un referat făcut în Word. Cu roșu sunt încadrate un text, o imagine și un tabel; titlul și rândurile de sub poză sunt tot text.
+
+## Pasul 2: Trei feluri de obiecte
+
+Fiecare bucată dintr-un document se numește **obiect**. Azi lucrăm cu trei feluri de obiecte:
+
+- **textul**: literele pe care le tastezi;
+
+- **imaginea**: o fotografie sau un desen; nu scrii în ea, doar o privești;
+
+- **tabelul**: căsuțe așezate pe **rânduri** (de-a latul) și pe **coloane** (de sus în jos); în fiecare căsuță poți scrie.
+
+Alegi obiectul după ce vrei să afle cititorul: să **vadă** cum arată ceva → imagine; să citească **date** așezate ordonat (note, ore, prețuri) → tabel; să citească o **explicație** → text.
+
+**Uite cum:**
+
+În referatul „Floarea-soarelui” din captura de la pasul 0:
+
+- „Floarea-soarelui este o plantă înaltă…” → **text** (explică);
+
+- desenul cu floarea → **imagine** (o vezi);
+
+- săptămâna, înălțimea și frunzele, în căsuțe → **tabel** (date).
+
+**Explică-mi altfel:**
+
+Gândește-te la un caiet de proiect: scrii cu pixul (text), lipești o poză (imagine) și desenezi cu rigla căsuțe pentru date (tabel). În Word faci aceleași trei lucruri, pe ecran.
+
+### Încearcă (pasul 2)
+
+Ce fel de obiect e fiecare bucată din document?
+
+Categorii: Text; Imagine; Tabel
+
+- Trei propoziții despre excursie → Text
+
+- Fotografia cetății → Imagine
+
+- Căsuțe cu prețurile biletelor, pe rânduri și coloane → Tabel
+
+- Un desen cu o frunză de stejar → Imagine
+
+- Titlul „Excursia noastră” → Text
+
+Indiciu (apare după prima greșeală): Literele tastate sunt text. Ce doar privești e imagine. Căsuțele pe rânduri și coloane sunt tabel.
+
+Explicația de după răspuns: Titlul și propozițiile sunt litere tastate, deci text. Fotografia și desenul se privesc: imagini. Căsuțele cu prețuri, pe rânduri și coloane, sunt un tabel.
+
+### Încă un exercițiu (pasul 2, varianta 1)
+
+Vrei ca un coleg să vadă cum arată barajul de la Bicaz. Ce obiect pui în document?
+
+Variante:
+
+- O imagine (corect)
+
+- Un tabel
+
+- Un text lung
+
+- Un titlu mare
+
+Indiciu (apare după prima greșeală): Ce trebuie să facă cititorul: să vadă, să citească date sau să citească o explicație?
+
+Explicația de după răspuns: Cititorul trebuie să VADĂ cum arată ceva, deci pui o imagine.
+
+### Încă un exercițiu (pasul 2, varianta 2)
+
+Ce obiect alegi pentru fiecare informație?
+
+Categorii: Text; Imagine; Tabel
+
+- Notele a 4 colegi la 3 materii → Tabel
+
+- Cum arată frunza de arțar → Imagine
+
+- De ce ne-a plăcut excursia → Text
+
+- Programul concursului: zilele și orele → Tabel
+
+- Harta traseului → Imagine
+
+Indiciu (apare după prima greșeală): Să vadă → imagine. Date așezate ordonat → tabel. O explicație → text.
+
+Explicația de după răspuns: Notele și programul sunt date așezate ordonat: tabel. Frunza și harta se văd: imagini. „De ce ne-a plăcut” e o explicație: text.
+
+## Pasul 3: Cursorul și tasta Enter
+
+În document clipește o linie subțire: **cursorul**. Tot ce tastezi apare **exact acolo**. Tot acolo apare și o poză nouă.
+
+Textul e împărțit în **paragrafe**. Un paragraf e bucata de text care se termină acolo unde ai apăsat tasta Enter (tasta mare, cu săgeata ↵).
+
+Ca să faci loc pentru ceva nou **sub** un paragraf:
+
+- dai clic la **capătul** paragrafului, după ultima literă;
+
+- apeși Enter: cursorul coboară pe un rând nou, gol;
+
+- abia acum tastezi sau pui poza.
+
+Ai greșit o literă? Tasta ⌫ (Backspace) șterge litera din stânga cursorului.
+
+**Uite cum:**
+
+Cursorul e la capătul primului paragraf:
+
+A venit toamna.
+
+Frunzele cad din copaci.
+
+Apeși Enter și tastezi „Plouă des.”. Rândul nou apare între cele două paragrafe:
+
+A venit toamna.
+
+Plouă des.
+
+Frunzele cad din copaci.
+
+**Explică-mi altfel:**
+
+Cursorul e ca vârful pixului pe foaie: scrie doar acolo unde l-ai pus. Enter e ca atunci când treci pe rândul următor din caiet.
+
+### Încearcă (pasul 3)
+
+(Exercițiu în aplicația simulată din pagină — tipul „wordobj”.)
+
+Sub titlul „Floarea-soarelui” scrie, pe un rând nou, **Clasa a VII-a**. Atinge titlul (cursorul se pune la capătul lui), apasă butonul **Enter ↵** de sub document (pe calculator merge și tasta Enter), apoi atinge caseta „Tastatura” și tastează.
+
+Indiciu (apare după prima greșeală): Cursorul trebuie să clipească după „soarelui”. Apoi butonul Enter ↵ de sub document, apoi tastezi Clasa a VII-a în caseta „Tastatura”.
+
+Explicația de după răspuns: Enter a făcut un rând nou sub titlu, iar textul a apărut acolo unde era cursorul. Paragraful de dedesubt a rămas neatins.
+
+### Încă un exercițiu (pasul 3, varianta 1)
+
+Cursorul clipește la capătul primului paragraf. Apeși Enter și tastezi „Mulțumesc!”. Unde apare textul?
+
+Variante:
+
+- Pe un rând nou, sub primul paragraf (corect)
+
+- La finalul documentului
+
+- Deasupra primului paragraf
+
+- În locul primului paragraf
+
+Indiciu (apare după prima greșeală): Enter coboară cursorul pe un rând nou. Textul apare unde e cursorul.
+
+Explicația de după răspuns: Enter a făcut un rând nou chiar sub paragraf, iar textul apare acolo unde e cursorul acum.
+
+### Încă un exercițiu (pasul 3, varianta 2)
+
+(Exercițiu în aplicația simulată din pagină — tipul „wordobj”.)
+
+Sub rândul „Te așteptăm vineri la serbare.” scrie, pe un rând nou, **Ora 17**.
+
+Indiciu (apare după prima greșeală): Atinge rândul „Te așteptăm…”, apasă butonul Enter ↵ de sub document, apoi tastează Ora 17 în caseta „Tastatura”.
+
+Explicația de după răspuns: Cursorul la capătul paragrafului, Enter pentru rândul nou, apoi textul.
+
+## Pasul 4: Inserezi o imagine din calculator
+
+A **insera** înseamnă a pune un obiect nou în document. În indicii, semnul › înseamnă „apoi”.
+
+- Faci loc: clic la capătul paragrafului, apoi Enter.
+
+- Pe fila **Inserare (Insert)** apeși **Imagini (Pictures)**.
+
+- În Word-ul nou se deschide un **meniu** (o listă cu variante). Alegi **Acest dispozitiv… (This Device…)**: poze din calculator. În Word 2016 se deschide direct fereastra.
+
+- În fereastra **Inserare imagine (Insert Picture)** dai clic pe fișier, apoi pe butonul **Inserare (Insert)**.
+
+Poza apare la cursor și rămâne **selectată** (are un chenar).
+
+[Imagine]
+
+Legenda imaginii: Fila **Inserare (Insert)**: **Tabel (Table)** și **Imagini (Pictures)**. Meniul și fereastra le vezi în exercițiul de jos.
+
+**Uite cum:**
+
+**Dacă sari peste pasul 1** (fără Enter), poza se lipește la capătul textului, pe același rând:
+
+Floarea-soarelui este o plantă înaltă.
+
+**Cu Enter înainte**, poza stă singură pe rândul ei, sub paragraf:
+
+Floarea-soarelui este o plantă înaltă.
+
+**Sfat:** scrie întâi tot textul, apoi pune poza la urmă, pe un rând gol făcut cu Enter între paragrafe. O poză adevărată e mare, ocupă tot rândul, iar după ea e greu să mai pui cursorul.
+
+Poza e în alt folder? În fereastră alegi întâi folderul, de exemplu **Descărcări (Downloads)**, apoi fișierul.
+
+**Explică-mi altfel:**
+
+E ca atunci când lipești o poză în caiet: întâi alegi locul (cursorul, pe un rând liber), apoi iei poza din sertar (fila Inserare, fereastra cu fișiere) și o pui acolo.
+
+### Încearcă (pasul 4)
+
+(Exercițiu în aplicația simulată din pagină — tipul „wordobj”.)
+
+Pune poza **floarea-soarelui.png** pe un rând al ei, sub paragraful despre plantă. Rândul nou îl faci cu butonul **Enter ↵** de sub document (pe calculator merge și tasta Enter). Panglica de mai jos e cea din Word, în engleză: **Insert** = Inserare, **Pictures** = Imagini.
+
+Indiciu (apare după prima greșeală): Atinge paragraful, apasă butonul Enter ↵ de sub document. Apoi Inserare (Insert) › Imagini (Pictures) › Acest dispozitiv… (This Device…), clic pe floarea-soarelui.png, apoi Inserare (Insert).
+
+Explicația de după răspuns: Ai făcut loc cu Enter, apoi ai inserat poza la cursor. De aceea stă singură pe rândul ei, sub paragraf.
+
+### Încă un exercițiu (pasul 4, varianta 1)
+
+Ai apăsat **Imagini (Pictures)** și s-a deschis o listă cu trei variante. Pe care o alegi pentru o poză salvată în calculator?
+
+Variante:
+
+- Acest dispozitiv… (This Device…) (corect)
+
+- Imagini stoc… (Stock Images…)
+
+- Imagini online… (Online Pictures…)
+
+Indiciu (apare după prima greșeală): „Dispozitivul” e calculatorul la care lucrezi.
+
+Explicația de după răspuns: Acest dispozitiv (This Device) deschide fereastra cu fișierele din calculator. Celelalte două aduc poze de pe internet.
+
+### Încă un exercițiu (pasul 4, varianta 2)
+
+(Exercițiu în aplicația simulată din pagină — tipul „wordobj”.)
+
+Pune poza **lacul-bicaz.jpg** pe un rând al ei, **între** cele două paragrafe: sub „Am mers cu autocarul…”.
+
+Indiciu (apare după prima greșeală): Atinge „Am mers cu autocarul…”, butonul Enter ↵ de sub document, apoi Inserare (Insert) › Imagini (Pictures) › Acest dispozitiv… (This Device…), lacul-bicaz.jpg, Inserare (Insert).
+
+Explicația de după răspuns: Cursorul pe rândul gol dintre paragrafe a hotărât locul pozei.
+
+## Pasul 5: Tabelul: rânduri, coloane, celule
+
+Un **tabel** e făcut din căsuțe:
+
+- un **rând** = căsuțele de-a latul, de la stânga la dreapta;
+
+- o **coloană** = căsuțele de sus în jos;
+
+- o **celulă** = o singură căsuță, acolo unde se întâlnesc un rând și o coloană. În ea scrii.
+
+Înainte să faci tabelul, îl numeri:
+
+- **coloane** = câte informații ai despre un lucru;
+
+- **rânduri** = câte lucruri ai, plus un rând sus, pentru numele coloanelor.
+
+Atenție: în tabel, rândul = căsuțele de-a latul. În text, „rând nou” = paragraful nou de după Enter.
+
+[Imagine]
+
+Legenda imaginii: Tabelul din referat: **o coloană** (roșu, de sus în jos), **un rând** (albastru, de-a latul), **o celulă** (verde).
+
+**Uite cum:**
+
+4 elevi, despre fiecare scrii **Nume** și **Nota**:
+
+- 2 informații → **2 coloane**;
+
+- 4 elevi + 1 rând pentru „Nume, Nota” → **5 rânduri**.
+
+Nume | Nota
+
+Ana | 9
+
+Bogdan | 8
+
+Carmen | 10
+
+Dan | 7
+
+Câte celule are? Fiecare rând are câte o celulă în fiecare coloană: 5 rânduri × 2 coloane = **10 celule**.
+
+**Explică-mi altfel:**
+
+Gândește-te la orarul de pe avizier: un **rând** = o oră, de luni până vineri, de-a latul; o **coloană** = o zi, cu orele ei de sus în jos; o **celulă** = ce ai marți la ora a doua.
+
+### Încearcă (pasul 5)
+
+Faci un tabel cu 6 colegi; despre fiecare scrii Numele și Culoarea preferată. De câte coloane și câte rânduri ai nevoie, cu tot cu rândul pentru numele coloanelor?
+
+Variante:
+
+- 2 coloane și 7 rânduri (corect)
+
+- 2 coloane și 6 rânduri
+
+- 6 coloane și 2 rânduri
+
+- 7 coloane și 2 rânduri
+
+Indiciu (apare după prima greșeală): Coloane = câte informații ai despre un coleg. Rânduri = câți colegi, plus 1.
+
+Explicația de după răspuns: 2 informații (Numele, Culoarea) → 2 coloane. 6 colegi + 1 rând pentru numele coloanelor → 7 rânduri.
+
+### Încă un exercițiu (pasul 5, varianta 1)
+
+(Adevărat sau fals?)
+
+O coloană a tabelului merge de-a latul, de la stânga la dreapta.
+
+Răspuns: Fals
+
+Indiciu (apare după prima greșeală): Gândește-te la coloanele unei clădiri: cum stau?
+
+Explicația de după răspuns: Fals. Coloana merge de sus în jos. De-a latul merge rândul.
+
+### Încă un exercițiu (pasul 5, varianta 2)
+
+Un tabel are 3 coloane și 5 rânduri. Câte celule are în total?
+
+Variante:
+
+- 15 (corect)
+
+- 8
+
+- 35
+
+- 53
+
+Indiciu (apare după prima greșeală): Fiecare rând are câte o celulă în fiecare coloană.
+
+Explicația de după răspuns: 5 rânduri × 3 coloane = 15 celule. Adunarea 5 + 3 = 8 nu numără căsuțele.
+
+## Pasul 6: Inserezi un tabel și scrii în celule
+
+- Dai clic la capătul paragrafului de deasupra.
+
+- Pe fila **Inserare (Insert)** apeși **Tabel (Table)**. Se deschide o **grilă** de pătrățele.
+
+- Treci cu mouse-ul peste grilă. Deasupra ei scrie mărimea, de exemplu **3x4**: întâi **coloanele** (3), apoi **rândurile** (4). Dai clic.
+
+- Tabelul apare **sub** paragraf, iar cursorul e în prima celulă. Tastezi.
+
+- Treci la celula următoare cu tasta Tab (în stânga tastaturii, deasupra lui Caps Lock). Apăsată în **ultima** celulă, Tab adaugă un rând nou.
+
+Enter într-o celulă nu te mută mai departe: face celula mai înaltă.
+
+[Imagine]
+
+Legenda imaginii: Grila: **3 coloane × 4 rânduri** colorate („3x4 Table”); tabelul gol apare deja în document.
+
+**Uite cum:**
+
+Ai pus un tabel cu 2 coloane și 2 rânduri. Cursorul e în prima celulă. Tastezi: Nume Tab Nota Tab Ana Tab 9
+
+Nume | Nota
+
+Ana | 9
+
+După „Nota”, Tab a trecut singur pe rândul următor, în prima celulă.
+
+**Ce ai învățat în lecția asta**- un document are obiecte: text, imagini, tabele;
+
+- poza apare la cursor, deci întâi faci loc: clic la capătul paragrafului, Enter; tabelul apare singur sub paragraful în care e cursorul;
+
+- întâi scrii textul, iar poza o pui la urmă, între paragrafe;
+
+- imaginea: Inserare (Insert) › Imagini (Pictures) › Acest dispozitiv… (This Device…) › fișierul › Inserare (Insert);
+
+- tabelul: Inserare (Insert) › Tabel (Table) › pe grilă întâi coloanele, apoi rândurile; în celule treci cu Tab.
+
+**Explică-mi altfel:**
+
+Grila e ca o tablă de șah mică: colorezi atâtea pătrățele de-a latul câte coloane vrei și atâtea în jos câte rânduri vrei. Tab te plimbă prin tabel ca la citit: de la stânga la dreapta, apoi rândul următor.
+
+### Încearcă (pasul 6)
+
+(Exercițiu în aplicația simulată din pagină — tipul „wordobj”.)
+
+Sub „Orarul de luni:” pune un tabel cu **2 coloane și 2 rânduri** și scrie în el: pe primul rând **Ora** și **Materia**, pe al doilea **8** și **TIC**. Treci de la o celulă la alta cu **Tab ⇥**.
+
+Indiciu (apare după prima greșeală): Atinge „Orarul de luni:”. Inserare (Insert) › Tabel (Table) › pe grilă pătrățelul 2x2. Apoi tastezi Ora, Tab ⇥, Materia, Tab ⇥, 8, Tab ⇥, TIC.
+
+Explicația de după răspuns: Tabelul a apărut sub paragraf, cu cursorul în prima celulă, iar Tab te-a dus prin celule de la stânga la dreapta, rând cu rând.
+
+### Încă un exercițiu (pasul 6, varianta 1)
+
+Deasupra grilei scrie „4x2 Table”. Ce tabel primești dacă dai clic?
+
+Variante:
+
+- 4 coloane și 2 rânduri (corect)
+
+- 2 coloane și 4 rânduri
+
+- 4 coloane și 4 rânduri
+
+- 8 celule pe un singur rând
+
+Indiciu (apare după prima greșeală): Primul număr sunt coloanele.
+
+Explicația de după răspuns: Word scrie întâi coloanele (4), apoi rândurile (2).
+
+### Încă un exercițiu (pasul 6, varianta 2)
+
+(Exercițiu în aplicația simulată din pagină — tipul „wordobj”.)
+
+Sub „Scorul la șah:” pune un tabel cu **2 coloane și 3 rânduri**. Pe primul rând scrie **Nume** și **Puncte**, pe al doilea **Ana** și **5**, pe al treilea **Dan** și **3**.
+
+Indiciu (apare după prima greșeală): Inserare (Insert) › Tabel (Table) › pe grilă 2 de-a latul, 3 în jos (2x3). Tab ⇥ între celule; nu apăsa Tab după ultima celulă.
+
+Explicația de după răspuns: 2 informații → 2 coloane; 2 elevi + rândul cu numele coloanelor → 3 rânduri.
+
+## Atelier: Atelier: referatul despre excursie
+
+(Exercițiu în aplicația simulată din pagină — tipul „wordobj”.)
+
+Atelier: referatul despre excursie
+
+Acum faci singur un referat cu toate trei obiectele, în Word-ul simulat. Sub sarcină vezi **testele**: fiecare se bifează ✔ când partea lui e gata.
+
+**Cum lucrezi aici:** panglica e cea din Word, în engleză (**Home** = Pornire, **Insert** = Inserare, **Table** = Tabel, **Pictures** = Imagini). Atingi un rând ca să pui cursorul la capătul lui. Tastezi în caseta „Tastatura”; pe calculator, după ce dai clic în document, poți tasta direct. Pe telefon nu ai tastele Enter și Tab: folosești butoanele **Enter ↵** și **Tab ⇥**; la grilă atingi o dată ca să vezi mărimea și încă o dată ca să pui tabelul. O literă greșită o ștergi cu **⌫**; pentru altceva, „Ia-o de la capăt”.
+
+**Sfat:** fă-l în ordinea din Word-ul adevărat: întâi textul „Ce am cheltuit:” și tabelul, iar poza la urmă, pe un rând gol făcut cu Enter sub paragraf.
+
+După atelier urmează pasul „Acum în aplicația adevărată”: faci singur un referat în **Word**. Apoi 5 întrebări de verificare.
+
+Referatul „Excursia la Cetatea Neamțului” trebuie să arate așa, de sus în jos: (1) paragraful „Sâmbătă am urcat la cetate…”; (2) sub el, pe rândul ei, poza **cetatea-neamt.jpg**; (3) sub poză, textul **Ce am cheltuit:**; (4) sub el, un tabel cu 2 coloane și 3 rânduri. În tabel, pe primul rând scrie **Lucru** și **Preț**, pe al doilea **Bilet** și **10 lei**, pe al treilea **Suc** și **5 lei**.
+
+Indiciu (apare după prima greșeală): Pe rând: (a) atinge paragraful „Sâmbătă…”, butonul Enter ↵, tastează Ce am cheltuit: în caseta „Tastatura”. (b) Inserare (Insert) › Tabel (Table) › 2x3, apoi celulele, cu Tab ⇥ între ele. (c) Atinge din nou paragraful „Sâmbătă…”, butonul Enter ↵, Inserare (Insert) › Imagini (Pictures) › Acest dispozitiv… (This Device…), cetatea-neamt.jpg, Inserare (Insert).
+
+Explicația de după răspuns: Fiecare obiect a ajuns unde era cursorul: poza pe rândul ei, textul sub poză, tabelul sub text, cu celulele completate rând cu rând.
+
+### Atelier — încă unul (1)
+
+(Exercițiu în aplicația simulată din pagină — tipul „wordobj”.)
+
+Încă unul, ca în Word-ul adevărat: referatul „Animalul meu”, de sus în jos: (1) paragraful „Am o pisică…”; (2) sub el, pe rândul ei, poza **pisica.png**, care e în folderul **Descărcări (Downloads)**; (3) sub poză, textul **Ce mănâncă:**; (4) sub el, un tabel cu 2 coloane și 3 rânduri: pe primul rând **Hrana** și **Când**, pe al doilea **Lapte** și **dimineața**, pe al treilea **Pește** și **seara**.
+
+Indiciu (apare după prima greșeală): Ca la cetate: întâi Ce mănâncă: și tabelul 2x3, apoi poza. În fereastra Insert Picture alegi întâi folderul Descărcări (Downloads), apoi pisica.png.
+
+Explicația de după răspuns: De sus în jos: paragraful, poza, textul, tabelul. Ai lucrat în ordinea sigură: textul și tabelul întâi, poza la urmă, pe rândul gol, luată din folderul ei.
+
+## Acum în aplicația adevărată
+
+1. Descarcă poza pentru referat: pisica.png. Ajunge în folderul **Descărcări (Downloads)**.
+
+2. Deschide **Word** și fă un document nou: Ctrl+N. Scrie titlul **Pisica** și apasă Enter. Scrie apoi 2-3 propoziții despre pisici (cum arată, ce fac).
+
+3. Apasă Enter și scrie **Ce mănâncă:**. Nu mai apăsa nimic: cursorul rămâne la capătul acestui rând.
+
+4. Pe fila **Inserare (Insert)** apasă **Tabel (Table)** și alege pe grilă **2x3** (2 coloane, 3 rânduri). Tabelul apare sub „Ce mănâncă:”, cu cursorul în prima celulă. Tastezi **Hrana**, Tab, **Când**, Tab, **Lapte**, Tab, **dimineața**, Tab, **Pește**, Tab, **seara**. După „seara” nu mai apeși Tab.
+
+5. Acum poza. Dă clic la capătul ultimei propoziții despre pisici și apasă Enter: ai un rând gol deasupra lui „Ce mănâncă:”. Dă clic pe fila **Inserare (Insert)** (după tabel, Word poate trece singur pe altă filă), apoi **Imagini (Pictures)** › **Acest dispozitiv… (This Device…)**; în Word 2016 se deschide direct fereastra. În fereastră, în stânga, dă clic pe **Descărcări (Downloads)**, apoi pe **pisica.png** și pe **Inserare (Insert)**. Nu găsești pisica.png în Descărcări (Downloads)? Dă clic în stânga pe **Imagini (Pictures)**, alege orice poză de acolo și apasă **Inserare (Insert)**.
+
+6. Verifică singur, de sus în jos, ce vezi în document: (1) titlul „Pisica”; (2) propozițiile tale; (3) poza, singură pe rândul ei, fără text lângă ea; (4) rândul „Ce mănâncă:”; (5) tabelul cu 2 coloane și 3 rânduri, fără rânduri goale, cu Hrana și Când pe primul rând. Ceva nu se potrivește? Recitește pasul acela și repară.
+
+7. Salvează cu Ctrl+S, cu numele tău, de exemplu `Popescu_Ana_obiecte.docx`, în folderul **Documente (Documents)**, dacă profesorul n-a scris pe tablă alt folder.
+
+## Verificare
+
+### Întrebarea 1
+
+Vrei ca cititorul să compare prețul biletului la 3 muzee. Ce obiect pui în document?
+
+Variante:
+
+- Un tabel (corect)
+
+- O imagine
+
+- Un text lung
+
+- Un titlu mare
+
+Indiciu (apare după prima greșeală): Sunt date (muzeu și preț), pentru mai multe muzee.
+
+Explicația de după răspuns: Datele așezate ordonat (muzeul și prețul, pentru fiecare) se citesc cel mai ușor într-un tabel.
+
+### Întrebarea 2
+
+Ai scris un paragraf și vrei o poză sub el, pe rândul ei. Ce faci înainte de Inserare (Insert) › Imagini (Pictures)?
+
+Variante:
+
+- Clic la capătul paragrafului, apoi Enter (corect)
+
+- Clic la începutul paragrafului
+
+- Apeși Tab de două ori
+
+- Nimic, poza se așază singură sub paragraf
+
+Indiciu (apare după prima greșeală): Unde apare poza: la cursor. Unde trebuie să fie cursorul?
+
+Explicația de după răspuns: Poza apare la cursor. Cu Enter la capătul paragrafului, cursorul e pe un rând nou, gol, sub paragraf. Fără Enter, poza s-ar lipi de text.
+
+### Întrebarea 3
+
+Cursorul e deja unde vrei tabelul. Așază în ordine ce faci mai departe.
+
+Pașii de pus în ordine (ordinea corectă):
+
+- Deschizi fila Inserare (Insert)
+
+- Apeși Tabel (Table)
+
+- Alegi pe grilă coloanele și rândurile
+
+- Tastezi în prima celulă
+
+Indiciu (apare după prima greșeală): Butonul Tabel stă pe o filă. Scrii abia după ce tabelul există.
+
+Explicația de după răspuns: Fila, butonul, mărimea pe grilă; abia după ce tabelul apare poți scrie în celulele lui.
+
+### Întrebarea 4
+
+Faci tabelul a 3 cărți; despre fiecare scrii Titlul, Autorul și Anul. Pe ce pătrățel din grilă dai clic, cu tot cu rândul pentru numele coloanelor?
+
+Variante:
+
+- 3x4 (corect)
+
+- 4x3
+
+- 3x3
+
+- 4x4
+
+Indiciu (apare după prima greșeală): Pe grilă, primul număr sunt coloanele. Coloane = informații despre o carte; rânduri = cărți + 1.
+
+Explicația de după răspuns: 3 informații → 3 coloane; 3 cărți + 1 rând pentru „Titlul, Autorul, Anul” → 4 rânduri. Pe grilă: 3x4.
+
+### Întrebarea 5
+
+Cursorul clipește la capătul rândului „Ce am cheltuit:”, sub care nu mai e nimic. Inserezi un tabel. Unde apare tabelul?
+
+Variante:
+
+- Sub rândul „Ce am cheltuit:” (corect)
+
+- În locul rândului „Ce am cheltuit:”
+
+- La începutul documentului
+
+- Deasupra rândului „Ce am cheltuit:”
+
+Indiciu (apare după prima greșeală): Ce ai aflat la pasul 5 despre locul unde apare tabelul?
+
+Explicația de după răspuns: Tabelul apare sub paragraful în care e cursorul, iar paragraful rămâne neschimbat. De aceea poți scrie întâi textul și pune tabelul imediat după el.
+
+## Ce am învățat
+
+a recunoscut textul, imaginea și tabelul, a pus cursorul la locul potrivit, a inserat o imagine din calculator și un tabel ales pe grilă și a scris în celule, trecând de la una la alta cu Tab

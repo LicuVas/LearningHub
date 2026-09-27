@@ -12,7 +12,8 @@
  *     derulare) în ultimele 2 minute. O filă uitată deschisă nu adună timp.
  *  3. La ~3 minute (și la închiderea paginii) trimite ce s-a adunat la teste-vasile.netlify.app/api/activitate.
  *  4. Elevul VEDE că e văzut: o etichetă mică jos („Profesorul vede activitatea ta · Ana P.”) și pagina
- *     /jurnal/ cu minutele lui. Nu există clasament — fiecare se vede doar pe sine.
+ *     /jurnal/ cu minutele lui. Nu există clasament — fiecare se vede doar pe sine. Eticheta nu stă peste
+ *     butoane sau simulatoare, iar întrebarea „Spune cine ești” se strânge la primul gest (27.09.2026, fereste()).
  *  5. Calculatoare comune: „Nu ești tu? Schimbă elevul”; după 90 de minute fără activitate întreabă
  *     „Ești tot Ana?” și NU numără nimic până nu răspunde.
  * Vizitatorii („Nu, doar vizitez”) nu sunt urmăriți deloc; întrebarea revine abia peste 30 de zile.
@@ -202,17 +203,87 @@
     '#lhp .lista .el{display:flex;flex-direction:column;align-items:flex-start;text-align:left;background:#0f1422;border-color:#44506c;padding:8px 10px}' +
     '#lhp .lista .el:hover{border-color:#5b8cff;background:#18213a}#lhp .lista .el span{font-size:12px;color:#9aa7c2}' +
     '#lhp .bar:has(.lista){max-width:560px}' +
+    /* 27.09.2026: eticheta se ferește de ce se poate apăsa (vezi fereste()); întrebările strânse devin etichete */
+    '#lhp{transition:opacity .2s}#lhp.ferit{opacity:0;pointer-events:none}#lhp.mini{left:auto;right:8px}' +
+    '#lhp.mini .pill{width:32px;height:32px;padding:0;gap:0;justify-content:center;box-sizing:border-box}#lhp.mini .dot{width:12px;height:12px}' +
+    '#lhp.mini .pill .t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}' +
+    '#lhp .pill.cere{border-color:#5b8cff;background:#1d2a4a}#lhp .pill.cere .dot{background:#5b8cff}' +
     '@media print{#lhp{display:none}}';
   var box;
-  function arata(html) {
+  /* strangibil = întrebare nechemată de elev (sau meniul etichetei): la primul lui gest în pagină se strânge */
+  function arata(html, strangibil) {
     if (!box) {
       var st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
       box = document.createElement('div'); box.id = 'lhp'; box.setAttribute('role', 'region'); box.setAttribute('aria-label', 'Evidența activității');
       document.body.appendChild(box);
+      try { new MutationObserver(planFereste).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'open'] }); } catch (e) {}
     }
+    seStrange = !!strangibil;
+    box.className = ''; dimPill = null;
     box.innerHTML = html;
     rezerva();
+    fereste();
   }
+
+  /* ---------------- să nu stea peste lecție (27.09.2026) ----------------
+     Trei judecători pe lecțiile noi din /lectii/: pe telefon (390 px) întrebarea „Spune cine ești” avea 227 px și
+     acoperea partea de jos a simulatorului și „Verifică” până răspundea elevul; eticheta mică acoperea uneori
+     „Verifică”, iar un clic pe diapozitivul simulat a nimerit panoul.
+     1. Întrebarea care apare singură (și lista „Cine lucrează acum?”, și meniul etichetei) se STRÂNGE la primul
+        gest al elevului în pagină (apăsare, derulare, tastă) într-o etichetă „Spune cine ești”; o apăsare pe ea o
+        redeschide. Nu se strâng: „Ești tot X?” (trebuie răspuns, altfel timpul rămâne deoparte) și formularele.
+     2. Eticheta (orice .pill) nu stă NICIODATĂ peste ceva ce se poate apăsa: dacă sub ea e un buton, o
+        legătură, un câmp, o celulă de simulator etc., se face buton rotund în colțul din dreapta; dacă și acolo
+        e ceva, dispare (și lasă clicurile să treacă) până se eliberează locul. */
+  var seStrange = false, strans = false, dimPill = null, rafF = 0, MINI = 32;
+  function gest(e) {
+    if (!seStrange || !box) return;
+    if (e.type === 'keydown' && /^(Tab|Shift|Control|Alt|Meta|CapsLock)$/.test(e.key)) return;
+    var t = e.target;
+    if (t && t.nodeType === 1 && box.contains(t) && (e.type !== 'pointerdown' || t.closest('button,a,input,select,textarea,label,.lista'))) return;
+    strans = true; randeaza();
+  }
+  ['pointerdown', 'wheel', 'touchmove', 'keydown'].forEach(function (ev) { addEventListener(ev, gest, { passive: true, capture: true }); });
+
+  var TAG_I = /^(A|BUTTON|INPUT|SELECT|TEXTAREA|LABEL|SUMMARY|OPTION|CANVAS|VIDEO|AUDIO|IFRAME|EMBED|OBJECT)$/,
+    ROL_I = /^(button|link|checkbox|radio|tab|slider|textbox|gridcell|option|menuitem|switch|combobox|spinbutton|application|grid|listbox|treeitem)$/;
+  function interactiv(e) {
+    for (var n = 0; e && e.nodeType === 1 && e !== document.body && e !== document.documentElement && n < 25; e = e.parentElement, n++) {
+      if (TAG_I.test(e.tagName.toUpperCase()) || e.isContentEditable || e.hasAttribute('onclick') || ROL_I.test(e.getAttribute('role') || '') ||
+        (e.getAttribute('tabindex') !== null && e.tabIndex >= 0) || e.getAttribute('draggable') === 'true') return true;
+      var cs = getComputedStyle(e), c = cs.cursor;
+      if (c && c !== 'auto' && c !== 'default') return true;
+      // o bandă care se derulează în lateral (foaia de calcul pe telefon): degetul trebuie să ajungă la ea
+      if ((cs.overflowX === 'auto' || cs.overflowX === 'scroll') && e.scrollWidth > e.clientWidth + 1) return true;
+      // celulele unui tabel-simulator (în care sunt butoane sau câmpuri) sunt și ele de apăsat
+      var tg = e.tagName.toUpperCase();
+      if ((tg === 'TD' || tg === 'TH') && e.closest('table') && e.closest('table').querySelector('button,input,select,textarea,[contenteditable]')) return true;
+    }
+    return false;
+  }
+  // e ceva de apăsat în dreptunghiul ăsta (cu 6 px de jur împrejur, cât un deget)?
+  function ocupat(l, t, r, b) {
+    var W = document.documentElement.clientWidth, H = innerHeight, xs = [l - 6, l + (r - l) / 4, (l + r) / 2, r - (r - l) / 4, r + 6], ys = [t - 6, (t + b) / 2, b + 4];
+    for (var i = 0; i < xs.length; i++) for (var j = 0; j < ys.length; j++) {
+      var lst = document.elementsFromPoint(Math.min(W - 1, Math.max(0, xs[i])), Math.min(H - 1, Math.max(0, ys[j])));
+      for (var k = 0; k < lst.length; k++) if (!box.contains(lst[k])) { if (interactiv(lst[k])) return true; break; }
+    }
+    return false;
+  }
+  function planFereste() { if (!rafF) rafF = requestAnimationFrame(fereste); }
+  function fereste() {
+    rafF = 0;
+    var el = box && box.firstElementChild;
+    if (!el || !el.classList.contains('pill')) { if (box && box.className) box.className = ''; return; }
+    if (!dimPill) { box.className = ''; var q = el.getBoundingClientRect(); dimPill = { w: q.width, h: q.height }; }
+    var W = document.documentElement.clientWidth, B = box.getBoundingClientRect().bottom;
+    var mod = !ocupat(12, B - dimPill.h, 12 + dimPill.w, B) ? '' : !ocupat(W - 8 - MINI, B - MINI, W - 8, B) ? 'mini' : 'mini ferit';
+    if (box.className !== mod) box.className = mod;
+  }
+  addEventListener('scroll', planFereste, { passive: true, capture: true });
+  addEventListener('resize', function () { dimPill = null; planFereste(); });
+  addEventListener('load', planFereste);
+  setInterval(function () { if (box && document.visibilityState === 'visible') planFereste(); }, 1000);
   /* Banda stă fixă jos: fără loc rezervat, ar acoperi ultimele butoane ale paginii (pe telefon, „Mai departe”
      din jocuri). Cât e pe ecran, pagina primește dedesubt spațiu cât ea, ca orice buton să poată urca deasupra. */
   var padBaza = null;
@@ -230,12 +301,12 @@
     /* „Nu, doar vizitez” apăsat din greșeală (25.09.2026, el: „pe urmă nu mai poate intra în monitorizare”):
        rămâne un buton mic și discret, ca elevul să se poată înscrie oricând. */
     if (s === 'vizitator') {
-      arata('<span class="pill" id="lhp-elev" style="opacity:.75" title="Ești elev? Înscrie-te ca profesorul să-ți vadă munca.">Sunt elev — mă înscriu</span>');
+      arata('<span class="pill" id="lhp-elev" style="opacity:.75" title="Ești elev? Înscrie-te ca profesorul să-ți vadă munca."><span class="dot" style="background:#9aa7c2"></span><span class="t">Sunt elev — mă înscriu</span></span>');
       $('lhp-elev').onclick = formular;
       return;
     }
     if (s === 'activ') {
-      arata('<span class="pill" id="lhp-pill" title="Profesorul vede ce pagini deschizi, cât timp lucrezi și ce niveluri termini. Apasă pentru jurnalul tău."><span class="dot"></span>Profesorul vede activitatea ta · <b>' + esc(scurt(eu.nume)) + '</b></span>');
+      arata('<span class="pill" id="lhp-pill" title="Profesorul vede ce pagini deschizi, cât timp lucrezi și ce niveluri termini. Apasă pentru jurnalul tău."><span class="dot"></span><span class="t">Profesorul vede activitatea ta · <b>' + esc(scurt(eu.nume)) + '</b></span></span>');
       $('lhp-pill').onclick = meniu;
     } else if (s === 'intreaba') {
       arata('<div class="bar">Ești tot <b>' + esc(eu.nume) + '</b> (' + esc(eu.clasa) + ')?<div class="mic">Ce lucrezi acum se păstrează: ajunge la profesor pe numele tău după ce apeși „Da”.</div>' +
@@ -246,11 +317,17 @@
         try { dispatchEvent(new CustomEvent('prezenta', { detail: identitate() })); } catch (e) {}
       };
       $('lhp-nu').onclick = function () { sterge(K_TINUT); uita(); alege(); };
+    } else if (strans) {   // întrebarea strânsă la primul gest: o etichetă care duce la înscriere
+      /* fără listă, eticheta ține locul butonului „Spune cine ești” (același id) și deschide direct formularul */
+      var cuLista = lista().length > 0, idP = cuLista ? 'lhp-cere' : 'lhp-cine';
+      arata('<span class="pill cere" id="' + idP + '" title="Profesorul vede ce lecții deschizi, cât lucrezi și ce niveluri termini — doar după ce spui cine ești."><span class="dot"></span><span class="t">' +
+        (cuLista ? 'Cine lucrează acum? <b>Alege-te din listă</b>' : '<b>Spune cine ești</b> · pentru ora de informatică') + '</span></span>');
+      $(idP).onclick = cuLista ? function () { strans = false; alege(); } : formular;
     } else if (lista().length) {
       alege();
     } else {
       arata('<div class="bar">Lucrezi pentru ora de informatică? <b>Spune cine ești</b>: profesorul vede ce lecții deschizi, cât lucrezi și ce niveluri termini.' + NOTA +
-        '<div class="row"><button id="lhp-cine">Spune cine ești</button><button class="g" id="lhp-viz">Nu, doar vizitez</button></div></div>');
+        '<div class="row"><button id="lhp-cine">Spune cine ești</button><button class="g" id="lhp-viz">Nu, doar vizitez</button></div></div>', true);
       $('lhp-cine').onclick = formular;
       $('lhp-viz').onclick = function () { eu = { refuz: Date.now() }; scrie(K_ID, eu); randeaza(); };
     }
@@ -268,7 +345,7 @@
         : '<div class="mic"><b>Progresul tău stă doar pe calculatorul ăsta.</b> Alege un cod ca să-l poți continua și pe alt calculator sau acasă.</div>') +
       '<div class="row"><a href="' + JURNAL_URL + '"><button>Jurnalul meu</button></a>' + (eu.h ? '' : '<button id="lhp-cod">Păstrează-l online</button>') +
       '<button class="g" id="lhp-alt">Nu ești tu? Schimbă elevul</button><button class="g" id="lhp-x">Închide</button></div>' +
-      '<div class="row"><button class="g" id="lhp-scoate" title="Progresul tău nu se șterge; doar numele tău nu mai apare în lista calculatorului.">Scoate-mă din lista calculatorului</button></div></div>');
+      '<div class="row"><button class="g" id="lhp-scoate" title="Progresul tău nu se șterge; doar numele tău nu mai apare în lista calculatorului.">Scoate-mă din lista calculatorului</button></div></div>', true);
     $('lhp-alt').onclick = function () { uita(); alege(); };
     $('lhp-x').onclick = randeaza;
     if ($('lhp-cod')) $('lhp-cod').onclick = cereCod;
@@ -299,7 +376,7 @@
         return '<button class="el" data-i="' + i + '"><b>' + esc(x.nume) + '</b><span>' + esc(x.clasa) + (x.h ? ' · ☁' : '') + '</span></button>';
       }).join('') + '</div>' +
       '<div class="row"><button id="lhp-nou">Nu sunt în listă</button><button class="g" id="lhp-x">Mai târziu</button></div>' +
-      '<div class="mic">„Nu sunt în listă” = prima dată pe calculatorul ăsta. Dacă ai lucrat pe alt calculator sau acasă, scrie același nume și același cod și îți vine progresul.</div></div>');
+      '<div class="mic">„Nu sunt în listă” = prima dată pe calculatorul ăsta. Dacă ai lucrat pe alt calculator sau acasă, scrie același nume și același cod și îți vine progresul.</div></div>', true);
     Array.prototype.forEach.call(box.querySelectorAll('.el'), function (b) { b.onclick = function () { eSunt(l[+b.dataset.i]); }; });
     $('lhp-nou').onclick = formular;
     $('lhp-x').onclick = function () { eu = eu && eu.refuz ? eu : null; if (!eu) { eu = { refuz: Date.now() }; scrie(K_ID, eu); } randeaza(); };
@@ -566,7 +643,7 @@
 
   function uita() {
     trimite(true);
-    eu = null; confirmat = false;
+    eu = null; confirmat = false; strans = false;   // alt elev la calculator: întrebarea i se arată întreagă
     sterge(K_ID); sterge(K_COADA); sterge(K_JURNAL); sterge(K_TINUT);
     // nivelurile făcute cât stătea „Ești tot X?” nu sunt ale lui X: trec la cel care stă acum la calculator
     mutaJoc('_tinut', '_neinscris');
