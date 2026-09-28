@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Operații cu registrul și cu foile de calcul</title>
+<meta name="description" content="Clasa a VIII-a, lecția 3 (Excel): registrul nou, salvarea cu un nume bun în laboratorul comun, Salvare ca și formatele .xlsx, .csv, .pdf, închiderea și deschiderea; foile: foaie nouă, trecerea de la una la alta, redenumirea, culoarea filei, ștergerea, mutarea și copierea, exersate într-o fereastră care se poartă ca Excel-ul.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600..800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF1EC; --paper:#FFFFFF; --paper2:#EDF2EC; --line:#D2DAD0;
+  --ink:#16211A; --ink2:#56645A; --accent:#107C41; --accentInk:#FFFFFF; --sel:#D6EEDD;
+  --mark:#FFE58A; --markInk:#16211A; --ok:#11703C; --okbg:#E0F2E6; --bad:#C23B33; --badbg:#FAE5E3;
+  --fd:"Fraunces",Georgia,serif; --fb:"Source Sans 3","Segoe UI",system-ui,sans-serif; --fm:"JetBrains Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E1310; --paper:#17201A; --paper2:#212C24; --line:#2E3B32;
+  --ink:#E3EBE5; --ink2:#9BAAA0; --accent:#4FC987; --accentInk:#0E1310; --sel:#1D4330;
+  --mark:#EFD25A; --markInk:#16211A; --ok:#4FC987; --okbg:#14301F; --bad:#FF7D73; --badbg:#3A1E1C;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E1310; --paper:#17201A; --paper2:#212C24; --line:#2E3B32;
+  --ink:#E3EBE5; --ink2:#9BAAA0; --accent:#4FC987; --accentInk:#0E1310; --sel:#1D4330;
+  --mark:#EFD25A; --markInk:#16211A; --ok:#4FC987; --okbg:#14301F; --bad:#FF7D73; --badbg:#3A1E1C;
+}
+/* tema: fâșia de sus e bara filelor unui registru: fila activă albă, cu dunga verde; una colorată; butonul + */
+.banda{display:flex;gap:0;font-family:var(--fb);font-size:.74rem;color:var(--ink2);overflow:hidden;white-space:nowrap}
+.banda span{padding:3px 10px;border-right:1px solid var(--line)}
+.banda span.a{background:var(--paper);color:var(--accent);font-weight:700;box-shadow:inset 0 -3px 0 var(--accent)}
+.banda span.v{background:#00B050;color:#10261A}
+.banda span.p{border-right:0;font-weight:700}
+h1,h2{letter-spacing:-.01em}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<!-- simulatorul registrului și al filelor foilor (fișier comun nou, scris pentru lecția asta) -->
+<script src="../../_sim/registru-foi.js"></script>
+<script>
+/* conținuturile programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={registru:'Operații cu un registru de calcul (deschidere, închidere, salvare, creare)',foi:'Operații cu foi de calcul (accesare, redenumire)'};
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG='../m1-l03/img/',IMGA='../../../jocuri/excel-antrenament-viii/img/';
+
+/* fișierele „colegilor” din laboratorul simulat: nu trebuie atinse (regula 23, calculatorul e comun) */
+const COLEGI=[{n:'Ionescu_Maria_8A_lectia3.xlsx',coleg:true,foi:[{n:'Sheet1',d:{A1:'Tema Mariei'}}]},{n:'lectia3.xlsx',coleg:true,foi:[{n:'Sheet1',d:{A1:'Tema lui Dan'}}]}];
+const LUNA=(n,a2)=>({n,d:{A1:'Elev',B1:'Prezent',A2:a2||'Ana',B2:'da'}});
+
+const PROVOCARE=[
+  'Deschide Excel. Pe prima pagină alege <b>Blank workbook (Registru de lucru necompletat)</b>. Dacă Excel e deja deschis, apasă <kbd>Ctrl</kbd>+<kbd>N</kbd>.',
+  'Jos, dublu clic pe fila <b>Sheet1</b> (sau Foaie1), scrie <b>Octombrie</b> și apasă <kbd>Enter</kbd>.',
+  'Apasă <b>+</b>, lângă file: apare o foaie nouă, după Octombrie. Redenumește-o <b>Noiembrie</b>. Mai apasă o dată <b>+</b> și redenumește foaia nouă <b>Septembrie</b>.',
+  'Mută <b>Septembrie</b> la început: ține apăsat butonul stâng al mouse-ului pe fila ei, du-o înaintea filei Octombrie și dă drumul. Sau: clic dreapta pe ea › <b>Mutare sau copiere (Move or Copy)</b> › la <b>Before sheet (Înaintea foii)</b> alege <b>Octombrie</b> › <b>OK</b>.',
+  'Clic dreapta pe fila <b>Octombrie</b> › <b>Culoare filă (Tab Color)</b> › alege o culoare.',
+  'Salvează cu <kbd>Ctrl</kbd>+<kbd>S</kbd>. La <b>File name</b> scrie numele tău după modelul <code>Popescu_Ana_8A_lectia3</code>. La <b>Choose a Location</b>, Excel propune locul folosit ultima dată, poate de un coleg: alege <b>Documente (Documents)</b>. Dacă pe tablă scrie alt folder și nu-l vezi în listă: <b>More options…</b> › <b>Browse (Răsfoire)</b> și îl alegi în stânga. Apoi <b>Save (Salvare)</b>. Dacă apare <i>The file … already exists</i>, apasă <b>Anulare (Cancel)</b>, NU OK: OK ar pune fișierul tău peste al colegului. Fereastra de salvare apare din nou, cu numele de probă (Book…) în loc de al tău: scrie iar numele tău complet, cu o cifră la sfârșit (de exemplu <code>Popescu_Ana_8A_lectia3_2</code>), și apasă <b>Save (Salvare)</b>.',
+  'Închide registrul cu <kbd>Ctrl</kbd>+<kbd>W</kbd>. Excel rămâne deschis, gol.',
+  'Deschide-l din nou: <kbd>Ctrl</kbd>+<kbd>O</kbd> › <b>Browse (Răsfoire)</b> › folderul Documente › clic pe fișierul tău › <b>Open (Deschidere)</b>. Verifică singur: trei foi, Septembrie, Octombrie, Noiembrie, în ordinea asta, iar fila Octombrie colorată. Sus scrie numele fișierului tău.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m1_l03',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/viii/, „Lecția 3”, „Acum în Excel-ul adevărat” înainte de verificare
+  titlu:'Operații cu registrul și cu foile de calcul',
+  marca:'Lecția <b>3</b> · Excel · a VIII-a',
+  h1:'Operații cu registrul și cu foile de calcul',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U1', unitateTitlu:'Calcul tabelar',
+  competente:['CS.1.1','CS.3.1'], lectii:'3',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VIII-U1 „Calcul tabelar” · lecția 3 · conținuturile: „Operații cu un registru de calcul (deschidere, închidere, salvare, creare)” și „Operații cu foi de calcul (accesare, redenumire)”',
+  intro:`<p>Lecția 3 din modulul 1. Faci un registru nou, îl salvezi cu un nume bun, alegi formatul potrivit, îl închizi și îl deschizi din nou. Apoi îi organizezi foile: le adaugi, le dai nume și culori, le muți, le copiezi și le ștergi.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 2, „Interfața aplicației de calcul tabelar. Structura unui registru”: un registru are foi, o foaie are celule; filele foilor stau jos, sub celule;</li>
+<li>din clasa a V-a: fișierul, folderul și extensia (partea de după punct din numele fișierului, ca <code>.docx</code>);</li>
+<li>din clasele a VI-a și a VII-a: ai salvat și ai deschis prezentări și documente.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după pagina „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu” (celelalte exerciții sunt în plus, dacă vrei). Apoi atelierul, într-o fereastră care se poartă ca Excel-ul, apoi aceleași lucruri în Excel-ul adevărat, iar la sfârșit 5 întrebări.</p>`,
+  banda:'<span>Septembrie</span><span class="a">Octombrie</span><span class="v">Noiembrie</span><span class="p">+</span>',
+  tipuri:{registru:SimRegistru},
+  nivele:[
+  {t:'Operații cu registrul și cu foile de calcul', final:true, lectii:[3], continuturi:[P.registru,P.foi],
+   obiectiv:'faci un registru nou, îi pui foile de care ai nevoie (cu nume, culoare și în ordinea bună), îl salvezi cu un nume al tău, îl închizi și îl deschizi din nou.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>Cercul de robotică ține prezența pe luni. Totul stă într-un singur fișier Excel, un <mark>registru</mark>, cu câte o foaie pentru fiecare lună: Septembrie, Octombrie, Noiembrie.</p>
+<p>E ca un biblioraft: pe cotor scrie numele lui, înăuntru stau foile, pe rând. Când termini, îl pui în dulap. Data viitoare îl găsești după nume și continui de unde ai rămas.</p>
+<p>Azi faci un registru de la zero și îl pui „în dulap”, ca să-l găsești data viitoare. Apoi îi pui foile în ordine, fiecare cu numele ei.</p>
+${fig(IMG+'biblioraft.webp',800,452,'Un biblioraft închis, cu eticheta scrisă de mână pe cotor, și alături un biblioraft deschis, cu inelele în care se prind foile','Un biblioraft: numele stă pe cotor, foile stau înăuntru. Fotografie: Martink, domeniu public (Wikimedia Commons).')}`},
+
+    /* ---------- PASUL 1: registrul nou și prima salvare ---------- */
+    {t:'Registru nou și prima salvare',
+     text:`<p>Un <mark>registru nou</mark> faci cu <kbd>Ctrl</kbd>+<kbd>N</kbd> sau din <b>Fișier (File)</b> › <b>Nou (New)</b> › <b>Blank workbook (Registru de lucru necompletat)</b>. Excel îi dă un nume de probă, <b>Book1</b> (în Excel în română: Registru1), și o singură foaie, <b>Sheet1</b> (Foaie1).</p>
+<p>Registrul devine fișier abia când îl <mark>salvezi</mark>: apeși <kbd>Ctrl</kbd>+<kbd>S</kbd>. Prima dată, Excel întreabă numele și locul. Scrii numele la <b>File name</b>, fără <code>.xlsx</code>: îl pune Excel. La <b>Choose a Location</b>, Excel propune locul folosit ultima dată, poate de un coleg: alegi <b>Documente (Documents)</b>. Apoi <b>Save (Salvare)</b>.</p>
+<p>Sus apare acum numele fișierului, în locul lui Book1.</p>
+${fig(IMG+'salveaza-acest-fisier.webp',575,399,'Excel: fereastra Save this file, cu File name Book1 și .xlsx, Choose a Location cu Documents și butoanele More options, Save și Cancel','Ctrl+S pe un registru nou, în Excel 365. Pe versiunile mai vechi se deschide întâi o pagină cu locuri: acolo alegi Browse (Răsfoire).')}`,
+     exemplu:`<p><b>Numele bun, în laborator</b> e doar al tău: numele, prenumele, clasa și ce e, legate prin <code>_</code> (<kbd>Shift</kbd> și tasta cu liniuța <code>-</code>, de obicei cea din dreapta lui 0): <code>Popescu_Ana_8A_lectia3</code>.</p>
+<p><b>Numele e luat?</b> Apare <i>The file … already exists</i>. Apasă <b>Anulare (Cancel)</b>, nu OK: OK pune fișierul tău peste al colegului. Fereastra revine: scrii numele tău complet.</p>
+<p><b>Folderul de pe tablă nu e în listă?</b> <b>More options…</b> › <b>Browse (Răsfoire)</b> și îl alegi în stânga.</p>
+${fig(IMG+'exista-deja.webp',454,216,'Excel: fereastra Save As cu mesajul The file Ionescu_Maria_8A_lectia3.xlsx already exists. Do you want to replace the existing file, cu butoanele OK și Anulare','La prima salvare, cu un nume care există deja: apeși Anulare, nu OK.')}`,
+     altfel:`<p>Gândește-te la un caiet nou. Până nu-i scrii pe copertă numele și clasa ta, se amestecă ușor cu ale colegilor. Salvarea e scrisul pe copertă și așezarea caietului în dulapul clasei.</p>`,
+     incearca:{t:'registru',q:'Fă un registru nou. Apoi salvează-l cu <kbd>Ctrl</kbd>+<kbd>S</kbd> în <b>Documente</b>, cu numele tău după modelul <code>Popescu_Ana_8A_lectia3</code>.',
+       start:{gol:true,fisiere:{Documente:COLEGI},locPropus:'Desktop'},
+       teste:[{ce:'Ai făcut un registru nou',nouFacut:true},
+        {ce:'E salvat în Documente, cu numele, prenumele, clasa ta și lectia3, ca .xlsx',salvat:{folder:'Documente',model:'lectia3',ext:'xlsx'}},
+        {ce:'Fișierele colegilor au rămas neatinse',colegi:true}],
+       rezolvare:[['nou'],['salveaza',{folder:'Documente',nume:'Popescu_Ana_8A_lectia3'}]],
+       greseala:[['nou'],['salveaza',{folder:'Desktop',nume:'Popescu_Ana_8A_lectia3'}]],
+       ajutor:'Registrul nou: butonul Ctrl+N de sub titlu (sau Fișier › Nou). Apoi butonul Ctrl+S: la File name scrie numele tău, clasa și lectia3, legate prin _; la Choose a Location schimbă locul propus pe Documente; apoi Save.',
+       why:'Registrul are acum un nume doar al tău și stă în Documente, nu în locul propus de calculator. Colegii își găsesc fișierele lor, iar tu pe al tău.'},
+     inca:[
+      {t:'registru',q:'Un coleg grăbit ar salva cu numele <code>lectia3</code>. Fă și tu așa: <kbd>Ctrl</kbd>+<kbd>S</kbd>, numele <code>lectia3</code>, locul <b>Documente</b>, <b>Save</b>. Citește ce spune Excel și apasă <b>Anulare</b>. Apoi salvează cu numele tău după modelul <code>Popescu_Ana_8A_lectia3</code>.',
+       start:{registru:{nume:'Book1',foi:[LUNA('Sheet1')],m:true},fisiere:{Documente:COLEGI},locPropus:'Documente'},
+       teste:[{ce:'Fișierul lectia3.xlsx al colegului a rămas neatins',colegi:true},
+        {ce:'Registrul tău e salvat în Documente, cu numele tău, clasa și lectia3',salvat:{folder:'Documente',model:'lectia3',ext:'xlsx'}}],
+       rezolvare:[['salveaza',{folder:'Documente',nume:'Popescu_Ana_8A_lectia3'}]],
+       greseala:[['salveaza',{folder:'Documente',nume:'lectia3',inlocuieste:true}]],
+       ajutor:'La mesajul „The file lectia3.xlsx already exists…” apasă Anulare, nu OK. Fereastra de salvare apare din nou: scrie numele tău complet și apasă Save.',
+       why:'Anulare a lăsat fișierul colegului întreg. Cu numele tău complet, nimeni nu mai poate da peste el din greșeală.'},
+      {t:'choice',q:'Maria Ionescu din clasa a VIII-a B lucrează la același calculator cu alți colegi. Ce nume dă fișierului cu tema ei?',
+       o:['Ionescu_Maria_8B_tema','Ionescu_Maria_tema','Maria_8B_tema_Excel','Clasa_8B_tema_noua'],ok:0,
+       ajutor:'Numele trebuie să-l deosebească de fișierele tuturor celorlalți.',why:'Ionescu_Maria_8B_tema are numele, prenumele, clasa și ce e. Fără clasă se încurcă cu o altă Maria Ionescu, fără nume de familie cu altă Marie din 8B, iar fără nume deloc cu orice coleg din 8B.'}
+     ]},
+
+    /* ---------- PASUL 2: Salvare ca: alt nume, alt loc, alt format ---------- */
+    {t:'Salvare ca: alt nume, alt loc, alt format',
+     text:`<p>După prima salvare, <kbd>Ctrl</kbd>+<kbd>S</kbd> nu mai întreabă nimic: pune schimbările în același fișier. Apasă-l des.</p>
+<p><mark>Salvare ca</mark> (Save As) face un fișier nou: cu alt nume, în alt loc sau în alt <mark>format</mark>. Apeși <kbd>F12</kbd> (pe unele laptopuri <kbd>Fn</kbd>+<kbd>F12</kbd>) sau <b>Fișier (File)</b> › <b>Salvare ca (Save As)</b> › <b>Browse (Răsfoire)</b>. În fereastră alegi folderul în stânga, scrii numele la <b>File name</b>, alegi formatul la <b>Save as type</b> și apeși <b>Save (Salvare)</b>. Fișierul vechi rămâne neschimbat.</p>
+<p>Numele e luat? Aici Excel întreabă <i>… already exists. Do you want to replace it?</i>: apasă <b>No (Nu)</b> și schimbă numele.</p>
+${fig(IMGA+'salvare-ca-nume.webp',420,70,'Excel: partea de jos a ferestrei Save As, cu File name Buget.xlsx și Save as type Excel Workbook','Partea de jos a ferestrei Save As: numele (File name) și formatul (Save as type).')}
+${fig(IMG+'confirma-inlocuire.webp',458,176,'Excel: fereastra Confirm Save As, cu întrebarea already exists, do you want to replace it și butoanele Yes și No','La Salvare ca, cu un nume care există deja: apeși No.')}`,
+     exemplu:`<p><b>Formatul</b> e felul fișierului; îl arată extensia. La <b>Save as type</b>:</p>
+<ul><li><b>Excel Workbook (*.xlsx)</b>: tot registrul, cu toate foile. Îl alegi când mai lucrezi la el.</li>
+<li><b>PDF (*.pdf)</b>: o „fotografie” a foii active, bună de citit și de tipărit. N-o mai modifici în Excel.</li>
+<li><b>CSV UTF-8 (Comma delimited) (*.csv)</b>: doar textul și numerele foii active, pentru un program care cere o listă simplă. Se pierd celelalte foi, culorile și aldinul; dintr-un calcul rămâne doar rezultatul.</li></ul>
+${fig(IMG+'csv-mai-multe-foi.webp',469,329,'Excel: mesajul The selected file type does not support workbooks that contain multiple sheets, cu butoanele OK și Cancel','Salvare ca .csv, cu mai multe foi în registru: Excel te anunță că se salvează doar foaia activă.')}`,
+     altfel:`<p>Salvarea e ca atunci când mai scrii o pagină în același caiet. Salvarea ca e ca atunci când copiezi caietul într-unul nou, cu altă etichetă: caietul vechi rămâne neatins, iar de acum scrii în cel nou.</p>`,
+     incearca:{t:'registru',q:'E deschis registrul profesorului, <b>Robotica_8A.xlsx</b>. Fă-ți o copie cu <b>Salvare ca</b> (<kbd>F12</kbd>), tot în <b>Documente</b>, cu numele tău după modelul <code>Popescu_Ana_8A_robotica</code>.',
+       start:{registru:{fisier:'Documente/Robotica_8A.xlsx',foi:[LUNA('Septembrie')]},fisiere:{Documente:[{n:'Ionescu_Maria_8A_robotica.xlsx',coleg:true,foi:[LUNA('Septembrie','Maria')]}]}},
+       teste:[{ce:'Ai o copie în Documente, cu numele tău, clasa și robotica, ca .xlsx',salvat:{folder:'Documente',model:'robotica',ext:'xlsx',foi:['Septembrie']}},
+        {ce:'Lucrezi acum în copia ta (numele ei e sus)',deschisDin:{folder:'Documente',model:'robotica',ext:'xlsx'}},
+        {ce:'Robotica_8A.xlsx a rămas neschimbat',neschimbat:['Documente/Robotica_8A.xlsx']},
+        {ce:'Fișierul Mariei a rămas neatins',colegi:true}],
+       rezolvare:[['salveazaCa',{folder:'Documente',nume:'Popescu_Ana_8A_robotica',tip:'xlsx'}]],
+       greseala:[['salveaza',{}]],
+       ajutor:'Butonul F12 de sub titlu (sau Fișier › Salvare ca). În stânga, Documente. La File name scrie numele tău, clasa și robotica, legate prin _, apoi Save.',
+       why:'Robotica_8A.xlsx a rămas cum era. Copia ta are alt nume, iar sus scrie numele ei: acolo lucrezi de acum.'},
+     inca:[
+      {t:'registru',q:'Salvează registrul cu <kbd>F12</kbd> în <b>Documente</b>. Scrie întâi numele <code>lectia3</code> și apasă <b>Save</b>: vezi ce spune Excel. Apoi salvează-l cum trebuie, cu numele tău după modelul <code>Popescu_Ana_8A_lectia3</code>.',
+       start:{registru:{nume:'Book1',foi:[LUNA('Sheet1')],m:true},fisiere:{Documente:COLEGI},locPropus:'Documente'},
+       teste:[{ce:'Fișierul lectia3.xlsx al colegului a rămas neatins',colegi:true},
+        {ce:'Registrul tău e salvat în Documente, cu numele tău, clasa și lectia3',salvat:{folder:'Documente',model:'lectia3',ext:'xlsx'}}],
+       rezolvare:[['salveazaCa',{folder:'Documente',nume:'Popescu_Ana_8A_lectia3',tip:'xlsx'}]],
+       greseala:[['salveazaCa',{folder:'Documente',nume:'lectia3',tip:'xlsx',inlocuieste:true}]],
+       ajutor:'Când Excel întreabă „already exists… replace it?”, apasă No. Apoi scrie la File name numele tău, clasa și lectia3.',
+       why:'Ai apăsat No: fișierul colegului a rămas întreg, iar tu ai rămas în fereastra Save As, ca să schimbi numele.'},
+      {t:'classify',q:'Ce format alegi la Save as type?',cats:['.xlsx','.csv','.pdf'],
+       items:[['Mâine continui tabelul cu notele',0],['Trimiți părinților orarul, doar ca să-l citească',2],['Duci lista de nume într-un program care citește doar text',1],['Vrei să păstrezi toate cele trei foi',0]],
+       ajutor:'Continui lucrul sau păstrezi tot: .xlsx. Doar citit: .pdf. Listă simplă pentru alt program: .csv.',why:'La .xlsx rămâne tot registrul, .pdf e bun de citit, iar .csv duce doar textul și numerele.'},
+      {t:'registru',q:'Salvează registrul ca CSV: <kbd>F12</kbd>, la <b>Save as type</b> alege <b>CSV UTF-8 (Comma delimited) (*.csv)</b>, apoi <b>Save</b>. Ce îți spune Excel?',
+       start:{registru:{fisier:'Documente/Robotica_8A.xlsx',foi:[LUNA('Septembrie'),LUNA('Octombrie'),LUNA('Noiembrie')]}},
+       o:['Că formatul nu ține mai multe foi, iar OK salvează doar foaia activă','Că fișierul s-a salvat cu toate cele trei foi','Că fișierul are prea multe rânduri','Nimic: registrul se închide'],ok:0,
+       ajutor:'Fă întâi salvarea în fereastră și citește mesajul.',why:'CSV-ul ține o singură foaie. Excel te anunță și salvează doar foaia activă.'}
+     ]},
+
+    /* ---------- PASUL 3: închidere și deschidere ---------- */
+    {t:'Închizi și deschizi din nou',
+     text:`<p>Registrul îl <mark>închizi</mark> cu <kbd>Ctrl</kbd>+<kbd>W</kbd> sau din <b>Fișier (File)</b> › <b>Închidere (Close)</b>. Excel rămâne deschis, gol. Butonul ✕ din colțul de sus închide fereastra.</p>
+<p>Dacă ai schimbat ceva după ultima salvare, Excel te întreabă întâi dacă salvezi: <b>Save (Salvare)</b> păstrează schimbările, <b>Don't Save (Nu salvați)</b> le aruncă, <b>Cancel (Anulare)</b> te lasă în registru.</p>
+<p>Îl <mark>deschizi</mark> din nou cu <kbd>Ctrl</kbd>+<kbd>O</kbd> › <b>Browse (Răsfoire)</b>: alegi folderul, dai clic pe fișier și apeși <b>Open (Deschidere)</b>. Sau dai dublu clic pe fișier în folderul lui, ca în clasa a V-a.</p>
+${fig(IMG+'salvezi-modificarile.webp',575,399,'Excel: fereastra Save your changes to this file, cu File name Book2, Choose a Location și butoanele Save, Dont Save și Cancel','Ctrl+W pe un registru cu schimbări nesalvate: Excel întreabă dacă le salvezi.')}`,
+     exemplu:`<p>Ai lucrat și vrei să păstrezi? <b>Save</b>. Ai încercat ceva și nu-ți place? <b>Don't Save</b>: data viitoare registrul se deschide cum era la ultima salvare. Nu știi încă? <b>Cancel</b>: rămâi în registru, iar schimbările sunt tot acolo, nesalvate.</p>
+<p>Un fișier descărcat de pe internet ajunge de obicei în folderul <b>Descărcări (Downloads)</b>: de acolo îl deschizi.</p>`,
+     altfel:`<p>E ca la un joc pe calculator: dacă ieși fără să salvezi, data viitoare pornești de la ultima salvare, nu de unde ai rămas.</p>`,
+     incearca:{t:'registru',q:'Ai adăugat foaia <b>Noiembrie</b>, dar n-ai salvat. Închide registrul și păstrează foaia. Apoi deschide-l din nou din <b>Documente</b>.',
+       start:{fisiere:{Documente:[{n:'Robotica_8A.xlsx',foi:[LUNA('Septembrie'),LUNA('Octombrie')]}]},registru:{fisier:'Documente/Robotica_8A.xlsx',foi:[LUNA('Septembrie'),LUNA('Octombrie'),{n:'Noiembrie',d:{}}],a:2,m:true}},
+       teste:[{ce:'Fișierul Robotica_8A.xlsx are și foaia Noiembrie',salvat:{folder:'Documente',fisier:'Robotica_8A.xlsx',ext:'xlsx',foi:['Septembrie','Octombrie','Noiembrie']}},
+        {ce:'L-ai închis și l-ai deschis din nou din Documente',redeschis:true,deschisDin:{folder:'Documente',fisier:'Robotica_8A.xlsx',ext:'xlsx'}}],
+       rezolvare:[['inchide','da'],['deschide','Documente/Robotica_8A.xlsx']],
+       greseala:[['inchide','nu'],['deschide','Documente/Robotica_8A.xlsx']],
+       ajutor:'Butonul Ctrl+W, apoi Save în fereastra care apare. Apoi butonul Ctrl+O, alegi Documente, clic pe Robotica_8A.xlsx și Open.',
+       why:'Ai salvat la închidere, deci foaia Noiembrie a rămas în fișier și o vezi din nou după deschidere.'},
+     inca:[
+      {t:'choice',q:'Închizi registrul și Excel te întreabă dacă salvezi modificările. Ai lucrat 20 de minute și n-ai salvat deloc. Ce apeși?',
+       o:['Save (Salvare)','Don\'t Save (Nu salvați)','Cancel (Anulare)'],ok:0,
+       ajutor:'Care buton păstrează munca?',why:'Save păstrează cele 20 de minute de lucru. Don\'t Save le aruncă, iar Cancel te lasă în registru, tot nesalvat.'},
+      {t:'registru',q:'Registrul e salvat și nu l-ai schimbat. Apasă <kbd>Ctrl</kbd>+<kbd>W</kbd> (butonul de sub titlu). Ce se întâmplă?',
+       start:{registru:{fisier:'Documente/Robotica_8A.xlsx',foi:[LUNA('Septembrie')]}},
+       o:['Registrul se închide, iar Excel rămâne deschis, gol','Se închide tot Excel-ul','Excel te întreabă dacă salvezi','Nu se întâmplă nimic'],ok:0,
+       ajutor:'Apasă butonul și uită-te la fereastră.',why:'Nimic nu era nesalvat, deci Excel n-a întrebat nimic: a închis registrul și a rămas deschis, gol.'}
+     ]},
+
+    /* ---------- PASUL 4: foile: foaie nouă, trecerea, numele ---------- */
+    {t:'Foile: foaie nouă, trecerea, numele',
+     text:`<p>Jos, sub celule, stau <mark>filele foilor</mark>. Fila albă, cu numele îngroșat și o dungă verde, e a foii active: pe ea lucrezi acum.</p>
+<p>Butonul <b>+</b> (Foaie nouă, New sheet) face o <mark>foaie nouă</mark>, imediat după foaia activă, cu un nume de probă ales de Excel, de exemplu Sheet2 (Foaie2). Treci pe altă foaie cu clic pe fila ei, sau cu <kbd>Ctrl</kbd>+<kbd>PageDown</kbd> (foaia din dreapta) și <kbd>Ctrl</kbd>+<kbd>PageUp</kbd> (din stânga). La ultima foaie, Ctrl+PageDown te lasă pe loc.</p>
+<p>Ca s-o <mark>redenumești</mark>, dai dublu clic pe filă: numele vechi se selectează, scrii direct numele nou și apeși <kbd>Enter</kbd>. <kbd>Esc</kbd> renunță.</p>
+${fig(IMG+'file-plus.webp',560,34,'Excel: filele de jos: Septembrie și foaia nouă Sheet2, activă, apoi butonul plus','După un clic pe +: foaia nouă e activă, imediat după Septembrie. Numărul din nume îl alege Excel: într-un registru deschis din nou poate începe iar de la Sheet1.')}
+${fig(IMG+'redenumire.webp',560,34,'Excel: fila unei foi în timpul redenumirii, cu numele Septembrie scris direct pe filă','Redenumirea: numele nou se scrie direct pe filă.')}`,
+     exemplu:`<p><b>Numele foii:</b> cel mult 31 de caractere, fără <code>: \\ / ? * [ ]</code>, nu gol și nu același cu al altei foi, nici cu alte litere mari („septembrie” lângă „Septembrie”). Mai sunt câteva reguli rare: nu se termină cu apostrof și nu poate fi History (în Excel în română, probabil Istoric).</p>
+<p><b>Culoarea filei:</b> clic dreapta pe filă (butonul din dreapta al mouse-ului; pe telefon ții degetul apăsat) › <b>Culoare filă (Tab Color)</b> › o culoare din Standard Colors.</p>
+${fig(IMG+'meniu-fila.webp',180,297,'Excel: meniul de clic dreapta al filei: Insert, Delete, Rename, Move or Copy, View Code, Protect Sheet, Tab Color, Hide, Unhide, Select All Sheets','Meniul filei (clic dreapta pe filă).')}
+${fig(IMG+'file-colorate.webp',560,34,'Excel: filele Septembrie, activă, Octombrie colorată cu verde și Noiembrie','Octombrie are culoarea verde. Când nu e activă, fila e plină de culoare.')}`,
+     altfel:`<p>E ca la un caiet cu inele: pagina nouă o prinzi imediat după pagina la care e deschis caietul, apoi îi scrii eticheta, „Octombrie”, ca s-o găsești dintr-o privire.</p>`,
+     incearca:{t:'registru',q:'Adaugă o foaie nouă cu butonul <b>+</b> și redenumește-o <b>Octombrie</b>. Apoi treci înapoi pe foaia <b>Septembrie</b>.',
+       start:{registru:{fisier:'Documente/Robotica_8A.xlsx',foi:[LUNA('Septembrie')]}},taste:false,
+       teste:[{ce:'Foile sunt Septembrie și Octombrie',foi:['Septembrie','Octombrie']},{ce:'Foaia activă e Septembrie',activa:'Septembrie'}],
+       rezolvare:[['plus'],['redenumeste',1,'Octombrie'],['activeaza','Septembrie']],
+       greseala:[['plus'],['activeaza','Septembrie']],
+       ajutor:'Butonul + e jos, lângă file. Dublu clic pe fila nouă (pe telefon, atingi fila de două ori repede), scrii Octombrie, Enter. Apoi clic pe fila Septembrie.',
+       why:'Ai două foi cu nume care spun ce au în ele, iar Septembrie e iar activă: fila ei e albă, cu dunga verde.'},
+     inca:[
+      {t:'registru',q:'Redenumește foile: <b>Sheet1</b> în <b>Septembrie</b>, <b>Sheet2</b> în <b>Octombrie</b>, <b>Sheet3</b> în <b>Noiembrie</b>.',
+       start:{registru:{nume:'Book1',foi:[{n:'Sheet1',d:{}},{n:'Sheet2',d:{}},{n:'Sheet3',d:{}}],m:true}},taste:false,
+       teste:[{ce:'Foile se numesc Septembrie, Octombrie, Noiembrie',foi:['Septembrie','Octombrie','Noiembrie']}],
+       rezolvare:[['redenumeste','Sheet1','Septembrie'],['redenumeste','Sheet2','Octombrie'],['redenumeste','Sheet3','Noiembrie']],
+       greseala:[['redenumeste','Sheet1','Septembrie'],['redenumeste','Sheet2','Octombrie']],
+       ajutor:'Dublu clic pe filă (pe telefon, atingi fila de două ori repede), scrii numele, Enter.',why:'Acum fiecare foaie spune ce are în ea.'},
+      {t:'registru',q:'Colorează fila <b>Octombrie</b> cu verde (<b>Green</b>, din Standard Colors).',
+       start:{registru:{nume:'Book1',foi:[LUNA('Septembrie'),LUNA('Octombrie'),LUNA('Noiembrie')],m:true}},taste:false,
+       teste:[{ce:'Fila Octombrie e verde',culoare:{Octombrie:'verde'}},{ce:'Celelalte file au rămas fără culoare',culoare:{Septembrie:'nu',Noiembrie:'nu'}}],
+       rezolvare:[['culoare','Octombrie','#00B050']],
+       greseala:[['culoare','Septembrie','#00B050']],
+       ajutor:'Clic dreapta (pe telefon, degetul ținut apăsat) pe fila Octombrie › Culoare filă (Tab Color) › pătrățelul verde din rândul Standard Colors.',why:'Fila Octombrie e verde: o găsești dintr-o privire.'},
+      {t:'registru',q:'Redenumește foaia <b>Noiembrie</b> în <b>septembrie</b>, cu literă mică. Ce spune Excel?',
+       start:{registru:{nume:'Book1',foi:[LUNA('Septembrie'),LUNA('Noiembrie')],m:true}},taste:false,
+       o:['Că numele e deja luat de altă foaie','Că numele e prea lung','Nimic: foaia se numește acum septembrie','Că numele are caractere nepermise'],ok:0,
+       ajutor:'Încearcă în fereastră și citește mesajul.',why:'„septembrie” și „Septembrie” sunt, pentru Excel, același nume. Două foi nu pot avea același nume.'},
+      {t:'registru',q:'Registrul are patru foi, iar tu ești pe prima. Apasă de șase ori <kbd>Ctrl</kbd>+<kbd>PageDown</kbd> (butonul de sub titlu). Pe ce foaie ajungi?',
+       start:{registru:{fisier:'Documente/Robotica_8A.xlsx',foi:[LUNA('Septembrie'),LUNA('Octombrie'),LUNA('Noiembrie'),LUNA('Decembrie')],a:0}},
+       o:['Pe ultima foaie, a patra','Înapoi pe prima foaie','Pe a doua foaie','Pe o foaie nouă'],ok:0,
+       ajutor:'Apasă de șase ori butonul Ctrl+PageDown și uită-te care filă e albă, cu dunga verde.',why:'După trei apăsări ești pe a patra foaie. Acolo rămâi pe loc: Excel nu sare înapoi la prima.'}
+     ]},
+
+    /* ---------- PASUL 5: ștergerea și mutarea unei foi ---------- */
+    {t:'Ștergerea și mutarea unei foi',
+     text:`<p>Clic dreapta pe o filă deschide meniul ei. Comanda <b>Ștergere</b> (<b>Delete</b>) <mark>șterge</mark> foaia. Dacă are ceva scris, Excel întreabă întâi: <b>Delete</b> (Ștergere) o șterge, <b>Cancel</b> (Anulare) o păstrează.</p>
+<p><strong>Atenție:</strong> ștergerea nu se anulează: <kbd>Ctrl</kbd>+<kbd>Z</kbd>, tasta care de obicei desface ultima operație, nu aduce foaia înapoi. O recuperezi doar din ultima salvare: închizi cu <b>Don't Save (Nu salvați)</b> și o deschizi din nou.</p>
+<p>Ca să <mark>muți</mark> o foaie, îi tragi fila cu mouse-ul între alte două file. Sau: clic dreapta › <b>Mutare sau copiere (Move or Copy)</b> › la <b>Before sheet (Înaintea foii)</b> alegi locul › <b>OK</b>.</p>
+${fig(IMG+'confirma-stergerea.webp',469,229,'Excel: întrebarea Microsoft Excel will permanently delete this sheet. Do you want to continue, cu butoanele Delete și Cancel','Ștergi o foaie cu date: Excel întreabă întâi.')}
+${fig(IMG+'mutare-sau-copiere.webp',400,500,'Excel: fereastra Move or Copy, cu To book Book1, lista Before sheet cu Septembrie, Noiembrie ales, Octombrie și move to end, și bifa Create a copy','Mutare sau copiere: foaia activă, Octombrie, ajunge înaintea lui Noiembrie.')}`,
+     exemplu:`<p>O foaie goală dispare fără întrebare. Singura foaie a registrului nu se poate șterge: fă întâi alta, cu <b>+</b>.</p>
+<p>O <mark>copie</mark> a foii faci trăgând fila cu <kbd>Ctrl</kbd> apăsat, sau în Mutare sau copiere bifezi <b>Create a copy</b> (fă o copie). Copia are aceleași date, iar numele primește un număr: Septembrie (2). <b>(move to end)</b> înseamnă „la sfârșit”.</p>
+${fig(IMG+'file-dupa-copie.webp',640,34,'Excel: filele după copiere: Septembrie, copia Septembrie (2), activă, Octombrie verde și Noiembrie','După copierea foii Septembrie: copia se numește Septembrie (2).')}`,
+     altfel:`<p>E ca la separatoarele din biblioraft: scoți separatorul „Octombrie” cu foile lui și îl pui la loc, între „Septembrie” și „Noiembrie”. O foaie ștearsă e ca una băgată în tocătorul de hârtie: n-o mai lipești la loc.</p>`,
+     incearca:{t:'registru',q:'Șterge foaia <b>Ciornă</b>. Apoi mută <b>Octombrie</b> înaintea lui <b>Noiembrie</b>, ca lunile să fie în ordine.',
+       start:{registru:{fisier:'Documente/Robotica_8A.xlsx',foi:[LUNA('Septembrie'),{n:'Ciornă',d:{A1:'de șters'}},LUNA('Noiembrie'),LUNA('Octombrie')],a:1}},
+       teste:[{ce:'Foaia Ciornă nu mai e',nuAreFoi:['Ciornă']},{ce:'Foile sunt Septembrie, Octombrie, Noiembrie',foi:['Septembrie','Octombrie','Noiembrie']}],
+       rezolvare:[['sterge','Ciornă'],['muta','Octombrie','Noiembrie']],
+       greseala:[['sterge','Ciornă'],['copiaza','Octombrie','Noiembrie']],
+       ajutor:'Clic dreapta (pe telefon, degetul ținut apăsat) pe fila Ciornă › Ștergere (Delete) › Delete. Apoi trage fila Octombrie între Septembrie și Noiembrie, sau clic dreapta pe ea › Mutare sau copiere › Before sheet: Noiembrie › OK, fără Create a copy.',
+       why:'Ciorna a dispărut, iar lunile sunt în ordine, fiecare o singură dată.'},
+     inca:[
+      {t:'registru',q:'Fă o copie a foii <b>Septembrie</b> și pune-o la sfârșit. Apoi redenumește copia <b>Decembrie</b>.',
+       start:{registru:{fisier:'Documente/Robotica_8A.xlsx',foi:[LUNA('Septembrie'),LUNA('Octombrie','Bogdan'),LUNA('Noiembrie','Cristi')]}},taste:false,
+       teste:[{ce:'Foile sunt Septembrie, Octombrie, Noiembrie, Decembrie',foi:['Septembrie','Octombrie','Noiembrie','Decembrie']},
+        {ce:'Decembrie are aceeași listă ca Septembrie',date:{Decembrie:{A2:'Ana'}}}],
+       rezolvare:[['copiaza','Septembrie',null],['redenumeste','Septembrie (2)','Decembrie']],
+       greseala:[['muta','Septembrie',null],['redenumeste','Septembrie','Decembrie']],
+       ajutor:'Clic dreapta pe Septembrie › Mutare sau copiere › Before sheet: (move to end) › bifezi Create a copy › OK. Apoi dublu clic pe fila Septembrie (2).',
+       why:'Copia are lista din Septembrie, iar foaia Septembrie a rămas la locul ei.'},
+      {t:'choice',q:'Ai salvat registrul la ora 10:00. La 10:20 ștergi din greșeală foaia Note, cu tot tabelul. Ce faci ca s-o aduci înapoi?',
+       o:['Închizi registrul cu Don\'t Save și îl deschizi din nou','Apeși Ctrl+Z de mai multe ori','Apeși Ctrl+S, apoi Ctrl+Z','Faci o foaie nouă cu + și o numești Note'],ok:0,
+       ajutor:'Ce se întâmplă cu schimbările nesalvate când închizi cu Don\'t Save?',why:'La redeschidere, registrul e cum era la 10:00, cu foaia Note. Ctrl+Z nu aduce foaia, Ctrl+S ar salva registrul fără ea, iar o foaie nouă e goală. Pierzi doar ce ai schimbat între 10:00 și 10:20.'},
+      {t:'registru',q:'Registrul are o singură foaie, <b>Septembrie</b>. Încearcă s-o ștergi. Ce se întâmplă?',
+       start:{registru:{fisier:'Documente/Robotica_8A.xlsx',foi:[LUNA('Septembrie')]}},taste:false,
+       o:['Excel refuză: un registru trebuie să aibă măcar o foaie','Foaia dispare, iar registrul rămâne fără foi','Excel închide registrul','Foaia se golește, dar rămâne'],ok:0,
+       ajutor:'Încearcă în fereastră: clic dreapta pe filă › Ștergere (Delete).',why:'Un registru are mereu cel puțin o foaie. Ca s-o ștergi pe aceasta, faci întâi alta, cu +.'}
+     ]}
+   ],
+   atelier:{t:'registru',titlu:'Atelier: registrul cercului de robotică',
+    intro:`<p>Fereastra de mai jos se poartă ca Excel-ul. Deasupra ei sunt <strong>testele</strong>: fiecare se bifează singur când ai făcut ce cere. Fă pașii în ordine. La final apasă <b>Verifică</b>.</p>`,
+    q:'<b>1.</b> Fă un registru nou. <b>2.</b> Redenumește <b>Sheet1</b> în <b>Octombrie</b>. <b>3.</b> Apasă <b>+</b> și numește foaia nouă <b>Noiembrie</b>. Mai apasă o dată <b>+</b> și numește foaia nouă <b>Septembrie</b>. <b>4.</b> Mută <b>Septembrie</b> la început, ca lunile să fie în ordine. <b>5.</b> Colorează fila <b>Octombrie</b> (orice culoare). <b>6.</b> Salvează în <b>Documente</b> (schimbă locul propus), cu numele tău după modelul <code>Popescu_Ana_8A_lectia3</code>. Dacă Excel spune că numele există deja, apasă <b>Anulare</b>. <b>7.</b> Închide registrul și deschide-l din nou.',
+    start:{gol:true,fisiere:{Documente:COLEGI}},
+    teste:[{ce:'Foile sunt Septembrie, Octombrie, Noiembrie, în ordinea asta',foi:['Septembrie','Octombrie','Noiembrie']},
+     {ce:'Fila Octombrie are o culoare',culoare:{Octombrie:'orice'}},
+     {ce:'E salvat în Documente, cu numele tău, clasa și lectia3, ca .xlsx, cu foile în ordine',salvat:{folder:'Documente',model:'lectia3',ext:'xlsx',foi:['Septembrie','Octombrie','Noiembrie'],culoare:{Octombrie:'orice'}}},
+     {ce:'L-ai închis și l-ai deschis din nou din Documente',redeschis:true,deschisDin:{folder:'Documente',model:'lectia3',ext:'xlsx'}},
+     {ce:'Fișierele colegilor au rămas neatinse',colegi:true}],
+    rezolvare:[['nou'],['redenumeste','Sheet1','Octombrie'],['plus'],['redenumeste','Sheet2','Noiembrie'],['plus'],['redenumeste','Sheet3','Septembrie'],['muta','Septembrie','Octombrie'],['culoare','Octombrie','#00B050'],
+      ['salveaza',{folder:'Documente',nume:'Popescu_Ana_8A_lectia3'}],['inchide','da'],['deschide','Documente/Popescu_Ana_8A_lectia3.xlsx']],
+    greseala:[['nou'],['redenumeste','Sheet1','Octombrie'],['plus'],['redenumeste','Sheet2','Noiembrie'],['plus'],['redenumeste','Sheet3','Septembrie'],['culoare','Octombrie','#00B050'],
+      ['salveaza',{folder:'Documente',nume:'Popescu_Ana_8A_lectia3'}]],
+    ajutor:'Registru nou: butonul Ctrl+N. Redenumirea: dublu clic pe filă, scrii, Enter. Mutarea: tragi fila sau clic dreapta › Mutare sau copiere. Culoarea: clic dreapta › Culoare filă. Salvarea: Ctrl+S, iar la Choose a Location alegi Documente. La final, Ctrl+W, apoi Ctrl+O și fișierul tău.',
+    why:'Registrul e gata: trei luni în ordine, Octombrie colorată, salvat cu un nume doar al tău și deschis din nou fără să pierzi nimic.',
+    inca:[
+     {t:'registru',q:'Registrul clubului de șah, <b>Sah_8A.xlsx</b>. <b>1.</b> Șterge foaia <b>Ciornă</b>. <b>2.</b> Fă o copie a foii <b>Runda 1</b>, pune-o înaintea foii <b>Runda 3</b> și redenumește-o <b>Runda 2</b>. <b>3.</b> Colorează fila <b>Runda 3</b> cu roșu (<b>Red</b>). <b>4.</b> Cu <b>Salvare ca</b>, fă-ți registrul tău în <b>Documente</b>, cu numele după modelul <code>Popescu_Ana_8A_sah</code>, ca .xlsx. <b>5.</b> Tot cu Salvare ca, fă și un <b>PDF</b> cu același nume, ca să-l trimiți clubului.',
+      start:{registru:{fisier:'Documente/Sah_8A.xlsx',foi:[{n:'Runda 1',d:{A1:'Masa',B1:'Albe',C1:'Negre',A2:'1',B2:'Ana',C2:'Dan'}},{n:'Ciornă',d:{A1:'încercări'}},{n:'Runda 3',d:{A1:'Masa',B1:'Albe',C1:'Negre'}}]},fisiere:{Documente:[{n:'Ionescu_Maria_8A_sah.xlsx',coleg:true,foi:[{n:'Runda 1',d:{A1:'Maria'}}]}]}},
+      teste:[{ce:'Foile sunt Runda 1, Runda 2, Runda 3',foi:['Runda 1','Runda 2','Runda 3']},
+       {ce:'Runda 2 are aceeași listă ca Runda 1',date:{'Runda 2':{B2:'Ana'}}},
+       {ce:'Fila Runda 3 e roșie',culoare:{'Runda 3':'#FF0000'}},
+       {ce:'Registrul tău e în Documente, cu numele tău, clasa și sah, ca .xlsx',salvat:{folder:'Documente',model:'sah',ext:'xlsx',foi:['Runda 1','Runda 2','Runda 3'],culoare:{'Runda 3':'#FF0000'}}},
+       {ce:'Ai și un PDF cu același nume, în Documente',salvat:{folder:'Documente',model:'sah',ext:'pdf'}},
+       {ce:'Sah_8A.xlsx și fișierul Mariei au rămas neschimbate',neschimbat:['Documente/Sah_8A.xlsx'],colegi:true}],
+      rezolvare:[['sterge','Ciornă'],['copiaza','Runda 1','Runda 3'],['redenumeste','Runda 1 (2)','Runda 2'],['culoare','Runda 3','#FF0000'],
+        ['salveazaCa',{folder:'Documente',nume:'Popescu_Ana_8A_sah',tip:'xlsx'}],['salveazaCa',{folder:'Documente',nume:'Popescu_Ana_8A_sah',tip:'pdf'}]],
+      greseala:[['sterge','Ciornă'],['copiaza','Runda 1','Runda 3'],['redenumeste','Runda 1 (2)','Runda 2'],['culoare','Runda 3','#FF0000'],['salveaza',{}]],
+      ajutor:'Copia: clic dreapta pe Runda 1 › Mutare sau copiere › Before sheet: Runda 3 › Create a copy › OK, apoi redenumești Runda 1 (2). Salvare ca: F12; la Save as type întâi Excel Workbook, apoi PDF.',
+      why:'Registrul clubului a rămas neatins; al tău are rundele în ordine, iar PDF-ul e gata de trimis.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Ai terminat orarul clasei și vrei să-l trimiți părinților, ca să-l citească pe telefon, fără să-l poată schimba. Ce alegi la <b>Save as type</b>?',
+     o:['PDF (*.pdf)','CSV UTF-8 (Comma delimited) (*.csv)','Excel Workbook (*.xlsx)'],ok:0,
+     ajutor:'Care format e o „fotografie” bună de citit?',why:'PDF-ul se citește ușor pe orice telefon și nu se modifică în Excel. CSV-ul pierde culorile, iar .xlsx se poate schimba.'},
+    {t:'registru',q:'Pune zilele în ordine: mută <b>Marți</b> înaintea lui <b>Miercuri</b>. Apoi colorează fila <b>Luni</b> cu galben (<b>Yellow</b>).',
+     start:{registru:{nume:'Book1',foi:[{n:'Luni',d:{A1:'Ora',B1:'Materia'}},{n:'Miercuri',d:{A1:'Ora',B1:'Materia'}},{n:'Marți',d:{A1:'Ora',B1:'Materia'}}],m:true}},taste:false,
+     teste:[{ce:'Foile sunt Luni, Marți, Miercuri',foi:['Luni','Marți','Miercuri']},{ce:'Fila Luni e galbenă',culoare:{Luni:'#FFFF00'}}],
+     rezolvare:[['muta','Marți','Miercuri'],['culoare','Luni','#FFFF00']],
+     greseala:[['culoare','Luni','#FFFF00']],
+     ajutor:'Mutarea: tragi fila Marți sau Mutare sau copiere. Culoarea: clic dreapta pe Luni › Culoare filă (Tab Color).',why:'Zilele sunt în ordine, iar Luni se vede de departe.'},
+    {t:'tf',q:'Ai șters din greșeală o foaie cu date. Dacă apeși imediat <kbd>Ctrl</kbd>+<kbd>Z</kbd>, foaia revine.',ok:false,
+     ajutor:'Ce ai aflat despre ștergerea unei foi?',why:'Fals. Ștergerea unei foi nu se poate anula. O recuperezi doar din ultima salvare: închizi cu Don\'t Save și deschizi din nou.'},
+    {t:'registru',q:'Deschide registrul <b>Biblioteca_8A.xlsx</b> din <b>Documente</b>. Fă-ți o copie cu numele tău după același model, <b>Popescu_Ana_8A_biblioteca</b>, tot în Documente, fără să schimbi fișierul original.',
+     start:{gol:true,fisiere:{Documente:[{n:'Biblioteca_8A.xlsx',foi:[{n:'Imprumuturi',d:{A1:'Cartea',B1:'Elev',A2:'Amintiri din copilărie',B2:'Ana'}}]},{n:'Pop_Dan_8A_biblioteca.xlsx',coleg:true,foi:[{n:'Imprumuturi',d:{A1:'Dan'}}]}]}},
+     teste:[{ce:'Ai o copie în Documente, cu numele tău, clasa și biblioteca',salvat:{folder:'Documente',model:'biblioteca',ext:'xlsx',foi:['Imprumuturi']}},
+      {ce:'Biblioteca_8A.xlsx și fișierul lui Dan au rămas neschimbate',neschimbat:['Documente/Biblioteca_8A.xlsx'],colegi:true}],
+     rezolvare:[['deschide','Documente/Biblioteca_8A.xlsx'],['salveazaCa',{folder:'Documente',nume:'Popescu_Ana_8A_biblioteca',tip:'xlsx'}]],
+     greseala:[['deschide','Documente/Biblioteca_8A.xlsx'],['salveaza',{}]],
+     ajutor:'Întâi Ctrl+O și fișierul. Apoi F12: numele tău la File name și Save.',why:'Originalul a rămas cum era, iar tu ai copia ta, cu numele tău.'},
+    {t:'registru',q:'Registrul <b>Note_8A.xlsx</b> are o foaie în plus, <b>Sheet2</b>, goală. Șterge-o, apoi închide registrul păstrând schimbarea.',
+     start:{registru:{fisier:'Documente/Note_8A.xlsx',foi:[{n:'Note',d:{A1:'Elev',B1:'Nota',A2:'Ana',B2:'9'}},{n:'Sheet2',d:{}}],a:1}},
+     teste:[{ce:'Registrul e închis',inchis:true},{ce:'Note_8A.xlsx are doar foaia Note',salvat:{folder:'Documente',fisier:'Note_8A.xlsx',ext:'xlsx',foi:['Note']}}],
+     rezolvare:[['sterge','Sheet2'],['inchide','da']],
+     greseala:[['sterge','Sheet2'],['inchide','nu']],
+     ajutor:'Clic dreapta pe Sheet2 › Ștergere (Delete). Apoi Ctrl+W și Save.',why:'Foaia goală a dispărut fără întrebare, iar la închidere ai salvat schimbarea.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Excel-ul adevărat, pe calculatorul din laborator',titlu:'Acum în Excel-ul adevărat',
+    intro:'<p>Faci același registru în Excel, pe calculator, singur, pas cu pas. La pasul 8 verifici tu că e bine. Fiecare comandă are alături, în paranteză, și celălalt nume: pe calculatorul tău vezi unul dintre ele (Office în română sau în engleză).</p>',
+    pasi:PROVOCARE},
+  diploma:{titlu:'Organizator de registre',
+    rezumat:'a făcut un registru nou, l-a salvat cu un nume doar al lui, a ales între .xlsx, .csv și .pdf, l-a închis și l-a deschis din nou, și i-a organizat foile: nume, culoare, ordine, copii și ștergeri',
+    aplicatie:'Excel-ul adevărat',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
