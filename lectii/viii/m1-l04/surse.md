@@ -43,3 +43,7 @@ Foaia din `_motor\tip-excel.js`, neschimbată, plus: clic dreapta (celulă, rân
 - Nimic din lecție rulat de mine în Excel vizibil (fără acord pentru controlul ecranului); afirmațiile sunt în `afirmatii.json`.
 - Atingerea lungă pe un telefon REAL (în Chromium emulat, evenimentul `contextmenu` deschide meniul); o atingere pe numărul rândului dată la mai puțin de ~0,2 s după o tragere a fost ignorată o dată în proba emulată.
 - Fotografia din viața reală pentru P1 (vezi `capturi_lipsa.json`).
+
+
+## Corectură 28.09.2026 (dirijorul)
+Grupul de pe fila Pornire (Home) se numește **Clipboard** și în Office-ul românesc (paginile Microsoft ro-ro: „în grupul Clipboard de pe fila Pornire”; `calibrare\meniuri_ro_en.json`). „Memorie temporară” era o traducere a unui sit terț, nu numele de pe panglică. Găsit de judecătorul lecției VIII/2; corectat în pagină (4 locuri), `afirmatii.json`, `profil.json`, `img\SURSE.json`.
