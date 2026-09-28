@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gestionarea unui document: creare, deschidere, vizualizare, salvare, închidere</title>
+<meta name="description" content="Lecția 3, clasa a VII-a: faci un document nou în Word, îl salvezi cu nume și loc potrivite, faci și o copie PDF, îl închizi, îl deschizi din nou și schimbi vizualizarea, pas cu pas, cu Word simulat în pagină și lucru la calculatorul din laborator.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600;6..72,800&family=Public+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Martian+Mono:wght@400;500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+/* TEMA: un raft cu dosare (bibliorafturi) cu etichete — fiecare document are un loc și un nume */
+:root{
+  --desk:#F1ECE4; --paper:#FFFFFF; --paper2:#F7F2EA; --line:#DDD2C2;
+  --ink:#2A2118; --ink2:#65584A; --accent:#8C4A0A; --accentInk:#FFFFFF; --sel:#F6E3C8;
+  --mark:#FFE27A; --markInk:#2A2118; --ok:#1B7A4A; --okbg:#E2F4EA; --bad:#B42318; --badbg:#FBE7E4;
+  --fd:"Newsreader",Georgia,"Times New Roman",serif; --fb:"Public Sans","Segoe UI",system-ui,sans-serif; --fm:"Martian Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#17130F; --paper:#221C16; --paper2:#2B241D; --line:#46392C; --ink:#F1E9DF; --ink2:#C2B3A2;
+  --accent:#F0B45A; --accentInk:#17130F; --sel:#4A3620; --mark:#F2C94C; --markInk:#2A2118;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#17130F; --paper:#221C16; --paper2:#2B241D; --line:#46392C; --ink:#F1E9DF; --ink2:#C2B3A2;
+  --accent:#F0B45A; --accentInk:#17130F; --sel:#4A3620; --mark:#F2C94C; --markInk:#2A2118;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+/* banda: cotoarele unor dosare pe raft, fiecare cu eticheta lui; doar CSS */
+.banda{min-height:32px;padding:0 10px;display:flex;align-items:flex-end;gap:5px;background:var(--paper2);border-bottom:3px solid var(--ink2)}
+.banda .d{flex:0 0 24px;height:26px;border-radius:2px 2px 0 0;position:relative}
+.banda .d::after{content:"";position:absolute;left:4px;right:4px;top:5px;height:9px;background:#FFFDF6;border-radius:1px}
+.banda .d.a{background:#C8641C}.banda .d.b{background:#2F6B63}.banda .d.c{background:#8C4A0A}.banda .d.e{background:#2B579A}
+.banda .sp{flex:1}
+h1{font-weight:800;letter-spacing:-.01em}
+h1 em{color:var(--accent);font-style:normal}
+h2{font-weight:600}
+.tasta{font-family:var(--fm);font-size:.85em;padding:1px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;background:var(--paper2);white-space:nowrap}
+/* desene mici „ca în Word” pentru „Uite cum” (nu sunt capturi) */
+.mw{border:1px solid #8A94A3;border-radius:6px;overflow:hidden;margin:6px 0 10px;background:#fff;color:#1b1b1b;font-family:'Segoe UI',system-ui,Arial,sans-serif;font-size:.86rem;max-width:460px}
+.mw .t{background:#2B579A;color:#fff;padding:4px 10px;text-align:center;font-size:.8rem}
+.mw .c{padding:8px 10px;display:grid;gap:6px}
+.mw .r{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.mw .b{border:1px solid #8A94A3;border-radius:3px;padding:2px 10px;background:#F3F3F3}
+.mw .b.p{background:#2B579A;color:#fff;border-color:#2B579A}
+.mw .ro{display:block;font-size:.72rem;color:#555}
+.mw .pv{background:#FFF1B8;border-bottom:1px solid #E6C84C;padding:5px 10px;font-size:.78rem}
+.fisiere{display:grid;gap:4px;margin:6px 0 10px;max-width:460px}
+.fisiere span{display:flex;gap:8px;align-items:center;font-size:.88rem}
+.fisiere i{flex:none;display:inline-grid;place-items:center;width:20px;height:24px;border-radius:2px;font-style:normal;font-size:.6rem;font-weight:700;color:#fff;background:#2B579A}
+.fisiere i.pdf{background:#C4302B}.fisiere i.odt{background:#1E7B45}.fisiere i.rtf{background:#6B6B6B}
+.descarca{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/ui-panglica.js"></script>
+<script src="../../../jocuri/_motor/panglica-word.js"></script>
+<script src="../../_sim/wordfisier.js"></script>
+<script>
+/* LECȚIA 3, clasa a VII-a, modulul 1 (revizuirea LearningHub, standardul din 27.09.2026).
+   Un singur nivel pe pași: pasul 0 „La ce folosește”, 5 pași cu „Încearcă” (după judecător, 28.09.2026: pașii 1+2, 4+5, 6+7, 8+9 comasați), atelierul în Word simulat,
+   pasul „Acum la calculatorul din laborator” (documentul de lucru se descarcă din pagină), 5 întrebări.
+   Simulatorul: lectii/_sim/wordfisier.js (tipul `wordfis`): pagina de început, File (Fișier), Save As, Save this file,
+   Open, Explorer, închiderea cu „Save your changes to this file?”, Vizualizarea protejată, vizualizările și zoom-ul.
+   Fiecare afirmație „dacă faci X, apare Y” e în afirmatii.json, cu proba din Word-ul real (_proba/rezultate_*.json). */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG_RAFT='img/dosare-pe-raft.webp';
+const IMG_FILE='../../../jocuri/word-vii/img/file-panglica.webp';
+const K=s=>s.split('+').map(k=>`<kbd>${k}</kbd>`).join('+');
+const PROG='Operații pentru gestionarea unui document: creare, deschidere, vizualizare, salvare, închidere';
+const DOCX='club-lectura.docx';
+const CLUB=['Clubul de lectură – fișa de înscriere','Ne întâlnim joi, după ore, în biblioteca școlii. Fiecare membru citește o carte pe lună și le povestește celorlalți despre ea.','Cartea pe care o propun: o carte de aventuri.','Numele meu:'];
+const ORAR=['Orarul meu','Luni: română, matematică, TIC'];
+const ORAR_ANA={folder:'doc',nume:'Popescu_Ana_7A_orar',text:ORAR};
+const MW_INCHIDERE=`<div class="mw" role="img" aria-label="Desen: fereastra Word care întreabă Save your changes to this file?, cu butoanele Save, Don't Save și Cancel"><div class="t">Microsoft Word</div><div class="c"><b>Save your changes to this file?</b><span class="ro">Salvați modificările în acest fișier?</span>
+  <div class="r"><span class="b p">Save<span class="ro" style="color:#dfe8f7">Salvare</span></span><span class="b">Don't Save<span class="ro">Nu salvați</span></span><span class="b">Cancel<span class="ro">Anulare</span></span></div></div></div>`;
+const MW_PV=`<div class="mw" role="img" aria-label="Desen: bara galbenă PROTECTED VIEW de sub panglică, cu butonul Enable Editing"><div class="pv"><b>PROTECTED VIEW</b> Be careful—files from the Internet can contain viruses. Unless you need to edit, it's safer to stay in Protected View. <span class="b" style="background:#fff">Enable Editing</span></div><div class="c" style="color:#555">…documentul, doar de citit…</div></div>`;
+const PROVOCARE=[
+  `Pornește <b>Word</b> din meniul <b>Start</b> și alege <b>Document necompletat (Blank document)</b>. Scrie pe primul rând <b>Orarul meu de luni</b>, apasă <kbd>Enter</kbd> și scrie materiile tale de luni, despărțite prin virgulă.`,
+  `Apasă <kbd>F12</kbd>. În stânga alege <b>Documente (Documents)</b> sau folderul scris pe tablă. La <b>Nume fișier (File name)</b> șterge ce e scris și scrie numele TĂU după regulă: numele, prenumele, clasa și <b>orar</b>, cu <code>_</code> între ele, fără diacritice. Apasă <b>Salvare (Save)</b>: sus, în bara de titlu, apare numele tău. Dacă Word spune că fișierul există deja (<i>already exists</i>): <b>Anulare (Cancel)</b>, pune o cifră la capătul numelui, apoi iar <b>Salvare (Save)</b>. F12 nu merge? <b>Fișier (File)</b> › <b>Salvare ca (Save As)</b> › <b>Răsfoire (Browse)</b>.`,
+  `Pe fila <b>Vizualizare (View)</b> apasă <b>Mod citire (Read Mode)</b>. Încearcă să scrii o literă: nu apare. Apasă <kbd>Esc</kbd>. Apoi mărește zoom-ul cu <b>+</b> din bara de stare și, la urmă, apasă <b>100%</b> pe fila <b>Vizualizare (View)</b>.`,
+  `Dă clic la capătul rândului cu materiile, apasă <kbd>Enter</kbd> și scrie <b>Marți am sport.</b> Apasă ${K('Ctrl+S')}: nu apare nicio fereastră.`,
+  `Copia PDF: apasă <kbd>F12</kbd>, la <b>Salvare cu tipul (Save as type)</b> alege <b>PDF (*.pdf)</b>, lasă același nume și apasă <b>Salvare (Save)</b>. Dacă Word întreabă <i>You already have a file named… Do you want to replace it with this one?</i>: <b>Anulare (Cancel)</b>, pune o cifră la capătul numelui, apoi iar <b>Salvare (Save)</b>. Dacă PDF-ul se deschide într-un alt program, închide-l cu ✕.`,
+  `Închide documentul cu ${K('Ctrl+W')} (Word rămâne gol), apoi Word-ul cu ✕. Pornește iar Word și, în lista <b>Recente (Recent)</b>, dă clic pe fișierul cu numele TĂU. Nu e acolo? <b>Deschidere (Open)</b> › <b>Răsfoire (Browse)</b> › <b>Documente (Documents)</b> › fișierul tău › <b>Deschidere (Open)</b>. Vezi rândul „Marți am sport.”? Închide-l cu ${K('Ctrl+W')}.`,
+  `Fișa clubului: descarcă <a href="${DOCX}" download="${DOCX}">${DOCX}</a> și deschide-o (clic pe ea în lista de descărcări a browserului sau dublu-clic în <b>Descărcări (Downloads)</b>). Pe bara galbenă apasă <b>Activare editare (Enable Editing)</b>; dacă e în <b>Mod citire (Read Mode)</b>, apasă <kbd>Esc</kbd>. Dă clic după <b>Numele meu:</b>, apasă bara de spațiu și scrie-ți numele. Salveaz-o cu <kbd>F12</kbd> în <b>Documente (Documents)</b>, cu numele tău după regulă și <b>club</b> la capăt; dacă există deja: <b>Anulare (Cancel)</b> și o cifră. Închide Word-ul cu ✕. În Explorer, în Documente, ai acum trei fișiere cu numele tău.`
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vii_m1_l03',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/vii/, „Lecția 3”, pasul din laborator înainte de verificare
+  titlu:'Gestionarea unui document: creare, deschidere, vizualizare, salvare, închidere',
+  marca:'Lecția 3 · <b>Documentul și fișierul lui</b>',
+  h1:'Gestionarea unui document: <em>creare, deschidere, vizualizare, salvare, închidere</em>',
+  clasa:'a VII-a', unitate:'VII-U1', unitateTitlu:'Tehnoredactare: editorul de texte',
+  competente:['CS.1.1','CS.3.1'], lectii:'3',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VII-U1 „Tehnoredactare: editorul de texte” · lecția 3 din modulul 1 · conținutul: „Operații pentru gestionarea unui document: creare, deschidere, vizualizare, salvare, închidere”',
+  banda:'<span class="d a"></span><span class="d b"></span><span class="d c"></span><span class="d e"></span><span class="d b"></span><span class="sp"></span><span class="d a"></span><span class="d c"></span>',
+  intro:`<p>Înveți drumul unui document Word: îl <b>creezi</b>, îl <b>salvezi</b> cu nume și loc potrivite, faci o copie <b>PDF</b>, îl <b>închizi</b>, îl <b>deschizi</b> din nou și alegi cum îl <b>vezi</b>. Exersezi în Word-ul simulat, apoi la calculatorul din laborator.</p>
+<p><b>Ai nevoie de:</b> lecția 2 (panglica din Word, cu filele ei, de exemplu <b>Pornire (Home)</b> și <b>Vizualizare (View)</b>; bara de stare, jos; scrii un rând și apeși <kbd>Enter</kbd>) și, din clasa a V-a: <b>fișier</b>, <b>folder</b>, <b>extensie</b> (partea de după punct din numele fișierului), <b>Explorer</b>, butonul <b>Start</b> și <b>bara de activități</b>.</p>`,
+  cum:`<p><b>Poți lucra singur, fără profesor.</b> Citești un pas, te uiți la „Uite cum”, faci „Încearcă tu”. După o greșeală apare un indiciu, după două poți cere răspunsul. Urmează atelierul, pasul din laborator și 5 întrebări.</p>`,
+  nivele:[
+{t:'Gestionarea unui document: creare, deschidere, vizualizare, salvare, închidere',lectii:[3],continuturi:[PROG],final:true,
+ obiectiv:'faci un document nou, îl salvezi cu un nume potrivit în folderul potrivit, faci o copie PDF, îl închizi, îl deschizi din nou și alegi cum îl vezi pe ecran.',
+ pasi:[
+  /* ---------- pasul 0 ---------- */
+  {t:'La ce folosește',
+   text:`<p>La școală, lucrările stau în <strong>dosare</strong>. Fiecare dosar are un <strong>nume</strong> pe etichetă și un loc pe <strong>raft</strong>, ca să-l găsești oricând și să nu-l încurci cu al colegului.</p>
+<p>Un document Word e la fel. Îl <strong>creezi</strong>, îi dai un nume și îl pui într-un folder: îl <strong>salvezi</strong>. Apoi îl <strong>închizi</strong>, iar data viitoare îl <strong>deschizi</strong> și continui. Un document nesalvat e ca o foaie uitată pe bancă: se pierde.</p>
+${fig(IMG_RAFT,800,534,'Fotografie: bibliorafturi portocalii și verzi așezate unul lângă altul pe un raft; pe cotorul fiecăruia e lipită o etichetă albă, scrisă de mână','Bibliorafturi pe raft, fiecare cu eticheta lui. Foto: Shixart1985, <a href="https://commons.wikimedia.org/wiki/File:Collection_of_colorful_binders_on_a_shelf_for_storing_documents_in_an_office_setting.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, licența <a href="https://creativecommons.org/licenses/by/2.0" target="_blank" rel="noopener">CC BY 2.0</a>.')}`},
+  /* ---------- pasul 1 ---------- */
+  {t:'Documentul nou și prima salvare',
+   text:`<p>Un <mark>document nou</mark> îl faci pe pagina de început a Word-ului, cu <strong>Document necompletat (Blank document)</strong>, sau cu ${K('Ctrl+N')}: ții apăsată tasta <kbd>Ctrl</kbd> și apeși o dată <kbd>N</kbd>. Tot acolo sunt <mark>șabloane</mark> (template): documente gata aranjate, de exemplu o diplomă.</p>
+<p>A <mark>salva</mark> înseamnă a scrie documentul pe disc, într-un fișier. Prima dată:</p>
+<ol><li>apeși <kbd>F12</kbd> (sus pe tastatură): se deschide fereastra <strong>Salvare ca (Save As)</strong>;</li>
+<li>în stânga dai clic pe <strong>Documente (Documents)</strong> sau pe folderul scris pe tablă;</li>
+<li>la <strong>Nume fișier (File name)</strong> scrii numele;</li>
+<li>apeși <strong>Salvare (Save)</strong> sau <kbd>Enter</kbd>.</li></ol>
+<p>Sus, în bara de titlu, în loc de Document1 apare numele.</p>`,
+   exemplu:`<p>Word îți propune ca nume primul <strong>rând</strong> (prima linie) al textului, de exemplu <b>Orarul meu</b>, pe unele calculatoare cu .docx la capăt. Îl ștergi și scrii numele cerut; extensia <b>.docx</b> o pune Word singur.</p>
+<p>F12 nu merge? Mergi pe <b>Fișier (File)</b> › <b>Salvare ca (Save As)</b> › <b>Răsfoire (Browse)</b>; semnul › înseamnă „apoi”. Și ${K('Ctrl+S')} îți cere, prima dată, numele și locul.</p>`,
+   altfel:`<p>E ca atunci când pui o lucrare în dosar: alegi raftul (folderul), scrii eticheta (numele), apoi o așezi acolo (Salvare).</p>`,
+   incearca:{t:'wordfis',taste:['f12'],tastatura:false,
+    q:'Salvează documentul în <b>Documente (Documents)</b>, cu numele <b>Popescu_Ana_7A_orar</b>: F12, folderul din stânga, numele la File name, apoi Save.',
+    start:{word:'deschis',docs:[{text:ORAR,modificat:true}],fisiere:[{folder:'desc',nume:'orar-model',text:['Orar-model']}]},
+    verif:[{ce:'În Documente e fișierul Popescu_Ana_7A_orar',fisier:{folder:'doc',nume:'Popescu_Ana_7A_orar'},cum:'În fereastra Save As alege în stânga Documente, scrie la File name exact Popescu_Ana_7A_orar și apasă Save (sau Enter).'},
+           {ce:'Sus, în bara de titlu, scrie Popescu_Ana_7A_orar',activ:{nume:'Popescu_Ana_7A_orar'},cum:'Bara de titlu arată numele abia după Save.'}],
+    solutie:[{saveas:{folder:'doc',nume:'Popescu_Ana_7A_orar'}}],tipic:[{saveas:{folder:'desc',nume:'Orarul meu'}}],
+    ajutor:'F12, clic în stânga pe Documente, șterge ce scrie la File name, scrie Popescu_Ana_7A_orar, Save.',
+    why:'Fereastra Save As a primit locul (Documente) și numele. De aceea sus scrie acum Popescu_Ana_7A_orar, nu Document1.'},
+   inca:[
+    {t:'wordfis',taste:['ctrln'],tastatura:false,
+     q:'Word e închis. Pornește-l din meniul Start (butonul <b>⊞ Start</b>, jos, apoi <b>Word</b>) și fă un document nou din șablonul <b>Diplomă</b>.',
+     start:{word:'inchis'},
+     verif:[{ce:'Word e pornit',word:'deschis',cum:'Apasă ⊞ Start, jos, apoi Word.'},{ce:'E deschis un document nou din șablonul Diplomă',activNou:'Diplomă',cum:'Pe pagina de început, dă clic pe șablonul Diplomă, nu pe Blank document.'}],
+     solutie:['porneste',{sablon:'Diplomă'}],tipic:['porneste','blank'],
+     ajutor:'⊞ Start, Word, apoi pe pagina de început alege dala Diplomă.',
+     why:'Pe pagina de început ai ales șablonul: documentul nou vine gata aranjat.'},
+    {t:'wordfis',taste:['ctrls','f12'],tastatura:false,
+     q:'Salvează poezia în <b>Documente (Documents)</b>, cu numele <b>Marin_Ioana_7B_poezie</b>, apăsând <b>Ctrl+S</b>: în Word-ul nou apare o fereastră mică, <b>Save this file</b>, unde scrii numele și alegi locul.',
+     start:{word:'deschis',docs:[{text:['Poezia mea','Toamna vine cu frunze ruginii.'],modificat:true}]},
+     verif:[{ce:'În Documente e fișierul Marin_Ioana_7B_poezie',fisier:{folder:'doc',nume:'Marin_Ioana_7B_poezie'},cum:'Numele exact: Marin_Ioana_7B_poezie; locul: Documents (Documente).'},
+            {ce:'Sus scrie Marin_Ioana_7B_poezie',activ:{nume:'Marin_Ioana_7B_poezie'}}],
+     solutie:[{savethis:{folder:'doc',nume:'Marin_Ioana_7B_poezie'}}],tipic:[{saveas:{folder:'doc',nume:'Poezia mea'}}],
+     ajutor:'Ctrl+S; Word propune „Poezia mea”: șterge-l, scrie Marin_Ioana_7B_poezie, lasă locul Documents, apoi Save.',
+     why:'Fie cu F12, fie cu fereastra mică de la Ctrl+S, prima salvare cere același lucru: locul și numele.'}
+   ]},
+  /* ---------- pasul 2 ---------- */
+  {t:'Numele fișierului, în laboratorul comun',
+   text:`<p>La același calculator lucrează multe clase. Numele fișierului spune <strong>al cui</strong> e și <strong>ce</strong> e: <strong>Nume_Prenume_clasa_ce</strong>, de exemplu <code>Popescu_Ana_7A_orar</code> pentru Ana Popescu din 7A. Tu scrii numele și clasa TA.</p>
+<ul><li>Între cuvinte pui <code>_</code> (liniuța de jos): ții apăsată <kbd>Shift</kbd> și apeși tasta cu minus, din dreapta lui 0.</li>
+<li>Scrii fără diacritice (ă, î, ș): unele tastaturi din laborator nu le au.</li>
+<li>Windows nu primește în nume semnele \\ / : * ? " &lt; &gt; |.</li></ul>
+<p>Așa îți găsești fișierul după nume și nu-l înlocuiești pe al colegului. În lecțiile următoare unele exemple sunt fără clasă: tu pune-o mereu.</p>`,
+   exemplu:`<p>Dacă în folder există deja un fișier cu același nume, Word întreabă: <i>The file … already exists</i> (fișierul există deja), cu <b>Replace existing file</b> ales. <b>Nu apăsa OK</b>: ai înlocui fișierul care era acolo. Apasă <b>Anulare (Cancel)</b> și adaugă o cifră la capătul numelui.</p>
+<p>La PDF, Word întreabă altfel: <i>You already have a file named… Do you want to replace it with this one?</i> Și acolo apeși <b>Anulare (Cancel)</b>.</p>`,
+   altfel:`<p>E ca eticheta de pe caiet: dacă scrii doar „Matematică”, caietele clasei se încurcă. Cu numele tău și clasa pe etichetă, îl găsești imediat, iar colegul îl găsește pe al lui.</p>`,
+   incearca:{t:'choice',q:'Ioana Marin, din clasa a VII-a B, salvează compunerea despre toamnă pe calculatorul din laborator. Ce nume respectă regula?',
+    o:['Marin_Ioana_7B_compunere','Marin Ioana 7B compunere','compunere_toamna','Document1'],ok:0,
+    ajutor:'Regula: Nume_Prenume_clasa_ce, cu _ între cuvinte, fără spații.',
+    why:'Marin_Ioana_7B_compunere spune al cui e (Marin Ioana), din ce clasă (7B) și ce e (compunere), fără spații. „compunere_toamna” n-are numele elevei: se poate încurca cu a colegilor.'},
+   inca:[
+    {t:'wordfis',taste:['f12','ctrls'],tastatura:false,
+     q:'Tu ești <b>Pop Mihai</b>, din a VII-a A. În Documente e deja orarul unei colege, <b>Popescu_Ana_7A_orar</b>. Salvează orarul tău în <b>Documente</b>, cu numele după regulă (<b>Pop_Mihai_7A_orar</b>), fără să-l înlocuiești pe al ei.',
+     start:{word:'deschis',docs:[{text:['Orarul meu','Luni: sport, TIC, istorie'],modificat:true}],fisiere:[ORAR_ANA]},
+     verif:[{ce:'În Documente e fișierul Pop_Mihai_7A_orar',fisier:{folder:'doc',nume:'Pop_Mihai_7A_orar'},cum:'Numele: Pop_Mihai_7A_orar (nume, prenume, clasa, ce e).'},
+            {ce:'Orarul colegei, Popescu_Ana_7A_orar, a rămas neschimbat',neschimbat:{folder:'doc',nume:'Popescu_Ana_7A_orar'},cum:'Ai înlocuit fișierul colegei. Apasă „Ia-o de la capăt”: la întrebarea „already exists” apasă Cancel și scrie numele tău.'}],
+     solutie:[{saveas:{folder:'doc',nume:'Pop_Mihai_7A_orar'}}],tipic:[{saveas:{folder:'doc',nume:'Popescu_Ana_7A_orar',inlocuieste:true}}],
+     ajutor:'F12, Documente, la File name scrie Pop_Mihai_7A_orar (nu da clic pe fișierul colegei), Save.',
+     why:'Numele tău, diferit de al colegei, a făcut un fișier nou. Fișierul ei a rămas neatins.'},
+    {t:'choice',q:'Apeși Save și Word spune „The file Pop_Mihai_7A_orar.docx already exists”, cu Replace existing file ales. Știi că fișierul acela e al altui Mihai Pop din 7A, de anul trecut. Ce faci?',
+     o:['Apeși Cancel (Anulare) și schimbi numele','Apeși OK','Închizi Word fără să salvezi','Apeși OK de două ori, ca să fie sigur'],ok:0,
+     ajutor:'Ce se întâmplă cu fișierul lui dacă apeși OK?',why:'OK ar înlocui fișierul lui cu al tău. Cancel te întoarce în fereastră, unde schimbi numele (de exemplu adaugi o cifră).'}
+   ]},
+  /* ---------- pasul 3 ---------- */
+  {t:'Salvare, Salvare ca și PDF',
+   text:`<p>După prima salvare, documentul are nume și loc. Mai departe:</p>
+<ul><li><strong>Salvare (Save)</strong>, ${K('Ctrl+S')}: scrie modificările în <strong>același fișier</strong>, pe loc, fără nicio fereastră;</li>
+<li><strong>Salvare ca (Save As)</strong>, <kbd>F12</kbd>: face un <strong>fișier nou</strong>, cu alt nume, în alt loc sau în alt <mark>format</mark>. Fișierul vechi rămâne cum era.</li></ul>
+<p>Formatul îl alegi în lista <strong>Salvare cu tipul (Save as type)</strong>. <b>.docx</b> e documentul Word, în care lucrezi mai departe. <b>.pdf</b> arată la fel pe orice calculator sau telefon și e pentru citit și tipărit: alegi rândul <b>PDF (*.pdf)</b>, apoi <strong>Salvare (Save)</strong>.</p>`,
+   exemplu:`<p>Scrii în orar „Marți: sport” și apeși ${K('Ctrl+S')}: fișierul e același, cu rândul nou. Apoi F12, alegi PDF (*.pdf) și Salvare. În Documente sunt acum două fișiere cu același nume:</p>
+<div class="fisiere"><span><i>W</i>Popescu_Ana_7A_orar · Word</span><span><i class="pdf">PDF</i>Popescu_Ana_7A_orar · PDF</span></div>
+<p>În Word rămâne deschis .docx-ul. Mai sunt și alte formate, de exemplu .odt, pentru programul gratuit LibreOffice Writer (Word întreabă dacă îl păstrezi: <b>Yes</b>, Da).</p>`,
+   altfel:`<p>Ctrl+S e ca atunci când adaugi un rând pe aceeași foaie din dosar. PDF-ul e ca o fotocopie gata de dat altora: arată la fel pentru toți, iar foaia ta rămâne în dosar.</p>`,
+   incearca:{t:'wordfis',taste:['ctrls','f12'],tastatura:false,
+    q:'Orarul are un rând nou, <b>Marți: sport</b>, încă nesalvat. (1) Salvează-l în <b>același fișier</b>. (2) Apoi fă o copie <b>PDF</b>, în Documente, cu același nume.',
+    start:{word:'deschis',docs:[{nume:'Popescu_Ana_7A_orar',folder:'doc',text:ORAR.concat(['Marți: sport']),modificat:true}],fisiere:[ORAR_ANA]},
+    verif:[{ce:'Fișierul Popescu_Ana_7A_orar are rândul „Marți: sport”',fisier:{folder:'doc',nume:'Popescu_Ana_7A_orar',contine:'Marți: sport'},cum:'Întâi Ctrl+S: scrie rândul nou în același fișier.'},
+           {ce:'În Documente e Popescu_Ana_7A_orar.pdf, cu rândul nou',fisier:{folder:'doc',nume:'Popescu_Ana_7A_orar',ext:'pdf',contine:'Marți: sport'},cum:'F12, la Save as type alege PDF (*.pdf), Save.'},
+           {ce:'În Word a rămas deschis documentul .docx',activ:{nume:'Popescu_Ana_7A_orar',ext:'docx'}}],
+    solutie:['ctrls',{saveas:{folder:'doc',nume:'Popescu_Ana_7A_orar',tip:'pdf'}}],tipic:[{saveas:{folder:'doc',nume:'Popescu_Ana_7A_orar',tip:'rtf'}}],
+    ajutor:'Ctrl+S; apoi F12, jos lista Save as type, rândul PDF (*.pdf), Save.',
+    why:'Ctrl+S a scris rândul în fișierul Word. F12 cu tipul PDF a făcut o copie pentru citit, iar documentul de lucru, .docx, a rămas deschis.'},
+   inca:[
+    {t:'classify',q:'Ce format alegi pentru fiecare situație?',cats:['.docx','.pdf'],
+     items:[['Afișul trebuie să iasă la tipărit exact cum l-ai aranjat',1],['Colegul continuă referatul în Word',0],['Mama vrea doar să citească orarul pe telefon',1],['Tu mai lucrezi mâine la compunere',0]],
+     ajutor:'Pentru citit și tipărit la fel peste tot: .pdf. Pentru lucrat mai departe în Word: .docx.',
+     why:'Tipăritul și cititul pe telefon cer .pdf, care arată la fel peste tot. Lucrul mai departe în Word cere .docx.'},
+    {t:'tf',q:'Salvare ca (Save As) schimbă fișierul vechi.',ok:false,
+     ajutor:'Recitește a doua liniuță a pasului.',why:'Fals. Salvare ca face un fișier nou; cel vechi rămâne cum era.'}
+   ]},
+  /* ---------- pasul 4 ---------- */
+  {t:'Închizi și redeschizi',
+   text:`<p>Închizi <strong>documentul</strong> cu ${K('Ctrl+W')}: Word rămâne deschis, gol. Butonul <strong>✕</strong> din colțul din dreapta sus închide fereastra; dacă era singurul document, Word se închide de tot. Dacă ai modificări nesalvate, Word întreabă întâi: <strong>Salvare (Save)</strong> le păstrează, <strong>Nu salvați (Don't Save)</strong> le pierde, <strong>Anulare (Cancel)</strong> te întoarce în document.</p>
+<p>A <mark>deschide</mark> un document: pe pagina de început sau cu ${K('Ctrl+O')}, lista <strong>Recente (Recent)</strong> arată fișierele deschise de curând, și pe ale colegilor; îl alegi pe cel cu numele tău. Nu e acolo? <strong>Răsfoire (Browse)</strong>: în fereastra <strong>Deschidere (Open)</strong> alegi folderul și fișierul.</p>`,
+   exemplu:`${MW_INCHIDERE}<p>Fără modificări nesalvate, Word închide fără să întrebe. În Recente, <b>Popescu_Ana_7B_orar</b> e al altei Ana Popescu; tu, din 7A, alegi <b>Popescu_Ana_7A_orar</b>.</p>`,
+   altfel:`<p>Ctrl+W e ca atunci când pui caietul în ghiozdan, iar ghiozdanul rămâne deschis pe bancă. ✕ e ca atunci când închizi și ghiozdanul. Recente e teancul de caiete lăsate ultima dată pe catedră.</p>`,
+   incearca:{t:'wordfis',taste:['ctrls','ctrlw','ctrlo','f12'],tastatura:false,
+    q:'Tu ești <b>Ana Popescu</b>, din 7A. Orarul are un rând nou, <b>Miercuri: desen</b>, nesalvat. (1) Închide documentul cu <b>Ctrl+W</b> și păstrează rândul. (2) Redeschide-l cu <b>Ctrl+O</b>, din lista Recent.',
+    start:{word:'deschis',docs:[{nume:'Popescu_Ana_7A_orar',folder:'doc',text:ORAR.concat(['Miercuri: desen']),modificat:true}],
+      fisiere:[ORAR_ANA,{folder:'doc',nume:'Popescu_Ana_7B_orar',text:['Orarul Anei din 7B','Luni: fizică, chimie']}],
+      recente:[{folder:'doc',nume:'Popescu_Ana_7B_orar',ext:'docx'},{folder:'doc',nume:'Popescu_Ana_7A_orar',ext:'docx'}]},
+    verif:[{ce:'Fișierul are rândul „Miercuri: desen”',fisier:{folder:'doc',nume:'Popescu_Ana_7A_orar',contine:'Miercuri: desen'},cum:'La întrebarea „Save your changes to this file?” apasă Save.'},
+           {ce:'Ai închis documentul',jurnal:{op:['ctrlw','x']},cum:'Închide documentul cu Ctrl+W.'},
+           {ce:'L-ai redeschis: e deschis Popescu_Ana_7A_orar',jurnal:{op:'deschis',nume:'Popescu_Ana_7A_orar'},cum:'Ctrl+O, apoi în Recent alege Popescu_Ana_7A_orar (7A, nu 7B).'}],
+    solutie:['ctrlw',{inchidere:'save'},'ctrlo',{deschide:{folder:'doc',nume:'Popescu_Ana_7A_orar'}}],tipic:['ctrlw',{inchidere:'dont'},'ctrlo',{deschide:{folder:'doc',nume:'Popescu_Ana_7B_orar'}}],
+    ajutor:'Ctrl+W, apoi Save în fereastra care întreabă. Apoi Ctrl+O și, în Recent, Popescu_Ana_7A_orar.',
+    why:'Save a păstrat rândul în fișier, Ctrl+W a închis documentul, iar din Recente ai ales fișierul cu numele și clasa ta.'},
+   inca:[
+    {t:'wordfis',taste:['ctrlo'],tastatura:false,
+     q:'Word e închis. Deschide compunerea lui Radu, <b>Ionescu_Radu_7A_compunere</b>, din <b>Explorer</b> (butonul Explorer din bara de activități, jos): folderul Documente, apoi dublu-clic pe fișier.',
+     start:{word:'inchis',fisiere:[ORAR_ANA,{folder:'doc',nume:'Ionescu_Radu_7A_compunere',text:['Toamna','Frunzele cad încet.']}]},
+     verif:[{ce:'E deschis Ionescu_Radu_7A_compunere',activ:{nume:'Ionescu_Radu_7A_compunere'},cum:'Explorer, Documente, dublu-clic pe Ionescu_Radu_7A_compunere (sau atinge-l și apasă Deschide).'}],
+     solutie:[{deschide:{folder:'doc',nume:'Ionescu_Radu_7A_compunere'}}],tipic:[{deschide:{folder:'doc',nume:'Popescu_Ana_7A_orar'}}],
+     ajutor:'Explorer, jos. În stânga: Documente. Dublu-clic pe compunere.',
+     why:'Dublu-clicul din Explorer a pornit Word-ul și a deschis direct fișierul.'}
+   ]},
+  /* ---------- pasul 5 ---------- */
+  {t:'Fișierul descărcat și cum îl vezi',
+   text:`<p>Un fișier luat de pe internet ajunge în <strong>Descărcări (Downloads)</strong>. Word îl deschide în <mark>Vizualizare protejată</mark> (Protected View): îl poți citi, dar nu-l poți schimba, ca să te apere de viruși. Dacă vine de la cineva de încredere, ca profesorul tău, apeși pe bara galbenă <strong>Activare editare (Enable Editing)</strong>.</p>
+<p>Cum <mark>vezi</mark> documentul alegi pe fila <strong>Vizualizare (View)</strong> sau în dreapta barei de stare: <strong>Aspect pagină imprimată (Print Layout)</strong>, pagina ca la imprimantă; <strong>Mod citire (Read Mode)</strong>, doar pentru citit, fără panglică (ieși cu <kbd>Esc</kbd>); <strong>Aspect web (Web Layout)</strong>, textul pe toată lățimea. <strong>Zoom</strong>-ul (− și + din bara de stare) mărește doar ce vezi, nu documentul.</p>
+${fig(IMG_FILE,377,122,'Rândul de file al panglicii din Word, arătat pe două rânduri: File, Home, Insert, Draw, Design, Layout, apoi References, Mailings, Review, View și Help; fila View e subliniată','Filele din Word: <b>Fișier (File)</b> e prima din stânga, <b>Vizualizare (View)</b> spre dreapta. Aici rândul e tăiat în două ca să încapă pe telefon; în Word e un singur rând.')}`,
+   exemplu:`<p>Fișa descărcată o deschizi cu un clic în lista de descărcări a browserului sau cu dublu-clic în Descărcări. Word arată:</p>${MW_PV}
+<p>Uneori se deschide direct în Mod citire: sus doar File, Tools și View. Apeși Esc. Butonul <b>100%</b> de pe fila Vizualizare (View) aduce zoom-ul la mărimea obișnuită.</p>`,
+   altfel:`<p>Vizualizarea protejată e ca o scrisoare într-un plic transparent: o citești prin plic, dar nu scrii pe ea; o scoți din plic (Activare editare) doar dacă știi cine a trimis-o. Zoom-ul e ca o lupă: vezi mai mare, foaia rămâne aceeași.</p>`,
+   incearca:{t:'wordfis',taste:['ctrlo','esc'],tastatura:false,
+    q:'Ai descărcat de pe sit fișa <b>club-lectura</b>, în <b>Descărcări (Downloads)</b>. Deschide-o (<b>Ctrl+O</b> › <b>Browse</b>, apoi Descărcări) și fă-o bună de scris.',
+    start:{word:'deschis',docs:[],fisiere:[{folder:'desc',nume:'club-lectura',text:CLUB,web:true},ORAR_ANA]},
+    verif:[{ce:'E deschisă fișa club-lectura',activ:{nume:'club-lectura',folder:'desc'},cum:'Ctrl+O, Browse, în stânga Descărcări, fișa, Open.'},
+           {ce:'Poți scrie în ea: bara galbenă a dispărut',pv:false,cum:'Pe bara galbenă apasă Enable Editing (Activare editare).'}],
+    solutie:[{deschide:{folder:'desc',nume:'club-lectura'}},'enable'],tipic:[{deschide:{folder:'desc',nume:'club-lectura'}}],
+    ajutor:'După ce se deschide, caută bara galbenă și butonul Enable Editing.',
+    why:'Fișierul venit de pe internet s-a deschis în Vizualizare protejată. Fiindcă vine de la profesor, ai apăsat Enable Editing.'},
+   inca:[
+    {t:'wordfis',taste:['esc'],tastatura:false,
+     q:'(1) Vezi orarul în <b>Web Layout</b> (Aspect web). (2) Treci în <b>Read Mode</b> (Mod citire) și ieși cu butonul <b>Esc</b>. (3) Mărește zoom-ul până trece de <b>150%</b> (butonul + din bara de stare).',
+     start:{word:'deschis',docs:[{nume:'Popescu_Ana_7A_orar',folder:'doc',text:ORAR}],fisiere:[ORAR_ANA]},
+     verif:[{ce:'Ai văzut orarul în Web Layout',fost:'web',cum:'Fila View, butonul Web Layout (sau cel din bara de stare).'},
+            {ce:'Ai trecut prin Read Mode',fost:'citire',cum:'Fila View, butonul Read Mode.'},
+            {ce:'Ai ieșit din Read Mode: acum ești în Print Layout',vedere:'print',cum:'Din Read Mode ieși cu Esc sau cu View › Edit Document.'},
+            {ce:'Zoom-ul a trecut de 150%',zoom:[150,500],cum:'Apasă + în bara de stare până trece de 150%.'}],
+     solutie:[{vedere:'web'},{vedere:'read'},'esc',{zoom:156}],tipic:[{vedere:'read'},{zoom:156}],
+     ajutor:'Fila View (sau butoanele din bara de stare): Web Layout, apoi Read Mode, apoi Esc; la urmă + de câteva ori.',
+     why:'Ai schimbat doar felul în care vezi documentul. Textul orarului n-a fost atins: Word nici nu-l socotește modificat.'}
+   ]}
+ ],
+ atelier:{t:'wordfis',taste:['ctrln','ctrlo','ctrls','f12','ctrlw','esc'],titlu:'Atelier: fișa clubului de lectură',
+  intro:`<p>Acum faci singur drumul unui document, în Word-ul simulat. Sub sarcină vezi <strong>testele</strong>: fiecare se bifează ✔ când partea lui e gata. Tastele sunt butoanele de sub fereastră; ce scrii în caseta „Tastatura” apare la capătul documentului. Apoi urmează laboratorul și 5 întrebări.</p>`,
+  q:'Tu ești <b>Pop Mihai</b>, din 7A. (1) Deschide fișa <b>club-lectura</b> din Descărcări (Downloads) și fă-o bună de scris (Enable Editing). (2) Scrie în caseta „Tastatura” un spațiu și numele tău, <b>Pop Mihai</b>. (3) Salveaz-o în <b>Documente</b> ca <b>Pop_Mihai_7A_club</b>; acolo e deja fișa unei colege: n-o înlocui. (4) Fă și o copie <b>PDF</b>, cu același nume. (5) Închide <b>documentul</b>, dar lasă Word deschis.',
+  start:{word:'deschis',docs:[],fisiere:[{folder:'desc',nume:'club-lectura',text:CLUB,web:true},{folder:'doc',nume:'Popescu_Ana_7A_club',text:CLUB.slice(0,3).concat(['Numele meu: Ana Popescu'])}],
+    recente:[{folder:'doc',nume:'Popescu_Ana_7A_club',ext:'docx'}]},
+  verif:[{ce:'Ai deschis fișa club-lectura din Descărcări',jurnal:{op:'deschis',nume:'club-lectura'},cum:'Ctrl+O › Browse, în stânga Descărcări, club-lectura, Open.'},
+         {ce:'Ai apăsat Enable Editing (Activare editare)',jurnal:{op:'enable'},cum:'Pe bara galbenă: Enable Editing.'},
+         {ce:'În Documente e Pop_Mihai_7A_club, cu numele tău în el',fisier:{folder:'doc',nume:'Pop_Mihai_7A_club',contine:'Pop Mihai'},cum:'Scrie „ Pop Mihai” în caseta „Tastatura” ÎNAINTE de F12; numele fișierului: Pop_Mihai_7A_club, în Documente.'},
+         {ce:'Fișa colegei, Popescu_Ana_7A_club, a rămas neschimbată',neschimbat:{folder:'doc',nume:'Popescu_Ana_7A_club'},cum:'Ai înlocuit fișa colegei. Apasă „Ia-o de la capăt”; la „already exists” apasă Cancel.'},
+         {ce:'În Documente e și Pop_Mihai_7A_club.pdf',fisier:{folder:'doc',nume:'Pop_Mihai_7A_club',ext:'pdf',contine:'Pop Mihai'},cum:'F12, Save as type: PDF (*.pdf), același nume, Save.'},
+         {ce:'Documentul e închis, iar Word a rămas deschis',docuri:0,cum:'La final: Ctrl+W (nu ✕).'}],
+  solutie:[{deschide:{folder:'desc',nume:'club-lectura'}},'enable',{scrie:' Pop Mihai'},{saveas:{folder:'doc',nume:'Pop_Mihai_7A_club'}},{saveas:{folder:'doc',nume:'Pop_Mihai_7A_club',tip:'pdf'}},'ctrlw'],
+  tipic:[{deschide:{folder:'desc',nume:'club-lectura'}},'enable',{scrie:' Pop Mihai'},{saveas:{folder:'doc',nume:'Popescu_Ana_7A_club',inlocuieste:true}},'x'],
+  ajutor:'Pe rând: Ctrl+O › Browse › Descărcări › club-lectura › Open; Enable Editing; în „Tastatura”: un spațiu și Pop Mihai; F12 › Documente › File name: Pop_Mihai_7A_club › Save; F12 › Save as type: PDF › Save; Ctrl+W.',
+  why:'Ai dus fișa pe tot drumul: deschisă din Descărcări, făcută bună de scris, completată, salvată cu numele tău lângă a colegei, copiată ca PDF și închisă, cu Word-ul încă deschis.',
+  inca:[
+   {t:'wordfis',taste:['ctrln','ctrls','f12','ctrlw','esc'],
+    q:'Încă una, de la zero: (1) pornește Word din <b>Start</b> și fă un document gol; (2) scrie în „Tastatura” <b>Excursie la Bicaz</b>; (3) salvează-l în <b>Documente</b> ca <b>Pop_Mihai_7A_excursie</b>; (4) fă o copie <b>PDF</b>; (5) închide <b>Word-ul de tot</b>.',
+    start:{word:'inchis',fisiere:[{folder:'doc',nume:'Pop_Mihai_7B_excursie',text:['Excursie la Sibiu']}]},
+    verif:[{ce:'În Documente e Pop_Mihai_7A_excursie.docx, cu textul „Excursie la Bicaz”',fisier:{folder:'doc',nume:'Pop_Mihai_7A_excursie',contine:'Excursie la Bicaz'},cum:'Scrie textul înainte de F12; numele: Pop_Mihai_7A_excursie (7A, nu 7B).'},
+           {ce:'În Documente e și Pop_Mihai_7A_excursie.pdf',fisier:{folder:'doc',nume:'Pop_Mihai_7A_excursie',ext:'pdf'},cum:'F12, Save as type: PDF (*.pdf), Save.'},
+           {ce:'Word e închis de tot',word:'inchis',cum:'La final: ✕, sus în dreapta.'}],
+    solutie:['porneste','blank',{scrie:'Excursie la Bicaz'},{saveas:{folder:'doc',nume:'Pop_Mihai_7A_excursie'}},{saveas:{folder:'doc',nume:'Pop_Mihai_7A_excursie',tip:'pdf'}},'x'],
+    tipic:['porneste','blank',{scrie:'Excursie la Bicaz'},{saveas:{folder:'doc',nume:'Pop_Mihai_7A_excursie'}},{saveas:{folder:'doc',nume:'Pop_Mihai_7A_excursie',tip:'pdf'}},'ctrlw'],
+    ajutor:'Start › Word › Blank document; scrie textul; F12 › Documente › numele › Save; F12 › PDF › Save; ✕.',
+    why:'De la pornire până la închidere: document nou, salvat cu nume, copiat ca PDF, apoi Word închis de tot cu ✕.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Trimiți părinților invitația la serbare, ca s-o citească pe telefon exact cum ai aranjat-o. În ce format o salvezi?',o:['.pdf','.docx','.odt','Oricare: toate arată la fel'],ok:0,
+   ajutor:'Care format arată la fel pe orice telefon și e făcut pentru citit?',why:'PDF-ul arată la fel pe orice calculator sau telefon și e făcut pentru citit și tipărit.'},
+  {t:'choice',q:'Ai deschis compunerea salvată ieri, ai scris încă un paragraf și vrei ca fișierul ei să-l păstreze. Ce apeși?',
+   o:['Ctrl+S','F12, apoi alt nume',"Ctrl+W, apoi Don't Save (Nu salvați)",'Ctrl+N'],ok:0,
+   ajutor:'Fișierul are deja nume și loc. Care comandă scrie în același fișier?',why:'Ctrl+S scrie modificarea în același fișier, pe loc. F12 cu alt nume ar face un fișier nou, iar Don’t Save ar pierde paragraful.'},
+  {t:'choice',q:'Deschizi fișa descărcată de pe sit. Sub panglică e o bară galbenă, iar ce tastezi nu apare în document. Ce faci ca să poți scrie?',
+   o:['Apeși Enable Editing pe bara galbenă','Apeși Ctrl+S, ca să salvezi fișierul','Treci în Web Layout (Aspect web)','Mărești zoom-ul din bara de stare'],ok:0,
+   ajutor:'Cum se numește modul cu bara galbenă și cum ieși din el?',why:'Bara galbenă înseamnă Vizualizare protejată: citești, dar nu scrii. Enable Editing (Activare editare) te lasă să scrii.'},
+  {t:'wordfis',taste:['ctrls','ctrlw','f12'],tastatura:false,q:'Orarul are modificări pe care NU vrei să le păstrezi. Închide <b>Word-ul de tot</b>, fără să salvezi modificările.',
+   start:{word:'deschis',docs:[{nume:'Popescu_Ana_7A_orar',folder:'doc',text:ORAR.concat(['Joi: greșeală']),modificat:true}],fisiere:[ORAR_ANA]},
+   verif:[{ce:'Word e închis de tot',word:'inchis',cum:'Închiderea Word-ului: butonul ✕ din dreapta sus.'},{ce:'Fișierul orarului a rămas cum era',neschimbat:{folder:'doc',nume:'Popescu_Ana_7A_orar'},cum:'La întrebare: Don\'t Save (Nu salvați).'}],
+   solutie:['x',{inchidere:'dont'}],tipic:['ctrlw',{inchidere:'dont'}],
+   ajutor:'✕, apoi în fereastra care întreabă: Don\'t Save.',why:'✕ a închis fereastra singurului document, deci tot Word-ul. Don’t Save a lăsat fișierul cum era la ultima salvare.'},
+  {t:'choice',q:'Profesorul vrea să vadă pe ecran cum va arăta afișul tău pe foaia tipărită. Ce vizualizare alegi?',
+   o:['Print Layout (Aspect pagină imprimată)','Read Mode (Mod citire, fără panglică)','Web Layout (Aspect web, pe lățime)','Zoom 500%, din bara de stare'],ok:0,
+   ajutor:'Care vizualizare arată pagina cum iese la imprimantă?',why:'Print Layout arată pagina cum iese la imprimantă. Web Layout întinde textul pe tot ecranul, iar Read Mode îl așază pentru citit.'}
+ ]}
+  ],
+  aplicatieReala:{aplicatie:'Microsoft Word',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+   intro:`<p>Faci același drum în Word-ul adevărat, singur. Fișa clubului o iei de aici:</p>
+<p class="descarca"><a class="btn primary" href="${DOCX}" download="${DOCX}">Descarcă fișa clubului (${DOCX})</a></p>
+<p>Numele fișierelor tale: regula de la pasul 2, cu numele, prenumele și clasa TA; nu copia un exemplu. Salvezi în <b>Documente (Documents)</b> sau în folderul scris pe tablă.</p>`,
+   pasi:PROVOCARE},
+  diploma:{titlu:'Stăpânul fișierelor',
+   rezumat:'a făcut documente noi, le-a salvat cu nume și loc potrivite, a ales între Salvare și Salvare ca, a făcut copii PDF, a închis documentul și Word-ul, a deschis fișiere (și unul descărcat, cu Activare editare) și a schimbat vizualizarea și zoom-ul',
+   aplicatie:'Microsoft Word',
+   provocare:PROVOCARE},
+  tipuri:{wordfis:TipWordFisier}
+});
+</script>
+</body>
+</html>
