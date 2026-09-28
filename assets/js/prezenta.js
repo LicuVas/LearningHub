@@ -631,6 +631,15 @@
     return [99, w.join(' ')];
   }
   function cmpClasa(a, b) { var x = cheieClasa(a), y = cheieClasa(b); return x[0] - y[0] || x[1].localeCompare(y[1], 'ro'); }
+  /* clasă scrisă de mână la „Altă clasă din școala asta” (28.09.2026): „a VI-a b” → „VI B”, „6b” → „6 B”;
+     dacă e de fapt una dintre clasele profesorului, ia eticheta lui — amprenta iese aceeași pe orice aparat */
+  function normClasa(s, proprii) {
+    var t = String(s || '').trim().replace(/\s+/g, ' ').replace(/^clasa\s+/i, '').replace(/^a\s+/i, '').replace(/-a\b/i, '').toUpperCase();
+    t = t.replace(/^(\d+|[IVX]+(?![IVX]))(?=[A-Z])/, '$1 ').slice(0, 20);
+    if (!t) return '';
+    var k = cheieClasa(t);
+    return (proprii || []).filter(function (x) { var q = cheieClasa(x); return q[0] === k[0] && q[1] === k[1]; })[0] || t;
+  }
 
   function formular() {
     arata('<div class="bar"><b>Cine ești?</b><div class="mic">Pe calculatoarele din laborator, la final apasă pe etichetă → „Schimbă elevul”.</div>' + NOTA +
@@ -638,7 +647,8 @@
       '<div id="lhp-alta" style="display:none"><label for="lhp-as">Numele școlii</label><input id="lhp-as" maxlength="60" autocomplete="off" placeholder="ex. Școala Gimnazială Nr. 3">' +
       '<label for="lhp-al">Localitatea și județul</label><input id="lhp-al" maxlength="50" autocomplete="off" placeholder="ex. Roman, Neamț">' +
       '<label for="lhp-ac">Clasa</label><input id="lhp-ac" maxlength="20" autocomplete="off" placeholder="ex. a VI-a B"></div>' +
-      '<div id="lhp-cc"><label for="lhp-c">Clasa</label><select id="lhp-c" disabled><option value="">— alege întâi școala —</option></select></div>' +
+      '<div id="lhp-cc"><label for="lhp-c">Clasa</label><select id="lhp-c" disabled><option value="">— alege întâi școala —</option></select>' +
+      '<div id="lhp-cxw" style="display:none"><label for="lhp-cx">Scrie clasa ta</label><input id="lhp-cx" maxlength="20" autocomplete="off" placeholder="ex. a VI-a B"></div></div>' +
       '<label for="lhp-n">Numele și prenumele, <b>întregi, ca în catalog</b></label><input id="lhp-n" maxlength="40" autocomplete="off" placeholder="ex. Popescu Ana-Maria">' +
       '<label for="lhp-k">Codul tău secret, <b>4 cifre</b> (scrie-l în caiet)</label><input id="lhp-k" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="ex. 4827">' +
       '<div class="mic">Cu același nume și același cod îți continui progresul pe orice calculator sau pe telefon. Dacă ai mai lucrat în altă parte, pune codul de atunci.</div>' +
@@ -655,8 +665,17 @@
         var alta = $('lhp-s').value === 'alta';
         $('lhp-alta').style.display = alta ? '' : 'none'; $('lhp-cc').style.display = alta ? 'none' : '';
         var sc = d.scoli.filter(function (x) { return x.key === $('lhp-s').value; })[0], c = $('lhp-c');
-        c.innerHTML = '<option value="">— alege —</option>' + (sc ? sc.clase.slice().sort(cmpClasa).map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') : '');
+        c.innerHTML = '<option value="">— alege —</option>' + (sc ? sc.clase.slice().sort(cmpClasa).map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') +
+          '<option value="__alta">Altă clasă din școala asta…</option>' : '');
         c.disabled = !sc;
+        $('lhp-cxw').style.display = 'none';
+        rezerva();
+      };
+      // în listă sunt doar clasele la care predă profesorul; celelalte clase ale școlii se scriu de mână
+      $('lhp-c').onchange = function () {
+        var alta = $('lhp-c').value === '__alta';
+        $('lhp-cxw').style.display = alta ? '' : 'none';
+        if (alta) $('lhp-cx').focus();
         rezerva();
       };
     }, function () { if ($('lhp-e')) $('lhp-e').textContent ='Nu s-a putut încărca lista școlilor. Verifică internetul și reîncarcă pagina.'; });
@@ -666,6 +685,9 @@
         var as = $('lhp-as').value.trim(), al = $('lhp-al').value.trim(); cl = $('lhp-ac').value.trim();
         if (!as || !al || !cl) { $('lhp-e').textContent = 'Scrie numele școlii, localitatea cu județul și clasa.'; return; }
         st = (as + ', ' + al).slice(0, 120);
+      } else if (cl === '__alta') {
+        cl = normClasa($('lhp-cx').value, ((DATE.scoli.filter(function (x) { return x.key === sc; })[0]) || {}).clase);
+        if (!cl) { $('lhp-e').textContent = 'Scrie clasa ta (ex. a VI-a B).'; return; }
       }
       if (!sc || !cl) { $('lhp-e').textContent = 'Alege școala și clasa.'; return; }
       if (nm.split(' ').length < 2) { $('lhp-e').textContent = 'Scrie numele și prenumele (două cuvinte).'; return; }
