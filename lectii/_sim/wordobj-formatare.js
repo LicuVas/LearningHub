@@ -235,6 +235,8 @@ const CSS=`
 .wf-doc .wf-p span{white-space:pre-wrap}
 .wf-doc .wf-pm{display:inline-block;width:.45em;height:1em;vertical-align:-.15em}
 .wf-doc .wf-pil{color:#4A7FC1}
+/* spațiul tastat încă netrimis, cu ¶ pornit: · peste spațiu, doar în documentul de pe ecran (.wo-doc), pe linia literelor */
+.wo-doc .wf-psp::before{content:"·";display:inline-block;width:0;color:#4A7FC1}
 .wf-doc .wo-car{width:2px}
 .wf-doc .wo-tab{display:inline-block;width:2.2em}
 .pg .wf-cb{width:100%;height:100%;display:flex;align-items:center;justify-content:space-between;gap:2px;border:1px solid var(--line);border-radius:2px;background:var(--paper);color:var(--ink);font:inherit;font-size:.72rem;padding:0 2px 0 4px;cursor:pointer;overflow:hidden;white-space:nowrap;min-height:0}
@@ -387,6 +389,11 @@ function render(Q,body,api){
     if(tfCmd)log.push({op:'tastat_tf'});
     // după tastare, formatarea vine din literele tastate (care o au deja)
     cur={b:cur.b,o:cur.o+t.length};ank=cp(cur);hist.push(tSnap);refa=[];tSnap=null;tf=null;tfCmd=false;
+    /* Reparat 28.09.2026 (semnalat de autorul lecției VII/8): desenul trebuie să urmeze documentul. Până aici, literele
+       tastate stăteau pe ecran într-un <span class="wo-pend"> fără data-o, iar literele de după ele aveau încă pozițiile
+       VECHI. Clicul, clicul dreapta, tragerea și ↑ ↓ Home End caută locul PE DESEN (posAt, charAt, rectLa), deci
+       ajungeau cu atâtea litere mai la stânga câte tastase elevul (⌫ ștergea altă literă). Redesenăm înainte să caute. */
+    drawDoc();
   }
   function anuleaza(){
     if(pend||tSnap){const s=tSnap;pend='';inp.value='';tSnap=null;if(s){refa.push(stare());doc=s.doc;cur=s.cur;ank=s.ank}log.push({op:'z'});tf=null;return}
@@ -518,8 +525,12 @@ function render(Q,body,api){
       if(sel){const [a,z]=sel;if(b>=a.b&&b<=z.b&&!(b===z.b&&z.o===0&&a.b<z.b)){s=b===a.b?a.o:0;e=b===z.b?z.o:p.t.length}semn=b>=a.b&&b<z.b}
       const car=!sel&&mod!=='trag'&&cur.b===b,F=car?fmtTastare():null,dr=mod==='trag'&&drop&&drop.b===b;
       let h='';
+      /* cu ¶ pornit, și spațiul abia tastat (încă în așteptare) se vede ca ·, pe loc, ca în Word (reparat 28.09.2026).
+         Rămâne un spațiu ADEVĂRAT în pagină; punctul îl desenează doar stilul (.wf-psp), ca o copie a documentului
+         (de ex. previzualizarea din wordobj-tehnoredactare.js) să aibă spațiul, fără punct. */
+      const pendH=car&&pend?(pil?esc(pend).replace(/ /g,'<span class="wf-psp"> </span>'):esc(pend)):'';
       for(let i=0;i<=p.t.length;i++){
-        if(car&&cur.o===i)h+=(pend?`<span class="wo-pend" style="${cssF(F)}">${esc(pend)}</span>`:'')+`<span class="wo-car" aria-hidden="true" style="height:${(F.sz*PX*1.15).toFixed(1)}px"></span>`;
+        if(car&&cur.o===i)h+=(pend?`<span class="wo-pend" style="${cssF(F)}">${pendH}</span>`:'')+`<span class="wo-car" aria-hidden="true" style="height:${(F.sz*PX*1.15).toFixed(1)}px"></span>`;
         if(dr&&drop.o===i)h+='<span class="wo-drop" aria-hidden="true"></span>';
         if(i===p.t.length)break;
         const c=p.t[i],sl=s!=null&&i>=s&&i<e,cl=sl?' class="wo-sl"':'';
