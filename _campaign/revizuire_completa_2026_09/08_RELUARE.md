@@ -32,6 +32,13 @@
 - Cât se schimbă o componentă comună, **judecătorii care o folosesc stau pe pauză** și reiau pe versiunea finală, cu sha1 verificat pe disc.
 
 ## 4. Publicarea (dirijorul, pe rând, fără scurtături)
+**Standardul din 28.09 seara = UN SINGUR SCRIPT cu porți** (comite și împinge DOAR dacă trece fiecare poartă; ultima linie = 0):
+```
+python C:/00/Projects/LearningHub/_campaign/revizuire_completa_2026_09/dirijor/publica_lectie.py <clasa>/<modul>-lNN [<alta>/…] [--fara-push]
+```
+Rulează-l în fundal, cu `timeout 5400` în jur (10-60 min: `build_lectii` re-testează în browser FIECARE lecție publicată, iar cu mulți agenți pe calculator trece de 15 min — scriptul îi dă 3600 s, iar un timeout contează ca poartă picată). Face în ordine pașii de mai jos, adaugă singur extensiile `_sim` din `<script src>`, reia o dată `test_joc` dacă pagina n-a pornit sub încărcare („întrebări jucate: None”), iar dacă pică o poartă NU comite și îți spune cum readuci `plan.json`. De ce există: pe 28.09 un `[PICAT]` s-a pierdut într-o comandă înlănțuită și lecția VII/1 a plecat live nevăzută (s-a dovedit un artefact de încărcare, dar regula rămâne: **niciodată verificări + commit în aceeași comandă înlănțuită**).
+
+Pașii, dacă vreodată trebuie făcuți de mână:
 ```
 python C:/00/Projects/LearningHub/_campaign/revizuire_completa_2026_09/dirijor/dirijor_publica.py <clasa>/<modul>-lNN     # stare=publicat + insigna
 python C:/00/Projects/LearningHub/lectii/_build/build_lectii.py            # → 0
@@ -50,17 +57,19 @@ MSYS_NO_PATHCONV=1 python …/verificare_lectii/fum_live.py /lectii/<clasa>/<mod
 - **NICIODATĂ `git add -A`** — alte sesiuni lucrează în același depozit. Doar fișierele numite.
 - Situl răspunde 200 la orice adresă: dovada e MARCAJUL din pagină, nu codul 200. Urllib cu User-Agent de Python e blocat de Cloudflare — scriptul folosește User-Agent de browser.
 - Git Bash strică argumentele care încep cu `/` → `MSYS_NO_PATHCONV=1`.
-- Build-ul + linkurile durează 2-3 minute: rulează-le în fundal (`run_in_background`).
+- Build-ul + linkurile: 2-3 minute pe calculatorul liber, peste 15 minute cu 8 agenți la lucru (28.09): rulează-le în fundal (`run_in_background`). Publică mai multe lecții ÎMPREUNĂ când se poate — build-ul costă la fel pentru una sau pentru patru.
 
 ## 5. Uneltele (toate pe disc, nu în scratchpad)
 | Unealtă | Unde | La ce |
 |---|---|---|
 | `stare.py` | `dirijor\` | starea lecțiilor + ultimul verdict de judecător |
+| `publica_lectie.py` | `dirijor\` | PUBLICAREA standard: toate porțile → commit pe fișiere numite → push → marcaje + fum live (ultima linie 0) |
 | `dirijor_publica.py` | `dirijor\` | marchează lecția publicată în plan.json |
 | `dirijor_verifica_live.py` | `dirijor\` | marcaje pe situl live |
 | `fum_live.py` | `verificare_lectii\` | proba de fum live, 390/1280, rețea blocată |
 | `lacat_office.py` | `verificare_lectii\` | lacătul PowerPoint (`ia` / `reinnoieste` / `elibereaza`, 60 min) |
 | `curata_metadate.py` | `verificare_lectii\` | numele contului Office din .docx/.pptx/.xlsx (`--curata`) |
+| `scoate_bara_docx.py` | `verificare_lectii\` | scoate bara galbenă „removePersonalInformation” dintr-un .docx, fără Word |
 | `curata_mru_office.py` | `verificare_lectii\` | urmele probelor din lista „Recent” Office (`--sterge`, cu Office închis) |
 | `proba_profil_motor.py` | `verificare_lectii\` | motorul pornește cu elev înscris fără progres (control inclus) |
 | `verifica_lectie.py` | `verificare_lectii\` | linia de verificare S0-T1 (`--fara-t1`) |
@@ -95,6 +104,7 @@ MSYS_NO_PATHCONV=1 python …/verificare_lectii/fum_live.py /lectii/<clasa>/<mod
 **Reparare:** „Reparare <lecția> după judecător: X GRAV, Y MAJOR, Z MINOR. Citește întreg `…\_verificare\judecatorN.md` (și `.json`). <GRAV/MAJOR, fiecare cu reparația>. MINOR: toate din judecatorN.md. Porțile din brief. Nu faci commit. Răspunsul final: JSON-ul din brief + reparațiile cu locul lor.”
 
 ## 8. Ce urmează (ordinea)
+0. **ÎNTÂI — defect LIVE în simulatorul comun Excel** (`lectii\_sim\excelx.js`, funcția `ajusteaza()`): la selecția prin tragere pagina sare — 18 px la 1280 în VIII/5, mai mult în VIII/2 (acolo e și o a doua cauză). Autorul VIII/8 are în extensia lui (`excelx-*.js` al lecției VIII/8) o reparație CSS care trebuie preluată în componenta comună. Proprietar unic + matrice de probe pe VIII/2, VIII/5, VIII/8, VIII/9 înainte de publicare. În același pas: bara de stare scrie „Număr (Count)” — Microsoft RO spune „Contor” (de confirmat în laborator).
 1. Terminarea lecțiilor începute pe 28.09 (dacă n-au apucat): vezi `stare.py` — cele „ÎN LUCRU”. Pentru fiecare: ultimul `judecatorN.md` → reparare / judecată / publicare.
 2. **Modulul 2, restul** (lecțiile 10-15 la fiecare clasă — titlurile în `stare.py --modul M2`): evaluări sumative (V/12, VI/10, VII/10, VIII/13), mini-proiecte (VIII/12), Internet și e-mail (V/13-15, VI/11-15), audio-video (VII/11-15), pagini web (VIII/14-15). Câte 2 lecții pe clasă pe val (8 autori), apoi judecătorii pe măsură ce termină.
 3. Apoi M3, M4, M5, la fel. Paginile vechi rămân cu banda „în lucru” până le înlocuiește lecția nouă.
@@ -103,7 +113,12 @@ MSYS_NO_PATHCONV=1 python …/verificare_lectii/fum_live.py /lectii/<clasa>/<mod
 - Istoricul depozitului GitHub public conține încă datele personale scoase din fișiere pe 28.09 (rescrierea istoriei = ireversibilă, cere acordul lui).
 - Panoul de activitate: 3 elevi de probă („Ana Pop”, „Dan Ene”, „Rusu Ilie”, 0 min) — de șters țintit (ștergerea țintită nu există încă în `activitate.py`).
 - Generatorul de teste (`Info_Gimnaziu_2026\generator\print_engine.py`) scrie „Nota = punctaj : 10” și B/C/A pe foi — contrazice `SISTEM_EVALUARE.md`; înainte de lucrările de la lecțiile 7.
-- Jocul `prezentari-vi` (6×6) contrazice lecția VI/2 („cel mult patru rânduri scurte”); de ales o regulă.
+- Jocul `prezentari-vi` (6×6) contrazice lecția VI/2 („cel mult patru rânduri scurte”) și lecțiile VI/8-9; tot acolo „titlu 32–40” și „Use Presenter View”; de ales o regulă (jocurile nu se schimbă fără acordul lui).
+- Jocul `fisiere-v`: „Restaurare jos” → numele Windows RO e „Restabilire jos” (fără acord, nu se atinge).
+- Simulatorul comun `simppt.js`: pe telefon filele panglicii au 25 px, „This Device”/Insert 29 px (sub 32×44) — găsit la VI/9, de reparat în componenta comună cu matrice de probe.
+- Antetul motorului pe telefon: legături de 23 px (găsit la VIII/9) — componentă comună, poartă de lansare independentă.
+- Documentele de descărcat din VII/3, VII/5, VII/6: bara galbenă „removePersonalInformation” a fost scoasă pe 28.09 (scriptul `verificare_lectii\scoate_bara_docx.py`, regula 21); orice .docx nou se verifică la fel.
+- Aplicațiile din Magazin (Paint, Calculator): setările stau în `SystemAppData\Helium\User.dat`; Calculator nu se pornește niciodată în probe (se deschide pe ecranul vizibil) — regula 25.
 - Pachetul de limbă RO pentru Office (capturi RO reale); lista numelor de confirmat în laborator (`calibrare\de_confirmat_in_laborator.md`); capturile lipsă (`capturi_lipsa.json` din fiecare lecție).
 - Tupilați: fără planificare 2026-2027 (termen 02.10).
 - Componenta `rezultat-elev.js`: minorul „două schimbări de elev în mai puțin de 8 minute” (propus: „Ești X?” la prima salvare a fiecărei verificări noi dacă ultima confirmare e mai veche de ~2 min).

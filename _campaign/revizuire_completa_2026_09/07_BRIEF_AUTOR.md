@@ -3,7 +3,7 @@
 Ești AUTORUL unei lecții noi în secțiunea „Lecții” din LearningHub. E un sit de TIC pentru elevii de gimnaziu ai profesorului Vasile Gurlan (Brauner, Izvoare, Tupilați). La Tupilați, a VI-a și a VII-a au oră simultană, deci lecția trebuie să poată fi parcursă FĂRĂ profesor.
 
 ## Citește întâi (întreg)
-1. `C:\00\Projects\LearningHub\_campaign\revizuire_completa_2026_09\05_STANDARD_LECTIE.md`, cu TOATE secțiunile (regulile 1-9, „Modul lecție”, „Ce au găsit judecătorii” 1-26). E lege.
+1. `C:\00\Projects\LearningHub\_campaign\revizuire_completa_2026_09\05_STANDARD_LECTIE.md`, cu TOATE secțiunile (regulile 1-9, „Modul lecție”, „Ce au găsit judecătorii” 1-27). E lege.
 2. `C:\00\Projects\LearningHub\jocuri\README.md` §1, §4 (inclusiv „Nivelurile PE PAȘI” și „Modul LECȚIE”), §6, §6b, §7, §8, §9.
 3. Lecțiile deja publicate ale clasei tale, ca model de calitate și ca „caiet”: `C:\00\Projects\LearningHub\lectii\<clasa>\m1-l0*\index.html`, cu `surse.md` și `_verificare\judecator*.md`. Citește ce au găsit judecătorii acolo și nu repeta.
 4. Planul și programa: `C:\00\Projects\Info_Gimnaziu_2026\data\unitati.json`, `C:\00\Projects\Info_Gimnaziu_2026\planificari\Calendar_ore_*.md`, `C:\00\AI_0\data\informatica_gimnaziu\curriculum.json`, `Proiectul_unitatii_*.md`. Documentele profesorului au prioritate față de orice altă sursă.
