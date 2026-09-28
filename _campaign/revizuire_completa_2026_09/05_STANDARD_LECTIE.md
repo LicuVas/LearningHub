@@ -78,6 +78,10 @@ Pune `mod:'lectie'` în configurație (vezi `jocuri\README.md` §4 „Modul LEC�
    - După „Verifică”, rezultatul primei încercări nu se șterge când elevul întoarce răspunsurile ✘. Pagina nu spune „știi” pe baza răspunsurilor corectate după ce le-a văzut.
    - Dacă un pas ulterior (laboratorul) cere rezultatul, pagina îl arată acolo.
    - Răspunsurile scrise se acceptă în toate formele corecte: fără diacritice, cu unitatea („8 biți”, „1024 MB”), cu articol („CPU-ul”).
+27. **Nicio dată personală în ce se publică.** (28.09) `surse.md`, `afirmatii.json`, rapoartele din `_campaign\` și scripturile ajung pe situl public și în depozitul GitHub public.
+   - Nu scrii căi locale cu numele contului Windows (scrii `C:\Users\<utilizator>\…`).
+   - Nu scrii e-mailul sau telefonul profesorului.
+   - Poarta, rulată de dirijor înainte de orice publicare: `python C:/00/AI_0/tools/learninghub_date_personale.py` → ultima linie 0. Poarta stă în AI_0, nu pe sit, pentru că are în ea tiparele pe care le caută.
 26. **Fișierul colegului: „numele există deja” NU arată la fel peste tot.** (probat în Excel și în PowerPoint reale, 28.09)
    - La PRIMA salvare (Ctrl+S → „Save this file”): „The file … already exists. Do you want to replace the existing file?”, cu **OK / Anulare (Cancel)**. OK înlocuiește fișierul colegului, iar Enter = Anulare. După Anulare, fereastra de salvare REVINE:
      - la Ctrl+S, numele-substituent (Book2 etc.) e din nou selectat, așa că elevul scrie iar numele lui complet, cu o cifră la sfârșit;

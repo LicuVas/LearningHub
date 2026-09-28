@@ -127,3 +127,10 @@ Consecințe: standardul `05_STANDARD_LECTIE.md`; secțiunea nouă `/lectii/` (o 
 - **Componenta `rezultat-elev.js` v3 FINALĂ** (sha1 `eb8fdae3…`, verificat pe disc de dirijor): citirea condiționată de confirmarea „Ești X?” în încărcarea curentă; confirmarea expiră după 8 min fără atingeri (pauza dintre ore = 10 min); butonul proprietarului „Sunt X, dar n-am dat-o eu” doar după „Da”; a doua revendicare întrebată separat. Matrice 21/21, mutanți 18/18, proba_intreaba 0, profil 0. → cele 3 lecții nr. 1 folosesc `asteaptaConfirmare(K)` pentru text corect („Pe calculator e fișa lui X… apasă sus «Da»”), apoi judecata 4 reluată pe sha1-ul ăsta.
 - 3 autori M2 (VI/9, VIII/9, V/8) blocați de un stream watchdog (600 s fără progres) → reluați din transcript.
 - M2: VI/9 (mini-proiect) autor gata → judecător. De decis/de reparat: jocul `prezentari-vi` (6×6, 3-5 min, titlu 32-40) contrazice lecțiile VI/2 și VI/6 publicate — judecătorul arbitrează.
+
+## 28.09, după-amiaza — PAUZĂ cerută de Vasile (16:40)
+- Cererea lui: „după ce termini lecțiile începute la fiecare clasă… te oprești și salvezi tot ce e necesar pentru a relua… exact în acest stil”. → Nu se mai pornesc lecții noi; se termină cele începute (VII/1, M2 nr. 8-9).
+- **Salvat pentru reluare:** `08_RELUARE.md` (tot), skill `AI_0\.claude\skills\lectii.md` (`/lectii`), `dirijor\stare.py` (starea calculată), uneltele mutate din scratchpad în `dirijor\`, fișa de memorie + MEMORY.md, decizia în KB.
+- **Date personale scoase** din ce se publică (39 de fișiere: căi cu numele contului Windows, partea locală a e-mailului) `1b1dc2ac`; poarta privată `AI_0\tools\learninghub_date_personale.py`; regula 27. Istoricul GitHub (public) încă le conține — decizia lui.
+- **PUBLICAT:** VI/1 + `rezultat-elev.js` v3 `690d26ed` · VIII/1 `2d38e538` · reparația simulatorului Word `wordobj-formatare.js` (cursorul după tastare; 8 → 0 abateri) `2556430b` · reparația F5 din `simppt-interfata.js` (pagina reîncărcată din note; 2 → 0) `4916eb26`. Toate verificate LIVE + fum.
+- **LIVE: 27 lecții** — M1 complet la V, VI, VIII; VII 2-7 (VII/1 = ultima reparație mică). M2 nr. 8-9: la judecători / reparări.
