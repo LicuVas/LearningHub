@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ce este o prezentare bună. Interfața aplicației de prezentări</title>
+<meta name="description" content="Lecția 2, clasa a VI-a (TIC): judeci un diapozitiv după patru reguli (o idee, puține cuvinte, se citește, imaginea spune ceva) și te descurci în fereastra PowerPoint: zonele, panglica, vizualizările, expunerea. Cu PowerPoint simulat în pagină și o prezentare de verificat în PowerPoint-ul din laborator.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Lexend:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#F2EEEA; --paper:#FFFFFF; --paper2:#F8F3EF; --line:#E2D6CD;
+  --ink:#231A16; --ink2:#62554E; --accent:#A83A1C; --accentInk:#FFFFFF; --sel:#F7DED3;
+  --mark:#FFE08A; --markInk:#231A16; --ok:#1E7A4A; --okbg:#E2F3E8; --bad:#B3261E; --badbg:#FBE6E3;
+  --fd:"Bricolage Grotesque",Georgia,serif; --fb:"Lexend","Segoe UI",system-ui,sans-serif; --fm:"JetBrains Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#17120F; --paper:#211A16; --paper2:#2A221D; --line:#3D322B;
+  --ink:#F1E8E2; --ink2:#BCAEA5; --accent:#FF9A74; --accentInk:#17120F; --sel:#4A2A1E;
+  --mark:#F2C94C; --markInk:#231A16; --ok:#6FD19A; --okbg:#173226; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#17120F; --paper:#211A16; --paper2:#2A221D; --line:#3D322B;
+  --ink:#F1E8E2; --ink2:#BCAEA5; --accent:#FF9A74; --accentInk:#17120F; --sel:#4A2A1E;
+  --mark:#F2C94C; --markInk:#231A16; --ok:#6FD19A; --okbg:#173226; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+/* banda de sus: o fereastră cu cele cinci zone, apoi diapozitive, ultimul „pe tot ecranul” (expunerea) — doar CSS */
+.banda{display:flex;gap:7px;padding:6px 12px;min-height:36px;align-items:center}
+.banda span{flex:0 0 auto;width:38px;height:22px;border:1px solid var(--ink2);border-radius:2px;opacity:.75;
+  background:linear-gradient(var(--ink2),var(--ink2)) 5px 5px/20px 2px no-repeat,linear-gradient(var(--line),var(--line)) 5px 11px/26px 2px no-repeat,linear-gradient(var(--line),var(--line)) 5px 15px/18px 2px no-repeat}
+.banda .fer{width:46px;background:linear-gradient(var(--accent),var(--accent)) 0 0/100% 5px no-repeat,linear-gradient(var(--line),var(--line)) 0 5px/9px 15px no-repeat,linear-gradient(var(--ink2),var(--ink2)) 0 100%/100% 2px no-repeat;opacity:1;border-color:var(--accent)}
+.banda .show{background:#000;border-color:#000;opacity:1}
+h1{font-size:clamp(1.7rem,7vw,3rem);font-weight:800;letter-spacing:-.01em}
+h1 .acc{color:var(--accent)}
+h2{font-weight:750}
+.nevoie{border-left:4px solid var(--accent);padding:6px 10px;background:var(--paper2);border-radius:0 6px 6px 0}
+figure.captura.ingusta img{max-width:300px}
+figure.captura.mica img{max-width:420px}
+.reading ol li,.reading ul li{margin:.2em 0}
+.descarca{display:inline-block;padding:6px 12px;border:1px solid var(--accent);border-radius:6px;font-weight:600;text-decoration:none}
+/* diapozitivele-exemplu, câte două pe rând pe ecran lat și câte unul pe telefon */
+.diap-grila{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 12px;margin:.4em 0}
+.diap-grila .captura{margin:.2em 0 .4em}
+.diap-grila .captura img{width:100%;max-height:none}
+.q .diap-grila .captura img{max-height:none;width:100%}
+.diap-grila figcaption{font-size:.95rem}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/ui-panglica.js"></script>
+<script src="../../../jocuri/_motor/panglica-powerpoint.js"></script>
+<script src="../../_sim/simppt-interfata.js"></script>
+<script>
+/* ======================================================================================================
+   Lecția VI · M1 · nr. 2 — „Ce este o prezentare bună. Interfața aplicației de prezentări”.
+   Simulatorul: lectii/_sim/simppt-interfata.js (fereastra PowerPoint + zonele pe o captură reală; proprietar: lecția 2).
+   Faptele despre PowerPoint sunt probate în PowerPoint-ul real, pe desktopul ascuns (afirmatii.json, _proba/).
+   Diapozitivele-exemplu sunt desenate de PowerPoint (Slide.Export, _proba/fa_pptx.py), cu conținut inventat.
+   ====================================================================================================== */
+SimPPTInt.imagini({
+  albina:{src:'../m1-l02/img/albina.webp',w:480,h:380,alt:'O albină pe o floare'},
+  baloane:{src:'../m1-l02/img/baloane.webp',w:360,h:480,alt:'Baloane colorate'}
+});
+const PARAGRAF='Albinele zboară toată ziua din floare în floare și adună nectarul dulce, pe care îl duc apoi în stup, unde îl fac încet miere, iar în același timp poartă polenul de la o floare la alta și așa ajută plantele să facă fructe și semințe.';
+SimPPTInt.prezentari({
+  /* aceeași prezentare ca albinele-de-verificat.pptx (făcută prin COM din _proba/ppt_l2.py) */
+  albinele:{titlu:'albinele-de-verificat',diap:[
+    {lay:'titlu',titlu:'Albinele',sub:'Mihai Radu, clasa a VI-a',note:'Bună ziua! Azi vă povestesc despre albine.'},
+    {lay:'tc',titlu:'Viața în stup',randuri:['Trăiesc în stup','Au o regină','Lucrează în echipă'],note:'Într-un stup trăiesc mii de albine.'},
+    {lay:'tc',titlu:'Ce fac albinele',randuri:[PARAGRAF],note:''},
+    {lay:'tc',titlu:'Mierea',randuri:['Albinele fac mierea din nectar','Mierea e hrana lor de iarnă'],cul:'#FFE666',note:''},
+    {lay:'to',titlu:'Albinele și florile',caseta:'Duc polenul de la o floare la alta',img:'baloane',note:''},
+    {lay:'to',titlu:'Albina la lucru',caseta:'Adună nectarul din floare',img:'albina',note:'Uitați-vă la perișorii ei: de ei se lipește polenul.'},
+    {lay:'tc',titlu:'Ce am aflat',randuri:['Albinele trăiesc în echipă','Fac miere din nectar','Ajută plantele'],note:'Mulțumesc! Aveți întrebări? Fotografii: John Severns (albina, domeniu public) și Ibrahim Husain Meraj (baloanele, CC BY-SA 4.0), Wikimedia Commons.'}]},
+  vulcanii:{titlu:'Vulcanii',diap:[
+    {lay:'titlu',titlu:'Vulcanii',sub:'Ana Pop, clasa a VI-a'},
+    {lay:'tc',titlu:'Ce este un vulcan',randuri:['Deschidere în scoarța Pământului','Iese lavă fierbinte']},
+    {lay:'tc',titlu:'Ce iese din vulcan',randuri:['Lavă','Cenușă','Gaze']},
+    {lay:'tc',titlu:'Ce am aflat',randuri:['Vulcanii fac munți noi','Unii dorm sute de ani']}]},
+  excursia:{titlu:'Excursia',diap:[
+    {lay:'titlu',titlu:'Excursia la Cheile Bicazului',sub:'Clasa a VI-a'},
+    {lay:'tc',titlu:'Plecarea',randuri:['Luni, la ora 8','Din fața școlii']},
+    {lay:'tc',titlu:'Pe drum',randuri:['Am trecut prin Bicaz','Am urcat pe munte']},
+    {lay:'tc',titlu:'Ce am văzut',randuri:['Pereți de stâncă înalți','Lacul Roșu']},
+    {lay:'tc',titlu:'Ce am mâncat',randuri:['Sandvișuri','Mere']},
+    {lay:'tc',titlu:'Ce am învățat',randuri:['Muntele se ocrotește','Gunoiul îl luăm cu noi']}]}
+});
+
+/* ---------------- imaginile ---------------- */
+const IMG={
+  'ex1-vulcani-mult':[480,270],'ex1-vulcani-bine':[480,270],'p1-a':[480,270],'p1-b':[480,270],'p1-c':[480,270],'p1-d':[480,270],
+  'q1-a':[480,270],'q1-b':[480,270],'q1-c':[480,270],'ex2-contrast-rau':[480,270],'ex2-contrast-bine':[480,270],
+  'ex2-imagine-rau':[480,270],'ex2-imagine-bine':[480,270],'p2-a':[480,270],'p2-b':[480,270],'p2-c':[480,270],'p2-d':[480,270],
+  'q5-a':[480,270],'q5-b':[480,270],'q5-c':[480,270],'q5-d':[480,270],
+  'panglica-file-grupuri':[1000,159],'bara-stare-vizualizari':[1003,141],'sortare-diapozitive':[1000,450],'fereastra-note':[1000,450],'schita-in-loc-de-miniaturi':[600,516]
+};
+const fig=(f,alt,cap,cls)=>`<figure class="captura${cls?' '+cls:''}"><a href="../m1-l02/img/${f}.webp" target="_blank"><img src="../m1-l02/img/${f}.webp" alt="${alt}" width="${IMG[f][0]}" height="${IMG[f][1]}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const figDin=(cale,w,h,alt,cap,cls)=>`<figure class="captura${cls?' '+cls:''}"><a href="${cale}" target="_blank"><img src="${cale}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const D=(f,lit,alt,cap)=>fig(f,alt,cap||`Diapozitivul <b>${lit}</b>`);
+const grila=(...f)=>`<div class="diap-grila">${f.join('')}</div>`;
+const FER='../../../jocuri/prezentari-vi/img/fereastra.webp',FER_Z='../../../jocuri/prezentari-vi/img/fereastra-zone.webp';
+/* zonele capturii fereastra-zone.webp (1000 x 581), în procente; numerele stau depărtate, ca să nu se atingă pe telefon */
+const ZONE=[{z:'panglica',nr:1,nx:50,ny:9},{z:'miniaturi',nr:2,nx:9.3,ny:52},{z:'lucru',nr:3,nx:60,ny:52},{z:'note',nr:4,nx:72,ny:93},{z:'stare',nr:5,nx:25,ny:98.2}];
+const IMG_ZONE={src:FER_Z,w:1000,h:581,alt:'Fereastra PowerPoint cu cinci zone încadrate cu roșu și numerotate de la 1 la 5'};
+const CONT=['Elemente de interfață a unei aplicații de realizare a prezentărilor','Instrumente de bază ale aplicației de realizare a prezentărilor'];
+const SIM_SCURT='<span class="hint" style="display:block;font-weight:400;margin-bottom:4px">PowerPoint simulat. Numele unui buton: ține mouse-ul pe el sau atinge-l (pe telefon, numele apare sub fereastră). Testele de sub fereastră se bifează singure; la final apeși <b>Verifică</b>.</span>';
+const SIM_INTRO=`<p>Mai jos e un <strong>PowerPoint simulat</strong>, cu panglica în engleză, ca pe unele calculatoare din laborator (pe altele PowerPoint e în română; numele românești le ai în pași). Lucrează în fereastră: <strong>testele se bifează singure</strong>, apoi apeși <b>Verifică</b>.</p>
+<ul><li><b>Numele unui buton:</b> pe calculator ții mouse-ul pe el; pe telefon îl atingi, iar numele apare sub fereastră.</li>
+<li><b>Tastele</b> <kbd>F5</kbd>, <kbd>←</kbd>, <kbd>→</kbd> și <kbd>Esc</kbd> le ai și ca butoane sub fereastră: pe telefon nu există.</li>
+<li><b>Expunerea</b> acoperă aici doar fereastra simulată; în PowerPoint umple tot ecranul.</li></ul>`;
+
+const LECTIA={
+ t:'Ce este o prezentare bună. Interfața aplicației de prezentări',lectii:[2],continuturi:CONT,final:true,
+ obiectiv:'judeci dacă un diapozitiv e bun (o idee, puține cuvinte, se citește, imaginea spune ceva) și te descurci în fereastra PowerPoint: găsești zonele și butoanele, schimbi vizualizarea, pornești și oprești o expunere.',
+ pasi:[
+  /* ---------- pasul 0: la ce folosește ---------- */
+  {t:'La ce folosește',
+   text:`<p>La geografie, la istorie sau la o serbare ai văzut <strong>prezentări</strong>: pe ecran apare, pe rând, câte un <strong>diapozitiv</strong>, o pagină care umple tot ecranul. Cel care prezintă vorbește, iar diapozitivele îl ajută pe <strong>public</strong>, adică pe cei care ascultă, să urmărească ideile.</p>
+<p>O prezentare se face într-o <strong>aplicație de prezentări</strong>: <strong>PowerPoint</strong> (de la Microsoft), <strong>Google Slides</strong> (în browser) sau <strong>LibreOffice Impress</strong> (gratuită). Azi afli ce face un diapozitiv să fie bun și cum te descurci în fereastra PowerPoint.</p>
+${figDin('../m1-l04/img/prezentare-la-ora.webp',960,688,'O oră de clasă: pe ecranul videoproiectorului se vede un diapozitiv; lângă ecran vorbește prezentatorul, iar elevii ascultă, cu spatele la aparat','O prezentare la o oră: diapozitivul pe ecran, lângă el cel care vorbește, în față publicul. Diapozitivul din poză are prea mult text: în pasul 1 afli de ce. Fotografie: Bureau of Land Management (SUA), domeniu public, Wikimedia Commons.','mica')}
+<p class="nevoie"><b>Ai nevoie de:</b> clasa a V-a: fereastra unei aplicații, clicul, tastatura, lista de descărcări a browserului. Din clasa a VI-a, nimic.</p>`},
+  /* ---------- pasul 1: o idee, puține cuvinte ---------- */
+  {t:'O idee pe diapozitiv, în puține cuvinte',
+   text:`<p>Publicul nu poate <strong>citi</strong> și <strong>asculta</strong> în același timp. Dacă pe diapozitiv e un paragraf lung, colegii citesc și nu te mai aud. De aceea, primele două reguli ale unui diapozitiv bun sunt:</p>
+<ul><li><mark>o idee pe diapozitiv</mark>: tot ce scrie pe el ține de titlul lui. Singura excepție e primul diapozitiv, cel de titlu: sub titlu scrii numele tău și clasa;</li>
+<li><mark>puține cuvinte</mark>: titlul și cel mult patru rânduri scurte. Un rând scurt încape pe o singură linie a diapozitivului; dacă trece pe linia următoare, e deja o propoziție lungă.</li></ul>
+<p>Explicația o spui tu, cu voce tare.</p>`,
+   exemplu:`${grila(D('ex1-vulcani-mult','','Diapozitivul Vulcanii desenat de PowerPoint: sub titlu, un singur paragraf lung, care se întinde pe trei linii','<b>Înainte:</b> un paragraf lung.'),D('ex1-vulcani-bine','','Același diapozitiv Vulcanii: sub titlu, trei rânduri scurte, fiecare cu o buliță','<b>După:</b> trei rânduri scurte.'))}
+<p>Ana repară diapozitivul „Vulcanii”:</p><ol><li>găsește ideile din paragraf: ce e un vulcan, ce iese din el, ce se formează;</li><li>scrie fiecare idee pe un rând scurt;</li><li>restul („fierbinte”, „în timp”) îl spune ea, cu voce tare.</li></ol>`,
+   altfel:`<p>Gândește-te la un indicator de pe drum: scrie „Piatra Neamț 12 km”, nu istoria orașului. Șoferul îl înțelege dintr-o privire. Diapozitivul e indicatorul, iar tu ești ghidul care povestește.</p>`,
+   incearca:{t:'classify',q:`Care diapozitive respectă cele două reguli (o idee pe diapozitiv, puține cuvinte) și care nu?${grila(
+       D('p1-a','A','Diapozitivul A, Apa în natură: sub titlu, un paragraf lung, care se întinde pe patru linii'),D('p1-b','B','Diapozitivul B, Anotimpurile: patru rânduri scurte, Primăvara, Vara, Toamna, Iarna'),
+       D('p1-c','C','Diapozitivul C, Vulcanii: trei rânduri, Iese lavă fierbinte, Echipa noastră a câștigat meciul, Mâine avem test la mate'),D('p1-d','D','Diapozitivul D, Pisica: trei rânduri scurte, Doarme mult ziua, Vede bine noaptea, Toarce când e mulțumită'))}`,
+     cats:['Respectă regulile','Încalcă o regulă'],
+     items:[['Diapozitivul A („Apa în natură”)',1],['Diapozitivul B („Anotimpurile”)',0],['Diapozitivul C („Vulcanii”)',1],['Diapozitivul D („Pisica”)',0]],
+     ajutor:'La fiecare întreabă-te: are un rând care trece pe linia următoare? Ține tot ce scrie de titlul lui?',
+     why:'A are un paragraf lung: prea multe cuvinte. C amestecă ideile: meciul și testul nu țin de vulcani. B și D au o singură idee, în rânduri scurte.'},
+   inca:[
+    {t:'choice',q:'Mihai vrea să pună pe diapozitivul „Albinele” tot ce știe despre ele: 12 rânduri. Ce face, după reguli?',
+     o:['Împarte ideile pe mai multe diapozitive, fiecare cu câteva rânduri scurte','Scrie toate cele 12 rânduri pe același diapozitiv','Le unește într-un singur paragraf lung','Pune doar titlul și citește cele 12 rânduri de pe foaie, cu spatele la public'],ok:0,
+     ajutor:'Câte rânduri scurte pui cel mult pe un diapozitiv?',
+     why:'Pe un diapozitiv stă o idee, în cel mult patru rânduri scurte. Cu 12 rânduri, faci mai multe diapozitive, fiecare cu ideea lui.'}
+   ]},
+  /* ---------- pasul 2: se citește, imaginea spune ceva ---------- */
+  {t:'Se citește din ultima bancă. Imaginea spune ceva',
+   text:`<p>Încă două reguli: diapozitivul trebuie să se vadă bine și din ultima bancă, iar poza să ajute.</p>
+<ul><li><mark>Contrastul</mark> e diferența de luminozitate dintre text și fundal. Se citește <strong>text închis pe fundal deschis</strong> sau <strong>text deschis pe fundal închis</strong>. Textul galben sau gri deschis pe alb nu se vede.</li>
+<li>O <mark>imagine care spune ceva</mark> arată chiar lucrul despre care vorbești: o albină, pe diapozitivul despre albine. O poză care nu ține de titlu, pusă doar ca să arate frumos, încurcă: publicul se întreabă ce caută acolo.</li></ul>`,
+   exemplu:`${grila(D('ex2-contrast-rau','','Diapozitivul Mierea cu titlul și rândurile scrise cu galben deschis pe fundal alb, abia vizibile','<b>Înainte:</b> galben pe alb.'),D('ex2-contrast-bine','','Același diapozitiv Mierea, cu textul negru pe fundal alb, ușor de citit','<b>După:</b> negru pe alb.'),
+     D('ex2-imagine-rau','','Diapozitivul Albinele și florile, cu textul Duc polenul de la o floare la alta și, în dreapta, o fotografie cu baloane colorate','<b>Înainte:</b> baloane.'),D('ex2-imagine-bine','','Același diapozitiv, cu fotografia unei albine pe o floare în locul baloanelor','<b>După:</b> albina pe floare.'))}
+<p>Mihai a schimbat textul galben în negru și a pus poza albinei în locul baloanelor. Acum diapozitivele se citesc, iar poza arată chiar ce spune el. Fotografii: John Severns (albina, domeniu public) și Ibrahim Husain Meraj (baloanele, <a href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noopener">CC BY-SA 4.0</a>), Wikimedia Commons.</p>`,
+   altfel:`<p>Gândește-te la tabla din clasă: creta albă pe tabla verde-închis se vede din ultima bancă, dar un creion galben pe o foaie albă aproape nu se vede. Iar o poză e ca un exemplu dat de profesor: te ajută doar dacă e despre lecție.</p>`,
+   incearca:{t:'classify',q:`Care diapozitive respectă ambele reguli (se citește, imaginea spune ceva) și care nu?${grila(
+       D('p2-a','A','Diapozitivul A, Albina la lucru: text negru pe alb și fotografia unei albine pe o floare'),D('p2-b','B','Diapozitivul B, Stupul: titlul și rândurile scrise cu gri deschis pe fundal alb'),
+       D('p2-c','C','Diapozitivul C, Florile de primăvară: textul Ghiocelul, zambila, laleaua și o fotografie cu baloane colorate'),D('p2-d','D','Diapozitivul D, Serbarea clasei: text alb pe fundal albastru închis și o fotografie cu baloane colorate'))}`,
+     cats:['Respectă regulile','Încalcă o regulă'],
+     items:[['Diapozitivul A („Albina la lucru”)',0],['Diapozitivul B („Stupul”)',1],['Diapozitivul C („Florile de primăvară”)',1],['Diapozitivul D („Serbarea clasei”)',0]],
+     ajutor:'La fiecare întreabă-te: textul e închis pe deschis sau deschis pe închis? Poza arată lucrul din titlu?',
+     why:'B nu se citește: gri deschis pe alb. C are baloane pe un diapozitiv despre flori: nu țin de titlu. A arată chiar albina din titlu, iar la D baloanele arată chiar serbarea din titlu, iar textul alb pe albastru închis se citește.'},
+   inca:[
+    {t:'choice',q:'Ai un diapozitiv despre Castelul Peleș. Ce imagine pui pe el?',
+     o:['O fotografie a Castelului Peleș','O fotografie cu baloane colorate','Un desen cu un soare zâmbăreț','Nicio imagine: mai scrii un paragraf'],ok:0,
+     ajutor:'Care imagine arată chiar lucrul din titlu?',
+     why:'Fotografia castelului arată ce spui. Baloanele și soarele nu țin de titlu, iar un paragraf în plus încalcă regula cuvintelor puține.'}
+   ]},
+  /* ---------- pasul 3: fereastra, cinci zone ---------- */
+  {t:'Fereastra PowerPoint: cinci zone',
+   text:`<p>Când deschizi o prezentare, fereastra PowerPoint are cinci <mark>zone</mark>:</p>
+<ul><li><strong>panglica</strong>, sus: butoanele cu comenzi (despre ea, în pasul următor);</li>
+<li>în stânga, toate diapozitivele, mici, în ordine: fiecare e o <mark>miniatură</mark>, iar zona lor e <strong>panoul cu miniaturi</strong>. Clic pe o miniatură și diapozitivul ei apare mare;</li>
+<li><strong>zona de lucru</strong>, în mijloc: diapozitivul ales, mare; pe el lucrezi;</li>
+<li><strong>zona de note</strong>, sub diapozitiv: ce vrei să spui; publicul nu o vede. Nu o vezi? Apasă <strong>Note (Notes)</strong>, jos;</li>
+<li><strong>bara de stare</strong>, jos de tot: al câtelea diapozitiv e ales, de exemplu <i>Slide 2 of 7</i>, adică diapozitivul 2 din 7.</li></ul>
+${figDin(FER,1000,699,'Fereastra PowerPoint cu cinci zone încadrate cu roșu și numite: panglica sus, miniaturile în stânga, zona de lucru cu diapozitivul mare, zona de note sub diapozitiv și bara de stare jos','PowerPoint (în engleză): <b>panglica</b> sus, <b>miniaturile</b> în stânga, <b>zona de lucru</b> cu diapozitivul mare, <b>notele</b> dedesubt și <b>bara de stare</b> jos, cu „Slide 1 of 4”.')}`,
+   exemplu:`${fig('fereastra-note','PowerPoint cu prezentarea Albinele: în stânga miniatura 2 are chenar colorat, diapozitivul Viața în stup e mare în mijloc, dedesubt nota Într-un stup trăiesc mii de albine, iar jos scrie Slide 2 of 7','Miniatura 2 aleasă (chenar colorat), diapozitivul ei mare, nota lui dedesubt și <i>Slide 2 of 7</i> jos. Captură din PowerPoint în engleză.')}
+<p>Mihai pregătește prezentarea „Albinele”:</p><ol><li>dă clic pe miniatura 2: primește un chenar colorat, iar „Viața în stup” apare mare în zona de lucru;</li><li>jos, bara de stare arată <i>Slide 2 of 7</i>;</li><li>dă clic în zona de note și scrie ce va spune: „Într-un stup trăiesc mii de albine.” Pe ecranul publicului nu apare.</li></ol>`,
+   altfel:`<p>Gândește-te la un album de fotografii: în stânga ții teancul cu toate pozele, mici (miniaturile), în față e poza pe care o privești acum, mare (zona de lucru), iar pe un bilețel, doar pentru tine, scrii ce vrei să povestești despre ea (notele). Deasupra albumului stă cutia cu unelte (panglica), iar jos, pe margine, scrie „poza 2 din 7” (bara de stare).</p>`,
+   incearca:{t:'ppti',taste:false,q:SIM_SCURT+'Alege diapozitivul <b>3</b> din panoul cu miniaturi și scrie în notele lui ce vei spune (cel puțin un cuvânt). Apoi ascunde zona de note cu butonul <b>Notes</b> (Note) din bara de stare și arat-o din nou.',
+     start:{deck:'vulcanii',cur:0},
+     teste:[{ce:'Diapozitivul 3 („Ce iese din vulcan”) e ales: în bara de stare scrie <i>Slide 3 of 4</i>',c:[{k:'cur',n:3}],ajutor:'Clic pe miniatura 3, în stânga.'},
+       {ce:'În notele diapozitivului 3 ai scris ce vei spune',c:[{k:'nota',d:3,min:1}],ajutor:'Clic în zona de sub diapozitiv, unde scrie „Click to add notes”, apoi tastează.'},
+       {ce:'Ai ascuns zona de note și ai adus-o înapoi (butonul Notes din bara de stare)',c:[{k:'ev',e:'notesToggle'},{k:'noteVizibile',v:true}],ajutor:'Jos, în bara de stare, butonul Notes: o apăsare o ascunde, încă una o arată.'}],
+     rez:['mini-3',{nota:[3,'Lava e rocă topită']},'notes','notes'],gresit:['mini-2',{nota:[2,'Lava e rocă topită']},'notes','notes'],
+     rezText:'clic pe miniatura 3 → clic în zona de note → scrii → Notes (Note) din bara de stare, de două ori',ajutor:'Unde alegi un diapozitiv? Unde scrii ce vei spune?',
+     why:'Ai ales diapozitivul din panoul cu miniaturi: bara de stare arată al câtelea e. Notele sunt ale diapozitivului ales, iar butonul Notes doar ascunde sau arată zona lor.'},
+   inca:[
+    {t:'zona',q:'În captura de mai jos, zonele sunt încadrate și numerotate, dar fără nume. În care zonă scrii ce vei spune, fără ca publicul să vadă? Atinge numărul ei.',img:IMG_ZONE,zone:ZONE,ok:'note',
+     ajutor:'Care zonă „nu o vede publicul”?',gresitMsg:{panglica:'Zona 1 e panglica, cu filele și butoanele.',miniaturi:'Zona 2 e panoul cu miniaturi.',lucru:'Zona 3 e zona de lucru: diapozitivul mare îl vede și publicul, în expunere.',stare:'Zona 5 e bara de stare.'},
+     why:'Zona 4, sub diapozitiv, e zona de note: acolo îți scrii ce vei spune, iar publicul nu o vede.'},
+    {t:'zona',q:'Aceeași captură. În care zonă dai clic ca să alegi diapozitivul pe care vrei să-l vezi mare? Atinge numărul ei.',img:IMG_ZONE,zone:ZONE,ok:'miniaturi',
+     ajutor:'Unde sunt toate diapozitivele, mici?',why:'Zona 2, panoul cu miniaturi: clic pe o miniatură și diapozitivul ei apare mare în zona de lucru.'}
+   ]},
+  /* ---------- pasul 4: panglica ---------- */
+  {t:'Panglica: file, grupuri, butoane',
+   text:`<p>Pe <strong>panglică</strong>, butoanele sunt așezate pe <mark>file</mark>. Clic pe numele unei file și apar butoanele ei:</p>
+<ul><li><strong>Pornire (Home)</strong>: textul, diapozitiv nou;</li><li><strong>Inserare (Insert)</strong>: poze, tabele, desene gata făcute;</li><li><strong>Proiectare (Design)</strong>: cum arată toată prezentarea;</li>
+<li><strong>Tranziții (Transitions)</strong> și <strong>Animații (Animations)</strong>: efectele de mișcare, <strong>tranzițiile</strong> și <strong>animațiile</strong>; le înveți în lecția 7;</li><li><strong>expunerea</strong> e prezentarea pe tot ecranul: fila <strong>Expunere diapozitive (Slide Show)</strong> (pasul 6);</li><li><strong>Vizualizare (View)</strong>: cum privești prezentarea.</li></ul>
+<p>Pe o filă, butoanele sunt strânse în <mark>grupuri</mark>, cu numele scris dedesubt. Ține mouse-ul pe un buton și îi apare numele. Un buton cu săgeata ▾ deschide o listă.</p>`,
+   exemplu:`${fig('panglica-file-grupuri','Panglica PowerPoint cu fila Home aleasă; încadrate cu roșu și numite: rândul de file, grupul Slides și butonul New Slide cu săgeata lui','Panglica: <b>filele</b> sus (aici e aleasă Home), <b>grupul</b> Slides și <b>butonul</b> New Slide, cu săgeata ▾ sub el. Prima filă, <b>File (Fișier)</b>, are operațiile cu fișierul: o folosești în lecția 3. Captură din PowerPoint în engleză.')}
+<p><b>Cum găsești un buton, în 4 pași:</b></p><ol><li>Spune în cuvinte ce vrei: „vreau să pun o poză”.</li><li>Alege fila după listă: pui ceva nou pe diapozitiv, deci <b>Inserare (Insert)</b>.</li><li>Deschide fila și citește numele grupurilor și ale butoanelor: <i>Pictures</i> (Imagini).</li><li>Nu e acolo? Încearcă fila care mai are sens.</li></ol>`,
+   altfel:`<p>Panglica e ca un dulap cu sertare etichetate: fila e sertarul, grupul e o cutie din sertar, butonul e unealta din cutie. Nu scotocești prin toate: citești eticheta și deschizi sertarul potrivit.</p>`,
+   incearca:{t:'ppti',taste:false,q:SIM_SCURT+'Găsește pe panglică butonul cu care pui un <b>tabel</b> pe diapozitiv (<b>Tabel</b> / <b>Table</b>): deschide fila potrivită și apasă-l.',
+     start:{deck:'vulcanii',cur:1},
+     teste:[{ce:'Ai apăsat butonul <b>Table</b> (Tabel)',c:[{k:'buton',id:'TableInsertGallery'}],ajutor:'Pui ceva nou pe diapozitiv. Ce filă e pentru asta?'}],
+     rez:['tab-insert','b:TableInsertGallery'],gresit:['tab-home','b:SlideNewGallery'],
+     rezText:'fila Insert (Inserare) → grupul Tables → butonul Table (Tabel)',ajutor:'Tabelul e ceva nou pe diapozitiv.',
+     why:'Tabelul e ceva nou pe care îl pui pe diapozitiv, deci e pe fila Inserare (Insert), în grupul Tables. Îl folosești în lecția 4.'},
+   inca:[
+    {t:'ppti',taste:false,q:SIM_SCURT+'Găsește pe panglică butonul <b>Notes</b> (Note), cel care arată sau ascunde zona de note. Nu cel din bara de stare: pe cel de pe o filă.',
+     start:{deck:'vulcanii',cur:0},
+     teste:[{ce:'Ai apăsat butonul <b>Notes</b> (Note) de pe panglică',c:[{k:'buton',id:'ShowNotes'}],ajutor:'Zona de note ține de felul în care privești prezentarea. Ce filă e pentru asta?'}],
+     rez:['tab-view','b:ShowNotes'],gresit:['tab-home','b:SlideLayoutGallery'],
+     rezText:'fila View (Vizualizare) → grupul Show → Notes (Note)',ajutor:'Care filă e despre cum privești prezentarea?',
+     why:'Zona de note ține de felul în care privești prezentarea, deci butonul e pe fila Vizualizare (View), în grupul Show.'}
+   ]},
+  /* ---------- pasul 5: vizualizările ---------- */
+  {t:'Vizualizările: Normal și Sortare diapozitive',
+   text:`<p>Aceeași prezentare o poți privi în mai multe feluri, numite <mark>vizualizări</mark>. Le schimbi cu <strong>cele patru butoane ale vizualizărilor</strong>, din dreapta barei de stare. Le recunoști după desen:</p>
+<ul><li><strong>Normal</strong>, o fereastră mică: cele cinci zone; aici lucrezi;</li><li><strong>Sortare diapozitive (Slide Sorter)</strong>, patru pătrățele: toate diapozitivele, mici, unul lângă altul;</li><li><strong>Vizualizare citire (Reading View)</strong>, o carte deschisă: nu o folosim;</li><li><strong>Expunere diapozitive (Slide Show)</strong>, un ecran pe un suport: în pasul următor.</li></ul>
+<p>Din Sortare revii cu Normal. Normal apăsat când ești deja în Normal pune în stânga <strong>Schița (Outline View)</strong>, textul diapozitivelor; încă o dată Normal și revin miniaturile.</p>
+${fig('bara-stare-vizualizari','Partea din dreapta a barei de stare din PowerPoint, mărită: Notes, Display Settings, Comments, apoi cele patru butoane ale vizualizărilor, încadrate și numite deasupra: Normal, Sortare, Citire, Expunere','Bara de stare, în dreapta: după Notes, Display Settings și Comments, <b>cele patru butoane ale vizualizărilor</b>. Ține mouse-ul pe unul și îi apare numele. Primele trei sunt și pe fila Vizualizare (View). Captură din PowerPoint în engleză.')}`,
+   exemplu:`${fig('sortare-diapozitive','PowerPoint în vizualizarea Sortare diapozitive: cele 7 diapozitive ale prezentării Albinele, mici, pe rânduri, fiecare cu numărul lui dedesubt','Sortare diapozitive (Slide Sorter): toată prezentarea „Albinele” dintr-o privire. Captură din PowerPoint în engleză.')}
+<p>Mihai apasă <b>Sortare diapozitive</b> (patru pătrățele) și vede toate cele 7 diapozitive. Observă că al treilea e plin de text. Dă clic pe el, apoi pe <b>Normal</b> (sau dublu clic pe el): diapozitivul 3 e acum mare, în zona de lucru.</p>
+${fig('schita-in-loc-de-miniaturi','PowerPoint după ce apeși Normal când ești deja în Normal: în stânga, încadrată, Schița cu textul diapozitivelor numerotate de la 1 la 7, în locul miniaturilor','<b>Schița (Outline View)</b>: Normal apăsat încă o dată, când erai deja în Normal. Mai apeși o dată Normal și revin miniaturile. Captură din PowerPoint în engleză.','mica')}`,
+   incearca:{t:'ppti',taste:false,q:SIM_SCURT+'Treci în <b>Sortare diapozitive</b> (Slide Sorter) și găsește acolo diapozitivul „Ce am mâncat”. Dă clic pe el, apoi întoarce-te în <b>Normal</b>.',
+     start:{deck:'excursia',cur:0},
+     teste:[{ce:'Ai trecut în Sortare diapozitive (Slide Sorter) și te-ai întors în Normal',c:[{k:'ev',e:'normalDupaSorter'},{k:'vedere',v:'normal'}],ajutor:'Sortare diapozitive: butonul cu patru pătrățele, în bara de stare. Înapoi: Normal, butonul cu fereastra mică.'},
+       {ce:'Diapozitivul „Ce am mâncat” (al 5-lea) e ales',c:[{k:'cur',n:5}],ajutor:'În Sortare diapozitive, clic pe „Ce am mâncat”, apoi Normal (sau dublu clic pe „Ce am mâncat”).'}],
+     rez:['v:sorter','mini-5','v:normal'],gresit:['mini-5'],
+     rezText:'butonul Slide Sorter (Sortare diapozitive, patru pătrățele) din bara de stare → clic pe diapozitivul 5 → butonul Normal (fereastra mică)',ajutor:'Care buton arată toate diapozitivele, mici, unul lângă altul?',
+     why:'În Sortare diapozitive ai văzut toată excursia dintr-o privire și ai ales diapozitivul; în Normal el e acum mare, în zona de lucru.'},
+   inca:[
+    {t:'choice',q:'Prezentarea are 15 diapozitive. Vrei să verifici repede dacă toate au titlu. Ce vizualizare alegi?',
+     o:['Sortare diapozitive (Slide Sorter)','Normal, cu diapozitivele luate pe rând','Expunere diapozitive (Slide Show), cu 15 clicuri','Vizualizare citire (Reading View)'],ok:0,
+     ajutor:'Care vizualizare le arată pe toate deodată?',why:'Sortare diapozitive le arată pe toate 15, mici, unul lângă altul: le verifici dintr-o privire, fără să le iei pe rând.'},
+    {t:'ppti',taste:false,q:SIM_SCURT+'Apasă <b>Normal</b> în bara de stare, deși ești deja în Normal, și uită-te ce apare în stânga. Apoi adu înapoi miniaturile și alege diapozitivul „Plecarea”.',
+     start:{deck:'excursia',cur:0},
+     teste:[{ce:'Ai văzut Schița (Outline View) în locul miniaturilor',c:[{k:'ev',e:'schita'}],ajutor:'Butonul Normal (fereastra mică) din bara de stare, apăsat o dată.'},
+       {ce:'Miniaturile sunt din nou în stânga, iar „Plecarea” (al 2-lea) e ales',c:[{k:'stanga',v:'miniaturi'},{k:'cur',n:2}],ajutor:'Încă o dată Normal; apoi clic pe miniatura 2.'}],
+     rez:['v:normal','v:normal','mini-2'],gresit:['v:normal','mini-2'],
+     rezText:'Normal (în Normal) → Schița → încă o dată Normal → miniatura 2',ajutor:'Ce buton ai apăsat ca să apară Schița?',
+     why:'Normal apăsat când erai deja în Normal a schimbat miniaturile cu Schița; încă o apăsare le-a adus înapoi.'}
+   ]},
+  /* ---------- pasul 6: expunerea ---------- */
+  {t:'Expunerea: pornești și ieși',
+   text:`<p><mark>Expunerea</mark> arată diapozitivele pe tot ecranul, unul câte unul, cum le vede publicul. O pornești:</p>
+<ul><li><strong>de la început</strong>: tasta <kbd>F5</kbd> sau fila <strong>Expunere diapozitive (Slide Show)</strong> → <strong>De la început (From Beginning)</strong>;</li>
+<li><strong>de la diapozitivul ales</strong>: butonul <strong>Expunere diapozitive (Slide Show)</strong> din bara de stare, ultimul dintre cele patru butoane ale vizualizărilor (un ecran pe un suport).</li></ul>
+<p>Mergi înainte cu un clic sau cu săgeata <kbd>→</kbd>, înapoi cu <kbd>←</kbd>. După ultimul diapozitiv apare un ecran negru: încă un clic te scoate. Oricând ieși cu tasta <kbd>Esc</kbd>, din colțul din stânga sus al tastaturii.</p>
+${figDin('../m1-l07/img/expunere-de-la-inceput.webp',384,300,'Fila Slide Show din PowerPoint, încadrată, iar dedesubt butoanele From Beginning și From Current Slide, încadrate','Fila <b>Expunere diapozitive (Slide Show)</b> → <b>De la început (From Beginning)</b>, la fel ca tasta F5. Captură din PowerPoint în engleză.','ingusta')}`,
+   exemplu:`<p>Mihai își privește prezentarea ca publicul:</p><ol><li>alesese diapozitivul 4, dar apasă <kbd>F5</kbd>: expunerea pornește de la diapozitivul 1;</li><li>dă clic de 6 ori și ajunge la „Ce am aflat”, al 7-lea; încă un clic: ecranul negru; încă unul: e înapoi în fereastră;</li><li>alege miniatura 6, apasă butonul <b>Expunere diapozitive (Slide Show)</b> din bara de stare (ecranul pe suport): pornește de la 6. Iese cu <kbd>Esc</kbd>.</li></ol>`,
+   altfel:`<p>E ca la teatru: fereastra de lucru e culisa, unde pregătești totul; expunerea e scena, unde publicul vede doar spectacolul. <kbd>F5</kbd> ridică cortina de la început, iar <kbd>Esc</kbd> te trimite înapoi în culise.</p>`,
+   incearca:{t:'ppti',q:SIM_SCURT+'Privește prezentarea „Excursia” ca publicul: pornește expunerea <b>de la început</b> (e ales diapozitivul 4, dar tu vrei de la primul), mergi până la ecranul negru de final și ieși.',
+     start:{deck:'excursia',cur:3},
+     teste:[{ce:'Ai pornit expunerea de la început (F5 sau Slide Show → From Beginning)',c:[{k:'ev',e:'inceput'}],ajutor:'Tasta F5 (butonul F5 de sub fereastră) sau fila Slide Show (Expunere diapozitive) → From Beginning (De la început).'},
+       {ce:'Ai mers până la ecranul negru de final',c:[{k:'ev',e:'final'}],ajutor:'Clic (sau →) până după ultimul diapozitiv.'},
+       {ce:'Ai ieșit din expunere: ești din nou în fereastra de lucru',c:[{k:'ev',e:'iesit'},{k:'vedere',v:'normal'}],ajutor:'Încă un clic pe ecranul negru sau tasta Esc.'}],
+     rez:['f5','next','next','next','next','next','next','next'],gresit:['v:show','next','next','next'],
+     rezText:'F5 → clic de 6 ori, până la ecranul negru → încă un clic',ajutor:'Butonul din bara de stare pornește de la diapozitivul ales. Tu vrei de la început.',
+     why:'F5 pornește mereu de la primul diapozitiv, oricare ar fi cel ales. După ultimul vine ecranul negru, iar încă un clic te întoarce în fereastră.'},
+   inca:[
+    {t:'choice',q:'Ești în expunere, pe diapozitivul 5. Ai trecut prea repede și vrei să revezi diapozitivul 4. Ce apeși?',
+     o:['Săgeata ←','Tasta Esc','Tasta F5','Săgeata →'],ok:0,ajutor:'Ce tastă te duce înapoi?',
+     why:'← te duce la diapozitivul dinainte, fără să ieși. Esc ar închide expunerea, F5 ar porni-o de la început, iar → merge înainte.'}
+   ]}
+ ],
+ atelier:{t:'ppti',titlu:'Verifică prezentarea lui Mihai',
+  intro:SIM_INTRO+'<p><strong>Sarcina:</strong> Mihai ți-a dat prezentarea lui, „Albinele”, s-o verifici înainte s-o arate clasei. Trei diapozitive încalcă fiecare câte una dintre cele patru reguli ale unui diapozitiv bun (o idee, puține cuvinte, se citește, imaginea spune ceva). Găsește-le și scrie în notele fiecăruia ce e greșit. Apoi privește toată prezentarea în Sortare diapozitive și ca publicul, în expunere. Ordinea în care faci testele o alegi tu.</p>',
+  q:'Verifică prezentarea „Albinele”.',start:{deck:'albinele',cur:0},
+  teste:[
+   {ce:'În notele diapozitivului cu prea multe cuvinte ai scris ce e greșit',c:[{k:'nota',d:3}],ajutor:'Caută diapozitivul cu un paragraf lung. Clic pe miniatura lui, apoi în zona de note, și scrie, de exemplu, „prea mult text”.'},
+   {ce:'În notele diapozitivului care nu se citește din ultima bancă ai scris ce e greșit',c:[{k:'nota',d:4}],ajutor:'Caută textul deschis pe fundal deschis.'},
+   {ce:'În notele diapozitivului cu poza care nu ține de titlu ai scris ce e greșit',c:[{k:'nota',d:5}],ajutor:'Caută poza care nu ține de titlu: arată altceva decât spune titlul.'},
+   {ce:'Ai scris doar în notele celor trei diapozitive: notele celorlalte au rămas cum erau',c:[{k:'nota',d:3},{k:'nota',d:4},{k:'nota',d:5},{k:'noteDoar',d:[3,4,5]}],ajutor:'Ai scris la alt diapozitiv? Clic în notele lui și șterge ce ai adăugat.'},
+   {ce:'Ai privit toată prezentarea în Sortare diapozitive (Slide Sorter) și te-ai întors în Normal',c:[{k:'ev',e:'normalDupaSorter'},{k:'vedere',v:'normal'}],ajutor:'Sortare diapozitive: butonul cu patru pătrățele, în bara de stare. Înapoi: Normal, butonul cu fereastra mică (sau dublu clic pe un diapozitiv).'},
+   {ce:'Ai privit-o ca publicul: expunere de la început, până la ecranul negru de final',c:[{k:'ev',e:'inceput'},{k:'ev',e:'final'}],ajutor:'F5 (sau Slide Show → From Beginning), apoi clic până după ultimul diapozitiv.'},
+   {ce:'Ai ieșit dintr-o expunere cu tasta Esc',c:[{k:'ev',e:'esc'}],ajutor:'Pornește expunerea (F5 sau butonul Slide Show (Expunere diapozitive) din bara de stare) și apasă Esc (sau butonul Esc de sub fereastră).'}],
+  rez:['mini-3',{nota:[3,'prea mult text']},{nota:[4,'nu se vede textul']},{nota:[5,'baloanele nu țin de albine']},'v:sorter','v:normal',
+   'f5','next','next','next','next','next','next','next','next','mini-6','v:show','esc'],
+  gresit:[{nota:[3,'prea mult text']},{nota:[4,'nu se vede textul']},{nota:[6,'poza nu e bună']},'v:sorter','v:normal','f5','next','next','next','next','next','next','next','next','mini-6','v:show','esc'],
+  rezText:'notele diapozitivelor 3 (paragraful), 4 (galben pe alb) și 5 (baloanele); Slide Sorter, apoi Normal; F5 și clic până la ecranul negru, încă un clic; miniatura 6 → butonul Slide Show (Expunere diapozitive) din bara de stare → Esc',
+  ajutor:'Lucrează test cu test. Ia diapozitivele pe rând și verifică la fiecare cele patru reguli.',
+  why:'Ai verificat prezentarea ca un profesor și te-ai descurcat în fereastra PowerPoint. <b>Ce am învățat:</b> un diapozitiv bun are o idee, în puține cuvinte, se citește (contrast mare) și are o imagine care spune ceva; fereastra PowerPoint are cinci zone (panglica, panoul cu miniaturi, zona de lucru, zona de note, bara de stare); pe panglică, butoanele stau pe file și în grupuri; Sortare diapozitive arată toată prezentarea, Normal e pentru lucru; expunerea pornește cu <kbd>F5</kbd> de la început sau cu butonul Slide Show din bara de stare, de la diapozitivul ales, iar <kbd>Esc</kbd> te scoate.'},
+ qs:[
+  {t:'choice',q:`Care diapozitiv respectă regulile „o idee pe diapozitiv” și „puține cuvinte”?${grila(
+     D('q1-a','A','Diapozitivul A, Planetele: opt rânduri, câte unul pentru fiecare planetă'),D('q1-b','B','Diapozitivul B, Marea Neagră: trei rânduri, Are apă sărată, Mi-am luat o bicicletă nouă, Fotbalul e sportul meu preferat'),
+     D('q1-c','C','Diapozitivul C, Marea Neagră: trei rânduri scurte, Apa ei e mai puțin sărată, În ea trăiesc delfini, Pe țărm e orașul Constanța'))}`,
+   o:['Diapozitivul C','Diapozitivul A','Diapozitivul B'],ok:0,ajutor:'La fiecare: câte rânduri are? Ține tot de titlu?',
+   why:'A are opt rânduri: prea multe. B amestecă ideile: bicicleta și fotbalul nu țin de Marea Neagră. C are o idee, în trei rânduri scurte.'},
+  {t:'zona',q:'În captura de mai jos, zonele sunt numerotate, dar fără nume. În care zonă vezi al câtelea diapozitiv e ales și câte are prezentarea? Atinge numărul ei.',img:IMG_ZONE,zone:ZONE,ok:'stare',
+   ajutor:'Caută „Slide 1 of 4” în captură.',gresitMsg:{panglica:'Zona 1 e panglica, cu filele și butoanele.',miniaturi:'Zona 2 arată diapozitivele, dar nu scrie al câtelea e ales din câte.',lucru:'Zona 3 e zona de lucru, cu diapozitivul mare.',note:'Zona 4 e zona de note.'},
+   why:'Zona 5, bara de stare, jos de tot: acolo scrie „Slide 1 of 4”, adică diapozitivul 1 din 4.'},
+  {t:'ppti',taste:false,q:SIM_SCURT+'Găsește pe panglică butonul cu care adaugi încă un diapozitiv, <b>Diapozitiv nou</b> (<b>New Slide</b>), și apasă-l.',
+   start:{deck:'excursia',cur:2},
+   teste:[{ce:'Ai apăsat butonul <b>New Slide</b> (Diapozitiv nou)',c:[{k:'buton',id:['SlideNewGallery','SlideNewGalleryInsert']}]}],
+   rez:['tab-home','b:SlideNewGallery'],gresit:['tab-design','b:SlideLayoutGallery'],
+   rezText:'fila Home (Pornire) → grupul Slides → New Slide (Diapozitiv nou)',ajutor:'Recitește lista filelor din pasul 4.',
+   why:'Diapozitivul nou e pe fila Pornire (Home), în grupul Slides (îl găsești și pe Inserare). Îl folosești în lecția 4.'},
+  {t:'ppti',q:SIM_SCURT+'Vrei să le arăți colegilor doar partea de la „Ce am văzut” (diapozitivul 4) încolo. Alege-l și pornește expunerea <b>de la el</b>, fără să treci prin primele trei. Apoi ieși cu <kbd>Esc</kbd>.',
+   start:{deck:'excursia',cur:0},
+   teste:[{ce:'Expunerea a pornit de la diapozitivul 4',c:[{k:'curentDin',n:4}]},{ce:'Ai ieșit cu Esc',c:[{k:'ev',e:'esc'}]}],
+   rez:['mini-4','v:show','esc'],gresit:['mini-4','f5','next','next','next','esc'],
+   rezText:'clic pe miniatura 4 → butonul Expunere diapozitive (Slide Show) din bara de stare, ecranul pe suport → Esc',ajutor:'Care buton pornește de la diapozitivul ales?',
+   why:'Butonul Slide Show (Expunere diapozitive) din bara de stare (sau Slide Show → From Current Slide) pornește de la diapozitivul ales. F5 ar fi pornit de la primul.'},
+  {t:'choice',q:`Care variantă a diapozitivului „Toamna” se citește din ultima bancă?${grila(
+     D('q5-a','A','Varianta A: textul galben deschis pe fundal alb'),D('q5-b','B','Varianta B: textul albastru închis pe fundal alb'),
+     D('q5-c','C','Varianta C: textul gri închis pe fundal negru'),D('q5-d','D','Varianta D: textul gri deschis pe fundal alb'))}`,
+   o:['Varianta B','Varianta A','Varianta C','Varianta D'],ok:0,ajutor:'Textul și fundalul trebuie să fie foarte diferite ca luminozitate.',
+   why:'B are text închis pe fundal deschis: contrast mare. La A și D textul deschis stă pe fundal deschis, iar la C textul închis stă pe fundal închis.'}
+ ]
+};
+
+/* „Acum la calculatorul din laborator”: aceeași prezentare ca în atelier (făcută în PowerPoint prin COM, _proba/fa_pptx.py) */
+const DESCARCA='<a class="descarca" href="albinele-de-verificat.pptx" download>⬇ albinele-de-verificat.pptx</a>';
+const PASI_REAL=[
+  `Descarcă prezentarea: ${DESCARCA}. E aceeași ca în atelier. Deschide fișierul descărcat (clic pe el, în lista de descărcări a browserului): se deschide în PowerPoint.`,
+  '<b>Editarea</b> este orice schimbare în prezentare, chiar și scrisul în note. Dacă sus apare o bară galbenă, <b>Vizualizare protejată (Protected View)</b>, apasă pe ea butonul <b>Activare editare (Enable Editing)</b>: fără el nu poți scrie nici în note.',
+  'Găsește cele cinci zone: panglica (sus), panoul cu miniaturi (stânga), zona de lucru (mijloc), zona de note (sub diapozitiv), bara de stare (jos de tot). Nu vezi zona de note? Apasă <b>Note (Notes)</b>, jos, în bara de stare.',
+  'Clic pe miniatura 2. Verifică: „Viața în stup” e mare în zona de lucru, iar bara de stare arată că ești pe diapozitivul 2 din 7 (în engleză: <i>Slide 2 of 7</i>). Citește notele lui.',
+  'Clic pe fila <b>Inserare (Insert)</b>, apoi pe <b>Vizualizare (View)</b>: sub fiecare apar alte butoane, pe grupuri. Ține mouse-ul pe un buton: îi apare numele. Revino la <b>Pornire (Home)</b>.',
+  'Ia diapozitivele pe rând și verifică la fiecare cele patru reguli: o idee, puține cuvinte, se citește, imaginea spune ceva. La cele trei care încalcă o regulă, dă clic în zona de note și scrie ce e greșit.',
+  'Apasă <b>Sortare diapozitive (Slide Sorter)</b>, butonul cu patru pătrățele din dreapta barei de stare: vezi toate cele 7 diapozitive. Revino cu <b>Normal</b>, butonul cu fereastra mică, chiar lângă el. Dacă în stânga apare textul diapozitivelor în locul miniaturilor (Schița), mai apasă o dată Normal (sau fila <b>Vizualizare (View)</b> → <b>Normal</b>).',
+  'Apasă <kbd>F5</kbd>: expunerea pornește de la primul diapozitiv, pe tot ecranul. Nu pornește? Pe unele laptopuri ții apăsată tasta <kbd>Fn</kbd> și apeși <kbd>F5</kbd>; sau fila <b>Expunere diapozitive (Slide Show)</b> → <b>De la început (From Beginning)</b>. Dă clic până la ecranul negru de final, apoi încă un clic: ești înapoi în fereastră.',
+  'Clic pe miniatura 6. Apasă butonul <b>Expunere diapozitive (Slide Show)</b> din bara de stare, ultimul dintre cele patru butoane ale vizualizărilor (un ecran pe un suport): expunerea pornește de la diapozitivul 6. Ieși cu <kbd>Esc</kbd>.',
+  'Verifică-te: diapozitivele care încalcă regulile sunt 3 (paragraful lung), 4 (galben pe alb) și 5 (baloanele nu țin de albine).',
+  'Închide PowerPoint cu ✕ din colțul din dreapta sus. Dacă te întreabă dacă păstrezi ce ai schimbat (<i>Save your changes to this file?</i>), apasă <b>Nu salvați (Don\'t Save)</b>, ca prezentarea să rămână neschimbată pentru colegul care vine după tine. Cum păstrezi o prezentare pe calculator (salvarea) înveți în lecția 3.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vi_m1_l02',
+  mod:'lectie',
+  titlu:'Ce este o prezentare bună. Interfața aplicației de prezentări',
+  marca:'Lecția <b>2</b> · clasa a VI-a',
+  h1:'Ce este o prezentare bună. <span class="acc">Interfața aplicației de prezentări</span>',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VI-a',
+  unitate:'VI-U1',
+  unitateTitlu:'Prezentări digitale',
+  competente:['CS.1.1','CS.3.1'],
+  lectii:'2',
+  ancoraText:'Programa (OMEN 3393/2017), clasa a VI-a, CS.1.1 și CS.3.1 · unitatea VI-U1 „Prezentări digitale” · lecția 2 din modulul 1 · conținuturile: „'+CONT.join('”, „')+'”',
+  intro:'Lecția 2 din modulul 1. Afli <b>ce face un diapozitiv să fie bun</b> (patru reguli pe care le aplici pe exemple) și te descurci în <b>fereastra PowerPoint</b>: zonele, panglica, vizualizările, expunerea. Exersezi într-un PowerPoint simulat chiar în pagină, apoi la calculatorul din laborator, pe o prezentare pe care o descarci de aici. <b>Ai nevoie de:</b> clasa a V-a (fereastra unei aplicații, clicul, tastatura). Poți lucra singur: fiecare pas are un exemplu și un exercițiu cu indiciu.',
+  cum:`<b>Cum lucrezi</b><ol>
+<li><b>Învață</b>: primul pas îți spune la ce folosește lecția; apoi urmează 6 pași scurți, câte o idee, cu un exemplu „Uite cum”. Nu ai înțeles? „Explică-mi altfel”.</li>
+<li><b>Încearcă tu</b>: după fiecare pas, un exercițiu mic, care nu se notează. Greșești? Primești un indiciu. „Încă un exercițiu” îți dă altele.</li>
+<li><b>Atelier</b>: verifici o prezentare întreagă într-un PowerPoint simulat. Testele se bifează singure.</li>
+<li><b>Acum la calculatorul din laborator</b>: faci același lucru în PowerPoint-ul de pe calculator, pas cu pas.</li>
+<li><b>Verificare</b>: 5 întrebări, doar din ce ai învățat în pași. Stele pentru răspunsurile din prima.</li></ol>`,
+  banda:'<span class="fer"></span><span></span><span></span><span></span><span class="show"></span><span class="fer"></span><span></span><span></span><span class="show"></span><span></span>',
+  nivele:[LECTIA],
+  tipuri:{ppti:SimPPTInt,zona:SimPPTInt.zona},
+  aplicatieReala:{aplicatie:'PowerPoint-ul de pe calculatorul din laborator',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:'<p>Ai exersat în simulator. Acum faci același lucru în PowerPoint-ul de pe calculator, cu aceeași prezentare. Nu ai nevoie de profesor: descarci fișierul de mai jos și urmezi pașii, unul câte unul. Fiecare pas îți spune ce trebuie să vezi.</p>',
+    pasi:PASI_REAL},
+  diploma:{
+    titlu:'Cunoscător de prezentări',
+    rezumat:'cele patru reguli ale unui diapozitiv bun (o idee, puține cuvinte, se citește, imaginea spune ceva), cele cinci zone ale ferestrei PowerPoint, filele și grupurile panglicii, vizualizările Normal și Sortare diapozitive, expunerea pornită cu F5 sau din bara de stare și oprită cu Esc',
+    aplicatie:'PowerPoint-ul de pe calculatorul din laborator',
+    provocare:PASI_REAL
+  }
+});
+</script>
+</body>
+</html>
