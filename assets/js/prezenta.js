@@ -77,6 +77,50 @@
     return 'necunoscut';
   }
 
+  /* ---------------- O SINGURĂ identitate pentru toate filele (28.09.2026) ----------------
+     Judecătorul VIII/1: fila lecției rescria la 5 secunde identitatea citită la încărcare, deci o înscriere făcută
+     în ALTĂ filă (elevul nou, pe calculatorul comun) revenea în 6 secunde la numele celui de dinainte, iar munca
+     noului elev se scria pe numele altui copil. Acum, înainte de orice scriere a identității sau a minutelor, fila
+     recitește lh_prezenta (sincron); dacă altă filă a schimbat-o, o ADOPTĂ (nu o suprascrie), redesenează eticheta
+     și anunță lecția/jocul prin evenimentul „prezenta”. La evenimentul „storage” se întâmplă imediat.
+     Minutele de dinainte de schimbare rămân ale elevului de dinainte: fila care schimbă elevul le trimite pe numele
+     lui (uita -> trimite), iar fila care adoptă nu mai scrie nimic pe numele vechi și nu mută nimic pe cel nou. */
+  function formaId(e) {   // identitatea fără „ultima”, pe care fiecare filă o împrospătează
+    if (!e || typeof e !== 'object') return '';
+    return JSON.stringify(Object.keys(e).filter(function (k) { return k !== 'ultima'; }).sort().map(function (k) { return [k, e[k]]; }));
+  }
+  function cine(e) { return e && e.id && e.numeEnc ? e.id + '|' + e.nume : ''; }
+  var pornit = false, tAnunt = 0;
+  function anunta() {   // o dată după o rafală: identitatea și profilul (sertarul) sosesc unul după altul din cealaltă filă
+    clearTimeout(tAnunt);
+    tAnunt = setTimeout(function () { try { dispatchEvent(new CustomEvent('prezenta', { detail: identitate() })); } catch (e) {} }, 80);
+  }
+  function sincron() {   // true = altă filă a schimbat identitatea și am adoptat-o
+    var raw, d = null;
+    try { raw = localStorage.getItem(K_ID); } catch (e) { return false; }   // fără localStorage: rămâne ce e în memorie
+    try { d = JSON.parse(raw); } catch (e) {}
+    if (formaId(d) === formaId(eu)) {
+      if (d && eu && (d.ultima || 0) > (eu.ultima || 0)) eu.ultima = d.ultima;
+      return false;
+    }
+    var altul = cine(d) !== cine(eu);
+    eu = d;
+    if (altul) { confirmat = false; strans = false; laPagina = 0; }
+    if (pornit) { randeaza(); if (altul) anunta(); }
+    return true;
+  }
+  // „ultima” pe numele lui: peste identitatea de pe disc, proaspăt recitită (nu peste copia din memorie), cel mult o dată la 30 s
+  function atinge() {
+    var t = Date.now(), d = citeste(K_ID, null);
+    eu.ultima = t;
+    if (d && d.id === eu.id && t - (d.ultima || 0) > 30000) { d.ultima = t; scrie(K_ID, d); }
+  }
+  addEventListener('storage', function (e) {
+    if (e.storageArea && e.storageArea !== localStorage) return;
+    if (e.key === K_ID || e.key === null) sincron();
+    else if (e.key === K_PROFIL && pornit) anunta();   // sertarul elevului nou vine imediat după identitate
+  });
+
   /* ---------------- numărarea timpului ---------------- */
   var ultimaMiscare = Date.now(), laPagina = 0;
   ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(function (e) {
@@ -91,6 +135,7 @@
     var v = c.pag[p0] || { t: '', s: 0, n: 0 };
     v.t = (document.title || '').slice(0, 120); v.s += sec; v.n += vizita ? 1 : 0;
     c.pag[p0] = v; if (!c.de) c.de = Date.now();
+    if (cheie === K_TINUT && sec) c.u = Date.now();   // când s-a lucrat ULTIMA oară deoparte (vezi tinutDeoparte)
     scrie(cheie, c);
     if (sec && cheie === K_COADA) jurnalSec(p0, v.t, sec);
   }
@@ -117,13 +162,14 @@
      noi în <cheia jocului>@_tinut, nu în sertarul lui X. Ce lucrează cineva neînscris stă în <cheie>@_neinscris.
      mutaJoc(din, p) le unește în sertarul p (maximul pe fiecare nivel) și șterge sursa: „Da” -> sertarul lui X;
      „Nu”/„Alege-te din listă” -> @_neinscris; înscrierea sau alegerea din listă -> sertarul celui ales. */
-  function mutaJoc(din, p) {
+  function mutaJoc(din, p, doar) {   // doar(src) (opțional, 28.09.2026): mută numai cheile pentru care întoarce true
     if (!p || p === din) return false;
     var chei = [], suf = '@' + din, mutat = false;
     try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.length > suf.length && k.slice(-suf.length) === suf && /^[\w-]+$/.test(k.slice(0, -suf.length))) chei.push(k); } } catch (e) { return false; }
     chei.forEach(function (k) {
       var src = citeste(k, null), kd = k.slice(0, -suf.length) + '@' + p, dst = citeste(kd, null);
       if (!src || typeof src !== 'object' || !src.lv) { sterge(k); return; }
+      if (doar && !doar(src)) return;
       if (!dst || typeof dst !== 'object') dst = { nume: '', lv: {} };
       if (!dst.lv) dst.lv = {};
       Object.keys(src.lv).forEach(function (n) {
@@ -141,16 +187,46 @@
     var a = mutaJoc('_neinscris', p), b = mutaJoc('_tinut', p);
     return a || b;
   }
+  /* CE S-A LUCRAT DEOPARTE (28.09.2026, judecătorul V/1: „Da, sunt eu” apăsat doar ca să închidă caseta trecea pe numele
+     lui X munca altui elev). „Da” nu mai mută nimic singur: dacă s-a lucrat deoparte în ultimele TINUT_RECENT minute,
+     a doua întrebare arată CE („Lecția 4 …, 6 minute”) și întreabă „Ai lucrat TU asta acum?”; munca mai veche nu i se
+     mai oferă și merge la „neînscris” (o primește următorul elev care se înscrie). Întoarce null dacă nu e nimic. */
+  var TINUT_RECENT = 20 * 60000, TINUT_MIN_SEC = 180;
+  var recent = function (ts) { return !!ts && Date.now() - ts <= TINUT_RECENT; };
+  /* Ce s-a lucrat deoparte în ultimele TINUT_RECENT minute: nivelurile (fiecare joc are momentul lui, `u`, pus de motor)
+     și timpul (numai dacă ședința ținută deoparte a ÎNCEPUT recent, `de`: timpul se adună pe pagini, fără ore). Întâi,
+     nivelurile mai vechi pleacă la „neînscris”. Întoarce null dacă nu rămâne nimic recent de oferit. */
+  function tinutDeoparte() {
+    mutaJoc('_tinut', '_neinscris', function (s) { return !recent(s.u); });
+    var t = citeste(K_TINUT, null) || {}, sec = 0, ce = [], niv = 0, suf = '@_tinut';
+    if (recent(t.de)) Object.keys(t.pag || {}).forEach(function (p) { sec += t.pag[p].s || 0; });
+    (t.ev || []).forEach(function (e) { if (e.tip === 'nivel' && e.titlu && recent(Date.parse(e.cand || '')) && ce.indexOf(e.titlu) < 0) ce.push(e.titlu); });
+    try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.slice(-suf.length) === suf) {
+      var s = citeste(k, null); if (s && s.lv) niv += Object.keys(s.lv).length; } } } catch (e) {}
+    if (!niv && sec < TINUT_MIN_SEC) return null;   // doar câteva minute pe pagină, fără niveluri: nu e nimic de întrebat
+    return { sec: sec, niveluri: niv, ce: ce };
+  }
+  /* răspunsul întreg la „Ești tot X?”: X rămâne; munca ținută deoparte merge la el (cuMunca) sau la „neînscris” */
+  function confirmaEu(cuMunca) {
+    confirmat = true; eu.intreaba = false; eu.ultima = Date.now(); scrie(K_ID, eu); ultimaMiscare = Date.now();
+    var t = citeste(K_TINUT, null);
+    if (t && !recent(t.de)) sterge(K_TINUT);   // timpul unei ședințe deoparte începute de mult nu e al lui
+    if (cuMunca) { mutaTinut(); mutaJoc('_tinut', citesteProfil()); }
+    else { sterge(K_TINUT); mutaJoc('_tinut', '_neinscris'); }
+    trimite(false); Nor.impinge(false); randeaza();
+    try { dispatchEvent(new CustomEvent('prezenta', { detail: identitate() })); } catch (e) {}
+  }
   // unde merge ce se întâmplă acum: în coada lui, deoparte (până răspunde la „Ești tot X?”), sau nicăieri
   function tinta() { var s = stare(); return s === 'activ' ? K_COADA : s === 'intreaba' ? K_TINUT : null; }
 
   setInterval(function () {
+    if (sincron()) return;   // altă filă a schimbat elevul: secundele astea nu se scriu nici pe cel vechi, nici pe cel nou
     var s = stare();
     if (s !== 'activ' && s !== 'intreaba') return;
     if (document.visibilityState !== 'visible' || !document.hasFocus()) return;
     if (Date.now() - ultimaMiscare > FEREASTRA) return;
     if (s === 'intreaba') { adaugaInCoada(TICK, false, K_TINUT); return; }   // deoparte, nu pierdut
-    eu.ultima = Date.now(); scrie(K_ID, eu);
+    atinge();
     laPagina += TICK;
     adaugaInCoada(TICK, false);
     if (laPagina === 30 || Date.now() - ((citeste(K_COADA, {}) || {}).de || Date.now()) > TRIMITE_LA) trimite(false);
@@ -159,13 +235,15 @@
   /* ---------------- trimiterea ---------------- */
   var inZbor = false;
   function trimite(laInchidere) {
+    sincron();   // coada e a celui înscris ACUM pe calculator (altă filă îl poate fi schimbat)
     if (!eElev() || stare() !== 'activ' || inZbor) return;
     var c = citeste(K_COADA, null);
     if (!c || (!Object.keys(c.pag).length && !c.ev.length)) return;
     var go = function () {
       // între apel și trimitere elevul se poate fi schimbat („Nu ești tu?”): atunci nu trimitem nimic și coada rămâne
       // pe loc, ca la ieșirea de mai sus (găsit 26.09.2026: „null.id” când pagina se încarcă mai încet)
-      if (!eu || !eElev() || stare() !== 'activ') { inZbor = false; return; }
+      if (sincron() || !eu || !eElev() || stare() !== 'activ') { inZbor = false; return; }
+      var al = eu.id;
       var corp = JSON.stringify({
         id: eu.id, scoala: eu.scoala, clasa: eu.clasa, numeEnc: eu.numeEnc, scoalaText: eu.scoalaText,
         pag: Object.keys(c.pag).map(function (p) { return { p: p, t: c.pag[p].t, s: c.pag[p].s, n: c.pag[p].n }; }),
@@ -175,22 +253,24 @@
       if (laInchidere && navigator.sendBeacon) { navigator.sendBeacon(server, new Blob([corp], { type: 'text/plain' })); return; }
       inZbor = true;
       fetch(server, { method: 'POST', body: corp, keepalive: true }).then(function (r) { if (!r.ok && r.status >= 500) throw 0; })
-        .catch(function () { inapoi(c); }).then(function () { inZbor = false; });
+        .catch(function () { inapoi(c, al); }).then(function () { inZbor = false; });
     };
     if (server) go(); else if (!laInchidere) incarcaDate().then(go, function () {});
   }
-  function inapoi(c) {   // n-a mers: punem înapoi ce n-a ajuns, peste ce s-a mai adunat între timp
+  function inapoi(c, al) {   // n-a mers: punem înapoi ce n-a ajuns, peste ce s-a mai adunat între timp
+    var d = citeste(K_ID, null);
+    if (!d || d.id !== al) return;   // între timp s-a înscris altul (în altă filă): minutele lui X nu trec pe el
     var n = citeste(K_COADA, null) || { pag: {}, ev: [] };
     Object.keys(c.pag).forEach(function (p) { var a = n.pag[p] || { t: c.pag[p].t, s: 0, n: 0 }; a.s += c.pag[p].s; a.n += c.pag[p].n; n.pag[p] = a; });
     n.ev = c.ev.concat(n.ev).slice(-30); n.de = Math.min(n.de || Date.now(), c.de || Date.now());
     scrie(K_COADA, n);
   }
-  addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') trimite(true); });
+  addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') trimite(true); else if (pornit) sincron(); });
   addEventListener('pagehide', function () { trimite(true); });
 
   /* ---------------- ce vede elevul ---------------- */
   var CSS = '#lhp{position:fixed;left:12px;bottom:12px;z-index:2147483000;font:14px/1.35 system-ui,Segoe UI,Arial,sans-serif;color:#e8ecf4;max-width:calc(100vw - 24px)}' +
-    '#lhp .pill{display:inline-flex;align-items:center;gap:6px;background:#1b2234;border:1px solid #33405e;border-radius:999px;padding:5px 11px;cursor:pointer;box-shadow:0 2px 8px #0006;font-size:12.5px}' +
+    '#lhp .pill{display:inline-flex;align-items:center;gap:6px;background:#1b2234;border:1px solid #33405e;border-radius:999px;padding:5px 11px;cursor:pointer;box-shadow:0 2px 8px #0006;font-size:12.5px;min-height:32px;box-sizing:border-box}' +
     '#lhp .pill:hover{border-color:#5b8cff}#lhp .dot{width:8px;height:8px;border-radius:50%;background:#34d399;flex:none}' +
     '#lhp .bar{background:#1b2234;border:1px solid #5b8cff;border-radius:12px;padding:12px 14px;box-shadow:0 4px 16px #0008;max-width:420px;box-sizing:border-box;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}' +
     '#lhp .bar b{color:#fff}#lhp .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}' +
@@ -203,9 +283,12 @@
     '#lhp .lista .el{display:flex;flex-direction:column;align-items:flex-start;text-align:left;background:#0f1422;border-color:#44506c;padding:8px 10px}' +
     '#lhp .lista .el:hover{border-color:#5b8cff;background:#18213a}#lhp .lista .el span{font-size:12px;color:#9aa7c2}' +
     '#lhp .bar:has(.lista){max-width:560px}' +
-    /* 27.09.2026: eticheta se ferește de ce se poate apăsa (vezi fereste()); întrebările strânse devin etichete */
-    '#lhp{transition:opacity .2s}#lhp.ferit{opacity:0;pointer-events:none}#lhp.mini{left:auto;right:8px}' +
-    '#lhp.mini .pill{width:32px;height:32px;padding:0;gap:0;justify-content:center;box-sizing:border-box}#lhp.mini .dot{width:12px;height:12px}' +
+    /* 27.09.2026: eticheta se ferește de ce se poate apăsa (vezi fereste()); întrebările strânse devin etichete.
+       28.09.2026: forma strânsă (.mini) nu mai e un punct fără nume: arată textul scurt .s („Ana-Maria P. · Schimbă”),
+       32 px înălțime; textul lung .t rămâne în pagină pentru cititoarele de ecran. .mini.st = strânsă, dar în stânga. */
+    '#lhp{transition:opacity .2s}#lhp.ferit{opacity:0;pointer-events:none}#lhp.mini{left:auto;right:8px}#lhp.mini.st{left:12px;right:auto}' +
+    '#lhp .pill .s{display:none}#lhp.mini .pill{height:32px;padding:0 10px;gap:5px}' +
+    '#lhp.mini .pill .s{display:inline;white-space:nowrap}#lhp.mini .pill .s b{display:inline-block;max-width:8.5em;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}' +
     '#lhp.mini .pill .t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}' +
     '#lhp .pill.cere{border-color:#5b8cff;background:#1d2a4a}#lhp .pill.cere .dot{background:#5b8cff}' +
     '@media print{#lhp{display:none}}';
@@ -233,8 +316,11 @@
         gest al elevului în pagină (apăsare, derulare, tastă) într-o etichetă „Spune cine ești”; o apăsare pe ea o
         redeschide. Nu se strâng: „Ești tot X?” (trebuie răspuns, altfel timpul rămâne deoparte) și formularele.
      2. Eticheta (orice .pill) nu stă NICIODATĂ peste ceva ce se poate apăsa: dacă sub ea e un buton, o
-        legătură, un câmp, o celulă de simulator etc., se face buton rotund în colțul din dreapta; dacă și acolo
-        e ceva, dispare (și lasă clicurile să treacă) până se eliberează locul. */
+        legătură, un câmp, o celulă de simulator etc., se strânge la forma scurtă (tot în stânga, apoi în colțul
+        din dreapta); dacă și acolo e ceva, dispare (și lasă clicurile să treacă) până se eliberează locul.
+     3. (28.09.2026, judecătorul lecției VI/1, regula 20) Forma strânsă era un punct rotund FĂRĂ nume: pe telefon
+        elevul nu găsea eticheta pe care lecția îi cere s-o atingă ca să schimbe elevul. Acum orice formă a
+        etichetei are nume vizibil (textul scurt .s, ex. „Ana-Maria P. · Schimbă”) și cel puțin 32x32 px de atins. */
   var seStrange = false, strans = false, dimPill = null, rafF = 0, MINI = 32;
   function gest(e) {
     if (!seStrange || !box) return;
@@ -263,10 +349,18 @@
   }
   // e ceva de apăsat în dreptunghiul ăsta (cu 6 px de jur împrejur, cât un deget)?
   function ocupat(l, t, r, b) {
-    var W = document.documentElement.clientWidth, H = innerHeight, xs = [l - 6, l + (r - l) / 4, (l + r) / 2, r - (r - l) / 4, r + 6], ys = [t - 6, (t + b) / 2, b + 4];
+    /* puncte la cel mult ~28 px pe orizontală și ~9 px pe verticală (28.09.2026: cu 3 rânduri, o legătură de 17 px, ca
+       „Wikimedia Commons” din lecția V/5, încăpea între ele și eticheta strânsă, acum lată cât numele, stătea peste ea) */
+    var W = document.documentElement.clientWidth, H = innerHeight, xs = [], ys = [], memo = new Map();
+    for (var nx = Math.max(5, Math.ceil((r - l + 12) / 28) + 1), ix = 0; ix < nx; ix++) xs.push(l - 6 + (r - l + 12) * ix / (nx - 1));
+    for (var ny = Math.max(3, Math.ceil((b - t + 10) / 9) + 1), iy = 0; iy < ny; iy++) ys.push(t - 6 + (b - t + 10) * iy / (ny - 1));
     for (var i = 0; i < xs.length; i++) for (var j = 0; j < ys.length; j++) {
       var lst = document.elementsFromPoint(Math.min(W - 1, Math.max(0, xs[i])), Math.min(H - 1, Math.max(0, ys[j])));
-      for (var k = 0; k < lst.length; k++) if (!box.contains(lst[k])) { if (interactiv(lst[k])) return true; break; }
+      for (var k = 0; k < lst.length; k++) if (!box.contains(lst[k])) {
+        var v = memo.get(lst[k]); if (v === undefined) { v = interactiv(lst[k]); memo.set(lst[k], v); }
+        if (v) return true;
+        break;
+      }
     }
     return false;
   }
@@ -275,9 +369,17 @@
     rafF = 0;
     var el = box && box.firstElementChild;
     if (!el || !el.classList.contains('pill')) { if (box && box.className) box.className = ''; return; }
-    if (!dimPill) { box.className = ''; var q = el.getBoundingClientRect(); dimPill = { w: q.width, h: q.height }; }
-    var W = document.documentElement.clientWidth, B = box.getBoundingClientRect().bottom;
-    var mod = !ocupat(12, B - dimPill.h, 12 + dimPill.w, B) ? '' : !ocupat(W - 8 - MINI, B - MINI, W - 8, B) ? 'mini' : 'mini ferit';
+    if (!dimPill) {   // mărimea formei pline și a celei strânse (cu nume), măsurate o dată pe etichetă
+      var c0 = box.className;
+      box.className = ''; var q = el.getBoundingClientRect();
+      box.className = 'mini'; var m = el.getBoundingClientRect();
+      box.className = c0;
+      dimPill = { w: q.width, h: q.height, mw: Math.max(MINI, m.width), mh: Math.max(MINI, m.height) };
+    }
+    var W = document.documentElement.clientWidth, B = box.getBoundingClientRect().bottom, d = dimPill;
+    // plină în stânga -> strânsă în stânga -> strânsă în dreapta -> ascunsă (niciodată peste ceva de apăsat)
+    var mod = !ocupat(12, B - d.h, 12 + d.w, B) ? '' : !ocupat(12, B - d.mh, 12 + d.mw, B) ? 'mini st'
+      : !ocupat(W - 8 - d.mw, B - d.mh, W - 8, B) ? 'mini' : 'mini ferit';
     if (box.className !== mod) box.className = mod;
   }
   addEventListener('scroll', planFereste, { passive: true, capture: true });
@@ -301,27 +403,35 @@
     /* „Nu, doar vizitez” apăsat din greșeală (25.09.2026, el: „pe urmă nu mai poate intra în monitorizare”):
        rămâne un buton mic și discret, ca elevul să se poată înscrie oricând. */
     if (s === 'vizitator') {
-      arata('<span class="pill" id="lhp-elev" style="opacity:.75" title="Ești elev? Înscrie-te ca profesorul să-ți vadă munca."><span class="dot" style="background:#9aa7c2"></span><span class="t">Sunt elev — mă înscriu</span></span>');
+      arata('<span class="pill" id="lhp-elev" style="opacity:.75" title="Ești elev? Înscrie-te ca profesorul să-ți vadă munca."><span class="dot" style="background:#9aa7c2"></span><span class="t">Sunt elev — mă înscriu</span><span class="s" aria-hidden="true">Mă înscriu</span></span>');
       $('lhp-elev').onclick = formular;
       return;
     }
     if (s === 'activ') {
-      arata('<span class="pill" id="lhp-pill" title="Profesorul vede ce pagini deschizi, cât timp lucrezi și ce niveluri termini. Apasă pentru jurnalul tău."><span class="dot"></span><span class="t">Profesorul vede activitatea ta · <b>' + esc(scurt(eu.nume)) + '</b></span></span>');
+      arata('<span class="pill" id="lhp-pill" title="Profesorul vede ce pagini deschizi, cât timp lucrezi și ce niveluri termini. Apasă pentru jurnalul tău."><span class="dot"></span><span class="t">Profesorul vede activitatea ta · <b>' + esc(scurt(eu.nume)) + '</b></span>' +
+        '<span class="s" aria-hidden="true"><b>' + esc(scurt(eu.nume)) + '</b> · Schimbă</span></span>');
       $('lhp-pill').onclick = meniu;
     } else if (s === 'intreaba') {
       arata('<div class="bar">Ești tot <b>' + esc(eu.nume) + '</b> (' + esc(eu.clasa) + ')?<div class="mic">Ce lucrezi acum se păstrează: ajunge la profesor pe numele tău după ce apeși „Da”.</div>' +
         '<div class="row"><button id="lhp-da">Da, sunt eu</button><button class="g" id="lhp-nu">Nu, sunt alt elev</button></div></div>');
       $('lhp-da').onclick = function () {
-        confirmat = true; eu.intreaba = false; eu.ultima = Date.now(); scrie(K_ID, eu); ultimaMiscare = Date.now();
-        mutaTinut(); mutaJoc('_tinut', citesteProfil()); trimite(false); Nor.impinge(false); randeaza();
-        try { dispatchEvent(new CustomEvent('prezenta', { detail: identitate() })); } catch (e) {}
+        if (sincron()) return;   // altă filă a schimbat între timp elevul: întrebarea de pe ecran nu mai e valabilă
+        var t = tinutDeoparte();                         // nivelurile vechi pleacă întâi la „neînscris”
+        if (!t) { confirmaEu(true); return; }            // nimic recent de întrebat: doar confirmarea
+        var min = Math.max(1, Math.round(t.sec / 60)), ce = t.ce.slice(0, 3).map(esc).join(', ');
+        arata('<div class="bar">Cât stătea întrebarea, pe calculatorul ăsta s-a lucrat: <b>' + (ce || (t.niveluri + (t.niveluri === 1 ? ' nivel' : ' niveluri'))) + '</b>' +
+          (t.sec ? ' (' + min + ' min)' : '') + '.<div class="mic"><b>Ai lucrat TU asta, acum?</b> Dacă nu, rămâne pentru elevul care a lucrat, nu intră pe numele tău.</div>' +
+          '<div class="row"><button id="lhp-da2">Da, eu am lucrat</button><button class="g" id="lhp-nu2">Nu, a lucrat altcineva</button></div></div>');
+        $('lhp-da2').onclick = function () { if (sincron()) return; confirmaEu(true); };
+        $('lhp-nu2').onclick = function () { if (sincron()) return; confirmaEu(false); };
       };
-      $('lhp-nu').onclick = function () { sterge(K_TINUT); uita(); alege(); };
+      $('lhp-nu').onclick = function () { if (sincron()) return; sterge(K_TINUT); uita(); alege(); };
     } else if (strans) {   // întrebarea strânsă la primul gest: o etichetă care duce la înscriere
       /* fără listă, eticheta ține locul butonului „Spune cine ești” (același id) și deschide direct formularul */
       var cuLista = lista().length > 0, idP = cuLista ? 'lhp-cere' : 'lhp-cine';
       arata('<span class="pill cere" id="' + idP + '" title="Profesorul vede ce lecții deschizi, cât lucrezi și ce niveluri termini — doar după ce spui cine ești."><span class="dot"></span><span class="t">' +
-        (cuLista ? 'Cine lucrează acum? <b>Alege-te din listă</b>' : '<b>Spune cine ești</b> · pentru ora de informatică') + '</span></span>');
+        (cuLista ? 'Cine lucrează acum? <b>Alege-te din listă</b>' : '<b>Spune cine ești</b> · pentru ora de informatică') + '</span>' +
+        '<span class="s" aria-hidden="true"><b>' + (cuLista ? 'Alege-te din listă' : 'Spune cine ești') + '</b></span></span>');
       $(idP).onclick = cuLista ? function () { strans = false; alege(); } : formular;
     } else if (lista().length) {
       alege();
@@ -406,7 +516,9 @@
       var c = $('lhp-k').value.trim();
       if (!/^\d{4}$/.test(c)) { $('lhp-e').textContent = 'Codul are exact 4 cifre.'; return; }
       this.disabled = true;
-      eu.h = await amprenta(eu, c); scrie(K_ID, eu); inregistreaza();
+      var h = await amprenta(eu, c);
+      if (sincron()) return;   // alt elev s-a înscris între timp în altă filă: codul nu e al lui
+      eu.h = h; scrie(K_ID, eu); inregistreaza();
       var venit = await Nor.trage(); await Nor.impinge(true);
       if (venit) { reincarcaDacaTrebuie(true, true); return; }
       meniu();
@@ -466,6 +578,7 @@
       return { p: p, date: date, m: m };
     },
     trage: function () {
+      sincron();
       if (!eElev() || !eu.h) return Promise.resolve(false);
       return Nor.url().then(function (u) {
         return fetch(u, { method: 'POST', body: JSON.stringify({ op: 'citeste', h: eu.h }) }).then(function (r) { return r.ok ? r.json() : null; });
@@ -486,6 +599,7 @@
       }).catch(function () { return false; });
     },
     impinge: function (forteaza, laInchidere) {
+      sincron();   // amprenta (eu.h) și profilul trebuie să fie ale aceluiași elev, cel de ACUM
       if (!eElev() || !eu.h) return Promise.resolve();
       var a = Nor.aduna(); if (!a) return Promise.resolve();
       var tot = semn(JSON.stringify(a.date));
@@ -667,12 +781,14 @@
     cereCod: function () { if (eElev()) cereCod(); },
     /* „Sunt alt elev” din lecții și jocuri: NU scoate elevul (copiii îl apasă ca să refacă lecția), ci întreabă
        „Ești tot X?” la următoarea pagină; până atunci totul se ține deoparte. Ce era deja adunat pleacă acum. */
-    intreaba: function () { if (!eElev()) return; trimite(true); eu.intreaba = true; scrie(K_ID, eu); randeaza(); },
+    intreaba: function () { sincron(); if (!eElev()) return; trimite(true); eu.intreaba = true; scrie(K_ID, eu); randeaza(); },
     eveniment: function (e) {
+      sincron();
       var K = tinta(); if (!eElev() || !K || !e || !e.tip || !e.joc) return;
       var c = citeste(K, null) || { pag: {}, ev: [] };
       c.ev.push({ tip: e.tip, joc: e.joc, titlu: e.titlu || '', nivel: e.nivel, din: e.din, stele: e.stele, max: e.max, cand: new Date().toISOString() });
       c.ev = c.ev.slice(-30); if (!c.de) c.de = Date.now();
+      if (K === K_TINUT) c.u = Date.now();
       scrie(K, c);
       var j = citeste(K_JURNAL, null) || { id: eu.id, zile: {}, pagini: {}, jocuri: {} };
       if (j.id === eu.id && K === K_COADA) {
@@ -687,6 +803,7 @@
        Chemată de lesson-summary.js când învățarea atomică e gata; pleacă doar când nota se SCHIMBĂ
        (rezumatul se redesenează des). Ține minte ultima notă trimisă pe pagină, per elev. */
     nota: function (s) {
+      sincron();
       var K = tinta(); if (!eElev() || !K || !s || !(s.grade >= 1 && s.grade <= 10)) return;
       var k = 'lh_prezenta_nota', tr = citeste(k, null) || {};
       if (tr.id !== eu.id) tr = { id: eu.id, p: {} };
@@ -704,8 +821,12 @@
   };
 
   function porneste() {
+    pornit = true; eu = citeste(K_ID, null);   // ce e pe disc ACUM (altă filă poate fi scris între timp)
     if (stare() === 'activ') { reincarcaDacaTrebuie(puneSertar()); inregistreaza(); }
     randeaza();
+    /* adresa serverului, de la început (28.09.2026): altfel, în primele 30 s pe pagină „Schimbă elevul” (uita -> trimite)
+       nu știa unde să trimită, iar secundele elevului de dinainte se ștergeau netrimise */
+    if (stare() === 'activ' || stare() === 'intreaba') incarcaDate().then(null, function () {});
     if (stare() === 'activ') {
       adaugaInCoada(0, true);
       /* progresul de pe alte aparate: la fiecare pagină, dacă n-am mai întrebat de 2 minute. Ce vine se scrie

@@ -62,6 +62,7 @@ def main():
                 if not (SITE / cale).exists():
                     continue
                 ctx = br.new_context(**cfg)
+                ctx.route("**/*", lambda r: r.continue_() if ("127.0.0.1" in r.request.url or "localhost" in r.request.url) else r.abort())   # REGULA 24: nicio cerere în afara serverului local (nici elevi falși în panoul profesorului)
                 ctx.route("**/api/**", lambda r: r.fulfill(status=200, body='{"ok":true}', headers={"access-control-allow-origin": "*"}))
                 if a.ui_panglica:
                     ctx.route("**/_motor/ui-panglica.js*", lambda r: r.fulfill(status=200, body=Path(a.ui_panglica).read_text(encoding="utf-8"),

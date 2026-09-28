@@ -90,7 +90,7 @@ const CSS=`.xl{--xlg:#217346;font-family:"Segoe UI",system-ui,sans-serif;user-se
 .xl table{border-collapse:collapse;font-size:.92rem;background:var(--paper)}
 .xl th{background:var(--paper2);color:var(--ink2);font-weight:500;border:1px solid var(--line);padding:2px 6px;min-width:2.2em;font-size:.8rem}
 .xl th.on{background:color-mix(in srgb,var(--xlg) 22%,var(--paper2));color:var(--ink)}
-.xl td{border:1px solid var(--line);min-width:5.4em;max-width:9em;height:1.9em;padding:0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;cursor:cell;color:var(--ink)}
+.xl td{border:1px solid var(--line);min-width:5.4em;max-width:9em;height:1.9em;padding:0 5px;white-space:nowrap;overflow:hidden;text-overflow:clip;position:relative;cursor:cell;color:var(--ink)}
 .xl td.n{text-align:right;font-variant-numeric:tabular-nums}
 .xl td.e{text-align:center}
 .xl td.er{color:var(--bad)}
@@ -215,6 +215,8 @@ function varianta(Q){
   }
   return {...Q,cells,verifica:V,q,cols:(Q.cols||6)+dc,rows:(Q.rows||8)+dr,variants:(Q.variants||[]).map(v=>mO(v))};
 }
+// ?recitire=N (motor.js, 27.09.2026): pagina e doar pentru recitire, deci seria de la „Exersează pe variante” nu se salvează
+const doarRecitire=()=>{try{return !!(window.JocMotor&&window.JocMotor.recitire&&window.JocMotor.recitire())}catch(e){return false}};
 function cheiePractica(Q){let h=0;const t=(Q.q||'')+JSON.stringify(Q.verifica||{});for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;
   let p='';try{p=localStorage.getItem('learninghub_active_profile')||''}catch(e){}return 'lh_excel_exersat'+(p&&p!=='_guest'?'@'+p:'')+'|'+h.toString(36)}
 function exerseaza(Q,loc,api){   // o variantă nouă, cu verificare proprie și seria de corecte
@@ -240,10 +242,10 @@ function exerseaza(Q,loc,api){   // o variantă nouă, cu verificare proprie și
     resolve:(ok,msg)=>{if(ok){gata=true;st.serie++;if(st.serie>=3)st.stapanit=true;
         fb.innerHTML=`<div class="fb ok"><strong>Corect!</strong> Serie: ${st.serie}/3${st.serie>=3?' — <b>stăpânit ✓</b>. Poți merge mai departe sau mai exersa.':''}</div>`}
       else{st.serie=0;fb.innerHTML=`<div class="fb bad"><strong>Nu încă.</strong> ${msg||''} Seria o iei de la capăt.</div>`}
-      try{localStorage.setItem(k,JSON.stringify(st))}catch(e){}
+      try{if(!doarRecitire())localStorage.setItem(k,JSON.stringify(st))}catch(e){}
       if(ok){nav.innerHTML='<button class="btn" type="button" data-exa="1">🔁 Altă variantă</button>';nav.querySelector('[data-exa]').onclick=()=>exerseaza(Q,loc,api)}},
     revealButton:fn=>{if(!nav.querySelector('[data-exr]')){nav.insertAdjacentHTML('beforeend','<button class="btn ghost" type="button" data-exr="1">Arată-mi</button>');nav.querySelector('[data-exr]').onclick=fn}},
-    giveUp:html=>{gata=true;st.serie=0;try{localStorage.setItem(k,JSON.stringify(st))}catch(e){}fb.innerHTML=`<div class="fb bad"><strong>Așa se face:</strong> ${html}</div>`;
+    giveUp:html=>{gata=true;st.serie=0;try{if(!doarRecitire())localStorage.setItem(k,JSON.stringify(st))}catch(e){}fb.innerHTML=`<div class="fb bad"><strong>Așa se face:</strong> ${html}</div>`;
       nav.innerHTML='<button class="btn" type="button" data-exa="1">🔁 Altă variantă</button>';nav.querySelector('[data-exa]').onclick=()=>exerseaza(Q,loc,api)},
     feedback:()=>{},nav:()=>nav};
   const sal=render._stare;render(Qv,loc.querySelector('#xexb'),apiP);exerseaza._stare={S:render._stare,Qv,loc};render._stare=sal;   // poarta de testare lucrează pe sarcina de bază
@@ -265,6 +267,18 @@ function render(Q,body,api){
   let mod=Q.mod||'ro';
   const RAW={};Object.entries(Q.cells||{}).forEach(([a,v])=>RAW[a]=typeof v==='number'?fmtNum(v):String(v));
   let act={c:0,r:0},fin={c:0,r:0};               // celula activă (albă) și celălalt colț al zonei
+  /* ENTER DUPĂ TAB (28.09.2026; probat în Excel-ul REAL, instanță nouă pe desktop ascuns, taste reale:
+     _campaign\revizuire_completa_2026_09\motor_lectie\excel_real_tab_enter*.json). După un șir de Tab-uri, Enter coboară
+     pe rândul următor în coloana din care a PORNIT șirul: A5 Elev ⇥ Nota ⇥ Clasa ↵ -> A6; și fără să scrii: A8 ⇥ ⇥ ↵ -> A9;
+     C50 a ⇥ b ↵ -> C51; al doilea Enter coboară simplu (A11 ⇥ ⇥ ↵ ↵ -> A13). Șirul îl RUP: o săgeată (în scriere:
+     A14 x ⇥ y → ↵ -> C15; fără scris: A17 ⇥ ⇥ → ↵ -> D18, A20 ⇥ ↓ ↵ -> B22), Home (B47 ⇥ ⇥ Home ↵ -> A48), un clic care
+     alege altă celulă (după clic, Enter coboară din celula aleasă). NU îl rupe Esc, nici în scriere (A23 x ⇥ y Esc ↵ -> A24;
+     A26 ⇥ ⇥ Esc ↵ -> A27). La ultima coloană Tab rămâne pe loc, iar Enter tot în coloana de start coboară (XFC44 ⇥ ⇥ ↵ ->
+     XFC45). Shift+Tab și Shift+Enter NU s-au putut proba (Shift trimis ca mesaj nu ajunge la Excel): aici rup șirul, ca
+     extensia lecției VIII/2 (lectii\_sim\excelx-interfata.js). */
+  let tabStart=null;                               // coloana din care a pornit șirul de Tab-uri (null = niciun șir)
+  const tabInainte=()=>{if(tabStart==null)tabStart=act.c};
+  const enterDupa=()=>{const c0=tabStart;tabStart=null;if(c0==null||act.c===c0)return false;act={c:c0,r:act.r};fin={...act};return true};
   let ed=null;                                     // editare: {mode:'enter'|'edit', pt:null|{start,end}}
   let curent='',lista=null,caret=0;                // textul în lucru; lista de funcții {items,idx,start}; poziția cursorului
   const gest=new Set(),undo=[],redo=[];
@@ -722,6 +736,7 @@ function render(Q,body,api){
       if(fh){fillTo={...fin};try{g.setPointerCapture(ev.pointerId)}catch(e){}return}
       const p=celulaDin(ev);if(!p)return;
       if(ed&&asteaptaAdresa()){dragPt=p;punAdresa(adr(p.c,p.r));gest.add('clic-adresa');return}
+      tabStart=null;   // clicul pe o celulă rupe șirul de Tab-uri (Excel real, vezi „ENTER DUPĂ TAB”)
       if(ed&&!termina(null))return;
       const acum=Date.now(),dublu=ultimClic&&ultimClic.c===p.c&&ultimClic.r===p.r&&acum-ultimClic.t<450;
       ultimClic=null;apasat={c:p.c,r:p.r,t:acum};
@@ -740,6 +755,7 @@ function render(Q,body,api){
     g.addEventListener('pointerup',gata);g.addEventListener('pointercancel',()=>{fillTo=null;dragSel=false;dragPt=null;draw()});
     g.addEventListener('keydown',ev=>{ultimClic=null;if((api.done()&&!liber)||ed)return;const k=ev.key,ctrl=ev.ctrlKey||ev.metaKey;
       if(ctrl){const kk=k.toLowerCase();
+        if(k==='Home'||k==='End'||k.startsWith('Arrow')||kk==='a')tabStart=null;   // salturile rup șirul de Tab-uri
         if(kk==='d'||kk==='r'){ev.preventDefault();ctrlD(kk==='d');return}
         if(kk==='b'||kk==='i'||kk==='u'){ev.preventDefault();aplica(kk);return}
         if(kk==='c'||kk==='x'){ev.preventDefault();copiaza(kk==='x');return}
@@ -753,9 +769,12 @@ function render(Q,body,api){
         if(dir){ev.preventDefault();sari(dir,ev.shiftKey);draw();return}
       }
       const dir={ArrowDown:'jos',ArrowUp:'sus',ArrowRight:'dreapta',ArrowLeft:'stanga',Enter:ev.shiftKey?'sus':'jos',Tab:ev.shiftKey?'stanga':'dreapta'}[k];
-      if(dir){ev.preventDefault();muta(dir,ev.shiftKey&&k.startsWith('Arrow'));draw();return}
-      if(k==='Escape'){if(clip){clip=null;draw()}return}
-      if(k==='Home'){ev.preventDefault();act={c:0,r:act.r};fin={...act};draw();return}
+      if(dir){ev.preventDefault();
+        const enter=k==='Enter'&&!ev.shiftKey;   // ENTER DUPĂ TAB: Tab ține minte coloana de start, Enter se întoarce la ea
+        if(k==='Tab'&&!ev.shiftKey)tabInainte();else if(!enter)tabStart=null;
+        muta(dir,ev.shiftKey&&k.startsWith('Arrow'));if(enter)enterDupa();draw();return}
+      if(k==='Escape'){if(clip){clip=null;draw()}return}   // Esc NU rupe șirul de Tab-uri (Excel real)
+      if(k==='Home'){ev.preventDefault();tabStart=null;act={c:0,r:act.r};fin={...act};draw();return}
       if(k==='F2'){ev.preventDefault();incepe(RAW[adr(act.c,act.r)]??'','edit');return}
       if(k==='Delete'||k==='Backspace'){ev.preventDefault();salveaza();const z=zona();for(let c=z.c1;c<=z.c2;c++)for(let r=z.r1;r<=z.r2;r++)delete RAW[adr(c,r)];gest.add('delete');
         if(k==='Backspace'&&z.c1===z.c2&&z.r1===z.r2){incepe('','enter');return}draw();return}
@@ -776,9 +795,10 @@ function render(Q,body,api){
         w.querySelectorAll('[data-fn]').forEach(x=>x.addEventListener('pointerdown',e2=>{e2.preventDefault();if(lista)alegeFunctia(x.dataset.fn)}));return}
       if(lista&&k==='Tab'){ev.preventDefault();alegeFunctia(lista.items[lista.idx]);return}
       if(k==='Escape'&&lista){ev.preventDefault();lista=null;draw();puneCursor(curent.length);return}
-      if(k==='Enter'){ev.preventDefault();termina(ev.shiftKey?'sus':'jos',ev.ctrlKey);return}
-      if(k==='Tab'){ev.preventDefault();termina(ev.shiftKey?'stanga':'dreapta');return}
-      if(k==='Escape'){ev.preventDefault();renunta();return}
+      if(k==='Enter'){ev.preventDefault();const enter=!ev.shiftKey&&!ev.ctrlKey;if(!enter)tabStart=null;
+        if(termina(ev.shiftKey?'sus':'jos',ev.ctrlKey)&&enter&&enterDupa())draw();return}   // ENTER DUPĂ TAB, și în scriere
+      if(k==='Tab'){ev.preventDefault();if(ev.shiftKey)tabStart=null;else tabInainte();termina(ev.shiftKey?'stanga':'dreapta');return}
+      if(k==='Escape'){ev.preventDefault();renunta();return}   // Esc renunță la scriere, dar NU rupe șirul de Tab-uri
       if(k==='F4'){ev.preventDefault();f4();return}
       if(k==='F2'){ev.preventDefault();ed.mode=ed.mode==='edit'?'enter':'edit';ed.pt=null;const s=body.querySelector('#xst span');if(s)s.textContent=MODE_TXT[modAcum()];return}
       if(k.startsWith('Arrow')&&ed.mode==='enter'){
@@ -787,7 +807,7 @@ function render(Q,body,api){
           const baza=ed.pt?pos(curent.slice(ed.pt.start,ed.pt.end).split(':')[0]):{...act};
           const d={jos:[0,1],sus:[0,-1],dreapta:[1,0],stanga:[-1,0]}[dir];const p={c:lim(baza.c+d[0],cols),r:lim(baza.r+d[1],rows)};
           punAdresa(adr(p.c,p.r));gest.add('clic-adresa');return}
-        ev.preventDefault();termina(dir);
+        ev.preventDefault();tabStart=null;termina(dir);   // săgeata în scriere confirmă, mută și rupe șirul de Tab-uri
       }
     });
   }
@@ -893,7 +913,7 @@ function render(Q,body,api){
       loc.innerHTML=`<button class="btn ghost" type="button" data-exs="1" style="margin-top:10px">🔁 Exersează pe variante${st.stapanit?' (✓ stăpânit)':' (3 la rând = stăpânit)'}</button>`;
       loc.querySelector('[data-exs]').onclick=()=>exerseaza({...Q,_practica:true},loc,api)};
     loc._ofera()}
-  render._stare={FMT,MERGE,setGraf:g=>{GRAF=g},sorteaza:(zt,dupa,antet)=>{const [a,b]=zt.split(':').map(pos);sorteaza({c1:a.c,c2:b.c,r1:a.r,r2:b.r},dupa.map(k=>({c:pos(k.col+'1').c,ord:k.ord})),antet!==false)},peRO,RAW,gest,setAct:a=>{const p=pos(a);act=p;fin=p},setZona:z=>{const [x,y]=z.split(':').map(pos);act=x;fin=y},draw,mod:()=>mod,liber,Q};
+  render._stare={FMT,MERGE,setGraf:g=>{GRAF=g},sorteaza:(zt,dupa,antet)=>{const [a,b]=zt.split(':').map(pos);sorteaza({c1:a.c,c2:b.c,r1:a.r,r2:b.r},dupa.map(k=>({c:pos(k.col+'1').c,ord:k.ord})),antet!==false)},peRO,RAW,gest,setAct:a=>{const p=pos(a);act=p;fin=p;tabStart=null},setZona:z=>{const [x,y]=z.split(':').map(pos);act=x;fin=y},draw,mod:()=>mod,liber,Q};
 }
 function rezolva(Q,body,S0){
   const S=S0&&S0.RAW?S0:render._stare   // al treilea argument poate fi API-ul motorului

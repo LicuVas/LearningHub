@@ -75,6 +75,7 @@ def main():
     with sync_playwright() as p:
         br = p.chromium.launch()
         ctx = br.new_context(viewport={"width": 1280, "height": 900})
+        ctx.route("**/*", lambda r: r.continue_() if ("127.0.0.1" in r.request.url or "localhost" in r.request.url) else r.abort())   # REGULA 24: nicio cerere în afara serverului local (nici elevi falși în panoul profesorului)
         ctx.route("**/api/**", lambda r: r.fulfill(status=200, body='{"ok":true}', headers={"access-control-allow-origin": "*"}))
         if a.tip_excel:
             ctx.route("**/_motor/tip-excel.js*", lambda r: r.fulfill(status=200, body=Path(a.tip_excel).read_text(encoding="utf-8"),
@@ -83,7 +84,7 @@ def main():
         pg.set_default_timeout(8000)
         erori = []
         pg.on("pageerror", lambda e: erori.append("pageerror: " + str(e)[:160]))
-        pg.on("console", lambda m: erori.append("console: " + m.text[:160]) if m.type == "error" else None)
+        pg.on("console", lambda m: erori.append("console: " + m.text[:160]) if m.type == "error" and "net::ERR_FAILED" not in m.text else None)
         pg.goto("%s/jocuri/%s/index.html" % (baza, a.joc), wait_until="load")
         pg.evaluate("localStorage.clear();localStorage.setItem('lh_prezenta',JSON.stringify({refuz:Date.now()}))")
         pg.reload(wait_until="load")

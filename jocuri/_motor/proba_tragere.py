@@ -49,6 +49,7 @@ def main():
         br = p.chromium.launch()
         for lat, inalt in ((1280, 720), (390, 844)):
             ctx = br.new_context(viewport={"width": lat, "height": inalt})
+            ctx.route("**/*", lambda r: r.continue_() if ("127.0.0.1" in r.request.url or "localhost" in r.request.url) else r.abort())   # REGULA 24: nicio cerere în afara serverului local (nici elevi falși în panoul profesorului)
             ctx.route("**/api/**", lambda r: r.fulfill(status=200, body='{"ok":true}', headers={"access-control-allow-origin": "*"}))
             if a.tip_excel:
                 ctx.route("**/_motor/tip-excel.js*", lambda r: r.fulfill(status=200, body=Path(a.tip_excel).read_text(encoding="utf-8"),

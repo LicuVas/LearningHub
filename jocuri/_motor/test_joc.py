@@ -27,6 +27,18 @@ BUILTIN = {"choice", "tf", "order", "classify", "match", "hunt", "pick"}
 DIACR = set("ăâîșțĂÂÎȘȚ")
 
 
+def blocheaza_externe(ctx):
+    """REGULA 24 (28.09.2026): poarta nu trimite nimic în afară (nici elevi falși în panoul profesorului). Trec doar
+    cererile spre file:, 127.0.0.1 și localhost; restul (ex. fonturile Google) sunt abandonate. Verdictul nu depinde de
+    ele: pagina se desenează cu fontul de rezervă, iar erorile de încărcare nu sunt erori JS."""
+    def ruta(r):
+        u = r.request.url
+        if u.startswith(("file:", "data:", "blob:")) or "127.0.0.1" in u or "localhost" in u:
+            return r.continue_()
+        return r.abort()
+    ctx.route("**/*", ruta)
+
+
 def strip_tags(s):
     return htmlmod.unescape(re.sub(r"<[^>]+>", " ", s or ""))
 
@@ -74,10 +86,22 @@ def static_checks(slug, cfg, page_html, fails, warns):
         if cfg.get("recapitulare"):  # recapitularea amestecă toate unitățile clasei: lecții și conținuturi din toată clasa
             allowed = {c for cont in domains.get(ucls, {}).values() for c in cont}
             nrs = {l["nr"] for u in un2.get(ucls, {}).get("unitati", []) for l in u["lectii"]}
+        # 27.09.2026 (dirijorul): unitățile -E0 („Deschiderea anului”: lecția 1, organizare + evaluare inițială) nu au
+        # conținuturi în programă - acoperire.py le sare la acoperire (`u["id"].endswith(("-E0", ...))`). Pentru un nivel
+        # dintr-o unitate -E0 sau ale cărui lecții declarate sunt toate, în plan, „organizare…”, `continuturi` poate fi [].
+        # Conținuturile declarate totuși se verifică la fel ca oriunde. Pentru toate celelalte niveluri, regula e neschimbată.
+        tip_lectie = {l["nr"]: str(l.get("tip", "")) for l in unit2["lectii"]} if unit2 else {}
+
+        def fara_continuturi_in_programa(lv):
+            if uid.endswith("-E0"):
+                return True
+            ls = lv.get("lectii") or []
+            return bool(ls) and all(tip_lectie.get(n, "").lower().startswith("organizare") for n in ls)
+
         for li, lv in enumerate(cfg.get("nivele", []), 1):
             if not lv.get("lectii"):
                 fails.append(f"N{li}: nu declară lectii (numerele lecțiilor din unitate pe care le acoperă)")
-            if not lv.get("continuturi"):
+            if not lv.get("continuturi") and not fara_continuturi_in_programa(lv):
                 fails.append(f"N{li}: nu declară continuturi (textul exact din programă)")
             for n in lv.get("lectii", []):
                 if n not in nrs:
@@ -241,6 +265,7 @@ def run(slug, fails, warns):
         cfg = None
         for dev in ["Pixel 7", "iPhone SE"]:
             ctx = b.new_context(**p.devices[dev])
+            blocheaza_externe(ctx)
             pg = ctx.new_page()
             pg.set_default_timeout(6000)
             errs = []
@@ -406,6 +431,7 @@ def run(slug, fails, warns):
         # antrenament: tragerea reală (fără toateIntrebarile). O rundă TERMINATĂ, reluată, trebuie să aducă alte întrebări.
         if cfg and cfg.get("mod") == "antrenament":
             ctx = b.new_context(**p.devices["Pixel 7"])
+            blocheaza_externe(ctx)
             pg = ctx.new_page()
             pg.set_default_timeout(6000)
             pg.goto(url, timeout=30000); pg.wait_for_timeout(300)

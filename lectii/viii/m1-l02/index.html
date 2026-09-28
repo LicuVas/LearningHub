@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Interfața aplicației de calcul tabelar. Structura unui registru</title>
+<meta name="description" content="Clasa a VIII-a, lecția 2 (Excel): fereastra Excel pe zone (panglica, caseta de nume, bara de formule, foile, bara de stare și zoom-ul), registrul cu foi, coloane, rânduri și celule, scrisul cu Enter și Tab, exersate într-o foaie care se poartă ca Excel-ul.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@600;800&family=Figtree:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Code:wght@400;500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EDF1EE; --paper:#FFFFFF; --paper2:#EEF3EF; --line:#CFD9D2;
+  --ink:#15201A; --ink2:#546358; --accent:#107C41; --accentInk:#FFFFFF; --sel:#D4EDDC;
+  --mark:#FFE38A; --markInk:#15201A; --ok:#0F6E3A; --okbg:#DFF1E5; --bad:#BF3A31; --badbg:#FAE4E1;
+  --fd:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif; --fb:"Figtree","Segoe UI",system-ui,sans-serif; --fm:"Fira Code",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0D1310; --paper:#161F1A; --paper2:#1F2A23; --line:#2D3A31;
+  --ink:#E2EBE4; --ink2:#9AAA9F; --accent:#52C98A; --accentInk:#0D1310; --sel:#1C4230;
+  --mark:#EDD05A; --markInk:#15201A; --ok:#52C98A; --okbg:#13301F; --bad:#FF7C72; --badbg:#3A1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0D1310; --paper:#161F1A; --paper2:#1F2A23; --line:#2D3A31;
+  --ink:#E2EBE4; --ink2:#9AAA9F; --accent:#52C98A; --accentInk:#0D1310; --sel:#1C4230;
+  --mark:#EDD05A; --markInk:#15201A; --ok:#52C98A; --okbg:#13301F; --bad:#FF7C72; --badbg:#3A1D1B;
+}
+/* tema: fâșia de sus e partea de jos a ferestrei Excel — filele foilor, apoi bara de stare cu zoom-ul */
+.banda{display:flex;align-items:stretch;font-family:var(--fb);font-size:.72rem;color:var(--ink2);white-space:nowrap;overflow:hidden}
+.banda span{padding:3px 10px;border-right:1px solid var(--line)}
+.banda span.on{color:var(--accent);font-weight:700;box-shadow:inset 0 -2px 0 var(--accent);background:var(--paper)}
+.banda span.z{margin-left:auto;border-right:0;border-left:1px solid var(--line);font-family:var(--fm)}
+h1,h2{letter-spacing:-.01em}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/tip-foaie.js"></script>
+<script src="../../../jocuri/_motor/tip-excel.js"></script>
+<!-- foaia „excelx” comună clasei a VIII-a + extensia „interfața” a lecției 2 (filele foilor, zoom-ul, Enter după Tab, „unde e…”) -->
+<script src="../../_sim/excelx.js"></script>
+<script src="../../_sim/excelx-interfata.js"></script>
+<script>
+/* conținuturile programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={interfata:'Elemente de interfaţă ale unei aplicaţii de calcul tabelar',structura:'Structura unui registru de calcul (foaie de calcul, coloană, rând, celulă, adresă de celulă)'};
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG='../m1-l02/img/';
+
+/* datele de lucru (inventate) */
+const NOTE={A1:'Elev',B1:'Nota 1',C1:'Nota 2',A2:'Ana',B2:9,C2:10,A3:'Bogdan',B3:7,C3:8,A4:'Cristi',B4:10,C4:6};
+const FOI=(ex)=>[{nume:'Note',cells:NOTE},{nume:'Excursie',cells:ex||{}},{nume:'Orar',cells:{A1:'Ziua',B1:'Ora 1',C1:'Ora 2',A2:'Luni',B2:'Română',C2:'TIC',A3:'Marți',B3:'Engleză',C3:'Istorie'}}];
+const EXC={A1:'Elev',B1:'Suma',A2:'Ana',B2:150,A3:'Bogdan',B3:120,A4:'Cristi',B4:130};
+
+const PROVOCARE=[
+  'Descarcă registrul <a href="registrul_clasei.xlsx" download>registrul_clasei.xlsx</a> și deschide-l în Excel: clic pe el, în lista de descărcări a browserului. Dacă sus apare o bandă galbenă cu butonul <b>Activare editare</b> (Enable Editing), apasă pe el: fișierele descărcate se deschid întâi doar pentru citit.',
+  'Găsește cele șase zone ale ferestrei: panglica, caseta de nume, bara de formule, foaia, filele foilor (jos: Note, Excursie, Orar) și bara de stare. Clic pe fila <b>Inserare (Insert)</b> a panglicii, apoi înapoi pe <b>Pornire (Home)</b>.',
+  'Pe foaia Note, clic pe celula <b>Cristinei</b>. În celulă se vede doar începutul numelui. Caseta de nume arată <b>A4</b>, iar bara de formule arată numele întreg: <b>Cristina Munteanu</b>.',
+  'Doar cu săgețile, du-te în <b>E10</b>. Caseta de nume trebuie să arate E10. Apoi sari la <b>K20</b>: clic în caseta de nume, scrie <b>K20</b> și apasă <kbd>Enter</kbd>.',
+  'Treci pe foaia <b>Excursie</b>: clic pe fila ei, jos. Clic pe <b>A1</b> și scrie <b>Elev</b>, <kbd>Tab</kbd>, <b>Suma</b>, <kbd>Enter</kbd>, <b>Ana</b>, <kbd>Tab</kbd>, <b>150</b>, <kbd>Enter</kbd>. Caseta de nume trebuie să arate <b>A3</b>: Enter te-a întors în coloana A.',
+  'Clic pe <b>A1</b>, scrie <b>Test</b>, dar apasă <kbd>Esc</kbd> în loc de Enter. În A1 rămâne <b>Elev</b>.',
+  'Tot pe foaia Excursie, jos în dreapta, apasă de două ori pe <b>+</b> al zoom-ului: scrie 120 %. Treci pe foaia <b>Note</b>: zoom-ul ei a rămas 100 %, pentru că fiecare foaie își ține zoom-ul ei. Înapoi pe <b>Excursie</b>: 120 %. Apoi de două ori pe <b>−</b>: din nou 100 %.',
+  'Gata. Registrul e doar pentru exercițiu: nu trebuie să-l salvezi.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m1_l02',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/viii/, „Lecția 2”, „Acum în Excel-ul adevărat” înainte de verificare
+  titlu:'Interfața aplicației de calcul tabelar. Structura unui registru',
+  marca:'Lecția <b>2</b> · Excel · a VIII-a',
+  h1:'Interfața aplicației de calcul tabelar. Structura unui registru',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U1', unitateTitlu:'Calcul tabelar',
+  competente:['CS.1.1','CS.3.1'], lectii:'2',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VIII-U1 „Calcul tabelar” · lecția 2 · conținuturi: „Elemente de interfaţă ale unei aplicaţii de calcul tabelar” și „Structura unui registru de calcul (foaie de calcul, coloană, rând, celulă, adresă de celulă)”',
+  intro:`<p>Lecția 2 din modulul 1. Faci cunoștință cu Excel: ce vezi în fereastra lui, cum e făcut un fișier Excel și cum te miști prin el. Scrii primele date, cu <kbd>Enter</kbd> și <kbd>Tab</kbd>.</p>
+<p><b>Ai nevoie de:</b> ce știi din clasele a VI-a și a VII-a despre aplicațiile PowerPoint și Word: panglica de sus, cu filele ei, și fișierele salvate pe calculator. Din lecția 1 a acestui an nu îți trebuie nimic anume.</p>`,
+  cum:`<p><b>Cum lucrezi:</b> după pagina „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”. Apoi atelierul, într-o foaie care se poartă ca Excel-ul, apoi aceleași lucruri în Excel-ul adevărat, iar la sfârșit 5 întrebări.</p>`,
+  banda:'<span class="on">Note</span><span>Excursie</span><span>Orar</span><span>+</span><span class="z">Ready · − ▮ + · 100 %</span>',
+  tipuri:{excelx:ExcelI},
+  nivele:[
+  {t:'Interfața aplicației de calcul tabelar. Structura unui registru', final:true, lectii:[2], continuturi:[P.interfata,P.structura],
+   obiectiv:'găsești în fereastra Excel panglica, caseta de nume, bara de formule, foile și bara de stare, treci de la o foaie la alta, te duci la orice celulă și scrii date cu Enter și Tab.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>Înainte de calculatoare, socotelile se scriau de mână, în caiete mari numite registre: pe fiecare linie un lucru, în dreapta suma lui, iar jos totalul, adunat cu creionul.</p>
+<p>Excel e o <mark>aplicație de calcul tabelar</mark>: un registru pe calculator, care face singur calculele. Mai sunt și altele la fel, de exemplu LibreOffice Calc și Google Sheets.</p>
+<p>Un fișier Excel se numește <mark>registru de calcul</mark> (workbook). Fiecare pagină a lui e o <mark>foaie de calcul</mark> (sheet). Diriginta ține, de exemplu, notele pe o foaie, banii pentru excursie pe alta și orarul pe a treia.</p>
+<p>Azi afli ce vezi în fereastra Excel și cum te miști prin ea.</p>
+${fig(IMG+'registru-1870.webp',800,533,'Fotografie: un registru vechi, deschis într-o vitrină; pe două pagini, rânduri scrise de mână, cu sume în dreapta și totaluri','Un registru de cheltuieli al corabiei „Union”, scris de mână (anii 1860-1870), la Muzeul Mării din Port de Sóller (Mallorca). Foto: Kritzolina, <a href="https://commons.wikimedia.org/wiki/File:Museu_de_la_Mar_-_Port_de_S%C3%B3ller_10.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noopener">CC BY-SA 4.0</a>, micșorată.')}`},
+
+    /* ---------- PASUL 1: fereastra, pe zone ---------- */
+    {t:'Fereastra Excel, pe zone',
+     text:`<p>Fereastra Excel are șase zone, de sus în jos:</p>
+<ol><li><mark>panglica</mark>: butoanele aplicației, ca în Word;</li>
+<li><mark>caseta de nume</mark> (Name Box), în stânga: îți spune în ce căsuță ești;</li>
+<li><mark>bara de formule</mark> (Formula Bar), câmpul lung de lângă <i>fx</i>: arată ce e scris în căsuța în care ești;</li>
+<li>foaia, cu tabelul ei de căsuțe;</li>
+<li><mark>filele foilor</mark> (sheet tabs), jos: fiecare foaie a registrului are o filă, adică o etichetă cu numele ei. Clic pe filă și treci pe foaia aceea;</li>
+<li><mark>bara de stare</mark> (status bar), jos de tot. În dreapta ei e <mark>zoom-ul</mark>: <b>+</b> mărește ce vezi, <b>−</b> micșorează.</li></ol>
+${fig(IMG+'fereastra-harta.webp',1000,680,'Fereastra Excel cu șase zone încadrate și numerotate: 1 panglica, 2 caseta de nume cu C4, 3 bara de formule cu 6, 4 foaia cu tabelul, 5 filele foilor Note, Excursie și Orar, 6 bara de stare cu Ready','Fereastra Excel, cu zonele numerotate ca în listă. Zoom-ul e în capătul din dreapta al barei de stare (imaginea de mai jos).')}`,
+     exemplu:`${fig(IMG+'zoom.webp',388,32,'Capătul din dreapta al barei de stare din Excel: trei butoane de vedere, apoi minus, glisorul zoom-ului, plus și 100 %','Zoom-ul: −, glisorul, + și procentul.')}
+<p>Fiecare clic pe <b>+</b> urcă zoom-ul cu 10 %: 100 %, 110 %, 120 %. Fiecare clic pe <b>−</b> îl coboară cu 10 %. La 120 % căsuțele par mai mari, dar în ele e scris același lucru: zoom-ul schimbă doar cât de mare vezi. Fiecare foaie își ține zoom-ul ei.</p>
+${fig(IMG+'file-foi.webp',460,42,'Jos, în fereastra Excel: filele foilor Note, Excursie și Orar, apoi butonul plus','Filele foilor dintr-un registru cu trei foi: Note (deschisă, subliniată), Excursie și Orar.')}`,
+     altfel:`<p>Gândește-te la banca ta din clasă: sus, penarul cu instrumentele (panglica); în fața ta, caietul deschis (foaia). Zoom-ul e ca o lupă ținută deasupra caietului: literele par mai mari, dar în caiet scrie același lucru.</p>`,
+     incearca:{t:'excelx',q:'În fereastra de mai jos, fă clic pe <b>caseta de nume</b>. Apoi apasă Verifică.',cols:4,rows:4,cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9},
+       verifica:{unde:'caseta'},ajutor:'Caseta de nume e în stânga, sub panglică, chiar deasupra tabelului.',why:'Caseta de nume e în stânga, sub panglică. Îți arată în ce căsuță ești; mai jos, la pasul „Caseta de nume și bara de formule”, afli cum o citești.'},
+     inca:[
+      {t:'excelx',q:'Fă clic pe <b>bara de formule</b>.',cols:4,rows:4,cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9},
+       verifica:{unde:'bara'},ajutor:'E câmpul lung de lângă semnul fx, sub panglică.',why:'Bara de formule e câmpul lung de lângă fx. Arată ce e scris în căsuța în care ești.'},
+      {t:'excelx',q:'Mărește foaia la <b>120 %</b>, cu zoom-ul.',cols:4,rows:4,cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9},
+       verifica:{zoom:120},ajutor:'Zoom-ul e jos, în capătul din dreapta al barei de stare. Fiecare clic pe + urcă 10 %.',why:'Două clicuri pe +: 110 %, apoi 120 %. Căsuțele par mai mari, dar în ele e scris același lucru.'},
+      {t:'match',q:'Potrivește fiecare zonă a ferestrei cu ce îți arată.',pairs:[['Caseta de nume','în ce căsuță ești'],['Bara de formule','ce e scris în căsuța în care ești'],['Filele foilor','foile registrului'],['Zoom-ul','cât de mare vezi foaia']],
+       ajutor:'Recitește lista din pas.',why:'Caseta de nume: unde ești. Bara de formule: ce e scris acolo. Filele foilor: foile. Zoom-ul: cât de mare vezi.'}
+     ]},
+
+    /* ---------- PASUL 2: panglica ---------- */
+    {t:'Panglica: file și grupuri',
+     text:`<p>Ca în Word, butoanele din <mark>panglică</mark> stau pe <mark>filele panglicii</mark>: Pornire (Home), Inserare (Insert), Aspect pagină (Page Layout), Formule (Formulas), Date (Data), Revizuire (Review), Vizualizare (View). Faci clic pe numele unei file și apar butoanele ei. Fila deschisă e subliniată.</p>
+<p>Pe fiecare filă, butoanele sunt strânse în <mark>grupuri</mark>. Numele grupului e scris jos, sub butoanele lui. Pe fila Pornire (Home) sunt, de exemplu, grupurile Font și Număr (Number).</p>
+<p>Excel poate fi în română sau în engleză, așa că scriem ambele nume: româna, apoi engleza, în paranteză.</p>
+${fig(IMG+'panglica-home.webp',1000,148,'Panglica Excel pe fila Home: fila Home încadrată sus, grupul Font încadrat, cu numele Font scris dedesubt','Fila Pornire (Home), încadrată, e subliniată: e deschisă. Grupul Font e încadrat; numele lui e scris jos.')}`,
+     exemplu:`<p>Clic pe fila Inserare (Insert): în locul grupurilor de pe Pornire (Home) apar alte grupuri, cu alte butoane. Acum e subliniată fila Insert.</p>
+${fig(IMG+'panglica-insert.webp',1000,148,'Panglica Excel pe fila Insert: grupurile Tables, Illustrations, Charts, Sparklines, Filters și, tăiat la margine, Links','Fila Inserare (Insert), deschisă: alte grupuri de butoane.')}`,
+     altfel:`<p>Panglica e ca un dulap cu sertare. Fila e sertarul pe care îl deschizi. Grupurile sunt despărțiturile din sertar: în fiecare stau lucruri de același fel.</p>`,
+     incearca:{t:'excelx',q:'Deschide fila <b>Date (Data)</b> a panglicii.',cols:4,rows:3,cells:{A1:'Elev',B1:'Nota'},
+       verifica:{fila:'data'},ajutor:'Numele filelor sunt sus de tot, deasupra butoanelor. Caută Data.',why:'Fila Date (Data) e deschisă: e subliniată, iar dedesubt sunt alte grupuri de butoane.'},
+     inca:[
+      {t:'excelx',q:'Deschide fila <b>Inserare (Insert)</b>, apoi întoarce-te pe fila <b>Pornire (Home)</b> și fă clic pe numele grupului <b>Număr (Number)</b>, scris jos.',cols:4,rows:3,cells:{A1:'Elev',B1:'Nota'},
+       verifica:{fila:'home',unde:'grup:Number'},ajutor:'Pe fila Home, numele grupurilor sunt scrise jos, sub butoane. Dacă nu vezi Number, derulează panglica spre dreapta.',why:'Grupul Număr (Number) e pe fila Pornire (Home), spre mijlocul panglicii.'},
+      {t:'choice',q:'Pe ce filă a panglicii stau grupurile Font și Număr (Number)?',o:['Pornire (Home)','Inserare (Insert)','Date (Data)','Vizualizare (View)'],ok:0,
+       ajutor:'Recitește al doilea paragraf din pas.',why:'Font și Număr (Number) sunt grupuri de pe fila Pornire (Home).'}
+     ]},
+
+    /* ---------- PASUL 3: registrul, foile, celulele ---------- */
+    {t:'Coloane, rânduri și celule',
+     text:`<p>Foaia de calcul e o grilă. <mark>Coloanele</mark> au litere, sus: A, B, C… <mark>Rândurile</mark> au numere, în stânga: 1, 2, 3… Căsuța de la întâlnirea unei coloane cu un rând e o <mark>celulă</mark>.</p>
+<p>Numele celulei e <mark>adresa</mark> ei: litera coloanei, apoi numărul rândului. Celula din coloana C și rândul 4 e C4. Faci clic pe ea: primește un chenar verde gros și devine <mark>celula activă</mark>, iar litera C și numărul 4 se colorează.</p>
+${fig(IMG+'grila-c4.webp',510,174,'Foaia Excel: coloanele A-F, rândurile 1-7; litera C și numărul 4 încadrate, celula C4 aleasă, cu 6','Celula C4 e celula activă: are chenar verde, iar sus se colorează litera C, în stânga numărul 4.')}`,
+     exemplu:`<p>Un registru nou are o singură foaie; în Excel-ul în engleză ea se numește Sheet1. O foaie e uriașă: are 1.048.576 de rânduri și 16.384 de coloane. După coloana Z urmează AA, AB…, iar ultima coloană e XFD.</p>`,
+     altfel:`<p>Registrul e ca un caiet de matematică: foile sunt paginile, iar pătrățelele sunt celulele. Adresa se scrie ca la șah: „e4” înseamnă coloana e și rândul 4. Întâi litera, apoi numărul.</p>`,
+     incearca:{t:'excelx',q:'Fă clic pe celula din coloana <b>D</b> și rândul <b>3</b>.',cols:5,rows:5,cells:NOTE,panglica:false,
+       verifica:{sel:'D3'},ajutor:'Caută litera D sus și numărul 3 în stânga. Celula e la întâlnirea lor.',why:'Coloana D, rândul 3: celula D3. Sus s-a colorat D, în stânga 3.'},
+     inca:[
+      {t:'excelx',q:'Treci pe foaia <b>Excursie</b> și fă clic pe celula cu suma plătită de <b>Bogdan</b>.',cols:4,rows:5,foi:FOI(EXC),panglica:false,
+       verifica:{foaie:'Excursie',activa:'B3'},ajutor:'Fila Excursie e jos, sub celule. Pe foaia ei, caută rândul lui Bogdan și coloana Suma.',why:'Pe foaia Excursie, Bogdan e pe rândul 3, iar sumele sunt în coloana B: celula B3, cu 120.'},
+      {t:'tf',q:'După coloana Z, o foaie Excel nu mai are alte coloane.',ok:false,
+       ajutor:'Recitește „Uite cum”.',why:'Fals. După Z urmează AA, AB și așa mai departe, până la XFD.'}
+     ]},
+
+    /* ---------- PASUL 4: scrii și te miști ---------- */
+    {t:'Scrii și te miști prin foaie',
+     text:`<p>Ca să scrii într-o celulă, faci clic pe ea și tastezi. Ce scrii înlocuiește tot ce era acolo. Apoi confirmi:</p>
+<ul><li><kbd>Enter</kbd> (tasta mare din dreapta) confirmă și te duce în celula de dedesubt;</li>
+<li><kbd>Tab</kbd> (în stânga, deasupra lui Caps Lock) confirmă și te duce în celula din dreapta;</li>
+<li><kbd>Esc</kbd> (colțul din stânga-sus) renunță: celula rămâne cum era.</li></ul>
+<p>Săgețile ← ↑ → ↓ te mută o celulă, în direcția lor.</p>
+<p>După câteva <kbd>Tab</kbd>-uri, <kbd>Enter</kbd> te duce pe rândul următor, în coloana din care ai pornit.</p>
+<p>Pe telefon, Tab, Enter, Esc și săgețile sunt butoanele de sub foaie.</p>`,
+     exemplu:`<p>S-a scris în A1 <b>Elev</b>, <kbd>Tab</kbd>, <b>Suma</b>, <kbd>Enter</kbd>, apoi <b>Ana</b>, <kbd>Tab</kbd>, <b>150</b>, <kbd>Enter</kbd>. După fiecare Enter, Excel a trecut la începutul rândului următor, în coloana A. Acum celula activă e A3.</p>
+${fig(IMG+'dupa-tab-enter.webp',630,184,'Excel: A1 Elev, B1 Suma, A2 Ana, B2 150; celula A3 aleasă, caseta de nume arată A3','După Tab și Enter: tabelul se completează rând cu rând, iar Excel te așteaptă în A3.')}
+${fig(IMG+'scriere-enter.webp',630,226,'Excel în timp ce scrii Bogdan în A3: lângă fx apar X și bifa, iar jos, în bara de stare, scrie Enter','Cât scrii direct în celulă, textul apare și în bara de formule, iar bara de stare arată Enter. După ce confirmi, arată din nou Ready. Pe telefon scrii în bara de formule, deci acolo bara de stare arată Editare (Edit).')}`,
+     altfel:`<p>E ca atunci când scrii în Word: la capătul unui rând apeși Enter și începi rândul următor de la margine. Tab e ca o săritură la căsuța următoare din același rând.</p>`,
+     incearca:{t:'excelx',q:'Scrie capul tabelului și primul rând. Clic pe <b>A1</b>, scrie <b>Elev</b>, apasă <kbd>Tab</kbd>, scrie <b>Nota</b>, apasă <kbd>Enter</kbd>. Apoi scrie <b>Ana</b>, <kbd>Tab</kbd>, <b>9</b>, <kbd>Enter</kbd>.',cols:4,rows:5,cells:{},panglica:false,
+       verifica:{valori:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9},activa:'A3'},ajutor:'După Nota apeși Enter: ajungi singur în A2, sub Elev. Dacă ai ajuns în altă parte, fă clic pe A2 și continuă.',
+       why:'Tabelul are capul pe rândul 1 și rândul Anei pe rândul 2. Celula activă e A3, gata pentru următorul elev.'},
+     inca:[
+      {t:'choice',q:'Celula activă e C2. Scrii <b>7</b> și apeși <kbd>Tab</kbd>. În ce celulă ajungi?',o:['D2','C3','B2','C1'],ok:0,
+       ajutor:'Tab confirmă și te duce în celula din dreapta. Ce literă urmează după C?',why:'Tab te mută la dreapta, pe același rând: din C2 în D2.'},
+      {t:'excelx',q:'Fă clic pe <b>A1</b>. Apoi, fără alt clic, doar cu săgețile, du-te în <b>D5</b>.',cols:5,rows:6,cells:{},panglica:false,
+       verifica:{activa:'D5',doarTaste:true},ajutor:'Din A1: de 3 ori → (spre coloana D), apoi de 4 ori ↓ (spre rândul 5). Pe telefon, butoanele cu săgeți de sub foaie.',why:'Trei pași la dreapta și patru în jos: din A1 în D5.'},
+      {t:'excelx',q:'În A2 e nota 9. Clic pe A2, scrie <b>5</b>, dar nu apăsa Enter: apasă <kbd>Esc</kbd>. Ce e acum în A2?',cols:3,rows:3,cells:{A1:'Nota',A2:9},panglica:false,
+       o:['9','5','95','nimic, e goală'],ok:0,ajutor:'Încearcă în foaie. Esc renunță la ce ai început să scrii.',why:'Esc a renunțat la 5: în A2 a rămas 9.'}
+     ]},
+
+    /* ---------- PASUL 5: celula activă, caseta de nume, bara de formule ---------- */
+    {t:'Caseta de nume și bara de formule',
+     text:`<p>Ce scrii ajunge mereu în celula activă, cea cu chenar verde. Două câmpuri de sub panglică îți spun totul despre ea.</p>
+<p><strong>Caseta de nume</strong> arată adresa celulei active. Cu ea poți și sări: clic în caseta de nume, scrii o adresă, de exemplu K20, și apeși <kbd>Enter</kbd>. K20 devine celula activă.</p>
+<p><strong>Bara de formule</strong> arată ce e scris de fapt în celula activă. Un text lung, care nu încape în celulă, acolo se vede întreg. Se numește „de formule” pentru că acolo vei vedea și calculele pe care le scrii (lecția 7).</p>
+${fig(IMG+'text-lung.webp',550,164,'Excel: A3 aleasă; în celulă se vede doar Bogdan Io, caseta de nume arată A3, bara de formule arată Bogdan Ionescu','În celula A3 se vede doar „Bogdan Io”: numele nu încape. Caseta de nume arată A3, iar bara de formule, numele întreg.')}`,
+     exemplu:`${fig(IMG+'caseta-si-bara.webp',630,184,'Excel, foaia Excursie: B3 aleasă, cu 120; caseta de nume arată B3, bara de formule arată 120, amândouă încadrate','Pe foaia Excursie, B3 e celula activă: caseta de nume arată B3, bara de formule arată 120.')}
+<p>Te-ai rătăcit într-o foaie mare? Uită-te în caseta de nume: ea îți spune mereu unde ești.</p>`,
+     altfel:`<p>Caseta de nume e ca numărul de pe ușa unei săli: îți spune unde ești. Bara de formule e ca atunci când deschizi ușa și vezi ce e înăuntru.</p>`,
+     incearca:{t:'excelx',q:'Numele nu încap în coloana A. Fă clic pe celula lui <b>Bogdan</b> și citește în bara de formule tot ce e scris acolo. În ce echipă e Bogdan?',cols:3,rows:4,panglica:false,
+       cells:{A1:'Elev',B1:'Nota',A2:'Ana Popescu, echipa de dans',B2:9,A3:'Bogdan Ionescu, echipa de robotică',B3:7,A4:'Cristi Munteanu, echipa de șah',B4:10},
+       o:['robotică','dans','șah','fotbal'],ok:0,ajutor:'Fă clic pe A3, apoi uită-te în câmpul lung de lângă fx.',why:'Bara de formule arată tot textul din A3: „Bogdan Ionescu, echipa de robotică”.'},
+     inca:[
+      {t:'excelx',q:'Sari la celula <b>H15</b> cu caseta de nume.',cols:8,rows:15,cells:{A1:'Start'},panglica:false,
+       verifica:{activa:'H15'},ajutor:'Clic în caseta de nume (în stânga, sub panglică), scrie H15 și apasă Enter.',why:'Caseta de nume te-a dus direct în H15, fără să cauți cu ochii.'},
+      {t:'excelx',q:'Celula activă nu mai e A1. Uită-te în caseta de nume: ea îți arată unde ești. Fără niciun clic, scrie cuvântul <b>aici</b> și apasă <kbd>Enter</kbd>: ajunge în celula activă. (Pe telefon: atingi bara de formule, scrii aici și atingi Enter ↵ de sub foaie.)',cols:5,rows:6,cells:{},panglica:false,start:'D4',
+       verifica:{valori:{D4:'aici'}},ajutor:'Caseta de nume arată D4. Nu alege altă celulă și nu face clic în casetă: scrie direct, apoi Enter. Dacă tastele nu merg, fă un clic pe celula activă, cea cu chenar verde, și scrie din nou.',why:'Ce scrii ajunge în celula activă: aici, în D4.'},
+      {t:'tf',q:'Caseta de nume arată ce e scris în celula activă.',ok:false,
+       ajutor:'Care dintre cele două câmpuri arată adresa?',why:'Fals. Caseta de nume arată adresa celulei active. Ce e scris în ea arată bara de formule.'}
+     ]}
+   ],
+   atelier:{t:'excelx',titlu:'Atelier: registrul clasei',
+    intro:`<p>Foaia de mai jos se poartă ca Excel-ul: are filele foilor jos și zoom-ul în bara de stare. Deasupra ei sunt <strong>testele</strong>: fiecare se bifează singur când ai făcut partea lui. La final apasă <b>Verifică</b>.</p>`,
+    q:'<b>1.</b> Treci pe foaia <b>Excursie</b>. <b>2.</b> Scrie capul tabelului: clic pe <b>A1</b>, <b>Elev</b>, <kbd>Tab</kbd>, <b>Suma</b>, <kbd>Enter</kbd>. <b>3.</b> Scrie rândurile: <b>Ana</b>, <kbd>Tab</kbd>, <b>150</b>, <kbd>Enter</kbd>, apoi <b>Bogdan</b>, <kbd>Tab</kbd>, <b>120</b>, <kbd>Enter</kbd>. <b>4.</b> Tot pe foaia Excursie, mărește zoom-ul la <b>120 %</b>.',
+    cols:4,rows:6,foi:FOI({}),
+    verifica:{foaie:'Excursie',pe:'Excursie',valori:{A1:'Elev',B1:'Suma',A2:'Ana',B2:150,A3:'Bogdan',B3:120},activa:'A4',neatinsa:'Note',zoom:120},
+    teste:[
+     {ce:'Ești pe foaia Excursie',foaie:'Excursie'},
+     {ce:'Capul tabelului e pe rândul 1: Elev în A1, Suma în B1',pe:'Excursie',valori:{A1:'Elev',B1:'Suma'}},
+     {ce:'Ana și Bogdan au rândurile lor, cu sumele 150 și 120',pe:'Excursie',valori:{A2:'Ana',B2:150,A3:'Bogdan',B3:120}},
+     {ce:'Celula activă e A4, gata pentru următorul elev',pe:'Excursie',activa:'A4'},
+     {ce:'Foaia Note a rămas cum era',neatinsa:'Note'},
+     {ce:'Foaia Excursie are zoom-ul 120 %',pe:'Excursie',zoom:120}],
+    ajutor:'Fila Excursie e jos, sub celule. Pe foaia ei: clic pe A1, apoi scrii, cu Tab între coloane și Enter la capătul rândului. Zoom-ul: două clicuri pe +, jos în dreapta, cât ești pe foaia Excursie (fiecare foaie își ține zoom-ul ei).',
+    why:'Pe foaia Excursie, tabelul e completat rând cu rând, cu Tab și Enter; Excel te așteaptă în A4, la începutul rândului următor. Foaia Note a rămas neatinsă.',
+    inca:[
+     {t:'excelx',q:'Pe foaia <b>Orar</b>, completează rândul pentru Miercuri: clic pe <b>A4</b>, <b>Miercuri</b>, <kbd>Tab</kbd>, <b>Biologie</b>, <kbd>Tab</kbd>, <b>Muzică</b>, <kbd>Enter</kbd>. Apoi, tot pe foaia Orar, micșorează zoom-ul la <b>90 %</b>.',
+      cols:4,rows:6,foi:FOI(EXC),
+      verifica:{foaie:'Orar',pe:'Orar',valori:{A4:'Miercuri',B4:'Biologie',C4:'Muzică'},activa:'A5',neatinsa:'Excursie',zoom:90},
+      teste:[
+       {ce:'Ești pe foaia Orar',foaie:'Orar'},
+       {ce:'Rândul 4 are Miercuri, Biologie și Muzică',pe:'Orar',valori:{A4:'Miercuri',B4:'Biologie',C4:'Muzică'}},
+       {ce:'Celula activă e A5',pe:'Orar',activa:'A5'},
+       {ce:'Foaia Excursie a rămas cum era',neatinsa:'Excursie'},
+       {ce:'Foaia Orar are zoom-ul 90 %',pe:'Orar',zoom:90}],
+      ajutor:'Fila Orar e jos. Pe foaia ei: clic pe A4, apoi scrii cu Tab între coloane și Enter la capăt. Zoom-ul: un clic pe −, cât ești pe foaia Orar.',
+      why:'Rândul lui Miercuri e completat, iar Enter te-a întors în coloana A, în A5.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Celula activă e C2. Scrii <b>7</b> și apeși <kbd>Enter</kbd>. Ce adresă arată acum caseta de nume?',o:['C3','D2','C1','C2'],ok:0,
+     ajutor:'Enter confirmă și te duce… unde?',why:'Enter confirmă și coboară o celulă: din C2 în C3. D2 ar fi fost după Tab.'},
+    {t:'excelx',q:'Fă clic pe locul din fereastră unde citești textul întreg al celulei active, chiar dacă nu încape în ea.',cols:3,rows:3,cells:{A1:'Elev',A2:'Ana Popescu, clasa a VIII-a B',B2:9},
+     verifica:{unde:'bara'},ajutor:'Nu caseta de nume: ea arată doar adresa.',why:'Bara de formule, câmpul lung de lângă fx, arată tot ce e scris în celula activă.'},
+    {t:'excelx',q:'Deschide fila <b>Vizualizare (View)</b> a panglicii.',cols:3,rows:3,cells:{A1:'Elev'},
+     verifica:{fila:'view'},ajutor:'Numele filelor sunt sus de tot, deasupra butoanelor.',why:'Fila Vizualizare (View) e deschisă: e subliniată și are alte grupuri de butoane.'},
+    {t:'excelx',q:'Treci pe foaia <b>Orar</b> și fă clic pe celula din coloana <b>C</b>, rândul <b>3</b>.',cols:4,rows:5,foi:FOI(EXC),panglica:false,
+     verifica:{foaie:'Orar',activa:'C3'},ajutor:'Întâi fila Orar, jos. Apoi litera C sus și numărul 3 în stânga.',why:'Pe foaia Orar, C3 e ora a doua de marți: Istorie.'},
+    {t:'excelx',q:'Completează rândul lui Radu: clic pe <b>A4</b>, apoi <b>Radu</b>, <kbd>Tab</kbd>, <b>8</b>, <kbd>Tab</kbd>, <b>9</b>, <kbd>Enter</kbd>. La final, celula activă trebuie să fie la începutul rândului următor.',cols:4,rows:6,cells:{A1:'Elev',B1:'Nota 1',C1:'Nota 2',A2:'Ana',B2:9,C2:10,A3:'Bogdan',B3:7,C3:8},panglica:false,
+     verifica:{valori:{A4:'Radu',B4:8,C4:9},activa:'A5'},ajutor:'Clic pe A4, apoi scrii cu Tab între coloane și Enter la capăt.',why:'Rândul lui Radu e completat, iar Enter te-a întors în A5.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Excel-ul adevărat',titlu:'Acum în Excel-ul adevărat',
+    intro:'<p>La calculatorul din laborator, fără profesor: faci pașii în ordine. La fiecare pas scrie ce trebuie să vezi, ca să te verifici singur. Dacă Excel e în română, numele sunt cele dinaintea parantezei.</p>',
+    pasi:PROVOCARE},
+  diploma:{titlu:'Explorator de registre',
+    rezumat:'a găsit în fereastra Excel panglica, caseta de nume, bara de formule, foile, bara de stare și zoom-ul, a trecut de la o foaie la alta, a ajuns la orice celulă cu clic, săgeți și caseta de nume și a completat un tabel rând cu rând, cu Tab și Enter',
+    aplicatie:'Excel-ul adevărat',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
