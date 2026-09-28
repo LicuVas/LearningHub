@@ -5,7 +5,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 URL = Path(r"C:\00\Projects\LearningHub\content\tic\cls7\m1-word-fundamente\lectia5-tabele.html").as_uri()
-PROF = Path(r"C:\Users\licuv\AppData\Local\Temp\claude\C--00-AI-0\d1ddcc30-0251-43d9-a426-7c5c0b2e2d92\scratchpad\pwprof")
+PROF = Path(r"C:\Users\<utilizator>\AppData\Local\Temp\claude\C--00-AI-0\d1ddcc30-0251-43d9-a426-7c5c0b2e2d92\scratchpad\pwprof")
 res = {}
 with sync_playwright() as p:
     ctx = p.chromium.launch_persistent_context(str(PROF), headless=True)

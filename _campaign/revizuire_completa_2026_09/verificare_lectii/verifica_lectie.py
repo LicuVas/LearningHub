@@ -943,6 +943,8 @@ def _t1_detalii(rez: dict, out_ok: Path, numar: int, sarcini: list, lectia_md: s
       - o parcurgere NEFACUT ai cărei pași căzuți sunt TOȚI în simulator/laborator, cu „știi ce să încerci” și
         „înțelegi efectul” adevărate (cititorul text nu poate atinge nimic; notă pentru J/R);
       - un blocaj citat doar din antet sau din pasul „La ce folosește” (fără acțiuni, după standard);
+      - un blocaj citat DOAR din titlul unui pas („Pasul 5: Alinierea paragrafului”), dacă termenul e explicat în
+        textul ACELUIAȘI pas: titlul anunță ce se predă acum, nu e o folosire (calibrare 27.09, VII nr. 6);
       - un blocaj pe propoziția care INTRODUCE termenul (îngroșat acolo, în textul unui pas, nu într-un exercițiu), dacă
         toate sarcinile care l-au semnalat au ieșit FACUT — dar NU pentru vocabularul lecțiilor viitoare (regula 9);
       - un obiectiv LIPSA la un singur cititor (teach-back); LIPSA la ≥ 2 cititori blochează doar dacă un cititor
@@ -1005,6 +1007,32 @@ def _t1_detalii(rez: dict, out_ok: Path, numar: int, sarcini: list, lectia_md: s
                         return True
         return False
 
+    # titlurile pașilor, cum le vede cititorul („## Pasul i: …”), și textul fiecărui pas (explicația, fără exerciții)
+    pasi_niv = nivel.get("pasi") or []
+    titluri_n = {i: VV._norm(f"Pasul {i}: {X.md(p.get('t', ''))}") for i, p in enumerate(pasi_niv, 1)}
+    text_pas_n = {i: VV._norm("\n".join(X.md(p.get(k) or "") for k in ("text", "exemplu", "altfel")))
+                  for i, p in enumerate(pasi_niv, 1)}
+    corp_n = VV._norm("\n".join(l for l in lectia_md.split("\n") if not re.match(r"\s*#{1,6}\s*Pasul\s+\d+", l)))
+    stop_titlu = {"dintre", "intre", "pentru", "care", "unui", "unei", "fara", "despre"}
+
+    def _din_titlu(cuv: str, citat: str) -> int | None:
+        """Numărul pasului dacă citatul stă DOAR în titlul pasului și termenul e explicat în textul aceluiași pas."""
+        cn, qn = VV._norm(cuv), VV._norm(citat)
+        if not qn or any(cn[:5] == w[:5] or w.startswith(cn[:5]) for w in viitoare_n):
+            return None
+        m = re.match(r"pasul\s*(\d+)\s*:?\s*(.*)$", qn)
+        rest = (m.group(2) if m else qn).strip()
+        if rest and rest in corp_n:              # aceleași cuvinte și în corpul lecției: nu e „doar din titlu”
+            return None
+        pasi_c = [int(m.group(1))] if m else [i for i, tn in titluri_n.items() if rest and rest in tn]
+        for i in pasi_c:
+            if i not in titluri_n or qn not in titluri_n[i] and rest not in titluri_n[i]:
+                continue
+            cuv_t = [w for w in re.findall(r"\w+", cn) if len(w) >= 4 and w not in stop_titlu]
+            if cuv_t and all(w[:5] in text_pas_n.get(i, "") for w in cuv_t):
+                return i
+        return None
+
     pe_cuvant: dict[str, list] = {}
     for vid, v in verd.items():
         for x in v.get("blocaje") or []:
@@ -1019,11 +1047,17 @@ def _t1_detalii(rez: dict, out_ok: Path, numar: int, sarcini: list, lectia_md: s
         if cit and all(VV._norm(c) in antet_n or VV._norm(c) in intro_n for _, _, c in cit):
             rez.setdefault("blocaje_in_antet", []).append(f"«{cuv}» — «{scurt(cit[0][2], 160)}»")
             continue
+        pasi_t = [_din_titlu(cuv, c) for _, _, c in cit]
+        if cit and all(p is not None for p in pasi_t):
+            av.append(f"blocaj «{cuv}» citat DOAR din titlul pasului {', '.join(sorted({str(p) for p in pasi_t}))}, iar termenul e "
+                      f"explicat în textul aceluiași pas (titlul anunță ce se predă, nu e o folosire): «{scurt(cit[0][2], 120)}»")
+            continue
         if cit and all(vf == "FACUT" and _introdus(cuv, c) for _, vf, c in cit):
             av.append(f"blocaj «{cuv}» pe propoziția care introduce termenul (îngroșat acolo), sarcina FACUT: "
                       f"introdus fără definiție explicită? — «{scurt(cit[0][2], 160)}»")
             continue
-        c0 = next((c for _, _, c in cit if VV._norm(c) not in antet_n and VV._norm(c) not in intro_n), cit[0][2] if cit else "")
+        c0 = next((c for _, _, c in cit if VV._norm(c) not in antet_n and VV._norm(c) not in intro_n
+                   and _din_titlu(cuv, c) is None), cit[0][2] if cit else "")
         cheie = VV._norm(c0) or f"(fără citat) {k}"
         g = pe_propozitie.setdefault(cheie, {"cuvinte": [], "citat": c0, "aparitii": 0})
         g["cuvinte"].append(cuv)

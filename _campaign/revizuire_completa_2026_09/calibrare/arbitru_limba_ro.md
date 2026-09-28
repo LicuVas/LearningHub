@@ -20,7 +20,7 @@ Sunt însă **două condiții**:
 | Versiune | 16.0.20326.20158, pe 64 de biți (`Platform = x64`) |
 | Canal de actualizare | Current Channel (`AudienceData = Production::CC`, CDN 492350f6-…) |
 | Limbi Office instalate | doar **en-us** (în plus, folderele 1036 și 3082 conțin doar instrumentele de corectură franceză și spaniolă, care vin implicit cu engleza) |
-| Limba de afișare Office (utilizatorul licuv) | `HKCU\…\Office\16.0\Common\LanguageResources\UILanguageTag = en-us`; limba de editare preferată = ro-RO |
+| Limba de afișare Office (utilizatorul <utilizator>) | `HKCU\…\Office\16.0\Common\LanguageResources\UILanguageTag = en-us`; limba de editare preferată = ro-RO |
 | Limba Windows | **ro-RO** (afișare, format regional, localizare sistem) |
 | Politici de limbă Office | niciuna (`HKCU\Software\Policies\…\LanguageResources` nu există) |
 

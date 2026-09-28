@@ -69,6 +69,33 @@ Pune `mod:'lectie'` în configurație (vezi `jocuri\README.md` §4 „Modul LEC�
 16. **O regulă predată nu are voie să aibă excepții nespuse.** De exemplu, „are litere, deci e text” e fals pentru „12 octombrie 2026”, care e o dată, și pentru „12 lei”, care e un număr.
 17. **Clipboardul e comun tuturor proceselor de pe PC.** Înainte de o probă cu lipire, verifici ce e în clipboard.
 18. **Word ajustează singur spațiile la ștergere și la lipire, dar nu mereu.** De exemplu, „ora 8.Aduceți”. Lecția spune elevului să verifice spațiul.
+19. **Probele de aplicație (lecțiile nr. 6-7):**
+   - **PowerPoint rulează o singură dată pe PC.** Înainte de fiecare probă verifici că nu e deschis. Nu apelezi `Quit()` pe o instanță pe care n-ai pornit-o tu.
+   - **Tastele se probează ca taste reale.** `FindKey().Execute()` și alte scurtături COM ocolesc comportamentul tastei: de exemplu, a doua apăsare pe Ctrl+E întoarce alinierea în Word.
+   - **„Ce ai pus tu rămâne” se probează la schimbarea temei.** O valoare egală cu cea din machetă nu se păstrează în fișier.
+23. **Calculatorul din laborator e COMUN; o verificare își ține rezultatul.** (lecțiile nr. 1, 27.09)
+   - Tot ce pagina păstrează în browser (rezultatul unei autoevaluări, o fișă de pornire, lista „Recitește”) e al elevului care stă ACUM pe scaun. Leagă-l de identitatea din „Spune cine ești” (`assets\js\prezenta.js`) sau pune un buton vizibil „Sunt alt elev / Încep din nou”. Se probează cu doi elevi pe același calculator.
+   - După „Verifică”, rezultatul primei încercări nu se șterge când elevul întoarce răspunsurile ✘. Pagina nu spune „știi” pe baza răspunsurilor corectate după ce le-a văzut.
+   - Dacă un pas ulterior (laboratorul) cere rezultatul, pagina îl arată acolo.
+   - Răspunsurile scrise se acceptă în toate formele corecte: fără diacritice, cu unitatea („8 biți”, „1024 MB”), cu articol („CPU-ul”).
+26. **Fișierul colegului: „numele există deja” NU arată la fel peste tot.** (probat în Excel și în PowerPoint reale, 28.09)
+   - La PRIMA salvare (Ctrl+S → „Save this file”): „The file … already exists. Do you want to replace the existing file?”, cu **OK / Anulare (Cancel)**. OK înlocuiește fișierul colegului, iar Enter = Anulare. După Anulare, fereastra de salvare REVINE:
+     - la Ctrl+S, numele-substituent (Book2 etc.) e din nou selectat, așa că elevul scrie iar numele lui complet, cu o cifră la sfârșit;
+     - la Ctrl+W („Save your changes…”), numele tastat rămâne.
+
+     Probat în Excel real; în PowerPoint real revine „Save this file”, cu același nume.
+   - La **Salvare ca** (F12 / Răsfoire): „Confirm Save As”, cu **Yes / No**. După No rămâi în Save As.
+   - În Word, la Salvare ca .docx, „Replace existing file” e ales implicit. La .pdf întrebarea e alta („You already have a file named…”, OK / Anulare).
+   - Lecția și simulatorul arată fereastra EXACTĂ pentru fiecare drum. În laborator, la FIECARE salvare, elevul apasă Anulare / No și adaugă prenumele sau o cifră. Nicio lecție nu spune „apasă No” acolo unde butonul nu există.
+25. **Calculatorul profesorului rămâne cum era.** (28.09)
+   - Închizi sau oprești DOAR instanța ta. Îi notezi PID-ul la pornire și, la final, `taskkill /PID <al tău>`. NICIODATĂ nu oprești toate procesele unei aplicații: profesorul sau alt agent poate lucra în ea.
+   - Nu lași urme în lista „Recent”. Deschizi cu `AddToMru=False` (Excel `Workbooks.Open`) și salvezi cu `AddToRecentFiles=False` (Word `SaveAs2`); PowerPoint nu are opțiunea asta. Urmele rămase le scoate dirijorul la final, cu `verificare_lectii\curata_mru_office.py --sterge`.
+   - Lacătul PowerPoint (`lacat_office.py`) îl reînnoiești la fiecare rundă (`reinnoieste`). Expiră după 60 de minute fără reînnoire.
+   - Nu lași fișiere de recuperare. Înainte de `Quit`, pui `Saved=True` și închizi fiecare fișier (`Close(SaveChanges=False)`). Un `taskkill` pe o instanță cu fișiere deschise lasă copii în `%APPDATA%\Microsoft\Excel\` (sau Word/PowerPoint), iar profesorul vede apoi panoul „Document Recovery” la fiecare Excel nou. Pe 28.09 s-a întâmplat cu `_j2_copie`; fișierele sunt mutate în `verificare_lectii\_carantina_recuperare_excel\`.
+24. **Probele NU trimit elevi falși în panoul profesorului.** `assets\js\prezenta.js` trimite identitatea și minutele la `teste-vasile.netlify.app/api/activitate` și `/api/progres`. Orice probă cu Playwright/browser care încarcă o pagină a sitului blochează TOATE cererile care nu merg spre serverul local (`ctx.route("**/*", …abort())` pentru tot ce nu e 127.0.0.1). Pe 28.09 s-a întâmplat: „Ana Pop” și „Dan Ene” au ajuns în panou, la 8 A.
+22. **Nicio dată a profesorului nu pleacă spre servicii externe.** Nu pui numele, e-mailul sau numele de utilizator în User-Agent, în antete sau în parametri, nici la Wikimedia, nici altundeva; folosești doar `LearningHub-lectii/1.0 (educational site)`. Pe 27.09 s-a întâmplat: câteva scripturi au trimis „<e-mailul profesorului>” spre Wikimedia Commons. Au fost oprite și curățate.
+21. **Fișierele de descărcat (.docx/.pptx/.xlsx) nu au nume de persoane în metadate.** Word, PowerPoint și Excel scriu la salvare contul Office în autor și în ultima modificare. După orice salvare prin COM rulezi `python C:/00/Projects/LearningHub/_campaign/revizuire_completa_2026_09/verificare_lectii/curata_metadate.py --curata` (sau golești `BuiltInDocumentProperties` Author/Last author/Company) și verifici cu el fără `--curata`: ultima linie trebuie să fie 0.
+20. **Un buton pe care textul îl numește trebuie să aibă nume vizibil.** Eticheta sau descrierea după formă și poziție trebuie să se vadă, pentru că pe telefon nu există „treci cu mouse-ul”. Orice zonă de atins are cel puțin 32 px.
 
 ## Simulatoarele din lecțiile nr. 4
 Cele patru simulatoare au fost scrise în paginile lecțiilor nr. 4:
@@ -82,6 +109,33 @@ Pentru lecțiile următoare:
 - Îl copiezi din pagina lecției nr. 4 numai după ce în `_verificare\` apare `reparatii.md`, adică după ce reparațiile judecătorului sunt făcute.
 - Îl extinzi acolo; lecția nr. 4 rămâne deocamdată cu copia ei.
 - Fiecare simulator are UN proprietar: autorul lecției nr. 5 a clasei respective.
+
+**Componenta comună `lectii\_sim\rezultat-elev.js`.** Proprietar: rezultat-elev (comun, lecțiile nr. 1). Ține rezultatul unei verificări (autoevaluare, fișă de pornire, listă „Recitește”) pentru elevul de pe scaun, după regula 23. Nu-ți mai scrii codul tău.
+- Încarci `<script src="../../_sim/rezultat-elev.js"></script>` și alegi o cheie a verificării, de exemplu `vi-m1-l01-initiala`.
+- La „Verifică” chemi `RezultatElev.salveaza(cheie, rezultat)`. PRIMA încercare rămâne diagnosticul. Ce vine după se ține ca `reincercare`.
+- Desenezi din `RezultatElev.citeste(cheie)`. Întoarce `null` sau `{rezultat, ora, reincercare, reincercari, elev, faraNume, deConfirmat}`. Desenezi la încărcare și la fiecare eveniment `rezultat-elev` pe `window`.
+- Butonul „Sunt alt elev / Încep din nou” cheamă `RezultatElev.golesteAlElevuluiDeAcum(cheie)`. Componenta nu șterge nimic.
+  - Pentru elevul înscris, butonul se cheamă „Sunt alt elev”, iar prima lui încercare rămâne diagnosticul. Componenta îi schimbă singură eticheta dacă textul spune „sunt alt elev” și „încep din nou” / „fișă nouă”, sau dacă butonul are `data-rezultat-elev-alt`.
+  - Pentru elevul fără nume, următorul de pe scaun e întrebat „Ai dat-o tu pe cea de la ora hh:mm?”.
+- Un elev „activ” nu e crezut pe cuvânt, nici la salvare, nici la citire. Componenta vrea ca elevul de pe scaun să spună, în încărcarea asta a paginii, că e X. Contează:
+  - „Da” la o întrebare a componentei;
+  - înscrierea sau alegerea din listă chiar atunci;
+  - o schimbare în casetă cât e pagina deschisă.
+  - Confirmarea se pierde după 8 minute fără nicio atingere. Am ales 8, nu 20, pentru că pauza dintre ore are 10 minute: elevul orei următoare nu trebuie să vadă fișa celui de dinainte și nici să scrie pe numele lui.
+  - La salvare: „Verificarea se scrie pe numele X. Ești X?”. La „Nu, sunt alt elev”, verificarea rămâne fără nume și se deschide lista.
+  - La citire: `citeste(cheie)` întoarce `null`, iar sus apare „Pe calculator e verificarea lui X, de la ora hh:mm. Ești X?”. La „Da”, pleacă `rezultat-elev` cu motivul `confirmat` și desenezi din nou. La „Nu”, se deschide lista, iar verificarea lui X rămâne neatinsă.
+- **Când `citeste(cheie)` e `null`, nu scrie „fișa e goală” până nu întrebi `RezultatElev.asteaptaConfirmare(cheie)`.**
+  - Dacă întoarce `{elev, ora}`, fișa EXISTĂ și așteaptă confirmarea. Scrie de exemplu: „Pe calculator e fișa lui {elev}, de la ora {ora}. Dacă ești {elev}, apasă sus «Da» ca s-o vezi.”
+  - La fel, `citeste(cheie, {asteptare: true})` întoarce în locul acelui `null` obiectul `{asteaptaConfirmare: {elev, ora}}`.
+  - Se întâmplă la fiecare încărcare nouă a paginii și după 8 minute fără atingeri, de exemplu cât elevul copiază fișa în caiet.
+- Fără nume, o verificare din altă încărcare a paginii nu se arată și nu primește reîncercări până nu răspunde elevul de pe scaun „Ai dat-o tu…?”. La „Nu”, ea se mută deoparte.
+- Cine are deja o verificare pe numele lui și e întrebat de încă una fără nume primește altă întrebare: „Ai deja verificarea de la ora hh:mm. Și cea de la ora hh:mm e tot a ta?”, cu „Nu” primul și implicit.
+- Lângă rezultat apare rândul „Se salvează pe numele: X”. Butonul proprietarului, „Sunt X, dar n-am dat-o eu”, apare DOAR după confirmare. El are nevoie de două apăsări și mută verificarea deoparte, nu o șterge.
+  - Rândul stă în `data-rezultat-elev-intrebare`, dacă ai pus unul. Altfel stă imediat după butonul tău „Sunt alt elev…”.
+- Numele îl pune componenta doar când caseta din `prezenta.js` spune `activ`. Altfel rezultatul stă fără nume, în fila asta, 50 de minute. Întrebarea „Verificarea de la ora hh:mm e a ta?” o pune tot ea, singură, pe orice pagină a filei care încarcă scriptul, și pe cuprins. Nu trebuie să chemi `citeste` ca s-o pornești.
+- Locul întrebării: dacă vrei s-o pui în atelier, pune un element `data-rezultat-elev-intrebare` acolo. Dacă elementul dispare la redesenare sau e ascuns, întrebarea trece sus, fixă. Când elementul apare din nou, întrebarea se mută în el. Nu trebuie să-l păstrezi tu.
+- Proba: `python C:/00/Projects/LearningHub/lectii/_sim/_teste/rezultat_elev_proba.py`. Ultima linie trebuie să fie 0. Dacă schimbi componenta sau `prezenta.js`, o rulezi din nou.
+- Mutanții: `python C:/00/Projects/LearningHub/lectii/_sim/_teste/rezultat_elev_mutanti.py`. Ultima linie trebuie să fie 0. Fiecare regulă nouă primește un caz în probă și un mutant pe care proba îl prinde.
 
 ## Verificarea dirijorului (după autor, înainte de publicare)
 S: poarta de mai sus + comparația exercițiu–verificare + prerechizitele · A: agenți-începători cu carte închisă (profilul de mai sus), câte unul pe sarcină · R: afirmatii.json rulate în aplicația reală · J: un judecător Opus care n-a scris lecția încearcă să o respingă pe regulile 1-9. Insigna publicată: „verificat parțial” până trece mașina bancul (faza 3a).

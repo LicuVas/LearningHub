@@ -3,7 +3,7 @@
 Data: 13.09.2026. Cine: un verificator care NU a scris protocolul; mandatul = să-l facă să pice.
 Nu am modificat protocolul, poarta (`G_poarta.py`) sau unealta de văzut (`H_vede.py`).
 Tot ce e „observat” mai jos a fost rulat de mine, în
-`C:\Users\licuv\AppData\Local\Temp\claude\C--00-AI-0\d1ddcc30-0251-43d9-a426-7c5c0b2e2d92\scratchpad\verif\`
+`C:\Users\<utilizator>\AppData\Local\Temp\claude\C--00-AI-0\d1ddcc30-0251-43d9-a426-7c5c0b2e2d92\scratchpad\verif\`
 (scripturile: `mk_fake.py`, `mk_xlsx.py`, `read_xlsx.py`, `mk_docx.py`, `pdf2png.py`).
 
 **Pe scurt:** 6 blocante · 18 importante · 10 minore.

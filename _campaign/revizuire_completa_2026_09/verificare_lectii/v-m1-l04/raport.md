@@ -3,7 +3,7 @@
 - lecția: `C:\00\Projects\LearningHub\lectii\v\m1-l04\index.html`
 - clasa a V-a, lecția 4 din plan: „Structura generală a unui sistem de calcul. Rolul componentelor hardware” (M1, V-U1)
 - nivelul din pagină: „Structura generală a unui sistem de calcul. Rolul componentelor hardware” · lectii declarate: [4]
-- rulat: 2026-09-27 18:31 · durata: 0.2 min · cost `claude -p`: 1.137 USD (generator 0.185 + cititori 0.952)
+- rulat: 2026-09-27 19:22 · durata: 0.2 min · cost `claude -p`: 1.137 USD (generator 0.185 + cititori 0.952)
 
 ## Rezumat
 

@@ -7,7 +7,7 @@
 Lecția: `content/tic/cls8/m2-formule-functii/lectia1-introducere-formule.html`
 (live: proba.learninghub-8z6.pages.dev/content/tic/cls8/m2-formule-functii/lectia1-introducere-formule)
 
-Vasile a urmat instrucțiunile ca un elev, în Google Sheets cu setări românești. Captura lui: `C:\Users\licuv\Pictures\Screenshots\2026-09\chrome_XMusWkZo9P.png`
+Vasile a urmat instrucțiunile ca un elev, în Google Sheets cu setări românești. Captura lui: `C:\Users\<utilizator>\Pictures\Screenshots\2026-09\chrome_XMusWkZo9P.png`
 - A pus, firesc, denumirile pe rândul 1 și numerele pe rândul 2. Formulele din lecție (`=A1*B1`) se referă la rândul 1, deci pe foaia lui dau #VALUE!. Lecția nu îl avertizează.
 - Butonul „Copiaza” a copiat textul explicativ („✏ Date de intrare (pune in A1:D1):”), care a ajuns în foaie pe coloana I.
 

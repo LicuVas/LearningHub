@@ -3,7 +3,7 @@
 - lecția: `C:\00\Projects\LearningHub\_campaign\revizuire_completa_2026_09\verificare_lectii\_calibrare\control\vii\m1-l04\index.html`
 - clasa a VII-a, lecția 4 din plan: „Obiecte într-un document: text, imagini, tabele” (M1, VII-U1)
 - nivelul din pagină: „Obiecte într-un document: text, imagini, tabele” · lectii declarate: [4]
-- rulat: 2026-09-27 18:35 · durata: 0.2 min · cost `claude -p`: 0.0 USD
+- rulat: 2026-09-27 19:21 · durata: 0.4 min · cost `claude -p`: 0.0 USD
 
 ## Rezumat
 

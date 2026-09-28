@@ -282,13 +282,13 @@ Copiere și Lipire nu sunt doar taste. Le găsești și cu mouse-ul, în două l
 
 - **Clic dreapta**: apeși butonul din dreapta al mouse-ului pe zona selectată și apare un meniu. Alegi **Copiere (Copy)**. În locul nou, clic dreapta și, sub „Opțiuni lipire (Paste Options)”, prima pictogramă, planșeta: **Lipire (Paste)**.
 
-- **Panglica**: fila **Pornire (Home)**, primul grup din stânga, **Memorie temporară (Clipboard)**. Pentru lipire apeși pe planșetă; cuvântul „Paste ▾” de sub ea deschide doar o listă.
+- **Panglica**: fila **Pornire (Home)**, primul grup din stânga, **Clipboard**. Pentru lipire apeși pe planșetă; cuvântul „Paste ▾” de sub ea deschide doar o listă.
 
 De aici scriem pe scurt cu semnul **›**, care înseamnă „apoi alegi”: clic dreapta › Copiere = faci clic dreapta, apoi alegi Copiere din meniu.
 
 [Imagine]
 
-Legenda imaginii: Fila Pornire (Home), grupul Memorie temporară (Clipboard). Aici Lipire (Paste) e gri: încă nu era nimic copiat.
+Legenda imaginii: Fila Pornire (Home), grupul Clipboard. Aici Lipire (Paste) e gri: încă nu era nimic copiat.
 
 ### Încearcă (pasul 5)
 
@@ -310,7 +310,7 @@ Unde găsești butonul Copiere (Copy) în panglică?
 
 Variante:
 
-- Pornire (Home), Memorie temporară (corect)
+- Pornire (Home), Clipboard (corect)
 
 - Inserare (Insert), la început
 
@@ -320,7 +320,7 @@ Variante:
 
 Indiciu (apare după prima greșeală): E primul grup din stânga al primei file.
 
-Explicația de după răspuns: Copiere, Decupare și Lipire stau împreună în grupul Memorie temporară (Clipboard) de pe fila Pornire (Home).
+Explicația de după răspuns: Copiere, Decupare și Lipire stau împreună în grupul Clipboard de pe fila Pornire (Home).
 
 ## Pasul 6: Mutarea: Decupare (Cut), apoi Lipire (Paste)
 

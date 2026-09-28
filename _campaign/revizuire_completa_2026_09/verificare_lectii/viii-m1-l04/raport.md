@@ -3,7 +3,7 @@
 - lecția: `C:\00\Projects\LearningHub\lectii\viii\m1-l04\index.html`
 - clasa a VIII-a, lecția 4 din plan: „Adresa de celulă. Selectare, copiere, mutare, ștergere” (M1, VIII-U1)
 - nivelul din pagină: „Adresa de celulă. Selectare, copiere, mutare, ștergere” · lectii declarate: [4]
-- rulat: 2026-09-27 18:31 · durata: 0.3 min · cost `claude -p`: 1.391 USD (generator 0.226 + cititori 1.165)
+- rulat: 2026-09-28 03:21 · durata: 1.3 min · cost `claude -p`: 0.0 USD
 
 ## Rezumat
 
@@ -13,7 +13,7 @@
 | S1 | identitate exercițiu–verificare | TRECUT | 0 |
 | S2 | practică: aplicare/execuție vs. recunoaștere | TRECUT | 0 |
 | T0 | oracol_novice (determinist) | TRECUT | 0 |
-| T1 | plimbarea (cititori cu carte închisă; rulare refolosită) | TRECUT | 0 |
+| T1 | plimbarea | NERULAT | 0 |
 
 ## S0 — poarta motorului (test_joc.py)
 
@@ -79,37 +79,15 @@ Programa legată de lecție: Operații de editare (selectare, copiere, mutare, �
 
 Situl .md și configul: `t0/` · ieșirea completă: `t0_oracol.txt`.
 
-## T1 — plimbarea (cititori cu carte închisă; rulare refolosită)
+## T1 — plimbarea
 
-**Blochează publicarea:** nimic
-
-- numărul kitului e 4; numărul liniei e 0 (diferența e explicată în avertismente și în „blocaje în antet”); blocaje citate doar din antet/„La ce folosește”: «copierea» — «Cu **selectarea**, **copierea**, **mutarea** și **ștergerea** termină în câteva secunde. Azi le înveți pe toate, pe rând.»; «mutarea» — «Cu **selectarea**, **copierea**, **mutarea** și **ștergerea** termină în câteva secunde. Azi le înveți pe toate, pe rând.»; «selectarea» — «Cu **selectarea**, **copierea**, **mutarea** și **ștergerea** termină în câteva secunde. Azi le înveți pe toate, pe rând.»; «ștergerea» — «Cu **selectarea**, **copierea**, **mutarea** și **ștergerea** termină în câteva secunde. Azi le înveți pe toate, pe rând.»
-
-Rulări: seed 7 → 4 (1.1653 USD)
-Canar: «Aici Lipire (Paste) e gri: încă nu era nimic copiat.» → «Aici Lipire (Paste) e albastru: încă nu era nimic copiat.» · momeală: «tabel pivot dinamic»
-
-| Sarcină | Țintă | Verdict | Răspuns / motiv |
-|---|---|---|---|
-| CANAR-1 | (canar/momeală) | FACUT | Butonul Lipire (Paste) e albastru când încă nu era nimic copiat. |
-| MOMEALA-1 | (canar/momeală) | NU_GASESC | Lecția 4 vorbește despre selectare, copiere, mutare și ștergere. Nu conține nicio parte despre 'tabel pivot dinamic'. |
-| S-1 | Pasul 2 | FACUT | H20. Regula formatului: litera coloanei, lipita de numarul randului. Coloana H si randul 20 dau H20, niciodata 20H sau cu tireata. |
-| S-2 | Pasul 3 | FACUT | Apeși pe D2, ții apăsat și tragi până la F6; abia acolo dai drumul. Caseta de nume arată D2 (adresa celulei active, de unde ai pornit). Zona D2:F6 are 15 celul… |
-| S-3 | Pasul 4 | FACUT | 1. Apeși pe B2, ții apăsat și tragi până la C3, apoi dai drumul - selectezi zona. 2. Apeși Ctrl+C: ții apăsată tasta Ctrl din stânga-jos și apeși o dată C. În … |
-| S-4 | Pasul 6 | FACUT | Ctrl+X |
-| S-5 | Pasul 7 | FACUT | Clic pe D6 (selectezi), apeși tasta Delete. D7 rămâne neschimbată ('nimic nu urcă'). Dacă apeși Ctrl+Z (sau butonul Anulare), textul din D6 revine, fiindcă com… |
-| S-6 | Pasul 8 | FACUT | 1. Clic dreapta pe numărul rândului 7, în stânga (pe cifra din stânga, nu pe o celulă). 2. Aleq din meniu comanda Ștergere (Delete). 3. Rândul dispare, iar rân… |
-| S-7 | Atelier | FACUT | 1) Clic dreapta pe cifra 5 (rândul Marker), apoi Ștergere (Delete) din meniu; rândul dispare și Elena urcă pe rândul 4. 2) Selectez A1:C4 trăgând de la A1 la C… |
-| S-8 | Provocarea (Acum în aplicația adevărată) | FACUT | Elevul de pe rândul 4 urcă pe rândul 3 în ambele tabele (A și G). Comanda folosită: clic dreapta pe numărul rândului 3, apoi Ștergere (Delete). Regula: rândul … |
-| S-9 | toată lecția, de la Pasul 1 la Verificare | FACUT | Am parcurs lecția pas cu pas de la Pasul 1 la Verificare. Fiecare pas are instrucțiuni clare, observații vizuale și explicații ale efectelor. Pasul 1 e doar in… |
-| S-10 | toată lecția | FACUT | Am învățat să lucrez cu celule în Excel folosind adrese precise. Adresa celulei se scrie cu litera coloanei apoi numărul rândului, de exemplu C4, și caseta de … |
-
-Sarcinile, obiectivele (din programă), concepțiile greșite și profilul: `t1/sit/plimbare/`; verdictele: `t1/verdicte_seed*/`.
+Nerulat: --fara-t1
 
 ## Ce NU verifică linia asta
 
 - R (aplicația reală): `afirmatii.json` → `python arbitru_office.py <afirmatii.json> --aplicatie excel|word|powerpoint`, rulat de dirijor.
 - J (judecătorul Opus pe regulile 1-9) și capturile (`capturi_lipsa.json`, regula 4) — separat.
 
-TREPTE: S0 TRECUT · S1 TRECUT · S2 TRECUT · T0 TRECUT · T1 TRECUT
+TREPTE: S0 TRECUT · S1 TRECUT · S2 TRECUT · T0 TRECUT · T1 NERULAT
 BLOCHEAZĂ PUBLICAREA: 0 (raport: C:\00\Projects\LearningHub\_campaign\revizuire_completa_2026_09\verificare_lectii\viii-m1-l04\raport.md)
 0

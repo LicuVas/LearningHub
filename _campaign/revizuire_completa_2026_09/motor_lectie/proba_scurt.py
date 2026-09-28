@@ -18,9 +18,10 @@ try:
     with sync_playwright() as p:
         b = p.chromium.launch()
         pg = b.new_page(viewport={"width": 390, "height": 844})
+        pg.route("**/*", lambda r: r.continue_() if ("127.0.0.1" in r.request.url or "localhost" in r.request.url) else r.abort())   # REGULA 24: nicio cerere în afara serverului local (nici elevi falși în panoul profesorului)
         erori = []
         pg.on("pageerror", lambda e: erori.append(str(e)))
-        pg.on("console", lambda m: erori.append(m.text) if m.type == "error" else None)
+        pg.on("console", lambda m: erori.append(m.text) if m.type == "error" and "net::ERR_FAILED" not in m.text else None)
         pg.goto(f"http://127.0.0.1:{PORT}/lectii/v/m1-l04/index.html", wait_until="networkidle")
         cfg_ar = "(()=>{const c=JocMotor.test.config();return c.nivele[0].aplicatieReala||c.aplicatieReala})()"
 
@@ -54,6 +55,14 @@ try:
         print("diploma în joc (excel-viii):", [h for h in hj if "profesorului" in h or "singur" in h])
         if "Arată-i profesorului diploma, apoi fă asta pe bune:" not in hj or any("verifică-i singur" in h for h in hj):
             probleme.append(f"fraza din diploma jocului s-a schimbat: {hj}")
+        # și obiectivul din primul pas: în JOC rămâne „La finalul nivelului:”
+        pg.evaluate("document.getElementById('go-home').click()")
+        li = pg.evaluate("JocMotor.test.config().nivele.findIndex(L=>L.pasi&&L.obiectiv)")
+        pg.evaluate("l=>document.querySelector('.lvl[data-l=\"'+l+'\"]').click()", li)
+        ob = pg.evaluate("(()=>{const b=document.querySelector('.obiectiv b');return b?b.innerText.trim():null})()")
+        print("obiectivul în joc (excel-viii, nivelul %d):" % (li + 1), ob)
+        if ob != "La finalul nivelului:":
+            probleme.append(f"obiectivul din joc: {ob!r}")
         if erori:
             probleme.append(f"erori: {erori[:3]}")
         b.close()

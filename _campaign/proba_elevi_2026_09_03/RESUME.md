@@ -5,12 +5,12 @@
 ## Cum se reia, dacă tura s-a oprit
 
 ```
-Workflow({scriptPath: "C:\Users\licuv\AppData\Local\Temp\claude\C--00-AI-0\33d252b4-3bd8-41e7-82f2-3000afaf047e\scratchpad\wf_proba.js",
+Workflow({scriptPath: "C:\Users\<utilizator>\AppData\Local\Temp\claude\C--00-AI-0\33d252b4-3bd8-41e7-82f2-3000afaf047e\scratchpad\wf_proba.js",
           resumeFromRunId: "wf_18a96fb3-1d4"})
 ```
 Agenții deja terminați întorc rezultatul din memorie, instant; se reia doar ce n-a apucat să ruleze.
 
-**Jurnalul rulării:** `C:\Users\licuv\.claude\projects\C--00-AI-0\33d252b4-3bd8-41e7-82f2-3000afaf047e\subagents\workflows\wf_18a96fb3-1d4\journal.jsonl`
+**Jurnalul rulării:** `C:\Users\<utilizator>\.claude\projects\C--00-AI-0\33d252b4-3bd8-41e7-82f2-3000afaf047e\subagents\workflows\wf_18a96fb3-1d4\journal.jsonl`
 Fiecare rând e un agent: `started` / `result`. Aici se vede exact cât s-a făcut.
 
 ## Cum e construită

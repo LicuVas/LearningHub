@@ -120,3 +120,41 @@ Linia rulează fără erori pe V-5, VI-4, VII-5 și VIII-5. Aceste semnalări **
 - **Kitul taie propoziția la punctul dintre ghilimele** („…registru.” în titlul lecției 2). Linia ocolește asta la antet (fără verdict sub 10 propoziții), dar reparația adevărată e în `oracol_novice.verif_densitate` (kit).
 - **Un LIPSA la teach-back confirmat de 2 cititori costă un cititor + un notator în plus** la fiecare rulare (~0,05-0,15 USD).
 - V nu a avut T1 nou (cum s-a cerut). Efectul promptului nou asupra S-4/S-7 de la V se vede abia la rularea T1 a lecției V.
+
+---
+
+## Stratul 2 (27.09.2026, seara): blocaj citat doar din TITLUL pasului (VII nr. 6)
+
+**Ce a semnalat dirijorul:** pe VII nr. 6, T1 a blocat 3 termeni citați din titlul pasului care îi predă: «Alinierea» din „Pasul 5: Alinierea paragrafului”, «Alineatul» și «Spațierea dintre rânduri» din „Pasul 6: Alineatul și spațierea dintre rânduri”. Titlul anunță ce se predă chiar acum. Nu e o folosire înainte de explicație.
+
+**Regula aplicată** (`verifica_lectie.py`, `_t1_detalii`, funcția `_din_titlu`): un blocaj nu se numără, și rămâne avertisment ca la antet, dacă sunt adevărate toate condițiile de mai jos:
+- TOATE citatele lui stau doar în titlul unui pas (`## Pasul i: …` = câmpul `t`);
+- același text nu apare și în corpul lecției;
+- fiecare cuvânt de conținut al termenului apare în textul ACELUIAȘI pas (text, „Uite cum”, „Explică-mi altfel”; fără exercițiile pasului);
+- termenul nu e vocabularul unei lecții viitoare (regula 9).
+
+Dacă măcar un citat vine din altă parte, blocajul se numără, cu acel citat.
+
+**Rezultatul pe VII nr. 6** (`vii-m1-l06\raport.md`, `--refa-raport` la 19:19, fără cost, pagina neschimbată în timpul rulării, amprenta `3be8bfe218…`):
+- înainte: T1 = 3 elemente care blochează. Două sunt cele 3 termeni din titlu («Alineatul» și «Spațierea dintre rânduri» erau deja numărați o dată, fiind aceeași propoziție). Al treilea e un teach-back. Raportul vechi e păstrat în `_calibrare\rezultate\vii-m1-l06_raport_inainte_titlu.md`;
+- după: **T1 = 1**. Cei 3 termeni din titlu apar acum ca avertismente („citat DOAR din titlul pasului 5/6, iar termenul e explicat în textul aceluiași pas”);
+- elementul care rămâne NU ține de titlu: teach-back LIPSA la 2 cititori pe «Elevul poate spune de ce alinierea, alineatul și spațierea se aplică unui paragraf … doar cu cursorul». Cititorul de confirmare a dat NU_GASESC, deși a citat «Alinierea e a întregului paragraf: ajunge un clic în el, fără selecție.». Pasul 5 spune regula doar pentru aliniere. La pasul 6, pentru alineat și spațiere, lecția spune doar „dai clic în paragraf”, fără „de ce”. **E de triat, nu l-am decis eu:** poate fi un gol real (regula nu e spusă explicit pentru alineat/spațiere) sau o confirmare prea strictă.
+
+**Proba că regula nu orbește linia** (`_calibrare\proba_titlu.py`, pe verdictele reale ale rulării VII-6, fără cost). **PROBA TRECUTĂ.**
+- A. Originalul: cei 3 termeni din titlu → avertisment, niciunul nu blochează.
+- B. Negativ: titlul pasului 5 devine „Alinierea și indentarea paragrafului”, iar un cititor blochează pe «indentarea» citând titlul. Textul pasului 5 nu explică indentarea, deci blocajul **se numără**.
+
+  (În B mai apare «Alinierea» cu citat gol: citatul original al cititorului nu mai există în titlul schimbat. Un blocaj fără citat valid rămâne numărat, adică linia e prudentă.)
+
+**Defectele plantate, din nou, la treptele gratuite (`--fara-t1`, după regula nouă):**
+
+| Copia | Rezultat | Prins? |
+|---|---|---|
+| `control` | 0 | nimic de prins, corect |
+| `a_termen` | T0 PICAT 2 („aliniere”, „indentare” nedefinite nicăieri) | **da, la T0** |
+| `b_recun` | S2 PICAT 1 (2 din 6, 33%) | **da, la S2** |
+| `c_identic` | S1 PICAT 1 (Î1 = P2 Încă un exercițiu 1) | **da, la S1** |
+
+Regresie pe lecțiile nr. 4 (`--refa-raport`): V rămâne 2 (S-4/S-7, sarcinile vechi, vezi mai sus), VII 0, VIII 0. Nimic nu s-a schimbat față de stratul 1.
+
+**Limita nouă:** regula verifică doar că termenul APARE în textul pasului, nu că e cu adevărat explicat acolo. Un pas intitulat „Indentarea” care doar pomenește cuvântul („apoi faci indentarea”), fără să spună ce e, trece ca avertisment. Paza pentru cazul acesta rămâne T0 (definiție după tipare) și judecătorul (J).

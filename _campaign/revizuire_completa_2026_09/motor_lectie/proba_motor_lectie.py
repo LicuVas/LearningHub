@@ -47,10 +47,11 @@ def server():
 
 def pagina(b, lat, erori):
     ctx = b.new_context(viewport=LATIMI[lat])
+    ctx.route("**/*", lambda r: r.continue_() if ("127.0.0.1" in r.request.url or "localhost" in r.request.url) else r.abort())   # REGULA 24: nicio cerere în afara serverului local (nici elevi falși în panoul profesorului)
     ctx.add_init_script(SEED)
     pg = ctx.new_page()
     pg.set_default_timeout(8000)
-    pg.on("console", lambda m: erori.append("console: " + m.text[:200]) if m.type == "error" else None)
+    pg.on("console", lambda m: erori.append("console: " + m.text[:200]) if m.type == "error" and "net::ERR_FAILED" not in m.text else None)
     pg.on("pageerror", lambda e: erori.append("pageerror: " + str(e)[:200]))
     return ctx, pg
 
@@ -191,6 +192,10 @@ def lectii():
                     cfg_niv = pg.evaluate("(()=>{const L=JocMotor.test.config().nivele[0];return {pasi:L.pasi.length,atelier:!!L.atelier,qs:L.qs.length}})()")
                     ordine, texte_chrome = [], [r["cuprins"]]
                     cap("2pas1")
+                    # „La finalul lecției:” (nu „nivelului”) în blocul obiectivului de la primul pas
+                    r["obiectiv"] = pg.evaluate("(()=>{const b=document.querySelector('.obiectiv b');return b?b.innerText.trim():null})()")
+                    if r["obiectiv"] is not None and r["obiectiv"] != "La finalul lecției:":
+                        P(f"obiectivul începe cu {r['obiectiv']!r}")
                     for _ in range(cfg_niv["pasi"] + 3):
                         st = pg.evaluate("JocMotor.test.stare()")
                         ordine.append(st["phase"] + (str(st["si"]) if st["phase"] == "learn" else ""))
@@ -213,7 +218,7 @@ def lectii():
                             continue
                         if st["phase"] == "real":
                             cap("4aplicatia")
-                            r["real"] = pg.evaluate("""()=>({h2:document.querySelector('#app h2').innerText,pasi:document.querySelectorAll('.aplicatie-reala li').length,
+                            r["real"] = pg.evaluate("""()=>({h2:document.querySelector('#app h2').innerText,pasi:document.querySelectorAll('.aplicatie-reala > li').length,
                               prov:(()=>{const c=JocMotor.test.config(),A=c.nivele[0].aplicatieReala||c.aplicatieReala;return ((A&&A.pasi)||c.diploma.provocare).length})()})""")
                             r["real"]["crumbs"] = pg.inner_text("#crumbs").split("›")[-1].strip()
                             r["real"]["hud"] = pg.inner_text("#hud")
@@ -275,15 +280,27 @@ def lectii():
                     if dl.get("Toate lecțiile clasei") != f"{BASE}/lectii/{c}/index.html":
                         P(f"pe diplomă „Toate lecțiile clasei” -> {dl.get('Toate lecțiile clasei')!r}")
                     # textele motorului nu mai vorbesc de niveluri / joc (firimituri, bara de sus, eyebrow, bara pașilor, butoane, h2, diploma)
-                    gasite = set()
+                    # titlurile scrise de AUTOR (lecția, nivelul, pașii, rezumatul) nu contează: lecția nr. 1 chiar predă
+                    # „cele trei niveluri” de evaluare. Se caută doar în ce scrie motorul.
+                    autor = pg.evaluate("(()=>{const c=JocMotor.test.config(),L=c.nivele[0];return [c.titlu,L.t,c.diploma.rezumat||'',(L.atelier&&L.atelier.titlu)||''].concat((L.pasi||[]).map(p=>p.t)).filter(Boolean).sort((a,b)=>b.length-a.length)})()")
+                    def motor_doar(s):
+                        s = (s or "").lower()   # eyebrow-ul e scris cu majuscule din CSS: se compară fără majuscule
+                        for a in autor:
+                            s = s.replace(a.lower(), "")
+                        return s
+                    gasite, unde = set(), set()
+                    def verif(eticheta, s):
+                        g = cauta_interzise(motor_doar(s))
+                        if g:
+                            gasite.update(g); unde.add(f"{eticheta}: {motor_doar(s).strip()[:90]!r}")
                     for T in texte_chrome:
                         for camp in ("crumbs", "hud", "eyebrow", "tabs", "toch", "h2"):
-                            gasite.update(cauta_interzise(T.get(camp)))
+                            verif(camp, T.get(camp))
                         for x in (T.get("butoane") or []) + (T.get("lvl") or []):
-                            gasite.update(cauta_interzise(x))
-                    gasite.update(cauta_interzise(r["diploma"]["p"]))
+                            verif("buton", x)
+                    verif("diploma", r["diploma"]["p"])
                     if gasite:
-                        P(f"texte de joc rămase: {sorted(gasite)}")
+                        P(f"texte de joc rămase: {sorted(gasite)} în {sorted(unde)[:3]}")
                     # cu `titlu`, textul implicit „aplicația adevărată” nu mai apare nicăieri în textele motorului (decât dacă e chiar în titlu)
                     if AR["titlu"] and "aplicația adevărată" not in AR["titlu"].lower():
                         rest = set()

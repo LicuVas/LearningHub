@@ -1,6 +1,6 @@
 # Verificarea adversarială a semnalărilor „blocante” (TIC, M1, V-VIII)
 
-Verificate: 16 (15 din Q_blocante_de_verificat.json + cls6-l6-01 din F_evaluari/cls6/lectia6-proiect/log.json). Scripturi și ieșiri: `C:\Users\licuv\AppData\Local\Temp\claude\C--00-AI-0\d1ddcc30-0251-43d9-a426-7c5c0b2e2d92\scratchpad\q` (render.py, render2.py, timp.py, timp_iesire.txt, shortcuts*.py, excel_check.py).
+Verificate: 16 (15 din Q_blocante_de_verificat.json + cls6-l6-01 din F_evaluari/cls6/lectia6-proiect/log.json). Scripturi și ieșiri: `C:\Users\<utilizator>\AppData\Local\Temp\claude\C--00-AI-0\d1ddcc30-0251-43d9-a426-7c5c0b2e2d92\scratchpad\q` (render.py, render2.py, timp.py, timp_iesire.txt, shortcuts*.py, excel_check.py).
 
 Estimarea de timp e a mea și e favorabilă lecției: citire 150 cuv/min pe textul randat (fără rezolvările pliate), pornire 5 min, 0,5 min pe întrebare de atom, 3 min „Încearcă tu”, iar pentru Ex.1 durata minimă estimată de mine (scrisă în timp.py).
 

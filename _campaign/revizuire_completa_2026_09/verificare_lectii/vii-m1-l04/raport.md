@@ -3,7 +3,7 @@
 - lecția: `C:\00\Projects\LearningHub\lectii\vii\m1-l04\index.html`
 - clasa a VII-a, lecția 4 din plan: „Obiecte într-un document: text, imagini, tabele” (M1, VII-U1)
 - nivelul din pagină: „Obiecte într-un document: text, imagini, tabele” · lectii declarate: [4]
-- rulat: 2026-09-27 18:13 · durata: 6.8 min · cost `claude -p`: 1.173 USD (generator 0.149 + cititori 1.025)
+- rulat: 2026-09-27 19:23 · durata: 0.2 min · cost `claude -p`: 1.173 USD (generator 0.149 + cititori 1.025)
 
 ## Rezumat
 
@@ -13,7 +13,7 @@
 | S1 | identitate exercițiu–verificare | TRECUT | 0 |
 | S2 | practică: aplicare/execuție vs. recunoaștere | TRECUT | 0 |
 | T0 | oracol_novice (determinist) | TRECUT | 0 |
-| T1 | plimbarea (cititori cu carte închisă, haiku) | TRECUT | 0 |
+| T1 | plimbarea (cititori cu carte închisă; rulare refolosită) | TRECUT | 0 |
 
 ## S0 — poarta motorului (test_joc.py)
 
@@ -71,14 +71,11 @@ Programa legată de lecție: Obiecte într-un document: text, imagini, tabele
 
 Situl .md și configul: `t0/` · ieșirea completă: `t0_oracol.txt`.
 
-## T1 — plimbarea (cititori cu carte închisă, haiku)
+## T1 — plimbarea (cititori cu carte închisă; rulare refolosită)
 
 **Blochează publicarea:** nimic
 
-- avertisment: obiective de PERFORMANȚĂ (nu se notează din teach-back; le verifică exercițiile/atelierul (S) și aplicația reală (R)): Elevul inserează o imagine dintr-un fișier local la locul potrivit dintr-un document, folosind aplicația de tehnoredact… | Elevul inserează un tabel cu numărul corect de rânduri și coloane și completează celulele, elaborând un document util (…
-- avertisment: obiective din programă pe care lecția de azi NU le predă (de verificat în plan, nu blochează): Formatarea obiectelor dintr-un document (dimensiune font, dimensiune imagine, format tabel, margini, aliniere) ține de …
 - numărul kitului e 2; numărul liniei e 0 (diferența e explicată în avertismente și în „blocaje în antet”); blocaje citate doar din antet/„La ce folosește”: «obiect» — «Afli din ce obiecte e făcut un document Word»; «obiecte» — «Afli din ce **obiecte** e făcut un document Word — text, imagini, tabele — și le pui chiar tu:»
-- generator: încercarea 1: cod 0, 95.6 s, JSON valid
 
 Rulări: seed 7 → 2 (1.0246 USD)
 Canar: «Tasta ⌫ (Backspace) șterge litera din stânga cursorului.» → «Tasta ⌫ (Backspace) șterge litera din dreapta cursorului.» · momeală: «tabel pivot dinamic»

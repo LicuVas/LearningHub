@@ -92,7 +92,7 @@ Agentul „prost” (cititor-incepator) există, dar: nu rulează nimic, e orb d
 
 Nicio constatare nu cere omul la fiecare lecție. Omul (sau o sursă primară) intervine o singură dată, pentru constante: cota TVA și dicționarul de meniuri RO.
 
-N-am modificat niciun fișier din proiecte. În scratchpad am scris: sit1/ (copia lecției + oracol.config.json de test), audit_o_lectie.py și proba_excel_lectie.py (C:/Users/licuv/AppData/Local/Temp/claude/C--00-AI-0/3132809d-3529-434e-95d4-15065fa03f59/scratchpad/). Neverificat de mine: cota TVA în vigoare și numele exacte ale meniurilor din Excel în română.
+N-am modificat niciun fișier din proiecte. În scratchpad am scris: sit1/ (copia lecției + oracol.config.json de test), audit_o_lectie.py și proba_excel_lectie.py (C:\Users\<utilizator>/AppData/Local/Temp/claude/C--00-AI-0/3132809d-3529-434e-95d4-15065fa03f59/scratchpad/). Neverificat de mine: cota TVA în vigoare și numele exacte ale meniurilor din Excel în română.
 
 ## R3. Ordinea lucrurilor: planul anului (unitati.json) față de materialul existent
 

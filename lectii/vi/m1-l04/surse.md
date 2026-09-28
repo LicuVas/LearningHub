@@ -50,7 +50,7 @@ Scris de autor pe 27.09.2026, completat seara după reparațiile cerute de judec
 Toate se confirmă cu captura C8 din `capturi_lipsa.json`, pe un calculator din laborator cu Office în română.
 
 ## Ce am verificat în PowerPoint-ul adevărat (COM, fără fereastră, 27.09.2026)
-Script: `C:\Users\licuv\AppData\Local\Temp\claude\C--00-AI-0\cbe44f7e-0686-471f-94ca-4bdf5170bb7c\scratchpad\com_ppt.py`. Scriptul pornește doar dacă PowerPoint nu e deja deschis. La final închide prezentarea fără salvare și închide aplicația. Verificat după rulare: niciun POWERPNT.EXE rămas deschis.
+Script: `C:\Users\<utilizator>\AppData\Local\Temp\claude\C--00-AI-0\cbe44f7e-0686-471f-94ca-4bdf5170bb7c\scratchpad\com_ppt.py`. Scriptul pornește doar dacă PowerPoint nu e deja deschis. La final închide prezentarea fără salvare și închide aplicația. Verificat după rulare: niciun POWERPNT.EXE rămas deschis.
 - **PowerPoint 16.0, diapozitiv 960 × 540 pt (16:9).**
 - **Cele 11 aspecte**, cu nume și substituenți:
   - Title Slide: 2;
