@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 9, clasa a V-a: Organizarea datelor pe suport extern: fișiere și directoare</title>
+<meta name="description" content="Lecția 9, clasa a V-a: ce e un fișier (nume, extensie, tip), ce e un folder (director) și arborele de foldere, unitățile C: și stickul, calea unui fișier și cum citești în Explorer unde ești.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;800&family=Lexend:wght@400;500;700&family=Fira+Code:wght@500;600&display=swap">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EDF1EF; --paper:#FFFFFF; --paper2:#F1F5F3; --line:#D3DDD8;
+  --ink:#16221F; --ink2:#55645F; --accent:#0E6B62; --accentInk:#FFFFFF; --sel:#D2ECE7;
+  --mark:#FFE07A; --markInk:#16221F; --ok:#257A45; --okbg:#E1F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Hanken Grotesk","Segoe UI",system-ui,sans-serif; --fb:"Lexend","Segoe UI",system-ui,sans-serif; --fm:"Fira Code",Consolas,monospace;
+  --dosar:#F2C14E; --dosar2:#E0A92E;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F1614; --paper:#17201D; --paper2:#1E2926; --line:#2E3C38;
+  --ink:#E4EEEA; --ink2:#A2B3AD; --accent:#5CC8B8; --accentInk:#0F1614; --sel:#1C3F39;
+  --mark:#EDCB63; --markInk:#16221F; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+  --dosar:#E8B846; --dosar2:#C99422;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F1614; --paper:#17201D; --paper2:#1E2926; --line:#2E3C38;
+  --ink:#E4EEEA; --ink2:#A2B3AD; --accent:#5CC8B8; --accentInk:#0F1614; --sel:#1C3F39;
+  --mark:#EDCB63; --markInk:#16221F; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+  --dosar:#E8B846; --dosar2:#C99422;
+}
+/* tema: bara de adresă din Explorer — un dosar galben și drumul până la fișier, cu › (bara cu butoane) și \ (calea) */
+.banda{display:flex;align-items:center;gap:10px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent)}
+.banda .dos{flex:none;position:relative;display:inline-block;width:20px;height:14px;background:var(--dosar);border-radius:1px 3px 3px 3px;margin-top:3px}
+.banda .dos::before{content:"";position:absolute;left:0;top:-4px;width:9px;height:5px;background:var(--dosar2);border-radius:2px 2px 0 0}
+.banda .bc{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:.76rem;color:var(--ink2);background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:2px 9px}
+.banda .bc i{font-style:normal;color:var(--accent);padding:0 4px}
+.banda .ct{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-family:var(--fm);font-size:.74rem;color:var(--ink);background:var(--paper);border:1px solid var(--accent);border-radius:4px;padding:2px 9px}
+h1,h2{font-weight:800;letter-spacing:0}
+pre.arbore{font-family:var(--fm);font-size:.9rem;line-height:1.5;background:var(--paper2);border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:.5em 0;white-space:pre;overflow-x:auto}
+pre.arbore b{color:var(--accent)}
+code{font-family:var(--fm)}
+.ext-lista li{margin:.15em 0}
+details.verif{margin-top:.4em;font-size:.93rem}
+details.verif summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:32px}
+/* schema „Ce am învățat” (HTML, nu imagine), ca la lecțiile 4-6 */
+.schema{display:grid;gap:6px;justify-items:center;margin:12px auto 14px;max-width:520px}
+.sc-box{border:2px solid var(--accent);border-radius:10px;background:var(--paper);padding:6px 12px;text-align:center;width:100%;line-height:1.3}
+.sc-box b{display:block;font-family:var(--fd);font-size:1.02rem}
+.sc-box span{display:block;font-size:.88rem;color:var(--ink2)}
+.sc-box code{font-size:.84rem}
+.sc-sag{font-size:1.35rem;line-height:1;color:var(--accent);font-weight:700}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/explorer-citire.js"></script>
+<script>
+/* Lecția 9, clasa a V-a (M2): „Organizarea datelor pe suport extern: fișiere și directoare”.
+   Standardul: LearningHub\_campaign\revizuire_completa_2026_09\05_STANDARD_LECTIE.md. Sursele și probele: surse.md, _proba\.
+   Simulatorul: lectii/_sim/explorer-citire.js (extensie nouă, DOAR citire: nu creează, nu mută, nu șterge — lecția 10).
+   Faptele despre Windows sunt probate pe Windows 11 25H2 în română (registry, Shell COM, fereastra „Deschidere” pe desktopul ascuns). */
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const wc=(file,nume)=>`<a href="https://commons.wikimedia.org/wiki/File:${file}" target="_blank" rel="noopener">${nume}</a>`;
+const CAPT='<small>Captură din Windows 11, în română; chenarele și etichetele roșii sunt puse de noi.</small>';
+const IMG={
+  biblio:fig('bibliorafturi.webp',800,534,'Bibliorafturi portocalii și verzi, unul lângă altul pe un raft; pe cotorul fiecăruia e o etichetă albă, scrisă de mână; pe una scrie 2020','Bibliorafturi pe un raft: pe cotorul fiecăruia scrie ce e înăuntru. <small>Foto: Shixart1985, '+wc('Collection_of_colorful_binders_on_a_shelf_for_storing_documents_in_an_office_setting.jpg','Wikimedia Commons')+', <a href="https://creativecommons.org/licenses/by/2.0/deed.ro" target="_blank" rel="noopener">CC BY 2.0</a>; micșorată.</small>'),
+  fisiere:fig('explorer-fisiere.webp',934,307,'Fereastra Explorer: sus, bara de adresă Acest PC, Disc local (C:), Scoala, Clasa_5, TIC; dedesubt, patru fișiere: cantec.mp3, notite.txt, pisica.jpg și tema.docx, cu coloanele Nume, Data modificării și Tip','Patru fișiere, văzute în Explorer. Fiecare are nume, punct și extensie. Coloana <b>Tip</b> spune tipul în cuvinte. '+CAPT),
+  arbore:fig('explorer-arbore.webp',474,252,'Panoul din stânga al ferestrei Explorer: folderul Scoala; sub el, mutate spre dreapta, Clasa_5 și Matei_Clasa5; sub Clasa_5, mutate și mai la dreapta, Matematica, Romana și TIC','<b>Arborele</b> din stânga ferestrei Explorer: Scoala; în el, Clasa_5 și Matei_Clasa5; în Clasa_5, trei foldere. '+CAPT),
+  unitati:fig('acest-pc-capacitati.webp',330,334,'Trei unități în Acest PC: Disc local (C:), Volum nou (W:) și My Passport (P:), fiecare cu o bară albastră și textul „liber din”','Trei unități în <b>Acest PC</b>: discul C:, încă o parte a discului, W:, și un hard disk extern, P:. Cifrele roșii, cu capacitatea (lecția 6), le-am scris noi peste captură. <small>Captură din Windows 11, în română.</small>'),
+  caleText:fig('cale-text.webp',440,78,'Bara de adresă din Explorer după clic: calea C:\\Scoala\\Clasa_5\\TIC, scrisă ca text și selectată','Aceeași bară de adresă, după clic pe partea ei goală: <b>calea</b>, scrisă cu <code>\\</code>. <small>Captură din Windows 11, în română.</small>'),
+  bara:fig('bara-activitati.webp',780,98,'Bara de activități din Windows 11: în stânga, butonul Start cu sigla Windows, patru pătrățele albastre; apoi caseta Căutare și pictogramele programelor, printre ele un dosar galben','<b>Dosarul galben</b> e Explorer. Cele patru pătrățele din stânga sunt <b>sigla Windows</b>. <small>Captură din Windows 11, în română; etichetele roșii sunt puse de noi.</small>'),
+  interzis:fig('nume-interzis.webp',695,160,'Explorer, în timp ce cineva scrie un nume: un balon spune că numele unui fișier nu poate să conțină caracterele bară inversă, bară, două puncte, steluță, semnul întrebării, ghilimele, mai mic, mai mare și bara verticală','Ce spune Windows dacă încerci să pui <code>?</code> într-un nume. '+CAPT)
+};
+
+/* stickul lui Ana și discul C: pentru Explorer-ul din pagină (DOAR citire). Tipurile, datele și mărimile au forma din Windows (surse.md). */
+const UNITATI={'C:':{nume:'Disc local',liber:'198 GB liber din 475 GB',ocupat:58},'E:':{nume:'STICK',liber:'11,8 GB liber din 14,6 GB',ocupat:19,stick:true}};
+const DOC='C:/Users/Ana/Documents/';
+const FS=[
+  ['C:/Users/Ana/Documents/Geografie/harta.png','05.11.2026 18:20','312 KB'],
+  ['C:/Users/Ana/Documents/Geografie/harta.txt','05.11.2026 18:25','1 KB'],
+  ['C:/Users/Ana/Documents/Romana/compunere.docx','03.11.2026 19:02','16 KB'],
+  ['C:/Users/Ana/Documents/scrisoare.docx','30.10.2026 17:45','14 KB'],
+  'C:/Users/Ana/Desktop/','C:/Users/Ana/Downloads/','C:/Users/Public/','C:/Program Files/','C:/Windows/',
+  ['E:/Scoala/TIC/afis.png','12.11.2026 10:15','245 KB'],
+  ['E:/Scoala/TIC/afis.docx','12.11.2026 10:20','18 KB'],
+  ['E:/Scoala/TIC/orar.txt','10.11.2026 08:05','1 KB'],
+  ['E:/Scoala/Muzica/colind.mp3','09.11.2026 17:40','3.850 KB'],
+  ['E:/Scoala/Muzica/colind.txt','09.11.2026 17:42','2 KB'],
+  ['E:/Excursie/munte.jpg','18.10.2026 12:31','2.140 KB'],
+  ['E:/Excursie/drumul.mp4','18.10.2026 12:50','48.320 KB']
+];
+const AFISAT={'C:/Users/Ana/Desktop/':'Desktop','C:/Users/Ana/Downloads/':'Descărcări'};
+const BLOCAT=['C:/Users/Ana/Desktop/','C:/Users/Ana/Downloads/','C:/Users/Public/','C:/Program Files/','C:/Windows/'];
+const EXPL=o=>Object.assign({t:'explorer',unitati:UNITATI,doc:DOC,fs:FS,afisat:AFISAT,blocat:BLOCAT,extensii:false},o);
+
+/* arborii desenați ca text (exerciții) */
+const ARB_VACANTA=`<pre class="arbore">STICK (E:)
+  Vacanta
+    Mare
+      plaja.jpg
+    Munte
+      cabana.jpg
+  Proiecte
+    vulcan.docx</pre>`;
+const ARB_SCOALA=`<pre class="arbore">STICK (E:)
+  Scoala
+    TIC
+      afis.png
+    Muzica
+      colind.mp3</pre>`;
+const ARB_CLASA=`<pre class="arbore">Disc local (C:)
+  Clasa
+    Istorie
+      daci.docx
+    Stiinte
+      Plante
+        frunza.jpg</pre>`;
+
+const SCHEMA=`<div class="schema" role="img" aria-label="Schema: unitatea, apoi folderele, apoi fișierul cu nume și extensie; calea le scrie pe toate, cu bară inversă între ele">
+  <div class="sc-box"><b>Unitatea</b><span>discul <code>C:</code>, stickul (de exemplu <code>E:</code>): le vezi la Acest PC</span></div>
+  <div class="sc-sag" aria-hidden="true">↓</div>
+  <div class="sc-box"><b>Folderele (directoarele)</b><span>folder în folder: arborele din stânga ferestrei Explorer</span></div>
+  <div class="sc-sag" aria-hidden="true">↓</div>
+  <div class="sc-box"><b>Fișierul: nume.extensie</b><span>extensia arată tipul; dacă e ascunsă, citești coloana Tip</span></div>
+  <div class="sc-sag" aria-hidden="true">↓</div>
+  <div class="sc-box"><b>Calea</b><span><code>E:\\Scoala\\TIC\\afis.png</code>: o citești după clic pe bara de adresă</span></div>
+</div>`;
+
+/* „Acum la calculatorul din laborator” (modul lecție: după atelier, înainte de verificare; diploma îl repetă).
+   DOAR CITIRE, fără profesor: nu se creează, nu se mută, nu se șterge și nu se deschide niciun fișier pe calculatorul comun. */
+const LABORATOR=[
+  'Azi <b>doar citești</b>. Calculatorul e al tuturor: nu muta, nu șterge, nu redenumi și nu deschide niciun fișier. Faci clic și dublu-clic doar pe <b>foldere</b> și pe <b>unități</b> (ca Disc local (C:)), niciodată pe fișiere. Scrie în caiet titlul <b>Unde stau fișierele</b>.',
+  'Deschide <b>Explorer</b> (în engleză, <i>File Explorer</i>): clic pe dosarul galben din bara de activități. Nu-l vezi? Ține apăsată tasta cu sigla Windows (patru pătrățele), jos, în stânga tastaturii, și apasă o dată <kbd>E</kbd>.',
+  'În panoul din stânga, fă clic pe <b>Acest PC</b> (<i>This PC</i>). Scrie în caiet unitățile pe care le vezi, cu litera lor, de exemplu „Disc local (C:)”. Pe un Windows în engleză, numele e în engleză, dar litera e aceeași.',
+  'În panoul din stânga, fă clic pe <b>Documente</b> (<i>Documents</i>). Scrie în caiet ce arată bara de adresă. Dacă în Documente e un folder, deschide-l cu dublu-clic, fă clic pe partea goală a barei de adresă, scrie <b>calea</b> în caiet, apoi apasă <kbd>Esc</kbd>.',
+  'Acum mergi într-un folder al lui Windows, care are mereu fișiere. În panoul din stânga, fă clic pe <b>Acest PC</b>. În dreapta, dă dublu-clic pe <b>Disc local (C:)</b>, apoi pe folderul <b>Windows</b>, apoi pe folderul <b>Media</b>. Fă clic pe partea goală a barei de adresă, scrie calea în caiet și apasă <kbd>Esc</kbd>.',
+  'Alege 3 fișiere și scrie pentru fiecare numele și tipul. Dacă în Documente erau fișiere, întoarce-te acolo cu un clic pe <b>Documente</b>, în panoul din stânga, și citește coloana <b>Tip</b> (<i>Type</i>). Dacă Documente e gol, rămâi în Media și alege trei sunete: sunt sub foldere; ca să cobori în listă, învârte spre tine rotița dintre cele două butoane ale mouse-ului. De exemplu: <b>Alarm01</b>, <b>Alarm02</b>, <b>Ring01</b>. În Media nu e coloana Tip: tipul îl arată pictograma. Scrie și dacă se vede extensia după nume: da sau nu. Nu da dublu-clic pe fișiere.',
+  'Închide Explorer cu butonul X din colțul din dreapta sus (lecția 8). Compară caietul cu al colegului de bancă. <details class="verif"><summary>Verifică-te, după ce ai scris</summary> Pe calculatoarele cu Windows e, de obicei, unitatea C:. În Documente, bara de adresă arată doar „Documente”, și după clic. Calea unui folder din Documente începe cu <code>C:\\Users\\</code>, apoi numele cu care s-a intrat pe calculator (în laborator e, de obicei, același pentru toată clasa, nu numele tău), apoi <code>Documents</code>, în engleză (pe unele calculatoare mai apare și OneDrive). Calea lui Media e <code>C:\\Windows\\Media</code>. Alarm01, Alarm02 și Ring01 sunt sunete, cu extensia <code>.wav</code>: dacă n-o vezi, Windows o ascunde, cum vine el.</details>'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_v_m2_l09',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/v/, „Lecția 9”, pasul „Acum la calculatorul din laborator” înainte de verificare
+  titlu:'Organizarea datelor pe suport extern: fișiere și directoare',
+  marca:'Lecția <b>9</b> · clasa a V-a',
+  h1:'Organizarea datelor pe suport extern: fișiere și directoare',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a V-a', unitate:'V-U2', unitateTitlu:'Sistemul de operare. Ordinea în fișierele mele',
+  competente:['CS.1.2'], lectii:'9',
+  ancoraText:'Din programă (CS.1.2, unitatea V-U2, lecția 9): Organizarea datelor pe suport extern',
+  intro:`<p>Afli cum stau datele pe disc și pe stick: în fișiere, iar fișierele în foldere. Înveți să citești numele și extensia unui fișier. Afli ce tip are și unde se află, adică drumul până la el. La atelier cauți o poză într-un Explorer din pagină și îi scrii drumul. Apoi, la calculatorul din laborator, doar citești unde stau fișierele lui. La sfârșit verifici ce știi, cu 5 întrebări.</p>
+<p><b>La final știi:</b> ce e un fișier și ce arată extensia lui, ce e un folder (director) și cum formează folderele un arbore, cum se scrie calea unui fișier și cum citești în Explorer unde ești.</p>
+<p><b>Ai nevoie de:</b> lecția 6 — dispozitivele de stocare (discul, stickul USB, cardul) păstrează datele și după oprire; lecția 4 — discul păstrează ce salvezi, memoria RAM se golește la oprire; un program e un șir de instrucțiuni pe care calculatorul le urmează; lecția 8 — desktopul, ferestrele (cu butonul X), butonul Start și bara de activități.</p>`,
+  cum:`<b>Cum lucrezi</b><ol><li>Citești 7 pași scurți. Primul îți arată la ce folosește lecția; după fiecare dintre ceilalți faci un exercițiu mic, fără puncte.</li><li>La atelier găsești o poză într-un Explorer din pagină și îi scrii calea.</li><li>Acum la calculatorul din laborator: deschizi Explorer și doar citești unde stau fișierele. Nu muți și nu ștergi nimic.</li><li>Răspunzi la 5 întrebări de verificare: pentru ele primești stele.</li></ol>`,
+  banda:'<span class="dos" aria-hidden="true"></span><span class="bc">STICK (E:)<i>›</i>Scoala<i>›</i>TIC</span><span class="ct">E:\\Scoala\\TIC\\afis.png</span>',
+  nivele:[
+{t:'Organizarea datelor pe suport extern: fișiere și directoare',final:true,lectii:[9],
+ continuturi:['Organizarea datelor pe suport extern'],
+ obiectiv:'citești numele și extensia unui fișier, afli tipul lui, arăți în ce folder stă și îi scrii calea, citită în Explorer.',
+ pasi:[
+  /* ---- pasul 0: la ce folosește (fără acțiuni) ---- */
+  {t:'La ce folosește: găsești repede ce ai salvat',
+   text:`<p>La secretariatul școlii, hârtiile nu stau grămadă. Stau în bibliorafturi, dosare groase, iar pe cotorul fiecăruia scrie ce e în el. Cine caută actele din 2020 citește etichetele și ia biblioraftul potrivit.</p>
+<p>În calculator e la fel. Tot ce salvezi, o temă, o poză sau un cântec, stă pe disc sau pe stick, cu un nume. Lucrurile care țin împreună se strâng la un loc, ca foile într-un biblioraft.</p>
+<p>Azi înveți să citești aceste nume, să afli ce fel de lucru e fiecare și să spui unde se află.</p>
+${IMG.biblio}`},
+  /* ---- pasul 1: fișierul, nume și extensie ---- */
+  {t:'Fișierul: nume și extensie',
+   text:`<p>Tot ce păstrezi pe un dispozitiv de stocare (lecția 6) stă într-un <mark>fișier</mark>: o temă, o poză, un cântec. Programa numește aceste dispozitive <strong>suport extern</strong>: discul, stickul, cardul, unde datele rămân și după oprire.</p>
+<p>Un fișier are un <strong>nume</strong> și o <mark>extensie</mark>, despărțite de un punct: <code>vulpea.png</code>. Extensia e partea de după <strong>ultimul</strong> punct: aici, <code>png</code>. Ea arată <strong>tipul</strong> fișierului: ce fel de date are și cu ce program se deschide.</p>
+<p>Fișierele le vezi în <mark>Explorer</mark>, un program al lui Windows (îl deschizi la pasul 5). Imaginea mică din fața numelui se numește <mark>pictogramă</mark>: și ea arată tipul.</p>
+${IMG.fisiere}`,
+   exemplu:`<p>Extensii pe care le întâlnești des:</p>
+<ul class="ext-lista"><li><code>.png</code>, <code>.jpg</code>: imagine (poză, desen);</li><li><code>.mp3</code>: sunet (cântec);</li><li><code>.mp4</code>: film;</li><li><code>.txt</code>: text simplu (lecția 6);</li><li><code>.docx</code>: document scris în programul Word.</li></ul>
+<p>În <code>excursie.2026.jpg</code> sunt două puncte. Extensia e după ultimul: <code>jpg</code>, deci e o poză.</p>`,
+   altfel:`<p>Gândește-te la eticheta de pe un borcan din cămară: „Căpșuni. Dulceață”. Primul cuvânt îți spune care borcan e. Al doilea îți spune ce fel de lucru e înăuntru și cum îl folosești: cu lingurița. La fișier, extensia e ca acest al doilea cuvânt.</p>`,
+   incearca:{t:'choice',q:'Care e extensia fișierului <code>bunica.si.bunicul.jpeg</code>?',o:['jpeg','si','bunicul.jpeg','bunica'],ok:0,
+    ajutor:'Extensia e partea de după ULTIMUL punct.',
+    why:'Numele are trei puncte. Extensia e partea de după ultimul punct: <code>jpeg</code>. E tot o poză: <code>jpeg</code> și <code>jpg</code> sunt două forme ale aceluiași tip.'},
+   inca:[
+    {t:'classify',q:'Ce fel de fișier e? Sortează după extensie.',cats:['Imagine','Sunet','Film','Text simplu'],items:[['plaja.png',0],['colind.mp3',1],['serbare.mp4',2],['lista.txt',3],['desen.jpg',0],['sonerie.mp3',1]],
+     ajutor:'Uită-te doar după ultimul punct și caută extensia în lista din „Uite cum”.',
+     why:'.png și .jpg sunt imagini, .mp3 e sunet, .mp4 e film, .txt e text simplu.'},
+    {t:'tf',q:'În numele <code>tema.docx</code>, partea <code>tema</code> e extensia.',ok:false,ajutor:'Care parte vine după punct?',
+     why:'Fals. Extensia e după punct: <code>docx</code>, un document Word. <code>tema</code> e numele.'}
+   ]},
+  /* ---- pasul 2: folderul și arborele ---- */
+  {t:'Folderul (directorul) și arborele',
+   text:`<p>Fișierele se strâng în <mark>foldere</mark>. Programa le spune <mark>directoare</mark>: folder și director înseamnă același lucru. Un folder e un loc cu nume, în care stau fișiere, ca foile într-un biblioraft.</p>
+<p>Un folder nu are extensie. Pictograma lui e un dosar galben, iar în coloana Tip scrie <em>Folder de fișiere</em>.</p>
+<p>Un folder poate avea în el și alte foldere. Folder în folder: așa se formează un <mark>arbore</mark>, ca ramurile care pornesc din trunchi. Explorer îl desenează în stânga ferestrei: fiecare folder aflat în altul e mutat puțin spre dreapta.</p>
+${IMG.arbore}`,
+   exemplu:`<p>Arborele din captură, scris pe rânduri. Fiecare nivel e mutat puțin spre dreapta. Am adăugat și fișierul tema.docx: panoul din stânga arată doar folderele.</p>
+<pre class="arbore">Disc local (C:)
+  Scoala
+    Clasa_5
+      Matematica
+      Romana
+      TIC
+        tema.docx
+    Matei_Clasa5</pre>
+<p>Scoala conține două foldere: Clasa_5 și Matei_Clasa5. Clasa_5 conține trei foldere. Fișierul <code>tema.docx</code> stă în TIC.</p>`,
+   altfel:`<p>Gândește-te la ghiozdanul tău. În ghiozdan ai penarul și un dosar. În penar stau creioanele, în dosar stau foile. Ghiozdanul e un folder mare, penarul și dosarul sunt foldere în el, iar creioanele și foile sunt fișierele, fiecare de alt fel.</p>`,
+   incearca:{t:'choice',q:`Arborele de pe stickul Mariei:${ARB_VACANTA}În ce folder stă <strong>direct</strong> fișierul <code>cabana.jpg</code>?`,o:['Munte','Vacanta','Mare','Proiecte'],ok:0,
+    ajutor:'Găsește fișierul în arbore. Folderul lui e cel de deasupra, mutat cu un pas mai spre stânga.',
+    why:'<code>cabana.jpg</code> e scris sub Munte, mutat puțin spre dreapta. Munte stă în Vacanta, iar Vacanta stă pe stick.'},
+   inca:[
+    {t:'tf',q:'Un folder poate conține, în același timp, fișiere și alte foldere.',ok:true,ajutor:'Uită-te la Clasa_5 din „Uite cum”: ce are în ea?',
+     why:'Adevărat. Folderele se pun unele în altele, iar în oricare dintre ele pot sta și fișiere. Așa se formează arborele.'},
+    {t:'choice',q:`Arborele de pe stickul Mariei:${ARB_VACANTA}Câte foldere sunt <strong>direct</strong> în folderul Vacanta?`,o:['2','1','3','4'],ok:0,amesteca:false,
+     ajutor:'Uită-te doar la rândurile mutate cu un pas sub Vacanta.',
+     why:'Direct în Vacanta sunt Mare și Munte. Fișierele din ele stau mai adânc, iar Proiecte stă alături de Vacanta, nu în ea.'}
+   ]},
+  /* ---- pasul 3: unitatea și calea ---- */
+  {t:'Unitatea și calea',
+   text:`<p>Fiecare dispozitiv de stocare apare în calculator ca o <mark>unitate</mark>, cu o literă și două puncte. <strong>C:</strong> e discul din calculator. Un stick primește altă literă liberă, de exemplu <strong>E:</strong>; pe alt calculator poate primi alta. Unitățile le vezi în Explorer (îl deschizi la pasul următor), la <strong>Acest PC</strong> (<em>This PC</em>).</p>
+<p>Drumul până la un fișier se numește <mark>cale</mark>. Se scrie pe un rând: unitatea, apoi folderele, de la cel din afară la cel dinăuntru, apoi fișierul, cu bara <code>\\</code> între ele:</p>
+<p><code>C:\\Scoala\\Clasa_5\\TIC\\tema.docx</code></p>
+<p>Și un folder are cale: ea se oprește la numele lui. Calea folderului TIC e <code>C:\\Scoala\\Clasa_5\\TIC</code>.</p>
+${IMG.unitati}`,
+   exemplu:`<p><b>Cum citești o cale:</b></p><ol><li>Începutul (<code>C:</code>) e unitatea.</li><li>Fiecare <code>\\</code> e o ușă spre folderul următor.</li><li>Ultima parte e locul la care ajungi: un fișier, dacă are extensie, sau un folder.</li><li>Partea scrisă chiar înaintea ei e folderul în care stă.</li></ol>
+<p>Fiindcă <code>\\</code> și <code>:</code> au treabă în cale, nu pot fi în numele unui fișier. Windows nu primește în nume nici semnele <code>/ * ? " &lt; &gt; |</code>: dacă încerci, te oprește.</p>${IMG.interzis}`,
+   altfel:`<p>Calea e ca drumul până la banca ta, spus de afară spre înăuntru: intri pe poarta școlii, urci la etajul 1, intri în clasa a V-a, mergi la banca a treia. Poarta școlii e unitatea, etajul și clasa sunt folderele, iar banca e fișierul. Fiecare <code>\\</code> e o ușă prin care treci.</p>`,
+   incearca:{t:'cale',q:`Arborele de pe stickul lui Ana:${ARB_SCOALA}Scrie calea fișierului <code>colind.mp3</code>.`,ok:'E:\\Scoala\\Muzica\\colind.mp3',eticheta:'Calea',tipic:'E:\\Muzica\\colind.mp3',
+    ajutor:'Pornești de la unitate (E:), treci prin fiecare folder până la fișier și pui \\ între ele.',
+    why:'Unitatea E:, folderul Scoala, folderul Muzica, apoi fișierul: <code>E:\\Scoala\\Muzica\\colind.mp3</code>.'},
+   inca:[
+    {t:'order',q:`Arborele de pe stickul Mariei:${ARB_VACANTA}Pune în ordine părțile căii fișierului <code>plaja.jpg</code>.`,items:['E:','Vacanta','Mare','plaja.jpg'],
+     ajutor:'Unitatea întâi, fișierul la sfârșit, folderele de la cel din afară la cel dinăuntru.',why:'Calea e <code>E:\\Vacanta\\Mare\\plaja.jpg</code>.'},
+    {t:'choice',q:'Ai pus stickul tău în calculator, iar Windows i-a dat litera <code>E:</code>. În calea <code>E:\\Proiecte\\vulcan.docx</code>, ce înseamnă <code>E:</code>?',o:['Unitatea: stickul tău','Primul folder','Extensia fișierului','Numele fișierului'],ok:0,
+     ajutor:'Recitește primul punct din „Cum citești o cale”: ce e începutul unei căi?',why:'Calea începe cu unitatea: litera ei și două puncte. E: e litera pe care a primit-o stickul tău pe calculatorul acesta.'},
+    {t:'tf',q:'Poți pune numele <code>Ce facem?.txt</code> unui fișier.',ok:false,ajutor:'Uită-te la semnele pe care Windows nu le primește în nume.',
+     why:'Fals. Semnul <code>?</code> e printre cele 9 pe care Windows nu le primește în nume: <code>\\ / : * ? " &lt; &gt; |</code>.'}
+   ]},
+  /* ---- pasul 4: Explorer: te miști prin foldere ---- */
+  {t:'Explorer: te miști prin foldere',
+   text:`<p><strong>Explorer</strong> (în engleză, <em>File Explorer</em>) îl deschizi cu un clic pe dosarul galben din bara de activități (lecția 8).</p>${IMG.bara}
+<p>În dreapta vezi ce e în folderul deschis. Un clic pe un folder doar îl <strong>selectează</strong> (îl alege): rândul se colorează. Îl deschizi cu <mark>dublu-clic</mark>: două clicuri repede, pe același loc.</p>
+<p>În stânga e <mark>panoul de navigare</mark>. Acolo sunt <strong>Acest PC</strong>, cu unitățile, și <strong>Documente</strong>. Aici e altfel: un singur clic pe un nume te duce direct la el.</p>`,
+   exemplu:`<p>Vrei să ajungi în folderul TIC de pe discul C:, cel din pasul „Unitatea și calea”:</p><ol><li>În stânga, un clic pe <b>Acest PC</b>.</li><li>În dreapta, dublu-clic pe <b>Disc local (C:)</b>.</li><li>Dublu-clic pe <b>Scoala</b>, apoi pe <b>Clasa_5</b>, apoi pe <b>TIC</b>.</li></ol>
+<p>Alt drum spre Explorer: ții apăsată tasta cu sigla Windows (patru pătrățele, jos, în stânga) și apeși <kbd>E</kbd>.</p>`,
+   altfel:`<p>E ca atunci când cauți o foaie în dulapul clasei: deschizi dulapul, apoi sertarul, apoi dosarul. Fiecare dublu-clic deschide încă o ușă, spre înăuntru. Panoul din stânga e o scurtătură: te duce direct la dulap.</p>`,
+   incearca:EXPL({q:'Pornești din Acest PC. Deschide stickul și mergi în folderul <b>Excursie</b>.',start:'PC',
+    checks:[{in:'E:/Excursie/',ce:'Ești în folderul Excursie de pe stick'}],
+    solutie:[['cd','E:/Excursie/']],gresit:[['cd','E:/Scoala/']],
+    ajutor:'Dublu-clic pe STICK (E:), apoi dublu-clic pe Excursie.',
+    why:'Ai deschis unitatea, apoi folderul din ea: acum ești în Excursie, pe stick.'}),
+   inca:[
+    {t:'tf',q:'În partea din dreapta a ferestrei, un singur clic pe un folder îl deschide.',ok:false,ajutor:'Recitește ce face un clic și ce face dublu-clicul în partea din dreapta.',
+     why:'Fals. În partea din dreapta, un clic doar selectează folderul: rândul se colorează. Dublu-clicul îl deschide. (În panoul din stânga e altfel: acolo un singur clic te duce la el.)'},
+    {t:'choice',q:'Ești în Explorer, într-un folder de pe stick. Vrei să ajungi repede la Documente. Ce faci?',o:['Un clic pe Documente, în panoul din stânga','Dublu-clic pe fiecare folder din dreapta','Închizi Explorer cu X','Apeși tasta Esc'],ok:0,
+     ajutor:'Care parte a ferestrei te duce direct la un loc?',why:'Panoul din stânga te duce direct la Documente, dintr-un singur clic.'}
+   ]},
+  /* ---- pasul 5: bara de adresă ---- */
+  {t:'Bara de adresă: unde ești și calea',
+   text:`<p>Sus, în Explorer, e <mark>bara de adresă</mark>. Ea arată unde ești, cu nume despărțite de ›: <em>Acest PC › Disc local (C:) › Scoala</em>.</p>
+<p>Un clic pe partea ei goală, în dreapta numelor, îți arată <strong>calea</strong> locului în care ești. E scrisă cu <code>\\</code>, ca la pasul „Unitatea și calea”. Toată calea se colorează.</p>
+<p>Cu <kbd>Esc</kbd>, tasta din colțul din stânga sus, revin numele cu ›.</p>
+<p>Când numele nu încap, de exemplu pe un ecran îngust, primele se ascund, iar la început apare semnul «.</p>`,
+   exemplu:`<p>Bara din captura de la pasul „Fișierul” arată <em>Acest PC › Disc local (C:) › Scoala › Clasa_5 › TIC</em>. După clic pe partea goală:</p>${IMG.caleText}
+<p><b>Atenție la Documente.</b> În Documente, bara arată doar <em>Documente</em>, și după clic. În folderul TIC din el, bara arată <em>Documente › TIC</em>, iar după clic, <code>C:\\Users\\Ana\\Documents\\TIC</code>. În cale, Windows păstrează numele englezești: <em>Utilizatori</em> e <code>Users</code>, <em>Documente</em> e <code>Documents</code>. În Users e câte un folder pentru fiecare nume cu care se intră pe calculator: al Anei e Ana.</p>`,
+   altfel:`<p>Bara de adresă e ca atunci când îi spui cuiva unde e caietul tău: „în ghiozdan, în buzunarul mare, în dosarul albastru”. Cu › arată aceste locuri unul după altul, iar după clic le scrie legate, cu \\, ca o cale.</p>`,
+   incearca:EXPL({q:'Ești în folderul Muzica de pe stick. Fă clic pe partea goală a barei de adresă, citește calea folderului și scrie-o în casetă.',start:'E:/Scoala/Muzica/',
+    raspuns:{eticheta:'Calea folderului',ok:'E:\\Scoala\\Muzica'},
+    checks:[{vazut:'E:/Scoala/Muzica/',ce:'Ai citit calea: clic pe partea goală a barei de adresă'},{cale:true,ce:'Calea folderului Muzica, scrisă în casetă, e corectă'}],
+    solutie:[['vezi'],['scrie','E:\\Scoala\\Muzica']],gresit:[['vezi'],['scrie','STICK (E:)\\Scoala\\Muzica']],
+    ajutor:'Calea unui folder se oprește la numele lui. Copiază în casetă ce vezi după clic pe partea goală a barei.',
+    why:'Calea folderului se oprește la numele lui: <code>E:\\Scoala\\Muzica</code>.'}),
+   inca:[
+    {t:'choice',q:'Ești în Explorer, în folderul Desene de pe discul C:. Bara de adresă arată <em>Acest PC › Disc local (C:) › Desene</em>. Faci clic pe partea ei goală. Ce vezi?',o:['C:\\Desene','Acest PC\\Desene','Disc local\\Desene','C: › Desene'],ok:0,
+     ajutor:'După clic apare calea: unitatea (literă și două puncte), apoi folderul, cu \\ între ele.',
+     why:'După clic, bara arată calea: <code>C:\\Desene</code>. „Acest PC” și „Disc local” sunt doar numele de pe butoane.'},
+    {t:'tf',q:'Tasta <kbd>Esc</kbd>, apăsată când bara de adresă arată calea, închide fereastra Explorer.',ok:false,ajutor:'Recitește ultima propoziție din pas.',
+     why:'Fals. <kbd>Esc</kbd> doar întoarce bara de adresă la numele cu ›. Fereastra rămâne deschisă.'}
+   ]},
+  /* ---- pasul 5: extensia ascunsă; pictograma și coloana Tip + ce am învățat ---- */
+  {t:'Extensia ascunsă: pictograma și coloana Tip',
+   text:`<p>Pe multe calculatoare nu vezi extensia. Windows vine așa: <strong>ascunde</strong> extensiile tipurilor de fișiere pe care le cunoaște, ca <code>.png</code> sau <code>.mp3</code>. În loc de <code>vulpea.png</code> vezi doar <code>vulpea</code>. În captura de la pasul „Fișierul: nume și extensie”, cineva a schimbat setarea, de aceea acolo se văd.</p>
+<p>Atunci afli tipul în două feluri:</p>
+<ul><li>te uiți la <strong>pictogramă</strong>;</li><li>citești coloana <strong>Tip</strong> (<em>Type</em>), din dreapta numelui. Acolo scrie, de exemplu, <em>Fișier PNG</em>: extensia e <code>.png</code>.</li></ul>
+<p>Pe fiecare calculator, cuvintele din coloana Tip pot fi puțin altfel, pentru că depind de programele instalate. De obicei conțin extensia (PNG, MP3) sau numele programului (Word).</p>`,
+   exemplu:`<p>În folderul Muzica, cu extensiile ascunse, sunt două fișiere cu același nume, <em>colind</em>:</p>
+<ul><li><em>colind</em>, cu Tip <em>Fișier MP3</em>: e <code>colind.mp3</code>, cântecul;</li><li><em>colind</em>, cu Tip <em>Fișier TXT</em>: e <code>colind.txt</code>, versurile scrise.</li></ul>
+<p>Numele e la fel, tipul e altul. Coloana Tip te scapă de încurcătură.</p>
+<p><b>Ce am învățat, pe scurt:</b></p>${SCHEMA}`,
+   incearca:EXPL({q:'Extensiile sunt ascunse. În folderul TIC sunt două fișiere cu numele <em>afis</em>. Selectează-l pe cel care e <b>poză</b>: un singur clic pe el.',start:'E:/Scoala/TIC/',
+    checks:[{sel:'afis.png',ce:'E selectat fișierul <em>afis</em> care e poză'}],
+    solutie:[['sel','afis.png']],gresit:[['sel','afis.docx']],
+    ajutor:'Citește coloana Tip de pe rândul fiecărui <em>afis</em>. La poză scrie PNG sau JPG.',
+    why:'La poză, coloana Tip spune <em>Fișier PNG</em>: e <code>afis.png</code>. Celălalt <em>afis</em> e un document Word.'}),
+   inca:[
+    {t:'choice',q:'Extensiile sunt ascunse. În coloana Tip a unui fișier scrie <em>Fișier MP4</em>. Ce extensie are fișierul?',o:['.mp4','.mp3','.png','Nu are extensie'],ok:0,
+     ajutor:'Coloana Tip conține de obicei extensia.',why:'<em>Fișier MP4</em> înseamnă extensia <code>.mp4</code>: un film. Extensia există, doar că Windows n-o arată.'},
+    {t:'tf',q:'Dacă în Explorer nu vezi extensia unui fișier, înseamnă că fișierul nu are extensie.',ok:false,ajutor:'Recitește primele propoziții din pas.',
+     why:'Fals. Windows ascunde extensiile, dar ele sunt tot acolo, în numele fișierului. Tipul îl afli din pictogramă sau din coloana Tip.'}
+   ]}
+ ],
+ atelier:EXPL({titlu:'Atelier: găsește poza pentru afiș și scrie-i calea',
+  intro:`<p><strong>Sarcina:</strong> Ana a pus pe stick poza pentru afișul clasei. E în folderul <b>TIC</b>, din folderul <b>Scoala</b>. Extensiile sunt ascunse, ca pe multe calculatoare.</p>
+<ol><li>Pornești din <b>Acest PC</b>. Deschide stickul, <b>STICK (E:)</b>, cu dublu-clic.</li>
+<li>Deschide pe rând folderele Scoala și TIC.</li>
+<li>Acolo sunt două fișiere <em>afis</em>. Selectează-l pe cel care e poză: citește coloana Tip.</li>
+<li>Fă clic pe partea goală a barei de adresă și citește calea folderului.</li>
+<li>Scrie în casetă calea <b>pozei</b>: calea folderului, apoi <code>\\</code>, numele și extensia. Extensia o afli din coloana Tip.</li>
+<li>Când trec toate testele, apasă <b>Verifică</b>.</li></ol>`,
+  q:'Găsește pe stick poza pentru afiș (folderul TIC din Scoala), selecteaz-o și scrie-i calea completă.',
+  start:'PC',
+  raspuns:{eticheta:'Calea pozei',ok:'E:\\Scoala\\TIC\\afis.png'},
+  checks:[{in:'E:/Scoala/TIC/',ce:'Ești în folderul TIC de pe stick (bara de adresă se termină cu Scoala › TIC)'},{sel:'afis.png',ce:'E selectat fișierul <em>afis</em> care e poză'},{cale:true,ce:'Calea pozei, scrisă în casetă, e completă: unitatea, folderele, numele și extensia'}],
+  solutie:[['cd','E:/Scoala/TIC/'],['sel','afis.png'],['vezi'],['scrie','E:\\Scoala\\TIC\\afis.png']],
+  gresit:[['cd','E:/Scoala/TIC/'],['sel','afis.png'],['vezi'],['scrie','E:\\Scoala\\TIC\\afis']],
+  ajutor:'Extensia pozei o afli din coloana Tip. Calea folderului o vezi după clic pe partea goală a barei de adresă; la sfârșitul ei adaugi \\, numele pozei și extensia.',
+  why:'Poza e <code>afis.png</code>, din folderul TIC, din Scoala, de pe stickul E:. Calea ei: <code>E:\\Scoala\\TIC\\afis.png</code>. Extensia intră în cale chiar dacă Explorer o ascunde.',
+  solutieText:'poza e selectată, iar în casetă e calea <code>E:\\Scoala\\TIC\\afis.png</code>.',
+  inca:[
+   EXPL({q:'Încă una: harta pentru ora de geografie e în <b>Documente</b>, în folderul <b>Geografie</b>. Găsește-o (e poză), selecteaz-o și scrie-i calea. Atenție: în cale, Windows scrie numele englezesc al folderului Documente.',start:'PC',
+    raspuns:{eticheta:'Calea hărții',ok:'C:\\Users\\Ana\\Documents\\Geografie\\harta.png'},
+    checks:[{in:'C:/Users/Ana/Documents/Geografie/',ce:'Ești în folderul Geografie din Documente'},{sel:'harta.png',ce:'E selectată harta care e poză'},{cale:true,ce:'Calea hărții, scrisă în casetă, e corectă'}],
+    solutie:[['cd','C:/Users/Ana/Documents/Geografie/'],['sel','harta.png'],['vezi'],['scrie','C:\\Users\\Ana\\Documents\\Geografie\\harta.png']],
+    gresit:[['cd','C:/Users/Ana/Documents/Geografie/'],['sel','harta.png'],['scrie','C:\\Users\\Ana\\Documente\\Geografie\\harta.png']],
+    ajutor:'Documente e în panoul din stânga. După clic pe bara de adresă, în folderul Geografie, vezi calea cu Documents.',
+    why:'Pe ecran vezi „Documente”, dar calea e <code>C:\\Users\\Ana\\Documents\\Geografie\\harta.png</code>.'}),
+   EXPL({q:'Încă una: aici extensiile se <b>văd</b>. Găsește pe stick filmul din excursie, selectează-l și scrie-i calea.',start:'PC',extensii:true,
+    raspuns:{eticheta:'Calea filmului',ok:'E:\\Excursie\\drumul.mp4'},
+    checks:[{in:'E:/Excursie/',ce:'Ești în folderul Excursie'},{sel:'drumul.mp4',ce:'E selectat filmul'},{cale:true,ce:'Calea filmului, scrisă în casetă, e corectă'}],
+    solutie:[['cd','E:/Excursie/'],['sel','drumul.mp4'],['scrie','E:\\Excursie\\drumul.mp4']],
+    gresit:[['cd','E:/Excursie/'],['sel','drumul.mp4'],['scrie','E:\\drumul.mp4']],
+    ajutor:'Filmul are extensia .mp4. Între unitate și fișier e folderul Excursie.',
+    why:'Filmul e <code>drumul.mp4</code>, în folderul Excursie de pe stick: <code>E:\\Excursie\\drumul.mp4</code>.'})
+  ]}),
+ qs:[
+  {t:'choice',q:'Care e extensia fișierului <b>ziua.mamei.2027.png</b>?',o:['png','2027','mamei.2027.png','ziua'],ok:0,
+   ajutor:'Extensia e partea de după ultimul punct.',why:'Extensia e după ultimul punct: <code>png</code>, o imagine. Celelalte puncte fac parte din nume.'},
+  {t:'choice',q:'Extensiile sunt ascunse. În folder vezi două fișiere cu numele <em>vulpea</em>. La primul, în coloana Tip scrie <em>Fișier MP3</em>. La al doilea scrie <em>Fișier PNG</em>. Care e desenul cu vulpea?',o:['Al doilea, cu Fișier PNG','Primul, cu Fișier MP3','Amândouă sunt desene','Nu se poate ști fără extensie'],ok:0,amesteca:false,
+   ajutor:'Coloana Tip conține de obicei extensia. Care extensie e de imagine?',why:'<em>Fișier PNG</em> înseamnă extensia <code>.png</code>: o imagine, deci desenul. <em>Fișier MP3</em> e un sunet. Extensia e ascunsă, dar tipul se vede.'},
+  {t:'choice',q:`Arborele de pe discul C:${ARB_CLASA}În ce folder stă <strong>direct</strong> fișierul <b>frunza.jpg</b>?`,o:['Plante','Stiinte','Clasa','Istorie'],ok:0,
+   ajutor:'Folderul unui fișier e cel de deasupra lui, mutat cu un pas mai spre stânga.',why:'<code>frunza.jpg</code> stă în Plante. Plante stă în Stiinte, iar Stiinte în Clasa.'},
+  {t:'cale',q:`Arborele de pe discul C:${ARB_CLASA}Scrie calea fișierului <b>daci.docx</b>.`,ok:'C:\\Clasa\\Istorie\\daci.docx',eticheta:'Calea',tipic:'C:\\Istorie\\daci.docx',
+   ajutor:'Unitatea, apoi fiecare folder până la fișier, cu \\ între ele.',why:'Unitatea C:, folderul Clasa, folderul Istorie, apoi fișierul: <code>C:\\Clasa\\Istorie\\daci.docx</code>.'},
+  {t:'choice',q:'Ești în Explorer, în folderul Romana din Documente. Bara de adresă arată <em>Documente › Romana</em>. Faci clic pe partea ei goală. Ce apare?',o:['C:\\Users\\Ana\\Documents\\Romana','C:\\Users\\Ana\\Documente\\Romana','Documente\\Romana','Acest PC › Documente › Romana'],ok:0,
+   ajutor:'După clic apare calea, cu \\. Ce nume păstrează Windows în cale pentru Documente?',why:'Apare calea <code>C:\\Users\\Ana\\Documents\\Romana</code>. Pe ecran scrie „Documente”, dar în cale Windows păstrează numele englezesc, Documents.'}
+ ]}
+  ],
+  diploma:{titlu:'Știu unde stau fișierele mele',
+   rezumat:'a învățat ce e un fișier (nume și extensie; tipul, din coloana Tip), ce e un folder (director) și arborele de foldere, ce e o unitate (C:, stickul) și cum se scrie calea unui fișier, citită în bara de adresă din Explorer',
+   aplicatie:'calculatorul tău din laborator',
+   provocare:LABORATOR},
+  aplicatieReala:{aplicatie:'calculatorul tău din laborator, doar citind, fără să muți sau să ștergi ceva',titlu:'Acum la calculatorul din laborator',scurt:'Laboratorul',
+   intro:'<p>Ai găsit fișiere într-un Explorer din pagină. Acum deschizi Explorer-ul adevărat și <b>doar citești</b>: ce unități are calculatorul, ce cale are un folder și ce tip au câteva fișiere. Faci pașii unul câte unul și scrii în caiet.</p>',
+   pasi:LABORATOR},
+  tipuri:{explorer:SimExplorerCitire,cale:TipCale}
+});
+</script>
+</body>
+</html>
