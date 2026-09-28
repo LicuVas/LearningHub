@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Funcții: sumă, maxim, minim, medie aritmetică</title>
+<meta name="description" content="Clasa a VIII-a, lecția 8 (Excel): ce este o funcție, zona ca argument, SUM, AVERAGE, MAX și MIN, ce fac funcțiile cu celulele goale și cu textul, butonul Însumare automată (AutoSum) cu lista lui și copierea funcției cu mânerul de umplere, exersate într-o foaie care se poartă ca Excel-ul pe setări românești.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Mulish:ital,wght@0,400;0,600;0,800;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF1F4; --paper:#FFFFFF; --paper2:#EDF2F6; --line:#CFD8E0;
+  --ink:#16202A; --ink2:#52606D; --accent:#1C5D8C; --accentInk:#FFFFFF; --sel:#DCEAF5;
+  --mark:#FFE38A; --markInk:#16202A; --ok:#1B6E3F; --okbg:#E0F1E6; --bad:#B3302A; --badbg:#FAE3E1;
+  --fd:"Archivo","Segoe UI",system-ui,sans-serif; --fb:"Mulish","Segoe UI",system-ui,sans-serif; --fm:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F1419; --paper:#171E25; --paper2:#1F2830; --line:#2F3C48;
+  --ink:#E3EAF0; --ink2:#9DAAB6; --accent:#6DB3E8; --accentInk:#0F1419; --sel:#1C3A52;
+  --mark:#EFD25A; --markInk:#16202A; --ok:#5CC98A; --okbg:#14301F; --bad:#FF8177; --badbg:#3B1F1D;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F1419; --paper:#171E25; --paper2:#1F2830; --line:#2F3C48;
+  --ink:#E3EAF0; --ink2:#9DAAB6; --accent:#6DB3E8; --accentInk:#0F1419; --sel:#1C3A52;
+  --mark:#EFD25A; --markInk:#16202A; --ok:#5CC98A; --okbg:#14301F; --bad:#FF8177; --badbg:#3B1F1D;
+}
+/* tema: fâșia de sus e rândul de sub un catalog: numele celor patru funcții pe primul rând, rezultatele lor
+   (pe notele 9, 8, 10, 7, 8 din lecție) dedesubt */
+.banda{display:grid;grid-template-columns:repeat(4,1fr);font-family:var(--fm);font-size:.72rem;color:var(--ink2);border-bottom:1px dashed var(--line)}
+.banda span{padding:2px 5px;border-left:1px dashed var(--line);white-space:nowrap;overflow:hidden;text-overflow:clip;text-align:left}
+.banda span:nth-child(4n+1){border-left:0}
+.banda span:nth-child(-n+4){border-bottom:1px dashed var(--line)}
+.banda span.r{text-align:right}
+h1,h2{letter-spacing:-.01em}
+.doua-foi{display:grid;grid-template-columns:1fr;gap:6px}
+@media (min-width:640px){.doua-foi{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/tip-foaie.js"></script>
+<script src="../../../jocuri/_motor/tip-excel.js"></script>
+<!-- foaia „excelx” comună clasei a VIII-a + extensia lecției 7 (formulele) + extensia lecției 8 (funcțiile, Σ) -->
+<script src="../../_sim/excelx.js"></script>
+<script src="../../_sim/excelx-formule.js"></script>
+<script src="../../_sim/excelx-functii.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={functii:'Funcții specifice aplicaţiei de calcul tabelar pentru sumă, maxim, minim, medie aritmetică şi decizie'};
+
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG='../m2-l08/img/';
+/* datele lecției: notele a cinci elevi (aceleași în capturile din Excel) */
+const NOTE={A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Bogdan',B3:8,A4:'Carla',B4:10,A5:'Dan',B5:7,A6:'Elena',B6:8};
+const TESTE3={A1:'Elev',B1:'Test 1',C1:'Test 2',D1:'Test 3',A2:'Ana',B2:9,C2:7,D2:8,A3:'Bogdan',B3:10,C3:9,D3:8,
+  A4:'Carla',B4:6,C4:7,D4:5,A5:'Dan',B5:8,C5:9,D5:10,A6:'Elena',B6:7,C6:7,D6:10};
+
+const PROVOCARE=[
+  'Descarcă fișierul <a href="lectia8_note.xlsx" download>lectia8_note.xlsx</a> și deschide-l în Excel. Dacă sus apare o bandă galbenă cu butonul <b>Enable Editing</b> (Activare editare), apasă pe el: fișierele descărcate se deschid întâi doar pentru citit.',
+  'În tabel sunt notele a cinci elevi la trei teste. Clic pe <b>B7</b>, sub notele de la Test 1. Scrie <code>=SUM(B2:B6)</code> și apasă <kbd>Enter</kbd>. În B7 trebuie să vezi <b>40</b>.',
+  'Clic pe <b>B8</b>. Pe fila <b>Pornire (Home)</b>, în dreapta, apasă săgeata <b>▾</b> de lângă <b>Σ</b> și alege <b>Medie (Average)</b>. Excel scrie <code>=AVERAGE(B2:B7)</code>: a prins și suma din B7. Scrie <b>B2:B6</b> peste zona propusă și apasă <kbd>Enter</kbd>. În B8 trebuie să vezi <b>8</b>.',
+  'În <b>B9</b> scrie <code>=MAX(B2:B6)</code>, iar în <b>B10</b> scrie <code>=MIN(B2:B6)</code>. După fiecare apeși <kbd>Enter</kbd>. Trebuie să vezi <b>10</b> și <b>6</b>.',
+  'Selectează <b>B7:B10</b>, trăgând peste ele. Apucă mânerul de umplere, pătrățelul verde din colțul din dreapta-jos al lui B10, și trage spre dreapta până în coloana <b>D</b>. Clic pe <b>D8</b>: trebuie să vezi <b>8,2</b>, iar în bara de formule <code>=AVERAGE(D2:D6)</code>.',
+  'În <b>E2</b> scrie <code>=AVERAGE(B2:D2)</code> și apasă <kbd>Enter</kbd>: media Anei, <b>8</b>. Clic din nou pe E2 și trage mânerul de umplere în jos, până la <b>E6</b>. Clic pe <b>E4</b>: trebuie să vezi <b>6</b>, iar în bara de formule <code>=AVERAGE(B4:D4)</code>.',
+  'Fă proba: clic pe <b>C6</b>, nota Elenei la Test 2, scrie <b>10</b> și apasă <kbd>Enter</kbd>. Fără să atingi funcțiile, C7 trebuie să arate <b>42</b>, C8 <b>8,4</b>, C9 <b>10</b>, iar E6 <b>9</b>.',
+  'Salvează o copie cu numele tău: apasă <kbd>F12</kbd> (Salvare ca / Save As; pe unele laptopuri <kbd>Fn</kbd>+<kbd>F12</kbd>). În stânga alege <b>Documente (Documents)</b>, la <b>File name</b> scrie numele tău după modelul <code>Popescu_Ana_8A_lectia8</code> și apasă <b>Save</b> (Salvare). Dacă apare fereastra <i>Confirm Save As</i> („… already exists”), un coleg are deja un fișier cu numele ăsta: apasă <b>No</b>, adaugă o cifră la sfârșitul numelui (de exemplu <code>Popescu_Ana_8A_lectia8_2</code>) și apasă din nou <b>Save</b>.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m2_l08',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/viii/, „Lecția 8”, pasul de laborator înainte de verificare
+  titlu:'Funcții: sumă, maxim, minim, medie aritmetică',
+  marca:'Lecția <b>8</b> · Excel · a VIII-a',
+  h1:'Funcții: sumă, maxim, minim, medie aritmetică',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U1', unitateTitlu:'Calcul tabelar',
+  competente:['CS.1.1','CS.3.1'], lectii:'8',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VIII-U1 „Calcul tabelar” · lecția 8 · conținutul: „Funcții specifice aplicaţiei de calcul tabelar pentru sumă, maxim, minim, medie aritmetică şi decizie” (decizia vine în lecția 9)',
+  intro:`<p>Lecția 8, prima din modulul 2. Afli suma, media, cea mai mare și cea mai mică notă dintr-un tabel cu câte o singură formulă scurtă: o funcție.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 2, „Interfața aplicației de calcul tabelar. Structura unui registru”: celula, <kbd>Enter</kbd> te duce în celula de dedesubt, bara de formule, fila <b>Pornire (Home)</b> a panglicii;</li>
+<li>lecția 3, „Operații cu registrul și cu foile de calcul”: <b>Salvare ca (Save As)</b> și fereastra <i>Confirm Save As</i>, la care apeși <b>No</b>;</li>
+<li>lecția 4, „Adresa de celulă. Selectare, copiere, mutare, ștergere”: adresa B2, zona B2:B6 (toate celulele de la B2 la B6), selectezi o zonă trăgând peste ea, <kbd>Ctrl</kbd>+<kbd>Z</kbd> anulează;</li>
+<li>lecția 5, „Tipuri de date: numeric, text, dată calendaristică”: numărul stă la dreapta, textul la stânga, zecimala se scrie cu virgulă;</li>
+<li>lecția 7, „Formule de calcul cu operatori aritmetici”: formula începe cu <code>=</code>, adresele, codurile de eroare <code>#VALUE!</code>, <code>#DIV/0!</code> și <code>#NAME?</code>.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după pagina „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”. Apoi atelierul, într-o foaie care se poartă ca Excel-ul pe setări românești, apoi aceleași lucruri la calculatorul din laborator, iar la sfârșit 5 întrebări.</p>`,
+  banda:'<span>SUM</span><span>AVERAGE</span><span>MAX</span><span>MIN</span><span class="r">42</span><span class="r">8,4</span><span class="r">10</span><span class="r">7</span>',
+  tipuri:{excelx:ExcelFn},
+  nivele:[
+  {t:'Funcții: sumă, maxim, minim, medie aritmetică', final:true, lectii:[8], continuturi:[P.functii],
+   obiectiv:'calculezi suma, media, cea mai mare și cea mai mică valoare dintr-o zonă cu SUM, AVERAGE, MAX și MIN, le pui cu butonul Σ Însumare automată, verificând zona, și le copiezi cu mânerul de umplere.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>La sfârșitul semestrului, profesorul face media fiecărui elev. Cu formulele din lecția 7, pentru cinci note ar scrie <code>=(B2+B3+B4+B5+B6)/5</code>. Pentru douăzeci de note, formula ar fi foarte lungă și ușor de greșit.</p>
+<p>Excel are calcule gata făcute, cu nume. Le spunem <mark>funcții</mark>. Media celor cinci note se scrie scurt: <code>=AVERAGE(B2:B6)</code>.</p>
+<p>Azi înveți patru funcții: suma, media, cea mai mare și cea mai mică valoare.</p>
+${fig(IMG+'functii-patru.webp',490,340,'Excel: notele 9, 8, 10, 7 și 8 în coloana B; sub ele Suma 42, Media 8,4, Cea mai mare 10, Cea mai mică 7; bara de formule arată =AVERAGE(B2:B6)','Notele a cinci elevi, în Excel. Sub ele, patru funcții au calculat suma, media, cea mai mare și cea mai mică notă. Sus, în bara de formule, e funcția care a calculat media.')}`},
+
+    /* ---------- PASUL 1: ce este o funcție ---------- */
+    {t:'Ce este o funcție',
+     text:`<p>O funcție este un calcul gata făcut, care are un nume. Tu scrii numele și spui cu ce numere să lucreze.</p>
+<p>O funcție se scrie așa: semnul <code>=</code>, numele funcției, apoi, între paranteze, o zonă de celule (lecția 4). Ce scrii între paranteze se numește <mark>argument</mark>.</p>
+<p>Exemplu: <code>=SUM(B2:B6)</code> adună toate numerele din zona B2:B6, adică din B2, B3, B4, B5 și B6. SUM vine din engleză și înseamnă „sumă”. Nu lași spații între nume și paranteză.</p>`,
+     exemplu:`${fig(IMG+'suma-b7.webp',490,292,'Excel: B7 e aleasă și arată 42, iar bara de formule arată =SUM(B2:B6)','În B7 scrie =SUM(B2:B6). După Enter, B7 arată 42, iar bara de formule arată funcția.')}
+<p><code>=SUM(B2:B6)</code> face același calcul ca <code>=B2+B3+B4+B5+B6</code>, dar e mai scurtă și nu sari nicio celulă. Dacă uiți paranteza de la sfârșit, Excel o pune singur la <kbd>Enter</kbd>.</p>
+<p>Cât scrii, sub celulă apare o bulă: <code>SUM(number1; [number2]; …)</code>. Ea arată că poți pune mai multe argumente. Pe setările românești ale Windows-ului le desparți cu <code>;</code>, pe unele calculatoare cu <code>,</code>.</p>`,
+     altfel:`<p>E ca atunci când îi spui unui coleg: „adună notele din catalog, de la Ana până la Elena”, în loc să-i dictezi fiecare notă. Numele funcției spune CE să facă. Zona dintre paranteze spune DE UNDE să ia numerele.</p>`,
+     incearca:{t:'excelx',q:'În <b>B7</b> scrie funcția <code>=SUM(B2:B6)</code> și apasă <kbd>Enter</kbd>.',
+       cols:2,rows:7,cells:{...NOTE,A7:'Suma'},panglica:false,
+       verifica:{formule:{B7:'=SUM(B2:B6)'},functie:{B7:'SUM'}},
+       ajutor:'Clic pe B7. Scrie semnul =, apoi SUM, paranteza (, zona B2:B6 și paranteza ). Apoi apasă Enter.',
+       why:'B7 arată 42: SUM a adunat notele 9, 8, 10, 7 și 8.'},
+     inca:[
+      {t:'excelx',q:'Clasa a strâns maculatură patru zile la rând: kilogramele sunt în <b>B2:B5</b>. În <b>B6</b> scrie funcția care adună toate kilogramele.',
+       cols:2,rows:6,cells:{A1:'Ziua',B1:'Kilograme',A2:'Luni',B2:12,A3:'Marți',B3:15,A4:'Miercuri',B4:9,A5:'Joi',B5:14,A6:'Total'},panglica:false,
+       verifica:{formule:{B6:'=SUM(B2:B5)'},functie:{B6:'SUM'}},
+       ajutor:'Funcția care adună e SUM. Între paranteze pui zona cu kilogramele: de la B2 la B5.',why:'=SUM(B2:B5) dă 50 de kilograme.'},
+      {t:'choice',q:'În formula <code>=SUM(C2:C9)</code>, care este argumentul?',o:['C2:C9','SUM','=','Parantezele'],ok:0,
+       ajutor:'Argumentul e ce scrii între paranteze.',why:'Argumentul e zona C2:C9, adică ce stă între paranteze. SUM e numele funcției.'}
+     ]},
+
+    /* ---------- PASUL 2: SUM, AVERAGE, MAX, MIN ---------- */
+    {t:'Patru funcții: SUM, AVERAGE, MAX, MIN',
+     text:`<p>Patru funcții îți ajung pentru multe tabele:</p>
+<ul><li><code>SUM</code>: suma numerelor din zonă;</li>
+<li><code>AVERAGE</code>: <mark>media aritmetică</mark>, adică suma numerelor împărțită la câte numere sunt;</li>
+<li><code>MAX</code>: cel mai mare număr din zonă;</li>
+<li><code>MIN</code>: cel mai mic număr din zonă.</li></ul>
+<p>Numele funcțiilor sunt în engleză și în Excel-ul în limba română. <code>=SUMA(B2:B6)</code> dă <code>#NAME?</code>, ca orice cuvânt pe care Excel nu-l cunoaște (lecția 7). Poți scrie și cu litere mici: la <kbd>Enter</kbd>, Excel le face mari.</p>`,
+     exemplu:`<p>Pe notele 9, 8, 10, 7 și 8, din B2:B6:</p>
+<ul><li><code>=SUM(B2:B6)</code> arată 42;</li>
+<li><code>=AVERAGE(B2:B6)</code> arată 8,4, adică 42 împărțit la 5;</li>
+<li><code>=MAX(B2:B6)</code> arată 10, iar <code>=MIN(B2:B6)</code> arată 7.</li></ul>
+${fig(IMG+'suma-name.webp',550,292,'Excel: C2 e aleasă și arată #NAME?, iar bara de formule arată =SUMA(B2:B6)','Cu numele românesc, =SUMA(B2:B6), Excel arată #NAME?.')}`,
+     altfel:`<p>Gândește-te la un concurs de aruncări la coș: SUM spune câte coșuri a înscris toată echipa, AVERAGE câte a înscris în medie fiecare jucător, MAX cele mai multe coșuri ale unui jucător, iar MIN cele mai puține.</p>`,
+     incearca:{t:'excelx',q:'În <b>B8</b> scrie funcția care arată cea mai mare notă din B2:B6 și apasă <kbd>Enter</kbd>.',
+       cols:2,rows:9,cells:{...NOTE,A7:'Suma',B7:'=SUM(B2:B6)',A8:'Cea mai mare',A9:'Cea mai mică'},panglica:false,
+       verifica:{formule:{B8:'=MAX(B2:B6)'},functie:{B8:'MAX'}},
+       ajutor:'Cea mai mare valoare o dă funcția MAX. Zona e B2:B6: fără suma din B7.',
+       why:'=MAX(B2:B6) arată 10, nota Carlei.'},
+     inca:[
+      {t:'excelx',q:'În <b>B9</b> scrie funcția care arată cea mai mică notă din B2:B6.',
+       cols:2,rows:9,cells:{...NOTE,A7:'Suma',B7:'=SUM(B2:B6)',A8:'Cea mai mare',B8:'=MAX(B2:B6)',A9:'Cea mai mică'},panglica:false,
+       verifica:{formule:{B9:'=MIN(B2:B6)'},functie:{B9:'MIN'}},ajutor:'Cea mai mică valoare o dă funcția MIN.',why:'=MIN(B2:B6) arată 7, nota lui Dan.'},
+      {t:'excelx',q:'Temperaturile de la ora 8, cinci zile la rând, sunt în <b>B2:B6</b>. În <b>B7</b> scrie funcția care arată temperatura medie.',
+       cols:2,rows:7,cells:{A1:'Ziua',B1:'Grade',A2:'Luni',B2:4,A3:'Marți',B3:6,A4:'Miercuri',B4:5,A5:'Joi',B5:3,A6:'Vineri',B6:7,A7:'Media'},panglica:false,
+       verifica:{formule:{B7:'=AVERAGE(B2:B6)'},functie:{B7:'AVERAGE'}},ajutor:'Media aritmetică o dă funcția AVERAGE.',why:'=AVERAGE(B2:B6) arată 5: suma 25, împărțită la 5.'},
+      {t:'tf',q:'În Excel-ul în limba română, media se scrie <code>=MEDIE(B2:B6)</code>.',ok:false,
+       ajutor:'În ce limbă sunt numele funcțiilor?',why:'Fals. Numele funcțiilor rămân în engleză: <code>=AVERAGE(B2:B6)</code>. Cu MEDIE, Excel arată #NAME?.'}
+     ]},
+
+    /* ---------- PASUL 3: celulele goale, textul și zeroul ---------- */
+    {t:'Celulele goale, textul și zeroul',
+     text:`<p>Funcțiile iau din zonă <strong>doar numerele</strong>. Sar peste celulele goale și peste text, de exemplu „absent”. De aceea <code>AVERAGE</code> împarte la câte numere sunt în zonă, nu la câte celule are zona.</p>
+<p>Atenție la 0: e un număr, deci intră în medie și o scade. Dacă un elev a lipsit, îi lași celula goală, nu scrii 0.</p>
+<p>O formulă cu + se oprește la un text: <code>=B2+B3</code> dă <code>#VALUE!</code> (lecția 7). <code>=SUM(B2:B6)</code> sare peste text și adună restul.</p>`,
+     exemplu:`<div class="doua-foi">${fig(IMG+'media-gol.webp',490,268,'Excel: B3 e goală; B7 arată 8,5, iar bara de formule arată =AVERAGE(B2:B6)','B3 goală: media celor 4 note, 34 împărțit la 4, adică 8,5.')}${fig(IMG+'media-zero.webp',490,268,'Excel: în B3 e 0; B7 arată 6,8','Cu 0 în B3: 34 împărțit la 5, adică 6,8.')}</div>
+<p>Dacă în zonă nu e niciun număr, <code>AVERAGE</code> arată <code>#DIV/0!</code>, iar <code>SUM</code>, <code>MAX</code> și <code>MIN</code> arată 0. O notă scrisă 7.5 devine dată (lecția 5). Pentru funcții, data e tot un număr, unul foarte mare, deci media iese greșită: un număr uriaș sau chiar o dată. Scrie 7,5.</p>`,
+     altfel:`<p>La catalog: dacă ai lipsit la un test, profesorul nu-ți trece nota 0. Lasă căsuța goală și face media din notele pe care le ai.</p>`,
+     incearca:{t:'excelx',q:'Carla a lipsit, deci <b>B4</b> e goală. Ghicește întâi: ce arată <code>=AVERAGE(B2:B6)</code> în B7? Apoi scrie funcția în B7 și alege răspunsul.',
+       cols:2,rows:7,cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Bogdan',B3:8,A4:'Carla',A5:'Dan',B5:7,A6:'Elena',B6:8,A7:'Media'},panglica:false,
+       o:['8','6,4','32','#DIV/0!'],ok:0,
+       ajutor:'Celula goală nu intră în medie. Adună cele 4 note și împarte la 4.',
+       why:'Media e 8: 9 + 8 + 7 + 8 fac 32, împărțit la 4 note. 6,4 ar ieși dacă ai împărți la 5.'},
+     inca:[
+      {t:'excelx',q:'În <b>B3</b> e scris 0, dar Bogdan de fapt a lipsit. Repară foaia, ca media din B7 să nu-l mai socotească pe Bogdan.',
+       cols:2,rows:7,cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Bogdan',B3:0,A4:'Carla',B4:10,A5:'Dan',B5:7,A6:'Elena',B6:8,A7:'Media',B7:'=AVERAGE(B2:B6)'},panglica:false,
+       verifica:{gol:['B3'],formule:{B7:'=AVERAGE(B2:B6)'}},
+       ajutor:'Clic pe B3 și apasă Delete: celula rămâne goală. Pe telefon: atingi B3, atingi bara de formule, ștergi 0 și apeși ↵. Funcția din B7 o lași cum e.',
+       why:'Cu B3 goală, media e 8,5: 34 împărțit la cele 4 note. Cu 0 era 6,8.'},
+      {t:'choice',q:'În zona B2:B6 sunt: 9, textul „scutit”, 6, 5 și 6. Ce arată <code>=AVERAGE(B2:B6)</code>?',o:['6,5','5,2','#VALUE!','26'],ok:0,
+       ajutor:'Textul nu intră în medie. Câte numere rămân?',why:'Rămân 4 numere: 9 + 6 + 5 + 6 fac 26, împărțit la 4 dă 6,5. 5,2 ar ieși dacă ai împărți la 5. Funcția sare peste text, deci nu apare #VALUE!.'}
+     ]},
+
+    /* ---------- PASUL 4: Însumare automată (AutoSum) ---------- */
+    {t:'Butonul Σ: Însumare automată (AutoSum)',
+     text:`<p>Butonul <b>Însumare automată (AutoSum)</b>, cu semnul Σ, scrie funcția în locul tău. E pe fila <b>Pornire (Home)</b>, în dreapta, în grupul <b>Editare (Editing)</b>, și pe fila <b>Formule (Formulas)</b>, la început.</p>
+<p>Faci clic în celula de sub numere, apoi pe Σ. Excel scrie <code>=SUM(</code> și o zonă aleasă de el, încadrată cu linie punctată. Săgeata <b>▾</b> de lângă Σ deschide o listă: <b>Medie (Average)</b>, <b>Max</b>, <b>Min</b>.</p>
+<p><strong>Înainte de Enter, citește zona.</strong> Excel urcă peste numere până la primul text sau prima celulă goală. La Medie, Max și Min prinde și un total de deasupra. Dacă zona e greșită, scrii zona bună peste ea.</p>`,
+     exemplu:`<div class="doua-foi">${fig(IMG+'autosum-suma.webp',490,292,'Excel, după clic pe B7 și pe Σ: în B7 se vede =SUM(B2:B6), iar zona B2:B6 e încadrată cu linie punctată','Clic pe B7, apoi pe Σ: zona B2:B6 e bună. Apeși Enter și apare 42.')}${fig(IMG+'autosum-lista.webp',220,267,'Excel, fila Home: butonul Σ cu săgeata ▾ și lista deschisă: Sum, Average, Count Numbers, Max, Min, More Functions','Săgeata ▾ de lângă Σ: Sum, Average, Max, Min…')}</div>
+<div class="doua-foi">${fig(IMG+'autosum-medie-total.webp',490,316,'Excel, după clic pe B8 și Σ ▾ Average: în B8 se vede =AVERAGE(B2:B7), iar zona încadrată prinde și suma 42 din B7','În B8, ▾ › Average propune B2:B7: a prins și suma din B7!')}${fig(IMG+'autosum-medie-reparat.webp',490,316,'Excel: după ce s-a scris B2:B6 peste zona propusă, în B8 se vede =AVERAGE(B2:B6)','Scrii B2:B6 peste zonă, apoi Enter: media e 8,4.')}</div>
+<p>Sub un total, Σ (Sumă) propune doar totalul, de exemplu <code>=SUM(B7)</code>: și atunci scrii zona bună peste ea. Pe telefon, butonul Σ se vede mai ușor pe fila <b>Formule (Formulas)</b>: e al doilea buton.</p>`,
+     altfel:`<p>Σ e ca un coleg grăbit care îți întinde foaia gata scrisă. Te ajută, dar tu citești ce a scris înainte să semnezi: dacă a adunat și rândul cu totalul, corectezi.</p>`,
+     incearca:{t:'excelx',q:'Clic pe <b>B7</b>, apoi pe butonul <b>Σ</b> (Însumare automată / AutoSum). Citește zona propusă și apasă <kbd>Enter</kbd>.',
+       cols:2,rows:7,cells:{...NOTE,A7:'Suma'},
+       verifica:{formule:{B7:'=SUM(B2:B6)'},functie:{B7:'SUM'},gest:['autosum']},
+       ajutor:'Σ e pe fila Formule (Formulas), la început, sau pe fila Pornire (Home), în dreapta: apasă pe semnul Σ, nu pe săgeată. Zona propusă, B2:B6, e bună: apasă Enter.',
+       why:'Σ a scris =SUM(B2:B6), iar B7 arată 42.'},
+     inca:[
+      {t:'excelx',q:'În B7 e deja suma. Clic pe <b>B8</b>, apoi pe săgeata <b>▾</b> de lângă Σ și alege <b>Medie (Average)</b>. Verifică zona propusă, repar-o dacă trebuie și apasă <kbd>Enter</kbd>.',
+       cols:2,rows:8,cells:{...NOTE,A7:'Suma',B7:'=SUM(B2:B6)',A8:'Media'},
+       verifica:{formule:{B8:'=AVERAGE(B2:B6)'},functie:{B8:'AVERAGE'},gest:['autosum']},
+       ajutor:'Excel propune B2:B7, cu tot cu suma din B7. Scrie B2:B6 peste zona propusă, apoi apasă Enter.',
+       why:'Media notelor e 8,4. Cu zona propusă, B2:B7, ar fi ieșit 14, pentru că intra și suma 42.'},
+      {t:'excelx',q:'Bogdan n-a dat testul, deci <b>B3</b> e goală. Clic pe <b>B7</b>, apoi pe <b>Σ</b>. Verifică zona propusă, repar-o dacă trebuie, ca suma să cuprindă toate notele din B2:B6, și apasă <kbd>Enter</kbd>.',
+       cols:2,rows:7,cells:{A1:'Elev',B1:'Nota',A2:'Ana',B2:9,A3:'Bogdan',A4:'Carla',B4:10,A5:'Dan',B5:7,A6:'Elena',B6:8,A7:'Suma'},
+       verifica:{formule:{B7:'=SUM(B2:B6)'},functie:{B7:'SUM'},gest:['autosum']},
+       ajutor:'Excel urcă doar până la celula goală, deci propune B4:B6. Scrie B2:B6 peste zona propusă și apasă Enter.',
+       why:'Suma e 34. Zona propusă, B4:B6, ar fi lăsat-o pe dinafară pe Ana.'}
+     ]},
+
+    /* ---------- PASUL 5: copierea funcției cu mânerul de umplere ---------- */
+    {t:'Copiezi funcția: zona se mută cu ea',
+     text:`<p>În E2 e media Anei: <code>=AVERAGE(B2:D2)</code>. Pentru ceilalți elevi nu scrii funcția din nou: o copiezi.</p>
+<p>Alegi E2. În colțul din dreapta-jos al celulei e un pătrățel, <mark>mânerul de umplere</mark> (fill handle; în ajutorul Office în română: instrumentul de umplere). Îl apuci cu mouse-ul și tragi în jos, până la E6.</p>
+<p>Zona din funcție se mută odată cu rândul: în E3 ajunge <code>=AVERAGE(B3:D3)</code>, media lui Bogdan, în E4 <code>=AVERAGE(B4:D4)</code> și tot așa. Spre dreapta merge la fel: <code>=SUM(B2:B6)</code> din B7, trasă până în C7, devine <code>=SUM(C2:C6)</code>.</p>`,
+     exemplu:`<div class="doua-foi">${fig('../../../jocuri/excel-viii/img/formula-maner.webp',900,240,'Excel: celula D2 aleasă, cu mânerul de umplere încadrat în colțul din dreapta-jos al celulei','Mânerul de umplere: pătrățelul din colțul din dreapta-jos al celulei alese.')}${fig(IMG+'media-copiata.webp',550,262,'Excel: E2 cu =AVERAGE(B2:D2) trasă în jos până la E6; E4 aleasă arată 6, iar bara de formule arată =AVERAGE(B4:D4)','După tragere, E4 are =AVERAGE(B4:D4): media Carlei, 6.')}</div>
+<p>Poți copia mai multe funcții deodată: selectezi B7:B10, iar pătrățelul e în colțul lui B10; îl tragi și se copiază toate. Pe telefon, pune degetul pe pătrățelul verde din colț și trage. Verifică apoi o celulă copiată: alege-o și citește zona din bara de formule.</p>`,
+     altfel:`<p>E ca o rețetă scrisă „ia notele de pe rândul tău”. Fiecare elev o citește pe rândul lui, deci fiecare primește media lui, deși rețeta e aceeași.</p>`,
+     incearca:{t:'excelx',q:'În <b>E2</b> e media Anei. Alege E2 și trage mânerul de umplere în jos, până la <b>E6</b>.',
+       cols:5,rows:6,cells:{...TESTE3,E1:'Media',E2:'=AVERAGE(B2:D2)'},panglica:false,
+       verifica:{formule:{E2:'=AVERAGE(B2:D2)'},umplut:{E2:['E3','E4','E5','E6']},gest:['umple']},
+       ajutor:'Clic pe E2. Apucă pătrățelul din colțul lui din dreapta-jos și trage în jos, până la E6. Pe telefon, pune degetul pe pătrățelul verde din colț și trage în jos.',
+       why:'Fiecare rând are media lui: 8, 9, 6, 9 și 8.'},
+     inca:[
+      {t:'excelx',q:'În E2 e <code>=AVERAGE(B2:D2)</code>. Trage mânerul de umplere până la E6, apoi alege <b>E5</b> și citește bara de formule. Ce funcție a ajuns acolo?',
+       cols:5,rows:6,cells:{...TESTE3,E1:'Media',E2:'=AVERAGE(B2:D2)'},panglica:false,
+       o:['=AVERAGE(B5:D5)','=AVERAGE(B2:D2)','=AVERAGE(B2:D5)','=AVERAGE(E2:E5)'],ok:0,
+       ajutor:'Din rândul 2 în rândul 5: zona coboară cu trei rânduri.',why:'Zona a coborât odată cu rândul: în E5 e =AVERAGE(B5:D5), media lui Dan, 9.'},
+      {t:'excelx',q:'În <b>B7</b> e cea mai mare notă de la Test 1. Trage mânerul de umplere al lui B7 spre dreapta, până la <b>D7</b>, ca să afli cea mai mare notă și la celelalte teste.',
+       cols:4,rows:7,cells:{...TESTE3,A7:'Cea mai mare',B7:'=MAX(B2:B6)'},panglica:false,
+       verifica:{formule:{B7:'=MAX(B2:B6)'},umplut:{B7:['C7','D7']},gest:['umple']},
+       ajutor:'Clic pe B7, apucă pătrățelul din colț și trage spre dreapta, până la D7.',why:'C7 are =MAX(C2:C6), adică 9, iar D7 are =MAX(D2:D6), adică 10.'}
+     ]}
+   ],
+   atelier:{t:'excelx',titlu:'Atelier: cheltuielile săptămânii',
+    intro:`<p>Foaia de mai jos se poartă ca Excel-ul pe setări românești, cu panglica lui. Deasupra ei sunt <strong>testele</strong>. Fiecare se bifează singur când partea lui e gata, chiar dacă se schimbă numerele din tabel. Poți scrie funcțiile sau poți folosi butonul Σ; cu Σ, citește zona înainte de <kbd>Enter</kbd>. Ai greșit? <kbd>Ctrl</kbd>+<kbd>Z</kbd> sau ↶. La final apasă <b>Verifică</b>.</p>`,
+    q:'Ana și Radu și-au scris cât au cheltuit în fiecare zi, în lei. <b>1.</b> În <b>B7</b> pune suma cheltuielilor Anei. <b>2.</b> În <b>B8</b> pune cea mai mare cheltuială a ei, iar în <b>B9</b> pe cea mai mică. <b>3.</b> În <b>B10</b> pune media pe zi, doar din zilele B2:B6. <b>4.</b> Selectează <b>B7:B10</b> și trage mânerul de umplere spre dreapta, până în coloana <b>C</b>, ca să ai aceleași calcule pentru Radu.',
+    cols:3,rows:10,
+    cells:{A1:'Ziua',B1:'Ana',C1:'Radu',A2:'Luni',B2:12,C2:10,A3:'Marți',B3:8.5,C3:7,A4:'Miercuri',B4:15,C4:9,A5:'Joi',B5:6,C5:14,A6:'Vineri',B6:10,C6:5,
+      A7:'Suma',A8:'Cea mai mare',A9:'Cea mai mică',A10:'Media'},
+    verifica:{formule:{B7:'=SUM(B2:B6)',B8:'=MAX(B2:B6)',B9:'=MIN(B2:B6)',B10:'=AVERAGE(B2:B6)'},
+      umplut:{B7:['C7'],B8:['C8'],B9:['C9'],B10:['C10']},gest:['umple'],functie:{B7:'SUM',B8:'MAX',B9:'MIN',B10:'AVERAGE'}},
+    teste:[
+     {ce:'B7 adună cheltuielile Anei, cu SUM',formule:{B7:'=SUM(B2:B6)'},functie:{B7:'SUM'}},
+     {ce:'B8 arată cea mai mare cheltuială (MAX), iar B9 cea mai mică (MIN)',formule:{B8:'=MAX(B2:B6)',B9:'=MIN(B2:B6)'},functie:{B8:'MAX',B9:'MIN'}},
+     {ce:'B10 arată media pe zi (AVERAGE), doar din B2:B6',formule:{B10:'=AVERAGE(B2:B6)'},functie:{B10:'AVERAGE'}},
+     {ce:'C7:C10 au aceleași calcule pentru Radu, copiate cu mânerul de umplere',formule:{C7:'=SUM(C2:C6)',C8:'=MAX(C2:C6)',C9:'=MIN(C2:C6)',C10:'=AVERAGE(C2:C6)'},umple:true}],
+    ajutor:'În B7 scrii =SUM(B2:B6), în B8 =MAX(B2:B6), în B9 =MIN(B2:B6), iar în B10 =AVERAGE(B2:B6). Dacă folosești Σ ▾, zona propusă prinde și rândurile de deasupra, deci scrii B2:B6 peste ea. Apoi selectezi B7:B10 și tragi pătrățelul din colțul lui B10 până în coloana C.',
+    why:'Ana a cheltuit 51,5 lei: cel mult 15 și cel puțin 6 lei pe zi, în medie 10,3. Radu: 45 de lei, între 5 și 14, în medie 9. Schimbă o sumă și urmărește cum se refac toate.',
+    inca:[
+     {t:'excelx',q:'Temperaturile de la ora 8, cinci zile la rând, sunt în <b>B2:B6</b>, unele sub zero. <b>1.</b> În <b>B7</b> pune cea mai mică temperatură. <b>2.</b> În <b>B8</b> pune cea mai mare. <b>3.</b> În <b>B9</b> pune media.',
+      cols:2,rows:9,panglica:false,cells:{A1:'Ziua',B1:'Grade',A2:'Luni',B2:-3,A3:'Marți',B3:2,A4:'Miercuri',B4:5,A5:'Joi',B5:-1,A6:'Vineri',B6:0,A7:'Cea mai mică',A8:'Cea mai mare',A9:'Media'},
+      verifica:{formule:{B7:'=MIN(B2:B6)',B8:'=MAX(B2:B6)',B9:'=AVERAGE(B2:B6)'},functie:{B7:'MIN',B8:'MAX',B9:'AVERAGE'}},
+      teste:[
+       {ce:'B7 arată cea mai mică temperatură (MIN)',formule:{B7:'=MIN(B2:B6)'},functie:{B7:'MIN'}},
+       {ce:'B8 arată cea mai mare temperatură (MAX)',formule:{B8:'=MAX(B2:B6)'},functie:{B8:'MAX'}},
+       {ce:'B9 arată media (AVERAGE), doar din B2:B6',formule:{B9:'=AVERAGE(B2:B6)'},functie:{B9:'AVERAGE'}}],
+      ajutor:'=MIN(B2:B6), =MAX(B2:B6), =AVERAGE(B2:B6). Zeroul de vineri e un număr, deci intră în medie.',
+      why:'Cea mai mică e -3, cea mai mare 5, iar media 0,6: suma 3, împărțită la 5 zile. Zeroul a intrat în medie.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Care formulă calculează media notelor din zona C2:C8?',o:['=AVERAGE(C2:C8)','=MEDIE(C2:C8)','=AVERAGE(C2+C8)','=SUM(C2:C8)/2'],ok:0,
+     ajutor:'Numele funcției e în engleză, iar între paranteze stă zona.',why:'<code>=AVERAGE(C2:C8)</code>. MEDIE dă #NAME?; C2+C8 adună doar două note; suma împărțită la 2 nu e media a 7 note.'},
+    {t:'excelx',q:'Punctajele a cinci echipe la concurs sunt în <b>B2:B6</b>. În <b>B7</b> scrie funcția care arată cel mai mic punctaj.',
+     cols:2,rows:7,cells:{A1:'Echipa',B1:'Puncte',A2:'Șoimii',B2:45,A3:'Lupii',B3:38,A4:'Vulturii',B4:52,A5:'Urșii',B5:41,A6:'Delfinii',B6:47,A7:'Cel mai mic'},panglica:false,
+     verifica:{formule:{B7:'=MIN(B2:B6)'},functie:{B7:'MIN'}},ajutor:'Cea mai mică valoare: ce funcție?',why:'<code>=MIN(B2:B6)</code> arată 38, punctajul Lupilor.'},
+    {t:'choice',q:'În zona B2:B6 sunt: 6, o celulă goală, 9, 10 și 5. Ce arată <code>=AVERAGE(B2:B6)</code>?',o:['7,5','6','30','#DIV/0!'],ok:0,
+     ajutor:'Celula goală nu intră în medie. Câte numere sunt?',why:'Sunt 4 numere: 6 + 9 + 10 + 5 fac 30, împărțit la 4 dă 7,5. 6 ar ieși dacă ai împărți la 5.'},
+    {t:'excelx',q:'În B7 e suma notelor. Pune în <b>B8</b> cea mai mare notă cu săgeata <b>▾</b> de lângă Σ › <b>Max</b>. Atenție la zona propusă.',
+     cols:2,rows:8,cells:{A1:'Elev',B1:'Nota',A2:'Ioana',B2:7,A3:'Mihai',B3:9,A4:'Sara',B4:6,A5:'Vlad',B5:10,A6:'Rareș',B6:8,A7:'Suma',B7:'=SUM(B2:B6)',A8:'Cea mai mare'},
+     verifica:{formule:{B8:'=MAX(B2:B6)'},functie:{B8:'MAX'},gest:['autosum']},
+     ajutor:'Zona propusă prinde și suma din B7. Scrie B2:B6 peste ea, apoi Enter.',why:'Cea mai mare notă e 10. Cu zona propusă, B2:B7, ar fi ieșit 40: suma, nu o notă.'},
+    {t:'choice',q:'În B8 este formula <b>=SUM(B2:B7)</b>. Tragi mânerul de umplere al lui B8 spre dreapta, până la E8. Ce formulă e în E8?',o:['=SUM(E2:E7)','=SUM(B2:B7)','=SUM(B2:E7)','=SUM(E8:E8)'],ok:0,
+     ajutor:'Spre dreapta, zona se mută odată cu coloana.',why:'Din coloana B în coloana E, zona se mută cu trei coloane: <b>=SUM(E2:E7)</b>. Rândurile rămân aceleași.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Excel-ul de pe calculator',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:'<p>Lucrezi singur, în Excel, pe calculatorul din laborator, cu fișierul de mai jos. La fiecare pas scrie ce trebuie să vezi: așa te verifici singur.</p>',
+    pasi:PROVOCARE},
+  diploma:{titlu:'Calculator cu funcții',
+    rezumat:'a calculat suma, media, cea mai mare și cea mai mică valoare cu funcțiile SUM, AVERAGE, MAX și MIN, a folosit butonul Σ Însumare automată și lista lui, a verificat zona propusă înainte de Enter și a copiat funcțiile cu mânerul de umplere',
+    aplicatie:'Excel-ul de pe calculator',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>

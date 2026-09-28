@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Funcția de decizie. Rezolv o situație-problemă cu tabelul</title>
+<meta name="description" content="Clasa a VIII-a, lecția 9 (Excel): condiția cu semnele de comparare, funcția IF cu trei părți, textul între ghilimele drepte, decizia pe rezultatul altei formule și o situație-problemă rezolvată cu tabelul (ce date am, ce calculez, ce decid), testată la limită, într-o foaie care se poartă ca Excel-ul pe setări românești.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF2F1; --paper:#FFFFFF; --paper2:#EDF3F2; --line:#CFDAD8;
+  --ink:#172321; --ink2:#51605D; --accent:#0E6B6F; --accentInk:#FFFFFF; --sel:#D5ECEA;
+  --mark:#FFE08A; --markInk:#172321; --ok:#16703F; --okbg:#E0F2E7; --bad:#B3302A; --badbg:#FAE3E1;
+  --fd:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif; --fb:"Source Sans 3","Segoe UI",system-ui,sans-serif; --fm:"JetBrains Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F1514; --paper:#18201F; --paper2:#212B2A; --line:#324240;
+  --ink:#E3ECEA; --ink2:#9DB0AC; --accent:#5CC6C0; --accentInk:#0F1514; --sel:#1D4441;
+  --mark:#EBCB55; --markInk:#172321; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F1514; --paper:#18201F; --paper2:#212B2A; --line:#324240;
+  --ink:#E3ECEA; --ink2:#9DB0AC; --accent:#5CC6C0; --accentInk:#0F1514; --sel:#1D4441;
+  --mark:#EBCB55; --markInk:#172321; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}
+/* tema: fâșia de sus e o decizie în mic — condiția pe primul rând, cele două drumuri alături; pe rândul 2, exemplul */
+.banda{display:grid;grid-template-columns:1.2fr 1fr 1fr;font-family:var(--fm);font-size:.72rem;color:var(--ink2);border-bottom:1px dashed var(--line)}
+.banda span{padding:2px 6px;border-left:1px dashed var(--line);white-space:nowrap;overflow:hidden;text-overflow:clip;text-align:left}
+.banda span:nth-child(3n+1){border-left:0}
+.banda span:nth-child(-n+3){border-bottom:1px dashed var(--line)}
+.banda span.da{color:var(--ok)}.banda span.nu{color:var(--bad)}
+h1,h2{letter-spacing:-.01em}
+.pasi-met{margin:.3em 0 .6em 1.2em;padding:0}
+.pasi-met li{margin:.25em 0}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/tip-foaie.js"></script>
+<script src="../../../jocuri/_motor/tip-excel.js"></script>
+<!-- foaia „excelx” comună clasei a VIII-a (lecțiile 4-5) + formulele (lecția 7) + extensia lecției 9: funcția IF, fidelă
+     Excel-ului pe setări românești (probat în Excel real: _proba/proba_ascuns*.json) -->
+<script src="../../_sim/excelx.js"></script>
+<script src="../../_sim/excelx-formule.js"></script>
+<script src="../../_sim/excelx-decizie.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={decizie:'Funcții specifice aplicaţiei de calcul tabelar pentru sumă, maxim, minim, medie aritmetică şi decizie'};
+
+/* captura reală (Excel pe desktop ascuns, img/SURSE.json) */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG9='../m2-l09/img/';
+const IMG3='../m1-l03/img/';
+
+const PROVOCARE=[
+  'Descarcă registrul <a href="excursia_lectia9.xlsx" download>excursia_lectia9.xlsx</a> și deschide-l în Excel. Dacă sus apare o bandă galbenă cu butonul <b>Enable Editing</b> (Activare editare), apasă pe el: fișierele descărcate se deschid întâi doar pentru citit.',
+  '<b>Ce date am.</b> În foaia <b>Excursia</b>, coloana B are vârsta elevilor, iar coloana C acordul părinților (da sau nu). Biletul costă 10 lei sub 14 ani și 20 de lei de la 14 ani în sus. În fondul clasei, în G3, sunt 50 de lei.',
+  'Clic pe <b>D2</b>, scrie <code>=IF(B2&lt;14;10;20)</code> și apasă <kbd>Enter</kbd>. D2 trebuie să arate <b>10</b>: Ana are 13 ani. Scrie la fel în D3, D4 și D5, cu numărul rândului schimbat (în D3: <code>=IF(B3&lt;14;10;20)</code>). Trebuie să vezi <b>20</b>, <b>20</b> și <b>10</b>. Dacă ai scris exact așa și Excel tot nu primește formula (<i>There\'s a problem with this formula</i>), calculatorul are setări englezești: apasă OK și pune virgulă în loc de punct și virgulă, <code>=IF(B2&lt;14,10,20)</code>.',
+  'În <b>E2</b> scrie <code>=IF(C2="da";"merge";"nu merge")</code> și apasă <kbd>Enter</kbd>, apoi la fel în E3, E4 și E5, cu numărul rândului schimbat. Trebuie să vezi <b>merge</b>, <b>nu merge</b>, <b>merge</b>, <b>merge</b>. Ghilimelele sunt cele drepte.',
+  'Testează la limită: în <b>B5</b> scrie <b>14</b> și apasă <kbd>Enter</kbd>. D5 trebuie să devină <b>20</b>. Apoi scrie la loc <b>12</b>: D5 arată iar 10.',
+  '<b>Ce calculez.</b> În <b>G2</b> scrie <code>=SUM(D2:D5)</code> (lecția 8) și apasă <kbd>Enter</kbd>. Trebuie să apară <b>60</b>: atât costă toate biletele.',
+  '<b>Ce decid.</b> În <b>G4</b> scrie <code>=IF(G2&lt;=G3;"da";"nu")</code> și apasă <kbd>Enter</kbd>. Apare <b>nu</b>: biletele costă 60 de lei, iar în fond sunt 50. Testează la limită: în G3 scrie <b>60</b>; G4 trebuie să arate <b>da</b>. Apoi pune la loc 50.',
+  'Salvează o copie cu numele tău: apasă <kbd>F12</kbd> (pe unele laptopuri <kbd>Fn</kbd>+<kbd>F12</kbd>), adică Salvare ca (Save As). Alege <b>Documente</b> în stânga, scrie la <b>File name</b> numele, prenumele și clasa ta, de exemplu <code>Popescu_Ana_8A_lectia9</code>, și apasă <b>Save</b>. Dacă apare <i>Confirm Save As</i> („… already exists. Do you want to replace it?”), fișierul e al unui coleg: apasă <b>No</b> și pune o cifră la sfârșitul numelui tău, de exemplu <code>Popescu_Ana_8A_lectia9_2</code>.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m2_l09',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/viii/, „Lecția 9”, pasul din laborator înainte de verificare
+  titlu:'Funcția de decizie. Rezolv o situație-problemă cu tabelul',
+  marca:'Lecția <b>9</b> · Excel · a VIII-a',
+  h1:'Funcția de decizie. Rezolv o situație-problemă cu tabelul',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U1', unitateTitlu:'Calcul tabelar',
+  competente:['CS.1.1','CS.3.1'], lectii:'9',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VIII-U1 „Calcul tabelar” · lecția 9 · conținutul: „Funcții specifice aplicaţiei de calcul tabelar pentru sumă, maxim, minim, medie aritmetică şi decizie”',
+  intro:`<p>Lecția 9 din modulul 2. Înveți funcția IF, care alege singură ce scrie într-o celulă după o condiție, apoi rezolvi o problemă din viață cu tabelul: ce date am, ce calculez, ce decid.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 2, „Interfața aplicației de calcul tabelar. Structura unui registru”: celula, <kbd>Enter</kbd>, bara de formule;</li>
+<li>lecția 3, „Operații cu registrul și cu foile de calcul”: Salvare ca (<kbd>F12</kbd>) cu numele tău și <i>Confirm Save As</i> → No;</li>
+<li>lecția 4, „Adresa de celulă. Selectare, copiere, mutare, ștergere”: adresa B2 și zona B2:C2;</li>
+<li>lecția 5, „Tipuri de date: numeric, text, dată calendaristică”: numărul stă la dreapta, textul la stânga, zecimala se scrie cu virgulă (4,5);</li>
+<li>lecția 7, „Formule de calcul cu operatori aritmetici”: formula începe cu =, codul <code>#NAME?</code> înseamnă un cuvânt pe care Excel nu-l cunoaște;</li>
+<li>lecția 8, „Funcții: sumă, maxim, minim, medie aritmetică”: <code>=SUM(B2:B4)</code>, <code>=AVERAGE(B2:C2)</code> și <code>=MAX(B2:B4)</code>, cu zona între paranteze (argumentul funcției);</li>
+<li>clasa a V-a, lecția 29: structura alternativă (decizia): dacă o condiție e adevărată, faci un lucru; altfel, faci altul.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după pagina „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”. Apoi atelierul, într-o foaie care se poartă ca Excel-ul pe setări românești, apoi aceleași lucruri la calculatorul din laborator, iar la sfârșit 5 întrebări.</p>`,
+  banda:'<span>Condiția</span><span class="da">Adevărată</span><span class="nu">Falsă</span><span>media e cel puțin 5?</span><span class="da">promovat</span><span class="nu">nepromovat</span>',
+  tipuri:{excelx:ExcelD},
+  nivele:[
+  {t:'Funcția de decizie. Rezolv o situație-problemă cu tabelul', final:true, lectii:[9], continuturi:[P.decizie],
+   obiectiv:'scrii cu funcția IF o decizie care se ia singură după o condiție, pe date sau pe rezultatul altei formule, și o verifici cu valori de la limită.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>La un carusel, lângă intrare, stă un panou cu o săgeată. Regula e simplă: <b>dacă</b> ești cel puțin cât săgeata, urci; <b>altfel</b>, mai aștepți un an. Omul de la intrare nu socotește nimic: compară și decide.</p>
+<p>În clasa a V-a ai numit asta <mark>decizie</mark> (structura alternativă): o condiție și două drumuri. Excel poate lua singur astfel de decizii, într-o celulă: scrie „promovat” sau „nepromovat”, „merge” sau „nu merge”. Azi înveți funcția care face asta.</p>
+${fig(IMG9+'inaltime-carusel.webp',600,360,'Panou negru la un carusel, cu o săgeată galbenă la o anumită înălțime și textul You must be this tall to ride this ride','Panou la un carusel: „Trebuie să fii cel puțin atât de înalt ca să urci.” Fotografie: Rick Obst, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>, <a href="https://commons.wikimedia.org/wiki/File:You_cannot_be_taller_than_this_to_ride_sign.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (decupată).')}`},
+
+    /* ---------- PASUL 1: condiția ---------- */
+    {t:'Condiția: o comparație adevărată sau falsă',
+     text:`<p>Orice decizie pornește de la o <mark>condiție</mark>: o comparație care e adevărată sau falsă. În Excel o scrii cu semnele de comparare:</p>
+<ul><li><code>&gt;</code> mai mare, <code>&lt;</code> mai mic;</li>
+<li><code>&gt;=</code> mai mare sau egal, <code>&lt;=</code> mai mic sau egal: două semne lipite, întâi &gt; sau &lt;;</li>
+<li><code>=</code> egal, <code>&lt;&gt;</code> diferit.</li></ul>
+<p>Scrisă singură, după semnul = al formulei, condiția dă <b>TRUE</b> (adevărat) sau <b>FALSE</b> (fals). De exemplu, <code>=B2&gt;=5</code> întreabă: „în B2 e cel puțin 5?”.</p>`,
+     exemplu:`${fig(IMG9+'conditie.webp',690,187,'Excel: Elev, Media, Trece?; Ana 7 dă TRUE, Radu 4 dă FALSE, Ioana 5 dă TRUE; C2 e aleasă, iar bara de formule arată =B2>=5','În C2 e =B2&gt;=5. Ana are 7: TRUE. Radu are 4: FALSE.')}
+<p>Ioana are exact 5: „5 mai mare sau egal cu 5” e adevărat, deci TRUE. Cu <code>=B4&gt;5</code> ar fi FALSE: 5 nu e mai mare decât 5.</p>
+<p>Pe tastatura englezească, &lt; și &gt; sunt <kbd>Shift</kbd> + tasta virgulă și <kbd>Shift</kbd> + tasta punct. Pe cea românească: <kbd>AltGr</kbd> + aceleași taste.</p>`,
+     altfel:`<p>E ca la matematică: „7 ≥ 5” e o propoziție adevărată, iar „4 ≥ 5” e falsă. Pe tastatură nu există semnul ≥, așa că Excel îl scrie din două semne: întâi &gt;, apoi =.</p>`,
+     incearca:{t:'excelx',q:'La proba de alergare trece cine face cel mult 15 secunde. Scrie în <b>C2</b> condiția care întreabă dacă timpul din B2 e mai mic sau egal cu 15, apoi apasă <kbd>Enter</kbd>.',
+       cols:3,rows:3,cells:{A1:'Elev',B1:'Timp (s)',C1:'Trece?',A2:'Maria',B2:14},panglica:false,
+       verifica:{formule:{C2:'=B2<=15'}},variants:[{B2:15},{B2:16},{B2:9}],
+       ajutor:'Începi cu =, apoi adresa B2, apoi semnul „mai mic sau egal”: întâi &lt;, apoi =. La sfârșit, 15.',
+       why:'<code>=B2&lt;=15</code> arată TRUE: 14 e mai mic decât 15. Și la exact 15 ar fi TRUE, fiindcă semnul spune „sau egal”.'},
+     inca:[
+      {t:'match',q:'Potrivește fiecare semn de comparare cu ce înseamnă.',pairs:[['>=','mai mare sau egal'],['<=','mai mic sau egal'],['<>','diferit'],['=','egal']],
+       ajutor:'Semnul cu două bucăți „&lt;&gt;” arată în ambele părți: nu e nici mai mic, nici mai mare, ci altfel.',why:'&gt;= și &lt;= au „sau egal” în coada lor; &lt;&gt; înseamnă diferit, iar = înseamnă egal.'},
+      {t:'excelx',q:'La un joc, ai terminat dacă ai 0 vieți. Scrie în <b>C2</b> condiția care întreabă dacă numărul de vieți din B2 este <b>diferit</b> de 0, adică mai poți juca.',
+       cols:3,rows:3,cells:{A1:'Jucător',B1:'Vieți',C1:'Mai joacă?',A2:'Dan',B2:3},panglica:false,
+       verifica:{formule:{C2:'=B2<>0'}},variants:[{B2:0},{B2:1}],
+       ajutor:'Diferit se scrie cu două semne: &lt; și apoi &gt;.',why:'<code>=B2&lt;&gt;0</code> arată TRUE cât timp Dan mai are vieți și FALSE când ajunge la 0.'}
+     ]},
+
+    /* ---------- PASUL 2: funcția IF ---------- */
+    {t:'Funcția IF: condiția și cele două rezultate',
+     text:`<p>Funcția <mark>IF</mark> („dacă”) alege singură ce scrie în celulă. Între paranteze are trei părți (argumente): condiția, ce scrie dacă e adevărată, ce scrie dacă e falsă.</p>
+<p>Exemplu: <code>=IF(B2&gt;=5;"promovat";"nepromovat")</code>. Dacă media din B2 e cel puțin 5, celula arată promovat; altfel, nepromovat. Textul stă între ghilimele (vezi pasul următor).</p>
+<p>Funcția se numește IF și în Excel-ul în română. Pe calculatoarele cu setări românești, părțile se despart cu <code>;</code>. Pe cele cu setări englezești, cu virgulă: <code>=IF(B2&gt;=5,"promovat","nepromovat")</code>.</p>`,
+     exemplu:`${fig(IMG9+'if-promovat.webp',690,187,'Excel: Ana 7 promovat, Radu 4 nepromovat, Ioana 5 promovat; C2 aleasă, bara de formule arată =IF(B2>=5;"promovat";"nepromovat")','În C2 se vede rezultatul, promovat; în bara de formule, funcția.')}
+<p>Ioana are exact 5, deci promovat.</p>
+<p>Tastele: <code>;</code> e tasta din dreapta lui L pe tastatura englezească; pe cea românească, <kbd>Shift</kbd> + tasta virgulă. Ghilimeaua dreaptă ": pe tastatura englezească, <kbd>Shift</kbd> + tasta din stânga lui <kbd>Enter</kbd>. Dacă tasta aceea scrie ț, tastatura e românească: <kbd>Shift</kbd> + <kbd>AltGr</kbd> + aceeași tastă, iar dacă așa nu apare nimic, <kbd>Shift</kbd> + <kbd>2</kbd>.</p>`,
+     altfel:`<p>E regula de la carusel, scrisă pentru Excel: condiția e „ești cel puțin cât săgeata?”, prima valoare e „urci”, a doua e „mai aștepți”. Excel citește condiția și alege una dintre cele două.</p>`,
+     incearca:{t:'excelx',q:'La bibliotecă, o carte e adusă la timp dacă a stat la tine cel mult 14 zile. Scrie în <b>C2</b> funcția IF care arată <b>la timp</b> dacă numărul de zile din B2 e cel mult 14, altfel <b>cu întârziere</b>.',
+       cols:3,rows:3,cells:{A1:'Carte',B1:'Zile',C1:'Adusă',A2:'Amintiri',B2:10},panglica:false,
+       verifica:{formule:{C2:'=IF(B2<=14;"la timp";"cu întârziere")'}},variants:[{B2:14},{B2:15},{B2:30}],
+       ajutor:'Începi cu =IF( , apoi condiția B2&lt;=14, apoi ; și "la timp", apoi ; și "cu întârziere", apoi ).',
+       why:'<code>=IF(B2&lt;=14;"la timp";"cu întârziere")</code> arată la timp: 10 zile sunt mai puțin de 14. La 15 zile ar arăta cu întârziere.'},
+     inca:[
+      {t:'choice',q:'În B2 e 5. Ce arată o celulă cu formula <code>=IF(B2&gt;=5;"promovat";"nepromovat")</code>?',o:['promovat','nepromovat','TRUE','#NAME?'],ok:0,
+       ajutor:'Condiția e „mai mare sau egal”. 5 e egal cu 5?',why:'5 &gt;= 5 e adevărat, deci IF alege prima valoare: promovat. TRUE ar apărea doar dacă ai scrie condiția singură, fără IF.'},
+      {t:'excelx',q:'Magazinul pune eticheta <b>reducere</b> pe produsele care costă peste 100 de lei și <b>preț întreg</b> pe celelalte. Scrie în <b>C2</b> funcția IF.',
+       cols:3,rows:3,cells:{A1:'Produs',B1:'Preț',C1:'Eticheta',A2:'Ghiozdan',B2:120},panglica:false,
+       verifica:{formule:{C2:'=IF(B2>100;"reducere";"preț întreg")'}},variants:[{B2:100},{B2:101},{B2:60}],
+       ajutor:'„Peste 100” înseamnă mai mare decât 100, fără egal: semnul &gt;.',why:'<code>=IF(B2&gt;100;"reducere";"preț întreg")</code>. La exact 100 de lei, eticheta e preț întreg: 100 nu e peste 100.'}
+     ]},
+
+    /* ---------- PASUL 3: textul între ghilimele drepte ---------- */
+    {t:'Textul din rezultat: între ghilimele drepte',
+     text:`<p>Un text din formulă, ca promovat, se scrie între <mark>ghilimele drepte</mark>: <code>"promovat"</code>. Așa știe Excel că e un text, nu o adresă. Și în condiție: <code>C2="da"</code> întreabă dacă în C2 scrie da (literele mari sau mici nu contează). Un număr se scrie fără ghilimele: <code>=IF(B2&gt;=100;0;15)</code> arată 0 sau 15.</p>
+<p>Trei greșeli dese:</p>
+<ul><li>fără ghilimele, <code>=IF(B2&gt;=5;promovat;nepromovat)</code> dă <code>#NAME?</code>: Excel caută un nume pe care nu-l cunoaște;</li>
+<li>cu ghilimelele românești „ ”, Excel nu primește formula: apare fereastra <i>There's a problem with this formula</i>; apeși OK și pui ghilimele drepte;</li>
+<li><code>=DACĂ(…)</code> dă <code>#NAME?</code>: funcția se numește IF.</li></ul>`,
+     exemplu:`${fig(IMG9+'if-fara-ghilimele.webp',690,140,'Excel: C2 arată #NAME?, iar bara de formule arată =IF(B2>=5;promovat;nepromovat), fără ghilimele','Fără ghilimele: #NAME?.')}
+${fig(IMG9+'if-daca.webp',690,140,'Excel: C2 arată #NAME?, iar bara de formule arată =DACĂ(B2>=5;"promovat";"nepromovat")','DACĂ în loc de IF: tot #NAME?.')}
+<p>„ ” de pe tasta din stânga lui 1 nu merg în formule; ghilimeaua dreaptă e cea de la pasul 3. Dacă după " îți apare ä sau ë (se întâmplă pe unele tastaturi, înaintea unei vocale), apasă <kbd>Backspace</kbd>, apoi " și <kbd>Spațiu</kbd>: rămâne ghilimeaua singură. Abia apoi scrie textul.</p>`,
+     altfel:`<p>Ghilimelele sunt ca un plic: ce e înăuntru ajunge exact cum l-ai scris. Fără plic, Excel crede că promovat e numele a ceva din registru, îl caută și nu-l găsește.</p>`,
+     incearca:{t:'excelx',q:'C2 arată <code>#NAME?</code>. Repară formula din C2, ca să arate <b>merge</b> dacă în B2 scrie da și <b>nu merge</b> altfel.',
+       cols:3,rows:3,cells:{A1:'Elev',B1:'Acord',C1:'Excursie',A2:'Ana',B2:'da',C2:'=IF(B2="da";merge;nu merge)'},panglica:false,
+       verifica:{formule:{C2:'=IF(B2="da";"merge";"nu merge")'}},variants:[{B2:'nu'},{B2:'Da'}],
+       ajutor:'Cuvintele merge și nu merge sunt texte: pune fiecare între ghilimele drepte, ca "da".',
+       why:'<code>=IF(B2="da";"merge";"nu merge")</code> arată merge. Excel nu face diferență între da și DA: și cu DA ar arăta merge.'},
+     inca:[
+      {t:'excelx',q:'Transportul costă 15 lei, dar e gratuit, adică 0 lei, pentru comenzile de cel puțin 100 de lei. Scrie în <b>C2</b> funcția IF care arată costul transportului.',
+       cols:3,rows:3,cells:{A1:'Comanda',B1:'Suma',C1:'Transport',A2:'Carte',B2:80},panglica:false,
+       verifica:{formule:{C2:'=IF(B2>=100;0;15)'}},variants:[{B2:100},{B2:99},{B2:250}],
+       ajutor:'Rezultatele sunt numere, deci le scrii fără ghilimele: 0 și 15.',why:'<code>=IF(B2&gt;=100;0;15)</code> arată 15, la dreapta, ca orice număr. La 100 de lei ar arăta 0.'},
+      {t:'choice',q:'Care formulă o primește Excel pe setări românești și arată promovat sau nepromovat?',o:['=IF(B2>=5;"promovat";"nepromovat")','=IF(B2>=5;„promovat”;„nepromovat”)','=DACĂ(B2>=5;"promovat";"nepromovat")','=IF(B2>=5;promovat;nepromovat)'],ok:0,
+       ajutor:'Caută numele în engleză și ghilimelele drepte.',why:'Doar prima e bună. Cu „ ” Excel nu primește formula; DACĂ și textul fără ghilimele dau #NAME?.'}
+     ]},
+
+    /* ---------- PASUL 4: condiția pe rezultatul altei formule ---------- */
+    {t:'Condiția pe rezultatul altei formule',
+     text:`<p>Condiția poate folosi o celulă în care e deja o formulă. Media Anei se calculează în D2, cu <code>=AVERAGE(B2:C2)</code> (lecția 8). Decizia stă în E2: <code>=IF(D2&gt;=5;"promovat";"corigent")</code>.</p>
+<p>Lanțul lucrează singur: schimbi o notă, se reface media, iar decizia se reface după medie.</p>
+<p>Un număr cu zecimale se scrie în condiție cu virgulă, ca în celule: <code>=IF(B2&gt;=3,5;"calificat";"necalificat")</code>. Cu punct (3.5), Excel nu primește formula. Pe setări englezești e invers: 3.5, iar între părți, virgulă.</p>`,
+     exemplu:`${fig(IMG9+'medie.webp',690,164,'Excel: Ana are 4 și 5, media 4,5 în D2, iar E2 arată corigent; Radu are 6 și 9, media 7,5, promovat; bara arată =IF(D2>=5;"promovat";"corigent")','Media Anei e 4,5, deci E2 arată corigent.')}
+${fig(IMG9+'medie-dupa.webp',690,164,'Excel: după ce nota 2 a Anei devine 6, media din D2 e 5, iar E2 arată promovat','Nota 2 devine 6: media e 5, iar E2 arată singur promovat.')}`,
+     altfel:`<p>E ca la catalog: întâi se face media, apoi, după medie, se vede dacă elevul promovează. Excel face la fel: E2 nu se uită la note, ci la rezultatul din D2.</p>`,
+     incearca:{t:'excelx',q:'În D2 e deja media lui Radu, calculată cu <code>=AVERAGE(B2:C2)</code>. Scrie în <b>E2</b> funcția IF care arată <b>promovat</b> dacă media din D2 e cel puțin 5, altfel <b>corigent</b>.',
+       cols:5,rows:3,cells:{A1:'Elev',B1:'Nota 1',C1:'Nota 2',D1:'Media',E1:'Situația',A2:'Radu',B2:6,C2:9,D2:'=AVERAGE(B2:C2)'},panglica:false,
+       verifica:{formule:{E2:'=IF(D2>=5;"promovat";"corigent")'}},variants:[{B2:4,C2:5},{B2:5,C2:5},{B2:4,C2:6}],
+       ajutor:'Condiția folosește adresa mediei, D2: D2&gt;=5.',
+       why:'<code>=IF(D2&gt;=5;"promovat";"corigent")</code> arată promovat: media e 7,5. Schimbă o notă și decizia se schimbă singură.'},
+     inca:[
+      {t:'excelx',q:'La săritura în lungime, cine sare cel puțin 3,5 metri se califică. Scrie în <b>C2</b> funcția IF care arată <b>calificat</b> sau <b>necalificat</b>.',
+       cols:3,rows:3,cells:{A1:'Elev',B1:'Săritura (m)',C1:'Rezultat',A2:'Ioana',B2:3.6},panglica:false,
+       verifica:{formule:{C2:'=IF(B2>=3,5;"calificat";"necalificat")'}},variants:[{B2:3.5},{B2:3.45},{B2:4}],
+       ajutor:'Pe setări românești, trei virgulă cinci se scrie 3,5, cu virgulă.',why:'<code>=IF(B2&gt;=3,5;"calificat";"necalificat")</code> arată calificat. Și la exact 3,5 e calificat.'},
+      {t:'choice',q:'În D2 e <code>=AVERAGE(B2:C2)</code>, iar notele sunt 4 și 6. Ce arată E2 cu <code>=IF(D2&gt;5;"promovat";"corigent")</code>?',o:['corigent','promovat','5','FALSE'],ok:0,
+       ajutor:'Calculează întâi media. Apoi citește semnul: e cu „sau egal”?',why:'Media e 5, iar 5 &gt; 5 e fals, deci E2 arată corigent. Cu &gt;= ar fi arătat promovat.'}
+     ]},
+
+    /* ---------- PASUL 5: situația-problemă, pe pași ---------- */
+    {t:'Situația-problemă: ce date am, ce calculez, ce decid',
+     text:`<p>O problemă din viață o rezolvi cu tabelul în trei pași:</p>
+<ol class="pasi-met"><li><b>Ce date am?</b> Le scrii, fiecare în celula ei: cheltuielile și bugetul.</li>
+<li><b>Ce calculez?</b> Totalul, cu o formulă: <code>=SUM(B2:B4)</code>.</li>
+<li><b>Ce decid?</b> Cu IF, pe rezultatul calculului: <code>=IF(B5&lt;=B6;"ne ajung banii";"nu ne ajung")</code>.</li></ol>
+<p>Apoi <mark>testezi la limită</mark>: pui în date exact valoarea din condiție (aici, un total egal cu bugetul) și verifici că decizia e cea dorită. Dacă nu e, corectezi semnul, de exemplu &lt; în &lt;=.</p>`,
+     exemplu:`${fig(IMG9+'buget.webp',690,260,'Excel: Autocar 900, Bilete 300, Masa 450, Total 1650, Bugetul 1800, Decizia ne ajung banii; bara arată =IF(B5<=B6;"ne ajung banii";"nu ne ajung")','Totalul, 1650, e sub buget: ne ajung banii.')}
+<p>Testul la limită: masa costă 600 de lei în loc de 450. Totalul devine 1800, exact cât bugetul. Cu &lt;= decizia rămâne „ne ajung banii”; cu &lt; ar scrie greșit „nu ne ajung”.</p>`,
+     altfel:`<p>E ca la cumpărături: ai lista (datele), aduni prețurile (calculezi), apoi te uiți în portofel (decizi). Testul la limită e întrebarea: dacă totalul e fix cât ai în portofel, îți ajung banii? Da, deci condiția trebuie să aibă „sau egal”.</p>`,
+     incearca:{t:'excelx',q:'Totalul din B5 e exact cât bugetul din B6, dar B7 scrie <b>nu ne ajung</b>. Corectează condiția din B7, ca banii să ajungă și când totalul e egal cu bugetul.',
+       cols:2,rows:7,cells:{A1:'Cheltuiala',B1:'Lei',A2:'Autocar',B2:900,A3:'Bilete',B3:300,A4:'Masa',B4:600,A5:'Total',B5:'=SUM(B2:B4)',A6:'Bugetul',B6:1800,A7:'Decizia',B7:'=IF(B5<B6;"ne ajung banii";"nu ne ajung")'},panglica:false,
+       verifica:{formule:{B7:'=IF(B5<=B6;"ne ajung banii";"nu ne ajung")'}},variants:[{B4:650},{B4:500},{B4:600}],
+       ajutor:'Semnul &lt; nu lasă totalul să fie egal cu bugetul. Ce semn spune „mai mic sau egal”?',
+       why:'<code>=IF(B5&lt;=B6;"ne ajung banii";"nu ne ajung")</code>: la 1800 lei, cât bugetul, banii ajung. La 1850 ar scrie nu ne ajung.'},
+     inca:[
+      {t:'choice',q:'La un film intră copiii de cel puțin 12 ani. Ce vârstă pui în tabel ca să testezi condiția la limită?',o:['12','11','15','0'],ok:0,
+       ajutor:'Limita e chiar numărul din regulă.',why:'La 12 ani copilul trebuie să intre. Dacă formula ta îl oprește, semnul e greșit (&gt; în loc de &gt;=).'}
+     ]}
+   ],
+   atelier:{t:'excelx',titlu:'Atelier: excursia clasei',
+    intro:`<p>Foaia de mai jos se poartă ca Excel-ul pe setări românești. Deasupra ei sunt <strong>testele</strong>. Fiecare se bifează singur când formulele tale decid bine, și pe datele din foaie, și la limită, și pe date schimbate. Un rezultat scris de mână nu bifează testul. La final apasă <b>Verifică</b>.</p>`,
+    q:'Clasa merge la muzeu. Biletul costă 10 lei pentru elevii sub 14 ani și 20 de lei pentru cei de 14 ani sau mai mari. Merge doar cine are acordul părinților. <b>Ce date am:</b> vârsta în coloana B, acordul (da sau nu) în coloana C. <b>1.</b> În <b>D2</b>, <b>D3</b> și <b>D4</b> scrie funcția IF care arată prețul biletului, 10 sau 20. <b>2.</b> În <b>E2</b>, <b>E3</b> și <b>E4</b> scrie funcția IF care arată <b>merge</b> dacă acordul e da, altfel <b>nu merge</b>. <b>3. Ce calculez:</b> în <b>D5</b>, cu SUM, cât costă toate biletele. Ion are fix 14 ani: biletul lui trebuie să fie 20.',
+    cols:5,rows:5,panglica:false,
+    cells:{A1:'Elev',B1:'Vârsta',C1:'Acord',D1:'Bilet',E1:'Merge?',A2:'Ana',B2:13,C2:'da',A3:'Ion',B3:14,C3:'nu',A4:'Eva',B4:15,C4:'da',A5:'Total'},
+    verifica:{formule:{D2:'=IF(B2<14;10;20)',D3:'=IF(B3<14;10;20)',D4:'=IF(B4<14;10;20)',E2:'=IF(C2="da";"merge";"nu merge")',E3:'=IF(C3="da";"merge";"nu merge")',E4:'=IF(C4="da";"merge";"nu merge")',D5:'=SUM(D2:D4)'}},
+    variants:[{B2:14,B3:13,B4:14},{C2:'nu',C3:'da',C4:'nu'},{B2:12,B3:15,B4:13}],
+    teste:[
+     {ce:'D2, D3 și D4 arată prețul biletului după vârstă',formule:{D2:'=IF(B2<14;10;20)',D3:'=IF(B3<14;10;20)',D4:'=IF(B4<14;10;20)'},variante:[{B2:14,B3:13,B4:14},{B2:12,B3:15,B4:13}]},
+     {ce:'La limită: cine are fix 14 ani plătește 20 de lei',formule:{D2:'=IF(B2<14;10;20)',D3:'=IF(B3<14;10;20)',D4:'=IF(B4<14;10;20)'},variante:[{B2:14,B3:14,B4:14},{B2:13,B3:13,B4:13}]},
+     {ce:'E2, E3 și E4 arată merge doar cu acordul părinților',formule:{E2:'=IF(C2="da";"merge";"nu merge")',E3:'=IF(C3="da";"merge";"nu merge")',E4:'=IF(C4="da";"merge";"nu merge")'},variante:[{C2:'nu',C3:'da',C4:'nu'},{C2:'DA',C3:'Da',C4:'da'}]},
+     {ce:'D5 adună biletele cu SUM',formule:{D5:'=SUM(D2:D4)'},functii:{D5:'SUM'}}],
+    functii:{D5:'SUM'},
+    ajutor:'D2: =IF(B2&lt;14;10;20), apoi la fel în D3 și D4, cu numărul rândului. E2: =IF(C2="da";"merge";"nu merge"), la fel în E3 și E4. D5: =SUM(D2:D4).',
+    why:'Ana plătește 10 lei, Ion și Eva câte 20: în total 50 de lei. Merg Ana și Eva; Ion nu are acordul. Schimbă o vârstă sau un acord și vezi cum se refac deciziile.',
+    inca:[
+     {t:'excelx',titlu:'Atelier: proba de sărituri',q:'La proba de săritură în lungime se califică cine sare cel puțin 3,5 metri. <b>1.</b> În <b>C2</b>, <b>C3</b> și <b>C4</b> scrie funcția IF care arată <b>calificat</b> sau <b>necalificat</b>. <b>2.</b> În <b>B5</b> calculează, cu MAX (lecția 8), cea mai lungă săritură. Radu a sărit fix 3,5 m: el se califică.',
+      cols:3,rows:5,panglica:false,
+      cells:{A1:'Elev',B1:'Săritura (m)',C1:'Rezultat',A2:'Ioana',B2:3.6,A3:'Radu',B3:3.5,A4:'Dan',B4:3.45,A5:'Cea mai lungă'},
+      verifica:{formule:{C2:'=IF(B2>=3,5;"calificat";"necalificat")',C3:'=IF(B3>=3,5;"calificat";"necalificat")',C4:'=IF(B4>=3,5;"calificat";"necalificat")',B5:'=MAX(B2:B4)'}},
+      variants:[{B2:3.5,B3:3.4,B4:3.5},{B2:2.9,B3:3.51,B4:4}],
+      teste:[
+       {ce:'C2, C3 și C4 decid calificarea',formule:{C2:'=IF(B2>=3,5;"calificat";"necalificat")',C3:'=IF(B3>=3,5;"calificat";"necalificat")',C4:'=IF(B4>=3,5;"calificat";"necalificat")'},variante:[{B2:3.5,B3:3.4,B4:3.5},{B2:2.9,B3:3.51,B4:4}]},
+       {ce:'B5 arată cea mai lungă săritură, cu MAX',formule:{B5:'=MAX(B2:B4)'},functii:{B5:'MAX'}}],
+      functii:{B5:'MAX'},
+      ajutor:'C2: =IF(B2&gt;=3,5;"calificat";"necalificat"), cu virgulă la 3,5. B5: =MAX(B2:B4).',
+      why:'Ioana și Radu se califică, Dan nu. Cea mai lungă săritură e 3,6 m.'}
+    ]},
+   qs:[
+    {t:'choice',q:'În B2 e 12. Ce arată o celulă cu formula <b>=IF(B2&gt;=12;"da";"nu")</b>?',o:['da','nu','TRUE','#NAME?'],ok:0,
+     ajutor:'12 e mai mare sau egal cu 12?',why:'12 &gt;= 12 e adevărat, deci IF alege prima valoare: da.'},
+    {t:'excelx',q:'La concursul de lectură primește diplomă cine a citit cel puțin 10 cărți. Scrie în <b>C2</b> funcția IF care arată <b>diplomă</b> sau <b>mai citește</b>.',
+     cols:3,rows:3,cells:{A1:'Elev',B1:'Cărți',C1:'Premiu',A2:'Luca',B2:12},panglica:false,
+     verifica:{formule:{C2:'=IF(B2>=10;"diplomă";"mai citește")'}},variants:[{B2:10},{B2:9},{B2:3}],
+     ajutor:'„Cel puțin 10” înseamnă mai mare sau egal cu 10. Textele stau între ghilimele drepte.',
+     why:'<code>=IF(B2&gt;=10;"diplomă";"mai citește")</code> arată diplomă. Și la exact 10 cărți.'},
+    {t:'tf',q:'Pe o tastatură românească, Maria scrie <b>=IF(C2=„da”;"merge";"nu merge")</b>, cu ghilimelele de pe tasta din stânga lui 1. Excel primește formula și arată merge.',ok:false,
+     ajutor:'Ce fel de ghilimele primește Excel într-o formulă?',why:'Fals. Cu ghilimelele românești „ ” Excel nu primește formula: apare fereastra <i>There\'s a problem with this formula</i>. Corect e <code>"da"</code>, cu ghilimele drepte.'},
+    {t:'excelx',q:'În D2 e media, calculată cu <code>=AVERAGE(B2:C2)</code>. Bursa se dă de la media 9 în sus. Scrie în <b>E2</b> funcția IF care arată <b>bursă</b> sau <b>fără bursă</b>.',
+     cols:5,rows:3,cells:{A1:'Elev',B1:'Nota 1',C1:'Nota 2',D1:'Media',E1:'Bursa',A2:'Irina',B2:10,C2:9,D2:'=AVERAGE(B2:C2)'},panglica:false,
+     verifica:{formule:{E2:'=IF(D2>=9;"bursă";"fără bursă")'}},variants:[{B2:9,C2:9},{B2:9,C2:8},{B2:8,C2:10}],
+     ajutor:'Condiția e pe media din D2: cel puțin 9.',why:'<code>=IF(D2&gt;=9;"bursă";"fără bursă")</code> arată bursă: media e 9,5.'},
+    {t:'choice',q:'La bazin intră copiii de cel puțin 7 ani. În C2 e <b>=IF(B2&gt;7;"intră";"nu intră")</b>. Ce arată testul la limită?',o:['Cu 7 în B2 apare nu intră, deci semnul trebuie să fie >=','Cu 8 în B2 apare intră, deci formula e bună','Cu 6 în B2 apare nu intră, deci formula e bună','Testul la limită nu se face cu vârste'],ok:0,
+     ajutor:'Limita e chiar numărul din regulă. Ce arată formula pentru el?',why:'Un copil de exact 7 ani are voie, dar 7 &gt; 7 e fals. Semnul corect e &gt;=.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Excel-ul adevărat',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:`<p>Faci aceeași excursie în Excel, pe calculator, fără ajutor: la fiecare pas scrie ce trebuie să vezi, ca să verifici singur.</p>
+${fig(IMG9+'laborator-gata.webp',690,212,'Excel: registrul excursia_lectia9.xlsx completat: biletele 10, 20, 20, 10; Merge? merge, nu merge, merge, merge; Total bilete 60, Fondul clasei 50, Ajung banii? nu','Așa arată registrul la sfârșit (cu 50 de lei în fond).')}
+${fig(IMG3+'confirma-inlocuire.webp',458,176,'Excel: fereastra Confirm Save As, cu întrebarea already exists, do you want to replace it și butoanele Yes și No','La Salvare ca, dacă numele există deja: apeși No și schimbi numele.')}`,
+    pasi:PROVOCARE},
+  diploma:{titlu:'Cel care decide cu tabelul',
+    rezumat:'a scris condiții cu semnele de comparare, a folosit funcția IF cu trei părți despărțite de punct și virgulă, a pus textele între ghilimele drepte, a luat decizii pe rezultatul altor formule și a rezolvat o situație-problemă cu tabelul (ce date am, ce calculez, ce decid), testând-o la limită',
+    aplicatie:'Excel-ul adevărat',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
