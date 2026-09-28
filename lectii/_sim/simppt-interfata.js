@@ -21,6 +21,9 @@
      ultimul); clicul de pe ecranul negru te întoarce pe diapozitivul ales înainte de expunere;
    - orice alt buton din panglică: spune pe ecran cum se numește, pe ce filă și în ce grup e (pe telefon nu există
      „ții mouse-ul pe el”), iar testele pot cere „găsește butonul X”.
+   - F5 / Shift+F5 sunt prinse ORIUNDE în simulator, și cu cursorul în zona de note (textul scris rămâne, expunerea
+     pornește), ca să nu ajungă la browser, care ar reîncărca pagina (GRAV, judecătorul VI/9, 28.09; probă cu taste
+     Windows reale: lectii/vi/m1-l02/_proba/proba_f5_headful.py, înainte 2 FAIL / după 0).
    ABATERI SPUSE PE ECRAN: pe diapozitiv nu se scrie (lecția 4); Reading View și celelalte vizualizări de pe fila View nu
    sunt simulate (spun asta la clic); fila File e lecția 3; filele Draw, Record, Review, Help n-au butoane aici.
    Verificarea e pe STAREA ferestrei (teste numite), nu pe drumul clicurilor: orice drum bun trece.
@@ -393,9 +396,17 @@ function render(Q,body,api){
   const laTasta=e=>{
     if(!root.isConnected){opreste();return}
     const t=e.target,k=e.key;
+    /* F5 / Shift+F5 ÎNAINTE de orice altă regulă: prinse oriunde în simulator, INCLUSIV cu cursorul în zona de note
+       (GRAV găsit de judecătorul VI/9: tasta ajungea la browser, care reîncărca pagina). Ca în PowerPoint, textul scris în
+       note rămâne, iar expunerea pornește. Câmpurile paginii din afara simulatorului (de ex. numele elevului) rămân ale paginii. */
+    if(k==='F5'){
+      if(t&&t.closest&&!root.contains(t)&&t.closest('input,textarea,select,[contenteditable="true"]'))return;
+      e.preventDefault();if(api.done())return;
+      const ta=app.querySelector('textarea.spi-in');
+      if(S.edit&&ta){slideCur(S).note=ta.value;S.edit=false}
+      return gest(e.shiftKey?'show:curent':'f5')}
     if(t&&t.closest&&t.closest('textarea.spi-in')){if(k==='Escape'){e.preventDefault();t.blur()}return}
     if(t&&t.closest&&!root.contains(t)&&t.closest('input,textarea,select,[contenteditable="true"]'))return;
-    if(k==='F5'){e.preventDefault();if(api.done())return;return gest(e.shiftKey?'show:curent':'f5')}
     if(api.done())return;
     if(S.show){
       if(k==='Escape'){e.preventDefault();return gest('esc')}
