@@ -47,6 +47,10 @@ Separatorul depinde de setările Windows-ului, nu de limba Office-ului.
 | 20 | PowerPoint | Fila **Expunere diapozitive**: al doilea buton, apoi butonul pentru prezentarea pe internet | „De la diapozitivul curent”, „Prezentare online” | altceva: ____ | ~1 |
 | 21 | Excel | Scrieți `=FIND("b";"abc")` și apăsați Enter | `2` | `#NAME?` | ~1 |
 | 22 | PowerPoint | Fila **Inserare**: butonul pentru albumul de fotografii | „Album foto” | altceva: ____ | 0 |
+| 23 | Word | Fila **Aspect**: mouse-ul pe al treilea buton mare, după Margini și Orientare (foaia cu colțul îndoit) | „Dimensiune” | altceva: ____ | 1 (VII/9) |
+| 24 | Word | Același buton, deschis: ultimul rând, sub listă | „Mai multe dimensiuni de hârtie...” | altceva: ____ | 1 (VII/9) |
+| 25 | Word | Din rândul 24 se deschide fereastra; fila **Hârtie**: numele celor două casete de sub prima listă | „Lățime” / „Înălțime” | altceva: ____ | 1 (VII/9) |
+| 26 | Word | Aceeași filă: ștergeți ce scrie în prima casetă, scrieți 9, apoi Tab. Ce scrie acum în lista de sus? (apoi Anulare) | „Dimensiune particularizată” | altceva: ____ | 1 (VII/9) |
 
 ## După laborator
 

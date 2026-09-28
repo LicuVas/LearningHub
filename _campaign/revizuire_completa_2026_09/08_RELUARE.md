@@ -1,6 +1,7 @@
 # Reluarea campaniei „Lecțiile refăcute” (LearningHub) — cum continui EXACT în stilul de acum
 
 > Scris de dirijor pe 28.09.2026, la oprirea cerută de Vasile: „după ce termini lecțiile începute… te oprești și salvezi tot ce e necesar pentru a relua la diferite momente, când te anunț eu… să poți continua exact în acest stil”.
+> **Starea la oprire (29.09.2026, ~00:30):** 36 de lecții LIVE, 0 în lucru — M1 complet la V, VI, VII, VIII (1-7) + M2 nr. 8-9 la toate cele patru clase. Ultimul commit al campaniei: `ec24d6a0` (VII/9). Listele „Recent” din Office: 0 urme ale probelor. Word: documentele noi în Print Layout, 100 %.
 > **Cum pornești:** în Claude Code, din `C:\00\AI_0`, scrii **`/lectii`** (skill-ul `.claude\skills\lectii.md`) sau „continuă lecțiile LearningHub”. Skill-ul te trimite aici.
 
 ## 0. Primii 5 minute la reluare (în ordinea asta)
@@ -104,8 +105,8 @@ MSYS_NO_PATHCONV=1 python …/verificare_lectii/fum_live.py /lectii/<clasa>/<mod
 **Reparare:** „Reparare <lecția> după judecător: X GRAV, Y MAJOR, Z MINOR. Citește întreg `…\_verificare\judecatorN.md` (și `.json`). <GRAV/MAJOR, fiecare cu reparația>. MINOR: toate din judecatorN.md. Porțile din brief. Nu faci commit. Răspunsul final: JSON-ul din brief + reparațiile cu locul lor.”
 
 ## 8. Ce urmează (ordinea)
-0. **ÎNTÂI — defect LIVE în simulatorul comun Excel** (`lectii\_sim\excelx.js`, funcția `ajusteaza()`): la selecția prin tragere pagina sare — 18 px la 1280 în VIII/5, mai mult în VIII/2 (acolo e și o a doua cauză). Autorul VIII/8 are în extensia lui (`excelx-*.js` al lecției VIII/8) o reparație CSS care trebuie preluată în componenta comună. Proprietar unic + matrice de probe pe VIII/2, VIII/5, VIII/8, VIII/9 înainte de publicare. În același pas: bara de stare scrie „Număr (Count)” — Microsoft RO spune „Contor” (de confirmat în laborator).
-1. Terminarea lecțiilor începute pe 28.09 (dacă n-au apucat): vezi `stare.py` — cele „ÎN LUCRU”. Pentru fiecare: ultimul `judecatorN.md` → reparare / judecată / publicare.
+0. **ÎNTÂI — defect LIVE în simulatorul comun Excel** (`lectii\_sim\excelx.js`, funcția `ajusteaza()`): la selecția prin tragere pagina sare — 18 px la 1280 în VIII/5, mai mult în VIII/2 (acolo e și o a doua cauză). Autorul VIII/8 are în extensia lui (`lectii\_sim\excelx-functii.js`) o ocolire CSS, iar în `lectii\viii\m2-l08\surse.md` reparația propriu-zisă: nota de sub panglică se scrie O DATĂ, nu după fiecare redesenare, plus `overflow-anchor:none` pe foaie. Proprietar unic + matrice de probe pe VIII/2, VIII/5, VIII/8, VIII/9 înainte de publicare. În același pas: bara de stare scrie „Număr (Count)” — Microsoft RO spune „Contor” (de confirmat în laborator).
+1. ~~Terminarea lecțiilor începute pe 28.09~~ — FĂCUT 29.09 ~00:30: toate cele 8 (M2 nr. 8-9) publicate și verificate live (`3237fece`, `5e2fecdf`, `90f811af`, `ec24d6a0`); `stare.py` → în lucru 0. Dacă `stare.py` arată totuși ceva „ÎN LUCRU”: ultimul `judecatorN.md` → reparare / judecată / publicare.
 2. **Modulul 2, restul** (lecțiile 10-15 la fiecare clasă — titlurile în `stare.py --modul M2`): evaluări sumative (V/12, VI/10, VII/10, VIII/13), mini-proiecte (VIII/12), Internet și e-mail (V/13-15, VI/11-15), audio-video (VII/11-15), pagini web (VIII/14-15). Câte 2 lecții pe clasă pe val (8 autori), apoi judecătorii pe măsură ce termină.
 3. Apoi M3, M4, M5, la fel. Paginile vechi rămân cu banda „în lucru” până le înlocuiește lecția nouă.
 
@@ -116,6 +117,9 @@ MSYS_NO_PATHCONV=1 python …/verificare_lectii/fum_live.py /lectii/<clasa>/<mod
 - Jocul `prezentari-vi` (6×6) contrazice lecția VI/2 („cel mult patru rânduri scurte”) și lecțiile VI/8-9; tot acolo „titlu 32–40” și „Use Presenter View”; de ales o regulă (jocurile nu se schimbă fără acordul lui).
 - Jocul `fisiere-v`: „Restaurare jos” → numele Windows RO e „Restabilire jos” (fără acord, nu se atinge).
 - Simulatorul comun `simppt.js`: pe telefon filele panglicii au 25 px, „This Device”/Insert 29 px (sub 32×44) — găsit la VI/9, de reparat în componenta comună cu matrice de probe.
+- Registrul Explorer (regula 25): au rămas urme invizibile ale probelor din 28.09 — setări de vedere pentru foldere ale lecțiilor (`BagMRU`/`Bags`, sloturile 1409, 1411, 1412) și o intrare python.exe în `ComDlg32\CIDSizeMRU`. Curățenie țintită a dirijorului pe toată campania, numai după ce niciun agent nu mai rulează; copia autorului V/9: `%TEMP%\claude_v_m2_l09_bagmru_copie.json` (conține nume de foldere ale profesorului — se șterge după).
+- Legătură ascunsă între simulatoare: `lectii\_sim\wordobj-hartie.js` (doar VII/9) modifică `wordpag` din `wordobj-pagina.js` (al lui VII/7) prin selectorii lui interni. Cine schimbă `wordobj-pagina.js` probează și VII/9 (lista Size + etichetele Margins/Orientation/Size), altfel se strică fără niciun semnal.
+- Motorul comun: butoanele lui („Pasul următor” etc.) pierd atingeri după o tragere rapidă într-un simulator (3/12 și 7/12 fără derulare; găsit la V/8, judecata 2). Simulatoarele V/8 au reparația lor (răspuns la ridicarea degetului + clicul următor ignorat) — de dus în motor, prin poarta de lansare.
 - Antetul motorului pe telefon: legături de 23 px (găsit la VIII/9) — componentă comună, poartă de lansare independentă.
 - Documentele de descărcat din VII/3, VII/5, VII/6: bara galbenă „removePersonalInformation” a fost scoasă pe 28.09 (scriptul `verificare_lectii\scoate_bara_docx.py`, regula 21); orice .docx nou se verifică la fel.
 - Aplicațiile din Magazin (Paint, Calculator): setările stau în `SystemAppData\Helium\User.dat`; Calculator nu se pornește niciodată în probe (se deschide pe ecranul vizibil) — regula 25.
