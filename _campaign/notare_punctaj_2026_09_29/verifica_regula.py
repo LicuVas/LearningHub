@@ -48,7 +48,9 @@ def main():
                     print("%s:%d  [%s]  …%s…" % (rel, nr, eticheta, rand[a:m.end() + 40].strip()))
     print("urme ale regulii vechi:")
     print(urme)
+    return urme
 
 
 if __name__ == "__main__":
-    main()
+    # cod de ieșire 1 dacă există urme: îl folosește contractul selfcheck `notare-punctaj-lectii`
+    raise SystemExit(1 if main() else 0)
