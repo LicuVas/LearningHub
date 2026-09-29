@@ -10,7 +10,7 @@ Autor: agentul-autor al lecției 9 (28.09.2026). Reparată în aceeași zi după
 
 ## Ce e AL PROFESORULUI și ce e AL PAGINII (judecătorul, J03, MAJOR — reparat)
 **Al profesorului** (spus ca atare în pagină):
-- **Grila:** `instrumente\Grila_produs.md`, 5 criterii × 3 niveluri, „Nivelul produsului = nivelul cel mai mic dintre criteriile 1-4”. Copiată VERBATIM la pasul de la calculator („Grila profesorului”). Pasul 6 dă criteriile **cu vorbele grilei** (coloana Consolidat). **Grila NU are punctaje; n-am inventat niciunul.** `SISTEM_EVALUARE.md` §3: „Mini-proiect / produs digital — DA, o notă, pe grilă anunțată dinainte”.
+- **Grila:** `instrumente\Grila_produs.md`, 5 criterii × 3 niveluri, cu puncte (0-18 pe criteriu, repere 10 / 14 / 18, + 10 din oficiu, nota = punctaj : 10); detaliile în secțiunea „Grila cu puncte (29.09.2026)” de mai jos. Copiată VERBATIM la pasul de la calculator („Grila profesorului, cu punctele”). Pasul 6 dă criteriile **cu vorbele grilei** (coloana Consolidat), pasul 7 punctele și nota. `SISTEM_EVALUARE.md` §3: „Mini-proiect / produs digital — DA, o notă, pe grilă anunțată dinainte”.
 - **Etapele:** `data\activitati_lectii_V_VI.json`, lecția 9: „alegerea temei și a publicului, planul pe diapozitive, realizarea, repetiția în pereche, susținerea în fața clasei. Colegii notează pe grila de observare.”
 - **Durata și mărimile:** `materiale\continut\clasa_VI_M1.json`: la lecția 4, „Regula orientativă a duratei: cam un diapozitiv pe minut de vorbit. Pentru 5 minute ajung 5–7 diapozitive.” (și „Aproximativ un diapozitiv pe minut”); la lecția 6, „titlu 32–40, text 24–28. Sub 20 nu se citește din sală”; la lecția 2, un exercițiu cu „3 minute” și structura „titlu — 3 idei — concluzie”. **Greșeala mea din prima versiune a acestui fișier („nu există nicio durată”) e corectată:** pasul 7 spune acum „Durata: cam un diapozitiv pe minut de vorbit; cât timp ai îți spune profesorul”, iar laboratorul și lista dau „textul 24-28, titlul 32-40” ca recomandarea profesorului (lângă „cel puțin 24” din lecția 6). Indiciul atelierului e „28”, nu „28 sau 32” (J09).
 - **Ce trebuie să conțină:** nu există fișa proiectului. Pasul 2 spune deschis: „Pe cea exactă ți-o dă profesorul și pe ea o respecți întâi. Până atunci, iată ce cer programa și proiectul unității”, iar lista vine din descriptorul Consolidat CS.3.1 din `planificari\Proiectul_unitatii_VI-U1.md` („casete text, forme predefinite, imagini importate, diapozitive”) și din activitatea CS.1.1 (animație + tranziție + expunere).
@@ -95,3 +95,80 @@ Fișierele `fisa_proiect` și `grila_proiect` ale lecției 9 (doar nume în unit
 - `_proba\proba_gesturi.py` (1280 px mouse + tastatură; 390 px atingere; servire locală, orice altă cerere blocată, `ctx.close()`) → 117 verificări, 0 probleme, 0 erori de consolă (`_proba\_proba_gesturi_run.txt`), inclusiv indiciile noi urmate literal și drumurile cu două imagini (judecătorul 3). Capturile de telefon `_proba\_ecran_*_390.png`, privite.
 - `_proba\numara_cuvinte.py` → 0 (textele pașilor ≤ 110 cuvinte, „Uite cum” ≤ 80).
 - `_proba\verifica_trimiteri.py` → 0 (toate numele de pași există, exact, în lecțiile 1-7 și în lecția 9).
+
+## Grila cu puncte (29.09.2026)
+**Sursa:** `C:\00\Projects\Info_Gimnaziu_2026\instrumente\Grila_produs.md` (are prioritate), plus `SISTEM_EVALUARE.md` §4 („Grila de evaluare a produsului … cu **0-18 puncte pe criteriu** (repere: De bază 10, Consolidat 14, Avansat 18) + 10 din oficiu; nota = punctaj : 10, ca la lucrări”) și `_campaign\notare_punctaj_2026_09_29\REGULA_NOUA.md` §1 (rotunjirea: la ,5 în favoarea elevului), §2 (nivelul se citește din notă), §4 (grila de proiect). Nu am găsit contradicții între ele.
+
+**Ce spunea pagina după prima reparație** (numerotarea de atunci, 8 pași pe ecran; după judecătorul notării sunt 7: criteriile = pasul 5, punctele = pasul 6, susținerea = pasul 7, vezi secțiunea următoare):
+- **Pasul 6 „Verifici după criterii”**: criteriile, cu vorbele grilei (neschimbate); „Fiecare criteriu are cele trei niveluri din lecția 1”; „Cum devin criteriile o notă afli la pasul următor”. „Explică-mi altfel”: juriul unui concurs de dans, care se uită pe rând la mai multe lucruri. „Încă un exercițiu”: ordinea diapozitivelor diferită de cuprins → Organizarea (criteriul care lipsea din exercițiul „Încearcă”).
+- **Pasul 7 „Punctele și nota proiectului” (nou)**: 0-18 puncte pe criteriu, reperele 10 / 14 / 18, „între ele” (12, 16) și 0 pentru un criteriu lipsă; + 10 din oficiu; punctajul, cel mult 100; nota = punctaj : 10, rotunjită la cel mai apropiat întreg, la ,5 în sus; nivelul din notă (9-10 / 7-8 / 5-6, ca în rândul de jos al grilei). Un pas separat, pentru că pasul 6 nu mai încăpea în 110 cuvinte (regula 2: un pas = o idee); de aceea susținerea a devenit pasul 8 (profil.json, afirmatii.json A15-A16 și `numerotarea`, „urmează 7 pași scurți” din „Cum lucrezi” au fost puse la zi).
+  - „Uite cum”: Ioana, 14 + 18 + 14 + 10 + 14 = 70, + 10 = **80 → nota 8**, Consolidat (exemplul din grilă și din REGULA_NOUA §4); apoi, între repere, 15 la explicație → 85 → 8,5 → **9**.
+  - „Încearcă” (aplicare; S2 o numără ca aplicare): Ana 18, 14, 16, 10, 13 → 71 + 10 = **81 → 8 (8,1)**, Consolidat. Variantele greșite sunt greșelile numite: 71 / nota 7 (uită oficiul), 68 / nota 7 (adună doar 4 criterii), „De bază, ca la explicație, nota 6” (ia nivelul cel mai mic).
+  - „Încă un exercițiu”: (1) Ana, criteriul cu cel mai mult de câștigat = **Explicația** (8 puncte până la 18); (2) Mihai 14, 12, 14, 10, 15 → 75 → 7,5 → **8** (greșite: 7 = în jos sau fără oficiu, 6 = patru criterii, 5 = nivelul cel mai mic); (3) Elena, câte 18 la patru criterii și 10 la explicație → 92 → **9, Avansat** (greșite: De bază = nivelul cel mai mic, Consolidat = fără oficiu).
+- **Grila de la pasul de la calculator (punctul 12)**: copiată din Grila_produs.md: fraza cu punctele, tabelul cu `#`, „Criteriu”, cele trei coloane cu „· 10 p / · 14 p / · 18 p” și coloana „Puncte”, rândul „Punctaj: ____ + 10 din oficiu = ____ · Nota (punctaj : 10) · Nivelul (din notă …)”, „Ce ai reușit” și „Pasul următor”. N-am copiat rândul de antet al fișei (Elev / Clasa / Produsul / Data) și nota de subsol despre Ordinul 4.615/2026. Pe telefon tabelul are 600 px și se derulează în chenarul lui (înainte cuvintele se rupeau literă cu literă).
+- **Diploma**: „Ce am învățat: la fiecare criteriu al grilei iau de la 0 la 18 puncte, iar nota e punctajul, cu cele 10 din oficiu, împărțit la 10”.
+- Nu există în lecție o autoevaluare interactivă pe criterii (lista de autoverificare are doar bife), deci nu era nimic de recalculat acolo.
+
+**Probele:**
+- `_proba\proba_notare.py` → 0: scrie singur regula (REGULA_NOUA §1, §2, §4), o verifică pe exemplele de acolo (80 → 8; 60 → 6; 100 → 10; 85 → 9, 84 → 8, 76 → 8, 75 → 8, 74 → 7), citește punctele din pagină, recalculează fiecare caz și îl compară cu varianta bună, cu variantele greșite și cu explicația; compară grila din pagină cu Grila_produs.md; verifică afirmațiile N01-N07. `_proba\proba_notare_mutanti.py` → 0 (16 mutanți, toți prinși).
+- `afirmatii.json`: 32 (25 despre PowerPoint, neschimbate, + N01-N07, socotelile, starea `CALCULAT`).
+- `verifica_regula.py` (oracolul lucrării) → 0 urme în `vi/m2-l09`.
+- `test_joc.py --dir …\lectii\vi m2-l09` → TRECUT (28 de întrebări jucate). `verifica_lectie.py … --fara-t1` → 0 (S2: 6 din 8 aplicare/execuție; T0: 0). `_proba\numara_cuvinte.py` → 0 (pasul 6: 98 de cuvinte, pasul 7: 101, „Uite cum” 66). `_proba\verifica_trimiteri.py` → 0.
+- `_proba\proba_gesturi.py` (1280 px mouse; 390 px atingere; servire locală, orice altă cerere blocată, `ctx.close()`) → 143 de verificări, 0 probleme, 0 erori de consolă; pasul 7 rezolvat cu atingeri (cele trei variante greșite respinse, cea bună primită, cele trei „Încă unul”), grila deschisă la atingere, cu antetul exact, fără depășire. Capturile `_proba\_ecran_pas7_390.png` și `_proba\_ecran_grila_390.png`, privite.
+
+**NESIGUR:** trimiterea „lecția 1, pasul «Cele trei niveluri»” (pasul 6) presupune că VI/1, reparată în paralel de alt agent, păstrează pasul cu numele acesta; `verifica_trimiteri.py` trebuie rulat din nou după publicarea ei. „Ca la lucrări” (oficiul) presupune că VI/1 predă în continuare cele 10 puncte din oficiu (REGULA_NOUA §1 le păstrează).
+
+## Reparațiile după judecătorul notării (29.09.2026; `_verificare/judecator_notare.md`: 1 GRAV, 1 MAJOR, 6 MINOR)
+Pe ecran lecția are acum **7 pași** („La ce folosește” + 6, cât avea lecția publicată): 1 La ce folosește · 2 Ce ți se cere · 3 Planul pe hârtie · 4 Imaginea: în locul din dreapta · 5 Verifici după criterii · 6 Punctele și nota proiectului · 7 Susținerea.
+- **JN01 (GRAV), 15 așezat greșit pe scară:** în „Uite cum” de la pasul 6 scrie acum „primit 15, între Consolidat și Avansat”; la fel în `afirmatii.json` N03. `_proba\proba_notare.py` caută acum ORICE așezare „N … între X și Y” (niveluri) în pagină și în afirmatii.json și o verifică pe reperele 10 / 14 / 18. A găsit două, amândouă cu 15, și amândouă sunt bune. Verifică și exemplele „între ele, de exemplu N” (12). Un mutant readuce fraza veche și e prins.
+- **JN02 (MAJOR), prea mulți pași:** am scos pasul „Realizarea, în ordinea bună”. Ordinea lui e deja, punct cu punct, în „Acum la calculatorul din laborator” (punctele 2-11).
+  - Exercițiul lui în simulator (Maria, „Fotbalul”) e acum „Încă un exercițiu” 2 la „Planul pe hârtie”.
+  - Adevărat/fals-ul „Tema o alegi la sfârșit…” e „Încă un exercițiu” 2 la „Imaginea”. Indiciul nu mai spune „al doilea punct din listă”, ci „Ce face tema cu toate diapozitivele (lecția 6)?”.
+  - Captura `jocuri/prezentari-vi/img/diapozitiv-sah.webp` („Uite cum” al pasului scos) nu mai e în pagină. Nu era trimisă din alt loc.
+  - Am pus la zi: „urmează 6 pași scurți” în „Cum lucrezi”, „(pasul 4)” și „(pasul 6)” în pasul 1 și în intro, `profil.json` (pașii 4-7), `afirmatii.json` (A02, A05, A07, A08-A08e, A15-A18, N01-N07 și `numerotarea`) și comentariile din sursă.
+  - `_proba\verifica_trimiteri.py` → 0.
+- **JN03:** pasul 6 trimite acum la lecția 1, pasul „Lucrarea și nota ei” (oficiul și nota = punctaj : 10). „Ai nevoie de” din pasul 1 și din intro începe cu „lecția 1 (nota și nivelul)”.
+- **JN04:** lista notă → nivel e întreagă: 9-10 Avansat, 7-8 Consolidat, 5-6 De bază, 3-4 În formare, 1-2 În dificultate (REGULA_NOUA §2). Proba citește lista din pagină și verifică fiecare notă de la 1 la 10.
+- **JN05:** „Aproape nimic nu e nou: doar unde pui imaginea (pasul 4) și punctele proiectului (pasul 6).” Tot așa în intro.
+- **JN06:** „Dacă lipsește cu totul ce cere criteriul, 0.” (textul combinat propus de judecător, cu JN03 și JN04).
+- **JN07, grila pe telefon:**
+  - Coloana „Criteriu” e lipită în stânga (`position:sticky`) când derulezi tabelul.
+  - Sub 480 px, tabelul are 440 px și literele cu 0,8 din mărime. Așa fiecare coloană (De bază, Consolidat, Avansat, Puncte) încape întreagă lângă „Criteriu”: la 390 px, locul rămas are 128 px, iar coloanele au 79, 124, 77 și 57.
+  - Probat cu glisări reale cu degetul. Capturile `_proba\_ecran_grila_derulata_390.png` și `_ecran_grila_avansat_390.png` le-am privit.
+- **JN08:** întrebarea 4 e acum o soră a exercițiului cu Mihai: Vlad are 10, 12, 10, 9 și 14. Suma e 55, cu oficiul 65, nota 6,5 → **7**.
+  - Variantele greșite: 6 (rotunjit în jos sau fără oficiu), 5 (doar patru criterii), 4 (nivelul cel mai mic: explicația sub De bază).
+  - E trecută în afirmatii.json ca N08.
+  - Întrebarea veche („Îi explici de ce ai ales-o”) a ieșit. Criteriul explicației rămâne verificat în întrebarea 3. Verificarea are tot 5 întrebări.
+- **Lungimile:** pasul 6 are 109 cuvinte. Ca pasul 1 să rămână sub pragul de 150 al lui test_joc (cu „Ai nevoie de” și legenda fotografiei), am scurtat două propoziții: „le pui la un loc” și „Pagina îți spune unde recitești”.
+
+**Porțile după aceste reparații:**
+- `test_joc.py` → TRECUT (28 de întrebări jucate), doar avertismentul „1 niveluri”.
+- `verifica_lectie.py … --fara-t1` → 0. S2: 5 din 7 aplicare/execuție, T0: 0, 0 avertismente.
+- `_proba\proba_notare.py` → 0. `_proba\proba_notare_mutanti.py` → 0: 23 de mutanți, toți prinși.
+- `_proba\numara_cuvinte.py` → 0. `_proba\verifica_trimiteri.py` → 0.
+- `verifica_regula.py` → 0 urme în `vi/m2-l09`.
+- `learninghub_date_personale.py` → 0.
+- `_proba\proba_gesturi.py` → 145 de verificări, 0 probleme, 0 erori de consolă, la 1280 px (mouse) și la 390 px (atingere), cu rețeaua blocată în afară de 127.0.0.1 și închidere cu `ctx.close()`.
+- `afirmatii.json`: 33 (25 despre PowerPoint + N01-N08).
+
+**NESIGUR (rămas):** trimiterile spre VI/1 („Cele trei niveluri” la pasul 5, „Lucrarea și nota ei” la pasul 6) există azi în fișierul VI/1, care e reparat în paralel. După publicarea VI/1 trebuie rulat din nou `verifica_trimiteri.py`.
+
+## Reparațiile după judecata a 2-a a notării (29.09.2026; `_verificare/judecator_notare2.md`: 0 GRAV, 0 MAJOR, 2 MINOR)
+- **N1, grila pe telefon:**
+  - Chenarul tabelului are acum `scroll-snap-type:x mandatory`, iar capetele coloanelor 3-6 au `scroll-snap-align:end`. După o glisare, derularea se oprește singură cu marginea dreaptă a unei coloane la marginea chenarului, deci coloana stă întreagă lângă „Criteriu”, care rămâne lipit.
+  - Probat la 390 px cu glisări reale scurte (72 px): opririle au fost la 0 (De bază), 97 (Consolidat), 174 (Avansat) și 231 (Puncte). Captura `_proba\_ecran_grila_consolidat_390.png` am privit-o.
+  - În Chromium fără ecran, o ridicare a degetului în aceeași milisecundă cu ultima mișcare nu declanșează oprirea. Cu o clipă de oprire înainte de ridicare (0,1 s, ca o mână), o declanșează. `scrollBy` și rotița mouse-ului se opresc și ele la 97. Depanarea e în `_proba\depaneaza_snap.py`.
+  - La 1280 px tabelul nu se derulează, iar toate coloanele se văd întregi.
+- **N2, susținerea în verificare:**
+  - Întrebarea 2 (câte idei are Elena) e acum „Irina își susține prezentarea «Delta Dunării», care are 7 diapozitive. Cam cât ține susținerea ei?”. Răspunsul bun: cam 7 minute. Variantele greșite: cam 1 minut (tot proiectul cât un diapozitiv), cam 3 minute (o jumătate de minut pe diapozitiv), cam 14 minute (două minute pe diapozitiv).
+  - E soră a exercițiului „Încă unul” 2 din pasul 7 („Susținerea”), iar regula e chiar în textul acelui pas: „Durata: cam un diapozitiv pe minut de vorbit; cât timp ai îți spune profesorul.”
+  - Numărarea ideilor rămâne exersată la pașii 2 și 3.
+  - `afirmatii.json`: N09. `_proba\proba_notare.py` verifică întrebarea, variantele și faptul că pasul dă regula; 3 mutanți noi, prinși.
+- **Porțile:**
+  - `test_joc.py` → TRECUT (28 de întrebări).
+  - `verifica_lectie.py … --fara-t1` → 0 (S2 5/7, 0 avertismente).
+  - `proba_notare.py` → 0. Mutanții: 26, toți prinși.
+  - `numara_cuvinte.py` → 0. `verifica_trimiteri.py` → 0.
+  - `verifica_regula.py` → 0 urme. Poarta de date personale → 0.
+  - `proba_gesturi.py` → 147 de verificări, 0 probleme, 0 erori de consolă. La 1280 px și la 390 px, cu rețeaua blocată în afară de 127.0.0.1 și închidere cu `ctx.close()`.
+  - `afirmatii.json`: 34 (25 despre PowerPoint + N01-N09).

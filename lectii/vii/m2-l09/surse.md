@@ -14,12 +14,12 @@ Scris de autorul lecției pe 28.09.2026. Standardul: `_campaign/revizuire_comple
 | `planificari/Proiectul_unitatii_VII-U1.md` | ora 9 = consolidare (mini-proiect), materiale „fisa_proiect, grila_proiect” | titlul, tipul orei |
 | `data/activitati_lectii_VII_VIII.json` | „Mini-proiect: fiecare elev alege un tip de document real de care are nevoie școala și îl realizează după o fișă de specificații. Verificare încrucișată între colegi înainte de predare.” Resurse: „laborator, fișe de specificații, grila de produs” | alegerea între 4 fișe; documente „de care are nevoie școala”; verificarea încrucișată (atelierul + ultimul pas din laborator) |
 | `SISTEM_EVALUARE.md` §3 | mini-proiectul/produsul digital = o notă, „pe grilă anunțată dinainte” | grila arătată ÎNAINTE de lucru, în laborator |
-| `instrumente/Grila_produs.md` | 5 criterii × 3 niveluri (De bază / Consolidat / Avansat); „Nivelul produsului = nivelul cel mai mic dintre criteriile 1-4 (un produs nu poate fi «Avansat» dacă cerința nu e respectată)”; „Grila se dă elevilor odată cu tema proiectului” | copiată cuvânt cu cuvânt (constanta GRILA) + regula nivelului; autoevaluarea din laborator calculează nivelul după regula ei |
+| `instrumente/Grila_produs.md` | 5 criterii, fiecare cu 0 – 18 puncte (repere: De bază = 10 p, Consolidat = 14 p, Avansat = 18 p; și între repere; 0 dacă lipsește cu totul) + 10 din oficiu; „Nota = punctaj : 10”; nivelul din notă; „Grila se dă elevilor odată cu tema proiectului” | copiată cuvânt cu cuvânt (constantele GRILA, NIV, REP și textul de deasupra criteriilor); autoevaluarea din laborator calculează punctajul, nota și nivelul după ea (secțiunea „Grila cu puncte”, mai jos) |
 | `instrumente/Fisa_criterii_elev_clasa_VII.md` | „să fac documente utile: scrisoare, carte de vizită, diplomă, afiș” | — |
 
 **Ce NU există:** fișele de specificații propriu-zise (`fisa_proiect`) și o grilă separată de proiect (`grila_proiect`) nu sunt scrise nicăieri în `Info_Gimnaziu_2026` (căutat: „carte de vizit”, „felicitar”, „diplom”, „scrisoare”, „specifica”, „fisa_proiect”, „grila”). Deci:
 - **fișele de specificații sunt ale autorului lecției** (`_proba/fise.json`, sursă unică pentru pagină și pentru probele în Word). De confirmat de profesor: dacă are alte fișe, se schimbă doar `fise.json` și se rulează `scrie_fise_js.py`, `proba_com.py`, `proba_fisiere_elev.py`, `fa_imagini.py`;
-- **nicio notă și niciun punctaj inventat**: pagina arată grila profesorului (niveluri, fără puncte) și regula lui de nivel; nu spune ce notă ia elevul.
+- **nicio notă și niciun punctaj inventat**: punctele, oficiul, nota și nivelul vin din grila profesorului (`Grila_produs.md`) și din `_campaign/notare_punctaj_2026_09_29/REGULA_NOUA.md` §1, §2, §4; pagina arată socoteala, nu dă altă regulă.
 
 ## Fișele (autorul lecției) — fiecare făcută în Word-ul real
 | Fișa | Foaia | Ce cere | Probat |
@@ -116,6 +116,43 @@ Faptele de Word sunt cele măsurate de judecător (`_verificare/j9b_word.json`, 
 - Cuvinte pe pas: textul 71-91, „Uite cum” ≤ 69.
 - După judecătorul 2: `proba_ui2.py` probează și caseta selectată după mesaj („9” scris direct dă „9”) și marginile 2,45 + 2,45 pe 9 × 5 (primite, fără mesaj); pe telefon, nicio captură `full_page` (strică emularea atingerii).
 
+## Grila cu puncte (29.09.2026)
+**Sursa:** `C:/00/Projects/Info_Gimnaziu_2026/instrumente/Grila_produs.md` (documentul profesorului, are prioritate) + `_campaign/notare_punctaj_2026_09_29/REGULA_NOUA.md` §1 (rotunjirea), §2 (nivelul din notă), §4 (grila de proiect). La fiecare criteriu: 0 – 18 puncte, repere De bază 10 p, Consolidat 14 p, Avansat 18 p (și între repere; 0 dacă lipsește cu totul); punctajul = criteriile 1-5 + 10 din oficiu (cel mult 100); nota = punctaj : 10, la cel mai apropiat întreg, la ,5 în favoarea elevului; nivelul se citește din notă.
+
+| Ce | Locul |
+|---|---|
+| textul de deasupra criteriilor, copiat din `Grila_produs.md` (rândurile 5-7, cu exemplul 14 + 18 + 14 + 10 + 14 + 10 = 80 → nota 8); o propoziție despre oficiu („le primești din start, ca la lucrare”); nivelul din notă | `labHtml()`, blocul „Grila profesorului” |
+| capetele de coloană cu puncte: „De bază (cu sprijin, model) · 10 p”, „Consolidat (independent) · 14 p”, „Avansat (context nou, justificat) · 18 p”; criteriile neschimbate, cuvânt cu cuvânt | `NIV`, `REP`, `GRILA` |
+| autoevaluarea: la fiecare criteriu, „Lipsește · 0 p / De bază · 10 p / Consolidat · 14 p / Avansat · 18 p”; caseta de sub criterii scrie rândul de punctaj al grilei (Punctaj … + 10 din oficiu = … · Nota (punctaj : 10) · Nivelul (din notă …)), adunarea, împărțirea, rotunjirea și criteriul (sau criteriile, la egalitate) cu cel mai mult de câștigat până la 18 p; când toate au același punctaj, o frază scurtă. Sub „Acum documentul tău”: „Aici alegi reperul cel mai apropiat. Profesorul poate da și puncte între repere, ca la Mara.” O atingere schimbă doar butoanele și caseta, nu tot laboratorul | `ALEG`, `notaDin`, `nivelDin`, `calculGrila()`, `puneGrila()` |
+| două exerciții înainte de autoevaluare, „Ce notă și ce nivel are documentul…?”: Radu 18, 14, 18, 10, 18 → 88 → 8,8 → nota 9, Avansat (alt set și alt rezultat decât exemplul grilei, fără ,5); Mara 12, 16, 14, 11, 12 (între repere) → 75 → 7,5 → nota 8, Consolidat. Fiecare variantă greșită e o singură greșeală: fără oficiu, doar primele 4 criterii, ia în seamă un singur criteriu, nivelul citit greșit din notă (la Radu), rotunjit în jos (la Mara). Varianta aleasă se colorează: verde dacă e corectă, roșie dacă e greșită | `EX` (între `/*EX:START*/` și `/*EX:END*/`), `exHtml()`, `exRez()`, `puneEx()`; CSS `.fl-var button.ok / .bad` |
+| laboratorul, pasul 10 (verificarea încrucișată): „unde crezi că ești la fiecare criteriu: pagina adună punctele, cu 10 din oficiu, și îți arată nota (punctaj : 10) și nivelul” | `PASI[9]` |
+| „Sunt alt elev” golește și exercițiile; nimic nu se păstrează în browser (regula 23) | handlerul de clic, `LAB.ex` |
+
+**De ce așa:**
+- Exercițiile de notare stau în laborator, nu în pași: grila se predă abia acolo, după atelier. Pașii 0-5, atelierul și cele 5 întrebări (despre document) au rămas neschimbate.
+- `Grila_produs.md` scrie în rândul de punctaj doar 9-10 / 7-8 / 5-6. Autoevaluarea poate coborî sub 5 (minimul e 10 p → nota 1), așa că pagina spune și 3-4 În formare, 1-2 În dificultate, cu plan de recuperare (REGULA_NOUA.md §2, la fel ca `Fisa_criterii_elev_clasa_VII.md` §4).
+- În autoevaluare se aleg doar reperele (0 / 10 / 14 / 18), deci suma e mereu pară și ,5 nu poate ieși acolo. Pagina îi spune elevului că acolo alege reperul cel mai apropiat, iar profesorul poate da și între repere, ca la Mara. Rotunjirea la ,5 se exersează la Mara (75 → 8).
+- `afirmatii.json` A31-A34: socotelile, cu câmpul `calcul` (criteriile, punctajul, nota, nivelul, criteriile cu cel mai mult de câștigat). `profil.json`: grila cu puncte la „se predă aici”; oficiul și nota din punctaj, din lecția 1 a clasei, la „știe”.
+
+**Probe (29.09.2026):**
+- `_proba/proba_grila_calc.py` → **0**: regula scrisă din nou din REGULA_NOUA.md, fără codul paginii (autotest pe exemplele de acolo: 85 → 9, 84 → 8, 76 → 8, 75 → 8, 74 → 7; toate De bază 60 → 6, toate Consolidat 80 → 8, toate Avansat 100 → 10); grila din pagină = `Grila_produs.md` cuvânt cu cuvânt; 13 socoteli din pagină; cele 2 exerciții (răspunsul și fiecare greșeală); cele 4 afirmații.
+- `_proba/proba_grila_mutanti.py` → **0** neprinși din 21 (exemplul grilei, fiecare variantă și nivelul ei, Radu cu punctele exemplului, explicația care descrie o regulă, enunțul fără nivel, un reper, un criteriu, rândul de punctaj, rotunjirea, afirmațiile).
+- `_proba/proba_grila_ui.py` → **0**: gesturi reale la 390 px cu atingere și 1280 px cu mouse; rețeaua oprită în afară de fișierele locale (s-a încercat doar fontul Google), închidere cu `ctx.close()`. Cele 9 cazuri din A34 pe ambele ecrane; exercițiile, cu FIECARE variantă greșită (✘, explicația, butonul roșu) și cea corectă (✔, butonul verde); saltul cu „Textul fișei” deschis (4 atingeri în grilă și la exerciții: 0 px, caseta rămâne deschisă); alegerea parțială, „Sunt alt elev”, ținte ≥ 32 px, fără depășire pe lățime, fără erori, nimic în localStorage. Capturile privite: `_proba/g_tel_exercitii.png`, `_proba/g_tel_calcul.png`, `_proba/g_pc_calcul.png`.
+- `_proba/proba_grila_ui_mutanti.py` → **0** neprinși din 2: redesenarea întregului laborator la atingere (prinsă: 403 → 120 px, caseta închisă) și butonul ales fără culoare (prins). Copia de probă stă lângă `index.html` doar cât rulează și se șterge.
+- Regresie: `_proba/proba_ui.py` → **0** (partea de laborator adusă la grila cu puncte: 18 + 14 + 18 + 10 + 14 = 74, + 10 = 84 → nota 8, Consolidat) și `_proba/proba_ui2.py` → **0**.
+- `test_joc.py --dir lectii/vii m2-l09` → **TRECUT** (27 de întrebări; avertismentul așteptat „1 niveluri”); `verifica_lectie.py … --fara-t1` → **0**; `_campaign/notare_punctaj_2026_09_29/verifica_regula.py` → 0 urme în acest dosar.
+- Word nu a fost pornit: nicio afirmație despre Word nu s-a schimbat. `lectii/_sim/` (inclusiv `wordobj-hartie.js` și `wordobj-pagina.js`) neatins.
+
+### După judecătorul notării (29.09, `_verificare/judecator_notare.md`: 0 GRAV, 0 MAJOR, 6 MINOR)
+| # | Problema | Reparația | Locul |
+|---|---|---|---|
+| N1 | varianta cu un singur criteriu avea altă formă („pentru că…”), iar explicația ei descria o regulă | toate variantele au aceeași formă, „… → nota N, Nivel”; greșeala tipică rămâne („10 puncte la criteriul 4 → nota 6, De bază”), cu explicația „Nota vine din toate punctele adunate, cu cele 10 din oficiu: adună toate cele 5 criterii.”; enunțul cere și nivelul, iar la Radu e și varianta cu nivelul citit greșit | `EX`; `afirmatii.json` A32, A33 |
+| N2 | Radu avea punctele exemplului din grilă, deci răspunsul era scris deasupra | Radu: 18, 14, 18, 10, 18 → 88 → nota 9, Avansat (alt set, alt rezultat, fără ,5); proba verifică să nu repete exemplul | `EX`; `proba_grila_calc.py` |
+| N3 | autoevaluarea are doar reperele, deși textul spune „și între repere” | „Aici alegi reperul cel mai apropiat. Profesorul poate da și puncte între repere, ca la Mara.” | `labHtml()`, sub „Acum documentul tău” |
+| N4 | o atingere în grilă sau la exerciții redesena tot laboratorul: „Textul fișei” se închidea, pagina sărea 576 px (telefon) / 490 px (calculator) | atingerea schimbă doar `aria-pressed`, culoarea, caseta de calcul și rândul de rezultat, în ambele copii (laborator și diplomă); măsurat: 0 px, caseta rămâne deschisă | `puneGrila()`, `puneEx()`, handlerul de clic |
+| N5 | varianta aleasă avea aceeași culoare, corectă sau greșită | clasa `ok` / `bad` pe butonul ales: verde / roșu din temă (`--ok`/`--okbg`, `--bad`/`--badbg`), ca la întrebările motorului | CSS-ul lecției, `exHtml()`, `puneEx()` |
+| N6 | la egalitate pe toate criteriile, o frază de 53 de cuvinte | „La toate criteriile mai ai câte 8 p până la 18 p. Alege unul și citește ce cere coloana următoare.”; la 2-4 criterii, virgule și „și” doar înaintea ultimului | `calculGrila()`, `insir()` |
+
 ## Calculatorul profesorului (regulile 22, 24-27)
 - Word: doar instanțe NOI (DispatchEx invizibil, sau /x pe desktop ascuns); PID-ul notat; închidere cu Saved=True + Close(False) + Quit; `taskkill` doar pe PID-ul nostru (de 3 ori, pe instanța /x blocată de o fereastră modală, cu documentul neschimbat; niciun fișier de recuperare; lacătele `~$` din `_proba/fisiere/` șterse). Procesele Word ale altora n-au fost atinse. Salvări doar sub `_proba/`.
 - **Lista „Recent” a Word-ului:** probele din prima rundă (15:36-16:36) au deschis documentele prin linia de comandă și au lăsat intrări de probă ale acestei lecții; le scoate dirijorul cu `curata_mru_office.py --sterge`, cu Office închis (regula 27: aici nu le enumăr). Probele de după judecător pornesc Word cu documentul gol și nesalvat (`/x /q /w`): lista Recent a avut același număr de intrări înainte și după.
@@ -128,4 +165,4 @@ Faptele de Word sunt cele măsurate de judecător (`_verificare/j9b_word.json`, 
 2. Fereastra Insert Picture pentru pozele descărcate (mărimea de intrare, A14).
 3. Protected View pe fișierele descărcate din pagină (A21, preluată).
 4. Pragul exact la care Word refuză marginile prea mari, între 0 și 0,1 cm de text (simulatorul: sub 0,05 cm).
-5. Dacă profesorul are propriile fișe de specificații sau o grilă de proiect cu punctaj: atunci fișele de aici se înlocuiesc din `_proba/fise.json`.
+5. Dacă profesorul are propriile fișe de specificații: atunci fișele de aici se înlocuiesc din `_proba/fise.json`. (Grila de proiect cu punctaj există: `Grila_produs.md`, secțiunea „Grila cu puncte”.)

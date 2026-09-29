@@ -79,6 +79,17 @@ h2{font-weight:600}
 .fl-niv button{min-height:36px;min-width:36px;padding:4px 10px;border:1.5px solid var(--line);border-radius:18px;background:var(--paper2);color:var(--ink);font:inherit;cursor:pointer}
 .fl-niv button[aria-pressed="true"]{border-color:var(--accent);background:var(--sel);font-weight:700}
 .fl-nivel{font-weight:700;margin:8px 0}
+.fl-calc{border:1.5px solid var(--accent);border-radius:8px;padding:8px 10px;background:var(--paper);font-weight:400}
+.fl-calc p{margin:4px 0}
+.fl-ex{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper);margin:8px 0}
+.fl-ex p{margin:4px 0}
+.fl-ex .fl-var{display:grid;gap:6px;margin:6px 0}
+.fl-ex .fl-var button{min-height:44px;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--paper2);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.fl-ex .fl-var button[aria-pressed="true"]{border-color:var(--accent);background:var(--sel)}
+.fl-ex .fl-var button.ok{border-color:var(--ok);background:var(--okbg)}
+.fl-ex .fl-var button.bad{border-color:var(--bad);background:var(--badbg)}
+.fl-ex .fl-exr.ok{color:var(--ok)}
+.fl-ex .fl-exr.bad{color:var(--bad)}
 .fl-nou{margin-top:8px}
 </style>
 </head>
@@ -145,7 +156,7 @@ function textFisa(k){const F=FISE[k];
 /* ---------- laboratorul: alegerea fișei, bifele, grila profesorului ----------
    Nimic nu se păstrează în browser (regula 23: calculatorul din laborator e comun): alegerea și bifele stau doar în
    memoria paginii deschise. Butonul „Sunt alt elev” le golește; o pagină reîncărcată pornește goală. */
-const LAB={ales:null,bife:new Set(),niv:{}};
+const LAB={ales:null,bife:new Set(),niv:{},ex:{}};
 const DESC={diploma:'Foaie A4 culcată, o poză',felicitare:'Foaie A5, un steag',scrisoare:'Foaie A4, un tabel',carte:'Foaie de 9 × 5 cm'};
 const BUNA={diploma:['img/diploma-buna.webp',620,439],felicitare:['img/felicitare-buna.webp',400,567],scrisoare:['img/scrisoare-buna.webp',520,735],carte:['img/carte-vizita-buna.webp',540,300]};
 const CREDIT={diploma:` ${CR_CREIOANE}`,felicitare:' Steagul: <a href="https://commons.wikimedia.org/wiki/File:Flag_of_Romania.svg" target="_blank" rel="noopener">Wikimedia Commons</a>, domeniu public.'};
@@ -156,6 +167,49 @@ const GRILA=[
   ['Explicația (ce am făcut și de ce)','răspunde la întrebări','explică pașii','justifică alegerile și propune alternative'],
   ['Munca proprie / sursele','folosește materialele date','citează sursele imaginilor/textelor','respectă drepturile de autor și explică de ce contează']];
 const NIV=['De bază (cu sprijin, model)','Consolidat (independent)','Avansat (context nou, justificat)'];   // capetele de coloană din instrumente/Grila_produs.md, întocmai
+const REP=[10,14,18];   // reperele în puncte ale celor trei coloane (Grila_produs.md): „· 10 p”, „· 14 p”, „· 18 p”
+/* alegerile din autoevaluare: 0 dacă lipsește cu totul, altfel reperul coloanei */
+const ALEG=[[0,'Lipsește · 0 p'],[10,'De bază · 10 p'],[14,'Consolidat · 14 p'],[18,'Avansat · 18 p']];
+/* nota = punctaj : 10, rotunjită la cel mai apropiat întreg; la ,5 în favoarea elevului (punctajul e un număr întreg) */
+const notaDin=p=>Math.floor((p+5)/10);
+/* nivelul se citește din notă (tabelul profesorului) */
+const nivelDin=n=>n>=9?'Avansat':n>=7?'Consolidat':n>=5?'De bază':n>=3?'În formare, cu plan de recuperare':'În dificultate, cu plan de recuperare';
+/* exercițiile de notare din laborator: [textul variantei, 1 = corectă, explicația, greșeala pe care o face varianta].
+   Fiecare variantă spune nota și nivelul; cele greșite au câte o singură greșeală. */
+/*EX:START*/const EX=[{"nume":"Radu","puncte":[18,14,18,10,18],"q":"Radu a primit la cele 5 criterii: 18, 14, 18, 10 și 18 puncte. Ce notă și ce nivel are documentul lui?","o":[["78 de puncte → nota 8, Consolidat",0,"Ai adunat criteriile, dar ai uitat cele 10 puncte din oficiu.","fara_oficiu"],["70 de puncte → nota 7, Consolidat",0,"Ai adunat doar primele 4 criterii. Se adună toate cele 5, plus 10 din oficiu.","patru_criterii"],["88 de puncte → nota 9, Consolidat",0,"Nota 9 e bună, dar nivelul se citește din notă: 9 sau 10 înseamnă Avansat.","nivel_gresit"],["88 de puncte → nota 9, Avansat",1,"18 + 14 + 18 + 10 + 18 = 78, plus 10 din oficiu = 88. Nota: 88 : 10 = 8,8, rotunjit: 9. Nivelul, din notă: Avansat.",""],["10 puncte la criteriul 4 → nota 6, De bază",0,"Nota vine din toate punctele adunate, cu cele 10 din oficiu: adună toate cele 5 criterii.","un_singur_criteriu"]]},{"nume":"Mara","puncte":[12,16,14,11,12],"q":"Mara a primit și puncte între repere: 12, 16, 14, 11 și 12. Ce notă și ce nivel are documentul ei?","o":[["65 de puncte → nota 7, Consolidat",0,"Ai uitat cele 10 puncte din oficiu.","fara_oficiu"],["63 de puncte → nota 6, De bază",0,"Ai adunat doar primele 4 criterii. Se adună toate cele 5, plus 10 din oficiu.","patru_criterii"],["75 de puncte → nota 8, Consolidat",1,"12 + 16 + 14 + 11 + 12 = 65, plus 10 din oficiu = 75. Nota: 75 : 10 = 7,5; la ,5 rotunjirea e în favoarea elevului, deci 8. Nivelul, din notă: Consolidat.",""],["75 de puncte → nota 7, Consolidat",0,"Totalul e bun, dar 7,5 se rotunjește în favoarea elevului: 8.","rotunjit_in_jos"],["11 puncte la criteriul 4 → nota 6, De bază",0,"Nota vine din toate punctele adunate, cu cele 10 din oficiu: adună toate cele 5 criterii.","un_singur_criteriu"]]}];/*EX:END*/
+const insir=a=>a.length>1?a.slice(0,-1).join(', ')+' și '+a[a.length-1]:a[0];
+function calculGrila(){
+  const v=GRILA.map((c,i)=>LAB.niv[i]),alese=v.filter(x=>x!=null).length;
+  const rand=(s,p,n,nv)=>`<p><b>Punctaj:</b> ${s} + 10 din oficiu = ${p} · <b>Nota</b> (punctaj : 10): ${n} · <b>Nivelul</b> (din notă: 9-10 Avansat, 7-8 Consolidat, 5-6 De bază): ${nv}</p>`;
+  if(alese<GRILA.length)return rand('____','____','______','______')+`<p>${alese?`Ai ales la ${alese} din ${GRILA.length} criterii. Alege la toate ca să vezi punctajul, nota și nivelul.`:'Alege la fiecare criteriu ca să vezi punctajul, nota și nivelul.'}</p>`;
+  const s=v.reduce((a,b)=>a+b,0),p=s+10,n=notaDin(p);
+  const imp=p%10?`${p} : 10 = ${nr(p/10)}, rotunjit: ${n}`:`${p} : 10 = ${n}`;
+  const lipsa=v.map(x=>18-x),max=Math.max(...lipsa),unde=lipsa.map((x,i)=>x===max?i:-1).filter(i=>i>=0);
+  const nume=insir(unde.map(i=>`„${i+1}. ${GRILA[i][0]}”`));
+  const castig=max===0?'Ai ales Avansat la toate criteriile: 100 de puncte, cât se poate.'
+    :unde.length===GRILA.length?`La toate criteriile mai ai câte ${max} p până la 18 p. Alege unul și citește ce cere coloana următoare.`
+    :unde.length>1?`Cel mai mult ai de câștigat la criteriile ${nume}: la fiecare mai sunt ${max} p până la 18 p. Citește acolo ce cere coloana următoare.`
+    :`Cel mai mult ai de câștigat la criteriul ${nume}: de la ${18-max} p până la 18 p mai sunt ${max} p. Citește acolo ce cere coloana următoare.`;
+  return rand(s,p,n,nivelDin(n))+`<p>Adunarea: ${v.join(' + ')} = ${s}, plus 10 din oficiu = ${p}. Nota: ${imp}.</p><p>${castig}</p>`;
+}
+/* rezultatul unui exercițiu: clasa (ok / bad) și textul de sub variante */
+function exRez(i){const j=LAB.ex[i],x=j!=null?EX[i].o[j]:null;return x?{c:x[1]?'ok':'bad',t:x[1]?`✔ Corect. ${x[2]}`:`✘ ${x[2]} Mai încearcă.`}:{c:'',t:''}}
+function exHtml(e,i){
+  const j=LAB.ex[i],r=exRez(i);
+  return `<div class="fl-ex"><p><b>Încearcă:</b> ${e.q}</p><div class="fl-var" role="group" aria-label="Variantele pentru ${e.nume}">${e.o.map((o,k)=>`<button type="button" data-fl-ex="${i}:${k}" aria-pressed="${j===k}"${j===k&&r.c?` class="${r.c}"`:''}>${o[0]}</button>`).join('')}</div><p class="fl-exr${r.c?' '+r.c:''}" data-fl-exr="${i}" aria-live="polite">${r.t}</p></div>`;
+}
+/* după o atingere în grilă sau la un exercițiu se schimbă doar butoanele și rezultatul, nu tot laboratorul: redesenarea
+   întreagă închidea „Textul fișei” și muta pagina cu sute de pixeli (judecătorul notării, N4). Ambele copii (laboratorul
+   și diploma) se țin la fel. */
+function puneEx(i){
+  const j=LAB.ex[i],r=exRez(i);
+  document.querySelectorAll(`[data-fl-ex^="${i}:"]`).forEach(b=>{const k=+b.dataset.flEx.split(':')[1];b.setAttribute('aria-pressed',String(j===k));b.classList.toggle('ok',j===k&&r.c==='ok');b.classList.toggle('bad',j===k&&r.c==='bad')});
+  document.querySelectorAll(`[data-fl-exr="${i}"]`).forEach(p=>{p.className='fl-exr'+(r.c?' '+r.c:'');p.textContent=r.t});
+}
+function puneGrila(i){
+  document.querySelectorAll(`[data-fl-niv^="${i}:"]`).forEach(b=>b.setAttribute('aria-pressed',String(LAB.niv[i]===+b.dataset.flNiv.split(':')[1])));
+  document.querySelectorAll('.fl-calc').forEach(c=>{c.innerHTML=calculGrila()});
+}
 function labHtml(){
   const alege=`<div class="fl-alege" role="group" aria-label="Alege fișa">${Object.keys(DESC).map(k=>`<button type="button" data-fl-alege="${k}" aria-pressed="${LAB.ales===k}"><b>${FISE[k]?FISE[k].nume:k}</b><small>${DESC[k]}</small></button>`).join('')}</div>`;
   let fisa='<p class="hint">Alege o fișă: sub ea apar textul, poza și lista de autoverificare.</p>';
@@ -172,12 +226,14 @@ ${F.par.some(p=>p.gol_dupa)?`<p class="hint"><b>Rândul gol de după tabel</b> e
 <ol class="fl-lista">${L.map(s=>`<li><label class="${LAB.bife.has(s.id)?'bifat':''}"><input type="checkbox" data-bifa="${s.id}"${LAB.bife.has(s.id)?' checked':''}><span><span class="g">${s.g}:</span> ${escH(s.t)}<span class="u">Unde o vezi: ${escH(s.u)}.</span></span></label></li>`).join('')}</ol>
 <p class="fl-scor" aria-live="polite">Ai bifat ${bifate} din ${L.length}.${bifate===L.length?' Toate: salvează și arată-i documentul colegului sau profesorului.':''}</p></div>`;
   }
-  const nivelProdus=()=>{const v=[0,1,2,3].map(i=>LAB.niv[i]);if(v.some(x=>x==null))return null;return NIV[Math.min(...v)]};
-  const np=nivelProdus();
   const grila=`<h3>Grila profesorului</h3>
-<p>Profesorul notează documentul cu grila de produs: cinci criterii, fiecare pe trei niveluri. <b>Nivelul produsului = nivelul cel mai mic dintre criteriile 1-4</b> (un produs nu poate fi „Avansat” dacă cerința nu e respectată). Alege, la fiecare criteriu, unde crezi că ești:</p>
-<div class="fl-grila">${GRILA.map((c,i)=>`<div class="fl-crit"><b>${i+1}. ${c[0]}</b><ul><li><i>${NIV[0]}:</i> ${c[1]}</li><li><i>${NIV[1]}:</i> ${c[2]}</li><li><i>${NIV[2]}:</i> ${c[3]}</li></ul><div class="fl-niv" role="group" aria-label="Nivelul meu la criteriul ${i+1}">${NIV.map((n,j)=>`<button type="button" data-fl-niv="${i}:${j}" aria-pressed="${LAB.niv[i]===j}">${n}</button>`).join('')}</div></div>`).join('')}</div>
-<p class="fl-nivel" aria-live="polite">${np?`Nivelul produsului, după alegerile tale la criteriile 1-4: ${np}.`:'Alege un nivel la criteriile 1-4 ca să vezi nivelul produsului.'}</p>`;
+<p>Profesorul notează documentul cu grila de produs: 5 criterii. La fiecare criteriu se dau <b>0 – 18 puncte</b>. Reperele: <b>De bază = 10 p</b>, <b>Consolidat = 14 p</b>, <b>Avansat = 18 p</b>; se poate da și între repere, iar 0 dacă lipsește cu totul. Punctajul = criteriile 1-5 + 10 din oficiu (cel mult 100). Cele 10 puncte din oficiu le primești din start, ca la lucrare.</p>
+<p><b>Nota = punctaj : 10</b> (rotunjită la cel mai apropiat întreg; la ,5 în favoarea elevului). Exemplu: 14 + 18 + 14 + 10 + 14 + 10 = 80 → nota 8.</p>
+<p>Nivelul se citește din notă: 9-10 Avansat, 7-8 Consolidat, 5-6 De bază; 3-4 În formare și 1-2 În dificultate, amândouă cu plan de recuperare.</p>
+${EX.map(exHtml).join('')}
+<p>Acum documentul tău. Alege, la fiecare criteriu, unde crezi că ești. Aici alegi reperul cel mai apropiat. Profesorul poate da și puncte între repere, ca la Mara.</p>
+<div class="fl-grila">${GRILA.map((c,i)=>`<div class="fl-crit"><b>${i+1}. ${c[0]}</b><ul>${NIV.map((n,j)=>`<li><i>${n} · ${REP[j]} p:</i> ${c[j+1]}</li>`).join('')}</ul><div class="fl-niv" role="group" aria-label="Punctele mele la criteriul ${i+1}">${ALEG.map(([p,t])=>`<button type="button" data-fl-niv="${i}:${p}" aria-pressed="${LAB.niv[i]===p}">${t}</button>`).join('')}</div></div>`).join('')}</div>
+<div class="fl-nivel fl-calc" aria-live="polite">${calculGrila()}</div>`;
   return alege+fisa+grila+'<p class="fl-nou"><button class="btn" type="button" data-fl-nou>Sunt alt elev: golește alegerea și bifele</button></p>';
 }
 function umpleLab(){document.querySelectorAll('[data-fise-lab]').forEach(el=>{el.innerHTML=labHtml()})}
@@ -192,9 +248,11 @@ document.addEventListener('click',e=>{
   const a=e.target.closest&&e.target.closest('[data-fl-alege]');
   if(a){LAB.ales=a.dataset.flAlege;umpleLab();const f=document.querySelector('.fl-fisa');if(f)f.scrollIntoView({block:'nearest'});const b=document.querySelector(`[data-fl-alege="${LAB.ales}"]`);if(b)b.focus({preventScroll:true});return}
   const n=e.target.closest&&e.target.closest('[data-fl-niv]');
-  if(n){const [i,j]=n.dataset.flNiv.split(':').map(Number);LAB.niv[i]=j;umpleLab();const b=document.querySelector(`[data-fl-niv="${i}:${j}"]`);if(b)b.focus({preventScroll:true});return}
+  if(n){const [i,p]=n.dataset.flNiv.split(':').map(Number);LAB.niv[i]=p;puneGrila(i);return}
+  const x=e.target.closest&&e.target.closest('[data-fl-ex]');
+  if(x){const [i,k]=x.dataset.flEx.split(':').map(Number);LAB.ex[i]=k;puneEx(i);return}
   const z=e.target.closest&&e.target.closest('[data-fl-nou]');
-  if(z){LAB.ales=null;LAB.bife.clear();LAB.niv={};umpleLab();const b=document.querySelector('[data-fl-alege]');if(b)b.focus({preventScroll:true})}
+  if(z){LAB.ales=null;LAB.bife.clear();LAB.niv={};LAB.ex={};umpleLab();const b=document.querySelector('[data-fl-alege]');if(b)b.focus({preventScroll:true})}
 });
 document.addEventListener('change',e=>{
   const c=e.target.closest&&e.target.closest('[data-bifa]');if(!c)return;
@@ -226,7 +284,7 @@ const PASI=[
   `<b>Tabelul</b> (scrisoarea): clic într-o celulă, fila <b>Proiectare tabel (Table Design)</b>, butonul <b>More</b> (▾) al galeriei <b>Stiluri de tabel (Table Styles)</b>; la <b>Grid Tables</b>, în primul rând care începe cu antetul negru, al doilea model: <b>Grid Table 4 - Accent 1</b> (antet albastru, rânduri în dungi). Bifa <b>Rând antet (Header Row)</b> rămâne pusă.`,
   `<b>Autoverificarea.</b> Ia lista de sub fișă, rând cu rând. La fiecare rând, caută valoarea în Word, în locul scris sub rând, și bifează doar ce ai văzut. Ce nu se potrivește, repari și verifici din nou. La final, bara de stare trebuie să arate <b>Page 1 of 1</b> (pagina 1 din 1).`,
   `<b>Salvarea.</b> Apasă <kbd>F12</kbd>, alege în stânga <b>Documente (Documents)</b> sau folderul scris pe tablă și scrie la <b>Nume fișier (File name)</b> numele tău după regula din lecția 3, cu tipul documentului la capăt, de exemplu <code>Popescu_Ana_7A_diploma</code>. Apasă <b>Salvare (Save)</b>. Dacă Word spune că fișierul există deja (<i>already exists</i>): <b>Anulare (Cancel)</b>, pune o cifră la capătul numelui, apoi iar <b>Salvare (Save)</b>.`,
-  `<b>Verificarea încrucișată.</b> Dacă lângă tine lucrează un coleg de clasă, schimbați locurile: verifică-i documentul cu lista lui, de pe ecranul lui, și spune-i ce n-ai putut bifa. Apoi alege, în grila profesorului de sub listă, nivelul tău la fiecare criteriu.`
+  `<b>Verificarea încrucișată.</b> Dacă lângă tine lucrează un coleg de clasă, schimbați locurile: verifică-i documentul cu lista lui, de pe ecranul lui, și spune-i ce n-ai putut bifa. Apoi alege, în grila profesorului de sub listă, unde crezi că ești la fiecare criteriu: pagina adună punctele, cu 10 din oficiu, și îți arată nota (punctaj : 10) și nivelul.`
 ];
 /* textele din Word-ul simulat `wordhartie` (aceleași rânduri ca în fișe) */
 const DIPLOMA_BL=[{t:'DIPLOMĂ',sz:48,b:1,col:'C00000',al:'center',font:'Georgia'},{t:'se acordă elevei',sz:16,al:'center',font:'Georgia'},{t:'Ioana Marin, clasa a VII-a B',sz:28,b:1,al:'center',font:'Georgia'}];

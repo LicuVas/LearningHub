@@ -109,12 +109,14 @@ details.verif summary{cursor:pointer;font-weight:800;color:var(--accent);min-hei
    materiale\print\Saptamana1_clasa_VII.html, materiale\continut\teste_initiale.json (VII), data\unitati.json. Detalii: surse.md.
    Pasul 0 „La ce folosește”, 5 pași cu „Încearcă” (regulile de note: rezumatul „Pe scurt” din pasul 5), atelierul = evaluarea inițială a
    profesorului, corectată de elev (tipul `evalinit`, scris aici), pasul „Acum la calculatorul din laborator”, 5 întrebări.
-   Reparațiile după judecător (27.09): _verificare/judecator.md și surse.md, „Reparații”. */
+   Reparațiile după judecător (27.09): _verificare/judecator.md și surse.md, „Reparații”.
+   Pașii 4-5, exercițiile lor, întrebările 3-4 și pasul 3 din laborator: SISTEM_EVALUARE.md §4.2-4.3 și fișa de criterii
+   a clasei a VII-a §4-5 (surse.md, secțiunea din 29.09.2026). */
 const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
 const NIV={b:'<span class="niv">De bază</span>',c:'<span class="niv c">Consolidat</span>',a:'<span class="niv a">Avansat</span>'};
 const NUME_NIV={b:'De bază',c:'Consolidat',a:'Avansat'};
 const IMG_CENTURI=fig('img/centuri.webp',850,754,'Cinci centuri de arte marțiale, strânse și așezate una lângă alta: galbenă, portocalie, verde, albastră și maro',
-  'Centurile de la judo: cerințele se știu dinainte, iar centurile se iau una după alta. <span class="credit">Foto: chris 論, <a href="https://commons.wikimedia.org/wiki/File:Obi-goky%C5%AB.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.ro" target="_blank" rel="noopener">CC BY-SA 3.0</a>; convertită în WebP.</span>');
+  'Centurile de la judo: cerințele fiecărei centuri se știu dinainte. <span class="credit">Foto: chris 論, <a href="https://commons.wikimedia.org/wiki/File:Obi-goky%C5%AB.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.ro" target="_blank" rel="noopener">CC BY-SA 3.0</a>; convertită în WebP.</span>');
 
 /* ---------- unde se recitește (jocurile de a V-a și a VI-a de pe sit; nivelurile citite din configurația lor) ---------- */
 /* legătura „doar recitire” a motorului (dirijorul, 27.09): ?recitire=N (N de la 1, ca pe ecran) deschide pașii nivelului N
@@ -227,8 +229,10 @@ const TipNumar={
     const inp=body.querySelector('.nr-in');
     inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const b=document.getElementById('chk');if(b)b.click()}});
     const nav=api.checkButton(()=>{
-      const v=citesteNr(inp.value);
-      if(v===null){api.feedback('bad','<strong>Scrie un număr</strong>, doar cu cifre (de exemplu 72).');inp.focus({preventScroll:true});return}
+      /* un cuvânt ÎNAINTEA numărului („nota 9”, „total 72”) e primit ca numărul; la „Nota”, exemplul e o notă, nu un punctaj
+         (judecata pe regula de notare, m2; 10 nu e răspunsul și nici capcana vreunui exercițiu cu nota) */
+      const v=citesteNr(inp.value.replace(/^\s*[a-zăâîșşțţ]+:?\s+(?=-?\d)/i,''));
+      if(v===null){api.feedback('bad',Q.eticheta==='Nota'?'<strong>Scrie nota</strong> doar cu cifre (de exemplu 10).':'<strong>Scrie un număr</strong>, doar cu cifre (de exemplu 72).');inp.focus({preventScroll:true});return}
       if(Math.abs(v-Q.ok)<1e-9){inp.disabled=true;nav.innerHTML='';api.resolve(true);return}
       const cap=(Q.capcane||{})[String(v)];
       api.resolve(false,cap||`${fmtNr(v)} nu e rezultatul. Refă socoteala pe pașii din pas.`);
@@ -337,7 +341,7 @@ const TipEval={
 const LABORATOR=[
   'Stai pe scaun; nu atingi cablurile și prizele. În caiet, pe o pagină nouă, scrie titlul <b>De unde plec — clasa a VII-a</b> și data.',
   'Scrie cele trei niveluri, fiecare cu o propoziție a ta.<details class="verif"><summary>Verifică-te, după ce ai scris</summary>De bază: rezolvi cu un model sau cu pașii dați, la lucruri făcute. Consolidat: rezolvi singur, lucruri de felul celor exersate. Avansat: rezolvi singur o situație nouă și explici de ce ai făcut așa.</details>',
-  'Scrie pragurile de la A, B și C și notele fiecărui nivel.<details class="verif"><summary>Verifică-te, după ce ai scris</summary>Cel puțin 27 de puncte la A: De bază, nota 5 sau 6. Și cel puțin 20 la B: Consolidat, 7 sau 8. Și cel puțin 14 la C: Avansat, 9 sau 10. Sub 27 la A: În formare (3 sau 4) sau În dificultate (1 sau 2), cu plan de recuperare.</details>',
+  'Scrie cum afli nota din puncte și nivelul din notă.<details class="verif"><summary>Verifică-te, după ce ai scris</summary>Punctajul = A + B + C + 10 din oficiu. Nota = punctaj : 10, rotunjită la cel mai apropiat număr întreg; la ,5 exact, în sus. Nivelul, din notă: 9 sau 10 Avansat, 7 sau 8 Consolidat, 5 sau 6 De bază, 3 sau 4 În formare, 1 sau 2 În dificultate; sub 5, și plan de recuperare.</details>',
   'Copiază fișa de pornire de mai sus: ✔ sau ✗, <b>De recitit</b> și <b>Proba nu a verificat</b>.',
   'Apasă cel mult trei legături din „De recitit” (sau una din „Proba nu a verificat”). Fiecare deschide, într-o filă nouă, pașii unui nivel, doar de citit. Scrie în caiet o propoziție despre fiecare, apoi revino în fila lecției.'
 ];
@@ -354,13 +358,13 @@ JocMotor.porneste({
   acasa:{href:'../../../hub/index.html',text:'LearningHub'},
   ancoraText:'Planul profesorului: unitatea VII-E0 „Deschiderea anului. Cum se învață și cum se notează”, lecția 1 (organizare + evaluare inițială). Criteriile: fișa de criterii a clasei a VII-a și sistemul de evaluare al profesorului, pe standardele de evaluare (Ordinul 4.615/2026, anexa 15). Evaluarea inițială: testul profesorului pentru clasa a VII-a, pe materia clasei a VI-a, plus o probă din planul clasei a V-a.',
   banda:'<span class="tr t1">De bază</span><span class="tr t2">Consolidat</span><span class="tr t3">Avansat</span>',
-  intro:`<p>Afli ce faci la TIC anul acesta și cum se notează (cele <b>trei niveluri</b>), apoi îți corectezi singur <b>evaluarea inițială</b>, care <b>nu se notează</b>.</p>
+  intro:`<p>Afli ce faci la TIC anul acesta, cum iei nota și ce sunt cele <b>trei niveluri</b>, apoi îți corectezi singur <b>evaluarea inițială</b>, care <b>nu se notează</b>.</p>
 <p><b>Ai nevoie de:</b> ce ai învățat în clasele a V-a și a VI-a.</p>`,
   cum:`<p><b>Poți lucra singur:</b> pașii cu „Încearcă tu”, atelierul, laboratorul, apoi 5 întrebări.</p>`,
   nivele:[
 {t:'Ce facem anul acesta. Criteriile de evaluare și cele trei niveluri. Evaluare inițială',lectii:[1],final:true,
  continuturi:[],   // VII-E0 (organizare + evaluare inițială) n-are conținut în programă; poarta are excepția -E0 (dirijorul, 27.09)
- obiectiv:'știi ce faci anul acesta la TIC, afli nivelul unei sarcini și al unei lucrări, transformi punctele în notă și știi de unde pleci.',
+ obiectiv:'știi ce faci anul acesta la TIC, afli nivelul unei sarcini, transformi punctele unei lucrări în notă, citești nivelul din notă și știi de unde pleci.',
  pasi:[
   /* ---------- pasul 0 ---------- */
   {t:'La ce folosește',
@@ -412,7 +416,7 @@ ${IMG_CENTURI}`},
 <ul class="niv-lista"><li><b>Partea A</b>, 40 de puncte: cu model (De bază);</li>
 <li><b>Partea B</b>, 30 de puncte: singur, situație cunoscută (Consolidat);</li>
 <li><b>Partea C</b>, 20 de puncte: situație nouă și explicație (Avansat).</li></ul>
-<p>Plus <strong>10 puncte din oficiu</strong>: în total, 100.</p>
+<p>Plus <strong>10 puncte din oficiu</strong> (le primești oricum): în total, 100.</p>
 <p><b>Atenție la litere.</b> „Partea A” e partea de bază, nu „A de la Avansat”. Lângă cerințe mai vezi o literă mică, cu alt rost: nivelul cerinței (B = De bază, C = Consolidat, A = Avansat).</p>`,
    incearca:{t:'numar',q:'Cristi a luat 30 de puncte la partea A, 22 la B și 10 la C. Câte puncte are în total, cu oficiul?',eticheta:'Totalul',unitate:'puncte',ok:72,tipic:62,
     capcane:{'62':'Ai adunat doar părțile A, B și C. Mai adaugă punctele din oficiu.'},
@@ -423,44 +427,42 @@ ${IMG_CENTURI}`},
     {t:'numar',q:'Ioana a luat 35 de puncte la A, 25 la B și 18 la C. Câte puncte are în total, cu oficiul?',eticheta:'Totalul',unitate:'puncte',ok:88,tipic:78,
      capcane:{'78':'Ai uitat cele 10 puncte din oficiu.'},ajutor:'Trei părți, plus oficiul.',why:'35 + 25 + 18 = 78, plus 10 din oficiu: 88.'}
    ]},
-  /* ---------- pasul 4 ---------- */
-  {t:'Din puncte, nivelul',
-   text:`<p>Nivelul îl afli în ordine, de jos în sus:</p>
-<ol><li>Cel puțin <b>27</b> din 40 la A? Ai atins <b>De bază</b>.</li>
-<li><b>Și</b> cel puțin <b>20</b> din 30 la B? <b>Consolidat</b>.</li>
-<li><b>Și</b> cel puțin <b>14</b> din 20 la C? <b>Avansat</b>.</li></ol>
-<p>Sub 27 la A ești <mark>În formare</mark> (cu cel puțin 14 la A) sau <mark>În dificultate</mark> (sub 14) și primești un <mark>plan de recuperare</mark>: pașii prin care recuperezi. Pragurile sunt regula profesorului tău.</p>`,
-   exemplu:`<p>Un elev are 31 la A, 21 la B și 6 la C: A ✔, B ✔, C ✘ (6 e sub 14). Te oprești la primul ✘: <b>Consolidat</b>.</p>`,
-   altfel:`<p>E o scară cu trei trepte. Urci numai pas cu pas: pe a doua treaptă ajungi după prima, pe a treia după a doua. Cine are multe puncte la C, dar puține la B, stă tot pe prima treaptă. Cine n-a urcat nici prima treaptă (sub 27 la A) e încă jos, lângă scară: În formare sau În dificultate.</p>`,
-   incearca:{t:'classify',q:'La ce nivel a ajuns fiecare elev?',cats:['În formare','De bază','Consolidat','Avansat'],
-    items:[['Dan are 35 la A, 24 la B și 15 la C',3],['Ema are 30 la A, 12 la B și 18 la C',1],['Radu are 28 la A, 21 la B și 4 la C',2],['Ilinca are 20 la A, 10 la B și 2 la C',0]],
-    ajutor:'Întâi A: cel puțin 27? Dacă da, B: cel puțin 20? Dacă da, C: cel puțin 14? Te oprești la primul „nu”.',
-    why:'Dan trece de toate trei pragurile: Avansat. Ema are 30 la A, dar doar 12 la B, deci se oprește la De bază, chiar dacă are 18 la C. Radu trece de A și B, nu și de C: Consolidat. Ilinca are 20 la A, sub 27, dar cel puțin 14: În formare.'},
+  /* ---------- pasul 4 (nota = punctaj : 10; SISTEM_EVALUARE.md §4.2, fișa de criterii VII §4) ---------- */
+  {t:'Din puncte, nota',
+   text:`<p>Aduni punctele părților și cele 10 din oficiu: A + B + C + 10. Rezultatul e <mark>punctajul</mark>, cel mult 100.</p>
+<p><b>Nota = punctaj : 10.</b> De exemplu, 82 de puncte: 82 : 10 = 8,2.</p>
+<p>Nota e un număr întreg, așa că <mark>rotunjești</mark> la cel mai apropiat: 8,2 devine <b>8</b>, 6,8 devine <b>7</b>. La <b>,5</b> exact rotunjești <b>în sus</b>, în favoarea ta: 85 de puncte dau 8,5, deci <b>nota 9</b>. Copiatul sau lucrarea nepredată: nota 1.</p>`,
+   exemplu:`<p>Un elev are 31 la A, 21 la B și 6 la C. Punctajul: 31 + 21 + 6 + 10 = 68. Nota: 68 : 10 = 6,8, rotunjit: <b>nota 7</b>.</p>`,
+   altfel:`<p>Nota e punctajul cu o virgulă pusă înaintea ultimei cifre: 82 devine 8,2, iar 68 devine 6,8. Apoi rotunjești la cel mai apropiat număr întreg; la ,5 exact, urci. Pentru 100 de puncte, nota e 10.</p>`,
+   incearca:{t:'numar',q:'Maria are 34 de puncte la A, 25 la B și 17 la C. Ce notă ia?',eticheta:'Nota',ok:9,tipic:8,
+    capcane:{'8':'8,6 e mai aproape de 9 decât de 8: rotunjești la cel mai apropiat, nu tai virgula. Ai adunat și cele 10 din oficiu?','7':'Ai adunat și cele 10 puncte din oficiu? Punctajul e A + B + C + 10.','8.6':'8,6 e punctajul împărțit la 10. Nota e un număr întreg: rotunjește la cel mai apropiat.','86':'86 e punctajul. Nota = punctaj : 10, apoi rotunjești.'},
+    ajutor:'Întâi punctajul: A + B + C + 10. Apoi îl împarți la 10 și rotunjești la cel mai apropiat număr întreg.',
+    why:'Punctajul: 34 + 25 + 17 + 10 = 86. Nota: 86 : 10 = 8,6, mai aproape de 9: nota 9.'},
    inca:[
-    {t:'tf',q:'Vlad are 20 de puncte din 20 la partea C, dar doar 15 la partea A. Vlad e la nivelul Avansat.',ok:false,
-     ajutor:'Nivelurile se urcă de jos: ce trebuie să ai întâi la A?',why:'Fals. Cu 15 la A (sub 27, dar cel puțin 14), Vlad e În formare, oricât ar avea la C. Primește și un plan de recuperare.'},
-    {t:'choice',q:'Sorin are 27 de puncte la A, 19 la B și 20 la C. La ce nivel a ajuns?',o:['De bază','Consolidat','Avansat','În formare'],ok:0,
-     ajutor:'Ia pragurile în ordine: 27 la A, 20 la B. Unde e primul „nu”?',why:'A: 27 e cel puțin 27, deci De bază. B: 19 e sub 20, deci se oprește acolo, chiar dacă are toate punctele la C.'}
+    {t:'numar',q:'Bianca are 35 de puncte la A, 24 la B și 16 la C. Ce notă ia?',eticheta:'Nota',ok:9,tipic:8,
+     capcane:{'8':'Verifică două lucruri: ai adunat cele 10 puncte din oficiu? Iar la ,5 exact rotunjești în sus, în favoarea ta.','8.5':'Nota e un număr întreg. La ,5 exact rotunjești în sus.','85':'85 e punctajul. Nota = punctaj : 10, apoi rotunjești.','7':'Adună și cele 10 puncte din oficiu: punctajul e A + B + C + 10.'},
+     ajutor:'Punctajul (A + B + C + 10), apoi punctaj : 10. Dacă iese ,5, în ce parte rotunjești?',why:'35 + 24 + 16 + 10 = 85. Nota: 8,5, exact la jumătate, deci rotunjești în sus, în favoarea ta: nota 9.'},
+    {t:'tf',q:'Sorin are 74 de puncte. Nota lui e 8, pentru că rotunjirea e în favoarea elevului.',ok:false,
+     ajutor:'Cât face 74 : 10? E mai aproape de 7 sau de 8?',why:'Fals. 74 : 10 = 7,4, mai aproape de 7: nota 7. Rotunjești în sus, în favoarea ta, doar la ,5 exact.'}
    ]},
-  /* ---------- pasul 5 (judecătorul, M6: regula cifrei primește pasul și exercițiul ei) ---------- */
-  {t:'Din nivel, nota',
-   text:`<p>Nivelul îți dă două note: <b>Avansat</b> 9 sau 10, <b>Consolidat</b> 7 sau 8, <b>De bază</b> 5 sau 6, <b>În formare</b> 3 sau 4. Pe care o primești alege <strong>totalul</strong>, cu oficiul: nota mai mare cere cel puțin 90, 80, 60, respectiv 40 de puncte. <b>În dificultate</b>: 2 dacă ai lucrat, 1 dacă n-ai predat sau ai copiat.</p>
-<p>Pe foaie poate scrie alt calcul; regula clasei e aceasta.</p>
-<div class="pescurt"><b>Pe scurt</b> (și pe fișa din caiet): 8 note pe an, 4 din lucrări, 3 din produse, 1 din <mark>portofoliu</mark> (mapa ta); o singură medie anuală, la ,50 rotunjită în sus. Testul de început nu se notează.</div>`,
-   exemplu:`<p>Elevul din pasul trecut e Consolidat: 7 sau 8. Totalul, 31 + 21 + 6 + 10 = 68, e sub 80: <b>nota 7</b>.</p>`,
-   incearca:{t:'numar',q:'Maria are 33 de puncte la A, 26 la B și 12 la C, plus 10 din oficiu. Ce notă ia? Află întâi nivelul, apoi alege nota după total.',eticheta:'Nota',ok:8,tipic:7,
-    capcane:{'7':'Nivelul e bun (Consolidat), dar uită-te la total: câte puncte are Maria cu tot cu oficiul?','9':'Verifică partea C: 12 e cel puțin 14?','10':'Verifică partea C: 12 e cel puțin 14?'},
-    ajutor:'A: 33 (cel puțin 27?), B: 26 (cel puțin 20?), C: 12 (cel puțin 14?). Apoi totalul: e de la 80 în sus?',
-    why:'A și B trec pragurile, C nu (12 e sub 14): Consolidat, adică 7 sau 8. Totalul e 33 + 26 + 12 + 10 = 81, de la 80 în sus: nota 8.'},
+  /* ---------- pasul 5 (nivelul se citește din notă; SISTEM_EVALUARE.md §4.3, fișa de criterii VII §4-5) ---------- */
+  {t:'Din notă, nivelul',
+   text:`<p>Din notă îți afli <b>nivelul</b>: 9 sau 10, <b>Avansat</b>; 7 sau 8, <b>Consolidat</b>; 5 sau 6, <b>De bază</b>; 3 sau 4, <mark>În formare</mark>; 1 sau 2, <mark>În dificultate</mark>. Sub 5 primești și un <mark>plan de recuperare</mark>: pașii prin care recuperezi.</p>
+<p>Părțile A, B și C arată unde ai pierdut puncte, deci ce ai de lucrat.</p>
+<div class="pescurt"><b>Pe scurt</b> (și pe fișa din caiet): primești cel puțin o notă în fiecare modul, deci cel puțin 5 pe an, din lucrări sau din proiecte făcute la oră. O singură medie anuală, la ,50 rotunjită în sus. Testul de la început nu se notează.</div>`,
+   exemplu:`<p>Elevul din pasul trecut are nota 7: <b>Consolidat</b>. A pierdut 40&nbsp;−&nbsp;31&nbsp;=&nbsp;9 puncte la A, 30&nbsp;−&nbsp;21&nbsp;=&nbsp;9 la B și 20&nbsp;−&nbsp;6&nbsp;=&nbsp;14 la C. Are de lucrat mai ales la partea C: situațiile noi.</p>`,
+   incearca:{t:'classify',q:'Află nota fiecărui elev, apoi nivelul lui.',cats:['În formare','De bază','Consolidat','Avansat'],
+    items:[['Dan are 38 la A, 28 la B și 18 la C',3],['Ema are 20 la A, 12 la B și 18 la C',1],['Radu are 25 la A, 20 la B și 10 la C',2],['Ilinca are 15 la A, 8 la B și 2 la C',0]],
+    ajutor:'Pentru fiecare: punctajul (A + B + C + 10), nota (punctaj : 10, rotunjit), apoi nivelul din notă.',
+    why:'Dan: 38 + 28 + 18 + 10 = 94, nota 9: Avansat. Ema: 20 + 12 + 18 + 10 = 60, nota 6: De bază, chiar cu 18 la C; nivelul vine din notă, nu din partea C. Radu: 25 + 20 + 10 + 10 = 65, adică 6,5, rotunjit în sus: nota 7, Consolidat (rotunjit în jos ar fi fost 6, De bază). Ilinca: 15 + 8 + 2 + 10 = 35, adică 3,5: nota 4, În formare, cu plan de recuperare.'},
    inca:[
-    {t:'tf',q:'Ioan are 40 de puncte la A, 30 la B și 13 la C, plus oficiul: 93 de puncte. Ioan ia nota 10.',ok:false,
-     ajutor:'Întâi nivelul: 13 la C e cel puțin 14?',why:'Fals. Cu 13 la C, Ioan nu ajunge la Avansat: e Consolidat, deci 7 sau 8. Totalul, 93, e de la 80 în sus: nota 8. Totalul alege nota doar în perechea dată de nivel.'},
-    {t:'numar',q:'Bianca are 30 de puncte la A, 15 la B și 8 la C, plus 10 din oficiu. Ce notă ia?',eticheta:'Nota',ok:6,tipic:5,
-     capcane:{'5':'Nivelul e bun (De bază), dar totalul e 63: e de la 60 în sus?','7':'Verifică partea B: 15 e cel puțin 20?','8':'Verifică partea B: 15 e cel puțin 20?'},
-     ajutor:'A: 30 (cel puțin 27?), B: 15 (cel puțin 20?). Apoi totalul, cu oficiul.',why:'A trece pragul, B nu: De bază, adică 5 sau 6. Totalul e 30 + 15 + 8 + 10 = 63, de la 60 în sus: nota 6.'},
+    {t:'tf',q:'Vlad are 15 puncte la A, 30 la B și 20 la C. Are toate punctele la C, deci Vlad e Avansat.',ok:false,
+     ajutor:'Nivelul se citește din notă. Cât e punctajul lui Vlad și ce notă îi dă?',why:'Fals. Punctajul: 15 + 30 + 20 + 10 = 75, adică 7,5, rotunjit în sus: nota 8, deci Consolidat. Nivelul se citește din notă, nu din partea C.'},
+    {t:'choice',q:'Tot Vlad: 15 puncte la A, 30 la B și 20 la C. La ce are de lucrat?',o:['La partea A: a pierdut 40 − 15 = 25 de puncte','La partea B: are 30 din 40, deci a pierdut 10','La partea C: nota 8 e Consolidat, deci îi lipsește Avansatul','La nimic: 15 + 30 + 20 + 10 = 75, nota 8, e bine'],ok:0,
+     ajutor:'Câte puncte a pierdut la fiecare parte? La A se pot lua 40, la B 30, la C 20.',why:'La A a pierdut 40 − 15 = 25 de puncte. La B se pot lua 30, nu 40, iar Vlad le are pe toate; la C are toate cele 20. Deci are de lucrat la partea A, chiar dacă nota 8 e bună și a rezolvat bine partea grea.'},
     {t:'classify',q:'Ce se trece în catalog ca notă și ce nu?',cats:['Se notează','Nu se notează'],
-     items:[['Testul de la început de an',1],['Lucrarea de la finalul unei unități',0],['Un produs făcut la oră, de exemplu filmulețul tău',0],['Portofoliul, la sfârșitul anului',0]],
-     ajutor:'Recitește caseta „Pe scurt”.',why:'Lucrările de la finalul unităților, produsele și portofoliul dau cele 8 note. Testul de la început nu se notează: arată de unde pleci.'}
+     items:[['Testul de la început de an',1],['Lucrarea de la finalul unei unități',0],['Un proiect făcut la oră, de exemplu filmulețul tău',0],['O lucrare copiată de la colegul de bancă',0]],
+     ajutor:'Recitește caseta „Pe scurt” și ultima propoziție din pasul „Din puncte, nota”.',why:'Notele vin din lucrările de la finalul unităților și din proiectele făcute la oră: cel puțin una în fiecare modul. Lucrarea copiată se notează și ea: cu nota 1. Testul de la început nu se notează: arată de unde pleci.'}
    ]}
 
  ],
@@ -532,12 +534,12 @@ ${IMG_CENTURI}`},
    o:['De la algoritm la program','Tehnoredactare: editorul de texte','Aplicații audio și audio-video','Aplicații colaborative'],ok:0,
    ajutor:'Ce iese la final: o pagină, un filmuleț, un material comun sau un program care socotește?',why:'La final iese un program care face singur o socoteală, deci „De la algoritm la program”.'},
   {t:'classify',q:'Ce nivel a atins fiecare elev la lucrare?',cats:['În formare','De bază','Consolidat','Avansat'],
-   items:[['Irina are 38 la A, 29 la B și 12 la C',2],['Paul are 25 la A, 28 la B și 19 la C',0],['Ștefan are 27 la A, 20 la B și 14 la C',3],['Denisa are 30 la A, 15 la B și 20 la C',1]],
-   ajutor:'Pragurile: 27 la A, 20 la B, 14 la C, în ordine. „Cel puțin” înseamnă că și numărul exact trece.',
-   why:'Irina trece de A și B, nu și de C: Consolidat. Paul are sub 27 la A, deci În formare, oricât ar avea la B și C. Ștefan are exact pragurile, iar „cel puțin” le include: Avansat. Denisa trece de A, dar nu de B: De bază, chiar cu 20 la C.'},
-  {t:'numar',q:'Tudor are 36 de puncte la A, 27 la B și 16 la C, plus oficiul. Ce notă primește?',eticheta:'Nota',ok:9,tipic:10,
-   capcane:{'10':'Nivelul e bun (Avansat), dar pentru 10 totalul trebuie să fie de la 90 în sus. Cât e totalul lui Tudor?','8':'Verifică partea C: 16 e cel puțin 14?'},
-   ajutor:'Întâi nivelul (A, apoi B, apoi C), apoi totalul, pentru cifră.',why:'A, B și C trec toate pragurile: Avansat, 9 sau 10. Totalul e 36 + 27 + 16 + 10 = 89, sub 90: nota 9.'},
+   items:[['Irina are 38 la A, 29 la B și 12 la C',3],['Paul are 25 la A, 28 la B și 19 la C',2],['Ștefan are 22 la A, 14 la B și 9 la C',1],['Denisa are 10 la A, 5 la B și 16 la C',0]],
+   ajutor:'Întâi punctajul (cu oficiul), apoi nota (punctaj : 10, rotunjit), apoi nivelul din notă.',
+   why:'Irina: 38 + 29 + 12 + 10 = 89, nota 9: Avansat, chiar cu 12 la C. Paul: 25 + 28 + 19 + 10 = 82, nota 8: Consolidat. Ștefan: 22 + 14 + 9 + 10 = 55, adică 5,5, rotunjit în sus: nota 6, De bază. Denisa: 10 + 5 + 16 + 10 = 41, nota 4: În formare, chiar cu 16 la C; primește și un plan de recuperare.'},
+  {t:'numar',q:'Tudor are 30 de puncte la A, 18 la B și 7 la C, plus oficiul. Ce notă primește?',eticheta:'Nota',ok:7,tipic:6,
+   capcane:{'6':'Verifică două lucruri: ai adunat cele 10 puncte din oficiu? Iar la ,5 exact rotunjești în sus, în favoarea ta.','6.5':'Nota e un număr întreg: la ,5 exact rotunjești în sus.','65':'65 e punctajul. Nota = punctaj : 10, apoi rotunjești.','5':'Adună și cele 10 puncte din oficiu: punctajul e A + B + C + 10.'},
+   ajutor:'Punctajul (A + B + C + 10), apoi punctaj : 10, rotunjit la cel mai apropiat număr întreg.',why:'30 + 18 + 7 + 10 = 65. Nota: 6,5, exact la jumătate, deci rotunjești în sus, în favoarea ta: nota 7.'},
   {t:'choice',q:'Pe o lucrare, lângă o cerință din partea B scrie mic „C (15 p)”. Ce înseamnă C?',o:['Nivelul cerinței: Consolidat','Partea C a lucrării','Nota la cerință','Numărul cerinței'],ok:0,
    ajutor:'Recitește paragraful „Atenție la litere” din pasul „Cum arată o lucrare”.',why:'Litera mică de lângă o cerință arată nivelul ei: B = De bază, C = Consolidat, A = Avansat. Partea lucrării e scrisă separat, de exemplu „PARTEA B”.'}
  ]}
@@ -546,7 +548,7 @@ ${IMG_CENTURI}`},
    intro:`<p>Faci pașii unul câte unul, fără profesor.</p><div data-rezultat-elev-intrebare></div><div data-fisa></div>`,
    pasi:LABORATOR},
   diploma:{titlu:'Știu de unde plec',
-   rezumat:'a aflat ce face anul acesta la TIC (tehnoredactare, audio și audio-video, aplicații colaborative, de la algoritm la program), cele trei niveluri (De bază, Consolidat, Avansat), cum arată o lucrare (părțile A, B, C și oficiul), cum devin punctele nivel și notă și și-a corectat singur evaluarea inițială, cu lista a ce are de recitit',
+   rezumat:'a aflat ce face anul acesta la TIC (tehnoredactare, audio și audio-video, aplicații colaborative, de la algoritm la program), cele trei niveluri (De bază, Consolidat, Avansat), cum arată o lucrare (părțile A, B, C și oficiul), cum devin punctele notă, cum se citește nivelul din notă și și-a corectat singur evaluarea inițială, cu lista a ce are de recitit',
    aplicatie:'calculatorul tău din laborator și caietul de TIC',
    provocare:LABORATOR},
   tipuri:{numar:TipNumar,evalinit:TipEval}
