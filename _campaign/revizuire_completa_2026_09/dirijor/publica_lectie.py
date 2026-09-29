@@ -113,7 +113,40 @@ env_push = ["cmd", "/c", "set GIT_TERMINAL_PROMPT=0&& set GCM_INTERACTIVE=never&
 cod, out = rul(env_push, timeout=120)
 poarta("git push", cod == 0, ultima(out) or "ok")
 
-# 4. verificare LIVE: marcajele + proba de fum
+# 4. verificare LIVE
+# 4a. conținutul servit = fișierul publicat (29.09.2026: marcajul „lectie_<clasa>_…” există și în versiunea VECHE a unei
+#     lecții republicate, așa că „marcaje LIVE: 0” a trecut cât timp situl încă servea pagina veche). Așteaptă până
+#     când pagina de pe sit e identică cu index.html comis (terminațiile de rând normalizate), cel mult 10 minute.
+import time
+import urllib.request
+
+
+def ia_live(cale):
+    url = f"https://learninghub-8z6.pages.dev{cale}?v={int(time.time() * 1000)}"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) verificare-dirijor"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.read()
+
+
+def normal(b):
+    return b.replace(b"\r\n", b"\n").strip()
+
+
+asteptate = {l: normal((R / "lectii" / l / "index.html").read_bytes()) for l in lectii}
+ramase, termen = set(lectii), time.time() + 600
+while ramase and time.time() < termen:
+    for l in sorted(ramase):
+        try:
+            if normal(ia_live(f"/lectii/{l}/")) == asteptate[l]:
+                ramase.discard(l)
+        except Exception:
+            pass
+    if ramase:
+        time.sleep(15)
+poarta("conținut LIVE = fișierul publicat", not ramase,
+       "toate identice" if not ramase else "încă vechi după 10 min: " + ", ".join(sorted(ramase)))
+
+# 4b. marcajele + proba de fum
 marcaje = []
 for l in lectii:
     cls, dos = l.split("/")

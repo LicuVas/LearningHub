@@ -56,6 +56,7 @@ MSYS_NO_PATHCONV=1 python …/dirijor/dirijor_verifica_live.py "/lectii/<clasa>/
 MSYS_NO_PATHCONV=1 python …/verificare_lectii/fum_live.py /lectii/<clasa>/<modul>-lNN/     # 390+1280, 0 erori, 0 cereri spre teste-vasile
 ```
 - **NICIODATĂ `git add -A`** — alte sesiuni lucrează în același depozit. Doar fișierele numite.
+- **La o lecție REPUBLICATĂ, marcajul `lectie_<clasa>_…` nu dovedește nimic** — există și în versiunea veche (29.09.2026: „marcaje LIVE: 0” a trecut, iar V/1, VI/1, VII/1 încă se serveau vechi câteva minute). De aceea `publica_lectie.py` are acum poarta „conținut LIVE = fișierul publicat”: așteaptă (cel mult 10 min) până pagina de pe sit e identică cu `index.html` comis.
 - Situl răspunde 200 la orice adresă: dovada e MARCAJUL din pagină, nu codul 200. Urllib cu User-Agent de Python e blocat de Cloudflare — scriptul folosește User-Agent de browser.
 - Git Bash strică argumentele care încep cu `/` → `MSYS_NO_PATHCONV=1`.
 - Build-ul + linkurile: 2-3 minute pe calculatorul liber, peste 15 minute cu 8 agenți la lucru (28.09): rulează-le în fundal (`run_in_background`). Publică mai multe lecții ÎMPREUNĂ când se poate — build-ul costă la fel pentru una sau pentru patru.
@@ -90,6 +91,12 @@ MSYS_NO_PATHCONV=1 python …/verificare_lectii/fum_live.py /lectii/<clasa>/<mod
 - **Contradicții între ce spune autorul și ce spune judecătorul** se arbitrează în aplicația reală (ex. Anulare în Excel reapare fereastra — autorul a avut dreptate).
 - **Spune-i lui Vasile cât durează** înainte: o lecție = ~1-2 ore de autor + 20-40 min de judecată pe trecere; 2-4 treceri.
 
+### Regula de notare (decizia lui Vasile, 29.09.2026 — obligatorie pentru orice lecție nouă)
+- **Nota = punctaj : 10** (A 40 + B 30 + C 20 + 10 din oficiu; rotunjire la cel mai apropiat întreg, ,5 în favoarea elevului). **Nivelul se citește din notă**: 9-10 Avansat, 7-8 Consolidat, 5-6 De bază, 3-4 În formare, 1-2 În dificultate. Părțile A/B/C NU schimbă nota, arată unde s-au pierdut puncte.
+- **Cel puțin o notă pe modul → cel puțin 5 pe an.** Nu scrie alt număr de note.
+- Proiectele: grila `Info_Gimnaziu_2026\instrumente\Grila_produs.md` — 5 criterii × 0-18 p (10 / 14 / 18) + 10; nota = punctaj : 10. NU „nivelul = cel mai mic dintre criterii”.
+- Sursa unică pentru agenți: `_campaign\notare_punctaj_2026_09_29\REGULA_NOUA.md`. Oracolul urmelor regulii vechi (praguri 27/20/14, banda de notă, 9/8/7 note): `python C:/00/Projects/LearningHub/_campaign/notare_punctaj_2026_09_29/verifica_regula.py` → ultima linie 0. Evaluările sumative (lecțiile de evaluare din M2 încolo) se construiesc pe regula asta.
+
 ## 7. Modele de prompt (copiate din campanie)
 **Autor (predare):**
 > Citește întâi și urmează întocmai `C:\00\Projects\LearningHub\_campaign\revizuire_completa_2026_09\07_BRIEF_AUTOR.md`.
@@ -113,7 +120,7 @@ MSYS_NO_PATHCONV=1 python …/verificare_lectii/fum_live.py /lectii/<clasa>/<mod
 ## 9. Deschis — de decis de Vasile / de reparat (păstrat și în jurnal)
 - Istoricul depozitului GitHub public conține încă datele personale scoase din fișiere pe 28.09 (rescrierea istoriei = ireversibilă, cere acordul lui).
 - Panoul de activitate: 3 elevi de probă („Ana Pop”, „Dan Ene”, „Rusu Ilie”, 0 min) — de șters țintit (ștergerea țintită nu există încă în `activitate.py`).
-- Generatorul de teste (`Info_Gimnaziu_2026\generator\print_engine.py`) scrie „Nota = punctaj : 10” și B/C/A pe foi — contrazice `SISTEM_EVALUARE.md`; înainte de lucrările de la lecțiile 7.
+- ~~Generatorul de teste scrie „Nota = punctaj : 10” — contrazice `SISTEM_EVALUARE.md`~~ — REZOLVAT 29.09.2026: Vasile a decis **nota = punctaj : 10** peste tot (vezi mai jos, „Regula de notare”). Foile erau deja corecte; s-au schimbat SISTEM_EVALUARE, fișele de criterii, grila de proiect și lecțiile V-VIII/1, VI/9, VII/9.
 - Jocul `prezentari-vi` (6×6) contrazice lecția VI/2 („cel mult patru rânduri scurte”) și lecțiile VI/8-9; tot acolo „titlu 32–40” și „Use Presenter View”; de ales o regulă (jocurile nu se schimbă fără acordul lui).
 - Jocul `fisiere-v`: „Restaurare jos” → numele Windows RO e „Restabilire jos” (fără acord, nu se atinge).
 - Simulatorul comun `simppt.js`: pe telefon filele panglicii au 25 px, „This Device”/Insert 29 px (sub 32×44) — găsit la VI/9, de reparat în componenta comună cu matrice de probe.
