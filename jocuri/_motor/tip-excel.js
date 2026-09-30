@@ -18,6 +18,23 @@
    - setări RO („;” și 12,5) / EN („,” și 12.5): un număr cu semnul greșit rămâne TEXT; separatorul greșit dă
      fereastra „There's a problem with this formula”.
    - „Copiază tabelul” pune foaia în clipboard (text + tabel), ca s-o lipești în Excel sau Google Sheets.
+   FOAIA MARE (29.09.2026, contractul _campaign/revizuire_completa_2026_09/foaie_excel_mare/contract.md):
+   - foaia arată de la început cel puțin coloanele A–J și rândurile 1–20 (sau cât cere exercițiul, cols/rows/cells);
+     ce se notează NU depinde de mărime: verificarea rămâne pe celulele ei;
+   - foaia crește singură, ca în Excel (acolo foaia continuă până la rândul 1.048.576 și coloana XFD): săgeata, Enter,
+     Tab (și Shift+săgeată) dincolo de margine, lipirea și umplerea (pătrățelul tras) care trec de margine, adresa
+     scrisă în caseta de nume (excelx.js, prin S.creste); pentru deget, butoanele „+ rând” / „+ coloană” de sub foaie;
+   - limita e coloana Z și rândul 100: acolo foaia nu mai crește, iar sub ea apare „În Excel foaia continuă…; aici ne
+     oprim…”. Ctrl+săgeată spre celule goale merge până la limită (în Excel: până la capătul foii), cu același mesaj;
+     lipirea care n-ar încăpea nu se face deloc (Excel refuză și el o lipire care iese din foaie);
+   - Ctrl+A selectează întâi tabelul din jurul celulei active (regiunea curentă), a doua oară toată foaia, ca în Excel
+     (o celulă goală, fără vecini: toată foaia);
+   - foaia derulează în caseta ei (pagina nu se lățește); derularea casetei rămâne după fiecare desen, iar cu tastele
+     celula activă rămâne în vedere; pe telefon, tragerea cu degetul pe celule selectează (pagina se derulează din
+     numerele rândurilor, caseta din literele coloanelor);
+   - SALTUL PAGINII la tragere (lecțiile VIII/2, VIII/5, VIII/8): foaia nu mai e ancoră de derulare (overflow-anchor),
+     nota de sub panglică își păstrează textul de la un desen la altul (se scrie o dată), bara de stare se desenează
+     direct cu înălțimea ei, iar măsurătorile și derularea casetei se fac după ce extensiile au terminat desenul.
 
    Întrebare: {t:'excel', q, cols, rows, cells:{A1:'Nume',B2:8,...}, mod:'ro'|'en', variants:[{B2:4}],
      verifica:{ sel:'C4' | zona:'B2:D2' | valori:{A1:'Nume',B1:12.5} | formule:{D2:'=B2*C2'} |
@@ -33,6 +50,9 @@ const adr=(c,r)=>COL(c)+(r+1);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const E=()=>window.JocFoaie;
 const MODE_TXT={gata:'Gata (Ready)',enter:'Introducere (Enter)',edit:'Editare (Edit)',point:'Indicare (Point)'};
+/* FOAIA MARE: mărimea de pornire (cel puțin) și limita până la care crește foaia */
+const MIN_C=10,MIN_R=20,MAX_C=26,MAX_R=100;
+const eAtingere=()=>{try{return matchMedia('(pointer: coarse)').matches||navigator.maxTouchPoints>0}catch(e){return false}};
 
 /* funcțiile, cu părțile lor exact cum le arată bula Excel-ului în engleză, și o descriere pentru elev */
 const FUNC={
@@ -129,7 +149,17 @@ const CSS=`.xl{--xlg:#217346;font-family:"Segoe UI",system-ui,sans-serif;user-se
 .xl .graf input{font:600 .95rem "Segoe UI",system-ui,sans-serif;border:1px dashed var(--line);background:transparent;color:var(--ink);text-align:center;width:100%;padding:3px}
 .xl .graf svg{width:100%;height:auto;display:block}
 .xl .graf .gbar{display:flex;justify-content:space-between;font-size:.78rem;color:var(--ink2)}
-@media (max-width:520px){.xl td{min-width:4.2em}.xl .nb{width:4.2em}.xl .pop{left:0;max-width:100%}}`;
+@media (max-width:520px){.xl td{min-width:4.2em}.xl .nb{width:4.2em}.xl .pop{left:0;max-width:100%}}
+.xl{overflow-anchor:none}
+.xl .gw td{touch-action:none}
+.xl .gw tbody th{touch-action:pan-y}
+.xl .gw thead th{touch-action:pan-x}
+.xl .cr{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 6px;border:1px solid var(--line);border-top:0;background:var(--paper);font-size:.82rem;color:var(--ink2)}
+.xl .cr button{border:1px solid var(--line);background:var(--paper2);color:var(--ink);border-radius:5px;padding:4px 10px;font:inherit;cursor:pointer;min-height:36px}
+.xl .cr button:hover{border-color:var(--xlg)}
+.xl .cr .cr-m{color:var(--ink);flex-basis:100%}
+.xl .cr .cr-m:empty{display:none}
+.xl .cr .cr-tel{flex-basis:100%}`;
 
 /* ---------------- EXERSEAZĂ PE VARIANTE (25.09.2026) ----------------
    Cercetarea (_cercetare/ritm_invatare_excel.md): după exemplu și pași ajutați, stăpânirea = 3 corecte LA RÂND pe
@@ -263,7 +293,18 @@ function cerePanglica(){
 function render(Q,body,api){
   cerePanglica();
   if(!document.getElementById('tip-excel-css')){const s=document.createElement('style');s.id='tip-excel-css';s.textContent=CSS;document.head.appendChild(s)}
-  const cols=Q.cols||6,rows=Q.rows||8,liber=Array.isArray(Q.o);
+  const liber=Array.isArray(Q.o);
+  /* FOAIA MARE: cel puțin A–J × 1–20, cât cere exercițiul (cols/rows) și cât e nevoie ca toate celulele date să se vadă;
+     crește până la limită (Z100, sau cât cere exercițiul, dacă cere mai mult) */
+  let extC=0,extR=0;Object.keys(Q.cells||{}).forEach(a=>{const p=pos(a);if(p){extC=Math.max(extC,p.c+1);extR=Math.max(extR,p.r+1)}});
+  const bazaC=Math.max(Q.cols||6,extC),bazaR=Math.max(Q.rows||8,extR),LIM_C=Math.max(MAX_C,bazaC),LIM_R=Math.max(MAX_R,bazaR);
+  let cols=Math.min(LIM_C,Math.max(MIN_C,bazaC)),rows=Math.min(LIM_R,Math.max(MIN_R,bazaR));
+  let limita='',vezi=false;   // mesajul de la marginea foii (se arată la desenul următor); vezi = celula activă trebuie adusă în vedere
+  const MESAJ_LIM=(c,r)=>`În Excel foaia continuă (are 1.048.576 de rânduri și 16.384 de coloane, până la XFD); aici ne oprim la ${c&&r?'coloana '+COL(LIM_C-1)+' și rândul '+LIM_R:c?'coloana '+COL(LIM_C-1):'rândul '+LIM_R}.`;
+  /* celula (c, r) intră în foaie? dacă e dincolo de margine, dar sub limită, foaia crește până la ea (ca în Excel, unde
+     foaia doar continuă); dincolo de limită: false și mesajul */
+  function asigura(c,r){const pc=c>=LIM_C,pr=r>=LIM_R;if(pc||pr){limita=MESAJ_LIM(pc,pr);return false}
+    if(c>=cols)cols=c+1;if(r>=rows)rows=r+1;return true}
   let mod=Q.mod||'ro';
   const RAW={};Object.entries(Q.cells||{}).forEach(([a,v])=>RAW[a]=typeof v==='number'?fmtNum(v):String(v));
   let act={c:0,r:0},fin={c:0,r:0};               // celula activă (albă) și celălalt colț al zonei
@@ -283,6 +324,7 @@ function render(Q,body,api){
   let curent='',lista=null,caret=0;                // textul în lucru; lista de funcții {items,idx,start}; poziția cursorului
   const gest=new Set(),undo=[],redo=[];
   let fillTo=null,dragSel=false,dragMutat=false,dragPt=null,ultimClic=null,apasat=null,clip=null;
+  let tragId=null;   // degetul / butonul care a pornit pe foaie o tragere, o umplere sau indicarea unei adrese (vezi pointercancel)
   // PANGLICA (25.09.2026): formatare, sortare, grafice. FMT[adresă] = {b,i,u,fill,color,bd,al,nf,dec}
   const FMT={},MERGE=[];let GRAF=null,tab='home',meniu=null,sortDlg=null,nesim=null;const panglica=Q.panglica!==false;
   // panglica reală vine în fundal (panglica-excel.js); când ajunge, foaia se redesenează cu ea
@@ -353,8 +395,19 @@ function render(Q,body,api){
   // ---------------- desenarea ----------------
   function modAcum(){if(!ed)return 'gata';if(ed.pt||asteaptaAdresa())return 'point';return ed.mode}
   let stMax=0;   // cea mai mare înălțime a barei de stare de până acum (vezi finalul lui draw)
+  let mhOrig=null,mhMine=null,mhCadru=false;   // garda de înălțime a lui #xwrap în timpul desenului (vezi începutul lui draw)
   function draw(){
     const aveaFocus=document.activeElement&&document.activeElement.id==='xgw';
+    /* ce trebuie să rămână de la desenul trecut: derularea casetei foii și textul notei de sub panglică (pus o dată de
+       extensii; dacă s-ar întoarce o clipă la textul implicit, pagina și-ar schimba înălțimea în mijlocul unei trageri) */
+    const g0=gw(),sx=g0?g0.scrollLeft:0,sy=g0?g0.scrollTop:0,ing0=body.querySelector('#xwrap .pg-ingust'),ingT=ing0?ing0.textContent:null;
+    /* #xwrap nu se scurtează în mijlocul desenului: piesele puse de extensii după desen (filele foilor din lecția VIII/2,
+       zoom-ul) lipsesc o clipă, iar orice măsurătoare de atunci (focus, derularea casetei) vedea pagina mai scurtă cu
+       ~38 px; cu pagina derulată până jos, browserul o muta. Înălțimea veche ține până la cadrul următor (după toate
+       extensiile, și după desenele cerute chiar de ele); atunci se scoate, dacă nu a pus alta o extensie. */
+    const wr=body.querySelector('#xwrap'),hw=wr?wr.offsetHeight:0;
+    if(wr&&hw){if(mhOrig===null)mhOrig=wr.style.minHeight;mhMine=hw+'px';wr.style.minHeight=mhMine;
+      if(!mhCadru){mhCadru=true;requestAnimationFrame(()=>{mhCadru=false;if(mhOrig!==null&&wr.style.minHeight===mhMine)wr.style.minHeight=mhOrig;mhOrig=null})}}
     const z=zona(),a=adr(act.c,act.r);
     const nume=dragSel&&dragMutat?`${z.r2-z.r1+1}R x ${z.c2-z.c1+1}C`:a;
     let h=`<div class="xl"><div class="bara"><span>Setările calculatorului:</span><span class="mod">
@@ -381,19 +434,37 @@ function render(Q,body,api){
         const handle=!ed&&c===z.c2&&r===z.r2?'<span class="fh" data-fh="1" aria-label="Pătrățelul de umplere (trage-l)"></span>':'';
         h+=`<td class="${cls}" data-a="${ad}"${mg?` colspan="${mg.c2-mg.c1+1}" rowspan="${mg.r2-mg.r1+1}"`:''}${stil(ad,s,mg)}>${esc(s.t)}${handle}</td>`}
       h+='</tr>'}
-    h+=`</tbody></table></div><div class="st" id="xst"><span>${MODE_TXT[modAcum()]}</span><span class="sd">${stare()}</span></div><div id="xdlg"></div>
+    const telFaraX=eAtingere()&&!window.ExcelX;   // pe paginile cu excelx.js, nota de telefon o pune el
+    h+=`</tbody></table></div><div class="cr" role="group" aria-label="Mărimea foii"><button type="button" data-cr="rand" title="Adaugă un rând la foaie (acum ${rows})" aria-label="Adaugă un rând la foaie">+ rând</button><button type="button" data-cr="col" title="Adaugă o coloană la foaie (acum până la ${COL(cols-1)})" aria-label="Adaugă o coloană la foaie">+ coloană</button><span class="cr-m" role="status">${esc(limita)}</span>${telFaraX?'<span class="cr-tel">Pe telefon: tragi cu degetul peste celule ca să selectezi; foaia o derulezi în lateral trăgând de literele coloanelor, iar pagina, trăgând de numerele rândurilor.</span>':''}</div>
+      <div class="st" id="xst" style="box-sizing:border-box;min-height:${stMax}px"><span>${MODE_TXT[modAcum()]}</span><span class="sd">${stare()}</span></div><div id="xdlg"></div>
       ${avertSort?`<div class="dlgs" role="dialog" aria-label="Avertisment de sortare"><b>Avertisment de sortare (Sort Warning)</b>
         Lângă selecție mai sunt date. Dacă sortezi doar ce ai selectat, rândurile se amestecă (un elev rămâne cu notele altuia).
         <div class="niv"><button class="ok" data-av="extinde">Extinde selecția (Expand the selection)</button><button data-av="curenta">Continuă cu selecția curentă (Continue with the current selection)</button><button data-av="anuleaza">Anulare</button></div></div>`:''}
       ${sortDlg?sortHtml():''}${GRAF?grafHtml():''}
       ${liber?'<div class="info">Foaia e a ta: încearcă ce vrei în ea (nu se notează), apoi alege răspunsul de mai jos.</div>':''}</div>`;
-    body.querySelector('#xwrap').innerHTML=h;wire();
-    /* Bara de stare (Medie / Număr / Sumă) nu se mai strânge la loc (27.09.2026): pe telefon, cu pagina derulată până la
-       capăt, bara scădea la primul clic al unei noi trageri, pagina se scurta, browserul o derula ~54 px, iar celula de
-       sub deget se schimba. Ca în Excel, bara își păstrează înălțimea. */
-    const stb=body.querySelector('#xst');if(stb){stb.style.boxSizing='border-box';stMax=Math.max(stMax,stb.getBoundingClientRect().height);stb.style.minHeight=stMax+'px'}
+    body.querySelector('#xwrap').innerHTML=h;
+    {const ing=body.querySelector('#xwrap .pg-ingust');if(ing&&ingT!=null&&ing.textContent!==ingT)ing.textContent=ingT}
+    wire();
     if(aveaFocus&&!ed){const g=gw();if(g)g.focus({preventScroll:true})}
+    limita='';const urm=vezi;vezi=false;
+    /* După desen, NU în mijlocul lui: extensiile (MutationObserver) își pun întâi piesele (filele foilor, zoom-ul,
+       formatarea), apoi aici se măsoară și se derulează caseta. O măsurătoare făcută înainte vedea pagina o clipă mai
+       scurtă, iar browserul, cu pagina derulată până jos, o muta (saltul paginii la tragere).
+       Bara de stare (Medie / Număr / Sumă) nu se mai strânge la loc (27.09.2026): pe telefon, cu pagina derulată până la
+       capăt, bara scădea la primul clic al unei noi trageri, pagina se scurta, browserul o derula ~54 px, iar celula de
+       sub deget se schimba. Ca în Excel, bara își păstrează înălțimea (acum pusă direct în desen, măsurată aici). */
+    queueMicrotask(()=>{const g=gw();if(!g)return;
+      if(sx||sy){g.scrollLeft=sx;g.scrollTop=sy}
+      const stb=body.querySelector('#xst');if(stb){stMax=Math.max(stMax,stb.getBoundingClientRect().height);stb.style.minHeight=stMax+'px'}
+      if(urm)inVedere(g,urm===true?act:urm)})
   }
+  /* cu tastele (și cu pătrățelul tras), celula la care ai ajuns rămâne în vedere, ca în Excel: caseta foii se derulează în
+     lateral, pagina în jos / în sus, doar cât trebuie */
+  function inVedere(g,p){const t=g.querySelector(`td[data-a="${adr(p.c,p.r)}"]`);if(!t)return;
+    const gb=g.getBoundingClientRect(),tb=t.getBoundingClientRect();
+    if(tb.right>gb.right)g.scrollLeft+=Math.ceil(tb.right-gb.right)+2;else if(tb.left<gb.left)g.scrollLeft-=Math.ceil(gb.left-tb.left)+2;
+    const H=window.innerHeight||document.documentElement.clientHeight,hud=document.querySelector('.hud'),sus=hud?Math.max(0,hud.getBoundingClientRect().bottom):0;   // bara lipită de sus a paginii
+    if(tb.bottom>H)window.scrollBy(0,Math.ceil(tb.bottom-H)+8);else if(tb.top<sus)window.scrollBy(0,Math.floor(tb.top-sus)-8)}
   // ---------------- panglica ----------------
   function stil(a,s,mg){const f=FMT[a]||{};const st=[];
     if(f.b)st.push('font-weight:700');if(f.i)st.push('font-style:italic');if(f.u)st.push('text-decoration:underline');
@@ -475,8 +546,9 @@ function render(Q,body,api){
     if(z){ed.pt={start:5,end:5+z.length};draw();puneCursor(curent.length)}
   }
   // regiunea curentă (blocul de celule pline din jurul celulei active), ca la Sortare/Grafic în Excel
-  function regiune(){const z=zona();if(!(z.c1===z.c2&&z.r1===z.r2))return z;
-    let c1=act.c,c2=act.c,r1=act.r,r2=act.r,sch=true;const p=(c,r)=>c>=0&&r>=0&&c<cols&&r<rows&&plina(c,r);
+  function regiune(){const z=zona();if(!(z.c1===z.c2&&z.r1===z.r2))return z;return regiuneDin(act)}
+  function regiuneDin(q){
+    let c1=q.c,c2=q.c,r1=q.r,r2=q.r,sch=true;const p=(c,r)=>c>=0&&r>=0&&c<cols&&r<rows&&plina(c,r);
     while(sch){sch=false;
       if(c1>0&&[...Array(r2-r1+1)].some((_,k)=>p(c1-1,r1+k))){c1--;sch=true}
       if(c2<cols-1&&[...Array(r2-r1+1)].some((_,k)=>p(c2+1,r1+k))){c2++;sch=true}
@@ -571,7 +643,10 @@ function render(Q,body,api){
 
   // ---------------- editarea ----------------
   const fx=()=>body.querySelector('#xfx'),gw=()=>body.querySelector('#xgw');
-  function puneCursor(p){caret=p;const i=fx();if(!i)return;i.focus();try{i.setSelectionRange(p,p)}catch(e){}
+  /* focus FĂRĂ derulare (30.09.2026, FOAIA MARE): pe foaia de 20+ rânduri, cu pagina derulată spre rândurile de jos,
+     bara de formule iese din ecran; un focus simplu o aducea înapoi și pagina sărea (~480 px) la prima tastă sau la
+     dublu-clic. În Excel scrii în celulă, iar foaia nu se mișcă. */
+  function puneCursor(p){caret=p;const i=fx();if(!i)return;i.focus({preventScroll:true});try{i.setSelectionRange(p,p)}catch(e){}
     const w=body.querySelector('.fx');if(w&&ed){const v=w.querySelector('.pop');if(v)v.remove();w.insertAdjacentHTML('beforeend',popHtml());
       w.querySelectorAll('[data-fn]').forEach(x=>x.addEventListener('pointerdown',e2=>{e2.preventDefault();if(lista)alegeFunctia(x.dataset.fn)}))}}
   function incepe(text,mode){ultimClic=null;clip=null;ed={mode,pt:null};curent=text;lista=null;actualizeazaLista();draw();puneCursor(curent.length)}
@@ -619,11 +694,13 @@ function render(Q,body,api){
   }
   function renunta(){ed=null;curent='';lista=null;draw();gw().focus({preventScroll:true})}
   function muta(dir,extinde){
-    if(!dir)return;const d={jos:[0,1],sus:[0,-1],dreapta:[1,0],stanga:[-1,0]}[dir];
-    if(extinde){fin={c:lim(fin.c+d[0],cols),r:lim(fin.r+d[1],rows)};return}
-    act={c:lim(act.c+d[0],cols),r:lim(act.r+d[1],rows)};fin={...act};
+    if(!dir)return;const d={jos:[0,1],sus:[0,-1],dreapta:[1,0],stanga:[-1,0]}[dir];vezi=true;
+    if(extinde){fin=pasul(fin,d);return}
+    act=pasul(act,d);fin={...act};
   }
   const lim=(x,n)=>Math.max(0,Math.min(n-1,x));
+  /* un pas dintr-o celulă: dincolo de margine foaia crește (până la limită), ca în Excel */
+  function pasul(p,d){const n={c:p.c+d[0],r:p.r+d[1]};if(n.c>=0&&n.r>=0)asigura(n.c,n.r);return {c:lim(n.c,cols),r:lim(n.r,rows)}}
   function arataDlg(t,m){const d=body.querySelector('#xdlg');if(d)d.innerHTML=`<div class="dlg" role="alert"><b>${esc(t)}</b>${esc(m)}</div>`}
   function f4(){
     const i=fx();const p=i.selectionStart;const re=/\$?[A-Za-z]{1,2}\$?\d+/g;let m,gasit=null;
@@ -656,18 +733,27 @@ function render(Q,body,api){
   function copiaza(taie){const z=zona();clip={z,taie,date:{}};for(let c=z.c1;c<=z.c2;c++)for(let r=z.r1;r<=z.r2;r++)clip.date[adr(c-z.c1,r-z.r1)]=RAW[adr(c,r)]??'';
     // writeText întoarce o promisiune: un clipboard refuzat (fără permisiune, fără focus) nu mai scapă ca eroare în consolă (27.09.2026)
     gest.add('copiere');try{if(navigator.clipboard&&navigator.clipboard.writeText){const pr=navigator.clipboard.writeText(tsv(z));if(pr&&pr.catch)pr.catch(()=>{})}}catch(e){}draw()}
-  function lipeste(){if(!clip)return;salveaza();const z=clip.z,h=z.r2-z.r1+1,w=z.c2-z.c1+1;
+  function lipeste(){if(!clip)return;const z=clip.z,h=z.r2-z.r1+1,w=z.c2-z.c1+1;
+    /* FOAIA MARE: lipirea care trece de margine întinde foaia (în Excel foaia continuă); dacă n-ar încăpea nici până la
+       limită, nu se lipește nimic (Excel refuză și el o lipire care iese din foaie), iar mesajul spune de ce */
+    if(!asigura(act.c+w-1,act.r+h-1)){draw();return}
+    salveaza();
     for(let dc=0;dc<w;dc++)for(let dr=0;dr<h;dr++){const v=clip.date[adr(dc,dr)];const c=act.c+dc,r=act.r+dr;if(c>=cols||r>=rows)continue;
       const t=v.startsWith('=')&&!clip.taie?E().shift(v,r-(z.r1+dr),c-(z.c1+dc)):v;if(t==='')delete RAW[adr(c,r)];else RAW[adr(c,r)]=t}
     if(clip.taie){for(let c=z.c1;c<=z.c2;c++)for(let r=z.r1;r<=z.r2;r++){const inDest=c>=act.c&&c<act.c+w&&r>=act.r&&r<act.r+h;if(!inDest)delete RAW[adr(c,r)]}clip=null}
     fin={c:lim(act.c+w-1,cols),r:lim(act.r+h-1,rows)};draw()}
   function plina(c,r){const v=RAW[adr(c,r)];return v!=null&&v!==''}
   function sari(dir,extinde){   // Ctrl+săgeată: până la marginea blocului de date, ca în Excel
-    const d={jos:[0,1],sus:[0,-1],dreapta:[1,0],stanga:[-1,0]}[dir];let p=extinde?{...fin}:{...act};
-    const urm=q=>({c:q.c+d[0],r:q.r+d[1]}),in_=q=>q.c>=0&&q.r>=0&&q.c<cols&&q.r<rows;
-    let n=urm(p);if(!in_(n))return;
+    /* FOAIA MARE: spre celule goale, fără date mai încolo, Excel ajunge la capătul foii (rândul 1.048.576 / coloana XFD);
+       aici, la limită (rândul 100 / coloana Z), cu mesajul; foaia crește până acolo */
+    const d={jos:[0,1],sus:[0,-1],dreapta:[1,0],stanga:[-1,0]}[dir];let p=extinde?{...fin}:{...act};vezi=true;
+    const urm=q=>({c:q.c+d[0],r:q.r+d[1]}),in_=q=>q.c>=0&&q.r>=0&&q.c<LIM_C&&q.r<LIM_R;
+    const laLimita=()=>{limita=MESAJ_LIM(d[0]>0,d[1]>0)};
+    let n=urm(p);if(!in_(n)){if(d[0]>0||d[1]>0)laLimita();return}
     if(plina(p.c,p.r)&&plina(n.c,n.r)){while(in_(urm(n))&&plina(urm(n).c,urm(n).r))n=urm(n)}
     else{while(in_(n)&&!plina(n.c,n.r)&&in_(urm(n)))n=urm(n)}
+    if(!in_(urm(n))&&!plina(n.c,n.r)&&(d[0]>0||d[1]>0))laLimita();
+    asigura(n.c,n.r);
     if(extinde)fin=n;else{act=n;fin={...n}}
   }
   function tsv(z){   // textul pentru Excel/Sheets: formulele cu separatorul setării
@@ -693,6 +779,29 @@ function render(Q,body,api){
 
   // ---------------- evenimentele ----------------
   function celulaDin(ev){const t=(ev.target.closest?ev.target.closest('td[data-a]'):null)||document.elementFromPoint(ev.clientX,ev.clientY)?.closest?.('td[data-a]');return t?pos(t.dataset.a):null}
+  /* FOAIA MARE: pătrățelul tras sub ultimul rând sau la dreapta ultimei coloane = celula de dincolo; foaia crește cu
+     câte un rând / o coloană la fiecare mișcare (ca derularea Excel-ului când tragi spre margine), până la limită */
+  function dincolo(ev){const g=gw(),x=ev.clientX,y=ev.clientY;if(!g||!isFinite(x)||!isFinite(y))return null;
+    const trs=g.querySelectorAll('tbody tr'),ths=g.querySelectorAll('thead th');if(!trs.length||ths.length<2)return null;
+    const ub=trs[trs.length-1].getBoundingClientRect(),uc=ths[ths.length-1].getBoundingClientRect(),jos=y>ub.bottom,dr=x>uc.right;
+    if(!jos&&!dr)return null;
+    let c=dr?cols:null,r=jos?rows:null;
+    if(r==null){for(let i=0;i<trs.length;i++){const b=trs[i].getBoundingClientRect();if(y<=b.bottom){r=i;break}}if(r==null)r=rows-1}
+    if(c==null){for(let i=1;i<ths.length;i++){const b=ths[i].getBoundingClientRect();if(x<=b.right){c=i-1;break}}if(c==null)c=cols-1}
+    if(!asigura(c,r))return {c:Math.min(c,cols-1),r:Math.min(r,rows-1)};
+    return {c,r}}
+  /* umplerea trasă: foaia se redesenează la fiecare mișcare, deci captura pe foaie se pierde; o urmărește documentul
+     până la ridicarea degetului / a butonului (și sub foaie, unde nu e nicio celulă) */
+  let umplereDoc=null;
+  function miscaUmplere(ev){const p=celulaDin(ev)||dincolo(ev);if(!p)return;const z=zona();
+    fillTo=p.r-z.r2>=p.c-z.c2?{c:z.c2,r:Math.max(z.r2,p.r)}:{c:Math.max(z.c2,p.c),r:z.r2};vezi={...fillTo};draw()}
+  function urmaresteUmplerea(){if(umplereDoc)return;
+    const mv=ev=>{if(fillTo&&body.isConnected&&!ev._xp)miscaUmplere(ev)};   // _xp = copiile trimise de excelx.js pentru deget (vin și cele adevărate)
+    const opreste=()=>{document.removeEventListener('pointermove',mv,true);document.removeEventListener('pointerup',sus,true);document.removeEventListener('pointercancel',anul,true);umplereDoc=null};
+    const sus=()=>{opreste();if(fillTo&&body.isConnected){dragSel=false;dragMutat=false;apasat=null;umple()}};
+    const anul=()=>{opreste();fillTo=null;dragSel=false;dragPt=null;if(body.isConnected)draw()};
+    document.addEventListener('pointermove',mv,true);document.addEventListener('pointerup',sus,true);document.addEventListener('pointercancel',anul,true);
+    umplereDoc=opreste}
   function wire(){
     body.querySelectorAll('[data-mod]').forEach(b=>b.onclick=()=>{const vechi=mod;mod=b.dataset.mod;if(vechi!==mod)Object.keys(RAW).forEach(a=>{const v=convSetari(RAW[a],vechi);if(v!==null)RAW[a]=v});draw()});
     const cp=body.querySelector('[data-copiaza]');if(cp)cp.onclick=copiazaTabelul;
@@ -700,6 +809,10 @@ function render(Q,body,api){
     // un clic în panglică între două clicuri pe aceeași celulă NU face dublu-clic (ca în Excel)
     Q_('.rb').forEach(r=>r.addEventListener('pointerdown',()=>{ultimClic=null}));
     Q_('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;meniu=null;nesim=null;draw()});
+    // „+ rând” / „+ coloană” (pentru deget): foaia crește cu unul, până la limită; coloana nouă se aduce în vedere
+    Q_('[data-cr]').forEach(b=>b.onclick=()=>{const rand=b.dataset.cr==='rand';
+      if(rand?asigura(0,rows):asigura(cols,0)){if(!rand)vezi={c:cols-1,r:act.r}}
+      draw();const g=gw();if(g)g.focus({preventScroll:true})});
     Q_('[data-mn]').forEach(b=>b.onclick=()=>{meniu=meniu===b.dataset.mn?null:b.dataset.mn;nesim=null;draw()});
     // butoanele reale pe care simulatorul nu le folosește: spun asta pe ecran (nu par stricate)
     Q_('[data-nesim]').forEach(b=>b.onclick=()=>{nesim=b.getAttribute('aria-label');meniu=null;draw()});
@@ -733,26 +846,30 @@ function render(Q,body,api){
     const g=gw(),i=fx();
     g.addEventListener('pointerdown',ev=>{if(api.done()&&!liber)return;ev.preventDefault();
       const fh=ev.target.closest&&ev.target.closest('[data-fh]');
-      if(fh){fillTo={...fin};try{g.setPointerCapture(ev.pointerId)}catch(e){}return}
+      if(fh){fillTo={...fin};tragId=ev.pointerId;try{g.setPointerCapture(ev.pointerId)}catch(e){}urmaresteUmplerea();return}
       const p=celulaDin(ev);if(!p)return;
-      if(ed&&asteaptaAdresa()){dragPt=p;punAdresa(adr(p.c,p.r));gest.add('clic-adresa');return}
+      if(ed&&asteaptaAdresa()){dragPt=p;tragId=ev.pointerId;punAdresa(adr(p.c,p.r));gest.add('clic-adresa');return}
       tabStart=null;   // clicul pe o celulă rupe șirul de Tab-uri (Excel real, vezi „ENTER DUPĂ TAB”)
       if(ed&&!termina(null))return;
       const acum=Date.now(),dublu=ultimClic&&ultimClic.c===p.c&&ultimClic.r===p.r&&acum-ultimClic.t<450;
       ultimClic=null;apasat={c:p.c,r:p.r,t:acum};
       if(dublu&&!ev.shiftKey){act=p;fin=p;incepe(RAW[adr(p.c,p.r)]??'','edit');return}
       // preventScroll (27.09.2026, lecția VIII/4): fără el, focus() derula pagina la începutul tragerii și celula de sub mouse se schimba
-      if(ev.shiftKey){fin=p}else{act=p;fin=p}dragSel=true;dragMutat=false;draw();gw().focus({preventScroll:true});
+      if(ev.shiftKey){fin=p}else{act=p;fin=p}dragSel=true;dragMutat=false;tragId=ev.pointerId;draw();gw().focus({preventScroll:true});
     });
     g.addEventListener('pointermove',ev=>{
-      if(fillTo){const p=celulaDin(ev);if(p){const z=zona();fillTo=p.r-z.r2>=p.c-z.c2?{c:z.c2,r:Math.max(z.r2,p.r)}:{c:Math.max(z.c2,p.c),r:z.r2};draw()}return}
+      if(fillTo){if(!umplereDoc)miscaUmplere(ev);return}   // umplerea o urmărește documentul (și dincolo de foaie)
       if(dragPt&&ed){const p=celulaDin(ev);if(p&&(p.c!==dragPt.c||p.r!==dragPt.r)){punAdresa(adr(dragPt.c,dragPt.r)+':'+adr(p.c,p.r));gest.add('clic-adresa');gest.add('zona-mouse')}return}
       if(dragSel&&ev.buttons){const p=celulaDin(ev);if(p&&(p.c!==fin.c||p.r!==fin.r)){fin=p;dragMutat=true;apasat=null;draw()}}
     });
-    const gata=()=>{const eraTras=dragSel&&dragMutat;if(fillTo)umple();dragSel=false;dragMutat=false;dragPt=null;
+    const gata=()=>{const eraTras=dragSel&&dragMutat;if(fillTo)umple();dragSel=false;dragMutat=false;dragPt=null;tragId=null;
       if(apasat&&act.c===apasat.c&&act.r===apasat.r&&fin.c===apasat.c&&fin.r===apasat.r)ultimClic=apasat;apasat=null;
       if(eraTras)draw()};
-    g.addEventListener('pointerup',gata);g.addEventListener('pointercancel',()=>{fillTo=null;dragSel=false;dragPt=null;draw()});
+    /* pointercancel (30.09.2026, poarta de lansare): browserul ia degetul ca să DERULEZE (literele coloanelor = caseta
+       foii, numerele rândurilor = pagina). Desenul de aici înlocuia caseta chiar în clipa aceea, iar derularea se oprea
+       pe loc: pe telefon, după „+ coloană”, nu mai era drum înapoi spre coloana A. Acum se renunță (și se redesenează)
+       doar dacă ACEST deget trăgea ceva pe foaie: o selecție, pătrățelul de umplere sau o adresă în formulă. */
+    g.addEventListener('pointerup',gata);g.addEventListener('pointercancel',ev=>{if(ev.pointerId!==tragId)return;tragId=null;fillTo=null;dragSel=false;dragPt=null;draw()});
     g.addEventListener('keydown',ev=>{ultimClic=null;if((api.done()&&!liber)||ed)return;const k=ev.key,ctrl=ev.ctrlKey||ev.metaKey;
       if(ctrl){const kk=k.toLowerCase();
         if(k==='Home'||k==='End'||k.startsWith('Arrow')||kk==='a')tabStart=null;   // salturile rup șirul de Tab-uri
@@ -762,9 +879,14 @@ function render(Q,body,api){
         if(kk==='v'){ev.preventDefault();lipeste();return}
         if(kk==='z'){ev.preventDefault();anuleaza();return}
         if(kk==='y'){ev.preventDefault();reface();return}
-        if(kk==='a'){ev.preventDefault();act={c:0,r:0};fin={c:cols-1,r:rows-1};draw();return}
-        if(k==='Home'){ev.preventDefault();act={c:0,r:0};fin={...act};draw();return}
-        if(k==='End'){ev.preventDefault();let r2=0,c2=0;Object.keys(RAW).forEach(a=>{const p=pos(a);if(p&&RAW[a]!==''){r2=Math.max(r2,p.r);c2=Math.max(c2,p.c)}});act={c:c2,r:r2};fin={...act};draw();return}
+        /* Ctrl+A, ca în Excel: întâi regiunea curentă (tabelul din jurul celulei active), a doua oară toată foaia;
+           o celulă goală fără vecini: toată foaia. Celula activă rămâne aceeași (Excel o păstrează). */
+        if(kk==='a'){ev.preventDefault();const z=zona(),rg=regiuneDin(act);
+          const unaGoala=rg.c1===rg.c2&&rg.r1===rg.r2&&!plina(act.c,act.r),dejaRg=z.c1===rg.c1&&z.c2===rg.c2&&z.r1===rg.r1&&z.r2===rg.r2;
+          const t=unaGoala||dejaRg?{c1:0,r1:0,c2:cols-1,r2:rows-1}:rg;
+          act={c:t.c1,r:t.r1};fin={c:t.c2,r:t.r2};draw();return}   // foaia de aici ține celula activă într-un colț al zonei (ca înainte: A1)
+        if(k==='Home'){ev.preventDefault();act={c:0,r:0};fin={...act};vezi=true;draw();return}
+        if(k==='End'){ev.preventDefault();vezi=true;let r2=0,c2=0;Object.keys(RAW).forEach(a=>{const p=pos(a);if(p&&RAW[a]!==''){r2=Math.max(r2,p.r);c2=Math.max(c2,p.c)}});act={c:c2,r:r2};fin={...act};draw();return}
         const dir={ArrowDown:'jos',ArrowUp:'sus',ArrowRight:'dreapta',ArrowLeft:'stanga'}[k];
         if(dir){ev.preventDefault();sari(dir,ev.shiftKey);draw();return}
       }
@@ -774,7 +896,7 @@ function render(Q,body,api){
         if(k==='Tab'&&!ev.shiftKey)tabInainte();else if(!enter)tabStart=null;
         muta(dir,ev.shiftKey&&k.startsWith('Arrow'));if(enter)enterDupa();draw();return}
       if(k==='Escape'){if(clip){clip=null;draw()}return}   // Esc NU rupe șirul de Tab-uri (Excel real)
-      if(k==='Home'){ev.preventDefault();tabStart=null;act={c:0,r:act.r};fin={...act};draw();return}
+      if(k==='Home'){ev.preventDefault();tabStart=null;act={c:0,r:act.r};fin={...act};vezi=true;draw();return}
       if(k==='F2'){ev.preventDefault();incepe(RAW[adr(act.c,act.r)]??'','edit');return}
       if(k==='Delete'||k==='Backspace'){ev.preventDefault();salveaza();const z=zona();for(let c=z.c1;c<=z.c2;c++)for(let r=z.r1;r<=z.r2;r++)delete RAW[adr(c,r)];gest.add('delete');
         if(k==='Backspace'&&z.c1===z.c2&&z.r1===z.r2){incepe('','enter');return}draw();return}
@@ -805,7 +927,7 @@ function render(Q,body,api){
         const dir={ArrowDown:'jos',ArrowUp:'sus',ArrowRight:'dreapta',ArrowLeft:'stanga'}[k];
         if(asteaptaAdresa()){ev.preventDefault();
           const baza=ed.pt?pos(curent.slice(ed.pt.start,ed.pt.end).split(':')[0]):{...act};
-          const d={jos:[0,1],sus:[0,-1],dreapta:[1,0],stanga:[-1,0]}[dir];const p={c:lim(baza.c+d[0],cols),r:lim(baza.r+d[1],rows)};
+          const d={jos:[0,1],sus:[0,-1],dreapta:[1,0],stanga:[-1,0]}[dir];const p=pasul(baza,d);
           punAdresa(adr(p.c,p.r));gest.add('clic-adresa');return}
         ev.preventDefault();tabStart=null;termina(dir);   // săgeata în scriere confirmă, mută și rupe șirul de Tab-uri
       }
@@ -913,7 +1035,13 @@ function render(Q,body,api){
       loc.innerHTML=`<button class="btn ghost" type="button" data-exs="1" style="margin-top:10px">🔁 Exersează pe variante${st.stapanit?' (✓ stăpânit)':' (3 la rând = stăpânit)'}</button>`;
       loc.querySelector('[data-exs]').onclick=()=>exerseaza({...Q,_practica:true},loc,api)};
     loc._ofera()}
-  render._stare={FMT,MERGE,setGraf:g=>{GRAF=g},sorteaza:(zt,dupa,antet)=>{const [a,b]=zt.split(':').map(pos);sorteaza({c1:a.c,c2:b.c,r1:a.r,r2:b.r},dupa.map(k=>({c:pos(k.col+'1').c,ord:k.ord})),antet!==false)},peRO,RAW,gest,setAct:a=>{const p=pos(a);act=p;fin=p;tabStart=null},setZona:z=>{const [x,y]=z.split(':').map(pos);act=x;fin=y},draw,mod:()=>mod,liber,Q};
+  render._stare={FMT,MERGE,setGraf:g=>{GRAF=g},sorteaza:(zt,dupa,antet)=>{const [a,b]=zt.split(':').map(pos);sorteaza({c1:a.c,c2:b.c,r1:a.r,r2:b.r},dupa.map(k=>({c:pos(k.col+'1').c,ord:k.ord})),antet!==false)},peRO,RAW,gest,setAct:a=>{const p=pos(a);asigura(p.c,p.r);act=p;fin=p;tabStart=null},setZona:z=>{const [x,y]=z.split(':').map(pos);asigura(Math.max(x.c,y.c),Math.max(x.r,y.r));act=x;fin=y},draw,mod:()=>mod,liber,Q,
+    /* FOAIA MARE, pentru extensii (excelx.js: caseta de nume; excelx-formatare.js: coloana/rândul întreg): mărimea de
+       acum și creșterea până la o celulă (false = dincolo de limită; mesajul apare sub foaie la desenul următor) */
+    dim:()=>({cols,rows}),creste:(c,r)=>asigura(c,r),limite:()=>({cols:LIM_C,rows:LIM_R}),
+    /* caseta de nume (30.09.2026): ca în Excel, celula la care sari e adusă în vedere la desenul următor */
+    arata:()=>{vezi=true}};
+  body._xlS=render._stare;   // starea ACESTEI foi, lângă ea (și pentru foaia de „Exersează pe variante”, care nu e render._stare)
 }
 function rezolva(Q,body,S0){
   const S=S0&&S0.RAW?S0:render._stare   // al treilea argument poate fi API-ul motorului

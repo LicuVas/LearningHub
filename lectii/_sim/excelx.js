@@ -237,6 +237,7 @@ function leagaCopierea(body){if(body._xtc)return;body._xtc=1;
       ctx.clipF={z,f,taie:k==='x'};return}
     if(k==='v'&&ctx.clipF&&w.querySelector('.gw td.mq')){const a=w.querySelector('.gw td.act'),d=a&&poz(a.dataset.a);if(!d)return;const C=ctx.clipF;
       setTimeout(()=>{const {z}=C,h=z.r2-z.r1+1,l=z.c2-z.c1+1,inDest=(c,r)=>c>=d.c&&c<d.c+l&&r>=d.r&&r<d.r+h,exista=x=>!!w.querySelector(`.gw td[data-a="${x}"]`);
+        if(!exista(adrX(d.c+l-1,d.r+h-1)))return;   // FOAIA MARE: lipirea n-a încăput nici până la limita foii (motorul n-a lipit nimic): nici forma
         if(C.taie)for(let r=z.r1;r<=z.r2;r++)for(let c=z.c1;c<=z.c2;c++)if(!inDest(c,r))delete ctx.FMT[adrX(c,r)];
         for(let r=0;r<h;r++)for(let c=0;c<l;c++){const x=adrX(d.c+c,d.r+r);if(!exista(x))continue;const f=C.f[r+','+c];if(f)ctx.FMT[x]=copieF(f);else delete ctx.FMT[x]}
         if(C.taie)ctx.clipF=null;ctx.S.draw()},0)}},true)}
@@ -511,8 +512,19 @@ function du(xl,t,vechi,nb){const D=dim(xl),m=t.toUpperCase().match(/^([A-Z]{1,3}
   if(!m){nota(xl,!t||/^\d/.test(t)?'Excel nu primește asta: scrie întâi litera coloanei, apoi numărul rândului, de exemplu <b>B2</b>, sau o zonă ca <b>B2:C4</b>.'
     :`În Excel, „${esc(t)}” ar deveni un NUME pentru celulele selectate (îl vei folosi în clasele mari). Azi scrie o adresă, de exemplu <b>B2</b> sau <b>B2:C4</b>.`);return}
   const a=pos(m[1]+m[2]),b=m[3]?pos(m[3]+m[4]):a;
-  if(!a||!b||a.r<0||b.r<0||Math.max(a.c,b.c)>=D.cols||Math.max(a.r,b.r)>=D.rows){nota(xl,`În Excel ai sări acolo. Foaia din exercițiu are doar coloanele A–${COL(D.cols-1)} și rândurile 1–${D.rows}.`);return}
+  if(!a||!b||a.r<0||b.r<0){nota(xl,'Excel nu primește asta: scrie întâi litera coloanei, apoi numărul rândului, de exemplu <b>B2</b>, sau o zonă ca <b>B2:C4</b>.');return}
+  /* FOAIA MARE (29.09.2026): o adresă dincolo de ce se vede întinde foaia până acolo (în Excel foaia continuă), prin
+     motor; dincolo de limita foii de aici (Z100) nu sărim, iar sub foaie apare mesajul motorului */
+  const cMax=Math.max(a.c,b.c),rMax=Math.max(a.r,b.r);
+  if(cMax>=D.cols||rMax>=D.rows){const S=stareDe(xl);
+    if(!S||!S.creste){nota(xl,`În Excel ai sări acolo. Foaia din exercițiu are doar coloanele A–${COL(D.cols-1)} și rândurile 1–${D.rows}.`);return}
+    if(!S.creste(cMax,rMax)){nota(xl,'');S.draw();return}
+    S.draw()}
+  /* ca în Excel, caseta de nume te duce la celulă: motorul o aduce în vedere (caseta foii în lateral, pagina în jos) */
+  const Sv=stareDe(xl);if(Sv&&Sv.arata)Sv.arata();
   nota(xl,'');selZ(xl,{c1:Math.min(a.c,b.c),c2:Math.max(a.c,b.c),r1:Math.min(a.r,b.r),r2:Math.max(a.r,b.r)})}
+/* starea foii din motor (tip-excel.js) pentru învelișul #xwrap: motorul o pune pe elementul în care a desenat foaia */
+const stareDe=xl=>{const b=xl&&xl.parentElement;return b&&b._xlS||null};
 
 /* ---- după fiecare desen al foii: Lipire gri cât nu e nimic copiat, sfaturile butoanelor, nota despre derulare ---- */
 const SFAT={Cut:'Decupare (Cut) · Ctrl+X',Copy:'Copiere (Copy) · Ctrl+C',Paste:'Lipire (Paste) · Ctrl+V — planșeta lipește; cuvântul „Paste ▾” deschide lista',
@@ -521,7 +533,11 @@ const TXT_ING='Panglica se derulează în lateral: mai la dreapta sunt grupurile
 function ajusteaza(xl){
   const p=xl.querySelector('[data-nesim="Paste"]');if(p){const gri=!areCopie(xl);p.classList.toggle('pg-gri',gri);p.setAttribute('aria-disabled',String(gri))}
   for(const [id,t] of Object.entries(SFAT)){const b=xl.querySelector(`[data-nesim="${id}"]`);if(b&&b.title!==t)b.title=t}
-  const i=xl.querySelector('.pg-ingust');if(i&&i.textContent!==TXT_ING)i.textContent=TXT_ING}
+  /* SALTUL PAGINII (29.09.2026; lecțiile VIII/2, VIII/5, VIII/8): nota se scrie O DATĂ, peste textul implicit al panglicii
+     (ui-panglica.js), când apare panglica; la desenele următoare motorul (tip-excel.js) o păstrează. Înainte o rescriam
+     după FIECARE desen: pagina era o clipă mai scurtă, iar cu pagina derulată până jos browserul o muta (18 px), deci
+     tragerea B2 → B6 selecta B2:B5. O notă pusă de altă extensie (formatarea, lecția 6) nu se mai înlocuiește. */
+  const i=xl.querySelector('.pg-ingust');if(i&&/^Pe ecran îngust/.test(i.textContent))i.textContent=TXT_ING}
 /* butoanele despărțite (mari): partea de sus (pictograma) face comanda, partea de jos (eticheta ▾) deschide lista */
 function susPeButon(b,ev){const s=b.querySelector('svg'),r=b.getBoundingClientRect();const lim=s?s.getBoundingClientRect().bottom+1:r.top+r.height/2;return !bun(ev.clientY)||ev.clientY<=lim}
 

@@ -189,10 +189,10 @@ function directPeZona(body,S,fn,z){
   if(z.r2>z.r1||z.c1===z.c2){   // coloane
     const ultimGol=[...Array(z.c2-z.c1+1)].every((_,k)=>gol(z.c1+k,z.r2));
     for(let c=z.c1;c<=z.c2;c++){const r=ultimGol&&z.r2>z.r1?z.r2:z.r2+1,r2=ultimGol&&z.r2>z.r1?z.r2-1:z.r2;
-      if(r<D.rows)tinte.push({a:adr(c,r),f:`=${fn}(${adr(c,z.r1)}:${adr(c,r2)})`})}
+      if(r<D.rows||(S.creste&&S.creste(c,r)))tinte.push({a:adr(c,r),f:`=${fn}(${adr(c,z.r1)}:${adr(c,r2)})`})}   // FOAIA MARE: sub ultimul rând, foaia crește
   }else{   // un singur rând, mai multe coloane
     const ultimGol=gol(z.c2,z.r1),c=ultimGol?z.c2:z.c2+1,c2=ultimGol?z.c2-1:z.c2;
-    if(c<D.cols)tinte.push({a:adr(c,z.r1),f:`=${fn}(${adr(z.c1,z.r1)}:${adr(c2,z.r1)})`})}
+    if(c<D.cols||(S.creste&&S.creste(c,z.r1)))tinte.push({a:adr(c,z.r1),f:`=${fn}(${adr(z.c1,z.r1)}:${adr(c2,z.r1)})`})}
   if(!tinte.length){nota(body,'Excel ar scrie rezultatul în afara foii de aici. Alege o celulă sub numere și apasă din nou pe Σ.');return}
   const sel0=adr(z.c1,z.r1);let c2=z.c2,r2=z.r2;
   for(const t of tinte){S.setAct(t.a);S.draw();tasta(grid(body),'=');scrieInBara(body,t.f,t.f.length,t.f.length);tasta(fx(body),'Enter');

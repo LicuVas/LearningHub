@@ -184,7 +184,9 @@ const colPx=w=>w<=0?0:w<1?Math.round(w*12):Math.round(w*7)+5;      // pixeli la 
 const pxLat=px=>px<=5?Math.max(0,px/12):Math.round((px-5)/7*100)/100;
 const inaltimeCustom=(ctx,r)=>{const f=ctx.FMT['row:'+(r+1)];return f?f.h:null};
 const areaDe=(ctx,c,r)=>ctx.MERGE.find(m=>c>=m.c1&&c<=m.c2&&r>=m.r1&&r<=m.r2);
-const dimF=ctx=>({cols:ctx.Q.cols||6,rows:ctx.Q.rows||8});
+/* mărimea foii de ACUM (FOAIA MARE, 29.09.2026: motorul arată cel puțin A–J × 1–20 și crește; coloana / rândul întreg
+   înseamnă până la marginea de acum a foii, ca selecția din excelx.js) */
+const dimF=ctx=>ctx.S&&ctx.S.dim?ctx.S.dim():{cols:ctx.Q.cols||6,rows:ctx.Q.rows||8};
 const F=(ctx,a)=>ctx.FMT[a]||(ctx.FMT[a]={});
 const rawDe=(ctx,a)=>{const v=ctx.RAW[a];return v==null?'':String(v)};
 
