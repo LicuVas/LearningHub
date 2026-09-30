@@ -17,6 +17,12 @@
  *  5. Calculatoare comune: „Nu ești tu? Schimbă elevul”; după 90 de minute fără activitate întreabă
  *     „Ești tot Ana?” și NU numără nimic până nu răspunde.
  * Vizitatorii („Nu, doar vizitez”) nu sunt urmăriți deloc; întrebarea revine abia peste 30 de zile.
+ *  6. (30.09.2026, el: „fă să li se ceară acel pin dacă se deconectează și fă să fie deconectarea clară”)
+ *     Pe numele unui elev se intră DOAR cu codul lui de 4 cifre: din lista „Cine lucrează acum?”, din formular cu un
+ *     nume care există deja pe calculator, după „Scoate-mă din listă”. Codul se compară prin amprentă (amprenta()),
+ *     nu stă nicăieri. Eticheta → „Ieși (deconectare)” → „Ai ieșit, X. Data viitoare îți cer codul.” „Mi-am uitat
+ *     codul”: elevul își alege un cod nou, pleacă doar amprenta lui (cu numele criptat) spre panoul profesorului, care
+ *     îl deblochează; 5 coduri greșite la rând = 30 de secunde de pauză. Vezi „CODUL LA INTRARE” mai jos.
  *
  * Pentru jocuri: window.Prezenta.eveniment({tip:'nivel'|'joc-gata', joc, titlu, nivel, din, stele, max}).
  * Serverul: Projects\teste-elevi\site\netlify\functions\activitate.mjs · panoul: /activitate.html acolo.
@@ -284,13 +290,19 @@
     '#lhp .lista .el:hover{border-color:#5b8cff;background:#18213a}#lhp .lista .el span{font-size:12px;color:#9aa7c2}' +
     '#lhp .bar:has(.lista){max-width:560px}' +
     /* 27.09.2026: eticheta se ferește de ce se poate apăsa (vezi fereste()); întrebările strânse devin etichete.
-       28.09.2026: forma strânsă (.mini) nu mai e un punct fără nume: arată textul scurt .s („Ana-Maria P. · Schimbă”),
+       28.09.2026: forma strânsă (.mini) nu mai e un punct fără nume: arată textul scurt .s („Ana-Maria P.”, iar din 30.09 și „Ieși”),
        32 px înălțime; textul lung .t rămâne în pagină pentru cititoarele de ecran. .mini.st = strânsă, dar în stânga. */
     '#lhp{transition:opacity .2s}#lhp.ferit{opacity:0;pointer-events:none}#lhp.mini{left:auto;right:8px}#lhp.mini.st{left:12px;right:auto}' +
     '#lhp .pill .s{display:none}#lhp.mini .pill{height:32px;padding:0 10px;gap:5px}' +
     '#lhp.mini .pill .s{display:inline;white-space:nowrap}#lhp.mini .pill .s b{display:inline-block;max-width:8.5em;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}' +
     '#lhp.mini .pill .t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}' +
     '#lhp .pill.cere{border-color:#5b8cff;background:#1d2a4a}#lhp .pill.cere .dot{background:#5b8cff}' +
+    /* 30.09.2026: codul se tastează ascuns (colegul de alături nu-l vede); „Ieși” e roșu, nu se confundă */
+    '#lhp input.cod{-webkit-text-security:disc;letter-spacing:.35em;font-size:18px;max-width:9em}' +
+    '#lhp button.iesi{background:#b3392f;border-color:#b3392f}#lhp .bun{color:#86efac;font-size:13px;margin-top:6px}' +
+    '#lhp .pill.nimeni .dot{background:#9aa7c2}' +
+    /* 30.09.2026 noaptea: „Ieși” pe etichetă, cu aspect de buton (aceeași culoare ca „Ieși (deconectare)” din meniu) */
+    '#lhp .pill .bt{background:#b3392f;color:#fff;border-radius:999px;padding:2px 9px;font-weight:600;white-space:nowrap;line-height:1.35}' +
     '@media print{#lhp{display:none}}';
   var box;
   /* strangibil = întrebare nechemată de elev (sau meniul etichetei): la primul lui gest în pagină se strânge */
@@ -408,8 +420,10 @@
       return;
     }
     if (s === 'activ') {
-      arata('<span class="pill" id="lhp-pill" title="Profesorul vede ce pagini deschizi, cât timp lucrezi și ce niveluri termini. Apasă pentru jurnalul tău."><span class="dot"></span><span class="t">Profesorul vede activitatea ta · <b>' + esc(scurt(eu.nume)) + '</b></span>' +
-        '<span class="s" aria-hidden="true"><b>' + esc(scurt(eu.nume)) + '</b> · Schimbă</span></span>');
+      /* 30.09.2026 noaptea (MINOR 1 al porții): amândoi începătorii au ezitat — eticheta nu arăta a buton și nu scria „Ieși”.
+         Acum are, și plină, și strânsă, un „Ieși” roșu, ca butonul din meniu. Drumul rămâne: apăsarea pe etichetă -> meniul. */
+      arata('<span class="pill" id="lhp-pill" title="Profesorul vede ce pagini deschizi, cât timp lucrezi și ce niveluri termini. Apasă ca să ieși (deconectare) sau ca să-ți vezi jurnalul."><span class="dot"></span><span class="t">Profesorul vede activitatea ta · <b>' + esc(scurt(eu.nume)) + '</b></span>' +
+        '<span class="s" aria-hidden="true"><b>' + esc(scurt(eu.nume)) + '</b></span><span class="bt">Ieși</span></span>');
       $('lhp-pill').onclick = meniu;
     } else if (s === 'intreaba') {
       arata('<div class="bar">Ești tot <b>' + esc(eu.nume) + '</b> (' + esc(eu.clasa) + ')?<div class="mic">Ce lucrezi acum se păstrează: ajunge la profesor pe numele tău după ce apeși „Da”.</div>' +
@@ -426,6 +440,19 @@
         $('lhp-nu2').onclick = function () { if (sincron()) return; confirmaEu(false); };
       };
       $('lhp-nu').onclick = function () { if (sincron()) return; sterge(K_TINUT); uita(); alege(); };
+    } else if (iesit()) {
+      /* după „Ieși” (30.09.2026, R3): nu e nimeni conectat și eticheta o spune; „Intră” duce la listă, unde se cere codul.
+         Mesajul întreg („Ai ieșit, X…”) stă doar pe pagina pe care s-a apăsat „Ieși”; se strânge la primul gest. */
+      if (mesajIesit && !strans) {
+        arata('<div class="bar" role="status"><span id="lhp-iesit">' + mesajIesit + '</span>' +
+          '<div class="row"><button id="lhp-intra2">Intră</button><button class="g" id="lhp-bine">Bine</button></div></div>', true);
+        $('lhp-intra2').onclick = function () { mesajIesit = ''; strans = false; alege(); };
+        $('lhp-bine').onclick = function () { mesajIesit = ''; randeaza(); };
+      } else {
+        arata('<span class="pill cere nimeni" id="lhp-nimeni" title="Nu e nimeni conectat pe calculatorul ăsta. Apasă ca să intri pe numele tău, cu codul tău.">' +
+          '<span class="dot"></span><span class="t">Nu e nimeni conectat · <b>Intră</b></span><span class="s" aria-hidden="true">Nimeni conectat · <b>Intră</b></span></span>');
+        $('lhp-nimeni').onclick = function () { mesajIesit = ''; strans = false; alege(); };
+      }
     } else if (strans) {   // întrebarea strânsă la primul gest: o etichetă care duce la înscriere
       /* fără listă, eticheta ține locul butonului „Spune cine ești” (același id) și deschide direct formularul */
       var cuLista = lista().length > 0, idP = cuLista ? 'lhp-cere' : 'lhp-cine';
@@ -449,20 +476,43 @@
     'Nu se vede nimic din alte site-uri, aplicații, mesaje, poze sau fișiere de pe calculator ori telefon.</div>';
 
   function meniu() {
+    /* „Ieși (deconectare)” sus, la o apăsare pe etichetă (30.09.2026, R3): nu mai e ascuns după „Nu ești tu?” */
     arata('<div class="bar">Ești înscris ca <b>' + esc(eu.nume) + '</b> · ' + esc(eu.clasa) + ' · ' + esc(eu.scoalaNume || eu.scoala) + '.' +
+      '<div class="row"><button class="iesi" id="lhp-iesi">Ieși (deconectare)</button><button class="g" id="lhp-x">Închide</button></div>' +
+      '<div class="mic">Pleci de la calculator? Apasă „Ieși”. După aceea, pe numele tău se intră doar cu codul tău.</div>' +
       '<div class="mic">Profesorul vede: paginile deschise, minutele lucrate (doar când lucrezi, nu cu fila uitată deschisă) și nivelurile terminate. Numele pleacă criptat.</div>' + NOTA +
       (eu.h ? '<div class="mic">☁ Progresul tău se păstrează online: pe alt calculator sau pe telefon te înscrii cu același nume și același cod și continui de unde ai rămas.</div>'
         : '<div class="mic"><b>Progresul tău stă doar pe calculatorul ăsta.</b> Alege un cod ca să-l poți continua și pe alt calculator sau acasă.</div>') +
       '<div class="row"><a href="' + JURNAL_URL + '"><button>Jurnalul meu</button></a>' + (eu.h ? '' : '<button id="lhp-cod">Păstrează-l online</button>') +
-      '<button class="g" id="lhp-alt">Nu ești tu? Schimbă elevul</button><button class="g" id="lhp-x">Închide</button></div>' +
+      '<button class="g" id="lhp-alt">Nu ești tu? Schimbă elevul</button></div>' +
       '<div class="row"><button class="g" id="lhp-scoate" title="Progresul tău nu se șterge; doar numele tău nu mai apare în lista calculatorului.">Scoate-mă din lista calculatorului</button></div></div>', true);
-    $('lhp-alt').onclick = function () { uita(); alege(); };
+    $('lhp-iesi').onclick = function () { if (sincron()) return; iesi(); };
+    $('lhp-alt').onclick = function () { if (sincron()) return; if (eElev()) Nor.impinge(true); uita(); alege(); };
     $('lhp-x').onclick = randeaza;
     if ($('lhp-cod')) $('lhp-cod').onclick = cereCod;
     $('lhp-scoate').onclick = function () {
-      var k = cheieElev(eu); scrie(K_LISTA, lista().filter(function (x) { return x.k !== k; }));
-      uita(); randeaza();
+      if (sincron()) return;
+      /* codul rămâne legat de sertarul lui (lh_coduri): fără listă, pe numele lui tot nu se intră fără cod (R2) */
+      var k = cheieElev(eu); if (eu.h) tineCod(k, eu.h, eu.id);
+      scrie(K_LISTA, lista().filter(function (x) { return x.k !== k; }));
+      iesi();
     };
+  }
+
+  /* ---------------- IEȘIREA (30.09.2026, R3) ----------------
+     El: „fă să fie deconectarea clară”. „Ieși (deconectare)” trimite ce s-a adunat (minutele, progresul online),
+     scoate elevul de pe calculator (uita(): lista rămâne, I2) și lasă un semn (lh_prezenta_iesit) cât nu intră nimeni:
+     eticheta spune „Nu e nimeni conectat · Intră”, pe orice pagină și în orice filă. Pe pagina asta apare întâi mesajul. */
+  var K_IESIT = 'lh_prezenta_iesit', mesajIesit = '';
+  function iesit() { return !!citeste(K_IESIT, null); }
+  function iesi(mesaj) {
+    var nume = eElev() ? eu.nume : '';
+    if (eElev()) Nor.impinge(true);   // corpul cererii se face acum, pe amprenta lui; pleacă după
+    // semnul ÎNAINTE de uita(): celelalte file află de ieșire prin „storage” (lh_prezenta), și atunci semnul trebuie să fie deja scris
+    scrie(K_IESIT, { t: Date.now() });   // fără nume: semnul spune doar că nu e nimeni conectat
+    uita();
+    mesajIesit = mesaj || ('Ai ieșit' + (nume ? ', <b>' + esc(nume) + '</b>' : '') + '. Data viitoare îți cer codul.');
+    randeaza();
   }
 
   /* ---------------- CINE LUCREAZĂ ACUM? (26.09.2026) ----------------
@@ -476,12 +526,15 @@
     var k = cheieElev(eu), l = lista().filter(function (x) { return x.k !== k; });
     l.unshift({ k: k, id: eu.id, scoala: eu.scoala, scoalaNume: eu.scoalaNume, scoalaText: eu.scoalaText, clasa: eu.clasa,
       nume: eu.nume, numeEnc: eu.numeEnc, h: eu.h || null, ultima: Date.now() });
+    if (eu.h) tineCod(k, eu.h, eu.id);
+    // cei care ies din listă (peste 80) își păstrează codul: pe sertarul lor tot nu se intră fără el (R2)
+    l.slice(80).forEach(function (x) { if (x.h) tineCod(x.k, x.h, x.id); });
     scrie(K_LISTA, l.slice(0, 80));
   }
   function alege() {
     var l = lista().sort(function (a, b) { return (b.ultima || 0) - (a.ultima || 0); });
     if (!l.length) { formular(); return; }
-    arata('<div class="bar"><b>Cine lucrează acum?</b><div class="mic">Apasă pe numele tău și continui de unde ai rămas. Progresul fiecăruia se păstrează.</div>' +
+    arata('<div class="bar"><b>Cine lucrează acum?</b><div class="mic">Apasă pe numele tău, scrie-ți codul și continui de unde ai rămas. Progresul fiecăruia se păstrează.</div>' +
       '<div class="lista" id="lhp-lista">' + l.map(function (x, i) {
         return '<button class="el" data-i="' + i + '"><b>' + esc(x.nume) + '</b><span>' + esc(x.clasa) + (x.h ? ' · ☁' : '') + '</span></button>';
       }).join('') + '</div>' +
@@ -491,11 +544,181 @@
     $('lhp-nou').onclick = formular;
     $('lhp-x').onclick = function () { eu = eu && eu.refuz ? eu : null; if (!eu) { eu = { refuz: Date.now() }; scrie(K_ID, eu); } randeaza(); };
   }
+  /* ---------------- CODUL LA INTRARE (30.09.2026, R1, R2, R8, R9) ----------------
+     El: „la conectarea pe learning hub cu pinul pe care îl selectează elevii - fă să li se ceară acel pin dacă se
+     deconectează”. Până acum un clic pe nume în „Cine lucrează acum?” intra FĂRĂ cod, iar formularul cu același nume și
+     ORICE cod lua sertarul celuilalt. Acum:
+      - pe numele din listă se intră cu codul lui: amprenta(elev, cod) === amprenta ținută pe calculator (x.h din listă
+        sau lh_coduri, care rămâne și după „Scoate-mă din listă” ori după ce lista trece de 80). Codul nu se ține nicăieri;
+      - elevii de dinainte de coduri (fără amprentă) își aleg un cod la prima intrare, apoi li se cere mereu;
+      - formularul cu un nume deja de pe calculator (listă, lh_coduri, sertar) cere același cod (formular()); un sertar
+        rămas fără amprentă de la versiunea de dinainte cere dovada serverului: progres online sub codul scris, salvat
+        ÎNAINTE de lansarea codurilor, după ceasul serverului (verificaCod, GRAV-1 + GRAV-2);
+      - alt cod decât cel de pe calculator intră doar dacă profesorul l-a deblocat („Mi-am uitat codul”, uitat()), iar
+        codul vechi al unui elev deblocat nu mai intră (serverul spune mutat); fără internet se judecă doar pe calculator;
+      - 5 coduri greșite la rând (în listă sau în formular, pe orice nume) = 30 de secunde în care butonul așteaptă.
+     Limite spuse cinstit (vezi PREDARE.md): cine are acces la instrumentele browserului poate scrie orice în
+     localStorage; elevul fără cod e „revendicat” de primul care îi alege unul; „Ești tot X?” rămâne Da/Nu (decizia lui). */
+  var K_CODURI = 'lh_coduri', K_GRESIT = 'lh_cod_gresit', GRESITE_MAX = 5, PAUZA_MS = 30000;
+  function coduri() { var c = citeste(K_CODURI, null); return c && typeof c === 'object' && !Array.isArray(c) ? c : {}; }
+  function tineCod(k, h, id) { if (!k || !h) return; var c = coduri(); c[k] = { h: h, id: id || (c[k] && c[k].id) || null }; scrie(K_CODURI, c); }
+  // ce știe calculatorul despre elevul k (listă, lh_coduri, sertare); null = nimic, deci e un elev nou aici
+  function peCalculator(k) {
+    var x = lista().filter(function (y) { return y.k === k; })[0] || null, c = coduri()[k] || null, t = citeste(K_SERTARE, null) || {};
+    if (!x && !c && !Object.prototype.hasOwnProperty.call(t, k)) return null;
+    return { x: x, h: (x && x.h) || (c && c.h) || null, id: (x && x.id) || (c && c.id) || null };
+  }
+  function pauza() { var g = citeste(K_GRESIT, null) || {}; return g.pana && g.pana > Date.now() ? g.pana - Date.now() : 0; }
+  function gresit() {   // încă un cod greșit; întoarce câte mai sunt până la pauză (0 = pauza a început)
+    var g = citeste(K_GRESIT, null) || {};
+    if (g.pana) g = {};
+    g.n = (g.n || 0) + 1;
+    if (g.n >= GRESITE_MAX) g = { pana: Date.now() + PAUZA_MS };
+    scrie(K_GRESIT, g);
+    return g.pana ? 0 : GRESITE_MAX - g.n;
+  }
+  function secunde(n) { return n >= 20 ? n + ' de secunde' : n === 1 ? 'o secundă' : n + ' secunde'; }
+  function asteaptaPauza(btn, err, text) {   // butonul așteaptă cât ține pauza, cu secundele rămase
+    (function tick() {
+      if (!btn.isConnected) return;
+      var p = pauza();
+      if (!p) { btn.disabled = false; btn.textContent = text; err.textContent = ''; return; }
+      var s = Math.ceil(p / 1000);
+      btn.disabled = true; btn.textContent = 'Așteaptă ' + s + ' s';
+      err.textContent = 'Ai greșit codul de 5 ori la rând. Mai încearcă peste ' + secunde(s) + '.';
+      setTimeout(tick, 1000);
+    })();
+  }
+  function mesajCod(r, ramase) {
+    if (r.motiv === 'mutat') return 'Codul ăsta nu mai e bun: profesorul te-a deblocat cu un cod nou. Intră cu codul nou.';
+    if (r.motiv === 'asteptare') return 'Profesorul nu te-a deblocat încă. Intri cu codul nou după ce te deblochează.';
+    if (r.motiv === 'respins') return 'Profesorul a respins cererea pentru codul ăsta.';
+    if (r.motiv === 'offline') return 'Nu pot verifica acum codul: nu merge internetul. Încearcă din nou peste puțin timp.';
+    return 'Cod greșit.' + (ramase === 1 ? ' Mai ai o încercare, apoi urmează o pauză de 30 de secunde.'
+      : ramase === 2 ? ' Mai ai două încercări, apoi urmează o pauză de 30 de secunde.' : ramase > 0 ? ' Mai încearcă.' : '');
+  }
+  /* {cerere, mutat, inainte?} pentru amprenta h, de la /api/progres; null fără internet, de la un server vechi (care nu
+     știe „stare”) sau la un răspuns care nu e al lui „stare” (un portal Wi-Fi, un {ok:true} gol): mutat e mereu true/false */
+  function stareServer(h) {
+    return Nor.url().then(function (u) {
+      var ctl = window.AbortController ? new AbortController() : null, t = ctl ? setTimeout(function () { ctl.abort(); }, 6000) : 0;
+      return fetch(u, { method: 'POST', body: JSON.stringify({ op: 'stare', h: h }), signal: ctl ? ctl.signal : undefined })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { clearTimeout(t); return j && j.ok && typeof j.mutat === 'boolean' ? j : null; }, function () { clearTimeout(t); return null; });
+    }).catch(function () { return null; });
+  }
+  /* codul scris pentru elevul e (școală, clasă, nume): {ok:true, h} sau {ok:false, motiv}. hStiut = amprenta ținută pe
+     calculator pentru el; null = elev de dinainte de coduri, iar codul ales acum devine al lui (întrebarea 1 din contract).
+     sertarVechi = pe calculator e deja un sertar pe numele ăsta, dar fără nicio amprentă ținută (vezi mai jos, GRAV-1). */
+  async function verificaCod(e, cod, hStiut, sertarVechi) {
+    var h = await amprenta(e, cod);
+    if (!hStiut) {   // elev nou aici (sau fără cod): intră, afară de codul VECHI al unui elev deblocat între timp (R9)
+      var s1 = await stareServer(h);
+      if (s1 && s1.mutat) return { ok: false, motiv: 'mutat' };
+      if (!sertarVechi) return { ok: true, h: h, nou: true };
+      /* GRAV-1 (poarta de lansare, 30.09.2026 seara). Versiunea de dinainte (28.09) scotea elevul din listă („Scoate-mă din
+         lista calculatorului”, sau lista trecea de 80) FĂRĂ să-i țină amprenta: pe calculator îi rămâne doar sertarul
+         (lh_sertare). Pe sertarul ăsta nu se mai intră cu primul cod scris, ci doar dacă e dovedit că e al lui:
+          - elevul cu cod și-a urcat progresul online sub amprenta lui, deci codul BUN găsește progres acolo; un cod
+            oarecare nu găsește nimic;
+          - sau profesorul a deblocat codul ăsta („Mi-am uitat codul” -> „Deblochează”): așa intră și elevul fără cod
+            de dinainte (25.09) sau cel care nu și-a urcat niciodată progresul.
+         Altfel: refuzat, ca la un cod greșit (se numără la cele 5), cu trimitere la „Mi-am uitat codul”.
+         GRAV-2 (a doua poartă, 30.09.2026 noaptea): „orice progres online sub codul scris” NU mai e dovadă. Un coleg și-l face
+         singur: se înscrie pe telefonul lui cu numele celuilalt și un cod ales de el, deschide o pagină, iar progresul urcă.
+         Dovadă e doar progresul salvat prima dată ÎNAINTE de lansarea codurilor. Judecă serverul, pe ceasul LUI (câmpul
+         `inainte` din „stare”; ceasul telefonului nu contează). Fără răspuns bun de la server, nu se poate dovedi nimic acum
+         (nu se numără ca greșeală). */
+      if (s1 && s1.cerere === 'deblocat') return { ok: true, h: h, deblocat: true };
+      if (!s1) return { ok: false, motiv: 'offline' };
+      if (s1.inainte === true) return { ok: true, h: h };
+      return { ok: false, motiv: s1.cerere === 'asteptare' || s1.cerere === 'respins' ? s1.cerere : 'sertar' };
+    }
+    if (h === hStiut) {
+      var s0 = await stareServer(h);   // codul VECHI al unui elev deblocat între timp în altă parte nu mai intră (R9)
+      return s0 && s0.mutat ? { ok: false, motiv: 'mutat' } : { ok: true, h: h };
+    }
+    var s = await stareServer(h);      // alt cod: intră doar dacă profesorul l-a deblocat
+    if (s && s.cerere === 'deblocat' && !s.mutat) return { ok: true, h: h, deblocat: true };
+    return { ok: false, motiv: s && (s.cerere === 'asteptare' || s.cerere === 'respins') ? s.cerere : 'gresit' };
+  }
+  var CAMP_COD = ' class="cod" inputmode="numeric" maxlength="4" autocomplete="off"';
+  /* apăsare pe un nume din listă: întâi codul (fereastra care cere codul); intra() abia după */
   function eSunt(x) {
+    var pc = peCalculator(x.k), hStiut = x.h || (pc && pc.h) || null, nou = !hStiut;
+    arata('<div class="bar"><b>Salut, ' + esc(x.nume) + '!</b> (' + esc(x.clasa) + ')' +
+      (nou ? '<div class="mic">De acum, fiecare elev intră pe numele lui <b>cu un cod de 4 cifre</b>, ca nimeni altcineva să nu poată intra în locul lui. Alege-ți codul și scrie-l în caiet. Dacă ai mai lucrat cu un cod pe alt calculator sau pe telefon, pune codul de atunci.</div>'
+        : '<div class="mic">Scrie codul tău de 4 cifre.</div>') +
+      '<label for="lhp-pc">' + (nou ? 'Alege-ți codul (4 cifre)' : 'Codul tău (4 cifre)') + '</label><input id="lhp-pc"' + CAMP_COD + '>' +
+      (nou ? '<label for="lhp-pc2">Scrie-l încă o dată</label><input id="lhp-pc2"' + CAMP_COD + '>' : '') +
+      '<div class="err" id="lhp-e" aria-live="polite"></div><div class="row"><button id="lhp-intra">Intră</button><button class="g" id="lhp-inapoi">← Înapoi la listă</button></div>' +
+      (nou ? '' : '<div class="row"><button class="g" id="lhp-uitat">Mi-am uitat codul</button></div>') + '</div>');
+    var btn = $('lhp-intra'), err = $('lhp-e');
+    $('lhp-inapoi').onclick = alege;
+    if ($('lhp-uitat')) $('lhp-uitat').onclick = function () { uitat(x, hStiut, function () { eSunt(x); }); };
+    ['lhp-pc', 'lhp-pc2'].forEach(function (id) { var i = $(id); if (i) i.addEventListener('keydown', function (e) { if (e.key === 'Enter') btn.click(); }); });
+    if (pauza()) asteaptaPauza(btn, err, 'Intră');
+    try { $('lhp-pc').focus({ preventScroll: true }); } catch (e) {}
+    btn.onclick = async function () {
+      if (pauza()) { asteaptaPauza(btn, err, 'Intră'); return; }
+      var c = $('lhp-pc').value.trim();
+      if (!/^\d{4}$/.test(c)) { err.textContent = 'Codul are exact 4 cifre.'; return; }
+      if (nou && $('lhp-pc2').value.trim() !== c) { err.textContent = 'Cele două coduri nu sunt la fel. Scrie-l din nou.'; return; }
+      btn.disabled = true; err.textContent = 'Verific codul…';
+      var r = await verificaCod(x, c, hStiut);
+      if (sincron() || !btn.isConnected) return;   // între timp a intrat altcineva (altă filă): caseta s-a redesenat
+      if (r.ok) { sterge(K_GRESIT); intra(x, r.h); return; }
+      var ramase = r.motiv === 'gresit' ? gresit() : -1;
+      $('lhp-pc').value = '';
+      btn.disabled = false; err.textContent = mesajCod(r, ramase);
+      if (ramase === 0) asteaptaPauza(btn, err, 'Intră');
+      try { $('lhp-pc').focus({ preventScroll: true }); } catch (e) {}
+    };
+  }
+  /* „MI-AM UITAT CODUL” (30.09.2026, R8; el: „să le pot reseta eu codurile și să își primească progresul după ce îi deblochez
+     eu dintr-un panou”; codul nou îl alege ELEVUL). Spre profesor pleacă doar amprenta nouă (ca la progresul online), numele
+     criptat, școala, clasa, id-ul și, de pe calculatorul din listă, amprenta veche. Codul nu pleacă nicăieri. După
+     „Deblochează” în panou, codul nou intră pe orice aparat: verificaCod() întreabă serverul. */
+  function uitat(x, hVechi, inapoi) {
+    arata('<div class="bar"><b>Mi-am uitat codul</b> · ' + esc(x.nume) + ' (' + esc(x.clasa) + ')' +
+      '<div class="mic">Alege un cod NOU de 4 cifre și scrie-l în caiet. Cererea ajunge la profesor; după ce te deblochează, intri cu numele tău și cu codul nou și îți găsești tot progresul. Profesorul nu vede codul.</div>' +
+      '<label for="lhp-n1">Codul nou (4 cifre)</label><input id="lhp-n1"' + CAMP_COD + '>' +
+      '<label for="lhp-n2">Scrie-l încă o dată</label><input id="lhp-n2"' + CAMP_COD + '>' +
+      '<div class="err" id="lhp-e" aria-live="polite"></div><div class="row"><button id="lhp-trimite">Trimite cererea</button><button class="g" id="lhp-inapoi">Înapoi</button></div></div>');
+    var btn = $('lhp-trimite'), err = $('lhp-e');
+    $('lhp-inapoi').onclick = inapoi;
+    $('lhp-n2').addEventListener('keydown', function (e) { if (e.key === 'Enter') btn.click(); });
+    try { $('lhp-n1').focus({ preventScroll: true }); } catch (e) {}
+    btn.onclick = async function () {
+      var c = $('lhp-n1').value.trim();
+      if (!/^\d{4}$/.test(c)) { err.textContent = 'Codul nou are exact 4 cifre.'; return; }
+      if ($('lhp-n2').value.trim() !== c) { err.textContent = 'Cele două coduri nu sunt la fel. Scrie-l din nou.'; return; }
+      btn.disabled = true; err.textContent = 'Trimit cererea…';
+      var j = null, st = 0;
+      try {
+        var corp = { op: 'cerere', h: await amprenta(x, c), numeEnc: x.numeEnc || await cripteaza(x.nume), scoala: x.scoala, clasa: x.clasa, id: x.id || idNou() };
+        if (x.scoalaText) corp.scoalaText = x.scoalaText;
+        if (hVechi) corp.hVechi = hVechi;
+        var r = await fetch(await Nor.url(), { method: 'POST', body: JSON.stringify(corp) });
+        st = r.status; j = await r.json().catch(function () { return null; });
+      } catch (e) { j = null; }
+      if (!btn.isConnected) return;
+      if (st === 200 && j && j.ok) {
+        arata('<div class="bar" role="status"><b>Cererea a ajuns la profesor.</b> După ce te deblochează, intri cu numele și codul nou.' +
+          '<div class="row"><button id="lhp-am">Am înțeles</button></div></div>');
+        $('lhp-am').onclick = function () { strans = false; alege(); };
+        return;
+      }
+      btn.disabled = false;
+      err.textContent = st === 429 && j && j.eroare ? j.eroare : 'Cererea nu a plecat. Verifică internetul și încearcă din nou.';
+    };
+  }
+  /* codul e bun: elevul x intră pe calculator (fostul eSunt, neschimbat mai jos), cu amprenta h */
+  function intra(x, h) {
     eu = { id: x.id || idNou(), scoala: x.scoala, scoalaNume: x.scoalaNume, clasa: x.clasa, nume: x.nume, numeEnc: x.numeEnc, ultima: Date.now() };
     if (x.scoalaText) eu.scoalaText = x.scoalaText;
-    if (x.h) eu.h = x.h;
-    scrie(K_ID, eu); confirmat = true; ultimaMiscare = Date.now();
+    if (h) eu.h = h;   // după o deblocare, amprenta NOUĂ ia locul celei vechi în listă (inregistreaza): codul vechi nu mai intră
+    scrie(K_ID, eu); sterge(K_IESIT); mesajIesit = ''; confirmat = true; ultimaMiscare = Date.now();
     inregistreaza();
     var schimbat = puneSertar();
     if (primesteNeinscris()) schimbat = true;
@@ -580,10 +803,19 @@
     trage: function () {
       sincron();
       if (!eElev() || !eu.h) return Promise.resolve(false);
+      var hCerut = eu.h;
       return Nor.url().then(function (u) {
-        return fetch(u, { method: 'POST', body: JSON.stringify({ op: 'citeste', h: eu.h }) }).then(function (r) { return r.ok ? r.json() : null; });
+        return fetch(u, { method: 'POST', body: JSON.stringify({ op: 'citeste', h: hCerut }) }).then(function (r) { return r.ok ? r.json() : null; });
       }).then(function (j) {
         if (!j || !j.date) return false;
+        /* 30.09.2026 (R9): profesorul a deblocat între timp un cod NOU al elevului (cerut de pe alt aparat): amprenta asta e
+           mutată, deci codul vechi nu mai intră. Elevul iese; ce a lucrat aici rămâne în sertarul lui și urcă sub codul
+           nou când intră cu el. Doar dacă e tot el pe calculator (altă filă îl poate fi schimbat între timp). */
+        if (j.mutat) {
+          sincron();
+          if (eElev() && eu.h === hCerut) iesi('Profesorul te-a deblocat cu un cod nou, <b>' + esc(eu.nume) + '</b>. Intră cu numele tău și cu codul nou.');
+          return false;
+        }
         var a = Nor.aduna(); if (!a) return false;
         var schimbat = false;
         Object.keys(j.date).forEach(function (g) {
@@ -602,9 +834,11 @@
       sincron();   // amprenta (eu.h) și profilul trebuie să fie ale aceluiași elev, cel de ACUM
       if (!eElev() || !eu.h) return Promise.resolve();
       var a = Nor.aduna(); if (!a) return Promise.resolve();
-      var tot = semn(JSON.stringify(a.date));
+      /* id-ul elevului pleacă lângă progres (30.09.2026, R10: legătura progres <-> elev, pentru „Deblochează” din panou);
+         intră și în semn, ca progresul salvat ÎNAINTE de schimbare să urce o dată cu id-ul și să se lege singur */
+      var tot = semn(JSON.stringify(a.date) + '|' + eu.id);
       if (!forteaza && a.m.trimis === tot) return Promise.resolve();
-      var corp = JSON.stringify({ op: 'scrie', h: eu.h, date: a.date });
+      var corp = JSON.stringify({ op: 'scrie', h: eu.h, date: a.date, id: eu.id });
       if (corp.length > 380000) return Promise.resolve();
       var marcheaza = function () { var m = citeste(K_NOR, null); if (m && m.p === a.p) { m.trimis = tot; scrie(K_NOR, m); } };
       if (laInchidere && server && navigator.sendBeacon && corp.length < 60000) {
@@ -642,7 +876,7 @@
   }
 
   function formular() {
-    arata('<div class="bar"><b>Cine ești?</b><div class="mic">Pe calculatoarele din laborator, la final apasă pe etichetă → „Schimbă elevul”.</div>' + NOTA +
+    arata('<div class="bar"><b>Cine ești?</b><div class="mic">Pe calculatoarele din laborator, la final apasă pe etichetă → „Ieși”.</div>' + NOTA +
       '<label for="lhp-s">Școala</label><select id="lhp-s"><option value="">— alege —</option></select>' +
       '<div id="lhp-alta" style="display:none"><label for="lhp-as">Numele școlii</label><input id="lhp-as" maxlength="60" autocomplete="off" placeholder="ex. Școala Gimnazială Nr. 3">' +
       '<label for="lhp-al">Localitatea și județul</label><input id="lhp-al" maxlength="50" autocomplete="off" placeholder="ex. Roman, Neamț">' +
@@ -652,7 +886,8 @@
       '<label for="lhp-n">Numele și prenumele, <b>întregi, ca în catalog</b></label><input id="lhp-n" maxlength="40" autocomplete="off" placeholder="ex. Popescu Ana-Maria">' +
       '<label for="lhp-k">Codul tău secret, <b>4 cifre</b> (scrie-l în caiet)</label><input id="lhp-k" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="ex. 4827">' +
       '<div class="mic">Cu același nume și același cod îți continui progresul pe orice calculator sau pe telefon. Dacă ai mai lucrat în altă parte, pune codul de atunci.</div>' +
-      '<div class="err" id="lhp-e"></div><div class="row"><button id="lhp-ok">Gata</button>' + (lista().length ? '<button class="g" id="lhp-inapoi">← Înapoi la listă</button>' : '') + '<button class="g" id="lhp-x">Mai târziu</button></div></div>');
+      '<div class="err" id="lhp-e" aria-live="polite"></div><div class="row"><button id="lhp-ok">Gata</button>' + (lista().length ? '<button class="g" id="lhp-inapoi">← Înapoi la listă</button>' : '') + '<button class="g" id="lhp-x">Mai târziu</button></div>' +
+      '<div class="row"><button class="g" id="lhp-uitat">Mi-am uitat codul</button></div></div>');
     // „Mai târziu” păstrează alegerea de dinainte (vizitatorul rămâne vizitator, cu butonul lui mic)
     $('lhp-x').onclick = function () { if (!(eu && eu.refuz)) eu = null; randeaza(); };
     if ($('lhp-inapoi')) $('lhp-inapoi').onclick = alege;
@@ -679,30 +914,69 @@
         rezerva();
       };
     }, function () { if ($('lhp-e')) $('lhp-e').textContent ='Nu s-a putut încărca lista școlilor. Verifică internetul și reîncarcă pagina.'; });
-    $('lhp-ok').onclick = async function () {
+    // școala, clasa și numele din formular (null + mesaj dacă lipsește ceva); folosit de „Gata” și de „Mi-am uitat codul”
+    var dateFormular = function () {
       var sc = $('lhp-s').value, cl = $('lhp-c').value, nm = $('lhp-n').value.trim().replace(/\s+/g, ' '), st = '';
       if (sc === 'alta') {
         var as = $('lhp-as').value.trim(), al = $('lhp-al').value.trim(); cl = $('lhp-ac').value.trim();
-        if (!as || !al || !cl) { $('lhp-e').textContent = 'Scrie numele școlii, localitatea cu județul și clasa.'; return; }
+        if (!as || !al || !cl) { $('lhp-e').textContent = 'Scrie numele școlii, localitatea cu județul și clasa.'; return null; }
         st = (as + ', ' + al).slice(0, 120);
       } else if (cl === '__alta') {
         cl = normClasa($('lhp-cx').value, ((DATE.scoli.filter(function (x) { return x.key === sc; })[0]) || {}).clase);
-        if (!cl) { $('lhp-e').textContent = 'Scrie clasa ta (ex. a VI-a B).'; return; }
+        if (!cl) { $('lhp-e').textContent = 'Scrie clasa ta (ex. a VI-a B).'; return null; }
       }
-      if (!sc || !cl) { $('lhp-e').textContent = 'Alege școala și clasa.'; return; }
-      if (nm.split(' ').length < 2) { $('lhp-e').textContent = 'Scrie numele și prenumele (două cuvinte).'; return; }
+      if (!sc || !cl) { $('lhp-e').textContent = 'Alege școala și clasa.'; return null; }
+      if (nm.split(' ').length < 2) { $('lhp-e').textContent = 'Scrie numele și prenumele (două cuvinte).'; return null; }
+      var sn = st || (DATE.scoli.filter(function (x) { return x.key === sc; })[0] || {}).nume || sc;
+      var e = { id: idNou(), scoala: sc, scoalaNume: sn, clasa: cl, nume: nm, ultima: Date.now() };
+      if (st) e.scoalaText = st;
+      return e;
+    };
+    /* „Mi-am uitat codul” și din formular (30.09.2026): pe telefon sau pe alt calculator elevul nu e în listă */
+    $('lhp-uitat').onclick = function () {
+      $('lhp-e').textContent = '';
+      var e = dateFormular(); if (!e) return;
+      var pc = peCalculator(cheieElev(e));
+      if (pc && pc.id) e.id = pc.id;
+      uitat(e, pc && pc.h, formular);
+    };
+    $('lhp-ok').onclick = async function () {
+      var btn = this;
+      $('lhp-e').textContent = '';
+      var nou = dateFormular(); if (!nou) return;
       var cod = $('lhp-k').value.trim();
       if (!/^\d{4}$/.test(cod)) { $('lhp-e').textContent = 'Alege un cod de exact 4 cifre (ex. 4827) și scrie-l în caiet.'; return; }
-      this.disabled = true;
+      /* R2 (30.09.2026): un nume care e deja pe calculatorul ăsta (în listă, în lh_coduri sau cu sertar) intră doar cu
+         codul LUI; înainte, formularul cu același nume și ORICE cod lua sertarul celuilalt. Același cod = același elev. */
+      var pc = peCalculator(cheieElev(nou)), hStiut = (pc && pc.h) || null;
+      /* GRAV-1 (30.09 seara): numele are sertar pe calculator, dar nicio amprentă ținută (nici în listă, nici în lh_coduri):
+         scos din listă de versiunea de dinainte sau ieșit din lista de 80. Sertarul nu se dă pe primul cod (verificaCod). */
+      var sertarVechi = !!(pc && !pc.x && !hStiut);
+      if ((hStiut || sertarVechi) && pauza()) { asteaptaPauza(btn, $('lhp-e'), 'Gata'); return; }
+      btn.disabled = true;
       try {
-        var sn = st || (DATE.scoli.filter(function (x) { return x.key === sc; })[0] || {}).nume || sc;
-        eu = { id: idNou(), scoala: sc, scoalaNume: sn, clasa: cl, nume: nm, numeEnc: await cripteaza(nm), ultima: Date.now() };
-        if (st) eu.scoalaText = st;
-        eu.h = await amprenta(eu, cod);
-        // același elev deja în lista calculatorului: își păstrează id-ul (aceeași înregistrare la profesor)
-        var dinLista = lista().filter(function (x) { return x.k === cheieElev(eu); })[0];
-        if (dinLista && dinLista.id) eu.id = dinLista.id;
-        scrie(K_ID, eu); sterge(K_COADA); if (!dinLista) sterge(K_JURNAL); confirmat = true; ultimaMiscare = Date.now();
+        $('lhp-e').textContent = 'Verific codul…';
+        var r = await verificaCod(nou, cod, hStiut, sertarVechi);
+        if (sincron() || !btn.isConnected) return;   // între timp a intrat altcineva (altă filă): caseta s-a redesenat
+        if (!r.ok) {
+          var ramase = r.motiv === 'gresit' || r.motiv === 'sertar' ? gresit() : -1;
+          btn.disabled = false;
+          $('lhp-e').textContent = (r.motiv === 'gresit' ? 'Pe calculatorul ăsta, ' + nou.nume + ' intră cu alt cod. '
+            : r.motiv === 'sertar' ? 'Pe calculatorul ăsta e deja progres pe numele ' + nou.nume + ', iar codul ăsta nu se potrivește. ' : '') + mesajCod(r, ramase) +
+            (r.motiv === 'gresit' ? ' Dacă ți-ai uitat codul, apasă „Mi-am uitat codul”.'
+              : r.motiv === 'sertar' ? ' Dacă ți-ai uitat codul sau n-ai avut cod până acum, apasă „Mi-am uitat codul”.' : '');
+          if (ramase === 0) asteaptaPauza(btn, $('lhp-e'), 'Gata');
+          return;
+        }
+        if (hStiut || sertarVechi) sterge(K_GRESIT);
+        nou.h = r.h;
+        nou.numeEnc = await cripteaza(nou.nume);
+        if (sincron() || !btn.isConnected) return;
+        // același elev deja pe calculator: își păstrează id-ul (aceeași înregistrare la profesor)
+        var dinLista = pc && pc.x;
+        if (pc && pc.id) nou.id = pc.id;
+        eu = nou;
+        scrie(K_ID, eu); sterge(K_IESIT); mesajIesit = ''; sterge(K_COADA); if (!dinLista) sterge(K_JURNAL); confirmat = true; ultimaMiscare = Date.now();
         inregistreaza();
         adaugaInCoada(0, true);
         // întâi profilul: dacă s-a schimbat, pagina se reîncarcă pe profilul lui (fără să anunțăm jocul/lecția,
@@ -715,7 +989,7 @@
         if (schimbat || venit) { trimite(true); randeaza(); setTimeout(function () { reincarcaDacaTrebuie(true, true); }, 300); return; }
         trimite(false); randeaza();
         try { dispatchEvent(new CustomEvent('prezenta', { detail: identitate() })); } catch (e) {}
-      } catch (e) { this.disabled = false; $('lhp-e').textContent = 'Nu a mers. Reîncarcă pagina și încearcă din nou.'; }
+      } catch (e) { btn.disabled = false; if ($('lhp-e')) $('lhp-e').textContent = 'Nu a mers. Reîncarcă pagina și încearcă din nou.'; }
     };
     $('lhp-n').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('lhp-ok').click(); });
   }
@@ -789,7 +1063,9 @@
   function identitate() { return eElev() ? { nume: eu.nume, scoala: eu.scoala, clasa: eu.clasa } : null; }
 
   window.Prezenta = {
+    versiune: 'pin-2026-09-30',   // marcajul pentru verificarea live (cod la intrare + „Ieși”)
     identitate: identitate,
+    iesi: function () { if (eElev()) iesi(); },
     /* 'activ' | 'intreaba' | 'vizitator' | 'necunoscut' — motor.js ține nivelurile deoparte cât e 'intreaba' */
     stare: stare,
     formular: formular,
@@ -844,6 +1120,7 @@
 
   function porneste() {
     pornit = true; eu = citeste(K_ID, null);   // ce e pe disc ACUM (altă filă poate fi scris între timp)
+    if (eElev()) sterge(K_IESIT);            // e cineva conectat: semnul „nu e nimeni conectat” nu mai e adevărat
     if (stare() === 'activ') { reincarcaDacaTrebuie(puneSertar()); inregistreaza(); }
     randeaza();
     /* adresa serverului, de la început (28.09.2026): altfel, în primele 30 s pe pagină „Schimbă elevul” (uita -> trimite)
