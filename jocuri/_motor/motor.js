@@ -927,6 +927,15 @@ function wireHeader(){
   bar.addEventListener('pointercancel',()=>{startY=null});
 }
 
+/* ---------------- galeria de imagini (30.09.2026) ----------------
+   assets/js/galerie.js (componentă comună, ca prezenta.js): capturile (șablonul fig) se deschid mari PE ACEEAȘI
+   PAGINĂ, în mod galerie, nu într-o filă nouă. Se încarcă ÎNTOTDEAUNA, și în recitire (unde prezenta.js nu vine). */
+function galerie(){
+  if(document.getElementById('lh-galerie'))return;
+  const s=document.createElement('script');s.id='lh-galerie';s.defer=true;
+  s.src=new URL('../../assets/js/galerie.js',MOTOR_URL).href;document.head.appendChild(s);
+}
+
 /* ---------------- evidența activității (24.09.2026) ----------------
    assets/js/prezenta.js (același pe tot LearningHub-ul) numără timpul lucrat și îl trimite profesorului.
    Jocul îi spune în plus ce nivel s-a terminat și cu câte stele. Numele: dacă elevul s-a înscris deja pe site,
@@ -979,6 +988,7 @@ function porneste(config){
   Object.entries(Object.assign({},EXT,C.tipuri||{})).forEach(([k,v])=>{TIPURI[k]=v.render;if(v.rezolva)REZOLVA[k]=v.rezolva;if(v.gresit)GRESIT[k]=v.gresit});
   RECITIRE=eLectie()?null:paramRecitire();   // ?recitire=N: doar citire (vezi „RECITIRE”); pe lecții se ignoră
   S=load();
+  galerie();   // capturile se deschid pe aceeași pagină (și în recitire)
   if(RECITIRE===null)prezenta();   // recitirea nu intră în jurnal și nu cere înscrierea
   document.body.insertAdjacentHTML('afterbegin',`<header class="hud"><div class="hud-in">
     <button class="brand" id="go-home" type="button">${C.marca||esc(C.titlu)}</button>

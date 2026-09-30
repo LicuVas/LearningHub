@@ -42,6 +42,17 @@
         document.head.appendChild(s);
     }
 
+    // Galeria de imagini (30.09.2026): capturile (linkurile spre imagini ale sitului) se deschid mari pe ACEEAȘI
+    // pagină, în mod galerie, nu într-o filă nouă. Tot de aici, ca prezenta.js, fără să atingem paginile.
+    if (!document.getElementById('lh-galerie')) {
+        var eu = document.currentScript && document.currentScript.src;
+        var g = document.createElement('script');
+        g.id = 'lh-galerie';
+        g.src = eu ? new URL('galerie.js', eu).href : '/assets/js/galerie.js';
+        g.defer = true;
+        document.head.appendChild(g);
+    }
+
     // Contorul de vizitatori (25.09.2026): o dată pe zi, browserul spune „am trecut azi” la
     // teste-vasile.netlify.app/api/vizitatori, cu un id aleator (fără nume). Hub-ul afișează cifrele.
     // Hub-ul (are #visitorCount) își face singur trimiterea, cu citirea cifrelor.
