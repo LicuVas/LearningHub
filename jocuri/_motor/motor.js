@@ -30,7 +30,12 @@ const GRESIT={};          // pentru testul automat: pune un răspuns greșit tip
    (fără nume), îl mută la el - așa nu se pierde nimic la trecere. */
 function profilActiv(){try{const p=localStorage.getItem('learninghub_active_profile');return p&&p!=='_guest'?p:''}catch(e){return ''}}
 function cheieJoc(){const p=profilActiv();return p?C.cheie+'@'+p:C.cheie}
-const normNume=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(' ').sort().join(' ');
+/* FARA DIACRITICE (01.10.2026): si literele fara forma "fara semn" in Unicode (i fara punct, l taiat, o taiat, ss...;
+   "Isik" scris cu i turcesc iesea "is k"), ca in prezenta.js si AI_0\tools\litere.py (sursa); oracolul care compara
+   toate copiile: AI_0\tools\tests\litere_proba.py */
+const LITERE_FARA={'\u0131':'i','\u0130':'I','\u0142':'l','\u0141':'L','\u00f8':'o','\u00d8':'O','\u0111':'d','\u0110':'D','\u00f0':'d','\u00d0':'D','\u00fe':'th','\u00de':'Th','\u00df':'ss','\u00e6':'ae','\u00c6':'Ae','\u0153':'oe','\u0152':'Oe','\u0127':'h','\u0126':'H','\u0167':'t','\u0166':'T'};
+const faraDiacritice=s=>String(s||'').replace(/[\u0131\u0130\u0142\u0141\u00f8\u00d8\u0111\u0110\u00f0\u00d0\u00fe\u00de\u00df\u00e6\u00c6\u0153\u0152\u0127\u0126\u0167\u0166]/g,c=>LITERE_FARA[c]).normalize('NFKD').replace(/[\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe20-\ufe2f]/g,'');
+const normNume=s=>faraDiacritice(s).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(' ').sort().join(' ');
 function citesteJoc(k){try{const s=JSON.parse(localStorage.getItem(k));return s&&typeof s==='object'?s:null}catch(e){return null}}
 let SK='';   // cheia din care s-a încărcat S (dacă profilul se schimbă sub joc, S se reîncarcă)
 let RECITIRE=null;   // ?recitire=N (textul parametrului) cât pagina e deschisă DOAR pentru recitire; null = jocul obișnuit
@@ -950,7 +955,7 @@ function prezenta(){
      (sau cât stătea pe ecran „Ești tot…?”) nu plecau niciodată. La deschidere și la fiecare înscriere/„Da”
      trimitem tot ce e deja făcut (serverul păstrează maximul de stele, deci nu se dublează nimic) - DOAR dacă
      numele din joc e al elevului înscris, ca pe calculatorul comun să nu primească nivelurile colegului. */
-  const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(' ').sort().join(' ');
+  const norm=normNume;   // aceeași regulă (01.10.2026)
   const sincron=()=>{const e=window.Prezenta&&window.Prezenta.identitate();if(!e||!S.nume||norm(S.nume)!==norm(e.nume))return;
     const facute=Object.keys(S.lv);if(!facute.length)return;
     facute.forEach(i=>raporteaza({tip:'nivel',nivel:+i+1,stele:S.lv[i].stars||0,max:3}));

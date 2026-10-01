@@ -748,7 +748,7 @@
     };
   }
   async function amprenta(e, cod) {
-    var n = function (s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+    var n = function (s) { return faraDiacritice(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
     var sc = e.scoala === 'alta' ? 'alta:' + n(e.scoalaText) : e.scoala;
     var sir = 'lh-progres|' + sc + '|' + n(e.clasa).replace(/^a /, '') + '|' + n(e.nume).split(' ').sort().join(' ') + '|' + cod;
     var b = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(sir)));
@@ -1001,8 +1001,19 @@
      schimbat (atunci pagina trebuie reîncărcată, ca lecția/jocul să citească progresul noului elev). */
   var K_SERTARE = 'lh_sertare', K_PROFIL = 'learninghub_active_profile';
   function cheieElev(e) {
-    return e.scoala + '|' + e.clasa + '|' + String(e.nume || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    return e.scoala + '|' + e.clasa + '|' + faraDiacritice(e.nume)
       .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').sort().join(' ');
+  }
+  /* FARA DIACRITICE (01.10.2026): NFD desface literele romanesti in litera + semn, dar unele litere (i fara punct
+     turcesc, l taiat, o taiat, ss german...) nu au forma "fara semn" si ramaneau ("Isik" cu i turcesc iesea "is k",
+     deci acelasi elev scris cu si fara i turcesc avea doua sertare). Aceeasi lista ca in AI_0\tools\litere.py
+     (sursa); oracolul care compara toate copiile: AI_0\tools\tests\litere_proba.py.
+     Pe 01.10.2026 nicio inscriere nu avea astfel de litere, deci nicio amprenta existenta nu se schimba. */
+  function faraDiacritice(s) {
+    var L = { '\u0131': 'i', '\u0130': 'I', '\u0142': 'l', '\u0141': 'L', '\u00f8': 'o', '\u00d8': 'O', '\u0111': 'd', '\u0110': 'D', '\u00f0': 'd', '\u00d0': 'D', '\u00fe': 'th', '\u00de': 'Th',
+      '\u00df': 'ss', '\u00e6': 'ae', '\u00c6': 'Ae', '\u0153': 'oe', '\u0152': 'Oe', '\u0127': 'h', '\u0126': 'H', '\u0167': 't', '\u0166': 'T' };
+    return String(s || '').replace(/[\u0131\u0130\u0142\u0141\u00f8\u00d8\u0111\u0110\u00f0\u00d0\u00fe\u00de\u00df\u00e6\u00c6\u0153\u0152\u0127\u0126\u0167\u0166]/g, function (c) { return L[c]; })
+      .normalize('NFKD').replace(/[\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe20-\ufe2f]/g, '');
   }
   function hashScurt(s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return h.toString(36); }
   function citesteProfil() { try { return localStorage.getItem(K_PROFIL); } catch (e) { return null; } }
