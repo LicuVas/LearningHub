@@ -1,6 +1,7 @@
 # Lecția 7, clasa a V-a — surse, harta „predat unde” și ce n-am putut verifica (27.09.2026, refăcut după judecător)
 
 Reparațiile după judecător (1 GRAV, 3 MAJOR, 13 MINOR): `_verificare\reparatii.md`.
+**01.10.2026:** literele părților trecute la cele oficiale (C · De bază, B · Consolidat, A · Avansat): secțiunea „Alinierea la actele oficiale, 01.10.2026”, la sfârșit.
 
 ## Programa și planul
 - **Titlul exact:** `Info_Gimnaziu_2026\planificari\Calendar_ore_5AM_5M.md`, r. 15: „23.10.2026 | 7 | M1 | Evaluare sumativă: sisteme de calcul | evaluare sumativă”. La fel în `data\unitati.json` (V-U1 = lecțiile 2-7; lecția 7 cu materialele „test_unitate, barem”).
@@ -24,17 +25,17 @@ L2 = calculator-v nivelurile 1-2; L3 = calculator-v nivelul 3 (+ materialul prof
 | **Î4** classify, dispozitivele de la calculatorul profesorului | Consolidat | camera web, scanerul / videoproiectorul, imprimanta / căștile cu microfon, ecranul tactil | L5 pașii 1-4; L7 P5 |
 | **Î5** choice, fotografiile de 7 GB (date noi, m1) | Consolidat | întâi unitatea + locul liber (card 16 GB gol / stick 64 GB cu 6 GB liberi / DVD 4,7 GB / CD 700 MB) | L6 „Capacitatea: cum compari două mărimi”, „Pe ce încape? Locul liber”; L7 P6 |
 | **Î6** classify, stația meteo (situație nouă) | Avansat | Intră / Prelucrare / Memorare / Iese; senzorul e explicat în enunț | L4 „Drumul datelor” + exercițiul cu poza de la telefon (aceleași 4 categorii); L6 „Dispozitivele de stocare”; L5 „Dispozitivele de ieșire” („difuzoarele sunt boxele gării”, Î2 L5); L3 („de la un senzor”); L7 P4, P6 |
-| **Atelier A** calculatorul de clasă, 4 etichete-funcție | De bază | intră literele / intră clicurile / iese rezultatul / se prelucrează | L4 „Piesele calculatorului: hardware-ul” (aceeași fotografie), „Procesorul…”; L5 „Dispozitivele de intrare/ieșire”; L7 P4, P5 |
+| **Atelier C** calculatorul de clasă, 4 etichete-funcție | De bază | intră literele / intră clicurile / iese rezultatul / se prelucrează | L4 „Piesele calculatorului: hardware-ul” (aceeași fotografie), „Procesorul…”; L5 „Dispozitivele de intrare/ieșire”; L7 P4, P5 |
 | **Atelier B(1)** unitate centrală NOUĂ (HP), 3 etichete-treabă (m3; runda 2: n1, n2) | Consolidat | discul („păstrează ce ai salvat”), sursa („dă curent; din ea pleacă multe cabluri”), placa de bază („pe ea se prind alte piese; prin ea circulă datele”, pe o bucată liberă). Unitatea DVD NU e țintă: enunțul spune ce e și că nu primește etichetă; cablurile sursei au mesajul lor. | L4 „Procesorul, memoria RAM și discul”, „Placa de bază, sursa și placa video” („de care se prind… Prin ea circulă datele”; „îl duce la ele prin cabluri”); L7 P4 |
 | **Atelier B(2)** stocarea, film de 900 MB | Consolidat | 900 MB < 1 GB ⇒ încape pe 2 GB, 2.0 GB, 16 GB, 4,7 GB; nu pe CD 700 MB | L6 „Capacitatea…” + atelierul L6 (aceeași fotografie, alt film); L7 P6 |
-| **Atelier B(3)** casa de marcat fără casier (mutată de la C, M2) | Consolidat | ecranul tactil I/E, cele 2 cititoare I, aparatul pentru card I/E, imprimanta de bonuri E | L5 „Metoda…”, „…de intrare-ieșire”, „Dispozitivele de intrare” (cititorul de coduri), atelier L5 încă unul (casa de marcat a unui magazin); L3 („cardul și codul PIN”); L7 P5 |
-| **Atelier C** telefonul deschis, pe asemănare (NOU, M2) | Avansat | camera ≈ camera web, difuzorul ≈ boxele, bateria ≈ sursa, cardul de memorie ≈ stickul | L5 „Dispozitivele de intrare” (camera web), „…de ieșire” (boxele); L4 „Placa de bază, sursa și placa video” (sursa dă curent); L6 „Dispozitivele de stocare” (stickul, cardul de memorie din telefon); L7 P4-P6. Locurile SIM / card sunt spuse în enunț. |
+| **Atelier B(3)** casa de marcat fără casier (mutată de la Avansat, M2) | Consolidat | ecranul tactil I/E, cele 2 cititoare I, aparatul pentru card I/E, imprimanta de bonuri E | L5 „Metoda…”, „…de intrare-ieșire”, „Dispozitivele de intrare” (cititorul de coduri), atelier L5 încă unul (casa de marcat a unui magazin); L3 („cardul și codul PIN”); L7 P5 |
+| **Atelier A** telefonul deschis, pe asemănare (NOU, M2) | Avansat | camera ≈ camera web, difuzorul ≈ boxele, bateria ≈ sursa, cardul de memorie ≈ stickul | L5 „Dispozitivele de intrare” (camera web), „…de ieșire” (boxele); L4 „Placa de bază, sursa și placa video” (sursa dă curent); L6 „Dispozitivele de stocare” (stickul, cardul de memorie din telefon); L7 P4-P6. Locurile SIM / card sunt spuse în enunț. |
 | P2 Încearcă (prima pauză după 9:00) · Încă 1 (voie / nu e voie) | — | regula 20–20–20 aplicată; regulile din laborator pe situații noi | L2 „Pauzele pentru ochi”, „Mâncarea, lichidele și cablurile”, „Când ceva nu e în regulă”; L7 P2 |
 | P3 Încearcă · Încă 1-2 | — | metoda detectivului; evoluția; comunicații | L3; L7 P3 |
 | P4 Încearcă (compunerea pe calculatorul de birou) · Încă 1-2 | — | RAM vs disc; rolurile | L4 pașii 2-4; L7 P4 |
 | P5 Încearcă (senzor, tabela, ecranul ceasului, difuzorul) · Încă 1-2 (cablul videoproiectorului; potrivirea nouă, m2) | — | metoda pe dispozitive noi | L5 pașii 1-4; L7 P5 |
 | P6 Încearcă (800 KB … 2 TB) · Încă 1-2 | — | trepte; 1 literă = 1 byte; locul liber | L6 pașii 2-5; L7 P6 |
-| Laborator A-C | — | părțile mari; drumul unei litere; robotul de aspirat (situație nouă, m12) | L4; L5; L3 (robotul, P3 Încearcă); L7 P3-P6 |
+| Laborator C, B, A | — | părțile mari; drumul unei litere; robotul de aspirat (situație nouă, m12) | L4; L5; L3 (robotul, P3 Încearcă); L7 P3-P6 |
 
 **Rezultat: toate cele 6 întrebări și cele 5 părți ale atelierului au lecția și pasul de unde vin.**
 
@@ -50,7 +51,7 @@ Pagina NU a fost aliniată la test acolo unde testul cere lucruri nepredate sau 
 `_proba\asemanare.py` compară cele 32 de exerciții, întrebări și pași din laborator ai lecției 7 cu 517 din lecțiile 4-6 (acum **și cu pașii lor din laborator**, după m1) și din jocurile V-U1 + recapitularea clasei. Măsura e aceeași ca la `intrebari_unitate.py`: cuvinte de conținut, prag 0,40. **Nicio copie.** Ce a rămas peste prag:
 - pașii-formulă din laborator („Stai pe scaun… Nu atingi cablurile…”, „Compară caietul tău cu al colegului…”), repetați voit în toate lecțiile: sunt reguli, nu exerciții;
 - variante-soră cu alte date: P6 Încearcă (800 KB … 2 TB) ~ L6 Î3; P5 Încă 1 (cablul videoproiectorului) ~ L5 (cablul imprimantei); P2 Încearcă (prima pauză după 9:00, se socotește ora) ~ calculator-v N2 („Ai lucrat 20 de minute. Ce faci?”).
-Aceeași fotografie ca într-o lecție, cu altă sarcină: doar B(2) (fotografia atelierului L6, film de 900 MB în loc de 3 GB). B(1) are acum o fotografie nouă (m3), iar partea C are și ea o fotografie nouă.
+Aceeași fotografie ca într-o lecție, cu altă sarcină: doar B(2) (fotografia atelierului L6, film de 900 MB în loc de 3 GB). B(1) are acum o fotografie nouă (m3), iar partea A (Avansat) are și ea o fotografie nouă.
 
 ## Simulatorul
 - `lectii\_sim\fotografie.js` — **neatins**. **m9 (notat, nereparat aici):** numai cu tastatura nu se poate pune nicio etichetă pe fotografie, iar după „Verifică” focusul cade pe BODY. Ține de simulatorul comun (proprietar: autorul lecției 6). Propunerea judecătorului: după `api.resolve(true)`, focusul pe `#inca`; câte un buton „Pune eticheta aleasă aici” pe fiecare rând din „Testele”.
@@ -70,9 +71,39 @@ Aceeași fotografie ca într-o lecție, cu altă sarcină: doar B(2) (fotografia
 - `_proba\cuvinte.py` → 0 (pașii au între 72 și 110 cuvinte; niciun cuvânt din M2/M3).
 
 ## Ce n-am putut verifica / de semnalat
-1. **Difuzorul telefonului** (partea C): e dedus. E singura grilă de pe spatele telefonului, lângă cameră, iar casca de convorbire e pe față. GSMArena confirmă doar că telefonul are difuzor.
+1. **Difuzorul telefonului** (partea A · Avansat): e dedus. E singura grilă de pe spatele telefonului, lângă cameră, iar casca de convorbire e pe față. GSMArena confirmă doar că telefonul are difuzor.
 2. **Ecranul casei EDEKA e tactil:** confirmat de judecător la producător (POLYTOUCH® PORTAL, „multitouch screen”).
 3. **P4 Încearcă („ce găsești mâine pe disc”):** simplificare ca la lecția 4. Salvarea automată a unor programe poate păstra o copie de recuperare.
 4. **Lecțiile 2 și 3** nu sunt pe /lectii/: conținutul lor e presupus predat la clasă ca în jocul calculator-v.
 5. **Laboratoarele** (Tupilați, Brauner): ce e pe masă la fiecare loc — neverificat; pașii au ieșiri pentru fiecare caz („nu o văd de pe scaun”, laptop, totul în spatele ecranului, fără microfon).
 6. **Nepotrivirile test ↔ lecții** de mai sus: hotărârea profesorului.
+
+## Alinierea la actele oficiale, 01.10.2026
+După `_campaign\isj_aliniere_2026_10_01\BRIEF_COMUN.md` (§1 literele, §3 ce spun actele) și `contract.md` (R3, R4).
+
+**Sursa.** Monitorul Oficial al României, Partea I, nr. 674 bis/14.VIII.2026, pag. 14, Anexa nr. 2 (OMEC 4.615/2026), tabelul „Nivel / Denumire”: „A — Avansat · B — Consolidat · C — De bază · D1 — În formare · D2 — În dificultate” (imaginea paginii citită pe 01.10.2026). Litera părții = litera nivelului.
+
+**Ce am schimbat în `index.html`:**
+- Părțile probei de antrenament și ale fișei din caiet: „A · De bază” → **„C · De bază”**, „B · Consolidat” rămâne, „C · Avansat” → **„A · Avansat”**. Ordinea pe ecran și în caiet rămâne de la ușor la greu: atelierul C, B, B, B, A; caietul C, B, A. Constanta `PARTE` are cheile C/B/A; banda de sus arată „C · B · A”; schimbate și intro-ul („Ai nevoie de: lecția 1 — cele trei niveluri, cu literele lor: C · De bază, B · Consolidat, A · Avansat”), pasul 1, intro-ul atelierului, pașii din laborator, comentariile din cod (r. 45, 87, atelierul).
+- `NIV` (eticheta întrebărilor, fără literă pe ecran) și clasa CSS `.niv.c` foloseau inițialele vechi (b = De bază, c = Consolidat): acum cheile sunt C/B/A, iar clasa Consolidat e `.niv.b`. Pe ecran nu se schimbă nimic (`node --check` pe scriptul inline: trecut).
+- Exercițiile: niciunul nu și-a schimbat enunțul, cheia, zonele sau locul; lecția nu are date cu litera părții (de tipul `parte:'A'`). **Socoteli:** pagina nu dă note și nu spune puncte pe părți, deci n-a fost nimic de refăcut; comentariul întrebărilor păstrează „3 De bază, 2 Consolidat, 1 Avansat, ca 40 / 30 / 20 pe lucrare” (punctele pe nivel, neschimbate).
+- **Pasul 1 „Ce verificăm la lucrare”:** definițiile = cele pentru elev din brief §3 (aceleași ca în fișe): C „rezolvi după un model sau după pașii dați, la lucruri pe care le-ai mai făcut”; B „rezolvi singur, la lucruri de felul celor exersate”; A „rezolvi singur, după cerință, o situație pe care n-ai mai văzut-o”. Explicația a ieșit din definiția Avansat și e spusă separat, ca cerință a profesorului: „Profesorul îți cere și să explici de ce.” Temeiul: anexa 2 descrie Avansat fără explicație („generalizându-le, modelându-le și transferându-le în contexte complexe. Ei sunt autonomi în învățare”); brief §3: „partea A a lucrării (Avansat) cere «situație nouă și explicație» — asta e regula profesorului și RĂMÂNE”. Pasul are 106 cuvinte (`_proba\cuvinte.py`; înainte de scurtare ajunsese la 130): „lecțiile 2, 3, 4, 5 și 6” → „lecțiile 2-6”, iar „la clasă” și „Pagina nu dă note:” au ieșit (le spune deja intro-ul).
+- Atelierul, „Cum îți afli nivelul”: „Nivelul tău **pe antrenament** e cea mai grea parte trecută…”, ca să nu pară nivelul oficial sau cel citit din notă.
+- Laboratorul, partea A · Avansat (robotul de aspirat), păstrează „explică de ce l-ai pus acolo”: e partea A a profesorului, nu definiția ministerului.
+
+**Ce n-am pus, cu motivul:**
+- Nota „explicația se cere la clase mai mici” (brief §3, pentru V: anexa 15 cere „justificând” la **CS 2.2**: „…identifica și clasifica datele utilizate de algoritmul corespunzător, justificând rolul acestora în prelucrare, în contexte noi”, `knowledge\legal_corpus\primary_law\standarde_evaluare_informatica_tic_V-VIII_2026.txt`, r. 219-222). Lecția 7 evaluează unitatea V-U1 (CS 1.1, hardware), iar cuvântul „algoritm” nu e predat până aici: pomenit în pagină ar fi un termen neexplicat. Pagina spune doar că explicația o cere profesorul la partea A. De confirmat de profesor.
+- Cele cinci niveluri, nivelul din notă („regula profesorului”), planul individualizat, numele ministerului: lecția 7 nu vorbește despre ele, deci n-am avut ce alinia. Verificat: în pagină nu apar „plan de recuperare”, „Ministerul Educației”, nici o regulă notă → nivel.
+
+**Rămase cu literele vechi, intenționat:** `_verificare\` (judecătorul, `reparatii.md`, 27.09) și jurnalele mai vechi din `_proba\` sunt istoric: acolo „partea A” = De bază și „partea C” = Avansat. Tabelul „Harta” de mai sus, `afirmatii.json`, `profil.json`, `capturi_lipsa.json` folosesc literele noi. Captura veche `_proba\telefon_atelier_C.png` (cu „C · Avansat”) a fost înlocuită de `telefon_atelier_A.png`.
+
+**Probele lecției, aduse la regula 24:** `_proba\parcurge.py` și `_proba\cuvinte.py` deschideau pagina ca fișier, fără blocarea rețelei; acum servesc situl local (`lectii\viii\m1-l01\_proba\server_local.py`) și opresc tot ce nu e 127.0.0.1 (cererile oprite nu sunt socotite erori ale paginii; cererile locale eșuate da). `parcurge.py` verifică în plus eticheta afișată a fiecărei părți din atelier: C · De bază, B · Consolidat ×3, A · Avansat.
+
+**Rezultate, 01.10.2026:**
+- `oracol_m1l01.py v/m1-l07` → **0** (înainte: 14, toate „A · De bază” / „C · Avansat”).
+- `verifica_regula.py` → **0**.
+- `verifica_lectie.py … --fara-t1` → **0** (S0 TRECUT · S1 0 identice · S2 6/6 · T0 0).
+- `_proba\parcurge.py` → **0 probleme** (390 px cu atingeri și 1280 px cu clicuri; părțile afișate C, B, B, B, A; 3 stele; diploma repetă pașii din laborator; 0 erori în consolă; cereri externe oprite: doar fonts.googleapis.com).
+- `_proba\cuvinte.py` → **0** (pașii au între 72 și 106 cuvinte; „Uite cum” cel mult 67).
+
+**De observat (neschimbat acum):** lecțiile 1-3 ale clasei a V-a există acum pe /lectii/, dar pașii de recitire ai lecției 7 trimit, pentru lecțiile 2 și 3, tot la jocul „Misiunea Tehnician” (vezi și `profil.json`, „observatie”).
