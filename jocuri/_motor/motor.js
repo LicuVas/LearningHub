@@ -50,28 +50,146 @@ function load(){
    „Da” le trece la X (prezenta.js mutaTinut), „Nu” le dă celui care se alege (prin @_neinscris). Nici „Ia-o de la
    capăt” apăsat atunci nu atinge sertarul lui X. */
 function inAsteptare(){try{return !!(window.Prezenta&&window.Prezenta.stare&&window.Prezenta.stare()==='intreaba')}catch(e){return false}}
+/* TERMINAT = are stele (endLevel dă cel puțin una; „deblochează” la fel). De la 01.10.2026 o intrare FĂRĂ stele în S.lv
+   înseamnă „văzut, dar neterminat” (vezi „CE FACE ELEVUL PE NIVEL” mai jos), deci nimic nu mai judecă după existența
+   intrării: nici deblocarea nivelului următor, nici „toate gata”, nici numărătorile de pe ecran. */
+const facut=l=>!!l&&(l.stars||0)>0;
+const ordonat=o=>Object.keys(o).sort().reduce((r,k)=>(r[k]=o[k],r),{});
+/* UNIREA a două intrări ale ACELUIAȘI nivel (01.10.2026): aceeași regulă ca unesteNivel din assets/js/prezenta.js și
+   din teste-elevi netlify/lib/unire.mjs (proba_instrumentare.py le compară pe toate trei): stars, xp, ind, ara, sec, pn,
+   at, v, fp = maximul; p1 și t0 = cel mai vechi; t1 = cel mai nou; ps = reuniunea. Cheile ies în ordine alfabetică. */
+const numar=x=>typeof x==='number'&&isFinite(x)&&x>=0?x:0;
+const p1Bun=p=>!!p&&typeof p==='object'&&typeof p.b==='number'&&typeof p.t==='number';
+function p1Vechi(x,y){if(!p1Bun(x))return p1Bun(y)?y:null;if(!p1Bun(y))return x;return (numar(y.c)||Infinity)<(numar(x.c)||Infinity)?y:x}
+function pasiUniti(a,b){const v={};[a,b].forEach(l=>{if(Array.isArray(l))l.forEach(x=>{if(typeof x==='number'&&x%1===0&&x>=0&&x<500)v[x]=1})});
+  return Object.keys(v).map(Number).sort((x,y)=>x-y)}
+function uneNivel(p,l){
+  if(!p||typeof p!=='object')return l;if(!l||typeof l!=='object')return p;
+  const o=Object.assign({},p,l);
+  if(p.stars!=null||l.stars!=null)o.stars=Math.max(p.stars||0,l.stars||0);
+  if(p.xp!=null||l.xp!=null)o.xp=Math.max(p.xp||0,l.xp||0);
+  ['ind','ara','sec','pn','at','v','fp'].forEach(k=>{if(p[k]!=null||l[k]!=null)o[k]=Math.max(numar(p[k]),numar(l[k]))});
+  const t0=[p.t0,l.t0].filter(x=>numar(x)>0),t1=[p.t1,l.t1].filter(x=>numar(x)>0);
+  if(t0.length)o.t0=Math.min(...t0);else delete o.t0;
+  if(t1.length)o.t1=Math.max(...t1);else delete o.t1;
+  if(p.ps!=null||l.ps!=null)o.ps=pasiUniti(p.ps,l.ps);
+  const p1=p1Vechi(p.p1,l.p1);if(p1)o.p1=p1;else delete o.p1;
+  return ordonat(o)}
+/* DOUĂ FILE CU ACELAȘI JOC (poarta de lansare, 01.10.2026): fila A, deschisă de mai demult, are în memorie (S) un
+   sertar VECHI; în fila B elevul termină între timp un nivel. Dacă fila A rescrie tot sertarul din memorie, nivelul
+   din fila B dispare. De aceea: save() UNEȘTE memoria cu ce e pe disc în clipa scrierii (stelele nu coboară, niciun
+   nivel de pe disc nu se pierde) și ia rezultatul și în memorie; notele noi (noteaza) se scriu doar pe INTRAREA
+   nivelului, citită de pe disc (scrieIn). Singurele scrieri care pot șterge sunt cerute anume: „Ia-o de la capăt” și
+   „Sunt alt elev, încep de la zero” (fără prezenta.js) -> scrieBrut(). */
+function scrieBrut(){if(RECITIRE!==null)return;try{localStorage.setItem(cheieJoc(),JSON.stringify(S))}catch(e){}}
 function save(){if(RECITIRE!==null)return;try{   // recitirea nu scrie nimic (vezi „RECITIRE” mai jos)
   if(inAsteptare()){
     const baza=(citesteJoc(cheieJoc())||{}).lv||{},kt=C.cheie+'@_tinut',t=citesteJoc(kt)||{nume:'',lv:{}};if(!t.lv)t.lv={};
     let nou=false;
+    /* aici trec doar stelele și punctele nivelurilor TERMINATE acum; restul (indicii, secunde, prima încercare…) e
+       scris direct în @_tinut de noteaza(), ca diferență, și rămâne lângă ele (Object.assign păstrează ce e deja acolo) */
     for(const i in S.lv){const a=S.lv[i]||{},b=baza[i],p=t.lv[i];
+      if(!facut(a))continue;
       if(b&&(a.stars||0)<=(b.stars||0)&&(a.xp||0)<=(b.xp||0))continue;
       if(p&&(a.stars||0)<=(p.stars||0)&&(a.xp||0)<=(p.xp||0))continue;
-      t.lv[i]=p?{stars:Math.max(p.stars||0,a.stars||0),xp:Math.max(p.xp||0,a.xp||0)}:{stars:a.stars||0,xp:a.xp||0};nou=true}
+      t.lv[i]=p?ordonat(Object.assign({},p,{stars:Math.max(p.stars||0,a.stars||0),xp:Math.max(p.xp||0,a.xp||0)})):{stars:a.stars||0,xp:a.xp||0};nou=true}
     if(nou){t.u=Date.now();localStorage.setItem(kt,JSON.stringify(t))}
     return}
-  localStorage.setItem(cheieJoc(),JSON.stringify(S))}catch(e){}}
+  const k=cheieJoc(),d=citesteJoc(k);
+  if(d&&d.lv&&typeof d.lv==='object'){const lv=Object.assign({},d.lv);for(const i in S.lv)lv[i]=uneNivel(d.lv[i],S.lv[i]);S.lv=lv}   // vezi „DOUĂ FILE”
+  localStorage.setItem(k,JSON.stringify(S))}catch(e){}}
 function totals(lv){lv=lv||S.lv;let st=0,xp=0;for(const k in lv){st+=lv[k].stars||0;xp+=lv[k].xp||0}return{st,xp}}
+
+/* ---------------- CE FACE ELEVUL PE NIVEL (01.10.2026, fișa elevului, R11) ----------------
+   El: „să vedem la fiecare exact ce activitate are [...] cât de bine se descurcă, cât a stat, peste ce a sărit”.
+   Până acum sertarul ținea pe nivel doar {stars, xp}, și doar la nivelurile terminate. Acum intrarea S.lv[i] poate avea și
+   (toate opționale; sertarele vechi rămân valide și se arată exact ca înainte):
+     v:1         nivelul a fost deschis. Intrare fără stars = VĂZUT, NETERMINAT; terminat = stars>0 (facut()).
+     ind         de câte ori a cerut „Am nevoie de un indiciu” (în pași, în atelier și la verificare)
+     ara         de câte ori a apăsat „Arată-mi răspunsul”
+     p1:{b,t,c}  PRIMA verificare terminată a nivelului: b răspunsuri bune din prima, din t întrebări; c = când (ms).
+                 Nu se mai schimbă (nici la reluare, nici la „Ia-o de la capăt”). Lipsește la nivelurile terminate
+                 înainte de 01.10.2026: reluarea lor NU e o primă încercare (nici după „Ia-o de la capăt”, vezi fp).
+     fp:1        nivelul fusese terminat FĂRĂ p1 (înainte de 01.10.2026) și a fost apoi șters cu „Ia-o de la capăt”:
+                 când îl reface, nu primește p1. Pus doar de istoric().
+     sec         secunde LUCRATE pe nivel, cu regula din prezenta.js: pagina în față ȘI mișcare în ultimele 2 minute
+     t0, t1      prima și ultima atingere a nivelului (ms)
+     ps, pn      pașii de învățat deschiși (numerele lor, de la 0) și câți pași are nivelul: pas lipsă din ps = sărit
+                 (ex. „Știu deja — la verificare” de la pasul 1)
+     at          0 = nivelul are atelier, nedeschis încă; 1 = atelierul a fost deschis (lipsește dacă nivelul n-are atelier)
+   Cheile intrării sunt scrise în ordine alfabetică (ordonat()), ca unirea din prezenta.js / unire.mjs să dea același
+   text pentru același conținut (altfel fiecare tragere din nor ar părea o schimbare și ar redesena cuprinsul).
+   Cât stă „Ești tot X?” pe ecran, TOT ce se notează merge în <cheie>@_tinut ca DIFERENȚĂ (indiciile și secundele de
+   acum), nu în sertarul lui X: „Da” le ADUNĂ la X, „Nu” le dă celui care se alege (prezenta.js mutaJoc). Recitirea
+   nu notează nimic. Cine citește datele: panoul profesorului (fișa elevului, admin.mjs) și /jurnal/. */
+function puneNota(l,fn,t){if(fn(l)===false)return false;l.v=1;if(!l.t0)l.t0=t;l.t1=t;return true}
+function scrieIn(k,i,fn,t,cuU){   // doar INTRAREA nivelului i din sertarul k, citit acum de pe disc; cuU: și `u` (@_tinut)
+  const s=citesteJoc(k)||{nume:'',lv:{}};if(!s.lv||typeof s.lv!=='object')s.lv={};
+  const l=Object.assign({},s.lv[i]);if(!puneNota(l,fn,t))return null;
+  s.lv[i]=ordonat(l);if(cuU)s.u=t;localStorage.setItem(k,JSON.stringify(s));return s.lv[i]}
+/* fn(l) schimbă intrarea nivelului i (întoarce false = nimic de schimbat); v, t0 și t1 se pun aici. Se scrie pe
+   intrarea de pe DISC (vezi „DOUĂ FILE”), iar memoria primește intrarea scrisă (cu ce a pus între timp altă filă). */
+function noteaza(i,fn){
+  if(RECITIRE!==null||!C||i==null||i<0)return;
+  const t=Date.now();
+  try{
+    if(inAsteptare()){scrieIn(C.cheie+'@_tinut',i,fn,t,true);   // `u` = când s-a lucrat ultima oară deoparte (prezenta.js)
+      eraAsteptare=true;return}   // la răspuns, S se recitește din sertar (altfel o salvare de după ar șterge ce s-a mutat)
+    const e=scrieIn(SK,i,fn,t);   // SK = sertarul din care e S (dacă profilul s-a schimbat sub joc, nota e tot a lui)
+    if(e&&cheieJoc()===SK)S.lv[i]=e;
+  }catch(e){}
+}
+/* SECUNDELE PE NIVEL: o bătaie la 5 s; se numără doar cu un nivel deschis (R), pagina în față și o mișcare în ultimele
+   2 minute (ca prezenta.js). Se adună în memorie și intră în sertar la cel mult 3 minute, la schimbarea nivelului, la
+   cuprins, la diplomă și când pagina se ascunde sau se închide (înaintea trimiterii din prezenta.js, care vine după).
+   Cât stă „Ești tot X?” pe ecran, fiecare bătaie merge pe loc în @_tinut; ce era adunat dinainte e al lui X. */
+let miscare=Date.now(),mutare=0,secBuf=0,secLi=-1,secScurs=Date.now();
+['pointerdown','keydown','wheel','touchstart','scroll'].forEach(e=>addEventListener(e,()=>{miscare=Date.now()},{passive:true,capture:true}));
+addEventListener('mousemove',()=>{const t=Date.now();if(t-mutare>2000){mutare=t;miscare=t}},{passive:true});
+function scurge(alCeluiDinainte){
+  if(!secBuf||secLi<0){secBuf=0;return}
+  const s=secBuf,i=secLi,f=l=>{l.sec=(l.sec||0)+s};secBuf=0;secScurs=Date.now();
+  if(!alCeluiDinainte&&!inAsteptare()){noteaza(i,f);return}
+  /* adunate cât elevul era confirmat, dar scrise acum, când întrebarea e pe ecran sau elevul s-a schimbat (altă filă):
+     sunt ale celui din care s-a încărcat S (SK), deci intră direct acolo și în S */
+  if(RECITIRE!==null)return;
+  try{const e=scrieIn(SK,i,f,Date.now());if(e)S.lv[i]=e}catch(e){}
+}
+setInterval(()=>{
+  if(!C||RECITIRE!==null)return;
+  if(R&&document.visibilityState==='visible'&&document.hasFocus()&&Date.now()-miscare<=120000&&cheieJoc()===SK){
+    if(inAsteptare()){scurge(true);noteaza(R.li,l=>{l.sec=(l.sec||0)+5})}
+    else{if(secLi!==R.li)scurge();secLi=R.li;secBuf+=5}
+  }
+  if(secBuf&&Date.now()-secScurs>=180000)scurge();
+},5000);
+addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')scurge()});
+addEventListener('pagehide',()=>scurge());
+/* „Ia-o de la capăt”: stelele și punctele pleacă (cuprinsul arată ca la început, ca înainte), dar ISTORICUL rămâne
+   (indiciile, „Arată-mi”, prima încercare, secundele, pașii văzuți): e munca lui, iar fișa profesorului trebuie să
+   spună cinstit că a mai trecut pe aici, iar p1 rămâne prima încercare, nu cea de după reluare. Un nivel terminat
+   fără p1 (vechi, doar {stars, xp}) rămâne {v:1, fp:1}: pe ecran e tot „începe →”, ca înainte, dar când îl reface
+   nu primește p1 (nu mai e o primă încercare). Pornește de la sertarul de PE DISC unit cu memoria (altă filă poate
+   avea istoric pe care fila asta nu-l știe) și se scrie ca atare (scrieBrut), fiindcă aici stelele trebuie să plece.
+   (Cu codul, maximul de stele din nor revine la următoarea tragere, tot ca înainte.) */
+function istoric(lv){const o={};for(const i in lv){const l=Object.assign({},lv[i]),era=facut(l);delete l.stars;delete l.xp;
+  if(era&&!p1Bun(l.p1))l.fp=1;
+  if(Object.keys(l).length){l.v=1;o[i]=ordonat(l)}}return o}
+function iaDeLaCapat(){
+  if(inAsteptare()){S.lv=istoric(S.lv);save();return}   // cât stă „Ești tot X?”: nimic în sertarul lui X (ca înainte)
+  const d=citesteJoc(cheieJoc()),lv=Object.assign({},d&&d.lv&&typeof d.lv==='object'?d.lv:{});
+  for(const i in S.lv)lv[i]=uneNivel(lv[i],S.lv[i]);
+  S.lv=istoric(lv);scrieBrut()}
 /* CÂT STĂ „Ești tot X?” (28.09.2026, judecătorul V/1: diploma ieșea pe „Pop Ana”, cu „Trimite diploma”, iar cuprinsul
    spunea „lecția e terminată” cu 3 stele, deși lucra ALT elev). Ce se arată ca FĂCUT e doar ce e în sertarul lui X;
    ce se lucrează acum stă deoparte și se vede ca atare; diploma nu poartă numele lui X și nu se trimite până nu răspunde.
    La răspuns (evenimentul „prezenta”), S se recitește din sertar: „Da” + „Da, eu am lucrat” -> munca e acum a lui X;
    „Nu, a lucrat altcineva” / „Nu, sunt alt elev” -> munca merge la „neînscris” (prezenta.js). */
 const sertarLv=()=>inAsteptare()?((citesteJoc(cheieJoc())||{}).lv||{}):S.lv;
-function tinutAici(i){if(!inAsteptare())return false;const a=S.lv[i],b=sertarLv()[i];return !!a&&(!b||(a.stars||0)>(b.stars||0)||(a.xp||0)>(b.xp||0))}
+function tinutAici(i){if(!inAsteptare())return false;const a=S.lv[i],b=sertarLv()[i];return facut(a)&&(!facut(b)||(a.stars||0)>(b.stars||0)||(a.xp||0)>(b.xp||0))}
 function numeIntrebat(){try{const e=window.Prezenta&&window.Prezenta.identitate();return e?e.nume:''}catch(x){return ''}}
 let eraAsteptare=false;   // s-a desenat ceva cât stătea întrebarea: la răspuns, S se recitește
-const unlocked=i=>i===0||!!S.lv[i-1];
+const unlocked=i=>i===0||facut(S.lv[i-1]);
 const starsHtml=n=>[0,1,2].map(i=>i<n?'<span class="on">★</span>':'<span>☆</span>').join('');
 
 /* ---------------- MODUL LECȚIE (27.09.2026) ----------------
@@ -203,11 +321,11 @@ function wireTabs(){app.querySelectorAll('.tabs [data-pas]').forEach(b=>b.onclic
 
 /* ---------------- cuprins ---------------- */
 function home(){
-  R=null;
-  const allDone=C.nivele.every((_,i)=>S.lv[i]);
+  scurge();R=null;
+  const allDone=C.nivele.every((_,i)=>facut(S.lv[i]));
   const LE=eLectie(),nrL=LE?lectieInfo().nr:'';
   const B=sertarLv();   // = S.lv, în afară de cât stă „Ești tot X?” (atunci: doar sertarul lui X)
-  const rows=C.nivele.map((Lv,i)=>{const d=B[i],u=unlocked(i),tin=tinutAici(i);
+  const rows=C.nivele.map((Lv,i)=>{const d=facut(B[i])?B[i]:null,u=unlocked(i),tin=tinutAici(i);
     const drum=Lv.pasi?`<span class="drum">${Lv.pasi.length} pași de învățat${Lv.atelier?' · atelier':''}${aplicatieReala(Lv)?' · '+esc(numeReal(Lv,'în aplicația adevărată')):''} · ${Lv.qs.length} întrebări de verificare</span>`:'';
     const nr=LE?(C.nivele.length>1?`Partea ${i+1}`:`Lecția ${nrL}`):`${i+1} din ${C.nivele.length}${Lv.final?' · final':''}`;
     return `<button class="lvl" type="button" data-l="${i}" ${u?'':'disabled'}><span class="n">${nr}</span><span class="t">${esc(Lv.t)}${drum}</span><span class="s">${d?starsHtml(d.stars)+(tin?' <small>· acum: ținut deoparte</small>':''):tin?'<small>făcut acum · ținut deoparte</small>':u?'începe →':'blocat'}</span></button>`}).join('');
@@ -223,14 +341,14 @@ function home(){
     <nav class="toc" aria-label="${LE?'Lecția':'Nivelurile'}">${rows}</nav>
     <div class="row" style="margin-top:22px">
       ${allDone?'<button class="btn primary" id="dipl" type="button">Vezi diploma</button>':''}
-      ${Object.keys(S.lv).length?'<button class="btn ghost" id="reset" type="button">Ia-o de la capăt</button>':''}
+      ${Object.keys(S.lv).some(i=>facut(S.lv[i]))?'<button class="btn ghost" id="reset" type="button">Ia-o de la capăt</button>':''}
       ${LE?'<a class="btn ghost" href="../index.html">Toate lecțiile clasei</a>':'<a class="btn ghost" href="../index.html">Toate jocurile</a>'}
     </div>`);
   const inp=document.getElementById('nume');inp.addEventListener('input',()=>{S.nume=inp.value.trim();save()});
   app.querySelectorAll('.lvl').forEach(b=>b.addEventListener('click',()=>startLevel(+b.dataset.l)));
   const dp=document.getElementById('dipl');if(dp)dp.onclick=diploma;
   const rs=document.getElementById('reset');
-  if(rs)rs.onclick=()=>{if(rs.dataset.sure){S.lv={};save();home()}else{rs.dataset.sure=1;rs.textContent='Sigur? Apasă din nou'}};
+  if(rs)rs.onclick=()=>{if(rs.dataset.sure){iaDeLaCapat();home()}else{rs.dataset.sure=1;rs.textContent='Sigur? Apasă din nou'}};   // vezi „Ia-o de la capăt” sus
   cineLucreaza();
 }
 /* CINE LUCREAZĂ (26.09.2026, el: „să permitem continuarea nivelurilor fără să mai ștergem progresul individual”).
@@ -238,7 +356,7 @@ function home(){
    calculatorului (prezenta.js) și fiecare continuă de unde a rămas; cu codul lui, și pe alt aparat. */
 function cineLucreaza(){
   const el=document.getElementById('cine-lucreaza');if(!el||R)return;
-  const P=window.Prezenta,e=P&&P.identitate&&P.identitate(),n=Object.keys(S.lv).length;
+  const P=window.Prezenta,e=P&&P.identitate&&P.identitate(),n=Object.keys(S.lv).filter(i=>facut(S.lv[i])).length;
   if(inAsteptare()){   // „Ești tot X?” jos: nimic nu se arată ca făcut pe numele lui X până nu răspunde
     const k=C.nivele.filter((_,i)=>tinutAici(i)).length,a=C.mod==='antrenament';
     const ce=!k?'':eLectie()&&C.nivele.length===1?' (acum ai făcut lecția)':` (acum ${k===1?(a?'o rundă făcută':'un nivel făcut'):`${k} ${a?'runde':'niveluri'} făcute`})`;
@@ -257,7 +375,7 @@ function cineLucreaza(){
   alt.onclick=()=>{
     if(window.Prezenta&&window.Prezenta.alege){window.Prezenta.alege();return}
     // fără prezenta.js (offline): ca înainte, două apăsări și jocul pornește curat
-    if(alt.dataset.sure){S={nume:'',lv:{}};save();home();const nm=document.getElementById('nume');if(nm)nm.focus()}else{alt.dataset.sure=1;alt.textContent='Sigur? Se șterge tot ce e mai sus - apasă din nou'}};
+    if(alt.dataset.sure){S={nume:'',lv:{}};scrieBrut();home();const nm=document.getElementById('nume');if(nm)nm.focus()}else{alt.dataset.sure=1;alt.textContent='Sigur? Se șterge tot ce e mai sus - apasă din nou'}};
 }
 
 /* ---------------- nivel ---------------- */
@@ -299,7 +417,9 @@ function marcheazaVazut(i,pick){
 function startLevel(i){
   const Lv=C.nivele[i];let pick=null;
   if(Lv.bazin){const t=trage(Lv,i);Lv.qs=t.qs;pick=t.pick}
+  scurge();   // secundele nivelului de dinainte intră la el
   R={li:i,qi:0,max:0,punctat:{},atts:{},xp:0,first:0,streak:0,phase:Lv.pasi?'learn':'read',pick,si:0,vazutPas:{},pv:{},indiciu:{},mode:'test'};
+  noteaza(i,l=>{if(Lv.pasi)l.pn=Lv.pasi.length;if(Lv.atelier&&l.at==null)l.at=0});   // văzut (v), t0/t1
   if(Lv.pasi)learnPage();else readPage();
 }
 /* textul întreg al nivelului (pentru „Recitește”): la nivelurile pe pași, toți pașii unul după altul */
@@ -326,6 +446,8 @@ function blocPrereq(){
 }
 function learnPage(){
   const Lv=C.nivele[R.li],n=Lv.pasi.length,P=Lv.pasi[R.si];R.vazutPas[R.si]=true;
+  const si=R.si;noteaza(R.li,l=>{const ps=Array.isArray(l.ps)?l.ps.slice():[];if(ps.includes(si))return false;   // pasul deschis (ps)
+    ps.push(si);l.ps=ps.sort((a,b)=>a-b);l.pn=n});
   const AR=aplicatieReala(Lv);   // doar în modul lecție: fără atelier, după ultimul pas vine „Acum în aplicația adevărată”
   const ultim=R.si===n-1,urm=ultim?(Lv.atelier?'La atelier →':AR?esc(numeReal(Lv,'Acum în aplicația adevărată'))+' →':'La verificare →'):'Pasul următor →';
   const ex=practiceList(P);
@@ -436,11 +558,12 @@ function ajutorButon(Q,body){
   w.innerHTML=`<button class="btn ghost sm" type="button">Am nevoie de un indiciu</button><div class="ajutor-t" hidden>${Q.ajutor}</div>`;
   body.parentNode.insertBefore(w,body);
   const b=w.querySelector('button'),t=w.querySelector('.ajutor-t');
-  b.onclick=()=>{t.hidden=false;b.remove();if(R.mode==='test')R.indiciu[R.qi]=true};
+  b.onclick=()=>{t.hidden=false;b.remove();if(R.mode==='test')R.indiciu[R.qi]=true;noteaza(R.li,l=>{l.ind=(l.ind||0)+1})};   // ind: indicii CERUTE (nu și cele deschise singure după o greșeală)
 }
 /* ATELIERUL: aplicația simulată (tip-html, tip-foaie…), fără puncte; testele simulatorului arată ce e gata */
 function atelierPage(){
   const Lv=C.nivele[R.li],A=Lv.atelier,AR=aplicatieReala(Lv);
+  noteaza(R.li,l=>{if(l.at===1)return false;l.at=1});   // atelierul deschis (at)
   shell(`
     <div class="eyebrow">${nivelEticheta(R.li)} · atelier</div>
     <h2 style="margin:8px 0 6px">${esc(A.titlu||'Fă-o ca în aplicația reală')}</h2>
@@ -560,7 +683,8 @@ function showNext(){
 function revealButton(fn){
   const nav=document.getElementById('nav');
   if(R.att>=2&&!R.done&&!document.getElementById('reveal')){
-    const b=document.createElement('button');b.className='btn ghost';b.id='reveal';b.type='button';b.textContent='Arată-mi răspunsul';b.onclick=fn;nav.appendChild(b);
+    const b=document.createElement('button');b.className='btn ghost';b.id='reveal';b.type='button';b.textContent='Arată-mi răspunsul';
+    b.onclick=()=>{if(R)noteaza(R.li,l=>{l.ara=(l.ara||0)+1});fn()};nav.appendChild(b);   // ara: de câte ori a cerut răspunsul
   }
 }
 function checkButton(fn,label){
@@ -744,14 +868,22 @@ REZOLVA.pick=(Q,body)=>{const p=Q.ans.split(':');body.querySelector(`.g button[d
 /* ---------------- final de nivel + diplomă ---------------- */
 function endLevel(){
   const Lv=C.nivele[R.li],n=Lv.qs.length,ratio=R.first/n,stars=ratio===1?3:ratio>=.6?2:1;
-  const prev=S.lv[R.li];
-  S.lv[R.li]={stars:Math.max(stars,prev?prev.stars:0),xp:Math.max(R.xp,prev?prev.xp:0)};
+  scurge();   // secundele nivelului, înainte de notele de final
+  const prev=S.lv[R.li],dinainte=facut(prev);   // prev poate fi și o intrare „văzut” (fără stele), cu istoricul ei
+  const deoparte=inAsteptare(),peDisc=deoparte?null:((citesteJoc(SK)||{}).lv||{})[R.li];   // altă filă îl poate fi terminat
+  const terminatInainte=dinainte||facut(peDisc);
+  S.lv[R.li]=ordonat(Object.assign({},prev,{stars:Math.max(stars,dinainte?prev.stars:0),xp:Math.max(R.xp,(prev&&prev.xp)||0)}));
   save();R.phase='end';
+  /* PRIMA încercare (p1): doar la primul final al nivelului (nici în memorie, nici pe disc nu era terminat, iar fp nu
+     spune că a fost terminat înainte de „Ia-o de la capăt”); cât stă „Ești tot X?”, merge în @_tinut și prezenta.js
+     (mutaJoc) n-o dă lui X dacă X terminase deja nivelul */
+  const bune=R.first;
+  noteaza(R.li,l=>{if(!l.p1&&(deoparte||(!terminatInainte&&!l.fp)))l.p1={b:bune,t:n,c:Date.now()}});
   if(C.nivele[R.li].bazin)marcheazaVazut(R.li,R.pick);
   const next=R.li+1<C.nivele.length;
   raporteaza({tip:'nivel',nivel:R.li+1,stele:S.lv[R.li].stars,max:3});
   try{if(window.Prezenta&&window.Prezenta.salveaza)window.Prezenta.salveaza()}catch(x){}
-  if(!prev&&C.nivele.every((_,i)=>S.lv[i]))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3});
+  if(!dinainte&&C.nivele.every((_,i)=>facut(S.lv[i])))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3});
   const LE=eLectie();
   shell(`
     <div class="eyebrow">${nivelEticheta(R.li)} · ${LE?`terminată${next?` · ${C.nivele.length-R.li-1===1?'mai e o parte':`mai sunt ${C.nivele.length-R.li-1} părți`}`:''}`:`terminat${(()=>{const rest=C.nivele.length-R.li-1,a=C.mod==='antrenament';return next?` · ${rest===1?(a?'mai e o rundă':'mai e un nivel'):`mai sunt ${rest} ${a?'runde':'niveluri'}`}`:` · ai terminat toate ${a?'rundele':'nivelurile'}`})()}`}</div>
@@ -769,7 +901,7 @@ function endLevel(){
   document.getElementById('toc').onclick=home;
 }
 function diploma(){
-  R=null;const t=totals(),d=new Date(),D=C.diploma;
+  scurge();R=null;const t=totals(),d=new Date(),D=C.diploma;
   const data=`${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
   /* modul lecție: „a terminat lecția 4”, iar pașii din aplicația adevărată (făcuți ÎNAINTE de verificare) se repetă pe scurt, restrânși */
   const LE=eLectie(),AR=LE?aplicatieReala(C.nivele[C.nivele.length-1]):null;
@@ -957,14 +1089,15 @@ function prezenta(){
      numele din joc e al elevului înscris, ca pe calculatorul comun să nu primească nivelurile colegului. */
   const norm=normNume;   // aceeași regulă (01.10.2026)
   const sincron=()=>{const e=window.Prezenta&&window.Prezenta.identitate();if(!e||!S.nume||norm(S.nume)!==norm(e.nume))return;
-    const facute=Object.keys(S.lv);if(!facute.length)return;
+    const facute=Object.keys(S.lv).filter(i=>facut(S.lv[i]));if(!facute.length)return;   // nivelurile doar văzute nu pleacă
     facute.forEach(i=>raporteaza({tip:'nivel',nivel:+i+1,stele:S.lv[i].stars||0,max:3}));
-    if(C.nivele.every((_,i)=>S.lv[i]))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3});};
+    if(C.nivele.every((_,i)=>facut(S.lv[i])))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3});};
   /* profilul s-a schimbat sub joc (ex. „Nu ești tu?” + „Mai târziu” -> @_neinscris): S nu mai ține nivelurile
      celui plecat, iar ce lucrează noul elev ajunge în sertarul lui (26.09.2026, T1) */
   /* răspunsul la „Ești tot X?” (28.09.2026): profilul rămâne același, dar munca ținută deoparte a plecat (la X sau la
      „neînscris”): S se recitește din sertar, iar pagina deschisă (cuprinsul sau diploma) se redesenează */
   addEventListener('prezenta',()=>{const raspuns=eraAsteptare&&!inAsteptare();
+    scurge(true);   // secundele adunate până acum sunt ale celui din SK (sertarul din care e S), oricine stă acum pe scaun
     if(cheieJoc()!==SK){S=load();if(!R)home()}
     else if(raspuns){S=load();if(!R){if(app.querySelector('.diploma'))diploma();else home()}}
     if(raspuns)eraAsteptare=false;
@@ -1011,7 +1144,8 @@ function porneste(config){
 const testHooks={
   config:()=>C,
   stare:()=>R?{li:R.li,qi:R.qi,phase:R.phase,done:R.done,mode:R.mode,si:R.si,nEx:R.pList?R.pList.length:0}:null,
-  deblocheaza:()=>{C.nivele.forEach((_,i)=>S.lv[i]=S.lv[i]||{stars:1,xp:0});save()},
+  deblocheaza:()=>{C.nivele.forEach((_,i)=>{if(!facut(S.lv[i]))S.lv[i]=ordonat(Object.assign({},S.lv[i],{stars:1,xp:(S.lv[i]&&S.lv[i].xp)||0}))});save()},
+  scurge:()=>scurge(),   // probele: secundele adunate intră acum în sertar (proba_instrumentare.py)
   toateIntrebarile:()=>{TEST_TOATE=true},   // antrenament: poarta joacă tot bazinul, nu doar ce iese la tragere
   /* nivelurile pe pași: poarta deschide fiecare pas și fiecare exercițiu („încă unul”), apoi atelierul */
   tipuri:()=>Object.keys(TIPURI),

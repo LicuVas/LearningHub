@@ -20,6 +20,10 @@ h1{font-size:1.6rem;margin:0 0 4px}h2{font-size:1.1rem;margin:0 0 10px}
 .zi.azi .bara i{background:var(--ok)}
 ul{margin:0;padding-left:18px}li{margin:4px 0}
 .stele{color:#fbbf24;letter-spacing:1px}
+.rez p{margin:6px 0}.rez b{font-variant-numeric:tabular-nums}
+.st{display:inline-block;font-size:.8rem;font-weight:600;padding:0 8px;border-radius:999px;white-space:nowrap}
+.st.gata{background:#123524;color:var(--ok)}.st.inc{background:#3a2f12;color:#fbbf24}.st.nu{background:#3a1d1d;color:#fca5a5}
+.rez li{overflow-wrap:anywhere}
 @media (max-width:480px){.cifra b{font-size:1.3rem}.zi{grid-template-columns:70px 1fr 48px}}
 </style>
 </head>
@@ -34,7 +38,9 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
     <ul>
       <li>ce lecții și jocuri ai deschis;</li>
       <li>cât ai <b>lucrat</b> pe fiecare: timpul se numără doar când pagina e în față și lucrezi (dai click, scrii, derulezi). O filă lăsată deschisă nu adună minute;</li>
-      <li>ce niveluri ai terminat și cu câte stele.</li>
+      <li>ce niveluri ai terminat și cu câte stele;</li>
+      <li>ce ai sărit, câte răspunsuri bune ai avut la prima încercare, câte indicii ai cerut și de câte ori ai apăsat „Arată-mi răspunsul”;</li>
+      <li>testele online pe care le-ai dat și notele de la ele.</li>
     </ul>
     <h2 style="margin-top:14px">Ce NU vede profesorul</h2>
     <ul>
@@ -75,6 +81,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
     var h='<div class="cifre"><div class="cifra"><b>'+min(j.zile[a])+'</b><span>azi</span></div>'+
       '<div class="cifra"><b>'+min(sapt)+'</b><span>săptămâna asta</span></div>'+
       '<div class="cifra"><b>'+sir+'</b><span>'+(sir===1?'zi la rând':'zile la rând')+'</span></div></div>';
+    h+=rezumat(eu,sapt);
     // bara plină = cel puțin 10 minute; altfel câteva secunde umpleau toată bara (25.09.2026)
     var zile=[],max=600;for(var i=13;i>=0;i--){var x=new Date(azi);x.setDate(azi.getDate()-i);var s=j.zile[zi(x)]||0;max=Math.max(max,s);zile.push([x,s])}
     h+='<div class="card"><h2>Ultimele două săptămâni</h2>'+zile.map(function(p){var k=zi(p[0]);return '<div class="zi'+(k===a?' azi':'')+'"><span>'+ZILE[p[0].getDay()]+' '+p[0].getDate()+'.'+(p[0].getMonth()+1)+'</span><div class="bara"><i style="width:'+Math.round(100*p[1]/max)+'%"></i></div><span>'+(p[1]>0&&p[1]<60?'&lt;1':Math.round(p[1]/60))+' min</span></div>'}).join('')+
@@ -88,7 +95,139 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
     if(pag.length)h+='<div class="card"><h2>Unde am lucrat în ultima vreme</h2><ul>'+pag.map(function(p){return '<li><a href="'+esc(p)+'">'+esc(j.pagini[p].t||p)+'</a> — '+min(j.pagini[p].s)+'</li>'}).join('')+'</ul></div>';
     corp.innerHTML=h;
   }
-  arata();addEventListener('prezenta',arata);addEventListener('focus',arata);
+  /* ---- REZUMATUL MEU (01.10.2026; contract teste-elevi\contracte\2026-10-01_fisa_elevului, R13). Profesorul: „într-un fel
+     ar trebui să vadă și elevii un fel de rezumat al fișei”. Elevul înscris vede cât a lucrat săptămâna asta, lecțiile
+     făcute din cele de până azi, ce a sărit, stelele și unde are de reluat. DOAR datele lui: sertarul profilului activ
+     de pe aparatul ăsta (cheile „<joc sau lecție>@<profilul lui>”, aduse de prezenta.js de pe server sub amprenta lui, cu
+     codul lui) + minutele din jurnalul de aici. Nicio cerere nouă spre server, niciun coleg, niciun clasament.
+     Lecțiile de până azi: lectii/plan.json (calendarul orelor), doar gimnaziul la Informatică/TIC - ca în panoul
+     profesorului (activitate.html planClasa). Câmpurile etapei 2 (p1 = prima încercare {b,t}) sunt opționale. */
+  var PLAN_SCOLI={brauner:1,dumbrava:1,tupilati:1},NIV={5:'v',6:'vi',7:'vii',8:'viii'};
+  var ROM={i:1,ii:2,iii:3,iv:4,v:5,vi:6,vii:7,viii:8,ix:9,x:10,xi:11,xii:12,xiii:13};
+  function nivelClasa(et){var w=String(et||'').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    for(var i=0;i<w.length;i++){var n=/^\d+$/.test(w[i])?+w[i]:ROM[w[i]];if(n)return n}return 0}
+  var PLAN=null,CAT=null,CHEI=citeste('lh_jurnal_chei')||{},cerut=false;
+  function incarca(){
+    if(cerut)return;cerut=true;
+    Promise.all([fetch('../lectii/plan.json').then(function(r){return r.ok?r.json():null}),
+      fetch('../jocuri/catalog.js').then(function(r){return r.ok?r.text():null})]).then(function(x){
+      PLAN=x[0]&&x[0].clase||null;
+      try{CAT=JSON.parse(x[1].slice(x[1].indexOf('{'),x[1].lastIndexOf('}')+1)).clase||[]}catch(e){CAT=[]}
+      arata();
+    }).catch(function(){PLAN=PLAN||null;CAT=CAT||[]});
+  }
+  /* jocul ține progresul sub cheia din configurația lui (ex. misiunea_webmaster_viii), nu sub numele folderului. O citim
+     din pagina jocului (50-280 KB), doar până apare, și doar când sertarul are jocuri pe care nu le știm încă: jocurile
+     clasei lui + cele jucate pe aparatul ăsta. Se ține minte pe aparat (lh_jurnal_chei). */
+  var RE_CHEIE=/\bcheie["']?\s*:\s*(['"])(.*?)\1/,cheiCerute=false;
+  function cheiaDin(url){
+    return fetch(url).then(function(r){
+      if(!r.ok)return r.status===404?'':null;
+      var rd=r.body&&r.body.getReader?r.body.getReader():null;
+      if(!rd)return r.text().then(function(t){var m=RE_CHEIE.exec(t);return m?m[2]:''});
+      var dec=new TextDecoder(),t='';
+      function pas(){return rd.read().then(function(x){
+        if(!x.done){t+=dec.decode(x.value,{stream:true});var m=RE_CHEIE.exec(t);if(m){rd.cancel().catch(function(){});return m[2]}if(t.length<600000)return pas()}
+        var m2=RE_CHEIE.exec(t);return m2?m2[2]:''})}
+      return pas();
+    });
+  }
+  function cheiJocuri(roman,jucate){
+    if(cheiCerute||!CAT)return;cheiCerute=true;
+    var lipsa=[];CAT.forEach(function(c){if(c.clasa!==roman)return;(c.unitati||[]).forEach(function(u){(u.jocuri||[]).forEach(function(g){lipsa.push(g.slug)})})});
+    lipsa=lipsa.concat(jucate).filter(function(s,i,a){return a.indexOf(s)===i&&!(s in CHEI)&&s.indexOf('lectie_')!==0&&/^[a-z0-9_-]{2,60}$/i.test(s)});
+    if(!lipsa.length)return;
+    cheiInCurs=true;
+    Promise.all(lipsa.map(function(s){return cheiaDin('../jocuri/'+s+'/').then(function(k){if(k!==null)CHEI[s]=k}).catch(function(){})})).then(function(){
+      cheiInCurs=false;try{localStorage.setItem('lh_jurnal_chei',JSON.stringify(CHEI))}catch(e){}arata()});
+  }
+  var cheiInCurs=false;   // cât se citesc cheile, un joc încă nerecunoscut nu primește „sărit” (poate e un joc terminat)
+  function sertarul(){   // {cheie: lv} doar pentru profilul activ (al elevului înscris acum pe aparatul ăsta)
+    var p=null,out={};try{p=localStorage.getItem('learninghub_active_profile')}catch(e){}
+    if(!p||p.charAt(0)==='_')return out;
+    var suf='@'+p;
+    try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);
+      if(!k||k.length<=suf.length||k.slice(-suf.length)!==suf)continue;
+      var v=citeste(k);if(v&&v.lv&&typeof v.lv==='object')out[k.slice(0,-suf.length)]=v.lv}}catch(e){}
+    return out;
+  }
+  function stare(lv,gataJurnal){   // {gata, nivele făcute, ultimul, sărite[], stele}
+    // un sertar stricat (nivelul 9000) nu face mii de rânduri: peste 200 de niveluri / 60 de pași = ignorat
+    var f=[],st=0;Object.keys(lv||{}).forEach(function(i){var l=lv[i];if(+i<200&&l&&(l.stars||0)>0){f.push(+i+1);st+=l.stars}});
+    f.sort(function(x,y){return x-y});var ult=f.length?f[f.length-1]:0,sar=[];
+    for(var n=1;n<ult;n++)if(f.indexOf(n)<0)sar.push(n);
+    return {f:f,sar:sar,stele:st,atins:Object.keys(lv||{}).length>0||!!gataJurnal};
+  }
+  function rezumat(eu,sapt){
+    if(window.Prezenta&&window.Prezenta.stare&&window.Prezenta.stare()==='intreaba')
+      return '<div class="card"><h2>Cum stau cu lecțiile</h2><p class="sub">Răspunde întâi jos, pe etichetă, dacă ești tot '+esc(eu.nume)+'. Apoi îți apare aici rezumatul.</p></div>';
+    incarca();
+    var S=sertarul(),j=citeste('lh_prezenta_jurnal')||{},jj=(j.id===eu.id&&j.jocuri)||{};
+    var n=nivelClasa(eu.clasa),cl=PLAN&&PLAN_SCOLI[eu.scoala]&&NIV[n]?PLAN[NIV[n]]:null;
+    var stiute={};Object.keys(CHEI).forEach(function(s){if(CHEI[s])stiute[CHEI[s]]=1});
+    if(CAT&&Object.keys(S).some(function(k){return k.indexOf('lectie_')!==0&&!stiute[k]}))cheiJocuri(cl?cl.roman:'',Object.keys(jj));
+    var titlu={},lectii=[],jocuri=[],azi=zi(new Date());
+    // titlurile tuturor lecțiilor și jocurilor (pentru „de reluat” din afara clasei)
+    if(PLAN)Object.keys(PLAN).forEach(function(c){(PLAN[c].module||[]).forEach(function(m){(m.lectii||[]).forEach(function(l){titlu[l.cheie]={t:'Lecția '+l.nr+': '+l.titlu,u:'../'+l.cale}})})});
+    (CAT||[]).forEach(function(c){(c.unitati||[]).forEach(function(u){(u.jocuri||[]).forEach(function(g){if(CHEI[g.slug])titlu[CHEI[g.slug]]={t:g.titlu,u:'../jocuri/'+g.slug+'/'}})})});
+    var maxNr=0;
+    if(cl){
+      var toate=[];(cl.module||[]).forEach(function(m){(m.lectii||[]).forEach(function(l){if(l.stare==='publicat')toate.push(l)})});
+      toate.forEach(function(l){var p=String(l.data||'').split('.'),d=p.length===3?p[2]+'-'+p[1]+'-'+p[0]:'9999';
+        var s=stare(S[l.cheie],jj[l.cheie]&&jj[l.cheie].gata),pg=(j.id===eu.id&&j.pagini||{})['/'+String(l.cale||'').replace(/^\/+/,'')];
+        if(pg&&pg.s>0)s.atins=true;   // a deschis-o și a lucrat pe ea (minutele din jurnalul de aici)
+        var x={t:'Lecția '+l.nr+': '+l.titlu,u:'../'+l.cale,s:s,gata:!!(s.f.length&&!s.sar.length)||!!(jj[l.cheie]&&jj[l.cheie].gata),pana:d<=azi,d:d};
+        if(x.pana)maxNr=Math.max(maxNr,l.nr);lectii.push(x)});
+      var ziLectie=function(nr){var d='9999';lectii.forEach(function(x,i){if(toate[i].nr===nr)d=x.d});return d};
+      ((CAT||[]).filter(function(c){return c.clasa===cl.roman})[0]||{unitati:[]}).unitati.forEach(function(u){(u.jocuri||[]).forEach(function(g){
+        var lv=CHEI[g.slug]?S[CHEI[g.slug]]:null,jg=jj[g.slug]||null,s=stare(lv,jg&&jg.gata);
+        if(jg&&jg.nivele)Object.keys(jg.nivele).forEach(function(k){if(s.f.indexOf(+k)<0&&jg.nivele[k]>0){s.f.push(+k);s.stele+=jg.nivele[k]}});
+        jocuri.push({t:g.titlu,u:'../jocuri/'+g.slug+'/',s:s,gata:!!(jg&&jg.gata),pana:(g.prima_lectie||99)<=maxNr,d:ziLectie(g.prima_lectie||0)})})});
+    }
+    // PRIMA TA ZI pe LearningHub (minutele de aici + prima atingere din sertarul tău): ce era programat înainte de ea nu e
+    // „sărit” (decizia din 01.10.2026: lecțiile ținute înainte să te înscrii nu sunt vina ta) - ca în fișa profesorului
+    var prima='';
+    if(j.id===eu.id)Object.keys(j.zile||{}).forEach(function(k){if((j.zile[k]||0)>0&&(!prima||k<prima))prima=k});
+    Object.keys(S).forEach(function(k){Object.keys(S[k]||{}).forEach(function(i){var t0=+((S[k][i]||{}).t0);if(t0>0){var d=zi(new Date(t0));if(!prima||d<prima)prima=d}})});
+    var dupa=function(x){return !prima||x.d>=prima};
+    // sărit: neterminat înaintea a ceva terminat (în ordinea lecțiilor / jocurilor), plus nivelurile lăsate în urmă
+    function peUrma(l){var k=-1;l.forEach(function(x,i){if(x.gata)k=i});return l.filter(function(x,i){return i<k&&!x.gata})}
+    var sarite=peUrma(lectii).filter(dupa).map(function(x){return '<a href="'+esc(x.u)+'">'+esc(x.t)+'</a> — n-ai terminat-o'})
+      .concat(peUrma(jocuri).filter(dupa).map(function(x){return 'jocul <a href="'+esc(x.u)+'">„'+esc(x.t)+'”</a> — nu l-ai terminat'}));
+    var stele=0,reluat=[];
+    var slugDe={};Object.keys(CHEI).forEach(function(s){if(CHEI[s])slugDe[CHEI[s]]=s});
+    Object.keys(S).forEach(function(k){var lv=S[k],s=stare(lv),t=titlu[k]||null,nume=t?'<a href="'+esc(t.u)+'">'+esc(t.t)+'</a>':'un joc fără nume încă';stele+=s.stele;
+      // jocul TERMINAT (jurnalul de aici: motorul îl anunță doar când toate nivelurile sunt făcute) n-are niveluri sărite,
+      // chiar dacă unele s-au făcut pe alt aparat și lipsesc din sertarul de aici
+      var jt=jj[slugDe[k]||k];
+      if(!t&&cheiInCurs&&k.indexOf('lectie_')!==0)return;
+      if(!(jt&&jt.gata))s.sar.forEach(function(nv){sarite.push(nume+', nivelul '+nv)});
+      // pașii lecției pe care nu i-ai deschis (ps = pașii deschiși, de la 0; pn = câți pași are), dacă ai mers mai departe
+      Object.keys(lv).forEach(function(i){var l=lv[i]||{};if(+i>=200||!(+l.pn>0)||+l.pn>60||!Array.isArray(l.ps))return;
+        var ult=-1;l.ps.forEach(function(x){ult=Math.max(ult,+x)});var pana=(l.stars||0)>0?+l.pn:ult;
+        for(var p=0;p<pana&&p<+l.pn;p++)if(l.ps.indexOf(p)<0)sarite.push(nume+', pasul '+(p+1)+(Object.keys(lv).length>1?' (nivelul '+(+i+1)+')':''))});
+      Object.keys(lv).forEach(function(i){var l=lv[i]||{};if(+i>=200||!((l.stars||0)>0))return;
+        var p1=l.p1&&l.p1.t?l.p1:null,slab=p1?(p1.b||0)/p1.t<0.6:l.stars===1;
+        if(slab&&t)reluat.push('<a href="'+esc(t.u)+'">'+esc(t.t)+'</a>, nivelul '+(+i+1)+': '+(p1?'prima dată ai avut '+(p1.b||0)+(p1.b===1?' răspuns bun':' răspunsuri bune')+' din '+p1.t:'ai luat o stea din 3'))})});
+    var pana=lectii.filter(function(x){return x.pana}),fac=pana.filter(function(x){return x.gata}).length;
+    var r='<div class="card rez"><h2>Cum stau cu lecțiile</h2>'+
+      '<p>Săptămâna asta ai lucrat <b>'+min(sapt)+'</b> <span class="sub">(pe calculatorul sau telefonul ăsta)</span>.</p>'+
+      (cl?'<p>Din lecțiile de până azi ai terminat <b>'+fac+' din '+pana.length+'</b>.</p>':PLAN||!PLAN_SCOLI[eu.scoala]||!NIV[n]?'<p class="sub">Pentru clasa ta nu am o listă de lecții pe zile.</p>':'')+
+      '<p>Ai strâns <b class="stele">★ '+stele+'</b> '+(stele===1?'stea':'stele')+'.</p>'+
+      '<p><b>Ai sărit:</b>'+(sarite.length?'</p><ul>'+sarite.slice(0,8).map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul>':' nimic. Bravo!</p>')+
+      '<p><b>De reluat:</b>'+(reluat.length?'</p><ul>'+reluat.slice(0,6).map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul>':' nimic deocamdată.</p>');
+    if(pana.length)r+='<h2 style="margin-top:14px">Lecțiile de până azi</h2><ul>'+pana.map(function(x){
+      return '<li><a href="'+esc(x.u)+'">'+esc(x.t)+'</a> — '+(x.gata?'<span class="st gata">terminată</span>':x.s.atins?'<span class="st inc">începută</span>':'<span class="st nu">neîncepută</span>')+
+        (x.s.stele?' <span class="stele">★ '+x.s.stele+'</span>':'')+'</li>'}).join('')+'</ul>';
+    var jp=jocuri.filter(function(x){return x.pana});
+    if(jp.length)r+='<h2 style="margin-top:14px">Jocurile de până azi</h2><ul>'+jp.map(function(x){
+      return '<li><a href="'+esc(x.u)+'">'+esc(x.t)+'</a> — '+(x.gata?'<span class="st gata">terminat</span>':x.s.atins||x.s.f.length?'<span class="st inc">început</span>':'<span class="st nu">neînceput</span>')+
+        (x.s.stele?' <span class="stele">★ '+x.s.stele+'</span>':'')+'</li>'}).join('')+'</ul>';
+    r+='<p class="sub">„Sărit” = ai lăsat ceva neterminat și ai trecut mai departe. „Prima dată” = câte răspunsuri bune ai avut prima oară când ai apăsat „Verifică”. '+
+      'Aici vezi doar ce ai lucrat tu; nu există clasament.</p></div>';
+    return r;
+  }
+  arata();addEventListener('prezenta',arata);addEventListener('focus',arata);addEventListener('lh-progres',arata);
 })();
 </script>
 </body>

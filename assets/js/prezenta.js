@@ -180,12 +180,69 @@
       if (!dst.lv) dst.lv = {};
       Object.keys(src.lv).forEach(function (n) {
         var a = src.lv[n] || {}, b = dst.lv[n];
-        dst.lv[n] = b ? Object.assign({}, b, { stars: Math.max(b.stars || 0, a.stars || 0), xp: Math.max(b.xp || 0, a.xp || 0) }) : a;
+        dst.lv[n] = b ? nivelMutat(b, a) : a;
       });
       if (!dst.nume && src.nume && din === '_neinscris') dst.nume = src.nume;
       scrie(kd, dst); sterge(k); mutat = true;
     });
     return mutat;
+  }
+  /* CE FACE ELEVUL PE NIVEL (01.10.2026, fișa elevului, R11): pe lângă stars/xp, nivelul din sertar poate avea ind
+     (indicii cerute), ara („Arată-mi răspunsul”), sec (secunde lucrate), p1 {b,t,c} (prima încercare), t0/t1 (prima și
+     ultima atingere), ps/pn (pașii văzuți / câți sunt), at (atelierul), v (văzut), fp (terminat fără p1, apoi șters cu
+     „Ia-o de la capăt”: nu mai primește p1). Scrise de jocuri/_motor/motor.js
+     (acolo e lista întreagă); o intrare FĂRĂ stars = nivel văzut, neterminat.
+     Două uniri, cu reguli diferite:
+      - nivelMutat (aici, mutaJoc): munca ținută DEOPARTE (@_tinut, @_neinscris) se MUTĂ în sertar și sursa se șterge,
+        deci numărătorile (ind, ara, sec) se ADUNĂ: în @_tinut motorul a scris doar ce s-a făcut cât stătea întrebarea.
+        p1 trece doar dacă sertarul n-a terminat deja nivelul fără ea și nu are fp (atunci nu mai e o primă încercare);
+      - unesteNivel (uneste, mai jos; aceeași ca pe server, netlify/lib/unire.mjs): ACELAȘI elev de pe două aparate,
+        deci numărătorile iau MAXIMUL (un aparat rămas în urmă nu șterge nimic), p1/t0 cel mai vechi, t1 cel mai nou.
+     Un nivel vechi, doar cu {stars, xp}, se unește exact ca înainte (aceeași formă, același text). */
+  var NOI = ['ind', 'ara', 'sec', 'p1', 't0', 't1', 'ps', 'pn', 'at', 'v', 'fp'];
+  function numar(x) { return typeof x === 'number' && isFinite(x) && x >= 0 ? x : 0; }
+  function areNoi(a, b) { return NOI.some(function (k) { return (a && a[k] != null) || (b && b[k] != null); }); }
+  function ordonat(o) { var r = {}; Object.keys(o).sort().forEach(function (k) { r[k] = o[k]; }); return r; }
+  function p1Bun(p) { return !!p && typeof p === 'object' && typeof p.b === 'number' && typeof p.t === 'number'; }
+  function p1Vechi(x, y) {   // cea mai veche dintre două prime încercări (c = când); la egalitate sau fără c, prima
+    if (!p1Bun(x)) return p1Bun(y) ? y : null; if (!p1Bun(y)) return x;
+    var cx = numar(x.c) || Infinity, cy = numar(y.c) || Infinity;
+    return cy < cx ? y : x;
+  }
+  function pasi(a, b) {      // reuniunea pașilor văzuți (numere întregi mici), crescător
+    var v = {}; [a, b].forEach(function (l) { if (Array.isArray(l)) l.forEach(function (x) { if (typeof x === 'number' && x % 1 === 0 && x >= 0 && x < 500) v[x] = 1; }); });
+    return Object.keys(v).map(Number).sort(function (x, y) { return x - y; });
+  }
+  /* câmpurile noi ale lui p (vechi / sertarul-țintă) și l (nou / mutat) în o; suma = true la mutare, maximul altfel */
+  function puneNoi(o, p, l, suma) {
+    ['ind', 'ara', 'sec'].forEach(function (k) { if (p[k] != null || l[k] != null) o[k] = suma ? numar(p[k]) + numar(l[k]) : Math.max(numar(p[k]), numar(l[k])); });
+    ['pn', 'at', 'v', 'fp'].forEach(function (k) { if (p[k] != null || l[k] != null) o[k] = Math.max(numar(p[k]), numar(l[k])); });
+    var t0 = [p.t0, l.t0].filter(function (x) { return numar(x) > 0; }), t1 = [p.t1, l.t1].filter(function (x) { return numar(x) > 0; });
+    if (t0.length) o.t0 = Math.min.apply(null, t0); else delete o.t0;
+    if (t1.length) o.t1 = Math.max.apply(null, t1); else delete o.t1;
+    if (p.ps != null || l.ps != null) o.ps = pasi(p.ps, l.ps);
+    return o;
+  }
+  function stele(o, p, l) {   // stars/xp = maximul, doar dacă măcar o parte le are (o intrare „văzut” rămâne fără ele)
+    if (p.stars != null || l.stars != null) o.stars = Math.max(p.stars || 0, l.stars || 0);
+    if (p.xp != null || l.xp != null) o.xp = Math.max(p.xp || 0, l.xp || 0);
+    return o;
+  }
+  function nivelMutat(b, a) {   // b = în sertarul-țintă, a = mutat din @_tinut / @_neinscris
+    if (!areNoi(a, b)) return Object.assign({}, b, { stars: Math.max(b.stars || 0, a.stars || 0), xp: Math.max(b.xp || 0, a.xp || 0) });   // ca înainte
+    var o = stele(Object.assign({}, a, b), b, a);
+    puneNoi(o, b, a, true);
+    var p1 = p1Bun(b.p1) ? p1Vechi(b.p1, a.p1) : (p1Bun(a.p1) && !((b.stars || 0) > 0) && !b.fp ? a.p1 : null);
+    if (p1) o.p1 = p1; else delete o.p1;
+    return ordonat(o);
+  }
+  function unesteNivel(p, l) {   // p = din valoarea mai veche, l = din cea mai nouă (același elev, două aparate)
+    if (!areNoi(p, l)) return Object.assign({}, p, l, { stars: Math.max(p.stars || 0, l.stars || 0), xp: Math.max(p.xp || 0, l.xp || 0) });   // ca înainte
+    var o = stele(Object.assign({}, p, l), p, l);
+    puneNoi(o, p, l, false);
+    var p1 = p1Vechi(p.p1, l.p1);
+    if (p1) o.p1 = p1; else delete o.p1;
+    return ordonat(o);
   }
   // la înscriere / alegerea din listă: ce a lucrat neînscris (și ce era ținut deoparte) intră în sertarul lui
   function primesteNeinscris() {
@@ -208,7 +265,8 @@
     if (recent(t.de)) Object.keys(t.pag || {}).forEach(function (p) { sec += t.pag[p].s || 0; });
     (t.ev || []).forEach(function (e) { if (e.tip === 'nivel' && e.titlu && recent(Date.parse(e.cand || '')) && ce.indexOf(e.titlu) < 0) ce.push(e.titlu); });
     try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.slice(-suf.length) === suf) {
-      var s = citeste(k, null); if (s && s.lv) niv += Object.keys(s.lv).length; } } } catch (e) {}
+      // doar nivelurile TERMINATE (cu stele); o intrare doar „văzut” (motor.js, 01.10.2026) nu e un nivel făcut
+      var s = citeste(k, null); if (s && s.lv) niv += Object.keys(s.lv).filter(function (n) { return s.lv[n] && (s.lv[n].stars || 0) > 0; }).length; } } } catch (e) {}
     if (!niv && sec < TINUT_MIN_SEC) return null;   // doar câteva minute pe pagină, fără niveluri: nu e nimic de întrebat
     return { sec: sec, niveluri: niv, ce: ce };
   }
@@ -768,7 +826,7 @@
     if (x && y && x.lv && y.lv && typeof x.lv === 'object' && typeof y.lv === 'object') {
       var nou = (b.u || 0) >= (a.u || 0) ? y : x, vechi = nou === y ? x : y, lv = {}, i;
       for (i in vechi.lv) lv[i] = vechi.lv[i];
-      for (i in nou.lv) { var p = lv[i], l = nou.lv[i]; lv[i] = p ? Object.assign({}, p, l, { stars: Math.max(p.stars || 0, l.stars || 0), xp: Math.max(p.xp || 0, l.xp || 0) }) : l; }
+      for (i in nou.lv) { var p = lv[i], l = nou.lv[i]; lv[i] = p ? unesteNivel(p, l) : l; }   // unesteNivel: vezi „CE FACE ELEVUL PE NIVEL”
       var o = Object.assign({}, vechi, nou, { lv: lv, nume: nou.nume || vechi.nume || '' });
       return { v: JSON.stringify(o), u: Math.max(a.u || 0, b.u || 0) };
     }
@@ -895,7 +953,10 @@
       // formularul poate fi deja închis („Mai târziu”) sau redeschis (lista deja pusă) până sosesc datele
       if (!$('lhp-s') || $('lhp-s').options.length > 1) return;
       $('lhp-s').insertAdjacentHTML('beforeend', d.scoli.map(function (x) { return '<option value="' + esc(x.key) + '">' + esc(x.nume) + '</option>'; }).join('') +
-        '<option value="alta">Altă școală (din altă localitate sau alt județ)</option>');
+        /* 01.10.2026 (R12, el: „am dat linkul și foștilor colegi [...] să nu-i amestecăm”): eticheta spunea „din altă
+           localitate sau alt județ”, deci elevii colegilor din același oraș își alegeau o școală din listă. Valoarea
+           rămâne „alta”: elevul de aici nu se leagă niciodată de un elev din ELEVI (activitate.py unde_e). */
+        '<option value="alta">Altă școală (nu e în listă)</option>');
       $('lhp-s').onchange = function () {
         var alta = $('lhp-s').value === 'alta';
         $('lhp-alta').style.display = alta ? '' : 'none'; $('lhp-cc').style.display = alta ? 'none' : '';
