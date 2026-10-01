@@ -305,9 +305,10 @@ function deschide(ctx,f,n){const S=ctx.S;if(S.reg){nota(ctx,'Aici poți avea un 
   return true}
 
 /* ---------------- testele ---------------- */
-/* Nume_Prenume_8A_<model>, cu o cifră opțională la sfârșit (lecția o cere când numele e luat: „…_lectia3_2”, „…_lectia3_3”,
-   „…_lectia32”): judecata 3, M1. */
-function potrivesteModel(n,model,ext){const m=new RegExp('^[^_\\s.]+_[^_\\s.]+_(8|VIII)[ -]?[A-Za-z]?_'+model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(_?\\d{1,2})?\\.'+ext+'$','i');return m.test(fara(n))}
+/* Nume_Prenume_<clasa>_<model>, cu o cifră opțională la sfârșit (lecția o cere când numele e luat: „…_lectia3_2”, „…_lectia3_3”,
+   „…_lectia32”): judecata 3, M1. Clasa = orice bucată cu cel puțin o literă sau cifră (01.10.2026, profesorul: lecția merge și la alte clase, iar
+   „XIID”, „12 D”, „AMF1-IF” sau „AMF1_IF” picau testul, care primea doar 8/VIII). Fără clasă tot pică. Proba: _proba/proba_model.js. */
+function potrivesteModel(n,model,ext){const m=new RegExp('^[^_\\s.]+_[^_\\s.]+_[^a-z0-9]*[a-z0-9].*?_'+model.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(_?\\d{1,2})?\\.'+ext+'$','i');return m.test(fara(n))}
 function cautaSalvat(S,c){const L=S.fold[c.folder||'Documente']||[];
   return L.filter(x=>x.ext===(c.ext||'xlsx')&&!x.coleg&&(c.fisier?fara(x.n)===fara(c.fisier):c.model?potrivesteModel(x.n,c.model,c.ext||'xlsx'):true))}
 function potrivesteFoi(cont,c){if(!cont||!cont.foi)return false;
@@ -460,6 +461,16 @@ function termina(ctx,accept){const R=ctx.S.reg;if(!R||R.ren==null)return;const i
 
 /* ---- salvarea, închiderea, deschiderea ---- */
 function numeFisier(v,ext){let n=String(v||'').trim().replace(/[\\/:*?"<>|]/g,'');if(!n)return '';if(!new RegExp('\\.'+ext+'$','i').test(n))n+='.'+ext;return n}
+/* Semnele pe care Windows nu le primește în numele unui fișier. Până la 01.10.2026 ferestrele de salvare le ștergeau pe tăcute
+   („AMF1/IF” devenea „AMF1IF”). Acum fereastra rămâne deschisă și spune ce să schimbi. Textul e al lecției, NU mesajul exact
+   al Excel-ului (neprobat, spus în viii/m1-l03/surse.md). Mesajul dispare când elevul scoate semnele. */
+function semneInterzise(d,laSalvare){const c=d.querySelector('[data-c="nume"]'),s=[...new Set(c.value.match(/[\\/:*?"<>|]/g)||[])];
+  let p=d.querySelector('.rg-interzis');
+  if(!s.length){if(p)p.remove();return false}
+  if(!p&&!laSalvare)return true;
+  if(!p){p=document.createElement('p');p.className='rg-interzis';p.setAttribute('role','alert');p.style.cssText='color:#B3261E;margin:6px 0 0;font-size:14px;line-height:1.35';(c.closest('.rand-nume')||c).after(p)}
+  p.textContent=`Windows nu primește în numele unui fișier semnele \\ / : * ? " < > |. Tu ai scris: ${s.map(x=>`„${x}”`).join(' ')}. Pune o liniuță (-) în loc${s.includes('/')?', de exemplu AMF1-IF, nu AMF1/IF':''}.`;
+  return true}
 function dlgSalveazaAcesta(ctx,laInchidere,dupa,locAles,numeScris){const R=ctx.S.reg;
   // numele propus = numele registrului (Book1); locul propus = cel folosit ULTIMA dată pe calculator (p8: poate fi al colegului)
   const baza=numeScris!=null?numeScris:R.nume.replace(/\.[a-z]+$/i,''),f0=locAles||(R.cale?R.cale.f:ctx.S.ultimulLoc);
@@ -470,7 +481,9 @@ function dlgSalveazaAcesta(ctx,laInchidere,dupa,locAles,numeScris){const R=ctx.S
    <div class="bt"><button type="button" class="link st" data-b="more">More options… (Mai multe opțiuni)</button><button type="button" class="pr" data-b="save">Save (Salvare)</button>${laInchidere?'<button type="button" data-b="nu">Don\'t Save (Nu salvați)</button>':''}<button type="button" data-b="cancel">Cancel (Anulare)</button></div>`);
   const spreSalvareCa=cum=>{inchid();nota(ctx,`„${cum}” te duce în Excel la pagina Fișier › Salvare ca (File › Save As); acolo apeși Browse (Răsfoire) și se deschide fereastra Save As, în care alegi orice folder în stânga. Aici se deschide direct fereastra.`);dlgSalvareCa(ctx,dupa)};
   d.querySelector('[data-c="loc"]').onchange=e=>{if(e.target.value==='__more')spreSalvareCa('More locations')};
-  d.querySelector('[data-b="save"]').onclick=()=>{const n=numeFisier(d.querySelector('[data-c="nume"]').value,R.cale?R.cale.ext:'xlsx'),f=d.querySelector('[data-c="loc"]').value;
+  d.querySelector('[data-c="nume"]').addEventListener('input',()=>semneInterzise(d,false));
+  d.querySelector('[data-b="save"]').onclick=()=>{if(semneInterzise(d,true)){d.querySelector('[data-c="nume"]').focus();return}
+    const n=numeFisier(d.querySelector('[data-c="nume"]').value,R.cale?R.cale.ext:'xlsx'),f=d.querySelector('[data-c="loc"]').value;
     if(!n){d.querySelector('[data-c="nume"]').focus();return}
     const ext=R.cale?R.cale.ext:'xlsx';
     const eAcelasi=R.cale&&R.cale.f===f&&fara(R.cale.n)===fara(n);
@@ -506,11 +519,13 @@ function dlgSalvareCa(ctx,dupa){const S=ctx.S,R=S.reg;let fold=R.cale?R.cale.f:S
   const arata=()=>{const e=extTip(d.querySelector('[data-c="tip"]').value);const L=listaFisiere(S,fold,[e]);
     d.querySelectorAll('.fold button').forEach(b=>b.classList.toggle('ales',b.dataset.f===fold));
     d.querySelector('[data-c="fis"]').innerHTML=L.length?L.map(x=>`<button type="button" data-n="${esc(x.n)}">${esc(x.n)}</button>`).join(''):'<div class="gol">Niciun fișier de tipul ales în folderul acesta.</div>';
-    d.querySelectorAll('[data-c="fis"] button').forEach(b=>b.onclick=()=>{d.querySelector('[data-c="nume"]').value=b.dataset.n.replace(/\.[a-z]+$/i,'')})};
+    d.querySelectorAll('[data-c="fis"] button').forEach(b=>b.onclick=()=>{d.querySelector('[data-c="nume"]').value=b.dataset.n.replace(/\.[a-z]+$/i,'');semneInterzise(d,false)})};
   d.querySelectorAll('.fold button').forEach(b=>b.onclick=()=>{fold=b.dataset.f;arata()});
   d.querySelector('[data-c="tip"]').onchange=arata;arata();
   d.querySelector('[data-b="cancel"]').onclick=()=>{inchid();dupa&&dupa('cancel')};
-  d.querySelector('[data-b="save"]').onclick=()=>{const t=d.querySelector('[data-c="tip"]').value,e=extTip(t);const n=numeFisier(d.querySelector('[data-c="nume"]').value,e);
+  d.querySelector('[data-c="nume"]').addEventListener('input',()=>semneInterzise(d,false));
+  d.querySelector('[data-b="save"]').onclick=()=>{if(semneInterzise(d,true)){d.querySelector('[data-c="nume"]').focus();return}
+    const t=d.querySelector('[data-c="tip"]').value,e=extTip(t);const n=numeFisier(d.querySelector('[data-c="nume"]').value,e);
     if(!n){d.querySelector('[data-c="nume"]').focus();return}
     if(!FOLOSITE[e]){nota(ctx,`În lecția asta folosim doar .xlsx, .csv și .pdf. Alege unul dintre ele la „Save as type”.`);return}
     const fa=()=>{
