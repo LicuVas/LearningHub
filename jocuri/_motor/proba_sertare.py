@@ -100,15 +100,24 @@ def main():
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         br = p.chromium.launch()
-        erori = []
+        erori, oprite, scapate = [], [], []
+        permis = ("http://127.0.0.1", "http://localhost", baza) + (("https://teste-vasile.netlify.app/api/progres",) if a.nor_real else ())
+        simulate = ("/api/activitate",) + (() if a.nor_real else ("/api/progres",))
+
+        def taie(r):
+            if r.request.url.startswith(permis):
+                return r.continue_()
+            oprite.append(r.request.url)
+            return r.abort()
 
         def calculator():
             ctx = br.new_context(viewport={"width": 1366, "height": 800})
             # regula 24 (02.10.2026, verificatorul independent): fără garda_locala.py, pagina trimitea POST-uri spre
             # contorul de vizitatori de pe viu (site-credit.js). Întâi: tot ce nu e situl probat se abandonează (rutele
             # de mai jos au întâietate); --nor-real lasă în plus doar /api/progres de pe viu, cum spune opțiunea.
-            permis = ("http://127.0.0.1", "http://localhost", baza) + (("https://teste-vasile.netlify.app/api/progres",) if a.nor_real else ())
-            ctx.route("**/*", lambda r: r.continue_() if r.request.url.startswith(permis) else r.abort())
+            ctx.route("**/*", taie)
+            # scurgere = o cerere spre altă adresă care a primit răspuns (nu cele oprite, nu cele simulate de probă)
+            ctx.on("requestfinished", lambda q: scapate.append(q.url) if not q.url.startswith(permis) and not any(s in q.url for s in simulate) else None)
             ctx.route("**/api/activitate", lambda r: r.fulfill(status=200, body='{"ok":true}', headers={"access-control-allow-origin": "*"}))
             if not a.nor_real:
                 ctx.route("**/api/progres", nor_simulat)
@@ -221,6 +230,10 @@ def main():
             generic = ka.replace(pc1.evaluate("localStorage.getItem('learninghub_active_profile')"), "~P")
             verifica(any(generic in d for d in NOR.values()), "progresul lecției a urcat online ca %r" % generic)
         verifica(not erori, "fără erori JavaScript %s" % erori[:3])
+        verifica(not scapate, "nicio cerere n-a ajuns pe internet în afara celor simulate (regula 24) %s" % scapate[:3])
+        garda = any("garda_locala" in (getattr(m, "__file__", "") or "") for m in list(sys.modules.values()))
+        print("(cereri spre alte adrese oprite de probă: %d, dintre care spre /api/: %d; garda_locala încărcată: %s)"
+              % (len(oprite), len([u for u in oprite if "/api/" in u]), "DA" if garda else "NU"))
         br.close()
     print("Rezultat: " + ("TOATE OK" if not probleme else "; ".join(probleme)))
     print(len(probleme))
