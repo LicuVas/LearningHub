@@ -13,6 +13,9 @@ TXT = "Text scurt numarul {n} despre ora de informatica."
 
 def build(name, goale, after):
     d = Document()
+    from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+    for _sec in d.sections:
+        _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
     st = d.styles["Normal"]
     st.font.name, st.font.size = "Calibri", Pt(11)
     st.paragraph_format.line_spacing = 1.15

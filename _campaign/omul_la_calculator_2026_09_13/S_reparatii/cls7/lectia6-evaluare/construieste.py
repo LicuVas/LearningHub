@@ -16,6 +16,9 @@ rez = {}
 
 # Ex.2: 3 coloane x 6 randuri = antet + 5 lectii
 d = docx.Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 lectii = ["Lectia 1 - Interfata Word", "Lectia 2 - Formatare text", "Lectia 3 - Paragrafe", "Lectia 4 - Liste", "Lectia 5 - Tabele"]
 t = d.add_table(rows=6, cols=3)
 t.style = "Table Grid"
@@ -34,6 +37,9 @@ rez["ex2_vechi_3x5_incap_lectii"] = 5 - 1
 
 # Ex.3: imagine In Line with Text (implicita la inserare) + legenda centrata, italic, dedesubt
 d = docx.Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 d.add_paragraph("Scoala mea").alignment = WD_ALIGN_PARAGRAPH.CENTER
 pi = d.add_paragraph()
 pi.alignment = WD_ALIGN_PARAGRAPH.CENTER

@@ -26,14 +26,22 @@ def elevi(t):
 
 rez = {}
 # varianta veche: imbina primul rand si scrie titlul
-d = Document(); t = converteste(d)
+d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
+t = converteste(d)
 m = t.cell(0, 0).merge(t.cell(0, 2))
 m.add_paragraph("Situatia clasei")
 d.save(S / "docx" / "Provocare_veche.docx")
 rez["veche"] = {"randuri": len(t.rows), "rand1": t.rows[0].cells[0].text, "elevi_curati": len(elevi(t))}
 
 # varianta noua: insereaza un rand deasupra, imbina randul NOU, scrie titlul
-d = Document(); t = converteste(d)
+d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
+t = converteste(d)
 nou = copy.deepcopy(t.rows[0]._tr)
 for tc in nou.findall(".//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t"):
     tc.text = ""

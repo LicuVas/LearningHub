@@ -9,6 +9,9 @@ from docx.shared import Pt, RGBColor
 
 S = Path(r"C:\00\Projects\LearningHub\_campaign\omul_la_calculator_2026_09_13\S_reparatii\cls7\lectia2-formatare-text")
 d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 h = d.styles["Heading 1"]
 h.font.name = "Arial"
 h.font.size = Pt(16)

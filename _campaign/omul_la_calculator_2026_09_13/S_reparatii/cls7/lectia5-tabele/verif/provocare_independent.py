@@ -8,6 +8,9 @@ print("email: randuri", len(rows), "coloane", {len(r) for r in rows}, "primul ra
 prov = ["Ana Iepure, 9, 2", "Dan Munte, 8, 0", "Ilie Nor, 7, 4", "Oana Rau, 10, 1", "Vlad Lac, 6, 3"]
 print("provocare: virgule/rand", {r.count(",") for r in prov}, "coloane", {len(r.split(",")) for r in prov})
 d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 t = d.add_table(rows=5, cols=3)
 for i, r in enumerate(prov):
     for j, v in enumerate(r.split(",")):

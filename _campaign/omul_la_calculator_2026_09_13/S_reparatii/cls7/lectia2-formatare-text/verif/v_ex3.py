@@ -8,6 +8,9 @@ T = ["Introducere", "Capitolul 1", "Capitolul 2", "Concluzii"]
 
 # manual
 d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 for t in T:
     p = d.add_paragraph()
     r = p.add_run(t); r.bold = True; r.font.name = "Arial"; r.font.size = Pt(16); r.font.color.rgb = RGBColor(0, 0x70, 0xC0)
@@ -16,6 +19,9 @@ d.save(D / "v_manual.docx")
 
 # stil
 d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 h = d.styles["Heading 1"]
 h.font.name = "Arial"; h.font.size = Pt(16); h.font.bold = True; h.font.color.rgb = RGBColor(0, 0x70, 0xC0)
 for t in T:

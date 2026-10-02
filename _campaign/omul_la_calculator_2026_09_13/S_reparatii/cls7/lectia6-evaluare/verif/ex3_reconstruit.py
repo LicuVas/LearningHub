@@ -7,6 +7,9 @@ V = os.path.dirname(os.path.abspath(__file__))
 img = os.path.join(V, "poza.png")
 Image.new("RGB", (400, 300), (200, 60, 60)).save(img)
 d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 d.add_paragraph("Titlu referat").alignment = WD_ALIGN_PARAGRAPH.CENTER
 d.add_paragraph("Paragraf de continut inainte de imagine. " * 4).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 p = d.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -16,7 +19,11 @@ r = cap.add_run("LEGENDA: imaginea arata un dreptunghi"); r.italic = True
 d.add_paragraph("Text dupa legenda. " * 10)
 out = os.path.join(V, "ex3_verif.docx"); d.save(out)
 # tabel Ex.2: 3 coloane x 6 randuri
-d2 = Document(); t = d2.add_table(rows=6, cols=3)
+d2 = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d2.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
+t = d2.add_table(rows=6, cols=3)
 lectii = ["Interfata", "Formatare text", "Paragrafe", "Liste", "Tabele"]
 t.cell(0, 0).text = "Lectia"
 for i, l in enumerate(lectii):

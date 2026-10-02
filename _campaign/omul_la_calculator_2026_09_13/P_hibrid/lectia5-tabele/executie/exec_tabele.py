@@ -53,6 +53,9 @@ def table_borders(table, outer_sz, inner_val):
 
 # ---------------- Ex1: orar 6 coloane x 8 randuri ----------------
 d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 t = d.add_table(rows=8, cols=6)
 t.style = 'Table Grid'
 hdr = ['Ora', 'Luni', 'Marti', 'Miercuri', 'Joi', 'Vineri']
@@ -98,6 +101,9 @@ log['ex1'] = {
 
 # ---------------- Ex2: browsere 5x5 ----------------
 d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 d.sections[0].left_margin = d.sections[0].right_margin = Cm(2.54)
 t = d.add_table(rows=5, cols=5); t.style = 'Table Grid'
 hdr = ['Caracteristica', 'Google Chrome', 'Mozilla Firefox', 'Microsoft Edge', 'Observatii']
@@ -131,6 +137,9 @@ log['ex2'] = {
 
 # ---------------- Ex3: formular 4x8 ----------------
 d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 t = d.add_table(rows=8, cols=4)
 def merge_clean(a, b):
     m = a.merge(b)
@@ -159,7 +168,11 @@ log['ex3'] = {'celule_distincte_rand8': len({id(c._tc) for c in t.rows[7].cells}
               'fisier': str(p)}
 
 # ---------------- Varianta gresita: Merge dupa ce ai scris ----------------
-d = Document(); t = d.add_table(rows=1, cols=4); t.style = 'Table Grid'
+d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
+t = d.add_table(rows=1, cols=4); t.style = 'Table Grid'
 for j, v in enumerate(['Nume', 'Nota Sem.1', 'Nota Sem.2', 'Media']): t.cell(0, j).text = v
 m = t.cell(0, 0).merge(t.cell(0, 3))
 log['merge_dupa_text'] = {'paragrafe_in_celula_imbinata': [pp.text for pp in m.paragraphs]}
@@ -176,7 +189,11 @@ log['conv_email_commas'] = {'randuri': len(rows), 'coloane': max(map(len, rows))
 # Provocarea: 5 randuri x 3 valori separate prin virgula
 prov = ["Ana, 9, 2", "Ion, 8, 0", "Maria, 10, 1", "Dan, 7, 4", "Ioana, 9, 3"]
 virgule = [s.count(',') for s in prov]
-d = Document(); t = d.add_table(rows=5, cols=3); t.style = 'Table Grid'
+d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
+t = d.add_table(rows=5, cols=3); t.style = 'Table Grid'
 for i, s in enumerate(prov):
     for j, v in enumerate(s.split(',')): t.cell(i, j).text = v.strip()
 m = t.cell(0, 0).merge(t.cell(0, 2))

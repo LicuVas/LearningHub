@@ -7,6 +7,9 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 # Ex.1
 d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 d.add_paragraph("Fisa mea de observatie - Interfata Word")
 for t in ["Bold (Ctrl+B) - ingroasa textul.", "Italic (Ctrl+I) - inclina textul.", "Underline (Ctrl+U) - subliniaza textul."]:
     d.add_paragraph(t)
@@ -16,6 +19,9 @@ d.save(OUT / "7A_Popescu_Interfata.docx")
 text = ["Word este un procesor de texte.", "Panglica are file si grupuri.", "Bara de acces rapid se poate personaliza.",
         "Salvez cu Ctrl+S.", "Pot exporta documentul ca PDF.", "Stilurile de titlu fac documentul ordonat."]
 d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 for t in text:
     d.add_paragraph(t)
 d.add_paragraph("Notita QAT: Print Preview - verific pagina; Save As - copie PDF; Spelling & Grammar - corectez.")
@@ -23,6 +29,9 @@ d.save(OUT / "7A_Popescu_Tema_Word.docx")
 
 # Ex.3 - documentul structurat: Titlu 1 deasupra, subtitlu Heading 2 sub el, al doilea Titlu 1 la mijloc
 d = Document()
+from docx.shared import Mm as _A4mm  # A4 mereu: Document() gol porneste pe Letter
+for _sec in d.sections:
+    _sec.page_width, _sec.page_height = _A4mm(210), _A4mm(297)
 d.add_paragraph("Ce am invatat despre Word", style="Heading 1")
 d.add_paragraph("Fereastra si panglica", style="Heading 2")
 for t in text[:3]:
