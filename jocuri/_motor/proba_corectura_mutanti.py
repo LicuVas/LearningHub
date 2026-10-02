@@ -53,6 +53,13 @@ for nume, unde, din, cu in M:
         print(">>> mutant „%s”: N-A RULAT (%s)" % (nume, ((r.stdout or "") + (r.stderr or "")).strip()[-200:]))
         scapati += 1
         continue
+    # verificatorul independent (02.10.2026, P1): „prins” = cel puțin o verificare CU NUME picată; dacă proba doar
+    # s-a oprit (timeout), putea fi și un calculator lent - nu e dovadă
+    numite = [x for x in linii if "RĂU" in x and "proba din browser s-a oprit" not in x]
+    if n != 0 and not numite:
+        print(">>> mutant „%s”: OPRIT, FĂRĂ VERIFICARE CU NUME %s" % (nume, rele))
+        scapati += 1
+        continue
     print(">>> mutant „%s”: %s (%s probleme) %s" % (nume, "PRINS" if n != 0 else "SCĂPAT", n, rele))
     scapati += 0 if n != 0 else 1
 print("Mutanți prinși: %d / %d" % (len(M) - scapati, len(M)))

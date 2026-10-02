@@ -156,6 +156,16 @@ def eu(pg):
     return json.loads(s) if s else {}
 
 
+# Verificatorul independent (02.10.2026, P1): un mutant care închide / schimbă fereastra trebuie să pice la o verificare
+# CU NUME, nu la un timeout de 30 s („proba din browser s-a oprit” nu dovedește nimic - poate fi și calculatorul lent).
+def txt(pg, sel):
+    return (pg.text_content(sel) or "") if pg.locator(sel).count() else ""
+
+
+def val(pg, sel):
+    return pg.input_value(sel) if pg.locator(sel).count() else None
+
+
 def formular(pg):
     pg.mouse.click(5, 5)
     pg.wait_for_timeout(300)
@@ -166,12 +176,19 @@ def formular(pg):
     if pg.locator("#lhp-nou").count():
         pg.click("#lhp-nou")
     pg.wait_for_function("document.querySelector('#lhp-s') && document.querySelector('#lhp-s').options.length > 2", timeout=8000)
+    if not pg.locator("#lhp-k").count():
+        ok(False, "formularul de înscriere are câmpul de cod (nu e formularul de corectură)")
 
 
 def asteapta_inscris(pg, nume):
-    pg.wait_for_function("n=>{try{return JSON.parse(localStorage.getItem('lh_prezenta')).nume===n}catch(e){return false}}", arg=nume, timeout=12000)
+    """True = înscris pe numele ăsta; False = nu (verificarea care urmează spune ce nu e bine, cu numele ei)."""
+    try:
+        pg.wait_for_function("n=>{try{return JSON.parse(localStorage.getItem('lh_prezenta')).nume===n}catch(e){return false}}", arg=nume, timeout=12000)
+    except Exception:
+        return False
     pg.wait_for_timeout(1500)                     # progresul (trage / impinge) și reîncărcarea, dacă e
     pg.wait_for_load_state()
+    return True
 
 
 def inscrie(pg, sc, cl, nume, cod):
@@ -228,15 +245,15 @@ def parte_a(br):
         ctx, pg = aparat(br)
         try:
             scrie_alta(pg, sc_txt, loc, cl)
-            ales_s, ales_c = pg.input_value("#lhp-s"), pg.input_value("#lhp-c")
-            msg = pg.text_content("#lhp-e") or ""
+            ales_s, ales_c = val(pg, "#lhp-s"), val(pg, "#lhp-c")
+            msg = txt(pg, "#lhp-e")
             ok(not eu(pg) and ales_s == sc and ales_c == cl_ast and "Școala ta e în listă" in msg,
                "R1 %r / %r / %r -> nu se înscrie încă; școala %s, clasa %r aleasă, mesajul spune" % (sc_txt, loc, cl, sc, cl_ast),
                (eu(pg), ales_s, ales_c, msg))
             if not cl_ast:
                 pg.click("#lhp-ok")
                 pg.wait_for_timeout(500)
-                ok(not eu(pg) and "Alege școala și clasa" in (pg.text_content("#lhp-e") or ""),
+                ok(not eu(pg) and "Alege școala și clasa" in (txt(pg, "#lhp-e")),
                    "R1 clasa nerecunoscută (%r): nu ghicește, cere clasa" % cl)
                 pg.select_option("#lhp-c", "VI")
                 cl_ast = "VI"
@@ -309,19 +326,19 @@ def parte_c(br):
     pg.click("#lhp-ok")
     pg.wait_for_timeout(500)
     g = json.loads(pg.evaluate("localStorage.getItem('lh_cod_gresit')") or "{}")
-    ok("Cod greșit" in (pg.text_content("#lhp-e") or "") and eu(pg) == e0 and g.get("n") == 1 and not pg.locator("#lhp-n").count(),
-       "R6 cod greșit: mesaj, nimic schimbat, greșeala numărată, fără formular", (pg.text_content("#lhp-e"), g))
+    ok("Cod greșit" in (txt(pg, "#lhp-e")) and eu(pg) == e0 and g.get("n") == 1 and not pg.locator("#lhp-n").count(),
+       "R6 cod greșit: mesaj, nimic schimbat, greșeala numărată, fără formular", (txt(pg, "#lhp-e"), g))
     # R6: codul bun -> formularul completat cu ce scrisese
     pg.fill("#lhp-pc", COD)
     pg.click("#lhp-ok")
     pg.wait_for_function("()=>document.querySelector('#lhp-n') && document.querySelector('#lhp-n').value.length>0", timeout=8000)
-    ok(pg.input_value("#lhp-s") == "brauner" and pg.input_value("#lhp-c") == "5 AM" and pg.input_value("#lhp-n") == GRESIT
+    ok(val(pg, "#lhp-s") == "brauner" and val(pg, "#lhp-c") == "5 AM" and val(pg, "#lhp-n") == GRESIT
        and not pg.locator("#lhp-k").count() and pg.evaluate("localStorage.getItem('lh_cod_gresit')") is None,
        "R6 cod bun: formularul de corectură, completat (Brauner · 5 AM · numele greșit), fără câmp de cod, greșelile șterse")
     # „Salvează” fără nicio schimbare
     pg.click("#lhp-ok")
     pg.wait_for_timeout(400)
-    ok("N-ai schimbat nimic" in (pg.text_content("#lhp-e") or ""), "R6 fără schimbare: spune, nu trimite nimic")
+    ok("N-ai schimbat nimic" in (txt(pg, "#lhp-e")), "R6 fără schimbare: spune, nu trimite nimic")
     n_activ = len(activ)
     pg.fill("#lhp-n", CORECT)
     pg.click("#lhp-ok")
@@ -369,8 +386,8 @@ def parte_c(br):
     pg3.fill("#lhp-k", COD)
     pg3.click("#lhp-ok")
     pg3.wait_for_timeout(2000)
-    ok(not eu(pg3) and "au fost corectate" in (pg3.text_content("#lhp-e") or ""), "R7 numele vechi + codul: nu mai intră, spune că s-a corectat",
-       pg3.text_content("#lhp-e"))
+    ok(not eu(pg3) and "au fost corectate" in txt(pg3, "#lhp-e"), "R7 numele vechi + codul: nu mai intră, spune că s-a corectat",
+       txt(pg3, "#lhp-e"))
     # pe primul aparat, dacă ar fi rămas cineva pe numele vechi: iese cu mesajul de corectură (Nor.trage pe amprenta mutată)
     st, j = nor_post("/api/progres", {"op": "citeste", "h": e0["h"]})
     ok(j.get("mutat") is True and j.get("corectat") is True, "R7 serverul spune despre amprenta veche: mutat + corectat", j)
@@ -402,8 +419,8 @@ def parte_c(br):
     pg4.fill("#lhp-n", "Pop Ana")
     pg4.click("#lhp-ok")
     pg4.wait_for_timeout(1500)
-    ok("e deja Pop Ana, cu alt cod" in (pg4.text_content("#lhp-e") or "") and eu(pg4) == e4,
-       "GRAV-1 corectura în numele unui coleg de pe calculator (alt cod): refuzată, nimic schimbat", pg4.text_content("#lhp-e"))
+    ok("e deja Pop Ana, cu alt cod" in txt(pg4, "#lhp-e") and eu(pg4) == e4,
+       "GRAV-1 corectura în numele unui coleg de pe calculator (alt cod): refuzată, nimic schimbat", txt(pg4, "#lhp-e"))
     # A în corectură: „Altă școală” cu „Brauner” scris -> îi alege școala
     pg4.select_option("#lhp-s", "alta")
     pg4.fill("#lhp-as", "Victor Brauner")
@@ -412,7 +429,7 @@ def parte_c(br):
     pg4.fill("#lhp-n", "Ionescu Dan Mihai")
     pg4.click("#lhp-ok")
     pg4.wait_for_timeout(500)
-    ok(pg4.input_value("#lhp-s") == "brauner" and "Școala ta e în listă" in (pg4.text_content("#lhp-e") or ""),
+    ok(val(pg4, "#lhp-s") == "brauner" and "Școala ta e în listă" in txt(pg4, "#lhp-e"),
        "R1 și în corectură: „Altă școală” + „Brauner” -> școala din listă")
     ctx4.close()
 

@@ -68,6 +68,16 @@ with sync_playwright() as p:
             ok(o["barTop"] >= 0, f"{tag}: bara top={o['barTop']:.0f} >= 0")
             for k, v in o["el"].items():
                 ok(v is not None and v[0] >= 0 and v[1] <= o["ih"] + 0.5, f"{tag}: #{k} pe ecran {v}")
+        # „Păstrează-l online” există încă pentru elevii fără cod (de dinainte de coduri): și fereastra lui încape
+        # (verificatorul independent, 02.10.2026: o scosesem odată cu pasul vechi al listei)
+        pg.evaluate("()=>{const e=JSON.parse(localStorage.getItem('lh_prezenta'));delete e.h;localStorage.setItem('lh_prezenta',JSON.stringify(e))}")
+        pg.reload(); pg.wait_for_selector("#lhp-pill", timeout=15000)
+        pg.click("#lhp-pill"); pg.click("#lhp-cod"); pg.wait_for_selector("#lhp-k", timeout=15000)
+        o = pg.evaluate(CHECK, ["lhp-k", "lhp-ok", "lhp-x"])
+        tag = f"{w}x{hh} cod online"
+        ok(o["barTop"] >= 0, f"{tag}: bara top={o['barTop']:.0f} >= 0")
+        for k, v in o["el"].items():
+            ok(v is not None and v[0] >= 0 and v[1] <= o["ih"] + 0.5, f"{tag}: #{k} pe ecran {v}")
         ctx.close()
     b.close()
 srv.shutdown()

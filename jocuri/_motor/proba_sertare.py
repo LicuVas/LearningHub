@@ -104,6 +104,11 @@ def main():
 
         def calculator():
             ctx = br.new_context(viewport={"width": 1366, "height": 800})
+            # regula 24 (02.10.2026, verificatorul independent): fără garda_locala.py, pagina trimitea POST-uri spre
+            # contorul de vizitatori de pe viu (site-credit.js). Întâi: tot ce nu e situl probat se abandonează (rutele
+            # de mai jos au întâietate); --nor-real lasă în plus doar /api/progres de pe viu, cum spune opțiunea.
+            permis = ("http://127.0.0.1", "http://localhost", baza) + (("https://teste-vasile.netlify.app/api/progres",) if a.nor_real else ())
+            ctx.route("**/*", lambda r: r.continue_() if r.request.url.startswith(permis) else r.abort())
             ctx.route("**/api/activitate", lambda r: r.fulfill(status=200, body='{"ok":true}', headers={"access-control-allow-origin": "*"}))
             if not a.nor_real:
                 ctx.route("**/api/progres", nor_simulat)
