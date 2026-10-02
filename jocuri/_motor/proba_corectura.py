@@ -458,6 +458,7 @@ def main():
     ok(not [u for u in oprite if "/api/" in u], "nicio cerere spre /api/ în afară de cele simulate local", [u for u in oprite if "/api/" in u][:3])
     print("(cereri externe abandonate: %d)" % len(oprite))
     print(len(probleme))
+    sys.exit(1 if probleme else 0)   # pentru contractul selfcheck „corectura-elev-alta-scoala” (exit0)
 
 
 if __name__ == "__main__":
