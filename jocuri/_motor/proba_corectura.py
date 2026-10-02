@@ -281,7 +281,21 @@ def nume_activ(enc):
 def parte_c(br):
     print("C. Corectura făcută de elev")
     ctx1, pg = aparat(br)
-    inscrie(pg, "brauner", "5 AM", GRESIT, COD)
+    # calculatorul din laborator: înaintea ei a lucrat alt elev (cu un singur elev, „primul elev moștenește profilul”
+    # ar ascunde o mutare lipsă a sertarului - verificatorul independent, 02.10.2026)
+    inscrie(pg, "brauner", "5 AM", "Inaintea Ei Maria", "8642")
+    pg.click("#lhp-pill")
+    pg.wait_for_selector("#lhp-alt", timeout=5000)
+    pg.click("#lhp-alt")
+    pg.wait_for_selector("#lhp-nou", timeout=5000)
+    pg.click("#lhp-nou")
+    pg.wait_for_function("document.querySelector('#lhp-s') && document.querySelector('#lhp-s').options.length > 2", timeout=8000)
+    pg.select_option("#lhp-s", "brauner")
+    pg.select_option("#lhp-c", "5 AM")
+    pg.fill("#lhp-n", GRESIT)
+    pg.fill("#lhp-k", COD)
+    pg.click("#lhp-ok")
+    asteapta_inscris(pg, GRESIT)
     e0 = eu(pg)
     prof = pg.evaluate("localStorage.getItem('learninghub_active_profile')")
     cheie = "joc_proba-corectura@" + prof
@@ -318,7 +332,18 @@ def parte_c(br):
     stele = pg.evaluate("([k])=>{const p=localStorage.getItem('learninghub_active_profile');return [p, localStorage.getItem(k)]}", [cheie])
     ok(stele[0] == prof and stele[1] and '"stars":3' in stele[1], "R7 progresul de pe calculator e tot acolo, pe același profil", stele)
     lista = json.loads(pg.evaluate("localStorage.getItem('lh_elevi_pc')") or "[]")
-    ok([x["nume"] for x in lista] == [CORECT], "R7 lista calculatorului: doar numele corect", [x.get("nume") for x in lista])
+    ok(sorted(x["nume"] for x in lista) == sorted([CORECT, "Inaintea Ei Maria"]),
+       "R7 lista calculatorului: numele corect (și colegul de dinainte), fără numele greșit", [x.get("nume") for x in lista])
+    # pe calculator, FĂRĂ server: sertarul (profilul cu progresul) e mutat pe numele corect, numele greșit nu mai are
+    # nici sertar, nici cod ținut (verificatorul independent, 02.10: verificarea de mai sus trecea și prin Nor.trage)
+    sert = json.loads(pg.evaluate("localStorage.getItem('lh_sertare')") or "{}")
+    cod = json.loads(pg.evaluate("localStorage.getItem('lh_coduri')") or "{}")
+    k_gresit = [k for k in sert if k.endswith("serafma zegrea")]
+    k_corect = [k for k in sert if k.endswith("serafima zegrea")]
+    ok(not k_gresit and len(k_corect) == 1 and sert[k_corect[0]] == prof,
+       "R7 sertarul de pe calculator: mutat pe numele corect (același profil), numele greșit nu mai are sertar", sert)
+    ok(not [k for k in cod if k.endswith("serafma zegrea")] and [cod[k].get("h") for k in cod if k.endswith("serafima zegrea")] == [e1["h"]],
+       "R7 codurile ținute pe calculator: numele greșit scos, numele corect cu amprenta nouă", cod)
     d = dump()
     nou, vechi = d.get("progres/" + e1["h"]) or {}, d.get("progres/" + e0["h"]) or {}
     v = ((nou.get("date") or {}).get("joc_proba-corectura@~P") or {}).get("v") or ""

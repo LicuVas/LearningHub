@@ -25,7 +25,8 @@ with sync_playwright() as p:
     for w, hh in [(740, 360), (320, 460)]:
         ctx = b.new_context(viewport={"width": w, "height": hh}, is_mobile=True, has_touch=True)
         pg = ctx.new_page()
-        pg.route("https://**", lambda r: r.abort() if "teste-vasile" in r.request.url and r.request.method == "POST" else r.continue_())
+        # regula 24 (02.10.2026): tot ce nu e 127.0.0.1 se abandonează (înainte treceau GET-urile spre internet)
+        pg.route("**/*", lambda r: r.continue_() if r.request.url.startswith("http://127.0.0.1") else r.abort())
         pg.goto(URL); pg.wait_for_selector("#lhp-cine", timeout=15000)
         pg.click("#lhp-cine")
         pg.wait_for_function("document.getElementById('lhp-s') && document.getElementById('lhp-s').options.length>1", timeout=15000)
@@ -46,13 +47,27 @@ with sync_playwright() as p:
         ok(o["barTop"] >= 0, f"{tag}: bara top={o['barTop']:.0f} >= 0")
         for k, v in o["el"].items():
             ok(v is not None and v[0] >= 0 and v[1] <= o["ih"] + 0.5 or (k == "lhp-lista" and v and v[0] >= 0), f"{tag}: #{k} pe ecran {v}")
-        pg.click(".el >> nth=0"); pg.wait_for_selector("#lhp-pill", timeout=15000)
-        pg.click("#lhp-pill"); pg.click("#lhp-cod"); pg.wait_for_selector("#lhp-k")
-        o = pg.evaluate(CHECK, ["lhp-k", "lhp-ok", "lhp-x"])
-        tag = f"{w}x{hh} cod online"
+        # de la 30.09.2026 numele din listă cere codul (fereastra de cod), iar elevul intră cu el; „Păstrează-l online”
+        # apare doar la elevii fără cod. 02.10.2026: și fereastra de cod + formularul CORECTURII încap pe telefon (I7)
+        pg.click(".el >> nth=0"); pg.wait_for_selector("#lhp-pc", timeout=15000)
+        o = pg.evaluate(CHECK, ["lhp-pc", "lhp-pc2", "lhp-intra"])
+        tag = f"{w}x{hh} cod la listă"
         ok(o["barTop"] >= 0, f"{tag}: bara top={o['barTop']:.0f} >= 0")
         for k, v in o["el"].items():
             ok(v is not None and v[0] >= 0 and v[1] <= o["ih"] + 0.5, f"{tag}: #{k} pe ecran {v}")
+        for i in ("#lhp-pc", "#lhp-pc2"):
+            if pg.locator(i).count():
+                pg.fill(i, "1234")
+        pg.click("#lhp-intra"); pg.wait_for_selector("#lhp-pill", timeout=15000)
+        pg.click("#lhp-pill"); pg.click("#lhp-corect"); pg.wait_for_selector("#lhp-pc", timeout=15000)
+        for ids, tag in ((["lhp-pc", "lhp-ok", "lhp-x"], "corectura: codul"), (["lhp-s", "lhp-n", "lhp-ok", "lhp-x"], "corectura: formularul")):
+            if tag.endswith("formularul"):
+                pg.fill("#lhp-pc", "1234"); pg.click("#lhp-ok"); pg.wait_for_selector("#lhp-n", timeout=15000)
+            o = pg.evaluate(CHECK, ids)
+            tag = f"{w}x{hh} {tag}"
+            ok(o["barTop"] >= 0, f"{tag}: bara top={o['barTop']:.0f} >= 0")
+            for k, v in o["el"].items():
+                ok(v is not None and v[0] >= 0 and v[1] <= o["ih"] + 0.5, f"{tag}: #{k} pe ecran {v}")
         ctx.close()
     b.close()
 srv.shutdown()

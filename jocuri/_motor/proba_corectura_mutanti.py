@@ -24,11 +24,16 @@ M = [
     ("id nou la corectură", "p", "nou.id = eu.id; nou.h = hNou;", "nou.h = hNou;"),
     ("progresul nu se mută pe server", "p", "op: 'redenumeste', h: eu.h", "op: 'stare', h: eu.h"),
     ("numele unui coleg luat", "p", "if (pc && pc.h !== hNou) {", "if (false) {"),
+    # verificatorul independent (02.10.2026, P4): mutarea pe calculator nu era apărată
+    ("sertarul nu se mută pe calculator", "p", "if (!has(kNou) && has(kVechi)) s[kNou] = s[kVechi];", ""),
+    ("codul vechi rămâne ținut pe calculator", "p", "var c = coduri(); delete c[kVechi]; scrie(K_CODURI, c);", ""),
     ("server: vechea amprentă rămâne bună", "s", "await set(K.progres(h), { ...(src || { date: {}, prima: acum }), mutatIn: la, mutat: acum, corectat: true });", ""),
     ("server: fără „corectat”", "s", "...(p.corectat ? { corectat: true } : {})", ""),
     ("server: reînvie codul scos de profesor", "s", "if (dest0 && dest0.mutatIn && !dest0.corectat)", "if (false)"),
 ]
 pz, pr = open(PREZENTA, encoding="utf-8").read(), open(PROGRES, encoding="utf-8").read()
+if len(sys.argv) > 1:   # doar mutanții al căror nume conține textul dat (ex. „calculator”)
+    M = [m for m in M if sys.argv[1] in m[0]]
 scapati = 0
 for nume, unde, din, cu in M:
     sursa = pz if unde == "p" else pr
@@ -44,6 +49,10 @@ for nume, unde, din, cu in M:
     linii = (r.stdout or "").strip().splitlines()
     n = int(linii[-1]) if linii and linii[-1].strip().isdigit() else -1
     rele = [x.strip() for x in linii if "RĂU" in x][:2]
+    if n < 0:   # proba n-a ajuns la final (port ocupat, eroare de pornire): nu dovedește nimic, deci nu e „prins”
+        print(">>> mutant „%s”: N-A RULAT (%s)" % (nume, ((r.stdout or "") + (r.stderr or "")).strip()[-200:]))
+        scapati += 1
+        continue
     print(">>> mutant „%s”: %s (%s probleme) %s" % (nume, "PRINS" if n != 0 else "SCĂPAT", n, rele))
     scapati += 0 if n != 0 else 1
 print("Mutanți prinși: %d / %d" % (len(M) - scapati, len(M)))

@@ -139,12 +139,18 @@ def main():
                 pg.click("#lhp-ok")
             pg.wait_for_function("window.Prezenta&&document.getElementById('lhp-pill')", timeout=15000)
 
-        def din_lista(pg, nume, schimba=True):
+        def din_lista(pg, nume, schimba=True, cod="4827"):
             if schimba:
                 pg.click("#lhp-pill"); pg.click("#lhp-alt")
             pg.wait_for_selector("#lhp-lista", timeout=5000)
+            # de la 30.09.2026 numele din listă cere codul lui (fereastra de cod, „Intră”); proba adusă la zi pe 02.10.2026
+            pg.locator("#lhp-lista .el", has_text=nume).click()
+            pg.wait_for_selector("#lhp-pc", timeout=5000)
+            for i in ("#lhp-pc", "#lhp-pc2"):
+                if pg.locator(i).count():
+                    pg.fill(i, cod)
             with pg.expect_navigation(timeout=20000):
-                pg.locator("#lhp-lista .el", has_text=nume).click()
+                pg.click("#lhp-intra")
             pg.wait_for_function("window.Prezenta&&document.getElementById('lhp-pill')", timeout=15000)
 
         pc1 = calculator()
