@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sortarea datelor după unul sau mai multe criterii</title>
+<meta name="description" content="Clasa a VIII-a, lecția 10 (Excel): sortarea crescătoare și descrescătoare a unui tabel după o coloană (text, numere, date calendaristice), capcana rândurilor desperecheate și fereastra Sort Warning, rândul de antet și „My data has headers”, sortarea după mai multe criterii cu Add Level, într-o foaie care se poartă ca Excel-ul pe setări românești.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@600;800&family=Lexend:wght@400;600;700&family=Spline+Sans+Mono:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#F1F0EC; --paper:#FFFFFF; --paper2:#F2F1EB; --line:#D6D3C8;
+  --ink:#1E1D1A; --ink2:#5A574E; --accent:#1F6E43; --accentInk:#FFFFFF; --sel:#DCEFE3;
+  --mark:#FFE28A; --markInk:#1E1D1A; --ok:#1B6E3A; --okbg:#E1F2E6; --bad:#B4322B; --badbg:#FAE4E1;
+  --fd:"Red Hat Display","Segoe UI",system-ui,sans-serif; --fb:"Lexend","Segoe UI",system-ui,sans-serif; --fm:"Spline Sans Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#121411; --paper:#1A1D19; --paper2:#232722; --line:#363C34;
+  --ink:#E6E8E2; --ink2:#A2A89C; --accent:#6CCB93; --accentInk:#10140F; --sel:#21402C;
+  --mark:#E8C95A; --markInk:#1E1D1A; --ok:#6CCB93; --okbg:#173022; --bad:#FF8076; --badbg:#3C201D;
+}}
+:root[data-theme="dark"]{
+  --desk:#121411; --paper:#1A1D19; --paper2:#232722; --line:#363C34;
+  --ink:#E6E8E2; --ink2:#A2A89C; --accent:#6CCB93; --accentInk:#10140F; --sel:#21402C;
+  --mark:#E8C95A; --markInk:#1E1D1A; --ok:#6CCB93; --okbg:#173022; --bad:#FF8076; --badbg:#3C201D;
+}
+/* tema: fâșia de sus e o coloană sortată în mic — numele de la A la Z, punctajele de la mare la mic */
+.banda{display:grid;grid-template-columns:repeat(5,1fr);font-family:var(--fm);font-size:.72rem;color:var(--ink2);border-bottom:1px dashed var(--line)}
+.banda span{padding:2px 6px;border-left:1px dashed var(--line);white-space:nowrap;overflow:hidden;text-overflow:clip;text-align:left}
+.banda span:nth-child(5n+1){border-left:0}
+.banda span:nth-child(-n+5){border-bottom:1px dashed var(--line)}
+.banda span.sus{color:var(--accent);font-weight:600}
+h1,h2{letter-spacing:-.01em}
+.pasi-met{margin:.3em 0 .6em 1.2em;padding:0}
+.pasi-met li{margin:.25em 0}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/tip-foaie.js"></script>
+<script src="../../../jocuri/_motor/tip-excel.js"></script>
+<!-- foaia „excelx” comună clasei a VIII-a (lecțiile 4-5) + extensia lecției 10: sortarea, fidelă Excel-ului pe setări
+     românești (probat în Excel real: _proba/proba_excel_2.json, _proba/proba_excel_b.json) -->
+<script src="../../_sim/excelx.js"></script>
+<script src="../../_sim/excelx-sortare.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={sortare:'Sortarea crescătoare/descrescătoare a datelor dintr-un tabel după unul sau mai multe criterii'};
+
+/* capturile reale (Excel pe desktop ascuns, img/SURSE.json) */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG='../m2-l10/img/';
+const IMG3='../m1-l03/img/';
+
+const PROVOCARE=[
+  'Descarcă registrul <a href="concurs_lectia10.xlsx" download>concurs_lectia10.xlsx</a> și deschide-l în Excel. Dacă sus apare o bandă galbenă cu butonul <b>Enable Editing</b> (Activare editare), apasă pe el: fișierele descărcate se deschid întâi doar pentru citit.',
+  '<b>Ce date ai.</b> În foaia <b>Concurs</b>, coloana A are elevii, coloana B clasa, iar coloana C punctajul de la concursul de matematică. Rândul 1 e rândul de antet.',
+  '<b>Clasamentul.</b> Clic pe <b>C2</b>, o singură celulă din coloana Punctaj. Pe fila <b>Date (Data)</b>, în grupul <b>Sortare și filtrare (Sort &amp; Filter)</b>, apasă butonul mic de jos, <b>Sortare de la cel mai mare la cel mai mic (Sort Largest to Smallest)</b>. Pe primele două rânduri de sub antet trebuie să vezi <b>Ioana</b> și <b>Darius</b>, cu câte 95, iar pe ultimul <b>Irina</b>, cu 64.',
+  '<b>Ordinea alfabetică.</b> Clic pe <b>A2</b>, apoi butonul mic de sus, <b>Sortare de la A la Z (Sort A to Z)</b>. Trebuie să vezi: Ana, Bogdan, Darius, Ioana, Irina, Matei, Radu, Sara, Ștefan, Teodora. Ștefan vine după Sara, fiindcă Ș vine după S.',
+  '<b>Capcana, făcută cu grijă.</b> Selectează doar punctajele, <b>C2:C11</b>, trăgând peste ele, apoi apasă butonul mic de jos. Apare fereastra <b>Sort Warning</b>. Lasă aleasă prima variantă, <b>Expand the selection</b> (Extindeți selecția), și apasă <b>Sort</b>. Verifică: Darius și Ioana au tot câte 95, iar Irina tot 64. Dacă ai ales altceva și punctajele s-au amestecat, apasă <kbd>Ctrl</kbd>+<kbd>Z</kbd>.',
+  '<b>Două criterii.</b> Clic pe <b>B3</b>. Pe fila <b>Date (Data)</b>, apasă butonul mare <b>Sortare (Sort)</b>. Verifică să fie bifat <b>My data has headers</b> (Datele mele au anteturi). La <b>Sort by</b> (Sortare după) poate scrie deja o coloană, de exemplu <b>Punctaj</b>, de la sortarea de dinainte: alege <b>Clasa</b>. La <b>Order</b> (Ordine) trebuie să scrie <b>A to Z</b> (De la A la Z); dacă scrie altceva, alege A to Z. Apasă <b>Add Level</b> (Adăugare nivel). La <b>Then by</b> (Apoi după) alege <b>Punctaj</b>, cu <b>Largest to Smallest</b> (De la cel mai mare la cel mai mic). Apasă <b>OK</b>.',
+  'Verifică: întâi clasa <b>8A</b> (Darius 95, Ana 92, Bogdan 88, Matei 70), apoi <b>8B</b> (Ioana 95, Radu 78, Irina 64), apoi <b>8C</b> (Sara 92, Ștefan 85, Teodora 70). Dacă nu iese așa, apasă <kbd>Ctrl</kbd>+<kbd>Z</kbd> și refă pasul de mai sus.',
+  'Calculatorul e comun: nu schimba nimic în afara registrului tău. Nu umbla la <b>File</b> (Fișier) › <b>Options</b> (Opțiuni), la limba Excel-ului sau la setările Windows-ului, și nu salva peste fișierul descărcat.',
+  'Salvează o copie cu numele tău: apasă <kbd>F12</kbd> (Salvare ca / Save As; pe unele laptopuri <kbd>Fn</kbd>+<kbd>F12</kbd>). În stânga alege <b>Documente (Documents)</b>, la <b>File name</b> scrie numele, prenumele și clasa ta, de exemplu <code>Popescu_Ana_8A_lectia10</code>, și apasă <b>Save</b> (Salvare). Dacă apare fereastra <i>Confirm Save As</i> („… already exists. Do you want to replace it?”), fișierul e al unui coleg: apasă <b>No</b>, pune o cifră la sfârșitul numelui tău, de exemplu <code>Popescu_Ana_8A_lectia10_2</code>, și apasă din nou <b>Save</b>.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m2_l10',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/viii/, „Lecția 10”, pasul din laborator înainte de verificare
+  titlu:'Sortarea datelor după unul sau mai multe criterii',
+  marca:'Lecția <b>10</b> · Excel · a VIII-a',
+  h1:'Sortarea datelor după unul sau mai multe criterii',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U1', unitateTitlu:'Calcul tabelar',
+  competente:['CS.1.1','CS.3.1'], lectii:'10',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VIII-U1 „Calcul tabelar” · lecția 10 · conținutul: „Sortarea crescătoare/descrescătoare a datelor dintr-un tabel după unul sau mai multe criterii”',
+  intro:`<p>Lecția 10 din modulul 2. Înveți să pui rândurile unui tabel în ordine, după o coloană sau după mai multe, fără să amesteci datele unui rând cu ale altuia.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 2, „Interfața aplicației de calcul tabelar. Structura unui registru”: rândul, coloana, celula, panglica cu file și grupuri;</li>
+<li>lecția 3, „Operații cu registrul și cu foile de calcul”: Salvare ca (<kbd>F12</kbd>) cu numele tău și <i>Confirm Save As</i> → No;</li>
+<li>lecția 4, „Adresa de celulă. Selectare, copiere, mutare, ștergere”: zona C2:C6, selectarea prin tragere, <kbd>Ctrl</kbd>+<kbd>Z</kbd> (Anulare);</li>
+<li>lecția 5, „Tipuri de date: numeric, text, dată calendaristică”: numerele, textul și datele scrise zz.ll.aaaa;</li>
+<li>lecția 6, „Formatarea rândurilor, a coloanelor și a celulelor”: textul îngroșat (aldin).</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după pagina „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”. Apoi atelierul, într-o foaie care se poartă ca Excel-ul pe setări românești, apoi aceleași lucruri la calculatorul din laborator, iar la sfârșit 5 întrebări.</p>`,
+  banda:'<span class="sus">Ana</span><span>Bogdan</span><span>Darius</span><span>Ioana</span><span>A → Z</span><span class="sus">95</span><span>92</span><span>88</span><span>70</span><span>mare → mic</span>',
+  tipuri:{excelx:ExcelS},
+  nivele:[
+  {t:'Sortarea datelor după unul sau mai multe criterii', final:true, lectii:[10], continuturi:[P.sortare],
+   obiectiv:'ordonezi rândurile unui tabel crescător sau descrescător, după o coloană sau după mai multe, fără să desperechezi rândurile.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>În Gara de Nord din București, panoul cu mersul trenurilor arată plecările în ordinea orei: de sus în jos, ora crește. Așa găsești repede trenul care pleacă primul. Tot în ordine sunt și numele din catalog (alfabetic) și rezultatele unui concurs (cel mai bun, sus).</p>
+<p>Să pui în ordine rândurile unui tabel se numește <mark>sortare</mark>. Excel o face dintr-un clic. Tu alegi doar după ce coloană ordonezi și în ce sens.</p>
+${fig(IMG+'mersul-trenurilor.webp',576,488,'Panoul Mersul trenurilor de călători din Gara de Nord, cu săgeata Plecări și coloane de trenuri scrise în ordinea orei, de la 08 la 18','Mersul trenurilor în Gara de Nord, București: la Plecări, trenurile sunt în ordinea orei. Fotografie: Dave Collier, <a href="https://creativecommons.org/licenses/by-sa/2.0/" target="_blank" rel="noopener">CC BY-SA 2.0</a>, <a href="https://commons.wikimedia.org/wiki/File:Plecari_Sosiri_(40494416311).jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (decupată, aceeași licență).')}`},
+
+    /* ---------- PASUL 1: crescător și descrescător ---------- */
+    {t:'Crescător sau descrescător',
+     text:`<p><mark>Sortarea</mark> așază rândurile unui tabel în ordine, după valorile dintr-o coloană. Coloana aleasă se numește <mark>criteriul</mark> sortării. Ordinea poate fi:</p>
+<ul><li><mark>crescătoare</mark>: textul de la A la Z, numerele de la mic la mare, datele de la cea mai veche la cea mai nouă;</li>
+<li><mark>descrescătoare</mark>: invers, textul de la Z la A, numerele de la mare la mic, datele de la cea mai nouă la cea mai veche.</li></ul>
+<p>Pe un calculator cu setări românești, Excel sortează textul după alfabetul românesc: Ă vine după A, Ș după S, Ț după T. Literele mari și mici nu contează. Celulele goale ajung la sfârșit, în ambele ordini.</p>`,
+     exemplu:`<p>Punctajele 70, 95 și 88: crescător dau 70, 88, 95; descrescător dau 95, 88, 70.</p>
+<p>Datele 18.12.2026 și 05.10.2026: crescător, 05.10.2026 vine prima, fiindcă e mai veche. La o dată, compari întâi anul, apoi luna, apoi ziua.</p>
+<p>Numele Sava, Stan și Ștefan rămân în ordinea asta de la A la Z: S, apoi Ș.</p>`,
+     altfel:`<p>E ca la catalog: profesorul nu citește numele la întâmplare, ci de sus în jos, în ordinea alfabetului. Sortarea crescătoare face din orice coloană un astfel de șir; descrescătoarea îl întoarce, ca la un clasament, cu cel mai mare sus.</p>`,
+     incearca:{t:'order',q:'Pune numele în ordinea în care le așază sortarea <b>crescătoare</b> (de la A la Z), după alfabetul românesc.',
+       items:['Sandu','Stoica','Șerban','Tănase','Țurcan'],
+       ajutor:'Literele cu diacritice sunt litere separate în alfabetul românesc: Ș vine după S, iar Ț după T.',
+       why:'S vine înaintea lui Ș, iar T înaintea lui Ț. De aceea Stoica stă înaintea lui Șerban și Tănase înaintea lui Țurcan, deși ș seamănă cu s.'},
+     inca:[
+      {t:'order',q:'Pune datele în ordine <b>crescătoare</b>, de la cea mai veche la cea mai nouă.',items:['20.09.2026','03.10.2026','15.10.2026','02.02.2027'],
+       ajutor:'Compară întâi anul, apoi luna, apoi ziua.',why:'2026 e înaintea lui 2027; în 2026, septembrie (09) e înaintea lui octombrie (10); în octombrie, ziua 3 e înaintea zilei 15.'},
+      {t:'choice',q:'Sortezi <b>descrescător</b> o coloană cu punctajele 45, 90, 70 și o celulă goală. Ce ajunge pe ultimul rând?',o:['celula goală','45','90','70'],ok:0,
+       ajutor:'Unde ajung celulele goale, la orice ordine?',why:'Celulele goale ajung la sfârșit și la crescător, și la descrescător. Deasupra lor: 90, 70, 45.'}
+     ]},
+
+    /* ---------- PASUL 2: o coloană, dintr-o singură celulă ---------- */
+    {t:'Sortezi tot tabelul după o coloană',
+     text:`<p>Ca să sortezi tot tabelul după o coloană:</p>
+<ol class="pasi-met"><li>faci clic pe <b>o singură celulă</b> din coloana-criteriu, de exemplu pe o medie;</li>
+<li>pe fila <b>Date (Data)</b>, în grupul <b>Sortare și filtrare (Sort &amp; Filter)</b>, apeși butonul mic de sus (A deasupra lui Z) pentru crescător sau butonul mic de jos (Z deasupra lui A) pentru descrescător.</li></ol>
+<p>Excel ia singur tot tabelul și mută <b>rândurile întregi</b>: fiecare elev rămâne cu clasa și media lui. Rândul de sus, cu numele coloanelor, se numește <mark>rândul de antet</mark>. El rămâne de obicei pe loc; în pasul „Rândul de antet” vezi când nu și ce faci atunci.</p>`,
+     exemplu:`${fig(IMG+'fila-date.webp',500,164,'Fila Data din Excel, grupul Sort and Filter: butoanele mici Sort A to Z și Sort Z to A, încadrate, și butonul mare Sort','Fila <b>Date (Data)</b>, grupul <b>Sortare și filtrare (Sort &amp; Filter)</b>: sus <b>Sortare de la A la Z (Sort A to Z)</b>, jos <b>Sortare de la Z la A (Sort Z to A)</b>, alături butonul mare <b>Sortare (Sort)</b>.')}
+${fig(IMG+'dupa-desc.webp',430,260,'Excel: tabelul Elev, Clasa, Media sortat descrescător după Media: Ioana 9,75, Ana 9,25, Dan 9,25, Radu 8,5, Mihai 7,5, Sara 6','Clic pe o medie, apoi butonul de jos: Ioana urcă prima, cu tot rândul ei.')}
+<p>Pe o celulă cu număr, aceleași butoane se numesc <b>Sortare de la cel mai mic la cel mai mare (Sort Smallest to Largest)</b> și invers. Locul lor rămâne același.</p>`,
+     altfel:`<p>Gândește-te la fișele elevilor dintr-un dosar: când le ordonezi după medie, muți fișa întreagă, nu doar colțul cu media. Excel face la fel cu rândurile.</p>`,
+     incearca:{t:'excelx',q:'Fă clasamentul: pune elevii în ordinea punctajului, de la cel mai mare la cel mai mic. Clic pe o celulă din coloana <b>Punctaj</b>, apoi fila <b>Data</b> (Date) › grupul <b>Sortare și filtrare (Sort &amp; Filter)</b> › butonul mic de jos.',
+       cols:3,rows:6,cells:{A1:'Elev',B1:'Clasa',C1:'Punctaj',A2:'Radu',B2:'8B',C2:78,A3:'Ana',B3:'8A',C3:92,A4:'Ioana',B4:'8B',C4:95,A5:'Matei',B5:'8A',C5:70,A6:'Sara',B6:'8C',C6:88},
+       verifica:{sortat:{zona:'A1:C6',dupa:[{col:'C',ord:'desc'}]}},
+       ajutor:'Nu selecta toată coloana: o singură celulă, de exemplu C3. Fila Date (Data) e în panglică, între Formule (Formulas) și Revizuire (Review). Pe telefon, dacă n-o vezi, glisează bara cu file spre stânga.',
+       why:'Ioana (95) urcă prima, iar fiecare elev și-a păstrat clasa: s-au mutat rândurile întregi.'},
+     inca:[
+      {t:'excelx',q:'Pune evenimentele în ordinea datelor, de la cea mai veche la cea mai nouă: clic pe o dată, apoi butonul de crescător din fila <b>Data</b> (Date).',
+       cols:2,rows:5,cells:{A1:'Eveniment',B1:'Data',A2:'Serbare',B2:'18.12.2026',A3:'Excursie',B3:'05.10.2026',A4:'Concurs',B4:'12.03.2027',A5:'Teză',B5:'20.11.2026'},
+       verifica:{sortat:{zona:'A1:B5',dupa:[{col:'B',ord:'asc'}]}},
+       ajutor:'Butonul mic de sus din grupul Sortare și filtrare (Sort &amp; Filter). Pe o dată, el se numește Sortare de la cel mai vechi la cel mai nou (Sort Oldest to Newest).',why:'Excursia (05.10.2026) e cea mai veche, deci urcă prima; concursul din 2027 coboară ultimul.'},
+      {t:'excelx',q:'Pune elevii în ordine alfabetică, de la A la Z.',
+       cols:2,rows:6,cells:{A1:'Elev',B1:'Nota',A2:'Ștefan',B2:9,A3:'Sara',B3:7,A4:'Tudor',B4:10,A5:'Ioana',B5:8,A6:'Ilinca',B6:6},
+       verifica:{sortat:{zona:'A1:B6',dupa:[{col:'A',ord:'asc'}]}},
+       ajutor:'Clic pe un nume, apoi butonul mic de sus din fila Data.',why:'Ilinca, Ioana, Sara, Ștefan, Tudor: Ș vine după S, iar fiecare elev și-a păstrat nota.'}
+     ]},
+
+    /* ---------- PASUL 3: capcana, o singură coloană selectată ---------- */
+    {t:'Capcana: o singură coloană selectată',
+     text:`<p>Dacă selectezi o singură coloană din tabel, de exemplu mediile C2:C7, trăgând peste ele, și apeși un buton de sortare, Excel vede că lângă selecție mai sunt date. Atunci deschide fereastra <b>Sort Warning</b> (avertisment de sortare), cu două variante:</p>
+<ul><li><b>Expand the selection</b> (Extindeți selecția), aleasă de la început: sortează tot tabelul, cu rândurile întregi. Pe aceasta o vrei.</li>
+<li><b>Continue with the current selection</b> (Continuați cu selecția curentă): se mută doar mediile, iar numele rămân pe loc. Fiecare elev ajunge cu media altuia: rândurile s-au <mark>desperecheat</mark>.</li></ul>
+<p>Apoi apeși <b>Sort</b>. Dacă ai greșit, <kbd>Ctrl</kbd>+<kbd>Z</kbd> (pe telefon, ↶) pune tabelul la loc.</p>`,
+     exemplu:`${fig(IMG+'avertisment.webp',588,237,'Fereastra Sort Warning din Excel: Microsoft Excel found data next to your selection; variantele Expand the selection, aleasă, și Continue with the current selection; butoanele Sort și Cancel','Fereastra <b>Sort Warning</b>. Prima variantă e aleasă de la început.')}
+${fig(IMG+'desperecheat.webp',430,260,'Excel: după Continue with the current selection, doar coloana Media e sortată: Radu are 9,75, deși media lui era 8,5','După <i>Continue with the current selection</i>: Radu are acum media Ioanei, 9,75. Greșit.')}
+<p>Fereastra apare și când alegi toată coloana, cu clic pe litera ei, sus.</p>
+<p>Dacă selectezi <b>două coloane din trei</b>, Excel nu te mai întreabă: sortează doar ce ai selectat, iar rândurile se desperechează. De aceea, cel mai sigur e clic pe o singură celulă.</p>`,
+     altfel:`<p>E ca și cum ai lua dintr-un teanc de fișe doar colțurile cu mediile, le-ai pune în ordine și le-ai lipi la loc pe alte fișe. Mediile sunt în ordine, dar nu mai sunt ale elevilor lor.</p>`,
+     incearca:{t:'excelx',q:'Selectează doar punctajele, <b>C2:C6</b>, trăgând peste ele, apoi apasă butonul de descrescător din fila <b>Data</b> (Date). În fereastra care apare, alege varianta care mută rândurile întregi și apasă <b>Sort</b>.',
+       cols:3,rows:6,cells:{A1:'Elev',B1:'Clasa',C1:'Punctaj',A2:'Mihai',B2:'8A',C2:64,A3:'Elena',B3:'8B',C3:97,A4:'Andrei',B4:'8A',C4:81,A5:'Bianca',B5:'8C',C5:90,A6:'Victor',B6:'8B',C6:73},
+       verifica:{sortat:{zona:'A1:C6',dupa:[{col:'C',ord:'desc'}]}},
+       ajutor:'Lasă aleasă prima variantă, Expand the selection: ea ia tot tabelul. Dacă s-au amestecat punctajele, apasă Ctrl+Z și încearcă din nou.',
+       why:'Elena (97) urcă prima, cu clasa ei. S-a sortat tot tabelul, nu doar coloana selectată.'},
+     inca:[
+      {t:'excelx',q:'Fă clic pe litera <b>C</b>, deasupra coloanei: se alege toată coloana. Apoi apasă butonul de crescător din fila <b>Data</b> (Date) și, în fereastră, alege varianta potrivită.',
+       cols:3,rows:5,cells:{A1:'Elev',B1:'Clasa',C1:'Absențe',A2:'Darius',B2:'8B',C2:6,A3:'Ilinca',B3:'8A',C3:2,A4:'Matei',B4:'8C',C4:9,A5:'Sara',B5:'8A',C5:0},
+       verifica:{sortat:{zona:'A1:C5',dupa:[{col:'C',ord:'asc'}]}},
+       ajutor:'Și aici apare Sort Warning. Varianta bună e cea care sortează tot tabelul.',why:'Sara, cu 0 absențe, urcă prima și rămâne în 8A. Antetul Absențe rămâne sus.'},
+      {t:'choice',q:'După o sortare, Radu are punctajul Ioanei, iar Ioana pe al lui Matei. Ce s-a întâmplat?',o:['S-a sortat doar coloana punctajelor','Excel a șters câteva punctaje de pe rânduri','S-a sortat tot tabelul după nume','Așa iese orice sortare descrescătoare'],ok:0,
+       ajutor:'Cine se mută când alegi Continue with the current selection?',why:'S-a mutat doar coloana selectată, iar numele au rămas pe loc: rândurile s-au desperecheat. Ctrl+Z repară.'}
+     ]},
+
+    /* ---------- PASUL 4: rândul de antet ---------- */
+    {t:'Rândul de antet și „My data has headers”',
+     text:`<p>Excel ghicește singur rândul de antet. Îl lasă sus când e altfel decât rândul de dedesubt: text peste numere, text îngroșat sau scris numai cu majuscule.</p>
+<p>La o listă doar cu texte, scrise la fel, Excel crede că primul rând e tot un nume: lista cu titlul Nume, sortată de la A la Z, îl mută pe „Nume” printre nume.</p>
+<p>Atunci: <kbd>Ctrl</kbd>+<kbd>Z</kbd>, apoi fila <b>Date (Data)</b> › butonul mare <b>Sortare (Sort)</b>. Bifezi <b>My data has headers</b> (Datele mele au anteturi), verifici că la <b>Sort by</b> (Sortare după) scrie Nume, iar la <b>Order</b> (Ordine) <b>A to Z</b> (De la A la Z), apoi apeși <b>OK</b>.</p>`,
+     exemplu:`${fig(IMG+'antet-gresit.webp',430,236,'Excel: lista Nume, Radu, Ana, Zamfir, Ioana, Bogdan sortată de la A la Z cu butonul: Nume a ajuns între Ioana și Radu','Cu butonul Sortare de la A la Z (Sort A to Z), „Nume” a ajuns printre nume.')}
+${fig(IMG+'sort-antet.webp',750,344,'Fereastra Sort din Excel, cu My data has headers bifat: Sort by Nume, Sort On Cell Values, Order A to Z','Fereastra <b>Sortare (Sort)</b>: cu <b>My data has headers</b> bifat, la <b>Sort by</b> scrie Nume, iar rândul 1 nu se mai sortează.')}`,
+     altfel:`<p>Rândul de antet e ca eticheta de pe un dosar: spune ce e înăuntru, dar nu e o fișă. Bifa „My data has headers” îi spune lui Excel: eticheta rămâne pe dosar.</p>`,
+     incearca:{t:'excelx',q:'Pune numele în ordine alfabetică, de la A la Z, cu titlul <b>Nume</b> rămas sus, pe rândul 1. Folosește fereastra <b>Sortare (Sort)</b> din fila <b>Data</b> (Date) și bifa potrivită.',
+       cols:3,rows:7,cells:{A1:'Nume',A2:'Radu',A3:'Ana',A4:'Zamfir',A5:'Ioana',A6:'Bogdan'},
+       verifica:{sortat:{zona:'A1:A6',dupa:[{col:'A',ord:'asc'}]}},
+       ajutor:'Clic pe un nume, fila Data, butonul mare Sort. În fereastră, bifează My data has headers; la Sort by trebuie să scrie Nume. Apoi OK.',
+       why:'Ana, Bogdan, Ioana, Radu, Zamfir, iar „Nume” a rămas sus. Fără bifă, Excel l-ar fi sortat printre nume.'},
+     inca:[
+      {t:'choice',q:'Ce face Excel cu primul rând când în fereastra <b>Sortare (Sort)</b> e bifat <b>My data has headers</b>?',o:['Îl lasă pe loc și nu-l sortează','Îl sortează printre celelalte rânduri','Îl șterge','Îl scrie îngroșat'],ok:0,
+       ajutor:'Recitește ultimul paragraf al pasului.',why:'Cu bifa, primul rând e rând de antet: rămâne sus, iar la Sort by apar numele coloanelor.'}
+     ]},
+
+    /* ---------- PASUL 5: mai multe criterii ---------- */
+    {t:'Mai multe criterii: Add Level',
+     text:`<p>Uneori vrei elevii grupați pe clase, iar în fiecare clasă, de la media cea mai mare la cea mai mică. Asta e o sortare după <mark>mai multe criterii</mark>, în fereastra <b>Sortare (Sort)</b> (fila <b>Date (Data)</b> › butonul mare <b>Sortare (Sort)</b>):</p>
+<ol class="pasi-met"><li>la <b>Sort by</b> (Sortare după) alegi Clasa, cu <b>A to Z</b> (De la A la Z);</li>
+<li>apeși <b>Add Level</b> (Adăugare nivel): apare rândul <b>Then by</b> (Apoi după);</li>
+<li>acolo alegi Media, cu <b>Largest to Smallest</b> (De la cel mai mare la cel mai mic);</li>
+<li>apeși <b>OK</b>.</li></ol>
+<p>Al doilea criteriu contează doar între rândurile cu aceeași clasă.</p>`,
+     exemplu:`${fig(IMG+'sort-doua-niveluri.webp',750,344,'Fereastra Sort din Excel cu două niveluri: Sort by Clasa, A to Z; Then by Media, Largest to Smallest; butonul Add Level','Două niveluri: întâi Clasa, apoi Media.')}
+${fig(IMG+'dupa-doua-niveluri.webp',430,260,'Excel: tabelul sortat întâi după Clasa, apoi după Media descrescător: 8A Ana 9,25, Dan 9,25, Mihai 7,5; 8B Ioana 9,75, Radu 8,5, Sara 6','Rezultatul: întâi toată clasa 8A, apoi 8B; în fiecare clasă, media cea mai mare e sus.')}`,
+     altfel:`<p>E ca la careu: întâi elevii se așază pe clase, apoi, în fiecare clasă, după înălțime. Al doilea criteriu ordonează doar în interiorul fiecărei clase.</p>`,
+     incearca:{t:'excelx',q:'Grupează elevii pe clase (de la A la Z), iar în fiecare clasă pune-i de la punctajul cel mai mare la cel mai mic. Folosește fereastra <b>Sortare (Sort)</b> din fila <b>Data</b> (Date), cu <b>Add Level</b> (Adăugare nivel).',
+       cols:3,rows:7,cells:{A1:'Elev',B1:'Clasa',C1:'Punctaj',A2:'Tudor',B2:'8B',C2:72,A3:'Irina',B3:'8A',C3:85,A4:'Paul',B4:'8B',C4:91,A5:'Lia',B5:'8A',C5:99,A6:'Cosmin',B6:'8A',C6:60,A7:'Oana',B7:'8B',C7:88},
+       verifica:{sortat:{zona:'A1:C7',dupa:[{col:'B',ord:'asc'},{col:'C',ord:'desc'}]}},
+       ajutor:'La Sort by (Sortare după): Clasa, cu A to Z (De la A la Z). Apoi Add Level (Adăugare nivel); la Then by (Apoi după): Punctaj, cu Largest to Smallest (De la cel mai mare la cel mai mic). OK.',
+       why:'Întâi clasa 8A: Lia 99, Irina 85, Cosmin 60; apoi 8B: Paul 91, Oana 88, Tudor 72.'},
+     inca:[
+      {t:'order',q:'Tabelul se sortează întâi după echipă (de la A la Z), apoi după goluri (de la cel mai mare la cel mai mic). Pune rândurile în ordinea rezultată.',
+       items:['Mihai, din echipa Albaștri, cu 4 goluri','Dana, din echipa Albaștri, cu 2 goluri','Ioan, din echipa Verzi, cu 5 goluri','Sara, din echipa Verzi, cu 1 gol'],
+       ajutor:'Întâi toată echipa care începe cu A; în fiecare echipă, mai multe goluri înseamnă mai sus.',why:'Primul criteriu face grupele (Albaștri, apoi Verzi). Al doilea ordonează în fiecare grupă: Ioan, cu 5 goluri, e primul la Verzi, dar vine după toată echipa Albaștri.'}
+     ]}
+   ],
+   atelier:{t:'excelx',titlu:'Atelier: crosul școlii',
+    intro:`<p>Foaia de mai jos se poartă ca Excel-ul pe setări românești, cu panglica lui. Deasupra ei sunt <strong>testele</strong>. Fiecare test se bifează singur când tabelul din foaie îl îndeplinește. Dacă ai greșit, <kbd>Ctrl</kbd>+<kbd>Z</kbd> (sau ↶, sus). La final apasă <b>Verifică</b>.</p>`,
+    q:'La crosul școlii s-a cronometrat fiecare elev, în secunde. Fă tabelul de premiere: elevii <b>grupați pe clase</b>, de la 8A la 8C, iar în fiecare clasă <b>de la cel mai mic timp la cel mai mare</b> (cel mai rapid, primul). Rândul de antet rămâne sus, iar fiecare elev își păstrează clasa și timpul.',
+    cols:3,rows:9,
+    cells:{A1:'Elev',B1:'Clasa',C1:'Timp (s)',A2:'Radu',B2:'8B',C2:312,A3:'Ana',B3:'8A',C3:298,A4:'Ștefan',B4:'8C',C4:305,A5:'Ioana',B5:'8B',C5:287,A6:'Matei',B6:'8A',C6:330,A7:'Sara',B7:'8C',C7:279,A8:'Bogdan',B8:'8A',C8:301,A9:'Irina',B9:'8B',C9:344},
+    verifica:{sortat:{zona:'A1:C9',dupa:[{col:'B',ord:'asc'},{col:'C',ord:'asc'}]}},
+    teste:[
+     {ce:'Rândul de antet a rămas sus, pe rândul 1',antet:true},
+     {ce:'Rândurile au rămas întregi: fiecare elev are clasa și timpul lui',intregi:true},
+     {ce:'Clasele sunt în ordine: întâi 8A, apoi 8B, apoi 8C',ordonat:[{col:'B',ord:'asc'}]},
+     {ce:'În fiecare clasă, timpii sunt de la cel mai mic la cel mai mare',ordonat:[{col:'B',ord:'asc'},{col:'C',ord:'asc'}]}],
+    ajutor:'Clic pe o celulă din tabel, apoi fila Date (Data), butonul mare Sortare (Sort). La Sort by (Sortare după): Clasa, cu A to Z (De la A la Z). Add Level (Adăugare nivel). La Then by (Apoi după): Timp (s), cu Smallest to Largest (De la cel mai mic la cel mai mare). OK.',
+    why:'8A: Ana 298, Bogdan 301, Matei 330; 8B: Ioana 287, Radu 312, Irina 344; 8C: Sara 279, Ștefan 305. Sara are cel mai bun timp din toată școala, dar stă în grupa clasei ei.',
+    inca:[
+     {t:'excelx',titlu:'Atelier: lista de lectură',q:'Pune cărțile în ordinea autorilor, de la A la Z. Rândul de antet (Carte, Autor) trebuie să rămână sus. Atenție: toate celulele sunt texte, scrise la fel.',
+      cols:2,rows:7,
+      cells:{A1:'Carte',B1:'Autor',A2:'Toate pânzele sus!',B2:'Radu Tudoran',A3:'Cireșarii',B3:'Constantin Chiriță',A4:'Micul prinț',B4:'Antoine de Saint-Exupéry',A5:'Dumbrava minunată',B5:'Mihail Sadoveanu',A6:'Amintiri din copilărie',B6:'Ion Creangă',A7:'Povestea lui Harap-Alb',B7:'Ion Creangă'},
+      verifica:{sortat:{zona:'A1:B7',dupa:[{col:'B',ord:'asc'}]}},
+      teste:[
+       {ce:'Rândul de antet (Carte, Autor) a rămas sus',antet:true},
+       {ce:'Fiecare carte are tot autorul ei',intregi:true},
+       {ce:'Autorii sunt de la A la Z',ordonat:[{col:'B',ord:'asc'}]}],
+      ajutor:'Cu butonul de sortare de la A la Z, „Autor” ar ajunge printre nume. Folosește fereastra Sortare (Sort) și bifează My data has headers; la Sort by alege Autor.',
+      why:'Antoine de Saint-Exupéry, Constantin Chiriță, Ion Creangă (de două ori), Mihail Sadoveanu, Radu Tudoran. Cele două cărți ale lui Creangă au rămas în ordinea în care erau.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Coloana Data are 05.10.2026, 18.12.2026 și 12.03.2027. Sortezi <b>descrescător</b> (de la cea mai nouă la cea mai veche). Ce dată ajunge pe primul rând de sub antet?',o:['12.03.2027','18.12.2026','05.10.2026','Rămâne 05.10.2026, pentru că e scrisă prima'],ok:0,
+     ajutor:'Cea mai nouă dată e cea din anul cel mai mare.',why:'12.03.2027 e cea mai nouă (anul 2027), deci la descrescător urcă prima.'},
+    {t:'excelx',q:'La proba de alergare, cel mai bun e cel mai mic timp. Pune elevii în ordinea timpului, de la cel mai mic la cel mai mare.',
+     cols:2,rows:5,cells:{A1:'Elev',B1:'Timp (s)',A2:'Dan',B2:14.2,A3:'Lia',B3:13.8,A4:'Ion',B4:15.1,A5:'Eva',B5:13.5},
+     verifica:{sortat:{zona:'A1:B5',dupa:[{col:'B',ord:'asc'}]}},
+     ajutor:'Clic pe un timp, apoi butonul de crescător din fila Data.',why:'Eva (13,5), Lia (13,8), Dan (14,2), Ion (15,1): crescător, de la mic la mare.'},
+    {t:'tf',q:'Ai selectat doar coloana Punctaj și, în fereastra <b>Sort Warning</b>, ai ales <b>Continue with the current selection</b>. După sortare, fiecare elev are tot punctajul lui.',ok:false,
+     ajutor:'Ce se mută când continui doar cu selecția?',why:'Fals. Se mută doar punctajele, iar numele rămân pe loc: rândurile se desperechează. Varianta bună e Expand the selection.'},
+    {t:'choice',q:'În A1 scrie Oraș, iar dedesubt sunt numai nume de orașe, scrise la fel ca titlul (nu îngroșat, nu cu majuscule). Apeși butonul de sortare de la A la Z. Ce se întâmplă cu Oraș?',o:['Ajunge printre orașe, ca și cum ar fi tot un oraș','Rămâne sus, pe rândul 1','Dispare din tabel','Excel deschide fereastra Sort Warning'],ok:0,
+     ajutor:'Cum își dă seama Excel că primul rând e rând de antet?',why:'Titlul e text, la fel ca orașele, și e scris la fel, deci Excel nu-l recunoaște ca antet și îl sortează printre ele. Repari cu Ctrl+Z și fereastra Sortare (Sort), cu My data has headers bifat.'},
+    {t:'order',q:'Tabelul se sortează întâi după clasă (de la A la Z), apoi după medie (de la cea mai mare la cea mai mică). Pune rândurile în ordinea rezultată.',
+     items:['Ioana, din 8A, cu media 9,50','Dan, din 8A, cu media 8,75','Maria, din 8B, cu media 9,80','Radu, din 8B, cu media 7,25'],
+     ajutor:'Întâi toată clasa 8A, apoi 8B; în fiecare clasă, media mai mare e sus.',why:'Maria are cea mai mare medie, dar e în 8B, deci vine după toată clasa 8A.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Excel-ul adevărat',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:`<p>Faci aceleași sortări în Excel, pe calculator, fără ajutor: la fiecare pas scrie ce trebuie să vezi, ca să te verifici singur.</p>
+${fig(IMG+'laborator-gata.webp',430,356,'Excel: foaia Concurs sortată după Clasa, apoi după Punctaj descrescător: 8A Darius 95, Ana 92, Bogdan 88, Matei 70; 8B Ioana 95, Radu 78, Irina 64; 8C Sara 92, Ștefan 85, Teodora 70','Așa arată foaia Concurs după cele două criterii.')}
+${fig(IMG3+'confirma-inlocuire.webp',458,176,'Excel: fereastra Confirm Save As, cu întrebarea already exists, do you want to replace it și butoanele Yes și No','La Salvare ca, dacă numele există deja: apeși No și schimbi numele.')}`,
+    pasi:PROVOCARE},
+  diploma:{titlu:'Cel care pune ordine în date',
+    rezumat:'a sortat un tabel crescător și descrescător după text, numere și date calendaristice, dintr-o singură celulă, a ocolit capcana rândurilor desperecheate alegând Expand the selection, a păstrat rândul de antet cu My data has headers și a sortat după două criterii cu Add Level',
+    aplicatie:'Excel-ul adevărat',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
