@@ -14,3 +14,18 @@ Doar citit, nimic modificat. Rețea: numai 127.0.0.1 (ctx.route + ctx.close()).
 - verifica_lectie.py --fara-t1: ultima linie `0` la toate trei (`BLOCHEAZĂ PUBLICAREA: 0`; exit 0).
 
 Rezultat: 4 ADEVĂRATE, 0 FALSE.
+
+## Măsurat exact: tot ce s-a schimbat după ultimul verdict (06.10, 04:55)
+
+Fiecare lecție are un singur commit (cel de publicare), deci git nu arată diferența. Sursa: comenzile de editare din transcrierile agenților (fiecare e o înlocuire `a → b` cu `assert s.count(a)==1`) și Edit-ul dirijorului. Căutate toate editările din transcrieri pe aceste fișiere, după ora verdictului (`scratchpad/dupa_verdict.py`, `dupa_verdict_bash.py`); acum, pe disc, fraza veche apare de 0 ori, iar cea nouă o dată (`dupa_verdict_stare.py`).
+
+| Lecție (verdict) | Ora, cine | Fișier | Ce s-a schimbat |
+|---|---|---|---|
+| VIII/10 (01:47) | 01:48, agentul mecanic | `_sim/excelx-sortare.js` | o frază din mesajul de la „Verifică” (în șirul de text din `mesajSortare`), nu cod |
+| VIII/10 (01:47) | 01:48, agentul mecanic | `m2-l10/index.html` | o frază din `why` la P4 |
+| VIII/10 (01:47) | 01:49, agentul mecanic | `m2-l10/surse.md` | un rând nou în tabelul reparațiilor (nepublicat ca pagină) |
+| VIII/11 (03:30) | 03:50, dirijorul | `m2-l11/index.html` | o frază din `why` la P4 (N6) |
+| VIII/12 (03:55) | 03:56, agentul mecanic | `m2-l12/index.html` | două fraze: avertismentul de la pasul 8 și rezumatul diplomei |
+| VIII/13, 14, 15 | — | — | nimic (pagina modificată ultima oară înaintea verdictului: 03:05 / 02:49 / 02:54) |
+
+În total: 5 fraze din șiruri de text plus un rând de documentație. Nicio schimbare de exercițiu, de răspuns sau de logică. Toate cele 5 fraze sunt verificate mai sus: 4/4 puncte ADEVĂRATE, iar porțile trec.
