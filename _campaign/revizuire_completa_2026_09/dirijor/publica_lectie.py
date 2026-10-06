@@ -99,6 +99,18 @@ if picate:
 # 3. commit DOAR pe fișierele numite (alte sesiuni lucrează în același depozit)
 clase = sorted({l.split("/")[0] for l in lectii})
 cai = [f"lectii/{l}/" for l in lectii] + sorted(extensii) + ["lectii/index.html", "lectii/plan.json"] + [f"lectii/{c}/index.html" for c in clase]
+
+# 3a. intrarea „Lecțiile” din hub (scrisă de build_lectii între LECTII:START și LECTII:END) pleacă odată cu lecția.
+#     06.10.2026: hub/index.html nu era în listă, iar pe sit contorul stătea la „1 lecție gata” de pe 27.09.
+#     Restul hub-ului nu pleacă de aici: dacă hub-ul are și alte schimbări (ale altei sesiuni), îl lăsăm pe loc.
+_BLOC = re.compile(r"<!-- LECTII:START.*?<!-- LECTII:END -->", re.S)
+_hub_acum = (R / "hub" / "index.html").read_bytes().decode("utf-8").replace("\r\n", "\n")
+_hub_head = subprocess.run(["git", "-C", str(R), "show", "HEAD:hub/index.html"], capture_output=True).stdout.decode("utf-8").replace("\r\n", "\n")
+if _hub_acum != _hub_head:
+    if _BLOC.sub("", _hub_acum) == _BLOC.sub("", _hub_head):
+        cai.append("hub/index.html")
+    else:
+        print("  hub/index.html are și alte schimbări decât intrarea „Lecțiile” — nu-l comit (de publicat separat)")
 cod, out = rul(["git", "-C", str(R), "add", "--"] + cai)
 poarta("git add (doar fișierele numite)", cod == 0, ", ".join(cai[:6]) + ("…" if len(cai) > 6 else ""))
 mesaj = (f"Lecții: {', '.join(l.upper() for l in lectii)} publicate (insigna „verificat parțial”) prin dirijor/publica_lectie.py — "
