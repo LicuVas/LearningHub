@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grafice: tipuri de grafice și serii de date</title>
+<meta name="description" content="Clasa a VIII-a, lecția 11 (Excel): selectezi antetul și valorile, inserezi graficul din Inserare (Insert), alegi tipul potrivit (coloane, bare, linie, radial), înțelegi seriile și categoriile, comuți rândurile cu coloanele și pui titlu, legendă și etichete de date, într-o foaie care se poartă ca Excel-ul.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Public+Sans:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF1F6; --paper:#FFFFFF; --paper2:#EEF2F8; --line:#CFD7E3;
+  --ink:#1A2230; --ink2:#525E70; --accent:#2F5597; --accentInk:#FFFFFF; --sel:#DCE6F4;
+  --mark:#FFE08A; --markInk:#1A2230; --ok:#1F6F3F; --okbg:#E1F2E7; --bad:#B3302A; --badbg:#FAE3E1;
+  --fd:"Archivo","Segoe UI",system-ui,sans-serif; --fb:"Public Sans","Segoe UI",system-ui,sans-serif; --fm:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#10141B; --paper:#181E28; --paper2:#212937; --line:#334055;
+  --ink:#E4EAF3; --ink2:#9FAEC2; --accent:#8FB2EA; --accentInk:#10141B; --sel:#22375A;
+  --mark:#EBCB55; --markInk:#1A2230; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}}
+:root[data-theme="dark"]{
+  --desk:#10141B; --paper:#181E28; --paper2:#212937; --line:#334055;
+  --ink:#E4EAF3; --ink2:#9FAEC2; --accent:#8FB2EA; --accentInk:#10141B; --sel:#22375A;
+  --mark:#EBCB55; --markInk:#1A2230; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}
+/* tema: fâșia de sus e un grafic cu coloane în mic, cu culorile seriilor din Excel */
+.banda{display:flex;align-items:flex-end;gap:3px;height:14px;padding:0 8px;border-bottom:1px solid var(--line);overflow:hidden}
+.banda i{display:block;width:10px;border-radius:1px 1px 0 0}
+.banda i:nth-child(odd){background:#4F81BD}.banda i:nth-child(even){background:#C0504D}
+h1,h2{letter-spacing:-.01em}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/tip-foaie.js"></script>
+<script src="../../../jocuri/_motor/tip-excel.js"></script>
+<!-- foaia „excelx” comună clasei a VIII-a (lecțiile 4-5) + extensia lecției 11: graficele, fidele Excel-ului
+     (probat în Excel real, pe desktop ascuns: _proba/proba_grafic*.json, _proba/r1_excel*.json) -->
+<script src="../../_sim/excelx.js"></script>
+<script src="../../_sim/excelx-grafic.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={tipuri:'Grafice: tipuri de grafice',serii:'Serii de date'};
+
+/* capturi reale (Excel pe desktop ascuns, img/SURSE.json) */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG='../m2-l11/img/';
+const IMG3='../m1-l03/img/';
+
+/* tabelele (date inventate) */
+const CARTI={A1:'Elev',B1:'Cărți citite',A2:'Ana',B2:6,A3:'Bogdan',B3:4,A4:'Carla',B4:9,A5:'Dan',B5:3,A6:'Elena',B6:7};
+const LUNI={A1:'Luna',B1:'8A',C1:'8B',A2:'septembrie',B2:12,C2:9,A3:'octombrie',B3:18,C3:14,A4:'noiembrie',B4:25,C4:20,A5:'decembrie',B5:15,C5:22};
+const TEMP={A1:'Luna',B1:'Temperatura',A2:'martie',B2:7,A3:'aprilie',B3:12,A4:'mai',B4:18,A5:'iunie',B5:22,A6:'iulie',B6:25};
+const DRUM={A1:'Cum vin la școală',B1:'Elevi',A2:'pe jos',B2:12,A3:'cu autobuzul',B3:8,A4:'cu mașina',B4:6,A5:'cu bicicleta',B5:2};
+const ANI={A1:'Anul',B1:'Elevi',A2:2023,B2:120,A3:2024,B3:135,A4:2025,B4:128,A5:2026,B5:140};
+
+const PROVOCARE=[
+  'Descarcă registrul <a href="biblioteca_lectia11.xlsx" download>biblioteca_lectia11.xlsx</a> și deschide-l în Excel. Dacă sus apare o bandă galbenă cu butonul <b>Enable Editing</b> (Activare editare), apasă pe el: fișierele descărcate se deschid întâi doar pentru citit.',
+  '<b>Ce date ai.</b> În foaia <b>Biblioteca</b>: în coloana A lunile, în B câte cărți a împrumutat clasa 8A, în C câte a împrumutat 8B. Selectează <b>A1:C5</b>: apasă pe A1, ține apăsat și trage până la C5.',
+  'Fila <b>Inserare (Insert)</b> › grupul <b>Diagrame (Charts)</b> › butonul cu o linie mică și săgeata ▾ (<i>Insert Line or Area Chart</i>) › prima din listă, <b>Line</b>. Trebuie să vezi două linii, jos legenda cu <b>8A</b> și <b>8B</b>, iar sus <i>Titlu diagramă</i> (sau <i>Chart Title</i>).',
+  'Dacă graficul acoperă tabelul, trage-l de marginea lui albă spre dreapta, până vezi tot tabelul.',
+  'Dă <b>un singur clic</b> pe titlu (apare un chenar în jurul lui), scrie <b>Cărți împrumutate pe luni</b> și apasă <kbd>Enter</kbd>. Titlul vechi dispare; rămâne al tău. Dacă ai dat două clicuri, în titlu clipește cursorul și ce scrii se adaugă la titlul vechi: dă clic pe o celulă, apoi un singur clic pe titlu și scrie din nou.',
+  'Etichetele de date, din panglică: clic pe grafic › fila <b>Proiectare diagramă (Chart Design)</b> › <b>Adăugare element de diagramă (Add Chart Element)</b> › <b>Etichete de date (Data Labels)</b> › <b>Right</b>. Lângă fiecare punct, în dreapta lui, apare numărul lui.',
+  'Clic pe <b>C5</b>, scrie <b>30</b> și apasă <kbd>Enter</kbd>. Punctul clasei 8B din decembrie urcă, iar eticheta lui arată <b>30</b>: graficul e legat de tabel.',
+  'Clic pe grafic › fila <b>Proiectare diagramă (Chart Design)</b> › <b>Comutare rând/coloană (Switch Row/Column)</b>. Acum în legendă sunt lunile, iar jos clasele. Apasă încă o dată pe același buton: revii la 8A și 8B.',
+  'Încearcă alt tip: alege graficul cu un clic pe marginea lui albă › <b>Proiectare diagramă (Chart Design)</b> › <b>Modificare tip diagramă (Change Chart Type)</b> › în stânga <b>Column</b> (coloană) › OK. Titlul și etichetele rămân. Apoi pune la loc, la fel, <b>Line</b>: pentru o schimbare în timp, linia e potrivită.',
+  'Salvează o copie cu numele tău: apasă <kbd>F12</kbd> (pe unele laptopuri <kbd>Fn</kbd>+<kbd>F12</kbd>), adică Salvare ca (Save As). Alege <b>Documente</b> în stânga, scrie la <b>File name</b> numele, prenumele și clasa ta, de exemplu <code>Popescu_Ana_8A_lectia11</code>, și apasă <b>Save</b>. Dacă apare <i>Confirm Save As</i> („… already exists. Do you want to replace it?”), fișierul e al unui coleg: apasă <b>No</b> și pune o cifră la sfârșitul numelui tău, de exemplu <code>Popescu_Ana_8A_lectia11_2</code>.',
+  'Calculatorul e al tuturor: nu schimba setările Excel-ului (<b>File › Options</b>) și nu șterge fișierele altora. La final închide Excel-ul.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m2_l11',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/viii/, „Lecția 11”, pasul din laborator înainte de verificare
+  titlu:'Grafice: tipuri de grafice și serii de date',
+  marca:'Lecția <b>11</b> · Excel · a VIII-a',
+  h1:'Grafice: tipuri de grafice și serii de date',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U1', unitateTitlu:'Calcul tabelar',
+  competente:['CS.1.1','CS.3.1'], lectii:'11',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VIII-U1 „Calcul tabelar” · lecția 11 · conținuturile: „Grafice: tipuri de grafice”, „Serii de date”',
+  intro:`<p>Lecția 11 din modulul 2. Faci din datele unui tabel un grafic: alegi ce date intră, alegi tipul potrivit, înțelegi seriile de date și pui titlu, legendă și etichete.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 2, „Interfața aplicației de calcul tabelar. Structura unui registru”: panglica, filele ei (Pornire, Inserare…) și grupurile de butoane;</li>
+<li>lecția 3, „Operații cu registrul și cu foile de calcul”: Salvare ca (<kbd>F12</kbd>) cu numele tău și <i>Confirm Save As</i> → No;</li>
+<li>lecția 4, „Adresa de celulă. Selectare, copiere, mutare, ștergere”: selectezi o zonă trăgând (sau clic, apoi <kbd>Shift</kbd> + clic), zona A1:B6, tasta <kbd>Delete</kbd> golește celula;</li>
+<li>lecția 5, „Tipuri de date: numeric, text, dată calendaristică”: numărul stă la dreapta, textul la stânga; apostroful ' scris înaintea unui număr îl face text;</li>
+<li>lecția 7, „Formule de calcul cu operatori aritmetici”: rezultatul se reface singur când schimbi datele.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după pagina „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”. Apoi atelierul, într-o foaie care se poartă ca Excel-ul, apoi aceleași lucruri la calculatorul din laborator, iar la sfârșit 5 întrebări.</p>`,
+  banda:'<i style="height:5px"></i><i style="height:9px"></i><i style="height:7px"></i><i style="height:12px"></i><i style="height:4px"></i><i style="height:10px"></i><i style="height:13px"></i><i style="height:8px"></i><i style="height:6px"></i><i style="height:11px"></i><i style="height:9px"></i><i style="height:14px"></i>',
+  tipuri:{excelx:ExcelG},
+  nivele:[
+  {t:'Grafice: tipuri de grafice și serii de date', final:true, lectii:[11], continuturi:[P.tipuri,P.serii],
+   obiectiv:'faci din datele unui tabel graficul potrivit (coloane, bare, linie sau radial), cu seriile dorite, cu titlu, legendă și etichete de date.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>Cineva a numărat vehiculele de pe stradă: mașini, taxiuri, autobuze, motociclete. Apoi a pus, pentru fiecare fel, atâtea cuburi câte a numărat. Dintr-o privire vezi că mașinile sunt cele mai multe, fără să citești vreun număr.</p>
+<p>Asta face un <mark>grafic</mark>: un desen făcut din numerele unui tabel. Cu el compari mai ușor, vezi cum se schimbă ceva în timp sau ce parte din întreg e fiecare.</p>
+<p>În Excel graficul se numește <mark>diagramă</mark> (în engleză, chart). Noi îi spunem grafic, ca în programă. Pe butoane vei citi Diagramă sau Chart: e același lucru.</p>
+${fig(IMG+'grafic-cuburi.webp',800,493,'Pe o masă, șiruri de cuburi colorate de lungimi diferite, fiecare cu un bilet scris de mână în stânga: cars, TAXI, Buses, Motorcycles, Trucks și altele','Un grafic cu bare făcut din cuburi: cel mai lung șir e la mașini (cars). Fotografie: jimmiehomeschoolmom, <a href="https://creativecommons.org/licenses/by/2.0/" target="_blank" rel="noopener">CC BY 2.0</a>, <a href="https://commons.wikimedia.org/wiki/File:Barchart_math_classroom_001.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>.')}`},
+
+    /* ---------- PASUL 1: selectezi datele (și ce ia Excel drept nume) ---------- */
+    {t:'Selectezi datele: antetul și valorile',
+     text:`<p>Graficul se face din datele pe care le selectezi (lecția 4). Selectezi o zonă care cuprinde și <mark>antetul</mark>, adică rândul de sus, cu numele coloanelor, și valorile de sub el. Pentru cărțile citite de fiecare elev: zona A1:B6.</p>
+<p>Din antet Excel ia numele datelor. Din prima coloană, cu numele elevilor, scrie numele de pe marginea de jos a graficului. Drept nume ia doar textul.</p>
+<p>Zona trebuie să fie <b>continuă</b>, fără rânduri goale. Un rând gol rupe tabelul: dacă îl lași în zonă, în grafic apare un loc gol.</p>`,
+     exemplu:`${fig(IMG+'selectie.webp',560,180,'Excel: zona A1:B6 selectată, cu Elev și Cărți citite în rândul 1 și Ana 6, Bogdan 4, Carla 9, Dan 3, Elena 7 dedesubt','Zona A1:B6: antetul și valorile, colorate.')}
+<p>Dacă selectezi doar numerele, B2:B6, jos apar 1, 2, 3, 4, 5 în loc de nume.</p>
+<p><b>Capcana anilor.</b> Anii scriși ca numere sub antetul Anul nu sunt text, deci nu sunt luați drept nume: în grafic devin încă un șir de coloane, iar jos apare iar 1, 2, 3, 4. Înainte de grafic, golești A1 (clic, <kbd>Delete</kbd>) sau scrii anii cu apostrof, '2023.</p>
+${fig(IMG+'ani-gresit.webp',960,373,'Excel: tabelul Anul, Elevi; graficul are două șiruri de coloane, Anul (coloane de 2000) și Elevi, iar jos 1, 2, 3, 4','Greșit: anii au devenit coloane, iar jos scrie 1, 2, 3, 4.')}
+${fig(IMG+'ani-corect.webp',960,373,'Excel: cu A1 gol, graficul are doar coloanele Elevi, iar jos anii 2023, 2024, 2025, 2026','Corect: cu A1 gol, jos sunt anii.')}`,
+     altfel:`<p>E ca atunci când îi dai cuiva o listă ca să-ți facă un desen. Dacă îi dai doar cifrele, nu mai știe ale cui sunt. Îi dai lista întreagă: capul de tabel, numele și numerele.</p>`,
+     incearca:{t:'excelx',q:'Vrei un grafic doar cu <b>cărțile citite</b> de fiecare elev. Selectează antetul și valorile de care ai nevoie: numele elevilor și coloana Cărți citite, fără coloana Pagini citite.',
+       cols:3,rows:7,cells:{A1:'Elev',B1:'Cărți citite',C1:'Pagini citite',A2:'Ana',B2:6,C2:540,A3:'Bogdan',B3:4,C3:410,A4:'Carla',B4:9,C4:880,A5:'Dan',B5:3,C5:260,A6:'Elena',B6:7,C6:650},panglica:false,
+       verifica:{zona:'A1:B6'},
+       ajutor:'Antetul e rândul 1. Pornește din A1 și trage până la ultimul număr din coloana Cărți citite.',
+       why:'A1:B6: antetul (Elev, Cărți citite), numele și numerele. Coloana C nu intră: graficul cere doar cărțile.'},
+     inca:[
+      {t:'choice',q:'Selectezi doar <b>B1:B6</b>: antetul Cărți citite și numerele, fără numele elevilor. Faci graficul. Ce scrie Excel pe marginea de jos a graficului?',o:['1, 2, 3, 4, 5','Ana, Bogdan, Carla, Dan, Elena','Elev','Nimic: graficul nu se face'],ok:0,
+       ajutor:'Numele stau în coloana A. Le-ai selectat?',why:'Fără coloana cu nume, Excel numerotează valorile: 1, 2, 3, 4, 5.'},
+      {t:'excelx',q:'Selectează datele pentru un grafic cu <b>temperatura</b> din fiecare lună (fără precipitații).',
+       cols:3,rows:7,cells:{A1:'Luna',B1:'Temperatura',C1:'Precipitații',A2:'martie',B2:7,C2:35,A3:'aprilie',B3:12,C3:48,A4:'mai',B4:18,C4:62,A5:'iunie',B5:22,C5:70,A6:'iulie',B6:25,C6:58},panglica:false,
+       verifica:{zona:'A1:B6'},ajutor:'Antetul și lunile sunt în A, temperaturile în B. Trage de la A1 până la ultima temperatură.',why:'A1:B6: lunile, antetul Temperatura și valorile ei.'},
+      {t:'tf',q:'Tabelul are un rând gol între Bogdan și Carla. Selectezi tot, de la A1 la B7, și faci graficul. În grafic apare un loc gol între Bogdan și Carla.',ok:true,
+       ajutor:'Rândul gol a intrat în zonă?',why:'Adevărat. Rândul gol e în zonă, deci graficul îi lasă locul lui, gol. De aceea zona trebuie să fie continuă.'},
+      {t:'choice',q:'În A1 scrie <b>Anul</b>, iar dedesubt sunt anii 2023, 2024, 2025 și 2026, scriși ca numere. În coloana B sunt elevii școlii. Vrei ca jos, în grafic, să apară anii. Ce faci <b>înainte</b> de grafic?',o:['Golești A1','Selectezi doar B1:B5','Scrii Ani în loc de Anul','Nimic: Excel ia singur anii drept nume'],ok:0,
+       ajutor:'Drept nume Excel ia doar textul. Anii sunt numere. Ce schimbi în tabel?',why:'Cu A1 gol, Excel ia anii drept nume, deci jos apar anii. Merge și cu anii scriși cu apostrof.'}
+     ]},
+
+    /* ---------- PASUL 2: inserezi graficul și îl alegi ---------- */
+    {t:'Inserezi graficul. Graficul ales',
+     text:`<p>Cu zona selectată, deschizi fila <b>Inserare (Insert)</b>. În grupul <b>Diagrame (Charts)</b> apeși pe butonul cu coloane mici și săgeata ▾ (<i>Insert Column or Bar Chart</i>) și alegi prima, <b>Coloană grupată (Clustered Column)</b>.</p>
+<p>Graficul apare lângă tabel, <b>ales</b>: are cerculețe pe margini, iar sus apare fila <b>Proiectare diagramă (Chart Design)</b>. Un clic pe o celulă îl lasă neales. Îl alegi din nou cu un clic pe <b>marginea lui albă</b>, de exemplu în colțul de sus, lângă titlu. Ales așa, îl muți trăgând de margine, îl mărești trăgând de un cerculeț din colț și îl ștergi cu tasta <kbd>Delete</kbd>.</p>`,
+     exemplu:`${fig(IMG+'lista-coloana.webp',1000,574,'Excel, fila Insert: lista butonului Insert Column or Bar Chart, deschisă, cu 2-D Column, 3-D Column, 2-D Bar, 3-D Bar; prima pictogramă, Clustered Column, e încadrată; datele A1:B6 sunt selectate','Lista butonului cu coloane: prima din rândul de sus e Coloană grupată (Clustered Column).')}
+${fig(IMG+'coloana.webp',960,373,'Excel: graficul cu coloane Cărți citite lângă tabel; Ana 6, Bogdan 4, Carla 9, Dan 3, Elena 7; în tabel antetul e încadrat cu roșu, numele cu mov, numerele cu albastru','Graficul, ales: cerculețe pe margini. În tabel, Excel încadrează cu culori ce a luat.')}
+<p>Cu o singură coloană de valori, titlul e chiar antetul ei: Cărți citite.</p>
+<p><b>Atenție la clic.</b> Un clic pe coloane alege doar coloanele de aceeași culoare, iar un clic pe titlu alege doar titlul. Atunci <kbd>Delete</kbd> le șterge numai pe ele. Dacă s-a întâmplat, alege tot graficul de marginea albă, șterge-l și fă-l din nou. Pe telefon, în loc de tasta Delete, atingi butonul Delete de sub grafic.</p>`,
+     altfel:`<p>Graficul e ca o poză lipită pe foaie: o apuci de margine ca s-o muți sau s-o arunci, iar celulele de sub ea rămân cum erau.</p>`,
+     incearca:{t:'excelx',q:'Fă graficul cu coloane al cărților citite: selectează datele, apoi <b>Inserare (Insert)</b> › butonul cu coloane ▾ › <b>Coloană grupată (Clustered Column)</b>.',
+       cols:2,rows:7,cells:CARTI,cuGrafic:true,grafic:{zona:'A1:B6',tip:'column',mesajTip:'Aici se cere graficul cu coloane: alege graficul (clic pe marginea lui albă), apoi butonul cu coloane ▾, prima din listă.'},
+       ajutor:'Trage de la A1 la B6. Apoi fila Inserare (Insert), butonul cu coloane ▾, prima din listă.',
+       why:'Graficul ia A1:B6. Titlul lui e antetul, Cărți citite, iar jos sunt numele.'},
+     inca:[
+      {t:'excelx',q:'Graficul de mai jos e prea mic. Alege-l cu un clic pe marginea lui albă (pe telefon o atingi o dată), apoi trage de cerculețul din colțul din dreapta-jos până trece de linia punctată roșie.',
+       cols:2,rows:7,cells:CARTI,start:{zona:'A1:B6',tip:'column',w:180,h:130,x:6,y:6},grafic:{latimeMin:0.85},
+       ajutor:'Întâi un clic pe marginea albă a graficului: apar cerculețele. Apoi apeși pe cel din colțul din dreapta-jos și tragi spre dreapta.',
+       why:'Graficul mai mare se citește mai ușor. Același gest îl faci în Excel cu mouse-ul.'},
+      {t:'choice',q:'În A1:B5 sunt <b>Elev</b> și <b>Pagini citite</b>, cu numele și numerele. Selectezi A1:B5 și inserezi graficul cu coloane. Ce titlu pune Excel singur?',o:['Pagini citite','Elev','Titlul cărții','Niciun titlu'],ok:0,
+       ajutor:'Cu o singură coloană de valori, de unde ia Excel titlul?',why:'Titlul e antetul coloanei de valori: Pagini citite.'},
+      {t:'excelx',q:'Graficul de mai jos a luat din greșeală și rândul <b>Total</b>. Șterge-l și fă-l din nou, doar cu clasele: zona <b>A1:B4</b>.',
+       cols:2,rows:6,cells:{A1:'Clasa',B1:'Elevi',A2:'8A',B2:24,A3:'8B',B3:27,A4:'8C',B4:22,A5:'Total',B5:73},start:{zona:'A1:B5',tip:'column'},grafic:{zona:'A1:B4',tip:'column',mesajTip:'Aici se cere graficul cu coloane.',mesajZona:'Graficul mai are rândul Total: apare ca încă o categorie, o coloană cât toate clasele la un loc. Alege graficul cu un clic pe marginea lui albă, apasă Delete, selectează doar A1:B4 și inserează-l din nou.'},
+       ajutor:'Un clic pe marginea albă a graficului, apoi Delete (pe telefon, butonul Delete de sub grafic). Selectează A1:B4, apoi Inserare (Insert) › butonul cu coloane ▾ › prima din listă.',
+       why:'Fără rândul Total, coloanele claselor se pot compara: cea mai înaltă e a clasei 8B, cu 27 de elevi.'}
+     ]},
+
+    /* ---------- PASUL 3: tipul potrivit ---------- */
+    {t:'Tipul potrivit: coloane, bare, linie, radial',
+     text:`<p>Tipul îl alegi după întrebarea la care răspunde graficul:</p>
+<ul><li><b>coloane</b> (Column): compari valori între ele, de exemplu cine a citit mai mult;</li>
+<li><b>bare</b> (Bar): tot o comparație, dar culcată; e bună când numele sunt lungi;</li>
+<li><b>linie</b> (Line): cum se schimbă ceva în timp, de exemplu temperatura de la o lună la alta;</li>
+<li><b>radial</b> (Pie): ce parte din întreg e fiecare. Desenează o singură coloană (sau un singur rând) de valori, iar întregul e suma lor.</li></ul>
+<p>Butoanele sunt alături, în grupul Diagrame (Charts): cel cu coloane (și bare), cel cu linie, cel rotund.</p>`,
+     exemplu:`${fig(IMG+'bara.webp',960,373,'Excel: graficul cu bare Cărți citite; barele sunt culcate, Ana jos și Elena sus','Bare: Clustered Bar, din aceeași listă cu coloanele. Primul nume, Ana, e jos.')}
+${fig(IMG+'linie.webp',960,373,'Excel: graficul linie Temperatura, care urcă de la 7 în martie la 25 în iulie','Linie: temperatura crește de la o lună la alta.')}
+${fig(IMG+'radial.webp',960,373,'Excel: graficul radial Elevi, cu felii pentru pe jos, cu autobuzul, cu mașina, cu bicicleta și legenda dedesubt','Radial: cum vin elevii la școală. Cea mai mare felie: pe jos.')}
+<p>Te-ai răzgândit? Alege graficul (clic pe marginea albă), apoi <b>Proiectare diagramă (Chart Design)</b> › <b>Modificare tip diagramă (Change Chart Type)</b>. În fereastră alegi alt tip și apeși OK. Merge și din fila Inserare (Insert): cu graficul ales, butonul altui tip îi schimbă tipul, nu face încă un grafic.</p>`,
+     altfel:`<p>Gândește-te la un termometru la geam, citit în fiecare zi: vrei să vezi dacă se încălzește, deci te interesează drumul în timp: linia. Când vrei doar să afli cine are mai mult, pui valorile una lângă alta: coloanele.</p>`,
+     incearca:{t:'excelx',q:'Vrei să vezi <b>cum se schimbă</b> temperatura de la o lună la alta. Fă graficul potrivit din datele de mai jos.',
+       cols:2,rows:7,cells:TEMP,cuGrafic:true,grafic:{zona:'A1:B6',tip:'line',mesajTip:'Graficul trebuie să arate o schimbare în timp, de la o lună la alta. Care tip arată asta?'},
+       ajutor:'Schimbarea în timp se vede pe o linie: butonul cu linie ▾, prima din listă (Line).',
+       why:'Linia urcă din martie până în iulie: se încălzește.'},
+     inca:[
+      {t:'classify',q:'Ce grafic se potrivește fiecărei întrebări?',cats:['Coloane','Linie','Radial'],items:[['Ce clasă a strâns mai multă hârtie la colectare?',0],['Cum a crescut un răsad de la o săptămână la alta?',1],['Ce parte din banii excursiei merge pe transport?',2],['Ce elev a sărit cel mai departe?',0]],
+       ajutor:'Compari → coloane; o schimbare în timp → linie; o parte din întreg → radial.',why:'Clasele și elevii se compară pe coloane; creșterea în timp se vede pe linie; partea din bani, pe radial.'},
+      {t:'excelx',q:'Graficul de mai jos e cu coloane. Tu vrei să arăți <b>ce parte</b> din clasă vine la școală în fiecare fel. Schimbă tipul graficului, fără să-l faci din nou.',
+       cols:2,rows:6,cells:DRUM,start:{zona:'A1:B5',tip:'column'},grafic:{zona:'A1:B5',tip:'pie',mesajTip:'Ce parte din întreg e fiecare: alt tip de grafic.'},
+       ajutor:'Alege graficul (clic pe marginea albă), apoi Proiectare diagramă (Chart Design) › Modificare tip diagramă (Change Chart Type) › Radială (Pie) › OK.',
+       why:'Radialul arată feliile unui întreg: felia cea mai mare e felul în care vin cei mai mulți elevi. Pe grafic nu scrie încă ce înseamnă fiecare felie; la ultimul pas înveți cum pui asta pe grafic.'},
+      {t:'choice',q:'Faci un grafic radial (Pie) din Luna, 8A și 8B, adică din două coloane de valori. Ce desenează?',o:['Doar clasa 8A, prima coloană de valori','Ambele clase, în două cercuri','Ambele clase, în același cerc','Nimic: Excel nu face graficul'],ok:0,
+       ajutor:'Câte coloane de valori desenează un radial?',why:'Radialul desenează o singură coloană de valori, prima: 8A. Titlul lui devine chiar 8A.'}
+     ]},
+
+    /* ---------- PASUL 4: seriile și categoriile ---------- */
+    {t:'Seriile și categoriile. Comutare rând/coloană',
+     text:`<p>O <mark>serie de date</mark> e un șir de valori care merg împreună, de exemplu cărțile împrumutate de clasa 8A în fiecare lună. Fiecare serie are culoarea ei, iar <mark>legenda</mark>, caseta de sub grafic, spune a cui e fiecare culoare. <mark>Categoriile</mark> sunt numele de pe marginea de jos, aici lunile. La bare stau în stânga, iar la radial sunt feliile.</p>
+<p>Excel alege singur: dacă valorile ocupă mai multe rânduri decât coloane, fiecare coloană devine o serie; altfel, și la număr egal, fiecare rând. Vrei invers? Clic pe grafic, apoi <b>Proiectare diagramă (Chart Design)</b> › <b>Comutare rând/coloană (Switch Row/Column)</b>.</p>`,
+     exemplu:`${fig(IMG+'doua-serii.webp',1000,456,'Excel: fila Chart Design cu butoanele Add Chart Element, Switch Row/Column, Change Chart Type; graficul are două serii, 8A și 8B, pe luni, cu legenda jos','Valorile ocupă 4 rânduri și 2 coloane: seriile sunt coloanele, 8A și 8B; categoriile sunt lunile. Sus: Switch Row/Column.')}
+${fig(IMG+'comutat.webp',960,381,'Excel: după Switch Row/Column, seriile sunt lunile (septembrie, octombrie, noiembrie, decembrie, în legendă), iar jos sunt 8A și 8B; titlul e tot Chart Title','După comutare: lunile sunt seriile, clasele sunt categoriile. Titlul nu se schimbă.')}
+<p>Încă o apăsare pe Comutare rând/coloană te întoarce la 8A și 8B.</p>`,
+     altfel:`<p>Gândește-te la catalog: fiecare elev are un rând cu notele lui. Dacă vrei să urmărești un elev, rândul lui e seria. Dacă vrei să compari toată clasa la o materie, coloana materiei e seria. Comutarea schimbă felul în care citești același tabel.</p>`,
+     incearca:{t:'excelx',q:'Graficul compară clasele în fiecare lună. Fă ca fiecare <b>lună</b> să fie o serie (în legendă: septembrie, octombrie, noiembrie, decembrie), iar jos să apară clasele, 8A și 8B.',
+       cols:3,rows:6,cells:LUNI,start:{zona:'A1:C5',tip:'column'},grafic:{zona:'A1:C5',serii:['septembrie','octombrie','noiembrie','decembrie'],categorii:['8A','8B']},
+       ajutor:'Clic pe grafic, apoi fila Proiectare diagramă (Chart Design) › Comutare rând/coloană (Switch Row/Column).',
+       why:'Acum lunile sunt seriile, iar clasele sunt categoriile: vezi luna cu luna în fiecare clasă.'},
+     inca:[
+      {t:'excelx',q:'Fă un grafic cu coloane în care fiecare <b>materie</b> să fie o serie: în legendă Română, Matematică, Informatică, iar jos elevii.',
+       cols:4,rows:5,cuGrafic:true,cells:{A1:'Elev',B1:'Română',C1:'Matematică',D1:'Informatică',A2:'Ana',B2:9,C2:8,D2:10,A3:'Bogdan',B3:7,C3:9,D3:8,A4:'Carla',B4:10,C4:7,D4:9},
+       grafic:{zona:'A1:D4',tip:'column',serii:['Română','Matematică','Informatică'],categorii:['Ana','Bogdan','Carla'],mesajTip:'Aici se cere graficul cu coloane.'},
+       ajutor:'Valorile ocupă 3 rânduri și 3 coloane, adică tot atâtea. La număr egal, Excel face din fiecare rând o serie: elevii. După inserare: Proiectare diagramă (Chart Design) › Comutare rând/coloană (Switch Row/Column).',
+       why:'După comutare, materiile sunt seriile, iar elevii sunt categoriile.'},
+      {t:'choice',q:'În A1:C4 sunt Clasa, Fete și Băieți, apoi clasele 8A, 8B, 8C cu numerele lor. Faci graficul cu coloane. Ce sunt seriile?',o:['Fete și Băieți','8A, 8B și 8C','Clasa','Doar Fete'],ok:0,
+       ajutor:'Valorile ocupă 3 rânduri și 2 coloane. Ce devine serie?',why:'Valorile ocupă mai multe rânduri decât coloane, deci fiecare coloană e o serie: Fete și Băieți.'},
+      {t:'excelx',q:'Vrei un grafic cu coloane al elevilor școlii pe ani: <b>o singură serie</b>, Elevi, iar jos anii. Repară tabelul, apoi fă graficul.',
+       cols:2,rows:6,cells:ANI,cuGrafic:true,grafic:{zona:'A1:B5',tip:'column',oSerie:'Elevi, iar jos anii',categorii:['2023','2024','2025','2026']},solutie:{gol:['A1']},
+       ajutor:'Capcana anilor, din pasul „Selectezi datele”: clic pe A1 și apasă Delete, ca celula din colț să fie goală. Dacă ai făcut deja graficul, alege-l cu un clic pe marginea lui albă, apasă Delete și fă-l din nou: graficul vechi nu se repară singur, nici cu Comutare rând/coloană.',
+       why:'Cu A1 gol, Excel ia anii drept categorii: o singură serie, Elevi.'},
+      {t:'tf',q:'Ai făcut graficul cu anii scriși ca numere: are două serii, Anul și Elevi. Golești A1, iar graficul se repară singur.',ok:false,
+       ajutor:'Graficul își păstrează seriile de la început?',why:'Fals. Graficul făcut rămâne cu două serii. Îl ștergi (clic pe marginea albă, apoi Delete) și îl faci din nou, cu A1 gol.'}
+     ]},
+
+    /* ---------- PASUL 5: titlul, legenda, etichetele de date ---------- */
+    {t:'Titlul, legenda și etichetele de date',
+     text:`<p>Titlul spune ce arată graficul. Excel pune singur antetul seriei sau, la mai multe serii, <i>Titlu diagramă (Chart Title)</i>. Îl schimbi așa: <b>un singur clic</b> pe titlu (apare un chenar în jurul lui), scrii titlul tău și apeși <kbd>Enter</kbd>. Ce scrii înlocuiește tot titlul.</p>
+<p><mark>Etichetele de date</mark> sunt numerele scrise pe grafic, lângă fiecare coloană sau punct. Le pornești așa: clic pe grafic › <b>Proiectare diagramă (Chart Design)</b> › <b>Adăugare element de diagramă (Add Chart Element)</b> › <b>Etichete de date (Data Labels)</b> › locul lor. Locurile depind de tip: la coloane, <b>Capăt exterior (Outside End)</b>; la linie, <b>Right</b> (în dreapta punctului). Din același meniu pornești sau oprești Legendă (Legend) și Titlu diagramă (Chart Title).</p>`,
+     exemplu:`${fig(IMG+'elemente.webp',960,373,'Excel: graficul cu titlul Cărți citite în octombrie și cu numerele 6, 4, 9, 3, 7 deasupra coloanelor','Titlul tău și etichetele de date, la coloane: Outside End.')}
+${fig(IMG+'meniu-elemente.webp',1000,537,'Excel: fila Chart Design, lista Add Chart Element deschisă la Data Labels, cu None, Center, Inside End, Inside Base, Outside End, Data Callout (lista de la coloane); în dreapta graficului, butonul +','Add Chart Element › Data Labels, la un grafic cu coloane. În dreapta graficului: butonul +.')}
+<p>Mai repede: butonul <b>+</b> din dreapta graficului ales, <b>Elemente diagramă (Chart Elements)</b>, are bifele Titlu diagramă, Legendă și Etichete de date.</p>
+<p>Două clicuri rare (nu dublu-clic) pe titlu pun cursorul în text; un dublu-clic rapid deschide panoul Format Chart Title: închide-l cu ✕. Ce scrii în text se adaugă la titlul vechi. Atunci dai clic pe o celulă și reiei cu un singur clic.</p>
+<p>Graficul e legat de tabel: schimbi un număr, iar coloana lui și eticheta se schimbă singure.</p>`,
+     altfel:`<p>Titlul e ca titlul unei compuneri: îți spune dinainte despre ce e vorba. Etichetele sunt ca prețurile lipite pe produse: nu mai ghicești cât e, citești.</p>`,
+     incearca:{t:'excelx',q:'Scrie titlul <b>Cărți citite în octombrie</b> și pornește etichetele de date.',
+       cols:2,rows:7,cells:CARTI,start:{zona:'A1:B6',tip:'column'},grafic:{titlu:'Cărți citite în octombrie',etichete:true},
+       ajutor:'Un singur clic pe titlu, scrie, Enter. Apoi clic pe grafic › Proiectare diagramă (Chart Design) › Adăugare element de diagramă (Add Chart Element) › Etichete de date (Data Labels) › Capăt exterior (Outside End).',
+       why:'Titlul spune acum și luna, iar numerele se citesc direct pe coloane.'},
+     inca:[
+      {t:'excelx',q:'Graficul are titlul pus de Excel, Titlu diagramă. Scrie titlul <b>Cărți împrumutate pe luni</b>. Legenda rămâne: fără ea nu știi care culoare e 8A.',
+       cols:3,rows:6,cells:LUNI,start:{zona:'A1:C5',tip:'column'},grafic:{titlu:'Cărți împrumutate pe luni',legenda:true},
+       ajutor:'Un singur clic pe titlu, scrii titlul și apeși Enter.',why:'Titlul spune ce arată graficul; legenda spune care serie e 8A și care e 8B.'},
+      {t:'excelx',q:'Dan a citit de fapt <b>10</b> cărți, nu 3. Corectează numărul în tabel și uită-te cum se schimbă coloana lui Dan și eticheta ei.',
+       cols:2,rows:7,cells:CARTI,start:{zona:'A1:B6',tip:'column',et:'ext'},grafic:{valori:{B5:10},etichete:true},solutie:{valori:{B5:10}},
+       ajutor:'Clic pe B5, scrie 10 și apasă Enter. Graficul nu trebuie refăcut.',why:'Coloana lui Dan a crescut singură, iar eticheta arată 10: graficul e legat de tabel.'},
+      {t:'choice',q:'Graficul are titlul Cărți citite, pus de Excel din antet. Scrii în B1 doar <b>Cărți</b> și apeși Enter. Ce titlu are acum graficul?',o:['Cărți','Cărți citite','Titlu diagramă (Chart Title)','Niciun titlu'],ok:0,
+       ajutor:'De unde ia Excel titlul pus singur?',why:'Titlul pus de Excel urmează antetul: devine Cărți. Un titlu scris de tine ar fi rămas neschimbat.'}
+     ]}
+   ],
+   atelier:{t:'excelx',titlu:'Atelier: târgul de toamnă',
+    intro:`<p>Foaia de mai jos se poartă ca Excel-ul. Deasupra ei sunt <strong>testele</strong>: fiecare se bifează singur când graficul tău e cum trebuie. La final apasă <b>Verifică</b>.</p>`,
+    q:'Clasele 8A, 8B, 8C și 8D au vândut prăjituri la târgul de toamnă: miercuri, joi și vineri. În tabel e câți lei a încasat fiecare clasă în fiecare zi. Vrei să vezi <b>cum s-au schimbat încasările</b> fiecărei clase de la o zi la alta. <b>1.</b> Selectează tot tabelul, cu antet. <b>2.</b> Inserează graficul potrivit pentru o schimbare în timp. <b>3.</b> Fiecare clasă trebuie să fie o serie: în legendă 8A, 8B, 8C și 8D, iar jos zilele. <b>4.</b> Titlul: <b>Încasări la târg</b>. <b>5.</b> Pornește etichetele de date.',
+    cols:4,rows:6,cuGrafic:true,
+    cells:{A1:'Clasa',B1:'miercuri',C1:'joi',D1:'vineri',A2:'8A',B2:45,C2:60,D2:90,A3:'8B',B3:50,C3:42,D3:80,A4:'8C',B4:38,C4:66,D4:72,A5:'8D',B5:55,C5:48,D5:70},
+    grafic:{zona:'A1:D5',tip:'line',serii:['8A','8B','8C','8D'],categorii:['miercuri','joi','vineri'],legenda:true,titlu:'Încasări la târg',etichete:true,mesajTip:'Graficul trebuie să arate cum se schimbă încasările de la o zi la alta: o schimbare în timp.'},
+    teste:[
+     {ce:'Graficul ia tot tabelul, cu antet: A1:D5',grafic:{zona:'A1:D5'}},
+     {ce:'Tipul arată o schimbare în timp',grafic:{tip:'line'}},
+     {ce:'Fiecare clasă e o serie (în legendă 8A, 8B, 8C, 8D), iar jos sunt zilele',grafic:{serii:['8A','8B','8C','8D'],categorii:['miercuri','joi','vineri'],legenda:true}},
+     {ce:'Titlul e „Încasări la târg”',grafic:{titlu:'Încasări la târg'}},
+     {ce:'Etichetele de date arată sumele',grafic:{etichete:true}}],
+    ajutor:'Selectează A1:D5, apoi Inserare (Insert) › butonul cu linie ▾ › Line. Valorile ocupă 4 rânduri și 3 coloane, deci Excel face din zile seriile: Proiectare diagramă (Chart Design) › Comutare rând/coloană (Switch Row/Column). Un singur clic pe titlu, scrie Încasări la târg, Enter. Etichetele: Adăugare element de diagramă (Add Chart Element) › Etichete de date (Data Labels) › Right.',
+    why:'Linia arată, pentru fiecare clasă, cum au urcat și au coborât încasările. Vineri au încasat cel mai mult toate clasele.',
+    inca:[
+     {t:'excelx',titlu:'Atelier: elevii claselor pe ani',q:'În rândul 1 sunt anii, scriși ca numere. Fă un grafic cu coloane cu elevii claselor 8A și 8B pe ani: în legendă <b>8A</b> și <b>8B</b>, jos anii <b>2024</b>, <b>2025</b>, <b>2026</b>. Atenție la anii din antet.',
+      cols:4,rows:4,cuGrafic:true,cells:{A1:'Clasa',B1:2024,C1:2025,D1:2026,A2:'8A',B2:24,C2:26,D2:25,A3:'8B',B3:22,C3:25,D3:27},
+      grafic:{zona:'A1:D3',tip:'column',serii:['8A','8B'],categorii:['2024','2025','2026'],mesajTip:'Aici se cere graficul cu coloane.'},solutie:{gol:['A1']},
+      teste:[
+       {ce:'Seriile sunt clasele: 8A și 8B',grafic:{serii:['8A','8B']}},
+       {ce:'Jos sunt anii 2024, 2025, 2026',grafic:{categorii:['2024','2025','2026']}},
+       {ce:'Graficul e cu coloane',grafic:{tip:'column'}}],
+      ajutor:'Anii-numere din antet nu sunt luați drept nume. Clic pe A1, Delete (celula din colț rămâne goală), apoi selectează A1:D3 și inserează graficul cu coloane. Un grafic făcut înainte îl alegi cu un clic pe marginea lui albă, îl ștergi cu Delete și îl faci din nou.',
+      why:'Cu A1 gol, anii devin categoriile, iar clasele rămân seriile.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Vrei să arăți ce parte din banii clasei merge pe fiecare cheltuială: excursie, cadouri, materiale. Ce grafic alegi?',o:['Radial (Pie)','Linie (Line)','Coloane (Column)','Bare (Bar)'],ok:0,
+     ajutor:'Banii clasei sunt întregul. Ce grafic arată părțile unui întreg?',why:'Radialul împarte întregul în felii: vezi dintr-o privire ce parte merge pe excursie.'},
+    {t:'excelx',q:'Fă un grafic cu coloane în care fiecare <b>sport</b> să fie o serie: în legendă Fotbal, Baschet, Volei, iar jos clasele.',
+     cols:4,rows:5,cuGrafic:true,cells:{A1:'Clasa',B1:'Fotbal',C1:'Baschet',D1:'Volei',A2:'8A',B2:10,C2:6,D2:9,A3:'8B',B3:7,C3:8,D3:11,A4:'8C',B4:12,C4:5,D4:7},
+     grafic:{zona:'A1:D4',tip:'column',serii:['Fotbal','Baschet','Volei'],categorii:['8A','8B','8C'],mesajTip:'Aici se cere graficul cu coloane.'},
+     ajutor:'Valorile ocupă tot atâtea rânduri câte coloane, deci Excel ia rândurile drept serii. După inserare: Proiectare diagramă (Chart Design) › Comutare rând/coloană (Switch Row/Column).',
+     why:'După comutare, sporturile sunt seriile, iar clasele sunt categoriile.'},
+    {t:'choice',q:'Selectezi <b>A2:B6</b>: numele elevilor și numerele, <b>fără</b> rândul de antet. Inserezi graficul cu coloane. Ce titlu pune Excel singur?',o:['Titlu diagramă (Chart Title)','Cărți citite, din coloana B','Ana, primul nume din tabel','Elev, din celula A1'],ok:0,
+     ajutor:'Antetul nu e în zonă. De unde să ia Excel numele datelor?',why:'Fără antet, Excel nu știe numele datelor și pune Titlu diagramă (Chart Title).'},
+    {t:'excelx',q:'Vrei un grafic <b>linie</b> cu temperatura medie pe ani: o singură serie, Temperatura, iar jos anii. Repară tabelul, apoi fă graficul.',
+     cols:2,rows:6,cuGrafic:true,cells:{A1:'Anul',B1:'Temperatura',A2:2023,B2:11,A3:2024,B3:12,A4:2025,B4:11,A5:2026,B5:13},
+     grafic:{zona:'A1:B5',tip:'line',oSerie:'Temperatura, iar jos anii',categorii:['2023','2024','2025','2026'],mesajTip:'Aici se cere graficul linie.'},solutie:{gol:['A1']},
+     ajutor:'Anii sunt numere: cu Anul în A1, devin încă o serie. Golește A1 sau scrie anii cu apostrof, apoi fă graficul din nou.',
+     why:'Cu A1 gol, anii sunt categoriile și rămâne o singură serie, Temperatura.'},
+    {t:'choice',q:'Graficul linie arată temperatura pe luni. În tabel schimbi temperatura din mai din 18 în 21 și apeși Enter. Ce face graficul?',o:['Punctul din mai urcă singur la 21','Nu se schimbă: trebuie făcut din nou','Se șterge','Apare încă un grafic'],ok:0,
+     ajutor:'Graficul e legat de tabel?',why:'Graficul e legat de celulele din tabel: punctul din mai urcă singur.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Excel-ul adevărat',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:`<p>Faci același lucru în Excel, pe calculator, fără ajutor: la fiecare pas scrie ce trebuie să vezi, ca să verifici singur.</p>
+${fig(IMG+'laborator-gata.webp',1000,445,'Excel: registrul biblioteca_lectia11.xlsx la sfârșit: tabelul Luna, 8A, 8B și graficul linie Cărți împrumutate pe luni, cu etichete de date și cu 30 la 8B în decembrie','Așa arată registrul la sfârșit.')}
+${fig(IMG3+'confirma-inlocuire.webp',458,176,'Excel: fereastra Confirm Save As, cu întrebarea already exists, do you want to replace it și butoanele Yes și No','La Salvare ca, dacă numele există deja: apeși No și schimbi numele.')}`,
+    pasi:PROVOCARE},
+  diploma:{titlu:'Cel care face graficul potrivit',
+    rezumat:'a selectat antetul și valorile, a inserat grafice din fila Inserare, a ales, a mutat și a șters graficul de marginea lui albă, a ales tipul potrivit (coloane, bare, linie, radial), a deosebit seriile de categorii, a comutat rândurile cu coloanele, a ocolit capcana anilor scriși ca numere și a pus titlu, legendă și etichete de date',
+    aplicatie:'Excel-ul adevărat',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
