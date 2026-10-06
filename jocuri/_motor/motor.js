@@ -223,6 +223,27 @@ function aplicatieReala(Lv){
   if(!pasi.length)return null;
   return {aplicatie:A.aplicatie||D.aplicatie||'',titlu:A.titlu||'',scurt:A.scurt||'',intro:A.intro||'',pasi};
 }
+/* PE TELEFON (06.10.2026, profesorul: „la fisierul xlsx care se descarca pentru a fi editat - in general nu merge editarea
+   pe telefon”; o elevă vedea registrul, dar nu putea scrie în el = era deschis într-o previzualizare). Pasul „în aplicația
+   adevărată” care dă un fișier de descărcat (.xlsx/.docx/.pptx) spune, pentru telefon, ce aplicație gratuită îl modifică,
+   de unde se instalează și cum îl deschizi cu ea. Linkurile magazinelor verificate pe 06.10.2026 (200, titlul aplicației);
+   „atinge de două ori” = ca în ghidurile cu capturi (jocuri/_ghiduri/sheets, slides). */
+const APP_TEL={
+  xlsx:{n:'Foi de calcul Google',en:'Google Sheets',play:'com.google.android.apps.docs.editors.sheets',ios:'842849113',scrii:'Atinge <b>de două ori</b> o celulă ca să scrii în ea.'},
+  docx:{n:'Documente Google',en:'Google Docs',play:'com.google.android.apps.docs.editors.docs',ios:'842842640',scrii:'Atinge textul ca să scrii în document (dacă vezi jos un creion, atinge-l întâi).'},
+  pptx:{n:'Prezentări Google',en:'Google Slides',play:'com.google.android.apps.docs.editors.slides',ios:'879478102',scrii:'Atinge <b>de două ori</b> o casetă ca să scrii în ea.'}};
+function telefonFisier(A){
+  const fis=[];String(A.pasi.join(' ')).replace(/href="([^"#?]+\.(xlsx|docx|pptx))"/gi,(m,f,x)=>{f=f.split('/').pop();if(!fis.some(e=>e.f===f))fis.push({f,x:x.toLowerCase()});return m});
+  if(!fis.length)return '';
+  const ghid=new URL('../ghiduri/#instalare',MOTOR_URL).href;
+  return fis.filter((e,i)=>fis.findIndex(o=>o.x===e.x)===i).map(e=>{const a=APP_TEL[e.x],nume=fis.filter(o=>o.x===e.x).map(o=>`<b>${esc(o.f)}</b>`).join(', ');
+    return `<div class="peek reading tel-fisier" style="display:block;margin:0 0 12px"><div class="lbl">📱 Lucrezi pe telefon?</div>
+<p>Pe telefon, fișierul ${nume} se poate <b>modifica</b> doar cu aplicația gratuită <b>${a.n}</b> <i>(${a.en})</i>. Dacă îl vezi, dar nu poți scrie în el, l-ai deschis doar pentru citit, într-o previzualizare.</p>
+<ol><li>Instalează aplicația: <a href="https://play.google.com/store/apps/details?id=${a.play}" target="_blank" rel="noopener">Magazin Play</a> (Android) sau <a href="https://apps.apple.com/app/id${a.ios}" target="_blank" rel="noopener">App Store</a> (iPhone). Sub nume trebuie să scrie <b>Google LLC</b>.</li>
+<li>Descarcă fișierul (linkul din pașii de mai jos). Deschide aplicația <b>${a.n}</b>, atinge <b>dosarul</b> din bara de sus, cea cu „Caută în …” <i>(Search)</i>, și alege fișierul descărcat, de obicei din <b>Descărcări</b> <i>(Downloads)</i>.</li>
+<li>${a.scrii} Butoanele stau în alte locuri decât pe calculator: ce nu găsești pe telefon faci la școală.</li></ol>
+<p style="margin:6px 0 0"><a href="${esc(ghid)}">Ghidul pas cu pas: cum instalezi aplicația și cum deschizi fișierul</a></p></div>`}).join('');
+}
 /* Numele pasului (27.09.2026, judecătorul lecției V/4: „aplicația adevărată” într-o lecție care tocmai a predat că
    aplicație = program, deși pasul se face la calculatorul din laborator): dacă `aplicatieReala.titlu` există, EL e
    textul pe buton, în titlu, în firimituri, în bara de sus, pe diplomă și în cuprins; `aplicatieReala.scurt` e
@@ -587,6 +608,7 @@ function realPage(){
     <h2 style="margin:8px 0 6px">${esc(A.titlu||'Acum în aplicația adevărată')}</h2>
     <div class="reading">${A.intro||(A.titlu?'<p>Ai exersat în simulator. Acum faci același lucru pe bune. Urmează pașii de mai jos, unul câte unul.</p>':'<p>Ai exersat în simulator. Acum faci același lucru pe bune, în aplicația adevărată. Urmează pașii de mai jos, unul câte unul.</p>')}</div>
     ${A.aplicatie?`<p class="hint" style="margin:0 0 6px">Unde lucrezi: <b>${esc(A.aplicatie)}</b></p>`:''}
+    ${telefonFisier(A)}
     <ol class="check aplicatie-reala">${A.pasi.map(x=>`<li>${x}</li>`).join('')}</ol>
     <p class="hint">Nu ai acum calculatorul în față? Treci la verificare; pașii îi găsești din nou pe diplomă.</p>
     <div class="row pas-nav" style="margin-top:22px">
