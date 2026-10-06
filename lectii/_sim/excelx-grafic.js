@@ -27,6 +27,10 @@
    6. TITLUL (r1_excel.json › titlu_clicuri): UN clic îl alege; ce scrii apoi + Enter înlocuiește tot titlul. Al DOILEA
       clic pune cursorul în text: ce scrii se adaugă acolo („CharAbct Title”), Enter face un rând nou, Esc lasă textul
       scris; un clic pe o celulă îl păstrează, iar un singur clic pe titlu + scris îl înlocuiește iar tot.
+      Un DUBLU-CLIC rapid pe titlu (j2_excel.json › K2; reparația 4: _proba/r4_excel.json › D1-D3, r4_excel2.json › D4,
+      r4_excel4.json › D6, capturile _proba/_r4_excel_panou.png, _r4_excel_dupa_x.png) lasă titlul doar ales (ChartTitle)
+      și deschide în dreapta panoul Format Chart Title (Title Options, Text Options, ✕); ce scrii + Enter înlocuiește tot
+      titlul („Abc”), iar Delete îl șterge, și cu panoul deschis; ✕ închide panoul, iar titlul rămâne ales. Clicul pe titlu ales + Delete îl șterge (j4_excel.json › T).
    7. Comutare rând/coloană: seriile devin categorii și invers; încă o apăsare revine. O singură serie cu titlul pus
       automat: după comutare titlul dispare, la revenire apare iar.
    8. Schimbarea tipului: titlul tău, legenda și etichetele rămân; etichetele iau locul implicit al noului tip
@@ -38,6 +42,9 @@
       desen -> nimic; titlul -> titlul; legenda -> legenda; numerele din stânga -> axa (Delete o șterge); o etichetă ->
       etichetele acelei serii. Comanda Undo după ștergerea unei serii o aduce înapoi, dar „Chart Title” dispare
       (r1_excel2.json). Graficul se MUTĂ doar trăgând de marginea albă; tras din mijloc nu se mișcă (j1_plus.json).
+      Tot graficul șters (marginea + Delete) revine la Ctrl+Z, ales de margine (ChartArea): j4_excel.json › Z, Undo prin
+      COM; _proba/r4_excel.json › Z2, Ctrl+Z ca tastă. Anularea e UNA pentru foaie și grafic: Ctrl+Z (și ↶) desface întâi
+      ce s-a făcut ultima dată, în foaie sau în grafic.
    12. AXA cu numere (j1_fapte, r1_excel2): pornește de la 0, afară de valorile apropiate ((max-min)/max < 1/6: min - (max-min)/2);
       sus: max + 5% din (max - min), rotunjit la pas; pasul = cel mai mic dintre 1, 2, 5 × 10^n cu cel mult 10 intervale
       (la bare, pe orizontală, cel mult 7). Ex.: 120…140 -> 110…145 din 5 în 5; 3…9 -> 0…10 din 1 în 1; la bare 0…10 din 2.
@@ -50,11 +57,14 @@
    ABATERI SPUSE PE ECRAN: graficul apare SUB foaie, nu peste ea; un al doilea grafic (făcut cu primul neales) îl
    înlocuiește pe primul; „Diagrame recomandate” și variantele 3-D/stratificate nu se fac aici; panoul „+” (Chart Elements)
    are doar cele trei bife ale lecției; pe telefon, tasta Delete e un buton sub grafic. NESPUSE, mici: etichetele de jos
-   lungi se rup pe două rânduri, iar dacă un cuvânt nu încape se rotesc la 45°; locul cursorului la al doilea clic pe titlu e aproximat.
+   lungi se rup pe două rânduri, iar dacă un cuvânt nu încape se rotesc la 45°; locul cursorului la al doilea clic pe titlu e aproximat;
+   panoul Format Chart Title e mic, lângă grafic, doar cu numele lui și ✕, și se închide când alegi altă parte (în Excel rămâne
+   deschis și trece la partea aleasă: Format Chart Area, apoi Format Shape după un clic pe o celulă — r4_excel.json › D3).
 
    CÂMPURI pe întrebare: start:{zona,tip,plot?,titlu?,et?,leg?,w?,x?,y?} (grafic deja făcut), grafic:{zona, tip (sau
-   listă), serii:[nume…], categorii:[…], oSerie, titlu, etichete, legenda, latimeMin, mesajTip} = ce trebuie să fie la
-   „Verifică”; teste:[{ce, grafic:{…o parte…}}] = testele numite, bifate pe loc; solutie:{gol:[…], valori:{…}} = ce
+   listă), serii:[nume…], categorii:[…], oSerie, titlu, etichete, legenda, latimeMin, mesajTip, mesajZona} = ce trebuie să fie la
+   „Verifică”; mesajZona = text dat la ORICE zonă greșită, sau {rand, text}: textul doar când zona graficului CUPRINDE
+   rândul `rand` (ex. rândul Total), iar la celelalte zone greșite mesajul comun cu zona cerută; teste:[{ce, grafic:{…o parte…}}] = testele numite, bifate pe loc; solutie:{gol:[…], valori:{…}} = ce
    schimbă rezolvarea în foaie înainte de grafic (ex. golește A1). Fără start/grafic, foaia e cea din excelx.js.
    STAREA unui grafic (G): tip, zona, plot, titlu{mod:'loc'|'auto'|'tau'|'ascuns',text}, leg, et, x, y, w, h, sel (ales),
    parte (ce e ales: 'grafic'|'titlu'|'trasare'|'leg'|'axaV'|'axaC'|'serie:<cheie>'|'et:<cheie>'), sterse:[cheie],
@@ -143,6 +153,13 @@ function css(){if(cssPus)return;cssPus=true;const s=document.createElement('styl
 .xg-dlg .jos{display:flex;gap:6px;justify-content:flex-end}
 .xg-dlg .jos button{min-width:72px;min-height:36px;border:1px solid var(--line);background:var(--paper2);color:var(--ink);border-radius:4px;cursor:pointer;font:inherit}
 .xg-dlg .jos button.ok{background:#217346;border-color:#217346;color:#fff}
+.xg-fmt{position:absolute;z-index:7;background:var(--paper);color:var(--ink);border:1px solid var(--line);box-shadow:0 6px 18px #0005;border-radius:6px;padding:6px 8px 8px;font:.84rem "Segoe UI",system-ui,sans-serif;box-sizing:border-box}
+.xg-fmt .cap{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.xg-fmt .cap b{font-size:.95rem}
+.xg-fmt .cap button{min-width:36px;min-height:36px;border:1px solid var(--line);background:var(--paper2);color:var(--ink);border-radius:4px;cursor:pointer;font-size:1rem}
+.xg-fmt .file{display:flex;gap:10px;border-bottom:1px solid var(--line);margin:2px 0 4px;padding-bottom:3px;font-size:.78rem;color:var(--ink2)}
+.xg-fmt .file span:first-child{color:#217346;font-weight:700}
+.xg-fmt .nota{font-size:.74rem;color:var(--ink2);margin:4px 0 0}
 .xg-teste{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px;background:var(--paper2);font-size:.9rem}
 .xg-teste .lbl{font-weight:700;margin-bottom:2px}
 .xg-teste ul{margin:0;padding:0;list-style:none}
@@ -311,7 +328,10 @@ function desenSVG(G,d,W,H,tH){
 /* ================= verificarea (pe ce e ACUM în grafic și în foaie) ================= */
 function verifica(sp,G,d,zonaW,val){
   if(!G)return 'Nu există încă un grafic. Selectează datele, apoi Inserare (Insert) › grupul Diagrame (Charts) și tipul de grafic.';
-  if(sp.zona&&G.zona!==zs(pz(sp.zona)))return sp.mesajZona||`Graficul ia datele din ${G.zona}, dar aici trebuie ${zs(pz(sp.zona))}: antetul și valorile, fără rânduri goale. Alege graficul cu un clic pe marginea lui albă, apasă Delete, selectează zona și inserează-l din nou.`;
+  if(sp.zona&&G.zona!==zs(pz(sp.zona))){const mz=sp.mesajZona,z=pz(G.zona);
+    if(mz&&typeof mz==='object'){if(z&&mz.rand>=z.r1+1&&mz.rand<=z.r2+1)return mz.text}   // {rand,text}: doar când zona chiar cuprinde rândul acela (judecata 4, M2)
+    else if(mz)return mz;
+    return `Graficul ia datele din ${G.zona}, dar aici trebuie ${zs(pz(sp.zona))}: antetul și valorile, fără rânduri goale. Alege graficul cu un clic pe marginea lui albă, apasă Delete, selectează zona și inserează-l din nou.`}
   if(sp.tip&&![].concat(sp.tip).includes(G.tip))return sp.mesajTip||`Graficul e ${NUME[G.tip]}. Gândește-te la întrebarea la care răspunde graficul și alege tipul potrivit.`;
   if(sp.oSerie&&d.serii.length!==1)return `Graficul are ${d.serii.length} serii (${d.serii.map(numeSerie).join(', ')||'niciuna'}), dar aici trebuie o singură serie: ${esc(sp.oSerie)}.`;
   if(sp.serii){const a=d.serii.map(numeSerie).map(norm),b=sp.serii.map(norm);if(a.join('|')!==b.join('|'))return `Seriile graficului sunt acum: ${d.serii.map(numeSerie).join(', ')||'niciuna'}. Aici trebuie să fie: ${sp.serii.join(', ')}. Uită-te la legendă.`}
@@ -336,7 +356,7 @@ function render(Q,body,api){
   body.classList.toggle('xg-host',cuGrafic);body.classList.toggle('xg-tel',cuGrafic&&PE_TEL());
   if(!cuGrafic)return baza.render(Q,body,api);
   css();
-  const I={G:null,tab:'insert',meniu:null,plus:false,dlg:null,edT:null,ist:[],toast:null};body._xg=I;
+  const I={G:null,tab:'insert',meniu:null,plus:false,dlg:null,edT:null,fmt:false,ist:[],toast:null};body._xg=I;leagaAnulareaG();
   let S=null;
   const api2=Object.assign({},api,{
     done:()=>false,   // foaia și graficul rămân vii după „Corect!” (schimbi o valoare și vezi graficul cum se reface)
@@ -353,7 +373,15 @@ function render(Q,body,api){
   const cap=document.createElement('p');cap.className='xg-cap';cap.innerHTML='Graficul apare aici, sub foaie (în Excel apare peste foaie, lângă tabel). Un grafic nou, făcut când cel vechi nu e ales, îl înlocuiește aici pe cel vechi (în Excel ar rămâne amândouă).'+(PE_TEL()?' Pe telefon: atingi marginea albă a graficului ca să-l alegi, apoi îl tragi cu degetul sau tragi de un cerculeț din colț. În loc de tasta Delete ai butonul <b>Delete</b> de sub grafic. O celulă o golești din bara de formule (ștergi textul, apoi ↵).':'');zona.after(cap);
   function zonaW(){return zona.clientWidth||340}
   function valNum(a){const c=celula(body,S,a);return c.t==='num'?c.v:null}
-  const salveaza=tag=>{I.ist.push({g:JSON.stringify(I.G),tag:tag||''});if(I.ist.length>40)I.ist.shift()};
+  /* istoricul graficului; fiecare pas ține minte și foaia de atunci (raw), ca Ctrl+Z / ↶ să desfacă întâi ce s-a făcut
+     ULTIMA dată: dacă foaia s-a schimbat de la ultimul pas al graficului, anulează foaia (motorul), altfel graficul */
+  const rawAcum=()=>{const R=S&&S.RAW||{};return Object.keys(R).filter(k=>R[k]!=null&&R[k]!=='').sort().map(k=>k+'='+R[k]).join('\u0001')};
+  const salveaza=tag=>{I.ist.push({g:JSON.stringify(I.G),tag:tag||'',raw:rawAcum()});if(I.ist.length>40)I.ist.shift()};
+  const poateAnula=()=>I.ist.length>0&&I.ist[I.ist.length-1].raw===rawAcum();
+  I.anuleazaG=()=>{if(!zona.isConnected||!poateAnula())return false;anuleaza();return true};   // doar foaia vie (proiectul VIII/12 desenează alte etape în același loc)
+  /* ↶ al foii (motorul îl desenează stins când foaia n-are ce anula): aprins cât graficul are ce anula */
+  function butonAnulare(){const u=body.querySelector('[data-ud="undo"]');if(!u)return;const p=poateAnula();
+    if(p&&u.disabled){u.disabled=false;u.dataset.xg='1'}else if(!p&&u.dataset.xg==='1'){u.disabled=true;delete u.dataset.xg}}
   function construieste(zt,tip,poz){const z=regiune(body,S,pz(zt)||{c1:0,c2:0,r1:0,r2:0});const G={tip,zona:zs(z),plot:'col',titlu:{mod:'loc'},leg:null,et:null};
     const an=analiza(body,S,z);G.plot=an.implicit;G.an={lr:an.lr,lc:an.lc,gol:an.gol};const d=date(body,S,G),n=d.serii.length;
     G.titlu={mod:(tip==='pie'?(n&&d.serii[0].nume):(n===1&&d.serii[0].nume))?'auto':'loc'};
@@ -408,11 +436,13 @@ function render(Q,body,api){
   /* ---------- zona graficului ---------- */
   function desen(){panglica();const G=I.G,W=zonaW();
     let h='';let refa=false;
+    if(I.fmt&&!(G&&G.sel&&G.parte==='titlu'))I.fmt=false;   // panoul Format Chart Title ține cât e ales titlul (abatere: în Excel trece la partea aleasă)
     if(!G){h+=`<div class="xg-gol">Aici apare graficul (diagrama).</div>`;zona.style.height='';}
     else{const d=date(body,S,G);G.x=Math.max(0,Math.min(G.x,W-60));const t=titluAfisat(G,d),rand=t?String(t).split('\n').length:0,tH=t?34+18*(rand-1):0;
       const yR=G.y+G.h+6,yF=yR+(G.sel?(PE_TEL()?82:40):0),   /* pe telefon rândul „Ales acum” are și butonul Delete: două rânduri */
         yP=yF+(I.edT?(I.edT.in?78:56):0);
-      zona.style.height=Math.max(230,yP+(I.plus?190:I.dlg?150:8))+'px';
+      const fW=Math.min(250,W-8),fDreapta=I.fmt&&W-(G.x+G.w+44)>=fW+6;   // panoul în dreapta graficului, dacă încape; altfel sub el
+      zona.style.height=Math.max(230,yP+(I.plus?190:I.dlg?150:I.fmt&&!fDreapta?175:8),I.fmt&&fDreapta?G.y+175:0)+'px';
       h+=`<div class="xg-ob${G.sel?' sel':''}" tabindex="0" role="group" aria-label="Graficul (diagrama) ${esc(SCURT[G.tip])}${t?', cu titlul '+esc(t):''}" style="left:${G.x}px;top:${G.y}px;width:${G.w}px;height:${G.h}px">
         <svg viewBox="0 0 ${G.w} ${G.h}" role="img" aria-label="${esc(SCURT[G.tip])}">${desenSVG(G,d,G.w,G.h,tH)}</svg>
         ${t?`<div class="xg-t${G.sel&&G.parte==='titlu'?' sel':''}" data-x="titlu" role="button" aria-label="Titlul graficului: ${esc(t)}. Un singur clic, apoi scrii titlul tău și Enter">${esc(t)}</div>`:''}
@@ -426,8 +456,12 @@ function render(Q,body,api){
             <label><input type="checkbox" data-el="et" ${G.et&&d.serii.some(s=>cuEt(G,s))?'checked':''}> Etichete de date (Data Labels)</label>
             <label><input type="checkbox" data-el="leg" ${G.leg?'checked':''}> Legendă (Legend)</label>
             <div class="nota">În Excel lista are și alte bife (axe, linii de grilă…). Azi folosim doar aceste trei.</div></div>`}}
+      if(I.fmt)h+=`<div class="xg-fmt" role="dialog" aria-label="Format Chart Title (panoul de formatare a titlului)" style="left:${fDreapta?W-fW-6:4}px;top:${fDreapta?G.y:yP}px;width:${fW}px">
+          <div class="cap"><b>Format Chart Title</b><button type="button" data-a="fmtno" aria-label="Închide panoul Format Chart Title (✕)" title="Închide panoul">✕</button></div>
+          <div class="file"><span>▾ Title Options</span><span>Text Options</span></div>
+          <p class="nota">Panoul de formatare a titlului (umplere, chenar, efecte). Azi nu-l folosim: îl închizi cu ✕. Titlul rămâne ales: scrii titlul tău și apeși Enter.</p></div>`;
       if(I.edT){const nota=I.edT.in?'Cursorul e în textul titlului (ai dat al doilea clic): ce scrii se adaugă la titlul vechi, iar Enter începe un rând nou, ca în Excel. Ca să-l înlocuiești tot: clic pe o celulă, apoi un singur clic pe titlu.':'Scrie titlul, apoi Enter (pe telefon: ✓). În Excel, ce scrii apare în bara de formule și înlocuiește tot titlul.';
-        h+=`<div class="xg-fx" style="top:${yF}px" role="group" aria-label="Titlul graficului"><i>fx</i>${I.edT.in?`<textarea data-x="fxt" rows="2" aria-label="Textul titlului, cu cursorul în el" autocomplete="off" autocorrect="off" spellcheck="false">${esc(I.edT.text)}</textarea>`:`<input type="text" data-x="fxt" value="${esc(I.edT.text)}" aria-label="Scrie titlul graficului" autocomplete="off" autocorrect="off" spellcheck="false">`}<button type="button" data-a="fxok" aria-label="${I.edT.in?'Gata (ca un clic pe o celulă)':'Enter (pune titlul)'}">✓</button>${I.edT.in?'':'<button type="button" data-a="fxno" aria-label="Anulare (Esc)">✗</button>'}<span class="nota">${nota}</span></div>`}
+        h+=`<div class="xg-fx" style="top:${yF}px" role="group" aria-label="Titlul graficului"><i>fx</i>${I.edT.in?`<textarea data-x="fxt" rows="2" aria-label="Textul titlului, cu cursorul în el" autocomplete="off" autocorrect="off" spellcheck="false">${esc(I.edT.text)}</textarea>`:`<input type="text" data-x="fxt" value="${esc(I.edT.text)}" aria-label="Scrie titlul graficului" autocomplete="off" autocorrect="off" spellcheck="false">`}<button type="button" data-a="fxok" aria-label="${I.edT.in?'Gata (ca un clic pe o celulă)':'Enter (pune titlul)'}">✓</button>${I.edT.in?'':'<button type="button" data-a="fxno" aria-label="Anulare (Esc)">✗</button>'}${I.fmt&&!fDreapta?'':`<span class="nota">${nota}</span>`}</div>`}   /* panoul sub grafic (telefon) ține locul notei: nota l-ar acoperi */
       if(I.dlg){const L=[['column','Coloană (Column)'],['line','Linie (Line)'],['pie','Radială (Pie)'],['bar','Bară (Bar)']];
         h+=`<div class="xg-dlg" role="dialog" aria-label="Modificare tip diagramă (Change Chart Type)"><b>Modificare tip diagramă (Change Chart Type)</b><div class="fila">Fila Toate diagramele (All Charts)</div>
           <div class="tipuri">${L.map(([k,n])=>`<button type="button" data-dt="${k}" class="${I.dlg.tip===k?'on':''}">${n}</button>`).join('')}</div>
@@ -437,7 +471,7 @@ function render(Q,body,api){
     if(Q.grafic&&Q.grafic.latimeMin)h+=`<div aria-hidden="true" style="position:absolute;top:0;bottom:0;left:${Math.round(Q.grafic.latimeMin*W)}px;border-left:2px dashed #C0504D;pointer-events:none"></div>`;
     if(zona._h!==h){zona.innerHTML=h;zona._h=h;refa=true}
     if(I.edT&&refa){const i=zona.querySelector('[data-x="fxt"]');if(i){try{i.focus({preventScroll:true});const L=I.edT.in&&I.edT.poz!=null?Math.min(I.edT.poz,i.value.length):i.value.length;i.setSelectionRange(L,L)}catch(e){}}}
-    teste()}
+    butonAnulare();teste()}
   function teste(){if(!tbox)return;const d=I.G?date(body,S,I.G):{cats:[],serii:[]};const W=zonaW();
     const rez=Q.teste.filter(T=>T.grafic).map(T=>({ce:T.ce,ok:!verifica(T.grafic,I.G,d,W,valNum)}));const n=rez.filter(x=>x.ok).length;
     tbox.innerHTML=`<div class="lbl">Testele atelierului: ${n} din ${rez.length} gata</div><ul>${rez.map(x=>`<li class="${x.ok?'ok':''}"><span aria-hidden="true">${x.ok?'✔':'○'}</span>${x.ce}<span class="xg-sr">${x.ok?' (gata)':' (încă nu)'}</span></li>`).join('')}</ul>`}
@@ -479,7 +513,13 @@ function render(Q,body,api){
     if(I.G.sel||I.meniu||I.plus||I.dlg||I.edT){I.G.sel=false;I.G.tsel=false;I.G.parte=null;I.meniu=null;I.plus=false;I.dlg=null;I.edT=null;desen()}}
   function puneTitlu(){const i=zona.querySelector('[data-x="fxt"]');if(I.edT&&I.edT.in){puneTitluIn();I.G.parte='titlu';desen();focusOb();return}
     const t=i?i.value:'';if(t.trim()!==''){salveaza();I.G.titlu={mod:'tau',text:t}}I.edT=null;I.G.parte='titlu';I.G.tsel=true;desen();focusOb()}
+  /* dublu-clic rapid pe titlu, ca în Excel (r4_excel*.json › D1-D6): titlul rămâne DOAR ales (scrisul îl înlocuiește,
+     Delete îl șterge) și se deschide panoul Format Chart Title, pe care îl închizi cu ✕ */
+  function deschideFormat(){const G=I.G;if(!G)return;if(!G.sel){I.tab='design';I.meniu=null}
+    G.sel=true;G.parte='titlu';G.tsel=true;I.plus=false;I.dlg=null;I.edT={text:''};I.fmt=true;desen()}
   function alegeTitlu(ev,t){const G=I.G;if(!G||I.mut)return;
+    if(ev&&ev.detail>=2){if(!I.inTextInainte)deschideFormat();return}   // al doilea clic al unui dublu-clic (judecata 4, M1/N2); în text deja: rămâne în text
+    I.inTextInainte=!!(I.edT&&I.edT.in);
     if(G.sel&&G.parte==='titlu'&&!(I.edT&&I.edT.in)){   // al doilea clic: cursorul intră în text, acolo unde ai dat clic
       const txt=titluAfisat(G,date(body,S,G))||'',r=t.getBoundingClientRect(),f=r.width?Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width)):1;
       I.edT={in:true,text:txt,poz:Math.round(f*txt.length)}}
@@ -505,25 +545,27 @@ function render(Q,body,api){
       if(a==='del'){sterge();return}
       if(a==='fxok'){puneTitlu();return}
       if(a==='fxno'){I.edT=null;desen();focusOb();return}
+      if(a==='fmtno'){I.fmt=false;if(!I.edT&&I.G&&I.G.parte==='titlu')I.edT={text:''};zona._h=null;desen();return}   // ✕: panoul se închide, titlul rămâne ales (r4_excel4.json › D6)
       if(b.dataset.dt){I.dlg.tip=b.dataset.dt;desen();const x=zona.querySelector('.xg-dlg button.on');if(x)try{x.focus({preventScroll:true})}catch(e){}return}
       if(a==='dlgok'){schimbaTip(I.dlg.tip);I.dlg=null;desen();focusOb();return}
       if(a==='dlgno'){I.dlg=null;desen();focusOb();return}
       if(a==='toastok'){I.toast=null;desen();return}}
     const t=ev.target.closest('.xg-t');if(t){alegeTitlu(ev,t);return}});
-  zona.addEventListener('dblclick',ev=>{const t=ev.target.closest('.xg-t');if(t&&I.G&&!(I.edT&&I.edT.in)){I.G.sel=true;I.G.parte='titlu';alegeTitlu(ev,t)}});
+  zona.addEventListener('dblclick',ev=>{const t=ev.target.closest('.xg-t');if(t&&I.G&&!I.fmt&&!I.inTextInainte&&!I.mut)deschideFormat()});   // dacă browserul n-a numărat clicurile (ev.detail)
   zona.addEventListener('change',ev=>{const c=ev.target.closest('input[data-el]');if(!c)return;bifa(c.dataset.el,c.checked);desen();
     const x=zona.querySelector(`input[data-el="${c.dataset.el}"]`);if(x)try{x.focus({preventScroll:true})}catch(e){}});
   zona.addEventListener('keydown',ev=>{
     if(ev.target.matches&&ev.target.matches('[data-x="fxt"]')){
       if(I.edT&&I.edT.in){if(ev.key==='Escape'){ev.preventDefault();puneTitluIn();I.G.parte='titlu';desen();focusOb()}return}   // Esc lasă textul scris (r1_excel.json); Enter = rând nou
-      if(ev.key==='Enter'){ev.preventDefault();puneTitlu()}else if(ev.key==='Escape'){ev.preventDefault();I.edT=null;desen();focusOb()}return}
+      if(ev.key==='Enter'){ev.preventDefault();puneTitlu()}else if(ev.key==='Escape'){ev.preventDefault();I.edT=null;desen();focusOb()}
+      else if(ev.key==='Delete'&&ev.target.value===''){ev.preventDefault();sterge()}   // titlul doar ales, nimic scris: Delete îl șterge, ca în Excel (j4_excel.json › T; judecata 4, M3)
+      return}
     if(I.dlg&&ev.key==='Escape'){I.dlg=null;desen();focusOb();return}
     const o=ev.target.closest&&ev.target.closest('.xg-ob');if(!o||!I.G)return;
-    if((ev.ctrlKey||ev.metaKey)&&(ev.key==='z'||ev.key==='Z')){ev.preventDefault();anuleaza();return}
     if(ev.key==='Delete'){ev.preventDefault();sterge();return}
     if(ev.key==='Escape'){ev.preventDefault();if(I.G.parte&&I.G.parte!=='grafic'){I.G.parte='grafic';I.G.tsel=false;desen();focusOb()}else deselecteaza();return}
     if(I.G.sel&&I.G.parte==='titlu'&&ev.key.length===1&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey){ev.preventDefault();I.edT={text:ev.key};desen()}});
-  pg.addEventListener('keydown',ev=>{if((ev.ctrlKey||ev.metaKey)&&(ev.key==='z'||ev.key==='Z')&&I.G){ev.preventDefault();anuleaza()}if(ev.key==='Escape'&&I.meniu){I.meniu=null;desen()}});
+  pg.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&I.meniu){I.meniu=null;desen()}});   // Ctrl+Z: leagaAnulareaG (o singură anulare pentru foaie și grafic)
   /* ce parte a graficului e sub deget / sub mouse */
   function parteDin(el){const e=el.closest&&el.closest('[data-p]');if(!e||!zona.contains(e))return 'grafic';const p=e.dataset.p;return p==='serie'||p==='et'?p+':'+e.dataset.k:p}
   /* clicul alege o parte; graficul se mută și se mărește doar ales de margine (sau de un cerculeț din colț) */
@@ -554,9 +596,23 @@ function render(Q,body,api){
     el.addEventListener('pointermove',mv);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up)});
   /* clic în foaie = graficul nu mai e ales (ca în Excel); orice schimbare în foaie redesenează graficul */
   w.addEventListener('pointerdown',()=>deselecteaza(),true);
-  let rafP=0;new MutationObserver(()=>{if(rafP)return;rafP=requestAnimationFrame(()=>{rafP=0;if(I.edT)return teste();desen()})}).observe(w,{childList:true,subtree:true,characterData:true});
+  let rafP=0;new MutationObserver(()=>{if(rafP)return;rafP=requestAnimationFrame(()=>{rafP=0;if(I.edT){butonAnulare();return teste()}desen()})}).observe(w,{childList:true,subtree:true,characterData:true});
   addEventListener('resize',()=>{if(document.body.contains(zona)&&!I.edT)desen()});
   desen()}
+
+/* O SINGURĂ anulare pentru foaie și grafic, ca în Excel: Ctrl+Z desface ultimul pas, oricare ar fi fost (judecata 4, M4:
+   graficul șters revine la Ctrl+Z; r4_excel.json › Z2). Ascultătorul stă pe window, în faza de captură, deci înaintea
+   anulării foii (excelx.js › leagaAnularea, pe document) și a motorului (pe foaie). Dacă ultimul pas e al graficului
+   (foaia n-a mai fost schimbată de atunci), îl desface graficul și oprește evenimentul; altfel îl lasă foii. La fel
+   butonul ↶ al foii (pe telefon). Dintr-un câmp de scris (titlul, bara de formule), Ctrl+Z rămâne al câmpului. */
+let anulareG=false;
+function leagaAnulareaG(){if(anulareG)return;anulareG=true;
+  const gazda=t=>{const h=t&&t.closest&&t.closest('.xg-host');return h&&h._xg&&h._xg.anuleazaG?h._xg:null};
+  addEventListener('keydown',ev=>{if(!(ev.ctrlKey||ev.metaKey)||ev.altKey||ev.shiftKey||(ev.key||'').toLowerCase()!=='z')return;
+    const t=ev.target;if(!t||!t.closest||t.closest('input,textarea,select,[contenteditable="true"]'))return;
+    const I=gazda(t);if(I&&I.anuleazaG()){ev.preventDefault();ev.stopImmediatePropagation()}},true);
+  addEventListener('click',ev=>{const u=ev.target&&ev.target.closest&&ev.target.closest('[data-ud="undo"]');if(!u)return;
+    const I=gazda(u);if(I&&I.anuleazaG()){ev.preventDefault();ev.stopImmediatePropagation()}},true)}
 
 /* rezolvarea porții (și „Arată-mi răspunsul”): foaia, apoi graficul cerut */
 function aplicaSolutia(Q,body){const I=body._xg,S=foaie(body);if(!I||!S)return;const sp=Q.grafic||{},sol=Q.solutie||{};
@@ -584,7 +640,7 @@ const ExcelG={
 };
 window.ExcelG=ExcelG;
 window.ExcelGrafic={analiza:(body,zt)=>analiza(body,foaie(body),pz(zt)),date:body=>{const I=body._xg;return I&&I.G?date(body,foaie(body),I.G):null},
-  stare:body=>{const I=body._xg;return I?{G:I.G&&JSON.parse(JSON.stringify(I.G)),tab:I.tab,meniu:I.meniu,plus:I.plus,dlg:I.dlg,edT:I.edT}:null},
+  stare:body=>{const I=body._xg;return I?{G:I.G&&JSON.parse(JSON.stringify(I.G)),tab:I.tab,meniu:I.meniu,plus:I.plus,dlg:I.dlg,edT:I.edT,fmt:I.fmt}:null},
   titlu:body=>{const I=body._xg;return I&&I.G?titluAfisat(I.G,date(body,foaie(body),I.G)):null},verifica,regiune:(body,zt)=>zs(regiune(body,foaie(body),pz(zt))),
   scala};
 })();
