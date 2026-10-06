@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mini-proiect: produs informatic cu tabel, formule și grafic</title>
+<meta name="description" content="Clasa a VIII-a, lecția 12 (Excel, mini-proiect): faci singur, cu date reale culese de tine, registrul cerut de profesor: tabel, cel puțin trei formule, o funcție de decizie, un grafic și o concluzie scrisă; pagina îți propune și o sortare. Te verifici cu grila profesorului.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Public+Sans:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF3F0; --paper:#FFFFFF; --paper2:#EDF4EF; --line:#CBD8CF;
+  --ink:#17241C; --ink2:#4F6156; --accent:#1D6B44; --accentInk:#FFFFFF; --sel:#D9EEE1;
+  --mark:#FFE08A; --markInk:#17241C; --ok:#1F6F3F; --okbg:#E1F2E7; --bad:#B3302A; --badbg:#FAE3E1;
+  --fd:"Archivo","Segoe UI",system-ui,sans-serif; --fb:"Public Sans","Segoe UI",system-ui,sans-serif; --fm:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F1512; --paper:#17201B; --paper2:#1F2B24; --line:#334539;
+  --ink:#E3EEE7; --ink2:#9CB3A5; --accent:#7FD3A5; --accentInk:#0F1512; --sel:#1F3D2C;
+  --mark:#EBCB55; --markInk:#17241C; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F1512; --paper:#17201B; --paper2:#1F2B24; --line:#334539;
+  --ink:#E3EEE7; --ink2:#9CB3A5; --accent:#7FD3A5; --accentInk:#0F1512; --sel:#1F3D2C;
+  --mark:#EBCB55; --markInk:#17241C; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}
+/* tema: fâșia de sus e un tabel mic urmat de un grafic cu coloane (tabel → formule → grafic) */
+.banda{display:flex;align-items:flex-end;gap:3px;height:14px;padding:0 8px;border-bottom:1px solid var(--line);overflow:hidden}
+.banda b{display:block;width:16px;height:12px;border:1px solid var(--accent);border-radius:1px;opacity:.55}
+.banda i{display:block;width:9px;border-radius:1px 1px 0 0;background:var(--accent)}
+.banda i:nth-child(even){opacity:.6}
+h1,h2{letter-spacing:-.01em}
+.descarca{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.mic{font-size:.9rem;color:var(--ink2)}
+/* laboratorul: tema, varianta, produsul-exemplu, grila profesorului (copiată întocmai) */
+.pl-teme{display:grid;gap:8px;grid-template-columns:1fr;margin:8px 0 12px}
+@media (min-width:700px){.pl-teme{grid-template-columns:repeat(3,1fr)}}
+.pl-tema{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--paper2)}
+.pl-tema h4{margin:2px 0 4px;font-family:var(--fd)}
+.pl-tema ul{margin:4px 0;padding-left:1.1em}
+.pl-tema li{margin:2px 0}
+.pl-var{border:1.5px solid var(--accent);border-radius:10px;padding:8px 12px;background:var(--paper);margin:8px 0}
+.pl-var p{margin:4px 0}
+.pl-grila{display:grid;gap:8px;margin:6px 0}
+.pl-crit{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper)}
+.pl-crit ul{margin:4px 0 6px;padding-left:1.1em}
+.pl-niv{display:flex;flex-wrap:wrap;gap:6px}
+.pl-niv button{min-height:36px;min-width:36px;padding:4px 10px;border:1.5px solid var(--line);border-radius:18px;background:var(--paper2);color:var(--ink);font:inherit;cursor:pointer}
+.pl-niv button[aria-pressed="true"]{border-color:var(--accent);background:var(--sel)}
+.pl-calc{border:1.5px solid var(--accent);border-radius:8px;padding:8px 10px;background:var(--paper);margin:8px 0}
+.pl-calc p{margin:4px 0}
+.pl-ex{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper);margin:8px 0}
+.pl-ex p{margin:4px 0}
+.pl-ex .pl-v{display:grid;gap:6px;margin:6px 0}
+.pl-ex .pl-v button{min-height:44px;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--paper2);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.pl-ex .pl-v button.ok{border-color:var(--ok);background:var(--okbg)}
+.pl-ex .pl-v button.bad{border-color:var(--bad);background:var(--badbg)}
+.pl-ex .pl-r.ok{color:var(--ok)}
+.pl-ex .pl-r.bad{color:var(--bad)}
+.pl-diploma{margin:14px 0}
+.pl-nou{margin-top:8px}
+/* în pașii laboratorului: adresele variantei scurte, sub cele ale variantei întregi (registrul j1, punctul A) */
+.pl-vs{display:block;margin-top:5px;padding:2px 0 2px 8px;border-left:3px solid var(--accent)}
+.pl-prop{font-size:.85em;font-weight:600;color:var(--ink2)}
+/* regula 20: pe ecranele cu atingere, orice zonă de atins are cel puțin 32 px (legăturile din explicațiile capturilor,
+   filele și antetele foilor din exerciții; panglica mărită de 1,75 ori, ca în excelx-formatare.js; pătrățelul de umplere
+   primește o zonă de atingere de 32 px în jurul lui) */
+@media (pointer:coarse){
+  figure.captura figcaption a{display:inline-block;min-height:32px;line-height:32px;padding:0 2px}
+  .rb .tabs button{min-height:32px}
+  #body .pg .pg-banda{zoom:1.75}
+  #body thead th,#body tbody th{min-width:32px;height:32px}
+  td:has(> .fh){overflow:visible}
+  .fh::after{content:"";position:absolute;left:-12px;top:-12px;width:32px;height:32px}
+}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../../jocuri/_motor/tip-foaie.js"></script>
+<script src="../../../jocuri/_motor/tip-excel.js"></script>
+<!-- foaia „excelx” comună clasei a VIII-a și extensiile lecțiilor 7-11, NEMODIFICATE; plus extensia lecției 12:
+     atelierul în trei etape (excelx-proiect.js), care le folosește pe toate -->
+<script src="../../_sim/excelx.js"></script>
+<script src="../../_sim/excelx-formule.js"></script>
+<script src="../../_sim/excelx-functii.js"></script>
+<script src="../../_sim/excelx-decizie.js"></script>
+<script src="../../_sim/excelx-sortare.js"></script>
+<script src="../../_sim/excelx-grafic.js"></script>
+<script src="../../_sim/excelx-proiect.js"></script>
+<script>
+/* LECȚIA 12, clasa a VIII-a, modulul 2 (consolidare, mini-proiect; revizuirea LearningHub, standardul din 27.09.2026).
+   Nu predă nimic nou din Excel: îl duce pe elev prin produsul lui, pas cu pas, cu trimiteri la lecțiile 3-11.
+   Nou e doar grila după care se notează proiectul (Info_Gimnaziu_2026/instrumente/Grila_produs.md, copiată întocmai).
+   Faptele „dacă faci X, apare Y”: afirmatii.json (probele în Excel real: _proba/proba_excel*.json). */
+
+/* conținuturile programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={formule:'Formule de calcul care utilizează operatori aritmetici (+, -,*, /)',functii:'Funcții specifice aplicaţiei de calcul tabelar pentru sumă, maxim, minim, medie aritmetică şi decizie',
+  sortare:'Sortarea crescătoare/descrescătoare a datelor dintr-un tabel după unul sau mai multe criterii',grafice:'Grafice: tipuri de grafice'};
+
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG='../m2-l12/img/';
+const IMG3='../m1-l03/img/';
+const CR_TARG='Fotografie: Jmpatel95, <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>, <a href="https://commons.wikimedia.org/wiki/File:2017-02-18_Elementary_Science_Fair_1.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (decupată).';
+
+/* ---------- grila profesorului: Info_Gimnaziu_2026/instrumente/Grila_produs.md, ÎNTOCMAI ---------- */
+const GRILA=[
+  ['Respectarea cerinței','conține elementele cerute, cu ajutor','conține tot ce s-a cerut, fără ajutor','depășește cerința cu elemente potrivite, alese motivat'],
+  ['Corectitudinea tehnică','operațiile de bază, cu îndrumare','operațiile cerute, corect, singur','operații diverse, alese potrivit situației'],
+  ['Organizarea','structură dată de profesor','structură proprie, clară','organizare gândită pentru scopul și publicul produsului'],
+  ['Explicația (ce am făcut și de ce)','răspunde la întrebări','explică pașii','justifică alegerile și propune alternative'],
+  ['Munca proprie / sursele','folosește materialele date','citează sursele imaginilor/textelor','respectă drepturile de autor și explică de ce contează']];
+const NIV=['De bază (cu sprijin, model)','Consolidat (independent)','Avansat (context nou, justificat)'];   // capetele de coloană, întocmai
+const REP=[10,14,18];   // reperele în puncte ale celor trei coloane: „· 10 p”, „· 14 p”, „· 18 p”
+const ALEG=[[0,'Lipsește cu totul · 0 p'],[10,'De bază · 10 p'],[14,'Consolidat · 14 p'],[18,'Avansat · 18 p']];
+/* nota = punctaj : 10, rotunjită la cel mai apropiat întreg; la ,5 în favoarea elevului (punctajul e un număr întreg) */
+const notaDin=p=>Math.floor((p+5)/10);
+const nivelDin=n=>n>=9?'Avansat':n>=7?'Consolidat':n>=5?'De bază':n>=3?'În formare, cu plan de recuperare':'În dificultate, cu plan de recuperare';
+const nr=v=>String(v).replace('.',',');
+/* exercițiile de notare din laborator: [varianta, 1 = corectă, explicația]; fiecare variantă greșită are O singură greșeală
+   a regulii de azi (fără oficiu, patru criterii, rotunjire în jos, nivel citit greșit) */
+const EX=[
+  {nume:'Bianca',q:'Bianca a primit la cele 5 criterii: 18, 14, 18, 14 și 18 puncte. Ce notă și ce nivel are proiectul ei?',o:[
+    ['82 de puncte → nota 8, Consolidat',0,'Ai adunat criteriile, dar ai uitat cele 10 puncte din oficiu.'],
+    ['74 de puncte → nota 7, Consolidat',0,'Ai adunat doar primele 4 criterii. Se adună toate cele 5, plus 10 din oficiu.'],
+    ['92 de puncte → nota 9, Consolidat',0,'Nota 9 e bună, dar nivelul se citește din notă: 9 sau 10 înseamnă Avansat.'],
+    ['92 de puncte → nota 9, Avansat',1,'18 + 14 + 18 + 14 + 18 = 82, plus 10 din oficiu = 92. Nota: 92 : 10 = 9,2, rotunjit: 9. Nivelul, din notă: Avansat.']]},
+  {nume:'Tudor',q:'Tudor a primit și puncte între repere: 11, 15, 12, 16 și 11. Ce notă și ce nivel are proiectul lui?',o:[
+    ['65 de puncte → nota 7, Consolidat',0,'Ai uitat cele 10 puncte din oficiu.'],
+    ['75 de puncte → nota 8, Consolidat',1,'11 + 15 + 12 + 16 + 11 = 65, plus 10 din oficiu = 75. Nota: 75 : 10 = 7,5; la ,5 rotunjirea e în favoarea elevului, deci 8. Nivelul, din notă: Consolidat.'],
+    ['75 de puncte → nota 7, Consolidat',0,'Totalul e bun, dar 7,5 se rotunjește în favoarea elevului: 8.'],
+    ['64 de puncte → nota 6, De bază',0,'Ai adunat doar primele 4 criterii: 11 + 15 + 12 + 16 = 54, plus 10 din oficiu = 64. Lipsește al cincilea criteriu, cu 11 puncte.']]}];
+
+/* ---------- laboratorul: nimic nu se păstrează în browser (regula 23: calculatorul din laborator e comun).
+   Alegerile din grilă și răspunsurile la exerciții stau doar în memoria paginii deschise; „Sunt alt elev” le golește. ---------- */
+const LAB={niv:{},ex:{}};
+const insir=a=>a.length>1?a.slice(0,-1).join(', ')+' și '+a[a.length-1]:a[0];
+function calculGrila(){
+  const v=GRILA.map((c,i)=>LAB.niv[i]),alese=v.filter(x=>x!=null).length;
+  const rand=(s,p,n,nv)=>`<p><b>Punctaj:</b> ${s} + 10 din oficiu = ${p} · <b>Nota</b> (punctaj : 10): ${n} · <b>Nivelul</b> (din notă): ${nv}</p>`;
+  if(alese<GRILA.length)return rand('____','____','______','______')+`<p>${alese?`Ai ales la ${alese} din ${GRILA.length} criterii. Alege la toate ca să vezi punctajul, nota și nivelul.`:'Alege la fiecare criteriu ca să vezi punctajul, nota și nivelul.'}</p>`;
+  const s=v.reduce((a,b)=>a+b,0),p=s+10,n=notaDin(p);
+  const imp=p%10?`${p} : 10 = ${nr(p/10)}, rotunjit: ${n}`:`${p} : 10 = ${n}`;
+  const lipsa=v.map(x=>18-x),max=Math.max(...lipsa),unde=lipsa.map((x,i)=>x===max?i:-1).filter(i=>i>=0);
+  const castig=max===0?'Ai ales Avansat la toate criteriile: 100 de puncte, cât se poate.'
+    :unde.length===GRILA.length?(max===18?'Ai ales 0 la toate criteriile: la fiecare poți câștiga până la 18 p. Citește întâi ce cere coloana De bază.':`La toate criteriile mai ai câte ${max} p până la 18 p.`)
+    :`Cel mai mult ai de câștigat la ${unde.length>1?'criteriile':'criteriul'} ${insir(unde.map(i=>`„${i+1}. ${GRILA[i][0]}”`))}: mai sunt ${max} p până la 18 p. Citește acolo ce cere coloana următoare.`;
+  return rand(s,p,n,nivelDin(n))+`<p>Adunarea: ${v.join(' + ')} = ${s}, plus 10 din oficiu = ${p}. Nota: ${imp}.</p><p>${castig}</p>`;
+}
+function exRez(i){const j=LAB.ex[i],x=j!=null?EX[i].o[j]:null;return x?{c:x[1]?'ok':'bad',t:x[1]?`✔ Corect. ${x[2]}`:`✘ ${x[2]} Mai încearcă.`}:{c:'',t:''}}
+function exHtml(e,i){const j=LAB.ex[i],r=exRez(i);
+  return `<div class="pl-ex"><p><b>Încearcă:</b> ${e.q}</p><div class="pl-v" role="group" aria-label="Variantele pentru ${e.nume}">${e.o.map((o,k)=>`<button type="button" data-pl-ex="${i}:${k}" aria-pressed="${j===k}"${j===k&&r.c?` class="${r.c}"`:''}>${o[0]}</button>`).join('')}</div><p class="pl-r${r.c?' '+r.c:''}" data-pl-r="${i}" aria-live="polite">${r.t}</p></div>`}
+/* după o atingere se schimbă doar butoanele și rezultatul, nu tot laboratorul (pagina nu sare) */
+function puneEx(i){const j=LAB.ex[i],r=exRez(i);
+  document.querySelectorAll(`[data-pl-ex^="${i}:"]`).forEach(b=>{const k=+b.dataset.plEx.split(':')[1];b.setAttribute('aria-pressed',String(j===k));b.classList.toggle('ok',j===k&&r.c==='ok');b.classList.toggle('bad',j===k&&r.c==='bad')});
+  document.querySelectorAll(`[data-pl-r="${i}"]`).forEach(p=>{p.className='pl-r'+(r.c?' '+r.c:'');p.textContent=r.t})}
+function puneGrila(i){
+  document.querySelectorAll(`[data-pl-niv^="${i}:"]`).forEach(b=>b.setAttribute('aria-pressed',String(LAB.niv[i]===+b.dataset.plNiv.split(':')[1])));
+  document.querySelectorAll('.pl-calc').forEach(c=>{c.innerHTML=calculGrila()})}
+/* temele: primele două vin din exemplele activității profesorului (bugetul unei excursii, un sondaj în clasă);
+   coloanele, formulele și pragurile de pe carduri sunt ale PAGINII (registrul j1, punctul D), scrise în propoziții (U),
+   cu decizia în ambele forme, cu ; și cu , (J) */
+const TEME=[
+  {t:'Sondaj în clasă',ex:'exemplul profesorului',d:'Întrebi colegii cum vin la școală dimineața și cum pleacă acasă, apoi numeri răspunsurile (doar numere, fără nume).',
+   col:['În coloana A pui felul drumului: pe jos, cu autobuzul, cu mașina, cu bicicleta, altfel.','În B scrii câți colegi vin așa dimineața, iar în C câți pleacă așa acasă.','În D aduni drumurile: <code>=B2+C2</code>.','În E pui o decizie, de exemplu <code>=IF(D2&gt;=10;"des";"rar")</code>, pe setări englezești <code>=IF(D2&gt;=10,"des","rar")</code>.'],
+   g:'Graficul: cu coloane, din A1:C6 (varianta scurtă: A1:C5).',s:'Sursa: „sondajul meu în clasa a VIII-a, data …”.'},
+  {t:'Bugetul unei excursii',ex:'exemplul profesorului',d:'O excursie de o zi pe care ai vrea s-o faci cu clasa: prețuri reale, găsite pe internet sau aflate acasă.',
+   col:['În coloana A pui cheltuielile: transport, masă, intrări, ghid, suveniruri.','În B scrii câți lei costă fiecare de persoană, iar în C câte persoane merg.','În D calculezi costul total: <code>=B2*C2</code>.','În E pui o decizie, de exemplu <code>=IF(B2&gt;=50;"scump";"ok")</code>, pe setări englezești <code>=IF(B2&gt;=50,"scump","ok")</code>.'],
+   g:'Graficul: radial, ca să arăți ce parte din bani merge pe fiecare cheltuială, din A1:B6 (varianta scurtă: A1:B5); sau cu coloane, din aceeași zonă.',s:'Sursa: scrii exact de unde ai luat prețurile.'},
+  {t:'Timpul meu',ex:'propunerea paginii',d:'Activitățile tale dintr-o zi: teme, citit, sport, ecran, ajutor în casă. Datele le ai chiar tu.',
+   col:['În coloana A pui activitățile.','În B scrii câte ore îi dai fiecăreia într-o zi de școală (Luni-vineri), iar în C câte ore într-o zi de weekend.','În D calculezi orele pe săptămână: <code>=B2*5+C2*2</code>.','În E pui o decizie, de exemplu <code>=IF(D2&gt;=10;"mult";"puțin")</code>, pe setări englezești <code>=IF(D2&gt;=10,"mult","puțin")</code>.'],
+   g:'Graficul: cu coloane, din A1:C6 (varianta scurtă: A1:C5).',s:'Sursa: „datele mele, adunate de mine”.'}];
+function labHtml(){
+  const teme=`<div class="pl-teme">${TEME.map(x=>`<div class="pl-tema"><h4>${x.t} <span class="pl-prop">(${x.ex})</span></h4><p class="mic">${x.d}</p><ul>${x.col.map(c=>`<li>${c}</li>`).join('')}</ul><p class="mic">${x.g} ${x.s}</p></div>`).join('')}</div>`;
+  const varianta=`<div class="pl-var"><p><b>Varianta întreagă</b> (o oră întreagă): toți pașii de mai jos, cu 5 rânduri de date.</p>
+<p><b>Varianta scurtă</b> (dacă ai doar o parte din oră). E <b>propunerea paginii</b>, nu a profesorului: el hotărăște dacă ajunge pentru nota lui. Ai 4 rânduri de date, pe rândurile 2-5, iar rândul 6 rămâne gol. Pe fiecare rând pui formula din D și decizia din E. Sub rândul gol pui totalul (în D7) și media (în D8). Așa ai trei formule fără IF (formula din D, SUM și AVERAGE) și, pe lângă ele, funcția de decizie, oricum le-ar număra profesorul. Urmează sortarea, graficul, sursa, concluzia, o explicație scurtă și salvarea. Fiecare pas de mai jos îți dă, la sfârșit, adresele pentru varianta scurtă.</p>
+<p><b>Dacă alegi varianta scurtă:</b> datele le aduni înainte de oră, acasă sau în pauză, și le aduci scrise pe o foaie; un sondaj nu încape în oră. În pagină faci „Încearcă tu” de la fiecare pas și primul atelier; „Încă un exercițiu” și al doilea atelier le poți lăsa pentru altă dată. Ce rămâne din proiect adaugi când ai din nou timp la calculator.</p></div>`;
+  const exemplu=`<p><b>Așa arată un produs bun</b> (altă temă decât ale tale: colecta de maculatură pe clase, cu date inventate):</p>${fig(IMG+'produs-exemplu.webp',1000,314,'Excel: tabelul Clasa, Septembrie, Octombrie, Total, Diplomă, sortat după total (7A 115, 6A 105, 8A 77, 8B 58, 7B 56), sub el Total 411, Media 82,2, Maxim 115, Minim 56, rândul cu sursa datelor, două rânduri de concluzie și, în dreapta, graficul cu coloane Maculatura strânsă pe clase (kg)','Produsul-exemplu: tabelul sortat, sumarul după rândul gol, sursa datelor, concluzia și graficul cu titlu.')}
+<p class="descarca"><a class="btn" href="exemplu_colecta.xlsx" download>Descarcă produsul-exemplu (exemplu_colecta.xlsx)</a> <span class="mic">În Excel, clic pe o celulă din D sau E: formula apare în bara de formule. Sub grafic e și explicația.</span></p>`;
+  const grila=`<h3>Grila profesorului</h3>
+<p>Profesorul notează produsul cu grila de produs: 5 criterii. La fiecare criteriu se dau <b>0 – 18 puncte</b>. Reperele: <b>De bază = 10 p</b>, <b>Consolidat = 14 p</b>, <b>Avansat = 18 p</b>; se poate da și între repere, iar 0 dacă lipsește cu totul. Punctajul = criteriile 1-5 + 10 din oficiu (cel mult 100).</p>
+<p><b>Nota = punctaj : 10</b> (rotunjită la cel mai apropiat întreg; la ,5 în favoarea elevului). Exemplu: 14 + 18 + 14 + 10 + 14 + 10 = 80 → nota 8. Nivelul se citește din notă: 9-10 Avansat, 7-8 Consolidat, 5-6 De bază, 3-4 În formare, 1-2 În dificultate.</p>
+${EX.map(exHtml).join('')}
+<p>Acum proiectul tău. Alege, la fiecare criteriu, unde crezi că ești. Aici alegi reperul cel mai apropiat; profesorul poate da și puncte între repere, ca la Tudor.</p>
+<div class="pl-grila">${GRILA.map((c,i)=>`<div class="pl-crit"><b>${i+1}. ${c[0]}</b><ul>${NIV.map((n,j)=>`<li><i>${n} · ${REP[j]} p:</i> ${c[j+1]}</li>`).join('')}</ul><div class="pl-niv" role="group" aria-label="Punctele mele la criteriul ${i+1}">${ALEG.map(([p,t])=>`<button type="button" data-pl-niv="${i}:${p}" aria-pressed="${LAB.niv[i]===p}">${t}</button>`).join('')}</div></div>`).join('')}</div>
+<div class="pl-calc" aria-live="polite">${calculGrila()}</div>`;
+  return `<h3>Temele</h3><p>Alegi una. Primele două vin din exemplele din cerința profesorului (bugetul unei excursii, rezultatele unui sondaj în clasă), a treia e propunerea paginii, iar profesorul poate da și alte teme. Coloanele, formulele și pragurile de pe carduri sunt <b>propunerea paginii</b>, nu a profesorului. Cum socotește el, la criteriul 3 (Organizarea), o așezare luată de aici, îl întrebi. Datele trebuie să fie adevărate, culese de tine.</p>${teme}${varianta}${exemplu}${grila}<p class="pl-nou"><button class="btn" type="button" data-pl-nou>Sunt alt elev: golește alegerile din grilă</button></p><p class="mic">Alegerile stau doar cât e deschisă pagina: nu se salvează nicăieri.</p>`;
+}
+function umpleLab(){document.querySelectorAll('[data-proiect-lab]').forEach(el=>{el.innerHTML=labHtml()})}
+/* pe diplomă, motorul repetă pașii laboratorului: deasupra lor pun și temele, exemplul și grila (cine face proiectul DUPĂ verificare) */
+new MutationObserver(()=>{document.querySelectorAll('.real-recap:not([data-pl-pus])').forEach(r=>{r.setAttribute('data-pl-pus','1');
+  r.insertAdjacentHTML('beforebegin','<div class="pl-diploma"><p><b>Proiectul tău:</b> temele, produsul-exemplu și grila sunt aici; pașii, dedesubt.</p><div data-proiect-lab></div></div>')})})
+  .observe(document.documentElement,{childList:true,subtree:true});
+new MutationObserver(()=>{if(document.querySelector('[data-proiect-lab]:not([data-umplut])')){document.querySelectorAll('[data-proiect-lab]').forEach(el=>el.setAttribute('data-umplut','1'));umpleLab()}})
+  .observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('click',e=>{
+  const n=e.target.closest&&e.target.closest('[data-pl-niv]');
+  if(n){const [i,p]=n.dataset.plNiv.split(':').map(Number);LAB.niv[i]=p;puneGrila(i);return}
+  const x=e.target.closest&&e.target.closest('[data-pl-ex]');
+  if(x){const [i,k]=x.dataset.plEx.split(':').map(Number);LAB.ex[i]=k;puneEx(i);return}
+  const z=e.target.closest&&e.target.closest('[data-pl-nou]');
+  if(z){LAB.niv={};LAB.ex={};umpleLab();const b=document.querySelector('[data-pl-niv]');if(b)b.focus({preventScroll:true})}
+});
+
+/* ---------- pașii din laborator (Excel-ul adevărat) ---------- */
+/* fiecare pas cu adrese le dă pe ale variantei întregi, apoi, în .pl-vs, pe ale variantei scurte (registrul j1, A și B);
+   varianta scurtă urmată literal e probată în Excel real: _proba/proba_excel_scurta*.json */
+const VS=t=>`<span class="pl-vs"><b>Varianta scurtă:</b> ${t}</span>`;
+/* pasul 5 al lecției: graficul (cerut de profesor) și concluzia */
+const GRAFIC_PAS=`<p>Graficul e cerut de profesor (lecția 11). Selectezi antetul și coloanele de desenat, fără rândul gol: de exemplu A1:C6, iar cu 4 rânduri de date A1:C5. Apoi Inserare (Insert) › Diagrame (Charts) și tipul potrivit: coloane, când compari; radial, când arăți ce parte din întreg e fiecare. Scrii un titlu care spune ce arată graficul. Graficul e legat de tabel: după o sortare, se ordonează și el.</p>
+<p>Graficul arată datele desenate; concluzia le spune în cuvinte: ce e cel mai mult, ce e cel mai puțin, ce te-a surprins. O scrii sub tabel, lângă sursa datelor.</p>`;
+/* graficul, cu ambele drumuri (coloane și radial), cu numele din lecția 11 (registrul j1, punctul V) */
+const GRAFIC_LAB='<b>Graficul</b> (lecția 11). Selectează, trăgând, antetul și coloanele de desenat, fără rândul gol: la temele Sondaj și Timpul meu A1:C6, la Buget A1:B6. Apoi fila <b>Inserare (Insert)</b>, grupul <b>Diagrame (Charts)</b>. Pentru coloane: butonul cu coloane mici și săgeata ▾ (<i>Insert Column or Bar Chart</i>) › prima, <b>Coloană grupată (Clustered Column)</b>. Pentru radial, când arăți ce parte din întreg e fiecare (o singură coloană de numere): butonul rotund cu săgeata ▾ (<i>Insert Pie or Doughnut Chart</i>) › prima, <b>Pie</b>. Trage graficul de marginea lui albă lângă tabel. Clic pe titlu, scrie un titlu care spune ce arată graficul și apasă <kbd>Enter</kbd>.'+VS('A1:C5, respectiv A1:B5. Nu trage și peste rândul 6, cel gol: graficul iese greșit. La coloane apare o serie în plus și numerele 1-5 jos, în locul numelor; la radial, cercul iese gol.');
+const PROVOCARE=[
+  '<b>Tema și datele.</b> Alege una dintre temele de mai sus (sau tema dată de profesor) și adună datele: 5 rânduri. Scrie-le întâi pe o foaie, ca să le ai la îndemână.'+VS('4 rânduri, adunate înainte de oră (acasă sau în pauză), pentru că un sondaj nu încape în oră.'),
+  'Deschide Excel și alege <b>Blank workbook</b> (Registru de lucru necompletat). Salvează de la început (lecția 3): <kbd>F12</kbd> (pe unele laptopuri <kbd>Fn</kbd>+<kbd>F12</kbd>), adică Salvare ca (Save As); în stânga <b>Documente (Documents)</b> sau folderul scris pe tablă; la <b>File name</b> numele tău după modelul <code>Popescu_Ana_8A_proiect</code>; apoi <b>Save</b>. Dacă apare <i>Confirm Save As</i> („… already exists. Do you want to replace it?”), fișierul e al unui coleg: apasă <b>No</b> și pune o cifră la sfârșitul numelui, de exemplu <code>Popescu_Ana_8A_proiect_2</code>.',
+  '<b>Tabelul</b> (lecțiile 2, 4 și 5). Pe rândul 1, antetul: în A1 numele primei coloane (de exemplu <b>Activitatea</b>), apoi în B1, C1, D1 și E1 numele celorlalte. În A2:A6 scrie numele, iar în B2:C6 numerele tale, fiecare singur în celula lui, cu virgulă la zecimale (1,5, nu 1.5).'+VS('numele în A2:A5, numerele în B2:C5. Rândul 6 rămâne gol.'),
+  '<b>Formula pe rând</b> (lecțiile 7 și 8). Clic pe D2, scrie formula temei (de exemplu <code>=B2*5+C2*2</code>) și apasă <kbd>Enter</kbd>. Clic din nou pe D2 și trage mânerul de umplere, pătrățelul din colțul din dreapta-jos, până la D6. Clic pe D4: bara de formule trebuie să arate aceeași formulă, cu 4 în loc de 2.'+VS('tragi mânerul doar până la D5. Rândul 6 rămâne gol.'),
+  '<b>Decizia</b> (lecția 9). În E2 scrie decizia cu IF, de exemplu <code>=IF(D2&gt;=10;"mult";"puțin")</code> (pe un calculator cu setări englezești: <code>=IF(D2&gt;=10,"mult","puțin")</code>), cu ghilimele drepte, și copiaz-o până la E6 cu mânerul de umplere.'+VS('o copiezi doar până la E5.'),
+  '<b>Sumarul</b> (lecția 8). Lasă rândul 7 gol. În A8 scrie Total, în A9 Media, în A10 Maxim, în A11 Minim. În D8 scrie <code>=SUM(D2:D6)</code>, în D9 <code>=AVERAGE(D2:D6)</code>, în D10 <code>=MAX(D2:D6)</code>, în D11 <code>=MIN(D2:D6)</code>.'+VS('rândul gol e rândul 6. În A7 scrie Total și în D7 <code>=SUM(D2:D5)</code>; în A8 scrie Media și în D8 <code>=AVERAGE(D2:D5)</code>.'),
+  '<b>Sortarea</b> (lecția 10; e propunerea paginii, nu e în cerința profesorului). Clic pe D2, o singură celulă. Fila <b>Date (Data)</b> › grupul <b>Sortare și filtrare (Sort &amp; Filter)</b> › <b>Sortare de la cel mai mare la cel mai mic (Sort Largest to Smallest)</b>. Verifică: fiecare rând și-a păstrat numele și numerele, iar sumarul de sub rândul gol a rămas pe loc, cu aceleași rezultate.'+VS('la fel, din D2; totalul și media din rândurile 7 și 8 rămân pe loc.'),
+  GRAFIC_LAB,
+  '<b>Sursa și concluzia.</b> Clic pe A13 și scrie de unde sunt datele, de exemplu <i>Sursa datelor: sondajul meu din 4 decembrie</i>. Sursa datelor e propunerea paginii; la criteriul 5, grila cere „citează sursele imaginilor/textelor”, deci, dacă folosești o imagine sau un text luat de altundeva, scrii și de unde e. În A14 scrie concluzia: ce arată datele, în una-două propoziții (ce e cel mai mult, ce e cel mai puțin, ce te-a surprins). Doar în varianta întreagă: antetul aldin, cu <b>B</b> din fila Pornire (Home), și bordurile tabelului, cu <b>Borduri (Borders)</b> › <b>Toate bordurile (All Borders)</b> (lecția 6).'+VS('sursa în A10, concluzia în A11.'),
+  '<b>Explicația</b> (criteriul 4 din grilă). De la A16 în jos, câte o propoziție pe rând: ce calculează formula din D, ce decide formula din E, de ce ai sortat, de ce ai ales acest grafic și ce ai fi putut face altfel.'+VS('de la A13 în jos, măcar două propoziții: ce calculează formula din D și de ce ai ales acest grafic.'),
+  'Apasă <kbd>Ctrl</kbd>+<kbd>S</kbd>: fișierul are numele tău de la pasul 2, iar acum se salvează cu tot ce ai adăugat. Apoi ia grila de mai sus criteriu cu criteriu și alege unde crezi că ești. Dacă profesorul cere altfel (alt loc, alt nume, altă predare), faci cum cere el. Calculatorul e al tuturor: nu schimba setările Excel-ului și nu șterge fișierele altora.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m2_l12',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/viii/, „Lecția 12”, pasul din laborator înainte de verificare
+  titlu:'Mini-proiect: produs informatic cu tabel, formule și grafic',
+  marca:'Lecția <b>12</b> · Excel · a VIII-a',
+  h1:'Mini-proiect: produs informatic cu tabel, formule și grafic',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U1', unitateTitlu:'Calcul tabelar',
+  competente:['CS.1.1','CS.3.1'], lectii:'12',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.1, CS.3.1 · unitatea VIII-U1 „Calcul tabelar” · lecția 12, din modulul 2: consolidare, mini-proiect · conținuturile: „Formule de calcul care utilizează operatori aritmetici (+, -,*, /)”, „Funcții specifice aplicaţiei de calcul tabelar pentru sumă, maxim, minim, medie aritmetică şi decizie”, „Sortarea crescătoare/descrescătoare a datelor dintr-un tabel după unul sau mai multe criterii”, „Grafice: tipuri de grafice”',
+  intro:`<p>Lecția 12 din modulul 2. Faci singur un produs: un registru Excel cu date reale culese de tine, cu tabel, formule, grafic și concluzie, cum cere profesorul; pagina îți propune și o sortare. Comenzile le știi din lecțiile 2-11; nou e doar felul în care se notează proiectul.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 1, „Ce facem anul acesta. Criteriile de evaluare și cele trei niveluri”: cele 10 puncte din oficiu, nota = punctaj : 10, nivelul citit din notă;</li>
+<li>lecția 2, „Interfața aplicației de calcul tabelar. Structura unui registru”: panglica, filele ei și grupurile de butoane, bara de formule;</li>
+<li>lecția 3, „Operații cu registrul și cu foile de calcul”: Salvare ca (<kbd>F12</kbd>) cu numele tău și <i>Confirm Save As</i> → No;</li>
+<li>lecția 4, „Adresa de celulă. Selectare, copiere, mutare, ștergere”: zona A1:C6, selectată trăgând;</li>
+<li>lecțiile 5 și 7, „Tipuri de date” și „Formule de calcul cu operatori aritmetici”: virgula la zecimale, formula cu <code>=</code>, adrese și operatori;</li>
+<li>lecția 6, „Formatarea rândurilor, a coloanelor și a celulelor”: aldin și Borduri (Borders);</li>
+<li>lecția 8, „Funcții: sumă, maxim, minim, medie aritmetică”: <code>=SUM(…)</code>, <code>=AVERAGE(…)</code>, <code>=MAX(…)</code>, <code>=MIN(…)</code> și mânerul de umplere;</li>
+<li>lecția 9, „Funcția de decizie”: <code>=IF(…)</code>, cu ghilimele drepte și cu <code>;</code> sau <code>,</code> între părți;</li>
+<li>lecția 10, „Sortarea datelor”: butoanele din fila Date (Data), rândurile mutate întregi;</li>
+<li>lecția 11, „Grafice”: zona cu antet, tipul potrivit, titlul.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după pagina „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”. Apoi atelierul: un produs întreg, în trei etape, într-o foaie care se poartă ca Excel-ul. Urmează proiectul tău, la calculatorul din laborator, iar la sfârșit 5 întrebări. Poți lucra singur: după o greșeală apare un indiciu, iar după două poți cere răspunsul.</p>`,
+  banda:'<b></b><b></b><b></b><i style="height:5px"></i><i style="height:9px"></i><i style="height:13px"></i><i style="height:7px"></i><i style="height:11px"></i><b></b><b></b><i style="height:12px"></i><i style="height:6px"></i><i style="height:10px"></i>',
+  tipuri:{excelx:ExcelFn,excelfn:ExcelFn,exceld:ExcelD,excels:ExcelS,excelg:ExcelG,proiect:ExcelP},
+  nivele:[
+  {t:'Mini-proiect: produs informatic cu tabel, formule și grafic', final:true, lectii:[12], continuturi:[P.formule,P.functii,P.sortare,P.grafice],
+   obiectiv:'faci singur, cu date reale culese de tine, registrul cerut de profesor (tabel, cel puțin trei formule, o funcție de decizie, un grafic și o concluzie scrisă, plus sortarea propusă de pagină), îl salvezi cu numele tău și te verifici cu grila profesorului.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>La un târg de științe, un elev a vrut să afle ce fel de pahar ține apa fierbinte caldă cel mai mult: de polistiren, de plastic, de hârtie sau de ceramică. A măsurat temperatura apei din fiecare pahar la fiecare 10 minute, timp de 30 de minute. Apoi a pus pe panou întrebarea, pașii și rezultatele, cu grafice.</p>
+<p>Asta e un proiect: o întrebare, date adevărate, calcule, un grafic și câteva propoziții care răspund la întrebare. Azi faci și tu un <mark>produs</mark> de felul ăsta, în Excel, cu datele tale.</p>
+${fig(IMG+'proiect-targ.webp',500,760,'Panoul unui proiect la un târg de științe: titlul CUP HEAT, întrebarea, pașii (Procedure), poze cu paharele și, jos, două grafice cu linii la Results; în față, paharele','Panoul proiectului: întrebarea sus, pașii (Procedure) în stânga, rezultatele cu două grafice (Results) jos. '+CR_TARG)}`},
+
+    /* ---------- PASUL 1: cerința (întocmai) și grila, pe scurt; detaliile grilei în „Uite cum” (registrul j1: C, D, L, M) ---------- */
+    {t:'Ce se cere și cum se notează',
+     text:`<p>Profesorul cere un <mark>produs informatic</mark>: registrul tău Excel, care se încheie cu o <mark>concluzie</mark>, adică una-două propoziții despre ce arată datele. Cerința lui, întocmai: „Mini-proiect pe date reale culese de elevi (bugetul unei excursii, rezultatele unui sondaj în clasă): tabel, cel puțin trei formule, o funcție de decizie, un grafic și o concluzie scrisă.” Documentul nu spune dacă funcția de decizie intră printre cele trei formule: întreabă-ți profesorul. Fișa de proiect, dacă o primești, are întâietate.</p>
+<p>Temele de la laborator, sortarea și varianta scurtă sunt <b>propunerea paginii</b>. Proiectul se notează cu <mark>grila</mark> profesorului: 5 criterii, câte 0 – 18 puncte, plus 10 din oficiu; nota = punctaj : 10, ca la lucrare.</p>`,
+     exemplu:`<p>Cele 5 criterii ale grilei: 1. Respectarea cerinței; 2. Corectitudinea tehnică; 3. Organizarea; 4. Explicația (ce am făcut și de ce); 5. Munca proprie / sursele. Reperele: De bază = 10 p, Consolidat = 14 p, Avansat = 18 p; se poate da și între repere, iar 0 dacă lipsește cu totul. Exemplul din grilă: 14 + 18 + 14 + 10 + 14 + 10 = 80 → nota 8. Grila întreagă e la pasul din laborator.</p>`,
+     altfel:`<p>Cerința e ca regulamentul unui concurs de dans: spune ce trebuie să arăți. Grila e baremul juriului, cu puncte separate pentru ritm, costume și coregrafie. Așa știi dinainte la ce să fii atent.</p>`,
+     incearca:{t:'excelfn',q:'Proiectul Mariei a primit punctele din B2:B6. În <b>B7</b> calculează punctajul: suma punctelor de la cele 5 criterii plus cele 10 din oficiu. În <b>B8</b> împarte punctajul la 10.',
+       cols:2,rows:8,cells:{A1:'Criteriul',B1:'Puncte',A2:'Cerința',B2:14,A3:'Corectitudinea',B3:10,A4:'Organizarea',B4:14,A5:'Explicația',B5:18,A6:'Sursele',B6:10,A7:'Punctajul',A8:'Punctaj : 10'},
+       verifica:{formule:{B7:'=SUM(B2:B6)+10',B8:'=B7/10'}},
+       ajutor:'În B7 scrii =SUM(B2:B6)+10 și apeși Enter. În B8 scrii =B7/10 și apeși Enter.',
+       why:'14 + 10 + 14 + 18 + 10 = 66, plus 10 din oficiu = 76 de puncte. 76 : 10 = 7,6. Nota se rotunjește la cel mai apropiat întreg: 8, deci nivelul Consolidat.'},
+     inca:[
+      {t:'choice',q:'Un proiect are 75 de puncte, cu tot cu cele 10 din oficiu. Ce notă și ce nivel are?',o:['Nota 8, Consolidat','Nota 7, Consolidat','Nota 7, De bază','Nota 8, Avansat'],ok:0,
+       ajutor:'75 : 10 = 7,5. Cum se rotunjește ,5?',why:'7,5 se rotunjește în favoarea elevului: 8. Nivelul se citește din notă: 7-8 înseamnă Consolidat.'},
+      {t:'tf',q:'Elevul n-a spus și n-a scris nimic despre ce a făcut: criteriul „Explicația” lipsește cu totul. La acest criteriu primește 0 puncte.',ok:true,
+       ajutor:'Când se dă 0, după grilă?',why:'Adevărat. Grila dă 0 doar când un criteriu lipsește cu totul; altfel, punctele sunt între 0 și 18, după cât de bine e făcut.'},
+      {t:'choice',q:'Registrul lui Radu are: tabelul, formula din D copiată pe toate rândurile, totalul cu SUM, media cu AVERAGE și un grafic cu titlu. Ce îi mai lipsește din cerința profesorului?',o:['O funcție de decizie (IF) și concluzia scrisă','Sortarea tabelului și o a doua formulă cu SUM','Nimic, are deja tot ce cere profesorul','Un al doilea grafic și antetul aldin'],ok:0,
+       ajutor:'Citește cerința, element cu element: tabel, cel puțin trei formule, o funcție de decizie, un grafic, o concluzie scrisă.',why:'Radu are tabelul, trei formule (cea din D, SUM și AVERAGE) și graficul. Îi lipsesc funcția de decizie și concluzia scrisă. Sortarea e propunerea paginii, nu cerința.'}
+     ]},
+
+    /* ---------- PASUL 2: tabelul (și salvarea de la început: registrul j1, punctul T) ---------- */
+    {t:'Tabelul tău: tema și datele',
+     text:`<p>Întâi alegi tema. La laborator ai trei: primele două vin din exemplele profesorului (bugetul unei excursii, un sondaj în clasă), a treia e propunerea paginii. Datele le aduni tu, adevărate, și scrii sub tabel de unde sunt.</p>
+<p>Deschizi un registru nou și îl salvezi de la început cu numele tău (Salvare ca, <kbd>F12</kbd>, lecția 3). Rândul 1 e antetul, cu numele coloanelor. În coloana A pui numele lucrurilor comparate, iar în B și C numerele, fiecare singur în celula lui, cu virgulă la zecimale (lecția 5). Formulele vin în D și E: graficul se face dintr-o zonă fără goluri (lecția 11), deci numerele de desenat stau lângă coloana A.</p>`,
+     exemplu:`<p>Tema „Timpul meu”: în A activitatea (citit, teme, sport…), în B câte ore îi dai într-o zi de școală, în C câte ore într-o zi de weekend. În D vor fi orele pe săptămână, iar în E o decizie. Graficul va lua A1:C6.</p>
+${fig(IMG3+'confirma-inlocuire.webp',458,176,'Excel: fereastra Confirm Save As, cu întrebarea already exists, do you want to replace it și butoanele Yes și No','La salvare, numele există deja: No, apoi o cifră la sfârșitul numelui.')}`,
+     altfel:`<p>Tabelul e ca un dulap cu sertare etichetate: pe fiecare sertar scrie ce e înăuntru (antetul), iar în fiecare sertar stă un singur lucru. Formulele sunt sertarele de la capăt, care se umplu singure.</p>`,
+     incearca:{t:'excelfn',q:'Începi tabelul temei „Timpul meu”. În <b>A1</b> scrie Activitatea, în <b>B1</b> Luni-vineri, în <b>C1</b> Weekend. Pe rândul 2: în <b>A2</b> scrie citit, în <b>B2</b> numărul 0,5, iar în <b>C2</b> numărul 1,5 (orele de citit într-o zi). După fiecare apasă Enter.',
+       cols:3,rows:3,cells:{},panglica:false,
+       verifica:{tip:{A1:{text:'Activitatea'},B1:{text:'Luni-vineri'},C1:{text:'Weekend'},A2:{text:'citit'},B2:{numar:0.5},C2:{numar:1.5}}},
+       ajutor:'Zecimalele se scriu cu virgulă: 0,5 și 1,5. Cu punct, Excel ia 1.5 drept dată.',
+       why:'Antetul e pe rândul 1, iar numerele cu virgulă stau la dreapta: sunt numere, bune de calcul.'},
+     inca:[
+      {t:'classify',q:'Ce scrii în celula cu ore, ca Excel să poată calcula cu ea?',cats:['Număr bun de calcul','Nu e număr bun: e text sau dată'],items:[['1,5',0],['1.5',1],['2 ore',1],['3',0]],
+       ajutor:'Lecția 5: virgula e zecimală; cu punct, Excel face o dată; cuvântul „ore” face din număr text.',why:'1,5 și 3 sunt numere. 1.5 devine dată, iar „2 ore” e text: formulele nu merg cu ele.'},
+      {t:'choice',q:'În A ai activitățile, în B și C orele. Vrei un grafic cu orele din B și C. Unde pui coloana cu formula orelor pe săptămână?',o:['În D, după coloanele cu numere','În B, între nume și numere','În A, înaintea numelor','Pe rândul 1, deasupra antetului'],ok:0,
+       ajutor:'Graficul ia o zonă fără goluri: numele și numerele de desenat trebuie să stea alături.',why:'A, B și C rămân alăturate pentru grafic (A1:C6), iar formula vine după ele, în D.'},
+      {t:'choice',q:'Ai scris la File name <code>Popescu_Ana_8A_proiect</code> și apeși Save. Apare Confirm Save As: „… already exists. Do you want to replace it?”. Ce faci?',o:['No, apoi adaug o cifră la sfârșitul numelui','Yes, ca fișierul meu să-l înlocuiască pe cel vechi','Scriu numele colegului în locul numelui meu','Închid Excel și nu mai salvez proiectul'],ok:0,
+       ajutor:'Al cui e fișierul care există deja?',why:'Fișierul e al unui coleg: Yes l-ar înlocui. No te lasă în fereastra Save As, unde adaugi o cifră, de exemplu Popescu_Ana_8A_proiect_2.'}
+     ]},
+
+    /* ---------- PASUL 3: formulele ---------- */
+    {t:'Formulele: pe fiecare rând și sub tabel',
+     text:`<p>Formulele fac din tabel un produs care calculează singur. Pe fiecare rând pui o formulă cu operatori (lecția 7), de exemplu în D2 <code>=B2*5+C2*2</code>, și o copiezi în jos cu mânerul de umplere (lecția 8). Tot pe rând, o decizie cu IF (lecția 9), de exemplu în E2 <code>=IF(D2&gt;=10;"mult";"puțin")</code>.</p>
+<p>Sub tabel lași UN rând gol, apoi pui totalul, media, maximul și minimul coloanei D: <code>=SUM(D2:D6)</code>, <code>=AVERAGE(D2:D6)</code>, <code>=MAX(D2:D6)</code>, <code>=MIN(D2:D6)</code>. Rândul gol desparte tabelul de aceste rânduri, numite <mark>sumar</mark>: sortarea și graficul iau doar tabelul.</p>`,
+     exemplu:`${fig(IMG+'formula-total.webp',628,238,'Excel: D2 aleasă, bara de formule arată =B2+C2; în tabel 7A are 55 și 60, iar totalul 115','D2 adună cele două luni: =B2+C2.')}
+${fig(IMG+'formula-diploma.webp',628,238,'Excel: E2 aleasă, bara de formule arată =IF(D2>=100;"da";"nu"); în E2 scrie da','E2 decide diploma: da, de la 100 kg în sus.')}
+${fig(IMG+'formula-suma.webp',628,358,'Excel: D8 aleasă, bara de formule arată =SUM(D2:D6); rândul 7 e gol, iar în D8 e 411','D8 adună coloana D. Rândul 7 e gol.')}
+<p>Pe un calculator cu setări englezești: <code>=IF(D2&gt;=100,"da","nu")</code>. Cu 4 rânduri de date (2-5), rândul gol e rândul 6, iar sub el, în D7, totalul e <code>=SUM(D2:D5)</code>.</p>`,
+     altfel:`<p>Rândul gol e ca linia trasă sub o adunare în caiet: deasupra sunt numerele, dedesubt rezultatul. Nimeni nu amestecă rezultatul printre numere.</p>`,
+     incearca:{t:'exceld',q:'Tema „Timpul meu”. În <b>D2</b> calculează orele pe săptămână: cele din B pentru cele 5 zile de luni până vineri, plus cele din C pentru cele 2 zile de weekend. În <b>E2</b> scrie decizia: mult, dacă D2 are cel puțin 10 ore; altfel, puțin.',
+       cols:5,rows:2,cells:{A1:'Activitatea',B1:'Luni-vineri',C1:'Weekend',D1:'Pe săptămână',E1:'Cât',A2:'citit',B2:0.5,C2:1.5},
+       verifica:{formule:{D2:'=B2*5+C2*2',E2:'=IF(D2>=10;"mult";"puțin")'}},variants:[{B2:1.6,C2:1},{B2:1,C2:2}],
+       ajutor:'În D2: =B2*5+C2*2. În E2: =IF(D2>=10;"mult";"puțin"), cu ghilimele drepte (pe setări englezești, virgule între părți).',
+       why:'0,5 × 5 + 1,5 × 2 = 5,5 ore pe săptămână: mai puțin de 10, deci „puțin”.'},
+     inca:[
+      {t:'excelfn',q:'Sub tabel, după rândul 7 lăsat gol, pune în <b>D8</b> totalul orelor din D2:D6, în <b>D9</b> media, în <b>D10</b> cea mai mare valoare, iar în <b>D11</b> cea mai mică.',
+       cols:4,rows:11,cells:{A1:'Activitatea',D1:'Pe săptămână',A2:'citit',D2:5.5,A3:'teme',D3:12,A4:'sport',D4:6,A5:'ecran',D5:14,A6:'ajutor',D6:4,A8:'Total',A9:'Media',A10:'Maxim',A11:'Minim'},
+       verifica:{formule:{D8:'=SUM(D2:D6)',D9:'=AVERAGE(D2:D6)',D10:'=MAX(D2:D6)',D11:'=MIN(D2:D6)'},functie:{D8:'SUM',D9:'AVERAGE',D10:'MAX',D11:'MIN'}},
+       ajutor:'D8: =SUM(D2:D6), D9: =AVERAGE(D2:D6), D10: =MAX(D2:D6), D11: =MIN(D2:D6). Dacă folosești Σ, citește zona propusă înainte de Enter: sub un total ea poate fi greșită, iar atunci scrii D2:D6 peste ea (lecția 8).',
+       why:'Totalul e 41,5 ore, media 8,3, cel mai mult 14 (ecran), cel mai puțin 4 (ajutor).'}
+     ]},
+
+    /* ---------- PASUL 4: clasamentul (sortarea), propunerea paginii (registrul j1: D, I, S) ---------- */
+    {t:'Clasamentul: tabelul sortat',
+     text:`<p>Sortarea nu e în cerința profesorului: e <b>propunerea paginii</b>, pentru că un tabel ordonat se citește mai ușor și dă un grafic ordonat. O faci ca la lecția 10: clic pe o singură celulă din coloana după care ordonezi, de exemplu D2, apoi fila Date (Data) › Sortare de la cel mai mare la cel mai mic (Sort Largest to Smallest).</p>
+<p>Rândurile se mută întregi, cu formulele lor. Sumarul de sub rândul gol rămâne pe loc, cu aceleași rezultate. Fără rândul gol, Excel ia și sumarul drept parte din tabel și îl amestecă printre rânduri.</p>`,
+     exemplu:`${fig(IMG+'sumar-lipit-gresit.webp',628,270,'Excel, după sortare: rândurile Total, Maxim, Media și Minim au intrat printre clase, cu 0 și 38,33333333 în coloana D','Greșit: sumarul era lipit de tabel, fără rând gol. Sortarea l-a amestecat printre clase, iar formulele lui dau 0.')}
+${fig(IMG+'produs-exemplu.webp',1000,314,'Excel: tabelul sortat după total, cu 7A primul, sumarul sub rândul gol, rândurile cu sursa datelor și concluzia, graficul cu coloane Maculatura strânsă pe clase (kg)','Bine: rândul 7 e gol, deci sortarea a mutat doar clasele.')}`,
+     altfel:`<p>Clasamentul e ca lista rezultatelor de la un concurs: primul sus, ultimul jos, iar fiecare concurent își ia punctele cu el. Linia trasă sub listă o desparte de ce scrii dedesubt, așa cum rândul gol desparte tabelul de sumar.</p>`,
+     incearca:{t:'excels',q:'Fă clasamentul: sortează tabelul după coloana <b>D</b>, de la cel mai mare la cel mai mic. Sumarul de sub rândul gol trebuie să rămână pe loc.',
+       cols:5,rows:9,cells:{A1:'Activitatea',B1:'Luni-vineri',C1:'Weekend',D1:'Pe săptămână',E1:'Cât',
+         A2:'citit',B2:0.5,C2:1.5,D2:'=B2*5+C2*2',E2:'=IF(D2>=10;"mult";"puțin")',
+         A3:'teme',B3:2,C3:1,D3:'=B3*5+C3*2',E3:'=IF(D3>=10;"mult";"puțin")',
+         A4:'sport',B4:1,C4:0.5,D4:'=B4*5+C4*2',E4:'=IF(D4>=10;"mult";"puțin")',
+         A5:'ecran',B5:2,C5:2,D5:'=B5*5+C5*2',E5:'=IF(D5>=10;"mult";"puțin")',
+         A6:'ajutor',B6:0.5,C6:0.75,D6:'=B6*5+C6*2',E6:'=IF(D6>=10;"mult";"puțin")',
+         A8:'Total',D8:'=SUM(D2:D6)',A9:'Maxim',D9:'=MAX(D2:D6)'},
+       verifica:{sortat:{zona:'A1:E6',dupa:[{col:'D',ord:'desc'}]}},
+       ajutor:'Clic pe D2 (o singură celulă). Fila Date (Data) › butonul mic de jos, Sortare de la cel mai mare la cel mai mic (Sort Largest to Smallest).',
+       why:'Sus e ecranul (14 ore), jos ajutorul în casă (4 ore). Fiecare rând și-a păstrat numerele, iar totalul și maximul au rămas sub rândul gol.'},
+     inca:[
+      {t:'tf',q:'Rândurile cu Total, Media, Maxim și Minim stau lipite de tabel, fără rând gol între ele. Sortezi tabelul după coloana D: rândurile de sumar rămân pe loc, sub tabel.',ok:false,
+       ajutor:'Ce desparte tabelul de sumar?',why:'Fals. Fără rând gol, Excel ia sumarul drept parte din tabel și îl sortează printre celelalte rânduri; formulele lui se strică. Rândul gol le desparte.'}
+     ]},
+
+    /* ---------- PASUL 5: graficul și concluzia (registrul j1: O, S, V) ---------- */
+    {t:'Graficul și concluzia',
+     text:GRAFIC_PAS,
+     exemplu:`${fig(IMG+'produs-exemplu.webp',1000,314,'Excel: tabelul Clasa, Septembrie, Octombrie, Total, Diplomă, sortat după total, sumarul, rândul cu sursa datelor, două rânduri de concluzie și, în dreapta, graficul cu coloane Maculatura strânsă pe clase (kg)','Produsul-exemplu: graficul cu coloane din A1:C6, cu titlu; sub tabel, sursa și concluzia.')}
+<p>Concluzia produsului-exemplu: „7A și 6A au strâns peste 100 kg și primesc diplomă. Trei clase din cinci au strâns mai mult în octombrie decât în septembrie.” Explicația de sub grafic (criteriul 4): „Am ales coloane, pentru că compar clasele. Un grafic radial n-ar merge: desenează o singură serie.”</p>`,
+     altfel:`<p>Graficul e ca o fotografie a tabelului. Concluzia e ce i-ai spune despre fotografie cuiva care n-are timp s-o privească.</p>`,
+     incearca:{t:'excelg',q:'Fă graficul cu coloane al orelor din B și C: selectează <b>A1:C6</b>, apoi <b>Inserare (Insert)</b> › butonul cu coloane ▾ › <b>Coloană grupată (Clustered Column)</b>. Titlul: <b>Ore pe zi</b>.',
+       cols:4,rows:6,cuGrafic:true,cells:{A1:'Activitatea',B1:'Luni-vineri',C1:'Weekend',D1:'Pe săptămână',A2:'ecran',B2:2,C2:2,D2:'=B2*5+C2*2',A3:'teme',B3:2,C3:1,D3:'=B3*5+C3*2',A4:'sport',B4:1,C4:0.5,D4:'=B4*5+C4*2',A5:'citit',B5:0.5,C5:1.5,D5:'=B5*5+C5*2',A6:'ajutor',B6:0.5,C6:0.75,D6:'=B6*5+C6*2'},
+       grafic:{zona:'A1:C6',tip:'column',titlu:'Ore pe zi',mesajTip:'Aici se cere graficul cu coloane: butonul cu coloane ▾, prima din listă.'},
+       ajutor:'Trage de la A1 la C6. Inserare (Insert) › butonul cu coloane ▾ › prima din listă. Apoi clic pe titlu, scrie Ore pe zi și apasă Enter.',
+       why:'Două serii, Luni-vineri și Weekend, pentru fiecare activitate: compari dintr-o privire.'},
+     inca:[
+      {t:'choice',q:'În A sunt activitățile, în B și C orele, în D totalul pe săptămână. Vrei graficul orelor din B și C, cu numele activităților jos. Ce zonă selectezi?',o:['A1:C6','B1:C6','A2:C6','A1:D6'],ok:0,
+       ajutor:'Graficul vrea antetul, numele și numerele de desenat, fără nimic în plus.',why:'A1:C6: antetul, numele și orele. Fără A, jos ar apărea 1, 2, 3…; fără rândul 1, seriile n-ar avea nume; cu D, totalul ar deveni a treia serie.'},
+      {t:'classify',q:'La ce criteriu din grilă ajută fiecare lucru?',cats:['2. Corectitudinea tehnică','4. Explicația','5. Munca proprie / sursele'],
+       items:[['Formulele iau numerele prin adresele lor, nu scrise de mână',0],['Spui de ce ai ales graficul cu coloane',1],['Scrii de unde e o imagine sau un text luat de altundeva',2],['Spui ce altceva ai fi putut face',1]],
+       ajutor:'Corectitudinea = operațiile făcute bine; explicația = ce ai făcut și de ce; la sursele, grila cere „citează sursele imaginilor/textelor”.',why:'Formulele bune țin de corectitudine; „de ce” și „ce altfel” țin de explicație; sursa unei imagini sau a unui text ține de munca proprie și surse.'}
+     ]}
+   ],
+   atelier:{t:'proiect',titlu:'Atelier: târgul de felicitări',
+    intro:`<p>Faci un produs întreg, în trei etape, într-o foaie care se poartă ca Excel-ul pe setări românești. Deasupra ei sunt <strong>testele</strong>: fiecare se bifează singur când partea lui e gata, chiar dacă se schimbă numerele din tabel. Treci de la o etapă la alta cu butoanele 1, 2, 3. La final apasă <b>Verifică</b>.</p>`,
+    q:'Clasele au vândut felicitări la târgul școlii. În B e câte felicitări a vândut fiecare clasă, în C prețul unei felicitări, în lei. <b>Etapa 1.</b> În D2:D6 calculează încasările fiecărei clase: felicitările înmulțite cu prețul. În E2:E6 scrie premiul: da, dacă încasările sunt de cel puțin 150 de lei; altfel nu. Sub tabel, după rândul 7 gol, în D8:D11: totalul, media, maximul și minimul încasărilor. <b>Etapa 2.</b> Sortează tabelul după încasări, de la cel mai mare la cel mai mic. <b>Etapa 3.</b> Fă graficul cu coloane al felicitărilor vândute (A1:B6), cu titlul <b>Felicitări vândute</b>.',
+    cols:5,rows:11,
+    cells:{A1:'Clasa',B1:'Felicitări',C1:'Preț',D1:'Încasări',E1:'Premiu',A2:'5A',B2:30,C2:4,A3:'5B',B3:45,C3:3,A4:'6A',B4:25,C4:5,A5:'6B',B5:52,C5:3,A6:'7A',B6:38,C6:4,
+      A8:'Total',A9:'Media',A10:'Maxim',A11:'Minim'},
+    teste:[
+     {ce:'D2:D6: încasările, cu o formulă cu adrese (felicitările înmulțite cu prețul)',etapa:1,formule:{D2:'=B2*C2',D3:'=B3*C3',D4:'=B4*C4',D5:'=B5*C5',D6:'=B6*C6'},sfat:'În D2 scrii =B2*C2, apoi tragi mânerul de umplere până la D6.'},
+     {ce:'E2:E6: premiul, cu IF: da de la 150 de lei în sus',etapa:1,formule:{E2:'=IF(D2>=150;"da";"nu")',E3:'=IF(D3>=150;"da";"nu")',E4:'=IF(D4>=150;"da";"nu")',E5:'=IF(D5>=150;"da";"nu")',E6:'=IF(D6>=150;"da";"nu")'},variante:[{B2:50,C2:3},{B2:49,C2:3}],sfat:'În E2: =IF(D2>=150;"da";"nu"), cu ghilimele drepte; la exact 150 trebuie „da”.'},
+     {ce:'D8:D11: totalul, media, maximul și minimul încasărilor (SUM, AVERAGE, MAX, MIN)',etapa:1,formule:{D8:'=SUM(D2:D6)',D9:'=AVERAGE(D2:D6)',D10:'=MAX(D2:D6)',D11:'=MIN(D2:D6)'},functii:{D8:'SUM',D9:'AVERAGE',D10:'MAX',D11:'MIN'},sfat:'D8: =SUM(D2:D6), D9: =AVERAGE(D2:D6), D10: =MAX(D2:D6), D11: =MIN(D2:D6).'},
+     {ce:'Tabelul e sortat după încasări, de la mare la mic, cu rândurile întregi',etapa:2,sortat:{zona:'A1:E6',dupa:{col:'D',ord:'desc'},legate:['A','B','C']},sfat:'În etapa 2: clic pe D2, fila Date (Data) › Sortare de la cel mai mare la cel mai mic (Sort Largest to Smallest).'},
+     {ce:'Graficul cu coloane ia felicitările vândute: A1:B6',etapa:3,grafic:{zona:'A1:B6',tip:'column'},sfat:'În etapa 3: selectează A1:B6, apoi Inserare (Insert) › butonul cu coloane ▾ › prima din listă.'},
+     {ce:'Titlul graficului: „Felicitări vândute”',etapa:3,grafic:{titlu:'Felicitări vândute'},sfat:'Clic pe titlul graficului, scrie Felicitări vândute și apasă Enter.'}],
+    solutie:{zona:'A1:E6',rand:{D:'=B{r}*C{r}',E:'=IF(D{r}>=150;"da";"nu")'},celule:{D8:'=SUM(D2:D6)',D9:'=AVERAGE(D2:D6)',D10:'=MAX(D2:D6)',D11:'=MIN(D2:D6)'},dupa:{col:'D',ord:'desc'}},
+    ajutor:'Etapa 1: D2 =B2*C2 și E2 =IF(D2>=150;"da";"nu"), trase până la rândul 6; D8:D11 cu SUM, AVERAGE, MAX, MIN pe D2:D6. Etapa 2: clic pe D2, Date (Data) › Sort Largest to Smallest. Etapa 3: A1:B6, Inserare (Insert) › coloane › prima; titlul Felicitări vândute.',
+    solutieText:'produsul corect e acum în foaie: formulele, tabelul sortat și graficul cu titlu. Treci prin etapele 1, 2, 3 și uită-te la fiecare.',
+    why:'Clasamentul: 6B (156 de lei) și 7A (152) iau premiu; urmează 5B, 6A și 5A. Totalul e 688 de lei, media 137,6. Graficul arată felicitările: 6B a vândut cele mai multe, 52.',
+    inca:[
+     {t:'proiect',titlu:'Atelier: campionatul de minifotbal',
+      q:'Echipele școlii au jucat un campionat. În B sunt victoriile, în C egalurile. <b>Etapa 1.</b> În D2:D6 calculează punctele: 3 pentru o victorie, 1 pentru un egal. În E2:E6 scrie da, dacă echipa are cel puțin 10 puncte; altfel nu. În D8:D11: totalul, media, maximul și minimul punctelor. <b>Etapa 2.</b> Sortează după puncte, de la cel mai mare la cel mai mic. <b>Etapa 3.</b> Fă graficul cu coloane al victoriilor și egalurilor (A1:C6), cu titlul <b>Victorii și egaluri</b>.',
+      cols:5,rows:11,
+      cells:{A1:'Echipa',B1:'Victorii',C1:'Egaluri',D1:'Puncte',E1:'Calificată',A2:'Lupii',B2:3,C2:2,A3:'Vulturii',B3:2,C3:1,A4:'Șoimii',B4:4,C4:0,A5:'Urșii',B5:1,C5:3,A6:'Delfinii',B6:3,C6:1,
+        A8:'Total',A9:'Media',A10:'Maxim',A11:'Minim'},
+      teste:[
+       {ce:'D2:D6: punctele, cu o formulă cu adrese (3 pe victorie, 1 pe egal)',etapa:1,formule:{D2:'=B2*3+C2',D3:'=B3*3+C3',D4:'=B4*3+C4',D5:'=B5*3+C5',D6:'=B6*3+C6'},sfat:'În D2: =B2*3+C2, apoi mânerul de umplere până la D6.'},
+       {ce:'E2:E6: calificarea, cu IF: da de la 10 puncte în sus',etapa:1,formule:{E2:'=IF(D2>=10;"da";"nu")',E3:'=IF(D3>=10;"da";"nu")',E4:'=IF(D4>=10;"da";"nu")',E5:'=IF(D5>=10;"da";"nu")',E6:'=IF(D6>=10;"da";"nu")'},variante:[{B2:3,C2:1},{B2:3,C2:0}],sfat:'În E2: =IF(D2>=10;"da";"nu"); Delfinii au exact 10 puncte, deci „da”.'},
+       {ce:'D8:D11: totalul, media, maximul și minimul punctelor',etapa:1,formule:{D8:'=SUM(D2:D6)',D9:'=AVERAGE(D2:D6)',D10:'=MAX(D2:D6)',D11:'=MIN(D2:D6)'},functii:{D8:'SUM',D9:'AVERAGE',D10:'MAX',D11:'MIN'}},
+       {ce:'Tabelul e sortat după puncte, de la mare la mic, cu rândurile întregi',etapa:2,sortat:{zona:'A1:E6',dupa:{col:'D',ord:'desc'},legate:['A','B','C']}},
+       {ce:'Graficul cu coloane ia victoriile și egalurile: A1:C6',etapa:3,grafic:{zona:'A1:C6',tip:'column'}},
+       {ce:'Titlul graficului: „Victorii și egaluri”',etapa:3,grafic:{titlu:'Victorii și egaluri'}}],
+      solutie:{zona:'A1:E6',rand:{D:'=B{r}*3+C{r}',E:'=IF(D{r}>=10;"da";"nu")'},celule:{D8:'=SUM(D2:D6)',D9:'=AVERAGE(D2:D6)',D10:'=MAX(D2:D6)',D11:'=MIN(D2:D6)'},dupa:{col:'D',ord:'desc'}},
+      ajutor:'D2 =B2*3+C2, E2 =IF(D2>=10;"da";"nu"), trase până la rândul 6; D8:D11 cu SUM, AVERAGE, MAX, MIN. Sortare: clic pe D2, Date (Data) › Sort Largest to Smallest. Grafic: A1:C6, coloane; titlul Victorii și egaluri.',
+      why:'Șoimii (12 puncte), Lupii (11) și Delfinii (10, exact la limită) se califică; Vulturii (7) și Urșii (6), nu.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Proiectul lui Andrei a primit 18, 14, 14, 10 și 18 puncte la cele 5 criterii. Ce notă și ce nivel are?',o:['84 de puncte → nota 8, Consolidat','74 de puncte → nota 7, Consolidat','84 de puncte → nota 9, Avansat','84 de puncte → nota 8, Avansat'],ok:0,
+     ajutor:'Adună cele 5 criterii, apoi cele 10 din oficiu. Nota = punctaj : 10, rotunjit la cel mai apropiat întreg.',why:'18 + 14 + 14 + 10 + 18 = 74, plus 10 din oficiu = 84. 84 : 10 = 8,4, rotunjit: 8. Nivelul, din notă: Consolidat.'},
+    {t:'exceld',q:'Tema „Cheltuielile mele”. În D2 e totalul pe două săptămâni. În <b>E2</b> scrie decizia: prea mult, dacă D2 e mai mare de 50 de lei; altfel, bine.',
+     cols:5,rows:2,cells:{A1:'Pe ce',B1:'Săptămâna 1',C1:'Săptămâna 2',D1:'Total',E1:'Părerea mea',A2:'jocuri',B2:20,C2:25,D2:'=B2+C2'},
+     verifica:{formule:{E2:'=IF(D2>50;"prea mult";"bine")'}},variants:[{B2:25,C2:25},{B2:26,C2:25}],
+     ajutor:'„Mai mare de 50” se scrie D2>50. Textul stă între ghilimele drepte: =IF(D2>50;"prea mult";"bine").',
+     why:'45 de lei nu e mai mult de 50, deci „bine”. La exact 50 tot „bine”; de la 51, „prea mult”.'},
+    {t:'excels',q:'Sortează tabelul după coloana <b>D</b>, de la cel mai mic la cel mai mare. Totalul de sub rândul gol trebuie să rămână pe loc.',
+     cols:4,rows:8,cells:{A1:'Pe ce',B1:'Săptămâna 1',C1:'Săptămâna 2',D1:'Total',A2:'mâncare',B2:30,C2:28,D2:'=B2+C2',A3:'transport',B3:10,C3:10,D3:'=B3+C3',A4:'rechizite',B4:15,C4:12,D4:'=B4+C4',A5:'jocuri',B5:20,C5:25,D5:'=B5+C5',A6:'cadouri',B6:0,C6:35,D6:'=B6+C6',A8:'Total',D8:'=SUM(D2:D6)'},
+     verifica:{sortat:{zona:'A1:D6',dupa:[{col:'D',ord:'asc'}]}},
+     ajutor:'Clic pe D2, o singură celulă. Fila Date (Data) › butonul mic de sus, Sortare de la cel mai mic la cel mai mare (Sort Smallest to Largest).',
+     why:'Sus transportul (20 de lei), jos mâncarea (58). Totalul, 185 de lei, a rămas sub rândul gol.'},
+    {t:'excelg',q:'Vrei să arăți <b>ce parte</b> din banii cheltuiți a mers pe fiecare lucru. Fă graficul potrivit din datele de mai jos.',
+     cols:2,rows:5,cuGrafic:true,cells:{A1:'Pe ce',B1:'Lei',A2:'mâncare',B2:58,A3:'jocuri',B3:45,A4:'cadouri',B4:35,A5:'transport',B5:20},
+     grafic:{zona:'A1:B5',tip:'pie',mesajTip:'Graficul trebuie să arate părțile unui întreg. Care tip arată asta?'},
+     ajutor:'Părțile unui întreg se văd pe un grafic radial: selectează A1:B5, apoi Inserare (Insert) › butonul rotund ▾ › Pie.',
+     why:'Radialul împarte toți banii în felii: mâncarea ia cea mai mare felie.'},
+    /* întrebarea 5: altă situație decât exercițiul din pasul 4 (registrul j1, punctul F): tabelul cu 4 rânduri, unde pui totalul */
+    {t:'choice',q:'Ai datele pe rândurile 2-5 (4 rânduri), cu formule în coloana D. Unde scrii totalul <code>=SUM(D2:D5)</code>, ca la sortare să rămână pe loc, sub tabel?',o:['În D7, după rândul 6 lăsat gol','În D6, imediat sub ultimul rând de date','În D5, peste ultima valoare','În D1, în locul antetului'],ok:0,
+     ajutor:'Ce desparte tabelul de sumar, ca Excel să nu le ia împreună?',why:'D7: rândul 6, gol, desparte tabelul (rândurile 1-5) de total, iar la sortare Excel mută doar rândurile cu date. În D6, totalul ar fi lipit de tabel: ar intra în sortare și formula lui s-ar strica. În D5 și în D1 ai scrie peste o valoare sau peste antet.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Excel-ul adevărat',titlu:'Acum la calculatorul din laborator: proiectul tău',scurt:'Proiectul',
+    intro:`<p>Faci produsul tău în Excel, pe calculator, fără ajutor. Cerința profesorului, întocmai: „Mini-proiect pe date reale culese de elevi (bugetul unei excursii, rezultatele unui sondaj în clasă): tabel, cel puțin trei formule, o funcție de decizie, un grafic și o concluzie scrisă.” Documentul nu spune dacă funcția de decizie intră printre cele trei formule: întreabă-ți profesorul. Mai jos: temele, cele două variante (întreagă și scurtă, propuneri ale paginii), produsul-exemplu și grila profesorului, cu care te verifici la sfârșit.</p><div data-proiect-lab></div>`,
+    pasi:PROVOCARE},
+  diploma:{titlu:'Autor de produs informatic',
+    rezumat:'a făcut, cu date reale, ce cere profesorul: tabel, cel puțin trei formule, o funcție de decizie, un grafic și o concluzie scrisă; în pagină a exersat formule cu operatori, SUM, AVERAGE (la varianta lungă și MAX, MIN), IF, graficul potrivit și sursa datelor; cu sumarul despărțit de tabel printr-un rând gol, l-a ordonat prin sortarea propusă de pagină, l-a salvat cu numele lui și s-a verificat cu grila profesorului',
+    aplicatie:'Excel-ul adevărat',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
