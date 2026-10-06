@@ -7,7 +7,7 @@
 > avem o treaba complexa. Trebuie sa lucrezi cu informatiile din trei locuri.
 > Ce ai inteles pana acum din aceasta consola, apoi despre progresul pe platforma de test si implementarea fidelitatii cu pachetul office.
 > -- progresul pe platforma de test -- (…) Tot lucrul e pe site-ul de probă, nu în producție. Misiunea Webmaster: https://proba.learninghub-8z6.pages.dev/jocuri/web-viii/ (…) Pasul următor ține de tine: încerci pe probă și hotărăști dacă trecem în producție. (…) După aceea: lecțiile LearningHub din content/, refăcute cu aceeași metodă pe pași, și simulatoarele noi din lista din README-ul jocurilor.
-> -- implementarea fidelitatii cu pachetul office. -- "C:\Users\licuv\Downloads\simulatoare_fidele_office_google.md"
+> -- implementarea fidelitatii cu pachetul office. -- "%USERPROFILE%\Downloads\simulatoare_fidele_office_google.md"
 
 ## Cele trei surse, pe scurt (ce am citit, nu ce îmi amintesc)
 
