@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cum e făcută o pagină web. Interfața editorului de pagini web</title>
+<meta name="description" content="Clasa a VIII-a, lecția 14 (prima despre paginile web): o pagină web e un fișier text .html pe care browserul îl desenează; etichetele care deschid și închid; Notepad (filele, meniul, bara de stare); salvarea corectă ca .html, cu UTF-8; deschiderea în browser, modific → salvez → F5, sursa paginii cu Ctrl+U.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF1F6; --paper:#FFFFFF; --paper2:#EEF2F8; --line:#CCD4E2;
+  --ink:#16202F; --ink2:#4E5A6E; --accent:#1F5FBF; --accentInk:#FFFFFF; --sel:#D8E5FA;
+  --mark:#FFE08A; --markInk:#16202F; --ok:#16703F; --okbg:#E0F2E7; --bad:#B3302A; --badbg:#FAE3E1;
+  --fd:"Archivo","Segoe UI",system-ui,sans-serif; --fb:"IBM Plex Sans","Segoe UI",system-ui,sans-serif; --fm:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E131B; --paper:#171E29; --paper2:#1F2836; --line:#334156;
+  --ink:#E4EAF3; --ink2:#9FAEC4; --accent:#7FB0FF; --accentInk:#0E131B; --sel:#1E3557;
+  --mark:#EBCB55; --markInk:#16202F; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E131B; --paper:#171E29; --paper2:#1F2836; --line:#334156;
+  --ink:#E4EAF3; --ink2:#9FAEC4; --accent:#7FB0FF; --accentInk:#0E131B; --sel:#1E3557;
+  --mark:#EBCB55; --markInk:#16202F; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}
+/* tema: fâșia de sus e o bară de adrese, cu fișierul paginii; dedesubt, rândul lui, cu etichetele colorate */
+.banda{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-family:var(--fm);font-size:.72rem;color:var(--ink2);padding:3px 8px;border-bottom:1px dashed var(--line)}
+.banda .adr{border:1px solid var(--line);border-radius:10px;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.banda .tg{color:var(--accent)}
+h1,h2{letter-spacing:-.01em}
+.pasi-met{margin:.3em 0 .6em 1.2em;padding:0}
+.pasi-met li{margin:.25em 0}
+pre.rand{font-family:var(--fm);background:var(--paper2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:.4em 0;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<!-- simulatorul „Notepad + browser” al lecției (proprietar: lecția VIII/14; îl refolosește lecția 15), fidel aplicațiilor
+     probate pe Windows 11 în română: _proba/notepad_*.json, _proba/edge_ascuns*.json, _proba/proba_codare_browser.json -->
+<script src="../../_sim/editorweb.js"></script>
+<script>
+/* conținuturile programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={interfata:'Elemente de interfaţă ale unui editor de pagini web',instrumente:'Instrumente de bază ale editorului de pagini web'};
+
+/* capturi reale (Notepad și Edge pe desktopul ascuns) și o fotografie de pe Wikimedia Commons: img/SURSE.json */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG='../m2-l14/img/';
+const X=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const MARIA={n:'Ionescu_Maria_8A_lectia14.html',t:'<h1>Excursia de vară</h1>\r\n',coleg:true};
+const ANA='Popescu_Ana_8A_lectia14.html';
+
+const PROVOCARE=[
+  'Pornește <b>Notepad</b>: apasă tasta Windows, scrie <b>Notepad</b> și apasă <kbd>Enter</kbd>. Dacă se deschide cu fila unui coleg, nu scrie în ea: apasă <b>+</b> (filă nouă). Dacă Notepad nu are file (pe Windows 10), lucrezi direct în fereastră, iar numele fișierului e sus, în bara de titlu.',
+  'Scrie, exact: <code>&lt;h1&gt;Pagina mea&lt;/h1&gt;</code>. Semnele <code>&lt;</code> și <code>&gt;</code> sunt cele de la lecția 9; bara <code>/</code> e tasta din stânga lui <kbd>Shift</kbd> din dreapta (sau <kbd>/</kbd> de la tastatura numerică).',
+  'Apasă <kbd>Ctrl</kbd>+<kbd>S</kbd>. În fereastra <b>Salvare ca</b> (Save As): în stânga, <b>Documente</b> (Documents); la <b>Nume fișier</b> (File name), numele, prenumele, clasa și lectia14, cu <b>.html</b> la sfârșit, de exemplu <code>Popescu_Ana_8A_lectia14.html</code>; la <b>Salvare cu tipul</b> (Save as type), <b>Toate fișierele (*.*)</b> (All files); la <b>Codificare</b> (Encoding), <b>UTF-8</b>; apoi <b>Salvare</b> (Save).',
+  'Dacă apare <b>Confirmare Salvare ca</b> („… există deja. Îl înlocuiți?”), fișierul e al unui coleg: apasă <b>Nu</b> (No) și adaugă o cifră la sfârșitul numelui, de exemplu <code>Popescu_Ana_8A_lectia14_2.html</code>, apoi <b>Salvare</b>.',
+  'Verifică fila din Notepad: numele se termină cu <b>.html</b>. Dacă scrie <b>.txt</b>, apasă <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> (Fișier › Salvați ca) și salvează din nou, cu <b>.html</b> la sfârșitul numelui.',
+  'Deschide <b>Explorer</b> (File Explorer): tasta Windows + <kbd>E</kbd>. Clic pe <b>Documente</b> în stânga și caută fișierul tău. La <b>Tip</b> trebuie să scrie ceva cu <b>HTML</b> (de exemplu „Microsoft Edge HTML Document” sau „Chrome HTML Document”). Dacă nu vezi coloana Tip, ține mouse-ul nemișcat o clipă pe fișier: în caseta mică care apare e scris și tipul. Apoi dublu-clic pe fișier: se deschide în browser și arată <b>Pagina mea</b>, mare, fără etichete. Dacă în loc de browser se deschide Notepad, sau la Tip scrie „Fișier TXT”, fișierul e .txt: întoarce-te la pasul 5.',
+  'În Notepad schimbă doar textul dintre etichete, de exemplu <code>&lt;h1&gt;Pagina lui Andrei&lt;/h1&gt;</code>, cu prenumele tău. Uită-te în browser: pagina e încă cea veche. Apasă <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad (punctul de pe filă dispare), apoi, în browser, <kbd>F5</kbd> sau butonul ⟳. Acum apare textul tău.',
+  'În browser apasă <kbd>Ctrl</kbd>+<kbd>U</kbd>: se deschide o filă nouă cu sursa paginii. Trebuie să vezi exact rândul din Notepad. Închide fila sursei cu × de pe ea.',
+  'La sfârșit, calculatorul rămâne curat pentru colegul următor. În Notepad închide pe rând <b>toate</b> filele, din meniu: <b>Fișier › Închideți fila</b>, până se închide Notepad. Dacă la fila unui coleg te întreabă „Salvați modificările…?”, apasă <b>Nu salvați</b>: ce a salvat el în Documente rămâne neatins. Nu închide Notepad cu X-ul ferestrei: îi redeschide colegului filele. Dacă Notepad nu are file (Windows 10), după ce ai salvat îl închizi cu X. În browser închide fila paginii cu × de pe ea. Fișierul tău rămâne în Documente. Nu schimba setările Notepad-ului, ale Explorer-ului sau ale browserului și nu deschide fișierele colegilor.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m2_l14',
+  mod:'lectie',
+  titlu:'Cum e făcută o pagină web. Interfața editorului de pagini web',
+  marca:'Lecția <b>14</b> · Pagini web · a VIII-a',
+  h1:'Cum e făcută o pagină web. Interfața editorului de pagini web',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U2', unitateTitlu:'Pagini web',
+  competente:['CS.1.2','CS.3.2'], lectii:'14',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.2, CS.3.2 · unitatea VIII-U2 „Pagini web” · lecția 14 · conținuturile: „Elemente de interfaţă ale unui editor de pagini web”, „Instrumente de bază ale editorului de pagini web”',
+  intro:`<p>Lecția 14, prima despre paginile web. Afli din ce e făcută o pagină, o scrii în Notepad, o salvezi corect și o vezi în browser.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>clasa a V-a, lecția 8: pornești un program din meniul Start, scriindu-i numele;</li>
+<li>clasa a V-a, lecția 9: un fișier are un nume și o extensie după punct (.docx, .jpg); Explorer și folderul Documente; dublu-clic deschide un fișier;</li>
+<li>clasa a V-a, lecția 14: browserul (Edge, Chrome), filele lui și bara de adrese;</li>
+<li>lecția 3, „Operații cu registrul și cu foile de calcul”: salvarea cu numele tău (<code>Popescu_Ana_8A_lectia3</code>), în Documente; „există deja” → nu înlocuiești fișierul colegului;</li>
+<li>lecția 9, „Funcția de decizie…”: tastele pentru <code>&lt;</code> și <code>&gt;</code>.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”, într-un Notepad și un browser simulate în pagină. Apoi atelierul, apoi același lucru la calculatorul din laborator, iar la sfârșit 5 întrebări.</p>
+<p><b>Obligatoriu:</b> primul „Încearcă tu” din fiecare pas, primul atelier, laboratorul și cele 5 întrebări. Butoanele „Încă un exercițiu” și al doilea atelier („ca la laborator, până la capăt”) sunt pentru cine termină mai repede.</p>`,
+  banda:'<span class="adr">ⓘ Fișier  C:/Users/Elev/Documents/Popescu_Ana_8A_lectia14.html</span><span><span class="tg">&lt;h1&gt;</span>Pagina mea<span class="tg">&lt;/h1&gt;</span></span>',
+  tipuri:{editorweb:EditorWeb},
+  nivele:[
+  {t:'Cum e făcută o pagină web. Interfața editorului de pagini web', final:true, lectii:[14], continuturi:[P.interfata,P.instrumente],
+   obiectiv:'faci o pagină web în Notepad, o salvezi corect ca fișier .html, o deschizi în browser și o schimbi: modifici, salvezi, reîmprospătezi.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>Orice pagină pe care o deschizi pe internet stă undeva, pe un calculator, ca un fișier. Primul astfel de calculator e în fotografie. Pe el a pus Tim Berners-Lee, la CERN, în Elveția, primele pagini web din lume. Pe hârtia albă lipită pe el scrie, în engleză, „This machine is a server. DO NOT POWER IT DOWN!!”, adică „Acest calculator e un server. NU-L OPRIȚI!!”. Un server e un calculator care ține pagini și le trimite oricui le cere.</p>
+<p>Azi faci și tu un fișier de pagină web, cu un program care e pe orice calculator cu Windows, și îl vezi ca pagină, pe calculatorul tău.</p>
+${fig(IMG+'server-web.webp',800,600,'Un calculator negru vechi, NeXT, cu monitor și tastatură, într-o vitrină de muzeu; pe carcasă e o hârtie albă lipită, cu un text scris de mână cu roșu','Calculatorul NeXT pe care Tim Berners-Lee a pus primele pagini web, la muzeul CERN. Fotografie: Coolcaesar, <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>, <a href="https://commons.wikimedia.org/wiki/File:First_Web_Server.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (micșorată).')}`},
+
+    /* ---------- PASUL 1: pagina = fișier text, browserul o desenează ---------- */
+    {t:'O pagină web e un fișier text',
+     text:`<p>O <mark>pagină web</mark> e un fișier text cu extensia <b>.html</b>, de exemplu <code>Popescu_Ana_8A_lectia14.html</code>. În el sunt doar litere, cifre și semne, scrise cu tastatura.</p>
+<p>Fișierul îl deschide <b>browserul</b> (Edge, Chrome), programul cu care intri pe internet: citește textul și desenează pagina. La pagina ta de azi, pe filă (tab) scrie numele fișierului, iar în bara de adrese, locul lui pe calculator.</p>
+<p>Textul din spatele paginii îl vezi în browser cu <kbd>Ctrl</kbd>+<kbd>U</kbd>. Se deschide o filă nouă, cu <mark>sursa paginii</mark>. Merge și clic dreapta pe pagină › <b>Vizualizați sursa paginii</b> în Edge, <b>Afișează sursa paginii</b> în Chrome (în engleză, <b>View page source</b>).</p>`,
+     exemplu:`${fig(IMG+'edge-f5.webp',900,184,'Microsoft Edge: pe filă scrie Popescu_Ana_8A_lectia14.html, în bara de adrese o cale care se termină cu Popescu_Ana_8A_lectia14.html, iar în pagină un titlu mare: Pagina lui Ștefan','Pagina, desenată de browser: un titlu mare. Bara de adrese arată unde e fișierul pe calculator (aici, un folder de probă, nu Documente).')}
+${fig(IMG+'edge-sursa.webp',900,184,'Microsoft Edge: o filă nouă, cu adresa view-source:file:///…/Popescu_Ana_8A_lectia14.html; pe rândul 1 e textul din fișier, Pagina lui Ștefan, cu semnele mai mic și mai mare colorate','Același fișier, după Ctrl+U: sursa paginii, cu rândurile numerotate. Aici vezi și semnele &lt; și &gt; din fișier.')}`,
+     altfel:`<p>Gândește-te la o partitură: pe hârtie sunt doar note scrise. Muzicianul o citește și cântă. Fișierul .html e partitura, iar browserul e muzicianul: citește textul și îl „cântă” ca pagină. Ctrl+U îți arată partitura.</p>`,
+     incearca:{t:'editorweb',mod:'notepad',
+       q:'În browserul de mai jos e deschisă pagina Mariei. Deschide-i sursa: dă clic pe pagină, apoi apasă <kbd>Ctrl</kbd>+<kbd>U</kbd> (pe telefon, butonul Ctrl+U de sub browser).',
+       start:{ferestre:['browser'],activa:'browser',fisiere:{Documente:[MARIA]},browser:{file:['Documente/'+MARIA.n]}},
+       teste:[{ce:'Sursa paginii e deschisă, într-o filă nouă',sursa:true,msg:'Dă clic pe pagina albă, apoi apasă Ctrl+U. Sau clic dreapta pe pagină › Vizualizați sursa paginii.'}],
+       rezolvare:[['sursa']],gresit:[['f5']],
+       ajutor:'Întâi clic pe pagină, ca tastele să ajungă la browser. Apoi Ctrl+U: ții apăsat Ctrl și apeși U.',
+       why:'Fila nouă arată textul din fișierul Mariei: <code>&lt;h1&gt;Excursia de vară&lt;/h1&gt;</code>. Pe pagină se vedea doar „Excursia de vară”, mare.'},
+     inca:[
+      {t:'tf',q:'Pe pagina desenată de browser se văd și semnele &lt; și &gt; din fișier.',ok:false,
+       ajutor:'Compară cele două capturi din „Uite cum”.',why:'Fals. Semnele &lt; și &gt; se văd doar în sursă (Ctrl+U). Pe pagină apare textul, desenat.'},
+      {t:'choice',q:'Care fișier e o pagină web?',o:['excursie.html','excursie.docx','excursie.jpg','excursie.mp3'],ok:0,
+       ajutor:'Caută extensia despre care vorbește pasul.',why:'Paginile web au extensia .html. .docx e un document Word, .jpg o imagine, .mp3 un sunet.'}
+     ]},
+
+    /* ---------- PASUL 2: etichetele, pe un rând gata scris ---------- */
+    {t:'Etichetele: una deschide, una închide',
+     text:`<p>În fișierul paginii, textul stă între <mark>etichete</mark>. O etichetă e un cuvânt scurt între semnele <code>&lt;</code> și <code>&gt;</code>. Uite un rând gata scris:</p>
+<pre class="rand">&lt;h1&gt;Pagina mea&lt;/h1&gt;</pre>
+<ul><li><code>&lt;h1&gt;</code> <b>deschide</b>: de aici începe un titlu mare;</li>
+<li><code>&lt;/h1&gt;</code> <b>închide</b>: are în plus bara <code>/</code>, imediat după <code>&lt;</code>.</li></ul>
+<p>Browserul nu arată etichetele. Arată doar textul dintre ele, mare și îngroșat. Azi schimbi numai textul dintre etichete. Alte etichete afli în lecțiile următoare.</p>`,
+     exemplu:`<p>Schimbi doar textul, etichetele rămân cum erau: <code>&lt;h1&gt;Pagina lui Andrei&lt;/h1&gt;</code>. Pagina arată atunci „Pagina lui Andrei”, mare.</p>
+<p>Tastele: <code>&lt;</code> și <code>&gt;</code> sunt <kbd>Shift</kbd> + tasta virgulă și <kbd>Shift</kbd> + tasta punct. Dacă <kbd>Shift</kbd> + virgulă scrie <code>;</code>, tastatura e românească: <kbd>AltGr</kbd> + aceleași taste. Bara <code>/</code> e tasta din stânga lui <kbd>Shift</kbd> din dreapta, sau <kbd>/</kbd> de la tastatura numerică. Atenție: bara e <code>/</code>, nu <code>\\</code> (bara inversă).</p>`,
+     altfel:`<p>Etichetele sunt ca ghilimelele dintr-o carte: una deschide, alta închide, iar ce e între ele ține împreună. La pagina web, eticheta care închide se recunoaște după bara /.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Schimbă doar textul dintre etichete, ca pagina să arate <b>Pagina lui Andrei</b>. Etichetele rămân neatinse.',
+       start:{text:'<h1>Pagina mea</h1>',fisier:ANA},
+       teste:[{ce:'Titlul mare din pagină e „Pagina lui Andrei”',el:'h1',text:'Pagina lui Andrei',msg:'Șterge „Pagina mea” dintre etichete și scrie acolo „Pagina lui Andrei”.'},
+        {ce:'Rândul începe cu eticheta care deschide și se termină cu cea care închide, cu bara /',are:'^\\s*<h1>[^<>]*</h1>\\s*$',msg:'Lasă etichetele exact cum erau: la început deschiderea, la sfârșit închiderea, cu bara / după &lt;.'}],
+       rezolvare:[['scrie','<h1>Pagina lui Andrei</h1>']],gresit:[['scrie','<h1>Pagina lui Andrei<h1>']],
+       ajutor:'Pune cursorul după &gt; de la început, șterge „Pagina mea” și scrie „Pagina lui Andrei”. Nu atinge etichetele.',
+       why:'Ai schimbat doar textul: <code>&lt;h1&gt;Pagina lui Andrei&lt;/h1&gt;</code>. Etichetele au rămas, deci browserul îl desenează tot ca titlu mare.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'Pagina de mai jos nu e scrisă bine: în eticheta care închide lipsește ceva. Repar-o, fără să schimbi textul.',
+       start:{text:'<h1>Clasa a VIII-a A<h1>',fisier:ANA},
+       teste:[{ce:'Titlul mare e „Clasa a VIII-a A”',el:'h1',text:'Clasa a VIII-a A',msg:'Textul trebuie să rămână „Clasa a VIII-a A”.'},
+        {ce:'A doua etichetă închide titlul: are bara / după &lt;',are:'^\\s*<h1>[^<>]*</h1>\\s*$',msg:'Eticheta de la sfârșit închide, deci are bara / imediat după &lt;.'}],
+       rezolvare:[['scrie','<h1>Clasa a VIII-a A</h1>']],gresit:[['scrie','<h1>Clasa a VIII-a A<\\h1>']],
+       ajutor:'Uită-te la eticheta de la sfârșit: ce o deosebește pe cea care închide?',
+       why:'Eticheta care închide are bara <code>/</code>: <code>&lt;/h1&gt;</code>.'},
+      {t:'tf',q:'Eticheta care închide are bara / imediat după semnul &lt;.',ok:true,
+       ajutor:'Recitește a doua liniuță din pas.',why:'Adevărat: deschiderea e cea fără bară, închiderea are bara / după &lt;.'}
+     ]},
+
+    /* ---------- PASUL 3: Notepad, interfața ---------- */
+    {t:'Notepad: unde scrii și unde vezi numele fișierului',
+     text:`<p>Paginile le scrii într-un <mark>editor de pagini web</mark>: un program în care scrii textul paginii. Folosim <b>Notepad</b>, care e pe orice calculator cu Windows. Îl pornești din Start: tasta Windows, scrii Notepad, <kbd>Enter</kbd>.</p>
+<p>Ce vezi în el:</p>
+<ul><li><b>fila</b>, sus, cu numele fișierului. O filă nouă primește numele după primul rând. Un punct ● pe filă înseamnă modificări nesalvate;</li>
+<li><b>meniul</b>: Fișier (File), Editare (Edit), Vizualizare (View);</li>
+<li>zona albă, unde scrii;</li>
+<li><b>bara de stare</b>, jos: rândul și coloana (Ln, Col), câte caractere ai scris și <mark>codificarea</mark> (UTF-8), adică felul în care literele sunt scrise în fișier.</li></ul>`,
+     exemplu:`${fig(IMG+'notepad-fila-noua.webp',900,520,'Notepad: o filă nouă numită h1Pagina meah1, cu un punct lângă nume; meniul Fișier, Editare, Vizualizare; butoane H1, liste, B, I, S; rândul cu Pagina mea între semnele mai mic și mai mare; jos: Ln 1, Col 20, 19 caractere, Text simplu, 100%, Windows (CRLF), UTF-8','O filă nouă: numele vine din primul rând, fără semnele &lt; &gt; /. Punctul arată că nu e salvată.')}
+<p>O filă nouă faci cu <b>+</b> de lângă file sau cu <b>Fișier › Filă nouă</b> (New tab). O filă o închizi cu <b>Fișier › Închideți fila</b> (Close tab); după ultima filă se închide și Notepad, iar data viitoare pornește curat. Dacă închizi fereastra cu X, Notepad își ține minte filele și le redeschide data viitoare. Butoanele H1, B, I de pe o filă nouă nu le folosim: etichetele le scrii tu. Merge și alt editor (Notepad++, Visual Studio Code).</p>`,
+     altfel:`<p>Notepad e ca un caiet cu file: fiecare filă e o foaie separată, iar pe colțul ei scrie numele. Punctul de pe colț îți amintește că foaia nu e încă pusă la păstrare (salvată).</p>`,
+     incearca:{t:'editorweb',mod:'notepad',
+       q:'Notepad s-a deschis cu fila unei colege, Maria. Nu scrie în ea: fă o filă nouă (<b>+</b> sau Fișier › Filă nouă) și scrie în ea rândul <code>&lt;h1&gt;Pagina mea&lt;/h1&gt;</code>.',
+       start:{ferestre:['notepad'],fisiere:{Documente:[MARIA]},notepad:{file:[{n:MARIA.n,dosar:'Documente'}]}},
+       teste:[{ce:'O filă nouă are rândul &lt;h1&gt;Pagina mea&lt;/h1&gt;',fila:{nou:true,text:'<h1>Pagina mea</h1>'},msg:'Apasă + de lângă file, apoi scrie rândul în fila nouă.'},
+        {ce:'Textul din fila Mariei a rămas cum era',fila:{n:MARIA.n,nemodificata:true},msg:'În fila Mariei ai scris ceva: șterge exact ce ai scris (Backspace sau Ctrl+Z; pe telefon: Editare › Anulați), până rămâne doar rândul ei. Punctul ● rămâne pe filă, ca în Notepad: el arată că ai umblat în ea. Fila Mariei n-o salva.'}],
+       rezolvare:[['filaNoua'],['scrie','<h1>Pagina mea</h1>']],gresit:[['scrie','<h1>Pagina mea</h1>']],
+       ajutor:'Butonul + e lângă fila Mariei, sus. În fila nouă scrii rândul exact cum e în enunț.',
+       why:'Fila nouă a primit singură numele „h1Pagina meah1”, după primul rând, și are punctul ●: nu e salvată. Fila Mariei e neatinsă.'},
+     inca:[
+      {t:'match',q:'Potrivește fiecare parte a Notepad-ului cu ce îți arată.',pairs:[['Fila','numele fișierului'],['Punctul de pe filă','modificări nesalvate'],['Bara de stare','rândul, coloana și codificarea'],['Meniul Fișier','salvarea și închiderea filei']],
+       ajutor:'Recitește lista din pas.',why:'Fila arată numele, punctul arată ce nu e salvat, bara de stare arată unde ești și codificarea, iar meniul Fișier are Salvați și Închideți fila.'}
+     ]},
+
+    /* ---------- PASUL 4: salvarea ca .html ---------- */
+    {t:'Salvarea ca pagină web: numele se termină cu .html',
+     text:`<p>Pe o filă nouă apeși <kbd>Ctrl</kbd>+<kbd>S</kbd> (Fișier › Salvați). Se deschide fereastra <b>Salvare ca</b> (Save As):</p>
+<ol class="pasi-met"><li>în stânga alegi <b>Documente</b> (Documents);</li>
+<li>la <b>Nume fișier</b> (File name) scrii numele cu <b>.html</b> la sfârșit: <code>Popescu_Ana_8A_lectia14.html</code>;</li>
+<li>la <b>Salvare cu tipul</b> (Save as type) alegi <b>Toate fișierele (*.*)</b> (All files);</li>
+<li>la <b>Codificare</b> (Encoding) lași <b>UTF-8</b>: păstrează literele ă, â, î, ș, ț;</li>
+<li>apeși <b>Salvare</b> (Save).</li></ol>
+<p>Un fișier care are deja nume îl salvezi din nou, cu alt nume, din <b>Fișier › Salvați ca</b> (Save as) sau cu <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>: se deschide aceeași fereastră.</p>`,
+     exemplu:`${fig(IMG+'salvare-ca.webp',900,201,'Fereastra Salvare ca din Notepad, partea de jos: Nume fișier Popescu_Ana_8A_lectia14.html, Salvare cu tipul Toate fișierele (*.*), Codificare UTF-8, butoanele Salvare și Anulare','Așa arată, înainte de Salvare. Cu „Documente text (*.txt)”, fereastra arată doar fișierele .txt, iar paginile din folder nu se văd.')}
+<p>Dacă nu scrii <b>.html</b>, sau greșești o literă (<code>.hmtl</code>), Notepad din Windows 11 pune singur <b>.txt</b> la sfârșit, oricare ar fi tipul ales. Numele rămâne cum l-ai scris doar dacă după punct e o extensie pe care Windows o cunoaște, ca .html. Dacă apare „… există deja. Îl înlocuiți?”, fișierul e al unui coleg: apeși <b>Nu</b> (No) și pui o cifră la sfârșitul numelui: <code>Popescu_Ana_8A_lectia14_2.html</code>.</p>
+${fig(IMG+'exista-deja.webp',458,176,'Fereastra Confirmare Salvare ca: Popescu_Ana_8A_lectia14.html există deja. Îl înlocuiți? Butoanele Da și Nu','Numele există deja: apeși Nu.')}`,
+     altfel:`<p>Extensia e ca scrisul de pe capacul unui borcan: „dulceață” sau „zacuscă”. Din el, calculatorul știe ce program deschide fișierul. Cu .html îl deschide browserul, cu .txt îl deschide Notepad.</p>`,
+     incearca:{t:'editorweb',mod:'notepad',
+       q:'Salvează fila în <b>Documente</b>, ca pagină web, cu numele tău după modelul <code>Popescu_Ana_8A_lectia14.html</code>. Fereastra de salvare pornește în alt folder: schimbă-l.',
+       start:{ferestre:['notepad'],locPropus:'Desktop',fisiere:{Documente:[MARIA]},notepad:{file:[{text:'<h1>Pagina mea</h1>'}]}},
+       teste:[{ce:'E salvată în Documente, cu numele, prenumele, clasa ta și lectia14, ca .html',fisier:{dosar:'Documente',model:'lectia14',ext:'html'},msg:'Ctrl+S, Documente în stânga, la Nume fișier numele tău cu .html la sfârșit, apoi Salvare.'},
+        {ce:'Codificarea e UTF-8',fisier:{dosar:'Documente',model:'lectia14',ext:'html',cod:'UTF-8'},msg:'La Codificare lasă UTF-8.'},
+        {ce:'Fișierul Mariei a rămas neatins',neatins:['Documente/'+MARIA.n],msg:'Ai înlocuit fișierul Mariei. La „există deja” se apasă Nu.'}],
+       rezolvare:[['salveaza',{nume:ANA,tip:'toate',dosar:'Documente'}]],gresit:[['salveaza',{nume:'Popescu_Ana_8A_lectia14',dosar:'Documente'}]],
+       ajutor:'Ctrl+S (sau Fișier › Salvați). În stânga, Documente. La Nume fișier: numele, prenumele, clasa, lectia14 și .html, legate prin _. Tipul: Toate fișierele. Apoi Salvare.',
+       why:'Pe filă scrie acum numele fișierului, cu .html, iar punctul a dispărut. Fișierul e în Documente, lângă cel al Mariei, care a rămas neatins.'},
+     inca:[
+      {t:'choice',q:'Ioana scrie la Nume fișier <code>excursie.hmtl</code>, cu literele inversate, și apasă Salvare. Ce fișier apare?',o:['excursie.hmtl.txt','excursie.html','excursie.hmtl','excursie.txt'],ok:0,
+       ajutor:'.hmtl e o extensie pe care Windows o cunoaște?',why:'.hmtl nu e o extensie cunoscută, așa că Notepad pune .txt la sfârșit: excursie.hmtl.txt. E un fișier text, nu o pagină.'}
+     ]},
+
+    /* ---------- PASUL 5: browserul arată fișierul SALVAT: modific → salvez → F5 ---------- */
+    {t:'Browserul arată fișierul salvat: modific, salvez, reîmprospătez',
+     text:`<p>Pagina o deschizi din <b>Explorer</b> (File Explorer): în <b>Documente</b>, dublu-clic pe fișierul tău. Se deschide în browser.</p>
+<p>Când schimbi ceva în Notepad, browserul nu află singur. Ca să vezi schimbarea:</p>
+<ol class="pasi-met"><li>în Notepad apeși <kbd>Ctrl</kbd>+<kbd>S</kbd>: punctul de pe filă dispare (fișierul are deja nume, deci Notepad nu mai întreabă nimic);</li>
+<li>în browser apeși <kbd>F5</kbd> sau butonul ⟳ (Reîmprospătați această pagină / Refresh): pagina se <mark>reîmprospătează</mark>, adică browserul citește din nou fișierul.</li></ol>
+<p>F5 se apasă în browser. În Notepad, F5 scrie ora și data.</p>`,
+     exemplu:`${fig(IMG+'notepad-modificat.webp',900,520,'Notepad: fila Popescu_Ana_8A_lectia14.html cu un punct; în rând scrie acum Pagina lui Ștefan','Textul e schimbat, dar nesalvat: punctul de pe filă.')}
+${fig(IMG+'edge-f5.webp',900,184,'Microsoft Edge: aceeași pagină arată acum titlul Pagina lui Ștefan','După Ctrl+S în Notepad și F5 în browser.')}
+<p>Dacă la dublu-clic se deschide <b>Notepad</b> în loc de browser, fișierul e <b>.txt</b>, nu <b>.html</b>. Cu setarea de la început a Windows-ului, Explorer ascunde extensiile cunoscute: fișierul .txt apare fără extensie, cu pictograma Notepad-ului, iar la Tip scrie „Fișier TXT”. Îl salvezi din nou, cu Salvați ca și .html. Dacă un .txt ajunge totuși în browser, se văd etichetele:</p>
+${fig(IMG+'edge-txt.webp',900,184,'Microsoft Edge: fila Popescu_Ana_8A_lectia14.html.txt arată rândul din fișier, cu semnele mai mic și mai mare, scris mic','Un fișier .txt deschis în browser: se văd etichetele.')}`,
+     altfel:`<p>Browserul face o fotografie a fișierului când îl deschide. Dacă schimbi fișierul, fotografia rămâne cea veche. Ctrl+S pune schimbarea în fișier, iar F5 face o fotografie nouă.</p>`,
+     incearca:{t:'editorweb',mod:'notepad',
+       q:'Fă ca browserul să arate <b>Pagina lui Ștefan</b>: schimbă textul dintre etichete în Notepad, salvează, apoi reîmprospătează pagina în browser.',
+       start:{fisiere:{Documente:[{n:ANA,t:'<h1>Pagina mea</h1>\r\n'}]},notepad:{file:[{n:ANA,dosar:'Documente'}]},browser:{file:['Documente/'+ANA]},dreapta:'browser'},
+       teste:[{ce:'Fișierul salvat are titlul „Pagina lui Ștefan”',fisier:{exact:ANA},el:'h1',text:'Pagina lui Ștefan',msg:'Schimbă textul în Notepad și apasă Ctrl+S.'},
+        {ce:'Browserul arată „Pagina lui Ștefan”',browser:{fisier:{exact:ANA}},el:'h1',text:'Pagina lui Ștefan',msg:'După Ctrl+S, treci în browser: clic pe pagină, apoi F5 (sau butonul ⟳).'},
+        {ce:'Pagina din browser e cea salvată acum',laZi:{exact:ANA},msg:'Browserul arată o versiune mai veche: F5 în browser.'}],
+       rezolvare:[['scrie','<h1>Pagina lui Ștefan</h1>'],['salveaza'],['f5']],gresit:[['scrie','<h1>Pagina lui Ștefan</h1>'],['salveaza']],
+       ajutor:'Trei gesturi: textul nou în Notepad, Ctrl+S în Notepad, F5 în browser (după un clic pe pagină).',
+       why:'Ctrl+S a pus textul în fișier, iar F5 l-a făcut pe browser să-l citească din nou. Fără F5, pagina rămânea „Pagina mea”.'},
+     inca:[
+      {t:'editorweb',mod:'notepad',
+       q:'În Documente sunt două fișiere care apar la fel, <b>Popescu_Ana_8A_lectia14</b>: pe calculatorul acesta extensiile sunt ascunse, ca în setarea de la început a Windows-ului. Deschide-l în browser pe cel care e pagină web (dublu-clic; pe telefon, două atingeri).',
+       start:{ferestre:['explorer','browser'],activa:'explorer',dreapta:'explorer',fisiere:{Documente:[{n:'Popescu_Ana_8A_lectia14.txt',t:'<h1>Pagina mea</h1>\r\n'},{n:ANA,t:'<h1>Pagina mea</h1>\r\n'}]}},
+       teste:[{ce:'Browserul arată pagina .html, cu titlul mare „Pagina mea”',browser:{fisier:{exact:ANA}},el:'h1',text:'Pagina mea',msg:'Uită-te la pictogramă și la coloana Tip: pagina web are la Tip ceva cu HTML.'}],
+       rezolvare:[['deschide','Documente/'+ANA]],gresit:[['deschide','Documente/Popescu_Ana_8A_lectia14.txt']],
+       ajutor:'Coloana Tip: la pagina web scrie „… HTML Document”.',
+       why:'Pagina web e fișierul cu Tip „Microsoft Edge HTML Document”. Celălalt e un fișier text: se deschide în Notepad.'}
+     ]}
+   ],
+   atelier:{t:'editorweb',mod:'notepad',titlu:'Atelier: pagina ta, de la zero',
+    intro:`<p>Mai jos ai un Notepad, folderul Documente și un browser, simulate. Deasupra lor sunt <strong>testele</strong>: se bifează singure când faci ce cer. La final apasă <b>Verifică</b>. Se vede câte o fereastră, ca atunci când stau una peste alta pe calculator: treci de la una la alta cu butoanele de sub ele (Notepad, Documente, Browser).</p>`,
+    q:'<b>1.</b> Notepad s-a deschis cu fila Mariei: fă o filă nouă și scrie <code>&lt;h1&gt;Pagina mea&lt;/h1&gt;</code>. <b>2.</b> Salveaz-o în Documente, ca pagină web, cu numele tău după modelul <code>Popescu_Ana_8A_lectia14.html</code>. <b>3.</b> Deschide-o în browser: în Documente, dublu-clic pe ea. <b>4.</b> Schimbă textul dintre etichete în „Pagina lui” și prenumele tău, apoi fă ca browserul să-l arate. <b>5.</b> Deschide sursa paginii tale.',
+    start:{fisiere:{Documente:[MARIA]},notepad:{file:[{n:MARIA.n,dosar:'Documente'}]},dreapta:'explorer'},
+    teste:[
+     {ce:'O pagină .html în Documente, cu numele, prenumele, clasa ta și lectia14',fisier:{dosar:'Documente',model:'lectia14',ext:'html'},msg:'Numele: Nume_Prenume_Clasa_lectia14.html, în Documente.'},
+     {ce:'Codificarea paginii tale e UTF-8',fisier:{dosar:'Documente',model:'lectia14',ext:'html',cod:'UTF-8'},msg:'La Codificare lasă UTF-8.'},
+     {ce:'Textul dintre etichete nu mai e „Pagina mea”, iar etichetele sunt scrise bine',fisier:{dosar:'Documente',model:'lectia14',ext:'html'},el:'h1',full:true,nu:'Pagina mea',curat:true,msg:'Schimbă textul dintre etichete și salvează (Ctrl+S).'},
+     {ce:'Browserul arată textul tău nou',browser:{fisier:{dosar:'Documente',model:'lectia14',ext:'html'}},el:'h1',full:true,nu:'Pagina mea',msg:'Deschide pagina din Documente (dublu-clic), iar după salvare apasă F5 în browser.'},
+     {ce:'Pagina din browser e cea salvată acum',laZi:{dosar:'Documente',model:'lectia14',ext:'html'},msg:'Ai schimbat fișierul după ce l-ai deschis: F5 în browser.'},
+     {ce:'Ai deschis sursa paginii tale',sursa:{dosar:'Documente',model:'lectia14',ext:'html'},msg:'În browser, clic pe pagina ta, apoi Ctrl+U.'},
+     {ce:'Fișierul Mariei a rămas neatins',neatins:['Documente/'+MARIA.n],msg:'La „există deja” se apasă Nu, iar în fila Mariei nu se scrie.'}],
+    rezolvare:[['filaNoua'],['scrie','<h1>Pagina mea</h1>'],['salveaza',{nume:ANA,tip:'toate',dosar:'Documente'}],['deschide','Documente/'+ANA],['scrie','<h1>Pagina lui Ana</h1>'],['salveaza'],['f5'],['sursa']],
+    gresit:[['filaNoua'],['scrie','<h1>Pagina mea</h1>'],['salveaza',{nume:'Popescu_Ana_8A_lectia14',dosar:'Documente'}],['deschide','Documente/Popescu_Ana_8A_lectia14.txt']],
+    ajutor:'Pe rând: + (filă nouă), rândul, Ctrl+S cu numele tău și .html; în Documente, dublu-clic pe fișier; în Notepad textul nou și Ctrl+S; în browser F5, apoi Ctrl+U.',
+    why:'Ai făcut drumul întreg al unei pagini web: textul în Notepad, salvarea ca .html în UTF-8, deschiderea în browser, schimbarea, Ctrl+S și F5, apoi sursa. Fișierul Mariei a rămas neatins.',
+    solutieText:'pagina lui Ana e salvată ca Popescu_Ana_8A_lectia14.html, deschisă în browser după ultima salvare, iar sursa ei e deschisă într-o filă.',
+    inca:[
+     {t:'editorweb',mod:'notepad',titlu:'Atelier: ca la laborator, până la capăt',
+      q:'Notepad e închis. <b>1.</b> Pornește-l (butonul din fereastră) și scrie în fila goală <code>&lt;h1&gt;Clubul de lectură&lt;/h1&gt;</code>. <b>2.</b> Salveaz-o în Documente cu numele tău după modelul <code>Popescu_Ana_8A_lectia14.html</code>; numele există deja? Apasă Nu și pune o cifră la sfârșit. <b>3.</b> Deschide-o în browser. <b>4.</b> La final lasă calculatorul curat: închide fila din Notepad cu Fișier › Închideți fila, nu cu X-ul ferestrei.',
+      start:{fisiere:{Documente:[{n:ANA,t:'<h1>Pagina Anei de anul trecut</h1>\r\n',coleg:true}]},notepad:{inchis:true},dreapta:'explorer'},
+      teste:[
+       {ce:'O pagină .html cu numele tău în Documente, cu titlul „Clubul de lectură”',fisier:{dosar:'Documente',model:'lectia14',ext:'html'},el:'h1',text:'Clubul de lectură',msg:'Scrie rândul, apoi Ctrl+S cu numele tău și .html.'},
+       {ce:'Browserul arată pagina ta',browser:{fisier:{dosar:'Documente',model:'lectia14',ext:'html'}},el:'h1',text:'Clubul de lectură',msg:'În Documente, dublu-clic pe pagina ta.'},
+       {ce:'Pagina de anul trecut, a altcuiva, a rămas neatinsă',neatins:['Documente/'+ANA],msg:'La „există deja” se apasă Nu și se schimbă numele.'},
+       {ce:'Notepad e închis și nu-ți mai redeschide fila',npCurat:true,msg:'Fișier › Închideți fila. X-ul ferestrei păstrează fila pentru data viitoare.'}],
+      rezolvare:[['pornesteNotepad'],['scrie','<h1>Clubul de lectură</h1>'],['salveaza',{nume:'Popescu_Ana_8A_lectia14_2.html',tip:'toate',dosar:'Documente'}],['deschide','Documente/Popescu_Ana_8A_lectia14_2.html'],['inchideFila']],
+      gresit:[['pornesteNotepad'],['scrie','<h1>Clubul de lectură</h1>'],['salveaza',{nume:'Popescu_Ana_8A_lectia14_2.html',tip:'toate',dosar:'Documente'}],['deschide','Documente/Popescu_Ana_8A_lectia14_2.html'],['inchideFereastra']],
+      ajutor:'Numele cu cifră: Popescu_Ana_8A_lectia14_2.html (cu numele tău). La final: Fișier › Închideți fila.',
+      why:'Pagina ta e salvată fără să atingi fișierul altcuiva, iar Notepad, închis din filă, pornește curat pentru colegul următor.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Matei scrie la <b>Nume fișier</b> doar <b>Matei_Pop_8B_lectia14</b>, fără nimic după, alege <b>Toate fișierele (*.*)</b> și apasă <b>Salvare</b>. Ce fișier apare în Documente?',
+     o:['Matei_Pop_8B_lectia14.txt','Matei_Pop_8B_lectia14.html','Matei_Pop_8B_lectia14','Matei_Pop_8B_lectia14.docx'],ok:0,
+     ajutor:'Ce face Notepad când numele nu se termină cu .html?',why:'Fără .html la sfârșit, Notepad pune singur .txt, chiar dacă ai ales Toate fișierele. Pagina web are nevoie de .html scris de tine.'},
+    {t:'editorweb',mod:'live',
+     q:'Rândul de mai jos are o greșeală în eticheta care închide. Repară-l, fără să schimbi textul.',
+     start:{text:'<h1>Bine ai venit!<\\h1>',fisier:'Pop_Matei_8B_lectia14.html'},
+     teste:[{ce:'Titlul mare e „Bine ai venit!”',el:'h1',text:'Bine ai venit!',msg:'Textul rămâne „Bine ai venit!”.'},
+      {ce:'Eticheta care închide e scrisă corect',are:'^\\s*<h1>[^<>\\\\]*</h1>\\s*$',msg:'Bara din eticheta care închide e /, nu \\.'}],
+     rezolvare:[['scrie','<h1>Bine ai venit!</h1>']],gresit:[['scrie','<h1>Bine ai venit!<\\h1>']],
+     ajutor:'Uită-te la bara din eticheta de la sfârșit.',why:'Eticheta care închide are bara /, nu bara inversă \\: <code>&lt;/h1&gt;</code>.'},
+    {t:'order',q:'Ai schimbat textul paginii în Notepad. Pune în ordine ce se întâmplă până vezi schimbarea în browser.',
+     items:['Apeși Ctrl+S în Notepad','Punctul de pe filă dispare','Treci în fereastra browserului','Apeși F5'],
+     ajutor:'Întâi fișierul, apoi browserul.',why:'Ctrl+S pune schimbarea în fișier (punctul dispare), iar F5 în browser îl face să citească fișierul din nou.'},
+    {t:'choice',q:'În Documente vezi două fișiere care se numesc la fel, <b>Popescu_Ana_8A_lectia14</b>: unul cu pictograma browserului și Tip „Microsoft Edge HTML Document”, celălalt cu pictograma Notepad-ului. Ce înseamnă?',
+     o:['Extensiile sunt ascunse: unul e .html, celălalt e .txt','Sunt două copii ale aceleiași pagini web','Al doilea e pagina deschisă acum în browser','Windows a dublat fișierul la salvare'],ok:0,
+     ajutor:'Ce nu arată Explorer cu setarea de la început a Windows-ului?',why:'Cu setarea de la început a Windows-ului, Explorer ascunde extensiile cunoscute, așa că pagina și fișierul text apar cu același nume. Fișierul cu pictograma Notepad-ului e .txt: cu dublu-clic se deschide în Notepad, nu în browser.'},
+    {t:'editorweb',mod:'notepad',
+     q:'Ana a scris deja textul nou în Notepad, dar browserul arată tot pagina veche. Fă ca browserul să arate textul nou.',
+     start:{fisiere:{Documente:[{n:ANA,t:'<h1>Pagina mea</h1>\r\n'}]},notepad:{file:[{n:ANA,dosar:'Documente',text:'<h1>Clubul de robotică</h1>'}]},browser:{file:['Documente/'+ANA]},dreapta:'browser'},
+     teste:[{ce:'Browserul arată „Clubul de robotică”',browser:{fisier:{exact:ANA}},el:'h1',text:'Clubul de robotică',msg:'Textul e doar în Notepad: salvează, apoi reîmprospătează pagina.'},
+      {ce:'Pagina din browser e cea salvată acum',laZi:{exact:ANA},msg:'F5 în browser, după salvare.'}],
+     rezolvare:[['salveaza'],['f5']],gresit:[['f5']],
+     ajutor:'Punctul de pe filă îți spune ceva despre fișier.',why:'Punctul arăta că textul nu era salvat. Ctrl+S l-a pus în fișier, iar F5 l-a adus în browser.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Notepad-ul și browserul adevărate',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:`<p>Faci pagina ta pe calculator, fără ajutor: la fiecare pas scrie ce trebuie să vezi, ca să verifici singur.</p>
+${fig(IMG+'salvare-ca.webp',900,201,'Fereastra Salvare ca din Notepad: Nume fișier Popescu_Ana_8A_lectia14.html, Salvare cu tipul Toate fișierele (*.*), Codificare UTF-8','Pasul 3: așa arată, înainte de Salvare (cu numele tău).')}
+${fig(IMG+'exista-deja.webp',458,176,'Fereastra Confirmare Salvare ca: … există deja. Îl înlocuiți? Da, Nu','Pasul 4: numele e al unui coleg, apeși Nu.')}`,
+    pasi:PROVOCARE},
+  diploma:{titlu:'Autorul primei lui pagini web',
+    rezumat:'a aflat că o pagină web e un fișier text .html pe care browserul îl desenează, a schimbat textul dintre etichete, a lucrat în Notepad cu filele și bara de stare, a salvat pagina cu numele lui, .html și UTF-8, a văzut-o în browser după Ctrl+S și F5 și i-a deschis sursa cu Ctrl+U',
+    aplicatie:'Notepad-ul și browserul adevărate',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>

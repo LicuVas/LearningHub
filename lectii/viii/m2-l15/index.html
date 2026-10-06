@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Elemente de structură: antet, titlu, corp</title>
+<meta name="description" content="Clasa a VIII-a, lecția 15: scheletul unei pagini web — DOCTYPE, html cu limba, antetul (head) cu titlul de pe filă și meta charset pentru diacritice, corpul (body) cu ce se vede; închiderea etichetelor în ordine inversă și indentarea cu Tab în Notepad.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF1F6; --paper:#FFFFFF; --paper2:#EEF2F8; --line:#CCD4E2;
+  --ink:#16202F; --ink2:#4E5A6E; --accent:#1F5FBF; --accentInk:#FFFFFF; --sel:#D8E5FA;
+  --mark:#FFE08A; --markInk:#16202F; --ok:#16703F; --okbg:#E0F2E7; --bad:#B3302A; --badbg:#FAE3E1;
+  --fd:"Archivo","Segoe UI",system-ui,sans-serif; --fb:"IBM Plex Sans","Segoe UI",system-ui,sans-serif; --fm:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E131B; --paper:#171E29; --paper2:#1F2836; --line:#334156;
+  --ink:#E4EAF3; --ink2:#9FAEC4; --accent:#7FB0FF; --accentInk:#0E131B; --sel:#1E3557;
+  --mark:#EBCB55; --markInk:#16202F; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E131B; --paper:#171E29; --paper2:#1F2836; --line:#334156;
+  --ink:#E4EAF3; --ink2:#9FAEC4; --accent:#7FB0FF; --accentInk:#0E131B; --sel:#1E3557;
+  --mark:#EBCB55; --markInk:#16202F; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}
+/* tema: fâșia de sus e o filă de browser cu titlul paginii, apoi scheletul pe un rând: antetul și corpul */
+.banda{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-family:var(--fm);font-size:.72rem;color:var(--ink2);padding:3px 8px;border-bottom:1px dashed var(--line)}
+.banda .fila{border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;padding:0 10px;white-space:nowrap}
+.banda .tg{color:var(--accent)}
+h1,h2{letter-spacing:-.01em}
+.pasi-met{margin:.3em 0 .6em 1.2em;padding:0}
+.pasi-met li{margin:.25em 0}
+pre.rand{font-family:var(--fm);background:var(--paper2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:.4em 0;white-space:pre;overflow-x:auto;tab-size:8;-moz-tab-size:8;line-height:1.35}
+.captura figcaption a{display:inline-block;padding:6px 0}   /* legătura din legendă: zonă de atins de 32 px pe telefon (regula 20) */
+@media (max-width:480px){pre.rand{tab-size:3;-moz-tab-size:3;font-size:.8rem}}   /* pe telefon Tab-ul se arată mai îngust, ca rândurile să încapă (390 px: și rândul cu <title>Școala mea</title>) */
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<!-- simulatorul „Notepad + browser” (proprietar: lecția VIII/14) + extensia lecției 15 (Tab ca în Notepad, banda „browserul ar ghici
+     codificarea”, verificările pe textul fișierului); probele reale: _proba/notepad_*.json, _proba/browser_ascuns_*.json, _proba/proba_*_l15.json -->
+<script src="../../_sim/editorweb.js"></script>
+<script src="../../_sim/editorweb-schelet.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={structura:'Elemente de structură ale unei pagini web: antet, titlu, corp'};
+
+/* capturi reale (Notepad și Edge pe desktopul ascuns) și o fotografie de pe Wikimedia Commons: img/SURSE.json */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG='../m2-l15/img/';
+const X=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const J=a=>a.join('\n');
+const PRE=s=>`<pre class="rand">${X(s)}</pre>`;
+const ES=window.EditorWebSchelet;
+const N=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+const LV=S=>S.live.text;
+const ORD={ce:'Scheletul e întreg, în ordine, și fiecare etichetă are perechea ei',fn:S=>ES.ordine(LV(S)),msg:'Ce s-a deschis ultimul se închide primul: &lt;/title&gt; înainte de &lt;/head&gt;, &lt;/body&gt; înainte de &lt;/html&gt;. Nu șterge rândurile scheletului.'};
+const DT='<!DOCTYPE html>', HL='<html lang="ro">';
+
+/* toate codurile din pagină (aceleași texte sunt probate în Edge și Chrome reale: _proba/proba_coduri_lectie.py) */
+const COD={
+  p1_ex:J([DT,HL,'<head>','</head>','<body>','<h1>Pagina mea</h1>','</body>','</html>']),
+  p1_start:J([DT,HL,'<head>','</head>','<body>','</body>','</html>']),
+  p1_rez:J([DT,HL,'<head>','</head>','<body>','Salut!','</body>','</html>']),
+  p1_gresit:J([DT,HL,'<head>','Salut!','</head>','<body>','</body>','</html>']),
+  p2_ex:J([DT,HL,'<head>','<title>Pagina lui Ștefan</title>','</head>','<body>','<h1>Bună ziua!</h1>','Învăț să fac pagini web.','</body>','</html>']),
+  p2_start:J([DT,HL,'<head>','</head>','<body>','<h1>Bine ai venit!</h1>','</body>','</html>']),
+  p2_rez:J([DT,HL,'<head>','<title>Pagina Anei</title>','</head>','<body>','<h1>Bine ai venit!</h1>','</body>','</html>']),
+  p2_gresit:J([DT,HL,'<head>','</head>','<body>','<title>Pagina Anei</title>','<h1>Bine ai venit!</h1>','</body>','</html>']),
+  p3_ex:J(['<head>','<meta charset="utf-8">','<title>Școala mea</title>','</head>']),
+  p3_start:J([DT,HL,'<head>','<title>Școala mea</title>','</head>','<body>','<h1>Școala mea</h1>','</body>','</html>']),
+  p3_rez:J([DT,HL,'<head>','<meta charset="utf-8">','<title>Școala mea</title>','</head>','<body>','<h1>Școala mea</h1>','</body>','</html>']),
+  p3_gresit:J([DT,HL,'<head>','<title>Școala mea</title>','</head>','<body>','<meta charset="utf-8">','<h1>Școala mea</h1>','</body>','</html>']),
+  p4_ex_gresit:J(['<head>','<meta charset="utf-8">','<title>Pagina lui Ștefan','</head>']),
+  p4_start:J([DT,HL,'<head>','<meta charset="utf-8">','<title>Clubul de lectură','</head>','<body>','<h1>Bine ați venit!</h1>','</body>','</html>']),
+  p4_rez:J([DT,HL,'<head>','<meta charset="utf-8">','<title>Clubul de lectură</title>','</head>','<body>','<h1>Bine ați venit!</h1>','</body>','</html>']),
+  p4_gresit:J([DT,HL,'<head>','<meta charset="utf-8">','<title>Clubul de lectură<title>','</head>','<body>','<h1>Bine ați venit!</h1>','</body>','</html>']),
+  p4b_start:J([DT,HL,'<head>','<meta charset="utf-8">','<title>Clubul de lectură</title>','</head>','<body>','<h1>Bine ați venit!</h1>','</html>','</body>']),
+  p4b_rez:J([DT,HL,'<head>','<meta charset="utf-8">','<title>Clubul de lectură</title>','</head>','<body>','<h1>Bine ați venit!</h1>','</body>','</html>']),
+  p5_start:J([DT,HL,'<head>','<meta charset="utf-8">','<title>Școala mea</title>','</head>','<body>','<h1>Școala mea</h1>','</body>','</html>']),
+  p5_rez:J([DT,HL,'\t<head>','\t\t<meta charset="utf-8">','\t\t<title>Școala mea</title>','\t</head>','\t<body>','\t\t<h1>Școala mea</h1>','\t</body>','</html>']),
+  p5b_start:J([DT,HL,'\t<head>','\t\t<meta charset="utf-8">','\t\t<title>Excursia</title>','\t<body>','\t\t<h1>Excursia de vară</h1>','\t</body>','</html>']),
+  p5b_rez:J([DT,HL,'\t<head>','\t\t<meta charset="utf-8">','\t\t<title>Excursia</title>','\t</head>','\t<body>','\t\t<h1>Excursia de vară</h1>','\t</body>','</html>']),
+  scoala:J([DT,HL,'\t<head>','\t\t<meta charset="utf-8">','\t\t<title>Școala mea</title>','\t</head>','\t<body>','\t\t<h1>Școala mea</h1>','\t</body>','</html>']),
+  scoala_gresit:J([DT,HL,'<head>','<title>Școala mea</title>','</head>','<body>','<h1>Școala mea</h1>','</body>','</html>']),
+  maria:J([DT,HL,'\t<head>','\t\t<meta charset="utf-8">','\t\t<title>Excursia de vară</title>','\t</head>','\t<body>','\t\t<h1>Excursia de vară</h1>','\t</body>','</html>']),
+  at2_start:J([DT,HL,'\t<head>','\t\t<meta charset="utf-8">','\t\t<title>Școala mea','\t</head>','\t<body>','\t\t<h1>Școala mea</h1>','\t</body>','</html>']),
+  q2_start:J([DT,HL,'<head>','<meta charset="utf-8">','<title>Concursul de șah<title>','</head>','<body>','<h1>Înscrieri</h1>','</body>','</html>']),
+  q2_rez:J([DT,HL,'<head>','<meta charset="utf-8">','<title>Concursul de șah</title>','</head>','<body>','<h1>Înscrieri</h1>','</body>','</html>']),
+  q5_start:J(['<html>','<head>','<meta charset="utf-8">','<title>Clubul de robotică</title>','</head>','<body>','<h1>Clubul de robotică</h1>','</body>','</html>']),
+  q5_rez:J([DT,HL,'<head>','<meta charset="utf-8">','<title>Clubul de robotică</title>','</head>','<body>','<h1>Clubul de robotică</h1>','</body>','</html>']),
+  q5_gresit:J([HL,'<head>','<meta charset="utf-8">','<title>Clubul de robotică</title>','</head>','<body>','<h1>Clubul de robotică</h1>','</body>','</html>'])
+};
+window.COD_L15=COD;
+const ANA='Popescu_Ana_8A_lectia15.html';
+const MARIA={n:'Ionescu_Maria_8A_lectia15.html',t:COD.maria.replace(/\n/g,'\r\n')+'\r\n',coleg:true};
+const AT={dosar:'Documente',model:'lectia15',ext:'html'};
+
+const PROVOCARE=[
+  'Pornește <b>Notepad</b>: tasta Windows, scrie <b>Notepad</b>, apoi <kbd>Enter</kbd>. Dacă se deschide cu fila unui coleg, nu scrie în ea: apasă <b>+</b> (filă nouă). Dacă Notepad nu are file (pe Windows 10), lucrezi direct în fereastră, iar numele fișierului e sus, în bara de titlu.',
+  `Scrie exact rândurile de mai jos. La începutul rândurilor mutate la dreapta apasă <kbd>Tab</kbd> o dată sau de două ori, cum vezi. După <kbd>Enter</kbd>, Notepad nu pune singur Tab-urile: le pui tu.
+<ul class="pasi-met"><li>Ghilimelele <code>"</code>: <kbd>Shift</kbd> + tasta de lângă <kbd>Enter</kbd>. Dacă tasta aceasta scrie ț, tastatura e românească: <kbd>Shift</kbd> + <kbd>AltGr</kbd> + aceeași tastă.</li>
+<li>Dacă după <code>"</code> nu apare nimic până la tasta următoare, iar în loc de <code>"u</code> iese <b>ü</b>, tastatura e „Statele Unite – Internațional”: după fiecare <code>"</code> apasă <kbd>Spațiu</kbd>.</li>
+<li><b>Ș</b>, cu virgulă dedesubt, se scrie pe tastatura românească: <kbd>Shift</kbd> + tasta <b>ș</b> (la dreapta lui L). La altă tastatură treci cu tasta Windows + <kbd>Spațiu</kbd>. Pe tastatura românească, <code>&lt;</code> și <code>&gt;</code> se scriu cu <kbd>AltGr</kbd> + virgulă și <kbd>AltGr</kbd> + punct, ca la lecția 14.</li></ul>${PRE(COD.scoala)}`,
+  'Apasă <kbd>Ctrl</kbd>+<kbd>S</kbd>. În fereastra <b>Salvare ca</b> (Save As): în stânga, <b>Documente</b> (Documents); la <b>Nume fișier</b> (File name), numele, prenumele, clasa și lectia15, cu <b>.html</b> la sfârșit, de exemplu <code>Popescu_Ana_8A_lectia15.html</code>; la <b>Salvare cu tipul</b> (Save as type), <b>Toate fișierele (*.*)</b> (All files); la <b>Codificare</b> (Encoding), <b>UTF-8</b>; apoi <b>Salvare</b> (Save). Dacă apare „… există deja. Îl înlocuiți?”, apasă <b>Nu</b> (No) și pune o cifră la sfârșitul numelui: <code>Popescu_Ana_8A_lectia15_2.html</code>.',
+  'Deschide <b>Explorer</b> (File Explorer): tasta Windows + <kbd>E</kbd>. Clic pe <b>Documente</b> în stânga, apoi dublu-clic pe fișierul tău. Verifică: pe fila browserului scrie <b>Școala mea</b>, iar în pagină, mare, tot <b>Școala mea</b>, cu Ș corect. Dacă pe filă scrie numele fișierului, verifică perechea <code>&lt;title&gt;</code> … <code>&lt;/title&gt;</code>. Dacă pe filă apare și restul fișierului (<code>&lt;/head&gt;</code>, <code>&lt;body&gt;</code>…), iar pagina e goală, lipsește <code>&lt;/title&gt;</code>. Dacă în loc de Ș apare Č, verifică rândul meta: ghilimele drepte, fără ü. După fiecare reparație: <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad, <kbd>F5</kbd> în browser.',
+  'În browser apasă <kbd>Ctrl</kbd>+<kbd>U</kbd>: în fila nouă vezi rândurile tale, cu indentarea. Uită-te la rândul meta: trebuie să fie exact <code>&lt;meta charset="utf-8"&gt;</code>. Închide fila sursei cu × de pe ea.',
+  'Experimentul: în Notepad, selectează cu mouse-ul tot rândul <code>&lt;meta charset="utf-8"&gt;</code> și apasă <kbd>Delete</kbd>. Apasă <kbd>Ctrl</kbd>+<kbd>S</kbd>, apoi, în browser, <kbd>F5</kbd>. Dacă browserul (Edge sau Chrome) e în limba română, în loc de Ș apar <b>Č</b> și un semn ciudat (un pătrățel sau un romb cu semnul întrebării): browserul a ghicit greșit codificarea. Dacă literele ies tot corecte, nu ai greșit: de data asta browserul a ghicit bine (de exemplu, e în engleză, sau Ș e scris fără virgulă). Pe alt calculator ar putea greși, de aceea rândul meta rămâne obligatoriu.',
+  'Pune rândul meta la loc. Dacă a rămas un rând gol, scrie pe el <code>&lt;meta charset="utf-8"&gt;</code>. Dacă rândul a dispărut, dă clic la sfârșitul rândului <code>&lt;head&gt;</code>, apasă <kbd>Enter</kbd>, de două ori <kbd>Tab</kbd>, apoi scrie-l. <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad, <kbd>F5</kbd> în browser: <b>Școala mea</b> apare iar corect.',
+  'La sfârșit, calculatorul rămâne curat pentru colegul următor: în Notepad închide pe rând <b>toate</b> filele, din meniu: <b>Fișier › Închideți fila</b>, până se închide Notepad. Dacă la fila unui coleg te întreabă „Salvați modificările…?”, apasă <b>Nu salvați</b>: ce a salvat el în Documente rămâne neatins. Nu închide Notepad cu X-ul ferestrei: îi redeschide colegului filele. Dacă Notepad nu are file (Windows 10), după ce ai salvat îl închizi cu X. În browser închide fila paginii. Fișierul tău rămâne în Documente.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m2_l15',
+  mod:'lectie',
+  titlu:'Elemente de structură: antet, titlu, corp',
+  marca:'Lecția <b>15</b> · Pagini web · a VIII-a',
+  h1:'Elemente de structură: antet, titlu, corp',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U2', unitateTitlu:'Pagini web',
+  competente:['CS.1.2','CS.3.2'], lectii:'15',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.2, CS.3.2 · unitatea VIII-U2 „Pagini web” · lecția 15 · conținutul: „Elemente de structură ale unei pagini web: antet, titlu, corp”',
+  intro:`<p>Lecția 15. Afli scheletul pe care îl are orice pagină web: antetul, cu titlul de pe filă, și corpul, cu ce vezi în pagină. Îl scrii în Notepad, curat și ușor de citit.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 14, „Cum e făcută o pagină web…”: pagina e un fișier text .html, desenat de browser; eticheta care deschide și cea care închide, cu bara <code>/</code> (<code>&lt;h1&gt;Pagina mea&lt;/h1&gt;</code>); Notepad, filele și bara de stare; salvarea ca .html, cu Toate fișierele și UTF-8; deschiderea din Explorer, <kbd>F5</kbd>, <kbd>Ctrl</kbd>+<kbd>U</kbd>; Fișier › Închideți fila;</li>
+<li>lecția 3, „Operații cu registrul și cu foile de calcul”: salvarea cu numele tău, în Documente; „există deja” → nu înlocuiești fișierul colegului;</li>
+<li>clasa a V-a, lecția 14: browserul (Edge, Chrome) și filele lui.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”, într-un Notepad și un browser simulate în pagină. Apoi atelierul, apoi același lucru la calculatorul din laborator, iar la sfârșit 5 întrebări. Toate acestea sunt obligatorii. Butoanele „Încă un exercițiu”, de la pași și de la atelier, sunt pentru cine termină mai repede.</p>`,
+  banda:'<span class="fila">Școala mea</span><span><span class="tg">&lt;head&gt;</span>…<span class="tg">&lt;/head&gt;</span> <span class="tg">&lt;body&gt;</span>…<span class="tg">&lt;/body&gt;</span></span>',
+  tipuri:{editorweb:EditorWeb},
+  nivele:[
+  {t:'Elemente de structură: antet, titlu, corp', final:true, lectii:[15], continuturi:[P.structura],
+   obiectiv:'scrii în Notepad scheletul complet al unei pagini web, cu antet (titlul de pe filă și codificarea) și corp, cu fiecare etichetă închisă la locul ei și cu rândurile indentate.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>Pe raftul din fotografie, cărțile stau cu cotorul în afară. Pe fiecare cotor scrie titlul: găsești cartea fără s-o deschizi. Textul cărții e înăuntru, nu pe cotor.</p>
+<p>Paginile web sunt la fel. Fiecare are un <b>antet</b>, cu informații despre pagină, de exemplu titlul, care apare pe fila browserului. Și are un <b>corp</b>, cu ce citești în pagină. Când ai multe file deschise, o găsești pe a ta după titlul de pe filă.</p>
+<p>Azi scrii o pagină întreagă, cu antetul, titlul și corpul ei.</p>
+${fig(IMG+'carti-cotor.webp',800,545,'Un raft cu cărți de programare puse cu cotorul în afară; pe fiecare cotor se citește titlul, de exemplu The C Programming Language, Learning Python, Programming Perl','Pe cotor stă titlul, înăuntru stă textul. Fotografie: K.lee, domeniu public, <a href="https://commons.wikimedia.org/wiki/File:Programming_language_textbooks.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (micșorată).')}`},
+
+    /* ---------- PASUL 1: scheletul — antetul și corpul ---------- */
+    {t:'Scheletul: antetul și corpul',
+     text:`<p>Orice pagină web are același <mark>schelet</mark>, în ordinea asta:</p>
+<ul><li><code>&lt;!DOCTYPE html&gt;</code>, primul rând: îi spune browserului că fișierul e o pagină web scrisă după regulile de azi. Nu are închidere;</li>
+<li><code>&lt;html lang="ro"&gt;</code> … <code>&lt;/html&gt;</code> cuprind toată pagina. <code>lang="ro"</code> spune că textul e în română;</li>
+<li><code>&lt;head&gt;</code> … <code>&lt;/head&gt;</code>: <mark>antetul</mark>, cu informații despre pagină. Ele nu apar în pagină; doar titlul se vede, pe filă. Un text scris aici, browserul îl mută singur în pagină, dar locul lui e în corp;</li>
+<li><code>&lt;body&gt;</code> … <code>&lt;/body&gt;</code>: <mark>corpul</mark>. Tot ce vezi în pagină stă aici.</li></ul>`,
+     exemplu:`<p>Un schelet cu antetul gol și cu titlul mare de la lecția 14 în corp:</p>${PRE(COD.p1_ex)}
+<p>În pagină apare doar ce e în corp: <b>Pagina mea</b>, mare. Primul rând, antetul și etichetele nu se văd.</p>`,
+     altfel:`<p>Gândește-te la caietul de TIC. Pe copertă e eticheta, cu numele tău și materia: ea spune ce e caietul, dar nu e lecția. Lecțiile sunt pe foile dinăuntru. Eticheta e antetul, foile sunt corpul, iar caietul întreg, cu copertă cu tot, e <code>&lt;html&gt;</code>.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Corpul paginii de mai jos e gol. Dă clic la sfârșitul rândului <code>&lt;body&gt;</code>, apasă <kbd>Enter</kbd> (pe telefon, tasta ↵ a tastaturii) și scrie <b>Salut!</b>. Restul rândurilor rămân cum sunt.',
+       start:{text:COD.p1_start,fisier:ANA},
+       teste:[{ce:'În pagină apare „Salut!”',el:'body',text:'Salut!',msg:'Scrie Salut! pe un rând nou, după &lt;body&gt;.'},
+        {ce:'În fișier, textul stă în corp: între &lt;body&gt; și &lt;/body&gt;',fn:S=>N(ES.textCorp(LV(S)))==='salut!',msg:'Textul trebuie să stea între &lt;body&gt; și &lt;/body&gt;, nu în antet.'},
+        ORD],
+       rezolvare:[['scrie',COD.p1_rez]],gresit:[['scrie',COD.p1_gresit]],
+       ajutor:'Rândul nou intră între &lt;body&gt; și &lt;/body&gt;. Ce e în corp se vede în pagină.',
+       why:'Ce scrii în corp apare în pagină. Dacă l-ai fi scris direct în antet, browserul l-ar fi mutat singur în pagină, dar locul corect al textului e în corp.'},
+     inca:[
+      {t:'choice',q:'Care rând e primul în fișierul unei pagini web?',o:['<!DOCTYPE html>','<html lang="ro">','<head>','<body>'],ok:0,
+       ajutor:'Recitește primul punct din pas.',why:'Primul rând îi spune browserului că fișierul e o pagină web scrisă după regulile de azi: <code>&lt;!DOCTYPE html&gt;</code>. Abia apoi vine <code>&lt;html lang="ro"&gt;</code>, care cuprinde antetul și corpul.'},
+      {t:'classify',q:'Unde stă fiecare: în antet sau în corp?',cats:['Antet (head)','Corp (body)'],items:[['informații despre pagină, care nu apar în pagină',0],['textul pe care îl citești în pagină',1],['<h1>Pagina mea</h1>',1],['ce îi spune browserului ceva despre pagină, fără să se vadă',0]],
+       ajutor:'Se vede în pagină? Atunci stă în corp.',why:'Ce se vede în pagină stă în corp, inclusiv titlul mare <code>&lt;h1&gt;</code>. Antetul are informații despre pagină.'}
+     ]},
+
+    /* ---------- PASUL 2: titlul de pe filă ---------- */
+    {t:'Titlul de pe filă: <title>',
+     text:`<p>În antet pui <mark>titlul paginii</mark>, între <code>&lt;title&gt;</code> și <code>&lt;/title&gt;</code>. Browserul îl scrie pe filă, nu în pagină. Fără el, pe filă apare numele fișierului, cum ai văzut la lecția 14.</p>
+<p>Nu-l confunda cu <code>&lt;h1&gt;</code>: acela e titlul mare <b>din pagină</b> și stă în corp. O pagină le are de obicei pe amândouă, cu același text sau cu texte diferite.</p>`,
+     exemplu:`${PRE(COD.p2_ex)}
+${fig(IMG+'edge-titlu-fila.webp',900,146,'Microsoft Edge: pe filă scrie Pagina lui Ștefan; în pagină, mare, Bună ziua!, iar dedesubt rândul Învăț să fac pagini web.','Pe filă: <b>Pagina lui Ștefan</b>, textul din <code>&lt;title&gt;</code>. În pagină: ce e în corp. (Bara de adrese e decupată.)')}`,
+     altfel:`<p>Titlul de pe filă e ca titlul de pe cotorul cărții: îl vezi când cartea stă închisă pe raft. Titlul mare <code>&lt;h1&gt;</code> e ca titlul de pe prima pagină: îl vezi abia când deschizi cartea.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Pune în antet titlul <b>Pagina Anei</b>, ca pe filă să scrie Pagina Anei: pe un rând nou, după <code>&lt;head&gt;</code>, scrie <code>&lt;title&gt;Pagina Anei&lt;/title&gt;</code>. Titlul mare din pagină rămâne „Bine ai venit!”.',
+       start:{text:COD.p2_start,fisier:ANA},
+       teste:ES.cuDiagnostic([{ce:'Pe filă scrie „Pagina Anei”',titlu:'Pagina Anei',msg:'Scrie &lt;title&gt;Pagina Anei&lt;/title&gt; pe un rând nou, după &lt;head&gt;.'},
+        {ce:'Titlul stă în antet, între &lt;head&gt; și &lt;/head&gt;',fn:S=>N(ES.titlu(LV(S)))==='pagina anei',msg:'Fila îl arată, dar &lt;title&gt; trebuie să stea în antet, între &lt;head&gt; și &lt;/head&gt;.'},
+        {ce:'Titlul mare din pagină e tot „Bine ai venit!”',el:'h1',text:'Bine ai venit!',msg:'Nu schimba rândul cu &lt;h1&gt;.'},
+        ORD]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p2_gresit]],
+       ajutor:'Antetul e între &lt;head&gt; și &lt;/head&gt;. Acolo intră rândul cu &lt;title&gt;.',
+       why:'Fila arată acum <b>Pagina Anei</b>, iar în pagină a rămas titlul mare „Bine ai venit!”. Dacă ai fi pus &lt;title&gt; în corp, browserul l-ar fi arătat tot pe filă, pentru că iartă greșeala, dar locul lui e în antet.'},
+     inca:[
+      {t:'choice',q:'Pe fila browserului scrie <b>Popescu_Ana_8A_lectia15.html</b>, nu un titlu. Ce lipsește din fișier?',o:['<title> cu textul dorit, în antet','<h1> cu textul dorit, în corp','Rândul <!DOCTYPE html>','lang="ro" din <html>'],ok:0,
+       ajutor:'Ce arată fila când pagina nu are titlu?',why:'Fără <code>&lt;title&gt;</code>, fila arată numele fișierului. <code>&lt;h1&gt;</code> apare în pagină, nu pe filă.'},
+      {t:'tf',q:'Textul scris între <code>&lt;title&gt;</code> și <code>&lt;/title&gt;</code> apare mare, sus în pagină.',ok:false,
+       ajutor:'Uită-te la captura din „Uite cum”.',why:'Fals. Titlul paginii apare pe filă. Titlul mare din pagină e <code>&lt;h1&gt;</code>, din corp.'}
+     ]},
+
+    /* ---------- PASUL 3: diacriticele — meta charset ---------- */
+    {t:'Literele ă, î, ș, ț: <meta charset="utf-8">',
+     text:`<p>La lecția 14 ai salvat pagina cu <b>Codificare UTF-8</b>: așa păstrează fișierul literele ă, â, î, ș, ț. Rândul <code>&lt;meta charset="utf-8"&gt;</code> îi spune browserului această codificare. Îl pui primul în antet. Nu are închidere.</p>
+<p>Fără el, browserul <b>ghicește</b> codificarea. Pe multe pagini ghicește bine. Pe pagina scurtă „Școala mea”, Edge și Chrome în limba română au ghicit greșit: în loc de Ș au apărut Č și un semn ciudat. Cu rândul meta, literele ies corect. Nu știi dinainte când greșește, de aceea îl scrii mereu.</p>`,
+     exemplu:`${PRE(COD.p3_ex)}
+${fig(IMG+'edge-fara-meta.webp',900,122,'Microsoft Edge, pagina fără meta charset: pe filă Č, un romb cu semnul întrebării, coala mea; în pagină Č, un pătrățel, coala mea','Fără <code>&lt;meta charset&gt;</code>: browserul a ghicit greșit.')}
+${fig(IMG+'edge-cu-meta.webp',900,122,'Microsoft Edge, aceeași pagină cu meta charset: pe filă și în pagină Școala mea, corect','Cu <code>&lt;meta charset="utf-8"&gt;</code>: <b>Școala mea</b>, corect. (Bara de adrese e decupată.)')}`,
+     altfel:`<p>E ca un mesaj cifrat. Dacă îi spui prietenului ce cheie ai folosit, îl citește corect din prima. Fără cheie, încearcă una la întâmplare: uneori iese bine, alteori iese un text stricat. Rândul meta e cheia.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Pagina de mai jos nu are rândul meta. Dă clic la sfârșitul rândului <code>&lt;head&gt;</code>, apasă <kbd>Enter</kbd> și scrie <code>&lt;meta charset="utf-8"&gt;</code>. Ghilimelele <code>"</code>: <kbd>Shift</kbd> + tasta de lângă <kbd>Enter</kbd> (pe tastatura românească, <kbd>Shift</kbd> + <kbd>AltGr</kbd> + aceeași tastă). Dacă după <code>"</code> nu apare nimic, iar în loc de <code>"u</code> iese <b>ü</b>, apasă <kbd>Spațiu</kbd> imediat după fiecare <code>"</code>.',
+       start:{text:COD.p3_start,fisier:ANA},
+       teste:ES.cuDiagnostic([{ce:'Antetul are &lt;meta charset="utf-8"&gt;',fn:S=>ES.metaUtf8(LV(S)),msg:'Scrie &lt;meta charset="utf-8"&gt; pe un rând nou, după &lt;head&gt;, cu ghilimelele drepte.'},
+        {ce:'Pe filă scrie tot „Școala mea”',titlu:'Școala mea',msg:'Nu schimba rândul cu &lt;title&gt;.'},
+        ORD]),
+       rezolvare:[['scrie',COD.p3_rez]],gresit:[['scrie',COD.p3_gresit]],
+       ajutor:'Rândul meta intră în antet, imediat după &lt;head&gt;. Banda galbenă de deasupra paginii dispare când e la locul lui.',
+       why:'Acum browserul nu mai ghicește: rândul meta îi spune că fișierul e în UTF-8, cum l-a salvat Notepad.'},
+     inca:[
+      {t:'tf',q:'Fără <code>&lt;meta charset="utf-8"&gt;</code>, literele ș și ț ies stricate pe orice pagină.',ok:false,
+       ajutor:'Ce face browserul fără rândul meta?',why:'Fals. Browserul ghicește: pe pagina „Pagina lui Ștefan”, cu mai mult text, a ghicit bine; pe „Școala mea” a greșit. Nu știi dinainte, de aceea pui rândul meta mereu.'}
+     ]},
+
+    /* ---------- PASUL 4: închiderea în ordine inversă ---------- */
+    {t:'Fiecare etichetă se închide, în ordine inversă',
+     text:`<p>Etichetele stau una în alta, ca niște cutii: <code>&lt;title&gt;</code> e în <code>&lt;head&gt;</code>, iar <code>&lt;head&gt;</code> e în <code>&lt;html&gt;</code>. Regula: ce s-a deschis ultimul se închide primul. Întâi <code>&lt;/title&gt;</code>, apoi <code>&lt;/head&gt;</code>. La sfârșit, <code>&lt;/body&gt;</code>, apoi <code>&lt;/html&gt;</code>.</p>
+<p>Browserul iartă multe greșeli: fără <code>&lt;/body&gt;</code> sau <code>&lt;/html&gt;</code>, pagina arată la fel. Nu iartă tot: fără <code>&lt;/title&gt;</code>, tot restul fișierului ajunge pe filă, iar pagina rămâne goală. Tu scrii forma corectă, cu fiecare pereche.</p>`,
+     exemplu:`<p>Lipsește <code>&lt;/title&gt;</code>:</p>${PRE(COD.p4_ex_gresit)}
+${fig(IMG+'edge-title-neinchis.webp',900,122,'Microsoft Edge: pe filă scrie Pagina lui Ștefan, apoi etichetele head și body, ca text; pagina de dedesubt e goală','Pe filă a ajuns și restul fișierului (&lt;/head&gt; &lt;body&gt;…), iar pagina e goală. Cu <code>&lt;/title&gt;</code> la sfârșitul rândului, totul revine la normal.')}`,
+     altfel:`<p>Pui penarul în ghiozdan. Când pleci, închizi întâi penarul, apoi ghiozdanul. Ce ai pus ultimul înăuntru închizi primul.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Pagina de mai jos e goală, iar pe filă apare aproape tot fișierul. Repar-o: pune ce lipsește la sfârșitul rândului cu <code>&lt;title&gt;</code>. Textele rămân cum sunt.',
+       start:{text:COD.p4_start,fisier:ANA},
+       teste:ES.cuDiagnostic([{ce:'Pe filă scrie „Clubul de lectură”',titlu:'Clubul de lectură',msg:'Închide titlul: &lt;/title&gt; la sfârșitul rândului, cu bara /.'},
+        {ce:'În pagină apare titlul mare „Bine ați venit!”',el:'h1',text:'Bine ați venit!',msg:'După ce închizi titlul, corpul reapare.'},
+        ORD]),
+       rezolvare:[['scrie',COD.p4_rez]],gresit:[['scrie',COD.p4_gresit]],
+       ajutor:'Eticheta care închide are bara / după &lt;.',
+       why:'Cu <code>&lt;/title&gt;</code>, browserul știe unde se termină titlul: fila arată „Clubul de lectură”, iar corpul apare din nou în pagină.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'Pagina de mai jos arată bine, pentru că browserul iartă, dar închiderile de la sfârșit sunt în ordine greșită. Pune-le în ordinea corectă.',
+       start:{text:COD.p4b_start,fisier:ANA},
+       teste:ES.cuDiagnostic([ORD,{ce:'În pagină apare tot „Bine ați venit!”',el:'h1',text:'Bine ați venit!',msg:'Nu schimba rândul cu &lt;h1&gt;.'}]),
+       rezolvare:[['scrie',COD.p4b_rez]],gresit:[['scrie',COD.p4b_start]],
+       ajutor:'Corpul s-a deschis după &lt;html&gt;, deci se închide înaintea lui.',
+       why:'<code>&lt;body&gt;</code> s-a deschis ultimul, deci <code>&lt;/body&gt;</code> vine înaintea lui <code>&lt;/html&gt;</code>.'}
+     ]},
+
+    /* ---------- PASUL 5: indentarea ---------- */
+    {t:'Indentarea: perechile una sub alta',
+     text:`<p><mark>Indentarea</mark> înseamnă să muți un rând la dreapta, ca să se vadă ce stă în ce. În Notepad apeși <kbd>Tab</kbd> la începutul rândului: <code>&lt;head&gt;</code> și <code>&lt;body&gt;</code> primesc un Tab, iar rândurile din ele, două. După <kbd>Enter</kbd>, Notepad nu pune singur Tab-urile: le pui tu.</p>
+<p>Perechile ajung una sub alta: <code>&lt;/head&gt;</code> exact sub <code>&lt;head&gt;</code>. Așa vezi imediat o închidere care lipsește. Browserul nu ține cont de indentare: pagina arată la fel.</p>`,
+     exemplu:`${fig(IMG+'notepad-schelet.webp',900,520,'Notepad: fila Popescu_Ana_8A_lectia15.html cu scheletul indentat: head și body mutate la dreapta cu un Tab, meta, title, h1 și rândul de text cu două; jos UTF-8','Scheletul în Notepad: fiecare Tab mută rândul la dreapta cu 8 spații. <code>&lt;/head&gt;</code> stă sub <code>&lt;head&gt;</code>, <code>&lt;/body&gt;</code> sub <code>&lt;body&gt;</code>.')}
+<p>Pe telefon nu ai Tab: pui două spații. Merge și așa.</p>`,
+     altfel:`<p>E ca la cuprinsul unei cărți: capitolele stau la marginea din stânga, iar subcapitolele puțin mai la dreapta, sub capitolul lor. Dintr-o privire vezi ce cuprinde fiecare capitol.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Indentează scheletul de mai jos. Dă clic la începutul fiecărui rând și apasă <kbd>Tab</kbd>: o dată pentru <code>&lt;head&gt;</code>, <code>&lt;/head&gt;</code>, <code>&lt;body&gt;</code>, <code>&lt;/body&gt;</code>, de două ori pentru rândurile dintre ele. Pe telefon, în loc de un Tab pui două spații.',
+       start:{text:COD.p5_start,fisier:ANA},
+       teste:ES.cuDiagnostic([{ce:'Rândurile din antet și din corp stau mai la dreapta; &lt;/head&gt; e sub &lt;head&gt;, &lt;/body&gt; sub &lt;body&gt;',fn:S=>ES.indentat(LV(S)),msg:'Rândurile dintre &lt;head&gt; și &lt;/head&gt; (și dintre &lt;body&gt; și &lt;/body&gt;) trebuie să stea mai la dreapta decât acestea, iar închiderea exact sub deschidere.'},
+        {ce:'Pagina e aceeași: pe filă și în pagină, „Școala mea”',titlu:'Școala mea',el:'h1',text:'Școala mea',msg:'Schimbi doar începutul rândurilor, nu textele.'},
+        ORD]),
+       rezolvare:[['scrie',COD.p5_rez]],gresit:[['scrie',COD.p5_start]],
+       ajutor:'Un Tab pentru &lt;head&gt;, &lt;/head&gt;, &lt;body&gt;, &lt;/body&gt;; două pentru meta, title și h1.',
+       why:'Acum perechile stau una sub alta, iar pagina a rămas aceeași: browserul nu ține cont de indentare.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'În scheletul indentat de mai jos lipsește o închidere. Uită-te sub <code>&lt;head&gt;</code> și pune-o, cu indentarea potrivită.',
+       start:{text:COD.p5b_start,fisier:ANA},
+       teste:ES.cuDiagnostic([ORD,{ce:'Indentarea e păstrată: închiderea stă sub deschiderea ei',fn:S=>ES.indentat(LV(S)),msg:'Rândul nou are un Tab la început, ca &lt;head&gt;.'},
+        {ce:'Pe filă scrie „Excursia”',titlu:'Excursia',msg:'Nu schimba rândul cu &lt;title&gt;.'}]),
+       rezolvare:[['scrie',COD.p5b_rez]],gresit:[['scrie',COD.p5b_start]],
+       ajutor:'Sub &lt;head&gt;, în aceeași coloană, nu e nicio închidere.',
+       why:'Lipsea <code>&lt;/head&gt;</code>: îl pui după rândul cu <code>&lt;title&gt;</code>, cu un Tab, exact sub <code>&lt;head&gt;</code>.'}
+     ]}
+   ],
+   atelier:{t:'editorweb',mod:'notepad',titlu:'Atelier: pagina „Școala mea”, de la zero',
+    intro:`<p>Mai jos ai un Notepad, folderul Documente și un browser, simulate. Deasupra lor sunt <strong>testele</strong>: se bifează singure când faci ce cer. La final apasă <b>Verifică</b>. Pe un ecran mic, treci de la o fereastră la alta cu butoanele de sub ele.</p>`,
+    q:`<b>1.</b> Notepad s-a deschis cu fila Mariei: fă o filă nouă (<b>+</b>). <b>2.</b> Scrie în ea scheletul de mai jos, cu indentarea lui. <b>3.</b> Salvează-l în Documente, ca pagină web, cu numele tău după modelul <code>Popescu_Ana_8A_lectia15.html</code>. <b>4.</b> Deschide pagina în browser: în Documente, dublu-clic pe ea (pe telefon, atinge-o de două ori, repede). <b>5.</b> Deschide-i sursa (<kbd>Ctrl</kbd>+<kbd>U</kbd>).${PRE(COD.scoala)}`,
+    start:{fisiere:{Documente:[MARIA]},notepad:{file:[{n:MARIA.n,dosar:'Documente'}]},dreapta:'explorer'},
+    teste:ES.cuDiagnostic([
+     {ce:'Fișierul Mariei a rămas neatins',neatins:['Documente/'+MARIA.n],msg:'Fișierul Mariei s-a schimbat: ai salvat peste el (în fila ei, cu Ctrl+S, sau cu Da la „… există deja”). În laborator, munca ei s-ar fi pierdut. „Arată-mi răspunsul” îți arată drumul bun. Data viitoare: filă nouă (+), iar la „există deja”, Nu.'},
+     {ce:'O pagină .html în Documente, cu numele, prenumele, clasa ta și lectia15, salvată în UTF-8',fisier:Object.assign({cod:'UTF-8'},AT),msg:'Scrie într-o filă nouă (+), nu în fila Mariei. Apoi Ctrl+S: Documente, numele tău cu lectia15 și .html, Toate fișierele, UTF-8, Salvare.'},
+     {ce:'Scheletul e complet și în ordine: &lt;!DOCTYPE html&gt; primul, &lt;html lang="ro"&gt;, antetul, corpul, fiecare etichetă cu perechea ei',fn:(S,U)=>{const s=ES.src(S,U,AT);return !!s&&ES.doctypePrimul(s)&&ES.htmlLangRo(s)&&ES.ordine(s)},msg:'Verifică primul rând, lang="ro" și închiderile, în ordine inversă.'},
+     {ce:'Antetul are &lt;meta charset="utf-8"&gt; și titlul „Școala mea”',fn:(S,U)=>{const s=ES.src(S,U,AT);return !!s&&ES.metaUtf8(s)&&N(ES.titlu(s))==='scoala mea'},msg:'În antet: rândul meta și &lt;title&gt;Școala mea&lt;/title&gt;.'},
+     {ce:'Corpul are titlul mare „Școala mea”',fisier:AT,el:'h1',text:'Școala mea',msg:'În corp: &lt;h1&gt;Școala mea&lt;/h1&gt;.'},
+     {ce:'Rândurile sunt indentate: perechile una sub alta',fn:(S,U)=>{const s=ES.src(S,U,AT);return !!s&&ES.indentat(s)},msg:'Tab la începutul rândurilor: unul pentru head și body, două pentru ce e în ele.'},
+     {ce:'Browserul arată pagina ta, iar pe filă scrie „Școala mea”',browser:{fisier:AT},titlu:'Școala mea',msg:'Deschide pagina din Documente (dublu-clic). Dacă ai schimbat ceva după, Ctrl+S în Notepad și F5 în browser.'},
+     {ce:'Pagina din browser e cea salvată acum',laZi:AT,msg:'Ai schimbat fișierul după ce l-ai deschis: F5 în browser.'},
+     {ce:'Ai deschis sursa paginii tale',sursa:AT,msg:'În browser, clic pe pagina ta, apoi Ctrl+U.'}],{spec:AT,coleg:[MARIA.n]}),
+    rezolvare:[['filaNoua'],['scrie',COD.scoala],['salveaza',{nume:ANA,tip:'toate',dosar:'Documente'}],['deschide','Documente/'+ANA],['sursa']],
+    gresit:[['filaNoua'],['scrie',COD.scoala_gresit],['salveaza',{nume:ANA,tip:'toate',dosar:'Documente'}],['deschide','Documente/'+ANA]],
+    ajutor:'Pe rând: + (filă nouă); scheletul, cu Tab-uri; Ctrl+S cu numele tău și .html; în Documente, dublu-clic pe fișier; în browser, Ctrl+U.',
+    why:'Ai scris scheletul complet al unei pagini web: antetul cu codificarea și titlul de pe filă, corpul cu titlul mare, închise în ordine și indentate. Fișierul Mariei a rămas neatins.',
+    solutieText:'scheletul paginii „Școala mea” e salvat ca Popescu_Ana_8A_lectia15.html, deschis în browser, cu sursa într-o filă nouă.',
+    inca:[
+     {t:'editorweb',mod:'notepad',titlu:'Atelier: repară pagina și lasă calculatorul curat',
+      q:'Pagina ta de mai devreme e deschisă în Notepad și în browser, dar în browser e goală, iar pe filă apare aproape tot fișierul. <b>1.</b> Repar-o în Notepad. <b>2.</b> Fă ca browserul să arate pagina reparată. <b>3.</b> La final, închide fila din Notepad cu <b>Fișier › Închideți fila</b>, nu cu X-ul ferestrei.',
+      start:{fisiere:{Documente:[{n:ANA,t:COD.at2_start.replace(/\n/g,'\r\n')+'\r\n'}]},notepad:{file:[{n:ANA,dosar:'Documente'}]},browser:{file:['Documente/'+ANA]},dreapta:'browser'},
+      teste:ES.cuDiagnostic([
+       {ce:'Fișierul salvat are titlul „Școala mea”, închis corect',fisier:{exact:ANA},titlu:'Școala mea',curat:true,msg:'Pune &lt;/title&gt; la sfârșitul rândului cu titlul, apoi Ctrl+S.'},
+       {ce:'Browserul arată titlul mare „Școala mea”',browser:{fisier:{exact:ANA}},el:'h1',text:'Școala mea',msg:'După Ctrl+S în Notepad: clic pe pagină, apoi F5.'},
+       {ce:'Pagina din browser e cea salvată acum',laZi:{exact:ANA},msg:'F5 în browser, după salvare.'},
+       {ce:'Notepad e închis și nu-ți mai redeschide fila',npCurat:true,faraDiagnostic:true,msg:'Fișier › Închideți fila. X-ul ferestrei păstrează fila pentru data viitoare.'}],{spec:{exact:ANA}}),
+      rezolvare:[['scrie',COD.scoala],['salveaza'],['f5'],['inchideFila']],
+      gresit:[['scrie',COD.scoala],['salveaza'],['f5'],['inchideFereastra']],
+      ajutor:'Lipsește o închidere pe rândul cu &lt;title&gt;. Apoi: Ctrl+S, F5, Fișier › Închideți fila.',
+      why:'Titlul închis aduce corpul înapoi în pagină. Notepad, închis din filă, pornește curat pentru colegul următor.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Ioana vrea ca pe fila browserului să scrie <b>Excursia la Bicaz</b>, iar în pagină, mare, <b>Bine ați venit!</b>. Ce rând pune în antet?',
+     o:['<title>Excursia la Bicaz</title>','<h1>Excursia la Bicaz</h1>','<title>Bine ați venit!</title>','<h1>Bine ați venit!</h1>'],ok:0,
+     ajutor:'Ce apare pe filă și unde stă?',why:'Pe filă apare textul din <code>&lt;title&gt;</code>, care stă în antet. „Bine ați venit!” intră în corp, în <code>&lt;h1&gt;</code>.'},
+    {t:'editorweb',mod:'live',
+     q:'Pagina de mai jos e goală, iar pe filă apare aproape tot fișierul. Repar-o, fără să schimbi textele.',
+     start:{text:COD.q2_start,fisier:'Pop_Matei_8B_lectia15.html'},
+     teste:[{ce:'Pe filă scrie „Concursul de șah”',titlu:'Concursul de șah',msg:'Uită-te la a doua etichetă de pe rândul cu titlul.'},
+      {ce:'În pagină apare titlul mare „Înscrieri”',el:'h1',text:'Înscrieri',msg:'Când titlul e închis corect, corpul reapare.'},
+      ORD],
+     rezolvare:[['scrie',COD.q2_rez]],gresit:[['scrie',COD.q2_start]],
+     ajutor:'Cele două etichete de pe rândul cu titlul arată la fel. Ce le deosebește când una închide?',why:'A doua etichetă trebuia să închidă titlul, deci are bara /: <code>&lt;/title&gt;</code>.'},
+    {t:'classify',q:'Unde stă fiecare rând: în antet sau în corp?',cats:['Antet (head)','Corp (body)'],
+     items:[['<meta charset="utf-8">',0],['<title>Clubul de robotică</title>',0],['<h1>Clubul de robotică</h1>',1],['Ne vedem joi, la ora 14.',1]],
+     ajutor:'Ce se vede în pagină stă în corp.',why:'Codificarea și titlul de pe filă sunt informații despre pagină, deci stau în antet. Titlul mare și textul se văd în pagină, deci stau în corp.'},
+    {t:'choice',q:'Matei a salvat pagina „Știri” în UTF-8, fără rândul meta. Pe filă și în pagină scrie Č, un semn ciudat și „tiri”. Ce face?',
+     o:['Pune <meta charset="utf-8"> în antet, salvează, F5','Salvează din nou fișierul, cu Codificare ANSI','Mută textul Știri din <h1> în <title>, în antet','Șterge rândul <!DOCTYPE html> și salvează'],ok:0,
+     ajutor:'Ce îi spune browserului codificarea, ca să nu mai ghicească?',why:'Rândul meta îi spune browserului că fișierul e în UTF-8, deci nu mai ghicește. Cu ANSI, Notepad pierde chiar literele ș și ț.'},
+    {t:'editorweb',mod:'live',
+     q:'Paginii de mai jos îi lipsesc două lucruri: primul rând, care îi spune browserului că fișierul e o pagină web scrisă după regulile de azi, și limba textului. Completează-le.',
+     start:{text:COD.q5_start,fisier:'Pop_Matei_8B_lectia15.html'},
+     teste:ES.cuDiagnostic([{ce:'Primul rând e &lt;!DOCTYPE html&gt;',fn:S=>ES.doctypePrimul(LV(S)),msg:'Rândul care îi spune browserului că fișierul e o pagină web stă primul, înaintea lui &lt;html&gt;.'},
+      {ce:'&lt;html&gt; spune că textul e în română',fn:S=>ES.htmlLangRo(LV(S)),msg:'În eticheta &lt;html&gt;, după un spațiu: lang="ro".'},
+      ORD],{}),
+     rezolvare:[['scrie',COD.q5_rez]],gresit:[['scrie',COD.q5_gresit]],
+     ajutor:'Două lucruri: un rând nou deasupra lui &lt;html&gt; și limba în eticheta &lt;html&gt;.',why:'Primul rând e <code>&lt;!DOCTYPE html&gt;</code>, iar <code>&lt;html lang="ro"&gt;</code> spune că textul e în română.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Notepad-ul și browserul adevărate',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:`<p>Faci pagina „Școala mea” pe calculator, fără ajutor: la fiecare pas scrie ce trebuie să vezi, ca să verifici singur.</p>
+${fig(IMG+'notepad-scoala-nou.webp',900,520,'Notepad: o filă nouă, nesalvată, numită !DOCTYPE html, cu pagina Școala mea scrisă cu Tab-uri','Pasul 2: așa arată în Notepad. Fila nouă primește singură numele „!DOCTYPE html”, după primul rând; numele tău îl pune salvarea.')}
+${fig(IMG+'edge-sursa-scoala.webp',900,266,'Microsoft Edge, după Ctrl+U: sursa paginii Școala mea, cu rândurile numerotate și indentarea din Notepad','Pasul 5: sursa arată rândurile tale, cu indentarea.')}`,
+    pasi:PROVOCARE},
+  diploma:{titlu:'Arhitectul scheletului de pagină',
+    rezumat:'a scris scheletul unei pagini web (DOCTYPE, html cu limba, antetul cu codificarea și titlul de pe filă, corpul cu ce se vede), a închis fiecare etichetă în ordine inversă, a indentat rândurile cu Tab și a văzut că fără rândul meta browserul ghicește codificarea și poate greși',
+    aplicatie:'Notepad-ul și browserul adevărate',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
