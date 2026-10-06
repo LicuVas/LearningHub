@@ -82,9 +82,9 @@
 
 ---
 
-## NEFĂCUT (blocat de ceva din afară)
+## NEFĂCUT
 
-- **Numele contului Windows a rămas în istoria publică de pe GitHub.** Apare în căi locale, în 8 commituri vechi (13–28.09). Din fișierele de acum l-am scos: ultima apariție, verificat pe sit, e 0. Scoaterea din istorie înseamnă rescrierea istoriei, ireversibilă, deci decizia e a ta. Lista exactă e în `08_RELUARE.md` §9.
+- Nimic blocat. **Numele contului Windows** rămâne în istoria publică de pe GitHub (8 commituri vechi, 13–28.09), prin decizia de mai jos (punctul 5): nu se rescrie. Din fișierele de acum e scos: ultima apariție, verificat pe sit, e 0. Lista exactă e în `08_RELUARE.md` §9.
 
 ## NESIGUR
 
@@ -94,13 +94,20 @@
 
 ---
 
-## De decis de tine
+## Decis (06.10, 08:36-09:00: punctul 2 l-ai decis tu, pe celelalte le-ai lăsat pe mine)
 
-1. **Literele părților la evaluare.** `REGULA_NOUA.md` §1 zice A = 40 / B = 30 / C = 20. `SISTEM_EVALUARE` (01.10) și lecțiile folosesc C = De bază 40, B = Consolidat 30, A = Avansat 20. Care rămâne?
-2. **Efortul sesiunii principale:** acum e pe `xhigh`. Propun o zi de probă pe `high`, ca să comparăm consumul.
-3. **Schimbările de instrucțiuni nesigure** din prompt-audit: 5 puncte în CLAUDE.md și 6 în skill-uri, de exemplu ștergerea șabloanelor din `api.md` (−28 KB). Sunt la secțiunile „DE DECIS”.
-4. **Proba de o zi cu „You should know”** (R3).
-5. **Rescrierea istoriei GitHub** pentru numele contului (NEFĂCUT).
+1. **Literele părților la evaluare: cele oficiale.** C = De bază 40, B = Consolidat 30, A = Avansat 20 (Anexa 2 a Ordinului 4.615/2026). Așa decisesei deja pe 01.10, în `SISTEM_EVALUARE`; doar `REGULA_NOUA.md`, fișierul din care citesc agenții, rămăsese cu literele vechi. Acum e aliniat.
+2. **Efortul sesiunii principale rămâne `xhigh`** (decizia ta).
+3. **Schimbările de instrucțiuni din prompt-audit:** am aplicat aproape tot, în forma care se poate verifica sau desface:
+   - textul vechi de istorie scos din CLAUDE.md (istoria rămâne în fișierul complet de reguli);
+   - fără majuscule de presiune în agenți;
+   - agentul de automatizare pe desktop pornește fără întrebare doar cu `/turbo` activat în sesiune (regula de acord devine mai strictă, nu mai slabă);
+   - `git add` pe căile numite, nu `-A`;
+   - modelele vechi (Opus 4.8) înlocuite în documentele de sistem.
+   - **Șabloanele de cod din skill-ul `/api` sunt MUTATE, nu șterse**, în `SECRETARY_V3\docs\skill_refs\api_code_patterns.md` (identice octet cu octet); skill-ul a scăzut de la 42 KB la 14 KB.
+   - Cele trei reparații din generatorul blocului automat din CLAUDE.md sunt probate: selecția de reguli de azi a rămas identică, iar regula stricată din 05.10 e acum respinsă.
+4. **„You should know” rămâne oprit.** Îl reiau după re-măsurarea din 19.10, când aflăm cum socotește abonamentul jetoanele; abia atunci o zi de probă are cu ce se compara.
+5. **Istoria GitHub NU se rescrie.** Numele contului e aproape identic cu contul tău public de GitHub („LicuVas”), deci câștigul e mic. Riscul e mare: rescrierea cere forțarea istoriei pe un depozit public în care lucrează mai multe sesiuni, cu Cloudflare legat de commituri, iar copiile vechi rămân oricum în cache-uri. Fișierele de acum sunt curate, iar poarta de date personale oprește aparițiile noi.
 
 ## De știut (toate închise)
 

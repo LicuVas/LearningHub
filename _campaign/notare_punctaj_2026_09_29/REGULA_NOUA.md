@@ -5,11 +5,11 @@ Contractul: `contract.md` din același dosar. Documentele profesorului, deja res
 `instrumente\Grila_produs.md`. Au prioritate. Dacă ceva de aici pare să le contrazică, ele câștigă și scrii asta în `surse.md`.
 
 ## 1. Lucrarea
-- Părțile rămân la fel: **A = 40 p** (De bază, cu model) · **B = 30 p** (Consolidat, singur, situație cunoscută) · **C = 20 p** (Avansat, situație nouă + explicație) · **10 din oficiu**. Total 100.
-- **Nota = punctaj : 10.** Punctajul = A + B + C + 10.
+- Părțile, cu literele oficiale din Anexa 2 a Ordinului 4.615/2026 (decizia lui Vasile din 01.10.2026, `SISTEM_EVALUARE.md`): **C = 40 p** (De bază, cu model) · **B = 30 p** (Consolidat, singur, situație cunoscută) · **A = 20 p** (Avansat, situație nouă + explicație) · **10 din oficiu**. Total 100. (Până la 01.10, părțile aveau literele inverse, A = De bază și C = Avansat; nu le mai folosești.)
+- **Nota = punctaj : 10.** Punctajul = C + B + A + 10.
 - Dacă nu iese întreg, nota se rotunjește la cel mai apropiat întreg; la ,5 rotunjirea e **în favoarea elevului** (85 → 9, 84 → 8, 76 → 8, 75 → 8, 74 → 7).
 - Copiatul sau lucrarea nepredată = nota 1.
-- Exemplul canonic: 25 + 28 + 19 + 10 = **82 → nota 8**. Exemplul din SISTEM_EVALUARE: 31 + 21 + 6 + 10 = 68 → **nota 7**.
+- Exemplul canonic: C 25 + B 28 + A 19 + 10 = **82 → nota 8**. Exemplul din SISTEM_EVALUARE: C 31 + B 21 + A 6 + 10 = 68 → **nota 7**.
 - Părțile NU mai schimbă nota. Ele arată unde ai pierdut puncte, deci ce ai de lucrat (feedback).
 
 ## 2. Nivelul se citește din notă
