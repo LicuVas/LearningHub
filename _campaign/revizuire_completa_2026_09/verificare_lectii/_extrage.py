@@ -80,7 +80,10 @@ def md(s) -> str:
         alt = re.search(r'alt="([^"]*)"', tag) or re.search(r"alt='([^']*)'", tag)
         return f"\n\n[Imagine: {alt.group(1) if alt else 'fără descriere'}]\n\n"
     s = re.sub(r"(?is)<img\b[^>]*>", _img, s)
-    s = re.sub(r"(?is)<figcaption[^>]*>(.*?)</figcaption>", r"\n\nLegenda imaginii: \1\n\n", s)
+    # 06.10.2026: eticheta era „Legenda imaginii:” — oracolul T0 o lua drept termenul „legendă”
+    # (predat în VIII/11, grafice) folosit înainte de definiție: alarmă falsă (raport T0: „prima folosire
+    # … Legenda imaginii: Un grafic cu bare”). Comparat pe toate cele 42 de lecții: nicio altă lecție nu se schimbă.
+    s = re.sub(r"(?is)<figcaption[^>]*>(.*?)</figcaption>", r"\n\nSub imagine: \1\n\n", s)
     s = re.sub(r"(?is)<(mark|dfn)>(.*?)</\1>", r"**\2**", s)
     s = re.sub(r"(?is)<(b|strong)>(.*?)</\1>", r"**\2**", s)
     s = re.sub(r"(?is)<kbd>(.*?)</kbd>", r"\1", s)
