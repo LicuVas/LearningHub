@@ -229,18 +229,23 @@ function aplicatieReala(Lv){
    de unde se instalează și cum îl deschizi cu ea. Linkurile magazinelor verificate pe 06.10.2026 (200, titlul aplicației);
    „atinge de două ori” = ca în ghidurile cu capturi (jocuri/_ghiduri/sheets, slides). */
 const APP_TEL={
-  xlsx:{n:'Foi de calcul Google',en:'Google Sheets',play:'com.google.android.apps.docs.editors.sheets',ios:'842849113',scrii:'Atinge <b>de două ori</b> o celulă ca să scrii în ea.'},
-  docx:{n:'Documente Google',en:'Google Docs',play:'com.google.android.apps.docs.editors.docs',ios:'842842640',scrii:'Atinge textul ca să scrii în document (dacă vezi jos un creion, atinge-l întâi).'},
-  pptx:{n:'Prezentări Google',en:'Google Slides',play:'com.google.android.apps.docs.editors.slides',ios:'879478102',scrii:'Atinge <b>de două ori</b> o casetă ca să scrii în ea.'}};
+  xlsx:{f:'Excel',n:'Foi de calcul Google',en:'Google Sheets',play:'com.google.android.apps.docs.editors.sheets',ios:'842849113',scrii:'Atinge <b>de două ori</b> o celulă ca să scrii în ea.'},
+  docx:{f:'Word',n:'Documente Google',en:'Google Docs',play:'com.google.android.apps.docs.editors.docs',ios:'842842640',scrii:'Atinge textul ca să scrii în document (dacă vezi jos un creion, atinge-l întâi).'},
+  pptx:{f:'PowerPoint',n:'Prezentări Google',en:'Google Slides',play:'com.google.android.apps.docs.editors.slides',ios:'879478102',scrii:'Atinge <b>de două ori</b> o casetă ca să scrii în ea.'}};
+/* 06.10.2026, cititorul-începător (8 blocaje la prima variantă): pasul din lecție spune „deschide-l în Excel”, deci caseta spune
+   deschis că PE TELEFON deschiderea se face altfel; dosarul are poza lui (captura reală, încercuită); „previzualizare” și
+   „Descărcări” sunt explicate la prima folosire. */
 function telefonFisier(A){
   const fis=[];String(A.pasi.join(' ')).replace(/href="([^"#?]+\.(xlsx|docx|pptx))"/gi,(m,f,x)=>{f=f.split('/').pop();if(!fis.some(e=>e.f===f))fis.push({f,x:x.toLowerCase()});return m});
   if(!fis.length)return '';
-  const ghid=new URL('../ghiduri/#instalare',MOTOR_URL).href;
+  const ghid=new URL('../ghiduri/#instalare',MOTOR_URL).href,poza=new URL('../_ghiduri/instalare/01-dosar.webp',MOTOR_URL).href;
   return fis.filter((e,i)=>fis.findIndex(o=>o.x===e.x)===i).map(e=>{const a=APP_TEL[e.x],nume=fis.filter(o=>o.x===e.x).map(o=>`<b>${esc(o.f)}</b>`).join(', ');
     return `<div class="peek reading tel-fisier" style="display:block;margin:0 0 12px"><div class="lbl">📱 Lucrezi pe telefon?</div>
-<p>Pe telefon, fișierul ${nume} se poate <b>modifica</b> doar cu aplicația gratuită <b>${a.n}</b> <i>(${a.en})</i>. Dacă îl vezi, dar nu poți scrie în el, l-ai deschis doar pentru citit, într-o previzualizare.</p>
+<p>Pe telefon, fișierul ${a.f} ${nume} se poate <b>modifica</b> doar cu aplicația gratuită <b>${a.n}</b> <i>(${a.en})</i>. Fără ea, telefonul ți-l arată doar într-o <b>previzualizare</b>: îl vezi, dar nu poți scrie în el. Pașii de mai jos sunt pentru calculator; <b>pe telefon, fișierul îl deschizi așa:</b></p>
 <ol><li>Instalează aplicația: <a href="https://play.google.com/store/apps/details?id=${a.play}" target="_blank" rel="noopener">Magazin Play</a> (Android) sau <a href="https://apps.apple.com/app/id${a.ios}" target="_blank" rel="noopener">App Store</a> (iPhone). Sub nume trebuie să scrie <b>Google LLC</b>.</li>
-<li>Descarcă fișierul (linkul din pașii de mai jos). Deschide aplicația <b>${a.n}</b>, atinge <b>dosarul</b> din bara de sus, cea cu „Caută în …” <i>(Search)</i>, și alege fișierul descărcat, de obicei din <b>Descărcări</b> <i>(Downloads)</i>.</li>
+<li>Atinge numele fișierului, în pașii de mai jos: telefonul îl descarcă în dosarul <b>Descărcări</b> <i>(Downloads)</i>, unde ajung fișierele luate de pe internet. Dacă telefonul îl deschide singur și nu poți scrie în el, închide-l.</li>
+<li>Deschide aplicația <b>${a.n}</b>. Sus, în bara „Caută în …” <i>(Search)</i>, atinge <b>dosarul</b> din dreapta (încercuit în poză) și alege fișierul din Descărcări.
+<img src="${esc(poza)}" width="360" height="80" alt="Bara de sus a aplicației: Caută în Foi de calcul, cu dosarul din dreapta încercuit cu roșu" loading="lazy" style="display:block;width:100%;max-width:360px;height:auto;margin:6px 0 0;border:1px solid var(--line);border-radius:8px"></li>
 <li>${a.scrii} Butoanele stau în alte locuri decât pe calculator: ce nu găsești pe telefon faci la școală.</li></ol>
 <p style="margin:6px 0 0"><a href="${esc(ghid)}">Ghidul pas cu pas: cum instalezi aplicația și cum deschizi fișierul</a></p></div>`}).join('');
 }
