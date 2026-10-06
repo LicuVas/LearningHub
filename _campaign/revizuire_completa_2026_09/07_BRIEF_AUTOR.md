@@ -39,5 +39,10 @@ Ești AUTORUL unei lecții noi în secțiunea „Lecții” din LearningHub. E u
 - `python C:/00/Projects/LearningHub/_campaign/revizuire_completa_2026_09/verificare_lectii/verifica_lectie.py <index.html> --fara-t1` → ultima linie 0. Dacă nu e 0, arăți în `surse.md` de ce e alarmă falsă.
 - Playwright cu gesturi reale la 390 px cu atingere și la 1280 px → 0 erori. Captura de telefon o privești.
 
+## Economia contextului (de la 05.10.2026 — măsurat: turele cu context peste 200.000 de jetoane fac 63% din consum)
+- Ieșirile lungi (Playwright, probe Office, `verifica_lectie.py`, `test_joc.py`) le trimiți într-un fișier din `_proba\` și citești doar coada: `comanda > _proba\iesire.txt 2>&1; tail -20 _proba\iesire.txt`. Apoi cauți în fișier cu Grep. Nu rerulezi comanda ca să vezi altă bucată.
+- Pagina o scrii pe secțiuni: o secțiune se rescrie o dată (Write sau un Edit mare), nu cu zeci de Edit-uri mici.
+- Ține la zi `_proba\stare_autor.md`: deciziile luate și de ce, variantele respinse și de ce, ce urmează. Dacă dirijorul îți cere predarea, o completezi și te oprești. Lecția o poate continua un autor proaspăt, care citește nota și fișierele de pe disc.
+
 ## Răspunsul final (scurt)
 `{"cale":"..","pasi":N,"incearca":{"aplicare_sau_executie":N,"recunoastere":N},"atelier_teste":N,"intrebari":5,"afirmatii":{"total":N,"probate":N},"porti":{"test_joc":"..","linia":"..","consola":".."},"nesigur":[...]}`
