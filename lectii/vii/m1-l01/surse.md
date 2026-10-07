@@ -214,3 +214,55 @@ Rulările de mai jos au încărcat `prezenta.js` cu elevi falși, **fără bloca
 - `_proba/proba_ui_l01.py` → 0 (390 px cu atingere + 1280 px, 0 erori în consolă); `_proba/proba_afirmatii.py` → 0; `_proba/proba_intunecat.py` → 0. Captura privită: `_proba/_tel_pas5_nivel.png` (P5 cu „Niciun document oficial…”, D1/D2, planul individualizat, „Uite cum” cu C / B / A).
 - Cuvinte pe pas, numărate ca oracolul (tokenuri; semnele izolate intră): P2 108, P3 101, P4 106, P5 102; „Uite cum”: 27, 0, 33, 34. Cu `_proba/cuvinte.py` (doar cuvintele): 99, 98, 97, 96. **Drumul obligatoriu: 1.575** (era 1.497; `cuvinte.py` → 1, peste ținta de ~1.500).
 - `tools/learninghub_date_personale.py` → 1, dar fișierul semnalat e `_campaign/isj_aliniere_2026_10_01/BRIEF_COMUN.md` (calea scratchpad-ului), nu un fișier al lecției.
+
+## Nota cu munca pe LearningHub, 07.10.2026
+
+**Ce am schimbat în pagină** (brieful `_campaign/nota_site_2026_10_07/BRIEF.md`):
+- **Pasul 4 „Din puncte, nota”** (pe bară P5): calculul notei lucrării a rămas; s-a adăugat „La lucrarea de modul contează și munca pe LearningHub: pasul următor.” Ca să rămână sub 110 cuvinte: „Aduni punctele părților și cele 10 din oficiu: C + B + A + 10. Rezultatul e punctajul, cel mult 100.” → „Aduni părțile și cele 10 din oficiu: C + B + A + 10 = punctajul.” („în total, 100” e spus la pasul 3); „82 : 10 = 8,2 devine 8” → „8,2 devine 8” („altfel” arată „82 devine 8,2”); „deci nota 9” → „nota 9”; „număr întreg” → „întreg”.
+- **Pasul 5 nou, „Din lucrare și LearningHub, nota din catalog”** (pe bară P6; 102 cuvinte, „Uite cum” 77): nota din catalog = (80% din punctajul lucrării + punctele de pe LearningHub) : 10, cu cele 20 de puncte și părțile lor, minutele, anunțul, calea fără calculator acasă, absența motivată, nota 1.
+- „Din notă, nivelul” e acum pasul 6; „Uite cum” al lui spunea „Elevul din pasul trecut” (adică 68 de puncte, de la „Din puncte, nota”): acum „Elevul din pasul „Din puncte, nota””. Diploma are regula nouă.
+
+**Exercițiile pasului nou, cu socoteala** (fiecare verificată cu `python AI_0/tools/nota_site.py <punctaj> <puncte_site>`):
+| Unde | Caz | Socoteala | Nota |
+|---|---|---|---|
+| Uite cum | Ana: 100 p, nimic | (80 + 2) : 10 = 8,2 | 8 |
+| Uite cum | Bogdan: 60 p, tot | 80% din 60 = 48; (48 + 20) : 10 = 6,8 | 7 |
+| Încearcă | Mihai: 95 p, 8 | (76 + 8) : 10 = 8,4 | 8 |
+| Încearcă | Oana: 50 p, 20 | (40 + 20) : 10 = 6 | 6 |
+| Încearcă | Luca: 60 p, nimic | (48 + 2) : 10 = 5 | 5 |
+| Încearcă | Sonia: 30 p, 20 | (24 + 20) : 10 = 4,4 | 4 |
+| Încă 1 (număr) | Paula: 80 p, 11 | (64 + 11) : 10 = 7,5, la ,5 în sus | 8 |
+Doar din lucrare, cei patru de la „Încearcă” ar fi avut 10, 5, 6 și 3. Capcanele de la Paula: 9 (tot punctajul lucrării), 7 (rotunjit în jos), 7,5 și 75. Încă 2-3: minutele (A/F), absența motivată (alegere).
+
+**Citatul din regulă** (SISTEM_EVALUARE §4.5; tabelul părților e pus pe rânduri, tăieturile sunt marcate cu […]):
+
+> **Nota trecută în catalog la lucrarea (sau proiectul) de modul**
+> = rotunjit((0,8 × punctajul lucrării + punctele de pe LearningHub) : 10), la ,5 în favoarea elevului.
+> Punctajul lucrării e cel de la §4.1–4.2 (din 100, cu cele 10 din oficiu); punctele de pe site sunt din 20:
+> din oficiu (le are oricine) 2 p · **C** · De bază: ce s-a dat clasei în perioadă, **terminat** […] — 8 p × terminate ÷ date ·
+> **B** · Consolidat: terminat **fără ajutor**: fără „Arată-mi răspunsul”, cel puțin 2 din 3 bune din **prima** încercare — 6 p × fără ajutor ÷ date ·
+> **A** · Avansat: **în plus**: jocurile de antrenament și „Vrei mai mult” din lecțiile perioadei, câte 1–2 p — cel mult 4 p · Total 20 p.
+>
+> - **De la anunț:** ce s-a dat înainte de ora la care am anunțat regula clasei nu intră în socoteală; dacă elevul l-a făcut totuși, i se adaugă, fără să treacă de punctajul întreg al părții (doar în favoarea lui).
+> - **Minutele nu intră în notă.** […]
+> - **Echitate:** lucrul la oră, la calculatorul școlii, sau pe foaie, recunoscut de mine, dă aceleași puncte […]; lecția din ziua unei absențe motivate nu intră în socoteală […].
+> - **Copiatul și lucrarea nepredată rămân nota 1** (§4.2), fără partea de site.
+>
+> **Exemple:** 100 p la lucrare + 2 p pe site (nimic făcut) → (80 + 2) : 10 = 8,2 → **8** · 60 p + 20 p (tot) → (48 + 20) : 10 = 6,8 → **7** · 60 p + 2 p → 5,0 → **5** · 55 p + 2 p → 4,6 → **5** · 50 p + 2 p → 4,2 → **4**.
+
+(`Info_Gimnaziu_2026/SISTEM_EVALUARE.md` §4.5; regula în cod: `AI_0/tools/nota_site.py`, proba `nota_site.py proba` → 0; fișa din caiet: `instrumente/Fisa_criterii_elev_clasa_VII.md`, „Munca mea pe LearningHub”.)
+
+**Nesigur / de hotărât de profesor:**
+- Ce notă dă **nivelul** (pasul „Din notă, nivelul”): pagina îl citește în continuare din nota lucrării (punctaj : 10), cum o fac toate exercițiile de acolo. §4.5 nu spune dacă nivelul se citește din nota lucrării sau din nota din catalog; n-am scris nicio regulă nouă.
+- „Vrei mai mult” (din §4.5) nu apare în lecție: în lecțiile de gimnaziu nu există o secțiune cu numele ăsta; partea de 4 puncte e spusă „pentru jocurile (făcute) în plus”.
+- Motorul (`jocuri/_motor/motor.js`, neatins) scrie deasupra fiecărei casete „Încearcă tu · fără puncte, doar exersezi”. Exercițiul singur nu dă puncte, dar „Arată-mi răspunsul” se numără acum la partea de 6 puncte; de hotărât de dirijor dacă eticheta motorului se schimbă.
+- Regula se anunță la clasă abia după etapa 5 a contractului (jurnalul cu punctele); pagina spune doar „de la ora în care o anunță profesorul”, fără dată.
+- Jumătățile de lecție, perioada dintre lucrări și cazul „nicio lecție dată pe site” (§4.5) nu sunt în pagină: nu erau în lista din brief, iar pasul are deja 100+ cuvinte.
+
+**Porțile (07.10.2026, după schimbare; rețeaua externă oprită la probele cu browser, regula 24):**
+- `_campaign/nota_site_2026_10_07/oracol_nota_site.py` → 0 (pornise de la 8, câte 2 pe lecție);
+- `_campaign/notare_punctaj_2026_09_29/verifica_regula.py` → 0;
+- `_campaign/isj_aliniere_2026_10_01/oracol_m1l01.py vii/m1-l01` → 0;
+- `verifica_lectie.py … --fara-t1` → S0, S1, S2 (6/7), T0 TRECUT, ultima linie 0;
+- `jocuri/_motor/test_joc.py --dir …/lectii/vii m1-l01` → TRECUT (32 de întrebări jucate; avertismentul „1 niveluri” e cel obișnuit);
+- proba în browser a pasului nou (Chromium, situl servit local, ctx.route care oprește tot ce nu e 127.0.0.1, ctx.close(); 1280 px cu mouse și 390 px cu atingere): trimiterea duce prin „Pasul următor” la pasul nou, eticheta lui pe bară e P6, „Arată-mi răspunsul” nu apare după o greșeală și apare după două, răspunsul bun e primit, 0 erori în consolă → 0 probleme. Scriptul probei a stat în afara depozitului (cerința lucrării: doar cele patru fișiere ale lecției).
