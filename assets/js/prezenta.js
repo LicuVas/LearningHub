@@ -521,7 +521,7 @@
     } else if (lista().length) {
       alege();
     } else {
-      arata('<div class="bar">Lucrezi pentru ora de informatică? <b>Spune cine ești</b>: profesorul vede ce lecții deschizi, cât lucrezi și ce niveluri termini.' + NOTA +
+      arata('<div class="bar">Lucrezi pentru ora de informatică? <b>Spune cine ești</b>: profesorul vede ce lecții deschizi, cât lucrezi și ce niveluri termini.' + NOTA + NOTA_NOTA +
         '<div class="row"><button id="lhp-cine">Spune cine ești</button><button class="g" id="lhp-viz">Nu, doar vizitez</button></div></div>', true);
       $('lhp-cine').onclick = formular;
       $('lhp-viz').onclick = function () { eu = { refuz: Date.now() }; scrie(K_ID, eu); randeaza(); };
@@ -532,13 +532,18 @@
      nu activitatea lui în general - să nu creăm panică”). Apare la întrebare, în formular și în meniu. */
   var NOTA = '<div class="mic">🔒 Se vede <b>doar</b> ce faci pe LearningHub (lecțiile și jocurile profesorului). ' +
     'Nu se vede nimic din alte site-uri, aplicații, mesaje, poze sau fișiere de pe calculator ori telefon.</div>';
+  /* Ce înseamnă pentru notă (07.10.2026, decizia profesorului: nota lucrării de modul = 80% lucrarea + 20% munca pe
+     LearningHub; SISTEM_EVALUARE §4.5, tools\nota_site.py din AI_0). Elevul o află înainte să aleagă „Nu, doar vizitez”,
+     împreună cu calea fără urmărire. Scurt: bara de pe telefon nu trebuie să crească mult. */
+  var NOTA_NOTA = '<div class="mic" id="lhp-nota-nota">📝 Ce termini aici poate aduce <b>până la 2 puncte</b> la nota lucrării de modul, ' +
+    'de la ora la care profesorul anunță regula (fișa de criterii). Fără înscriere, faci aceeași muncă la oră, la calculatorul școlii, sau pe foaie.</div>';
 
   function meniu() {
     /* „Ieși (deconectare)” sus, la o apăsare pe etichetă (30.09.2026, R3): nu mai e ascuns după „Nu ești tu?” */
     arata('<div class="bar">Ești înscris ca <b>' + esc(eu.nume) + '</b> · ' + esc(eu.clasa) + ' · ' + esc(eu.scoalaNume || eu.scoala) + '.' +
       '<div class="row"><button class="iesi" id="lhp-iesi">Ieși (deconectare)</button><button class="g" id="lhp-x">Închide</button></div>' +
       '<div class="mic">Pleci de la calculator? Apasă „Ieși”. După aceea, pe numele tău se intră doar cu codul tău.</div>' +
-      '<div class="mic">Profesorul vede: paginile deschise, minutele lucrate (doar când lucrezi, nu cu fila uitată deschisă) și nivelurile terminate. Numele pleacă criptat.</div>' + NOTA +
+      '<div class="mic">Profesorul vede: paginile deschise, minutele lucrate (doar când lucrezi, nu cu fila uitată deschisă) și nivelurile terminate. Numele pleacă criptat.</div>' + NOTA + NOTA_NOTA +
       (eu.h ? '<div class="mic">☁ Progresul tău se păstrează online: pe alt calculator sau pe telefon te înscrii cu același nume și același cod și continui de unde ai rămas.</div>'
         : '<div class="mic"><b>Progresul tău stă doar pe calculatorul ăsta.</b> Alege un cod ca să-l poți continua și pe alt calculator sau acasă.</div>') +
       '<div class="row"><a href="' + JURNAL_URL + '"><button>Jurnalul meu</button></a>' + (eu.h ? '' : '<button id="lhp-cod">Păstrează-l online</button>') +
@@ -1051,7 +1056,7 @@
     cor = cor && typeof cor.cod === 'string' ? cor : null;   // ca handler de clic (onclick = formular) primește evenimentul
     var GATA = cor ? 'Salvează' : 'Gata';
     arata('<div class="bar">' + (cor ? '<b>Corectează ce ai scris greșit</b><div class="mic">Schimbă școala, clasa sau numele. Nivelurile, lecțiile și minutele tale vin cu tine; codul rămâne același.</div>'
-      : '<b>Cine ești?</b><div class="mic">Pe calculatoarele din laborator, la final apasă pe etichetă → „Ieși”.</div>' + NOTA) +
+      : '<b>Cine ești?</b><div class="mic">Pe calculatoarele din laborator, la final apasă pe etichetă → „Ieși”.</div>' + NOTA + NOTA_NOTA) +
       '<label for="lhp-s">Școala</label><select id="lhp-s"><option value="">— alege —</option></select>' +
       '<div id="lhp-alta" style="display:none"><label for="lhp-as">Numele școlii</label><input id="lhp-as" maxlength="60" autocomplete="off" placeholder="ex. Școala Gimnazială Nr. 3">' +
       '<label for="lhp-al">Localitatea și județul</label><input id="lhp-al" maxlength="50" autocomplete="off" placeholder="ex. Roman, Neamț">' +
