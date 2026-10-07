@@ -28,6 +28,10 @@ with sync_playwright() as p:
         # regula 24 (02.10.2026): tot ce nu e 127.0.0.1 se abandonează (înainte treceau GET-urile spre internet)
         pg.route("**/*", lambda r: r.continue_() if r.request.url.startswith("http://127.0.0.1") else r.abort())
         pg.goto(URL); pg.wait_for_selector("#lhp-cine", timeout=15000)
+        # 07.10.2026 (nota pe LearningHub, R5): înainte să aleagă „Nu, doar vizitez”, elevul vede ce înseamnă pentru notă
+        # și calea fără înscriere (NOTA_NOTA din prezenta.js), iar bara tot încape (verificările de mai jos)
+        nn = pg.evaluate("(() => { const e = document.querySelector('#lhp .bar #lhp-nota-nota'); return e ? e.innerText : ''; })()")
+        ok("până la 2 puncte" in nn and "pe foaie" in nn, f"{w}x{hh} bara de înscriere: nota despre notă (#lhp-nota-nota) {nn[:60]!r}")
         pg.click("#lhp-cine")
         pg.wait_for_function("document.getElementById('lhp-s') && document.getElementById('lhp-s').options.length>1", timeout=15000)
         pg.select_option("#lhp-s", "alta")
