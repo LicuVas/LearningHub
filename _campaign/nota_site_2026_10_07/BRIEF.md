@@ -10,7 +10,7 @@ Sursele: `C:\00\Projects\Info_Gimnaziu_2026\SISTEM_EVALUARE.md` §4.5 (citește-
   rotunjită la cel mai apropiat întreg, la ,5 în favoarea elevului. Punctajul lucrării rămâne cel de acum (C 40, B 30,
   A 20, 10 din oficiu, din 100). Pe site: **cel mult 20 de puncte**:
   **2 din oficiu** · până la **8** dacă termină ce s-a dat clasei · până la **6** dacă lucrează fără „Arată-mi răspunsul”
-  și nimerește din prima · până la **4** pentru ce face în plus (jocuri de antrenament, „Vrei mai mult”).
+  și nimerește din prima · până la **4** pentru ce face în plus (jocurile de antrenament și ce marchează profesorul „pentru nota mare”; corectat 07.10: caseta „Vrei mai mult” nu există încă în lecțiile de gimnaziu).
 - Exemplele de folosit: 100 de puncte la lucrare și nimic pe site → (80 + 2) : 10 = 8,2 → **8**; 60 de puncte și tot pe
   site → (48 + 20) : 10 = 6,8 → **7**; 55 de puncte și nimic → 4,6 → **5**; 50 și nimic → 4,2 → **4**.
 - **Minutele nu contează**, contează ce termini. **Se aplică de la ora la care profesorul anunță regula**; ce ai făcut

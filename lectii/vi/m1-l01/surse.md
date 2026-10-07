@@ -235,7 +235,7 @@ Doar din lucrare, cei patru de la „Încearcă” ar fi avut 9, 8, 6 și 5. În
 > Punctajul lucrării e cel de la §4.1–4.2 (din 100, cu cele 10 din oficiu); punctele de pe site sunt din 20:
 > din oficiu (le are oricine) 2 p · **C** · De bază: ce s-a dat clasei în perioadă, **terminat** […] — 8 p × terminate ÷ date ·
 > **B** · Consolidat: terminat **fără ajutor**: fără „Arată-mi răspunsul”, cel puțin 2 din 3 bune din **prima** încercare — 6 p × fără ajutor ÷ date ·
-> **A** · Avansat: **în plus**: jocurile de antrenament și „Vrei mai mult” din lecțiile perioadei, câte 1–2 p — cel mult 4 p · Total 20 p.
+> **A** · Avansat: **în plus**: jocurile de antrenament și ce marchez „pentru nota mare” în lista clasei, câte 1–2 p — cel mult 4 p · Total 20 p.
 >
 > - **De la anunț:** ce s-a dat înainte de ora la care am anunțat regula clasei nu intră în socoteală; dacă elevul l-a făcut totuși, i se adaugă, fără să treacă de punctajul întreg al părții (doar în favoarea lui).
 > - **Minutele nu intră în notă.** […]
@@ -248,7 +248,7 @@ Doar din lucrare, cei patru de la „Încearcă” ar fi avut 9, 8, 6 și 5. În
 
 **Nesigur / de hotărât de profesor:**
 - Ce notă dă **nivelul** (pasul „Nivelul se citește din notă”): pagina îl citește în continuare din nota lucrării (punctaj : 10), cum o fac toate exercițiile de acolo. §4.5 nu spune dacă nivelul se citește din nota lucrării sau din nota din catalog; n-am scris nicio regulă nouă.
-- „Vrei mai mult” (din §4.5) nu apare în lecție: în lecțiile de gimnaziu nu există o secțiune cu numele ăsta; partea de 4 puncte e spusă „pentru jocurile (făcute) în plus”.
+- „Vrei mai mult” (din §4.5) nu apare în lecție: în lecțiile de gimnaziu nu există o secțiune cu numele ăsta; partea de 4 puncte e spusă „pentru jocurile (făcute) în plus”. *(07.10.2026, mai târziu: §4.5 a fost corectat la fel — A = jocurile de antrenament și ce marchează profesorul „pentru nota mare”; citatul de mai sus e cel de acum.)*
 - Motorul (`jocuri/_motor/motor.js`, neatins) scrie deasupra fiecărei casete „Încearcă tu · fără puncte, doar exersezi”. Exercițiul singur nu dă puncte, dar „Arată-mi răspunsul” se numără acum la partea de 6 puncte; de hotărât de dirijor dacă eticheta motorului se schimbă.
 - Regula se anunță la clasă abia după etapa 5 a contractului (jurnalul cu punctele); pagina spune doar „de la ora în care o anunță profesorul”, fără dată.
 - Jumătățile de lecție, perioada dintre lucrări și cazul „nicio lecție dată pe site” (§4.5) nu sunt în pagină: nu erau în lista din brief, iar pasul are deja 100+ cuvinte.
