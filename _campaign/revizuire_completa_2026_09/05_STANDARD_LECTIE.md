@@ -5,6 +5,11 @@
 >
 > „Totul trebuie să aibă accent practic și să fie instrucțiuni clare și ilustrate, plus posibilitatea de practică chiar în pagina respectivă. Conceptele se prezintă simplu și pe rând. Tot ce cerem să fie făcut să fie mai întâi expus/predat.”
 
+**08.10.2026, 12:47** (regula 10 și secțiunea „Bara pașilor, de jos”):
+> „ideea este că acest LearningHub îi pregătește pe elevi pentru aplicațiile adevărate - deci trebuie să le dăm și taste reale - de la cele mai mici - deschide un registru de lucru, salvează-l, închide-l, selectează o celulă - astfel încât elevul să aibă contact cu aplicația reală de multe ori - și să îi crească încrederea progresiv și natural - fără efort.”
+>
+> „meniul lecțiilor parcurse să aibă pentru fiecare dintre ei - clickabile itemurile pe care le-au parcurs și neclickabile cele pe care nu le-au parcurs încă. Astfel la o privire în meniul de jos elevul să știe clar unde a rămas data trecută - dar trebuie să se reflecte per elev - progresul fiecăruia”
+
 „Modulul” = modulul din anul școlar (M1 = lecțiile 1-7 din `Calendar_ore_*.md`, 11.09-23.10 la Brauner). Ordinea lecțiilor = `C:\00\Projects\Info_Gimnaziu_2026\planificari\Calendar_ore_<clasa>.md` + `C:\00\Projects\Info_Gimnaziu_2026\data\unitati.json`.
 
 ## Forma
@@ -22,6 +27,7 @@
 7. **Adevărat în aplicația reală** (R). Orice afirmație „dacă faci X, apare Y” (inclusiv în indicii și în cheile întrebărilor) o treci în `afirmatii.json`: `{id, loc (pas/exercițiu/întrebare), actiune, rezultat_promis, aplicatie}`. Dirijorul le rulează în Excel/Word/PowerPoint real.
 8. **Fără contradicții și fără date vechi** (A, J, S). O celulă/un obiect are un singur rol; „foaie nouă”/„document nou” se spune când începi de la capăt. Constantele (TVA 21% etc.) doar din `calibrare\constante_lume.json`.
 9. **Fidelitatea simulatorului** (`jocuri\README.md` §1): simulatorul nu acceptă ce aplicația respinge și nu respinge ce aplicația acceptă.
+10. **Gesturi reale, mici și dese, în aplicația adevărată** (J, A; încă fără script). (08.10.2026, profesorul.) LearningHub îi pregătește pe elevi pentru aplicațiile adevărate, deci nu ajunge un singur pas „Acum în aplicația adevărată” la final. Elevul face în aplicația reală și gesturile cele mai mici, de multe ori: deschide un registru de lucru, salvează-l, închide-l, selectează o celulă. Orice gest predat în pagină (pas sau simulator) se face și în aplicația adevărată, cât e încă proaspăt. Ordinea crește de la sine: întâi gesturi de o secundă, apoi combinații. Lecțiile următoare reiau gesturile deja învățate (deschizi, lucrezi, salvezi, închizi), nu le spun o singură dată. Ținta: încrederea elevului crește treptat, prin repetare, fără efort.
 
 ## Profilul elevului (ce ȘTIE când începe lecția N)
 - ȘTIE: conținutul lecțiilor 1..N-1 ale clasei lui din unitati.json/Calendar_ore (s-au predat la clasă) + conținutul planului din clasele anterioare (pentru a VI-a: planul de a V-a etc.). Clasa a V-a pornește de la zero: știe să citească, să miște mouse-ul și să facă clic, să tasteze litere (presupus; de confirmat de profesor).
@@ -35,6 +41,11 @@
 
 ## Modul lecție al motorului (de la 27.09, după)
 Pune `mod:'lectie'` în configurație (vezi `jocuri\README.md` §4 „Modul LECȚIE”). Motorul face singur firul de navigare spre `/lectii/<clasa>/`, textele de lecție și pasul **„Acum în aplicația adevărată”**, între atelier și întrebări: câmpul `aplicatieReala:{aplicatie, titlu?, intro?, pasi:[…]}`, iar fără el se folosesc `diploma.aplicatie` + `diploma.provocare`. Nu scrie în text „apoi diploma, cu provocarea”.
+
+## Bara pașilor, de jos (08.10.2026, profesorul: DE FĂCUT în motor)
+- **Cerința.** În bara de jos a lecției (P1…Pn, Atelier, Aplicația, Î1…Î5), un element se poate apăsa doar dacă ELEVUL ACESTA a ajuns deja la el. Cele la care n-a ajuns nu se pot apăsa. Progresul e al fiecărui elev (pe profilul lui) și se vede și la următoarea deschidere a lecției, ca elevul să știe dintr-o privire unde a rămas data trecută.
+- **Cum e acum** (citit în `jocuri\_motor\motor.js` și în motorul de pe situl viu, 08.10.2026). Bara se construiește din `R`, pe care `startLevel` îl face de la zero la fiecare deschidere (`R={li:i,qi:0,max:0,…,vazutPas:{},…}`). Deci bara e la fel pentru toți elevii și nu ține minte nimic de la o deschidere la alta. P1…Pn, Atelier și Aplicația se pot apăsa de la început (comentariul din `tabsFor`: „Toți pașii de învățare se pot deschide oricând”). Î1 se poate apăsa de la prima secundă, la toată lumea: `vazut=k<=R.max`, iar `max` pornește de la 0. Ce s-a văzut la lecția 2 (Î1 de apăsat la mulți elevi) e greșeala asta din motor, nu progresul lor.
+- **Ce e deja per elev:** doar stelele și terminarea lecției (`S.lv`, salvat sub cheia `cheie@profil`).
 
 ## Ce au găsit judecătorii la lecțiile nr. 4 (27.09) — nu repeta
 1. **Simulatorul trebuie să fie fidel la FIECARE gest** pe care elevul îl poate încerca, nu doar pe drumul lecției. Exemple:
