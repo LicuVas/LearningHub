@@ -30,8 +30,18 @@ Contract: `contract.md` (aprobat 10.10.2026 21:51, toate implicitele). Specifica
       **SETUL ASCUNS, a doua măsurare (date.js 097916c1ae01): locul 1 85,8%, primele 3 94,3%, în afară 34/37 = TREC.**
       proba_browser 0 · proba_vezi (I5, motorul 3af8b783 al lui ai-0-b7) 0 · selfcheck `cum-fac-fise-la-zi` +
       `cum-fac-lectii-acoperite` VERZI (AI_0 c98ef35a) · commituri LH locale f26dbec6, 46f86b24, 26420c62.
-- [ ] 5. probă browser + publicare (verifică `git log origin/master..master`) + probe live + contract selfcheck +
-      commit + raport (CLOSEOUT).
+- [x] 4b. Reprompt T1 (wf_103f517f-fed, 14 agenți): DESCHIS. Reparat: glosarul SUPRASCRIS la 23:30 de un `build.py`
+      vechi din scratchpad-ul comun (refăcut din scripturile reparatorului, mutate în `_unelte/glosar/`; scriptul vechi
+      redenumit VECHI_…_NU_RULA) → 185 termeni; dubluri în „Cuvinte de știut”; legătura pasului „real” (fără ?vezi=real);
+      acoperirea 286/286. Commit 97f6777a. Rămase de raportat (nu defecte): 7 întrebări ale setului ascuns apar identic
+      în fișiere scrise după (fără ele: 85,6/94,2/32 din 35); ancorele sunt literale după normalizarea kbd→[..];
+      60 de afirmații PARȚIAL/NEGĂSIT netrecute prin Office real.
+- [x] 5. PUBLICAT 11.10 01:25: `git push` f26dbec6..97f6777a (doar ale mele; ale lui ai-0-b7 urcate de ea înainte).
+      LIVE după ~75 s: date.js 4f5017448e2b (md5 identic cu discul), hub + /lectii/ cu legătura, motor cu VEZI.
+      `_unelte/proba_live.py` → 0 (8/8 exemple pe locul 1 pe situl viu; „Exersezi…” → P2 în recitire; /cum-fac/ 0 cereri
+      externe; hub-ul cheamă /api/vizitatori — contorul vechi). `_unelte/proba_fara_internet.py` → 0 (după încărcare).
+      Reprompt reluat (only G0,P7,P8,P10): P8, P10 FĂCUTE; G0/P7 rămân doar ca lucruri de raportat (60 de afirmații
+      PARȚIAL/NEGĂSIT netrecute prin Office real; formatul „probat” diferit între lecții; 7 suprapuneri în setul ascuns).
 
 ## Blocaje / note
 - 23:25 ai-0-79 (dirijorul lecțiilor M2: 18 lecții noi V-VII, primul commit nu înainte de ~02:00) rulează
