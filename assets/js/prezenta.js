@@ -10,7 +10,9 @@
  *     profesorului (aceeași ca la diplome, din jocuri/_motor/diplome-date.js); pe server nu stă în clar.
  *  2. Numără SECUNDELE LUCRATE pe fiecare pagină: doar cu pagina în față ȘI cu mișcare (click, tastă,
  *     derulare) în ultimele 2 minute. O filă uitată deschisă nu adună timp.
- *  3. La ~3 minute (și la închiderea paginii) trimite ce s-a adunat la teste-vasile.netlify.app/api/activitate.
+ *  3. La ~5 minute (și la închiderea paginii) trimite ce s-a adunat la teste-vasile.netlify.app/api/activitate.
+ *     (10.10.2026: era la ~3 minute; la 800 de elevi, cererile periodice sunt aproape tot costul serverului. Plecările,
+ *     nivelurile și notele pleacă tot imediat.) Vezi „DE UNDE A PLECAT” și „PRIMA ATINGERE A UNUI PAS” mai jos.
  *  4. Elevul VEDE că e văzut: o etichetă mică jos („Profesorul vede activitatea ta · Ana P.”) și pagina
  *     /jurnal/ cu minutele lui. Nu există clasament — fiecare se vede doar pe sine. Eticheta nu stă peste
  *     butoane sau simulatoare, iar întrebarea „Spune cine ești” se strânge la primul gest (27.09.2026, fereste()).
@@ -37,7 +39,7 @@
 
   var SELF = (document.currentScript && document.currentScript.src) || (location.origin + '/assets/js/prezenta.js');
   var K_ID = 'lh_prezenta', K_COADA = 'lh_prezenta_coada', K_JURNAL = 'lh_prezenta_jurnal', K_TINUT = 'lh_prezenta_tinut';
-  var TICK = 5, FEREASTRA = 120000, TRIMITE_LA = 180000, UITAT_DUPA = 90 * 60000, REFUZ_ZILE = 30;
+  var TICK = 5, FEREASTRA = 120000, TRIMITE_LA = 300000, UITAT_DUPA = 90 * 60000, REFUZ_ZILE = 30;
 
   function citeste(k, def) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; } catch (e) { return def; } }
   function scrie(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -292,31 +294,50 @@
     var s = stare();
     if (s !== 'activ' && s !== 'intreaba') return;
     if (document.visibilityState !== 'visible' || !document.hasFocus()) return;
-    if (Date.now() - ultimaMiscare > FEREASTRA) return;
+    // pagina e în față, dar fără niciun gest de 2 minute: o singură plecare „fără gesturi” (vezi „DE UNDE A PLECAT”)
+    if (Date.now() - ultimaMiscare > FEREASTRA) { if (s === 'activ') pleaca('fara-gesturi', false); return; }
     if (s === 'intreaba') { adaugaInCoada(TICK, false, K_TINUT); return; }   // deoparte, nu pierdut
     atinge();
     laPagina += TICK;
     adaugaInCoada(TICK, false);
-    if (laPagina === 30 || Date.now() - ((citeste(K_COADA, {}) || {}).de || Date.now()) > TRIMITE_LA) trimite(false);
+    // a revenit după o plecare anunțată: plecarea se încheie; dacă a lipsit cel puțin un minut, profesorul află acum
+    // că lucrează iar (altfel ar vedea „a plecat” până la următoarea trimitere, peste câteva minute)
+    var revenire = !!plecatTrimis && Date.now() - tPlecat >= REVENIRE_DUPA;
+    plecatTrimis = null; seInchide = false;
+    if (revenire || laPagina === 30 || Date.now() - ((citeste(K_COADA, {}) || {}).de || Date.now()) > TRIMITE_LA) trimite(false);
   }, TICK * 1000);
 
   /* ---------------- trimiterea ---------------- */
   var inZbor = false;
-  function trimite(laInchidere) {
+  /* motiv (10.10.2026, spec_api.md §2): 'ascuns' | 'inchis' | 'fara-gesturi' = cererea anunță o PLECARE de pe pagina asta
+     (plecat: {p, t, pas?, motiv}) în locul lui „acum”; pleacă și cu coada goală. Întoarce true dacă cererea a plecat
+     (sau pleacă după ce se află adresa serverului). */
+  function trimite(laInchidere, motiv) {
     sincron();   // coada e a celui înscris ACUM pe calculator (altă filă îl poate fi schimbat)
-    if (!eElev() || stare() !== 'activ' || inZbor) return;
+    if (!eElev() || stare() !== 'activ') return false;
+    // o cerere e deja pe drum: așteptăm (două cereri simultane pe același aparat pierd secunde pe server); plecarea de la
+    // închidere nu poate aștepta, deci ea pleacă oricum (mică: de obicei doar pagina și motivul)
+    if (inZbor && !(motiv && laInchidere)) return false;
     var c = citeste(K_COADA, null);
-    if (!c || (!Object.keys(c.pag).length && !c.ev.length)) return;
+    if (!motiv && (!c || (!Object.keys(c.pag).length && !c.ev.length))) return false;
+    if (!c) c = { pag: {}, ev: [] };
+    // ca înainte (acum:null cu pagina ascunsă), dar acum se spune și de pe ce pagină a plecat
+    if (!motiv && document.visibilityState !== 'visible') motiv = 'ascuns';
+    if (!server && laInchidere) return false;
     var go = function () {
       // între apel și trimitere elevul se poate fi schimbat („Nu ești tu?”): atunci nu trimitem nimic și coada rămâne
       // pe loc, ca la ieșirea de mai sus (găsit 26.09.2026: „null.id” când pagina se încarcă mai încet)
       if (sincron() || !eu || !eElev() || stare() !== 'activ') { inZbor = false; return; }
-      var al = eu.id;
-      var corp = JSON.stringify({
+      var al = eu.id, unde = { p: p0, t: (document.title || '').slice(0, 120) }, ps = pasAcum();
+      if (ps) unde.pas = ps;
+      var o = {
         id: eu.id, scoala: eu.scoala, clasa: eu.clasa, numeEnc: eu.numeEnc, scoalaText: eu.scoalaText,
+        h: eu.h || null,   // amprenta progresului: jurnalul elevului găsește pe server toate aparatele lui
         pag: Object.keys(c.pag).map(function (p) { return { p: p, t: c.pag[p].t, s: c.pag[p].s, n: c.pag[p].n }; }),
-        ev: c.ev, acum: document.visibilityState === 'visible' ? { p: p0, t: (document.title || '').slice(0, 120) } : null
-      });
+        ev: c.ev
+      };
+      if (motiv) { unde.motiv = motiv; o.plecat = unde; } else o.acum = unde;
+      var corp = JSON.stringify(o);
       sterge(K_COADA);
       if (laInchidere && navigator.sendBeacon) { navigator.sendBeacon(server, new Blob([corp], { type: 'text/plain' })); return; }
       inZbor = true;
@@ -324,7 +345,69 @@
         .catch(function () { inapoi(c, al); }).then(function () { inZbor = false; });
     };
     if (server) go(); else if (!laInchidere) incarcaDate().then(go, function () {});
+    return true;
   }
+
+  /* ---------------- DE UNDE A PLECAT (10.10.2026) ----------------
+     Profesorul: „să văd [...] de pe ce pagină a plecat când a intrat în idle” (elevul s-a dus în Excel sau în Word).
+     Până acum, la ascunderea paginii pleca „acum: null”, deci panoul nu știa de unde a plecat. Acum pleacă o PLECARE:
+     pagina, pasul din lecție (window.__lhPas, de la motor.js) și motivul:
+       'ascuns'       = pagina ascunsă (altă filă / altă aplicație) sau fereastra fără focus de 10 secunde;
+       'inchis'       = pagina închisă sau părăsită (beforeunload / pagehide);
+       'fara-gesturi' = pagina în față, dar 2 minute fără niciun gest (o dată, la intrarea în inactiv).
+     O singură cerere pe plecare: o plecare „mai mare” (fără gesturi < ascuns < închis) se mai anunță o dată, una egală sau
+     mai mică nu. Primul gest numărat după plecare o încheie (iar dacă a lipsit cel puțin un minut, pleacă și un „acum”).
+     Ce se numără nu se schimbă: tot doar cu pagina în față și cu mișcare în ultimele 2 minute. */
+  var RANG = { 'fara-gesturi': 1, ascuns: 2, inchis: 3 }, REVENIRE_DUPA = 60000;
+  var plecatTrimis = null, tPlecat = 0, seInchide = false, tBlur = 0;
+  function pleaca(motiv, laInchidere) {
+    if (plecatTrimis && RANG[plecatTrimis] >= RANG[motiv]) return;   // aceeași plecare, deja anunțată
+    if (trimite(laInchidere, motiv)) { plecatTrimis = motiv; tPlecat = Date.now(); }
+  }
+  // pasul din motorul lecției / jocului, dacă pagina are motor (spec_api.md §1); altfel nimic
+  function pasAcum() {
+    var d = window.__lhPas;
+    if (!d || typeof d !== 'object' || typeof d.pas !== 'string') return null;
+    return { cheie: d.cheie, nivel: d.nivel, pas: d.pas, eticheta: String(d.eticheta || '').slice(0, 40), real: d.real === true };
+  }
+  // la închidere / părăsire, beforeunload vine ÎNAINTE de ascundere: așa ascunderea de atunci se anunță ca „închis”, într-o
+  // singură cerere (ca înainte); dacă pagina rămâne totuși deschisă, primul gest numărat șterge semnul
+  addEventListener('beforeunload', function () { seInchide = true; });
+  addEventListener('blur', function () {
+    clearTimeout(tBlur);
+    tBlur = setTimeout(function () {   // hasFocus() rămâne true cât lucrează într-un cadru (iframe) din pagină
+      if (document.visibilityState === 'visible' && !document.hasFocus()) pleaca('ascuns', false);
+    }, 10000);
+  });
+  addEventListener('focus', function () { clearTimeout(tBlur); });
+
+  /* ---------------- PRIMA ATINGERE A UNUI PAS (10.10.2026, spec_api.md §2) ----------------
+     Motorul anunță fiecare pas afișat (evenimentul „lh-pas”). Prima dată când elevul ajunge la un pas al unei lecții sau
+     al unui joc (P3, Atelier, Aplicația, Î2, Citire), în coadă intră {tip:'pas', p, cheie, nivel, pas, eticheta, cand};
+     o revenire la același pas nu mai trimite nimic. Ce s-a trimis se ține minte pe aparat, pe PROFILUL elevului
+     (lh_prezenta_pasi = {profil: {"cheie|nivel|pas": 1}}; nu în cheile profilului, care urcă în progresul online).
+     Pașii nu cer o trimitere a lor: pleacă împreună cu următoarea (la ~5 minute, la plecare, la un nivel terminat). */
+  var K_PASI = 'lh_prezenta_pasi', RE_PAS = /^(p\d{1,2}|atelier|real|q\d{1,2}|citire)$/;
+  function notaPas(d) {
+    if (!d || typeof d !== 'object' || !RE_PAS.test(String(d.pas)) || typeof d.nivel !== 'number' || !d.cheie) return;
+    if (!eElev() || tinta() !== K_COADA) return;   // cât stă „Ești tot X?” nu notăm: nu e sigur al cui e pasul
+    var prof = citesteProfil(); if (!prof || prof.charAt(0) === '_') return;
+    var m = citeste(K_PASI, null); if (!m || typeof m !== 'object') m = {};
+    var al = m[prof] && typeof m[prof] === 'object' ? m[prof] : (m[prof] = {}), k = d.cheie + '|' + d.nivel + '|' + d.pas;
+    if (al[k]) return;
+    al[k] = 1;
+    var ch = Object.keys(al); if (ch.length > 3000) ch.slice(0, 500).forEach(function (x) { delete al[x]; });
+    var pr = Object.keys(m); if (pr.length > 80) pr.filter(function (x) { return x !== prof; }).slice(0, pr.length - 80).forEach(function (x) { delete m[x]; });
+    scrie(K_PASI, m);
+    var c = citeste(K_COADA, null) || { pag: {}, ev: [] };
+    c.ev.push({ tip: 'pas', p: p0, cheie: String(d.cheie).slice(0, 120), nivel: d.nivel, pas: d.pas, eticheta: String(d.eticheta || '').slice(0, 40), cand: new Date().toISOString() });
+    // cel mult 30 de evenimente în coadă (cât primește serverul): întâi ies pașii cei mai vechi, nivelurile și notele rămân
+    while (c.ev.length > 30) { var i = 0; for (var x = 0; x < c.ev.length; x++) if (c.ev[x].tip === 'pas') { i = x; break; } c.ev.splice(i, 1); }
+    if (!c.de) c.de = Date.now();
+    scrie(K_COADA, c);
+    if (c.ev.length >= 25) trimite(false);   // o rafală de pași: pleacă acum, ca să nu împingă afară un nivel terminat
+  }
+  addEventListener('lh-pas', function (e) { notaPas(e && e.detail); });
   function inapoi(c, al) {   // n-a mers: punem înapoi ce n-a ajuns, peste ce s-a mai adunat între timp
     var d = citeste(K_ID, null);
     if (!d || d.id !== al) return;   // între timp s-a înscris altul (în altă filă): minutele lui X nu trec pe el
@@ -333,8 +416,8 @@
     n.ev = c.ev.concat(n.ev).slice(-30); n.de = Math.min(n.de || Date.now(), c.de || Date.now());
     scrie(K_COADA, n);
   }
-  addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') trimite(true); else if (pornit) sincron(); });
-  addEventListener('pagehide', function () { trimite(true); });
+  addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') pleaca(seInchide ? 'inchis' : 'ascuns', true); else if (pornit) sincron(); });
+  addEventListener('pagehide', function () { pleaca('inchis', true); });
 
   /* ---------------- ce vede elevul ---------------- */
   var CSS = '#lhp{position:fixed;left:12px;bottom:12px;z-index:2147483000;font:14px/1.35 system-ui,Segoe UI,Arial,sans-serif;color:#e8ecf4;max-width:calc(100vw - 24px)}' +
@@ -1286,7 +1369,7 @@
   function identitate() { return eElev() ? { nume: eu.nume, scoala: eu.scoala, clasa: eu.clasa } : null; }
 
   window.Prezenta = {
-    versiune: 'corectura-2026-10-02',   // marcajul pentru verificarea live (02.10: școala recunoscută + corectura cu codul)
+    versiune: 'plecat-pas-2026-10-10',   // marcajul pentru verificarea live (10.10: h, acum.pas, plecat, ev „pas”, cadența de 5 minute)
     identitate: identitate,
     iesi: function () { if (eElev()) iesi(); },
     /* 'activ' | 'intreaba' | 'vizitator' | 'necunoscut' — motor.js ține nivelurile deoparte cât e 'intreaba' */
@@ -1361,6 +1444,8 @@
     }
     // nota calculată de lesson-summary.js înainte să ne încărcăm noi
     if (window.__lhNotaAsteapta) { window.Prezenta.nota(window.__lhNotaAsteapta); window.__lhNotaAsteapta = null; }
+    // pasul anunțat de motor înainte să ne încărcăm noi (motor.js ne încarcă după ce și-a desenat primul pas)
+    if (window.__lhPas) notaPas(window.__lhPas);
   }
   if (document.body) porneste(); else document.addEventListener('DOMContentLoaded', porneste);
 })();
