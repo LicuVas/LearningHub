@@ -9,7 +9,8 @@ JURNALUL (jurnal/index.html), pe un telefon de 360 px, cu serverul SIMULAT de pr
      din calendar = cele de pe server (0 diferențe); cererea are {id, h}; 4 stări de lecție (făcută pe aparat, făcută pe
      ALT aparat, începută „P3 din N”, neîncepută); „Continuă: Lecția 3 … · pasul P3” -> ?continua=1; „De reluat” = lista
      exactă așteptată (motiv + legătură la pas); toate legăturile în filă nouă; 360 px fără derulare în lateral;
-  J2 lecțiile 1-4 terminate -> „Începe: Lecția 5”; J3 nimic -> „Începe: Lecția 1”;
+  J2 lecțiile 1-4 terminate -> „Începe: Lecția 5”; J3 nimic -> „Începe: Lecția 1”; la amândouă, clic -> FILĂ NOUĂ cu
+     lecția aceea, la începutul ei (cuprinsul lecției, anunțat de motor);
   J4 clic pe „Continuă” -> FILĂ NOUĂ cu lecția reală, deschisă de motor la P3 (bara, starea motorului, titlul pasului);
   J5 fără rețea -> datele de pe aparat + nota „arăt doar ce e pe telefonul ăsta”; J6 neînscris / vizitator -> 0 cereri.
 TRIMITERILE (assets/js/prezenta.js), pe lecția reală, cu ceasul paginii accelerat (page.clock):
@@ -21,6 +22,16 @@ TRIMITERILE (assets/js/prezenta.js), pe lecția reală, cu ceasul paginii accele
   (nimic la 55 s, nimic în plus în următoarele 2 minute); P9 (G2) „fara-gesturi”, gest după 20 s -> un „acum” la 60 s de
   la plecare; P10 (G4) ascunderea cât o cerere e pe drum -> nicio a doua cerere în paralel; plecarea pleacă după ce se
   întoarce cererea de pe drum.
+CAP-COADĂ (10.10.2026, seara):
+  N  jurnalul pe ALT aparat, prin Nor: pe aparatul A elevul lucrează lecția (motorul scrie sertarul, prezenta.js îl urcă
+     pe /api/progres, op:'scrie'; serverul de probă îl ține sub amprentă); pe aparatul B sertarul e GOL, jurnalul se
+     desenează din server (L3 fără pas, „Începe: Lecția 1”), apoi vine progresul (op:'citeste', ținut până atunci) ->
+     sertarul B îl primește, jurnalul se redesenează (lh-progres): L1, L2 făcute, „L3 începută · P3 din N”, „Continuă:
+     Lecția 3 … · pasul P3” -> ?continua=1; clic -> filă nouă, motorul de pe B deschide P3;
+  L  legăturile chiar duc la pas: ?pas=atelier (elev care a ajuns până la Aplicația) -> motorul afișează Atelierul;
+     ?continua=1 (elev cu P3 atins) -> motorul afișează P3;
+  R  plecarea de pe pasul „Aplicația”: ?pas=real -> motorul anunță real:true; „acum” poartă pasul real, iar la
+     ascundere plecat = {pas: {pas: 'real', real: true}, motiv: 'ascuns'}.
 Regula 24: situl e servit LOCAL; în browser tot ce nu e 127.0.0.1 e abandonat, iar /api/jurnal, /api/activitate și
 /api/progres primesc răspunsuri inventate de probă (nicio cerere nu pleacă spre teste-vasile). navigator.sendBeacon e
 înlocuit în pagină (ce ar fi trimis se ține în localStorage, ca proba să-l citească). Browserul pornește cu --mute-audio.
@@ -45,9 +56,11 @@ MOTOR_DIR = Path(__file__).resolve().parent
 LH = MOTOR_DIR.parents[1]
 JURNAL = LH / "jurnal" / "index.html"
 PREZENTA = LH / "assets" / "js" / "prezenta.js"
+MOTOR = MOTOR_DIR / "motor.js"
 LECTIE = "lectii/v/m1-l03/"
 LOCALE = ("127.0.0.1", "localhost")
 H = "b" * 64
+H_NOR = "c" * 64          # N: amprenta elevului cu două aparate; doar pentru ea serverul de probă ține progresul (Nor)
 ID_ANA = "idtablou" + "0" * 16
 
 try:   # ziua în ora României (ca serverul); fără baza de fusuri, ziua calculatorului (care e în România)
@@ -68,7 +81,8 @@ INIT = r"""
 })();
 """
 
-# mutanții: (fișier, nume, din, cu); fiecare strică o cerință; partea probei care atinge fișierul trebuie să pice
+# mutanții: (fișier, nume, din, cu[, părțile probei]); fiecare strică o cerință; partea probei care atinge fișierul trebuie
+# să pice (fără părți scrise: jurnalul -> J, prezenta.js -> P)
 MUTANTI = [
     ("prezenta", "M1 fără amprenta h", "h: eu.h || null,   // amprenta progresului", "h: null,   //"),
     ("prezenta", "M2 fără acum.pas", "if (ps) unde.pas = ps;", ""),
@@ -89,6 +103,15 @@ MUTANTI = [
     ("jurnal", "M10 legăturile în aceeași filă", "var NOU=' target=\"_blank\" rel=\"noopener\"';", "var NOU='';"),
     ("jurnal", "M11 prima încercare: 60% intră la reluat", "(+p1.b||0)/p1.t<0.6", "(+p1.b||0)/p1.t<=0.6"),
     ("jurnal", "M12 cere serverul și pentru vizitator / neînscris", "if(!eElev(e)||stareEu(e)!=='activ')return;", "if(!e)e={id:'x'};"),
+    # cap-coadă 10.10.2026 seara: N (alt aparat, prin Nor), L (legăturile duc la pas), R (plecarea de pe pasul real)
+    ("jurnal", "M16 jurnalul nu mai ascultă lh-progres", "addEventListener('lh-progres',arata);", "", ("N",)),
+    ("prezenta", "M17 Nor.trage nu mai scrie progresul venit în sertar", "try { localStorage.setItem(k, dupa.v); } catch (e) { return; }",
+     "try { } catch (e) { return; }", ("N",)),
+    ("prezenta", "M18 Nor.trage nu mai anunță lh-progres", "if (venit) { try { dispatchEvent(new CustomEvent('lh-progres')); } catch (e) {} }", "", ("N",)),
+    ("motor", "M19 motorul ignoră ?pas=", "const pas=String(q.get('pas')||'').trim().toLowerCase()", "const pas=''", ("L",)),
+    ("motor", "M20 motorul ignoră ?continua=1", "cont=q.get('continua')", "cont=null", ("L",)),
+    ("prezenta", "M21 prezenta.js pierde real", "real: d.real === true }", "real: false }", ("R",)),
+    ("motor", "M22 motorul anunță real:false pe pasul Aplicația", "real:id==='real'", "real:false", ("R",)),
 ]
 
 
@@ -97,13 +120,25 @@ def iso(z, ora="10:00:00"):
 
 
 class Proba:
-    def __init__(self, br, baza, jurnal_txt=None, prezenta_txt=None, tacut=False):
+    def __init__(self, br, baza, jurnal_txt=None, prezenta_txt=None, motor_txt=None, tacut=False):
         self.br, self.baza, self.tacut = br, baza, tacut
-        self.jurnal_txt, self.prezenta_txt = jurnal_txt, prezenta_txt
+        self.jurnal_txt, self.prezenta_txt, self.motor_txt = jurnal_txt, prezenta_txt, motor_txt
         self.probleme, self.externe, self.erori = [], [], []
         self.jurnal_cereri, self.activ, self.progres = [], [], 0
         self.mod_jurnal, self.raspuns_jurnal = "server", {"ok": True, "aparate": 0}
         self.tine, self.tinute = False, []   # P10: cererile /api/activitate ținute pe drum (fără răspuns, până le dă proba drumul)
+        # N: progresul ținut pe serverul de probă (/api/progres), doar pentru amprentele de aici; „citește” poate fi ținut pe drum
+        self.nor, self.nor_tine, self.nor_tinute = {}, False, []
+        self._cfg = None
+
+    def nor_scrie(self, h, date):
+        """ca serverul (progres.mjs), pe scurt: pe fiecare cheie rămâne valoarea cu momentul (u) cel mai nou"""
+        pe = self.nor.get(h)
+        if pe is None or not isinstance(date, dict):
+            return
+        for g, x in date.items():
+            if isinstance(x, dict) and "v" in x and (g not in pe or (x.get("u") or 0) >= (pe[g].get("u") or 0)):
+                pe[g] = x
 
     def verifica(self, c, ce, det=""):
         if not self.tacut:
@@ -132,6 +167,18 @@ class Proba:
                 return r.fulfill(status=200, headers=cors, body='{"ok":true,"sec":0}')
             if s.hostname == "teste-vasile.netlify.app" and s.path == "/api/progres":
                 self.progres += 1
+                try:
+                    b = json.loads(r.request.post_data or "{}")
+                except Exception:
+                    b = {}
+                if isinstance(b, dict) and b.get("h") in self.nor:   # N: aici serverul de probă ține progresul elevului
+                    if b.get("op") == "scrie":
+                        self.nor_scrie(b["h"], b.get("date"))
+                        return r.fulfill(status=200, headers=cors, body='{"ok":true}')
+                    if self.nor_tine:   # „citește” rămâne pe drum până îi dă proba drumul (ca jurnalul să se deseneze întâi fără el)
+                        self.nor_tinute.append(r)
+                        return None
+                    return r.fulfill(status=200, headers=cors, body=json.dumps({"ok": True, "date": self.nor[b["h"]]}))
                 return r.fulfill(status=200, headers=cors, body='{"ok":true}')
             self.externe.append(u)
             return r.abort()
@@ -141,6 +188,8 @@ class Proba:
             return r.fulfill(status=200, body=self.jurnal_txt, headers={"content-type": "text/html; charset=utf-8"})
         if self.prezenta_txt is not None and s.path.endswith("/assets/js/prezenta.js"):
             return r.fulfill(status=200, body=self.prezenta_txt, headers={"content-type": "application/javascript; charset=utf-8"})
+        if self.motor_txt is not None and s.path.endswith("/jocuri/_motor/motor.js"):
+            return r.fulfill(status=200, body=self.motor_txt, headers={"content-type": "application/javascript; charset=utf-8"})
         return r.continue_()
 
     def context(self, **kw):
@@ -154,29 +203,57 @@ class Proba:
         pg.goto(self.baza + "/__gol")
         pg.evaluate("o=>{localStorage.clear();for(const k in o)if(o[k]!=null)localStorage.setItem(k,typeof o[k]==='string'?o[k]:JSON.stringify(o[k]))}", ls)
 
-    def ruleaza(self, parti=("J", "P")):
+    def ruleaza(self, parti=("J", "P", "N", "L", "R")):
         try:
             self.plan = json.loads((LH / "lectii" / "plan.json").read_text(encoding="utf-8"))
             self.lv5 = [l for m in self.plan["clase"]["v"]["module"] for l in m["lectii"] if l["stare"] == "publicat"]
             self.titlu = {l["nr"]: l["titlu"] for l in self.lv5}
-            if "J" in parti:
-                self._jurnal()
-            if "P" in parti:
-                self._prezenta()
         except Exception as e:
             self.verifica(False, "proba s-a oprit: " + str(e).splitlines()[0][:220])
+            return self.probleme
+        # fiecare parte separat: dacă una se oprește, celelalte tot rulează
+        for cod, parte in (("J", self._jurnal), ("P", self._prezenta), ("N", self._nor), ("L", self._legaturi), ("R", self._real)):
+            if cod not in parti:
+                continue
+            try:
+                parte()
+            except Exception as e:
+                self.verifica(False, "proba s-a oprit (%s): %s" % (cod, str(e).splitlines()[0][:220]))
         self.verifica(not self.erori, "0 erori JS", self.erori[:3])
         return self.probleme
 
     # =========================== JURNALUL ===========================
     def config_lectie(self, ctx):
+        if self._cfg:
+            return self._cfg
         pg = ctx.new_page()
         self.pune(pg, {"learninghub_active_profile": "e_cfg"})
         pg.goto(self.baza + "/" + LECTIE)
         pg.wait_for_function("window.JocMotor&&JocMotor.test&&JocMotor.test.config()", timeout=15000)
-        cfg = pg.evaluate("(()=>{const n=JocMotor.test.config().nivele[0];return {pn:n.pasi.length,q:n.qs.length,t3:n.pasi[2].t}})()")
+        cfg = pg.evaluate("(()=>{const n=JocMotor.test.config().nivele[0];return {pn:n.pasi.length,q:n.qs.length,t3:n.pasi[2].t,at:(n.atelier||{}).titlu||''}})()")
         pg.close()
+        self._cfg = cfg
         return cfg
+
+    def rand(self, pg, nr):
+        """rândul lecției nr din „Lecțiile mele”: starea, textul, legătura"""
+        return pg.evaluate("k=>{const r=document.querySelector('#lectii li[data-cheie=\"'+k+'\"]');return r?{s:r.dataset.stare,t:r.innerText,a:r.querySelector('a').getAttribute('href')}:null}",
+                           "lectie_v_m1_l%02d" % nr)
+
+    def fila_noua(self, ctx, pg, sel="#continua-link"):
+        """clic pe legătură -> fila nouă; ce afișează motorul acolo (pasul anunțat, starea, bara, textul foii)"""
+        with ctx.expect_page(timeout=10000) as nou:
+            pg.click(sel)
+        p2 = nou.value
+        try:
+            p2.wait_for_function("window.JocMotor&&JocMotor.test&&window.__lhPas", timeout=15000)
+            p2.wait_for_timeout(400)
+            return p2.evaluate("({url:location.pathname,q:location.search,cheie:window.__lhPas.cheie,pas:window.__lhPas.pas,real:window.__lhPas.real,st:JocMotor.test.stare(),"
+                               "now:(document.querySelector('.tabs [aria-current=step]')||{}).textContent||null,txt:(document.querySelector('.foaie')||{innerText:''}).innerText})")
+        except Exception as e:
+            return {"eroare": str(e).splitlines()[0][:150]}
+        finally:
+            p2.close()
 
     def eu(self, **x):
         return dict({"id": ID_ANA, "nume": "Tablou Ana", "clasa": "5 AM", "scoala": "brauner", "scoalaNume": "Școala (probă)",
@@ -310,6 +387,11 @@ class Proba:
             a = pg.get_attribute("#continua-link", "href")
             self.verifica(("%s: Lecția %d — %s" % (ce_, nr, self.titlu[nr])) in ce and a == "../lectii/v/m1-l%02d/" % nr,
                           "%s -> „%s: Lecția %d”, la începutul ei" % (caz, ce_, nr), (ce, a))
+            # cap-coadă: clic -> filă nouă cu lecția aceea, deschisă de motor la început (cuprinsul ei, niciun pas pornit)
+            info = self.fila_noua(ctx, pg)
+            self.verifica(info.get("url") == "/lectii/v/m1-l%02d/" % nr and info.get("cheie") == "lectie_v_m1_l%02d" % nr and info.get("pas") == "cuprins" and info.get("st") is None,
+                          "%s: clic pe „%s” -> filă nouă cu Lecția %d, la începutul ei (motorul: cuprinsul lecției)" % (caz.split()[0], ce_, nr),
+                          {k: info.get(k) for k in ("url", "cheie", "pas", "st", "eroare")})
 
         # ---- J5: fără rețea -> doar aparatul, cu nota
         self.mod_jurnal = "offline"
@@ -538,6 +620,168 @@ class Proba:
         pg.clock.resume()
         pg.close()
 
+    # =========================== CAP-COADĂ (10.10.2026, seara) ===========================
+    # ---- N: jurnalul pe ALT aparat. Forma progresului NU e inventată: o scriu motorul și prezenta.js pe aparatul A.
+    def _nor(self):
+        self.nor = {H_NOR: {}}
+        T = int(time.time() * 1000)
+        azi = azi_ro().isoformat()
+        facuta = {"nume": "", "lv": {"0": {"stars": 3, "v": 1, "t1": T - 2 * 86400000}}}
+        # aparatul A (calculatorul de acasă): L1, L2 făcute; L3 lucrată acum până la P3
+        ctxa = self.context(viewport={"width": 1280, "height": 900})
+        pa = ctxa.new_page()
+        self.pune(pa, {"lh_prezenta": self.eu(id="idaparata" + "0" * 15, h=H_NOR), "learninghub_active_profile": "e_apa",
+                       "lectie_v_m1_l01@e_apa": facuta, "lectie_v_m1_l02@e_apa": facuta})
+        pa.goto(self.baza + "/" + LECTIE)
+        # prezenta.js a tras deja o dată progresul (lh_nor.tras) și l-a urcat pe al aparatului: abia apoi lucrează elevul
+        pa.wait_for_function("window.JocMotor&&JocMotor.test&&window.Prezenta&&window.__lhPas&&(JSON.parse(localStorage.getItem('lh_nor')||'{}').tras||0)>0", timeout=20000)
+        pa.wait_for_timeout(400)
+        pa.click('.lvl[data-l="0"]')          # pornește lecția: P1
+        pa.evaluate("JocMotor.test.pas(1)")    # P2
+        pa.evaluate("JocMotor.test.pas(2)")    # P3
+        pas_a = pa.evaluate("window.__lhPas.pas")
+        loc_a = pa.evaluate("JSON.parse(localStorage.getItem('lectie_v_m1_l03@e_apa')||'null')")
+        pa.evaluate("__ascunde()")             # elevul lasă calculatorul: prezenta.js urcă progresul (beacon spre /api/progres)
+        pa.wait_for_timeout(500)
+        for x in pa.evaluate("JSON.parse(localStorage.getItem('__proba_beacons')||'[]')"):
+            if x["u"].endswith("/api/progres"):   # ce ar fi plecat cu sendBeacon ajunge la serverul de probă, ca orice „scrie”
+                try:
+                    b = json.loads(x["t"])
+                except Exception:
+                    continue
+                if b.get("op") == "scrie" and b.get("h") == H_NOR:
+                    self.nor_scrie(H_NOR, b.get("date"))
+        ctxa.close()
+        pe = self.nor[H_NOR]
+        try:
+            l3 = json.loads(pe["lectie_v_m1_l03@~P"]["v"])["lv"]["0"]
+        except Exception:
+            l3 = None
+        self.verifica(pas_a == "p3" and l3 and l3.get("ps") == [0, 1, 2] and loc_a and l3 == loc_a["lv"]["0"]
+                      and "lectie_v_m1_l01@~P" in pe and "lectie_v_m1_l02@~P" in pe,
+                      "N aparatul A: motorul la P3, iar pe server a urcat sertarul lui, sub „…@~P” (L3 cu ps [0,1,2], cum l-a scris motorul; L1, L2)",
+                      {"pas": pas_a, "chei": sorted(pe), "L3": l3})
+        # aparatul B (telefonul): același elev (aceeași amprentă), alt id, alt profil, sertarul GOL
+        ctx = self.context(viewport={"width": 360, "height": 780}, device_scale_factor=2, is_mobile=True, has_touch=True)
+        PN = self.config_lectie(ctx)["pn"]   # (citit o dată; pune() de mai jos golește oricum aparatul)
+        pg = ctx.new_page()
+        self.pune(pg, {"lh_prezenta": self.eu(id="idaparatb" + "0" * 15, h=H_NOR), "learninghub_active_profile": "e_apb"})
+        self.mod_jurnal = "server"
+        self.raspuns_jurnal = {"ok": True, "aparate": 2, "zile": {azi: 600}, "ore": {}, "jocuri": {}, "note": {}, "ev": [],
+                               "pagini": {"/lectii/v/m1-l03/": {"t": "L3", "s": 600, "n": 1, "u": iso(azi)}}, "ultima": iso(azi), "plecat": None}
+        self.nor_tine, self.nor_tinute = True, []
+        try:
+            pg.goto(self.baza + "/jurnal/")
+            gata = self.asteapta(pg, "server")
+            for _ in range(50):                # „citește” de pe B a ajuns la server (și stă pe drum)
+                if self.nor_tinute:
+                    break
+                pg.wait_for_timeout(200)
+            r3, c0, d0 = self.rand(pg, 3), pg.inner_text("#continua"), pg.evaluate("+document.body.dataset.desenat||0")
+            gol = pg.evaluate("Object.keys(localStorage).filter(k=>/^lectie_/.test(k))")
+            self.verifica(gata and len(self.nor_tinute) == 1 and not gol and r3 and "P3" not in r3["t"] and ("Începe: Lecția 1 — " + self.titlu[1]) in c0,
+                          "N aparatul B, înainte să vină progresul: sertarul gol, jurnalul din server (L3 fără pas, „Începe: Lecția 1”), cererea „citește” pe drum",
+                          {"cereri citește": len(self.nor_tinute), "sertar": gol, "L3": r3, "continua": c0})
+        finally:
+            self.nor_tine = False
+            for r in self.nor_tinute:          # vine progresul de pe A
+                try:
+                    r.fulfill(status=200, headers={"access-control-allow-origin": "*", "content-type": "application/json"},
+                              body=json.dumps({"ok": True, "date": self.nor[H_NOR]}))
+                except Exception:
+                    pass
+            self.nor_tinute = []
+        try:
+            pg.wait_for_function("t=>{const r=document.querySelector('#lectii li[data-cheie=\"lectie_v_m1_l03\"]');return r&&r.innerText.includes(t)}",
+                                 arg="P3 din %d" % PN, timeout=8000)
+            pg.wait_for_timeout(250)
+        except Exception:
+            pass
+        loc_b = pg.evaluate("JSON.parse(localStorage.getItem('lectie_v_m1_l03@e_apb')||'null')")
+        self.verifica(loc_b and (loc_b.get("lv") or {}).get("0", {}).get("ps") == [0, 1, 2],
+                      "N Nor.trage a scris progresul de pe A în sertarul de pe B (lectie_v_m1_l03@e_apb, ps [0,1,2])", loc_b)
+        r1, r2, r3 = self.rand(pg, 1), self.rand(pg, 2), self.rand(pg, 3)
+        d1 = pg.evaluate("+document.body.dataset.desenat||0")
+        self.verifica(d1 > d0 and [(r or {}).get("s") for r in (r1, r2, r3)] == ["gata", "gata", "inc"] and "P3 din %d" % PN in r3["t"]
+                      and r3["a"] == "../lectii/v/m1-l03/?continua=1",
+                      "N după lh-progres jurnalul s-a redesenat: L1, L2 făcute, L3 „începută · P3 din %d” -> ?continua=1" % PN,
+                      {"desenări": (d0, d1), "L1": (r1 or {}).get("s"), "L2": (r2 or {}).get("s"), "L3": r3})
+        ce, a = pg.inner_text("#continua"), pg.get_attribute("#continua-link", "href")
+        self.verifica(("Continuă: Lecția 3 — %s · pasul P3" % self.titlu[3]) in ce and a == "../lectii/v/m1-l03/?continua=1",
+                      "N „Continuă: Lecția 3 … · pasul P3” -> ../lectii/v/m1-l03/?continua=1 (pe B, din progresul lui A)", (ce, a))
+        info = self.fila_noua(ctx, pg)
+        st = info.get("st") or {}
+        self.verifica(info.get("url") == "/" + LECTIE and st.get("phase") == "learn" and st.get("si") == 2 and info.get("pas") == "p3" and info.get("now") == "P3",
+                      "N clic pe „Continuă” pe B -> filă nouă, motorul de pe B deschide P3 (din progresul tras)",
+                      {k: info.get(k) for k in ("url", "st", "pas", "now", "eroare")})
+        ctx.close()
+        self.nor = {}
+
+    def sertar_l3(self, prof, **lv0):
+        T = int(time.time() * 1000)
+        return {"lectie_v_m1_l03@" + prof: {"nume": "", "lv": {"0": dict({"v": 1, "t0": T - 7200000, "t1": T - 3600000}, **lv0)}}}
+
+    # ---- L: legăturile directe chiar duc la pas (ce afișează motorul, nu textul legăturii)
+    def _legaturi(self):
+        ctx = self.context(viewport={"width": 1280, "height": 900})
+        cfg = self.config_lectie(ctx)
+        PN = cfg["pn"]
+        pg = ctx.new_page()
+
+        def la(q, prof, **lv0):
+            self.pune(pg, dict(self.sertar_l3(prof, **lv0), **{"lh_prezenta": self.eu(id="idlegatura" + "0" * 14), "learninghub_active_profile": prof}))
+            pg.goto(self.baza + "/" + LECTIE + q)
+            pg.wait_for_function("window.JocMotor&&JocMotor.test&&window.__lhPas", timeout=15000)
+            pg.wait_for_timeout(500)
+            return pg.evaluate("({st:JocMotor.test.stare(),pas:window.__lhPas.pas,now:(document.querySelector('.tabs [aria-current=step]')||{}).textContent||null,"
+                               "nota:document.querySelectorAll('.nota-pas').length,q:location.search,txt:(document.querySelector('.foaie')||{innerText:''}).innerText})")
+
+        # elevul a ajuns până la Aplicația (toți pașii, atelierul, pasul real): ?pas=atelier trebuie să-l ducă ÎNAPOI la atelier
+        i = la("?pas=atelier", "e_lga", ps=list(range(PN)), pn=PN, at=1, re=1, ul="real")
+        at = re.sub(r"^Atelier:\s*", "", cfg.get("at") or "")[:20]
+        self.verifica((i["st"] or {}).get("phase") == "atelier" and i["pas"] == "atelier" and i["now"] == "Atelier" and i["nota"] == 0
+                      and "pas=" not in i["q"] and (not at or at in i["txt"]),
+                      "L ?pas=atelier (elev ajuns până la Aplicația) -> motorul afișează Atelierul (bara: Atelier, „%s…” pe ecran), fără notă" % at,
+                      {k: i[k] for k in ("st", "pas", "now", "nota", "q")})
+        # elevul are P1-P3 atinse: ?continua=1 -> P3
+        i = la("?continua=1", "e_lgc", ps=[0, 1, 2], pn=PN, at=0, ul="p3")
+        t3 = re.sub(r"<[^>]+>", "", cfg["t3"]).strip()[:25]
+        self.verifica((i["st"] or {}).get("phase") == "learn" and (i["st"] or {}).get("si") == 2 and i["pas"] == "p3" and i["now"] == "P3"
+                      and "continua=" not in i["q"] and t3 in i["txt"],
+                      "L ?continua=1 (elev cu P3 atins) -> motorul afișează P3 (bara: P3, „%s…” pe ecran)" % t3,
+                      {k: i[k] for k in ("st", "pas", "now", "nota", "q")})
+        ctx.close()
+
+    # ---- R: plecarea de pe pasul „Aplicația” (elevul lucrează în aplicația adevărată)
+    def _real(self):
+        ctx = self.context(viewport={"width": 1280, "height": 900})
+        PN = self.config_lectie(ctx)["pn"]
+        pg = ctx.new_page()
+        self.pune(pg, dict(self.sertar_l3("e_re", ps=list(range(PN)), pn=PN, at=1, re=1, ul="real"),
+                           **{"lh_prezenta": self.eu(id="idreal" + "0" * 18), "learninghub_active_profile": "e_re"}))
+        pg.clock.install()
+        a0 = len(self.activ)
+        self.deschide(pg, "?pas=real")
+        d = pg.evaluate("({p:window.__lhPas,st:JocMotor.test.stare()})")
+        self.verifica((d["p"] or {}).get("pas") == "real" and (d["p"] or {}).get("real") is True and (d["st"] or {}).get("phase") == "real",
+                      "R ?pas=real -> motorul afișează pasul Aplicația și anunță real: true", d)
+        self.lucreaza(pg, 36000, 5000)       # prima trimitere (30 s pe pagină)
+        f, _ = self.corpuri(pg, a0)
+        ac = next((x["acum"] for x in f if x.get("acum")), {}) or {}
+        self.verifica((ac.get("pas") or {}).get("pas") == "real" and (ac.get("pas") or {}).get("real") is True,
+                      "R „acum” de pe pasul Aplicația: pas {pas: real, real: true}", ac)
+        nb = len(self.corpuri(pg)[1])
+        pg.evaluate("__ascunde()")           # elevul trece în aplicația adevărată: pagina se ascunde
+        pg.wait_for_timeout(400)
+        f, b = self.corpuri(pg, a0)
+        pl = [x["plecat"] for x in f + b[nb:] if x.get("plecat")]
+        p0 = pl[0] if pl else {}
+        self.verifica(len(pl) == 1 and p0.get("motiv") == "ascuns" and p0.get("p") == "/" + LECTIE
+                      and (p0.get("pas") or {}).get("pas") == "real" and (p0.get("pas") or {}).get("real") is True,
+                      "R la ascundere pe pasul Aplicația: plecat {pas: {pas: real, real: true}, motiv: ascuns} (cererea spre /api/activitate)", pl)
+        pg.clock.resume()
+        ctx.close()
+
 
 class Tacut(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a):
@@ -566,16 +810,19 @@ def main():
             externe += P.externe
             scapati = 0
             if a.mutanti:
-                txt = {"jurnal": JURNAL.read_text(encoding="utf-8"), "prezenta": PREZENTA.read_text(encoding="utf-8")}
-                print("Mutanții (fiecare = partea probei care atinge fișierul, pe o copie stricată)")
-                for fis, nume, din, in_ in MUTANTI:
+                txt = {"jurnal": JURNAL.read_text(encoding="utf-8"), "prezenta": PREZENTA.read_text(encoding="utf-8"), "motor": MOTOR.read_text(encoding="utf-8")}
+                print("Mutanții (fiecare = partea probei care atinge fișierul, pe o copie stricată, servită în locul celui adevărat)")
+                for mt in MUTANTI:
+                    fis, nume, din, in_ = mt[:4]
+                    parti = mt[4] if len(mt) > 4 else (("J",) if fis == "jurnal" else ("P",))
                     if txt[fis].count(din) != 1:
                         print("  RĂU  %s: textul de mutat apare de %d ori" % (nume, txt[fis].count(din)))
                         scapati += 1
                         continue
                     m = txt[fis].replace(din, in_)
-                    M = Proba(br, baza, jurnal_txt=m if fis == "jurnal" else None, prezenta_txt=m if fis == "prezenta" else None, tacut=True)
-                    pm = M.ruleaza(("J",) if fis == "jurnal" else ("P",))
+                    M = Proba(br, baza, jurnal_txt=m if fis == "jurnal" else None, prezenta_txt=m if fis == "prezenta" else None,
+                              motor_txt=m if fis == "motor" else None, tacut=True)
+                    pm = M.ruleaza(parti)
                     externe += M.externe
                     prins = bool([x for x in pm if not x.startswith("proba s-a oprit")])
                     print(("  ok   " if prins else "  RĂU  ") + "%s: %s (%s)" % (nume, "prins" if prins else "SCĂPAT", ("; ".join(pm[:2]) or "nicio verificare picată")[:200].replace("\n", " ")), flush=True)
