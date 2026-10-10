@@ -153,6 +153,11 @@ def html_index(plan):
   <div class="clase">
 {chr(10).join(carduri)}
   </div>
+  <a class="joc-link" href="../cum-fac/index.html" style="border-left-color:var(--acc)">
+    <span class="ic" aria-hidden="true">🔎</span>
+    <span><span class="t">Cum fac…? Caută un gest din lecții</span><span class="d">Scrii ce vrei să faci (de exemplu „cum salvez în Excel”) și primești pașii pentru aplicația adevărată.</span></span>
+    <span class="go" style="color:var(--acc)">Caută →</span>
+  </a>
   <a class="joc-link" href="../jocuri/index.html">
     <span class="ic" aria-hidden="true">🎮</span>
     <span><span class="t">Jocurile TIC rămân disponibile</span><span class="d">Câte un joc pentru fiecare unitate, la clasele V–VIII.</span></span>
