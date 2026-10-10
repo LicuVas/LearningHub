@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 10, clasa a V-a: Operații cu fișiere și directoare</title>
+<meta name="description" content="Lecția 10, clasa a V-a: creezi un folder, redenumești, copiezi, muți, ștergi și pui înapoi din Coșul de reciclare, cauți un fișier pierdut, în Explorer, fără să strici fișierele colegilor.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF2F7; --paper:#FFFFFF; --paper2:#F2F5F9; --line:#D2DAE4;
+  --ink:#152131; --ink2:#55627A; --accent:#0B63B5; --accentInk:#FFFFFF; --sel:#D5E7F8;
+  --mark:#FFE07A; --markInk:#152131; --ok:#22774A; --okbg:#E0F2E7; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif; --fb:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif; --fm:"JetBrains Mono",Consolas,monospace;
+  --dosar:#F2C14E; --dosar2:#E0A92E;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E141C; --paper:#161E29; --paper2:#1D2734; --line:#2D3A4B;
+  --ink:#E3EAF3; --ink2:#A3B1C4; --accent:#6CB4F5; --accentInk:#0E141C; --sel:#1B3550;
+  --mark:#EDCB63; --markInk:#152131; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+  --dosar:#E8B846; --dosar2:#C99422;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E141C; --paper:#161E29; --paper2:#1D2734; --line:#2D3A4B;
+  --ink:#E3EAF3; --ink2:#A3B1C4; --accent:#6CB4F5; --accentInk:#0E141C; --sel:#1B3550;
+  --mark:#EDCB63; --markInk:#152131; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+  --dosar:#E8B846; --dosar2:#C99422;
+}
+/* tema: bara de comenzi din Explorer — un dosar galben și numele operațiilor, ca butoanele de sus */
+.banda{display:flex;align-items:center;gap:6px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent)}
+.banda .dos{flex:none;position:relative;display:inline-block;width:20px;height:14px;background:var(--dosar);border-radius:1px 3px 3px 3px;margin:3px 4px 0 0}
+.banda .dos::before{content:"";position:absolute;left:0;top:-4px;width:9px;height:5px;background:var(--dosar2);border-radius:2px 2px 0 0}
+.banda .op{flex:none;font-size:.74rem;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:2px 8px}
+.banda .op.nou{color:var(--accent);border-color:var(--accent);font-weight:700}
+h1,h2{font-weight:800;letter-spacing:0}
+pre.arbore{font-family:var(--fm);font-size:.9rem;line-height:1.5;background:var(--paper2);border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:.5em 0;white-space:pre;overflow-x:auto}
+code{font-family:var(--fm)}
+details.verif{margin-top:.4em;font-size:.93rem}
+details.verif summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:32px}
+.lacalc{border-left:4px solid var(--accent);background:var(--paper2);padding:6px 10px;margin:.6em 0 0;border-radius:0 6px 6px 0}
+/* schema „Ce am învățat” (HTML, nu imagine) */
+.schema{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin:10px 0 12px}
+.sc-box{border:2px solid var(--accent);border-radius:10px;background:var(--paper);padding:6px 10px;line-height:1.3}
+.sc-box b{display:block;font-family:var(--fd);font-size:1rem}
+.sc-box span{display:block;font-size:.86rem;color:var(--ink2)}
+/* laboratorul: o căsuță de bifat la fiecare punct (nu se păstrează nicăieri: e doar pentru elevul de acum) */
+.bifez{display:inline-flex;align-items:center;justify-content:center;min-width:32px;min-height:32px;vertical-align:middle;margin:-4px 2px -4px -6px;cursor:pointer}
+.bifez input{width:20px;height:20px;margin:0;accent-color:var(--accent);cursor:pointer}
+li:has(> .bifez input:checked){opacity:.62}
+details.mai{margin:.5em 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px}
+details.mai summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:32px;display:flex;align-items:center}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/explorer-operatii.js"></script>
+<script>
+/* Lecția 10, clasa a V-a (M2): „Operații cu fișiere și directoare: creare, redenumire, copiere, mutare, ștergere, căutare”.
+   Standardul: LearningHub\_campaign\revizuire_completa_2026_09\05_STANDARD_LECTIE.md. Sursele și probele: surse.md, _proba\.
+   Simulatorul: lectii/_sim/explorer-operatii.js (extensie NOUĂ; nu atinge explorer-citire.js al lecției 9).
+   Faptele despre Windows: probate pe Windows 11 25H2 în română (operațiile, prin IFileOperation, pe desktopul ascuns, doar
+   în _proba\sandbox; textele, din resursele lui Windows). Ce n-am putut proba e în surse.md, „Nesigur”. */
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const CAPT='<small>Captură din Windows 11, în română; chenarele și etichetele roșii sunt puse de noi.</small>';
+const IMG={
+  copiator:fig('copiator-scoala.webp',800,608,'Un copiator mare, alb, pe holul unei școli; în tava din față sunt foile copiate','Un copiator într-o școală: originalul rămâne la tine, iar copiile ies în tavă. <small>Foto: Dennis Sylvester Hurd, <a href="https://commons.wikimedia.org/wiki/File:The_Closest_Photocopier_(3594209596).jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC0 (domeniu public); micșorată.</small>'),
+  bara:fig('bara-comenzi.webp',820,136,'Bara de comenzi din Explorer: butonul Nou și pictogramele Decupare (foarfeca), Copiere, Lipire, Redenumire, Partajare și Ștergere (coșul), cu numele scrise dedesubt cu roșu','Bara de comenzi din Explorer. Numele roșii le-am scris noi: în Windows, numele apare când ții mouse-ul pe pictogramă. '+CAPT),
+  meniuNou:fig('meniu-nou-folder.webp',715,700,'Meniul de clic dreapta pe un loc gol din Explorer: Nou e încadrat și numerotat 1; în dreapta s-a deschis lista în care prima linie, Folder, e încadrată și numerotată 2','Clic dreapta pe un loc gol: întâi <b>Nou</b>, apoi <b>Folder</b>. '+CAPT),
+  f2:fig('redenumire-f2.webp',695,230,'Explorer: folderul Proiect_TIC are numele într-o casetă albastră, gata de scris, după apăsarea tastei F2','După <kbd>F2</kbd>, numele intră într-o casetă: scrii peste el. '+CAPT),
+  conflict:fig('inlocuire-sau-omitere.webp',463,292,'Fereastra Înlocuire sau omitere fișiere: Se copiază 1 element de la Ana_Pop_5A la Exercitii; Destinația are deja un fișier cu numele tema.docx; trei variante, prima, Înlocuire fișier de la destinație, are chenar; a doua, Se omite acest fișier, e încadrată cu roșu','Fereastra care apare când numele există deja. Prima variantă are chenar: e deja aleasă. '+CAPT),
+  cos:fig('cos-restaurare.webp',700,360,'Coșul de reciclare: fișierul notite.txt, cu Locație inițială C:\\Scoala\\Clasa_5\\TIC, și meniul de clic dreapta în care Restaurare e încadrată','În Coș: <b>Locație inițială</b> spune de unde a plecat fișierul; clic dreapta, apoi <b>Restaurare</b>. '+CAPT),
+  definitiv:fig('stergere-definitiva.webp',496,189,'Fereastra Ștergere fișier: Sigur ștergeți definitiv acest fișier? Dedesubt numele fișierului și butoanele Da, cu chenar, și Nu, încadrat cu roșu','Când ștergerea e definitivă, Windows întreabă întâi. Da are chenar: Enter înseamnă Da. '+CAPT),
+  cautare:fig('cautare-explorer.webp',934,202,'Explorer: în caseta de căutare din dreapta sus scrie compunere; bara de adresă arată Rezultatele căutării în Matei_Clasa5; singurul rezultat este compunere_toamna.docx','Căutarea: un cuvânt din nume sau începutul lui, în caseta din dreapta sus. '+CAPT)
+};
+
+/* calculatorul din laborator, simulat: toată clasa intră cu numele Elev; folderul de lucru al Anei e Ex Pop Ana */
+const D='C:/Users/Elev/Documents/', EX=D+'Ex Pop Ana/', MEDIA='C:/Windows/Media/';
+const UNITATI={'C:':{nume:'Disc local'},'E:':{nume:'STICK',stick:true}};
+const BAZA=[[MEDIA+'Alarm01.wav','01.04.2024 10:22','480 KB'],[MEDIA+'Alarm02.wav','01.04.2024 10:22','324 KB'],[MEDIA+'Ring01.wav','01.04.2024 10:22','487 KB'],[MEDIA+'Ring02.wav','01.04.2024 10:22','308 KB'],
+  MEDIA+'Afternoon/',MEDIA+'Calligraphy/','C:/Program Files/','C:/Users/Public/','C:/Users/Elev/Desktop/','C:/Users/Elev/Downloads/',[D+'Romana/compunere.docx','12.11.2026 18:02','16 KB']];
+const COS_ALTII=[['C:/Users/Elev/Documents/Ex Ionescu Dan/','19.11.2026 13:05',''],['C:/Users/Elev/Desktop/desen vechi.png','18.11.2026 11:40','212 KB']];
+const OP=o=>Object.assign({t:'explorerop',unitati:UNITATI,doc:D,afisat:{'C:/Users/Elev/Desktop/':'Desktop','C:/Users/Elev/Downloads/':'Descărcări'},
+  blocat:[MEDIA+'Afternoon/',MEDIA+'Calligraphy/','C:/Program Files/','C:/Users/Public/'],doarCitire:['C:/Windows/'],extensii:false,acum:'20.11.2026 09:20',cos:COS_ALTII},o,{fs:BAZA.concat(o.fs||[])});
+
+const MODEL=`<pre class="arbore">Ex Pop Ana
+  Alarme
+    Alarm02
+  Sonerii
+    sonerie
+    sonerie - Copie
+  Sunete
+    Alarm01</pre>`;
+const SCHEMA=`<div class="schema" role="img" aria-label="Schema operațiilor: folder nou, redenumire, copiere, mutare, ștergere și restaurare, căutare">
+  <div class="sc-box"><b>Folder nou</b><span>Nou, apoi Folder; scrii numele, Enter</span></div>
+  <div class="sc-box"><b>Redenumire</b><span>selectezi, F2, scrii, Enter (Esc renunță)</span></div>
+  <div class="sc-box"><b>Copiere</b><span>Copiere (Ctrl și C), apoi Lipire (Ctrl și V): rămân două</span></div>
+  <div class="sc-box"><b>Mutare</b><span>Decupare (Ctrl și X), apoi Lipire: rămâne unul, în locul nou</span></div>
+  <div class="sc-box"><b>Același nume</b><span>Se omite acest fișier, nu Enter</span></div>
+  <div class="sc-box"><b>Ștergere</b><span>Delete: în Coș; din Coș, Restaurare</span></div>
+  <div class="sc-box"><b>Căutare</b><span>un cuvânt din nume sau începutul lui, în caseta Căutați în</span></div>
+</div>`;
+
+/* „Acum la calculatorul din laborator” (modul lecție: după atelier, înainte de verificare; diploma îl repetă).
+   Fără profesor. Elevul lucrează DOAR în folderul lui; din C:\Windows\Media doar copiază; la final își șterge folderul
+   (ajunge în Coș) și NU golește Coșul: calculatorul rămâne cum l-a găsit (regulile 23 și 25, surse.md). */
+const LABORATOR=[
+  'Lucrezi <b>doar în folderul tău</b>, din Documente. Nu deschide, nu muta și nu șterge fișierele altora. Din folderul Media al lui Windows doar <b>copiezi</b>. Scrie în caiet titlul <b>Traseul fișierelor</b>. Bifează fiecare punct după ce l-ai făcut.',
+  'Deschide Explorer (dosarul galben din bara de activități) și fă un clic pe <b>Documente</b>, în panoul din stânga. Dacă nu ți-ai făcut folderul la pași, fă-l acum: <b>Nou</b>, apoi <b>Folder</b> (pe Windows 10: <b>Pornire</b>, apoi <b>Folder nou</b>). Scrie <b>Ex</b>, numele și prenumele tău, de exemplu <b>Ex Pop Ana</b>, și apasă <kbd>Enter</kbd>. Dacă Windows spune că numele există deja, adaugă o cifră la sfârșit. Intră în folderul tău cu dublu-clic.',
+  'În folderul tău fă două foldere noi: <b>Alarme</b> și <b>Sonerii</b>. <i>Vezi:</i> în folderul tău sunt cele două foldere.',
+  'Copiază <b>Alarm02</b>. Mergi în Media: în panoul din stânga, un clic pe <b>Acest PC</b>; în dreapta, dublu-clic pe <b>Disc local (C:)</b>, apoi pe <b>Windows</b>, apoi pe <b>Media</b>. Un clic pe <b>Alarm02</b>, apoi <b>Copiere</b>. Întoarce-te: un clic pe <b>Documente</b>, dublu-clic pe folderul tău, apoi <b>Lipire</b>. <i>Vezi:</i> Alarm02 e în folderul tău.',
+  'Copiază și <b>Ring02</b>, pe același drum: Acest PC, Disc local (C:), Windows, Media; un clic pe <b>Ring02</b>, <b>Copiere</b>; apoi Documente, dublu-clic pe folderul tău, <b>Lipire</b>. <i>Vezi:</i> în folderul tău sunt Alarm02 și Ring02.',
+  'Mută <b>Alarm02</b> în Alarme: un clic pe Alarm02, <b>Decupare</b>, dublu-clic pe Alarme, <b>Lipire</b>. Întoarce-te în folderul tău cu săgeata <b>Înapoi</b>, de lângă bara de adresă. <i>Vezi:</i> Alarm02 nu mai e direct în folderul tău.',
+  'Mută <b>Ring02</b> în Sonerii, la fel: un clic pe Ring02, <b>Decupare</b>, dublu-clic pe Sonerii, <b>Lipire</b>. Rămâi în Sonerii.',
+  'Redenumește <b>Ring02</b> în <b>sonerie</b>: un clic pe el, <kbd>F2</kbd> (sau butonul <b>Redenumire</b>), scrii <b>sonerie</b> și apeși <kbd>Enter</kbd>.',
+  'Fă o copie chiar acolo: un clic pe sonerie, <b>Copiere</b>, apoi <b>Lipire</b>. <i>Vezi:</i> apare <b>sonerie - Copie</b>.',
+  'Un clic pe <b>sonerie - Copie</b> și apasă <kbd>Delete</kbd>. Dacă Windows întreabă dacă o muți în Coș, apasă <b>Da</b>. <i>Vezi:</i> sonerie - Copie a dispărut din Sonerii.',
+  'Citește întâi și punctul 12. Ca să vezi desktopul, micșorează cu liniuța <b>și Explorer, și fereastra cu lecția</b>. Pe desktop, dublu-clic pe <b>Coș de reciclare</b>. Nu vezi Coșul pe desktop? Adu lecția înapoi (ca la punctul următor), lasă copia în Coș, scrie în caiet „Coșul lipsea” și treci la punctul 13.',
+  'În Coș, găsește <b>sonerie - Copie</b>: la <b>Locație inițială</b> scrie folderul tău. Clic dreapta pe ea, apoi <b>Restaurare</b>. Adu lecția înapoi: un clic pe pictograma ferestrei cu lecția, în bara de activități.',
+  'Întoarce-te în folderul tău: un clic pe dosarul galben din bara de activități (Explorer); în panoul din stânga, un clic pe <b>Documente</b>, apoi dublu-clic pe folderul tău.',
+  'Scrie <b>alarm</b> în caseta de căutare din dreapta sus și apasă <kbd>Enter</kbd>. Scrie în caiet ce a găsit. Ieși din căutare cu săgeata <b>Înapoi</b>.',
+  `Compară folderul tău cu modelul. Folderul Sunete îl ai doar dacă ai făcut și gesturile de la pași.${MODEL}<details class="verif"><summary>Verifică-te, după ce ai comparat</summary> Alarme are un singur fișier, Alarm02. Sonerii are două: sonerie și sonerie - Copie. În folderul tău nu mai e niciun fișier direct, doar folderele. Dacă vezi și extensia .wav după nume, e tot bine: Windows o arată sau o ascunde, după setare. Căutarea „alarm” găsește folderul Alarme, fișierul Alarm02 și, dacă ai Sunete, Alarm01.</details>`,
+  'Lasă calculatorul cum l-ai găsit. În Documente, un clic pe <b>folderul tău</b> și apasă <kbd>Delete</kbd>; dacă Windows întreabă dacă îl muți în Coș, apasă <b>Da</b>. <i>Vezi:</i> folderul tău a plecat din Documente: e în Coș. <b>Nu goli Coșul</b> și nu șterge nimic altceva: acolo pot fi fișierele colegilor. Închide toate ferestrele Explorer cu X.'
+];
+/* în pagina laboratorului, fiecare punct cu o căsuță de bifat (pe diplomă, fără) */
+const LAB_BIFE=LABORATOR.map((x,i)=>`<label class="bifez"><input type="checkbox" aria-label="Am făcut punctul ${i+1}"></label>${x}`);
+
+JocMotor.porneste({
+  cheie:'lectie_v_m2_l10',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/v/, „Lecția 10”, pasul „Acum la calculatorul din laborator” înainte de verificare
+  titlu:'Operații cu fișiere și directoare: creare, redenumire, copiere, mutare, ștergere, căutare',
+  marca:'Lecția <b>10</b> · clasa a V-a',
+  h1:'Operații cu fișiere și directoare: creare, redenumire, copiere, mutare, ștergere, căutare',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a V-a', unitate:'V-U2', unitateTitlu:'Sistemul de operare. Ordinea în fișierele mele',
+  competente:['CS.1.2'], lectii:'10',
+  ancoraText:'Din programă (CS.1.2, unitatea V-U2, lecția 10): Operații cu fișiere și directoare',
+  intro:`<p>Înveți să lucrezi cu fișierele și folderele în Explorer: faci un folder nou, îi schimbi numele, copiezi și muți fișiere, le ștergi și le pui înapoi din Coșul de reciclare, cauți un fișier pierdut. Exersezi pe un calculator din pagină, apoi faci un traseu de operații la calculatorul din laborator, într-un folder doar al tău. La sfârșit verifici ce știi, cu 5 întrebări.</p>
+<p><b>La final știi:</b> să creezi un folder (director), să redenumești, să copiezi și să muți un fișier, să-l ștergi și să-l restaurezi din Coș, să-l găsești cu căutarea și să nu strici fișierul unui coleg când numele e același.</p>
+<p><b>Ai nevoie de:</b> lecția 9 — fișierul (nume și extensie, după ultimul punct; extensia poate fi ascunsă), folderul și arborele, calea (de exemplu <code>C:\\Windows\\Media</code>), Explorer: un clic selectează, dublu-clicul deschide, panoul din stânga (Acest PC, Documente), bara de adresă; semnele pe care Windows nu le primește în nume; lecția 8 — desktopul, cu pictograma Coș de reciclare, fereastra și butoanele ei (liniuța o micșorează, X o închide), bara de activități.</p>`,
+  cum:`<b>Cum lucrezi</b><ol><li>Citești 8 pași scurți. Primul îți arată la ce folosește lecția; după fiecare dintre ceilalți faci un exercițiu mic, fără puncte, pe un Explorer din pagină. Dacă ești la calculatorul din laborator, faci apoi același gest și acolo, în folderul tău.</li><li>La atelier faci un traseu de operații în Explorer-ul din pagină.</li><li>Acum la calculatorul din laborator: faci același traseu, în folderul tău (cam 15-20 de minute), și la final îl ștergi. Dacă se apropie sfârșitul orei, sari la ultimul punct: îți ștergi folderul.</li><li>Răspunzi la 5 întrebări de verificare: pentru ele primești stele.</li></ol>`,
+  banda:'<span class="dos" aria-hidden="true"></span><span class="op nou">Nou</span><span class="op">Decupare</span><span class="op">Copiere</span><span class="op">Lipire</span><span class="op">Redenumire</span><span class="op">Ștergere</span>',
+  nivele:[
+{t:'Operații cu fișiere și directoare: creare, redenumire, copiere, mutare, ștergere, căutare',final:true,lectii:[10],
+ continuturi:['Operații cu fișiere și directoare'],
+ obiectiv:'creezi un folder, redenumești, copiezi și muți un fișier, îl ștergi și îl pui înapoi din Coș și găsești un fișier cu căutarea, fără să strici fișierele altora.',
+ pasi:[
+  /* ---- pasul 0: la ce folosește (fără acțiuni) ---- */
+  {t:'La ce folosește: ordine în fișierele tale',
+   text:`<p>La copiator, foaia ta rămâne la tine, iar în tavă apare o copie. Când îți muți caietul din bancă în ghiozdan, caietul pleacă din bancă. Ce arunci la coșul de hârtii mai poți scoate de acolo, până se golește coșul.</p>
+<p>În calculator faci la fel cu fișierele: le copiezi, le muți, le ștergi și le pui înapoi. Le dai nume bune, le strângi în foldere și le găsești când le cauți.</p>
+<p>Azi înveți aceste operații. Le exersezi în pagină, apoi la calculatorul din laborator, într-un folder doar al tău.</p>
+${IMG.copiator}`},
+  /* ---- pasul 1: folder nou ---- */
+  {t:'Folderul tău: Nou, apoi Folder',
+   text:`<p>În Explorer, sus, sub bara de adresă, e <mark>bara de comenzi</mark>: un rând de butoane. Primul se numește <b>Nou</b> (în engleză, <i>New</i>).</p>
+<p>Un <mark>folder nou</mark> se face în folderul în care ești. Intri întâi acolo. Apoi apeși <b>Nou</b> și alegi <b>Folder</b>. Apare un folder numit <em>Folder nou</em>, cu numele colorat, gata de scris. Scrii numele lui și apeși <kbd>Enter</kbd>, tasta mare din dreapta literelor.</p>
+${IMG.bara}`,
+   exemplu:`<p>Ana își face folderul de lucru în Documente:</p><ol><li>În panoul din stânga, un clic pe <b>Documente</b>.</li><li>Sus, un clic pe <b>Nou</b>, apoi pe <b>Folder</b>.</li><li>Scrie <b>Ex Pop Ana</b> (Ex de la exercițiu, apoi numele și prenumele) și apasă <kbd>Enter</kbd>.</li></ol>
+<p>Alt drum: <mark>clic dreapta</mark>, adică un clic cu butonul din dreapta al mouse-ului, pe un loc gol din folder. Se deschide un meniu: alegi <b>Nou</b>, apoi <b>Folder</b>.</p>${IMG.meniuNou}
+<details class="mai"><summary>Ai Windows 10?</summary><p>Un clic pe cuvântul <b>Pornire</b>, sus, arată butoanele, printre ele <b>Folder nou</b>.</p></details>`,
+   altfel:`<p>E ca atunci când pui un dosar nou în sertarul tău: întâi deschizi sertarul potrivit, apoi pui dosarul și îi scrii eticheta.</p>`,
+   incearca:OP({q:'Ești în Documente. Fă-ți folderul de lucru: <b>Ex Pop Ana</b>.',start:D,
+    checks:[{are:EX,ce:'În Documente e folderul <b>Ex Pop Ana</b>'}],
+    solutie:[['nou','Ex Pop Ana']],gresit:[['nou','Folder nou']],
+    ajutor:'Sus, Nou, apoi Folder. Scrie Ex Pop Ana peste Folder nou și apasă Enter (pe telefon: atinge altundeva).',
+    why:'Folderul nou a apărut în Documente, unde erai. <div class="lacalc"><b>Acum, dacă ești la calculatorul din laborator:</b> deschide Explorer, un clic pe Documente și fă-ți folderul: Ex, numele și prenumele tău.</div>'}),
+   inca:[
+    {t:'choice',q:'Ești în Explorer, în folderul Romana. Apeși <b>Nou</b>, apoi <b>Folder</b>. Unde apare folderul nou?',o:['În Romana','În Documente','Pe desktop','În Acest PC'],ok:0,
+     ajutor:'Folderul nou apare în folderul în care ești.',why:'Folderul nou se face în folderul deschis: aici, în Romana.'},
+    {t:'tf',q:'Poți numi un folder <b>Ex Pop Ana?</b>, cu semnul întrebării la sfârșit.',ok:false,ajutor:'Amintește-ți semnele pe care Windows nu le primește în nume (lecția 9).',
+     why:'Fals. Semnul <code>?</code> e printre cele 9 semne interzise în nume: <code>\\ / : * ? " &lt; &gt; |</code>.'}
+   ]},
+  /* ---- pasul 2: redenumirea ---- */
+  {t:'Redenumirea: F2 sau Redenumire',
+   text:`<p>A <mark>redenumi</mark> înseamnă a schimba numele unui fișier sau al unui folder. Întâi îl selectezi: un clic pe el. Apoi apeși tasta <kbd>F2</kbd>, din rândul de sus al tastaturii, sau butonul <b>Redenumire</b> (în engleză, <i>Rename</i>) din bara de comenzi.</p>
+<p>Numele intră într-o casetă. Scrii numele nou și apeși <kbd>Enter</kbd>. Te-ai răzgândit? Apeși <kbd>Esc</kbd>: rămâne numele vechi. (Pe telefon, în Explorer-ul din pagină, nu ai Esc: atingi altundeva fără să schimbi nimic.)</p>
+<p>La un fișier, schimbi doar numele, nu și extensia. Așa se deschide tot cu programul lui.</p>
+${IMG.f2}`,
+   exemplu:`<p>Dacă extensiile sunt ascunse, în casetă e doar numele: <em>harta</em>. Scrii <em>Romania</em>, iar fișierul devine <code>Romania.png</code>.</p>
+<p>Dacă extensiile se văd, în casetă e <code>harta.png</code>. Schimbi doar partea dinaintea punctului.</p>
+<details class="mai"><summary>Vrei să știi mai mult?</summary><p>Dacă ștergi sau schimbi extensia, Windows întreabă: „Dacă modificați extensia unui fișier, acesta poate deveni inutilizabil. Sigur modificați extensia?”. Apeși <b>Nu</b> și o pui la loc.</p></details>`,
+   altfel:`<p>E ca eticheta de pe caiet: o scrii din nou, dar caietul rămâne același, cu aceleași pagini.</p>`,
+   incearca:OP({q:'În folderul tău e un <em>Folder nou</em>. Redenumește-l în <b>Sunete</b>.',start:EX,fs:[EX+'Folder nou/',[EX+'Alarm01.wav','20.11.2026 09:10','480 KB']],
+    checks:[{are:EX+'Sunete/',ce:'În Ex Pop Ana e folderul <b>Sunete</b>'},{nu:EX+'Folder nou/',ce:'Numele vechi, Folder nou, nu mai există'}],
+    solutie:[['ren','Folder nou','Sunete']],gresit:[['ren','Folder nou','Sunete?']],
+    ajutor:'Un clic pe Folder nou, apoi F2 sau butonul Redenumire; scrii Sunete și apeși Enter.',
+    why:'Același folder, alt nume. <div class="lacalc"><b>Acum, dacă ești la calculatorul din laborator:</b> în folderul tău fă un folder nou, apoi redenumește-l în Sunete: un clic pe el, <kbd>F2</kbd> (sau butonul <b>Redenumire</b>), scrii, <kbd>Enter</kbd>.</div>'}),
+   inca:[
+    OP({q:'Încă una: aici extensiile se <b>văd</b>. Redenumește <code>harta.png</code> în <b>Romania</b>. Extensia rămâne aceeași.',start:D+'Geografie/',extensii:true,fs:[[D+'Geografie/harta.png','05.11.2026 18:20','312 KB']],
+     checks:[{are:D+'Geografie/Romania.png',ce:'Harta se numește acum <code>Romania.png</code>'}],
+     solutie:[['ren','harta.png','Romania.png']],gresit:[['ren','harta.png','Romania']],
+     ajutor:'În casetă schimbi doar partea dinaintea punctului. Partea .png rămâne.',
+     why:'Ai schimbat numele, iar extensia .png a rămas: poza se deschide la fel.'}),
+    {t:'choice',q:'Ai apăsat <kbd>F2</kbd> pe un fișier, dar te-ai răzgândit. Ce tastă apeși ca numele să rămână cel vechi?',o:['Esc','Enter','F2, încă o dată','Nicio tastă: numele vechi nu se mai poate pune la loc'],ok:0,
+     ajutor:'Recitește a doua propoziție din pas.',why:'<kbd>Esc</kbd> renunță la redenumire. <kbd>Enter</kbd> ar păstra ce ai scris în casetă.'}
+   ]},
+  /* ---- pasul 3: copierea ---- */
+  {t:'Copierea: Copiere, apoi Lipire',
+   text:`<p>La <mark>copiere</mark>, fișierul rămâne unde era și apare încă unul la fel, în alt loc. Se face în doi pași:</p>
+<ol><li>Selectezi fișierul și apeși <b>Copiere</b> (<i>Copy</i>) în bara de comenzi. Pe ecran nu se schimbă nimic: Windows doar ține minte fișierul.</li>
+<li>Intri în folderul unde vrei copia și apeși <b>Lipire</b> (<i>Paste</i>).</li></ol>
+<p>Cu tastele: ții apăsată tasta <kbd>Ctrl</kbd>, jos, în colțul din stânga al tastaturii, și apeși <kbd>C</kbd>. În folderul nou, ții <kbd>Ctrl</kbd> și apeși <kbd>V</kbd>.</p>`,
+   exemplu:`<p>Dacă lipești în <b>același</b> folder, în el nu pot sta două fișiere cu același nume. Copia primește alt nume: <em>tema</em> devine <em>tema - Copie</em> (pe un Windows în engleză, <i>tema - Copy</i>), iar a doua copie, <em>tema - Copie (2)</em>.</p>
+<p>Sunetele lui Windows stau în <code>C:\\Windows\\Media</code> (lecția 9). Acolo doar copiezi: nu muți și nu ștergi nimic.</p>`,
+   altfel:`<p>E ca la copiator: foaia ta rămâne la tine și mai primești una la fel.</p>`,
+   incearca:OP({q:'Ești în <code>C:\\Windows\\Media</code>. Copiază <b>Alarm01</b> în folderul tău, <b>Ex Pop Ana</b>, din Documente.',start:MEDIA,fs:[EX],
+    checks:[{are:EX+'Alarm01.wav',ce:'În Ex Pop Ana e Alarm01'},{neatins:MEDIA+'Alarm01.wav',ce:'Alarm01 a rămas și în Media'}],
+    solutie:[['copy','Alarm01.wav'],['cd',EX],['paste']],gresit:[['copy','Alarm01.wav']],
+    ajutor:'Un clic pe Alarm01, Copiere. Apoi un clic pe Documente în panoul din stânga, dublu-clic pe Ex Pop Ana și Lipire.',
+    why:'Alarm01 e acum în două locuri: în Media și în folderul tău. <div class="lacalc"><b>Acum, dacă ești la calculatorul din laborator:</b> deschide Media ca la lecția 9 (Acest PC, Disc local (C:), Windows, Media). Un clic pe Alarm01, <b>Copiere</b>; apoi un clic pe Documente, dublu-clic pe folderul tău și <b>Lipire</b>.</div>'}),
+   inca:[
+    {t:'choice',q:'Copiezi fișierul <em>desen</em> și îl lipești chiar în folderul în care era. Ce nume primește copia?',o:['desen - Copie','desen (2)','Copie desen','Nu se poate face copia'],ok:0,
+     ajutor:'Recitește „Uite cum”: ce se întâmplă când lipești în același folder?',why:'În același folder nu pot sta două fișiere cu același nume, așa că Windows îi dă copiei numele <em>desen - Copie</em>.'}
+   ]},
+  /* ---- pasul 4: mutarea ---- */
+  {t:'Mutarea: Decupare, apoi Lipire',
+   text:`<p>La <mark>mutare</mark>, fișierul pleacă din locul vechi și ajunge în locul nou. Rămâne unul singur.</p>
+<p>Pașii sunt ca la copiere, dar în loc de Copiere alegi <b>Decupare</b> (<i>Cut</i>): foarfeca din bara de comenzi. Apoi intri în folderul nou și apeși <b>Lipire</b>. Cu tastele: <kbd>Ctrl</kbd> și <kbd>X</kbd>, apoi <kbd>Ctrl</kbd> și <kbd>V</kbd>.</p>
+<p>Aceleași comenzi le găsești și cu clic dreapta pe fișier: în meniu e un rând de butoane mici, sus sau jos, lângă săgeata mouse-ului. Printre ele: Decupare, Copiere, Redenumire și Ștergere.</p>
+<p>Nu trage fișierele cu mouse-ul: azi folosești doar Decupare, Copiere și Lipire.</p>`,
+   exemplu:`<p>Ana mută <em>Alarm01</em> din folderul ei în Sunete:</p><ol><li>Un clic pe Alarm01.</li><li><b>Decupare</b> (sau <kbd>Ctrl</kbd> și <kbd>X</kbd>).</li><li>Dublu-clic pe folderul Sunete.</li><li><b>Lipire</b> (sau <kbd>Ctrl</kbd> și <kbd>V</kbd>).</li></ol>
+<details class="mai"><summary>Vrei să știi mai mult?</summary><p>Nu vezi butoanele mici în meniu? Jos în meniu alegi <b>Afișați mai multe opțiuni</b> (<i>Show more options</i>): apare un meniu mai lung, cu aceleași comenzi scrise.</p>
+<p>Pe calculator, imediat după o mutare greșită, poți ține <kbd>Ctrl</kbd> și apăsa <kbd>Z</kbd>: Windows anulează ultima operație.</p></details>`,
+   altfel:`<p>E ca atunci când îți muți caietul din bancă în ghiozdan: e tot un singur caiet, în alt loc.</p>`,
+   incearca:OP({q:'Mută <b>Alarm01</b> în folderul <b>Sunete</b>.',start:EX,fs:[[EX+'Alarm01.wav','20.11.2026 09:10','480 KB'],EX+'Sunete/'],
+    checks:[{are:EX+'Sunete/Alarm01.wav',ce:'Alarm01 e în Sunete'},{nu:EX+'Alarm01.wav',ce:'Alarm01 nu mai e direct în Ex Pop Ana (mutare, nu copiere)'}],
+    solutie:[['cut','Alarm01.wav'],['cd',EX+'Sunete/'],['paste']],gresit:[['copy','Alarm01.wav'],['cd',EX+'Sunete/'],['paste']],
+    ajutor:'Un clic pe Alarm01, Decupare (foarfeca), dublu-clic pe Sunete, Lipire.',
+    why:'A rămas un singur Alarm01, în Sunete. <div class="lacalc"><b>Acum, dacă ești la calculatorul din laborator:</b> în folderul tău, mută Alarm01 în Sunete: <b>Decupare</b>, dublu-clic pe Sunete, <b>Lipire</b>.</div>'}),
+   inca:[
+    {t:'classify',q:'Ce se întâmplă cu fișierul din locul vechi?',cats:['Rămâne și în locul vechi','Pleacă din locul vechi'],
+     items:[['Copiere, apoi Lipire în alt folder',0],['Decupare, apoi Lipire în alt folder',1],['Ctrl și C, apoi Ctrl și V',0],['Ctrl și X, apoi Ctrl și V',1]],
+     ajutor:'Copierea lasă originalul pe loc; decuparea îl ia de acolo.',why:'Copiere (Ctrl și C) lasă fișierul și în locul vechi. Decupare (Ctrl și X) îl mută: rămâne doar în locul nou.'}
+   ]},
+  /* ---- pasul 5: același nume ---- */
+  {t:'Același nume: Înlocuire sau omitere',
+   text:`<p>Lipești un fișier într-un folder unde e deja unul cu <b>același nume</b>? Windows se oprește și te întreabă, în fereastra <mark>Înlocuire sau omitere fișiere</mark>. <b>Destinația</b> e folderul în care lipești.</p>
+<ul><li><b>Înlocuire fișier de la destinație</b> (<i>Replace the file in the destination</i>): fișierul de acolo se pierde, iar în locul lui intră al tău.</li>
+<li><b>Se omite acest fișier</b> (<i>Skip this file</i>): nu se lipește nimic; fișierul de acolo rămâne.</li></ul>
+<p>Prima variantă e deja aleasă: dacă apeși <kbd>Enter</kbd>, înlocuiești. În laborator, fișierul de acolo poate fi al unui coleg. Alegi <b>Se omite acest fișier</b>. Apoi îți redenumești fișierul, apeși din nou <b>Copiere</b> și îl lipești.</p>`,
+   exemplu:`${IMG.conflict}<p>De ce din nou Copiere? Copiere ține minte numele de atunci. După redenumire, la Lipire, Windows spune „Imposibil de găsit acest element” și nu lipește nimic.</p>
+<p>A treia variantă, „Comparați informațiile pentru ambele fișiere” (<i>Compare info for both files</i>), îți arată fișierele unul lângă altul. Azi n-ai nevoie de ea.</p>`,
+   altfel:`<p>E ca la cuierul clasei: dacă locul tău e ocupat de haina colegului, nu-i arunci haina. Îți cauți alt loc.</p>`,
+   incearca:OP({q:'Profesorul vrea temele în folderul <b>Clasa 5A</b>, din Documente. Acolo e deja <em>tema</em> unui coleg. Pune acolo o copie a temei tale, fără să strici tema colegului. Ca să nu se mai ciocnească, redenumește tema ta în <b>tema Pop Ana</b>.',start:EX,
+    fs:[[EX+'tema.docx','19.11.2026 17:30','15 KB'],[D+'Clasa 5A/tema.docx','19.11.2026 16:05','18 KB']],
+    checks:[{neatins:D+'Clasa 5A/tema.docx',ce:'Tema colegului din Clasa 5A e neatinsă'},{are:D+'Clasa 5A/tema Pop Ana.docx',ce:'Tema ta e în Clasa 5A, cu numele <b>tema Pop Ana</b>'}],
+    solutie:[['copy','tema.docx'],['cd',D+'Clasa 5A/'],['paste'],['omite'],['cd',EX],['ren','tema.docx','tema Pop Ana.docx'],['copy','tema Pop Ana.docx'],['cd',D+'Clasa 5A/'],['paste']],
+    gresit:[['copy','tema.docx'],['cd',D+'Clasa 5A/'],['paste'],['inlocuieste']],
+    ajutor:'Dacă apare fereastra, alege Se omite acest fișier. În folderul tău, redenumește tema (F2), apoi apasă din nou Copiere pe tema Pop Ana, intri în Clasa 5A, Lipire.',
+    why:'Tema colegului a rămas, iar tema ta stă lângă ea, cu numele tău. <div class="lacalc"><b>Acum, dacă ești la calculatorul din laborator:</b> copiază din nou Alarm01 din Media și lipește-l în Sunete, unde e deja. Când apare fereastra, alege <b>Se omite acest fișier</b>.</div>'}),
+   inca:[
+    {t:'choice',q:'Apare fereastra „Înlocuire sau omitere fișiere” și apeși <kbd>Enter</kbd>, fără să citești. Ce se întâmplă?',o:['Fișierul din destinație e înlocuit','Nu se lipește nimic','Fereastra se închide și nu se schimbă nimic','Apar amândouă fișierele, unul lângă altul'],ok:0,
+     ajutor:'Care variantă e deja aleasă când apare fereastra?',why:'Prima variantă, Înlocuire fișier de la destinație, e deja aleasă: <kbd>Enter</kbd> o alege. Fișierul care era acolo se pierde.'}
+   ]},
+  /* ---- pasul 6: ștergerea și Coșul ---- */
+  {t:'Ștergerea și Coșul de reciclare',
+   text:`<p>Fișierul selectat îl ștergi cu tasta <kbd>Delete</kbd> (pe unele tastaturi scrie <kbd>Del</kbd>) sau cu butonul <b>Ștergere</b> (<i>Delete</i>), coșul din bara de comenzi. De obicei, Windows nu întreabă nimic: fișierul pleacă în <mark>Coș de reciclare</mark> (<i>Recycle Bin</i>).</p>
+<p>Din Coș îl poți pune înapoi. Coșul se deschide cu dublu-clic pe pictograma lui de pe desktop. Coloana <b>Locație inițială</b> (<i>Original Location</i>) arată de unde a plecat fiecare fișier. Clic dreapta pe al tău, apoi <b>Restaurare</b> (<i>Restore</i>): se întoarce la locul lui.</p>
+<p>Nu goli Coșul: acolo pot fi fișierele colegilor.</p>`,
+   exemplu:`${IMG.cos}<p>De pe stick, de obicei, ștergerea e <b>definitivă</b>: fișierul nu mai trece prin Coș. Windows întreabă întâi: „Sigur ștergeți definitiv acest fișier?”. Dacă vrei să-l păstrezi, apasă <b>Nu</b>. Atenție: Da e deja ales, deci <kbd>Enter</kbd> înseamnă Da.</p>${IMG.definitiv}`,
+   altfel:`<p>E ca la coșul de hârtii din clasă: ce arunci acolo mai poți scoate, până vine cineva și îl golește. După golire, hârtia nu mai e.</p>`,
+   incearca:OP({q:'Șterge <em>notite</em> cu <kbd>Delete</kbd> (sau Ștergere), apoi pune-o înapoi: deschide Coșul de reciclare cu dublu-clic, sub Explorer, și alege Restaurare pe <em>notite</em>. Fișierele colegilor rămân în Coș.',start:EX,
+    fs:[[EX+'notite.txt','19.11.2026 12:00','1 KB'],EX+'Sunete/'],
+    checks:[{restaurat:EX+'notite.txt',ce:'Ai șters <em>notite</em> și ai pus-o înapoi din Coș'},{cosNeatins:true,ce:'Fișierele colegilor au rămas în Coș'}],
+    solutie:[['del','notite.txt'],['cd','COS'],['rest',EX+'notite.txt']],gresit:[['del','notite.txt']],
+    ajutor:'Coșul se deschide cu dublu-clic pe Coș de reciclare, sub fereastră. Acolo: clic dreapta pe notite (pe telefon: ține degetul pe ea), apoi Restaurare.',
+    why:'Notite e din nou în folderul tău. <div class="lacalc"><b>Acum, dacă ești la calculatorul din laborator:</b> în Sunete, șterge Alarm01 cu <kbd>Delete</kbd>. Ca să vezi desktopul, micșorează cu liniuța și Explorer, și fereastra cu lecția. Dublu-clic pe Coș de reciclare, găsește Alarm01 după Locație inițială și alege <b>Restaurare</b>. Adu lecția înapoi: un clic pe pictograma ferestrei cu lecția, în bara de activități.</div>'}),
+   inca:[
+    {t:'choice',q:'Ai apăsat <kbd>Delete</kbd> pe un fișier de pe stick. Windows întreabă: „Sigur ștergeți definitiv acest fișier?”. Vrei să-l păstrezi. Ce faci?',o:['Apeși Nu','Apeși Enter','Apeși Da, apoi îl cauți în Coș','Golești Coșul'],ok:0,amesteca:true,
+     ajutor:'Care buton îl păstrează? Și ce face Enter aici?',why:'Nu îl păstrează. Da (și Enter, pentru că Da e deja ales) îl șterge definitiv: nu mai ajunge în Coș.'}
+   ]},
+  /* ---- pasul 7: căutarea + ce am învățat ---- */
+  {t:'Căutarea: găsești un fișier pierdut',
+   text:`<p>Nu mai știi unde e un fișier? Folosești <mark>căutarea</mark>. Sus, în dreapta barei de adresă, e caseta de căutare. În ea scrie <b>Căutați în</b> și numele folderului în care ești.</p>
+<p>Scrii acolo un cuvânt din numele fișierului sau începutul lui și apeși <kbd>Enter</kbd>. Windows caută în folderul în care ești <b>și în toate folderele din el</b>. De aceea pornești dintr-un folder mare, de exemplu Documente. Bara de adresă arată atunci <em>Rezultatele căutării în Documente</em>.</p>
+<p>Ieși din căutare cu săgeata <b>Înapoi</b> (←), din stânga barei de adresă.</p>`,
+   exemplu:`${IMG.cautare}<p>Scrii un cuvânt întreg din nume sau începutul numelui: „compunere” găsește <em>compunere_toamna</em>, ca în poză. Numele clare se găsesc ușor.</p>
+<p><b>Ce am învățat, pe scurt:</b></p>${SCHEMA}`,
+   incearca:OP({q:'Ești în Documente. Nu mai știi în ce folder e fișierul <em>compunere</em>. Caută-l cu caseta de căutare.',start:D,
+    fs:[[D+'Romana/Toamna/compunere toamna.docx','12.11.2026 18:02','16 KB'],[D+'Desene/soare.png','03.11.2026 17:10','96 KB']],
+    checks:[{gasit:D+'Romana/Toamna/compunere toamna.docx',ce:'Căutarea a găsit compunerea, din folderul Toamna'}],
+    solutie:[['cauta','compunere']],gresit:[['cauta','tema']],
+    ajutor:'Scrie compunere în caseta din dreapta sus (Căutați în Documente) și apasă Enter.',
+    why:'Windows a căutat în Documente și în toate folderele din el. <div class="lacalc"><b>Acum, dacă ești la calculatorul din laborator:</b> adu Explorer înapoi (dosarul galben din bara de activități) și intră în folderul tău: Documente, apoi dublu-clic pe folderul tău. Scrie <b>alarm</b> în caseta de căutare și apasă <kbd>Enter</kbd>. Windows găsește Alarm01, din Sunete.</div>'}),
+   inca:[
+    {t:'choice',q:'Fișierul pierdut se numește <em>excursie munte 2026</em>. Ești în Documente. Ce scrii în caseta de căutare ca să-l găsești?',o:['munte','2027','mare','docx'],ok:0,
+     ajutor:'Ajunge un cuvânt din nume. Care variantă e chiar în nume?',why:'„munte” e un cuvânt din nume. 2027 și mare nu sunt în nume, iar docx ar găsi toate documentele Word.'}
+   ]}
+ ],
+ atelier:OP({titlu:'Atelier: traseul fișierelor',
+  intro:`<p><strong>Sarcina:</strong> faci în Explorer-ul din pagină traseul pe care îl vei face apoi la calculatorul din laborator. Folderul <b>Ex Pop Ana</b>, din Documente, e gol.</p>
+<ol><li>În Ex Pop Ana fă două foldere noi: <b>Alarme</b> și <b>Sonerii</b>.</li>
+<li>Copiază din <code>C:\\Windows\\Media</code> fișierele <b>Alarm02</b> și <b>Ring02</b> în Ex Pop Ana.</li>
+<li>Mută Alarm02 în Alarme și Ring02 în Sonerii.</li>
+<li>În Sonerii, redenumește Ring02 în <b>sonerie</b>. Apoi fă o copie chiar acolo: Copiere, Lipire.</li>
+<li>Șterge <b>sonerie - Copie</b> și pune-o înapoi din Coș (Restaurare).</li>
+<li>Din Ex Pop Ana, caută <b>alarm</b>.</li>
+<li>Când trec toate testele, apasă <b>Verifică</b>.</li></ol>`,
+  q:'Traseul fișierelor: foldere noi, copiere din Media, mutare, redenumire, copie, ștergere și restaurare, căutare.',
+  start:D,fs:[EX],
+  checks:[
+   {toate:[{are:EX+'Alarme/'},{are:EX+'Sonerii/'}],ce:'În Ex Pop Ana sunt folderele Alarme și Sonerii'},
+   {toate:[{are:EX+'Alarme/Alarm02.wav'},{nu:EX+'Alarm02.wav'},{neatins:MEDIA+'Alarm02.wav'}],ce:'Alarm02 e în Alarme (copiat din Media, apoi mutat)'},
+   {toate:[{are:EX+'Sonerii/sonerie.wav'},{nu:EX+'Ring02.wav'},{nu:EX+'Sonerii/Ring02.wav'},{neatins:MEDIA+'Ring02.wav'}],ce:'Ring02 e în Sonerii, cu numele <b>sonerie</b>'},
+   {are:EX+'Sonerii/sonerie - Copie.wav',ce:'În Sonerii e și copia: <b>sonerie - Copie</b>'},
+   {restaurat:EX+'Sonerii/sonerie - Copie.wav',ce:'Ai șters copia și ai pus-o înapoi din Coș'},
+   {gasit:EX+'Alarme/Alarm02.wav',cautat:'alarm',ce:'Ai căutat <b>alarm</b> și ai găsit Alarm02'},
+   {cosNeatins:true,ce:'Fișierele colegilor au rămas în Coș'}],
+  solutie:[['cd',EX],['nou','Alarme'],['nou','Sonerii'],['cd',MEDIA],['copy','Alarm02.wav'],['cd',EX],['paste'],['cd',MEDIA],['copy','Ring02.wav'],['cd',EX],['paste'],
+   ['cut','Alarm02.wav'],['cd',EX+'Alarme/'],['paste'],['cd',EX],['cut','Ring02.wav'],['cd',EX+'Sonerii/'],['paste'],['ren','Ring02.wav','sonerie.wav'],
+   ['copy','sonerie.wav'],['paste'],['del','sonerie - Copie.wav'],['cd','COS'],['rest',EX+'Sonerii/sonerie - Copie.wav'],['cd',EX],['cauta','alarm']],
+  gresit:[['cd',EX],['nou','Alarme'],['nou','Sonerii'],['cd',MEDIA],['copy','Alarm02.wav'],['cd',EX+'Alarme/'],['paste'],['cd',EX],['paste']],
+  ajutor:'Pe rând, cu testele de sub Explorer. Media: Acest PC, Disc local (C:), Windows, Media; acolo doar Copiere. Coșul: dublu-clic pe el, sub Explorer; clic dreapta (pe telefon: ține degetul) pe sonerie - Copie, apoi Restaurare.',
+  why:'Ai făcut tot traseul: foldere noi, copiere, mutare, redenumire, o copie în același folder, ștergere și restaurare, căutare. Același traseu îl faci acum la calculatorul din laborator.',
+  solutieText:'în Explorer și la testele de sub el: acum trec toate.',
+  inca:[
+   OP({q:'Încă una: pe stick, în folderul Poze, ai apăsat din greșeală <kbd>Delete</kbd> pe <em>excursie</em>. Apasă și tu <kbd>Delete</kbd> (sau Ștergere) pe ea, citește ce întreabă Windows și răspunde așa încât poza să rămână.',start:'E:/Poze/',
+    fs:[['E:/Poze/excursie.jpg','18.10.2026 12:31','2.140 KB']],
+    checks:[{intrebat:true,ce:'A apărut întrebarea „Sigur ștergeți definitiv acest fișier?”'},{are:'E:/Poze/excursie.jpg',ce:'Poza <em>excursie</em> a rămas pe stick'}],
+    solutie:[['del','excursie.jpg'],['nu']],gresit:[['del','excursie.jpg'],['da']],
+    ajutor:'Selectezi poza, Delete, apoi citești întrebarea. Care buton o păstrează?',
+    why:'De pe stick, ștergerea e definitivă: Windows întreabă întâi, iar Nu păstrează poza.'}),
+   OP({q:'Încă una: în folderul tău, folderul <b>Muzca</b> are numele greșit. Redenumește-l în <b>Muzica</b>, apoi mută în el sunetul <b>Ring01</b>.',start:EX,
+    fs:[EX+'Muzca/',[EX+'Ring01.wav','20.11.2026 09:12','487 KB']],
+    checks:[{are:EX+'Muzica/',ce:'Folderul se numește Muzica'},{are:EX+'Muzica/Ring01.wav',ce:'Ring01 e în Muzica'},{nu:EX+'Ring01.wav',ce:'Ring01 nu mai e direct în folderul tău (mutare)'}],
+    solutie:[['ren','Muzca','Muzica'],['cut','Ring01.wav'],['cd',EX+'Muzica/'],['paste']],gresit:[['ren','Muzca','Muzica'],['copy','Ring01.wav'],['cd',EX+'Muzica/'],['paste']],
+    ajutor:'Un clic pe Muzca, F2, scrii Muzica, Enter. Apoi Ring01: Decupare, dublu-clic pe Muzica, Lipire.',
+    why:'Numele e corect, iar Ring01 a fost mutat: e doar în Muzica.'})
+  ]}),
+ qs:[
+  {t:'choice',q:'În folderul tău sunt deja <b>vulpea</b> și <b>vulpea - Copie</b>. Copiezi <b>vulpea</b> și o lipești tot acolo. Ce nume primește copia nouă?',o:['vulpea - Copie (2)','vulpea - Copie - Copie','vulpea (2)','vulpea - Copie 2'],ok:0,amesteca:true,
+   ajutor:'Numele vulpea - Copie e deja luat. Cum numește Windows a doua copie?',why:'<em>vulpea - Copie</em> e deja luat, așa că Windows îi dă copiei noi numele <em>vulpea - Copie (2)</em>. <em>vulpea - Copie - Copie</em> ar apărea doar dacă ai copia fișierul <em>vulpea - Copie</em>.'},
+  {t:'order',q:'Muți poza <b>munte</b> din Documente în folderul Excursie, din Documente. Pune pașii în ordine.',items:['Un clic pe poza munte, ca s-o selectezi','Decupare (sau Ctrl și X)','Dublu-clic pe folderul Excursie','Lipire (sau Ctrl și V)'],
+   ajutor:'Întâi spui CE muți, apoi UNDE.',why:'Selectezi, decupezi, intri în folderul nou, lipești. La final poza e doar în Excursie.'},
+  {t:'choice',q:'Lipești <b>desen</b> în folderul Clasa 5A. Apare: „Destinația are deja un fișier cu numele desen”. Desenul de acolo e al unui coleg. Ce alegi?',o:['Se omite acest fișier','Înlocuire fișier de la destinație','Apeși Enter, ca să meargă mai repede','Ștergi desenul colegului și lipești din nou'],ok:0,
+   ajutor:'Care variantă lasă fișierul colegului cum era?',why:'Se omite acest fișier nu lipește nimic, iar desenul colegului rămâne. Înlocuire și Enter i-ar pierde desenul.'},
+  OP({q:'Ai șters din greșeală <b>desen</b> din folderul tău. Pune-l înapoi din Coș. Fișierele colegilor rămân în Coș.',start:EX,fs:[EX],
+   cos:[[EX+'desen.png','20.11.2026 09:05','212 KB','meu']].concat(COS_ALTII),
+   checks:[{restaurat:EX+'desen.png',ce:'Desenul e din nou în folderul tău'},{cosNeatins:true,ce:'Fișierele colegilor au rămas în Coș'}],
+   solutie:[['cd','COS'],['rest',EX+'desen.png']],gresit:[['cd','COS']],
+   ajutor:'Dublu-clic pe Coș de reciclare, sub Explorer. Clic dreapta pe desen (pe telefon: ține degetul pe el), apoi Restaurare.',
+   why:'Restaurare l-a pus înapoi exact unde era: Locație inițială îi ține minte folderul.'}),
+  {t:'tf',q:'Windows întreabă: „Sigur ștergeți definitiv acest fișier?”. Dacă apeși Da, fișierul ajunge în Coș și îl poți restaura de acolo.',ok:false,
+   ajutor:'Ce înseamnă „definitiv”?',why:'Fals. „Definitiv” înseamnă că fișierul NU mai trece prin Coș: după Da, nu-l mai poți restaura.'}
+ ]}
+  ],
+  diploma:{titlu:'Fac ordine în fișierele mele',
+   rezumat:'a învățat să creeze și să redenumească foldere și fișiere, să copieze și să mute fișiere, să le șteargă și să le restaureze din Coșul de reciclare, să găsească un fișier cu căutarea și să nu strice fișierul unui coleg când numele e același',
+   aplicatie:'calculatorul tău din laborator',
+   provocare:LABORATOR},
+  aplicatieReala:{aplicatie:'calculatorul tău din laborator, doar în folderul tău',titlu:'Acum la calculatorul din laborator',scurt:'Laboratorul',
+   intro:'<p>Ai făcut traseul în Explorer-ul din pagină. Acum îl faci la calculatorul din laborator, fără profesor: în <b>folderul tău</b> din Documente, cu sunete copiate din Media. Faci punctele unul câte unul, le bifezi și scrii în caiet. Durează cam 15-20 de minute. La final îți ștergi folderul, ca să lași calculatorul cum l-ai găsit.</p><p><b>Se apropie sfârșitul orei?</b> Sari la ultimul punct: îți ștergi folderul.</p>',
+   pasi:LAB_BIFE},
+  tipuri:{explorerop:SimExplorerOperatii}
+});
+</script>
+</body>
+</html>

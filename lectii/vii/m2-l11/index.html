@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Interfața unei aplicații de prelucrare audio / audio-video</title>
+<meta name="description" content="Lecția 11, clasa a VII-a: fereastra Audacity (pista, unda, linia de timp în secunde, capul de redare, Redare, Pauză, Stop, Mărește, Micșorează) și zonele editorului video Clipchamp. Cu Audacity și Clipchamp simulate în pagină și un sunet adevărat de descărcat.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,600;7..72,700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Mono:wght@400;500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+/* TEMA: studioul de sunet — pista închisă la culoare, clipul somon, butonul verde de redare */
+:root{
+  --desk:#ECEEF3; --paper:#FFFFFF; --paper2:#F2F3F7; --line:#C9CCD6;
+  --ink:#1D2330; --ink2:#4E576A; --accent:#1F7F70; --accentInk:#FFFFFF; --sel:#DDEFEA;
+  --mark:#FFE58A; --markInk:#1D2330; --ok:#1B7A4A; --okbg:#E2F4EA; --bad:#B42318; --badbg:#FBE7E4;
+  --fd:"Literata",Georgia,"Times New Roman",serif; --fb:"Source Sans 3","Segoe UI",system-ui,sans-serif; --fm:"Fira Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#11151C; --paper:#1A202B; --paper2:#212937; --line:#364052; --ink:#E5EAF2; --ink2:#A6B0C2;
+  --accent:#6FD3C0; --accentInk:#0E1A17; --sel:#1E3A35; --mark:#E9C46A; --markInk:#1D2330;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#11151C; --paper:#1A202B; --paper2:#212937; --line:#364052; --ink:#E5EAF2; --ink2:#A6B0C2;
+  --accent:#6FD3C0; --accentInk:#0E1A17; --sel:#1E3A35; --mark:#E9C46A; --markInk:#1D2330;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+body{background:var(--desk)}
+/* banda: un clip somon cu o undă, pe o pistă închisă, cu capul de redare */
+.banda{min-height:32px;padding:4px 10px;display:flex;align-items:center;gap:10px;background:#3D4150}
+.banda .bp{flex:none;width:22px;height:22px;border-radius:4px;background:#2FB5A0;color:#06231E;font:700 .8rem/22px var(--fb);text-align:center}
+.banda .bc{position:relative;flex:1 1 auto;height:24px;border-radius:3px;background:#F19A9A;display:flex;align-items:center;gap:2px;padding:0 6px;overflow:hidden}
+.banda .bc i{flex:1;max-width:3px;background:#2A1414;border-radius:1px}
+.banda .bh{position:absolute;top:0;bottom:0;left:38%;width:2px;background:#30333C;box-shadow:0 0 0 1px rgba(255,255,255,.6)}
+h1{font-weight:700;letter-spacing:-.01em}
+h1 em{color:var(--accent);font-style:normal}
+h2{font-weight:600}
+.gest{border-left:4px solid var(--accent);background:var(--paper2);padding:6px 10px;border-radius:0 6px 6px 0;margin:.6em 0 0}
+.simb{font-family:"Segoe UI Symbol","Segoe UI",system-ui,sans-serif;font-weight:700}
+.ceas{font-family:var(--fm);font-size:.92em;background:#1F2430;color:#F5F7FF;padding:1px 5px;border-radius:4px;white-space:nowrap}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/audio-linie.js"></script>
+<script>
+/* LECȚIA 11, clasa a VII-a, modulul 2 (revizuirea LearningHub, standardul din 27.09.2026 + regula 10 din 08.10.2026),
+   scrisă în tura de noapte 10→11.10.2026. Un nivel pe pași: pasul 0 „La ce folosește”, 5 pași cu „Încearcă” și cu un
+   gest scurt în Audacity-ul adevărat, atelierul, pasul din laborator, 5 întrebări.
+   Simulatorul: lectii/_sim/audio-linie.js (Audacity: pista, unda, linia de timp, capul de redare, Redare/Pauză/Stop,
+   Început/Sfârșit, Mărește/Micșorează; Clipchamp: biblioteca, previzualizarea, pistele, capul de redare), probat pe
+   Audacity 4.0 REAL (desktop ascuns, _proba/audacity_proba*.json). Lecțiile 12-15 îl extind (surse.md).
+   Sunetul de lucru: batai-in-usa.wav (Wikimedia Commons, domeniu public; surse.md). Afirmațiile: afirmatii.json. */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const J='../../../jocuri/audio-video-vii/img/';
+const K=s=>s.split('+').map(k=>`<kbd>${k}</kbd>`).join('+');
+const S=x=>`<span class="simb">${x}</span>`;
+const CEAS=t=>`<span class="ceas">${t}</span>`;
+const PROG='Interfaţa unei aplicaţii de prelucrare a fișierelor audio respectiv audio-video';
+const UNDA=[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.03,0.08,0.05,0.04,0.04,0.02,0.02,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.23,0.23,0.1,0.08,0.07,0.03,0.03,0.02,0.02,0.02,0.01,0.01,0.01,0.01,0.48,0.24,0.16,0.1,0.06,0.05,0.04,0.03,0.03,0.02,0.02,0.01,0.01,0.01,0.01,0.01,0.01,0.0,0.0,0.0,0.01,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.01,0.03,0.02,0.02,0.02,0.01,0.01,0.01,0.01,0.01,0.0,0.35,0.24,0.13,0.09,0.06,0.04,0.03,0.02,0.02,0.02,0.22,0.16,0.09,0.07,0.04,0.03,0.03,0.02,0.01,0.02,0.18,0.19,0.09,0.07,0.06,0.03,0.03,0.02,0.01,0.01,0.01,0.01,0.01,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.08,0.22,0.11,0.08,0.07,0.04,0.03,0.02,0.02,0.02,0.01,0.57,0.27,0.16,0.11,0.07,0.05,0.04,0.03,0.02,0.02,0.42,0.41,0.17,0.12,0.09,0.06,0.03,0.03,0.03,0.02,0.02,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0];   /* vârfurile sunetului batai-in-usa.wav, la fiecare 1/50 s (din fișierul real, _proba/unda_batai.json) */
+const SUNET='batai-in-usa.wav';
+const DESC=`<a href="${SUNET}" download>batai-in-usa.wav</a>`;
+const A=(o)=>Object.assign({t:'audiolinie',nume:'batai-in-usa',unda:UNDA,sunet:SUNET},o);   /* exercițiu în Audacity-ul simulat */
+const PROIECT=[   /* filmul reporterului, în Clipchamp-ul simulat (numele din capturile jocului audio-video-vii) */
+  {tip:'text',nume:'Text',clipuri:[{id:'t1',nume:'Interviu la bibliotecă',start:0,durata:4},{id:'t2',nume:'Ce carte se citește cel mai mult?',start:5,durata:5}]},
+  {tip:'video',nume:'Video',clipuri:[{id:'v1',nume:'Intrarea în bibliotecă',start:0,durata:5},{id:'v2',nume:'Întrebarea reporterului',start:5,durata:6},{id:'v3',nume:'Răspunsul bibliotecarei',start:11,durata:9}]},
+  {tip:'audio',nume:'Audio',clipuri:[{id:'a1',nume:'Muzică de fundal',start:0,durata:20}]}];
+const C=(o)=>Object.assign({t:'audiolinie',mod:'video',piste:PROIECT},o);   /* exercițiu în Clipchamp-ul simulat */
+const NU_SALVA=fig('img/audacity-nu-salva.webp',677,237,'Fereastra Modificări nesalvate din Audacity 4, cu întrebarea Dorești să salvezi modificările acestui proiect înainte de a-l închide și butoanele Salvează, Nu salva încadrat cu roșu, Renunță','<b>Nu salva</b>, încadrat. <b>Salvează</b> e colorat: un Enter ar salva.');
+const PROVOCARE=[
+  `Dacă Audacity e încă deschis cu sunetul de la pași, sari la pasul 3. Altfel, pornește Audacity: butonul <b>Start</b>, scrii <b>Audacity</b>, clic pe Audacity. Dacă apare o fereastră de bun venit sau „O nouă versiune…”, închide-o cu ✕ din colțul ei. Nu instala nimic. Dacă vezi pagina <b>Acasă</b>, cu titlul „Proiecte”, nu apăsa nimic acolo: mergi la meniul <b>Fișier</b>.`,
+  `Deschide sunetul: <b>Fișier › Deschide… (File › Open…)</b> sau ${K('Ctrl+O')}. În stânga alegi <b>Descărcări (Downloads)</b>, apoi dublu-clic pe <b>batai-in-usa</b>.`,
+  `Găsește pe ecran, fără să apeși nimic: meniurile, butoanele de redare, afișajul timpului, linia de timp, pista, unda, capul de redare.`,
+  `Apasă <b>Mărește</b> (lupa cu +) până vezi bătăile despărțite, dar cu al doilea grup tot în fereastră: în Audacity 4 cam de 3 ori, în Audacity 3 o dată (acolo sunetul umple de la început fereastra). Dacă al doilea grup a ieșit din fereastră, apasă o dată <b>Micșorează</b>. Numără bătăile din al doilea grup.`,
+  `Dă un clic pe undă chiar înainte de al doilea grup. Afișajul arată cam ${CEAS('00h00m02')}… Clicul să fie pe undă, nu pe linia de timp: în Audacity 3, un clic pe linia de timp pornește și sunetul.`,
+  `Apasă ${S('▶')} <b>Redare</b> (sau bara de spațiu), ascultă al doilea grup, apoi ${S('■')} <b>Stop</b>. Capul de redare s-a întors de unde ai pornit?`,
+  `Apasă ${S('|◀')} (la început), apoi ${S('▶')}. După primul grup, apasă ${S('‖')} <b>Pauză</b>. Apoi continuă: în Audacity 4 apeși ${S('▶')} (e același buton); în Audacity 3 apeși încă o dată ${S('‖')} (${S('▶')} ar porni din nou de la început). Lasă sunetul să meargă până la capăt.`,
+  `Apasă <b>Micșorează</b> (lupa cu −) până vezi tot sunetul.`,
+  `Închide Audacity cu ✕ din colțul din dreapta-sus. La „Dorești să salvezi modificările…?” apasă <b>Nu salva (Don’t save)</b>. În Audacity 3, la „Salvezi proiectul…?”, apasă <b>Nu (No)</b>. Nu apăsa Enter. ${NU_SALVA}`,
+  `Lasă calculatorul cum l-ai găsit: deschide <b>Explorer</b> (dosarul galben din bara de activități, jos), în stânga un clic pe <b>Descărcări (Downloads)</b>, apoi un clic pe <b>batai-in-usa</b> și apasă tasta <kbd>Delete</kbd>. Dacă ai descărcat sunetul de două ori, șterge la fel și <b>batai-in-usa (1)</b>.`
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vii_m2_l11',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/vii/, „Lecția 11”, pasul din laborator înainte de verificare
+  titlu:'Interfața unei aplicații de prelucrare audio / audio-video',
+  marca:'Lecția 11 · <b>Audacity și Clipchamp</b>',
+  h1:'Interfața unei aplicații de prelucrare <em>audio / audio-video</em>',
+  clasa:'a VII-a', unitate:'VII-U2', unitateTitlu:'Aplicații audio și audio-video',
+  competente:['CS.1.2','CS.3.2'], lectii:'11',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.2, CS.3.2 · unitatea VII-U2 „Aplicații audio și audio-video” · lecția 11 din modulul 2 · conținutul: „Interfaţa unei aplicaţii de prelucrare a fișierelor audio respectiv audio-video”',
+  banda:'<span class="bp">▶</span><span class="bc">'+Array.from({length:40},(_,i)=>`<i style="height:${Math.round(10+80*Math.abs(Math.sin(i*1.3)*Math.cos(i*.37)))}%"></i>`).join('')+'<span class="bh"></span></span>',
+  intro:`<p>Înveți două aplicații: <b>Audacity</b>, pentru sunet, și <b>Clipchamp</b>, pentru film. Găsești în ele pista, unda, linia de timp și capul de redare. Asculți cu <b>Redare</b>, <b>Pauză</b> și <b>Stop</b>. Mărești și micșorezi linia de timp. Exersezi întâi în pagină, cu un sunet adevărat: bătăi în ușă. Apoi faci la fel în Audacity, la calculator.</p>
+<p><b>Ai nevoie de:</b> fereastra Word și zoom-ul (lecțiile 2 și 3). Tot din lecția 3: deschiderea unui fișier și dosarul <b>Descărcări (Downloads)</b>. Din clasa a V-a: fișierul și butonul <b>Start</b>.</p>`,
+  cum:`<p><b>Poți lucra singur, fără profesor.</b> Citești un pas, faci exercițiul „Încearcă tu” și gestul scurt din Audacity-ul adevărat. Ca să auzi sunetul, pune căștile; dacă nu ai, dă volumul mic. Pe telefon, butoanele sunt în fereastra simulată.</p>`,
+  nivele:[
+{t:'Interfața unei aplicații de prelucrare audio / audio-video',lectii:[11],continuturi:[PROG],final:true,
+ obiectiv:'recunoști fereastra Audacity și zonele lui Clipchamp, citești pe linia de timp unde e un sunet, muți capul de redare, asculți cu Redare, Pauză și Stop și mărești sau micșorezi linia de timp.',
+ pasi:[
+  /* ---------- pasul 0 ---------- */
+  {t:'La ce folosește',
+   text:`<p>La radio, la un podcast sau la serbarea școlii, cineva <strong>înregistrează</strong> sunete și filme, apoi le curăță și le pune în ordine. Pentru asta folosește o <mark>aplicație de prelucrare audio</mark> (doar sunet) sau <mark>audio-video</mark> (imagine și sunet).</p>
+<p>În lecțiile 11-15 lucrezi cu două: <strong>Audacity</strong>, pentru sunet, și <strong>Clipchamp</strong>, editorul video din Windows 11. Azi înveți doar să te uiți prin ele și să asculți.</p>
+${fig('img/studio-radio.webp',960,720,'Studioul tehnic al unui post de radio: un microfon pe braț, un pupitru de mixaj cu butoane și două ecrane de calculator','Studioul unui post de radio: microfonul, pupitrul de mixaj și calculatoarele pe care se prelucrează sunetul. Foto: L’embellie, <a href="https://commons.wikimedia.org/wiki/File:Studio_technique_radio_JVA.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0</a>.')}`},
+  /* ---------- pasul 1 ---------- */
+  {t:'Fereastra Audacity: pista și unda',
+   text:`<ul><li>Sus, <strong>meniurile</strong> (Fișier, Editează…) și <strong>butoanele de redare</strong>.</li>
+<li>Dedesubt, o <mark>pistă</mark>: banda lungă pe care stă sunetul; în stânga, numele lui.</li>
+<li>Pe pistă, <mark>unda</mark>: desenul sunetului. Unde e <strong>înaltă</strong>, sunetul e <strong>tare</strong>; unde e aproape o <strong>linie</strong>, e <strong>liniște</strong>.</li></ul>
+${fig('img/audacity-fereastra.webp',1000,295,'Fereastra Audacity cu sunetul batai-in-usa: încadrate cu roșu meniurile, butoanele de redare, afișajul timpului, linia de timp, pista cu unda și capul de redare','Audacity 4, cu sunetul de lucru deschis și mărit de două ori (la deschidere e mai mic, vezi pasul 2). Unda are trei grupuri de linii înalte: trei grupuri de bătăi.')}
+<p class="gest"><b>La calculator, acum:</b> deschide sunetul de lucru în Audacity, ca în „Uite cum”. Câte grupuri de bătăi vezi pe undă?</p>`,
+   exemplu:`<ol><li>Descarcă sunetul: ${DESC} (6 secunde, bătăi în ușă). Ajunge în <b>Descărcări (Downloads)</b>.</li>
+<li>Pornește Audacity: <b>Start</b>, scrii <b>Audacity</b>, clic. O fereastră de bun venit sau „O nouă versiune…” o închizi cu ✕. Dacă vezi pagina <b>Acasă</b>, cu titlul „Proiecte”, nu apăsa nimic acolo: mergi la meniul <b>Fișier</b>.</li>
+<li><b>Fișier › Deschide… (File › Open…)</b>; în stânga, <b>Descărcări</b>; dublu-clic pe <b>batai-in-usa</b>.</li></ol>
+${fig('img/audacity-meniu-fisier.webp',490,555,'Meniul Fișier din Audacity, deschis, cu comanda Deschide și scurtătura Ctrl+O încadrate cu roșu','Meniul <b>Fișier</b>: <b>Deschide…</b> ('+K('Ctrl+O')+').')}`,
+   altfel:`<p>Unda e ca desenul unui creion legat de sunet: sare în sus când se aude ceva tare și merge aproape drept când e liniște. Citind-o, știi unde e sunetul fără să-l asculți.</p>`,
+   incearca:A({vedere:8,
+    q:'În Audacity-ul din pagină, dă un clic pe unda celui de-al <b>doilea</b> grup de bătăi (grupul din mijloc).',
+    teste:[{ce:'Ai dat clic pe al doilea grup de bătăi',clic:[2.3,3.15],cum:'Al doilea grup e cel din mijloc: a doua „pădurice” de linii înalte. Dă un clic chiar pe ea.'}],
+    solutie:[{clic:2.6}],gresit:[{clic:4.7}],
+    ajutor:'Numără de la stânga: primul grup, o bucată de liniște, al doilea grup.',
+    why:'Unda arată unde e sunet: trei grupuri de linii înalte, despărțite de liniște.'}),
+   inca:[
+    A({vedere:8,
+     q:'Dă un clic pe o bucată de <b>liniște</b> dintre două grupuri de bătăi.',
+     teste:[{ce:'Ai dat clic pe liniștea dintre două grupuri',clicIn:[[1.15,2.3],[3.15,4.35]],cum:'Liniștea e acolo unde unda e aproape o linie dreaptă, între grupurile de linii înalte.'}],
+     solutie:[{clic:1.7}],gresit:[{clic:0.5}],
+     ajutor:'Caută între grupuri locul unde unda e aproape o linie.',
+     why:'Unde unda e aproape o linie, nu se aude aproape nimic.'}),
+    {t:'choice',q:'Pe pista unui interviu, unda e foarte înaltă între secundele 10 și 12 și aproape o linie între 12 și 15. Ce auzi între 12 și 15?',
+     o:['Aproape liniște','Cel mai tare sunet','Muzică foarte tare','Nimic, acolo pista s-a terminat'],ok:0,
+     ajutor:'Ce înseamnă o undă aproape dreaptă?',why:'O undă aproape dreaptă înseamnă aproape liniște; pista merge mai departe.'}
+   ]},
+  /* ---------- pasul 2 ---------- */
+  {t:'Linia de timp: secundele și lupele',
+   text:`<p>Deasupra pistei e <mark>linia de timp</mark>: o riglă cu <strong>secunde</strong> (0:00, 0:01, 0:02…). Timpul curge de la <strong>stânga la dreapta</strong>: ce e mai în stânga se aude mai devreme. În Word, textul curge de sus în jos; aici curge în timp.</p>
+<p>Lupele sunt zoom-ul din Word: <strong>Mărește (Zoom In)</strong>, lupa cu +, întinde linia de timp, ca să vezi bătăile una câte una; <strong>Micșorează (Zoom Out)</strong>, lupa cu −, o strânge la loc. Sunetul nu se schimbă.</p>
+<p class="gest"><b>La calculator, acum:</b> apasă de câteva ori <b>Mărește</b> și urmărește secundele de pe linia de timp: se depărtează una de alta. Apoi apasă o dată <b>Micșorează</b>.</p>`,
+   exemplu:`<p>În Audacity 4, la deschidere, sunetul de 6 secunde ocupă o bucată mică, iar linia de timp scrie 0:00, 0:05, 0:10. După 3 clicuri pe <b>Mărește</b> scrie 0:01, 0:02, 0:03, iar bătăile se văd despărțite. În Audacity 3, sunetul umple de la început toată fereastra: acolo ajunge un clic.</p>
+${fig('img/audacity-marire.webp',1000,381,'Aceeași pistă din Audacity de două ori: sus, la deschidere, sunetul ocupă o bucată mică; jos, după trei clicuri pe Mărește, bătăile se văd una câte una și linia de timp arată 0:01, 0:02, 0:03, 0:04','Sus, la deschidere. Jos, după 3 clicuri pe <b>Mărește</b>.')}`,
+   altfel:`<p>E ca atunci când te apropii de o hartă ca să citești numele străzilor: harta e aceeași, doar o vezi mai mare. Mărești ca să vezi detaliile, micșorezi ca să vezi tot drumul.</p>`,
+   incearca:A({
+    q:'Apasă <b>Mărește</b> până când linia de timp scrie fiecare secundă: 0:01, 0:02, 0:03.',
+    teste:[{ce:'Ai apăsat Mărește',mareste:1,cum:'Mărește e lupa cu +, sus, între butoane.'},{ce:'Linia de timp scrie fiecare secundă',pasRigla:1,cum:'Mai apasă o dată Mărește, până vezi 0:01, 0:02, 0:03 pe rând.'}],
+    solutie:[{mareste:3}],gresit:[{micsoreaza:1}],
+    ajutor:'Lupa cu + e lângă butoanele de redare. Apas-o de mai multe ori.',
+    why:'Mărește a întins linia de timp: o secundă ocupă acum mai mult loc, deci încape numărul fiecăreia.'}),
+   inca:[
+    A({start:[{mareste:4}],
+     q:'Linia de timp e mărită foarte tare. <b>Micșorează</b> până vezi tot sunetul, de la începutul lui până la capăt.',
+     teste:[{ce:'Ai apăsat Micșorează',micsoreaza:1,cum:'Micșorează e lupa cu −.'},{ce:'Se vede tot sunetul',vedeTot:true,cum:'Mai apasă Micșorează, până vezi și capătul clipului.'}],
+     solutie:[{micsoreaza:4}],gresit:[{micsoreaza:1}],
+     ajutor:'Apasă lupa cu − de câteva ori.',
+     why:'Micșorează strânge linia de timp, deci încape mai mult timp pe ecran.'}),
+    {t:'choice',q:'Apeși de două ori Mărește. Ce se întâmplă cu sunetul?',
+     o:['Nimic: doar se vede mai lat pe ecran','Se aude mai tare','Devine de două ori mai lung','Se taie în două bucăți'],ok:0,
+     ajutor:'E ca zoom-ul din Word.',why:'Lupele schimbă doar cum vezi linia de timp; sunetul rămâne la fel.'}
+   ]},
+  /* ---------- pasul 3 ---------- */
+  {t:'Capul de redare și afișajul timpului',
+   text:`<p>Pe pistă stă o linie verticală, cu un semn pe linia de timp: <mark>capul de redare</mark>. El arată <strong>momentul</strong> de unde pornește sunetul. Seamănă cu cursorul din Word: acolo arăta unde scrii, aici arată de unde asculți.</p>
+<p>Îl muți cu <strong>un clic pe undă</strong>. <mark>Afișajul timpului</mark>, lângă butoane, spune unde e: ${CEAS('00h00m02.30s')} înseamnă 0 ore, 0 minute, 2,30 secunde. În Audacity 3 afișajul poate arăta altfel, de exemplu ${CEAS('00 h 00 m 02 s')}, fără sutimi: îl citești la fel, ore, minute, secunde.</p>
+<p class="gest"><b>La calculator, acum:</b> dă un clic pe undă chiar înainte de al doilea grup și citește afișajul. Clicul să fie pe undă: în Audacity 3, un clic pe linia de timp pornește și sunetul.</p>`,
+   exemplu:`<p>Un clic pe undă, chiar înaintea celui de-al doilea grup: capul de redare sare acolo, iar afișajul arată ${CEAS('00h00m02.30s')}.</p>
+${fig('img/audacity-cap-redare.webp',1000,199,'Audacity cu linia de timp mărită: capul de redare încadrat, la 2,30 secunde, chiar înaintea celui de-al doilea grup de bătăi; afișajul timpului încadrat arată 00h00m02.30s','Capul de redare, mutat cu un clic la 2,30 secunde.')}`,
+   altfel:`<p>Gândește-te la o melodie pe telefon: punctul de pe bara de jos arată unde ești în melodie. Capul de redare e punctul acela, iar afișajul îți spune minutul și secunda.</p>`,
+   incearca:A({vedere:8,
+    q:'Du capul de redare chiar <b>înainte de al treilea grup</b> de bătăi: dă un clic pe undă, puțin la stânga lui.',
+    teste:[{ce:'Capul de redare e chiar înainte de al treilea grup (între 3,6 și 4,4 secunde)',cap:[3.6,4.38],cum:'Al treilea grup e ultimul. Dă clic pe linia aproape dreaptă, puțin la stânga lui. Dacă nimerești greu, apasă întâi Mărește.'}],
+    solutie:[{clic:4.1}],gresit:[{clic:4.7}],
+    ajutor:'Afișajul trebuie să arate între 00h00m03.60s și 00h00m04.38s.',
+    why:'Un clic pe undă a mutat capul de redare acolo; afișajul arată secunda.'}),
+   inca:[
+    A({vedere:8,
+     q:'Du capul de redare în liniștea dintre <b>primul</b> și <b>al doilea</b> grup.',
+     teste:[{ce:'Capul de redare e între primul și al doilea grup',cap:[1.1,2.35],cum:'Afișajul trebuie să arate între 00h00m01.10s și 00h00m02.35s.'}],
+     solutie:[{clic:1.7}],gresit:[{clic:0.5}],
+     ajutor:'Primul grup e cel din stânga; după el vine o bucată de liniște.',
+     why:'Liniștea dintre grupuri e cam între secundele 1 și 2.'}),
+    {t:'choice',q:'Afișajul timpului arată 00h00m04.50s. Unde e capul de redare?',
+     o:['La 4 secunde și jumătate','La 4 minute și 50 de secunde','La 45 de secunde','La 4 ore și 50 de minute'],ok:0,
+     ajutor:'Citește pe rând: ore (h), minute (m), secunde (s).',why:'00 ore, 00 minute, 04.50 secunde: patru secunde și jumătate.'}
+   ]},
+  /* ---------- pasul 4 ---------- */
+  {t:'Redare, Pauză, Stop',
+   text:`<ul><li>${S('▶')} <strong>Redare (Play)</strong> sau bara de spațiu: pornește sunetul de la capul de redare. Capul merge spre dreapta.</li>
+<li>${S('‖')} <strong>Pauză (Pause)</strong>: oprește pe loc. Ca să continui de acolo:
+<br>– în Audacity 4, ${S('‖')} stă în locul lui ${S('▶')} cât merge sunetul; în pauză redevine ${S('▶')}: îl apeși;
+<br>– în Audacity 3, ${S('‖')} e un buton separat, la stânga lui ${S('▶')}: apeși <strong>încă o dată</strong> ${S('‖')} (${S('▶')} ar porni din nou de unde porniseși).</li>
+<li>${S('■')} <strong>Stop</strong> sau din nou bara de spațiu: oprește și duce capul <strong>înapoi de unde ai pornit</strong>.</li>
+<li>${S('|◀')} și ${S('▶|')} duc capul la începutul și la capătul sunetului.</li></ul>
+${fig('img/audacity-butoane.webp',1000,294,'Butoanele din Audacity de două ori: sus oprit, cu numele Redare, Stop, Început, Sfârșit, Mărește, Micșorează; jos în timpul redării, cu butonul Pauză încadrat în locul lui Redare','Sus, oprit. Jos, în timpul redării: în locul lui ▶ e ‖ (Pauză).')}
+<p class="gest"><b>La calculator, acum (cu căștile):</b> ${S('|◀')}, ${S('▶')}; după primul grup, ${S('‖')}; apoi continuă (Audacity 4: ${S('▶')}; Audacity 3: ${S('‖')}); la final, ${S('■')}.</p>`,
+   exemplu:`<p>Capul stă la 2 secunde. Apeși ${S('▶')}: capul merge spre dreapta, afișajul numără 2,50… 3,00… Apeși ${S('■')}: capul sare înapoi la 2 secunde, iar afișajul arată ${CEAS('00h00m02.00s')}.</p>`,
+   altfel:`<p>E ca la un film pe televizor: Pauză îngheață imaginea și o pornești de unde ai rămas; Stop te scoate din film, iar data viitoare o iei de unde porniseși.</p>`,
+   incearca:A({vedere:8,
+    q:'Ascultă <b>doar al doilea grup</b>: pune capul de redare chiar înainte de el, apasă <b>Redare</b> și, după ce trec cele trei bătăi, apasă <b>Stop</b>, înainte de al treilea grup.',
+    teste:[{ce:'Redarea a pornit chiar înainte de al doilea grup',pornitIntre:[1.2,2.38],cum:'Întâi un clic pe undă chiar înainte de al doilea grup, apoi Redare.'},
+           {ce:'S-a auzit tot al doilea grup',auzit:[2.42,2.95],cum:'Lasă sunetul să meargă până trec cele trei bătăi.'},
+           {ce:'Ai apăsat Stop înainte de al treilea grup',stopInainte:4.4,cum:'Apasă Stop (■) în liniștea de după al doilea grup.'}],
+    solutie:[{clic:2},{reda:1},{asteapta:1.3},{stop:1}],gresit:[{reda:1},{asteapta:7}],
+    ajutor:'Clic pe undă înainte de grupul din mijloc, ▶, așteaptă bătăile, ■.',
+    why:'Redarea a pornit de la capul de redare, iar Stop l-a dus înapoi de unde ai pornit.'}),
+   inca:[
+    A({vedere:8,
+     q:'Redă de la început. În liniștea de după <b>primul</b> grup apasă <b>Pauză</b>; apoi continuă, ca în Audacity 4 (▶ sau bara de spațiu), și lasă sunetul să meargă până la capăt.',
+     teste:[{ce:'Ai făcut Pauză după primul grup și ai continuat',pauzaIntre:[1.0,2.38],cum:'Pauza e butonul ‖, care apare în locul lui ▶ cât merge sunetul.'},
+            {ce:'Sunetul a mers până la capăt',capat:true,cum:'După Pauză apasă ▶ (sau bara de spațiu) și nu-l mai opri.'}],
+     solutie:[{reda:1},{asteapta:1.5},{pauza:1},{reda:1},{asteapta:6}],gresit:[{reda:1},{asteapta:7}],
+     ajutor:'▶, așteaptă primul grup, ‖, apoi ▶.',
+     why:'Pauza a oprit pe loc, iar ▶ a continuat de acolo. În Audacity 3 continui cu încă un ‖.'}),
+    {t:'choice',q:'Capul de redare stă la 1 secundă. Apeși Redare, iar la 3 secunde apeși Stop. Unde stă acum capul de redare?',
+     o:['La 1 secundă, de unde ai pornit','La 3 secunde, unde ai oprit','La 0, la începutul sunetului','La capătul sunetului'],ok:0,
+     ajutor:'Ce face Stop cu capul de redare?',why:'Stop îl duce înapoi de unde a pornit redarea, ca să poți asculta din nou aceeași bucată.'}
+   ]},
+  /* ---------- pasul 5 ---------- */
+  {t:'Clipchamp: aceleași idei, alte zone',
+   text:`<p><strong>Clipchamp</strong> lucrează cu imagine și sunet:</p>
+<ul><li>în stânga, <strong>Conținutul meu media (Your media)</strong>: biblioteca, cu filmările, pozele și sunetele aduse pentru film;</li>
+<li>sus, <strong>previzualizarea</strong>: ecranul pe care vezi filmul. Dedesubt ai ${S('|◀')}, ↺5, ${S('▶')} și ↻5; buton ${S('■')} Stop nu are;</li>
+<li>jos, <strong>linia de timp</strong>, cu materialele pe rânduri numite tot <strong>piste</strong>: imagini (video), sunete (audio), text. O bucată de pe o pistă e un <mark>clip</mark>;</li>
+<li>capul de redare: linia verticală. Îl muți cu un clic pe rigla cu secunde.</li></ul>
+${fig(J+'clipchamp-zone.webp',1000,584,'Editorul video Clipchamp, cu patru zone încadrate și numite cu litere mari: biblioteca, previzualizarea, bara de unelte și linia de timp','Clipchamp: <b>biblioteca</b>, <b>previzualizarea</b> și, jos, <b>linia de timp</b>.')}
+<p class="gest"><b>Clipchamp cere cont Microsoft.</b> Azi îl recunoști din poze și din simulator.</p>`,
+   exemplu:`${fig(J+'clipchamp-cursor.webp',760,264,'Linia de timp din Clipchamp, cu capul de redare (linie verticală) la secunda 9,30 și două clipuri de text unul după altul, pe aceeași pistă','Capul de redare, la 0:09.30, și două clipuri cu text, unul după altul. În poză scrie „cursorul de redare”: e tot capul de redare.')}
+<p>Previzualizarea arată ce e sub capul de redare: imaginea, textul peste ea, iar muzica se aude.</p>`,
+   incearca:{t:'match',q:'Leagă fiecare zonă din Clipchamp de ce găsești în ea.',
+    pairs:[['Conținutul meu media','Filmările, pozele și sunetele aduse pentru film'],['Previzualizarea','Ecranul pe care vezi filmul'],['Linia de timp','Pistele, cu materialele puse în ordine'],['Capul de redare','Linia verticală care arată momentul']],
+    ajutor:'Recitește lista din pas: ce e în stânga, sus, jos.',why:'Materialele pleacă din bibliotecă, se așază pe linia de timp și se văd în previzualizare.'},
+   inca:[
+    C({q:'Filmul reporterului: du capul de redare în clipul <b>Întrebarea reporterului</b> (apasă pe rigla cu secunde, deasupra lui), apoi apasă ▶ <b>Redare</b> sub previzualizare.',
+     teste:[{ce:'Redarea a pornit în clipul „Întrebarea reporterului”',redatInClip:'v2',cum:'Apasă pe rigla cu secunde chiar deasupra clipului „Întrebarea reporterului”, apoi ▶.'}],
+     solutie:[{rigla:6},{reda:1},{asteapta:0.4},{pauza:1}],gresit:[{reda:1},{asteapta:0.4},{pauza:1}],
+     ajutor:'Clipul e pe pista video, al doilea din stânga.',
+     why:'Previzualizarea a arătat clipul de sub capul de redare.'}),
+    {t:'choice',q:'În Clipchamp, unde te uiți ca să vezi filmul, cu textul peste imagine?',
+     o:['În previzualizare','În Conținutul meu media','Pe rigla cu secunde','În meniul Fișier'],ok:0,
+     ajutor:'Care zonă e un ecran?',why:'Previzualizarea arată filmul așa cum îl va vedea privitorul.'}
+   ]}
+ ],
+ atelier:A({titlu:'Atelier: pregătește ascultarea',
+  intro:`<p>Ca la radio, înainte de emisiune: pregătești sunetul în Audacity-ul din pagină. Sub fereastră vezi <strong>testele</strong>: fiecare se bifează ✔ singur când partea lui e gata.</p>`,
+  q:'(1) Apasă <b>Mărește</b> o dată: al treilea grup rămâne pe ecran. Dacă ai apăsat de mai multe ori și nu-l mai vezi, apasă <b>Micșorează</b> până îl vezi din nou. (2) Pune capul de redare chiar înainte de <b>al treilea</b> grup. (3) Apasă <b>Redare</b> și ascultă tot al treilea grup (poți lăsa sunetul să meargă până la capăt). (4) La final, apasă <b>|◀ Început</b>, ca să lași capul de redare la 0:00 pentru colegul următor.',
+  teste:[{ce:'Ai mărit linia de timp',mareste:1,cum:'Apasă lupa cu + (Mărește).'},
+         {ce:'Redarea a pornit chiar înainte de al treilea grup',pornitIntre:[3.6,4.38],cum:'Un clic pe undă chiar înainte de al treilea grup, apoi ▶.'},
+         {ce:'S-a auzit tot al treilea grup',auzit:[4.42,4.95],cum:'Lasă sunetul să meargă până trec cele trei bătăi.'},
+         {ce:'La final, capul de redare e la 0:00, cu sunetul oprit',inceputLaFinal:true,cum:'Când sunetul s-a oprit (singur sau cu ■), apasă |◀ (Început). Cât merge sunetul, |◀ e stins.'}],
+  solutie:[{mareste:1},{clic:4.1},{reda:1},{asteapta:2.5},{inceput:1}],gresit:[{mareste:1},{clic:4.1},{reda:1},{asteapta:2.5}],
+  ajutor:'Mărește; clic pe undă înainte de ultimul grup; ▶; așteaptă; |◀.',
+  why:'Ai citit unda, ai mutat capul de redare, ai ascultat și ai lăsat totul pregătit.',
+  inca:[
+   C({q:'Încă unul, în Clipchamp: (1) du capul de redare în clipul <b>Răspunsul bibliotecarei</b> (clic pe rigla cu secunde, deasupra lui); (2) apasă <b>Mărește</b>, la colțul liniei de timp; (3) apasă ▶ și urmărește previzualizarea.',
+    teste:[{ce:'Ai mărit linia de timp',mareste:1,cum:'Butonul Mărește e la colțul liniei de timp.'},
+           {ce:'Redarea a pornit în clipul „Răspunsul bibliotecarei”',redatInClip:'v3',cum:'Clipul e ultimul de pe pista video. Apasă pe rigla cu secunde deasupra lui, apoi ▶.'}],
+    solutie:[{rigla:12},{mareste:1},{reda:1},{asteapta:0.4},{pauza:1}],gresit:[{rigla:12},{reda:1},{asteapta:0.3},{pauza:1}],
+    ajutor:'Rigla cu secunde deasupra ultimului clip video, apoi Mărește, apoi ▶.',
+    why:'Ca în Audacity: întâi muți capul de redare, apoi redai de acolo.'})
+  ]}),
+ qs:[
+  {t:'choice',q:'Pe pista din Audacity, unda e aproape o linie între secundele 0 și 3, apoi foarte înaltă între 3 și 4. Când se aude cel mai tare?',
+   o:['Între secundele 3 și 4','Între secundele 0 și 3','Tot timpul la fel de tare','Doar la secunda 0'],ok:0,
+   ajutor:'Unda înaltă înseamnă…',why:'Unda înaltă înseamnă sunet tare; între 0 și 3 e aproape liniște.'},
+  A({vedere:8,
+   q:'Redă <b>doar primul grup</b> de bătăi: pornește de la început și apasă <b>Stop</b> în liniștea de după el, înainte de al doilea grup.',
+   teste:[{ce:'Redarea a pornit de la început',pornitIntre:[0,0.2],cum:'Capul de redare trebuie să fie la 0:00 (|◀) când apeși ▶.'},
+          {ce:'S-a auzit primul grup',auzit:[0.45,0.85],cum:'Lasă sunetul să meargă până trec bătăile din primul grup.'},
+          {ce:'Ai apăsat Stop după primul grup, înainte de al doilea',stopIntre:[0.9,2.4],cum:'Apasă ■ în liniștea dintre primul și al doilea grup.'}],
+   solutie:[{inceput:1},{reda:1},{asteapta:1.5},{stop:1}],gresit:[{reda:1},{asteapta:3},{stop:1}],
+   ajutor:'▶ de la 0:00, apoi ■ în prima liniște.',
+   why:'Ai ascultat doar bucata dorită: Redare de la început, Stop în liniște.'}),
+  {t:'choice',q:'Capul de redare stă la 3 secunde. Apeși Redare, la 4 secunde apeși Pauză, apoi continui (în Audacity 4 cu ▶, în Audacity 3 cu încă un ‖). De unde continuă sunetul?',
+   o:['De la 4 secunde, unde ai făcut pauză','De la 3 secunde, de unde ai pornit','De la 0, de la început','De la capătul sunetului'],ok:0,
+   ajutor:'Pauza oprește pe loc.',why:'Pauza ține capul de redare pe loc, iar butonul care continuă pornește de acolo. Stop l-ar fi dus înapoi.'},
+  {t:'classify',q:'Unde găsești fiecare lucru?',cats:['Doar în Audacity','Doar în Clipchamp','În amândouă'],
+   items:[['O linie de timp cu secunde',2],['Capul de redare, o linie verticală',2],['Previzualizarea, ecranul cu imaginea',1],['Biblioteca „Conținutul meu media”',1],['Butonul ■ Stop, care duce capul înapoi de unde a pornit',0]],
+   ajutor:'Care aplicație arată și imagine?',why:'Amândouă au linie de timp și cap de redare; previzualizarea și biblioteca sunt ale editorului video; ■ Stop e în bara Audacity.'},
+  {t:'choice',q:'Cele trei bătăi ale unui grup se văd ca o singură dungă subțire. Ce apeși ca să le vezi una câte una?',
+   o:['Mărește (lupa cu +)','Micșorează (lupa cu −)','■ Stop','▶| (la capăt)'],ok:0,
+   ajutor:'Care lupă întinde linia de timp?',why:'Mărește întinde linia de timp, deci bătăile se văd despărțite.'}
+ ]}
+  ],
+  aplicatieReala:{aplicatie:'Audacity-ul adevărat',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+   intro:`<p>Lucrezi singur, în Audacity, cu sunetul de lucru. Pune căștile; dacă nu ai, dă volumul mic, ca să nu-i deranjezi pe colegi. N-ai descărcat încă sunetul? ${DESC}.</p>`,
+   pasi:PROVOCARE},
+  diploma:{titlu:'Ascultător atent în Audacity',
+   rezumat:'a recunoscut fereastra Audacity (pista, unda, linia de timp, capul de redare, afișajul timpului) și zonele lui Clipchamp, a mutat capul de redare, a ascultat cu Redare, Pauză și Stop și a mărit și micșorat linia de timp',
+   aplicatie:'Audacity-ul adevărat',
+   provocare:PROVOCARE},
+  tipuri:{audiolinie:TipAudioLinie}
+});
+</script>
+</body>
+</html>
