@@ -355,6 +355,14 @@
       };
       if (motiv) { unde.motiv = motiv; o.plecat = unde; } else o.acum = unde;
       if (!motiv) { revenireLa = 0; clearTimeout(tRevenire); }   // orice „acum” anunță și revenirea (vezi revino)
+      /* ID-UL CERERII (bucla 10.10.2026, retrimitere-dubla-semn-fals): coada cu secunde / evenimente primește un rid la prima
+         trimitere, iar inapoi() îl păstrează pe coada unită. Dacă cererea a ajuns totuși (răspunsul pierdut, 5xx după ce serverul
+         a scris), serverul scade la retrimitere ce a primit deja pe rid (nu le adună de două ori și nu le taie ca păcăleală).
+         rep = momentul primei încercări, trimis doar la retrimitere. Serverul vechi ignoră ambele câmpuri. */
+      var rep = !!c.rid;
+      if (!rep && (Object.keys(c.pag).length || c.ev.length)) { c.rid = idNou().slice(0, 20); c.rt = Date.now(); }
+      if (c.rid) o.rid = c.rid;
+      if (rep) o.rep = new Date(c.rt || Date.now()).toISOString();
       var corp = JSON.stringify(o);
       sterge(K_COADA);
       if (laInchidere && navigator.sendBeacon) { navigator.sendBeacon(server, new Blob([corp], { type: 'text/plain' })); return; }
@@ -442,6 +450,9 @@
     var n = citeste(K_COADA, null) || { pag: {}, ev: [] };
     Object.keys(c.pag).forEach(function (p) { var a = n.pag[p] || { t: c.pag[p].t, s: 0, n: 0 }; a.s += c.pag[p].s; a.n += c.pag[p].n; n.pag[p] = a; });
     n.ev = c.ev.concat(n.ev).slice(-30); n.de = Math.min(n.de || Date.now(), c.de || Date.now());
+    // același rid pe coada unită (vezi „ID-UL CERERII” în trimite). Limita: dacă n are deja alt rid (altă filă a pus înapoi o
+    // cerere căzută în aceeași clipă), rămâne al ei, iar partea lui c, dacă ajunsese, se poate aduna de două ori (ca înainte)
+    if (c.rid && !n.rid) { n.rid = c.rid; n.rt = c.rt; }
     scrie(K_COADA, n);
   }
   addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') pleaca(seInchide ? 'inchis' : 'ascuns', true); else if (pornit) sincron(); });
