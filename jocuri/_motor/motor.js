@@ -533,7 +533,10 @@ function startLevel(i,la,nota){
   const Lv=C.nivele[i];let pick=null;
   if(Lv.bazin){const t=trage(Lv,i);Lv.qs=t.qs;pick=t.pick}
   scurge();   // secundele nivelului de dinainte intră la el
-  R={li:i,qi:0,max:0,qm:0,punctat:{},atts:{},xp:0,first:0,streak:0,phase:Lv.pasi?'learn':'read',pick,si:0,vazutPas:{},pv:{},indiciu:{},mode:'test'};
+  /* tq/tr/qm0: CRONOMETRUL PE ÎNTREBARE (vezi „RĂSPUNSURI PREA RAPIDE” la question); qm0 = cea mai mare întrebare atinsă
+     ÎNAINTE de deschiderea asta (din sertar, unit și cu celelalte aparate) - cele până la ea nu se cronometrează */
+  R={li:i,qi:0,max:0,qm:0,punctat:{},atts:{},xp:0,first:0,streak:0,phase:Lv.pasi?'learn':'read',pick,si:0,vazutPas:{},pv:{},indiciu:{},mode:'test',
+    tq:{},tr:{},qm0:numar((sertarLv()[i]||{}).qm)};
   noteaza(i,l=>{if(Lv.pasi)l.pn=Lv.pasi.length;if(Lv.atelier&&l.at==null)l.at=0});   // văzut (v), t0/t1
   if(la!=null){mergiLa(la);arataNota(nota);return}
   if(Lv.pasi)learnPage();else readPage();
@@ -731,6 +734,11 @@ function readPage(){
 function question(){
   const Lv=C.nivele[R.li],Q=Lv.qs[R.qi];R.mode='test';R.att=R.atts[R.qi]||0;R.done=false;R.max=Math.max(R.max,R.qi);
   const qn=R.qi+1;R.qm=Math.max(R.qm||0,qn);R.proaspat=!R.punctat[R.qi];   /* proaspăt = nerezolvată încă în deschiderea asta */
+  /* RĂSPUNSURI PREA RAPIDE (10.10.2026, contramăsura P5 din pacaleli_si_contramasuri.md): cronometrul pornește la PRIMA
+     afișare a întrebării în deschiderea asta și se oprește la primul răspuns (resolve). Se cronometrează DOAR întrebările pe
+     care elevul nu le atinsese niciodată (peste qm0): una deja văzută (reîncărcare, „Pasul anterior”, alt aparat cu cod,
+     reluare) poate primi un răspuns rapid cinstit, din memorie. endLevel trimite câte au fost sub 3 s, din câte. */
+  if(R.tq&&qn>R.qm0&&!R.punctat[R.qi]&&R.tq[R.qi]==null)R.tq[R.qi]=Date.now();
   noteaza(R.li,l=>{const ul='q'+qn;if(numar(l.qm)>=qn&&l.ul===ul)return false;   /* cea mai mare întrebare atinsă (qm), ultimul pas (ul) */
     l.qm=Math.max(numar(l.qm),qn);l.ul=ul});
   const sarite=R.proaspat&&Lv.qs.some((_,k)=>k<R.qi&&!R.punctat[k]);   /* a intrat direct aici (bara, „Continuă”): vezi showNext */
@@ -778,6 +786,8 @@ function resolve(correct,msg){
   if(R.mode==='practice')return resolvePractice(correct,msg);
   const Q=C.nivele[R.li].qs[R.qi];
   if(R.done)return;
+  /* primul răspuns la o întrebare cronometrată (vezi „RĂSPUNSURI PREA RAPIDE” la question): cât a trecut de la afișare */
+  if(R.tq&&R.tq[R.qi]!=null&&R.tr[R.qi]==null&&!R.punctat[R.qi])R.tr[R.qi]=Math.max(0,Date.now()-R.tq[R.qi]);
   if(R.punctat[R.qi]){   // pas refăcut după „Pasul anterior”: doar exercițiu, fără XP a doua oară
     if(correct){R.done=true;feedback('ok',`<strong>Corect!</strong> (punctele pentru pasul ăsta le-ai primit deja)<br>${Q.why}`);showNext()}
     else{R.att++;feedback('bad',`<strong>Nu încă.</strong> ${msg||''}`)}
@@ -1006,10 +1016,14 @@ function endLevel(){
      spune că a fost terminat înainte de „Ia-o de la capăt”); cât stă „Ești tot X?”, merge în @_tinut și prezenta.js
      (mutaJoc) n-o dă lui X dacă X terminase deja nivelul */
   const bune=R.first;
-  noteaza(R.li,l=>{l.ul='gata';if(!l.p1&&(deoparte||(!terminatInainte&&!l.fp)))l.p1={b:bune,t:n,c:Date.now()}});
+  let primaTerminare=false;
+  noteaza(R.li,l=>{l.ul='gata';if(!l.p1&&(deoparte||(!terminatInainte&&!l.fp))){l.p1={b:bune,t:n,c:Date.now()};primaTerminare=true}});
   if(C.nivele[R.li].bazin)marcheazaVazut(R.li,R.pick);
   const next=R.li+1<C.nivele.length;
-  raporteaza({tip:'nivel',nivel:R.li+1,stele:S.lv[R.li].stars,max:3});
+  /* P5: câte întrebări cronometrate au avut primul răspuns sub 3 s (rap), din câte (rq); rel = nu e prima terminare a nivelului
+     (reluarea nu dă semnul în panou: răspunsurile se știu). Fără nicio întrebare cronometrată, nivelul pleacă exact ca înainte. */
+  const tr=Object.values(R.tr||{}),rapid=tr.length?{rap:tr.filter(x=>x<3000).length,rq:tr.length,...(primaTerminare&&!terminatInainte?{}:{rel:1})}:{};
+  raporteaza({tip:'nivel',nivel:R.li+1,stele:S.lv[R.li].stars,max:3,...rapid});
   try{if(window.Prezenta&&window.Prezenta.salveaza)window.Prezenta.salveaza()}catch(x){}
   if(!dinainte&&C.nivele.every((_,i)=>facut(S.lv[i])))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3});
   const LE=eLectie();

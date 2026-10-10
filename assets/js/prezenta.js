@@ -48,6 +48,20 @@
   function ziAzi() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
   function idNou() { var a = new Uint8Array(16); crypto.getRandomValues(a); return Array.prototype.map.call(a, function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }
   function scurt(nume) { var w = String(nume || '').trim().split(/\s+/); return w.length > 1 ? w[w.length - 1] + ' ' + w[0].charAt(0) + '.' : w[0] || ''; }
+  /* ID-UL APARATULUI (10.10.2026, contramăsurile P7 și P8 din pacaleli_si_contramasuri.md). `id` se schimbă la „Sunt alt elev”
+     / „Schimbă elevul”, deci serverul nu putea vedea că două nume au lucrat pe ACELAȘI telefon (un elev care face lecția în
+     locul colegului) și nici deosebi același elev pe două aparate de altcineva cu numele lui. `ap` = 32 de semne aleatoare,
+     făcute o singură dată pe browser și ținute în lh_aparat: NU se șterge la schimbarea elevului, la ieșire sau la „Ești tot X?”
+     și nu conține nimic despre elev. Pleacă lângă id, în cererile care există deja (nicio cerere în plus). Fără localStorage:
+     unul nou pe pagină (nu leagă nimic, deci nici nu poate da un semn fals). */
+  var K_AP = 'lh_aparat', apMem = null;
+  function aparat() {
+    var a = citeste(K_AP, null);
+    if (typeof a === 'string' && /^[a-f0-9]{32}$/.test(a)) return a;
+    if (!apMem) apMem = idNou();
+    scrie(K_AP, apMem);
+    return apMem;
+  }
 
   var DATE = null, server = null;
   function incarcaDate() {
@@ -350,6 +364,7 @@
       var o = {
         id: eu.id, scoala: eu.scoala, clasa: eu.clasa, numeEnc: eu.numeEnc, scoalaText: eu.scoalaText,
         h: eu.h || null,   // amprenta progresului: jurnalul elevului găsește pe server toate aparatele lui
+        ap: aparat(),      // id-ul aparatului (P7, P8): același pentru toți elevii de pe browserul ăsta
         pag: Object.keys(c.pag).map(function (p) { return { p: p, t: c.pag[p].t, s: c.pag[p].s, n: c.pag[p].n }; }),
         ev: c.ev
       };
@@ -1409,6 +1424,7 @@
 
   window.Prezenta = {
     versiune: 'plecat-pas-2026-10-10',   // marcajul pentru verificarea live (10.10: h, acum.pas, plecat, ev „pas”, cadența de 5 minute)
+    contramasuri: 'ap-rapid-2026-10-10',  // marcajul contramăsurilor P5/P7/P8 (ap, rap/rq/rel) pentru verificarea live, la publicare
     identitate: identitate,
     iesi: function () { if (eElev()) iesi(); },
     /* 'activ' | 'intreaba' | 'vizitator' | 'necunoscut' — motor.js ține nivelurile deoparte cât e 'intreaba' */
@@ -1432,6 +1448,11 @@
       var x = { tip: e.tip, joc: e.joc, titlu: e.titlu || '', nivel: e.nivel, din: e.din, stele: e.stele, max: e.max, cand: new Date().toISOString() };
       // sinc (bucla 10.10.2026, T1): motor.js retrimite la deschiderea paginii nivelurile terminate cândva; nu sunt progres de azi
       if (e.sinc) x.sinc = 1;
+      /* rap / rq / rel (10.10.2026, P5 „răspunsuri prea rapide”): motor.js le pune pe un nivel terminat acum, când a cronometrat
+         întrebări văzute prima dată (rq = câte, rap = câte au avut primul răspuns sub 3 s, rel = reluare); merg mai departe neatinse */
+      if (!e.sinc && e.tip === 'nivel' && e.rq > 0 && e.rq % 1 === 0 && e.rap >= 0 && e.rap % 1 === 0 && e.rap <= e.rq) {
+        x.rap = e.rap; x.rq = e.rq; if (e.rel) x.rel = 1;
+      }
       c.ev.push(x);
       c.ev = c.ev.slice(-30); if (!c.de) c.de = Date.now();
       if (K === K_TINUT) c.u = Date.now();

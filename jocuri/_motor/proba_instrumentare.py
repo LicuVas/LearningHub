@@ -620,7 +620,8 @@ def motor_vechi_citeste(br, url, nod, motor, prezenta):
 # ---------------- mutanții ----------------
 MUTANTI = [
     ("M1 unirea de pe server ia minimul la ind/ara/sec", "unire", "o[k] = Math.max(numar(p[k]), numar(l[k]));", "o[k] = Math.min(numar(p[k]), numar(l[k]));"),
-    ("M2 p1 se suprascrie la reluare", "motor", "if(!l.p1&&(deoparte||(!terminatInainte&&!l.fp)))l.p1=", "if(true)l.p1="),
+    # 10.10.2026 (P5): ținta are acum acolade (endLevel notează și primaTerminare); mutantul e același: p1 scris la orice final
+    ("M2 p1 se suprascrie la reluare", "motor", "if(!l.p1&&(deoparte||(!terminatInainte&&!l.fp))){l.p1=", "if(true){l.p1="),
     ("M3 mutarea din @_tinut pierde câmpurile noi", "prezenta", "if (!areNoi(a, b)) return Object.assign({}, b, {", "if (true) return Object.assign({}, b, {"),
     ("M4 indiciul cerut cât stă întrebarea nu ajunge în @_tinut", "motor", "if(inAsteptare()){scrieIn(C.cheie+'@_tinut',i,fn,t,true);", "if(false){scrieIn(C.cheie+'@_tinut',i,fn,t,true);"),
     ("M5 save() fără unire cu discul", "motor", "if(d&&d.lv&&typeof d.lv==='object'){const lv=", "if(false){const lv="),
