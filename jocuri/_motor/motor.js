@@ -601,17 +601,31 @@ function practiceList(P){return [P.incearca].concat(P.inca||[]).filter(Boolean)}
    deblocarea. Doar citire: fără verificare și fără atelier, fără puncte; S, progresul, jurnalul și diploma rămân
    neatinse (save() nu scrie nimic, load() nu mută nimic între sertare, prezenta.js nu se încarcă). „Încearcă tu” din
    pași rămâne, fără puncte, ca în jocul obișnuit. Cuprinsul = aceeași pagină FĂRĂ parametru (încărcare obișnuită).
-   Doctrina rămâne: nivelurile se DESCHID tot pe rând; recitirea doar citește. Pe o lecție (mod:'lectie') parametrul
-   e ignorat: lecția are un singur nivel, iar pașii ei se deschid oricum liber. */
+   Doctrina rămâne: nivelurile se DESCHID tot pe rând; recitirea doar citește. Pe o lecție (mod:'lectie') ?recitire e
+   ignorat: lecția are un singur nivel.
+   VEZI (10.10.2026, pentru fișele „Cum fac…?”): pe o LECȚIE, ?vezi=pN (N de la 1, ca P1…Pn din bară) deschide DIRECT pasul
+   de învățat N în aceeași recitire (doar citire: nu scrie sertarul, fără puncte, fără prezenta.js), chiar dacă elevul n-a
+   ajuns la el sau n-are profil. Parametrul se scoate din adresă după folosire. ?vezi= necunoscut sau un pas care nu există =
+   încărcare obișnuită. Altceva decât ?pas= (legăturile din jurnal, care deschid pasul ÎN LUCRU, vezi „LEGĂTURI DIRECTE”). */
 const urlCuprins=()=>location.pathname;
+const felCuprins=()=>eLectie()?'lecției':'jocului';
+let VEZI_SI=0;   // pasul de la care pornește recitirea (?vezi=pN pe lecții); 0 = primul pas
 function paramRecitire(){try{return new URLSearchParams(location.search).get('recitire')}catch(e){return null}}
-function recitireBanda(){return `<div class="recitire-banda" role="note"><span><b>Recitire</b> — nu se notează și nu deschide nivelul</span><a class="btn ghost sm" href="${esc(urlCuprins())}">Cuprinsul jocului</a></div>`}
+function paramVezi(){
+  let q;try{q=new URLSearchParams(location.search)}catch(e){return null}
+  const m=/^p(\d+)$/i.exec(String(q.get('vezi')||'').trim()),Lv=C.nivele[0],N=m?Number(m[1]):0;
+  if(!m||!Lv||!Lv.pasi||N<1||N>Lv.pasi.length)return null;
+  VEZI_SI=N-1;q.delete('vezi');
+  try{const s=q.toString();history.replaceState(history.state,'',location.pathname+(s?'?'+s:'')+location.hash)}catch(e){}
+  return '1';
+}
+function recitireBanda(){return `<div class="recitire-banda" role="note"><span><b>Recitire</b> — nu se notează${eLectie()?'':' și nu deschide nivelul'}</span><a class="btn ghost sm" href="${esc(urlCuprins())}">Cuprinsul ${felCuprins()}</a></div>`}
 function recitireStart(){
   const t=String(RECITIRE).trim(),n=C.nivele.length,N=/^\d+$/.test(t)?Number(t):NaN,Lv=N>=1&&N<=n?C.nivele[N-1]:null;
   if(!Lv)return recitireMesaj(`Nivelul „${esc(t)}” nu există în acest joc`,`Jocul are ${n} niveluri, numerotate de la 1 la ${n}. Verifică legătura sau deschide cuprinsul jocului.`);
   if(!Lv.pasi||!Lv.pasi.length)return recitireMesaj(`Nivelul ${N} nu are pași de recitit`,
     `Nivelul ${N} („${esc(Lv.t)}”) este ${Lv.bazin?'o rundă de antrenament: întrebări alese la întâmplare, fără pagini de citit':'o pagină de citit urmată de întrebări, fără pași'}. Deschide-l din cuprinsul jocului.`);
-  R={li:N-1,si:0,phase:'learn',recitire:true,qi:0,max:0,punctat:{},atts:{},xp:0,first:0,streak:0,vazutPas:{},pv:{},indiciu:{},mode:'practice'};
+  R={li:N-1,si:Math.min(VEZI_SI,Lv.pasi.length-1),phase:'learn',recitire:true,qi:0,max:0,punctat:{},atts:{},xp:0,first:0,streak:0,vazutPas:{},pv:{},indiciu:{},mode:'practice'};
   recitirePas(false);
 }
 function recitireMesaj(titlu,text){
@@ -619,7 +633,7 @@ function recitireMesaj(titlu,text){
   shell(`${recitireBanda()}
     <h2 style="margin:8px 0 6px" tabindex="-1" id="rec-h">${titlu}</h2>
     <p class="lede">${text}</p>
-    <div class="row" style="margin-top:18px"><a class="btn primary" href="${esc(urlCuprins())}">Cuprinsul jocului</a></div>`);
+    <div class="row" style="margin-top:18px"><a class="btn primary" href="${esc(urlCuprins())}">Cuprinsul ${felCuprins()}</a></div>`);
 }
 function recitirePas(focus){
   const Lv=C.nivele[R.li],n=Lv.pasi.length,P=Lv.pasi[R.si],ex=practiceList(P),ultim=R.si===n-1;R.vazutPas[R.si]=true;R.phase='learn';
@@ -642,8 +656,8 @@ function recitirePas(focus){
     ${ex.length?`<section class="incearca" aria-label="Încearcă tu"><div class="lbl">Încearcă tu <span class="hint">· fără puncte, doar exersezi${ex.length>1?` · ${ex.length} exerciții la dispoziție`:''}</span></div>
       <div class="q" id="pq"></div><div id="body"></div><div id="fb" aria-live="polite"></div><div class="row" id="nav"></div></section>`:''}
     <div class="row pas-nav" style="margin-top:22px">
-      ${R.si?'<button class="btn" id="pas-prev" type="button">← Pasul anterior</button>':`<a class="btn" href="${esc(urlCuprins())}">← Cuprinsul jocului</a>`}
-      ${ultim?`<a class="btn primary" id="pas-gata" href="${esc(urlCuprins())}">Gata — la cuprinsul jocului</a>`:'<button class="btn primary" id="pas-next" type="button">Pasul următor →</button>'}
+      ${R.si?'<button class="btn" id="pas-prev" type="button">← Pasul anterior</button>':`<a class="btn" href="${esc(urlCuprins())}">← Cuprinsul ${felCuprins()}</a>`}
+      ${ultim?`<a class="btn primary" id="pas-gata" href="${esc(urlCuprins())}">Gata — la cuprinsul ${felCuprins()}</a>`:'<button class="btn primary" id="pas-next" type="button">Pasul următor →</button>'}
     </div>`,tabs);
   const af=document.getElementById('altfel');
   if(af)af.onclick=()=>{const t=document.getElementById('altfel-t');t.hidden=!t.hidden;af.setAttribute('aria-expanded',String(!t.hidden));af.textContent=t.hidden?'Nu am înțeles — explică-mi altfel':'Ascunde explicația'};
@@ -782,12 +796,16 @@ function practiceNext(){
     document.getElementById('inca').onclick=()=>{R.pv[R.pKey]=k+1;renderPractice(R.pList,R.pKey);document.getElementById('pq').scrollIntoView({behavior:'smooth',block:'center'})}}
   if(R.pKey==='atelier')R.atelierGata=true;
 }
-function resolve(correct,msg){
+function resolve(correct,msg,gol){
   if(R.mode==='practice')return resolvePractice(correct,msg);
   const Q=C.nivele[R.li].qs[R.qi];
   if(R.done)return;
-  /* primul răspuns la o întrebare cronometrată (vezi „RĂSPUNSURI PREA RAPIDE” la question): cât a trecut de la afișare */
-  if(R.tq&&R.tq[R.qi]!=null&&R.tr[R.qi]==null&&!R.punctat[R.qi])R.tr[R.qi]=Math.max(0,Date.now()-R.tq[R.qi]);
+  /* primul răspuns la o întrebare cronometrată (vezi „RĂSPUNSURI PREA RAPIDE” la question): cât a trecut de la afișare.
+     Nu se socotesc (recenzia din 10.10.2026, semne false pe elevi cinstiți): o verificare fără nimic ales (gol = „Nu ai ales
+     nimic încă”, „Ai găsit 0” fără niciun marcaj) și un clic sub 350 ms de la afișare (al doilea clic al unui dublu-clic pe
+     „Mai departe”, care nimerește întrebarea nouă, vine la ~100-250 ms; nimeni nu citește și răspunde sub 350 ms, iar cel care
+     ghicește la ~0,5 s rămâne prins). Cronometrul merge atunci mai departe, până la răspunsul adevărat. */
+  if(R.tq&&R.tq[R.qi]!=null&&R.tr[R.qi]==null&&!R.punctat[R.qi]&&!gol){const dt=Date.now()-R.tq[R.qi];if(dt>=350)R.tr[R.qi]=dt}
   if(R.punctat[R.qi]){   // pas refăcut după „Pasul anterior”: doar exercițiu, fără XP a doua oară
     if(correct){R.done=true;feedback('ok',`<strong>Corect!</strong> (punctele pentru pasul ăsta le-ai primit deja)<br>${Q.why}`);showNext()}
     else{R.att++;feedback('bad',`<strong>Nu încă.</strong> ${msg||''}`)}
@@ -940,7 +958,7 @@ function huntCod(Q,body){
   const nav=checkButton(()=>{
     const hit=[...marked].filter(k=>T[k].err).length,wrong=marked.size-hit;
     if(hit===total&&wrong===0){showFound();nav.innerHTML='';resolve(true);document.querySelector('#fb .fb').insertAdjacentHTML('beforeend',list())}
-    else{resolve(false,`Ai găsit ${hit} din ${total}${wrong?`, iar ${wrong} ${wrong===1?'marcaj e':'marcaje sunt'} pe cod corect`:''}.${Q.indiciu?' '+esc(Q.indiciu):''}`);
+    else{resolve(false,`Ai găsit ${hit} din ${total}${wrong?`, iar ${wrong} ${wrong===1?'marcaj e':'marcaje sunt'} pe cod corect`:''}.${Q.indiciu?' '+esc(Q.indiciu):''}`,marked.size===0);
       revealButton(()=>{showFound();nav.innerHTML='';giveUp(`toate cele ${total} sunt marcate cu verde.`+list())})}
   });
 }
@@ -974,7 +992,7 @@ TIPURI.hunt=function(Q,body){
   const nav=checkButton(()=>{
     const hit=[...marked].filter(k=>T[k].err).length,wrong=marked.size-hit;
     if(hit===total&&wrong===0){showFound();nav.innerHTML='';resolve(true);document.querySelector('#fb .fb').insertAdjacentHTML('beforeend',list())}
-    else{resolve(false,`Ai găsit ${hit} din ${total}${wrong?`, iar ${wrong} ${wrong===1?'marcaj e':'marcaje sunt'} pe text corect`:''}.${Q.indiciu?' '+esc(Q.indiciu):''}`);
+    else{resolve(false,`Ai găsit ${hit} din ${total}${wrong?`, iar ${wrong} ${wrong===1?'marcaj e':'marcaje sunt'} pe text corect`:''}.${Q.indiciu?' '+esc(Q.indiciu):''}`,marked.size===0);
       revealButton(()=>{showFound();nav.innerHTML='';giveUp(`toate cele ${total} sunt marcate cu verde.`+list())})}
   });
 };
@@ -997,7 +1015,7 @@ TIPURI.pick=function(Q,body){
   const nav=checkButton(()=>{
     const got=label();
     if(got===Q.ans){nav.innerHTML='';resolve(true)}
-    else{resolve(false,got==='—'?'Nu ai ales nimic încă.':`Ai ales ${got}. Caută întâi coloana (litera de sus), apoi rândul (numărul din stânga).`);
+    else{resolve(false,got==='—'?'Nu ai ales nimic încă.':`Ai ales ${got}. Caută întâi coloana (litera de sus), apoi rândul (numărul din stânga).`,got==='—');
       revealButton(()=>{const p=Q.ans.split(':');a=p[0];b=p[1]||null;draw();nav.innerHTML='';giveUp(Q.ans)})}
   });
 };
@@ -1269,7 +1287,7 @@ function porneste(config){
   if(!window.JOCURI_PREREQ)incarcaScript('prerechizite.js').catch(()=>{});   // blocul „Ce trebuie să știi”; primul pas vine după un clic
   ['cheie','titlu','clasa','unitate','unitateTitlu','competente','intro','nivele','diploma'].forEach(k=>{if(C[k]==null)throw new Error('JocMotor: lipsește „'+k+'” din configurație')});
   Object.entries(Object.assign({},EXT,C.tipuri||{})).forEach(([k,v])=>{TIPURI[k]=v.render;if(v.rezolva)REZOLVA[k]=v.rezolva;if(v.gresit)GRESIT[k]=v.gresit});
-  RECITIRE=eLectie()?null:paramRecitire();   // ?recitire=N: doar citire (vezi „RECITIRE”); pe lecții se ignoră
+  RECITIRE=eLectie()?paramVezi():paramRecitire();   // jocuri: ?recitire=N; lecții: ?vezi=pN (doar citire, vezi „RECITIRE” și „VEZI”)
   S=load();
   galerie();   // capturile se deschid pe aceeași pagină (și în recitire)
   if(RECITIRE===null)prezenta();   // recitirea nu intră în jurnal și nu cere înscrierea
