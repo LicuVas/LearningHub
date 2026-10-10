@@ -300,24 +300,41 @@
     atinge();
     laPagina += TICK;
     adaugaInCoada(TICK, false);
-    // a revenit după o plecare anunțată: plecarea se încheie; dacă a lipsit cel puțin un minut, profesorul află acum
-    // că lucrează iar (altfel ar vedea „a plecat” până la următoarea trimitere, peste câteva minute)
-    var revenire = !!plecatTrimis && Date.now() - tPlecat >= REVENIRE_DUPA;
-    plecatTrimis = null; seInchide = false;
-    if (revenire || laPagina === 30 || Date.now() - ((citeste(K_COADA, {}) || {}).de || Date.now()) > TRIMITE_LA) trimite(false);
+    // a revenit după o plecare anunțată: plecarea se încheie și profesorul trebuie să afle că lucrează iar (altfel ar vedea
+    // „inactiv de … a plecat de pe” până la trimiterea periodică, ~5 minute). Revenirea se anunță MEREU, cu un singur „acum”
+    // pe plecare: pe loc, dacă plecarea a fost acum cel puțin un minut; altfel în clipa în care se împlinește minutul
+    // (revino). Bucla 10.10.2026, G2: înainte, după o plecare sub un minut (o notificare, o privire în Excel) nu pleca nimic.
+    if (plecatTrimis) {
+      plecatTrimis = null; seInchide = false; revenireLa = tPlecat + REVENIRE_DUPA;
+      if (revenireLa > Date.now()) programeazaRevenirea();
+    }
+    if ((revenireLa && Date.now() >= revenireLa) || laPagina === 30 || Date.now() - ((citeste(K_COADA, {}) || {}).de || Date.now()) > TRIMITE_LA) trimite(false);
   }, TICK * 1000);
+  /* „acum”-ul de după o plecare scurtă: pleacă la un minut de la plecare, dacă elevul lucrează (pagina în față, cu focus,
+     cu un gest în ultimele 2 minute) și nu a plecat din nou între timp. Orice „acum” trimis îl încheie (trimite). Dacă nu
+     poate pleca acum (o cerere e pe drum, nu mai lucrează), îl trimite următorul semn numărat (revenireLa rămâne). */
+  var revenireLa = 0, tRevenire = 0;
+  function programeazaRevenirea() { clearTimeout(tRevenire); tRevenire = setTimeout(revino, Math.max(0, revenireLa - Date.now())); }
+  function revino() {
+    tRevenire = 0;
+    if (!revenireLa || plecatTrimis || Date.now() < revenireLa) return;
+    if (document.visibilityState !== 'visible' || !document.hasFocus() || Date.now() - ultimaMiscare > FEREASTRA) return;
+    trimite(false);
+  }
 
   /* ---------------- trimiterea ---------------- */
-  var inZbor = false;
+  var inZbor = false, plecatAmanat = null;
   /* motiv (10.10.2026, spec_api.md §2): 'ascuns' | 'inchis' | 'fara-gesturi' = cererea anunță o PLECARE de pe pagina asta
      (plecat: {p, t, pas?, motiv}) în locul lui „acum”; pleacă și cu coada goală. Întoarce true dacă cererea a plecat
      (sau pleacă după ce se află adresa serverului). */
   function trimite(laInchidere, motiv) {
     sincron();   // coada e a celui înscris ACUM pe calculator (altă filă îl poate fi schimbat)
     if (!eElev() || stare() !== 'activ') return false;
-    // o cerere e deja pe drum: așteptăm (două cereri simultane pe același aparat pierd secunde pe server); plecarea de la
-    // închidere nu poate aștepta, deci ea pleacă oricum (mică: de obicei doar pagina și motivul)
-    if (inZbor && !(motiv && laInchidere)) return false;
+    // o cerere e deja pe drum: NU pleacă a doua, nici o plecare (bucla 10.10.2026, G4). Pe server, activ/<id> e citit-modificat-
+    // scris, deci cererea care ajunge a doua (chiar o plecare mică, de la închidere) scria peste ce adusese prima: secundele,
+    // nivelul terminat, nota. Plecarea rămâne deoparte și pleacă după ce se întoarce cererea de pe drum, dacă elevul tot n-a
+    // revenit (dupaZbor); dacă pagina se închide între timp, se renunță la ea (panoul îl arată inactiv după 6 minute fără semn).
+    if (inZbor) { if (motiv && !(plecatAmanat && RANG[plecatAmanat] >= RANG[motiv])) plecatAmanat = motiv; return false; }
     var c = citeste(K_COADA, null);
     if (!motiv && (!c || (!Object.keys(c.pag).length && !c.ev.length))) return false;
     if (!c) c = { pag: {}, ev: [] };
@@ -337,15 +354,23 @@
         ev: c.ev
       };
       if (motiv) { unde.motiv = motiv; o.plecat = unde; } else o.acum = unde;
+      if (!motiv) { revenireLa = 0; clearTimeout(tRevenire); }   // orice „acum” anunță și revenirea (vezi revino)
       var corp = JSON.stringify(o);
       sterge(K_COADA);
       if (laInchidere && navigator.sendBeacon) { navigator.sendBeacon(server, new Blob([corp], { type: 'text/plain' })); return; }
       inZbor = true;
       fetch(server, { method: 'POST', body: corp, keepalive: true }).then(function (r) { if (!r.ok && r.status >= 500) throw 0; })
-        .catch(function () { inapoi(c, al); }).then(function () { inZbor = false; });
+        .catch(function () { inapoi(c, al); }).then(function () { inZbor = false; dupaZbor(); });
     };
     if (server) go(); else if (!laInchidere) incarcaDate().then(go, function () {});
     return true;
+  }
+  // plecarea ținută deoparte cât era o cerere pe drum (G4): pleacă acum, singură, doar dacă elevul tot nu lucrează
+  function dupaZbor() {
+    var m = plecatAmanat; plecatAmanat = null;
+    if (!m) return;
+    if (document.visibilityState === 'visible' && document.hasFocus() && Date.now() - ultimaMiscare <= FEREASTRA) return;   // a revenit
+    pleaca(m, false);
   }
 
   /* ---------------- DE UNDE A PLECAT (10.10.2026) ----------------
@@ -356,13 +381,16 @@
        'inchis'       = pagina închisă sau părăsită (beforeunload / pagehide);
        'fara-gesturi' = pagina în față, dar 2 minute fără niciun gest (o dată, la intrarea în inactiv).
      O singură cerere pe plecare: o plecare „mai mare” (fără gesturi < ascuns < închis) se mai anunță o dată, una egală sau
-     mai mică nu. Primul gest numărat după plecare o încheie (iar dacă a lipsit cel puțin un minut, pleacă și un „acum”).
+     mai mică nu. Primul gest numărat după plecare o încheie, iar revenirea se anunță cu un singur „acum”: pe loc, dacă a
+     lipsit cel puțin un minut, altfel la un minut de la plecare (revino; cel mult o cerere în plus pe plecare).
+     Cu o cerere pe drum, plecarea așteaptă să se întoarcă (dupaZbor), nu pleacă în paralel.
      Ce se numără nu se schimbă: tot doar cu pagina în față și cu mișcare în ultimele 2 minute. */
   var RANG = { 'fara-gesturi': 1, ascuns: 2, inchis: 3 }, REVENIRE_DUPA = 60000;
   var plecatTrimis = null, tPlecat = 0, seInchide = false, tBlur = 0;
   function pleaca(motiv, laInchidere) {
     if (plecatTrimis && RANG[plecatTrimis] >= RANG[motiv]) return;   // aceeași plecare, deja anunțată
-    if (trimite(laInchidere, motiv)) { plecatTrimis = motiv; tPlecat = Date.now(); }
+    // o plecare nouă e starea de acum: un „acum” de revenire încă neplecat nu mai are rost
+    if (trimite(laInchidere, motiv)) { plecatTrimis = motiv; tPlecat = Date.now(); revenireLa = 0; clearTimeout(tRevenire); }
   }
   // pasul din motorul lecției / jocului, dacă pagina are motor (spec_api.md §1); altfel nimic
   function pasAcum() {

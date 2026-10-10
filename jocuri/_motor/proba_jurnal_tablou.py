@@ -17,6 +17,10 @@ TRIMITERILE (assets/js/prezenta.js), pe lecția reală, cu ceasul paginii accele
   (fără `acum`), apoi un „acum” la revenire; P4 o singură plecare „fara-gesturi” după 120 s fără gest; P5 „ascuns” după
   10 s fără focus; P6 o singură plecare „inchis” la părăsirea paginii; P7 cadența: o oră de lucru continuu = cel mult 13
   cereri /api/activitate.
+  Bucla 10.10.2026: P8 (G2) ascundere, revenire după 30 s, lucru cu gesturi -> UN singur „acum”, la 60 s de la plecare
+  (nimic la 55 s, nimic în plus în următoarele 2 minute); P9 (G2) „fara-gesturi”, gest după 20 s -> un „acum” la 60 s de
+  la plecare; P10 (G4) ascunderea cât o cerere e pe drum -> nicio a doua cerere în paralel; plecarea pleacă după ce se
+  întoarce cererea de pe drum.
 Regula 24: situl e servit LOCAL; în browser tot ce nu e 127.0.0.1 e abandonat, iar /api/jurnal, /api/activitate și
 /api/progres primesc răspunsuri inventate de probă (nicio cerere nu pleacă spre teste-vasile). navigator.sendBeacon e
 înlocuit în pagină (ce ar fi trimis se ține în localStorage, ca proba să-l citească). Browserul pornește cu --mute-audio.
@@ -73,6 +77,13 @@ MUTANTI = [
     ("prezenta", "M5 ev „pas” la fiecare atingere", "if (al[k]) return;\n", ""),
     ("prezenta", "M6 cadența veche (3 minute)", "TRIMITE_LA = 300000", "TRIMITE_LA = 180000"),
     ("prezenta", "M7 fără plecarea la 10 s fără focus", "if (document.visibilityState === 'visible' && !document.hasFocus()) pleaca('ascuns', false);", ""),
+    # bucla 10.10.2026 (G2, G4)
+    ("prezenta", "M13 revenirea anunțată doar după un minut de lipsă (cum era)", "revenireLa = tPlecat + REVENIRE_DUPA;",
+     "revenireLa = Date.now() - tPlecat >= REVENIRE_DUPA ? Date.now() : 0;"),
+    ("prezenta", "M14 plecarea pleacă și cu o cerere pe drum (cum era)",
+     "if (inZbor) { if (motiv && !(plecatAmanat && RANG[plecatAmanat] >= RANG[motiv])) plecatAmanat = motiv; return false; }",
+     "if (inZbor && !(motiv && laInchidere)) return false;"),
+    ("prezenta", "M15 plecarea ținută cât e o cerere pe drum se pierde", "inZbor = false; dupaZbor();", "inZbor = false;"),
     ("jurnal", "M8 jurnalul ignoră serverul", "if(SRV&&SRV_ID===e.id){", "if(false){"),
     ("jurnal", "M9 „Continuă” fără ?continua=1", "esc(urm.url+'?continua=1')", "esc(urm.url)"),
     ("jurnal", "M10 legăturile în aceeași filă", "var NOU=' target=\"_blank\" rel=\"noopener\"';", "var NOU='';"),
@@ -92,6 +103,7 @@ class Proba:
         self.probleme, self.externe, self.erori = [], [], []
         self.jurnal_cereri, self.activ, self.progres = [], [], 0
         self.mod_jurnal, self.raspuns_jurnal = "server", {"ok": True, "aparate": 0}
+        self.tine, self.tinute = False, []   # P10: cererile /api/activitate ținute pe drum (fără răspuns, până le dă proba drumul)
 
     def verifica(self, c, ce, det=""):
         if not self.tacut:
@@ -114,6 +126,9 @@ class Proba:
                 return r.fulfill(status=200, headers=cors, body=json.dumps(self.raspuns_jurnal))
             if s.hostname == "teste-vasile.netlify.app" and s.path == "/api/activitate":
                 self.activ.append(r.request.post_data or "")
+                if self.tine:   # P10: cererea rămâne pe drum (răspunsul îl dă proba mai târziu, cu elibereaza)
+                    self.tinute.append(r)
+                    return None
                 return r.fulfill(status=200, headers=cors, body='{"ok":true,"sec":0}')
             if s.hostname == "teste-vasile.netlify.app" and s.path == "/api/progres":
                 self.progres += 1
@@ -424,7 +439,104 @@ class Proba:
         self.verifica(1 <= self.cadenta <= 13 and all(x.get("acum") for x in f), "P7 o oră de lucru continuu: %d cereri /api/activitate (țintă ≤ 13; progresul /api/progres separat: %d)"
                       % (self.cadenta, self.progres - pr0), [list(x.keys()) for x in f][:3])
         pg.clock.resume()
+        pg.close()
+        self._revenire(ctx)
+        self._zbor(ctx)
         ctx.close()
+
+    def acumuri(self, f):
+        return [x for x in f if x.get("acum") and not x.get("plecat")]
+
+    # ---- P8, P9 (G2): revenirea după o plecare scurtă se anunță, cu un singur „acum”, la 60 s de la plecare
+    def _revenire(self, ctx):
+        pg = ctx.new_page()
+        self.pune(pg, {"lh_prezenta": self.eu(id="idrevenire" + "0" * 14), "learninghub_active_profile": "e_rev"})
+        pg.clock.install()
+        self.deschide(pg)
+        self.lucreaza(pg, 36000, 5000)          # prima trimitere (30 s pe pagină) a plecat și s-a întors
+        pg.wait_for_timeout(200)
+        n, nb = len(self.activ), len(self.corpuri(pg)[1])
+        t0 = pg.evaluate("Date.now()")
+        pg.evaluate("__ascunde()")               # P8: plecarea „ascuns” (o notificare pe telefon), la t0
+        _, b = self.corpuri(pg)
+        self.verifica(len(b) - nb == 1 and (b[-1].get("plecat") or {}).get("motiv") == "ascuns",
+                      "P8 ascunderea: o plecare „ascuns”", b[nb:])
+        self.lucreaza(pg, 30000, 10000, cu_gest=False)
+        pg.evaluate("__arata()")                 # revine după 30 s și lucrează cu gesturi
+        self.lucreaza(pg, 25000, 5000)           # t0 + 55 s
+        f55, _ = self.corpuri(pg, n)
+        self.lucreaza(pg, 5000, 5000)            # t0 + 60 s
+        f60, _ = self.corpuri(pg, n)
+        t60 = pg.evaluate("Date.now()") - t0
+        self.lucreaza(pg, 120000, 10000)         # încă 2 minute de lucru
+        f, b2 = self.corpuri(pg, n)
+        self.verifica(not f55 and len(f60) == 1 and len(self.acumuri(f60)) == 1 and t60 == 60000,
+                      "P8 revenire după 30 s: nimic până la 55 s, UN „acum” la 60 s de la plecare (înainte: nimic până la ~5 min)",
+                      {"la 55 s": len(f55), "la %d ms" % t60: [list(x.keys()) for x in f60]})
+        self.verifica(len(f) == 1 and len(b2) == len(b),
+                      "P8 în următoarele 2 minute de lucru: nicio cerere în plus (cel mult o cerere în plus pe plecare)", [list(x.keys()) for x in f])
+        # P9: „fara-gesturi” (un clip urmărit fără să atingă ecranul), apoi un gest după 20 s
+        n = len(self.activ)
+        ta, gasit = None, None
+        for _ in range(40):                      # pași de 5 s fără gest, până pleacă „fara-gesturi”
+            t = pg.evaluate("Date.now()")
+            pg.clock.run_for(5000)
+            pg.wait_for_timeout(15)
+            fg = [x for x in self.corpuri(pg, n)[0] if (x.get("plecat") or {}).get("motiv") == "fara-gesturi"]
+            if fg:
+                ta, gasit = t, fg
+                break
+        if not gasit:
+            self.verifica(False, "P9 „fara-gesturi” n-a plecat în 200 s fără gest")
+        else:
+            n = len(self.activ)
+            pg.clock.run_for(15000)              # plecarea e în (ta, ta + 5 s]; gestul vine la ~20 s după ea
+            pg.wait_for_timeout(15)
+            self.lucreaza(pg, 40000, 5000)       # ta + 60 s: „acum” nu pleacă înainte de 60 s de la plecare
+            f60, _ = self.corpuri(pg, n)
+            self.lucreaza(pg, 5000, 5000)        # ta + 65 s
+            f65, _ = self.corpuri(pg, n)
+            self.lucreaza(pg, 120000, 10000)
+            f, _ = self.corpuri(pg, n)
+            self.verifica(not f60 and len(f65) == 1 and len(self.acumuri(f65)) == 1 and len(f) == 1,
+                          "P9 „fara-gesturi”, gest după 20 s: UN „acum” la 60 s de la plecare (nu înainte), apoi nimic în plus 2 minute",
+                          {"până la 60 s": len(f60), "la 65 s": [list(x.keys()) for x in f65], "total": len(f)})
+        pg.clock.resume()
+        pg.close()
+
+    # ---- P10 (G4): o plecare cât e o cerere pe drum nu pleacă în paralel; pleacă după ce se întoarce cererea
+    def _zbor(self, ctx):
+        pg = ctx.new_page()
+        self.pune(pg, {"lh_prezenta": self.eu(id="idzbor" + "0" * 18), "learninghub_active_profile": "e_zb"})
+        pg.clock.install()
+        self.deschide(pg)
+        n, nb = len(self.activ), len(self.corpuri(pg)[1])
+        self.tine, self.tinute = True, []
+        try:
+            self.lucreaza(pg, 36000, 5000)       # prima trimitere (30 s pe pagină): rămâne PE DRUM
+            pg.wait_for_timeout(300)
+            pe_drum = len(self.tinute)
+            pg.evaluate("__ascunde()")           # elevul ascunde pagina cât cererea e pe drum
+            pg.wait_for_timeout(500)
+            f, b = self.corpuri(pg, n)
+            self.verifica(pe_drum == 1 and len(f) == 1 and len(b) == nb and (f[0].get("acum") or {}).get("p"),
+                          "P10 ascunderea cât o cerere e pe drum: nicio a doua cerere în paralel (nici fetch, nici beacon)",
+                          {"pe drum": pe_drum, "fetch": len(f), "beacon": len(b) - nb})
+        finally:
+            self.tine = False
+            for r in self.tinute:                # cererea de pe drum se întoarce
+                try:
+                    r.fulfill(status=200, headers={"access-control-allow-origin": "*", "content-type": "application/json"}, body='{"ok":true,"sec":30}')
+                except Exception:
+                    pass
+            self.tinute = []
+        pg.wait_for_timeout(500)
+        f, b = self.corpuri(pg, n)
+        dupa = f[1:]
+        self.verifica(len(f) == 2 and len(b) == nb and (dupa[0].get("plecat") or {}).get("motiv") == "ascuns" and "acum" not in dupa[0],
+                      "P10 după ce se întoarce cererea: plecarea „ascuns” pleacă singură (una), tot fără beacon", [list(x.keys()) for x in f])
+        pg.clock.resume()
+        pg.close()
 
 
 class Tacut(http.server.SimpleHTTPRequestHandler):
