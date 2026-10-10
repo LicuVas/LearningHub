@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Măsuri de siguranță în utilizarea Internetului. Programele antivirus</title>
+<meta name="description" content="Lecția 11, clasa a VI-a (TIC): ce programe rău-intenționate vin de pe Internet (virusul, troianul, programul-spion), pe unde intră în calculator, cum închizi o fereastră falsă fără să apeși în ea, ce face antivirusul (Microsoft Defender, în Securitate Windows) și cum verifici un stick sau un fișier. Cu un calculator simulat în pagină și pași de privit și de verificat la calculatorul din laborator.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@600;700&family=Schibsted+Grotesk:wght@400;500;700&family=Spline+Sans+Mono:wght@500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EDF2F4; --paper:#FFFFFF; --paper2:#F3F7F9; --line:#D2DDE2;
+  --ink:#13232B; --ink2:#4B5F69; --accent:#0B5D74; --accentInk:#FFFFFF; --sel:#D5EAF0;
+  --mark:#FFE08A; --markInk:#13232B; --ok:#1E7A4A; --okbg:#E2F3E8; --bad:#B3261E; --badbg:#FBE6E3;
+  --fd:"Familjen Grotesk","Segoe UI",system-ui,sans-serif; --fb:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif; --fm:"Spline Sans Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0D161A; --paper:#152127; --paper2:#1B2A31; --line:#2D3F47;
+  --ink:#E4EEF2; --ink2:#A6BAC3; --accent:#6CC9E0; --accentInk:#0D161A; --sel:#1C4552;
+  --mark:#F2C94C; --markInk:#13232B; --ok:#6FD19A; --okbg:#173226; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0D161A; --paper:#152127; --paper2:#1B2A31; --line:#2D3F47;
+  --ink:#E4EEF2; --ink2:#A6BAC3; --accent:#6CC9E0; --accentInk:#0D161A; --sel:#1C4552;
+  --mark:#F2C94C; --markInk:#13232B; --ok:#6FD19A; --okbg:#173226; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+/* banda de sus: file de browser cu ✕ (o închizi pe cea falsă) și un scut (antivirusul) — doar CSS */
+.banda{display:flex;gap:6px;padding:8px 12px 0;min-height:36px;align-items:flex-end}
+.banda span{flex:0 0 auto;width:58px;height:22px;border:1px solid var(--ink2);border-bottom:0;border-radius:6px 6px 0 0;
+  background:linear-gradient(var(--ink2),var(--ink2)) 7px 9px/26px 3px no-repeat;position:relative}
+.banda span::after{content:"✕";position:absolute;right:5px;top:2px;font-size:11px;color:var(--ink2)}
+.banda span.falsa{border-color:var(--bad);background:linear-gradient(var(--bad),var(--bad)) 7px 9px/26px 3px no-repeat}
+.banda span.falsa::after{color:var(--bad);font-weight:700}
+.banda .scut{width:22px;height:26px;border:0;background:var(--accent);clip-path:polygon(50% 0,100% 18%,92% 62%,50% 100%,8% 62%,0 18%);align-self:center;margin-left:8px}
+.banda .scut::after{content:""}
+h1{font-size:clamp(1.6rem,6.2vw,2.7rem);font-weight:700;letter-spacing:-.01em}
+h1 .acc{color:var(--accent)}
+h2{font-weight:700}
+.nevoie{border-left:4px solid var(--accent);padding:6px 10px;background:var(--paper2);border-radius:0 6px 6px 0}
+figure.captura.ingusta img{max-width:420px}
+figure.captura.mica img{max-width:320px}
+.reading ol li,.reading ul li{margin:.2em 0}
+.descarca{display:inline-block;padding:6px 12px;border:1px solid var(--accent);border-radius:6px;font-weight:600;text-decoration:none;min-height:32px}
+.gest{border-left:4px solid var(--accent);background:var(--paper2);padding:6px 10px;border-radius:0 6px 6px 0;margin:.6em 0 0}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/siguranta-pc.js"></script>
+<script>
+/* ======================================================================================================
+   Lecția VI · M2 · nr. 11 — „Măsuri de siguranță în utilizarea Internetului. Programele antivirus”.
+   Simulatorul: lectii/_sim/siguranta-pc.js (proprietar: această lecție) — tipurile fereastra, scanare, laborator.
+   Faptele despre Windows / Securitate Windows: citite din Windows (resursele aplicației, PowerShell Get-MpComputerStatus,
+   MpCmdRun pe un dosar din _proba) și din paginile Microsoft ro-ro citate în surse.md; aplicația Securitate Windows NU a
+   fost pornită (s-ar fi deschis pe ecranul vizibil al profesorului). Granița: parolele și datele personale = lecția 12;
+   e-mailul și atașamentele = lecțiile 13-15 (nu apar aici).
+   Trimiterile între pași se fac după NUMELE pasului (numărul de pe ecran îl pune motorul).
+   ====================================================================================================== */
+const fig=(cale,w,h,alt,cap,cls)=>`<figure class="captura${cls?' '+cls:''}"><a href="${cale}" target="_blank"><img src="${cale}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const CCBYSA4='<a href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noopener">CC BY-SA 4.0</a>';
+const CONT=['Măsuri de siguranță în utilizarea Internetului (de exemplu, utilizarea programelor de tip antivirus)'];
+const IMG_STICK=fig('../../v/m1-l06/img/stick.webp',420,236,'Un stick USB gri închis, cu capătul de metal în stânga; pe el scrie PNY și 16GB',
+  `Un stick USB: pe el îți aduci tema de acasă. Fotografie: Donald Trung Quoc Don, ${CCBYSA4}, <a href="https://commons.wikimedia.org/wiki/File:PNY_USB_flash_drive_(16GB),_Hillegersberg,_Rotterdam_(2020)_01.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>.`,'mica');
+const IMG_EXE=fig('../../../jocuri/internet-vi/img/fisier-exe.webp',685,260,'Un folder în File Explorer, în vederea cu coloane: fișierul joc_gratis.exe e încadrat cu roșu, iar în coloana Tip, tot încadrat, scrie Aplicație; o etichetă roșie spune: un .exe este un PROGRAM: dacă îl deschizi, pornește. La celelalte fișiere scrie Folder de fișiere, Fișier MP3, IrfanView JPG File sau Microsoft Word Document',
+  'Aici extensiile se văd; pe multe calculatoare <code>joc_gratis.exe</code> apare doar ca <code>joc_gratis</code>, dar coloana <b>Tip</b> spune tot <b>Aplicație</b>: e un program.');
+const IMG_FILA=fig('../../../jocuri/documentare-v/img/bara-browser.webp',1000,248,'Bara de sus a browserului Google Chrome: fila Lup cenușiu - Wikipedia, cu un ✕ mic chiar în dreapta numelui ei; săgeți roșii arată alte butoane: plus pentru filă nouă, Înapoi, Înainte, Reîncarcă, bara de adresă și steaua pentru Favorite',
+  'Fila are chiar lângă nume un <b>✕</b> mic, nu cel din colțul ferestrei: el închide doar fila. Săgețile arată alte butoane ale browserului (Google Chrome).');
+const IMG_SEC=fig('../../../jocuri/internet-vi/img/antivirus-scanare.webp',700,610,'Aplicația Securitate Windows, pagina Protecție antivirus și împotriva amenințărilor: la Amenințări curente scrie Momentan nu există amenințări, ultima scanare, 0 amenințări găsite, 79270 fișiere scanate; dedesubt butonul Scanare rapidă și legăturile Opțiuni de scanare, Amenințări permise, Istoric protecție',
+  'Sus, la <b>Amenințări curente</b>: rezultatul ultimei scanări. Jos, <b>Istoric protecție</b>: ce a blocat antivirusul și ce a pus în carantină. Captură din Windows în română.','ingusta');
+
+const T_LAB=[
+  {c:'falsaInchisa',ce:'Ai închis fila cu fereastra falsă, fără să apeși nimic în ea',ajutor:'Bara de activități → Browser → ✕ de lângă numele filei false. Ai apăsat ceva în pagina falsă? Apasă jos „Ia-o de la capăt”.'},
+  {c:'scanatInainte',ce:'Ai scanat <b>STICK (E:)</b> cu Microsoft Defender înainte să deschizi vreun fișier de pe el',ajutor:'File Explorer → clic dreapta pe STICK (E:) (pe telefon: ții degetul apăsat sau atingi ⋯) → Afișați mai multe opțiuni → Scanați cu Microsoft Defender... Ai deschis deja un fișier de pe stick? „Ia-o de la capăt” și scanează întâi.'},
+  {c:'nr',ce:'Ai scris în căsuța „Răspunsul tău” câte amenințări a găsit scanarea',ajutor:'În Securitate Windows citește rândul „… amenințări găsite.”. Numărul din fața cuvântului „amenințări” îl scrii în căsuța „Răspunsul tău”, de sub calculator.'},
+  {c:'deschisFaraProgram',v:['Tema_6A_Pop','joc_gratis'],ce:'Ai deschis tema (<b>Tema_6A_Pop</b>), iar <b>joc_gratis</b> (Tip: Aplicație) a rămas nepornit',ajutor:'Dublu clic pe STICK (E:), apoi dublu clic pe Tema_6A_Pop (pe telefon: atingi de două ori repede). joc_gratis e un program de pe un site necunoscut: nu-l porni. L-ai pornit? „Ia-o de la capăt”.'}
+];
+
+const LECTIA={
+ t:'Măsuri de siguranță în utilizarea Internetului. Programele antivirus',lectii:[11],continuturi:CONT,final:true,
+ obiectiv:'recunoști programele rău-intenționate și căile pe care intră, închizi o fereastră falsă fără să apeși în ea, știi ce face antivirusul și verifici cu el un stick sau un fișier.',
+ pasi:[
+  /* ---------- pasul 0: la ce folosește ---------- */
+  {t:'La ce folosește',
+   text:`<p>De pe Internet iei lecții, jocuri și filme. Tot de acolo pot veni și programe care strică un calculator sau fură ce e în el. Azi afli ce sunt, pe unde intră, cum le oprește un <strong>program antivirus</strong> și ce faci tu, ca să rămână calculatorul sigur.</p>
+${IMG_STICK}
+<p>De exemplu: îți aduci tema de acasă pe un stick. La școală, înainte s-o deschizi, verifici stickul cu antivirusul.</p>
+<p class="nevoie"><b>Ai nevoie de:</b> din clasa a V-a, fișierele și folderele din File Explorer, cu extensia și coloana Tip (lecția 9), stickul USB (lecția 6), browserul, filele și descărcarea fișierelor (lecțiile 14 și 15), regulile de siguranță pe Internet (lecția 16); din clasa a VI-a, fișierele descărcate din lecții (lecțiile 2-8).</p>`},
+  /* ---------- pasul: programele rău-intenționate ---------- */
+  {t:'Programe rău-intenționate',
+   text:`<p>Un <mark>program rău-intenționat</mark> (în engleză <i>malware</i>, se citește „mal-uer”) e un program făcut ca să strice sau să fure. Trei feluri des întâlnite:</p>
+<ul><li><mark>virusul</mark>: se copiază singur în alte fișiere și trece mai departe odată cu ele, pe stickuri și pe alte calculatoare;</li>
+<li><mark>troianul</mark>: se preface că e un program bun, de exemplu un joc „gratis”; nu se copiază singur: îl pornește cineva, păcălit;</li>
+<li><mark>programul-spion</mark>: notează pe ascuns ce scrii și ce pagini deschizi, apoi trimite altcuiva.</li></ul>
+<p>Altele blochează fișierele și cer bani ca să le deblocheze.</p>`,
+   exemplu:`<p>Andrei descarcă „Curse de mașini, GRATIS” de pe un site necunoscut și îl pornește. Jocul nu apare, iar a doua zi pozele lui nu se mai deschid. Ce a fost? Un <b>troian</b>: s-a prefăcut că e joc, iar Andrei l-a pornit singur.</p>
+<p>Dacă s-ar fi copiat apoi singur în alte fișiere, de exemplu în prezentările de pe stickul colegului, ar fi fost un <b>virus</b>.</p>`,
+   altfel:`<p>Numele „troian” vine dintr-o poveste veche. Grecii au lăsat în fața cetății Troia un cal mare de lemn, ca dar. Troienii l-au tras singuri în cetate, iar noaptea din cal au ieșit soldați. La fel, troianul arată ca un dar, un joc gratis, dar tu îl lași să intre.</p>`,
+   incearca:{t:'classify',q:'Ce fel de program rău-intenționat e fiecare?',
+     cats:['Virus','Troian','Program-spion'],
+     items:[['Se copiază singur în toate prezentările din calculator, apoi pe orice stick pus în el',0],['Un „program care îți dă monede în joc”: după ce îl pornești, aduce alte programe rele',1],['Notează pe ascuns fiecare tastă apăsată și o trimite unui necunoscut',2],['Pare o aplicație de desenat; după ce o pornești, îți șterge fișierele',1]],
+     ajutor:'Întreabă-te la fiecare: se copiază singur în alte fișiere (virus)? S-a prefăcut că e bun și l-a pornit cineva (troian)? Urmărește pe ascuns ce faci (program-spion)?',
+     why:'Virusul se copiază singur în alte fișiere. Troianul se ascunde într-un program care pare bun și îl pornește cineva păcălit. Programul-spion urmărește pe ascuns ce faci și trimite altcuiva.'},
+   inca:[
+    {t:'tf',q:'Un troian se copiază singur în alte fișiere și pe alte calculatoare, fără să-l pornească nimeni.',ok:false,ajutor:'Cum intră troianul: singur sau pornit de cineva păcălit?',
+     why:'Fals. Troianul nu se copiază singur: îl pornește cineva care crede că e un program bun. Cel care se copiază singur în alte fișiere e virusul.'},
+    {t:'choice',q:'Ce au în comun virusul, troianul și programul-spion?',o:['Sunt toate programe rău-intenționate','Sunt toate programe antivirus','Se copiază toate singure','Sunt toate fișiere cu poze'],ok:0,
+     ajutor:'Care e numele de familie al tuturor celor trei?',why:'Toate trei sunt programe rău-intenționate (malware): făcute ca să strice sau să fure. Doar virusul se copiază singur.'}
+   ]},
+  /* ---------- pasul: pe unde intră ---------- */
+  {t:'Pe unde intră în calculator',
+   text:`<p>Un program rău-intenționat intră, de obicei, pe una din trei căi:</p>
+<ol><li><strong>programe descărcate de pe site-uri necunoscute</strong>: „jocuri gratis”, „monede gratis”;</li>
+<li><strong>stickuri</strong> aduse de la alții sau găsite;</li>
+<li><strong>ferestre și reclame false</strong>, care te sperie sau îți promit un premiu, ca să apeși pe ele.</li></ol>
+<p>În File Explorer, în vederea cu coloane (Detalii), coloana <b>Tip</b> a unui program scrie <b>Aplicație</b>, chiar dacă extensia <code>.exe</code> e ascunsă. Atenție: și alte Tipuri pot porni programe, așa că un Tip necunoscut nu-l deschizi. Regula: nu instalezi (nu pui pe calculator) și nu pornești programe fără acordul unui adult.</p>
+${IMG_EXE}
+<p class="gest"><b>La calculator, acum:</b> deschide <b>File Explorer</b>, alege în stânga <b>Descărcări</b> și citește coloana <b>Tip</b>. Nu deschide nimic; apoi închide File Explorer cu ✕. (Descărcări e gol sau nu vezi coloanele? Treci peste.)</p>`,
+   exemplu:`<p>Pe stickul primit de la un vecin, Ioana vede două lucruri: „Poze_vacanta”, cu Tip: Folder de fișiere, și „vezi_pozele”, cu Tip: <b>Aplicație</b>. Pozele nu sunt programe, deci „vezi_pozele” e ciudat: e un program cu nume de poze. Ioana nu-l deschide și îl întreabă pe tatăl ei.</p>`,
+   altfel:`<p>Gândește-te la ușa casei: un hoț intră cel mai ușor dacă îi deschizi chiar tu, păcălit de o poveste frumoasă. Programul „gratis”, stickul adus de altcineva și fereastra falsă vin și ele cu o poveste frumoasă. Nu deschizi până nu verifici, oricine ar fi la ușă.</p>`,
+   incearca:{t:'classify',q:'E un obicei riscant sau sigur pentru calculator?',
+     cats:['Riscant','Sigur'],
+     items:[['Pui în calculator un stick găsit pe holul școlii, ca să vezi al cui e',0],['Descarci de pe un site necunoscut un „program care face jocul mai rapid”',0],['Un coleg îți dă pe stick un fișier cu Tip: Aplicație, „ca să te joci”',0],['Pe un stick e un fișier cu Tip: Pachet pentru Windows Installer; îl deschizi, ca să vezi ce e',0],['Descarci prezentarea de pe pagina lecției și o verifici cu antivirusul înainte s-o deschizi',1],['Profesorul pune un program nou pe calculatoarele din laborator',1]],
+     ajutor:'La fiecare: vine pe una din cele trei căi (program de pe un site necunoscut, stick străin, fereastră falsă)? Știi ce e și de unde vine?',
+     why:'Stickul găsit, programul de pe un site necunoscut, aplicația primită „ca să te joci” și fișierul cu un Tip pe care nu-l cunoști pot lăsa să intre programe rele. Prezentarea din lecție vine dintr-un loc cunoscut și o verifici înainte s-o deschizi, iar programele noi le pune profesorul.'},
+   inca:[
+    {t:'choice',q:'Pe un stick vezi „tema_mate”, cu Tip: Aplicație. Ce e?',o:['Un program, chiar dacă numele pare de temă','O temă la matematică, scrisă în Word','Un folder cu teme','O poză cu tema'],ok:0,
+     ajutor:'Ce înseamnă „Aplicație” în coloana Tip?',why:'Tip: Aplicație înseamnă program. Numele îl poate alege oricine, așa că te uiți la Tip, nu la nume.'}
+   ]},
+  /* ---------- pasul: fereastra falsă ---------- */
+  {t:'Fereastra care te sperie: o închizi',
+   text:`<p>Pe unele site-uri apare o <mark>fereastră falsă</mark>: o pagină care imită un avertisment sau un premiu. Te sperie („Calculatorul tău e infectat!”) sau îți promite ceva („Ai câștigat!”) și te grăbește să apeși sau să suni la un număr. Avertismentele adevărate de la Microsoft nu au niciodată număr de telefon.</p>
+<p>Ce faci: <strong>nu apeși nimic în ea</strong>, nici „OK”, nici „✕” desenat în pagină. Închizi <strong>fila</strong>, de sus, cu ✕ de lângă numele ei, apoi spui unui adult. Nu vezi filele sau fila nu se închide? Nu apăsa nimic și cheamă un adult.</p>
+${IMG_FILA}
+<p class="gest"><b>La calculator, acum:</b> apasă <kbd>Ctrl+T</kbd> și închide fila nouă cu ✕ de lângă numele ei. Încă o dată: <kbd>Ctrl+T</kbd>, apoi <kbd>Ctrl+W</kbd>, care o închide. Revii la lecție.</p>`,
+   exemplu:`<p>Mihai caută un joc și se deschide o filă nouă: „FELICITĂRI! Ai câștigat o tabletă! Apasă OK!”. Nu apasă OK și nici ✕ din colțul casetei roșii: e tot din pagină. Se uită sus, găsește fila nouă și apasă ✕ de lângă numele ei. Fila se închide, iar el îi spune profesorului ce a văzut.</p>`,
+   altfel:`<p>E ca un necunoscut care te strigă pe stradă: „Ai câștigat un premiu, vino repede!”. Nu iei nimic din ce îți întinde și nu stai de vorbă: pleci și le spui părinților.</p>`,
+   incearca:{t:'fereastra',falsa:'premiu',q:'Mai jos e un browser simulat. În fila nouă a apărut o fereastră falsă. Închide-o așa cum ai învățat, cu mouse-ul (pe telefon, cu degetul). Aici nu folosi Ctrl+W: ar închide chiar lecția. Dacă l-ai apăsat totuși și apare întrebarea „Părăsiți site-ul?”, apasă Anulați: lecția rămâne deschisă.',
+     ajutor:'Nu apăsa nimic în caseta roșie. Sus, caută fila cu numele „FELICITĂRI! Ai câștigat!” și apasă ✕ de lângă el.',
+     why:'Ai închis fila cu ✕ de pe ea, fără să apeși nimic în pagina falsă. Așa nu poate porni nicio descărcare.'},
+   inca:[
+    {t:'choice',q:'O pagină scrie: „Calculatorul tău e blocat! Sună acum la 07xx xxx xxx ca să-l deblochezi.” Ce faci?',
+     o:['Închid fila, fără să sun, și îi spun unui adult','Sun repede, ca să nu pierd fișierele','Apăs „OK”, ca să dispară mesajul','Notez numărul și sun de acasă'],ok:0,
+     ajutor:'Avertismentele adevărate de la Microsoft au număr de telefon?',why:'Un avertisment cu număr de telefon e fals: Microsoft nu pune numere de telefon în avertismente. Închizi fila și îi spui unui adult.'},
+    {t:'fereastra',falsa:'descarca',q:'Altă filă falsă: îți oferă un joc gratis, „doar 5 minute”. Închide-o corect, cu mouse-ul sau cu degetul (nu cu Ctrl+W: ar închide chiar lecția).',
+     ajutor:'Butoanele din pagină sunt tot ale paginii false. Fila are ✕ sus, lângă numele ei.',why:'Ai închis fila de sus, cu ✕, fără să descarci nimic.'}
+   ]},
+  /* ---------- pasul: antivirusul ---------- */
+  {t:'Antivirusul: ce face',
+   text:`<p>Un <mark>program antivirus</mark> te apără de programele rău-intenționate:</p>
+<ul><li><strong>scanează</strong>: verifică fișierele, singur, când le descarci sau le deschizi, și ori de câte ori îi ceri tu;</li>
+<li><strong>blochează</strong> un program periculos: nu-l lasă să pornească;</li>
+<li>îl pune în <mark>carantină</mark>: îl mută deoparte, închis, unde nu mai poate face rău;</li>
+<li><strong>se actualizează</strong> singur: primește informații despre programele rele noi.</li></ul>
+<p>Pe Windows, antivirusul inclus e <b>Microsoft Defender</b>. Programele rele pe care le găsește, el le numește <mark>amenințări</mark>. Îl găsești în aplicația <b>Securitate Windows</b>, la <b>Protecție antivirus și împotriva amenințărilor</b>.</p>
+${IMG_SEC}
+<p class="gest"><b>La calculator, acum:</b> lângă ceas, în dreapta barei de activități, caută scutul <b>Securitate Windows</b> (sau după săgeata mică <b>^</b>). Doar uită-te la el. Nu-l găsești? Treci mai departe.</p>`,
+   exemplu:`<p>Elena deschide Securitate Windows, apoi Protecție antivirus și împotriva amenințărilor. La Amenințări curente citește: „Momentan nu există amenințări.” și, la ultima scanare, „0 amenințări găsite.”. Apoi apasă <b>Istoric protecție</b>: acolo ar vedea ce a blocat antivirusul și ce a pus în carantină. Nu schimbă nimic.</p>`,
+   altfel:`<p>Antivirusul e ca paznicul școlii: se uită la oricine intră, nu-l lasă înăuntru pe cel periculos și îl ține deoparte, la poartă: asta e carantina. Ca să-i recunoască pe cei noi, primește mereu lista nouă: asta e actualizarea.</p>`,
+   incearca:{t:'classify',q:'Ce face antivirusul în fiecare situație?',
+     cats:['Scanează','Blochează','Pune în carantină','Se actualizează'],
+     items:[['Înainte să deschizi tema de pe stick, îi ceri antivirusului să se uite prin tot stickul',0],['Dai dublu clic pe „joc_super”, dar jocul nu pornește, iar antivirusul spune că l-a oprit',1],['După verificare, un fișier periculos nu mai e în Descărcări: antivirusul îl ține închis, într-un loc al lui',2],['Ieri a apărut un program rău nou; azi antivirusul tău îl recunoaște, deși n-ai apăsat nimic',3]],
+     ajutor:'La fiecare situație întreabă-te: antivirusul verifică, oprește pornirea, ține fișierul deoparte sau învață ceva nou?',
+     why:'Scanarea verifică fișierele, blocarea oprește pornirea, carantina ține fișierul periculos deoparte, iar actualizarea îi aduce antivirusului informații despre programele rele noi.'},
+   inca:[
+    {t:'tf',q:'Microsoft Defender e programul antivirus inclus în Windows.',ok:true,ajutor:'Cum se numește antivirusul din Securitate Windows?',
+     why:'Adevărat. Microsoft Defender vine cu Windows; îl vezi în aplicația Securitate Windows.'}
+   ]},
+  /* ---------- pasul: verifici un stick sau un fișier ---------- */
+  {t:'Verifici un stick sau un fișier',
+   text:`<p>Înainte să deschizi ceva de pe un stick sau un fișier descărcat, îl verifici:</p>
+<ol><li>în File Explorer, <strong>clic dreapta</strong> pe stick sau pe fișier;</li>
+<li>alegi <b>Scanați cu Microsoft Defender...</b>; pe Windows 11 apare după ce alegi <b>Afișați mai multe opțiuni</b>;</li>
+<li>se deschide Securitate Windows: citești câte amenințări a găsit.</li></ol>
+<p>Scrie „0 amenințări găsite.”? Poți deschide. A găsit amenințări? Nu deschizi nimic și chemi un adult. Atenție: antivirusul <strong>nu prinde tot</strong>. Un program de pe un site necunoscut nu-l pornești, chiar dacă scanarea n-a găsit nimic.</p>
+<p class="gest"><b>La calculator, acum:</b> în File Explorer, la <b>Descărcări</b>, dă clic dreapta pe un fișier și alege <b>Afișați mai multe opțiuni</b>. Găsește în meniu <b>Scanați cu Microsoft Defender...</b>, dar nu-l apăsa încă: închide meniul cu <kbd>Esc</kbd>. (Descărcări e gol? Treci peste.) Scanarea o faci la final, în pasul „Acum la calculatorul din laborator”.</p>`,
+   exemplu:`<p>Darius pune stickul cu tema. În File Explorer, la Acest PC, dă clic dreapta pe <b>STICK (E:)</b> → Afișați mai multe opțiuni → Scanați cu Microsoft Defender... În Securitate Windows citește „0 amenințări găsite.”. Pe stick mai e și „cheats_joc”, cu Tip: Aplicație, luat de pe un site necunoscut: pe acela nu-l pornește.</p>`,
+   altfel:`<p>E ca la doctor: un control fără probleme e o veste bună, dar nu te apără de orice, așa că tot te speli pe mâini. La fel, după o scanare fără amenințări tot nu pornești programe necunoscute.</p>`,
+   incearca:{t:'scanare',start:'PC',q:'Mai jos e File Explorer, simulat. Verifică <b>STICK (E:)</b> cu antivirusul, fără să deschizi nimic de pe el. Apoi scrie numărul de amenințări găsite în căsuța „Răspunsul tău”, de sub calculator.',
+     teste:[{c:'scanatInainte',v:'E:',ce:'Ai scanat <b>STICK (E:)</b> cu Microsoft Defender înainte să deschizi ceva de pe el',ajutor:'Clic dreapta pe STICK (E:) (pe telefon: ții degetul apăsat pe el sau atingi ⋯) → Afișați mai multe opțiuni → Scanați cu Microsoft Defender... Ai deschis deja ceva de pe stick? „Ia-o de la capăt” și scanează întâi.'},
+       {c:'niciunProgram',ce:'Programele (Tip: Aplicație) au rămas nepornite',ajutor:'Ai pornit un program? Un program de pe un site necunoscut nu-l pornești. „Ia-o de la capăt”.'},
+       {c:'nr',ce:'Ai scris în căsuța „Răspunsul tău” câte amenințări a găsit scanarea',ajutor:'Citește în Securitate Windows rândul „… amenințări găsite.”. Numărul din fața cuvântului „amenințări” îl scrii în căsuța „Răspunsul tău”, de sub calculator.'}],
+     rezText:'clic dreapta pe STICK (E:) → Afișați mai multe opțiuni → Scanați cu Microsoft Defender... → în căsuța „Răspunsul tău”: 0',
+     ajutor:'Clic dreapta pe STICK (E:), nu dublu clic: dublu clic îl deschide.',
+     why:'Ai verificat stickul înainte să deschizi ceva de pe el: 0 amenințări găsite.'},
+   inca:[
+    {t:'tf',q:'Scanarea stickului a scris „0 amenințări găsite.”. Deci poți porni liniștit orice program de pe el, chiar și unul luat de pe un site necunoscut.',ok:false,
+     ajutor:'Prinde antivirusul tot?',why:'Fals. Antivirusul nu prinde tot: un program rău foarte nou poate trece de el. Un program de pe un site necunoscut nu-l pornești fără acordul unui adult.'},
+    {t:'order',q:'Pune în ordine verificarea unui fișier descărcat, pe Windows 11.',
+     items:['Clic dreapta pe fișier, în File Explorer','Afișați mai multe opțiuni','Scanați cu Microsoft Defender...','Citești câte amenințări a găsit'],
+     ajutor:'Meniul apare după clicul dreapta; comanda de scanare e în meniul cu mai multe opțiuni.',why:'Clic dreapta, mai multe opțiuni, comanda de scanare, apoi citești rezultatul în Securitate Windows.'}
+   ]}
+ ],
+ atelier:{t:'laborator',titlu:'Stickul și fereastra falsă, pe calculatorul simulat',
+  intro:`<p>Mai jos e un <strong>calculator simulat</strong>: un browser, File Explorer și, după scanare, Securitate Windows. Treci de la o fereastră la alta din <b>bara de activități</b>, de sub ele. Testele se bifează singure; la final apeși <b>Verifică</b>.</p>
+<p><strong>Situația:</strong> ai venit la laborator cu tema pe stick. În browser tocmai s-a deschis o filă cu o fereastră falsă. <strong>Sarcina:</strong> închide fila falsă corect, verifică stickul cu antivirusul înainte să deschizi ceva de pe el, scrie rezultatul în căsuța „Răspunsul tău”, de sub calculator, apoi deschide tema. Ordinea o alegi tu, dar stickul îl scanezi înainte de orice fișier de pe el.</p>`,
+  q:'Închide fila falsă, scanează stickul, apoi deschide tema.',teste:T_LAB,
+  rezText:'Browser → ✕ de pe fila falsă; File Explorer → clic dreapta pe STICK (E:) → Afișați mai multe opțiuni → Scanați cu Microsoft Defender... → în căsuța „Răspunsul tău”: 0; dublu clic pe STICK (E:) → dublu clic pe Tema_6A_Pop; joc_gratis rămâne nepornit',
+  ajutor:'Ia testele pe rând. Fereastra falsă: ✕ de pe filă. Stickul: clic dreapta, nu dublu clic, până după scanare.',
+  why:'Ai închis fereastra falsă fără să apeși în ea, ai scanat stickul înainte să-l folosești și ai lăsat nepornit programul necunoscut. <b>Ce am învățat:</b> programele rău-intenționate (virusul se copiază singur în alte fișiere, troianul se preface că e bun, programul-spion urmărește pe ascuns); căile lor: programe de pe site-uri necunoscute, stickuri străine, ferestre și reclame false; un program are în File Explorer Tip: Aplicație, iar un Tip pe care nu-l cunoști nu-l deschizi; la o fereastră falsă nu apeși nimic în ea, închizi fila cu ✕ (în browserul adevărat și cu Ctrl+W) și spui unui adult; antivirusul scanează, blochează, pune în carantină și se actualizează (pe Windows: Microsoft Defender, în Securitate Windows); verifici un stick sau un fișier cu clic dreapta → Scanați cu Microsoft Defender... înainte să-l deschizi, dar antivirusul nu prinde tot.',
+  inca:[
+   {t:'classify',q:'La calculatorul din laborator: ce faci și ce nu faci?',cats:['Fac','Nu fac'],
+    items:[['Închid o filă care mă sperie, cu ✕ de pe ea',0],['Opresc antivirusul, ca să meargă jocul mai repede',1],['Scanez stickul înainte să deschid ceva de pe el',0],['Pun pe calculator un program găsit pe Internet, fără să întreb pe nimeni',1],['Îi spun profesorului când văd o fereastră ciudată',0]],
+    ajutor:'Ce ține calculatorul comun în siguranță și ce îl pune în pericol?',
+    why:'Închizi fila falsă, scanezi stickul și spui ce ai văzut. Antivirusul nu se oprește, iar programele noi le pune doar un adult, pentru că laboratorul e al tuturor.'}
+  ]},
+ qs:[
+  {t:'choice',q:'Prin ce se deosebește un virus de un troian?',
+   o:['Virusul se copiază singur în alte fișiere; troianul nu se copiază, îl pornește cineva păcălit','Troianul se copiază singur în alte fișiere; virusul nu se copiază, îl pornește cineva păcălit','Virusul e un antivirus; troianul e un program rău-intenționat','Sunt două nume pentru același program rău-intenționat'],ok:0,
+   ajutor:'Pasul „Programe rău-intenționate”: cine se copiază singur?',
+   why:'Virusul se copiază singur în alte fișiere și trece mai departe odată cu ele. Troianul arată ca un program bun și intră doar dacă îl pornește cineva păcălit.'},
+  {t:'classify',q:'Care obiceiuri pot lăsa un program rău-intenționat să intre și care te apără?',cats:['Poate lăsa să intre','Te apără'],
+   items:[['Descarci „filme gratis” de pe un site pe care nu-l știi',0],['Pui în calculator un stick uitat de cineva în autobuz',0],['Pornești un program de pe un site necunoscut, pentru că scanarea n-a găsit nimic',0],['Scanezi fișa descărcată din lecție înainte s-o deschizi',1],['Lași antivirusul să se actualizeze singur',1]],
+   ajutor:'Pașii „Pe unde intră în calculator” și „Verifici un stick sau un fișier”.',
+   why:'Site-urile necunoscute și stickurile străine sunt căi pentru programele rele, iar o scanare fără amenințări nu e o garanție. Scanarea înainte de deschidere și actualizarea, care îi arată antivirusului programele rele noi, te apără.'},
+  {t:'fereastra',falsa:'virus',q:'În fila nouă a apărut un avertisment care îți cere să apeși sau să suni la un număr. Fă ce ai învățat, cu mouse-ul sau cu degetul (nu cu Ctrl+W: ar închide chiar lecția).',
+   ajutor:'Avertismentele adevărate nu au număr de telefon. Nu apăsa în pagină: caută fila de sus și ✕ de lângă numele ei.',
+   why:'Avertismentul era fals: te grăbea și îți dădea un număr de telefon. L-ai închis de sus, cu ✕ de pe filă, fără să apeși nimic în el.'},
+  {t:'choice',q:'Ce face antivirusul cu un fișier periculos pe care îl recunoaște?',
+   o:['Îl blochează și îl pune deoparte, în carantină','Îl deschide, ca să vadă ce e în el','Îl copiază pe stick, ca să nu se piardă','Îl lasă să pornească, dar scrie un mesaj'],ok:0,
+   ajutor:'Pasul „Antivirusul: ce face”.',
+   why:'Antivirusul nu lasă fișierul periculos să pornească și îl ține deoparte, închis, în carantină. Ce a făcut vezi în Istoric protecție.'},
+  {t:'scanare',start:'Desc',q:'În <b>Descărcări</b> ai fișierul <b>fisa-de-lucru</b>, descărcat din lecție. Verifică-l cu antivirusul înainte să-l deschizi. Apoi scrie numărul de amenințări găsite în căsuța „Răspunsul tău”, de sub calculator.',
+   teste:[{c:'scanatInainte',v:'fisa-de-lucru',ce:'Ai scanat fișierul <b>fisa-de-lucru</b> cu Microsoft Defender înainte să-l deschizi',ajutor:'L-ai deschis deja? „Ia-o de la capăt” și scanează-l întâi.'},
+     {c:'niciunProgram',ce:'Programele (Tip: Aplicație) au rămas nepornite',ajutor:'Ai pornit un program? „Ia-o de la capăt”.'},
+     {c:'nr',ce:'Ai scris în căsuța „Răspunsul tău” câte amenințări a găsit scanarea'}],
+   rezText:'clic dreapta pe fisa-de-lucru → Afișați mai multe opțiuni → Scanați cu Microsoft Defender... → în căsuța „Răspunsul tău”: 0',
+   ajutor:'Pasul „Verifici un stick sau un fișier”: clic dreapta pe fișier, nu dublu clic.',
+   why:'Ai verificat fișierul descărcat înainte să-l deschizi: 0 amenințări găsite.'}
+ ]
+};
+
+/* „Acum la calculatorul din laborator”: doar privit și verificat; nicio setare schimbată (calculatorul e comun) */
+const DESCARCA='<a class="descarca" href="fisa-de-verificat.txt" download>⬇ fisa-de-verificat.txt</a>';
+const PASI_REAL=[
+  'Aici doar <b>privești și verifici</b>. Nu schimbi nicio setare și nu oprești nimic: calculatorul e al tuturor.',
+  'Jos, în dreapta barei de activități, lângă ceas, caută pictograma <b>Securitate Windows</b>: un scut. Nu o vezi? Apasă săgeata mică <b>^</b> de lângă pictograme (<i>Se afișează pictogramele ascunse</i>). Doar uită-te la ea; dacă nu o găsești, treci mai departe.',
+  'Apasă <b>Start</b> (tasta cu sigla Windows), scrie <code>securitate</code> și apasă <kbd>Enter</kbd> când sus apare <b>Securitate Windows</b> (în engleză: <i>Windows Security</i>). Nu apare? Nu deschide altceva: apasă <kbd>Esc</kbd>, sari peste pașii cu Securitate Windows și treci la pasul în care descarci fișierul de verificat.',
+  'Alege <b>Protecție antivirus și împotriva amenințărilor</b>. La <b>Amenințări curente</b> citește ce scrie și când a fost ultima scanare. <b>Nu</b> apăsa <b>Scanare rapidă</b>: ține calculatorul ocupat câteva minute. Dacă pagina scrie numele altui antivirus, citește-l: el apără calculatorul acesta.',
+  'Apasă <b>Istoric protecție</b> și privește: lista e goală sau are rânduri, de exemplu <i>Amenințare blocată</i> sau <i>Amenințare în carantină</i>? Nu apăsa pe niciun rând. Dacă apare o fereastră care îți cere voie sau un cod, apasă <b>Nu</b> și treci mai departe. Apoi închide Securitate Windows cu ✕ din colțul din dreapta sus.',
+  `Descarcă fișierul de verificat: ${DESCARCA}. Deschide <b>File Explorer</b> (dosarul galben din bara de activități) și alege, în stânga, <b>Descărcări</b>. Dacă l-au descărcat și alții, numele poate avea la sfârșit (1) sau (2).`,
+  'Clic dreapta pe <b>fisa-de-verificat</b> → <b>Afișați mai multe opțiuni</b> (pe Windows 11) → <b>Scanați cu Microsoft Defender...</b> (în engleză: <i>Show more options</i> → <i>Scan with Microsoft Defender...</i>). Se deschide Securitate Windows: citește câte amenințări a găsit. Nu apăsa niciun buton de scanare (de exemplu <i>Scanare rapidă</i> sau <i>Scanare acum</i>): ar ține calculatorul ocupat minute întregi. Apoi închide-o cu ✕. Nu găsești comanda? Școala poate folosi alt antivirus: treci mai departe.',
+  'Uită-te la coloana <b>Tip</b> a fișierului: scrie un fel de text (pe multe calculatoare <i>Fișier TXT</i>), deci e un text, nu un program. Atenție: nu doar <i>Aplicație</i> pornește programe; de exemplu, un fișier cu Tip <i>Pachet pentru Windows Installer</i> instalează unul. Un Tip pe care nu-l cunoști nu-l deschizi fără un adult. (Nu vezi coloanele? Treci peste.) Apoi șterge-l: clic pe el și tasta <kbd>Delete</kbd>. Fișierul ajunge în <b>Coșul de reciclare</b>; Coșul nu-l golești, pentru că pot fi acolo și fișierele altora.',
+  'Exersează închiderea unei file, ca la o fereastră falsă: în browser apasă <kbd>Ctrl</kbd>+<kbd>T</kbd> (filă nouă), apoi <kbd>Ctrl</kbd>+<kbd>W</kbd>: fila nouă se închide și ai revenit aici. Încă o dată, cu mouse-ul: <kbd>Ctrl</kbd>+<kbd>T</kbd>, apoi ✕ de lângă numele filei noi.',
+  'Verifică-te: ai căutat scutul, ai citit starea antivirusului și Istoric protecție (dacă s-a deschis Securitate Windows), ai scanat și ai șters fișierul, ai închis fila nouă cu Ctrl+W și cu ✕. Ai văzut pe calculator o fereastră ciudată? Nu apăsa nimic în ea și spune-i profesorului.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vi_m2_l11',
+  mod:'lectie',
+  titlu:'Măsuri de siguranță în utilizarea Internetului. Programele antivirus',
+  marca:'Lecția <b>11</b> · clasa a VI-a',
+  h1:'Măsuri de siguranță în utilizarea Internetului. <span class="acc">Programele antivirus</span>',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VI-a',
+  unitate:'VI-U2',
+  unitateTitlu:'Comunic prin Internet, în siguranță',
+  competente:['CS.1.3'],
+  lectii:'11',
+  ancoraText:'Programa (OMEN 3393/2017), clasa a VI-a, CS.1.3 · unitatea VI-U2 „Comunic prin Internet, în siguranță” · lecția 11, prima a unității · conținutul: „'+CONT[0]+'”',
+  intro:'Lecția 11, prima despre Internet în clasa a VI-a. Afli ce <b>programe rău-intenționate</b> vin de pe Internet și pe unde intră în calculator. Înveți să închizi o <b>fereastră falsă</b> fără să apeși în ea. Afli ce face un <b>antivirus</b> și verifici cu el un stick sau un fișier. Exersezi pe un calculator simulat, chiar în pagină. La calculatorul din laborator doar privești și verifici: nu schimbi nimic. <b>Ai nevoie de:</b> fișierele și folderele, browserul și filele, din clasa a V-a. Poți lucra singur: fiecare pas are un exemplu și un exercițiu cu indiciu.',
+  cum:`<b>Cum lucrezi</b><ol>
+<li><b>Învață</b>: primul pas îți spune la ce folosește lecția; apoi urmează 5 pași scurți, câte o idee, cu un exemplu „Uite cum”. Nu ai înțeles? „Explică-mi altfel”.</li>
+<li><b>Încearcă tu</b>: după fiecare pas, un exercițiu mic, care nu se notează. Greșești? Primești un indiciu. „Încă un exercițiu” îți dă altele.</li>
+<li><b>Atelier</b>: pe un calculator simulat închizi o fereastră falsă, verifici un stick cu antivirusul și deschizi tema. Testele se bifează singure.</li>
+<li><b>Acum la calculatorul din laborator</b>: găsești antivirusul, îi citești starea și verifici cu el un fișier, fără să schimbi nimic.</li>
+<li><b>Verificare</b>: 5 întrebări, doar din ce ai învățat în pași. Stele pentru răspunsurile din prima.</li></ol>`,
+  banda:'<span></span><span></span><span class="falsa"></span><span></span><span class="scut"></span><span></span>',
+  nivele:[LECTIA],
+  tipuri:{fereastra:SigurantaPC.fereastra,scanare:SigurantaPC.scanare,laborator:SigurantaPC.laborator},
+  aplicatieReala:{aplicatie:'calculatorul din laborator',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:'<p>Ai exersat pe calculatorul simulat. Acum, la calculatorul din laborator, găsești antivirusul, îi citești starea și verifici cu el un fișier pe care îl descarci de aici. Nu ai nevoie de profesor și <b>nu schimbi nimic</b>: urmezi pașii, unul câte unul.</p>',
+    pasi:PASI_REAL},
+  diploma:{
+    titlu:'Paznicul calculatorului',
+    rezumat:'programele rău-intenționate (virusul, troianul, programul-spion) și căile lor (programe de pe site-uri necunoscute, stickuri străine, ferestre false), Tip: Aplicație în File Explorer, închiderea unei ferestre false cu ✕ de pe filă, fără niciun clic în ea, antivirusul (scanează, blochează, pune în carantină, se actualizează; Microsoft Defender, în Securitate Windows) și verificarea unui stick sau a unui fișier cu clic dreapta → Scanați cu Microsoft Defender',
+    aplicatie:'calculatorul din laborator',
+    provocare:PASI_REAL
+  }
+});
+</script>
+</body>
+</html>
