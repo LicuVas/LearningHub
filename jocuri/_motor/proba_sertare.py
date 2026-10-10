@@ -49,10 +49,16 @@ class Tacut(http.server.SimpleHTTPRequestHandler):
 
 def server_local():
     h = functools.partial(Tacut, directory=str(SITE))
-    http.server.ThreadingHTTPServer.allow_reuse_address = True
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8770), h)
+    # 10.10.2026: pe Windows SO_REUSEADDR lasă DOUĂ servere pe același port; cu „Traducere live” pornit (TraducereLive\server.py,
+    # tot pe 8770) proba primea paginile ei, iar deschide() expira fără să spună de ce. Pe Windows nu refolosim portul;
+    # dacă 8770 e ocupat, luăm unul liber.
+    http.server.ThreadingHTTPServer.allow_reuse_address = sys.platform != "win32"
+    try:
+        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8770), h)
+    except OSError:
+        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), h)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
-    return "http://127.0.0.1:8770"
+    return "http://127.0.0.1:%d" % srv.server_address[1]
 
 
 # ---- serverul de progres simulat: aceeași unire ca netlify/functions/progres.mjs ----
