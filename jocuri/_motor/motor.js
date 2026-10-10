@@ -63,12 +63,13 @@ const p1Bun=p=>!!p&&typeof p==='object'&&typeof p.b==='number'&&typeof p.t==='nu
 function p1Vechi(x,y){if(!p1Bun(x))return p1Bun(y)?y:null;if(!p1Bun(y))return x;return (numar(y.c)||Infinity)<(numar(x.c)||Infinity)?y:x}
 function pasiUniti(a,b){const v={};[a,b].forEach(l=>{if(Array.isArray(l))l.forEach(x=>{if(typeof x==='number'&&x%1===0&&x>=0&&x<500)v[x]=1})});
   return Object.keys(v).map(Number).sort((x,y)=>x-y)}
+/* 10.10.2026 (bara pașilor, pe elev): și re, qm = maximul; ul = de la intrarea mai nouă (aici: memoria, l). */
 function uneNivel(p,l){
   if(!p||typeof p!=='object')return l;if(!l||typeof l!=='object')return p;
   const o=Object.assign({},p,l);
   if(p.stars!=null||l.stars!=null)o.stars=Math.max(p.stars||0,l.stars||0);
   if(p.xp!=null||l.xp!=null)o.xp=Math.max(p.xp||0,l.xp||0);
-  ['ind','ara','sec','pn','at','v','fp'].forEach(k=>{if(p[k]!=null||l[k]!=null)o[k]=Math.max(numar(p[k]),numar(l[k]))});
+  ['ind','ara','sec','pn','at','v','fp','re','qm'].forEach(k=>{if(p[k]!=null||l[k]!=null)o[k]=Math.max(numar(p[k]),numar(l[k]))});
   const t0=[p.t0,l.t0].filter(x=>numar(x)>0),t1=[p.t1,l.t1].filter(x=>numar(x)>0);
   if(t0.length)o.t0=Math.min(...t0);else delete o.t0;
   if(t1.length)o.t1=Math.max(...t1);else delete o.t1;
@@ -117,6 +118,9 @@ function totals(lv){lv=lv||S.lv;let st=0,xp=0;for(const k in lv){st+=lv[k].stars
      ps, pn      pașii de învățat deschiși (numerele lor, de la 0) și câți pași are nivelul: pas lipsă din ps = sărit
                  (ex. „Știu deja — la verificare” de la pasul 1)
      at          0 = nivelul are atelier, nedeschis încă; 1 = atelierul a fost deschis (lipsește dacă nivelul n-are atelier)
+     re          1 = pasul „Acum în aplicația adevărată” a fost văzut (10.10.2026, bara pașilor pe elev)
+     qm          cea mai mare întrebare de verificare atinsă (Î1 = 1); lipsă = niciuna (10.10.2026)
+     ul          ultimul pas afișat: "p3", "atelier", "real", "q2", "citire", "gata" (10.10.2026; doar informativ)
    Cheile intrării sunt scrise în ordine alfabetică (ordonat()), ca unirea din prezenta.js / unire.mjs să dea același
    text pentru același conținut (altfel fiecare tragere din nor ar părea o schimbare și ar redesena cuprinsul).
    Cât stă „Ești tot X?” pe ecran, TOT ce se notează merge în <cheie>@_tinut ca DIFERENȚĂ (indiciile și secundele de
@@ -280,6 +284,25 @@ function shell(inner,tabs){
   if(inAsteptare())eraAsteptare=true;
   app.innerHTML=`<div class="book"><div class="banda" aria-hidden="true">${C.banda||''}</div><div class="foaie">${inner}</div>${tabs?`<nav class="tabs" aria-label="Pașii nivelului">${tabs}</nav>`:''}</div>`;
   setHud();setCrumbs();wireTabs();window.scrollTo({top:0});
+  anuntaPas();
+}
+/* SEMNALUL PASULUI (10.10.2026), pentru restul sitului (prezenta.js îl citește): la fiecare schimbare a pasului afișat,
+   window.__lhPas = detail și evenimentul „lh-pas” pe window. detail = {cheie (C.cheie), joc (ca în jurnal), nivel (de la
+   0; null pe cuprins și pe diplomă), pas: 'cuprins' | 'p3' | 'atelier' | 'real' | 'q2' | 'citire' | 'gata', eticheta
+   ('P3', 'Atelier', 'Aplicația', 'Î2', 'Cuprins', 'Gata', 'Diploma'), titlu (al nivelului; pe cuprins și pe diplomă al
+   jocului), real: true doar pe pasul în care elevul e trimis în aplicația adevărată}. Același pas redesenat nu se
+   anunță a doua oară. Recitirea nu anunță nimic (nu e progres). */
+let pasAnuntat='';
+function anuntaPas(){
+  if(RECITIRE!==null||!C)return;
+  const b={cheie:C.cheie,joc:jocSlug()};let d;
+  if(R&&!R.recitire){const id=pasAcum(),e=pasiNivel(R.li).find(x=>x.id===id);
+    d=Object.assign(b,{nivel:R.li,pas:id,eticheta:id==='gata'?'Gata':e?e.et:id,titlu:C.nivele[R.li].t,real:id==='real'})}
+  else if(app.querySelector('.diploma,.ghid'))d=Object.assign(b,{nivel:null,pas:'gata',eticheta:'Diploma',titlu:C.titlu,real:false});
+  else d=Object.assign(b,{nivel:null,pas:'cuprins',eticheta:'Cuprins',titlu:C.titlu,real:false});
+  const semn=d.nivel+'|'+d.pas;if(semn===pasAnuntat)return;pasAnuntat=semn;
+  window.__lhPas=d;
+  try{window.dispatchEvent(new CustomEvent('lh-pas',{detail:d}))}catch(e){}
 }
 /* breadcrumb: 🏠 LearningHub › Jocuri TIC › Clasa › Jocul [› Nivelul N]. Căile sunt relative la jocuri/<slug>/index.html. */
 function setCrumbs(){
@@ -312,29 +335,51 @@ function nivelEticheta(i){
 /* Bara de jos: pașii prin care ai trecut deja sunt butoane - te poți întoarce la ei (și înainte, până unde
    ajunseseși). Un pas refăcut nu mai dă XP a doua oară (R.punctat), iar încercările greșite se țin minte
    (R.atts), ca „du-te înapoi și revino” să nu șteargă greșelile. */
-function tabsFor(){
-  const Lv=C.nivele[R.li],inNivel=R.phase!=='end';
-  let t;
+/* BARA PE ELEV (10.10.2026). Profesorul (08.10.2026): „meniul lecțiilor parcurse să aibă pentru fiecare dintre ei -
+   clickabile itemurile pe care le-au parcurs și neclickabile cele pe care nu le-au parcurs încă. Astfel la o privire în
+   meniul de jos elevul să știe clar unde a rămas data trecută - dar trebuie să se reflecte per elev”. Până acum bara se
+   făcea doar din R (de la zero la fiecare deschidere): P1..Pn, Atelier și Aplicația se puteau apăsa oricând, iar Î1 de
+   la prima secundă (vazut=k<=R.max, cu max pornit de la 0).
+   Acum ordinea nivelului e P1..Pn → Atelier → Aplicația (pasul „real”) → Î1..Îk (fără pași: Citire → Î1..Îk), iar un
+   element e BUTON doar dacă elevul ACESTA l-a văzut: în sertarul lui (S.lv[i], pe profil; unit și cu celălalt aparat)
+   sau în deschiderea de acum (R). Din sertar: ps (pașii P văzuți), at:1, re:1, qm (vezi „CE FACE ELEVUL PE NIVEL”).
+   Nivel terminat (stele) = toate butoane. Cele nevăzute sunt stinse (span.blocat, cu titlul „Ajungi aici…”), iar primul
+   nevăzut de după cel mai îndepărtat atins poartă semnul „următorul” (span.urm). La antrenament (bazin) întrebările se
+   trag din nou la fiecare rundă, deci acolo Î-urile vin doar din runda de acum. */
+function pasiNivel(i){   /* elementele barei, în ordine: id (în ?pas=, în ul și în lh-pas), la (pentru mergiLa), et, t */
+  const Lv=C.nivele[i],o=[];
   if(Lv.pasi){
-    /* nivel pe pași: P1..Pn (învățarea), Atelier, apoi Î1..Qn (verificarea). Toți pașii de învățare se pot
-       deschide oricând: elevul care știe deja poate sări, cel care s-a pierdut se poate întoarce. */
-    t=Lv.pasi.map((p,k)=>{const acum=R.phase==='learn'&&R.si===k;
-      return inNivel&&!acum?`<button type="button" class="${R.vazutPas[k]?'done':''}" data-pas="p${k}" title="${esc(p.t)}">P${k+1}</button>`:`<span class="${acum?'now':'done'}">P${k+1}</span>`}).join('');
-    if(Lv.atelier){const acum=R.phase==='atelier';
-      t+=inNivel&&!acum?`<button type="button" class="${R.atelierGata?'done':''}" data-pas="atelier" title="${atelierBara(Lv).replace(' · ',': ')}">Atelier</button>`:`<span class="${acum?'now':'done'}">Atelier</span>`}
+    Lv.pasi.forEach((p,k)=>o.push({id:'p'+(k+1),la:'p'+k,et:'P'+(k+1),t:p.t}));
+    if(Lv.atelier)o.push({id:'atelier',la:'atelier',et:'Atelier',t:atelierBara(Lv).replace(' · ',': ')});
     const AR=aplicatieReala(Lv);
-    if(AR){const acum=R.phase==='real',et=esc(AR.scurt||'Aplicația');   // doar în modul lecție
-      t+=inNivel&&!acum?`<button type="button" class="${R.realVazut?'done':''}" data-pas="real" title="${esc(AR.titlu||'Acum în aplicația adevărată')}">${et}</button>`:`<span class="${acum?'now':'done'}">${et}</span>`}
-  }else{
-    const cit=Lv.bazin?'Pregătire':'Citire';
-    t=inNivel&&R.phase!=='read'?`<button type="button" class="done" data-pas="citire" title="Înapoi la pagina de citit">${cit}</button>`
-      :`<span class="${R.phase==='read'?'now':'done'}">${cit}</span>`;
-  }
-  return t+Lv.qs.map((_,k)=>{
-    const acum=R.phase==='q'&&k===R.qi,vazut=k<=R.max;
-    const cls=R.phase==='end'||R.punctat[k]?'done':(acum?'now':'');
-    if(inNivel&&vazut&&!acum)return `<button type="button" class="${cls}" data-pas="${k}" title="Mergi la întrebarea ${k+1}">Î${k+1}</button>`;
-    return `<span class="${cls}${acum?' now':''}">Î${k+1}</span>`}).join('');
+    if(AR)o.push({id:'real',la:'real',et:AR.scurt||'Aplicația',t:AR.titlu||'Acum în aplicația adevărată'});
+  }else o.push({id:'citire',la:'citire',et:Lv.bazin?'Pregătire':'Citire',t:'Înapoi la pagina de citit'});
+  (Lv.qs||[]).forEach((_,k)=>o.push({id:'q'+(k+1),la:String(k),et:'Î'+(k+1),t:`Mergi la întrebarea ${k+1}`}));
+  return o;
+}
+/* pentru fiecare element din pasiNivel(i): l-a văzut elevul acesta? */
+function atins(i){
+  const Lv=C.nivele[i],l=sertarLv()[i]||{},gata=facut(l),aici=R&&R.li===i&&!R.recitire?R:null;
+  const ps={};(Array.isArray(l.ps)?l.ps:[]).forEach(k=>{ps[k]=1});if(aici)Object.keys(aici.vazutPas).forEach(k=>{ps[k]=1});
+  const qm=Lv.bazin?numar(aici&&aici.qm):Math.max(numar(l.qm),numar(aici&&aici.qm));
+  return pasiNivel(i).map((e,x)=>gata||(e.id==='citire'?!!(l.v||aici):e.id==='atelier'?l.at===1||!!(aici&&aici.atelierVazut)
+    :e.id==='real'?l.re===1||!!(aici&&aici.realVazut):e.id[0]==='q'?qm>=+e.id.slice(1):!!ps[+e.id.slice(1)-1]));
+}
+/* pasul afișat acum, cu id-ul din pasiNivel ('gata' = ecranul de final al nivelului) */
+function pasAcum(){
+  if(!R)return null;
+  return R.phase==='learn'?'p'+(R.si+1):R.phase==='q'?'q'+(R.qi+1):R.phase==='read'?'citire':R.phase==='end'?'gata':R.phase;
+}
+/* Pașii prin care ai trecut sunt butoane (te întorci la ei sau sari înainte până unde ajunseseși). Un pas refăcut nu mai
+   dă XP a doua oară (R.punctat), iar încercările greșite se țin minte (R.atts), ca „du-te înapoi și revino” să nu
+   șteargă greșelile. Verde (done): pașii de învățare văzuți; întrebările punctate acum sau la final. */
+function tabsFor(){
+  const E=pasiNivel(R.li),A=atins(R.li),acum=pasAcum(),urm=A.lastIndexOf(true)+1;
+  return E.map((e,x)=>{
+    const cls=e.id[0]==='q'?(R.phase==='end'||R.punctat[+e.la]?'done':''):'done';
+    if(e.id===acum)return `<span class="${cls?cls+' ':''}now" aria-current="step">${esc(e.et)}</span>`;
+    if(A[x])return `<button type="button" class="${cls}" data-pas="${e.la}" title="${esc(e.t)}">${esc(e.et)}</button>`;
+    return `<span class="blocat${x===urm?' urm':''}" title="${x===urm?'Următorul. ':''}Ajungi aici după ce termini pașii de dinainte">${esc(e.et)}</span>`}).join('');
 }
 function mergiLa(k){
   if(k==='citire'){if(C.nivele[R.li].pasi){R.si=0;R.phase='learn';learnPage()}else{R.phase='read';readPage()}return}
@@ -344,6 +389,45 @@ function mergiLa(k){
   R.qi=Number(k);R.phase='q';question();
 }
 function wireTabs(){app.querySelectorAll('.tabs [data-pas]').forEach(b=>b.onclick=()=>mergiLa(b.dataset.pas))}
+/* o notă scurtă deasupra paginii abia desenate (legăturile directe, mai jos); pleacă la următorul desen */
+function arataNota(t){const f=t&&app.querySelector('.foaie');if(f)f.insertAdjacentHTML('afterbegin',`<p class="nota-pas" role="status">${esc(t)}</p>`)}
+/* „CONTINUĂ DE UNDE AI RĂMAS” (10.10.2026): nivelul neterminat atins cel mai recent (t1; lecția: nivelul ei), la cel mai
+   îndepărtat pas atins. Doar dacă elevul a trecut de primul pas; nu la antrenament (întrebările se trag din nou) și nu la
+   un nivel reluat după „Ia-o de la capăt” (p1/fp: drumul vechi rămâne în ps/qm, iar bara îl arată apăsabil oricum). */
+function deContinuat(){
+  let b=null;
+  C.nivele.forEach((Lv,i)=>{const s=sertarLv()[i];if(Lv.bazin||!s||facut(s)||s.p1||s.fp||!unlocked(i))return;
+    const f=atins(i).lastIndexOf(true);if(f<1)return;
+    if(!b||numar(s.t1)>b.t)b={i,f,t:numar(s.t1)}});
+  if(!b)return null;
+  const e=pasiNivel(b.i)[b.f],n=C.nivele.length>1?(eLectie()?`partea ${b.i+1}, `:`${C.mod==='antrenament'?'runda':'nivelul'} ${b.i+1}, `):'';
+  return {i:b.i,e,unde:n+e.et};
+}
+/* LEGĂTURI DIRECTE (10.10.2026): ?pas=p3|atelier|real|q2|citire deschide nivelul (lecția: nivelul ei; jocul: &nivel=N,
+   de la 1, altfel nivelul de continuat) direct la pasul cerut, DACĂ elevul l-a atins; altfel la cel mai îndepărtat pas
+   atins, cu o notă scurtă. ?continua=1 = la cel mai îndepărtat pas atins (ca butonul „Continuă de unde ai rămas”); la un
+   nivel terminat rămâne cuprinsul. Drumul e cel obișnuit: startLevel(i, pas) -> mergiLa. Parametrii se scot din adresă
+   după folosire, ca o reîncărcare să nu-l mute iar. ?recitire=N nu ajunge aici (porneste() iese înainte). */
+function legaturaDirecta(){
+  let q;try{q=new URLSearchParams(location.search)}catch(e){return}
+  const pas=String(q.get('pas')||'').trim().toLowerCase(),cont=q.get('continua'),nv=parseInt(q.get('nivel'),10);
+  if(!pas&&cont==null)return;
+  ['pas','continua','nivel'].forEach(k=>q.delete(k));
+  try{const s=q.toString();history.replaceState(history.state,'',location.pathname+(s?'?'+s:'')+location.hash)}catch(e){}
+  const n=C.nivele.length,DC=deContinuat();
+  const i=nv>=1&&nv<=n?nv-1:n===1?0:DC?DC.i:Math.max(0,C.nivele.findIndex((_,k)=>unlocked(k)&&!facut(sertarLv()[k])));
+  const fel=eLectie()?'partea':C.mod==='antrenament'?'runda':'nivelul';
+  if(!unlocked(i))return arataNota(`${fel[0].toUpperCase()+fel.slice(1)} ${i+1} nu s-a deschis încă: termină întâi ${fel} ${i}.`);
+  if(C.nivele[i].bazin)return startLevel(i);
+  if(!pas&&facut(sertarLv()[i]))return arataNota(eLectie()&&n===1?'Ai terminat deja lecția.':`Ai terminat deja ${fel} ${i+1}.`);
+  const E=pasiNivel(i),A=atins(i),f=A.lastIndexOf(true);
+  let x=-1,nota='';
+  if(pas){x=E.findIndex(e=>e.id===pas);
+    if(x<0)nota=`Pasul „${pas}” nu există aici.`;
+    else if(!A[x]){nota=`Încă n-ai ajuns la ${E[x].et}.`;x=-1}}
+  if(x<0){x=Math.max(f,0);if(nota)nota+=f>=0?` Te-am dus unde ai rămas: ${E[x].et}.`:` Începi cu ${E[x].et}.`}
+  startLevel(i,E[x].la,nota);
+}
 
 /* ---------------- cuprins ---------------- */
 function home(){
@@ -355,6 +439,7 @@ function home(){
     const drum=Lv.pasi?`<span class="drum">${Lv.pasi.length} pași de învățat${Lv.atelier?' · atelier':''}${aplicatieReala(Lv)?' · '+esc(numeReal(Lv,'în aplicația adevărată')):''} · ${Lv.qs.length} întrebări de verificare</span>`:'';
     const nr=LE?(C.nivele.length>1?`Partea ${i+1}`:`Lecția ${nrL}`):`${i+1} din ${C.nivele.length}${Lv.final?' · final':''}`;
     return `<button class="lvl" type="button" data-l="${i}" ${u?'':'disabled'}><span class="n">${nr}</span><span class="t">${esc(Lv.t)}${drum}</span><span class="s">${d?starsHtml(d.stars)+(tin?' <small>· acum: ținut deoparte</small>':''):tin?'<small>făcut acum · ținut deoparte</small>':u?'începe →':'blocat'}</span></button>`}).join('');
+  const DC=inAsteptare()?null:deContinuat();   /* cât stă „Ești tot X?” nu trimitem pe nimeni pe drumul lui X */
   shell(`
     <div class="eyebrow">${LE?`Lecția ${nrL}`:esc(C.eticheta?C.eticheta.replace(/^Jocuri\s*/,''):'TIC')} · clasa ${esc(C.clasa)} · ${esc(C.unitateTitlu)}</div>
     <h1 style="margin-top:8px">${C.h1||esc(C.titlu)}</h1>
@@ -363,6 +448,7 @@ function home(){
     <div id="cine-lucreaza"></div>
     <div class="namerow"><label for="nume">Numele tău, pentru diplomă</label><input id="nume" type="text" autocomplete="off" maxlength="40" value="${esc(inAsteptare()?'':S.nume)}" placeholder="ex. Ana Popescu"></div>
     ${C.cum?`<div class="cum-inveti">${C.cum}</div>`:''}
+    ${DC?`<div class="row continua-rand"><button class="btn primary" id="continua" type="button">Continuă de unde ai rămas: ${esc(DC.unde)}</button></div>`:''}
     <div class="toc-h">${LE?(C.nivele.length>1?`Lecția are ${C.nivele.length} părți · se deschid pe rând`:numeReal(C.nivele[0],'')?`Drumul lecției: pașii → ${C.nivele[0].atelier?'atelierul → ':''}${esc(numeReal(C.nivele[0],''))} → verificarea`:'Drumul lecției: înveți pe pași, exersezi, o faci în aplicația adevărată, apoi verifici'):C.mod==='antrenament'?`${C.nivele.length} runde · De bază → Consolidat → Avansat · întrebări noi la fiecare reluare`:`${C.nivele.length} niveluri · se deblochează pe rând · ultimul e nivelul final`}</div>
     <nav class="toc" aria-label="${LE?'Lecția':'Nivelurile'}">${rows}</nav>
     <div class="row" style="margin-top:22px">
@@ -372,6 +458,7 @@ function home(){
     </div>`);
   const inp=document.getElementById('nume');inp.addEventListener('input',()=>{S.nume=inp.value.trim();save()});
   app.querySelectorAll('.lvl').forEach(b=>b.addEventListener('click',()=>startLevel(+b.dataset.l)));
+  const ct=document.getElementById('continua');if(ct)ct.onclick=()=>startLevel(DC.i,DC.e.la);
   const dp=document.getElementById('dipl');if(dp)dp.onclick=diploma;
   const rs=document.getElementById('reset');
   if(rs)rs.onclick=()=>{if(rs.dataset.sure){iaDeLaCapat();home()}else{rs.dataset.sure=1;rs.textContent='Sigur? Apasă din nou'}};   // vezi „Ia-o de la capăt” sus
@@ -440,12 +527,15 @@ function marcheazaVazut(i,pick){
   if(idx.every(k=>next.includes(k)))next=pick;   // a văzut tot bazinul: ciclul o ia de la capăt
   try{localStorage.setItem(vazutKey(i),JSON.stringify(next))}catch(e){}
 }
-function startLevel(i){
+/* la (opțional): pasul de deschis direct, ca în bară ('p3' = P4, 'atelier', 'real', '1' = Î2), cu o notă deasupra
+   (legăturile directe și „Continuă de unde ai rămas”); fără el, nivelul începe cu primul pas, ca înainte */
+function startLevel(i,la,nota){
   const Lv=C.nivele[i];let pick=null;
   if(Lv.bazin){const t=trage(Lv,i);Lv.qs=t.qs;pick=t.pick}
   scurge();   // secundele nivelului de dinainte intră la el
-  R={li:i,qi:0,max:0,punctat:{},atts:{},xp:0,first:0,streak:0,phase:Lv.pasi?'learn':'read',pick,si:0,vazutPas:{},pv:{},indiciu:{},mode:'test'};
+  R={li:i,qi:0,max:0,qm:0,punctat:{},atts:{},xp:0,first:0,streak:0,phase:Lv.pasi?'learn':'read',pick,si:0,vazutPas:{},pv:{},indiciu:{},mode:'test'};
   noteaza(i,l=>{if(Lv.pasi)l.pn=Lv.pasi.length;if(Lv.atelier&&l.at==null)l.at=0});   // văzut (v), t0/t1
+  if(la!=null){mergiLa(la);arataNota(nota);return}
   if(Lv.pasi)learnPage();else readPage();
 }
 /* textul întreg al nivelului (pentru „Recitește”): la nivelurile pe pași, toți pașii unul după altul */
@@ -472,8 +562,8 @@ function blocPrereq(){
 }
 function learnPage(){
   const Lv=C.nivele[R.li],n=Lv.pasi.length,P=Lv.pasi[R.si];R.vazutPas[R.si]=true;
-  const si=R.si;noteaza(R.li,l=>{const ps=Array.isArray(l.ps)?l.ps.slice():[];if(ps.includes(si))return false;   // pasul deschis (ps)
-    ps.push(si);l.ps=ps.sort((a,b)=>a-b);l.pn=n});
+  const si=R.si;noteaza(R.li,l=>{const ps=Array.isArray(l.ps)?l.ps.slice():[],ul='p'+(si+1);if(ps.includes(si)&&l.ul===ul)return false;   /* pasul deschis (ps), ultimul pas (ul) */
+    if(!ps.includes(si)){ps.push(si);l.ps=ps.sort((a,b)=>a-b)}l.pn=n;l.ul=ul});
   const AR=aplicatieReala(Lv);   // doar în modul lecție: fără atelier, după ultimul pas vine „Acum în aplicația adevărată”
   const ultim=R.si===n-1,urm=ultim?(Lv.atelier?'La atelier →':AR?esc(numeReal(Lv,'Acum în aplicația adevărată'))+' →':'La verificare →'):'Pasul următor →';
   const ex=practiceList(P);
@@ -588,8 +678,8 @@ function ajutorButon(Q,body){
 }
 /* ATELIERUL: aplicația simulată (tip-html, tip-foaie…), fără puncte; testele simulatorului arată ce e gata */
 function atelierPage(){
-  const Lv=C.nivele[R.li],A=Lv.atelier,AR=aplicatieReala(Lv);
-  noteaza(R.li,l=>{if(l.at===1)return false;l.at=1});   // atelierul deschis (at)
+  const Lv=C.nivele[R.li],A=Lv.atelier,AR=aplicatieReala(Lv);R.atelierVazut=true;
+  noteaza(R.li,l=>{if(l.at===1&&l.ul==='atelier')return false;l.at=1;l.ul='atelier'});   /* atelierul deschis (at), ultimul pas (ul) */
   shell(`
     <div class="eyebrow">${nivelEticheta(R.li)} · atelier</div>
     <h2 style="margin:8px 0 6px">${esc(A.titlu||'Fă-o ca în aplicația reală')}</h2>
@@ -606,8 +696,9 @@ function atelierPage(){
 /* MODUL LECȚIE: „Acum în aplicația adevărată” - după atelier, înainte de verificare (standardul lecției, 27.09.2026).
    Pașii sunt cei din `aplicatieReala.pasi` (sau `diploma.provocare`); fără puncte, elevul îi face în aplicația reală. */
 function realPage(){
-  const Lv=C.nivele[R.li],A=aplicatieReala(Lv);R.realVazut=true;
+  const Lv=C.nivele[R.li],A=aplicatieReala(Lv);
   if(!A){R.phase='q';question();return}
+  R.realVazut=true;noteaza(R.li,l=>{if(l.re===1&&l.ul==='real')return false;l.re=1;l.ul='real'});   /* Aplicația văzută (re), ultimul pas (ul) */
   shell(`
     <div class="eyebrow">${nivelEticheta(R.li)} · ${esc(A.titlu||'în aplicația adevărată')}</div>
     <h2 style="margin:8px 0 6px">${esc(A.titlu||'Acum în aplicația adevărată')}</h2>
@@ -625,6 +716,7 @@ function realPage(){
 }
 function readPage(){
   const Lv=C.nivele[R.li];
+  noteaza(R.li,l=>{if(l.ul==='citire')return false;l.ul='citire'});   /* ultimul pas (ul) */
   const intro=Lv.bazin
     ?`<p class="lede" style="margin:0 0 14px">${Lv.qs.length} întrebări alese la întâmplare din ${Lv.bazin.length}. La fiecare reluare primești altele, pe aceleași lucruri din lecții.</p>${Lv.text?`<div class="peek reading" style="display:block"><div class="lbl">Amintește-ți</div>${Lv.text}</div>`:''}`
     :`<div class="reading">${Lv.text}</div>`;
@@ -638,6 +730,10 @@ function readPage(){
 }
 function question(){
   const Lv=C.nivele[R.li],Q=Lv.qs[R.qi];R.mode='test';R.att=R.atts[R.qi]||0;R.done=false;R.max=Math.max(R.max,R.qi);
+  const qn=R.qi+1;R.qm=Math.max(R.qm||0,qn);R.proaspat=!R.punctat[R.qi];   /* proaspăt = nerezolvată încă în deschiderea asta */
+  noteaza(R.li,l=>{const ul='q'+qn;if(numar(l.qm)>=qn&&l.ul===ul)return false;   /* cea mai mare întrebare atinsă (qm), ultimul pas (ul) */
+    l.qm=Math.max(numar(l.qm),qn);l.ul=ul});
+  const sarite=R.proaspat&&Lv.qs.some((_,k)=>k<R.qi&&!R.punctat[k]);   /* a intrat direct aici (bara, „Continuă”): vezi showNext */
   const tn=textNivel(Lv),inapoiLa=R.qi?String(R.qi-1):Lv.pasi?(aplicatieReala(Lv)?'real':Lv.atelier?'atelier':'p'+(Lv.pasi.length-1)):'citire';
   shell(`
     <div class="row" style="justify-content:space-between"><div class="eyebrow">${nivelEticheta(R.li)} · ${Lv.pasi?'verificare · ':''}${esc(Lv.t)}</div>
@@ -645,6 +741,7 @@ function question(){
     <button class="btn ghost sm" id="peekb" type="button" aria-expanded="false" ${tn?'':'hidden'}>${Lv.bazin?'Amintește-ți':Lv.pasi?'Recitește pașii':'Recitește pagina'}</button></span></div>
     ${R.qi===0&&Lv.pasi?'<p class="hint" style="margin:6px 0 0">Acum verifici ce ai învățat în pași. Primești stele pentru răspunsurile corecte din prima; poți cere oricând un indiciu sau reciti pașii.</p>':''}
     ${R.punctat[R.qi]?'<p class="hint" style="margin:6px 0 0">Refaci un pas deja rezolvat: exersezi, dar punctele le-ai primit deja.</p>':''}
+    ${sarite?'<p class="hint" style="margin:6px 0 0">Întrebările de dinainte le rezolvi și pe ele înainte de final: stelele se dau pe toate.</p>':''}
     <div class="peek reading" id="peek" hidden>${tn}</div>
     <div class="stack" style="margin-top:14px">
       <div class="q">${Q.q}</div>
@@ -700,12 +797,16 @@ function resolve(correct,msg){
 function giveUp(html){
   if(R.mode==='practice'){R.done=true;feedback('bad',`<strong>Uite răspunsul:</strong> ${html}${R.pQ.why?'<br>'+R.pQ.why:''}<br><em>Încearcă și exercițiul următor, ca să vezi dacă ai prins ideea.</em>`);practiceNext();return}
   const Q=C.nivele[R.li].qs[R.qi];R.done=true;if(!R.punctat[R.qi]){R.punctat[R.qi]=true;R.streak=0};feedback('bad',`<strong>Răspunsul corect:</strong> ${html}<br>${Q.why}`);showNext();setHud()}
+/* SĂRITE (10.10.2026): bara ține minte întrebările atinse, deci elevul poate intra direct la Î3 (din bară, din „Continuă
+   de unde ai rămas”, din ?pas=q3). Cele de dinainte nu sunt rezolvate în deschiderea asta, iar stelele și prima
+   încercare (p1) se socotesc pe toate: la ultima întrebare butonul îl duce întâi la prima nerezolvată, iar când nu mai
+   e niciuna, „Termină nivelul”. Pe drumul obișnuit (Î1, Î2… la rând) totul e ca înainte. */
 function showNext(){
   if(R.mode==='practice')return;
-  const last=R.qi===C.nivele[R.li].qs.length-1;
-  document.getElementById('nav').innerHTML=`<button class="btn primary" id="next" type="button">${last?'Termină nivelul':'Mai departe →'}</button>`;
+  const qs=C.nivele[R.li].qs,last=R.qi===qs.length-1,lipsa=qs.findIndex((_,k)=>!R.punctat[k]),gata=lipsa<0&&(last||R.proaspat);
+  document.getElementById('nav').innerHTML=`<button class="btn primary" id="next" type="button">${gata?'Termină nivelul':last?`Mai ai de rezolvat: Î${lipsa+1} →`:'Mai departe →'}</button>`;
   const n=document.getElementById('next');n.focus({preventScroll:true});
-  n.onclick=()=>{if(last)endLevel();else{R.qi++;question()}};
+  n.onclick=()=>{if(gata)endLevel();else if(last){R.qi=lipsa;question()}else{R.qi++;question()}};
 }
 function revealButton(fn){
   const nav=document.getElementById('nav');
@@ -905,7 +1006,7 @@ function endLevel(){
      spune că a fost terminat înainte de „Ia-o de la capăt”); cât stă „Ești tot X?”, merge în @_tinut și prezenta.js
      (mutaJoc) n-o dă lui X dacă X terminase deja nivelul */
   const bune=R.first;
-  noteaza(R.li,l=>{if(!l.p1&&(deoparte||(!terminatInainte&&!l.fp)))l.p1={b:bune,t:n,c:Date.now()}});
+  noteaza(R.li,l=>{l.ul='gata';if(!l.p1&&(deoparte||(!terminatInainte&&!l.fp)))l.p1={b:bune,t:n,c:Date.now()}});
   if(C.nivele[R.li].bazin)marcheazaVazut(R.li,R.pick);
   const next=R.li+1<C.nivele.length;
   raporteaza({tip:'nivel',nivel:R.li+1,stele:S.lv[R.li].stars,max:3});
@@ -1165,13 +1266,16 @@ function porneste(config){
   document.getElementById('go-home').onclick=home;
   wireHeader();
   home();
+  legaturaDirecta();   /* ?pas=… / ?continua=1 (vezi „LEGĂTURI DIRECTE”) */
 }
 
 /* ---------------- pentru poarta de testare (test_joc.py) ---------------- */
 const testHooks={
   config:()=>C,
   stare:()=>R?{li:R.li,qi:R.qi,phase:R.phase,done:R.done,mode:R.mode,si:R.si,nEx:R.pList?R.pList.length:0}:null,
-  deblocheaza:()=>{C.nivele.forEach((_,i)=>{if(!facut(S.lv[i]))S.lv[i]=ordonat(Object.assign({},S.lv[i],{stars:1,xp:(S.lv[i]&&S.lv[i].xp)||0}))});save()},
+  /* pana (opțional, 10.10.2026): deblochează doar nivelurile de dinaintea lui (de la 0), ca nivelul `pana` să rămână
+     neterminat: un nivel terminat are toată bara apăsabilă (vezi „BARA PE ELEV”) */
+  deblocheaza:pana=>{C.nivele.forEach((_,i)=>{if(pana!=null&&i>=pana)return;if(!facut(S.lv[i]))S.lv[i]=ordonat(Object.assign({},S.lv[i],{stars:1,xp:(S.lv[i]&&S.lv[i].xp)||0}))});save()},
   scurge:()=>scurge(),   // probele: secundele adunate intră acum în sertar (proba_instrumentare.py)
   toateIntrebarile:()=>{TEST_TOATE=true},   // antrenament: poarta joacă tot bazinul, nu doar ce iese la tragere
   /* nivelurile pe pași: poarta deschide fiecare pas și fiecare exercițiu („încă unul”), apoi atelierul */

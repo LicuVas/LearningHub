@@ -30,7 +30,8 @@ Scenariul:
   K. (informativ, nu se numără) o filă cu motorul VECHI citește un sertar scris de motorul nou
 Mutanții (proba trebuie să-i prindă pe toți): M1 unirea de pe server ia minimul la ind/ara/sec; M2 p1 se suprascrie la
 reluare; M3 mutarea din @_tinut pierde câmpurile noi; M4 indiciul cerut cât stă întrebarea nu ajunge în @_tinut;
-M5 save() fără unire cu discul; M6 noteaza rescrie tot sertarul din memorie; M7 fără fp la „Ia-o de la capăt”.
+M5 save() fără unire cu discul; M6 noteaza rescrie tot sertarul din memorie; M7 fără fp la „Ia-o de la capăt”;
+M8 (10.10.2026) copia din prezenta.js nu ia maximul la re/qm (bara pașilor pe elev: re, qm = maximul, ul = valoarea mai nouă).
 Ultima linie = numărul de probleme (+ mutanții scăpați). 0 = bine.
 """
 import argparse
@@ -96,8 +97,10 @@ function nivel(fel) {
   if (fel === 2 || fel === 3) { l.stars = 1 + r(3); l.xp = r(60); }
   l.v = 1; pune('ind', r(6)); pune('ara', r(3)); pune('sec', r(900)); pune('t0', T + r(1e6)); pune('t1', T + 1e6 + r(1e6));
   pune('ps', [r(5), r(5)]); pune('pn', 4 + r(2)); pune('at', r(2));
+  // 10.10.2026, bara pașilor pe elev: re (Aplicația văzută), qm (cea mai mare Î atinsă), ul (ultimul pas afișat)
+  pune('re', 1); pune('qm', 1 + r(5)); pune('ul', ['p1', 'p3', 'atelier', 'real', 'q2', 'gata'][r(6)]);
   if (fel === 3 || (fel === 2 && r(2))) l.p1 = { b: r(6), t: 5, c: T + r(1e6) };
-  if (fel === 4) { l.ind = 'x'; l.sec = -5; l.ps = [1, 'a', 2.5, -1, 3]; l.p1 = { b: '3' }; l.t0 = 'ieri'; }
+  if (fel === 4) { l.ind = 'x'; l.sec = -5; l.ps = [1, 'a', 2.5, -1, 3]; l.p1 = { b: '3' }; l.t0 = 'ieri'; l.qm = 'x'; l.re = -1; }
   return Object.keys(l).sort().reduce((o, k) => (o[k] = l[k], o), {});
 }
 function sertar(vechi) {
@@ -131,13 +134,18 @@ for (const [ua, ub] of [[1, 2], [2, 1]]) {
   caz(`stele max + câmpuri noi de pe celălalt aparat (u ${ua}/${ub})`, (M) => { const z = u(M.uneste(S({ 0: { stars: 2, xp: 30 } }, ua), S({ 0: { v: 1, ind: 1 } }, ub))); return z.stars === 2 && z.xp === 30 && z.ind === 1; });
   caz(`două intrări „văzut” rămân fără stele (u ${ua}/${ub})`, (M) => { const z = u(M.uneste(S({ 0: { v: 1, ind: 1 } }, ua), S({ 0: { v: 1, sec: 5 } }, ub))); return !('stars' in z) && !('xp' in z); });
   caz(`nivel doar pe aparatul rămas în urmă nu se pierde (u ${ua}/${ub})`, (M) => { const z = L(M.uneste(S({ 0: { stars: 1, xp: 9 }, 1: { v: 1, ind: 4 } }, ua), S({ 0: { stars: 2, xp: 20 } }, ub))); return z[1] && z[1].ind === 4; });
+  // 10.10.2026, bara pașilor pe elev: re/qm = maximul, ul = de la valoarea mai nouă (u mai mare)
+  caz(`re/qm = maximul (u ${ua}/${ub})`, (M) => { const z = u(M.uneste(S({ 0: { v: 1, re: 1, qm: 2 } }, ua), S({ 0: { v: 1, qm: 4 } }, ub))); return z.re === 1 && z.qm === 4; });
+  caz(`ul = de la valoarea mai nouă (u ${ua}/${ub})`, (M) => u(M.uneste(S({ 0: { v: 1, ul: 'p3' } }, ua), S({ 0: { v: 1, ul: 'q2' } }, ub))).ul === (ub > ua ? 'q2' : 'p3'));
+  caz(`ul de pe un singur aparat rămâne (u ${ua}/${ub})`, (M) => u(M.uneste(S({ 0: { v: 1, ul: 'p3', qm: 1 } }, ua), S({ 0: { v: 1, ps: [0] } }, ub))).ul === 'p3');
 }
 caz('aceeași valoare de două ori = același text (idempotent)', (M) => { const a = S({ 0: { ara: 1, ind: 2, p1: { b: 3, c: 5, t: 5 }, ps: [0, 1], sec: 40, stars: 3, t0: 1, t1: 2, v: 1, xp: 50 } }, 5); return M.uneste(a, { v: a.v, u: 6 }).v === a.v; });
 const mut = (ce, f) => { let ok = false; try { ok = f(P.nivelMutat); } catch (e) { ok = false; } if (!ok) iesire.semantic.push('prezenta mutaJoc: ' + ce); };
 mut('ind/ara/sec se ADUNĂ la mutare', (m) => { const z = m({ stars: 3, xp: 40, ind: 2, sec: 100, p1: { b: 3, t: 5, c: 9 } }, { v: 1, ind: 1, ara: 1, sec: 10 }); return z.ind === 3 && z.ara === 1 && z.sec === 110 && z.p1.b === 3 && z.stars === 3; });
 mut('p1 nu trece la un nivel terminat fără p1', (m) => !('p1' in m({ stars: 2, xp: 20 }, { v: 1, stars: 3, xp: 50, p1: { b: 5, t: 5, c: 9 } })));
 mut('p1 trece la un nivel neterminat', (m) => m({ v: 1, ind: 1 }, { v: 1, stars: 3, xp: 50, p1: { b: 5, t: 5, c: 9 } }).p1.b === 5);
-mut('nivel vechi: exact ca înainte', (m) => JSON.stringify(m({ stars: 2, xp: 20 }, { stars: 3, xp: 10 })) === JSON.stringify({ stars: 3, xp: 20 }));
+mut('re/qm = maximul la mutare, ul = al muncii mutate', (m) => { const z = m({ v: 1, qm: 3, ul: 'q3' }, { v: 1, qm: 1, re: 1, ul: 'p2' }); return z.qm === 3 && z.re === 1 && z.ul === 'p2'; });
+mut('nivel vechi: exact ca înainte',(m) => JSON.stringify(m({ stars: 2, xp: 20 }, { stars: 3, xp: 10 })) === JSON.stringify({ stars: 3, xp: 20 }));
 process.stdout.write(JSON.stringify(iesire));
 """
 
@@ -619,6 +627,8 @@ MUTANTI = [
     ("M6 noteaza rescrie tot sertarul din memorie", "motor", "const e=scrieIn(SK,i,fn,t);",
      "const e=(()=>{const l=Object.assign({},S.lv[i]);if(!puneNota(l,fn,t))return null;S.lv[i]=ordonat(l);localStorage.setItem(SK,JSON.stringify(S));return S.lv[i]})();"),
     ("M7 reluarea unui nivel vechi după „Ia-o de la capăt” primește p1", "motor", "if(era&&!p1Bun(l.p1))l.fp=1;", ""),
+    # 10.10.2026, bara pașilor pe elev: copia din prezenta.js uită re/qm (iau valoarea de pe un singur aparat)
+    ("M8 prezenta.js nu ia maximul la re/qm", "prezenta", "['pn', 'at', 'v', 'fp', 're', 'qm'].forEach(", "['pn', 'at', 'v', 'fp'].forEach("),
 ]
 
 

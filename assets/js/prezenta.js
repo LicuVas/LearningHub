@@ -198,8 +198,11 @@
         p1 trece doar dacă sertarul n-a terminat deja nivelul fără ea și nu are fp (atunci nu mai e o primă încercare);
       - unesteNivel (uneste, mai jos; aceeași ca pe server, netlify/lib/unire.mjs): ACELAȘI elev de pe două aparate,
         deci numărătorile iau MAXIMUL (un aparat rămas în urmă nu șterge nimic), p1/t0 cel mai vechi, t1 cel mai nou.
-     Un nivel vechi, doar cu {stars, xp}, se unește exact ca înainte (aceeași formă, același text). */
-  var NOI = ['ind', 'ara', 'sec', 'p1', 't0', 't1', 'ps', 'pn', 'at', 'v', 'fp'];
+     Un nivel vechi, doar cu {stars, xp}, se unește exact ca înainte (aceeași formă, același text).
+     10.10.2026 (bara pașilor, pe elev; motor.js „BARA PE ELEV”): și re (Aplicația văzută), qm (cea mai mare întrebare
+     atinsă) = MAXIMUL în ambele uniri; ul (ultimul pas afișat) = de la valoarea mai nouă la unesteNivel (ca pe server),
+     iar la mutare de la munca mutată (e făcută mai târziu, cât stătea întrebarea / neînscris). */
+  var NOI = ['ind', 'ara', 'sec', 'p1', 't0', 't1', 'ps', 'pn', 'at', 'v', 'fp', 're', 'qm', 'ul'];
   function numar(x) { return typeof x === 'number' && isFinite(x) && x >= 0 ? x : 0; }
   function areNoi(a, b) { return NOI.some(function (k) { return (a && a[k] != null) || (b && b[k] != null); }); }
   function ordonat(o) { var r = {}; Object.keys(o).sort().forEach(function (k) { r[k] = o[k]; }); return r; }
@@ -216,7 +219,7 @@
   /* câmpurile noi ale lui p (vechi / sertarul-țintă) și l (nou / mutat) în o; suma = true la mutare, maximul altfel */
   function puneNoi(o, p, l, suma) {
     ['ind', 'ara', 'sec'].forEach(function (k) { if (p[k] != null || l[k] != null) o[k] = suma ? numar(p[k]) + numar(l[k]) : Math.max(numar(p[k]), numar(l[k])); });
-    ['pn', 'at', 'v', 'fp'].forEach(function (k) { if (p[k] != null || l[k] != null) o[k] = Math.max(numar(p[k]), numar(l[k])); });
+    ['pn', 'at', 'v', 'fp', 're', 'qm'].forEach(function (k) { if (p[k] != null || l[k] != null) o[k] = Math.max(numar(p[k]), numar(l[k])); });
     var t0 = [p.t0, l.t0].filter(function (x) { return numar(x) > 0; }), t1 = [p.t1, l.t1].filter(function (x) { return numar(x) > 0; });
     if (t0.length) o.t0 = Math.min.apply(null, t0); else delete o.t0;
     if (t1.length) o.t1 = Math.max.apply(null, t1); else delete o.t1;
@@ -232,6 +235,7 @@
     if (!areNoi(a, b)) return Object.assign({}, b, { stars: Math.max(b.stars || 0, a.stars || 0), xp: Math.max(b.xp || 0, a.xp || 0) });   // ca înainte
     var o = stele(Object.assign({}, a, b), b, a);
     puneNoi(o, b, a, true);
+    if (a.ul != null) o.ul = a.ul;   // ultimul pas: al muncii mutate (vezi mai sus)
     var p1 = p1Bun(b.p1) ? p1Vechi(b.p1, a.p1) : (p1Bun(a.p1) && !((b.stars || 0) > 0) && !b.fp ? a.p1 : null);
     if (p1) o.p1 = p1; else delete o.p1;
     return ordonat(o);

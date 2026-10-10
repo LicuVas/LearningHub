@@ -51,10 +51,12 @@ with sync_playwright() as p:
     print(f"pagina: {URL}")
     pg.goto(URL, timeout=30000)
     pg.wait_for_timeout(300)
-    pg.evaluate("JocMotor.test.deblocheaza()")
-    pg.evaluate("document.getElementById('go-home').click()")
     cfg = pg.evaluate("JSON.parse(JSON.stringify(JocMotor.test.config(),(k,v)=>typeof v==='function'?'[fn]':v))")
     li = next(i for i, lv in enumerate(cfg["nivele"]) if len(lv.get("qs", [])) >= 3)
+    # 10.10.2026: se deblochează doar nivelurile de DINAINTEA lui li; nivelul li rămâne neterminat, fiindcă un nivel
+    # terminat are toată bara apăsabilă (motor.js, „BARA PE ELEV”), iar verificarea 3 e despre un nivel în lucru
+    pg.evaluate("JocMotor.test.deblocheaza(%d)" % li)
+    pg.evaluate("document.getElementById('go-home').click()")
     pg.click(f'.lvl[data-l="{li}"]')
     pg.click("#go")
 
