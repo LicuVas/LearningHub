@@ -878,7 +878,12 @@
     var lista = [], vazute = new Set();
     (f.termeni || []).forEach(function (x) {
       var k = normalizeaza(x && x.t);
-      if (k && !vazute.has(k)) { vazute.add(k); lista.push({ t: x.t, d: x.d, din: 'fisa', forme: [k] }); }
+      // „temporizare (Timing)” acoperă și „temporizare” din glosar: cheia fără paranteza englezească
+      var k2 = normalizeaza(String((x && x.t) || '').replace(/\s*\([^)]*\)\s*$/, ''));
+      if (k && !vazute.has(k)) {
+        vazute.add(k); if (k2) vazute.add(k2);
+        lista.push({ t: x.t, d: x.d, din: 'fisa', forme: k2 && k2 !== k ? [k, k2] : [k] });
+      }
     });
     var text = (f.pasi || []).concat([f.rezultat || '']).join(' . ');
     gasesteTermeni(text, glosar, f.aplicatie).forEach(function (m) {

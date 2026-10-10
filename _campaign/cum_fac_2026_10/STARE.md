@@ -24,6 +24,12 @@ Contract: `contract.md` (aprobat 10.10.2026 21:51, toate implicitele). Specifica
       dev1+dev2 → a doua măsurare pe ascuns. Dacă tot < 90% → varianta (b) din contract (model AI în browser) = ÎNTREB
       întâi (30-100 MB pe PC). Reparațiile finale ale fișelor: după `afirmatii_surse.json` (judecata 2 + elevul de probă
       + Word: la margini punctul NU merge, la alineat merge — VII/6 vs VII/9).
+- [x] 4. GATA ~00:50: auditorul: testul e drept (51/54 ratări = motorul) · set de reglaj nr. 2 (429, opus) · 7.125
+      formulări în plus (`_sursa/formulari_extra_*.json`) · reglor nr. 2 (`reglaj_2.md`) · reparații finale + surse
+      Microsoft (102 confirmate, 48 parțial, 1 fals reparat, 20 negăsite) + elev runda 2 (V 32/10/0, VII 40/2/0, 0 blocaje)
+      **SETUL ASCUNS, a doua măsurare (date.js 097916c1ae01): locul 1 85,8%, primele 3 94,3%, în afară 34/37 = TREC.**
+      proba_browser 0 · proba_vezi (I5, motorul 3af8b783 al lui ai-0-b7) 0 · selfcheck `cum-fac-fise-la-zi` +
+      `cum-fac-lectii-acoperite` VERZI (AI_0 c98ef35a) · commituri LH locale f26dbec6, 46f86b24, 26420c62.
 - [ ] 5. probă browser + publicare (verifică `git log origin/master..master`) + probe live + contract selfcheck +
       commit + raport (CLOSEOUT).
 

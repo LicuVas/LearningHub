@@ -382,10 +382,11 @@ def main():
             pg.wait_for_selector(f'article[id="fisa-{reala_app["id"]}"]', timeout=5000)
             href = pg.get_attribute("#exersezi", "href") or ""
             tl = pg.inner_text("#exersezi")
-            if not href.endswith("?vezi=real") or "pasul din aplicația adevărată «" not in tl:
+            # pasul „în aplicația adevărată” n-are ?vezi=: legătura deschide lecția, textul spune că pasul e la final
+            if "?" in href or not href.endswith("/") or "la finalul lecției, pasul «" not in tl:
                 P(f"fișa {reala_app['id']} (pasul „real”): legătura {href}, textul „{tl}”")
             else:
-                OK(f"fișa {reala_app['id']}: legătura ?vezi=real, „{tl.strip()[:70]}…”")
+                OK(f"fișa {reala_app['id']}: legătura fără ?vezi= spre lecție, „{tl.strip()[:80]}…”")
         ctx.close()
 
         # ------------------------------------------------------------ 4. viteza pe 300 de fișe
