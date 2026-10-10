@@ -1216,10 +1216,13 @@ function prezenta(){
      trimitem tot ce e deja făcut (serverul păstrează maximul de stele, deci nu se dublează nimic) - DOAR dacă
      numele din joc e al elevului înscris, ca pe calculatorul comun să nu primească nivelurile colegului. */
   const norm=normNume;   // aceeași regulă (01.10.2026)
+  /* sinc:1 (bucla 10.10.2026, T1): trimiterile de aici REPETĂ niveluri terminate cândva (la fiecare deschidere de pagină),
+     deci nu sunt progres de azi. Panoul (semnul „timp fără progres”) nu le socotește; serverul le păstrează ca înainte
+     (maximul de stele). Un nivel terminat de-adevărat pleacă din endLevel(), fără sinc. */
   const sincron=()=>{const e=window.Prezenta&&window.Prezenta.identitate();if(!e||!S.nume||norm(S.nume)!==norm(e.nume))return;
     const facute=Object.keys(S.lv).filter(i=>facut(S.lv[i]));if(!facute.length)return;   // nivelurile doar văzute nu pleacă
-    facute.forEach(i=>raporteaza({tip:'nivel',nivel:+i+1,stele:S.lv[i].stars||0,max:3}));
-    if(C.nivele.every((_,i)=>facut(S.lv[i])))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3});};
+    facute.forEach(i=>raporteaza({tip:'nivel',nivel:+i+1,stele:S.lv[i].stars||0,max:3,sinc:1}));
+    if(C.nivele.every((_,i)=>facut(S.lv[i])))raporteaza({tip:'joc-gata',stele:totals().st,max:C.nivele.length*3,sinc:1});};
   /* profilul s-a schimbat sub joc (ex. „Nu ești tu?” + „Mai târziu” -> @_neinscris): S nu mai ține nivelurile
      celui plecat, iar ce lucrează noul elev ajunge în sertarul lui (26.09.2026, T1) */
   /* răspunsul la „Ești tot X?” (28.09.2026): profilul rămâne același, dar munca ținută deoparte a plecat (la X sau la

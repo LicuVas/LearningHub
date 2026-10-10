@@ -1418,7 +1418,10 @@
       sincron();
       var K = tinta(); if (!eElev() || !K || !e || !e.tip || !e.joc) return;
       var c = citeste(K, null) || { pag: {}, ev: [] };
-      c.ev.push({ tip: e.tip, joc: e.joc, titlu: e.titlu || '', nivel: e.nivel, din: e.din, stele: e.stele, max: e.max, cand: new Date().toISOString() });
+      var x = { tip: e.tip, joc: e.joc, titlu: e.titlu || '', nivel: e.nivel, din: e.din, stele: e.stele, max: e.max, cand: new Date().toISOString() };
+      // sinc (bucla 10.10.2026, T1): motor.js retrimite la deschiderea paginii nivelurile terminate cândva; nu sunt progres de azi
+      if (e.sinc) x.sinc = 1;
+      c.ev.push(x);
       c.ev = c.ev.slice(-30); if (!c.de) c.de = Date.now();
       if (K === K_TINUT) c.u = Date.now();
       scrie(K, c);
