@@ -59,6 +59,7 @@ PREZENTA = LH / "assets" / "js" / "prezenta.js"
 MOTOR = MOTOR_DIR / "motor.js"
 LECTIE = "lectii/v/m1-l03/"
 LOCALE = ("127.0.0.1", "localhost")
+SERVERE = ("teste-vasile.netlify.app", "lh-api.grlnvasile.workers.dev")   # serverul vechi și Worker-ul Cloudflare (11.10.2026)
 H = "b" * 64
 H_NOR = "c" * 64          # N: amprenta elevului cu două aparate; doar pentru ea serverul de probă ține progresul (Nor)
 ID_ANA = "idtablou" + "0" * 16
@@ -154,18 +155,19 @@ class Proba:
             return r.continue_()
         cors = {"access-control-allow-origin": "*", "content-type": "application/json"}
         if s.hostname not in LOCALE:
-            if s.hostname == "teste-vasile.netlify.app" and s.path == "/api/jurnal":
+            # 11.10.2026: clienții vorbesc cu Worker-ul Cloudflare (DIPLOME.api); aceeași simulare pe ambele adrese
+            if s.hostname in SERVERE and s.path == "/api/jurnal":
                 self.jurnal_cereri.append(r.request.post_data or "")
                 if self.mod_jurnal == "offline":
                     return r.abort()
                 return r.fulfill(status=200, headers=cors, body=json.dumps(self.raspuns_jurnal))
-            if s.hostname == "teste-vasile.netlify.app" and s.path == "/api/activitate":
+            if s.hostname in SERVERE and s.path == "/api/activitate":
                 self.activ.append(r.request.post_data or "")
                 if self.tine:   # P10: cererea rămâne pe drum (răspunsul îl dă proba mai târziu, cu elibereaza)
                     self.tinute.append(r)
                     return None
                 return r.fulfill(status=200, headers=cors, body='{"ok":true,"sec":0}')
-            if s.hostname == "teste-vasile.netlify.app" and s.path == "/api/progres":
+            if s.hostname in SERVERE and s.path == "/api/progres":
                 self.progres += 1
                 try:
                     b = json.loads(r.request.post_data or "{}")
@@ -518,7 +520,8 @@ class Proba:
         self.lucreaza(pg, 3600000, 20000)
         f, b = self.corpuri(pg, n)
         self.cadenta = len(f) + len(b)
-        self.verifica(1 <= self.cadenta <= 13 and all(x.get("acum") for x in f), "P7 o oră de lucru continuu: %d cereri /api/activitate (țintă ≤ 13; progresul /api/progres separat: %d)"
+        # 11.10.2026: cadența 2 minute (pe Cloudflare; era 5 minute pe Netlify): ~30 pe oră; sub 25 = a rămas rară, peste 32 = prea deasă
+        self.verifica(25 <= self.cadenta <= 32 and all(x.get("acum") for x in f), "P7 o oră de lucru continuu: %d cereri /api/activitate (țintă 25-32, la 2 minute; progresul /api/progres separat: %d)"
                       % (self.cadenta, self.progres - pr0), [list(x.keys()) for x in f][:3])
         pg.clock.resume()
         pg.close()

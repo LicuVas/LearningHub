@@ -39,7 +39,9 @@
 
   var SELF = (document.currentScript && document.currentScript.src) || (location.origin + '/assets/js/prezenta.js');
   var K_ID = 'lh_prezenta', K_COADA = 'lh_prezenta_coada', K_JURNAL = 'lh_prezenta_jurnal', K_TINUT = 'lh_prezenta_tinut';
-  var TICK = 5, FEREASTRA = 120000, TRIMITE_LA = 300000, UITAT_DUPA = 90 * 60000, REFUZ_ZILE = 30;
+  // TRIMITE_LA: 2 minute de la 11.10.2026 (el: „telefoanele lor pot trimite la 2 minute în loc de 5. fă-o!”), acum că serverul e pe
+  // Cloudflare (100.000 de cereri pe ZI); înainte 5 minute (cota Netlify pe lună) și, la început, 3 minute
+  var TICK = 5, FEREASTRA = 120000, TRIMITE_LA = 120000, UITAT_DUPA = 90 * 60000, REFUZ_ZILE = 30;
 
   function citeste(k, def) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; } catch (e) { return def; } }
   function scrie(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -1154,8 +1156,9 @@
         .then(function (r) { if (r.ok) marcheaza(); }).catch(function () {});
     }
   };
-  // 11.10.2026 (cota Netlify): progresul urcă la 5 minute (doar dacă s-a schimbat) și la ascunderea / închiderea paginii
-  setInterval(function () { if (stare() === 'activ') Nor.impinge(false); }, 300000);
+  // progresul urcă la 2 minute (doar dacă s-a schimbat) și la ascunderea / închiderea paginii (11.10.2026: pe Cloudflare; pe
+  // Netlify fusese rărit la 5 minute)
+  setInterval(function () { if (stare() === 'activ') Nor.impinge(false); }, 120000);
   addEventListener('pagehide', function () { if (stare() === 'activ') Nor.impinge(false, true); });
   addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && stare() === 'activ') Nor.impinge(false, true); });
 
@@ -1511,7 +1514,7 @@
       /* progresul de pe alte aparate: la fiecare pagină, dacă n-am mai întrebat de 2 minute. Ce vine se scrie
          în localStorage, iar jocul deschis își reîncarcă cuprinsul (evenimentul lh-progres). */
       var m = citeste(K_NOR, null) || {};
-      if (eu.h && Date.now() - (m.tras || 0) > 600000) Nor.trage()   /* 11.10.2026: cel mult o dată la 10 minute (cota Netlify) */.then(function (venit) {
+      if (eu.h && Date.now() - (m.tras || 0) > 120000) Nor.trage()   /* cel mult o dată la 2 minute (pe Cloudflare din 11.10.2026) */.then(function (venit) {
         if (venit) { try { dispatchEvent(new CustomEvent('lh-progres')); } catch (e) {} }
         Nor.impinge(false);
       });
