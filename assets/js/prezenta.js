@@ -73,7 +73,12 @@
       s.onload = function () { DATE = window.DIPLOME; DATE ? ok(DATE) : nu(); };
       s.onerror = nu;
       document.head.appendChild(s);
-    }).then(function (d) { server = d.server.replace(/\/api\/diploma$/, '/api/activitate'); return d; });
+    }).then(function (d) {
+      /* CLOUDFLARE (11.10.2026): activitatea și progresul merg la serverul din d.api (Worker-ul lh-api, 100.000 de cereri pe zi),
+         nu la Netlify (cota contului depășită). Fără d.api (fișierul vechi de date) totul rămâne ca înainte, pe Netlify. */
+      server = d.api ? String(d.api).replace(/\/+$/, '') + '/api/activitate' : d.server.replace(/\/api\/diploma$/, '/api/activitate');
+      return d;
+    });
   }
 
   async function cripteaza(nume) {
