@@ -52,7 +52,9 @@ Contract: `contract.md` (aprobat 10.10.2026 21:51, toate implicitele). Specifica
       VII/10 = fără gesturi noi (motive în `lectii_fara_gesturi.json`). Elev de probă: V 40/8/0, VII 38/9/1 → reparator pornit.
       MĂSURAT (date.js după fișele noi): ascuns vechi 85,2/94,6/**32 din 37**; ascuns M2 85,9/93,5/**12 din 15** →
       „n-am găsit” SUB prag → NU se publică până la reglor nr. 3 (pe `set_dezvoltare_m2.json`, 136, A/B).
-- [ ] M2-3. build + probe + `lectii_acoperite` 0 + publicare + proba live.
+- [x] M2-3. Reglor nr. 3 (`reglaj_3.md`) + reparații după elevi (14) → ascuns vechi 85,8/93,4/34 din 37, ascuns M2
+      89,1/95,7/15 din 15; `scurgere_ascuns.py` → 1 („merge and center” = numele butonului, nu o scurgere);
+      proba_browser 0; lectii_acoperite 0; --verifica 0. PUBLICAT bfbecfd1 (11.10 ~12:00); proba live în curs.
 
 ## Blocaje / note
 - 23:25 ai-0-79 (dirijorul lecțiilor M2: 18 lecții noi V-VII, primul commit nu înainte de ~02:00) rulează
