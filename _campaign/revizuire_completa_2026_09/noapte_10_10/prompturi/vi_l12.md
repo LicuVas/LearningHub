@@ -1,0 +1,15 @@
+# Autor VI/12
+
+**Lecția ta:** clasa a VI-a, M2, nr. 12 — „Protecția datelor personale. Parole și identitate virtuală” (predare, 04.12.2026). Dosarul: `C:\00\Projects\LearningHub\lectii\vi\m2-l12\`, cheia `lectie_vi_m2_l12`. Lecțiile publicate ale clasei: `lectii\vi\m1-l01`…`m1-l07`, `m2-l08`, `m2-l09`; plus planul clasei a V-a (V-U3: Internet, servicii, navigare, căutare, salvare, drepturi de autor), pe care elevul de a VI-a îl ȘTIE. Fă lista cu tot ce presupui cunoscut, cu bife în `surse.md`.
+
+**Granița.** Lecția 11 (alt autor, ÎN PARALEL) = pericolele pentru CALCULATOR (programe rău-intenționate, ferestre false), antivirusul, actualizările. Lecțiile 13-15 = poșta electronică. **Tu predai:** ce sunt datele personale (exemple: nume complet, adresă, telefon, școală și clasă, poze, locul unde ești acum) și de ce le protejezi; ce nu publici și cui nu le dai; parola: la ce folosește, ce o face puternică (lungime, amestec), fraza-parolă, nu o spui nimănui (în afară de părinți), nu o folosești peste tot; identitatea virtuală (profilul, ce las în urmă când postez), profilurile false și cum le recunoști; mesajele care îți cer parola sau date = capcană. Activitatea profesorului (`activitati_lectii_V_VI.json`, VI/12): „zece parole după criterii de tărie … frază-parolă … profil fals pregătit de profesor”. **NU predai:** antivirusul (11), e-mailul (13-15), setările unui serviciu anume.
+
+**SIGURANȚĂ — obligatoriu:**
+- Lecția NU cere nicăieri elevului să scrie date reale (nume, parolă, adresă). Toate exercițiile lucrează cu parole și persoane INVENTATE, iar pagina spune clar „nu scrie aici parola ta adevărată”.
+- Verifică în cod ce salvează și ce trimite pagina: `jocuri\_motor\motor.js`, `assets\js\prezenta.js`, `lectii\_sim\rezultat-elev.js` (doar citire, nu le modifici). Orice câmp în care elevul tastează o parolă de exercițiu NU are voie să ajungă în sertarul elevului, în `localStorage` sau spre panoul profesorului (`teste-vasile`). Dovada (probă Playwright cu rețeaua blocată + ce e în `localStorage` după) intră în `surse.md`.
+- Evaluatorul de tărie a parolei rulează DOAR în pagină (fără servicii externe de tipul „a fost parola ta furată?”).
+- Ce afirmi despre lege (GDPR, vârsta de la care un copil își poate face singur cont) — doar cu sursa oficială citată în `surse.md`, altfel nu afirmi.
+
+**Practica:** „Încearcă” de aplicare (sortezi date personale / nepersonale, judeci parole inventate, construiești o frază-parolă inventată, analizezi un profil fals), atelier în pagină (extensie nouă, nume nou). Gesturi reale în laborator: alege-le cu grijă pe calculatorul COMUN — nimic care schimbă parole, conturi sau setări, nimic care blochează calculatorul (ex. Windows + L poate lăsa calculatorul blocat cu o parolă pe care elevul n-o știe). Jocul `jocuri\internet-vi` (nivelurile N2, N6; pasul „Construiește o parolă puternică”) — refolosești ce e bun, verifici.
+
+Apoi citește și urmează `C:\00\Projects\LearningHub\_campaign\revizuire_completa_2026_09\noapte_10_10\prompturi\_comun.md`.
