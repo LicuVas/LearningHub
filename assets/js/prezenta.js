@@ -145,6 +145,10 @@
 
   /* ---------------- numărarea timpului ---------------- */
   var ultimaMiscare = Date.now(), laPagina = 0;
+  /* COTA NETLIFY (11.10.2026, el: „trebuie regândit cum facem să optimizăm numărul de apeluri”): cota de funcții e a TOT contului,
+     cu siturile clienților cu tot, și s-a depășit. Trimiterea de la 30 s de pe o pagină pleacă doar la SOSIRE (nimic trimis în
+     ultimele SOSIRE_DUPA), ca profesorul să-l vadă repede pe cel care abia a intrat; în lucru, totul merge cu trimiterea periodică. */
+  var trimisLa = 0, SOSIRE_DUPA = 10 * 60000;
   ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(function (e) {
     addEventListener(e, function () { ultimaMiscare = Date.now(); }, { passive: true, capture: true });
   });
@@ -322,7 +326,7 @@
       plecatTrimis = null; seInchide = false; revenireLa = tPlecat + REVENIRE_DUPA;
       if (revenireLa > Date.now()) programeazaRevenirea();
     }
-    if ((revenireLa && Date.now() >= revenireLa) || laPagina === 30 || Date.now() - ((citeste(K_COADA, {}) || {}).de || Date.now()) > TRIMITE_LA) trimite(false);
+    if ((revenireLa && Date.now() >= revenireLa) || (laPagina === 30 && Date.now() - trimisLa > SOSIRE_DUPA) || Date.now() - ((citeste(K_COADA, {}) || {}).de || Date.now()) > TRIMITE_LA) trimite(false);
   }, TICK * 1000);
   /* „acum”-ul de după o plecare scurtă: pleacă la un minut de la plecare, dacă elevul lucrează (pagina în față, cu focus,
      cu un gest în ultimele 2 minute) și nu a plecat din nou între timp. Orice „acum” trimis îl încheie (trimite). Dacă nu
@@ -379,7 +383,7 @@
       if (c.rid) o.rid = c.rid;
       if (rep) o.rep = new Date(c.rt || Date.now()).toISOString();
       var corp = JSON.stringify(o);
-      sterge(K_COADA);
+      sterge(K_COADA); trimisLa = Date.now();
       if (laInchidere && navigator.sendBeacon) { navigator.sendBeacon(server, new Blob([corp], { type: 'text/plain' })); return; }
       inZbor = true;
       fetch(server, { method: 'POST', body: corp, keepalive: true }).then(function (r) { if (!r.ok && r.status >= 500) throw 0; })
@@ -1145,7 +1149,8 @@
         .then(function (r) { if (r.ok) marcheaza(); }).catch(function () {});
     }
   };
-  setInterval(function () { if (stare() === 'activ') Nor.impinge(false); }, 60000);
+  // 11.10.2026 (cota Netlify): progresul urcă la 5 minute (doar dacă s-a schimbat) și la ascunderea / închiderea paginii
+  setInterval(function () { if (stare() === 'activ') Nor.impinge(false); }, 300000);
   addEventListener('pagehide', function () { if (stare() === 'activ') Nor.impinge(false, true); });
   addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && stare() === 'activ') Nor.impinge(false, true); });
 
@@ -1464,6 +1469,7 @@
         if (e.din) g.din = e.din; if (e.tip === 'joc-gata') g.gata = Date.now();
         j.jocuri[e.joc] = g; scrie(K_JURNAL, j);
       }
+      // nivelul / jocul terminat pleacă pe loc (11.10.2026: rămâne așa - e rar, ~3 pe oră, și panoul îl folosește pentru semne)
       if (K === K_COADA) trimite(false);
     },
     /* NOTA dintr-o lecție (25.09.2026, el: „pe LearningHub copiii sunt notați, îi aud «eu am luat 7»”).
@@ -1500,7 +1506,7 @@
       /* progresul de pe alte aparate: la fiecare pagină, dacă n-am mai întrebat de 2 minute. Ce vine se scrie
          în localStorage, iar jocul deschis își reîncarcă cuprinsul (evenimentul lh-progres). */
       var m = citeste(K_NOR, null) || {};
-      if (eu.h && Date.now() - (m.tras || 0) > 120000) Nor.trage().then(function (venit) {
+      if (eu.h && Date.now() - (m.tras || 0) > 600000) Nor.trage()   /* 11.10.2026: cel mult o dată la 10 minute (cota Netlify) */.then(function (venit) {
         if (venit) { try { dispatchEvent(new CustomEvent('lh-progres')); } catch (e) {} }
         Nor.impinge(false);
       });
