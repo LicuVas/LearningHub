@@ -10,7 +10,9 @@ Măsoară: cereri externe încercate, timpul de la tastare la rezultate (căutar
 deasupra marginii de jos la 1366×768 și la 390×844 (capturi în _teste/capturi/), deschiderea fișei în aceeași pagină,
 „Înapoi” care păstrează căutarea, săgeți + Enter, „n-am găsit” cu 3 propuneri și răsfoirea, tema întunecată și cea
 luminoasă, zonele de atins ≥ 32 px pe telefon, fără derulare orizontală, textul fișelor escapat corect (o fișă de
-probă cu <title>, &lt;&gt;, ghilimele, injectată doar în proba asta), viteza pe 300 de fișe, erorile JS din consolă.
+probă cu <title>, &lt;&gt;, ghilimele, injectată doar în proba asta), viteza pe 300 de fișe, erorile JS din consolă,
+fiecare aplicație cu fișe (și audio = Audacity/Clipchamp, din 11.10.2026) cu buton, etichetă și culoare proprie cu
+contrast ≥ 4,5 în ambele teme, iar „audacity play” cu o fișă audio pe locul 1 (când există fișe audio).
 Ultima linie = numărul de probleme.
 """
 import json
@@ -54,6 +56,43 @@ def porneste_server():
     srv = ThreadingHTTPServer(("127.0.0.1", 0), partial(Tacut, directory=LH))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     return srv
+
+
+def culori_aplicatii(pg, apps):
+    """Pentru fiecare aplicație: butonul ei de filtru (și textul lui) și culoarea ei (--c pe [data-app]), cu fundalul
+    cardului și culoarea de accent din tema de acum (--c lipsă sau egal cu accentul = aplicația n-are culoarea ei)."""
+    return pg.evaluate("""(apps) => {
+      const rs = getComputedStyle(document.documentElement), o = {};
+      for (const a of apps) {
+        const b = document.querySelector('#aplicatii button[data-filtru="' + a + '"]');
+        const d = document.createElement('a'); d.className = 'r'; d.setAttribute('data-app', a); d.hidden = true;
+        document.querySelector('main').appendChild(d);
+        const c = getComputedStyle(d).getPropertyValue('--c').trim();
+        d.remove();
+        o[a] = { buton: !!b, eticheta: b ? b.textContent.trim() : '', c: c,
+                 card: rs.getPropertyValue('--card').trim(), acc: rs.getPropertyValue('--acc').trim() };
+      }
+      return o;
+    }""", apps)
+
+
+def contrast(c1, c2):
+    """Raportul de contrast WCAG între două culori #RRGGBB sau rgb(…)."""
+    def rgb(c):
+        c = c.strip()
+        if c.startswith("#"):
+            h = c[1:]
+            if len(h) == 3:
+                h = "".join(x * 2 for x in h)
+            return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
+        return [int(x) for x in re.findall(r"\d+", c)[:3]]
+
+    def L(c):
+        v = [x / 255 for x in rgb(c)]
+        v = [x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4 for x in v]
+        return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]
+    a, b = L(c1), L(c2)
+    return (max(a, b) + 0.05) / (min(a, b) + 0.05)
 
 
 def citeste_date():
@@ -249,12 +288,52 @@ def main():
             v = [int(x) for x in re.findall(r"\d+", c)[:3]]
             return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]
         f_dark = fundal(pg)
+        c_dark = culori_aplicatii(pg, apps)
         pg.click("#tema")
         f_light = fundal(pg)
+        c_light = culori_aplicatii(pg, apps)
         if not (lum(f_dark) < 60 and lum(f_light) > 200):
             P(f"tema: întunecată {f_dark}, după buton {f_light}")
         else:
             OK(f"tema întunecată ({f_dark}) și, la buton, cea luminoasă ({f_light})")
+        # fiecare aplicație cu fișe (și audio, din 11.10.2026): buton de filtru cu eticheta ei, culoarea ei proprie,
+        # cu contrast ≥ 4,5 față de fundalul rezultatului, în ambele teme
+        rele = []
+        for tema_n, cul in (("întunecată", c_dark), ("luminoasă", c_light)):
+            vazute = {}
+            for a in apps:
+                x = cul.get(a) or {}
+                if not x.get("buton") or x.get("eticheta") in ("", a):
+                    rele.append(f"{a}: fără buton de filtru cu eticheta ei")
+                if not x.get("c") or x["c"] == x.get("acc"):
+                    rele.append(f"{a} ({tema_n}): fără culoarea ei (--{a})")
+                    continue
+                k = contrast(x["c"], x["card"])
+                if k < 4.5:
+                    rele.append(f"{a} ({tema_n}): contrast {k:.2f} < 4,5 ({x['c']} pe {x['card']})")
+                if x["c"] in vazute:
+                    rele.append(f"{a} ({tema_n}): aceeași culoare ca {vazute[x['c']]}")
+                vazute[x["c"]] = a
+        if rele:
+            P("aplicațiile în pagină: " + "; ".join(sorted(set(rele))[:8]))
+        else:
+            OK(f"aplicațiile cu fișe ({', '.join(apps)}): buton, etichetă, culoare proprie cu contrast ≥ 4,5 în ambele teme")
+        if "audio" in apps:
+            # o întrebare de Audacity: pe locul 1 o fișă audio, cu eticheta aplicației
+            pg.fill("#q", "")
+            pg.click('#aplicatii button[data-filtru=""]')
+            pg.click("#q")
+            pg.keyboard.type("audacity play", delay=10)
+            try:
+                pg.wait_for_function("document.querySelectorAll('#rezultate a.r').length > 0 && !document.getElementById('mesaj-negasit')", timeout=5000)
+                app_r0 = pg.get_attribute("#r0", "data-app")
+                et_r0 = pg.inner_text("#r0 .ap").strip().lower()
+                if app_r0 != "audio" or et_r0 != (c_light.get("audio") or {}).get("eticheta", "").lower():
+                    P(f"„audacity play”: primul rezultat e {app_r0} cu eticheta „{et_r0}” (aștept audio)")
+                else:
+                    OK(f"„audacity play”: pe locul 1 {pg.get_attribute('#r0', 'data-id')}, eticheta „{et_r0}”")
+            except Exception:
+                P("„audacity play”: niciun rezultat găsit")
         ctx.close()
 
         # ------------------------------------------------------------ 2. telefon 390×844, tema luminoasă a sistemului

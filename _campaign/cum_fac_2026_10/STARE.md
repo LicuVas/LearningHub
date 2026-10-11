@@ -43,6 +43,17 @@ Contract: `contract.md` (aprobat 10.10.2026 21:51, toate implicitele). Specifica
       Reprompt reluat (only G0,P7,P8,P10): P8, P10 FĂCUTE; G0/P7 rămân doar ca lucruri de raportat (60 de afirmații
       PARȚIAL/NEGĂSIT netrecute prin Office real; formatul „probat” diferit între lecții; 7 suprapuneri în setul ascuns).
 
+## Valul M2 (11.10.2026, cerut 10:26: „fă fișele pentru lecțiile noi”)
+- [x] M2-1. GATA ~11:20: autor windows (V/10, V/13, V/14, VI/11, VI/12 → `fise_m2_windows.json`) · autor audio+evaluări
+      (VII/11 app `audio`, VI/10, VII/10 → `fise_m2_audio_evaluari.json`) · resincronizare 29 de fișe (lecții republicate
+      noaptea; `--accepta`) · aplicația `audio` în motor + pagină · listă independentă `_independent/gesturi_m2.json`.
+- [x] M2-2. 48 de fișe noi (fise_m2_windows 31, fise_m2_audio_evaluari 17) + 24 resincronizate; judecata 0 GRAV/11 MEDIU/
+      12 MINOR → reparate; acoperire 98,9% (+2 fișe: meniul Start, Esc); formulări +1.150; glosar audio; V/13, VI/10,
+      VII/10 = fără gesturi noi (motive în `lectii_fara_gesturi.json`). Elev de probă: V 40/8/0, VII 38/9/1 → reparator pornit.
+      MĂSURAT (date.js după fișele noi): ascuns vechi 85,2/94,6/**32 din 37**; ascuns M2 85,9/93,5/**12 din 15** →
+      „n-am găsit” SUB prag → NU se publică până la reglor nr. 3 (pe `set_dezvoltare_m2.json`, 136, A/B).
+- [ ] M2-3. build + probe + `lectii_acoperite` 0 + publicare + proba live.
+
 ## Blocaje / note
 - 23:25 ai-0-79 (dirijorul lecțiilor M2: 18 lecții noi V-VII, primul commit nu înainte de ~02:00) rulează
   publica_lectie.py → build_lectii.py + hub. Am SCOS legăturile mele (patch: `_patch/legaturi_cum_fac.patch`, se

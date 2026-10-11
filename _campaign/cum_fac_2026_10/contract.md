@@ -127,3 +127,9 @@ Publicarea singur e verificată acum: `push_ready.py --repo C:\00\Projects\Learn
   1 = (a) fișe scoase din lecții, legate de sursă, semnalate la schimbare; 2 = (a) dicționar de sensuri în
   pagină, fără model AI (model doar dacă R4 pică); 3 = doar cele 42 de lecții publicate; 4 = fără „Încearcă
   aici” pe fișă; 5 = NU se păstrează întrebările elevilor.
+- 11.10.2026 08:35 — feedback după prima folosire: „excel resize cell” (lățime/înălțime în față) + „Exersezi…” în
+  filă nouă → reparate și publicate (d44403ba).
+- 11.10.2026 10:26 — profesorul: „fă fișele pentru lecțiile noi” (decizia 3: fișele cresc odată cu lecțiile). Valul M2:
+  8 lecții noi (V/10, V/13, V/14, VI/10, VI/11, VI/12, VII/10, VII/11) + resincronizarea a 29 de fișe ale căror lecții
+  au fost republicate în noaptea 10→11.10. Aplicație nouă: `audio` („Audio-video”: Audacity, Clipchamp), pentru VII/11.
+  Aceleași praguri R2-R8; pentru fișele noi, set de test separat scris de un agent care vede doar titlurile.

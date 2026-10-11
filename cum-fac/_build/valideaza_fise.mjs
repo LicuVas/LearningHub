@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 const L = 'C:/00/Projects/LearningHub';
 const SURSA = path.join(L, 'cum-fac/_sursa');
 const DIGEST = path.join(L, '_campaign/cum_fac_2026_10/digest');
-const APLICATII = ['excel', 'word', 'powerpoint', 'windows', 'web'];
+const APLICATII = ['excel', 'word', 'powerpoint', 'windows', 'web', 'audio'];   // audio = Audacity, Clipchamp (VII/11, 11.10.2026)
 const CAMPURI = ['id', 'aplicatie', 'titlu', 'intrebare', 'scurtatura', 'pasi', 'rezultat', 'atentie', 'termeni', 'captura',
   'formulari', 'cuvinte', 'sursa', 'clasa', 'lectia', 'inrudite'];
 const ETICHETE_OK = /^(b|\/b|kbd|\/kbd|code|\/code|i|\/i)$/;

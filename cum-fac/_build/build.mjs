@@ -65,10 +65,12 @@ if (sensuri) {
     if (!g.id || !Array.isArray(g.cuvinte) || !g.cuvinte.length) P(`sensuri.json: grup fără id sau fără cuvinte: ${JSON.stringify(g).slice(0, 80)}`);
     else if (ids.has(g.id)) P(`sensuri.json: grupul „${g.id}” apare de două ori`);
     ids.add(g.id);
-    if (g.aplicatie && !['excel', 'word', 'powerpoint', 'windows', 'web'].includes(g.aplicatie)) P(`sensuri.json: grupul „${g.id}” are aplicatie necunoscută „${g.aplicatie}”`);
+    if (g.aplicatie && !Cautare.aplicatii.includes(g.aplicatie)) P(`sensuri.json: grupul „${g.id}” are aplicatie necunoscută „${g.aplicatie}”`);
     for (const w of g.cuvinte || []) if (stop.has(norm(w))) info.push(`sensuri.json: „${w}” (grupul ${g.id}) e și în umplutură, deci nu ajunge niciodată la grup`);
   }
   if (!sensuri.aplicatii || !sensuri.grupuri) P('sensuri.json: lipsesc „aplicatii” sau „grupuri”');
+  for (const a of Object.keys(sensuri.aplicatii || {})) if (!Cautare.aplicatii.includes(a)) P(`sensuri.json: aplicația „${a}” nu e în lista motorului (cautare.js, APLICATII)`);
+  for (const a of Cautare.aplicatii) if (sensuri.aplicatii && !sensuri.aplicatii[a]) P(`sensuri.json: lipsește aplicatii.${a} (nume, indicii)`);
 }
 
 // 1b) glosarul termenilor (opțional)
@@ -78,7 +80,7 @@ if (fs.existsSync(TERMENI)) {
   try { g = JSON.parse(fs.readFileSync(TERMENI, 'utf8')); } catch (e) { P(`termeni.json: nu se citește: ${e.message}`); }
   if (g && !Array.isArray(g)) P('termeni.json: trebuie să fie o listă de {t, forme, d, aplicatii, sursa}');
   else if (g) {
-    const AP = ['excel', 'word', 'powerpoint', 'windows', 'web'];
+    const AP = Cautare.aplicatii;   // aceeași listă ca motorul (din 11.10.2026 și audio)
     g.forEach((x, i) => {
       const rau = !x || typeof x.t !== 'string' || !x.t.trim() || typeof x.d !== 'string' || !x.d.trim()
         || (x.forme != null && !Array.isArray(x.forme)) || (x.aplicatii != null && (!Array.isArray(x.aplicatii) || x.aplicatii.some(a => !AP.includes(a))));

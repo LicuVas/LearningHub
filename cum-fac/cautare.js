@@ -29,8 +29,17 @@
  *  9. formulările în plus (_sursa/formulari_extra_*.json, în date.js câmpul „fx”, normalizate, legate cu „|”) sunt un
  *     câmp separat: ponderea lui la ordonare, cât contează la „am găsit” (un cuvânt spus o singură dată e context);
  * 10. „neacoperite” (sensuri.json): gesturile care nu sunt în materie (ascund o coloană, cuprins, video…); dacă întrebarea
- *     pomenește unul și primul rezultat nu-l are în titlu / întrebare / formulări / cuvinte -> „n-am găsit”;
+ *     pomenește unul și primul rezultat nu-l are în titlu / întrebare / formulări / cuvinte -> „n-am găsit”
+ *     (afară de gesturile pe care aplicația fișei le „acoperă” toate: aplicatii.<app>.acopera, la audio sunetul și filmul);
  * 11. viteza: se punctează pe larg doar max_candidati fișe, cele cu cea mai mare margine de sus a acoperirii.
+ * 12. programele unei aplicații (aplicatii.<app>.programe, la audio: Audacity, Clipchamp): dacă întrebarea numește un
+ *     program, fișele care numesc ALT program trec în spate (× alt_program) și nu pot fi „am găsit” pe locul 1;
+ *     numele programului scris greșit („clipchap”) contează și el.
+ * 13. aplicatii.<app>.neacoperite: gesturile acelei aplicații care NU sunt în materie (la audio: tăiat, efecte, export;
+ *     la web: imagini, legături, tabele); țin doar când primul rezultat e al aplicației sau întrebarea o numește.
+ * 14. articolul: „site-ul”, „slide-urile” se lipesc la loc (= site, slide); cu articol_necunoscut, un cuvânt necunoscut
+ *     care e un cuvânt scurt + articol („josul”) se citește fără articol, înainte de corectarea greșelilor.
+ * 15. margine_slab: la marginea candidaților (pct. 11), un cuvânt găsit doar în pași / rezultat cântărește atât.
  * Ponderile și pragul stau în sensuri.json („reglaj”), ca reglajul să nu atingă codul.
  */
 (function (global, fabrica) {
@@ -42,8 +51,8 @@
   // semnele diacritice combinate (U+0300..U+036F), după normalize('NFD'): ă -> a + ˘, ș -> s + virgulă
   var SEMNE = new RegExp('[' + String.fromCharCode(0x300) + '-' + String.fromCharCode(0x36F) + ']', 'g');
 
-  var VERSIUNE = '1.2 (11.10.2026, reglajul nr. 2: formulările în plus, gesturile neacoperite)';
-  var APLICATII = ['excel', 'word', 'powerpoint', 'windows', 'web'];
+  var VERSIUNE = '1.4 (11.10.2026, reglajul nr. 3: aplicatii.<app>.neacoperite, articolul, margine_slab)';
+  var APLICATII = ['excel', 'word', 'powerpoint', 'windows', 'web', 'audio'];   // audio = Audio-video (VII/11)
   var REGLAJ_IMPLICIT = {
     prag: 0.55,
     ponderi_campuri: { titlu: 1.0, intrebare: 1.0, formulari: 0.95, cuvinte: 0.9, scurtatura: 0.9, termeni: 0.7,
@@ -56,6 +65,7 @@
     pondere_fraza: 0.5,
     alta_aplicatie_numita: 0.55,
     alta_aplicatie_indiciu: 0.85,
+    alt_program: 0.55,   // fișa altui program al aceleiași aplicații (aplicatii.<app>.programe), când întrebarea îl numește
     necunoscut: 0.9,
     scor_minim: 0.2,
     rar_df: 2,
@@ -63,7 +73,10 @@
     pondere_identitate: 0,
     lung_potrivite: 0,
     prag_lung: 0.4,
-    grup_nume_aplicatie: null
+    grup_nume_aplicatie: null,
+    articol_necunoscut: false, // „josul” = jos + ul (cuvântul necunoscut, fără articol)
+    margine_slab: null,        // null = marginea candidaților socotită pe toate câmpurile la fel (ca înainte)
+    pondere_tare: 0            // cât contează la ordonare acoperirea pe câmpurile tari (0 = deloc, ca înainte)
   };
 
   // ---------------------------------------------------------------- normalizare și rădăcini
@@ -79,6 +92,9 @@
     s = s.replace(/\b((?:ctrl|alt|shift|win)(?:\s*\+\s*(?:ctrl|alt|shift|win))*)\s*\+\s*([a-z0-9]+)/g,
       function (m, mod, tasta) { return ' ' + mod.replace(/[\s+]/g, '') + tasta + ' '; });
     s = s.replace(/\b(ctrl|alt|shift|win)\s+([a-z0-9]|f\d{1,2})\b/g, function (m, mod, tasta) { return mod + tasta; });
+    // articolul despărțit de cratimă se lipește la loc: site-ul -> siteul (= site), slide-urile -> slideurile (= slide)
+    // (doar după un cuvânt de 2+ litere: „s-ul” rămâne litera s)
+    s = s.replace(/\b([a-z0-9]{2,})[\-‑](ul|ului|urile|urilor|uri)\b/g, '$1$2');
     return s.replace(/[^a-z0-9]+/g, ' ').trim();
   }
 
@@ -235,9 +251,37 @@
     D.veto = (sensuri.neacoperite || []).map(function (l) {
       return (Array.isArray(l) ? l : [l]).map(function (w) { return bucati(w).map(radacina); }).filter(function (b) { return b.length; });
     });
+    // aplicatii.<app>.neacoperite: gesturile acelei aplicații care NU sunt în materie (la audio: tăiat, efecte, export);
+    // țin doar când primul rezultat e al aplicației sau întrebarea arată aplicația („tai” e și gestul din Word)
+    D.vetoApp = [];
+    var apV = sensuri.aplicatii || {};
+    Object.keys(apV).forEach(function (a) {
+      (apV[a].neacoperite || []).forEach(function (l) {
+        D.vetoApp[D.veto.length] = a;
+        D.veto.push((Array.isArray(l) ? l : [l]).map(function (w) { return bucati(w).map(radacina); }).filter(function (b) { return b.length; }));
+      });
+    });
     D.vetoStart = new Map();      // rădăcina de început -> [[intrarea, forma]]
     D.veto.forEach(function (forme, ix) {
       forme.forEach(function (b) { var l = D.vetoStart.get(b[0]); if (!l) { l = []; D.vetoStart.set(b[0], l); } l.push([ix, b]); });
+    });
+    // aplicatii.<app>.acopera: gesturile „neacoperite” pe care ORICE fișă a aplicației le predă (la audio: sunetul,
+    // filmul); vetoul lor nu taie fișele aplicației, chiar dacă fișa nu le scrie în titlu
+    D.acoperaApp = {};
+    Object.keys(ap).forEach(function (a) {
+      var s = new Set();
+      (ap[a].acopera || []).forEach(function (w) { vetoIn(D, bucati(w).map(radacina)).forEach(function (x) { s.add(x); }); });
+      if (s.size) D.acoperaApp[a] = s;
+    });
+    // aplicatii.<app>.programe: {program: [formele numelui]}, la o aplicație cu mai multe programe (audio: Audacity,
+    // Clipchamp). Numele programului iese din căutare ca orice nume; dacă întrebarea numește un program, fișele
+    // aplicației care numesc ALT program (în titlu, întrebare, formulări, cuvinte) trec în spate (reglaj.alt_program)
+    D.programRad = new Map();     // rădăcinile numelui (legate cu spațiu) -> „app:program”
+    Object.keys(ap).forEach(function (a) {
+      var pr = ap[a].programe || {};
+      Object.keys(pr).forEach(function (p) {
+        (pr[p] || []).forEach(function (w) { var b = bucati(w); if (b.length) D.programRad.set(b.map(radacina).join(' '), a + ':' + p); });
+      });
     });
     return D;
   }
@@ -259,6 +303,16 @@
     return o;
   }
   function radaciniText(t, normalizat) { var n = normalizat ? t : normalizeaza(t); return n ? n.split(' ').map(radacina) : []; }
+  // programele (aplicatii.<app>.programe) numite într-un text dat ca listă de rădăcini: un cuvânt sau două la rând
+  function programeIn(D, rads, o) {
+    o = o || new Set();
+    if (!D.programRad.size) return o;
+    for (var i = 0; i < rads.length; i++) {
+      var p = D.programRad.get(rads[i]) || (i + 1 < rads.length && D.programRad.get(rads[i] + ' ' + rads[i + 1]));
+      if (p) o.add(p);
+    }
+    return o;
+  }
 
   // textul -> jetoane {w: cuvântul (sau expresia), s: rădăcina (sau „f:expresia”), g: Set(grupuri)}
   // + voturile pentru aplicație (nume = 3, indiciu = 1)
@@ -337,6 +391,7 @@
     var N = fise.length;
     var df = new Map();              // „s:rad” / „g:grup” -> în câte fișe apare
     var postari = new Map();         // aceeași cheie -> Set(indicii fișelor)
+    var postariT = new Map();        // … doar din câmpurile tari și formulările în plus (pentru marginea candidaților)
     var vocabular = new Map();       // cuvânt -> rădăcină (pentru greșeli și început de cuvânt)
     D.cuvinteDictionar.forEach(function (r, w) { vocabular.set(w, r); });
     D.numeCuvant.forEach(function (a, w) { if (w.length > 2) vocabular.set(w, '@' + a); });
@@ -348,6 +403,7 @@
       var app = f.aplicatie;
       var campuri = {};
       var chei = new Set();
+      var cheiT = new Set();          // cheile câmpurilor tari
       var cheiFx = new Set();
       var fx = formulariExtra(f);
       var fxNormalizat = typeof f.fx === 'string';   // build.mjs le scrie normalizate
@@ -373,8 +429,8 @@
           if (aici) aici.forEach(function (x) { C.tf.set(x, (C.tf.get(x) || 0) + 1); });
         });
         var tinta = eFx ? cheiFx : chei;
-        C.s.forEach(function (s) { tinta.add('s:' + s); });
-        C.g.forEach(function (g) { tinta.add('g:' + g); });
+        C.s.forEach(function (s) { tinta.add('s:' + s); if (tare) cheiT.add('s:' + s); });
+        C.g.forEach(function (g) { tinta.add('g:' + g); if (tare) cheiT.add('g:' + g); });
         campuri[nume] = C;
       }
       var sursa = f.sursa || {};
@@ -408,6 +464,7 @@
       });
       if (analizeFx && R.fx_fraza) analizeFx.forEach(function (a) { if (a.jetoane.length) fraze.push(fraza(a, 1)); });
       chei.forEach(function (k) { df.set(k, (df.get(k) || 0) + 1); adauga(postari, k, ix); });
+      if (R.margine_slab != null) { cheiT.forEach(function (k) { adauga(postariT, k, ix); }); cheiFx.forEach(function (k) { adauga(postariT, k, ix); }); }
       cheiFx.forEach(function (k) {
         if (chei.has(k)) return;
         if (R.fx_df) df.set(k, (df.get(k) || 0) + 1); else faraDfFx.set(k, (faraDfFx.get(k) || 0) + 1);
@@ -420,8 +477,13 @@
         [f.titlu, f.intrebare].concat(f.formulari || [], f.cuvinte || []).forEach(function (t) {
           if (t) vetoIn(D, radaciniText(an(t).text, true)).forEach(function (x) { veto.add(x); });
         });
+        if (D.acoperaApp[app]) D.acoperaApp[app].forEach(function (x) { veto.add(x); });
       }
-      return { f: f, ix: ix, app: app, c: campuri, fraze: fraze, veto: veto, nIdent: (f.titlu ? 1 : 0) + (f.intrebare ? 1 : 0),
+      var prog = new Set();          // programele pe care le numește fișa (doar la aplicațiile cu „programe”)
+      if (D.programRad.size) [f.titlu, f.intrebare].concat(f.formulari || [], f.cuvinte || []).forEach(function (t) {
+        if (t) programeIn(D, radaciniText(t), prog);
+      });
+      return { f: f, ix: ix, app: app, c: campuri, fraze: fraze, veto: veto, prog: prog, nIdent: (f.titlu ? 1 : 0) + (f.intrebare ? 1 : 0),
         fxText: fx, fxNorm: fxNormalizat, fraziFx: null };
     });
     // fx_df oprit: rareța se socotește pe câmpurile autorilor; o cheie care apare DOAR în formulările în plus
@@ -521,10 +583,11 @@
       for (var i = 0; i < numeApp.length; i++) {
         var v = numeApp[i][0];
         if (v === w || v[0] !== w[0]) continue;
-        if (distanta(w, v, max) <= max) return numeApp[i][1];
+        if (distanta(w, v, max) <= max) { numeGasit = v; return numeApp[i][1]; }
       }
       return null;
     }
+    var numeGasit = null;           // ultimul nume corectat de numeAplicatieGresit (pentru programele aplicației)
     function inceputuri(w) {
       var r = new Set();
       if (w.length < 3) return r;
@@ -532,24 +595,44 @@
       return r;
     }
 
+    // „josul”: cuvânt scurt (pe care rădăcina nu-l mai taie) + articol; true = umplutură cu articol
+    var ARTICOLE = ['ului', 'ul', 'ii', 'lui'];
+    function faraArticol(w) {
+      for (var i = 0; i < ARTICOLE.length; i++) {
+        var a = ARTICOLE[i];
+        if (w.length - a.length < 2 || w.slice(-a.length) !== a) continue;
+        var b = w.slice(0, -a.length);
+        if (D.stop.has(b)) return true;
+        var tb = { s: radacina(b), g: grupuri(D, b, radacina(b)) };
+        if (cunoscut(tb)) return { w: b, s: tb.s, g: tb.g };
+      }
+      return null;
+    }
     // întrebarea -> jetoanele lămurite (cu rădăcina corectată, factorul de încredere și idf-ul)
     function intelege(text) {
       var A = analizeaza(D, text);
       var P = R.potrivire;
       var tastare = !/\s$/.test(String(text || ''));
       var jet = [];
+      var corectate = [];             // numele de program scrise greșit („clipchap”, „audacyti”), corectate
       A.jetoane.forEach(function (j, nrJ) {
         var t = { w: j.w, s: j.s, g: j.g, f: 1, fel: 'exact', ps: null };
         // numele aplicației scris greșit („powerpiont”, „exel”), chiar dacă greșeala apare și în formulările în plus:
         // un cuvânt fără sens în dicționar, rar sau necunoscut câmpurilor tari, la o literă de numele aplicației
         if (R.app_rar && !j.fraza && !t.g.size && (!vocabular.has(j.w) || (df.get('s:' + t.s) || 0) <= R.rar_df)) {
           var ca = numeAplicatieGresit(j.w);
-          if (ca) { A.vot[ca] = (A.vot[ca] || 0) + 3; A.numite[ca] = true; return; }
+          if (ca) { A.vot[ca] = (A.vot[ca] || 0) + 3; A.numite[ca] = true; if (numeGasit) corectate.push(radacina(numeGasit)); return; }
+        }
+        // cuvântul necunoscut e un cuvânt scurt + articol („josul” = jos + ul): întâi încercăm fără articol
+        if (R.articol_necunoscut && !j.fraza && !cunoscut(t)) {
+          var fa = faraArticol(j.w);
+          if (fa === true) return;            // umplutură cu articol
+          if (fa) { t.s = fa.s; t.g = fa.g; t.fel = 'articol→' + fa.w; }
         }
         if (!cunoscut(t)) {
           var c = j.fraza ? null : corecteaza(j.w);
           if (c && c.stop) return;
-          if (c && c.s[0] === '@') { var ap = c.s.slice(1); A.vot[ap] = (A.vot[ap] || 0) + 3; A.numite[ap] = true; return; }
+          if (c && c.s[0] === '@') { var ap = c.s.slice(1); A.vot[ap] = (A.vot[ap] || 0) + 3; A.numite[ap] = true; corectate.push(radacina(c.w)); return; }
           if (c) {
             t.s = c.s; t.g = grupuri(D, c.w, c.s); t.f = c.d === 1 ? P.greseala_1 : P.greseala_2; t.fel = 'greșeală→' + c.w;
           } else if (tastare && nrJ === A.jetoane.length - 1 && j.w.length >= 3 && (t.ps = inceputuri(j.w)).size) {
@@ -569,7 +652,8 @@
         if (A.vot[a] > max) { max = A.vot[a]; dedusa = a; egal = false; } else if (A.vot[a] === max) egal = true;
       });
       if (egal) dedusa = null;
-      return { jetoane: jet, dedusa: dedusa, numita: !!(dedusa && A.numite[dedusa]), text: A.text };
+      return { jetoane: jet, dedusa: dedusa, numita: !!(dedusa && A.numite[dedusa]), text: A.text,
+        programe: programeIn(D, corectate, programeIn(D, A.text ? A.text.split(' ').map(radacina) : [])) };
     }
 
     function potrivire(t, s, g) {
@@ -686,7 +770,18 @@
       var ident = R.pondere_identitate ? identDice : 0;
       return { acoperire: a, tare: numitor ? tare / numitor : 0, tareA: numitor ? tareA / numitor : 0, nTare: nTare, fraza: fraza, ident: ident,
         fq: numitor ? fq / numitor : 0,
-        scor: a + R.pondere_fraza * fraza + (R.pondere_identitate || 0) * ident, de_ce: deCe };
+        // pondere_tare: cât din întrebare explică ce spune fișa că e (titlu, întrebare, formulări…) contează și la
+        // ordonare, nu doar la „am găsit”; altfel o fișă cu pași lungi, care pomenesc contextul, trece înaintea gestului
+        scor: a + R.pondere_fraza * fraza + (R.pondere_identitate || 0) * ident + (R.pondere_tare || 0) * (numitor ? tare / numitor : 0), de_ce: deCe };
+    }
+
+    // fișa numește un program al aplicației ei (aplicatii.<app>.programe), iar întrebarea numește ALT program al
+    // aceleiași aplicații și nu pe al fișei („linia de timp în Clipchamp” față de fișa de Audacity)
+    function altProgram(E, I) {
+      if (!I.programe || !I.programe.size || !E.prog.size) return false;
+      var acelasi = false, alt = false;
+      I.programe.forEach(function (p) { if (E.prog.has(p)) acelasi = true; else if (p.split(':')[0] === E.app) alt = true; });
+      return alt && !acelasi;
     }
 
     function propuneriImplicite(app, exclude, n) {
@@ -731,15 +826,27 @@
       // candidații: fișele care au măcar o cheie a întrebării
       // candidații: fișele care au măcar o cheie a întrebării, fiecare cu o margine de sus a acoperirii (idf-ul
       // cuvintelor pe care le are, în orice câmp); se punctează pe larg doar primii max_candidati după margine
-      var cand = [], margine = new Float64Array(N), vazut = new Int32Array(N);
+      var cand = [], margine = new Float64Array(N), vazut = new Int32Array(N), vazut2 = new Int32Array(N);
       Q.forEach(function (t, k) {
         if (!t.f) return;
         var semn = k + 1, w = t.idf * t.f;
-        function ia(p) { if (p) p.forEach(function (x) { if (vazut[x] !== semn) { vazut[x] = semn; if (!margine[x]) cand.push(x); margine[x] += w; } }); }
-        ia(postari.get('s:' + t.s));
-        t.g.forEach(function (g) { ia(postari.get('g:' + g)); });
-        if (t.ps) t.ps.forEach(function (s) { ia(postari.get('s:' + s)); });
-        if (t.alt) { ia(postari.get('s:' + t.alt.s)); t.alt.g.forEach(function (g) { ia(postari.get('g:' + g)); }); }
+        // margine_slab: cuvântul găsit doar în pași / rezultat / termeni_def adaugă la margine doar atât din idf
+        // (ponderile acelor câmpuri sunt ≤ 0,45), ca o fișă care îl are în titlu să nu fie tăiată de una cu pași lungi
+        var slab = R.margine_slab;
+        function ia(p, cat, semnX, vaz) { if (p) p.forEach(function (x) { if (vazut[x] !== semnX && (!vaz || vazut2[x] !== semn)) { vazut[x] = semnX; if (!margine[x]) cand.push(x); margine[x] += cat; } }); }
+        function toate(M, cat, semnX, vaz) {
+          ia(M.get('s:' + t.s), cat, semnX, vaz);
+          t.g.forEach(function (g) { ia(M.get('g:' + g), cat, semnX, vaz); });
+          if (t.ps) t.ps.forEach(function (s) { ia(M.get('s:' + s), cat, semnX, vaz); });
+          if (t.alt) { ia(M.get('s:' + t.alt.s), cat, semnX, vaz); t.alt.g.forEach(function (g) { ia(M.get('g:' + g), cat, semnX, vaz); }); }
+        }
+        if (slab == null) toate(postari, w, semn);
+        else {
+          // întâi câmpurile tari (idf întreg), apoi restul (idf × slab), fără să numărăm de două ori aceeași fișă
+          toate(postariT, w, semn);
+          for (var it = 0; it < cand.length; it++) if (vazut[cand[it]] === semn) vazut2[cand[it]] = semn;
+          toate(postari, w * slab, -semn, true);
+        }
       });
       if (filtru) cand = cand.filter(function (ix) { return intrari[ix].app === filtru; });
       var maxC = R.max_candidati || 0;
@@ -757,6 +864,7 @@
         var p = puncteaza(E, Q, numitor);
         if (!p.acoperire) return;
         if (I.dedusa && E.app !== I.dedusa) p.scor *= I.numita ? R.alta_aplicatie_numita : R.alta_aplicatie_indiciu;
+        if (altProgram(E, I)) p.scor *= R.alt_program;
         lista.push({ E: E, p: p });
       });
       lista.sort(function (a, b) { return (b.p.scor - a.p.scor) || (b.p.acoperire - a.p.acoperire) || (a.E.ix - b.E.ix); });
@@ -769,11 +877,17 @@
       // sub prag, dar întrebarea seamănă tare cu una dintre formulările în plus ale primei fișe (Dice >= fx_dice):
       // copiii întreabă cu vorbe de context („la geografie”, „colegul”) pe care fișa nu le are, dar fraza e a ei
       if (top && !peste && R.fx_dice && top.E.fxText.length && diceFx(top.E, Q, numitor) >= R.fx_dice) peste = true;
-      rez.gasit = peste && !(I.numita && I.dedusa && top.E.app !== I.dedusa && !filtru);
+      // … nici când întrebarea numește un program („în Clipchamp”), iar primul rezultat e fișa altui program
+      rez.gasit = peste && !(I.numita && I.dedusa && top.E.app !== I.dedusa && !filtru) && !altProgram(top.E, I);
       // întrebarea cere un gest care nu e în materie, iar primul rezultat nu-l pomenește: „n-am găsit” + propuneri
+      if (opt.diag) rez.gasitFaraVeto = rez.gasit;
       if (top && (rez.gasit || opt.diag) && R.veto !== false && D.veto.length) {
         var taie = false;
-        vetoIn(D, I.text ? I.text.split(' ').map(radacina) : []).forEach(function (x) { if (!top.E.veto.has(x)) taie = true; });
+        vetoIn(D, I.text ? I.text.split(' ').map(radacina) : []).forEach(function (x) {
+          var va = D.vetoApp[x];
+          if (va && va !== top.E.app && !(I.numita && va === I.dedusa)) return;
+          if (!top.E.veto.has(x)) { taie = true; if (opt.diag) (rez.vetoIntrari = rez.vetoIntrari || []).push(x); }
+        });
         if (taie) rez.gasit = false;
         if (opt.diag) rez.vetoTaie = taie;
       }
@@ -826,12 +940,12 @@
       var E = intrari.filter(function (x) { return x.f.id === id; })[0];
       if (!E) return null;
       var p = puncteaza(E, I.jetoane, numitor);
-      var sc = p.scor * (I.dedusa && E.app !== I.dedusa ? (I.numita ? R.alta_aplicatie_numita : R.alta_aplicatie_indiciu) : 1);
+      var sc = p.scor * (I.dedusa && E.app !== I.dedusa ? (I.numita ? R.alta_aplicatie_numita : R.alta_aplicatie_indiciu) : 1) * (altProgram(E, I) ? R.alt_program : 1);
       var loc = 1;
       intrari.forEach(function (X) {
         if (X === E) return;
         var q = puncteaza(X, I.jetoane, numitor);
-        var s = q.scor * (I.dedusa && X.app !== I.dedusa ? (I.numita ? R.alta_aplicatie_numita : R.alta_aplicatie_indiciu) : 1);
+        var s = q.scor * (I.dedusa && X.app !== I.dedusa ? (I.numita ? R.alta_aplicatie_numita : R.alta_aplicatie_indiciu) : 1) * (altProgram(X, I) ? R.alt_program : 1);
         if (q.acoperire && s > sc) loc++;
       });
       var r3 = function (x) { return Math.round(x * 1000) / 1000; };
