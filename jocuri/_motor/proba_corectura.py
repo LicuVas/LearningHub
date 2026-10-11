@@ -79,7 +79,9 @@ def porneste_nor(tmp):
         "const M = globalThis.__MEM;\n"
         "export const get = async (k) => (M.has(k) ? JSON.parse(JSON.stringify(M.get(k))) : null);\n"
         "export const set = async (k, v) => { M.set(k, JSON.parse(JSON.stringify(v))); };\n"
-        "export const store = () => ({ list: async ({ prefix }) => ({ blobs: [...M.keys()].filter((k) => k.startsWith(prefix)).map((key) => ({ key })) }) });\n")
+        "export const store = () => ({ list: async ({ prefix }) => ({ blobs: [...M.keys()].filter((k) => k.startsWith(prefix)).map((key) => ({ key })) }) });\n"
+        # 11.10.2026: progres.mjs importă și inainte() (trimiterea mai departe la Worker-ul lh-api, doar pe Netlify cu FORWARD_LH_API)
+        "export const inainte = async () => null;\n")
     open(os.path.join(tmp, "server.mjs"), "w", encoding="utf-8").write(
         'import http from "node:http";\n'
         "globalThis.__MEM = new Map();\n"
