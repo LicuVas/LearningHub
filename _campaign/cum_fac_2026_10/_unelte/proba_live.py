@@ -48,10 +48,15 @@ def main():
             print('  ✗ fișa nu are legătura „Exersezi…”'); prob += 1
         else:
             href = ex.get_attribute('href')
-            ex.click(); pg.wait_for_load_state('load'); pg.wait_for_timeout(1500)
-            t = pg.inner_text('body')
+            with ctx.expect_page() as nou:   # se deschide într-o filă nouă; fila cu căutarea rămâne
+                ex.click()
+            pl = nou.value
+            pl.wait_for_load_state('load'); pl.wait_for_timeout(1500)
+            t = pl.inner_text('body')
             ok = 'Registru nou' in t and 'Recitire' in t
-            print(('  ✓' if ok else '  ✗'), f'„Exersezi…” ({href}) → pasul P2 „Registru nou…”, în recitire'); prob += not ok
+            print(('  ✓' if ok else '  ✗'), f'„Exersezi…” ({href}) → FILĂ NOUĂ cu pasul P2 „Registru nou…”, în recitire'); prob += not ok
+            ok = '/cum-fac/' in pg.url and pg.query_selector('#exersezi') is not None
+            print(('  ✓' if ok else '  ✗'), 'fila cu căutarea a rămas deschisă, pe aceeași fișă'); prob += not ok
         if erori:
             print('  ✗ erori JS:', erori[:3]); prob += 1
         ctx.close(); b.close()

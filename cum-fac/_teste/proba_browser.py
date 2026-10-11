@@ -170,6 +170,11 @@ def main():
             P("fișa n-are legătura „Exersezi în lecția …”")
         else:
             href = ex.get_attribute("href")
+            # se deschide într-o filă nouă, ca fila cu căutarea să rămână (cerut de profesor, 11.10.2026)
+            if ex.get_attribute("target") != "_blank" or "noopener" not in (ex.get_attribute("rel") or ""):
+                P(f"„Exersezi…” nu se deschide într-o filă nouă (target={ex.get_attribute('target')}, rel={ex.get_attribute('rel')})")
+            else:
+                OK("„Exersezi…” se deschide într-o filă nouă (target=_blank, rel=noopener)")
             astept = "../" + f0["sursa"]["cale"] + "?vezi=" + f0["sursa"]["pas"]
             if href != astept:
                 P(f"legătura spre lecție e {href}, aștept {astept}")
