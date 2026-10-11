@@ -8,6 +8,8 @@ from playwright.sync_api import sync_playwright
 
 B = 'https://learninghub-8z6.pages.dev'
 EX = json.load(open(r'C:\00\Projects\LearningHub\cum-fac\_teste\exemplele_profesorului.json', encoding='utf-8'))
+# întrebările reale ale profesorului după prima folosire (11.10.2026): orice fișă din `accept` pe locul 1
+EX += json.load(open(r'C:\00\Projects\LearningHub\cum-fac\_teste\set_feedback_profesor.json', encoding='utf-8'))
 
 
 def main():
