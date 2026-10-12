@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 12, clasa a V-a: Evaluare sumativă: sistemul de operare</title>
+<meta name="description" content="Lecția 12, clasa a V-a: te pregătești pentru proba practică a unității „Sistemul de operare”: structura de foldere după o schemă, operații cu fișiere, căutarea, cum te verifici singur și o probă de antrenament cu punctaj pe părțile C, B și A.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@600;800&family=Source+Sans+3:wght@400;600;700&family=Fira+Code:wght@500;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EFF3EE; --paper:#FFFFFF; --paper2:#F1F5F0; --line:#CFDACD;
+  --ink:#16241A; --ink2:#506355; --accent:#1F6F43; --accentInk:#FFFFFF; --sel:#D3EBDB;
+  --mark:#FFE07A; --markInk:#16241A; --ok:#1F7A45; --okbg:#DFF2E5; --bad:#B4372F; --badbg:#FAE3E0;
+  --fd:"Rubik","Segoe UI",system-ui,sans-serif; --fb:"Source Sans 3","Segoe UI",system-ui,sans-serif; --fm:"Fira Code",Consolas,monospace;
+  --dosar:#F2C14E; --dosar2:#E0A92E;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F1712; --paper:#16211A; --paper2:#1C2A21; --line:#2E4234;
+  --ink:#E2EDE5; --ink2:#A5B8AA; --accent:#6FCB96; --accentInk:#0F1712; --sel:#1C3A27;
+  --mark:#EDCB63; --markInk:#16241A; --ok:#6FCB96; --okbg:#173022; --bad:#FF8A7E; --badbg:#3A1F1C;
+  --dosar:#E8B846; --dosar2:#C99422;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F1712; --paper:#16211A; --paper2:#1C2A21; --line:#2E4234;
+  --ink:#E2EDE5; --ink2:#A5B8AA; --accent:#6FCB96; --accentInk:#0F1712; --sel:#1C3A27;
+  --mark:#EDCB63; --markInk:#16241A; --ok:#6FCB96; --okbg:#173022; --bad:#FF8A7E; --badbg:#3A1F1C;
+  --dosar:#E8B846; --dosar2:#C99422;
+}
+/* tema: foaia probei — dosare galbene și literele părților, C, B, A */
+.banda{display:flex;align-items:center;gap:8px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent)}
+.banda .dos{flex:none;position:relative;display:inline-block;width:20px;height:14px;background:var(--dosar);border-radius:1px 3px 3px 3px;margin:3px 2px 0 0}
+.banda .dos::before{content:"";position:absolute;left:0;top:-4px;width:9px;height:5px;background:var(--dosar2);border-radius:2px 2px 0 0}
+.banda .lit{flex:none;font-family:var(--fd);font-weight:800;font-size:.8rem;color:var(--accentInk);background:var(--accent);border-radius:4px;padding:1px 7px}
+.banda .et{flex:none;font-size:.76rem;color:var(--ink);margin-right:6px}
+h1,h2{font-weight:800;letter-spacing:0}
+pre.arbore{font-family:var(--fm);font-size:.9rem;line-height:1.5;background:var(--paper2);border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:.5em 0;white-space:pre;overflow-x:auto}
+pre.arbore .gr{color:var(--bad);font-weight:600}
+code{font-family:var(--fm)}
+.tab-lucr{border-collapse:collapse;width:100%;margin:.5em 0 .7em;font-size:.95rem}
+.tab-lucr th,.tab-lucr td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+.tab-lucr td.nr{text-align:right;font-family:var(--fm);white-space:nowrap}
+.tab-lucr .mic{font-size:.85rem;color:var(--ink2)}
+.tab-lucr tr.tot td{font-weight:700}
+details.verif{margin-top:.4em;font-size:.93rem}
+details.verif summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:32px}
+.lacalc{border-left:4px solid var(--accent);background:var(--paper2);padding:6px 10px;margin:.6em 0 0;border-radius:0 6px 6px 0}
+.doua{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;margin:.4em 0}
+.doua > div{border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--paper)}
+.doua b.t{display:block;font-family:var(--fd);margin:2px 0}
+/* laboratorul: o căsuță de bifat la fiecare punct de lucru (nu se păstrează nicăieri: e doar pentru elevul de acum) */
+.bifez{display:inline-flex;align-items:center;justify-content:center;min-width:32px;min-height:32px;vertical-align:middle;margin:-4px 2px -4px -6px;cursor:pointer}
+.bifez input{width:20px;height:20px;margin:0;accent-color:var(--accent);cursor:pointer}
+li:has(> .bifez input:checked){opacity:.62}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/explorer-operatii.js"></script>
+<script src="../../_sim/rezultat-elev.js"></script>
+<script src="../../_sim/explorer-proba.js"></script>
+<script>
+/* Lecția 12, clasa a V-a (M2): „Evaluare sumativă: sistemul de operare” (evaluare sumativă, 04.12.2026 la Brauner).
+   Standardul: LearningHub\_campaign\revizuire_completa_2026_09\05_STANDARD_LECTIE.md. Sursele și probele: surse.md, _proba\.
+   Nu se predă nimic nou: pagina pregătește proba practică (activitatea din Info_Gimnaziu_2026\data\activitati_lectii_V_VI.json:
+   „crearea unei structuri de directoare după o schemă dată, operații cu fișiere, căutare. Cerințele sunt marcate pe cele
+   trei niveluri”). Testul profesorului pentru V-U2 NU există încă (teste_sumative.json are doar V-U1): pagina NU îl inventează;
+   proba din atelier și din laborator e de ANTRENAMENT, cu cerințele mele, notată pe C/B/A ca în SISTEM_EVALUARE.md §4.1.
+   Nota: doar ce spune lecția 1 a clasei (pașii 6-8). Simulatoarele: _sim/explorer-operatii.js (V/10, neschimbat) +
+   _sim/explorer-proba.js (extensie NOUĂ a lecției 12: punctajul probei, testele stricte, proba în curs păstrată).
+   Reparată după judecata 1 (12.10.2026): _verificare\registru_j1.md. Activitatea principală = proba din laborator; pagina
+   e pregătire scurtă (o oră: estimarea pe acțiuni în surse.md). */
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="${f}" target="_blank"><img src="${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const CAPT='<small>Captură din Windows 11, în română (de la lecția 10); chenarele roșii sunt puse de noi.</small>';
+const IMG={
+  traseu:fig('img/traseu-scoala.webp',800,300,'Un traseu pentru biciclete desenat pe jos, lângă o școală: drumuri albastre cu marcaje albe, un sens giratoriu, treceri de pietoni și o bancă','Un traseu de exersat cu bicicleta, lângă o școală. <small>Foto: Kamil Czaiński, <a href="https://commons.wikimedia.org/wiki/File:Bielsko-Bia%C5%82a,_Szko%C5%82a_Podstawowa_nr_3_(dawne_Gimnazjum_nr_16)_-_miasteczko_ruchu_drogowego.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, licența <a href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noopener">CC BY-SA 4.0</a> (decupată, micșorată).</small>'),
+  arbore:fig('../m2-l09/img/explorer-arbore.webp',474,252,'Panoul din stânga al lui Explorer: folderul Scoala, sub el Clasa_5, iar sub Clasa_5, mai la dreapta, folderele Matematica, Romana și TIC','Arborele din lecția 9: fiecare folder stă puțin mai la dreapta, sub folderul în care se află. Schema se citește la fel. <small>Captură din Windows 11, în română (de la lecția 9).</small>'),
+  adresa:fig('../m2-l09/img/explorer-fisiere.webp',934,307,'Fereastra Explorer: sus, bara de adresă Acest PC, Disc local (C:), Scoala, Clasa_5, TIC; dedesubt, patru fișiere: cantec.mp3, notite.txt, pisica.jpg și tema.docx, cu coloanele Nume, Data modificării și Tip','Sus, bara de adresă: <em>… › Scoala › Clasa_5 › TIC</em>. Ultimul nume e folderul în care ești; cel dinaintea lui e folderul în care stă el. <small>Captură din Windows 11, în română (de la lecția 9).</small>'),
+  f2:fig('../m2-l10/img/redenumire-f2.webp',695,230,'Explorer: folderul Proiect_TIC are numele într-o casetă albastră, gata de scris, după apăsarea tastei F2','După <kbd>F2</kbd>, numele intră într-o casetă: scrii peste el și apeși Enter. '+CAPT),
+  extensie:fig('img/redenumire-extensie.webp',441,155,'Fereastra Redenumire: un semn de atenție galben și textul Dacă modificați extensia unui fișier, acesta poate deveni inutilizabil. Sigur modificați extensia? Dedesubt, butoanele Da și Nu','Ai șters extensia la redenumire: Windows întreabă. Cu <b>Nu</b>, redenumirea nu se face. <small>Captură din Windows 11, în română (12.10.2026).</small>'),
+  cautare:fig('../m2-l10/img/cautare-explorer.webp',934,202,'Explorer: în caseta de căutare din dreapta sus scrie compunere; bara de adresă arată Rezultatele căutării în Matei_Clasa5; singurul rezultat este compunere_toamna.docx, fără coloana Tip','Căutarea: un cuvânt din nume sau începutul lui, în caseta din dreapta sus. În rezultate nu e coloana Tip: te uiți la pictogramă. '+CAPT)
+};
+const VEZI=(l,p,t)=>`<a href="../m2-l${l}/?vezi=p${p}" target="_blank" rel="noopener">lecția ${+l}, pasul „${t}”</a>`;
+const L9arb=VEZI('09',3,'Folderul (directorul) și arborele'), L9adr=VEZI('09',6,'Bara de adresă: unde ești și calea'), L9tip=VEZI('09',7,'Extensia ascunsă: pictograma și coloana Tip');
+const L10nou=VEZI(10,2,'Folderul tău: Nou, apoi Folder'), L10ren=VEZI(10,3,'Redenumirea: F2 sau Redenumire'), L10cop=VEZI(10,4,'Copierea: Copiere, apoi Lipire');
+const L10mut=VEZI(10,5,'Mutarea: Decupare, apoi Lipire'), L10sterg=VEZI(10,7,'Ștergerea și Coșul de reciclare'), L10caut=VEZI(10,8,'Căutarea: găsești un fișier pierdut');
+const L1nota=`<a href="../m1-l01/?vezi=p6" target="_blank" rel="noopener">lecția 1, pasul „Lucrarea: trei părți și nota ta”</a>`, L1lh=`<a href="../m1-l01/?vezi=p7" target="_blank" rel="noopener">lecția 1, pasul „Munca ta pe LearningHub intră în notă”</a>`;
+
+/* calculatorul din laborator, simulat: toată clasa intră cu numele Elev; folderul de lucru al Anei e Ex Pop Ana (ca la V/10-11) */
+const D='C:/Users/Elev/Documents/', EX=D+'Ex Pop Ana/', MAT=D+'Materiale/', VE=MAT+'Vechi/2025/', PR=EX+'Proiect/', IM=PR+'Imagini/', SU=PR+'Sunete/', MEDIA='C:/Windows/Media/';
+const BAZA=[[MEDIA+'Alarm01.wav','01.04.2024 10:22','480 KB'],[MEDIA+'Ring01.wav','01.04.2024 10:22','487 KB'],MEDIA+'Afternoon/','C:/Program Files/','C:/Users/Public/','C:/Users/Elev/Desktop/','C:/Users/Elev/Downloads/'];
+const COS_ALTII=[[D+'Ex Ionescu Dan/','30.11.2026 13:05',''],['C:/Users/Elev/Desktop/desen vechi.png','27.11.2026 11:40','212 KB']];
+const CFG_EX={unitati:{'C:':{nume:'Disc local'}},doc:D,afisat:{'C:/Users/Elev/Desktop/':'Desktop','C:/Users/Elev/Downloads/':'Descărcări'},
+  blocat:[MEDIA+'Afternoon/','C:/Program Files/','C:/Users/Public/'],doarCitire:['C:/Windows/'],extensii:false,acum:'01.12.2026 09:20',cos:COS_ALTII};
+const OP=o=>Object.assign({t:'explorerop'},CFG_EX,o,{fs:BAZA.concat(o.fs||[])});           /* exercițiile pașilor (fără puncte) */
+const PB=o=>Object.assign({t:'probaexp'},CFG_EX,o,{fs:BAZA.concat(o.fs||[])});            /* proba de antrenament (cu puncte) */
+
+/* folderul Materiale, pregătit de profesor (inventat) */
+const PISICA=[MAT+'pisica.png','02.12.2026 10:15','212 KB'], CAINE=[MAT+'caine.jpg','02.12.2026 10:16','1.840 KB'], ALARM=[MAT+'Alarm03.wav','01.04.2024 10:22','420 KB'];
+const TOAMNA=[[VE+'toamna.png','14.10.2025 16:02','96 KB'],[VE+'toamna.wav','14.10.2025 16:05','310 KB']];
+const CIORNA_COS=[EX+'ciorna.txt','01.12.2026 09:18','1 KB','meu'];
+
+/* schemele, ca arborele din lecția 9: fiecare rând mai la dreapta e un folder ÎN folderul de deasupra */
+const SCHEMA_C=`<pre class="arbore" aria-label="Schema: Ex Pop Ana, în el Proiect, în Proiect Imagini și Sunete">Ex Pop Ana
+  Proiect
+    Imagini
+    Sunete</pre>`;
+const SCHEMA_LAB=`<pre class="arbore" aria-label="Schema: folderul tău, în el Colectie, în Colectie Imagini și Sunete">Ex Nume Prenume
+  Colectie
+    Imagini
+    Sunete</pre>`;
+const FINAL_LAB=`<pre class="arbore" aria-label="La final: Colectie cu Imagini (ecran) și Sunete (notify, Ring05)">Ex Nume Prenume
+  Colectie
+    Imagini
+      ecran
+    Sunete
+      notify
+      Ring05</pre>`;
+
+/* „Acum la calculatorul din laborator” (după atelier, înainte de verificare; diploma îl repetă). Fără profesor. E ACTIVITATEA
+   PRINCIPALĂ a lecției (decizia dirijorului, 12.10). Elevul lucrează DOAR în folderul lui; din C:\Windows (Media, Web) doar
+   copiază; la final își șterge folderul (ajunge în Coș) și NU golește Coșul: calculatorul rămâne cum l-a găsit (regulile 23
+   și 25; la fel ca lecțiile 10-11). Punctele de la „Verifică-te” sunt aceleași ca în proba din pagină (antrenament). */
+const LABORATOR=[
+  'Lucrezi <b>doar în folderul tău</b>. Din <code>C:\\Windows</code> doar <b>copiezi</b>; dacă apare fereastra „Acces refuzat”, apasă <b>Anulare</b>. Scrie în caiet <b>Proba de antrenament</b> și bifează fiecare punct făcut.',
+  'Deschide Explorer, un clic pe <b>Documente</b>, dublu-clic pe folderul tău. Nu-l ai? Fă-l: <b>Nou</b>, apoi <b>Folder</b> (pe Windows 10: <b>Pornire</b>, apoi <b>Folder nou</b>), scrie <b>Ex</b>, numele și prenumele, <kbd>Enter</kbd>.',
+  `<b>Partea C, cu pașii dați.</b> În folderul tău: Nou, Folder, scrii <b>Colectie</b>, <kbd>Enter</kbd>. Dublu-clic pe Colectie și fă la fel <b>Imagini</b> și <b>Sunete</b>.${SCHEMA_LAB}`,
+  'Copiază <b>img100</b> în Imagini: Acest PC, Disc local (C:), Windows, <b>Web</b>, <b>Screen</b>; un clic pe img100, <b>Copiere</b>. Apoi Documente și dublu-clic pe folderul tău, pe Colectie, pe Imagini; <b>Lipire</b>.',
+  'În Colectie fă folderul <b>Ciorna</b>, apoi șterge-l: un clic pe el, <kbd>Delete</kbd>. Dacă Windows întreabă dacă îl muți în Coș, apasă <b>Da</b>.',
+  `<details class="verif"><summary>Verifică-te la partea C, după ce ai terminat-o</summary>Colectie e în folderul tău: 6 p. Imagini și Sunete sunt în Colectie: 5 + 5 p (bara de adresă: … › Colectie › Imagini). În Imagini e img100: 15 p. Ciorna e în Coș (ai făcut-o și ai șters-o): 6 p. Nimic în plus în folderul tău: 3 p, doar dacă ai făcut și folderele. Numele, ca în cerință. Scrie lângă C punctele, din 40.</details>`,
+  '<b>Partea B, singur.</b> Copiază din Media sunetul <b>Ring05</b> în Colectie, apoi <b>mută-l</b> din Colectie în Sunete. În Imagini, <b>redenumește</b> img100 în <b>ecran</b>.',
+  `<details class="verif"><summary>Verifică-te la partea B, după ce ai terminat-o</summary>Ring05 e în Sunete: 9 p. Ring05 e în Sunete și nu mai e direct în Colectie (mutat, nu copiat): 9 p. În Imagini, img100 se numește <b>ecran</b> și are aceeași pictogramă: 9 p. Nu vezi coloana Tip? Uită-te la pictograme. Nimic în plus: 3 p, doar dacă ai mutat Ring05. Scrie lângă B punctele, din 30.</details>`,
+  '<b>Partea A, o situație nouă.</b> Intră în Media (Acest PC, Disc local (C:), Windows, Media) și caută <b>notify</b>: caseta din dreapta sus, apoi <kbd>Enter</kbd>. Printre rezultate e un sunet numit doar <b>notify</b>; pot apărea și altele, cu mai multe cuvinte în nume. Copiază-l doar pe el în Sunete. În caiet, la A, scrie de ce l-ai pus în Sunete și cum ai știut care e.',
+  `<details class="verif"><summary>Verifică-te la partea A, după ce ai terminat-o</summary>În Sunete e notify, singurul dintre rezultate: 10 p. Explicația: 5 p dacă spune că e un sunet (din pictogramă sau din coloana Tip), 5 p dacă spune că numele lui e doar notify. Scrie lângă A punctele, din 20. Folderul tău arată așa:${FINAL_LAB}Adună C + B + A + 10 din oficiu: nota e numărul de zeci, plus 1 dacă ultima cifră e de la 5 la 9. E nota pe antrenament; pe cea adevărată o dă profesorul.</details>`,
+  'Lasă calculatorul cum l-ai găsit: în Documente, un clic pe <b>folderul tău</b> și <kbd>Delete</kbd>; dacă Windows întreabă dacă îl muți în Coș, apasă <b>Da</b>. <b>Nu goli Coșul</b>: acolo pot fi fișierele colegilor. Închide Explorer cu X.'
+];
+/* căsuța de bifat doar la punctele de lucru; „Verifică-te” (details) n-are căsuță (sonnet M-4: casete goale la 6, 8, 10) */
+const LAB_BIFE=LABORATOR.map((x,i)=>x.startsWith('<details')?x:`<label class="bifez"><input type="checkbox" aria-label="Am făcut punctul ${i+1}"></label>${x}`);
+
+/* PROBA DE ANTRENAMENT (atelierul): 4 exerciții, punctele după structura lucrării (SISTEM_EVALUARE.md §4.1: C 40, B 30, A 20,
+   10 din oficiu). Punctele se socotesc la PRIMA apăsare pe „Verifică” și rămân și după reîncărcare (lectii/_sim/explorer-proba.js). */
+ExplorerProba.configureaza({cheie:'v-m2-l12-proba',oficiu:10,
+  parti:{C:{nume:'De bază',max:40},B:{nume:'Consolidat',max:30},A:{nume:'Avansat',max:20}},
+  itemi:[{id:'C',parte:'C',puncte:40},{id:'B',parte:'B',puncte:30},{id:'A1',parte:'A',puncte:14},{id:'A2',parte:'A',puncte:6}]});
+
+JocMotor.porneste({
+  cheie:'lectie_v_m2_l12',
+  mod:'lectie',
+  titlu:'Evaluare sumativă: sistemul de operare',
+  marca:'Lecția <b>12</b> · clasa a V-a',
+  h1:'Evaluare sumativă: sistemul de operare',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a V-a', unitate:'V-U2', unitateTitlu:'Sistemul de operare. Ordinea în fișierele mele',
+  competente:['CS.1.2'], lectii:'12',
+  ancoraText:'Din programă (CS.1.2, unitatea V-U2, lecția 12): evaluarea unității — Organizarea datelor pe suport extern; Operații cu fișiere și directoare',
+  intro:`<p>Lecția 12 e lucrarea unității „Sistemul de operare”: o <b>probă practică</b> la calculator. Pagina te pregătește, fără nimic nou. Dai o probă de antrenament, cu punctaj, în Explorer-ul din pagină, apoi una la fel la calculatorul din laborator.</p>
+<p><b>Ai nevoie de:</b> lecția 10 — folder nou (Nou, apoi Folder), redenumirea (F2), Copiere, Decupare și Lipire, ștergerea în Coș, căutarea, folderul tău „Ex” din Documente; lecția 9 — arborele, bara de adresă, Explorer (un clic selectează, dublu-clicul deschide, panoul din stânga, Acest PC), pictograma și coloana Tip; lecția 11 — criteriul după care așezi fișierele, de exemplu după tip; lecția 1 — părțile lucrării și nota.</p>`,
+  cum:`<b>Cum lucrezi</b> (o oră)<ol><li>6 pași scurți, cu câte un exercițiu mic (cam 15 minute). „Încă un exercițiu” e doar dacă ai timp.</li><li>Atelierul: proba de antrenament, cu punctaj, în pagină (cam 10 minute).</li><li>Laboratorul: o probă la fel, în Explorer-ul adevărat (cam 15 minute). Dacă se apropie sfârșitul orei, sari la ultimul punct: îți ștergi folderul. Data viitoare reiei laboratorul de la partea C, cu un folder nou.</li><li>5 întrebări de verificare, pentru stele (cam 5 minute).</li></ol>`,
+  banda:'<span class="dos" aria-hidden="true"></span><span class="lit">C</span><span class="et">după pași</span><span class="lit">B</span><span class="et">singur</span><span class="lit">A</span><span class="et">situație nouă</span><span class="dos" aria-hidden="true"></span>',
+  nivele:[
+{t:'Evaluare sumativă: sistemul de operare',final:true,lectii:[8,9,10,11,12],
+ continuturi:['Organizarea datelor pe suport extern','Operații cu fișiere și directoare'],
+ obiectiv:'știi ce cere fiecare parte a probei practice, faci o structură de foldere după o schemă, te verifici singur și afli, pe o probă de antrenament, ce mai ai de recitit.',
+ pasi:[
+  /* ---- pasul 1 (P1): la ce folosește (fără acțiuni) ---- */
+  {t:'La ce folosește: arăți ce știi',
+   text:`<p>Lângă unele școli, pe asfalt e desenat un traseu pentru biciclete. Copiii știu dinainte traseul și ce se verifică, iar înainte de probă se antrenează pe el.</p>
+<p>La sfârșitul unității „Sistemul de operare” dai o <b>lucrare</b>: o <mark>probă practică</mark> la calculator. În Explorer faci foldere după un desen dat, lucrezi cu fișiere și cauți un fișier.</p>
+<p>Pagina asta e traseul tău de antrenament.</p>
+${IMG.traseu}`},
+  /* ---- pasul 2: părțile lucrării și nota (DOAR ce spune lecția 1, pașii 6-8; fără procente la clasa a V-a) ---- */
+  {t:'Lucrarea: părțile C, B, A și nota',
+   text:`<p>Lucrarea are trei părți, cu literele nivelurilor, în ordinea de pe foaie:</p>
+<table class="tab-lucr"><thead><tr><th>Partea</th><th>Puncte</th></tr></thead><tbody>
+<tr><td><b>C · De bază</b><br><span class="mic">ca la clasă, cu pașii dați</span></td><td class="nr">40</td></tr>
+<tr><td><b>B · Consolidat</b><br><span class="mic">singur, o situație cunoscută</span></td><td class="nr">30</td></tr>
+<tr><td><b>A · Avansat</b><br><span class="mic">o situație nouă și explicația ta</span></td><td class="nr">20</td></tr>
+<tr><td>din oficiu</td><td class="nr">10</td></tr>
+<tr class="tot"><td>Total</td><td class="nr">100</td></tr></tbody></table>
+<p><mark>Nota = punctaj : 10</mark>, rotunjită după ultima cifră, ca în ${L1nota}. Acolo afli și cum intră în notă munca ta pe LearningHub (${L1lh}).</p>`,
+   exemplu:`<p><b>Lucrarea lui Matei:</b> C 36, B 15, A 4, plus 10 din oficiu: 65 de puncte. 65 are 6 zeci; ultima cifră, 5, e de la 5 la 9: nota 6 + 1 = <b>7</b>.</p><p>Nivelul se citește din notă: 9 sau 10 Avansat, 7 sau 8 Consolidat, 5 sau 6 De bază, 3 sau 4 În formare, 1 sau 2 În dificultate.</p>`,
+   incearca:{t:'choice',q:'Sara are la lucrare: partea C 33 de puncte, partea B 22, partea A 10. Ce notă are lucrarea ei?',o:['nota 8','nota 7','nota 6','nota 9'],ok:0,
+    ajutor:'Adună cele trei părți și cele 10 puncte din oficiu. Apoi uită-te la ultima cifră a punctajului.',
+    why:'33 + 22 + 10 + 10 din oficiu = 75 de puncte: 7 zeci, iar ultima cifră, 5, e de la 5 la 9, deci nota 7 + 1 = 8. Cine uită oficiul sau nu rotunjește în sus la 5 greșește.'},
+   inca:[
+    {t:'classify',q:'Patru cerințe dintr-o probă practică pe Explorer. În ce parte a lucrării e fiecare? Alege pe fiecare rând, apoi apasă „Verifică”.',cats:['C · De bază','B · Consolidat','A · Avansat'],
+     items:[['„Intră în folderul tău. Apasă Nou, apoi Folder, scrie Teme și apasă Enter.”',0],['„Fă singur, în folderul tău, folderele Teme și Desene.”',1],['„Două fișiere au același nume. Pune-le pe fiecare în folderul potrivit și scrie cum ți-ai dat seama.”',2],['„Mută singur sunetul Alarm03 din Materiale în Sunete, ca la lecția 10.”',1]],
+     ajutor:'Cerința îți dă pașii? Te lasă singur cu ceva exersat? Îți dă ceva nou și îți cere să explici?',
+     why:'Pașii dați, unul câte unul, sunt la partea C. Ce faci singur, ca la lecția 10 (folderele, mutarea), e la partea B. Situația nouă, cu explicația ta, e la partea A.'},
+    {t:'tf',q:'Dacă rezolvi toată partea A, dar ai puține puncte la C și B, nivelul tău e Avansat.',ok:false,
+     ajutor:'Nivelul se citește din notă. Nota vine din tot punctajul.',
+     why:'Fals. Nota vine din toate punctele: C + B + A + 10 din oficiu. Nivelul se citește apoi din notă, nu din partea cea mai grea.'}
+   ]},
+  /* ---- pasul 3: partea C — structura după schemă, cu pașii dați; „Locul” se verifică în BARA DE ADRESĂ (J1-4) ---- */
+  {t:'Partea C: foldere după o schemă, cu pașii dați',
+   text:`<p>La partea C primești o <mark>schemă</mark>: arborele folderelor de făcut, ca în ${L9arb}. Fiecare rând mai la dreapta e un folder <b>în</b> folderul de deasupra lui.</p>
+${SCHEMA_C}
+<p>Faci folderele de sus în jos. Intri în folderul în care trebuie să fie (dublu-clic), apoi <b>Nou</b>, <b>Folder</b>, scrii numele, <kbd>Enter</kbd>. Copierea și ștergerea le faci exact după pașii dați, în ordine.</p>
+<p>Greșeala tipică: folderul făcut în alt loc, de exemplu Imagini direct în Ex Pop Ana.</p>`,
+   exemplu:`<p>Schema cere Imagini în Proiect. Ești în Ex Pop Ana: dublu-clic pe Proiect, apoi Nou, Folder, scrii Imagini, <kbd>Enter</kbd>. Te verifici în <b>bara de adresă</b> (${L9adr}): dublu-clic pe Imagini; bara se termină cu <em>Ex Pop Ana › Proiect › Imagini</em>.</p>${IMG.arbore}
+<p class="lacalc"><b>La calculatorul din laborator, acum (un minut):</b> deschide Explorer, un clic pe <b>Documente</b>. Nu ai un folder <b>Ex</b> cu numele tău? Fă-l: <b>Nou</b>, apoi <b>Folder</b> (pe Windows 10: <b>Pornire</b>, apoi <b>Folder nou</b>), scrie <b>Ex</b>, numele și prenumele, <kbd>Enter</kbd>. Intră în el: bara de adresă se termină cu numele lui.</p>`,
+   incearca:OP({q:'Fă schema în Ex Pop Ana: folderul <b>Scoala</b>, iar în Scoala, folderele <b>Teme</b> și <b>Desene</b>.<pre class="arbore">Ex Pop Ana\n  Scoala\n    Teme\n    Desene</pre>',start:D,
+    fs:[EX],
+    checks:[{are:EX+'Scoala/',ce:'În Ex Pop Ana e folderul Scoala'},{toate:[{are:EX+'Scoala/Teme/'},{are:EX+'Scoala/Desene/'}],ce:'În Scoala sunt folderele Teme și Desene'},
+     {toate:[{are:EX+'Scoala/'},{nu:EX+'Teme/'},{nu:EX+'Desene/'}],ce:'Teme și Desene nu stau direct în Ex Pop Ana'}],
+    solutie:[['cd',EX],['nou','Scoala'],['cd',EX+'Scoala/'],['nou','Teme'],['nou','Desene']],
+    gresit:[['cd',EX],['nou','Scoala'],['nou','Teme'],['nou','Desene']],
+    ajutor:'Dublu-clic pe Ex Pop Ana, Nou, Folder, Scoala, Enter (pe telefon: atinge altundeva). Apoi dublu-clic pe Scoala și abia acolo faci Teme și Desene.',
+    why:'Ai intrat în Scoala înainte să faci Teme și Desene, deci ele sunt în Scoala, cum cere schema.'}),
+   inca:[
+    {t:'choice',q:'În schemă, sub <b>Proiect</b> și puțin mai la dreapta sunt <b>Imagini</b> și <b>Sunete</b>. Unde faci folderul Sunete?',o:['În Proiect, lângă Imagini','În Ex Pop Ana, lângă Proiect','În Imagini, sub pisică','În Documente, lângă Ex Pop Ana'],ok:0,
+     ajutor:'Un rând mai la dreapta înseamnă „în folderul de deasupra”.',why:'Sunete e mai la dreapta, sub Proiect, deci stă în Proiect, lângă Imagini.'}
+   ]},
+  /* ---- pasul 4: partea B — singur: copiezi sau muți, redenumești; fereastra extensiei, probată în Windows (decizia 1) ---- */
+  {t:'Partea B: singur — copiezi, muți, redenumești',
+   text:`<p>La partea B nu mai primești pașii, doar ce trebuie să iasă. Citește atent verbul:</p>
+<ul><li><b>copiază</b>: la final sunt două, în ambele locuri (Copiere, apoi Lipire);</li>
+<li><b>mută</b>: rămâne unul, doar în locul nou (Decupare, apoi Lipire);</li>
+<li><b>redenumește</b>: același fișier, alt nume (<kbd>F2</kbd>).</li></ul>
+<p>Când extensiile sunt ascunse, scrii doar numele. Când se văd, schimbi doar partea dinaintea punctului. Dacă ștergi și extensia, Windows întreabă „Sigur modificați extensia?”. Apeși <b>Nu</b>: redenumirea nu se face, iar fișierul rămâne cu numele vechi. Apoi iar <kbd>F2</kbd>.</p>`,
+   exemplu:`<p>Cerința: „Mută <em>harta</em> din Materiale în Proiect.” În Materiale, un clic pe harta, Decupare. Intri în Proiect (Documente, apoi dublu-clic pe Ex Pop Ana și pe Proiect), Lipire. Te verifici în <b>ambele</b> foldere: în Proiect e harta, iar în Materiale nu mai e. Dacă e în amândouă, ai copiat-o.</p>${IMG.f2}${IMG.extensie}`,
+   incearca:OP({q:'În Scoala sunt folderele Teme și Desene. <b>Mută</b> <em>desen</em> din Teme în Desene, apoi redenumește-l în <b>soare</b>.',start:EX+'Scoala/Teme/',
+    fs:[EX+'Scoala/Desene/',[EX+'Scoala/Teme/desen.png','28.11.2026 17:10','96 KB'],[EX+'Scoala/Teme/tema.docx','28.11.2026 18:00','16 KB']],
+    checks:[{are:EX+'Scoala/Desene/soare.png',ce:'În Desene e <b>soare</b>, tot o imagine (Fișier PNG)'},{toate:[{nu:EX+'Scoala/Teme/desen.png'},{nu:EX+'Scoala/Teme/soare.png'},{are:EX+'Scoala/Desene/soare.png'}],ce:'În Teme nu mai e desenul: l-ai mutat, nu l-ai copiat'}],
+    solutie:[['cut','desen.png'],['cd',EX+'Scoala/Desene/'],['paste'],['ren','desen.png','soare.png']],
+    gresit:[['copy','desen.png'],['cd',EX+'Scoala/Desene/'],['paste'],['ren','desen.png','soare.png']],
+    ajutor:'Un clic pe desen, Decupare. Mergi în Desene (Documente, apoi dublu-clic pe Ex Pop Ana, pe Scoala, pe Desene), Lipire. Apoi un clic pe desen, F2 (pe telefon: Redenumire), scrii doar soare, Enter.',
+    why:'Decupare și Lipire l-au mutat, iar F2 i-a schimbat doar numele: extensia ascunsă a rămas, deci e tot o imagine.'}),
+   inca:[
+    {t:'choice',q:'Cerința: „Copiază <em>orar</em> în Proiect.” După ce ai lucrat, orar e în Proiect, dar în folderul de unde a plecat nu mai e. Ce s-a întâmplat?',o:['L-ai mutat cu Decupare și Lipire','L-ai copiat, cum cerea cerința','L-ai șters din greșeală, cu Delete','L-ai redenumit, fără să-l muți'],ok:0,
+     ajutor:'După o copiere, câte fișiere orar sunt?',why:'După Copiere și Lipire ar fi două: unul în locul vechi, unul în Proiect. Dacă a plecat din locul vechi, ai folosit Decupare, adică l-ai mutat.'}
+   ]},
+  /* ---- pasul 5: partea A — situație nouă: cauți și decizi după tip, cu explicație; tipul din PICTOGRAMĂ (J1-3) ---- */
+  {t:'Partea A: o situație nouă, cu explicație',
+   text:`<p>La partea A primești ceva ce n-ai făcut exact așa. Folosești ce știi: căutarea și regula după care e făcută structura.</p>
+<p>De exemplu: două fișiere au același nume, iar tu le pui pe fiecare în folderul potrivit. Cauți din folderul mare: în caseta din dreapta sus scrii un cuvânt din nume sau începutul lui, apoi <kbd>Enter</kbd>; Windows caută și în folderele din el. În rezultate nu e coloana Tip: tipul îl afli din <b>pictogramă</b>. La A scrii și <b>explicația</b>.</p>`,
+   exemplu:`<p>Cauți <em>vara</em> din Documente. Găsești două <em>vara</em>, cu pictograme diferite: una e o poză (JPG), cealaltă o melodie (MP3). Explicația: „Am pus poza în Imagini și melodia în Sunete, pentru că fiecare tip are folderul lui; tipul l-am văzut din pictogramă.”</p>${IMG.cautare}`,
+   incearca:OP({q:'Undeva în Documente sunt două fișiere <em>vara</em>. Caută-le din Documente: caseta din dreapta sus, apoi <kbd>Enter</kbd>.',start:D,
+    fs:[[D+'Vacanta/Mare/vara.jpg','20.08.2026 12:10','2.140 KB'],[D+'Vacanta/vara.mp3','21.08.2026 09:00','3.120 KB'],D+'Proiect/Imagini/',D+'Proiect/Sunete/'],
+    checks:[{gasit:D+'Vacanta/Mare/vara.jpg',cautat:'vara',ce:'Căutarea a găsit poza vara (Fișier JPG)'},{gasit:D+'Vacanta/vara.mp3',cautat:'vara',ce:'Căutarea a găsit melodia vara (Fișier MP3)'}],
+    solutie:[['cauta','vara']],gresit:[['cauta','iarna']],
+    ajutor:'Scrie vara în caseta din dreapta sus (Căutați în Documente) și apasă Enter.',
+    why:'Windows a căutat în Documente și în toate folderele din el. Cele două au același nume; le deosebești după pictogramă (aici, în pagină, vezi și coloana Tip).'}),
+   inca:[
+    {t:'choice',q:'Căutarea găsește două fișiere <em>munte</em>: unul are pictograma unei poze, celălalt pictograma unui sunet. Pe care îl pui în folderul Sunete?',o:['Pe cel cu pictograma de sunet','Pe cel cu pictograma de poză','Pe amândouă','Pe cel găsit primul'],ok:0,
+     ajutor:'Pictograma îți spune ce fel de fișier e. Care e un sunet?',why:'Pictograma de sunet arată că fișierul e un sunet, deci merge în Sunete. Cel cu pictograma de poză e o imagine și merge în Imagini.'}
+   ]},
+  /* ---- pasul 6: înainte să predai — autoverificarea; Locul în bara de adresă, Tipul din pictogramă (J1-3, J1-4, J1-6) ---- */
+  {t:'Înainte să predai: te verifici singur',
+   text:`<p>Înainte să spui „gata”, verifici fiecare cerință, în ordinea C, B, A:</p>
+<ol><li><b>Locul</b>: intri în folder (dublu-clic) și citești bara de adresă: se termină ca în schemă, de exemplu <em>Ex Pop Ana › Proiect › Imagini</em>.</li>
+<li><b>Numele</b>: literă cu literă, ca în cerință, cu literele mari ale ei.</li>
+<li><b>Copiat sau mutat</b>: te uiți și în folderul de unde a plecat fișierul.</li>
+<li><b>Tipul</b>: după redenumire, pictograma e aceeași. Nu vezi coloana Tip? Uită-te la pictograme.</li></ol>
+<p>Ce găsești greșit repari înainte să predai.</p>`,
+   exemplu:`<p>Aceeași cerință: Proiect cu Imagini și Sunete; pisica redenumită în <em>pisica mea</em>; Alarm03 mutat din Materiale în Sunete.</p><div class="doua"><div><b class="t">Ana: bine</b><pre class="arbore">Ex Pop Ana
+  Proiect
+    Imagini
+      pisica mea
+    Sunete
+      Alarm03</pre></div><div><b class="t">Dan: patru greșeli</b><pre class="arbore">Ex Ene Dan
+  Proiect
+    <span class="gr">Imgini</span>
+      pisica mea  <span class="gr">Tip: Fișier</span>
+  <span class="gr">Sunete</span>
+    Alarm03
+Materiale
+  <span class="gr">Alarm03</span></pre></div></div>
+<p>La Dan: numele <em>Imgini</em>; Sunete în locul greșit; Alarm03 copiat, nu mutat; pisica mea are pictograma albă și la Tip scrie doar „Fișier”, deci i s-a șters extensia.</p>${IMG.adresa}`,
+   incearca:{t:'classify',q:'Lucrarea Ioanei are patru greșeli. Ce verificare o prinde pe fiecare? Alege pe fiecare rând, apoi apasă „Verifică”.',cats:['Locul','Numele','Copiat sau mutat','Tipul'],
+    items:[['În folderul Muzica, bara de adresă nu are Proiect înainte de Muzica, deși schema cere Muzica în Proiect.',0],['Folderul se numește Imagni.',1],['Cerința spunea „mută desen”, iar desen e și în Materiale, și în Imagini.',2],['După redenumire, desen are pictograma albă și la Tip scrie doar „Fișier”.',3]],
+    ajutor:'Pentru fiecare: e greșit unde stă, cum se numește, de câte ori există sau ce fel de fișier a ajuns?',
+    why:'Bara de adresă arată că Muzica stă în alt loc (Locul). Imagni e scris greșit (Numele). Desen în ambele foldere înseamnă copiere în loc de mutare. Pictograma albă și „Fișier” fără tip înseamnă extensia pierdută la redenumire (Tipul).'},
+   inca:[
+    {t:'tf',q:'Ca să verifici o mutare, e de ajuns să te uiți în folderul în care ai mutat fișierul.',ok:false,
+     ajutor:'Ce deosebește mutarea de copiere?',why:'Fals. Te uiți și în folderul de unde a plecat: după mutare, acolo nu mai e. Dacă e în ambele, l-ai copiat.'}
+   ]}
+ ],
+ /* ---- ATELIERUL: proba de antrenament (C, B, A1, A2), cu punctaj la prima verificare, păstrat și după reîncărcare ---- */
+ atelier:PB({proba:'C',titlu:'Atelier: proba de antrenament, partea C',
+  intro:`<p><strong>Proba de antrenament</strong>, cu cerințele noastre: patru exerciții, C (40 de puncte), B (30), A1 (14) și A2 (6), plus 10 din oficiu. Nu e lucrarea adevărată. Punctele se socotesc la <b>prima</b> apăsare pe „Verifică”, ca la lucrare, și rămân, chiar dacă reîncarci pagina. După ea poți repara, ca exercițiu.</p>
+<p><b>Spune întâi cine ești</b> (caseta de jos, ca la lecția 1): așa punctele rămân ale tale și dacă închizi pagina. Fără nume, rămân doar cât e fila deschisă.</p>
+<p>Pe telefon: <b>Ștergere</b> în loc de <kbd>Delete</kbd>, <b>Redenumire</b> în loc de <kbd>F2</kbd>; în loc de <kbd>Enter</kbd> atingi altundeva.</p>`,
+  q:`<b>Partea C (40 de puncte), cu pașii dați.</b> Ești în Documente.<ol><li>Intră în <b>Ex Pop Ana</b> (dublu-clic). Fă folderul <b>Proiect</b>: Nou, apoi Folder, scrii Proiect, <kbd>Enter</kbd>.</li><li>Intră în Proiect. Fă în el folderele <b>Imagini</b> și <b>Sunete</b>.</li><li>Copiază <b>pisica</b> din Materiale în Imagini: Documente (în panoul din stânga), dublu-clic pe Materiale, un clic pe pisica, Copiere; apoi Documente, dublu-clic pe Ex Pop Ana, pe Proiect, pe Imagini; Lipire.</li><li>Șterge <b>ciorna</b> din Ex Pop Ana: intră în Ex Pop Ana, un clic pe ciorna, <kbd>Delete</kbd>.</li></ol>Schema:${SCHEMA_C}`,
+  start:D,fs:[PISICA,CAINE,ALARM].concat(TOAMNA,[[EX+'ciorna.txt','30.11.2026 18:40','1 KB']]),
+  teste:[
+   {folderNou:PR,ce:'În Ex Pop Ana e folderul <b>Proiect</b>, făcut acum, cu numele scris ca în cerință',puncte:6,lectia:L10nou},
+   {folderNou:IM,ce:'În Proiect e folderul <b>Imagini</b>, scris ca în cerință',puncte:5,lectia:L9arb},
+   {folderNou:SU,ce:'În Proiect e folderul <b>Sunete</b>, scris ca în cerință',puncte:5,lectia:L9arb},
+   {copiatSiPastrat:{din:MAT+'pisica.png',in:IM},ce:'Pisica e în Imagini și a rămas și în Materiale (copiere, nu mutare)',puncte:15,lectia:L10cop},
+   {toate:[{inCos:EX+'ciorna.txt'},{cosNeatins:true}],ce:'Ciorna e în Coș, iar fișierele colegilor au rămas în Coș',puncte:6,lectia:L10sterg},
+   {nimicInPlus:{folder:EX,foldere:[PR,IM,SU]},paza:true,pazaDupa:[0,1,2],ce:'În Ex Pop Ana nu e nimic în plus: niciun folder în afara schemei, nicio copie de două ori',puncte:3,lectia:L9arb}],
+  solutie:[['cd',EX],['nou','Proiect'],['cd',PR],['nou','Imagini'],['nou','Sunete'],['cd',MAT],['copy','pisica.png'],['cd',IM],['paste'],['cd',EX],['del','ciorna.txt']],
+  gresit:[['cd',EX],['nou','Proiect'],['nou','Imagini'],['nou','Sunete'],['cd',MAT],['cut','pisica.png'],['cd',EX+'Imagini/'],['paste']],
+  ajutor:'Urmează pașii în ordine. Imagini și Sunete le faci după ce ai intrat în Proiect (dublu-clic). Copierea: întâi Copiere în Materiale, apoi Lipire în Imagini.',
+  why:'Partea C e gata: structura după schemă, copia pisicii și ciorna în Coș. Treci la partea B cu „Încă un exercițiu”.',
+  solutieText:'în Explorer și în lista de teste: acum trec toate.',
+  inca:[
+   PB({proba:'B',titlu:'Atelier: proba de antrenament, partea B',
+    q:`<b>Partea B (30 de puncte), singur.</b> Partea C e făcută (Proiect, cu Imagini și Sunete; pisica e în Imagini). Fără pași:<ol><li><b>Mută</b> Alarm03 din Materiale în Sunete.</li><li><b>Copiază</b> caine din Materiale în Imagini.</li><li>În Imagini, <b>redenumește</b> pisica în <b>pisica mea</b>.</li></ol>`,
+    start:D,fs:[PISICA,CAINE,ALARM].concat(TOAMNA,[PR,IM,SU,[IM+'pisica.png','02.12.2026 10:15','212 KB']]),cos:COS_ALTII.concat([CIORNA_COS]),
+    teste:[
+     {mutat:{din:MAT+'Alarm03.wav',in:SU},ce:'Alarm03 e în Sunete și nu mai e în Materiale (mutare)',puncte:9,lectia:L10mut},
+     {copiatSiPastrat:{din:MAT+'caine.jpg',in:IM},ce:'Câinele e în Imagini și a rămas și în Materiale (copiere)',puncte:9,lectia:L10cop},
+     {numit:{din:IM+'pisica.png',nou:IM+'pisica mea.png'},ce:'În Imagini, pisica se numește <b>pisica mea</b>, scris ca în cerință, și e tot o imagine (Fișier PNG)',puncte:9,lectia:L10ren},
+     {nimicInPlus:{folder:EX,foldere:[PR,IM,SU]},paza:true,pazaDupa:[0,1],ce:'În Ex Pop Ana nu e nimic în plus: niciun folder în afara schemei, nicio copie de două ori',puncte:3,lectia:L9arb}],
+    solutie:[['cd',MAT],['cut','Alarm03.wav'],['cd',SU],['paste'],['cd',MAT],['copy','caine.jpg'],['cd',IM],['paste'],['ren','pisica.png','pisica mea.png']],
+    gresit:[['cd',MAT],['copy','Alarm03.wav'],['cd',SU],['paste'],['cd',MAT],['cut','caine.jpg'],['cd',IM],['paste']],
+    ajutor:'Mută = Decupare, apoi Lipire; copiază = Copiere, apoi Lipire. La redenumire scrii doar pisica mea, cu litere mici, ca în cerință (extensia e ascunsă).',
+    why:'Partea B e gata: Alarm03 mutat, câinele copiat, pisica redenumită, cu extensia neatinsă.',
+    solutieText:'în Explorer și în lista de teste: acum trec toate.'}),
+   PB({proba:'A1',titlu:'Atelier: proba de antrenament, partea A (A1)',
+    q:`<b>Partea A, exercițiul A1 (14 puncte), o situație nouă.</b> Părțile C și B sunt făcute. Profesorul a pus în Materiale, într-un folder mai vechi, două fișiere cu același nume: <b>toamna</b>. Nu știi în ce folder sunt. Intră în Materiale și găsește-le cu caseta de căutare. Apoi <b>mută-le</b> în Proiect, pe fiecare în folderul potrivit.`,
+    start:D,fs:[PISICA,CAINE].concat(TOAMNA,[PR,IM,SU,[IM+'pisica mea.png','02.12.2026 10:15','212 KB'],[IM+'caine.jpg','02.12.2026 10:16','1.840 KB'],[SU+'Alarm03.wav','01.04.2024 10:22','420 KB']]),cos:COS_ALTII.concat([CIORNA_COS]),
+    teste:[
+     {mutat:{din:VE+'toamna.png',in:IM},ceInainte:'Prima <b>toamna</b> e mutată în folderul potrivit din Proiect',ce:'<b>toamna</b>, imaginea (PNG), e mutată în Imagini',puncte:6,lectia:L9tip},
+     {mutat:{din:VE+'toamna.wav',in:SU},ceInainte:'A doua <b>toamna</b> e mutată în folderul potrivit din Proiect',ce:'<b>toamna</b>, sunetul (WAV), e mutată în Sunete',puncte:6,lectia:L9tip},
+     {cautat:{gasit:[VE+'toamna.png',VE+'toamna.wav']},paza:true,ce:'Le-ai găsit cu caseta de căutare',puncte:2,lectia:L10caut}],
+    solutie:[['cd',MAT],['cauta','toamna'],['cut','toamna.png'],['cd',IM],['paste'],['cd',MAT],['cauta','toamna'],['cut','toamna.wav'],['cd',SU],['paste']],
+    gresit:[['cd',MAT],['cauta','toamna'],['cut','toamna.wav'],['cd',IM],['paste']],
+    ajutor:'În Materiale scrie toamna în caseta din dreapta sus și apasă Enter. Uită-te la pictograme (aici vezi și coloana Tip). Un clic pe una, Decupare; mergi în folderul potrivit, Lipire. Apoi la fel cu cealaltă.',
+    why:'Ai deosebit cele două fișiere după tip: imaginea în Imagini, sunetul în Sunete.',
+    solutieText:'în Explorer și în lista de teste: acum trec toate.'}),
+   {t:'probaalege',proba:'A2',titlu:'Atelier: proba de antrenament, partea A (A2)',
+    q:'<b>Partea A, exercițiul A2 (6 puncte): explicația.</b> La A1 ai avut două fișiere cu același nume, <b>toamna</b>. Care explicație e bună pentru felul în care le-ai așezat?',
+    o:['Am văzut tipul; le-am așezat după tip: imaginea (PNG) în Imagini, sunetul (WAV) în Sunete.','Am văzut tipul; le-am așezat după nume: toamna e un nume de poze, deci amândouă în Imagini.','Am văzut tipul; le-am așezat după căutare: prima găsită în Imagini, a doua în Sunete.','Am văzut tipul; le-am așezat ca pe unul: același nume, același fișier, deci am mutat doar unul.'],ok:0,
+    mesaje:{1:'Numele nu spune ce fel de fișier e: aici amândouă se numesc toamna. Folderul îl decide tipul.',2:'Ordinea rezultatelor nu spune ce fel de fișier e fiecare. Folderul îl decide tipul.',3:'Două fișiere cu același nume și extensii diferite sunt fișiere diferite (lecția 9).'},
+    ce:'Explicația: tipul (pictograma, coloana Tip) decide folderul',lectia:L9tip,
+    ajutor:'Toate variantele pomenesc tipul. În care decide tipul folderul?',
+    why:'Tipul, văzut din pictogramă sau din coloana Tip, arată ce fel de fișier e. Structura are câte un folder pentru fiecare fel: imaginile în Imagini, sunetele în Sunete.'}
+  ]}),
+ qs:[
+  {t:'choice',q:'Lucrarea lui Victor: partea C 37 de puncte, partea B 19, partea A 8. Ce notă are lucrarea lui?',o:['nota 7','nota 8','nota 6','nota 9'],ok:0,
+   ajutor:'Adună și cele 10 puncte din oficiu. Ultima cifră e sub 5 sau de la 5 la 9?',why:'37 + 19 + 8 + 10 = 74 de puncte: 7 zeci, iar ultima cifră, 4, e sub 5, deci nota 7.'},
+  {t:'order',q:'Schema cere în Ex Pop Ana folderul <b>Arta</b>, iar în Arta folderul <b>Picturi</b>. Ești în Documente. Pune pașii în ordine.',items:['Dublu-clic pe Ex Pop Ana','Nou, apoi Folder; scrii Arta, Enter','Dublu-clic pe Arta','Nou, apoi Folder; scrii Picturi, Enter'],
+   ajutor:'Un folder nou apare în folderul în care ești.',why:'Intri întâi în Ex Pop Ana și faci Arta; apoi intri în Arta și abia acolo faci Picturi.'},
+  {t:'choice',q:'Cerința: „Mută <em>melodie</em> din Materiale în Muzica.” Cum verifici că ai mutat-o, nu ai copiat-o?',o:['Te uiți și în Materiale: nu mai e acolo','Te uiți doar în Muzica: e acolo, deci e bine','Te uiți în Coșul de reciclare, după ea','Redenumești melodia, apoi o cauți'],ok:0,
+   ajutor:'Ce deosebește mutarea de copiere: câte fișiere rămân?',why:'După mutare rămâne un singur fișier, în Muzica. Dacă melodie e și în Materiale, ai copiat-o.'},
+  OP({q:'În Documente, folderul Proiect are Imagini și Sunete. Undeva în Documente sunt două fișiere <b>iarna</b>. Găsește-le cu căutarea și mută-le în Proiect, pe fiecare în folderul potrivit.',start:D,
+   fs:[D+'Proiect/Imagini/',D+'Proiect/Sunete/',[D+'Arhiva/2024/iarna.png','10.01.2024 15:20','140 KB'],[D+'Arhiva/iarna.mp3','11.01.2024 18:05','2.900 KB']],
+   checks:[{toate:[{are:D+'Proiect/Imagini/iarna.png'},{nu:D+'Arhiva/2024/iarna.png'}],ce:'Imaginea iarna (Fișier PNG) e mutată în Imagini'},{toate:[{are:D+'Proiect/Sunete/iarna.mp3'},{nu:D+'Arhiva/iarna.mp3'}],ce:'Melodia iarna (Fișier MP3) e mutată în Sunete'}],
+   solutie:[['cauta','iarna'],['cut','iarna.png'],['cd',D+'Proiect/Imagini/'],['paste'],['cd',D],['cauta','iarna'],['cut','iarna.mp3'],['cd',D+'Proiect/Sunete/'],['paste']],
+   gresit:[['cauta','iarna'],['cut','iarna.mp3'],['cd',D+'Proiect/Imagini/'],['paste']],
+   ajutor:'Scrie iarna în caseta din dreapta sus și apasă Enter. Pictograma (aici și coloana Tip) îți spune care e imaginea și care e sunetul.',
+   why:'Imaginea (PNG) e în Imagini, melodia (MP3) în Sunete: le-ai deosebit după tip.'}),
+  {t:'choice',q:'Extensiile se văd. Redenumești <em>harta.png</em>: ștergi tot și scrii <b>harta mare</b>, apoi <kbd>Enter</kbd>. Windows întreabă: „Sigur modificați extensia?”. Ce apeși, ca fișierul să rămână o imagine?',o:['Nu','Da','Enter','Nimic: oricum rămâne o imagine'],ok:0,
+   ajutor:'Ai șters și .png. Care răspuns oprește schimbarea?',why:'Cu Nu, redenumirea nu se face: fișierul rămâne harta.png, tot o imagine. Apoi iar F2 și scrii harta mare doar înaintea punctului. Cu Da (sau cu Enter, care apasă Da, butonul ales), fișierul rămâne fără extensie, cu pictograma albă.'}
+ ]}
+  ],
+  diploma:{titlu:'Gata de proba practică',
+   rezumat:'a recapitulat structura de foldere după o schemă, copierea, mutarea, redenumirea, ștergerea și căutarea, s-a verificat singur pe părțile C, B și A și a dat o probă de antrenament cu punctaj',
+   aplicatie:'calculatorul din laborator, în folderul tău',
+   provocare:LABORATOR},
+  aplicatieReala:{aplicatie:'calculatorul tău din laborator, doar în folderul tău',titlu:'Acum la calculatorul din laborator',scurt:'Laboratorul',
+   intro:'<p>O probă la fel, în Explorer-ul adevărat, singur. După fiecare parte deschizi „Verifică-te” și îți scrii punctele în caiet. Cam 15 minute.</p>',
+   pasi:LAB_BIFE},
+  tipuri:{explorerop:SimExplorerOperatii,probaexp:ExplorerProba.explorer,probaalege:ExplorerProba.alegere}
+});
+</script>
+</body>
+</html>
