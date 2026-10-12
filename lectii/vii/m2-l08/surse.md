@@ -72,3 +72,60 @@
 - **`lectii\_sim\wordobj-formatare.js` (lecția 6):** literele tastate stau în așteptare (`pend`) până la următoarea comandă; la un clic, `commit()` le trimite în document, dar `posAt()` citește pozițiile de pe desenul VECHI (fără redesenare între ele). În același paragraf, după literele tastate, cursorul ajunge cu atâtea litere mai la stânga: în proba mea, „la··Târgul” + clic între spații + ⌫ a șters „a”. Reparația propusă: în `docEl` pointerdown, `commit(); drawDoc();` înainte de `posAt`. Extensia mea ocolește defectul (trimite tastarea cu un Ctrl+Y sintetic înainte de clic, care în editor doar trimite tastarea), fără să schimbe fișierul lecției 6.
 - **Tot `wordobj-formatare.js`:** cu ¶ pornit, spațiul tocmai tastat (încă „în așteptare”) se desenează fără punct ·, deși Word îl arată imediat ca ·. Extensia mea pune punctul peste literele în așteptare (doar la desen; textul nu se schimbă).
 - **`jocuri\word-vii` (nivelul 6):** predă aceleași reguli de spațiu; nu am găsit contradicții cu lecția.
+
+## 12.10.2026 — stilul Titlu 1 (Heading 1), adăugat la pasul 4 (lecția publicată, de republicat)
+
+### De ce și de unde
+- **Decizia profesorului (11.10.2026):** stilurile de titlu sunt cerute de documentele lui pentru VII-U1, dar lecțiile VII/2-9 nu le predau (semnalat de autorul VII/10, `lectii\vii\m2-l10\surse.md`, „Nepredat, deci necerut”). Întrebat „Le adăugăm undeva?”, a răspuns „Adaugă-le”.
+- **Ce cer documentele lui, exact:** fișa de pregătire VII-U1 (`C:\00\Projects\Info_Gimnaziu_2026\materiale\pregatire\Pregatire_toate.html` = `data\analogii.json`, „VII-U1”): titlul „Textul curge. Formatare cu stiluri vs. aranjare cu spatii si Enter.”; analogia „Stilul e ordinul dat o singura data ('toate titlurile arata asa'), spatiile sunt impinsul mobilei cu piciorul, de fiecare data.”; demonstrația „Echipa A aranjeaza cu Enter si spatii, echipa B cu stiluri. […] 'schimbati toate titlurile in albastru, aveti 10 secunde'.” Fișa VII-E0 spune la fel: „in unul schimb marimea titlurilor din stiluri, in 3 secunde”. `Proiectul_unitatii_VII-U1.md` și `curriculum.json` (OMEN 3393/2017) NU numesc stilurile: conținutul rămâne „Reguli generale de tehnoredactare şi estetică a paginii tipărite”. N-am inventat criterii de notare.
+
+### Unde l-am pus: extins pasul 4, nu pas nou
+- Pasul 4 („titlurile de același fel arată la fel”) primește „cum faci asta sigur”: stilul Titlu 1, un clic în loc de cinci formatări. E aceeași idee a pasului, nu una nouă.
+- Un pas nou era respins din trei motive: plafonul (pasul 0 + 5 pași) e atins; `cum-fac\date.js` are 2 fișe spre `vii/m2-l08/` cu `"pas":"p6"` („Verifici: semnele ¶ și previzualizarea”), pe care un pas nou le-ar fi mutat la alt pas (`cum-fac\` nu e al meu); titlul pasului 4 și legăturile `?pas=p5` rămân la fel.
+- Ce s-a adăugat în pas: în text, un rând în listă („Cel mai sigur, le dai același stil, Titlu 1 (Heading 1)”) și ce e un stil, cu legătura la stilul de tabel din lecția 7 și folosul („Schimbi stilul o dată și se schimbă toate titlurile cu el”, demonstrația profesorului); caseta „La calculator, acum” (regula 10): documentul `programul-serbarii.docx` (aceleași 5 paragrafe ca exercițiile pasului, cu cele două titluri de parte), Titlu 1 la „Partea întâi” și „Partea a doua”, închis cu Ctrl+W și Nu salvați; în „Uite cum”, unde e galeria și cei doi pași, ce se întâmplă cu formatarea de mână, Center după stil, capcana Title fără cifră, Ctrl+Z; în „altfel”, analogia profesorului cu dirijorul (același cor ca analogia pasului); exercițiul 2 din 4 (tipul `wordstil`, de execuție în simulator). Exercițiile, întrebările și pasul din laborator de dinainte au rămas neschimbate.
+- Timpul: textul pasului 4 are ~108 cuvinte (+ caseta gestului, în textul pasului, cu trimiterea „ca în «Uite cum», mai jos”; poarta `test_joc.py` numără ~171 și avertizează, MINOR, acceptat), „Uite cum” 75. Gestul din Word ține cam 2 minute; exercițiul 2 e „Încă un exercițiu”, deci lecția rămâne de o oră.
+- Restul paginii: „Ai nevoie de” (lecția 3: Ctrl+W; lecția 7: stilul unui tabel), obiectivul, descrierea și rezumatul diplomei pomenesc stilul Titlu 1. `profil.json`: stilul Titlu 1 a trecut din „nu se cere” în „se predă aici”; în „nu se cere” rămân Modify / Update, Heading 2…9, cuprinsul, Ctrl+Alt+1.
+
+### Proba în Word-ul real (12.10.2026)
+- Word 16.0.20326, interfață engleză (pe calculatorul de probă Office are doar limbile 1033, 1036, 3082: interfața română nu e instalată), instanță NOUĂ și INVIZIBILĂ (`DispatchEx`, `_proba/wordcom.py`), doar PID-ul ei oprit, documente închise cu `Saved=True` + `Close(0)`, vederea și zoomul puse la loc; nicio setare a Word-ului schimbată (stilul a fost schimbat doar în documentul de probă). Chrome / Edge reali nu s-au pornit. Scripturile: `_proba/proba_stiluri_word.py` -> `rezultate_stiluri.json` (0 secțiuni căzute), `_proba/fa_docx_stiluri.py` -> `rezultate_docx_stiluri.json`.
+- Clicul pe dală = aceeași comandă ca `Selection.Style` (COM); clicul de mouse pe galerie nu se poate face în instanța invizibilă (vezi `afirmatii.json` A24-A34). Ce am aflat:
+  - cursorul în titlu, fără selecție -> TOT paragraful devine Heading 1, celelalte rămân Normal;
+  - formatarea pusă de mână pe tot titlul dispare (aldin 14 -> Calibri Light 20, fără aldin; Comic Sans 20 aldin, centrat -> Calibri Light 20, la STÂNGA); un cuvânt aldin rămâne aldin. De aici „întregului titlu” și „Center îl pui după stil”;
+  - un singur cuvânt selectat -> doar cuvântul ia forma, paragraful rămâne Normal (capcana din „Uite cum” și mesajul simulatorului); tot textul selectat (cu sau fără ¶) -> paragraful e Heading 1;
+  - Ctrl+Z (Undo 1) întoarce totul dintr-o dată; Normal readuce Calibri 11, 0/8 pt; Enter la capătul titlului dă un paragraf Normal; stilul schimbat o dată (culoarea) schimbă ambele titluri;
+  - Heading 1 = Calibri Light 20, #2F5496 (din PDF-ul făcut de Word), 18 pt înainte / 4 după; Title = Calibri Light 28, negru: alt stil, „mult mai mare”.
+- **Documentul `programul-serbarii.docx`:** făcut în Word-ul real (textul în română), cu definiția Heading1 scrisă în `styles.xml` (sz 40, color 2F5496), deci Word-ul din laborator, oricare ar fi versiunea, dă același Titlu 1 ca simulatorul și ca pagina („Calibri Light, 20, albastru”). `curata_metadate.py --curata`, apoi verificarea -> 0 fișiere cu nume; `removePersonalInformation` nu e în `settings.xml`.
+
+### Numele românești
+- Din Microsoft ro-ro, text brut (nu din Word, vezi mai sus): „Stilurile descrise în acest articol se află în galeria Stiluri, un meniu vizual de pe fila Pornire”, „Selectați textul din document care are stilul aplicat, cum ar fi Titlu 1” (https://support.microsoft.com/ro-ro/word/customize-or-create-new-styles, copie `_proba/surse_web/ms_ro_aplicare_stiluri.txt`, 12.10.2026); „Aplicați stilul Normal / Titlu 1 / Titlu 2 — Ctrl+Shift+N / Ctrl+Alt+1 / Ctrl+Alt+2” (https://support.microsoft.com/ro-ro/accessibility/word/keyboard-shortcuts-in-word, copie `lectii\vii\m1-l03\_proba\surse_web\ms_comenzi_rapide.txt`); „Accesați Stiluri pornire >, apoi alegeți Titlu 1” (pagina ro-ro „Inserarea unui cuprins”, `_campaign\…\calibrare\_cache\4bb536e8936d9ae6.txt`).
+- NESIGUR: numele românesc al stilului **Title** (probabil „Titlu”, dar nu l-am găsit în nicio sursă): pagina îl numește doar „Title, fără cifră”, ca să fie adevărat în ambele limbi. Numele „No Spacing” în română (în simulator, în sfat: „Fără spațiere”) nu e confirmat; nu apare în textul lecției.
+- Ctrl+Alt+1: NU e predat. Tastele postate în fereastra instanței invizibile n-au făcut nimic (neconcludent), iar pe tastatura Română (standard) Ctrl+Alt+1 e totuna cu AltGr+1, care scrie „¡” (ToUnicodeEx). Simulatorul nu-l are.
+
+### Simulatorul: extensie nouă `lectii\_sim\wordteh-stiluri.js` (tipul `wordstil`; proprietar: lecția VII/8)
+- `wordobj-tehnoredactare.js` (tot al acestei lecții) NU l-am schimbat: îl folosește și lecția publicată VII/10. Extensia nouă se încarcă după el și îi folosește fereastra (editorul din `wordobj-formatare.js`, neschimbat); dalele galeriei Styles sunt cele din dump-ul panglicii (`panglica-word.js`).
+- Ce face (capul fișierului are tot): clic în paragraf + dală = stilul pe tot paragraful, cu regula „jumătății” pentru formatarea de mână; stilurile legate (Heading 1, Heading 2, Title) pe o bucată selectată = doar bucata; Ctrl+Z (tasta și butonul) anulează stilul; Enter la capătul unui titlu = paragraf Normal; dala stilului de la cursor e aprinsă, cu mostra „AaBbCcDc”; numele românesc în sfat; banda panglicii pornește derulată la grupul Styles (în Word se vede fără derulare) și nu mai sare înapoi la fiecare clic. Subtitle, Subtle Emphasis, Emphasis și Styles... spun pe ecran că nu sunt folosite în lecție.
+- Testele: `{stil:{text, nume}}`, `{restul:{nume, afara}}`, `textPastrat`; mesaje anume pentru Title (fără cifră), pentru stilul pus doar pe o bucată și pentru stilul pus pe un paragraf de text.
+- Pentru lecția următoare (dacă VII/10 sau alta vrea stilurile): `tipuri:{wordstil:TipWordStiluri}`, după `wordobj-tehnoredactare.js`; `TipWordStiluri.STILURI`, `.aplica(doc, {cur, ank}, nume)`, `.mk(spec)` (paragrafe cu `stil:'Heading 1'`). Nu schimbați forma stilurilor fără probă în Word.
+
+### Lecția VII/10 (evaluarea, publicată) — NEATINSĂ
+Ce ar trebui schimbat acolo, dacă profesorul vrea stilurile și în evaluare:
+- `lectii\vii\m2-l10\surse.md`, „Nepredat, deci necerut”: stilurile de titlu sunt acum predate în VII/8, pasul 4;
+- cerința / criteriul (titlurile documentului de laborator cu Titlu 1) doar dacă profesorul îl pune în grila lui (C/B/A din `SISTEM_EVALUARE.md`); azi nu e în grila lui;
+- simulatorul lecției 10 (`wordobj-proba.js`) n-are galeria de stiluri: ar trebui încărcat și `wordteh-stiluri.js` (tipul `wordstil`) sau o extensie a proprietarului lecției 10.
+
+### Pentru dirijor
+- `cum-fac\` (contractul `cum-fac-lectii-acoperite`): lipsește fișa „Cum pun stilul Titlu 1 (Heading 1)?”, cu legătura `lectii/vii/m2-l08/?vezi=p5`. N-am atins `cum-fac\`.
+- Capturile lipsă: `capturi_lipsa.json` C4 (galeria Styles în Word, în engleză și în română).
+
+### Porțile (12.10.2026)
+- `test_joc.py --dir …\lectii\vii m2-l08` -> TRECUT (doar „1 niveluri”, așteptat; avertismentul de lungime al pasului 4 a revenit după reparațiile de seară: poarta numără ~171 de cuvinte, textul de citit are ~108; MINOR, acceptat).
+- `verifica_lectie.py … --fara-t1` -> ultima linie 0 (S0, S1 0 identice, S2 6/6, T0 0).
+- `_proba/proba_ui_stiluri.py` (Playwright, rețeaua blocată în afară de file://, `ctx.close()`): 390 px cu atingere + 1280 px cu mouse și taste reale -> 0 probleme, 0 erori în consolă (drumul bun, cuvânt selectat, Title, stilul pe text, Subtle Emphasis, Ctrl+Z tastă și buton, Center după stil, literă + trei Ctrl+Z, Enter la capăt, legătura de descărcare, lățimea paginii). `_proba/proba_ui_l08.py` (proba veche a lecției: pașii 1, 3, 5, atelierul, laboratorul) -> 0.
+- `python C:/00/AI_0/tools/learninghub_date_personale.py` -> ultima linie 0.
+
+### Reparații după judecător (12.10.2026, seara)
+- M1: caseta „La calculator, acum” trimite acum la „Uite cum” (clic în titlu, fără selecție, Pornire › Stiluri › Titlu 1), ca în VII/11.
+- m6: ales: formulare. Exercițiul `wordstil` rămâne al 2-lea „Încă un exercițiu” (primul „Încearcă” e cel cu fonturile, de care depind textul și poza); obiectivul și diploma spun „afli / a aflat cum se pun titlurile la fel cu stilul Titlu 1”, nu „a pus”.
+- m3: ⌫/Delete care unește un titlu cu paragraful de sub el: în Word tot textul unit devine Calibri Light 20 (probat de judecător); simulatorul NU face asta (regula editorului, fișier neatins). Abaterea e spusă în legenda de sub fereastră.
+- m4: pătrățelul negru de lângă titlu cu ¶ pornit (Keep with next / Keep lines together) NU e desenat în simulator și nu e pomenit în lecție: NEPROBAT vizual (Word invizibil, fără captură).
+- m1/m2/m5/m7: „Normal” explicat în pasul 4; analogia cu dirijorul („Întâi fiecare titlu intră în cor… Apoi dirijorul…”); lista pasului unește titlurile și alinierea într-un punct; exercițiul cu aldin 14 începe cu „Fără stil, de mână (merge și așa, dar la fiecare titlu, pe rând):”.
