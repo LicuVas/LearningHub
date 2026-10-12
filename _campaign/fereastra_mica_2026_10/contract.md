@@ -96,3 +96,12 @@ neasistată; raportul în Notepad++.
   PAGINĂ, nu `A.pasi`; (b) V/10-12 au bifele lor pe fiecare punct → acolo motorul nu mai pune bifă (fără bife duble);
   (c) VI/9 are în pași lista de autoverificare (16 bife, numărător, buton) → clicurile din fereastră se fac pe
   elementul-pereche din pagină, apoi copia se reface (oglinda).
+- Publicat 12.10.2026 ~23:30 (commit b65339d4), live verificat: marcaj în motor.js, proba --baza 58/58.
+- Verificarea independentă (reprompt, 9 întrebări, canar trecut) → DESCHIS: FĂCUT P1, P3, P5, P6, P8. Reparat după ea:
+  P2 (bifele „pe elev” nu aveau probă → `pe_elev` A/B/A + mutantul M11), P4 (sfatul doar simulat în Chrome → acum și
+  într-un Firefox adevărat). P7 („cele 8 jocuri antrenament/recapitulare pică din cauza motorului nou”) — RESPINS cu
+  probă cu O singură variabilă: copie doar cu `jocuri/` + motorul NOU → recapitulare-v, calculator-antrenament-v,
+  excel-antrenament-viii TRECUT; aceeași copie + `assets/` → PICAT; situl întreg cu motorul VECHI (305c1cdb) → PICAT.
+  Picătura vine din ceva din `assets/` (probabil prezenta.js), nu din motor; verificatorul comparase vechi-fără-assets
+  cu nou-cu-assets. Rămâne de cercetat separat. G0: R8 (mâna profesorului) și raportul de noapte — deschise la data
+  verificării; R10 rulat (activitate.py lista: 0 rânduri „nu e în catalog” înainte și după probe).

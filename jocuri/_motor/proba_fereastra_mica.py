@@ -49,6 +49,7 @@ MUTANTI = [
     ("M5 sfatul apare și pe telefon", "  if(!cuMouse())return '';\n", ""),
     ("M6 fereastra rămâne deschisă după ce pagina pleacă de pe pas", "if(!app.querySelector('ol[data-real-lista]'))PIP.close();", "if(false)PIP.close();"),
     ("M7 bifele nu țin după închiderea ferestrei", "try{sessionStorage.setItem(cheieBife(),", "try{void(cheieBife(),"),
+    ("M11 bifele nu țin seama de elev", "return 'lh_bife_real|'+cheieJoc()+'|'+R.li", "return 'lh_bife_real|'+C.cheie+'|'+R.li"),
 ]
 
 
@@ -227,6 +228,52 @@ class Proba:
         finally:
             ctx.close()
 
+    def firefox(self, lectie):
+        """R5 într-un browser ADEVĂRAT fără fereastra de document (self.br = Firefox): fără buton, cu sfatul, bifele merg."""
+        ctx = self.context(viewport={"width": 1366, "height": 768})
+        pg = ctx.new_page()
+        pg.on("pageerror", lambda e: self.erori.append("firefox: " + str(e)))
+        try:
+            self.la_aplicatie(pg, lectie)
+            self.verifica(not pg.evaluate("!!window.documentPictureInPicture"), "Firefox: browserul chiar nu are fereastra de document")
+            self.verifica(pg.locator("#pip-deschide").count() == 0 and pg.locator(".fereastra-sfat").is_visible(),
+                          "R5 Firefox adevărat: fără buton, cu sfatul „Windows + ←”")
+            pg.locator("#app input.bifa-real").first.click()
+            self.verifica(pg.locator("#app input.bifa-real").first.is_checked(), "R5 Firefox: bifele merg")
+        except Exception as e:
+            self.verifica(False, "proba în Firefox s-a oprit: " + str(e).splitlines()[0][:200])
+        finally:
+            ctx.close()
+
+    def pe_elev(self, lectie):
+        """Bifele sunt ale ELEVULUI (profilul activ), pe aceeași filă: A bifează, B nu vede bifa lui A, A o regăsește."""
+        ctx = self.context(viewport={"width": 1366, "height": 768})
+        pg = ctx.new_page()
+        pg.on("pageerror", lambda e: self.erori.append(str(e)))
+
+        def ca(profil):
+            pg.evaluate("p => localStorage.setItem('learninghub_active_profile', p)", profil)
+            pg.reload()
+            pg.wait_for_function("window.JocMotor&&JocMotor.test&&JocMotor.test.config()", timeout=15000)
+            pg.click('.lvl[data-l="0"]', timeout=8000)
+            pg.evaluate("JocMotor.test.real()")
+            pg.wait_for_selector("#app input.bifa-real", timeout=8000)
+            return pg.evaluate("[...document.querySelectorAll('#app input.bifa-real')].map(x=>x.checked)")
+        try:
+            self.la_aplicatie(pg, lectie)
+            ca("ProbaA")
+            pg.locator('#app input.bifa-real[data-k="0"]').click()
+            b = ca("ProbaB")
+            self.verifica(not any(b), "pe elev: elevul B, pe aceeași filă, NU vede bifa pusă de A", b)
+            a = ca("ProbaA")
+            self.verifica(a[:1] == [True] and not any(a[1:]), "pe elev: întors la A, bifa lui e tot acolo", a)
+            ls = pg.evaluate("Object.keys(localStorage).filter(k=>/bife/i.test(k))")
+            self.verifica(not ls, "pe elev: bifele NU stau în localStorage (sertarul)", ls)
+        except Exception as e:
+            self.verifica(False, "proba pe elev s-a oprit: " + str(e).splitlines()[0][:200])
+        finally:
+            ctx.close()
+
     def fara_pip_si_telefon(self, lectie):
         ctx = self.context(viewport={"width": 1366, "height": 768}, init=FARA_PIP)
         pg = ctx.new_page()
@@ -314,6 +361,18 @@ def main():
             P = Proba(br, baza)
             P.detaliat(a.lectie)
             P.oglinda()
+            P.pe_elev(a.lectie)
+            try:   # R5 într-un Firefox adevărat (python -m playwright install firefox); lipsă = doar informație
+                fx = p.firefox.launch()
+            except Exception:
+                fx = None
+                print("  info Firefox pentru probe nu e instalat: R5 doar prin simulare în Chrome")
+            if fx:
+                PF = Proba(fx, baza)
+                PF.firefox(a.lectie)
+                P.probleme += PF.probleme
+                P.erori += PF.erori
+                fx.close()
             P.fara_pip_si_telefon(a.lectie)
             if not a.fara_toate:
                 P.toate(lectii)
@@ -333,6 +392,7 @@ def main():
                     M = Proba(br, baza, motor_txt=txt.replace(din, in_), tacut=True)
                     M.detaliat(a.lectie)
                     M.oglinda()
+                    M.pe_elev(a.lectie)
                     M.fara_pip_si_telefon(a.lectie)
                     M.toate(COMPLETATE)   # lecțiile care își completează pașii după desenare (M8)
                     prins = bool(M.probleme)
