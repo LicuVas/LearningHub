@@ -41,6 +41,7 @@
 
 ## Modul lecție al motorului (de la 27.09, după)
 Pune `mod:'lectie'` în configurație (vezi `jocuri\README.md` §4 „Modul LECȚIE”). Motorul face singur firul de navigare spre `/lectii/<clasa>/`, textele de lecție și pasul **„Acum în aplicația adevărată”**, între atelier și întrebări: câmpul `aplicatieReala:{aplicatie, titlu?, intro?, pasi:[…]}`, iar fără el se folosesc `diploma.aplicatie` + `diploma.provocare`. Nu scrie în text „apoi diploma, cu provocarea”.
+**Fereastra mică (12.10.2026, profesorul):** pe acest pas motorul pune singur câte o bifă pe fiecare pas și butonul „⧉ Ține pașii deasupra, cât lucrezi” (pașii într-o fereastră care stă deasupra Excelului/Word-ului). Tu nu scrii nimic pentru asta și NU scrii în pași „bifează” sau „fereastra mică”: le spune motorul. Dacă pasul tău are deja bifele lui (câte una pe punct), motorul nu mai pune una. Fiecare pas din listă trebuie să se înțeleagă și citit singur, într-o fereastră îngustă (~460 px), lângă aplicație. Detalii: `jocuri\README.md` §4, „Fereastra mică”.
 
 ## Bara pașilor, de jos (08.10.2026, profesorul: DE FĂCUT în motor)
 - **Cerința.** În bara de jos a lecției (P1…Pn, Atelier, Aplicația, Î1…Î5), un element se poate apăsa doar dacă ELEVUL ACESTA a ajuns deja la el. Cele la care n-a ajuns nu se pot apăsa. Progresul e al fiecărui elev (pe profilul lui) și se vede și la următoarea deschidere a lecției, ca elevul să știe dintr-o privire unde a rămas data trecută.

@@ -710,6 +710,111 @@ function atelierPage(){
   document.getElementById('go').onclick=()=>{R.mode='test';if(AR){R.phase='real';realPage()}else{R.phase='q';question()}};
   renderPractice([A].concat(A.inca||[]),'atelier');
 }
+/* FEREASTRA MICĂ (12.10.2026; profesorul: „poate o folosim mai des pe learninghub - mai ales pentru lecțiile care cer
+   interacțiune cu aplicațiile adevărate”; contract: _campaign/fereastra_mica_2026_10/contract.md). Pe pasul „Acum în
+   aplicația adevărată”, butonul „⧉ Ține pașii deasupra, cât lucrezi” mută pașii într-o fereastră a browserului care stă
+   mereu deasupra celorlalte (Document Picture-in-Picture, Chrome/Edge 116+, doar pe calculator). Elevul lucrează în
+   aplicație și bifează pașii acolo; „Am terminat → La verificare” închide fereastra și duce lecția la Î1. Bifele sunt
+   aceleași în pagină și în fereastră și țin cât e deschisă fila (sessionStorage, pe elev și pe nivel: nu intră în
+   sertar, nu pleacă spre server, nu trec la alt elev după închiderea filei). Fereastra se închide singură când pagina
+   lecției nu mai arată pasul (alt pas, întrebări, cuprins) și odată cu fila. Fără fereastra de document, pe un calculator
+   cu mouse: sfatul cu ecranul împărțit (Windows + ←). Pe telefon: nimic. Proba: proba_fereastra_mica.py (--mutanti). */
+let PIP=null,pipPaza=null;
+const arePip=()=>!!window.documentPictureInPicture;
+function cuMouse(){try{return matchMedia('(pointer:fine)').matches}catch(e){return true}}
+function cheieBife(){return 'lh_bife_real|'+cheieJoc()+'|'+R.li}
+function bifeReal(){try{const b=JSON.parse(sessionStorage.getItem(cheieBife())||'[]');return new Set(Array.isArray(b)?b:[])}catch(e){return new Set()}}
+function puneBifa(k,da){
+  const b=bifeReal();if(da)b.add(k);else b.delete(k);
+  try{sessionStorage.setItem(cheieBife(),JSON.stringify([...b].sort((x,y)=>x-y)))}catch(e){}
+  sincBife();
+}
+function sincBife(){   // aceleași bife în pagină și în fereastra mică, plus „2 din 5 pași bifați”
+  const b=bifeReal();
+  [document,PIP&&PIP.document].forEach(d=>{if(!d)return;
+    const c=d.querySelectorAll('input.bifa-real');c.forEach(x=>{x.checked=b.has(+x.dataset.k)});
+    const n=d.querySelector('.bife-numar');if(n)n.textContent=c.length?`${[...c].filter(x=>x.checked).length} din ${c.length} pași bifați`:''});
+}
+/* Un pas care are deja bifele lui (V/10-12: câte o bifă pe fiecare punct) nu primește încă una. */
+function listaReal(A){
+  const b=bifeReal();
+  return `<ol class="check aplicatie-reala" data-real-lista>${A.pasi.map((x,k)=>`<li>${/type=["']?checkbox/i.test(x)?'':`<input type="checkbox" class="bifa-real" data-k="${k}" aria-label="Am făcut pasul ${k+1}"${b.has(k)?' checked':''}> `}${x}</li>`).join('')}</ol>`;
+}
+/* OGLINDA: lista din fereastra mică e o COPIE a listei din pagină, așa cum arată acum (unele lecții își completează pașii
+   după desenare: rezultatele atelierului la VI/1 și VIII/1, lista de autoverificare la VI/9). Pagina rămâne singurul
+   original: un clic pe o bifă, un buton sau un „De ce?” din fereastră se face pe elementul-pereche din pagină (cu
+   scripturile lecției), apoi copia se reface. Orice schimbare făcută direct în pagină reface și ea copia. */
+function oglindaPip(){
+  if(!PIP)return;
+  const d=PIP.document,sursa=app.querySelector('ol[data-real-lista]'),veche=d.querySelector('ol[data-real-lista],.pip-lista');
+  if(!sursa||!veche)return;
+  const y=d.scrollingElement?d.scrollingElement.scrollTop:0,nou=d.importNode(sursa,true);
+  /* adrese întregi (documentul ferestrei nu are adresa lecției) și linkurile în fila browserului */
+  nou.querySelectorAll('a[href]').forEach(a=>{a.href=new URL(a.getAttribute('href'),location.href).href;a.target='_blank';a.rel='noopener'});
+  nou.querySelectorAll('img[src]').forEach(i=>{i.src=new URL(i.getAttribute('src'),location.href).href});
+  veche.replaceWith(nou);
+  if(d.scrollingElement)d.scrollingElement.scrollTop=y;
+}
+let oglindaProgramata=0;
+function oglindaCurand(){if(PIP&&!oglindaProgramata)oglindaProgramata=setTimeout(()=>{oglindaProgramata=0;oglindaPip();sincBife()},0)}
+function clicInFereastra(e){
+  const lista=PIP&&PIP.document.querySelector('ol[data-real-lista]'),el=e.target.closest&&e.target.closest('input,button,summary,label');
+  if(!lista||!el||!lista.contains(el)||el.tagName==='LABEL')return;   // eticheta trimite singură un clic pe bifa ei
+  const pereche=[...app.querySelector('ol[data-real-lista]').querySelectorAll('*')][[...lista.querySelectorAll('*')].indexOf(el)];
+  if(!pereche||pereche.tagName!==el.tagName)return;
+  e.preventDefault();pereche.click();oglindaCurand();
+}
+function blocFereastra(){
+  if(!cuMouse())return '';
+  if(!arePip())return `<p class="hint fereastra-sfat">Ca să vezi pașii și aplicația deodată: apasă împreună tasta <b>Windows</b> (cea cu sigla ⊞, jos, lângă Ctrl) și <b>săgeata spre stânga ←</b>. Lecția trece în stânga ecranului; în dreapta alegi aplicația.</p>`;
+  return `<div class="fereastra-mica">
+      <button class="btn primary" id="pip-deschide" type="button">⧉ Ține pașii deasupra, cât lucrezi</button>
+      <span class="hint">Pașii apar într-o fereastră mică, deasupra aplicației: o muți ținând de bara ei de sus și o mărești trăgând de un colț. Nu închide fila lecției (o poți micșora).</span>
+      <div class="fereastra-deschisa" style="display:none">Pașii sunt în fereastra mică. <button class="btn" id="pip-inapoi" type="button">Adu pașii înapoi</button></div>
+    </div>`;
+}
+function stareFereastra(){
+  const b=document.getElementById('pip-deschide'),d=document.querySelector('.fereastra-deschisa');
+  if(b)b.style.display=PIP?'none':'';if(d)d.style.display=PIP?'':'none';
+}
+function legaFereastra(A){
+  app.querySelectorAll('input.bifa-real').forEach(c=>c.onchange=()=>puneBifa(+c.dataset.k,c.checked));
+  const b=document.getElementById('pip-deschide');
+  if(b)b.onclick=()=>deschideFereastra(A).catch(e=>{console.warn('[fereastra mică]',e);PIP=null;stareFereastra()});
+  const i=document.getElementById('pip-inapoi');if(i)i.onclick=()=>{if(PIP)PIP.close()};
+  stareFereastra();sincBife();
+}
+async function deschideFereastra(A){
+  if(PIP){PIP.focus();return}
+  const w=await window.documentPictureInPicture.requestWindow({
+    width:Math.round(Math.min(480,screen.availWidth*.36)),height:Math.round(Math.min(600,screen.availHeight*.72))});
+  PIP=w;const d=w.document;
+  for(const f of document.styleSheets){   // motor.css + jetoanele de culoare ale lecției; fonturile de pe alt domeniu, prin link
+    try{const s=d.createElement('style');s.textContent=[...f.cssRules].map(r=>r.cssText).join('\n');d.head.append(s)}
+    catch(e){if(f.href){const l=d.createElement('link');l.rel='stylesheet';l.href=f.href;d.head.append(l)}}}
+  [...document.documentElement.attributes].forEach(a=>{try{d.documentElement.setAttribute(a.name,a.value)}catch(e){}});
+  d.title=A.titlu||'Acum în aplicația adevărată';
+  d.body.className='pip-pasi';
+  d.body.innerHTML=`<div class="pip-cap"><b>${esc(A.titlu||'Acum în aplicația adevărată')}</b>
+      <span class="pip-marime"><button class="btn" type="button" data-z="-1" aria-label="Text mai mic">A−</button><button class="btn" type="button" data-z="1" aria-label="Text mai mare">A+</button></span></div>
+    ${A.aplicatie?`<p class="hint" style="margin:0 0 4px">Unde lucrezi: <b>${esc(A.aplicatie)}</b></p>`:''}
+    <div class="pip-lista"></div>
+    <p class="hint bife-numar" style="margin:0 0 8px"></p>
+    <button class="btn primary" id="pip-gata" type="button">Am terminat → La verificare</button>`;
+  oglindaPip();   // lista din pagină, cu tot ce au completat scripturile lecției (vezi OGLINDA)
+  d.addEventListener('click',clicInFereastra,true);
+  app.addEventListener('change',oglindaCurand,true);app.addEventListener('click',oglindaCurand,true);
+  let z=1;d.querySelectorAll('[data-z]').forEach(x=>x.onclick=()=>{z=Math.min(1.8,Math.max(.8,z+.15*x.dataset.z));d.body.style.zoom=z});
+  ['pointerdown','keydown','wheel'].forEach(ev=>d.addEventListener(ev,()=>{miscare=Date.now()},{passive:true,capture:true}));   // lucrul în fereastră e mișcare (secundele pe nivel)
+  d.getElementById('pip-gata').onclick=()=>{try{window.focus()}catch(e){}R.mode='test';R.phase='q';question()};   // pagina trece la Î1; paza închide fereastra
+  w.addEventListener('pagehide',()=>{PIP=null;if(pipPaza){pipPaza.disconnect();pipPaza=null}
+    app.removeEventListener('change',oglindaCurand,true);app.removeEventListener('click',oglindaCurand,true);stareFereastra()});
+  /* paza: când pagina lecției nu mai arată pasul cu lista (alt pas, întrebări, cuprins, diplomă), fereastra se închide;
+     cât e pe pas, orice schimbare în listă (scripturile lecției) ajunge și în fereastră */
+  pipPaza=new MutationObserver(()=>{if(!PIP)return;if(!app.querySelector('ol[data-real-lista]'))PIP.close();else oglindaCurand()});
+  pipPaza.observe(app,{childList:true,subtree:true});
+  stareFereastra();sincBife();
+}
 /* MODUL LECȚIE: „Acum în aplicația adevărată” - după atelier, înainte de verificare (standardul lecției, 27.09.2026).
    Pașii sunt cei din `aplicatieReala.pasi` (sau `diploma.provocare`); fără puncte, elevul îi face în aplicația reală. */
 function realPage(){
@@ -722,7 +827,8 @@ function realPage(){
     <div class="reading">${A.intro||(A.titlu?'<p>Ai exersat în simulator. Acum faci același lucru pe bune. Urmează pașii de mai jos, unul câte unul.</p>':'<p>Ai exersat în simulator. Acum faci același lucru pe bune, în aplicația adevărată. Urmează pașii de mai jos, unul câte unul.</p>')}</div>
     ${A.aplicatie?`<p class="hint" style="margin:0 0 6px">Unde lucrezi: <b>${esc(A.aplicatie)}</b></p>`:''}
     ${telefonFisier(A)}
-    <ol class="check aplicatie-reala">${A.pasi.map(x=>`<li>${x}</li>`).join('')}</ol>
+    ${blocFereastra()}
+    ${listaReal(A)}
     <p class="hint">Nu ai acum calculatorul în față? Treci la verificare; pașii îi găsești din nou pe diplomă.</p>
     <div class="row pas-nav" style="margin-top:22px">
       <button class="btn" id="pas-prev" type="button">${Lv.atelier?'← Înapoi la atelier':'← Înapoi la pași'}</button>
@@ -730,6 +836,7 @@ function realPage(){
     </div>`,tabsFor());
   document.getElementById('pas-prev').onclick=()=>{if(Lv.atelier){R.phase='atelier';atelierPage()}else{R.si=Lv.pasi.length-1;R.phase='learn';learnPage()}};
   document.getElementById('go').onclick=()=>{R.mode='test';R.phase='q';question()};
+  legaFereastra(A);
 }
 function readPage(){
   const Lv=C.nivele[R.li];
