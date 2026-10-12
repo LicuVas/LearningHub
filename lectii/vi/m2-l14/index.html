@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Operații cu mesaje: compunere, trimitere, răspuns, redirecționare, atașare</title>
+<meta name="description" content="Lecția 14, clasa a VI-a (TIC): scrii în Gmail un mesaj corect către profesor, cu subiect clar, salut și semnătură, îl trimiți și îl găsești în Trimise, afli ce se întâmplă cu adresa greșită și cu mesajul netrimis, atașezi un fișier, răspunzi și redirecționezi. Exersezi într-o căsuță de exersare din pagină, cu conturi inventate, apoi în Gmail-ul adevărat, la calculatorul din laborator.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@600;700;800&family=Karla:wght@400;500;700&family=Inconsolata:wght@500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EDF1F7; --paper:#FFFFFF; --paper2:#F3F6FB; --line:#D3DCEA;
+  --ink:#16202E; --ink2:#4E5B70; --accent:#1F4E9C; --accentInk:#FFFFFF; --sel:#DCE7F8;
+  --mark:#FFE08A; --markInk:#16202E; --ok:#1E7A4A; --okbg:#E2F3E8; --bad:#B3261E; --badbg:#FBE6E3;
+  --fd:"Red Hat Display","Segoe UI",system-ui,sans-serif; --fb:"Karla","Segoe UI",system-ui,sans-serif; --fm:"Inconsolata",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F1520; --paper:#172030; --paper2:#1D2840; --line:#33415C;
+  --ink:#E8EEF8; --ink2:#AAB7CC; --accent:#9EC1FF; --accentInk:#0F1520; --sel:#2A3B5E;
+  --mark:#F2C94C; --markInk:#16202E; --ok:#6FD19A; --okbg:#173226; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F1520; --paper:#172030; --paper2:#1D2840; --line:#33415C;
+  --ink:#E8EEF8; --ink2:#AAB7CC; --accent:#9EC1FF; --accentInk:#0F1520; --sel:#2A3B5E;
+  --mark:#F2C94C; --markInk:#16202E; --ok:#6FD19A; --okbg:#173226; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+/* banda de sus: marginea unui plic de poștă aeriană și o săgeată de „trimis” — doar CSS */
+.banda{display:flex;align-items:center;gap:10px;min-height:30px;padding:0 12px;
+  background:repeating-linear-gradient(-45deg,#C8102E 0 9px,transparent 9px 18px,#1F4E9C 18px 27px,transparent 27px 36px)}
+.banda .at{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--paper);color:var(--accent);font:800 15px/1 var(--fd)}
+h1{font-size:clamp(1.45rem,5.6vw,2.4rem);font-weight:800;letter-spacing:-.01em}
+h1 .acc{color:var(--accent)}
+h2{font-weight:700}
+.nevoie{border-left:4px solid var(--accent);padding:6px 10px;background:var(--paper2);border-radius:0 6px 6px 0}
+figure.captura.mica img{max-width:340px}
+a.la{display:inline-block;padding:7px 3px;margin:-7px 0}
+figure.captura figcaption a{display:inline-block;padding:7px 2px;margin:-7px 0}
+.reading ol li,.reading ul li{margin:.2em 0}
+.cod{font-family:var(--fm);background:var(--paper2);border:1px solid var(--line);border-radius:5px;padding:0 4px;word-break:break-all}
+/* „plicul”: un mesaj scris, în exemple (nu e o captură, e text) */
+.plic{margin:.6em 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper);max-width:520px;font-size:.95rem}
+.plic .r{padding:5px 10px;border-bottom:1px solid var(--line);word-break:break-word}
+.plic .r span{display:inline-block;min-width:4.6em;color:var(--ink2)}
+.plic .t{padding:8px 10px;white-space:pre-line;word-break:break-word}
+.plic .a{padding:6px 10px;border-top:1px solid var(--line);background:var(--paper2);font-size:.9rem;word-break:break-all}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/posta-gmail.js"></script>
+<script src="../../_sim/posta-gmail-scrie.js"></script>
+<script>
+/* ======================================================================================================
+   Lecția VI · M2 · nr. 14 — „Operații cu mesaje: compunere, trimitere, răspuns, redirecționare, atașare” (VI-U2, CS.1.3).
+   Serviciul = Gmail, cu contul Google de la școală (decizia profesorului, 11.10.2026).
+   Simulatoarele: lectii/_sim/posta-gmail.js (al lecției 13, nemodificat) + lectii/_sim/posta-gmail-scrie.js (al lecției
+   acesteia: Scrie, Trimite, Răspunde, Răspunde tuturor, Redirecționează, agrafa, Mesaje nefinalizate, mesajul întors).
+   SIGURANȚA: conturile, adresele, persoanele, fișierele și mesajele sunt INVENTATE (domeniile .test sunt rezervate
+   pentru exemple; numele, verificate să nu fie ale unor elevi reali: _proba/nume_inventate.py); ce tastează elevul
+   nu se salvează și nu pleacă nicăieri; nicio fereastră de fișiere adevărată (proba: _proba/proba_lectie.py).
+   Granița: contul, conectarea, meniul principal, părțile mesajului = lecția 13; etichete, agenda, regulile de
+   comunicare online (cu numele lor) = lecția 15.
+   ====================================================================================================== */
+const CONT=['Operații specifice cu mesaje electronice: deschidere, compunere, trimitere, răspuns, redirecționare, atașarea unui fișier'];
+const fig=(f,w,h,alt,cap,cls)=>`<figure class="captura${cls?' '+cls:''}"><a href="../m2-l14/img/${f}" target="_blank"><img src="../m2-l14/img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const C_=s=>`<span class="cod">${s}</span>`;
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+/* un mesaj scris, arătat ca text (rânduri: [eticheta, valoarea]) */
+const plic=(randuri,corp,atas)=>`<div class="plic">${randuri.map(([e,v])=>`<div class="r"><span>${e}</span> ${esc(v)}</div>`).join('')}<div class="t">${esc(corp)}</div>${atas?`<div class="a">📄 ${esc(atas)}</div>`:''}</div>`;
+
+/* ---------------- persoanele, conturile și mesajele inventate ---------------- */
+const D=SimPostaGmail.DOMENIU;                      // scoala-exemplu.test
+const om=(nume,adresa)=>({nume,adresa});
+const DARIA={adresa:'daria.lungu@'+D,nume:'Daria Lungu',parola:'Ploaie5!Ceas#Fag'};
+const TUDOR={adresa:'tudor.manole@'+D,nume:'Tudor Manole',parola:'Morcov3#Pod!Vant'};
+const PROF=om('Paul Neagu','paul.neagu@'+D), DIRIG=om('Carmen Voicu','carmen.voicu@'+D);
+const LUCA=om('Luca Zamfir','luca.zamfir@'+D), ILINCA=om('Ilinca Toader','ilinca.toader@'+D), IRINA=om('Irina Cazacu','irina.cazacu@'+D);
+const MAMA_T=om('Mama','mama.lui.tudor@posta-exemplu.test');
+const EU_D=om(DARIA.nume,DARIA.adresa), EU_T=om(TUDOR.nume,TUDOR.adresa);
+const SEMN_PROF='Paul Neagu\nProfesor de informatică', SEMN_DIRIG='Carmen Voicu\nDiriginta clasei a VI-a A';
+const KB=1024;
+const FISA={nume:'Fisa_concurs.pdf',marime:180*KB}, PROGRAM={nume:'Program_excursie.pdf',marime:96*KB};
+const ANT='Anotimp_6A_Lungu.pptx', PLA='Plante_6A_Lungu.pptx', VUL='Vulcanii_6A_Lungu.pptx', VUL_T='Vulcanii_6A_Manole.pptx';
+const DAEMON=SimPostaGmailScrie.DAEMON, INTORS=SimPostaGmailScrie.SUBIECT_INTORS;
+const LUCA_GRESIT='luca.zamfr@'+D, IRINA_GRESIT='irina.cazac@'+D;
+
+const M_CONCURS={id:'concurs',lista:'primite',de:PROF,catre:[EU_D],subiect:'Vii la concurs?',data:'14 dec.',ora:'08:10',
+  corp:'Bună, Daria,\nVii marți, la ora 13, la concursul de informatică? Răspunde-mi până mâine.',semnatura:SEMN_PROF};
+const M_SERBARE={id:'serbare',lista:'primite',de:DIRIG,catre:[EU_D,LUCA,ILINCA],subiect:'Cine aduce ce la serbare',data:'13 dec.',ora:'17:30',
+  corp:'Dragi copii,\nVineri e serbarea clasei. Răspundeți-mi tuturor ce aduce fiecare: suc, fructe sau farfurii, ca să nu aducem toți același lucru.',semnatura:SEMN_DIRIG};
+const M_FISA={id:'fisa',lista:'primite',de:PROF,catre:[EU_D],subiect:'Fișa pentru concurs',data:'12 dec.',ora:'12:05',citit:true,
+  corp:'Bună, Daria,\nÎți trimit fișa de exerciții pentru concurs. Rezolv-o până marți.',semnatura:SEMN_PROF,atasate:[FISA]};
+const M_PROIECT={id:'proiect',lista:'primite',de:LUCA,catre:[EU_D],subiect:'Proiectul la geografie',data:'12 dec.',ora:'16:40',citit:true,
+  corp:'Salut! Tu aduci harta pentru proiect?',semnatura:'Luca'};
+const M_BUNICA={id:'bunica',lista:'trimise',de:EU_D,catre:[om('Bunica Ana','bunica.ana@posta-exemplu.test')],subiect:'Mulțumesc pentru fular!',data:'10 dec.',ora:'19:15',citit:true,
+  corp:'Dragă bunico,\nFularul e foarte cald. Îl port în fiecare zi!\nDaria'};
+const M_SPAM={id:'premiu',lista:'spam',de:om('Premii Rapide','premii@castiga-acum.test'),catre:[EU_D],subiect:'Ai câștigat o tabletă!!!',data:'11 dec.',ora:'03:12',
+  corp:'Scrie-ne parola contului în 10 minute ca să primești premiul.'};
+const BAZA=[M_CONCURS,M_SERBARE,M_FISA,M_PROIECT,M_BUNICA,M_SPAM];
+const cu=(...m)=>BAZA.concat(m);
+/* P2: mesajul început și netrimis (fără subiect și fără semnătură) */
+const M_INTREBARE={id:'intrebare',lista:'nefinalizate',de:EU_D,catre:[PROF],subiect:'',data:'14 dec.',ora:'20:05',citit:true,
+  corp:'Bună ziua, domnule profesor,\nPot să vă trimit prezentarea de la mini-proiect luni?'};
+/* P2: mesajul către Luca, la o adresă greșită, și mesajul întors */
+const M_HARTA_GRESIT={id:'harta',lista:'trimise',de:EU_D,catre:[om(LUCA_GRESIT,LUCA_GRESIT)],subiect:'Harta pentru proiect',data:'14 dec.',ora:'18:20',citit:true,
+  corp:'Salut, Luca!\nDa, aduc eu harta.\nDaria'};
+const M_INTORS={id:'intors',lista:'primite',de:DAEMON,catre:[EU_D],subiect:INTORS,data:'14 dec.',ora:'18:21',
+  corp:`Adresa nu a fost găsită\n\nMesajul tău nu a fost livrat către ${LUCA_GRESIT}, pentru că adresa nu a fost găsită sau nu poate primi e-mailuri.\n\nSubiectul mesajului tău: „Harta pentru proiect”.`};
+/* P3: un mesaj nefinalizat cu alt fișier atașat decât trebuia */
+const M_ATAS_GRESIT={id:'plante',lista:'nefinalizate',de:EU_D,catre:[PROF],subiect:'Prezentarea despre plante',data:'14 dec.',ora:'19:40',citit:true,
+  corp:'Bună ziua, domnule profesor,\nVă trimit prezentarea mea despre plante.\nDaria Lungu',atasate:[{nume:VUL,marime:3670016}]};
+/* atelierul: lanțul clasei (activitatea profesorului pentru lecția 14) */
+const M_LANT={id:'lant',lista:'primite',de:PROF,catre:[EU_D],subiect:'Lanțul clasei: fișa pentru concurs',data:'15 dec.',ora:'09:00',
+  corp:`Bună, Daria,\nÎți trimit fișa pentru concurs. Răspunde-mi că ai primit-o, apoi trimite-i-o mai departe lui Luca Zamfir (${LUCA.adresa}), cu tot cu fișă.`,semnatura:SEMN_PROF,atasate:[FISA]};
+/* încă un atelier: lanțul s-a rupt la Tudor */
+const M_LANT_T={id:'lant',lista:'primite',de:PROF,catre:[EU_T],subiect:'Lanțul clasei: fișa pentru concurs',data:'15 dec.',ora:'09:00',citit:true,
+  corp:`Bună, Tudor,\nÎți trimit fișa pentru concurs. Trimite-i-o mai departe Irinei Cazacu (${IRINA.adresa}), cu tot cu fișă.`,semnatura:SEMN_PROF,atasate:[FISA]};
+const M_FWD_GRESIT={id:'dat-mai-departe',lista:'trimise',de:EU_T,catre:[om(IRINA_GRESIT,IRINA_GRESIT)],subiect:'Fwd: Lanțul clasei: fișa pentru concurs',data:'15 dec.',ora:'09:30',citit:true,
+  corp:'Salut, Irina! Uite fișa de la domnul profesor.\nTudor',atasate:[FISA]};
+const M_INTORS_T={id:'intors',lista:'primite',de:DAEMON,catre:[EU_T],subiect:INTORS,data:'15 dec.',ora:'09:31',
+  corp:`Adresa nu a fost găsită\n\nMesajul tău nu a fost livrat către ${IRINA_GRESIT}, pentru că adresa nu a fost găsită sau nu poate primi e-mailuri.\n\nSubiectul mesajului tău: „Fwd: Lanțul clasei: fișa pentru concurs”.`};
+const M_PROIECT_T={id:'proiect',lista:'primite',de:LUCA,catre:[EU_T],subiect:'Mingea de fotbal',data:'14 dec.',ora:'15:10',citit:true,corp:'Salut! Mâine aduci mingea?',semnatura:'Luca'};
+/* întrebările: Tudor */
+const M_EXCURSIE_T={id:'excursie',lista:'primite',de:DIRIG,catre:[EU_T],subiect:'Programul excursiei',data:'13 dec.',ora:'12:30',
+  corp:'Dragă Tudor,\nÎți trimit programul excursiei de sâmbătă. Arată-l și părinților.',semnatura:SEMN_DIRIG,atasate:[PROGRAM]};
+const BAZA_T=[M_EXCURSIE_T,M_PROIECT_T];
+
+/* sarcinile în căsuța simulată (tipul „mesaj” din posta-gmail-scrie.js) */
+const M_=o=>Object.assign({t:'mesaj'},o);
+const SIM_D=o=>Object.assign({start:'casuta',cont:DARIA,mesaje:BAZA},o||{});
+const SIM_T=o=>Object.assign({start:'casuta',cont:TUDOR,mesaje:BAZA_T,existente:[MAMA_T.adresa]},o||{});
+const SUB_PREZ={cuvinte:['prezentar*','plante','mini*'],despre:'prezentare'};
+
+const LECTIA={
+ t:'Operații cu mesaje: compunere, trimitere, răspuns, redirecționare, atașare',lectii:[14],continuturi:CONT,final:true,
+ obiectiv:'scrii un mesaj corect către profesor (subiect clar, salut, semnătură), îl trimiți și îl găsești în Trimise, știi ce faci cu un mesaj netrimis sau întors, atașezi un fișier, răspunzi și redirecționezi un mesaj.',
+ pasi:[
+  /* ---------- pasul 0: la ce folosește ---------- */
+  {t:'La ce folosește',
+   text:`<p>În lecția 13 ai citit mesaje în Gmail. Azi le <strong>scrii</strong>: un mesaj nou către profesor, un răspuns, un mesaj dat mai departe și un mesaj cu un fișier.</p>
+<p>E ca la poștă: plicul trimis la o adresă unde nu e nimeni ajunge înapoi la tine. Dar dacă greșești o literă și iese adresa altui om, plicul ajunge la el și tu nu afli. La e-mail e la fel: de aceea citești adresa înainte să trimiți.</p>
+${fig('scrisoare-intoarsa.webp',480,422,'Colțul unui plic adevărat: o etichetă roz a poștei, scrisă în germană și franceză, cu o căsuță bifată, și o bandă galbenă pe care se citește RETURN TO SENDER (înapoi la expeditor)','Plicul n-a găsit destinatarul la adresa scrisă. Poșta a bifat asta pe eticheta roz, a lipit banda galbenă „RETURN TO SENDER” („înapoi la expeditor”) și l-a dus înapoi. Fotografie: USPS, domeniu public, <a href="https://commons.wikimedia.org/wiki/File:Envelope_USA_-_Germany_-_Return_to_sender_-_December_2020.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (decupată).','mica')}
+<p class="nevoie"><b>Ai nevoie de:</b> lecția 13 (contul de la școală, conectarea, ieșirea din cont, meniul principal, părțile unui mesaj); lecția 3 (fereastra Deschidere); lecția 11 (programele rău-intenționate).</p>`},
+  /* ---------- pasul: scrii un mesaj nou ---------- */
+  {t:'Scrii un mesaj nou',
+   text:`<p>Un mesaj nou îl <mark>compui</mark> (îl scrii) așa: în stânga sus apeși <b>Scrie</b> (Compose). Se deschide fereastra <b>Mesaj nou</b> (New Message), de obicei în dreapta jos. O completezi de sus în jos:</p>
+<ul><li><b>Către</b> (To): adresa destinatarului, semn cu semn;</li>
+<li><b>Cc</b>: doar dacă cineva trebuie să primească o copie, ca să știe. Apeși „Cc” (de obicei, în dreapta rândului Către) și scrii adresa lui;</li>
+<li><b>Subiect</b> (Subject): despre ce e mesajul, în câteva cuvinte;</li>
+<li>corpul: un salut, ce ai de spus, iar pe ultimul rând semnătura, adică numele tău.</li></ul>
+<p>Cât scrii, Gmail păstrează singur mesajul în <b>Mesaje nefinalizate</b> (Drafts); îl cauți acolo. Coșul 🗑, jos în dreapta, e <b>Renunță</b> (Discard): aruncă mesajul.</p>`,
+   exemplu:`<p>Daria vrea să-l întrebe ceva pe profesorul ei, Paul Neagu. Apasă Scrie și completează:</p>
+${plic([['Către','paul.neagu@scoala-exemplu.test'],['Subiect','Prezentarea de la mini-proiect']],'Bună ziua, domnule profesor,\nPot să vă trimit prezentarea luni?\nDaria Lungu, clasa a VI-a A')}
+<p>Un subiect ca „Întrebare” sau „Salut” nu spune despre ce e mesajul.</p>`,
+   altfel:`<p>E ca o scrisoare pe hârtie: pe plic scrii adresa (Către), sus pe foaie un titlu scurt (Subiect), apoi „Dragă…” (salutul), ce ai de spus și, la sfârșit, numele tău (semnătura). Cc e o copie a scrisorii, dată cuiva care doar trebuie să știe. Scrisoarea neterminată rămâne pe birou și o termini mai târziu (Mesaje nefinalizate).</p>`,
+   incearca:M_({q:`În contul inventat al Dariei, scrie-i profesorului Paul Neagu (${C_(PROF.adresa)}) un mesaj nou: îl întrebi dacă poți trimite prezentarea de la mini-proiect luni. Completează Către, un subiect clar (despre prezentare), salutul, întrebarea și semnătura. Nu-l trimite încă: testele se bifează cât scrii.`,
+     sim:SIM_D(),mesaj:{tip:'nou'},
+     teste:[{c:'catre',v:PROF.adresa},{c:'subiect',v:SUB_PREZ},{c:'salut'},{c:'semnatura',v:'Daria'}],
+     drum:[['scrie'],['catre',PROF.adresa],['subiect','Prezentarea de la mini-proiect'],['corp','Bună ziua, domnule profesor,\nPot să trimit prezentarea luni?\nDaria Lungu']],
+     gresit:{drum:[['scrie'],['catre',PROF.adresa],['subiect','Întrebare'],['corp','pot sa trimit prezentarea luni?']]},
+     ajutor:'Scrie (stânga sus). Către: adresa, semn cu semn. Subiect: despre ce e mesajul, de exemplu „Prezentarea de la mini-proiect”. În corp, pe rânduri: „Bună ziua, domnule profesor,”, întrebarea, apoi numele tău.',
+     arata:'Scrie → Către: paul.neagu@scoala-exemplu.test → Subiect: „Prezentarea de la mini-proiect” → corpul: „Bună ziua, domnule profesor,” / întrebarea / „Daria Lungu”.',
+     why:'Profesorul vede din subiect despre ce e mesajul, iar din salut și semnătură, că i-a scris Daria, politicos.'}),
+   inca:[
+    M_({q:`Acum ești în contul inventat al lui Tudor. El îi scrie dirigintei, Carmen Voicu (${C_(DIRIG.adresa)}), că vineri lipsește de la repetiție, pentru că merge la medic. Mama lui (${C_(MAMA_T.adresa)}) trebuie doar să știe. Completează mesajul. Nu-l trimite încă.`,
+     sim:SIM_T(),mesaj:{tip:'nou'},
+     teste:[{c:'catre',v:DIRIG.adresa},{c:'cc',v:MAMA_T.adresa},{c:'subiect',v:{cuvinte:['repetiti*','lipse*','absen*','vineri'],despre:'lipsa de la repetiție'}},{c:'salut'},{c:'semnatura',v:'Tudor'}],
+     drum:[['scrie'],['catre',DIRIG.adresa],['cc',MAMA_T.adresa],['subiect','Lipsesc vineri de la repetiție'],['corp','Bună ziua, doamnă dirigintă,\nVineri lipsesc de la repetiție, pentru că merg la medic.\nTudor Manole']],
+     gresit:{drum:[['scrie'],['catre',DIRIG.adresa+', '+MAMA_T.adresa],['subiect','Lipsesc vineri de la repetiție'],['corp','Bună ziua, doamnă dirigintă,\nVineri lipsesc de la repetiție.\nTudor Manole']]},
+     ajutor:'Mama doar trebuie să știe: ea merge în Cc. Apasă „Cc”, în dreapta rândului Către, și scrie acolo adresa ei.',
+     arata:'Scrie → Către: carmen.voicu@scoala-exemplu.test → „Cc” → mama.lui.tudor@posta-exemplu.test → Subiect: „Lipsesc vineri de la repetiție” → salut / mesaj / „Tudor Manole”.',
+     why:'Diriginta e destinatarul (Către). Mama primește o copie, ca să știe (Cc).'}),
+    {t:'classify',q:'Daria îi scrie profesorului. Care subiect îi spune clar despre ce e mesajul?',cats:['Subiect clar','Subiect neclar'],
+     items:[['Tema la TIC, clasa a VI-a A',0],['Salut',1],['Întrebare despre concursul de marți',0],['Mesaj',1],['Prezentarea mea despre vulcani',0]],
+     ajutor:'Subiectul spune, în câteva cuvinte, despre ce e mesajul. „Salut” spune ce?',
+     why:'Un subiect clar spune despre ce e mesajul (tema, concursul, prezentarea). „Salut” și „Mesaj” se potrivesc la orice mesaj, deci nu spun nimic.'}
+   ]},
+  /* ---------- pasul: trimiți și verifici ---------- */
+  {t:'Verifici adresa și trimiți',
+   text:`<p>Înainte de <b>Trimite</b> (Send) citești adresa din Către literă cu literă. O literă greșită dă altă adresă:</p>
+<ul><li>dacă adresa nu există, mesajul se <mark>întoarce</mark>: în Mesaje primite (Inbox) vine un mesaj de la <b>Mail Delivery Subsystem</b>, adesea cu subiectul „Notificare privind starea livrării (eroare)” (Delivery Status Notification (Failure));</li>
+<li>dacă adresa e a altcuiva, mesajul ajunge la acel om și nu se întoarce nimic.</li></ul>
+<p>Apeși Trimite. În stânga jos apare scurt „Mesaj trimis” (Message sent), cu <b>Anulează</b> (Undo): câteva secunde (între 5 și 30, cum e setat Gmail-ul) îl mai poți retrage. Apoi mesajul stă în <b>Trimise</b> (Sent).</p>`,
+   exemplu:`<p>Daria citește adresa, apasă Trimite; jos apare „Mesaj trimis”, iar în Trimise e mesajul ei.</p>
+<p>Apoi îi scrie lui Luca, dar la ${C_(LUCA_GRESIT)}: a uitat un „i”. Adresa asta nu există, deci în Mesaje primite vine mesajul de la Mail Delivery Subsystem. Daria ia adresa lui Luca dintr-un mesaj primit de la el, ${C_(LUCA.adresa)}, și îi scrie din nou.</p>`,
+   altfel:`<p>Ca la poștă: înainte să pui plicul în cutie, citești adresa de pe el. Plicul pus în cutie a plecat (Trimise). Dacă adresa nu există, plicul se întoarce la tine; dacă e adresa altui om, ajunge la el.</p>`,
+   incearca:M_({q:'Daria a început un mesaj pentru profesor și a închis fereastra fără să-l trimită. Găsește-l, completează ce-i lipsește (un subiect clar și semnătura), trimite-l, apoi caută-l în Trimise.',
+     sim:SIM_D({mesaje:cu(M_INTREBARE)}),mesaj:{tip:'nou'},
+     teste:[{c:'deschis',v:'intrebare',d:'început și netrimis (din Mesaje nefinalizate)'},{c:'subiect',v:SUB_PREZ},{c:'semnatura',v:'Daria'},{c:'trimis'},{c:'verificat'}],
+     drum:[['lista','nefinalizate'],['deschide','intrebare'],['subiect','Prezentarea de la mini-proiect'],['corp','Bună ziua, domnule profesor,\nPot să vă trimit prezentarea de la mini-proiect luni?\nDaria Lungu'],['trimite'],['lista','trimise']],
+     gresit:{sari:2},
+     ajutor:'Mesaje nefinalizate (stânga) → clic pe mesaj: se deschide fereastra de scriere. Scrie subiectul și, pe ultimul rând din corp, numele tău. Apoi Trimite, apoi Trimise.',
+     arata:'Mesaje nefinalizate → mesajul → Subiect: „Prezentarea de la mini-proiect” → la sfârșitul corpului, pe un rând nou: „Daria Lungu” → Trimite → Trimise.',
+     why:'Mesajul netrimis aștepta în Mesaje nefinalizate. Acum are subiect și semnătură, a plecat și e în Trimise.'}),
+   inca:[
+    M_({q:'Luca îi spune Dariei că n-a primit niciun mesaj despre hartă. Caută în căsuța ei de ce: deschide mesajul întors și scrie în fișă adresa la care a trimis Daria. Apoi scrie-i lui Luca din nou, la adresa bună (o găsești într-un mesaj primit de la el), cu un subiect.',
+     /* fără `mesaj`: orice drum care duce mesajul la adresa bună e bun (Scrie din nou sau, după pasul 5, Redirecționează din Trimise) */
+     sim:SIM_D({mesaje:cu(M_HARTA_GRESIT,M_INTORS),negasite:[LUCA_GRESIT]}),
+     teste:[{c:'deschis',v:'intors',d:'întors (de la Mail Delivery Subsystem)'},{c:'fisa',v:'adr',d:'Fișa: ai scris adresa greșită'},{c:'catre',v:LUCA.adresa},{c:'subiect',v:{min:2}},{c:'trimis'},{c:'neintors'}],
+     fisa:[{id:'adr',et:'La ce adresă a trimis Daria mesajul care s-a întors?',ok:[LUCA_GRESIT],adresa:true}],
+     drum:[['deschide','intors'],['fisa','adr',LUCA_GRESIT],['scrie'],['catre',LUCA.adresa],['subiect','Harta pentru proiect'],['corp','Salut, Luca!\nDa, aduc eu harta.\nDaria'],['trimite']],
+     gresit:{drum:[['deschide','intors'],['fisa','adr',LUCA_GRESIT],['scrie'],['catre',LUCA_GRESIT],['subiect','Harta pentru proiect'],['corp','Salut, Luca!\nDa, aduc eu harta.\nDaria'],['trimite']]},
+     ajutor:'Mesajul întors e în Mesaje primite, de la Mail Delivery Subsystem. Adresa bună a lui Luca e în mesajul „Proiectul la geografie”, primit de la el. Compară-le semn cu semn.',
+     arata:'Mesaje primite → „Notificare privind starea livrării (eroare)”: luca.zamfr@scoala-exemplu.test (fără „i”) → fișa → Scrie → Către: luca.zamfir@scoala-exemplu.test → Subiect → corpul → Trimite.',
+     why:'Lipsea un „i” din adresă, iar o asemenea adresă nu există. Adresa scrisă semn cu semn ajunge.'}),
+    {t:'choice',q:'Daria greșește o literă în adresa lui Luca. Adresa care iese așa e a altui elev din școală, care chiar există. Ce se întâmplă după Trimite?',
+     o:['Mesajul ajunge la celălalt elev, fără nicio veste','Vine un mesaj de la Mail Delivery Subsystem','Gmail corectează singur adresa lui Luca','Mesajul ajunge totuși la Luca, ca de obicei'],ok:0,
+     ajutor:'Pasul spune două cazuri: adresa nu există sau adresa e a altcuiva. Care e aici?',
+     why:'Adresa există, deci mesajul pleacă și ajunge la acel elev. Nu se întoarce nimic, așa că Daria n-ar afla. De aceea citești adresa literă cu literă ÎNAINTE de Trimite.'},
+    {t:'classify',q:'Unde găsești mesajul, în fiecare caz?',cats:['Trimise','Mesaje nefinalizate','Mesaje primite'],
+     items:[['un mesaj după ce ai apăsat Trimite',0],['un mesaj început, pe care nu l-ai trimis',1],['mesajul de la Mail Delivery Subsystem, după o adresă care nu există',2],['răspunsul pe care l-ai trimis ieri profesorului',0]],
+     ajutor:'Pașii 1 și 2 spun unde ajunge mesajul trimis, cel netrimis și cel întors.',
+     why:'Ce ai trimis stă în Trimise, ce n-ai trimis în Mesaje nefinalizate, iar vestea că mesajul s-a întors vine ca mesaj nou, în Mesaje primite.'}
+   ]},
+  /* ---------- pasul: atașezi un fișier ---------- */
+  {t:'Atașezi un fișier',
+   text:`<p>Un fișier trimis odată cu mesajul e un <mark>atașament</mark> (fișier atașat): o prezentare, o fișă, o poză.</p>
+<ol><li>În fereastra de scriere, jos, apeși agrafa 📎: <b>Atașează fișiere</b> (Attach files).</li>
+<li>Se deschide fereastra Windows <b>Deschidere</b> (Open), ca la lecția 3: alegi folderul, apoi fișierul tău, și apeși <b>Deschidere</b> (Open).</li>
+<li>Numele fișierului apare jos, în mesaj. Ai ales greșit? Îl scoți cu ✕, de lângă nume.</li></ol>
+<p>Un fișier foarte mare (un film) nu se atașează: Gmail pune în loc o legătură spre el. Atașamentele de la necunoscuți nu le deschizi: pot ascunde programe rău-intenționate (lecția 11).</p>`,
+   exemplu:`<p>Daria apasă Scrie și completează Către, Subiect și corpul. Apasă agrafa. În fereastra Deschidere: Documente, dublu clic pe folderul TIC_6A, clic pe ${C_(ANT)}, apoi Deschidere. Jos, în mesaj, apare numele fișierului, ${ANT}. Abia acum apasă Trimite. Profesorul primește mesajul, cu prezentarea sub text.</p>`,
+   altfel:`<p>E ca atunci când pui o poză în plic, lângă scrisoare: întâi o pui, te uiți că e acolo și abia apoi lipești plicul și îl duci la poștă.</p>`,
+   incearca:M_({q:`Trimite-i profesorului Paul Neagu (${C_(PROF.adresa)}) prezentarea Dariei despre plante, ${C_(PLA)}, din Documente › TIC_6A. Scrie un subiect clar, salutul, un rând de mesaj și semnătura.`,
+     sim:SIM_D(),mesaj:{tip:'nou'},
+     teste:[{c:'catre',v:PROF.adresa},{c:'subiect',v:SUB_PREZ},{c:'salut'},{c:'semnatura',v:'Daria'},{c:'atasat',v:PLA},{c:'trimis'}],
+     drum:[['scrie'],['catre',PROF.adresa],['subiect','Prezentarea despre plante'],['corp','Bună ziua, domnule profesor,\nVă trimit prezentarea mea despre plante.\nDaria Lungu'],['ataseaza',PLA],['trimite']],
+     gresit:{sari:4},
+     ajutor:'Scrie → Către, Subiect, corpul → agrafa 📎 (jos) → Documente → dublu clic pe TIC_6A → clic pe fișier → Deschidere → te uiți că apare jos → Trimite.',
+     arata:'Scrie → Către: paul.neagu@scoala-exemplu.test → Subiect: „Prezentarea despre plante” → salut / mesaj / „Daria Lungu” → 📎 → Documente › TIC_6A › Plante_6A_Lungu.pptx → Deschidere → Trimite.',
+     why:'Fișierul a apărut jos, în mesaj, înainte de Trimite: așa știi că pleacă odată cu mesajul.'}),
+   inca:[
+    M_({q:`Daria a început un mesaj pentru profesor, dar a atașat altă prezentare decât trebuia. Deschide-l din Mesaje nefinalizate, scoate ${C_(VUL)}, atașează ${C_(PLA)} (Documente › TIC_6A) și trimite-l.`,
+     sim:SIM_D({mesaje:cu(M_ATAS_GRESIT)}),mesaj:{tip:'nou'},
+     teste:[{c:'faraAtasat',v:VUL},{c:'atasat',v:PLA},{c:'trimis'}],
+     drum:[['lista','nefinalizate'],['deschide','plante'],['scoate',VUL],['ataseaza',PLA],['trimite']],
+     gresit:{sari:2},
+     ajutor:'Lângă numele fișierului greșit e un ✕: îl apeși. Apoi agrafa 📎 și fișierul bun.',
+     arata:'Mesaje nefinalizate → „Prezentarea despre plante” → ✕ lângă Vulcanii_6A_Lungu.pptx → 📎 → Documente › TIC_6A › Plante_6A_Lungu.pptx → Deschidere → Trimite.',
+     why:'Înainte de Trimite verifici ce fișier e jos. Un fișier greșit îl scoți cu ✕ și îl pui pe cel bun.'}),
+    {t:'choice',q:'Daria vrea să-i trimită bunicii filmul de la serbare, de 380 MB. Ce se întâmplă dacă îl atașează?',
+     o:['Gmail pune în mesaj o legătură spre film','Pleacă imediat, ca orice atașament','Gmail îl micșorează singur până încape','Pleacă doar primul minut din film'],ok:0,
+     ajutor:'Ultimul paragraf al pasului: ce face Gmail cu un fișier foarte mare?',
+     why:'Atașamentele au o limită de mărime. Un fișier mai mare nu pleacă lipit de mesaj: Gmail pune în loc o legătură spre el.'}
+   ]},
+  /* ---------- pasul: răspunzi ---------- */
+  {t:'Răspunzi la un mesaj',
+   text:`<p>Vrei să-i scrii înapoi cuiva care ți-a trimis un mesaj? Îl deschizi și, sub el, apeși:</p>
+<ul><li><b>Răspunde</b> (Reply): răspunsul merge doar la expeditor;</li>
+<li><b>Răspunde tuturor</b> (Reply all): merge la expeditor și la toți cei din Către și Cc. De obicei îl vezi doar la mesajele trimise mai multor oameni. Îl folosești doar când toți trebuie să afle.</li></ul>
+<p>Sub mesaj se deschide o casetă, cu Către deja completat. De obicei, Gmail pune singur subiectul, cu „Re:” în față. Tu scrii salutul, răspunsul și semnătura, apoi apeși Trimite. Fișierele atașate la mesajul primit nu pleacă: nici înapoi, nici la cine adaugi tu în Către.</p>`,
+   exemplu:`<p>Profesorul o întreabă pe Daria dacă vine la concurs. Ea apasă Răspunde și scrie: „Bună ziua, domnule profesor, / Da, vin marți. / Daria”. Răspunsul ajunge doar la profesor.</p>
+<p>Diriginta le-a scris Dariei, lui Luca și Ilincăi să-i spună tuturor ce aduc la serbare. Daria apasă Răspunde tuturor: „Eu aduc fructele.” Așa află toți.</p>`,
+   altfel:`<p>Răspunde = îi spui ceva doar celui care te-a întrebat. Răspunde tuturor = răspunzi cu voce tare, în fața tuturor celor care au auzit întrebarea.</p>`,
+   incearca:M_({q:'Profesorul o întreabă pe Daria, în mesajul „Vii la concurs?”, dacă vine marți. Răspunde-i doar lui că vine, cu salut și semnătură.',
+     sim:SIM_D(),mesaj:{tip:'raspuns',la:'concurs'},
+     teste:[{c:'catre',v:PROF.adresa,d:'Răspunsul merge doar la profesor'},{c:'salut'},{c:'continut',v:{cuvinte:['vin','veni*','particip*']},d:'Răspunsul spune că vine'},{c:'semnatura',v:'Daria'},{c:'trimis'}],
+     drum:[['deschide','concurs'],['raspunde','concurs'],['corp','Bună ziua, domnule profesor,\nDa, vin marți la concurs.\nDaria'],['trimite']],
+     gresit:{drum:[['deschide','concurs'],['redir','concurs'],['catre',PROF.adresa],['corp','Bună ziua, domnule profesor,\nDa, vin marți la concurs.\nDaria'],['trimite']]},
+     ajutor:'Deschide mesajul „Vii la concurs?”. Sub el: Răspunde (nu Redirecționează). În casetă: salutul, „Da, vin.”, numele tău. Apoi Trimite.',
+     arata:'Mesaje primite → „Vii la concurs?” → Răspunde → „Bună ziua, domnule profesor,” / „Da, vin marți la concurs.” / „Daria” → Trimite.',
+     why:'Cu Răspunde, Către e completat singur cu adresa profesorului, iar răspunsul ajunge doar la el.'}),
+   inca:[
+    M_({q:'Diriginta le-a scris Dariei, lui Luca și Ilincăi: „Răspundeți-mi tuturor ce aduce fiecare la serbare.” Daria aduce fructele. Răspunde cum cere diriginta.',
+     sim:SIM_D(),mesaj:{tip:'tuturor',la:'serbare'},
+     teste:[{c:'catre',v:[DIRIG.adresa,LUCA.adresa,ILINCA.adresa],d:'Răspunsul merge la dirigintă, la Luca și la Ilinca'},{c:'continut',v:{cuvinte:['fruct*']},d:'Spune că aduce fructele'},{c:'semnatura',v:'Daria'},{c:'trimis'}],
+     drum:[['deschide','serbare'],['tuturor','serbare'],['corp','Bună ziua, doamnă dirigintă,\nEu aduc fructele.\nDaria'],['trimite']],
+     gresit:{drum:[['deschide','serbare'],['raspunde','serbare'],['corp','Bună ziua, doamnă dirigintă,\nEu aduc fructele.\nDaria'],['trimite']]},
+     ajutor:'Diriginta vrea ca toți să afle: sub mesaj apeși Răspunde tuturor, nu Răspunde.',
+     arata:'Mesaje primite → „Cine aduce ce la serbare” → Răspunde tuturor → salut / „Eu aduc fructele.” / „Daria” → Trimite.',
+     why:'Cu Răspunde tuturor, răspunsul ajunge la dirigintă și la colegii din Către. Așa nu aduc toți fructe.'}),
+    {t:'choice',q:'Profesorul a scris întregii clase despre concurs. Tudor vrea să-i spună doar profesorului că e răcit și lipsește. Ce apasă sub mesaj?',
+     o:['Răspunde','Răspunde tuturor','Redirecționează','Scrie, cu toată clasa în Cc'],ok:0,
+     ajutor:'Cine trebuie să afle că Tudor e răcit: doar profesorul sau toată clasa?',
+     why:'Răspunde merge doar la expeditor. Cu Răspunde tuturor ar afla toată clasa un lucru care îl privește doar pe profesor.'}
+   ]},
+  /* ---------- pasul: redirecționezi ---------- */
+  {t:'Redirecționezi un mesaj',
+   text:`<p><mark>Redirecționezi</mark> un mesaj când vrei să-l primească și cineva căruia nu i-a fost trimis. Îl deschizi și apeși <b>Redirecționează</b> (Forward), sub el.</p>
+<ul><li>Câmpul Către e gol: scrii tu adresa celui care trebuie să-l primească.</li>
+<li>Mesajul primit și fișierele lui atașate merg mai departe, sub textul tău. De obicei, Gmail pune „Fwd:” în fața subiectului.</li>
+<li>Deasupra scrii un rând: de ce i-l trimiți. Apoi Trimite.</li></ul>
+<p>Un mesaj al tău s-a întors? Îl deschizi din Trimise, apeși Redirecționează și scrii adresa bună: pleacă din nou, cu fișiere cu tot. Un mesaj scris doar pentru tine nu-l redirecționezi fără acordul celui care l-a scris. Mesajele din Spam nu le dai mai departe.</p>`,
+   exemplu:`<p>Diriginta i-a trimis Dariei programul excursiei, atașat. Daria vrea să-l vadă și mama ei. Deschide mesajul, apasă Redirecționează și scrie în Către adresa mamei. Deasupra: „Mami, uite programul excursiei. Daria”. Apasă Trimite. Mama primește mesajul dirigintei, cu programul atașat.</p>`,
+   altfel:`<p>E ca atunci când îi dai unui coleg o foaie primită de la profesor: o pui într-un plic nou, cu un bilețel deasupra („Ți-o dau pentru că ai lipsit”), și scrii pe plic adresa lui.</p>`,
+   incearca:M_({q:`Ilinca a lipsit și n-a primit fișa pentru concurs. Redirecționează-i mesajul profesorului „Fișa pentru concurs” (${C_(ILINCA.adresa)}), cu un rând pentru ea și semnătura Dariei.`,
+     sim:SIM_D(),mesaj:{tip:'redir',la:'fisa'},
+     teste:[{c:'catre',v:ILINCA.adresa},{c:'atasat',v:FISA.nume,d:'Fișa merge mai departe, atașată'},{c:'semnatura',v:'Daria'},{c:'trimis'}],
+     drum:[['deschide','fisa'],['redir','fisa'],['catre',ILINCA.adresa],['corp','Salut, Ilinca!\nDomnul profesor a trimis fișa pentru concurs.\nDaria'],['trimite']],
+     gresit:{sari:2},
+     ajutor:'Deschide „Fișa pentru concurs”. Sub mesaj: Redirecționează. Către: adresa Ilincăi. Deasupra mesajului vechi: un rând și numele tău. Fișa e deja jos.',
+     arata:'Mesaje primite → „Fișa pentru concurs” → Redirecționează → Către: ilinca.toader@scoala-exemplu.test → „Salut, Ilinca!” / un rând / „Daria” → Trimite.',
+     why:'Ilinca primește mesajul profesorului, cu fișa atașată, și rândul Dariei deasupra.'}),
+   inca:[
+    {t:'classify',q:'Ce apeși sub mesajul primit, în fiecare caz?',cats:['Răspunde','Răspunde tuturor','Redirecționează'],
+     items:[['Bunica te întreabă ce vrei de ziua ta',0],['Profesorul i-a scris doar lui Luca o regulă de concurs, iar Luca vrea să ți-o arate și ție',2],['Diriginta vă întreabă pe toți trei, în același mesaj, cine aduce mingea, și vrea ca toți să afle răspunsul',1],['Ai primit orarul nou și vrei să-l vadă și fratele tău',2]],
+     ajutor:'Cui merge mesajul tău: doar celui care ți-a scris, tuturor celor din mesaj sau cuiva care nu l-a primit?',
+     why:'Răspunde = doar celui care ți-a scris. Răspunde tuturor = tuturor celor din mesaj. Redirecționează = cuiva care n-a primit mesajul.'},
+    {t:'tf',q:'Un prieten ți-a scris un secret, doar pentru tine. E în regulă să le redirecționezi mesajul colegilor, fără să-l întrebi.',ok:false,
+     ajutor:'Ultimul paragraf al pasului.',
+     why:'Mesajul era scris doar pentru tine. Îl dai mai departe numai cu acordul celui care l-a scris.'}
+   ]}
+ ],
+ atelier:M_({titlu:'Lanțul clasei',
+  intro:`<p><strong>Sarcina:</strong> profesorul a pornit un lanț: fiecare elev primește fișa pentru concurs, îi răspunde că a primit-o și o dă mai departe unui coleg. Faci partea Dariei, în căsuța de exersare (un desen al Gmail-ului, cu un cont inventat). Testele de jos se bifează singure; la final apeși <b>Verifică</b>. Ai greșit? „Ia-o de la capăt”.</p>`,
+  q:`Contul inventat al Dariei e deschis. 1) Deschide mesajul profesorului „Lanțul clasei: fișa pentru concurs”. 2) Răspunde-i că ai primit fișa (salut, un rând, semnătura). 3) Redirecționează mesajul lui Luca Zamfir (${C_(LUCA.adresa)}), cu un rând pentru el și semnătura: fișa merge singură. 4) Uită-te în Trimise: acolo sunt amândouă. 5) Ieși din cont.`,
+  sim:SIM_D({mesaje:[M_LANT].concat(BAZA.filter(m=>m.id!=='fisa'))}),
+  teste:[{c:'deschis',v:'lant',d:'profesorului „Lanțul clasei”'},
+   {c:'semnatura',v:'Daria',pe:{tip:'raspuns',la:'lant'},d:'Răspunsul pentru profesor are semnătura ta'},{c:'trimis',pe:{tip:'raspuns',la:'lant'},d:'Ai trimis răspunsul (Răspunde, apoi Trimite)'},
+   {c:'catre',v:LUCA.adresa,pe:{tip:'redir',la:'lant'},d:'Redirecționarea merge la Luca Zamfir'},{c:'atasat',v:FISA.nume,pe:{tip:'redir',la:'lant'},d:'Fișa merge mai departe, atașată'},
+   {c:'trimis',pe:{tip:'redir',la:'lant'},d:'Ai trimis redirecționarea (Redirecționează, apoi Trimite)'},
+   {c:'verificat',d:'După Trimite, te-ai uitat în Trimise'},{c:'iesit'}],
+  drum:[['deschide','lant'],['raspunde','lant'],['corp','Bună ziua, domnule profesor,\nAm primit fișa. Mulțumesc!\nDaria'],['trimite'],
+   ['deschide','lant'],['redir','lant'],['catre',LUCA.adresa],['corp','Salut, Luca!\nÎți trimit fișa de la domnul profesor.\nDaria'],['trimite'],['lista','trimise'],['iesi']],
+  gresit:{drum:[['deschide','lant'],['raspunde','lant'],['corp','Bună ziua, domnule profesor,\nAm primit fișa. Mulțumesc!\nDaria'],['trimite'],
+   ['deschide','lant'],['redir','lant'],['catre',LUCA_GRESIT],['corp','Salut, Luca!\nÎți trimit fișa de la domnul profesor.\nDaria'],['trimite'],['lista','trimise'],['iesi']]},
+  ajutor:'În ordine: Mesaje primite → „Lanțul clasei…” → Răspunde → salut / „Am primit fișa.” / numele tău → Trimite → din nou „Lanțul clasei…” → Redirecționează → Către: adresa lui Luca → un rând / numele tău → Trimite → Trimise → Profil → Deconectează-te.',
+  arata:'„Lanțul clasei…” → Răspunde → „Bună ziua, domnule profesor,” / „Am primit fișa.” / „Daria” → Trimite; „Lanțul clasei…” → Redirecționează → Către: luca.zamfir@scoala-exemplu.test → „Salut, Luca!” / un rând / „Daria” → Trimite; Trimise; Profil → Deconectează-te.',
+  why:'Ai făcut partea ta din lanț, ca în laborator. <b>Ce am învățat:</b> un mesaj nou îl scrii cu Scrie (Compose): Către, Cc doar pentru cine trebuie doar să știe, un subiect clar, salutul, mesajul și semnătura; un mesaj netrimis îl găsești în Mesaje nefinalizate (Drafts); înainte de Trimite (Send) citești adresa literă cu literă: la o adresă care nu există mesajul se întoarce (vestea vine de la Mail Delivery Subsystem), iar la adresa altcuiva ajunge la acel om, fără nicio veste; după Trimite, mesajul e în Trimise (Sent), iar de acolo îl redirecționezi la adresa bună dacă s-a întors; un fișier îl atașezi cu agrafa (Atașează fișiere) și fereastra Deschidere, și verifici că apare jos; Răspunde merge la expeditor, Răspunde tuturor la toți din mesaj, fără fișierele primite; Redirecționează duce mesajul și fișierele lui cuiva nou, la adresa scrisă de tine.',
+  inca:[
+   M_({q:`Lanțul s-a rupt la Tudor: Irina spune că n-a primit fișa. Pornești de la o filă nouă: intră în contul inventat al lui Tudor (${C_(TUDOR.adresa)}, parola ${C_(TUDOR.parola)}); la întrebarea browserului despre parolă refuzi. Găsește mesajul întors și scrie în fișă adresa la care a trimis Tudor. Apoi trimite fișa din nou, ca în pasul „Redirecționezi un mesaj”: deschide din Trimise mesajul lui Tudor care s-a întors, apasă Redirecționează și scrie adresa bună a Irinei (o scrie profesorul în mesajul lui), cu un rând și semnătura. La final, ieși din cont.`,
+    /* metoda predată (pasul 5, laboratorul 8) = Trimise → Redirecționează; se acceptă orice redirecționare care duce fișa la adresa bună */
+    sim:{start:'fila',cont:TUDOR,mesaje:[M_LANT_T,M_FWD_GRESIT,M_INTORS_T,M_PROIECT_T],negasite:[IRINA_GRESIT],intreabaParola:true},mesaj:{tip:'redir'},
+    teste:[{c:'bara'},{c:'conectat',v:'lui Tudor'},{c:'nesalvata'},{c:'deschis',v:'intors',d:'întors (de la Mail Delivery Subsystem)'},{c:'fisa',v:'adr',d:'Fișa: ai scris adresa greșită'},
+     {c:'catre',v:IRINA.adresa,d:'Redirecționarea merge la adresa bună a Irinei'},{c:'atasat',v:FISA.nume,d:'Fișa merge mai departe, atașată'},{c:'semnatura',v:'Tudor'},{c:'trimis'},{c:'iesit'}],
+    fisa:[{id:'adr',et:'La ce adresă a trimis Tudor fișa, de s-a întors?',ok:[IRINA_GRESIT],adresa:true}],
+    drum:[['bara','gmail.com'],['conecteaza'],['bula'],['deschide','intors'],['fisa','adr',IRINA_GRESIT],['lista','trimise'],['deschide','dat-mai-departe'],['redir','dat-mai-departe'],['catre',IRINA.adresa],
+     ['corp','Salut, Irina!\nÎți trimit din nou fișa de la domnul profesor.\nTudor'],['trimite'],['iesi']],
+    gresit:{drum:[['bara','gmail.com'],['conecteaza'],['bula'],['deschide','intors'],['fisa','adr',IRINA_GRESIT],['lista','trimise'],['deschide','dat-mai-departe'],['redir','dat-mai-departe'],['catre',IRINA_GRESIT],
+     ['corp','Salut, Irina!\nÎți trimit din nou fișa de la domnul profesor.\nTudor'],['trimite'],['iesi']]},
+    ajutor:'gmail.com și Enter → adresa, Înainte → parola, Înainte → la întrebarea despre parolă: ✕. Mesaje primite → mesajul de la Mail Delivery Subsystem: adresa greșită. Apoi Trimise → mesajul lui Tudor → Redirecționează → adresa Irinei, așa cum o scrie profesorul în mesajul lui.',
+    arata:'gmail.com; adresa și parola lui Tudor; ✕ la întrebarea despre parolă; mesajul întors: irina.cazac@scoala-exemplu.test (fără „u”); Trimise → „Fwd: Lanțul clasei…” → Redirecționează → Către: irina.cazacu@scoala-exemplu.test → un rând / „Tudor” → Trimite; Profil → Deconectează-te.',
+    why:'Lanțul se rupsese la o literă lipsă din adresă. Ai găsit unde și de ce, iar fișa a plecat din nou, la adresa bună (din Trimise sau din mesajul profesorului, ambele merg).'})
+  ]}),
+ qs:[
+  {t:'choice',q:'Ilinca i-a trimis un mesaj colegei ei. Peste puțin timp, în Mesaje primite apare un mesaj de la Mail Delivery Subsystem. Ce s-a întâmplat?',
+   o:['Mesajul nu a ajuns: adresa nu există','Colega i-a răspuns deja la mesaj','Mesajul a ajuns la colegă de două ori','Gmail a mutat mesajul în Spam'],ok:0,
+   ajutor:'Pasul „Verifici adresa și trimiți”: când primești mesaj de la Mail Delivery Subsystem?',
+   why:'Mesajul de la Mail Delivery Subsystem e vestea că mesajul s-a întors: adresa scrisă nu există. Ilinca verifică adresa literă cu literă și trimite din nou.'},
+  {t:'classify',q:'Cui ajunge mesajul tău?',cats:['Doar celui care ți-a scris','Tuturor celor din mesaj','Cuiva care nu l-a primit'],
+   items:[['apeși Redirecționează și scrii adresa verișoarei',2],['apeși Răspunde la un mesaj trimis de dirigintă întregii clase',0],['apeși Răspunde tuturor la un mesaj trimis de dirigintă întregii clase',1],['apeși Răspunde la mesajul pe care ți l-a scris doar ție un coleg',0]],
+   ajutor:'Pașii „Răspunzi” și „Redirecționezi”: unde merge fiecare buton?',
+   why:'Răspunde merge doar la expeditor, Răspunde tuturor la toți cei din Către și Cc, iar Redirecționează la adresa pe care o scrii tu.'},
+  M_({q:`Tudor îi trimite profesorului Paul Neagu (${C_(PROF.adresa)}) prezentarea lui despre vulcani, ${C_(VUL_T)}, din Documente › TIC_6A. Scrie mesajul complet: subiect clar, salut, un rând și semnătura, cu prezentarea atașată, apoi trimite-l.`,
+   sim:SIM_T(),mesaj:{tip:'nou'},
+   teste:[{c:'catre',v:PROF.adresa},{c:'subiect',v:{cuvinte:['vulcan*','prezentar*'],despre:'prezentarea despre vulcani'}},{c:'salut'},{c:'semnatura',v:'Tudor'},{c:'atasat',v:VUL_T},{c:'trimis'}],
+   drum:[['scrie'],['catre',PROF.adresa],['subiect','Prezentarea despre vulcani'],['corp','Bună ziua, domnule profesor,\nVă trimit prezentarea mea despre vulcani.\nTudor Manole'],['ataseaza',VUL_T],['trimite']],
+   gresit:{drum:[['scrie'],['catre',PROF.adresa],['subiect','Prezentarea despre vulcani'],['corp','vă trimit prezentarea'],['ataseaza',VUL_T],['trimite'],['confirma']]},
+   ajutor:'Pașii „Scrii un mesaj nou” și „Atașezi un fișier”: Scrie, Către, Subiect, corpul pe rânduri, agrafa, Trimite.',
+   arata:'Scrie → Către: paul.neagu@scoala-exemplu.test → Subiect: „Prezentarea despre vulcani” → salut / un rând / „Tudor Manole” → 📎 → Documente › TIC_6A › Vulcanii_6A_Manole.pptx → Deschidere → Trimite.',
+   why:'Un mesaj complet: subiectul spune despre ce e, salutul și semnătura arată cine scrie, iar fișierul pleacă atașat.'}),
+  M_({q:`Diriginta i-a trimis lui Tudor programul excursiei, atașat. Mama lui (${C_(MAMA_T.adresa)}) trebuie să-l vadă. Dă-i mai departe mesajul dirigintei, cu un rând pentru ea și semnătura lui Tudor.`,
+   sim:SIM_T(),mesaj:{tip:'redir',la:'excursie'},
+   teste:[{c:'catre',v:MAMA_T.adresa},{c:'atasat',v:PROGRAM.nume,d:'Programul merge mai departe, atașat'},{c:'semnatura',v:'Tudor'},{c:'trimis'}],
+   drum:[['deschide','excursie'],['redir','excursie'],['catre',MAMA_T.adresa],['corp','Mami, uite programul excursiei.\nTudor'],['trimite']],
+   gresit:{drum:[['deschide','excursie'],['raspunde','excursie'],['corp','Mami, uite programul excursiei.\nTudor'],['trimite']]},
+   ajutor:'Pasul „Redirecționezi”: deschizi mesajul, Redirecționează, scrii adresa, un rând, Trimite.',
+   arata:'Mesaje primite → „Programul excursiei” → Redirecționează → Către: mama.lui.tudor@posta-exemplu.test → „Mami, uite programul excursiei.” / „Tudor” → Trimite.',
+   why:'Mama nu primise mesajul, deci îl redirecționezi. Programul atașat merge și el mai departe.'}),
+  {t:'choice',q:'Profesorul i-a trimis Dariei un mesaj cu fișa atașată. Daria apasă Răspunde și scrie „Am primit fișa”. Ce primește profesorul?',
+   o:['Doar răspunsul Dariei, fără fișă','Răspunsul și fișa lui, înapoi','Doar fișa, fără răspuns','Un mesaj de la Mail Delivery Subsystem'],ok:0,
+   ajutor:'Pasul „Răspunzi la un mesaj”: ce se întâmplă cu fișierele atașate la mesajul primit?',
+   why:'La Răspunde, fișierele atașate la mesajul primit nu pleacă înapoi: profesorul primește doar ce a scris Daria. La Redirecționează, ar fi plecat mai departe.'}
+ ]
+};
+
+/* „Acum la calculatorul din laborator”: Gmail-ul adevărat, cu contul elevului de la școală; fără profesor; gesturi mici.
+   Cine nu-și știe adresa sau parola (sau nu are adresa profesorului pe tablă) face aceiași pași în căsuța de exersare
+   (atelierul) și îi spune profesorului la final. Reparația J1 (12.10.2026): lipsa mesajului întors NU e dovada că mesajul a
+   ajuns (adresa greșită poate fi a altcuiva): elevul compară adresa din Trimise cu caietul, iar profesorul confirmă la final. */
+const ATELIER='<a class="la" href="?pas=atelier">atelierul lecției</a>';
+const PASI_REAL=[
+  `Scrie întâi în caiet, literă cu literă, adresa profesorului (de pe tablă) și adresa ta de la școală. Nu e pe tablă adresa profesorului? Faci doar pașii 2, 3, 10 și 11, apoi ${ATELIER}, iar la final îi spui profesorului. Lecția rămâne deschisă în fila ei. Deschide o filă nouă: clic pe <b>+</b>, în dreapta filei lecției (sau <kbd>Ctrl</kbd> + <kbd>T</kbd>). Fila nouă acoperă lecția: ca să citești pasul următor, faci clic pe fila lecției, apoi din nou pe fila Gmail. Fereastra browserului (cu ✕ din colțul ei de sus) n-o închizi: s-ar închide și lecția. Gmail-ul tău e în engleză? Numele sunt cele din paranteze.`,
+  `În bara de adrese a filei noi scrie ${C_('gmail.com')} și apasă <kbd>Enter</kbd>. Intră în contul tău de la școală, ca la lecția 13: adresa, <b>Înainte</b> (Next), parola, <b>Înainte</b>. La orice întrebare a browserului despre parolă sau cont, refuzi: ✕ din colțul întrebării, „Nu acum” sau „Niciodată”; nu <b>Salvează</b> (Save). E deschis contul altcuiva? Nu citești nimic: <b>Profil</b>, apoi <b>Deconectează-te</b> (Sign out). Apare o fereastră pe care n-o știi? Nu apeși la întâmplare: ridici mâna și îl întrebi pe profesor; până vine, nu pleci de la calculator. Nu-ți știi adresa sau parola? Închizi fila cu × de pe ea, faci ${ATELIER} și, la final, îi spui profesorului.`,
+  'Un gest mic: apasă <b>Scrie</b> (Compose), în stânga sus. În fereastra Mesaj nou (New Message), la <b>Subiect</b> (Subject), scrie <code>Proba</code>. Închide fereastra Mesaj nou cu <b>✕</b> din colțul ei (nu fereastra browserului). Apasă <b>Mesaje nefinalizate</b> (Drafts), în stânga: „Proba” ar trebui să fie acolo. Deschide-l și apasă coșul de gunoi 🗑, jos în dreapta (<b>Renunță</b>, Discard), ca să nu rămână. Nu e acolo? Nu-i nimic: treci la pasul următor.',
+  'Apasă din nou <b>Scrie</b>. În <b>Către</b> (To) scrie adresa profesorului, din caiet, literă cu literă. În <b>Subiect</b> scrie despre ce e mesajul, de exemplu „Prezentarea mea, clasa a VI-a A”. În corp, pe rânduri: salutul („Bună ziua,”), un rând despre ce îi trimiți, iar pe ultimul rând prenumele, numele și clasa ta.',
+  'Atașează un fișier al tău: jos, apasă agrafa 📎 (<b>Atașează fișiere</b>, Attach files). În fereastra <b>Deschidere</b> (Open) alege folderul tău (Documente sau folderul clasei, scris pe tablă) și o prezentare făcută de tine la o lecție trecută, de exemplu la lecția 3 sau la mini-proiect. Citește numele: alegi doar fișierul tău. Trimiți doar o prezentare fără poze cu oameni și fără adresa sau telefonul tău în ea; nu ești sigur ce are în ea? N-o trimiți. Apasă <b>Deschidere</b> (Open) și așteaptă să apară numele fișierului jos, în mesaj. N-ai găsit niciun fișier potrivit? Trimiți mesajul fără fișier și scrii în el că nu l-ai găsit.',
+  'Citește tot o dată: adresa, literă cu literă, cu cea din caiet (o literă greșită poate duce mesajul la alt om), subiectul, salutul, semnătura, fișierul (dacă l-ai atașat). Apoi apasă <b>Trimite</b> (Send). În stânga jos apare scurt „Mesaj trimis” (Message sent). Ai văzut chiar atunci o greșeală? Apasă repede <b>Anulează</b> (Undo), repară greșeala și trimite din nou.',
+  'În stânga apasă <b>Trimise</b> (Sent) și deschide mesajul tău. Compară adresa din Către cu cea din caiet, literă cu literă. Dacă ai atașat un fișier, e sub text. Un gest mic: apasă <b>Redirecționează</b> (Forward), sub mesaj. Uită-te: Către e gol, iar mesajul tău e dedesubt. Nu trimiți nimic: apasă coșul de gunoi 🗑 (<b>Renunță</b>, Discard).',
+  'Apasă <b>Mesaje primite</b> (Inbox). A venit un mesaj de la <b>Mail Delivery Subsystem</b> sau ai văzut la pasul 7 că adresa din Către nu e cea din caiet? Mesajul n-a ajuns la profesor. Trimite-l din nou: deschide-l pe al tău din Trimise, apasă <b>Redirecționează</b>, scrie adresa bună, literă cu literă (compară-o întâi pe cea din caiet cu cea de pe tablă), un rând deasupra („Vă trimit din nou mesajul meu.”) și apasă <b>Trimite</b>. Nu vezi Redirecționează? Apasă Scrie și fă din nou pașii 4-6. Adresa greșită putea fi a altui om: îi spui profesorului la final. N-a venit nimic înapoi? Asta nu dovedește că mesajul a ajuns: la final, profesorul îți spune dacă l-a primit.',
+  'Un gest mic cu <b>Răspunde</b> (Reply): din Trimise, deschide din nou mesajul tău și apasă Răspunde, sub el. Uită-te: caseta se deschide sub mesaj, cu Către completat. Nu trimiți: apasă coșul 🗑 (<b>Renunță</b>). Ai în Mesaje primite un mesaj de la profesor care îți cere un răspuns? Atunci îi răspunzi de-adevăratelea: Răspunde, salutul, un rând, semnătura, <b>Trimite</b>.',
+  'Ieși din cont: în dreapta sus apasă <b>Profil</b> (cerculețul cu inițiala sau cu poza ta), apoi <b>Deconectează-te</b> (Sign out). Verifică: apare din nou pagina de conectare.',
+  'Închide fila Gmail cu <b>×</b> de pe ea (nu fereastra browserului). Fila lecției rămâne. Contul tău nu mai e deschis: adresa ta poate rămâne în lista de conturi, dar fără parolă nu intră nimeni. Ai apăsat din greșeală Salvează la parolă? Îi spui profesorului înainte să pleci. La sfârșitul orei îi spui profesorului că i-ai trimis mesajul (și dacă o adresă a fost greșită): el îți spune dacă l-a primit. Pe fila lecției apasă <b>La verificare →</b> și răspunde la cele 5 întrebări.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vi_m2_l14',
+  mod:'lectie',
+  titlu:'Operații cu mesaje: compunere, trimitere, răspuns, redirecționare, atașare',
+  marca:'Lecția <b>14</b> · clasa a VI-a',
+  h1:'Operații cu mesaje: <span class="acc">compunere, trimitere, răspuns, redirecționare, atașare</span>',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VI-a',
+  unitate:'VI-U2',
+  unitateTitlu:'Comunic prin Internet, în siguranță',
+  competente:['CS.1.3'],
+  lectii:'14',
+  ancoraText:'Programa (OMEN 3393/2017), clasa a VI-a, CS.1.3 · unitatea VI-U2 „Comunic prin Internet, în siguranță” · lecția 14 · conținutul: „'+CONT.join('”, „')+'”',
+  intro:'Lecția 14. Scrii în Gmail un <b>mesaj</b> corect către profesor, cu subiect clar, salut și semnătură, îl <b>trimiți</b> și îl găsești în Trimise. Afli ce se întâmplă cu un mesaj netrimis și cu unul trimis la o adresă greșită. Apoi <b>atașezi</b> un fișier, <b>răspunzi</b> și <b>redirecționezi</b> un mesaj. Exersezi în pagină, într-o căsuță de exersare: un desen al Gmail-ului, cu conturi și fișiere inventate. Apoi lucrezi în Gmail-ul adevărat, la calculatorul din laborator. <b>Ai nevoie de:</b> lecțiile 13, 11 și 3. Poți lucra singur: fiecare pas are un exemplu și un exercițiu cu indiciu.',
+  cum:`<b>Cum lucrezi</b><ol>
+<li><b>Învață</b>: primul pas îți spune la ce folosește lecția; apoi urmează 5 pași scurți, câte o idee, cu un exemplu „Uite cum”. Nu ai înțeles? „Explică-mi altfel”.</li>
+<li><b>Încearcă tu</b>: după fiecare pas, un exercițiu mic, care nu se notează, de multe ori în căsuța de exersare. Greșești? Primești un indiciu. „Încă un exercițiu” îți dă altele.</li>
+<li><b>Atelier</b>: faci partea ta din lanțul clasei, în căsuța de exersare. Testele se bifează singure.</li>
+<li><b>Acum la calculatorul din laborator</b>: îi scrii profesorului în Gmail-ul adevărat, cu un fișier de-al tău atașat, verifici adresa în Trimise și încerci Răspunde și Redirecționează.</li>
+<li><b>Verificare</b>: 5 întrebări, doar din ce ai învățat în pași. Stele pentru răspunsurile din prima.</li></ol>`,
+  banda:'<span class="at">@</span>',
+  nivele:[LECTIA],
+  tipuri:{mesaj:SimPostaGmailScrie.tip},
+  aplicatieReala:{aplicatie:'Gmail-ul adevărat, cu contul tău de la școală, pe calculatorul din laborator',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:'<p>Ai exersat în căsuța din pagină. Acum îi scrii profesorului în Gmail-ul adevărat, cu contul tău de la școală, pe calculatorul din laborator. Nu ai nevoie de profesor: faci pașii unul câte unul. Nu ai încă un cont de la școală, nu-ți știi adresa ori parola sau nu e pe tablă adresa profesorului? Faci aceiași pași în atelierul lecției și, la final, îi spui profesorului.</p>',
+    pasi:PASI_REAL},
+  diploma:{
+    titlu:'Corespondentul clasei',
+    rezumat:'scrierea unui mesaj nou (Scrie: Către, Cc, Subiect, salutul, mesajul, semnătura), mesajul netrimis din Mesaje nefinalizate, adresa citită literă cu literă înainte de Trimite (la o adresă care nu există mesajul se întoarce, la a altcuiva ajunge la acel om), Anulează, verificarea în Trimise, fișierul atașat cu agrafa și fereastra Deschidere, Răspunde, Răspunde tuturor și Redirecționează',
+    aplicatie:'Gmail-ul adevărat, pe calculatorul din laborator',
+    provocare:PASI_REAL
+  }
+});
+</script>
+</body>
+</html>

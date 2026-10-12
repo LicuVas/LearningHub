@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dosare cu mesaje și agenda de utilizatori. Netichetă</title>
+<meta name="description" content="Lecția 15, clasa a VI-a (TIC): în Gmail îți faci etichete și pui mesajele sub ele, salvezi în Agenda Google adresele oamenilor cu care îți scrii și le alegi de acolo când scrii, apoi înveți neticheta: cum scrii politicos și ce nu dai mai departe. Exersezi într-o căsuță de exersare din pagină, cu conturi inventate, apoi în Gmail-ul adevărat, la calculatorul din laborator.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF3EF; --paper:#FFFFFF; --paper2:#F2F6F3; --line:#D2DDD5;
+  --ink:#17241C; --ink2:#4D5E53; --accent:#1E6B4A; --accentInk:#FFFFFF; --sel:#DCEDE3;
+  --mark:#FFE08A; --markInk:#17241C; --ok:#1E7A4A; --okbg:#E2F3E8; --bad:#B3261E; --badbg:#FBE6E3;
+  --fd:"Lexend","Segoe UI",system-ui,sans-serif; --fb:"Source Sans 3","Segoe UI",system-ui,sans-serif; --fm:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F1712; --paper:#16211A; --paper2:#1C2A21; --line:#33463A;
+  --ink:#E7F1EA; --ink2:#A9BDAF; --accent:#8FD3AE; --accentInk:#0F1712; --sel:#26402F;
+  --mark:#F2C94C; --markInk:#17241C; --ok:#6FD19A; --okbg:#173226; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F1712; --paper:#16211A; --paper2:#1C2A21; --line:#33463A;
+  --ink:#E7F1EA; --ink2:#A9BDAF; --accent:#8FD3AE; --accentInk:#0F1712; --sel:#26402F;
+  --mark:#F2C94C; --markInk:#17241C; --ok:#6FD19A; --okbg:#173226; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+/* banda de sus: trei etichete de dosar, pe o fâșie în dungi — doar CSS */
+.banda{display:flex;align-items:center;gap:8px;min-height:30px;padding:0 12px;overflow:hidden;
+  background:repeating-linear-gradient(90deg,#1E6B4A 0 26px,#2C8A61 26px 52px)}
+.banda .tg{display:inline-block;padding:1px 12px 1px 9px;border-radius:3px 12px 12px 3px;background:#FFF7E0;color:#17241C;font:700 12px/1.6 var(--fd);white-space:nowrap}
+.banda .tg:nth-child(2){background:#FFE3D6}.banda .tg:nth-child(3){background:#DCEBFF}
+h1{font-size:clamp(1.45rem,5.6vw,2.4rem);font-weight:800;letter-spacing:-.01em}
+h1 .acc{color:var(--accent)}
+h2{font-weight:700}
+.nevoie{border-left:4px solid var(--accent);padding:6px 10px;background:var(--paper2);border-radius:0 6px 6px 0}
+figure.captura.mica img{max-width:360px}
+figure.captura figcaption a{display:inline-block;padding:7px 2px;margin:-7px 0}
+.reading ol li,.reading ul li{margin:.2em 0}
+.cod{font-family:var(--fm);background:var(--paper2);border:1px solid var(--line);border-radius:5px;padding:0 4px;word-break:break-all}
+/* „plicul”: un mesaj scris, în exemple (nu e o captură, e text) */
+.plic{margin:.6em 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper);max-width:520px;font-size:.95rem}
+.plic .r{padding:5px 10px;border-bottom:1px solid var(--line);word-break:break-word}
+.plic .r span{display:inline-block;min-width:4.6em;color:var(--ink2)}
+.plic .t{padding:8px 10px;white-space:pre-line;word-break:break-word}
+.plic .cap{padding:4px 10px;font-size:.82rem;font-weight:700;background:var(--paper2);border-bottom:1px solid var(--line)}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/posta-gmail.js"></script>
+<script src="../../_sim/posta-gmail-scrie.js"></script>
+<script src="../../_sim/posta-gmail-dosare.js"></script>
+<script>
+/* ======================================================================================================
+   Lecția VI · M2 · nr. 15 — „Dosare cu mesaje și agenda de utilizatori. Netichetă” (VI-U2, CS.1.3; predare + consolidare).
+   Serviciul = Gmail, cu contul Google de la școală (decizia profesorului, 11.10.2026); agenda = Agenda Google (Google Contacts).
+   Simulatoarele: lectii/_sim/posta-gmail.js (lecția 13) + posta-gmail-scrie.js (lecția 14), nemodificate, + posta-gmail-dosare.js
+   (al lecției acesteia: etichetele, Agenda Google, alegerea din agendă, testele netichetei).
+   SIGURANȚA: conturile, adresele, persoanele și mesajele sunt INVENTATE (domeniile .test sunt rezervate pentru exemple; numele,
+   verificate să nu fie ale unor elevi reali: lectii/vi/m2-l13/_proba/nume_toate.py); ce tastează elevul nu se salvează și nu
+   pleacă nicăieri (proba: _proba/proba_lectie.py).
+   Granița: contul, conectarea, meniul principal, părțile mesajului = lecția 13; scrierea, trimiterea, răspunsul, redirecționarea,
+   atașarea = lecția 14 (reluate aici, nu predate din nou). NU: filtre automate, setări de cont, alte servicii.
+   ====================================================================================================== */
+const CONT=['Dosare cu mesaje, agendă de utilizatori','Reguli de comunicare în mediul online (netichetă): formule de adresare, reguli de scriere'];
+const fig=(f,w,h,alt,cap,cls)=>`<figure class="captura${cls?' '+cls:''}"><a href="../m2-l15/img/${f}" target="_blank"><img src="../m2-l15/img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const C_=s=>`<span class="cod">${s}</span>`;
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+/* un mesaj scris, arătat ca text (rânduri: [eticheta, valoarea]) */
+const plic=(randuri,corp,cap)=>`<div class="plic">${cap?`<div class="cap">${cap}</div>`:''}${randuri.map(([e,v])=>`<div class="r"><span>${e}</span> ${esc(v)}</div>`).join('')}<div class="t">${esc(corp)}</div></div>`;
+
+/* ---------------- persoanele, conturile și mesajele inventate (aceleași personaje ca la lecția 14) ---------------- */
+const D=SimPostaGmail.DOMENIU;                      // scoala-exemplu.test
+const om=(nume,adresa)=>({nume,adresa});
+const DARIA={adresa:'daria.lungu@'+D,nume:'Daria Lungu',parola:'Ploaie5!Ceas#Fag'};
+const TUDOR={adresa:'tudor.manole@'+D,nume:'Tudor Manole',parola:'Morcov3#Pod!Vant'};
+const PROF=om('Paul Neagu','paul.neagu@'+D), DIRIG=om('Carmen Voicu','carmen.voicu@'+D);
+const LUCA=om('Luca Zamfir','luca.zamfir@'+D), ILINCA=om('Ilinca Toader','ilinca.toader@'+D), MATEI=om('Matei Dragomir','matei.dragomir@'+D);
+const ANTRENOR=om('Paul Nedelcu','paul.nedelcu@posta-exemplu.test');
+const MAMA_D=om('Mama','mama.dariei@posta-exemplu.test'), MAMA_T=om('Mama','mama.lui.tudor@posta-exemplu.test');
+const EU_D=om(DARIA.nume,DARIA.adresa), EU_T=om(TUDOR.nume,TUDOR.adresa);
+const SEMN_PROF='Paul Neagu\nProfesor de informatică', SEMN_DIRIG='Carmen Voicu\nDiriginta clasei a VI-a A';
+const KB=1024;
+const FISA={nume:'Fisa_concurs.pdf',marime:180*KB}, PROG_S={nume:'Program_serbare.pdf',marime:88*KB}, PROG_E={nume:'Program_excursie.pdf',marime:96*KB};
+
+const M_CONCURS={id:'concurs',lista:'primite',de:PROF,catre:[EU_D],subiect:'Vii la concurs?',data:'14 dec.',ora:'08:10',
+  corp:'Bună, Daria,\nVii marți, la ora 13, la concursul de informatică? Răspunde-mi până mâine.',semnatura:SEMN_PROF};
+const M_FISA={id:'fisa',lista:'primite',de:PROF,catre:[EU_D],subiect:'Fișa pentru concurs',data:'12 dec.',ora:'12:05',citit:true,
+  corp:'Bună, Daria,\nÎți trimit fișa de exerciții pentru concurs. Rezolv-o până marți.',semnatura:SEMN_PROF,atasate:[FISA]};
+const M_SERBARE={id:'serbare',lista:'primite',de:DIRIG,catre:[EU_D,LUCA,ILINCA],subiect:'Cine aduce ce la serbare',data:'13 dec.',ora:'17:30',citit:true,
+  corp:'Dragi copii,\nVineri e serbarea clasei. Răspundeți-mi tuturor ce aduce fiecare: suc, fructe sau farfurii.',semnatura:SEMN_DIRIG};
+const M_PROIECT={id:'proiect',lista:'primite',de:LUCA,catre:[EU_D],subiect:'Proiectul la geografie',data:'12 dec.',ora:'16:40',citit:true,
+  corp:'Salut! Tu aduci harta pentru proiect?',semnatura:'Luca'};
+const M_BUNICA={id:'bunica',lista:'trimise',de:EU_D,catre:[om('Bunica Ana','bunica.ana@posta-exemplu.test')],subiect:'Mulțumesc pentru fular!',data:'10 dec.',ora:'19:15',citit:true,
+  corp:'Dragă bunico,\nFularul e foarte cald. Îl port în fiecare zi!\nDaria'};
+const M_SPAM={id:'premiu',lista:'spam',de:om('Premii Rapide','premii@castiga-acum.test'),catre:[EU_D],subiect:'Ai câștigat o tabletă!!!',data:'11 dec.',ora:'03:12',
+  corp:'Scrie-ne parola contului în 10 minute ca să primești premiul.'};
+const BAZA=[M_CONCURS,M_FISA,M_SERBARE,M_PROIECT,M_BUNICA,M_SPAM];
+const cu=(...m)=>BAZA.concat(m);
+/* P2, încă: patru mesaje de pus la locul lor */
+const M_TEMA={id:'tema',lista:'primite',de:PROF,catre:[EU_D],subiect:'Tema la TIC',data:'15 dec.',ora:'10:00',
+  corp:'Bună, Daria,\nTema pentru joi: o prezentare de 3 diapozitive despre vulcani.',semnatura:SEMN_PROF};
+const M_PREZ={id:'prezentare',lista:'primite',de:PROF,catre:[EU_D],subiect:'Prezentarea pentru serbare',data:'15 dec.',ora:'11:30',
+  corp:'Bună, Daria,\nLa ora de informatică pregătim împreună prezentarea pe care o arătăm la serbare.',semnatura:SEMN_PROF};
+/* P4: mesajele de rescris (activitatea profesorului pentru lecția 15) */
+const M_FURIOS={id:'furios',lista:'nefinalizate',de:EU_D,catre:[PROF],subiect:'',data:'15 dec.',ora:'20:15',citit:true,corp:'DE CE NU MI-AȚI PUS NOTA LA TEST???'};
+const M_HEI={id:'hei',lista:'nefinalizate',de:EU_T,catre:[DIRIG],subiect:'',data:'15 dec.',ora:'21:05',citit:true,corp:'hei, mâine nu vin. pa'};
+const M_NECLAR={id:'neclar',lista:'nefinalizate',de:EU_D,catre:[LUCA],subiect:'Salut',data:'15 dec.',ora:'18:40',citit:true,corp:'ai aia?'};
+/* P5: un mesaj-lanț și programul serbării */
+const M_LANT={id:'lant',lista:'primite',de:MATEI,catre:[EU_D,LUCA,ILINCA],subiect:'Trimite-l mai departe!!!',data:'16 dec.',ora:'19:02',
+  corp:'Trimite mesajul ăsta la 10 colegi până diseară, altfel ai ghinion toată săptămâna!!!',semnatura:'Matei'};
+const M_PROGRAM={id:'program',lista:'primite',de:DIRIG,catre:[EU_D],subiect:'Programul serbării',data:'16 dec.',ora:'12:30',
+  corp:'Dragă Daria,\nÎți trimit programul serbării de vineri. Arată-l și părinților.',semnatura:SEMN_DIRIG,atasate:[PROG_S]};
+/* Tudor (încă un atelier, întrebările) */
+const M_EXCURSIE_T={id:'excursie',lista:'primite',de:DIRIG,catre:[EU_T],subiect:'Programul excursiei',data:'13 dec.',ora:'12:30',
+  corp:'Dragă Tudor,\nÎți trimit programul excursiei de sâmbătă. Arată-l și părinților.',semnatura:SEMN_DIRIG,atasate:[PROG_E]};
+const M_LANT_T={id:'lant',lista:'primite',de:MATEI,catre:[EU_T,LUCA],subiect:'Citește și trimite la toți!',data:'14 dec.',ora:'22:10',
+  corp:'Dacă nu trimiți mesajul ăsta la 15 colegi, nu-ți merge bine la teste!!!',semnatura:'Matei'};
+const M_PROIECT_T={id:'proiect',lista:'primite',de:LUCA,catre:[EU_T],subiect:'Mingea de fotbal',data:'14 dec.',ora:'15:10',citit:true,corp:'Salut! Mâine aduci mingea?',semnatura:'Luca'};
+const M_ANTR1={id:'antrenament',lista:'primite',de:ANTRENOR,catre:[EU_T],subiect:'Antrenamentul de sâmbătă',data:'12 dec.',ora:'18:00',
+  corp:'Salut, Tudor,\nSâmbătă, antrenamentul începe la ora 10.',semnatura:'Paul Nedelcu\nAntrenor'};
+const M_ANTR2={id:'meci',lista:'primite',de:ANTRENOR,catre:[EU_T],subiect:'Meciul de duminică',data:'14 dec.',ora:'19:30',citit:true,
+  corp:'Salut, Tudor,\nDuminică jucăm cu echipa din cartierul vecin. Ne vedem la 9.',semnatura:'Paul Nedelcu\nAntrenor'};
+
+/* sarcinile în căsuța simulată (tipul „dosare” din posta-gmail-dosare.js) */
+const M_=o=>Object.assign({t:'dosare'},o);
+const SIM_D=o=>Object.assign({start:'casuta',cont:DARIA,mesaje:BAZA,agenda:[LUCA,ILINCA]},o||{});
+const SIM_T=o=>Object.assign({start:'casuta',cont:TUDOR,mesaje:[M_EXCURSIE_T,M_PROIECT_T],agenda:[LUCA,MAMA_T]},o||{});
+const F_PROF={cuvinte:['profesor','domnule']}, F_DIRIG={cuvinte:['doamna','diriginta']};
+
+const LECTIA={
+ t:'Dosare cu mesaje și agenda de utilizatori. Netichetă',lectii:[15],continuturi:CONT,final:true,
+ obiectiv:'îți faci etichete în Gmail și pui mesajele sub ele, salvezi adrese în Agenda Google și le alegi de acolo când scrii, și scrii politicos, după regulile netichetei.',
+ pasi:[
+  /* ---------- pasul 0: la ce folosește ---------- */
+  {t:'La ce folosește',
+   text:`<p>După lecțiile 13 și 14, în căsuța ta de mesaje se adună tot mai multe mesaje: de la profesor, de la dirigintă, de la colegi. Azi afli cum le pui în ordine, ca foile puse în dosare.</p>
+<p>Afli și cum păstrezi adresele oamenilor cu care îți scrii, ca să nu le mai tastezi, și cum scrii un mesaj politicos.</p>
+${fig('dosare-etichete.webp',520,360,'Dosare portocalii și verzi așezate unul lângă altul pe un raft; pe cotorul fiecăruia e lipită o hârtie albă pe care scrie cu pixul anul și numărul dosarului','Dosare pe un raft. Pe cotorul fiecăruia e lipită o hârtie cu un cod și un an: după ea găsești dosarul. Fotografie: Shixart1985, <a href="https://creativecommons.org/licenses/by/2.0" target="_blank" rel="noopener">CC BY 2.0</a>, <a href="https://commons.wikimedia.org/wiki/File:Collection_of_colorful_binders_on_a_shelf_for_storing_documents_in_an_office_setting.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (decupată).','mica')}
+<p class="nevoie"><b>Ai nevoie de:</b> lecția 13 (contul de la școală, conectarea, ieșirea din cont, meniul principal, părțile unui mesaj) și lecția 14 (Scrie, Către, Cc, Subiect, salutul, semnătura, Trimite, Mesaje nefinalizate, Răspunde, Redirecționează).</p>`},
+  /* ---------- pasul: etichetele ---------- */
+  {t:'Etichetele: un fel de dosare pentru mesaje',
+   text:`<p>O <mark>etichetă</mark> (label) e un nume pe care îl pui pe mesaje, ca să le găsești repede: „Informatică”, „Serbare”. Seamănă cu un dosar, dar un mesaj poate avea mai multe etichete, iar mesajul nu se mută: rămâne și în Mesaje primite. Etichetele le vezi doar tu: cei cărora le scrii nu le primesc.</p>
+<p>Cum faci una: în meniul principal, în stânga, lângă cuvântul <b>Etichete</b> (Labels), apeși <b>+</b> (<b>Creează o etichetă nouă</b>, Create new label). Scrii numele și apeși <b>Creează</b> (Create). Eticheta apare în stânga, sub Etichete.</p>`,
+   exemplu:`<p>Daria are multe mesaje de la profesorul de informatică. În stânga, lângă Etichete, apasă +. În fereastra „Etichetă nouă” scrie ${C_('Informatică')} și apasă Creează. În stânga apare „Informatică”. Deocamdată nu are niciun mesaj.</p>`,
+   altfel:`<p>Gândește-te la un abțibild pe care scrie „Informatică”. Îl lipești pe caiet, iar caietul rămâne în ghiozdan, la locul lui; după abțibild îl găsești imediat. Pe același caiet poți lipi și un al doilea abțibild, de exemplu „Serbare”.</p>`,
+   incearca:M_({q:'În contul inventat al Dariei (căsuța de exersare de mai jos), fă eticheta „Informatică”. Testul se bifează singur.',
+     sim:SIM_D(),
+     teste:[{c:'eticheta',v:'Informatică'}],
+     drum:[['eticheta-noua','Informatică']],
+     gresit:{drum:[['eticheta-noua','Info']]},
+     ajutor:'În stânga, sub meniul principal, e rândul „Etichete”, cu un + în dreapta. Apasă +, scrie Informatică, apoi Creează.',
+     arata:'+ de lângă Etichete → „Informatică” → Creează.',
+     why:'Eticheta e gata: o vezi în stânga, sub Etichete. Încă nu are mesaje: le pui la pasul următor.'}),
+   inca:[
+    M_({q:'Daria vrea încă două etichete: „Serbare” și „Proiect”. Fă-le pe amândouă, apoi uită-te în stânga, sub Etichete.',
+     sim:SIM_D({etichete:['Informatică']}),
+     teste:[{c:'eticheta',v:'Serbare'},{c:'eticheta',v:'Proiect'}],
+     drum:[['eticheta-noua','Serbare'],['eticheta-noua','Proiect']],
+     gresit:{sari:1},
+     ajutor:'Fiecare etichetă: + de lângă Etichete, numele, Creează. De două ori.',
+     arata:'+ → „Serbare” → Creează; + → „Proiect” → Creează.',
+     why:'Fiecare etichetă se face la fel: +, numele, Creează. Toate trei stau acum în stânga, sub Etichete.'}),
+    {t:'tf',q:'Daria pune eticheta „Informatică” pe mesajele profesorului. Profesorul vede și el eticheta, în căsuța lui.',ok:false,
+     ajutor:'Primul paragraf al pasului: cine vede etichetele tale?',
+     why:'Fals. Etichetele le vezi doar tu, în contul tău. Cei cărora le scrii nu le primesc.'}
+   ]},
+  /* ---------- pasul: pui mesajele sub etichetă ---------- */
+  {t:'Pui mesajele sub etichetă și le găsești',
+   text:`<p>Ca să pui un mesaj sub o etichetă:</p>
+<ol><li>în listă, bifezi caseta din stânga mesajului (poți bifa mai multe);</li>
+<li>sus apare iconița <b>Etichete</b> (Labels) 🏷: o apeși;</li>
+<li>bifezi eticheta, apoi apeși <b>Aplică</b> (Apply), dacă apare.</li></ol>
+<p>Numele etichetei apare lângă subiect. Ca să găsești mesajele, apeși eticheta în stânga: vezi doar mesajele ei. Iconița 🏷 o găsești, de obicei, și sus pe un mesaj deschis, lângă săgeata ←.</p>`,
+   exemplu:`<p>Daria bifează „Vii la concurs?” și „Fișa pentru concurs”, apasă 🏷, bifează Informatică și apasă Aplică. Lângă cele două subiecte apare „Informatică”. Apasă Informatică, în stânga: sunt doar cele două mesaje. În Mesaje primite sunt tot acolo.</p>`,
+   altfel:`<p>E ca un semn de carte colorat: pui câte un semn verde la toate paginile despre plante. Paginile rămân în carte, la locul lor, dar după semnul verde le găsești pe toate deodată.</p>`,
+   incearca:M_({q:'Daria are deja eticheta „Informatică”. Pune sub ea cele două mesaje ale profesorului Paul Neagu, apoi apasă eticheta, în stânga, ca să le vezi la un loc.',
+     sim:SIM_D({etichete:['Informatică']}),
+     teste:[{c:'etichetat',v:{ids:['concurs','fisa'],et:'Informatică'},d:'Mesajele profesorului au eticheta „Informatică”'},
+      {c:'neetichetat',v:{ids:['serbare','proiect'],et:'Informatică'},d:'Mesajele dirigintei și al lui Luca nu au eticheta „Informatică”'},
+      {c:'vazutEticheta',v:'Informatică'}],
+     drum:[['eticheteaza',['concurs','fisa'],'Informatică'],['eticheta','Informatică']],
+     gresit:{drum:[['eticheteaza',['concurs','serbare'],'Informatică'],['eticheta','Informatică']]},
+     ajutor:'Bifează caseta din stânga la „Vii la concurs?” și la „Fișa pentru concurs”. Sus apasă 🏷, bifează Informatică, apoi Aplică. La final apasă Informatică, în stânga.',
+     arata:'☐ „Vii la concurs?” + ☐ „Fișa pentru concurs” → 🏷 → ☑ Informatică → Aplică → Informatică (în stânga).',
+     why:'Cele două mesaje au acum eticheta „Informatică”. Le găsești la eticheta lor, dar și în Mesaje primite.'}),
+   inca:[
+    M_({q:'Daria are trei etichete: „Informatică”, „Serbare” și „Proiect”. Pune fiecare mesaj nou sub eticheta potrivită. Mesajul „Prezentarea pentru serbare” ține de amândouă: și de informatică, și de serbare. Pune-i două etichete.',
+     sim:SIM_D({etichete:['Informatică','Serbare','Proiect'],mesaje:[M_TEMA,M_PREZ,M_SERBARE,M_PROIECT,M_BUNICA]}),
+     teste:[{c:'etichetat',v:{ids:['tema'],et:'Informatică'}},{c:'etichetat',v:{ids:['serbare'],et:'Serbare'}},{c:'etichetat',v:{ids:['proiect'],et:'Proiect'}},
+      {c:'etichetat',v:{ids:['prezentare'],et:'Informatică'}},{c:'etichetat',v:{ids:['prezentare'],et:'Serbare'}},
+      {c:'neetichetat',v:{ids:['tema','proiect'],et:'Serbare'},d:'„Tema la TIC” și „Proiectul la geografie” nu au eticheta „Serbare”'}],
+     drum:[['eticheteaza',['tema','prezentare'],'Informatică'],['eticheteaza',['serbare','prezentare'],'Serbare'],['eticheteaza',['proiect'],'Proiect']],
+     gresit:{drum:[['eticheteaza',['tema','prezentare'],'Informatică'],['eticheteaza',['serbare'],'Serbare'],['eticheteaza',['proiect'],'Proiect']]},
+     ajutor:'Citește expeditorul și subiectul. Bifezi mesajele care merg sub aceeași etichetă, 🏷, bifezi eticheta, Aplică. Apoi la fel cu următoarea etichetă.',
+     arata:'„Tema la TIC” + „Prezentarea pentru serbare” → Informatică; „Cine aduce ce la serbare” + „Prezentarea pentru serbare” → Serbare; „Proiectul la geografie” → Proiect.',
+     why:'Fiecare mesaj e la eticheta temei lui. „Prezentarea pentru serbare” are două etichete: o găsești și la Informatică, și la Serbare.'}),
+    {t:'tf',q:'Un mesaj poate avea o singură etichetă.',ok:false,
+     ajutor:'Primul pas cu etichete: prin ce se deosebește o etichetă de un dosar?',
+     why:'Fals. Un mesaj poate avea mai multe etichete, de exemplu „Informatică” și „Serbare”. Așa îl găsești la amândouă.'}
+   ]},
+  /* ---------- pasul: agenda ---------- */
+  {t:'Agenda: adresele oamenilor cu care îți scrii',
+   text:`<p><mark>Agenda</mark> e lista ta de persoane de contact: numele și adresele lor. La Google: <b>Agenda Google</b> (Google Contacts).</p>
+<p>Adaugi pe cineva: în bara de adrese scrii ${C_('contacts.google.com')} și apeși Enter. Sus în stânga apeși <b>Creează o persoană de contact</b> (Create contact), apoi, în lista care se deschide dedesubt, primul rând: tot <b>Creează o persoană de contact</b> (Create a contact). Scrii prenumele, numele și adresa, literă cu literă, apoi <b>Salvează</b> (Save). La mesaje te întorci cu ${C_('gmail.com')}.</p>
+<p>Când scrii, în Către tastezi primele litere ale numelui și apeși pe sugestie (sau apeși pe „Către” și alegi din listă). E mai sigur: o adresă tastată greșit poate fi a unui străin.</p>`,
+   exemplu:`<p>Daria o salvează pe Ilinca Toader în Agenda Google, cu adresa copiată literă cu literă din mesajul ei. În Gmail apasă Scrie și tastează în Către „il”. Dedesubt apare „Ilinca Toader &lt;ilinca.toader@scoala-exemplu.test&gt;”. Daria citește numele și adresa, apoi apasă pe sugestie. Altfel: apasă pe cuvântul „Către”, bifează persoana din listă și apasă Inserează (Insert).</p>`,
+   altfel:`<p>E ca agenda de pe telefonul părinților: numărul îl scrii o dată, cu grijă. Apoi nu-l mai tastezi: cauți numele și apeși pe el. Dacă l-ai salvat greșit, suni mereu greșit. De aceea îl verifici când îl salvezi.</p>`,
+   incearca:M_({q:`Salvează-l în agenda Dariei pe profesorul Paul Neagu, cu adresa din mesajele lui (o vezi în mesaj, lângă nume, între &lt; și &gt;). Apoi întoarce-te la mesaje, apasă Scrie și pune-l în Către din agendă: primele litere ale numelui, apoi sugestia. Nu trimite mesajul.`,
+     sim:SIM_D(),mesaj:{tip:'nou'},
+     teste:[{c:'agendaVazuta'},{c:'contact',v:{adresa:PROF.adresa,nume:'Paul Neagu'},d:'Paul Neagu e în agendă, cu adresa lui'},{c:'dinAgenda',v:PROF.adresa},{c:'catre',v:PROF.adresa}],
+     drum:[['agenda'],['contact',{prenume:'Paul',nume:'Neagu',adresa:PROF.adresa}],['gmail'],['scrie'],['sugestie','pau',PROF.adresa]],
+     gresit:{drum:[['agenda'],['contact',{prenume:'Paul',nume:'Neagu',adresa:'paul.negu@'+D}],['gmail'],['scrie'],['sugestie','pau','paul.negu@'+D]]},
+     ajutor:'Adresa lui e în mesajul „Vii la concurs?”, lângă nume. Bara de adrese: contacts.google.com, Enter → Creează o persoană de contact → în lista de dedesubt, primul rând (tot Creează o persoană de contact) → Prenume, Nume, E-mail → Salvează. Apoi bara: gmail.com, Enter → Scrie → în Către „pau” → apasă pe sugestie.',
+     arata:'contacts.google.com → Creează o persoană de contact → primul rând din lista de dedesubt → Paul / Neagu / paul.neagu@scoala-exemplu.test → Salvează → gmail.com → Scrie → Către: „pau” → sugestia „Paul Neagu”.',
+     why:'Adresa profesorului e acum în agendă. Data viitoare nu o mai tastezi: o alegi, fără greșeli.'}),
+   inca:[
+    M_({q:'În agenda Dariei sunt doi oameni cu prenumele Paul: profesorul de informatică și antrenorul de fotbal. Scrie-i profesorului un mesaj nou: în Către tastezi „paul” și alegi adresa potrivită. Nu-l trimite.',
+     sim:SIM_D({agenda:[LUCA,ILINCA,PROF,ANTRENOR]}),mesaj:{tip:'nou'},
+     teste:[{c:'catre',v:PROF.adresa,d:'În Către e profesorul, Paul Neagu'},{c:'dinAgenda',v:PROF.adresa}],
+     drum:[['scrie'],['sugestie','paul',PROF.adresa]],
+     gresit:{drum:[['scrie'],['sugestie','paul',ANTRENOR.adresa]]},
+     ajutor:'Sub Către apar două sugestii. Citește tot rândul, cu numele de familie și cu adresa: profesorul e Paul Neagu, de la școală.',
+     arata:'Scrie → Către: „paul” → sugestia „Paul Neagu &lt;paul.neagu@scoala-exemplu.test&gt;”.',
+     why:'Din agendă alegi repede, dar citești sugestia: același prenume poate fi al altcuiva.'}),
+    M_({q:'Daria le scrie deodată lui Luca și Ilincăi. Alege-i pe amândoi din agendă: apasă pe cuvântul „Către”, bifează-i în listă și apasă Inserează (Insert). Nu trimite mesajul.',
+     sim:SIM_D(),mesaj:{tip:'nou'},
+     teste:[{c:'catre',v:[LUCA.adresa,ILINCA.adresa]},{c:'dinAgenda',v:LUCA.adresa},{c:'dinAgenda',v:ILINCA.adresa}],
+     drum:[['scrie'],['din-agenda',[LUCA.adresa,ILINCA.adresa]]],
+     gresit:{drum:[['scrie'],['din-agenda',[LUCA.adresa]]]},
+     ajutor:'Scrie → apasă cuvântul „Către” (în stânga rândului) → bifează Luca Zamfir și Ilinca Toader → Inserează (Insert).',
+     arata:'Scrie → „Către” → ☑ Ilinca Toader, ☑ Luca Zamfir → Inserează (Insert).',
+     why:'Lista din agendă îți arată numele și adresele: bifezi pe cine vrei și apeși Inserează (Insert).'})
+   ]},
+  /* ---------- pasul: neticheta, cum scrii ---------- */
+  {t:'Neticheta: cum scrii un mesaj politicos',
+   text:`<p><mark>Neticheta</mark> înseamnă regulile de politețe de pe Internet. La un e-mail:</p>
+<ul><li>un subiect clar;</li>
+<li>o <b>formulă de adresare</b>, adică salutul și felul în care îl numești pe cel căruia îi scrii: „Bună ziua, domnule profesor,”, „Bună ziua, doamnă dirigintă,”; unui coleg, „Salut,”;</li>
+<li>scrii la obiect: spui scurt ce vrei sau răspunzi la ce ai fost întrebat;</li>
+<li>nu scrii cuvinte numai cu MAJUSCULE: pe Internet, asta înseamnă că strigi (un nume de familie scris așa, ca în catalog, nu e strigăt). Nici „!!!” sau „???”;</li>
+<li>la final, semnătura. Dacă ai cerut ceva, înainte de ea mulțumești: „Vă mulțumesc,” (unui coleg, „Mulțumesc,”).</li></ul>`,
+   exemplu:`<p>Tudor era supărat și a scris așa:</p>
+${plic([['Către','paul.neagu@scoala-exemplu.test'],['Subiect','(gol)']],'DE CE NU MI-AȚI TRIMIS FIȘA???','Înainte')}
+<p>L-a recitit și l-a rescris înainte de Trimite:</p>
+${plic([['Către','paul.neagu@scoala-exemplu.test'],['Subiect','Fișa pentru concurs']],'Bună ziua, domnule profesor,\nNu am primit fișa pentru concurs. Mi-o puteți trimite, vă rog?\nVă mulțumesc,\nTudor Manole','După')}`,
+   altfel:`<p>Un e-mail către profesor e ca o vizită în cancelarie: saluți, spui pe scurt de ce ai venit, mulțumești și spui cine ești. Nu strigi, chiar dacă ești supărat.</p>`,
+   incearca:M_({q:'Daria a început un mesaj furios către profesor și nu l-a trimis. Deschide-l din Mesaje nefinalizate și rescrie-l după regulile netichetei: un subiect clar, „Bună ziua, domnule profesor,”, întrebarea spusă calm, fără cuvinte scrise numai cu majuscule și fără „???”, „Vă mulțumesc,” și semnătura. Apoi trimite-l.',
+     sim:SIM_D({mesaje:cu(M_FURIOS)}),mesaj:{tip:'nou'},
+     teste:[{c:'subiect',v:{cuvinte:['nota','test*','lucrar*'],despre:'nota la test'}},{c:'formal',v:F_PROF},{c:'faraMajuscule'},{c:'faraSemneMulte'},{c:'multumire'},{c:'semnatura',v:'Daria'},{c:'trimis'}],
+     drum:[['lista','nefinalizate'],['deschide','furios'],['subiect','Nota la test'],['corp','Bună ziua, domnule profesor,\nVă rog să-mi spuneți ce notă am luat la test.\nVă mulțumesc,\nDaria Lungu'],['trimite']],
+     gresit:{drum:[['lista','nefinalizate'],['deschide','furios'],['subiect','Nota la test'],['corp','Bună ziua, domnule profesor,\nCE NOTĂ AM LUAT???\nDaria Lungu'],['trimite']]},
+     ajutor:'Mesaje nefinalizate → mesajul. Subiect: despre ce e (nota la test). În corp, pe rânduri: „Bună ziua, domnule profesor,”, „Vă rog să-mi spuneți ce notă am luat la test.”, „Vă mulțumesc,”, „Daria Lungu”. Șterge rândul cu majuscule. Apoi Trimite.',
+     arata:'Mesaje nefinalizate → mesajul → Subiect: „Nota la test” → „Bună ziua, domnule profesor,” / „Vă rog să-mi spuneți ce notă am luat la test.” / „Vă mulțumesc,” / „Daria Lungu” → Trimite.',
+     why:'Aceeași întrebare, spusă calm, cu subiect, salut și semnătură: profesorul o citește ușor și răspunde.'}),
+   inca:[
+    M_({q:'Tudor lipsește mâine de la școală, pentru că merge la medic. A început un mesaj pentru dirigintă, dar e prea scurt și nepoliticos. Deschide-l din Mesaje nefinalizate, rescrie-l după regulile netichetei și trimite-l.',
+     sim:SIM_T({mesaje:[M_EXCURSIE_T,M_PROIECT_T,M_HEI]}),mesaj:{tip:'nou'},
+     teste:[{c:'subiect',v:{cuvinte:['lips*','absen*','maine','medic*','doctor*'],despre:'lipsa de mâine'}},{c:'formal',v:F_DIRIG},
+      {c:'continut',v:{cuvinte:['medic*','doctor*','control*','dentist*','stomatolog*','spital*','policlinic*']},d:'Spune de ce lipsește (merge la medic sau la doctor)',m:'Încă nu spui de ce lipsești. Trebuia un rând ca „Mâine lipsesc de la școală, pentru că merg la medic.”'},
+      {c:'faraMajuscule'},{c:'semnatura',v:'Tudor'},{c:'trimis'}],
+     drum:[['lista','nefinalizate'],['deschide','hei'],['subiect','Lipsesc mâine de la școală'],['corp','Bună ziua, doamnă dirigintă,\nMâine lipsesc de la școală, pentru că merg la medic.\nVă mulțumesc,\nTudor Manole'],['trimite']],
+     gresit:{drum:[['lista','nefinalizate'],['deschide','hei'],['subiect','Lipsesc mâine de la școală'],['corp','hei, mâine nu vin. pa\nTudor Manole'],['trimite'],['confirma']]},
+     ajutor:'Subiect: că lipsești mâine. Corpul: „Bună ziua, doamnă dirigintă,”, de ce lipsești (merg la medic), apoi numele. „Hei” și „pa” sunt pentru prieteni.',
+     arata:'Mesaje nefinalizate → mesajul → Subiect: „Lipsesc mâine de la școală” → „Bună ziua, doamnă dirigintă,” / „Mâine lipsesc de la școală, pentru că merg la medic.” / „Vă mulțumesc,” / „Tudor Manole” → Trimite.',
+     why:'Diriginta află din subiect despre ce e mesajul, iar din text, de ce lipsește Tudor. Salutul și semnătura arată respect.'}),
+    M_({q:'Daria a început un mesaj neclar pentru Luca: nici subiectul, nici textul nu spun despre ce e vorba. Ea vrea să afle dacă Luca aduce mâine harta pentru proiectul la geografie. Rescrie-l clar și trimite-l.',
+     sim:SIM_D({mesaje:cu(M_NECLAR)}),mesaj:{tip:'nou'},
+     teste:[{c:'subiect',v:{cuvinte:['hart*','proiect*','geografi*'],despre:'harta pentru proiect'}},{c:'salut'},{c:'continut',v:{cuvinte:['hart*']},d:'Întreabă de hartă'},
+      {c:'multumire',v:{cuvinte:['multumesc','multumim','mersi']},d:'La final îi mulțumești („Mulțumesc,”): îi ceri ceva'},{c:'semnatura',v:'Daria'},{c:'trimis'}],
+     drum:[['lista','nefinalizate'],['deschide','neclar'],['subiect','Harta pentru proiect'],['corp','Salut, Luca,\nAduci tu mâine harta pentru proiectul la geografie?\nMulțumesc,\nDaria'],['trimite']],
+     gresit:{drum:[['lista','nefinalizate'],['deschide','neclar'],['corp','Salut, Luca,\nai aia?\nDaria'],['trimite']]},
+     ajutor:'Subiectul spune despre ce e: harta pentru proiect. În corp: „Salut, Luca,”, întrebarea întreagă, „Mulțumesc,” (îi ceri ceva), numele tău.',
+     arata:'Mesaje nefinalizate → mesajul → Subiect: „Harta pentru proiect” → „Salut, Luca,” / „Aduci tu mâine harta pentru proiectul la geografie?” / „Mulțumesc,” / „Daria” → Trimite.',
+     why:'„Ai aia?” nu spune ce vrei. Scris la obiect, Luca înțelege din prima.'}),
+    {t:'hunt',q:'Mesajul lui Matei către profesor încalcă regulile netichetei. Apasă pe fragmentele nepotrivite.',
+     src:'Subiect: [[(gol)|un subiect clar spune despre ce e mesajul, de exemplu „Tema la TIC”]] Mesaj: [[Hei prof,|profesorului îi scrii „Bună ziua, domnule profesor,”]] am uitat tema acasă. [[NU E VINA MEA!!!|majusculele și „!!!” înseamnă că strigi]] O aduc mâine. [[Pa!|la final scrii numele tău, nu „Pa!”]]',
+     indiciu:'Treci prin reguli pe rând: subiectul, formula de adresare, majusculele, încheierea.',
+     ajutor:'Regulile din pas: subiect clar, formulă de adresare, la obiect, fără cuvinte scrise numai cu majuscule, semnătura (și „Vă mulțumesc,” când ceri ceva).',
+     why:'Fără subiect, cu „Hei prof”, cu majuscule și fără semnătură, mesajul pare un strigăt. Scris politicos, același lucru primește un răspuns bun.'}
+   ]},
+  /* ---------- pasul: neticheta, ce dai mai departe ---------- */
+  {t:'Neticheta: ce dai mai departe și cui',
+   text:`<p>Neticheta privește și ce trimiți mai departe:</p>
+<ul><li>Un <mark>mesaj-lanț</mark> îți cere să-l trimiți la mulți („trimite-l la 10 colegi, altfel…”). Nu-l redirecționezi nimănui. Dacă te sperie, îi spui unui adult.</li>
+<li>Adresa unui coleg e a lui: n-o dai nimănui fără acordul lui. La Redirecționează pleacă mai departe și adresele din mesaj, iar în Cc fiecare vede adresele tuturor.</li>
+<li>Ce ți-a scris cineva doar ție, ca un secret sau o supărare, nu dai mai departe fără acordul lui (lecția 14).</li>
+<li>Înainte de Trimite citești Către: e omul potrivit? La Răspunde tuturor: chiar trebuie să afle toți?</li></ul>`,
+   exemplu:`<p>Matei îi trimite Dariei: „Trimite mesajul ăsta la 10 colegi până diseară, altfel ai ghinion!” Daria nu-l dă mai departe. Diriginta îi trimite programul serbării, pe care trebuie să-l vadă și mama ei. Daria îl redirecționează, ia adresa mamei din agendă și, înainte de Trimite, citește Către: e adresa mamei.</p>`,
+   altfel:`<p>Un bilet care spune „dă-l la zece colegi” nu-l dai mai departe: așa ajunge la toată școala. Iar numărul de telefon al unui prieten nu-l scrii pe tablă: e al lui.</p>`,
+   incearca:M_({q:'Daria a primit două mesaje noi. Programul serbării trebuie să-l vadă și mama ei (e în agendă, la „Mama”). Dă mai departe doar ce trebuie: redirecționează programul, cu adresa luată din agendă, un rând pentru mama și semnătura.',
+     sim:SIM_D({mesaje:cu(M_LANT,M_PROGRAM),agenda:[LUCA,ILINCA,MAMA_D]}),mesaj:{tip:'redir',la:'program'},
+     teste:[{c:'catre',v:MAMA_D.adresa,d:'Programul merge la mama Dariei'},{c:'dinAgenda',v:MAMA_D.adresa},{c:'semnatura',v:'Daria'},{c:'trimis'},
+      {c:'neredirectionat',v:'lant',d:'N-ai dat mai departe mesajul-lanț de la Matei'}],
+     drum:[['deschide','program'],['redir','program'],['sugestie','mam',MAMA_D.adresa],['corp','Mami, uite programul serbării.\nDaria'],['trimite']],
+     gresit:{drum:[['deschide','lant'],['redir','lant'],['sugestie','mam',MAMA_D.adresa],['corp','Mami, uite.\nDaria'],['trimite'],
+      ['deschide','program'],['redir','program'],['sugestie','mam',MAMA_D.adresa],['corp','Mami, uite programul serbării.\nDaria'],['trimite']]},
+     ajutor:'Deschide „Programul serbării” → Redirecționează → în Către tastează „mam” și apasă pe sugestie → un rând și numele tău → Trimite. Mesajul de la Matei îl lași.',
+     arata:'„Programul serbării” → Redirecționează → Către: „mam” → sugestia „Mama” → „Mami, uite programul serbării.” / „Daria” → Trimite. Mesajul-lanț nu pleacă nicăieri.',
+     why:'Programul a ajuns la mama, cu adresa din agendă. Mesajul-lanț s-a oprit la Daria.'}),
+   inca:[
+    {t:'classify',q:'Dai mai departe mesajul sau nu?',cats:['Îl dau mai departe','Nu-l dau mai departe'],
+     items:[['Un mesaj care promite noroc dacă îl trimiți la 15 colegi',1],['Invitația la serbare, trimisă doar ție, pe care diriginta te-a rugat s-o dai bunicii',0],['Mesajul în care o prietenă îți spune un secret',1],['Adresele colegilor, cerute de un site care dă premii',1],['Fișa de concurs, pentru colegul care a lipsit, la cererea profesorului',0]],
+     ajutor:'Pasul spune ce nu dai mai departe: mesajele-lanț, adresele altora (fără acord) și ce ți-a scris cineva doar ție. Restul îl dai doar dacă trebuie să ajungă la omul acela.',
+     why:'Mesajele-lanț, secretele și adresele altora nu le dai mai departe. Invitația și fișa ajung la cine trebuie să le primească: cel care ți le-a trimis ți-a cerut asta.'},
+    {t:'choice',q:'Diriginta trimite un mesaj tuturor părinților din clasă și îi pune pe toți în Cc. Ce vede fiecare părinte?',
+     o:['Adresele tuturor celorlalți părinți','Doar adresa dirigintei, fără alte adrese','Doar adresa lui, fără a celorlalți','Nicio adresă, numai textul mesajului'],ok:0,
+     ajutor:'Pasul: ce vede fiecare om din Cc?',
+     why:'În Cc, fiecare vede adresele tuturor. De aceea nu pui în Cc oameni care nu se cunosc, fără acordul lor.'}
+   ]}
+ ],
+ atelier:M_({titlu:'Mesajul de la cap la coadă',
+  intro:`<p><strong>Sarcina:</strong> faci drumul unui mesaj, cu ce ai învățat în lecțiile 13, 14 și 15: pui în ordine mesajele, îi scrii politicos profesorului, cu adresa din agendă, și ieși din cont. Contul inventat al Dariei e deschis, iar profesorul e deja în agenda ei (conectarea și Agenda le faci de-adevăratelea în laborator). Testele de jos se bifează singure; la final apeși <b>Verifică</b>. Ai greșit? „Ia-o de la capăt”.</p>`,
+  q:`1) Fă eticheta „Concurs” și pune sub ea cele două mesaje ale profesorului despre concurs. 2) Scrie-i profesorului un mesaj nou, cu adresa luată din agendă: îl întrebi în ce sală e concursul. Subiect clar, „Bună ziua, domnule profesor,”, niciun cuvânt scris numai cu majuscule, „Vă mulțumesc,” și semnătura. Trimite-l și uită-te în Trimise. 3) Ieși din cont.`,
+  sim:SIM_D({agenda:[LUCA,ILINCA,PROF]}),mesaj:{tip:'nou'},
+  teste:[{c:'eticheta',v:'Concurs'},
+   {c:'etichetat',v:{ids:['concurs','fisa'],et:'Concurs'},d:'Cele două mesaje ale profesorului au eticheta „Concurs”'},
+   {c:'dinAgenda',v:PROF.adresa},{c:'catre',v:PROF.adresa},{c:'subiect',v:{cuvinte:['concurs*','sala','sali*'],despre:'concurs'}},
+   {c:'formal',v:F_PROF},{c:'faraMajuscule'},{c:'faraSemneMulte'},{c:'multumire'},{c:'semnatura',v:'Daria'},{c:'trimis'},{c:'verificat'},{c:'iesit'}],
+  drum:[['eticheta-noua','Concurs'],['eticheteaza',['concurs','fisa'],'Concurs'],['scrie'],['sugestie','pau',PROF.adresa],
+   ['subiect','Sala de concurs'],['corp','Bună ziua, domnule profesor,\nÎn ce sală e concursul?\nVă mulțumesc,\nDaria Lungu'],['trimite'],['lista','trimise'],['iesi']],
+  gresit:{drum:[['eticheta-noua','Concurs'],['eticheteaza',['concurs','fisa'],'Concurs'],['scrie'],['sugestie','pau',PROF.adresa],
+   ['subiect','Sala de concurs'],['corp','Bună ziua, domnule profesor,\nÎN CE SALĂ E CONCURSUL???\nDaria Lungu'],['trimite'],['lista','trimise'],['iesi']]},
+  ajutor:'În ordine: + de lângă Etichete → „Concurs” → Creează → bifezi cele două mesaje ale profesorului → 🏷 → Concurs → Aplică → Scrie → Către: „pau” → sugestia → subiect, corp → Trimite → Trimise → Profil → Deconectează-te.',
+  arata:'eticheta „Concurs” pe „Vii la concurs?” și „Fișa pentru concurs”; Scrie → Către: „pau” → sugestia „Paul Neagu” → Subiect: „Sala de concurs” → „Bună ziua, domnule profesor,” / „În ce sală e concursul?” / „Vă mulțumesc,” / „Daria Lungu” → Trimite → Trimise → Profil → Deconectează-te.',
+  why:'Ai făcut drumul unui mesaj, ca în laborator. <b>Ce am învățat:</b><ul><li><b>Eticheta</b> (label): o faci cu + de lângă Etichete; pui mesajele sub ea cu caseta din stânga, 🏷 și Aplică. Mesajul rămâne și în Mesaje primite și poate avea mai multe etichete.</li><li><b>Agenda Google</b> (contacts.google.com): salvezi adresa o dată, literă cu literă, apoi o alegi din sugestiile de sub Către.</li><li><b>Neticheta</b>: subiect clar, formula de adresare, la obiect, fără cuvinte strigate cu majuscule și fără „!!!”, „Vă mulțumesc,” când ceri ceva, semnătura.</li><li><b>Ce nu dai mai departe</b>: mesaje-lanț, adresele altora și ce ți-a scris cineva doar ție. Înainte de Trimite citești Către.</li></ul>',
+  inca:[
+   M_({q:'Contul inventat al lui Tudor e deschis. 1) Fă eticheta „Excursie” și pune sub ea mesajul dirigintei cu programul excursiei. 2) Programul trebuie să-l vadă și mama lui (e în agendă, la „Mama”): redirecționează-i mesajul, cu adresa luată din agendă, un rând pentru ea și semnătura. 3) Mesajul-lanț de la Matei nu-l dai nimănui. 4) Ieși din cont.',
+    sim:SIM_T({mesaje:[M_EXCURSIE_T,M_LANT_T,M_PROIECT_T]}),mesaj:{tip:'redir',la:'excursie'},
+    teste:[{c:'eticheta',v:'Excursie'},{c:'etichetat',v:{ids:['excursie'],et:'Excursie'}},{c:'catre',v:MAMA_T.adresa,d:'Programul merge la mama lui Tudor'},
+     {c:'dinAgenda',v:MAMA_T.adresa},{c:'semnatura',v:'Tudor'},{c:'trimis'},{c:'neredirectionat',v:'lant',d:'N-ai dat mai departe mesajul-lanț de la Matei'},{c:'iesit'}],
+    drum:[['eticheta-noua','Excursie'],['eticheteaza',['excursie'],'Excursie'],['deschide','excursie'],['redir','excursie'],['sugestie','mam',MAMA_T.adresa],
+     ['corp','Mami, uite programul excursiei de sâmbătă.\nTudor'],['trimite'],['iesi']],
+    gresit:{drum:[['eticheta-noua','Excursie'],['eticheteaza',['excursie'],'Excursie'],['deschide','lant'],['redir','lant'],['sugestie','mam',MAMA_T.adresa],
+     ['corp','Mami, uite.\nTudor'],['trimite'],['deschide','excursie'],['redir','excursie'],['sugestie','mam',MAMA_T.adresa],['corp','Mami, uite programul excursiei de sâmbătă.\nTudor'],['trimite'],['iesi']]},
+    ajutor:'+ de lângă Etichete → „Excursie” → Creează → bifezi „Programul excursiei” → 🏷 → Excursie → Aplică → deschizi „Programul excursiei” → Redirecționează → Către: „mam” → sugestia → un rând, „Tudor” → Trimite → Profil → Deconectează-te.',
+    arata:'eticheta „Excursie” pe „Programul excursiei”; „Programul excursiei” → Redirecționează → sugestia „Mama” → „Mami, uite programul excursiei de sâmbătă.” / „Tudor” → Trimite; mesajul-lanț rămâne pe loc; Profil → Deconectează-te.',
+    why:'Mesajul dirigintei e la eticheta lui și a ajuns la mama, cu adresa din agendă. Mesajul-lanț s-a oprit la Tudor.'})
+  ]}),
+ qs:[
+  {t:'choice',q:'Tudor pune eticheta „Excursie” pe un mesaj din Mesaje primite. Ce se întâmplă cu mesajul?',
+   o:['Rămâne în Mesaje primite și apare și la Excursie','Pleacă din Mesaje primite și stă doar la Excursie','Îl primește din nou diriginta, care l-a trimis','Se șterge după ce îl deschizi la Excursie'],ok:0,
+   ajutor:'Pasul „Etichetele”: eticheta mută mesajul?',
+   why:'Eticheta nu mută mesajul: rămâne în Mesaje primite, iar la eticheta Excursie îl găsești repede.'},
+  M_({q:'În contul inventat al lui Tudor sunt două mesaje de la antrenorul lui de fotbal, Paul Nedelcu. Fă eticheta „Fotbal”, pune sub ea mesajele antrenorului, apoi apasă eticheta, în stânga.',
+   sim:SIM_T({mesaje:[M_ANTR1,M_ANTR2,M_PROIECT_T,M_EXCURSIE_T]}),
+   teste:[{c:'eticheta',v:'Fotbal'},{c:'etichetat',v:{ids:['antrenament','meci'],et:'Fotbal'},d:'Mesajele antrenorului au eticheta „Fotbal”'},
+    {c:'neetichetat',v:{ids:['excursie'],et:'Fotbal'},d:'Programul excursiei nu are eticheta „Fotbal”'},{c:'vazutEticheta',v:'Fotbal'}],
+   drum:[['eticheta-noua','Fotbal'],['eticheteaza',['antrenament','meci'],'Fotbal'],['eticheta','Fotbal']],
+   gresit:{drum:[['eticheta-noua','Fotbal'],['eticheteaza',['antrenament','meci','excursie'],'Fotbal'],['eticheta','Fotbal']]},
+   ajutor:'Pașii „Etichetele” și „Pui mesajele sub etichetă”: +, numele, Creează; apoi bifezi mesajele, 🏷, eticheta, Aplică.',
+   arata:'+ → „Fotbal” → Creează → ☐ „Antrenamentul de sâmbătă” + ☐ „Meciul de duminică” → 🏷 → ☑ Fotbal → Aplică → Fotbal (în stânga).',
+   why:'Mesajele antrenorului sunt acum la „Fotbal”. Mesajul lui Luca despre minge ține și el de fotbal: îl poți pune acolo sau nu, eticheta e a ta. Programul excursiei nu e despre fotbal.'}),
+  M_({q:'Tudor vrea să-i scrie mai ușor dirigintei. Salvează-o în agenda lui pe Carmen Voicu, cu adresa din mesajul ei, apoi întoarce-te la mesaje, apasă Scrie și pune-o în Către din agendă. Nu trimite mesajul.',
+   sim:SIM_T(),mesaj:{tip:'nou'},
+   teste:[{c:'contact',v:{adresa:DIRIG.adresa,nume:'Carmen Voicu'},d:'Diriginta Carmen Voicu e în agendă, cu adresa ei'},{c:'dinAgenda',v:DIRIG.adresa},{c:'catre',v:DIRIG.adresa}],
+   drum:[['agenda'],['contact',{prenume:'Carmen',nume:'Voicu',adresa:DIRIG.adresa}],['gmail'],['scrie'],['sugestie','car',DIRIG.adresa]],
+   gresit:{drum:[['agenda'],['contact',{prenume:'Carmen',nume:'Voicu',adresa:'carmen.voic@'+D}],['gmail'],['scrie'],['sugestie','car','carmen.voic@'+D]]},
+   ajutor:'Pasul „Agenda”: contacts.google.com → Creează o persoană de contact → primul rând din lista de dedesubt → numele, adresa → Salvează → gmail.com → Scrie → primele litere în Către → sugestia.',
+   arata:'contacts.google.com → Creează o persoană de contact → primul rând din lista de dedesubt → Carmen / Voicu / carmen.voicu@scoala-exemplu.test → Salvează → gmail.com → Scrie → Către: „car” → sugestia.',
+   why:'Adresa dirigintei e în agendă, literă cu literă. De acum o alege din sugestii.'}),
+  {t:'hunt',q:'Mesajul Ilincăi către dirigintă încalcă regulile netichetei. Apasă pe fragmentele nepotrivite.',
+   src:'Subiect: [[???|subiectul spune despre ce e mesajul, de exemplu „Ședința cu părinții”]] Mesaj: [[Salut!|dirigintei îi scrii „Bună ziua, doamnă dirigintă,”]] Vă rog să-mi spuneți când e ședința cu părinții. [[RĂSPUNDEȚI REPEDE!!!|majusculele și „!!!” înseamnă că strigi]] [[Bye|la final: „Vă mulțumesc,” (ai cerut ceva) și numele tău]]',
+   indiciu:'Subiectul, formula de adresare, majusculele, încheierea.',
+   ajutor:'Pasul „Neticheta: cum scrii”: ce reguli are un mesaj politicos?',
+   why:'Cu subiect clar, „Bună ziua, doamnă dirigintă,”, fără cuvinte strigate cu majuscule și cu „Vă mulțumesc,” și numele, mesajul arată respect și primește repede răspuns.'},
+  {t:'classify',q:'Ce faci cu fiecare mesaj?',cats:['Îl dai mai departe','Nu-l dai mai departe'],
+   items:[['„Trimite-l la toată lista ta, altfel pierzi tot!”',1],['Programul excursiei, trimis doar ție, pe care diriginta ți-a cerut să-l arăți tatălui tău',0],['Lista cu adresele colegilor, pentru un joc online care ți-o cere',1],['Mesajul în care un coleg îți scrie de ce e trist',1]],
+   ajutor:'Pasul „Neticheta: ce dai mai departe”: mesajele-lanț, adresele altora și ce ți-a scris cineva doar ție.',
+   why:'Mesajele-lanț, adresele colegilor și ce ți-a scris cineva doar ție nu le dai mai departe. Programul ajunge la cine trebuie să-l vadă.'}
+ ]
+};
+
+/* „Acum la calculatorul din laborator”: Gmail-ul adevărat și Agenda Google, cu contul elevului de la școală; fără profesor;
+   gesturi mici. Pașii au un TITLU îngroșat la început: lecția trimite la ei după titlu („Sari la pasul „Ieșirea din cont””),
+   nu după număr. Reparația după judecata 1 (12.10.2026, registrul _verificare/registru_j1.md): drumul exact din ajutorul
+   Agendei (A), adresa profesorului din caiet sau din Trimise (B), regula calculatorului comun și „Sună de pauză?”, un
+   laborator mai scurt (C), o singură regulă despre profesor (D), clic pe „Către” și 🏷 pe mesajul deschis și în Gmail (N). */
+const ATELIER='<a href="?pas=atelier">atelierul lecției</a>';
+const IESIRE='„Ieșirea din cont”';
+const PASI_REAL=[
+  `<b>Adresa profesorului.</b> Caută în caiet adresa profesorului, scrisă la lecția 14. N-o ai? Scrie-o acum, literă cu literă, de pe tablă. Nu e nici pe tablă? O iei din Gmail, la pasul „Mesajul de la lecția 14”. Deschide o filă nouă cu <b>+</b>, în dreapta filei lecției (sau <kbd>Ctrl</kbd> + <kbd>T</kbd>); lecția rămâne în fila ei. Treci de la o filă la alta cu clic pe ele. Fereastra browserului n-o închizi: s-ar închide și lecția. Gmail-ul e în engleză? Numele sunt cele din paranteze.`,
+  `<b>Intră în cont.</b> În bara de adrese a filei noi: ${C_('gmail.com')} și <kbd>Enter</kbd>. Intră în contul tău de la școală, ca la lecția 13: adresa, <b>Înainte</b> (Next), parola, <b>Înainte</b>. La întrebările browserului despre parolă refuzi (✕, „Nu acum” sau „Niciodată”), nu <b>Salvează</b> (Save). E deschis contul altcuiva? Nu citești nimic: <b>Profil</b>, apoi <b>Deconectează-te</b> (Sign out). Nu-ți știi adresa sau parola? Închizi fila cu × de pe ea, faci ${ATELIER} și, la final, îi spui profesorului. <b>De acum contul e deschis: sună de pauză? Sari la pasul ${IESIRE}.</b>`,
+  '<b>Eticheta.</b> Un gest mic: în stânga, lângă <b>Etichete</b> (Labels), apasă <b>+</b> (<b>Creează o etichetă nouă</b>, Create new label). Scrie <code>Informatică</code> și apasă <b>Creează</b> (Create). Îți spune că există deja? Ai făcut-o la o oră trecută: mergi mai departe.',
+  `<b>Mesajul de la lecția 14.</b> Apasă <b>Trimise</b> (Sent) și deschide mesajul trimis profesorului la lecția 14. N-ai adresa lui în caiet? Scrie-o acum, literă cu literă: o vezi cu săgeata ▾ de lângă „către” (<b>Afișează detaliile</b>, Show details), ca la lecția 13. Sus pe mesaj apasă 🏷 <b>Etichete</b> (Labels), de obicei lângă ←, bifează Informatică și <b>Aplică</b> (Apply), dacă apare. Nu vezi 🏷? Treci mai departe. N-ai găsit nici mesajul, nici adresa? Sari la pasul ${IESIRE} și, la final, îi spui profesorului.`,
+  '<b>Dacă ai timp.</b> În <b>Mesaje primite</b> (Inbox), pune sub Informatică și mesajele profesorului de la lecțiile 13 și 14: caseta din stânga, 🏷, Informatică, Aplică. N-ai timp sau n-ai niciunul? Treci mai departe.',
+  `<b>Agenda.</b> În bara de adrese: ${C_('contacts.google.com')} și <kbd>Enter</kbd>. Sus în stânga apasă <b>Creează o persoană de contact</b> (Create contact). Dedesubt se deschide o listă: apasă primul ei rând, tot <b>Creează o persoană de contact</b> (Create a contact). Scrie adresa profesorului din caiet (de la lecția 14), literă cu literă, iar la nume prenumele și numele lui, de pe tablă (nu sunt pe tablă? lasă numele gol), apoi <b>Salvează</b> (Save). Înapoi la mesaje: ${C_('gmail.com')} și <kbd>Enter</kbd>. Agenda nu se deschide? Te întorci tot cu gmail.com.`,
+  '<b>Mesajul nou.</b> Apasă <b>Scrie</b> (Compose). Un gest mic: apasă pe cuvântul <b>Către</b> (To). Se deschide o fereastră cu persoanele tale de contact: o închizi fără să alegi (✕ din colțul ei sau <b>Anulare</b>, Cancel). Apoi în Către tastează primele litere ale numelui profesorului, compară sugestia cu caietul, literă cu literă, și apasă pe ea. Nicio sugestie? Scrie adresa din caiet.',
+  '<b>Scrie politicos.</b> La <b>Subiect</b> (Subject): „Lecția 15”. În corp, pe rânduri: „Bună ziua, domnule profesor,” (sau „Bună ziua, doamnă profesoară,”), „V-am salvat adresa în agendă.”, „Vă mulțumesc,”, apoi prenumele, numele și clasa ta. Niciun cuvânt scris numai cu majuscule și fără „!!!”. Citește tot o dată, mai ales Către, și apasă <b>Trimite</b> (Send).',
+  '<b>Eticheta pe mesajul de azi.</b> În <b>Trimise</b> (Sent), bifează caseta din stânga mesajului de azi, apasă 🏷 sus, bifează Informatică și Aplică, dacă apare. Apasă <b>Informatică</b>, în stânga: mesajul e acolo, dar și în Trimise. Eticheta nu mută mesajul.',
+  '<b>Ieșirea din cont.</b> În dreapta sus apasă <b>Profil</b> (cerculețul cu inițiala sau cu poza ta), apoi <b>Deconectează-te</b> (Sign out). Verifică: apare din nou pagina de conectare.',
+  '<b>Fila Gmail.</b> Închide fila Gmail cu <b>×</b> de pe ea (nu fereastra browserului). Fără parolă nu intră nimeni în contul tău. Ai apăsat din greșeală Salvează la parolă? Îi spui profesorului înainte să pleci. Pe fila lecției apasă <b>La verificare →</b> și răspunde la cele 5 întrebări.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vi_m2_l15',
+  mod:'lectie',
+  titlu:'Dosare cu mesaje și agenda de utilizatori. Netichetă',
+  marca:'Lecția <b>15</b> · clasa a VI-a',
+  h1:'Dosare cu mesaje și agenda de utilizatori. <span class="acc">Netichetă</span>',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VI-a',
+  unitate:'VI-U2',
+  unitateTitlu:'Comunic prin Internet, în siguranță',
+  competente:['CS.1.3'],
+  lectii:'15',
+  ancoraText:'Programa (OMEN 3393/2017), clasa a VI-a, CS.1.3 · unitatea VI-U2 „Comunic prin Internet, în siguranță” · lecția 15 · conținuturile: „'+CONT.join('”, „')+'”',
+  intro:'Lecția 15. În Gmail îți pui mesajele în ordine cu <b>etichete</b>, salvezi în <b>Agenda Google</b> adresele oamenilor cu care îți scrii și le alegi de acolo când scrii. Apoi înveți <b>neticheta</b>: cum scrii un mesaj politicos și ce nu dai mai departe. La final faci drumul unui mesaj, cu ce ai învățat în lecțiile 13, 14 și 15. Exersezi în pagină, într-o căsuță de exersare: un desen al Gmail-ului, cu conturi inventate. Apoi lucrezi în Gmail-ul adevărat, la calculatorul din laborator. <b>Ai nevoie de:</b> lecțiile 13 și 14. Poți lucra singur: fiecare pas are un exemplu și un exercițiu cu indiciu.',
+  cum:`<b>Cum lucrezi</b><ol>
+<li><b>Învață</b>: primul pas îți spune la ce folosește lecția; apoi urmează 5 pași scurți, câte o idee, cu un exemplu „Uite cum”. Nu ai înțeles? „Explică-mi altfel”.</li>
+<li><b>Încearcă tu</b>: după fiecare pas, un exercițiu mic, care nu se notează, în căsuța de exersare. Greșești? Primești un indiciu. „Încă un exercițiu” îți dă altele.</li>
+<li><b>Atelier</b>: faci drumul unui mesaj, în căsuța de exersare. Testele se bifează singure.</li>
+<li><b>Acum la calculatorul din laborator</b>: îți faci eticheta Informatică, salvezi adresa profesorului în agendă și îi scrii politicos, în Gmail-ul adevărat.</li>
+<li><b>Verificare</b>: 5 întrebări, doar din ce ai învățat în pași. Stele pentru răspunsurile din prima.</li></ol>`,
+  banda:'<span class="tg">Informatică</span><span class="tg">Serbare</span><span class="tg">Agendă</span>',
+  nivele:[LECTIA],
+  tipuri:{dosare:SimPostaGmailDosare.tip},
+  aplicatieReala:{aplicatie:'Gmail-ul adevărat și Agenda Google, cu contul tău de la școală, pe calculatorul din laborator',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:`<p>Acum lucrezi în Gmail-ul adevărat, cu contul tău de la școală. Lecția o faci singur, pas cu pas.</p>
+<p><b>Regula calculatorului comun:</b> nu pleci de la calculator cu contul deschis. Sună de pauză și n-ai terminat? Sari la pasul ${IESIRE}, aproape de final.</p>
+<p>Profesorul îl chemi doar dacă apare o fereastră pe care n-o știi: nu apeși nimic în ea și ridici mâna. Poate fi la cealaltă clasă: cât aștepți, citește pe fila lecției pașii următori, fără să pleci de la calculator.</p>`,
+    pasi:PASI_REAL},
+  diploma:{
+    titlu:'Corespondent ordonat și politicos',
+    rezumat:'etichetele (Creează o etichetă nouă, caseta, Etichete, Aplică; un mesaj cu mai multe etichete), Agenda Google (Creează o persoană de contact, Salvează, sugestiile de sub Către) și neticheta: subiect clar, formula de adresare, la obiect, fără cuvinte scrise numai cu majuscule, „Vă mulțumesc,” când ceri ceva, semnătura, fără mesaje-lanț, fără adresele altora și fără ce ți-a scris cineva doar ție',
+    aplicatie:'Gmail-ul adevărat, pe calculatorul din laborator',
+    provocare:PASI_REAL
+  }
+});
+</script>
+</body>
+</html>
