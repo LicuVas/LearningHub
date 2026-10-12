@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gestionarea proiectului audio-video. Înregistrarea și redarea sunetelor</title>
+<meta name="description" content="Lecția 12, clasa a VII-a: proiectul Audacity (fișierul de lucru .aup4 / .aup3), proiect nou, înregistrarea vocii cu butonul roșu, ascultarea și refacerea ei, salvarea proiectului cu numele tău, închiderea și redeschiderea. Cu Audacity simulat în pagină și pașii de făcut la calculator.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+/* TEMA: studioul de înregistrare — becul roșu „ON AIR”, unda care crește, hârtia cu textul de citit */
+:root{
+  --desk:#EFEDEA; --paper:#FFFFFF; --paper2:#F5F3F0; --line:#D3CEC7;
+  --ink:#24211E; --ink2:#5B554E; --accent:#B3263E; --accentInk:#FFFFFF; --sel:#F6DDE2;
+  --mark:#FFE08A; --markInk:#24211E; --ok:#1B7A4A; --okbg:#E2F4EA; --bad:#B42318; --badbg:#FBE7E4;
+  --fd:"Bitter",Georgia,serif; --fb:"Nunito Sans","Segoe UI",system-ui,sans-serif; --fm:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#16130F; --paper:#201C18; --paper2:#2A2520; --line:#433C35; --ink:#EEE8E1; --ink2:#B5ACA2;
+  --accent:#F08A9B; --accentInk:#2A0C12; --sel:#4A2129; --mark:#E9C46A; --markInk:#24211E;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#16130F; --paper:#201C18; --paper2:#2A2520; --line:#433C35; --ink:#EEE8E1; --ink2:#B5ACA2;
+  --accent:#F08A9B; --accentInk:#2A0C12; --sel:#4A2129; --mark:#E9C46A; --markInk:#24211E;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+body{background:var(--desk)}
+/* banda: becul „ON AIR” și o undă care crește */
+.banda{min-height:32px;padding:4px 10px;display:flex;align-items:center;gap:10px;background:#2B2622}
+.banda .air{flex:none;font:700 .72rem/1 var(--fb);letter-spacing:.12em;color:#fff;background:#C8102E;border-radius:4px;padding:5px 7px;box-shadow:0 0 10px rgba(255,60,80,.7)}
+.banda .und{position:relative;flex:1 1 auto;height:22px;display:flex;align-items:center;gap:2px;overflow:hidden}
+.banda .und i{flex:1;max-width:3px;background:#F2B8C2;border-radius:1px}
+.banda .und i.nou{background:#5a524b}
+h1{font-weight:700;letter-spacing:-.01em}
+h1 em{color:var(--accent);font-style:normal}
+h2{font-weight:600}
+.gest{border-left:4px solid var(--accent);background:var(--paper2);padding:6px 10px;border-radius:0 6px 6px 0;margin:.6em 0 0}
+.simb{font-family:"Segoe UI Symbol","Segoe UI",system-ui,sans-serif;font-weight:700}
+.rosu{color:#d81b3c}
+.foaie{border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:8px 12px;margin:.5em 0;font-family:var(--fd);font-size:1.02rem;line-height:1.5}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/audio-linie.js"></script>
+<script src="../../_sim/audio-linie-inregistrare.js"></script>
+<script>
+/* LECȚIA 12, clasa a VII-a, modulul 2 (revizuirea LearningHub, standardul din 27.09.2026 + regula 10 din 08.10.2026),
+   scrisă în tura de noapte 10→11.10.2026. Un nivel pe pași: pasul 0, 5 pași cu „Încearcă” și cu un gest scurt în
+   Audacity-ul adevărat, atelierul, pasul din laborator, 5 întrebări.
+   Simulatorul: lectii/_sim/audio-linie-inregistrare.js (extensie nouă, proprietar VII/12), peste lectii/_sim/audio-linie.js
+   (VII/11, neschimbat). Faptele despre proiect, salvare, deschidere sunt probate în Audacity 4.0.0 REAL (desktop ascuns,
+   _proba/audacity_proba_l12_*.json); despre înregistrare, din manualul Audacity (butonul roșu NU s-a apăsat: fără microfon).
+   Afirmațiile: afirmatii.json. Imaginile: img/SURSE.json.
+   Reparată după judecata 1 (12.10.2026): _verificare/registru_j1.md (A–S); simulatorul 1.1. */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const J='../../../jocuri/audio-video-vii/img/';
+const K=s=>s.split('+').map(k=>`<kbd>${k}</kbd>`).join('+');
+const S=x=>`<span class="simb">${x}</span>`;
+const REC=`<span class="simb rosu">●</span>`;
+const PROG1='Operații pentru gestionarea unei aplicații audio, audio-video: creare, deschidere, vizualizare, salvare, închidere';
+const PROG2='Înregistrarea şi redarea sunetelor';
+const TEXT_CITIT=`Bună ziua! Ascultați radioul școlii. Astăzi vă spunem vremea: dimineața e frig, la prânz iese soarele, iar seara poate ploua. Nu uitați umbrela! În pauza mare, biblioteca vă așteaptă cu cărți noi despre animale, despre călătorii și despre știință. Vă mulțumim că ne ascultați. La revedere!`;
+const P=o=>Object.assign({t:'audioproiect'},o);   /* exercițiu în Audacity-ul simulat (proiecte, înregistrare, salvare) */
+const COLEGI=[{nume:'Ionescu_Dan_7A_voce',autor:'coleg',voce:{sec:9,seed:21}},{nume:'Marin_Ioana_7B_voce',autor:'coleg',voce:{sec:7,seed:33}}];
+const NESALVATE=fig('img/modificari-nesalvate.webp',677,237,'Fereastra Modificări nesalvate din Audacity 4, cu întrebarea Dorești să salvezi modificările acestui proiect înainte de a-l închide și butoanele Salvează încadrat, Nu salva, Renunță','„Modificări nesalvate” (Unsaved changes): apare doar dacă proiectul are ceva nesalvat. Ca să nu pierzi înregistrarea, apeși <b>Salvează</b>, butonul încadrat.');
+const EROARE=fig('img/eroare-salvare.webp',508,233,'Fereastra Audacity cu titlul Eroare la salvarea proiectului: Audacity a eșuat să scrie într-un fișier. Poate C: nu are drepturi de scriere sau discul este plin. Butonul OK','„Salvează ca…” peste un proiect care există deja, când proiectul tău deschis are deja un nume: Audacity 4 dă eroarea asta, iar proiectul de acolo <b>dispare</b> de pe disc. (Pe un proiect fără nume, „Fără titlu”, „Salvează ca…” înlocuiește proiectul de acolo fără nicio fereastră.)');
+const PROVOCARE=[
+  `Pune căștile cu microfon de pe masa ta. Nu băga și nu scoate cabluri din spatele calculatorului. Pornește Audacity, dacă nu e deja pornit: <b>Start</b>, scrii <b>Audacity</b>, clic. Ferestrele „O nouă versiune…” sau „Bun venit”, dacă apar, le închizi cu ✕. Nu instala nimic.`,
+  `În fila <b>Acasă (Home)</b>, clic pe <b>Proiect nou (New project)</b>. (Audacity 3 n-are fila Acasă: de obicei pornește direct cu un proiect gol.)`,
+  `Apasă <b>Setări audio (Audio setup)</b> › <b>Dispozitiv înregistrare (Recording device)</b> și uită-te ce microfon e ales (de obicei are o bifă în față): trebuie să fie al căștilor (numele lui conține de obicei „Microphone”, „Microfon” sau „Headset”). Dacă nu e, alege-l. Nu umbla la setările Windows.`,
+  `Apasă ${REC} și citește clar, nu tare (colegii lucrează lângă tine), textul de mai jos, cam 20 de secunde. Apoi dă clic, în fereastra Audacity, pe ${S('■')} <b>Stop</b>.<div class="foaie">${TEXT_CITIT}</div>`,
+  `Apasă ${S('|◀')}, apoi ${S('▶')}, și ascultă în căști. Unda e aproape o linie, vârfurile ating marginile sau se aude zgomot? Apasă ${K('Ctrl+Z')} și înregistrează din nou, la o palmă de microfon, în liniște. (Dacă după ${K('Ctrl+Z')} rămâne o pistă goală, nu e nimic: înregistrezi din nou.) Dacă stă un coleg lângă tine, cere-i părerea: se înțelege fiecare cuvânt?`,
+  `<b>Fișier › Salvează (File › Save)</b> sau ${K('Ctrl+S')}. La „Unde dorești să salvezi?” apasă <b>Salvează pe calculator (Save to computer)</b>; nu bifa „Nu mai arăta din nou”. Întrebarea nu apare? E normal (a bifat-o un coleg): mergi mai departe. Fereastra de salvare se poate deschide unde a salvat colegul de dinainte: în stânga alege tu <b>Documente (Documents)</b>, sau folderul scris pe tablă, dacă profesorul a scris unul.`,
+  `La <b>Nume fișier</b> șterge „Fără titlu” și scrie numele TĂU după modelul <code>Nume_Prenume_clasa_voce</code>: în loc de <i>Nume</i>, numele tău de familie; în loc de <i>Prenume</i>, prenumele tău; în loc de <i>clasa</i>, clasa ta (de exemplu 7A). Fără diacritice și fără să copiezi modelul.`,
+  `<b>Înainte de Salvare, caută în listă EXACT ce ai scris (literele mari sau mici nu contează):</b> dacă e acolo, al oricui ar fi, pune o cifră la capăt (Audacity 4 nu întreabă, ci înlocuiește proiectul de acolo). Apoi <b>Salvare</b>: sus, în bara de titlu, apare numele tău. Nu folosi <b>Salvează ca…</b> peste un nume care există: proiectul de acolo se șterge. (Audacity 3: dacă apare „Dorești să suprascrii proiectul…?”, apasă <b>Nu</b> și pune o cifră.)`,
+  `<b>Fișier › Închide proiectul (File › Close project)</b> sau ${K('Ctrl+W')}, în Audacity. În fila <b>Acasă</b>, la <b>Noi și recente (New & recent)</b>, clic pe proiectul tău cu <code>voce</code> la capăt: se deschide. Apasă ${S('|◀')} și ${S('▶')} și ascultă-l din nou. (Audacity 3: <b>Fișier › Deschide…</b>, apoi Documente și proiectul tău.)`,
+  `Închide Audacity cu ✕: proiectul e salvat, deci nu te întreabă nimic. Dacă totuși apare „Modificări nesalvate” (Unsaved changes), apasă <b>Salvează</b>, butonul încadrat în imagine. Proiectul rămâne unde l-ai salvat (Documente sau folderul de pe tablă): în lecția 13 îl deschizi și îl cureți. ${NESALVATE}`,
+  `Ceva nu merge? <b>Unda rămâne o linie, deși vorbești, sau la ${REC} apare o fereastră de eroare</b> (de exemplu „Error opening recording device”)? Închide fereastra (OK), apoi: 1) <b>Setări audio</b> › <b>Dispozitiv înregistrare</b>: alege microfonul căștilor. 2) Microfonul căștilor nu e în listă? <b>Setări audio</b> › <b>Rescanează dispozitive audio (Rescan audio devices)</b>, apoi uită-te din nou în listă. 3) Tot nimic? Lucrează la calculatorul unui coleg, cu căștile lui, și spune-i profesorului la sfârșitul orei. Nu schimba setările Windows ale calculatorului.`,
+  `<b>La salvare apare o fereastră care îți cere să te conectezi (audio.com)?</b> Nu te conecta și nu-ți face cont: închide-o cu ✕ și spune-i profesorului la sfârșitul orei.`
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vii_m2_l12',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/vii/, „Lecția 12”, pasul din laborator înainte de verificare
+  titlu:'Gestionarea proiectului audio-video. Înregistrarea și redarea sunetelor',
+  marca:'Lecția 12 · <b>Proiectul și înregistrarea</b>',
+  h1:'Gestionarea proiectului audio-video. <em>Înregistrarea și redarea sunetelor</em>',
+  clasa:'a VII-a', unitate:'VII-U2', unitateTitlu:'Aplicații audio și audio-video',
+  competente:['CS.1.2','CS.3.2'], lectii:'12',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.2, CS.3.2 · unitatea VII-U2 „Aplicații audio și audio-video” · lecția 12 din modulul 2 · conținuturile: „Operații pentru gestionarea unei aplicații audio, audio-video: creare, deschidere, vizualizare, salvare, închidere”, „Înregistrarea şi redarea sunetelor”',
+  banda:'<span class="air">ON AIR</span><span class="und">'+Array.from({length:44},(_,i)=>`<i class="${i>30?'nou':''}" style="height:${i>30?8:Math.round(14+80*Math.abs(Math.sin(i*1.1)*Math.cos(i*.29)))}%"></i>`).join('')+'</span>',
+  intro:`<p>Faci primul tău <b>proiect</b> în Audacity: îți înregistrezi vocea cu butonul roșu, o asculți, o refaci dacă nu e bună, salvezi proiectul cu numele tău, îl închizi și îl redeschizi. Exersezi întâi în pagină, apoi la calculator, cu căștile cu microfon.</p>
+<p><b>Ai nevoie de:</b> lecția 11 (fereastra Audacity: pista, unda, capul de redare, ${S('▶')} Redare, ${S('■')} Stop, ${S('|◀')} Început). Din lecția 3: fereastra de salvare, <b>Documente (Documents)</b>, numele fișierului după regulă, ${K('Ctrl+W')}. Din lecția 2: ${K('Ctrl+Z')}. Din clasa a V-a: microfonul, dispozitivul care „aude” vocea.</p>`,
+  cum:`<p><b>Poți lucra singur, fără profesor.</b> Citești un pas, faci exercițiul „Încearcă tu” și gestul scurt din Audacity-ul adevărat. În pagină nu se folosește microfonul: unda o desenează simulatorul, după cum alegi în panoul „Tu, la microfon”. Vocea ta adevărată o înregistrezi la calculator, cu căștile cu microfon.</p>
+<p>În Audacity-ul din pagină alegi comenzile din meniul <b>Fișier</b>. Merg și ${K('Ctrl+S')}, ${K('Ctrl+Z')} și bara de spațiu. ${K('Ctrl+W')} și ${K('Ctrl+O')} le apeși doar în Audacity-ul adevărat: în browser, ${K('Ctrl+W')} închide fila lecției.</p>`,
+  nivele:[
+{t:'Gestionarea proiectului audio-video. Înregistrarea și redarea sunetelor',lectii:[12],continuturi:[PROG1,PROG2],final:true,
+ obiectiv:'faci un proiect nou în Audacity, îți înregistrezi vocea, o asculți și o refaci dacă nu e bună, salvezi proiectul cu numele tău, îl închizi și îl redeschizi.',
+ pasi:[
+  /* ---------- pasul 0 ---------- */
+  {t:'La ce folosește',
+   text:`<p>Reporterii școlii înregistrează interviuri, iar un podcast începe tot cu o voce la microfon. O înregistrare iese rar perfectă din prima: o asculți, o refaci, apoi o păstrezi, ca s-o lucrezi mai departe.</p>
+<p>Azi faci primul tău <strong>proiect</strong> în Audacity: îți înregistrezi vocea, o asculți și o salvezi cu numele tău. În lecția 13 o vei curăța.</p>
+${fig('img/podcast.webp',960,720,'O persoană văzută din spate, cu căști pe urechi, înregistrează la un microfon de masă, citind de pe o foaie scrisă de mână, într-o sală cu calculatoare','Înregistrarea unui podcast într-o sală cu calculatoare: căști, microfon, textul scris pe o foaie. Foto: Guillaume Bonzoms, <a href="https://commons.wikimedia.org/wiki/File:Enregistrement_d%27un_podcast.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0</a>.')}`},
+  /* ---------- pasul 1 ---------- */
+  {t:'Proiectul: fișierul tău de lucru',
+   text:`<p>Ce faci în Audacity stă într-un <mark>proiect</mark>: pistele și înregistrările de pe ele. Proiectul e <strong>fișierul de lucru</strong> al Audacity: se deschide doar în Audacity, iar data viitoare continui de unde ai rămas. Audacity 4 îl salvează cu extensia <code>.aup4</code>, Audacity 3 cu <code>.aup3</code>.</p>
+<p>Un <strong>fișier de sunet</strong> (<code>.wav</code>, <code>.mp3</code>) e altceva: îl ascultă oricine, pe aproape orice telefon. Pe acela îl faci la final, într-o lecție următoare.</p>
+<p>Proiect nou: la pornire, în fila <strong>Acasă (Home)</strong>, clic pe <strong>Proiect nou (New project)</strong>.</p>
+${fig('img/acasa.webp',1000,536,'Fila Acasă a Audacity 4 la pornire: titlul Proiecte, fila Noi și recente și dala Proiect nou încadrată cu roșu; jos, butoanele Nou și Deschide altul','Audacity 4 la pornire: fila <b>Acasă</b>, cu dala <b>Proiect nou</b>.')}
+<p class="gest"><b>La calculator, acum:</b> pornește Audacity și fă un proiect nou, ca în „Uite cum”.</p>`,
+   exemplu:`<ol><li><b>Start</b>, scrii <b>Audacity</b>, clic. Fereastra „O nouă versiune…” sau „Bun venit”, dacă apare, o închizi cu ✕.</li>
+<li>În fila <b>Acasă</b>, clic pe <b>Proiect nou</b> (sau <b>Fișier › Nou…</b>).</li>
+<li>Se deschide fila <b>Proiect</b>, fără nicio pistă. Sus scrie doar „Audacity 4.0”: proiectul încă n-are nume.</li></ol>
+<p>Audacity 3 n-are fila Acasă: de obicei pornește direct cu un proiect gol.</p>`,
+   altfel:`<p>Proiectul e ca un caiet de lucru: scrii în el, îl închizi, iar ora viitoare îl deschizi și continui. Fișierul de sunet e ca o felicitare gata scrisă: o dai oricui s-o citească, dar nu mai lucrezi în ea.</p>`,
+   incearca:P({start:{ecran:'acasa'},
+    q:'În Audacity-ul din pagină, fă un <b>proiect nou</b>.',
+    teste:[{ce:'Ai făcut un proiect nou',proiectNou:true,cum:'În fila Acasă, clic pe dala Proiect nou (sau Fișier › Nou…).'}],
+    solutie:[{proiectNou:1}],gresit:[],
+    ajutor:'Dala cu semnul + din fila Acasă.',
+    why:'Proiect nou deschide fila Proiect, cu un proiect gol: acolo vei înregistra.'}),
+   inca:[
+    {t:'choice',q:'Vrei să lucrezi și ora viitoare la înregistrarea ta, în Audacity 4. Ce fișier îți trebuie?',
+     o:['interviu.aup4','interviu.mp3','interviu.wav','interviu.docx'],ok:0,
+     ajutor:'Care extensie e a proiectului Audacity 4?',why:'.aup4 e proiectul Audacity 4, fișierul de lucru. .mp3 și .wav sunt fișiere de sunet, iar .docx e un document Word.'},
+    P({start:{ecran:'inchis'},
+     q:'Audacity e închis. Pornește-l (butonul „Pornește Audacity” ține locul butonului Start) și fă un proiect nou, din meniul <b>Fișier</b>.',
+     teste:[{ce:'Ai pornit Audacity',folosit:'pornit',cum:'Apasă „Pornește Audacity”.'},{ce:'Ai făcut un proiect nou',proiectNou:true,cum:'Fișier › Nou… (sau dala Proiect nou).'}],
+     solutie:[{pornesteAplicatia:1},{proiectNou:1}],gresit:[{pornesteAplicatia:1}],
+     ajutor:'Pornește Audacity, apoi Fișier › Nou….',why:'Ai deschis Audacity, apoi un proiect nou, gol.'})
+   ]},
+  /* ---------- pasul 2 ---------- */
+  {t:'Înregistrezi: butonul roșu ●',
+   text:`<p>Înregistrarea are nevoie de un <strong>microfon</strong>: în laborator, cel al căștilor. Microfonul folosit e cel ales în <strong>Setări audio (Audio setup) › Dispozitiv înregistrare (Recording device)</strong>; de obicei are o bifă în față.</p>
+<p>Apeși butonul roșu <strong>${REC} Înregistrează (Record)</strong> și vorbești. Pe o <strong>pistă</strong> apare, de obicei chiar cât vorbești, unda vocii tale. Oprești cu <strong>${S('■')} Stop</strong> sau cu bara de spațiu.</p>
+<p>Vorbește clar, cam la o palmă de microfon.</p>
+${fig('img/proiect-nou.webp',1000,177,'Partea de sus a unui proiect nou în Audacity 4: butonul roșu de înregistrare încadrat lângă Redare și Stop, butonul Setări audio încadrat; dedesubt Piste, Adaugă pistă și linia de timp','Butonul roșu ● și <b>Setări audio</b>, într-un proiect nou.')}
+<p class="gest"><b>La calculator, acum (cu căștile):</b> întâi <b>Setări audio</b> › <b>Dispozitiv înregistrare</b>: alege microfonul căștilor, dacă nu e deja ales. Apoi apasă ${REC}, spune „Unu, doi, trei, probă de microfon” și apasă ${S('■')}.</p>`,
+   exemplu:`${fig('img/setari-audio.webp',300,270,'Lista Setări audio din Audacity 4 cu rândurile Gazdă, Dispozitiv redare, Dispozitiv înregistrare încadrat, Canale înregistrare, Rescanează dispozitive audio, Setări audio','<b>Setări audio</b> › <b>Dispozitiv înregistrare</b>: aici alegi microfonul.')}
+<p>Proiect gol. Clic pe ${REC}: începe înregistrarea. Spui o propoziție. Clic pe ${S('■')}: pe pistă rămâne unda propoziției, cu vârfuri unde ai vorbit și aproape o linie unde ai tăcut.</p>`,
+   altfel:`<p>E ca reportofonul de pe telefon: apeși butonul roșu, vorbești, apeși pătratul ca să oprești. Doar că aici îți vezi vocea desenată pe pistă.</p>`,
+   incearca:P({start:{ecran:'proiect',proiect:{}},
+    q:'Înregistrează <b>cel puțin 3 secunde</b> de voce, la o palmă de microfon, apoi oprește. Distanța o alegi jos, în „Tu, la microfon”.',
+    teste:[{ce:'Ai înregistrat cel puțin 3 secunde și ai oprit',inregistrat:{min:3},cum:'Apasă ●, așteaptă 3 secunde, apoi ■ (Stop).'},
+           {ce:'Unda e bună: ai vorbit la o palmă de microfon',inregistrareBuna:true,cum:'Alege „la o palmă” în „Tu, la microfon” și înregistrează din nou.'}],
+    solutie:[{distanta:'palma'},{inregistreaza:4}],gresit:[{distanta:'departe'},{inregistreaza:4}],
+    ajutor:'„la o palmă”, apoi ●, numără până la 4, apoi ■.',
+    why:'Butonul roșu a pornit înregistrarea, ■ a oprit-o, iar unda a ieșit cu vârfuri potrivite.'}),
+   inca:[
+    P({start:{ecran:'proiect',proiect:{},mic:'mixaj'},
+     q:'La calculatorul ăsta, unda iese o linie dreaptă, deși vorbești: Audacity „ascultă” alt dispozitiv. Alege microfonul căștilor din <b>Setări audio › Dispozitiv înregistrare</b>, apoi înregistrează 3 secunde, la o palmă.',
+     teste:[{ce:'Ai ales microfonul căștilor',micCorect:true,cum:'Setări audio › Dispozitiv înregistrare › Microfon (căștile cu microfon).'},
+            {ce:'Ai înregistrat cel puțin 3 secunde, cu unda bună',inregistrat:{min:3,buna:true},cum:'După ce ai ales microfonul: ●, 3 secunde, ■.'}],
+     solutie:[{mic:'casti'},{distanta:'palma'},{inregistreaza:4}],gresit:[{inregistreaza:4}],
+     ajutor:'Întâi Setări audio, apoi ●.',why:'Cu microfonul căștilor ales, Audacity îți înregistrează vocea.'}),
+    {t:'choice',q:'Care buton pornește înregistrarea în Audacity?',
+     o:['● cercul roșu','▶ triunghiul','■ pătratul','|◀ bara cu triunghi'],ok:0,
+     ajutor:'Ce culoare are?',why:'Cercul roșu înregistrează; ▶ redă, ■ oprește, |◀ duce capul la început.'}
+   ]},
+  /* ---------- pasul 3 ---------- */
+  {t:'Asculți și, dacă trebuie, refaci',
+   text:`<p>După ${S('■')}, ascultă: ${S('|◀')} <strong>Început</strong>, apoi ${S('▶')} <strong>Redare</strong>, ca în lecția 11. Uită-te și la undă:</p>
+<ul><li><strong>aproape o linie</strong> de la un capăt la altul: ai stat prea departe sau Audacity ascultă alt microfon;</li>
+<li><strong>vârfurile ating marginile</strong> pistei: ai stat lipit de microfon, iar vocea sună spart;</li>
+<li><strong>se aude zgomot</strong> (colegi, ventilator): caută liniștea.</li></ul>
+<p>Nu e bună? Apasă ${K('Ctrl+Z')} (anulezi, ca în Word) sau săgeata <strong>↶</strong> din dreapta sus: înregistrarea dispare. Dacă rămâne o pistă goală, nu e nimic. Apoi înregistrezi din nou.</p>
+<p class="gest"><b>La calculator, acum:</b> ascultă proba de microfon cu ${S('|◀')} și ${S('▶')}. Apoi ${K('Ctrl+Z')} și înregistreaz-o din nou.</p>`,
+   exemplu:`<p>Unda e aproape o linie. Apeși ${S('|◀')} și ${S('▶')}: abia se aude ceva. Apeși ${K('Ctrl+Z')}: înregistrarea dispare. Te apropii la o palmă de microfon, apeși ${REC}, vorbești, apoi ${S('■')}. Acum unda are vârfuri potrivite, care nu ating marginile.</p>`,
+   altfel:`<p>E ca o poză făcută cu telefonul: o privești imediat. Dacă a ieșit mișcată, o ștergi și faci alta, mai atent.</p>`,
+   incearca:P({start:{ecran:'proiect',proiect:{voce:{sec:6,distanta:'departe',seed:4}}},
+    q:'Pe pistă e o înregistrare făcută <b>de departe</b>. Ascult-o, anuleaz-o (Ctrl+Z sau săgeata ↶), înregistrează din nou la o palmă, cel puțin 3 secunde, și ascultă înregistrarea nouă de la început.',
+    teste:[{ce:'Ai anulat înregistrarea cu unda aproape o linie',folosit:'anuleaza',cum:'Apasă săgeata ↶ din dreapta sus (sau Ctrl+Z).'},
+           {ce:'Ai înregistrat din nou, la o palmă, cel puțin 3 secunde',inregistrat:{min:3,buna:true},cum:'„la o palmă”, apoi ●, 3 secunde, ■.'},
+           {ce:'Ai ascultat înregistrarea nouă de la început până la capăt',ascultat:true,cum:'|◀ (Început), apoi ▶ și lasă-l să meargă până se oprește singur.'}],
+    solutie:[{anuleaza:1},{distanta:'palma'},{inregistreaza:4},{asculta:1}],gresit:[{asculta:1}],
+    ajutor:'↶ (sau Ctrl+Z); ●, ■; |◀, ▶.',
+    why:'Ai recunoscut unda prea mică, ai anulat-o și ai refăcut înregistrarea mai aproape de microfon.'}),
+   inca:[
+    {t:'choice',q:'Vârfurile undei ating marginile de sus și de jos ale pistei, iar vocea sună spart. Ce faci?',
+     o:['Ctrl+Z și înregistrezi iar, la o palmă de microfon','Lași așa: o voce tare înseamnă o înregistrare bună','Apeși ▶ de mai multe ori, până sună mai bine','Te lipești și mai tare de microfon și înregistrezi iar'],ok:0,
+     ajutor:'Ce înseamnă vârfurile care ating marginile?',why:'Vârfurile lipite de margini înseamnă că ai stat prea aproape; anulezi și refaci de la o palmă.'},
+    P({start:{ecran:'proiect',proiect:{voce:{sec:6,distanta:'lipit',seed:8}},distanta:'lipit'},
+     q:'Înregistrarea de pe pistă are vârfurile lipite de margini. Refă-o: anuleaz-o, înregistrează din nou la o palmă (cel puțin 3 secunde) și ascult-o de la început.',
+     teste:[{ce:'Ai anulat înregistrarea cu vârfurile lipite de margini',folosit:'anuleaza',cum:'Săgeata ↶ (sau Ctrl+Z).'},
+            {ce:'Ai înregistrat din nou, la o palmă, cel puțin 3 secunde',inregistrat:{min:3,buna:true},cum:'Alege „la o palmă” înainte de ●.'},
+            {ce:'Ai ascultat-o de la început până la capăt',ascultat:true,cum:'|◀, apoi ▶.'}],
+     solutie:[{anuleaza:1},{distanta:'palma'},{inregistreaza:4},{asculta:1}],gresit:[{anuleaza:1},{inregistreaza:4},{asculta:1}],
+     ajutor:'Distanța „lipit” rămâne aleasă până o schimbi.',why:'La o palmă de microfon, vârfurile nu mai ating marginile.'})
+   ]},
+  /* ---------- pasul 4 ---------- */
+  {t:'Salvezi proiectul cu numele tău',
+   text:`<p><strong>Fișier › Salvează (File › Save)</strong> sau ${K('Ctrl+S')}. Prima dată, Audacity întreabă <strong>„Unde dorești să salvezi?”</strong>: apeși <strong>Salvează pe calculator (Save to computer)</strong>. Nu bifa „Nu mai arăta din nou”.</p>
+<p>Urmează fereastra de salvare. Alegi <strong>Documente (Documents)</strong> în stânga. La <strong>Nume fișier</strong> ștergi „Fără titlu”, scrii numele TĂU după regulă, cu <code>voce</code> la capăt, apoi <strong>Salvare</strong>.</p>
+<p><strong>Atenție:</strong> Audacity 4 nu întreabă dacă numele există deja: înlocuiește proiectul de acolo. Caută în listă exact ce ai scris (literele mari sau mici nu contează). Iar <strong>Salvează ca… (Save As…)</strong> peste un nume care există șterge proiectul de acolo.</p>
+${fig('img/unde-salvezi.webp',760,530,'Fereastra Salvează proiect din Audacity 4, cu întrebarea Unde dorești să salvezi, varianta Salvează în Cloud gratuit și varianta Pe calculatorul meu, cu butonul Salvează pe calculator încadrat','„Unde dorești să salvezi?” › <b>Salvează pe calculator</b>.')}
+<p class="gest"><b>La calculator, acum:</b> salvează proba de microfon în Documente, cu numele tău și <code>proba</code> la capăt (<code>Nume_Prenume_clasa_proba</code>). Caută întâi în listă.</p>`,
+   exemplu:`${fig('img/salvare-windows.webp',960,294,'Fereastra Windows Salvează proiect, în două bucăți: sus bara de adresă Documente, Audacity4, Projects; jos caseta Nume fișier și butonul Salvare încadrate, iar Salvare cu tipul arată Fișiere Audacity 4 (*.aup4)','Pe un calculator unde nu s-a mai salvat, fereastra se deschide în Documente › Audacity4 › Projects; altfel, unde a salvat ultimul coleg. Alegi oricum <b>Documente</b> în stânga. La un proiect nou, numele propus e „Fără titlu” (aici, proiectul pornise dintr-un sunet): îl ștergi și scrii numele tău.')}
+<p>Nu apare „Unde dorești să salvezi?”? A bifat-o un coleg: mergi mai departe, la fereastra de salvare.</p>
+<p>Ana scrie <code>Popescu_Ana_7A_voce</code>, se uită în listă (nu e acolo) și apasă <b>Salvare</b>: proiectul devine <code>Popescu_Ana_7A_voce.aup4</code>, iar titlul se schimbă. Mai târziu, ${K('Ctrl+S')} salvează pe loc, fără nicio fereastră.</p>
+${fig('img/titlu-salvat.webp',600,50,'Bara de titlu a Audacity 4 după salvare, cu textul Popescu_Ana_7A_voce - Audacity 4.0 încadrat','Bara de titlu după salvare.')}
+${EROARE}
+<p>Audacity 3: <b>Fișier › Salvează proiectul</b>; proiectul primește <code>.aup3</code>.</p>`,
+   altfel:`<p>E ca atunci când îți scrii numele pe caiet înainte să-l pui în dulapul clasei: fără nume nu-l mai găsești, iar cu numele altcuiva colegul își pierde caietul.</p>`,
+   incearca:P({start:{ecran:'proiect',proiect:{voce:{sec:8,seed:12}},fs:{Documente:COLEGI}},
+    q:'Aici joci rolul Anei Popescu din 7A. Salvează proiectul din pagină <b>pe calculator</b>, în <b>Documente</b>, cu numele <b>Popescu_Ana_7A_voce</b>.',
+    teste:[{ce:'Ai salvat în Documente, cu numele Popescu_Ana_7A_voce',salvat:{folder:'Documente',nume:'^Popescu_Ana_7A_voce$'},cum:'Fișier › Salvează › Salvează pe calculator; în stânga Documente; șterge „Fără titlu”, scrie numele; Salvare.'},
+           {ce:'N-ai înlocuit proiectul altcuiva',nimicInlocuit:true,cum:'Numele scris trebuie să fie Popescu_Ana_7A_voce, nu al unui coleg din listă.'}],
+    solutie:[{salveaza:{nume:'Popescu_Ana_7A_voce',folder:'Documente'}}],gresit:[{salveaza:{nume:'Popescu_Ana_7A_voce',folder:'Documente/Audacity4/Projects'}}],
+    ajutor:'Fereastra pornește în alt folder (Documente › Audacity4 › Projects): alege Documente în stânga.',
+    why:'Proiectul e acum în Documente, cu numele tău, iar titlul ferestrei îl arată.'}),
+   inca:[
+    P({start:{ecran:'proiect',proiect:{voce:{sec:8,seed:14}},fs:{Documente:COLEGI.concat([{nume:'Popescu_Ana_7A_voce',autor:'coleg',voce:{sec:5,seed:41}}])}},
+     q:'Ana își salvează înregistrarea de azi. În <b>Documente</b> e deja un <b>Popescu_Ana_7A_voce</b>, de săptămâna trecută, pe care vrea să-l păstreze. Salvează proiectul în Documente fără să-l înlocuiești pe cel vechi.',
+     teste:[{ce:'Ai salvat în Documente, cu Popescu_Ana_7A_voce și o cifră la capăt',salvat:{folder:'Documente',nume:'^Popescu_Ana_7A_voce[0-9]+$'},cum:'Scrie Popescu_Ana_7A_voce2.'},
+            {ce:'Proiectul de săptămâna trecută a rămas neatins',nimicInlocuit:true,cum:'Audacity 4 nu întreabă: înlocuiește pe loc. Ia-o de la capăt și pune o cifră la capătul numelui.'}],
+     solutie:[{salveaza:{nume:'Popescu_Ana_7A_voce2',folder:'Documente'}}],gresit:[{salveaza:{nume:'Popescu_Ana_7A_voce',folder:'Documente'}}],
+     ajutor:'Uită-te în lista din fereastră înainte de Salvare.',
+     why:'Cu o cifră la capăt, numele e nou: proiectul vechi rămâne, iar cel nou se salvează alături.'}),
+    {t:'tf',q:'Când salvezi cu un nume care există deja în folder, Audacity 4 te întreabă întâi dacă vrei să înlocuiești proiectul de acolo.',ok:false,
+     ajutor:'Recitește „Atenție” din pas.',why:'Fals. Audacity 4 nu întreabă nimic și înlocuiește pe loc. De aceea te uiți întâi în listă.'},
+    {t:'choice',q:'Proiectul Anei are deja nume. Ea alege <b>Fișier › Salvează ca…</b> și scrie <b>Ionescu_Dan_7A_voce</b>, un nume care e deja în Documente. Ce se întâmplă în Audacity 4?',
+     o:['Apare „Eroare la salvarea proiectului”, iar proiectul lui Dan dispare de pe disc','Audacity o întreabă dacă vrea să înlocuiască proiectul lui Dan','Rămân amândouă proiectele, iar al Anei primește o cifră la capăt','Proiectul Anei se șterge, iar al lui Dan rămâne neatins'],ok:0,
+     ajutor:'Recitește ultimul rând din „Atenție” și fereastra din „Uite cum”.',why:'Așa face Audacity 4: eroare, iar proiectul de acolo dispare. De aceea nu folosești „Salvează ca…” peste un nume care există.'}
+   ]},
+  /* ---------- pasul 5 ---------- */
+  {t:'Închizi și redeschizi proiectul',
+   text:`<p>Închizi proiectul cu <strong>Fișier › Închide proiectul (Close project)</strong>: Audacity rămâne deschis, pe fila <strong>Acasă</strong>. În Audacity-ul adevărat merge și ${K('Ctrl+W')}, ca la Word; în pagină, ${K('Ctrl+W')} ar închide fila lecției. Cu <strong>✕</strong> închizi tot Audacity-ul. Proiect salvat: nu te întreabă nimic. Ai ceva nesalvat (o steluță * în bara de titlu)? Apare „Modificări nesalvate” (Unsaved changes).</p>
+<p>Îl redeschizi din <strong>Acasă › Noi și recente (New & recent)</strong>: clic pe dala cu numele tău. Nu e acolo? <strong>Fișier › Deschide… (File › Open…)</strong>, apoi Documente, proiectul tău, <strong>Deschidere</strong>.</p>
+${fig('img/acasa-recent.webp',1000,500,'Fila Acasă a Audacity 4 după închiderea proiectului: lângă dala Proiect nou, dala Popescu_Ana_7A_voce cu eticheta AZI, încadrată','După <b>Închide proiectul</b>: proiectul tău, în <b>Noi și recente</b>.')}
+<p class="gest"><b>La calculator, acum:</b> în Audacity apasă ${K('Ctrl+W')}, apoi clic pe proba ta din Acasă, ascult-o și închide-o din nou (<b>Fișier › Închide proiectul</b>).</p>`,
+   exemplu:`<p>Ana alege <b>Fișier › Închide proiectul</b>: e în fila Acasă, unde dala <b>Popescu_Ana_7A_voce</b> arată „AZI”. Clic pe ea: proiectul se deschide, cu pista și unda ei. ${S('|◀')}, ${S('▶')}: se aude înregistrarea. La final, ✕: Audacity se închide fără nicio întrebare, pentru că totul e salvat.</p>
+<p>Audacity 3: <b>Fișier › Deschide…</b>, apoi Documente și proiectul tău.</p>`,
+   altfel:`<p><b>Închide proiectul</b> e ca atunci când pui caietul în dulap, dar rămâi în clasă. ✕ e ca atunci când pleci din clasă. Ora viitoare, caietul cu numele tău te așteaptă în dulap.</p>`,
+   incearca:P({start:{ecran:'proiect',proiect:{nume:'Popescu_Ana_7A_voce',folder:'Documente',voce:{sec:7,seed:16}},recente:[{nume:'Popescu_Ana_7A_voce.aup4',folder:'Documente'}],fs:{Documente:COLEGI}},
+    q:'Proiectul Anei e salvat. Închide-l cu <b>Fișier › Închide proiectul</b> și redeschide-l din fila <b>Acasă</b>.',
+    teste:[{ce:'Ai închis proiectul',inchis:true,cum:'Fișier › Închide proiectul (în pagină, din meniu).'},
+           {ce:'L-ai redeschis',redeschis:{},cum:'În fila Acasă, clic pe dala Popescu_Ana_7A_voce.'}],
+    solutie:[{inchideProiect:1},{deschideRecent:'Popescu_Ana_7A_voce'}],gresit:[{inchideProiect:1}],
+    ajutor:'După închidere ești în Acasă: dala cu numele Anei.',
+    why:'Proiectul salvat s-a închis fără întrebare și s-a redeschis din Noi și recente.'}),
+   inca:[
+    P({start:{ecran:'proiect',proiect:{nume:'Popescu_Ana_7A_voce',folder:'Documente',voce:{sec:7,seed:16},modificat:true},recente:[{nume:'Popescu_Ana_7A_voce.aup4',folder:'Documente'}]},
+     q:'Ana a mai înregistrat ceva după ultima salvare (titlul are steluța *). Închide Audacity cu <b>✕</b> fără să pierzi înregistrarea, pornește-l din nou și redeschide proiectul.',
+     teste:[{ce:'La „Modificări nesalvate” ai apăsat Salvează',salvat:{},cum:'La întrebare, Salvează (nu Nu salva).'},
+            {ce:'Ai închis Audacity',folosit:'aplicatieInchisa',cum:'✕ din colțul ferestrei.'},
+            {ce:'L-ai redeschis',redeschis:{},cum:'Pornește Audacity, apoi clic pe proiect în Acasă.'}],
+     solutie:[{inchideAplicatia:1,raspuns:'salveaza'},{pornesteAplicatia:1},{deschideRecent:'Popescu_Ana_7A_voce'}],
+     gresit:[{inchideAplicatia:1,raspuns:'nusalva'},{pornesteAplicatia:1},{deschideRecent:'Popescu_Ana_7A_voce'}],
+     ajutor:'Steluța din titlu înseamnă „ceva nesalvat”.',why:'Salvează a păstrat înregistrarea nouă înainte de închidere.'}),
+    {t:'choice',q:'Ai salvat proiectul și apeși ✕. Ce se întâmplă?',
+     o:['Audacity se închide, fără nicio întrebare','Apare „Modificări nesalvate”','Proiectul se șterge','Audacity îți cere numele din nou'],ok:0,
+     ajutor:'Are ceva nesalvat?',why:'Când totul e salvat, Audacity se închide direct; întrebarea apare doar dacă ai ceva nesalvat.'}
+   ]}
+ ],
+ atelier:P({titlu:'Atelier: prima ta înregistrare, de la cap la coadă',
+  start:{ecran:'acasa',fs:{Documente:COLEGI.concat([{nume:'Popescu_Ana_7A_voce',autor:'coleg',voce:{sec:6,seed:43}}])},recente:[{nume:'Ionescu_Dan_7A_voce.aup4',folder:'Documente'}],ultimFolderSalvare:'Descărcări'},
+  intro:`<p>Faci în Audacity-ul din pagină tot drumul de la calculator. Sub fereastră vezi <strong>testele</strong>: fiecare se bifează ✔ singur când partea lui e gata. În Documente sunt deja proiectele colegilor, iar colegul de dinainte a salvat în Descărcări.</p>`,
+  q:'(1) Fă un <b>proiect nou</b>. (2) Înregistrează <b>cel puțin 5 secunde</b> de voce bună. (3) Ascult-o de la început. (4) Salveaz-o în <b>Documente</b>, cu numele TĂU după regulă: <code>Nume_Prenume_clasa_voce</code>, dar cu numele, prenumele și clasa ta, fără diacritice. Nu înlocui proiectul altcuiva. (5) Închide proiectul și redeschide-l.',
+  teste:[{ce:'Ai făcut un proiect nou',proiectNou:true,cum:'Fila Acasă › Proiect nou.'},
+         {ce:'Ai o înregistrare bună, de cel puțin 5 secunde',inregistrat:{min:5,buna:true},cum:'„la o palmă”, fără zgomot; ●, 5 secunde, ■. Dacă n-a ieșit bine: săgeata ↶ și din nou.'},
+         {ce:'Ai ascultat-o de la început până la capăt',ascultat:true,cum:'|◀, apoi ▶, până se oprește singur.'},
+         {ce:'Ai salvat-o în Documente, cu numele TĂU după regulă (Nume_Prenume_clasa_voce)',salvatRegula:{folder:'Documente'},cum:'În loc de Nume și Prenume scrii numele și prenumele tău (nu modelul), apoi clasa și voce, cu _ între ele, fără diacritice. Două prenume: Ana_Maria sau Ana-Maria. Fereastra a pornit în Descărcări: alege Documente în stânga.'},
+         {ce:'N-ai înlocuit și n-ai șters proiectul unui coleg',nimicInlocuit:true,cum:'Numele ales era deja în listă: Audacity 4 a înlocuit proiectul (sau, la „Salvează ca…”, l-a șters). Apasă „Ia-o de la capăt” și caută în listă exact ce ai scris, înainte de Salvare.'},
+         {ce:'Ai închis proiectul și l-ai redeschis',redeschis:{},cum:'Fișier › Închide proiectul, apoi clic pe proiectul tău în Acasă.'}],
+  solutie:[{proiectNou:1},{distanta:'palma'},{inregistreaza:6},{asculta:1},{salveaza:{nume:'Elev_Model_7A_voce',folder:'Documente'}},{inchideProiect:1},{deschideRecent:'Elev_Model_7A_voce'}],
+  gresit:[{proiectNou:1},{distanta:'palma'},{inregistreaza:6},{asculta:1},{salveaza:{nume:'Ionescu_Dan_7A_voce',folder:'Documente'}},{inchideProiect:1},{deschideRecent:'Ionescu_Dan_7A_voce'}],
+  raspuns:'testele sunt acum bifate: un proiect nou, o înregistrare bună ascultată, salvată ca Elev_Model_7A_voce în Documente, închisă și redeschisă.',
+  ajutor:'Proiect nou; ●, ■; |◀, ▶; Fișier › Salvează › Salvează pe calculator › Documente › numele tău › Salvare; Fișier › Închide proiectul; clic pe proiect.',
+  why:'Ai făcut tot drumul: proiect nou, înregistrare, ascultare, salvare cu numele tău, închidere și redeschidere.',
+  inca:[
+   P({start:{ecran:'acasa',mic:'mixaj',zgomot:true,fs:{Documente:COLEGI}},
+    q:'Încă unul, într-un laborator gălăgios: Audacity ascultă alt dispozitiv, iar colegii vorbesc tare. (1) Proiect nou. (2) Alege microfonul căștilor. (3) Așteaptă liniștea (debifează „zgomot în jur”). (4) Înregistrează cel puțin 5 secunde bune. (5) Salvează în Documente, cu numele tău după regulă.',
+    teste:[{ce:'Ai ales microfonul căștilor',micCorect:true,cum:'Setări audio › Dispozitiv înregistrare.'},
+           {ce:'Ai o înregistrare bună, de cel puțin 5 secunde',inregistrat:{min:5,buna:true},cum:'Fără zgomot, la o palmă: ●, 5 secunde, ■.'},
+           {ce:'Ai salvat-o în Documente, cu numele tău după regulă',salvatRegula:{folder:'Documente'},cum:'Nume_Prenume_clasa_voce, cu numele, prenumele și clasa TA, fără diacritice.'},
+           {ce:'N-ai înlocuit proiectul unui coleg',nimicInlocuit:true,cum:'Alege un nume care nu e deja în listă.'}],
+    solutie:[{proiectNou:1},{mic:'casti'},{zgomot:false},{distanta:'palma'},{inregistreaza:6},{salveaza:{nume:'Elev_Model_7B_voce',folder:'Documente'}}],
+    gresit:[{proiectNou:1},{inregistreaza:6},{salveaza:{nume:'Elev_Model_7B_voce',folder:'Documente'}}],
+    ajutor:'Întâi Setări audio și liniștea, abia apoi ●.',
+    why:'Cu microfonul potrivit și în liniște, înregistrarea iese curată; numele nou nu înlocuiește nimic.'})
+  ]}),
+ qs:[
+  {t:'tf',q:'Proiectul <code>.aup4</code> îl poate asculta oricine, pe orice telefon, ca pe un fișier <code>.mp3</code>.',ok:false,
+   ajutor:'Unde se deschide proiectul?',why:'Fals. Proiectul se deschide doar în Audacity; pentru telefon îți trebuie un fișier de sunet (.mp3, .wav).'},
+  P({start:{ecran:'proiect',proiect:{},distanta:'lipit'},
+   q:'Înregistrează <b>cel puțin 4 secunde</b> de voce bună și ascult-o de la început. Uită-te la distanța aleasă în „Tu, la microfon”.',
+   teste:[{ce:'Ai o înregistrare bună, de cel puțin 4 secunde',inregistrat:{min:4,buna:true},cum:'Distanța era „lipit de microfon”: alege „la o palmă”. Dacă ai înregistrat deja, săgeata ↶ și din nou.'},
+          {ce:'Ai ascultat-o de la început până la capăt',ascultat:true,cum:'|◀, apoi ▶.'}],
+   solutie:[{distanta:'palma'},{inregistreaza:5},{asculta:1}],gresit:[{inregistreaza:5},{asculta:1}],
+   ajutor:'„la o palmă”; ●, ■; |◀, ▶.',
+   why:'La o palmă de microfon, unda are vârfuri potrivite; ai ascultat-o ca să fii sigur.'}),
+  {t:'choice',q:'Unda înregistrării Mariei e aproape o linie de la un capăt la altul, deși ea a vorbit. Ce verifică întâi?',
+   o:['Cât de aproape a vorbit și ce microfon e ales în Setări audio','Dacă ecranul calculatorului e prea luminos sau prea întunecat','Dacă proiectul are deja un nume în bara de titlu','Dacă a apăsat Ctrl+S înainte să înceapă înregistrarea'],ok:0,
+   ajutor:'De unde „aude” Audacity vocea?',why:'O undă aproape plată înseamnă că microfonul a prins foarte puțin: prea departe sau alt dispozitiv ales.'},
+  P({start:{ecran:'proiect',proiect:{voce:{sec:7,seed:19}},fs:{Documente:COLEGI}},
+   q:'Salvează proiectul în <b>Documente</b>, cu numele <b>Marin_Ioana_7B_voce</b>; dacă numele e deja luat, pune o cifră la capăt.',
+   teste:[{ce:'Ai salvat în Documente, cu Marin_Ioana_7B_voce și o cifră la capăt',salvat:{folder:'Documente',nume:'^Marin_Ioana_7B_voce[0-9]+$'},cum:'În listă e deja Marin_Ioana_7B_voce: scrie Marin_Ioana_7B_voce2.'},
+          {ce:'N-ai înlocuit proiectul de acolo',nimicInlocuit:true,cum:'Ia-o de la capăt: Audacity 4 a înlocuit proiectul fără să întrebe.'}],
+   solutie:[{salveaza:{nume:'Marin_Ioana_7B_voce2',folder:'Documente'}}],gresit:[{salveaza:{nume:'Marin_Ioana_7B_voce',folder:'Documente'}}],
+   ajutor:'Uită-te în lista din fereastra de salvare.',
+   why:'Numele era deja luat; cu o cifră la capăt ai salvat alături, fără să înlocuiești nimic.'}),
+  {t:'choice',q:'În Audacity-ul adevărat ai închis proiectul salvat cu Ctrl+W. De unde îl redeschizi cel mai repede?',
+   o:['Din fila Acasă, de la Noi și recente','Din meniul Înregistrează','Din Setări audio','De nicăieri: s-a șters'],ok:0,
+   ajutor:'Unde ajungi după Închide proiectul (Ctrl+W)?',why:'Ctrl+W (Închide proiectul) te lasă în fila Acasă, unde proiectele salvate apar în Noi și recente.'}
+ ]}
+  ],
+  aplicatieReala:{aplicatie:'Audacity-ul adevărat',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+   intro:`<p>Lucrezi singur, în Audacity, cu căștile cu microfon. Vorbește încet, ca să nu-i deranjezi pe colegi. Proiectul pe care îl salvezi azi îl folosești în lecția 13.</p>`,
+   pasi:PROVOCARE},
+  diploma:{titlu:'Reporter la microfon',
+   rezumat:'a făcut un proiect nou în Audacity, și-a înregistrat vocea, a ascultat-o și a refăcut-o când n-a ieșit bine, a salvat proiectul cu numele lui, l-a închis și l-a redeschis',
+   aplicatie:'Audacity-ul adevărat',
+   provocare:PROVOCARE},
+  tipuri:{audioproiect:TipAudioProiect}
+});
+</script>
+</body>
+</html>
