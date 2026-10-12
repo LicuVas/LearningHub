@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Selecția secvențelor: ștergere, copiere, mutare. Mixarea semnalului audio</title>
+<meta name="description" content="Lecția 13, clasa a VII-a: în Audacity alegi o bucată din înregistrare trăgând pe undă, ștergi o pauză lungă cu Șterge și elimină spațiul, copiezi și lipești o bucată, muți un clip de bara lui și pui sub voce o muzică de fundal pe a doua pistă, cu volumul potrivit. Cu Audacity simulat în pagină și pașii de făcut la calculator.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+/* TEMA: masa de mixaj a radioului școlii — glisoare de volum, două piste una sub alta, foarfeca pe undă */
+:root{
+  --desk:#ECEFEA; --paper:#FFFFFF; --paper2:#F3F5F1; --line:#CDD3CA;
+  --ink:#1F2620; --ink2:#556057; --accent:#2D6A4F; --accentInk:#FFFFFF; --sel:#D8EEE2;
+  --mark:#FFE08A; --markInk:#1F2620; --ok:#1B7A4A; --okbg:#E2F4EA; --bad:#B42318; --badbg:#FBE7E4;
+  --fd:"Zilla Slab",Georgia,serif; --fb:"Source Sans 3","Segoe UI",system-ui,sans-serif; --fm:"JetBrains Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#121713; --paper:#1B221D; --paper2:#232C25; --line:#3B473E; --ink:#E7EEE8; --ink2:#AAB8AD;
+  --accent:#7FD1A8; --accentInk:#0D2418; --sel:#24402F; --mark:#E9C46A; --markInk:#1F2620;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#121713; --paper:#1B221D; --paper2:#232C25; --line:#3B473E; --ink:#E7EEE8; --ink2:#AAB8AD;
+  --accent:#7FD1A8; --accentInk:#0D2418; --sel:#24402F; --mark:#E9C46A; --markInk:#1F2620;
+  --ok:#6FD19A; --okbg:#163324; --bad:#FF8A80; --badbg:#3B1D1B;
+}
+body{background:var(--desk)}
+/* banda: trei glisoare de mixaj și două piste */
+.banda{min-height:32px;padding:4px 10px;display:flex;align-items:center;gap:12px;background:#22302A}
+.banda .fad{flex:none;display:flex;gap:6px;align-items:flex-end;height:24px}
+.banda .fad i{position:relative;width:4px;height:22px;background:#4c6157;border-radius:2px}
+.banda .fad i b{position:absolute;left:-4px;width:12px;height:6px;background:#E8F3EC;border-radius:2px}
+.banda .pis{flex:1 1 auto;display:grid;gap:3px}
+.banda .pis span{display:block;height:8px;border-radius:2px}
+.banda .pis .v{background:linear-gradient(90deg,#E58C8C 0 31%,transparent 31% 36%,#E58C8C 36% 70%)}
+.banda .pis .m{background:#7FC9AE;opacity:.75}
+h1{font-weight:700;letter-spacing:-.01em}
+h1 em{color:var(--accent);font-style:normal}
+h2{font-weight:600}
+.gest{border-left:4px solid var(--accent);background:var(--paper2);padding:6px 10px;border-radius:0 6px 6px 0;margin:.6em 0 0}
+.simb{font-family:"Segoe UI Symbol","Segoe UI",system-ui,sans-serif;font-weight:700}
+.desc a{font-weight:600}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/audio-linie.js"></script>
+<script src="../../_sim/audio-linie-inregistrare.js"></script>
+<script src="../../_sim/audio-linie-editare.js"></script>
+<script src="unde.js"></script>
+<script>
+/* LECȚIA 13, clasa a VII-a, modulul 2 (revizuirea LearningHub, standardul din 27.09.2026 + regula 10 din 08.10.2026),
+   scrisă 12.10.2026. Un nivel pe pași: pasul 0, 5 pași cu „Încearcă” și cu un gest scurt în Audacity-ul adevărat, atelierul,
+   pasul din laborator, 5 întrebări.
+   Simulatorul: lectii/_sim/audio-linie-editare.js (extensie nouă, proprietar VII/13), peste audio-linie-inregistrare.js (VII/12)
+   și audio-linie.js (VII/11), neschimbate. Faptele despre selecție, ștergere, copiere, lipire, mutare, import și volum sunt
+   probate în Audacity 4.0.0 REAL (desktop ascuns, _proba/audacity_proba_l13_*.json). Afirmațiile: afirmatii.json.
+   Imaginile: img/SURSE.json. Sunetele (voce-de-curatat.wav, muzica-fundal.wav) și licențele lor: surse.md §5. */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const K=s=>s.split('+').map(k=>`<kbd>${k}</kbd>`).join('+');
+const S=x=>`<span class="simb">${x}</span>`;
+const PROG1='Selecţia unor secvențe audio, audio-video pentru ștergere, copiere şi mutare';
+const PROG2='Mixarea semnalului audio din mai multe surse';
+/* sunetele lecției: unda (50 de vârfuri pe secundă) în unde.js */
+const V=UNDE_L13.voce,M=UNDE_L13.muzica,DV=V.length/50,DM=M.length/50;
+const SUN={voce:'voce-de-curatat.wav',muzica:'muzica-fundal.wav'};
+const IMP=[{nume:'muzica-fundal.wav',folder:'Descărcări',unda:M,fis:'muzica',rol:'muzica'}];
+const bucV=(id,de,lung,start)=>({id,nume:'voce-de-curatat',start:start==null?de:start,durata:lung,unda:V.slice(Math.round(de*50),Math.round((de+lung)*50)),seg:[{fis:'voce',de,lung}]});
+const pistaV=(nume,extra)=>({tip:'audio',nume:nume||'voce-de-curatat',rol:'voce',vol:0,clipuri:[bucV('v1',0,DV)].concat(extra||[])});
+const pistaM=(vol)=>({tip:'audio',nume:'muzica-fundal',rol:'muzica',vol:vol||0,clipuri:[{id:'m1',nume:'muzica-fundal',start:0,durata:DM,unda:M,culoare:'#a8dccb',seg:[{fis:'muzica',de:0,lung:DM}]}]});
+/* proiectul pornit din fișierul de rezervă (un WAV deschis în Audacity 4: fără nume, „Importă” în istoric) */
+const WAV=o=>Object.assign({ecran:'proiect',proiect:{piste:[pistaV()]},numeSunet:'voce-de-curatat.wav',dinWav:true,comportament:null,importabile:IMP},o||{});
+const E=o=>Object.assign({t:'audioeditare',sunete:SUN},o);   /* exercițiu în Audacity-ul simulat (editare, mixare) */
+/* bucățile fișierului de rezervă (secunde): titlul, cele două pauze lungi, versurile */
+const TITLU=[0.3,1.7],VERS=[[5.8,10.9],[13.95,19.7]];
+const DESC_V=`<a href="voce-de-curatat.wav" download>voce-de-curatat.wav</a>`,DESC_M=`<a href="muzica-fundal.wav" download>muzica-fundal.wav</a>`;
+/* de unde sunt sunetele și de ce le putem folosi (judecata 1: m7 / sonnet m7) — licențele: surse.md §5 */
+const LIC_V='Vocea: „Câinele și cățelul” de Grigore Alexandrescu, citită de Livia F. pentru LibriVox, domeniu public (o poate folosi oricine); pauzele lungi le-am pus noi.';
+const LIC_M='Muzica: Gymnopédie nr. 1 de Erik Satie, cântată de Teknopazzo, cu licența CC0: o poate folosi oricine, fără să ceară voie. În proiectele tale pui doar muzică cu licență liberă.';
+const MAI_MULTE='Dacă în Descărcări sunt mai multe, cu (1) sau (2) la capăt, e bun oricare.';
+const PROVOCARE=[
+  `Pune căștile de pe masa ta (nu băga și nu scoate cabluri). Pornește Audacity: <b>Start</b>, scrii <b>Audacity</b>, clic. Ferestrele „O nouă versiune…” sau „Bun venit”, dacă apar, le închizi cu ✕. Nu instala nimic.`,
+  `Deschide proiectul tău de la lecția 12: în fila <b>Acasă</b>, la <b>Noi și recente</b>, clic pe dala cu numele TĂU (sau <b>Fișier › Deschide…</b>, apoi Documente). Nu-l găsești? Descarcă sunetul de rezervă ${DESC_V} și deschide-l cu <b>Fișier › Deschide… (File › Open…)</b> › <b>Descărcări (Downloads)</b>, dublu-clic pe el. ${MAI_MULTE} <small>${LIC_V}</small>`,
+  `Apasă ${S('|◀')}, apoi ${S('▶')}, și ascultă în căști. Caută o pauză prea lungă sau o greșeală (un „ăăă”, un cuvânt spus de două ori). Notează de pe afișajul timpului secunda la care începe și pe cea la care se termină. N-ai găsit nicio pauză lungă și nicio greșeală? Lucrezi pe sunetul de rezervă: <b>Fișier › Închide proiectul (File › Close project)</b>, apoi îl deschizi ca la pasul 2. Are două pauze lungi: după titlu și în mijlocul versului.`,
+  `Dă un clic pe undă, departe de bucata aceea. Apoi ține apăsat la începutul ei și trage până la sfârșit. Jos, la <b>Selecție</b>, verifică cele două secunde.`,
+  `<b>Editează › Șterge și elimină spațiul (per pistă)</b> (în Audacity 3: <b>Editează › Șterge</b>). Dă un clic puțin înainte de tăietură și ascultă: se aude lin? Dacă ai tăiat dintr-un cuvânt, <b>Editează › Anulează</b> (${K('Ctrl+Z')}) și alege din nou, mai strâns. Dacă apare fereastra „Alege comportamentul la ștergerea unei porțiuni de clip”, apasă ${K('Esc')}: nu alegi tu pentru tot laboratorul.`,
+  `Curăță la fel și celelalte pauze lungi sau greșeli. Apoi, ca probă: <b>Editează › Anulează</b> o dată (bucata revine) și <b>Editează › Refă „…”</b> (${K('Ctrl+Shift+Z')}), rândul de sub el, o dată (pleacă din nou).`,
+  `Copiază salutul de la început (sau titlul): îl alegi, <b>Editează › Copiază</b> (${K('Ctrl+C')}), dai un clic puțin după capătul înregistrării și <b>Editează › Lipește</b> (${K('Ctrl+V')}). Nu vezi loc gol după capăt? Apasă <b>Micșorează</b> (lupa −) până apare. Între capăt și copie rămâne liniște: trage copia de bara ei de sus spre stânga, până aproape de capăt, fără s-o lași peste vorbire (dacă ai lăsat-o, <b>Editează › Anulează</b>). Ascultă finalul în căști.`,
+  `Descarcă muzica de fundal: ${DESC_M}. <small>${LIC_M}</small> În Audacity: <b>Fișier › Importă… (File › Import…)</b> (în Audacity 3: <b>Fișier › Importă › Audio…</b>), <b>Descărcări</b>, <b>muzica-fundal</b>, <b>Deschidere</b>. ${MAI_MULTE} Muzica intră pe o pistă nouă, sub vocea ta.`,
+  `În panoul din stânga al pistei cu muzică, trage glisorul de volum spre stânga. Apasă ${S('|◀')} și ${S('▶')} și ascultă în căști. Repetă până când fiecare cuvânt al tău se înțelege, iar muzica se aude doar în fundal. Dacă stă un coleg lângă tine, cere-i părerea.`,
+  `<b>Fișier › Salvează (File › Save)</b> (${K('Ctrl+S')}). Proiectul tău de la lecția 12 are deja nume, deci nu apare nicio fereastră.`,
+  `Ai pornit din sunetul de rezervă? Atunci, la salvare, apare „Unde dorești să salvezi?”: apasă <b>Salvează pe calculator (Save to computer)</b>, fără să bifezi „Nu mai arăta din nou” (nu apare? A bifat-o un coleg: mergi mai departe). Alegi <b>Documente</b>; la <b>Nume fișier</b> ștergi numele propus și scrii numele TĂU după regula din lecția 3, cu <code>mixaj</code> la capăt. <b>Uită-te în listă:</b> dacă numele e deja acolo, pune o cifră la capăt (Audacity 4 nu întreabă). Apoi <b>Salvare</b>. Nu folosi „Salvează ca…” peste un nume care există.`,
+  `Închide Audacity cu ✕. Dacă apare „Modificări nesalvate”, apasă <b>Salvează</b>. Fișierele descărcate azi le lași în Descărcări.`
+];
+
+JocMotor.porneste({
+  cheie:'lectie_vii_m2_l13',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/vii/, „Lecția 13”, pasul din laborator înainte de verificare
+  titlu:'Selecția secvențelor: ștergere, copiere, mutare. Mixarea semnalului audio',
+  marca:'Lecția 13 · <b>Curăț și mixez</b>',
+  h1:'Selecția secvențelor: ștergere, copiere, mutare. <em>Mixarea semnalului audio</em>',
+  clasa:'a VII-a', unitate:'VII-U2', unitateTitlu:'Aplicații audio și audio-video',
+  competente:['CS.1.2','CS.3.2'], lectii:'13',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.2, CS.3.2 · unitatea VII-U2 „Aplicații audio și audio-video” · lecția 13 din modulul 2 · conținuturile: „Selecţia unor secvențe audio, audio-video pentru ștergere, copiere şi mutare”, „Mixarea semnalului audio din mai multe surse”',
+  banda:'<span class="fad"><i><b style="bottom:14px"></b></i><i><b style="bottom:4px"></b></i><i><b style="bottom:10px"></b></i></span><span class="pis"><span class="v"></span><span class="m"></span></span>',
+  intro:`<p>Îți cureți înregistrarea din lecția 12: alegi o bucată din ea, scoți pauzele lungi, copiezi și muți o bucată, apoi pui sub vocea ta o muzică de fundal, cu volumul potrivit. Exersezi întâi în pagină, apoi la calculator, cu căștile. N-ai proiectul pe calculatorul ăsta? Lucrezi pe sunetul de rezervă din pagină (îl găsești la pasul 1).</p>
+<p><b>Ai nevoie de:</b> lecția 11 (pista, unda, capul de redare, ${S('▶')} Redare, ${S('■')} Stop, ${S('|◀')} Început, afișajul timpului, <b>Mărește</b> și <b>Micșorează</b>). Lecția 12: proiectul, fila <b>Acasă › Noi și recente</b>, <b>Fișier › Deschide…</b>, <b>Fișier › Închide proiectul</b>, <b>Fișier › Salvează</b>. Lecția 5: copierea și mutarea în Word (Copiere, Decupare, Lipire, ${K('Ctrl+C')}, ${K('Ctrl+X')}, ${K('Ctrl+V')}). Lecția 2: ${K('Ctrl+Z')}. Lecția 3: Descărcări, regula numelui.</p>`,
+  cum:`<p><b>Poți lucra singur, fără profesor.</b> Citești un pas, faci exercițiul „Încearcă tu” și gestul scurt din Audacity-ul adevărat. În pagină, panoul <b>„Tu, la căști”</b> îți scrie ce s-ar auzi la capul de redare; cu <b>„Sunet: pornit”</b> auzi chiar sunetele lecției (în laborator, doar în căști).</p>`,
+  nivele:[
+{t:'Selecția secvențelor: ștergere, copiere, mutare. Mixarea semnalului audio',lectii:[13],continuturi:[PROG1,PROG2],final:true,
+ obiectiv:'alegi o bucată din înregistrare, ștergi o pauză lungă fără să lași gol, copiezi și muți o bucată și pui sub voce o muzică de fundal, cu volumul potrivit.',
+ pasi:[
+  /* ---------- pasul 0 ---------- */
+  {t:'La ce folosește',
+   text:`<p>La radio, o înregistrare nu ajunge în difuzor așa cum a ieșit la microfon. Întâi se curăță: se scot pauzele prea lungi și greșelile. Apoi, pe pupitrul de mixaj, sub voce se pune o muzică încetă. Fiecare sursă de sunet are butonul ei de volum.</p>
+<p>Azi faci la fel în Audacity, cu înregistrarea ta din lecția 12 (sau cu sunetul de rezervă din pagină).</p>
+${fig('../m2-l11/img/studio-radio.webp',960,720,'Studioul tehnic al unui post de radio: un microfon pe braț, un pupitru de mixaj cu multe butoane și glisoare și două ecrane de calculator','Pupitrul de mixaj al unui studio de radio: fiecare sursă de sunet are glisorul ei. Foto: L’embellie, <a href="https://commons.wikimedia.org/wiki/File:Studio_technique_radio_JVA.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0</a>.')}`},
+  /* ---------- pasul 1 ---------- */
+  {t:'Alegi o bucată: selecția',
+   text:`<p>Ca să ștergi sau să copiezi o bucată de sunet, întâi o alegi: asta e <mark>selecția</mark>. Ții apăsat pe undă la începutul bucății și tragi până la sfârșit: ea se vede mai deschisă. Jos, la <strong>Selecție</strong>, scrie unde începe și unde se termină; la <strong>Durată</strong>, cât ține.</p>
+<p>Ca să știi unde e bucata, întâi asculți: clic pe undă puțin înainte, ${S('▶')}, și urmărești afișajul timpului. Un clic pe undă scoate selecția. Pe telefon, ca s-o lărgești pe ecran: clic în mijlocul bucății, apoi de 2-3 ori <strong>Mărește</strong> (lupa +).</p>
+${fig('img/selectie.webp',1000,272,'Audacity 4: bucata aleasă prin tragere pe undă, mai deschisă la culoare, încadrată; sub ea bara de jos Selecție cu 00h00m01.23s și 00h00m02.22s și Durată 00h00m00.99s; sunetul din captură e unul de probă','Bucata aleasă, încadrată; jos, <b>Selecție</b> și <b>Durată</b>.')}
+<p class="gest"><b>La calculator, acum:</b> deschide în Audacity proiectul tău (lecția 12). Nu-l ai aici? Descarcă sunetul de rezervă ${DESC_V} și deschide-l cu <b>Fișier › Deschide… (File › Open…)</b>, din Descărcări: lucrezi pe el la toți pașii. Ascultă în căști o pauză, trage peste ea și citește Selecție și Durată.</p>`,
+   exemplu:`<p>În sunetul din pagină, după titlul „Câinele și cățelul” e o pauză lungă. Clic pe undă la 0:01, ${S('▶')}: după titlu, panoul „Tu, la căști” scrie „vocea face o pauză”, iar pe la 0:05,7 începe versul. Apeși ${S('■')}. Tragi pe undă de la 0:01,8 la 0:05,7. Jos scrie <b>Selecție</b> 00h00m01.80s … 00h00m05.70s, <b>Durată</b> 00h00m03.90s.</p>`,
+   altfel:`<p>E ca atunci când subliniezi cu creionul, pe foaie, un rând pe care vrei să-l tai. Întâi citești ca să-l găsești, apoi îl subliniezi exact de la primul la ultimul cuvânt.</p>`,
+   incearca:E({start:WAV(),
+    q:'Ascultă zona de după titlu (clic pe undă la 0:01, apoi ▶; urmărește panoul „Tu, la căști”), apoi alege, trăgând pe undă, <b>pauza lungă</b> de după titlu: cam de la 0:01,8 la 0:05,7.',
+    teste:[{ce:'Ai ascultat zona de după titlu (0:01 – 0:06)',ascultatZona:[1.3,5.8],cum:'Clic pe undă la 0:01, apoi ▶ și lasă-l să meargă până după 0:06.'},
+           {ce:'Ai ales pauza: Selecție începe pe la 0:01,7–0:02,2 și se termină pe la 0:05,3–0:05,8',selectie:{de:[1.6,2.2],pana:[5.3,5.85]},cum:'Clic pe undă departe de pauză, apoi ține apăsat la 0:01,8 și trage până la 0:05,7. Uită-te jos, la Selecție.'}],
+    solutie:[{asculta:[1.2,6.0]},{selecteaza:[1.8,5.65]}],gresit:[{selecteaza:[0.3,1.6]}],
+    ajutor:'Pauza e linia aproape dreaptă de după primul grup de vârfuri.',
+    why:'Ai ascultat întâi ca să găsești pauza, apoi ai ales-o exact, de la capătul titlului la începutul versului.'}),
+   inca:[
+    {t:'choice',q:'Ai ales o bucată pe undă, apoi dai un clic pe undă, în altă parte. Ce se întâmplă?',
+     o:['Bucata nu mai e aleasă; capul de redare vine la clic','Bucata rămâne aleasă și se mai alege încă una','Bucata aleasă se șterge din înregistrare','Pornește redarea bucății alese, de la început'],ok:0,
+     ajutor:'Ultima propoziție a pasului.',why:'Un clic pe undă mută capul de redare și scoate selecția. Ca să alegi alta, tragi din nou.'},
+    E({start:WAV(),
+     q:'În mijlocul versului mai e o pauză lungă (după „urșii”). Găsește-o ascultând și alege-o: cam de la 0:10,9 la 0:13,9.',
+     teste:[{ce:'Ai ales a doua pauză: Selecție începe pe la 0:10,8–0:11,3 și se termină pe la 0:13,5–0:14,0',selectie:{de:[10.8,11.3],pana:[13.5,14.0]},cum:'Ascultă de la 0:10 cu ▶, apoi trage pe undă de la 0:10,95 la 0:13,85.'}],
+     solutie:[{selecteaza:[10.95,13.85]}],gresit:[{selecteaza:[9.0,10.5]}],
+     ajutor:'A doua linie aproape dreaptă, lungă, din mijlocul sunetului.',why:'Ai ales a doua pauză, fără cuvintele dinaintea și de după ea.'})
+   ]},
+  /* ---------- pasul 2 ---------- */
+  {t:'Ștergi o pauză, fără să lași gol',
+   text:`<p>Bucata aleasă o scoți cu <strong>Editează › Șterge și elimină spațiul (per pistă)</strong> (Edit › Delete and close gap (per track), ${K('Shift+Del')}): ea dispare, iar restul vine în stânga. Înregistrarea se scurtează.</p>
+<p><strong>Șterge</strong> (Delete, ${K('Del')}) simplu poate lăsa în loc un gol, după cum e reglat calculatorul. Dacă apare fereastra „Alege comportamentul…”, apasă tasta ${K('Esc')} (stânga sus; pe telefon, în pagină, butonul Esc din fereastră): nu alegi tu pentru tot laboratorul.</p>
+<p>Ai greșit? <strong>Editează › Anulează</strong> (Undo, ${K('Ctrl+Z')}) aduce bucata înapoi. Rândul de sub el, <strong>Refă „…”</strong> (Redo, ${K('Ctrl+Shift+Z')}), o scoate din nou.</p>
+${fig('img/meniu-editeaza.webp',556,556,'Meniul Editează din Audacity 4, cu Anulează, Copiază, Lipește și Șterge și elimină spațiul (per pistă) încadrate; se văd și Refacere (stins), Decupează, Șterge, Duplică','Meniul <b>Editează</b>, cu rândurile din pas încadrate. „Refacere” e stins până anulezi ceva.')}
+<p class="gest"><b>La calculator, acum:</b> scoate pauza aleasă cu Șterge și elimină spațiul și ascultă locul în căști. Apoi Editează › Anulează și Editează › Refă „Șterge și elimină spațiul”.</p>`,
+   exemplu:`${fig('img/inainte-dupa.webp',640,430,'Audacity 4, același sunet înainte și după Șterge și elimină spațiul: sus pauza aleasă, încadrată; jos clipul mai scurt, cu bătăile de după pauză venite în stânga','Sus: pauza aleasă. Jos, după <b>Șterge și elimină spațiul</b>: sunetul s-a scurtat.')}
+<p>Dacă apeși Anulează de prea multe ori, poate dispărea toată pista (ai anulat chiar deschiderea sunetului). Atunci <b>Editează › Refă „Importă”</b> o aduce înapoi.</p>
+${fig('img/alege-comportamentul.webp',590,353,'Fereastra Alege comportamentul din Audacity 4, cu variantele Lasă spațiu, aleasă, și Elimină spațiul (cascadează) și butonul Aplică','Fereastra de alegere. Nu apeși Aplică: o închizi cu <b>Esc</b>.')}`,
+   altfel:`<p>E ca atunci când tai un rând dintr-o fâșie de hârtie și lipești la loc cele două capete: fâșia se scurtează și nu rămâne nicio gaură. <b>Șterge</b> simplu poate face doar gaura, iar capetele rămân depărtate.</p>`,
+   incearca:E({start:WAV(),
+    q:'Scoate pauza lungă de după titlu (cam de la 0:01,8 la 0:05,7), astfel încât restul să vină în stânga. Nu tăia din cuvinte.',
+    teste:[{ce:'Pauza a dispărut',scos:{fis:'voce',de:2.0,pana:5.5},cum:'Alege pauza, apoi Editează › Șterge și elimină spațiul (per pistă).'},
+           {ce:'N-ai tăiat din titlu și nici din vers',pastrat:{fis:'voce',intervale:[TITLU].concat(VERS)},cum:'Ai prins și un cuvânt: Editează › Anulează și alege mai strâns, de la 0:01,8 la 0:05,7.'},
+           {ce:'Fără gol: restul a venit în stânga',faraGol:{},cum:'A rămas un gol: Editează › Anulează, apoi Editează › Șterge și elimină spațiul (per pistă).'},
+           {ce:'N-ai schimbat alegerea calculatorului',nimicAles:true,cum:'La fereastra „Alege comportamentul…” se apasă Esc. Apasă „Ia-o de la capăt” și folosește Șterge și elimină spațiul.'}],
+    solutie:[{selecteaza:[1.8,5.65]},{stergeElimina:1}],gresit:[{selecteaza:[1.0,6.5]},{stergeElimina:1}],
+    ajutor:'Alege pauza ca la pasul 1, apoi meniul Editează, rândul „Șterge și elimină spațiul (per pistă)”.',
+    why:'Pauza a ieșit din înregistrare, iar versul vine acum imediat după titlu, fără gol.'}),
+   inca:[
+    E({start:WAV({comportament:'lasa'}),
+     q:`Pe calculatorul ăsta cineva a ales deja „Lasă spațiu” (Leave gap). Alege pauza din mijlocul versului (0:10,9 – 0:13,9) și apasă <b>Editează › Șterge</b>. Vezi golul? Apoi <b>Editează › Anulează</b>: în meniu scrie „Anulează „Split delete””, adică ștergerea care a lăsat golul. La sfârșit scoate pauza cu <b>Șterge și elimină spațiul (per pistă)</b>.${fig('img/gol-lasa-spatiu.webp',640,430,'Audacity 4, cu alegerea Lasă spațiu: sus o bucată aleasă, jos după Editează › Șterge, clipul rupt în două, cu un gol încadrat în locul bucății','În Audacity 4 adevărat, cu „Lasă spațiu”: după <b>Șterge</b> rămâne un gol.')}`,
+     teste:[{ce:'Ai văzut golul lăsat de Șterge și l-ai anulat',anulat:'Split delete',cum:'Editează › Șterge, apoi Editează › Anulează (în meniu scrie „Anulează „Split delete””, adică ștergerea care a lăsat golul).'},
+            {ce:'Pauza a dispărut, fără gol',faraGol:{},cum:'Editează › Șterge și elimină spațiul (per pistă).'},
+            {ce:'Pauza nu mai e în înregistrare',scos:{fis:'voce',de:11.2,pana:13.6},cum:'Alege din nou pauza, dacă nu mai e aleasă.'}],
+     solutie:[{selecteaza:[10.95,13.85]},{sterge:1},{anuleaza:1},{stergeElimina:1}],gresit:[{selecteaza:[10.95,13.85]},{sterge:1}],
+     ajutor:'Anularea readuce și selecția: după ea alegi direct Șterge și elimină spațiul.',
+     why:'Șterge a lăsat un gol cât pauza; Șterge și elimină spațiul a scos pauza și a lipit capetele.'}),
+    E({start:WAV(),
+     q:'Pe calculatorul ăsta încă n-a ales nimeni. Alege pauza de după titlu și apasă <b>Editează › Șterge</b>: apare o fereastră. Închide-o cu <b>Esc</b>, fără să alegi, apoi scoate pauza cu <b>Șterge și elimină spațiul (per pistă)</b>.',
+     teste:[{ce:'Ai închis fereastra de alegere cu Esc',folositEd:'comportamentInchis',cum:'Editează › Șterge, apoi Esc (pe telefon, butonul „Esc” din fereastră).'},
+            {ce:'N-ai ales nimic în ea',nimicAles:true,cum:'Nu apăsa Aplică: Esc. „Ia-o de la capăt” și din nou.'},
+            {ce:'Pauza a dispărut, fără gol',faraGol:{},cum:'Editează › Șterge și elimină spațiul (per pistă).'},
+            {ce:'Pauza nu mai e în înregistrare',scos:{fis:'voce',de:2.0,pana:5.5},cum:'Alege pauza de la 0:01,8 la 0:05,7.'}],
+     solutie:[{selecteaza:[1.8,5.65]},{sterge:1,raspuns:'esc'},{stergeElimina:1}],gresit:[{selecteaza:[1.8,5.65]},{sterge:1,raspuns:'elimina'}],
+     ajutor:'Esc închide fereastra fără să schimbe nimic.',why:'Ai lăsat calculatorul cum era și ai scos pauza cu comanda care merge la fel peste tot.'}),
+    E({start:WAV({pasiInainte:[{selecteaza:[1.8,5.65]},{stergeElimina:1},{anuleaza:2}]}),
+     q:'Cineva a apăsat Anulează de două ori și a dispărut toată pista: a anulat și pauza scoasă, și deschiderea sunetului. Adu-o înapoi cu <b>Editează › Refă „…”</b> (rândul de sub Anulează), până pauza e iar scoasă.',
+     teste:[{ce:'Pista e înapoi',piste:1,cum:'Editează › Refă „Importă” (Ctrl+Shift+Z).'},
+            {ce:'Pauza e iar scoasă, fără gol',scos:{fis:'voce',de:2.0,pana:5.5},cum:'Încă o dată: Editează › Refă „Șterge și elimină spațiul”.'}],
+     solutie:[{reface:2}],gresit:[{reface:1}],
+     ajutor:'Refă face din nou, pe rând, ce ai anulat: rândul scrie ce urmează.',why:'Primul Refă a adus sunetul înapoi, al doilea a scos din nou pauza.'})
+   ]},
+  /* ---------- pasul 3 ---------- */
+  {t:'Copiezi și lipești o bucată',
+   text:`<p>Ca în Word: <strong>Editează › Copiază</strong> (Copy, ${K('Ctrl+C')}) ține minte bucata aleasă, care rămâne și la locul ei. Dai un clic acolo unde vrei copia: capul de redare stă exact unde ai dat clic. Apoi <strong>Editează › Lipește</strong> (Paste, ${K('Ctrl+V')}). Bucata apare ca un <mark>clip</mark> nou: o bucată de sunet cu bara ei de nume deasupra, care începe la capul de redare.</p>
+<p><strong>Atenție:</strong> în Audacity 4, așa cum e reglat de la început, bucata lipită peste vorbire o <strong>acoperă</strong>, nu o împinge. Lipește-o deci într-un loc gol, de exemplu puțin după capătul înregistrării.</p>
+${fig('img/lipit-dupa-capat.webp',640,210,'Audacity 4: după Copiază, un clic după capătul clipului și Lipește, bucata apare ca un clip nou, încadrat, chiar la capul de redare, cu liniște înaintea lui','Copia lipită puțin după capăt: un clip nou (încadrat), de la capul de redare. Între capăt și copie e liniște.')}
+<p class="gest"><b>La calculator, acum:</b> copiază salutul de la începutul înregistrării tale (sau titlul, în sunetul de rezervă) și lipește-l puțin după capătul ei. Ascultă finalul în căști.</p>`,
+   exemplu:`<p>Vrei titlul „Câinele și cățelul” și la sfârșit. Îl alegi (0:00,2 – 0:01,8), <b>Editează › Copiază</b>. Dai un clic puțin după capătul undei, pe la 0:21: capul de redare stă acolo. <b>Editează › Lipește</b>: titlul apare a doua oară, ca un clip nou, de la 0:21. Între capătul versului și titlu rămâne liniște; la pasul 4 îl tragi mai aproape. Dacă dădeai clicul la 0:08, titlul acoperea o bucată din vers.</p>`,
+   altfel:`<p>Copierea e ca o fotocopie: originalul rămâne în dosar, iar copia o pui unde vrei. Doar că aici, dacă pui copia peste o foaie scrisă, o acoperă.</p>`,
+   incearca:E({start:WAV(),
+    q:'Copiază titlul „Câinele și cățelul” (cam de la 0:00,2 la 0:01,8) și lipește-l după capătul înregistrării: dă clicul puțin după 0:20. (Pe telefon: clic pe la 0:01 și de 3 ori <b>Mărește</b>; după Copiază, apasă <b>Micșorează</b> până vezi 0:20 — de 3 ori.)',
+    teste:[{ce:'Titlul apare de două ori',copiat:{fis:'voce',de:TITLU[0],pana:TITLU[1]},cum:'Alege titlul, Editează › Copiază; clic după capăt; Editează › Lipește.'},
+           {ce:'Copia e după capătul înregistrării',copieDupa:{fis:'voce',de:TITLU[0],pana:TITLU[1],dupa:20},cum:'Dă clicul după capătul undei (după 0:20), apoi Editează › Lipește.'},
+           {ce:'Versurile n-au fost acoperite',pastrat:{fis:'voce',intervale:VERS},cum:'Ai lipit peste vorbire și a acoperit-o: Editează › Anulează și lipește după capăt.'}],
+    solutie:[{selecteaza:[0.2,1.8]},{copiaza:1},{cap:20.6},{lipeste:1}],gresit:[{selecteaza:[0.2,1.8]},{copiaza:1},{cap:8},{lipeste:1}],
+    ajutor:'Titlul e primul grup de vârfuri, la început.',
+    why:'Titlul a rămas la început, iar copia lui e un clip nou, după ultimul vers.'}),
+   inca:[
+    {t:'tf',q:'În Audacity 4, cu reglajul de la început, o bucată lipită peste vorbire împinge vorbirea spre dreapta, iar din vorbire nu se pierde nimic.',ok:false,
+     ajutor:'Recitește „Atenție” din pas.',why:'Fals. Bucata lipită acoperă ce era acolo. De aceea lipești într-un loc gol.'}
+   ]},
+  /* ---------- pasul 4 ---------- */
+  {t:'Muți un clip, de bara lui',
+   text:`<p>Un clip se mută ținând apăsat pe <strong>bara lui de sus</strong> (unde e numele) și trăgând spre stânga sau spre dreapta, pe aceeași pistă. Așa așezi titlul lipit imediat după vers sau muzica mai târziu. Tragi într-un loc gol: dacă îl lași peste alt clip, Audacity nu-l oprește, ci <strong>acoperă</strong> bucata de dedesubt, ca la Lipește. Atunci: <strong>Editează › Anulează</strong>.</p>
+<p>O bucată se poate muta și ca în Word: <strong>Editează › Decupează</strong> (Cut, ${K('Ctrl+X')}), clic în locul nou, <strong>Lipește</strong>. Decupează pornește însă aceeași fereastră de alegere (${K('Esc')}) și poate lăsa un gol în urmă.</p>
+${fig('img/clip-mutat.webp',640,210,'Audacity 4: un clip mutat cu 3 secunde spre dreapta, trăgând de bara lui de sus, încadrată; clipul ales are mânere la capete','<b>Bara clipului</b> (încadrată): de aici îl tragi.')}
+<p class="gest"><b>La calculator, acum:</b> trage bucata lipită de bara ei spre stânga, până aproape de capătul vorbirii, fără s-o lași peste vorbire. Ascultă-o în căști, apoi Editează › Anulează de două ori (întâi mutarea, apoi lipirea).</p>`,
+   exemplu:`<p>Titlul lipit a rămas la 0:23, cu trei secunde de liniște înaintea lui. Ții apăsat pe bara lui de sus și îl tragi spre stânga, până ajunge lângă capătul versului, nu peste el. În Editează, primul rând arată acum „Anulează „Mută clipul”” (Move clip). Dacă clipul era ales, de exemplu imediat după Lipește, scrie „Anulează „Mută elementele”” (Move items).</p>`,
+   altfel:`<p>E ca la pozele prinse cu cârlige pe o sfoară, la expoziția clasei: o muți de-a lungul sforii ținând-o de cârlig, adică de sus. Dacă o prinzi peste altă poză, pe aceea n-o mai vezi. Doar că aici bucata de dedesubt se taie de tot: dacă muți apoi clipul de deasupra, în locul ei rămâne liniște. O aduci înapoi doar cu Editează › Anulează.</p>`,
+   incearca:E({start:WAV({proiect:{piste:[pistaV(null,[bucV('t1',0.24,1.5,23)])]}}),
+    q:'Titlul lipit stă prea departe, la 0:23. Trage-l de bara lui de sus ca să înceapă aproape de capătul versului, între 0:19,8 și 0:21, fără să-l lași peste vers. (Pe telefon: întâi un clic pe pistă, pe la 0:21, apoi de 2 ori <b>Mărește</b>.)',
+    teste:[{ce:'Titlul lipit începe aproape de capătul versului, între 0:19,8 și 0:21',mutat:{fis:'voce',de:0.24,start:[19.75,21.05],pista:0},cum:'Trage titlul de bara lui de sus până începe între 0:19,8 și 0:21 (jos, la Selecție, vezi unde începe). Dacă a ajuns peste vers: Editează › Anulează și trage-l mai puțin.'},
+           {ce:'Versul se aude întreg: titlul nu l-a acoperit',pastrat:{fis:'voce',intervale:[[VERS[1][0],19.71]],prag:0.9995},cum:'Titlul a ajuns peste vers și l-a acoperit: Editează › Anulează, apoi trage-l mai puțin.'}],
+    solutie:[{mutaClip:{pista:0,la:23.5,start:20.2}}],gresit:[{mutaClip:{pista:0,la:23.5,start:18}}],
+    ajutor:'Bara de sus a clipului mic din dreapta, unde scrie numele lui.',
+    why:'Ai mutat clipul de bara lui: titlul vine acum după vers, fără să-l acopere.'}),
+   inca:[
+    {t:'choice',q:'Vrei să muți un clip mai la dreapta, pe aceeași pistă. De unde îl tragi?',
+     o:['De bara lui de sus, unde e numele','Din mijlocul undei lui','De glisorul Volum al pistei','De linia de timp, de deasupra pistelor'],ok:0,
+     ajutor:'Prima propoziție a pasului.',why:'Bara de sus mută clipul; trasul pe undă alege o bucată, iar glisorul schimbă volumul.'}
+   ]},
+  /* ---------- pasul 5 ---------- */
+  {t:'Mixezi: muzica pe a doua pistă',
+   text:`<p><mark>Mixarea</mark> înseamnă să asculți mai multe surse deodată, fiecare cu volumul ei. Muzica o aduci cu <strong>Fișier › Importă… (File › Import…)</strong>: alegi fișierul, apoi <strong>Deschidere</strong>. Ea intră pe o pistă nouă, sub voce, de la 0:00.</p>
+<p>În panoul din stânga, fiecare pistă are glisorul ei de <strong>volum</strong> (Volume): bara lungă cu un cerculeț, din dreapta rotiței (rotița n-o atingi). Tragi cerculețul glisorului muzicii spre stânga până vocea se înțelege clar, iar muzica se aude doar în fundal. ${S('▶')} le redă pe toate împreună. Asculți în căști și potrivești.</p>
+${fig('img/doua-piste.webp',1000,370,'Audacity 4: pista cu vocea și, sub ea, pista cu muzica importată, de la 0:00; în panoul din stânga, glisoarele de volum încadrate, al muzicii tras spre stânga','Vocea și muzica, cu glisoarele de volum încadrate: al muzicii e tras spre stânga. Culorile le alege Audacity.')}
+<p class="gest"><b>La calculator, acum:</b> descarcă muzica (${DESC_M}), adu-o cu Fișier › Importă…, coboară-i volumul și ascultă împreună, în căști. <small>Muzica: Gymnopédie nr. 1 de Erik Satie, cântată de Teknopazzo, licență CC0: o poate folosi oricine.</small></p>`,
+   exemplu:`${fig('img/meniu-fisier-importa.webp',490,555,'Meniul Fișier din Audacity 4, cu Importă încadrat','<b>Fișier › Importă…</b>')}
+<p>Ana aduce <b>muzica-fundal</b>. La volume egale, panoul „Tu, la căști” scrie „muzica ACOPERĂ vocea”. Ea trage glisorul muzicii spre stânga, puțin câte puțin, și ascultă de fiecare dată: când scrie „cuvintele se înțeleg clar”, se oprește. Când vei face din proiect un fișier MP3 sau WAV (într-o lecție următoare), pistele se vor uni într-una, cu volumele alese acum.</p>`,
+   altfel:`<p>E ca la o petrecere: dacă muzica e dată prea tare, nu-l mai auzi pe cel de lângă tine. Nu îl pui să țipe, ci dai muzica mai încet.</p>`,
+   incearca:E({start:WAV(),
+    q:'Adu muzica de fundal (<b>Fișier › Importă…</b>, <b>Descărcări</b>, <b>muzica-fundal.wav</b>, <b>Deschidere</b>), coboară-i volumul până vocea se înțelege clar, apoi ascultă-le împreună cel puțin 5 secunde.',
+    teste:[{ce:'Muzica e pe o pistă nouă',importat:'muzica-fundal',cum:'Fișier › Importă…, în stânga Descărcări, muzica-fundal.wav, Deschidere.'},
+           {ce:'Vocea se înțelege peste muzică (vezi „Tu, la căști”)',mixBun:{},cum:'Trage glisorul de volum al muzicii spre stânga, puțin câte puțin, și ascultă.'},
+           {ce:'Le-ai ascultat împreună cel puțin 5 secunde, după ultima potrivire a volumului',ascultatImpreuna:5,cum:'Clic pe undă, apoi ▶; lasă cel puțin 5 secunde.'}],
+    solutie:[{importa:'muzica-fundal.wav'},{volum:{pista:1,db:-16}},{asculta:[6,11.6]}],gresit:[{importa:'muzica-fundal.wav'},{asculta:[6,11.6]}],
+    ajutor:'Glisorul de volum e în panoul din stânga al pistei cu muzică.',
+    why:'Muzica e pe pista ei, mai încet decât vocea: cuvintele se înțeleg, iar muzica se aude în fundal.'}),
+   inca:[
+    E({start:WAV({proiect:{piste:[pistaV(),pistaM(-40)]}}),
+     q:'Aici muzica e dată atât de încet, încât abia se mai aude. Urcă-o (glisorul spre dreapta) până se aude în fundal, dar cuvintele rămân clare, apoi ascultă împreună cel puțin 4 secunde.',
+     teste:[{ce:'Muzica se aude în fundal, iar vocea se înțelege',mixBun:{},cum:'Trage glisorul muzicii puțin spre dreapta; urmărește „Tu, la căști”.'},
+            {ce:'Le-ai ascultat împreună cel puțin 4 secunde, după ultima potrivire',ascultatImpreuna:4,cum:'Clic pe undă, ▶, cel puțin 4 secunde.'}],
+     solutie:[{volum:{pista:1,db:-15}},{asculta:[6,10.6]}],gresit:[{asculta:[6,10.6]}],
+     ajutor:'Prea încet e la fel de rău ca prea tare: muzica trebuie să se audă.',why:'Acum muzica se aude, dar sub voce.'}),
+    {t:'choice',q:'În podcastul tău, muzica de fundal acoperă vocea. Ce faci?',
+     o:['Tragi spre stânga glisorul de volum al pistei cu muzică','Tragi spre dreapta glisorul de volum al pistei cu muzică','Ștergi pista cu vocea','Muți clipul cu muzica mai la dreapta'],ok:0,
+     ajutor:'Care pistă stă în fundal?',why:'Vocea duce mesajul; muzica o cobori până se înțeleg cuvintele.'}
+   ]}
+ ],
+ atelier:E({titlu:'Atelier: curăță și mixează proiectul Anei',
+  sunete:null,
+  start:{ecran:'acasa',fs:{Documente:[{nume:'Popescu_Ana_7A_voce',autor:'tu',piste:[pistaV('Audio 1')]}]},recente:[{nume:'Popescu_Ana_7A_voce.aup4',folder:'Documente'}],comportament:null,importabile:IMP},
+  intro:`<p>Proiectul Anei de la lecția 12 e în Documente: ea a citit titlul și primele versuri din „Câinele și cățelul”, cu două pauze prea lungi. Faci tot drumul de la calculator. Sub fereastră vezi <strong>testele</strong>: fiecare se bifează ✔ singur când partea lui e gata.</p>`,
+  q:'(1) Deschide proiectul din <b>Acasă › Noi și recente</b>. (2) Scoate cele <b>două pauze lungi</b> (după titlu; în mijlocul versului), fără goluri și fără să tai din cuvinte. (3) Copiază titlul și lipește-l <b>puțin după capăt</b>. (4) Adu <b>muzica-fundal</b> (Fișier › Importă…, Descărcări) și coboară-o până se înțeleg cuvintele; ascultă împreună cel puțin 5 secunde. (5) <b>Fișier › Salvează</b>.',
+  teste:[{ce:'Ai deschis proiectul Anei',folosit:'deschis',cum:'Acasă › Noi și recente › Popescu_Ana_7A_voce.'},
+         {ce:'Pauza de după titlu a dispărut',scos:{fis:'voce',de:2.0,pana:5.5},cum:'Alege-o (0:01,8 – 0:05,7) și Editează › Șterge și elimină spațiul (per pistă).'},
+         {ce:'Pauza din mijlocul versului a dispărut',scos:{fis:'voce',de:11.2,pana:13.6},cum:'Începe cu ea (e mai la dreapta): 0:10,95 – 0:13,85. Dacă ai scos-o întâi pe cealaltă, a venit cu 3,9 s spre stânga.'},
+         {ce:'N-ai tăiat din cuvinte',pastrat:{fis:'voce',intervale:[TITLU].concat(VERS)},cum:'Editează › Anulează și alege mai strâns: doar linia aproape dreaptă.'},
+         {ce:'Fără goluri acolo unde ai scos pauzele',faraGol:{faraLipite:true},cum:'A rămas un gol: Editează › Anulează, apoi Șterge și elimină spațiul (per pistă), nu Șterge.'},
+         {ce:'Titlul e copiat după capăt',copieDupa:{fis:'voce',de:TITLU[0],pana:TITLU[1],dupa:13},cum:'Alege titlul, Copiază, clic după capăt, Lipește.'},
+         {ce:'Vocea se înțelege peste muzică',mixBun:{},cum:'Fișier › Importă… › Descărcări › muzica-fundal.wav; apoi glisorul muzicii spre stânga.'},
+         {ce:'Le-ai ascultat împreună cel puțin 5 secunde, după ultima potrivire',ascultatImpreuna:5,cum:'|◀, apoi ▶.'},
+         {ce:'Ai salvat după toate schimbările',salvatDupaEditari:true,cum:'Fișier › Salvează (proiectul are nume: nu apare nicio fereastră).'},
+         {ce:'N-ai schimbat alegerea calculatorului',nimicAles:true,cum:'La fereastra „Alege comportamentul…” se apasă Esc. „Ia-o de la capăt”.'}],
+  solutie:[{deschideRecent:'Popescu_Ana_7A_voce'},{selecteaza:[10.95,13.85]},{stergeElimina:1},{selecteaza:[1.8,5.65]},{stergeElimina:1},
+           {selecteaza:[0.2,1.8]},{copiaza:1},{cap:14},{lipeste:1},{importa:'muzica-fundal.wav'},{volum:{pista:1,db:-16}},{ascultaTot:1},
+           {salveaza:{nume:'Popescu_Ana_7A_voce',folder:'Documente'}}],
+  gresit:[{deschideRecent:'Popescu_Ana_7A_voce'},{selecteaza:[10.95,13.85]},{stergeElimina:1},{selecteaza:[1.8,5.65]},{stergeElimina:1},
+          {selecteaza:[0.2,1.8]},{copiaza:1},{cap:14},{lipeste:1},{importa:'muzica-fundal.wav'},{ascultaTot:1},{salveaza:{nume:'Popescu_Ana_7A_voce',folder:'Documente'}}],
+  raspuns:'testele sunt acum bifate: proiectul deschis, cele două pauze scoase, titlul copiat după capăt, muzica adusă și coborâtă, ascultată împreună cu vocea și proiectul salvat.',
+  ajutor:'Acasă › proiectul; pauzele: alegi, Editează › Șterge și elimină spațiul; titlul: Copiază, clic după capăt, Lipește; Fișier › Importă…; glisorul muzicii spre stânga; |◀ ▶; Fișier › Salvează.',
+  why:'Ai făcut tot drumul: curățarea, copierea, mixarea și salvarea.',
+  inca:[
+   E({start:WAV(),
+    q:'Încă unul, cu sunetul de rezervă: (1) scoate pauza din mijlocul versului; (2) adu muzica-fundal; (3) mută-o de bara ei ca să înceapă după titlu, pe la 0:02 (pe telefon: clic pe pista muzicii pe la 0:01 și de 2 ori <b>Mărește</b>; jos, la Selecție, vezi unde începe muzica); (4) potrivește-i volumul până se înțeleg cuvintele.',
+    teste:[{ce:'Pauza din mijlocul versului a dispărut, fără gol',faraGol:{},cum:'Alege 0:10,95 – 0:13,85 și Editează › Șterge și elimină spațiul (per pistă).'},
+           {ce:'Pauza nu mai e în înregistrare',scos:{fis:'voce',de:11.2,pana:13.6},cum:'Alege-o din nou și scoate-o.'},
+           {ce:'Muzica începe pe la 0:02',mutat:{fis:'muzica',de:0,start:[1.7,2.5],pista:1},cum:'Trage clipul muzicii de bara lui de sus spre dreapta, cam 2 secunde.'},
+           {ce:'Vocea se înțelege peste muzică',mixBun:{},cum:'Glisorul de volum al muzicii spre stânga.'},
+           {ce:'N-ai schimbat alegerea calculatorului',nimicAles:true,cum:'Esc la fereastra de alegere.'}],
+    solutie:[{selecteaza:[10.95,13.85]},{stergeElimina:1},{importa:'muzica-fundal.wav'},{mutaClip:{pista:1,la:5,start:2}},{volum:{pista:1,db:-16}}],
+    gresit:[{selecteaza:[10.95,13.85]},{stergeElimina:1},{importa:'muzica-fundal.wav'},{volum:{pista:1,db:-16}}],
+    ajutor:'Muzica intră de la 0:00: o muți de bara ei.',why:'Titlul se aude singur, apoi intră muzica, încet, sub vers.'})
+  ]}),
+ qs:[
+  {t:'choice',q:'Ai ales o pauză lungă și vrei ca, pe orice calculator, restul înregistrării să vină în stânga, fără gol. Ce alegi din meniul Editează?',
+   o:['Șterge și elimină spațiul (per pistă)','Șterge, apoi Lipește în locul golului','Decupează, apoi Lipește la capăt','Copiază, apoi Șterge (Del)'],ok:0,
+   ajutor:'Care comandă nu depinde de alegerea făcută pe calculator?',why:'Șterge și elimină spațiul lipește capetele mereu. Șterge simplu (și Decupează) poate lăsa un gol, după cum e reglat calculatorul, iar Lipește pune bucata înapoi, nu umple golul.'},
+  E({start:WAV({pasiInainte:[{selecteaza:[1.8,5.65]},{stergeElimina:1}]}),
+   q:'Aici pauza de după titlu e deja scoasă. În mijlocul versului mai e o pauză lungă: găsește-o (ascultă și uită-te la undă) și scoate-o, fără gol și fără să tai din cuvinte.',
+   teste:[{ce:'Pauza a dispărut',scos:{fis:'voce',de:11.2,pana:13.6},cum:'Alege-o și Editează › Șterge și elimină spațiul (per pistă).'},
+          {ce:'N-ai tăiat din cuvinte',pastrat:{fis:'voce',intervale:VERS},cum:'Editează › Anulează și alege mai strâns, doar linia aproape dreaptă.'},
+          {ce:'Fără gol',faraGol:{},cum:'Editează › Anulează, apoi Șterge și elimină spațiul, nu Șterge.'},
+          {ce:'N-ai schimbat alegerea calculatorului',nimicAles:true,cum:'Esc la fereastra de alegere; „Ia-o de la capăt”.'}],
+   solutie:[{selecteaza:[7.1,10.0]},{stergeElimina:1}],gresit:[{selecteaza:[7.1,10.0]},{sterge:1,raspuns:'lasa'}],
+   ajutor:'Pauza a venit mai spre stânga, pentru că prima a fost scoasă: e linia aproape dreaptă, lungă, după primele cuvinte ale versului.',why:'Pauza a ieșit, iar versul curge fără gol.'}),
+  {t:'choice',q:'Ai copiat un salut de 2 secunde. Dai un clic la 0:08, în mijlocul unei propoziții, și alegi Editează › Lipește (Audacity 4, cu reglajul de la început). Ce se aude acum de la 0:08 la 0:10?',
+   o:['Salutul; cuvintele care erau acolo nu se mai aud','Salutul, apoi cuvintele de acolo, mutate mai la dreapta','Salutul și cuvintele de acolo, în același timp','Nimic nou: Lipește nu merge în mijlocul vorbirii'],ok:0,
+   ajutor:'Ce face bucata lipită cu ce era sub ea?',why:'Bucata lipită acoperă ce era acolo: între 0:08 și 0:10 se aude doar salutul, iar cuvintele de sub el s-au pierdut. De aceea lipești într-un loc gol.'},
+  E({start:WAV({proiect:{piste:[pistaV(),pistaM(0)]}}),
+   q:'Muzica e deja pe a doua pistă, dar la fel de tare ca vocea. Potrivește-i volumul până se înțeleg cuvintele și ascultă împreună cel puțin 4 secunde.',
+   teste:[{ce:'Vocea se înțelege peste muzică',mixBun:{},cum:'Glisorul de volum al muzicii spre stânga, puțin câte puțin.'},
+          {ce:'Le-ai ascultat împreună cel puțin 4 secunde, după ultima potrivire',ascultatImpreuna:4,cum:'Clic pe undă, ▶, cel puțin 4 secunde.'}],
+   solutie:[{volum:{pista:1,db:-18}},{asculta:[6,10.6]}],gresit:[{volum:{pista:0,db:-18}},{asculta:[6,10.6]}],
+   ajutor:'Cobori muzica, nu vocea.',why:'Muzica stă acum sub voce; ai verificat ascultând.'}),
+  {t:'choice',q:'Ai scos o pauză cu Șterge și elimină spațiul, apoi ai apăsat din greșeală Editează › Anulează și pauza a revenit. Ce alegi ca s-o scoți din nou, dintr-o singură comandă?',
+   o:['Editează › Refă „Șterge și elimină spațiul”','Încă o dată Editează › Anulează','Editează › Lipește','Editează › Copiază'],ok:0,
+   ajutor:'Care rând face din nou ce ai anulat?',why:'Refă face din nou ce ai anulat: pauza pleacă iar. Încă un Anulează ar anula și mai mult.'}
+ ]}
+  ],
+  aplicatieReala:{aplicatie:'Audacity-ul adevărat',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+   intro:`<p>Lucrezi singur, în Audacity, cu înregistrarea ta din lecția 12 și cu căștile. N-o găsești sau n-are nicio pauză lungă? Lucrezi pe sunetul de rezervă (pașii 2 și 3 îți spun cum). Ascultă doar în căști, ca să nu-i deranjezi pe colegi.</p>`,
+   pasi:PROVOCARE},
+  diploma:{titlu:'Tehnician de sunet',
+   rezumat:'și-a curățat înregistrarea în Audacity: a ales bucăți pe undă, a scos pauzele lungi fără să lase gol, a copiat și a mutat o bucată și a pus sub voce o muzică de fundal, cu volumul potrivit',
+   aplicatie:'Audacity-ul adevărat',
+   provocare:PROVOCARE},
+  tipuri:{audioeditare:TipAudioEditare}
+});
+</script>
+</body>
+</html>
