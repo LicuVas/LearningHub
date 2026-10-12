@@ -13,12 +13,15 @@ Picture-in-Picture (mereu deasupra) cu pașii și bifele. Verifică, în Chrome,
   R6  pe telefon: nici buton, nici sfat; pagina nu iese din ecran.
 Controlul: --mutanti servește motor.js stricat în 7 feluri; proba trebuie să-i prindă pe toți.
     python C:\00\Projects\LearningHub\jocuri\_motor\proba_fereastra_mica.py [--mutanti] [--lectie lectii/viii/m1-l07/]
+    python C:\00\Projects\LearningHub\jocuri\_motor\proba_fereastra_mica.py --baza https://learninghub-8z6.pages.dev
+Cu --baza, proba lucrează pe situl publicat; orice cerere spre /api/ sau spre alt domeniu e tot abandonată.
 Ultima linie = UN număr (0 = curat).
 """
 import argparse
 import functools
 import http.server
 
+import subprocess
 import sys
 import threading
 from pathlib import Path
@@ -54,9 +57,16 @@ class Tacut(http.server.SimpleHTTPRequestHandler):
         pass
 
 
-def lectii_cu_aplicatie():
+def lectii_cu_aplicatie(doar_publicate=False):
+    """Lecțiile de pe disc cu pas în aplicație; doar_publicate (pentru --baza): doar cele din git (lecțiile în lucru,
+    încă neadăugate, nu sunt pe sit)."""
+    pub = None
+    if doar_publicate:
+        r = subprocess.run(["git", "-C", str(LH), "ls-files", "lectii"], capture_output=True, text=True, encoding="utf-8")
+        pub = set(r.stdout.split())
     return sorted(p.parent.relative_to(LH).as_posix() + "/" for p in (LH / "lectii").glob("*/m*-l*/index.html")
-                  if "aplicatieReala" in p.read_text(encoding="utf-8", errors="ignore"))
+                  if "aplicatieReala" in p.read_text(encoding="utf-8", errors="ignore")
+                  and (pub is None or p.relative_to(LH).as_posix() in pub))
 
 
 class Proba:
@@ -74,9 +84,11 @@ class Proba:
         init = kw.pop("init", None)
         ctx = self.br.new_context(**kw)
 
+        gazde = ("127.0.0.1", "localhost", urlsplit(self.baza).hostname)   # --baza: și situl publicat
+
         def ruta(r):
             s = urlsplit(r.request.url)
-            if s.hostname not in ("127.0.0.1", "localhost"):
+            if s.hostname not in gazde or "/api/" in s.path:   # nimic spre panoul profesorului (regula 24)
                 self.externe.append(r.request.url)
                 if "/api/" in s.path:
                     self.api.append(r.request.url)
@@ -285,11 +297,12 @@ def main():
     ap.add_argument("--mutanti", action="store_true")
     ap.add_argument("--lectie", default=LECTIE)
     ap.add_argument("--fara-toate", action="store_true", help="sare peste trecerea prin toate lecțiile")
+    ap.add_argument("--baza", help="situl publicat (ex. https://learninghub-8z6.pages.dev); implicit: server local")
     a = ap.parse_args()
-    lectii = lectii_cu_aplicatie()
+    lectii = lectii_cu_aplicatie(doar_publicate=bool(a.baza))
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Tacut, directory=str(LH)))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
-    baza = "http://127.0.0.1:%d" % srv.server_address[1]
+    baza = a.baza.rstrip("/") if a.baza else "http://127.0.0.1:%d" % srv.server_address[1]
     scapati = 0
     try:
         with sync_playwright() as p:
@@ -305,7 +318,11 @@ def main():
             if not a.fara_toate:
                 P.toate(lectii)
             P.verifica(not P.erori, "0 erori JS", P.erori[:2])
-            P.verifica(not P.api, "nicio cerere spre /api/ (regula 24; %d cereri externe abandonate)" % len(P.externe), P.api[:2])
+            if a.baza:   # pe situl publicat, prezenta.js încearcă /api/vizitatori; ruta le abandonează pe toate (nu pleacă)
+                print("  info %d încercări spre /api/ abandonate de rută, niciuna plecată (regula 24); %d cereri externe abandonate"
+                      % (len(P.api), len(P.externe)))
+            else:
+                P.verifica(not P.api, "nicio cerere spre /api/ (regula 24; %d cereri externe abandonate)" % len(P.externe), P.api[:2])
             if a.mutanti:
                 txt = MOTOR.read_text(encoding="utf-8")
                 for nume, din, in_ in MUTANTI:
