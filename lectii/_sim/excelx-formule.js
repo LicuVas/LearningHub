@@ -27,6 +27,16 @@
       - × și ÷ devin * și / (Excel 365); +A2*B2 / -A2*B2 devin formule (=+A2*B2), ca în Excel;
       - celula cu cod de eroare are triunghiul verde; pe ecranele tactile, ținte de atins de cel puțin 36-40 px.
       - (judecătorul 2) =A2 B2, cu semnul uitat -> #NULL! și mesajul „Ai uitat semnul dintre A2 și B2”, fără fereastră.
+   8. (14.10.2026, poza din laborator: D5 = 26, testul nebifat fără niciun motiv; profesorul, cu =D4/25, a crezut că e
+      un defect) MOTIVUL sub testul nebifat, DOAR unde întrebarea îl cere: motive:true (VIII/13 e un test și nu primește
+      indicii). În ordine: apostroful din față; text fără = („lipsește semnul =” / „ai scris … de mână”); două semne =
+      („rezultatul la final”, =D4/B2=52, sau „două formule legate prin =”, cu sfatul pe ecranul tău); capcanele testului,
+      capcane:[{formule:{D5:'=D4/(B2+B3)'}, spune:'…'}] (toate adresele capcanei în formula elevului + aceeași valoare);
+      o celulă de pe lanțul formulei bune (D4, apoi D2 și D3) e goală sau greșită -> „Fă întâi D4” / „D4 se calculează
+      din D2 … fă întâi D2” (nicio judecată pe valoare); rezultat bun
+      acum, dar numere de mână în loc de adrese (=D4/25 -> „ai scris 25 de mână, în loc de B2”); doar numere; rezultat
+      greșit -> „nu e cât trebuie”. Coduri de eroare: nimic (le explică Verifică). Judecat de doi judecători ai porții
+      (lectii/viii/m1-l07/_verificare/motive_14_10/). Proba: m1-l07/_proba/proba_gesturi.py + mutanti_motive.py.
    NU face (spus în lectii/viii/m1-l07/surse.md): fereastra Yes/No a corecturii propuse (elevul nu o poate accepta aici);
    „vărsarea” lui =A2:B2 din Excel 365 (mesajul o spune); afișarea „General” pe lățimea coloanei (3,333333 în Excel, aici
    mai multe zecimale); „'12 lei” cu apostrof într-o formulă (Excel: 24; aici #VALUE!).
@@ -134,13 +144,71 @@ function eFormulaBuna(RAW,Q,a,f){const raw=RAW[a];
   const V={};Object.entries(Q.cells||{}).forEach(([k,v],i)=>{if(typeof v==='number')V[k]=String(v+(i%3+1)*3).replace('.',',')});
   if(!Object.keys(V).length)return true;
   try{const D={...RAW,...V};return la(valCu(D)(a),valCu({...D,[a]:f})(a))}catch(e){return false}}
+
+/* 8. motivul de sub testul nebifat (doar cu motive:true pe întrebare) */
+const aproape=(x,y)=>typeof x==='number'&&typeof y==='number'&&Math.abs(x-y)<1e-6;
+function adrese(f){const s=faraText(String(f)).replace(/\$/g,''),r=[],re=/([A-Za-z]{1,3})(\d+)/g;let m;   // A2, nu LOG10( și nici bucăți din cuvinte
+  while((m=re.exec(s))){const p=s[m.index-1]||'',d=s.slice(re.lastIndex);
+    if(/[A-Za-z0-9_.]/.test(p)||/^[A-Za-z0-9_]/.test(d)||d.trimStart()[0]==='(')continue;
+    if(eAdresa(m[0]))r.push(m[0].toUpperCase())}
+  return r}
+function numere(f){const s=faraText(String(f)).replace(/\$/g,''),r=[],re=/\d+(?:,\d+)?/g;let m;     // numerele scrise de mână, nu cifrele din adrese
+  while((m=re.exec(s)))if(!/[A-Za-z0-9_.,]/.test(s[m.index-1]||''))r.push(m[0]);
+  return r}
+const lista=x=>x.length<2?(x[0]||''):x.slice(0,-1).join(', ')+' și '+x[x.length-1];
+/* după judecătorii porții (14.10). Judecătorul 1: „lipite” nu mai afirmă o cauză (dublu-clic) și spune ce faci pe
+   ecranul tău (pe telefon atingerea celulei nu deschide tastatura: se scrie în bara de formule, unde textul vechi
+   rămâne); „=D4/B2=52” (rezultatul la final, ca la matematică) are motivul lui; o capcană cere TOATE adresele ei în
+   formula elevului (=D4/B2/2 dă tot 26 fără B3; =12,5 la „Mediile” nu are nicio împărțire). Judecătorul 2: cât timp o
+   celulă citită de formula bună (D4) e goală sau greșită, motivul nu judecă valoarea lui D5 (52 bun părea greșit). */
+function motiv(RAW,Q,T){
+  const tactil=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+  const asteptat=Object.assign({},(Q.verifica&&Q.verifica.formule)||{});(Q.teste||[]).forEach(t=>Object.assign(asteptat,t.formule||{}));
+  for(const [a,fx] of Object.entries(T.formule||{})){
+    if(eFormulaBuna(RAW,Q,a,fx))continue;
+    const raw=RAW[a];if(raw==null||String(raw).trim()==='')continue;   // celula goală: încă nu, fără motiv
+    const s=String(raw).trim(),val=src=>{try{return valCu(src)(a)}catch(e){return undefined}};
+    const v=val(RAW),bun=val({...RAW,[a]:fx}),ale=adrese(s),nr=numere(s),cod=`<code>${esc(s)}</code>`;
+    const sfat=ce=>tactil?`Atinge ${a}, apoi bara de formule, șterge tot textul de acolo, până la ultimul semn, și scrie ${ce}.`
+      :`Dă un singur clic pe ${a} și scrie ${ce}: ce scrii așa înlocuiește tot ce era în celulă.`;
+    if(s[0]==="'")return `În ${a} ai scris un apostrof (') la început, așa că Excel ia ce urmează drept text. ${sfat('formula din nou, fără apostrof, începând cu =')}`;
+    if(s[0]!=='=')return ale.length
+      ?`În ${a} lipsește semnul = de la început, așa că Excel ia ${cod} drept text. ${sfat('formula din nou, începând cu =')}`
+      :`În ${a} ai scris ${cod} de mână, nu o formulă. Formula începe cu = și folosește adresele celulelor, ca rezultatul să se refacă singur.`;
+    const corp=faraText(s.slice(1)),eg=[...corp.matchAll(/[^<>=]=\s*[-A-Za-z0-9(]/g)];
+    if(eg.length){const coada=corp.slice(eg[eg.length-1].index+2).trim();
+      return /^-?\d+(,\d+)?$/.test(coada)
+        ?`În ${a} ai scris la final și rezultatul (<code>=${esc(coada)}</code>). În Excel, formula are un singur semn =, la început, iar rezultatul îl calculează Excel. ${sfat('doar formula')}`
+        :`În ${a} sunt două formule legate prin =: ${cod}. O formulă are un singur semn =, la început. ${sfat('o singură formulă')}`}
+    for(const C of T.capcane||[]){const f=C.formule&&C.formule[a];
+      if(f&&adrese(f).every(r=>ale.includes(r))&&aproape(v,val({...RAW,[a]:f}))&&!aproape(v,bun))return C.spune}
+    // tot lanțul (judecătorul 3, G-A2): D5 -> D4 -> D2, D3; prin[d] = celula citită direct de formula bună prin care s-a ajuns la d
+    const prin={},st=adrese(fx).filter(d=>d!==a).map(d=>[d,null]);
+    while(st.length){const [d,p]=st.shift();if(d===a||d in prin||!(d in asteptat))continue;prin[d]=p;adrese(asteptat[d]).forEach(x=>st.push([x,p||d]))}
+    const neGata=Object.keys(prin).filter(d=>!eFormulaBuna(RAW,Q,d,asteptat[d]));                  // goale sau greșite
+    const sunt=x=>x.length>1?'sunt gata':'e gata',directe=neGata.filter(d=>prin[d]===null);
+    if(directe.length)return `Pentru ${a}, tema folosește ${lista(directe)}, care încă nu ${sunt(directe)}. Fă întâi ${lista(directe)}, apoi uită-te din nou la ${a}.`;
+    if(neGata.length){const via=prin[neGata[0]],rad=neGata.filter(d=>prin[d]===via);
+      return `Pentru ${a}, tema folosește ${via}, care se calculează din ${lista(rad)}. ${lista(rad)} încă nu ${sunt(rad)}: fă întâi ${lista(rad)}, apoi uită-te din nou la ${a}.`}
+    if(aproape(v,bun)){                                                  // bun acum, dar nu și pe numerele schimbate
+      const lipsa=adrese(fx).filter(r=>!ale.includes(r));
+      for(const n of nr){const x=Number(n.replace(',','.')),r=lipsa.find(r=>{try{return aproape(valCu(RAW)(r),x)}catch(e){return false}});
+        if(r)return `${a} arată bine acum (${fmt(v)}), dar în formulă ai scris ${n} de mână, în loc de ${r}. Pune adresa ${r}: când se schimbă numărul din ${r}, rezultatul se reface singur.`}
+      return nr.length?`${a} arată bine acum (${fmt(v)}), dar formula are numere scrise de mână. Folosește adresele celulelor, ca rezultatul să se refacă singur când se schimbă tabelul.`
+        :`${a} arată bine acum (${fmt(v)}), dar ia numerele din alte celule decât cere tema, așa că nu se mai potrivește când se schimbă tabelul. Citește din nou ce cere tema pentru ${a}.`}
+    if(typeof v!=='number')continue;                                    // cod de eroare: îl explică Verifică
+    return ale.length?`${a} arată ${fmt(v)}, dar nu e cât trebuie. Citește din nou ce cere tema pentru ${a}.`
+      :`În ${a} ai scris doar numere, fără adrese de celule, iar ${fmt(v)} nu e cât trebuie. Folosește adresele celulelor, de exemplu ${lista(adrese(fx))}.`}
+  return ''}
+
 function teste(body,Q,S,w){const box=document.createElement('div');box.className='xp-teste';box.setAttribute('aria-live','polite');body.insertBefore(box,w);
   const f=()=>{const xl=w.querySelector('.xl');if(!xl)return;const val={};xl.querySelectorAll('.gw td[data-a]').forEach(t=>val[t.dataset.a]=t.textContent.trim());
     const eq=(x,y)=>String(x??'').trim().toLowerCase()===String(y).trim().toLowerCase();
     const rez=Q.teste.map(T=>({ce:T.ce,ok:Object.entries(T.formule||{}).every(([a,fx])=>eFormulaBuna(S.RAW,Q,a,fx))
       &&Object.entries(T.valori||{}).every(([a,v])=>eq(val[a],v))&&(!T.tip||(window.ExcelTipuri&&window.ExcelTipuri.testeOk(body,T.tip)))}));
+    if(Q.motive)rez.forEach((x,i)=>{if(!x.ok)try{x.motiv=motiv(S.RAW,Q,Q.teste[i])}catch(e){x.motiv=''}});
     const n=rez.filter(x=>x.ok).length;
-    box.innerHTML=`<div class="lbl">Testele atelierului: ${n} din ${rez.length} gata</div><ul>${rez.map(x=>`<li class="${x.ok?'ok':''}"><span aria-hidden="true">${x.ok?'✔':'○'}</span>${x.ce}<span class="xp-sr">${x.ok?' (gata)':' (încă nu)'}</span></li>`).join('')}</ul>`};
+    box.innerHTML=`<div class="lbl">Testele atelierului: ${n} din ${rez.length} gata</div><ul>${rez.map(x=>`<li class="${x.ok?'ok':''}"><span aria-hidden="true">${x.ok?'✔':'○'}</span>${x.ce}<span class="xp-sr">${x.ok?' (gata)':' (încă nu)'}</span>${x.motiv?`<div class="xp-motiv">${x.motiv}</div>`:''}</li>`).join('')}</ul>`};
   f();new MutationObserver(f).observe(w,{childList:true,subtree:true,characterData:true})}
 
 /* telefonul îngust (jocuri/README.md §9: grila trebuie să încapă la 320 px): coloane mai înguste și, sub 360 px, literă
@@ -149,7 +217,8 @@ function teste(body,Q,S,w){const box=document.createElement('div');box.className
 const CSS_F=`@media (max-width:420px){#body .xl td{min-width:3.3em}}
 @media (max-width:360px){#body .xl .gw{font-size:13.5px}#body .xl td{min-width:3em;max-width:5.4em;padding:0 3px}#body .xl .nb{width:3.6em}}
 @media (max-width:340px){#body .xl .gw{font-size:12.5px}#body .xl td{min-width:2.6em;padding:0 2px}}
-@media (pointer:coarse){#body .xl td,#body .xl tbody th{height:36px}#body .xl [data-ud]{min-width:40px;min-height:40px}#body .xl [data-copiaza]{min-height:40px}}`;
+@media (pointer:coarse){#body .xl td,#body .xl tbody th{height:36px}#body .xl [data-ud]{min-width:40px;min-height:40px}#body .xl [data-copiaza]{min-height:40px}}
+.xp-teste li .xp-motiv{margin:3px 0 4px 1.3em;padding:5px 9px;border-left:3px solid var(--accent);border-radius:6px;background:var(--paper2,#F2F1EA);color:var(--ink,#1d1d1b);font-weight:400;font-size:.92rem;line-height:1.4;overflow-wrap:anywhere}`;
 function css(){if(!document.getElementById('xf-css')){const s=document.createElement('style');s.id='xf-css';s.textContent=CSS_F;document.head.appendChild(s)}}
 
 const X=window.ExcelX;
