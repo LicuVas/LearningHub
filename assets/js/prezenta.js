@@ -1059,6 +1059,17 @@
     var b = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(sir)));
     return Array.prototype.map.call(b, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
   }
+  /* BILETUL (15.10.2026, AI_0\projects\teste-elevi\contracte\2026-10-15_bilet_prima_conectare): același șir ca amprenta, dar
+     FĂRĂ cod. Profesorul urcă biletele elevilor care au lucrat înainte de coduri (AI_0\tools\activitate.py bilete, aceeași
+     regulă în bilet() de acolo); jurnalul îl trimite la /api/jurnal, iar serverul leagă PE LOC înscrierile lor vechi de amprenta
+     nouă, la prima conectare cu cod pe alt aparat. „Altă școală” n-are bilete. */
+  async function bilet(e) {
+    if (!e || !e.scoala || e.scoala === 'alta' || !e.clasa || !e.nume) return null;
+    var n = function (s) { return faraDiacritice(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+    var sir = 'lh-bilet|' + e.scoala + '|' + n(e.clasa).replace(/^a /, '') + '|' + n(e.nume).split(' ').sort().join(' ');
+    var b = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(sir)));
+    return Array.prototype.map.call(b, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+  }
 
   /* ---------------- PROGRESUL ONLINE (26.09.2026) ----------------
      Cheile profilului elevului (tot ce conține profilul ca bucată întreagă: jocuri, lecții, exersări) urcă
@@ -1438,7 +1449,10 @@
   window.Prezenta = {
     versiune: 'plecat-pas-2026-10-10',   // marcajul pentru verificarea live (10.10: h, acum.pas, plecat, ev „pas”, cadența de 5 minute)
     contramasuri: 'ap-rapid-2026-10-10',  // marcajul contramăsurilor P5/P7/P8 (ap, rap/rq/rel) pentru verificarea live, la publicare
+    bilet_versiune: 'bilet-2026-10-15',   // marcajul pentru verificarea live a biletului (contracte\2026-10-15_bilet_prima_conectare)
     identitate: identitate,
+    /* biletul elevului dat (implicit cel conectat) pentru /api/jurnal; null dacă nu se poate face (Altă școală, fără crypto) */
+    bilet: function (e) { try { return bilet(e || eu).catch(function () { return null; }); } catch (x) { return Promise.resolve(null); } },
     iesi: function () { if (eElev()) iesi(); },
     /* 'activ' | 'intreaba' | 'vizitator' | 'necunoscut' — motor.js ține nivelurile deoparte cât e 'intreaba' */
     stare: stare,

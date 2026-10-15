@@ -148,9 +148,13 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
     var e=euDe();if(!eElev(e)||stareEu(e)!=='activ')return;   // neînscris / vizitator / „Ești tot X?”: nimic spre server
     if(inCurs||(!fortat&&Date.now()-tCerut<10000))return;
     inCurs=true;tCerut=Date.now();var id=e.id,h=e.h||null;
-    adresa().then(function(u){
+    // BILETUL (15.10.2026): la prima conectare cu cod pe alt aparat, serverul leagă pe loc ce a lucrat elevul înainte de coduri
+    // (prezenta.js Prezenta.bilet; AI_0\projects\teste-elevi\contracte\2026-10-15_bilet_prima_conectare). Fără el: ca înainte.
+    var bil=h&&window.Prezenta&&window.Prezenta.bilet?window.Prezenta.bilet(e):Promise.resolve(null);
+    Promise.all([adresa(),bil.then(null,function(){return null})]).then(function(x){
+      var u=x[0],b=x[1];
       var ctl=window.AbortController?new AbortController():null,t=ctl?setTimeout(function(){ctl.abort()},10000):0;
-      return fetch(u,{method:'POST',body:JSON.stringify({id:id,h:h}),signal:ctl?ctl.signal:undefined})
+      return fetch(u,{method:'POST',body:JSON.stringify(b?{id:id,h:h,b:b}:{id:id,h:h}),signal:ctl?ctl.signal:undefined})
         .then(function(r){clearTimeout(t);return r.ok?r.json():null},function(x){clearTimeout(t);throw x});
     }).then(function(j){
       SRV_ID=id;
