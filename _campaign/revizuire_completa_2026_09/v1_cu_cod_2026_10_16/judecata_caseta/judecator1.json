@@ -1,0 +1,83 @@
+{
+  "judecator": 1,
+  "tinta": "lectii/_sim/intrare-cod.js (sha1 c8c6b4ae9688afa57e196f84275f616cc4931c9d) fata de assets/js/prezenta.js (sha1 8e852437fb1748289eb8ef901f3063172418466d)",
+  "data": "2026-10-16",
+  "grav": 0,
+  "major": 3,
+  "minor": 5,
+  "simulator": {"drumuri": 474, "infidelitati": 3},
+  "provocare": "nu e cazul (componenta comuna, nu o lectie)",
+  "linia_fara_t1": "nu e cazul (componenta comuna)",
+  "probleme": [
+    {
+      "id": "P1", "gravitate": "MAJOR", "regula": "Verificarea exercitiilor: un drum gresit nu are voie sa iasa Corect",
+      "loc": "intrare-cod.js, meniul etichetei, butonul „Scoate-mă din lista calculatorului” + evalueaza() (tinta implicita 'iesit' la start eticheta/meniu)",
+      "citat": "jurnal('scos',{k});iesi()",
+      "de_ce": "La exercitiile cu tinta „iesit” (implicita la start eticheta si meniu) copilul rezolva apasand „Scoate-mă din lista calculatorului” in loc de „Ieși (deconectare)”: butonul scrie in jurnal si „iesit”, deci Verifica da „Corect”. Pe calculatorul adevarat „Scoate-mă” sterge numele din lista (a doua zi copilul nu se mai gaseste in „Cine lucreaza acum?” si trebuie sa se reinscrie de la zero cu nume si cod). Probat cu gesturi reale la 1280 si la 390 (poarta.py, drumul „R-eticheta/iesit: Scoate-ma din lista” -> Corect).",
+      "reparatie_propusa": "In evalueaza(), cand exista in jurnal un 'scos' al elevului, nu numara 'iesit'-ul care il insoteste: raspunde cu un mesaj de forma „Ai scos numele din lista calculatorului. Nu asta cere exercitiul: apasa „Ieși (deconectare)”, nu „Scoate-mă…”.” (sau, in butonul 'scoate', nu scrie jurnal('iesit') pentru tinta 'iesit')."
+    },
+    {
+      "id": "P2", "gravitate": "MAJOR", "regula": "Fidelitate: acelasi comportament la Enter ca in caseta adevarata (nedeclarat in GATA.md §5)",
+      "loc": "intrare-cod.js, cereCod() = „Păstrează progresul online” (campul codului)",
+      "citat": "placeholder=\"${TEXTE.exCod}\" data-enter=\"ok\">",
+      "de_ce": "In exersare, Enter in campul „Codul tău (4 cifre)” de la „Păstrează progresul online” salveaza codul. In caseta adevarata (prezenta.js, cereCod) campul NU are niciun handler pentru Enter: nu se intampla nimic pana nu apesi „Păstrează”. Copilul invata ca Enter merge, iar in laborator apasa Enter, ecranul ramane la fel, codul nu se pastreaza online si el poate crede ca e salvat. Probat: scenariul D9b (pasul Enter): real ramane pe „Păstrează progresul online”, exersarea trece la meniu.",
+      "reparatie_propusa": "Scoate data-enter=\"ok\" din input-ul 'k' al lui cereCod (celelalte campuri cu Enter — nume la „Cine ești?”, cod la „Salut”, a doua scriere la „Mi-am uitat codul”, codul la corectura — sunt la fel in ambele casete). Sau declara diferenta in GATA.md §5."
+    },
+    {
+      "id": "P3", "gravitate": "MAJOR", "regula": "Verificarea exercitiilor: drumul bun (calea oficiala de reparare) trebuie sa ajunga la Corect; mesajul nu are voie sa fie fals",
+      "loc": "intrare-cod.js, evalueaza(), verificarea „a doua inscriere”",
+      "citat": "const inscrieri=E.filter(x=>x.e==='inscris'&&!eTu(x.k)&&!kColegi.has(x.k));",
+      "de_ce": "Un copil care greseste litera la numele din „Cine ești?” (ex. «Stanciu Irina» in loc de «Stanciu Iarina») primeste corect „a doua inscriere”. Dar daca isi repara greseala pe calea oficiala (eticheta -> „Mi-am scris greșit numele, clasa sau școala” -> cod -> numele corect -> „Salvează”), exercitiul tot spune „Ai făcut a doua înscriere: numele scris altfel… Profesorul ar vedea doi elevi în loc de unul” — fals: dupa corectura, pe calculatorul adevarat profesorul vede un singur elev. Evenimentul 'inscris' ramane pentru totdeauna in jurnal. Probat (extra.py E1) la 1280 si 390: dupa corectura, Verifica ramane „Nu încă” cu mesajul vechi; iesirea e doar „Arată-mi răspunsul”.",
+      "reparatie_propusa": "In evalueaza() ignora inscrierile al caror nume a fost apoi mutat de o corectura: `&&!E.some(y=>y.e==='corectat'&&y.din===x.k)`; la start 'nou'/'lista' accepta ca bun si drumul «inscriere cu greseala + corectura»."
+    },
+    {
+      "id": "P4", "gravitate": "MINOR", "regula": "Fidelitate: numele ramane asa cum a fost scris in formular",
+      "loc": "intrare-cod.js, gata() — intrarea prin „Nu sunt în listă” pe un nume deja din lista",
+      "citat": "conecteaza(x||nou,cod);S.iesit=false;S.mesajIesit='';S.refuz=false;S.intreaba=false;",
+      "de_ce": "Caseta adevarata face eu = numele TASTAT (si il scrie asa in lista). Daca elevul scrie «Iarina Stanciu» (prenume nume), eticheta adevarata arata «Stanciu I.», iar cea de exersare «Iarina S.» (ia numele din lista). Aceeasi diferenta la majuscule/diacritice («stanciu iarina»). Probat: scenariul D10d (real «Stanciu I.», exersare «Iarina S.»), 1280 si 390.",
+      "reparatie_propusa": "In gata(): cand x exista, conecteaza cu nume/clasa din formular: conecteaza(Object.assign({},x,{nume:nou.nume}),cod) si lasa inregistreaza() sa rescrie intrarea din lista."
+    },
+    {
+      "id": "P5", "gravitate": "MINOR", "regula": "Fidelitate: aceeasi ordine in lista „Cine lucrează acum?” (nedeclarat in GATA.md §5)",
+      "loc": "intrare-cod.js, popularea listei la pornire (start eticheta, meniu, fara-cod)",
+      "citat": "if(COLEGI.length){inLista(COLEGI[0],COLEGI[0].cod);inLista(eu0,elevCod);COLEGI.slice(1).forEach(c=>inLista(c,c.cod))}",
+      "de_ce": "La start 'eticheta' / 'meniu' (elevul e conectat) caseta adevarata, dupa „Ieși (deconectare)” -> „Intră”, arata elevul care a lucrat PRIMUL in lista; exersarea arata colegul primul («Doroftei Horia» deasupra lui «Stanciu Iarina»). Probat cu ordine.py: eticheta si meniu DIFERIT; coleg ramas conectat si lista simpla la fel. E o decizie de proiect (copilul care apasa primul nume greseste), dar in aceste exercitii nu seamana cu ce vede copilul in laborator si nu e spus in §5.",
+      "reparatie_propusa": "La start 'eticheta'/'meniu'/'fara-cod' cu pe=elevul, pune elevul primul in lista; sau scrie diferenta in GATA.md §5 si in nota exercitiului."
+    },
+    {
+      "id": "P6", "gravitate": "MINOR", "regula": "Proba proprietarului: proba textelor (R2) cauta fragmentele oriunde in prezenta.js",
+      "loc": "lectii/_sim/_teste/intrare_cod_texte.py, gasit()",
+      "citat": "if frag in crud or frag in fara:",
+      "de_ce": "Proba cauta fiecare fragment ca subsir in tot fisierul (si in comentarii, si la oricare aparitie). Pe 12 copii mutate ale prezenta.js, proba textelor prinde doar 3 (mesaje cu text unic). Scapa: «Mi-am uitat codul» schimbat doar in „Salut” (mai exista in formular), «Cele două coduri nu sunt la fel» schimbat doar la „Salut”, «Nu ești tu? Schimbă elevul» schimbat in buton (textul vechi mai sta in comentariul din capul fisierului), iar regulile (5 coduri -> 4, pauza 30 -> 20 s, 4 cifre -> 3), ordinea butoanelor si cifrele ascunse nu intra deloc in proba textelor. Diferentialul din judecata_caseta (scenarii.py + mutanti.py), care compara stare cu stare, prinde 11 din 12 (al 12-lea, M11, face caseta adevarata sa semene cu exersarea: confirma P2).",
+      "reparatie_propusa": "Pune diferentialul (scenarii.py + mutanti.py din judecata_caseta) ca poarta de publicare langa intrare_cod_proba.py, sau cel putin noteaza in GATA.md §3 ca proba textelor nu vede locul textului."
+    },
+    {
+      "id": "P7", "gravitate": "MINOR", "regula": "Telefonul: mesajul „Nu încă” trebuie sa se vada",
+      "loc": "motor.js (#fb sub butonul Verifică) + inaltimea casetei la start 'fara-cod'",
+      "citat": "<div id=\"fb\" aria-live=\"polite\"></div>",
+      "de_ce": "La 390 px, dupa „Verifică” pe starea 'fara-cod' mesajul incepe la y=734 si se termina la y=886 din 844: doar primele randuri se vad fara derulare (la lista, salut, meniu, nou se vede tot). Nu e un defect al fisierului intrare-cod.js, ci al asezarii din motor; nota aici fiindca exercitiul 'fara-cod' e cel mai inalt.",
+      "reparatie_propusa": "In motor: dupa resolve(false) fa scrollIntoView({block:'nearest'}) pe #fb; sau lasa caseta mai scurta (meniul fara cod are 4 note „mic”)."
+    },
+    {
+      "id": "P8", "gravitate": "MINOR", "regula": "Apasari rapide",
+      "loc": "intrare-cod.js, eSunt(): intarzierea de 350 ms inainte de intrare",
+      "citat": "dupa(350,()=>{",
+      "de_ce": "Un copil care apasa „Intră” si imediat „Verifică” (sub 350 ms) primeste „Nu încă. Încă nu ești conectat pe numele tău”; a doua apasare iese Corect. Inofensiv, dar mesajul e derutant. Probat cu extra.py E3 (1280 si 390).",
+      "reparatie_propusa": "In evalueaza(), cat timp un 'dupa(...)' e in curs (butonul „Intră”/„Trimite” oprit), raspunde „Asteapta o clipa…” sau amana Verifică."
+    }
+  ],
+  "ce_am_incercat_sa_resping_si_n-am_reusit": [
+    "Fidelitatea: 270 de mersuri aleatorii (stari de pornire: lista, salut, eticheta, meniu, coleg ramas conectat, fara cod, Ești tot X, nimeni, calculator nou, nume scris gresit, un singur elev; 1280 si 390 px; server fals cu cerere in asteptare si cu deblocare), pana la 30 de pasi fiecare, cu taste reale: 268 identice stare cu stare (cele 2 neidentice = erori de infrastructura ale probei: ERR_NETWORK_CHANGED si un timeout; reluate 8/8 identice); 44 de drumuri numite (cod de 3 cifre, litere, 1-5 coduri gresite, pauza si secundele ramase, sfarsitul pauzei, Enter, numele colegului, colegul fara cod revendicat, Mi-am uitat codul cu si fara deblocare, Ieși / Bine / Intră, Schimbă elevul, Păstrează-l online, a doua inscriere cu alta clasa / alt nume / alta scoala, apasari duble, rotirea telefonului, erorile formularului, corectura, Scoate-mă, Ești tot X, nimeni conectat): toate la fel la 1280 si la 390, cu exceptia P2 si P4 si a limitei declarate la §5.4 (scoala scrisa de mana).",
+    "Codul vizibil/ascuns: «ascuns» identic in toate starile: Salut, Mi-am uitat codul, corectura = puncte; Cine ești? si Păstrează progresul online = cifrele se vad (comparat camp cu camp in fiecare pas).",
+    "Izolarea (R4): 39 de drumuri x (prezenta.js activ cu un elev ADEVARAT conectat + prezenta.js blocat) x 1280/390 px = 156 rulari: 0 apeluri catre localStorage/sessionStorage/cookie/fetch/XHR/beacon/WebSocket/evenimente/istoric/ferestre cu intrare-cod.js pe stiva; 0 chei schimbate de exersare (stocarea INTREAGA comparata, nu doar lh_*); window.Prezenta neatins; elevul adevarat ramane conectat; 0 cereri /api in rularile fara prezenta.js; 0 cereri spre afara. Spionul a fost verificat cu control pozitiv: 3 copii ale casetei cu cate o scriere in localStorage / un fetch / un apel la Prezenta sunt toate prinse.",
+    "Poarta: rezolva() -> Corect, gresit() -> Nu încă, Verifică fara gest -> Nu încă cu mesaj clar, 2 greseli -> «Arată-mi răspunsul» -> starea buna cu drumul spus: 84 de verificari (21 de variante de start, scoli diferite) la 1280 si la 390: 0 abateri. 58 de drumuri cu gesturi (bune si gresite): abateri doar P1 (la ambele latimi).",
+    "Telefon (390 px): in toate starile atinse (317 pasi comparati) niciun element de atins (buton, eticheta, camp, lista) sub 32 px, nicio derulare laterala a paginii, rotirea ecranului nu strica starea; focusul dupa „Nu încă” ramane pe «Verifică», mesajul e in regiunea aria-live; dupa «Corect» focusul ramane pe pagina (comportament general al motorului).",
+    "Mutanti pe COPIE a prezenta.js (12): vezi P6; originalul nu a fost atins."
+  ],
+  "top3": [
+    "P3: dupa o greseala de scriere la inscriere, chiar si dupa corectura oficiala exercitiul spune fals «Ai făcut a doua înscriere» (inscrierea veche ramane in jurnal)",
+    "P1: «Scoate-mă din lista calculatorului» e socotit «Ieși (deconectare)» si da Corect (drum gresit care sterge numele din lista)",
+    "P2: Enter salveaza codul la «Păstrează progresul online», dar in caseta adevarata nu face nimic (copilul invata un gest care nu merge si poate crede ca codul e salvat)"
+  ],
+  "verdict": "publicabil dupa reparatii"
+}
