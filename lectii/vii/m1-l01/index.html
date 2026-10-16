@@ -98,11 +98,14 @@ details.verif summary{cursor:pointer;font-weight:800;color:var(--accent);min-hei
 .ei-mesaj a{color:var(--bad)}
 .pescurt{border-left:4px solid var(--accent);background:var(--paper2);padding:6px 10px;margin:.6em 0;line-height:1.45}
 .ei-cine{border:2px solid var(--accent);border-radius:10px;background:var(--sel);color:var(--ink);padding:10px 12px;margin:0 0 12px;line-height:1.45}
+/* montajele casetei de jos (16.10.2026): înalte; pe ecran lat nu mai late de 560 px, ca să se citească fără să umple pagina */
+.captura img[src*="casete-cod"]{max-width:min(100%,560px)}
 </style>
 </head>
 <body>
 <script src="../../_sim/rezultat-elev.js"></script>
 <script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/intrare-cod.js"></script>
 <script>
 /* LECȚIA 1, clasa a VII-a, modulul 1 (revizuirea LearningHub, standardul din 27.09.2026): ora de organizare + evaluare inițială.
    Surse (toate ale profesorului): Info_Gimnaziu_2026\instrumente\Fisa_criterii_elev_clasa_VII.md, SISTEM_EVALUARE.md,
@@ -115,7 +118,11 @@ details.verif summary{cursor:pointer;font-weight:800;color:var(--accent);min-hei
    a clasei a VII-a §4-5 (surse.md, secțiunea din 29.09.2026).
    Alinierea la actele oficiale (01.10.2026; surse.md, secțiunea cu același nume): literele din OMEC 4.615/2026, anexa 2
    (A = Avansat, B = Consolidat, C = De bază), părțile lucrării C 40 / B 30 / A 20, cinci niveluri, regula notă → nivel
-   a profesorului, planul individualizat de învățare pentru fiecare elev, Avansat fără explicație în definiția ministerului. */
+   a profesorului, planul individualizat de învățare pentru fiecare elev, Avansat fără explicație în definiția ministerului.
+   CODUL (16.10.2026; contractul _campaign\revizuire_completa_2026_09\v1_cu_cod_2026_10_16): de la 30.09, prezenta.js cere
+   un cod de 4 cifre la fiecare intrare pe numele unui elev. Pașii 2-3 (pe bară P2, P3) predau intrarea cu cod; caseta
+   „Cine dă evaluarea?” din atelier trimite la ei; laboratorul se face cu codul adevărat. Faptele: _proba/proba_cod_vii.py
+   și _proba/proba_laborator_cod.py, pe caseta adevărată (prezenta.js sha1 8e852437), serverul FALS local, rețeaua blocată. */
 const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
 /* cheile b / c / a sunt INTERNE (stau și în fișele salvate ale elevilor), nu literele nivelurilor; literele oficiale
    (OMEC 4.615/2026, anexa 2: A = Avansat, B = Consolidat, C = De bază) sunt în etichete (01.10.2026) */
@@ -123,6 +130,66 @@ const NIV={b:'<span class="niv">C · De bază</span>',c:'<span class="niv c">B �
 const NUME_NIV={b:'C · De bază',c:'B · Consolidat',a:'A · Avansat'};
 const IMG_CENTURI=fig('img/centuri.webp',850,754,'Cinci centuri de arte marțiale, strânse și așezate una lângă alta: galbenă, portocalie, verde, albastră și maro',
   'Centurile de la judo: cerințele fiecărei centuri se știu dinainte. <span class="credit">Foto: chris 論, <a href="https://commons.wikimedia.org/wiki/File:Obi-goky%C5%AB.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.ro" target="_blank" rel="noopener">CC BY-SA 3.0</a>; convertită în WebP.</span>');
+
+/* ---------- PAȘII CU CODUL (16.10.2026) ----------
+   Pozele: capturi ale casetei ADEVĂRATE de azi (prezenta.js sha1 8e852437), cu unealta comună
+   lectii/v/m1-l01/_proba/captura_casete_cod.py --clasa VII --scoala tupilati --clasa-exacta VII, nume inventate
+   (Vlaicu Sorina cu codul 3946, Toma Radu, Dobre Matei fără cod). casete-cod.webp = montajul uneltei;
+   casete-cod-altfel.webp = două capturi ale ei, montate de _proba/monta_altfel.py (două persoane). Rândurile: img/SURSE.json. */
+const FIG_COD_INTRA=fig('img/casete-cod.webp',834,2431,
+  'Patru capturi ale casetei de jos, numerotate. 1: formularul Cine ești? completat: Scoala Gimnaziala Tupilati, clasa VII, Vlaicu Sorina, codul 3946 (cifrele se văd), butonul Gata. 2: lista Cine lucrează acum? cu Toma Radu, Vlaicu Sorina și Dobre Matei. 3: Salut, Vlaicu Sorina! cu câmpul Codul tău (4 cifre) și butoanele Intră, Înapoi la listă, Mi-am uitat codul. 4: meniul etichetei, cu butonul roșu Ieși (deconectare) și, mai jos, Nu ești tu? Schimbă elevul',
+  'Caseta adevărată: 1 prima dată, 2 lista, 3 codul, 4 meniul etichetei.');
+const FIG_COD_ALTFEL=fig('img/casete-cod-altfel.webp',643,1253,
+  'Două capturi ale casetei de jos, numerotate. 1: Mi-am uitat codul, Vlaicu Sorina (VII): Codul nou (4 cifre), Scrie-l încă o dată, butonul Trimite cererea. 2: meniul etichetei la Dobre Matei, care n-a avut cod: Progresul tău stă doar pe calculatorul ăsta, cu butonul Păstrează-l online',
+  '1 „Mi-am uitat codul”; 2 Matei, fără cod: „Păstrează-l online”.');
+/* Scenariile casetei de exersare comune (lectii/_sim/intrare-cod.js, API: lectii/_sim/intrare-cod.GATA.md, proprietar:
+   autorul V/1). Caseta imită caseta adevărată, dar NU atinge înscrierea adevărată (R4). Elevii sunt INVENTAȚI; școala
+   și clasa sunt cele ale clasei a VII-a de la Tupilați (lista școlilor: 'tupilati', 'VII').
+   gresit() al casetei (poarta test_joc): fără colegi = a doua înscriere, cu altă clasă; cu colegi = pe numele colegului. */
+const ELEV_COD={nume:'Lazăr Bianca',clasa:'VII',scoala:'tupilati'};
+const SCENARII_COD={
+  /* pasul „Pe numele tău…”, „Încearcă”: (a) prima înscriere, (c) ieșirea, (b) intrarea din listă, cu același cod.
+     Greșeala tipică respinsă: a doua înscriere, cu altă clasă (gresit()). */
+  inscriere:{t:'intrare-cod',start:'nou',elev:ELEV_COD,tinta:['intrat','iesit','intrat'],
+    q:'În chenarul de exersare de mai jos (nu în caseta din colțul ecranului): ești Lazăr Bianca, din clasa a VII-a, la Școala Gimnazială Tupilați. Înscrie-te cu un cod ales de tine. Apoi ieși și intră din nou din listă, cu același cod.',
+    ajutor:'Prima dată: „Spune cine ești”, școala, clasa, numele, codul, „Gata”. Ieși: eticheta din exersare, apoi „Ieși (deconectare)”. Din nou: „Intră”, numele tău din listă, codul, „Intră”.',
+    why:'Pe numele tău se intră doar cu codul tău. „Ieși (deconectare)” lasă calculatorul liber; data viitoare caseta îți cere codul.'},
+  /* pasul „Pe numele tău…”, „Încă un exercițiu”: (b) calculatorul are deja lista; codul din caiet */
+  lista:{t:'intrare-cod',start:'lista',elev:ELEV_COD,cod:'6402',colegi:[{nume:'Toma Radu'},{nume:'Pavel Irina'}],tinta:'intrat',
+    q:'În chenarul de exersare e lista „Cine lucrează acum?”. În caiet, Bianca are codul 6402: e doar codul exercițiului (pe al tău îl alegi tu, altul). Intră pe numele ei.',
+    ajutor:'Apasă pe numele Biancăi, scrie codul din caiet la „Codul tău (4 cifre)” și apasă „Intră”.',
+    why:'Din listă intri apăsând pe numele tău și scriind codul tău. Pe numele unui coleg nu intri: nu-i știi codul.'},
+  /* pasul „Pe numele tău…”, „Încă un exercițiu”: eticheta are numele colegului → „Nu ești tu? Schimbă elevul” → lista → codul */
+  coleg:{t:'intrare-cod',start:'eticheta',elev:ELEV_COD,cod:'6402',pe:'Toma Radu',colegi:[{nume:'Toma Radu'}],tinta:'intrat',
+    q:'Bianca se așază la calculator. În chenarul de exersare, eticheta are numele lui Radu. Bianca are codul 6402. Fă ca munca să se scrie pe numele ei.',
+    ajutor:'Apasă pe etichetă, apoi „Nu ești tu? Schimbă elevul”. Din listă, numele Biancăi și codul ei.',
+    why:'Cât eticheta are numele lui Radu, munca se scrie pe numele lui. Schimbi elevul și intri pe numele tău, cu codul tău.'},
+  /* pasul „Acasă, pe telefon…”, „Încearcă”: (e) „Mi-am uitat codul” → cod nou de două ori → „Trimite cererea” →
+     „Cererea a ajuns la profesor.”, apoi ce face profesorul (deblocat:true: exersarea face „Deblochează”) → intră cu codul NOU.
+     Greșeala tipică respinsă: o înscriere nouă (a doua înscriere, gresit()). */
+  uitat:{t:'intrare-cod',start:'uitat',elev:ELEV_COD,cod:'6402',deblocat:true,tinta:['cerere','intrat'],
+    q:'Bianca și-a uitat codul, iar chenarul de exersare îi cere „Codul tău (4 cifre)”. Cere un cod nou. În exersare, profesorul o deblochează imediat; pe site, abia după ce vorbește cu el. Apoi intră cu codul nou.',
+    ajutor:'„Mi-am uitat codul”, un cod nou scris de două ori la fel, „Trimite cererea”. Apoi „Am înțeles”, numele ei din listă, codul nou și „Intră”.',
+    why:'Cererea ajunge la profesor. Îi spui că e a ta (acum, dacă e în sală, sau la ora următoare); după ce te deblochează, intri cu codul nou și îți găsești progresul. Ai deja două coduri? Tot așa: la deblocare, ce ai lucrat online pe numele tău, la clasa ta, trece sub codul nou. O înscriere nouă, cu alt cod, ar fi o a doua Biancă, fără progres.'},
+  /* pasul „Acasă, pe telefon…”, „Încă un exercițiu”: (f) a lucrat fără cod → meniul → „Păstrează-l online” → cod → „Păstrează” */
+  faraCod:{t:'intrare-cod',start:'fara-cod',elev:ELEV_COD,tinta:'online',
+    q:'Bianca a lucrat până acum fără cod. E conectată pe calculatorul ăsta. Fă, în chenarul de exersare, ca progresul ei să meargă și acasă.',
+    ajutor:'Apasă eticheta din exersare, apoi „Păstrează-l online”, scrie un cod de 4 cifre și apasă „Păstrează”.',
+    why:'Fără cod, progresul stă doar pe calculatorul ăsta. Cu un cod, urcă online; acasă intri cu același nume, aceeași clasă și același cod.'},
+  /* pasul „Acasă, pe telefon…”, „Încă un exercițiu”: (d) acasă / pe telefon: formularul cu același nume, aceeași clasă, același cod */
+  telefon:{t:'intrare-cod',start:'acasa',elev:ELEV_COD,cod:'6402',tinta:'intrat',
+    q:'Acasă, pe telefon, Bianca vrea să continue ce a lucrat la școală. În caiet: Școala Gimnazială Tupilați, clasa a VII-a, Lazăr Bianca, codul 6402. Înscrie-o, în chenarul de exersare.',
+    ajutor:'Același nume, aceeași clasă, același cod ca la școală. Altfel e o a doua înscriere, fără progresul ei.',
+    why:'Cu același nume, aceeași clasă și același cod, progresul de la școală vine și pe telefon. Pe site, semnul e pe cuprinsul lecției: stelele ei sau „Continuă de unde ai rămas”. Nu apare nimic? Codul greșit: „Mi-am uitat codul”, cu codul din caiet, și îi spui profesorului. Clasa greșită o repari singur: exercițiul următor.'},
+  /* pasul „Acasă, pe telefon…”, „Încă un exercițiu” (reparare 16.10, registrul C21; API: start 'eticheta' + scris.clasa, ținta
+     'corectat'): acasă, înscrisă din greșeală la altă clasă → „Mi-am scris greșit numele, clasa sau școala” → codul → clasa
+     bună → „Salvează”. Pe caseta adevărată: „Progresul tău a venit cu tine.” + „Continuă de unde ai rămas: P3”
+     (_proba/proba_reparare.py, c21_clasa, 1280 + 390). */
+  clasaGresita:{t:'intrare-cod',start:'eticheta',elev:ELEV_COD,cod:'6402',scris:{clasa:'VIII'},
+    q:'Acasă, pe telefon, Bianca s-a înscris din greșeală la clasa VIII și nu i-a apărut „Continuă de unde ai rămas”. Codul ei e 6402. Repar-o în chenarul de exersare, ca să-i vină munca de la școală.',
+    ajutor:'Apasă eticheta din exersare, apoi „Mi-am scris greșit numele, clasa sau școala”. Scrie codul, apasă „Mai departe”, alege clasa VII și apasă „Salvează”.',
+    why:'Nu face încă o înscriere. Cu „Mi-am scris greșit numele, clasa sau școala”, munca de pe clasa greșită trece pe clasa bună și îi vine și cea de la școală.'}
+};
 
 /* ---------- unde se recitește (jocurile de a V-a și a VI-a de pe sit; nivelurile citite din configurația lor) ---------- */
 /* legătura „doar recitire” a motorului (dirijorul, 27.09): ?recitire=N (N de la 1, ca pe ecran) deschide pașii nivelului N
@@ -198,15 +265,22 @@ function umpleFisa(){document.querySelectorAll('[data-fisa]').forEach(el=>{el.cl
    'alta-fila' și 'fara-prezenta'). Etichetele sunt cele din assets/js/prezenta.js. */
 const scurtNume=n=>{const w=String(n||'').trim().split(/\s+/);return w.length>1?w[w.length-1]+' '+w[0].charAt(0)+'.':(w[0]||'')};   // ca scurt() din prezenta.js
 const ASCUNSA=' Dacă nu vezi caseta, derulează până la capătul paginii.';
+/* 16.10.2026, reparare (registrul comun C1, C5): după intrare pagina pornește din nou pe cuprins. Elevul neconectat primește
+   „Continuă de unde ai rămas” (munca lui neconectat trece pe numele lui); cel care schimbă de pe numele unui coleg NU (munca
+   rămâne în sertarul colegului) și se întoarce cu butonul lecției + „Pasul următor →” + „La atelier →”, fără să rezolve
+   din nou (probat: _proba/proba_reparare.py, c1_mijloc, c1_drum_rapid, 1280 + 390). Bara pașilor e a elevului care tocmai a
+   intrat, deci nu-l trimitem la fila „Atelier” din bară (C5). */
+const REVINO=' Pagina pornește din nou: apasă „Continuă de unde ai rămas”; nu apare? Apasă Lecția 1, apoi „Pasul următor →” și „La atelier →”, până aici.';
 const oriText=n=>n===1?'o dată':n<20?`de ${n} ori`:`de ${n} de ori`;
 const cuPunct=t=>/[.!?]$/.test(t)?t:t+'.';
 function cineHtml(){
   const c=RE_OK()?window.RezultatElev.cine():{stare:'fara-prezenta',elev:null};
-  if(c.stare==='activ'&&c.elev)return `<b>Cine dă evaluarea?</b> Caseta de jos a ecranului scrie că lucrează <b>${escF(cuPunct(scurtNume(c.elev)))}</b> Nu ești tu? Apasă pe ea, apoi „Nu ești tu? Schimbă elevul” și alege-te din listă.${ASCUNSA}`;
-  if(c.stare==='intreaba')return '<b>Cine dă evaluarea?</b> Caseta de jos a ecranului te întreabă „Ești tot …?”. Răspunde întâi: „Da, sunt eu” sau „Nu, sunt alt elev”.';
-  if(c.stare==='vizitator')return '<b>Cine dă evaluarea?</b> Ai ales „Nu, doar vizitez”. Dacă ești elev, apasă caseta de jos a ecranului („Sunt elev — mă înscriu”) și înscrie-te, apoi revino la fila „Atelier”.'+ASCUNSA;
+  /* 16.10.2026: fiecare variantă trimite la pasul cu codul („Pe numele tău, cu codul tău”), nu mai predă intrarea aici */
+  if(c.stare==='activ'&&c.elev)return `<b>Cine dă evaluarea?</b> Caseta de jos a ecranului scrie că lucrează <b>${escF(cuPunct(scurtNume(c.elev)))}</b> Nu ești tu? Apasă pe ea, apoi „Nu ești tu? Schimbă elevul”, și intră pe numele tău, cu codul tău.${REVINO}${ASCUNSA}`;
+  if(c.stare==='intreaba')return '<b>Cine dă evaluarea?</b> Caseta de jos a ecranului te întreabă „Ești tot …?”. Răspunde întâi: „Da, sunt eu” sau „Nu, sunt alt elev” (apoi intri pe numele tău, cu codul tău).'+REVINO;
+  if(c.stare==='vizitator')return '<b>Cine dă evaluarea?</b> Ai ales „Nu, doar vizitez”. Dacă ești elev, apasă caseta de jos a ecranului („Sunt elev — mă înscriu”) și intră pe numele tău, cu codul tău.'+REVINO+ASCUNSA;
   if(c.stare==='alta-fila')return '<b>Cine dă evaluarea?</b> Elevul s-a schimbat în altă filă. Reîncarcă pagina, ca să vezi în caseta de jos cine lucrează acum.';
-  return '<b>Cine dă evaluarea?</b> Nu ești înscris. Apasă caseta de jos a ecranului („Spune cine ești” sau „Cine lucrează acum?”) și înscrie-te, apoi revino la fila „Atelier”.'+ASCUNSA;
+  return '<b>Cine dă evaluarea?</b> Nu ești conectat. Intră pe numele tău, cu codul tău, ca la pasul <i>Pe numele tău, cu codul tău</i>: apasă caseta de jos a ecranului („Spune cine ești”, „Cine lucrează acum?” sau „Nu e nimeni conectat”).'+REVINO+ASCUNSA;
 }
 function umpleCine(){document.querySelectorAll('[data-cine]').forEach(el=>{el.innerHTML=cineHtml()})}
 new MutationObserver(()=>{
@@ -346,10 +420,26 @@ const TipEval={
 /* ---------- „Acum la calculatorul din laborator” (fără profesor; de pe scaun) ---------- */
 const LABORATOR=[
   'Stai pe scaun; nu atingi cablurile și prizele. În caiet, pe o pagină nouă, scrie titlul <b>De unde plec — clasa a VII-a</b> și data.',
-  'Scrie cele trei niveluri, fiecare cu o propoziție a ta.<details class="verif"><summary>Verifică-te, după ce ai scris</summary>C · De bază: rezolvi după un model sau după pașii dați, la lucruri făcute. B · Consolidat: rezolvi singur, la lucruri de felul celor exersate. A · Avansat: rezolvi singur, după cerință, o situație pe care n-ai mai văzut-o.</details>',
-  'Scrie cum afli nota din puncte și nivelul din notă.<details class="verif"><summary>Verifică-te, după ce ai scris</summary>Punctajul = C + B + A + 10 din oficiu. Nota = punctaj : 10, rotunjită la cel mai apropiat număr întreg; la ,5 exact, în sus. Nivelul, din notă, după regula profesorului: 9 sau 10 Avansat, 7 sau 8 Consolidat, 5 sau 6 De bază, 3 sau 4 În formare, 1 sau 2 În dificultate. Fiecare elev primește, pe an, cel puțin un plan individualizat de învățare; sub 5, pașii lui duc la De bază.</details>',
+  /* 16.10.2026, reparare: C23 (pe telefon eticheta strânsă n-are „Profesorul vede activitatea ta”: cerem doar numele);
+     C1 (după „Schimbă elevul” pagina pornește pe cuprins, fără „Continuă”: drumul înapoi, probat în proba_reparare.py,
+     c1_mijloc + c1_drum_rapid); C8 (nu poate intra: cererea, profesorul e în sală, pașii de sărit). */
+  'Eticheta din colțul de jos trebuie să aibă numele tău (scurtat, ca Sorina V.). Alt nume? Apasă pe ea, „Nu ești tu? Schimbă elevul” și intră pe numele tău. Pagina pornește din nou: Lecția 1, apoi „Pasul următor →” până la atelier; îl rezolvi din nou (fișa ta e goală). Ți-ai uitat codul? „Mi-am uitat codul”, „Trimite cererea”, spune-i profesorului acum și sari pașii 7 și 8.',
+  /* reparare, I4 (judecătorul cod1, M3): nivelurile și regula notei, într-un singur pas de scris (erau doi). Caseta „Pe scurt”
+     NU le are (are doar numărul de note și media), deci „copiază caseta Pe scurt” ar fi pierdut nivelurile și regula. */
+  'Scrie cele trei niveluri, fiecare cu o propoziție a ta, apoi cum afli nota din puncte și nivelul din notă.<details class="verif"><summary>Verifică-te, după ce ai scris</summary>C · De bază: rezolvi după un model sau după pașii dați, la lucruri făcute. B · Consolidat: rezolvi singur, la lucruri de felul celor exersate. A · Avansat: rezolvi singur, după cerință, o situație pe care n-ai mai văzut-o. Punctajul = C + B + A + 10 din oficiu. Nota = punctaj : 10, rotunjită la cel mai apropiat număr întreg; la ,5 exact, în sus. Nivelul, din notă, după regula profesorului: 9 sau 10 Avansat, 7 sau 8 Consolidat, 5 sau 6 De bază, 3 sau 4 În formare, 1 sau 2 În dificultate. Fiecare elev primește, pe an, cel puțin un plan individualizat de învățare; sub 5, pașii lui duc la De bază.</details>',
   'Copiază fișa de pornire de mai sus: ✔ sau ✗, <b>De recitit</b> și <b>Proba nu a verificat</b>.',
-  'Apasă cel mult trei legături din „De recitit” (sau una din „Proba nu a verificat”). Fiecare deschide, într-o filă nouă, pașii unui nivel, doar de citit. Scrie în caiet o propoziție despre fiecare, apoi revino în fila lecției.'
+  /* reparare, I4: o legătură e obligatorie, celelalte (cel mult trei) dacă ai timp. NU le-am mutat acasă, cum propunea
+     judecătorul: fișa cu legăturile stă doar pe calculatorul pe care s-a lucrat atelierul (rezultat-elev.js, lh_rez_…
+     în localStorage), deci acasă lista n-ar fi acolo. Acasă rămâne situația (d), făcută de-adevăratelea (ultimul pas). */
+  'Apasă o legătură din „De recitit” (sau din „Proba nu a verificat”); dacă ai timp, cel mult trei. Fiecare deschide, într-o filă nouă, pașii unui nivel, doar de citit. Scrie în caiet o propoziție despre fiecare, apoi revino în fila lecției.',
+  /* 16.10.2026: intrarea cu CODUL ADEVĂRAT (decizia profesorului), gest cu gest; probat pe caseta adevărată
+     (_proba/proba_laborator_cod.py): „Ieși” lasă lecția pe pasul acesta; după „Intră” pagina pornește din nou, cu
+     „Continuă de unde ai rămas: Laboratorul”. Reparare: C17 (caietul acasă), C22 (conectat, dar fără cod știut: nu iese). */
+  'Pe ultima pagină a caietului de TIC scrie <b>Codul meu LearningHub</b> și codul tău, dacă nu l-ai scris deja. Nu-l arăta nimănui; caietul îl iei și acasă. Nu-ți mai știi codul? Nu ieși: sari pașii 7 și 8 și spune-i profesorului.',
+  'Apasă eticheta, cu numele tău, apoi „Ieși (deconectare)”. Trebuie să scrie „Data viitoare îți cer codul.” Lecția rămâne la pasul acesta.',
+  'Apasă „Intră”, apoi numele tău din listă, scrie codul din caiet și apasă „Intră”. Pagina pornește din nou: „Continuă de unde ai rămas” te aduce înapoi aici.',
+  /* reparare: C7 / m6 (ieșirea e amintită și după ultima întrebare și pe diplomă); I4: tema = situația (d), de-adevăratelea */
+  'După cele 5 întrebări apasă întâi „Termină nivelul”. Abia apoi, când pleci: eticheta, „Ieși (deconectare)”. Calculatorul rămâne liber pentru următorul elev. <b>Temă:</b> acasă, cu internet, pe telefon sau pe alt calculator, intră cu același nume, aceeași clasă și același cod și uită-te la stelele lecției.'
 ];
 
 JocMotor.porneste({
@@ -366,17 +456,79 @@ JocMotor.porneste({
   banda:'<span class="tr t1">De bază</span><span class="tr t2">Consolidat</span><span class="tr t3">Avansat</span>',
   intro:`<p>Afli ce faci la TIC anul acesta, cum iei nota și ce sunt cele <b>trei niveluri</b>, apoi îți corectezi singur <b>evaluarea inițială</b>, care <b>nu se notează</b>.</p>
 <p><b>Ai nevoie de:</b> ce ai învățat în clasele a V-a și a VI-a.</p>`,
-  cum:`<p><b>Poți lucra singur:</b> pașii cu „Încearcă tu”, atelierul, laboratorul, apoi 5 întrebări.</p>`,
+  /* 16.10.2026, reparare (registrul comun C1/C20): verificarea etichetei se face AICI, înaintea lecției. „Ieși” + „Bine”
+     nu reîncarcă pagina; ce lucrează elevul neconectat trece pe numele lui când intră la pasul „Acasă, pe telefon…”
+     („Continuă de unde ai rămas: P3”, probat: _proba/proba_reparare.py, c1_iesi și c1_iesi_nou, 1280 + 390). */
+  cum:`<p><b>Poți lucra singur:</b> pașii cu „Încearcă tu”, atelierul, laboratorul, apoi 5 întrebări.</p>
+<p><b>Întâi, uită-te la eticheta din colțul de jos al ecranului.</b> Are numele altui elev? Apasă pe ea, apoi „Ieși (deconectare)” și „Bine”. Pe numele tău intri în lecție, după ce înveți cum.</p>`,
   nivele:[
 {t:'Ce facem anul acesta. Criteriile de evaluare și cele trei niveluri. Evaluare inițială',lectii:[1],final:true,
  continuturi:[],   // VII-E0 (organizare + evaluare inițială) n-are conținut în programă; poarta are excepția -E0 (dirijorul, 27.09)
- obiectiv:'știi ce faci anul acesta la TIC, afli nivelul unei sarcini, transformi punctele unei lucrări în notă, citești nivelul din notă (regula profesorului) și știi de unde pleci.',
+ obiectiv:'intri pe numele tău, cu codul tău, și ieși, știi ce faci anul acesta la TIC, afli nivelul unei sarcini, transformi punctele unei lucrări în notă, citești nivelul din notă (regula profesorului) și știi de unde pleci.',
  pasi:[
   /* ---------- pasul 0 ---------- */
   {t:'La ce folosește',
    text:`<p>Azi afli ce faci la TIC anul acesta și după ce reguli primești notele.</p>
 <p>Regulile acestea se numesc <mark>criterii de evaluare</mark>. Le afli de la început, nu după lucrare: așa știi ce ai de exersat și te poți verifica singur.</p>
 ${IMG_CENTURI}`},
+  /* ---------- pasul nou A (16.10.2026; pe bară P2): intrarea pe numele tău, cu codul — situațiile R1 a, b, c + colegul.
+     Faptele, probate pe caseta adevărată (_proba/proba_cod_vii.py): „Spune cine ești” → „Cine ești?” → „Gata”; eticheta
+     „Profesorul vede activitatea ta · Sorina V.”; meniul → „Ieși (deconectare)” → „Ai ieșit, Vlaicu Sorina. Data viitoare îți
+     cer codul.”; „Nu e nimeni conectat · Intră” → „Cine lucrează acum?” → „Salut, …!” → „Codul tău (4 cifre)” → „Intră”;
+     5 coduri greșite la rând = 30 de secunde; „Nu ești tu? Schimbă elevul” → lista. ---------- */
+  {t:'Pe numele tău, cu codul tău',
+   text:`<p>La laborator, același calculator îl folosesc mulți elevi. Ca munca să fie a ta, intri pe numele tău cu un <mark>cod</mark> de 4 cifre, ales de tine. Cine îți știe codul poate lucra pe numele tău: nu-l spui nimănui, îl scrii în caiet.</p>
+<p><b>Prima dată</b> apeși „Spune cine ești” (sau „Nu sunt în listă”), alegi școala și clasa, scrii numele întreg, ca în catalog, și codul, apoi „Gata”. <b>La fiecare oră</b>: din lista „Cine lucrează acum?”, numele tău, codul, „Intră”.</p>
+<p><b>Pleci?</b> Apeși <mark>eticheta</mark> (bara din colțul de jos, cu numele tău), apoi „Ieși (deconectare)”. Are numele altui elev? Apeși pe ea, apoi „Nu ești tu? Schimbă elevul”.</p>`,
+   /* „Uite cum” scurtat în etapa 2 (I4): numerele (1)-(4) trimit la poza casetei adevărate; „Data viitoare îți cer codul.”
+      și „Nu e nimeni conectat” le arată caseta de exersare (ieșirea și intrarea din nou) și laboratorul. */
+   exemplu:`<p>Sorina intră prima dată (1). Cifrele codului se văd cât le scrie, deci se uită să nu stea nimeni lângă ea. Scrie codul și în caiet, apoi apasă „Gata”.</p>
+<p>Ora următoare apasă „Intră” pe etichetă, apoi pe numele ei din listă (2), scrie codul și apasă „Intră” (3). Cod greșit? Îl scrie din nou; dacă nu-l mai știe, tot acolo e „Mi-am uitat codul”. La plecare: eticheta, apoi „Ieși (deconectare)” (4).</p>`+FIG_COD_INTRA,
+   altfel:`<p>Codul e ca cifrul lacătului de la bicicletă. Bicicletele stau toate în același loc, dar a ta se deschide doar cu cifrul tău. Cine îl află poate pleca cu ea, deci nu-l spui nimănui. „Ieși (deconectare)” e lacătul pus la loc când pleci.</p>`,
+   /* APLICARE pe caseta de exersare (etapa 2): înscrierea, ieșirea, intrarea din nou, din listă, cu același cod */
+   incearca:SCENARII_COD.inscriere,
+   inca:[
+    SCENARII_COD.lista,
+    SCENARII_COD.coleg,
+    /* recunoașterea din etapa 1, trecută aici; alegerea cu Radu a ieșit: e aceeași situație ca SCENARII_COD.coleg */
+    {t:'order',q:'Ora următoare, pe același calculator, jos scrie „Nu e nimeni conectat”. Pune în ordine ce face Sorina ca să intre pe numele ei.',
+     items:['Apasă eticheta „Nu e nimeni conectat”','În lista „Cine lucrează acum?” apasă pe numele ei','Scrie codul din caiet la „Codul tău (4 cifre)”','Apasă „Intră”'],
+     ajutor:'Întâi deschizi lista, apoi te alegi din ea, apoi dovedești cu codul că ești tu.',
+     why:'Eticheta deschide lista „Cine lucrează acum?”. Pe numele ei se intră doar cu codul ei, scris la „Codul tău (4 cifre)”, apoi „Intră”.'},
+    {t:'tf',q:'Codul tău îl poți spune colegului de bancă, dacă îți e prieten.',ok:false,
+     ajutor:'Ce poate face cine îți știe codul?',why:'Fals. Cine îți știe codul poate lucra pe numele tău, chiar și fără să vrea. Codul nu-l spui nimănui.'}
+   ]},
+  /* ---------- pasul nou B (16.10.2026; pe bară P3): același cod peste tot, codul uitat, fără cod — situațiile R1 d, e, f.
+     Probat: alt aparat + același nume, clasă și cod = progresul vine („Continuă de unde ai rămas”); numele în altă ordine,
+     cu majuscule sau diacritice = tot el; alt cod / altă clasă / un cuvânt în plus = altă înscriere, fără progres.
+     „Mi-am uitat codul” → „Codul nou (4 cifre)” + „Scrie-l încă o dată” → „Trimite cererea” → „Cererea a ajuns la
+     profesor.”; înainte de deblocare: „Profesorul nu te-a deblocat încă.”; după: intră codul nou, nu cel vechi.
+     Profesorul (activitate.html): „Deblochează doar după ce ți-a spus el, la oră, că e cererea lui.” Fără cod: meniul
+     „Progresul tău stă doar pe calculatorul ăsta.” → „Păstrează-l online”; din listă: „Alege-ți codul (4 cifre)”.
+     După intrarea în caseta adevărată, pagina se încarcă din nou, cu „Continuă de unde ai rămas: P3” (proba_laborator_cod.py). */
+  {t:'Acasă, pe telefon, cu codul uitat',
+   text:`<p><b>Acasă sau pe telefon</b> nu ești în listă: lista e a calculatorului. Te înscrii, cu internet, cu același nume, aceeași clasă și același cod: îți vine ce ai lucrat la școală. Alt cod, altă clasă sau alt nume fac o a doua înscriere, goală.</p>
+<p><b>Ți-ai uitat codul?</b> Apasă „Mi-am uitat codul” (acasă: la „Spune cine ești”, după nume), alege un cod nou și „Trimite cererea”. Spune-i profesorului că cererea e a ta. După ce te deblochează (îți primește codul nou), intri cu el și ai tot ce ai lucrat.</p>
+<p><b>Ai lucrat până acum fără cod?</b> Apasă eticheta: dacă scrie „Progresul tău stă doar pe calculatorul ăsta.”, apasă „Păstrează-l online”.</p>`,
+   /* „Uite cum” scurtat în etapa 2 (I4): poza (1) „Mi-am uitat codul”, (2) meniul la elevul fără cod (Dobre Matei). Fraza
+      despre „Alege-ți codul (4 cifre)” din listă a ieșit: caseta adevărată o explică singură, pe ecran. */
+   exemplu:`<p>Acasă, cu caietul, Sorina se înscrie. Pe cuprins vede stelele sau „Continuă de unde ai rămas”. Nimic? A greșit clasa: eticheta, „Mi-am scris greșit numele, clasa sau școala”. A greșit codul: „Mi-am uitat codul”, cu codul din caiet, și spune profesorului.</p>`+FIG_COD_ALTFEL+`
+<p><b>Acum, de-adevăratelea,</b> în caseta din colțul ecranului (nu în exersare): intră pe numele tău sau verifică-l. Fără cod încă? Îl alegi, de două ori. Pagina pornește din nou? „Continuă de unde ai rămas”.</p>`,
+   /* APLICARE pe caseta de exersare (etapa 2): codul uitat, cererea, apoi intrarea cu codul nou după deblocare.
+      Alegerea din etapa 1 (Bianca și codul uitat) a ieșit: e aceeași situație ca exercițiul acesta. */
+   incearca:SCENARII_COD.uitat,
+   inca:[
+    SCENARII_COD.faraCod,
+    SCENARII_COD.telefon,
+    SCENARII_COD.clasaGresita,
+    {t:'tf',q:'Acasă, Sorina scrie numele începând cu prenumele: Sorina Vlaicu, cu aceeași clasă și același cod. Pentru site e alt elev.',ok:false,
+     ajutor:'Ce trebuie să fie la fel: cuvintele din nume, clasa, codul. Contează și ordinea?',
+     why:'Fals. Ordinea cuvintelor, literele mari și diacriticele nu contează. Contează aceleași cuvinte, aceeași clasă și același cod. Vlaicu Sorina Maria, sau clasa VIII, ar fi o a doua înscriere, fără progresul de la școală.'},
+    {t:'choice',q:'Cezar a lucrat la școală fără cod. Acum e la calculatorul lui, iar eticheta de jos scrie numele lui. Ce face ca să-și continue progresul și acasă?',
+     o:['Apasă eticheta, apoi „Păstrează-l online”, și alege un cod','Acasă se înscrie cu un cod nou: progresul vine singur','Apasă „Scoate-mă din lista calculatorului”','Nimic: progresul lui e deja păstrat online'],ok:0,
+     ajutor:'Ce scrie în caseta de la etichetă, la elevul fără cod?',
+     why:'Fără cod, „Progresul tău stă doar pe calculatorul ăsta.”. Cu „Păstrează-l online” și un cod ales, progresul de pe calculatorul ăsta urcă online; acasă, Cezar intră cu același nume, aceeași clasă și același cod.'}
+   ]},
   /* ---------- pasul 1 ---------- */
   {t:'Ce faci anul acesta',
    text:`<p>Materia are patru <mark>unități</mark>: părți mari, fiecare cu o lucrare la final.</p>
@@ -575,17 +727,17 @@ ${IMG_CENTURI}`},
    capcane:{'6':'Verifică două lucruri: ai adunat cele 10 puncte din oficiu? Iar la ,5 exact rotunjești în sus, în favoarea ta.','6.5':'Nota e un număr întreg: la ,5 exact rotunjești în sus.','65':'65 e punctajul. Nota = punctaj : 10, apoi rotunjești.','5':'Adună și cele 10 puncte din oficiu: punctajul e C + B + A + 10.'},
    ajutor:'Punctajul (C + B + A + 10), apoi punctaj : 10, rotunjit la cel mai apropiat număr întreg.',why:'30 + 18 + 7 + 10 = 65. Nota: 6,5, exact la jumătate, deci rotunjești în sus, în favoarea ta: nota 7.'},
   {t:'choice',q:'Pe foaia lucrării, prima parte e „PARTEA C (40 p)”. Ce nivel verifică?',o:['De bază: exerciții cu model','Consolidat: singur, la ce ai exersat','Avansat: o situație nouă'],ok:0,
-   ajutor:'Recitește pasul „Cum arată o lucrare”: ce literă are fiecare parte?',why:'Fiecare parte poartă litera nivelului pe care îl verifică, ca la minister: C · De bază, B · Consolidat, A · Avansat. Partea C, cu 40 de puncte, vine prima: exercițiile cu model.'}
+   ajutor:'Recitește pasul „Cum arată o lucrare”: ce literă are fiecare parte?',why:'Fiecare parte poartă litera nivelului pe care îl verifică, ca la minister: C · De bază, B · Consolidat, A · Avansat. Partea C, cu 40 de puncte, vine prima: exercițiile cu model. Gata cu întrebările: apasă întâi „Termină nivelul”, ca lecția să rămână terminată pe numele tău. Abia apoi, când pleci: eticheta, „Ieși (deconectare)”.'}
  ]}
   ],
   aplicatieReala:{aplicatie:'calculatorul tău din laborator și caietul de TIC',titlu:'Acum la calculatorul din laborator',scurt:'Laboratorul',
    intro:`<p>Faci pașii unul câte unul, fără profesor.</p><div data-rezultat-elev-intrebare></div><div data-fisa></div>`,
    pasi:LABORATOR},
   diploma:{titlu:'Știu de unde plec',
-   rezumat:'a aflat ce face anul acesta la TIC (tehnoredactare, audio și audio-video, aplicații colaborative, de la algoritm la program), cele trei niveluri (C · De bază, B · Consolidat, A · Avansat), cum arată o lucrare (părțile C, B, A și oficiul), cum devin punctele notă, cum intră munca pe LearningHub în nota din catalog la lucrarea de modul (80% lucrarea + cel mult 20 de puncte de pe LearningHub), cum se citește nivelul din notă după regula profesorului și și-a corectat singur evaluarea inițială, cu lista a ce are de recitit',
+   rezumat:'a învățat să intre pe numele lui, cu codul lui, și să iasă, a aflat ce face anul acesta la TIC (tehnoredactare, audio și audio-video, aplicații colaborative, de la algoritm la program), cele trei niveluri (C · De bază, B · Consolidat, A · Avansat), cum arată o lucrare (părțile C, B, A și oficiul), cum devin punctele notă, cum intră munca pe LearningHub în nota din catalog la lucrarea de modul (80% lucrarea + cel mult 20 de puncte de pe LearningHub), cum se citește nivelul din notă după regula profesorului și și-a corectat singur evaluarea inițială, cu lista a ce are de recitit. La plecare: eticheta din colțul de jos, apoi „Ieși (deconectare)”',
    aplicatie:'calculatorul tău din laborator și caietul de TIC',
    provocare:LABORATOR},
-  tipuri:{numar:TipNumar,evalinit:TipEval}
+  tipuri:{numar:TipNumar,evalinit:TipEval,'intrare-cod':SimIntrareCod.intrare}
 });
 </script>
 </body>
