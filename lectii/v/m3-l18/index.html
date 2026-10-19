@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 18, clasa a V-a: Rolul unui editor grafic. Interfața. Creare, deschidere, salvare</title>
+<meta name="description" content="Lecția 18, clasa a V-a: la ce folosește un editor grafic, fereastra Paint din Windows 11 (titlul, meniul Fișier, bara cu instrumente, pânza, bara de stare cu mărimea în pixeli), o imagine nouă și o linie cu Creionul, Salvați ca în folderul tău (PNG sau JPG), Salvați (Ctrl+S), închiderea cu „Salvați lucrul?” și Deschidere.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF2F7; --paper:#FFFFFF; --paper2:#F4F7FB; --line:#D3DCE7;
+  --ink:#16202C; --ink2:#4E5D6E; --accent:#0B5CAD; --accentInk:#FFFFFF; --sel:#D6E6F8;
+  --mark:#FFE07A; --markInk:#16202C; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Fredoka","Segoe UI",system-ui,sans-serif; --fb:"Nunito Sans","Segoe UI",system-ui,sans-serif; --fm:"JetBrains Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F151C; --paper:#17202A; --paper2:#1E2935; --line:#33414F;
+  --ink:#E7EEF5; --ink2:#AEBBC8; --accent:#7DB8F2; --accentInk:#0F151C; --sel:#24384D;
+  --mark:#EDCB63; --markInk:#16202C; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F151C; --paper:#17202A; --paper2:#1E2935; --line:#33414F;
+  --ink:#E7EEF5; --ink2:#AEBBC8; --accent:#7DB8F2; --accentInk:#0F151C; --sel:#24384D;
+  --mark:#EDCB63; --markInk:#16202C; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: bara de titlu a lui Paint, paleta de culori și bara de stare */
+.banda{display:flex;align-items:center;gap:10px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent)}
+.banda .bd-t{flex:none;font-size:.76rem;font-weight:600;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 9px}
+.banda .bd-pal{flex:none;display:flex;gap:4px}
+.banda .bd-pal i{display:block;width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,0,0,.25)}
+.banda .bd-z{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-family:var(--fm);font-size:.72rem;color:var(--ink2)}
+h1,h2{font-weight:600;letter-spacing:0}
+code{font-family:var(--fm);font-size:.9em}
+details.verif{margin-top:.4em;font-size:.93rem}
+details.verif summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:32px}
+/* „Acum la calculator” (regula 10): gesturi mici, reale, imediat după pas */
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:600;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.acum li.tarziu{list-style:none;margin:.5em 0 .1em -1.2em;padding-top:5px;border-top:1px dashed var(--line)}   /* punctul „La sfârșitul orei”: ultimul, fără număr, despărțit */
+.acum code{white-space:nowrap;font-size:.8em}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/paint.js"></script>
+<script>
+/* Lecția 18, clasa a V-a (M3): „Rolul unui editor grafic. Interfața. Creare, deschidere, salvare” — prima lecție din V-U4.
+   Standardul: LearningHub\_campaign\revizuire_completa_2026_09\05_STANDARD_LECTIE.md. Sursele și probele: surse.md, _proba\.
+   Simulatorul: lectii/_sim/paint.js (NOU, proprietar lecția aceasta; baza lecțiilor 19-22), tipul paintw (Paint).
+   Paint (aplicație din Magazin) NU a fost pornit: faptele vin din capturile reale din jocuri/grafica-v (Paint RO), din probele
+   judecătorului lecției V/8 pe Paint-ul real (desktopul ascuns), din resursele pachetului Paint citite ca fișier și din fereastra
+   Salvare ca a lui Windows, probată de lecția V/15. Ce nu e probat stă în surse.md („Nesigur”) și în capturi_lipsa.json și e
+   scris prudent („de obicei”); niciun exercițiu nu se sprijină pe un fapt presupus despre Paint.
+   Reparată după judecata 1 (19.10.2026, _verificare\registru_j1.md): P0 + 5 pași (era P0 + 9), ca să încapă într-o oră.
+   Trecerea după judecata 2 (19.10.2026, _verificare\registru_j2.md, V–AB): curățenia = ultimul punct, nenumerotat, al casetei P3;
+   citirea scurtată și exercițiul din Paint-ul din pagină de la „Închizi și deschizi din nou” mutat la „Încă un exercițiu”.
+   Salvarea se face EXACT ca la lecția 15: în fereastra Salvare ca, întâi numele, apoi Documente, dublu-clic pe folderul tău, te uiți
+   sus, Salvare; la „există deja”: Nu și o cifră. Folderul de lucru: Ex Nume Prenume în Documente (lecția 10), făcut în caseta de la
+   „O imagine nouă și o linie”, pus la sfârșit în Coș, fără golirea Coșului; tot acolo stă punctul „La sfârșitul orei”, la care se
+   poate întoarce oricine (pasul e văzut, deci se apasă în bara de jos). Trimiterile la pași se fac după TITLU. */
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const CAPT='<small>Captură din Paint (Windows 11); chenarele sunt de la noi.</small>';
+const IMG={
+  tableta:fig('desen-tableta.webp',800,450,'O mână desenează cu un creion special direct pe ecranul unei tablete grafice; pe ecran se văd schițe cu personaje','Un desenator lucrează într-un editor grafic, direct pe ecran. <small>Foto: David Revoy, CC BY 4.0, <a href="https://commons.wikimedia.org/wiki/File:Penciling_on_Wacom_Cintiq_13HD_by_David_Revoy.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>; micșorată.</small>'),
+  goblen:fig('goblen-puncte.webp',640,480,'Broderie în cruciulițe pe pânză albă: flori roșii și frunze verzi, făcute din cruciulițe mici, fiecare de o singură culoare','Cusătura în cruciulițe: fiecare cruciuliță are o singură culoare. <small>Foto: Loyna, CC BY-SA 2.5, <a href="https://commons.wikimedia.org/wiki/File:Cross-stitch_012007.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>; micșorată.</small>'),
+  fereastra:fig('fereastra-paint-parti.webp',1000,688,'Fereastra Paint din Windows 11, în română, cu o casă și un soare desenate; cinci chenare roșii numerotate: 1 bara de titlu, 2 meniul de sus, 3 bara cu instrumente, 4 pânza, 5 bara de stare','Cele cinci părți, numerotate ca în text. '+CAPT),
+  creion:fig('creion-instrumente.webp',248,158,'Grupul Instrumente din Paint, cu șase butoane pe două rânduri: Creion (încadrat cu roșu), Umplere (aleasă, cu fond albastru), Text; Radieră, Selector de culoare, Lupă','<b>Creionul</b>: primul buton din grupul <b>Instrumente</b>. Aici era aleasă Umplere (fondul albastru). '+CAPT),
+  fisier:fig('fisier-meniu.webp',440,440,'Meniul Fișier din Paint, deschis: Nou, Deschidere, Importați pe pânză, Recente, Salvați, Salvați ca, Salvați ca proiect, Imprimați, Partajați, Stabilire ca fundal pentru desktop, Proprietăți imagine, Ieși; încadrate: Nou, Deschidere, Salvați, Salvați ca','Meniul <b>Fișier</b>; jos, <b>Ieși</b>. '+CAPT),
+  formate:fig('formate-salvare.webp',430,190,'Submeniul Salvați ca din Paint, cu formatele Imagine PNG, Imagine JPG, Imagine BMP, Imagine GIF și Alt format','Lista de formate de la <b>Salvați ca</b>. '+CAPT),
+  salvareCa:fig('edge-salvare-ca.webp',911,209,'Bucăți din fereastra Salvare ca a lui Windows: titlul, bara de adresă cu Descărcări, câmpul Nume fișier cu numele colorat și butoanele Salvare și Anulare','Fereastra <b>Salvare ca</b> (lecția 15). <small>Captură din Edge; în Paint, de obicei, aceeași fereastră.</small>')
+};
+const ACUM=(...p)=>`<div class="acum" role="note"><div class="lbl">Acum la calculator, în Paint-ul adevărat</div><ol>${p.map(x=>x.startsWith('!')?`<li class="tarziu">${x.slice(1)}</li>`:`<li>${x}</li>`).join('')}</ol></div>`;   /* '!…' = punctul de la sfârșitul orei */
+
+/* lumea simulatorului: contul Elev din laborator, folderul de lucru al Anei e Documente › Ex Pop Ana */
+const P=o=>Object.assign({t:'paintw'},o);
+const COLEG=[['Documente/Ex Ionescu Dan/']];
+const LINIA='Documente/Ex Pop Ana/linia mea.png';
+
+/* ---- „Acum la calculator” (după atelier, înainte de verificare). FĂRĂ profesor, pe calculatorul comun. Casetele de la pași au
+   făcut deja tot drumul în Paint (pornești, imagine nouă, linie, Salvați ca, Ctrl+S, X, Deschidere); aici faci DOAR ce n-au făcut
+   ele (aceeași imagine în altă aplicație — activitatea profesorului) și lași calculatorul cum l-ai găsit. ---- */
+const LAB=[
+  'Aceeași imagine, în altă aplicație. Readu Explorer: clic pe pictograma lui din bara de activități (lecția 8). În folderul tău, dublu-clic pe <b>linia mea</b>: de obicei se deschide într-o aplicație de privit imagini, de exemplu Fotografii (<i>Photos</i>); dacă Windows te întreabă cu ce s-o deschidă, alege Fotografii. Același desen: aici îl vezi, în Paint îl schimbi. Închide aplicația cu X.',
+  'Lasă calculatorul cum l-ai găsit. Închide Paint, dacă e deschis (la „Salvați lucrul?”: <b>Nu salvați</b>). În Explorer, <b>Documente</b>, un clic pe folderul tău, <kbd>Delete</kbd>: folderul ajunge în Coș. <b>Nu goli Coșul</b>. Ai salvat din greșeală un desen în alt folder, de exemplu în <b>Imagini</b>? Acolo, un clic pe desenul tău, <kbd>Delete</kbd>. Închide Explorer cu X. <details class="verif"><summary>Verifică-te, după ce ai terminat</summary>Din Explorer, <b>linia mea</b> s-a deschis în altă aplicație decât Paint, cu același desen. Acum nu mai e deschis nici Paint, nici Explorer: a rămas doar lecția, în browser. Folderul tău e în Coș.</details>'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_v_m3_l18',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/v/, „Lecția 18”, pasul real înainte de verificare
+  titlu:'Rolul unui editor grafic. Interfața. Creare, deschidere, salvare',
+  marca:'Lecția <b>18</b> · clasa a V-a',
+  h1:'Rolul unui editor grafic. Interfața. Creare, deschidere, salvare',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a V-a', unitate:'V-U4', unitateTitlu:'Editoare grafice. Fac materiale digitale',
+  competente:['CS.3.1'], lectii:'18',
+  ancoraText:'Din programă (CS.3.1, unitatea V-U4, lecția 18): Rolul unui editor grafic; Elemente de interfață specifice; Crearea, deschiderea şi salvarea fişierelor grafice',
+  intro:`<p><b>Ai nevoie de:</b> lecția 8 — Start (pornești o aplicație scriindu-i numele), X, Minimizare, bara de activități. Lecția 9 — fișierul, extensia, folderul, Explorer, Documente. Lecția 10 — folderul tău din Documente (<b>Nou</b> › <b>Folder</b>, <b>Ex</b>, numele și prenumele), <kbd>Delete</kbd>, Coșul. Lecția 15 — fereastra Salvare ca: întâi numele, apoi folderul; la „există deja”, Nu și o cifră.</p>`,
+  cum:`<b>Cum lucrezi</b><ol><li>6 pași scurți. După fiecare: un exercițiu mic, fără puncte, și gesturi în Paint-ul adevărat (casetele „Acum la calculator”).</li><li>Atelierul: tot drumul unui desen, într-un Paint din pagină.</li><li>La calculator: desenul tău în altă aplicație; lași calculatorul curat.</li><li>5 întrebări, pentru stele.</li></ol><p><b>Se apropie sfârșitul orei și n-ai terminat?</b> Apasă în bara de jos <b>P3</b> („O imagine nouă și o linie”) și fă ultimul punct din caseta lui, „La sfârșitul orei”.</p>`,
+  banda:'<span class="bd-t">Fără titlu - Paint</span><span class="bd-pal" aria-hidden="true"><i style="background:#000"></i><i style="background:#ed1c24"></i><i style="background:#fff200"></i><i style="background:#22b14c"></i><i style="background:#00a2e8"></i><i style="background:#a349a4"></i></span><span class="bd-z">1038 × 648px</span>',
+  nivele:[
+{t:'Rolul unui editor grafic. Interfața. Creare, deschidere, salvare',final:true,lectii:[18],
+ continuturi:['Rolul unui editor grafic','Elemente de interfață specifice','Crearea, deschiderea şi salvarea fişierelor grafice'],
+ obiectiv:'pornești Paint, îi recunoști părțile ferestrei, faci o imagine nouă, o salvezi în folderul tău ca PNG sau JPG, o închizi și o deschizi din nou.',
+ pasi:[
+  /* ---- pasul 0: la ce folosește (fără acțiuni) ---- */
+  {t:'La ce folosește: desene, fotografii, afișe',
+   text:`<p>Un <mark>editor grafic</mark> este o aplicație cu care faci și schimbi imagini pe calculator. Cu el:</p>
+<ul><li><b>desenezi</b>: o felicitare, harta clasei, un personaj pentru o poveste;</li><li><b>retușezi</b> o fotografie: îi tai marginea strâmbă, o faci mai mică;</li><li>faci un <b>afiș</b> pentru serbare, cu desen și text.</li></ul>
+<p>În Windows ai editorul grafic <b>Paint</b>. Azi îl pornești, îi cunoști fereastra și înveți să-ți păstrezi desenul pe calculator, să-l închizi și să-l deschizi din nou.</p>
+${IMG.tableta}`},
+  /* ---- pasul 1: pornești Paint; cele cinci părți ale ferestrei; mărimea pânzei, în pixeli ---- */
+  {t:'Pornești Paint: părțile ferestrei',
+   text:`<p>Pornești Paint ca la lecția 8: <b>Start</b>, scrii <code>pai</code>, clic pe <b>Paint</b>. Fereastra lui are cinci părți, de sus în jos:</p>
+<ol><li><b>bara de titlu</b>: numele imaginii; o imagine nouă se numește <b>Fără titlu</b>;</li><li><b>meniul de sus</b>: <b>Fișier</b> (<i>File</i>), Editare, Vizualizați;</li><li><b>bara cu instrumente</b>, pe grupuri: Selecție, Imagine, Instrumente, Pensule, Forme, Culori;</li><li><mark>pânza</mark>: zona albă din mijloc, pe care desenezi;</li><li><b>bara de stare</b>, jos: aici scrie <b>mărimea pânzei</b>.</li></ol>
+<p>Mărimea se măsoară în <mark>pixeli</mark>: pătrățelele foarte mici din care e făcută orice imagine, fiecare de o singură culoare. <b>1038 × 648px</b> înseamnă 1038 de pixeli pe lățime și 648 pe înălțime.</p>
+${IMG.fereastra}`,
+   exemplu:`<p>În bara de stare, mărimea pânzei are în față un pătrățel cu colțuri (un dreptunghi punctat e al unei selecții).</p><p>Pe un ecran îngust, unele grupuri stau strânse într-un buton cu numele lor (<b>Instrumente</b>). Pe telefon, în pagină, trage bara spre stânga: săgeata › arată că mai sunt grupuri.</p>
+${ACUM('Pornește Paint: <b>Start</b>, scrie <code>pai</code>, clic pe <b>Paint</b>. Nu da încă clic pe pânză.','Găsește cele cinci părți. Ce scrie în bara de titlu? Ce mărime are pânza?')}`,
+   altfel:`<p>Te-ai uitat de aproape la o ie sau la un ștergar cusut în cruciulițe? Fiecare cruciuliță are o singură culoare. De departe vezi o floare; de aproape vezi cruciulițele. Pixelii sunt cruciulițele imaginii: mărimea pânzei spune câte încap pe un rând și câte rânduri sunt.</p>${IMG.goblen}`,
+   incearca:P({q:'Paint e închis. Pornește-l din <b>Start</b> (scrie <code>pai</code>), apoi deschide meniul <b>Fișier</b>.',start:{pornit:false},
+    checks:[{k:'pornit',ce:'Paint a pornit din Start'},{k:'meniu',m:'fisier',ce:'Ai deschis meniul Fișier'}],
+    sol:[['start'],['meniu','fisier']],gresit:[['start']],
+    ajutor:'Jos, butonul Start; scrie pai și dă clic pe Paint. Apoi, sus în stânga, Fișier.',
+    why:'Paint a pornit cu o imagine nouă, Fără titlu. Meniul Fișier e primul din meniul de sus: din el salvezi și deschizi.'}),
+   inca:[
+    P({q:'Dă clic pe <b>bara cu instrumente</b>.',explorare:true,checks:[{k:'zona',z:'unelte',ce:'Ultimul clic: pe bara cu instrumente',msg:'Bara cu instrumente e sub meniul de sus: are grupurile Selecție, Imagine, Instrumente, Pensule, Forme, Culori.'}],
+     sol:[['zona','unelte']],gresit:[['zona','meniu']],ajutor:'Sub Fișier, Editare, Vizualizați e un rând lat, cu grupuri de butoane.',why:'Bara cu instrumente are uneltele, pe grupuri, de la Selecție până la Culori. Numele grupului e scris sub el.'}),
+    P({q:'Citește în bara de stare a Paint-ului din pagină mărimea pânzei. Scrie-o mai jos: lățimea, litera x, înălțimea.',raspuns:{eticheta:'Mărimea pânzei (lățime x înălțime):'},
+     checks:[{k:'raspuns',are:['1038 x 648'],ce:'Ai scris mărimea pânzei, întâi lățimea',msg:'Uită-te jos, în bara de stare, după pătrățelul cu colțuri. Scrie întâi primul număr, apoi x, apoi al doilea.'}],
+     sol:[['raspuns','1038 x 648']],gresit:[['raspuns','648 x 1038']],
+     ajutor:'Jos, în bara de stare: două numere cu × între ele. În locul semnului × scrii litera x.',
+     why:'Pânza are 1038 de pixeli pe lățime și 648 pe înălțime. La calculatorul tău poate fi altă mărime: o citești tot acolo.'})
+   ]},
+  /* ---- pasul 2: o imagine nouă (Fișier › Nou) și un singur gest de desen, cu Creionul (desenul se predă la lecția 19) ---- */
+  {t:'O imagine nouă și o linie cu Creionul',
+   text:`<p><b>Fișier</b> › <mark>Nou</mark> (<kbd>Ctrl</kbd>+<kbd>N</kbd>) îți dă o pânză albă: o imagine nouă, <b>Fără titlu</b>. Și când pornești Paint ai o imagine nouă.</p>
+<p>Ca să ai ce salva, faci un singur gest de desen (uneltele le înveți la lecția 19):</p>
+<ol><li>Alegi <b>Creion</b> (<i>Pencil</i>): primul buton din grupul <b>Instrumente</b>. Vezi doar butonul <b>Instrumente</b>? Un clic pe el, apoi pe creion.</li><li>Pe pânză, ții apăsat butonul stâng al mouse-ului și tragi: apare o linie subțire.</li></ol>
+${IMG.creion}`,
+   exemplu:`<p>Pe telefon, tragi cu degetul. Linie groasă? Probabil era aleasă Pensule: alege Creion.</p>
+${ACUM('Fă-ți folderul (lecția 10): Explorer, <b>Documente</b>, <b>Nou</b> › <b>Folder</b> (Windows 10: <b>Pornire</b> › <b>Folder nou</b>), scrie Ex, numele și prenumele tău, cu spații (<code>Ex Pop Ana</code>), <kbd>Enter</kbd>; dacă există, adaugă o cifră. Micșorează Explorer.','În Paint: <b>Fișier</b> › <b>Nou</b>, apoi <b>Creion</b> și o linie.','!<b>La sfârșitul orei (chiar dacă n-ai terminat)</b>, nu acum: revii aici (<b>P3</b>), închizi Paint (la întrebare: <b>Nu salvați</b>); în Explorer, <b>Documente</b>, clic pe folderul tău, <kbd>Delete</kbd>. Nu goli Coșul.')}`,
+   incearca:P({q:'În Paint e deschisă imaginea <b>linia mea</b>. Fă o imagine nouă, alege <b>Creion</b> și trage o linie pe ea.',start:{fisier:LINIA},fs:[[LINIA,'linie']],
+    checks:[{k:'nou',ce:'Ai făcut o imagine nouă (Fișier › Nou)'},{k:'titlu',are:'Fără titlu',ce:'În bara de titlu scrie Fără titlu'},{k:'unealta',u:'creion',ce:'E aleasă unealta Creion',msg:'Alege Creion: primul buton din grupul Instrumente (sau butonul Instrumente, apoi creionul).'},{k:'desen',cu:'creion',linie:true,ce:'Pe pânza nouă e o linie trasă cu Creionul',msg:'Ține apăsat pe pânză și trage: o linie, nu doar un punct.'}],
+    sol:[['cmd','nou'],['u','creion'],['linie',220,320,820,330]],gresit:[['u','creion'],['linie',220,320,820,330]],
+    ajutor:'Fișier › Nou. Apoi Creionul (primul buton din grupul Instrumente) și ții apăsat pe pânză în timp ce tragi.',
+    why:'Nou ți-a dat o pânză albă, Fără titlu; cu Creionul ai tras o linie subțire. Cu Pensule ar fi ieșit groasă.'}),
+   inca:[
+    {t:'choice',q:'Vrei să începi un desen nou, pe o pânză albă. Ce alegi din meniul Fișier?',o:['Nou','Salvați','Ieși','Proprietăți imagine'],ok:0,
+     ajutor:'Care comandă îți dă o imagine nouă?',why:'Nou îți dă o pânză albă, o imagine nouă, Fără titlu.'}
+   ]},
+  /* ---- pasul 3: Salvați ca — formatul, apoi numele ÎNTÂI și folderul (exact ca la lecția 15) ---- */
+  {t:'Salvați ca: numele, folderul, PNG sau JPG',
+   text:`<p>Ca să păstrezi desenul, îl <b>salvezi</b> (lecția 15): <b>Fișier</b> › <b>Salvați ca</b> (<i>Save as</i>), apoi alegi <mark>formatul</mark>, felul în care se păstrează imaginea:</p>
+<ul><li><b>Imagine PNG</b> (<code>.png</code>): pentru <b>desene</b>; păstrează exact fiecare pixel;</li><li><b>Imagine JPG</b> (<code>.jpg</code>): pentru <b>fotografii</b>; o fotografie iese mult mai mică, dar unii pixeli se schimbă puțin.</li></ul>
+<p>Se deschide fereastra <b>Salvare ca</b>, cea de la lecția 15: scrii numele, de exemplu <code>linia mea</code> (dacă numele propus nu e colorat, ștergi întâi ce scrie), apoi <b>Documente</b>, dublu-clic pe folderul tău, te uiți sus, <b>Salvare</b>.</p>
+${IMG.formate}${IMG.salvareCa}`,
+   exemplu:`<p>Apare „… există deja. Îl înlocuiți?”? Apeși <b>Nu</b>: fișierul vechi rămâne. Scrii iar numele, cu o cifră la sfârșit (<code>linia mea 2</code>), și <b>Salvare</b>. Nu alege <b>Salvați ca proiect</b>: nu face o imagine.</p>
+${ACUM('<b>Fișier</b> › <b>Salvați ca</b> › <b>Imagine PNG</b>. Scrie <code>linia mea</code>, apoi <b>Documente</b>, dublu-clic pe folderul tău, te uiți sus, <b>Salvare</b>. Ce scrie acum în bara de titlu?')}`,
+   incearca:P({q:'Salvează desenul ca imagine PNG, cu numele <b>linia mea</b>, în folderul tău: <b>Documente › Ex Pop Ana</b>. (În Documente e și folderul unui coleg: nu salva acolo.)',start:{desen:'linie',modificat:true,unealta:'creion'},fs:COLEG,
+    checks:[{k:'salvat',folder:'elev',nume:'linia mea',ext:'png',ce:'linia mea e salvată ca PNG în Documente › Ex Pop Ana',msg:'Imaginea nu e încă în folderul tău ca PNG. Fișier › Salvați ca › Imagine PNG; scrie numele; Documente, dublu-clic pe Ex Pop Ana, te uiți sus, Salvare.'},
+     {k:'titlu',are:'linia mea',ce:'În bara de titlu scrie linia mea'}],
+    sol:[['salveaza','elev','linia mea','png']],gresit:[['salveaza','Documente/Ex Ionescu Dan','linia mea','png']],
+    ajutor:'Fișier, Salvați ca, Imagine PNG. Cât numele e colorat, scrie linia mea. Apoi Documente, dublu-clic pe Ex Pop Ana, Salvare.',
+    why:'Imaginea e în folderul tău, iar sus scrie numele ei. Ca la lecția 15: întâi scrii numele, apoi alegi folderul.'}),
+   inca:[
+    P({q:'În folderul tău e deja <b>linia mea</b>, de ieri. Salvează desenul nou ca PNG, tot în <b>Documente › Ex Pop Ana</b>, cu numele <b>linia mea</b> și o cifră, fără să-l pierzi pe cel vechi.',
+     start:{desen:'casa',modificat:true,unealta:'creion'},fs:[[LINIA,'linie']],
+     checks:[{k:'neatins',f:LINIA,ce:'Imaginea de ieri, linia mea, a rămas neatinsă',msg:'Ai înlocuit imaginea de ieri. Apasă „Ia-o de la capăt”: la „există deja” apeși Nu.'},
+      {k:'salvat',folder:'elev',nume:'linia mea',ext:'png',nou:true,ce:'Desenul nou e salvat în folderul tău, cu o cifră la sfârșitul numelui',msg:'Desenul nou nu e încă salvat. După Nu, scrie linia mea și o cifră, apoi Salvare.'}],
+     sol:[['cmd','png'],['nume','linia mea'],['nav','elev'],['ok'],['nu'],['nume','linia mea 2'],['ok']],gresit:[['cmd','png'],['nume','linia mea'],['nav','elev'],['ok'],['da']],
+     ajutor:'La „există deja. Îl înlocuiți?” apeși Nu. Numele se colorează: scrii linia mea 2 și apeși Salvare.',
+     why:'Nu a păstrat imaginea de ieri; cu cifra, desenul nou are numele lui.'}),
+    {t:'classify',q:'Ce format alegi?',cats:['PNG','JPG'],items:[['Harta clasei, desenată cu linii',0],['Poza câinelui tău, făcută cu telefonul',1],['Un afiș cu titlu mare',0],['Fotografia unui apus, de trimis bunicii',1]],
+     ajutor:'Desen sau fotografie?',why:'Desenele și textul, cu margini clare: PNG, care păstrează exact fiecare pixel. Fotografiile: JPG; o fotografie salvată ca JPG iese mult mai mică decât ca PNG.'}
+   ]},
+  /* ---- pasul 4: Salvați (Ctrl+S), după prima salvare ---- */
+  {t:'Salvați (Ctrl+S): după prima salvare',
+   text:`<p>După ce imaginea are nume și folder, păstrezi schimbările cu <b>Salvați</b>: <kbd>Ctrl</kbd>+<kbd>S</kbd>, sau <b>Fișier</b> › <b>Salvați</b>, sau primul buton de după Vizualizați. Paint scrie peste același fișier; de obicei nu mai apare nicio fereastră. Numele și folderul rămân.</p>
+<p>O imagine încă Fără titlu o salvezi prima dată cu <b>Salvați ca</b>: alegi tu numele, folderul și formatul.</p>
+<p>Vrei alt nume sau alt format? Tot <b>Salvați ca</b>: se face încă un fișier, iar cel vechi rămâne cum era.</p>`,
+   exemplu:`<p>Tastele ajung la fereastra în care ai dat ultimul clic. Înainte de <kbd>Ctrl</kbd>+<kbd>S</kbd>, dă un clic pe bara de titlu a Paint-ului. Pe telefon, în Paint-ul din pagină: <b>Fișier</b> › <b>Salvați</b>.</p>
+${ACUM('Mai trage o linie cu Creionul. Clic pe bara de titlu a Paint-ului, apoi <kbd>Ctrl</kbd>+<kbd>S</kbd>. A apărut vreo fereastră?')}`,
+   incearca:P({q:'Imaginea <b>linia mea</b>, din folderul tău, e deschisă. Mai trage o linie cu Creionul și salveaz-o în același fișier.',start:{fisier:LINIA,unealta:'creion'},fs:[[LINIA,'linie']],
+    checks:[{k:'salvat',folder:'elev',nume:'linia mea',exact:true,ext:'png',cu:'creion',min:2,ce:'linia mea are acum două linii, salvate în același fișier',msg:'Fișierul linia mea nu are încă linia nouă. Trage o linie, apoi Ctrl+S (pe telefon: Fișier › Salvați).'},
+     {k:'nemodificat',ce:'Tot ce e pe pânză e salvat'}],
+    sol:[['linie',200,450,800,460],['ctrl','s']],gresit:[['linie',200,450,800,460]],
+    ajutor:'Ține apăsat pe pânză și trage. Apoi Ctrl+S (sau Fișier › Salvați).',
+    why:'Imaginea avea deja nume și folder, deci Salvați a scris peste același fișier, fără fereastră.'}),
+   inca:[
+    {t:'tf',q:'După prima salvare, Ctrl+S deschide de fiecare dată fereastra Salvare ca.',ok:false,ajutor:'Ce face Salvați după ce imaginea are nume și folder?',why:'Fals. Când imaginea are nume și folder, Ctrl+S scrie peste același fișier, fără fereastra Salvare ca.'}
+   ]},
+  /* ---- pasul 5: închiderea cu „Salvați lucrul?” (probat pe Paint-ul real de judecătorul V/8) și Deschidere ---- */
+  {t:'Închizi și deschizi din nou: „Salvați lucrul?”',
+   text:`<p>Închizi Paint cu <b>Închidere</b> (X) sau din <b>Fișier</b> › <b>Ieși</b>. Dacă ai schimbat ceva de la ultima salvare, Paint întreabă <b>Salvați lucrul?</b>:</p>
+<ul><li><b>Salvați</b> (albastru, ales dinainte): păstrează, apoi închide;</li><li><b>Nu salvați</b>: închide, iar ce ai făcut de la ultima salvare se pierde;</li><li><b>Anulare</b>: te întorci la desen.</li></ul>
+<p>Ca să continui alt dată: pornești Paint și alegi <mark>Deschidere</mark> (<b>Fișier</b> › <b>Deschidere</b>, <kbd>Ctrl</kbd>+<kbd>O</kbd>). În fereastra Deschidere: <b>Documente</b>, dublu-clic pe folderul tău, dublu-clic pe imagine. Sus apare, de obicei, numele ei.</p>
+${IMG.fisier}`,
+   exemplu:`<p>La lecția 8 ai apăsat <b>Nu salvați</b>: punctul nu trebuia păstrat. Azi desenul e al tău. La <b>Nou</b> sau la <b>Deschidere</b>, Paint poate pune o întrebare asemănătoare: o citești și alegi.</p>
+${ACUM('Mai trage o linie și apasă X. La „Salvați lucrul?” apasă <b>Salvați</b>.','Pornește din nou Paint. <b>Fișier</b> › <b>Deschidere</b>, <b>Documente</b>, dublu-clic pe folderul tău, dublu-clic pe <b>linia mea</b>. Sunt acolo liniile tale? Închide Paint cu X.')}`,
+   /* trecerea după judecata 2 (W): exercițiul în Paint-ul din pagină (închizi cu „Salvați lucrul?”, apoi Deschidere) e acum la
+      „Încă un exercițiu”; gesturile lui le face caseta de mai sus în Paint-ul adevărat, iar atelierul le reia pe toate */
+   incearca:{t:'choice',q:'Desenezi de 10 minute și n-ai salvat. Apeși X din greșeală și apare „Salvați lucrul?”. Vrei să mai desenezi. Ce apeși?',o:['Anulare','Salvați','Nu salvați'],ok:0,amesteca:false,
+    ajutor:'Care buton te întoarce la desen?',why:'Anulare te întoarce la desen, fără să închidă. Salvați ar fi închis Paint, iar Nu salvați ar fi pierdut tot desenul.'},
+   inca:[
+    P({q:'În imaginea <b>linia mea</b> ai desenat o casă și n-ai salvat-o. Închide Paint fără s-o pierzi. Apoi pornește-l din nou și deschide <b>linia mea</b> din folderul tău.',start:{fisier:LINIA,desen:'casa',modificat:true,unealta:'creion'},fs:[[LINIA,'linie']].concat(COLEG),
+    checks:[{k:'intrebat',ce:'Ai închis Paint, iar el a întrebat „Salvați lucrul?”'},{k:'faraPierderi',ce:'Casa nu s-a pierdut',msg:'Ai apăsat Nu salvați: casa s-a pierdut. Apasă „Ia-o de la capăt”.'},
+     {k:'salvat',folder:'elev',nume:'linia mea',exact:true,ext:'png',cu:'creion',min:3,ce:'Casa e salvată în linia mea'},
+     {k:'deschis',folder:'elev',nume:'linia mea',ce:'Ai deschis din nou linia mea, cu Deschidere',msg:'Pornește Paint din Start, apoi Fișier › Deschidere; Documente; dublu-clic pe Ex Pop Ana; dublu-clic pe linia mea.'}],
+    sol:[['cmd','x'],['intreb','salvati'],['start'],['deschide','elev','linia mea']],gresit:[['cmd','x'],['intreb','nusalvati'],['start'],['deschide','elev','linia mea']],
+    ajutor:'X, sus în dreapta; la „Salvați lucrul?” apeși Salvați. Apoi Start, pai, Paint; Fișier › Deschidere, Documente, Ex Pop Ana, linia mea.',
+    why:'Salvați a păstrat casa în linia mea, apoi Paint s-a închis. Deschidere a adus-o înapoi: casa e pe pânză, iar sus scrie numele imaginii.'})
+   ]}
+ ],
+ atelier:P({titlu:'Atelier: desenul tău, de la pornire la închidere',
+  intro:`<p><strong>Sarcina:</strong> desenul tău pentru expoziția clasei, salvat în folderul tău. Paint e deschis, cu o imagine nouă.</p>
+<ol><li>Alege <b>Creion</b> și trage o linie.</li>
+<li><b>Fișier</b> › <b>Salvați ca</b> › <b>Imagine PNG</b>; scrie <b>expozitie</b>; <b>Documente</b>, dublu-clic pe <b>Ex Pop Ana</b>, <b>Salvare</b>. (În folderul colegului e tot o expozitie: n-o atinge.)</li>
+<li>Închide Paint cu X.</li>
+<li>Pornește-l din nou, deschide <b>expozitie</b> din folderul tău, mai trage o linie cu Creionul și salvează cu <kbd>Ctrl</kbd>+<kbd>S</kbd> (pe telefon, Fișier › Salvați).</li>
+<li>Închide Paint. Când trec toate testele, apasă <b>Verifică</b>.</li></ol>`,
+  q:'Desenul pentru expoziție: pașii de mai sus, de la prima linie până la închidere.',
+  fs:[['Documente/Ex Ionescu Dan/expozitie.png','soare']],
+  checks:[{k:'neatins',f:'Documente/Ex Ionescu Dan/expozitie.png',ce:'Desenul colegului a rămas neatins',msg:'Ai salvat peste desenul colegului. Apasă „Ia-o de la capăt” și salvează în Ex Pop Ana.'},   /* întâi: greșeala cea mai gravă (judecata 2, AB) */
+   {k:'pornit',ce:'După ce l-ai închis, ai pornit din nou Paint din Start'},
+   {k:'deschis',folder:'elev',nume:'expozitie',ce:'Ai deschis expozitie din folderul tău, cu Fișier › Deschidere',msg:'N-ai deschis încă expozitie cu Deschidere. După ce o salvezi și închizi Paint: pornește-l, Fișier › Deschidere, Documente, Ex Pop Ana, expozitie.'},
+   {k:'continuat',folder:'elev',nume:'expozitie',ce:'După ce ai deschis expozitie, ai mai tras o linie și ai salvat-o',msg:'După ce deschizi expozitie cu Deschidere, mai trage o linie cu Creionul și salvează cu Ctrl+S (pe telefon: Fișier › Salvați).'},
+   {k:'salvat',folder:'elev',nume:'expozitie',exact:true,ext:'png',cu:'creion',min:2,ce:'expozitie.png, în folderul tău, are două linii de creion',msg:'În expozitie din folderul tău nu sunt încă două linii de creion salvate.'},
+   {k:'inchis',ce:'La sfârșit, Paint e închis'},
+   {k:'faraPierderi',ce:'Nicio linie nu s-a pierdut la închidere',msg:'O linie s-a pierdut: ai apăsat Nu salvați. Apasă „Ia-o de la capăt”.'}],
+  sol:[['u','creion'],['linie',200,250,800,260],['salveaza','elev','expozitie','png'],['cmd','x'],['start'],['deschide','elev','expozitie'],['u','creion'],['linie',200,420,800,430],['ctrl','s'],['cmd','x']],
+  gresit:[['u','creion'],['linie',200,250,800,260],['salveaza','elev','expozitie','png'],['cmd','x'],['start'],['deschide','elev','expozitie'],['linie',200,420,800,430],['cmd','x'],['intreb','nusalvati']],
+  ajutor:'Testul care nu trece îți spune ce lipsește. După ce redeschizi Paint, uită-te ce unealtă e aleasă și alege din nou Creionul.',
+  why:'Ai făcut tot drumul unui desen: pornești, desenezi, salvezi cu nume și folder, închizi, deschizi, continui, salvezi, închizi. Așa vei lucra la toate lecțiile cu Paint.',
+  inca:[
+   P({q:'Imaginea <b>expozitie</b> (PNG) e deschisă. Fă din ea și o copie JPG, cu același nume, în același folder. PNG-ul rămâne cum e.',start:{fisier:'Documente/Ex Pop Ana/expozitie.png',unealta:'creion'},fs:[['Documente/Ex Pop Ana/expozitie.png','casa']],
+    checks:[{k:'salvat',folder:'elev',nume:'expozitie',exact:true,ext:'jpg',ce:'În folderul tău e și expozitie în format JPG'},{k:'neatins',f:'Documente/Ex Pop Ana/expozitie.png',ce:'expozitie.png a rămas neatinsă'}],
+    sol:[['salveaza','elev','expozitie','jpg']],gresit:[['ctrl','s']],
+    ajutor:'Fișier › Salvați ca › Imagine JPG; numele expozitie; Documente, dublu-clic pe Ex Pop Ana, Salvare.',
+    why:'Salvați ca a făcut un fișier nou, expozitie.jpg; expozitie.png a rămas cum era. Extensiile diferite fac nume diferite, deci Windows n-a întrebat nimic.'})
+  ]}),
+ qs:[
+  {t:'choice',q:'Mihai vrea să taie marginea strâmbă a unei fotografii de la serbare. Ce aplicație folosește?',o:['Paint, un editor grafic','Notepad, pentru texte','Edge, un browser web','Calculatorul din Windows'],ok:0,
+   ajutor:'Ce fel de aplicație schimbă imagini?',why:'Un editor grafic face și schimbă imagini, deci și o fotografie. Notepad e pentru text, browserul pentru pagini web, Calculatorul pentru socoteli.'},
+  {t:'choice',q:'În bara de stare a lui Paint, după pătrățelul cu colțuri, scrie <b>800 × 600px</b>. Câți pixeli are pânza pe lățime, de la stânga la dreapta?',o:['800','600','1400','80'],ok:0,
+   ajutor:'Care număr vine întâi: lățimea sau înălțimea?',why:'Mărimea se scrie lățime × înălțime: 800 de pixeli pe lățime și 600 pe înălțime.'},
+  {t:'match',q:'Unde te uiți în fereastra Paint? Leagă fiecare parte de ce găsești acolo.',pairs:[['Bara de titlu','numele imaginii'],['Bara de stare','mărimea pânzei, în pixeli'],['Meniul Fișier','Nou, Deschidere, Salvați'],['Pânza','locul unde desenezi']],
+   why:'Sus e numele imaginii, în meniul Fișier sunt comenzile pentru fișiere, în mijloc pânza, iar jos mărimea pânzei.'},
+  P({q:'Harta școlii, desenată de tine, e încă Fără titlu. Păstreaz-o în folderul tău, <b>Ex Pop Ana</b> din Documente, cu numele <b>harta</b>, în formatul potrivit pentru un desen.',start:{desen:'casa',modificat:true,unealta:'creion'},fs:COLEG,
+   checks:[{k:'salvat',folder:'elev',nume:'harta',ext:'png',ce:'harta e salvată în folderul tău, în formatul pentru desene',msg:'Harta nu e încă în folderul tău, în formatul pentru desene.'}],
+   sol:[['salveaza','elev','harta','png']],gresit:[['salveaza','elev','harta','jpg']],
+   ajutor:'Desen → PNG. Fișier › Salvați ca; numele întâi, apoi Documente și dublu-clic pe folderul tău.',why:'Harta e un desen: PNG o păstrează exact. Ai ales tu folderul, deci o găsești mâine.'}),
+  P({q:'Paint e deschis. Deschide imaginea <b>flori</b> din folderul <b>Imagini</b>, mai trage o linie cu Creionul și închide Paint fără s-o pierzi.',fs:[['Imagini/flori.png','soare']],
+   checks:[{k:'deschis',folder:'Imagini',nume:'flori',ce:'Ai deschis flori din Imagini'},{k:'salvat',folder:'Imagini',nume:'flori',exact:true,cu:'creion',min:6,ce:'Linia nouă e salvată în flori'},{k:'inchis',ce:'Paint e închis'},{k:'faraPierderi',ce:'Nimic nu s-a pierdut'}],
+   sol:[['deschide','Imagini','flori'],['u','creion'],['linie',150,600,900,600],['ctrl','s'],['cmd','x']],gresit:[['deschide','Imagini','flori'],['u','creion'],['linie',150,600,900,600],['cmd','x'],['intreb','nusalvati']],
+   ajutor:'Fișier › Deschidere, Imagini, flori. Creion, o linie. Apoi Ctrl+S și X (sau X și Salvați).',why:'Ai deschis, ai schimbat, ai salvat și abia apoi ai închis: nimic nu s-a pierdut.'})
+ ]}
+  ],
+  diploma:{titlu:'Pictor la calculator',
+   rezumat:'a învățat că un editor grafic face și schimbă imagini, părțile ferestrei Paint (bara de titlu, meniul Fișier, bara cu instrumente, pânza, bara de stare cu mărimea pânzei în pixeli), să facă o imagine nouă și o linie cu Creionul, să salveze cu Salvați ca (întâi numele, apoi folderul; PNG pentru desene, JPG pentru fotografii), să salveze cu Ctrl+S, să închidă fără să piardă nimic și să deschidă din nou o imagine',
+   aplicatie:'Paint și Explorer, pe calculatorul din laborator',
+   provocare:LAB},
+  aplicatieReala:{aplicatie:'Paint și Explorer, pe calculatorul din laborator',titlu:'Acum la calculator',scurt:'Calculatorul',
+   intro:'<p>N-ai în folderul tău <b>linia mea</b>? Fă întâi casetele de la P3 și P4 („O imagine nouă și o linie”, „Salvați ca”).</p><p><b>Se apropie sfârșitul orei?</b> Sari la ultimul punct.</p>',
+   pasi:LAB},
+  tipuri:{paintw:SimPaint}
+});
+</script>
+</body>
+</html>
