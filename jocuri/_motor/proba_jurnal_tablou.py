@@ -304,7 +304,10 @@ class Proba:
         gata = self.asteapta(pg, "server", "Misiunea Tehnician, nivelul 2", "#de-reluat")
         self.verifica(gata, "J1 jurnalul s-a desenat din datele serverului (cu jocurile recunoscute)")
         corpuri = [json.loads(x) for x in self.jurnal_cereri[n0:]]
-        self.verifica(len(corpuri) >= 1 and all(c == {"id": ID_ANA, "h": H} for c in corpuri), "J1 cererea /api/jurnal = {id, h} ale elevului", corpuri[:2])
+        # din 15.10.2026 cererea poartă și biletul (b = 64 hex, Prezenta.bilet; contracte\2026-10-15_bilet_prima_conectare)
+        bilet_bun = lambda c: "b" not in c or (isinstance(c["b"], str) and len(c["b"]) == 64 and all(x in "0123456789abcdef" for x in c["b"]))  # noqa: E731
+        self.verifica(len(corpuri) >= 1 and all({k: v for k, v in c.items() if k != "b"} == {"id": ID_ANA, "h": H} and bilet_bun(c) for c in corpuri),
+                      "J1 cererea /api/jurnal = {id, h} ale elevului (+ biletul b)", corpuri[:2])
         # minutele = serverul (nu aparatul ăsta: 300 s azi)
         sec = lambda s: int(pg.get_attribute(s, "data-sec") or -1)
         luni = azi - dt.timedelta(days=azi.weekday())

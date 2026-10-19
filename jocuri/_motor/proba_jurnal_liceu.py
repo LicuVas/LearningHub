@@ -7,7 +7,12 @@ regula 24 —, /api/jurnal simulat, sertarul pus în localStorage):
   - liceu (Forestier X E, Brauner XII M, Brauner 9 M, Transporturi X B) -> „Lecțiile mele” = lecțiile clasei a VIII-a;
   - gimnaziu (Brauner 5 AM) -> tot lecțiile clasei a V-a (neschimbat);
   - maiștri / postliceal (Transporturi Anul I F (Maiștri), I A AMG) și Țibucani (engleză) -> fără „Lecțiile mele”, dar cu „Continuă”.
-Controlul: --mutanti servește jurnalul cu regula veche (doar gimnaziul) și cu una greșită (Țibucani pe plan) — proba trebuie să pice.
+19.10.2026 (el: „jurnalul celor de la clasa a VII-a arată ciudat - nu arată lecțiile făcute și nefăcute ca la clasa a 8-a”;
+Focșanianu Vlad, Tupilați VII, înscris la „Țibucani · VII”): o clasă de GIMNAZIU la o școală fără plan (Țibucani, „Altă școală”)
+care a lucrat lecții ale clasei ei -> planul clasei; fără lecții lucrate -> tot fără plan; „VII A C” la Forestier (liceu) și
+maiștrii care lucrează lecții de a VIII-a -> tot fără plan.
+Controlul: --mutanti servește jurnalul cu regula veche (doar gimnaziul), cu una greșită (Țibucani pe plan), fără regula din 19.10,
+cu ea fără condiția „a lucrat lecțiile” și cu ea pe liceele fără gimnaziu — proba trebuie să pice.
 Ultima linie = UN număr (0 = curat).
 Pornire:  python C:\00\Projects\LearningHub\jocuri\_motor\proba_jurnal_liceu.py [--mutanti]
 """
@@ -30,7 +35,13 @@ MUTANTI = [
      "var LICEU_SCOLI={brauner:1,forestier:1,transporturi:1,tibucani:1};PLAN_SCOLI.tibucani=1;"),
     ("M3 maiștrii pe planul de a VIII-a", NOU, "    return LICEU_SCOLI[e.scoala]?'viii':null}"),
 ]
-CAZURI = [   # (școala, clasa, ce plan așteptăm: nivelul sau None)
+GIMN = "    if(NIV[n]&&!LICEU_SCOLI[e.scoala])return lucreazaPlanul(NIV[n],D,S)?NIV[n]:null;\n"
+MUTANTI += [
+    ("M4 fără regula din 19.10 (Țibucani VII care lucrează lecțiile clasei rămâne fără listă)", GIMN, ""),
+    ("M5 regula din 19.10 fără „a lucrat lecțiile clasei”", GIMN, "    if(NIV[n]&&!LICEU_SCOLI[e.scoala])return NIV[n];\n"),
+    ("M6 regula din 19.10 și pe liceele fără gimnaziu", GIMN, "    if(NIV[n])return lucreazaPlanul(NIV[n],D,S)?NIV[n]:null;\n"),
+]
+CAZURI = [   # (școala, clasa, ce plan așteptăm: nivelul sau None[, cheia unei lecții lucrate, pusă în sertar])
     ("forestier", "X E", "viii"),
     ("brauner", "XII M", "viii"),
     ("brauner", "9 M", "viii"),
@@ -39,6 +50,12 @@ CAZURI = [   # (școala, clasa, ce plan așteptăm: nivelul sau None)
     ("transporturi", "Anul I F (Maiștri)", None),
     ("transporturi", "I A AMG", None),
     ("tibucani", "VII", None),
+    ("tibucani", "VII", "vii", "lectie_vii_m1_l02"),
+    ("alta", "a VIII -a A", "viii", "lectie_viii_m1_l03"),
+    ("alta", "Clasa a VI a", "vi", "lectie_vi_m1_l02"),
+    ("alta", "Clasa a VI a", None, "lectie_vii_m1_l02"),
+    ("forestier", "VII A C", None, "lectie_vii_m1_l02"),
+    ("transporturi", "Anul I F (Maiștri)", None, "lectie_viii_m1_l02"),
 ]
 
 
@@ -46,11 +63,17 @@ def ruleaza(br, baza, jurnal_txt=None, tacut=False):
     P = T.Proba(br, baza, jurnal_txt=jurnal_txt, tacut=tacut)
     plan = json.loads((T.LH / "lectii" / "plan.json").read_text(encoding="utf-8"))["clase"]
     ctx = P.context(viewport={"width": 360, "height": 780}, device_scale_factor=2, is_mobile=True, has_touch=True)
-    for i, (sc, cl, niv) in enumerate(CAZURI):
+    for i, caz in enumerate(CAZURI):
+        sc, cl, niv = caz[:3]
+        lucrat = caz[3] if len(caz) > 3 else None
+        cl = cl + (" (a lucrat %s)" % lucrat if lucrat else "")   # doar în mesaje: cazurile cu aceeași clasă se deosebesc
         pg = ctx.new_page()
         try:
-            eu = P.eu(id="idliceu%02d" % i + "0" * 15, scoala=sc, clasa=cl, nume="Liceu Proba %d" % i)
-            P.pune(pg, {"lh_prezenta": eu, "learninghub_active_profile": "e_lic%d" % i})
+            eu = P.eu(id="idliceu%02d" % i + "0" * 15, scoala=sc, clasa=caz[1], nume="Liceu Proba %d" % i)
+            ls = {"lh_prezenta": eu, "learninghub_active_profile": "e_lic%d" % i}
+            if lucrat:
+                ls[lucrat + "@e_lic%d" % i] = {"nume": "", "lv": {"0": {"stars": 2, "v": 1}}}
+            P.pune(pg, ls)
             pg.goto(baza + "/jurnal/")
             # desenul după plan: „Continuă” fără „Caut unde ai rămas…” (planul încărcat)
             pg.wait_for_function("()=>{const c=document.getElementById('continua');return c&&!/Caut unde/.test(c.innerText)}", timeout=15000)

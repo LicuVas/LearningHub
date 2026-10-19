@@ -211,10 +211,19 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
      a VIII-a”); datele lecțiilor sunt cele din calendarul 8A/8M, deci „de până azi” e aproximativ la liceu. Maiștrii și postlicealul
      (Anul I F, I A AMG, II C AMF: nivelul iese 1-2) au lecțiile lor din /content/, deci rămân fără plan; Țibucani = engleză, pe alt sit. */
   var LICEU_SCOLI={brauner:1,forestier:1,transporturi:1};
-  function planulMeu(e){var n=nivelClasa(e.clasa);
+  /* înscris la o școală FĂRĂ plan (Țibucani, „Altă școală”), dar cu o clasă de gimnaziu și cu lecții ale clasei ei lucrate:
+     planul clasei (19.10.2026, el: „jurnalul celor de la clasa a VII-a arată ciudat - nu arată lecțiile făcute și nefăcute ca
+     la clasa a 8-a”; Focșanianu Vlad, Tupilați VII, s-a înscris la „Țibucani · VII” și lucrează /lectii/vii/). Fără lecții ale
+     clasei lucrate (elevul de Țibucani care doar a deschis situl): tot fără plan. Liceele fără gimnaziu (clasa „VII A C” la
+     Forestier e o greșeală de scris) și maiștrii/postlicealul rămân ca înainte. */
+  function lucreazaPlanul(k,D,S){var pre='lectie_'+k+'_',re=new RegExp('^/lectii/'+k+'/m\\d');
+    return Object.keys(S||{}).concat(Object.keys(D&&D.jocuri||{})).some(function(c){return c.indexOf(pre)===0})||
+      Object.keys(D&&D.pagini||{}).some(function(p){return re.test(p)})}
+  function planulMeu(e,D,S){var n=nivelClasa(e.clasa);
     if(PLAN_SCOLI[e.scoala]&&NIV[n])return NIV[n];
+    if(NIV[n]&&!LICEU_SCOLI[e.scoala])return lucreazaPlanul(NIV[n],D,S)?NIV[n]:null;
     return LICEU_SCOLI[e.scoala]&&n>=9&&n<=12?'viii':null}
-  function claseaMea(e){var k=planulMeu(e);return PLAN&&k&&PLAN[k]?PLAN[k]:null}
+  function claseaMea(e,D,S){var k=planulMeu(e,D,S);return PLAN&&k&&PLAN[k]?PLAN[k]:null}
   /* jocul ține progresul sub cheia din configurația lui (ex. misiunea_webmaster_viii), nu sub numele folderului. O citim
      din pagina jocului (50-280 KB), doar până apare, și doar pentru jocurile clasei lui + cele jucate. Ținută minte pe
      aparat (lh_jurnal_chei). */
@@ -397,7 +406,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
     if(PLAN)Object.keys(PLAN).forEach(function(c){(PLAN[c].module||[]).forEach(function(m){(m.lectii||[]).forEach(function(l){titlu[l.cheie]={t:'Lecția '+l.nr+' — '+l.titlu+(PLAN[c].roman?' (clasa a '+PLAN[c].roman+'-a)':''),u:'../'+String(l.cale||'').replace(/^\/+/,'')}})})});
     Object.keys(CHEI).forEach(function(s){if(CHEI[s])slugDe[CHEI[s]]=s});
     (CAT||[]).forEach(function(c){(c.unitati||[]).forEach(function(u){(u.jocuri||[]).forEach(function(g){if(CHEI[g.slug])titlu[CHEI[g.slug]]={t:g.titlu,u:'../jocuri/'+g.slug+'/',joc:g.slug}})})});
-    var cl=claseaMea(e);
+    var cl=claseaMea(e,D,S);
     if(CAT&&Object.keys(S).some(function(k){return k.indexOf('lectie_')!==0&&!slugDe[k]}))cheiJocuri(cl?cl.roman:'',Object.keys(D.jocuri));
 
     // ---- lecțiile clasei lui (publicate, în ordinea din plan)
