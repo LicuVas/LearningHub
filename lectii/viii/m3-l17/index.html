@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tabele și liste în pagina web</title>
+<meta name="description" content="Clasa a VIII-a, lecția 17: lista cu buline (ul) și lista numerotată (ol), cu elementele în li; tabelul scris rând cu rând (table, tr, td), cu capul tabelului în th; când alegi lista și când tabelul; greșelile care se văd în browser și cum le repari, în Notepad.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF2EF; --paper:#FFFFFF; --paper2:#EDF3EF; --line:#C9D6CE;
+  --ink:#15221B; --ink2:#4A5C52; --accent:#1C6B4E; --accentInk:#FFFFFF; --sel:#D5EBDF;
+  --mark:#FFE08A; --markInk:#15221B; --ok:#16703F; --okbg:#E0F2E7; --bad:#B3302A; --badbg:#FAE3E1;
+  --fd:"Sora","Segoe UI",system-ui,sans-serif; --fb:"Source Sans 3","Segoe UI",system-ui,sans-serif; --fm:"JetBrains Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E1512; --paper:#16201B; --paper2:#1E2A24; --line:#33463C;
+  --ink:#E3EEE7; --ink2:#9DB3A6; --accent:#7FD1AE; --accentInk:#0E1512; --sel:#1F3A2E;
+  --mark:#EBCB55; --markInk:#15221B; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E1512; --paper:#16201B; --paper2:#1E2A24; --line:#33463C;
+  --ink:#E3EEE7; --ink2:#9DB3A6; --accent:#7FD1AE; --accentInk:#0E1512; --sel:#1F3A2E;
+  --mark:#EBCB55; --markInk:#15221B; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}
+/* tema: fâșia de sus e un mic tabel (cap + un rând) lângă o listă cu buline, scrise cu etichetele lor */
+.banda{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-family:var(--fm);font-size:.72rem;color:var(--ink2);padding:3px 8px;border-bottom:1px dashed var(--line)}
+.banda .grila{display:inline-grid;grid-template-columns:auto auto auto;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.banda .grila span{padding:0 6px;border-right:1px solid var(--line)}
+.banda .grila span:nth-child(3n){border-right:0}
+.banda .grila b{font-weight:600;color:var(--ink)}
+.banda .tg{color:var(--accent)}
+h1,h2{letter-spacing:-.01em}
+pre.rand{font-family:var(--fm);background:var(--paper2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:.4em 0;white-space:pre;overflow-x:auto;tab-size:8;-moz-tab-size:8;line-height:1.35}
+.captura figcaption a{display:inline-block;padding:6px 0}
+#body .ew .lv .br-corp{min-height:15em}   /* pagina desenată alături de cod: titlul și tot tabelul (4 rânduri) se văd fără derulare, și pe telefon */
+@media (max-width:480px){pre.rand{tab-size:3;-moz-tab-size:3;font-size:.78rem;padding:6px}}   /* pe telefon Tab-ul se arată mai îngust, ca rândurile să încapă la 390 px */
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<!-- simulatorul „Notepad + browser” (proprietar: lecția VIII/14) + extensia lecției 15 (Tab, verificările scheletului)
+     + extensia lecției 17 (listele și tabelele citite ca browserul, mesajul greșelii, desenul pentru „Uite cum”).
+     Probele: _proba/proba_browser_l17.json (Chromium 148, fișiere locale scrise ca de Notepad). -->
+<script src="../../_sim/editorweb.js"></script>
+<script src="../../_sim/editorweb-schelet.js"></script>
+<script src="../../_sim/editorweb-tabele.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={editare:'Operații de editare a elementelor de conținut (paragraf, imagini, tabele, liste, legături): inserare, ștergere, mutare, copiere'};
+
+/* imagini refolosite de pe sit: fotografia din lecția 10 (Wikimedia Commons, CC BY-SA 2.0) și captura din jocul web-viii (Chrome) */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const X=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const J=a=>a.join('\n');
+const PRE=s=>`<pre class="rand">${X(s)}</pre>`;
+const ES=window.EditorWebSchelet, TB=window.EditorWebTabele;
+const LV=S=>S.live.text;
+const DT='<!DOCTYPE html>', HL='<html lang="ro">';
+/* scheletul de la lecția 15, indentat, cu titlul de pe filă și rândurile din corp */
+const SCH=(titlu,corp)=>J([DT,HL,'\t<head>','\t\t<meta charset="utf-8">','\t\t<title>'+titlu+'</title>','\t</head>','\t<body>',...corp,'\t</body>','</html>']);
+/* scheletul în ordine (fără etichetele de listă și de tabel, pe care le judecă testul „inchise”) */
+const fara=s=>String(s).replace(/<\/?(ul|ol|li|table|tr|td|th)\b[^>]*>/gi,'');
+const ORD={ce:'Scheletul paginii a rămas întreg și în ordine',fn:S=>ES.ordine(fara(LV(S))),msg:'Nu șterge și nu muta rândurile scheletului: &lt;head&gt;, &lt;/head&gt;, &lt;body&gt;, &lt;/body&gt;, &lt;/html&gt;.'};
+const INCH={ce:'Fiecare etichetă de listă și de tabel are perechea ei',fn:S=>TB.inchise(LV(S)),msg:'Caută perechea fiecărei etichete: &lt;ul&gt; cu &lt;/ul&gt;, &lt;li&gt; cu &lt;/li&gt;, &lt;tr&gt; cu &lt;/tr&gt;, &lt;td&gt; cu &lt;/td&gt;.'};
+const H='\t\t', R3='\t\t\t', R4='\t\t\t\t';
+/* un rând de tabel: <tr>, fiecare celulă pe rândul ei (mai la dreapta), </tr> — rândurile scurte încap și în fereastra îngustă a pașilor */
+const tr=(tag,a,i)=>{i=i==null?R3:i;return J([i+'<tr>',...a.map(x=>`${i}\t<${tag}>${x}</${tag}>`),i+'</tr>'])};
+const trb=(tag,a)=>tr(tag,a,'\t');   /* pentru casetele „Uite cum”, cu <table> la margine */
+const CAP=tr('th',['Ora','Luni','Marți']), R1=tr('td',['8:00','Română','Engleză']), R2=tr('td',['9:00','Matematică','Istorie']);
+
+/* toate codurile din pagină (aceleași texte sunt deschise în Chromium: _proba/proba_coduri_l17.py) */
+const COD={
+  p1_bloc:J(['<h1>Ce iau în excursie</h1>','<ul>','\t<li>apă</li>','\t<li>pelerină</li>','\t<li>sandviș</li>','</ul>']),
+  p1_ex:SCH('Excursia',[H+'<h1>Ce iau în excursie</h1>',H+'<ul>',R3+'<li>apă</li>',R3+'<li>pelerină</li>',R3+'<li>sandviș</li>',H+'</ul>']),
+  p1_start:SCH('Excursia',[H+'<h1>Ce iau în excursie</h1>',H+'<ul>',R3+'<li>apă</li>',H+'</ul>']),
+  p1_rez:SCH('Excursia',[H+'<h1>Ce iau în excursie</h1>',H+'<ul>',R3+'<li>apă</li>',R3+'<li>pelerină</li>',R3+'<li>sandviș</li>',H+'</ul>']),
+  p1_gresit:SCH('Excursia',[H+'<h1>Ce iau în excursie</h1>',H+'<ul>',R3+'<li>apă</li>',H+'</ul>',H+'<li>pelerină</li>',H+'<li>sandviș</li>']),
+  p1b_start:SCH('Excursia',[H+'<h1>Ce iau în excursie</h1>',H+'<li>apă</li>',H+'<li>pelerină</li>',H+'<li>sandviș</li>']),
+  p1b_rez:SCH('Excursia',[H+'<h1>Ce iau în excursie</h1>',H+'<ul>',R3+'<li>apă</li>',R3+'<li>pelerină</li>',R3+'<li>sandviș</li>',H+'</ul>']),
+  p2_bloc:J(['<ol>','\t<li>Spală fructele.</li>','\t<li>Taie-le.</li>','\t<li>Amestecă-le.</li>','</ol>']),
+  p2_ex:SCH('Salata de fructe',[H+'<h1>Salata de fructe</h1>',H+'<ol>',R3+'<li>Spală fructele.</li>',R3+'<li>Taie-le.</li>',R3+'<li>Amestecă-le.</li>',H+'</ol>']),
+  p2_start:SCH('Salata de fructe',[H+'<h1>Salata de fructe</h1>',H+'<ul>',R3+'<li>Spală fructele.</li>',R3+'<li>Taie-le.</li>',R3+'<li>Amestecă-le.</li>',H+'</ul>']),
+  p2_rez:SCH('Salata de fructe',[H+'<h1>Salata de fructe</h1>',H+'<ol>',R3+'<li>Spală fructele.</li>',R3+'<li>Taie-le.</li>',R3+'<li>Amestecă-le.</li>',H+'</ol>']),
+  p2_gresit:SCH('Salata de fructe',[H+'<h1>Salata de fructe</h1>',H+'<ol>',R3+'<li>Spală fructele.</li>',R3+'<li>Taie-le.</li>',R3+'<li>Amestecă-le.</li>',H+'</ul>']),
+  p2b_start:SCH('Salata de fructe',[H+'<h1>Salata de fructe</h1>',H+'<ol>',R3+'<li>1. Spală fructele.</li>',R3+'<li>2. Taie-le.</li>',R3+'<li>3. Amestecă-le.</li>',H+'</ol>']),
+  p2c_start:SCH('Salata de fructe',[H+'<h1>Salata de fructe</h1>',H+'<ol>',R3+'<li>Taie-le.</li>',R3+'<li>Spală fructele.</li>',R3+'<li>Amestecă-le.</li>',H+'</ol>']),
+  p3_bloc:J(['<table>',trb('td',['8:00','Română','Engleză']),trb('td',['9:00','Matematică','Istorie']),'</table>']),
+  p3_ex:SCH('Orarul',[H+'<table>',R1,R2,H+'</table>']),
+  p3_start:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',R1,R2,H+'</table>']),
+  p3_rez:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',R1,R2,tr('td',['10:00','TIC','Sport']),H+'</table>']),
+  p3_gresit:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',R1,R2,tr('td',['10:00','TIC']),H+'</table>']),
+  p3b_start:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',H+'</table>']),
+  p3b_rez:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',tr('td',['Luni','Română']),tr('td',['Marți','Engleză']),H+'</table>']),
+  p3b_gresit:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',tr('td',['Luni','Română','Marți','Engleză']),H+'</table>']),
+  p4_bloc:tr('th',['Ora','Luni','Marți'],''),
+  p4_ex:SCH('Orarul',[H+'<table>',CAP,R1,R2,H+'</table>']),
+  p4_start:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',tr('td',['Ora','Luni','Marți']),R1,R2,H+'</table>']),
+  p4_rez:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',CAP,R1,R2,H+'</table>']),
+  p4_gresit:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',J([R3+'<tr>',R4+'<th>Ora</td>',R4+'<th>Luni</td>',R4+'<th>Marți</td>',R3+'</tr>']),R1,R2,H+'</table>']),
+  p4b_start:SCH('Munții',[H+'<h1>Vârfuri din Carpați</h1>',H+'<table>',tr('td',['Moldoveanu','2544 m']),tr('td',['Negoiu','2535 m']),H+'</table>']),
+  p4b_rez:SCH('Munții',[H+'<h1>Vârfuri din Carpați</h1>',H+'<table>',tr('th',['Vârful','Înălțimea']),tr('td',['Moldoveanu','2544 m']),tr('td',['Negoiu','2535 m']),H+'</table>']),
+  p4b_gresit:SCH('Munții',[H+'<h1>Vârfuri din Carpați</h1>',H+'<table>',tr('td',['Vârful','Înălțimea']),tr('td',['Moldoveanu','2544 m']),tr('td',['Negoiu','2535 m']),H+'</table>']),
+  p5_bloc:tr('td',['9:00','Istorie'],''),
+  p5_ex:SCH('Orarul',[H+'<table>',CAP,R1,tr('td',['9:00','Istorie']),H+'</table>']),
+  p5_start:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',CAP,R1,tr('td',['9:00','Istorie']),H+'</table>']),
+  p5_rez:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',CAP,R1,R2,H+'</table>']),
+  p5_gresit:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',CAP,R1,tr('td',['9:00','Istorie','Matematică']),H+'</table>']),
+  p5b_start:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',CAP,R1,R2,H+'<p>Orarul e valabil din ianuarie.</p>']),
+  p5b_rez:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',CAP,R1,R2,H+'</table>',H+'<p>Orarul e valabil din ianuarie.</p>']),
+  p5c_start:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',CAP,tr('td',['8:00','Română','Engleză','Sport']),R2,H+'</table>']),
+  p5c_rez:SCH('Orarul',[H+'<h1>Orarul meu</h1>',H+'<table>',CAP,R1,R2,H+'</table>']),
+  p5d_start:SCH('Excursia',[H+'<h1>Ce iau în excursie</h1>',H+'<ul>',R3+'<li>apă</li>',R3+'<li>pelerină</li>',R3+'<li>sandviș</li>',H+'<p>Ne vedem la ora 8, la școală.</p>']),
+  p5d_rez:SCH('Excursia',[H+'<h1>Ce iau în excursie</h1>',H+'<ul>',R3+'<li>apă</li>',R3+'<li>pelerină</li>',R3+'<li>sandviș</li>',H+'</ul>',H+'<p>Ne vedem la ora 8, la școală.</p>']),
+  at_start:SCH('Excursia clasei',[H+'<h1>Excursia clasei</h1>']),
+  at_rez:SCH('Excursia clasei',[H+'<h1>Excursia clasei</h1>',H+'<ul>',R3+'<li>apă</li>',R3+'<li>pelerină</li>',R3+'<li>sandviș</li>',H+'</ul>',H+'<table>',tr('th',['Ora','Ce facem','Unde']),tr('td',['9:00','Plecăm','Școala']),tr('td',['12:00','Masa','Cabana']),H+'</table>']),
+  at_gresit:SCH('Excursia clasei',[H+'<h1>Excursia clasei</h1>',H+'<ul>',R3+'<li>apă</li>',R3+'<li>pelerină</li>',R3+'<li>sandviș</li>',H+'</ul>',H+'<table>',tr('th',['Ora','Ce facem','Unde']),tr('td',['9:00','Plecăm','Școala']),tr('td',['12:00','Cabana']),H+'</table>']),
+  at2_start:SCH('Excursia clasei',[H+'<h1>Excursia clasei</h1>',H+'<ul>',R3+'<li>apă</li>',R3+'<li>pelerină</li>',R3+'<li>sandviș</li>',H+'<table>',tr('th',['Ora','Ce facem','Unde']),tr('td',['9:00','Plecăm','Școala']),tr('td',['12:00','Cabana']),H+'</table>']),
+  q2_start:SCH('Materii',[H+'<h1>Materiile mele preferate</h1>',H+'Informatică',H+'Sport',H+'Desen']),
+  q2_rez:SCH('Materii',[H+'<h1>Materiile mele preferate</h1>',H+'<ul>',R3+'<li>Informatică</li>',R3+'<li>Sport</li>',R3+'<li>Desen</li>',H+'</ul>']),
+  q2_gresit:SCH('Materii',[H+'<h1>Materiile mele preferate</h1>',H+'<ol>',R3+'<li>Informatică</li>',R3+'<li>Sport</li>',R3+'<li>Desen</li>',H+'</ol>']),
+  q3_start:SCH('Orarul',[H+'<h1>Orarul</h1>',H+'<table>',tr('th',['Ziua','Ora 1','Ora 2']),tr('td',['Luni','Română','Engleză']),tr('td',['Marți','Fizică','Chimie']),H+'</table>']),
+  q3_rez:SCH('Orarul',[H+'<h1>Orarul</h1>',H+'<table>',tr('th',['Ziua','Ora 1','Ora 2']),tr('td',['Luni','Română','Engleză']),tr('td',['Marți','Fizică','Chimie']),tr('td',['Miercuri','Biologie','Istorie']),H+'</table>']),
+  q3_gresit:SCH('Orarul',[H+'<h1>Orarul</h1>',H+'<table>',tr('th',['Ziua','Ora 1','Ora 2']),tr('td',['Luni','Română','Engleză']),tr('td',['Marți','Fizică','Chimie']),H+'</table>',tr('td',['Miercuri','Biologie','Istorie'],H)]),
+  /* laboratorul (redus după judecata 1, J1-M2): de scris doar scheletul, titlul și tabelul mic (capul + rândul cu 8:00);
+     rândul cu 9:00 vine prin copiere; lista e pasul „Dacă mai ai timp” */
+  lab1:SCH('Orarul meu',[H+'<h1>Orarul meu</h1>',H+'<table>',CAP,R1,H+'</table>']),
+  lab_rand2:R2,
+  lab_copiat:SCH('Orarul meu',[H+'<h1>Orarul meu</h1>',H+'<table>',CAP,R1,R2,H+'</table>']),
+  lab_exp:SCH('Orarul meu',[H+'<h1>Orarul meu</h1>',H+'<table>',CAP,tr('td',['8:00','Engleză']),R2,H+'</table>']),
+  lab_lista:J([H+'<p>Luni iau în ghiozdan:</p>',H+'<ul>',R3+'<li>caiet</li>',R3+'<li>manual</li>',R3+'<li>trening</li>',H+'</ul>']),
+  lab_final:SCH('Orarul meu',[H+'<h1>Orarul meu</h1>',H+'<table>',CAP,R1,R2,H+'</table>',H+'<p>Luni iau în ghiozdan:</p>',H+'<ul>',R3+'<li>caiet</li>',R3+'<li>manual</li>',R3+'<li>trening</li>',H+'</ul>'])
+};
+window.COD_L17=COD;
+const ANA='Popescu_Ana_8A_lectia17.html';
+const AT={dosar:'Documente',model:'lectia17',ext:'html'};
+const SRC=(S,U)=>ES.src(S,U,AT);
+
+const PROVOCARE=[
+  'Pornește <b>Notepad</b>: tasta Windows, scrie <b>Notepad</b>, apoi <kbd>Enter</kbd>. Dacă se deschide cu fila unui coleg, nu scrie în ea: apasă <b>+</b> (filă nouă). Dacă Notepad nu are file (pe Windows 10), lucrezi direct în fereastră.',
+  `Scrie pagina de mai jos: scheletul de la lecția 15, titlul mare și un tabel mic, cu capul tabelului și rândul cu 8:00. Fiecare celulă stă pe rândul ei. La începutul rândurilor mutate la dreapta apasă <kbd>Tab</kbd> de câte ori vezi. Ghilimelele și semnele <code>&lt;</code>, <code>&gt;</code> le scrii ca la lecțiile 14 și 15. Literele ă, â și ț sunt pe tastatura românească (ț e tasta de lângă <kbd>Enter</kbd>). Dacă nu-ți ies, scrie fără ele: tabelul se desenează la fel.${PRE(COD.lab1)}`,
+  'Apasă <kbd>Ctrl</kbd>+<kbd>S</kbd>. În fereastra <b>Salvare ca</b> (Save As): în stânga, <b>Documente</b> (Documents); la <b>Nume fișier</b> (File name), numele, prenumele, clasa și lectia17, cu <b>.html</b> la sfârșit, de exemplu <code>Popescu_Ana_8A_lectia17.html</code>; la <b>Salvare cu tipul</b> (Save as type), <b>Toate fișierele (*.*)</b> (All files); la <b>Codificare</b> (Encoding), <b>UTF-8</b>; apoi <b>Salvare</b> (Save). Dacă apare „… există deja. Îl înlocuiți?”, apasă <b>Nu</b> (No) și pune o cifră la sfârșitul numelui: <code>Popescu_Ana_8A_lectia17_2.html</code>.',
+  'Deschide <b>Explorer</b> (File Explorer): tasta Windows + <kbd>E</kbd>. Clic pe <b>Documente</b> în stânga, apoi dublu-clic pe fișierul tău. În browser trebuie să vezi titlul mare <b>Orarul meu</b> și, sub el, tabelul cu trei coloane: sus <b>Ora</b>, <b>Luni</b>, <b>Marți</b>, îngroșate; dedesubt <b>8:00</b>, <b>Română</b>, <b>Engleză</b>, fiecare sub capul coloanei ei. Linii între celule nu apar: e normal. Dacă ceva nu e la locul lui, numără celulele pe fiecare rând și caută perechea fiecărei etichete; apoi <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad și <kbd>F5</kbd> în browser.',
+  `Rândul cu 9:00 îl faci prin copiere. În Notepad, selectează cu mouse-ul <b>rândul tabelului</b> cu 8:00: cele cinci rânduri din Notepad, de la începutul rândului <code>&lt;tr&gt;</code> până după <code>&lt;/tr&gt;</code>. Apasă <kbd>Ctrl</kbd>+<kbd>C</kbd>, dă clic la sfârșitul acelui <code>&lt;/tr&gt;</code>, apasă <kbd>Enter</kbd>, apoi <kbd>Ctrl</kbd>+<kbd>V</kbd>. În rândul lipit schimbă cele trei texte: <b>9:00</b>, <b>Matematică</b>, <b>Istorie</b>. Rândul nou arată așa:${PRE(COD.lab_rand2)}<kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad, <kbd>F5</kbd> în browser: tabelul are acum trei rânduri, cu fiecare materie sub ziua ei.`,
+  'Experimentul: în Notepad, la rândul tabelului cu 8:00, selectează cu mouse-ul rândul din Notepad de sub <code>&lt;td&gt;8:00&lt;/td&gt;</code>, adică <code>&lt;td&gt;Română&lt;/td&gt;</code>, și apasă <kbd>Delete</kbd>. <kbd>Ctrl</kbd>+<kbd>S</kbd>, apoi <kbd>F5</kbd> în browser: pe rândul cu 8:00, materia de marți a trecut sub <b>Luni</b>. Așa arată o celulă lipsă.',
+  'Pune celula la loc. Dacă a rămas un rând gol, scrie pe el <code>&lt;td&gt;Română&lt;/td&gt;</code>. Dacă rândul a dispărut, dă clic la sfârșitul rândului <code>&lt;td&gt;8:00&lt;/td&gt;</code>, apasă <kbd>Enter</kbd>, de patru ori <kbd>Tab</kbd>, apoi scrie celula. <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad, <kbd>F5</kbd> în browser: fiecare materie e iar sub ziua ei. Apoi <kbd>Ctrl</kbd>+<kbd>U</kbd> în browser: vezi rândurile tale, cu tabelul. Închide fila sursei cu × de pe ea.',
+  `<b>Dacă mai ai timp</b> (altfel treci la pasul următor): o listă sub tabel. În Notepad, dă clic la sfârșitul rândului <code>&lt;/table&gt;</code>, apasă <kbd>Enter</kbd> și scrie rândurile de mai jos, cu Tab-urile lor:${PRE(COD.lab_lista)}<kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad, <kbd>F5</kbd> în browser: sub tabel apar propoziția și trei rânduri, fiecare cu o bulină în față. Dacă bulinele lipsesc, verifică <code>&lt;ul&gt;</code> și <code>&lt;/ul&gt;</code>.`,
+  'La sfârșit, calculatorul rămâne curat pentru colegul următor: în Notepad închide pe rând <b>toate</b> filele, din meniu: <b>Fișier › Închideți fila</b>, până se închide Notepad. Dacă la fila unui coleg te întreabă „Salvați modificările…?”, apasă <b>Nu salvați</b>: ce a salvat el în Documente rămâne neatins. Nu închide Notepad cu X-ul ferestrei: îi redeschide colegului filele. Dacă Notepad nu are file (Windows 10), după ce ai salvat îl închizi cu X. În browser închide fila paginii. Fișierul tău rămâne în Documente.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m3_l17',
+  mod:'lectie',
+  titlu:'Tabele și liste în pagina web',
+  marca:'Lecția <b>17</b> · Pagini web · a VIII-a',
+  h1:'Tabele și liste în pagina web',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U2', unitateTitlu:'Pagini web',
+  competente:['CS.1.2','CS.3.2'], lectii:'17',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.2, CS.3.2 · unitatea VIII-U2 „Pagini web” · lecția 17 · conținutul: „Operații de editare a elementelor de conținut (paragraf, imagini, tabele, liste, legături): inserare, ștergere, mutare, copiere” (aici: liste și tabele)',
+  intro:`<p>Lecția 17. Afli cum pui în pagină o listă, cu buline sau numerotată, și un tabel, cu rânduri și coloane, ca un orar. Le scrii în Notepad și le vezi în browser.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 15, „Elemente de structură…”: scheletul paginii (<code>&lt;head&gt;</code> cu titlul și rândul meta, <code>&lt;body&gt;</code>), închiderea în ordine inversă, rândurile mutate la dreapta cu <kbd>Tab</kbd>;</li>
+<li>lecția 14, „Cum e făcută o pagină web…”: Notepad, salvarea ca .html (Toate fișierele, UTF-8), deschiderea din Explorer, <kbd>F5</kbd>, <kbd>Ctrl</kbd>+<kbd>U</kbd>, Fișier › Închideți fila;</li>
+<li>lecția 16, „Conținutul paginii…”: paragraful <code>&lt;p&gt;</code> (îl folosești gata scris); <kbd>Enter</kbd> din Notepad nu trece textul pe alt rând în browser;</li>
+<li>lecția 4, „Adresa de celulă. Selectare, copiere, mutare, ștergere”: <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd>;</li>
+<li>lecția 2, „Interfața aplicației de calcul tabelar…”: rândurile, coloanele și celula din Excel.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”, într-un Notepad și un browser simulate în pagină. Apoi atelierul, apoi același lucru la calculatorul din laborator, iar la sfârșit 5 întrebări.</p>
+<p><b>Obligatoriu:</b> primul „Încearcă tu” din fiecare pas, primul atelier, laboratorul (fără pasul „Dacă mai ai timp”) și cele 5 întrebări. Butoanele „Încă un exercițiu” și al doilea atelier sunt pentru cine termină mai repede.</p>
+<p><b>Când mai sunt 10 minute din oră</b> și n-ai terminat laboratorul: salvează (<kbd>Ctrl</kbd>+<kbd>S</kbd>), închide filele din Notepad ca la ultimul pas al laboratorului și treci la cele 5 întrebări.</p>`,
+  banda:'<span class="grila"><span><b>Ora</b></span><span><b>Luni</b></span><span><b>Marți</b></span><span>8:00</span><span>Română</span><span>Engleză</span></span><span><span class="tg">&lt;ul&gt;</span> <span class="tg">&lt;ol&gt;</span> <span class="tg">&lt;li&gt;</span> · <span class="tg">&lt;table&gt;</span> <span class="tg">&lt;tr&gt;</span> <span class="tg">&lt;th&gt;</span> <span class="tg">&lt;td&gt;</span></span>',
+  tipuri:{editorweb:EditorWeb},
+  nivele:[
+  {t:'Tabele și liste în pagina web', final:true, lectii:[17], continuturi:[P.editare],
+   obiectiv:'scrii în Notepad o listă cu buline, o listă numerotată și un tabel cu capul lui, alegi când folosești lista și când tabelul, și repari o celulă lipsă sau o etichetă neînchisă.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>În gară, plecările trenurilor stau pe un panou mare. Fiecare tren are rândul lui. Pe coloane stau ora, numărul trenului și orașul în care merge. Deasupra coloanelor scrie ce e în ele, de exemplu ORA. Panoul e un <b>tabel</b>.</p>
+<p>O listă de cumpărături e mai simplă: lucrurile, scrise unul sub altul. Paginile web au și ele liste și tabele. Azi le faci pe amândouă.</p>
+${fig('../m2-l10/img/mersul-trenurilor.webp',576,488,'Panoul Mersul trenurilor de călători din Gara de Nord: coloane de trenuri, fiecare tren pe rândul lui, cu ora în stânga; deasupra coloanelor scrie ORA','Mersul trenurilor în Gara de Nord, București: un tabel, cu un tren pe fiecare rând. Fotografie: Dave Collier, <a href="https://creativecommons.org/licenses/by-sa/2.0/" target="_blank" rel="noopener">CC BY-SA 2.0</a>, <a href="https://commons.wikimedia.org/wiki/File:Plecari_Sosiri_(40494416311).jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (decupată, aceeași licență).')}`},
+
+    /* ---------- PASUL 1: lista cu buline ---------- */
+    {t:'Lista cu buline: <ul> și <li>',
+     text:`<p>O <mark>listă</mark> pune lucrurile unul sub altul. Când ordinea lor nu contează, de exemplu ce iei în excursie, folosești <mark>lista cu buline</mark>, numită și listă neordonată:</p>
+<ul><li><code>&lt;ul&gt;</code> … <code>&lt;/ul&gt;</code> cuprind toată lista;</li>
+<li>fiecare lucru stă între <code>&lt;li&gt;</code> și <code>&lt;/li&gt;</code>, înăuntrul listei. E un <mark>element al listei</mark>.</li></ul>
+<p>Numele vin din engleză: „unordered list” și „list item”. Bulinele le pune browserul singur: tu scrii doar textul. Ca la lecția 15, muți rândurile listei la dreapta cu <kbd>Tab</kbd>.</p>`,
+     exemplu:`${PRE(COD.p1_bloc)}${TB.randare(COD.p1_ex,150)}<p>Trei <code>&lt;li&gt;</code> în <code>&lt;ul&gt;</code>: trei rânduri, fiecare cu bulina lui.</p>`,
+     altfel:`<p>Gândește-te la bilețelul pe care scrii ce cumperi de la magazin. Bilețelul întreg e lista <code>&lt;ul&gt;</code>. Fiecare rând de pe el, „pâine”, „lapte”, e un <code>&lt;li&gt;</code>. Nu contează ce pui primul în coș.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'În lista de mai jos e doar <b>apă</b>. Adaugă încă două lucruri, fiecare pe rândul lui: <b>pelerină</b> și <b>sandviș</b>. Dă clic la sfârșitul rândului cu apă, apasă <kbd>Enter</kbd> (pe telefon, tasta ↵) și scrie <code>&lt;li&gt;pelerină&lt;/li&gt;</code>. La fel pentru sandviș. Rândul <code>&lt;/ul&gt;</code> rămâne după ele.',
+       start:{text:COD.p1_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Lista cu buline are trei lucruri: apă, pelerină, sandviș',fn:S=>TB.lista(LV(S),{tip:'ul',texte:['apă','pelerină','sandviș']}),msg:'Fiecare lucru nou intră între &lt;li&gt; și &lt;/li&gt;, înaintea rândului &lt;/ul&gt;.'},
+        INCH,ORD]),
+       rezolvare:[['scrie',COD.p1_rez]],gresit:[['scrie',COD.p1_gresit]],
+       ajutor:'Rândurile noi intră înaintea lui &lt;/ul&gt;, ca să fie în listă. Fiecare are &lt;li&gt; la început și &lt;/li&gt; la sfârșit.',
+       why:'Acum lista are trei elemente, iar browserul a pus singur câte o bulină în fața fiecăruia.'},
+     inca:[
+      {t:'choice',q:'Ce pune browserul în fața fiecărui element dintr-o listă <code>&lt;ul&gt;</code>?',o:['O bulină','Un număr: 1., 2., 3.','Nimic: semnul îl scrii tu','O linie de tabel'],ok:0,
+       ajutor:'Cum se mai numește lista <code>&lt;ul&gt;</code>?',why:'Lista <code>&lt;ul&gt;</code> e lista cu buline: browserul pune singur bulina. Tu scrii doar textul.'},
+      {t:'editorweb',mod:'live',
+       q:'Lucrurile de mai jos n-au buline: lipsește lista din jurul lor. Scrie <code>&lt;ul&gt;</code> pe un rând înaintea lor și <code>&lt;/ul&gt;</code> pe un rând după ele.',
+       start:{text:COD.p1b_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Apă, pelerină și sandviș sunt într-o listă cu buline',fn:S=>TB.lista(LV(S),{tip:'ul',texte:['apă','pelerină','sandviș']}),msg:'Rândurile cu &lt;li&gt; trebuie să stea între &lt;ul&gt; și &lt;/ul&gt;.'},INCH,ORD]),
+       rezolvare:[['scrie',COD.p1b_rez]],gresit:[['scrie',COD.p1b_start]],
+       ajutor:'Un &lt;li&gt; are nevoie de lista lui: &lt;ul&gt; înainte, &lt;/ul&gt; după.',
+       why:'Un <code>&lt;li&gt;</code> fără listă apare fără bulină. În <code>&lt;ul&gt;</code>, fiecare primește bulina lui.'}
+     ]},
+
+    /* ---------- PASUL 2: lista numerotată ---------- */
+    {t:'Lista numerotată: <ol>',
+     text:`<p>Când ordinea contează, de exemplu pașii unei rețete, folosești <mark>lista numerotată</mark>, numită și listă ordonată: <code>&lt;ol&gt;</code> … <code>&lt;/ol&gt;</code>, de la „ordered list”. Fiecare pas stă tot între <code>&lt;li&gt;</code> și <code>&lt;/li&gt;</code>.</p>
+<p>Numerele le pune browserul: 1., 2., 3. Dacă adaugi sau ștergi un pas, numerele se refac singure. De aceea nu le scrii tu: ar apărea de două ori, „1. 1.”.</p>
+<p>Pe scurt: ordinea contează, deci <code>&lt;ol&gt;</code>; nu contează, deci <code>&lt;ul&gt;</code>.</p>`,
+     exemplu:`${PRE(COD.p2_bloc)}${TB.randare(COD.p2_ex,150)}
+${fig('../../../jocuri/web-viii/img/pag-liste.webp',620,476,'Google Chrome: o pagină cu titlul Ce punem în ghiozdan și trei rânduri cu buline, apoi titlul Pașii înscrierii și trei rânduri numerotate 1, 2, 3','În Google Chrome, pe o pagină cu amândouă: lista <code>&lt;ul&gt;</code> cu buline, lista <code>&lt;ol&gt;</code> numerotată.')}`,
+     altfel:`<p>La o rețetă, ordinea contează: întâi speli fructele, abia apoi le tai. În rucsac, nu contează ce pui primul. Rețeta e o listă <code>&lt;ol&gt;</code>, rucsacul e o listă <code>&lt;ul&gt;</code>.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Pașii rețetei de mai jos au buline, dar ordinea lor contează. Fă din listă una numerotată: schimbă <code>&lt;ul&gt;</code> în <code>&lt;ol&gt;</code> și <code>&lt;/ul&gt;</code> în <code>&lt;/ol&gt;</code>. Pașii rămân cum sunt.',
+       start:{text:COD.p2_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Pașii sunt într-o listă numerotată, în aceeași ordine',fn:S=>TB.lista(LV(S),{tip:'ol',ordine:['Spală fructele.','Taie-le.','Amestecă-le.']})&&!TB.liste(LV(S)).some(l=>l.tip==='ul'),msg:'Schimbă eticheta listei: &lt;ol&gt; la început, &lt;/ol&gt; la sfârșit.'},
+        INCH,ORD]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p2_gresit]],
+       ajutor:'Schimbi două etichete: cea care deschide lista și cea care o închide. Închiderea repetă numele: &lt;ol&gt; … &lt;/ol&gt;.',
+       why:'Cu <code>&lt;ol&gt;</code>, browserul a numerotat singur pașii: 1., 2., 3.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'În pagina de mai jos apare „1. 1. Spală fructele.”: numerele sunt de două ori. Repară lista, ca fiecare număr să apară o singură dată.',
+       start:{text:COD.p2b_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Fiecare pas are un singur număr, pus de browser',fn:S=>TB.lista(LV(S),{tip:'ol',ordine:['Spală fructele.','Taie-le.','Amestecă-le.']})&&!TB.numereScrise(LV(S)),msg:'Șterge numerele scrise de tine la începutul pașilor, cu tot cu punctul de după ele.'},INCH,ORD]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p2b_start]],
+       ajutor:'Cine pune numerele într-o listă &lt;ol&gt;?',
+       why:'Lista <code>&lt;ol&gt;</code> își pune singură numerele. Cele scrise de mână apăreau a doua oară.'},
+      {t:'editorweb',mod:'live',
+       q:'Pașii de mai jos sunt în ordine greșită: întâi speli fructele, abia apoi le tai. Mută rândul cu „Spală fructele.” deasupra celui cu „Taie-le.”: selectează-l cu mouse-ul de la începutul lui până la începutul rândului următor (așa iei tot rândul), <kbd>Ctrl</kbd>+<kbd>X</kbd>, dă clic la începutul rândului cu „Taie-le.”, <kbd>Ctrl</kbd>+<kbd>V</kbd>. Pe telefon: ține degetul pe rând, trage de capetele selecției peste tot rândul și alege <b>Decupează</b> (Cut); apoi ține degetul la începutul rândului cu „Taie-le.” și alege <b>Lipește</b> (Paste). Pe unele telefoane, numele sunt puțin altfel. Uită-te la numere: browserul le pune iar 1, 2, 3.',
+       start:{text:COD.p2c_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Pașii sunt în ordinea: Spală fructele., Taie-le., Amestecă-le.',fn:S=>TB.lista(LV(S),{tip:'ol',ordine:['Spală fructele.','Taie-le.','Amestecă-le.']}),msg:'Rândul cu „Spală fructele.” trebuie să fie primul din listă.'},INCH,ORD]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p2c_start]],
+       ajutor:'Selectezi tot rândul, de la începutul lui până la începutul rândului următor. Pe telefon: ține degetul pe text ca să-l selectezi, apoi alege din meniul care apare.',
+       why:'Ai mutat un element al listei, iar browserul a renumerotat singur pașii. Dacă în Notepad două <code>&lt;li&gt;</code> au ajuns pe același rând, pagina arată la fel; un <kbd>Enter</kbd> între ele le pune iar pe rânduri separate.'},
+      {t:'classify',q:'Ce listă folosești pentru fiecare?',cats:['Listă cu buline (ul)','Listă numerotată (ol)'],
+       items:[['ce iei în excursie',0],['pașii unei rețete',1],['clasamentul unui concurs, de la locul 1',1],['culorile tale preferate',0]],
+       ajutor:'Contează ordinea? Atunci e numerotată.',why:'Pașii și clasamentul au o ordine, deci <code>&lt;ol&gt;</code>. Lucrurile din rucsac și culorile, nu: <code>&lt;ul&gt;</code>.'}
+     ]},
+
+    /* ---------- PASUL 3: tabelul ---------- */
+    {t:'Tabelul: <table>, <tr>, <td>',
+     text:`<p>Un <mark>tabel</mark> așază datele pe rânduri și coloane, ca foaia din Excel de la lecția 2. În pagina web îl scrii rând cu rând:</p>
+<ul><li><code>&lt;table&gt;</code> … <code>&lt;/table&gt;</code> cuprind tot tabelul;</li>
+<li><code>&lt;tr&gt;</code> … <code>&lt;/tr&gt;</code> e un <mark>rând</mark>;</li>
+<li>în rând, fiecare <code>&lt;td&gt;</code> … <code>&lt;/td&gt;</code> e o <mark>celulă</mark>.</li></ul>
+<p>Coloanele nu se scriu separat: câte celule are fiecare rând, atâtea coloane are tabelul. Browserul nu desenează linii între celule: vezi textul așezat în coloane.</p>
+<p>Alegi tabelul când despre fiecare lucru ai mai multe date, ca ora și materia. Pentru lucruri simple, unul sub altul, ajunge o listă.</p>`,
+     exemplu:`${PRE(COD.p3_bloc)}${TB.randare(COD.p3_ex,70)}<p>Două <code>&lt;tr&gt;</code>, deci două rânduri. Câte trei celule în fiecare, deci trei coloane. În Notepad, fiecare celulă stă pe rândul ei, mai la dreapta decât <code>&lt;tr&gt;</code>: între <code>&lt;tr&gt;</code> și <code>&lt;/tr&gt;</code> numeri ușor celulele.</p>`,
+     altfel:`<p>Gândește-te la panoul din gară, de la început. <code>&lt;table&gt;</code> e tot panoul. Fiecare <code>&lt;tr&gt;</code> e rândul unui tren: primul scris e sus, următorul sub el. În rând, celulele sunt ora, trenul și orașul, de la stânga la dreapta. Orele, scrise una sub alta pe toate rândurile, formează o coloană.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Adaugă în orar un al treilea rând: <b>10:00</b>, <b>TIC</b>, <b>Sport</b>. Dă clic la sfârșitul ultimului rând <code>&lt;/tr&gt;</code> și apasă <kbd>Enter</kbd> (pe telefon, tasta ↵). Scrie <code>&lt;tr&gt;</code>, apoi, fiecare pe rândul ei, cele trei celule, între <code>&lt;td&gt;</code> și <code>&lt;/td&gt;</code>, apoi <code>&lt;/tr&gt;</code>.',
+       start:{text:COD.p3_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Tabelul are trei rânduri, fiecare cu trei celule',fn:S=>TB.tabel(LV(S),{randuri:3,coloane:3}),msg:'Rândul nou intră înaintea lui &lt;/table&gt;, cu trei celule &lt;td&gt;…&lt;/td&gt;.'},
+        {ce:'Al treilea rând are 10:00, TIC și Sport',fn:S=>TB.tabel(LV(S),{randuri:3,rand:{2:['10:00','TIC','Sport']}}),msg:'Pe rândul nou: &lt;td&gt;10:00&lt;/td&gt;&lt;td&gt;TIC&lt;/td&gt;&lt;td&gt;Sport&lt;/td&gt;.'},
+        INCH,ORD]),
+       rezolvare:[['scrie',COD.p3_rez]],gresit:[['scrie',COD.p3_gresit]],
+       ajutor:'Fă-l ca rândul de deasupra: &lt;tr&gt;, trei celule &lt;td&gt;…&lt;/td&gt;, &lt;/tr&gt;. Mai repede: îl copiezi pe cel de deasupra (de la &lt;tr&gt; la &lt;/tr&gt;) cu Ctrl+C și Ctrl+V, apoi schimbi doar textele.',
+       why:'Un rând nou înseamnă un <code>&lt;tr&gt;</code> nou, cu atâtea celule câte au și celelalte rânduri.'},
+     inca:[
+      {t:'choice',q:'Un tabel are 4 rânduri <code>&lt;tr&gt;</code>, iar în fiecare sunt 2 celule <code>&lt;td&gt;</code>. Cum arată în browser?',o:['4 rânduri și 2 coloane','2 rânduri și 4 coloane','8 rânduri, cu câte o celulă','6 rânduri și o coloană'],ok:0,
+       ajutor:'Un <code>&lt;tr&gt;</code> e un rând. Celulele dintr-un rând dau coloanele.',why:'4 rânduri, fiecare cu 2 celule: 2 coloane, 8 celule în total.'},
+      {t:'editorweb',mod:'live',
+       q:'Între <code>&lt;table&gt;</code> și <code>&lt;/table&gt;</code> scrie un tabel cu 2 rânduri și 2 coloane: pe primul rând <b>Luni</b> și <b>Română</b>, pe al doilea <b>Marți</b> și <b>Engleză</b>.',
+       start:{text:COD.p3b_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Tabelul are 2 rânduri, fiecare cu 2 celule',fn:S=>TB.tabel(LV(S),{randuri:2,coloane:2}),msg:'Două rânduri &lt;tr&gt;…&lt;/tr&gt;, cu câte două celule &lt;td&gt;…&lt;/td&gt;.'},
+        {ce:'Luni și Română pe primul rând, Marți și Engleză pe al doilea',fn:S=>TB.tabel(LV(S),{rand:{0:['Luni','Română'],1:['Marți','Engleză']}}),msg:'Verifică textele din celule și ordinea lor.'},INCH,ORD]),
+       rezolvare:[['scrie',COD.p3b_rez]],gresit:[['scrie',COD.p3b_gresit]],
+       ajutor:'Un rând al tabelului = un &lt;tr&gt;. Dacă pui toate patru celulele în același &lt;tr&gt;, ai un singur rând, cu 4 coloane.',
+       why:'Două <code>&lt;tr&gt;</code> fac două rânduri, iar câte două celule în fiecare fac două coloane.'}
+     ]},
+
+    /* ---------- PASUL 4: capul tabelului ---------- */
+    {t:'Capul tabelului: <th>',
+     text:`<p>Primul rând al unui tabel spune ce e în fiecare coloană, ca ORA pe panoul din gară. El e <mark>capul tabelului</mark>.</p>
+<p>Celulele lui le scrii cu <code>&lt;th&gt;</code> … <code>&lt;/th&gt;</code> în loc de <code>&lt;td&gt;</code> … <code>&lt;/td&gt;</code>, de la „table header”. Browserul le scrie îngroșat, la mijlocul coloanei. Celelalte rânduri rămân cu <code>&lt;td&gt;</code>.</p>
+<p>Nu-l confunda cu antetul paginii de la lecția 15, <code>&lt;head&gt;</code>. Capul tabelului stă în corp, în tabel, și se vede în pagină.</p>`,
+     exemplu:`<p>Primul rând al orarului, scris ca cap de tabel:</p>${PRE(COD.p4_bloc)}${TB.randare(COD.p4_ex,90)}<p>Sus, <b>Ora</b>, <b>Luni</b> și <b>Marți</b> sunt îngroșate și așezate la mijlocul coloanei.</p>`,
+     altfel:`<p>La un concurs, foaia cu rezultatele are sus Nume, Clasa, Punctaj. Fără rândul acesta, n-ai ști ce înseamnă numerele de dedesubt. Rândul de sus e capul tabelului.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Fă din primul rând al orarului capul tabelului: la celulele cu Ora, Luni și Marți, schimbă fiecare <code>&lt;td&gt;</code> în <code>&lt;th&gt;</code> și fiecare <code>&lt;/td&gt;</code> în <code>&lt;/th&gt;</code>. Celelalte rânduri ale tabelului rămân cum sunt.',
+       start:{text:COD.p4_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Primul rând are trei celule &lt;th&gt;: Ora, Luni, Marți',fn:S=>TB.tabel(LV(S),{randuri:3,coloane:3,cap:true,rand:{0:['Ora','Luni','Marți']}}),msg:'Pe primul rând, toate trei celulele cu &lt;th&gt;; pe celelalte, &lt;td&gt;.'},
+        INCH,ORD]),
+       rezolvare:[['scrie',COD.p4_rez]],gresit:[['scrie',COD.p4_gresit]],
+       ajutor:'În primul rând al tabelului sunt șase etichete de schimbat: trei care deschid și trei care închid.',
+       why:'Acum primul rând e capul tabelului: browserul îl scrie îngroșat și la mijloc.'},
+     inca:[
+      {t:'tf',q:'Celulele <code>&lt;th&gt;</code> se scriu în antetul paginii, între <code>&lt;head&gt;</code> și <code>&lt;/head&gt;</code>.',ok:false,
+       ajutor:'Unde se vede capul tabelului?',why:'Fals. Capul tabelului e primul rând al tabelului, deci stă în corp, în <code>&lt;table&gt;</code>. Antetul <code>&lt;head&gt;</code> are doar informații despre pagină.'},
+      {t:'editorweb',mod:'live',
+       q:'Tabelul de mai jos n-are cap. Adaugă deasupra celor două rânduri un rând nou, cu <b>Vârful</b> și <b>Înălțimea</b>, în celule <code>&lt;th&gt;</code>.',
+       start:{text:COD.p4b_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Primul rând e capul tabelului: Vârful, Înălțimea',fn:S=>TB.tabel(LV(S),{randuri:3,coloane:2,cap:true,rand:{0:['Vârful','Înălțimea'],1:['Moldoveanu','2544 m']}}),msg:'Un rând nou, după &lt;table&gt;: &lt;tr&gt;, două celule &lt;th&gt;…&lt;/th&gt;, &lt;/tr&gt;.'},INCH,ORD]),
+       rezolvare:[['scrie',COD.p4b_rez]],gresit:[['scrie',COD.p4b_gresit]],
+       ajutor:'Rândul nou intră imediat după &lt;table&gt;, înaintea rândului cu Moldoveanu.',
+       why:'Rândul de sus, cu <code>&lt;th&gt;</code>, spune ce e în fiecare coloană.'}
+     ]},
+
+    /* ---------- PASUL 5: greșelile care se văd ---------- */
+    {t:'Greșeli în tabele și liste: cum le găsești',
+     text:`<p>Browserul iartă unele greșeli: fără <code>&lt;/li&gt;</code>, <code>&lt;/td&gt;</code> sau <code>&lt;/tr&gt;</code>, pagina arată la fel. Tu scrii totuși fiecare pereche: așa vezi ușor unde se termină fiecare element, iar pagina ta nu depinde de cât iartă browserul. Alte greșeli se văd:</p>
+<ul><li><b>o celulă lipsă</b>: celulele din dreapta ei trec în coloana din stânga;</li>
+<li><b>o celulă în plus</b>: iese în dreapta tabelului;</li>
+<li><b>fără <code>&lt;/table&gt;</code></b>: ce ai scris după tabel urcă deasupra lui;</li>
+<li><b>fără <code>&lt;/ul&gt;</code></b>: ce ai scris după listă intră în ea, mutat la dreapta.</li></ul>
+<p>Metoda: 1. numeri celulele pe fiecare rând; 2. cauți perechea fiecărei etichete; 3. salvezi, reîmprospătezi și te uiți din nou.</p>`,
+     exemplu:`<p>Rândul cu 9:00 din orar are doar două celule:</p>${PRE(COD.p5_bloc)}${TB.randare(COD.p5_ex,90)}<p><b>Istorie</b> a ajuns sub <b>Luni</b>, deși e marți. Celula de luni lipsește.</p>`,
+     altfel:`<p>La cinema, pe un rând de scaune, fiecare spectator are locul lui, numărat de la stânga. Dacă un loc rămâne neocupat și toți din dreapta lui se mută un scaun spre stânga, fiecare ajunge pe locul altuia.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Luni la 9:00 e <b>Matematică</b>, iar marți e <b>Istorie</b>. În pagină, Istorie a ajuns sub Luni. Adaugă celula care lipsește, ca Istorie să ajungă sub Marți.',
+       start:{text:COD.p5_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Fiecare rând are trei celule',fn:S=>TB.tabel(LV(S),{randuri:3,coloane:3}),msg:'Numără celulele pe rândul cu 9:00: trebuie să fie trei, ca pe celelalte.'},
+        {ce:'Pe rândul cu 9:00: 9:00, Matematică, Istorie',fn:S=>TB.tabel(LV(S),{rand:{2:['9:00','Matematică','Istorie']}}),msg:'Celula nouă intră între 9:00 și Istorie: &lt;td&gt;Matematică&lt;/td&gt;.'},
+        INCH,ORD]),
+       rezolvare:[['scrie',COD.p5_rez]],gresit:[['scrie',COD.p5_gresit]],
+       ajutor:'Celula lipsă e cea de luni. Ea stă între celula cu 9:00 și cea cu Istorie.',
+       why:'Cu trei celule pe rând, fiecare materie stă iar sub ziua ei.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'Propoziția „Orarul e valabil din ianuarie.” e scrisă după tabel, dar în pagină a urcat deasupra lui. Repară.',
+       start:{text:COD.p5b_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Propoziția apare sub tabel',fn:S=>TB.dupaTabel(LV(S),'Orarul e valabil din ianuarie'),msg:'Ce lipsește la sfârșitul tabelului?'},INCH,ORD]),
+       rezolvare:[['scrie',COD.p5b_rez]],gresit:[['scrie',COD.p5b_start]],
+       ajutor:'Tabelul se deschide cu &lt;table&gt;. Se și închide?',
+       why:'Lipsea <code>&lt;/table&gt;</code>. Fără el, browserul a mutat propoziția deasupra tabelului.'},
+      {t:'editorweb',mod:'live',
+       q:'Pe rândul cu 8:00, <b>Sport</b> iese în dreapta tabelului: e o celulă în plus. Șterge-o, cu tot cu <code>&lt;td&gt;</code> și <code>&lt;/td&gt;</code>.',
+       start:{text:COD.p5c_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Fiecare rând are trei celule, fără Sport',fn:S=>TB.tabel(LV(S),{randuri:3,coloane:3,cap:true})&&!/sport/i.test(LV(S)),msg:'Șterge toată celula &lt;td&gt;Sport&lt;/td&gt;.'},INCH,ORD]),
+       rezolvare:[['scrie',COD.p5c_rez]],gresit:[['scrie',COD.p5c_start]],
+       ajutor:'Celula în plus e ultima de pe rândul cu 8:00.',
+       why:'Toate rândurile au acum câte trei celule, deci tabelul are trei coloane.'},
+      {t:'editorweb',mod:'live',
+       q:'Propoziția „Ne vedem la ora 8, la școală.” a intrat în listă și e mutată la dreapta. Repară lista.',
+       start:{text:COD.p5d_start,fisier:ANA},
+       teste:TB.cuDiagnostic([{ce:'Propoziția nu mai e în listă',fn:S=>!TB.inLista(LV(S),'Ne vedem la ora 8')&&TB.lista(LV(S),{tip:'ul',texte:['apă','pelerină','sandviș']}),msg:'Unde se termină lista?'},INCH,ORD]),
+       rezolvare:[['scrie',COD.p5d_rez]],gresit:[['scrie',COD.p5d_start]],
+       ajutor:'Lista s-a deschis cu &lt;ul&gt;. Unde e &lt;/ul&gt;?',
+       why:'Lipsea <code>&lt;/ul&gt;</code>: tot ce urma intra în listă. Acum lista se oprește după sandviș.'}
+     ]}
+   ],
+   atelier:{t:'editorweb',mod:'notepad',titlu:'Atelier: lista și programul excursiei',
+    intro:`<p>Mai jos ai un Notepad, folderul Documente și un browser, simulate. Deasupra lor sunt <strong>testele</strong>: se bifează singure când faci ce cer. La final apasă <b>Verifică</b>. Pe un ecran mic, treci de la o fereastră la alta cu butoanele de sub ele.</p>`,
+    q:`<b>1.</b> Pagina ta, <code>${ANA}</code>, e deschisă în Notepad. După titlul mare, adaugă o listă cu buline, cu cel puțin trei lucruri pe care le iei în excursie (scrii tu ce). <b>2.</b> Sub listă, adaugă programul excursiei: un tabel cu 3 rânduri și 3 coloane. Pe primul rând, capul tabelului: <b>Ora</b>, <b>Ce facem</b>, <b>Unde</b>. Pe celelalte două rânduri, ce vrei tu. <b>3.</b> Mută rândurile noi la dreapta, ca pe celelalte din corp. <b>4.</b> Salvează (<kbd>Ctrl</kbd>+<kbd>S</kbd>). <b>5.</b> Deschide pagina în browser: în Documente, dublu-clic pe ea (pe telefon, atinge-o de două ori, repede).`,
+    start:{fisiere:{Documente:[{n:ANA,t:COD.at_start.replace(/\n/g,'\r\n')+'\r\n'}]},notepad:{file:[{n:ANA,dosar:'Documente'}]},dreapta:'explorer'},
+    teste:TB.cuDiagnostic([
+     {ce:'Pagina salvată are o listă cu buline, cu cel puțin trei lucruri',fn:(S,U)=>{const s=SRC(S,U);return !!s&&TB.lista(s,{tip:'ul',min:3})},faraOraData:true,msg:'După titlu: &lt;ul&gt;, cel puțin trei rânduri &lt;li&gt;…&lt;/li&gt;, apoi &lt;/ul&gt;. Apoi Ctrl+S.'},
+     {ce:'Tabelul are 3 rânduri, fiecare cu 3 celule cu text',fn:(S,U)=>{const s=SRC(S,U);return !!s&&TB.tabel(s,{randuri:3,coloane:3})},msg:'Trei rânduri &lt;tr&gt;…&lt;/tr&gt;, fiecare cu trei celule. Apoi Ctrl+S.'},
+     {ce:'Primul rând e capul tabelului: Ora, Ce facem, Unde, în celule &lt;th&gt;',fn:(S,U)=>{const s=SRC(S,U);return !!s&&TB.tabel(s,{randuri:3,coloane:3,cap:true,rand:{0:['Ora','Ce facem','Unde']}})},msg:'Pe primul rând al tabelului: &lt;th&gt;Ora&lt;/th&gt;&lt;th&gt;Ce facem&lt;/th&gt;&lt;th&gt;Unde&lt;/th&gt;; pe celelalte, &lt;td&gt;.'},
+     /* J1-m3: testele 4 și 5 se bifează doar după ce există lista și tabelul (altfel erau bifate la pornire) */
+     {ce:'Fiecare etichetă are perechea ei, iar scheletul a rămas întreg',fn:(S,U)=>{const s=SRC(S,U);return !!s&&TB.liste(s).length>0&&TB.tabele(s).length>0&&TB.inchise(s)&&ES.ordine(s)},faraOraData:true,msg:'Caută perechea fiecărei etichete și nu șterge rândurile scheletului.'},
+     {ce:'Rândurile din corp stau mai la dreapta decât &lt;body&gt;',fn:(S,U)=>{const s=SRC(S,U);return !!s&&TB.liste(s).length>0&&TB.tabele(s).length>0&&ES.indentat(s)},msg:'La începutul rândurilor noi apasă Tab: de două ori pentru &lt;ul&gt; și &lt;table&gt;, de trei ori pentru &lt;li&gt; și &lt;tr&gt;, de patru ori pentru celule.',msgTactil:'Pe telefon nu ai Tab: la începutul rândurilor noi pune câte două spații pentru fiecare Tab.'},
+     {ce:'Browserul arată pagina ta, cu tabelul',browser:{fisier:AT},el:'table',msg:'Deschide pagina din Documente (dublu-clic). Dacă ai schimbat ceva după, Ctrl+S în Notepad și F5 în browser.'},
+     {ce:'Pagina din browser e cea salvată acum',laZi:AT,msg:'Ai schimbat fișierul după ce l-ai deschis: F5 în browser.'}],{spec:AT}),
+    rezolvare:[['scrie',COD.at_rez],['salveaza'],['deschide','Documente/'+ANA]],
+    gresit:[['scrie',COD.at_gresit],['salveaza'],['deschide','Documente/'+ANA]],
+    ajutor:'Pe rând: lista (&lt;ul&gt;, trei &lt;li&gt;, &lt;/ul&gt;); tabelul (&lt;table&gt;, rândul cu &lt;th&gt;, două rânduri cu &lt;td&gt;, &lt;/table&gt;); '+(ES.tactil()?'spații la început':'Tab-uri la început')+'; Ctrl+S; în Documente, dublu-clic pe fișier.',
+    why:'Pagina ta are o listă cu buline și un tabel cu cap, salvate și deschise în browser.',
+    solutieText:'pagina Popescu_Ana_8A_lectia17.html are lista (apă, pelerină, sandviș) și programul (Ora, Ce facem, Unde; 9:00 Plecăm Școala; 12:00 Masa Cabana), salvată și deschisă în browser.',
+    inca:[
+     {t:'editorweb',mod:'notepad',titlu:'Atelier: repară pagina și lasă calculatorul curat',
+      q:'Pagina ta s-a stricat: în browser, tabelul a intrat în listă, mutat la dreapta, iar pe ultimul rând Cabana a ajuns sub Ce facem. La 12:00 facem <b>Masa</b>, la <b>Cabana</b>. <b>1.</b> Repară pagina în Notepad. <b>2.</b> Fă ca browserul să arate pagina reparată. <b>3.</b> La final, închide fila din Notepad cu <b>Fișier › Închideți fila</b>, nu cu X-ul ferestrei.',
+      start:{fisiere:{Documente:[{n:ANA,t:COD.at2_start.replace(/\n/g,'\r\n')+'\r\n'}]},notepad:{file:[{n:ANA,dosar:'Documente'}]},browser:{file:['Documente/'+ANA]},dreapta:'browser'},
+      teste:TB.cuDiagnostic([
+       {ce:'Lista se închide după sandviș, iar tabelul nu mai e în ea',fn:(S,U)=>{const s=ES.src(S,U,{exact:ANA});return !!s&&TB.lista(s,{tip:'ul',texte:['apă','pelerină','sandviș']})},msg:'Lista s-a deschis cu &lt;ul&gt;. Unde se închide? Apoi Ctrl+S.'},
+       {ce:'Pe ultimul rând: 12:00, Masa, Cabana',fn:(S,U)=>{const s=ES.src(S,U,{exact:ANA});return !!s&&TB.tabel(s,{randuri:3,coloane:3,cap:true,rand:{2:['12:00','Masa','Cabana']}})},msg:'Numără celulele pe ultimul rând. Apoi Ctrl+S.'},
+       {ce:'Fiecare etichetă are perechea ei',fn:(S,U)=>{const s=ES.src(S,U,{exact:ANA});return !!s&&TB.inchise(s)&&ES.ordine(s)},faraOraData:true,msg:'Caută perechea fiecărei etichete.'},
+       {ce:'Pagina din browser e cea salvată acum',laZi:{exact:ANA},msg:'După Ctrl+S în Notepad: clic pe pagină, apoi F5.'},
+       {ce:'Notepad e închis și nu-ți mai redeschide fila',npCurat:true,faraDiagnostic:true,msg:'Fișier › Închideți fila. X-ul ferestrei păstrează fila pentru data viitoare.'}],{spec:{exact:ANA}}),
+      rezolvare:[['scrie',COD.at_rez],['salveaza'],['f5'],['inchideFila']],
+      gresit:[['scrie',COD.at_rez],['salveaza'],['f5'],['inchideFereastra']],
+      ajutor:'Două lucruri lipsesc: închiderea listei și o celulă pe ultimul rând. Apoi: Ctrl+S, F5, Fișier › Închideți fila.',
+      why:'Lista închisă la locul ei lasă tabelul în afara ei, iar celula Masa pune Cabana sub Unde. Notepad, închis din filă, pornește curat pentru colegul următor.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Andrei pune în pagină pașii pentru a planta un pom: întâi sapă groapa, apoi pune pomul, apoi îl udă. Ce scrie în jurul pașilor?',
+     o:['<ol> și </ol>, cu fiecare pas în <li>','<ul> și </ul>, cu fiecare pas în <li>','<table> și </table>, cu fiecare pas în <td>','Doar <li> și </li>, fără nimic în jurul lor'],ok:0,
+     ajutor:'Contează ordinea pașilor?',why:'Ordinea contează, deci lista numerotată: <code>&lt;ol&gt;</code>, cu fiecare pas în <code>&lt;li&gt;</code>. Browserul pune numerele.'},
+    {t:'editorweb',mod:'live',
+     q:'În pagină, cele trei materii apar pe un singur rând. Fă din ele o listă cu buline, fiecare materie fiind un element al listei.',
+     start:{text:COD.q2_start,fisier:'Pop_Matei_8B_lectia17.html'},
+     teste:[{ce:'Informatică, Sport și Desen sunt într-o listă cu buline',fn:S=>TB.lista(LV(S),{tip:'ul',texte:['Informatică','Sport','Desen']}),msg:'O listă cu buline are &lt;ul&gt; în jur și fiecare lucru în &lt;li&gt;…&lt;/li&gt;.'},INCH,ORD],
+     rezolvare:[['scrie',COD.q2_rez]],gresit:[['scrie',COD.q2_gresit]],
+     ajutor:'Ce etichetă are lista cu buline? Ce etichetă are fiecare element?',why:'Fiecare materie în <code>&lt;li&gt;</code>, toate în <code>&lt;ul&gt;</code>: trei rânduri cu buline.'},
+    {t:'editorweb',mod:'live',
+     q:'Adaugă în orar rândul pentru miercuri, sub rândul cu Marți: <b>Miercuri</b>, <b>Biologie</b>, <b>Istorie</b>.',
+     start:{text:COD.q3_start,fisier:'Pop_Matei_8B_lectia17.html'},
+     teste:[{ce:'Tabelul are patru rânduri, fiecare cu trei celule',fn:S=>TB.tabel(LV(S),{randuri:4,coloane:3,cap:true}),msg:'Rândul nou stă în tabel, înaintea lui &lt;/table&gt;, cu trei celule &lt;td&gt;.'},
+      {ce:'Ultimul rând: Miercuri, Biologie, Istorie',fn:S=>TB.tabel(LV(S),{rand:{3:['Miercuri','Biologie','Istorie']}}),msg:'Verifică textele și ordinea celulelor de pe rândul nou.'},INCH,ORD],
+     rezolvare:[['scrie',COD.q3_rez]],gresit:[['scrie',COD.q3_gresit]],
+     ajutor:'Un rând nou: &lt;tr&gt;, celulele, &lt;/tr&gt;, înainte de sfârșitul tabelului.',why:'Rândul nou e un <code>&lt;tr&gt;</code> cu trei celule <code>&lt;td&gt;</code>, scris înaintea lui <code>&lt;/table&gt;</code>.'},
+    {t:'classify',q:'Listă sau tabel? Ce folosești în pagină pentru fiecare?',cats:['Listă','Tabel'],
+     items:[['lucrurile din ghiozdan',0],['numele, clasa și punctajul fiecărui concurent',1],['pașii pentru a salva o pagină',0],['pentru fiecare zi, orele și materiile',1]],
+     ajutor:'Ai mai multe date despre fiecare lucru? Atunci e tabel.',why:'Când despre fiecare lucru ai mai multe date (nume, clasă, punctaj; zi, oră, materie), le așezi pe coloane, în tabel. Lucrurile simple, unul sub altul, merg în listă.'},
+    {t:'choice',q:'Ioana a uitat <code>&lt;/table&gt;</code>. După tabel scrisese propoziția „Mâine avem test.”. Unde apare propoziția în browser?',
+     o:['Deasupra tabelului','Sub tabel, ca de obicei','În ultima celulă a tabelului','Nicăieri: browserul o șterge'],ok:0,
+     ajutor:'Recitește ce se vede când lipsește închiderea tabelului.',why:'Fără <code>&lt;/table&gt;</code>, browserul mută textul de după tabel deasupra lui. Cu <code>&lt;/table&gt;</code> la locul lui, propoziția rămâne sub tabel.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Notepad-ul și browserul adevărate',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:`<p>Faci o pagină cu orarul tău, pe calculator, fără ajutor: la fiecare pas scrie ce trebuie să vezi, ca să verifici singur. Pasul „Dacă mai ai timp” e pentru cine termină mai repede.</p>
+<p>Când mai sunt 10 minute din oră: salvează, fă ultimul pas (închizi filele din Notepad) și treci la cele 5 întrebări.</p>`,
+    pasi:PROVOCARE},
+  diploma:{titlu:'Constructorul de liste și tabele',
+    rezumat:'a scris liste cu buline (ul) și numerotate (ol), cu fiecare element în li, a construit un tabel rând cu rând (table, tr, td), cu capul tabelului în th, a ales între listă și tabel și a reparat o celulă lipsă',
+    aplicatie:'Notepad-ul și browserul adevărate',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
