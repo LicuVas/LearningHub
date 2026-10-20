@@ -153,7 +153,7 @@ function acasa() {
   app.innerHTML = `<h1>Școala altfel</h1><p class="mic">Izvoare · Informatică și T.I.C. · marți 20 octombrie 2026 · EU Code Week</p>
   <button class="mare" onclick="location.hash='vii'">Clasa a VII-a<small>Detectivii digitali: adevărat sau fals?</small></button>
   <button class="mare" onclick="location.hash='viii'">Clasa a VIII-a<small>Inteligența artificială: mit sau realitate? · 6 părți, cu „Om sau AI?”</small></button>
-  <button class="mare" onclick="location.hash='vi'">Clasa a VI-a<small>Robotul ascultător: programăm cu săgeți</small></button>
+  <button class="mare" onclick="location.hash='vi'">Clasa a VI-a<small>Robotul ascultător: 15 provocări cu săgeți, mere, labirinturi și greșeli</small></button>
   <p class="mic">Nu ai nevoie de cont. Nimic din ce apeși aici nu se trimite nicăieri.</p>`;
 }
 
@@ -749,11 +749,51 @@ function omSauAi() { location.hash = "viii/3"; }
 window.omSauAi = omSauAi;
 
 // ---------------------------------------------------------------- VI: robotul ascultator
+// 20.10.2026, 09:10: niveluri noi (E, F cu mere; G, H labirint), 3 greseli de vanat, 4 „unde ajunge?”.
+// Toate verificate cu BFS / simulare in scratchpad vi/proiect.py (min = cel mai scurt posibil; fiecare greseala are O singura reparatie dintr-o carte).
+Object.assign(TRASEE, {
+  E: {s: [5, 0], d: 0, g: [0, 5], c: [[3, 1], [2, 3], [4, 3], [1, 1]], m: [[2, 0], [5, 4]], min: 20},
+  F: {s: [0, 0], d: 1, g: [5, 0], c: [[1, 1], [1, 2], [3, 3], [3, 4], [4, 1]], m: [[0, 5], [2, 2], [5, 3]], min: 23},
+  G: {s: [5, 0], d: 1, g: [0, 5], c: [[0, 3], [1, 1], [1, 3], [2, 1], [2, 5], [3, 1], [3, 2], [3, 3], [4, 3], [4, 4]], min: 16},
+  H: {s: [0, 0], d: 2, g: [5, 5], c: [[0, 1], [1, 1], [1, 3], [1, 4], [2, 3], [3, 0], [3, 1], [3, 5], [4, 3], [5, 3], [4, 1]], min: 15},
+});
+const BUGURI = {
+  bug: {t: "A", prog: GRESIT, cine: "Grăbiții"},
+  bug2: {t: "C", prog: "↑ ⟳ ↑ ↑ ⟳ ↑ ↑ ↑ ↑ ⟲ ↑ ↑ ↑".split(" "), cine: "Rotiții"},        // pasul 5 trebuia ⟲
+  bug3: {t: "G", prog: "↑ ↑ ↑ ↑ ↑ ⟲ ↑ ↑ ⟲ ↑ ↑ ↑ ↑ ↑ ⟳ ↑".split(" "), cine: "Labirinții"},  // pasul 11 trebuia ⟳
+};
+const PREZIC = {
+  p1: {t: "A", prog: "↑ ⟳ ↑ ↑ ↑ ⟲ ↑ ↑", opt: ["D4", "D3", "C3"], ok: "D3"},
+  p2: {t: "C", prog: "↑ ⟳ ↑ ↑ ⟲ ↑ ↑ ⟲ ↑", opt: ["B4", "C4", "A4"], ok: "B4"},
+  p3: {t: "H", prog: "↑ ↑ ⟲ ↑ ↑ ⟳ ↑ ⟲ ↑", opt: ["E4", "C4", "D4"], ok: "D4"},
+  p4: {t: "B", prog: "⟲ ↑ ↑ ⟳ ↑ ↑ ⟳ ↑", opt: ["E4", "D4", "Intră într-un copac 🌲"], ok: "Intră într-un copac 🌲"},
+};
+const GRUPE_VI = [["Nivelul 1 · ușor", ["A", "B"]], ["Nivelul 2", ["C", "D"]], ["Nivelul 3 · culege toate merele 🍎", ["E", "F"]],
+  ["Nivelul 4 · labirint", ["G", "H"]], ["🐞 Vânătoarea de greșeli", ["bug", "bug2", "bug3"]], ["🔮 Unde ajunge robotul?", ["p1", "p2", "p3", "p4"]]];
+function etichetaVi(id) {
+  if (BUGURI[id]) return "🐞 Greșeala " + (id === "bug" ? 1 : id.slice(3)) + " · echipa „" + BUGURI[id].cine + "”";
+  if (PREZIC[id]) return "🔮 Unde ajunge? " + id.slice(1);
+  const n = GRUPE_VI.findIndex(g => g[1].includes(id));
+  return "Traseul " + id + " · nivelul " + (n + 1);
+}
 function vi() {
-  let cheie = "A", prog = [], ruleaza = false, urma = [], stare = null, bug = false;
+  const CHEIE_VI = "altfel-vi-2026-10", ORDINE = GRUPE_VI.flatMap(g => g[1]);
+  let rezolvate = {};
+  try { rezolvate = JSON.parse(localStorage.getItem(CHEIE_VI)) || {}; } catch (e) { rezolvate = {}; }
+  let sel = "A", cheie = "A", prog = [], ruleaza = false, urma = [], stare = null, ales = null;
+  const tip = () => BUGURI[sel] ? "bug" : PREZIC[sel] ? "prezic" : "traseu";
+  function bifeaza() { rezolvate[sel] = 1; try { localStorage.setItem(CHEIE_VI, JSON.stringify(rezolvate)); } catch (e) {} }
+  function alege(id) {
+    sel = id; ales = null;
+    if (BUGURI[id]) { cheie = BUGURI[id].t; prog = [...BUGURI[id].prog]; }
+    else if (PREZIC[id]) { cheie = PREZIC[id].t; prog = PREZIC[id].prog.split(" "); }
+    else { cheie = id; prog = []; }
+    start(); desen(); window.scrollTo(0, 0);
+  }
   function start() { const t = TRASEE[cheie]; stare = {r: t.s[0], c: t.s[1], d: t.d}; urma = [[t.s[0], t.s[1]]]; }
   function harta() {
     const t = TRASEE[cheie], cop = new Set(t.c.map(x => x.join(","))), u = new Set(urma.map(x => x.join(",")));
+    const mere = new Set((t.m || []).map(x => x.join(",")));
     let h = `<div class="harta"><span></span>` + [...COL].map(x => `<span class="et">${x}</span>`).join("");
     for (let r = 0; r < 6; r++) {
       h += `<span class="et">${r + 1}</span>`;
@@ -762,34 +802,71 @@ function vi() {
         if (stare.r === r && stare.c === c) h += `<div class="c urma"><span class="robo" style="transform:rotate(${stare.d * 90}deg)">▲</span></div>`;
         else if (cop.has(k)) h += `<div class="c copac">🌲</div>`;
         else if (t.g[0] === r && t.g[1] === c) h += `<div class="c stea">★</div>`;
+        else if (mere.has(k) && !u.has(k)) h += `<div class="c">🍎</div>`;
         else h += `<div class="c${u.has(k) ? " urma" : ""}"></div>`;
       }
     }
     return h + `</div>`;
   }
-  function desen(mesaj, cls, acum) {
+  function text() {
     const t = TRASEE[cheie];
-    app.innerHTML = sus("VI · Robotul ascultător") + `<h1>Robotul ascultător</h1>
-      <div class="rand traseu-btn">${Object.keys(TRASEE).map(k => `<button class="alt${k === cheie && !bug ? " ales" : ""}" data-t="${k}">${k}</button>`).join("")}
-        <button class="alt${bug ? " ales" : ""}" data-t="bug">🐞</button></div>
-      <p class="mic">${bug ? "<b>Vânătoarea de greșeli:</b> echipa „Grăbiții” a scris algoritmul de mai jos pentru traseul A, dar robotul nu ajunge. Pornește-l, găsește pasul greșit și apasă pe el ca să-l schimbi."
-        : `Traseul ${cheie}: du robotul (cercul albastru, vârful arată încotro se uită) la ★, fără să intri în copaci și fără să ieși de pe hartă.`}</p>
-      ${harta()}
+    if (tip() === "bug") return `<b>Vânătoarea de greșeli:</b> echipa „${BUGURI[sel].cine}” a scris algoritmul de mai jos pentru traseul ${cheie}, dar robotul nu ajunge. Pornește-l, găsește pasul greșit și apasă pe el ca să-l schimbi.`;
+    if (tip() === "prezic") return `<b>Unde ajunge robotul?</b> Robotul primește algoritmul de mai jos. Urmăriți-l cu degetul pe hartă, pas cu pas, și alegeți unde se oprește. Abia apoi îl porniți, să vedeți dacă ați avut dreptate.`;
+    return `Traseul ${cheie}: du robotul (cercul albastru; vârful arată încotro se uită) ${t.m ? "prin <b>toate merele 🍎</b>, apoi " : ""}la ★, fără să intri în copaci și fără să ieși de pe hartă.`;
+  }
+  function desen(mesaj, cls, acum, gata) {
+    const pr = tip() === "prezic", n = ORDINE.filter(id => rezolvate[id]).length, urm = ORDINE[ORDINE.indexOf(sel) + 1];
+    let h = sus("VI · Robotul ascultător") + `<h1>Robotul ascultător</h1>
+      <select id="nivel" class="cuv" aria-label="Alege nivelul">${GRUPE_VI.map(([g, ids]) => `<optgroup label="${esc(g)}">`
+        + ids.map(id => `<option value="${id}"${id === sel ? " selected" : ""}>${esc(etichetaVi(id))}${rezolvate[id] ? " ✓" : ""}</option>`).join("") + `</optgroup>`).join("")}</select>
+      <div class="mic" style="margin:6px 0">Rezolvate: <b>${n} din ${ORDINE.length}</b> · alegeți nivelul din listă</div>
+      <p class="mic">${text()}</p>${harta()}
       <div class="mesaj ${cls || ""}">${mesaj || "&nbsp;"}</div>
-      <div class="mic">Algoritmul tău (${prog.length} cartonașe) — apasă pe un pas ca să-l schimbi:</div>
-      <div class="prog">${prog.map((p, k) => `<span data-i="${k}" class="${k === acum ? "acum" : ""}">${p}<small>${k + 1}</small></span>`).join("") || '<span class="mic" style="background:none">gol — adaugă săgeți</span>'}</div>
-      <div class="rand comenzi"><button class="alt" data-c="↑" title="un pas înainte">↑</button><button class="alt" data-c="⟲" title="rotire la stânga">⟲</button>
+      <div class="mic">${pr ? "Algoritmul" : "Algoritmul tău"} (${prog.length} cartonașe)${pr ? ":" : " — apasă pe un pas ca să-l schimbi:"}</div>
+      <div class="prog">${prog.map((p, k) => `<span data-i="${k}" class="${k === acum ? "acum" : ""}">${p}<small>${k + 1}</small></span>`).join("") || '<span class="mic" style="background:none">gol — adaugă săgeți</span>'}</div>`;
+    if (pr) {
+      const q = PREZIC[sel];
+      h += ales === null ? `<div class="rand">` + q.opt.map((o, j) => `<button class="alt" data-p="${j}">${esc(o)}</button>`).join("") + `</div>`
+        : gata ? "" : `<p class="mic">Ați ales: <b>${esc(q.opt[ales])}</b></p><div class="rand"><button id="run">▶ Verifică: pornește robotul</button></div>`;
+    } else {
+      h += `<div class="rand comenzi"><button class="alt" data-c="↑" title="un pas înainte">↑</button><button class="alt" data-c="⟲" title="rotire la stânga">⟲</button>
         <button class="alt" data-c="⟳" title="rotire la dreapta">⟳</button><button class="alt" data-c="del" title="șterge ultimul">⌫</button></div>
       <div class="mic" style="margin:4px 0 8px">↑ un pas înainte · ⟲ se rotește la stânga, pe loc · ⟳ se rotește la dreapta, pe loc</div>
       <div class="rand"><button id="run">▶ Pornește robotul</button><button class="alt" id="gol">Golește</button></div>`;
-    app.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { if (ruleaza) return;
-      bug = b.dataset.t === "bug"; cheie = bug ? "A" : b.dataset.t; prog = bug ? [...GRESIT] : []; start(); desen(); });
+    }
+    if (gata && pr && !rezolvate[sel]) h += `<p><button class="alt" id="iar" style="width:100%">↺ Mai încercați o dată</button></p>`;
+    if (gata && urm) h += `<p><button class="mare" id="urmator" style="text-align:center">Următorul: ${esc(etichetaVi(urm))} →</button></p>`;
+    if (gata && !urm) h += `<div class="raspuns bun"><b class="bun">Ați terminat tot!</b> Provocare: alegeți un traseu și scrieți-l cu cât mai puține cartonașe.</div>`;
+    app.innerHTML = h;
+    document.getElementById("nivel").onchange = ev => { if (!ruleaza) alege(ev.target.value); };
     app.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { if (ruleaza) return; start();
-      if (b.dataset.c === "del") prog.pop(); else if (prog.length < 30) prog.push(b.dataset.c); desen(); });
-    app.querySelectorAll(".prog span[data-i]").forEach(s => s.onclick = () => { if (ruleaza) return; start();
+      if (b.dataset.c === "del") prog.pop(); else if (prog.length < 40) prog.push(b.dataset.c); desen(); });
+    if (!pr) app.querySelectorAll(".prog span[data-i]").forEach(s => s.onclick = () => { if (ruleaza) return; start();
       const k = +s.dataset.i, ciclu = ["↑", "⟲", "⟳"]; prog[k] = ciclu[(ciclu.indexOf(prog[k]) + 1) % 3]; desen(); });
-    document.getElementById("gol").onclick = () => { if (ruleaza) return; prog = []; start(); desen(); };
-    document.getElementById("run").onclick = porneste;
+    app.querySelectorAll("button[data-p]").forEach(b => b.onclick = () => { ales = +b.dataset.p; desen("Acum porniți robotul și vedeți dacă ați avut dreptate."); });
+    const g = document.getElementById("gol"); if (g) g.onclick = () => { if (ruleaza) return; prog = []; start(); desen(); };
+    const r = document.getElementById("run"); if (r) r.onclick = porneste;
+    const u = document.getElementById("urmator"); if (u) u.onclick = () => alege(urm);
+    const i2 = document.getElementById("iar"); if (i2) i2.onclick = () => alege(sel);
+  }
+  function sfarsit(rez) {   // rez: {fel: "iese"|"copac"|"stop", k, loc}
+    ruleaza = false;
+    const t = TRASEE[cheie], q = PREZIC[sel];
+    if (q) {
+      const real = rez.fel === "copac" ? q.opt.find(o => o.startsWith("Intră")) || "copac" : rez.loc, ok = q.opt[ales] === real;
+      if (ok) bifeaza();
+      const unde = rez.fel === "copac" ? `la pasul ${rez.k} intră în copac` : rez.fel === "iese" ? `la pasul ${rez.k} iese de pe hartă` : `se oprește în ${rez.loc}`;
+      return desen(ok ? `🔮 Ați ghicit! Robotul ${unde}.` : `Robotul ${unde}, nu „${q.opt[ales]}”. Urmăriți încă o dată pe hartă unde ați greșit.`, ok ? "bun" : "rau", -1, true);
+    }
+    if (rez.fel !== "stop") return desen(`Pasul ${rez.k}: robotul ${rez.fel === "iese" ? "iese de pe hartă" : "intră în copac (" + rez.loc + ")"}! Găsește pasul greșit.`, "rau", rez.k - 1);
+    const u = new Set(urma.map(x => x.join(","))), mere = (t.m || []).filter(x => u.has(x.join(","))).length, toate = (t.m || []).length;
+    if (stare.r === t.g[0] && stare.c === t.g[1] && mere === toate) {
+      bifeaza();
+      return desen(`★ A ajuns! ${prog.length} cartonașe.` + (BUGURI[sel] ? ` Ați reparat algoritmul „${BUGURI[sel].cine}”!` :
+        prog.length > t.min ? ` Provocare: se poate și cu ${t.min}.` : " Mai scurt nu se poate — bravo!"), "bun", -1, true);
+    }
+    if (stare.r === t.g[0] && stare.c === t.g[1]) return desen(`Robotul e la ★, dar a cules doar ${mere} din ${toate} mere 🍎. Schimbați drumul ca să treacă pe la toate.`, "rau", -1);
+    desen(`Robotul s-a oprit în ${COL[stare.c]}${stare.r + 1}, nu la stea${toate ? ` (mere culese: ${mere} din ${toate})` : ""}. Mai adaugă pași sau schimbă unul.`, "rau", -1);
   }
   function porneste() {
     if (ruleaza || !prog.length) return;
@@ -797,21 +874,14 @@ function vi() {
     const t = TRASEE[cheie], cop = new Set(t.c.map(x => x.join(",")));
     let k = 0;
     (function pas() {
-      if (k >= prog.length) {
-        ruleaza = false;
-        if (stare.r === t.g[0] && stare.c === t.g[1]) {
-          desen(`★ A ajuns! ${prog.length} cartonașe.` + (bug ? " Ai reparat algoritmul „Grăbiților”!" :
-            prog.length > t.min ? ` Provocare: se poate și cu ${t.min}.` : " Mai scurt nu se poate — bravo!"), "bun", -1);
-        } else desen(`Robotul s-a oprit în ${COL[stare.c]}${stare.r + 1}, nu la stea. Mai adaugă pași sau schimbă unul.`, "rau", -1);
-        return;
-      }
+      if (k >= prog.length) return sfarsit({fel: "stop", loc: COL[stare.c] + (stare.r + 1)});
       const p = prog[k];
       if (p === "⟲") stare.d = (stare.d + 3) % 4;
       else if (p === "⟳") stare.d = (stare.d + 1) % 4;
       else {
         const r = stare.r + DIRS[stare.d][0], c = stare.c + DIRS[stare.d][1];
-        if (r < 0 || r > 5 || c < 0 || c > 5) { ruleaza = false; desen(`Pasul ${k + 1}: robotul iese de pe hartă! Găsește pasul greșit.`, "rau", k); return; }
-        if (cop.has(r + "," + c)) { ruleaza = false; desen(`Pasul ${k + 1}: robotul intră în copac (${COL[c]}${r + 1})! Găsește pasul greșit.`, "rau", k); return; }
+        if (r < 0 || r > 5 || c < 0 || c > 5) return sfarsit({fel: "iese", k: k + 1});
+        if (cop.has(r + "," + c)) return sfarsit({fel: "copac", k: k + 1, loc: COL[c] + (r + 1)});
         stare.r = r; stare.c = c; urma.push([r, c]);
       }
       desen(`Pasul ${k + 1}: ${p}`, "", k);
