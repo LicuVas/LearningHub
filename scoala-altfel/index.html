@@ -184,36 +184,472 @@ function quiz(o) {
   pas();
 }
 
-// ---------------------------------------------------------------- VII: Detectivii digitali
-function vii() {
+// ---------------------------------------------------------------- VII: Detectivii digitali, 6 misiuni (20.10.2026, dupa ora VII A: „subtire rau”)
+// Misiunea 1 = cele 12 cartonase de pe foile tiparite; 2-6 sunt doar aici. Punctele stau doar in telefonul elevului (localStorage).
+const CHEIE_VII = "altfel-vii-2026-10";
+let DOSAR = {};
+try { DOSAR = JSON.parse(localStorage.getItem(CHEIE_VII)) || {}; } catch (e) { DOSAR = {}; }
+function pastreaza() { try { localStorage.setItem(CHEIE_VII, JSON.stringify(DOSAR)); } catch (e) {} }
+function salveaza(m, p, max) { DOSAR[m] = {p, max}; pastreaza(); }
+function toast(t, cls) {
+  let d = document.getElementById("toast");
+  if (!d) { d = document.createElement("div"); d.id = "toast"; d.setAttribute("role", "status"); document.body.appendChild(d); }
+  d.textContent = t; d.className = cls + " vazut"; clearTimeout(toast.t); toast.t = setTimeout(() => d.classList.remove("vazut"), 3200);
+}
+function cuvinte4() {
+  const a = [...CUVINTE].sort(() => Math.random() - .5).slice(0, 4);
+  return a.join("-") + Math.floor(Math.random() * 10) + "!?#"[Math.floor(Math.random() * 3)];
+}
+document.addEventListener("click", ev => {
+  if (!ev.target || ev.target.id !== "gen") return;
+  const pw = document.getElementById("pw"), s = cuvinte4();
+  if (pw) { pw.value = s; pw.dispatchEvent(new Event("input")); } else { const o = document.getElementById("parola"); if (o) o.textContent = s; }
+});
+
+// cazurile cu indicii: rand = [clasa, ...bucati]; bucata = "text" (atingere gresita), ["text", "de ce e indiciu"], {t: "text"} (nu se atinge)
+function textCaz(d) {
+  const bucati = {};
+  d.rows.forEach((row, r) => row.slice(1).forEach((s, j) => {
+    if (!(s && s.t !== undefined)) bucati[r + "-" + j] = Array.isArray(s) ? [true, s[1]] : [false, ""];
+  }));
+  return Object.assign({}, d, {bucati, html(g, w, predat) {
+    return `<div class="mock">` + d.rows.map((row, r) => `<div class="r ${row[0]}">` + row.slice(1).map((s, j) => {
+      if (s && s.t !== undefined) return `<span class="p">${esc(s.t)}</span>`;
+      const k = r + "-" + j, n = g.indexOf(k), txt = Array.isArray(s) ? s[0] : s;
+      const cls = n >= 0 ? " gasit" : predat && bucati[k][0] ? " aratat" : w.has(k) ? " nimic" : "";
+      return `<span class="b${cls}" data-k="${k}">${esc(txt)}${n >= 0 ? `<sup>${n + 1}</sup>` : ""}</span>`;
+    }).join(" ") + `</div>`).join("") + `</div>`;
+  }});
+}
+const DEGETE = [-50, -30, -10, 10, 30, 50].map(a => `<rect x="282.7" y="121" width="4.6" height="15" rx="2.3" fill="#f2c9a0" stroke="#c99a70" stroke-width=".6" transform="rotate(${a} 285 144)"/>`).join("");
+const POZA_AI = {
+  titlu: "Cazul 6 · Poza „de la excursie”",
+  cerinta: "Desenul imită o poză făcută cu AI, postată ca „poză reală”. Găsiți <b>3 indicii</b> în imagine: uitați-vă atent la detalii mici. O atingere greșită costă 1 punct.",
+  bucati: {
+    mana: [true, "Mâna are 6 degete! AI-ul greșește des mâinile și degetele.", [285, 140]],
+    panou: [true, "Scrisul de pe panou nu are sens („MUZEUI SAATLLUI IZVAORRE”): AI-ul desenează forme de litere, dar nu știe să scrie.", [155, 113]],
+    umbra: [true, "Soarele e în stânga, deci umbrele cad spre dreapta, ca la primul copac. Umbra copacului din dreapta cade însă spre stânga: lumina nu se potrivește.", [300, 196]],
+    soare: [false, "Soarele e în regulă.", [48, 44]],
+    nor: [false, "Norul e în regulă.", [258, 38]],
+    pasare: [false, "Pasărea e în regulă.", [156, 58]],
+    copac: [false, "Copacul din stânga și umbra lui sunt în regulă: umbra cade în partea opusă soarelui.", [70, 132]],
+    copil: [false, "Fața și hainele sunt în regulă. Căutați detalii mai mici.", [248, 205]],
+    carare: [false, "Cărarea e în regulă.", [182, 240]],
+  },
+  html(g, w, predat) {
+    const semne = Object.entries(this.bucati).map(([k, b]) => {
+      const n = g.indexOf(k), [x, y] = b[2];
+      if (n >= 0 || (predat && b[0])) return `<g pointer-events="none"><circle cx="${x}" cy="${y}" r="18" fill="none" stroke="#f59e0b" stroke-width="4"${n < 0 ? ' stroke-dasharray="6 4"' : ""}/>`
+        + (n >= 0 ? `<circle cx="${x + 15}" cy="${y - 15}" r="9" fill="#f59e0b"/><text x="${x + 15}" y="${y - 11}" font-size="12" font-weight="800" text-anchor="middle" fill="#1f1600">${n + 1}</text>` : "") + `</g>`;
+      if (w.has(k)) return `<text x="${x}" y="${y + 7}" font-size="22" font-weight="800" text-anchor="middle" fill="#b91c1c" pointer-events="none">✗</text>`;
+      return "";
+    }).join("");
+    return `<div class="mock"><div class="r antet"><span>🌍 Excursii Frumoase</span><span>ieri · 19:20</span></div>
+      <div class="r">Ce zi minunată la muzeu! 📸 Poză 100% reală!</div>
+      <svg viewBox="0 0 360 260" role="img" aria-label="desen: un copil în fața unui panou, cu doi copaci">
+      <rect width="360" height="260" fill="#cfe8ff"/>
+      <g data-k="soare"><circle cx="48" cy="44" r="24" fill="#fbbf24"/></g>
+      <g data-k="nor"><ellipse cx="250" cy="42" rx="34" ry="14" fill="#fff"/><ellipse cx="272" cy="33" rx="22" ry="13" fill="#fff"/></g>
+      <g data-k="pasare"><rect x="132" y="44" width="50" height="26" fill="transparent"/><path d="M140 62 q8 -9 16 0 q8 -9 16 0" fill="none" stroke="#334155" stroke-width="3"/></g>
+      <rect y="165" width="360" height="95" fill="#86c96a"/>
+      <g data-k="carare"><polygon points="160,260 205,260 188,165 176,165" fill="#d6b98c"/></g>
+      <g data-k="copac"><ellipse cx="104" cy="197" rx="32" ry="6" fill="#3f6b2f" opacity=".55"/><rect x="64" y="150" width="12" height="46" fill="#7c4a1e"/><circle cx="70" cy="132" r="30" fill="#2f7d32"/></g>
+      <g data-k="umbra"><ellipse cx="296" cy="199" rx="32" ry="6" fill="#3f6b2f" opacity=".55"/><rect x="322" y="152" width="12" height="46" fill="#7c4a1e"/><circle cx="328" cy="134" r="27" fill="#2f7d32"/></g>
+      <g data-k="panou"><rect x="111" y="130" width="5" height="48" fill="#5b3a1a"/><rect x="194" y="130" width="5" height="48" fill="#5b3a1a"/>
+        <rect x="100" y="94" width="110" height="38" rx="4" fill="#8b5a2b" stroke="#5b3a1a" stroke-width="2"/>
+        <text x="155" y="110" font-size="11.5" font-weight="700" text-anchor="middle" fill="#fff">MUZEUI SAATLLUI</text>
+        <text x="155" y="125" font-size="10" font-weight="700" text-anchor="middle" fill="#fff">IZVAORRE</text></g>
+      <g data-k="copil"><line x1="242" y1="232" x2="238" y2="254" stroke="#1e3a8a" stroke-width="7" stroke-linecap="round"/>
+        <line x1="254" y1="232" x2="258" y2="254" stroke="#1e3a8a" stroke-width="7" stroke-linecap="round"/>
+        <rect x="234" y="186" width="28" height="48" rx="8" fill="#ef4444"/><line x1="236" y1="194" x2="224" y2="224" stroke="#f2c9a0" stroke-width="7" stroke-linecap="round"/>
+        <line x1="260" y1="194" x2="281" y2="153" stroke="#f2c9a0" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="248" cy="172" r="14" fill="#f2c9a0"/><circle cx="243" cy="169" r="1.8" fill="#333"/><circle cx="253" cy="169" r="1.8" fill="#333"/>
+        <path d="M242 176 q6 5 12 0" fill="none" stroke="#333" stroke-width="1.5"/></g>
+      <g data-k="mana"><circle cx="285" cy="140" r="22" fill="transparent"/>${DEGETE}<circle cx="285" cy="144" r="8.5" fill="#f2c9a0" stroke="#c99a70" stroke-width=".6"/></g>
+      ${semne}</svg></div>`;
+  },
+  ceFaci: {text: "Cum verificați o poză care vi se pare ciudată?", corect: "A",
+    optiuni: {A: "Mă uit la mâini, la scrisul din imagine, la umbre și caut poza cu căutarea după imagine (Google Lens)", B: "Dacă are multe like-uri, e reală", C: "Dacă e clară și colorată, e reală"},
+    dece: {B: "Și pozele false strâng mii de like-uri: like-urile nu arată adevărul.", C: "Pozele făcute cu AI sunt adesea foarte clare și „perfecte”."},
+    explicatie: "Căutarea după imagine îți arată unde a mai apărut poza și dacă e veche, trucată sau făcută cu AI."},
+};
+const CAZURI = [
+  textCaz({titlu: "Cazul 1 · SMS-ul cu coletul", cerinta: "Mesajul e o <b>momeală</b>. Găsiți <b>5 indicii</b>: atingeți bucățile suspecte. O atingere greșită costă 1 punct.",
+    rows: [
+      ["antet", {t: "De la: INFO-COLET"}, {t: "azi, 07:42"}],
+      ["bula", ["Stimate client,", "Nu-ți spune numele: același mesaj a fost trimis deodată la mii de oameni."],
+        "coletul dumneavoastră nr. RO77310 a ajuns în depozitul nostru.",
+        ["Pentru livrare, achitați o taxă de 1,49 lei", "Cere bani, chiar dacă puțini: scopul nu e taxa, ci datele cardului pe care le scrii pe site."],
+        ["în maximum 12 ore,", "Te grăbește, ca să n-ai timp să te gândești sau să întrebi pe cineva."],
+        ["altfel coletul va fi distrus.", "Te sperie: frica te face să apeși fără să verifici."],
+        ["https://livrare-colet.ro-plata.top/RO77310", "Site-ul e ce stă chiar înainte de prima „/”: aici e ro-plata.top, nu un curier. Curierii adevărați nu-ți cer plata printr-un link din SMS."],
+        "Vă mulțumim!"],
+    ],
+    ceFaci: {text: "Ce faceți cu un astfel de SMS?", corect: "B",
+      optiuni: {A: "Apăs pe link și plătesc: sunt doar 1,49 lei", B: "Nu apăs pe link; îi arăt unui părinte și ștergem mesajul", C: "Răspund „STOP”, ca să nu-mi mai scrie"},
+      dece: {A: "Pe site-ul fals scrii datele cardului: de acolo se pot lua mult mai mulți bani decât 1,49 lei.", C: "Orice răspuns le arată că numărul tău e folosit: primești și mai multe mesaje."},
+      explicatie: "Dacă chiar aștepți un colet, verifici în aplicația curierului sau pe site-ul lui, scris de mână în browser, nu prin linkul din SMS."}}),
+  textCaz({titlu: "Cazul 2 · Știrea care se „șterge”", cerinta: "Știrea e <b>falsă</b>. Găsiți <b>6 indicii</b>.",
+    rows: [
+      ["url", {t: "🔒 "}, ["www.stiri-adevarate-24.info/socant", "Un site pe care nu-l cunoști și care își scrie „adevărate” chiar în nume. Site-urile serioase nu au nevoie de asta."]],
+      ["titlu", ["ȘOCANT!!!", "Majuscule și „!!!”: titlul vrea să te sperie, nu să te informeze."], {t: "De la 1 noiembrie, telefoanele mobile vor fi interzise tuturor copiilor sub 16 ani"}],
+      ["meta", ["Publicat: 3 mai 2019", "Știrea e veche de 7 ani: „de la 1 noiembrie” nu are legătură cu anul ăsta. Uită-te mereu la dată."], ["Autor: Redacția", "Nu are un autor cu nume, deci nu știi cine răspunde pentru ce scrie."], "Categoria: Educație"],
+      ["r", ["Un studiu secret al unor experți internaționali", "Ce studiu? Ce experți? Nu dă niciun nume și niciun link, deci nu poți verifica."], "arată că telefoanele îi țin pe copii treji noaptea."],
+      ["r", ["Dă share înainte să fie șters!!!", "Cere să-l dai mai departe repede: așa se împrăștie știrile false. O știre adevărată nu „se șterge”."]],
+      ["subsol", "Citește și: Cum să dormi mai bine", "Distribuie ✉"],
+    ],
+    ceFaci: {text: "Cum verificați dacă știrea e adevărată?", corect: "A",
+      optiuni: {A: "Caut aceeași știre pe 2–3 site-uri de știri cunoscute; dacă nu apare nicăieri, e falsă", B: "Mă uit câte share-uri are: dacă are multe, e adevărată", C: "O trimit în grupul clasei să vedem ce zic ceilalți"},
+      dece: {B: "Și minciunile au mii de share-uri: numărul lor nu arată adevărul.", C: "Așa ai împrăștia-o chiar tu, înainte să știi dacă e adevărată."},
+      explicatie: "O știre mare apare la multe redacții, cu autor, dată și sursă. Dacă o găsești doar pe un site necunoscut, nu o crezi și nu o dai mai departe."}}),
+  textCaz({titlu: "Cazul 3 · Zvonul din grupul clasei", cerinta: "Mesajul e un <b>zvon</b>. Găsiți <b>4 indicii</b>.",
+    rows: [
+      ["antet", {t: "👥 Clasa a VII-a 😎 · 24 de membri"}, {t: "21:14"}],
+      ["meta", ["↪ Redirecționat de multe ori", "A trecut prin multe telefoane: nu se mai știe cine l-a scris prima dată."]],
+      ["bula", ["ATENȚIE!!! MÂINE NU SE FACE ȘCOALĂ ÎN TOT JUDEȚUL!!!", "Majuscule și „!!!”: vrea să te agite, nu să te informeze."],
+        ["Mi-a zis mama unei prietene care lucrează la inspectorat.", "„Mi-a zis cineva care știe pe cineva” nu e o sursă: nu ai pe cine să întrebi."],
+        ["Dați mai departe la toate grupurile!", "Cere să-l împrăștii: semn clasic de zvon."]],
+      ["bula eu", "Yesss 😁 dormim mâine!"],
+    ],
+    ceFaci: {text: "Ce faceți?", corect: "A",
+      optiuni: {A: "Verific pe pagina școlii sau îl întreb pe diriginte; nu dau mai departe", B: "Dau mai departe, că poate e adevărat", C: "Nu mai vin mâine la școală"},
+      dece: {B: "Dacă nu e adevărat, ai păcălit și tu zeci de oameni.", C: "Dacă zvonul e fals, lipsești degeaba: absența rămâne."},
+      explicatie: "Zilele libere le anunță școala: dirigintele, pagina școlii, grupul oficial cu părinții. Nu un mesaj redirecționat."}}),
+  textCaz({titlu: "Cazul 4 · Concursul cu telefoane gratis", cerinta: "Postarea e o <b>momeală</b>. Găsiți <b>5 indicii</b>.",
+    rows: [
+      ["antet", ["@telefoane.gratis.oficial2026", "Un nume lung, cu „oficial” și un an. Conturile adevărate ale firmelor mari au de obicei bifa de verificare și foarte mulți urmăritori."],
+        ["Cont creat săptămâna trecută · 214 urmăritori", "Un cont nou, cu foarte puțini urmăritori, care „dă” 500 de telefoane? Imposibil."]],
+      ["r", "🎉 Sărbătorim deschiderea magazinului!", ["Dăm GRATIS 500 de telefoane noi!", "Prea frumos ca să fie adevărat: nimeni nu dă 500 de telefoane unor necunoscuți."]],
+      ["r", ["Ca să participi: like, distribuie și trimite-ne în privat numele, adresa și numărul de telefon.", "Cere date personale. Cu ele, cineva te poate găsi sau te poate păcăli mai târziu."],
+        ["Doar azi, până la 23:59!", "Grabă: să n-ai timp să întrebi pe cineva."]],
+      ["poza", {t: "[ poză: un teanc de cutii de telefoane ]"}],
+      ["subsol", "❤ 1.204", "💬 389 de comentarii"],
+    ],
+    ceFaci: {text: "Ce faceți?", corect: "B",
+      optiuni: {A: "Particip: n-am nimic de pierdut", B: "Nu particip, nu trimit nimic și raportez postarea", C: "Trimit doar adresa, nu și telefonul"},
+      dece: {A: "Ai de pierdut: datele tale ajung la necunoscuți.", C: "Și adresa singură e o dată personală: spune unde locuiești."},
+      explicatie: "Concursurile adevărate nu-ți cer adresa și telefonul în privat. Raportarea ajută ca postarea să fie ștearsă și să nu-i păcălească pe alții."}}),
+  textCaz({titlu: "Cazul 5 · Magazinul cu reduceri", cerinta: "Magazinul e o <b>țeapă</b>. Găsiți <b>6 indicii</b>.",
+    rows: [
+      ["url", {t: "🔒 "}, ["adidasi-originali-reduceri.shop", "Un nume lung care tot repetă „originali” și „reduceri”. Un magazin pe care nu-l cunoști se verifică înainte."]],
+      ["titlu", "Adidași de alergare, model 2026"],
+      ["pret", ["650 lei → 59 lei (−91%)", "O reducere de 91% la un produs nou e aproape imposibilă: e momeala care te face să nu mai verifici."]],
+      ["r", ["⏳ Mai sunt doar 2 perechi! 47 de persoane se uită acum.", "Presiune: vrea să cumperi repede, fără să te gândești."], "Mărimi: 36–45.", "Culori: alb, negru."],
+      ["r", ["Plata: doar cu cardul, în avans. Fără plată la livrare.", "Nu poți plăti când primești pachetul: dacă e țeapă, banii sunt deja duși."]],
+      ["r", ["Recenzii: ⭐⭐⭐⭐⭐ „Super!” · „Super!!” · „Foarte bun!”", "Recenzii scurte, toate la fel: par scrise de același om."], ["Contact: —", "Nicio adresă, niciun telefon, nicio firmă: dacă ceva nu merge, n-ai cui să te plângi."]],
+      ["buton", {t: "🛒 Cumpără acum"}],
+    ],
+    ceFaci: {text: "Ce faceți?", corect: "B",
+      optiuni: {A: "Cumpăr repede, până se termină", B: "Nu cumpăr; caut numele magazinului cu „păreri” sau „țeapă” și întreb un părinte", C: "Cumpăr cu cardul părinților, fără să le spun"},
+      dece: {A: "Exact asta vrea ceasul cu „doar 2 perechi”.", C: "Cardul părinților nu se folosește fără ei, niciodată. Și pe un site ca ăsta, datele cardului pot fi furate."},
+      explicatie: "Înainte de orice cumpărătură online: cine e firma, are adresă și telefon, ce spun alți cumpărători (pe alte site-uri, nu pe al lui)."}}),
+  POZA_AI,
+];
+const MAX_M2 = CAZURI.reduce((s, c) => s + Object.values(c.bucati).filter(b => b[0]).length + 2, 0);
+
+const LINKURI = [
+  ["Vrei să citești despre albine pe Wikipedia. Care e adresa adevărată?", {A: "ro.wikipedia.org/wiki/Albină", B: "wikipedia.ro-articole.net/albina", C: "wikipedia-romana.net/albina"}, "A",
+    "Site-ul e ce stă chiar înainte de prima „/”: la A e wikipedia.org („ro.” din față = varianta în română). La B e ro-articole.net, la C e wikipedia-romana.net."],
+  ["Un coleg îți trimite un link cu „Robux gratis”. Care adresă e chiar a jocului Roblox?", {A: "roblox.com.robux-gratis.gift", B: "www.roblox.com", C: "rob1ox.com/free"}, "B",
+    "La A site-ul e robux-gratis.gift (roblox.com e pus la început ca să te păcălească). La C scrie „rob1ox”, cu cifra 1 în loc de l. Și: „Robux gratis” printr-un link e mereu capcană."],
+  ["Ai primit un SMS despre un colet. Care e site-ul adevărat al Poștei Române?", {A: "posta-romana.ro.colet-livrare.info", B: "postaromana-plata.com", C: "www.posta-romana.ro"}, "C",
+    "La A site-ul e colet-livrare.info. La B e un nume asemănător, dar alt site. Doar C e posta-romana.ro."],
+  ["Vrei să intri în contul Google. Care e pagina adevărată?", {A: "google.com.verificare-cont.top", B: "accounts.google.com", C: "g00gle.com/login"}, "B",
+    "accounts.google.com se termină în google.com. La A site-ul e verificare-cont.top, la C scrie „g00gle”, cu două cifre 0 în loc de o."],
+  ["https://cont.banca-ta.ro.verificare-urgenta.com/login\nCe bucată îți spune AL CUI e site-ul?", {A: "cont.banca-ta.ro", B: "verificare-urgenta.com", C: "/login"}, "B",
+    "Mergi până la prima „/” și citești de la dreapta: …verificare-urgenta.com. Tot ce e în stânga („cont.banca-ta.ro”) poate scrie oricine, ca să te păcălească."],
+  ["Lacătul 🔒 de lângă adresă înseamnă că site-ul e cinstit?", {A: "Da: lacătul înseamnă că site-ul e sigur", B: "Nu: lacătul arată doar că legătura e criptată; și site-urile false au lacăt"}, "B",
+    "Lacătul înseamnă că ce scrii ajunge „ascuns” la site, dar nu spune nimic despre CINE e site-ul. Și hoții își pun lacăt."],
+  ["Un necunoscut îți scrie: „Uite ce poză cu tine circulă! bit.ly/3kQz9”. Ce faci?", {A: "Apăs repede să văd", B: "Nu apăs: un link scurtat, de la un necunoscut, poate duce oriunde", C: "Îl trimit și altora să vadă"}, "B",
+    "Linkurile scurtate (bit.ly și altele) ascund adresa adevărată. „Uite ce poză cu tine” e o momeală care se joacă cu curiozitatea și cu frica ta."],
+  ["Vrei să vezi structura anului școlar pe site-ul Ministerului Educației. Care e adresa?", {A: "edu.ro.calendar-scolar.click", B: "ministerul-educatiei-oficial.info", C: "www.edu.ro"}, "C",
+    "Site-ul Ministerului Educației e edu.ro. La A site-ul e calendar-scolar.click. B are „oficial” în nume, dar asta nu-l face oficial."],
+];
+const DATE_PERS = [
+  ["Un desen făcut de tine", "V", "E creația ta: o poți arăta. Doar fără numele complet și școala scrise pe el."],
+  ["Adresa de acasă", "N", "Cu adresa, oricine află unde locuiești."],
+  ["Parola sau codul PIN al telefonului", "N", "Nici public, nici în privat, nici celui mai bun prieten. Doar părinții."],
+  ["Numărul tău de telefon", "N", "Îl dai doar oamenilor pe care îi cunoști, față în față, nu într-o postare."],
+  ["O poză cu tine la mare, după ce v-ați întors acasă", "G", "Se poate, după ce te-ai întors, cu contul pus pe privat."],
+  ["„Plecăm 2 săptămâni în vacanță, casa rămâne goală!”", "N", "Le spui hoților când e casa goală."],
+  ["Locația ta în timp real, pe hartă", "N", "Oricine vede unde ești chiar acum. Locația o împarți doar cu părinții."],
+  ["Poza unui coleg, fără să-l întrebi", "N", "Poza lui e a lui: o pui doar dacă te lasă."],
+  ["O poză cu carnetul de elev", "N", "Are numele, poza și școala: tot ce-i trebuie cuiva ca să te găsească."],
+  ["Ce mâncare îți place cel mai mult", "V", "Nu spune nimic despre unde ești sau cum poți fi găsit."],
+  ["O poză în fața casei, cu numărul casei și numele străzii la vedere", "N", "Din poză se poate afla adresa."],
+  ["Diploma de la un concurs, cu numele tău complet și școala", "G", "Bucuria se poate împărți, dar cu grijă: numele complet + școala spun unde ești în fiecare zi. Poți acoperi numele."],
+];
+const SITUATII_PERS = [
+  ["Pe un joc online, cineva pe care nu-l cunoști îți scrie: „Am 13 ani ca tine 😊 Trimite-mi o poză și zi-mi la ce școală ești.”",
+    {A: "Îi trimit: pare de treabă", B: "Nu trimit nimic, îl blochez și le spun părinților", C: "Îi cer întâi lui o poză, să văd dacă e copil"}, "B",
+    {A: "N-ai de unde ști cine e de fapt: pe internet, oricine poate spune că are 13 ani.", C: "Poza lui poate fi luată de pe internet: nu dovedește nimic."},
+    "Un adult care se dă drept copil ca să afle date sau poze e un pericol real. Le spui părinților chiar dacă ți-e rușine: n-ai greșit tu."],
+  ["Un coleg a postat o poză cu tine, editată ca să râdă toată clasa.",
+    {A: "Postez și eu una urâtă cu el", B: "Fac o captură de ecran, nu dau mai departe, raportez postarea și le spun părinților sau dirigintelui", C: "Tac și sper să treacă"}, "B",
+    {A: "Așa sunt două postări urâte în loc de una, iar adulții pot ajuta mai greu.", C: "Nu trece singur. Un adult chiar poate opri asta, iar a cere ajutor nu înseamnă că ești pârâcios."},
+    "Captura de ecran e dovada. Raportarea și un adult de încredere opresc postarea mai repede decât orice răspuns."],
+  ["Ai postat din greșeală o poză în care se vede adresa casei.",
+    {A: "Nu mai contează, a văzut-o deja lumea", B: "O șterg imediat, verific cine poate vedea ce postez și le spun părinților", C: "O las, dar scriu sub ea „nu vă uitați la adresă”"}, "B",
+    {A: "Contează: cu cât stă mai puțin, cu atât o văd mai puțini.", C: "Așa atragi și mai multă atenție chiar pe adresă."},
+    "Greșelile se repară repede: ștergi, pui contul pe privat, spui unui adult."],
+];
+const PAROLE_Q = [
+  ["Care parolă e mai greu de ghicit?", {A: "maria2012", B: "Gutuie-Racheta-Melc-Vioara"}, "B", "Un nume + un an se ghicește în câteva secunde. 4 cuvinte fără legătură între ele: lungă și ușor de ținut minte."],
+  ["Care parolă e mai greu de ghicit?", {A: "Parola123!", B: "Ceainic7!Dragon-Fluture"}, "B", "„Parola123!” e printre primele încercate: are „parola” și „123”."],
+  ["Care parolă e mai greu de ghicit?", {A: "qwerty", B: "123456", C: "Niciuna"}, "C", "Amândouă sunt printre cele mai folosite parole din lume: se ghicesc pe loc. „qwerty” sunt primele litere de pe tastatură."],
+  ["Care parolă e mai greu de ghicit?", {A: "Tr0mp3t@", B: "trompeta castravete fulger iglu"}, "B", "Programele care ghicesc parole știu trucul cu 0 în loc de o, 3 în loc de e și @ în loc de a. Lungimea contează mai mult: 31 de caractere bat 8."],
+  ["Folosești aceeași parolă la toate conturile (joc, e-mail, rețele)?", {A: "Da, așa n-o uit", B: "Nu: dacă se află una, se deschid toate conturile"}, "B", "Fiecare cont cu parola lui. Poți folosi aceeași „poveste” cu alte cuvinte."],
+  ["Cine are voie să-ți știe parola?", {A: "Cel mai bun prieten", B: "Nimeni, în afară de părinți", C: "Oricine îmi promite Robux sau skinuri"}, "B", "Parola e ca periuța de dinți: n-o împrumuți nimănui.",
+    {A: "Prieteniile se mai strică, iar parola rămâne la el. Și poate scăpa din greșeală.", C: "E momeala clasică: îți ia contul și nu-ți dă nimic."}],
+];
+const POVESTE = [
+  ["Seara, primești pe o rețea socială un mesaj de la Maria, colega ta de bancă:\n„Heii! Votează-mă, te rog, la un concurs de dans 💃 Intri pe link și te loghezi cu contul tău, durează 10 secunde: insta-vot-concurs.top”",
+    {A: "Intru și votez, e prietena mea", B: "O întreb altfel (o sun sau o întreb la școală) dacă ea a trimis mesajul", C: "Dau linkul mai departe în grupul clasei, s-o votăm toți"}, "B",
+    {A: "Pe site-ul fals îți scrii parola, iar hoțul îți ia și ție contul.", C: "Așa ar pierde tot grupul conturile."},
+    "Un link care îți cere să te loghezi pe un site străin (insta-vot-concurs.top) e o capcană de furat conturi, chiar dacă vine de la un prieten: contul prietenului poate fi spart."],
+  ["O suni pe Maria. „N-am trimis nimic! Nici nu mai pot intra în cont!” Contul ei a fost spart. Ce o sfătuiești?",
+    {A: "Să le spună părinților, să-și recupereze contul cu „Ai uitat parola?”, să pună o parolă nouă și verificarea în doi pași", B: "Să-și facă un cont nou și să-l uite pe cel vechi", C: "Să nu spună nimănui, ca să nu se facă de râs"}, "A",
+    {B: "Contul vechi rămâne la hoț, care le scrie în continuare prietenilor ei, în numele ei.", C: "Cu cât află mai repede adulții și prietenii, cu atât mai puțini sunt păcăliți."},
+    "Verificarea în doi pași: pe lângă parolă, contul cere și un cod trimis pe telefon. Fără el, hoțul nu poate intra nici dacă îți află parola."],
+  ["Cum s-a întâmplat? Maria povestește: „Ieri mi-a scris cineva că am câștigat un concurs și mi-a cerut codul de 6 cifre primit prin SMS, ca să-mi trimită premiul.” Care e lecția?",
+    {A: "Codul primit prin SMS nu se dă NIMĂNUI: e cheia contului", B: "Trebuia să ceară întâi o poză cu premiul", C: "Trebuia să dea doar 3 cifre din cod"}, "A",
+    {B: "Poza premiului se fură ușor de pe internet: nu dovedește nimic.", C: "Nicio cifră: codul e cheia contului, oricât de puțin ai da din el."},
+    "Codul din SMS e exact „al doilea pas” care te apără. Cine ți-l cere vrea contul tău."],
+  ["De pe contul Mariei, hoțul a postat o poză cu ea, editată urât. Unii colegi au început s-o distribuie. Ce faci tu?",
+    {A: "O distribui și eu, toată lumea o face", B: "Nu o distribui, raportez postarea și îi spun dirigintelui", C: "Scriu un comentariu răutăcios la ea"}, "B",
+    {A: "Fiecare share o rănește încă o dată pe Maria.", C: "Comentariile o împing și mai sus, să o vadă și mai mulți."},
+    "Când toți raportează și nimeni nu dă mai departe, postarea dispare repede."],
+  ["Vrei să scrii un mesaj în grupul clasei. Care e cel mai bun?",
+    {A: "„Haha, Maria a pățit-o 😂”", B: "„Contul Mariei a fost spart. NU intrați pe linkul cu votul și nu dați mai departe poza. Raportați-o!”", C: "Nu scriu nimic, nu e treaba mea"}, "B",
+    {A: "Râsul nu oprește nimic, iar pe Maria o doare.", C: "Colegii care n-au aflat încă pot intra pe link. Un mesaj scurt îi apără."},
+    "Ai rezolvat cazul: ai verificat, ai ajutat, ai oprit răspândirea."],
+];
+function navMisiune(k) {
+  const urm = k + 1 < MISIUNI.length;
+  return `<div class="rand" style="margin-top:14px"><button class="alt" onclick="location.hash='vii'">← Dosarul echipei</button>`
+    + `<button onclick="location.hash='${urm ? "vii/" + (k + 2) : "vii/insigna"}'">${urm ? "Misiunea " + (k + 2) + " →" : "🏅 Insigna"}</button></div>`;
+}
+function finalMisiune(k, s, n, extra) {
+  salveaza(MISIUNI[k].id, s, MISIUNI[k].max);
+  return `<h1>Misiunea ${k + 1}: ${s} din ${n}</h1>` + (extra || "") + navMisiune(k);
+}
+function misiune1() {
   quiz({
-    titlu: "VII · Detectivii digitali",
-    intro: `<h1>Detectivii digitali: adevărat sau fals?</h1>
+    titlu: "VII · Misiunea 1", inapoi: "#vii",
+    intro: `<h1>Încălzirea: adevărat, fals sau momeală?</h1>
       <div class="card"><b>ADEVĂRAT</b> = informație corectă, se poate verifica.<br><b>FALS</b> = informație mincinoasă, imagine trucată sau făcută cu AI.<br>
       <b>MOMEALĂ</b> = mesaj care vrea să-ți ia bani, parole, coduri sau date.</div>
       <div class="card"><b>Cele 3 întrebări ale detectivului</b><ol class="reguli"><li>Cine spune asta? (sursa)</li>
       <li>Mă grăbește, mă sperie sau îmi promite prea mult?</li><li>Se potrivesc detaliile? (adresa site-ului, mâinile, textul, buzele)</li></ol></div>
-      <p class="mic">12 cartonașe. Alege răspunsul, apoi citește indiciul. Discutați în echipă!</p>`,
+      <p class="mic">12 cartonașe. Discutați în echipă, alegeți, apoi citiți indiciul.</p>`,
     intrebari: CARTONASE.map(([t, x, r, ind]) => ({eticheta: t, text: x, corect: r, explicatie: ind})),
     optiuni: {A: "ADEVĂRAT", F: "FALS", M: "MOMEALĂ"},
-    final: (s, n) => `<h1>Ai ${s} din ${n}!</h1>
-      <div class="card"><b>De ținut minte</b><ul><li>Imaginile și video-urile false se fac ușor cu AI: uită-te la mâini, la textul din fundal, la buze.</li>
-      <li>Ce te grăbește sau îți promite un premiu pe care nu l-ai cerut e aproape mereu momeală.</li>
-      <li>Codul primit prin SMS și parola nu se dau nimănui.</li><li>Când nu ești sigur: nu dai share, întrebi un adult.</li></ul></div>
-      <h2>Parola-poveste</h2>
-      <div class="card">Alege <b>4 cuvinte</b> care nu au legătură între ele, fă din ele o poveste scurtă, adaugă o cifră și un semn.<br>
-      <span class="mic">NU folosi: numele tău, data nașterii, numele animalului, „123456”.</span>
-      <p><button class="alt" id="gen" style="width:100%">Dă-mi 4 cuvinte, ca idee</button></p><div class="text" id="parola"></div>
-      <p class="mic">Asta e doar un exercițiu: parola ta adevărată ți-o inventezi singur, pe ciornă, și n-o spui nimănui.</p></div>
-      <h2>Biletul de ieșire</h2><div class="card">Scrie pe bilet (sau spune) <b>un sfat de siguranță online</b> pe care l-ai da unui prieten.</div>
-      <p><button class="alt" onclick="location.reload()" style="width:100%">Joacă din nou</button></p>`,
+    final: (s, n) => finalMisiune(0, s, n, `<div class="card">Ați încălzit ochiul de detectiv. În misiunea următoare, indiciile nu vi le mai spune nimeni: le găsiți voi.</div>`),
   });
-  document.addEventListener("click", function gen(ev) {
-    if (ev.target && ev.target.id === "gen") {
-      const a = [...CUVINTE].sort(() => Math.random() - .5).slice(0, 4);
-      document.getElementById("parola").textContent = a.join("-") + "-" + Math.floor(Math.random() * 10) + "!?#"[Math.floor(Math.random() * 3)];
+}
+function misiune2() {
+  let i = 0, gasite = [], gresite = new Set(), predat = false, ales = null, total = 0;
+  const N = CAZURI.length;
+  const indicii = c => Object.keys(c.bucati).filter(k => c.bucati[k][0]);
+  function atinge(k) {
+    const c = CAZURI[i], b = c.bucati[k], toate = indicii(c);
+    if (predat || gasite.length === toate.length || !b) return;
+    if (b[0]) {
+      if (gasite.includes(k)) return;
+      gasite.push(k);
+      toast(gasite.length === toate.length ? "✓ Toate indiciile! Coborâți la întrebarea „Ce faceți?”." : `✓ Indiciul ${gasite.length}: ${b[1]}`, "bun");
+    } else if (!gresite.has(k)) { gresite.add(k); toast((b[1] || "Aici nu e nimic suspect.") + " (−1 punct)", "rau"); }
+    desen();
+  }
+  function desen() {
+    if (i >= N) {
+      app.innerHTML = sus("VII · Misiunea 2", "#vii") + finalMisiune(1, total, MAX_M2, `<div class="card"><b>Semnele pe care le-ați găsit azi:</b><ul>
+        <li>Nu se știe cine o spune: fără autor, fără sursă, „mi-a zis cineva”.</li><li>Te grăbește, te sperie sau îți promite prea mult.</li>
+        <li>Adresa site-ului e ciudată; data e veche.</li><li>Îți cere bani, coduri, parole sau date personale.</li>
+        <li>La poze: mâini, scris fără sens, umbre care nu se potrivesc.</li></ul></div>`);
+      window.scrollTo(0, 0); return;
     }
+    const c = CAZURI[i], toate = indicii(c), gata = predat || gasite.length === toate.length;
+    let h = sus("VII · Misiunea 2", "#vii") + bara(i, N)
+      + `<div class="mic">Cazul ${i + 1} din ${N} · indicii: <b>${gasite.length} din ${toate.length}</b> · atingeri greșite: ${gresite.size} · puncte: ${total}</div>`
+      + `<h2>${esc(c.titlu)}</h2><p>${c.cerinta}</p>` + c.html(gasite, gresite, predat);
+    const lista = gasite.concat(predat ? toate.filter(k => !gasite.includes(k)) : []);
+    if (lista.length) h += `<div class="card"><b>Indiciile</b><ol class="reguli">` + lista.map(k => `<li>${gasite.includes(k) ? "" : "<i>(nu l-ați găsit)</i> "}${esc(c.bucati[k][1])}</li>`).join("") + `</ol></div>`;
+    if (!gata) h += `<p><button class="alt" id="predau" style="width:100%">Ne dăm bătuți: arată-ne indiciile</button></p>`;
+    else {
+      const q = c.ceFaci;
+      h += `<div class="card"><span class="eticheta">Ce faceți?</span><div class="text">${esc(q.text)}</div></div>`;
+      if (ales === null) h += `<div class="stiva">` + Object.entries(q.optiuni).map(([k, v]) => `<button class="alt" data-o="${k}">${esc(v)}</button>`).join("") + `</div>`;
+      else {
+        const ok = ales === q.corect;
+        h += `<div class="raspuns ${ok ? "bun" : "rau"}"><b class="${ok ? "bun" : "rau"}">${ok ? "Corect! +2 puncte." : "Nu chiar."}</b> `
+          + (ok ? "" : `Răspunsul bun: <b>${esc(q.optiuni[q.corect])}</b><br>${esc((q.dece || {})[ales] || "")}<br>`) + `${esc(q.explicatie)}</div>`
+          + `<p><button class="mare" id="urm" style="text-align:center">${i + 1 < N ? "Cazul următor →" : "Vezi punctajul"}</button></p>`;
+      }
+    }
+    app.innerHTML = h;
+    app.querySelectorAll("[data-k]").forEach(el => el.addEventListener("click", () => atinge(el.getAttribute("data-k"))));
+    const p = document.getElementById("predau"); if (p) p.onclick = () => { predat = true; desen(); };
+    app.querySelectorAll("button[data-o]").forEach(b => b.onclick = () => {
+      ales = b.dataset.o;
+      total += Math.max(0, gasite.length - gresite.size) + (ales === c.ceFaci.corect ? 2 : 0);
+      desen();
+    });
+    const u = document.getElementById("urm"); if (u) u.onclick = () => { i++; gasite = []; gresite = new Set(); predat = false; ales = null; desen(); window.scrollTo(0, 0); };
+  }
+  app.innerHTML = sus("VII · Misiunea 2", "#vii") + `<h1>Vânătoarea de indicii</h1>
+    <div class="card">6 cazuri: un SMS, o știre, un zvon, un concurs, un magazin și o poză. La fiecare, <b>atingeți bucățile suspecte</b>.<br>
+    ✓ indiciu găsit = <b>+1</b> · ✗ atingere greșită = <b>−1</b> · răspuns bun la „Ce faceți?” = <b>+2</b>.<br><span class="mic">Nu atingeți la întâmplare: discutați întâi în echipă.</span></div>
+    <button class="mare" id="start" style="text-align:center">Începe</button>`;
+  document.getElementById("start").onclick = () => { desen(); window.scrollTo(0, 0); };
+}
+function misiune3() {
+  quiz({
+    titlu: "VII · Misiunea 3", inapoi: "#vii",
+    intro: `<h1>Adresa care minte</h1>
+      <div class="card"><b>Cum citești o adresă de site:</b><ol class="reguli"><li>Sari peste <span class="mono">https://</span> și <span class="mono">www.</span></li>
+      <li>Mergi până la <b>prima „/”</b>.</li><li>Chiar înainte de ea stă <b>numele site-ului</b>: ultimele două bucăți, despărțite de punct (ex. <span class="mono">wikipedia.org</span>, <span class="mono">posta-romana.ro</span>).</li>
+      <li>Tot ce e în stânga lor poate scrie oricine, ca să te păcălească.</li></ol>
+      Exemplu: <span class="mono">https://cont.<b>banca-ta.ro</b>/login</span> → site-ul e <b>banca-ta.ro</b>.</div>
+      <p class="mic">8 întrebări. Nu apăsați pe nicio adresă: aici doar le citiți.</p>`,
+    intrebari: LINKURI.map(([x, o, c, e]) => ({eticheta: "Detectivul de adrese", text: x, optiuni: o, corect: c, explicatie: e, mono: x.indexOf("Lacătul") < 0 && x.indexOf("necunoscut") < 0})),
+    final: (s, n) => finalMisiune(2, s, n, `<div class="card"><b>De ținut minte:</b> numele site-ului e chiar înainte de prima „/”. Un link primit prin SMS sau mesaj nu-l deschizi: scrii tu adresa în browser.</div>`),
   });
+}
+function misiune4() {
+  quiz({
+    titlu: "VII · Misiunea 4", inapoi: "#vii",
+    intro: `<h1>Ce postez și ce nu?</h1>
+      <div class="card">Pentru fiecare lucru, alegeți:<br>✅ <b>Pot posta</b><br>⚠️ <b>Cu grijă</b>: doar pentru prieteni pe care îi cunoști în realitate, cu contul pe privat și cu acordul părinților<br>
+      ⛔ <b>Niciodată public</b></div><div class="card"><b>Regula detectivului:</b> ce pui pe internet poate rămâne acolo pentru totdeauna, chiar dacă îl ștergi. Cineva poate face o captură de ecran într-o secundă.</div>
+      <p class="mic">12 lucruri + 3 situații.</p>`,
+    intrebari: DATE_PERS.map(([x, c, e]) => ({eticheta: "Pot posta asta?", text: x, corect: c, explicatie: e}))
+      .concat(SITUATII_PERS.map(([x, o, c, d, e]) => ({eticheta: "Situația", text: x, optiuni: o, corect: c, dece: d, explicatie: e}))),
+    optiuni: {V: "✅ Pot posta", G: "⚠️ Cu grijă", N: "⛔ Niciodată public"},
+    final: (s, n) => finalMisiune(3, s, n, `<div class="card"><b>Nu se postează:</b> adresa, telefonul, parola, CNP-ul, locația în timp real, „plecăm în vacanță”, poze cu alții fără acordul lor.<br>
+      <b>Dacă ceva nu e în regulă:</b> captură de ecran, nu dai mai departe, raportezi, spui unui adult.</div>`),
+  });
+}
+const COMUNE = ["parola", "password", "qwerty", "azerty", "123456", "iloveyou", "fotbal", "iubire", "abc123", "111111", "admin", "dragoste"];
+const NUME = ["maria", "andrei", "ana", "ion", "elena", "alex", "david", "ioana", "mihai", "denisa", "darius", "bianca", "vasile", "gabriel"];
+function forta(p) {
+  const lit = p.toLowerCase(), probleme = [];
+  let set = 0;
+  if (/[a-zăâîșț]/.test(p)) set += 26;
+  if (/[A-ZĂÂÎȘȚ]/.test(p)) set += 26;
+  if (/\d/.test(p)) set += 10;
+  if (/[^a-zA-Z0-9ăâîșțĂÂÎȘȚ]/.test(p)) set += 33;
+  let biti = p.length * Math.log2(Math.max(set, 1));
+  if (COMUNE.some(w => lit.includes(w))) { probleme.push("are o parolă foarte folosită („parola”, „qwerty”, „123456”…)"); biti = Math.min(biti, 18); }
+  if (NUME.some(n => lit.includes(n))) { probleme.push("are un nume: e primul lucru încercat de cine te cunoaște"); biti -= 14; }
+  if (/(19[5-9]\d|20[0-3]\d)/.test(p)) { probleme.push("are un an (ex. anul nașterii)"); biti -= 10; }
+  if (/(012|123|234|345|456|567|678|789|abc|qwe|asd)/i.test(p)) { probleme.push("are un șir la rând („123”, „abc”, „qwe”)"); biti -= 10; }
+  if (/(.)\1\1/.test(p)) { probleme.push("are același caracter de 3 ori la rând"); biti -= 8; }
+  if (p.length && p.length < 12) probleme.push("e scurtă: sub 12 caractere");
+  biti = Math.max(0, biti);
+  const sec = Math.pow(2, biti) / 2 / 1e10;   // jumatate din incercari, la 10 miliarde de incercari pe secunda
+  const timp = sec < 1 ? "pe loc" : sec < 60 ? "în câteva secunde" : sec < 3600 ? "în câteva minute" : sec < 86400 ? "în câteva ore"
+    : sec < 86400 * 30 ? "în câteva zile" : sec < 86400 * 365 ? "în câteva luni" : sec < 86400 * 365 * 100 ? "în câțiva ani" : "în peste 100 de ani";
+  const fort = sec >= 86400 * 365 * 100 && p.length >= 14 && !probleme.length && set >= 62;
+  const nivel = !p.length ? ["", 0, "var(--linie)"] : fort ? ["🏰 Fortăreață", 100, "#15803d"] : sec >= 86400 * 365 * 100 ? ["🟢 Bună", 80, "#22c55e"]
+    : sec >= 86400 * 30 ? ["🟡 Medie", 55, "#eab308"] : sec >= 1 ? ["🟠 Slabă", 30, "#f97316"] : ["🔴 Foarte slabă", 12, "#dc2626"];
+  return {nivel, timp, probleme, fort, set,
+    lista: [[p.length >= 14, "cel puțin 14 caractere (acum: " + p.length + ")"], [/[a-zăâîșț]/.test(p) && /[A-ZĂÂÎȘȚ]/.test(p), "litere mari și mici"],
+      [/\d/.test(p), "o cifră"], [/[^a-zA-Z0-9ăâîșțĂÂÎȘȚ]/.test(p), "un semn (- ! ? # …)"], [p.length > 0 && !probleme.filter(x => x.indexOf("scurtă") < 0).length, "fără nume, ani, „123”, „parola”"]]};
+}
+function misiune5() {
+  let premiu = false, scorQ = 0;
+  quiz({
+    titlu: "VII · Misiunea 5", inapoi: "#vii",
+    intro: `<h1>Laboratorul de parole</h1><div class="card">Partea 1: 6 întrebări. Partea 2: construiți o parolă de nivel <b>🏰 Fortăreață</b> (+3 puncte).</div>`,
+    intrebari: PAROLE_Q.map(([x, o, c, e, d]) => ({eticheta: "Parole", text: x, optiuni: o, corect: c, explicatie: e, dece: d, mono: x.indexOf("ghicit") >= 0})),
+    final: (s, n) => { scorQ = s; salveaza("m5", s, MISIUNI[4].max);
+      return `<h1>Partea 1: ${s} din ${n}</h1><h2>Partea 2: parola-fortăreață</h2>
+      <div class="card">Rețeta: <b>4 cuvinte fără legătură</b> + o poveste ca să le ții minte + o cifră și un semn.<br>
+      Exemplu: <i>Pinguinul cu Vioara a mâncat o Gutuie pe Rachetă</i> → <b class="mono">Pinguin-Vioara-Gutuie-Racheta7!</b><br>
+      <span class="mic">⚠ NU scrieți aici parola voastră adevărată! Inventați una de exercițiu. Nimic nu se trimite nicăieri, dar regula detectivului e: parola adevărată nu se scrie pe site-uri necunoscute.</span></div>
+      <input class="cuv mono" id="pw" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="scrieți o parolă de exercițiu">
+      <p><button class="alt" id="gen" style="width:100%">Dă-mi 4 cuvinte, ca idee</button></p>
+      <div class="card" id="forta"><span class="mic">Scrieți ceva mai sus. Încercați și „maria2012” sau „Parola123!”, să vedeți diferența.</span></div>
+      <div id="premiu"></div>
+      <div class="card"><b>Verificarea în doi pași:</b> pe lângă parolă, contul cere și un cod trimis pe telefon. Așa, hoțul nu intră nici dacă îți află parola.
+      De aceea <b>codul primit prin SMS nu se dă nimănui</b>.</div>` + navMisiune(4); },
+    gata: () => {
+      const pw = document.getElementById("pw"), out = document.getElementById("forta");
+      pw.addEventListener("input", () => {
+        const f = forta(pw.value);
+        if (!pw.value) { out.innerHTML = `<span class="mic">Scrieți ceva mai sus.</span>`; return; }
+        out.innerHTML = `<b>${f.nivel[0]}</b> · un calculator puternic ar ghici-o <b>${f.timp}</b>
+          <div class="metru"><i style="width:${f.nivel[1]}%;background:${f.nivel[2]}"></i></div>
+          <ul class="lista-ok">${f.lista.map(([ok, t]) => `<li>${ok ? "✅" : "⬜"} ${esc(t)}</li>`).join("")}</ul>`
+          + (f.probleme.length ? `<div class="mic" style="margin-top:6px">Problema: ${esc(f.probleme.join("; "))}.</div>` : "")
+          + `<div class="mic" style="margin-top:6px">Estimare aproximativă, ca să vedeți ordinul de mărime.</div>`;
+        if (f.fort && !premiu) {
+          premiu = true; salveaza("m5", scorQ + 3, MISIUNI[4].max);
+          document.getElementById("premiu").innerHTML = `<div class="raspuns bun"><b class="bun">🏰 Parolă-fortăreață! +3 puncte.</b> Acum închideți ochii: o mai știți pe de rost? Dacă da, rețeta merge.</div>`;
+          toast("🏰 Fortăreață! +3 puncte", "bun");
+        }
+      });
+    },
+  });
+}
+function misiune6() {
+  quiz({
+    titlu: "VII · Misiunea 6", inapoi: "#vii",
+    intro: `<h1>Cazul final: contul spart</h1><div class="card">O poveste în 5 capitole. La fiecare, alegeți ce face un detectiv digital. Aici folosiți tot ce ați aflat azi.</div>`,
+    intrebari: POVESTE.map(([x, o, c, d, e], j) => ({eticheta: "Capitolul " + (j + 1) + " din " + POVESTE.length, text: x, optiuni: o, corect: c, dece: d, explicatie: e})),
+    final: (s, n) => finalMisiune(5, s, n, `<div class="card">Cazul e închis. Treceți la insignă și arătați-o profesorului.</div>`),
+  });
+}
+const MISIUNI = [
+  {id: "m1", nume: "Încălzirea: adevărat, fals sau momeală?", ce: "12 cartonașe", min: 6, max: 12, f: misiune1},
+  {id: "m2", nume: "Vânătoarea de indicii", ce: "6 cazuri: atingeți ce e suspect", min: 15, max: MAX_M2, f: misiune2},
+  {id: "m3", nume: "Adresa care minte", ce: "8 adrese de site: care e cea adevărată?", min: 6, max: LINKURI.length, f: misiune3},
+  {id: "m4", nume: "Ce postez și ce nu?", ce: "date personale: 12 lucruri + 3 situații", min: 8, max: DATE_PERS.length + SITUATII_PERS.length, f: misiune4},
+  {id: "m5", nume: "Laboratorul de parole", ce: "6 întrebări + parola-fortăreață", min: 8, max: PAROLE_Q.length + 3, f: misiune5},
+  {id: "m6", nume: "Cazul final: contul spart", ce: "o poveste cu 5 alegeri", min: 5, max: POVESTE.length, f: misiune6},
+];
+function grad(p, max) {
+  const r = max ? p / max : 0;
+  return r >= .85 ? ["🏅", "Detectiv-șef"] : r >= .65 ? ["🛡️", "Inspector"] : r >= .4 ? ["🕵️", "Agent digital"] : ["🔎", "Detectiv începător"];
+}
+function totalVii() { let p = 0, max = 0; MISIUNI.forEach(m => { max += m.max; if (DOSAR[m.id]) p += DOSAR[m.id].p; }); return [p, max]; }
+function insigna() {
+  const [p, max] = totalVii(), [ic, nume] = grad(p, max), facute = MISIUNI.filter(m => DOSAR[m.id]).length;
+  app.innerHTML = sus("VII · Insigna", "#vii") + `<div class="card" style="text-align:center"><div style="font-size:3.4rem;line-height:1.1">${ic}</div>
+    <h1 style="margin:.2em 0">${nume}</h1><div>${DOSAR.echipa ? "Echipa <b>" + esc(DOSAR.echipa) + "</b> · " : ""}<b>${p}</b> din ${max} puncte · ${facute} din ${MISIUNI.length} misiuni</div></div>
+    <table class="dosar">${MISIUNI.map((m, k) => `<tr><td>${k + 1}. ${esc(m.nume)}</td><td>${DOSAR[m.id] ? DOSAR[m.id].p + " / " + m.max : "—"}</td></tr>`).join("")}</table>
+    <p class="mic">Arătați ecranul acesta profesorului.</p>
+    <h2>Ce știe acum un detectiv digital</h2>
+    <div class="card"><ol class="reguli"><li><b>3 semne de știre falsă:</b> nu se știe cine o spune; te grăbește, te sperie sau îți promite prea mult; adresa sau data nu se potrivesc.</li>
+    <li><b>3 semne de poză făcută cu AI:</b> mâinile și degetele, scrisul fără sens, umbrele și lumina.</li>
+    <li><b>Parola:</b> 4 cuvinte + o poveste + o cifră și un semn. Nu o spui nimănui, iar codul din SMS nu-l dai nimănui.</li>
+    <li><b>Nu postezi:</b> adresa, telefonul, parola, locația, „plecăm în vacanță”, poze cu alții fără acordul lor.</li>
+    <li><b>Când nu ești sigur:</b> nu apeși, nu dai mai departe, întrebi un adult.</li></ol></div>
+    <h2>Biletul de ieșire</h2><div class="card">Scrieți pe bilet (sau spuneți) <b>un sfat de siguranță online</b> pe care l-ați da unui prieten.</div>
+    <p><button class="alt" id="nou" style="width:100%">Dosar nou (șterge punctele de pe telefonul acesta)</button></p>`;
+  const b = document.getElementById("nou");
+  b.onclick = () => {
+    if (!b.dataset.sigur) { b.dataset.sigur = "1"; b.textContent = "Sigur? Apăsați încă o dată"; return; }
+    DOSAR = {}; try { localStorage.removeItem(CHEIE_VII); } catch (e) {} location.hash = "vii";
+  };
+}
+function vii(sub) {
+  if (sub === "insigna") return insigna();
+  const k = parseInt(sub, 10);
+  if (k >= 1 && k <= MISIUNI.length) return MISIUNI[k - 1].f();
+  const [p] = totalVii();
+  app.innerHTML = sus("VII · Detectivii digitali") + `<h1>Agenția „Detectivii digitali”</h1>
+    <div class="card">Azi sunteți agenți. Lucrați în echipă (2–3 colegi pe un telefon), discutați înainte să apăsați și faceți misiunile <b>în ordine</b>.
+    Punctele se adună în dosarul echipei, iar la sfârșit primiți insigna.</div>
+    <label class="mic" for="echipa">Numele echipei (inventat, nu numele voastre):</label>
+    <input class="cuv" id="echipa" maxlength="30" autocomplete="off" value="${esc(DOSAR.echipa || "")}" placeholder="ex. Lupii digitali">`
+    + MISIUNI.map((m, j) => { const d = DOSAR[m.id];
+      return `<button class="mare${d ? " alt" : ""}" onclick="location.hash='vii/${j + 1}'">${d ? "✓ " : ""}Misiunea ${j + 1}: ${esc(m.nume)}<small>${esc(m.ce)} · ~${m.min} min${d ? " · " + d.p + " / " + m.max + " puncte" : ""}</small></button>`; }).join("")
+    + `<button class="mare" style="text-align:center" onclick="location.hash='vii/insigna'">🏅 Insigna echipei · ${p} puncte</button>
+    <p class="mic">Nimic din ce scrieți sau apăsați aici nu se trimite nicăieri: rămâne doar pe telefonul acesta.</p>`;
+  const e = document.getElementById("echipa");
+  e.addEventListener("input", () => { DOSAR.echipa = e.value.trim(); pastreaza(); });
 }
 
 // ---------------------------------------------------------------- VIII: mit sau realitate + Om sau AI
