@@ -333,7 +333,8 @@
       plecatTrimis = null; seInchide = false; revenireLa = tPlecat + REVENIRE_DUPA;
       if (revenireLa > Date.now()) programeazaRevenirea();
     }
-    if ((revenireLa && Date.now() >= revenireLa) || (laPagina === 30 && Date.now() - trimisLa > SOSIRE_DUPA) || Date.now() - ((citeste(K_COADA, {}) || {}).de || Date.now()) > TRIMITE_LA) trimite(false);
+    // pe loc dacă ultimul semn al aparatului e plecarea ALTEI file (vezi „PLECAREA DIN ALTĂ FILĂ”)
+    if ((revenireLa && Date.now() >= revenireLa) || plecatDinAltaFila() || (laPagina === 30 && Date.now() - trimisLa > SOSIRE_DUPA) || Date.now() - ((citeste(K_COADA, {}) || {}).de || Date.now()) > TRIMITE_LA) trimite(false);
   }, TICK * 1000);
   /* „acum”-ul de după o plecare scurtă: pleacă la un minut de la plecare, dacă elevul lucrează (pagina în față, cu focus,
      cu un gest în ultimele 2 minute) și nu a plecat din nou între timp. Orice „acum” trimis îl încheie (trimite). Dacă nu
@@ -380,6 +381,7 @@
         ev: c.ev
       };
       if (motiv) { unde.motiv = motiv; o.plecat = unde; } else o.acum = unde;
+      scrie(K_SEMN, { fel: motiv ? 'plecat' : 'acum', fila: FILA });   // ultimul semn al aparatului (PLECAREA DIN ALTĂ FILĂ)
       if (!motiv) { revenireLa = 0; clearTimeout(tRevenire); }   // orice „acum” anunță și revenirea (vezi revino)
       /* ID-UL CERERII (bucla 10.10.2026, retrimitere-dubla-semn-fals): coada cu secunde / evenimente primește un rid la prima
          trimitere, iar inapoi() îl păstrează pe coada unită. Dacă cererea a ajuns totuși (răspunsul pierdut, 5xx după ce serverul
@@ -426,6 +428,15 @@
     // o plecare nouă e starea de acum: un „acum” de revenire încă neplecat nu mai are rost
     if (trimite(laInchidere, motiv)) { plecatTrimis = motiv; tPlecat = Date.now(); revenireLa = 0; clearTimeout(tRevenire); }
   }
+  /* PLECAREA DIN ALTĂ FILĂ (21.10.2026, el: „bobocea vlad nu apare ca lucreaza desi este conectat”). Plecările și „acum”-urile
+     tuturor filelor cad pe aceeași înregistrare a elevului, deci o filă închisă („a închis Jurnalul”) îl arăta plecat și cât
+     lucra în fila lecției: până la minutul de revenire de mai sus (Bobocea: 47 s) sau până la trimiterea de la 30 s a unei pagini
+     noi. Acum ultimul semn plecat de pe aparat stă în lh_prezenta_semn = {fel: 'acum'|'plecat', fila}; dacă e plecarea ALTEI
+     file (altă filă, sau pagina de dinainte din aceeași filă), pagina în care elevul lucrează anunță „acum” la primul semn
+     numărat. Plecarea paginii înseși (o privire în Excel, o notificare) așteaptă tot minutul. La o trecere de la o filă la alta
+     nu pleacă o cerere în plus: „acum”-ul pleca oricum, doar mai târziu; în plus doar la treceri repetate sub un minut. */
+  var K_SEMN = 'lh_prezenta_semn', FILA = idNou().slice(0, 12);
+  function plecatDinAltaFila() { var s = citeste(K_SEMN, null); return !!s && s.fel === 'plecat' && s.fila !== FILA; }
   // pasul din motorul lecției / jocului, dacă pagina are motor (spec_api.md §1); altfel nimic
   function pasAcum() {
     var d = window.__lhPas;

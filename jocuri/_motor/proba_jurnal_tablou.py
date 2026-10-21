@@ -22,6 +22,10 @@ TRIMITERILE (assets/js/prezenta.js), pe lecția reală, cu ceasul paginii accele
   (nimic la 55 s, nimic în plus în următoarele 2 minute); P9 (G2) „fara-gesturi”, gest după 20 s -> un „acum” la 60 s de
   la plecare; P10 (G4) ascunderea cât o cerere e pe drum -> nicio a doua cerere în paralel; plecarea pleacă după ce se
   întoarce cererea de pe drum.
+  21.10.2026 (el: „bobocea vlad nu apare ca lucreaza desi este conectat”): P11 plecarea din ALTĂ filă. Lecția se ascunde,
+  Jurnalul e în față -> un „acum” de pe /jurnal/ la primul semn numărat (nu la 30 s); Jurnalul se închide („inchis”) și
+  elevul lucrează în lecție -> UN „acum” de pe lecție în primele 10 s (înainte: abia la 60 s de la plecarea lecției, iar
+  panoul îl arăta „a închis Jurnalul”), apoi nimic în plus 90 s. P8 rămâne: plecarea filei ÎNSEȘI așteaptă minutul.
 CAP-COADĂ (10.10.2026, seara):
   N  jurnalul pe ALT aparat, prin Nor: pe aparatul A elevul lucrează lecția (motorul scrie sertarul, prezenta.js îl urcă
      pe /api/progres, op:'scrie'; serverul de probă îl ține sub amprentă); pe aparatul B sertarul e GOL, jurnalul se
@@ -90,7 +94,7 @@ MUTANTI = [
     ("prezenta", "M3 la ascundere tot acum:null (fără plecat)", "if (motiv) { unde.motiv = motiv; o.plecat = unde; } else o.acum = unde;", "o.acum = motiv ? null : unde;"),
     ("prezenta", "M4 fără „fara-gesturi”", "if (s === 'activ') pleaca('fara-gesturi', false);", ""),
     ("prezenta", "M5 ev „pas” la fiecare atingere", "if (al[k]) return;\n", ""),
-    ("prezenta", "M6 cadența veche (3 minute)", "TRIMITE_LA = 300000", "TRIMITE_LA = 180000"),
+    ("prezenta", "M6 cadența veche (3 minute)", "TRIMITE_LA = 120000", "TRIMITE_LA = 180000"),
     ("prezenta", "M7 fără plecarea la 10 s fără focus", "if (document.visibilityState === 'visible' && !document.hasFocus()) pleaca('ascuns', false);", ""),
     # bucla 10.10.2026 (G2, G4)
     ("prezenta", "M13 revenirea anunțată doar după un minut de lipsă (cum era)", "revenireLa = tPlecat + REVENIRE_DUPA;",
@@ -99,6 +103,11 @@ MUTANTI = [
      "if (inZbor) { if (motiv && !(plecatAmanat && RANG[plecatAmanat] >= RANG[motiv])) plecatAmanat = motiv; return false; }",
      "if (inZbor && !(motiv && laInchidere)) return false;"),
     ("prezenta", "M15 plecarea ținută cât e o cerere pe drum se pierde", "inZbor = false; dupaZbor();", "inZbor = false;"),
+    # 21.10.2026 (P11, plecarea din altă filă)
+    ("prezenta", "M23 plecarea altei file nu grăbește „acum”-ul (cum era)", " || plecatDinAltaFila()", ""),
+    ("prezenta", "M24 orice plecare, și a filei înseși, grăbește „acum”-ul (fără minutul G2)", "s.fel === 'plecat' && s.fila !== FILA", "s.fel === 'plecat'"),
+    ("prezenta", "M25 „acum”-ul nu șterge plecarea din semn (o cerere la fiecare 5 s)", "scrie(K_SEMN, { fel: motiv ? 'plecat' : 'acum', fila: FILA });",
+     "if (motiv) scrie(K_SEMN, { fel: 'plecat', fila: FILA });"),
     ("jurnal", "M8 jurnalul ignoră serverul", "if(SRV&&SRV_ID===e.id){", "if(false){"),
     ("jurnal", "M9 „Continuă” fără ?continua=1", "esc(urm.url+'?continua=1')", "esc(urm.url)"),
     ("jurnal", "M10 legăturile în aceeași filă", "var NOU=' target=\"_blank\" rel=\"noopener\"';", "var NOU='';"),
@@ -530,6 +539,7 @@ class Proba:
         pg.close()
         self._revenire(ctx)
         self._zbor(ctx)
+        self._alta_fila(ctx)
         ctx.close()
 
     def acumuri(self, f):
@@ -625,6 +635,45 @@ class Proba:
                       "P10 după ce se întoarce cererea: plecarea „ascuns” pleacă singură (una), tot fără beacon", [list(x.keys()) for x in f])
         pg.clock.resume()
         pg.close()
+
+    # ---- P11 (21.10.2026, Bobocea): plecarea din ALTĂ filă (Jurnalul închis) nu-l mai arată plecat cât lucrează în lecție
+    def _alta_fila(self, ctx):
+        pa = ctx.new_page()
+        self.pune(pa, {"lh_prezenta": self.eu(id="idaltafila" + "0" * 14), "learninghub_active_profile": "e_af"})
+        pa.clock.install()
+        self.deschide(pa)
+        self.lucreaza(pa, 36000, 5000)           # lecția: prima trimitere (30 s pe pagină) a plecat și s-a întors
+        pa.wait_for_timeout(200)
+        pa.evaluate("__ascunde()")                # elevul trece în fila Jurnalului: lecția pleacă „ascuns”
+        n = len(self.activ)
+        pj = ctx.new_page()                       # Jurnalul, în față; ceasul e al CONTEXTULUI (și al lecției), îl mișcă proba
+        pj.goto(self.baza + "/jurnal/")
+        pj.wait_for_function("window.Prezenta", timeout=15000)
+        self.lucreaza(pj, 10000, 5000)            # primul semn numărat al Jurnalului e la 5 s; „sosirea” veche, abia la 30 s
+        f, _ = self.corpuri(pj, n)
+        aj = [x for x in self.acumuri(f) if (x.get("acum") or {}).get("p") == "/jurnal/"]
+        self.verifica(len(f) == 1 and len(aj) == 1, "P11 lecția ascunsă, Jurnalul în față: un „acum” de pe /jurnal/ la primul semn numărat (nu la 30 s)",
+                      [(list(x.keys()), (x.get("acum") or x.get("plecat") or {}).get("p")) for x in f])
+        nb = len(self.corpuri(pa)[1])
+        pj.goto(self.baza + "/__gol")             # elevul închide Jurnalul
+        pj.wait_for_timeout(300)
+        _, b = self.corpuri(pa)
+        pl = [x.get("plecat") or {} for x in b[nb:]]
+        self.verifica(len(pl) == 1 and pl[0].get("p") == "/jurnal/" and pl[0].get("motiv") == "inchis",
+                      "P11 Jurnalul închis: o plecare „inchis” de pe /jurnal/", pl)
+        n = len(self.activ)
+        pa.evaluate("__arata()")                  # rămâne fila lecției, iar elevul lucrează în ea
+        self.lucreaza(pa, 10000, 5000)
+        f10, _ = self.corpuri(pa, n)
+        self.lucreaza(pa, 90000, 10000)
+        f, _ = self.corpuri(pa, n)
+        self.verifica(len(f10) == 1 and len(self.acumuri(f10)) == 1 and f10[0]["acum"].get("p") == "/" + LECTIE and len(f) == 1,
+                      "P11 înapoi în lecție după Jurnalul închis: UN „acum” de pe lecție în primele 10 s (înainte: abia la 60 s de la "
+                      "plecarea lecției, cu „a închis Jurnalul” în panou), apoi nimic în plus 90 s",
+                      {"în 10 s": [list(x.keys()) for x in f10], "în 100 s": len(f)})
+        pa.clock.resume()
+        pa.close()
+        pj.close()
 
     # =========================== CAP-COADĂ (10.10.2026, seara) ===========================
     # ---- N: jurnalul pe ALT aparat. Forma progresului NU e inventată: o scriu motorul și prezenta.js pe aparatul A.
