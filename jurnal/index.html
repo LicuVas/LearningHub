@@ -209,18 +209,25 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
   }
   /* liceul (IX-XII) lucrează pe materia clasei a VIII-a (el, 10.10.2026: „pentru liceu până acum am folosit materia de la clasa
      a VIII-a”); datele lecțiilor sunt cele din calendarul 8A/8M, deci „de până azi” e aproximativ la liceu. Maiștrii și postlicealul
-     (Anul I F, I A AMG, II C AMF: nivelul iese 1-2) au lecțiile lor din /content/, deci rămân fără plan; Țibucani = engleză, pe alt sit. */
+     (Anul I F, I A AMG, II C AMF: nivelul iese 1-2) aveau lecțiile lor din /content/ și rămâneau fără plan; din 21.10 maiștrii și
+     AMF au planul de a VIII-a (RE_IMPRUMUT, mai jos), AMG nu; Țibucani = engleză, pe alt sit. */
   var LICEU_SCOLI={brauner:1,forestier:1,transporturi:1};
+  /* maiștrii (din 01.10) și AMF (din 14.10) lucrează și ei pe lecțiile noi de a VIII-a, la calculul tabelar, ca liceul (panoul
+     clasei: „Lecțiile 2–7 / 2–8 și 10 … în Jurnal, Continuă”), deci primesc planul de a VIII-a ca liceul (21.10.2026, el: „Panoul
+     la AMF arată ciudat în jurnalul cursanților. Pare un model de afișare mai vechi” — era fără „Lecțiile mele”). AMG rămâne fără
+     plan: modulul lui e altul (Informatică medicală, curriculum nou) și începe abia în semestrul al II-lea. */
+  var RE_IMPRUMUT=/\bamf\b|farmac|mai[sșş]tri/i;
   /* înscris la o școală FĂRĂ plan (Țibucani, „Altă școală”), dar cu o clasă de gimnaziu și cu lecții ale clasei ei lucrate:
      planul clasei (19.10.2026, el: „jurnalul celor de la clasa a VII-a arată ciudat - nu arată lecțiile făcute și nefăcute ca
      la clasa a 8-a”; Focșanianu Vlad, Tupilați VII, s-a înscris la „Țibucani · VII” și lucrează /lectii/vii/). Fără lecții ale
      clasei lucrate (elevul de Țibucani care doar a deschis situl): tot fără plan. Liceele fără gimnaziu (clasa „VII A C” la
-     Forestier e o greșeală de scris) și maiștrii/postlicealul rămân ca înainte. */
+     Forestier e o greșeală de scris) rămân ca înainte; maiștrii/AMF au regula lor (RE_IMPRUMUT). */
   function lucreazaPlanul(k,D,S){var pre='lectie_'+k+'_',re=new RegExp('^/lectii/'+k+'/m\\d');
     return Object.keys(S||{}).concat(Object.keys(D&&D.jocuri||{})).some(function(c){return c.indexOf(pre)===0})||
       Object.keys(D&&D.pagini||{}).some(function(p){return re.test(p)})}
   function planulMeu(e,D,S){var n=nivelClasa(e.clasa);
     if(PLAN_SCOLI[e.scoala]&&NIV[n])return NIV[n];
+    if(LICEU_SCOLI[e.scoala]&&RE_IMPRUMUT.test(e.clasa||''))return 'viii';
     if(NIV[n]&&!LICEU_SCOLI[e.scoala])return lucreazaPlanul(NIV[n],D,S)?NIV[n]:null;
     return LICEU_SCOLI[e.scoala]&&n>=9&&n<=12?'viii':null}
   function claseaMea(e,D,S){var k=planulMeu(e,D,S);return PLAN&&k&&PLAN[k]?PLAN[k]:null}
@@ -406,12 +413,14 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
     if(PLAN)Object.keys(PLAN).forEach(function(c){(PLAN[c].module||[]).forEach(function(m){(m.lectii||[]).forEach(function(l){titlu[l.cheie]={t:'Lecția '+l.nr+' — '+l.titlu+(PLAN[c].roman?' (clasa a '+PLAN[c].roman+'-a)':''),u:'../'+String(l.cale||'').replace(/^\/+/,'')}})})});
     Object.keys(CHEI).forEach(function(s){if(CHEI[s])slugDe[CHEI[s]]=s});
     (CAT||[]).forEach(function(c){(c.unitati||[]).forEach(function(u){(u.jocuri||[]).forEach(function(g){if(CHEI[g.slug])titlu[CHEI[g.slug]]={t:g.titlu,u:'../jocuri/'+g.slug+'/',joc:g.slug}})})});
-    var cl=claseaMea(e,D,S);
+    var cl=claseaMea(e,D,S),strain=!!cl&&cl.nivel!==nivelClasa(e.clasa);   // planul altei clase (liceu, maiștri, AMF)
     if(CAT&&Object.keys(S).some(function(k){return k.indexOf('lectie_')!==0&&!slugDe[k]}))cheiJocuri(cl?cl.roman:'',Object.keys(D.jocuri));
 
-    // ---- lecțiile clasei lui (publicate, în ordinea din plan)
+    // ---- lecțiile clasei lui (publicate, în ordinea din plan). Pe planul altei clase, fără Lecția 1 neatinsă: e ora de organizare
+    //      a gimnaziului, pe care panoul clasei le-o sare („Lecțiile 2–…”), altfel „Continuă” i-ar trimite acolo
     var L=[];
-    if(cl)(cl.module||[]).forEach(function(m){(m.lectii||[]).forEach(function(l){if(l.stare==='publicat'&&l.cheie&&l.cale)L.push(lectia(l,S,D))})});
+    if(cl)(cl.module||[]).forEach(function(m){(m.lectii||[]).forEach(function(l){if(l.stare==='publicat'&&l.cheie&&l.cale){
+      var x=lectia(l,S,D);if(!(strain&&+l.nr===1&&x.stare==='nu'))L.push(x)}})});
 
     // ---- De reluat
     var R=[],vazut={};
