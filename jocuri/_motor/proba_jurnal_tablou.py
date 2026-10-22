@@ -314,9 +314,11 @@ class Proba:
         self.verifica(gata, "J1 jurnalul s-a desenat din datele serverului (cu jocurile recunoscute)")
         corpuri = [json.loads(x) for x in self.jurnal_cereri[n0:]]
         # din 15.10.2026 cererea poartă și biletul (b = 64 hex, Prezenta.bilet; contracte\2026-10-15_bilet_prima_conectare)
-        bilet_bun = lambda c: "b" not in c or (isinstance(c["b"], str) and len(c["b"]) == 64 and all(x in "0123456789abcdef" for x in c["b"]))  # noqa: E731
-        self.verifica(len(corpuri) >= 1 and all({k: v for k, v in c.items() if k != "b"} == {"id": ID_ANA, "h": H} and bilet_bun(c) for c in corpuri),
-                      "J1 cererea /api/jurnal = {id, h} ale elevului (+ biletul b)", corpuri[:2])
+        # + biletul pe nivel bn (22.10.2026, AI_0\projects\teste-elevi\contracte\2026-10-22_bilet_legare_partiala, R3)
+        hex64 = lambda x: isinstance(x, str) and len(x) == 64 and all(y in "0123456789abcdef" for y in x)  # noqa: E731
+        bilet_bun = lambda c: all(k not in c or hex64(c[k]) for k in ("b", "bn"))  # noqa: E731
+        self.verifica(len(corpuri) >= 1 and all({k: v for k, v in c.items() if k not in ("b", "bn")} == {"id": ID_ANA, "h": H} and bilet_bun(c) for c in corpuri),
+                      "J1 cererea /api/jurnal = {id, h} ale elevului (+ biletul b și biletul pe nivel bn)", corpuri[:2])
         # minutele = serverul (nu aparatul ăsta: 300 s azi)
         sec = lambda s: int(pg.get_attribute(s, "data-sec") or -1)
         luni = azi - dt.timedelta(days=azi.weekday())

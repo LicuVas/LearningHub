@@ -1081,6 +1081,18 @@
     var b = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(sir)));
     return Array.prototype.map.call(b, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
   }
+  /* BILETUL PE NIVEL (22.10.2026, AI_0\projects\teste-elevi\contracte\2026-10-22_bilet_legare_partiala, R3; Țoțoiu, X E, și-a
+     scris clasa „10 EA E”): ca bilet(), dar cu NIVELUL clasei (10 din „X E” și din „10 EA E”, cheieClasa), nu cu clasa întreagă.
+     Profesorul îl urcă doar când numele e al unui singur elev de nivelul ăla în școală (activitate.py bilet_nivel). */
+  async function biletNivel(e) {
+    if (!e || !e.scoala || e.scoala === 'alta' || !e.nume) return null;
+    var niv = cheieClasa(e.clasa)[0];
+    if (niv === 99) return null;
+    var n = function (s) { return faraDiacritice(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+    var sir = 'lh-bilet-nivel|' + e.scoala + '|' + niv + '|' + n(e.nume).split(' ').sort().join(' ');
+    var b = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(sir)));
+    return Array.prototype.map.call(b, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+  }
 
   /* ---------------- PROGRESUL ONLINE (26.09.2026) ----------------
      Cheile profilului elevului (tot ce conține profilul ca bucată întreagă: jocuri, lecții, exersări) urcă
@@ -1460,10 +1472,12 @@
   window.Prezenta = {
     versiune: 'plecat-pas-2026-10-10',   // marcajul pentru verificarea live (10.10: h, acum.pas, plecat, ev „pas”, cadența de 5 minute)
     contramasuri: 'ap-rapid-2026-10-10',  // marcajul contramăsurilor P5/P7/P8 (ap, rap/rq/rel) pentru verificarea live, la publicare
-    bilet_versiune: 'bilet-2026-10-15',   // marcajul pentru verificarea live a biletului (contracte\2026-10-15_bilet_prima_conectare)
+    bilet_versiune: 'bilet-nivel-2026-10-22',   // marcajul pentru verificarea live a biletului (contracte\2026-10-22_bilet_legare_partiala)
     identitate: identitate,
     /* biletul elevului dat (implicit cel conectat) pentru /api/jurnal; null dacă nu se poate face (Altă școală, fără crypto) */
     bilet: function (e) { try { return bilet(e || eu).catch(function () { return null; }); } catch (x) { return Promise.resolve(null); } },
+    /* biletul pe nivel (22.10.2026): clasa scrisă altfel decât în catalog („10 EA E”); null fără nivel / Altă școală */
+    biletNivel: function (e) { try { return biletNivel(e || eu).catch(function () { return null; }); } catch (x) { return Promise.resolve(null); } },
     iesi: function () { if (eElev()) iesi(); },
     /* 'activ' | 'intreaba' | 'vizitator' | 'necunoscut' — motor.js ține nivelurile deoparte cât e 'intreaba' */
     stare: stare,
