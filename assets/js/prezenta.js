@@ -1321,7 +1321,15 @@
         if (!cl) { $('lhp-e').textContent = 'Scrie clasa ta (ex. a VI-a B).'; return null; }
       }
       if (!sc || !cl) { $('lhp-e').textContent = 'Alege școala și clasa.'; return null; }
-      if (nm.split(' ').length < 2) { $('lhp-e').textContent = 'Scrie numele și prenumele (două cuvinte).'; return null; }
+      /* 23.10.2026, el: „«Amalia 💕» nu știu cine este - și poate prevenim astfel de cazuri - când elevul nu are cel puțin două
+         cuvinte pentru nume și prenume”. Se număra doar după spații, deci inima trecea drept al doilea cuvânt. Acum: doar litere
+         (cu - ' . între ele) și cel puțin DOUĂ cuvinte de minim 2 litere (numele de familie + prenumele). Fără \p{L} (telefoane
+         vechi): literele cu diacritice trec prin faraDiacritice, ca la amprentă. Aceeași regulă la corectură (folosește tot asta). */
+      var nmL = faraDiacritice(nm);
+      if (/[^A-Za-z .'’-]/.test(nmL) || nmL.split(' ').filter(function (w) { return w.replace(/[^A-Za-z]/g, '').length >= 2; }).length < 2) {
+        $('lhp-e').textContent = 'Scrie numele de familie și prenumele, întregi, ca în catalog (ex. Popescu Ana-Maria): doar litere, cel puțin două cuvinte.';
+        return null;
+      }
       var sn = st || (DATE.scoli.filter(function (x) { return x.key === sc; })[0] || {}).nume || sc;
       var e = { id: idNou(), scoala: sc, scoalaNume: sn, clasa: cl, nume: nm, ultima: Date.now() };
       if (st) e.scoalaText = st;
