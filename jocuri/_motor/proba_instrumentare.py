@@ -238,7 +238,7 @@ def inscrie(pg, nume=NUME):
     pg.click("#lhp-cine")
     pg.wait_for_function("document.querySelectorAll('#lhp-s option').length>2", timeout=15000)
     et = pg.evaluate("(document.querySelector('#lhp-s option[value=\"alta\"]')||{}).textContent||''")
-    pg.select_option("#lhp-s", "forestier")
+    pg.select_option("#lhp-s", "transporturi")
     pg.select_option("#lhp-c", "X E")
     pg.fill("#lhp-n", nume)
     pg.fill("#lhp-k", COD)

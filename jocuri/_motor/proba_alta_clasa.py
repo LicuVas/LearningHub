@@ -19,7 +19,7 @@ PERMIS = (ORIGINE,) if BAZA else ("http://127.0.0.1", "http://localhost")
 CAZURI = [
     ("brauner", "a vi-a b", "VI B"),      # clasă care nu e a profesorului -> forma curată
     ("brauner", "6a", "6 A"),             # e de fapt clasa lui „6 A” -> eticheta lui
-    ("forestier", "clasa a XI-a c", "XI C"),  # e clasa lui „XI C”
+    ("transporturi", "clasa a XI-a c", "XI C"),  # e clasa lui „XI C” (Forestier, sub CTT din 23.10.2026)
     ("brauner", "vib", "VI B"),           # lipit, roman
     ("brauner", "7ma", "7 MA"),           # lipit, e clasa lui „7 MA”
     ("brauner", "", None),                # gol -> mesaj de eroare, nu se înscrie

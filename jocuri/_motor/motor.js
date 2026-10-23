@@ -1247,8 +1247,10 @@ function wireTrimite(t,data){
   qr();intreaba();
   incarcaScript('diplome-date.js').then(()=>{
     const Z=window.DIPLOME;if(!Z||!Z.scoli)throw 0;
-    $('d-scoala').insertAdjacentHTML('beforeend',Z.scoli.map(x=>`<option value="${esc(x.key)}">${esc(x.nume)}</option>`).join(''));
-    $('d-scoala').onchange=()=>{const sc=Z.scoli.find(x=>x.key===$('d-scoala').value),cl=$('d-clasa');
+    // 23.10.2026 (prezenta.js vedere): Forestierul stă sub CTT; diploma pleacă tot cu cheia clasei („cheie”: XII C -> forestier)
+    const V=Z.vedere||Z.scoli,cheia=(s,c)=>{const v=V.find(x=>x.key===s);return (v&&v.cheie&&v.cheie[c])||s};
+    $('d-scoala').insertAdjacentHTML('beforeend',V.map(x=>`<option value="${esc(x.key)}">${esc(x.nume)}</option>`).join(''));
+    $('d-scoala').onchange=()=>{const sc=V.find(x=>x.key===$('d-scoala').value),cl=$('d-clasa');
       cl.innerHTML=sc?'<option value="">— alege —</option>'+sc.clase.map(c=>`<option>${esc(c)}</option>`).join(''):'<option value="">— alege școala întâi —</option>';
       cl.disabled=!sc;poateTrimite()};
     $('d-clasa').onchange=poateTrimite;
@@ -1261,7 +1263,7 @@ function wireTrimite(t,data){
         const k=await crypto.subtle.importKey('jwk',Z.cheie,{name:'RSA-OAEP',hash:'SHA-256'},false,['encrypt']);
         const enc=new Uint8Array(await crypto.subtle.encrypt({name:'RSA-OAEP'},k,new TextEncoder().encode(nume())));
         let bin='';enc.forEach(x=>bin+=String.fromCharCode(x));
-        const r=await fetch(Z.server,{method:'POST',body:JSON.stringify({scoala:$('d-scoala').value,clasa:$('d-clasa').value,joc:C.cheie,
+        const r=await fetch(Z.server,{method:'POST',body:JSON.stringify({scoala:cheia($('d-scoala').value,$('d-clasa').value),clasa:$('d-clasa').value,joc:C.cheie,
           titluJoc:C.titlu,titlu:D.titlu,clasaJoc:String(C.clasa),stele:t.st,max:C.nivele.length*3,xp:t.xp,nivele:C.nivele.length,data,numeEnc:btoa(bin)})});
         const j=await r.json().catch(()=>({}));
         if(!r.ok||!j.ok)throw new Error(j.eroare||('HTTP '+r.status));

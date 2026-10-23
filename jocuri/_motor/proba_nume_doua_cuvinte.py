@@ -55,7 +55,7 @@ def formular(br, baza):
     if pg.locator("#lhp-nou").count():
         pg.click("#lhp-nou")
     pg.wait_for_function("document.querySelectorAll('#lhp-s option').length > 1", timeout=15000)
-    pg.select_option("#lhp-s", "forestier")
+    pg.select_option("#lhp-s", "transporturi")   # 23.10.2026: X E (Forestier) stă sub Colegiul Tehnic de Transporturi
     pg.select_option("#lhp-c", "X E")
     pg.fill("#lhp-k", "4827")
     return ctx, pg

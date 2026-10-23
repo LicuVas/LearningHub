@@ -71,7 +71,9 @@ def main():
         pc.wait_for_function("document.querySelectorAll('#d-scoala option').length>2", timeout=10000)
         verifica(pc.is_disabled("#d-trimite"), "Trimite e oprit până alegi clasa")
         if not a.fara_trimitere:
-            pc.select_option("#d-scoala", "forestier")
+            # 23.10.2026: Forestierul stă sub Colegiul Tehnic de Transporturi (unirea la vedere); diploma pleacă tot cu cheia
+            # clasei (forestier) - verificat fără trimitere în proba_unire_ctt.py R6
+            pc.select_option("#d-scoala", "transporturi")
             pc.select_option("#d-clasa", "X E")
             pc.click("#d-trimite")
             pc.wait_for_function("/Trimis|Nu s-a/.test(document.getElementById('d-stare').textContent)", timeout=20000)

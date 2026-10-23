@@ -703,7 +703,7 @@
 
   function meniu() {
     /* „Ieși (deconectare)” sus, la o apăsare pe etichetă (30.09.2026, R3): nu mai e ascuns după „Nu ești tu?” */
-    arata('<div class="bar">Ești înscris ca <b>' + esc(eu.nume) + '</b> · ' + esc(eu.clasa) + ' · ' + esc(eu.scoalaNume || eu.scoala) + '.' +
+    arata('<div class="bar">Ești înscris ca <b>' + esc(eu.nume) + '</b> · ' + esc(eu.clasa) + ' · ' + esc(numeVazut(eu)) + '.' +
       '<div class="row"><button class="iesi" id="lhp-iesi">Ieși (deconectare)</button><button class="g" id="lhp-x">Închide</button></div>' +
       '<div class="mic">Pleci de la calculator? Apasă „Ieși”. După aceea, pe numele tău se intră doar cu codul tău.</div>' +
       '<div class="mic">Profesorul vede: paginile deschise, minutele lucrate (doar când lucrezi, nu cu fila uitată deschisă) și nivelurile terminate. Numele pleacă criptat.</div>' + NOTA + NOTA_NOTA +
@@ -807,7 +807,7 @@
       var venit = await Nor.trage();
       Nor.impinge(true);
       adaugaInCoada(0, true); trimite(false);   // la profesor, aceeași înregistrare (același id), cu numele corect
-      arata('<div class="bar" role="status"><b>Gata, ' + esc(eu.nume) + '!</b> Acum ești la ' + esc(eu.clasa) + ' · ' + esc(eu.scoalaNume || eu.scoala) +
+      arata('<div class="bar" role="status"><b>Gata, ' + esc(eu.nume) + '!</b> Acum ești la ' + esc(eu.clasa) + ' · ' + esc(numeVazut(eu)) +
         '. Progresul tău a venit cu tine. Data viitoare intri cu numele ăsta și cu același cod.<div class="row"><button id="lhp-bine2">Bine</button></div></div>');
       $('lhp-bine2').onclick = function () { if (schimbat || venit) reincarcaDacaTrebuie(true, true); else randeaza(); };
       try { dispatchEvent(new CustomEvent('prezenta', { detail: identitate() })); } catch (e) {}
@@ -1222,9 +1222,30 @@
      4 înscrieri de acolo erau ale profesorului. Cuvintele care recunosc o școală vin din diplome-date.js („alias”, din
      AI_0\tools\diplome.py ALIAS); o școală doar dacă e UNA singură. Clasa: întâi eticheta întreagă („a-5-a AM” → „5 AM”),
      apoi doar numărul, dacă școala are o singură clasă cu numărul ăla; altfel n-o ghicim (o alege elevul). */
+  /* UNIREA LA VEDERE (23.10.2026, el: „sa unim cele doua unitati (Forestier si auto) in una singura - Colegiul Tehnic de
+     Transporturi - asa cum s-au si unit ele de fapt”). În diplome-date.js, „vedere” = lista arătată elevului: Forestierul stă
+     sub CTT, iar „cheie” {clasă -> cheia ei} păstrează cheia VECHE a clasei ('forestier'). Școala intră în amprentă, în bilet
+     și în cheieElev: altă cheie = alt elev, fără progresul lui. Fără „vedere” (date vechi) lista e „scoli”, ca înainte. */
+  function vedere(d) { return (d && (d.vedere || d.scoli)) || []; }
+  // școala din listă sub care stă o cheie salvată ('forestier' -> Colegiul Tehnic de Transporturi)
+  function scoalaVazuta(d, key) {
+    return vedere(d).filter(function (x) {
+      return x.key === key || (x.cheie && Object.keys(x.cheie).some(function (c) { return x.cheie[c] === key; }));
+    })[0] || null;
+  }
+  // cheia adevărată a clasei alese sub școala din listă; pastrez = cheia elevului la corectură
+  function cheiaClasei(d, sc, cl, pastrez) {
+    var x = vedere(d).filter(function (v) { return v.key === sc; })[0];
+    if (x && x.cheie && x.cheie[cl]) return x.cheie[cl];
+    if (!x || !x.cheie || x.clase.indexOf(cl) >= 0) return sc;
+    // clasă scrisă de mână sub o școală unită: la corectură elevul rămâne pe cheia lui (altfel și-ar muta progresul)
+    var vz = pastrez && pastrez !== 'alta' ? scoalaVazuta(d, pastrez) : null;
+    return vz && vz.key === sc ? pastrez : sc;
+  }
+  function numeVazut(e) { var x = DATE && scoalaVazuta(DATE, e.scoala); return (x && x.nume) || e.scoalaNume || e.scoala; }
   function scoalaRecunoscuta(s) {
     var w = ' ' + faraDiacritice(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
-    var g = ((DATE && DATE.scoli) || []).filter(function (x) { return (x.alias || []).some(function (a) { return w.indexOf(' ' + a + ' ') >= 0; }); });
+    var g = vedere(DATE).filter(function (x) { return (x.alias || []).some(function (a) { return w.indexOf(' ' + a + ' ') >= 0; }); });
     return g.length === 1 ? g[0] : null;
   }
   function clasaRecunoscuta(s, clase) {
@@ -1265,7 +1286,7 @@
     incarcaDate().then(function (d) {
       // formularul poate fi deja închis („Mai târziu”) sau redeschis (lista deja pusă) până sosesc datele
       if (!$('lhp-s') || $('lhp-s').options.length > 1) return;
-      $('lhp-s').insertAdjacentHTML('beforeend', d.scoli.map(function (x) { return '<option value="' + esc(x.key) + '">' + esc(x.nume) + '</option>'; }).join('') +
+      $('lhp-s').insertAdjacentHTML('beforeend', vedere(d).map(function (x) { return '<option value="' + esc(x.key) + '">' + esc(x.nume) + '</option>'; }).join('') +
         /* 01.10.2026 (R12, el: „am dat linkul și foștilor colegi [...] să nu-i amestecăm”): eticheta spunea „din altă
            localitate sau alt județ”, deci elevii colegilor din același oraș își alegeau o școală din listă. Valoarea
            rămâne „alta”: elevul de aici nu se leagă niciodată de un elev din ELEVI (activitate.py unde_e). */
@@ -1273,7 +1294,7 @@
       $('lhp-s').onchange = function () {
         var alta = $('lhp-s').value === 'alta';
         $('lhp-alta').style.display = alta ? '' : 'none'; $('lhp-cc').style.display = alta ? 'none' : '';
-        var sc = d.scoli.filter(function (x) { return x.key === $('lhp-s').value; })[0], c = $('lhp-c');
+        var sc = vedere(d).filter(function (x) { return x.key === $('lhp-s').value; })[0], c = $('lhp-c');
         c.innerHTML = '<option value="">— alege —</option>' + (sc ? sc.clase.slice().sort(cmpClasa).map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') +
           '<option value="__alta">Altă clasă din școala asta…</option>' : '');
         c.disabled = !sc;
@@ -1289,8 +1310,8 @@
       };
       // corectura: formularul pornește cu ce scrisese elevul (școala, clasa - din listă sau scrisă de mână -, numele)
       if (cor && eElev()) {
-        var s0 = $('lhp-s');
-        if (eu.scoala === 'alta' || d.scoli.some(function (x) { return x.key === eu.scoala; })) { s0.value = eu.scoala; s0.onchange(); }
+        var s0 = $('lhp-s'), vz = scoalaVazuta(d, eu.scoala);   // elevul de la Forestier: CTT, cu clasa lui
+        if (eu.scoala === 'alta' || vz) { s0.value = vz ? vz.key : 'alta'; s0.onchange(); }
         if (eu.scoala === 'alta') {
           var tx = String(eu.scoalaText || ''), i = tx.indexOf(', ');
           $('lhp-as').value = i < 0 ? tx : tx.slice(0, i); $('lhp-al').value = i < 0 ? '' : tx.slice(i + 2); $('lhp-ac').value = eu.clasa;
@@ -1317,7 +1338,7 @@
         }
         st = (as + ', ' + al).slice(0, 120);
       } else if (cl === '__alta') {
-        cl = normClasa($('lhp-cx').value, ((DATE.scoli.filter(function (x) { return x.key === sc; })[0]) || {}).clase);
+        cl = normClasa($('lhp-cx').value, ((vedere(DATE).filter(function (x) { return x.key === sc; })[0]) || {}).clase);
         if (!cl) { $('lhp-e').textContent = 'Scrie clasa ta (ex. a VI-a B).'; return null; }
       }
       if (!sc || !cl) { $('lhp-e').textContent = 'Alege școala și clasa.'; return null; }
@@ -1330,7 +1351,8 @@
         $('lhp-e').textContent = 'Scrie numele de familie și prenumele, întregi, ca în catalog (ex. Popescu Ana-Maria): doar litere, cel puțin două cuvinte.';
         return null;
       }
-      var sn = st || (DATE.scoli.filter(function (x) { return x.key === sc; })[0] || {}).nume || sc;
+      if (sc !== 'alta') sc = cheiaClasei(DATE, sc, cl, cor && eElev() ? eu.scoala : null);   // XII C sub CTT -> 'forestier'
+      var sn = st || (scoalaVazuta(DATE, sc) || {}).nume || sc;
       var e = { id: idNou(), scoala: sc, scoalaNume: sn, clasa: cl, nume: nm, ultima: Date.now() };
       if (st) e.scoalaText = st;
       return e;

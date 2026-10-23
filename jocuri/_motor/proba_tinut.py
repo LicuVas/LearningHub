@@ -82,7 +82,7 @@ with sync_playwright() as p:
     def inscrie(nume, cod="4827"):
         pg.wait_for_selector("#lhp-s", timeout=10000)
         pg.wait_for_function("document.querySelectorAll('#lhp-s option').length>2", timeout=15000)
-        pg.select_option("#lhp-s", "forestier"); pg.select_option("#lhp-c", "X E"); pg.fill("#lhp-n", nume); pg.fill("#lhp-k", cod)
+        pg.select_option("#lhp-s", "transporturi"); pg.select_option("#lhp-c", "X E"); pg.fill("#lhp-n", nume); pg.fill("#lhp-k", cod)
         with pg.expect_navigation(timeout=20000):
             pg.click("#lhp-ok")
         pg.wait_for_function("window.Prezenta&&document.getElementById('lhp-pill')", timeout=15000)

@@ -103,7 +103,7 @@ const TEXTE={
   formMic:'Cu același nume și același cod îți continui progresul pe orice calculator sau pe telefon. Dacă ai mai lucrat în altă parte, pune codul de atunci.',
   bGata:'Gata',
   errAlta:'Scrie numele școlii, localitatea cu județul și clasa.', errClasa:'Scrie clasa ta (ex. a VI-a B).', errScoalaClasa:'Alege școala și clasa.',
-  errNume:'Scrie numele și prenumele (două cuvinte).', errCod:'Alege un cod de exact 4 cifre (ex. 4827) și scrie-l în caiet.',
+  errNume:'Scrie numele de familie și prenumele, întregi, ca în catalog (ex. Popescu Ana-Maria): doar litere, cel puțin două cuvinte.', errCod:'Alege un cod de exact 4 cifre (ex. 4827) și scrie-l în caiet.',
   errAltCod:'Pe calculatorul ăsta, {nume} intră cu alt cod. ', errAltCodUitat:' Dacă ți-ai uitat codul, apasă „Mi-am uitat codul”.',
   caut:'Caut progresul tău…'
 };
@@ -147,17 +147,21 @@ const CADRU={
   }
 };
 
-/* Școlile și clasele din jocuri/_motor/diplome-date.js (copie; intrare_cod_texte.py verifică să fie aceleași).
-   Pe pagină se folosește window.DIPLOME.scoli dacă prezenta.js a încărcat deja fișierul (doar citit, nicio cerere). */
+/* Școlile și clasele văzute de elev din jocuri/_motor/diplome-date.js („vedere”: Forestierul sub Colegiul Tehnic de
+   Transporturi, 23.10.2026; „cheie” = cheia veche a clasei, ca în prezenta.js). Copie; intrare_cod_texte.py verifică să fie
+   aceleași. Pe pagină se folosește window.DIPLOME dacă prezenta.js a încărcat deja fișierul (doar citit, nicio cerere). */
 const SCOLI_COPIE=[
-  {key:'transporturi',nume:'Colegiul Tehnic de Transporturi',clase:['X B','Anul I F (Maiștri)','I A AMG','II C AMF','I B AMG']},
-  {key:'forestier',nume:'Liceul Forestier',clase:['X E','XI C','XI D','XII C','XII D']},
-  {key:'brauner',nume:'Liceul de Arte "Victor Brauner"',clase:['7 MA','X A','X M','XII M','9 M','9 A','XI M','5 AM','5 M','6 A','6 M','8 A','8 M']},
+  {key:'transporturi',nume:'Colegiul Tehnic de Transporturi',clase:['X B','Anul I F (Maiștri)','I A AMG','II C AMF','I B AMG','X E','XI C','XI D','XII C','XII D'],
+   cheie:{'X E':'forestier','XI C':'forestier','XI D':'forestier','XII C':'forestier','XII D':'forestier'}},
+  {key:'brauner',nume:'Liceul de Arte "Victor Brauner"',clase:['7 MA','X A','X M','XII M','9 M','9 A','XI M','5 AM','5 M','6 A','6 M','8 A','8 M','XII A','XI A']},
   {key:'tibucani',nume:'Scoala Gimnaziala Comuna Tibucani',clase:['VI','VII','VIII']},
   {key:'dumbrava',nume:'Scoala Gimnaziala Nr. 1 Dumbrava Rosie',clase:['VI','VII A','VII B','VIII']},
   {key:'tupilati',nume:'Scoala Gimnaziala Tupilati',clase:['V','VI','VII','VIII']}
 ];
-function scoli(){const d=window.DIPLOME;return d&&Array.isArray(d.scoli)&&d.scoli.length?d.scoli:SCOLI_COPIE}
+function scoli(){const d=window.DIPLOME,l=d&&(d.vedere||d.scoli);return Array.isArray(l)&&l.length?l:SCOLI_COPIE}
+// școala din listă sub care stă o cheie ('forestier' -> CTT); cheia adevărată a clasei alese (ca prezenta.js)
+const scoalaVazuta=key=>scoli().filter(x=>x.key===key||(x.cheie&&Object.values(x.cheie).includes(key)))[0]||null;
+const cheiaClasei=(sc,cl)=>{const x=scoli().filter(v=>v.key===sc)[0];return (x&&x.cheie&&x.cheie[cl])||sc};
 
 const GRESITE_MAX=5,PAUZA_MS=30000;
 const COD_COLEGI=['7130','5262','8417','6094','2873'];
@@ -237,7 +241,7 @@ function Caseta(Q,body,api){
   stil();
   const n=++NR,id=s=>'ic'+n+'-'+s;
   const start=START.includes(Q.start)?Q.start:'lista';
-  const scoalaDe=key=>scoli().filter(x=>x.key===key)[0]||{key,nume:key,clase:[]};
+  const scoalaDe=key=>scoalaVazuta(key)||{key,nume:key,clase:[]};
   const om=(p,cls)=>{p=p||{};const sc=p.scoala||(Q.elev&&Q.elev.scoala)||'brauner';
     const o={nume:String(p.nume||'Elev Exersare').trim(),clasa:p.clasa||cls||(Q.elev&&Q.elev.clasa)||'5 AM',scoala:sc,scoalaNume:p.scoalaNume||scoalaDe(sc).nume};
     o.k=cheieElev(o);return o};
@@ -532,7 +536,8 @@ function Caseta(Q,body,api){
     cls.onchange=()=>{const alta=cls.value==='__alta';$('.ic-cxw').style.display=alta?'':'none';if(alta)$('#'+id('cx')).focus()};
     if(cor&&S.eu){
       const e=S.eu;
-      if(e.scoala==='alta'||SC.some(x=>x.key===e.scoala)){sel.value=e.scoala;sel.onchange()}
+      const vz=scoalaVazuta(e.scoala);
+      if(e.scoala==='alta'||vz){sel.value=vz?vz.key:'alta';sel.onchange()}
       if([].some.call(cls.options,o=>o.value===e.clasa))cls.value=e.clasa;
       else if(sel.value){cls.value='__alta';cls.onchange();$('#'+id('cx')).value=e.clasa}
       $('#'+id('n')).value=e.nume;
@@ -548,8 +553,11 @@ function Caseta(Q,body,api){
         if(!cl){err.textContent=TEXTE.errClasa;return null}
       }
       if(!sc||!cl){err.textContent=TEXTE.errScoalaClasa;return null}
-      if(nm.split(' ').length<2){err.textContent=TEXTE.errNume;return null}
-      const sn=st||(SC.filter(x=>x.key===sc)[0]||{}).nume||sc;
+      // ca prezenta.js (23.10.2026): doar litere (cu - ' . între ele), cel puțin două cuvinte de minim 2 litere
+      const nmL=faraDiacritice(nm);
+      if(/[^A-Za-z .'’-]/.test(nmL)||nmL.split(' ').filter(w=>w.replace(/[^A-Za-z]/g,'').length>=2).length<2){err.textContent=TEXTE.errNume;return null}
+      if(sc!=='alta')sc=cheiaClasei(sc,cl);   // XII C sub CTT -> 'forestier'
+      const sn=st||(scoalaVazuta(sc)||{}).nume||sc;
       const e={nume:nm,clasa:cl,scoala:sc,scoalaNume:sn};if(st)e.scoalaText=st;e.k=cheieElev(e);return e;
     }
   }

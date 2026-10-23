@@ -99,7 +99,7 @@ def linistit(pg, url):
 
 def inscrie(pg):
     pg.click("#lhp-cine")
-    pg.select_option("#lhp-s", "forestier")
+    pg.select_option("#lhp-s", "transporturi")
     pg.select_option("#lhp-c", "X E")
     pg.fill("#lhp-n", NUME)
     pg.fill("#lhp-k", "4827")   # 26.09.2026: codul de 4 cifre (progresul pe orice aparat)
@@ -271,7 +271,7 @@ def ruleaza(br, baza, a):
     pg.click("#lhp-x")
     verifica(pg.is_visible("#lhp-elev") and not pg.is_visible("#lhp-cine"), "„Mai târziu” îl lasă vizitator (butonul mic rămâne)")
     pg.click("#lhp-elev")
-    pg.select_option("#lhp-s", "forestier"); pg.select_option("#lhp-c", "X E"); pg.fill("#lhp-n", NUME); pg.fill("#lhp-k", "4827"); pg.click("#lhp-ok")
+    pg.select_option("#lhp-s", "transporturi"); pg.select_option("#lhp-c", "X E"); pg.fill("#lhp-n", NUME); pg.fill("#lhp-k", "4827"); pg.click("#lhp-ok")
     pg.wait_for_selector("#lhp-pill", timeout=20000)
     ids.add((ls(pg, "lh_prezenta") or {}).get("id"))
     verifica(pg.is_visible("#lhp-pill"), "după butonul mic se înscrie normal și apare eticheta")
@@ -288,7 +288,7 @@ def ruleaza(br, baza, a):
     pt.click("#lhp-cine")
     lat = pt.evaluate("()=>{const b=document.getElementById('lhp').getBoundingClientRect();return [b.left,b.right,b.top,innerWidth]}")
     verifica(lat[0] >= 0 and lat[1] <= lat[3] and lat[2] >= 0, "telefon: formularul încape în ecran (%s)" % lat)
-    pt.select_option("#lhp-s", "forestier"); pt.select_option("#lhp-c", "X E"); pt.fill("#lhp-n", NUME); pt.fill("#lhp-k", "4827"); pt.click("#lhp-ok")
+    pt.select_option("#lhp-s", "transporturi"); pt.select_option("#lhp-c", "X E"); pt.fill("#lhp-n", NUME); pt.fill("#lhp-k", "4827"); pt.click("#lhp-ok")
     pt.wait_for_selector("#lhp-pill", timeout=20000)
     ids.add((ls(pt, "lh_prezenta") or {}).get("id"))
     for i in range(20):
@@ -312,7 +312,7 @@ def ruleaza(br, baza, a):
         pp.fill("#pinval", pin); pp.click("#pinok")
     pp.wait_for_selector("#fs", timeout=20000)
     verifica("#" not in pp.url, "cheile au dispărut din bara de adrese")
-    pp.select_option("#fs", "forestier")
+    pp.select_option("#fs", "transporturi")
     pp.select_option("#fc", "forestier|X E")
     pp.wait_for_timeout(500)
     t = pp.inner_text("#corp")

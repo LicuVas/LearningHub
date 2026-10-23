@@ -100,7 +100,8 @@ def main():
     ap.add_argument("--nor-real", action="store_true")
     a = ap.parse_args()
     baza = (a.baza or server_local()).rstrip("/")
-    sufix = secrets.token_hex(3)
+    # doar LITERE (23.10.2026: formularul refuză cifrele din nume - „Amalia 💕”; cifrele hex -> literele g…p)
+    sufix = secrets.token_hex(3).translate(str.maketrans("0123456789", "ghijklmnop"))
     ANA, BOGDAN = "Ana Proba" + sufix, "Bogdan Proba" + sufix
     print("Proba progresului pe elev pe", baza, "(nor real)" if a.nor_real else "(nor simulat)")
     from playwright.sync_api import sync_playwright
@@ -154,7 +155,7 @@ def main():
         def inscrie(pg, nume, cod="4827"):
             pg.wait_for_selector("#lhp-s", timeout=10000)
             pg.wait_for_function("document.querySelectorAll('#lhp-s option').length>2", timeout=15000)
-            pg.select_option("#lhp-s", "forestier"); pg.select_option("#lhp-c", "X E"); pg.fill("#lhp-n", nume); pg.fill("#lhp-k", cod)
+            pg.select_option("#lhp-s", "transporturi"); pg.select_option("#lhp-c", "X E"); pg.fill("#lhp-n", nume); pg.fill("#lhp-k", cod)
             with pg.expect_navigation(timeout=20000):
                 pg.click("#lhp-ok")
             pg.wait_for_function("window.Prezenta&&document.getElementById('lhp-pill')", timeout=15000)
