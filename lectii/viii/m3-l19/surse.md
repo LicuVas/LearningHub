@@ -1,0 +1,116 @@
+# Lecția 19, clasa a VIII-a — surse, probe și ce n-am putut verifica (24.10.2026, tura de noapte)
+
+Numerotarea pașilor e cea din bara motorului: **P1 = „La ce folosește”**, P2-P6 = pașii 1-5 din standard. (În scripturile din `_proba\` pașii se cheamă P0-P5, ca `JocMotor.test.pas(n)`; proba de gesturi îi afișează ca P1-P6.)
+
+## Programa și planul
+- **Titlul exact:** `Info_Gimnaziu_2026\planificari\Calendar_ore_8A_8M.md` (05.02.2027, lecția 19, M3, predare; în `Calendar_ore_VIII.md`, 02.02.2027), `data\unitati.json` (VIII-U2 „Pagini web”, CS.1.2 + CS.3.2), `Proiectul_unitatii_VIII-U2.md` (ora 19, „teorie, exercitii”).
+- **Conținutul** (copiat întocmai din `curriculum.json`, „Pagini web”): „Operații de formatare la nivel de text, paragraf, fundal”. Text = P2-P4 (culoarea, mărimea, fontul, câteva cuvinte); paragraf = P4 (alinierea, stilul pe tot paragraful); fundal = P5.
+- **Activitatea profesorului** (`data\activitati_lectii_VII_VIII.json`, lecția 19): „Aceeași pagină, formatată în două variante; verificarea lizibilității pe ecran mare și pe telefon. Se discută contrastul dintre text și fundal.” (resurse: laborator, telefon pentru verificare, pagină-suport) → P5 (cele două variante desenate, contrastul, „privește pagina în browser și întreabă-te: se citește ușor?”; până la reparația J1 scria „dacă poți, pe telefon”, scos: elevul n-are cum să-și vadă fișierul pe telefon fără profesor), testul de contrast din atelier, laboratorul 9 (a doua variantă, alegi varianta care se citește mai ușor). Verificarea pe telefon a fișierului din laborator nu se poate face fără profesor (fișierul e pe calculator): în pagină, cine lucrează pe telefon vede chiar pagina desenată la lățimea telefonului.
+- **Ce NU cer documentele profesorului** (căutat în `Info_Gimnaziu_2026`, fără `materiale\print\`: `style=`, `<style`, `CSS`, `bgcolor`, `<font`, `font-family`, `background-color`, `text-align`): nimic despre forma tehnică. Am urmat **decizia dirijorului nr. 3** (`_noapte.md`): atributul `style`, fără `<font>`, `bgcolor`, `align`, fără `<style>` în `<head>` și fără fișiere `.css`. Lecția e de predare: fără notare.
+
+## Ce presupun cunoscut (lecțiile publicate / pe disc) și ce acopăr
+| | Presupun | De unde | Folosit în lecție |
+|---|---|---|---|
+| ✔ | Notepad: filă nouă, ●, Ctrl+S, Fișier › Salvați ca (Ctrl+Shift+S), Toate fișierele, UTF-8, „există deja” → Nu + cifră, Fișier › Închideți fila (X-ul păstrează filele); Explorer + dublu-clic; Ctrl+S / F5 | VIII/14 (`afirmatii.json` A08, A11, A17, A21, A24, A31) | atelier, atelier 2, laborator 1-3, 5, 10 (texte copiate din VIII/16-17, ca să nu se contrazică) |
+| ✔ | scheletul (DOCTYPE, `html lang`, `head` cu meta + title, `body`), Tab / două spații pe telefon | VIII/15 | toate codurile; testul „Scheletul a rămas întreg” (`EditorWebSchelet.ordine`) |
+| ✔ | `<h1>`, `<p>`; Enter din Notepad nu trece pe alt rând; **atributul** (`src="…"`), spațiu între atribute, **în etichetă Enter = spațiu**; Fișier › Deschideți (Ctrl+O) | VIII/16 (pe disc, se publică în noaptea asta; granița lui îi lasă lecției 19 formatarea, culorile, CSS și `<b>`) | P2 („Un atribut știi de la lecția 16”), P3 (Enter între proprietăți), „Uite cum” rupt pe rânduri, laborator 2 |
+| ✔ | pagina cu orarul (tabel), salvată în Documente | VIII/17 (laboratorul) | laboratorul o formatează; dacă lipsește, pagina scurtă din pasul 2 |
+| ✔ | formatarea în Excel (lecția 6) și în Word (VII/6: Aldin (Bold), Cursiv (Italic)) | VIII/6, VII/6 | P1 (punte de idei: „schimbă cum arată, nu ce scrie”), P4 (Aldin, Cursiv) |
+| — | `<a href>` (VIII/18, în paralel) | granița `m3_noapte_23_10\granite\viii_l18.md` | NU e folosită în exerciții; laboratorul (de la reparația J1) primește și pagina de la lecția 18 (pasul 2), iar pasul 9 spune condiționat că o legătură rămâne albastră pe fundal închis (probat și pe `COD_L18.lab1`) |
+Nimic din 14-17 contrazis: aceleași texte pentru salvare, deschidere și închiderea filelor; nicio etichetă nouă de structură.
+
+## Granița (`m3_noapte_23_10\granite\viii_l19.md`)
+Predau `style` (color, font-size, font-family, text-align, background-color), `<strong>`, `<em>`, `<span style>`, contrastul, greșelile ignorate. NU: `<a>` și culorile legăturilor (18), `class`, `<style>`, `.css`, `<font>`, `bgcolor`, `align`, imagini de fundal, ce nu se publică (20). VIII/18 (granița lui): „nu folosesc atributul style”; VIII/20: nu construiește pe 19. Nicio contradicție.
+
+## Faptele — probate în Chromium 148 headless (Playwright), pe fișiere locale scrise ca de Notepad
+Notepad din Windows 11 și Edge / Chrome reali nu se pornesc în noaptea asta (`_noapte.md`). Faptele despre browser vin din Chromium 148 (motorul lui Edge și Chrome), rețeaua blocată (doar `file:` / 127.0.0.1), profil temporar, `ctx.close()`. Detaliul fiecărei afirmații: `afirmatii.json` (A01-A32; A28-A32 de la reparația J1).
+| Fapt | Dovada |
+|---|---|
+| `color: navy` merge cu/fără spații, cu/fără `;` final, cu litere mari, `#000080` | `_proba\proba_browser_l19.json` (h1_navy*, h1_NAVY_mari, h1_navy_hex) |
+| sărite în tăcere: `=`, `naavy`, `colour`, `culoare`, `albastru`, `red: color`, `centre`, `middle`, `dreapta`, `align:`, `size:`, `20 px`, `24`, al doilea `style`, `style` în `</h1 …>` | idem (h1_egal … q_h1_inchidere_red) |
+| fără `;` între două proprietăți (sau cu virgulă) → amândouă sărite; fără `:` la prima → doar ea (titlul negru, dar centrat) | h1_fara_pv, h1_virgula, h1_fara_2p_primul |
+| ghilimeaua de închidere lipsă → titlul dispare; fără alte ghilimele după → pagina goală | h1_ghil_inchidere_lipsa(_singur); `proba_coduri_l19.json` (p6c_start) |
+| fonturile: primul găsit, apoi rezerva; Verdana / Georgia / Arial există pe Windows | latimi_20px; `_proba\fonturi_windows.json` (C:\Windows\Fonts + learn.microsoft.com/en-us/typography/fonts/windows_10_font_list) |
+| `<body>` cu fundal → toată fereastra; pe `<p>` → bandă pe toată lățimea; pe `<span>` → doar sub cuvinte | body_bg (pixelul de jos), p_bg_galben, span_bg_galben |
+| `color` / `text-align` pe `<body>` trec la h1 și p, în afară de ce are culoarea lui; legătura rămâne rgb(0, 0, 238) | body_color_h1, body_center, body_bg_navy_alb |
+| `<strong>`/`<b>` = 700, `<em>`/`<i>` = italic; `</strong>` lipsă → și paragraful următor e îngroșat | strong_em, b_i, strong_neinchis |
+| Enter (și Tab) în etichetă, între proprietăți sau după numele etichetei = spațiu | `proba_coduri_l19.json` (p3_ex, p5_v1, p4_ex) |
+| Toate cele 56 de pagini întregi din `window.COD_L19`, deschise ca fișiere: ce spune lecția + extensia citește exact ca browserul (culoare, fundal, mărime, primul font, aliniere, grosime, înclinare, text) | `_proba\proba_coduri_l19.py` → 0 nepotriviri (97 de verificări) |
+| Laboratorul pe pagina lecției 17 (`COD_L17.lab_final`), pas cu pas: titlul bleumarin centrat; fereastra galben-deschis; propoziția 20px Verdana cu „stil” îngroșat; fără `:` → negru, dar centrat; varianta 2: titlul bleumarin pe bleumarin, celulele albe, cu yellow se vede; legătura albastră pe bleumarin: contrast 1,70 | idem (lab_1 … lab_7) |
+| Tastatura: Română (Standard) `:` = Shift + punct, `;` = Shift + virgulă; US / US-Internațională: tasta de lângă L | `_proba\proba_tastatura_l19.json` (doar citire, aranjamentele deja încărcate) |
+
+## Numele RO / EN
+- Notepad (Windows 11 în română), din lecțiile 14-17: Fișier, Deschideți (Open), Deschidere (Open), Salvați ca, Salvare ca (Save As), Nume fișier (File name), Toate fișierele (*.*) (All files), Codificare (Encoding), Salvare (Save), Închideți fila, Nu salvați.
+- Word (punte, clasa a VII-a): Aldin (Bold), Cursiv (Italic) — numele din `lectii\vii\m1-l06`.
+- Proprietățile CSS și culorile nu se traduc (browserul nu le primește în română: probat). Lecția dă traducerea în paranteză: navy (bleumarin), lightyellow (galben-deschis).
+
+## Imagini
+- P1: `img\placuta-strada.webp` — „File:Street sign of Strada Stănileși in Bucharest, Romania.jpg”, Neoclassicism Enthusiast, **CC BY-SA 4.0**, citită din API-ul Commons (extmetadata, 24.10.2026, User-Agent „LearningHub-lectii/1.0 (educational site)”), micșorată la 800 px, 107 KB. Legenda are autorul, licența, legătura și „(micșorată, aceeași licență)”. `img\SURSE.json`. Respinse: alte plăcuțe (persoane / afișe cu fețe / mașini în cadru); capturile din jocul web-viii (vezi `capturi_lipsa.json`).
+- „Uite cum” are, în locul capturilor, **desenul browserului elevului** (iframe `sandbox=""`, fără scripturi și fără cereri, prin `EditorWebUtil.previewDoc`), ca la VIII/17. Capturile Edge / Notepad care lipsesc: `capturi_lipsa.json`.
+
+## Simulatorul: extensia nouă `lectii\_sim\editorweb-stil.js` (proprietar: lecția VIII/19)
+`editorweb.js` (VIII/14) și `editorweb-schelet.js` (VIII/15) **NU** sunt modificate; nici `-continut`, `-tabele` (nu le încarc). Browserul simulat al lui editorweb.js desenează deja pagina într-un iframe adevărat cu `style-src 'unsafe-inline'`, deci stilurile se aplică fidel; extensia nu ascultă taste și nu schimbă desenul. Ea **citește** ce desenează browserul: un iframe ascuns, same-origin, FĂRĂ scripturi (`sandbox="allow-same-origin"`), în care scrie pagina curățată de `previewDoc`, apoi `getComputedStyle` (cu moștenire și cu ce aruncă browserul).
+**Pentru lecția următoare (VIII/21, mini-proiectul) — ce poți folosi, din `window.EditorWebStil`:**
+- `calc(src)`, `stil(src, sel, prop, i?)`, `are(src, sel, {prop: valoare}, i?)` (culorile comparate ca culori; `font-family` = primul font), `fonturi`, `cuRezerva`, `element(src, text)`, `ingrosat`, `inclinat`, `culoareText`, `fundalPagina`, `textPagina`;
+- `culoare(v)`, `aceeasiCuloare(a, b)`, `contrast(a, b)` (WCAG 2), `lizibil(src, opt?)` → `{ok, rau:[{text, tag, culoare, fundal, raport, prag}]}` — **de la reparația J1 (24.10.2026): prag 3 la tot textul (`EditorWebStil.PRAG_LECTIE`)**; `opt.prag` = alt prag fix; `opt.wcag: true` = vechiul 4,5 / 3 la litere ≥ 24px sau ≥ 18,66px îngroșate;
+- `declaratii(src)`, `perechi(src)` (strong/em/span/b/i), `mesajText(src)` (greșeala de stil, spusă; de la reparația J1: întâi `<!DOCTYPE html>` lipsă, apoi ghilimelele „strâmbe” numite, `<font>` / `<center>` = „etichetă veche”), `cuDiagnostic(teste, {spec, coleg})` (ordinea: starea schelet-ului → stilul → schelet), `randare(cod, inaltime, eticheta?)` (**de la reparația J1: `inaltime` = minimul, desenul crește cât pagina desenată, la încărcare și la orice schimbare de lățime; iframe `sandbox="allow-same-origin"`, tot fără scripturi**).
+- **Nu schimba** semnăturile și ordinea mesajelor (testele lecției 19 se sprijină pe ele). Ce-ți trebuie în plus → extensie cu nume nou. Se poate încărca alături de `editorweb-tabele.js` / `-continut.js` (alte nume de clase CSS: `.ews-*`).
+- Înălțimea browserului simulat: lecția 19 o mărește din CSS-ul paginii ei (`#body .ew .lv .br-corp{min-height:15em}`), ca la VIII/17.
+
+## Regulile 22 / 24 / 25 / 27 — calculatorul profesorului
+- Nu am pornit Notepad, Edge, Chrome, Explorer, Office sau vreo aplicație din Magazin. Doar Chromium-ul din Playwright, headless, profil temporar, rețeaua blocată (doar `file:` / 127.0.0.1), închis cu `ctx.close()`. Serverele locale ale probelor: 127.0.0.1:8858 și :8859, oprite odată cu scripturile. Niciun registru atins, nicio setare, nimic salvat în afara `_proba\` și `img\`. Aranjamentele de tastatură doar citite (VkKeyScanEx / ToUnicodeEx, fără încărcare / activare). Niciun fișier Office → `curata_metadate.py` nu se aplică.
+- **Regula 22:** singurele cereri spre exterior: API-ul Commons (căutare + 4 miniaturi privite, apoi șterse; păstrată doar cea folosită) și pagina Microsoft cu fonturile din Windows 10, cu User-Agent „LearningHub-lectii/1.0 (educational site)”. **Regula 24:** probele cu pagina lecției au blocat fonturile Google; nimic spre panoul profesorului; `activitate.py lista` după probe: niciun elev de probă (lista NU e păstrată în `_proba\`, are nume de elevi). **Regula 27:** `learninghub_date_personale.py` → 0; nicio cale cu numele contului.
+
+## Durata (≤ 50 de minute; estimare, nu măsurare la clasă — refăcută la reparația J1, 24.10.2026)
+Modelul lecției VIII/17: 0,6 s pe semn simplu, 1,6 s pe `<` `>` și ghilimele, 1,0 s pe majusculă și pe `:` `;` (Shift), 0,4 s pe Tab / Enter, plus citirea.
+- Pașii citiți (6, 69-99 de cuvinte + „Uite cum”): ~8 min. Cele 5 „Încearcă” (de tastat 20-60 de semne fiecare, cu pagina desenată pe loc): ~9,5 min (P5 are acum doi pași mici: fundalul, apoi literele; +~0,5 min față de varianta dinainte). Atelierul (șase schimbări + Ctrl+S + Explorer): ~7 min.
+- Laboratorul obligatoriu (pașii 1-8, 10): de tastat ~180 de semne (4 bucăți de stil + rândul `<p>`), ~3,5 min; operațiile fixe (Notepad, Deschideți, Salvați ca, Explorer, 4 × Ctrl+S / F5, experimentul, închiderea filelor) și cititul pașilor ~8 min → **~11-12 min**. Pasul 9 („Dacă mai ai timp”): ~1,5 min. Fără pagina de la lecția 17 (pasul 2, pagina scurtă): +3 min.
+- Cele 5 întrebări: ~5 min (Î3 cere acum o aliniere + o pereche `<strong>`, cam cât cerea înainte `<span>` + `<em>`). **Total obligatoriu ≈ 41-42 de minute din 50.** E o estimare: se măsoară la prima clasă (judecătorul sonnet). „Cum lucrezi” spune ce e obligatoriu și ce faci când mai sunt 10 minute (rămâne).
+
+## Porțile și probele (rulate ULTIMELE, după ultima schimbare — reparația J1, 24.10.2026)
+- `test_joc.py --dir lectii\viii m3-l19` → **TRECUT** (31 de întrebări jucate; doar avertismentul așteptat „1 niveluri”). Ieșirea: `_proba\iesire_test_joc.txt`.
+- `verifica_lectie.py … --fara-t1` → **ultima linie 0** (S0 TRECUT, S1 0 identice, S2 6/6 aplicare/execuție, T0 0). Ieșirea: `_proba\iesire_verifica.txt`.
+- `_proba\proba_gesturi_l19.py` (pusă la zi pentru reparații: P4 „Uite cum” cu `<em>`, P5 Încearcă navy → white, P5 Încă 3 lightyellow, Î3 tastat, Î5 nou, plus „fiecare desen din «Uite cum» încape întreg” la P2-P6) — 1280 px cu mouse + tastatură și 390 px cu atingere: fiecare „Încearcă” și „Încă un exercițiu” (întâi greșit, cu mesajul greșelii, apoi stilul TASTAT cu cursorul în etichetă), ce arată pagina desenată, „Uite cum”, atelierul (la pornire 0 teste bifate; nesalvat → Ctrl+S; titlu galben pe galben-deschis → mesajul de contrast; apoi Ctrl+S, Explorer, dublu-clic / două atingeri, F5), atelierul 2 (3 reparații, F5, Fișier › Închideți fila), laboratorul (și la 460 px), cele 5 întrebări, diploma → **298 de verificări, 0 picate, 0 erori în consolă**. Ieșirea: `_proba\iesire_gesturi.txt`.
+- `_proba\proba_reparatii.py` (NOU, o verificare pe literă din `_verificare\registru_j1.md`, 1280 + 390, plus 320 px la A) → **80 de verificări, literele A-N, 0 picate, 0 erori în consolă**. Ieșirea: `_proba\proba_reparatii_3.txt`; datele (matricea de contrast, laboratorul pe pagina 18): `_proba\proba_reparatii.json`; captura `_proba\_r1_tel_p5_uite_cum.png` privită (ambele variante întregi, literele albe se văd).
+- `_proba\proba_coduri_l19.py` → 0 (98 de verificări); `_proba\proba_browser_l19.py` (faptele, rerulat); `_proba\numara_cuvinte.py` → 0 (textul pașilor 69-99 de cuvinte, „Uite cum” ≤ 44).
+- `learninghub_date_personale.py` → 0. `activitate.py lista` după probe: niciun elev de probă (toate cererile spre exterior oprite).
+
+## Ce n-am putut verifica / alegeri de semnalat
+1. **Edge real** n-a fost pornit: tot ce spune lecția despre pagină e probat în Chromium 148, motorul lui (A27, nesigur).
+2. **Notepad real** n-a fost pornit: gesturile din laborator (clic în etichetă, tastarea stilului, Deschideți / Salvați ca) vin din lecțiile 14-16 (A26, preluat). Rezultatul lor în pagină e probat.
+3. **Aranjamentul tastaturii din fiecare laborator** nu-l știu: lecția dă și Română (Standard), și americană (A04).
+4. **Telefonul:** „pe un telefon s-ar putea să lipsească [Verdana]: atunci vezi rezerva” — formulat prudent, neprobat pe un telefon (A09).
+5. **Contrastul** (schimbat la reparația J1, vezi mai jos): simulatorul judecă după **regula lecției, raport ≥ 3 la tot textul**. E un criteriu al lecției, nu o regulă a browserului: browserul desenează orice culori. (Înainte: WCAG 2 AA, 4,5 / 3 la litere mari, ceea ce respingea roșul pe alb, 4,0, deși lecția îl predă.)
+6. **Hexazecimalul** (`#000080`) e doar pomenit în „Uite cum” (îl vor vedea în paginile altora), nu cerut și nu verificat la întrebări. **`<b>` / `<i>`** nu sunt predate (aceeași formă ca `<strong>` / `<em>`); simulatorul le primește, ca browserul (judecă ce se vede).
+7. **`style=color:navy` fără ghilimele și fără spații** merge în browser; lecția cere ghilimelele (P6, punctul 2), iar simulatorul nu-l respinge (testele judecă pagina desenată).
+8. Fără `<!DOCTYPE html>`, `font-size: 20` (fără px) e primit de browser (modul vechi de compatibilitate). Toate paginile lecțiilor au DOCTYPE, deci lecția spune „fără px, browserul sare peste mărime” — adevărat pentru paginile lor.
+
+## Pentru componenta comună (nu sunt ale lecției; nu le-am atins)
+- **`editorweb.js`, `previewDoc`:** pune `body{background:#fff}`. În browserul adevărat `<body>` n-are fundal; dacă o pagină pune `background-color` pe `<html>` (nu pe `<body>`), browserul adevărat colorează toată fereastra, iar simulatorul arată o cutie albă peste ea. Lecția 19 pune fundalul doar pe `<body>`, deci nu se vede abaterea. Propunere: `body{background:transparent}` + `html{background:#fff}`.
+- **`editorweb.js`, `corecteaza`:** `<font>` și `<center>` nu sunt în lista `STIUTE`, deci scheletul „nu e în ordine”, deși browserul le desenează. Lecția nu le predă (învechite). De la reparația J1, extensia lecției (`editorweb-stil.js`) spune mesajul adevărat („`<font>` e o etichetă veche… azi cu `style`”), înaintea celui de schelet; testul „Scheletul a rămas întreg” pică în continuare (componenta comună), iar lecția oricum cere `style`.
+- **`editorweb.js`, `previewDoc`, DOCTYPE:** pune mereu `<!doctype html>`. Fără DOCTYPE, browserul adevărat trece pe reguli vechi și primește `font-size: 20` ca 20px (probat, A32); desenul simulat îl sare. Nu se vede în lecție: fără DOCTYPE pică testul de schelet, iar extensia spune întâi „Lipsește primul rând…”. Propunere: `previewDoc` să păstreze lipsa DOCTYPE-ului.
+- **Motorul:** firul de navigare de sus are ținte sub 32 px (98×23, 31×23, 76×23, 52×23 — `iesire_gesturi.txt`), ca la VIII/14-17.
+
+## Atenție pentru judecător
+- P4 are două sub-idei legate („tot paragraful” = aliniere / „câteva cuvinte” = strong, em, span); am preferat-o unui al 6-lea pas (standardul cere 3-5). De la reparația J1: două subtitluri, `span` doar numit (exersat doar opțional), „Încearcă” numerotat 1 / 2; textul are 88 de cuvinte.
+- Testele cu `lizibil` (contrastul) — pragul e regula lecției (raport ≥ 3 la tot textul), nu o regulă a browserului (punctul 5 de mai sus).
+- „Uite cum” are codul rupt pe rânduri (Enter în etichetă = spațiu, din lecția 16) ca să încapă la 390 px; „Încearcă” cere stilul pe același rând cu eticheta.
+
+## Reparațiile după judecata 1 (24.10.2026)
+Autor proaspăt, după judecățile opus (`_verificare\judecator1.md`, 0 / 0 / 7 MINOR) și sonnet (`_verificare\ab_sonnet\judecator1.md`, 0 / 2 MAJOR / 5 MINOR) și punctele dirijorului (`m3_noapte_23_10\prompturi\r1_viii19.md`). **Registrul, punct cu punct (literă, gravitate, cine, citat, reparația, locul, starea, proba): `_verificare\registru_j1.md`** — 14 puncte (A-N), toate REPARATE. Copia dinainte: `_proba\inainte_r1\`. Proba fiecărei litere: `_proba\proba_reparatii.py` (1280 px cu mouse și taste, 390 px cu atingere, rețeaua blocată, `ctx.close()`), ieșirea `_proba\proba_reparatii_3.txt`.
+
+**Ce s-a schimbat în lecție**
+- **A** „Uite cum” nu mai taie nimic pe telefon: desenul (`EWS.randare`) își potrivește singur înălțimea după pagina desenată (la 390 px, P5: 171 px; la 1280 px: 116 px), și după rotire / micșorare.
+- **B** P4: două subtitluri („Tot paragraful.” / „Doar câteva cuvinte.”), „Încearcă” numerotat (1 aliniere, 2 `<strong>`); `<em>` predat și exersat la „Încă un exercițiu”; `<span>` doar numit. P5: „Încearcă” obligatoriu = fundal bleumarin, apoi litere albe, amândouă scrise de elev în `<body>` (vechiul exercițiu cu galben-deschis a trecut la „Încă un exercițiu”). Î3 cere acum doar ce s-a exersat obligatoriu: alinierea unui paragraf + `<strong>` pe un cuvânt. Î2 (`color` în `<body>`) e soră cu „Încearcă” din P5. Nicio parte obligatorie nu mai cere `<span>` sau `<em>` (probat pe configurația motorului). Obiectivul și diploma spun doar ce s-a exersat obligatoriu.
+- **C** Contrastul: **regula lecției = raport ≥ 3 la tot textul.** De ce 3 și nu culori mai închise peste tot: lecția predă `red` (P2, P4, P6), iar roșul pe alb (4,0) și pe galben-deschis (3,92) se citesc; toate perechile „rele” pe care lecția le dă ca exemplu rămân sub 3 (galben/alb 1,07; albastru/negru 2,44; roșu/verde 1,28; portocaliu/galben 1,84; verde/roșu 1,28; bleumarin/negru 1,31; legătura albastră pe bleumarin 1,70). 3:1 e și pragul WCAG 2 pentru textul mare. Matricea 17 culori × 14 fundaluri (ca judecătorul opus), pe titlu și pe un paragraf obișnuit: 50 de perechi din 238 respinse, toate cu raportul sub 3 — portocaliu și darkorange peste tot, roșu / gri / oliv pe fundaluri medii (lightblue, lightgreen, lightgray, pink, lightpink, lightskyblue), teal / green / crimson pe 1-2 dintre ele; nicio culoare închisă (navy, darkgreen, maroon, darkblue, darkred, black) respinsă. Detaliul: `_proba\proba_reparatii.json` (`note.C_matrice`).
+- **D** Î5: „în primul a scris mărimea de 24px, iar în al doilea culoarea roșie” → „Negru, cu literele de 24px” (probat în Chromium, A28).
+- **E** Laborator: pasul 2 primește pagina de la lecția 17 (sau 18, 16, 15); pasul 9 spune condiționat „Dacă pagina ta are o legătură (pagina de la lecția 18 are una)…”. Pașii 4-9 probați și pe pagina lecției 18 (`COD_L18.lab1`).
+- **F** Numele fișierului, ca la lecția 17: „numele, prenumele, clasa ta și lectia19, cu .html la sfârșit, de exemplu Popescu_Ana_8A_lectia19.html (în locul lui 8A scrii clasa ta)”.
+- **G** „Repară-o.” · **H** P5 fără „dacă poți, pe telefon” · **I** P3 primește Verdana, Arial sau Georgia (și două fonturi), cu rezerva la sfârșit · **J** P5: explicația spune „literele deschise pe bleumarin” (primește orice culoare deschisă) · **K** `<font>` / `<center>`: mesaj adevărat („etichetă veche… azi cu style”) · **L** fără `<!DOCTYPE html>`: mesajul spune întâi rândul lipsă, nu „scrie px” (fără DOCTYPE browserul primește `font-size: 20`, A32) · **M** ghilimelele „strâmbe” (“ ” „) sunt numite în mesaj (A30) · **N** durata refăcută (≈ 41-42 de minute din 50, estimare).
+
+**Pentru lecția următoare (VIII/21) — API-ul `EditorWebStil` după reparație** (scris și în `m3_noapte_23_10\granite\viii_l19.md`): semnăturile vechi rămân; schimbări de comportament:
+1. `lizibil(src, opt?)` — pragul implicit e acum **3 la tot textul** (`EditorWebStil.PRAG_LECTIE`); `opt.wcag: true` dă vechiul 4,5 / 3; `opt.prag` = alt prag fix.
+2. `randare(cod, inaltime, eticheta?)` — `inaltime` e **minimul**; desenul crește cât pagina; iframe `sandbox="allow-same-origin"` (tot FĂRĂ scripturi și fără cereri).
+3. `mesajText` / `cuDiagnostic` — mesaje noi, în ordinea: `<!DOCTYPE html>` lipsă (primul), ghilimele „strâmbe” (în bucla etichetelor cu `style`), `<font>` / `<center>` (înaintea perechilor `</strong>` …). Restul ordinii neschimbat.
+
+**Porțile, după ultima schimbare:** vezi „Porțile și probele” mai sus (actualizat cu cifrele de acum) și registrul.

@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Formatare la nivel de text, paragraf și fundal</title>
+<meta name="description" content="Clasa a VIII-a, lecția 19: atributul style, cu proprietate și valoare; culoarea, mărimea și fontul literelor; alinierea paragrafului; câteva cuvinte îngroșate, înclinate sau colorate; fundalul paginii și contrastul; cum găsești o greșeală din stil, în Notepad.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,600;7..72,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Fira+Mono:wght@400;500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#F3F0EA; --paper:#FFFFFF; --paper2:#F5F1E8; --line:#D9D0BF;
+  --ink:#1D1B2E; --ink2:#55506A; --accent:#22306E; --accentInk:#FFFFFF; --sel:#DCE1F5;
+  --mark:#FFE08A; --markInk:#1D1B2E; --ok:#17703F; --okbg:#E1F2E6; --bad:#B0302A; --badbg:#FAE3E1;
+  --fd:"Literata",Georgia,serif; --fb:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif; --fm:"Fira Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#13121A; --paper:#1C1B26; --paper2:#242331; --line:#3B3950;
+  --ink:#ECEAF4; --ink2:#AAA6C0; --accent:#A9B8FF; --accentInk:#13121A; --sel:#2B3157;
+  --mark:#EBCB55; --markInk:#1D1B2E; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}}
+:root[data-theme="dark"]{
+  --desk:#13121A; --paper:#1C1B26; --paper2:#242331; --line:#3B3950;
+  --ink:#ECEAF4; --ink2:#AAA6C0; --accent:#A9B8FF; --accentInk:#13121A; --sel:#2B3157;
+  --mark:#EBCB55; --markInk:#1D1B2E; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}
+/* tema: fâșia de sus = câteva stiluri scrise, fiecare cu mostra lui de culoare */
+.banda{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-family:var(--fm);font-size:.72rem;color:var(--ink2);padding:3px 8px;border-bottom:1px dashed var(--line)}
+.banda .sw{display:inline-block;width:.9em;height:.9em;border:1px solid var(--line);border-radius:2px;vertical-align:-.12em;margin-right:4px}
+.banda b{font-family:var(--fb);color:var(--ink)}
+.banda i{font-family:var(--fb);color:var(--ink)}
+h1,h2{letter-spacing:-.01em}
+pre.rand{font-family:var(--fm);background:var(--paper2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:.4em 0;white-space:pre;overflow-x:auto;tab-size:8;-moz-tab-size:8;line-height:1.35}
+.captura figcaption a{display:inline-block;padding:6px 0}
+#body .ew .lv .br-corp{min-height:15em}   /* pagina desenată alături de cod: titlul și două paragrafe se văd fără derulare, și pe telefon */
+@media (max-width:480px){pre.rand{tab-size:3;-moz-tab-size:3;font-size:.68rem;padding:6px}}   /* pe telefon Tab-ul se arată mai îngust, iar rândurile de 41 de semne încap la 390 px */
+@media (max-width:379px){pre.rand{font-size:.6rem}}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<!-- simulatorul „Notepad + browser” (proprietar: lecția VIII/14) + extensia lecției 15 (Tab, verificările scheletului)
+     + extensia lecției 19 (stilurile CALCULATE de browser, contrastul, greșeala din stil spusă, desenul pentru „Uite cum”).
+     Probele: _proba/proba_browser_l19.json (Chromium 148, fișiere locale scrise ca de Notepad). -->
+<script src="../../_sim/editorweb.js"></script>
+<script src="../../_sim/editorweb-schelet.js"></script>
+<script src="../../_sim/editorweb-stil.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={formatare:'Operații de formatare la nivel de text, paragraf, fundal'};
+
+const IMG='../m3-l19/img/';
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const X=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const J=a=>a.join('\n');
+const PRE=s=>`<pre class="rand">${X(s)}</pre>`;
+const ES=window.EditorWebSchelet, EWS=window.EditorWebStil;
+const LV=S=>S.live.text;
+const DT='<!DOCTYPE html>', HL='<html lang="ro">', H='\t\t';
+/* scheletul de la lecția 15, indentat; `body` = eticheta <body> (cu stilul ei, dacă e cazul) */
+const SCH=(titlu,corp,body)=>J([DT,HL,'\t<head>','\t\t<meta charset="utf-8">','\t\t<title>'+titlu+'</title>','\t</head>','\t'+(body||'<body>'),...corp,'\t</body>','</html>']);
+const T1='Concursul de robotică', PA='Sâmbătă, la ora 10, în laboratorul de informatică.', PB='Înscrierile se fac până joi, la diriginte.',
+      SEMN='Clubul de robotică', ATN='Atenție! Aduceți și ecusonul.';
+const h1=a=>H+'<h1'+(a?' style="'+a+'"':'')+'>'+T1+'</h1>';
+const p=(t,a)=>H+'<p'+(a?' style="'+a+'"':'')+'>'+t+'</p>';
+const B=a=>'<body style="'+a+'">';
+const C='Concursul';
+
+/* toate codurile din pagină (aceleași texte sunt deschise în Chromium: _proba/proba_coduri_l19.py) */
+const COD={
+  p2_bloc:'<h1 style="color: navy;">Robotică</h1>',
+  p2_ex:SCH(C,[H+'<h1 style="color: navy;">Robotică</h1>',p('Sâmbătă, la ora 10.')]),
+  p2_start:SCH(C,[h1(),p(PA)]),
+  p2_rez:SCH(C,[h1('color: navy;'),p(PA)]),
+  p2_gresit:SCH(C,[h1('color = navy;'),p(PA)]),
+  p2b_start:SCH(C,[h1('color: navy;'),p(PA)]),
+  p2b_rez:SCH(C,[h1('color: navy;'),p(PA,'color: green;')]),
+  p2b_gresit:SCH(C,[h1('color: navy;'),p(PA,'color: verde;')]),
+  p3_bloc:J(['<p style="font-size: 20px;','\tfont-family: Verdana, sans-serif;">','\tSâmbătă, la ora 10.','</p>']),
+  p3_ex:SCH(C,[H+'<h1 style="color: navy;">Robotică</h1>',H+'<p style="font-size: 20px;',H+'\tfont-family: Verdana, sans-serif;">',H+'\tSâmbătă, la ora 10.',H+'</p>',p('Înscrierile se fac până joi.')]),
+  p3_start:SCH(C,[h1('color: navy;'),p(PA)]),
+  p3_rez:SCH(C,[h1('color: navy;'),p(PA,'font-size: 20px; font-family: Verdana, sans-serif;')]),
+  p3_gresit:SCH(C,[h1('color: navy;'),p(PA,'font-size: 20 px; font-family: Verdana, sans-serif;')]),
+  p3b_start:SCH(C,[h1('color: navy;'),p(PA,'font-size: 20px font-family: Georgia, serif;')]),
+  p3b_rez:SCH(C,[h1('color: navy;'),p(PA,'font-size: 20px; font-family: Georgia, serif;')]),
+  p4_bloc:J(['<h1 style="text-align: center;">','\tRobotică','</h1>','<p>Vino <strong>la ora 10</strong>.</p>','<p>Până','\t<em>joi</em>.','</p>']),
+  p4_ex:SCH(C,[H+'<h1 style="text-align: center;">',H+'\tRobotică',H+'</h1>',H+'<p>Vino <strong>la ora 10</strong>.</p>',H+'<p>Până',H+'\t<em>joi</em>.',H+'</p>']),
+  p4_start:SCH(C,[h1(),p(PA)]),
+  p4_rez:SCH(C,[h1('text-align: center;'),H+'<p>Sâmbătă, <strong>la ora 10</strong>, în laboratorul de informatică.</p>']),
+  p4_gresit:SCH(C,[h1('text-align: center;'),H+'<p>Sâmbătă, <strong>la ora 10, în laboratorul de informatică.</p>']),
+  p4b_start:SCH(C,[h1(),p(PB)]),
+  p4b_rez:SCH(C,[h1(),H+'<p>Înscrierile se fac până <span style="color: red;">joi</span>, la diriginte.</p>']),
+  p4b_gresit:SCH(C,[h1(),p(PB,'color: red;')]),
+  p4c_start:SCH(C,[h1(),p(PA)]),
+  p4c_rez:SCH(C,[h1(),H+'<p>Sâmbătă, la ora 10, în <em>laboratorul de informatică</em>.</p>']),
+  p4c_gresit:SCH(C,[h1(),H+'<p>Sâmbătă, la ora 10, în <em>laboratorul de informatică.</p>']),
+  p4d_start:SCH(C,[h1(),p(PA),p(SEMN)]),
+  p4d_rez:SCH(C,[h1(),p(PA),p(SEMN,'text-align: right;')]),
+  p4d_gresit:SCH(C,[h1(),p(PA),p(SEMN,'text-align: dreapta;')]),
+  p5_body1:J(['<body','\tstyle="background-color: lightyellow;">']),
+  p5_body2:J(['<body style="background-color: navy;','\tcolor: white;">']),
+  p5_v1:SCH(C,[h1('color: navy;'),p(PA)],'<body\n\t\tstyle="background-color: lightyellow;">'),
+  p5_v2:SCH(C,[h1('color: yellow;'),p(PA)],'<body style="background-color: navy;\n\t\tcolor: white;">'),
+  p5_start:SCH(C,[h1(),p(PA)]),
+  p5_rez:SCH(C,[h1(),p(PA)],B('background-color: navy; color: white;')),
+  p5_gresit:SCH(C,[h1(),p(PA)],'<body style="background-color: navy;" style="color: white;">'),
+  p5b_start:SCH(C,[h1('color: navy;'),p(PA),p(ATN)]),
+  p5b_rez:SCH(C,[h1('color: navy;'),p(PA),p(ATN,'background-color: yellow;')]),
+  p5b_gresit:SCH(C,[h1('color: navy;'),p(PA),p(ATN,'color: yellow;')]),
+  p5c_start:SCH(C,[h1('color: navy;'),p(PA)]),
+  p5c_rez:SCH(C,[h1('color: navy;'),p(PA)],B('background-color: lightyellow;')),
+  p5c_gresit:SCH(C,[h1('color: navy;'),p(PA)],B('background-color: light yellow;')),
+  p6_bloc:J(['<p style="color: red font-size: 20px;">','\tVino la ora 10.','</p>']),
+  p6_ex:SCH(C,[H+'<h1>Robotică</h1>',H+'<p style="color: red font-size: 20px;">',H+'\tVino la ora 10.',H+'</p>']),
+  p6_start:SCH(C,[h1('color = navy; text-align: centre;'),p(PA)]),
+  p6_rez:SCH(C,[h1('color: navy; text-align: center;'),p(PA)]),
+  p6_gresit:SCH(C,[h1('color: navy; text-align: centre;'),p(PA)]),
+  p6b_start:SCH(C,[h1(),H+'<p style="color: green;" style="font-size: 20px;">'+PA+'</p>']),
+  p6b_rez:SCH(C,[h1(),p(PA,'color: green; font-size: 20px;')]),
+  p6c_start:SCH(C,[H+'<h1 style="color: navy;>'+T1+'</h1>',p(PA)]),
+  p6c_rez:SCH(C,[h1('color: navy;'),p(PA)]),
+  at_start:SCH(T1,[h1(),p(PA),p(PB),p(SEMN)]),
+  at_rez:SCH(T1,[h1('color: navy; text-align: center;'),p(PA,'font-size: 20px; font-family: Verdana, sans-serif;'),H+'<p>Înscrierile se fac până <strong>joi</strong>, la diriginte.</p>',p(SEMN,'text-align: right;')],B('background-color: lightyellow;')),
+  at_gresit:SCH(T1,[h1('color: yellow; text-align: center;'),p(PA,'font-size: 20px; font-family: Verdana, sans-serif;'),H+'<p>Înscrierile se fac până <strong>joi</strong>, la diriginte.</p>',p(SEMN,'text-align: right;')],B('background-color: lightyellow;')),
+  at2_start:SCH(T1,[h1('color = navy; text-align: center;'),p(PA,'font-size: 20 px; font-family: Verdana, sans-serif;'),H+'<p>Înscrierile se fac până <strong>joi, la diriginte.</p>',p(SEMN,'text-align: right;')],B('background-color: lightyellow;')),
+  q2_start:SCH(C,[h1(),p(PA),p(PB)]),
+  q2_rez:SCH(C,[h1(),p(PA),p(PB)],B('color: navy;')),
+  q2_gresit:SCH(C,[h1('color: navy;'),p(PA),p(PB)]),
+  q3_start:SCH(C,[h1(),p(ATN),p(PB)]),
+  q3_rez:SCH(C,[h1(),H+'<p style="text-align: center;"><strong>Atenție!</strong> Aduceți și ecusonul.</p>',p(PB)]),
+  q3_gresit:SCH(C,[h1(),H+'<p style="text-align: center;"><strong>Atenție! Aduceți și ecusonul.</strong></p>',p(PB)]),
+  /* laboratorul */
+  lab_h1:'<h1 style="color: navy; text-align: center;">Orarul meu</h1>',
+  lab_body1:'<body style="background-color: lightyellow;">',
+  lab_p:'<p style="font-size: 20px; font-family: Verdana, sans-serif;">Pagina mea are <strong>stil</strong>.</p>',
+  lab_body2:'<body style="background-color: navy; color: white;">',
+  lab_scurt:SCH('Pagina mea',[H+'<h1>Pagina mea</h1>',H+'<p>Sunt în clasa a VIII-a.</p>'])
+};
+window.COD_L19=COD;
+const ANA='Popescu_Ana_8A_lectia19.html';
+const AT={dosar:'Documente',model:'lectia19',ext:'html'};
+const SRC=(S,U)=>ES.src(S,U,AT);
+
+/* testele comune */
+const ORD={ce:'Scheletul paginii a rămas întreg și în ordine',fn:S=>ES.ordine(LV(S)),msg:'Nu șterge și nu muta rândurile scheletului: &lt;head&gt;, &lt;/head&gt;, &lt;body&gt;, &lt;/body&gt;, &lt;/html&gt;. Fiecare etichetă are perechea ei.'};
+const PER={ce:'Fiecare &lt;strong&gt;, &lt;em&gt; și &lt;span&gt; are perechea ei',fn:S=>EWS.perechi(LV(S)),msg:'Închide eticheta chiar după cuvintele tale: &lt;strong&gt;…&lt;/strong&gt;.'};
+const TP_={};const TP=k=>(k in TP_)?TP_[k]:(TP_[k]=EWS.textPagina(COD[k]));
+const ACEL=k=>({ce:'Textul paginii a rămas același',fn:S=>EWS.textPagina(LV(S))===TP(k),msg:'Schimbi doar etichetele, nu textul. Dacă ai șters sau ai mutat o literă, pune-o la loc.'});
+const NEGRU='black', ALB='rgb(255, 255, 255)';
+const negru=(s,sel,i)=>EWS.aceeasiCuloare(EWS.stil(s,sel,'color',i),NEGRU);
+/* „tot textul se citește”: mesajul spune textul care abia se vede */
+function LIZ(ce,sursa,cond,msgCond){let ult=null,motiv='';return {ce,faraOraData:true,fn:(S,U)=>{const s=sursa(S,U);ult=null;motiv='';if(!s){motiv='lipsa';return false}
+  if(cond&&!cond(s)){motiv='cond';return false}const r=EWS.lizibil(s);ult=r;return r.ok},
+  get msg(){if(motiv==='cond')return msgCond;if(ult&&!ult.ok){const x=ult.rau[0];return `„${X(x.text)}” abia se vede pe fundalul de sub el. Alege litere mai închise pe fundal deschis sau litere deschise pe fundal închis.`}return msgCond||'Salvează pagina (Ctrl+S).'}}}
+/* P5, „Încearcă” (obligatoriu; reparația J1, B + J): fundal bleumarin și litere deschise, amândouă scrise de elev în <body> */
+function LIZ_P5(){return {t:'editorweb',mod:'live',
+  q:'Dă paginii fundal bleumarin și litere albe, totul din eticheta <code>&lt;body&gt;</code>. <b>1.</b> Chiar după <code>body</code>, apasă <kbd>Spațiu</kbd> și scrie <code>style="background-color: navy;"</code>. În browser, literele negre abia se văd. <b>2.</b> În același <code>style</code>, după <code>navy;</code>, apasă <kbd>Spațiu</kbd> și scrie <code>color: white;</code>.',
+  start:{text:COD.p5_start,fisier:ANA},
+  teste:EWS.cuDiagnostic([{ce:'Toată pagina are fundal bleumarin (navy)',fn:S=>EWS.aceeasiCuloare(EWS.fundalPagina(LV(S)),'navy'),msg:'În eticheta &lt;body&gt;: style="background-color: navy;".'},
+   LIZ('Tot textul se citește: litere deschise pe fundal bleumarin',S=>LV(S),s=>EWS.aceeasiCuloare(EWS.fundalPagina(s),'navy'),'Întâi fundalul: în &lt;body&gt;, style="background-color: navy;".'),
+   {ce:'Culoarea literelor e scrisă o singură dată, în &lt;body&gt;',fn:S=>{const d=EWS.declaratii(LV(S)).filter(x=>x.prop==='color'&&x.valid);return d.length===1&&d[0].tag==='body'},msg:'În același style din &lt;body&gt;, după navy;, scrie color: white;.'},
+   ACEL('p5_start'),ORD]),
+  rezolvare:[['scrie',COD.p5_rez]],gresit:[['scrie',COD.p5_gresit]],
+  ajutor:'Un singur <code>style</code> în <code>&lt;body&gt;</code>, cu două proprietăți: <code>background-color: navy; color: white;</code>.',
+  why:'Pus în <code>&lt;body&gt;</code>, <code>color</code> schimbă toate literele din pagină: literele deschise pe bleumarin au contrast mare.'}}
+
+const PROVOCARE=[
+  'Pornește <b>Notepad</b>: tasta Windows, scrie <b>Notepad</b>, apoi <kbd>Enter</kbd>. Dacă se deschide cu fila unui coleg, nu scrie în ea: apasă <b>+</b> (filă nouă). Dacă Notepad nu are file (pe Windows 10), lucrezi direct în fereastră.',
+  `Deschide pagina ta de la lecția 17 (sau de la lecția 18, 16 sau 15): <b>Fișier › Deschideți</b> (Open), sau <kbd>Ctrl</kbd>+<kbd>O</kbd>; în stânga, <b>Documente</b>. Dacă nu-ți vezi pagina în listă, alege jos, lângă <b>Nume fișier</b>, <b>Toate fișierele (*.*)</b>. Clic pe pagina ta, de exemplu <code>Popescu_Ana_8A_lectia17.html</code>, apoi <b>Deschidere</b> (Open). Dacă n-o găsești (ai lucrat pe alt calculator), rămâi în fila nouă și scrie pagina scurtă de mai jos, cu Tab-urile ei:${PRE(COD.lab_scurt)}`,
+  'Salvează pagina cu nume nou, ca cea veche să rămână neschimbată: <b>Fișier › Salvați ca</b> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>). În <b>Documente</b>, la <b>Nume fișier</b>, numele, prenumele, clasa ta și lectia19, cu <b>.html</b> la sfârșit, de exemplu <code>Popescu_Ana_8A_lectia19.html</code> (în locul lui 8A scrii clasa ta); <b>Toate fișierele (*.*)</b>; <b>UTF-8</b>; <b>Salvare</b>. Dacă apare „… există deja. Îl înlocuiți?”, apasă <b>Nu</b> (No) și pune o cifră la sfârșitul numelui, înainte de .html: <code>Popescu_Ana_8A_lectia19_2.html</code>. Verifică fila din Notepad: numele are <b>lectia19</b>. De acum lucrezi doar în ea.',
+  'Titlul: în eticheta <code>&lt;h1&gt;</code>, dă clic chiar după <code>h1</code>, apasă <kbd>Spațiu</kbd> și scrie <code>style="color: navy; text-align: center;"</code>. Textul titlului tău rămâne cum era. De exemplu, rândul devine <code>&lt;h1 style="color: navy; text-align: center;"&gt;Orarul meu&lt;/h1&gt;</code>. Pe tastatura Română (Standard), <code>:</code> e <kbd>Shift</kbd> + tasta cu punctul, iar <code>;</code> e <kbd>Shift</kbd> + tasta cu virgula. Apoi <kbd>Ctrl</kbd>+<kbd>S</kbd>.',
+  'Deschide <b>Explorer</b> (File Explorer): tasta Windows + <kbd>E</kbd>. Clic pe <b>Documente</b> în stânga, apoi dublu-clic pe pagina ta cu lectia19. În browser, titlul trebuie să fie bleumarin și la mijlocul ferestrei. Dacă nu e, caută greșeala ca la pasul 6 din lecție (cele patru verificări), apoi <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad și <kbd>F5</kbd> în browser.',
+  'Fundalul: în Notepad, în eticheta <code>&lt;body&gt;</code>, dă clic chiar după <code>body</code>, apasă <kbd>Spațiu</kbd> și scrie <code>style="background-color: lightyellow;"</code>. <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad, <kbd>F5</kbd> în browser: toată fereastra e galben-deschis, până jos.',
+  'Un paragraf nou: dă clic la sfârșitul rândului cu <code>&lt;/h1&gt;</code>, apasă <kbd>Enter</kbd>, apoi <kbd>Tab</kbd> de câte ori are și rândul cu <code>&lt;h1&gt;</code>, și scrie <code>&lt;p&gt;Pagina mea are &lt;strong&gt;stil&lt;/strong&gt;.&lt;/p&gt;</code>. Apoi, în eticheta acestui <code>&lt;p&gt;</code>, dă clic chiar după <code>p</code>, apasă <kbd>Spațiu</kbd> și scrie <code>style="font-size: 20px; font-family: Verdana, sans-serif;"</code>. <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>F5</kbd>: sub titlu apare propoziția, mai mare, cu alt font, iar cuvântul <b>stil</b> e îngroșat.',
+  'Experimentul: în eticheta <code>&lt;h1&gt;</code>, șterge cele două puncte de după <code>color</code>. <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>F5</kbd>: titlul e iar negru, dar tot la mijloc. Browserul n-a scris nicio eroare: a sărit doar peste culoare. Pune <code>:</code> la loc, <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>F5</kbd>: titlul e iar bleumarin.',
+  `<b>Dacă mai ai timp</b> (altfel treci la pasul următor), a doua variantă: în stilul lui <code>&lt;body&gt;</code>, schimbă <code>lightyellow;</code> în <code>navy; color: white;</code>, ca eticheta să fie <code>&lt;body style="background-color: navy; color: white;"&gt;</code>. <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>F5</kbd>: textul e alb pe bleumarin, dar titlul nu se mai vede, pentru că e bleumarin pe bleumarin. În <code>&lt;h1&gt;</code> schimbă <code>navy</code> în <code>yellow</code>, apoi <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>F5</kbd>. Dacă pagina ta are o legătură (pagina de la lecția 18 are una), ea rămâne albastră (sau mov, dacă ai mai deschis-o) și abia se vede pe bleumarin: atunci pune înapoi fundalul <code>lightyellow</code> și culoarea <code>navy</code> a titlului. Păstrează varianta care se citește mai ușor și salvează.`,
+  'La sfârșit, calculatorul rămâne curat pentru colegul următor: în Notepad închide pe rând <b>toate</b> filele, din meniu: <b>Fișier › Închideți fila</b>, până se închide Notepad. Dacă la fila unui coleg te întreabă „Salvați modificările…?”, apasă <b>Nu salvați</b>: ce a salvat el în Documente rămâne neatins. Nu închide Notepad cu X-ul ferestrei: îi redeschide colegului filele. Dacă Notepad nu are file (Windows 10), după ce ai salvat îl închizi cu X. În browser închide fila paginii. Pagina ta rămâne în Documente.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m3_l19',
+  mod:'lectie',
+  titlu:'Formatare la nivel de text, paragraf și fundal',
+  marca:'Lecția <b>19</b> · Pagini web · a VIII-a',
+  h1:'Formatare la nivel de text, paragraf și fundal',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U2', unitateTitlu:'Pagini web',
+  competente:['CS.1.2','CS.3.2'], lectii:'19',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.2, CS.3.2 · unitatea VIII-U2 „Pagini web” · lecția 19 · conținutul: „Operații de formatare la nivel de text, paragraf, fundal”',
+  intro:`<p>Lecția 19. Afli cum schimbi felul în care arată pagina ta: culoarea, mărimea și fontul literelor, locul paragrafului, câteva cuvinte îngroșate și culoarea din spate. Le scrii în Notepad, cu atributul <code>style</code>, și le vezi în browser.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 15, „Elemente de structură…”: scheletul paginii, <code>&lt;body&gt;</code>, rândurile mutate la dreapta cu <kbd>Tab</kbd>;</li>
+<li>lecția 16, „Conținutul paginii…”: paragraful <code>&lt;p&gt;</code>, atributul (ca <code>src="…"</code> la imagine), <b>Fișier › Deschideți</b>;</li>
+<li>lecția 14, „Cum e făcută o pagină web…”: Notepad, <b>Salvați ca</b> .html (Toate fișierele, UTF-8), deschiderea din Explorer, <kbd>F5</kbd>, Fișier › Închideți fila;</li>
+<li>lecția 17, „Tabele și liste…”: pagina ta cu orarul, pe care o formatezi în laborator.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”, într-un Notepad și un browser simulate în pagină. Apoi atelierul, apoi același lucru la calculatorul din laborator, iar la sfârșit 5 întrebări.</p>
+<p><b>Obligatoriu:</b> primul „Încearcă tu” din fiecare pas, primul atelier, laboratorul (fără pasul „Dacă mai ai timp”) și cele 5 întrebări. Butoanele „Încă un exercițiu” și al doilea atelier sunt pentru cine termină mai repede.</p>
+<p><b>Când mai sunt 10 minute din oră</b> și n-ai terminat laboratorul: salvează (<kbd>Ctrl</kbd>+<kbd>S</kbd>), închide filele din Notepad ca la ultimul pas al laboratorului și treci la cele 5 întrebări.</p>`,
+  banda:'<span><span class="sw" style="background:#000080"></span>color: navy;</span><span><span class="sw" style="background:#ffffe0"></span>background-color: lightyellow;</span><span>text-align: center;</span><span><b>strong</b> · <i>em</i></span>',
+  tipuri:{editorweb:EditorWeb},
+  nivele:[
+  {t:'Formatare la nivel de text, paragraf și fundal', final:true, lectii:[19], continuturi:[P.formatare],
+   obiectiv:'schimbi cu atributul style culoarea, mărimea și fontul literelor, alinierea paragrafului și fundalul paginii, îngroși doar câteva cuvinte, alegi culori care se citesc ușor și repari un stil scris greșit.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>Pe plăcuța unei străzi, literele sunt albe, mari și groase, pe un fundal albastru-închis. Le citești de departe. Dacă ar fi galbene pe un fundal alb, n-ai mai citi nimic, deși textul ar fi același.</p>
+<p>Culoarea și mărimea literelor, fontul, locul textului și culoarea din spate schimbă cum arată textul, nu ce scrie. Asta e <mark>formatarea</mark>. Ai făcut-o în Excel, la lecția 6, și în Word, în clasa a VII-a. Azi o faci în pagina web.</p>
+${fig(IMG+'placuta-strada.webp',800,378,'Plăcuța unei străzi din București: litere albe, mari și groase, pe fundal albastru-închis, prinsă pe un gard de beton','Plăcuța unei străzi din București: litere albe, mari, pe fundal închis, se citesc de departe. Fotografie: Neoclassicism Enthusiast, <a href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noopener">CC BY-SA 4.0</a>, <a href="https://commons.wikimedia.org/wiki/File:Street_sign_of_Strada_St%C4%83nile%C8%99i_in_Bucharest,_Romania.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (micșorată, aceeași licență).')}`},
+
+    /* ---------- PASUL 1: atributul style, culoarea ---------- */
+    {t:'Atributul style: culoarea literelor',
+     text:`<p>Formatarea o scrii în eticheta de deschidere, în <mark>atributul style</mark>. Un atribut știi de la lecția 16: <code>src="…"</code>. Între ghilimelele lui <code>style</code> scrii:</p>
+<ul><li>întâi <mark>proprietatea</mark>, adică ce schimbi: <code>color</code>, culoarea literelor;</li>
+<li>apoi două puncte, <code>:</code>;</li>
+<li>apoi <mark>valoarea</mark>, adică cum vrei să fie: <code>navy</code> (bleumarin), <code>red</code>, <code>green</code>;</li>
+<li>la sfârșit, punct și virgulă, <code>;</code>.</li></ul>
+<p>Numele se scriu în engleză. Dacă greșești unul, browserul nu-ți spune nimic: sare peste el, iar literele rămân negre.</p>`,
+     exemplu:`${PRE(COD.p2_bloc)}${EWS.randare(COD.p2_ex,110)}<p>Pe tastatura Română (Standard), <code>:</code> e <kbd>Shift</kbd> + tasta cu punctul, iar <code>;</code> e <kbd>Shift</kbd> + tasta cu virgula. Pe tastatura americană, amândouă sunt pe tasta de lângă L: <code>;</code> fără <kbd>Shift</kbd>, <code>:</code> cu <kbd>Shift</kbd>. Pe alte pagini vei vedea și coduri, ca <code>#000080</code>: tot bleumarin, scris altfel.</p>`,
+     altfel:`<p>E ca la o comandă de tort: „glazură: ciocolată; lumânări: 14;”. Întâi scrii ce alegi, apoi două puncte, apoi cum vrei să fie. Fiecare alegere se încheie cu punct și virgulă.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Colorează titlul în bleumarin. În eticheta <code>&lt;h1&gt;</code>, dă clic chiar după <code>h1</code>, înainte de <code>&gt;</code>, apasă <kbd>Spațiu</kbd> și scrie <code>style="color: navy;"</code>. Semnul <code>&gt;</code> rămâne la sfârșitul etichetei.',
+       start:{text:COD.p2_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'Titlul e bleumarin (navy)',fn:S=>EWS.are(LV(S),'h1',{color:'navy'}),msg:'În eticheta de deschidere a titlului: &lt;h1 style="color: navy;"&gt;.'},ACEL('p2_start'),ORD]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p2_gresit]],
+       ajutor:'Atributul stă în eticheta de deschidere, între <code>h1</code> și <code>&gt;</code>, cu un spațiu înainte: <code>&lt;h1 style="color: navy;"&gt;</code>.',
+       why:'Browserul a citit proprietatea <code>color</code> cu valoarea <code>navy</code> și a colorat literele titlului.'},
+     inca:[
+      {t:'choice',q:'Care stil face literele roșii?',o:['style="color: red;"','style="color = red;"','style="red: color;"','style="culoare: roșu;"'],ok:0,
+       ajutor:'Întâi proprietatea, apoi două puncte, apoi valoarea, toate în engleză.',why:'Proprietatea <code>color</code>, două puncte, valoarea <code>red</code>. Cu <code>=</code>, cu ordinea inversată sau cu nume românești, browserul sare peste stil, iar literele rămân negre.'},
+      {t:'editorweb',mod:'live',
+       q:'Titlul e deja bleumarin. Fă și paragraful verde (<code>green</code>): pune un <code>style</code> în eticheta <code>&lt;p&gt;</code>.',
+       start:{text:COD.p2b_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'Paragraful e verde (green)',fn:S=>EWS.are(LV(S),'p',{color:'green'}),msg:'În eticheta paragrafului: &lt;p style="color: green;"&gt;.'},{ce:'Titlul a rămas bleumarin',fn:S=>EWS.are(LV(S),'h1',{color:'navy'}),msg:'Stilul titlului rămâne cum era.'},ACEL('p2b_start'),ORD]),
+       rezolvare:[['scrie',COD.p2b_rez]],gresit:[['scrie',COD.p2b_gresit]],
+       ajutor:'La fel ca la titlu, dar în <code>&lt;p&gt;</code>, cu valoarea <code>green</code>.',
+       why:'Fiecare element își are stilul lui: titlul e bleumarin, paragraful e verde.'}
+     ]},
+
+    /* ---------- PASUL 2: mărimea și fontul ---------- */
+    {t:'Mărimea și fontul: două proprietăți',
+     text:`<p><code>font-size</code> e mărimea literelor: un număr lipit de <code>px</code> (pixeli), de exemplu <code>font-size: 20px;</code>. Un paragraf obișnuit are 16px.</p>
+<p><code>font-family</code> e fontul. Scrii unul sau două fonturi, cu virgulă între ele, și la sfârșit o <mark>rezervă</mark>: <code>font-family: Verdana, sans-serif;</code>. Browserul ia primul font pe care îl găsește pe calculator. Dacă nu-l găsește, folosește rezerva: <code>sans-serif</code> (litere fără „piciorușe”) sau <code>serif</code> (cu „piciorușe”, ca Times New Roman).</p>
+<p>Două proprietăți stau în același <code>style</code>, fiecare cu <code>;</code> după ea. Dacă rândul e prea lung, treci cu <kbd>Enter</kbd> pe rândul următor între două proprietăți, ca la lecția 16: browserul ia Enter-ul drept spațiu.</p>`,
+     exemplu:`${PRE(COD.p3_bloc)}${EWS.randare(COD.p3_ex,150)}<p>Primul paragraf e mai mare și are alt font; al doilea e cel obișnuit. Arial, Verdana și Georgia sunt pe calculatoarele cu Windows. Pe un telefon s-ar putea să lipsească: atunci vezi rezerva.</p>`,
+     altfel:`<p>E ca atunci când îi spui unui prieten: „Ia-mi o înghețată de vanilie. Dacă n-au, orice înghețată de fructe.” Vanilia e fontul ales, iar „orice înghețată de fructe” e rezerva: un fel întreg de fonturi, din care se găsește mereu unul.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Fă paragraful mai mare și schimbă-i fontul. În eticheta <code>&lt;p&gt;</code>, dă clic chiar după <code>p</code>, apasă <kbd>Spațiu</kbd> și scrie <code>style="font-size: 20px; font-family: Verdana, sans-serif;"</code>. În locul lui Verdana poți alege Arial sau Georgia.',
+       start:{text:COD.p3_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'Paragraful are literele de 20px',fn:S=>EWS.are(LV(S),'p',{'font-size':'20px'}),msg:'În &lt;p&gt;: font-size: 20px; (numărul lipit de px).'},
+        {ce:'Paragraful are un font din lecție (Verdana, Arial sau Georgia), cu rezerva la sfârșit',fn:S=>['verdana','arial','georgia'].includes((EWS.fonturi(LV(S),'p')||[])[0])&&EWS.cuRezerva(LV(S),'p'),msg:'În același style: font-family: Verdana, sans-serif; (virgulă între ele; în locul lui Verdana, Arial sau Georgia).'},
+        ACEL('p3_start'),ORD]),
+       rezolvare:[['scrie',COD.p3_rez]],gresit:[['scrie',COD.p3_gresit]],
+       ajutor:'Un singur <code>style</code>, cu două proprietăți: <code>font-size: 20px;</code> și <code>font-family: Verdana, sans-serif;</code>.',
+       why:'Browserul a citit amândouă proprietățile: literele au 20px și fontul Verdana.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'Paragraful de mai jos ar trebui să aibă 20px și fontul Georgia, dar n-are nimic din ele: în stil lipsește un semn. Găsește-l și pune-l.',
+       start:{text:COD.p3b_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'Paragraful are 20px și fontul Georgia',fn:S=>EWS.are(LV(S),'p',{'font-size':'20px','font-family':'Georgia'}),msg:'Uită-te între 20px și font-family.'},ACEL('p3b_start'),ORD]),
+       rezolvare:[['scrie',COD.p3b_rez]],gresit:[['scrie',COD.p3b_start]],
+       ajutor:'Ce semn stă după fiecare proprietate?',
+       why:'Lipsea <code>;</code> după <code>20px</code>. Fără el, browserul a sărit peste amândouă proprietățile.'},
+      {t:'choice',q:'Pe un calculator nu există fontul Verdana. Ce face browserul cu <code>font-family: Verdana, sans-serif;</code>?',o:['Îl scrie cu rezerva, fără „piciorușe”','Nu mai arată deloc paragraful','Arată un mesaj de eroare în pagină','Îl scrie oricum cu fontul Verdana'],ok:0,
+       ajutor:'La ce folosește ultimul nume din listă?',why:'Când nu găsește fontul, browserul trece la următorul din listă, aici rezerva <code>sans-serif</code>. Paragraful se vede, cu alt font.'},
+      {t:'choice',q:'Care stil face literele de 24 de pixeli?',o:['style="font-size: 24px;"','style="font-size: 24 px;"','style="font-size: 24;"','style="size: 24px;"'],ok:0,
+       ajutor:'Numele proprietății e întreg, iar numărul e lipit de px.',why:'<code>font-size: 24px;</code>. Cu spațiu înainte de px, fără px sau cu alt nume, browserul sare peste mărime.'}
+     ]},
+
+    /* ---------- PASUL 3: tot paragraful sau câteva cuvinte ---------- */
+    {t:'Tot paragraful sau doar câteva cuvinte',
+     text:`<p><b>Tot paragraful.</b> Stilul din <code>&lt;p&gt;</code> sau din <code>&lt;h1&gt;</code> se vede pe tot paragraful sau pe tot titlul. Tot acolo îl așezi: <code>text-align: center;</code> îl pune la mijloc, <code>right</code> la dreapta, <code>left</code> la stânga, ca de obicei.</p>
+<p><b>Doar câteva cuvinte.</b> Le pui între două etichete, chiar în paragraf:</p>
+<ul><li><code>&lt;strong&gt;</code>…<code>&lt;/strong&gt;</code>: îngroșat, ca Aldin (Bold) în Word;</li>
+<li><code>&lt;em&gt;</code>…<code>&lt;/em&gt;</code>: înclinat, ca Cursiv (Italic).</li></ul>
+<p>Închizi eticheta chiar după cuvintele tale, altfel se schimbă și ce urmează. Pentru altă culoare la câteva cuvinte există <code>&lt;span style="…"&gt;</code>: îl găsești la „Încă un exercițiu”.</p>`,
+     exemplu:`${PRE(COD.p4_bloc)}${EWS.randare(COD.p4_ex,150)}<p>Titlul e la mijloc. În paragrafe, doar „la ora 10” e îngroșat și doar „joi” e înclinat.</p>`,
+     altfel:`<p>Pe o felicitare scrisă de mână, titlul îl așezi la mijlocul rândului: asta privește tot rândul. Apoi, în text, apeși mai tare pe pix doar la un cuvânt important: asta privește un singur cuvânt.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Două schimbări mici. <b>1.</b> Pune titlul la mijloc: în <code>&lt;h1&gt;</code>, chiar după <code>h1</code>, apasă <kbd>Spațiu</kbd> și scrie <code>style="text-align: center;"</code>. <b>2.</b> Îngroașă doar cuvintele „la ora 10”: în paragraf, scrie <code>&lt;strong&gt;</code> chiar înainte de „la” și <code>&lt;/strong&gt;</code> chiar după „10”.',
+       start:{text:COD.p4_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'Titlul e la mijloc',fn:S=>EWS.are(LV(S),'h1',{'text-align':'center'}),msg:'În &lt;h1&gt;: style="text-align: center;".'},
+        {ce:'Doar „la ora 10” e îngroșat',fn:S=>EWS.ingrosat(LV(S),'la ora 10')&&!EWS.are(LV(S),'p',{'font-weight':'bold'})&&!EWS.ingrosat(LV(S),'Sâmbătă'),msg:'&lt;strong&gt; chiar înainte de „la”, &lt;/strong&gt; chiar după „10”, înaintea virgulei.'},
+        ACEL('p4_start'),PER,ORD]),
+       rezolvare:[['scrie',COD.p4_rez]],gresit:[['scrie',COD.p4_gresit]],
+       ajutor:'Alinierea e a titlului întreg, deci stă în <code>&lt;h1&gt;</code>. Îngroșarea e doar a trei cuvinte: <code>&lt;strong&gt;la ora 10&lt;/strong&gt;</code>.',
+       why:'Titlul e la mijloc, iar în paragraf s-au îngroșat doar cuvintele dintre <code>&lt;strong&gt;</code> și <code>&lt;/strong&gt;</code>.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'Colorează în roșu doar cuvântul „joi”: <code>&lt;span style="color: red;"&gt;</code> chiar înaintea lui și <code>&lt;/span&gt;</code> chiar după el. <code>span</code> nu schimbă nimic singur; schimbă doar ce scrii în <code>style</code>-ul lui. Restul paragrafului rămâne negru.',
+       start:{text:COD.p4b_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'„joi” e roșu',fn:S=>EWS.aceeasiCuloare(EWS.culoareText(LV(S),'joi'),'red'),msg:'În jurul cuvântului: &lt;span style="color: red;"&gt;joi&lt;/span&gt;.'},
+        {ce:'Restul paragrafului a rămas negru',fn:S=>negru(LV(S),'p'),msg:'Stilul stă în &lt;span&gt;, nu în &lt;p&gt;.'},ACEL('p4b_start'),PER,ORD]),
+       rezolvare:[['scrie',COD.p4b_rez]],gresit:[['scrie',COD.p4b_gresit]],
+       ajutor:'Stilul pus în <code>&lt;p&gt;</code> colorează tot paragraful. Pentru un cuvânt îți trebuie <code>&lt;span&gt;</code>.',
+       why:'Doar cuvântul dintre <code>&lt;span …&gt;</code> și <code>&lt;/span&gt;</code> e roșu.'},
+      {t:'editorweb',mod:'live',
+       q:'Scrie înclinat doar „laboratorul de informatică”, cu <code>&lt;em&gt;</code> și <code>&lt;/em&gt;</code>. Punctul de la sfârșit rămâne în afara lor.',
+       start:{text:COD.p4c_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'Doar „laboratorul de informatică” e înclinat',fn:S=>EWS.inclinat(LV(S),'laboratorul de informatică')&&!EWS.inclinat(LV(S),PA),msg:'&lt;em&gt; chiar înainte de „laboratorul”, &lt;/em&gt; chiar după „informatică”, înaintea punctului.'},ACEL('p4c_start'),PER,ORD]),
+       rezolvare:[['scrie',COD.p4c_rez]],gresit:[['scrie',COD.p4c_gresit]],
+       ajutor:'<code>&lt;em&gt;laboratorul de informatică&lt;/em&gt;.</code>',
+       why:'Cuvintele dintre <code>&lt;em&gt;</code> și <code>&lt;/em&gt;</code> sunt înclinate; restul paragrafului, nu.'},
+      {t:'editorweb',mod:'live',
+       q:'Ultimul paragraf, „Clubul de robotică”, e semnătura. Du-l la dreapta.',
+       start:{text:COD.p4d_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'Semnătura e la dreapta',fn:S=>EWS.are(LV(S),'p',{'text-align':'right'},1),msg:'În ultimul &lt;p&gt;: style="text-align: right;".'},
+        {ce:'Primul paragraf a rămas la stânga',fn:S=>!EWS.are(LV(S),'p',{'text-align':'right'},0)&&!EWS.are(LV(S),'p',{'text-align':'center'},0),msg:'Stilul stă doar în paragraful semnăturii.'},ACEL('p4d_start'),ORD]),
+       rezolvare:[['scrie',COD.p4d_rez]],gresit:[['scrie',COD.p4d_gresit]],
+       ajutor:'Alinierea la dreapta e <code>text-align: right;</code>, în eticheta paragrafului cu semnătura.',
+       why:'Doar paragraful semnăturii are <code>text-align: right;</code>, deci doar el stă la dreapta.'}
+     ]},
+
+    /* ---------- PASUL 4: fundalul și contrastul ---------- */
+    {t:'Fundalul și contrastul',
+     text:`<p><code>background-color</code> e culoarea din spatele textului. În <code>&lt;body&gt;</code> colorează toată fereastra: <code>&lt;body style="background-color: lightyellow;"&gt;</code> (galben-deschis). Într-un paragraf, colorează o bandă de la o margine la alta. Și <code>color</code> pus în <code>&lt;body&gt;</code> schimbă literele din toată pagina, în afară de cele care au culoarea lor.</p>
+<p>Alege culori cu <mark>contrast</mark>: litere închise pe fundal deschis sau litere deschise pe fundal închis. Culorile apropiate nu se citesc: galben pe alb, albastru pe negru, roșu pe verde. După fiecare schimbare, privește pagina în browser și întreabă-te: se citește ușor?</p>`,
+     exemplu:`<p>Aceeași pagină, în două variante. Se schimbă doar eticheta <code>&lt;body&gt;</code> și culoarea titlului.</p>${PRE(COD.p5_body1)}${EWS.randare(COD.p5_v1,100,'Varianta 1: litere închise pe fundal deschis')}${PRE(COD.p5_body2)}${EWS.randare(COD.p5_v2,100,'Varianta 2: litere deschise pe fundal închis')}`,
+     altfel:`<p>Gândește-te la tabla din clasă: creta albă pe tabla verde-închis se vede din ultima bancă. O cretă verde-închis pe aceeași tablă nu s-ar vedea deloc, deși ai scrie la fel de frumos.</p>`,
+     incearca:LIZ_P5(),
+     inca:[
+      {t:'choice',q:'Care pereche de culori se citește ușor?',o:['Litere albe (white) pe fundal bleumarin (navy)','Litere galbene (yellow) pe fundal alb (white)','Litere albastre (blue) pe fundal negru (black)','Litere roșii (red) pe fundal verde (green)'],ok:0,
+       ajutor:'Caută perechea în care o culoare e foarte deschisă, iar cealaltă foarte închisă.',why:'Albul e foarte deschis, bleumarinul foarte închis: contrast mare. Celelalte perechi au culori apropiate ca luminozitate și abia se citesc.'},
+      {t:'editorweb',mod:'live',
+       q:'Paragraful „Atenție! …” trebuie să iasă în evidență: dă-i fundal galben (<code>yellow</code>). Literele lui rămân negre.',
+       start:{text:COD.p5b_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'Paragraful „Atenție!” are fundal galben',fn:S=>EWS.are(LV(S),'p',{'background-color':'yellow'},1),msg:'În eticheta acelui paragraf: style="background-color: yellow;".'},
+        {ce:'Literele lui au rămas negre',fn:S=>negru(LV(S),'p',1),msg:'Schimbi doar fundalul, nu culoarea literelor.'},ACEL('p5b_start'),ORD]),
+       rezolvare:[['scrie',COD.p5b_rez]],gresit:[['scrie',COD.p5b_gresit]],
+       ajutor:'Fundalul e <code>background-color</code>, nu <code>color</code>.',
+       why:'Banda galbenă din spatele paragrafului îl scoate în evidență, iar literele negre pe galben se citesc ușor.'},
+      {t:'editorweb',mod:'live',
+       q:'Dă paginii fundalul galben-deschis: în eticheta <code>&lt;body&gt;</code>, după <code>body</code>, apasă <kbd>Spațiu</kbd> și scrie <code>style="background-color: lightyellow;"</code>. Titlul rămâne bleumarin.',
+       start:{text:COD.p5c_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'Toată pagina are fundal galben-deschis (lightyellow)',fn:S=>EWS.aceeasiCuloare(EWS.fundalPagina(LV(S)),'lightyellow'),msg:'În eticheta &lt;body&gt;: style="background-color: lightyellow;" (lightyellow scris lipit).'},
+        {ce:'Titlul a rămas bleumarin',fn:S=>EWS.are(LV(S),'h1',{color:'navy'}),msg:'Stilul titlului rămâne cum era.'},ACEL('p5c_start'),ORD]),
+       rezolvare:[['scrie',COD.p5c_rez]],gresit:[['scrie',COD.p5c_gresit]],
+       ajutor:'Fundalul paginii stă în <code>&lt;body&gt;</code>: <code>&lt;body style="background-color: lightyellow;"&gt;</code>.',
+       why:'Pusă în <code>&lt;body&gt;</code>, culoarea de fundal umple toată fereastra. Bleumarin pe galben-deschis are contrast mare.'}
+     ]},
+
+    /* ---------- PASUL 5: greșelile ---------- */
+    {t:'Când stilul nu se vede: cum găsești greșeala',
+     text:`<p>Browserul nu-ți arată greșelile din stil: sare peste ce n-a înțeles, fără niciun mesaj. Dacă stilul nu se vede, caută în Notepad, pe rând:</p>
+<ol><li>stilul e în eticheta de deschidere, nu în <code>&lt;/h1&gt;</code>, și e unul singur pe etichetă;</li>
+<li>are ghilimele la început și la sfârșit;</li>
+<li>după fiecare proprietate stă <code>:</code>, nu <code>=</code>, iar după fiecare valoare, <code>;</code>;</li>
+<li>numele sunt scrise exact, în engleză: <code>center</code>, nu <code>centre</code>; <code>20px</code>, fără spațiu.</li></ol>
+<p>Apoi <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad și <kbd>F5</kbd> în browser.</p>`,
+     exemplu:`${PRE(COD.p6_bloc)}${EWS.randare(COD.p6_ex,100)}<p>Lipsește <code>;</code> după <code>red</code>: browserul a sărit peste amândouă proprietățile, iar paragraful e negru și de mărime obișnuită. Fără ghilimeaua de la sfârșit e și mai rău: titlul dispare din pagină. Iar dacă o etichetă are două atribute <code>style</code>, browserul îl citește doar pe primul.</p>`,
+     altfel:`<p>E ca un automat de băuturi care nu recunoaște o monedă: nu ți-o ia și nu-ți spune de ce. Tu te uiți la monedă și încerci alta. La stil, te uiți semn cu semn, după listă.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Titlul trebuie să fie bleumarin și la mijloc, dar în stilul lui sunt două greșeli. Repară-le.',
+       start:{text:COD.p6_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'Titlul e bleumarin',fn:S=>EWS.are(LV(S),'h1',{color:'navy'}),msg:'Verifică semnul dintre color și navy.'},
+        {ce:'Titlul e la mijloc',fn:S=>EWS.are(LV(S),'h1',{'text-align':'center'}),msg:'Verifică valoarea alinierii, literă cu literă.'},ACEL('p6_start'),ORD]),
+       rezolvare:[['scrie',COD.p6_rez]],gresit:[['scrie',COD.p6_gresit]],
+       ajutor:'Una e la semnul dintre proprietate și valoare; cealaltă e în numele unei valori.',
+       why:'<code>color: navy;</code> cu două puncte și <code>center</code>, ca în engleza americană: acum browserul le înțelege pe amândouă.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'Paragraful e verde, dar nu s-a mărit, deși scrie <code>font-size: 20px;</code>. Repară, ca paragraful să fie și verde, și de 20px.',
+       start:{text:COD.p6b_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'Paragraful e verde și are 20px',fn:S=>EWS.are(LV(S),'p',{color:'green','font-size':'20px'}),msg:'Câte atribute style are eticheta &lt;p&gt;?'},ACEL('p6b_start'),ORD]),
+       rezolvare:[['scrie',COD.p6b_rez]],gresit:[['scrie',COD.p6b_start]],
+       ajutor:'O etichetă are un singur <code>style</code>. Mută <code>font-size: 20px;</code> în primul, după <code>green;</code>.',
+       why:'Browserul îl citește doar pe primul <code>style</code> al etichetei. Cu ambele proprietăți în același stil, se văd amândouă.'},
+      {t:'editorweb',mod:'live',
+       q:'Pagina a rămas goală: nu se mai vede nici titlul, nici paragraful. Greșeala e în stilul titlului. Repară-o.',
+       start:{text:COD.p6c_start,fisier:ANA},
+       teste:EWS.cuDiagnostic([{ce:'Se văd titlul și paragraful',fn:S=>!!EWS.element(LV(S),T1)&&!!EWS.element(LV(S),PA),msg:'Numără ghilimelele din eticheta &lt;h1&gt;.'},
+        {ce:'Titlul e bleumarin',fn:S=>EWS.are(LV(S),'h1',{color:'navy'}),msg:'Stilul titlului rămâne color: navy;.'},ORD]),
+       rezolvare:[['scrie',COD.p6c_rez]],gresit:[['scrie',COD.p6c_start]],
+       ajutor:'Stilul începe cu <code>"</code>. Unde se termină?',
+       why:'Lipsea ghilimeaua de la sfârșitul stilului. Fără ea, browserul a luat drept stil tot restul paginii.'},
+      {t:'choice',q:'Mihai a scris <code>&lt;h1&gt;Concursul&lt;/h1 style="color: red;"&gt;</code>. Cum apare titlul în browser?',o:['Negru, ca de obicei','Roșu','Roșu doar ultima literă','Nu apare deloc'],ok:0,
+       ajutor:'În ce etichetă se uită browserul după stil?',why:'Browserul citește stilul doar din eticheta de deschidere. În <code>&lt;/h1 …&gt;</code> îl ignoră, deci titlul rămâne negru.'}
+     ]}
+   ],
+   atelier:{t:'editorweb',mod:'notepad',titlu:'Atelier: afișul concursului',
+    intro:`<p>Mai jos ai un Notepad, folderul Documente și un browser, simulate. Deasupra lor sunt <strong>testele</strong>: se bifează singure când faci ce cer. La final apasă <b>Verifică</b>. Pe un ecran mic, treci de la o fereastră la alta cu butoanele de sub ele.</p>`,
+    q:`Pagina ta, <code>${ANA}</code>, e afișul concursului, deschis în Notepad. <b>1.</b> Pune titlul la mijloc și dă-i o culoare închisă, la alegere (de exemplu <code>navy</code>, <code>darkgreen</code> sau <code>maroon</code>). <b>2.</b> Primul paragraf: 20px și un font din lecție, cu rezerva lui. <b>3.</b> În al doilea paragraf, îngroașă doar cuvântul „joi”. <b>4.</b> Du semnătura „Clubul de robotică” la dreapta. <b>5.</b> Dă paginii un fundal deschis (de exemplu <code>lightyellow</code> sau <code>lightblue</code>). Tot textul trebuie să se citească ușor. <b>6.</b> Salvează (<kbd>Ctrl</kbd>+<kbd>S</kbd>) și deschide pagina în browser: în Documente, dublu-clic pe ea (pe telefon, atinge-o de două ori, repede).`,
+    start:{fisiere:{Documente:[{n:ANA,t:COD.at_start.replace(/\n/g,'\r\n')+'\r\n'}]},notepad:{file:[{n:ANA,dosar:'Documente'}]},dreapta:'explorer'},
+    teste:EWS.cuDiagnostic([
+     {ce:'Titlul e la mijloc și are o culoare, nu negru',fn:(S,U)=>{const s=SRC(S,U);return !!s&&EWS.are(s,'h1',{'text-align':'center'})&&!negru(s,'h1')},faraOraData:true,msg:'În &lt;h1&gt;: style="color: navy; text-align: center;" (sau altă culoare închisă). Apoi Ctrl+S.'},
+     {ce:'Primul paragraf are 20px și un font cu rezervă',fn:(S,U)=>{const s=SRC(S,U);return !!s&&EWS.are(s,'p',{'font-size':'20px'},0)&&EWS.cuRezerva(s,'p',0)},msg:'În primul &lt;p&gt;: font-size: 20px; font-family: Verdana, sans-serif; (sau Arial, Georgia). Apoi Ctrl+S.'},
+     {ce:'În al doilea paragraf, doar „joi” e îngroșat',fn:(S,U)=>{const s=SRC(S,U);return !!s&&EWS.ingrosat(s,'joi')&&!EWS.are(s,'p',{'font-weight':'bold'},1)&&!EWS.ingrosat(s,SEMN)},msg:'&lt;strong&gt;joi&lt;/strong&gt;, cu perechea închisă chiar după cuvânt. Apoi Ctrl+S.'},
+     {ce:'Semnătura „Clubul de robotică” e la dreapta',fn:(S,U)=>{const s=SRC(S,U),e=s&&EWS.element(s,SEMN);return !!e&&EWS.stil(s,'p','text-align',[...e.ownerDocument.querySelectorAll('p')].indexOf(e.closest('p')))==='right'},msg:'În paragraful semnăturii: style="text-align: right;". Apoi Ctrl+S.'},
+     LIZ('Pagina are un fundal colorat, iar tot textul se citește ușor',(S,U)=>SRC(S,U),s=>!EWS.aceeasiCuloare(EWS.fundalPagina(s),'white'),'În &lt;body&gt;: style="background-color: lightyellow;" (sau altă culoare deschisă). Apoi Ctrl+S.'),
+     {ce:'Fiecare etichetă are perechea ei, iar scheletul a rămas întreg',fn:(S,U)=>{const s=SRC(S,U);return !!s&&EWS.declaratii(s).length>0&&EWS.perechi(s)&&ES.ordine(s)},faraOraData:true,msg:'Caută perechea fiecărei etichete și nu șterge rândurile scheletului.'},
+     {ce:'Browserul arată pagina ta, formatată',fn:(S,U)=>{const t=U.tabBrowser(S,AT);return !!t&&/\bstyle\s*=/i.test(t.continut)},msg:'Deschide pagina din Documente (dublu-clic). Dacă ai schimbat ceva după, Ctrl+S în Notepad și F5 în browser.'},
+     {ce:'Pagina din browser e cea salvată acum',laZi:AT,msg:'Ai schimbat fișierul după ce l-ai deschis: F5 în browser.'}],{spec:AT}),
+    rezolvare:[['scrie',COD.at_rez],['salveaza'],['deschide','Documente/'+ANA]],
+    gresit:[['scrie',COD.at_gresit],['salveaza'],['deschide','Documente/'+ANA]],
+    ajutor:'Pe rând: în &lt;h1&gt; color și text-align; în primul &lt;p&gt; font-size și font-family; &lt;strong&gt;joi&lt;/strong&gt;; text-align: right în semnătură; background-color în &lt;body&gt;; Ctrl+S; în Documente, dublu-clic pe fișier.',
+    why:'Afișul tău are titlul colorat la mijloc, un paragraf mai mare, cuvântul „joi” îngroșat, semnătura la dreapta și un fundal deschis, iar tot textul se citește.',
+    solutieText:'pagina Popescu_Ana_8A_lectia19.html are titlul bleumarin la mijloc, primul paragraf de 20px cu Verdana, „joi” îngroșat, semnătura la dreapta și fundalul galben-deschis, salvată și deschisă în browser.',
+    inca:[
+     {t:'editorweb',mod:'notepad',titlu:'Atelier: repară afișul și lasă calculatorul curat',
+      q:'Afișul are trei greșeli: titlul e negru, deși ar trebui să fie bleumarin; primul paragraf nu are 20px; iar după „joi” s-a îngroșat tot restul. <b>1.</b> Repară-le în Notepad. <b>2.</b> Fă ca browserul să arate pagina reparată. <b>3.</b> La final, închide fila din Notepad cu <b>Fișier › Închideți fila</b>, nu cu X-ul ferestrei.',
+      start:{fisiere:{Documente:[{n:ANA,t:COD.at2_start.replace(/\n/g,'\r\n')+'\r\n'}]},notepad:{file:[{n:ANA,dosar:'Documente'}]},browser:{file:['Documente/'+ANA]},dreapta:'browser'},
+      teste:EWS.cuDiagnostic([
+       {ce:'Titlul e bleumarin și la mijloc',fn:(S,U)=>{const s=ES.src(S,U,{exact:ANA});return !!s&&EWS.are(s,'h1',{color:'navy','text-align':'center'})},faraOraData:true,msg:'Verifică semnul dintre color și navy. Apoi Ctrl+S.'},
+       {ce:'Primul paragraf are 20px',fn:(S,U)=>{const s=ES.src(S,U,{exact:ANA});return !!s&&EWS.are(s,'p',{'font-size':'20px'},0)},msg:'Verifică cum e scris 20px. Apoi Ctrl+S.'},
+       {ce:'Doar „joi” e îngroșat',fn:(S,U)=>{const s=ES.src(S,U,{exact:ANA});return !!s&&EWS.ingrosat(s,'joi')&&!EWS.ingrosat(s,SEMN)&&EWS.perechi(s)},msg:'Unde se închide &lt;strong&gt;? Apoi Ctrl+S.'},
+       {ce:'Pagina din browser e cea salvată acum',laZi:{exact:ANA},msg:'După Ctrl+S în Notepad: clic pe pagină, apoi F5.'},
+       {ce:'Notepad e închis și nu-ți mai redeschide fila',npCurat:true,faraDiagnostic:true,msg:'Fișier › Închideți fila. X-ul ferestrei păstrează fila pentru data viitoare.'}],{spec:{exact:ANA}}),
+      rezolvare:[['scrie',COD.at_rez],['salveaza'],['f5'],['inchideFila']],
+      gresit:[['scrie',COD.at_rez],['salveaza'],['f5'],['inchideFereastra']],
+      ajutor:'Trei locuri: semnul dintre <code>color</code> și <code>navy</code>; felul în care e scris <code>20px</code>; perechea lui <code>&lt;strong&gt;</code>. Apoi: Ctrl+S, F5, Fișier › Închideți fila.',
+      why:'Cu <code>:</code> la culoare, <code>20px</code> lipit și <code>&lt;/strong&gt;</code> după „joi”, browserul arată afișul cum trebuie. Notepad, închis din filă, pornește curat pentru colegul următor.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Andrei vrea ca semnătura de la sfârșitul paginii să stea la dreapta. Ce scrie în eticheta ei <code>&lt;p&gt;</code>?',
+     o:['style="text-align: right;"','style="text-align = right;"','style="align: right;"','style="text-align: dreapta;"'],ok:0,
+     ajutor:'Proprietatea alinierii are un nume din două cuvinte, iar valoarea e în engleză.',why:'<code>text-align: right;</code>. Cu <code>=</code>, cu numele <code>align</code> sau cu valoarea în română, browserul sare peste stil, iar semnătura rămâne la stânga.'},
+    {t:'editorweb',mod:'live',
+     q:'Fă literele din toată pagina bleumarin (<code>navy</code>), scriind culoarea o singură dată.',
+     start:{text:COD.q2_start,fisier:'Pop_Matei_8B_lectia19.html'},
+     teste:[{ce:'Titlul și ambele paragrafe sunt bleumarin',fn:S=>EWS.are(LV(S),'h1',{color:'navy'})&&EWS.are(LV(S),'p',{color:'navy'},0)&&EWS.are(LV(S),'p',{color:'navy'},1),msg:'Unde pui culoarea ca să ajungă la toată pagina?'},
+      {ce:'Culoarea e scrisă o singură dată',fn:S=>EWS.declaratii(LV(S)).filter(d=>d.prop==='color').length===1,msg:'Un singur color: navy;, în eticheta care cuprinde toată pagina.'},ACEL('q2_start'),ORD],
+     rezolvare:[['scrie',COD.q2_rez]],gresit:[['scrie',COD.q2_gresit]],
+     ajutor:'Ce etichetă cuprinde tot ce se vede în pagină?',why:'Pus în <code>&lt;body&gt;</code>, <code>color: navy;</code> ajunge la toate literele din pagină care n-au culoarea lor.'},
+    {t:'editorweb',mod:'live',
+     q:'Pune la mijloc doar primul paragraf, „Atenție! Aduceți și ecusonul.”, și îngroașă în el doar cuvântul „Atenție!”. Restul paginii rămâne cum e.',
+     start:{text:COD.q3_start,fisier:'Pop_Matei_8B_lectia19.html'},
+     teste:[{ce:'Doar primul paragraf e la mijloc',fn:S=>EWS.are(LV(S),'p',{'text-align':'center'},0)&&!EWS.are(LV(S),'p',{'text-align':'center'},1)&&!EWS.are(LV(S),'h1',{'text-align':'center'}),msg:'Alinierea stă doar în eticheta primului &lt;p&gt;.'},
+      {ce:'Doar „Atenție!” e îngroșat',fn:S=>EWS.ingrosat(LV(S),'Atenție!')&&!EWS.are(LV(S),'p',{'font-weight':'bold'},0),msg:'&lt;strong&gt; chiar înainte de „Atenție!”, &lt;/strong&gt; chiar după semnul exclamării.'},ACEL('q3_start'),PER,ORD],
+     rezolvare:[['scrie',COD.q3_rez]],gresit:[['scrie',COD.q3_gresit]],
+     ajutor:'Ce privește tot paragraful stă în eticheta lui <code>&lt;p&gt;</code>; ce privește un cuvânt stă între <code>&lt;strong&gt;</code> și <code>&lt;/strong&gt;</code>.',why:'<code>text-align</code> din <code>&lt;p&gt;</code> mută tot paragraful, iar <code>&lt;strong&gt;</code> îngroașă doar cuvântul dintre etichete.'},
+    {t:'choice',q:'Clasa face un afiș care trebuie citit de departe. Ce variantă aleg?',
+     o:['Litere negre (black) pe fundal galben-deschis (lightyellow)','Litere portocalii (orange) pe fundal galben (yellow)','Litere verzi (green) pe fundal roșu (red)','Litere bleumarin (navy) pe fundal negru (black)'],ok:0,
+     ajutor:'O culoare foarte închisă lângă una foarte deschisă.',why:'Negru pe galben-deschis are contrast mare. În celelalte, culorile sunt apropiate ca luminozitate și literele abia se văd.'},
+    {t:'choice',q:'Ioana a pus în eticheta <code>&lt;p&gt;</code> două atribute <code>style</code>: în primul a scris mărimea de 24px, iar în al doilea culoarea roșie. Cum arată paragraful în browser?',
+     o:['Negru, cu literele de 24px','Roșu, cu literele de 24px','Roșu, cu literele de mărime obișnuită','Negru, cu literele de mărime obișnuită'],ok:0,
+     ajutor:'Câte atribute style citește browserul pe o etichetă?',why:'Browserul îl folosește doar pe primul <code>style</code> al etichetei: literele au 24px, dar rămân negre. Ambele proprietăți trebuie puse în același stil.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Notepad-ul și browserul adevărate',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:`<p>Îți formatezi pagina de la lecția 17, pe calculator, fără ajutor: la fiecare pas scrie ce trebuie să vezi, ca să verifici singur. Pasul „Dacă mai ai timp” e pentru cine termină mai repede.</p>
+<p>Când mai sunt 10 minute din oră: salvează, fă ultimul pas (închizi filele din Notepad) și treci la cele 5 întrebări.</p>`,
+    pasi:PROVOCARE},
+  diploma:{titlu:'Stilistul paginilor web',
+    rezumat:'a scris stiluri cu proprietate și valoare (color, font-size, font-family, text-align, background-color), a îngroșat doar câteva cuvinte (strong), a colorat literele din toată pagina din &lt;body&gt;, a ales culori cu contrast și a găsit greșelile din stil, pe care browserul le sare în tăcere',
+    aplicatie:'Notepad-ul și browserul adevărate',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
