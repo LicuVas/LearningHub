@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 18, clasa a VI-a: Aplicația de exersare a algoritmilor: interfață și instrumente de bază</title>
+<meta name="description" content="Lecția 18, clasa a VI-a: Scratch, aplicația de exersare a algoritmilor. Îl deschizi în browser, fără cont, și îl pui în română; scena, personajul, paleta cu categorii și zona de cod; tragi și lipești blocuri, pornești cu steagul verde, oprești, ștergi un bloc; salvezi proiectul (.sb3) în folderul tău și îl deschizi din nou. Cu un Scratch simulat în pagină.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Code:wght@500;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#F1EEF9; --paper:#FFFFFF; --paper2:#F5F2FC; --line:#DAD3EE;
+  --ink:#231B3A; --ink2:#5C5378; --accent:#6B45C4; --accentInk:#FFFFFF; --sel:#E7DFFA;
+  --mark:#FFE07A; --markInk:#231B3A; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Baloo 2","Segoe UI",system-ui,sans-serif; --fb:"Nunito Sans","Segoe UI",system-ui,sans-serif; --fm:"Fira Code",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#141022; --paper:#1C172D; --paper2:#241E38; --line:#3A3254;
+  --ink:#ECE8F7; --ink2:#B4ABCF; --accent:#B39BF2; --accentInk:#141022; --sel:#3B2F63;
+  --mark:#EBC95C; --markInk:#231B3A; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#141022; --paper:#1C172D; --paper2:#241E38; --line:#3A3254;
+  --ink:#ECE8F7; --ink2:#B4ABCF; --accent:#B39BF2; --accentInk:#141022; --sel:#3B2F63;
+  --mark:#EBC95C; --markInk:#231B3A; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: o mică stivă de blocuri, ca în zona de cod */
+.banda{display:flex;align-items:center;gap:4px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent);font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-size:.72rem;font-weight:700;color:#fff}
+.banda .bk{flex:none;display:inline-block;padding:4px 10px;border-radius:5px;border:1px solid rgba(0,0,0,.18)}
+.banda .ev{background:#FFBF00;border-radius:14px 14px 5px 5px}
+.banda .mv{background:#4C97FF}
+.banda .lk{background:#9966FF}
+h1,h2{font-weight:800;letter-spacing:0}
+h1 .acc{color:var(--accent)}
+code{font-family:var(--fm);font-size:.9em}
+/* „Acum în Scratch” (regula 10): gesturi mici, reale, imediat după pas */
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:800;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+/* blocurile desenate în text (simulatorul lectii/_sim/scratch.js, fără tragere) */
+.ss-static{display:block!important;margin:8px 0!important;max-width:100%;overflow-x:auto}
+.ss-static .ss-b{touch-action:auto;cursor:default}
+.ss-cap{margin:0 0 4px;font-size:.85rem;color:var(--ink2)}
+.blk{display:inline-block;padding:1px 7px;border-radius:5px;color:#fff;font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-weight:700;font-size:.86em;white-space:nowrap}
+.blk.ev{background:#FFBF00;color:#3A2A00}.blk.mv{background:#3373CC}.blk.lk{background:#774DCB}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/scratch.js"></script>
+<script src="../../_sim/explorer-operatii.js"></script>
+<script>
+/* Lecția 18, clasa a VI-a (M3, predare): „Aplicația de exersare a algoritmilor: interfață și instrumente de bază”.
+   Standardul: LearningHub\_campaign\revizuire_completa_2026_09\05_STANDARD_LECTIE.md. Sursele și probele: surse.md, _proba\.
+   Aplicația = Scratch 3, editorul online scratch.mit.edu, în română, FĂRĂ cont (decizia dirijorului, 23.10.2026; planificarea
+   profesorului: „mediul grafic interactiv (Scratch)”). Faptele despre editor sunt PROBATE în editorul viu (Chromium headless,
+   profil temporar, fără cont, 24.10.2026: _proba\live_scratch*.py, _proba\live\rezultat.json) și în traducerea oficială
+   (scratch-l10n, _proba\l10n\). Simulatorul NOU: lectii/_sim/scratch.js (proprietar: lecția aceasta; API pentru VI/19-26).
+   Explorer-ul simulat (redenumire + mutare): lectii/_sim/explorer-operatii.js (lecția V/10), doar FOLOSIT.
+   Granița: NU repetiția (19-23), NU „dacă”, NU variabilele, NU contul, NU „Distribuie”.
+   Reparată după judecata 1 (24.10.2026): registrul _verificare/registru_j1.md, probele _proba/proba_reparatii.py. */
+SimScratch.stil();
+const fig = (f, w, h, alt, cap) => `<figure class="captura"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const ACUM = (...p) => `<div class="acum" role="note"><div class="lbl">Acum în Scratch, la calculator</div><ol>${p.map(x => `<li>${x}</li>`).join('')}</ol></div>`;
+/* o stivă de blocuri desenată în text (forma și culorile editorului); se desenează când apare în pagină */
+const STIVA = (b, cap) => `<div class="ss ss-static" role="img" aria-label="Blocuri Scratch: ${b.map(x => SimScratch.text(x)).join(', ')}">${cap ? `<p class="ss-cap">${cap}</p>` : ''}<div class="ss-script" style="position:relative">${b.map(x => SimScratch.html(x)).join('')}</div></div>`;
+const deseneazaStive = () => document.querySelectorAll('.ss-static:not([data-d])').forEach(e => { if (!e.offsetWidth) return; e.dataset.d = '1'; SimScratch.deseneaza(e); });
+new MutationObserver(deseneazaStive).observe(document.documentElement, {childList: true, subtree: true});
+window.addEventListener('lh-pas', () => setTimeout(deseneazaStive, 0));
+
+/* ---- ajutoare pentru testele simulatorului (pe COMPORTAMENT: programul elevului e rulat de la steag) ---- */
+const A = SimScratch.ajutor;
+const norm = s => String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[\s.!?…]+$/, '').trim();
+const spuse = U => U.spuse.map(norm);
+const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+/* unde era pisica atunci când a spus textul (null = n-a spus) */
+const spusLa = (U, text, o) => { let p = [o.x, o.y]; for (const e of U.evenimente) { if (e.tip === 'poz') p = e.valoare; if (e.tip === 'spune' && norm(e.valoare) === norm(text)) return p; } return null; };
+const ALTUNDE = {x: -150, y: 60, directie: 90};
+const PAL = ['steag', 'mergi', 'roteste_dr', 'roteste_st', 'mergi_la_xy', 'orienteaza', 'spune_sec', 'spune'];
+/* „mergi la x … y: …” are 0 și 0 (în paletă, numerele lui urmează pisica: SimScratch 1.1, ca editorul) */
+const zeroZero = P => { const v = A.valori(P, 'mergi_la_xy'); return v.length === 1 && +v[0][0] === 0 && +v[0][1] === 0; };
+
+/* ---- programele lecției ---- */
+const P_ATELIER = [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 0, 0], ['spune_sec', 'Bună!', 2], ['mergi', 100], ['spune_sec', 'Am ajuns!', 2]]}];
+
+/* ---- explorer-ul simulat (lecția V/10): calculatorul din laborator, contul Elev.
+   extensii:true (reparare J1, punctul B): „.sb3” nu e un tip cunoscut de Windows, deci se vede după nume, iar
+   Redenumire alege doar numele (ca la V/10: „aici extensiile se văd … Extensia rămâne aceeași”). ---- */
+const D = 'C:/Users/Elev/Documents/', TIC = D + 'TIC_6A/', DL = 'C:/Users/Elev/Downloads/';
+const OP = o => Object.assign({t: 'explorerop', unitati: {'C:': {nume: 'Disc local'}}, doc: D, afisat: {'C:/Users/Elev/Desktop/': 'Desktop', [DL]: 'Descărcări'},
+  extensii: true, acum: '26.01.2027 10:44'}, o, {fs: ['C:/Users/Elev/Desktop/', DL, TIC, D + 'TIC_6B/'].concat(o.fs || [])});
+
+/* ---- „Acum în Scratch, la calculator” (laboratorul, după atelier): FĂRĂ profesor, pe calculatorul comun.
+   Reparare J1: punctul 2 spune LOCUL primului „spune” (E); 100 → 150 = „Dacă mai ai timp” (C); numele = Pisica_,
+   clasa și numele (D, ca „Algoritm_” la VI/17). ---- */
+const LAB = [
+  'Fila Scratch s-a închis? <code>scratch.mit.edu</code> › <b>Creează</b>; meniul e în engleză? <b>Settings</b> › <b>Language</b> › <b>Română</b>; apoi <b>X</b> la filmuleț.',
+  'Sub blocul galben ai „mergi la x 0 y: 0” și „mergi 10 pași” (lipsesc? Ia-le din paletă: blocul galben „când se dă click pe ⚑” din <b>Evenimente</b>, apoi „mergi la x … y: …”, în care scrii <code>0</code> și <code>0</code>, și „mergi 10 pași”). Din <b>Aspect</b>, trage „spune Salut! pentru 2 secunde” și lasă-l chiar sub „mergi la x 0 y: 0”: intră între cele două. Scrie <code>Bună!</code> în el.',
+  'În „mergi 10 pași” scrie <code>100</code>. La sfârșit, sub „mergi 100 pași”, lipește încă un „spune … pentru 2 secunde”, cu <code>Am ajuns!</code>. Apasă steagul: la final, x e 100.',
+  '<b>Dacă mai ai timp:</b> schimbă 100 în <code>150</code> și apasă din nou steagul: x e 150.',
+  '<b>Fișier</b> › <b>Salvează pe calculatorul tău</b>. Browserul întreabă unde? <b>Documente</b> (sau folderul scris pe tablă), numele <code>Pisica_</code>, clasa și numele tău (de exemplu <code>Pisica_6A_Popescu</code>), <b>Salvare</b>. Spune că numele există deja? Nu (sau Anulare), adaugi prenumele, Salvare; sari la punctul 7.',
+  'Nu te-a întrebat? Explorer › <b>Descărcări</b> › <b>Proiect Scratch</b> (cu ora de acum; poate cu (1)): <kbd>F2</kbd>, <code>Pisica_</code>, clasa și numele tău, <kbd>Enter</kbd>; <b>Decupare</b>, Documente › folderul tău, <b>Lipire</b>. Există deja? E al unui coleg: <b>Se omite acest fișier</b>, adaugă prenumele, mută-l din nou.',
+  'Închide fila (browserul întreabă dacă pleci? Pleci: proiectul e salvat). <code>scratch.mit.edu</code> › <b>Creează</b>, <b>X</b> la filmuleț, <b>Fișier</b> › <b>Load from your computer</b>; în fereastra <b>Deschidere</b>: folderul tău, fișierul tău, <b>Deschidere</b>. Steagul: e programul tău. Închide fila.'
+];
+
+JocMotor.porneste({
+  cheie: 'lectie_vi_m3_l18',
+  mod: 'lectie',
+  titlu: 'Aplicația de exersare a algoritmilor: interfață și instrumente de bază',
+  marca: 'Lecția <b>18</b> · clasa a VI-a',
+  h1: 'Aplicația de exersare a algoritmilor: <span class="acc">interfață și instrumente de bază</span>',
+  eticheta: 'Lecții TIC',
+  acasa: {href: '../../../hub/index.html', text: 'LearningHub'},
+  clasa: 'a VI-a',
+  unitate: 'VI-U3',
+  unitateTitlu: 'Algoritmi: structuri repetitive',
+  competente: ['CS.2.1'],
+  lectii: '18',
+  ancoraText: 'Programa (OMEN 3393/2017), clasa a VI-a, CS.2.1 „Utilizarea unui mediu grafic-interactiv pentru exersarea algoritmilor” · unitatea VI-U3 „Algoritmi: structuri repetitive” · lecția 18, predare · conținuturile „Elemente de interfață ale unei aplicații de exersare a algoritmilor” și „Instrumente de bază utilizate în exersarea algoritmilor”. Aplicația: Scratch 3, editorul online scratch.mit.edu, pe care planificarea profesorului îl numește „mediul grafic interactiv”.',
+  intro: '<p><b>Ai nevoie de:</b> lecția 17 (algoritmul, secvența); din clasa a V-a: browserul, Descărcări, Explorer (Redenumire, Decupare, Lipire), Documente; lecția 3: numele fișierului, fereastra Deschidere.</p>',
+  cum: '<b>Cum lucrezi:</b> „Încă un exercițiu” și „Dacă mai ai timp” sunt pentru cine termină repede.',
+  banda: '<span class="bk ev">când se dă click pe ⚑</span><span class="bk mv">mergi la x 0 y: 0</span><span class="bk lk">spune Bună! pentru 2 secunde</span><span class="bk mv">mergi 100 pași</span>',
+  nivele: [
+{t: 'Aplicația de exersare a algoritmilor: interfață și instrumente de bază', final: true, lectii: [18],
+ continuturi: ['Elemente de interfață ale unei aplicații de exersare a algoritmilor', 'Instrumente de bază utilizate în exersarea algoritmilor'],
+ obiectiv: 'deschizi Scratch în română, faci din blocuri trase și lipite un program de 5 blocuri, îl pornești și îl oprești, ștergi un bloc, salvezi proiectul în folderul tău și îl deschizi din nou.',
+ pasi: [
+  /* ---- pasul 0: la ce folosește (fără acțiuni) ---- */
+  {t: 'La ce folosește: algoritmul, făcut din blocuri',
+   text: `<p>La lecția 17 ai scris algoritmi în cuvinte. Azi îi faci din <mark>blocuri</mark>: fiecare bloc e un pas, de exemplu <span class="blk mv">mergi 10 pași</span>, iar blocurile se prind unul sub altul, în ordinea pașilor.</p>
+<p>O <mark>aplicație de exersare a algoritmilor</mark> îți arată imediat rezultatul: un personaj face pașii. Noi lucrăm în <b>Scratch</b>: gratuit, în browser, în română.</p>
+${fig('constructii.webp', 560, 373, 'Mâinile unui copil prind o piesă albă de un vehicul construit din piese colorate de joc de construcții', 'Piesele se prind una de alta, ca blocurile. <small>Foto: Nenad Stojkovic, <a href="https://commons.wikimedia.org/wiki/File:Playing_with_Lego_bricks.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC BY 2.0; micșorată.</small>')}`},
+  /* ---- pasul 1: deschizi Scratch, fără cont, în română ---- */
+  {t: 'Deschizi Scratch și alegi limba română',
+   text: `<ol><li>În bara de adrese scrii <code>scratch.mit.edu</code>, <kbd>Enter</kbd>.</li>
+<li>Sus, apeși <b>Creează</b> (Create): se deschide <mark>editorul</mark>, unde faci programe.</li>
+<li>Meniul e în engleză (Settings, File, Edit)? <b>Settings</b> › <b>Language</b> › <b>Română</b>.</li>
+<li>Abia acum închizi fereastra verde cu filmulețul: <b>X</b> (Închide).</li></ol>
+<p>Nu apeși <b>Logare</b>: proiectul îl salvezi pe calculator.</p>
+${fig('start-creeaza.webp', 960, 50, 'Bara de sus a paginii scratch.mit.edu în română, cu Creează încadrat', '<b>Creează</b>, pe scratch.mit.edu.')}
+${fig('limba-romana.webp', 396, 432, 'Editorul Scratch în engleză: meniul Settings deschis, Language și, în lista limbilor, Română, încadrate și numerotate 1, 2, 3', '1. <b>Settings</b>, 2. <b>Language</b>, 3. <b>Română</b>.')}`,
+   exemplu: `${fig('tutorial.webp', 482, 328, 'Fereastra verde a tutorialului, cu un filmuleț și butoanele Tutorials, Shrink și Close (X) sus', 'Filmulețul se închide cu <b>X</b> (Close; cu meniul în română, Închide).')}
+${ACUM('Fă pașii 1-4 de mai sus, în browser. Lasă fila Scratch deschisă: lucrezi în ea și la pașii următori.')}`,
+   altfel: `<p>E ca atunci când intri într-un atelier: întâi găsești ușa (adresa), apoi masa de lucru (Creează). Dacă afișele de pe pereți sunt în altă limbă, îți iei broșura în română (Settings › Language › Română).</p>`,
+   incearca: {t: 'choice', q: 'Ai deschis editorul. Meniul de sus scrie <b>Settings</b>, <b>File</b>, <b>Edit</b>. Ce faci ca să-l ai în română?', o: ['Settings › Language › Română', 'File › Română', 'Apeși Logare și alegi limba din cont', 'Închizi fila și deschizi Scratch din nou'], ok: 0,
+    ajutor: 'Limba se alege din primul meniu, cel cu rotița.', why: 'Limba se schimbă din Settings › Language. Nu-ți trebuie cont. În același browser, editorul rămâne apoi în română.'},
+   inca: [
+    {t: 'order', q: 'Pune în ordine pașii prin care ajungi în editorul Scratch, în română, pe un calculator unde meniul e în engleză.',
+     items: ['Deschizi browserul', 'Scrii scratch.mit.edu în bara de adrese și apeși Enter', 'Apeși Creează, sus', 'Apeși Settings, apoi Language', 'Alegi Română din listă'],
+     ajutor: 'Nu poți alege limba editorului înainte să ajungi în editor.', why: 'Întâi ajungi pe pagină (adresa), apoi în editor (Creează), apoi schimbi limba din meniul lui (Settings › Language).'}
+   ]},
+  /* ---- pasul 2: ecranul editorului ---- */
+  {t: 'Ce vezi în editor: paleta, zona de cod, scena',
+   text: `<ul><li>În stânga, <mark>paleta de blocuri</mark>, cu bulinele <mark>categoriilor</mark>. Blocurile au culoarea categoriei lor: <span class="blk mv">Mișcare</span> albastru, <span class="blk lk">Aspect</span> mov, <span class="blk ev">Evenimente</span> galben.</li>
+<li>În mijloc, <mark>zona de cod</mark>: aici pui blocurile, unul sub altul.</li>
+<li>În dreapta sus, <mark>scena</mark>, unde se mișcă personajul. Deasupra ei, <b>steagul verde</b> (pornește) și <b>Stop</b> (oprește).</li>
+<li>Sub scenă, <mark>personajul</mark>: pisica <b>Sprite1</b>. <b>x</b> și <b>y</b> arată unde e, <b>Direcția</b> încotro privește (90 = spre dreapta).</li></ul>`,
+   exemplu: `${fig('editor-zone.webp', 960, 600, 'Editorul Scratch în română, cu zonele încadrate și numite: categoriile, paleta de blocuri, zona de cod, scena, steagul verde și Stop, personajul Sprite1, câmpurile x, y și Direcția', 'Editorul, cu zonele numite.')}`,
+   altfel: `<p>E ca o bucătărie: dulapul cu ingrediente pe rafturi colorate e paleta, masa pe care le pui în ordine e zona de cod, iar farfuria pe care vezi mâncarea gata e scena.</p>`,
+   incearca: {t: 'match', q: 'Potrivește fiecare loc cu ce faci acolo.',
+    pairs: [['Paleta de blocuri', 'de aici iei blocurile'], ['Zona de cod', 'aici pui blocurile, unul sub altul'], ['Scena', 'aici se mișcă personajul'], ['x, y și Direcția', 'arată unde e personajul și încotro privește']],
+    ajutor: 'Verbele: iei, pui, se mișcă, arată.', why: 'Iei din paletă, pui în zona de cod, privești pe scenă. Sub scenă citești unde e personajul.'},
+   inca: [
+    {t: 'classify', q: 'În ce categorie e fiecare bloc? Te ajută culoarea și pasul de mai sus.', cats: ['Mișcare (albastru)', 'Aspect (mov)', 'Evenimente (galben)'],
+     items: [['mergi 10 pași', 0], ['spune Salut! pentru 2 secunde', 1], ['când se dă click pe steag', 2], ['rotește-te 15 grade', 0], ['spune Salut!', 1]],
+     ajutor: 'Ce mișcă pisica e albastru. Ce o face să vorbească e mov.', why: 'Blocurile care mută sau rotesc personajul sunt în Mișcare; cele care îl fac să vorbească, în Aspect; „când se dă click pe steag” e în Evenimente.'}
+   ]},
+  /* ---- pasul 3: tragi, lipești, ștergi (schimbarea numărului a trecut la pasul 4: reparare J1, punctul H) ---- */
+  {t: 'Tragi un bloc, îl lipești, îl ștergi',
+   text: `<ol><li>Apeși bulina categoriei.</li>
+<li>Ții apăsat pe bloc și îl <mark>tragi</mark> în zona de cod.</li>
+<li>Îl lași chiar sub alt bloc: se <mark>lipește</mark>. Lăsat sub un bloc din mijloc, intră acolo; cele de sub el coboară.</li></ol>
+<p>Programul începe cu <span class="blk ev">când se dă click pe ⚑</span> (Evenimente). Ca să ștergi un bloc, îl tragi înapoi în paletă. Atenție: tras din mijloc, un bloc vine cu cele de sub el.</p>`,
+   exemplu: `${fig('meniu-bloc.webp', 240, 230, 'Clic dreapta pe blocul spune: meniul cu Duplică, Adaugă comentariu și Șterge blocul, cu Șterge blocul încadrat', 'Altă cale: clic dreapta › <b>Șterge blocul</b> (pleacă doar el). Pe telefon, în pagină: ții degetul pe bloc.')}
+${ACUM('Apasă bulina <b>Evenimente</b> și trage „când se dă click pe ⚑” în zona de cod. Apasă bulina <b>Mișcare</b> și lipește sub el „mergi 10 pași”.', 'Trage deoparte un „rotește-te”, apoi înapoi în paletă: dispare.')}`,
+   altfel: `<p>E ca un șir de vagoane: îl agăți pe unul sub ultimul și se prinde. Dacă tragi de un vagon din mijloc, vin după el toate vagoanele din spatele lui.</p>`,
+   incearca: {t: 'scratch', q: 'Lipește „mergi 10 pași” sub blocul galben, apoi trage „rotește-te” înapoi în paletă. Pe telefon: degetul pe bloc, întâi puțin spre dreapta, apoi unde vrei.',
+    paleta: ['steag', 'mergi', 'roteste_dr', 'spune_sec'],
+    program: [{x: 14, y: 14, b: [['steag']]}, {x: 30, y: 150, b: [['roteste_dr', 15]]}],
+    teste: [
+     {ce: '„mergi 10 pași” e sub blocul galben', msg: 'Trage „mergi 10 pași” din Mișcare și lasă-l chiar sub blocul galben, până se lipește.', ok: (U, P) => eq(A.dupaSteag(P), ['mergi'])},
+     {ce: '„rotește-te” nu mai e în zona de cod', msg: 'Trage „rotește-te” înapoi în paletă, în stânga: acolo se șterge.', ok: (U, P) => !A.toate(P).includes('roteste_dr')},
+     {ce: 'Pisica ajunge la x 10', msg: 'Sub blocul galben trebuie să fie „mergi 10 pași”, cu 10.', ok: U => U.x === 10 && U.y === 0}],
+    solutie: [{x: 14, y: 14, b: [['steag'], ['mergi', 10]]}],
+    gresit: [{x: 14, y: 14, b: [['steag']]}, {x: 30, y: 150, b: [['roteste_dr', 15]]}],
+    ajutor: 'Bulina albastră Mișcare, apoi ții apăsat pe „mergi 10 pași” și îl duci sub blocul galben. „rotește-te” îl duci în paletă.',
+    why: 'Blocul lipit sub „când se dă click pe ⚑” face parte din program. Un bloc tras în paletă se șterge.'}},
+  /* ---- pasul 4: pornești, oprești; pisica nu se întoarce singură; „mergi la x 0 y: 0” cu 0 și 0 SCRISE de elev
+     (reparare J1, punctul A: în paletă, numerele lui arată unde e pisica ACUM — probat viu, _proba/live_scratch_r1.py) ---- */
+  {t: 'Pornești cu steagul verde, oprești cu Stop',
+   text: `<p><b>Steagul verde</b> pornește programul: blocurile lipite sub <span class="blk ev">când se dă click pe ⚑</span> se execută o dată, de sus în jos. Un bloc nelipit nu se execută. <b>Stop</b> oprește tot.</p>
+<p>Pisica nu se întoarce singură: la steagul următor pornește de unde a rămas. De aceea, primul bloc e <span class="blk mv">mergi la x 0 y: 0</span>, mijlocul scenei. În paletă, numerele lui arată unde e pisica <b>acum</b>: după ce îl lipești, clic pe fiecare număr, scrii 0, <kbd>Enter</kbd>.</p>`,
+   exemplu: `${fig('steag-rulat.webp', 773, 408, 'Zona de cod cu programul când se dă click pe steag, mergi 10 pași, rotește-te 15 grade, spune Salut! pentru 2 secunde, iar pe scenă pisica spune Salut!; sub scenă x este 10 și Direcția 105, încadrate', 'După steag: x = 10, Direcția = 105, balonul Salut!.')}
+${ACUM('Apasă steagul de 3 ori: sub scenă, x e 10, 20, 30.', 'Din <b>Mișcare</b>, trage „mergi la x 30 y: 0” chiar sub blocul galben (intră deasupra lui „mergi 10 pași”).', 'Clic pe 30, scrie 0, <kbd>Enter</kbd>. Apasă steagul de 2 ori: x rămâne 10.')}`,
+   altfel: `<p>E ca o tablă de joc: pionul rămâne unde l-ai lăsat. Dacă vrei ca fiecare joc să înceapă la start, primul lucru pe care îl faci e să-l pui înapoi la start. „mergi la x 0 y: 0” face asta, dar numai cu 0 și 0 scrise în el.</p>`,
+   incearca: {t: 'scratch', q: 'Pisica a rămas la x 30. Lipește „mergi la x … y: …” chiar sub blocul galben, scrie în el 0 și 0 și apasă steagul.',
+    paleta: PAL,
+    personaj: {x: 30, y: 0, directie: 90},
+    program: [{x: 14, y: 14, b: [['steag'], ['mergi', 10]]}],
+    teste: [
+     {ce: '„mergi la x … y: …” e chiar sub blocul galben', msg: 'Trage „mergi la x … y: …” din Mișcare și lasă-l chiar sub blocul galben: intră deasupra lui „mergi 10 pași”.', ok: (U, P) => eq(A.dupaSteag(P), ['mergi_la_xy', 'mergi'])},
+     {ce: 'În el scrie 0 și 0', msg: 'Din paletă a venit cu numerele de acum ale pisicii. Clic pe fiecare număr care nu e 0, scrie 0, Enter.', ok: (U, P) => zeroZero(P)},
+     {ce: 'Pisica ajunge la x 10, y 0, de oriunde pornește', o: ALTUNDE, msg: 'Pisica pleacă din mijloc (0 și 0), apoi merge 10 pași.', ok: U => U.x === 10 && U.y === 0},
+     {ce: 'Ai apăsat steagul verde', msg: 'Apasă steagul verde, deasupra scenei, și privește x.', ok: (U, P, S) => S.apasatSteag}],
+    solutie: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 0, 0], ['mergi', 10]]}],
+    gresit: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 30, 0], ['mergi', 10]]}],
+    ajutor: 'Mișcare › „mergi la x 30 y: 0” (paleta arată unde e pisica). Lasă-l chiar sub blocul galben, apoi clic pe 30, scrie 0, Enter.',
+    why: 'Blocul din paletă vine cu numerele de acum ale pisicii. Cu 0 și 0, pisica pleacă mereu din mijloc, deci ajunge mereu la x 10.'},
+   inca: [
+    {t: 'scratch', q: 'Pisica trebuie să meargă 60 de pași, nu 10. Schimbă numărul din bloc: clic pe 10 (pe telefon: atingi 10), scrie 60, <kbd>Enter</kbd>.',
+     paleta: ['steag', 'mergi', 'spune_sec'],
+     program: [{x: 14, y: 14, b: [['steag'], ['mergi', 10]]}],
+     teste: [
+      {ce: 'Sub steag e tot un singur bloc, „mergi … pași”', msg: 'Nu adăuga alt bloc: schimbă doar numărul din „mergi 10 pași”.', ok: (U, P) => eq(A.dupaSteag(P), ['mergi'])},
+      {ce: 'Programul mută pisica 60 de pași, până la x 60', msg: 'În câmpul alb al blocului scrie 60, apoi Enter.', ok: U => U.x === 60}],
+     solutie: [{x: 14, y: 14, b: [['steag'], ['mergi', 60]]}],
+     gresit: [{x: 14, y: 14, b: [['steag'], ['mergi', 10]]}],
+     ajutor: 'Clic chiar pe numărul 10, din cerculețul alb.', why: 'Numărul din bloc spune câți pași face pisica.'},
+    {t: 'scratch', q: 'Algoritmul: pisica pleacă din mijlocul scenei, spune „Bună!” 2 secunde, apoi merge 100 de pași. Blocurile de mai jos sunt lipite în altă ordine. Mută-le, ca să se execute în ordinea algoritmului, apoi apasă steagul verde.',
+     paleta: PAL,
+     program: [{x: 14, y: 14, b: [['steag'], ['mergi', 100], ['spune_sec', 'Bună!', 2], ['mergi_la_xy', 0, 0]]}],
+     teste: [
+      {ce: 'Sub steag: „mergi la x 0 y: 0”, „spune Bună! pentru 2 secunde”, „mergi 100 pași”', msg: 'Trage ultimul bloc, „mergi la x 0 y: 0”, chiar sub blocul galben. Apoi pune „spune Bună!” sub el.', ok: (U, P) => eq(A.dupaSteag(P), ['mergi_la_xy', 'spune_sec', 'mergi'])},
+      {ce: 'Pisica spune „Bună!” în mijlocul scenei, chiar dacă era în altă parte', o: ALTUNDE, msg: '„mergi la x 0 y: 0”, cu 0 și 0, trebuie să fie înaintea lui „spune”.', ok: U => eq(spusLa(U, 'Bună!', ALTUNDE), [0, 0])},
+      {ce: 'La final, pisica e la x 100, y 0', o: ALTUNDE, msg: 'După „spune”, pisica merge 100 de pași din mijloc.', ok: U => U.x === 100 && U.y === 0},
+      {ce: 'Ai pornit programul cu steagul verde', msg: 'Apasă steagul verde, deasupra scenei, și privește pisica.', ok: (U, P, S) => S.apasatSteag}],
+     solutie: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 0, 0], ['spune_sec', 'Bună!', 2], ['mergi', 100]]}],
+     gresit: [{x: 14, y: 14, b: [['steag'], ['mergi', 100], ['spune_sec', 'Bună!', 2], ['mergi_la_xy', 0, 0]]}],
+     ajutor: 'Trage „mergi la x 0 y: 0” (ultimul) și lasă-l chiar sub blocul galben: intră acolo. Apoi trage „spune Bună!” (acum ultimul) și lasă-l sub „mergi la x 0 y: 0”.',
+     why: 'Blocurile se execută de sus în jos. Întâi pisica ajunge în mijloc, apoi vorbește, apoi merge.'},
+    {t: 'scratch', q: 'Cerința: pisica pleacă din mijloc, merge 60 de pași și spune „Pa!” 2 secunde. Un bloc din program nu are ce căuta acolo. Găsește-l, șterge-l și pornește programul.',
+     paleta: PAL,
+     program: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 0, 0], ['roteste_dr', 90], ['mergi', 60], ['spune_sec', 'Pa!', 2]]}],
+     teste: [
+      {ce: 'În program nu mai e niciun „rotește-te”', msg: 'Cerința nu spune să se rotească: șterge „rotește-te”.', ok: (U, P) => !A.toate(P).includes('roteste_dr')},
+      {ce: 'Toate blocurile sunt lipite sub „când se dă click pe ⚑”', msg: 'Un bloc tras din mijloc a luat cu el și blocurile de sub el: lipește-le la loc sub „mergi la x 0 y: 0”. (Cu clic dreapta › Șterge blocul pleacă doar el.)', ok: (U, P) => P.length === 1 && A.libere(P).length === 0},
+      {ce: 'Pisica ajunge la x 60, y 0 și spune „Pa!”', o: ALTUNDE, msg: 'Programul: mergi la x 0 y: 0, mergi 60 pași, spune Pa! pentru 2 secunde.', ok: U => U.x === 60 && U.y === 0 && eq(spuse(U), ['pa'])},
+      {ce: 'Ai pornit programul cu steagul verde', msg: 'Apasă steagul verde.', ok: (U, P, S) => S.apasatSteag}],
+     solutie: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 0, 0], ['mergi', 60], ['spune_sec', 'Pa!', 2]]}],
+     gresit: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 0, 0], ['roteste_dr', 90], ['mergi', 60], ['spune_sec', 'Pa!', 2]]}],
+     ajutor: 'Blocul în plus e cel care rotește pisica. Clic dreapta pe el (pe telefon: ții degetul pe el) › Șterge blocul.', why: 'Ai scos blocul care nu era în cerință, iar celelalte au rămas lipite, în ordine.'},
+    {t: 'scratch', q: 'Apasă steagul verde de două ori și uită-te la <b>Direcția</b>, sub scenă: a doua oară pisica nu mai pleacă spre dreapta. Lipește „orientează-te în direcția 90” chiar sub „mergi la x 0 y: 0”, ca să plece mereu spre dreapta.',
+     paleta: PAL,
+     program: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 0, 0], ['mergi', 50], ['roteste_dr', 90]]}],
+     teste: [
+      {ce: '„orientează-te în direcția 90” e lipit sub „mergi la x 0 y: 0”', msg: 'Din Mișcare, trage „orientează-te în direcția 90” și lasă-l chiar sub „mergi la x 0 y: 0”.', ok: (U, P) => eq(A.dupaSteag(P).slice(0, 2), ['mergi_la_xy', 'orienteaza'])},
+      {ce: 'Pisica ajunge la x 50, y 0, chiar dacă privea în altă parte', o: {x: 20, y: -40, directie: 180}, msg: 'Direcția trebuie să fie 90 (spre dreapta) înainte de „mergi 50 pași”.', ok: U => U.x === 50 && U.y === 0}],
+     solutie: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 0, 0], ['orienteaza', 90], ['mergi', 50], ['roteste_dr', 90]]}],
+     gresit: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 0, 0], ['mergi', 50], ['roteste_dr', 90]]}],
+     ajutor: 'După primul steag Direcția devine 180 (în jos). „orientează-te în direcția 90” o pune înapoi spre dreapta.', why: 'Pisica nu-și schimbă singură direcția înapoi: o fixezi la începutul programului.'}
+   ]},
+  /* ---- pasul 5: salvezi și deschizi din nou (reparare J1, C: Explorer-ul simulat = „Încă un exercițiu”; laboratorul
+     face același gest de-adevăratelea) ---- */
+  {t: 'Salvezi proiectul în folderul tău și îl deschizi din nou',
+   text: `<ol><li><b>Fișier</b> › <b>Salvează pe calculatorul tău</b>. Browserul pune proiectul, de obicei, în <b>Descărcări</b>: fișierul <b>Proiect Scratch</b> (<code>.sb3</code>). Dacă te întreabă unde, alegi direct folderul tău și numele.</li>
+<li>În Explorer îl <b>redenumești</b> (<code>Pisica_</code>, clasa și numele tău), apoi <b>Decupare</b>, <b>Lipire</b> în folderul tău.</li></ol>
+<p>Îl <mark>deschizi din nou</mark> cu <b>Fișier</b> › <b>Load from your computer</b> (netradus): în fereastra <b>Deschidere</b>, fișierul tău, <b>Deschidere</b>.</p>`,
+   exemplu: `${fig('meniu-fisier.webp', 410, 200, 'Meniul Fișier din editorul în română: Nou, Load from your computer și Salvează pe calculatorul tău', 'Meniul <b>Fișier</b>.')}
+<p>Dacă ai lucrat ceva, la deschidere Scratch întreabă <b>Replace contents of the current project?</b> (Înlocuiesc?): <b>OK</b>. Salvezi la laborator.</p>`,
+   altfel: `<p>E ca o scrisoare care ajunge la poștă (Descărcări): o iei de acolo, îi scrii numele tău pe plic (Redenumire) și o pui în sertarul tău (folderul tău).</p>`,
+   incearca: {t: 'choice', q: 'Ai apăsat <b>Salvează pe calculatorul tău</b>, iar browserul nu te-a întrebat nimic. Unde cauți proiectul și cum se numește?', o: ['În Descărcări, Proiect Scratch', 'În Documente, cu numele tău', 'În Scratch, la Logare', 'Pe Desktop, Sprite1'], ok: 0,
+    ajutor: 'Ce descarci din browser ajunge, de obicei, într-un folder anume. Numele îl pune Scratch.', why: 'Browserul îl pune în Descărcări, cu numele dat de Scratch: Proiect Scratch. De acolo îl redenumești și îl muți în folderul tău.'},
+   inca: [
+    OP({q: 'Ai salvat proiectul. În <b>Descărcări</b> e <b>Proiect Scratch.sb3</b> (aici extensiile se văd). Redenumește-l <b>Pisica_6A_Popescu</b> (Redenumire alege doar numele; .sb3 rămâne) și mută-l în <b>Documente › TIC_6A</b>. Fișierul colegului Ion nu-l atingi.',
+     start: DL, fs: [[DL + 'Proiect Scratch.sb3', '26.01.2027 10:41', '42 KB'], [DL + 'fisa-de-lucru.pdf', '19.01.2027 09:05', '120 KB'], [TIC + 'Pisica_6A_Ion.sb3', '26.01.2027 10:39', '43 KB']],
+     checks: [{are: TIC + 'Pisica_6A_Popescu.sb3', ce: 'În TIC_6A e Pisica_6A_Popescu.sb3'}, {nu: DL + 'Proiect Scratch.sb3', ce: 'În Descărcări nu mai e Proiect Scratch (l-ai redenumit și l-ai mutat)'}, {nu: DL + 'Pisica_6A_Popescu.sb3', ce: 'L-ai mutat (Decupare), nu l-ai copiat'}, {neatins: TIC + 'Pisica_6A_Ion.sb3', ce: 'Fișierul lui Ion e neatins'}],
+     solutie: [['sel', 'Proiect Scratch.sb3'], ['ren', 'Proiect Scratch.sb3', 'Pisica_6A_Popescu.sb3'], ['sel', 'Pisica_6A_Popescu.sb3'], ['cut', 'Pisica_6A_Popescu.sb3'], ['cd', TIC], ['paste']],
+     gresit: [['sel', 'Proiect Scratch.sb3'], ['ren', 'Proiect Scratch.sb3', 'Pisica_6A_Popescu.sb3'], ['sel', 'Pisica_6A_Popescu.sb3'], ['copy', 'Pisica_6A_Popescu.sb3'], ['cd', TIC], ['paste']],
+     ajutor: 'Clic pe Proiect Scratch.sb3, Redenumire (F2), scrii Pisica_6A_Popescu, Enter. Apoi Decupare, Documente, dublu clic pe TIC_6A, Lipire.',
+     why: 'Fișierul are acum numele tău și stă în folderul tău. În Descărcări nu a rămas nimic de-al tău.'}),
+    {t: 'order', q: 'Vrei să lucrezi mai departe la proiectul salvat ieri. Scratch e deschis și n-ai lucrat nimic în el. Pune pașii în ordine.',
+     items: ['În Scratch: Fișier › Load from your computer', 'În fereastra Deschidere: Documente, apoi folderul tău', 'Clic pe fișierul tău, apoi Deschidere', 'Apeși steagul verde ca să vezi programul'],
+     ajutor: 'Întâi comanda din Scratch, apoi fereastra Windows.', why: 'Comanda din meniul Fișier deschide fereastra Deschidere. Alegi folderul, apoi fișierul, apoi pornești programul.'}
+   ]}
+ ],
+ atelier: {t: 'scratch', titlu: 'Primul program: de la algoritm la blocuri',
+  intro: `<p>Algoritmul, în cuvinte:</p>
+<ol><li>Început: când se dă click pe steagul verde.</li><li>Pisica merge în mijlocul scenei.</li><li>Spune „Bună!” 2 secunde.</li><li>Merge 100 de pași.</li><li>Spune „Am ajuns!” 2 secunde.</li></ol>
+<p><strong>Sarcina:</strong> fă-l din blocuri, apasă steagul verde, apoi „Rulează testele”.</p>`,
+  q: 'Fă programul din blocuri și pornește-l.',
+  paleta: PAL,
+  program: [],
+  teste: [
+   {ce: 'Totul e lipit sub blocul galben', msg: 'Pune sus „când se dă click pe ⚑” (Evenimente) și lipește toate blocurile sub el. Un bloc lăsat deoparte nu se execută.', ok: (U, P) => P.length === 1 && A.cuSteag(P).length === 1 && A.libere(P).length === 0},
+   {ce: 'Pisica spune „Bună!”, apoi „Am ajuns!”', msg: 'Trebuie două blocuri „spune … pentru 2 secunde”: întâi cu Bună!, apoi cu Am ajuns!.', ok: U => eq(spuse(U), ['buna', 'am ajuns'])},
+   {ce: 'Spune „Bună!” în mijloc, oriunde ar fi fost', o: ALTUNDE, msg: '„mergi la x 0 y: 0” vine primul sub steag, cu 0 și 0 (din paletă vine cu numerele de acum ale pisicii); „spune Bună!” după el.', ok: U => eq(spusLa(U, 'Bună!', ALTUNDE), [0, 0])},
+   {ce: 'Spune „Am ajuns!” la x 100, y 0', o: ALTUNDE, msg: '„mergi 100 pași” vine înaintea lui „spune Am ajuns!”. În „mergi 10 pași” scrie 100.', ok: U => eq(spusLa(U, 'Am ajuns!', ALTUNDE), [100, 0]) && U.x === 100 && U.y === 0},
+   {ce: 'Ai apăsat steagul verde', msg: 'Apasă steagul verde, deasupra scenei, și privește pisica.', ok: (U, P, S) => S.apasatSteag}],
+  solutie: P_ATELIER,
+  gresit: [{x: 14, y: 14, b: [['steag'], ['spune_sec', 'Bună!', 2], ['mergi', 100], ['spune_sec', 'Am ajuns!', 2]]}],
+  ajutor: 'Evenimente: „când se dă click pe ⚑”. Mișcare: „mergi la x … y: …”, cu 0 și 0. Aspect: „spune Salut! pentru 2 secunde” (scrii Bună!). Mișcare: „mergi 10 pași” (scrii 100). Aspect: încă un „spune”, cu Am ajuns!.',
+  why: 'Fiecare rând al algoritmului a devenit un bloc, în aceeași ordine. „mergi la x 0 y: 0” face ca pisica să plece mereu din mijloc.',
+  inca: [
+   {t: 'scratch', q: 'Încă unul: pisica pleacă din mijloc, cu fața spre dreapta, merge 80 de pași, se rotește 90 de grade spre dreapta (↻), merge încă 80 de pași și spune „Gata!” 2 secunde.',
+    paleta: PAL, program: [],
+    teste: [
+     {ce: 'Totul e lipit sub „când se dă click pe ⚑”', msg: 'Un singur program, care începe cu „când se dă click pe ⚑”.', ok: (U, P) => P.length === 1 && A.cuSteag(P).length === 1},
+     {ce: 'Pisica ajunge la x 80, y −80 și spune „Gata!”, oricum ar fi stat la început', o: {x: -100, y: 90, directie: 45}, msg: 'Începe cu „mergi la x 0 y: 0” (cu 0 și 0) și „orientează-te în direcția 90”; apoi mergi 80, rotește-te ↻ 90, mergi 80, spune Gata!.', ok: U => U.x === 80 && U.y === -80 && eq(spuse(U), ['gata'])},
+     {ce: 'Ai pornit programul cu steagul verde', msg: 'Apasă steagul verde.', ok: (U, P, S) => S.apasatSteag}],
+    solutie: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 0, 0], ['orienteaza', 90], ['mergi', 80], ['roteste_dr', 90], ['mergi', 80], ['spune_sec', 'Gata!', 2]]}],
+    gresit: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 0, 0], ['mergi', 80], ['roteste_st', 90], ['mergi', 80], ['spune_sec', 'Gata!', 2]]}],
+    ajutor: '↻ e „rotește-te” cu săgeata spre dreapta. Direcția 90 = spre dreapta; după ↻ 90, pisica privește în jos.', why: 'Din mijloc, 80 de pași spre dreapta duc la x 80; rotită spre dreapta cu 90 de grade, pisica privește în jos, deci următorii 80 de pași o duc la y −80.'}
+  ]},
+ qs: [
+  {t: 'choice', q: 'Ai lipit trei blocuri sub „când se dă click pe ⚑”. Al patrulea a rămas deoparte. Ce se execută la steagul verde?', o: ['Doar cele trei lipite', 'Toate patru', 'Nimic', 'Doar blocul nelipit'], ok: 0,
+   why: 'La steag se execută doar blocurile lipite sub „când se dă click pe ⚑”, de sus în jos. Blocul lăsat deoparte nu face parte din program.'},
+  {t: 'scratch', q: 'Cerința: pisica pleacă din mijloc, spune „Start!” 2 secunde, apoi merge 70 de pași. Un bloc e la locul greșit: mută-l și pornește programul.',
+   paleta: PAL,
+   program: [{x: 14, y: 14, b: [['steag'], ['spune_sec', 'Start!', 2], ['mergi_la_xy', 0, 0], ['mergi', 70]]}],
+   teste: [
+    {ce: 'Pisica spune „Start!” în mijlocul scenei', o: ALTUNDE, msg: 'Pisica vorbește înainte să ajungă în mijloc: pune „mergi la x 0 y: 0” deasupra lui „spune”.', ok: U => eq(spusLa(U, 'Start!', ALTUNDE), [0, 0])},
+    {ce: 'La final pisica e la x 70, y 0', o: ALTUNDE, msg: 'Pisica pleacă din mijloc și merge 70 de pași: „mergi 70 pași” rămâne ultimul.', ok: U => U.x === 70 && U.y === 0},
+    {ce: 'Totul e lipit sub „când se dă click pe ⚑”', msg: 'Lipește toate blocurile sub blocul galben.', ok: (U, P) => P.length === 1 && A.libere(P).length === 0},
+    {ce: 'Ai pornit programul cu steagul verde', msg: 'Apasă steagul verde.', ok: (U, P, S) => S.apasatSteag}],
+   solutie: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', 0, 0], ['spune_sec', 'Start!', 2], ['mergi', 70]]}],
+   gresit: [{x: 14, y: 14, b: [['steag'], ['spune_sec', 'Start!', 2], ['mergi_la_xy', 0, 0], ['mergi', 70]]}],
+   why: 'Ordinea blocurilor e ordinea pașilor: întâi în mijloc, apoi vorbește, apoi merge.'},
+  {t: 'choice', q: 'Programul: „când se dă click pe ⚑”, „mergi 30 pași”. Pisica e la x 0, cu fața spre dreapta. Apeși steagul de două ori. La ce x ajunge?', o: ['60', '30', '0', '90'], ok: 0,
+   why: 'Pisica nu se întoarce singură la start: al doilea steag o mută încă 30 de pași, de la x 30 la x 60. Cu „mergi la x 0 y: 0” la început, ar fi ajuns de fiecare dată la 30.'},
+  {t: 'choice', q: 'Sub „când se dă click pe ⚑” sunt patru blocuri. Tragi în paletă al doilea. Ce dispare?', o: ['Al doilea și toate cele de sub el', 'Doar al doilea', 'Tot programul, cu blocul galben', 'Nimic'], ok: 0,
+   why: 'Un bloc tras din mijloc vine cu toate cele de sub el, iar în paletă se șterg toate. Ca să ștergi doar blocul acela: clic dreapta › Șterge blocul.'},
+  {t: 'choice', q: 'Ieri ai salvat <b>Pisica_6A_Popescu.sb3</b> în folderul tău. Azi ai deschis Scratch. Ce alegi ca să lucrezi la el?', o: ['Fișier › Load from your computer', 'Fișier › Nou', 'Fișier › Salvează pe calculatorul tău', 'Logare, apoi proiectele mele'], ok: 0,
+   why: '„Load from your computer” deschide un proiect .sb3 de pe calculator. „Nou” începe un proiect gol, iar „Salvează” scrie unul nou. Fără cont nu ai proiecte în cont.'}
+ ]}
+  ],
+  tipuri: {scratch: SimScratch.tipuri.scratch, explorerop: SimExplorerOperatii},
+  aplicatieReala: {aplicatie: 'Scratch, în browser, pe calculatorul din laborator', titlu: 'Acum în Scratch, la calculator', scurt: 'Scratch',
+    intro: '<p>Programul atelierului, în Scratch: îl faci, îl salvezi în folderul tău, îl redeschizi. Fără cont.</p>',
+    pasi: LAB},
+  diploma: {
+    titlu: 'Primul meu program din blocuri',
+    rezumat: 'editorul Scratch în română, fără cont: paleta cu categorii, zona de cod, scena, personajul cu x, y și Direcția; blocuri trase, lipite și șterse; steagul verde și Stop; „mergi la x 0 y: 0”, cu 0 și 0 scrise de tine, ca pisica să plece din mijloc; proiectul salvat ca .sb3 în folderul tău și deschis din nou',
+    aplicatie: 'Scratch, în browser, pe calculatorul din laborator',
+    provocare: LAB
+  }
+});
+</script>
+</body>
+</html>
