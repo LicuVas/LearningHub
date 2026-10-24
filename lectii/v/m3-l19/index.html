@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 19, clasa a V-a: Selectare, copiere, mutare, ștergere. Instrumente de desenare</title>
+<meta name="description" content="Lecția 19, clasa a V-a: în Paint (Windows 11) desenezi cu Creionul, Pensulele și Radiera (cu Dimensiune), iei forme gata făcute, anulezi cu Ctrl+Z, selectezi o parte din desen, o copiezi (Ctrl+C, Ctrl+V), o muți, o decupezi (Ctrl+X) sau o ștergi (Delete) și refaci un desen după model.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF2F7; --paper:#FFFFFF; --paper2:#F4F7FB; --line:#D3DCE7;
+  --ink:#16202C; --ink2:#4E5D6E; --accent:#0B5CAD; --accentInk:#FFFFFF; --sel:#D6E6F8;
+  --mark:#FFE07A; --markInk:#16202C; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Fredoka","Segoe UI",system-ui,sans-serif; --fb:"Nunito Sans","Segoe UI",system-ui,sans-serif; --fm:"JetBrains Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F151C; --paper:#17202A; --paper2:#1E2935; --line:#33414F;
+  --ink:#E7EEF5; --ink2:#AEBBC8; --accent:#7DB8F2; --accentInk:#0F151C; --sel:#24384D;
+  --mark:#EDCB63; --markInk:#16202C; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F151C; --paper:#17202A; --paper2:#1E2935; --line:#33414F;
+  --ink:#E7EEF5; --ink2:#AEBBC8; --accent:#7DB8F2; --accentInk:#0F151C; --sel:#24384D;
+  --mark:#EDCB63; --markInk:#16202C; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: bara de titlu a lui Paint, o selecție punctată și formele */
+.banda{display:flex;align-items:center;gap:10px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent)}
+.banda .bd-t{flex:none;font-size:.76rem;font-weight:600;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 9px}
+.banda .bd-sel{flex:none;width:44px;height:16px;border:1.5px dashed var(--ink2);border-radius:2px}
+.banda .bd-f{flex:none;font-size:1rem;letter-spacing:4px;color:var(--ink)}
+.banda .bd-z{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-family:var(--fm);font-size:.72rem;color:var(--ink2)}
+h1,h2{font-weight:600;letter-spacing:0}
+code{font-family:var(--fm);font-size:.9em}
+details.verif{margin-top:.4em;font-size:.93rem}
+details.verif summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:32px}
+/* „Acum la calculator” (regula 10): gesturi mici, reale, imediat după pas */
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:600;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.acum li.tarziu{list-style:none;margin:.5em 0 .1em -1.2em;padding-top:5px;border-top:1px dashed var(--line)}   /* punctul „La sfârșitul orei”: ultimul, fără număr, despărțit */
+.acum li.mai-ai-timp,span.mai-ai-timp{color:var(--ink2)}   /* „Dacă mai ai timp”: nu intră în timpul obligatoriu (reparația J1-A) */
+.acum code{white-space:nowrap;font-size:.8em}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/paint.js"></script>
+<script src="../../_sim/paint-selectie.js"></script>
+<script>
+/* Lecția 19, clasa a V-a (M3): „Selectare, copiere, mutare, ștergere. Instrumente de desenare” — a doua lecție din V-U4.
+   Standardul: LearningHub\_campaign\revizuire_completa_2026_09\05_STANDARD_LECTIE.md. Sursele și probele: surse.md, _proba\.
+   Simulatorul: lectii/_sim/paint.js (al lecției 18, neschimbat) + extensia NOUĂ lectii/_sim/paint-selectie.js (proprietar lecția
+   aceasta; baza lecțiilor 20-22): tipul paintw = SimPaintSel (Selecție, Editare, Pensule, Radieră, Forme, Dimensiune).
+   Paint (aplicație din Magazin) NU a fost pornit: faptele vin din capturile reale din jocuri/grafica-v (Paint RO), din probele
+   judecătorului lecției V/8 pe Paint-ul real (UI Automation), din resursele pachetului Paint citite ca fișier și din Windows
+   Insider Blog (Microsoft: cursorul de mărime din stânga pânzei, Ctrl+C, radiera care lasă să se vadă fundalul). Ce nu e probat
+   stă în surse.md („Nesigur”) și în capturi_lipsa.json și e scris prudent („de obicei”).
+   Gesturile din Paint-ul adevărat (regula 10) reiau lecția 18: pornești, Salvați ca PNG în folderul tău, Ctrl+S după un clic pe bara
+   de titlu, X și „Salvați lucrul?”. Folderul de lucru: Ex Nume Prenume în Documente (lecția 10), făcut în caseta pasului
+   „Creion, Pensule, Radieră”, pus la sfârșit în Coș, fără golirea Coșului; tot acolo stă punctul „La sfârșitul orei”.
+   Trimiterile la pași se fac după TITLU și după numărul din bara de jos (P1 = „La ce folosește”).
+   REPARAȚIILE după judecata 1 (24.10.2026; registrul: _verificare\registru_j1.md): planul de timp R1-R11 al judecătorului (caseta
+   P4 scoasă, Î4 cu variante, laboratorul salvează cu Ctrl+S și X, ușa și soarele „Dacă mai ai timp”, P2 punctul 2 „Dacă mai ai
+   timp”, „Pornește Paint” în caseta P3, Î2 doar ștergerea norului, textele scurtate); desenele ps_nor și ps_parc mutate în
+   paint-selectie.js (norul departe de vecini; soarele scos din colțul lipirii); „Ctrl+Z dă timpul înapoi cu un pas” peste tot. */
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const CAPT='<small>Capturi din Paint (Windows 11); chenarele roșii sunt de la noi.</small>';   /* o singură dată, la prima captură (R7) */
+const IMG={
+  tangram:fig('tangram.webp',800,615,'Piese colorate de tangram, prinse pe o tablă neagră: triunghiuri, un pătrat și piese înclinate cu patru laturi, puse una lângă alta; alături, două piese libere','Tangram: piese simple, puse una lângă alta. <small>Foto: Fumikas Sagisavas, CC0, <a href="https://commons.wikimedia.org/wiki/File:Magnetic_tangram.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>.</small>'),
+  unelte:fig('instrumente-pensule.webp',215,122,'Bucată din bara cu instrumente a lui Paint: sus, Salvați, Partajați, Anulați și Refaceți; jos, grupul Instrumente cu Creion și Radieră încadrate (și Umplere, aleasă, cu fond albastru) și grupul Pensule, încadrat, cu săgeata ⌄ dedesubt','<b>Creion</b> și <b>Radieră</b> (grupul Instrumente), <b>Pensule</b> cu săgeata ⌄; sus, <b>Anulați</b> ↶. Umplere era aleasă (fond albastru). '+CAPT),
+  forme:fig('desen-forme.webp',700,450,'Desen făcut în Paint din forme: o casă din dreptunghi și triunghi, un soare din oval; cer albastru și iarbă verde','Un desen făcut doar din forme: dreptunghi, triunghi, oval. Culorile le pui la lecția 21.'),
+  selMeniu:fig('selectie-meniu.webp',340,340,'Meniul butonului Selectare din Paint, deschis cu săgeata de sub el: Dreptunghi, Formă liberă și Selectați tot (Ctrl+A) încadrate; dedesubt Inversare selecție, Selecție transparentă și Ștergere (del)','Săgeata ⌄ de sub <b>Selectare</b>: <b>Dreptunghi</b>, <b>Formă liberă</b>, <b>Selectați tot</b>; jos, <b>Ștergere</b> (del).'),
+  selSoare:fig('selectie-soare.webp',560,330,'Un soare galben pe cer albastru, înconjurat de un chenar punctat cu pătrățele mici pe colțuri și pe laturi: zona selectată','Soarele, selectat cu <b>Dreptunghi</b>: chenarul punctat și mânerele.'),
+  copiere:fig('copiere-lipire.webp',700,288,'Doi sori pe cer: în stânga, copia lipită și trasă acolo, încă în chenarul punctat, care acoperă puțin acoperișul casei; în dreapta, originalul','După <kbd>Ctrl</kbd>+<kbd>C</kbd> și <kbd>Ctrl</kbd>+<kbd>V</kbd>: copia, trasă la stânga, încă selectată; originalul, la locul lui. Chenarul copiei acoperă vârful acoperișului.')
+};
+/* '!…' = punctul de la sfârșitul orei; '?…' = „Dacă mai ai timp” (nu intră în timpul obligatoriu) */
+const ACUM=(...p)=>`<div class="acum" role="note"><div class="lbl">Acum la calculator, în Paint-ul adevărat</div><ol>${p.map(x=>x.startsWith('!')?`<li class="tarziu">${x.slice(1)}</li>`:x.startsWith('?')?`<li class="mai-ai-timp"><b>Dacă mai ai timp:</b> ${x.slice(1)}</li>`:`<li>${x}</li>`).join('')}</ol></div>`;
+
+/* lumea simulatorului: contul Elev din laborator, folderul de lucru al Anei e Documente › Ex Pop Ana; desenele cu etichete
+   (casa, copac, trunchi, soare, nor, mazga, stea, floare) sunt în PaintSelectie.DESENE (lectii/_sim/paint-selectie.js) */
+const P=o=>Object.assign({t:'paintw'},o);
+const PARC='Documente/Ex Pop Ana/parc.png';
+const SUS_DREAPTA=[600,0,438,260];
+
+/* ---- „Acum la calculator” (după atelier, înainte de verificare). FĂRĂ profesor, pe calculatorul comun. Activitatea profesorului
+   (activitati_lectii_V_VI.json, V/19): „elevii refac un desen-model folosind numai instrumentele de bază; cine termină primește
+   varianta avansat, cu mai multe forme suprapuse”. Casetele de la pași au făcut deja gesturile; aici le pui împreună.
+   Reparația J1-A (R4, R5, R10): desenul din casete (casa și trei copaci) e deja aproape ca Modelul; ușa, soarele și varianta
+   „avansat” sunt „Dacă mai ai timp”; se salvează cu Ctrl+S (desenul forme), nu cu alt nume. ---- */
+const LAB=[
+  'Deschide desenul tău <b>forme</b>, dacă nu e deschis: pornește Paint, <b>Fișier</b> › <b>Deschidere</b>, <b>Documente</b>, dublu-clic pe folderul tău, apoi pe <b>forme</b>.',
+  '<span class="mai-ai-timp"><b>Dacă mai ai timp:</b> fă-l ca Modelul, cu ușa (un <b>Dreptunghi</b> mic, jos, în casă) și soarele (un <b>Oval</b>, sus în dreapta). Apoi varianta „avansat”: două ferestre la fel pe casă (un pătrat desenat o dată, apoi copiat) și un gard din scânduri copiate, puse una lângă alta. Ai greșit? <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</span>',
+  'Clic pe bara de titlu a Paint-ului, <kbd>Ctrl</kbd>+<kbd>S</kbd>, apoi închide Paint cu X.',
+  'Lasă calculatorul cum l-ai găsit: în Explorer, <b>Documente</b>, clic pe folderul tău, <kbd>Delete</kbd> (ajunge în Coș; <b>nu goli Coșul</b>). Un desen salvat din greșeală în alt folder (de exemplu, <b>Imagini</b>): clic pe el, <kbd>Delete</kbd>. Închide Explorer. <details class="verif"><summary>Verifică-te, după ce ai terminat</summary>Desenul e salvat; Paint și Explorer sunt închise; folderul tău e în Coș.</details>'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_v_m3_l19',
+  mod:'lectie',   // motorul în modul lecție: firimituri spre lectii/v/, „Lecția 19”, pasul real înainte de verificare
+  titlu:'Selectare, copiere, mutare, ștergere. Instrumente de desenare',
+  marca:'Lecția <b>19</b> · clasa a V-a',
+  h1:'Selectare, copiere, mutare, ștergere. Instrumente de desenare',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a V-a', unitate:'V-U4', unitateTitlu:'Editoare grafice. Fac materiale digitale',
+  competente:['CS.3.1'], lectii:'19',
+  ancoraText:'Din programă (CS.3.1, unitatea V-U4, lecția 19): Comenzi pentru selectare, copiere, mutare, ştergere; Instrumente de desenare',
+  intro:`<p><b>Ai nevoie de:</b> lecția 18 (Paint: Start, <code>pai</code>; Creionul; <b>Salvați ca</b> › <b>Imagine PNG</b>; <kbd>Ctrl</kbd>+<kbd>S</kbd> după un clic pe bara de titlu; X și „Salvați lucrul?”), lecția 10 (folderul tău din Documente, <kbd>Delete</kbd>, Coșul) și lecția 15 (<kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd>; ce copiezi stă în memorie).</p>`,
+  cum:`<b>Cum lucrezi</b><ol><li>6 pași; după fiecare, un exercițiu în pagină și gesturi în Paint-ul adevărat (casetele „Acum la calculator”).</li><li>Atelierul: un desen după model.</li><li>La calculator: salvezi, apoi faci ordine.</li><li>5 întrebări, pentru stele.</li></ol><p><b>Se apropie sfârșitul orei?</b> Bara de jos › <b>P2</b>: ultimul punct din casetă.</p>`,
+  banda:'<span class="bd-t">parc - Paint</span><span class="bd-sel" aria-hidden="true"></span><span class="bd-f" aria-hidden="true">▭ △ ◯ ☆</span><span class="bd-z">⬚ 140 × 250px</span>',
+  nivele:[
+{t:'Selectare, copiere, mutare, ștergere. Instrumente de desenare',final:true,lectii:[19],
+ continuturi:['Comenzi pentru selectare, copiere, mutare, ştergere','Instrumente de desenare'],
+ obiectiv:'desenezi cu Creionul, Pensulele, Radiera și Formele, apoi selectezi o parte din desen și o copiezi, o muți, o decupezi sau o ștergi; greșelile le anulezi cu Ctrl+Z.',
+ pasi:[
+  /* ---- pasul 0: la ce folosește (fără acțiuni) ---- */
+  {t:'La ce folosește: un desen făcut din bucăți',
+   text:`<p>Un desen se face pe bucăți. Pentru fiecare bucată alegi <b>instrumentul</b> potrivit:</p>
+<ul><li>liniile libere le faci cu <b>Creionul</b> sau cu <b>Pensulele</b>, iar greșelile le ștergi cu <b>Radiera</b>;</li><li>dreptunghiul, ovalul, steaua le iei gata făcute, din <b>Forme</b>;</li><li>o bucată care se repetă (un copac, o fereastră) o desenezi o dată și o <b>copiezi</b>; una pusă greșit o <b>muți</b>; una în plus o <b>ștergi</b>.</li></ul>
+<p>E ca la tangram, jocul cu piese de carton: din câteva piese simple, puse una lângă alta, faci o casă, o pisică, o barcă.</p>
+${IMG.tangram}`},
+  /* ---- pasul 1: Creion, Pensule (tipurile), Radieră, Dimensiune (cursorul din stânga pânzei — Windows Insider Blog, 13.03.2024) ---- */
+  {t:'Creion, Pensule, Radieră și Dimensiune',
+   text:`<p>Desenezi liber ținând apăsat butonul stâng al mouse-ului și trăgând pe pânză:</p>
+<ul><li><b>Creion</b>: o linie subțire (lecția 18);</li><li><mark>Pensule</mark>: linii mai groase, în stiluri diferite. Clic pe săgeata ⌄ de sub Pensule și alegi tipul: Pensulă, Pensulă caligrafică, Aerograf, Marker, Creion natural…;</li><li><mark>Radieră</mark>, în grupul Instrumente: unde treci cu ea, desenul dispare și se vede fundalul pânzei, de obicei alb.</li></ul>
+<p>Când alegi una dintre ele, în stânga pânzei apare cursorul <mark>Dimensiune</mark>: o bară cu un buton pe care îl tragi; linia iese mai groasă sau mai subțire.</p>
+${IMG.unelte}`,
+   exemplu:`<p>Mustățile pisicii: Creion. Un curcubeu gros: Pensule, cu Dimensiune mare. Pe telefon, în pagină, tragi cu degetul.</p>
+${ACUM('Fă-ți folderul (lecția 10): Explorer, <b>Documente</b>, <b>Nou</b> › <b>Folder</b> (Windows 10: <b>Pornire</b> › <b>Folder nou</b>), scrie Ex, numele și prenumele (<code>Ex Pop Ana</code>), <kbd>Enter</kbd>; dacă există, adaugă o cifră. Ascunde Explorer cu <b>Minimizare</b> (liniuța).','?pornește Paint; <b>Pensule</b> › ⌄ › <b>Marker</b>, o linie; mută butonul cursorului <b>Dimensiune</b>, încă o linie; <b>Radieră</b> peste una.','!<b>La sfârșitul orei</b> (chiar dacă n-ai terminat), nu acum: revii aici (<b>P2</b>), închizi Paint (<b>Nu salvați</b>); în Explorer, <b>Documente</b>, clic pe folderul tău, <kbd>Delete</kbd>. Nu goli Coșul.')}`,
+   altfel:`<p>Ca la ora de desen: creionul face linii subțiri, pensula linii groase, iar guma șterge. Dimensiune e ca atunci când iei din cutie o pensulă mai groasă sau mai subțire.</p>`,
+   incearca:P({q:'Desenează cu <b>Pensule</b>, tipul <b>Marker</b>, o linie groasă: <b>Dimensiune</b> cel puțin 20. Apoi, cu <b>Radiera</b>, șterge o bucată din mijlocul ei.',
+    checks:[{k:'pensula',tip:'marker',dimMin:20,ce:'Pe pânză e o linie de Marker, cu Dimensiune cel puțin 20',msg:'Pensule › săgeata ⌄ › Marker. Mută cursorul Dimensiune (stânga pânzei) până scrie cel puțin 20px, apoi trage o linie lungă.'},
+     {k:'radiera',peste:'pensula',ce:'Ai șters cu Radiera o bucată din linie',msg:'Alege Radieră (grupul Instrumente) și trage peste mijlocul liniei.'}],
+    sol:[['pensula','marker'],['dim','pensula',26],['trage',[[200,320],[500,322],[820,330]]],['unealta','radiera'],['trage',[[505,250],[505,400]]]],
+    gresit:[['pensula','marker'],['trage',[[200,320],[500,322],[820,330]]]],
+    ajutor:'Sub Pensule e săgeata ⌄: din ea alegi Marker. Cursorul Dimensiune apare în stânga pânzei. Radiera e în grupul Instrumente, sub Creion.',
+    why:'Marker-ul cu Dimensiune mare a făcut o linie groasă, iar Radiera a scos o bucată din ea: acolo se vede iar fundalul alb.'}),
+   inca:[
+    {t:'match',q:'Leagă fiecare instrument de ce face.',pairs:[['Creion','o linie subțire'],['Pensule','linii groase, în stiluri diferite'],['Radieră','șterge: se vede fundalul pânzei'],['Dimensiune','cât de groasă iese linia']],
+     ajutor:'Recitește lista din pas.',why:'Alegi instrumentul după ce vrei să faci: linie subțire, linie groasă sau ștergere; Dimensiune schimbă doar grosimea.'}
+   ]},
+  /* ---- pasul 2: Forme (apeși, tragi, lași) + Anulați (Ctrl+Z) ---- */
+  {t:'Forme gata făcute; Ctrl+Z dacă n-a ieșit',
+   text:`<p>Din grupul <mark>Forme</mark> iei forme gata făcute: Linie, Oval, Dreptunghi, Triunghi, Stea cu 5 colțuri, Inimă… Ies drepte, mai frumos decât cu mâna.</p>
+<ol><li>Clic pe formă (pe un ecran îngust, întâi pe butonul <b>Forme</b>).</li><li>Pe pânză apeși într-un colț, tragi în diagonală și lași butonul.</li></ol>
+<p>Forma iese cu culoarea aleasă acum, de obicei neagră; culorile le înveți la lecția 21.</p>
+<p>N-a ieșit bine? <mark>Anulați</mark>: <kbd>Ctrl</kbd>+<kbd>Z</kbd> sau săgeata ↶ de sus. Ultima schimbare se desface.</p>
+${IMG.forme}`,
+   exemplu:`<p>O casă: un Dreptunghi, apoi un Triunghi deasupra lui. În Paint-ul adevărat, forma abia desenată are, de obicei, un chenar punctat; un clic în afara ei o lasă pe pânză.</p>
+${ACUM('Pornește Paint (dacă nu e deja deschis; Start, <code>pai</code>). Ai linii de la P2? <b>Fișier</b> › <b>Nou</b>, <b>Nu salvați</b>.','<b>Forme</b> › <b>Dreptunghi</b>; apasă, trage, lasă. Apoi un <b>Triunghi</b> deasupra: o casă. N-a ieșit? <kbd>Ctrl</kbd>+<kbd>Z</kbd>.','<b>Fișier</b> › <b>Salvați ca</b> › <b>Imagine PNG</b>; scrie <code>forme</code>, apoi <b>Documente</b>, dublu-clic pe folderul tău, <b>Salvare</b>.')}`,
+   altfel:`<p>Formele sunt ca șabloanele de plastic cu care desenezi un cerc sau o stea: nu le mai faci cu mâna, doar alegi mărimea. Iar <kbd>Ctrl</kbd>+<kbd>Z</kbd> dă timpul înapoi cu un pas: desface ultimul lucru făcut, de exemplu forma abia desenată.</p>`,
+   incearca:P({q:'Desenează o casă din forme: un <b>Dreptunghi</b> și, chiar deasupra lui, un <b>Triunghi</b> pe post de acoperiș.',start:{unealta:'creion'},
+    checks:[{k:'forma',fel:'dreptunghi',ce:'Pe pânză e un dreptunghi (Forme › Dreptunghi)',msg:'Alege din Forme dreptunghiul, apoi apasă pe pânză, trage în diagonală și lasă.'},{k:'forma',fel:'triunghi',ce:'Pe pânză e un triunghi (Forme › Triunghi)'},
+     {k:'peste',sus:'triunghi',jos:'dreptunghi',ce:'Triunghiul stă pe dreptunghi, ca un acoperiș',msg:'Latura de jos a triunghiului trebuie să fie pe latura de sus a dreptunghiului. Ctrl+Z și încearcă din nou.'}],
+    sol:[['forma','dreptunghi'],['trage',[[350,330],[650,580]]],['forma','triunghi'],['trage',[[330,150],[670,330]]]],
+    gresit:[['forma','oval'],['trage',[[350,330],[650,580]]],['forma','triunghi'],['trage',[[700,60],[900,200]]]],
+    ajutor:'Forme › Dreptunghi: apeși, tragi, lași. Apoi Forme › Triunghi: apeși puțin în stânga colțului de sus al dreptunghiului și tragi până puțin în dreapta celuilalt colț de sus.',
+    why:'Două forme gata făcute, puse una peste alta, dau o casă. Fiecare formă a fost un singur gest: apeși, tragi, lași.'}),
+   inca:[
+    P({q:'Pe pânză e o casă. Desenează un <b>Oval</b>, apoi anulează-l cu <kbd>Ctrl</kbd>+<kbd>Z</kbd> (pe telefon: săgeata ↶ de sus). Casa trebuie să rămână.',start:{desen:'ps_casa',unealta:'creion'},
+     checks:[{k:'ev',tip:'anulat',dupa:'forma',ce:'Ai desenat o formă, apoi ai anulat-o'},{k:'forma',fel:'oval',min:0,max:0,ce:'Ovalul tău nu mai e pe pânză'},{k:'original',tag:'casa',ce:'Casa a rămas întreagă',msg:'Ai anulat și o bucată din casă? Apasă „Ia-o de la capăt” și anulează o singură dată, imediat după oval.'}],
+     sol:[['forma','oval'],['trage',[[560,220],[760,330]]],['anuleaza']],gresit:[['forma','oval'],['trage',[[560,220],[760,330]]]],
+     ajutor:'Forme › Oval; apeși, tragi, lași. Apoi Ctrl+Z o singură dată (sau săgeata ↶ de sus).',
+     why:'Ctrl+Z a anulat ultima schimbare, ovalul. Casa era făcută înainte, deci a rămas.'})
+   ]},
+  /* ---- pasul 3: selecția (Selectare › Dreptunghi / Formă liberă / Selectați tot) — capturile selectie-meniu, selectie-soare ---- */
+  {t:'Selectezi o parte din desen',
+   text:`<p>Ca să lucrezi doar cu o bucată din desen (s-o copiezi, s-o muți, s-o ștergi), întâi o <mark>selectezi</mark>. În grupul <b>Selecție</b> e butonul <b>Selectare</b>; săgeata ⌄ de sub el îți dă:</p>
+<ul><li><b>Dreptunghi</b>: tragi un dreptunghi peste bucată, ca la forme;</li><li><b>Formă liberă</b>: o înconjori ținând apăsat, ca și cum ai trage cu creionul în jurul ei;</li><li><b>Selectați tot</b> (<kbd>Ctrl</kbd>+<kbd>A</kbd>): toată pânza.</li></ul>
+<p>Bucata aleasă are în jur un <b>chenar punctat</b>. Un clic în afara lui, de obicei, o lasă jos.</p>
+${IMG.selMeniu}`,
+   exemplu:`${IMG.selSoare}<p>În bara de stare, jos, apare și mărimea selecției, după un dreptunghi punctat. În Paint-ul adevărat selectezi la pasul următor.</p>`,
+   altfel:`<p>E ca atunci când încercuiești în caiet un exercițiu ca să știi la care lucrezi: restul paginii rămâne neatins.</p>`,
+   incearca:P({q:'Selectează <b>doar soarele</b>, întreg, cu <b>Selectare</b> › <b>Dreptunghi</b>. Casa să nu intre în selecție.',start:{desen:'ps_casa',unealta:'creion'},
+    checks:[{k:'selectie',tag:'soare',fara:['casa'],ce:'Soarele e selectat întreg, fără nicio bucată din casă',msg:'Trage dreptunghiul de selecție de deasupra și din stânga soarelui până dedesubt și în dreapta lui, cu tot soarele înăuntru.'}],
+    sol:[['mod','dreptunghi'],['trage',[[800,40],[960,200]]]],gresit:[['mod','dreptunghi'],['trage',[[90,40],[960,600]]]],
+    ajutor:'Selectare (grupul Selecție), apoi apeși în colțul din stânga-sus al soarelui, puțin în afara lui, și tragi până la colțul din dreapta-jos.',
+    why:'Chenarul punctat cuprinde tot soarele și nimic din casă: orice faci acum (copiere, mutare, ștergere) se face doar cu soarele.'}),
+   inca:[
+    P({q:'Selectează <b>toată</b> pânza dintr-o mișcare.',start:{desen:'ps_casa',unealta:'creion'},
+     checks:[{k:'selectat',tot:true,ce:'E selectată toată pânza',msg:'Ctrl+A, sau Selectare › ⌄ › Selectați tot.'}],
+     sol:[['tot']],gresit:[['mod','dreptunghi'],['trage',[[90,150],[420,580]]]],
+     ajutor:'Ctrl+A (pe telefon: săgeata ⌄ de sub Selectare › Selectați tot).',why:'Selectați tot (Ctrl+A) pune chenarul punctat în jurul întregii pânze.'}),
+    {t:'choice',q:'Vrei să alegi doar o pisică desenată strâmb, fără iarba din jurul ei. Ce folosești?',o:['Selectare › Formă liberă','Selectare › Dreptunghi','Selectați tot (Ctrl+A)','Radiera'],ok:0,
+     ajutor:'Care selecție merge pe lângă conturul pisicii?',why:'Cu Formă liberă înconjori doar pisica. Dreptunghiul ar prinde și iarbă, Ctrl+A tot desenul, iar Radiera nu selectează, șterge.'}
+   ]},
+  /* ---- pasul 4: copierea (Ctrl+C, Ctrl+V, tragi copia) — captura copiere-lipire ---- */
+  {t:'Copiezi: Ctrl+C, Ctrl+V și tragi copia',
+   text:`<p>Vrei încă o bucată la fel? O <mark>copiezi</mark>, ca textul la lecția 15:</p>
+<ol><li>o selectezi;</li><li><kbd>Ctrl</kbd>+<kbd>C</kbd> (<b>Copiere</b>): o copie ajunge în memorie, originalul rămâne;</li><li><kbd>Ctrl</kbd>+<kbd>V</kbd> (<b>Lipire</b>): copia apare pe pânză, de obicei sus în stânga, selectată;</li><li>o tragi de mijloc unde vrei;</li><li>un clic în afara ei o lasă jos.</li></ol>
+<p>Fiecare <kbd>Ctrl</kbd>+<kbd>V</kbd> mai lipește o copie. Copia acoperă ce e sub chenarul ei: o pui pe un loc liber.</p>
+${IMG.copiere}`,
+   exemplu:`<p>Tastele merg la fereastra în care ai dat ultimul clic (lecția 18). Pe telefon, în Paint-ul din pagină: meniul <b>Editare</b> › <b>Copiere</b>, apoi <b>Editare</b> › <b>Lipire</b>.</p>
+${ACUM('Lângă casă, un copac din forme: un Dreptunghi subțire (trunchiul) și un Oval peste el (coroana).','Selectează tot copacul, <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd>, trage copia lângă el. Încă un <kbd>Ctrl</kbd>+<kbd>V</kbd> și încă o tragere: trei copaci.','Clic pe bara de titlu a Paint-ului, apoi <kbd>Ctrl</kbd>+<kbd>S</kbd>.')}`,
+   altfel:`<p>E ca la ștampilă: o ștampilezi de câte ori vrei, iar ștampila (memoria) rămâne cu același desen pe ea.</p>`,
+   incearca:P({q:'Fă încă <b>doi copaci</b> la fel, pe locul liber din dreapta celui dintâi. Copacul de la început rămâne pe loc.',start:{desen:'ps_casa_copac',unealta:'creion'},
+    checks:[{k:'original',tag:'copac',ce:'Copacul de la început e întreg, la locul lui',msg:'Copacul de la început a dispărut: ai decupat sau ai mutat, în loc să copiezi. Ctrl+Z sau „Ia-o de la capăt”.'},
+     {k:'toate',c:[{k:'obiect',tag:'copac',min:3},{k:'obiect',tag:'trunchi',min:3}],ce:'Pe pânză sunt 3 copaci întregi (coroană și trunchi)',msg:'Selectează tot copacul (și trunchiul), Ctrl+C, apoi Ctrl+V și tragi copia pe un loc liber; încă o dată Ctrl+V și o tragere. O copie peste alta se acoperă.'}],
+    sol:[['mod','dreptunghi'],['trage',[[505,320],[645,570]]],['copiaza'],['lipeste'],['trage',[[70,120],[720,445]]],['lipeste'],['trage',[[70,120],[870,445]]]],
+    gresit:[['mod','dreptunghi'],['trage',[[505,320],[645,570]]],['decupeaza'],['lipeste'],['trage',[[70,120],[720,445]]]],
+    ajutor:'Selectare › Dreptunghi peste tot copacul. Ctrl+C, Ctrl+V; copia apare sus în stânga: o tragi de mijloc la dreapta copacului. Încă un Ctrl+V și o tragere. (Pe telefon: Editare › Copiere, Editare › Lipire.)',
+    why:'Ctrl+C a pus copacul în memorie, iar fiecare Ctrl+V a lipit o copie, pe care ai tras-o pe un loc liber. Originalul n-a plecat.'}),
+   inca:[
+    {t:'tf',q:'După <kbd>Ctrl</kbd>+<kbd>C</kbd>, bucata selectată dispare de pe pânză.',ok:false,ajutor:'Ce se întâmplă cu originalul la copiere?',why:'Fals. Ctrl+C doar pune o copie în memorie; originalul rămâne. Bucata dispare la Ctrl+X sau la Delete.'}
+   ]},
+  /* ---- pasul 5: mutarea (tragi selecția), Decupare (Ctrl+X), Ștergere (Delete); „Decupare” din grupul Imagine = alt buton (lecția 20) ---- */
+  {t:'Muți, decupezi sau ștergi',
+   text:`<p>Cu bucata selectată mai poți:</p>
+<ul><li><mark>muta</mark>: o tragi de mijloc în alt loc; unde era rămâne fundalul, de obicei alb;</li><li><mark>decupa</mark>: <kbd>Ctrl</kbd>+<kbd>X</kbd> (<b>Decupare</b>). Bucata dispare de pe loc și ajunge în memorie: o pui altundeva cu <kbd>Ctrl</kbd>+<kbd>V</kbd>;</li><li><mark>șterge</mark>: tasta <kbd>Delete</kbd>. Bucata dispare și nu ajunge în memorie.</li></ul>
+<p>Atenție: în grupul Imagine e alt buton, tot cu numele <b>Decupare</b>; el taie marginile imaginii și îl înveți la lecția 20. Azi decupezi cu <kbd>Ctrl</kbd>+<kbd>X</kbd> (pe telefon: <b>Editare</b> › <b>Decupare</b>).</p>`,
+   exemplu:`<p>Ai șters din greșeală? <kbd>Ctrl</kbd>+<kbd>Z</kbd> dă timpul înapoi cu un pas: bucata ștearsă revine. Pe telefon, în Paint-ul din pagină: ștergerea e în săgeata ⌄ de sub Selectare › <b>Ștergere</b>.</p>
+${ACUM('Selectează un copac și trage-l de mijloc puțin mai încolo.','Selectează alt copac și apasă <kbd>Delete</kbd>. Apoi <kbd>Ctrl</kbd>+<kbd>Z</kbd>: copacul se întoarce.','Lasă Paint deschis: îl folosești la sfârșit.')}`,
+   altfel:`<p>Mutarea e ca atunci când muți o carte pe raft: e tot o singură carte, în alt loc. Ștergerea e ca atunci când arunci o foaie mototolită: dispare de pe masă și n-ai păstrat-o nicăieri (nu e în memorie). O aduce înapoi doar <kbd>Ctrl</kbd>+<kbd>Z</kbd>, care dă timpul înapoi cu un pas.</p>`,
+   incearca:P({q:'<b>Mută</b> norul sus, în dreapta pânzei, și <b>șterge</b> mâzgălitura neagră. Restul desenului rămâne.',start:{desen:'ps_nor',unealta:'creion'},
+    checks:[{k:'mutat',tag:'nor',zona:SUS_DREAPTA,ce:'Norul e sus, în dreapta, iar la locul vechi nu mai e',msg:'Selectează norul (Selectare › Dreptunghi), apoi apasă în mijlocul chenarului și trage-l sus, în dreapta, întreg: să nu iasă din pânză.'},
+     {k:'sters',tag:'mazga',ce:'Mâzgălitura a dispărut',msg:'Selectează mâzgălitura și apasă Delete (pe telefon: săgeata ⌄ de sub Selectare › Ștergere). Sau trece cu Radiera peste toată.'},
+     {k:'toate',c:[{k:'original',tag:'casa'},{k:'original',tag:'soare'},{k:'original',tag:'copac'}],ce:'Casa, soarele și copacul au rămas întregi',msg:'Ai șters sau ai acoperit și altceva. Ctrl+Z sau „Ia-o de la capăt”.'}],
+    sol:[['mod','dreptunghi'],['trage',[[330,45],[630,215]]],['trage',[[480,130],[880,130]]],['trage',[[730,350],[970,475]]],['sterge']],   /* ps_nor, 24.10 (J1-B): norul (380,90)-(580,170), mâzgălitura (760-935, 380-445) */
+    gresit:[['mod','dreptunghi'],['trage',[[330,45],[630,215]]],['copiaza'],['lipeste'],['trage',[[150,85],[800,90]]]],
+    ajutor:'Norul: Selectare › Dreptunghi în jurul lui, apoi apeși în mijlocul chenarului și tragi. Mâzgălitura: încă o selecție în jurul ei și Delete.',
+    why:'Norul a plecat din locul vechi (acolo a rămas fundalul) și a ajuns sus în dreapta. Mâzgălitura, ștearsă cu Delete, nu e nici pe pânză, nici în memorie.'}),
+   inca:[
+    {t:'classify',q:'Ce faci cu bucata selectată?',cats:['Copiere','Mutare','Ștergere'],items:[['Vreau patru ferestre la fel pe casă',0],['Bradul e prea aproape de casă; îl vreau mai încolo',1],['Un punct negru, pus din greșeală',2],['Încă un nor la fel',0],['Luna e în colțul greșit',1]],
+     ajutor:'Originalul rămâne (și mai vreau unul), pleacă în alt loc sau dispare de tot?',why:'Rămâne și mai vreau unul: copiere. Pleacă în alt loc: mutare. Dispare de tot: ștergere.'}
+   ]}
+ ],
+ atelier:P({titlu:'Atelier: parcul, după model',
+  intro:`<p><strong>Sarcina:</strong> fă desenul <b>parc</b> (deschis din folderul tău) ca <b>Modelul</b> de sub Paint, apoi salvează-l.</p>
+<ol><li>Ușa: <b>Forme</b> › <b>Dreptunghi</b>, mic, jos, în interiorul casei.</li>
+<li>Încă doi copaci: selectezi copacul, <kbd>Ctrl</kbd>+<kbd>C</kbd>. Apoi <kbd>Ctrl</kbd>+<kbd>V</kbd> și tragi copia în dreapta lui; încă un <kbd>Ctrl</kbd>+<kbd>V</kbd> și încă o tragere (pe telefon: <b>Editare</b> › <b>Copiere</b>, <b>Editare</b> › <b>Lipire</b>).</li>
+<li>Mâzgălitura din cer: o selectezi, <kbd>Delete</kbd> (pe telefon: săgeata ⌄ de sub <b>Selectare</b> › <b>Ștergere</b>).</li>
+<li>Soarele: îl selectezi și îl tragi sus, în dreapta, întreg în pânză.</li>
+<li><kbd>Ctrl</kbd>+<kbd>S</kbd> (pe telefon, <b>Fișier</b> › <b>Salvați</b>), apoi <b>Verifică</b>.</li></ol>`,
+  q:'Parcul, după model: ușa, încă doi copaci, mâzgălitura ștearsă, soarele mutat, apoi salvat.',
+  start:{fisier:PARC,unealta:'creion'},fs:[[PARC,'ps_parc']],ps:{model:'ps_parc_model'},
+  checks:[{k:'toate',c:[{k:'original',tag:'casa'},{k:'original',tag:'copac'}],ce:'Casa și copacul de la început sunt întregi, la locul lor',msg:'Casa sau primul copac a fost acoperit, mutat sau șters. Ctrl+Z sau „Ia-o de la capăt”.'},   /* întâi: greșeala cea mai gravă */
+   {k:'forma',fel:'dreptunghi',in:'casa',ce:'Casa are ușă: un dreptunghi desenat de tine, în interiorul ei',msg:'Forme › Dreptunghi, apoi trage ușa în interiorul casei, jos, fără să ieși din ea.'},
+   {k:'toate',c:[{k:'obiect',tag:'copac',min:3},{k:'obiect',tag:'trunchi',min:3}],ce:'Sunt trei copaci întregi (coroană și trunchi)',msg:'Selectează tot copacul, Ctrl+C. Apoi Ctrl+V și tragi copia pe un loc liber; încă un Ctrl+V și încă o tragere. Copiile nu trebuie să se acopere. (Pe telefon: Editare › Copiere, Editare › Lipire.)'},
+   {k:'sters',tag:'mazga',ce:'Mâzgălitura din cer a dispărut',msg:'Selectează mâzgălitura (Selectare › Dreptunghi) și apasă Delete (pe telefon: săgeata ⌄ de sub Selectare › Ștergere).'},
+   {k:'mutat',tag:'soare',zona:SUS_DREAPTA,ce:'Soarele e sus, în dreapta, iar la locul vechi nu mai e',msg:'Selectează soarele și trage-l de mijloc sus, în dreapta pânzei, întreg: să nu iasă din pânză.'},
+   {k:'toate',c:[{k:'ev',tip:'salvat'},{k:'nemodificat'}],ce:'La sfârșit ai salvat: tot ce e pe pânză e salvat în parc',msg:'Salvează: clic în Paint, apoi Ctrl+S (pe telefon: Fișier › Salvați).'}],
+  /* ps_parc, 24.10 (J1-C, J2-T): soarele (440,90)-(550,200), mâzgălitura (650-772, 195-241) */
+  sol:[['forma','dreptunghi'],['trage',[[225,455],[285,555]]],['mod','dreptunghi'],['trage',[[505,320],[645,570]]],['copiaza'],['lipeste'],['trage',[[70,120],[720,445]]],['lipeste'],['trage',[[70,120],[870,445]]],
+   ['trage',[[630,180],[795,270]]],['sterge'],['trage',[[420,70],[570,220]]],['trage',[[495,145],[915,145]]],['ctrl','s']],
+  gresit:[['forma','dreptunghi'],['trage',[[225,455],[285,555]]],['mod','dreptunghi'],['trage',[[505,320],[645,570]]],['decupeaza'],['lipeste'],['trage',[[70,120],[720,445]]],['lipeste'],['trage',[[70,120],[870,445]]],['ctrl','s']],
+  ajutor:'Testul care nu trece îți spune ce lipsește. Ordinea nu contează, dar salvezi la sfârșit. Ai greșit? Ctrl+Z (săgeata ↶ de sus).',
+  why:'Ai refăcut desenul după model doar cu instrumentele de bază: o formă nouă, copii, o ștergere, o mutare, apoi o salvare. Așa lucrezi și în Paint-ul adevărat.',
+  inca:[
+   P({q:'Desenează pe cer o <b>Stea cu 5 colțuri</b> (Forme), apoi copiaz-o de două ori: trei stele, toate întregi.',start:{desen:'ps_casa',unealta:'creion'},
+    checks:[{k:'forma',fel:'stea5',min:3,ce:'Pe pânză sunt trei stele întregi',msg:'O stea din Forme, apoi selecția ei, Ctrl+C și de două ori Ctrl+V, cu câte o tragere pe un loc liber.'}],
+    sol:[['forma','stea5'],['trage',[[450,40],[540,130]]],['mod','dreptunghi'],['trage',[[440,30],[550,140]]],['copiaza'],['lipeste'],['trage',[[50,50],[600,60]]],['lipeste'],['trage',[[50,50],[720,60]]]],
+    gresit:[['forma','stea5'],['trage',[[450,40],[540,130]]]],
+    ajutor:'Forme › Stea cu 5 colțuri; apeși, tragi, lași. Apoi Selectare › Dreptunghi în jurul ei, Ctrl+C, Ctrl+V, tragi copia; încă o dată.',
+    why:'O singură stea desenată, două copii lipite: ai lucrat de trei ori mai repede decât desenând fiecare stea.'})
+  ]}),
+ qs:[
+  {t:'choice',q:'Ana a desenat o fereastră și vrea încă trei la fel pe casă. Ce face după ce o selectează?',o:['Ctrl+C, apoi Ctrl+V de trei ori, cu câte o tragere','Ctrl+X, apoi Ctrl+V o singură dată, cu o tragere','Delete, apoi o desenează din nou de trei ori','Ctrl+A, apoi Delete și o desenează iar'],ok:0,
+   ajutor:'Originalul rămâne? Câte copii lipește fiecare Ctrl+V?',why:'Copierea păstrează fereastra pe loc, iar fiecare Ctrl+V lipește încă una. Ctrl+X ar lua-o de pe loc, Delete ar șterge-o, iar Ctrl+A cu Delete ar șterge tot desenul.'},
+  P({q:'Pe cer e un nor de prisos. <b>Șterge-l</b>. Steaua și floarea care sunt deja rămân.',start:{desen:'ps_flori',unealta:'creion'},
+   checks:[{k:'sters',tag:'nor',ce:'Norul a dispărut',msg:'Selectează doar norul (Selectare › Dreptunghi) și apasă Delete (pe telefon: săgeata ⌄ de sub Selectare › Ștergere).'},{k:'toate',c:[{k:'original',tag:'stea'},{k:'original',tag:'floare'}],ce:'Steaua și floarea de la început sunt întregi',msg:'Ai șters și altceva decât norul. Ctrl+Z sau „Ia-o de la capăt”.'}],
+   sol:[['mod','dreptunghi'],['trage',[[800,50],[980,180]]],['sterge']],
+   gresit:[['tot'],['sterge']],
+   ajutor:'Selectare › Dreptunghi doar în jurul norului, apoi Delete (pe telefon: săgeata ⌄ de sub Selectare › Ștergere).',why:'Delete a șters doar ce era selectat, norul; steaua și floarea au rămas.'}),
+  {t:'match',q:'Ai selectat un fluture. Leagă fiecare tastă de ce se întâmplă.',pairs:[['Ctrl+C','fluturele rămâne, iar o copie merge în memorie'],['Ctrl+X','fluturele dispare și merge în memorie'],['Delete','fluturele dispare și nu merge în memorie'],['Ctrl+V','apare pe pânză ce era în memorie']],
+   why:'Două întrebări: rămâne bucata pe loc? Ajunge în memorie? Ctrl+C: da și da. Ctrl+X: nu și da. Delete: nu și nu. Ctrl+V lipește ce e în memorie.'},
+  {t:'choice',q:'Vrei o linie groasă, de <b>Pensulă caligrafică</b>. Ce faci?',o:['Pensule › ⌄ › Pensulă caligrafică, muți cursorul Dimensiune, tragi','Creion, apoi muți cursorul Dimensiune și tragi o linie','Pensule › ⌄ › Marker, apoi treci cu Radiera peste linie','Forme › Linie, apoi Ctrl+Z, ca linia să iasă mai groasă'],ok:0,   /* R3: întrebare cu variante, soră cu Încearcă P2 */
+   ajutor:'De unde alegi tipul liniei? Și de unde îi schimbi grosimea?',why:'Tipul îl alegi din săgeata ⌄ de sub Pensule, iar grosimea din cursorul Dimensiune. Creionul n-are tipuri de pensulă, Radiera șterge, iar Ctrl+Z desface ultima schimbare.'},
+  {t:'choice',q:'Ai șters din greșeală soarele cu <kbd>Delete</kbd>. Cum îl aduci înapoi, repede?',o:['Ctrl+Z (Anulați)','Ctrl+V (Lipire)','Ctrl+A (Selectați tot)','Nu se mai poate: îl desenezi din nou'],ok:0,
+   ajutor:'Delete pune ceva în memorie? Ce face Ctrl+Z?',why:'Delete nu pune nimic în memorie, deci Ctrl+V nu-l aduce. Ctrl+Z dă timpul înapoi cu un pas: desface ștergerea, iar soarele revine.'}
+ ]}
+  ],
+  diploma:{titlu:'Constructor de desene',
+   rezumat:'a învățat să deseneze cu Creionul, Pensulele și Radiera, cu grosimea din Dimensiune, să ia forme gata făcute și să anuleze cu Ctrl+Z, să selecteze o parte din desen (Dreptunghi, Formă liberă, Selectați tot) și s-o copieze (Ctrl+C, Ctrl+V), s-o mute, s-o decupeze (Ctrl+X) sau s-o șteargă (Delete)',
+   aplicatie:'Paint și Explorer, pe calculatorul din laborator',
+   provocare:LAB},
+  aplicatieReala:{aplicatie:'Paint și Explorer, pe calculatorul din laborator',titlu:'Acum la calculator',scurt:'Calculatorul',
+   intro:'<p>Desenul din casete (casa și trei copaci) e aproape ca Modelul din atelier. N-ai desenul <b>forme</b> în folderul tău? Fă întâi casetele de la <b>P2</b>, <b>P3</b> și <b>P5</b>. <b>Sfârșitul orei?</b> Sari la ultimul punct.</p>',
+   pasi:LAB},
+  tipuri:{paintw:SimPaintSel}
+});
+</script>
+</body>
+</html>
