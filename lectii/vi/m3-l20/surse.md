@@ -110,3 +110,5 @@ Autor proaspăt; registrul: `_verificare\registru_j1.md` (14 puncte A–N: 4 MAJ
 
 ## Stratul 24.10.2026, 15:52 — după judecata 3 (dirijorul)
 - R: laboratorul punctul 1 (preluat și de diplomă) spune acum „de la pasul „Programul lung devine scurt” (pasul 3 din 6)” — „(P3 în bara de jos)” de la 12:20 trimitea, pe diplomă, la o bară care nu e pe ecran. Judecata 3 a reparcurs pagina nouă (390: 46/0, 1280: 43/0). Publicată la 16:4x, commit 95449728, cu scratch.js 1.3 (b52018e3).
+
+- **Strat 24.10.2026 (seara) — `scratch.js` 1.4** (`_campaign/revizuire_completa_2026_09/componente_24_10/scratch/raport.md`): cu degetul, după Duplică copia apare lângă program și se trage (ca Scratch-ul real cu atingere; înainte se lăsa printr-o atingere); câmpul direcției cere și în simulator dublu clic (un clic deschide cercul cu săgeata); eroarea din consolă (câmp deschis + tragere din paletă) reparată. Versiunile 1.1-1.3 de mai sus sunt istorice.

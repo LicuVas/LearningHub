@@ -162,3 +162,5 @@ Autor proaspăt (al treilea). Judecata 2: `_verificare\judecator2.md` + `.json` 
 - `test_joc.py --dir lectii/v m3-l21` → **TRECUT**; V/19 publicată → **TRECUT**; `paint.js`, `paint-selectie.js`, `jocuri\_motor\`, `lectii\v\m3-l19\`: `git status` gol.
 - `verifica_lectie.py index.html --fara-t1` → **0** (S0, S1, S2, T0 trecute; `_proba\r2_verifica.txt`).
 - `learninghub_date_personale.py` → **0**; `activitate.py lista | grep -c "nu e în catalog"` → **2** înainte și **2** după probe (ieșirea nesalvată).
+
+- **Strat 24.10.2026 (seara) — `paint-selectie.js` + `paint.js`** (`_campaign/revizuire_completa_2026_09/componente_24_10/mici/raport.md`): meniul Forme rămâne întreg în fereastră la 360 / 390 / 412 px (galeria are 7 coloane la 390, 6 la 360), neschimbat la 1280; meniurile Fișier și Editare nu mai ies 4-6 px la 360.

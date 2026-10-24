@@ -91,3 +91,5 @@ O (întâi limba, apoi X — pasul 1, laboratorul 1 și 7), P (laboratorul 2: bl
 
 ## Trecerea 4 (24.10.2026, după judecata 3) — dirijorul
 C: cele trei tăieturi propuse de judecător (laboratorul 5 scurtat; pasul 1 punctul 4 = „Abia acum închizi fereastra verde cu filmulețul: X (Închide).”; laboratorul 1 fără paranteza despre fereastra care revine) — 1635 → 1595 de cuvinte; durata: `_proba/durata_r1.py` 49,8 min; `_verificare/j2_durata.py` 50,2 la 120 cuv/min, din care 0,5 min = al doilea X care nu mai există după O → 49,7. S: capturi_lipsa (fereastra „numele există deja”), registrul, acest rând.
+
+- **Strat 24.10.2026 (seara) — `scratch.js` 1.4** (`_campaign/revizuire_completa_2026_09/componente_24_10/scratch/raport.md`): cu degetul, după Duplică copia apare lângă program și se trage (ca Scratch-ul real cu atingere; înainte se lăsa printr-o atingere); câmpul direcției cere și în simulator dublu clic (un clic deschide cercul cu săgeata); eroarea din consolă (câmp deschis + tragere din paletă) reparată. Versiunile 1.1-1.3 de mai sus sunt istorice.

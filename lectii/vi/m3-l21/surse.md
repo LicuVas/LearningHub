@@ -107,3 +107,5 @@ Registrul, cu fiecare punct al AMBELOR judecăți (opus `_verificare\judecator1.
 
 ## Stratul 24.10.2026, 13:40 — scratch.js 1.3 (dirijorul)
 - `scratch.js` 1.3 (instalat 13:20; raportul `_campaign/revizuire_completa_2026_09/m3_noapte_23_10/scratch_13/raport.md`): pe telefon, fiecare câmp și bloc are zona de atingere ≥ 32 px (0 ținte sub 32 px din 793, 0 suprapuneri; 810/810 atingeri reale pe ținta corectă); cu o casetă deschisă, o singură atingere pe alt câmp / bloc lucrează din prima. Desenul neschimbat; mouse-ul la 1280 neschimbat. Ce scrie mai sus despre câmpurile de 27×22 px sau „1.3 urmează” e istoric.
+
+- **Strat 24.10.2026 (seara) — `scratch.js` 1.4** (`_campaign/revizuire_completa_2026_09/componente_24_10/scratch/raport.md`): cu degetul, după Duplică copia apare lângă program și se trage (ca Scratch-ul real cu atingere; înainte se lăsa printr-o atingere); câmpul direcției cere și în simulator dublu clic (un clic deschide cercul cu săgeata); eroarea din consolă (câmp deschis + tragere din paletă) reparată. Versiunile 1.1-1.3 de mai sus sunt istorice.

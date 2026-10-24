@@ -206,3 +206,5 @@ Ce s-a schimbat:
 - `proba_eval.py` → **0 abateri** · `parcurge.py` → **0** (390 + 1280, până la final, 3 stele, 0 erori în consolă) · `durata.py` → **0** (≈ 48,1 min) · `r3_capturi.py` → 0 (capturile de telefon `r3_telefon_B1_alegere.png`, `r3_telefon_B1_motiv.png`, privite: variantele întregi, motivul cu ✗ roșu după verificare, fără derulare orizontală).
 - `test_joc.py --dir lectii/v m3-l17` → **TRECUT** (doar „1 niveluri”) · `verifica_lectie.py … --fara-t1` → **0** (S0 · S1 · S2 · T0 TRECUT) · `verifica_regula.py` → 0 · `oracol_nota_site.py` → 0 · `learninghub_date_personale.py` → 0 · `activitate.py lista`: aceleași 2 rânduri „nu e în catalog” ca la judecata 3, niciun elev de probă.
 - Nicio aplicație Office, niciun Edge / Chrome real, nicio pagină de pe Internet.
+
+- **Strat 24.10.2026 (seara) — `browser-siguranta.js`** (`_campaign/revizuire_completa_2026_09/componente_24_10/mici/raport.md`): are acum id-ul de stil propriu `bs-css-siguranta` (înainte îl împărțea cu `browser-salvare.js`, `bs-css`); ocolirea `stilBS` din `eval-internet-v.js` rămâne compatibilă.

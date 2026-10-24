@@ -214,3 +214,5 @@ Ce s-a schimbat:
 
 **Nesigur / de știut (reparația 5):** (1) Pe telefon, capetele selecției le pun cu `setSelectionRange` (ca J2-J5). (2) Ctrl+Z e probat în zona de scris a simulatorului, nu în Notepad-ul adevărat. (3) Faptul „browserul mută în corp ce stă după `</body>`” e probat în Chromium (motorul lui Edge și Chrome); Edge real n-a fost pornit (regula nopții). (4) Mesajul X e lung (≈ 90 de cuvinte cu drumul înapoi); la 390 px încape cu butoanele sub el (captura privită).
 
+
+- **Strat 24.10.2026 (seara) — `editorweb-schelet.js`** (`_campaign/revizuire_completa_2026_09/componente_24_10/mici/raport.md`): `ES.ordine` primea conținut scris după `</body>` / `</html>` (rândurile de mai sus, „de reparat de proprietar”); reparat în componentă: acum îl respinge cu mesajul „După </body> mai e ceva în cod…”, în afară de alb și comentarii (nu se văd în browser). Conținutul dintre `</head>` și `<body>` e primit în continuare (îl acoperă testul lecției, NEATINS / afaraCorp). Comentariul din cod (reparația 5, X) descrie starea de dinainte.
