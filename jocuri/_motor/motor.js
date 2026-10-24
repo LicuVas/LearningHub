@@ -1,7 +1,10 @@
 /* Motorul lecțiilor-joc (LearningHub/jocuri). Specificația completă: README.md din acest folder.
    Un joc = index.html cu tema lui + JocMotor.porneste({...configurație...}).
    Tipuri de întrebări incluse: choice, tf, order, classify, match, hunt, pick.
-   Tipuri noi (simulatoare) vin prin config.tipuri = { nume: { render(Q, body, api), rezolva(Q, body, api) } }. */
+   Tipuri noi (simulatoare) vin prin config.tipuri = { nume: { render(Q, body, api), rezolva(Q, body, api) } }.
+   24.10.2026 (componentele comune, regula 20 + judecățile V/20 j5, VI/16 j1, VII/20 j2): bifele „Acum în aplicația
+   adevărată” stau într-o etichetă (listaReal; zona de atingere ≥ 32 px e în motor.css), iar „Ia-o de la capăt” DIN
+   SIMULATOR redeschide un exercițiu închis (vezi „IA-O DE LA CAPĂT”); API-ul, sertarele și textele rămân aceleași. */
 (function(){
 'use strict';
 /* de unde s-a încărcat motorul: diplome-date.js, qrcode.min.js și pagina diploma/ stau lângă el */
@@ -676,7 +679,7 @@ function recitirePas(focus){
 /* un exercițiu fără scor, în #pq/#body/#fb/#nav; „Încă un exercițiu” trece la următorul din listă */
 function renderPractice(list,key){
   const k=(R.pv[key]||0)%list.length,Q=list[k];
-  R.mode='practice';R.pQ=Q;R.pKey=key;R.pList=list;R.done=false;R.att=0;
+  R.mode='practice';R.pQ=Q;R.pKey=key;R.pList=list;R.done=false;R.att=0;R.chk=null;   // chk: vezi „IA-O DE LA CAPĂT”
   document.getElementById('pq').innerHTML=(list.length>1?`<span class="nr-ex">Exercițiul ${k+1} din ${list.length}</span> `:'')+Q.q;
   document.getElementById('fb').innerHTML='';document.getElementById('nav').innerHTML='';
   const body=document.getElementById('body');body.innerHTML='';
@@ -735,10 +738,13 @@ function sincBife(){   // aceleași bife în pagină și în fereastra mică, pl
     const c=d.querySelectorAll('input.bifa-real');c.forEach(x=>{x.checked=b.has(+x.dataset.k)});
     const n=d.querySelector('.bife-numar');if(n)n.textContent=c.length?`${[...c].filter(x=>x.checked).length} din ${c.length} pași bifați`:''});
 }
-/* Un pas care are deja bifele lui (V/10-12: câte o bifă pe fiecare punct) nu primește încă una. */
+/* Un pas care are deja bifele lui (V/10-12: câte o bifă pe fiecare punct) nu primește încă una.
+   24.10.2026 (regula 20): bifa stă într-o <label class="bifa-zona"> fără text; pe atingere (pointer: coarse) eticheta are
+   un chenar invizibil în jurul bifei (motor.css), deci zona de atins trece de 32 × 32 px; cu mouse-ul e doar un înveliș
+   și desenul rămâne același. Numele bifei rămâne aria-label-ul ei. */
 function listaReal(A){
   const b=bifeReal();
-  return `<ol class="check aplicatie-reala" data-real-lista>${A.pasi.map((x,k)=>`<li>${/type=["']?checkbox/i.test(x)?'':`<input type="checkbox" class="bifa-real" data-k="${k}" aria-label="Am făcut pasul ${k+1}"${b.has(k)?' checked':''}> `}${x}</li>`).join('')}</ol>`;
+  return `<ol class="check aplicatie-reala" data-real-lista>${A.pasi.map((x,k)=>`<li>${/type=["']?checkbox/i.test(x)?'':`<label class="bifa-zona"><input type="checkbox" class="bifa-real" data-k="${k}" aria-label="Am făcut pasul ${k+1}"${b.has(k)?' checked':''}></label> `}${x}</li>`).join('')}</ol>`;
 }
 /* OGLINDA: lista din fereastra mică e o COPIE a listei din pagină, așa cum arată acum (unele lecții își completează pașii
    după desenare: rezultatele atelierului la VI/1 și VIII/1, lista de autoverificare la VI/9). Pagina rămâne singurul
@@ -853,7 +859,7 @@ function readPage(){
   document.getElementById('go').onclick=()=>{R.phase='q';question()};
 }
 function question(){
-  const Lv=C.nivele[R.li],Q=Lv.qs[R.qi];R.mode='test';R.att=R.atts[R.qi]||0;R.done=false;R.max=Math.max(R.max,R.qi);
+  const Lv=C.nivele[R.li],Q=Lv.qs[R.qi];R.mode='test';R.att=R.atts[R.qi]||0;R.done=false;R.chk=null;R.max=Math.max(R.max,R.qi);
   const qn=R.qi+1;R.qm=Math.max(R.qm||0,qn);R.proaspat=!R.punctat[R.qi];   /* proaspăt = nerezolvată încă în deschiderea asta */
   /* RĂSPUNSURI PREA RAPIDE (10.10.2026, contramăsura P5 din pacaleli_si_contramasuri.md): cronometrul pornește la PRIMA
      afișare a întrebării în deschiderea asta și se oprește la primul răspuns (resolve). Se cronometrează DOAR întrebările pe
@@ -936,11 +942,12 @@ function giveUp(html){
    de unde ai rămas”, din ?pas=q3). Cele de dinainte nu sunt rezolvate în deschiderea asta, iar stelele și prima
    încercare (p1) se socotesc pe toate: la ultima întrebare butonul îl duce întâi la prima nerezolvată, iar când nu mai
    e niciuna, „Termină nivelul”. Pe drumul obișnuit (Î1, Î2… la rând) totul e ca înainte. */
-function showNext(){
+function showNext(adauga){   // adauga: lângă „Verifică”, fără focus (vezi „IA-O DE LA CAPĂT”); altfel ca înainte
   if(R.mode==='practice')return;
   const qs=C.nivele[R.li].qs,last=R.qi===qs.length-1,lipsa=qs.findIndex((_,k)=>!R.punctat[k]),gata=lipsa<0&&(last||R.proaspat);
-  document.getElementById('nav').innerHTML=`<button class="btn primary" id="next" type="button">${gata?'Termină nivelul':last?`Mai ai de rezolvat: Î${lipsa+1} →`:'Mai departe →'}</button>`;
-  const n=document.getElementById('next');n.focus({preventScroll:true});
+  const h=`<button class="btn primary" id="next" type="button">${gata?'Termină nivelul':last?`Mai ai de rezolvat: Î${lipsa+1} →`:'Mai departe →'}</button>`;
+  if(adauga)document.getElementById('nav').insertAdjacentHTML('beforeend',h);else document.getElementById('nav').innerHTML=h;
+  const n=document.getElementById('next');if(!adauga)n.focus({preventScroll:true});
   n.onclick=()=>{if(gata)endLevel();else if(last){R.qi=lipsa;question()}else{R.qi++;question()}};
 }
 function revealButton(fn){
@@ -954,7 +961,33 @@ function checkButton(fn,label){
   const nav=document.getElementById('nav');
   nav.innerHTML=`<button class="btn primary" id="chk" type="button">${label||'Verifică'}</button>`;
   document.getElementById('chk').onclick=()=>{if(!R.done)fn()};
+  if(R)R.chk={fn,label,body:document.getElementById('body')};   // vezi „IA-O DE LA CAPĂT”
   return nav;
+}
+/* IA-O DE LA CAPĂT ÎN SIMULATOR (24.10.2026; V/20 judecata 5 [K], VI/16 judecata 1): multe simulatoare au, sub ele, butonul
+   lor „Ia-o de la capăt”, care le golește starea. Motorul nu afla: după „Corect!” exercițiul rămânea închis (R.done),
+   simulatorul scosese deja „Verifică”, iar „Corect!” stătea în #fb lângă testele noi, cu ✗. Acum, un clic (sau, pe
+   telefon, ridicarea degetului: V/8 tratează butonul la pointerup și oprește clicul) pe un buton „Ia-o de la capăt” din
+   #body, cât exercițiul e închis, îl redeschide DUPĂ ce simulatorul s-a golit (setTimeout 0) și NUMAI dacă simulatorul
+   chiar s-a redesenat (MutationObserver pe #body): unele simulatoare (simppt*, video-clipchamp*) nu se golesc după
+   „Corect” — acolo verdictul rămâne adevărat și nimic nu se schimbă. La redeschidere verdictul vechi pleacă din #fb, iar
+   „Verifică” revine cu aceeași funcție pe care simulatorul a dat-o la checkButton (fără ea, #nav rămâne gol, ca la prima
+   desenare: simulatorul se rezolvă singur la gestul cerut). Punctele nu se schimbă: o întrebare deja punctată se reface ca
+   exercițiu (resolve, R.punctat), iar „Mai departe” rămâne lângă „Verifică”, ca elevul să nu fie ținut pe loc de o
+   reluare din curiozitate. Cu exercițiul deschis, nimic nou. */
+function reiaDupaCapat(e){
+  if(!R||!R.done||(e.type==='pointerup'&&e.pointerType!=='touch'))return;   // mouse / creion: urmează clicul
+  const b=e.target&&e.target.closest&&e.target.closest('button'),body=document.getElementById('body');
+  if(!b||!body||!body.contains(b)||!/(^|\s)Ia-o de la capăt$/.test(b.textContent.replace(/\s+/g,' ').trim()))return;
+  const mod=R.mode,qi=R.qi,pq=R.pQ;let golit=false;
+  const ob=new MutationObserver(()=>{golit=true});ob.observe(body,{childList:true,subtree:true,attributes:true,characterData:true});
+  setTimeout(()=>{
+    if(ob.takeRecords().length)golit=true;ob.disconnect();
+    if(!golit||!R||!R.done||R.mode!==mod||R.qi!==qi||R.pQ!==pq||document.getElementById('body')!==body)return;
+    R.done=false;document.getElementById('fb').innerHTML='';
+    if(R.chk&&R.chk.body===body)checkButton(R.chk.fn,R.chk.label);else document.getElementById('nav').innerHTML='';
+    if(R.mode==='test'&&R.punctat[R.qi])showNext(true);
+  },0);
 }
 const API={esc,resolve,giveUp,revealButton,checkButton,feedback,shuffle,expandRange,
   done:()=>!!(R&&R.done),attempts:()=>R?R.att:0,nav:()=>document.getElementById('nav')};
@@ -1406,6 +1439,7 @@ function porneste(config){
     <button class="pulldown" id="hdr-pull" type="button" aria-label="Arată bara de sus" title="Arată bara de sus">▾</button>
   </div></header><main><nav class="crumbs" id="crumbs" aria-label="Unde ești"></nav><div id="app"></div></main>`);
   app=document.getElementById('app');hud=document.getElementById('hud');
+  ['click','pointerup'].forEach(t=>document.addEventListener(t,reiaDupaCapat,true));   // înaintea simulatoarelor (unele opresc clicul): vezi „IA-O DE LA CAPĂT”
   if(RECITIRE!==null){document.getElementById('go-home').onclick=()=>{location.href=urlCuprins()};wireHeader();recitireStart();return}
   document.getElementById('go-home').onclick=home;
   wireHeader();
