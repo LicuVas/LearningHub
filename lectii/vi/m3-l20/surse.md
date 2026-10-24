@@ -107,3 +107,6 @@ Autor proaspăt; registrul: `_verificare\registru_j1.md` (14 puncte A–N: 4 MAJ
 
 ## Stratul 24.10.2026, 13:40 — scratch.js 1.3 (dirijorul)
 - `scratch.js` 1.3 (instalat 13:20; raportul `_campaign/revizuire_completa_2026_09/m3_noapte_23_10/scratch_13/raport.md`): pe telefon, fiecare câmp și bloc are zona de atingere ≥ 32 px (0 ținte sub 32 px din 793, 0 suprapuneri; 810/810 atingeri reale pe ținta corectă); cu o casetă deschisă, o singură atingere pe alt câmp / bloc lucrează din prima. Desenul neschimbat; mouse-ul la 1280 neschimbat. Ce scrie mai sus despre câmpurile de 27×22 px sau „1.3 urmează” e istoric.
+
+## Stratul 24.10.2026, 15:52 — după judecata 3 (dirijorul)
+- R: laboratorul punctul 1 (preluat și de diplomă) spune acum „de la pasul „Programul lung devine scurt” (pasul 3 din 6)” — „(P3 în bara de jos)” de la 12:20 trimitea, pe diplomă, la o bară care nu e pe ecran. Judecata 3 a reparcurs pagina nouă (390: 46/0, 1280: 43/0). Publicată la 16:4x, commit 95449728, cu scratch.js 1.3 (b52018e3).
