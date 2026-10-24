@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Legături (link-uri) între pagini și către resurse externe</title>
+<meta name="description" content="Clasa a VIII-a, lecția 18: legătura cu eticheta a și atributul href, spre o pagină din același dosar (doar numele fișierului) și înapoi, pagina de eroare a browserului când numele e greșit, legătura externă cu https:// și target=&quot;_blank&quot; (filă nouă), textul legăturii care spune unde duce; în Notepad și în browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;800&family=Rubik:ital,wght@0,400;0,500;0,700;1,400&family=Source+Code+Pro:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF1F6; --paper:#FFFFFF; --paper2:#EAF0F8; --line:#C6D0DF;
+  --ink:#16202E; --ink2:#4B5A70; --accent:#1F4F8F; --accentInk:#FFFFFF; --sel:#D6E3F5;
+  --mark:#FFE08A; --markInk:#16202E; --ok:#17703F; --okbg:#E1F2E7; --bad:#B3302A; --badbg:#FAE3E1;
+  --fd:"Bitter",Georgia,serif; --fb:"Rubik","Segoe UI",system-ui,sans-serif; --fm:"Source Code Pro",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E131B; --paper:#161E2A; --paper2:#1D2735; --line:#334257;
+  --ink:#E4EAF3; --ink2:#9FB0C8; --accent:#8DB6F0; --accentInk:#0E131B; --sel:#22324A;
+  --mark:#EBCB55; --markInk:#16202E; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E131B; --paper:#161E2A; --paper2:#1D2735; --line:#334257;
+  --ink:#E4EAF3; --ink2:#9FB0C8; --accent:#8DB6F0; --accentInk:#0E131B; --sel:#22324A;
+  --mark:#EBCB55; --markInk:#16202E; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}
+/* tema: fâșia de sus = două indicatoare de munte, cu textul unei legături pe fiecare */
+.banda{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font-family:var(--fm);font-size:.72rem;color:var(--ink2);padding:3px 8px;border-bottom:1px dashed var(--line)}
+.banda .ind{display:inline-block;background:var(--paper);border:1px solid var(--line);padding:0 14px 0 8px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,0 100%)}
+.banda .ind.st{padding:0 8px 0 14px;clip-path:polygon(8px 0,100% 0,100% 100%,8px 100%,0 50%)}
+.banda .ind u{color:#1F4F8F;text-underline-offset:2px}
+:root[data-theme="dark"] .banda .ind u{color:#8DB6F0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .banda .ind u{color:#8DB6F0}}
+.banda .tg{color:var(--accent)}
+h1,h2{letter-spacing:-.01em}
+pre.rand{font-family:var(--fm);background:var(--paper2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:.4em 0;white-space:pre;overflow-x:auto;tab-size:4;-moz-tab-size:4;line-height:1.35}   /* Tab-ul = 4 semne, ca în Notepad-ul simulat; cu 8, rândul cel mai lung din laborator ieșea din casetă la 1280 px cu fontul paginii (reparația E) */
+.captura figcaption a{display:inline-block;padding:6px 0}
+@media (max-width:480px){pre.rand{tab-size:2;-moz-tab-size:2;font-size:.7rem;padding:6px}}   /* pe telefon Tab-ul se arată îngust, ca rândurile laboratorului să încapă la 390 px */
+/* judecata 1 (J1-m6 / M-7) + judecata 2 (Y): casetele „Uite cum” (cel mult 35 de semne pe rând) rămân la .7rem pe orice telefon.
+   Casetele din pașii laboratorului (în listă, li) au rânduri de până la 42 de semne (3 Tab-uri + href cu numele lung): pe
+   telefon ocupă și marginea listei (aliniate cu restul paginii), iar rândul cu textul lung e rupt în două; socotit cu lățimea
+   fontului paginii (Source Code Pro = 0,6 em pe semn): 10,4 px la 390, 9,6 px la 360 (înainte: 9,3 și 8,3) */
+@media (max-width:480px){li pre.rand{margin-left:-24px;padding:6px 4px}}
+@media (max-width:400px){li pre.rand{font-size:.65rem}}
+@media (max-width:370px){li pre.rand{font-size:.6rem}}
+/* judecata 1 (M-3): în „Încearcă” zona de scris arată tot fișierul (până la 16 rânduri), fără derulare înăuntru
+   (body în față: regula editorweb.js „.lv .np-ta{min-height:7em}” se pune în pagină după aceasta).
+   Judecata 2 (X): rândurile lungi se rup doar la vedere și pe ecranul mare (în fișier rămân întregi): la 1280 px, rândul cu
+   legătura spre parc (754 px) nu mai iese din zona de scris (670 px) */
+body .lv .np-ta{min-height:25.5em;white-space:pre-wrap;overflow-wrap:anywhere}
+/* pe telefon, rândurile lungi se rup pe ecran (doar la vedere, în fișier rămân întregi): capătul rândului cerut se vede și se
+   poate atinge fără derulare în lături */
+@media (max-width:480px){body .lv .np-ta{white-space:pre-wrap;overflow-wrap:anywhere;tab-size:2;-moz-tab-size:2;min-height:36em}}   /* rupte, rândurile ocupă mai mult: 36em = tot fișierul din P5, cu rândul nou, la 360 px */
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<!-- simulatorul „Notepad + browser” (proprietar: lecția VIII/14) + extensia lecției 15 (Tab, verificările scheletului)
+     + extensia lecției 18 (browserul simulat urmează legăturile; pagina de eroare; ←; filă nouă; verificările legăturilor).
+     Probele: _proba/proba_browser_l18_*_full.json, proba_inapoi_l18.json, proba_vizitat_l18.json (Chromium 148). -->
+<script src="../../_sim/editorweb.js"></script>
+<script src="../../_sim/editorweb-schelet.js"></script>
+<script src="../../_sim/editorweb-legaturi.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={editare:'Operații de editare a elementelor de conținut (paragraf, imagini, tabele, liste, legături): inserare, ștergere, mutare, copiere'};
+
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const X=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const J=a=>a.join('\n');
+const PRE=s=>`<pre class="rand">${X(s)}</pre>`;
+const ES=window.EditorWebSchelet, LG=window.EditorWebLegaturi;
+const LV=S=>S.live.text;
+const N=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+const DT='<!DOCTYPE html>', HL='<html lang="ro">', H='\t\t';
+/* scheletul de la lecția 15, indentat, cu titlul de pe filă și rândurile din corp */
+const SCH=(titlu,corp)=>J([DT,HL,'\t<head>','\t\t<meta charset="utf-8">','\t\t<title>'+titlu+'</title>','\t</head>','\t<body>',...corp,'\t</body>','</html>']);
+const EX='Excursia în Retezat', LB='Lacul Bucura', WIKI='https://ro.wikipedia.org/wiki/Lacul_Bucura';
+const p=s=>H+'<p>'+s+'</p>';
+const a=(href,text,blank)=>`<a href="${href}"${blank?' target="_blank"':''}>${text}</a>`;
+const PAG1=c=>SCH(EX,[H+'<h1>'+EX+'</h1>',p('Am urcat trei ore până la lac.'),...c]);
+const PAGB=c=>SCH(LB,[H+'<h1>'+LB+'</h1>',p('Apa era rece și limpede.'),...c]);
+const ANA='Popescu_Ana_8A_lectia18.html', ANA2='Popescu_Ana_8A_pagina2.html';
+const INAPOI='Înapoi la '+EX, PNR='https://www.retezat.ro', PN='Parcul Național Retezat';
+/* în laborator, legătura cu nume lung stă pe trei-patru rânduri, ca rândurile să încapă în fereastra îngustă a pașilor (460 px) */
+const a3=(href,text,blank)=>[H+'<p><a',H+'\thref="'+href+'"'+(blank?'':'>'),...(blank?[H+'\ttarget="_blank">']:[]),H+'\t'+text+'</a></p>'];
+/* la fel, cu textul legăturii pe două rânduri (rândul nou = spațiu în browser) */
+const a3r=(href,t1,t2)=>[H+'<p><a',H+'\thref="'+href+'">',H+'\t'+t1,H+'\t'+t2+'</a></p>'];
+/* pagina elevului de la lecția 16 (VIII/16, COD_L16.lab), cu titlul de pe filă și titlul mare = `titlu`, plus rândurile `c` */
+const PAG16=(titlu,c)=>SCH(titlu,[H+'<h1>'+titlu+'</h1>',H+'<h2>'+LB+'</h2>',H+'<p>Am urcat trei ore pe munte.</p>',H+'<p>Apa era rece și limpede.</p>',H+'<img src="Popescu_Ana_bucura.jpg"',H+'\talt="Lacul Bucura, între munți">',...c]);
+
+/* toate codurile din pagină (aceleași texte sunt deschise în Chromium: _proba/proba_coduri_l18.py) */
+const COD={
+  bucura:PAGB([]),
+  /* casetele „Uite cum”: rânduri scurte (≤ 36 de semne), ca să încapă și pe telefon, la 390 px; browserul ia rândul nou drept spațiu */
+  p2_bloc:J(['<p><a href="bucura.html">','\tLacul Bucura</a></p>']),
+  p2_start:PAG1([]),
+  p2_rez:PAG1([p(a('bucura.html',LB))]),
+  p2_gresit:PAG1([H+'<p><a href="bucura.html">Lacul Bucura</p>']),
+  p2b_start:PAG1([H+'<p><a src="bucura.html">Lacul Bucura</a></p>']),
+  p2c_start:PAG1([H+'<p><a href="bucura.html">Lacul Bucura</p>',p('Ne vedem la cabană.')]),
+  p2c_rez:PAG1([p(a('bucura.html',LB)),p('Ne vedem la cabană.')]),
+  p3_bloc:J(['<p><a href="bucra.html">','\tLacul Bucura</a></p>']),
+  p3_ex:PAG1([p(a('bucra.html',LB))]),
+  p3_start:PAG1([p(a('bucra.html',LB))]),
+  p3_gresit:PAG1([p(a('bucura.htm',LB))]),
+  p3b_start:PAG1([p(a('bucura',LB))]),
+  p3c_start:PAG1([p(a('Documente/bucura.html',LB))]),
+  p4_bloc:J(['<p><a href="excursia.html">','\tÎnapoi la Excursia','\tîn Retezat</a></p>']),
+  p4_rez:PAGB([p(a('excursia.html',INAPOI))]),
+  p4_gresit:PAGB([p(a('excursie.html',INAPOI))]),
+  p5_bloc:J(['<p><a href="'+PNR+'"','\ttarget="_blank">','\t'+PN+'</a></p>']),
+  p5_rez:PAGB([p(a('excursia.html',INAPOI)),p(a(PNR,PN,true))]),
+  p5_gresit:PAGB([p(a('excursia.html',INAPOI)),p(a(PNR,PN))]),
+  p5b_start:PAGB([p(a('excursia.html',INAPOI)),p(a('www.retezat.ro',PN,true))]),
+  p6_rau:J(['<p><a href="bucura.html">','\tclick aici</a></p>']),
+  p6_bun:J(['<p><a href="bucura.html">','\tLacul Bucura</a></p>']),
+  p6_start:PAG1([p(a('bucura.html','click aici'))]),
+  p6_gresit:PAG1([p(a('bucura.html','aici'))]),
+  /* atelierul: pagina Anei, apoi a doua pagină făcută din ea cu Salvați ca */
+  at_start:PAG1([]),
+  at_p1:PAG1([p(a(ANA2,LB))]),
+  at_p2:SCH(LB,[H+'<h1>'+LB+'</h1>',p('Am urcat trei ore până la lac.'),p(a(ANA,INAPOI))]),
+  at_p2_gresit:SCH(LB,[H+'<h1>'+LB+'</h1>',p('Am urcat trei ore până la lac.'),p(a('Popescu_Ana_8A_lectia17.html',INAPOI))]),
+  /* atelierul 2: legătura stricată (pagna2) și legătura spre Wikipedia */
+  at2_p1:PAG1([p(a('Popescu_Ana_8A_pagna2.html',LB))]),
+  at2_rez:PAG1([p(a(ANA2,LB)),p(a(WIKI,'Lacul Bucura, pe Wikipedia',true))]),
+  /* întrebările */
+  q2_start:SCH('Concursul de șah',[H+'<h1>Concursul de șah</h1>',p('Am jucat cinci partide.'),p(a('rezultat.html','Rezultatele concursului'))]),
+  q2_rez:SCH('Concursul de șah',[H+'<h1>Concursul de șah</h1>',p('Am jucat cinci partide.'),p(a('rezultate.html','Rezultatele concursului'))]),
+  q2_ext:SCH('Rezultate',[H+'<h1>Rezultatele concursului</h1>']),
+  q3_start:SCH('Ce am învățat',[H+'<h1>Ce am învățat</h1>',p('Paginile web se scriu în HTML.')]),
+  q3_rez:SCH('Ce am învățat',[H+'<h1>Ce am învățat</h1>',p('Paginile web se scriu în HTML.'),p(a('https://ro.wikipedia.org/wiki/HTML','Despre HTML, pe Wikipedia',true))]),
+  q3_gresit:SCH('Ce am învățat',[H+'<h1>Ce am învățat</h1>',p('Paginile web se scriu în HTML.'),p(a('https://ro.wikipedia.org/wiki/HTML','aici',true))]),
+  /* laboratorul (reparația 2, judecata 2 D): pornește de la pagina elevului de la lecția 16 (VIII/16, COD_L16.lab: titlul
+     „Excursia în Retezat”, titlul secțiunii, două paragrafe, fotografia), deschisă și salvată cu nume nou, ca la VIII/19.
+     lab1 = ce tastezi în prima pagină; lab_scurt = pagina scurtă, doar pentru cine nu-și găsește pagina de la lecția 16 */
+  lab16:PAG16(EX,[]),
+  lab1:J(a3(ANA2,LB)),
+  lab_scurt:SCH(EX,[H+'<h1>'+EX+'</h1>',...a3(ANA2,LB)]),
+  lab_p1:PAG16(EX,a3(ANA2,LB)),
+  /* legătura înapoi: textul lung rupt în două rânduri (judecata 2, Y: casetele pe telefon cu litere mai mari) */
+  lab2:J(a3r(ANA,'Înapoi la Excursia','în Retezat')),
+  lab_p2:PAG16(LB,a3r(ANA,'Înapoi la Excursia','în Retezat')),
+  lab_ext:J(a3(PNR,'Parcul Național Retezat',true)),
+  lab3:PAG16(LB,[...a3r(ANA,'Înapoi la Excursia','în Retezat'),...a3(PNR,'Parcul Național Retezat',true)]),
+  lab3_strica:PAG16(LB,[...a3r('Popescu_Ana_8A_lectia1.html','Înapoi la Excursia','în Retezat'),...a3(PNR,'Parcul Național Retezat',true)])
+};
+window.COD_L18=COD;
+const DOC={Documente:[{n:'bucura.html',t:COD.bucura}]};
+const DOC_EX={Documente:[{n:'excursia.html',t:COD.p2_rez}]};
+/* legătura e închisă și scheletul a rămas întreg */
+/* (judecata 1, M-4: și legătura stă în corpul paginii, între <body> și </body>) */
+const PER={ce:'Fiecare legătură e închisă cu &lt;/a&gt;, iar scheletul a rămas întreg',fn:S=>{const s=LV(S),q=LG.perechiA(s);return q.deschise>0&&q.deschise===q.inchise&&ES.ordine(s)&&LG.inCorp(s)},msg:'Închide legătura cu &lt;/a&gt;, scrie-o între &lt;body&gt; și &lt;/body&gt; și nu șterge rândurile scheletului.'};
+/* site-ul parcului: cu și fără www e aceeași pagină (probat headless, _proba/proba_retezat_fara_www.json) */
+const PNR_OK=['https://www.retezat.ro','https://retezat.ro'];
+const DUCE=(la,text,ce,msg)=>({ce,fn:(S,U)=>LG.duce(S,U,null,text===true?{la,textBun:true}:{la,text}),msg});
+const MINI=(start,fis,h,nota)=>LG.mini({fisiere:fis,start,inaltime:h,nota});
+
+/* atelierul: fișierele Anei citite de teste */
+const AT={dosar:'Documente',model:'lectia18',ext:'html'}, AT2={dosar:'Documente',model:'pagina2',ext:'html'};
+const fis=(S,U,sp)=>U.fisierElev(S,sp);
+/* pagina `sp` are o legătură spre fișierul `nume` (din Documente), cu un text care spune unde duce */
+const spre=(S,U,sp,nume)=>{const f=fis(S,U,sp);if(!f||!nume)return false;return LG.legaturi(f.t).some(l=>{const r=LG.tinta('Documente/'+f.n,l.href);return r.tip==='local'&&N(r.cale)===N('Documente/'+nume)&&LG.textBun(l.text)})};
+const inchisa=t=>{const q=LG.perechiA(t);return q.deschise>0&&q.deschise===q.inchise&&ES.ordine(t)&&LG.inCorp(t)};
+const h1=t=>{const d=new DOMParser().parseFromString(t,'text/html').querySelector('h1');return d?d.textContent.trim():''};
+
+const PROVOCARE=[
+  'Pornește <b>Notepad</b> (tasta Windows, scrie <b>Notepad</b>, <kbd>Enter</kbd>). Dacă se deschide cu fila unui coleg, nu scrie în ea: apasă <b>+</b> (filă nouă). Deschide pagina ta de la lecția 16: <b>Fișier › Deschideți</b> (<kbd>Ctrl</kbd>+<kbd>O</kbd>), în stânga <b>Documente</b>, jos <b>Toate fișierele (*.*)</b>, clic pe pagina ta, de exemplu <code>Popescu_Ana_8A_lectia16.html</code>, apoi <b>Deschidere</b> (Open). N-o găsești? Rămâi în fila nouă: la pasul 3 scrii o pagină scurtă.',
+  'Salvează pagina cu nume nou, ca cea de la lecția 16 să rămână neschimbată: <b>Fișier › Salvați ca</b> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>), în <b>Documente</b>, cu numele tău și lectia18, de exemplu <code>Popescu_Ana_8A_lectia18.html</code>; <b>Toate fișierele (*.*)</b>; <b>UTF-8</b>; <b>Salvare</b>. Dacă apare „… există deja”, apasă <b>Nu</b> (No) și pune o cifră înainte de .html: <code>Popescu_Ana_8A_lectia18_2.html</code>. Ține minte numele.',
+  `Sub ultimul rând de deasupra lui <code>&lt;/body&gt;</code> adaugă legătura spre a doua pagină: clic la sfârșitul rândului, <kbd>Enter</kbd>, apoi rândurile de mai jos, cu Tab-urile lor. În locul lui <b>Popescu_Ana_8A</b> scrii numele, prenumele și clasa ta. Browserul ia rândurile noi drept spații. Apoi <kbd>Ctrl</kbd>+<kbd>S</kbd>.${PRE(COD.lab1)}<ul class="pasi-met"><li>Ești în fila nouă, fără pagina de la lecția 16? Scrie toată pagina de mai jos, apoi <kbd>Ctrl</kbd>+<kbd>S</kbd>.</li></ul>${PRE(COD.lab_scurt)}`,
+  'Fă a doua pagină din prima: <b>Fișier › Salvați ca</b> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>), în <b>Documente</b>, cu numele din legătura ta, de exemplu <code>Popescu_Ana_8A_pagina2.html</code>; <b>Toate fișierele (*.*)</b>; <b>UTF-8</b>; <b>Salvare</b>. Acum lucrezi în fila paginii 2; prima a rămas salvată, neschimbată. Dacă apare „… există deja”, apasă <b>Nu</b> și pune o cifră înainte de .html: <code>Popescu_Ana_8A_pagina2_2.html</code>. Ține minte numele: la începutul pasului 6 îl scrii și în legătura din prima pagină.',
+  `În a doua pagină, în <code>&lt;title&gt;</code> și în <code>&lt;h1&gt;</code>, scrie <b>Lacul Bucura</b> în locul lui „Excursia în Retezat”. În legătură: la <code>href</code>, numele primei pagini, cum l-ai salvat la pasul 2 (lectia18 în locul lui pagina2); textul legăturii: <b>Înapoi la Excursia în Retezat</b>. Apoi <kbd>Ctrl</kbd>+<kbd>S</kbd>.${PRE(COD.lab2)}`,
+  'Încearcă legăturile.<ul class="pasi-met"><li>Ai pus o cifră la pasul 4? Atunci, întâi, schimbă legătura din prima pagină: deschide-o în Notepad (<kbd>Ctrl</kbd>+<kbd>O</kbd>, Toate fișierele, pagina ta cu lectia18), scrie în <code>href</code> numele cu cifra, apoi <kbd>Ctrl</kbd>+<kbd>S</kbd>.</li></ul>Tasta Windows + <kbd>E</kbd> (Explorer), clic pe <b>Documente</b>, dublu-clic pe pagina ta cu <b>lectia18</b>, cea cu numele tău. În browser, sub fotografie (în pagina scurtă, sub titlul mare), apasă pe legătura <b>Lacul Bucura</b>: în aceeași filă apare pagina Lacul Bucura. Apasă pe <b>Înapoi la Excursia în Retezat</b>: ești iar pe prima pagină, iar Lacul Bucura e acum mov.<ul class="pasi-met"><li>Apare o pagină de eroare, cu codul ERR_FILE_NOT_FOUND? Compară numele din <code>href</code>, literă cu literă, cu cel din Explorer. Repară-l în Notepad (prima pagină o deschizi cu <kbd>Ctrl</kbd>+<kbd>O</kbd>), <kbd>Ctrl</kbd>+<kbd>S</kbd>, apoi în browser <b>←</b> și încearcă din nou.</li></ul>',
+  `Legătura spre Internet: în a doua pagină, clic la sfârșitul rândului cu <code>&lt;/a&gt;&lt;/p&gt;</code> al legăturii înapoi, <kbd>Enter</kbd>, apoi rândurile de mai jos, cu Tab-urile lor, și <kbd>Ctrl</kbd>+<kbd>S</kbd>.${PRE(COD.lab_ext)}În browser, apasă iar pe <b>Lacul Bucura</b>, apoi pe <b>Parcul Național Retezat</b>: se deschide o filă nouă, cu site-ul parcului (fără Internet, browserul spune că nu se poate conecta). Pagina ta a rămas în prima filă. Închide fila nouă cu × de pe ea.`,
+  '<b>Dacă mai ai timp</b> (altfel, treci la pasul 9) — experimentul, o legătură stricată: în Notepad, în a doua pagină, la <code>href</code>-ul legăturii înapoi, șterge cifra <b>8</b> din lectia18 și apasă <kbd>Ctrl</kbd>+<kbd>S</kbd>. În browser, pe a doua pagină, <kbd>F5</kbd>, apoi apasă pe <b>Înapoi la Excursia în Retezat</b>: apare pagina de eroare, cu ERR_FILE_NOT_FOUND. Scrie cifra 8 la loc, <kbd>Ctrl</kbd>+<kbd>S</kbd>. În browser apasă <b>←</b>, apoi din nou pe legătura înapoi: merge.',
+  'La sfârșit, calculatorul rămâne curat pentru colegul următor: în Notepad închide pe rând <b>toate</b> filele, din meniu: <b>Fișier › Închideți fila</b>, până se închide Notepad. Dacă la fila unui coleg te întreabă „Salvați modificările…?”, apasă <b>Nu salvați</b>. Nu închide Notepad cu X-ul ferestrei: îi redeschide colegului filele. Dacă Notepad nu are file (Windows 10), după ce ai salvat îl închizi cu X. În browser închide filele paginilor tale. Cele două pagini rămân în Documente.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m3_l18',
+  mod:'lectie',
+  titlu:'Legături (link-uri) între pagini și către resurse externe',
+  marca:'Lecția <b>18</b> · Pagini web · a VIII-a',
+  h1:'Legături (link-uri) între pagini și către resurse externe',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U2', unitateTitlu:'Pagini web',
+  competente:['CS.1.2','CS.3.2'], lectii:'18',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.2, CS.3.2 · unitatea VIII-U2 „Pagini web” · lecția 18 · conținutul: „Operații de editare a elementelor de conținut (paragraf, imagini, tabele, liste, legături): inserare, ștergere, mutare, copiere” (aici: legăturile)',
+  intro:`<p>Lecția 18. Afli cum legi paginile tale între ele, dus-întors, și cum trimiți spre o pagină de pe Internet. Le scrii în Notepad și le încerci în browser.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 15, „Elemente de structură…”: scheletul paginii (<code>&lt;head&gt;</code> cu titlul și rândul meta, <code>&lt;body&gt;</code>), rândurile mutate la dreapta cu <kbd>Tab</kbd>;</li>
+<li>lecția 14, „Cum e făcută o pagină web…”: Notepad, salvarea ca .html (Toate fișierele, UTF-8), deschiderea din Explorer, <kbd>F5</kbd>, Fișier › Închideți fila;</li>
+<li>lecția 16, „Conținutul paginii…”: paragraful <code>&lt;p&gt;</code>; atributul (<code>src</code>, <code>alt</code>) și fișierul din același dosar; Fișier › Salvați ca și Fișier › Deschideți; pagina ta de atunci, din Documente: de la ea pornești laboratorul.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după „La ce folosește”, 5 pași scurți, fiecare cu „Încearcă tu”, într-un Notepad și un browser simulate în pagină (legăturile se pot apăsa). Apoi atelierul, laboratorul și 5 întrebări.</p>
+<p><b>Obligatoriu:</b> primul „Încearcă tu” din fiecare pas, laboratorul (fără pasul 8, care e pentru cine mai are timp) și cele 5 întrebări. Atelierele și butoanele „Încă un exercițiu” sunt pentru cine are timp: atelierul 1 e o repetiție a laboratorului, în pagină.</p>
+<p><b>Când mai sunt 10 minute din oră</b> și n-ai terminat laboratorul: termină pasul la care ești, salvează (<kbd>Ctrl</kbd>+<kbd>S</kbd>), închide filele din Notepad ca la ultimul pas al laboratorului și treci la cele 5 întrebări.</p>`,
+  banda:'<span class="ind"><u>Lacul Bucura</u></span><span class="ind st"><u>Înapoi la Excursia în Retezat</u></span><span><span class="tg">&lt;a href="bucura.html"&gt;</span>Lacul Bucura<span class="tg">&lt;/a&gt;</span></span>',
+  tipuri:{editorweb:EditorWeb},
+  nivele:[
+  {t:'Legături (link-uri) între pagini și către resurse externe', final:true, lectii:[18], continuturi:[P.editare],
+   obiectiv:'scrii în Notepad legături între două pagini ale tale, dus-întors, și una spre un site de pe Internet, care se deschide într-o filă nouă, cu texte care spun unde duc, și repari o legătură stricată.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>Pe munte, la o răscruce, indicatoarele îți spun unde ajungi pe fiecare drum: spre vârful Capra, spre cabana Obârșia Lotrului. Citești, alegi și pornești.</p>
+<p>Pe o pagină web, o <b>legătură</b> (în engleză, „link”) face la fel. E un text, de obicei albastru și subliniat, care spune unde ajungi. Apeși pe el, iar browserul deschide altă pagină: una de-a ta sau una de pe alt site.</p>
+<p>Azi faci un site mic, cu două pagini legate între ele, și o legătură spre Internet.</p>
+${fig('img/indicatoare-munte.webp',600,400,'Trei indicatoare turistice în formă de săgeată, pe un stâlp, cu munți împăduriți în spate; pe fiecare scrie spre ce loc duce drumul și în câte ore ajungi','Indicatoare turistice lângă cabana Groapa Seacă: fiecare săgeată spune unde ajungi. Fotografie: Cioboata Andrei, <a href="https://creativecommons.org/licenses/by/3.0" target="_blank" rel="noopener">CC BY 3.0</a>, <a href="https://commons.wikimedia.org/wiki/File:Indicatoare_turistice_Cabana_Groapa_Seac%C4%83_-_panoramio.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (decupată).')}`},
+
+    /* ---------- PASUL 1: eticheta <a> și href ---------- */
+    {t:'Legătura: <a href="…">text</a>',
+     text:`<p>O <mark>legătură</mark> se scrie cu eticheta <code>&lt;a&gt;</code>, de la „anchor” (ancoră). Are trei părți:</p>
+<ul><li><code>href</code>, un <mark>atribut</mark>, ca <code>src</code> de la lecția 16: în el scrii, între ghilimele, unde duce legătura;</li>
+<li>textul dintre <code>&lt;a href="…"&gt;</code> și <code>&lt;/a&gt;</code>: ce vezi în pagină și pe ce apeși;</li>
+<li><code>&lt;/a&gt;</code>, care închide legătura. Fără el, tot textul de după devine legătură.</li></ul>
+<p>Pui legătura într-un paragraf, ca să stea pe rândul ei. În browser e albastră și subliniată, iar mouse-ul devine o mână deasupra ei.</p>`,
+     exemplu:`<p>Pagina <b>excursia.html</b> are, sub titlu, un paragraf cu o legătură spre <b>bucura.html</b>. Amândouă stau în același dosar (folder), Documente. Rândul e rupt doar ca să încapă pe ecran: browserul ia rândul nou drept spațiu, ca la lecția 16.</p>${PRE(COD.p2_bloc)}${MINI('excursia.html',{'excursia.html':COD.p2_rez,'bucura.html':COD.p4_rez},150)}`,
+     altfel:`<p>Gândește-te la un indicator de pe munte. Pe săgeată scrie unde ajungi: e textul legăturii, pe care îl citește omul. Drumul pe care pornești e adresa din <code>href</code>: pe el te duce browserul când apeși.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'În <b>excursia.html</b>, dă clic la sfârșitul rândului cu paragraful (cel cu „Am urcat”), apasă <kbd>Enter</kbd> (pe telefon, tasta ↵) și scrie legătura spre <b>bucura.html</b>, cu textul <b>Lacul Bucura</b>: <code>&lt;p&gt;&lt;a href="bucura.html"&gt;Lacul Bucura&lt;/a&gt;&lt;/p&gt;</code>. Apoi apasă pe legătură, în browser.',
+       start:{text:COD.p2_start,fisier:'excursia.html',fisiere:DOC},
+       teste:LG.cuDiagnostic([DUCE('bucura.html','Lacul Bucura','Pagina are o legătură spre bucura.html, cu textul Lacul Bucura','Scrie &lt;p&gt;&lt;a href="bucura.html"&gt;Lacul Bucura&lt;/a&gt;&lt;/p&gt; sub paragraf.'),PER]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p2_gresit]],
+       ajutor:'Trei părți: &lt;a href="bucura.html"&gt;, apoi textul Lacul Bucura, apoi &lt;/a&gt;. Toate între &lt;p&gt; și &lt;/p&gt;.',
+       why:'Legătura e gata: în browser, textul e albastru și subliniat. Apasă pe el: se deschide pagina Lacul Bucura. Săgeata ← din stânga sus a browserului (Înapoi) te întoarce.'},
+     inca:[
+      {t:'choice',q:'Ce parte a legăturii îi spune browserului ce pagină să deschidă?',o:['Atributul href, cu ce scrie în el','Textul dintre <a href="…"> și </a>','Eticheta </a>','Eticheta <p>, din jurul legăturii'],ok:0,
+       ajutor:'Recitește prima liniuță din pas.',why:'Adresa stă în <code>href</code>. Textul e doar ce vezi și pe ce apeși; <code>&lt;/a&gt;</code> închide legătura.'},
+      {t:'editorweb',mod:'live',
+       q:'În browser, „Lacul Bucura” e negru și nesubliniat: nu e legătură. Repară eticheta, ca textul să ducă la <b>bucura.html</b>.',
+       start:{text:COD.p2b_start,fisier:'excursia.html',fisiere:DOC},
+       teste:LG.cuDiagnostic([DUCE('bucura.html','Lacul Bucura','„Lacul Bucura” e legătură spre bucura.html','Adresa legăturii stă în atributul href.'),PER]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p2b_start]],
+       ajutor:'Care atribut spune unde duce legătura? src era la imagini.',
+       why:'Adresa unei legături stă în <code>href</code>. Cu <code>src</code>, browserul nu face din text o legătură.'},
+      {t:'editorweb',mod:'live',
+       q:'Și propoziția „Ne vedem la cabană.” a ieșit albastră și subliniată: a intrat în legătură. Repară pagina, ca doar „Lacul Bucura” să fie legătură.',
+       start:{text:COD.p2c_start,fisier:'excursia.html',fisiere:DOC},
+       teste:LG.cuDiagnostic([DUCE('bucura.html','Lacul Bucura','„Lacul Bucura” duce la bucura.html','Legătura are textul Lacul Bucura.'),
+        {ce:'Doar „Lacul Bucura” e legătură',fn:S=>{const L=LG.legaturi(LV(S));return L.length===1&&N(L[0].text)===N('Lacul Bucura')},msg:'Unde se termină legătura?'},PER]),
+       rezolvare:[['scrie',COD.p2c_rez]],gresit:[['scrie',COD.p2c_start]],
+       ajutor:'Legătura s-a deschis cu &lt;a href="bucura.html"&gt;. Unde se închide?',
+       why:'Lipsea <code>&lt;/a&gt;</code>. Fără el, browserul face legătură din tot ce urmează.'}
+     ]},
+
+    /* ---------- PASUL 2: doar numele fișierului; pagina de eroare ---------- */
+    {t:'Spre pagina ta: doar numele fișierului',
+     text:`<p>Când cele două pagini stau în același dosar, în <code>href</code> scrii doar numele fișierului, întreg, cu <b>.html</b>: <code>href="bucura.html"</code>. Fără dosar în față, ca la <code>src</code>. În Explorer nu vezi .html, dar în <code>href</code> îl scrii.</p>
+<p>Numele trebuie să fie exact: fiecare literă, fiecare liniuță. Pe Windows, literele mari sau mici nu contează.</p>
+<p>Dacă numele e greșit sau fișierul e în alt dosar, browserul arată o <mark>pagină de eroare</mark>, cu codul ERR_FILE_NOT_FOUND („fișierul nu a fost găsit”). Titlul ei diferă: în Chrome, „Fișierul nu a putut fi accesat”; în Edge, de obicei, „Hmm… nu se poate accesa această pagină”. Codul e același.</p>`,
+     exemplu:`<p>Aici, în <code>href</code> lipsește un „u”: <b>bucra.html</b>. Apasă pe legătură:</p>${PRE(COD.p3_bloc)}${MINI('excursia.html',{'excursia.html':COD.p3_ex,'bucura.html':COD.bucura},210)}`,
+     altfel:`<p>E ca adresa de pe un plic. Dacă scrii greșit o literă din numele străzii, poștașul nu găsește casa, iar scrisoarea nu ajunge. Browserul caută exact numele din <code>href</code>. Dacă nu găsește fișierul, îți spune.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Apasă pe legătura din browser: apare pagina de eroare. Repară numele din <code>href</code>, ca legătura să ducă la <b>bucura.html</b>. Apoi încearc-o din nou.',
+       start:{text:COD.p3_start,fisier:'excursia.html',fisiere:DOC},
+       teste:LG.cuDiagnostic([DUCE('bucura.html','Lacul Bucura','Legătura Lacul Bucura duce la bucura.html, care există','Compară numele din href cu bucura.html, literă cu literă.'),PER]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p3_gresit]],
+       ajutor:'Compară numele din href cu numele fișierului, bucura.html, literă cu literă.',
+       why:'Cu numele exact, browserul găsește fișierul în același dosar și îl deschide.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'Legătura duce la pagina de eroare, deși fișierul <b>bucura.html</b> e în același dosar. Repară <code>href</code>.',
+       start:{text:COD.p3b_start,fisier:'excursia.html',fisiere:DOC},
+       teste:LG.cuDiagnostic([DUCE('bucura.html','Lacul Bucura','Legătura duce la bucura.html','Numele fișierului e întreg, cu tot ce are la sfârșit.'),PER]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p3b_start]],
+       ajutor:'Ce lipsește de la sfârșitul numelui?',why:'Fișierul se numește <b>bucura.html</b>. Fără .html, browserul caută alt fișier, care nu există.'},
+      {t:'editorweb',mod:'live',
+       q:'Amândouă paginile stau în Documente, dar legătura duce la pagina de eroare. Repară <code>href</code>.',
+       start:{text:COD.p3c_start,fisier:'excursia.html',fisiere:DOC},
+       teste:LG.cuDiagnostic([DUCE('bucura.html','Lacul Bucura','Legătura duce la bucura.html','În href scrii doar numele fișierului.'),PER]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p3c_start]],
+       ajutor:'Scrii doar numele fișierului, fără dosar în față.',why:'Browserul caută pornind din dosarul paginii, Documente. Cu „Documente/” în față, caută un dosar Documente în Documente, care nu există.'},
+      {t:'choice',q:'Pagina ta e în Documente. A doua pagină, <b>bucura.html</b>, ai salvat-o din greșeală pe Desktop. Ce vezi când apeși pe legătura cu <code>href="bucura.html"</code>?',
+       o:['Pagina de eroare a browserului','Pagina bucura.html, de pe Desktop','Textul legăturii devine negru','Nimic: pagina ta rămâne pe ecran'],ok:0,
+       ajutor:'Unde caută browserul, când în href e doar numele?',why:'Cu doar numele, browserul caută în dosarul paginii tale, Documente. Acolo fișierul nu e, deci apare pagina de eroare, cu ERR_FILE_NOT_FOUND.'}
+     ]},
+
+    /* ---------- PASUL 3: legătura înapoi și butonul ← ---------- */
+    {t:'Legătura înapoi și butonul ←',
+     text:`<p>Pe a doua pagină pui o legătură înapoi spre prima, ca vizitatorul să nu rămână blocat: <code>&lt;a href="excursia.html"&gt;Înapoi la Excursia în Retezat&lt;/a&gt;</code>. Textul spune și unde te întorci, nu doar „Înapoi”. Așa, paginile sunt legate dus-întors.</p>
+<p>Browserul are și el butonul <b>←</b> (Înapoi, Back), sus, în stânga: te duce la pagina de dinainte, din aceeași filă. Cine a deschis direct a doua pagină n-are o pagină de dinainte, deci ← nu-l duce nicăieri. Legătura ta merge și pentru el.</p>
+<p>După ce ai deschis o legătură, ea devine mov. Așa vezi pe unde ai fost.</p>`,
+     exemplu:`<p>A doua pagină, <b>bucura.html</b>, cu legătura înapoi:</p>${PRE(COD.p4_bloc)}${MINI('excursia.html',{'excursia.html':COD.p2_rez,'bucura.html':COD.p4_rez},150,'Apasă pe Lacul Bucura, apoi pe legătura înapoi. Uită-te la culoarea legăturii Lacul Bucura după ce te-ai întors.')}`,
+     altfel:`<p>La lac, un indicator arată și drumul înapoi spre cabană. Fără el, te-ai întoarce doar pe unde ții minte că ai venit, ca la butonul ←. Legătura „Înapoi la…” e indicatorul pus de tine.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Acum lucrezi în <b>bucura.html</b>. Dă clic la sfârșitul rândului cu „Apa era rece și limpede.”, apasă <kbd>Enter</kbd> (pe telefon, tasta ↵) și scrie o legătură înapoi spre <b>excursia.html</b>, cu un text care spune unde duce, de exemplu <b>Înapoi la Excursia în Retezat</b>. Apoi încearc-o, în browser.',
+       start:{text:COD.bucura,fisier:'bucura.html',fisiere:DOC_EX},
+       teste:LG.cuDiagnostic([DUCE('excursia.html',true,'Pagina are o legătură spre excursia.html, cu un text care spune unde duce','Scrie &lt;p&gt;&lt;a href="excursia.html"&gt;Înapoi la Excursia în Retezat&lt;/a&gt;&lt;/p&gt;. Textul spune și unde te întorci: „Înapoi” singur nu ajunge.'),PER]),
+       rezolvare:[['scrie',COD.p4_rez]],gresit:[['scrie',COD.p4_gresit]],
+       ajutor:'Ca legătura de la pasul 1, dar spre excursia.html, cu textul Înapoi la Excursia în Retezat.',
+       why:'Acum paginile sunt legate dus-întors: de la excursie la lac și înapoi.'},
+     inca:[
+      {t:'choice',q:'Ai apăsat pe legătura „Lacul Bucura”, apoi te-ai întors pe prima pagină. Ce culoare are acum legătura „Lacul Bucura”?',o:['Mov','Albastră','Neagră','Verde'],ok:0,
+       ajutor:'Recitește ultima propoziție din pas.',why:'O legătură pe care ai deschis-o devine mov. Așa vezi pe unde ai fost.'},
+      {t:'tf',q:'Ai deschis a doua pagină cu legătura din prima. Butonul ← al browserului te întoarce la prima, chiar dacă a doua pagină n-are o legătură înapoi.',ok:true,
+       ajutor:'Al cui e butonul ←: al paginii tale sau al browserului?',why:'Adevărat. Butonul ← e al browserului, nu al paginii: te duce la pagina de dinainte, din aceeași filă. Legătura înapoi o pui tu, pentru cine a deschis direct a doua pagină: el n-are o pagină de dinainte.'}
+     ]},
+
+    /* ---------- PASUL 4: spre alt site — https:// și target="_blank" ---------- */
+    {t:'Spre alt site: https:// și target="_blank"',
+     text:`<p>Spre o pagină de pe Internet scrii adresa întreagă, cu <code>https://</code> la început: <code>href="https://www.retezat.ro"</code>, site-ul Parcului Național Retezat. E o <mark>legătură externă</mark>, spre o resursă (o pagină, un fișier) din afara site-ului tău. Fără <code>https://</code>, browserul caută pe calculator un fișier cu numele acesta și arată pagina de eroare.</p>
+<p>Al doilea atribut, <code>target="_blank"</code>, deschide legătura într-o <b>filă nouă</b>, iar pagina ta rămâne deschisă în fila ei. Îl pui de obicei la legăturile spre alte site-uri. Între atribute lași un spațiu.</p>`,
+     exemplu:`${PRE(COD.p5_bloc)}<p>Un atribut poate trece pe rândul următor din Notepad: browserul ia rândul nou drept spațiu.</p>${MINI('bucura.html',{'excursia.html':COD.p2_rez,'bucura.html':COD.p5_rez},150,'Apasă pe Parcul Național Retezat: se deschide o filă nouă. Fila paginii tale rămâne, în stânga.')}
+${fig('../../../jocuri/web-viii/img/pag-legaturi.webp',620,573,'Google Chrome cu o pagină care are două legături albastre, subliniate; cu mouse-ul pe a doua, adresa ei apare în colțul din stânga jos','În Chrome, cu mouse-ul pe o legătură: adresa ei apare jos, în stânga. Așa vezi unde duce, înainte să apeși.')}`,
+     altfel:`<p>E ca atunci când deschizi un dicționar lângă caiet: cauți cuvântul, iar caietul rămâne deschis la pagina ta. Fila nouă e dicționarul, fila ta e caietul.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Dă clic la sfârșitul rândului cu legătura înapoi, apasă <kbd>Enter</kbd> (pe telefon, tasta ↵) și scrie legătura spre site-ul parcului, care se deschide într-o filă nouă: <code>&lt;p&gt;&lt;a href="https://www.retezat.ro" target="_blank"&gt;Parcul Național Retezat&lt;/a&gt;&lt;/p&gt;</code>. Apoi apasă pe ea.',
+       start:{text:COD.p4_rez,fisier:'bucura.html',fisiere:DOC_EX},
+       teste:LG.cuDiagnostic([{ce:'Pagina are o legătură spre '+PNR+', cu un text care spune unde duce',fn:(S,U)=>LG.duce(S,U,null,{extern:PNR_OK,textBun:true}),msg:'Adresa întreagă, exact ca în cerință: https://www.retezat.ro (https, două puncte, două bare, apoi www.retezat.ro); textul spune unde duce: Parcul Național Retezat.'},
+        {ce:'Legătura spre site-ul parcului se deschide într-o filă nouă',fn:(S,U)=>LG.duce(S,U,null,{extern:PNR_OK,blank:true}),msg:'Adaugă atributul target="_blank", după href, cu un spațiu între ele.'},PER]),
+       rezolvare:[['scrie',COD.p5_rez]],gresit:[['scrie',COD.p5_gresit]],
+       ajutor:'Două atribute în aceeași etichetă: href="…" target="_blank", cu un spațiu între ele.',
+       why:'Legătura externă are adresa întreagă, cu https://, iar target="_blank" o deschide într-o filă nouă.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'Legătura spre site-ul parcului duce la pagina de eroare, cu ERR_FILE_NOT_FOUND. Repară adresa.',
+       start:{text:COD.p5b_start,fisier:'bucura.html',fisiere:DOC_EX},
+       teste:LG.cuDiagnostic([{ce:'Legătura duce la '+PNR,fn:(S,U)=>LG.duce(S,U,null,{extern:PNR_OK,blank:true}),msg:'O adresă de pe Internet începe cu https://.'},PER]),
+       rezolvare:[['scrie',COD.p5_rez]],gresit:[['scrie',COD.p5b_start]],
+       ajutor:'Cu ce începe adresa unei pagini de pe Internet?',why:'Fără <code>https://</code>, browserul a căutat pe calculator un fișier cu numele acela. Cu el, merge pe Internet.'},
+      {t:'classify',q:'Ce scrii în <code>href</code>?',cats:['Doar numele fișierului','Adresa întreagă, cu https://'],
+       items:[['a doua pagină a ta, din același dosar',0],['site-ul Parcului Național Retezat',1],['prima ta pagină, din același dosar',0],['site-ul unui muzeu',1]],
+       ajutor:'Pagina e pe calculatorul tău, lângă prima, sau pe Internet?',why:'Paginile tale din același dosar: doar numele fișierului. Paginile de pe Internet: adresa întreagă, cu https://.'}
+     ]},
+
+    /* ---------- PASUL 5: textul legăturii ---------- */
+    {t:'Textul legăturii spune unde duce',
+     text:`<p>Mulți citesc o pagină sărind de la o legătură la alta. Un om care nu vede bine își ascultă pagina cu un <mark>cititor de ecran</mark>: un program care citește cu voce tare ce e pe ecran, uneori doar legăturile. De aceea, textul legăturii spune unde ajungi: „Lacul Bucura”, „Parcul Național Retezat”.</p>
+<p>Nu scrii „click aici”, „aici” sau „pagina 2”: singure, nu spun nimic. Nici adresa nu e un text bun: e lungă și greu de citit.</p>`,
+     exemplu:`<p>Aceeași legătură, întâi cu un text care nu spune nimic, apoi cu unul care spune unde duce:</p>${PRE(COD.p6_rau)}${PRE(COD.p6_bun)}<p>Cine aude doar legăturile află din prima „click aici”, iar din a doua, „Lacul Bucura”.</p>`,
+     altfel:`<p>Pe indicatoarele de pe munte scrie „spre cabana Obârșia Lotrului”, nu „pe aici”. Cu „pe aici”, n-ai ști ce drum să alegi.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Legătura spre <b>bucura.html</b> are textul „click aici”. Schimbă-l cu un text care spune unde duce. Adresa din <code>href</code> rămâne.',
+       start:{text:COD.p6_start,fisier:'excursia.html',fisiere:DOC},
+       teste:LG.cuDiagnostic([DUCE('bucura.html',true,'Legătura duce la bucura.html, cu un text care spune unde duce','Textul dintre &lt;a href="bucura.html"&gt; și &lt;/a&gt; numește locul unde ajungi, de exemplu Lacul Bucura.'),PER]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p6_gresit]],
+       ajutor:'Ce găsești pe pagina bucura.html? Asta scrii.',
+       why:'Acum textul spune unde ajungi, și pentru cine citește doar legăturile.'},
+     inca:[
+      {t:'classify',q:'E un text bun pentru o legătură?',cats:['Text bun','Text nepotrivit'],
+       items:[['Programul excursiei',0],['click aici',1],['Orarul clasei a VIII-a',0],['https://ro.wikipedia.org/wiki/HTML',1],['aici',1],['Rezultatele concursului de șah',0]],
+       ajutor:'Citește doar textul: afli unde ajungi? Se citește ușor?',why:'„Programul excursiei”, „Orarul clasei a VIII-a” și „Rezultatele concursului de șah” numesc locul. „click aici” și „aici” nu spun nimic. Adresa spune unde duce, dar e lungă și greu de citit, deci nici ea nu e un text bun.'},
+      {t:'choice',q:'Pe pagina clasei sunt trei legături, toate cu textul „aici”. Un coleg își ascultă pagina cu un cititor de ecran, care îi citește doar legăturile. Ce află?',
+       o:['Că sunt trei legături, dar nu și unde duc','Unde duce fiecare legătură','Adresa fiecărei legături, în ordine','Nimic: cititorul de ecran sare peste legături'],ok:0,
+       ajutor:'Ce aude, de trei ori?',why:'Aude de trei ori „aici”: știe că sunt trei legături, dar nu și unde duc.'}
+     ]}
+   ],
+   atelier:{t:'editorweb',mod:'notepad',titlu:'Atelier: un site cu două pagini',
+    intro:`<p><b>Atelierul e pentru cine are timp.</b> E o repetiție a laboratorului, în pagină. Dacă mai sunt cel puțin 35 de minute din oră, fă-l acum. Altfel, treci direct la laborator, cu butonul de jos „Acum la calculatorul din laborator →”; atelierul îl poți face după întrebări, din bara de jos (Atelier).</p>
+<p>Mai jos ai un Notepad, dosarul Documente și un browser, simulate. Deasupra lor sunt <strong>testele</strong>: se bifează singure când faci ce cer. La final apasă <b>Verifică</b>. Pe un ecran mic, treci de la o fereastră la alta cu butoanele de sub ele.</p>`,
+    q:`<b>1.</b> Pagina Anei, <code>${ANA}</code>, e deschisă în Notepad. Sub paragraf, adaugă legătura spre a doua pagină, <code>${ANA2}</code>, cu textul <b>Lacul Bucura</b>. Salvează (<kbd>Ctrl</kbd>+<kbd>S</kbd>). <b>2.</b> Fă a doua pagină din prima: <b>Fișier › Salvați ca</b>, cu numele <code>${ANA2}</code>, <b>Toate fișierele (*.*)</b>. <b>3.</b> În a doua pagină: titlul de pe filă și titlul mare devin <b>Lacul Bucura</b>; legătura duce înapoi, la <code>${ANA}</code>, cu textul <b>Înapoi la Excursia în Retezat</b>. Salvează. <b>4.</b> În Documente, dublu-clic pe prima pagină (pe telefon, două atingeri repezi). În browser, apasă pe <b>Lacul Bucura</b>, apoi pe legătura înapoi.`,
+    start:{fisiere:{Documente:[{n:ANA,t:COD.at_start.replace(/\n/g,'\r\n')+'\r\n'}]},notepad:{file:[{n:ANA,dosar:'Documente'}]},dreapta:'explorer'},
+    teste:LG.cuDiagnostic([
+     {ce:`Prima pagină, salvată, are o legătură spre ${ANA2}, cu un text care spune unde duce`,fn:(S,U)=>spre(S,U,AT,ANA2),spec:AT,msg:`Sub paragraf: &lt;p&gt;&lt;a href="${ANA2}"&gt;Lacul Bucura&lt;/a&gt;&lt;/p&gt;. Apoi Ctrl+S.`},
+     {ce:`A doua pagină, ${ANA2}, e salvată în Documente, cu titlul Lacul Bucura (pe filă și titlul mare)`,fn:(S,U)=>{const f=fis(S,U,AT2);return !!f&&N(ES.titlu(f.t))===N(LB)&&N(h1(f.t))===N(LB)},spec:AT2,faraLegaturi:true,msg:`Fișier › Salvați ca, numele ${ANA2}, Toate fișierele; apoi, în ea, Lacul Bucura în &lt;title&gt; și în &lt;h1&gt;, și Ctrl+S.`},
+     {ce:'A doua pagină are o legătură înapoi spre prima, cu un text care spune unde duce',fn:(S,U)=>{const f=fis(S,U,AT);return !!f&&spre(S,U,AT2,f.n)},spec:AT2,msg:`În a doua pagină, legătura: href="${ANA}", textul Înapoi la Excursia în Retezat. Apoi Ctrl+S.`},
+     {ce:'Fiecare legătură e închisă cu &lt;/a&gt;, iar scheletul ambelor pagini a rămas întreg',fn:(S,U)=>{const f1=fis(S,U,AT),f2=fis(S,U,AT2);return !!f1&&!!f2&&inchisa(f1.t)&&inchisa(f2.t)},faraOraData:true,spec:AT2,msg:'Caută perechea fiecărei etichete, în ambele pagini.'},
+     {ce:'În browser, ai deschis a doua pagină cu legătura din prima',fn:(S,U)=>LG.urmata(S,{la:ANA2,ok:true}),spec:AT,msg:'În Documente, dublu-clic pe prima pagină; în browser, apasă pe Lacul Bucura.'},
+     {ce:'Te-ai întors pe prima pagină cu legătura înapoi',fn:(S,U)=>{const f=fis(S,U,AT);return !!f&&LG.urmata(S,{de:ANA2,la:f.n,ok:true})},spec:AT2,msg:'Pe a doua pagină, în browser, apasă pe Înapoi la Excursia în Retezat (nu pe ←).'}],{spec:AT}),
+    rezolvare:[['scrie',COD.at_p1],['salveaza'],['salveazaCa',{nume:ANA2,dosar:'Documente',cod:'UTF-8'}],['scrie',COD.at_p2],['salveaza'],['deschide','Documente/'+ANA],['legatura',{text:LB}],['legatura',{text:INAPOI}]],
+    gresit:[['scrie',COD.at_p1],['salveaza'],['salveazaCa',{nume:ANA2,dosar:'Documente',cod:'UTF-8'}],['scrie',COD.at_p2_gresit],['salveaza'],['deschide','Documente/'+ANA],['legatura',{text:LB}],['legatura',{text:INAPOI}]],
+    ajutor:'Pe rând: legătura în prima pagină și Ctrl+S; Fișier › Salvați ca pentru a doua; în ea, titlurile și legătura înapoi, Ctrl+S; în Documente, dublu-clic pe prima; în browser, cele două legături.',
+    why:'Cele două pagini ale Anei sunt legate dus-întors, iar legăturile merg în browser.',
+    solutieText:`prima pagină (${ANA}) are legătura Lacul Bucura spre ${ANA2}; a doua, făcută cu Salvați ca, are titlul Lacul Bucura și legătura Înapoi la Excursia în Retezat; amândouă au fost încercate în browser.`,
+    inca:[
+     {t:'editorweb',mod:'notepad',titlu:'Atelier: repară legătura și adaugă una spre Internet',
+      q:`În browser e deschisă prima pagină a Anei. <b>1.</b> Apasă pe <b>Lacul Bucura</b>: apare pagina de eroare. Repară legătura în Notepad (a doua pagină se numește <code>${ANA2}</code>), salvează, apoi în browser <b>←</b> și încearc-o din nou. <b>2.</b> Sub ea, în prima pagină, adaugă legătura spre <code>${WIKI}</code>, într-o filă nouă, cu textul <b>Lacul Bucura, pe Wikipedia</b>. Salvează, fă ca browserul să arate pagina salvată și apasă pe legătura nouă. <b>3.</b> La final, închide fila din Notepad cu <b>Fișier › Închideți fila</b>, nu cu X-ul ferestrei.`,
+      start:{fisiere:{Documente:[{n:ANA,t:COD.at2_p1.replace(/\n/g,'\r\n')+'\r\n'},{n:ANA2,t:COD.at_p2.replace(/\n/g,'\r\n')+'\r\n'}]},notepad:{file:[{n:ANA,dosar:'Documente'}]},browser:{file:['Documente/'+ANA]},dreapta:'browser'},
+      teste:LG.cuDiagnostic([
+       {ce:`Legătura Lacul Bucura duce la ${ANA2}`,fn:(S,U)=>spre(S,U,{exact:ANA},ANA2),spec:{exact:ANA},msg:'Compară numele din href cu numele celei de-a doua pagini, literă cu literă. Apoi Ctrl+S.'},
+       {ce:'Ai încercat-o în browser și a mers',fn:(S,U)=>LG.urmata(S,{la:ANA2,ok:true}),spec:{exact:ANA},msg:'După Ctrl+S: în browser, ← (sau F5 pe prima pagină), apoi apasă pe Lacul Bucura.'},
+       {ce:'Prima pagină are legătura spre Wikipedia, cu target="_blank" și un text care spune unde duce',fn:(S,U)=>LG.duce(S,U,{exact:ANA},{extern:WIKI,blank:true,textBun:true}),spec:{exact:ANA},msg:`&lt;p&gt;&lt;a href="${WIKI}" target="_blank"&gt;Lacul Bucura, pe Wikipedia&lt;/a&gt;&lt;/p&gt;, apoi Ctrl+S.`},
+       {ce:'Ai deschis-o în browser, într-o filă nouă',fn:(S,U)=>LG.urmata(S,{extern:WIKI,blank:true}),spec:{exact:ANA},msg:'În browser, pe prima pagină: F5 (ca să citească pagina salvată), apoi apasă pe Lacul Bucura, pe Wikipedia.'},
+       {ce:'Notepad e închis și nu-ți mai redeschide fila',npCurat:true,faraDiagnostic:true,msg:'Fișier › Închideți fila. X-ul ferestrei păstrează fila pentru data viitoare.'}],{spec:{exact:ANA}}),
+      rezolvare:[['scrie',COD.at2_rez],['salveaza'],['legatura',{text:LB}],['inapoi'],['legatura',{text:LB}],['inapoi'],['f5'],['legatura',{text:'Lacul Bucura, pe Wikipedia'}],['inchideFila']],
+      gresit:[['scrie',COD.at2_rez],['salveaza'],['f5'],['legatura',{text:LB}],['inapoi'],['legatura',{text:'Lacul Bucura, pe Wikipedia'}],['inchideFereastra']],
+      ajutor:'Lipsește un „i” din numele din href. După Ctrl+S: în browser ←, apoi legătura; pentru legătura nouă, F5 pe prima pagină. La final, Fișier › Închideți fila.',
+      why:'Legătura reparată duce la a doua pagină, iar cea spre Wikipedia se deschide într-o filă nouă. Notepad, închis din filă, pornește curat pentru colegul următor.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Andrei vrea ca textul „Orarul clasei” să ducă la pagina <b>orar.html</b>, din același dosar. Ce scrie?',
+     o:['<a href="orar.html">Orarul clasei</a>','<a src="orar.html">Orarul clasei</a>','<a href="Orarul clasei">orar.html</a>','<a href="orar">Orarul clasei</a>'],ok:0,
+     ajutor:'Unde stă adresa și unde stă textul? Ce are numele fișierului la sfârșit?',why:'Adresa stă în <code>href</code>, cu numele întreg al fișierului, <b>orar.html</b>; textul, între <code>&lt;a href="…"&gt;</code> și <code>&lt;/a&gt;</code>.'},
+    {t:'editorweb',mod:'live',
+     q:'Legătura „Rezultatele concursului” duce la pagina de eroare. În același dosar e fișierul <b>rezultate.html</b>. Repară legătura.',
+     start:{text:COD.q2_start,fisier:'concurs.html',fisiere:{Documente:[{n:'rezultate.html',t:COD.q2_ext}]}},
+     teste:[DUCE('rezultate.html','Rezultatele concursului','Legătura duce la rezultate.html','Compară numele din href cu rezultate.html, literă cu literă.'),PER],
+     rezolvare:[['scrie',COD.q2_rez]],gresit:[['scrie',COD.q2_start]],
+     ajutor:'Citește numele din href literă cu literă și compară-l cu rezultate.html.',why:'Numele din <code>href</code> trebuie să fie exact numele fișierului: <b>rezultate.html</b>.'},
+    {t:'editorweb',mod:'live',
+     q:'Sub paragraf, adaugă o legătură spre <b>https://ro.wikipedia.org/wiki/HTML</b>, care se deschide într-o filă nouă, cu un text care spune unde duce.',
+     start:{text:COD.q3_start,fisier:'invatat.html'},
+     teste:[{ce:'Pagina are o legătură spre https://ro.wikipedia.org/wiki/HTML, cu un text care spune unde duce',fn:(S,U)=>LG.duce(S,U,null,{extern:'https://ro.wikipedia.org/wiki/HTML',textBun:true}),msg:'Adresa întreagă, cu https://; textul numește locul unde ajungi.'},
+      {ce:'Legătura se deschide într-o filă nouă',fn:(S,U)=>LG.duce(S,U,null,{extern:'https://ro.wikipedia.org/wiki/HTML',blank:true}),msg:'Ce atribut deschide o filă nouă?'},PER],
+     rezolvare:[['scrie',COD.q3_rez]],gresit:[['scrie',COD.q3_gresit]],
+     ajutor:'Două atribute: href cu adresa întreagă și cel pentru filă nouă. Textul spune unde ajungi.',why:'Adresa întreagă, cu <code>https://</code>, <code>target="_blank"</code> pentru filă nouă și un text care numește locul.'},
+    {t:'choice',q:'Maria a pus în <code>href</code> numele <b>galerie.html</b>, dar fișierul din același dosar se numește <b>galeria.html</b>. Ce vede când apasă pe legătură?',
+     o:['Pagina de eroare a browserului','Pagina galeria.html, ghicită','Textul legăturii, devenit negru','Pagina ei, încărcată din nou'],ok:0,
+     ajutor:'Browserul caută exact numele din href. Există fișierul galerie.html?',why:'Browserul nu ghicește: caută exact <b>galerie.html</b>, care nu există, și arată pagina de eroare, cu ERR_FILE_NOT_FOUND.'},
+    {t:'classify',q:'Pentru fiecare legătură: textul spune unde duce sau nu?',cats:['Spune unde duce','Nu spune unde duce'],
+     items:[['Galeria foto de la excursie',0],['apasă aici',1],['Regulamentul concursului',0],['pagina2.html',1]],
+     ajutor:'Citește doar textul: afli unde ajungi?',why:'„Galeria foto de la excursie” și „Regulamentul concursului” numesc locul. „apasă aici” și un nume de fișier nu spun ce găsești acolo.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Notepad-ul și browserul adevărate',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:`<p>Faci două pagini legate între ele și o legătură spre Internet, fără ajutor, pornind de la pagina ta de la lecția 16. La fiecare pas scrie ce trebuie să vezi. Pasul 8, experimentul, e pentru cine mai are timp.</p>
+<p>Când mai sunt 10 minute din oră: termină pasul la care ești, salvează, fă ultimul pas (închizi filele din Notepad) și treci la cele 5 întrebări.</p>`,
+    pasi:PROVOCARE},
+  diploma:{titlu:'Constructorul de drumuri între pagini',
+    rezumat:'a legat două pagini ale lui, dus-întors, cu eticheta a și atributul href, a pus o legătură spre un site de pe Internet, cu https://, care se deschide într-o filă nouă (target="_blank"), a ales texte care spun unde duc legăturile și a reparat o legătură stricată',
+    aplicatie:'Notepad-ul și browserul adevărate',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
