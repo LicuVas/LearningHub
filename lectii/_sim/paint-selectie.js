@@ -378,7 +378,16 @@ function popup(win,S,P){
     <button type="button" class="ps-it" role="menuitem" data-act="ps:nu" data-v="transparenta">Selecție transparentă</button>
     <button type="button" class="ps-it${P.sel?'':' gri'}" role="menuitem" data-act="ps:stergere">Ștergere<span class="sc">del</span></button></div>`;
   else if(S.pop==='ps-pens')h=`<div class="pt-pop ps-pop" role="menu" aria-label="Pensule" style="${pozPop(win,G[3],220)}">${PENSULE.map(x=>`<button type="button" class="ps-it${P.tip===x.id&&S.unealta==='pensula'?' on':''}" role="menuitem" data-act="ps:pensula" data-v="${x.id}">${svgPensula(x.id)} ${E(x.nume)}</button>`).join('')}</div>`;
-  else if(S.pop==='ps-forme')h=`<div class="pt-pop ps-pop" role="menu" aria-label="Forme" style="${pozPop(win,G[4],250)}">${galerie(P,S)}<div class="pt-gn">Forme</div>${STIL.replace('ps-stil','ps-stil" style="flex-direction:row;margin:4px 0 0')}</div>`;
+  else if(S.pop==='ps-forme'){
+    /* 24.10.2026 (componentele comune): meniul are 8 coloane × 32 px = 277 px, nu 250 cât socotea poziția, deci la 390 px ieșea
+       ~20 px din fereastră (găsit la V/19, judecătorul 2 al V/21). Acum: unde încape cum era, rămâne cum era (desenul de la 1280 nu
+       se schimbă); altfel se mută spre stânga, iar dacă nici așa nu încape, galeria are mai puține coloane (butoanele rămân de 32 px). */
+    const W=win.clientWidth||600,col=Math.max(1,Math.min(8,Math.floor((W-21)/33))),lat=col*33+13;
+    let poz=pozPop(win,G[4],250);const x0=+(/left:(-?\d+)px/.exec(poz)||[0,0])[1];
+    if(col<8||x0+lat>W)poz=pozPop(win,G[4],lat);
+    const gal=col<8?galerie(P,S).replace('class="ps-gal"',`class="ps-gal" style="grid-template-columns:repeat(${col},32px)"`):galerie(P,S);
+    h=`<div class="pt-pop ps-pop" role="menu" aria-label="Forme" style="${poz}">${gal}<div class="pt-gn">Forme</div>${STIL.replace('ps-stil','ps-stil" style="flex-direction:row;margin:4px 0 0')}</div>`;
+  }
   if(S.meniu==='editare'){const mb=win.querySelector('.pt-mb [data-v="editare"]'),wr=win.getBoundingClientRect(),br=mb?mb.getBoundingClientRect():null,x=br?Math.round(br.left-wr.left-win.clientLeft):60,y=br?Math.round(br.bottom-wr.top-win.clientTop+2):34;
     h+=`<div class="pt-menu" role="menu" aria-label="Editare" style="left:${Math.max(4,Math.min(x,(win.clientWidth||600)-256))}px;top:${y}px">
       <button type="button" role="menuitem" data-act="ps:ed" data-v="decupare"><span>Decupare</span><span class="sc">Ctrl+X</span></button>

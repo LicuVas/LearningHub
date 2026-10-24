@@ -102,6 +102,25 @@ const lin=s=>String(s==null?'':s).replace(/\r\n?/g,'\n');
 const ORA=/\d{1,2}:\d\d \d{1,2}\.\d{1,2}\.\d{4}/,ORA_G=new RegExp(ORA.source,'g');
 const bloc=(src,tag)=>{const s=lin(src),a=s.search(new RegExp('<'+tag+'\\b[^>]*>','i'));if(a<0)return null;
   const r=s.slice(a),m=r.match(new RegExp('</'+tag+'\\s*>','i'));return m?r.slice(r.indexOf('>')+1,m.index):null};
+/* 24.10.2026 (componentele comune): ordine() nu mai primește conținut scris DUPĂ </body> sau după </html> (judecătorii VIII/16 J5-X
+   și VIII/18 J2-I: paragraful, imaginea sau legătura de acolo luau „Corect”, pentru că browserul le mută singur în corp).
+   Probat în Chromium (componente_24_10/mici/proba_dupa_body_browser.py): albul (spații, Tab, Enter, CRLF, spațiul fără rupere) și
+   comentariile (și cel neînchis) de acolo NU se văd și nu intră în pagină, deci rămân primite; orice altceva e semnalat.
+   Mesajul (mesajDupa) se spune DOAR când acesta e singurul motiv pentru care testul pică (pazeste, mai jos); altfel mesajele de azi rămân. */
+const COMENT=/<!--(?:-?>|[\s\S]*?(?:--!?>|$))/g;
+function dupa(src){
+  const s=lin(src),m=/<\/body\s*>/i.exec(s);if(!m)return null;
+  const r=s.slice(m.index+m[0].length),h=/<\/html\s*>/i.exec(r);
+  const cur=x=>x.replace(COMENT,' ').replace(/\s+/g,' ').trim();
+  const a=cur(h?r.slice(0,h.index):r);if(a)return {unde:'body',text:a};
+  const b=h?cur(r.slice(h.index+h[0].length)):'';return b?{unde:'html',text:b}:null;
+}
+function mesajDupa(d){
+  const x=d.text.length>60?d.text.slice(0,57)+'…':d.text;
+  return `După <code>&lt;/${d.unde}&gt;</code> mai e ceva în cod: <code>${esc(x)}</code>. `+(d.unde==='html'?'Pagina se termină cu <code>&lt;/html&gt;</code>: tot':'Tot')+
+    ' ce se vede în pagină se scrie între <code>&lt;body&gt;</code> și <code>&lt;/body&gt;</code>. Mută-l mai sus, înainte de <code>&lt;/body&gt;</code>, sau șterge-l, dacă e în plus.';
+}
+let FARA_DUPA=0,VAZUT_DUPA=0,ULTIM_DUPA=null,SPUNE_DUPA=null;   /* vezi pazeste() */
 const ES={
   /* textul de verificat: editorul (mod live), fișierul elevului (spec), pagina din browser ({browser:spec|true}) sau fila activă */
   src(S,U,spec){
@@ -122,7 +141,12 @@ const ES={
   /* scheletul în ordinea bună: doctype, html, head, /head, body, /body, /html — și fiecare o singură dată */
   ordine(src){const s=lin(src).toLowerCase();const re=[/<!doctype\s+html\s*>/g,/<html\b[^>]*>/g,/<head\b[^>]*>/g,/<\/head\s*>/g,/<body\b[^>]*>/g,/<\/body\s*>/g,/<\/html\s*>/g];
     let ult=-1;for(const r of re){const m=s.match(r);if(!m||m.length!==1)return false;const i=s.search(r);if(i<ult)return false;ult=i}
-    return !(window.EditorWebUtil&&window.EditorWebUtil.corecteaza(src).length)},
+    if(window.EditorWebUtil&&window.EditorWebUtil.corecteaza(src).length)return false;
+    if(FARA_DUPA)return true;
+    const d=dupa(src);if(d){VAZUT_DUPA++;ULTIM_DUPA=d;return false}   /* 24.10.2026: nimic după </body> și după </html> */
+    return true},
+  /* 24.10.2026: ce stă după </body> sau după </html>, în afară de alb și de comentarii ('' = nimic) */
+  dupaCorp(src){const d=dupa(src);return d?d.text:''},
   tactil,
   /* lățimile Tab-ului după care se judecă alinierea (M5-1): calculator = Notepad (8) și zona de scris a simulatorului (4,
      editorweb.js); ecran tactil = regula lecției, două spații în locul unui Tab (2, cum arată extensia Tab-ul acolo) */
@@ -160,6 +184,7 @@ const ES={
     const m=s.match(/<\/(title|head|body|html|h1)\b(?!\s*>)/i);
     if(m)return `După <code>&lt;/${m[1].toLowerCase()}</code> trebuie semnul <code>&gt;</code>, care închide eticheta.`;
     if(/<title\b[^>]*>[^<\n]*<title\b[^>]*>/i.test(s))return 'A doua etichetă de pe rândul cu titlul nu închide: îi lipsește bara <code>/</code>, ca la <code>&lt;/h1&gt;</code>. De aceea pe filă apare și restul fișierului.';
+    if(SPUNE_DUPA)return mesajDupa(SPUNE_DUPA);   /* 24.10.2026: doar când testul pică numai din cauza conținutului de după </body> */
     return '';
   },
   /* opt.spec: fișierul elevului citit de teste (mod notepad); opt.coleg: numele fișierelor colegilor, deschise în file */
@@ -221,4 +246,44 @@ const ES={
   }
 };
 window.EditorWebSchelet=ES;
+
+/* ---------- 6. (24.10.2026) conținutul de după </body>: mesajul, numai când e SINGURUL motiv ----------
+   La fiecare exercițiu desenat, fiecare test cu fn din Q.teste e învelit: dacă pică, iar ordine() a găsit ceva după </body>
+   (sau </html>), testul se mai rulează o dată fără regula asta. Trece așa → regula e singurul motiv: mesajul testului devine
+   mesajDupa (testele simple) sau îl spune mesajText (testele cu diagnostic: ES/EWC/EWS/TB/LG/EV.cuDiagnostic). Pică și așa →
+   mesajul de azi, neschimbat (de exemplu VIII/16, care spune deja ce e în afara corpului). Ultima rulare e mereu cea cu regula. */
+const PAZIT=new WeakSet(),ATRIB=new WeakMap();
+function evalueaza(c,fn0,self,args){
+  ATRIB.delete(c);
+  const v0=VAZUT_DUPA,ok=!!fn0.apply(self,args);
+  if(ok||VAZUT_DUPA===v0)return ok;
+  const d=ULTIM_DUPA;
+  let alt;FARA_DUPA++;try{alt=!!fn0.apply(self,args)}finally{FARA_DUPA--}
+  if(!alt)return !!fn0.apply(self,args);
+  const p=SPUNE_DUPA;let r;SPUNE_DUPA=d;try{r=!!fn0.apply(self,args)}finally{SPUNE_DUPA=p}
+  if(!r)ATRIB.set(c,mesajDupa(d));
+  return r;
+}
+function pazeste(Q){
+  (Q&&Array.isArray(Q.teste)?Q.teste:[]).forEach(c=>{
+    if(!c||typeof c!=='object'||PAZIT.has(c)||typeof c.fn!=='function')return;
+    const df=Object.getOwnPropertyDescriptor(c,'fn');if(!df||!(df.writable||df.configurable))return;
+    PAZIT.add(c);
+    const fn0=c.fn;
+    if(df.writable)c.fn=function(){return evalueaza(c,fn0,this,arguments)};
+    else Object.defineProperty(c,'fn',{value:function(){return evalueaza(c,fn0,this,arguments)},writable:false,enumerable:df.enumerable,configurable:true});
+    const dm=Object.getOwnPropertyDescriptor(c,'msg');
+    if(dm&&!dm.configurable)return;   /* mesajul cu getter al diagnosticului: îl spune mesajText (SPUNE_DUPA) */
+    let orig=dm?dm.value:undefined;
+    Object.defineProperty(c,'msg',{enumerable:dm?dm.enumerable:true,configurable:true,
+      get(){const m=ATRIB.get(c);return m!=null?m:(dm&&dm.get?dm.get.call(c):orig)},
+      set(v){if(dm&&dm.set)dm.set.call(c,v);else orig=v}});
+  });
+}
+const EW=window.EditorWeb;
+if(EW&&typeof EW.render==='function'&&!EW.render.esPazit){
+  const r0=EW.render;
+  EW.render=function(Q){try{pazeste(Q)}catch(x){}return r0.apply(this,arguments)};
+  EW.render.esPazit=true;
+}
 })();

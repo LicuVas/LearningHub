@@ -63,7 +63,9 @@ const CSS=`
 .bs-fals{display:inline-block;border:0;border-radius:10px;background:#1DB954;color:#fff;font:inherit;font-size:1.05rem;font-weight:800;padding:10px 20px;min-height:40px;margin:.4em 0;cursor:pointer;box-shadow:0 3px 0 #127a37}
 .bs-vinde{display:inline-block;border:0;border-radius:8px;background:#F08C00;color:#1B1B1B;font:inherit;font-weight:800;padding:8px 16px;min-height:36px;margin:.3em 0;cursor:pointer}
 `;
-function css(){if(document.getElementById('bs-css'))return;const s=document.createElement('style');s.id='bs-css';s.textContent=CSS;document.head.appendChild(s)}
+/* 24.10.2026 (componentele comune): stilul are id-ul LUI, „bs-css-siguranta”. Cu „bs-css”, același ca la browser-salvare.js (V/15),
+   pe o pagină care le încarcă pe amândouă (V/17) al doilea simulator desenat rămânea fără stil. Selectorii lor nu se ciocnesc. */
+function css(){if(document.getElementById('bs-css-siguranta'))return;const s=document.createElement('style');s.id='bs-css-siguranta';s.textContent=CSS;document.head.appendChild(s)}
 const N=s=>String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
 const LUNI=['ianuarie','februarie','martie','aprilie','mai','iunie','iulie','august','septembrie','octombrie','noiembrie','decembrie'];
 /* data scrisă de elev, în oricare formă obișnuită; [zi, lună, an] căutat în text */

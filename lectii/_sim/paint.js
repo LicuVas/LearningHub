@@ -141,6 +141,9 @@ const CSS=`
 .pt-sb button{min-width:32px;min-height:32px;border:0;background:transparent;cursor:pointer;color:#1a1a1a;font-size:14px;border-radius:4px}
 .pt-sb button:hover{background:#e6e6e6}
 .pt-menu{position:absolute;z-index:7;background:#fff;border:1px solid #cfcfcf;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2);padding:4px;min-width:250px;max-width:calc(100% - 12px);max-height:calc(100% - 74px);overflow-y:auto;overscroll-behavior:contain}
+/* 24.10.2026 (componentele comune): la 360 px fereastra are ~250 px, iar meniurile Fișier / Editare (cel puțin 250 px, puse la 4-6 px
+   de margine) ieșeau 4-6 px din ea; acum lățimea minimă nu trece de fereastră. Unde încap 250 px (1280), nimic nu se schimbă. */
+.pt-menu{min-width:min(250px,calc(100% - 12px))}
 .pt-menu .pt-sub{border-left:3px solid #9cc3ef;margin:2px 0 4px 16px;padding-left:4px}
 .pt-menu button{display:flex;width:100%;align-items:center;gap:10px;border:0;background:transparent;font:inherit;font-size:13px;color:#1a1a1a;text-align:left;padding:5px 10px;min-height:34px;border-radius:4px;cursor:pointer}
 .pt-menu button:hover,.pt-menu button:focus-visible{background:#ececec;outline:none}
