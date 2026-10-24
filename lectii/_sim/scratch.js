@@ -33,9 +33,37 @@
    desenată mai simplu (nota de sub paletă); „Adaugă comentariu” doar spune ce face în Scratch; butonul „Pas cu pas”
    e DOAR în pagină (Scratch nu-l are); scena e mică (Scratch are și el „scena mică”); pe telefon, meniul blocului se
    deschide ținând degetul apăsat.
+   1.2 (24.10.2026, componenta comună, după judecățile VI/19 și VI/20) — DEFECTELE DE TELEFON (la 390 px zona de cod
+   are ~133 px): (1) după ce închizi caseta unui câmp (Enter, Escape, atingere în altă parte), zona de cod revine
+   singură spre stânga cât să se vadă marginea stângă a programului (rămânea derulată ~89 px, iar blocul tras din
+   paletă sub program cădea deoparte); cu degetul, atingerea unui bloc din paletă închide și ea caseta; (2) cât zona e
+   derulată spre dreapta, locurile de lipire ascunse la stânga se măsoară față de marginea văzută a zonei; (3) în zona
+   de cod, degetul pus pe un loc gol de lângă un bloc derulează zona (înainte, „atracția” atingerii spre bloc îl
+   apuca și rupea programul); (4) blocul tras cu degetul din zona de cod rămâne în document, ascuns, până ridici
+   degetul (înainte, prima atingere de după, ex. pe steag, se pierdea uneori). Probele: _campaign/revizuire_completa_
+   2026_09/m3_noapte_23_10/scratch_12/ (proba_telefon.py, dbg_steag.py, raport.md). Mouse și taste: neschimbate.
+   ABATERI NESPUSE PE ECRAN (1.2, mărunte, doar cât zona e derulată în lateral): Scratch nu derulează singur zona la
+   închiderea unui câmp și nu lipește de un loc ascuns; aici da, ca blocurile să nu se piardă pe ecranul mic.
+   1.3 (24.10.2026, componenta comună, după judecățile VI/21 [MAJOR] și VI/20, VI/19) — ȚINTELE DE ATINGERE (regula 20:
+   ≥ 32 × 32 px pe telefon), DOAR pe ecranele cu deget (`@media (pointer: coarse)`), cu zone INVIZIBILE: desenul și
+   așezarea blocurilor nu se schimbă (nici pe telefon, nici la 1280). (1) câmpurile (.ss-pill: numere, texte, liste ▾)
+   din paletă și din zona de cod se ating pe toată înălțimea rândului: 48u = 32,6 px (la --ss-u .68), × lățimea + 6 px;
+   înainte, zona lor (−7 px) trecea ~1,5 px în blocul de deasupra: o atingere pe marginea de jos a unui bloc deschidea
+   câmpul blocului de dedesubt; (2) raportoarele și booleenele („poziția x”, „( ) > 50”, „atinge … ▾?”),
+   înalte de 40u = 27 px, au sus și jos câte o margine invizibilă de 4u (2,7 px) → 32,6 px, cât rândul blocului în
+   care stau (nu trec în vecini); (3) cu DEGETUL, cu caseta unui câmp deschisă, atingerea altui câmp sau bloc își face
+   treaba DIN PRIMA (alt câmp → se deschide; bloc → rulează sau se trage; ținut apăsat → meniul blocului). Înainte,
+   închiderea casetei redesena zona chiar în pointerdown: elementul atins ieșea din pagină, iar atingerea se pierdea
+   (trebuia a doua). Acum blocul redesenat (același uid) preia atingerea, iar cel vechi stă ascuns în „parcarea” din
+   1.2 până după ridicarea degetului; zona de cod NU mai fuge atunci spre stânga (ar muta câmpul de sub deget), iar o
+   atingere pe chiar câmpul deschis îl lasă deschis. Probele: _campaign/revizuire_completa_2026_09/m3_noapte_23_10/
+   scratch_13/ (tinte.py, comportamente.py, raport.md). Mouse și taste: neschimbate (desen, ținte și pași, probat).
 
    API PUBLIC (window.SimScratch) — stabil de la 24.10.2026; orice schimbare se trece în graniță, cu data:
-     versiune                                            '1.1 (24.10.2026)' (1.1 = paleta urmează personajul, `dinPersonaj`)
+     versiune                                            '1.3 (24.10.2026)' — înainte '1.2 (24.10.2026)', '1.1 (24.10.2026)'
+                                                         (1.1 = paleta urmează personajul, `dinPersonaj`; 1.2 = defectele
+                                                         de telefon de mai sus; 1.3 = țintele de atingere ≥ 32 px și
+                                                         atingerile din prima cu o casetă deschisă; API-ul NESCHIMBAT)
      categorie(id, {nume, en, culoare, margine})       categoriile (cele 9 ale editorului sunt deja înregistrate:
                                                          miscare, aspect, sunet, evenimente, control, detectare,
                                                          operatori, variabile, blocurile_mele)
@@ -88,7 +116,7 @@
 (function () {
   'use strict';
   if (window.SimScratch) return;
-  const VERSIUNE = '1.1 (24.10.2026)';
+  const VERSIUNE = '1.3 (24.10.2026)';
   const FPS = 30;
   const CAT = {};
   const DEF = {};
@@ -383,7 +411,22 @@
 .ss-tst li.ok .s{color:var(--ok,#23784A)}.ss-tst li.no .s{color:var(--bad,#B8362E)}
 .ss-tst .m{display:block;color:var(--bad,#B8362E);font-size:.86rem}
 @media (max-width:559px){.ss-scena{max-width:250px}.ss-lucru{height:340px}.ss-pal{grid-template-columns:42px minmax(0,1fr)}.ss-catb{font-size:9px}}
+@media (pointer:coarse){
+.ss-pal .ss-pill::after,.ss-panza .ss-pill::after{top:calc(var(--ss-u)*-8px - 1px);bottom:calc(var(--ss-u)*-8px - 1px)}
+.ss-pal .ss-b[data-forma="raportor"]::before,.ss-pal .ss-b[data-forma="boolean"]::before,.ss-panza .ss-b[data-forma="raportor"]::before,.ss-panza .ss-b[data-forma="boolean"]::before{content:"";position:absolute;left:0;right:0;top:calc(var(--ss-u)*-4px);bottom:calc(var(--ss-u)*-4px)}
+}
 `;
+  /* 1.3 (24.10.2026): ultimul bloc de mai sus = ȚINTELE DE ATINGERE pe ecranele cu deget (regula 20, ≥ 32 × 32 px),
+     doar în paletă și în zona de cod (nu și în blocurile desenate în text, .ss-static, unde o margine în plus ar face
+     loc de derulare). Zonele sunt INVIZIBILE (pseudo-elemente): nimic nu se mută și nimic nu se redesenează.
+       - câmpul: zona lui = rândul blocului: 48u = 32,6 px, cât .ss-rand (pseudo-elementul se așază față de interiorul
+         chenarului de 1 px al câmpului: 32u − 2 px + 2 × (8u + 1 px) = 48u), × lățimea câmpului + 6 px (regula de
+         bază, −4 px). Câmpul e la mijlocul rândului, deci zona nu trece în blocul de deasupra / dedesubt;
+       - raportorul / booleanul: 40u + 2×4u = 48u = 32,6 px; așezat într-un rând de 48u (la mijloc), zona ajunge exact la
+         marginile rândului. Câmpurile din el și raportorul pus într-un câmp al lui sunt mai jos în arbore, deci câștigă
+         în banda lor (atinsă acolo, se deschide câmpul / se trage raportorul, ca pe desen);
+       - butoanele (steagul 40 × 36, Stop 40 × 36, categoriile 42 × 44, meniul 190 × 36, căsuțele x / y 52 × 32) au
+         deja ≥ 32. Mouse (`pointer: fine`): neschimbat. */
   function stil() {
     if (document.getElementById('ss-stil')) return;
     const e = document.createElement('style');
@@ -471,7 +514,10 @@
       else parti = [Hpx / u];
       /* pe telefon, Chrome „mută” atingerea pe cel mai apropiat element care răspunde la clic (aici, butoanele de
          categorii); un ascultător de clic pe bloc îl face și pe el țintă, deci atingerea rămâne pe bloc */
-      if (!el._ssClic) { el.addEventListener('click', () => {}); el._ssClic = true; }
+      /* 1.2 (24.10.2026): NU și blocurilor din zona de cod. Acolo „atracția” făcea ca degetul pus pe un loc gol, la
+         ~10 px de un bloc, să apuce blocul (și să rupă programul) în loc să deruleze zona; în zona de cod nu e alt
+         element apăsabil care să fure atingerea (probat: proba_telefon.py, scratch_12) */
+      if (!el._ssClic && !el.closest('.ss-panza')) { el.addEventListener('click', () => {}); el._ssClic = true; }
       const svg = el.querySelector(':scope > .ss-forma');
       svg.setAttribute('width', el.offsetWidth);
       svg.setAttribute('height', Hpx);
@@ -745,18 +791,32 @@
       inp.select();
       if (camp.c === 'n') inp.addEventListener('input', () => { const c = inp.value.replace(/[^0-9.\-]/g, ''); if (c !== inp.value) inp.value = c; });
       let terminat = false;
+      const ed = {inp, faraStanga: false};   /* 1.3: faraStanga = închis de degetul pus pe alt bloc din zona de cod */
       const fin = (pastreaza) => {
         if (terminat) return;
         terminat = true;
+        if (editare === ed) editare = null;
         let v = pastreaza ? inp.value : vechi;
         if (camp.c === 'n' && v.trim() === '') v = '0';
         n.v[k] = v;
         if (inPaleta) redeseneazaPaleta();
-        else if (v !== vechi) schimbat(); else deseneazaCod();
+        else { if (v !== vechi) schimbat(); else deseneazaCod(); if (!ed.faraStanga) laStanga(n); }
       };
+      if (!inPaleta) editare = ed;
       inp.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') fin(true); else if (e.key === 'Escape') fin(false); });
       inp.addEventListener('blur', () => fin(true));
       inp.addEventListener('pointerdown', (e) => e.stopPropagation());
+    }
+    let editare = null;   /* 1.2: caseta deschisă acum într-un bloc din zona de cod ({inp, faraStanga}), altfel null */
+    /* 1.2 (24.10.2026): după ce se închide caseta unui câmp (Enter, Escape, atingere în altă parte), zona de cod revine
+       spre stânga cât să se vadă marginea stângă a programului în care ai scris (programul de la x 20 → la capăt).
+       La 390 px câmpurile din dreapta unui bloc lung se văd doar cu zona derulată; rămasă așa, marginea stângă a
+       programului stătea ascunsă sub paletă (lipirea „sub program” nu mai mergea). Zona nederulată: nimic schimbat. */
+    function laStanga(n) {
+      const cod = $('.ss-cod'), loc = idx[n.uid];
+      const se = loc ? root.querySelector(`.ss-panza .ss-script[data-si="${scripturi.indexOf(loc.sc)}"]`) : null;
+      const m = se ? se.offsetLeft - 6 : 0;
+      if (cod.scrollLeft > m) cod.scrollLeft = m <= 24 ? 0 : m;
     }
     function redeseneazaPaleta() { refaPaleta(); }
     function refaPaleta() {
@@ -832,9 +892,28 @@
       g.dragging = true;
       g.valoric = DEF[noduri[0].id].valoric;
       g.hU = f.firstChild.offsetHeight / U;
-      if (!g.inPaleta) deseneazaCod();
+      if (!g.inPaleta) { if (g.tip !== 'mouse') parcheaza(g.bl); deseneazaCod(); }
       muta(e);
     }
+    /* 1.2 (24.10.2026): blocul atins cu DEGETUL în zona de cod rămâne în document (ascuns) până ridici degetul.
+       Fără asta, deseneazaCod() îl scoate din pagină chiar la începutul tragerii, iar restul atingerii (touchmove,
+       touchend) merge la un element scos: ascultătorul de pe document (cel care oprește derularea cât tragi) nu-l mai
+       vede, iar prima atingere de după (ex. steagul) se pierdea uneori (dbg_steag.py, scratch_12). Mouse: neschimbat. */
+    let parcare = null;
+    function parcheaza(b) {
+      if (!parcare) {
+        parcare = document.createElement('div'); parcare.hidden = true; parcare.setAttribute('aria-hidden', 'true');
+        /* 1.3: ținut apăsat pe un element parcat (ascuns): fără meniul browserului */
+        parcare.addEventListener('contextmenu', (e) => e.preventDefault());
+      }
+      if (!parcare.isConnected) document.body.appendChild(parcare);
+      parcare.appendChild(b);
+    }
+    function golesteParcarea() { if (parcare) { parcare.textContent = ''; parcare.remove(); } }
+    /* 1.3: elementul atins cu degetul a fost scos din pagină chiar acum (redesenarea de la închiderea casetei): îl
+       parchez cu tot cu bucata scoasă din care face parte, ca restul atingerii (touchmove, touchend) să ajungă la
+       document (vezi 1.2, steagul pierdut) */
+    function parcheazaScos(t) { let r = t; while (r.parentNode) r = r.parentNode; if (r !== document && r.nodeType === 1) parcheaza(r); }
     function tinte() {
       /* conexiunile posibile, în coordonate de ecran */
       const T = [], U = u();
@@ -850,14 +929,19 @@
         });
         return T;
       }
+      /* 1.2 (24.10.2026): zona de cod derulată spre dreapta = marginea stângă a stivelor e ascunsă (sub paletă, unde
+         lăsarea ar șterge blocul). Atunci locurile de lipire ascunse la stânga se măsoară față de marginea VĂZUTĂ a
+         zonei: blocul lăsat sub program, lângă marginea stângă a zonei, se lipește. Zona nederulată: nimic schimbat. */
+      const cod = $('.ss-cod'), cl = cod.scrollLeft > 0 ? cod.getBoundingClientRect().left : -Infinity;
+      const vx = (x) => Math.max(x, cl);
       root.querySelectorAll('.ss-panza .ss-b').forEach(b => {
         const loc = idx[b.dataset.uid];
         if (!loc || loc.slotDe) return;
         const d = DEF[loc.n.id];
         if (d.valoric) return;
         const r = b.getBoundingClientRect();
-        if (prim.forma !== 'palarie' && !d.final && d.forma !== 'capac') T.push({tip: 'dupa', x: r.left, y: r.top + b.offsetHeight * (r.height / b.offsetHeight), loc});
-        if (d.forma === 'c' && prim.forma !== 'palarie') b.querySelectorAll(':scope > .ss-gura').forEach(gu => { const rg = gu.getBoundingClientRect(); T.push({tip: 'gura', x: rg.left, y: rg.top, n: loc.n, k: +gu.dataset.g}); });
+        if (prim.forma !== 'palarie' && !d.final && d.forma !== 'capac') T.push({tip: 'dupa', x: vx(r.left), y: r.top + b.offsetHeight * (r.height / b.offsetHeight), loc});
+        if (d.forma === 'c' && prim.forma !== 'palarie') b.querySelectorAll(':scope > .ss-gura').forEach(gu => { const rg = gu.getBoundingClientRect(); T.push({tip: 'gura', x: vx(rg.left), y: rg.top, n: loc.n, k: +gu.dataset.g}); });
       });
       if (ultimJos) scripturi.forEach((sc, si) => {
         const p = sc.b[0];
@@ -865,7 +949,7 @@
         const el2 = root.querySelector(`.ss-script[data-si="${si}"]`);
         if (!el2) return;
         const r = el2.getBoundingClientRect();
-        T.push({tip: 'inainte', x: r.left, y: r.top, sc, jos: true});
+        T.push({tip: 'inainte', x: vx(r.left), y: r.top, sc, jos: true});
       });
       return T;
     }
@@ -1041,14 +1125,44 @@
 
     function laJos(e) {
       if (g && g.urmareste) return;
+      /* 1.3: ce a rămas parcat de la o atingere încheiată (ex. ținut apăsat → meniul) pleacă acum */
+      if (!g && parcare && parcare.firstChild && !parcare.contains(e.target)) golesteParcarea();
       if (e.target.closest('input')) return;
-      const bl = e.target.closest('.ss-b');
+      let bl = e.target.closest('.ss-b');
       if (!bl || !root.contains(bl)) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
+      let pill = e.target.closest('.ss-pill');
       inchideMeniu();
+      /* 1.2: cu degetul, o atingere pe un bloc din paletă cât e deschisă caseta unui câmp din zona de cod o închide
+         (ca o atingere în altă parte), deci zona revine înainte de tragere. Fără asta caseta rămânea deschisă toată
+         tragerea (pointerdown anulat mai jos = fără blur), zona rămânea derulată, iar la lăsare redesenarea zonei
+         scotea caseta din pagină cu o eroare în consolă („…moved in a 'blur' event handler?”). Mouse: neschimbat.
+         1.3: la fel pentru caseta unui câmp din PALETĂ și pentru atingerile pe blocurile din ZONA DE COD (ascultătorul
+         zonei le lasă aici). Atingerea își face treaba din prima: închiderea redesenează zona (sau paleta) și scoate
+         elementul atins, deci îl parchez (parcheazaScos) și lucrez mai departe pe blocul redesenat, cu același uid,
+         și pe câmpul lui cu același data-k. Pe un bloc din zona de cod, zona NU se întoarce la stânga (faraStanga):
+         câmpul / blocul atins ar fugi de sub deget. Pe chiar câmpul deschis (lângă casetă): rămâne deschis. */
+      if (e.pointerType !== 'mouse') {
+        const L = $('.ss-lista'), a = document.activeElement;
+        const cas = editare ? editare.inp : (a && a.tagName === 'INPUT' && L.contains(a) ? a : null);
+        if (cas) {
+          if (pill && pill.contains(cas)) { e.preventDefault(); return; }
+          const t = e.target, uid = bl.dataset.uid, k = pill ? pill.dataset.k : null, inCod = !!bl.closest('.ss-panza');
+          if (editare && inCod) editare.faraStanga = true;
+          cas.blur();
+          if (!t.isConnected) parcheazaScos(t);
+          if (inCod) $('.ss-cod').focus({preventScroll: true});
+          if (!root.contains(bl)) {
+            bl = root.querySelector(`.ss-b[data-uid="${uid}"]`);
+            if (!bl) return;
+            pill = k == null ? null : [...bl.querySelectorAll(`.ss-pill[data-k="${k}"]`)].find(p => p.closest('.ss-b') === bl) || null;
+          }
+        }
+      }
+      if (!root.contains(bl)) return;
       const inPaleta = !!bl.closest('.ss-pal');
       /* blocul de apucat: dacă degetul e pe un raportor dintr-un câmp, raportorul; altfel blocul de sub deget */
-      g = {id: e.pointerId, x0: e.clientX, y0: e.clientY, bl, inPaleta, tip: e.pointerType, pill: e.target.closest('.ss-pill'), dragging: false};
+      g = {id: e.pointerId, x0: e.clientX, y0: e.clientY, bl, inPaleta, tip: e.pointerType, pill, dragging: false};
       /* și la atingere: fără evenimentele de mouse „de compatibilitate” de după atingere (un mousedown care ar muta
          focusul de pe caseta de scris a câmpului, abia deschisă); derularea paletei o decide touch-action, nu asta */
       e.preventDefault();
@@ -1083,9 +1197,10 @@
       curataAscultatori();
       if (g.lung) { clearTimeout(g.lung); g.lung = null; }
       const gg = g;
-      if (gg.dragging) { muta(e); lasa(); g = null; paletaUrmeaza(); return; }
+      if (gg.dragging) { muta(e); lasa(); g = null; paletaUrmeaza(); if (parcare) setTimeout(golesteParcarea, 0); return; }
       g = null;
       setTimeout(paletaUrmeaza, 0);   /* după ce clicul și-a făcut treaba (caseta câmpului deschisă = paleta nu se schimbă) */
+      if (parcare && parcare.firstChild) setTimeout(golesteParcarea, 0);   /* 1.3: după touchend (vezi laJos) */
       /* clic fără tragere */
       if (gg.pill && !gg.inPaleta) {
         const b = gg.pill.closest('.ss-b'), loc = idx[b.dataset.uid];
@@ -1108,6 +1223,7 @@
       if (g.dragging) { lasa(); }
       g = null;
       paletaUrmeaza();
+      if (parcare) setTimeout(golesteParcarea, 0);
     }
     root.addEventListener('pointerdown', laJos);
     root.addEventListener('contextmenu', (e) => {
@@ -1125,7 +1241,15 @@
       else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || ((e.key === 'z' || e.key === 'Z') && e.shiftKey))) { e.preventDefault(); reface(); }
     });
     $('.ss-cod').tabIndex = 0;
-    $('.ss-cod').addEventListener('pointerdown', (e) => { if (!e.target.closest('input')) $('.ss-cod').focus({preventScroll: true}); });
+    $('.ss-cod').addEventListener('pointerdown', (e) => {
+      if (e.target.closest('input')) return;
+      /* 1.3: cu degetul, cu caseta unui câmp deschisă, pe un bloc al zonei: caseta o închide laJos (din prima, vezi acolo) */
+      if (e.pointerType !== 'mouse' && editare && e.target.closest('.ss-panza .ss-b')) return;
+      const t = e.target;
+      $('.ss-cod').focus({preventScroll: true});
+      /* 1.3: degetul pe un loc gol, cu o casetă deschisă: redesenarea poate scoate elementul atins (marginea unui script) */
+      if (e.pointerType !== 'mouse' && !t.isConnected) parcheazaScos(t);
+    });
     $('.ss-steag').addEventListener('click', steag);
     $('.ss-stop').addEventListener('click', () => opreste(true));
     const pb = $('.ss-pasb');
