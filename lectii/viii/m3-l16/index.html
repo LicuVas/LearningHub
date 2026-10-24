@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Conținutul paginii: paragrafe și imagini</title>
+<meta name="description" content="Clasa a VIII-a, lecția 16: titlurile de secțiune h2-h6, paragraful p și ruperea rândului br, mutarea, copierea și ștergerea unui paragraf întreg, imaginea img cu src (fișierul în același dosar, numele exact, cu extensia) și textul alternativ alt.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF1F6; --paper:#FFFFFF; --paper2:#EEF2F8; --line:#CCD4E2;
+  --ink:#16202F; --ink2:#4E5A6E; --accent:#1F5FBF; --accentInk:#FFFFFF; --sel:#D8E5FA;
+  --mark:#FFE08A; --markInk:#16202F; --ok:#16703F; --okbg:#E0F2E7; --bad:#B3302A; --badbg:#FAE3E1;
+  --fd:"Archivo","Segoe UI",system-ui,sans-serif; --fb:"IBM Plex Sans","Segoe UI",system-ui,sans-serif; --fm:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E131B; --paper:#171E29; --paper2:#1F2836; --line:#334156;
+  --ink:#E4EAF3; --ink2:#9FAEC4; --accent:#7FB0FF; --accentInk:#0E131B; --sel:#1E3557;
+  --mark:#EBCB55; --markInk:#16202F; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E131B; --paper:#171E29; --paper2:#1F2836; --line:#334156;
+  --ink:#E4EAF3; --ink2:#9FAEC4; --accent:#7FB0FF; --accentInk:#0E131B; --sel:#1E3557;
+  --mark:#EBCB55; --markInk:#16202F; --ok:#5CCB8E; --okbg:#14301F; --bad:#FF7F75; --badbg:#3B1F1D;
+}
+/* tema: fâșia de sus e o filă de browser cu titlul paginii, apoi conținutul ei pe un rând: titlu de secțiune, paragraf, imagine */
+.banda{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-family:var(--fm);font-size:.72rem;color:var(--ink2);padding:3px 8px;border-bottom:1px dashed var(--line)}
+.banda .fila{border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;padding:0 10px;white-space:nowrap}
+.banda .tg{color:var(--accent)}
+h1,h2{letter-spacing:-.01em}
+.pasi-met{margin:.3em 0 .6em 1.2em;padding:0}
+.pasi-met li{margin:.25em 0}
+pre.rand{font-family:var(--fm);background:var(--paper2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:.4em 0;white-space:pre;overflow-x:auto;tab-size:8;-moz-tab-size:8;line-height:1.35}
+.captura figcaption a{display:inline-block;padding:6px 0}   /* legătura din legendă: zonă de atins de 32 px pe telefon (regula 20) */
+@media (max-width:480px){pre.rand{tab-size:2;-moz-tab-size:2;font-size:.7rem}}   /* pe telefon Tab-ul se arată îngust, ca rândurile laboratorului să încapă (390 px: și rândul <img src="Popescu_Ana_bucura.jpg") */
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<!-- simulatorul „Notepad + browser” (proprietar: lecția VIII/14) + extensia lecției 15 (Tab, codificarea, diagnosticul)
+     + extensia lecției 16 (fișiere-imagine în dosare, imaginile în pagina simulată, verificările pe paragrafe și imagini);
+     probele: _proba/proba_browser_l16.json, _proba/proba_coduri_l16.json -->
+<script src="../../_sim/editorweb.js"></script>
+<script src="../../_sim/editorweb-schelet.js"></script>
+<script src="../../_sim/editorweb-continut.js"></script>
+<script src="img/imagini-sim.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json */
+const P={editare:'Operații de editare a elementelor de conținut (paragraf, imagini, tabele, liste, legături): inserare, ștergere, mutare, copiere'};
+
+/* imaginile: o fotografie Wikimedia Commons (CC0), fotografia lacului (CC0, de salvat în laborator), pagini desenate de
+   Chromium (motorul lui Edge și Chrome) și capturi Edge refolosite de la lecția V/15: img/SURSE.json */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+/* fotografia de salvat în laborator: fără legătură în jur, ca la clic dreapta să apară meniul imaginii, ca în captura de la V/15 (punctul H) */
+const figFara=(src,w,h,alt,cap)=>`<figure class="captura"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy" style="cursor:default"><figcaption>${cap}</figcaption></figure>`;
+const IMG='../m3-l16/img/';
+const X=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const J=a=>a.join('\n');
+const PRE=s=>`<pre class="rand">${X(s)}</pre>`;
+const ES=window.EditorWebSchelet, EWC=window.EditorWebContinut;
+EWC.inregistreaza('bucura',window.IMAGINI_L16.bucura);
+const N=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+const LV=S=>S.live.text;
+const DT='<!DOCTYPE html>', HL='<html lang="ro">';
+/* scheletul de la lecția 15, cu rândurile din corp (fiecare cu două Tab-uri) */
+const SK=(t,c)=>J([DT,HL,'\t<head>','\t\t<meta charset="utf-8">','\t\t<title>'+t+'</title>','\t</head>','\t<body>',...c.map(l=>l?'\t\t'+l:''),'\t</body>','</html>']);
+/* doar rândurile din corp, fără Tab-urile din față (pentru „Uite cum”) */
+const CORP=s=>{const L=s.split('\n'),a=L.findIndex(l=>/<body>/.test(l)),b=L.findIndex(l=>/<\/body>/.test(l));return L.slice(a+1,b).map(l=>l.replace(/^\t\t/,'')).join('\n')};
+const T='Excursia în Retezat', H1='<h1>Excursia în Retezat</h1>';
+const ALT='Lacul Bucura, între munți';
+/* <img> cu src și alt: alt pe rândul următor, cu un Tab în plus (în etichetă, Enter e tot un spațiu) — ca rândul să încapă */
+const IA=f=>['<img src="'+f+'"','\talt="'+ALT+'">'];
+
+/* toate codurile din pagină (aceleași texte sunt deschise în Chromium cu fotografia în dosar: _proba/proba_coduri_l16.py) */
+const COD={
+  p1_ex:SK('Clubul de șah',['<h1>Clubul de șah</h1>','<h2>Program</h2>','<h3>Luni</h3>','Ne întâlnim la ora 14.','<h3>Joi</h3>','Ne întâlnim la ora 15.','<h2>Înscrieri</h2>','Te înscrii la profesorul de sport.']),
+  p1_start:SK(T,[H1,'Am urcat trei ore pe munte.','Apa era rece și limpede.']),
+  p1_rez:SK(T,[H1,'<h2>Drumul</h2>','Am urcat trei ore pe munte.','<h2>Lacul Bucura</h2>','Apa era rece și limpede.']),
+  p1_gresit:SK(T,[H1,'<h1>Drumul</h1>','Am urcat trei ore pe munte.','<h1>Lacul Bucura</h1>','Apa era rece și limpede.']),
+  p2_ex:SK('Jurnal',['<h1>Jurnal</h1>','<p>Am urcat    trei ore','pe munte.</p>','<p>Somnoroase păsărele<br>','Pe la cuiburi se adună,</p>']),
+  p2_start:SK('Poezia săptămânii',['<h1>Poezia săptămânii</h1>','Somnoroase păsărele','Pe la cuiburi se adună,','Se ascund în rămurele -','Noapte bună!','Mihai Eminescu']),
+  p2_rez:SK('Poezia săptămânii',['<h1>Poezia săptămânii</h1>','<p>Somnoroase păsărele<br>','Pe la cuiburi se adună,<br>','Se ascund în rămurele -<br>','Noapte bună!</p>','<p>Mihai Eminescu</p>']),
+  p2_gresit:SK('Poezia săptămânii',['<h1>Poezia săptămânii</h1>','<p>Somnoroase păsărele','Pe la cuiburi se adună,','Se ascund în rămurele -','Noapte bună!</p>','<p>Mihai Eminescu</p>']),
+  p2b_start:SK(T,[H1,'<p>Ziua 1: am urcat la cabană.','','','Ziua 2: am ajuns la lac.</p>']),
+  p2b_rez:SK(T,[H1,'<p>Ziua 1: am urcat la cabană.</p>','<p>Ziua 2: am ajuns la lac.</p>']),
+  p3_start:SK(T,[H1,'<h2>Drumul</h2>','<p>Apa era rece și limpede.</p>','<p>Am urcat trei ore pe munte.</p>','<h2>Lacul Bucura</h2>']),
+  p3_rez:SK(T,[H1,'<h2>Drumul</h2>','<p>Am urcat trei ore pe munte.</p>','<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>']),
+  p3_gresit:SK(T,[H1,'<h2>Drumul</h2>','<p>Apa era rece și limpede.</p>','<p>Am urcat trei ore pe munte.</p>','<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>']),
+  p3b_start:SK(T,[H1,'<h2>Drumul</h2>','<p>Am urcat trei ore pe munte.</p>','<p>Text de probă, de șters.</p>','<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>']),
+  p3b_gresit:SK(T,[H1,'<h2>Drumul</h2>','<p>Am urcat trei ore pe munte.</p>','<p></p>','<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>']),
+  p3c_start:SK(T,[H1,'<h2>Drumul</h2>','<p>Am urcat trei ore pe munte.</p>','<p>Pagina clasei a VIII-a A</p>']),
+  p3c_rez:SK(T,[H1,'<p>Pagina clasei a VIII-a A</p>','<h2>Drumul</h2>','<p>Am urcat trei ore pe munte.</p>','<p>Pagina clasei a VIII-a A</p>']),
+  p3c_gresit:SK(T,[H1,'<p>Pagina clasei a VIII-a A</p>','<h2>Drumul</h2>','<p>Am urcat trei ore pe munte.</p>']),
+  p4_start:SK(T,[H1,'<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>']),
+  p4_rez:SK(T,[H1,'<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>','<img src="bucura.jpg">']),
+  p4_gresit:SK(T,[H1,'<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>','<img src="bucura">']),
+  p5_ex:SK(T,[H1,'<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>',...IA('bucura.png')]),
+  p5_start:SK(T,[H1,'<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>','<img src="bucura.png">']),
+  p5_rez:SK(T,[H1,'<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>',...IA('bucura.jpg')]),
+  p5_gresit:SK(T,[H1,'<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>',...IA('bucura.png')]),
+  scoala:SK('Școala mea',['<h1>Școala mea</h1>']),
+  atelier:SK(T,[H1,'<h2>Lacul Bucura</h2>','<p>Am urcat trei ore pe munte.</p>','<p>Apa era rece și limpede.</p>',...IA('bucura.jpg')]),
+  at2_start:SK(T,[H1,'<h2>Lacul Bucura</h2>','<p>Am urcat trei ore pe munte.</p>','<p>Apa era rece și limpede.</p>',...IA('bucura.jpeg')]),
+  lab:SK(T,[H1,'<h2>Lacul Bucura</h2>','<p>Am urcat trei ore pe munte.</p>','<p>Apa era rece și limpede.</p>',...IA('Popescu_Ana_bucura.jpg')]),
+  q2_start:SK('Cercul de robotică',['<h1>Cercul de robotică</h1>','<p>Luni: 14-16','Miercuri: 15-17','Vineri: 14-15</p>']),
+  q2_rez:SK('Cercul de robotică',['<h1>Cercul de robotică</h1>','<p>Luni: 14-16<br>','Miercuri: 15-17<br>','Vineri: 14-15</p>']),
+  q2_gresit:SK('Cercul de robotică',['<h1>Cercul de robotică</h1>','<p>Luni: 14-16</p>','<p>Miercuri: 15-17</p>','<p>Vineri: 14-15</p>']),
+  q3_start:SK('Muzeul satului',['<h1>Muzeul satului</h1>','<h2>Program</h2>','<p>Biletul costă 10 lei.</p>','<p>Muzeul e deschis zilnic, de la 9 la 17.</p>','<h2>Bilete</h2>']),
+  q3_rez:SK('Muzeul satului',['<h1>Muzeul satului</h1>','<h2>Program</h2>','<p>Muzeul e deschis zilnic, de la 9 la 17.</p>','<h2>Bilete</h2>','<p>Biletul costă 10 lei.</p>']),
+  q3_gresit:SK('Muzeul satului',['<h1>Muzeul satului</h1>','<h2>Program</h2>','<p>Biletul costă 10 lei.</p>','<p>Muzeul e deschis zilnic, de la 9 la 17.</p>','<h2>Bilete</h2>','<p>Biletul costă 10 lei.</p>']),
+  q5_start:SK(T,[H1,'<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>',...IA('Documente/bucura.jpg')]),
+  q5_rez:SK(T,[H1,'<h2>Lacul Bucura</h2>','<p>Apa era rece și limpede.</p>',...IA('bucura.jpg')])
+};
+window.COD_L16=COD;
+const ANA='Popescu_Ana_8A_lectia16.html', P15='Popescu_Ana_8A_lectia15.html';
+const FOTO={n:'bucura.jpg',imagine:'bucura'};
+/* dosarul paginii în exercițiile din pași: pagina (numele ei) și fotografia */
+const DOSAR=()=>({Documente:[{n:ANA,t:'.'},Object.assign({},FOTO)]});
+const AT={dosar:'Documente',model:'lectia16',ext:'html'};
+
+/* ===================== PRINCIPIUL VERIFICĂRILOR (reparația 4, 24.10.2026, decizia dirijorului) =====================
+   Un mesaj de verificare spune NUMAI ce e sigur adevărat. Când nu poate fi sigur, spune mai puțin (ce rând s-a schimbat)
+   și cum te întorci: Ctrl+Z până revine, sau butonul „Ia de la capăt” (sursa de început a exercițiului).
+   De ce: judecățile 2, 3 și 4 au găsit de fiecare dată alt fel de selecție imprecisă (mouse, deget) pentru care mesajul
+   spunea ceva FALS (N, R, T, U, V, W). Nu mai adăugăm cazuri. În P4 (mutare, ștergere, copiere), P5 și Î3 PRIMUL test e
+   NEATINS: restul paginii (titlurile, celelalte paragrafe, scheletul, <body>, </body>) e cum era la început. Abia după el
+   vin testele zonei exercițiului (resturi de etichetă, PERECHI_P, ordinea, COPIA_SUS…), iar ultimul test (DIFERIT) spune
+   ce e diferit față de rezolvare tot numai cu lucruri sigure.
+   Reparația 5 (judecata 5): principiul se aplică ȘI mesajelor vechi — niciun mesaj nu spune ce taste a apăsat elevul sau
+   ce a făcut („l-ai copiat”, „l-ai decupat”, „ai luat doar textul”), doar starea paginii — și capetelor scheletului:
+   NEATINS cere și ca înainte de <body> și după </body> să fie doar scheletul de la început. La calculator, drumul înapoi
+   e unul singur: Ctrl+Z „până pagina e iar cum era la început”. */
+/* bucățile unei surse, pentru comparații: etichetele întregi (cu spațiile din ele strânse) și textele (spațiile strânse,
+   fără capete). Spațiile, Tab-urile și Enter-urile DINTRE ele nu contează; un „<” care nu începe o etichetă întreagă e o
+   bucată singură (așa, în „<h2>Drumul</h” nu mai e eticheta </h2>). */
+const BUC=s=>{const o=[],re=/<[^<>]*>|[^<]+|</g,t=String(s||'').replace(/\r\n?/g,'\n');let m;
+  while((m=re.exec(t))){const x=m[0].length>1&&m[0][0]==='<'?m[0].replace(/\s+/g,' '):m[0].replace(/\s+/g,' ').trim();if(x)o.push(x)}return o};
+/* aceleași bucăți, cu locul lor în sursă (k = primul semn care nu e spațiu), pentru mesajul X (reparația 5) */
+const BUCP=s=>{const o=[],re=/<[^<>]*>|[^<]+|</g,t=String(s||'').replace(/\r\n?/g,'\n');let m;
+  while((m=re.exec(t))){const e=m[0].length>1&&m[0][0]==='<',x=e?m[0].replace(/\s+/g,' '):m[0].replace(/\s+/g,' ').trim();if(x)o.push({x,k:m.index+(e?0:m[0].length-m[0].trimStart().length)})}return o};
+const NR_ORI=['','o dată','de două ori','de trei ori','de patru ori','de cinci ori'];
+/* reparația 5, punctul Z: la calculator, Ctrl+Z „până pagina e iar cum era la început” (nu „până rândul revine”): oprit
+   la rând, Ctrl+Z anula doar lipirea, iar paragraful decupat rămânea în afara paginii. */
+const CAPAT_INAPOI=()=>ES.tactil()?'apasă butonul <b>Ia de la capăt</b>, de lângă <b>Verifică</b>: pagina revine cum era la început.'
+  :'apasă <kbd>Ctrl</kbd>+<kbd>Z</kbd> de câte ori trebuie, până pagina e iar cum era la început, sau butonul <b>Ia de la capăt</b>, de lângă <b>Verifică</b>, care pune pagina de la început.';
+/* NEATINS(start, zona, refa): testul „restul paginii e cum era”. start = sursa de început a exercițiului; zona = cuvinte
+   din rândurile care țin de exercițiu (ele pot pleca, veni sau apărea de două ori); refa = ce face elevul după ce s-a întors.
+   Fiecare ALT rând nevid al sursei de început trebuie să apară ÎNTREG (aceleași bucăți, una după alta), în aceeași ordine
+   față de celelalte (cea mai lungă subsecvență comună) și de câte ori era. Ce poate spune, sigur: rândul s-a șters (nici
+   el, nici textul lui nu mai sunt, iar eticheta lui apare mai rar), s-a schimbat, nu mai e la locul lui (e întreg, în alt
+   loc) sau apare de mai multe ori decât la început. Lângă un rând întreg poate sta lipit altceva: acela ține de zonă. */
+const NEATINS=(start,zona,refa)=>{
+  const F=String(start).replace(/\r\n?/g,'\n').split('\n').map(l=>l.trim()).filter(l=>l&&!zona.some(z=>l.includes(z)))
+    .map(l=>{const b=BUC(l);return {l,b,k:b.join('\u0001'),txt:b.filter(x=>x[0]!=='<'||x.length===1).join(' ')}});
+  const L0=BUC(start),cate=(t,s)=>s.filter(x=>x===t).length;let r=null;
+  const cauta=src=>{
+    const T=BUC(src),fel=[...new Map(F.map(f=>[f.k,f])).values()].sort((a,b)=>b.b.length-a.b.length),O=[];
+    for(let i=0;i<T.length;){const f=fel.find(f=>f.b.every((x,j)=>T[i+j]===x));if(f){O.push(f.k);i+=f.b.length}else i++}
+    const n=F.length,m=O.length,D=Array.from({length:n+1},()=>new Array(m+1).fill(0)),pus=new Array(n).fill(false);
+    for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)D[i][j]=F[i].k===O[j]?D[i+1][j+1]+1:Math.max(D[i+1][j],D[i][j+1]);
+    for(let i=0,j=0;i<n&&j<m;){if(F[i].k===O[j]){pus[i]=true;i++;j++}else if(D[i+1][j]>=D[i][j+1])i++;else j++}
+    const acum=k=>cate(k,O),la_inceput=k=>F.filter(f=>f.k===k).length,ns=N(src),o={sterse:[],schimbate:[],mutate:[],plus:[]};
+    F.forEach((f,i)=>{if(pus[i])return;
+      if(acum(f.k)>=la_inceput(f.k))o.mutate.push(f.l);
+      else if(f.txt&&!ns.includes(N(f.txt))&&cate(f.b[0],T)<cate(f.b[0],L0))o.sterse.push(f.l);
+      else o.schimbate.push(f.l)});
+    for(const f of fel)if(acum(f.k)>la_inceput(f.k))o.plus.push({l:f.l,n:acum(f.k),n0:la_inceput(f.k)});
+    o.plus.sort((a,b)=>F.findIndex(f=>f.l===a.l)-F.findIndex(f=>f.l===b.l));
+    return o};
+  /* reparația 5, punctul X: „restul paginii e cum era” cuprinde și capetele scheletului. Înainte de <body> și după </body>
+     trebuie să fie exact bucățile de la început (DOCTYPE, <html>, <head>…</head>; </html>); orice altceva acolo stă în
+     afara corpului paginii, chiar dacă browserul îl mută singur în corp (A27) și testele pe DOM nu-l mai văd. */
+  const S0=BUC(start),b0=S0.indexOf('<body>'),e0=S0.indexOf('</body>');
+  const afara=src=>{const T=BUCP(src),b=T.findIndex(t=>/^<body\b/i.test(t.x)),e=T.findIndex(t=>/^<\/body\s*>$/i.test(t.x));
+    if(b<0||e<0||b0<0||e0<0)return null;
+    const plus=(A,B)=>{const o=[];let j=0;for(const t of A){if(j<B.length&&t.x===B[j])j++;else o.push(t)}return o};
+    const d=plus(T.slice(e+1),S0.slice(e0+1)),i=plus(T.slice(0,b),S0.slice(0,b0));
+    return d.length?{dupa:true,p:d}:i.length?{dupa:false,p:i}:null};
+  return {ce:'Restul paginii e cum era (titlurile, celelalte paragrafe, scheletul), iar tot ce se vede stă între &lt;body&gt; și &lt;/body&gt;',faraDiagnostic:true,
+    fn:S=>{r=cauta(LV(S));r.afara=null;r.src=LV(S);if(r.sterse.length||r.schimbate.length||r.mutate.length||r.plus.length)return false;r.afara=afara(r.src);return !r.afara},
+    get msg(){if(!r)return '';
+      const C=t=>`<code>${X(t.slice(0,70))}</code>`,li=a=>a.length===1?C(a[0]):a.slice(0,-1).map(C).join(', ')+' și '+C(a[a.length-1]),R=a=>a.length>1?'rândurile':'rândul',f=[];
+      if(r.afara){   /* X: unde a ajuns (rândul de deasupra, sau rândul pe care stă lipit) și ce; apoi regula și cele două drumuri */
+        const s=String(r.src).replace(/\r\n?/g,'\n'),L=s.split('\n'),p=r.afara.p,k=p[0].k,rd=s.slice(0,k).split('\n').length-1,col=k-(s.lastIndexOf('\n',k-1)+1);
+        const CL=t=>C(t.replace(/\s+/g,' ').trim()),ce=CL(p.map(t=>t.x).join('')),B=r.afara.dupa?'<code>&lt;/body&gt;</code>':'<code>&lt;body&gt;</code>';
+        let sus='';for(let j=rd-1;j>=0;j--)if(L[j].trim()){sus=L[j];break}
+        const unde=!L[rd].slice(0,col).trim()&&sus?`Sub rândul ${CL(sus)}`:`Pe rândul ${CL(L[rd])}`;
+        f.push(`${unde}, în afara corpului paginii, a ajuns ${ce}. Chiar dacă browserul îl arată la ${r.afara.dupa?'sfârșitul':'începutul'} paginii, locul lui în cod e greșit: tot ce se vede în pagină se scrie între <code>&lt;body&gt;</code> și <code>&lt;/body&gt;</code>. Mută-l ${r.afara.dupa?'mai sus, înainte de':'mai jos, după'} ${B}, acolo unde îl cere exercițiul.`);
+        f.push('Altfel, ca să pornești din nou curat, '+CAPAT_INAPOI());
+        if(refa)f.push('Apoi '+refa);
+        return f.join(' ')}
+      if(r.sterse.length)f.push(`Ai șters și ${R(r.sterse)} ${li(r.sterse)}.`);
+      if(r.schimbate.length)f.push(`Ai schimbat și ${R(r.schimbate)} ${li(r.schimbate)}.`);
+      if(r.mutate.length)f.push(r.mutate.length>1?`Rândurile ${li(r.mutate)} nu mai sunt la locul lor.`:`Rândul ${li(r.mutate)} nu mai e la locul lui.`);
+      for(const p of r.plus)f.push(`Rândul ${C(p.l)} apare acum ${NR_ORI[p.n]||'de '+p.n+' ori'}; la început apărea ${NR_ORI[p.n0]||'de '+p.n0+' ori'}.`);
+      /* reparația 5, punctul Z: o singură formulare — până la începutul exercițiului, nu doar până revine rândul */
+      f.push(ES.tactil()?'Apasă butonul <b>Ia de la capăt</b>, de lângă <b>Verifică</b>: pagina revine cum era la început.'
+        :'Apasă <kbd>Ctrl</kbd>+<kbd>Z</kbd> de câte ori trebuie, până pagina e iar cum era la început, sau butonul <b>Ia de la capăt</b>, de lângă <b>Verifică</b>, care pune pagina de la început.');
+      if(refa)f.push('Apoi '+refa);
+      return f.join(' ')}}};
+/* DIFERIT(rez, ce, ordinea): ultimul test la mutare / ștergere: elementele paginii (titluri, paragrafe, imagini, în ordinea
+   din browser) sunt exact cele din rezolvare. Mesajul, numai lucruri sigure: ce element apare de prea multe ori, ce e în
+   plus, ce lipsește; dacă sunt aceleași elemente, doar ordinea diferă — și cum NEATINS a trecut (restul paginii e întreg),
+   singurul care poate sta în alt loc e paragraful exercițiului: atunci mesajul `ordinea`. Apoi cum pornești din nou curat. */
+const DIFERIT=(rez,ce,ordinea)=>{const b=EWC.ordine(rez);let a=[];return {ce,
+  fn:S=>{a=EWC.ordine(LV(S));return JSON.stringify(a.map(N))===JSON.stringify(b.map(N))},
+  get msg(){const nu=x=>{const i=x.indexOf(':'),t=x.slice(0,i),s=x.slice(i+1);return t==='p'?(s?`paragraful „${X(s.slice(0,60))}”`:'un paragraf gol, <code>&lt;p&gt;&lt;/p&gt;</code>'):t==='img'?`imaginea <code>${X(s)}</code>`:`titlul „${X(s.slice(0,60))}”`};
+    const rest=a.slice(),lipsa=[];for(const x of b){const i=rest.findIndex(y=>N(y)===N(x));if(i<0)lipsa.push(x);else rest.splice(i,1)}
+    if(!rest.length&&!lipsa.length)return typeof ordinea==='function'?ordinea():ordinea;
+    const f=[],dubluri=[...new Set(rest.filter(x=>b.some(y=>N(y)===N(x))).map(N))],plus=rest.filter(x=>!dubluri.includes(N(x)));
+    for(const k of dubluri){const x=a.find(y=>N(y)===k),n=a.filter(y=>N(y)===k).length,n0=b.filter(y=>N(y)===k).length;
+      f.push(`${nu(x)[0].toUpperCase()+nu(x).slice(1)} apare ${NR_ORI[n]||'de '+n+' ori'}, dar în pagina cerută apare ${NR_ORI[n0]}.`)}
+    if(plus.length)f.push(`În pagină e în plus ${plus.map(nu).join(', ')}.`);
+    if(lipsa.length)f.push(`În pagină lipsește ${lipsa.map(nu).join(', ')}.`);
+    /* reparația 5, punctul Y: un paragraf care apare de prea multe ori — numai starea (nu ce taste s-au apăsat) și ce
+       păstrezi: în rezolvare stă imediat sub elementul X; dacă exact una dintre copii stă acum imediat sub X, pe aceea o
+       păstrezi. Altfel: „șterge unul dintre ele”. Apoi, ca alternativă, drumul înapoi. */
+    let sfat='';
+    if(dubluri.length===1&&!plus.length&&!lipsa.length){const k=dubluri[0],x=a.find(y=>N(y)===k),ib=b.findIndex(y=>N(y)===k),n=a.filter(y=>N(y)===k).length;
+      if(x.startsWith('p:')&&b.filter(y=>N(y)===k).length===1){
+        const pr=ib>0?b[ib-1]:null,cod=e=>{const i=e.indexOf(':'),t=e.slice(0,i),s=e.slice(i+1);return `<code>${X(t==='img'?'<img src="'+s+'">':'<'+t+'>'+s.slice(0,60)+'</'+t+'>')}</code>`};
+        const bune=pr?a.map((y,i)=>i).filter(i=>N(a[i])===k&&i>0&&N(a[i-1])===N(pr)):[],P='<code>&lt;p&gt;</code>',PI='<code>&lt;/p&gt;</code>';
+        sfat=bune.length===1?`Păstrează-l pe cel care stă imediat sub ${cod(pr)} și ${n>2?'șterge-le pe celelalte, întregi':'șterge-l pe celălalt, întreg'}, de la ${P} până după ${PI}.`
+          :`${n>2?'Lasă unul singur și șterge-le pe celelalte, întregi':'Șterge unul dintre ele, întreg'}, de la ${P} până după ${PI}.`}}
+    return f.join(' ')+(sfat?' '+sfat+' Altfel, ca să pornești din nou curat, ':' Ca să pornești din nou curat, ')+CAPAT_INAPOI()}}};
+/* butonul „Ia de la capăt” (reparația 4), lângă Verifică, la exercițiile cu capat:true (cele cu NEATINS): pune în zona de
+   scris sursa de început a exercițiului (start.text). Tipul e cel al extensiei (EWC.tip), neschimbat; butonul îl pune lecția.
+   Dispare când exercițiul e gata (Corect sau „Arată-mi răspunsul”). */
+function capat(Q,body,api){const nav=api.nav&&api.nav(),chk=nav&&nav.querySelector('#chk');if(!chk||nav.querySelector('#capat'))return;
+  const b=document.createElement('button');b.type='button';b.id='capat';b.className='btn ghost';b.textContent='Ia de la capăt';
+  b.onclick=()=>{const ta=body.querySelector('.np-ta');if(api.done()||!ta){b.remove();return}
+    ta.value=Q.start.text;if(body._ew&&body._ew.S&&body._ew.S.live)body._ew.S.live.text=Q.start.text;ta.dispatchEvent(new Event('input'));
+    const m=body.querySelector('.ew-msg');if(m){m.classList.remove('av');m.textContent='Pagina e iar cum era la început. Fă din nou exercițiul.'}};
+  chk.after(b);chk.addEventListener('click',()=>setTimeout(()=>{if(api.done())b.remove()},0))}
+const TIP_L16={render(Q,body,api){const r=EWC.tip.render(Q,body,api);if(Q.capat&&Q.mod==='live')capat(Q,body,api);return r},
+  rezolva:(Q,body,api)=>EWC.tip.rezolva(Q,body,api),gresit:(Q,body,api)=>EWC.tip.gresit(Q,body,api)};
+/* reparația 4, punctul O: regula POZITIVĂ pentru fotografia lacului, aici și nu în extensie (EWC.altBun rămâne cum îl
+   folosesc vecinii). Textul alternativ e primit dacă trece de EWC.altBun (câteva cuvinte, nu numele fișierului, nu doar
+   umpluturi) ȘI are cel puțin un cuvânt despre ce SE VEDE în fotografia reală (img/bucura.jpg, privită la reparație):
+   lacul (Bucura), apa, munții și vârfurile lor, stâncile și pietrele cu licheni, iarba și plantele, cerul cu nori; plus
+   locul (Retezat), „peisaj” și „glaciar”. Brazi, pădure: NU (nu se văd). Cuvintele, fără diacritice (N), cu formele lor.
+   Reparația 5, punctul AB: și numele firești ale aceluiași lucru — iezer, tău (lac de munte), pajiște alpină, malul,
+   luciul / oglinda apei, apelor, grohotișul, vegetația, versanții. */
+const VEDE=/^(lac|lacul|lacului|lacuri|lacurile|lacurilor|lake|bucura|munte|muntele|muntelui|munti|muntii|muntilor|montan|montana|mountain|mountains|apa|ape|apei|apele|apelor|water|cer|cerul|cerului|sky|nor|norul|nori|norii|norilor|noros|noroasa|cloud|clouds|stanca|stanci|stancile|stancilor|stancos|stancoasa|stancosi|stancoase|piatra|pietre|pietrele|pietrelor|bolovan|bolovani|bolovanii|roca|roci|rocile|rock|rocks|stone|stones|iarba|ierburi|ierbii|verdeata|grass|planta|plante|plantele|licheni|lichen|lichenii|varf|varful|varfuri|varfurile|varfurilor|pisc|piscuri|creasta|creste|culme|culmi|peisaj|peisajul|retezat|retezatului|glaciar|glaciara|glaciare|iezer|iezerul|iezere|iezerele|iezerului|iezerelor|tau|taul|tauri|taurile|taului|taurilor|pajiste|pajistea|pajisti|pajistile|pajistii|pajistilor|alpin|alpina|alpine|alpini|alpinul|mal|malul|maluri|malurile|malului|luciu|luciul|luciului|oglinda|oglinzi|grohotis|grohotisul|grohotisuri|vegetatie|vegetatia|versant|versantul|versanti|versantii|lacustru|lacustra|lakeside|meadow|shore|alpine|deal|dealul|dealuri|dealurile|dealului|dealurilor|vale|valea|vaile|vaii|elesteu|elesteul|elestee|balta|balti|baltile|baltii)$/;
+const altLac=src=>EWC.altBun(src)&&[...new DOMParser().parseFromString(String(src||''),'text/html').body.querySelectorAll('img')].every(im=>N(im.getAttribute('alt')).split(/[^a-z]+/).some(w=>VEDE.test(w)));
+/* testul de text alternativ, cu mesajul după ce e scris: fără alt = cum se scrie; cu alt slab = ce să scrie în el */
+const ALT_LAC=ce=>{let are=false;return {ce,fn:S=>{const im=corp(LV(S)).querySelector('img');are=!!im&&im.hasAttribute('alt');return altLac(LV(S))},
+  get msg(){return are?'În <code>alt="…"</code> scrie ce se vede în fotografie, în câteva cuvinte (ex. „Lacul Bucura între munți”, „Un iezer între stânci”). Un singur cuvânt, „poză”, „imagine” sau numele fișierului nu spun ce se vede.'
+    :'Scrie în eticheta <code>&lt;img&gt;</code>, după un spațiu, <code>alt="…"</code>, cu câteva cuvinte despre ce se vede în fotografie, de exemplu „un lac între munți”. Un singur cuvânt, „poză”, „imagine” sau numele fișierului nu spun ce se vede.'}}};
+
+/* verificări pe text (folosite în teste) */
+const corp=s=>new DOMParser().parseFromString(String(s||''),'text/html').body;
+/* reparația 5 (X), pentru atelier: ce stă în afara lui <body>…</body>, în afară de schelet (DOCTYPE, <html>, </html>, iar în
+   <head>: <title>…</title>, <meta>, <link>, <style>, <script>, <base>), comentarii și spații. Gol = nimic în afara corpului. */
+const afaraCorp=s=>{const t=String(s||'').replace(/\r\n?/g,'\n').replace(/^﻿/,''),b=t.search(/<body\b[^>]*>/i),e=t.search(/<\/body\s*>/i);if(b<0||e<0)return '';
+  const cur=x=>x.replace(/<!--[\s\S]*?-->/g,'').replace(/<(title|style|script)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,'').replace(/<!doctype[^>]*>|<\/?(?:html|head)\b[^>]*>|<(?:meta|link|base)\b[^>]*>/gi,'').trim();
+  return (cur(t.slice(e).replace(/^<\/body\s*>/i,''))||cur(t.slice(0,b))).replace(/\s+/g,' ').slice(0,70)};
+const textele=(s,sel)=>[...corp(s).querySelectorAll(sel)].map(e=>N(e.textContent));
+const ordine=s=>EWC.ordine(s).map(N);
+/* rândurile unui paragraf, așa cum le rupe <br> (pentru strofă și program) */
+const randuriP=(s,cuv)=>{const p=[...corp(s).querySelectorAll('p')].find(x=>N(x.textContent).includes(cuv));return p?p.innerHTML.split(/<br\s*\/?>/i).map(h=>N(h.replace(/<[^>]*>/g,''))).filter(Boolean):null};
+const brIn=(s,cuv)=>{const p=[...corp(s).querySelectorAll('p')].find(x=>N(x.textContent).includes(cuv));return p?p.querySelectorAll('br').length:-1};
+const fara=(s,re)=>!re.test(String(s||''));
+/* textul scris direct în corp, fără nicio etichetă în jur (de obicei s-a mutat sau s-a copiat doar textul unui paragraf) */
+const liber=s=>{const n=[...corp(s).childNodes].find(x=>x.nodeType===3&&x.textContent.trim());return n?n.textContent.replace(/\s+/g,' ').trim():''};
+/* bucățile de paragraf rămase după o selecție imprecisă (reparația 2, punctul N): <p> singur, </p> singur, <p></p>, text
+   cu <p> fără </p>, text cu </p> fără <p>, text fără niciuna. Se caută pe ETICHETE, nu în DOM (browserul le închide singur
+   și pierde rândul), doar între <body> și </body>. Fiecare bucată: {fel, rand (indexul rândului), text}.
+   Reparația 3 (punctul R): ÎNTÂI resturile de etichetă, ce rămâne când selecția taie o etichetă: „<”, „<p”, „</”, „</p”,
+   „p>”, „/p>”, „>” (orice < sau > care nu e într-o etichetă întreagă; „</h2” = titlu tăiat, căruia îi lipsește doar „>”),
+   fel 'rest', {rand, k, text, nume}. Celelalte bucăți se
+   caută pe sursa FĂRĂ resturi (lista.curat): altfel „p>Apa…” ar fi text fără <p>, iar „<p” s-ar lipi de <p>-ul de dedesubt
+   ca o singură etichetă. Resturile stau primele în listă: mesajul spune întâi ce ștergi. */
+const ETICHETA=/<!--[\s\S]*?-->|<\/?[a-z][a-z0-9]*\b[^<>]*>/gi;
+const NUME_ET=['html','head','body','title','meta','img','br','p','h1','h2','h3','h4','h5','h6','ul','ol','li','div','span','strong','em','table','tr','td','th','a','b','i','u','link','style','script'];
+const resturi=(s,i0,i1)=>{
+  /* „<p/p>” (selecție de după „<p” până după „<” din </p>) arată ca o etichetă, dar e făcută din două bucăți: nu se maschează */
+  const m=s.slice(0,i1).replace(ETICHETA,x=>/^<\/?p(?=[\s\/p]*[\/p])[\s\/p]+>$/i.test(x)?x:'\u0001'.repeat(x.length)),lit=c=>!!c&&/[a-z0-9ăâîșțşţ]/i.test(c),out=[];
+  for(let i=i0;i<i1;i++){
+    /* reparația 5, punctul AA: „<” / „</” se întinde și peste literele care încep numele unei etichete („</bo” din </body>,
+       „<im” din <img>): bucata se numește întreagă, nu „</” plus un text „bo”. Un cuvânt care nu începe un nume de etichetă
+       („<Apa”, „<Pagina”) rămâne text, ca înainte. */
+    if(m[i]==='<'){let j=i+1;if(m[j]==='/')j++;let n=j;while(lit(m[n]))n++;const nume=m.slice(j,n).toLowerCase();
+      if(/^(p|h[1-6]?)$/.test(nume)||(nume&&NUME_ET.some(e=>e.startsWith(nume))))j=n;out.push({k:i,t:s.slice(i,j),nume:j===n?nume:''});i=j-1}
+    /* reparația 4 (punctul T): „>” se întinde și peste numele unui titlu („2>”, „h2>”, „/h2>”), ca „p>” și „/p>”; „<” și peste
+       un nume început („<h”, „</h”). Când originalul e întreg (NEATINS a trecut), așa ceva stă doar într-o copie: se șterge. */
+    else if(m[i]==='>'){let a=i;const w=/(?:p|h[1-6]|[1-6])$/i.exec(m.slice(Math.max(0,i-2),i));
+      if(w&&!lit(m[i-w[0].length-1])){a=i-w[0].length;if(m[a-1]==='/')a--}out.push({k:a,t:s.slice(a,i+1)})}
+  }
+  return out;
+};
+const bucati=src=>{
+  const s0=String(src||'').replace(/\r\n?/g,'\n'),mb=/<body\b[^>]*>/i.exec(s0),i0=mb?mb.index+mb[0].length:0;
+  const mf=/<\/body\s*>/i.exec(s0.slice(i0)),i1=mf?i0+mf.index:s0.length;
+  const rand=k=>s0.slice(0,k).split('\n').length-1,scurt=t=>t.replace(/\s+/g,' ').trim(),out=[];
+  const rs=resturi(s0,i0,i1);let s=s0;
+  for(const r of rs){out.push({fel:'rest',rand:rand(r.k),k:r.k,text:r.t,nume:r.nume||''});s=s.slice(0,r.k)+' '.repeat(r.t.length)+s.slice(r.k+r.t.length)}
+  out.curat=s;
+  let p=null,lib=null,inH=false,m;   /* p: paragraful deschis {k,t,img}; lib: textul scris liber {k,t} */
+  const inchideP=()=>{if(!p)return;const t=scurt(p.t);out.push(t||p.img?{fel:'fara_inchidere',rand:rand(p.k),text:t}:{fel:'p_singur',rand:rand(p.k)});p=null};
+  const golesteLib=()=>{if(lib)out.push({fel:'liber',rand:rand(lib.k),text:scurt(lib.t)});lib=null};
+  const re=/<(\/?)([a-z][a-z0-9]*)\b[^<>]*>|[^<]+|</gi,corp=s.slice(i0,i1);
+  while((m=re.exec(corp))){
+    const k=i0+m.index;
+    if(m[2]){
+      const tag=m[2].toLowerCase(),inc=!!m[1];
+      if(tag==='p'){
+        if(!inc){inchideP();golesteLib();p={k,t:'',img:false}}
+        else if(p){if(!scurt(p.t)&&!p.img)out.push({fel:'gol',rand:rand(p.k)});p=null}
+        else if(lib){out.push({fel:'fara_deschidere',rand:rand(lib.k),text:scurt(lib.t)});lib=null}
+        else out.push({fel:'inchidere_singura',rand:rand(k)});
+      }else if(/^(h[1-6]|ul|ol|li|div|table|pre|blockquote|hr)$/.test(tag)){inchideP();golesteLib();if(/^h[1-6]$/.test(tag))inH=!inc}
+      else if(tag==='img'&&p)p.img=true;
+    }else if(p)p.t+=m[0];
+    else if(!inH&&m[0].trim()){if(lib)lib.t+=m[0];else lib={k,t:m[0]}}
+  }
+  inchideP();golesteLib();
+  return out;
+};
+/* reparația 4 (PRINCIPIUL): o bucată de text care NU e textul întreg al unui paragraf de la început (selecția a tăiat chiar
+   în text: „.”, „Bi”, „Apa era rece și limpede” fără punct) nu primește o instrucțiune de reparat — „scrie <p> înainte de el”
+   ar face din ea un paragraf nou, greșit. Mesajul spune doar ce e sigur, iar PERECHI_P / FARA_LIBER adaugă drumul înapoi. */
+const FRAGM=(b,orig)=>!!orig&&!!b&&!!b.text&&/^(fara_inchidere|fara_deschidere|liber)$/.test(b.fel)&&!orig.includes(N(b.text));
+const spuneFragment=b=>{const q=`Textul „${X(b.text.slice(0,60))}”`,P='<code>&lt;p&gt;</code>',PI='<code>&lt;/p&gt;</code>';
+  return (b.fel==='fara_inchidere'?`${q} are ${P} în față, dar nu are ${PI} la sfârșit`:b.fel==='fara_deschidere'?`${q} are ${PI} după el, dar nu are ${P} în față`:`${q} stă fără ${P} și ${PI}`)+'; nu e textul întreg al unui paragraf de la început, ci doar o bucată de text.'};
+/* ce spune mesajul despre fiecare bucată: ce a rămas, unde (rândul vecin sau rândul ei) și ce faci */
+const spuneBucata=(src,b)=>{
+  const L=String(src||'').replace(/\r\n?/g,'\n').split('\n'),C=t=>`<code>${X(t.replace(/\s+/g,' ').trim().slice(0,70))}</code>`;
+  const r=L[b.rand]||'',singur=e=>r.replace(/\s+/g,'')===e,sus=()=>{for(let j=b.rand-1;j>=0;j--)if(L[j].trim())return L[j];return ''};
+  const q=t=>`Textul „${X(t.slice(0,60))}”`;
+  if(b.fel==='inchidere_singura')return singur('</p>')&&sus()?`Sub rândul ${C(sus())} a rămas un rând cu doar <code>&lt;/p&gt;</code>: șterge-l.`:`Pe rândul ${C(r)} e un <code>&lt;/p&gt;</code> în plus, fără <code>&lt;p&gt;</code> înainte: șterge-l.`;
+  if(b.fel==='p_singur')return singur('<p>')&&sus()?`Sub rândul ${C(sus())} a rămas un rând cu doar <code>&lt;p&gt;</code>: șterge-l.`:`Pe rândul ${C(r)} e un <code>&lt;p&gt;</code> în plus, fără text și fără <code>&lt;/p&gt;</code> după el: șterge-l.`;
+  if(b.fel==='gol')return singur('<p></p>')&&sus()?`Sub rândul ${C(sus())} a rămas un paragraf gol, <code>&lt;p&gt;&lt;/p&gt;</code>: doar etichetele, fără text. Șterge rândul acela.`:`Pe rândul ${C(r)} a rămas un paragraf gol, <code>&lt;p&gt;&lt;/p&gt;</code>: doar etichetele, fără text. Șterge-l.`;
+  if(b.fel==='fara_inchidere')return b.text?`${q(b.text)} are <code>&lt;p&gt;</code> în față, dar nu are <code>&lt;/p&gt;</code> la sfârșit: scrie <code>&lt;/p&gt;</code> după el.`:`Paragraful de pe rândul ${C(r)} nu are <code>&lt;/p&gt;</code>: scrie-l la sfârșitul lui.`;
+  if(b.fel==='fara_deschidere')return `${q(b.text)} are <code>&lt;/p&gt;</code> după el, dar nu are <code>&lt;p&gt;</code> în față: scrie <code>&lt;p&gt;</code> înainte de el.`;
+  return `${q(b.text)} stă fără <code>&lt;p&gt;</code> și <code>&lt;/p&gt;</code>: scrie <code>&lt;p&gt;</code> înainte de el și <code>&lt;/p&gt;</code> după el.`;
+};
+/* reparația 3, punctul R: resturile de etichetă, câte o propoziție pe rând (toate resturile unui rând odată, ca rândul citat
+   să fie încă acolo când elevul ajunge la el). Singur pe rând: „Sub rândul X”; lipit: „Pe rândul X, la început / la sfârșit /
+   înainte de …”. Rândul de deasupra se caută pe sursa fără resturi (cum arată după ce elevul le-a șters pe cele de mai sus). */
+const spuneResturi=(src,curat,lista)=>{
+  const L=String(src||'').replace(/\r\n?/g,'\n').split('\n'),LC=String(curat||'').split('\n'),C=t=>`<code>${X(t.replace(/\s+/g,' ').trim().slice(0,70))}</code>`;
+  const inc=k=>{let n=0;for(let j=0;j<k;j++)n+=L[j].length+1;return n};
+  const sus=r=>{for(let j=r-1;j>=0;j--)if(LC[j].trim())return LC[j];return ''};
+  const randuri=[...new Set(lista.map(b=>b.rand))].sort((a,b)=>a-b),NR=['','o','două','trei','patru'];
+  return randuri.map(r=>{
+    const lin=L[r]||'',bs=lista.filter(b=>b.rand===r).sort((a,b)=>a.k-b.k),o=inc(r);
+    /* eticheta de titlu tăiată la sfârșitul rândului („<h2>Drumul</h2”): nu e de șters, îi lipsește doar „>” */
+    const h=bs.find(b=>/^h[1-6]$/.test(b.nume)&&!lin.slice(b.k-o+b.text.length).trim());
+    if(h&&bs.length===1)return `Pe rândul ${C(lin)}, la sfârșit, eticheta ${C(h.text)} a rămas fără ${C('>')}: scrie ${C('>')} după ea.`;
+    if(!(LC[r]||'').trim()&&sus(r))return bs.length===1?`Sub rândul ${C(sus(r))} a rămas, singură pe rând, o bucată de etichetă: ${C(bs[0].text)}. Șterge-o.`
+      :`Sub rândul ${C(sus(r))} a rămas un rând doar cu bucăți de etichetă: ${C(lin)}. Șterge-l.`;
+    const poz=b=>{const a=b.k-o,inainte=lin.slice(0,a),dupa=lin.slice(a+b.text.length);
+      if(!inainte.trim())return 'la început';if(!dupa.trim())return 'la sfârșit';
+      return `înainte de ${C(dupa.trim().split(/\s+/)[0].slice(0,15))}`};
+    if(bs.length===1)return `Pe rândul ${C(lin)}, ${poz(bs[0])}, a rămas o bucată de etichetă: ${C(bs[0].text)}. Șterge-o.`;
+    return `Pe rândul ${C(lin)} au rămas ${NR[bs.length]||bs.length} bucăți de etichetă: ${bs.map(b=>`${C(b.text)} ${poz(b)}`).join(' și ')}. Șterge-le.`;
+  });
+};
+/* testul perechilor de paragraf (reparația 2, punctul N): pică dacă a rămas o etichetă de paragraf fără pereche sau un
+   paragraf gol; mesajul numește FIECARE bucată rămasă, în ordinea rândurilor (și textul liber, dacă e), ca elevul să le
+   repare pe toate odată. Stă înaintea testelor de loc și de ordine: ele ar trimite elevul să mute ce e deja la locul lui.
+   Reparația 3 (punctul R): pică și la o bucată de etichetă rămasă; mesajul spune întâi resturile (de șters), apoi celelalte
+   bucăți, socotite pe sursa fără resturi. */
+/* reparația 5 (AA): faraDiagnostic — mesajul îl spune lecția, nu diagnosticul lecției 15. Pentru o copie care a luat și
+   „</body” (fără „>”), diagnosticul spunea „După </body trebuie semnul >”: urmat, făcea al doilea </body>. */
+const PERECHI_P=(sfat,start)=>{let sursa='',lista=[];const orig=start?textele(start,'p'):null;return {ce:'Fiecare paragraf e întreg: &lt;p&gt;, textul și &lt;/p&gt;',faraDiagnostic:true,
+  fn:S=>{sursa=LV(S);lista=bucati(sursa);return !lista.some(b=>b.fel!=='liber')},
+  get msg(){const R=lista.filter(b=>b.fel==='rest'),alte=lista.filter(b=>b.fel!=='rest'),fr=alte.some(b=>FRAGM(b,orig));
+    return [...spuneResturi(sursa,lista.curat,R),...alte.map(b=>FRAGM(b,orig)?spuneFragment(b):spuneBucata(lista.curat,b))].join(' ')+(fr?' Ca să pornești din nou curat, '+CAPAT_INAPOI():'')+' '+(sfat||'Data viitoare selectezi elementul întreg, de la <code>&lt;p&gt;</code> până după <code>&lt;/p&gt;</code>.')}}};
+/* testul „niciun text fără etichete”; mesajul citează textul rămas liber (reparare J1, punctul A) și spune doar ce lipsește
+   (reparația 2, punctul N: dacă după text vine </p>, lipsește doar <p>) */
+const FARA_LIBER=(start)=>{let t='',b=null;const orig=start?textele(start,'p'):null;return {ce:'Tot textul stă în etichete: niciun rând fără &lt;p&gt; și &lt;/p&gt;',fn:S=>{t=liber(LV(S));b=t?bucati(LV(S)).find(x=>x.fel==='fara_deschidere'||x.fel==='liber'):null;return !t},
+  get msg(){const f=b&&FRAGM(b,orig)?b:(!b&&t&&FRAGM({fel:'liber',text:t},orig)?{fel:'liber',text:t}:null);   /* reparația 4: bucată de text → doar ce e sigur + drumul înapoi */
+    if(f)return spuneFragment(f)+' Ca să pornești din nou curat, '+CAPAT_INAPOI();
+    return b&&b.fel==='fara_deschidere'?`Textul „${X(b.text.slice(0,60))}” are <code>&lt;/p&gt;</code> după el, dar nu are <code>&lt;p&gt;</code> în față: scrie <code>&lt;p&gt;</code> înainte de el.`
+    :`Textul „${X(t.slice(0,60))}” stă în pagină fără <code>&lt;p&gt;</code> și <code>&lt;/p&gt;</code>: scrie <code>&lt;p&gt;</code> înainte de el și <code>&lt;/p&gt;</code> după el.`}}};   /* reparația 5 (Y): fără „ai luat doar textul” — lecția nu știe cum a ajuns textul așa */
+/* P5: imaginea sub paragraf (reparare J1, punctul M). Reparația 2, punctul P: când <img> e ÎNĂUNTRUL paragrafului, mesajul
+   spune și de ce nu e bine, deși în browserul îngust de aici pare tot sub text (A23: într-o fereastră lată stă lângă text). */
+/* Reparația 3, punctul S: mesajul după locul REAL al lui <img> în <p> (textul de dinainte / de după el): după text = mesajul
+   lung de la P; înainte de text = deasupra textului; între cuvinte = rupe textul; fără text în <p> = un paragraf al fotografiei. */
+const locImg=im=>{const p=im.closest('p'),w=p.ownerDocument.createTreeWalker(p,NodeFilter.SHOW_TEXT);let ina=false,dupa=false,n;
+  while((n=w.nextNode()))if(n.textContent.trim()){if(im.compareDocumentPosition(n)&Node.DOCUMENT_POSITION_PRECEDING)ina=true;else dupa=true}
+  return ina&&dupa?'mijloc':ina?'dupa_text':dupa?'inainte_text':'singura'};
+/* Reparația 4: și când <img> NU e în <p>, mesajul spune doar ce e sigur (câte imagini sunt, dacă stă deasupra paragrafului). */
+const IMG_SUB_P=()=>{let loc='',cate=0,sus=false;return {ce:'Pagina are o imagine, sub paragraf',
+  fn:S=>{const o=ordine(LV(S)),i=o.findIndex(x=>x.startsWith('img:')),iP=o.findIndex(x=>x.startsWith('p:')),im=corp(LV(S)).querySelector('p img');loc=im?locImg(im):'';
+    cate=o.filter(x=>x.startsWith('img:')).length;sus=i>=0&&iP>=0&&i<iP;return i>0&&o[i-1].startsWith('p:')&&!im&&cate===1},
+  get msg(){const MUTA='mută <code>&lt;img src="…"&gt;</code> pe un rând nou, după <code>&lt;/p&gt;</code>.';
+    if(loc==='dupa_text')return 'Fotografia stă înăuntrul paragrafului, înainte de <code>&lt;/p&gt;</code>. Aici, în browserul îngust, pare tot sub text, doar lipită de el; într-o fereastră lată stă chiar lângă text, pe același rând. Exercițiul o vrea sub paragraf în orice fereastră: '+MUTA;
+    /* reparația 4, punctul S: și ce se întâmplă într-o fereastră lată (probat în Chromium la 1280, pagina singură: textul stă
+       pe același rând cu fotografia) — ca la mesajul pentru „după text” */
+    if(loc==='inainte_text')return 'Fotografia stă la începutul paragrafului, înainte de text: aici, în browserul îngust, apare deasupra textului (într-o fereastră lată, fotografia poate sta chiar pe același rând cu textul). Exercițiul o vrea sub paragraf în orice fereastră: '+MUTA;
+    if(loc==='mijloc')return 'Fotografia stă în mijlocul paragrafului, între cuvinte: aici, în browserul îngust, rupe textul în două, o parte deasupra ei și restul dedesubt (într-o fereastră lată, fotografia poate sta chiar pe același rând cu textul). Exercițiul o vrea sub paragraf în orice fereastră: '+MUTA;
+    if(loc==='singura')return 'Fotografia stă singură între <code>&lt;p&gt;</code> și <code>&lt;/p&gt;</code>, ca un paragraf fără text. Exercițiul o vrea fără ele: șterge <code>&lt;p&gt;</code> și <code>&lt;/p&gt;</code> din jurul ei, ca <code>&lt;img src="…"&gt;</code> să stea singur pe rândul lui, după <code>&lt;/p&gt;</code>-ul paragrafului cu text.';
+    if(cate>1)return `În pagină sunt ${cate} imagini, iar exercițiul vrea una singură: păstrează doar una, pe un rând nou, după <code>&lt;/p&gt;</code>, și șterge-le pe celelalte.`;
+    if(sus)return 'Fotografia stă acum deasupra paragrafului. Mut-o: rândul cu <code>&lt;img src="…"&gt;</code> pe un rând nou, după <code>&lt;/p&gt;</code>.';
+    if(cate===1)return 'Fotografia nu stă imediat sub paragraf. Mut-o: rândul cu <code>&lt;img src="…"&gt;</code> pe un rând nou, imediat după <code>&lt;/p&gt;</code>.';
+    return 'Scrie <code>&lt;img src="…"&gt;</code> pe un rând nou, după <code>&lt;/p&gt;</code>, nu înăuntrul paragrafului.'}}};
+/* P4, „Încă un exercițiu” 2 (copierea). Reparația 3, punctul R: mesajul de „jos nu mai e” doar când jos chiar nu mai e
+   paragraful; altfel mesajul spune ce e de fapt: copia lipsește de sus, stă în alt loc sau e de prea multe ori.
+   Reparația 5 (Y): niciun mesaj nu mai spune ce tastă s-a apăsat. */
+const COPIA_SUS=()=>{let n=0,sus=false,jos=false;const k='p:pagina clasei a viii-a a',AM='<code>&lt;p&gt;Am urcat trei ore pe munte.&lt;/p&gt;</code>',H='<code>&lt;h1&gt;</code>';
+  /* reparația 5: `ce` nu mai începe cu „Paragraful …” (antetul „Testul care nu trece încă: …” era citit ca o propoziție) */
+  return {ce:'Copia stă imediat sub &lt;h1&gt;, iar paragraful „Pagina clasei a VIII-a A” a rămas și jos, la sfârșit',
+  fn:S=>{const o=ordine(LV(S));n=o.filter(x=>x===k).length;sus=o[1]===k;jos=o.length>2&&o[o.length-1]===k;return sus&&jos&&n===2},
+  get msg(){
+    if(!n)return `Paragraful „Pagina clasei a VIII-a A” nu mai e în pagină. Scrie-l din nou jos, pe un rând nou, după ${AM}: <code>&lt;p&gt;Pagina clasei a VIII-a A&lt;/p&gt;</code>; apoi copiază-l sub ${H}.`;
+    /* reparația 5, punctul Y: starea paginii, nu ce taste s-au apăsat („l-ai decupat (Ctrl+X)” era fals după Ctrl+C și un
+       Enter apăsat peste selecție) */
+    if(!jos&&n===1&&sus)return `Jos nu mai e paragraful „Pagina clasei a VIII-a A”, iar exercițiul îl vrea și sus, imediat sub ${H}, și jos, după ${AM}. Copiază paragraful de sus, întreg, de la <code>&lt;p&gt;</code> până după <code>&lt;/p&gt;</code> (<kbd>Ctrl</kbd>+<kbd>C</kbd>), și lipește copia pe un rând nou, după ${AM}.`;
+    if(!jos)return `Paragraful „Pagina clasei a VIII-a A” trebuie să rămână și jos, ultimul, după ${AM}. ${n>1?'Mută acolo unul dintre ele, întreg (Ctrl+X, apoi Ctrl+V pe un rând nou).':'Copiază-l întreg (Ctrl+C) și lipește copia pe un rând nou, după '+AM+'.'}`;
+    if(n>2)return `Paragraful „Pagina clasei a VIII-a A” apare de ${n} ori, dar trebuie doar de două ori: imediat sub ${H} și jos. Șterge copiile în plus, întregi, de la <code>&lt;p&gt;</code> până după <code>&lt;/p&gt;</code>.`;
+    if(n===1)return `Paragraful „Pagina clasei a VIII-a A” e doar jos: copia lui nu e încă sus. Selectează-l întreg, <kbd>Ctrl</kbd>+<kbd>C</kbd>, apoi clic la sfârșitul rândului cu ${H}, <kbd>Enter</kbd> și <kbd>Ctrl</kbd>+<kbd>V</kbd>.`;
+    return `Copia de sus nu stă imediat sub ${H}: mut-o acolo, întreagă (<kbd>Ctrl</kbd>+<kbd>X</kbd>, apoi clic la sfârșitul rândului cu ${H}, <kbd>Enter</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd>).`}}};
+const ORD={ce:'Scheletul e întreg și fiecare etichetă are perechea ei',fn:S=>ES.ordine(LV(S)),msg:'O etichetă a rămas fără pereche sau un rând al scheletului lipsește. Fiecare <code>&lt;h2&gt;</code> și <code>&lt;p&gt;</code> se închide cu <code>&lt;/h2&gt;</code>, <code>&lt;/p&gt;</code>.'};
+const STROFA=['somnoroase pasarele','pe la cuiburi se aduna,','se ascund in ramurele -','noapte buna!'];
+
+const PROVOCARE=[
+  'Salvează fotografia lacului: în pagina lecției, deasupra acestor pași, clic dreapta pe fotografia lacului › <b>Salvați imaginea ca</b> (în Chrome: <b>Salvează imaginea ca…</b>). În fereastra <b>Salvare ca</b>: în stânga, <b>Documente</b> (Documents); la <b>Nume fișier</b> (File name), numele, prenumele și bucura, cu <b>.jpg</b> la sfârșit, de exemplu <code>Popescu_Ana_bucura.jpg</code>; apoi <b>Salvare</b> (Save). Dacă apare „… există deja. Îl înlocuiți?”, apasă <b>Nu</b> (No) și pune o cifră la sfârșitul numelui, înainte de .jpg: <code>Popescu_Ana_bucura2.jpg</code>. Ține minte numele: îl scrii în pagină.',
+  'Pornește <b>Notepad</b>: tasta Windows, scrie <b>Notepad</b>, apoi <kbd>Enter</kbd>. Dacă se deschide cu fila unui coleg, nu scrie în ea: apasă <b>+</b> (filă nouă). Deschide pagina ta de la lecția 15, ca în atelier: <b>Fișier › Deschideți</b> (Open), sau <kbd>Ctrl</kbd>+<kbd>O</kbd>; în stânga, <b>Documente</b>. Dacă nu-ți vezi pagina în listă, alege jos, lângă <b>Nume fișier</b>, <b>Toate fișierele (*.*)</b>. Clic pe pagina ta, de exemplu <code>Popescu_Ana_8A_lectia15.html</code>, apoi <b>Deschidere</b> (Open). Dacă n-o găsești (de exemplu, ai lucrat pe alt calculator), rămâi în fila nouă: la pasul 4 scrii toate rândurile.',
+  'Salvează pagina cu nume nou, ca cea de la lecția 15 să rămână neschimbată: <b>Fișier › Salvați ca</b> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>). În <b>Documente</b>, numele tău cu lectia16 și <b>.html</b>, de exemplu <code>Popescu_Ana_8A_lectia16.html</code>; <b>Toate fișierele (*.*)</b>; <b>UTF-8</b>; <b>Salvare</b>. Dacă apare „… există deja. Îl înlocuiți?”, apasă <b>Nu</b> (No) și pune o cifră la sfârșitul numelui, înainte de .html: <code>Popescu_Ana_8A_lectia16_2.html</code>. Verifică fila din Notepad: numele are <b>lectia16</b> și se termină cu <b>.html</b>. De acum lucrezi doar în ea.',
+  `Fă pagina să arate ca mai jos: schimbă textul din <code>&lt;title&gt;</code> și din <code>&lt;h1&gt;</code>, apoi, pe rânduri noi, sub <code>&lt;h1&gt;</code>, scrie titlul secțiunii, cele două paragrafe și imaginea. La <code>src</code> scrie numele exact al fotografiei tale, cu .jpg. La începutul rândurilor, Tab-uri, ca la lecția 15. Apoi <kbd>Ctrl</kbd>+<kbd>S</kbd>.
+<ul class="pasi-met"><li>Dacă după ghilimele apar litere ca <b>ü</b> sau <b>ä</b>, tastatura e „Statele Unite – Internațional”: după fiecare <code>"</code> apasă <kbd>Spațiu</kbd>.</li></ul>${PRE(COD.lab)}`,
+  'Deschide <b>Explorer</b> (File Explorer): tasta Windows + <kbd>E</kbd>. Clic pe <b>Documente</b> în stânga, apoi dublu-clic pe pagina ta cu lectia16 (la Tip scrie ceva cu HTML). Verifică în browser: pe filă, <b>Excursia în Retezat</b>; în pagină, titlul mare, sub el titlul secțiunii, mai mic, apoi cele două paragrafe, fiecare de la capăt de rând, și fotografia lacului.',
+  `Dacă în locul fotografiei vezi o pictogramă mică și textul din <code>alt</code>, caută cauza în Explorer, în <b>Documente</b>:
+<ul class="pasi-met"><li>Fotografia ta nu e acolo? Caut-o în <b>Descărcări</b> (Downloads): acolo ajunge de obicei. Clic în stânga pe Descărcări, un clic pe fotografia ta, <kbd>Ctrl</kbd>+<kbd>X</kbd>; clic în stânga pe Documente, <kbd>Ctrl</kbd>+<kbd>V</kbd>, ca la clasa a V-a. Dacă nu e nici acolo, fă din nou pasul 1.</li>
+<li>Fotografia e acolo? Atunci numele din <code>src</code> nu e exact. Fotografia apare fără extensie, iar la <b>Tip</b> scrie ceva cu <b>JPG</b>: numele ei întreg se termină cu <b>.jpg</b>. Dacă nu vezi coloana Tip, ține mouse-ul nemișcat o clipă pe fotografie: tipul apare în caseta mică. Repară rândul în Notepad și apasă <kbd>Ctrl</kbd>+<kbd>S</kbd>.</li></ul>Apoi <kbd>F5</kbd> în browser: fotografia apare.`,
+  'Dacă mai ai timp, experimentul: în Notepad, la <code>src</code>, șterge <code>.jpg</code> de la sfârșitul numelui. <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad, <kbd>F5</kbd> în browser: în locul fotografiei apar o pictogramă mică și textul din <code>alt</code>. Pune <code>.jpg</code> la loc, <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>F5</kbd>: fotografia revine.',
+  'Dacă mai ai timp, mută un paragraf: în Notepad, selectează cu mouse-ul tot paragraful al doilea, de la <code>&lt;p&gt;</code> până după <code>&lt;/p&gt;</code>, și apasă <kbd>Ctrl</kbd>+<kbd>X</kbd>. Dă clic la sfârșitul rândului cu <code>&lt;/h2&gt;</code>, apasă <kbd>Enter</kbd>, apoi <kbd>Ctrl</kbd>+<kbd>V</kbd>. <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad, <kbd>F5</kbd> în browser: cele două paragrafe și-au schimbat locul.',
+  'Dacă mai ai timp, copiază și șterge un paragraf: în Notepad, selectează tot primul paragraf, de la <code>&lt;p&gt;</code> până după <code>&lt;/p&gt;</code>, și apasă <kbd>Ctrl</kbd>+<kbd>C</kbd>. Dă clic la sfârșitul rândului cu <code>alt="…"&gt;</code>, apasă <kbd>Enter</kbd>, apoi <kbd>Ctrl</kbd>+<kbd>V</kbd>. <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>F5</kbd>: paragraful apare de două ori, a doua oară sub fotografie. Selectează copia de jos întreagă, de la <code>&lt;p&gt;</code> până după <code>&lt;/p&gt;</code>, și apasă <kbd>Delete</kbd>. <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>F5</kbd>: paragraful a rămas o singură dată.',
+  'Dacă mai ai timp, rupe un rând: în Notepad, în paragraful despre apă, dă clic chiar după „limpede.”, înainte de <code>&lt;/p&gt;</code>, și scrie <code>&lt;br&gt;Am stat o oră pe mal.</code> <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>F5</kbd>: propoziția nouă începe pe rândul următor, în același paragraf, fără spațiu liber deasupra.',
+  'Ultimul pas, oricum, chiar dacă ai sărit pașii care încep cu „Dacă mai ai timp”: calculatorul rămâne curat pentru colegul următor. În Notepad închide pe rând <b>toate</b> filele, din meniu: <b>Fișier › Închideți fila</b>, până se închide Notepad. Dacă la fila unui coleg te întreabă „Salvați modificările…?”, apasă <b>Nu salvați</b>. Nu închide Notepad cu X-ul ferestrei: îi redeschide colegului filele. Dacă Notepad nu are file (Windows 10), după ce ai salvat îl închizi cu X. În browser închide fila paginii. Pagina și fotografia tale rămân în Documente.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m3_l16',
+  mod:'lectie',
+  titlu:'Conținutul paginii: paragrafe și imagini',
+  marca:'Lecția <b>16</b> · Pagini web · a VIII-a',
+  h1:'Conținutul paginii: paragrafe și imagini',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U2', unitateTitlu:'Pagini web',
+  competente:['CS.1.2','CS.3.2'], lectii:'16',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.2, CS.3.2 · unitatea VIII-U2 „Pagini web” · lecția 16 · conținutul: „Operații de editare a elementelor de conținut (paragraf, imagini, tabele, liste, legături): inserare, ștergere, mutare, copiere”; azi: paragraful și imaginea',
+  intro:`<p>Lecția 16. Umpli pagina de la lecția 15 cu titluri de secțiune, paragrafe și o fotografie, iar paragrafele le muți, le copiezi și le ștergi întregi.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 15, „Elemente de structură…”: scheletul (<code>&lt;head&gt;</code> cu <code>&lt;title&gt;</code> și rândul meta, <code>&lt;body&gt;</code>), fiecare etichetă închisă, rândurile mutate la dreapta cu <kbd>Tab</kbd>; <code>lang="ro"</code>;</li>
+<li>lecția 14, „Cum e făcută o pagină web…”: titlul mare <code>&lt;h1&gt;</code>…<code>&lt;/h1&gt;</code>; Notepad (file, Fișier › Salvați ca, Închideți fila), salvarea ca .html cu Toate fișierele și UTF-8; Explorer, unde extensiile sunt ascunse și te uiți la coloana Tip; în browser, după <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad, <kbd>F5</kbd>;</li>
+<li>lecția 4, „Adresa de celulă. Selectare, copiere, mutare, ștergere”: <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd>;</li>
+<li>clasa a V-a, lecția 10, „Operații cu fișiere și directoare”: muți un fișier în alt folder, în Explorer (un clic pe el, <kbd>Ctrl</kbd>+<kbd>X</kbd>, apoi în folderul nou <kbd>Ctrl</kbd>+<kbd>V</kbd>);</li>
+<li>clasa a V-a, lecția 15, „Salvarea informațiilor de pe Internet”: clic dreapta pe o imagine › Salvați imaginea ca.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”, într-un Notepad și un browser simulate în pagină. Apoi atelierul, apoi același lucru la calculatorul din laborator, iar la sfârșit 5 întrebări. Acestea sunt obligatorii. Pentru cine termină mai repede sunt butoanele „Încă un exercițiu”, de la pași și de la atelier, și pașii din laborator care încep cu „Dacă mai ai timp”.</p>`,
+  banda:'<span class="fila">Excursia în Retezat</span><span><span class="tg">&lt;h2&gt;</span>Lacul Bucura<span class="tg">&lt;/h2&gt;</span> <span class="tg">&lt;p&gt;</span>…<span class="tg">&lt;/p&gt;</span> <span class="tg">&lt;img src="bucura.jpg"&gt;</span></span>',
+  tipuri:{editorweb:TIP_L16},
+  nivele:[
+  {t:'Conținutul paginii: paragrafe și imagini', final:true, lectii:[16], continuturi:[P.editare],
+   obiectiv:'pui într-o pagină web titluri de secțiune, paragrafe și o imagine din același dosar, cu text alternativ, și muți, copiezi sau ștergi un paragraf întreg.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>La intrarea în Cheile Vălișoarei, în județul Alba, stă panoul din fotografie. Sus e titlul mare, numele locului. Dedesubt sunt titluri mai mici, câte unul pentru fiecare parte a panoului: aici, o parte în franceză și una în engleză. Sub fiecare titlu sunt paragrafe de text, iar alături, o hartă.</p>
+<p>Așa se citește ușor: te uiți la titluri și găsești partea care te interesează. O pagină web se face la fel, din titluri, paragrafe și imagini. Azi le pui în pagina ta.</p>
+${fig(IMG+'panou-valisoara.webp',800,700,'Panou verde la intrarea în Cheile Vălișoarei: sus titlul mare CHEILE VĂLIȘOAREI, dedesubt titlurile mai mici LES GORGES DE VALISOARA și VALISOARA GORGE, fiecare cu paragrafe de text, iar în dreapta o hartă a cheilor','Titlul mare, titlurile părților, paragrafele și o imagine (harta). Fotografie: E.Coman, CC0, <a href="https://commons.wikimedia.org/wiki/File:Cheile_Valisoarei_-_Cheile_Aiudului_(panou_informativ).jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (micșorată).')}`},
+
+    /* ---------- PASUL 1: titlurile de secțiune ---------- */
+    {t:'Titlurile de secțiune: de la <h2> la <h6>',
+     text:`<p>Știi deja <code>&lt;h1&gt;</code>, titlul mare al paginii. O pagină mai lungă are și părți, numite <mark>secțiuni</mark>, fiecare cu titlul ei. Pentru ele mai sunt cinci niveluri: <code>&lt;h2&gt;</code>, <code>&lt;h3&gt;</code>, <code>&lt;h4&gt;</code>, <code>&lt;h5&gt;</code>, <code>&lt;h6&gt;</code>. Cifra spune cât de important e titlul:</p>
+<ul><li><code>&lt;h1&gt;</code>, o singură dată: titlul paginii;</li>
+<li><code>&lt;h2&gt;</code>: titlul unei secțiuni;</li>
+<li><code>&lt;h3&gt;</code>: o parte dintr-o secțiune.</li></ul>
+<p>Nu sări niveluri: sub un <code>&lt;h2&gt;</code> vine <code>&lt;h3&gt;</code>, nu <code>&lt;h5&gt;</code>. Fiecare titlu are perechea lui, ca <code>&lt;h1&gt;</code>: <code>&lt;h2&gt;Drumul&lt;/h2&gt;</code>. Nu există <code>&lt;h7&gt;</code>.</p>`,
+     exemplu:`${PRE(CORP(COD.p1_ex))}
+${fig(IMG+'br-titluri.webp',480,364,'Pagina Clubul de șah în browser: titlul mare Clubul de șah, titlul de secțiune Program, mai mic, titlurile Luni și Joi, și mai mici, apoi titlul de secțiune Înscrieri; rândurile de text sunt scrise normal, neîngroșate','Browserul scrie titlurile îngroșat: „Program” mai mic decât „Clubul de șah”, iar „Luni” și „Joi” și mai mici. Eticheta o alegi după locul titlului în pagină, nu după mărimea literelor.')}`,
+     altfel:`<p>Gândește-te la caietul de TIC. Titlul lecției e scris sus, mare: el e <code>&lt;h1&gt;</code>. În lecție ai părți, „Teorie” și „Exerciții”: ele sunt <code>&lt;h2&gt;</code>. La „Exerciții” ai „Exercițiul 1” și „Exercițiul 2”: ele sunt <code>&lt;h3&gt;</code>.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Pagina de mai jos are două rânduri de text. Pune un titlu de secțiune deasupra fiecăruia: <b>Drumul</b> deasupra rândului despre urcare și <b>Lacul Bucura</b> deasupra rândului despre apă. Fiecare titlu, pe un rând nou, cu <code>&lt;h2&gt;</code> și <code>&lt;/h2&gt;</code>.',
+       start:{text:COD.p1_start,fisier:ANA},
+       teste:EWC.cuDiagnostic([
+        {ce:'Titlul paginii, &lt;h1&gt;, a rămas unul singur: „Excursia în Retezat”',fn:S=>JSON.stringify(textele(LV(S),'h1'))===JSON.stringify(['excursia in retezat']),msg:'<code>&lt;h1&gt;</code> e doar pentru titlul paginii. Secțiunile primesc <code>&lt;h2&gt;</code>.'},
+        {ce:'Pagina are titlurile de secțiune „Drumul” și „Lacul Bucura”, cu &lt;h2&gt;',fn:S=>JSON.stringify(textele(LV(S),'h2'))===JSON.stringify(['drumul','lacul bucura']),msg:'Scrie <code>&lt;h2&gt;Drumul&lt;/h2&gt;</code> și <code>&lt;h2&gt;Lacul Bucura&lt;/h2&gt;</code>, fiecare pe rândul lui, în ordinea asta.'},
+        {ce:'Fiecare titlu stă deasupra rândului lui',fn:S=>{const t=N(corp(LV(S)).textContent),a=[t.indexOf('drumul'),t.indexOf('am urcat'),t.indexOf('lacul bucura'),t.indexOf('apa era')];return a.every(x=>x>=0)&&a[0]<a[1]&&a[1]<a[2]&&a[2]<a[3]},msg:'„Drumul” vine înaintea rândului despre urcare, iar „Lacul Bucura”, înaintea rândului despre apă.'},
+        ORD]),
+       rezolvare:[['scrie',COD.p1_rez]],gresit:[['scrie',COD.p1_gresit]],
+       ajutor:'Dă clic la sfârșitul rândului cu &lt;h1&gt;, apasă Enter și scrie &lt;h2&gt;Drumul&lt;/h2&gt;. La fel, deasupra rândului despre apă.',
+       why:'Titlurile de secțiune împart pagina în două părți. <code>&lt;h1&gt;</code> a rămas doar pentru titlul paginii.'},
+     inca:[
+      {t:'choice',q:'Pagina „Clubul de șah” are titlul paginii, două secțiuni, „Program” și „Înscrieri”, iar în secțiunea „Program” două părți, „Luni” și „Joi”. Ce etichetă primește „Joi”?',o:['<h3>','<h2>','<h1>','<h6>'],ok:0,
+       ajutor:'„Joi” e o parte dintr-o secțiune.',why:'„Joi” e o parte din secțiunea „Program” (<code>&lt;h2&gt;</code>), deci primește nivelul următor: <code>&lt;h3&gt;</code>.'},
+      {t:'tf',q:'Ca să scrii un rând de text mai mic decât restul, îl pui între <code>&lt;h6&gt;</code> și <code>&lt;/h6&gt;</code>.',ok:false,
+       ajutor:'Ce spune cifra din eticheta unui titlu?',why:'Fals. <code>&lt;h6&gt;</code> face din rând un titlu, cel mai puțin important. Cifra spune locul titlului în pagină, nu mărimea textului.'}
+     ]},
+
+    /* ---------- PASUL 2: paragrafe și rânduri ---------- */
+    {t:'Paragrafe și rânduri: <p> și <br>',
+     text:`<p>Browserul nu ține cont de <kbd>Enter</kbd>-ul din Notepad. Nici de spațiile puse unul după altul, nici de rândurile goale: din toate face un singur spațiu și scrie textul în continuare, pe același rând. De aceea îi arăți tu unde începe fiecare bucată:</p>
+<ul><li><code>&lt;p&gt;</code> … <code>&lt;/p&gt;</code> cuprinde un <mark>paragraf</mark>. Fiecare paragraf începe pe un rând nou, cu un spațiu liber deasupra;</li>
+<li><code>&lt;br&gt;</code> <mark>rupe rândul</mark> în interiorul paragrafului, fără spațiu liber, de exemplu între versurile unei strofe. Nu are închidere.</li></ul>`,
+     exemplu:`${PRE(CORP(COD.p2_ex))}
+${fig(IMG+'br-paragrafe.webp',480,166,'Pagina Jurnal în browser: titlul mare Jurnal, apoi rândul Am urcat trei ore pe munte., cu un singur spațiu între cuvinte, apoi, după un spațiu liber, versurile Somnoroase păsărele și Pe la cuiburi se adună, pe rânduri separate','Primul paragraf: Enter-ul și spațiile în plus n-au contat. Al doilea: <code>&lt;br&gt;</code> a rupt rândul.')}`,
+     altfel:`<p>E ca atunci când îi dictezi unui coleg. El nu vede cum ai așezat tu textul pe foaia ta. Scrie de la capăt de rând doar când îi spui „alineat nou” (<code>&lt;p&gt;</code>) sau „rând nou” (<code>&lt;br&gt;</code>).</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'În browser, versurile și numele poetului ies unul după altul, pe același rând. Fă din strofă un paragraf, cu fiecare vers pe rândul lui, iar din numele poetului, alt paragraf: <code>&lt;p&gt;</code> înainte de primul vers, <code>&lt;br&gt;</code> la sfârșitul primelor trei versuri, <code>&lt;/p&gt;</code> după ultimul; apoi <code>&lt;p&gt;</code>Mihai Eminescu<code>&lt;/p&gt;</code>.',
+       start:{text:COD.p2_start,fisier:ANA},
+       teste:EWC.cuDiagnostic([
+        {ce:'Strofa e un paragraf, cu fiecare vers pe rândul lui',fn:S=>JSON.stringify(randuriP(LV(S),'somnoroase'))===JSON.stringify(STROFA),msg:'Strofa intră într-un singur <code>&lt;p&gt;</code>…<code>&lt;/p&gt;</code>, cu <code>&lt;br&gt;</code> la sfârșitul primelor trei versuri.'},
+        {ce:'Numele poetului e un paragraf separat',fn:S=>textele(LV(S),'p').includes('mihai eminescu'),msg:'Pune <code>&lt;p&gt;Mihai Eminescu&lt;/p&gt;</code> pe rândul lui, după strofă.'},
+        {ce:'&lt;br&gt; e scris fără închidere',fn:S=>fara(LV(S),/<\/br\s*>/i),msg:'<code>&lt;br&gt;</code> nu are închidere: șterge <code>&lt;/br&gt;</code>.'},
+        ORD]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p2_gresit]],
+       ajutor:'Fără &lt;br&gt;, versurile din același paragraf ies pe un singur rând, ca înainte.',
+       why:'<code>&lt;p&gt;</code> a făcut din strofă un paragraf, iar <code>&lt;br&gt;</code> a pus fiecare vers pe rândul lui. Numele poetului e un paragraf separat, cu un spațiu liber deasupra.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'Ana a pus rânduri goale în Notepad între cele două zile, dar în browser zilele stau pe același rând. Fă din fiecare zi un paragraf.',
+       start:{text:COD.p2b_start,fisier:ANA},
+       teste:EWC.cuDiagnostic([
+        {ce:'Două paragrafe: „Ziua 1…” și „Ziua 2…”',fn:S=>JSON.stringify(textele(LV(S),'p'))===JSON.stringify(['ziua 1: am urcat la cabana.','ziua 2: am ajuns la lac.']),msg:'Fiecare zi stă între <code>&lt;p&gt;</code> și <code>&lt;/p&gt;</code>: închide primul paragraf după „cabană.” și deschide altul înainte de „Ziua 2”.'},
+        ORD]),
+       rezolvare:[['scrie',COD.p2b_rez]],gresit:[['scrie',COD.p2b_start]],
+       ajutor:'Rândurile goale nu fac loc liber. Un paragraf nou face.',
+       why:'Fiecare zi e acum un paragraf: începe pe rând nou, cu un spațiu liber deasupra. Rândurile goale nu contau.'},
+      {t:'choice',q:'Matei scrie în Notepad, într-un singur <code>&lt;p&gt;</code>, două propoziții pe două rânduri, fără <code>&lt;br&gt;</code>. Cum apar în browser?',o:['Pe același rând, una după alta','Pe două rânduri','Ca două paragrafe','Nu apar deloc'],ok:0,
+       ajutor:'Ce face browserul cu Enter-ul din Notepad?',why:'Browserul face din Enter un singur spațiu, deci propozițiile ies una după alta. Un rând nou ceri cu <code>&lt;br&gt;</code>.'}
+     ]},
+
+    /* ---------- PASUL 3: elementul întreg: muți, copiezi, ștergi ---------- */
+    {t:'Muți, copiezi sau ștergi un paragraf întreg',
+     text:`<p>Un <mark>element</mark> înseamnă eticheta care deschide, ce e înăuntru și eticheta care închide: <code>&lt;p&gt;Apa era rece.&lt;/p&gt;</code> e un element paragraf. Când muți, copiezi sau ștergi un paragraf, îl iei întreg, cu ambele etichete. Altfel rămân etichete fără pereche. În Notepad, ca în Excel la lecția 4:</p>
+<ol class="pasi-met"><li>selectezi elementul: clic înainte de <code>&lt;p&gt;</code>, apoi tragi cu mouse-ul până după <code>&lt;/p&gt;</code>;</li>
+<li><kbd>Ctrl</kbd>+<kbd>X</kbd> îl decupează (îl muți), <kbd>Ctrl</kbd>+<kbd>C</kbd> îl copiază, <kbd>Delete</kbd> îl șterge;</li>
+<li>la mutare sau copiere: clic la sfârșitul rândului după care îl vrei, <kbd>Enter</kbd>, apoi <kbd>Ctrl</kbd>+<kbd>V</kbd>.</li></ol>
+<p>Rândul gol rămas în urmă nu strică nimic.</p>`,
+     exemplu:`<p>Înainte: paragraful despre apă e sub secțiunea „Drumul”.</p>${PRE(CORP(COD.p3_start))}
+<p>După mutare: e sub „Lacul Bucura”. În browser, fiecare paragraf apare sub titlul lui.</p>${PRE(CORP(COD.p3_rez))}`,
+     altfel:`<p>E ca atunci când muți un sertar plin: iei tot sertarul, cu ce e în el. Dacă iei doar lucrurile din el, sertarul gol rămâne pe loc. Etichetele sunt sertarul, textul e ce e înăuntru.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Paragraful despre apă a ajuns sub secțiunea greșită. Mută-l întreg, de la <code>&lt;p&gt;</code> la <code>&lt;/p&gt;</code>, sub titlul <b>Lacul Bucura</b>.'+(ES.tactil()?' Pe telefon: ține degetul pe text ca să-l selectezi, trage de capetele selecției, apoi decupează și lipește din butoanele care apar.':''),
+       start:{text:COD.p3_start,fisier:ANA},capat:true,
+       teste:EWC.cuDiagnostic([
+        NEATINS(COD.p3_start,['Apa era'],'fă din nou mutarea: selectezi doar paragraful despre apă, de la <code>&lt;p&gt;</code> până după <code>&lt;/p&gt;</code>.'),
+        PERECHI_P(null,COD.p3_start),
+        FARA_LIBER(COD.p3_start),
+        {ce:'Paragraful despre apă e în pagină',fn:S=>textele(LV(S),'p').some(x=>x.includes('apa era')),get msg(){return 'Paragraful întreg <code>&lt;p&gt;Apa era rece și limpede.&lt;/p&gt;</code> nu mai e în pagină. Dacă l-ai decupat și nu l-ai lipit încă, lipește-l pe un rând nou, sub <code>&lt;h2&gt;Lacul Bucura&lt;/h2&gt;</code>. Altfel, ca să pornești din nou curat, '+CAPAT_INAPOI()}},
+        /* reparația 5, punctul Y: testul „apare o singură dată (mutat, nu copiat)” a plecat — mesajul lui spunea ce tastă a
+           apăsat elevul („l-ai copiat (Ctrl+C)”), fals după Ctrl+X + Ctrl+V de două ori. Dublura o spune DIFERIT, pe stare. */
+        ORD,
+        DIFERIT(COD.p3_rez,'Ordinea: „Drumul”, paragraful despre urcare, „Lacul Bucura”, paragraful despre apă','Paragraful despre apă trebuie să stea imediat sub <code>&lt;h2&gt;Lacul Bucura&lt;/h2&gt;</code>, iar celelalte să rămână unde erau.')]),
+       rezolvare:[['scrie',COD.p3_rez]],gresit:[['scrie',COD.p3_gresit]],
+       ajutor:'Selectează tot rândul cu paragraful despre apă, Ctrl+X; clic la sfârșitul rândului cu Lacul Bucura, Enter, Ctrl+V.',
+       why:'Paragraful despre apă stă acum sub „Lacul Bucura”, întreg: etichetele sunt împreună cu textul, deci n-a rămas nimic fără pereche.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'În pagină a rămas un paragraf de probă. Șterge-l întreg: selectează-l de la <code>&lt;p&gt;</code> până după <code>&lt;/p&gt;</code> și apasă <kbd>Delete</kbd>.',
+       start:{text:COD.p3b_start,fisier:ANA},capat:true,
+       teste:EWC.cuDiagnostic([
+        NEATINS(COD.p3b_start,['Text de probă'],'șterge din nou doar paragraful de probă: de la <code>&lt;p&gt;</code> până după <code>&lt;/p&gt;</code>, apoi <kbd>Delete</kbd>.'),
+        {ce:'Paragraful de probă nu mai e în pagină',fn:S=>!N(LV(S)).includes('text de proba'),msg:'Textul „Text de probă, de șters.” e încă în pagină.'},
+        PERECHI_P(null,COD.p3b_start),FARA_LIBER(COD.p3b_start),ORD,
+        DIFERIT(COD.p3_rez,'Restul paginii e ca în rezolvare: „Drumul”, urcarea, „Lacul Bucura”, apa',()=>'Elementele paginii nu mai sunt în ordinea de la început. Ca să pornești din nou curat, '+CAPAT_INAPOI())]),
+       rezolvare:[['scrie',COD.p3_rez]],gresit:[['scrie',COD.p3b_gresit]],
+       ajutor:'Selecția începe înainte de &lt;p&gt; și se termină după &lt;/p&gt;.',
+       why:'Paragraful de probă nu mai e în pagină, nici textul, nici etichetele lui. Un rând gol rămas nu se vede în browser.'},
+      {t:'editorweb',mod:'live',
+       q:'Rândul „Pagina clasei a VIII-a A” trebuie să apară și sus, imediat sub titlul mare, dar să rămână și jos. Copiază paragraful și lipește copia sub <code>&lt;h1&gt;</code>.',
+       start:{text:COD.p3c_start,fisier:ANA},capat:true,
+       teste:EWC.cuDiagnostic([
+        NEATINS(COD.p3c_start,['Pagina clasei'],'copiază din nou doar paragraful: de la <code>&lt;p&gt;</code> până după <code>&lt;/p&gt;</code>, <kbd>Ctrl</kbd>+<kbd>C</kbd>, apoi lipește-l sub <code>&lt;h1&gt;</code>.'),
+        PERECHI_P(null,COD.p3c_start),FARA_LIBER(COD.p3c_start),ORD,
+        COPIA_SUS()]),
+       rezolvare:[['scrie',COD.p3c_rez]],gresit:[['scrie',COD.p3c_gresit]],
+       ajutor:'Copierea: Ctrl+C. Originalul rămâne unde era.',
+       why:'Paragraful e acum și sus, și jos. Așa face copierea: cu <kbd>Ctrl</kbd>+<kbd>C</kbd> originalul rămâne pe loc, iar <kbd>Ctrl</kbd>+<kbd>V</kbd> pune copia acolo unde e cursorul.'}
+     ]},
+
+    /* ---------- PASUL 4: imaginea: <img src> ---------- */
+    {t:'Imaginea: <img src="…">',
+     text:`<p>O imagine se pune cu eticheta <code>&lt;img&gt;</code>, iar fișierul ei îl spui cu <code>src</code>: <code>&lt;img src="bucura.jpg"&gt;</code>. <code>src</code> e un <mark>atribut</mark>: o informație scrisă în eticheta care deschide, cu semnul <code>=</code> și valoarea între ghilimele, ca <code>lang="ro"</code> de la lecția 15. Reguli:</p>
+<ul><li>fișierul imaginii stă în <b>același dosar</b> cu pagina, iar în <code>src</code> scrii doar numele lui, fără dosar: <code>bucura.jpg</code>, nu <code>Documente/bucura.jpg</code>;</li>
+<li>scrii numele lui <b>exact</b>, cu extensia: <code>bucura.jpg</code>, nu <code>bucura</code>. În Explorer extensia nu se vede: la Tip scrie ceva cu <b>JPG</b>, de exemplu „Fișier JPG”, deci numele se termină cu .jpg;</li>
+<li><code>&lt;img&gt;</code> nu are închidere.</li></ul>`,
+     exemplu:`${PRE(CORP(COD.p4_rez))}
+${fig(IMG+'br-imagine.webp',664,653,'Pagina Excursia în Retezat în browser: titlul mare, titlul de secțiune Lacul Bucura, paragraful Apa era rece și limpede., iar dedesubt fotografia lacului dintre munți','Fotografia apare acolo unde ai scris <code>&lt;img&gt;</code>, sub paragraf.')}`,
+     altfel:`<p>E ca un bilet pentru colegul de bancă: „caietul verde cu spirală”. Colegul caută doar pe banca voastră, așa că pe bilet nu scrii unde e: banca e dosarul paginii. Îl găsește doar dacă îl numești întreg. Un bilet fără „cu spirală” (ca un nume fără extensie) sau cu „albastru” în loc de „verde” nu-l duce la caiet.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Fotografia lacului stă în același dosar cu pagina: sub zona de scris vezi dosarul, ca în Explorer. Pune fotografia în pagină, pe un rând nou, sub paragraf.',
+       start:{text:COD.p4_start,fisier:ANA,fisiere:DOSAR()},capat:true,
+       teste:EWC.cuDiagnostic([
+        NEATINS(COD.p4_start,['Apa era'],'scrie din nou imaginea, pe un rând nou, sub paragraf.'),
+        PERECHI_P('Data viitoare, înainte de <kbd>Enter</kbd>, pui cursorul la sfârșitul rândului, după <code>&lt;/p&gt;</code>.',COD.p4_start),
+        IMG_SUB_P(),
+        {ce:'Imaginea se vede: în src e numele fișierului din dosar, cu extensia',fn:S=>EWC.seVede(S),msg:'Numele din <code>src</code> trebuie să fie exact numele fotografiei, cu extensia.'},
+        {ce:'&lt;img&gt; e scris fără închidere',fn:S=>fara(LV(S),/<\/img\s*>/i),msg:'<code>&lt;img&gt;</code> nu are închidere: șterge <code>&lt;/img&gt;</code>.'},
+        ORD]),
+       rezolvare:[['scrie',COD.p4_rez]],gresit:[['scrie',COD.p4_gresit]],
+       ajutor:'În dosar fotografia apare ca „bucura”, cu Tip „Fișier JPG”. Numele întreg: bucura.jpg.',
+       why:'<code>src="bucura.jpg"</code> e numele exact al fișierului din același dosar, deci browserul îl găsește și desenează fotografia.'},
+     inca:[
+      {t:'choice',q:'În Documente sunt pagina Mariei și o fotografie care în Explorer apare ca <b>munte</b>, cu Tip „Fișier PNG”. Ce rând scrie Maria în pagină?',o:['<img src="munte.png">','<img src="munte">','<img src="munte.jpg">','<img src="Documente/munte.png">'],ok:0,
+       ajutor:'Ce extensie arată coloana Tip? Și unde stă fotografia?',why:'Tip „Fișier PNG” înseamnă că numele se termină cu .png. Fotografia stă în același dosar cu pagina, deci scrii doar numele: <code>munte.png</code>.'},
+      {t:'tf',q:'<code>&lt;img src="bucura.jpg"&gt;</code> are nevoie de <code>&lt;/img&gt;</code> după el.',ok:false,
+       ajutor:'Recitește ultima regulă din pas.',why:'Fals. <code>&lt;img&gt;</code> nu are text înăuntru: tot ce-i trebuie stă în atribute, deci nu are închidere.'}
+     ]},
+
+    /* ---------- PASUL 5: alt și imaginea care lipsește ---------- */
+    {t:'Textul alternativ: alt',
+     text:`<p><code>alt</code> e al doilea atribut al imaginii. În el scrii, în câteva cuvinte, ce se vede în fotografie: <code>alt="Lacul Bucura, între munți"</code>. La ce folosește:</p>
+<ul><li>dacă imaginea nu se poate arăta, de exemplu pentru că numele din <code>src</code> e greșit, browserul pune o pictogramă mică de imagine lipsă și, lângă ea, textul din <code>alt</code>. Fără <code>alt</code> rămâne doar pictograma;</li>
+<li>un elev nevăzător ascultă pagina cu un program care citește cu voce tare. În locul imaginii aude textul din <code>alt</code>.</li></ul>
+<p>Între atribute pui un spațiu: <code>&lt;img src="bucura.jpg" alt="Lacul Bucura"&gt;</code>. Dacă rândul e prea lung, treci cu <kbd>Enter</kbd> pe rândul următor: browserul ia Enter-ul drept spațiu.</p>`,
+     exemplu:`${PRE(J(IA('bucura.png')))}
+${fig(IMG+'br-imagine-lipsa.webp',480,195,'Pagina Excursia în Retezat în browser: titlul, secțiunea Lacul Bucura și paragraful; în locul fotografiei, o pictogramă mică de imagine ruptă și textul Lacul Bucura, între munți','Fișierul din dosar se numește <code>bucura.jpg</code>, nu <code>bucura.png</code>: în locul fotografiei, pictograma și textul din <code>alt</code>. Cu numele corect, după <kbd>Ctrl</kbd>+<kbd>S</kbd> și <kbd>F5</kbd>, fotografia revine.')}`,
+     altfel:`<p>Gândește-te că îi povestești la telefon unui prieten ce e într-o fotografie, pe care el n-o vede. Nu-i spui „poză” sau numele fișierului, ci ce e în ea: „un lac între munți, cu stânci în față”. Asta scrii în <code>alt</code>.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'În pagină se vede doar o pictogramă mică. <b>1.</b> Dă imaginii un text alternativ care spune ce e în fotografie: după <code>src="…"</code>, un spațiu și <code>alt="…"</code>. <b>2.</b> Repară numele din <code>src</code>: uită-te în dosarul de sub zona de scris, la Tip.',
+       start:{text:COD.p5_start,fisier:ANA,fisiere:DOSAR()},
+       teste:EWC.cuDiagnostic([
+        ALT_LAC('Imaginea are un text alternativ care spune ce se vede'),
+        {ce:'Imaginea se vede: numele din src e cel din dosar',fn:S=>EWC.seVede(S),msg:'Fișierul din dosar are Tip „Fișier JPG”: numele lui se termină cu .jpg.'},
+        ORD]),
+       rezolvare:[['scrie',COD.p5_rez]],gresit:[['scrie',COD.p5_gresit]],
+       ajutor:'Întâi alt: textul tău apare lângă pictogramă. Apoi src: .jpg în loc de .png.',
+       why:'Cât timp numele era greșit, se vedeau pictograma și textul din <code>alt</code>. Cu <code>src="bucura.jpg"</code>, fotografia a apărut.'},
+     inca:[
+      {t:'classify',q:'Care texte alternative sunt bune pentru fotografia lacului?',cats:['Bun: spune ce se vede','Slab: nu spune ce se vede'],
+       items:[['Lacul Bucura, cu stânci și munți în jur',0],['bucura.jpg',1],['poză',1],['Un lac de munte, cu apă liniștită',0]],
+       ajutor:'Un nevăzător ar afla ce e în fotografie?',why:'Un text alternativ bun spune ce se vede. Numele fișierului sau „poză” nu-i spun nimic celui care nu vede imaginea.'},
+      {t:'choice',q:'În eticheta <code>&lt;img&gt;</code>, Ana scrie la <code>src</code> numele <b>Lac.jpg</b>, iar la <code>alt</code> „Lacul Bucura”. În dosar, fotografia se numește <b>bucura.jpg</b>. Ce vede în browser?',o:['Pictograma de imagine lipsă și „Lacul Bucura”','Fotografia lacului, în mărimea ei','Textul „Lac.jpg”, fără nicio pictogramă','Nimic: în locul imaginii rămâne gol'],ok:0,
+       ajutor:'Există un fișier Lac.jpg în dosar?',why:'În dosar nu e niciun fișier Lac.jpg, deci browserul nu are ce desena: pune pictograma de imagine lipsă și textul din <code>alt</code>.'}
+     ]}
+   ],
+   atelier:{t:'editorweb',mod:'notepad',titlu:'Atelier: pagina despre excursie',
+    intro:`<p>Mai jos ai un Notepad, folderul Documente și un browser, simulate. Deasupra lor sunt <strong>testele</strong>: se bifează singure când faci ce cer. La final apasă <b>Verifică</b>. Pe un ecran mic, treci de la o fereastră la alta cu butoanele de sub ele.</p>`,
+    q:`În Notepad e o filă goală. În Documente sunt pagina ta de la lecția 15 și fotografia lacului. <b>1.</b> Deschide pagina de la lecția 15. Comanda <b>Fișier › Deschideți</b> (Open), sau <kbd>Ctrl</kbd>+<kbd>O</kbd>, aduce în Notepad un fișier salvat, ca să-l schimbi. În fereastra <b>Deschidere</b>: în stânga, <b>Documente</b>; dacă pagina ta nu apare în listă, alege jos, la tip, <b>Toate fișierele (*.*)</b>; clic pe pagina ta, apoi butonul <b>Deschidere</b> (Open). <b>2.</b> Salvează pagina cu nume nou, ca cea de la lecția 15 să rămână neschimbată: <b>Fișier › Salvați ca</b> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>), în Documente, cu numele tău după modelul <code>Popescu_Ana_8A_lectia16.html</code>. <b>3.</b> Fă din ea pagina de mai jos: pe filă și în titlul mare <b>Excursia în Retezat</b>, apoi secțiunea, două paragrafe și fotografia, cu text alternativ. <b>4.</b> Salvează și deschide pagina în browser (în Documente, dublu-clic pe ea; pe telefon, două atingeri repezi).${PRE(COD.atelier)}`,
+    start:{fisiere:{Documente:[{n:P15,t:COD.scoala.replace(/\n/g,'\r\n')+'\r\n'},Object.assign({},FOTO)]},dreapta:'explorer'},
+    teste:EWC.cuDiagnostic([
+     {ce:'Pagina de la lecția 15 e deschisă în Notepad (Fișier › Deschideți)',fn:S=>(S.jurnal||[]).some(j=>j.a==='deschis_notepad'&&j.cale==='Documente/'+P15),faraDiagnostic:true,msg:'Întâi deschide pagina ta de la lecția 15: <b>Fișier › Deschideți</b> (Ctrl+O), în stânga Documente, jos <b>Toate fișierele (*.*)</b>, clic pe pagină, apoi <b>Deschidere</b>. Nu o scrie din nou de la capăt.'},
+     {ce:'Pagina de la lecția 15 a rămas cum era',neatins:['Documente/'+P15],msg:'Pagina de la lecția 15 din Documente nu mai e cum era. Întâi <b>Fișier › Salvați ca</b>, cu numele nou; abia apoi lucrezi. „Arată-mi răspunsul” îți arată drumul bun.'},
+     {ce:'O pagină .html în Documente, cu numele, prenumele, clasa ta și lectia16, salvată în UTF-8',fisier:Object.assign({cod:'UTF-8'},AT),msg:'Fișier › Salvați ca: Documente, numele tău cu lectia16 și .html, Toate fișierele, UTF-8, Salvare.'},
+     {ce:'Pe filă și în titlul mare scrie „Excursia în Retezat”',fn:(S,U)=>{const s=ES.src(S,U,AT);return !!s&&N(ES.titlu(s))==='excursia in retezat'&&JSON.stringify(textele(s,'h1'))===JSON.stringify(['excursia in retezat'])},faraOraData:true,msg:'Schimbă textul și în <code>&lt;title&gt;</code>, și în <code>&lt;h1&gt;</code>, apoi Ctrl+S.'},
+     {ce:'Sub titlul mare, secțiunea &lt;h2&gt; „Lacul Bucura”',fn:(S,U)=>{const s=ES.src(S,U,AT);return !!s&&textele(s,'h2').includes('lacul bucura')},msg:'Scrie <code>&lt;h2&gt;Lacul Bucura&lt;/h2&gt;</code> pe un rând nou, sub <code>&lt;h1&gt;</code>.'},
+     {ce:'Cel puțin două paragrafe cu text',fn:(S,U)=>{const s=ES.src(S,U,AT);return !!s&&EWC.paragrafe(s).length>=2},msg:'Fiecare paragraf stă între <code>&lt;p&gt;</code> și <code>&lt;/p&gt;</code>.'},
+     {ce:'Fotografia lacului se vede și are un text alternativ',fn:(S,U)=>{const s=ES.src(S,U,AT);return !!s&&EWC.seVede(S,U,AT)&&altLac(s)},msg:'<code>&lt;img src="bucura.jpg" alt="…"&gt;</code>: numele exact al fotografiei, cu .jpg, iar în <code>alt</code> ce se vede în fotografie, în câteva cuvinte (ex. „Lacul Bucura între munți”), nu „poză” sau numele fișierului.'},
+     /* reparația 5 (X): ES.ordine primește conținut după </body>; aici se cere și ca în afara lui <body>…</body> să fie
+        doar scheletul (afaraCorp) */
+     (()=>{let af='';return {ce:'Scheletul e întreg, fiecare etichetă are perechea ei, iar tot ce se vede stă între &lt;body&gt; și &lt;/body&gt;',fn:(S,U)=>{const s=ES.src(S,U,AT);af=s?afaraCorp(s):'';return !!s&&ES.ordine(s)&&!af},faraOraData:true,
+       get msg(){return af?`În afara lui <code>&lt;body&gt;</code>…<code>&lt;/body&gt;</code> a ajuns <code>${X(af)}</code>. Chiar dacă browserul îl arată, locul lui în cod e greșit: tot ce se vede în pagină se scrie între <code>&lt;body&gt;</code> și <code>&lt;/body&gt;</code>. Mută-l acolo, apoi <kbd>Ctrl</kbd>+<kbd>S</kbd>.`
+         :'Fiecare <code>&lt;h2&gt;</code> și <code>&lt;p&gt;</code> se închide; rândurile scheletului rămân.'}}})(),
+     {ce:'Browserul arată pagina ta, cu fotografia',fn:(S,U)=>EWC.seVede(S,U,{browser:AT}),msg:'Deschide pagina din Documente (dublu-clic). Dacă ai schimbat ceva după, Ctrl+S în Notepad și F5 în browser.'},
+     {ce:'Pagina din browser e cea salvată acum',laZi:AT,msg:'Browserul arată pagina cum era înainte de ultima salvare: F5 în browser.'}],{spec:AT}),
+    rezolvare:[['deschideInNotepad','Documente/'+P15],['salveazaCa',{nume:ANA,dosar:'Documente'}],['scrie',COD.atelier],['salveaza'],['deschide','Documente/'+ANA]],
+    gresit:[['deschideInNotepad','Documente/'+P15],['scrie',COD.atelier],['salveaza'],['deschide','Documente/'+P15]],
+    ajutor:'Pe rând: Fișier › Deschideți (Ctrl+O), Toate fișierele, pagina de la lecția 15; Ctrl+Shift+S cu numele tău și lectia16.html; textele noi și rândurile '+(ES.tactil()?'(cu spații în locul Tab-urilor)':'(cu Tab-uri)')+'; Ctrl+S; în Documente, dublu-clic pe pagină.',
+    why:'Ai deschis pagina de la lecția 15, ai salvat-o cu nume nou și ai făcut din ea o pagină cu titlu, o secțiune, două paragrafe și o fotografie din același dosar, cu text alternativ. Pagina de la lecția 15 a rămas neatinsă.',
+    solutieText:'pagina de la lecția 15 a fost deschisă cu Fișier › Deschideți, apoi salvată ca Popescu_Ana_8A_lectia16.html, cu secțiunea, paragrafele și fotografia, și e deschisă în browser.',
+    inca:[
+     {t:'editorweb',mod:'notepad',titlu:'Atelier: repară fotografia și lasă calculatorul curat',
+      q:'În browser, în locul fotografiei se văd o pictogramă mică și textul alternativ. <b>1.</b> Află în Documente numele exact al fotografiei (uită-te la Tip). <b>2.</b> Repară <code>src</code> în Notepad. <b>3.</b> Fă ca browserul să arate fotografia. <b>4.</b> La final, închide fila din Notepad cu <b>Fișier › Închideți fila</b>, nu cu X-ul ferestrei.',
+      start:{fisiere:{Documente:[{n:ANA,t:COD.at2_start.replace(/\n/g,'\r\n')+'\r\n'},Object.assign({},FOTO)]},notepad:{file:[{n:ANA,dosar:'Documente'}]},browser:{file:['Documente/'+ANA]},dreapta:'browser'},
+      teste:EWC.cuDiagnostic([
+       {ce:'În fișierul salvat, src are numele exact al fotografiei',fn:(S,U)=>EWC.seVede(S,U,{exact:ANA}),msg:'Fotografia are Tip „Fișier JPG”: numele ei se termină cu .jpg. Repară src și apasă Ctrl+S.'},
+       {ce:'Browserul arată fotografia',fn:(S,U)=>EWC.seVede(S,U,{browser:{exact:ANA}}),msg:'După Ctrl+S în Notepad: clic pe pagină, apoi F5.'},
+       {ce:'Pagina din browser e cea salvată acum',laZi:{exact:ANA},msg:'F5 în browser, după salvare.'},
+       {ce:'Notepad e închis și nu-ți mai redeschide fila',npCurat:true,faraDiagnostic:true,msg:'Fișier › Închideți fila. X-ul ferestrei păstrează fila pentru data viitoare.'}],{spec:{exact:ANA}}),
+      rezolvare:[['scrie',COD.atelier],['salveaza'],['f5'],['inchideFila']],
+      gresit:[['scrie',COD.atelier],['salveaza'],['f5'],['inchideFereastra']],
+      ajutor:'În src scrie bucura.jpg. Apoi: Ctrl+S, F5, Fișier › Închideți fila.',
+      why:'Cu numele exact, browserul găsește fotografia. Notepad, închis din filă, pornește curat pentru colegul următor.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Pagina „Muzeul satului” are titlul paginii și trei secțiuni: „Program”, „Bilete” și „Cum ajungi”. Ce rând scrii pentru secțiunea „Bilete”?',
+     o:['<h2>Bilete</h2>','<h1>Bilete</h1>','<h3>Bilete</h3>','<p>Bilete</p>'],ok:0,
+     ajutor:'Ce nivel are titlul unei secțiuni?',why:'„Bilete” e titlul unei secțiuni, deci <code>&lt;h2&gt;</code>. <code>&lt;h1&gt;</code> e pentru titlul paginii, o singură dată.'},
+    {t:'editorweb',mod:'live',
+     q:'Programul cercului iese pe un singur rând. Fă ca fiecare zi să fie pe rândul ei, în același paragraf.',
+     start:{text:COD.q2_start,fisier:'Pop_Matei_8B_lectia16.html'},
+     teste:[{ce:'Fiecare zi e pe rândul ei, în același paragraf',fn:S=>JSON.stringify(randuriP(LV(S),'luni'))===JSON.stringify(['luni: 14-16','miercuri: 15-17','vineri: 14-15']),msg:'Programul trebuie să fie un singur paragraf, cu fiecare zi pe rândul ei: <code>&lt;br&gt;</code> la sfârșitul primelor două zile, nu câte un <code>&lt;p&gt;</code> pentru fiecare zi.'},
+      {ce:'Fără etichete fără pereche',fn:S=>fara(LV(S),/<\/br\s*>/i)&&ES.ordine(LV(S)),msg:'O etichetă e scrisă greșit sau a rămas fără pereche.'}],
+     rezolvare:[['scrie',COD.q2_rez]],gresit:[['scrie',COD.q2_gresit]],
+     ajutor:'Un paragraf, dar rânduri rupte.',why:'<code>&lt;br&gt;</code> la sfârșitul primelor două zile rupe rândul fără să facă paragraf nou.'},
+    {t:'editorweb',mod:'live',
+     q:'Paragraful despre bilet a ajuns sub secțiunea „Program”. Mută-l sub „Bilete”.',
+     start:{text:COD.q3_start,fisier:'Pop_Matei_8B_lectia16.html'},capat:true,
+     teste:[NEATINS(COD.q3_start,['Biletul'],'mută din nou paragraful despre bilet: selectezi doar rândul lui, de la <code>&lt;p&gt;</code> până după <code>&lt;/p&gt;</code>.'),
+      PERECHI_P(null,COD.q3_start),
+      FARA_LIBER(COD.q3_start),ORD,
+      DIFERIT(COD.q3_rez,'Ordinea: „Program”, paragraful despre program, „Bilete”, paragraful despre bilet, o singură dată','Paragraful despre bilet trebuie să stea imediat sub „Bilete”, iar celelalte să rămână unde erau.')],
+     rezolvare:[['scrie',COD.q3_rez]],gresit:[['scrie',COD.q3_gresit]],
+     ajutor:'Elementul întreg, decupat și lipit.',why:'Paragraful despre bilet stă acum sub „Bilete”, întreg: <code>&lt;p&gt;</code>, textul și <code>&lt;/p&gt;</code>.'},
+    {t:'choice',q:'În Documente, Ana are pagina ei și o fotografie care în Explorer apare ca <b>cetatea</b>, cu Tip „Fișier PNG”. În eticheta <code>&lt;img&gt;</code> scrie la <code>src</code> numele <b>cetatea.jpg</b>, iar la <code>alt</code> „Cetatea Neamțului”. Ce vede în browser?',
+     o:['Pictograma de imagine lipsă și „Cetatea Neamțului”','Fotografia cetății, în mărimea ei','Textul „cetatea.jpg”, fără nicio pictogramă','Nimic: în locul imaginii rămâne gol'],ok:0,
+     ajutor:'Ce extensie arată Tip „Fișier PNG”?',why:'Fișierul se numește <code>cetatea.png</code>, nu <code>cetatea.jpg</code>. Browserul nu găsește fișierul, deci pune pictograma de imagine lipsă și textul din <code>alt</code>.'},
+    {t:'editorweb',mod:'live',
+     q:'Fotografia stă în același dosar cu pagina, dar nu se vede. Repară rândul cu imaginea.',
+     start:{text:COD.q5_start,fisier:ANA,fisiere:DOSAR()},
+     teste:[{ce:'Fotografia se vede',fn:S=>EWC.seVede(S),msg:'Ce scrii în src când fotografia stă în același dosar cu pagina?'},
+      {ce:'Imaginea are în continuare textul alternativ',fn:S=>altLac(LV(S)),msg:'Păstrează <code>alt="…"</code>.'},ORD],
+     rezolvare:[['scrie',COD.q5_rez]],gresit:[['scrie',COD.q5_start]],
+     ajutor:'Uită-te la ce e scris în fața numelui fotografiei.',why:'Fotografia stă în același dosar cu pagina, deci în <code>src</code> scrii doar numele ei: <code>bucura.jpg</code>, fără dosar.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Notepad-ul și browserul adevărate',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:`<p>Faci pagina despre excursie pe calculator, fără ajutor: la fiecare pas scrie ce trebuie să vezi, ca să verifici singur. Pașii 1-6 și ultimul pas, curățenia, sunt obligatorii. Pașii care încep cu „Dacă mai ai timp” sunt pentru cine termină mai repede. Dacă se apropie sfârșitul orei, sari direct la ultimul pas: pagina și fotografia rămân în Documente. Întrebările de după laborator le faci după curățenie, dacă mai e timp, sau ora viitoare: pe pagina lecției apeși <b>Continuă de unde ai rămas</b>, apoi <b>La verificare</b>.</p>
+<p>Întâi salvezi fotografia de mai jos, în Documente.</p>
+${figFara(IMG+'bucura.jpg',640,480,'Lacul Bucura din Munții Retezat: apa în dreapta, stânci cu licheni în față, munți și nori în spate','Fotografia de salvat (pasul 1): Lacul Bucura, în Munții Retezat. Fotografie: Gugalcrom123, CC0, <a href="https://commons.wikimedia.org/wiki/File:Lake_Bucura_03.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (micșorată).')}
+${fig('../../v/m2-l15/img/edge-meniu-imagine.webp',880,785,'Microsoft Edge: clic dreapta pe fotografia unui lup; în meniu, comanda Salvați imaginea ca e încadrată','Pasul 1, în Edge: clic dreapta pe fotografie › <b>Salvați imaginea ca</b>. (Captură de la lecția a V-a, cu altă fotografie.)')}
+${fig('../../v/m2-l15/img/edge-salvare-ca.webp',911,209,'Bucăți din fereastra Salvare ca deschisă din Edge: sus bara de adresă cu Descărcări, jos câmpul Nume fișier cu numele propus și butoanele Salvare și Anulare','Fereastra <b>Salvare ca</b> pornește în Descărcări: tu alegi în stânga Documente și scrii numele tău.')}`,
+    pasi:PROVOCARE},
+  diploma:{titlu:'Autorul paginii cu paragrafe și imagini',
+    rezumat:'a împărțit pagina în secțiuni cu titluri de la h2 în jos, a scris paragrafe cu p și a rupt rândul cu br, a mutat, a copiat și a șters paragrafe întregi, a pus o fotografie din același dosar cu img, src și alt și a reparat numele greșit al unei imagini',
+    aplicatie:'Notepad-ul și browserul adevărate',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
