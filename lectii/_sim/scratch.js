@@ -58,12 +58,44 @@
    1.2 până după ridicarea degetului; zona de cod NU mai fuge atunci spre stânga (ar muta câmpul de sub deget), iar o
    atingere pe chiar câmpul deschis îl lasă deschis. Probele: _campaign/revizuire_completa_2026_09/m3_noapte_23_10/
    scratch_13/ (tinte.py, comportamente.py, raport.md). Mouse și taste: neschimbate (desen, ținte și pași, probat).
+   1.4 (24.10.2026, componenta comună, după judecățile VI/19 [E], VI/21 [MAJOR 3, MINOR 6] și raportul 1.2) — TREI
+   PURTĂRI, probate întâi în editorul VIU (Chromium headless, fără cont, rețeaua doar spre scratch.mit.edu, atingeri
+   reale; _campaign/revizuire_completa_2026_09/componente_24_10/scratch/live_atingere*.py → live_atingere_*.json):
+     (1) DUPLICĂ CU DEGETUL (meniul deschis ținând degetul pe bloc): în Scratch, cu atingere, copia NU vine după deget;
+         apare lângă original, mai la dreapta și mai jos (+48, +96 unități; probat pe tabletă Android, laptop cu ecran
+         tactil și telefon), o atingere în altă parte n-o mută, iar trasă cu degetul sub ultimul bloc se lipește. Aici
+         la fel: copia intră în zona de cod ca un script nou, la același loc, și se trage ca orice bloc. Înainte,
+         copia „plutea” după un deget care nu putea s-o miște: prima atingere o lăsa chiar acolo (pe telefon, de cele
+         mai multe ori PESTE program, deci intra între blocuri), iar pragul de lipire era cel de mouse (36 px, nu 44).
+         Cu MOUSE-ul, neschimbat: copia vine după mouse și o lași cu un clic (ca în Scratch).
+     (2) O CASETĂ LĂSATĂ DESCHISĂ (fără Enter) nu mai dă eroare în consolă. Cauza: un câmp deschis, apoi o tragere din
+         paletă (mouse): lăsarea redesena zona de cod, scoțând din pagină caseta care avea încă focusul; scoaterea ei
+         pornea `blur` → închiderea casetei → altă redesenare chiar în timpul primei („Failed to set the 'innerHTML'
+         property … moved in a 'blur' event handler?”), iar restul lăsării nu se mai făcea. Acum: (a) cu mouse-ul,
+         apăsarea pe un bloc din PALETĂ închide întâi caseta (ca degetul din 1.2, ca Scratch: editorul câmpului se
+         închide la apăsare), apoi tragerea merge; (b) apăsarea pe chiar caseta deschisă din paletă o lasă deschisă
+         (gardă); (c) orice redesenare a zonei sau a paletei închide întâi caseta deschisă din ea (plasa de siguranță,
+         pe orice altă ordine de gesturi).
+     (3) CÂMPUL DIRECȚIEI („orientează-te în direcția 90”, și în paletă): ca în Scratch, UN clic deschide caseta și
+         CERCUL CU SĂGEATA, iar tastele NU intră (focusul e pe cerc; nici Enter nu-l închide); DUBLU clic pe număr îl
+         selectează și scrii peste el; două clicuri LENTE pun cursorul între cifre („9-900” → 9, ca J2 VI/21 V4);
+         triplu clic selectează tot. Mânerul alb al cercului se trage cu mouse-ul (pas de 15°); un clic pe cerc nu
+         schimbă nimic (probat viu). Pe TELEFON: o atingere = cercul, fără tastatură, tastele nu intră (ca Scratch);
+         a doua atingere pe număr, repede sau încet, îl selectează și scrii peste el (ca Scratch pe un calculator cu
+         ecran tactil, probat; pe tableta Android Scratch pune doar cursorul între cifre); mânerul NU se trage cu
+         degetul (în Scratch nici el, probat). Fără zoom la dublu-tap (touch-action). Probele 1.4:
+         componente_24_10/scratch/ (proba_14.py, raport.md).
+   ABATERI 1.4 (mărunte): cercul e desenat mai simplu (fără săgeata de pe mâner); Scratch pune numărul și cercul în
+   același loc, aici cercul stă sub câmp (sau deasupra, dacă jos nu încape).
 
    API PUBLIC (window.SimScratch) — stabil de la 24.10.2026; orice schimbare se trece în graniță, cu data:
-     versiune                                            '1.3 (24.10.2026)' — înainte '1.2 (24.10.2026)', '1.1 (24.10.2026)'
+     versiune                                            '1.4 (24.10.2026)' — înainte '1.3 (24.10.2026)', '1.2 (24.10.2026)',
+                                                         '1.1 (24.10.2026)'
                                                          (1.1 = paleta urmează personajul, `dinPersonaj`; 1.2 = defectele
                                                          de telefon de mai sus; 1.3 = țintele de atingere ≥ 32 px și
-                                                         atingerile din prima cu o casetă deschisă; API-ul NESCHIMBAT)
+                                                         atingerile din prima cu o casetă deschisă; 1.4 = Duplică cu
+                                                         degetul, caseta deschisă fără erori, câmpul direcției cu cercul;
+                                                         API-ul NESCHIMBAT, doar adăugirea `unghi` de mai jos)
      categorie(id, {nume, en, culoare, margine})       categoriile (cele 9 ale editorului sunt deja înregistrate:
                                                          miscare, aspect, sunet, evenimente, control, detectare,
                                                          operatori, variabile, blocurile_mele)
@@ -77,6 +109,8 @@
          dinPersonaj: ['x', 'y'] (opțional; 1.1) — în PALETĂ, câmpul i ia Math.round(personaj[dinPersonaj[i]]) la
                fiecare mișcare a personajului (null = câmp care nu urmează); au deja: mergi_la_xy ['x','y'],
                seteaza_x ['x'], seteaza_y ['y']; un „glisează … la x: y:” nou (VI/24) pune [null, 'x', 'y'];
+         unghi: [0] (opțional; 1.4) — câmpurile numerice i care sunt DIRECȚII: se editează ca în Scratch, cu cercul
+               cu săgeata (un clic = cercul, dublu clic = scrii); are deja: orienteaza [0];
          en: 'move %1 steps' (opțional, pentru surse),  final: true (fără crestătură jos: „la infinit”),
          executa: function*(ctx, v, nod) { … }   generator; `yield` = așteaptă cadrul următor (1/30 s);
                ctx.personaj: {x, y, directie, mergi(n), roteste(grade), mergiLa(x, y), orienteaza(d), spune(text, sec?),
@@ -116,7 +150,7 @@
 (function () {
   'use strict';
   if (window.SimScratch) return;
-  const VERSIUNE = '1.3 (24.10.2026)';
+  const VERSIUNE = '1.4 (24.10.2026)';
   const FPS = 30;
   const CAT = {};
   const DEF = {};
@@ -175,7 +209,7 @@
   bloc('roteste_st', {cat: 'miscare', text: 'rotește-te ↺ [n:15] grade', en: 'turn left %1 degrees', *executa(ctx, v) { ctx.personaj.roteste(-nr(v[0])); }});
   /* dinPersonaj (1.1): în paletă, numerele urmează personajul, ca în editor (după 3 steaguri: „mergi la x 30 y: 0”) */
   bloc('mergi_la_xy', {cat: 'miscare', text: 'mergi la x [n:0] y: [n:0]', en: 'go to x: %1 y: %2', dinPersonaj: ['x', 'y'], *executa(ctx, v) { ctx.personaj.mergiLa(nr(v[0]), nr(v[1])); }});
-  bloc('orienteaza', {cat: 'miscare', text: 'orientează-te în direcția [n:90]', en: 'point in direction %1', *executa(ctx, v) { ctx.personaj.orienteaza(nr(v[0])); }});
+  bloc('orienteaza', {cat: 'miscare', text: 'orientează-te în direcția [n:90]', en: 'point in direction %1', unghi: [0], *executa(ctx, v) { ctx.personaj.orienteaza(nr(v[0])); }});
   bloc('modifica_x', {cat: 'miscare', text: 'modifică x cu [n:10]', en: 'change x by %1', *executa(ctx, v) { const p = ctx.personaj; p.mergiLa(p.x + nr(v[0]), p.y); }});
   bloc('seteaza_x', {cat: 'miscare', text: 'setează x la [n:0]', en: 'set x to %1', dinPersonaj: ['x'], *executa(ctx, v) { const p = ctx.personaj; p.mergiLa(nr(v[0]), p.y); }});
   bloc('modifica_y', {cat: 'miscare', text: 'modifică y cu [n:10]', en: 'change y by %1', *executa(ctx, v) { const p = ctx.personaj; p.mergiLa(p.x, p.y + nr(v[0])); }});
@@ -410,6 +444,10 @@
 .ss-tst li .s{flex:none;width:1.1em;font-weight:800}
 .ss-tst li.ok .s{color:var(--ok,#23784A)}.ss-tst li.no .s{color:var(--bad,#B8362E)}
 .ss-tst .m{display:block;color:var(--bad,#B8362E);font-size:.86rem}
+.ss-pill input.ss-unghi{position:relative;z-index:1}
+.ss-cadran{position:fixed;z-index:2147483001;background:#fff;border:1px solid #C8CCD4;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.18);padding:4px;touch-action:none;outline:0;-webkit-user-select:none;user-select:none}
+.ss-cadran svg{display:block;width:120px;height:120px;touch-action:none}
+.ss-cadran .ss-cad-m{cursor:grab}
 @media (max-width:559px){.ss-scena{max-width:250px}.ss-lucru{height:340px}.ss-pal{grid-template-columns:42px minmax(0,1fr)}.ss-catb{font-size:9px}}
 @media (pointer:coarse){
 .ss-pal .ss-pill::after,.ss-panza .ss-pill::after{top:calc(var(--ss-u)*-8px - 1px);bottom:calc(var(--ss-u)*-8px - 1px)}
@@ -598,6 +636,10 @@
 
     /* ---- zona de cod ---- */
     function deseneazaCod(insertie) {
+      /* 1.4: plasa de siguranță — o casetă deschisă în zona de cod se închide (cu ce e scris) ÎNAINTE de redesenare.
+         Altfel innerHTML de mai jos o scoate cu focusul pe ea, blur-ul ei redesenează din nou în mijlocul scoaterii și
+         apare eroarea „…moved in a 'blur' event handler?”. Din fin() se ajunge aici cu caseta deja închisă. */
+      if (caseta && !caseta.inPaleta) inchideCaseta();
       indexeaza();
       const pz = $('.ss-panza'), U = u();
       let maxX = 0, maxY = 0;
@@ -653,6 +695,7 @@
        Nu se schimbă cât elevul ține apăsat / trage un bloc sau scrie într-un câmp din paletă (se reia imediat după). */
     function paletaUrmeaza() {
       if (g) return;
+      if (caseta && caseta.inPaleta) return;   /* 1.4: și cât e deschis cercul direcției din paletă (focusul pe cerc) */
       const L = $('.ss-lista'), a = document.activeElement;
       if (L && a && a.tagName === 'INPUT' && L.contains(a)) return;
       const S = M ? M.S : st;
@@ -784,30 +827,117 @@
         meniu(span.getBoundingClientRect().left, span.getBoundingClientRect().bottom, camp.opt.map(op => [op, () => { n.v[k] = op; inPaleta ? redeseneazaPaleta() : schimbat(); }]));
         return;
       }
+      /* 1.4 (gardă): caseta e deja deschisă chiar aici (al doilea clic pe ea): rămâne cum e; innerHTML de mai jos ar
+         scoate caseta cu focus, iar blur-ul ei ar redesena în mijlocul scoaterii. */
+      if (caseta && caseta.inp.isConnected && span.contains(caseta.inp)) return;
+      const unghi = camp.c === 'n' && !!d.unghi && d.unghi.indexOf(k) >= 0;   /* 1.4: câmpul direcției (cu cercul) */
       const vechi = n.v[k];
-      span.innerHTML = `<input value="${esc(vechi)}" ${camp.c === 'n' ? 'inputmode="decimal"' : ''} aria-label="Valoarea din bloc">`;
+      span.innerHTML = `<input value="${esc(vechi)}" ${camp.c === 'n' ? 'inputmode="decimal"' : ''} aria-label="${unghi ? 'Direcția, în grade' : 'Valoarea din bloc'}"${unghi ? ' class="ss-unghi"' : ''}>`;
       const inp = span.querySelector('input');
-      inp.focus();
-      inp.select();
-      if (camp.c === 'n') inp.addEventListener('input', () => { const c = inp.value.replace(/[^0-9.\-]/g, ''); if (c !== inp.value) inp.value = c; });
       let terminat = false;
-      const ed = {inp, faraStanga: false};   /* 1.3: faraStanga = închis de degetul pus pe alt bloc din zona de cod */
+      const ed = {inp, faraStanga: false, inPaleta, cad: null, fin: null};   /* 1.3: faraStanga = închis de degetul pus pe alt bloc din zona de cod */
+      if (unghi) {
+        /* 1.4: ca în Scratch (probat viu, live_atingere*.json): un clic deschide caseta ȘI cercul, iar focusul stă pe
+           cerc (tastele nu intră, nici Enter nu închide); numărul e deja selectat, dar se scrie abia după al doilea
+           clic pe el (dublu clic = cuvântul selectat; clic lent = cursorul între cifre; triplu clic = tot). */
+        ed.cad = cadran(inp, span);
+        inp.select();
+        ed.cad.focus({preventScroll: true});
+        let tip = null;
+        inp.addEventListener('pointerdown', (e) => { tip = e.pointerType; });
+        /* cu degetul, a doua atingere pe număr (repede sau încet) îl selectează (ca Scratch pe un calculator cu ecran
+           tactil: dublu-tap și atingeri la 700 ms → „90” selectat, probat viu); cu mouse-ul hotărăște browserul */
+        inp.addEventListener('click', () => { if (tip && tip !== 'mouse' && !terminat) { inp.focus({preventScroll: true}); inp.select(); } });
+        inp.addEventListener('input', () => { const x = parseFloat(String(inp.value).replace(',', '.')); if (isFinite(x) && ed.cad) ed.cad._arata(x); });
+      } else {
+        inp.focus();
+        inp.select();
+      }
+      if (camp.c === 'n') inp.addEventListener('input', () => { const c = inp.value.replace(/[^0-9.\-]/g, ''); if (c !== inp.value) inp.value = c; });
       const fin = (pastreaza) => {
         if (terminat) return;
         terminat = true;
         if (editare === ed) editare = null;
+        if (caseta === ed) caseta = null;
+        if (ed.cad) { const c = ed.cad; ed.cad = null; window.removeEventListener('scroll', c._poz, true); c.remove(); }
         let v = pastreaza ? inp.value : vechi;
         if (camp.c === 'n' && v.trim() === '') v = '0';
+        /* 1.4: la direcție, Scratch păstrează numărul de la început („9-900” → 9, J2 VI/21 V4); fără număr → cel vechi */
+        if (unghi) { const x = parseFloat(String(v).replace(',', '.')); v = isFinite(x) ? String(x) : vechi; }
         n.v[k] = v;
         if (inPaleta) redeseneazaPaleta();
         else { if (v !== vechi) schimbat(); else deseneazaCod(); if (!ed.faraStanga) laStanga(n); }
       };
+      ed.fin = fin;
+      caseta = ed;
       if (!inPaleta) editare = ed;
       inp.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') fin(true); else if (e.key === 'Escape') fin(false); });
-      inp.addEventListener('blur', () => fin(true));
+      /* 1.4: la direcție, focusul trece între casetă și cerc fără să le închidă */
+      const pierde = (e) => { const r = e.relatedTarget; if (unghi && r && (r === inp || (ed.cad && ed.cad.contains(r)))) return; fin(true); };
+      inp.addEventListener('blur', pierde);
+      if (ed.cad) ed.cad.addEventListener('blur', pierde);
       inp.addEventListener('pointerdown', (e) => e.stopPropagation());
     }
+    /* 1.4: cercul cu săgeata al câmpului direcției (desenul după editorul viu: cercul albastru de 94 px, gradațiile din
+       15 în 15, linia spre 0 și spre direcția de acum, mânerul alb de 20 px). Mânerul se trage cu MOUSE-ul (pas de 15°,
+       −180 … 180); un clic pe cerc nu schimbă nimic; cu degetul, cercul doar arată (probat viu: Scratch nu-l mișcă). */
+    function cadran(inp, span) {
+      const c = document.createElement('div');
+      c.className = 'ss-cadran';
+      c.tabIndex = -1;
+      c.setAttribute('aria-label', 'Cercul cu săgeata: direcția (trage mânerul alb)');
+      let semne = '';
+      for (let a = 0; a < 360; a += 15) semne += `<line x1="94" y1="60" x2="100" y2="60" transform="rotate(${a},60,60)" stroke="#fff" stroke-opacity=".7"/>`;
+      c.innerHTML = `<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="47" fill="#4280D7" stroke="#3373CC"/><path class="ss-cad-g" fill="#fff" fill-opacity=".3"/><line x1="60" y1="60" x2="60" y2="13" stroke="#fff"/><line class="ss-cad-l" x1="60" y1="60" stroke="#fff" stroke-width="1.5"/>${semne}<circle cx="60" cy="60" r="2" fill="#fff"/><circle class="ss-cad-m" r="10" fill="#fff" stroke="#3373CC"/></svg>`;
+      document.body.appendChild(c);
+      /* sub câmp (deasupra, dacă jos nu încape); rămâne lângă câmp și când pagina sau zona de cod se derulează */
+      c._poz = () => {
+        const r = span.getBoundingClientRect(), W = c.offsetWidth, H = c.offsetHeight;
+        c.style.left = Math.max(4, Math.min(r.left + r.width / 2 - W / 2, window.innerWidth - W - 4)) + 'px';
+        c.style.top = (r.bottom + 6 + H <= window.innerHeight - 4 ? r.bottom + 6 : Math.max(4, r.top - H - 6)) + 'px';
+      };
+      c._poz();
+      window.addEventListener('scroll', c._poz, true);
+      const f = (v) => Math.round(v * 100) / 100;
+      c._arata = (d) => {
+        const a = d * Math.PI / 180, x = 60 + 47 * Math.sin(a), y = 60 - 47 * Math.cos(a);
+        c.querySelector('.ss-cad-g').setAttribute('d', `M 60,60 L 60,13 A 47,47 0 0 ${d >= 0 ? 1 : 0} ${f(x)},${f(y)} z`);
+        const l = c.querySelector('.ss-cad-l'); l.setAttribute('x2', f(x)); l.setAttribute('y2', f(y));
+        const m = c.querySelector('.ss-cad-m'); m.setAttribute('cx', f(x)); m.setAttribute('cy', f(y));
+      };
+      const x0 = parseFloat(String(inp.value).replace(',', '.'));
+      c._arata(isFinite(x0) ? x0 : 90);
+      let tr = null;
+      const unghiDin = (e) => {
+        const q = c.querySelector('svg').getBoundingClientRect();
+        let d = Math.atan2(e.clientX - (q.left + q.width / 2), (q.top + q.height / 2) - e.clientY) * 180 / Math.PI;
+        d = Math.round(d / 15) * 15;
+        if (d <= -180) d += 360;
+        if (d > 180) d -= 360;
+        return d;
+      };
+      c.addEventListener('pointerdown', (e) => {
+        e.preventDefault();   /* focusul rămâne unde e (pe casetă, dacă scrii; pe cerc, altfel) */
+        if (e.pointerType !== 'mouse' || e.button !== 0 || !e.target.closest('.ss-cad-m')) return;
+        tr = e.pointerId;
+        try { c.setPointerCapture(e.pointerId); } catch (er) { /* fără captură */ }
+      });
+      c.addEventListener('pointermove', (e) => {
+        if (tr !== e.pointerId) return;
+        const d = unghiDin(e);
+        inp.value = String(d);
+        c._arata(d);
+      });
+      const gata = (e) => { if (tr === e.pointerId) tr = null; };
+      c.addEventListener('pointerup', gata);
+      c.addEventListener('pointercancel', gata);
+      c.addEventListener('contextmenu', (e) => e.preventDefault());
+      return c;
+    }
+    /* 1.4: închide caseta deschisă (oriunde: zona de cod sau paleta), păstrând ce e scris în ea */
+    function inchideCaseta() { if (caseta) caseta.fin(true); }
     let editare = null;   /* 1.2: caseta deschisă acum într-un bloc din zona de cod ({inp, faraStanga}), altfel null */
+    let caseta = null;    /* 1.4: caseta deschisă acum, în zona de cod SAU în paletă ({inp, fin, inPaleta, cad}), altfel null */
     /* 1.2 (24.10.2026): după ce se închide caseta unui câmp (Enter, Escape, atingere în altă parte), zona de cod revine
        spre stânga cât să se vadă marginea stângă a programului în care ai scris (programul de la x 20 → la capăt).
        La 390 px câmpurile din dreapta unui bloc lung se văd doar cu zona derulată; rămasă așa, marginea stângă a
@@ -820,6 +950,7 @@
     }
     function redeseneazaPaleta() { refaPaleta(); }
     function refaPaleta() {
+      if (caseta && caseta.inPaleta) inchideCaseta();   /* 1.4: plasa de siguranță, ca în deseneazaCod */
       const L = $('.ss-lista'), top = L.scrollTop;
       L.innerHTML = catFolosite.map(c => `<h4 data-cat="${c}">${esc(CAT[c].nume)}</h4>` + Object.values(nodPaleta).filter(n => DEF[n.id].cat === c).map(n => htmlNod(n, true)).join('')).join('') + `<p class="ss-nota">${o.nota || NOTA}</p>`;
       deseneaza(L, u());
@@ -1064,12 +1195,12 @@
       setTimeout(() => d.remove(), 4200);
     }
     function nrBlocuri(n) { let k = 1; n.guri.forEach(gl => gl.forEach(x => { k += nrBlocuri(x); })); Object.values(n.s).forEach(x => { k += nrBlocuri(x); }); return k; }
-    function meniuBloc(uid, x, y) {
+    function meniuBloc(uid, x, y, deget) {
       const loc = idx[uid];
       if (!loc) return;
       const k = nrBlocuri(loc.n);
       meniu(x, y, [
-        ['Duplică', () => duplica(uid, x, y)],
+        ['Duplică', () => duplica(uid, x, y, deget)],
         ['Adaugă comentariu', () => toast('În Scratch, „Adaugă comentariu” lipește lângă bloc o notiță galbenă, în care scrii ce face blocul. În pagină nu punem comentarii.')],
         [k > 1 ? `Șterge ${k} blocuri` : 'Șterge blocul', () => { scoateUnul(uid); schimbat(); }]
       ]);
@@ -1085,12 +1216,24 @@
       if (tot) it.push([tot > 1 ? `Șterge ${tot} blocuri` : 'Șterge blocul', () => { if (tot < 2 || window.confirm(`Șterg toate ${tot} blocuri?`)) { scripturi = []; schimbat(); } }]);
       meniu(x, y, it);
     }
-    function duplica(uid, x, y) {
+    function duplica(uid, x, y, deget) {
       const loc = idx[uid];
       if (!loc) return;
       const spec = loc.slotDe ? [spre(loc.n)] : loc.lista.slice(loc.i).map(spre);
       const noduri = spec.map(dinSpec);
-      /* ca în Scratch: copia vine „lipită” de mouse/deget; o lași cu un clic / o atingere */
+      if (deget) {
+        /* 1.4: meniul deschis cu DEGETUL (ținut apăsat) — ca în Scratch cu atingere (probat viu, live_atingere_*.json:
+           tabletă Android, laptop cu ecran tactil, telefon): copia NU vine după deget, ci apare lângă original, cu
+           +48 unități spre dreapta și +96 în jos; o atingere în altă parte n-o mută; o tragi ca pe orice bloc (pragul
+           de lipire al degetului, 44 px) și, lăsată sub ultimul bloc, se lipește. */
+        const el0 = root.querySelector(`.ss-panza .ss-b[data-uid="${uid}"]`), U = u();
+        const pz = $('.ss-panza').getBoundingClientRect(), r = el0 ? el0.getBoundingClientRect() : null;
+        const ox = r ? (r.left - pz.left) / U : loc.sc.x, oy = r ? (r.top - pz.top) / U : loc.sc.y;
+        scripturi.push({x: ox + 48, y: oy + 96, b: noduri});
+        schimbat();
+        return;
+      }
+      /* ca în Scratch: copia vine „lipită” de mouse; o lași cu un clic (1.4: doar cu mouse-ul, vezi mai sus) */
       g = {id: null, x0: x, y0: y, inPaleta: false, tip: 'mouse', dragging: false, urmareste: true};
       g.noduri = noduri; g.offX = 10; g.offY = 10;
       const f = document.createElement('div');
@@ -1142,15 +1285,19 @@
          elementul atins, deci îl parchez (parcheazaScos) și lucrez mai departe pe blocul redesenat, cu același uid,
          și pe câmpul lui cu același data-k. Pe un bloc din zona de cod, zona NU se întoarce la stânga (faraStanga):
          câmpul / blocul atins ar fugi de sub deget. Pe chiar câmpul deschis (lângă casetă): rămâne deschis. */
-      if (e.pointerType !== 'mouse') {
-        const L = $('.ss-lista'), a = document.activeElement;
-        const cas = editare ? editare.inp : (a && a.tagName === 'INPUT' && L.contains(a) ? a : null);
+      /* 1.4: și cu MOUSE-ul, dar doar pe un bloc din PALETĂ: apăsarea închide întâi caseta deschisă (Scratch închide
+         editorul câmpului la apăsare). Înainte caseta rămânea deschisă toată tragerea, iar la lăsare redesenarea zonei
+         o scotea din pagină cu focusul pe ea → eroarea „…moved in a 'blur' event handler?” și lăsarea neterminată.
+         Clicul pe chiar caseta deschisă din paletă o lasă deschisă (gardă). Zona de cod, cu mouse-ul:
+         neschimbată (ascultătorul zonei închide caseta, ca înainte). caseta = oricare, din zonă sau din paletă. */
+      if (e.pointerType !== 'mouse' || bl.closest('.ss-pal')) {
+        const cas = caseta ? caseta.inp : null;
         if (cas) {
           if (pill && pill.contains(cas)) { e.preventDefault(); return; }
           const t = e.target, uid = bl.dataset.uid, k = pill ? pill.dataset.k : null, inCod = !!bl.closest('.ss-panza');
           if (editare && inCod) editare.faraStanga = true;
-          cas.blur();
-          if (!t.isConnected) parcheazaScos(t);
+          inchideCaseta();
+          if (!t.isConnected && e.pointerType !== 'mouse') parcheazaScos(t);
           if (inCod) $('.ss-cod').focus({preventScroll: true});
           if (!root.contains(bl)) {
             bl = root.querySelector(`.ss-b[data-uid="${uid}"]`);
@@ -1167,7 +1314,7 @@
          focusul de pe caseta de scris a câmpului, abia deschisă); derularea paletei o decide touch-action, nu asta */
       e.preventDefault();
       if (e.pointerType !== 'mouse' && !inPaleta) {
-        g.lung = setTimeout(() => { if (g && !g.dragging) { const uid = bl.dataset.uid; g = null; curataAscultatori(); meniuBloc(uid, e.clientX, e.clientY); } }, 600);
+        g.lung = setTimeout(() => { if (g && !g.dragging) { const uid = bl.dataset.uid; g = null; curataAscultatori(); meniuBloc(uid, e.clientX, e.clientY, true); } }, 600);
       }
       window.addEventListener('pointermove', laMiscare, true);
       window.addEventListener('pointerup', laSus, true);
@@ -1225,12 +1372,16 @@
       paletaUrmeaza();
       if (parcare) setTimeout(golesteParcarea, 0);
     }
+    /* 1.4: ultimul fel de apăsare (mouse / deget / creion), ca meniul deschis de browser (contextmenu) să știe dacă
+       l-a cerut degetul (Duplică diferă: vezi duplica) */
+    let ultimTip = 'mouse';
+    root.addEventListener('pointerdown', (e) => { ultimTip = e.pointerType || 'mouse'; }, true);
     root.addEventListener('pointerdown', laJos);
     root.addEventListener('contextmenu', (e) => {
       if (e.target.closest('input')) return;
       if (document.querySelector('.ss-meniu')) { e.preventDefault(); return; }
       const bl = e.target.closest('.ss-panza .ss-b');
-      if (bl) { e.preventDefault(); meniuBloc(bl.dataset.uid, e.clientX, e.clientY); return; }
+      if (bl) { e.preventDefault(); meniuBloc(bl.dataset.uid, e.clientX, e.clientY, (e.pointerType || ultimTip) !== 'mouse'); return; }
       if (e.target.closest('.ss-cod')) { e.preventDefault(); meniuZona(e.clientX, e.clientY); }
     });
     document.addEventListener('touchmove', (e) => { if (g && g.dragging) e.preventDefault(); }, {passive: false});
