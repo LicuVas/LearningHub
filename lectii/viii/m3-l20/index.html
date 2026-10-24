@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Securitate cibernetică: ce nu public niciodată pe web</title>
+<meta name="description" content="Clasa a VIII-a, lecția 20: ce e securitatea cibernetică, de ce o pagină publicată rămâne publică (copii, motoare de căutare, arhive, codul văzut cu Ctrl+U), ce date personale nu publici, ce spune o fotografie (și locul ascuns în fișier), acordul și GDPR, ce publici în loc și lista de verificare a paginii, în Notepad și în browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;700&family=Lato:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@400;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#F1EFEA; --paper:#FFFFFF; --paper2:#F4F1EA; --line:#D8D0C2;
+  --ink:#221D16; --ink2:#5A5146; --accent:#8A4B00; --accentInk:#FFFFFF; --sel:#F6E3C6;
+  --mark:#FFE08A; --markInk:#221D16; --ok:#1E6B3A; --okbg:#E1F1E6; --bad:#A8322A; --badbg:#F8E2DF;
+  --fd:"Lexend","Segoe UI",system-ui,sans-serif; --fb:"Lato","Segoe UI",system-ui,sans-serif; --fm:"Fira Code",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#14110D; --paper:#1D1914; --paper2:#262019; --line:#43392C;
+  --ink:#EEE7DC; --ink2:#B5A994; --accent:#F2B45A; --accentInk:#14110D; --sel:#3A2E1D;
+  --mark:#EBCB55; --markInk:#221D16; --ok:#62C98A; --okbg:#16301F; --bad:#FF8A7F; --badbg:#3C201D;
+}}
+:root[data-theme="dark"]{
+  --desk:#14110D; --paper:#1D1914; --paper2:#262019; --line:#43392C;
+  --ink:#EEE7DC; --ink2:#B5A994; --accent:#F2B45A; --accentInk:#14110D; --sel:#3A2E1D;
+  --mark:#EBCB55; --markInk:#221D16; --ok:#62C98A; --okbg:#16301F; --bad:#FF8A7F; --badbg:#3C201D;
+}
+/* tema: fâșia de sus e lista de verificare a paginii, cu căsuțele ei, înainte de publicare */
+.banda{display:flex;flex-wrap:wrap;gap:3px 12px;align-items:center;font-family:var(--fm);font-size:.72rem;color:var(--ink2);padding:3px 8px;border-bottom:1px dashed var(--line)}
+.banda b{color:var(--accent);font-weight:600}
+.banda .cs{display:inline-block;width:.8em;height:.8em;border:1.5px solid var(--ink2);border-radius:2px;margin-right:4px;vertical-align:-1px}
+h1,h2{letter-spacing:-.01em}
+pre.rand{font-family:var(--fm);background:var(--paper2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:.4em 0;white-space:pre;overflow-x:auto;tab-size:8;-moz-tab-size:8;line-height:1.35}
+ol.lista-v{margin:.4em 0 .6em;padding-left:1.6em}
+ol.lista-v li{margin:.15em 0}
+.pasi-met{margin:.3em 0 .6em 1.2em;padding:0}   /* sub-pașii laboratorului (ca la VIII/16) */
+.pasi-met li{margin:.3em 0}
+.captura figcaption a{display:inline-block;padding:6px 0}
+a.descarca{display:inline-block;padding:6px 0;font-weight:700}
+@media (max-width:480px){pre.rand{tab-size:2;-moz-tab-size:2;font-size:.7rem;padding:6px}}   /* pe telefon Tab-ul se arată mai îngust și litera mai mică, ca rândurile să încapă la 390 px și în fereastra îngustă a pașilor (ca la VIII/16) */
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<!-- simulatorul „Notepad + browser” (proprietar: lecția VIII/14) + extensia lecției 15 (Tab, scheletul) + extensia lecției 16
+     (fișierele-imagine și pagina care le arată) + extensia lecției 20 (datele care nu se publică, căutate în tot codul).
+     Probele: _proba/proba_verificare.py, _proba/proba_gesturi_l20.py (Chromium headless, rețeaua blocată). -->
+<script src="../../_sim/editorweb.js"></script>
+<script src="../../_sim/editorweb-schelet.js"></script>
+<script src="../../_sim/editorweb-continut.js"></script>
+<script src="../../_sim/editorweb-verificare.js"></script>
+<script src="img/imagini-sim.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json, clasa a VIII-a, „Pagini web” */
+const P={securitate:'Securitate cibernetică'};
+
+/* imagini: panoul din lecția VIII/16 (E.Coman, CC0) și fotografia lacului (Gugalcrom123, CC0) cu locul adăugat în fișier;
+   proveniența în img/SURSE.json */
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const X=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const J=a=>a.join('\n');
+const PRE=s=>`<pre class="rand">${X(s)}</pre>`;
+const ES=window.EditorWebSchelet, EWC=window.EditorWebContinut, EV=window.EditorWebVerificare;
+EWC.inregistreaza('lacul',window.IMAGINI_L20.lacul);
+const LV=S=>S.live.text;
+const DT='<!DOCTYPE html>', HL='<html lang="ro">';
+/* scheletul de la lecția 15, indentat, cu titlul de pe filă și rândurile din corp */
+const SCH=(titlu,corp)=>J([DT,HL,'\t<head>','\t\t<meta charset="utf-8">','\t\t<title>'+titlu+'</title>','\t</head>','\t<body>',...corp,'\t</body>','</html>']);
+const H='\t\t', R3='\t\t\t';
+/* imaginea ca la lecția 16: alt pe rândul următor, ca rândul să încapă și pe telefon (Enter în etichetă = spațiu) */
+const IA=(src,alt)=>[H+'<img src="'+src+'"',R3+'alt="'+alt+'">'];
+const FOTO={n:'lacul.jpg',imagine:'lacul'};
+const DOSAR=()=>({Documente:[Object.assign({},FOTO)]});
+const ORD={ce:'Scheletul paginii a rămas întreg, cu fiecare etichetă închisă',fn:S=>ES.ordine(LV(S)),msg:'Nu șterge rândurile scheletului (&lt;head&gt;, &lt;/head&gt;, &lt;body&gt;, &lt;/body&gt;, &lt;/html&gt;). Dacă ai șters un paragraf, șterge-l întreg, de la &lt;p&gt; până la &lt;/p&gt;.'};
+const SURSA_FOTO='Foto: Gugalcrom123, CC0';
+/* sursa e scrisă în pagină DUPĂ imagine (în cod, după rândul cu <img>) */
+const sursaDupaImg=s=>{const t=EV.norm(s),i=t.indexOf('<img'),j=t.indexOf('gugalcrom123');return i>=0&&j>i&&EV.contine(EV.textPagina(s),'Gugalcrom123')&&EV.contine(EV.textPagina(s),'CC0')};
+
+/* toate codurile din pagină (aceleași texte sunt deschise în Chromium: _proba/proba_coduri_l20.py) */
+const COD={
+  p1_ex:SCH('Ana Popescu, 8B',[H+'<h1>Pagina mea</h1>',H+'<p>Îmi place să urc pe munte.</p>']),
+  p1_start:SCH('Ana Popescu – pagina mea',[H+'<h1>Pagina mea</h1>',H+'<p>Îmi place să urc pe munte.</p>',...IA('lacul.jpg','Ana Popescu la Lacul Bucura')]),
+  p1_rez:SCH('Ana – pagina mea',[H+'<h1>Pagina mea</h1>',H+'<p>Îmi place să urc pe munte.</p>',...IA('lacul.jpg','Ana la Lacul Bucura')]),
+  p1_gresit:SCH('Ana – pagina mea',[H+'<h1>Pagina mea</h1>',H+'<p>Îmi place să urc pe munte.</p>',...IA('lacul.jpg','Ana Popescu la Lacul Bucura')]),
+  p2_start:SCH('Pagina Anei',[H+'<h1>Pagina Anei</h1>',H+'<p>Îmi place să desenez pisici.</p>',H+'<p>Scrie-mi la ana.popescu@exemplu.test sau sună-mă la 0700 000 000.</p>']),
+  p2_rez:SCH('Pagina Anei',[H+'<h1>Pagina Anei</h1>',H+'<p>Îmi place să desenez pisici.</p>']),
+  p2_gresit:SCH('Pagina Anei',[H+'<h1>Pagina Anei</h1>',H+'<p>Îmi place să desenez pisici.</p>',H+'<p>Scrie-mi la ana.popescu@exemplu.test.</p>']),
+  p5_start:SCH('Ana Popescu',[H+'<h1>Ana Popescu</h1>',H+'<p>Sunt în clasa a VIII-a B la Școala Gimnazială nr. 99 din Brașov.</p>',H+'<p>Locuiesc pe Strada Inventată nr. 7.</p>',H+'<p>Îmi place baschetul.</p>']),
+  p5_rez:SCH('Ana',[H+'<h1>Ana</h1>',H+'<p>Sunt din Brașov.</p>',H+'<p>Îmi place baschetul.</p>']),
+  p5_gresit:SCH('Ana',[H+'<h1>Ana</h1>',H+'<p>Sunt în clasa a VIII-a B la Școala Gimnazială nr. 99 din Brașov.</p>',H+'<p>Îmi place baschetul.</p>']),
+  at_start:SCH('Ana Popescu, clasa a VIII-a B',[H+'<h1>Pagina Anei Popescu</h1>',H+'<p>Sunt în clasa a VIII-a B la Școala Gimnazială nr. 99 din Brașov.</p>',H+'<p>Locuiesc pe Strada Inventată nr. 7. Telefonul meu: 0700 000 000.</p>',H+'<p>Săptămâna asta suntem la bunici, casa e goală.</p>',H+'<p>Îmi place să desenez și să urc pe munte.</p>',...IA('lacul.jpg','Ana Popescu la Lacul Bucura, în vacanță')]),
+  at_rez:SCH('Ana',[H+'<h1>Pagina Anei</h1>',H+'<p>Sunt din Brașov.</p>',H+'<p>Îmi place să desenez și să urc pe munte.</p>',...IA('lacul.jpg','Lacul Bucura, între munți'),H+'<p>'+SURSA_FOTO+'</p>']),
+  at_gresit:SCH('Ana',[H+'<h1>Pagina Anei</h1>',H+'<p>Sunt din Brașov.</p>',H+'<p>Îmi place să desenez și să urc pe munte.</p>',...IA('lacul.jpg','Ana Popescu la Lacul Bucura, în vacanță')]),
+  at2_start:SCH('Clubul de lectură',[H+'<h1>Clubul de lectură</h1>',H+'<p>Ne întâlnim în fiecare marți, la ora 15, în sala 12 a Școlii Gimnaziale nr. 99.</p>',H+'<p>Membrii clubului:</p>',H+'<ul>',R3+'<li>Ana Popescu</li>',R3+'<li>Matei Pop</li>',R3+'<li>Ioana Vasilescu</li>',H+'</ul>']),
+  at2_rez:SCH('Clubul de lectură',[H+'<h1>Clubul de lectură</h1>',H+'<p>Ne întâlnim o dată pe săptămână.</p>',H+'<p>Membrii clubului:</p>',H+'<ul>',R3+'<li>Ana</li>',R3+'<li>Matei</li>',R3+'<li>Ioana</li>',H+'</ul>']),
+  at2_gresit:SCH('Clubul de lectură',[H+'<h1>Clubul de lectură</h1>',H+'<p>Ne întâlnim o dată pe săptămână.</p>',H+'<p>Membrii clubului:</p>',H+'<ul>',R3+'<li>Ana</li>',R3+'<li>Matei Pop</li>',R3+'<li>Ioana</li>',H+'</ul>']),
+  q3_start:SCH('Matei Pop – pagina mea',[H+'<h1>Pagina mea</h1>',H+'<p>Îmi plac munții.</p>',H+'<p>Scrie-mi: matei.pop@exemplu.test</p>',...IA('lacul.jpg','Matei Pop la lacul din Retezat')]),
+  q3_rez:SCH('Matei – pagina mea',[H+'<h1>Pagina mea</h1>',H+'<p>Îmi plac munții.</p>',...IA('lacul.jpg','Matei la lacul din Retezat')]),
+  q3_gresit:SCH('Matei – pagina mea',[H+'<h1>Pagina mea</h1>',H+'<p>Îmi plac munții.</p>',...IA('lacul.jpg','Matei Pop la lacul din Retezat')]),
+  /* laboratorul: două paragrafe de scris (după ce verifici pagina ta) */
+  lab_eu:H+'<p>Sunt Ana și desenez.</p>',
+  lab_sursa:H+'<p>'+SURSA_FOTO+'</p>'
+};
+window.COD_L20=COD;
+/* pagina din atelier are numele ca la laborator (după el o găsește profesorul; intro-ul atelierului spune de ce rămâne);
+   în exercițiile din pași, nume de fișier neutre, ca numele de familie să nu apară într-un loc încă neexplicat */
+const ANA='Popescu_Ana_8A_lectia20.html', FA='pagina_anei.html', FM='pagina_lui_matei.html', FC='pagina_clubului.html';
+const AT={exact:ANA};
+const SRC=(S,U)=>ES.src(S,U,AT);
+/* lista de verificare (aceeași în P6, în atelier și în laborator; lecția 21 o folosește întocmai).
+   Reparația j1 (24.10): 3-5 prind tot ce spun P3-P4 (data nașterii, CNP-ul, unde ești acum, documentele, locul ascuns),
+   iar 6 = numele fișierelor din src / href (la școală au numele elevului: rămân pentru profesor, se notează) */
+const LISTA=['Apare numele meu complet sau numele unui coleg?','Apare numele școlii mele?','Am fotografii cu oameni, cu ceva care arată cine sunt și unde stau, sau cu locul ascuns în fișier?','Am adresa, telefonul, e-mailul, data nașterii, CNP-ul sau programul meu (când plec, unde sunt la o anumită oră, unde sunt acum)?','Am parole, coduri sau documente (carnet, buletin, bilete)?','Numele fișierelor din cod, la <code>src</code> și la <code>href</code>, spun cine sunt?'];
+const LISTA_HTML=`<ol class="lista-v">${LISTA.map(x=>`<li>${x}</li>`).join('')}</ol>`;
+const DESC_PAG=`<a class="descarca" href="pagina_de_verificat.html" download>pagina_de_verificat.html</a>`;
+const DESC_FOTO=`<a class="descarca" href="img/lacul-cu-locul.jpg" download>lacul-cu-locul.jpg</a>`;
+
+const PROVOCARE=[
+  'Pornește <b>Notepad</b>: tasta Windows, scrie <b>Notepad</b>, apoi <kbd>Enter</kbd>. Dacă se deschide cu fila unui coleg, nu scrie în ea: apasă <b>+</b> (filă nouă). Dacă Notepad nu are file (pe Windows 10), lucrezi direct în fereastră.',
+  `Deschide cea mai nouă pagină a ta, de la lecțiile 16-19: <b>Fișier › Deschideți</b> (Open) sau <kbd>Ctrl</kbd>+<kbd>O</kbd>; în stânga, <b>Documente</b>. Dacă nu-ți vezi paginile în listă, alege jos, lângă <b>Nume fișier</b>, <b>Toate fișierele (*.*)</b>. Clic pe pagina cu numărul cel mai mare (lectia19, altfel lectia18, lectia17…), apoi <b>Deschidere</b> (Open).
+<ul class="pasi-met"><li>Nu ai nicio pagină pe acest calculator? Descarcă din această pagină ${DESC_PAG}: ajunge în <b>Descărcări</b> (Downloads). Dacă browserul te întreabă ceva despre el, îl păstrezi: e fișierul pe care l-ai cerut tu, din pagina lecției, cu numele <b>pagina_de_verificat</b>. E pagina Anei, inventată: o verifici ca și cum ar fi a ta. Un fișier care se descarcă singur sau vine de pe un site necunoscut NU-l păstrezi: îi spui profesorului.</li>
+<li>Apoi, în fereastra Deschidere: în stânga <b>Descărcări</b>, jos, lângă <b>Nume fișier</b>, <b>Toate fișierele (*.*)</b> (altfel pagina nu apare în listă), clic pe <b>pagina_de_verificat</b>, apoi <b>Deschidere</b>.</li></ul>`,
+  'Salvează pagina cu nume nou, ca pagina veche să rămână neschimbată: <b>Fișier › Salvați ca</b> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>). În <b>Documente</b>, numele tău cu lectia20 și <b>.html</b>, de exemplu <code>Popescu_Ana_8A_lectia20.html</code>; <b>Toate fișierele (*.*)</b>; <b>UTF-8</b>; <b>Salvare</b>. Dacă apare „… există deja. Îl înlocuiți?”, apasă <b>Nu</b> (No) și pune o cifră la sfârșitul numelui, înainte de .html. Numele fișierului rămâne cu numele tău: după el îl găsește profesorul. Pe un site, pagina ar primi alt nume, pentru că numele fișierului apare în adresa paginii.',
+  'Deschide <b>Explorer</b> (File Explorer): tasta Windows + <kbd>E</kbd>. Clic pe <b>Documente</b> în stânga, apoi dublu-clic pe pagina ta cu lectia20 (la Tip scrie ceva cu HTML). Pagina se deschide în browser.',
+  `Treci pagina prin lista de verificare. La fiecare întrebare te uiți în browser, apoi în Notepad, în tot codul, de sus până jos: pe rândul cu <code>&lt;title&gt;</code>, în fiecare paragraf și tabel, la fiecare <code>alt</code>, <code>src</code> și <code>href</code>.${LISTA_HTML}Numele tău din <code>src</code> și <code>href</code> nu-l ștergi aici: el ține de întrebarea 6 (pasul 8). La un „da” la întrebările 1-5, în Notepad selectezi cu mouse-ul bucata și o ștergi cu <kbd>Delete</kbd> sau scrii peste ea ce se poate publica, de exemplu doar prenumele. O fotografie cu oameni o scoți cu tot cu eticheta <code>&lt;img …&gt;</code>, de la <code>&lt;img</code> până la <code>&gt;</code>, chiar dacă e pe două rânduri. Apoi <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad și <kbd>F5</kbd> în browser: ce ai scos nu mai apare. Orarul, fotografia lacului și întrebarea 6 le iei la pașii următori.`,
+  `<b>Orarul</b> (doar dacă pagina ta îl are, de la lecțiile 17 și 19): l-ai copiat din lecție, deci e inventat, dar titlul „Orarul meu” spune că e programul tău (întrebarea 4). Pe filă (în <code>&lt;title&gt;</code>) și în titlul mare (în <code>&lt;h1&gt;</code>), scrie peste „Orarul meu”: <b>Orarul unei clase inventate</b>. Dacă ai scris în tabel orarul tău adevărat, scoate tot tabelul, de la <code>&lt;table&gt;</code> până la <code>&lt;/table&gt;</code>. <kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad, <kbd>F5</kbd> în browser: pe filă și în titlul mare scrie <b>Orarul unei clase inventate</b>.`,
+  `<b>Fotografia lacului</b> (doar dacă pagina ta o are, de la lecția 16; întrebarea 3): în Explorer, în <b>Documente</b>, clic dreapta pe fotografia ta › <b>Proprietăți</b> (dacă nu-l vezi în meniu, alege întâi <b>Afișați mai multe opțiuni</b>) › fila <b>Detalii</b>. Dacă găsești rândurile <b>Latitudine</b> și <b>Longitudine</b>, cu numere, fotografia are locul ascuns: scoate-o din pagină, cu tot cu eticheta <code>&lt;img …&gt;</code>. Fotografia salvată la lecția 16 nu are locul ascuns, deci rămâne. Închide fereastra Proprietăți cu X.`,
+  `<b>Numele fișierelor</b> (doar dacă pagina ta are <code>src</code> sau <code>href</code>; întrebarea 6): la <code>src</code> (fotografia de la lecția 16, de exemplu <code>Popescu_Ana_bucura.jpg</code>) și la <code>href</code> (legăturile de la lecția 18, de exemplu <code>Popescu_Ana_8A_pagina2.html</code>) e numele tău complet. Pe acestea NU le schimbi: după ele știe profesorul a cui e lucrarea, iar pagina ta de la laborator nu se publică. Dacă le schimbi, fotografia sau legătura nu mai merge. Dacă l-ai schimbat deja, scrie-l la loc, literă cu literă, cum îl vezi în Explorer, cu extensia la sfârșit (.jpg, .html), apoi <kbd>Ctrl</kbd>+<kbd>S</kbd> și <kbd>F5</kbd>: fotografia se vede din nou, iar legătura merge. Scrie în caiet: „Înainte de publicare: fișierele primesc nume fără numele meu (de exemplu bucura.jpg, pagina2.html) și schimb și src, href.”`,
+  'În browser apasă <kbd>Ctrl</kbd>+<kbd>U</kbd>: e codul paginii, pe care îl poate citi oricine. Citește-l de sus în jos: rândul cu <code>&lt;title&gt;</code>, fiecare paragraf, fiecare <code>alt</code>, <code>src</code> și <code>href</code>. La întrebările 1-5 nu mai găsești nimic. Dacă mai găsești ceva, întoarce-te la pasul 5. Numele tău complet mai poate fi doar în numele fișierelor, la <code>src</code> și <code>href</code> (întrebarea 6): pe acelea le-ai scris în caiet și rămân. Închide fila sursei cu × de pe ea.',
+  `<b>Dacă mai ai timp</b> (altfel treci la ultimul pas): pune pe pagină ceva despre tine care se poate publica. În Notepad, dă clic la sfârșitul rândului cu <code>&lt;/h1&gt;</code>, apasă <kbd>Enter</kbd>, de două ori <kbd>Tab</kbd>, apoi scrie un paragraf cu prenumele tău și ce-ți place, de exemplu:${PRE(COD.lab_eu)}Fără nume de familie, fără școală. Dacă pagina are fotografia lacului de la lecția 16, scrie sub ea, pe un rând nou, după <code>&gt;</code>, sursa fotografiei:${PRE(COD.lab_sursa)}<kbd>Ctrl</kbd>+<kbd>S</kbd> în Notepad, <kbd>F5</kbd> în browser: paragraful tău apare sub titlul mare, iar sursa sub fotografie.`,
+  `<b>Dacă mai ai timp</b> (altfel treci la ultimul pas): copia fără locul ascuns. Descarcă fotografia lacului cu locul ascuns: ${DESC_FOTO} (dacă browserul te întreabă ceva, o păstrezi, ca la pasul 2: ai cerut-o tu, din pagina lecției). În Explorer, clic în stânga pe <b>Descărcări</b> (Downloads), apoi clic dreapta pe fotografie › <b>Proprietăți</b> › fila <b>Detalii</b>. Caută rândurile <b>Latitudine</b> și <b>Longitudine</b>: ele spun locul. Jos, în aceeași filă, apasă <b>Eliminare proprietăți și informații personale</b>, alege <b>Creare copie cu toate proprietățile posibile eliminate</b>, apoi <b>OK</b>. Lângă fotografie apare o copie. Deschide-i și ei Proprietăți › Detalii: latitudinea și longitudinea nu mai sunt. Dacă nu găsești rândurile sau butonul, nu-i nimic: treci la ultimul pas.`,
+  'Ultimul pas, oricum: calculatorul rămâne curat pentru colegul următor. În Explorer, în <b>Descărcări</b>, șterge doar fișierele pe care le-ai descărcat tu azi din această pagină: <b>pagina_de_verificat</b>, <b>lacul-cu-locul</b> și copia ei (are și ea lacul-cu-locul în nume). Clic pe fișier, apoi <kbd>Delete</kbd>; dacă te întreabă ceva, confirmă. Un fișier cu nume asemănător (de exemplu cu (1) la sfârșit) despre care nu știi sigur că e al tău îl lași. În Notepad închide pe rând <b>toate</b> filele, din meniu: <b>Fișier › Închideți fila</b>, până se închide Notepad. Dacă la fila unui coleg te întreabă „Salvați modificările…?”, apasă <b>Nu salvați</b>. Nu închide Notepad cu X-ul ferestrei: îi redeschide colegului filele. Dacă Notepad nu are file (Windows 10), după ce ai salvat îl închizi cu X. În browser închide fila paginii. Pagina ta cu lectia20 rămâne în Documente.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m3_l20',
+  mod:'lectie',
+  titlu:'Securitate cibernetică: ce nu public niciodată pe web',
+  marca:'Lecția <b>20</b> · Pagini web · a VIII-a',
+  h1:'Securitate cibernetică: ce nu public niciodată pe web',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U2', unitateTitlu:'Pagini web',
+  competente:['CS.1.2','CS.3.2'], lectii:'20',
+  ancoraText:'Programa (OMEN 3393/2017): CS.1.2, CS.3.2 · unitatea VIII-U2 „Pagini web” · lecția 20 · conținutul: „Securitate cibernetică”',
+  intro:`<p>Lecția 20. Afli de ce o pagină publicată rămâne publică, ce date nu pui niciodată pe ea, ce spune o fotografie despre tine și cum îți verifici pagina înainte s-o publici, cu o listă de șase întrebări.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 16, „Conținutul paginii…”: paragraful <code>&lt;p&gt;</code>, imaginea <code>&lt;img src="…" alt="…"&gt;</code> și textul alternativ, Fișier › Deschideți;</li>
+<li>lecția 15, „Elemente de structură…”: scheletul paginii și titlul de pe filă, <code>&lt;title&gt;</code>;</li>
+<li>lecția 14, „Cum e făcută o pagină web…”: Notepad, Salvare ca .html (Toate fișierele, UTF-8), Explorer, <kbd>F5</kbd>, <kbd>Ctrl</kbd>+<kbd>U</kbd>, Fișier › Închideți fila;</li>
+<li>lecțiile 17-19: tabelul „Orarul meu”, legătura <code>&lt;a href="…"&gt;</code> spre altă pagină și <code>style</code>: le ai în paginile tale, pe care le verifici la laborator;</li>
+<li>clasa a VI-a, lecția 12, „Protecția datelor personale…”: ce sunt datele personale; clasa a V-a, lecția 15: licența liberă și sursa scrisă sub imagine.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> după „La ce folosește” urmează 5 pași scurți, fiecare cu „Încearcă tu”, unele într-un Notepad și un browser simulate în pagină. Apoi atelierul, apoi verificarea paginii tale la calculatorul din laborator, iar la sfârșit 5 întrebări.</p>
+<p><b>Obligatoriu:</b> primul „Încearcă tu” din fiecare pas, primul atelier, laboratorul (fără pașii „Dacă mai ai timp”) și cele 5 întrebări. Butoanele „Încă un exercițiu” și al doilea atelier sunt pentru cine termină mai repede.</p>
+<p><b>Când mai sunt 10 minute din oră</b> și n-ai terminat laboratorul: salvează (<kbd>Ctrl</kbd>+<kbd>S</kbd>) și fă ultimul pas al laboratorului, curățenia. Cele 5 întrebări le faci după curățenie, dacă mai e timp, sau ora viitoare: pe pagina lecției apeși <b>Continuă de unde ai rămas</b>.</p>
+<p>Toate persoanele, numerele și adresele din exerciții sunt inventate.</p>`,
+  banda:'<span><b>înainte să publici:</b></span><span><i class="cs"></i>nume complet?</span><span><i class="cs"></i>școala?</span><span><i class="cs"></i>fotografii, locul ascuns?</span><span><i class="cs"></i>adresă, telefon, CNP, program?</span><span><i class="cs"></i>parole, documente?</span><span><i class="cs"></i>numele fișierelor?</span>',
+  tipuri:{editorweb:EWC.tip},
+  nivele:[
+  {t:'Securitate cibernetică: ce nu public niciodată pe web', final:true, lectii:[20], continuturi:[P.securitate],
+   obiectiv:'verifici o pagină web înainte s-o publici: găsești datele care nu se publică, și în cod (pe filă, în textul alternativ), și le înlocuiești cu ce se poate publica.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>La intrarea în multe rezervații naturale stă un panou cu informații. Îl citește oricine trece pe acolo. Unii îl fotografiază, iar fotografia lor poate ajunge apoi oriunde.</p>
+<p>O pagină web publicată e ca un panou pus în mijlocul lumii: o poate citi oricine are Internet. Azi afli ce nu scrii niciodată pe un asemenea panou și cum îți verifici pagina înainte s-o publici.</p>
+${fig('img/panou-valisoara.webp',800,700,'Panoul rezervației Cheile Vălișoarei, de aproape: titlul mare, paragrafe de text în română, franceză și engleză, o hartă și, jos, pictograme cu ce nu ai voie să faci','Panoul de la intrarea în rezervația Cheile Vălișoarei (județul Alba): îl citește oricine trece pe drum. Fotografie: E.Coman, CC0, <a href="https://commons.wikimedia.org/wiki/File:Cheile_Valisoarei_-_Cheile_Aiudului_(panou_informativ).jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (micșorată).')}`},
+
+    /* ---------- PASUL 1: securitatea cibernetică; ce publici rămâne ---------- */
+    {t:'Ce publici rămâne publicat',
+     text:`<p><mark>Securitatea cibernetică</mark> înseamnă tot ce faci ca să-ți aperi calculatorul, conturile și datele de cei care vor să le fure sau să le strice. O parte ține de tine: ce <mark>publici</mark>, adică ce pui pe Internet.</p>
+<p>O pagină publicată o vede oricine. Ce scrii pe ea poate rămâne, chiar dacă o ștergi:</p>
+<ul><li>vizitatorii o pot salva sau îi pot face o captură de ecran;</li>
+<li>motoarele de căutare, ca Google, o arată în rezultate;</li>
+<li>arhivele web, ca Wayback Machine, pot păstra copii ale ei.</li></ul>
+<p>Și codul e public: cu <kbd>Ctrl</kbd>+<kbd>U</kbd>, oricine citește și ce nu se vede în pagină: titlul de pe filă, textul alternativ, numele fișierelor.</p>`,
+     exemplu:`<p>Codul paginii Anei:</p>${PRE(COD.p1_ex)}${EV.randare(COD.p1_ex,96)}<p>În pagină se văd doar titlul mare și propoziția. Numele complet al Anei și clasa ei (8B) stau pe filă și în cod: le vede oricine deschide pagina sau apasă <kbd>Ctrl</kbd>+<kbd>U</kbd>.</p>`,
+     altfel:`<p>Gândește-te la un afiș lipit în stația de autobuz. Chiar dacă îl dezlipești seara, cei care l-au fotografiat dimineața au încă poza. Și nu știi cine sunt.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Pagina pare curată: un titlu, o propoziție, o fotografie. În cod însă, numele complet al Anei apare în două locuri care nu se văd în pagină. Găsește-le și șterge numele de familie, <b>Popescu</b>. Pe filă, prenumele <b>Ana</b> rămâne.',
+       start:{text:COD.p1_start,fisier:FA,fisiere:DOSAR()},
+       teste:EV.cuDiagnostic([
+        {ce:'Numele de familie nu mai apare nicăieri în cod',fn:S=>!EV.contine(LV(S),'Popescu'),date:{nume:['Popescu']},msg:'Caută „Popescu” în cod: pe rândul cu &lt;title&gt; și în textul alternativ al imaginii (alt).'},
+        {ce:'Prenumele Ana a rămas pe filă',fn:S=>EV.contine(LV(S),'Ana','fila'),msg:'Ștergi doar numele de familie: pe filă, Ana rămâne.'},
+        {ce:'Textul alternativ spune în continuare ce e în fotografie: Lacul Bucura',fn:S=>EV.contine(LV(S),'Lacul Bucura','alt'),msg:'Nu șterge tot textul alternativ: „Lacul Bucura” rămâne în alt.'},
+        {ce:'Fotografia lacului se vede în continuare',fn:S=>EWC.seVede(S),msg:'Nu șterge rândul cu &lt;img&gt;: fotografia lacului poate rămâne.'},
+        ORD]),
+       rezolvare:[['scrie',COD.p1_rez]],gresit:[['scrie',COD.p1_gresit]],
+       ajutor:'Un loc e pe rândul cu &lt;title&gt; (se vede pe filă). Celălalt e în textul alternativ al imaginii, după alt=.',
+       why:'Numele scris pe filă și în textul alternativ nu apare în pagină, dar e în cod. Cu Ctrl+U, oricine l-ar fi citit. În alt poate rămâne „Ana la Lacul Bucura” sau doar „Lacul Bucura”, ce se vede în fotografie.'},
+     inca:[
+      {t:'choice',q:'Luni, Ana publică o pagină cu numărul ei de telefon. Marți șterge rândul cu telefonul și publică din nou pagina. Ce poate fi adevărat miercuri?',
+       o:['Numărul e încă în copiile făcute luni de alții','Numărul a dispărut de peste tot, odată cu rândul','Numărul l-a văzut doar Ana, pe calculatorul ei','Numărul se șterge singur din arhive după o zi'],ok:0,
+       ajutor:'Recitește lista din pas: cine poate păstra o copie a paginii?',why:'O zi publicată a fost destul ca pagina să fie salvată, fotografiată sau arhivată. Ana a schimbat doar pagina ei, nu și copiile altora.'}
+     ]},
+
+    /* ---------- PASUL 2: datele personale ---------- */
+    {t:'Datele personale: ce nu publici niciodată',
+     text:`<p>La clasa a VI-a ai învățat: <mark>datele personale</mark> sunt informațiile după care cineva poate afla cine ești sau unde te găsește. Pe o pagină web nu publici niciodată:</p>
+<ul><li>numele complet și numele școlii, mai ales lângă clasă și oraș;</li>
+<li>adresa de acasă, telefonul, e-mailul, data nașterii, <mark>CNP-ul</mark> (codul numeric personal, de 13 cifre);</li>
+<li>programul tău (când pleci de acasă, unde ești la o anumită oră) și locul unde ești acum;</li>
+<li>parolele și codurile;</li>
+<li>documentele: carnetul de elev, buletinul, biletele;</li>
+<li>datele colegilor: și ele sunt personale.</li></ul>
+<p>O informație singură pare puțin. Puse una lângă alta, îi spun unui străin cine ești și unde te găsește.</p>`,
+     exemplu:`<p>Trei propoziții de pe aceeași pagină:</p>
+<ul><li>„Sunt Ana Popescu, din clasa a VIII-a B.”</li><li>„Învăț la Școala Gimnazială nr. 99 din Brașov.”</li><li>„Ies în fiecare zi de la școală la ora 13.”</li></ul>
+<p>Împreună, spun oricui unde și când o găsește pe Ana. Varianta care se poate publica: „Sunt Ana și îmi place baschetul.”</p>`,
+     altfel:`<p>E ca la un puzzle. O singură piesă nu arată nimic. Numele, școala și ora la care ieși, puse una lângă alta, arată tot tabloul: cine ești, unde ești și când.</p>`,
+     incearca:{t:'classify',q:'Se poate publica pe pagina ta? Pune fiecare informație la locul ei.',cats:['Se poate publica','Nu se publică'],
+       items:[['Prenumele tău, Ana',0],['Titlul cărții tale preferate',0],['Codul de pe biletul tău de tren',1],['Ora la care pleci zilnic spre antrenament',1],['E-mailul unui coleg',1]],
+       ajutor:'Pentru fiecare: poate afla cineva din ea cine ești, unde ești sau ce cod ai?',
+       why:'Prenumele singur și cartea preferată nu spun cine ești sau unde te găsește cineva. Codul biletului e al unui document, ora la care pleci e din programul tău, iar e-mailul colegului e o dată a lui.'},
+     inca:[
+      {t:'editorweb',mod:'live',
+       q:'În ultimul paragraf sunt telefonul și e-mailul Anei. Șterge tot paragraful, de la <code>&lt;p&gt;</code> până la <code>&lt;/p&gt;</code>. Paragraful cu pisicile rămâne.',
+       start:{text:COD.p2_start,fisier:FA},
+       teste:EV.cuDiagnostic([
+        {ce:'Telefonul și e-mailul nu mai apar',fn:S=>EV.curat(LV(S),{tipuri:['telefon','email']}),date:{tipuri:['telefon','email']},msg:'Șterge tot paragraful cu telefonul și e-mailul.'},
+        {ce:'Paragraful cu pisicile a rămas',fn:S=>EV.contine(EV.textPagina(LV(S)),'Îmi place să desenez pisici'),msg:'Ștergi doar ultimul paragraf; cel cu pisicile rămâne.'},
+        ORD]),
+       rezolvare:[['scrie',COD.p2_rez]],gresit:[['scrie',COD.p2_gresit]],
+       ajutor:'Selectează tot rândul cu „Scrie-mi”, de la &lt;p&gt; până după &lt;/p&gt;, și apasă Delete.',
+       why:'Telefonul și e-mailul sunt date de contact: pe o pagină publică le-ar putea folosi oricine.'}
+     ]},
+
+    /* ---------- PASUL 3: ce spune o fotografie ---------- */
+    {t:'Ce spune o fotografie despre tine',
+     text:`<p>Fotografiile cu tine sunt și ele date personale. Iar o fotografie spune mai mult decât crezi:</p>
+<ul><li><b>ce se vede</b> în ea: uniforma sau numele școlii, numărul casei, numărul mașinii, un bilet sau un carnet ținut în mână;</li>
+<li><b>ce nu se vede</b>: în fișierul unei fotografii pot fi scrise, pe ascuns, date despre ea. O fotografie făcută cu telefonul poate avea în ea chiar locul unde a fost făcută, ca pe hartă: latitudinea și longitudinea. E <mark>locul ascuns</mark> al fotografiei: oricine o descarcă îl poate citi.</li></ul>
+<p>Pe pagina ta pui doar fotografii în care nu se vede nimic despre tine sau despre alții. Înainte, verifici și locul ascuns.</p>`,
+     exemplu:`${fig('img/lacul-cu-locul.jpg',640,480,'Lacul Bucura din Munții Retezat: apa în dreapta, stânci cu licheni în față, munți și nori în spate; fără oameni','Fotografia pare să arate doar un lac. În fișierul ei e scris însă și locul: latitudinea 45°21′30″ nord, longitudinea 22°52′30″ est, lângă Lacul Bucura. Fotografie: Gugalcrom123, CC0, <a href="https://commons.wikimedia.org/wiki/File:Lake_Bucura_03.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (micșorată; locul l-am adăugat noi, pentru lecție).')}
+<p>În Windows, locul se vede cu clic dreapta pe fotografie › <b>Proprietăți</b> › fila <b>Detalii</b>, la rândurile <b>Latitudine</b> și <b>Longitudine</b>. Dacă în meniu nu vezi Proprietăți, alege întâi <b>Afișați mai multe opțiuni</b>.</p>
+<p>Locul se poate scoate: tot în fila Detalii, cu <b>Eliminare proprietăți și informații personale</b>, faci o copie a fotografiei fără el. Pe pagină pui copia. La laborator îți verifici fotografia ta, dacă pagina ta are fotografia lacului.</p>`,
+     altfel:`<p>E ca o scrisoare cu adresa expeditorului scrisă pe spatele plicului. Cine se uită doar la față nu o vede. Cine întoarce plicul o citește.</p>`,
+     incearca:{t:'classify',q:'O poți pune pe pagina ta așa cum e?',cats:['Da, așa cum e','Nu, așa nu'],
+       items:[['Un selfie în fața școlii, cu numele ei pe clădire',1],['Un apus fotografiat de pe dealul din oraș, fără oameni, fără loc ascuns în fișier',0],['Mâna ta ținând biletul de concert',1],['Blocul tău, cu numărul pe ușa scării',1],['O floare din parc, de aproape, fără loc ascuns în fișier',0]],
+       ajutor:'Pentru fiecare: ce se vede în fotografie și ce ar putea fi ascuns în fișier?',
+       why:'Numele școlii, biletul și numărul blocului spun cine ești sau unde stai. Apusul și floarea, fără oameni și fără locul ascuns, nu spun nimic despre tine.'},
+     inca:[
+      {t:'choice',q:'Ana fotografiază cu telefonul pisica, în curtea casei. În fotografie e doar pisica. Ce verifică Ana înainte s-o pună pe pagină?',
+       o:['Dacă fișierul are în el locul unde a fost făcută','Dacă pisica se vede destul de mare în cadru','Nimic, pentru că în fotografie e doar o pisică','Dacă fișierul fotografiei are mai puțin de 1 MB'],ok:0,
+       ajutor:'Recitește a doua liniuță din pas: ce poate fi ascuns în fișier?',why:'Fotografia a fost făcută în curtea casei, deci locul ascuns ar putea arăta unde stă Ana, chiar dacă în imagine e doar pisica.'}
+     ]},
+
+    /* ---------- PASUL 4: acordul; GDPR ---------- */
+    {t:'Acordul: GDPR pe înțelesul tău',
+     text:`<p>În Uniunea Europeană, datele personale sunt apărate de o lege comună, <mark>GDPR</mark> (Regulamentul general privind protecția datelor). Pe scurt:</p>
+<ul><li>datele cuiva se folosesc doar când legea dă voie, de exemplu cu <mark>consimțământul</mark> lui: acordul lui clar, dat de bunăvoie;</li>
+<li>când o aplicație sau o rețea socială îți cere acordul: sub 16 ani îl dă sau îl aprobă un părinte, de la 16 ani îl dai tu. În România vârsta e 16 ani;</li>
+<li>în anumite situații poți cere unui site să-ți șteargă datele, de exemplu dacă îți retragi acordul.</li></ul>
+<p>Regula noastră, ca să fii sigur: fotografia sau numele unui coleg nu le publici fără acordul lui și al părinților lui.</p>`,
+     exemplu:`<p>Matei are 14 ani și vrea un cont într-o aplicație de jocuri, care îi cere acordul pentru datele lui. Are sub 16 ani, deci acordul îl dă sau îl aprobă un părinte.</p>
+<p>Ana ar vrea pe pagină o fotografie cu colega ei, Ioana. După regula noastră, fără „da”-ul Ioanei și al părinților ei, n-o publică. Cel mai simplu: pune o fotografie fără oameni.</p>`,
+     altfel:`<p>E ca atunci când împrumuți bicicleta unui prieten: o iei doar dacă ți-a spus „da”. La fel, fotografia sau numele unui coleg le pui pe pagina ta doar cu „da”-ul lui și al părinților lui.</p>`,
+     incearca:{t:'choice',q:'Elena are 13 ani. O aplicație de desen îi cere acordul ca să-i folosească datele. Cum se face, după GDPR, în România?',
+       o:['Acordul îl dă sau îl aprobă un părinte: Elena are sub 16 ani','Elena își dă singură acordul: a împlinit deja 12 ani','Nu e nevoie de acord într-o aplicație de desen','Acordul îl dă profesorul de TIC, la școală'],ok:0,
+       ajutor:'Ce vârstă spune pasul? Elena e sub ea sau peste ea?',why:'Sub 16 ani, acordul pentru datele tale într-o aplicație îl dă sau îl aprobă un părinte. Elena are 13.'},
+     inca:[
+      {t:'tf',q:'Ești și tu în fotografie, lângă un coleg. Atunci ai voie s-o publici fără să-l întrebi.',ok:false,
+       ajutor:'Al cui e chipul colegului din fotografie?',why:'Fals. Chipul colegului e o dată personală a lui, chiar dacă ești și tu în fotografie. După regula noastră, fără acordul lui și al părinților lui, nu o publici.'}
+     ]},
+
+    /* ---------- PASUL 5: ce publici în loc; lista de verificare ---------- */
+    {t:'Ce publici în loc. Lista de verificare',
+     text:`<p>Pagina ta poate fi frumoasă și fără date personale. Pui în loc:</p>
+<ul><li>prenumele, fără numele de familie;</li>
+<li>orașul, fără stradă și fără numele școlii;</li>
+<li>ce-ți place, ce ai făcut, ce ai învățat;</li>
+<li>desenele tale și imagini cu <mark>licență liberă</mark>, cu autorul și licența scrise sub ele, ca la clasa a V-a.</li></ul>
+<p>Înainte să publici, treci pagina prin <mark>lista de verificare</mark> de mai jos, întrebare cu întrebare. Te uiți în pagină și în tot codul: pe filă, în textul alternativ, la <code>src</code> și <code>href</code>. La un „da” la întrebările 1-5, ștergi sau înlocuiești. Întrebarea 6 e despre numele fișierelor: citește „Uite cum”.</p>`,
+     exemplu:`<p>Lista de verificare:</p>${LISTA_HTML}<p>De exemplu, în loc de „Ana Popescu” scrii „Ana”, iar în loc de numele școlii scrii doar orașul.</p>
+<p>Întrebarea 6: la școală, fotografia și paginile tale au în nume numele tău (de exemplu <code>Popescu_Ana_bucura.jpg</code>), ca profesorul să știe a cui e lucrarea. Pagina ta de la laborator nu se publică. Dacă ar fi publicată, întâi fișierele ar primi alte nume, ca <code>bucura.jpg</code>, și s-ar schimba și <code>src</code>, <code>href</code>.</p>`,
+     altfel:`<p>E ca verificarea ghiozdanului înainte de excursie, după o listă: iei fiecare rând pe rând și bifezi. Nu te bazezi pe „cred că e bine”.</p>`,
+     incearca:{t:'editorweb',mod:'live',
+       q:'Fă pagina gata de publicat, după lista de verificare: pe filă și în titlul mare lasă doar prenumele, <b>Ana</b>. Propoziția despre școală înlocuiește-o cu <b>Sunt din Brașov.</b> Șterge paragraful cu strada. Paragraful cu baschetul rămâne.',
+       start:{text:COD.p5_start,fisier:FA},
+       teste:EV.cuDiagnostic([
+        {ce:'Numele de familie nu mai apare, nici pe filă, nici în titlul mare',fn:S=>!EV.contine(LV(S),'Popescu'),date:{nume:['Popescu']},msg:'Caută „Popescu” pe filă (&lt;title&gt;) și în &lt;h1&gt;.'},
+        {ce:'Prenumele Ana a rămas pe filă și în titlul mare',fn:S=>EV.contine(LV(S),'Ana','fila')&&/<h1[^>]*>[^<]*\bAna\b/i.test(LV(S)),msg:'Lasă prenumele Ana și pe filă, și între &lt;h1&gt; și &lt;/h1&gt;.'},
+        {ce:'Numele școlii și strada nu mai apar',fn:S=>EV.curat(LV(S),{tipuri:['scoala','adresa']})&&!EV.contine(LV(S),'nr. 99'),date:{tipuri:['scoala','adresa']},msg:'Propoziția cu școala devine „Sunt din Brașov.”, iar paragraful cu strada se șterge întreg.'},
+        {ce:'Paragraful cu baschetul a rămas',fn:S=>EV.contine(EV.textPagina(LV(S)),'baschetul'),msg:'Ce-i place Anei se poate publica: lasă paragraful cu baschetul.'},
+        ORD]),
+       rezolvare:[['scrie',COD.p5_rez]],gresit:[['scrie',COD.p5_gresit]],
+       ajutor:'Patru locuri: &lt;title&gt;, &lt;h1&gt;, propoziția cu școala (o rescrii), paragraful cu strada (îl ștergi întreg).',
+       why:'Acum pagina spune cine e Ana doar cât se poate publica: prenumele, orașul și ce-i place.'},
+     inca:[
+      {t:'classify',q:'Ana vrea să pună pe pagina clasei textul de mai jos, propoziție cu propoziție. Ce rămâne și ce se șterge?',cats:['Rămâne','Se șterge'],
+       items:[['„Bună! Sunt Ana și îmi place baschetul.”',0],['„Numele meu întreg e Ana Popescu.”',1],['„Stau în Brașov.”',0],['„Locuiesc pe Strada Inventată nr. 7.”',1],['„Joia, de la 14 la 18, sunt singură acasă.”',1]],
+       ajutor:'Ia lista de verificare rând cu rând: nume complet, școală, fotografii, adresă, telefon, data nașterii, program, parole, documente.',
+       why:'Rămân prenumele, orașul și ce-i place. Numele întreg, adresa și programul (când e singură acasă) se șterg.'}
+     ]}
+   ],
+   atelier:{t:'editorweb',mod:'notepad',titlu:'Atelier: pagina Anei, gata de publicat',
+    intro:`<p>Mai jos ai un Notepad, folderul Documente și un browser, simulate. Deasupra lor sunt <strong>testele</strong>: se bifează singure când faci ce cer. La final apasă <b>Verifică</b>. Pe un ecran mic, treci de la o fereastră la alta cu butoanele de sub ele.</p>
+<p>Pagina e salvată ca <code>${ANA}</code>: la școală, numele fișierului are numele elevului, ca profesorul să știe a cui e lucrarea. Pe acesta nu-l schimbi. Pe un site, fișierul ar primi întâi alt nume (întrebarea 6 din listă).</p>`,
+    q:`Pagina Anei (inventată) e deschisă în Notepad, iar fotografia lacului stă lângă ea, în Documente. <b>1.</b> Deschide pagina în browser: în Documente, dublu-clic pe ea (pe telefon, atinge-o de două ori, repede). <b>2.</b> Treci pagina prin lista de verificare, și în cod. <b>3.</b> În Notepad, fă-o gata de publicat: păstrează doar prenumele Ana, orașul fără școală, ce-i place și fotografia; restul îl ștergi. <b>4.</b> Sub fotografie, pe un rând nou, scrie sursa ei: <code>&lt;p&gt;${SURSA_FOTO}&lt;/p&gt;</code>. <b>5.</b> Salvează (<kbd>Ctrl</kbd>+<kbd>S</kbd>) și reîmprospătează browserul (<kbd>F5</kbd>).`,
+    start:{fisiere:{Documente:[{n:ANA,t:COD.at_start.replace(/\n/g,'\r\n')+'\r\n'},Object.assign({},FOTO)]},notepad:{file:[{n:ANA,dosar:'Documente'}]},dreapta:'explorer'},
+    teste:EV.cuDiagnostic([
+     {ce:'Numele de familie nu mai apare: nici în pagină, nici pe filă, nici în textul alternativ',fn:(S,U)=>{const s=SRC(S,U);return !!s&&!EV.contine(s,'Popescu')},date:{nume:['Popescu']},msg:'Caută „Popescu” în tot codul, apoi Ctrl+S.'},
+     {ce:'Numele școlii nu mai apare',fn:(S,U)=>{const s=SRC(S,U);return !!s&&!EV.are(s,'scoala')&&!EV.contine(s,'nr. 99')},date:{tipuri:['scoala']},msg:'Din propoziția cu școala păstrezi cel mult orașul. Apoi Ctrl+S.'},
+     {ce:'Adresa și telefonul nu mai apar',fn:(S,U)=>{const s=SRC(S,U);return !!s&&EV.curat(s,{tipuri:['adresa','telefon']})},date:{tipuri:['adresa','telefon']},msg:'Paragraful cu strada și telefonul se șterge întreg. Apoi Ctrl+S.'},
+     {ce:'Pagina nu mai spune unde e familia acum și că a rămas casa goală',fn:(S,U)=>{const s=SRC(S,U);return !!s&&!EV.contine(s,'bunici')&&!EV.contine(s,'casa e goal')},date:{texte:[{tip:'acum',eticheta:'unde e familia acum (și că, de aceea, casa e goală)',text:'la bunici'},{tip:'acum',eticheta:'că acum casa e goală',text:'casa e goal'}]},msg:'Locul unde ești acum nu se publică: șterge tot paragraful cu bunicii.'},
+     /* se bifează doar după ce pagina a fost schimbată (altfel ar fi bifat la pornire) */
+     {ce:'Ce se poate publica a rămas: Ana în titlul mare, ce-i place, fotografia lacului',fn:(S,U)=>{const s=SRC(S,U);return !!s&&!EV.contine(s,'Popescu')&&/<h1[^>]*>[^<]*\bAnei?\b/i.test(s)&&EV.contine(EV.textPagina(s),'desenez')&&EWC.imagini(s).length===1&&EWC.seVede(S,U,AT)},msg:'Lasă prenumele Ana în &lt;h1&gt;, paragraful cu ce-i place și fotografia lacului (rândul cu &lt;img&gt; și cel cu alt).'},
+     {ce:'Sub fotografie e sursa ei: autorul Gugalcrom123 și licența CC0',fn:(S,U)=>{const s=SRC(S,U);return !!s&&sursaDupaImg(s)},msg:'După rândul cu alt="…"&gt;, pe un rând nou: &lt;p&gt;Foto: Gugalcrom123, CC0&lt;/p&gt;. Apoi Ctrl+S.'},
+     {ce:'Scheletul e întreg și fiecare etichetă e închisă',fn:(S,U)=>{const s=SRC(S,U);return !!s&&!EV.contine(s,'Popescu')&&ES.ordine(s)},faraOraData:true,msg:'Dacă ai șters un paragraf, șterge-l întreg, de la &lt;p&gt; până la &lt;/p&gt;, și nu atinge rândurile scheletului.'},
+     {ce:'Browserul arată pagina reparată, salvată acum',fn:(S,U)=>{const b=ES.src(S,U,{browser:AT});return !!b&&!EV.contine(b,'Popescu')&&U.test(S,{laZi:AT})},msg:'În Documente, dublu-clic pe pagină. Dacă ai schimbat ceva după, Ctrl+S în Notepad și F5 în browser.'}],{spec:AT}),
+    rezolvare:[['scrie',COD.at_rez],['salveaza'],['deschide','Documente/'+ANA]],
+    gresit:[['scrie',COD.at_gresit],['salveaza'],['deschide','Documente/'+ANA]],
+    ajutor:'Lista de verificare, rând cu rând: numele (&lt;title&gt;, &lt;h1&gt;, alt), școala, strada și telefonul, „la bunici”. Apoi sursa sub fotografie, Ctrl+S, F5 în browser.',
+    why:'Pagina Anei spune acum doar ce se poate publica: prenumele, orașul, ce-i place și o fotografie cu licență liberă, cu sursa ei.',
+    solutieText:'pagina Popescu_Ana_8A_lectia20.html are pe filă „Ana”, titlul „Pagina Anei”, „Sunt din Brașov.”, paragraful cu ce-i place, fotografia lacului cu alt fără nume și sursa sub ea; salvată și deschisă în browser.',
+    inca:[
+     {t:'editorweb',mod:'live',titlu:'Atelier: pagina clubului de lectură',
+      q:'Pagina clubului (cu nume inventate) e aproape gata. În listă, lasă doar prenumele membrilor. Propoziția cu întâlnirea înlocuiește-o cu <b>Ne întâlnim o dată pe săptămână.</b>',
+      start:{text:COD.at2_start,fisier:FC},
+      teste:EV.cuDiagnostic([
+       {ce:'În listă au rămas doar prenumele: Ana, Matei, Ioana',fn:S=>{const s=LV(S);return !EV.contine(s,'Popescu')&&!/\bpop\b/i.test(EV.norm(s))&&!EV.contine(s,'Vasilescu')&&['Ana','Matei','Ioana'].every(n=>EV.contine(EV.textPagina(s),n))},date:{nume:['Popescu','Pop','Vasilescu']},msg:'În fiecare &lt;li&gt; rămâne doar prenumele.'},
+       {ce:'Nu mai apar ziua, ora, sala și școala întâlnirilor',fn:S=>{const s=LV(S);return !EV.are(s,'scoala')&&!EV.contine(s,'Școlii')&&!EV.contine(s,'sala 12')&&!EV.contine(s,'ora 15')},date:{tipuri:['scoala'],texte:[{tip:'program',eticheta:'locul și ora întâlnirilor',text:'sala 12'},{tip:'program',eticheta:'ziua și ora întâlnirilor',text:'ora 15'}]},msg:'Propoziția cu întâlnirea devine „Ne întâlnim o dată pe săptămână.”'},
+       ORD]),
+      rezolvare:[['scrie',COD.at2_rez]],gresit:[['scrie',COD.at2_gresit]],
+      ajutor:'Lista: în fiecare &lt;li&gt;, doar prenumele. Propoziția cu marți, ora 15 și sala o scrii din nou.',
+      why:'Pagina spune ce face clubul, fără să spună cine sunt membrii și unde îi găsește oricine marțea.'}
+    ]},
+   qs:[
+    {t:'choice',q:'Matei pune pe o pagină publicată fotografia biletului lui de concert, cu codul la vedere. După o oră o șterge. Ce e adevărat?',
+     o:['Cineva poate să fi salvat deja fotografia, cu tot cu cod','Fotografia a dispărut de peste tot când a șters-o','Codul nu mai contează, pentru că fotografia a stat puțin','Fotografia s-a văzut doar pe calculatorul lui Matei'],ok:0,
+     ajutor:'Ce pot face vizitatorii cu o pagină cât e publicată?',why:'Cât a stat publicată, fotografia a putut fi salvată sau copiată. Ștergerea schimbă doar pagina lui Matei.'},
+    {t:'classify',q:'Pagina ta e gata de publicat. Ce poate apărea pe ea?',cats:['Poate apărea','Nu apare'],
+     items:[['Prenumele tău',0],['Codul PIN al telefonului tău',1],['Ziua și ora la care rămâi singur acasă',1],['Un desen făcut de tine',0],['Numele școlii tale',1],['Orașul tău, fără stradă',0]],
+     ajutor:'Ia lista de verificare: nume complet, școală, fotografii, adresă, telefon, data nașterii, program, parole, coduri, documente.',why:'Prenumele, desenul tău și orașul fără stradă se pot publica. Codul PIN, programul tău și numele școlii, nu.'},
+    {t:'editorweb',mod:'live',
+     q:'Fă pagina lui Matei gata de publicat: numele lui de familie, <b>Pop</b>, nu trebuie să rămână nicăieri în cod, iar paragraful cu e-mailul se șterge întreg. Pe filă rămâne prenumele, Matei. Fotografia rămâne, cu textul ei alternativ.',
+     start:{text:COD.q3_start,fisier:FM,fisiere:DOSAR()},
+     teste:EV.cuDiagnostic([
+      {ce:'Numele de familie, Pop, nu mai apare nicăieri în cod',fn:S=>!/\bpop\b/i.test(EV.norm(LV(S))),date:{nume:['Pop']},msg:'Caută „Pop” pe filă (&lt;title&gt;) și în textul alternativ (alt).'},
+      {ce:'E-mailul nu mai apare',fn:S=>!EV.are(LV(S),'email'),date:{tipuri:['email']},msg:'Șterge tot paragraful cu e-mailul.'},
+      {ce:'Pe filă a rămas Matei, iar fotografia se vede, cu textul alternativ despre lac',fn:S=>EV.contine(LV(S),'Matei','fila')&&EV.contine(LV(S),'lacul','alt')&&EWC.seVede(S),msg:'Lasă Matei pe filă (&lt;title&gt;); rândul cu &lt;img&gt; rămâne, iar în alt rămâne lacul.'},
+      ORD]),
+     rezolvare:[['scrie',COD.q3_rez]],gresit:[['scrie',COD.q3_gresit]],
+     ajutor:'Trei locuri: &lt;title&gt;, paragraful cu e-mailul, textul alternativ.',why:'Numele de pe filă și din alt nu se văd în pagină, dar sunt în cod; e-mailul e o dată de contact. În alt poate rămâne „Matei la lacul din Retezat” sau doar „lacul din Retezat”.'},
+    {t:'choice',q:'Ioana a împlinit 16 ani și vrea un cont într-o rețea socială, care îi cere acordul pentru datele ei. Cum se face, după GDPR, în România?',
+     o:['Ioana își dă singură acordul: are deja 16 ani','Acordul îl dă un părinte: Ioana nu are încă 18 ani','Nu e nevoie de acord pentru o rețea socială','Acordul îl dă un prieten mai mare, de 18 ani'],ok:0,
+     ajutor:'Ce spune pasul: de la ce vârstă îți dai singur acordul?',why:'De la 16 ani, acordul pentru datele tale îl dai tu. Ioana are 16.'},
+    {t:'choice',q:'Andrei a fotografiat cu telefonul un apus, de pe balconul lui. În Proprietăți › Detalii, fotografia are Latitudine și Longitudine. Ce pune pe pagină?',
+     o:['O copie a fotografiei, fără locul ascuns din fișier','Fotografia așa cum e, pentru că în ea e doar un apus','Fotografia, cu adresa blocului scrisă dedesubt','Fotografia mărită, ca apusul să se vadă mai bine'],ok:0,
+     ajutor:'Ce spun Latitudinea și Longitudinea? Ce ai învățat că se poate face cu ele?',why:'Locul ascuns arată unde e balconul lui Andrei, adică unde stă. Pe pagină pune o copie fără el, făcută cu Eliminare proprietăți și informații personale.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Notepad-ul și browserul adevărate',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:`<p>Îți verifici pagina ta, pe calculator, fără ajutor: la fiecare pas scrie ce trebuie să vezi, ca să verifici singur. Pașii care încep cu „Dacă mai ai timp” sunt pentru cine termină mai repede.</p>
+<p>Când mai sunt 10 minute din oră: salvează și fă ultimul pas (ștergi ce ai descărcat, închizi filele din Notepad). Cele 5 întrebări le faci după curățenie, dacă mai e timp, sau ora viitoare: pe pagina lecției apeși <b>Continuă de unde ai rămas</b>.</p>`,
+    pasi:PROVOCARE},
+  diploma:{titlu:'Paznicul paginii',
+    rezumat:'a aflat ce e securitatea cibernetică și de ce o pagină publicată rămâne publică, a găsit datele personale dintr-o pagină, și în cod (pe filă, în textul alternativ), a aflat ce spune o fotografie și ce spune GDPR despre acord și a făcut o pagină gata de publicat, după lista de verificare',
+    aplicatie:'Notepad-ul și browserul adevărate',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
