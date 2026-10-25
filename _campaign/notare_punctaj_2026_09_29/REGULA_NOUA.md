@@ -18,8 +18,10 @@ Contractul: `contract.md` din același dosar. Documentele profesorului, deja res
 | 9 – 10 | Avansat |
 | 7 – 8 | Consolidat |
 | 5 – 6 | De bază |
-| 3 – 4 | În formare + plan de recuperare |
-| 1 – 2 | În dificultate + plan de recuperare |
+| 3 – 4 | În formare + plan individualizat de învățare |
+| 1 – 2 | În dificultate + plan individualizat de învățare |
+
+(Strat 25.10.2026: „plan de recuperare” → „plan individualizat de învățare”, termenul folosit de lecții din 01.10.2026. La lucrarea de modul, nota din catalog = rotunjit((0,8 × punctajul lucrării + punctele de pe LearningHub, din 20) : 10), ,5 în favoarea elevului — `Info_Gimnaziu_2026\SISTEM_EVALUARE.md` §4.5, anunțată elevilor pe 14.10. Ghidul: `_campaign\revizuire_completa_2026_09\00_GHID_LECTII.md`, Partea IV.2.)
 
 ## 3. Câte note
 - **Cel puțin o notă în fiecare modul, deci cel puțin 5 note pe an** (la toate clasele V-VIII).

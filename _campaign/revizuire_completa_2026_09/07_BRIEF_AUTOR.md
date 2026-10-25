@@ -3,7 +3,7 @@
 Ești AUTORUL unei lecții noi în secțiunea „Lecții” din LearningHub. E un sit de TIC pentru elevii de gimnaziu ai profesorului Vasile Gurlan (Brauner, Izvoare, Tupilați). La Tupilați, a VI-a și a VII-a au oră simultană, deci lecția trebuie să poată fi parcursă FĂRĂ profesor.
 
 ## Citește întâi (întreg)
-1. `C:\00\Projects\LearningHub\_campaign\revizuire_completa_2026_09\05_STANDARD_LECTIE.md`, cu TOATE secțiunile (regulile 1-9, „Modul lecție”, „Ce au găsit judecătorii” 1-27). E lege.
+1. **Legea (de la 25.10.2026): `C:\00\Projects\LearningHub\_campaign\revizuire_completa_2026_09\00_GHID_LECTII.md`** — Partea I întreagă (regulile 1-38, J1-J10, lanțul, ce nu faci niciodată, glosarul), apoi părțile autorului: II, III, IV, V.1, VI.1 și, din VIII, secțiunile comune A-D + secțiunile aplicațiilor din lecția ta (găsești secțiunile cu `grep -n "^# Partea\|^## \|^### "` și le citești cu Read offset/limit). (Fostul `05_STANDARD_LECTIE.md` e acum o trimitere spre ghid.)
 2. `C:\00\Projects\LearningHub\jocuri\README.md` §1, §4 (inclusiv „Nivelurile PE PAȘI” și „Modul LECȚIE”), §6, §6b, §7, §8, §9.
 3. Lecțiile deja publicate ale clasei tale, ca model de calitate și ca „caiet”: `C:\00\Projects\LearningHub\lectii\<clasa>\m1-l0*\index.html`, cu `surse.md` și `_verificare\judecator*.md`. Citește ce au găsit judecătorii acolo și nu repeta.
 4. Planul și programa: `C:\00\Projects\Info_Gimnaziu_2026\data\unitati.json`, `C:\00\Projects\Info_Gimnaziu_2026\planificari\Calendar_ore_*.md`, `C:\00\AI_0\data\informatica_gimnaziu\curriculum.json`, `Proiectul_unitatii_*.md`. Documentele profesorului au prioritate față de orice altă sursă.
@@ -13,7 +13,7 @@ Ești AUTORUL unei lecții noi în secțiunea „Lecții” din LearningHub. E u
 ## Reguli de lucru
 - Nimic din memorie: orice fapt despre o aplicație îl probezi în aplicația reală, prin COM, cu instanță NOUĂ și INVIZIBILĂ, fără salvare, iar `Quit()` numai pe instanța ta. Tastele le trimiți ca taste reale, pe desktopul ascuns (`C:\00\AI_0\tools\hidden_desktop.py`). NIMIC pe ecranul vizibil al profesorului. PowerPoint rulează o singură dată: verifici întâi că nu e deschis.
 - Fișierele de descărcat: după salvare rulezi `python C:/00/Projects/LearningHub/_campaign/revizuire_completa_2026_09/verificare_lectii/curata_metadate.py --curata` (regula 21).
-- Imaginile sunt refolosite de pe sit sau luate de pe Wikimedia Commons, cu licența verificată pe pagina fișierului (autor și licență în `img\SURSE.json` și sub imagine), sub ~150 KB. Nu desenezi și nu generezi imagini.
+- Imaginile sunt refolosite de pe sit sau luate de pe Wikimedia Commons, cu licența verificată pe pagina fișierului (autor și licență în `img\SURSE.json` și sub imagine), sub ~150 KB. Nu generezi imagini (nimic făcut de AI). Un fișier de LUCRU pentru elev poate fi un desen simplu al tău, făcut cu cod, trecut în `SURSE.json` ca „desen al autorului”; ilustrațiile despre lumea reală sunt capturi sau fotografii Commons (ghidul, X.1 IV-2).
 - Simulatoarele comune din `lectii\_sim\` au proprietari. NU le modifici: dacă îți trebuie ceva, scrii o extensie cu nume nou în `lectii\_sim\`.
 - Windows + Git Bash: căi ABSOLUTE, fără `cd`. Python cu regex prin Write + rulare fișier, niciodată heredoc. Grep înainte de Read; Read cu offset/limit. Scripturile tale le pui în `_proba\` din dosarul lecției.
 - NU atingi `_motor\` și nici alte lecții. NU faci commit, NU publici.
