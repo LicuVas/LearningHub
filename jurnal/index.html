@@ -45,6 +45,12 @@ h1{font-size:1.6rem;margin:0 0 4px}h2{font-size:1.1rem;margin:0 0 10px}
 .leg i{display:inline-block;width:12px;height:12px;border-radius:3px;background:#0f1526;border:1px solid #232d48}
 .leg i.n1{background:#1d3557}.leg i.n2{background:#2c5aa0}.leg i.n3{background:#4a84ea}.leg i.n4{background:#9cc0ff}
 ul{margin:0;padding-left:18px}li{margin:4px 0}
+/* „Cum am lucrat” (autoanaliza, 26.10.2026): galben când a mers în grabă la mai multe lecții */
+#autoanaliza.mare{border-color:var(--inc);background:#2a2213}
+#autoanaliza .ce{font-size:1.08rem;font-weight:600;margin:0 0 8px}
+#autoanaliza ul.aa{margin:4px 0 10px}#autoanaliza p{margin:0 0 8px}
+.tag{display:inline-block;font-size:.78rem;line-height:1.5;padding:0 7px;border-radius:999px;border:1px solid;margin-left:2px;white-space:nowrap}
+.tag.gr{color:var(--inc);border-color:#7a5b12}.tag.st{color:var(--ok);border-color:#1d6b52}
 @media (max-width:480px){.cifra b{font-size:1.2rem}}
 </style>
 </head>
@@ -62,6 +68,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
       <li>cât ai <b>lucrat</b> pe fiecare: timpul se numără doar când pagina e în față și lucrezi (dai click, scrii, derulezi). O filă lăsată deschisă nu adună minute;</li>
       <li>ce niveluri ai terminat și cu câte stele;</li>
       <li>ce ai sărit, câte răspunsuri bune ai avut la prima încercare, câte indicii ai cerut și de câte ori ai apăsat „Arată-mi răspunsul”;</li>
+      <li>la ce lecții ai mers în grabă (aceleași pe care le vezi și tu, sus, la „Cum am lucrat”);</li>
       <li>de pe ce pagină ai plecat (când ascunzi sau închizi pagina, ori nu mai lucrezi pe ea);</li>
       <li>testele online pe care le-ai dat și notele de la ele.</li>
     </ul>
@@ -86,6 +93,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
   </div>
 </main>
 <script src="../assets/js/prezenta.js" id="lh-prezenta" defer></script>
+<script src="../assets/js/autoanaliza.js"></script>
 <script>
 /* JURNALUL MEU — „tabloul” elevului (10.10.2026; contract AI_0\projects\teste-elevi\contracte\2026-10-10_jurnal_panou_baza_comuna,
    R2-R5). Elevii, prin profesor: „mă întreabă unde au ajuns, ce au făcut, cu ce trebuie să continue [...] cu linkuri exact
@@ -97,7 +105,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
      - aparatul: sertarul profilului (cheile „<lecție sau joc>@<profil>”: pașii, stelele, prima încercare; prezenta.js îl
        aduce și de pe celelalte aparate, cu codul) + secundele încă netrimise (lh_prezenta_coada);
      - fără rețea, sau dacă serverul nu știe încă /api/jurnal: doar ce e pe aparat (lh_prezenta_jurnal), cu o notă.
-   Secțiunile: Continuă · Lecțiile mele · De reluat · Cât am lucrat · Jocurile mele · Unde am mai lucrat. Legăturile spre
+   Secțiunile: Continuă · Cum am lucrat (26.10.2026) · Lecțiile mele · De reluat · Cât am lucrat · Jocurile mele · Unde am mai lucrat. Legăturile spre
    lecții se deschid în FILĂ NOUĂ, direct la pas (motor.js: ?continua=1, ?pas=p3|atelier|real|q2, &nivel=N).
    Fără clasament, fără colegi. Nicio cerere spre server dacă elevul nu e înscris, a ales „Nu, doar vizitez” sau încă
    n-a răspuns la „Ești tot X?”. Se reîmprospătează când elevul revine în pagină, nu în buclă.
@@ -348,7 +356,9 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
       var bt=-1;Object.keys(lv).forEach(function(i){if((st[i]||0)>0)return;var t=+lv[i].t1||0;if(t>bt){bt=t;ni=+i}});
       if(ni>=0){pas=departe(lv[ni]);if(pas&&pas.q){var k=nrIntrebari(K,url,ni);if(k>=pas.q)pas.din=k}}
     }
-    return {l:l,K:K,P:P,url:url,titlu:'Lecția '+l.nr+' — '+l.titlu,gata:gata,stare:gata?'gata':atinsa?'inc':'nu',sec:sec,t1:t1,stele:stele,nota:nota,pas:pas,ni:ni,din:din,lv:lv};
+    // gm = terminată în MOTOR (jocul „gata” sau toate părțile cu stele), fără nota lecțiilor vechi: așa socotește și panoul
+    // profesorului „făcut”, deci autoanaliza (care judecă doar ce e terminat în motor) dă aceleași etichete pe ambele pagini
+    return {l:l,K:K,P:P,url:url,titlu:'Lecția '+l.nr+' — '+l.titlu,gata:gata,gm:!!(sj&&sj.gata)||fac>=din,stare:gata?'gata':atinsa?'inc':'nu',sec:sec,t1:t1,stele:stele,nota:nota,pas:pas,ni:ni,din:din,lv:lv};
   }
 
   /* „De reluat”: nota sub 7, prima încercare sub 60% (sau o stea din 3, la nivelurile de dinainte de prima încercare
@@ -375,6 +385,81 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
     });
     // la jocuri: nivelurile lăsate în urmă (neterminate înaintea unuia terminat), dacă jocul nu e deja „gata”
     if(joc&&!gataJoc)for(var i=0;i<ultF;i++)if(!lv[i]||!((lv[i].stars||0)>0))out.push({t:titlu+', nivelul '+(i+1),motiv:'l-ai sărit',href:url+'?continua=1&nivel='+(i+1)});
+  }
+
+  /* ---------------- „Cum am lucrat” — autoanaliza (26.10.2026) ----------------
+     Contract AI_0\projects\teste-elevi\contracte\2026-10-26_jurnal_autoanaliza: o mică autoanaliză pe care elevul o vede,
+     ca cine trece prin lecții în câteva minute, sărind pașii, să afle singur asta și să știe ce reia. Regula („în grabă” /
+     „știai deja”) și pragurile ei stau DOAR în ../assets/js/autoanaliza.js, aceeași cu a panoului profesorului; aici sunt
+     doar lecțiile judecate și textul (din câmpurile sarPasi / sarAtelier / rapid ale modulului). Judecate = TOATE lecțiile
+     terminate ale lui (planul clasei, apoi cele din alt plan, după cheie), din sertarul profilului activ. Textul, după doi
+     cititori-începători (a V-a, a XII-a): „terminată” explicat, de ce contează pașii și Atelierul, care lecții sunt „în
+     grabă”, ordinea din „Ce faci acum”, că profesorul vede același lucru. */
+  function cuDe(n,pl){var r=n%100;return n+(r>=20||(n>=100&&r===0)?' de ':' ')+pl}   // „7 lecții”, „38 de pași”
+  function ori(n){return n===1?'o dată':'de '+cuDe(n,'ori')}
+  function bune(b,t){return (b===1?'un răspuns bun':cuDe(b,'răspunsuri bune'))+' din '+t}
+  function judecate(L,S,D,cl){
+    if(!window.Autoanaliza||!PLAN)return [];
+    var out=[],vaz={};
+    L.forEach(function(x){vaz[x.K]=1;if(x.gm)out.push({x:x,a:window.Autoanaliza.lectie(x.lv,x.sec)})});
+    Object.keys(PLAN).forEach(function(c){(PLAN[c].module||[]).forEach(function(m){(m.lectii||[]).forEach(function(l){
+      if(!l.cheie||!l.cale||vaz[l.cheie]||!(S[l.cheie]||D.jocuri[l.cheie]))return;vaz[l.cheie]=1;
+      var x=lectia(l,S,D),alt=PLAN[c]!==cl&&PLAN[c].roman?PLAN[c].roman:'';if(!x.gm)return;
+      if(alt)x.titlu+=' (clasa a '+alt+'-a)';
+      out.push({x:x,a:window.Autoanaliza.lectie(x.lv,x.sec),alt:alt})})})});
+    return out.filter(function(y){return y.a.fel});
+  }
+  var DE_CE='Pașii îți arată cum se face, iar în Atelier exersezi. Când îi sari, treci de întrebări, dar înveți puțin.';
+  function nrL(y){return String(y.x.l.nr)+(y.alt?' (clasa a '+y.alt+'-a)':'')}   // „3”, „2 (clasa a VII-a)”
+  function motive(a){   // de ce e „în grabă” (sau „știai deja”): doar ce a hotărât modulul la lecția asta
+    var m=[];
+    if(a.sarPasi)m.push('ai deschis '+a.pasi.v+' din '+cuDe(a.pasi.din,'pași'));
+    if(a.sarAtelier)m.push('ai sărit Atelierul');
+    if(a.rapid)m.push('ai stat '+min(a.sec));
+    return m;
+  }
+  function cardAutoanaliza(J,D){
+    var R=window.Autoanaliza.rezumat(J,function(ms){return zi(new Date(ms))}),G=R.graba,h='';
+    if(!G.length){   // „fără grabă la toate” doar dacă nicio lecție nu e „știai deja” (acolo a sărit ceva sau a mers repede)
+      h+='<p class="ce">'+(R.stiai.length?'N-ai făcut nicio lecție în grabă.':R.n===1?'Ai terminat o lecție și ai lucrat-o fără grabă.':'Ai lucrat fără grabă la toate cele '+cuDe(R.n,'lecții')+' terminate.')+' Bravo!</p>';
+      var b=0,t=0;J.forEach(function(y){if(y.a.p1){b+=y.a.p1.b;t+=y.a.p1.t}});
+      if(t)h+='<p>Din prima ai răspuns bine la '+b+' din '+cuDe(t,'întrebări')+'.</p>';
+    }else if(R.mare){
+      var g=R.g,m=g.nSec?Math.round(g.sec/g.nSec/60):0;
+      h+='<p class="ce">'+(G.length===R.n?'Ai terminat '+cuDe(R.n,'lecții')+' și pe toate le-ai făcut în grabă.':
+        'Ai terminat '+cuDe(R.n,'lecții')+'. Pe '+G.length+' dintre ele (lecțiile '+esc(lista(G.map(nrL)))+') le-ai făcut în grabă.')+'</p>';
+      if(R.zi&&D.zile[R.zi.zi])h+='<p>'+(R.zi.n===R.n?'Toate le-ai terminat pe '+ziScurt(R.zi.zi):'Pe '+ziScurt(R.zi.zi)+' ai terminat '+cuDe(R.zi.n,'lecții')+' dintre ele')+
+        '; în ziua aceea ai lucrat în total '+min(D.zile[R.zi.zi])+'.</p>';
+      var li=[];
+      if(g.nSec)li.push('ai stat cam '+(m<1?'sub un minut':m===1?'un minut':cuDe(m,'minute'))+' pe o lecție, deși o lecție e făcută pentru o oră de curs');
+      if(g.din&&g.v<g.din)li.push('ai deschis '+g.v+' din '+cuDe(g.din,'pași'));
+      if(g.atS)li.push('ai sărit Atelierul '+(g.atS===G.length?'la toate':g.atS===1?'la una dintre ele':'la '+g.atS+' dintre ele'));
+      if(g.t)li.push('din prima ai răspuns bine la '+g.b+' din '+cuDe(g.t,'întrebări'));
+      if(g.ara)li.push('ai apăsat „Arată-mi răspunsul” '+ori(g.ara));
+      h+='<p>'+(G.length===R.n?'La ele':'La cele '+G.length)+':</p><ul class="aa" id="aa-cifre">'+li.map(function(x,i){return '<li>'+esc(x)+(i<li.length-1?';':'.')+'</li>'}).join('')+'</ul>'+
+        '<p>'+DE_CE+'</p>';
+    }else{
+      h+='<p class="ce">'+(G.length===1?'Lecția '+esc(nrL(G[0]))+' ai făcut-o în grabă: '+esc(lista(motive(G[0].a)))+'.':
+        'Lecțiile '+esc(lista(G.map(nrL)))+' le-ai făcut în grabă.')+'</p><p>'+DE_CE+'</p>';
+      var rest=R.bine.length,cel=!R.stiai.length;   // „celelalte” doar fără „știai deja”
+      if(rest)h+='<p>'+(rest===1?(cel?'Cealaltă lecție':'O altă lecție')+' ai lucrat-o fără grabă.':(cel?'Celelalte ':'Alte ')+cuDe(rest,'lecții')+' le-ai lucrat fără grabă.')+'</p>';
+    }
+    if(R.stiai.length){var S1=R.stiai;
+      h+='<p id="aa-stiai">'+(S1.length===1?'La Lecția '+esc(nrL(S1[0]))+' '+esc(lista(motive(S1[0].a)))+', dar din prima ai răspuns bine la '+S1[0].a.p1.b+' din '+S1[0].a.p1.t+': se vede că știai deja.':
+        'La lecțiile '+esc(lista(S1.map(nrL)))+' ai sărit ceva sau ai mers repede, dar ai răspuns bine din prima: se vede că știai deja.')+(G.length?' Bravo!':'')+'</p>';}
+    if(R.reia.length){
+      h+='<p><b>Ce faci acum'+(R.reia.length>1&&R.reia[0].a.p1?'</b> (sus e lecția la care ai greșit cel mai mult din prima)<b>':'')+':</b></p><ul class="rand" id="aa-reia">'+R.reia.map(function(y){var a=y.a,r=a.reia,mai=Object.keys(y.x.lv||{}).some(function(i){return +i>0});
+        var href=y.x.url+(r?'?pas='+r.pas+(mai?'&nivel='+(r.ni+1):''):''),
+          unde=r?(r.pas==='atelier'?'reiei de la Atelier, pe care l-ai sărit':'reiei de la pasul '+r.pas.toUpperCase()+', primul pe care l-ai sărit'):'reiei lecția de la început';
+        var meta=motive(a);
+        if(!a.sarPasi&&a.pasi&&a.pasi.v<a.pasi.din)meta.unshift('ai deschis '+a.pasi.v+' din '+cuDe(a.pasi.din,'pași'));
+        if(a.p1)meta.push('din prima: '+bune(a.p1.b,a.p1.t));if(a.ara)meta.push('„Arată-mi răspunsul” '+ori(a.ara));meta.push(unde);
+        return '<li class="rel" data-cheie="'+esc(y.x.K)+'"><span class="ic" aria-hidden="true">↻</span><span class="tt">'+esc(y.x.titlu)+'<span class="meta">'+esc(meta.join(' · '))+'</span></span>'+leg(href,'Reia')+'</li>'}).join('')+'</ul>'+
+        '<p class="sub">Când reiei pașii și Atelierul, lecția nu mai e „în grabă”.</p>';
+    }
+    h+='<p class="sub">„În grabă” = la o lecție terminată (ai trecut de întrebările de la final) ai deschis sub jumătate din pași, ai sărit Atelierul sau ai stat sub 5 minute. Nu intră în notă. Profesorul vede și el ce vezi tu aici.</p>';
+    return '<div class="card'+(R.mare?' mare':'')+'" id="autoanaliza" data-mare="'+(R.mare?1:0)+'" data-graba="'+esc(G.map(function(y){return y.x.K}).join(' '))+
+      '" data-stiai="'+esc(R.stiai.map(function(y){return y.x.K}).join(' '))+'"><h2>Cum am lucrat</h2>'+h+'</div>';
   }
 
   /* ---------------- desenul ---------------- */
@@ -453,6 +538,10 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
     }
     h+='</div>';
 
+    // ---- 1b. Cum am lucrat (autoanaliza): doar cu cel puțin o lecție terminată pe care o putem judeca
+    var J=judecate(L,S,D,cl),FEL={};J.forEach(function(y){FEL[y.x.K]=y.a.fel});
+    if(J.length)h+=cardAutoanaliza(J,D);
+
     // ---- 2. Lecțiile mele
     if(cl){
       var pana=L.filter(function(x){var p=String(x.l.data||'').split('.');return (p.length===3?p[2]+'-'+p[1]+'-'+p[0]:'9999')<=azi}),fac=pana.filter(function(x){return x.gata}).length;
@@ -460,12 +549,13 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
         (pana.length?'<p class="rez">Din lecțiile de până azi ai terminat <b>'+fac+' din '+pana.length+'</b>.</p>':'')+'<ul class="rand" id="lectii">'+
         L.map(function(x){
           var meta=x.stare==='gata'?'făcută':x.stare==='inc'?'începută'+(x.pas?' · '+etPas(x.pas):''):'neîncepută';
+          if(FEL[x.K]==='graba')meta+=' <span class="tag gr">în grabă</span>';else if(FEL[x.K]==='stiai')meta+=' <span class="tag st">știai deja</span>';
           if(x.stele)meta+=' · <span class="stele">★ '+x.stele+'</span>';
           if(x.nota&&x.nota.nota)meta+=' · nota '+esc(x.nota.nota);
           if(x.sec)meta+=' · '+min(x.sec);
           if(x.t1)meta+=' · ultima dată '+ziScurt(zi(new Date(x.t1)));
           var a=x.stare==='gata'?leg(x.url,'Reia','g'):x.stare==='inc'?leg(x.url+'?continua=1','Continuă'):leg(x.url,'Începe','g');
-          return '<li class="'+x.stare+'" data-cheie="'+esc(x.K)+'" data-stare="'+x.stare+'" data-sec="'+x.sec+'"><span class="ic" aria-hidden="true">'+(x.stare==='gata'?'✓':x.stare==='inc'?'◐':'○')+'</span>'+
+          return '<li class="'+x.stare+'" data-cheie="'+esc(x.K)+'" data-stare="'+x.stare+'" data-sec="'+x.sec+'"'+(FEL[x.K]?' data-fel="'+FEL[x.K]+'"':'')+'><span class="ic" aria-hidden="true">'+(x.stare==='gata'?'✓':x.stare==='inc'?'◐':'○')+'</span>'+
             '<span class="tt">'+esc(x.titlu)+'<span class="meta">'+meta+'</span></span>'+a+'</li>'}).join('')+'</ul></div>';
     }
 
