@@ -25,4 +25,11 @@
 5. Am reparat eu, după a treia judecată, trei lucruri mici: un rând din `surse.md` al V/29 și două mărunțișuri în simulatorul V/28. Primul: simulatorul primește și „20 − 6 (14)”. Al doilea: datele se scriu „Se dau 20 pentru «bani»…”, ca în V/29. Totul e scris în `judecator3.md`, cu probele.
 
 ## Cât a costat
-Bugetul pe 7 zile a crescut de la 1 % la 7 %. Contextul dirijorului a rămas sub prag (228k din 250k), așa că n-a fost nevoie de predarea ștafetei.
+Bugetul pe 7 zile a crescut de la 1 % la 7 %. Contextul dirijorului (cât „ține minte” sesiunea care conduce lucrarea) era 228k din 250k la 23:44. La 23:54 a trecut de prag (254k): dirijorul a scris singur o notă de predare și a dat lucrarea unei sesiuni noi, care a închis verificarea finală. Pe lucrarea asta, nicio sesiune-dirijor n-a trecut de 258k. Dovezile sunt în `_dirijor\p10_dovezi_R3.md`. Verificarea finală de mai jos a avut 3 rulări, cu 25 de agenți în total.
+
+## Verificarea finală (T1)
+Un agent care n-a lucrat la lecții scrie întrebările de verificare. Alți agenți caută răspunsurile pe disc și pe site, iar un script decide ce e FĂCUT, numai pe baza dovezilor citite atunci. Printre întrebări e și un **canar**: o întrebare-capcană la care singurul răspuns corect e „nu există”. Dacă un verificator bifează fără să citească, canarul îl prinde.
+- **Rularea 1 (23:46 → 23:53):** 11 întrebări, **9 FĂCUT**, canarul trecut. Au rămas deschise două.
+- **P1, „ce e pe site nu e identic cu ce e pe disc”:** diferența era doar sfârșitul de rând. Windows ține pe disc un caracter în plus la capătul fiecărui rând (CR), iar site-ul primește fișierul din git, fără el. Am comparat ce e live cu fișierul publicat în git: toate 4 fișierele (cele 2 pagini și cele 2 simulatoare) sunt identice. Proba e `_dirijor\p1_sha1_live_vs_git.sh` (ultima linie 0). **Închis**: FĂCUT la reluarea 1.
+- **P10, „predarea ștafetei” (R3 din contract):** raportul spunea că n-a fost nevoie de predare, dar la 23:54 dirijorul a trecut de prag și a predat singur. Am corectat raportul, jurnalul și fișa de memorie, cu măsurătorile din transcript. Reluarea 1: 3 din 4 FĂCUT. A patra întrebare (jurnalul și fișa aveau încă fraza veche) am reparat-o, iar reluarea 2 a ieșit **CURAT**.
+- **De știut:** la reluarea 2, agentul a scris întrebările din nou, așa că „P4” de acolo a verificat raportul, nu jurnalul și fișa. Corecția din jurnal (rândul 00:04) și pe cea din fișă le-am verificat eu, pe disc.
