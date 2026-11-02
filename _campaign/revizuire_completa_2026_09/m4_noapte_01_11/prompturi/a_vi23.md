@@ -1,0 +1,20 @@
+# Autor VI/23
+
+Citește întâi și urmează întocmai `C:\00\Projects\LearningHub\_campaign\revizuire_completa_2026_09\07_BRIEF_AUTOR.md` (legea = `00_GHID_LECTII.md`, părțile autorului; din VIII: A-D + I. Scratch).
+
+**Lecția ta:** clasa a VI-a, M4, nr. 23 — „Comparăm cele trei structuri repetitive. Când o folosesc pe fiecare” (consolidare; data din `lectii\plan.json`). Dosarul: `C:\00\Projects\LearningHub\lectii\vi\m4-l23\`, cheia `lectie_vi_m4_l23`. Unitatea: VI-U3 (`C:\00\Projects\Info_Gimnaziu_2026\planificari\Proiectul_unitatii_VI-U3.md`); jocul `jocuri\algoritmi-vi`.
+
+**Activitatea profesorului (scheletul, citat întocmai):** „Tabel comparativ completat de elevi în echipe și confruntat la tablă. Apoi, pentru cinci probleme date, fiecare echipă alege structura potrivită și argumentează.” Resursa: „fișă de comparație, listă de probleme”.
+
+**De citit întâi (publicate):** VI/17 (recapitularea; `urmarire-algoritm.js`), VI/18 (Scratch: interfața; `scratch.js`), VI/19 (repetiția, etapele), VI/20 (cu contor; `urmarire-algoritm-repetitie.js`, `scratch-control.js`), VI/21 (condiționată anterior; `scratch-conditie.js`, `urmarire-algoritm-cattimp.js`), VI/22 (condiționată posterior; `urmarire-algoritm-pana-cand.js` 1.2) — paginile, `surse.md` („Pentru lecția următoare (VI/23…)” din VI/22 e scris pentru tine: încarci `urmarire-algoritm.js`, apoi `-repetitie.js`, `-cattimp.js`, `-pana-cand.js`; nu le schimbi numele rândurilor și forma lui `treceri()`), `afirmatii.json`.
+
+**Ce e important aici:**
+- **Ora simultană, fără profesor și fără echipe:** tabelul comparativ îl completează elevul singur, în pagină (testat pe rezultat: fiecare celulă a tabelului — când se face testul, de câte ori minim se execută corpul, când știi dinainte numărul de pași), iar „confruntarea la tablă” devine verificarea pe exemple executate: ACEEAȘI problemă scrisă cu cele trei structuri, urmărită pas cu pas cu componentele publicate, și cazul în care ele dau rezultate DIFERITE (condiția adevărată de la început: `cât timp` — 0 treceri, `repetă … până când` — o trecere). „Argumentează” = răspuns scris scurt, primit în toate formele corecte (regula 23), sau alegerea motivului dintre variante-soră.
+- **Cele cinci probleme:** din activitate / manual / joc (nu inventa probleme la care alegerea e discutabilă); pentru fiecare, structura „potrivită” trebuie să fie apărabilă cu regula predată, iar unde două structuri merg amândouă, testul le primește pe amândouă (rezultat, nu drum). Scrii regula alegerii o singură dată, la fel peste tot.
+- **Notația de pseudocod = exact a lecțiilor VI/20-22** (verifici în paginile lor); fără variante noi.
+- **Atelierul** în Scratch simulat + urmărirea, cu teste numite: aceeași problemă rezolvată cu două structuri diferite, cu rezultatul verificat pe comportament (ca la VI/22: `testFinal`, `condCaInCaiet`, pornirea din alt loc). Extensie NOUĂ doar dacă îți trebuie (ex. `lectii\_sim\compara-repetitii.js`; verifică numele liber și granițele vecinilor VI/24, VI/25).
+- **Laboratorul fără profesor:** Scratch online fără cont (ca VI/18-22): deschizi, construiești aceeași problemă în două structuri, rulezi, salvezi `.sb3` cu numele care poartă clasa ta, „Nu (sau Anulare)” dacă există; nu te conectezi. Telefon 390 px cu degetul.
+
+**Granița.** **Tu predai / consolidezi:** cele trei structuri puse una lângă alta, diferențele (unde e testul, minimul de treceri, numărul cunoscut sau nu de pași), regula alegerii, transformarea unei structuri în alta pe un exemplu simplu. **NU predai:** schema logică / blocurile grafice (VI/24, vecinul din val — nu desenezi scheme), problemele cu sume, numărări și cifre ca subiect (VI/25 — exemplele tale nu sunt sume / numărări de cifre), evaluarea (VI/26). Vocabularul lor nu apare nici în variante.
+
+Apoi citește și urmează `…\noapte_10_10\prompturi\_comun.md`, `…\luni_12_10\prompturi\_zi.md`, `…\m3_19_10\prompturi\_m3.md`, `…\m3_noapte_23_10\prompturi\_noapte.md`, `…\m4_26_10\prompturi\_m4.md` și `…\m4_noapte_01_11\prompturi\_noapte_01_11.md` (granița ta: `m4_noapte_01_11\granite\vi_l23.md`; contractul: `m4_noapte_01_11\contract.md`).
