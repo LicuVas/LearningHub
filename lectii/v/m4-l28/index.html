@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 28, clasa a V-a: Structura secvențială (liniară). Descriere în limbaj natural</title>
+<meta name="description" content="Lecția 28, clasa a V-a: structura secvențială (liniară) — pașii se fac unul după altul, în ordinea scrisă, fiecare o dată; algoritmul pregătirii ghiozdanului scris în limbaj natural, dat unui robot care face exact ce scrie și corectat unde s-a oprit; citirea, atribuirea și afișarea; tabelul de urmărire; apoi algoritmul tău în Notepad.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@600;800&family=Commissioner:wght@400;600;700&family=Azeret+Mono:wght@500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF1EA; --paper:#FFFFFF; --paper2:#F3F6EF; --line:#C9D3C0;
+  --ink:#16200F; --ink2:#4A5940; --accent:#2F6B3A; --accentInk:#FFFFFF; --sel:#DCEBD5;
+  --mark:#FFE07A; --markInk:#24190D; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Gabarito","Segoe UI",system-ui,sans-serif; --fb:"Commissioner","Segoe UI",system-ui,sans-serif; --fm:"Azeret Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#101710; --paper:#18211A; --paper2:#202B22; --line:#3C4C3E;
+  --ink:#E8F0E4; --ink2:#B5C6AE; --accent:#8FD19B; --accentInk:#101710; --sel:#2A3D2D;
+  --mark:#EDCB63; --markInk:#24190D; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#101710; --paper:#18211A; --paper2:#202B22; --line:#3C4C3E;
+  --ink:#E8F0E4; --ink2:#B5C6AE; --accent:#8FD19B; --accentInk:#101710; --sel:#2A3D2D;
+  --mark:#EDCB63; --markInk:#24190D; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: pașii scriși unul sub altul, ca pe o foaie de caiet */
+.banda{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:7px 12px;background:#24452b;border-bottom:2px solid var(--accent)}
+.banda .bd-t{flex:0 1 auto;max-width:100%;font-family:var(--fm);font-size:.76rem;color:#f2f7ee;border:1px dashed #a9c9a5;border-radius:4px;padding:1px 8px}
+.banda .bd-z{flex:0 1 auto;max-width:100%;font-size:.76rem;color:#dbe9d6}
+h1,h2{font-weight:600;letter-spacing:0}
+code{font-family:var(--fm);font-size:.95em}
+ul.feluri,ol.reguli{margin:.3em 0 .3em 1.2em;padding:0}
+ul.feluri li,ol.reguli li{margin:.25em 0}
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:600;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.acum li.tarziu{list-style:none;margin:.5em 0 .1em -1.2em;padding-top:5px;border-top:1px dashed var(--line)}
+.acum li.mai-ai-timp,span.mai-ai-timp{color:var(--ink2)}
+.atentie{border-left:4px solid var(--accent);padding:2px 10px;margin:6px 0}
+.captura figcaption a.lic{display:inline-block;padding:8px 0;min-width:32px;text-align:center}
+.captura.mica img{max-width:300px}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/cutii-variabile.js"></script>
+<script src="../../_sim/evaluare-expresii.js"></script>
+<script src="../../_sim/secventa-liniara.js"></script>
+<script>
+/* Lecția 28, clasa a V-a (M4): „Structura secvențială (liniară). Descriere în limbaj natural” — predare, a cincea lecție din
+   V-U5 „Algoritmi. Gândesc pas cu pas” (CS.2.3). Legea: LearningHub\_campaign\revizuire_completa_2026_09\00_GHID_LECTII.md.
+   Sursele și probele: surse.md, _proba\. Definiția: manualele de clasa a V-a (Intuitext p. 78: „se execută fiecare o singură
+   dată, de la prima până la ultima instrucţiune”; Corint p. 66: „se execută în ordinea scrierii lor”; Art Klett p. 56: „în
+   ordinea în care apar, una după alta”; Litera p. 62: „denumită și structură liniară”). Citire / atribuire / afișare:
+   Intuitext p. 78 și Sigma p. 69; „afișează” ca în testul inițial al profesorului („afișez”) și în lecția VI/17.
+   Activitatea profesorului (activitati_lectii_V_VI.json): „Elevii scriu algoritmul unei activități familiare (pregătirea
+   ghiozdanului), îl dau unui coleg să îl execute exact și îl corectează după ce văd unde s-a blocat.” Resursa: „caiet, fișă
+   de scriere a algoritmului” — atelierul (robotul = colegul care execută exact) și laboratorul (algoritmul tău, în Notepad).
+   Simulatorul: lectii/_sim/secventa-liniara.js (NOU, proprietar lecția aceasta); evaluare-expresii.js (V/27) și
+   cutii-variabile.js (V/26) sunt încărcate nemodificate, pentru calculul expresiilor și citirea numerelor scrise.
+   Granița: NU predă decizia (29), repetiția, evaluarea sumativă (30), Scratch. Notepad (laboratorul) NU a fost pornit:
+   faptele vin din lecția publicată V/15 (afirmatii.json A17, A24, A27, A55) și din probele VIII/14.
+   Trimiterile la pași se fac după numărul din bara de jos (P1 = „La ce folosește”). */
+const SL=SecventaLiniara;
+const fig=(src,w,h,alt,cap,cls)=>`<figure class="captura${cls?' '+cls:''}"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG={
+  notepad:fig('img/notepad-fila.webp',900,520,'Fereastra Notepad din Windows 11, în română: sus, fila cu numele fișierului și butonul plus pentru o filă nouă; dedesubt meniurile Fișier, Editare, Vizualizare','Notepad în Windows 11: sus, fila cu numele fișierului și <b>+</b>, pentru o filă nouă; în stânga, meniul <b>Fișier</b>. Textul din ea (al unui elev de a VIII-a) nu contează: contează fila și meniul. <small>Captură din Notepad-ul real.</small>','mica'),
+  ghiozdan:fig('img/ghiozdan.webp',720,648,'Un ghiozdan gri, închis, așezat pe o masă: clapa din față e trasă peste el, iar fermoarele sunt închise','Un ghiozdan închis. Ca să pui ceva în el, întâi îl deschizi. <small>Foto: Manhyia, <a class="lic" href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noopener">CC BY-SA 4.0</a>, <a class="lic" href="https://commons.wikimedia.org/wiki/File:A_school_Bag.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (decupată și micșorată, aceeași licență).</small>','mica')
+};
+/* '!…' = punctul de la sfârșitul orei */
+const ACUM=(...p)=>`<div class="acum" role="note"><div class="lbl">Acum la calculatorul din laborator, în Notepad</div><ol>${p.map(x=>x.startsWith('!')?`<li class="tarziu">${x.slice(1)}</li>`:`<li>${x}</li>`).join('')}</ol></div>`;
+const TEL='Pe telefon: scrie același lucru în caiet.';
+
+/* ===================== pașii robotului (lumea ghiozdan) ===================== */
+const O={f:'orar'},D={f:'deschide'},SC={f:'scoate'},PM={f:'pune_maine'},PP={f:'pune',o:'penar'},IN={f:'inchide'};
+const N=(text,de_ce)=>({f:'neclar',text,de_ce});
+const BUN=[O,D,SC,PM,PP,IN];
+const T_TERMINA={k:'termina',ce:'Robotul face toți pașii, până la ultimul'};
+const T_GH={k:'ghiozdan',ce:'În ghiozdan e exact ce trebuie mâine: cărțile din orar și penarul'};
+const T_INCHIS={k:'inchis',ce:'La sfârșit, ghiozdanul e închis'};
+const GH=o=>Object.assign({t:'secventa',lume:'ghiozdan',teste:[T_TERMINA,T_GH,T_INCHIS],sol:BUN},o);
+/* ===================== pașii cu date (lumea cutii) ===================== */
+const C=c=>({f:'citeste',c}),CALC=(e,c)=>({f:'calc',e,c}),AF=c=>({f:'afiseaza',c}),PU=(v,c)=>({f:'pune',v,c});
+const DATE=o=>Object.assign({t:'secventa',lume:'cutii'},o);
+const URM=o=>Object.assign({t:'urmarire'},o);
+const ALG_REST=[C('bani'),C('preț'),CALC('«bani» − «preț»','rest'),AF('rest')];                    // P4 „Uite cum”
+const ALG_PUNCTE=[C('puncte'),C('bonus'),CALC('«puncte» + «bonus»','puncte'),CALC('«puncte» * 2','puncte'),AF('puncte')]; // P5 „Uite cum”
+const ALG_CAIETE=[C('caiete'),C('preț'),CALC('«caiete» * «preț»','total'),AF('total')];           // P4 „Încearcă”
+const ALG_PERIM=[C('lungime'),C('lățime'),CALC('(«lungime» + «lățime») * 2','perimetru'),AF('perimetru')];
+
+/* „Acum la calculator” — FĂRĂ profesor, pe calculatorul comun. Notepad (V/15): Start › „note” › Notepad; fila altcuiva →
+   „+”; clic în Notepad, Ctrl+S › Salvare ca (numele propus = primul rând, selectat: scrii direct; Notepad adaugă .txt);
+   „există deja” → Nu; Fișier › Închideți fila (Windows 11; „Nu salvați” la întrebare, VIII/14 A25) / X (Windows 10).
+   R1 (J1 M3): ultimul punct ÎNCEPE cu închiderea Notepad (fostul punct 6 „Închide fila” e acum aici), apoi ștergerea: doar
+   fișierul TĂU de azi, în Coș, fără golirea Coșului (V/24, V/26). */
+const LAB=[
+  '<b>Notepad.</b> Ai scris primul rând (la pasul 3 din 5, „Descrierea în limbaj natural”)? Treci la punctul 2. Nu? <b>Start</b>, scrie <code>note</code>, clic pe <b>Notepad</b> (fila altcuiva? <b>+</b>, sus) și scrie <code>1. Citește în orar ce ore ai mâine.</code>',
+  '<b>Scrie restul algoritmului</b> pentru ghiozdanul tău de mâine: încă cel puțin 3 pași, unul pe rând, numerotați (<code>2.</code>, <code>3.</code>, …). Poți numi materiile: <code>Pune în ghiozdan caietul și manualul de română.</code>',
+  '<b>Fii tu robotul.</b> Citește pașii de sus în jos: „Pot face pasul EXACT așa, acum?” Unde te oprești, repari: scrii pasul mai clar sau adaugi deasupra lui pasul care lipsește (clic la capătul rândului de deasupra, Enter, scrii pasul; apoi schimbi numerele pașilor de sub el).',
+  '<b>Salvează:</b> clic în Notepad, apoi Ctrl+S. În <b>Salvare ca</b>, cât numele propus e colorat, scrie <code>Nume_Prenume_&lt;clasa ta&gt;_ghiozdan</code> (ca <code>Pop_Ana_5A_ghiozdan</code>), alege în stânga <b>Documente</b>, apoi <b>Salvare</b>. Există deja? <b>Nu (sau Anulare)</b> și adaugă o cifră la sfârșit.',
+  '<span class="mai-ai-timp"><b>Dacă mai ai timp:</b> copiază algoritmul în caiet; îți rămâne după ștergere.</span>',
+  '<b>La sfârșitul orei</b>: în Notepad, <b>Fișier</b> › <b>Închideți fila</b> (pe Windows 10: X); la întrebare, <b>Nu salvați</b> (sau <b>Nu salva</b>). Apoi, dacă l-ai salvat: Explorer, <b>Documente</b>, clic pe fișierul TĂU (începe cu numele tău, conține <code>_ghiozdan</code>, poate și o cifră), tasta <b>Delete</b>. Felicitarea, afișul și stelele de la lecțiile 22, 23 și 25 nu le atingi. Nu goli Coșul.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_v_m4_l28',
+  mod:'lectie',
+  titlu:'Structura secvențială (liniară). Descriere în limbaj natural',
+  marca:'Lecția <b>28</b> · clasa a V-a',
+  h1:'Structura secvențială (liniară). Descriere în limbaj natural',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a V-a', unitate:'V-U5', unitateTitlu:'Algoritmi. Gândesc pas cu pas',
+  competente:['CS.2.3'], lectii:'28',
+  ancoraText:'Din programă (CS.2.3, unitatea V-U5, lecția 28): Structura secvențială (liniară); descrierea în limbaj natural a unor algoritmi cu ajutorul secvențelor de operații',
+  intro:`<p><b>Ai nevoie de:</b> lecțiile 24 (<b>algoritmul</b>, <b>pasul</b>, <b>executantul</b>), 25 (pasul <b>clar</b>), 26 (<b>variabila</b> = cutia cu etichetă; datele de intrare și de ieșire) și 27 (<b>expresia</b>). Pentru laborator: <b>Notepad</b> (lecția 15).</p>`,
+  cum:`<b>Cum lucrezi</b><ol><li>Pasul 1 îl citești, apoi 4 pași scurți, cu exerciții.</li><li>Atelierul: algoritmul ghiozdanului, dat robotului.</li><li>La calculator: algoritmul tău, în Notepad (pe telefon, în caiet).</li><li>5 întrebări.</li></ol><p><b>Când mai sunt 10 minute din oră:</b> treci la întrebări; la calculator, ultimul punct (închizi Notepad, ștergi fișierul tău).</p>`,
+  banda:'<span class="bd-t">Pasul 1 → Pasul 2 → Pasul 3 → …</span><span class="bd-z">unul după altul · în ordinea scrisă · fiecare o singură dată</span>',
+  nivele:[
+{t:'Structura secvențială (liniară). Descriere în limbaj natural',final:true,lectii:[28],
+ continuturi:['Structura secvenţială (liniară)'],
+ obiectiv:'scrii în limbaj natural un algoritm ai cărui pași se fac unul după altul (structura secvențială), îl corectezi unde executantul s-a oprit și urmărești pas cu pas ce e în fiecare cutie.',
+ pasi:[
+  /* ---- pasul 1: la ce folosește (fără acțiuni). Ghiozdanul = activitatea profesorului. ---- */
+  {t:'La ce folosește: ordinea pașilor',
+   text:`<p>Seara îți pregătești ghiozdanul pentru a doua zi. Faci pașii unul după altul: te uiți în orar, deschizi ghiozdanul, scoți cărțile de azi, pui cărțile pentru mâine și penarul, îl închizi.</p>
+<p>Ordinea contează. Un caiet nu intră într-un ghiozdan închis. Iar dacă pui întâi cărțile de mâine și abia apoi scoți toate cărțile, ghiozdanul rămâne fără ele.</p>
+<p>Azi afli cum se numesc acești algoritmi, cum îi scrii în cuvinte, pentru oricine, și cum urmărești ce fac cu datele.</p>
+${IMG.ghiozdan}`},
+  /* ---- pasul 2: structura secvențială (liniară) — numele, ce înseamnă, cum o recunoști (Intuitext, Corint, Art Klett, Litera). ---- */
+  {t:'Structura secvențială (liniară)',
+   text:`<p>Un algoritm ai cărui pași se fac <b>unul după altul</b>, în ordinea în care sunt scriși, de la primul la ultimul, are <mark>structura secvențială</mark>. I se mai spune <b>structura liniară</b>: pașii stau la rând, ca pe o linie.</p>
+<p>O recunoști așa: fiecare pas se face <b>o singură dată</b>; executantul nu sare peste niciun pas și nu se întoarce la un pas făcut.</p>
+<p>De aceea ordinea contează: un pas se poate face doar dacă pașii de deasupra lui au pregătit ce îi trebuie.</p>`,
+   exemplu:`${SL.imagine({lume:'ghiozdan'},[IN,PP,D],{aria:'Algoritmul „Penarul uitat” cu doi pași în locul greșit: robotul s-a oprit la pasul 2, Pune penarul în ghiozdan, pentru că ghiozdanul e închis',legenda:'Algoritmul „Penarul uitat”. Două greșeli de ordine: „Deschide ghiozdanul.” trebuia primul, iar „Închide ghiozdanul.” ultimul (pasul 1 are ✓ pentru că robotul l-a făcut, dar ghiozdanul era deja închis). Ordinea bună: Deschide, Pune penarul, Închide.'})}
+${ACUM('Pornește Notepad: <b>Start</b>, scrie <code>note</code>, clic pe <b>Notepad</b> (lecția 15). Textul altcuiva în el? <b>+</b>, sus, lângă file. Lasă-l deschis. Pe telefon: nimic de făcut aici.')}
+${IMG.notepad}`,
+   altfel:`<p>E ca la coada de la cantină: fiecare copil trece o dată, în ordinea din rând. Nimeni nu sare peste rând și nimeni nu se mai întoarce la capătul cozii după ce a trecut.</p>`,
+   incearca:GH({q:'Pașii sunt buni, dar amestecați. Mută-i cu ↑ și ↓, ca robotul să pregătească ghiozdanul pentru mâine. Pornește robotul ca să vezi unde se oprește, apoi <b>Verifică</b>.',
+    alg:[D,O,PM,IN,SC,PP],gresit:[O,D,PM,SC,PP,IN],
+    ajutor:'Ce trebuie făcut înainte să pui sau să scoți ceva din ghiozdan? Și ce se întâmplă cu cărțile puse înaintea pasului care le scoate pe toate?',
+    why:'Întâi orarul și deschiderea; apoi scoți cărțile de azi, pui cărțile pentru mâine și penarul; închiderea vine la sfârșit.'}),
+   inca:[
+    {t:'choice',q:'Un algoritm are structura secvențială. Executantul tocmai a făcut pasul 3. Ce face acum?',
+     o:['pasul 4','pasul 1, de la început','pasul pe care îl alege el','pasul 3, încă o dată'],ok:0,
+     ajutor:'Pașii se fac unul după altul, fiecare o singură dată.',why:'După pasul 3 vine pasul 4: executantul merge mai departe, în ordinea scrisă, fără să sară și fără să se întoarcă.'},
+    GH({q:'Alți pași amestecați. Pune-i în ordine cu ↑ și ↓, apoi <b>Verifică</b>.',alg:[IN,PP,SC,PM,D,O],gresit:[D,O,PM,SC,PP,IN],
+     ajutor:'Pornește robotul: la ce pas se oprește și de ce?',why:'Ordinea bună: orarul, deschiderea, scosul cărților de azi, cărțile de mâine, penarul, închiderea. Orarul poate fi citit și după deschidere.'})
+   ]},
+  /* ---- pasul 3: descrierea în limbaj natural (Intuitext p. 78: „Descrii algoritmul pas cu pas”; pasul clar = V/25). Executantul care
+     face exact ce scrie = colegul din activitatea profesorului. ---- */
+  {t:'Descrierea în limbaj natural',
+   text:`<p>A descrie un algoritm în <mark>limbaj natural</mark> înseamnă a-l scrie cu vorbele de zi cu zi, ca pe o listă de pași:</p>
+<ol class="reguli"><li>fiecare pas are <b>numărul</b> lui: Pasul 1, Pasul 2, …;</li><li>un pas spune <b>o singură acțiune</b>, clară (lecția 25), și începe cu ce faci: „Deschide…”, „Pune…”;</li><li>nu lipsește niciun pas: executantul nu face nimic din ce nu scrie.</li></ol>
+<p>Ca să afli dacă algoritmul e bun, îl dai unui executant care face exact ce scrie. Se oprește? Uită-te la pasul unde s-a oprit: e neclar, îi lipsește un pas deasupra sau stă în locul greșit.</p>`,
+   exemplu:`${SL.imagine({lume:'ghiozdan'},[D,SC,N('Pune cărțile în ghiozdan.','nu scrie care cărți'),PP,IN],{aria:'Algoritm cu pasul 3 neclar: robotul s-a oprit înaintea lui, cu ghiozdanul deschis și gol',legenda:'Pasul 3 nu spune care cărți. Îl schimbi cu „Pune în ghiozdan cărțile și caietele pentru orele de mâine.”, iar deasupra lui adaugi „Citește în orar ce ore ai mâine.”'})}
+${ACUM('În Notepad, scrie primul pas al algoritmului tău, cu numărul în față: <code>1. Citește în orar ce ore ai mâine.</code> Apoi Enter. Nu-ți ies ș, î, â? Scrie fără ele. Lasă Notepad deschis. '+TEL)}`,
+   altfel:`<p>Gândește-te la un coleg căruia îi lași un bilet: „Pune cărțile.” El te întreabă: „Care cărți?” Robotul nu întreabă și nu ghicește: se oprește. Biletul bun spune totul, pe rânduri, în ordinea în care trebuie făcut.</p>`,
+   incearca:GH({q:'Robotul se oprește la pasul 2. Repară algoritmul: pune din cartonașe ce lipsește, scoate pasul neclar (✕), mută pașii (↑ ↓). Pornește robotul, apoi <b>Verifică</b>.',
+    alg:[O,SC,PM,N('Pune și ce mai trebuie.','nu scrie ce anume'),IN],
+    cartonase:[PP,N('Pregătește ghiozdanul.','nu spune ce anume să facă'),D,{f:'pune',o:'desen'}],
+    gresit:[O,SC,PM,PP,IN],
+    ajutor:'Ghiozdanul e închis la început. Ce pas îl deschide? Și ce lucru, care nu e o carte, trebuie să ajungă în ghiozdan? Uită-te la testul 2.',
+    why:'Algoritmul bun: Citește în orar…, Deschide ghiozdanul., Scoate…, Pune… pentru orele de mâine., Pune penarul în ghiozdan., Închide ghiozdanul.'}),
+   inca:[
+    GH({q:'Încă un algoritm de reparat: robotul se oprește la pasul 2. Pune ce lipsește din cartonașe și mută-l unde trebuie, apoi <b>Verifică</b>.',
+     alg:[D,PM,SC,PP,IN],cartonase:[N('Uită-te ce ai mâine.','nu spune unde să se uite'),O],gresit:[D,SC,PM,PP,IN],
+     ajutor:'De unde știe robotul ce ore ai mâine? Și ce face pasul „Scoate…” cu cărțile puse înaintea lui?',
+     why:'Lipsea „Citește în orar ce ore ai mâine.”, înaintea pasului cu orele de mâine; iar „Scoate…” trebuie să vină înainte de „Pune… pentru orele de mâine.”'})
+   ]},
+  /* ---- pasul 4: secvența pe date — citire, atribuire, afișare (Intuitext p. 78: „citire (primire a datelor de intrare)”, „scriere
+     (furnizare a datelor de ieșire)”, „atribuire (prin care o variabilă primeşte ca valoare rezultatul obţinut prin evaluarea unei
+     expresii…)”; Sigma p. 69: „Operația de atribuire”, „variabilă ← expresie”). Cutia = V/26, expresia = V/27. ---- */
+  {t:'Pașii cu date: citește, calculează, afișează',
+   text:`<p>Pașii cu <b>date</b> din cutii:</p>
+<ul class="feluri"><li><b>„Citește «bani».”</b> — primește din afară o dată de intrare (nu „se uită”) și o pune în cutia «bani»;</li><li><b>„Calculează «bani» − «preț» și pune rezultatul în cutia «rest».”</b> — calculul se face cu valorile de acum;</li><li><b>„Afișează «rest».”</b> — arată pe ecran ce e în cutie (data de ieșire); cutia rămâne la fel.</li></ul>
+<p>Pasul care pune în cutie un rezultat sau un număr scris în algoritm („Pune 5 în cutia «preț».”) se numește <mark>atribuire</mark>: ce era în cutie se pierde.</p>`,
+   exemplu:`${SL.imagine({lume:'cutii',cutii:['bani','preț','rest'],intrari:{bani:20,'preț':6}},ALG_REST,{aria:'Algoritmul „Cât îți rămâne”: cutiile bani 20, preț 6, rest 14, iar pe ecran apare 14',legenda:'Robotul pune 20 în «bani» și 6 în «preț»; pasul 3 e unul singur: calculează 20 − 6 și pune 14 în «rest»; apoi afișează 14.'})}
+<p class="atentie">Unele cărți scriu atribuirea scurt, cu o săgeată: <code>rest ← bani − preț</code> („«rest» primește valoarea lui bani − preț”). Noi o scriem în cuvinte.</p>`,
+   altfel:`<p>E ca la tema de matematică: citești numerele din enunț (citire), scrii rezultatul calculului în căsuța lui (atribuire: ce era scris înainte acolo ștergi), apoi spui rezultatul cu voce tare, la oră (afișare).</p>`,
+   incearca:DATE({q:'Algoritmul „Cât plătești pe caiete” are pașii amestecați. Pune-i în ordine cu ↑ și ↓, apoi <b>Verifică</b>. Testul îl încearcă și pe alte date.',
+    cutii:['caiete','preț','total'],cazuri:[{caiete:3,'preț':5},{caiete:4,'preț':6}],
+    alg:[CALC('«caiete» * «preț»','total'),AF('total'),C('preț'),C('caiete')],
+    teste:[T_TERMINA,{k:'afisat',ce:'Se afișează cât plătești, și pentru alte date (4 caiete de câte 6 lei)',astept:'cât plătești'}],
+    sol:ALG_CAIETE,gresit:[C('caiete'),CALC('«caiete» * «preț»','total'),C('preț'),AF('total')],
+    ajutor:'Robotul poate calcula «caiete» * «preț» doar după ce în ambele cutii e ceva. Și poate afișa «total» doar după ce l-a calculat.',
+    why:'Întâi cele două citiri (în orice ordine), apoi calculul, apoi afișarea.'}),
+   inca:[
+    DATE({q:'Fă tu algoritmul „Perimetrul dreptunghiului” din cartonașe: robotul trebuie să afișeze doar perimetrul. Testul îl încearcă și pe alte date. Apoi <b>Verifică</b>.',
+     cutii:['lungime','lățime','perimetru'],cazuri:[{lungime:7,'lățime':4},{lungime:10,'lățime':3}],alg:[],
+     cartonase:[AF('perimetru'),C('lățime'),CALC('(«lungime» + «lățime») * 2','perimetru'),AF('lungime'),C('lungime')],
+     teste:[T_TERMINA,{k:'afisat',ce:'Se afișează doar perimetrul, și pentru alte date (10 și 3)',astept:'perimetrul'}],
+     sol:ALG_PERIM,gresit:[C('lungime'),CALC('(«lungime» + «lățime») * 2','perimetru'),C('lățime'),AF('perimetru')],
+     ajutor:'Ce trebuie să fie în cutii înainte de calcul? Ce cerea problema să se afișeze?',
+     why:'Citește «lungime»., Citește «lățime»., apoi calculul cu paranteza, apoi Afișează «perimetru». Cartonașul „Afișează «lungime».” nu trebuie.'}),
+    {t:'choice',q:'Într-o carte scrie pasul: rest ← bani − preț. Ce face el?',
+     o:['Calculează bani − preț și pune rezultatul în cutia «rest»','Afișează pe ecran ce e acum în cutia «rest»','Compară «rest» cu bani − preț și dă adevărat sau fals','Citește o valoare nouă pentru «rest», de la cine folosește algoritmul'],ok:0,
+     ajutor:'Săgeata e scrierea scurtă a atribuirii.',why:'Săgeata înseamnă atribuirea: «rest» primește valoarea expresiei bani − preț.'}
+   ]},
+  /* ---- pasul 5: tabelul de urmărire (Corint p. 66: „Urmărim cum se execută fiecare instrucțiune a algoritmului și cum se modifică
+     valorile variabilelor folosind următorul tabel”; Sigma p. 69: tabelul cu pașii și variabilele). Forma: un rând pe pas, valorile
+     TUTUROR cutiilor după pasul acela (granița v_l28: V/29 adaugă coloana condiției). ---- */
+  {t:'Tabelul de urmărire',
+   text:`<p>Ce face un algoritm cu datele urmărești pas cu pas, într-un <mark>tabel de urmărire</mark>:</p>
+<ul class="feluri"><li>un rând pentru fiecare pas, în ordinea în care se fac;</li><li>o coloană pentru fiecare cutie și una pentru ce se afișează;</li><li>în fiecare rând scrii ce e în fiecare cutie <b>după</b> pasul acela.</li></ul>
+<p>O cutie pe care pasul n-o schimbă păstrează valoarea din rândul de deasupra. O cutie în care nu s-a pus încă nimic e goală: căsuța rămâne goală. După o atribuire, în rând scrii doar valoarea nouă.</p>`,
+   exemplu:`${SL.tabel(ALG_PUNCTE,{puncte:7,bonus:3},{cutii:['puncte','bonus'],titlu:'Algoritmul „Puncte la joc”: 1. Citește «puncte». 2. Citește «bonus». 3. Calculează «puncte» + «bonus» și pune rezultatul în cutia «puncte». 4. Calculează «puncte» * 2 și pune rezultatul în cutia «puncte». 5. Afișează «puncte». Se dau 7 pentru «puncte» și 3 pentru «bonus».',legenda:'Colorat: ce a schimbat pasul; „–”: cutie încă goală. La pasul 3, «puncte» primește 10 și 7 se pierde; la pasul 4 primește 20. «bonus» rămâne 3.'})}`,
+   altfel:`<p>E ca tabela de scor de la un meci: după fiecare fază scrii scorul de acum al ambelor echipe, nu doar al celei care a marcat. Scorul vechi nu se mai vede: rămâne doar cel nou.</p>`,
+   incearca:URM({q:'Ana cumpără, pe rând, două caiete. Completează tabelul, apoi <b>Verifică</b>.',
+    pasi:[C('bani'),C('preț'),CALC('«bani» − «preț»','bani'),CALC('«bani» − «preț»','bani'),AF('bani')],
+    intrari:{bani:20,'preț':6},cutii:['bani','preț'],
+    ajutor:'Rândul 3: cât face 20 − 6? Rândul 4: calculezi cu valoarea de acum din «bani». «preț» nu se schimbă după pasul 2.',
+    why:'«bani»: 20, 20, 14, 8, 8; «preț»: goală, apoi 6 până la sfârșit; se afișează 8, la pasul 5.'}),
+   inca:[
+    URM({q:'Încă un tabel: algoritmul „Caiete de câte 5 lei”. Completează-l, apoi <b>Verifică</b>.',
+     pasi:[C('caiete'),PU(5,'preț'),CALC('«caiete» * «preț»','total'),AF('total')],intrari:{caiete:4},cutii:['caiete','preț','total'],
+     ajutor:'Pasul 2 nu citește nimic: pune direct 5 în «preț».',why:'«caiete»: 4 în toate rândurile; «preț»: goală, apoi 5; «total»: goală, goală, 20, 20; se afișează 20 la pasul 4.'})
+   ]}
+ ],
+ /* atelierul: activitatea profesorului — elevul scrie (din cartonașe) algoritmul pregătirii ghiozdanului, îl dă robotului (colegul
+    care execută exact), vede unde s-a oprit și îl corectează. Testele: rezultatul (robotul termină, ghiozdanul are exact ce trebuie,
+    e închis), nu un text anume (regula 29). Orarul de mâine e altul decât în pași. */
+ atelier:GH({titlu:'Atelier: algoritmul ghiozdanului, dat robotului',
+  intro:`<p><strong>Sarcina:</strong> scrii algoritmul ghiozdanului pentru mâine, îl dai robotului să-l facă EXACT și îl corectezi unde s-a oprit. Azi ai avut română și desen. Atingi cartonașele în ordinea dorită; nu toate sunt bune. Apoi <b>Verifică</b>.</p>`,
+  q:'Pornește robotul și corectează algoritmul până ajunge la ultimul pas.',
+  azi:['romana','desen'],maine:['mate','engleza','geografie'],alg:[],max:10,
+  cartonase:[PM,IN,N('Pune cărțile în ghiozdan.','nu scrie care cărți'),O,{f:'pune',o:'romana'},SC,D,PP],
+  gresit:[D,PM,SC,IN],
+  ajutor:'Testul care nu trece îți spune ce lipsește. Pornește robotul și uită-te la pasul colorat cu roșu: acolo s-a oprit.',
+  why:'Un algoritm bun: 1. Citește în orar ce ore ai mâine. 2. Deschide ghiozdanul. 3. Scoate din ghiozdan toate cărțile și caietele. 4. Pune în ghiozdan cărțile și caietele pentru orele de mâine. 5. Pune penarul în ghiozdan. 6. Închide ghiozdanul.'}),
+ qs:[
+  {t:'choice',q:'Ce înseamnă că un algoritm are structura secvențială (liniară)?',
+   o:['Pașii se fac pe rând, în ordinea scrisă, o dată','Executantul face pașii în ce ordine vrea el','Executantul sare peste pașii care i se par grei','Se face doar ultimul pas, cel cu rezultatul'],ok:0,
+   ajutor:'Gândește-te la robotul din pagină: cum face pașii?',why:'În structura secvențială pașii se fac de la primul la ultimul, în ordinea scrisă, fiecare o dată.'},
+  {t:'choice',q:'Robotul se oprește la pasul 2, „Pune penarul în ghiozdan.”: ghiozdanul e închis. Cum repari?',
+   o:['Pui pasul „Deschide ghiozdanul.” înaintea pasului 2','Ștergi pasul 2','Pui pasul „Deschide ghiozdanul.” la sfârșit','Apeși din nou „Pornește robotul”'],ok:0,
+   ajutor:'Ce trebuie să se fi întâmplat înainte ca robotul să poată pune ceva în ghiozdan?',why:'Robotul face pașii în ordine: deschiderea trebuie să vină înaintea pasului care pune ceva în ghiozdan. La sfârșit ar fi prea târziu.'},
+  {t:'choice',q:'Ce face pasul „Calculează «mere» + «pere» și pune rezultatul în cutia «fructe».”?',
+   o:['Pune în «fructe» suma de acum a cutiilor «mere» și «pere»','Afișează pe ecran suma «mere» + «pere» și nu pune nimic','Citește pentru «fructe» o valoare nouă, primită din afară','Pune în «mere» suma lui «mere» și «pere», nu în «fructe»'],ok:0,
+   ajutor:'E o atribuire: în ce cutie pune rezultatul?',why:'Pasul calculează expresia cu valorile de acum și pune rezultatul în cutia «fructe». Nu afișează nimic.'},
+  {t:'choice',q:'În cutia «bani» e 15. Robotul face pasul „Calculează «bani» − 4 și pune rezultatul în cutia «bani».” Ce e acum în «bani»?',
+   o:['11','15','15 și 11','4'],ok:0,
+   ajutor:'Cât face 15 − 4? Și ce se întâmplă cu valoarea veche?',why:'15 − 4 dă 11. Atribuirea pune 11 în cutie, iar 15 se pierde: o cutie ține o singură valoare.'},
+  {t:'choice',q:'Algoritmul: 1. Citește «latura». 2. Calculează «latura» * 4 și pune rezultatul în cutia «perimetru». Se dă 6 pentru «latura». Ce e în «perimetru» după pasul 1?',
+   o:['nimic: cutia e încă goală','24, rezultatul lui 6 * 4','6, valoarea citită la pasul 1','4, numărul din expresie'],ok:0,
+   ajutor:'Ce cutie schimbă pasul 1?',why:'Pasul 1 pune 6 doar în «latura». «perimetru» primește 24 abia la pasul 2, deci după pasul 1 e încă goală.'}
+ ]}
+  ],
+  diploma:{titlu:'Scriitorul de algoritmi',
+   rezumat:'a scris algoritmul pregătirii ghiozdanului, l-a dat robotului să-l facă exact și l-a corectat după ce a văzut unde s-a oprit; a pus în ordine pașii unui algoritm cu date (citește, calculează, afișează) și l-a urmărit pas cu pas în tabelul de urmărire; a aflat ce e structura secvențială (liniară)',
+   aplicatie:'Notepad, pe calculatorul din laborator',
+   provocare:LAB},
+  aplicatieReala:{aplicatie:'Notepad, pe calculatorul din laborator',titlu:'Acum la calculator',scurt:'Notepad',
+   intro:'<p>Algoritmul TĂU pentru ghiozdanul de mâine, în Notepad: îl scrii, îl verifici ca un robot, îl salvezi (cam 8 minute). <b>Când mai sunt 10 minute din oră:</b> sari la ultimul punct.</p><details class="verif"><summary>Pe telefon (fără Notepad)</summary><p>Scrie algoritmul în caiet, un pas pe rând, numerotat; fii tu robotul și repară. Nimic de salvat sau de șters.</p></details>',
+   pasi:LAB},
+  tipuri:{secventa:SecventaLiniara.tipuri.secventa,urmarire:SecventaLiniara.tipuri.urmarire}
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 29, clasa a V-a: Structura alternativă (decizia). Urmăresc algoritmul pas cu pas</title>
+<meta name="description" content="Lecția 29, clasa a V-a: decizia într-un algoritm (Dacă … atunci … altfel …), condiția adevărată sau falsă și cele două ramuri; tabelul de urmărire completat rând cu rând pe date diferite, compararea traseelor, secvența și decizia împreună, apoi o decizie adevărată în Explorer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@600;800&family=Commissioner:wght@400;600;700&family=Azeret+Mono:wght@500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF1EA; --paper:#FFFFFF; --paper2:#F3F6EF; --line:#C9D3C0;
+  --ink:#16200F; --ink2:#4A5940; --accent:#2F6B3A; --accentInk:#FFFFFF; --sel:#DCEBD5;
+  --mark:#FFE07A; --markInk:#24190D; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Gabarito","Segoe UI",system-ui,sans-serif; --fb:"Commissioner","Segoe UI",system-ui,sans-serif; --fm:"Azeret Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#101710; --paper:#18211A; --paper2:#202B22; --line:#3C4C3E;
+  --ink:#E8F0E4; --ink2:#B5C6AE; --accent:#8FD19B; --accentInk:#101710; --sel:#2A3D2D;
+  --mark:#EDCB63; --markInk:#24190D; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#101710; --paper:#18211A; --paper2:#202B22; --line:#3C4C3E;
+  --ink:#E8F0E4; --ink2:#B5C6AE; --accent:#8FD19B; --accentInk:#101710; --sel:#2A3D2D;
+  --mark:#EDCB63; --markInk:#24190D; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: tabla verde a clasei, cu decizia scrisă cu creta */
+.banda{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:7px 12px;background:#24452b;border-bottom:2px solid var(--accent)}
+.banda .bd-t{flex:0 1 auto;max-width:100%;font-family:var(--fm);font-size:.76rem;color:#f2f7ee;border:1px dashed #a9c9a5;border-radius:4px;padding:1px 8px}
+.banda .bd-z{flex:0 1 auto;max-width:100%;font-size:.76rem;color:#dbe9d6}
+h1,h2{font-weight:600;letter-spacing:0}
+code{font-family:var(--fm);font-size:.95em}
+pre.forma{font-family:var(--fm);font-size:.86rem;background:var(--paper2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:6px 0;white-space:pre-wrap}
+/* „Acum la calculator” (regula 10): gesturi mici, reale, imediat după pas */
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:600;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.acum li.tarziu{list-style:none;margin:.5em 0 .1em -1.2em;padding-top:5px;border-top:1px dashed var(--line)}
+.acum li.mai-ai-timp,span.mai-ai-timp{color:var(--ink2)}
+.atentie{border-left:4px solid var(--accent);padding:2px 10px;margin:6px 0}
+.captura figcaption a.lic{display:inline-block;padding:8px 0;min-width:32px;text-align:center}
+.captura.mica img{max-width:240px}
+.doua{display:grid;grid-template-columns:1fr;gap:8px}
+@media (min-width:760px){.doua{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/cutii-variabile.js"></script>
+<script src="../../_sim/evaluare-expresii.js"></script>
+<script src="../../_sim/urmarire-decizie.js"></script>
+<script>
+/* Lecția 29, clasa a V-a (M4): „Structura alternativă (decizia). Urmăresc algoritmul pas cu pas” — predare + consolidare,
+   a șasea lecție din V-U5 „Algoritmi. Gândesc pas cu pas” (CS.2.3). Legea: LearningHub\_campaign\revizuire_completa_2026_09\00_GHID_LECTII.md.
+   Sursele și probele: surse.md, _proba\. Forma deciziei: manualele de clasa a V-a (Intuitext: „Dacă condiție atunci
+   Instrucțiuni1 Altfel Instrucțiuni2”; Art Klett, Sigma, CD Press, Corint — citatele în surse.md) și testul inițial al
+   profesorului („Dacă a > b atunci afișez a, altfel afișez b.”). Forma pașilor (Citește / Calculează … și pune rezultatul
+   în cutia / Afișează) și tabelul de urmărire: presupuse de la V/28 (granița m4_seara_02_11\granite\v_l28.md).
+   Activitatea profesorului (activitati_lectii_V_VI.json): „Tabel de urmărire completat împreună pentru un algoritm cu
+   decizie, apoi individual pentru alte două seturi de date de intrare. Se compară traseele obținute.” Resursa: „fișă cu
+   tabel de urmărire, exemple cu date diferite” — P3 („împreună”: biletul, cu explicația fiecărui rând), atelierul (același
+   algoritm, două seturi care merg pe ramuri diferite, apoi compararea traseelor).
+   Simulatorul: lectii/_sim/urmarire-decizie.js (NOU, proprietar lecția aceasta); evaluare-expresii.js (V/27) și
+   cutii-variabile.js (V/26) sunt încărcate nemodificate, pentru condiții / calcule și pentru citirea numerelor.
+   Granița: NU predă repetiția, Scratch, evaluarea sumativă (30); nu redefinește structura secvențială (28). Laboratorul:
+   Explorer, Acest PC (lecția 9), doar citire — nimic creat, nimic șters. Trimiterile la pași se fac pe NUMELE pasului. */
+const UD=UrmarireDecizie;
+const fig=(src,w,h,alt,cap,cls)=>`<figure class="captura${cls?' '+cls:''}"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG={
+  semafor:fig('img/semafor-rosu.webp',600,402,'Un semafor pentru pietoni pe un stâlp: lumina de sus e aprinsă roșu','Semaforul pentru pietoni: e roșu, deci aștepți. <small>Foto: R1717, <a class="lic" href="https://commons.wikimedia.org/wiki/File:Fu%C3%9Fg%C3%A4ngerampel_Landau_Pfalz_rot.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC0; micșorată.</small>'),
+  pc:fig('img/acest-pc-liber.webp',330,334,'Trei unități în Acest PC, fiecare cu o bară albastră; sub Disc local (C:) scrie 198 GB liber din 475 GB, iar „198 GB liber” e într-un chenar roșu','<b>Acest PC</b> (Windows 11). Chenarul roșu, pus de noi: 198 GB liberi. Cifrele roșii mari (tot ale noastre): totalul, nu cât e liber.','mica'),
+  pcLab:fig('img/acest-pc-liber.webp',330,334,'Trei unități în Acest PC; sub Disc local (C:), „198 GB liber” e într-un chenar roșu','În chenarul roșu (pus de noi): «liber», 198. Cifrele roșii mari arată totalul, nu ce e liber.','mica')
+};
+/* '!…' = punctul de la sfârșitul orei */
+const ACUM=(...p)=>`<div class="acum" role="note"><div class="lbl">Acum la calculatorul din laborator, în Explorer</div><ol>${p.map(x=>x.startsWith('!')?`<li class="tarziu">${x.slice(1)}</li>`:`<li>${x}</li>`).join('')}</ol></div>`;
+
+/*ALG-START (sursa unică: pagina și probele din _proba citesc blocul acesta) */
+const ALG_NIVEL={cutii:['puncte'],pasi:[
+  {citeste:'puncte'},
+  {daca:'«puncte» ≥ 50',atunci:[{afisText:'Nivel trecut'}],altfel:[{afisText:'Mai încearcă'}]},
+  {afis:'puncte'}]};
+const ALG_BILET={cutii:['vârsta','bani','rest'],pasi:[
+  {citeste:'vârsta'},{citeste:'bani'},
+  {daca:'«vârsta» < 14',atunci:[{calc:'«bani» − 5',in:'rest'}],altfel:[{calc:'«bani» − 10',in:'rest'}]},
+  {afis:'rest'}]};
+const ALG_CAIETE={cutii:['bani','caiete','cost'],pasi:[
+  {citeste:'bani'},{citeste:'caiete'},
+  {calc:'«caiete» * 4',in:'cost'},
+  {daca:'«cost» ≤ «bani»',atunci:[{afisText:'Cumpăr caietele'}],altfel:[{afisText:'Nu ajung banii'}]},
+  {afis:'cost'}]};
+const ALG_LIBER={cutii:['liber'],pasi:[
+  {citeste:'liber'},
+  {daca:'«liber» ≥ 100',atunci:[{afisText:'Loc destul'}],altfel:[{afisText:'Loc puțin'}]},
+  {afis:'liber'}]};
+/*ALG-END*/
+const TU=o=>Object.assign({t:'tabel-urmarire'},o);
+
+/* „Acum la calculator” — FĂRĂ profesor, pe calculatorul comun. Doar citire în Acest PC: nimic creat, mutat sau șters.
+   „… liber din …” = resursa ro-RO a Windows (propsys.dll.mui: „%1!ls! liber din %2!ls!”) + captura din lecția 9;
+   vederea Detalii are coloana „Spațiu liber” (Shell.Application, citit, _proba\sonda_liber_din.json). */
+const LAB=[
+  '<b>Explorer, la Acest PC.</b> E deschis de la pasul <i>Decizia: condiția și cele două ramuri</i>? Treci la punctul 2. Nu? Clic pe dosarul galben din bara de activități (lecția 9) sau ține apăsată tasta cu sigla Windows și apasă <kbd>E</kbd>. Apoi, în stânga, clic pe <b>Acest PC</b> (<i>This PC</i>).',
+  '<b>Datele de intrare.</b> Caută discul cu (C:) la sfârșitul numelui: <b>Disc local (C:)</b> sau alt nume, de exemplu Windows (C:). Sub el scrie, de exemplu, „198 GB liber din 475 GB”. Numărul dinaintea cuvântului „liber” (sau „liberi”) e «liber». Scrie-l în caiet, cu virgulă dacă are. Scrie TB în loc de GB? Sunt mult peste 100 GB: lucrează cu 1000 pentru «liber». Nu găsești discul C: sau nu scrie nimic sub el? Lucrează cu 198 pentru «liber», din poză.'+IMG.pcLab,
+  '<b>Algoritmul, cu tine ca executant</b> („Afișează” înseamnă: scrii în caiet):'+UD.algoritmHtml(ALG_LIBER)+'Desenează în caiet tabelul de urmărire, cu coloanele Pasul, «liber», Condiția, Se afișează, și completează-l rând cu rând.',
+  '<b>Alt set de date, alt traseu.</b> Scrie sub tabel traseul tău (coloana Pasul). Ai ajuns la „Loc destul”? Gândește-te la 40 pentru «liber». Ai ajuns la „Loc puțin”? La 150. Scrie noul traseu, apoi o propoziție: de la ce rând diferă de al tău și de ce.',
+  '<span class="mai-ai-timp"><b>Dacă mai ai timp:</b> la colegul de lângă tine, Explorer arată alt număr? Cu numărul lui, pe ce ramură merge algoritmul?</span>',
+  '<b>La sfârșitul orei</b> (chiar dacă n-ai terminat): X pe Explorer (colțul din dreapta sus). N-ai creat niciun fișier: n-ai nimic de șters.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_v_m4_l29',
+  mod:'lectie',
+  titlu:'Structura alternativă (decizia). Urmăresc algoritmul pas cu pas',
+  marca:'Lecția <b>29</b> · clasa a V-a',
+  h1:'Structura alternativă (decizia). Urmăresc algoritmul pas cu pas',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a V-a', unitate:'V-U5', unitateTitlu:'Algoritmi. Gândesc pas cu pas',
+  competente:['CS.2.3'], lectii:'29',
+  ancoraText:'Din programă (CS.2.3, unitatea V-U5, lecția 29): Structura alternativă (decizională) — urmărirea pas cu pas a unor algoritmi cu secvențe de operații și decizii',
+  intro:`<p><b>Ai nevoie de:</b> lecția 28: pașii <b>Citește</b>, <b>Calculează … și pune rezultatul în cutia …</b>, <b>Afișează</b> și <b>tabelul de urmărire</b>. Lecția 27: comparațiile <code>= ≠ &lt; &gt; ≤ ≥</code>, cu valoarea <b>adevărat</b> sau <b>fals</b>. Lecția 26: cutia cu etichetă. Pentru laborator: <b>Explorer</b> și <b>Acest PC</b> (lecția 9).</p>`,
+  cum:`<b>Cum lucrezi</b><ol><li>P1 de citit, apoi 4 pași scurți, cu exerciții.</li><li>Atelierul: algoritmul biletului, pe două seturi de date; apoi compari drumurile.</li><li>La calculator: o decizie cu datele calculatorului tău, în Explorer (pe telefon, în caiet).</li><li>5 întrebări.</li></ol><p><b>Când mai sunt 10 minute din oră:</b> treci la întrebări; la calculator, ultimul punct.</p>`,
+  banda:'<span class="bd-t">Dacă condiție atunci … altfel …</span><span class="bd-z">adevărat → ramura „atunci” · fals → ramura „altfel” · se face o singură ramură</span>',
+  nivele:[
+{t:'Structura alternativă (decizia). Urmăresc algoritmul pas cu pas',final:true,lectii:[29],
+ /* textul EXACT din programă (curriculum.json): acolo, conținutul „Structura alternativă (decizională)” e lipit de „Medii grafice
+    interactive …” (V-U6); poarta cere textul întreg — lecția acoperă doar prima parte (surse.md, „Contradicții găsite”) */
+ continuturi:['Structura alternativă (decizională)Medii grafice interactive - elemente de interfață specifice mediului grafic interactiv'],
+ obiectiv:'urmărești pas cu pas, într-un tabel, un algoritm cu o decizie, pe date diferite, și explici de ce algoritmul a mers pe un drum sau pe celălalt.',
+ pasi:[
+  /* ---- pasul 1: la ce folosește (fără acțiuni). Semaforul = Art Klett („Dacă semaforul pietonilor este roșu. Atunci aștept.
+     Altfel traversez.”). „Structura alternativă sau decizională” = Art Klett, CD Press, Sigma, Litera. ---- */
+  {t:'La ce folosește: decizia',
+   text:`<p>La lecția 28, pașii unui algoritm se făceau toți, unul după altul. La semafor însă nu faci mereu același lucru: dacă e roșu, aștepți; altfel, traversezi. Alegi după ce vezi acum.</p>
+<p>Într-un algoritm, o alegere ca asta se numește <mark>decizie</mark>. Un algoritm cu o decizie are <mark>structura alternativă</mark>, numită și <b>decizională</b>: are două drumuri (<b>ramuri</b>), iar datele de acum hotărăsc pe care merge.</p>
+<p>Azi citești decizii, urmărești pas cu pas ce face un algoritm pe date diferite și compari drumurile.</p>
+${IMG.semafor}`},
+  /* ---- pasul 2: condiția și ramurile (Intuitext: „Dacă condiție este adevărată, atunci se execută Instrucțiuni1, altfel
+     se execută Instrucțiuni2”; Sigma: „Nu se pot executa ambele … ramuri diferite … se iese din structura alternativă și
+     se continuă algoritmul”). Ramurile mai la dreapta: VI/17 și jocul algoritmi-v. Afișează „text”: Intuitext „scriu
+     „Promovat””, jocul algoritmi-v „afișează „Promovat””. ---- */
+  {t:'Decizia: condiția și cele două ramuri',
+   text:`<p>O decizie se scrie așa:</p>
+<pre class="forma">Dacă condiție atunci
+    pașii ramurii „atunci”
+altfel
+    pașii ramurii „altfel”</pre>
+<p><mark>Condiția</mark> e o comparație (lecția 27), socotită cu valorile de acum din cutii. Adevărată: se fac pașii ramurii „atunci”. Falsă: pașii ramurii „altfel”. Se face o singură <mark>ramură</mark>, niciodată amândouă. Pașii unei ramuri stau mai la dreapta; „altfel” nu e un pas: n-are număr și nu apare în tabel. După decizie, algoritmul merge la pasul de sub ea.</p>
+<p class="atentie">În unele manuale, decizia se încheie cu rândul „Sfârșit dacă”. Unele decizii n-au „altfel”: dacă condiția e falsă, din decizie nu se face nimic. Azi, fiecare decizie are ambele ramuri.</p>`,
+   exemplu:`${UD.algoritmHtml(ALG_NIVEL,{titlu:'Algoritmul nivelului dintr-un joc:'})}<p>Cu 65 pentru «puncte»: condiția 65 ≥ 50 e adevărată, deci se fac pașii 1, 2, 3 și 5. Pasul 4 se sare. Se afișează „Nivel trecut” (exact textul dintre ghilimele), apoi 65.</p>
+${ACUM('Deschide Explorer (dosarul galben din bara de activități); în stânga, clic pe <b>Acest PC</b>. Sub discul cu (C:) la sfârșitul numelui (de obicei <b>Disc local (C:)</b>), primul număr arată câți GB sunt liberi (poza de mai jos). Scrie TB? Atunci sunt peste 100 GB.','Scrie în caiet: numărul acesta ≥ 100 e adevărat sau fals? Lasă Explorer deschis. Pe telefon: cu 198 din poză.')}
+${IMG.pc}`,
+   altfel:`<p>Dimineața: „Dacă plouă, atunci iau umbrela, altfel iau șapca.” Condiția e „plouă”. Nu iei amândouă: doar una, după cum e vremea acum. Apoi, oricum ar fi, pleci la școală: acesta e pasul de după decizie.</p>`,
+   incearca:{t:'choice',q:`${UD.algoritmHtml(ALG_NIVEL)}Algoritmul nivelului primește 40 pentru «puncte». Ce afișează?`,
+    o:['„Mai încearcă”, apoi 40','„Nivel trecut”, apoi 40','„Nivel trecut”, „Mai încearcă”, apoi 40','doar 40'],ok:0,
+    ajutor:'Întâi condiția: e 40 ≥ 50 adevărat sau fals? Care ramură se face atunci? Pasul 5 e sub decizie.',
+    why:'40 ≥ 50 e fals, deci se face ramura „altfel”: pasul 4 afișează „Mai încearcă”. Pasul 5, de sub decizie, afișează 40.'},
+   inca:[
+    {t:'choice',q:`${UD.algoritmHtml(ALG_NIVEL)}Acum se dă 50 pentru «puncte». Ce afișează algoritmul?`,
+     o:['„Nivel trecut”, apoi 50','„Mai încearcă”, apoi 50','„Nivel trecut”, „Mai încearcă”, apoi 50','doar „Nivel trecut”'],ok:0,
+     ajutor:'Semnul ≥ înseamnă „mai mare sau egal”. E 50 ≥ 50 adevărat?',
+     why:'50 ≥ 50 e adevărat (50 e egal cu 50), deci ramura „atunci”: „Nivel trecut”. Apoi pasul 5 afișează 50.'}
+   ]},
+  /* ---- pasul 3: tabelul de urmărire, „împreună” (activitatea profesorului). Forma tabelului = granița V/28 (un rând pe pas
+     făcut; în cutii ce e DUPĂ pas; „–” = goală), cu coloana Condiția (V/29). ---- */
+  {t:'Tabelul de urmărire, completat împreună',
+   text:`<p>Un algoritm pe niște date se urmărește pas cu pas în <b>tabelul de urmărire</b>, ca la lecția 28. Are în plus coloana <b>Condiția</b>.</p>
+<p>Fiecare rând e un pas făcut, în ordinea în care se face. În tabel e ce are fiecare cutie DUPĂ pas; cutia încă goală are căsuța goală („–” în tabelul gata făcut). La rândul deciziei scrii la Condiția adevărat sau fals. Rândul următor e primul pas al ramurii alese: pașii celeilalte ramuri nu apar în tabel.</p>
+<p>În exerciții, ce nu schimbă pasul (valoarea din rândul de deasupra) e scris deja, cu gri înclinat; tu scrii doar ce pune pasul.</p>`,
+   exemplu:`<p>Biletul la muzeu costă 5 lei sub 14 ani și 10 lei de la 14 ani în sus. Algoritmul află restul:</p>${UD.algoritmHtml(ALG_BILET)}
+${UD.tabelHtml(ALG_BILET,{'vârsta':11,bani:20},{explica:['Citește vârsta: 11.','Citește banii: 20. «vârsta» rămâne 11 (gri).','Decizia: 11 &lt; 14 e adevărat.','Ramura „atunci”: 20 − 5 dă 15. Pasul 5 se sare.','Pasul 6 e sub decizie: se face oricum.'],traseu:false})}`,
+   altfel:`<p>E ca un jurnal de drum: scrii, rând cu rând, pe unde ai trecut și ce ai în rucsac după fiecare oprire. La o răscruce (decizia) notezi ce ai văzut, apoi doar drumul ales.</p>`,
+   incearca:TU({q:'Completează tabelul de urmărire al algoritmului nivelului cu 40 pentru «puncte»: atinge numărul pasului care se face, apoi răspunde sub tabel. La sfârșit, <b>Verifică</b>.',
+    alg:ALG_NIVEL,seturi:[{intrari:{puncte:40}}],
+    ajutor:'Rândul 1 e pasul 1. După decizie, condiția hotărăște: adevărată, urmează pasul 3; falsă, pasul 4. Pasul 5 se face oricum.',
+    why:'Pașii făcuți: 1, 2, 4, 5. 40 ≥ 50 e fals, deci ramura „altfel” (pasul 4: „Mai încearcă”); pasul 5 afișează 40.'}),
+   inca:[
+    TU({q:'Același algoritm, cu 50 pentru «puncte».',alg:ALG_NIVEL,seturi:[{intrari:{puncte:50}}],
+     ajutor:'E 50 ≥ 50 adevărat? „≥” primește și „egal”.',why:'50 ≥ 50 e adevărat: pașii 1, 2, 3, 5; se afișează „Nivel trecut”, apoi 50.'})
+   ]},
+  /* ---- pasul 4: traseul și compararea (activitatea profesorului: „Se compară traseele obținute”). ---- */
+  {t:'Date diferite, trasee diferite',
+   text:`<p><mark>Traseul</mark> algoritmului pe un set de date e lista pașilor făcuți, în ordine: coloana Pasul, citită de sus în jos.</p>
+<p>Cu alte date, condiția poate avea altă valoare, deci algoritmul merge pe cealaltă ramură: traseul e altul. Când compari două trasee, cauți primul rând unde diferă și spui de ce: ce valoare a avut condiția la fiecare set.</p>`,
+   exemplu:`<div class="doua">${UD.tabelHtml(ALG_NIVEL,{puncte:65},{titlu:'Algoritmul nivelului:'})}${UD.tabelHtml(ALG_NIVEL,{puncte:40},{titlu:'Același algoritm:'})}</div>
+<p>Traseele diferă la rândul 3: 65 ≥ 50 e adevărat (pasul 3), 40 ≥ 50 e fals (pasul 4). Pașii 1, 2 și 5 se fac la amândouă.</p>`,
+   altfel:`<p>Doi colegi pleacă de acasă spre școală. La semafor, unul găsește verde și trece; celălalt găsește roșu și așteaptă. Au același plan, dar drumuri diferite, pentru că au văzut altceva la semafor.</p>`,
+   incearca:{t:'choice',q:`${UD.algoritmHtml(ALG_NIVEL)}Algoritmul nivelului primește 80 pentru «puncte». Care e traseul?`,
+    o:['1, 2, 3, 5','1, 2, 4, 5','1, 2, 3, 4, 5','1, 3, 5'],ok:0,
+    ajutor:'E 80 ≥ 50 adevărat sau fals? Ce pas e pe ramura aleasă? Ce pas e sub decizie?',
+    why:'80 ≥ 50 e adevărat: pașii 1, 2, apoi pasul 3 de pe ramura „atunci”, apoi pasul 5. Pasul 4 se sare.'},
+   inca:[
+    {t:'choice',q:`${UD.algoritmHtml(ALG_NIVEL)}Cu un alt număr de puncte, algoritmul nivelului a avut traseul 1, 2, 4, 5. Ce știi sigur despre numărul de puncte?`,
+     o:['e mai mic decât 50','e 50 sau mai mare','e exact 40','nu se poate ști nimic'],ok:0,
+     ajutor:'Pasul 4 e pe ramura „altfel”. Când se face ramura „altfel”?',
+     why:'Pasul 4 se face doar când condiția «puncte» ≥ 50 e falsă, adică atunci când numărul e mai mic decât 50.'}
+   ]},
+  /* ---- pasul 5: consolidarea (tipul lecției): secvența (V/28) + decizia, cu un calcul înainte de decizie. ---- */
+  {t:'Secvență și decizie, în același algoritm',
+   text:`<p>Un algoritm are de obicei și pași care se fac toți, unul după altul (structura secvențială, lecția 28), și o decizie. Pașii de pe marginea din stânga se fac la orice date, în ordinea lor; decizia alege doar ramura.</p>
+<p>Des, algoritmul calculează întâi ceva și abia apoi decide, cu valoarea calculată. Îl urmărești la fel: un rând pe pas făcut.</p>`,
+   exemplu:`<p>Un caiet costă 4 lei. Ajung banii pentru caietele dorite?</p>${UD.algoritmHtml(ALG_CAIETE)}<p>Pașii 1, 2 și 3 sunt o secvență: citește banii, citește câte caiete vrei și calculează costul. Pasul 4 decide cu valoarea din «cost». Pasul 7 se face oricum.</p>`,
+   altfel:`<p>La cumpărături: întâi aduni prețurile (secvența), apoi te uiți dacă ajung banii (decizia): dacă da, plătești, altfel lași ceva înapoi. Apoi pleci acasă, oricum ar fi.</p>`,
+   incearca:TU({q:'Completează tabelul cu 15 pentru «bani» și 3 pentru «caiete». Apoi <b>Verifică</b>.',
+    alg:ALG_CAIETE,seturi:[{intrari:{bani:15,caiete:3}}],
+    ajutor:'Pasul 3: cât fac 3 caiete de câte 4 lei? Pasul 4: e acel cost ≤ 15?',
+    why:'3 * 4 dă 12; 12 ≤ 15 e adevărat: traseul 1, 2, 3, 4, 5, 7; se afișează „Cumpăr caietele”, apoi 12.'}),
+   inca:[
+    TU({q:'Același algoritm, cu 10 pentru «bani» și 3 pentru «caiete».',alg:ALG_CAIETE,seturi:[{intrari:{bani:10,caiete:3}}],
+     ajutor:'Costul e tot 12. E 12 ≤ 10?',why:'12 ≤ 10 e fals: traseul 1, 2, 3, 4, 6, 7; se afișează „Nu ajung banii”, apoi 12.'})
+   ]}
+ ],
+ /* atelierul: activitatea profesorului — același algoritm ca „împreună” (P3), individual, pe DOUĂ seturi care merg pe ramuri
+    diferite, apoi compararea traseelor (ce ramură, de ce). Ambele seturi afișează 5: compararea arată că același rezultat
+    poate veni pe drumuri diferite. Testele: valorile, condiția, traseul, ce se afișează (pe set) + compararea. */
+ atelier:TU({titlu:'Atelier: fișa cu tabelul de urmărire, pe două seturi de date',
+  intro:`<p><strong>Sarcina:</strong> algoritmul biletului la muzeu, completat împreună la pasul <i>Tabelul de urmărire, completat împreună</i>. Acum îl urmărești singur, pe două seturi de date (filele <b>Setul 1</b> și <b>Setul 2</b>). La fiecare rând: atingi numărul pasului care se face, apoi răspunzi sub tabel. La sfârșit compari traseele și apeși <b>Verifică</b>.</p>`,
+  q:'Completează tabelul pentru fiecare set, apoi compară traseele.',
+  alg:ALG_BILET,
+  seturi:[{intrari:{'vârsta':14,bani:15}},{intrari:{'vârsta':8,bani:10}}],
+  compara:{q:'Amândouă seturile afișează 5. Au mers pe același drum?',
+   o:['Nu. Setul 1 a trecut prin pasul 5: 14 &lt; 14 e fals. Setul 2, prin pasul 4: 8 &lt; 14 e adevărat.',
+      'Da. Amândouă au afișat 5, iar același rest înseamnă că au trecut prin aceiași pași.',
+      'Nu. Setul 1 a trecut prin pasul 4: 14 &lt; 14 e adevărat. Setul 2, prin pasul 5: 8 &lt; 14 e fals.',
+      'Da. Amândouă au trecut prin pasul 4 și prin pasul 5: pașii se fac toți, pe rând.'],ok:0},
+  ajutor:'Testul care nu trece îți spune setul și rândul. La decizie: e 14 mai mic decât 14? Dar 8?',
+  why:'Setul 1: 14 &lt; 14 e fals, traseul 1, 2, 3, 5, 6; 15 − 10 dă 5. Setul 2: 8 &lt; 14 e adevărat, traseul 1, 2, 3, 4, 6; 10 − 5 dă 5. Același rest, drumuri diferite: diferă la rândul 4.'}),
+ qs:[
+  {t:'choice',q:'Într-o decizie, când se fac pașii ramurii „altfel”?',
+   o:['când condiția e falsă','când condiția e adevărată','mereu, după pașii ramurii „atunci”','niciodată'],ok:0,
+   ajutor:'Adevărată: o ramură; falsă: cealaltă.',why:'Ramura „altfel” se face doar când condiția e falsă; se face o singură ramură.'},
+  {t:'choice',q:`${UD.algoritmHtml({cutii:['grade'],pasi:[{citeste:'grade'},{daca:'«grade» < 10',atunci:[{afisText:'Ia geaca'}],altfel:[{afisText:'Fără geacă'}]}]})}Ce afișează algoritmul cu 10 pentru «grade»?`,
+   o:['„Fără geacă”','„Ia geaca”','„Ia geaca”, apoi „Fără geacă”','nimic'],ok:0,
+   ajutor:'E 10 mai mic decât 10?',why:'10 &lt; 10 e fals (10 e egal cu 10, nu mai mic), deci ramura „altfel”: „Fără geacă”.'},
+  {t:'choice',q:`${UD.algoritmHtml(ALG_CAIETE)}Algoritmul caietelor primește 20 pentru «bani» și 5 pentru «caiete». Care e traseul?`,
+   o:['1, 2, 3, 4, 5, 7','1, 2, 3, 4, 6, 7','1, 2, 3, 4, 5, 6, 7','1, 2, 4, 5, 7'],ok:0,
+   ajutor:'Pasul 3: 5 * 4 dă…? Apoi: e acel cost ≤ 20? „≤” primește și „egal”.',why:'5 * 4 dă 20; 20 ≤ 20 e adevărat: pașii 1, 2, 3, 4, apoi 5 (ramura „atunci”), apoi 7.'},
+  {t:'choice',q:`${UD.algoritmHtml(ALG_BILET)}Algoritmul biletului la muzeu primește 14 pentru «vârsta» și 20 pentru «bani». Ce afișează?`,
+   o:['10','15','5','15, apoi 10'],ok:0,
+   ajutor:'E 14 mai mic decât 14? Pe ce ramură merge? Cât scade din 20?',why:'14 &lt; 14 e fals, deci ramura „altfel”: 20 − 10 dă 10, iar pasul 6 afișează 10.'},
+  {t:'choice',q:`${UD.algoritmHtml(ALG_BILET)}Doi copii folosesc algoritmul biletului la muzeu. Pentru primul, traseul e 1, 2, 3, 4, 6; pentru al doilea, 1, 2, 3, 5, 6. Ce e sigur adevărat?`,
+   o:['primul are sub 14 ani, al doilea are 14 ani sau mai mult','amândoi au sub 14 ani','primul are 14 ani sau mai mult, al doilea sub 14 ani','au afișat sigur același rest'],ok:0,
+   ajutor:'Pasul 4 e pe ramura „atunci”, pasul 5 pe ramura „altfel”. Când e adevărat «vârsta» &lt; 14?',
+   why:'Pasul 4 se face când «vârsta» &lt; 14 e adevărat (sub 14 ani); pasul 5, când e fals (14 ani sau mai mult). Restul depinde și de bani, deci nu e sigur același.'}
+ ]}
+  ],
+  diploma:{titlu:'Urmăritorul de algoritmi',
+   rezumat:'a urmărit pas cu pas, în tabelul de urmărire, algoritmi cu o decizie, pe date diferite, a comparat traseele și a explicat de ce algoritmul a mers pe o ramură sau pe cealaltă, apoi a făcut o decizie adevărată cu datele din Explorer',
+   aplicatie:'Explorer, pe calculatorul din laborator',
+   provocare:LAB},
+  aplicatieReala:{aplicatie:'Explorer, pe calculatorul din laborator',titlu:'Acum la calculator',scurt:'Explorer',
+   intro:'<p>Aici datele de intrare vin din calculatorul tău: câți GB sunt liberi pe disc (cam 8 minute). Doar citești în Explorer, nu schimbi nimic.</p><details class="verif"><summary>Pe telefon (fără Explorer)</summary><p>Fă în caiet punctul 3 cu 198 pentru «liber» (din poză), apoi punctul 4 cu 40.</p></details>',
+   pasi:LAB},
+  tipuri:{'tabel-urmarire':UrmarireDecizie.tipuri['tabel-urmarire']}
+});
+</script>
+</body>
+</html>
