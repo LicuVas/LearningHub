@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 26, clasa a V-a: Datele: de intrare, de ieșire, de manevră. Constante și variabile</title>
+<meta name="description" content="Lecția 26, clasa a V-a: datele cu care lucrează un algoritm — de intrare (ce se dă), de ieșire (ce se cere), de manevră (ce se calculează pe parcurs); variabila ca o cutie cu etichetă și constanta; tabelul de analiză pe trei probleme, cutiile în pagină, apoi o „cutie” în Paint.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@600;800&family=Commissioner:wght@400;600;700&family=Azeret+Mono:wght@500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#F4EFE6; --paper:#FFFFFF; --paper2:#F8F3EA; --line:#DCCFBA;
+  --ink:#24190D; --ink2:#5E4E3B; --accent:#8A4B12; --accentInk:#FFFFFF; --sel:#F3E2C8;
+  --mark:#FFE07A; --markInk:#24190D; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Gabarito","Segoe UI",system-ui,sans-serif; --fb:"Commissioner","Segoe UI",system-ui,sans-serif; --fm:"Azeret Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#17120C; --paper:#211A12; --paper2:#2A2117; --line:#4A3B2A;
+  --ink:#F2E9DC; --ink2:#C7B59D; --accent:#F0B46A; --accentInk:#17120C; --sel:#3A2D1E;
+  --mark:#EDCB63; --markInk:#24190D; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#17120C; --paper:#211A12; --paper2:#2A2117; --line:#4A3B2A;
+  --ink:#F2E9DC; --ink2:#C7B59D; --accent:#F0B46A; --accentInk:#17120C; --sel:#3A2D1E;
+  --mark:#EDCB63; --markInk:#24190D; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: cutii de carton cu etichete, ca la magazie */
+/* r1 (sonnet M8): pe telefon banda trece pe două rânduri, nu se mai taie („pe parcurs” ieșea din cadru la 390 px) */
+.banda{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:7px 12px;background:#5b3d1e;border-bottom:2px solid var(--accent)}
+.banda .bd-t{flex:0 1 auto;max-width:100%;font-family:var(--fm);font-size:.76rem;color:#fbf3e4;border:1px dashed #d8b98c;border-radius:4px;padding:1px 8px}
+.banda .bd-z{flex:0 1 auto;max-width:100%;font-size:.76rem;color:#f0e2c9}
+h1,h2{font-weight:600;letter-spacing:0}
+code{font-family:var(--fm);font-size:.9em}
+/* „Acum la calculator” (regula 10): gesturi mici, reale, imediat după pas */
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:600;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.acum li.tarziu{list-style:none;margin:.5em 0 .1em -1.2em;padding-top:5px;border-top:1px dashed var(--line)}
+.acum li.mai-ai-timp,span.mai-ai-timp{color:var(--ink2)}
+.atentie{border-left:4px solid var(--accent);padding:2px 10px;margin:6px 0}
+.captura figcaption a.lic{display:inline-block;padding:8px 0}
+.cv-demo-t{font-weight:700;margin:10px 0 2px}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/cutii-variabile.js"></script>
+<script>
+/* Lecția 26, clasa a V-a (M4): „Datele: de intrare, de ieșire, de manevră. Constante și variabile” — predare, a treia lecție
+   din V-U5 „Algoritmi. Gândesc pas cu pas” (CS.2.2). Legea: LearningHub\_campaign\revizuire_completa_2026_09\00_GHID_LECTII.md.
+   Sursele și probele: surse.md, _proba\. Definițiile: manualele de clasa a V-a de pe manuale.edu.ro (Art Klett p. 61-63,
+   Intuitext p. 67-68, Sigma p. 61, Litera p. 61-62, CD Press p. 66-69, Corint, EDP — citatele în surse.md) și programa.
+   Activitatea profesorului (activitati_lectii_V_VI.json): „Pe trei probleme scurte, elevii completează un tabel cu ce se dă,
+   ce se cere și ce se calculează pe parcurs. Analogia variabilei cu o cutie etichetată, cu obiecte care se schimbă.” —
+   atelierul (3 probleme, tabelul de analiză) și pasul P4 (cutiile).
+   Simulatorul: lectii/_sim/cutii-variabile.js (NOU, proprietar lecția aceasta): tabelul de analiză și cutiile etichetate.
+   Granița: NU predă expresiile și operatorii (27), „structura secvențială” ca denumire (28), decizia (29), Scratch (31);
+   fără „←”, fără „citește / scrie / afișează”, fără litere în loc de numere: calculele sunt spuse în cuvinte, ca la lecția 25.
+   Paint (laboratorul) NU a fost pornit: faptele vin din lecțiile 18, 19, 22, 23 (afirmatii.json ale lor).
+   Trimiterile la pași se fac după numărul din bara de jos (P1 = „La ce folosește”). */
+const CV=CutiiVariabile;
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+/* fotografia P1: copia identică (sha1 69ae0a7f…) a celei de la lecția VIII/13, în img\ al lecției (r1, sonnet M9: nu mai
+   depinde de dosarul altei lecții); licența reverificată în _proba\commons_licenta.json și _proba\j1_licenta_out.txt; img\SURSE.json */
+const IMG={
+  scor:fig('img/tabela-scor.webp',800,585,'O tabelă de scor neagră, lângă un teren cu iarbă: sus scrie TOTAL, dedesubt 95 pe plăcuțe albe; alături WICKETS 1 și OVERS 20','Tabela de scor de la un meci de crichet (un joc cu mingea și bâta). Etichetele (TOTAL = în total) sunt scrise pe tablă; numerele sunt plăcuțe agățate, care se pot schimba. <small>Foto: Acabashi, <a class="lic" href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noopener">CC BY-SA 4.0</a>, <a class="lic" href="https://commons.wikimedia.org/wiki/File:High_Beach_Cricket_Club_scoreboard_at_High_Beach,_Essex,_England_1.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (decupată și micșorată, aceeași licență).</small>')
+};
+/* '!…' = punctul de la sfârșitul orei */
+const ACUM=(...p)=>`<div class="acum" role="note"><div class="lbl">Acum la calculator, în Paint-ul adevărat</div><ol>${p.map(x=>x.startsWith('!')?`<li class="tarziu">${x.slice(1)}</li>`:`<li>${x}</li>`).join('')}</ol></div>`;
+/* trimiterile la pașii lecțiilor publicate (?vezi=pN: pasul N din bara lor, P1 = „La ce folosește”; doar de citit, în filă nouă) */
+const LP=(cale,l,p,t)=>`<a href="../${cale}/?vezi=p${p}" target="_blank" rel="noopener">lecția ${l}, pasul <i>${t}</i> (P${p})</a>`;
+const NUME='numele, prenumele și clasa <b>ta</b>, legate cu liniuța de jos (Shift și tasta cu minus), apoi <code>_cutie</code> (ca <code>Pop_Ana_5A_cutie</code>, dar cu ale tale)';
+const SFARSIT='<b>La sfârșitul orei</b> (chiar dacă n-ai terminat): X pe Paint; te întreabă „Salvați lucrul?”? <b>Nu salvați</b>. Ai salvat cutia? Explorer: <b>Documente</b>, clic pe fișierul tău care se termină cu <code>_cutie</code> (poate are și cifra ta), <kbd>Delete</kbd>. Felicitarea, afișul și desenul cu stele de la lecțiile 22, 23 și 25 nu le atingi. Nu goli Coșul.';
+
+/* ===================== problemele (toate inventate; fiecare cu algoritmul ei, ca „pe parcurs” să aibă un singur sens) ===================== */
+/* P2 „Uite cum”: pâinile (două coloane) */
+const PAINE={nume:'Pâinile',enunt:'Mama cumpără 3 pâini. O pâine costă 4 lei. Câți lei plătește?',
+ date:[{t:'câte pâini cumpără mama',rol:'da',v:'3'},{t:'cât costă o pâine',rol:'da',v:'4 lei'},{t:'câți lei plătește mama',rol:'cere',v:'12 lei',val:12}]};
+/* P2 „Încearcă”: clătitele */
+const CLATITE={nume:'Clătitele de la cantină',enunt:'La cantină, fiecare elev primește 2 clătite. Azi mănâncă 25 de elevi. Câte clătite trebuie făcute?',
+ date:[{t:'câte clătite primește un elev',rol:'da'},{t:'câți elevi mănâncă azi',rol:'da'},{t:'câte clătite trebuie făcute',rol:'cere',val:50}]};
+/* P2 „Încă un exercițiu”: sticlele */
+const STICLE={nume:'Sticlele de apă',enunt:'Un bax are 6 sticle de apă. Doamna dirigintă cumpără 4 baxuri. Câte sticle de apă are?',
+ date:[{t:'câte baxuri cumpără doamna dirigintă',rol:'da'},{t:'câte sticle de apă are',rol:'cere',val:24},{t:'câte sticle are un bax',rol:'da'}]};
+/* P3 „Uite cum”: caietele Anei */
+const CAIETE={nume:'Caietele Anei',enunt:'Ana are 20 de lei. Cumpără 3 caiete, de câte 4 lei. Câți lei îi rămân?',
+ pasi:['Înmulțește prețul unui caiet cu numărul caietelor: află cât costă caietele.','Scade din banii Anei cât costă caietele: află câți lei îi rămân.','Spune câți lei îi rămân.'],
+ date:[{t:'câți lei are Ana',rol:'da',v:'20 de lei'},{t:'cât costă un caiet',rol:'da',v:'4 lei'},{t:'câte caiete cumpără',rol:'da',v:'3'},
+  {t:'cât costă caietele',rol:'parcurs',v:'12 lei',val:12,pas:0},{t:'câți lei îi rămân',rol:'cere',v:'8 lei',val:8,pas:1}]};
+/* P3 „Încearcă”: plăcintele bunicii */
+const PLACINTE={nume:'Plăcintele bunicii',enunt:'Bunica are 15 mere. Pune câte 4 mere într-o plăcintă și face 3 plăcinte. Câte mere îi rămân?',
+ pasi:['Înmulțește numărul plăcintelor cu câte mere pune într-o plăcintă: află câte mere pune în plăcinte.','Scade din merele bunicii câte mere a pus în plăcinte: află câte mere îi rămân.','Spune câte mere îi rămân.'],
+ date:[{t:'câte mere are bunica',rol:'da'},{t:'câte mere pune în plăcinte',rol:'parcurs',val:12,pas:0},{t:'câte plăcinte face',rol:'da'},
+  {t:'câte mere îi rămân',rol:'cere',val:3,pas:1},{t:'câte mere pune într-o plăcintă',rol:'da'}]};
+/* P3 „Încă un exercițiu”: biletele de tren */
+const TREN={nume:'Biletele de tren',enunt:'Un bilet de tren costă 8 lei. Merg în excursie 5 copii. Doamna profesoară are 50 de lei. Câți lei îi rămân după ce cumpără biletele?',
+ pasi:['Înmulțește prețul unui bilet cu numărul copiilor: află cât costă biletele.','Scade din banii doamnei profesoare cât costă biletele: află câți lei îi rămân.','Spune câți lei îi rămân.'],
+ date:[{t:'cât costă biletele',rol:'parcurs',val:40,pas:0},{t:'câți copii merg',rol:'da'},{t:'câți lei îi rămân',rol:'cere',val:10,pas:1},
+  {t:'cât costă un bilet',rol:'da'},{t:'câți lei are doamna profesoară',rol:'da'}]};
+/* atelierul: cele trei probleme scurte ale fișei (activitatea profesorului) */
+const BALOANE={nume:'Baloanele de la serbare',enunt:'La serbare, fiecare elev primește 2 baloane. În clasă sunt 24 de elevi. Într-o pungă mare sunt 60 de baloane. Câte baloane rămân în pungă?',
+ pasi:['Înmulțește numărul elevilor cu câte baloane primește un elev: află câte baloane se împart.','Scade din baloanele din pungă câte baloane se împart: află câte baloane rămân.','Spune câte baloane rămân în pungă.'],
+ date:[{t:'câte baloane primește un elev',rol:'da'},{t:'câte baloane se împart',rol:'parcurs',val:48,pas:0},{t:'câți elevi sunt în clasă',rol:'da'},
+  {t:'câte baloane rămân în pungă',rol:'cere',val:12,pas:1},{t:'câte baloane sunt în pungă',rol:'da'}]};
+const CAIET={nume:'Paginile caietului',enunt:'Un caiet are 48 de file. O filă are 2 pagini. Matei a scris deja 30 de pagini. Câte pagini mai poate scrie?',
+ pasi:['Înmulțește numărul filelor cu câte pagini are o filă: află câte pagini are caietul.','Scade din paginile caietului paginile scrise: află câte pagini mai poate scrie.','Spune câte pagini mai poate scrie.'],
+ date:[{t:'câte pagini mai poate scrie Matei',rol:'cere',val:66,pas:1},{t:'câte file are caietul',rol:'da'},{t:'câte pagini are caietul',rol:'parcurs',val:96,pas:0},
+  {t:'câte pagini a scris Matei',rol:'da'},{t:'câte pagini are o filă',rol:'da'}]};
+const SPORT={nume:'Ora de sport',enunt:'Ora de sport ține 50 de minute. Încălzirea ține 10 minute, iar jocul de la sfârșit 12 minute. Câte minute rămân pentru exerciții?',
+ pasi:['Adună minutele încălzirii cu minutele jocului: află câte minute țin împreună.','Scade acest rezultat din minutele orei: află câte minute rămân pentru exerciții.','Spune câte minute rămân pentru exerciții.'],
+ date:[{t:'câte minute ține încălzirea',rol:'da'},{t:'câte minute rămân pentru exerciții',rol:'cere',val:28,pas:1},{t:'câte minute ține ora',rol:'da'},
+  {t:'câte minute țin încălzirea și jocul împreună',rol:'parcurs',val:22,pas:0},{t:'câte minute ține jocul',rol:'da'}]};
+
+/* ===================== cutiile (variabilele) ===================== */
+const MERE={cutii:[{n:'mere'},{n:'pere'}],pasi:[{t:'Pune 5 în cutia «mere».',pune:{mere:5}},{t:'Pune 2 în cutia «pere».',pune:{pere:2}},{t:'Pune 8 în cutia «mere».',pune:{mere:8}}]};
+const BOMBOANE={cutii:[{n:'bomboane'},{n:'copie'}],
+ pasi:[{t:'Pune 4 în cutia «bomboane».',pune:{bomboane:4}},{t:'Pune 9 în cutia «bomboane».',pune:{bomboane:9}},{t:'Pune în cutia «copie» ce e acum în cutia «bomboane».',pune:{copie:s=>s.bomboane}}]};
+const REST={cutii:[{n:'bani'},{n:'preț'},{n:'rest'}],
+ pasi:[{t:'Pune 10 în cutia «bani».',pune:{bani:10}},{t:'Pune 3 în cutia «preț».',pune:{'preț':3}},{t:'Scade «preț» din «bani» și pune rezultatul în cutia «rest».',pune:{rest:s=>s.bani-s['preț']}},{t:'Pune 4 în cutia «preț».',pune:{'preț':4}}]};
+const GAINI={cutii:[{n:'găini'},{n:'picioare de găină',c:true,v:2},{n:'picioare'}],
+ pasi:[{t:'Pune 5 în cutia «găini».',pune:{'găini':5}},{t:'Înmulțește «găini» cu «picioare de găină» și pune rezultatul în cutia «picioare».',pune:{picioare:s=>s['găini']*s['picioare de găină']}}]};
+const BILETE={cutii:[{n:'copii'},{n:'preț bilet',c:true,v:5},{n:'total'}],
+ pasi:[{t:'Pune 4 în cutia «copii».',pune:{copii:4}},{t:'Înmulțește «copii» cu «preț bilet» și pune rezultatul în cutia «total».',pune:{total:s=>s.copii*s['preț bilet']}},
+  {t:'Pune 6 în cutia «copii».',pune:{copii:6}},{t:'Înmulțește iar «copii» cu «preț bilet» și pune rezultatul în cutia «total».',pune:{total:s=>s.copii*s['preț bilet']}}]};
+
+const DR=o=>Object.assign({t:'date-rol'},o);
+const CU=o=>Object.assign({t:'cutii'},o);
+const T2=[{k:'coloane',ce:'Fiecare dată e în coloana ei'},{k:'valori',ce:'Ce se cere e aflat bine'}];
+const T3=[{k:'coloane',ce:'Fiecare dată e în coloana ei'},{k:'valori',ce:'Numerele aflate (pe parcurs și la sfârșit) sunt bune'}];
+const TC=C=>C.cutii.filter(c=>!c.c).map(c=>({k:'cutie',n:c.n,ce:`Cutia «${c.n}» are valoarea de după ultimul pas`}));
+
+/* „Acum la calculator” — FĂRĂ profesor, pe calculatorul comun. Fișierul se șterge la sfârșitul orei (regulile 23, 25, 26, 38).
+   Gesturile: lecțiile 18 (Paint, Salvați ca › Imagine PNG, „există deja” → Nu, clic pe bara de titlu + Ctrl+S, Deschidere),
+   19 (Selectare › Dreptunghi, Delete), 22-23 (Text). Timpul: _proba\durata.py. */
+/* r1 (judecata 1): punctul 1 vechi (8 gesturi într-un rând, sonnet M6) e acum punctele 1-3; trimiterea la P4 pe numele
+   pasului (opus J1-K); clicul pe pânză la Text (J1-D); bucata rămasă după Delete (sonnet M7); „te întreabă de salvare?”
+   la Nou = ceva nesalvat → Anulare și iar Ctrl+S, nu „Nu salvați” (J1-C); ce înseamnă 7 și ce faci dacă vezi 3 (J1-C). */
+const LAB=[
+  '<b>Cutia ta.</b> Ai făcut-o la pasul <i>Variabila: o cutie cu etichetă</i> (P4)? Paint e încă deschis cu cifra 3: treci la punctul 4. S-a închis? Pornește Paint (Start, <code>pai</code>), <b>Fișier</b> › <b>Deschidere</b>, <b>Documente</b>, clic pe <code>…_cutie</code>, <b>Deschidere</b> (lecția 18), apoi punctul 4. N-ai făcut-o? Paint (Start, <code>pai</code>); <b>Text</b> (litera A), clic pe pânză, cifra <b>3</b>, clic în afara casetei.',
+  '<b>Îi pui eticheta:</b> <b>Fișier</b> › <b>Salvați ca</b> › <b>Imagine PNG</b>; numele: '+NUME+'; <b>Documente</b>; <b>Salvare</b>.',
+  '<b>Numele există deja?</b> <b>Nu</b> (sau <b>Anulare</b>), o cifră la sfârșitul numelui, iar <b>Salvare</b>.',
+  '<b>Pui altă valoare.</b> <b>Selectare</b> › <b>Dreptunghi</b> ('+LP('m3-l19',19,4,'Selectezi o parte din desen')+'): trage un dreptunghi peste cifra 3, apoi <kbd>Delete</kbd>. Se mai vede o bucată din 3? Trage alt dreptunghi peste ea și iar <kbd>Delete</kbd>. Cu <b>Text</b>, clic pe pânză, scrie <b>7</b>; clic în afara casetei.',
+  '<b>Salvezi în aceeași cutie:</b> clic pe bara de titlu a Paint-ului, apoi <kbd>Ctrl</kbd>+<kbd>S</kbd> (lecția 18). De obicei nu apare nicio fereastră: Paint scrie în același fișier, cu același nume. Eticheta a rămas.',
+  '<b>Te uiți în cutie:</b> <b>Fișier</b> › <b>Nou</b>. Te întreabă de salvare? Desenul are ceva nesalvat: <b>Anulare</b>, refă punctul 5, apoi iar <b>Fișier</b> › <b>Nou</b>. Apoi <b>Fișier</b> › <b>Deschidere</b>, <b>Documente</b>, clic pe <code>…_cutie</code>, <b>Deschidere</b>. Vezi 7? Valoarea nouă a luat locul lui 3: fișierul ține un singur desen odată, ca variabila o singură valoare. Vezi 3? Desenul cu 7 nu s-a salvat: refă punctele 4 și 5, apoi acest punct.',
+  '<span class="mai-ai-timp"><b>Dacă mai ai timp</b>, în caiet: scrie eticheta cutiei tale (numele fișierului) și valoarea de acum. Ce a rămas la fel? Ce s-a schimbat?</span>',
+  SFARSIT
+];
+
+JocMotor.porneste({
+  cheie:'lectie_v_m4_l26',
+  mod:'lectie',
+  titlu:'Datele: de intrare, de ieșire, de manevră. Constante și variabile',
+  marca:'Lecția <b>26</b> · clasa a V-a',
+  h1:'Datele: de intrare, de ieșire, de manevră. Constante și variabile',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a V-a', unitate:'V-U5', unitateTitlu:'Algoritmi. Gândesc pas cu pas',
+  competente:['CS.2.2'], lectii:'26',
+  ancoraText:'Din programă (CS.2.2, unitatea V-U5, lecția 26): Clasificarea datelor cu care lucrează algoritmii în funcție de rolul acestora (de intrare, de ieșire, de manevră); Constante și variabile',
+  intro:`<p><b>Ai nevoie de:</b> lecțiile 24 (<b>algoritmul</b>, <b>executantul</b>) și 25 (cazurile de același fel). Pentru laborator: Paint, lecțiile 18 (<b>Salvați ca</b>, <kbd>Ctrl</kbd>+<kbd>S</kbd>, <b>Deschidere</b>), 19 (<b>Selectare</b>, <kbd>Delete</kbd>) și 22 (<b>Text</b>, liniuța de jos); Explorer, lecția 10 (<b>Documente</b>, <kbd>Delete</kbd>, Coșul).</p>`,
+  cum:`<b>Cum lucrezi</b><ol><li>P1 de citit, apoi 4 pași scurți, cu exerciții.</li><li>Atelierul: tabelul de analiză, pe trei probleme.</li><li>La calculator: o „cutie” în Paint (pe telefon, în caiet).</li><li>5 întrebări.</li></ol><p><b>Când mai sunt 10 minute din oră:</b> treci la întrebări; la calculator, ultimul punct.</p>`,
+  banda:'<span class="bd-t">Ce se dă · Ce se cere · Ce se calculează pe parcurs</span><span class="bd-z">o cutie · o etichetă · un singur lucru înăuntru</span>',
+  nivele:[
+{t:'Datele: de intrare, de ieșire, de manevră. Constante și variabile',final:true,lectii:[26],
+ continuturi:['Clasificarea datelor cu care lucrează algoritmii în funcţie de rolul acestora (de intrare, de ieșire, de manevră)','Constante și variabile'],
+ obiectiv:'găsești într-o problemă ce se dă, ce se cere și ce se calculează pe parcurs, apoi spui care date se schimbă (variabilele) și care nu (constantele).',
+ pasi:[
+  /* ---- pasul 1: la ce folosește (fără acțiuni). „Date” = Art Klett: „Numim date acele informații cu care lucrează un algoritm.” ---- */
+  {t:'La ce folosește: datele cu care lucrează un algoritm',
+   text:`<p>La lecția 25, executantul afla câte picioare au găinile din orice curte: număra găinile, apoi înmulțea cu 2. Numărul găinilor era altul la fiecare curte.</p>
+<p>Informațiile cu care lucrează un algoritm (numere, cuvinte) se numesc <mark>date</mark>. Una singură e o dată (nu e data din calendar). Pe unele le primește, pe altele le află pe parcurs, iar la sfârșit dă un rezultat.</p>
+<p>Azi afli cum se numesc datele după rolul lor și care se schimbă. Ca pe tabela de scor din poză: eticheta TOTAL rămâne, numărul de sub ea se schimbă.</p>
+${IMG.scor}`},
+  /* ---- pasul 2: intrare / ieșire (Art Klett: „Date de intrare – datele pe care trebuie să le primească un algoritm din exterior
+     pentru a putea fi parcurs”, „Date de ieșire – … datele pe care le furnizează algoritmul în exterior după parcurgerea sa
+     (rezultatele așteptate)”; Corint: „datele de intrare («ce se dă») și datele de ieșire («ce se cere»)”; CD Press: „date de
+     intrare (datele din enunțul problemei), date de ieșire (rezultatul problemei)”) ---- */
+  {t:'Datele de intrare și datele de ieșire',
+   text:`<p><mark>Datele de intrare</mark> sunt datele pe care algoritmul le primește la început, ca să poată lucra: <b>ce se dă</b>. Într-o problemă, sunt scrise în enunț.</p>
+<p><mark>Datele de ieșire</mark> sunt rezultatele pe care algoritmul le dă la sfârșit: <b>ce se cere</b>. Ți le spune întrebarea problemei.</p>
+<p class="atentie"><b>Atenție la cuvânt:</b> la lecția 5, tastatura era un <i>dispozitiv</i> de intrare, adică un obiect. Aici, „de intrare” spune rolul unei date.</p>`,
+   exemplu:`<p class="cv-demo-t">O problemă, cu datele ei:</p>${CV.tabel(PAINE,{coloane:['da','cere']})}<p>Întrebarea („Câți lei plătește?”) e ce se cere. Celelalte două sunt scrise în enunț: ce se dă. Cât plătește afli tu: 3 pâini, de câte 4 lei, fac 12 lei.</p>`,
+   altfel:`<p>Gândește-te la automatul de suc de pe hol: îi dai banii și alegi sucul (intrarea); el îți dă sucul (ieșirea).</p>`,
+   incearca:DR({q:'Sub fiecare dată, atinge butonul coloanei ei. La <i>Ce se cere</i>, scrie cât e. Apoi <b>Verifică</b>.',
+    probleme:[CLATITE],coloane:['da','cere'],teste:T2,gresit:{p:0,id:1,rol:'cere'},
+    ajutor:'Ce întreabă problema? Aceea e ce se cere. Ce e scris în enunț e ce se dă.',
+    why:'2 clătite și 25 de elevi sunt scrise în enunț: ce se dă. Întrebarea cere câte clătite: 25 de elevi, de câte 2, fac 50.'}),
+   inca:[
+    DR({q:'Sticlele de apă: pune fiecare dată în coloana ei și scrie cât e ce se cere.',probleme:[STICLE],coloane:['da','cere'],teste:T2,gresit:{p:0,id:0,rol:'cere'},
+     ajutor:'Care propoziție e o întrebare?',why:'Câte sticle are un bax și câte baxuri cumpără sunt scrise în enunț. Se cere câte sticle are: 4 baxuri, de câte 6, fac 24.'})
+   ]},
+  /* ---- pasul 3: de manevră (Art Klett: „date temporare, necesare algoritmului pentru a se obține datele de ieșire pe baza
+     datelor de intrare”; Sigma: „Datele intermediare sunt date care se folosesc pe parcurs…”; CD Press: „folosite pe parcursul
+     algoritmului, diferite de cele de intrare și ieșire”). „Tabelul de analiză” = resursa profesorului. ---- */
+  {t:'Datele de manevră: ce se calculează pe parcurs',
+   text:`<p>Uneori, ca să ajungi de la ce se dă la ce se cere, afli ceva pe drum. Acestea sunt <mark>datele de manevră</mark> (în unele manuale, date intermediare): algoritmul are nevoie de ele doar pe parcurs. Nu le primește la început și nu sunt răspunsul.</p>
+<p>Le găsești în pașii algoritmului: un pas află ceva, iar un pas de mai târziu folosește ce a aflat.</p>
+<p>Datele unei probleme le pui într-un <b>tabel de analiză</b>, cu trei coloane: <i>Ce se dă</i>, <i>Ce se cere</i>, <i>Ce se calculează pe parcurs</i>.</p>`,
+   exemplu:`<p class="cv-demo-t">Problema, algoritmul și tabelul de analiză:</p>${CV.tabel(CAIETE)}<p>„Cât costă caietele” (12 lei) nu e scris în enunț și nu e răspunsul: pasul 1 îl află, iar pasul 2 îl folosește. E dată de manevră.</p>`,
+   altfel:`<p>Când faci o prăjitură, întâi amesteci ouăle cu zahărul. Amestecul nu e nici în lista de cumpărături, nici prăjitura de la sfârșit, dar fără el nu iese prăjitura.</p>`,
+   incearca:DR({q:'Plăcintele bunicii: pune fiecare dată în coloana ei. La datele aflate (pe parcurs și la sfârșit), scrie cât sunt. Apoi <b>Verifică</b>.',
+    probleme:[PLACINTE],teste:T3,
+    ajutor:'Care date sunt scrise în enunț? Care e întrebarea? Care e aflată la pasul 1 și folosită la pasul 2?',
+    why:'„Câte mere pune în plăcinte” (12) e aflat la pasul 1 și folosit la pasul 2: dată de manevră. Rămân 3 mere.'}),
+   inca:[
+    DR({q:'Biletele de tren: completează tabelul de analiză și scrie numerele aflate.',probleme:[TREN],teste:T3,
+     ajutor:'Ce află pasul 1? Unde e folosit?',why:'5 bilete, de câte 8 lei, costă 40 de lei (pe parcurs). Rămân 50 de lei, mai puțin 40 de lei, adică 10 lei (ce se cere).'})
+   ]},
+  /* ---- pasul 4: variabila (Intuitext: „date variabile … pot să își modifice valoarea pe parcursul execuției algoritmului”;
+     Litera: „Variabilele sunt «cutii» … etichetată … cu o denumire unică”; Corint: „la un moment dat, variabila poate avea o
+     singură valoare”; EDP: „«cutii» separate, identificate prin câte un nume”). Analogia profesorului: cutia etichetată.
+     Ce NU spune analogia, spus pe față: o singură valoare odată; valoarea folosită nu pleacă din cutie; cutia nu se schimbă singură. ---- */
+  {t:'Variabila: o cutie cu etichetă',
+   text:`<p>O <mark>variabilă</mark> e o dată care are un nume și a cărei <mark>valoare</mark> se poate schimba. Gândește-te la o cutie cu etichetă: eticheta e numele (de exemplu «mere»), iar ce e în cutie e valoarea (de exemplu 5).</p>
+<p>Cutia asta are reguli: ține <b>o singură valoare odată</b>; când pui alta, cea veche dispare. Se schimbă doar când un pas pune ceva în ea. Când un pas folosește valoarea, ea rămâne în cutie.</p>`,
+   exemplu:`<p class="cv-demo-t">Trei pași și cutiile după fiecare:</p>${CV.urma(MERE)}<p>Eticheta «mere» a rămas; valoarea s-a schimbat din 5 în 8. Ca pe tabela de scor de la pasul <i>La ce folosește</i> (P1): eticheta rămâne, plăcuța cu numărul se schimbă.</p>
+${ACUM('Fă-ți o cutie: Paint (Start, <code>pai</code>); <b>Text</b> (litera A, lecția 22), clic pe pânză, cifra <b>3</b>, clic în afara casetei.','<b>Fișier</b> › <b>Salvați ca</b> › <b>Imagine PNG</b> (lecția 18); numele tău ca la lecția 22, cu <code>_cutie</code> la sfârșit (ca <code>Pop_Ana_5A_cutie</code>); <b>Documente</b>; <b>Salvare</b>. Există deja? <b>Nu</b> (sau <b>Anulare</b>) și o cifră. Numele e eticheta; 3 e valoarea. Lasă Paint deschis. Pe telefon: sari peste.','!<b>La sfârșitul orei</b> (chiar dacă n-ai terminat): X pe Paint (te întreabă? <b>Nu salvați</b>); Explorer, <b>Documente</b>, <code>…_cutie</code>, <kbd>Delete</kbd>. Nu goli Coșul.')}`,
+   altfel:`<p>Pe tablă, în colț, scrie „Data:” și ziua de azi. Mâine se șterge ziua și se scrie cea nouă; „Data:” rămâne. Acolo stă o singură zi odată.</p>`,
+   incearca:CU(Object.assign({q:'Tu ești executantul: fă pașii pe rând, în cutii (atingi cutia, scrii numărul, <b>Pune</b>). Apoi <b>Verifică</b>.',
+    teste:TC(BOMBOANE),gresit:{copie:4},
+    ajutor:'Ce e în «bomboane» după pasul 2? Pasul 3 pune în «copie» exact ce e acolo în momentul acela.',
+    why:'După pasul 2, în «bomboane» e 9 (4 a dispărut). Pasul 3 pune 9 și în «copie», iar în «bomboane» rămâne 9.'},BOMBOANE)),
+   inca:[
+    CU(Object.assign({q:'Fă pașii în cutii, pe rând. Atenție la pasul 4.',teste:TC(REST),gresit:{rest:6},
+     ajutor:'După pasul 3, mai pune vreun pas ceva în «rest»?',
+     why:'«rest» primește 7 la pasul 3 (10, mai puțin 3). Pasul 4 schimbă doar «preț»; niciun pas nu mai pune nimic în «rest», deci rămâne 7.'},REST))
+   ]},
+  /* ---- pasul 5: constanta (Intuitext: „date constante … nu pot să își modifice valoarea pe parcursul execuției algoritmului”;
+     CD Press: „Constantele unui algoritm rămân cu aceeași valoare dacă pe tot parcursul algoritmului nu se schimbă”, numărul de
+     persoane = variabilă, 3 minute = constantă; Corint: „au aceeași valoare de fiecare dată când executăm algoritmul”).
+     Cele două feluri din manuale (cât lucrează / de la o folosire la alta) sunt spuse amândouă. ---- */
+  {t:'Constanta: o dată care nu se schimbă',
+   text:`<p>O <mark>constantă</mark> e o dată care are mereu aceeași valoare: nu se schimbă cât lucrează algoritmul și e aceeași de fiecare dată când îl folosești. De exemplu, o găină are 2 picioare; o săptămână are 7 zile.</p>
+<p>Datele care se pot schimba sunt variabile: de la un caz la altul (altă curte, alt număr de găini) sau chiar cât lucrează algoritmul (banii din portofel, după fiecare cumpărătură).</p>
+<p><b>Atenție:</b> „variabilă” și „constantă” nu sunt coloane noi în tabelul de analiză. Răspund la altă întrebare: se schimbă data sau nu?</p>`,
+   exemplu:`<p class="cv-demo-t">Cutia cu lacăt e constanta:</p>${CV.urma(GAINI,{inceput:true})}<p>La altă curte, «găini» primește alt număr, iar «picioare» alt rezultat; «picioare de găină» rămâne 2. În pagină, cutia cu lacăt nu primește altă valoare.</p>`,
+   altfel:`<p>Un exemplu dintr-un manual de clasa a V-a: pe tabla de șah, locul pieselor se schimbă la fiecare mutare, ca o variabilă. Tabla are mereu 8 pătrățele pe fiecare latură, ca o constantă.</p>`,
+   /* r1 (opus J1-A, MAJOR): clasificările NU se mai rezolvă după formă — niciun rând nu are număr în paranteză, iar
+      lungimea, numărul de cuvinte, poziția și cuvintele rândurilor nu despart clasele (_proba\ghicitor_forma.py → 0).
+      Variabilele de aici se schimbă CÂT LUCREAZĂ algoritmul (deci și de la o folosire la alta), constantele niciodată:
+      același răspuns pe ambele definiții din manuale (Intuitext/Sigma și CD Press/Corint), probat prin simulare. */
+   incearca:{t:'classify',q:'Un algoritm numără orele de sport ale clasei tale. Clasa ta are mereu 2 ore de sport pe săptămână, iar o oră ține mereu 50 de minute. La sfârșitul fiecărei săptămâni, algoritmul adaugă 2 la orele strânse și află câte minute fac ele. Fiecare dată se schimbă sau nu?',cats:['Variabilă','Constantă'],
+    items:[['câte ore de sport s-au strâns până acum',0],['câte ore de sport are clasa pe săptămână',1],['câte săptămâni a numărat algoritmul',0],['câte minute fac orele strânse',0],['câte minute ține o oră de sport',1]],
+    ajutor:'Care date primesc altă valoare cât lucrează algoritmul, de la o săptămână la alta? Care sunt mereu aceleași?',
+    why:'Orele strânse, minutele lor și săptămânile numărate cresc cât lucrează algoritmul: variabile. 2 ore pe săptămână și 50 de minute la o oră sunt mereu aceleași: constante.'},
+   inca:[
+    CU(Object.assign({q:'Fă pașii în cutii, pe rând. Un bilet costă mereu 5 lei: de aceea «preț bilet» e o cutie cu lacăt (constantă).',teste:TC(BILETE),gresit:{total:20},
+     ajutor:'După pasul 3, ce e în «copii»? Pasul 4 folosește valoarea de acum.',
+     why:'La pasul 2, «total» primește 20 (4 copii, de câte 5 lei); la pasul 4, cu 6 copii, primește 30, iar 20 dispare. «preț bilet» rămâne 5.'},BILETE))
+   ]}
+ ],
+ /* atelierul: activitatea profesorului — trei probleme scurte, tabelul cu ce se dă / ce se cere / ce se calculează pe parcurs.
+    Testele: fiecare dată în coloana ei + valorile aflate (pe parcurs și la sfârșit), pe fiecare problemă. */
+ atelier:DR({titlu:'Atelier: tabelul de analiză, pe trei probleme',
+  intro:`<p><strong>Sarcina (fișa profesorului):</strong> la fiecare problemă completezi tabelul de analiză: sub fiecare dată atingi coloana ei, iar la datele aflate scrii cât sunt. La sfârșit, <b>Verifică</b>.</p>`,
+  q:'Completează tabelul de analiză la cele trei probleme.',
+  probleme:[BALOANE,CAIET,SPORT],
+  teste:[0,1,2].flatMap(p=>[{k:'coloane',p,ce:`Problema ${p+1}: fiecare dată e în coloana ei`},{k:'valori',p,ce:`Problema ${p+1}: numerele aflate sunt bune`}]),
+  ajutor:'Testul care nu trece îți spune la ce problemă și ce dată să verifici. Întreabă-te la fiecare: e scrisă în enunț, e întrebarea sau o află un pas?',
+  why:'Trei date se dau, una o află pasul 1 pentru pasul 2 (de manevră), iar întrebarea e ce se cere: 48 și 12; 96 și 66; 22 și 28.'}),
+ qs:[
+  {t:'choice',q:'Problema: „Un pix costă 3 lei. Ionuț cumpără 4 pixuri. Câți lei plătește?” Care sunt datele de intrare?',
+   o:['cât costă un pix și câte pixuri cumpără Ionuț','câți lei plătește Ionuț, în total','cât costă un pix și câți lei plătește Ionuț','doar câte pixuri cumpără Ionuț'],ok:0,
+   ajutor:'Ce e scris în enunț? Ce întreabă problema?',why:'Prețul unui pix și câte pixuri cumpără sunt scrise în enunț: ce se dă. Câți lei plătește e ce se cere.'},
+  {t:'choice',q:'Problema: „O culegere are 80 de exerciții. Sara rezolvă câte 10 pe zi, timp de 6 zile. Câte exerciții mai are de rezolvat?” Algoritmul: 1. Înmulțește numărul zilelor cu câte exerciții rezolvă pe zi: află câte exerciții a rezolvat. 2. Scade din exercițiile culegerii exercițiile rezolvate: află câte mai are. 3. Spune câte mai are. Care e o dată de manevră?',
+   o:['câte exerciții a rezolvat Sara în cele 6 zile','câte exerciții mai are Sara de rezolvat','câte exerciții are culegerea, în total','câte exerciții rezolvă Sara într-o zi'],ok:0,
+   ajutor:'Care dată nu e scrisă în enunț și nici nu e întrebarea, dar o află pasul 1 ca pasul 2 s-o folosească?',why:'Exercițiile rezolvate (60) nu sunt în enunț și nu sunt răspunsul: le află pasul 1, le folosește pasul 2.'},
+  {t:'choice',q:'Algoritmul: „1. Pune 6 în cutia «puncte». 2. Pune 9 în cutia «puncte».” Ce e în cutia «puncte» după pasul 2?',o:['9','6','6 și 9','15'],ok:0,
+   ajutor:'Câte valori ține o cutie odată?',why:'O cutie ține o singură valoare: când pui 9, 6 dispare.'},
+  /* r1 (opus J1-A): aceeași regulă ca la P5 — fără numere în paranteză, nicio formă nu desparte clasele, un singur răspuns pe ambele definiții */
+  {t:'classify',q:'Un algoritm numără roțile din parcare: trece pe la fiecare bicicletă și tricicletă și adaugă roțile ei la roțile numărate. O bicicletă are mereu 2 roți, iar o tricicletă 3. Fiecare dată se schimbă sau nu?',cats:['Variabilă','Constantă'],
+   items:[['câte roți are o bicicletă',1],['câte roți a numărat până acum',0],['câte biciclete și triciclete mai are de numărat',0],['câte roți are fiecare tricicletă',1],['câte biciclete a văzut',0]],
+   ajutor:'Care date se schimbă cât algoritmul trece de la o bicicletă la alta? Care sunt mereu aceleași?',why:'Roțile numărate, bicicletele văzute și cele rămase de numărat se schimbă cât lucrează algoritmul: variabile. O bicicletă are mereu 2 roți, o tricicletă 3: constante.'},
+  {t:'choice',q:'Algoritmul: „1. Pune 20 în cutia «bani». 2. Pune 5 în cutia «preț». 3. Scade «preț» din «bani» și pune rezultatul în cutia «rest». 4. Pune 8 în cutia «preț».” Ce e în cutia «rest» la sfârșit?',o:['15','12','8','20'],ok:0,
+   ajutor:'Pune pasul 4 ceva în «rest»?',why:'«rest» primește 15 la pasul 3 (20, mai puțin 5). Pasul 4 schimbă doar «preț»; «rest» rămâne 15.'}
+ ]}
+  ],
+  diploma:{titlu:'Detectivul datelor',
+   rezumat:'a completat tabelul de analiză al fișei profesorului pe trei probleme (ce se dă, ce se cere, ce se calculează pe parcurs) și a lucrat cu cutiile etichetate din pagină; a aflat ce sunt datele de intrare, de ieșire și de manevră, variabilele și constantele',
+   aplicatie:'Paint, pe calculatorul din laborator',
+   provocare:LAB},
+  aplicatieReala:{aplicatie:'Paint, pe calculatorul din laborator',titlu:'Acum la calculator',scurt:'Calculatorul',
+   intro:'<p>Un fișier e ca o cutie: <b>numele</b> lui e eticheta, <b>desenul</b> din el e valoarea. Pui o valoare, o schimbi și te uiți ce a rămas (cam 8 minute). <b>Când mai sunt 10 minute din oră:</b> sari la ultimul punct.</p><details class="verif"><summary>Pe telefon (n-ai Paint): cutia, în caiet</summary><p>Desenează în caiet o cutie, scrie deasupra eticheta «puncte» și înăuntru, cu creionul, 3. Apoi șterge cu guma și scrie 7. Eticheta a rămas, valoarea s-a schimbat. Punctele de mai jos le sari.</p></details>',
+   pasi:LAB},
+  tipuri:{'date-rol':CutiiVariabile.tipuri['date-rol'],cutii:CutiiVariabile.tipuri.cutii}
+});
+</script>
+</body>
+</html>
