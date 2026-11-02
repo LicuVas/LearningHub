@@ -25,7 +25,7 @@
 5. Am reparat eu, după a treia judecată, trei lucruri mici: un rând din `surse.md` al V/29 și două mărunțișuri în simulatorul V/28. Primul: simulatorul primește și „20 − 6 (14)”. Al doilea: datele se scriu „Se dau 20 pentru «bani»…”, ca în V/29. Totul e scris în `judecator3.md`, cu probele.
 
 ## Cât a costat
-Bugetul pe 7 zile a crescut de la 1 % la 7 %. Contextul dirijorului (cât „ține minte” sesiunea care conduce lucrarea) era 228k din 250k la 23:44. La 23:54 a trecut de prag (254k): dirijorul a scris singur o notă de predare și a dat lucrarea unei sesiuni noi, care a închis verificarea finală. Pe lucrarea asta, nicio sesiune-dirijor n-a trecut de 258k. Dovezile sunt în `_dirijor\p10_dovezi_R3.md`. Verificarea finală de mai jos a avut 3 rulări, cu 25 de agenți în total.
+Bugetul pe 7 zile a crescut de la 1 % la 7 % (8 % după verificarea finală). Contextul dirijorului (cât „ține minte” sesiunea care conduce lucrarea) era 228k din 250k la 23:44. La 23:54 a trecut de prag (254k): dirijorul a scris singur o notă de predare și a dat lucrarea unei sesiuni noi, care a închis verificarea finală. Pe lucrarea asta, nicio sesiune-dirijor n-a trecut de 258k. Dovezile sunt în `_dirijor\p10_dovezi_R3.md`. Verificarea finală de mai jos a avut 3 rulări, cu 25 de agenți în total.
 
 ## Verificarea finală (T1)
 Un agent care n-a lucrat la lecții scrie întrebările de verificare. Alți agenți caută răspunsurile pe disc și pe site, iar un script decide ce e FĂCUT, numai pe baza dovezilor citite atunci. Printre întrebări e și un **canar**: o întrebare-capcană la care singurul răspuns corect e „nu există”. Dacă un verificator bifează fără să citească, canarul îl prinde.
