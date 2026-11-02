@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 24, clasa a VI-a: Reprezentarea algoritmilor prin blocuri grafice</title>
+<meta name="description" content="Lecția 24, clasa a VI-a: reprezentarea algoritmilor prin blocuri grafice. Schema logică: ovalul, paralelogramul, dreptunghiul, rombul și săgețile; citirea unei scheme pas cu pas; transcrierea din cuvinte în schemă și invers; decizia și repetiția desenate; verificarea schemei unui coleg pe seturi de date; programul Scratch făcut după o schemă. Cu un simulator de schemă logică în pagină.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Code:wght@500;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF5F8; --paper:#FFFFFF; --paper2:#F1F7FA; --line:#CFE0E8;
+  --ink:#16303B; --ink2:#4E6B78; --accent:#1F7A9E; --accentInk:#FFFFFF; --sel:#DCEFF6;
+  --mark:#FFE07A; --markInk:#16303B; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Baloo 2","Segoe UI",system-ui,sans-serif; --fb:"Nunito Sans","Segoe UI",system-ui,sans-serif; --fm:"Fira Code",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F1D23; --paper:#16262E; --paper2:#1D313A; --line:#2F4A56;
+  --ink:#E4F0F5; --ink2:#A6C1CC; --accent:#7CC6E4; --accentInk:#0F1D23; --sel:#24414D;
+  --mark:#EBC95C; --markInk:#16303B; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F1D23; --paper:#16262E; --paper2:#1D313A; --line:#2F4A56;
+  --ink:#E4F0F5; --ink2:#A6C1CC; --accent:#7CC6E4; --accentInk:#0F1D23; --sel:#24414D;
+  --mark:#EBC95C; --markInk:#16303B; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: blocurile schemei logice, în ordinea unei scheme */
+.banda{display:flex;align-items:center;gap:6px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent);font-family:var(--fm);font-size:.72rem;font-weight:600;color:var(--ink)}
+.banda .bk{flex:none;display:inline-block;padding:4px 12px;background:var(--paper);border:1.5px solid var(--ink)}
+.banda .ov{border-radius:14px}
+.banda .pg{border:none;background:var(--ink);color:var(--paper);clip-path:polygon(9px 0,100% 0,calc(100% - 9px) 100%,0 100%);padding:4px 16px}
+.banda .rb{border:none;background:var(--accent);color:var(--accentInk);clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,14px 100%,0 50%);padding:4px 20px}
+.banda .sg{flex:none;font-size:1rem;line-height:1}
+h1,h2{font-weight:800;letter-spacing:0}
+h1 .acc{color:var(--accent)}
+code{font-family:var(--fm);font-size:.9em}
+pre.ps{font-family:var(--fm);font-size:.9rem;background:var(--paper2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:.3em 0;white-space:pre;overflow-x:auto}
+/* „Acum în Scratch” (regula 10): gesturi mici, reale, imediat după pas */
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:800;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+/* două coloane: schema lângă pseudocod (pe telefon, una sub alta) */
+.doua{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+.doua > div{min-width:0}
+.doua .et{font-size:.85rem;color:var(--ink2);margin:0 0 2px}
+@media (max-width:560px){.doua{grid-template-columns:1fr}}
+.mic{font-size:.9rem;color:var(--ink2)}
+/* opțiunile cu pseudocod (choice cu html:true) */
+.opt-ps{font-family:var(--fm);font-size:.86rem;line-height:1.35;text-align:left;display:block}
+/* regula 20: legătura sursei fotografiei și legătura capturii ≥ 32 px */
+.sursa-foto a{display:inline-block;padding:8px 0}
+.captura>a{min-height:32px}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/schema-logica.js"></script>
+<script>
+/* Lecția 24, clasa a VI-a (M4, predare): „Reprezentarea algoritmilor prin blocuri grafice”.
+   Legea: _campaign\revizuire_completa_2026_09\00_GHID_LECTII.md. Sursele și probele: surse.md, _proba\.
+   Schema logică: simbolurile din manualul Sigma VI (p. 68-69) și din jocul algoritmi-vi (N7): oval START / STOP, paralelogram
+   citire / afișare, dreptunghi atribuire, romb condiție cu DA / NU; în romb doar condiția, fără „?” (ca în manuale).
+   Cuvintele din blocuri = notația clasei (VI/17): „Citește”, „Afișează”, „←”; repetițiile = notația VI/21-22.
+   Simulatorul: lectii/_sim/schema-logica.js (NOU, al lecției): desenul, execuția pas cu pas, tipul „schema”
+   (construieste / coleg / urmareste). Ieșirile, valorile și tabelele din exemple sunt CALCULATE de execuția schemei,
+   nu scrise de mână (oracolul independent: _proba\oracol_independent.py).
+   Laboratorul: Scratch 3 online, fără cont (decizia dirijorului): programul făcut după o schemă dată, rulat, salvat.
+   Granița: NU comparația celor trei structuri și regula alegerii (23), NU sume / numărări / cifre (25), NU evaluarea (26),
+   NU „dacă” din Scratch, NU variabilele Scratch. */
+const SL = SchemaLogica;
+SL.stil();
+const esc = s => JocMotor.esc(String(s));
+const fig = (f, w, h, alt, cap) => `<figure class="captura"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const ACUM = (...p) => `<div class="acum" role="note"><div class="lbl">Acum în Scratch, la calculator</div><ol>${p.map(x => `<li>${x}</li>`).join('')}</ol></div>`;
+const PS = r => `<pre class="ps">${r.map(esc).join('\n')}</pre>`;
+const FIG = (s, leg, aria) => SL.figura(s, {legenda: leg, aria: aria});
+const iesire = (s, d) => SL.executa(s, d || {}).iesire;
+const treceriBloc = (s, d, id) => SL.executa(s, d || {}).pasi.filter(p => p.id === id).length;
+const OPS = r => `<span class="opt-ps">${r.map(esc).join('<br>')}</span>`;
+
+/* ---------------- schemele lecției (blocurile: id, tip, text, coloana c, rândul r, săgețile urm / da / nu) ---------------- */
+const B = (id, tip, text, c, r, x) => Object.assign({id, tip, text, c, r}, x || {});
+const START = (urm) => B('s', 'start', '', 0, 0, {urm});
+const STOP = (r, c) => B('t', 'stop', '', c || 0, r);
+
+/* P1: legenda formelor (desen fără săgeți) */
+const S_FORME = {start: 'o', blocuri: [
+  B('o', 'start', '', 0, 0), B('p', 'citire', 'Citește a', 1, 0),
+  B('d', 'calcul', 'x ← x * 2', 0, 1), B('r', 'decizie', 'a > 5', 1, 1)]};
+/* P1, „Uite cum”: algoritmul din lecția 17, desenat */
+const S_PRET = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește preț, n', 0, 1, {urm: 'a'}),
+  B('a', 'calcul', 'total ← preț * n', 0, 2, {urm: 'f'}),
+  B('f', 'afisare', 'Afișează total', 0, 3, {urm: 't'}), STOP(4)]};
+/* P2: decizia din lecția 17 (traseul din parcul de aventură), desenată */
+const S_TRASEU = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește înălțime', 0, 1, {urm: 'd'}),
+  B('d', 'decizie', 'înălțime ≥ 140', 0, 2, {da: 'm', nu: 'n', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('m', 'afisare', 'Afișează „traseul mare”', 0, 3, {urm: 't'}),
+  B('n', 'afisare', 'Afișează „traseul mic”', 1, 3, {urm: 't'}), STOP(4)]};
+const D_TRASEU = {'înălțime': 132};
+/* P2, „Încearcă”: reducerea (decizie fără ramura NU) */
+const S_REDUCERE = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește preț', 0, 1, {urm: 'd'}),
+  B('d', 'decizie', 'preț > 100', 0, 2, {da: 'r', nu: 'f', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('r', 'calcul', 'preț ← preț - 20', 0, 3, {urm: 'f'}),
+  B('f', 'afisare', 'Afișează preț', 0, 4, {urm: 't'}), STOP(5)]};
+/* P2 (încă un exercițiu) și P3: cel mai mare dintre două numere (exemplul din testul inițial al profesorului) */
+const S_MAX = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește a, b', 0, 1, {urm: 'd'}),
+  B('d', 'decizie', 'a > b', 0, 2, {da: 'x', nu: 'y', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('x', 'afisare', 'Afișează a', 0, 3, {urm: 't'}),
+  B('y', 'afisare', 'Afișează b', 1, 3, {urm: 't'}), STOP(4)]};
+/* P3, „Uite cum” */
+const S_NOTA = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește nota', 0, 1, {urm: 'd'}),
+  B('d', 'decizie', 'nota ≥ 5', 0, 2, {da: 'x', nu: 'y', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('x', 'afisare', 'Afișează „Promovat”', 0, 3, {urm: 't'}),
+  B('y', 'afisare', 'Afișează „Mai încearcă”', 1, 3, {urm: 't'}), STOP(4)]};
+/* P3, „Încearcă”: același MAX, cu locuri goale; cărțile (forma + textul) */
+const S_MAX_GOL = {start: 's', blocuri: [START('L1'),
+  B('L1', null, '', 0, 1, {gol: true, urm: 'L2'}),
+  B('L2', null, '', 0, 2, {gol: true, da: 'L3', nu: 'L4', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('L3', null, '', 0, 3, {gol: true, urm: 't'}),
+  B('L4', null, '', 1, 3, {gol: true, urm: 't'}), STOP(4)]};
+const C_MAX = [
+  {id: 'k1', tip: 'citire', text: 'Citește a, b'}, {id: 'k2', tip: 'decizie', text: 'a > b'},
+  {id: 'k3', tip: 'afisare', text: 'Afișează a'}, {id: 'k4', tip: 'afisare', text: 'Afișează b'},
+  {id: 'k5', tip: 'calcul', text: 'Citește a, b'}, {id: 'k6', tip: 'decizie', text: 'a < b'},
+  {id: 'k7', tip: 'calcul', text: 'a ← b'}, {id: 'k8', tip: 'afisare', text: 'Afișează a, b'}];
+/* P3, încă un exercițiu: ceasul cu 12 ore */
+const S_CEAS_GOL = {start: 's', blocuri: [START('L1'),
+  B('L1', null, '', 0, 1, {gol: true, urm: 'L2'}),
+  B('L2', null, '', 0, 2, {gol: true, da: 'L3', nu: 'f', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('L3', null, '', 0, 3, {gol: true, urm: 'f'}),
+  B('f', 'afisare', 'Afișează ora', 0, 4, {urm: 't'}), STOP(5)]};
+const C_CEAS = [
+  {id: 'c1', tip: 'citire', text: 'Citește ora'}, {id: 'c2', tip: 'decizie', text: 'ora > 12'},
+  {id: 'c3', tip: 'calcul', text: 'ora ← ora - 12'}, {id: 'c4', tip: 'decizie', text: 'ora < 12'},
+  {id: 'c5', tip: 'calcul', text: 'ora ← 12'}, {id: 'c6', tip: 'afisare', text: 'Afișează ora - 12'}];
+/* P4: „cât timp” desenat (ceaiul se răcește) și „repetă … până când” desenat (mingea sare tot mai jos) */
+const S_CEAI = {start: 's', blocuri: [START('i'),
+  B('i', 'calcul', 't ← 100', 0, 1, {urm: 'd'}),
+  B('d', 'decizie', 't > 30', 0, 2, {da: 'b', nu: 'f', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('b', 'calcul', 't ← t - 25', 0, 3, {urm: 'd'}),
+  B('f', 'afisare', 'Afișează t', 0, 4, {urm: 't'}), STOP(5)]};
+const P_CEAI = ['t ← 100', 'cât timp t > 30 execută', '   t ← t - 25', 'sfârșit cât timp', 'Afișează t'];
+const S_MINGE = {start: 's', blocuri: [START('i'),
+  B('i', 'calcul', 'h ← 64', 0, 1, {urm: 'b'}),
+  B('b', 'calcul', 'h ← h / 2', 0, 2, {urm: 'd'}),
+  B('d', 'decizie', 'h < 5', 0, 3, {da: 'f', nu: 'b', iesDa: 'jos', iesNu: 'stanga'}),
+  B('f', 'afisare', 'Afișează h', 0, 4, {urm: 't'}), STOP(5)]};
+const P_MINGE = ['h ← 64', 'repetă', '   h ← h / 2', 'până când h < 5', 'Afișează h'];
+/* P4, încă un exercițiu: din pseudocod („cât timp”) în schemă */
+const S_TRIPLU_GOL = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește x', 0, 1, {urm: 'L1'}),
+  B('L1', null, '', 0, 2, {gol: true, da: 'L2', nu: 'f', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('L2', null, '', 0, 3, {gol: true, urm: 'L1'}),
+  B('f', 'afisare', 'Afișează x', 0, 4, {urm: 't'}), STOP(5)]};
+const C_TRIPLU = [
+  {id: 'x1', tip: 'decizie', text: 'x < 50'}, {id: 'x2', tip: 'calcul', text: 'x ← x * 3'},
+  {id: 'x3', tip: 'decizie', text: 'x > 50'}, {id: 'x4', tip: 'calcul', text: 'x ← x + 3'}, {id: 'x5', tip: 'afisare', text: 'Afișează x * 3'}];
+/* P5: din schemă în pseudocod */
+const S_PAR = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește n', 0, 1, {urm: 'd'}),
+  B('d', 'decizie', 'n % 2 = 0', 0, 2, {da: 'x', nu: 'y', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('x', 'afisare', 'Afișează „par”', 0, 3, {urm: 't'}),
+  B('y', 'afisare', 'Afișează „impar”', 1, 3, {urm: 't'}), STOP(4)]};
+const P_PAR = ['Început', 'Citește n', 'Dacă n % 2 = 0 atunci', '   Afișează „par”', 'altfel', '   Afișează „impar”', 'Sfârșit'];
+const S_TRIPLU_PANA = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește b', 0, 1, {urm: 'b'}),
+  B('b', 'calcul', 'b ← b * 3', 0, 2, {urm: 'd'}),
+  B('d', 'decizie', 'b > 100', 0, 3, {da: 'f', nu: 'b', iesDa: 'jos', iesNu: 'stanga'}),
+  B('f', 'afisare', 'Afișează b', 0, 4, {urm: 't'}), STOP(5)]};
+const S_ZERO = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește t', 0, 1, {urm: 'd'}),
+  B('d', 'decizie', 't < 0', 0, 2, {da: 'r', nu: 'f', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('r', 'calcul', 't ← 0', 0, 3, {urm: 'f'}),
+  B('f', 'afisare', 'Afișează t', 0, 4, {urm: 't'}), STOP(5)]};
+/* laboratorul: schema programului Scratch (blocurile Scratch scrise în forme; nu se execută în pagină) */
+const S_LAB = {start: 's', blocuri: [START('a'),
+  B('a', 'calcul', 'mergi la x -150 y: 0', 0, 1, {urm: 'b'}),
+  B('b', 'calcul', 'orientează-te în direcția 90', 0, 2, {urm: 'd'}),
+  B('d', 'decizie', 'poziția x > 100', 0, 3, {da: 'f', nu: 'm', iesDa: 'dreapta', iesNu: 'jos'}),
+  B('m', 'calcul', 'mergi 40 pași', 0, 4, {urm: 'd'}),
+  B('f', 'afisare', 'spune „Am ajuns!”', 0, 5, {urm: 't'}), STOP(6)]};
+/* pozițiile pisicii după schema laboratorului, calculate (testul înainte de fiecare trecere, ca „repetă până când” din Scratch) */
+const pozitii = (x, pas, prag) => { const r = [x]; while (!(x > prag) && r.length < 100) { x += pas; r.push(x); } return r; };
+const POZ_LAB = pozitii(-150, 40, 100), POZ_LAB60 = pozitii(-150, 60, 100);
+/* atelierul: schema colegului (verificarea încrucișată) */
+const S_RACHETA = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește n', 0, 1, {urm: 'L1'}),
+  B('L1', null, '', 0, 2, {gol: true, da: 'L2', nu: 'f', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('L2', null, '', 0, 3, {gol: true, urm: 'L3'}),
+  B('L3', null, '', 0, 4, {gol: true, urm: 'L1'}),
+  B('f', 'afisare', 'Afișează „Start!”', 0, 5, {urm: 't'}), STOP(6)]};
+const C_RACHETA = [
+  {id: 'r1', tip: 'decizie', text: 'n ≥ 0'}, {id: 'r2', tip: 'decizie', text: 'n > 0'}, {id: 'r3', tip: 'decizie', text: 'n > 1'},
+  {id: 'r4', tip: 'afisare', text: 'Afișează n'}, {id: 'r5', tip: 'calcul', text: 'n ← n - 1'},
+  {id: 'r6', tip: 'calcul', text: 'n ← n + 1'}, {id: 'r7', tip: 'afisare', text: 'Afișează n - 1'}];
+const S_ORDINE = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește n', 0, 1, {urm: 'd'}),
+  B('d', 'decizie', 'n > 0', 0, 2, {da: 'L1', nu: 't', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('L1', null, '', 0, 3, {gol: true, urm: 'L2'}),
+  B('L2', null, '', 0, 4, {gol: true, urm: 'd'}), STOP(5)]};
+const C_ORDINE = [
+  {id: 'o1', tip: 'calcul', text: 'n ← n - 1'}, {id: 'o2', tip: 'afisare', text: 'Afișează n'},
+  {id: 'o3', tip: 'calcul', text: 'n ← n + 1'}, {id: 'o4', tip: 'afisare', text: 'Afișează n + 1'}];
+/* întrebările */
+const S_Q2 = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește t', 0, 1, {urm: 'd'}),
+  B('d', 'decizie', 't > 30', 0, 2, {da: 'x', nu: 'y', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('x', 'afisare', 'Afișează „caniculă”', 0, 3, {urm: 't'}),
+  B('y', 'afisare', 'Afișează „normal”', 1, 3, {urm: 't'}), STOP(4)]};
+const S_Q3 = {start: 's', blocuri: [START('i'),
+  B('i', 'calcul', 'x ← 5', 0, 1, {urm: 'd'}),
+  B('d', 'decizie', 'x < 60', 0, 2, {da: 'b', nu: 'f', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('b', 'calcul', 'x ← x * 2', 0, 3, {urm: 'd'}),
+  B('f', 'afisare', 'Afișează x', 0, 4, {urm: 't'}), STOP(5)]};
+const S_Q4 = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește k', 0, 1, {urm: 'd'}),
+  B('d', 'decizie', 'k < 100', 0, 2, {da: 'b', nu: 'f', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('b', 'calcul', 'k ← k + 30', 0, 3, {urm: 'd'}),
+  B('f', 'afisare', 'Afișează k', 0, 4, {urm: 't'}), STOP(5)]};
+/* Î5 (r1, 02.11): alt algoritm decât „Încă un exercițiu” de la pasul 6 (t < 0 → t ← 0): plafonul de 100 */
+const S_Q5_GOL = {start: 's', blocuri: [START('c'),
+  B('c', 'citire', 'Citește p', 0, 1, {urm: 'L1'}),
+  B('L1', null, '', 0, 2, {gol: true, da: 'L2', nu: 'f', iesDa: 'jos', iesNu: 'dreapta'}),
+  B('L2', null, '', 0, 3, {gol: true, urm: 'f'}),
+  B('f', 'afisare', 'Afișează p', 0, 4, {urm: 't'}), STOP(5)]};
+const C_Q5 = [
+  {id: 'q2', tip: 'decizie', text: 'p < 100'}, {id: 'q1', tip: 'decizie', text: 'p > 100'},
+  {id: 'q4', tip: 'calcul', text: 'p ← p - 100'}, {id: 'q3', tip: 'calcul', text: 'p ← 100'}, {id: 'q5', tip: 'afisare', text: 'Afișează 100'}];
+
+/* valori calculate pentru textele exemplelor */
+const R_TRASEU = SL.executa(S_TRASEU, D_TRASEU);
+const R_CEAI = SL.executa(S_CEAI, {});
+const NR_CEAI = treceriBloc(S_CEAI, {}, 'b');
+const R_MINGE = SL.executa(S_MINGE, {});
+const VAL_MINGE = R_MINGE.pasi.filter(p => p.id === 'b').map(p => SL.fmt(p.valori.h));
+const Q2_O = ['normal', 'caniculă', '30', 'nimic'];
+const Q3_N = treceriBloc(S_Q3, {}, 'b');
+const Q3_V = SL.executa(S_Q3, {}).pasi.filter(p => p.id === 'b').map(p => p.valori.x);
+
+/* ---------------- „Acum în Scratch, la calculator” (laboratorul, după atelier): FĂRĂ profesor, pe calculatorul comun ---------------- */
+const LAB = [
+  'Programul de la pași e în fila Scratch? Treci la punctul 2. Fila e închisă? <code>scratch.mit.edu</code> › <b>Creează</b> (în engleză? <b>Settings</b> › <b>Language</b> › <b>Română</b>) și fă programul după schema de mai sus, cu casetele de la pași.',
+  `Compară programul cu schema, de sus în jos: ovalul START e „când se dă click pe ⚑”; fiecare dreptunghi e un bloc albastru, din Mișcare; rombul cu săgeata care se întoarce e „repetă până când (poziția x) &gt; (100)”, cu „mergi 40 pași” în gură; paralelogramul e „spune Am ajuns! pentru 2 secunde”, sub brațul de jos. Lipsește un bloc? Pune-l acum.`,
+  `Steagul. Urmărește schema în caiet: x este ${POZ_LAB.slice(0, 4).join(', ')}, …; pisica trebuie să se oprească la x ${POZ_LAB[POZ_LAB.length - 1]} și să spună „Am ajuns!”. Alt x? Caută blocul care nu e ca în schemă (de obicei numărul din „mergi”, din „mergi la x” sau din condiție).`,
+  '<b>Fișier</b> › <b>Salvează pe calculatorul tău</b>. Browserul întreabă unde? Folderul tău, numele <code>Schema_</code>, clasa și numele tău (de exemplu <code>Schema_6A_Popescu</code>), <b>Salvare</b>. Numele există deja? <b>Nu</b> (sau <b>Anulare</b>), adaugă prenumele, <b>Salvare</b>. Sari la punctul 6.',
+  'Nu te-a întrebat? Explorer › <b>Descărcări</b>: fișierul <b>Proiect Scratch</b> (poate cu (1)). <kbd>F2</kbd>, <code>Schema_</code>, clasa și numele tău, <kbd>Enter</kbd>; <b>Decupare</b>, folderul tău, <b>Lipire</b>. Există deja? <b>Se omite acest fișier</b>, adaugă prenumele, mută-l din nou.',
+  `<b>Dacă mai ai timp:</b> în „mergi 40 pași”, clic pe 40, scrie <code>60</code>, <kbd>Enter</kbd>. Întâi în caiet: urmărește schema cu 60 în loc de 40; unde se oprește pisica? Apoi steagul și verifică: x ${POZ_LAB60[POZ_LAB60.length - 1]}. Nu mai salva.`,
+  'Închide fila Scratch (te întreabă dacă pleci? Pleci: ai salvat).'
+];
+
+JocMotor.porneste({
+  cheie: 'lectie_vi_m4_l24',
+  mod: 'lectie',
+  titlu: 'Reprezentarea algoritmilor prin blocuri grafice',
+  marca: 'Lecția <b>24</b> · clasa a VI-a',
+  h1: 'Reprezentarea algoritmilor prin <span class="acc">blocuri grafice</span>',
+  eticheta: 'Lecții TIC',
+  acasa: {href: '../../../hub/index.html', text: 'LearningHub'},
+  clasa: 'a VI-a',
+  unitate: 'VI-U3',
+  unitateTitlu: 'Algoritmi: structuri repetitive',
+  competente: ['CS.2.1', 'CS.2.2', 'CS.2.3'],
+  lectii: '24',
+  ancoraText: 'Programa (OMEN 3393/2017), clasa a VI-a, CS.2.2 „Aplicarea etapelor de rezolvare…, urmărind pas cu pas”, CS.2.3 „Reprezentarea algoritmilor de prelucrare a informației…” · unitatea VI-U3 „Algoritmi: structuri repetitive” · lecția 24, predare · conținutul „Modalități de reprezentare a structurilor repetitive prin blocuri grafice”. Schema logică: simbolurile din manualul de clasa a VI-a (Sigma) și din jocul algoritmi-vi; pseudocodul în notația lecțiilor 17 și 20-22; aplicația: Scratch 3, editorul online scratch.mit.edu.',
+  intro: '<p><b>Ai nevoie de:</b> lecțiile 17-22 (pseudocodul cu „Citește”, „←”, „Afișează”, „Dacă … atunci … altfel” și tabelul de urmărire; „cât timp” și „repetă … până când”; în Scratch: salvarea, „repetă până când”, „poziția x”, „( ) &gt; (50)”).</p>',
+  cum: '<b>Cum lucrezi:</b> în exercițiile cu schemă atingi întâi locul din schemă, apoi blocul din listă (fără tragere). Casetele „Acum în Scratch” le faci în fila Scratch, lângă pagină (pe telefon le sari). „Încă un exercițiu” și „Dacă mai ai timp”: doar dacă termini repede. Când mai sunt 10 minute din oră, treci la întrebări.',
+  banda: '<span class="bk ov">START</span><span class="sg">→</span><span class="bk pg">Citește a, b</span><span class="sg">→</span><span class="bk">x ← x * 2</span><span class="sg">→</span><span class="bk rb">x &gt; 20</span><span class="sg">→</span><span class="bk ov">STOP</span>',
+  nivele: [
+{t: 'Reprezentarea algoritmilor prin blocuri grafice', final: true, lectii: [24],
+ continuturi: ['Modalități de reprezentare a structurilor repetitive prin blocuri grafice'],
+ obiectiv: 'citești o schemă logică pas cu pas, transcrii un algoritm din cuvinte în schemă și din schemă în pseudocod (cu decizie și cu repetiție), verifici schema unui coleg executând-o pe câteva seturi de date și faci în Scratch programul unei scheme.',
+ pasi: [
+  /* ---- pasul 0: la ce folosește (fără acțiuni) ---- */
+  {t: 'La ce folosește: un algoritm desenat',
+   text: `<p>Pe holul școlii e de obicei un <b>plan de evacuare</b>. Nu citești un text lung: urmărești cu degetul săgețile verzi, de la „ești aici” până la ieșire. Oricine îl înțelege la fel.</p>
+<p>Și un algoritm se poate desena așa: pașii stau în <mark>blocuri grafice</mark>, iar săgețile arată ordinea lor. Desenul se numește <mark>schemă logică</mark>. Dintr-o privire vezi unde se desparte drumul (decizia) și unde se întoarce (repetiția).</p>
+${fig('plan-evacuare.webp', 600, 719, 'Bucată dintr-un plan de evacuare: holul verde, săli numerotate, punctul mov Standort și indicatoare verzi cu săgeată spre ieșire', 'Plan de evacuare dintr-o școală din Germania: „Standort” (punctul mov) înseamnă „ești aici”; săgețile verzi duc spre ieșire. <small class="sursa-foto">Foto: Triplec85, <a href="https://commons.wikimedia.org/wiki/File:Fluchtplan_Rettungsplan_Kaufm%C3%A4nnische_Schule_Tauberbischofsheim_Erdgeschoss_Hintereingang.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noopener">CC BY-SA 4.0</a>; decupată și micșorată, aceeași licență.</small>')}`},
+
+  /* ---- pasul 1: blocurile ---- */
+  {t: 'Blocurile schemei logice',
+   text: `<p>O schemă logică e un algoritm desenat din blocuri legate cu săgeți. <b>Forma</b> blocului spune ce fel de pas e:</p>
+<ul><li><b>ovalul</b>: START și STOP, ca „Început” și „Sfârșit” din pseudocod;</li>
+<li><b>paralelogramul</b>: o citire („Citește a”) sau o afișare („Afișează a”);</li>
+<li><b>dreptunghiul</b>: o atribuire („x ← x * 2”) sau o mișcare („mergi 10 pași”);</li>
+<li><b>rombul</b>: o condiție, cu două ieșiri: <b>DA</b> (adevărată) și <b>NU</b> (falsă). Din celelalte blocuri iese o singură săgeată.</li></ul>
+${FIG(S_FORME, '', 'Cele patru forme ale schemei logice: ovalul cu START, paralelogramul cu Citește a, dreptunghiul cu x ← x * 2, rombul cu a > 5')}`,
+   exemplu: `<div class="doua"><div><p class="et">Algoritmul din lecția 17, pe rânduri</p>${PS(['Început', 'Citește preț, n', 'total ← preț * n', 'Afișează total', 'Sfârșit'])}</div><div><p class="et">Același algoritm, desenat</p>${FIG(S_PRET)}</div></div>
+<p>Fiecare rând devine un bloc: „Început” și „Sfârșit” devin ovale, „Citește” și „Afișează” paralelograme, atribuirea un dreptunghi. Săgețile păstrează ordinea rândurilor.</p>
+<p class="mic">Alte manuale pot desena citirea și afișarea ca trapez, pot scrie „Scrie” în loc de „Afișează”, TRUE și FALSE (adevărat și fals, în engleză) în loc de DA și NU sau pot pune DA și NU în alte colțuri ale rombului; unele jocuri adaugă „?” după condiție. Ideea e aceeași.</p>
+${ACUM('Deschide <code>scratch.mit.edu</code> › <b>Creează</b> (în engleză? <b>Settings</b> › <b>Language</b> › <b>Română</b>).', 'Din <b>Evenimente</b>, trage „când se dă click pe ⚑” în zona de cod. În schemă, el ține locul ovalului START: de aici pornește programul.')}`,
+   incearca: {t: 'classify', q: 'Pune fiecare bloc în forma lui.', cats: ['Ovalul', 'Paralelogramul', 'Dreptunghiul', 'Rombul'],
+    items: [['STOP', 0], ['Citește vârsta', 1], ['Afișează mesaj', 1], ['viteza ← d / t', 2], ['nota ≥ 5', 3], ['START', 0], ['x < y', 3], ['preț ← preț - 5', 2]],
+    ajutor: 'La fiecare te întrebi: citește sau afișează? Are săgeata „←”? Are răspuns DA sau NU?',
+    why: 'START și STOP stau în ovale. Citirea și afișarea, în paralelograme. Atribuirea („←”), în dreptunghi. O condiție (cu răspuns DA sau NU), în romb.'},
+   inca: [
+    {t: 'choice', q: 'Din ce bloc ies două săgeți?', o: ['Din romb', 'Din dreptunghi', 'Din paralelogram', 'Din ovalul START'], ok: 0,
+     why: 'Rombul are o condiție: pe DA mergi într-o parte, pe NU în alta. Din celelalte blocuri iese o singură săgeată (din STOP, niciuna).'}
+   ]},
+
+  /* ---- pasul 2: citirea pas cu pas ---- */
+  {t: 'Citești schema pas cu pas',
+   text: `<p>Ca să afli ce face o schemă, o <b>execuți</b> tu, ca un calculator, cu niște date de intrare:</p>
+<ol><li>Pornești de la START și mergi doar pe săgeți.</li>
+<li>La fiecare bloc faci ce scrie în el și notezi noile valori, ca în tabelul de urmărire (lecția 17).</li>
+<li>La romb pui în condiție valorile de <b>acum</b>: adevărată, mergi pe DA; falsă, pe NU.</li>
+<li>Te oprești la STOP. Ce s-a afișat pe drum e rezultatul.</li></ol>
+<p>Pe drumul pe care n-ai mers nu se execută nimic.</p>`,
+   exemplu: `<p>Decizia din lecția 17 (traseul din parcul de aventură), desenată. Pentru înălțime = ${D_TRASEU['înălțime']}:</p>
+${FIG(S_TRASEU)}
+${SL.tabel(S_TRASEU, D_TRASEU)}
+<p>${D_TRASEU['înălțime']} ≥ 140 e fals, deci drumul NU: se afișează ${R_TRASEU.iesire[0]}. Blocul de pe drumul DA nu se execută.</p>
+${ACUM('Sub „când se dă click pe ⚑”, din <b>Mișcare</b>: „mergi la x 0 y: 0” (clic pe primul 0, scrie <code>-150</code>, <kbd>Enter</kbd>), apoi „orientează-te în direcția 90”. Sunt două dreptunghiuri: doi pași făcuți unul după altul, ca în schemă.')}`,
+   incearca: {t: 'schema', mod: 'urmareste', q: `Execută schema pentru preț = 130. La romb alegi DA sau NU, la dreptunghi scrii valoarea nouă, apoi apasă „Verifică urmărirea”.`,
+    schema: S_REDUCERE, intrari: {'preț': 130},
+    ajutor: 'La romb: 130 e mai mare decât 100? La dreptunghi: în dreapta săgeții calculezi cu valoarea de acum a prețului.',
+    why: `130 &gt; 100 e adevărat, deci DA: preț devine 130 - 20 = ${SL.executa(S_REDUCERE, {'preț': 130}).valori['preț']}. Apoi se afișează ${iesire(S_REDUCERE, {'preț': 130})[0]}.`},
+   inca: [
+    {t: 'schema', mod: 'urmareste', q: 'Execută schema pentru a = 3 și b = 8.', schema: S_MAX, intrari: {a: 3, b: 8},
+     ajutor: 'La romb: 3 e mai mare decât 8?', why: `3 &gt; 8 e fals, deci NU: se afișează b, adică ${iesire(S_MAX, {a: 3, b: 8})[0]}.`},
+    {t: 'schema', mod: 'urmareste', q: 'Aceeași schemă a reducerii, pentru preț = 80.', schema: S_REDUCERE, intrari: {'preț': 80},
+     ajutor: '80 e mai mare decât 100?', why: `80 &gt; 100 e fals: drumul NU ocolește dreptunghiul, deci prețul rămâne ${iesire(S_REDUCERE, {'preț': 80})[0]}.`}
+   ]},
+
+  /* ---- pasul 3: din cuvinte în schemă ---- */
+  {t: 'Din cuvinte în schemă',
+   text: `<p>Ai algoritmul în cuvinte și vrei schema. Lucrezi în patru pași:</p>
+<ol><li>Fiecare propoziție devine un bloc.</li>
+<li>Alegi forma după ce face propoziția: citește sau afișează, paralelogram; calculează, dreptunghi; „dacă…”, romb.</li>
+<li>Legi blocurile cu săgeți, în ordinea în care se fac. Din romb: pe DA, ce faci când condiția e adevărată; pe NU, ce faci când e falsă. După decizie, drumurile se unesc din nou.</li>
+<li>Faci proba: execuți schema pe câteva date și compari cu ce cere algoritmul.</li></ol>`,
+   exemplu: `<p>Algoritmul: <i>Citește nota. Dacă nota este cel puțin 5, afișează „Promovat”, altfel afișează „Mai încearcă”.</i> „Cel puțin 5” devine condiția nota ≥ 5.</p>
+${FIG(S_NOTA)}
+<p>Proba: pentru nota = 7, condiția e adevărată și se afișează ${iesire(S_NOTA, {nota: 7})[0]}; pentru nota = 4, e falsă și se afișează ${iesire(S_NOTA, {nota: 4})[0]}.</p>`,
+   incearca: {t: 'schema', mod: 'construieste',
+    q: 'Transcrie în schemă: <i>Citește a și b. Dacă a este mai mare decât b, afișează a; altfel afișează b.</i> Atinge un loc, apoi blocul potrivit. Rulează schema pe un set de date, apoi apasă „Verifică schema”.',
+    schema: S_MAX_GOL, carti: C_MAX,
+    seturi: [{intrari: {a: 7, b: 4}}, {intrari: {a: 3, b: 9}}, {intrari: {a: 5, b: 5}}],
+    solutie: {L1: 'k1', L2: 'k2', L3: 'k3', L4: 'k4'}, gresit: {L1: 'k1', L2: 'k2', L3: 'k4', L4: 'k3'},
+    ajutor: 'Locul 1 e primul pas: ce faci întâi? Locul 2 are două ieșiri, deci e un romb. Pe DA (în jos) afișezi numărul care e mai mare.',
+    why: 'Citirea, în paralelogram; condiția a &gt; b, în romb; pe DA afișezi a, pe NU afișezi b. Pentru a = 5 și b = 5 condiția e falsă și se afișează b, adică tot 5. Merge și altfel: cu a &lt; b în romb, afișezi b pe DA și a pe NU.'},
+   inca: [
+    {t: 'schema', mod: 'construieste',
+     q: 'Transcrie în schemă: <i>Citește ora (de la 0 la 23). Dacă ora este mai mare decât 12, scazi 12 din ea. Afișează ora.</i>',
+     schema: S_CEAS_GOL, carti: C_CEAS,
+     seturi: [{intrari: {ora: 15}}, {intrari: {ora: 9}}, {intrari: {ora: 12}}, {intrari: {ora: 23}}],
+     solutie: {L1: 'c1', L2: 'c2', L3: 'c3'}, gresit: {L1: 'c1', L2: 'c4', L3: 'c3'},
+     ajutor: '„Mai mare decât 12” se scrie cu semnul &gt;. „Scazi 12 din ea” e o atribuire: ora primește ora - 12.',
+     why: `15 &gt; 12, deci ora devine 15 - 12 = ${iesire(SL.cuCarti(S_CEAS_GOL, C_CEAS, {L1: 'c1', L2: 'c2', L3: 'c3'}), {ora: 15})[0]}. Pentru 9 și 12 condiția e falsă: ora rămâne cum era.`}
+   ]},
+
+  /* ---- pasul 4: repetiția desenată ---- */
+  {t: 'Repetiția desenată: săgeata care se întoarce',
+   text: `<p>În schemă, repetiția nu are un cuvânt al ei. Se vede după o <mark>săgeată care se întoarce</mark> la un bloc de mai sus. Pașii de pe drumul care se întoarce sunt corpul.</p>
+<ul><li>La „cât timp … execută”, rombul stă <b>înaintea</b> corpului: pe DA faci corpul și te întorci la romb; pe NU ieși.</li>
+<li>La „repetă … până când”, corpul stă <b>înaintea</b> rombului, iar în romb e condiția de oprire: pe NU te întorci la corp, pe DA ieși.</li></ul>
+<p>„pentru i ← 1, n” (lecția 20) se desenează ca „cât timp i ≤ n” (lecția 21), cu i ← 1 înaintea rombului și i ← i + 1 la sfârșitul corpului.</p>`,
+   exemplu: `<div class="doua"><div><p class="et">„cât timp”: ceaiul se răcește</p>${PS(P_CEAI)}${FIG(S_CEAI)}</div><div><p class="et">„repetă … până când”: mingea sare tot mai jos</p>${PS(P_MINGE)}${FIG(S_MINGE)}</div></div>
+<p>Urmărește schema ceaiului:</p>
+${SL.tabel(S_CEAI, {})}
+<p>Corpul „t ← t - 25” s-a executat de ${NR_CEAI} ori. La t = ${R_CEAI.valori.t}, condiția ${R_CEAI.valori.t} &gt; 30 e falsă: ieși din repetiție și se afișează ${R_CEAI.iesire[0]}.</p>`,
+   incearca: {t: 'schema', mod: 'urmareste', q: 'Execută schema mingii. La romb alegi DA sau NU, la dreptunghi scrii valoarea nouă.',
+    schema: S_MINGE, intrari: {},
+    ajutor: 'După fiecare „h ← h / 2” ajungi la romb: h e mai mic decât 5? NU: săgeata te întoarce la „h ← h / 2”.',
+    why: `h devine ${VAL_MINGE.join(', ')}. Abia la ${VAL_MINGE[VAL_MINGE.length - 1]} condiția ${VAL_MINGE[VAL_MINGE.length - 1]} &lt; 5 e adevărată: DA, ieși și se afișează ${R_MINGE.iesire[0]}.`},
+   inca: [
+    {t: 'schema', mod: 'construieste',
+     q: `Desenează în schemă pseudocodul:${PS(['Citește x', 'cât timp x < 50 execută', '   x ← x * 3', 'sfârșit cât timp', 'Afișează x'])}`,
+     schema: S_TRIPLU_GOL, carti: C_TRIPLU,
+     seturi: [{intrari: {x: 1}}, {intrari: {x: 20}}, {intrari: {x: 5}}],
+     solutie: {L1: 'x1', L2: 'x2'}, gresit: {L1: 'x3', L2: 'x2'},
+     ajutor: 'La „cât timp”, rombul stă înaintea corpului. Ce scrii în romb? Condiția de după „cât timp”.',
+     why: 'Rombul x &lt; 50 stă înaintea corpului; pe DA, „x ← x * 3”, apoi săgeata se întoarce la romb; pe NU ieși și afișezi x.'}
+   ]},
+
+  /* ---- pasul 5: din schemă în pseudocod și în Scratch ---- */
+  {t: 'Din schemă în pseudocod și în Scratch',
+   text: `<p>Invers, din schemă în pseudocod: scrii fiecare bloc pe un rând, de sus în jos; ovalele devin „Început” și „Sfârșit”. Două drumuri care se unesc mai jos înseamnă „Dacă … atunci … altfel”; dacă pe drumul NU nu e niciun bloc, e „Dacă … atunci”, fără „altfel” (lecția 17). O săgeată care se întoarce înseamnă o repetiție.</p>
+<p>În schemă, blocul Scratch „repetă până când” (lecția 21) are rombul înaintea corpului: corpul pe NU, ieșirea pe DA.</p>
+<p><b>Atenție la nume:</b> blocul „repetă până când” din Scratch testează <b>înainte</b> de fiecare trecere, ca „cât timp”. „repetă … până când” din caiet îl faci cu corpul o dată deasupra lui (lecția 22).</p>`,
+   exemplu: `<div class="doua"><div>${FIG(S_PAR)}</div><div><p class="et">Pseudocodul aceleiași scheme</p>${PS(P_PAR)}</div></div>
+<p>Rombul are două drumuri care se unesc la STOP, deci e „Dacă … atunci … altfel”: drumul DA devine ramura „atunci”, drumul NU ramura „altfel”, amândouă mai la dreapta.</p>
+<p>O schemă și programul Scratch făcut după ea, bloc cu bloc:</p>
+<div class="doua"><div>${FIG(S_LAB, '', 'Schema programului Scratch: START, mergi la x -150 y: 0, orientează-te în direcția 90, rombul poziția x > 100; pe NU mergi 40 pași și săgeata înapoi la romb; pe DA spune Am ajuns!, apoi STOP')}</div><div>${fig('program-schema.webp', 270, 264, 'Programul în Scratch: când se dă click pe steag, mergi la x -150 y: 0, orientează-te în direcția 90, repetă până când poziția x mai mare decât 100, cu mergi 40 pași în gură, apoi spune Am ajuns! pentru 2 secunde', 'Același program în Scratch (captură din editorul adevărat): ovalul START e „când se dă click pe ⚑”, rombul cu săgeata întoarsă e „repetă până când”, paralelogramul e „spune”.')}</div></div>
+${ACUM('Sub „orientează-te în direcția 90”, din <b>Control</b>: „repetă până când”. Din <b>Operatori</b>, „( ) &gt; (50)” în locul în șase colțuri; în prima căsuță „poziția x” (din Mișcare), în a doua <code>100</code>.',
+  'În gura lui „repetă până când”: „mergi 10 pași”, cu <code>40</code> în loc de 10. E drumul NU al rombului.',
+  `Sub brațul de jos, din <b>Aspect</b>: „spune Salut! pentru 2 secunde”. Clic pe Salut!, scrie <code>Am ajuns!</code>, <kbd>Enter</kbd>. Steagul: pisica se oprește la x ${POZ_LAB[POZ_LAB.length - 1]} (sub scenă) și spune „Am ajuns!”.`)}`,
+   incearca: {t: 'choice', html: true, q: `Care pseudocod spune același lucru ca schema?${FIG(S_TRIPLU_PANA)}`,
+    o: [OPS(['Citește b', 'repetă', '   b ← b * 3', 'până când b > 100', 'Afișează b']),
+        OPS(['Citește b', 'cât timp b > 100 execută', '   b ← b * 3', 'sfârșit cât timp', 'Afișează b']),
+        OPS(['Citește b', 'repetă', '   b ← b * 3', 'până când b < 100', 'Afișează b']),
+        OPS(['Citește b', 'Dacă b > 100 atunci', '   b ← b * 3', 'Afișează b'])], ok: 0,
+    ajutor: 'Unde stă rombul: înaintea dreptunghiului sau după el? Pe ce drum se întoarce săgeata?',
+    why: 'Corpul „b ← b * 3” vine înaintea rombului, iar săgeata se întoarce pe NU: e „repetă … până când”, cu condiția de oprire b &gt; 100, cea din romb.'},
+   inca: [
+    {t: 'choice', html: true, q: `Care pseudocod spune același lucru ca schema?${FIG(S_ZERO)}`,
+     o: [OPS(['Citește t', 'Dacă t < 0 atunci', '   t ← 0', 'Afișează t']),
+         OPS(['Citește t', 'Dacă t < 0 atunci', '   t ← 0', 'altfel', '   Afișează t']),
+         OPS(['Citește t', 'cât timp t < 0 execută', '   t ← 0', 'sfârșit cât timp']),
+         OPS(['Citește t', 'Dacă t > 0 atunci', '   t ← 0', 'Afișează t'])], ok: 0,
+     ajutor: 'Drumul NU are vreun bloc al lui? Unde se unesc cele două drumuri?',
+     why: 'Pe NU nu e niciun bloc: drumul se unește direct la „Afișează t”, care se face oricum. E „Dacă … atunci” fără „altfel”, cu afișarea după decizie.'}
+   ]},
+ ],
+ atelier: {t: 'schema', mod: 'coleg', titlu: 'Verificarea încrucișată: schema colegului',
+  intro: `<p><b>Verificarea încrucișată:</b> colegul îți dă schema lui, iar tu o verifici. O execuți pe 2-3 seturi de date și compari ce afișează cu ce cere problema. Aici, colegul e desenat de pagină.</p>
+<p><b>Cerința colegului:</b> <i>Citește n. Afișează numerele de la n în jos până la 1, apoi afișează „Start!”.</i></p>
+<p><b>Sarcina:</b> alege un set de date și rulează schema (▶ sau ⏭). Sub ea vezi ce afișează și ce ar trebui să afișeze. Unde diferă, atinge blocul greșit și pune altul în locul lui, din listă. La final, „Verifică schema”.</p>`,
+  q: 'Pe telefon: atingi blocul din schemă (sau butonul „Locul …”), apoi blocul nou din listă.',
+  schema: S_RACHETA, carti: C_RACHETA, start: {L1: 'r1', L2: 'r4', L3: 'r5'},
+  seturi: [{intrari: {n: 3}}, {intrari: {n: 1}}, {intrari: {n: 5}}],
+  solutie: {L1: 'r2', L2: 'r4', L3: 'r5'}, gresit: {L1: 'r3', L2: 'r4', L3: 'r5'},
+  ajutor: 'Rulează cu n = 1: ce afișează schema colegului în plus? Uită-te în romb: cu ce valoare a lui n se mai trece o dată pe DA?',
+  why: `Cu „n ≥ 0” trece pe DA și n = 0, așa că se afișează și 0. Cu „n &gt; 0” repetiția se oprește după 1: pentru n = 3 se afișează ${iesire(SL.cuCarti(S_RACHETA, C_RACHETA, {L1: 'r2', L2: 'r4', L3: 'r5'}), {n: 3}).join(', ')}.`,
+  inca: [
+   {t: 'schema', mod: 'coleg',
+    q: '<b>Alt coleg, altă cerință:</b> <i>Citește n. Afișează numerele de la n în jos până la 1.</i> Rulează schema lui pe seturile de date, găsește greșeala și repar-o.',
+    schema: S_ORDINE, carti: C_ORDINE, start: {L1: 'o1', L2: 'o2'},
+    seturi: [{intrari: {n: 3}}, {intrari: {n: 1}}, {intrari: {n: 4}}],
+    solutie: {L1: 'o2', L2: 'o1'}, gresit: {L1: 'o1', L2: 'o2'},
+    ajutor: 'Pentru n = 3, primul număr afișat ar trebui să fie 3. Ce se face întâi în corp: scăderea sau afișarea?',
+    why: 'Colegul scădea întâi și afișa după, așa că pornea de la n - 1 și ajungea la 0. Întâi afișezi n, apoi scazi 1. Merge și dacă scazi întâi și afișezi n + 1.'}
+  ]},
+ qs: [
+  {t: 'choice', q: 'În ce bloc al schemei logice scrii „arie ← l * l”?', o: ['În dreptunghi', 'În paralelogram', 'În romb', 'În oval'], ok: 0,
+   why: 'E o atribuire: calculezi l * l și pui rezultatul în arie. Atribuirea stă în dreptunghi.'},
+  {t: 'choice', q: `Ce afișează schema pentru t = 30?${FIG(S_Q2)}`, o: Q2_O, ok: Q2_O.indexOf(iesire(S_Q2, {t: 30})[0]),
+   why: `30 &gt; 30 e fals (30 nu e mai mare decât 30), deci drumul NU: se afișează ${iesire(S_Q2, {t: 30})[0]}.`},
+  {t: 'choice', q: `De câte ori se execută blocul „x ← x * 2”?${FIG(S_Q3)}`, o: [String(Q3_N), String(Q3_N - 1), String(Q3_N + 1), '1'], ok: 0,
+   why: `x devine ${Q3_V.join(', ')}; la ${Q3_V[Q3_V.length - 1]}, condiția ${Q3_V[Q3_V.length - 1]} &lt; 60 e falsă și ieși. Adică ${Q3_N} treceri.`},
+  {t: 'choice', html: true, q: `Care pseudocod spune același lucru ca schema?${FIG(S_Q4)}`,
+   o: [OPS(['Citește k', 'cât timp k < 100 execută', '   k ← k + 30', 'sfârșit cât timp', 'Afișează k']),
+       OPS(['Citește k', 'repetă', '   k ← k + 30', 'până când k < 100', 'Afișează k']),
+       OPS(['Citește k', 'cât timp k > 100 execută', '   k ← k + 30', 'sfârșit cât timp', 'Afișează k']),
+       OPS(['Citește k', 'Dacă k < 100 atunci', '   k ← k + 30', 'Afișează k'])], ok: 0,
+   why: 'Rombul stă înaintea corpului, pe DA faci „k ← k + 30” și săgeata se întoarce la romb: e „cât timp k &lt; 100”.'},
+  {t: 'schema', mod: 'construieste',
+   q: 'Transcrie în schemă: <i>Citește p. Dacă p este mai mare decât 100, îl faci 100. Afișează p.</i>',
+   schema: S_Q5_GOL, carti: C_Q5,
+   seturi: [{intrari: {p: 150}}, {intrari: {p: 40}}, {intrari: {p: 100}}],
+   solutie: {L1: 'q1', L2: 'q3'}, gresit: {L1: 'q2', L2: 'q3'},
+   why: '„Mai mare decât 100” înseamnă p &gt; 100: condiția stă în romb. „Îl faci 100” e atribuirea p ← 100, pe DA. Pe NU, p rămâne cum era și se afișează; pentru p = 100 condiția e falsă, deci p rămâne 100.'}
+ ]}
+  ],
+  tipuri: {schema: SchemaLogica.tipuri.schema},
+  aplicatieReala: {aplicatie: 'Scratch, în browser, pe calculatorul din laborator', titlu: 'Acum în Scratch, la calculator', scurt: 'Scratch',
+    intro: `<p>Faci în Scratch programul după schema de mai jos, îl rulezi și verifici că pisica se oprește unde spune schema. Apoi salvezi proiectul cu nume nou, în folderul tău. Fără cont. Lucrezi doar pe telefon? Atelierul din pagină ține loc de laborator: treci la întrebări.</p>${FIG(S_LAB, '', 'Schema programului Scratch: START, mergi la x -150 y: 0, orientează-te în direcția 90, rombul poziția x > 100; pe NU mergi 40 pași și săgeata înapoi la romb; pe DA spune Am ajuns!, apoi STOP')}
+${fig('scena-x130.webp', 482, 423, 'Scena Scratch: pisica spune Am ajuns!; sub scenă, x 130 și y 0', `Așa arată la final: pisica spune „Am ajuns!” timp de 2 secunde (apoi balonul dispare), iar sub scenă x rămâne ${POZ_LAB[POZ_LAB.length - 1]} (captură din editorul adevărat).`)}`,
+    pasi: LAB},
+  diploma: {
+    titlu: 'Schema logică',
+    rezumat: 'blocurile schemei logice (ovalul, paralelogramul, dreptunghiul, rombul) și săgețile; citirea unei scheme pas cu pas; transcrierea din cuvinte în schemă și din schemă în pseudocod; decizia și repetiția desenate; verificarea schemei unui coleg pe seturi de date; în Scratch, programul făcut după o schemă',
+    aplicatie: 'Scratch, în browser, pe calculatorul din laborator',
+    provocare: LAB
+  }
+});
+</script>
+</body>
+</html>
