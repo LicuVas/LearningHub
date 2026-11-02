@@ -17,14 +17,14 @@ Cererea ta (01.11, 22:55): „mai avem 43% pentru vreo 12 ore. continua pe learn
 | VI/25 | Probleme cu repetiție: sume, numărări, cifre (în Scratch, cu variabile) | `f2a263e1` |
 | VI/26 | Evaluare sumativă: structuri repetitive (probă de antrenament C / B / A) | `f8bde23e` |
 
-Fiecare a trecut prin 2-5 judecători independenți până la 0 greșeli grave și 0 mari, apoi prin toate porțile de publicare (conținutul de pe sit = fișierul comis, proba pe telefon 390 px și pe calculator 1280 px fără erori). Modulul 4 la a V-a e complet (22-27); la a VI-a, 22-26 (rămân 27-29, animația). În M4: 15 lecții publicate la toate clasele, 0 în lucru.
+Fiecare a trecut prin 2-5 judecători independenți până la 0 greșeli grave și 0 mari, apoi prin toate porțile de publicare (conținutul de pe sit = fișierul comis, proba pe telefon 390 px și pe calculator 1280 px fără erori). **Cinstit, două nuanțe:** (a) la V/24, ultima judecată dinaintea publicării lăsase 1 greșeală mare (cum se șterge fișierul la sfârșitul orei); a închis-o o trecere de text pe care am citit-o eu (4 rânduri), iar o judecată opus nouă, făcută după publicare (10:25), a confirmat: 0 grave / 0 mari / 0 mărunte (`lectii\v\m4-l24\_verificare\judecator3.md`); (b) la 8 lecții (V/22, V/25, V/26, V/27, VI/23, VI/24, VI/25, VI/26), după ultima judecată s-a mai făcut o reparație măruntă de text sau de mesaj — reparația exactă propusă de judecător, făcută de mine sau de un autor scurt, cu probele rulate din nou (scrisă în `_verificare\registru_j1.md` al lecției și în jurnal). La a V-a, din modulul 4 sunt publicate 22-27 (**rămân 28 și 29**); la a VI-a, 22-26 (rămân 27-29, animația). În M4: 15 lecții publicate la toate clasele, 0 în lucru, 17 neîncepute.
 
 **Dovada:** `python C:/00/Projects/LearningHub/_campaign/revizuire_completa_2026_09/dirijor/stare.py --modul M4` · sau deschide `learninghub-8z6.pages.dev/lectii/v/` și `/lectii/vi/`.
 
 ## NEFĂCUT
 
-- **VII/24+ și VIII/24+ (13 lecții)** — n-am pornit nimic: activitățile tale cer un program scris și rulat, iar limbajul îl alegi tu. **Deblocare: un cuvânt — C++ sau Python?** (VIII/1 pomenește deja C++ la o întrebare.)
-- **VI/27+ (animația)** — n-am pornit: nu știu ce aplicație de animație vrei la a VI-a.
+- **VII/24-29 și VIII/24-29 (12 lecții)** — n-am pornit nimic: activitățile tale cer un program scris și rulat, iar limbajul îl alegi tu. **Deblocare: un cuvânt — C++ sau Python?** (VIII/1 pomenește deja C++ la o întrebare.)
+- **VI/27-29 (animația)** — n-am pornit. **Deblocare: ce aplicație de animație folosesc elevii de a VI-a?** (de exemplu Scratch — pe care îl știu deja —, sau alta din laborator).
 
 ## NESIGUR (de verificat la clasă sau în laborator)
 
@@ -40,6 +40,7 @@ Fiecare a trecut prin 2-5 judecători independenți până la 0 greșeli grave �
 4. **VI/25:** variabilele în Scratch se predau aici (VI/18-22 nu le predaseră); cifra se scoate cu `n ← n − c`, apoi `n ← n / 10` (ca la VI/17), nu cu „partea întreagă din”.
 5. **VI/26:** testul unității VI-U3 nu există → probă de antrenament C / B / A.
 6. **Valul C (V/27)** l-am pornit la 05:20 pe bugetul rămas, cu grijă să-ți rămână cel puțin 10 % pentru dimineața de la școală.
+7. **V/28 „Structura secvențială” și V/29 „Structura alternativă” NU le-am făcut — alegerea mea, nu un blocaj.** Nu aveau nevoie de nicio decizie de-a ta (sunt în limbaj natural). V/28 se sprijină pe V/27, publicată la 09:16 — **puteam porni autorul V/28 atunci și n-am făcut-o (scăpare)**; la 10:10, un lanț de 3-5 ore nu mai încăpea în cele ~12 ore cerute și ar fi consumat din bugetul tău de la școală. Bugetul: am folosit 22 de puncte (58 % → 80 %) din cele ~40 rămase; ~17-20 de puncte se pierd la resetarea de la 11:00. **Dacă vrei: un cuvânt („continuă”) și le iau în tura următoare — sunt gata de pornit.**
 
 ## Pentru componentele comune (de reparat altă dată, de proprietarii lor)
 
