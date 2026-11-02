@@ -2,7 +2,7 @@
 
 **Pentru cine:** sesiunea-dirijor care duce lucrarea (pornită de `tools\predare.py` sau de `tools\paza_noapte.py`). Ești DIRIJORUL: nu scrii lecții, pornești agenți și verifici cu dovezi. Omul (Vasile) nu e de față; nu-l întrebi nimic. Ce e decizia lui se parchează în raport.
 
-**Contractul:** `C:\00\Projects\LearningHub\_campaign\revizuire_completa_2026_09\m4_seara_02_11\contract.md` (R1-R6). **Legea:** `…\00_GHID_LECTII.md` — citește Partea I.6 (lanțul), VI.3 (dirijorul), VII (operarea), Anexa F (publicarea). Fișa de memorie: `C:\Users\licuv\.claude\projects\C--00-AI-0\memory\project_learninghub_revizuire_completa.md`.
+**Contractul:** `C:\00\Projects\LearningHub\_campaign\revizuire_completa_2026_09\m4_seara_02_11\contract.md` (R1-R6). **Legea:** `…\00_GHID_LECTII.md` — citește Partea I.6 (lanțul), VI.3 (dirijorul), VII (operarea), Anexa F (publicarea). Fișa de memorie: `%USERPROFILE%\.claude\projects\C--00-AI-0\memory\project_learninghub_revizuire_completa.md`.
 
 ## Pas 0 — verifică ce e pe disc ÎNAINTE de orice (poate ai preluat la jumătate)
 - `python C:\00\AI_0\tools\job_etape.py stare` → lucrările `lhm4s_v28`, `lhm4s_v29` (etapele: autor → j1 → reparare → judecata_finala → publicat). Ce e bifat e GATA; nu reiei.
