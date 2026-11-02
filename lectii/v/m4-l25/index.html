@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 25, clasa a V-a: Proprietățile algoritmilor: claritate, finitudine, generalitate</title>
+<meta name="description" content="Lecția 25, clasa a V-a: cele trei proprietăți ale unui algoritm bun — claritatea (fiecare pas se face într-un singur fel), finitudinea (algoritmul se oprește) și generalitatea (merge pentru toate cazurile de același fel); repari patru algoritmi defecți cu un executant în pagină, apoi un algoritm de desen în Paint.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@600;800&family=Commissioner:wght@400;600;700&family=Azeret+Mono:wght@500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF3F0; --paper:#FFFFFF; --paper2:#F2F7F4; --line:#CFDDD5;
+  --ink:#15241D; --ink2:#4B5E55; --accent:#0F6B52; --accentInk:#FFFFFF; --sel:#D3EDE2;
+  --mark:#FFE07A; --markInk:#15241D; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Gabarito","Segoe UI",system-ui,sans-serif; --fb:"Commissioner","Segoe UI",system-ui,sans-serif; --fm:"Azeret Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E1613; --paper:#16211C; --paper2:#1C2A24; --line:#30443B;
+  --ink:#E6F0EA; --ink2:#A9BCB2; --accent:#6FD0AE; --accentInk:#0E1613; --sel:#21392F;
+  --mark:#EDCB63; --markInk:#15241D; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E1613; --paper:#16211C; --paper2:#1C2A24; --line:#30443B;
+  --ink:#E6F0EA; --ink2:#A9BCB2; --accent:#6FD0AE; --accentInk:#0E1613; --sel:#21392F;
+  --mark:#EDCB63; --markInk:#15241D; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: o tablă de clasă cu un algoritm scris cu creta și cele trei întrebări */
+.banda{display:flex;align-items:center;gap:10px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:#24443a;border-bottom:2px solid var(--accent)}
+.banda .bd-t{flex:none;font-family:var(--fm);font-size:.76rem;color:#f4f1e6;border:1px dashed #9fc1b2;border-radius:4px;padding:1px 8px}
+.banda .bd-z{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:.76rem;color:#d9eadf}
+h1,h2{font-weight:600;letter-spacing:0}
+code{font-family:var(--fm);font-size:.9em}
+/* „Acum la calculator” (regula 10): gesturi mici, reale, imediat după pas */
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:600;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.acum li.tarziu{list-style:none;margin:.5em 0 .1em -1.2em;padding-top:5px;border-top:1px dashed var(--line)}
+.acum li.mai-ai-timp,span.mai-ai-timp{color:var(--ink2)}
+/* algoritmul lui Dan (laboratorul): pașii, ca pe o fișă */
+.fisa{border:1px solid var(--line);border-radius:8px;background:var(--paper);padding:6px 10px;margin:6px 0}
+.fisa ol{margin:.2em 0 .2em 1.3em;padding:0}
+.fisa .fisa-t{font-weight:700}
+.intrebari3{border-left:4px solid var(--accent);padding:2px 10px;margin:6px 0}
+.captura figcaption a.lic{display:inline-block;padding:8px 0}
+.ad-demo-t{font-weight:700;margin:10px 0 2px}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/algoritm-defect.js"></script>
+<script>
+/* Lecția 25, clasa a V-a (M4): „Proprietățile algoritmilor: claritate, finitudine, generalitate” — predare, a doua lecție din
+   V-U5 „Algoritmi. Gândesc pas cu pas”. Legea: LearningHub\_campaign\revizuire_completa_2026_09\00_GHID_LECTII.md.
+   Sursele și probele: surse.md, _proba\. Definițiile: manualele de clasa a V-a de pe manuale.edu.ro (Intuitext p. 63; Art Klett,
+   Sigma, Corint, Litera, CD Press, EDP — citatele în surse.md) și programa (CS.2.1, exemplele „sau” / „numerele naturale pare”).
+   Activitatea profesorului (activitati_lectii_V_VI.json): „Elevii primesc patru algoritmi defecți (ambiguu, fără sfârșit, valabil
+   doar pentru un caz) și trebuie să spună ce lipsește la fiecare și să îl repare.” — atelierul (4 algoritmi; al patrulea: tot
+   ambiguu, cu „sau”, felul din programă).
+   Simulatorul: lectii/_sim/algoritm-defect.js (NOU, proprietar lecția aceasta): executantul face exact ce scrie; un pas neclar îl
+   oprește nedumerit, un pas fără sfârșit e oprit de pagină după 40 de faceri (regula paginii; o spune PAGINA, sub bula
+   executantului — reparația r1, ca la V/24), iar cazurile de același fel arată generalitatea. Testele judecă algoritmul
+   REPARAT, EXECUTAT. „Pas” = un rând scris; „facere” = o dată când executantul face un pas (P3).
+   Granița: NU predă ce e un algoritm (lecția 24, doar recapitulat), datele / constantele / variabilele (26), expresiile (27),
+   structura secvențială ca denumire (28), decizia (29): niciun algoritm din pagină nu folosește „dacă” sau o literă în loc de număr.
+   Paint (laboratorul) NU a fost pornit: faptele vin din lecțiile 18-22 (afirmatii.json ale lor).
+   Trimiterile la pași se fac după numărul din bara de jos (P1 = „La ce folosește”). */
+const AD=AlgoritmDefect, pune=AD.pune, scrie=AD.scrie, nr=AD.nr;
+const V=(t,o)=>Object.assign({t},o||{});
+const ori=k=>k===0?'o dată':`de ${nr(k+1,'ori')}`;
+const fig=(f,w,h,alt,cap)=>`<figure class="captura"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG={
+  linguri:fig('linguri-masura.webp',760,577,'Două linguri de măsurat din plastic alb pe un prosop de hârtie: cea mică are scris 5 ml, cea mare 15 ml','Lingurița de măsurat (5 ml, TSP în engleză) și lingura (15 ml, TBS): la fel pentru toți. „Puțin” nu. <small>Foto: „Teaspoon &amp; tablespoon”, J.smith, <a class="lic" href="https://creativecommons.org/licenses/by-sa/3.0" target="_blank" rel="noopener">CC BY-SA 3.0</a>, micșorată (aceeași licență), <a class="lic" href="https://commons.wikimedia.org/wiki/File:Teaspoon_%26_tablespoon.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>.</small>')
+};
+/* '!…' = punctul de la sfârșitul orei; '?…' = „Dacă mai ai timp” */
+const ACUM=(...p)=>`<div class="acum" role="note"><div class="lbl">Acum la calculator, în Paint-ul adevărat</div><ol>${p.map(x=>x.startsWith('!')?`<li class="tarziu">${x.slice(1)}</li>`:x.startsWith('?')?`<li class="mai-ai-timp"><b>Dacă mai ai timp:</b> ${x.slice(1)}</li>`:`<li>${x}</li>`).join('')}</ol></div>`;
+/* trimiterile la pașii lecțiilor publicate (?vezi=pN: pasul N din bara lor, P1 = „La ce folosește”; doar de citit, în filă nouă) */
+const LP=(cale,l,p,t)=>`<a href="../${cale}/?vezi=p${p}" target="_blank" rel="noopener">lecția ${l}, pasul <i>${t}</i> (P${p})</a>`;
+/* algoritmul lui Dan (inventat): îl execuți pe bucăți în casetele pașilor 2-4, apoi îl repari și îl execuți în laborator */
+const DAN=['Pornește Paint.','Alege în <b>Culoare 1</b> o culoare frumoasă.','Din <b>Forme</b>, desenează stele cu 5 colțuri una lângă alta și nu te opri.','Cu <b>Text</b>, scrie jos: <i>Dan, 5B</i>.'];
+
+/* ===================== algoritmii (toți inventați; nicio „dacă”, nicio literă în loc de număr) ===================== */
+/* P2 „Uite cum”: ceaiul (programa: „prepararea unui ceai”; Corint: pasul ambiguu al ceaiului) */
+const CEAI={nume:'Ceaiul',masaTitlu:'Pe masă:',start:()=>({masa:[]}),
+ pasi:[
+  {v:[V('Fierbe 250 ml de apă.',{fa:s=>pune(s,'ibricul','250 ml de apă fiartă')})]},
+  {v:[V('Pune un plic de ceai în cană.',{fa:s=>pune(s,'în cană','un plic de ceai')})]},
+  {v:[V('Toarnă apa fiartă în cană.',{fa:s=>{pune(s,'ibricul','gol');pune(s,'în cană','ceai, 250 ml');}})]},
+  {v:[V('Pune puțin zahăr.',{neclar:['o linguriță','două lingurițe','cinci lingurițe'],intrebare:'Cât înseamnă „puțin”:'}),
+      V('Pune o linguriță de zahăr.',{fa:s=>pune(s,'zahăr','o linguriță')})]}],
+ sol:[0,0,0,1],gresit:[0,0,0,0]};
+/* P2 „Încearcă”: limonada (cuvinte vagi + „sau” ca variante greșite) */
+const LIMONADA={nume:'Limonada',masaTitlu:'În pahar:',start:()=>({masa:[]}),
+ pasi:[
+  {v:[V('Pune 200 ml de apă rece în pahar.',{fa:s=>pune(s,'apă rece','200 ml')}),V('Pune puțină apă rece în pahar.',{neclar:['100 ml','200 ml','paharul plin'],intrebare:'Câtă apă:'})]},
+  {v:[V('Stoarce o lămâie în pahar.',{fa:s=>pune(s,'zeamă de lămâie','o lămâie')}),V('Stoarce câteva lămâi în pahar.',{neclar:['una','două','cinci'],intrebare:'Câte lămâi:'})]},
+  {v:[V('Pune zahăr cât trebuie.',{neclar:['o linguriță','trei lingurițe','zece lingurițe'],intrebare:'Cât înseamnă „cât trebuie”:'}),
+      V('Pune zahăr după gust.',{neclar:['o linguriță','patru lingurițe','deloc'],intrebare:'Cât înseamnă „după gust”:'}),
+      V('Pune două lingurițe de zahăr.',{fa:s=>pune(s,'zahăr','două lingurițe')}),
+      V('Pune zahăr sau miere.',{neclar:['zahăr','miere'],intrebare:'Ce pun:'})]},
+  {v:[V('Amestecă de 5 ori cu lingurița.',{de:5,fa:(s,c,k)=>pune(s,'amestecat',ori(k))}),V('Amestecă puțin.',{neclar:['o dată','de 5 ori','de 30 de ori'],intrebare:'Cât înseamnă „puțin”:'})]}],
+ tinta:(c,s)=>{const are=k=>(s.masa||[]).some(m=>m[0]===k);const ok=are('apă rece')&&are('zeamă de lămâie')&&are('zahăr')&&are('amestecat');return {ok,are:ok?'a făcut limonada':'limonada nu e gata',astept:'apă, lămâie, zahăr, amestecat'};},
+ sol:[0,0,2,0],gresit:[0,0,1,0]};
+/* P2 „Încă un exercițiu”: ghiozdanul */
+const GHIOZDAN={nume:'Ghiozdanul pentru ora de TIC',masaTitlu:'Ghiozdanul:',start:()=>({masa:[]}),
+ pasi:[
+  {v:[V('Deschide ghiozdanul.',{fa:s=>pune(s,'ghiozdanul','deschis')}),V('Deschide ceva.',{neclar:['ghiozdanul','penarul','fereastra'],intrebare:'Ce deschid:'})]},
+  {v:[V('Pune în ghiozdan câteva caiete.',{neclar:['caietul de TIC','toate caietele de pe raft','două caiete oarecare'],intrebare:'Care caiete:'}),
+      V('Pune în ghiozdan caietele care trebuie.',{neclar:['caietul de TIC','caietul de mate','toate caietele'],intrebare:'Care sunt „cele care trebuie”:'}),
+      V('Pune în ghiozdan caietul de TIC și pe cel de română.',{fa:s=>pune(s,'înăuntru','caietul de TIC, caietul de română')})]},
+  {v:[V('Pune penarul în ghiozdan.',{fa:s=>{const x=(s.masa||[]).find(m=>m[0]==='înăuntru');pune(s,'înăuntru',(x?x[1]+', ':'')+'penarul');}}),V('Pune și ce mai vrei.',{neclar:['penarul','mingea','nimic'],intrebare:'Ce pun:'})]},
+  {v:[V('Închide ghiozdanul.',{fa:s=>pune(s,'ghiozdanul','închis')})]}],
+ tinta:(c,s)=>{const x=(s.masa||[]).find(m=>m[0]==='înăuntru');const ok=!!x&&/TIC/.test(x[1])&&/penarul/.test(x[1]);return {ok,are:ok?'a pregătit ghiozdanul':'ghiozdanul nu e gata',astept:'caietele și penarul în ghiozdan'};},
+ sol:[0,2,0,0],gresit:[0,1,0,0]};
+
+/* P3 „Uite cum”: numerele pare (programa: „se afişează numerele naturale pare” e lipsită de finitudine; Art Klett, p. 55) */
+const PARE={nume:'Numerele pare',tablaTitlu:'Pe tablă:',start:()=>({tabla:[],loc:'la tablă'}),
+ pasi:[
+  {v:[V('Ia o cretă.',{fa:s=>{s.loc='la tablă, cu creta în mână';}})]},
+  {v:[V('Scrie pe tablă numerele pare: 0, 2, 4, 6 și tot așa.',{mereu:true,fa:(s,c,k)=>scrie(s,2*k)}),
+      V('Scrie pe tablă numerele pare de la 0 la 20.',{de:11,fa:(s,c,k)=>scrie(s,2*k)})]},
+  {v:[V('Pune creta jos.',{fa:s=>{s.loc='la tablă; a pus creta jos';}})]}],
+ sol:[0,1,0],gresit:[0,0,0]};
+/* P3 „Încearcă”: coarda */
+const COARDA={nume:'Săritul corzii',tablaTitlu:'Săriturile, numărate:',start:()=>({masa:[['coarda','în dulap']],tabla:[]}),
+ pasi:[
+  {v:[V('Ia coarda din dulap.',{fa:s=>pune(s,'coarda','în mâna executantului')}),V('Ia o coardă de undeva.',{neclar:['din dulap','din sala de sport','de la un coleg'],intrebare:'De unde:'})]},
+  {v:[V('Sari coarda și nu te opri.',{mereu:true,fa:(s,c,k)=>scrie(s,k+1)}),
+      V('Sari coarda de multe ori.',{neclar:['de 5 ori','de 50 de ori','de 100 de ori'],intrebare:'Cât înseamnă „de multe ori”:'}),
+      V('Sari coarda de 10 ori.',{de:10,fa:(s,c,k)=>scrie(s,k+1)}),
+      V('Sari coarda mereu.',{mereu:true,fa:(s,c,k)=>scrie(s,k+1)})]},
+  {v:[V('Pune coarda la loc, în dulap.',{fa:s=>pune(s,'coarda','la loc, în dulap')}),V('Pune coarda undeva.',{neclar:['în dulap','pe masă','pe jos'],intrebare:'Unde:'})]}],
+ tinta:(c,s)=>{const x=(s.masa||[]).find(m=>m[0]==='coarda');const ok=!!x&&x[1]==='la loc, în dulap';return {ok,are:ok?'a pus coarda la loc':'coarda nu e la loc',astept:'coarda la loc, în dulap'};},
+ sol:[0,2,0],gresit:[0,3,0]};
+/* P3 „Încă un exercițiu”: din 5 în 5 */
+const CINCI={nume:'Din 5 în 5',tablaTitlu:'Pe tablă:',start:()=>({tabla:[]}),
+ pasi:[
+  {v:[V('Scrie pe tablă: 5, 10, 15 și tot așa, din 5 în 5.',{mereu:true,fa:(s,c,k)=>scrie(s,5*(k+1))}),
+      V('Scrie pe tablă din 5 în 5, de la 5 la 50.',{de:10,fa:(s,c,k)=>scrie(s,5*(k+1))}),
+      V('Scrie pe tablă din 5 în 5, cât poți de mult.',{mereu:true,fa:(s,c,k)=>scrie(s,5*(k+1))})]},
+  {v:[V('Spune ultimul număr scris.',{fa:s=>{s.spune=(s.tabla||[]).slice(-1)[0]||'';}})]}],
+ tinta:(c,s)=>({ok:!!s.spune,are:s.spune?`a spus „${s.spune}”`:'n-a spus nimic',astept:'ultimul număr scris'}),
+ sol:[1,0],gresit:[2,0]};
+
+/* P4 „Uite cum”: găinile (Intuitext, ex. 8 C: „Adună pe 5 cu 7…” = un singur caz; Corint: „nu vom scrie un program care
+   adună numerele 2, 5, 18 și 42”). Cazurile: trei curți inventate. */
+const GAINI={nume:'Picioarele găinilor',masaTitlu:'Executantul ține minte:',
+ cazuri:[{nume:'Curtea 1',g:5},{nume:'Curtea 2',g:3},{nume:'Curtea 3',g:7}],descrieCaz:c=>`${c.nume} (${nr(c.g,'găini')})`,
+ start:c=>({gaini:c.g,masa:[]}),
+ pasi:[
+  {v:[V('Numără găinile din curte.',{fa:(s,c)=>{s.numarate=c.g;pune(s,'găini numărate',String(c.g));}})]},
+  {v:[V('Spune: „Au 10 picioare.”',{fa:s=>{s.rasp=10;s.spune='Au 10 picioare.';}}),
+      V('Înmulțește cu 2 numărul găinilor numărate și spune rezultatul.',{fa:s=>{s.rasp=2*s.numarate;s.spune=`Au ${nr(s.rasp,'picioare')}.`;}})]}],
+ tinta:(c,s)=>({ok:s.rasp===2*c.g,are:`a spus „${s.spune}”`,astept:nr(2*c.g,'picioare')}),
+ sol:[0,1],gresit:[0,0]};
+/* P4 „Încearcă”: biletele la teatru (prețul e inventat: „să zicem 10 lei”) */
+const BILETE={nume:'Biletele la teatru',cerinta:'Clasa merge la teatru. Să zicem că un bilet costă 10 lei. Algoritmul află câți lei plătește clasa.',masaTitlu:'Executantul ține minte:',
+ cazuri:[{nume:'Clasa a V-a A',e:25},{nume:'Clasa a V-a B',e:18},{nume:'Clasa a V-a C',e:21}],descrieCaz:c=>`${c.nume} (${nr(c.e,'elevi')})`,
+ start:c=>({masa:[['elevi care merg',String(c.e)]]}),
+ pasi:[
+  {v:[V('Numără elevii care merg la teatru.',{fa:(s,c)=>{s.numarati=c.e;pune(s,'elevi numărați',String(c.e));}}),
+      V('Numără câțiva elevi.',{neclar:['trei elevi','zece elevi','toți elevii'],intrebare:'Câți:'})]},
+  {v:[V('Spune: „Plătim 250 de lei.”',{fa:s=>{s.rasp=250;s.spune='Plătim 250 de lei.';}}),
+      V('Spune: „Plătim 180 de lei.”',{fa:s=>{s.rasp=180;s.spune='Plătim 180 de lei.';}}),
+      V('Înmulțește cu 10 numărul elevilor numărați și spune câți lei plătiți.',{fa:s=>{s.rasp=10*s.numarati;s.spune=`Plătim ${nr(s.rasp,'lei')}.`;}}),
+      V('Spune: „Plătim mulți lei.”',{neclar:['100 de lei','250 de lei','1000 de lei'],intrebare:'Câți înseamnă „mulți”:'})]}],
+ tinta:(c,s)=>({ok:s.rasp===10*c.e,are:`a spus „${s.spune}”`,astept:nr(10*c.e,'lei')}),
+ sol:[0,2],gresit:[0,1]};
+/* P4 „Încă un exercițiu”: ouăle din cofraje (6 într-un cofraj) */
+const OUA={nume:'Ouăle din cofraje',cerinta:'În fiecare cofraj sunt 6 ouă. Algoritmul află câte ouă sunt pe masă.',masaTitlu:'Executantul ține minte:',
+ cazuri:[{nume:'Masa 1',k:2},{nume:'Masa 2',k:3},{nume:'Masa 3',k:5}],descrieCaz:c=>`${c.nume} (${nr(c.k,'cofraje')})`,
+ start:c=>({masa:[['cofraje pe masă',String(c.k)]]}),
+ pasi:[
+  {v:[V('Numără cofrajele de pe masă.',{fa:(s,c)=>{s.cof=c.k;pune(s,'cofraje numărate',String(c.k));}})]},
+  {v:[V('Spune: „Sunt 12 ouă.”',{fa:s=>{s.rasp=12;s.spune='Sunt 12 ouă.';}}),
+      V('Adună 6 cu 6 și spune rezultatul.',{fa:s=>{s.rasp=12;s.spune='Sunt 12 ouă.';}}),
+      V('Înmulțește cu 6 numărul cofrajelor numărate și spune rezultatul.',{fa:s=>{s.rasp=6*s.cof;s.spune=`Sunt ${nr(s.rasp,'ouă')}.`;}})]}],
+ tinta:(c,s)=>({ok:s.rasp===6*c.k,are:`a spus „${s.spune}”`,astept:nr(6*c.k,'ouă')}),
+ sol:[0,2],gresit:[0,1]};
+
+/* ===== atelierul: cei patru algoritmi defecți ai fișei profesorului ===== */
+const SANDVIS={nume:'Sandvișul',cerinta:'Ce face: un sandviș cu unt și roșie.',masaTitlu:'Pe farfurie:',start:()=>({masa:[]}),
+ pasi:[
+  {v:[V('Pune o felie de pâine pe farfurie.',{fa:s=>pune(s,'pâine','o felie')}),V('Pune puțină pâine pe farfurie.',{neclar:['o felie','jumătate de pâine','o pâine întreagă'],intrebare:'Câtă pâine:'})]},
+  {v:[V('Unge felia cu unt.',{fa:s=>pune(s,'unt','pe felie')}),V('Unge felia cu ceva bun.',{neclar:['unt','miere','gem'],intrebare:'Cu ce:'})]},
+  {v:[V('Pune pe ea câteva felii de roșie.',{neclar:['una','trei','opt'],intrebare:'Câte felii:'}),
+      V('Pune pe ea roșii cât vrei.',{neclar:['o felie','patru felii','toate roșiile'],intrebare:'Cât înseamnă „cât vrei”:'}),
+      V('Pune pe ea trei felii de roșie.',{fa:s=>pune(s,'roșie','trei felii')})]},
+  {v:[V('Pune deasupra a doua felie de pâine.',{fa:s=>pune(s,'pâine','două felii, cu unt și roșie între ele')})]}],
+ tinta:(c,s)=>{const p=(s.masa||[]).find(m=>m[0]==='pâine');const ok=!!p&&/două/.test(p[1])&&(s.masa||[]).some(m=>m[0]==='roșie');return {ok,are:ok?'a făcut sandvișul':'sandvișul nu e gata',astept:'sandvișul cu unt și roșie'};},
+ lipsa:'claritate',sol:[0,0,2,0],gresit:[0,0,1,0]};
+const FLOAREA={nume:'Udatul florii',cerinta:'Ce face: udă floarea din ghiveciul de pe geam.',masaTitlu:'Ce vezi:',start:()=>({masa:[['ghiveciul','pământ uscat']]}),
+ pasi:[
+  {v:[V('Umple paharul cu apă.',{fa:s=>pune(s,'paharul','plin cu apă')}),V('Umple paharul cu ceva.',{neclar:['apă','suc','lapte'],intrebare:'Cu ce:'})]},
+  {v:[V('Toarnă apă în ghiveci, pahar după pahar, mereu.',{mereu:true,fa:(s,c,k)=>{pune(s,'paharul',k===0?'golit în ghiveci':'umplut și golit '+ori(k));pune(s,'apă turnată',k===0?'un pahar':nr(k+1,'pahare'));pune(s,'ghiveciul',k<2?'ud':'dă pe dinafară!');}}),
+      V('Toarnă apă în ghiveci la nesfârșit.',{mereu:true,fa:(s,c,k)=>{pune(s,'paharul',k===0?'golit în ghiveci':'umplut și golit '+ori(k));pune(s,'apă turnată',k===0?'un pahar':nr(k+1,'pahare'));pune(s,'ghiveciul',k<2?'ud':'dă pe dinafară!');}}),
+      V('Toarnă în ghiveci un pahar de apă.',{fa:s=>{pune(s,'paharul','golit în ghiveci');pune(s,'apă turnată','un pahar');pune(s,'ghiveciul','ud');}}),
+      V('Toarnă în ghiveci multă apă.',{neclar:['un pahar','trei pahare','o găleată'],intrebare:'Cât înseamnă „multă”:'})]},
+  {v:[V('Pune paharul pe masă.',{fa:s=>pune(s,'paharul','gol, pe masă')})]}],
+ tinta:(c,s)=>{const g=(s.masa||[]).find(m=>m[0]==='ghiveciul');const ok=!!g&&g[1]==='ud';return {ok,are:ok?'a udat floarea':'floarea nu e udată cum trebuie',astept:'pământul ud'};},
+ lipsa:'finitudine',sol:[0,2,0],gresit:[0,1,0]};
+const FELICITAREA={nume:'Felicitarea',cerinta:'Ce face: o felicitare pentru colegul care își serbează azi ziua de naștere.',tablaTitlu:'Pe felicitare scrie:',masaTitlu:'Executantul:',
+ cazuri:[{nume:'Ziua Ioanei',p:'Ioana',d:'Ioanei'},{nume:'Ziua lui Vlad',p:'Vlad',d:'lui Vlad'},{nume:'Ziua Irinei',p:'Irina',d:'Irinei'}],descrieCaz:c=>c.nume,
+ start:()=>({tabla:[],masa:[]}),
+ pasi:[
+  {v:[V('Ia o felicitare albă.',{fa:s=>pune(s,'are în mână','o felicitare albă')}),V('Ia o felicitare oarecare.',{neclar:['una albă','una roșie','una cu flori'],intrebare:'Care:'})]},
+  {v:[V('Scrie pe ea: „La mulți ani, Ioana!”',{fa:s=>scrie(s,'La mulți ani, Ioana!')}),
+      V('Scrie pe ea: „La mulți ani, Ioana și Vlad!”',{fa:s=>scrie(s,'La mulți ani, Ioana și Vlad!')}),
+      V('Scrie pe ea „La mulți ani,” și prenumele colegului sărbătorit.',{fa:(s,c)=>scrie(s,`La mulți ani, ${c.p}!`)}),
+      V('Scrie pe ea ceva frumos.',{neclar:['„La mulți ani!”','o poezie','o glumă'],intrebare:'Ce înseamnă „ceva frumos”:'})]},
+  {v:[V('Dă felicitarea colegului sărbătorit.',{fa:(s,c)=>pune(s,'a dat felicitarea',c.d)})]}],
+ tinta:(c,s)=>{const t=(s.tabla||[]).slice(-1)[0]||'';return {ok:t===`La mulți ani, ${c.p}!`,are:`a scris pe felicitare „${t}”`,astept:`„La mulți ani, ${c.p}!”`};},
+ lipsa:'generalitate',sol:[0,2,0],gresit:[0,1,0]};
+const EXCURSIA={nume:'Excursia',cerinta:'Ce face: duce clasa într-o excursie de o zi.',masaTitlu:'Executantul:',start:()=>({loc:'în clasă',masa:[]}),
+ pasi:[
+  {v:[V('Ia ghiozdanul în spate.',{fa:s=>pune(s,'ghiozdanul','în spate')}),V('Ia ce-ți trebuie.',{neclar:['ghiozdanul','penarul','umbrela'],intrebare:'Ce iau:'})]},
+  {v:[V('Ieși din școală cu clasa.',{fa:s=>{s.loc='în fața școlii, cu clasa';}})]},
+  {v:[V('Mergi la muzeu sau la parc.',{neclar:['la muzeu','la parc'],intrebare:'Unde merg:'}),
+      V('Mergi la muzeu.',{fa:s=>{s.loc='la muzeu, cu clasa';s.fost=1;}}),
+      V('Mergi unde vrei tu.',{neclar:['la muzeu','la parc','acasă'],intrebare:'Unde înseamnă „unde vrei”:'}),
+      V('Mergi la parc.',{fa:s=>{s.loc='în parc, cu clasa';s.fost=1;}})]},
+  {v:[V('Întoarce-te la școală la ora 13.',{fa:s=>{s.loc='înapoi la școală, la ora 13';}}),V('Întoarce-te la școală mai târziu.',{neclar:['la ora 12','la ora 13','seara'],intrebare:'Când:'})]}],
+ tinta:(c,s)=>{const ok=!!s.fost&&/înapoi la școală/.test(s.loc||'');return {ok,are:ok?'a făcut excursia':'excursia nu s-a terminat',astept:'excursia și întoarcerea la școală'};},
+ lipsa:'claritate',sol:[0,0,1,0],gresit:[0,0,2,0]};
+
+const D=o=>Object.assign({t:'defect'},o);
+/* „Acum la calculator” — FĂRĂ profesor, pe calculatorul comun. Rezultatul rămâne în Documente, cu numele elevului și clasa lui
+   (regulile 23, 26, 38). Gesturile: lecțiile 18 (Paint, Nou, Salvați ca › Imagine PNG, „există deja” → Nu), 19 (Forme), 21
+   (Culoare 1), 22 (Text). Timpul: _proba\durata.py. */
+const LAB=[
+  `<b>Algoritmul lui Dan</b>:<div class="fisa"><ol>${DAN.map(x=>`<li>${x}</li>`).join('')}</ol></div>L-ai executat la casetele din pași? Treci la punctul 2. Nu? Execută-l acum în Paint (Start, <code>pai</code>), cam un minut, exact cum scrie; la pasul 3, după vreo 5 stele, te oprești tu. Pe telefon: în caiet.`,
+  '<b>În caiet, îl repari:</b> scrie doar pașii 2, 3 și 4, reparați. Lângă fiecare, ce îi lipsea: claritatea, finitudinea sau generalitatea. Pune-ți cele trei întrebări (pasul <i>Trei întrebări: verifici orice algoritm</i>, P5).',
+  '<b>Pânză nouă:</b> <b>Fișier</b> › <b>Nou</b>. Te întreabă dacă salvezi desenul lui Dan? <b>Nu salvați</b>. Execută algoritmul TĂU, exact cum l-ai scris în caiet. Pe telefon: în caiet.',
+  '<b>Salvezi</b> ('+LP('m3-l18',18,4,'Salvați ca: numele, folderul, PNG sau JPG')+'): <b>Fișier</b> › <b>Salvați ca</b> › <b>Imagine PNG</b>; numele: numele, prenumele și clasa <b>ta</b>, legate cu liniuța de jos, apoi <code>_stele</code> (ca <code>Pop_Ana_5A_stele</code>, dar cu numele tău); în stânga, <b>Documente</b>; <b>Salvare</b>. Scrie că există deja? <b>Nu</b> și adaugi o cifră la sfârșitul numelui.',
+  '<span class="mai-ai-timp"><b>Dacă mai ai timp, verifică-te:</b> desenul are culoarea, numărul de stele și prenumele scrise în caiet? Un coleg care execută algoritmul tău ar alege aceeași culoare și ar desena tot atâtea stele? Dacă nu, repară pasul acela în caiet. La pasul 4, colegul ar scrie numele LUI: așa trebuie, desenul e al lui.</span>',
+  '<b>La sfârșitul orei</b> (chiar dacă n-ai terminat): X pe Paint. Apare „Salvați lucrul?”? <b>Nu salvați</b>. Nu apare? E bine. Desenul salvat rămâne în <b>Documente</b>, cu numele tău.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_v_m4_l25',
+  mod:'lectie',
+  titlu:'Proprietățile algoritmilor: claritate, finitudine, generalitate',
+  marca:'Lecția <b>25</b> · clasa a V-a',
+  h1:'Proprietățile algoritmilor: claritate, finitudine, generalitate',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a V-a', unitate:'V-U5', unitateTitlu:'Algoritmi. Gândesc pas cu pas',
+  competente:['CS.2.1'], lectii:'25',
+  ancoraText:'Din programă (CS.2.1, unitatea V-U5, lecția 25): Proprietăți ale algoritmilor',
+  intro:`<p><b>Ai nevoie de:</b> lecția 24 (<b>algoritmul</b> și <b>executantul</b>). Pentru laborator: Paint, lecțiile 18 (pornești, <b>Salvați ca</b>), 19 (<b>Forme</b>), 21 (<b>Culoare 1</b>) și 22 (<b>Text</b>).</p>`,
+  cum:`<b>Cum lucrezi</b><ol><li>P1, apoi 4 pași scurți, cu exerciții.</li><li>Atelierul: patru algoritmi defecți.</li><li>La calculator: un algoritm de desen, în Paint (pe telefon, în caiet).</li><li>5 întrebări.</li></ol><p><b>Când mai sunt 10 minute din oră:</b> treci la întrebări; la calculator, ultimul punct.</p>`,
+  banda:'<span class="bd-t">4. Pune o linguriță de zahăr.</span><span class="bd-z">se înțelege? · se oprește? · merge pentru toate?</span>',
+  nivele:[
+{t:'Proprietățile algoritmilor: claritate, finitudine, generalitate',final:true,lectii:[25],
+ continuturi:['Proprietăți ale algoritmilor'],
+ obiectiv:'recunoști ce îi lipsește unui algoritm (claritatea, finitudinea sau generalitatea) și îl repari, apoi îl verifici executându-l.',
+ pasi:[
+  /* ---- pasul 1: la ce folosește (fără acțiuni) ---- */
+  {t:'La ce folosește: algoritmi care merg de fiecare dată',
+   text:`<p>La lecția 24 ai văzut: un <b>algoritm</b> e un șir de pași, în ordine, care duc la un rezultat. Executantul (cine face pașii: un om, un robot sau calculatorul) face exact ce scrie.</p>
+<p>Un algoritm bun spune <b>exact</b> ce faci (o linguriță de zahăr, nu „puțin”), <b>se termină</b> (3 minute, nu „mereu”) și merge pentru <b>orice</b> ceai, nu doar pentru cel de mentă.</p>
+<p>Azi înveți aceste trei <mark>proprietăți ale algoritmilor</mark> (însușiri pe care le are orice algoritm bun) și repari algoritmi defecți.</p>
+${IMG.linguri}`},
+  /* ---- pasul 2: claritatea (Intuitext p. 63: „La fiecare pas al algoritmului, trebuie precizat exact ce trebuie făcut”;
+     programa și Art Klett: „sau” = lipsit de claritate; Corint: pasul ambiguu al ceaiului) ---- */
+  {t:'Claritatea: fiecare pas se face într-un singur fel',
+   text:`<p>Un algoritm are <mark>claritate</mark> când fiecare pas spune <b>exact</b> ce faci, cât să iasă la fel oricine îl face: se înțelege <b>într-un singur fel</b>. Manualele spun „fără ambiguități”.</p>
+<p>Claritatea o strică <b>cuvintele vagi</b> (care nu spun exact cât sau care: <i>puțin, câteva, cât trebuie</i>) și „asta <b>sau</b> aia”, fără să spui care. Executantul nu știe ce să aleagă și se oprește.</p>
+<p><b>Repari</b> pasul: scrii exact (<i>o linguriță</i>).</p>
+<p>În exerciții: atingi un pas ca să-l schimbi, apoi <b>▶ Execută</b>. Pe telefon, casetele „Acum la calculator” le sari.</p>`,
+   exemplu:`<p class="ad-demo-t">Algoritmul defect, executat:</p>${AD.imagine(CEAI)}<p><b>Reparat:</b> „Pune o linguriță de zahăr.” Acum executantul face toți pașii.</p>
+${ACUM('<b>Algoritmul lui Dan</b> pentru colegi: <div class="fisa"><ol>'+DAN.map(x=>`<li>${x}</li>`).join('')+'</ol></div>Fă acum pașii 1 și 2, exact cum scrie: Paint (Start, <code>pai</code>), apoi o culoare în <b>Culoare 1</b> ('+LP('m3-l21',21,2,'Culoare 1, Culoare 2 și paleta')+'). Ce culoare ai ales? Colegul de lângă tine a ales aceeași? „Frumoasă” nu e clar. Lasă Paint deschis.')}`,
+   altfel:`<p>Gândește-te: acasă ți se spune „adu puțină pâine”: aduci o felie sau o pâine întreagă? „Adu o pâine” se înțelege la fel de oricine. Un pas clar e ca „adu o pâine”.</p>`,
+   incearca:D({q:'Limonada are un pas pe care executantul nu-l poate face. Execută, găsește-l și schimbă-l cu unul clar. Apoi <b>Verifică</b>.',
+    algoritme:[LIMONADA],
+    teste:[{k:'clar',ce:'Fiecare pas se poate face într-un singur fel'},{k:'tinta',ce:'Executantul face toți pașii: limonada e gata'}],
+    ajutor:'Apasă ▶ Execută: la ce pas se oprește executantul nedumerit? Atinge pasul acela și alege varianta care spune exact cât.',
+    why:'„Două lingurițe” se înțelege într-un singur fel.'}),
+   inca:[
+    D({q:'Ghiozdanul pentru ora de TIC: repară pasul neclar, ca executantul să-l poată face.',algoritme:[GHIOZDAN],
+     teste:[{k:'clar',ce:'Fiecare pas se poate face într-un singur fel'},{k:'tinta',ce:'Executantul face toți pașii: ghiozdanul e gata'}],
+     ajutor:'Ce caiete înseamnă „câteva”? Alege varianta care le spune pe nume.',
+     why:'„Câteva caiete” nu spune care; „caietul de TIC și pe cel de română” spune exact ce pui.'})
+   ]},
+  /* ---- pasul 3: finitudinea (Intuitext p. 63: „număr finit (limitat) de pași, indiferent cât de mulți”; programa și Art Klett:
+     „numerele naturale pare” = lipsit de finitudine, „mai mici decât 1000” = reparat). 40 de faceri = regula paginii (r1: pas = rând scris, facere = o dată când îl face) ---- */
+  {t:'Finitudinea: algoritmul se oprește',
+   text:`<p>Un pas scris se poate face de mai multe ori. „Bate din palme de 3 ori” e un singur pas, dar 3 <b>faceri</b>. Executantul numără fiecare facere.</p>
+<p>Un algoritm are <mark>finitudine</mark> când se termină: executantul se oprește după un număr de faceri, oricât de multe, dar nu la nesfârșit.</p>
+<p>Semnele că lipsește: <i>și tot așa, mereu, nu te opri</i>. Aici, după 40 de faceri, îl oprește pagina: o regulă a paginii, ca să nu se blocheze.</p>
+<p><b>Repari</b> pasul: spui când se termină (<i>de 10 ori</i>, <i>de la 0 la 20</i>).</p>`,
+   exemplu:`<p class="ad-demo-t">Algoritmul defect, executat:</p>${AD.imagine(PARE)}<p><b>Reparat:</b> „Scrie pe tablă numerele pare de la 0 la 20.” Executantul scrie 0, 2, …, 20 și se oprește.</p>
+${ACUM('Pasul 3 al lui Dan: din <b>Forme</b>, stele cu 5 colțuri una lângă alta, „și nu te opri” ('+LP('m3-l19',19,3,'Forme gata făcute; Ctrl+Z dacă n-a ieșit')+'). Desenează cam 20 de secunde, apoi oprește-te TU. Cine ți-a spus când să te oprești? Nimeni: pasului îi lipsește finitudinea.')}`,
+   altfel:`<p>Gândește-te: cineva îți spune „sari coarda” și pleacă: nu știi când ai terminat. „Sari coarda de 20 de ori” are un sfârșit: după a douăzecea săritură, gata.</p>`,
+   incearca:D({q:'Săritul corzii: executantul nu mai ajunge să pună coarda la loc. Repară pasul, ca algoritmul să se oprească. Apoi <b>Verifică</b>.',
+    algoritme:[COARDA],
+    teste:[{k:'clar',ce:'Fiecare pas se poate face într-un singur fel'},{k:'opreste',ce:'Algoritmul se oprește singur'},{k:'tinta',ce:'Coarda e pusă la loc, în dulap'}],
+    ajutor:'Execută și uită-te la ce pas nu se mai oprește executantul. Alege varianta care spune de câte ori.',
+    why:'„De 10 ori” spune când se termină săriturile.'}),
+   inca:[
+    D({q:'Din 5 în 5: executantul trebuie să ajungă să spună ultimul număr scris. Repară pasul care nu se termină.',algoritme:[CINCI],
+     teste:[{k:'clar',ce:'Fiecare pas se poate face într-un singur fel'},{k:'opreste',ce:'Algoritmul se oprește singur'},{k:'tinta',ce:'Executantul spune ultimul număr scris'}],
+     ajutor:'„Cât poți de mult” are un sfârșit? Alege varianta care spune până unde.',
+     why:'„De la 5 la 50” are un ultim număr (50), deci algoritmul se termină și executantul îl poate spune.'})
+   ]},
+  /* ---- pasul 4: generalitatea (Intuitext p. 63: „toate problemele de același tip”; Art Klett: „o întreagă clasă de probleme”;
+     Intuitext ex. 8 C „Adună pe 5 cu 7 și afișează rezultatul”). Fără „date de intrare”, „citește”, litere: granița cu lecția 26 ---- */
+  {t:'Generalitatea: merge pentru toate cazurile de același fel',
+   text:`<p>Un algoritm are <mark>generalitate</mark> când rezolvă <b>toate</b> problemele de același fel, nu doar una. O astfel de problemă e un <mark>caz</mark>: altă curte, cu alt număr de găini.</p>
+<p>Semnul că lipsește: un pas are scris <b>dinainte</b> ceva bun doar pentru un caz: răspunsul (<i>„Au 10 picioare”</i>), numerele acelui caz sau un nume.</p>
+<p><b>Repari</b> pasul: spui ce faci ca să afli răspunsul (<i>înmulțești cu 2 numărul găinilor numărate</i>). Executantul încearcă algoritmul pe mai multe cazuri.</p>`,
+   exemplu:`<p class="ad-demo-t">Algoritmul defect, încercat pe trei curți:</p>${AD.imagine(GAINI)}<p><b>Reparat:</b> „Înmulțește cu 2 numărul găinilor numărate și spune rezultatul.” Executantul spune 10, 6 și 14 picioare: merge la toate trei.</p>
+${ACUM('Pasul 4 al lui Dan: cu <b>Text</b>, scrie jos <i>Dan, 5B</i> ('+LP('m4-l22',22,2,'Text: caseta în care scrii')+'). Desenul e al tău, dar cu numele lui Dan: pasul merge doar pentru desenul lui. Îi lipsește generalitatea.')}`,
+   altfel:`<p>E ca la adunarea în coloană, pe care o știi: aduni unitățile, apoi zecile, iar când unitățile trec de 9, ții minte 1. Regula merge pentru orice două numere de două cifre, nu doar pentru 23 + 14. Un algoritm cu generalitate e o astfel de regulă.</p>`,
+   incearca:D({q:'Biletele la teatru: algoritmul merge doar pentru o clasă. Repară-l, ca să meargă pentru toate trei. Apoi <b>Verifică</b>.',
+    algoritme:[BILETE],
+    teste:[{k:'clar',ce:'Fiecare pas se poate face într-un singur fel'},{k:'opreste',ce:'Algoritmul se oprește singur'},{k:'cazuri',ce:'Merge la toate cele trei clase'}],
+    ajutor:'Execută și uită-te la lista de clase de sub executant. Care pas are răspunsul scris dinainte? Alege varianta care spune ce faci ca să-l afli.',
+    why:'Înmulțind cu 10 numărul elevilor numărați, executantul află suma pentru orice clasă.'}),
+   inca:[
+    D({q:'Ouăle din cofraje: algoritmul merge doar pe o masă. Repară-l, ca să meargă pe toate trei.',algoritme:[OUA],
+     teste:[{k:'clar',ce:'Fiecare pas se poate face într-un singur fel'},{k:'opreste',ce:'Algoritmul se oprește singur'},{k:'cazuri',ce:'Merge pe toate cele trei mese'}],
+     ajutor:'„Adună 6 cu 6” dă mereu 12. Ce trebuie înmulțit cu 6?',
+     why:'Numărul cofrajelor înmulțit cu 6 dă ouăle de pe orice masă: 12, 18, 30. „Adună 6 cu 6” merge doar pentru două cofraje.'})
+   ]},
+  /* ---- pasul 5: metoda (cele trei întrebări; Intuitext: „Dacă o descriere … încalcă una dintre aceste trei proprietăți, atunci
+     acea descriere nu poate fi considerată algoritm”) ---- */
+  {t:'Trei întrebări: verifici orice algoritm',
+   text:`<p>Pui trei întrebări, pe rând:</p>
+<ol class="intrebari3"><li><b>Se înțelege fiecare pas într-un singur fel?</b> Nu? Lipsește claritatea.</li><li><b>Se oprește?</b> Nu? Lipsește finitudinea.</li><li><b>Merge pentru toate cazurile de același fel?</b> Nu? Lipsește generalitatea.</li></ol>
+<p>Repari <b>doar pasul defect</b>, execuți din nou și pui iar întrebările. Manualul spune: fără una dintre cele trei proprietăți, nu e algoritm. De aceea îi spunem azi „algoritm defect”: reparat, devine algoritm.</p>`,
+   exemplu:`<p>Pasul „Pune pe masă câte o farfurie pentru cei 3 copii.”: 1. Se înțelege într-un singur fel? Da. 2. Se oprește? Da. 3. Merge pentru toate cazurile de același fel? <b>Nu</b>: într-o familie cu 4 copii, unul rămâne fără farfurie. Lipsește generalitatea. Reparat: „Numără copiii și pune câte o farfurie pentru fiecare.”</p>`,
+   altfel:`<p>E ca la medic: întâi întrebările (te doare? unde? de când?), abia apoi tratamentul. La algoritmi, întrebările sunt trei, iar tratamentul e pasul reparat.</p>`,
+   incearca:{t:'classify',q:'Pune cele trei întrebări. Ce îi lipsește fiecărui pas?',cats:['Claritatea','Finitudinea','Generalitatea'],
+    items:[['Desenează un copac mare.',0],['Bate mingea de pământ, iar și iar, fără oprire.',1],['Pentru orice număr de săptămâni, câte zile sunt? Spune: „21 de zile.”',2],['Ia de pe raft cartea roșie sau pe cea albastră.',0],['Pentru orice elev din clasă: scrie pe caiet „Ana Pop, 5A”.',2]],
+    ajutor:'Întrebarea 1: e un cuvânt vag sau un „sau”? Întrebarea 2: se termină? Întrebarea 3: are scris dinainte ceva bun doar pentru un caz?',
+    why:'„Mare” și „sau” se înțeleg în mai multe feluri (claritatea); „fără oprire” nu se termină (finitudinea); „21 de zile” și „Ana Pop, 5A” sunt bune doar pentru un caz (generalitatea).'},
+   inca:[
+    {t:'choice',q:'Executantul se oprește nedumerit la pasul „Pune pe tort lumânări colorate sau albe.” Ce îi lipsește pasului?',o:['Claritatea','Finitudinea','Generalitatea','Nu îi lipsește nimic'],ok:0,
+     ajutor:'Se înțelege într-un singur fel?',why:'„Colorate sau albe” nu spune care: pasul se poate face în două feluri. Lipsește claritatea.'}
+   ]}
+ ],
+ /* atelierul: activitatea profesorului — patru algoritmi defecți (ambiguu, fără sfârșit, valabil doar pentru un caz; al patrulea,
+    tot ambiguu, cu „sau”, ca exemplul din programă). Testele: ce lipsește (alegere) + algoritmul reparat, EXECUTAT. */
+ atelier:D({titlu:'Atelier: patru algoritmi defecți',
+  intro:`<p><strong>Sarcina (fișa profesorului):</strong> la fiecare algoritm apeși <b>▶ Execută</b>, alegi <b>ce îi lipsea</b>, repari pasul defect și execuți din nou. Doi pot avea aceeași problemă. La sfârșit, <b>Verifică</b>.</p>`,
+  q:'Repară cei patru algoritmi și spune ce îi lipsea fiecăruia.',
+  algoritme:[SANDVIS,FLOAREA,FELICITAREA,EXCURSIA],intreabaLipsa:true,
+  teste:[0,1,2,3].flatMap(i=>[{k:'lipsa',alg:i,ce:`Algoritmul ${i+1}: ai ales ce îi lipsea`},{k:'merge',alg:i,ce:`Algoritmul ${i+1} reparat: executantul ajunge la rezultat`}]),
+  ajutor:'Testul care nu trece îți spune la care algoritm și ce face executantul. Uită-te la mesajul lui după ▶ Execută.',
+  why:'Sandvișul și excursia aveau pași neclari („câteva”, „sau”), udatul florii nu se oprea, iar felicitarea mergea doar pentru Ioana.'}),
+ qs:[
+  {t:'choice',q:'Rețeta spune: „Fierbe ouăle câteva minute.” Ce îi lipsește acestui pas?',o:['Claritatea','Finitudinea','Generalitatea','Nu îi lipsește nimic'],ok:0,
+   ajutor:'„Câteva” înseamnă la fel pentru toți?',why:'„Câteva minute” pot fi 3 pentru unul și 10 pentru altul. Pasul se termină, dar nu e clar.'},
+  {t:'choice',q:'Care pas are finitudine?',o:['Bate din palme de 5 ori.','Bate din palme și nu te opri.','Bate din palme mereu, iar și iar.','Bate din palme la nesfârșit, tare.'],ok:0,
+   ajutor:'Care se termină?',why:'„De 5 ori” are un sfârșit: după a cincea bătaie, gata.'},
+  {t:'choice',q:'Câte roți au mașinile din parcare? „1. Numără mașinile. 2. Spune: «Sunt 12 roți.»” merge doar pentru o parcare. Cu ce schimbi pasul 2?',
+   o:['Înmulțește cu 4 numărul mașinilor numărate și spune rezultatul.','Spune: „Sunt 16 roți.”, ca să fie mai multe.','Numără încă o dată mașinile, apoi spune: „Sunt 12 roți.”','Spune: „Sunt multe roți în parcare.”'],ok:0,
+   ajutor:'Care variantă spune ce faci ca să afli răspunsul, pentru orice parcare?',why:'O mașină are 4 roți: numărul mașinilor înmulțit cu 4 merge pentru orice parcare. „16 roți” e tot un răspuns scris dinainte.'},
+  {t:'classify',q:'Ce îi lipsește fiecărui pas?',cats:['Claritatea','Finitudinea','Generalitatea'],
+   items:[['Pune în ciorbă sare cât crezi tu.',0],['Mergi înainte și nu te opri niciodată.',1],['Pentru orice coleg, ca să afli câți ani are: spune „11 ani”.',2],['Fă întâi tema la mate sau la română.',0],['Scrie numerele 3, 6, 9 și tot așa.',1]],
+   ajutor:'Pune cele trei întrebări la fiecare pas.',why:'„Cât crezi tu” și „sau” se înțeleg în mai multe feluri; „nu te opri” și „tot așa” nu se termină; „11 ani” e bun doar pentru un coleg.'},
+  {t:'choice',q:'Executantul a făcut toți pașii, dar pe alte cazuri de același fel a greșit. Ce repari?',o:['Pasul scris doar pentru un caz','Pasul care nu spune când să se termine','Pasul cu un cuvânt vag, ca „puțin”','Ordinea tuturor pașilor'],ok:0,
+   ajutor:'A mers până la capăt, deci se înțelege și se oprește. Ce proprietate lipsește?',why:'A mers până la capăt, deci lipsește generalitatea: un pas e scris doar pentru un caz.'}
+ ]}
+  ],
+  diploma:{titlu:'Reparator de algoritmi',
+   rezumat:'a primit fișa profesorului cu patru algoritmi defecți și i-a reparat în pagină, cu executantul; a aflat cele trei proprietăți ale algoritmilor (claritatea, finitudinea, generalitatea) și cum le verifică cu trei întrebări',
+   aplicatie:'Paint, pe calculatorul din laborator',
+   provocare:LAB},
+  aplicatieReala:{aplicatie:'Paint, pe calculatorul din laborator',titlu:'Acum la calculator',scurt:'Calculatorul',
+   intro:'<p>Algoritmul lui Dan are trei pași defecți: îl repari în caiet, îl execuți în Paint și salvezi desenul (cam 10 minute). <b>Când mai sunt 10 minute din oră:</b> sari la ultimul punct.</p><p><b>Pe telefon</b> n-ai Paint: punctele 1-3 le faci în caiet, desenând cu creioanele; restul le sari.</p>',
+   pasi:LAB},
+  tipuri:{defect:AlgoritmDefect.tipuri.defect}
+});
+</script>
+</body>
+</html>
