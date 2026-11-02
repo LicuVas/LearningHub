@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 27, clasa a V-a: Expresii: operatori aritmetici, relaționali, logici. Evaluarea expresiilor</title>
+<meta name="description" content="Lecția 27, clasa a V-a: expresia (operanzi și operatori), operatorii aritmetici (+ − * / %), relaționali (= ≠ &lt; &gt; ≤ ≥) și logici (și, sau, nu); evaluarea pas cu pas, cu rezultatul intermediar la fiecare operator, jocul adevărat / fals cu motivul ales, apoi pașii în aplicația Calculator.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@600;800&family=Commissioner:wght@400;600;700&family=Azeret+Mono:wght@500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF1EA; --paper:#FFFFFF; --paper2:#F3F6EF; --line:#C9D3C0;
+  --ink:#16200F; --ink2:#4A5940; --accent:#2F6B3A; --accentInk:#FFFFFF; --sel:#DCEBD5;
+  --mark:#FFE07A; --markInk:#24190D; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Gabarito","Segoe UI",system-ui,sans-serif; --fb:"Commissioner","Segoe UI",system-ui,sans-serif; --fm:"Azeret Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#101710; --paper:#18211A; --paper2:#202B22; --line:#3C4C3E;
+  --ink:#E8F0E4; --ink2:#B5C6AE; --accent:#8FD19B; --accentInk:#101710; --sel:#2A3D2D;
+  --mark:#EDCB63; --markInk:#24190D; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#101710; --paper:#18211A; --paper2:#202B22; --line:#3C4C3E;
+  --ink:#E8F0E4; --ink2:#B5C6AE; --accent:#8FD19B; --accentInk:#101710; --sel:#2A3D2D;
+  --mark:#EDCB63; --markInk:#24190D; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: tabla verde a clasei, cu expresia scrisă cu creta */
+.banda{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:7px 12px;background:#24452b;border-bottom:2px solid var(--accent)}
+.banda .bd-t{flex:0 1 auto;max-width:100%;font-family:var(--fm);font-size:.76rem;color:#f2f7ee;border:1px dashed #a9c9a5;border-radius:4px;padding:1px 8px}
+.banda .bd-z{flex:0 1 auto;max-width:100%;font-size:.76rem;color:#dbe9d6}
+h1,h2{font-weight:600;letter-spacing:0}
+code{font-family:var(--fm);font-size:.95em}
+ul.ops,ol.ordine{margin:.3em 0 .3em 1.2em;padding:0}
+ul.ops li,ol.ordine li{margin:.2em 0}
+/* „Acum la calculator” (regula 10): gesturi mici, reale, imediat după pas */
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:600;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.acum li.tarziu{list-style:none;margin:.5em 0 .1em -1.2em;padding-top:5px;border-top:1px dashed var(--line)}
+.acum li.mai-ai-timp,span.mai-ai-timp{color:var(--ink2)}
+.atentie{border-left:4px solid var(--accent);padding:2px 10px;margin:6px 0}
+.captura figcaption a.lic{display:inline-block;padding:8px 0;min-width:32px;text-align:center}
+.captura.mica img{max-width:240px}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/cutii-variabile.js"></script>
+<script src="../../_sim/evaluare-expresii.js"></script>
+<script>
+/* Lecția 27, clasa a V-a (M4): „Expresii: operatori aritmetici, relaționali, logici. Evaluarea expresiilor” — predare, a patra
+   lecție din V-U5 „Algoritmi. Gândesc pas cu pas” (CS.2.3). Legea: LearningHub\_campaign\revizuire_completa_2026_09\00_GHID_LECTII.md.
+   Sursele și probele: surse.md, _proba\. Notația: manualele de clasa a V-a de pe manuale.edu.ro (Art Klett, CD Press, Intuitext,
+   Corint, Sigma, Litera — citatele în surse.md): * și / ca în toate manualele, % = restul (Art Klett, CD Press, Intuitext, Sigma),
+   relaționalii cu semnele de la matematică (CD Press: „<= sau ≤”, „>= sau ≥”, „≠”), logicii „și, sau, nu” (Art Klett, CD Press,
+   Intuitext, Litera; AND / OR / NOT = Corint, Sigma).
+   Activitatea profesorului (activitati_lectii_V_VI.json): „Exerciții de evaluare pas cu pas, cu scrierea rezultatului
+   intermediar la fiecare operator. Joc de adevărat/fals pentru expresiile logice, cu justificare orală.” Resursa: „fișă de
+   exerciții gradate, tablă” — atelierul (fișa cu patru expresii gradate, pas cu pas) și pasul P5 (jocul, cu motivul ales).
+   Simulatorul: lectii/_sim/evaluare-expresii.js (NOU, proprietar lecția aceasta); cutii-variabile.js (V/26) e încărcat doar
+   pentru citirea numerelor scrise (CutiiVariabile.numar), nemodificat.
+   Granița: NU predă „structura secvențială” ca denumire (28), decizia (29), evaluarea sumativă (30), Scratch (31); fără „←”.
+   Aplicația Calculator (laboratorul) NU a fost pornită: faptele vin din codul și documentația publică Microsoft (surse.md) și
+   din captura de pe Wikimedia Commons (licența MIT). Trimiterile la pași se fac după numărul din bara de jos (P1 = „La ce folosește”). */
+const EE=EvaluareExpresii;
+const fig=(src,w,h,alt,cap,cls)=>`<figure class="captura${cls?' '+cls:''}"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+/* P1: copia identică (sha1 aa27c64c…) a fotografiei din lecția V/7 (img\SURSE.json); licența reverificată în _proba\commons_out.json.
+   Calculatorul: captura „Windows 11 Calculator in light mode.png” (Commons, MIT, Microsoft Corporation), convertită în .webp. */
+const IMG={
+  casa:fig('img/casa-self-service.webp',760,1057,'O casă de marcat la care plătești singur: un ecran mare, un cititor de coduri de bare și, în stânga, un cântar pe care scrie Maximal 15 Artikel','O casă de marcat la care plătești singur, într-un magazin din Germania. Pe cântarul din stânga scrie, în germană, „cel mult 15 produse”. <small>Foto: Triplec85, <a class="lic" href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noopener">CC BY-SA 4.0</a>, <a class="lic" href="https://commons.wikimedia.org/wiki/File:Supermarket_self-checkout_EDEKA_E-Center_D%C3%BCrr_Tauberbischofsheim_8.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> (decupată și micșorată, aceeași licență).</small>'),
+  calc:fig('img/calculator-windows11.webp',322,502,'Fereastra aplicației Calculator din Windows 11, cu titlul Standard, ecranul care arată 0 și butoanele cu cifre, semnele ÷, ×, −, + și butonul albastru =','Aplicația Calculator din Windows 11, în modul Standard. Captura e în engleză; în română scrie tot „Calculator” și „Standard”. Înmulțirea e butonul ×, împărțirea ÷. Butonul % de aici nu e restul: în modul Standard înseamnă procent. <small>Captură: Microsoft Corporation, licența <a class="lic" href="https://opensource.org/license/mit" target="_blank" rel="noopener">MIT</a>, <a class="lic" href="https://commons.wikimedia.org/wiki/File:Windows_11_Calculator_in_light_mode.png" target="_blank" rel="noopener">Wikimedia Commons</a>.</small>','mica')
+};
+/* '!…' = punctul de la sfârșitul orei */
+const ACUM=(...p)=>`<div class="acum" role="note"><div class="lbl">Acum la calculatorul din laborator, în aplicația Calculator</div><ol>${p.map(x=>x.startsWith('!')?`<li class="tarziu">${x.slice(1)}</li>`:`<li>${x}</li>`).join('')}</ol></div>`;
+const TEL='Pe telefon: are telefonul tău o aplicație de calculat? Fă în ea același calcul. Nu are? Fă-l în caiet.';
+
+/* ===================== expresiile (toate inventate; numerele alese ca împărțirile să iasă exact) ===================== */
+const EX_BANI={e:'«bani» − «preț»',cutii:{bani:20,'preț':6}};             // P2 „Uite cum”
+const EX_ORDINE={e:'20 − 12 / 4 * 2'};                                   // P3 „Uite cum”
+const EX_PRET={e:'«preț» * 3 ≤ «bani»',cutii:{'preț':4,bani:10}};        // P4 „Uite cum”
+const EX_VARSTA={e:'(«vârsta» ≥ 10) și («vârsta» ≤ 12)',cutii:{'vârsta':11}};   // P5 „Uite cum”
+const PAS=o=>Object.assign({t:'expresie-pas'},o);
+const AF=o=>Object.assign({t:'adevarat-fals'},o);
+
+/* „Acum la calculator” — FĂRĂ profesor, pe calculatorul comun. Nimic nu se salvează: la sfârșit doar X pe Calculator.
+   Doar operații câte una („a op b =”), care dau același rezultat în orice mod al Calculatorului; expresia tastată întreagă
+   (punctul 5) are spuse AMÂNDOUĂ rezultatele posibile (Standard: în ordinea apăsării; Științific: ordinea operațiilor —
+   README-ul și CalculatorManager.cpp din microsoft/calculator, surse.md). Butonul % al Calculatorului = procent, nu restul. */
+const LAB=[
+  '<b>Calculatorul.</b> E deschis de la pasul <i>Expresia: operanzi și operatori aritmetici</i> (P2)? Treci la punctul 2. Nu e? <b>Start</b>, scrie <code>calc</code>, clic pe <b>Calculator</b>. Sus, lângă cele trei liniuțe ☰, scrie altceva decât <b>Standard</b>? Clic pe ☰ (stânga sus), apoi pe <b>Standard</b>.',
+  '<b>Expresia 2 din atelier, pe pași:</b> <code>40 − (6 + 4) * 3</code>. Întâi paranteza: clic pe 6, pe +, pe 4, apoi pe =. Vezi 10?',
+  '<b>Pasul al doilea:</b> clic pe 1 și 0, pe × (înmulțirea), pe 3, apoi pe =. Vezi 30?',
+  '<b>Pasul al treilea:</b> clic pe 4 și 0, pe −, pe 3 și 0, apoi pe =. Vezi 10? Aceasta e valoarea expresiei, aceeași ca în atelier.',
+  '<b>Toată expresia dintr-odată:</b> clic pe 2, +, 3, ×, 4, apoi pe =. Vezi 14? Calculatorul a făcut întâi înmulțirea, ca la matematică. Vezi 20? A făcut operațiile în ordinea în care le-ai apăsat: 2 + 3 dă 5, apoi 5 × 4 dă 20. Așa lucrează modul Standard al Calculatorului din Windows. De aceea, la o expresie faci câte un operator pe rând.',
+  '<span class="mai-ai-timp"><b>Dacă mai ai timp:</b> fă în Calculator pașii expresiei 1 din atelier, <code>15 + 5 * 3</code>: întâi 5 × 3 =, apoi 15 + 15 =. Vezi 30?</span>',
+  '<b>La sfârșitul orei</b> (chiar dacă n-ai terminat): X pe Calculator. N-ai salvat niciun fișier, deci nu ai nimic de șters.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_v_m4_l27',
+  mod:'lectie',
+  titlu:'Expresii: operatori aritmetici, relaționali, logici. Evaluarea expresiilor',
+  marca:'Lecția <b>27</b> · clasa a V-a',
+  h1:'Expresii: operatori aritmetici, relaționali, logici. Evaluarea expresiilor',
+  eticheta:'Lecții TIC',
+  acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a V-a', unitate:'V-U5', unitateTitlu:'Algoritmi. Gândesc pas cu pas',
+  competente:['CS.2.3'], lectii:'27',
+  ancoraText:'Din programă (CS.2.3, unitatea V-U5, lecția 27): Expresii (operatori aritmetici, relaționali, logici; evaluarea expresiilor)',
+  intro:`<p><b>Ai nevoie de:</b> lecția 26 (<b>variabila</b>: o cutie cu etichetă și valoarea ei de acum) și lecția 24 (<b>algoritmul</b>, <b>pasul</b>). De la matematică: adunarea, scăderea, înmulțirea, împărțirea și ordinea în care se fac. Pentru laborator: pornirea unei aplicații din <b>Start</b>, scriind începutul numelui (lecția 18: <code>pai</code> pentru Paint).</p>`,
+  cum:`<b>Cum lucrezi</b><ol><li>P1 de citit, apoi 4 pași scurți, cu exerciții.</li><li>Atelierul: fișa cu patru expresii, pas cu pas.</li><li>La calculator: aceiași pași în aplicația Calculator (pe telefon, în caiet sau în aplicația de calculat a telefonului).</li><li>5 întrebări.</li></ol><p><b>Când mai sunt 10 minute din oră:</b> treci la întrebări; la calculator, ultimul punct.</p>`,
+  banda:'<span class="bd-t">operand · operator · operand</span><span class="bd-z">un pas = un operator (sau o cutie citită) · întâi parantezele · apoi * / % · apoi + −</span>',
+  nivele:[
+{t:'Expresii: operatori aritmetici, relaționali, logici. Evaluarea expresiilor',final:true,lectii:[27],
+ continuturi:['Expresii (operatori aritmetici, relaționali, logici; evaluarea expresiilor)'],
+ obiectiv:'evaluezi o expresie pas cu pas, scriind rezultatul la fiecare operator, și afli valoarea de adevăr (adevărat sau fals) a unei expresii cu comparații, „și”, „sau”, „nu”.',
+ pasi:[
+  /* ---- pasul 1: la ce folosește (fără acțiuni). Legătura cu V/26: calculul spus în cuvinte („Scade «preț» din «bani»…”,
+     algoritmul REST din V/26) devine expresie. „Expresie” = CD Press: „O expresie este o secvență de date și operatori…”;
+     Intuitext: „Expresiile sunt combinaţii de date şi operaţii.” ---- */
+  {t:'La ce folosește: expresiile',
+   text:`<p>La lecția 26, un pas spunea în cuvinte: „Scade «preț» din «bani» și pune rezultatul în cutia «rest».” Calculul se poate scrie scurt: <code>«bani» − «preț»</code>.</p>
+<p>Un calcul scris așa, cu numere, cutii și semne, se numește <mark>expresie</mark>. Casa de marcat din poză adună prețurile produselor. Pe cântarul ei scrie, în germană, „cel mult 15 produse”: întrebarea „ai cel mult 15 produse?” are răspunsul adevărat sau fals.</p>
+<p>Azi afli cum se scrie o expresie, cum o calculezi pas cu pas și când e adevărată sau falsă.</p>
+${IMG.casa}`},
+  /* ---- pasul 2: operanzi, operatori aritmetici (Intuitext: „datele se mai numesc şi operanzi. Între operanzi se află niște
+     simboluri numite operatori”; Art Klett: „Operatorii specifică operațiile care se efectuează asupra operanzilor”;
+     % = „restul împărțirii întregi” la Art Klett / Intuitext / CD Press / Sigma). Cutia (V/26) se citește cu valoarea de ACUM
+     (CD Press: „Evaluarea expresiilor aritmetice presupune înlocuirea variabilelor cu valorile lor”). ---- */
+  {t:'Expresia: operanzi și operatori aritmetici',
+   text:`<p>O expresie are <mark>operanzi</mark> (valorile cu care calculezi: numere sau cutii) și <mark>operatori</mark> (semnele care spun ce calcul faci). Operatorii aritmetici sunt:</p>
+<ul class="ops"><li><code>+</code> adunarea și <code>−</code> scăderea;</li><li><code>*</code> înmulțirea (la matematică scrii × sau ·);</li><li><code>/</code> împărțirea (la matematică scrii :); în lecția asta, împărțirile ies exact;</li><li><code>%</code> restul împărțirii: <code>17 % 5</code> dă 2, pentru că 17 = 5 · 3 + 2.</li></ul>
+<p>O cutie din expresie se citește cu valoarea ei de acum.</p>
+<p class="atentie"><b>Atenție la cuvânt:</b> <b>Calculator</b>, cu literă mare, e o aplicație care socotește. Calculatorul din laborator e aparatul pe care rulează ea.</p>`,
+   exemplu:`${EE.urma(EX_BANI,{titlu:'Expresia «bani» − «preț», pas cu pas:'})}<p>Operanzii sunt «bani» și «preț»; operatorul e −. Întâi pui în locul fiecărei cutii valoarea ei de acum, apoi faci scăderea.</p>
+<p>Săgeata → se citește „dă”: «bani» → 20 înseamnă „în cutia «bani» e 20”.</p>
+${ACUM('Pornește aplicația: <b>Start</b>, scrie <code>calc</code>, clic pe <b>Calculator</b>. Arată ca în poza de mai jos. Sus scrie altceva decât <b>Standard</b>? Clic pe ☰ (cele trei liniuțe din stânga sus), apoi pe <b>Standard</b>.','Calculează 20 − 6: clic pe 2 și pe 0, pe −, pe 6, apoi pe =. Vezi 14? Lasă Calculatorul deschis. '+TEL)}
+${IMG.calc}`,
+   altfel:`<p>La magazin: ai 20 de lei și cumperi ceva de 6 lei. Banii și prețul sunt operanzii, semnul − (scăderea) e operatorul, iar ce-ți rămâne (14 lei) e rezultatul.</p>`,
+   incearca:PAS({q:'Calculează expresia: atinge o cutie și scrie ce e în ea acum, apoi cealaltă cutie; la sfârșit atinge operatorul și scrie ce dă. Apoi <b>Verifică</b>.',
+    expresii:[{e:'«caiete» * «preț»',cutii:{caiete:3,'preț':5}}],
+    ajutor:'Ce număr e în cutia «caiete»? Dar în «preț»? Apoi: cât fac 3 caiete, de câte 5 lei?',
+    why:'În «caiete» e 3, în «preț» e 5; 3 * 5 dă 15.'}),
+   inca:[
+    PAS({q:'25 de elevi se așază câte 2 în bancă. Câți rămân singuri? Calculează expresia.',expresii:[{e:'«elevi» % 2',cutii:{elevi:25}}],
+     ajutor:'25 împărțit la 2 dă 12, iar restul e…?',why:'25 = 2 · 12 + 1, deci 25 % 2 dă 1: un elev stă singur.'}),
+    PAS({q:'12 mere se împart la 4 copii. Câte primește fiecare? Calculează expresia.',expresii:[{e:'«mere» / «copii»',cutii:{mere:12,copii:4}}],
+     ajutor:'Ce e în fiecare cutie? Cât face 12 împărțit la 4?',why:'12 / 4 dă 3: fiecare copil primește 3 mere.'})
+   ]},
+  /* ---- pasul 3: evaluarea pas cu pas (Art Klett: „Operația de rezolvare a unei expresii și de aflare a rezultatului se
+     numește evaluarea expresiei, iar rezultatului calculat îi mai spunem valoarea expresiei”; ordinea: Art Klett 1-2 +
+     paranteze; Intuitext: „Prioritatea … este aceeași ca la matematică”; Corint: „Dacă există operații cu aceeași
+     prioritate, ele se execută în ordine, de la stânga la dreapta”). Rezultatul intermediar = activitatea profesorului. ---- */
+  {t:'Evaluarea pas cu pas: ordinea operațiilor',
+   text:`<p>A <mark>evalua</mark> o expresie înseamnă a-i afla <b>valoarea</b>: ce rămâne la sfârșit. O faci pas cu pas: la fiecare pas faci un singur operator (sau citești o cutie) și scrii rezultatul, apoi rescrii expresia, mai scurtă.</p>
+<p>Ordinea e cea de la matematică:</p>
+<ol class="ordine"><li>ce e în paranteze (întâi paranteza dinăuntru);</li><li><code>*</code>, <code>/</code> și <code>%</code>, de la stânga la dreapta;</li><li><code>+</code> și <code>−</code>, de la stânga la dreapta: în <code style="white-space:nowrap">8 − 2 − 3 + 1</code>, întâi 8 − 2.</li></ol>
+<p>Alegi tu doar unde nu contează: două paranteze separate sau două bucăți cu *, / ori %, despărțite de + sau −. Testele verifică fiecare pas: ordinea și rezultatul.</p>`,
+   exemplu:`${EE.urma(EX_ORDINE,{titlu:'Expresia 20 − 12 / 4 * 2, pas cu pas (bucata subliniată se face la pasul de sub ea):'})}<p><code>/</code> și <code>*</code> sunt de același fel: întâi <code>/</code>, care e mai la stânga, apoi <code>*</code>; abia la sfârșit <code>−</code>.</p>
+${ACUM('În Calculator, fă pașii de mai sus câte unul, cu = la fiecare: 12 ÷ 4 =, apoi 3 × 2 =, apoi 20 − 6 =. Vezi 3, apoi 6, apoi 14? '+TEL)}`,
+   altfel:`<p>La matematică faci la fel: în 2 + 3 · 4, întâi înmulțirea (12), apoi adunarea (14). Parantezele spun „fă-mă întâi”: (2 + 3) · 4 dă 20.</p>`,
+   incearca:PAS({q:'Evaluează pas cu pas: atinge operatorul care se face ACUM și scrie ce dă; apoi următorul, până rămâne o singură valoare. La sfârșit, <b>Verifică</b>.',
+    expresii:[{e:'18 − 2 * (3 + 4)'}],
+    ajutor:'Ce e în paranteză se face întâi. Apoi, între − și *, care se face primul?',
+    why:'Paranteza: 3 + 4 dă 7. Apoi 2 * 7 dă 14. La sfârșit, 18 − 14 dă 4.'}),
+   inca:[
+    PAS({q:'Evaluează pas cu pas. Atenție la doi operatori de același fel.',expresii:[{e:'24 / 4 * 2'}],
+     ajutor:'/ și * sunt de același fel. Care e mai la stânga?',why:'De la stânga la dreapta: 24 / 4 dă 6, apoi 6 * 2 dă 12.'}),
+    PAS({q:'Evaluează pas cu pas, cu cutia de acum.',expresii:[{e:'(«bani» − 5) % 4',cutii:{bani:23}}],
+     ajutor:'Întâi cutia, apoi paranteza, apoi restul împărțirii la 4.',why:'«bani» e 23; 23 − 5 dă 18; 18 % 4 dă 2, pentru că 18 = 4 · 4 + 2.'}),
+    PAS({q:'Evaluează pas cu pas. Două bucăți cu * sau /, despărțite de +: începe cu oricare.',expresii:[{e:'3 * 4 + 10 / 5'}],
+     ajutor:'* și / se fac înaintea lui +.',why:'3 * 4 dă 12, 10 / 5 dă 2 (în orice ordine: sunt despărțite de +), apoi 12 + 2 dă 14.'})
+   ]},
+  /* ---- pasul 4: relaționalii (Art Klett: „Operatorii relaționali (de comparație)… pot să fie adevărate… sau false”; CD Press:
+     „<= sau ≤”, „>= sau ≥”, „= sau ==”, „≠”; Sigma: „<, >, (≤), (≥), = (egal), <> (diferit)”). „=” e comparație: spus pe față. ---- */
+  {t:'Operatorii relaționali: adevărat sau fals',
+   text:`<p>Operatorii <mark>relaționali</mark> compară două valori:</p>
+<ul class="ops"><li><code>=</code> egal și <code>≠</code> diferit;</li><li><code>&lt;</code> mai mic și <code>&gt;</code> mai mare;</li><li><code>≤</code> mai mic sau egal și <code>≥</code> mai mare sau egal.</li></ul>
+<p>O comparație nu dă un număr, ci o <mark>valoare de adevăr</mark>: <b>adevărat</b> sau <b>fals</b>. <code>7 &gt; 3</code> e adevărat; <code>2 = 5</code> e fals. Unele manuale scriu <code>&lt;=</code> în loc de ≤, <code>&gt;=</code> în loc de ≥ și <code>&lt;&gt;</code> în loc de ≠.</p>
+<p class="atentie"><b>Atenție:</b> într-o expresie, <code>=</code> întreabă „sunt egale?”. Butonul = din Calculator e altceva: el cere rezultatul. Când lângă comparație sunt calcule, întâi faci calculele, apoi compari.</p>`,
+   exemplu:`${EE.urma(EX_PRET,{titlu:'Ajung 10 lei pentru 3 caiete de câte 4 lei?'})}<p>12 ≤ 10 e fals: banii nu ajung.</p>`,
+   altfel:`<p>E ca la exercițiile cu „adevărat sau fals” de la limba română: propoziția „7 e mai mare decât 3” e adevărată, iar „2 e egal cu 5” e falsă.</p>`,
+   incearca:PAS({q:'Evaluează pas cu pas. La comparație alegi „adevărat” sau „fals”. Apoi <b>Verifică</b>.',
+    expresii:[{e:'«puncte» + 4 ≥ 20',cutii:{puncte:15}}],
+    ajutor:'Întâi cutia și calculul, apoi comparația. E 19 mai mare sau egal cu 20?',
+    why:'«puncte» e 15; 15 + 4 dă 19; 19 ≥ 20 e fals, pentru că 19 e mai mic decât 20.'}),
+   inca:[
+    AF({q:'Pentru fiecare expresie: adevărat sau fals? Alege și motivul. Apoi <b>Verifică</b>.',
+     afirmatii:[
+      {e:'12 / 4 = 3',motive:['semnul = arată rezultatul, deci e mereu adevărat','12 / 4 dă 3, iar 3 e egal cu 3','12 / 4 dă 4, iar 4 nu e egal cu 3'],m:1},
+      {e:'10 ≠ 2 * 5',motive:['10 e diferit de 2, deci e adevărat','2 * 5 dă 7, iar 10 e diferit de 7','2 * 5 dă 10, iar 10 nu e diferit de 10'],m:2},
+      {e:'«note» ≥ 5',cutii:{note:5},motive:['5 e egal cu 5, iar ≥ primește și „egal”','5 nu e mai mare decât 5, deci e fals','în cutia «note» poate fi orice număr'],m:0}],
+     ajutor:'Întâi calculul, apoi comparația. La ≥, „egal” e de ajuns.',
+     why:'12 / 4 dă 3, iar 3 = 3: adevărat. 2 * 5 dă 10, iar 10 ≠ 10 e fals. 5 ≥ 5 e adevărat: 5 e egal cu 5.'})
+   ]},
+  /* ---- pasul 5: logicii (Intuitext: „Cuvintele şi, sau, nu se numesc operatori logici… AND… OR… NOT”; Art Klett: „P1 … este
+     adevărată atât în cazul în care practic doar unul dintre sporturi, cât și în cazul în care le practic pe amândouă”;
+     Litera: „E=(2<3) sau (nu(4>3))” — fiecare comparație în paranteza ei). Jocul adevărat / fals cu justificare = activitatea
+     profesorului: „justificarea orală” devine motivul ales dintre variante-soră. ---- */
+  {t:'Operatorii logici: și, sau, nu',
+   text:`<p>Operatorii <mark>logici</mark> lucrează cu valori de adevăr:</p>
+<ul class="ops"><li><b>și</b> dă adevărat doar când ambele părți sunt adevărate;</li><li><b>sau</b> dă adevărat când cel puțin o parte e adevărată (și când sunt amândouă);</li><li><b>nu</b> schimbă valoarea: nu adevărat dă fals, nu fals dă adevărat.</li></ul>
+<p>Unele manuale scriu AND, OR și NOT. În lecția asta, fiecare comparație stă în paranteza ei: întâi faci parantezele; apoi „nu” din fața parantezei; apoi „și” sau „sau”. O expresie din lecție are „și” sau „sau”, nu pe amândouă.</p>`,
+   exemplu:`${EE.urma(EX_VARSTA,{titlu:'Are «vârsta» între 10 și 12 ani?'})}<p>Ambele sunt adevărate: „și” dă adevărat. Cu 14, ar da fals.</p>`,
+   altfel:`<p>„Am la mine pix și creion” e adevărat numai când le am pe amândouă. „Am pix sau creion” e adevărat când am măcar unul. „Nu am pix” e adevărat exact când „Am pix” e fals.</p>`,
+   incearca:AF({q:'Jocul adevărat / fals: la fiecare expresie alege valoarea, apoi motivul (de ce). Apoi <b>Verifică</b>.',
+    afirmatii:[
+     {e:'(7 > 3) și (2 = 5)',motive:['7 > 3 e adevărat, iar la „și” ajunge o parte adevărată','2 = 5 e fals, iar „și” cere ambele părți adevărate','ambele comparații sunt false, de aceea „și” e fals'],m:1},
+     {e:'(7 > 3) sau (2 = 5)',motive:['7 > 3 e adevărat, iar la „sau” ajunge o parte adevărată','2 = 5 e fals, iar „sau” cere ambele părți adevărate','ambele comparații sunt adevărate, de aceea „sau” e adevărat'],m:0},
+     {e:'nu (4 > 7)',motive:['4 > 7 e adevărat, iar „nu” lasă valoarea la fel','„nu” face orice expresie să fie falsă','4 > 7 e fals, iar „nu” schimbă fals în adevărat'],m:2}],
+    ajutor:'Fă întâi fiecare paranteză: e adevărată sau falsă? Apoi: „și” cere amândouă adevărate; „sau”, măcar una; „nu” schimbă valoarea.',
+    why:'7 > 3 e adevărat, 2 = 5 e fals: „și” dă fals, „sau” dă adevărat. 4 > 7 e fals, iar „nu” îl face adevărat.'}),
+   inca:[
+    AF({q:'Încă o rundă din joc: valoarea, apoi motivul.',
+     afirmatii:[
+      {e:'(«bani» ≥ 10) sau («bani» = 3)',cutii:{bani:5},motive:['5 ≥ 10 e adevărat, iar la „sau” ajunge o parte','„sau” dă adevărat ori de câte ori are două paranteze','5 ≥ 10 e fals și 5 = 3 e fals: nicio parte nu e adevărată'],m:2},
+      {e:'nu (10 % 2 = 0)',motive:['10 % 2 dă 0, paranteza e adevărată, iar „nu” o face falsă','10 % 2 dă 5, paranteza e falsă, iar „nu” o face adevărată','„nu” lasă valoarea parantezei la fel, deci e adevărat'],m:0}],
+     ajutor:'Fă întâi parantezele, cu valoarea de acum a cutiei.',why:'5 ≥ 10 și 5 = 3 sunt false: „sau” dă fals. 10 % 2 dă 0, 0 = 0 e adevărat, iar „nu” dă fals.'}),
+    PAS({q:'Evaluează pas cu pas: are «vârsta» între 10 și 12 ani?',expresii:[{e:'(«vârsta» ≥ 10) și («vârsta» ≤ 12)',cutii:{'vârsta':13}}],
+     ajutor:'Întâi cutiile, apoi fiecare paranteză, apoi „și”.',why:'13 ≥ 10 e adevărat, 13 ≤ 12 e fals; „și” cere amândouă adevărate: fals.'})
+   ]}
+ ],
+ /* atelierul: activitatea profesorului — exerciții de evaluare pas cu pas, cu rezultatul intermediar la fiecare operator,
+    pe o fișă gradată (de la o singură prioritate la paranteze, cutii, rest, comparații și „și”). Testele: ordinea, calculele
+    și valoarea, pe fiecare expresie (ordinea e chiar ce se predă: excepția de la „rezultat, nu drum”, regula 29). */
+ atelier:PAS({titlu:'Atelier: fișa de exerciții gradate, pas cu pas',
+  intro:`<p><strong>Sarcina (fișa de exerciții gradate):</strong> evaluezi patru expresii, de la ușor la greu. La fiecare atingi operatorul care se face acum (sau o cutie) și scrii rezultatul lui, până la valoarea de la sfârșit. Apoi <b>Verifică</b>: testele se uită la fiecare pas.</p>`,
+  q:'Evaluează pas cu pas cele patru expresii (filele Expresia 1-4).',
+  expresii:[{e:'15 + 5 * 3'},{e:'40 − (6 + 4) * 3'},{e:'(«bomboane» − 2) % 5',cutii:{bomboane:25}},{e:'(«puncte» + 4 ≥ 20) și («puncte» % 2 = 0)',cutii:{puncte:16}}],
+  gresit:{e:1},
+  ajutor:'Testul care nu trece îți spune la ce expresie și la ce pas. Întreabă-te: e ceva în paranteză? E un *, / sau % înaintea unui + sau −?',
+  why:'Expresia 1: 5 * 3, apoi 15 + 15 → 30. Expresia 2: 6 + 4, apoi 10 * 3, apoi 40 − 30 → 10. Expresia 3: 25 − 2, apoi 23 % 5 → 3. Expresia 4: 20 ≥ 20 e adevărat, 16 % 2 = 0 e adevărat, deci „și” dă adevărat.'}),
+ qs:[
+  {t:'choice',q:'În expresia „«caiete» * 4”, care sunt operanzii?',
+   o:['«caiete» și 4','doar semnul *','«caiete», * și 4','doar numărul 4'],ok:0,
+   ajutor:'Operanzii sunt valorile cu care calculezi; operatorul e semnul.',why:'Operanzii sunt valorile: cutia «caiete» și numărul 4. * e operatorul.'},
+  {t:'choice',q:'Care operator se face primul în „30 − 4 * (2 + 3)”?',
+   o:['+, cel din paranteză','−, primul din stânga','*, înmulțirea','toate trei odată'],ok:0,
+   ajutor:'Ce se face întâi, după ordinea de la matematică?',why:'Întâi paranteza: 2 + 3 dă 5. Apoi 4 * 5 dă 20, apoi 30 − 20 dă 10.'},
+  {t:'choice',q:'Ce valoare are expresia „(20 − 13) % 5 + 12”?',
+   o:['14','29','13','2'],ok:0,
+   ajutor:'Întâi paranteza, apoi restul împărțirii (%), la sfârșit adunarea.',why:'Paranteza: 20 − 13 dă 7. Apoi 7 % 5 dă 2, pentru că 7 = 5 · 1 + 2. La sfârșit, 2 + 12 dă 14.'},
+  {t:'choice',q:'În cutia «puncte» e acum 9. Ce valoare are expresia „«puncte» ≥ 10”?',
+   o:['fals','adevărat','10','9'],ok:0,
+   ajutor:'O comparație dă adevărat sau fals. E 9 mai mare sau egal cu 10?',why:'9 e mai mic decât 10, deci 9 ≥ 10 e fals.'},
+  {t:'choice',q:'Ce valoare are „(5 &lt; 8) sau (6 = 9)” și de ce?',
+   o:['adevărat: 5 < 8 e adevărat, iar la „sau” ajunge o parte adevărată','fals: 6 = 9 e fals, iar „sau” cere ca ambele părți să fie adevărate','adevărat: ambele comparații sunt adevărate, deci „sau” dă adevărat','fals: ambele comparații sunt false, deci „sau” dă fals'],ok:0,
+   ajutor:'Fă întâi fiecare paranteză. Ce cere „sau”?',why:'5 < 8 e adevărat, 6 = 9 e fals; „sau” are nevoie de o singură parte adevărată: adevărat.'}
+ ]}
+  ],
+  diploma:{titlu:'Evaluatorul de expresii',
+   rezumat:'a evaluat pas cu pas expresiile fișei de exerciții gradate, cu rezultatul intermediar la fiecare operator, a jucat jocul adevărat / fals cu motivul ales și a refăcut pașii în aplicația Calculator; a aflat ce sunt operanzii și operatorii aritmetici, relaționali și logici și în ce ordine se fac',
+   aplicatie:'Calculator, pe calculatorul din laborator',
+   provocare:LAB},
+  aplicatieReala:{aplicatie:'Calculator, pe calculatorul din laborator',titlu:'Acum la calculator',scurt:'Calculatorul',
+   intro:'<p>Refaci pașii unei expresii în aplicația <b>Calculator</b>, câte un operator pe rând, ca în pagină (cam 6 minute). <b>Atenție:</b> în modul Standard, butonul % din Calculator nu dă restul împărțirii; acolo % înseamnă procent. Restul îl afli în pagină sau în caiet. (Doar în modul Programator, pe care nu-l folosim, % dă restul.) <b>Când mai sunt 10 minute din oră:</b> sari la ultimul punct.</p><details class="verif"><summary>Pe telefon (fără Calculatorul din Windows)</summary><p>Are telefonul tău o aplicație de calculat? Fă în ea punctele 2-4: câte un calcul, cu = la fiecare. La punctul 5 poate să arate 14 sau 20; citește ce înseamnă fiecare. Nu are? Scrie în caiet expresia 2 din atelier și, sub ea, rândurile cu rezultatul fiecărui pas.</p></details>',
+   pasi:LAB},
+  tipuri:{'expresie-pas':EvaluareExpresii.tipuri['expresie-pas'],'adevarat-fals':EvaluareExpresii.tipuri['adevarat-fals']}
+});
+</script>
+</body>
+</html>
