@@ -366,12 +366,21 @@ function evalueaza(){
   var remOk=T.filter(function(t){return t.parte==='R'}).every(function(t){return t.ok});
   $('#rem-bun').classList.toggle('ascuns',!remOk);
   $('#pastila').textContent='Teste: '+nr+' din '+T.length;
+  scorLaProfesor(nr,T.length);
   var tot=nr===T.length;
   $('#gata').classList.toggle('vizibil',tot);
   if(tot&&!S.gata){S.gata=true;save();anunta(false)}
   return T;
 }
 
+/* SCORUL ȘI FĂRĂ FINAL (05.11.2026, el: „să permită vizualizarea scorului și dacă nu termină”): testele bifate pleacă la
+   profesor ca NOTĂ pe pagina fișei (Prezenta.nota, ca la lecții: pleacă doar când nota se schimbă; detaliile „atomic N/M” =
+   teste bifate din total). Nota = 1 din oficiu + 9 × bifate/total. Nimic până la primul test bifat. Vezi _unelte/scor_partial.py */
+function scorLaProfesor(ok,tot){
+  try{ if(!(window.Prezenta&&window.Prezenta.nota)||!(tot>0)||!(ok>0))return;
+    window.Prezenta.nota({grade:Math.max(1,Math.min(10,Math.round(1+9*ok/tot))),atomicCorrect:ok,atomicTotal:tot,practiceStarted:false});
+  }catch(e){}
+}
 /* anunțarea terminării: ca în jocuri/_motor/motor.js (raporteaza -> window.Prezenta.eveniment, tip 'joc-gata') */
 function anunta(sinc){
   try{
@@ -424,6 +433,9 @@ desen();umple();aratGrupa();semneP1();leaga();evalueaza();arataDiag();
 /* fișa terminată înainte ca elevul să spună cine e: retrimitem (serverul păstrează maximul), ca în motor.js (sinc:1) */
 window.addEventListener('prezenta',function(){if(S.gata&&teste().every(function(t){return t.ok}))anunta(true)});
 window.addEventListener('load',function(){setTimeout(function(){if(S.gata&&teste().every(function(t){return t.ok}))anunta(true)},800)});
+/* scorul de pe fișă după ce prezenta.js știe cine e elevul (vezi scorLaProfesor) */
+function scorAcum(){var T=teste();scorLaProfesor(T.filter(function(t){return t.ok}).length,T.length)}
+window.addEventListener('prezenta',scorAcum);window.addEventListener('load',function(){setTimeout(scorAcum,1500)});
 })();
 </script>
 <script src="/assets/js/site-credit.js" defer></script>

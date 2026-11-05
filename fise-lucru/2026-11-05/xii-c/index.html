@@ -598,6 +598,7 @@ textarea.cod{min-height:180px;resize:vertical;line-height:1.4}
     });
     E.forEach(function (t) { var o = false; try { o = !!t.ok(); } catch (e) {} RAND[t.id].li.classList.toggle('ok', o); });
     document.getElementById('cnt').textContent = 'Teste bifate: ' + n + ' din ' + TOT;
+    scorLaProfesor(n, TOT);
     document.getElementById('bara').style.width = (100 * n / TOT) + '%';
     var toate = n === TOT;
     document.getElementById('felicitari').classList.toggle('da', toate);
@@ -606,6 +607,14 @@ textarea.cod{min-height:180px;resize:vertical;line-height:1.4}
     arataPrima();
     return n;
   }
+/* SCORUL ȘI FĂRĂ FINAL (05.11.2026, el: „să permită vizualizarea scorului și dacă nu termină”): testele bifate pleacă la
+   profesor ca NOTĂ pe pagina fișei (Prezenta.nota, ca la lecții: pleacă doar când nota se schimbă; detaliile „atomic N/M” =
+   teste bifate din total). Nota = 1 din oficiu + 9 × bifate/total. Nimic până la primul test bifat. Vezi _unelte/scor_partial.py */
+function scorLaProfesor(ok,tot){
+  try{ if(!(window.Prezenta&&window.Prezenta.nota)||!(tot>0)||!(ok>0))return;
+    window.Prezenta.nota({grade:Math.max(1,Math.min(10,Math.round(1+9*ok/tot))),atomicCorrect:ok,atomicTotal:tot,practiceStarted:false});
+  }catch(e){}
+}
   function anunta(sinc) {
     try {
       if (window.Prezenta && window.Prezenta.eveniment) {
@@ -676,6 +685,10 @@ textarea.cod{min-height:180px;resize:vertical;line-height:1.4}
   window.addEventListener('load', function () {
     setTimeout(function () { if (rezultate().every(function (r) { return r.ok; })) { var era = S.gata; S.gata = true; scrie(); anunta(era); } }, 1500);
   });
+  /* scorul de pe fișă după ce prezenta.js știe cine e elevul (vezi scorLaProfesor) */
+  function scorAcum() { var n = 0; rezultate().forEach(function (r) { if (r.ok) n++; }); scorLaProfesor(n, TOT); }
+  window.addEventListener('prezenta', scorAcum);
+  window.addEventListener('load', function () { setTimeout(scorAcum, 1500); });
   void n0;
 })();
 </script>

@@ -544,6 +544,7 @@ function actualizeaza(){
     var c=$('contor-s'+s.nr);if(c){c.textContent=f+' din '+n+' pași';c.classList.toggle('gata',f===n)}
   });
   $('pasi-tot').textContent='Pași bifați de tine: '+fac+' din '+tot+' · teste bifate: '+nrOk()+' din '+TESTE.length;
+  scorLaProfesor(nrOk(),TESTE.length);
   $('gata').classList.toggle('vede',totiOk());
   if(S.prima)$('prima').textContent='Prima încercare: '+S.prima.scor+' din '+S.prima.din+' (la ora '+ora(new Date(S.prima.cand))+').';
   else $('prima').textContent='';
@@ -557,6 +558,14 @@ function autoRez(){
   else if(nu.length)t+=' De reluat (se reevaluează): '+nu.join('; ')+'.';
   $('rez-auto').textContent=t;
 }
+/* SCORUL ȘI FĂRĂ FINAL (05.11.2026, el: „să permită vizualizarea scorului și dacă nu termină”): testele bifate pleacă la
+   profesor ca NOTĂ pe pagina fișei (Prezenta.nota, ca la lecții: pleacă doar când nota se schimbă; detaliile „atomic N/M” =
+   teste bifate din total). Nota = 1 din oficiu + 9 × bifate/total. Nimic până la primul test bifat. Vezi _unelte/scor_partial.py */
+function scorLaProfesor(ok,tot){
+  try{ if(!(window.Prezenta&&window.Prezenta.nota)||!(tot>0)||!(ok>0))return;
+    window.Prezenta.nota({grade:Math.max(1,Math.min(10,Math.round(1+9*ok/tot))),atomicCorrect:ok,atomicTotal:tot,practiceStarted:false});
+  }catch(e){}
+}
 /* ---------------- anunțul de final (ca în jocuri/_motor/motor.js: tip „joc-gata”) ---------------- */
 function anunta(sinc){
   try{if(window.Prezenta){var e={tip:'joc-gata',joc:JOC,titlu:TITLU,din:TESTE.length,stele:nrOk(),max:TESTE.length};if(sinc)e.sinc=1;window.Prezenta.eveniment(e)}}catch(_){}
@@ -569,6 +578,9 @@ function dupaSchimbare(){
 
 /* ---------------- pornirea ---------------- */
 foaie();sarcini();aplica();actualizeaza();eraGata=totiOk();
+/* scorul de pe fișă după ce prezenta.js știe cine e elevul (vezi scorLaProfesor) */
+function scorAcum(){scorLaProfesor(nrOk(),TESTE.length)}
+addEventListener('prezenta',scorAcum);addEventListener('load',function(){setTimeout(scorAcum,1500)});
 if(eraGata){var incercari=0,t=setInterval(function(){incercari++;if(window.Prezenta||incercari>20){clearInterval(t);if(window.Prezenta)anunta(true)}},1000)}
 
 document.addEventListener('input',function(ev){

@@ -301,6 +301,14 @@ function evalueaza(){ var o = {}; Object.keys(V).forEach(function(id){ o[id] = V
 function nrOk(o){ return C.teste.filter(function(t){ return o[t.id].ok; }).length; }
 function ora(ts){ try{ return new Date(ts).toLocaleTimeString('ro-RO', {hour:'2-digit', minute:'2-digit'}); }catch(e){ return ''; } }
 
+/* SCORUL ȘI FĂRĂ FINAL (05.11.2026, el: „să permită vizualizarea scorului și dacă nu termină”): testele bifate pleacă la
+   profesor ca NOTĂ pe pagina fișei (Prezenta.nota, ca la lecții: pleacă doar când nota se schimbă; detaliile „atomic N/M” =
+   teste bifate din total). Nota = 1 din oficiu + 9 × bifate/total. Nimic până la primul test bifat. Vezi _unelte/scor_partial.py */
+function scorLaProfesor(ok,tot){
+  try{ if(!(window.Prezenta&&window.Prezenta.nota)||!(tot>0)||!(ok>0))return;
+    window.Prezenta.nota({grade:Math.max(1,Math.min(10,Math.round(1+9*ok/tot))),atomicCorrect:ok,atomicTotal:tot,practiceStarted:false});
+  }catch(e){}
+}
 /* ---- anunțul de final, ca în jocuri/_motor/motor.js (raporteaza + tip:'joc-gata') ---- */
 function anunta(sinc){
   try{ if(window.Prezenta) window.Prezenta.eveniment(Object.assign({tip:'joc-gata', joc:C.joc, titlu:C.titlu_raport, din:N,
@@ -321,6 +329,7 @@ function deseneaza(){
     if(li){ li.classList.toggle('ok', r.ok); li.classList.toggle('rau', arataRau); }
   });
   $('#nr-ok').textContent = ok;
+  scorLaProfesor(ok, N);
   var toate = ok === N;
   $('#gata').hidden = !toate;
   if(toate && !S.gata){ S.gata = Date.now(); save(); anunta(false); }
@@ -384,6 +393,10 @@ $('#sterge').addEventListener('click', function(){ sterge(this); });
 function sincron(){ if(S.gata && nrOk(evalueaza()) === N) anunta(true); }
 addEventListener('load', sincron);
 addEventListener('prezenta', sincron);
+/* scorul de pe fișă după ce prezenta.js știe cine e elevul (vezi scorLaProfesor) */
+function scorAcum(){ scorLaProfesor(nrOk(evalueaza()), N); }
+addEventListener('prezenta', scorAcum);
+addEventListener('load', function(){ setTimeout(scorAcum, 1500); });
 })();
 </script>
 <script src="/assets/js/site-credit.js" defer></script>
