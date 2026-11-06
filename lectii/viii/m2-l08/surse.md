@@ -112,11 +112,11 @@ Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8
 - **laboratorul, pasul 6 (=AVERAGE(B2:D2) în E2, apoi mânerul în jos până la E6)** (`l08-r6-depanare`): „Dacă nu-ți iese” (`<details>`). Aici elevul scrie singur numele funcției AVERAGE; cazul „nume de funcție greșit” e general (fără celule). Pentru tragerea în jos, trimiterea la cazurile 06.
   - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `04-nume-de-functie-gresit`.
   - Lăsat deoparte `04-celule-goale-div0`: pașii cazului cer =AVERAGE(B2:B4), din tabelul tutorialului; aici formula e =AVERAGE(B2:D2).
-  - Lăsat deoparte `04-virgula-in-loc-de-punct-si-virgula`: formulele lecției 8 folosesc doar zone cu „:” (B2:D2), fără valori despărțite prin ; sau ,; pașii cazului cer =AVERAGE(B2;B4).
+  - Lăsat deoparte `04-virgula-in-loc-de-punct-si-virgula`: formulele lecției 8 folosesc doar zone cu „:” (B2:D2), fără valori despărțite prin ; sau ,; pașii cazului cer =AVERAGE(B2;B3;B4), cu celulele tutorialului.
   - Trimitere la „Dacă nu-ți iese” din `06-maner-umplere` (pusă), cu nota: „Acolo formula se trage în jos din D2; la tine, din E2 până la E6”.
 - **„Acum la calculatorul din laborator”, textul de deasupra pașilor** (`l08-intro-exersare`): legătura opțională spre registrul de exersare (`exersare.html#04-media-functie`). Registrul de exersare are câte o foaie pe film (04, 05, 06 sunt gesturile lecției). E opțional: nu înlocuiește lectia8_note.xlsx.
 
 Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
 
-Amprenta cazurilor folosite (sha1, primele 12): `d14a21f8d7a9`.
+Amprenta cazurilor folosite (sha1, primele 12): `9f5abd6db21e`.
 <!-- TUTORIALE-EXCEL:END surse -->

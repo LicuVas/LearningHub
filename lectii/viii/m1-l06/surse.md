@@ -63,12 +63,14 @@ Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8
 
 - **pasul „Lățimea coloanei și înălțimea rândului” (pasul 2 din 6), „Uite cum”** (`l06-p2-film`): legătura „Vezi film” spre `01-latime-coloana` („Cum lărgești o coloană”), `02-potrivire-automata` („Lățimea potrivită automat”). Pasul predă exact cele două gesturi filmate: tragerea de linia dintre litere și dublu-clicul pe ea.
 - **pasul „Borduri, culoare de umplere și stiluri” (pasul 5 din 6), „Uite cum”** (`l06-p5-film`): legătura „Vezi film” spre `07-aldin-ctrl-b` („Scris îngroșat cu Ctrl+B”). Pasul predă scrisul îngroșat cu butonul B; filmul arată același rezultat cu tastele Ctrl+B. E un adaos: butonul B rămâne ce se cere.
-- **laboratorul, pasul 7 (dublu-clic pe linia dintre A și B, apoi dintre C și D)** (`l06-r7-depanare`): „Dacă nu-ți iese” (`<details>`). Pasul 7 e locul unde elevul dă dublu-clic în Excel-ul adevărat. Cazurile 02 vorbesc chiar de coloana A și de linia A|B; în fișierul lecției titlul lung stă în A1 (neîmbinat până la pasul 3), iar datele din C se văd ca ####.
-  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `02-clic-pe-litera-coloanei`, `02-dublu-clic-pe-linia-gresita`, `02-coloana-prea-lata`, `01-diezi-in-loc-de-data`.
+- **laboratorul, pasul 7 (dublu-clic pe linia dintre A și B, apoi dintre C și D)** (`l06-r7-depanare`): „Dacă nu-ți iese” (`<details>`). Pasul 7 e locul unde elevul dă dublu-clic în Excel-ul adevărat. Cazurile 02 puse vorbesc chiar de coloana A și de linia A|B, iar datele din C se văd ca #### (cazul 01-diezi-in-loc-de-data).
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `02-clic-pe-litera-coloanei`, `02-dublu-clic-pe-linia-gresita`, `01-diezi-in-loc-de-data`.
   - Lăsat deoparte `01-alta-coloana-largita`: descrie o tragere de linie; pasul 7 cere dublu-clic (greșeala cu linia B|C e acoperită de 02-dublu-clic-pe-linia-gresita).
   - Lăsat deoparte `01-text-taiat-de-vecina`: exemplul cazului („Mere iona…”, B2) e din tabelul tutorialului; numele tăiate din coloana A le acoperă 02-dublu-clic-pe-linia-gresita.
+  - Lăsat deoparte `02-coloana-prea-lata`: pus aici pe 06.11 și scos pe 07.11.2026, fiindcă rezolvarea cazului (tragi linia înapoi, titlul rămâne cum e) merge împotriva lecției, care îmbină titlul peste A1:D1 la pasul 3, înainte de dublu-clic. Dublu-clicul nu ține cont de titlul îmbinat (A19 din afirmatii.json, Excel real: coloana A 33,78 cu titlul în A1, 15,22 după îmbinare), deci A se face foarte lată doar dacă elevul a sărit pasul 3; pentru asta blocul are nota lecției de mai jos.
+  - Notă a lecției, pusă ca paragraf în „Dacă nu-ți iese” (nu e un caz filmat): „Coloana A s-a făcut foarte lată după dublu-clic? Înseamnă că titlul din A1 nu e încă îmbinat, iar dublu-clicul a potrivit coloana după el. Faci acum pasul 3 (îmbini titlul peste A1:D1), apoi dai din nou dublu-clic pe linia dintre A și B: coloana A se potrivește după nume”.
 
 Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
 
-Amprenta cazurilor folosite (sha1, primele 12): `d14a21f8d7a9`.
+Amprenta cazurilor folosite (sha1, primele 12): `9f5abd6db21e`.
 <!-- TUTORIALE-EXCEL:END surse -->
