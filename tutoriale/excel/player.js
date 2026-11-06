@@ -160,10 +160,21 @@
   bInainte.addEventListener('click', urmator);
   bDinNou.addEventListener('click', function () { mergiLa(0); });
   v.addEventListener('click', comuta);
+  // Pe telefon lista pasilor sta sub film: apasat acolo, pasul ar rula deasupra ecranului, nevazut. Daca filmul nu se
+  // vede INTREG, il aducem intai sus in ecran; pe ecran mare, cu filmul vizibil, pagina nu se misca.
+  function filmInEcran() {
+    var r = v.getBoundingClientRect();
+    var h = window.innerHeight || document.documentElement.clientHeight;
+    return r.top >= 0 && r.bottom <= h;
+  }
+  function aduFilmul() {
+    if (filmInEcran()) return;
+    try { v.scrollIntoView({ block: 'start' }); } catch (e) { v.scrollIntoView(true); }
+  }
   for (var k = 0; k < itemi.length; k++) {
     (function (pas) {
       var b = itemi[pas].querySelector('button');
-      if (b) b.addEventListener('click', function () { mergiLa(pas + 1); });
+      if (b) b.addEventListener('click', function () { aduFilmul(); mergiLa(pas + 1); });
     })(k);
   }
   if (cbSingur) cbSingur.addEventListener('change', function () {
