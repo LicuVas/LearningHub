@@ -86,3 +86,20 @@ Abateri rămase, spuse aici (nu ascunse):
 - **#VALUE! / #NAME? în Excel cu interfața în română**: calibrarea (`calibrare/meniuri_ro_en.json`) le are „NESIGUR” (#VALOARE! / #NUME? apar pe paginile Microsoft ro-ro, probabil traducere a site-ului). Materialul profesorului scrie „#VALUE! / #VALOARE!”. Lecția scrie codurile din Excel-ul probat (engleză). Proba de laborator: `=1+"a"` și Enter (fișa `de_confirmat_in_laborator.md`, pct. 10).
 - **Setările regionale din laborator**: pe setări englezești, 8,5 apare 8.5 (probat pe separatorii Excel-ului, nu pe Windows englezesc); lecția o spune o dată, în aplicația reală. Foaia din pagină are doar setări românești.
 - **Versiunea de Excel din laborator** (365 sau 2016/2019): schimbă doar ce apare la `=A2:B2`, pe care lecția nu-l promite.
+
+<!-- TUTORIALE-EXCEL:START surse -->
+## Legături spre tutoriale (06.11.2026, proba)
+
+Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8z6.pages.dev), nu pe situl elevilor. Tutorialele Excel filmate stau în `tutoriale/excel/`, copiate 1:1 din `C:/00/Projects/DemoGif/site/` de `C:/00/Projects/DemoGif/_unelte/copiaza_in_lh.py`, care rescrie și bucățile de mai jos (între marcajele TUTORIALE-EXCEL START/END; nu le edita de mână). Locurile și motivele: `C:/00/Projects/DemoGif/_unelte/lh_locuri.json`. Toate legăturile se deschid într-o filă nouă (`target="_blank" rel="noopener"`), cu textul T55. Pașii NU s-au renumerotat; `afirmatii.json`, `capturi_lipsa.json` și `profil.json` rămân cum erau. Capturile statice rămân: filmul e un adaos, nu un înlocuitor (regula 4).
+
+- **pasul „Prima formulă: semnul = și adresele” (pasul 3 din 6), „Uite cum”** (`l07-p3-film`): legătura „Vezi film” spre `03-formula-inmultire` („Cum scrii o formulă”). Același gest: semnul =, o celulă, *, altă celulă, Enter.
+- **laboratorul, pasul 3 (=A2*B2 în C2, rezultatul 600)** (`l07-r3-depanare`): „Dacă nu-ți iese” (`<details>`). Niciun caz al tutorialului 03 nu se potrivește literal (celulele lui sunt altele), deci pasul trimite la secțiunea „Dacă nu-ți iese” a tutorialului, cu nota despre celule.
+  - Lăsat deoparte `03-fara-egal`: pașii cazului spun să scrii =B2*C2; în lecție formula stă chiar în C2, deci =B2*C2 s-ar referi la propria celulă.
+  - Lăsat deoparte `03-x-in-loc-de-stelut`: la fel: pașii cazului cer =B2*C2, iar în lecție formula e în C2.
+  - Lăsat deoparte `03-celula-format-text`: în lecție registrul e nou (Ctrl+N), cu celule obișnuite; cazul pornește de la o celulă formatată Text dinainte și arată =B2*C2.
+  - Trimitere la „Dacă nu-ți iese” din `03-formula-inmultire` (pusă), cu nota: „Acolo formula este =B2*C2 și stă în D2; la tine formula este =A2*B2 și stă în C2”.
+
+Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
+
+Amprenta cazurilor folosite (sha1, primele 12): `d14a21f8d7a9`.
+<!-- TUTORIALE-EXCEL:END surse -->

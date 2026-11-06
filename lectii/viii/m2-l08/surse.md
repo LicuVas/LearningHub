@@ -91,3 +91,32 @@ Toate din Excel-ul real (`img/SURSE.json`: aplicația, ce arată, decupajul, sur
 - Bula de sub celulă pe setări englezești (cu `,`): nu am schimbat setările regionale ale calculatorului profesorului.
 - Gestul de tragere cu mouse-ul în Excel-ul real (mânerul, zona propusă înlocuită prin tragere): pe desktopul ascuns clicurile nu ajung; rezultatul tragerii mânerului e probat cu AutoFill, iar înlocuirea zonei prin tragere e comportamentul documentat de Microsoft pentru argumentele unei funcții („tastați A2:A4 (sau selectați celula A2 și glisați…)”, pagina SUM ro-ro din cache).
 - Banda Enable Editing la descărcarea din browser (preluată din lecția 6).
+
+<!-- TUTORIALE-EXCEL:START surse -->
+## Legături spre tutoriale (06.11.2026, proba)
+
+Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8z6.pages.dev), nu pe situl elevilor. Tutorialele Excel filmate stau în `tutoriale/excel/`, copiate 1:1 din `C:/00/Projects/DemoGif/site/` de `C:/00/Projects/DemoGif/_unelte/copiaza_in_lh.py`, care rescrie și bucățile de mai jos (între marcajele TUTORIALE-EXCEL START/END; nu le edita de mână). Locurile și motivele: `C:/00/Projects/DemoGif/_unelte/lh_locuri.json`. Toate legăturile se deschid într-o filă nouă (`target="_blank" rel="noopener"`), cu textul T55. Pașii NU s-au renumerotat; `afirmatii.json`, `capturi_lipsa.json` și `profil.json` rămân cum erau. Capturile statice rămân: filmul e un adaos, nu un înlocuitor (regula 4).
+
+- **pasul „Patru funcții: SUM, AVERAGE, MAX, MIN” (pasul 3 din 6), „Uite cum”** (`l08-p3-film`): legătura „Vezi film” spre `04-media-functie` („Media cu funcția AVERAGE”). Filmul arată media cu AVERAGE, una dintre cele patru funcții ale pasului.
+- **pasul „Butonul Σ: Însumare automată (AutoSum)” (pasul 5 din 6), „Uite cum”** (`l08-p5-film`): legătura „Vezi film” spre `05-suma-automata` („Suma cu un singur buton”). Același buton, Σ Însumare automată (AutoSum).
+- **pasul „Copiezi funcția: zona se mută cu ea” (pasul 6 din 6), „Uite cum”** (`l08-p6-film`): legătura „Vezi film” spre `06-maner-umplere` („Copiezi formula în jos”). Același gest: tragi de mânerul de umplere, iar formula se potrivește pe fiecare rând.
+- **laboratorul, pasul 3 (Σ ▾ Medie (Average) în B8)** (`l08-r3-depanare`): „Dacă nu-ți iese” (`<details>`). Pasul cere butonul Σ din panglică; cazul „panglica strânsă” e exact situația în care elevul nu-l găsește.
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `05-panglica-stransa`.
+  - Lăsat deoparte `05-numere-scrise-ca-text`: în lectia8_note.xlsx toate notele din B2:D6 sunt numere (verificat cu openpyxl), iar pașii cazului vorbesc de B2:B4.
+  - Lăsat deoparte `05-suma-sare-golul`: în lectia8_note.xlsx nu e nicio celulă goală între note; zona propusă de Σ e explicată chiar în pasul 3 (B2:B7, rescrisă B2:B6).
+- **laboratorul, pasul 5 (mânerul de umplere, din B10 spre dreapta până în D)** (`l08-r5-depanare`): „Dacă nu-ți iese” (`<details>`). Gestul e același (mânerul de umplere), dar celulele din cazuri sunt altele; pasul trimite la cazurile tutorialului, cu nota despre direcție și celule.
+  - Lăsat deoparte `06-numar-in-loc-de-formula`: celulele cazului (D2, 13,5, =B2*C2) sunt din tabelul tutorialului.
+  - Lăsat deoparte `06-selectie-in-loc-de-copiere`: pașii cazului pornesc din D2 și trag în jos; aici tragi din B10 spre dreapta.
+  - Lăsat deoparte `06-tras-prea-departe`: cazul vorbește de D5 și D4, din tabelul tutorialului.
+  - Trimitere la „Dacă nu-ți iese” din `06-maner-umplere` (pusă), cu nota: „Acolo formula se trage în jos, din D2; la tine tragi spre dreapta, din colțul lui B10”.
+- **laboratorul, pasul 6 (=AVERAGE(B2:D2) în E2, apoi mânerul în jos până la E6)** (`l08-r6-depanare`): „Dacă nu-ți iese” (`<details>`). Aici elevul scrie singur numele funcției AVERAGE; cazul „nume de funcție greșit” e general (fără celule). Pentru tragerea în jos, trimiterea la cazurile 06.
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `04-nume-de-functie-gresit`.
+  - Lăsat deoparte `04-celule-goale-div0`: pașii cazului cer =AVERAGE(B2:B4), din tabelul tutorialului; aici formula e =AVERAGE(B2:D2).
+  - Lăsat deoparte `04-virgula-in-loc-de-punct-si-virgula`: formulele lecției 8 folosesc doar zone cu „:” (B2:D2), fără valori despărțite prin ; sau ,; pașii cazului cer =AVERAGE(B2;B4).
+  - Trimitere la „Dacă nu-ți iese” din `06-maner-umplere` (pusă), cu nota: „Acolo formula se trage în jos din D2; la tine, din E2 până la E6”.
+- **„Acum la calculatorul din laborator”, textul de deasupra pașilor** (`l08-intro-exersare`): legătura opțională spre registrul de exersare (`exersare.html#04-media-functie`). Registrul de exersare are câte o foaie pe film (04, 05, 06 sunt gesturile lecției). E opțional: nu înlocuiește lectia8_note.xlsx.
+
+Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
+
+Amprenta cazurilor folosite (sha1, primele 12): `d14a21f8d7a9`.
+<!-- TUTORIALE-EXCEL:END surse -->

@@ -55,3 +55,20 @@ Reparațiile, una câte una, cu dovada: `_verificare/reparatii.md`. Probe noi: `
 - `import pywinauto` în procesul care ține obiecte COM pywin32 le strică („Object is not connected to server”): UI Automation într-un proces separat (`_proba/uia_ajutor.py`).
 - Excel pe desktop ascuns respinge apelurile cât e ocupat; pywin32 le arată ca AttributeError — le reîncerci (`Rx` din `capturi_ascuns.py`).
 - În emularea Playwright, o tragere cu degetul prin CDP se termină în punctul (0,0), iar Chromium înghite următoarea atingere ca „oprire de fling”; proba pune o atingere neutră între ele (`_proba/depanare_tel.py`).
+
+<!-- TUTORIALE-EXCEL:START surse -->
+## Legături spre tutoriale (06.11.2026, proba)
+
+Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8z6.pages.dev), nu pe situl elevilor. Tutorialele Excel filmate stau în `tutoriale/excel/`, copiate 1:1 din `C:/00/Projects/DemoGif/site/` de `C:/00/Projects/DemoGif/_unelte/copiaza_in_lh.py`, care rescrie și bucățile de mai jos (între marcajele TUTORIALE-EXCEL START/END; nu le edita de mână). Locurile și motivele: `C:/00/Projects/DemoGif/_unelte/lh_locuri.json`. Toate legăturile se deschid într-o filă nouă (`target="_blank" rel="noopener"`), cu textul T55. Pașii NU s-au renumerotat; `afirmatii.json`, `capturi_lipsa.json` și `profil.json` rămân cum erau. Capturile statice rămân: filmul e un adaos, nu un înlocuitor (regula 4).
+
+- **pasul „Lățimea coloanei și înălțimea rândului” (pasul 2 din 6), „Uite cum”** (`l06-p2-film`): legătura „Vezi film” spre `01-latime-coloana` („Cum lărgești o coloană”), `02-potrivire-automata` („Lățimea potrivită automat”). Pasul predă exact cele două gesturi filmate: tragerea de linia dintre litere și dublu-clicul pe ea.
+- **pasul „Borduri, culoare de umplere și stiluri” (pasul 5 din 6), „Uite cum”** (`l06-p5-film`): legătura „Vezi film” spre `07-aldin-ctrl-b` („Scris îngroșat cu Ctrl+B”). Pasul predă scrisul îngroșat cu butonul B; filmul arată același rezultat cu tastele Ctrl+B. E un adaos: butonul B rămâne ce se cere.
+- **laboratorul, pasul 7 (dublu-clic pe linia dintre A și B, apoi dintre C și D)** (`l06-r7-depanare`): „Dacă nu-ți iese” (`<details>`). Pasul 7 e locul unde elevul dă dublu-clic în Excel-ul adevărat. Cazurile 02 vorbesc chiar de coloana A și de linia A|B; în fișierul lecției titlul lung stă în A1 (neîmbinat până la pasul 3), iar datele din C se văd ca ####.
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `02-clic-pe-litera-coloanei`, `02-dublu-clic-pe-linia-gresita`, `02-coloana-prea-lata`, `01-diezi-in-loc-de-data`.
+  - Lăsat deoparte `01-alta-coloana-largita`: descrie o tragere de linie; pasul 7 cere dublu-clic (greșeala cu linia B|C e acoperită de 02-dublu-clic-pe-linia-gresita).
+  - Lăsat deoparte `01-text-taiat-de-vecina`: exemplul cazului („Mere iona…”, B2) e din tabelul tutorialului; numele tăiate din coloana A le acoperă 02-dublu-clic-pe-linia-gresita.
+
+Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
+
+Amprenta cazurilor folosite (sha1, primele 12): `d14a21f8d7a9`.
+<!-- TUTORIALE-EXCEL:END surse -->
