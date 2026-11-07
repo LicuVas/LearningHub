@@ -79,3 +79,22 @@ Fiecare probă și-a pornit propria instanță (`EXCEL.EXE /x`, PID în JSON) ș
 
 ## Lecția folosită și la alte clase (01.10.2026)
 Profesorul folosește lecția și la XII D, AMF1/IF etc. Testul numelui primea la clasă doar 8/VIII, așa că `Popescu_Ana_XIID_lectia3` nu se bifa. Acum clasa e orice bucată cu cel puțin o literă sau cifră între prenume și `lectia3` (`_sim/registru-foi.js`, `potrivesteModel`); fără clasă tot pică. Ferestrele de salvare ștergeau pe tăcute semnele \ / : * ? " < > | (AMF1/IF devenea AMF1IF). Acum nu salvează și spun, sub nume, ce semn ai scris și ce să schimbi (pe toate drumurile: Ctrl+S, Enter, Ctrl+W, Save As, F12 cu CSV/PDF). **Textul acela e al lecției, NU mesajul exact al Excel-ului (neprobat în Excel).** Probe: `_proba/proba_model.js` (30 de cazuri, 0 greșite; versiunea veche: 8), `_proba/proba_clase.py` (30/30 în browser; versiunea veche: 16 probleme), `_proba/proba_gesturi.py` (143/143), `test_joc` TRECUT. Poarta de lansare independentă: LANSEAZA (175 de cazuri proprii, 0 GRAV/MAJOR, 3 MINORE, toate reparate și reprobate: 103/103 în browser).
+
+<!-- TUTORIALE-EXCEL:START surse -->
+## Legături spre tutoriale (07.11.2026, proba)
+
+Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8z6.pages.dev), nu pe situl elevilor. Tutorialele Excel filmate stau în `tutoriale/excel/`, copiate 1:1 din `C:/00/Projects/DemoGif/site/` de `C:/00/Projects/DemoGif/_unelte/copiaza_in_lh.py`, care rescrie și bucățile de mai jos (între marcajele TUTORIALE-EXCEL START/END; nu le edita de mână). Locurile și motivele: `C:/00/Projects/DemoGif/_unelte/lh_locuri.json`. Toate legăturile se deschid într-o filă nouă (`target="_blank" rel="noopener"`), cu textul T55. Pașii NU s-au renumerotat; `afirmatii.json`, `capturi_lipsa.json` și `profil.json` rămân cum erau. Capturile statice rămân: filmul e un adaos, nu un înlocuitor (regula 4).
+
+- **pasul „Foile: foaie nouă, trecerea, numele” (pasul 4 din 5), „Uite cum”** (`l03-p4-film`): legătura „Vezi film” spre `16-redenumire-foaie` („Redenumești o foaie”). Pasul predă redenumirea: dublu clic pe filă, numele vechi se selectează, scrii direct numele nou și apeși Enter. Filmul face exact asta, pe Sheet1 → Octombrie, ca laboratorul. Butonul + și mutarea filei vin cu tutorialul 17 (etapa E).
+- **laboratorul, pasul 2 (dublu clic pe Sheet1, Octombrie)** (`l03-r2-depanare`): „Dacă nu-ți iese” (`<details>`). Cazul e jucat în Excel-ul real: un clic prin mesaj pe fila Sheet1 lasă focusul pe grilă, iar Octombrie ajunge în celula activă; Ctrl+Z o golește (măsurat).
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `16-un-singur-clic`.
+  - Lăsat deoparte `16-nume-cu-bara`: la rândul 2 numele cerut e Octombrie, fără bară; cazul (06/11 devine 0611) rămâne pe pagina tutorialului.
+  - Lăsat deoparte `16-nume-deja-luat`: la rândul 2 nu există încă altă foaie; cazul stă la rândul 3.
+- **laboratorul, pasul 3 (+, Noiembrie, +, Septembrie)** (`l03-r3-depanare`): „Dacă nu-ți iese” (`<details>`). Fereastra „That name is already taken” e jucată în Excel-ul real (dublu clic pe filă, scris, Enter prin mesaje); textul ei e citit prin UI Automation.
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `16-nume-deja-luat`.
+- **„Acum în Excel-ul adevărat”, textul de deasupra pașilor** (`l03-intro-exersare`): legătura opțională spre registrul de exersare (`exersare.html#16-redenumire-foaie`). Registrul de exersare are o foaie pentru redenumire (16 Redenumire, cu „✓ Gata” singur când fila se numește exact Octombrie). E opțional: laboratorul pornește tot de la un registru nou.
+
+Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
+
+Amprenta cazurilor folosite (sha1, primele 12): `cee21c4869b8`.
+<!-- TUTORIALE-EXCEL:END surse -->
