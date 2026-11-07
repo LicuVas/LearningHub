@@ -101,5 +101,5 @@ Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8
 
 Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
 
-Amprenta cazurilor folosite (sha1, primele 12): `b1017d40ad5f`.
+Amprenta cazurilor folosite (sha1, primele 12): `5c8b0b663488`.
 <!-- TUTORIALE-EXCEL:END surse -->

@@ -47,3 +47,21 @@ Foaia din `_motor\tip-excel.js`, neschimbată, plus: clic dreapta (celulă, rân
 
 ## Corectură 28.09.2026 (dirijorul)
 Grupul de pe fila Pornire (Home) se numește **Clipboard** și în Office-ul românesc (paginile Microsoft ro-ro: „în grupul Clipboard de pe fila Pornire”; `calibrare\meniuri_ro_en.json`). „Memorie temporară” era o traducere a unui sit terț, nu numele de pe panglică. Găsit de judecătorul lecției VIII/2; corectat în pagină (4 locuri), `afirmatii.json`, `profil.json`, `img\SURSE.json`.
+
+<!-- TUTORIALE-EXCEL:START surse -->
+## Legături spre tutoriale (07.11.2026, proba)
+
+Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8z6.pages.dev), nu pe situl elevilor. Tutorialele Excel filmate stau în `tutoriale/excel/`, copiate 1:1 din `C:/00/Projects/DemoGif/site/` de `C:/00/Projects/DemoGif/_unelte/copiaza_in_lh.py`, care rescrie și bucățile de mai jos (între marcajele TUTORIALE-EXCEL START/END; nu le edita de mână). Locurile și motivele: `C:/00/Projects/DemoGif/_unelte/lh_locuri.json`. Toate legăturile se deschid într-o filă nouă (`target="_blank" rel="noopener"`), cu textul T55. Pașii NU s-au renumerotat; `afirmatii.json`, `capturi_lipsa.json` și `profil.json` rămân cum erau. Capturile statice rămân: filmul e un adaos, nu un înlocuitor (regula 4).
+
+- **pasul „Copierea: Copiere (Copy), apoi Lipire (Paste)” (pasul 3 din 7), „Uite cum”** (`l04-p3-film`): legătura „Vezi film” spre `14-copiere-ctrl-c-v` („Copiezi un tabel cu Ctrl+C și Ctrl+V”). Pasul predă Ctrl+C, clic pe colțul locului nou, Ctrl+V, Esc: aceiași pași ca în film, pe aceleași celule (A1:B5 copiat în D1). Filmul nu arată marginea punctată: Excel-ul filmat nu folosește clipboard-ul, iar textul îi spune elevului că la el apare.
+- **pasul „Mutarea: Decupare (Cut), apoi Lipire (Paste)” (pasul 5 din 7), „Uite cum”** (`l04-p5-film`): legătura „Vezi film” spre `15-mutare-ctrl-x-v` („Muți un tabel cu Ctrl+X și Ctrl+V”). Pasul predă Ctrl+X, clic pe colțul locului nou, Ctrl+V și locul vechi gol; filmul mută D1:E5 în G1, ca rândul 4 al laboratorului.
+- **laboratorul, pasul 3 (A1:B5 copiat în D1)** (`l04-r3-depanare`): „Dacă nu-ți iese” (`<details>`). Toate trei sunt jucate în Excel-ul real pe celulele rândului (A1:B5 → D1): două clicuri în loc de tragere, Ctrl+X în loc de Ctrl+C, colțul pus pe B1, peste tabel.
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `14-doua-clicuri`, `14-x-in-loc-de-c`, `14-lipit-peste-tabel`.
+- **laboratorul, pasul 4 (D1:E5 mutat în G1)** (`l04-r4-depanare`): „Dacă nu-ți iese” (`<details>`). Cazurile sunt jucate în Excel-ul real pe celulele rândului (D1:E5 → G1). Ciorna avea „a doua Lipire nu mai lipește nimic”: ține de clipboard-ul Windows, pe care filmarea nu-l atinge, deci n-a putut fi verificat în Excel; în locul lui, Ctrl+C în loc de Ctrl+X (tabelul rămâne și în D1:E5).
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `15-c-in-loc-de-x`, `15-doar-o-coloana`, `15-lipit-un-rand-mai-jos`.
+- **„Acum în Excel-ul adevărat”, textul de deasupra pașilor** (`l04-intro-exersare`): legătura opțională spre registrul de exersare (`exersare.html#14-copiere-ctrl-c-v`). Registrul de exersare are câte o foaie pe film (14 Copiere și 15 Mutare sunt gesturile lecției, cu „✓ Gata” singur). E opțional: pașii laboratorului rămân cei de azi.
+
+Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
+
+Amprenta cazurilor folosite (sha1, primele 12): `5c8b0b663488`.
+<!-- TUTORIALE-EXCEL:END surse -->
