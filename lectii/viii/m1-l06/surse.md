@@ -57,7 +57,7 @@ Reparațiile, una câte una, cu dovada: `_verificare/reparatii.md`. Probe noi: `
 - În emularea Playwright, o tragere cu degetul prin CDP se termină în punctul (0,0), iar Chromium înghite următoarea atingere ca „oprire de fling”; proba pune o atingere neutră între ele (`_proba/depanare_tel.py`).
 
 <!-- TUTORIALE-EXCEL:START surse -->
-## Legături spre tutoriale (06.11.2026, proba)
+## Legături spre tutoriale (07.11.2026, proba)
 
 Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8z6.pages.dev), nu pe situl elevilor. Tutorialele Excel filmate stau în `tutoriale/excel/`, copiate 1:1 din `C:/00/Projects/DemoGif/site/` de `C:/00/Projects/DemoGif/_unelte/copiaza_in_lh.py`, care rescrie și bucățile de mai jos (între marcajele TUTORIALE-EXCEL START/END; nu le edita de mână). Locurile și motivele: `C:/00/Projects/DemoGif/_unelte/lh_locuri.json`. Toate legăturile se deschid într-o filă nouă (`target="_blank" rel="noopener"`), cu textul T55. Pașii NU s-au renumerotat; `afirmatii.json`, `capturi_lipsa.json` și `profil.json` rămân cum erau. Capturile statice rămân: filmul e un adaos, nu un înlocuitor (regula 4).
 
@@ -72,5 +72,5 @@ Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8
 
 Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
 
-Amprenta cazurilor folosite (sha1, primele 12): `e2757219929e`.
+Amprenta cazurilor folosite (sha1, primele 12): `b1017d40ad5f`.
 <!-- TUTORIALE-EXCEL:END surse -->

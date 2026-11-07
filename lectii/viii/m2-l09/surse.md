@@ -101,3 +101,25 @@ Probate cu `_proba/proba_judecator.py` (1280 px + 390 px cu atingere, rețeaua b
 | n2 | mesajul ghilimelei fără pereche spunea mereu „There's a problem”, iar tabelul de mai sus spunea inexact că e70/e73 deschid fereastra de problemă | mesajul spune: fereastra de problemă SAU o corectură propusă, care poate fi greșită; rândul M5 de mai sus e corectat | `excelx-decizie.js`, verificarea 0; `surse.md` |
 | n3 | `=IF(B2<14);10;20)`: foaia spunea „Excel propune s-o scoată”, iar Excel arată fereastra de problemă (r20) | un `;` rămas în afara parantezelor → „Ai închis paranteza prea devreme…”, fereastra de problemă; `)` în plus doar la sfârșit păstrează „Excel propune s-o scoată” (e33, r25, r27, r34, r36) | `excelx-decizie.js`, verificarea 4c' |
 | n5 | antetul motorului pe telefon, legături de 23 px | NEREPARAT: e în motor (`jocuri/_motor`), comun tuturor lecțiilor; de reparat de proprietarul motorului | — |
+
+<!-- TUTORIALE-EXCEL:START surse -->
+## Legături spre tutoriale (07.11.2026, proba)
+
+Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8z6.pages.dev), nu pe situl elevilor. Tutorialele Excel filmate stau în `tutoriale/excel/`, copiate 1:1 din `C:/00/Projects/DemoGif/site/` de `C:/00/Projects/DemoGif/_unelte/copiaza_in_lh.py`, care rescrie și bucățile de mai jos (între marcajele TUTORIALE-EXCEL START/END; nu le edita de mână). Locurile și motivele: `C:/00/Projects/DemoGif/_unelte/lh_locuri.json`. Toate legăturile se deschid într-o filă nouă (`target="_blank" rel="noopener"`), cu textul T55. Pașii NU s-au renumerotat; `afirmatii.json`, `capturi_lipsa.json` și `profil.json` rămân cum erau. Capturile statice rămân: filmul e un adaos, nu un înlocuitor (regula 4).
+
+- **pasul „Funcția IF: condiția și cele două rezultate” (pasul 2 din 5), „Uite cum”** (`l09-p2-film`): legătura „Vezi film” spre `08-functia-if-numere` („Funcția IF: o decizie într-o celulă”). Pasul predă IF cu trei părți despărțite de ;. Filmul scrie exact =IF(B2<14;10;20), formula din laborator, pe datele lui (vârstele 13, 14, 15, 12).
+- **pasul „Textul din rezultat: între ghilimele drepte” (pasul 3 din 5), „Uite cum”** (`l09-p3-film`): legătura „Vezi film” spre `09-functia-if-text` („Funcția IF cu text: ghilimelele drepte”). Pasul predă ghilimelele drepte; filmul scrie =IF(C2="da";"merge";"nu merge"), formula din laborator.
+- **laboratorul, pasul 3 (D2: =IF(B2<14;10;20), apoi D3, D4, D5)** (`l09-r3-depanare`): „Dacă nu-ți iese” (`<details>`). Cazurile 08 sunt filmate pe registrul laboratorului (B2:C5 identic, vârsta 14 chiar în B3): fără =, DACĂ în loc de IF (ambele în D2) și <= în D3, unde rândul cere =IF(B3<14;10;20) și 20.
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `08-fara-egal`, `08-daca-in-loc-de-if`, `08-semnul-la-limita`.
+  - Lăsat deoparte `09-virgula-in-loc-de-punct-si-virgula`: e filmat pe E2, cu formula cu text, iar pașii lui cer =IF(C2="da";…); rândul 3 spune deja singur ce faci când apare fereastra There's a problem with this formula (virgulă în loc de ;). Cazul e pus la rândul 4, unde celula și formula se potrivesc.
+- **laboratorul, pasul 4 (E2: =IF(C2="da";"merge";"nu merge"))** (`l09-r4-depanare`): „Dacă nu-ți iese” (`<details>`). Cele trei greșeli cu textul (fără ghilimele, ghilimele „ ”, virgulă în loc de ;) sunt filmate chiar în E2, cu formula rândului; ce apare în Excel e citit din Excel-ul real.
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `09-fara-ghilimele`, `09-ghilimele-romanesti`, `09-virgula-in-loc-de-punct-si-virgula`.
+- **laboratorul, pasul 5 (testul la limită: 14 în B5, D5 trebuie să devină 20)** (`l09-r5-depanare`): „Dacă nu-ți iese” (`<details>`). Dacă D5 rămâne 10 la 14 ani, semnul din formulă e <= în loc de <. Niciun caz nu are celulele rândului, deci blocul trimite la „Dacă nu-ți iese” din tutorialul 08, cu nota despre rând.
+  - Lăsat deoparte `08-semnul-la-limita`: pașii cazului vorbesc de D3 (vârsta 14 e acolo în B3), iar aici limita se probează în B5 și D5; cazul e pus la rândul 3, unde D3 se potrivește.
+  - Trimitere la „Dacă nu-ți iese” din `08-functia-if-numere` (pusă), cu nota: „Acolo greșeala de la limită se vede în D3, unde vârsta e 14; la tine se vede în D5, după ce scrii 14 în B5”.
+- **„Acum la calculatorul din laborator”, textul de deasupra pașilor** (`l09-intro-exersare`): legătura opțională spre registrul de exersare (`exersare.html#08-functia-if-numere`). Registrul de exersare are câte o foaie pe film (8 IF și 9 IF text sunt gesturile lecției; pe foaia 8, vârsta 14 e chiar în B2, deci <= dă „încă nu”). E opțional: nu înlocuiește excursia_lectia9.xlsx.
+
+Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
+
+Amprenta cazurilor folosite (sha1, primele 12): `b1017d40ad5f`.
+<!-- TUTORIALE-EXCEL:END surse -->
