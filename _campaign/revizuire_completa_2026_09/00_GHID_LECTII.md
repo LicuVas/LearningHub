@@ -812,6 +812,13 @@ Cifre de reper: o lecție = 1-2 ore de autor + 20-40 min pe judecată, 2-6 judec
 - Muzica și scenele refolosite se COPIAZĂ (sha1 identic), nu se leagă, ca lecția să nu depindă de ordinea publicării. [surse: Evii:258; Evii:279]
 - Genericul cu autorii (VII/15: 15 cuvinte → final de 4 s în liniște, spus în pagină) rămâne de întrebat profesorul. [surse: C1:126]
 
+### 14. Prezentarea pe zone peste captură (`lectii/_sim/tur-captura.js`, 07.11.2026)
+- Când o captură are mai multe părți de învățat (zonele unei ferestre, filele panglicii), în locul imaginii statice cu chenare poate sta PREZENTAREA PE ZONE: elevul apasă Înainte / Înapoi (sau numerele, ← →), imaginea se mărește pe fiecare zonă, restul se estompează, iar dedesubt apar numele RO (EN) și ce face zona. Imaginea se poate mări (+, −, Ctrl + rotiță, ciupire) și trage. Filele panglicii se apasă și pun în imagine banda reală a filei; fila File arată ecranul ei, cu ieșirea prin săgeată. Butonul ⛶ e pentru videoproiector. Pilot: VIII/2, pașii „Fereastra Excel, pe zone” (`data-mod="zone"`) și „Panglica: file și grupuri” (`data-mod="panglica"`). [surse: cererea lui, 07.11.2026; contractul `AI_0\SECRETARY_V3\docs\contracte\2026-11-07_prezentare_zone_excel\contract.md`]
+- Folosire, fără cod nou: `<div class="tur-captura" data-tur="img/tur.json" data-mod="zone|panglica">` cu figura statică ÎNĂUNTRU. Figura rămâne când datele nu se încarcă și la tipărire. O altă lecție aduce doar JSON-ul și imaginile ei; formatul e scris în capul fișierului JS. [surse: contract R8, R9]
+- Dreptunghiurile (zone, file, grupuri, săgeata File) se citesc din UI Automation în ACEEAȘI rulare cu capturile, nu din ochi (VIII/2: `_proba/capturi_tur.py` → `_proba/fa_tur.py --scrie`). Banda unei file se lipește peste baza comună doar dacă, în afara benzii, captura e identică (0 pixeli diferiți; proba e în `fa_tur.py`). Excel pornește cu `/safe /x`, deci fără add-in-uri și fără personalizările panglicii. [surse: contract R5]
+- Numele grupurilor apar în română doar unde sunt deja folosite pe sit (Număr, Aliniere, Celule, Editare, Stiluri, Diagrame, Afișare); celelalte rămân cum scrie în captură, în engleză. Cuvântul „grup” apare doar de la pasul în care se predă: modul „zone” nu încadrează grupuri. Chenarele roșii (`#E4002B`) și numerele le desenează pagina, iar textul spune că le-am pus noi. [surse: contract I2; IV.1 §5]
+- Proba: `_proba/proba_tur.py --baza <sit>` (ultima linie 0) + pozele de telefon (360/390/412) PRIVITE. [surse: contract R1-R4, R6, R8]
+
 ## IV.2 Evaluarea și notarea
 
 ### 1. Nota la lucrare (regula în vigoare)
