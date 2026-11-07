@@ -8,6 +8,10 @@
        <figure class="captura">…imaginea statică…</figure>      ← rămâne dacă datele nu se încarcă și la tipărire
      </div>
    Componenta pornește singură (MutationObserver) oriunde apare elementul, și în textul refăcut de motor.
+   LISTA ZONELOR (opțional, modul zone): un <ol data-tc-zone> pus CHIAR înaintea elementului; al k-lea <li> = zona k.
+   Cuvintele <mark> (galbene) din el devin butoane care fac exact ce face butonul k de sub imagine (cererea lui, 07.11).
+   Un nume de zonă care NU e termen nou (deci fără <mark>) se leagă cu <span data-tc-leg>: e galben doar cât merge prezentarea.
+   Fără prezentare (date lipsă, tipar), lista rămâne text simplu.
 
    DATELE (JSON; dreptunghiurile [x,y,l,h] în pixelii capturii, MĂSURATE în Excel prin UI Automation, nu din ochi):
      baza:{src,w,h,alt}                         captura întreagă (căile, relative la JSON)
@@ -27,6 +31,8 @@
                                                 de exemplu pentru o aplicație fără nume de grup scrise jos
    MODURI: „zone” = pașii 0..N peste fereastră (filele panglicii se pot apăsa, fără grupuri: grupul se predă la pasul
    panglicii); „panglica” = doar panglica (vedere), grupurile filei deschise încadrate și prezentate pe rând.
+   CLIC ÎN IMAGINE (la fel în ambele moduri): pe o zonă / un grup, sau pe cercul lui cu număr = îl vezi de aproape; încă
+   un clic pe cel ales = înapoi la tot. Filele panglicii stau deasupra zonei panglicii. O tragere nu e clic.
    STAREA pentru probe: element.tcStare + atributele data-* de pe .tc (pas, fila, fisier, grup, scara). */
 (function(){
 'use strict';
@@ -62,8 +68,16 @@ const CSS=`
 .tc-nr{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:${ROSU};color:#fff;font:700 15px/26px "Figtree","Segoe UI",system-ui,sans-serif;
   text-align:center;transform:scale(var(--inv,1));box-shadow:0 0 0 2px #fff;pointer-events:none}
 .tc[data-ingust] .tc-nr{width:20px;height:20px;margin:-10px 0 0 -10px;font-size:12px;line-height:20px}
+.tc-nr.tc-nr-hot{pointer-events:auto;cursor:pointer}
+.tc-nr.tc-nr-hot::before{content:"";position:absolute;inset:-8px;border-radius:50%}   /* ținta degetului: 36-42 px de ecran */
+.tc-nr.tc-nr-hot:hover{box-shadow:0 0 0 2px #fff,0 0 0 4px ${ROSU}}
 .tc-hot{position:absolute;padding:0;margin:0;border:0;background:transparent;cursor:pointer;border-radius:3px;min-width:0;min-height:0}
 .tc-hot:hover{background:rgba(228,0,43,.10);box-shadow:inset 0 0 0 2px rgba(228,0,43,.75)}
+.tc-hot.tc-hot-acum:hover{background:transparent;box-shadow:none}   /* zona aleasă are deja chenarul; umbrită ar acoperi tot cadrul */
+.tc-leg{cursor:pointer;border-radius:3px}
+span.tc-leg{background:var(--mark,#FFE38A);color:var(--markInk,#15201A);padding:0 .15em}
+.tc-leg:hover,.tc-leg:focus-visible{outline:2px solid ${ROSU};outline-offset:1px}
+.tc-leg[aria-current="step"]{box-shadow:0 0 0 2px ${ROSU}}
 .tc-bara{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
 .tc-bara .tc-gol{flex:1 1 0;min-width:0}
 .tc button.tc-b{min-height:36px;min-width:36px;padding:4px 10px;border:1px solid var(--line,#CFD9D2);border-radius:8px;background:var(--paper,#fff);color:var(--ink,#15201A);
@@ -89,7 +103,7 @@ const CSS=`
 .tc:fullscreen .tc-cadru{flex:1 1 auto;aspect-ratio:auto!important;height:auto!important;min-height:0}
 .tc:fullscreen .tc-text{font-size:1.15rem}
 @media (prefers-reduced-motion:reduce){.tc-scena.tc-anim{transition:none}}
-@media print{.tur-captura.tc-pornit>.captura{display:block}.tur-captura .tc{display:none}}
+@media print{.tur-captura.tc-pornit>.captura{display:block}.tur-captura .tc{display:none}.tc-leg{box-shadow:none!important;outline:none!important}span.tc-leg{background:none;color:inherit;padding:0}}
 `;
 function css(){if(document.getElementById('tc-css'))return;const s=document.createElement('style');s.id='tc-css';s.textContent=CSS;document.head.appendChild(s)}
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -103,7 +117,7 @@ function date(url){return cache[url]||(cache[url]=fetch(url).then(r=>{if(!r.ok)t
 function monteaza(el){
   if(el.dataset.tcGata)return;el.dataset.tcGata='1';
   let url;try{url=new URL(el.dataset.tur,document.baseURI).href}catch(e){el.dataset.tcEroare='adresă';return}
-  date(url).then(D=>{try{construieste(el,D,url)}catch(e){el.dataset.tcEroare=String(e&&e.message||e);el.classList.remove('tc-pornit');const t=el.querySelector('.tc');if(t)t.remove()}})
+  date(url).then(D=>{try{construieste(el,D,url)}catch(e){el.dataset.tcEroare=String(e&&e.message||e);el.classList.remove('tc-pornit');const t=el.querySelector('.tc');if(t)t.remove();if(el.tcDezleaga)el.tcDezleaga()}})
     .catch(e=>{el.dataset.tcEroare=String(e&&e.message||e)});   // rămâne figura statică
 }
 
@@ -118,6 +132,7 @@ function construieste(el,D,url){
   const lume=()=>st.fisier?lumeTot:lumeMod;
   const fila=()=>PG&&PG.file.find(f=>f.id===st.fila);
   const grupuri=()=>{const f=fila();return f&&f.grupuri||[]};
+  const legate=[];   // cuvintele galbene din lista zonelor, legate de pași (vezi LISTA ZONELOR, sus)
 
   /* ---------- DOM ---------- */
   const tc=document.createElement('div');tc.className='tc';tc.dataset.mod=mod;
@@ -151,7 +166,7 @@ function construieste(el,D,url){
   const cadru=$('.tc-cadru'),scena=$('.tc-scena'),banda=$('.tc-banda'),fis=$('.tc-fis'),masca=$('.tc-masca'),rame=$('.tc-rame'),
         puncte=$('.tc-puncte'),rand=$('.tc-file'),pasi=$('.tc-pasi'),txt=$('.tc-text'),bIn=$('.tc-inapoi'),bUrm=$('.tc-inainte');
   scena.style.width=B.w+'px';scena.style.height=B.h+'px';
-  $('.tc-baza').addEventListener('error',()=>{el.dataset.tcEroare='imaginea de bază';el.classList.remove('tc-pornit');tc.remove()});
+  $('.tc-baza').addEventListener('error',()=>{el.dataset.tcEroare='imaginea de bază';el.classList.remove('tc-pornit');tc.remove();dezleaga()});
   const fsOk=!!(document.fullscreenEnabled&&tc.requestFullscreen);if(!fsOk)$('.tc-fs').hidden=true;
 
   /* rândul filelor (pe telefon, numele din captură sunt prea mici de apăsat) */
@@ -268,10 +283,13 @@ function construieste(el,D,url){
   function rama(r,cls){rame.appendChild(dreptunghi(r,'tc-halou'));rame.appendChild(dreptunghi(r,'tc-rama '+(cls||'')))}
   function gaura(r){if(!r){masca.setAttribute('d','');return}
     const p=4;masca.setAttribute('d',`M0 0H${B.w}V${B.h}H0Z M${r.x-p} ${r.y-p}V${r.y+r.h+p}H${r.x+r.w+p}V${r.y-p}Z`)}
-  function numar(n,r,la){const s=document.createElement('span');s.className='tc-nr';s.textContent=n;s.dataset.ax=la?la[0]:r.x+r.w;s.dataset.ay=la?la[1]:r.y+r.h/2;puncte.appendChild(s);pozNumere()}
+  function numar(n,r,la,fn,eticheta){const s=document.createElement('span');s.className='tc-nr';s.textContent=n;s.dataset.ax=la?la[0]:r.x+r.w;s.dataset.ay=la?la[1]:r.y+r.h/2;
+    if(fn){s.classList.add('tc-nr-hot');s.title=eticheta||'';s.onclick=e=>{e.stopPropagation();fn()}}
+    puncte.appendChild(s);pozNumere()}
   function pozNumere(){   // centrul cercului = mijlocul laturii din dreapta a chenarului, mutat înăuntru cât să nu iasă din imagine
-    const k=(tc.dataset.ingust?11:14)/(st.cam.s||1);
-    puncte.querySelectorAll('.tc-nr').forEach(e=>{const x=Math.min(+e.dataset.ax,B.w-k),y=Math.min(Math.max(+e.dataset.ay,k),B.h-k);e.style.left=x+'px';e.style.top=y+'px'})}
+    const s=st.cam.s||1,ing=!!tc.dataset.ingust;   // cercul apăsabil: înăuntru cât îi încape toată ținta (36 / 42 px)
+    puncte.querySelectorAll('.tc-nr').forEach(e=>{const k=(e.classList.contains('tc-nr-hot')?(ing?18:21):(ing?11:14))/s;
+      const x=Math.min(+e.dataset.ax,B.w-k),y=Math.min(Math.max(+e.dataset.ay,k),B.h-k);e.style.left=x+'px';e.style.top=y+'px'})}
   function buton(r,eticheta,fn,cls,min){const b=document.createElement('button');b.type='button';b.className='tc-hot '+(cls||'');b.tabIndex=-1;b.setAttribute('aria-hidden','true');
     b.title=eticheta;Object.assign(b.dataset,{x:r.x,y:r.y,w:r.w,h:r.h,min:min||''});b.onclick=e=>{e.stopPropagation();fn()};puncte.appendChild(b);pozTinte();return b}
   function pozTinte(){   // „h” = cel puțin 32 px de ecran pe înălțime (filele: pe lățime s-ar călca între ele); „hw” = pe ambele
@@ -297,13 +315,15 @@ function construieste(el,D,url){
     if(st.fisier){fis.style.width=B.w+'px';fis.style.height=B.h+'px';
       if(asteapta(fis,rel(PG.fisier.src))&&PG.fisier.inapoi){const r=R4(PG.fisier.inapoi);rama(r,'slab');buton(r,'Înapoi (ieși din fila File)',inchideFisier,'','hw')}
       return}
+    if(mod==='zone')Z.forEach((z,i)=>{const acum=st.pas===i+1;   // ca grupurile din modul panglica: clic = de aproape; pe cea aleasă = toată fereastra
+      buton(R4(z.r),acum?T.toataFereastra:`${z.nr}. ${z.titlu}`,()=>mergi(acum?0:i+1),'tc-hot-zona'+(acum?' tc-hot-acum':''))});
     if(filePermise()){   // filele panglicii, apăsabile în imagine (în modul zone: doar la pasul panglicii)
       PG.file.forEach(x=>buton(R4(x.r),nume(x).replace(/<[^>]+>/g,''),()=>alegeFila(x.id),'tc-hot-fila','h'));
       if(PG.fisier&&PG.fisier.r)buton(R4(PG.fisier.r),'Fișier (File)',deschideFisier,'tc-hot-fila','h');
     }
     if(mod==='zone'){
-      if(st.pas===0)Z.forEach(z=>{const r=R4(z.r);rama(r,'slab');numar(z.nr,r,z.nr_la)});
-      else{const z=Z[st.pas-1],r=R4(z.r);gaura(r);rama(r);numar(z.nr,r,z.nr_la);if(z.detaliu)rama(R4(z.detaliu),'punct')}
+      if(st.pas===0)Z.forEach((z,i)=>{const r=R4(z.r);rama(r,'slab');numar(z.nr,r,z.nr_la,()=>mergi(i+1),`${z.nr}. ${z.titlu}`)});
+      else{const z=Z[st.pas-1],r=R4(z.r);gaura(r);rama(r);numar(z.nr,r,z.nr_la,()=>mergi(0),T.toataFereastra);if(z.detaliu)rama(R4(z.detaliu),'punct')}
     }else{
       if(!gata)return;   // chenarele grupurilor doar peste banda lor (nu peste fila de dinainte, cât se încarcă)
       const G=grupuri();
@@ -351,6 +371,7 @@ function construieste(el,D,url){
     // rândul filelor: la pasul panglicii (modul zone) sau mereu (modul panglica)
     const zArat=filePermise()||st.fisier;
     rand.hidden=!PG||!zArat;
+    legate.forEach(m=>{if(+m.dataset.tcPas===st.pas&&!st.fisier)m.setAttribute('aria-current','step');else m.removeAttribute('aria-current')});
     rand.querySelectorAll('button[data-fila]').forEach(b=>b.setAttribute('aria-pressed',String(st.fisier?b.dataset.fila===PG.fisier.id:(!st.fisier&&b.dataset.fila===st.fila))));
   }
   pasi.addEventListener('click',e=>{const b=e.target.closest('button[data-pas]');if(!b)return;mergi(+b.dataset.pas)});
@@ -389,12 +410,28 @@ function construieste(el,D,url){
     el.tcStare={mod,pas:st.pas,fila:st.fila,fisier:st.fisier,grup:st.grup,cam:{...st.cam},fit:st.fit,cadru:V(),
       banda:banda.hidden?null:banda.getAttribute('src'),lume:lume()};
   }
+  function spre(n){   // la fel ca butonul n de sub imagine; dacă imaginea nu se vede (telefon), pagina se mută la ea
+    mergi(n);const r=cadru.getBoundingClientRect();
+    if(r.top<0||r.bottom>(window.innerHeight||document.documentElement.clientHeight))tc.scrollIntoView({block:'nearest',behavior:redus()?'auto':'smooth'})}
+  const lista=mod==='zone'&&el.previousElementSibling&&el.previousElementSibling.matches('ol[data-tc-zone]')?el.previousElementSibling:null;
+  if(lista){
+    [...lista.children].filter(x=>x.tagName==='LI').forEach((li,i)=>{if(!Z[i])return;
+      li.querySelectorAll('mark,[data-tc-leg]').forEach(m=>{m.classList.add('tc-leg');m.setAttribute('role','button');m.tabIndex=0;
+        m.title=`Arată în imagine: ${Z[i].nr}. ${Z[i].titlu}`;m.dataset.tcPas=String(i+1);legate.push(m)})});
+    lista.addEventListener('click',clicLista);lista.addEventListener('keydown',tastaLista);
+  }
+  function clicLista(e){const m=e.target.closest&&e.target.closest('.tc-leg');if(m)spre(+m.dataset.tcPas)}
+  function tastaLista(e){const m=e.target.closest&&e.target.closest('.tc-leg');if(!m||(e.key!=='Enter'&&e.key!==' '))return;e.preventDefault();spre(+m.dataset.tcPas)}
+  function dezleaga(){   // prezentarea a căzut: lista redevine text simplu
+    legate.forEach(m=>{m.classList.remove('tc-leg');m.removeAttribute('role');m.removeAttribute('tabindex');m.removeAttribute('title');m.removeAttribute('aria-current');delete m.dataset.tcPas});
+    legate.length=0;if(lista){lista.removeEventListener('click',clicLista);lista.removeEventListener('keydown',tastaLista)}}
+  el.tcDezleaga=dezleaga;
   actualizeaza(false);
   el.dispatchEvent(new CustomEvent('tc:gata',{bubbles:true}));
 }
 
 function cauta(rad){(rad||document).querySelectorAll('.tur-captura[data-tur]:not([data-tc-gata])').forEach(monteaza)}
 function porneste(){cauta();try{new MutationObserver(()=>cauta()).observe(document.body,{childList:true,subtree:true})}catch(e){}}
-window.TurCaptura={cauta,versiune:'2026-11-07'};
+window.TurCaptura={cauta,versiune:'2026-11-07b'};
 if(document.body)porneste();else document.addEventListener('DOMContentLoaded',porneste);
 })();
