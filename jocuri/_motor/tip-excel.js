@@ -817,6 +817,34 @@ function render(Q,body,api){
     const anul=()=>{opreste();fillTo=null;dragSel=false;dragPt=null;if(body.isConnected)draw()};
     document.addEventListener('pointermove',mv,true);document.addEventListener('pointerup',sus,true);document.addEventListener('pointercancel',anul,true);
     umplereDoc=opreste}
+  /* SELECȚIA TRASĂ DINCOLO DE MARGINE (07.11.2026): ca în Excel, cât butonul mouse-ului stă apăsat dincolo de marginea
+     casetei foii (stânga / dreapta) sau de marginea de sus / de jos a foii și a ecranului, caseta (sau pagina) se derulează
+     și selecția crește cu câte o celulă la ~90 ms; la dreapta ultimei coloane / sub ultimul rând, foaia crește, până la
+     limită (ca la pătrățelul de umplere). Din 29.09 foaia are cel puțin A–J, mai lată decât caseta ei (1280 px: I–J
+     ascunse; 390 px: E–J), iar zona trasă se oprea la marginea vizibilă. Doar mouse și creion: degetul derulează foaia
+     trăgând de literele coloanelor (vezi pointercancel). Ridicat dincolo de foaie: tragerea se încheie și caseta de nume
+     revine la celula activă (înainte rămânea „3R x 5C” până la desenul următor). */
+  let selDoc=null;
+  function urmaresteSelectia(){if(selDoc)return;let ultim=null,tm=0;
+    const margini=()=>{const g=gw();if(!g)return null;const b=g.getBoundingClientRect(),th=g.querySelector('thead'),hud=document.querySelector('.hud');
+      const H=window.innerHeight||document.documentElement.clientHeight,st=b.left+g.clientLeft;
+      return {st,dr:st+g.clientWidth,sus:Math.max(th?th.getBoundingClientRect().bottom:b.top,hud?hud.getBoundingClientRect().bottom:0),jos:Math.min(b.top+g.clientTop+g.clientHeight,H)}};
+    const pas=()=>{tm=0;if(!dragSel||!ultim||!body.isConnected)return;const m=margini();if(!m)return;
+      const x=ultim.x,y=ultim.y,dx=x>=m.dr?1:x<m.st?-1:0,dy=y>=m.jos-1?1:y<m.sus?-1:0;
+      if(!dx&&!dy)return;   // în foaie: o urmărește pointermove-ul foii
+      const e=document.elementFromPoint(Math.min(m.dr-3,Math.max(m.st+3,x)),Math.min(m.jos-3,Math.max(m.sus+3,y)));
+      const t=e&&e.closest?e.closest('td[data-a]'):null,p=t?pos(t.dataset.a):fin;
+      let c=Math.max(0,p.c+dx),r=Math.max(0,p.r+dy);
+      if((c>=cols||r>=rows)&&!asigura(Math.min(c,cols),Math.min(r,rows))){c=Math.min(c,cols-1);r=Math.min(r,rows-1)}
+      c=Math.min(c,cols-1);r=Math.min(r,rows-1);
+      if(c!==fin.c||r!==fin.r){fin={c,r};dragMutat=true;apasat=null;vezi={c,r};draw()}
+      tm=setTimeout(pas,90)};
+    const opreste=()=>{clearTimeout(tm);tm=0;document.removeEventListener('pointermove',mv,true);document.removeEventListener('pointerup',sus,true);document.removeEventListener('pointercancel',opreste,true);selDoc=null};
+    const sus=ev=>{opreste();const g=gw();if(g&&ev&&ev.target&&g.contains(ev.target))return;   // ridicat în foaie: îl termină pointerup-ul foii
+      const eraTras=dragSel&&dragMutat;dragSel=false;dragMutat=false;tragId=null;apasat=null;if(eraTras&&body.isConnected)draw()};
+    const mv=ev=>{if(ev._xp)return;if(!(ev.buttons&1)){sus(ev);return}ultim={x:ev.clientX,y:ev.clientY};if(!tm)pas()};
+    document.addEventListener('pointermove',mv,true);document.addEventListener('pointerup',sus,true);document.addEventListener('pointercancel',opreste,true);
+    selDoc=opreste}
   function wire(){
     body.querySelectorAll('[data-mod]').forEach(b=>b.onclick=()=>{const vechi=mod;mod=b.dataset.mod;if(vechi!==mod)Object.keys(RAW).forEach(a=>{const v=convSetari(RAW[a],vechi);if(v!==null)RAW[a]=v});draw()});
     const cp=body.querySelector('[data-copiaza]');if(cp)cp.onclick=copiazaTabelul;
@@ -871,6 +899,7 @@ function render(Q,body,api){
       if(dublu&&!ev.shiftKey){act=p;fin=p;incepe(RAW[adr(p.c,p.r)]??'','edit');return}
       // preventScroll (27.09.2026, lecția VIII/4): fără el, focus() derula pagina la începutul tragerii și celula de sub mouse se schimba
       if(ev.shiftKey){fin=p}else{act=p;fin=p}dragSel=true;dragMutat=false;tragId=ev.pointerId;draw();gw().focus({preventScroll:true});
+      if(ev.pointerType!=='touch'&&!ev._xp)urmaresteSelectia();   // dincolo de marginea casetei: derulare + selecția crește (vezi sus)
     });
     g.addEventListener('pointermove',ev=>{
       if(fillTo){if(!umplereDoc)miscaUmplere(ev);return}   // umplerea o urmărește documentul (și dincolo de foaie)

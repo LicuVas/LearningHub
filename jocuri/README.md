@@ -511,9 +511,74 @@ Profesorul a verificat Misiunea Analist la toate clasele de la a VIII-a în sus:
   - După fiecare push, hash-ul se anunță sesiunii vecine. Orice cale din `jocuri\_motor` sau `lectii\_sim` se anunță înainte de push.
   - Cloudflare publică proba în 20-40 de secunde.
 
+### 07.11.2026 seara — ce s-a găsit pe drum, reparat (ramura `prezentare-zone`)
+
+- **Probele cu port fix cădeau pe programe străine (`proba_excel_gesturi`: „JocMotor is not defined”).**
+  - Cauza: pe portul 8771 rula `tools\elevi_app.py` din AI_0. Pe Windows, `http.server.HTTPServer` are `allow_reuse_address=1` (SO_REUSEADDR), deci proba „pornea” FĂRĂ eroare peste portul ocupat. Cererile ajungeau la celălalt program și primeau 404.
+  - Reparat: cele 13 probe din `_motor` cu port fix iau acum un port liber de la sistem (`("127.0.0.1", 0)`, apoi `srv.server_address[1]`). `proba_sertare` avea deja ocolirea.
+  - **Regulă: o probă nouă nu primește niciodată port fix.** Când o probă „nu găsește motorul”, întâi te uiți cine ascultă pe port: `netstat -ano`, apoi procesul după PID.
+  - Pe drum, `proba_excel_gesturi` mai avea o așteptare veche. Scrisă pe 25.09, cerea ca `Elev ⇥ Nota ↵` să ducă la B2. Excel-ul REAL coboară în coloana de start a șirului de Tab-uri, adică A2 (proba din 28.09). Motorul făcea deja corect, doar proba era greșită. Acum: 86 de verificări, 0 probleme.
+- **Poarta pe `excel-antrenament-viii`: „Page.click: Timeout 6000ms”.**
+  - Cauza: la prima vizită, întrebarea evidenței („Spune cine ești”, `assets\js\prezenta.js`) are 300 px pe Pixel 7. Ea se strânge abia la primul GEST al elevului: apăsare, derulare sau tastă.
+  - Derularea făcută de Playwright e programatică, deci nu e un gest. Singurul nivel al antrenamentului stătea sub întrebare, iar clicul aștepta degeaba.
+  - Elevul adevărat derulează și trece; poarta nu o făcea.
+  - Reparat în `test_joc.py`: `primul_gest(pg)`, adică o rotiță de 1 px după încărcare, ca un elev. Acum TRECUT, cu 102 întrebări jucate.
+  - **Lecție:** o probă care deschide pagina „ca un elev” face și primul gest al elevului. Altfel testează o stare pe care niciun elev n-o vede până la capăt.
+- **`proba_tragere`: 36 de abateri. Proba era greșită, iar motorul avea și un gol real.**
+  - (1) Din 29.09 foaia arată cel puțin A–J, mai lată decât caseta ei: la 1280 px coloanele I–J sunt ascunse în derularea casetei, la 390 px E–J. Proba alegea rândurile vizibile, dar coloanele din toată foaia, deci ochea J7, pe care elevul nu-l vede.
+    - Acum alege și coloanele vizibile: 36/36 exacte.
+    - Controlul: cu defectul din 27.09 pus la loc (`focus()` fără `preventScroll`), proba îl prinde de 36 de ori.
+  - (2) **Golul real de fidelitate:** în Excel, cât ții butonul apăsat dincolo de marginea ferestrei, foaia se derulează și selecția crește. În simulator, selecția se oprea la marginea casetei.
+    - Acum, în `tip-excel.js` (`urmaresteSelectia()`): cât butonul stă dincolo de marginea casetei (stânga/dreapta) sau a foii și a ecranului (sus/jos), caseta sau pagina se derulează. Selecția crește cu o celulă la ~90 ms, iar la capăt foaia crește, ca la pătrățelul de umplere, până la limită.
+    - Merge doar pentru mouse și creion. Degetul derulează foaia de literele coloanelor (vezi `pointercancel`), iar `excelx.js` are drumul lui.
+    - Tot aici: ridicat dincolo de foaie, tragerea se încheie, iar caseta de nume revine la celula activă. Înainte rămânea „1R x 8C”, fiindcă `pointerup` pleca doar de pe foaie.
+    - Proba e în `proba_tragere.py`, „dincolo de marginea casetei”: la 1280 și 390 px, spre dreapta (zona ajunge cel puțin la J, caseta se derulează) și spre stânga (până la A).
+    - Pe motorul vechi, toate 4 cazurile pică. Pe cel nou, 4/4.
+- **„Sunt elev — mă înscriu” peste textul lecției (judecătorul prezentării, VIII/2, 390 px).**
+  - Eticheta se ferea doar de ce se poate apăsa (27.09), iar `opacity:.75` amesteca literele ei cu ale paginii.
+  - Acum `ocupat()` întoarce 2 = de apăsat, 1 = TEXT, 0 = liber. Textul înseamnă dreptunghiurile rândurilor din textul direct al elementului de deasupra (`Range.getClientRects`).
+  - Eticheta stă în primul loc liber: plină în stânga, apoi strânsă în stânga, apoi strânsă în dreapta. Dacă nu e niciunul liber, rămâne strânsă unde e doar text, ca butonul de chat al unui sit (se poate derula). Peste ceva de apăsat e ascunsă, ca înainte.
+  - Cât pagina se derulează, eticheta nu sare din colț în colț după fiecare rând. Se mută pe loc doar ca să nu stea peste ceva de apăsat; altfel așteaptă oprirea derulării.
+  - Eticheta de vizitator e opacă (`.pill.viz`) și discretă prin culori.
+  - Proba nouă: `_motor\proba_eticheta_text.py`. Ea ascunde o clipă eticheta și întreabă browserul, cu `caretRangeFromPoint`, ce literă e sub fiecare punct: altă cale decât codul etichetei. Acceptă `--prezenta <fișier vechi>` pentru comparație.
+  - Rezultat, pe 4 pagini × 2 ecrane × 2 stări:
+    - puncte pe litere acoperite: 18.849 înainte, 4.051 după;
+    - poziții în care eticheta stătea peste text deși avea loc liber: 13 înainte, 0 după;
+    - peste ceva de apăsat: 0.
+  - **Rămâne știut:** pe telefon, când textul ajunge în ambele colțuri, eticheta strânsă tot acoperă un cuvânt-două. Nu se ascunde, fiindcă e drumul elevului spre înscriere și spre „Ieși”.
+- **Cercul 5 peste fila „Orar” (prezentarea pe zone, VIII/2).**
+  - Cercul are mărime fixă pe ECRAN, deci într-o captură îngustă acoperă mult. Centrul lui stătea la capătul filelor.
+  - Acum `nr_la` acceptă `[x, y, "st"]`: x este marginea din STÂNGA a cercului (`tur-captura.js`, `pozNumere`).
+  - `fa_tur.py` îl pune imediat după butonul „+” (`Add Sheet`, din UI Automation, aceeași rulare), pe mijlocul rândului filelor, unde bara e goală. S-a schimbat doar `tur.json`; imaginile au rămas identice octet cu octet.
+  - Proba e M15 în `proba_tur.py`: la 6 lățimi (1280-390), la „Toată fereastra” și la pasul 5, cercul nu acoperă nicio filă și nici „+”. Dreptunghiurile vin din UI Automation, nu din codul componentei.
+  - Pe proba (versiunea veche): 12 abateri. Pe versiunea nouă: 0.
+- **Probele care scriu pe serverele VII. Greșeala mea din seara asta, cu ce am învățat din ea.**
+  - Am rulat într-o serie „toate probele atinse”. Printre ele erau două care scriu pe serverul real:
+    - `proba_prezenta.py`: înscrie un elev inventat la Transporturi, X E, și îl șterge la final. Ghidul lecțiilor (IV) o interzice în probe.
+    - `proba_diploma.py`: trimitea implicit o diplomă reală. Verificarea ei (`diplome.py descarca --dir <temp>`) ia de pe server TOATE diplomele care așteaptă și le șterge acolo. O diplomă reală a unui elev ar fi ajuns într-un folder temporar, nu la profesor.
+  - Inventarul făcut după aceea:
+    - elevul inventat a fost șters (proba a re-listat serverul și n-a mai găsit nimic);
+    - în panou (`activitate.py lista`) nu e niciun nume de probă;
+    - din server s-a luat doar diploma de probă: un singur rând în evidența temporară, deci nu aștepta nicio diplomă reală;
+    - folderul de pe Drive n-a fost atins;
+    - contorul de vizitatori (anonim, fără nume) a primit vizitele câtorva probe fără blocarea rețelei. Nu se poate desface.
+  - Reparat:
+    - `proba_prezenta` pornește doar cu `--server-viu`; altfel refuză, iar ultima linie e 1.
+    - `proba_diploma` nu mai trimite nimic implicit și oprește rețeaua. `--trimite-viu` refuză dacă pe server așteaptă diplome (`diplome.py lista` ≠ 0).
+    - Blocarea rețelei (regula 24) e pusă și în `proba_excel_gesturi`, `proba_varianta_text`, `proba_exersare` și `lectii\viii\m1-l02\_proba\proba_tur.py`.
+  - **Regulă: înainte să rulezi o probă pe care n-ai scris-o tu, cauți în ea `teste-vasile`, `teste.api`, `diplome.py` și blocarea rețelei (`abort`).** O serie de probe nu se face după „tot ce se numește proba_*”.
+  - Rămâne de lămurit: `proba_prezenta` pică la „pe server: 5 s pe lecție” (așteaptă ≥ 25 s). Probabil e o așteptare mai veche decât rărirea trimiterilor din 11.10 (cota Netlify): `prezenta.js` trimite de la 30 s doar la sosire. Codul de numărare n-a fost atins azi. Nu am mai rulat-o, ca să nu scriu iar pe serverul viu.
+- **Verificarea de după, pe motorul schimbat:**
+  - `test_joc.py --toate`: 27 TRECUT, 0 PICAT (2 sărite: pagini vechi fără motor);
+  - lecțiile VIII: 23/23 TRECUT;
+  - `motor_lectie\proba_stari.py` (copie pe worktree): 0 din 448 de rulări, cu controlul prins;
+  - `proba_excel_gesturi` 0, `proba_tragere` 0 (și `--capat` 0), `proba_tab_enter` 0, `proba_varianta_copiere` 0, `proba_varianta_text` 0, `proba_exersare` 0, `proba_lansator` 0, `proba_fereastra_mica` 0;
+  - `proba_inscriere_telefon`, `proba_tinut`, `proba_nume_doua_cuvinte`, `proba_unire_ctt`, `proba_diploma` (fără trimitere): 0;
+  - `proba_eticheta_text` 0; proba zonelor VIII/2: 0.
+
 ## 10. Deschis / de îmbunătățit
 
-- **Găsite pe 07.11.2026 (§9, ultimul strat), de reparat:**
+- **(REPARATE 07.11.2026 seara, §9 „07.11.2026 seara”)** Găsite pe 07.11.2026 (§9), de reparat:
   - `test_joc.py` pe `excel-antrenament-viii` (timeout la clic);
   - `proba_excel_gesturi.py` („JocMotor is not defined”);
   - `proba_tragere.py` (36 de abateri, selecția se oprește la marginea vizibilă);

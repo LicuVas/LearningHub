@@ -56,9 +56,9 @@ def server_local():
     h = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(LH))
     h.log_message = lambda *a, **k: None
     http.server.ThreadingHTTPServer.allow_reuse_address = True
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8766), h)
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), h)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
-    return "http://127.0.0.1:8766"
+    return "http://127.0.0.1:%d" % srv.server_address[1]
 
 
 def ls(pg, k):
@@ -112,7 +112,17 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--baza")
     ap.add_argument("--fara-panou", action="store_true")
+    ap.add_argument("--server-viu", action="store_true",
+                    help="singura cale de pornire: proba înscrie un elev inventat pe serverul VIU al evidenței (teste-vasile) și îl șterge la final")
     a = ap.parse_args()
+    if not a.server_viu:
+        # 07.11.2026: proba stătea între celelalte probe din _motor și a fost rulată într-o serie (ghidul lecțiilor, IV,
+        # o interzice în probe: trimite la serverul VIU, consumă cota Netlify comună cu clienții, iar elevul inventat stă
+        # în panoul profesorului cât durează proba). Pornește doar cu --server-viu, la cererea profesorului.
+        print("REFUZ: proba_prezenta trimite la serverul VIU al evidenței (elev inventat în panoul profesorului, cota Netlify).\n"
+              "Ghidul lecțiilor o interzice în probele obișnuite. O pornești doar cu --server-viu, când o cere profesorul.")
+        print(1)
+        return 1
     baza = (a.baza or server_local()).rstrip("/")
     print("Proba evidenței pe", baza)
     from playwright.sync_api import sync_playwright

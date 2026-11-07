@@ -6,9 +6,9 @@ from playwright.sync_api import sync_playwright
 LH = str(__import__('pathlib').Path(__file__).resolve().parents[2])
 h = functools.partial(http.server.SimpleHTTPRequestHandler, directory=LH)
 h.log_message = lambda *a, **k: None
-srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8771), h)
+srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), h)
 threading.Thread(target=srv.serve_forever, daemon=True).start()
-URL = "http://127.0.0.1:8771/jocuri/web-viii/index.html"
+URL = "http://127.0.0.1:%d/jocuri/web-viii/index.html" % srv.server_address[1]
 prob = []
 def ok(c, m):
     print(("  ok   " if c else "  RAU  ") + m)

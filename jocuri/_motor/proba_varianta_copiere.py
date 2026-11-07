@@ -67,9 +67,9 @@ def main():
     ap.add_argument("--n", type=int, default=12)
     ap.add_argument("--tip-excel", help="servește ALT tip-excel.js (un candidat de reparație), fără să-l pui pe disc în _motor")
     a = ap.parse_args()
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8775), functools.partial(Tacut, directory=str(SITE)))
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Tacut, directory=str(SITE)))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
-    baza = "http://127.0.0.1:8775"
+    baza = "http://127.0.0.1:%d" % srv.server_address[1]
     from playwright.sync_api import sync_playwright
     rezolvate = 0
     with sync_playwright() as p:
