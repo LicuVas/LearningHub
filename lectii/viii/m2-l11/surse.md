@@ -145,3 +145,19 @@ După semnalul dirijorului, copia de lucru a înlocuit `lectii/_sim/excelx-grafi
 
 Judecata 2 → reparat: N1 (focusul se dă mereu la pointerdown, Delete/Ctrl+Z merg după un nou clic pe marginea graficului ales), I (etichetele lungi de jos se rup pe două rânduri, întregi; rotire doar dacă un cuvânt nu încape), N2 (textul despre două clicuri rare / dublu-clic și panoul Format Chart Title), N3 (cu o serie aleasă, butonul din Inserare dă mesaj și nu schimbă nimic), N4 (după ștergerea unei serii din două, titlul implicit devine numele seriei rămase), N5 („din pasul „Selectezi datele””), N6 (radialul fără legendă: explicația spune să pornești Legenda), mesajul de la exercițiul cu rândul Total (spune greșeala reală, prin câmpul nou `mesajZona`).
 - Judecata 2 → reparat (N6, 06.10 ~03:40, dirijor): explicația radialului de la P4 nu mai folosește „legendă” înainte de definiție și nu mai trimite la butonul + (neprobat); poarta T0 a prins-o la publicare.
+
+<!-- TUTORIALE-EXCEL:START surse -->
+## Legături spre tutoriale (07.11.2026, proba)
+
+Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8z6.pages.dev), nu pe situl elevilor. Tutorialele Excel filmate stau în `tutoriale/excel/`, copiate 1:1 din `C:/00/Projects/DemoGif/site/` de `C:/00/Projects/DemoGif/_unelte/copiaza_in_lh.py`, care rescrie și bucățile de mai jos (între marcajele TUTORIALE-EXCEL START/END; nu le edita de mână). Locurile și motivele: `C:/00/Projects/DemoGif/_unelte/lh_locuri.json`. Toate legăturile se deschid într-o filă nouă (`target="_blank" rel="noopener"`), cu textul T55. Pașii NU s-au renumerotat; `afirmatii.json`, `capturi_lipsa.json` și `profil.json` rămân cum erau. Capturile statice rămân: filmul e un adaos, nu un înlocuitor (regula 4).
+
+- **pasul „Inserezi graficul. Graficul ales” (pasul 2 din 5), „Uite cum”** (`l11-p2-film`): legătura „Vezi film” spre `12-grafic-linie` („Graficul linie din tabel”). Același drum prin fila Inserare (Insert); lecția alege aici coloanele, iar filmul linia, ca laboratorul (rândul 3). Tabelul filmului e chiar cel din biblioteca_lectia11.xlsx (Luna / 8A / 8B, A1:C5).
+- **laboratorul, pasul 3 (graficul Line din A1:C5)** (`l11-r3-depanare`): „Dacă nu-ți iese” (`<details>`). Fiecare caz e jucat în Excel-ul real: fila Inserare, galeria cu linie și elementul Line primesc clicul prin mesaje; seriile și lunile de jos sunt citite prin COM (măsurat).
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `12-doar-numerele`, `12-fara-antet`, `12-doar-o-clasa`.
+  - Lăsat deoparte `12-anii-ca-numere`: tabelul lecției are lunile ca text; capcana anilor e în pasul 1 al lecției, nu în laborator; cazul rămâne pe pagina tutorialului.
+- **„Acum la calculatorul din laborator”, textul de deasupra pașilor** (`l11-intro-exersare`): legătura opțională spre registrul de exersare (`exersare.html#12-grafic-linie`). Registrul de exersare are o foaie pentru graficul linie (12 Grafic). O verifici tu, cu ochii: nicio funcție din Excel nu vede un grafic. E opțional: nu înlocuiește biblioteca_lectia11.xlsx.
+
+Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
+
+Amprenta cazurilor folosite (sha1, primele 12): `31c0dcf2932d`.
+<!-- TUTORIALE-EXCEL:END surse -->
