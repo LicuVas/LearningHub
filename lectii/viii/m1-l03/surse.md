@@ -90,6 +90,7 @@ Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8
   - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `16-un-singur-clic`.
   - Lăsat deoparte `16-nume-cu-bara`: la rândul 2 numele cerut e Octombrie, fără bară; cazul (06/11 devine 0611) rămâne pe pagina tutorialului.
   - Lăsat deoparte `16-nume-deja-luat`: la rândul 2 nu există încă altă foaie; cazul stă la rândul 3.
+  - Notă pentru elev, la începutul „Dacă nu-ți iese” (cazurile sunt filmate pe alt tabel decât al laboratorului): „În caz foaia are deja un tabel mic, iar Octombrie a ajuns în A6, celula aleasă acolo. La tine foaia e goală: Octombrie apare în celula aleasă, de obicei A1. Greșeala și ce faci sunt la fel”.
 - **laboratorul, pasul 3 (+, Noiembrie, +, Septembrie)** (`l03-r3-depanare`): „Dacă nu-ți iese” (`<details>`). Fereastra „That name is already taken” e jucată în Excel-ul real (dublu clic pe filă, scris, Enter prin mesaje); textul ei e citit prin UI Automation. Dublu clicul pe fila Noiembrie (neactivă) și redenumirea ei merg tot prin mesaje (măsurat).
   - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `16-nume-deja-luat`, `17-redenumit-alta-foaie`.
 - **pasul „Ștergerea și mutarea unei foi” (pasul 5 din 5), „Uite cum”** (`l03-p5-film`): legătura „Vezi film” spre `17-foaie-noua-mutare` („Foaie nouă și mutarea ei”). Pasul predă mutarea foii trăgând de filă; filmul o arată la sfârșit: Septembrie trasă înaintea lui Octombrie, ca rândul 4 al laboratorului. Excel mută foaia prin COM (Move), echivalentul tragerii, care nu se poate juca prin mesaje (măsurat); tragerea și triunghiul negru sunt desenate.
@@ -99,5 +100,5 @@ Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8
 
 Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
 
-Amprenta cazurilor folosite (sha1, primele 12): `df5bfcb96588`.
+Amprenta cazurilor folosite (sha1, primele 12): `e84df0cf1f67`.
 <!-- TUTORIALE-EXCEL:END surse -->

@@ -57,11 +57,13 @@ Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8
 - **pasul „Mutarea: Decupare (Cut), apoi Lipire (Paste)” (pasul 5 din 7), „Uite cum”** (`l04-p5-film`): legătura „Vezi film” spre `15-mutare-ctrl-x-v` („Muți un tabel cu Ctrl+X și Ctrl+V”). Pasul predă Ctrl+X, clic pe colțul locului nou, Ctrl+V și locul vechi gol; filmul mută D1:E5 în G1, ca rândul 4 al laboratorului.
 - **laboratorul, pasul 3 (A1:B5 copiat în D1)** (`l04-r3-depanare`): „Dacă nu-ți iese” (`<details>`). Toate trei sunt jucate în Excel-ul real pe celulele rândului (A1:B5 → D1): două clicuri în loc de tragere, Ctrl+X în loc de Ctrl+C, colțul pus pe B1, peste tabel.
   - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `14-doua-clicuri`, `14-x-in-loc-de-c`, `14-lipit-peste-tabel`.
+  - Notă pentru elev, la începutul „Dacă nu-ți iese” (cazurile sunt filmate pe alt tabel decât al laboratorului): „În cazurile de mai jos tabelul filmat are produse și prețuri (Produs, Preț, Caiet, Creion…). La tine sunt numele și notele scrise de tine (Elev, Nota): unde în caz scrie un produs sau un preț, la tine e un nume sau o notă. Celulele sunt aceleași (A1:B5 copiat în D1), iar greșeala și ce faci sunt la fel”.
 - **laboratorul, pasul 4 (D1:E5 mutat în G1)** (`l04-r4-depanare`): „Dacă nu-ți iese” (`<details>`). Cazurile sunt jucate în Excel-ul real pe celulele rândului (D1:E5 → G1). Ciorna avea „a doua Lipire nu mai lipește nimic”: ține de clipboard-ul Windows, pe care filmarea nu-l atinge, deci n-a putut fi verificat în Excel; în locul lui, Ctrl+C în loc de Ctrl+X (tabelul rămâne și în D1:E5).
   - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `15-c-in-loc-de-x`, `15-doar-o-coloana`, `15-lipit-un-rand-mai-jos`.
+  - Notă pentru elev, la începutul „Dacă nu-ți iese” (cazurile sunt filmate pe alt tabel decât al laboratorului): „În cazurile de mai jos tabelul filmat are produse și prețuri. La tine copia din D1:E5 are numele și notele tale: unde în caz scrie produse sau prețuri, la tine sunt nume sau note. Celulele sunt aceleași (D1:E5 mutat în G1), iar greșeala și ce faci sunt la fel”.
 - **„Acum în Excel-ul adevărat”, textul de deasupra pașilor** (`l04-intro-exersare`): legătura opțională spre registrul de exersare (`exersare.html#14-copiere-ctrl-c-v`). Registrul de exersare are câte o foaie pe film (14 Copiere și 15 Mutare sunt gesturile lecției, cu „✓ Gata” singur). E opțional: pașii laboratorului rămân cei de azi.
 
 Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
 
-Amprenta cazurilor folosite (sha1, primele 12): `df5bfcb96588`.
+Amprenta cazurilor folosite (sha1, primele 12): `e84df0cf1f67`.
 <!-- TUTORIALE-EXCEL:END surse -->
