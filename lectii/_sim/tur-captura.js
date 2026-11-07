@@ -12,12 +12,19 @@
    DATELE (JSON; dreptunghiurile [x,y,l,h] în pixelii capturii, MĂSURATE în Excel prin UI Automation, nu din ochi):
      baza:{src,w,h,alt}                         captura întreagă (căile, relative la JSON)
      ansamblu:{titlu,text}                      „toată fereastra” (pasul 0)
-     zone:[{id,nr,r,titlu,en,text,detaliu?,focus?}]  pașii, în ordine (detaliu = al doilea chenar, punctat; focus = unde se uită camera)
+     zone:[{id,nr,r,titlu,en,text,detaliu?,focus?,nr_la?}]  pașii, în ordine. detaliu = al doilea chenar, punctat; focus = unde
+                                                se uită camera, când zona e prea lată ca să se vadă mărită întreagă (bara de
+                                                formule, bara de stare); nr_la = [x,y] unde stă cercul cu numărul.
+                                                Zona cu id:"panglica" e SPECIALĂ: doar la ea se pot apăsa filele (imagine + rând
+                                                de butoane), iar textul spune ce filă e deschisă.
      final:"…"                                  rândul de după ultimul pas (unde e „Încearcă tu”)
      panglica:{r,vedere,activa,nota,
        file:[{id,en,ro,r,src|null,plin?,grupuri:[{en,ro,r}]}]   src = banda panglicii pe fila aceea (mărimea lui r) sau,
                                                             cu plin:true, fereastra întreagă (panglica filei e mai înaltă/joasă)
        fisier:{id,en,ro,r,src,inapoi,text}}               fila File: ecranul ei peste toată fereastra + săgeata de ieșire
+     grupuri[].strans = grupul e strâns într-un singur buton (numele e pe buton, nu jos)
+     texte:{…}                                  înlocuiește propozițiile scrise în cod (cheile: vezi T_IMPLICIT mai jos),
+                                                de exemplu pentru o aplicație fără nume de grup scrise jos
    MODURI: „zone” = pașii 0..N peste fereastră (filele panglicii se pot apăsa, fără grupuri: grupul se predă la pasul
    panglicii); „panglica” = doar panglica (vedere), grupurile filei deschise încadrate și prezentate pe rând.
    STAREA pentru probe: element.tcStare + atributele data-* de pe .tc (pas, fila, fisier, grup, scara). */
@@ -25,9 +32,16 @@
 'use strict';
 if(window.TurCaptura)return;
 const ROSU='#E4002B';   // roșul chenarelor din ghid (IV.1 §5)
-/* PLAFONUL DE MĂRIRE = claritatea: până la 2 px de ecran pe pixel de captură (peste, captura se vede pixelată), dar cel
-   puțin 2× față de vederea întreagă (videoproiector). Pe calculator ≈ 4×, pe telefon ≈ 8-9× (contract, decizia 07.11). */
-const CLAR=2;
+/* PLAFONUL DE MĂRIRE: până la 3 px de ecran pe pixel de captură, dar cel puțin 2× față de vederea întreagă (videoproiector).
+   Pe calculator ≈ 6,7×, pe telefon ≈ 13× (contract, decizia 07.11, după judecător: 2 px/px lăsa caseta de nume la 35%). */
+const CLAR=3;
+const T_IMPLICIT={toataFereastra:'Toată fereastra',toataPanglica:'Toată panglica',inapoi:'◀ Înapoi',inainte:'Înainte ▶',
+  grupAnterior:'◀ Grupul anterior',grupUrmator:'Grupul următor ▶',iesiFisier:'Ieși din File',
+  numeJos:'Numele fiecărui grup e scris jos, sub butoanele lui.',numeJosStrans:'Un grup strâns într-un singur buton are numele pe buton ({lista}).',
+  grupStrans:'Grupul e strâns într-un singur buton: numele lui e pe buton, nu jos.',
+  apasaGrup:'Apasă pe un grup (sau pe „Grupul următor”) ca să-l vezi de aproape; apasă pe altă filă ca să vezi cum se schimbă grupurile.',
+  tragePanglica:'Trage de imagine spre stânga ca să vezi restul panglicii.',acumFila:'Acum e deschisă fila {fila}.',
+  eroareFila:'Captura filei nu s-a încărcat; arăt fila de pornire.'};
 const CSS=`
 .tur-captura.tc-pornit>.captura{display:none}
 .tc{margin:.4em 0 1em;max-width:100%}
@@ -44,7 +58,7 @@ const CSS=`
 .tc-rama{fill:none;stroke:${ROSU};stroke-width:calc(3px * var(--inv,1))}
 .tc-rama.slab{stroke-width:calc(2px * var(--inv,1))}
 .tc-rama.punct{stroke-dasharray:calc(6px * var(--inv,1)) calc(4px * var(--inv,1))}
-.tc-halou{fill:none;stroke:#fff;stroke-width:calc(7px * var(--inv,1));opacity:.85}   /* grosimea în px de ECRAN: vector-effect nu vede scale() din CSS */
+.tc-halou{fill:none;stroke:#fff;stroke-width:calc(5px * var(--inv,1));opacity:.85}   /* grosimea în px de ECRAN: vector-effect nu vede scale() din CSS */
 .tc-nr{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:${ROSU};color:#fff;font:700 15px/26px "Figtree","Segoe UI",system-ui,sans-serif;
   text-align:center;transform:scale(var(--inv,1));box-shadow:0 0 0 2px #fff;pointer-events:none}
 .tc[data-ingust] .tc-nr{width:20px;height:20px;margin:-10px 0 0 -10px;font-size:12px;line-height:20px}
@@ -96,7 +110,7 @@ function monteaza(el){
 function construieste(el,D,url){
   css();
   const rel=s=>s?new URL(s,url).href:null;
-  const B=D.baza,PG=D.panglica||null,Z=D.zone||[];
+  const B=D.baza,PG=D.panglica||null,Z=D.zone||[],T=Object.assign({},T_IMPLICIT,D.texte||{});
   const mod=el.dataset.mod==='panglica'&&PG?'panglica':'zone';
   const lumeMod=mod==='panglica'&&PG.vedere?R4(PG.vedere):{x:0,y:0,w:B.w,h:B.h};
   const lumeTot={x:0,y:0,w:B.w,h:B.h};
@@ -137,6 +151,7 @@ function construieste(el,D,url){
   const cadru=$('.tc-cadru'),scena=$('.tc-scena'),banda=$('.tc-banda'),fis=$('.tc-fis'),masca=$('.tc-masca'),rame=$('.tc-rame'),
         puncte=$('.tc-puncte'),rand=$('.tc-file'),pasi=$('.tc-pasi'),txt=$('.tc-text'),bIn=$('.tc-inapoi'),bUrm=$('.tc-inainte');
   scena.style.width=B.w+'px';scena.style.height=B.h+'px';
+  $('.tc-baza').addEventListener('error',()=>{el.dataset.tcEroare='imaginea de bază';el.classList.remove('tc-pornit');tc.remove()});
   const fsOk=!!(document.fullscreenEnabled&&tc.requestFullscreen);if(!fsOk)$('.tc-fs').hidden=true;
 
   /* rândul filelor (pe telefon, numele din captură sunt prea mici de apăsat) */
@@ -145,19 +160,21 @@ function construieste(el,D,url){
     rand.innerHTML=`<span class="tc-et">Filele:</span>`+toate.map(f=>`<button type="button" class="tc-b" data-fila="${esc(f.id)}" title="${nume(f).replace(/<[^>]+>/g,'')}">${esc(f.en)}</button>`).join('');
     rand.addEventListener('click',e=>{const b=e.target.closest('button[data-fila]');if(!b)return;alegeFila(b.dataset.fila)});
     const pre=()=>{toate.forEach(f=>{if(f.src){const i=new Image();i.decoding='async';i.src=rel(f.src)}})};
-    (window.requestIdleCallback||(f=>setTimeout(f,1200)))(pre);
+    if(window.IntersectionObserver){const io=new IntersectionObserver(es=>{if(es.some(x=>x.isIntersecting)){io.disconnect();pre()}},{rootMargin:'200px'});io.observe(tc)}
+    else setTimeout(pre,1500);
   }
 
   /* ---------- camera (pan & zoom) ---------- */
   const V=()=>({w:cadru.clientWidth||1,h:cadru.clientHeight||1});
   function potrivire(){const v=V(),L=lume();return Math.min(v.w/L.w,v.h/L.h)}
   const smax=()=>Math.max(st.fit*2,CLAR);
+  const sus0=()=>mod==='panglica'&&!st.fisier;   // modul panglica: banda stă sus, dedesubt se vede (estompat) restul ferestrei
   function limiteaza(c){
     const v=V(),L=lume();st.fit=potrivire();
     c.s=Math.max(st.fit,Math.min(smax(),c.s));
     const lw=L.w*c.s,lh=L.h*c.s;
     c.tx=lw<=v.w+0.5?(v.w-lw)/2-L.x*c.s:Math.min(-L.x*c.s,Math.max(v.w-(L.x+L.w)*c.s,c.tx));
-    c.ty=lh<=v.h+0.5?(v.h-lh)/2-L.y*c.s:Math.min(-L.y*c.s,Math.max(v.h-(L.y+L.h)*c.s,c.ty));
+    c.ty=lh<=v.h+0.5?(sus0()?-L.y*c.s:(v.h-lh)/2-L.y*c.s):Math.min(-L.y*c.s,Math.max(v.h-(L.y+L.h)*c.s,c.ty));
     return c;
   }
   function aplica(c,anim){
@@ -167,21 +184,23 @@ function construieste(el,D,url){
     scena.style.setProperty('--inv',String(1/st.cam.s));
     cadru.classList.toggle('tc-marit',st.cam.s>st.fit*1.01);
     tc.dataset.scara=(st.cam.s/st.fit).toFixed(2);
-    pozNumere();stare();
+    pozNumere();pozTinte();stare();
   }
   function tintaPe(r,pad){   // centrează dreptunghiul r, cât de mare încape (cu margine), până la plafonul de claritate
     const v=V();pad=pad||1.3;st.fit=potrivire();
     const s=Math.max(st.fit,Math.min(smax(),v.w/(r.w*pad),v.h/(r.h*pad)));
     return {s,tx:v.w/2-(r.x+r.w/2)*s,ty:v.h/2-(r.y+r.h/2)*s};
   }
-  function tintaToata(){st.fit=potrivire();const v=V(),L=lume(),s=Math.max(st.fit,mod==='panglica'&&!st.fisier?v.h/L.h:0);return {s,tx:-L.x*s,ty:-L.y*s}}
+  function tintaToata(){st.fit=potrivire();const v=V(),L=lume(),s=Math.max(st.fit,sus0()&&tc.dataset.ingust?v.h/L.h:0);return {s,tx:-L.x*s,ty:-L.y*s}}
   function laTinta(anim){aplica(st.tinta?tintaPe(st.tinta,st.tintaPad):tintaToata(),anim)}
   function zoomLa(f,px,py){
     const c=st.cam,s2=Math.max(st.fit,Math.min(smax(),c.s*f));
     const wx=(px-c.tx)/c.s,wy=(py-c.ty)/c.s;
     aplica({s:s2,tx:px-wx*s2,ty:py-wy*s2},false);
   }
-  const centru=()=>{const v=V();return [v.w/2,v.h/2]};
+  const centru=()=>{const v=V(),c=st.cam;
+    if(st.tinta){const x=(st.tinta.x+st.tinta.w/2)*c.s+c.tx,y=(st.tinta.y+st.tinta.h/2)*c.s+c.ty;if(x>=0&&x<=v.w&&y>=0&&y<=v.h)return [x,y]}
+    return [v.w/2,v.h/2]};
   $('.tc-zp').onclick=()=>zoomLa(1.4,...centru());
   $('.tc-zm').onclick=()=>zoomLa(1/1.4,...centru());
   $('.tc-z0').onclick=()=>aplica(tintaToata(),true);
@@ -243,34 +262,49 @@ function construieste(el,D,url){
   function rama(r,cls){rame.appendChild(dreptunghi(r,'tc-halou'));rame.appendChild(dreptunghi(r,'tc-rama '+(cls||'')))}
   function gaura(r){if(!r){masca.setAttribute('d','');return}
     const p=4;masca.setAttribute('d',`M0 0H${B.w}V${B.h}H0Z M${r.x-p} ${r.y-p}V${r.y+r.h+p}H${r.x+r.w+p}V${r.y-p}Z`)}
-  function numar(n,r){const s=document.createElement('span');s.className='tc-nr';s.textContent=n;s.dataset.ax=r.x+r.w;s.dataset.ay=r.y+r.h/2;puncte.appendChild(s);pozNumere()}
+  function numar(n,r,la){const s=document.createElement('span');s.className='tc-nr';s.textContent=n;s.dataset.ax=la?la[0]:r.x+r.w;s.dataset.ay=la?la[1]:r.y+r.h/2;puncte.appendChild(s);pozNumere()}
   function pozNumere(){   // centrul cercului = mijlocul laturii din dreapta a chenarului, mutat înăuntru cât să nu iasă din imagine
     const k=(tc.dataset.ingust?11:14)/(st.cam.s||1);
     puncte.querySelectorAll('.tc-nr').forEach(e=>{const x=Math.min(+e.dataset.ax,B.w-k),y=Math.min(Math.max(+e.dataset.ay,k),B.h-k);e.style.left=x+'px';e.style.top=y+'px'})}
-  function buton(r,eticheta,fn,cls){const b=document.createElement('button');b.type='button';b.className='tc-hot '+(cls||'');b.tabIndex=-1;b.setAttribute('aria-hidden','true');
-    b.title=eticheta;b.style.left=r.x+'px';b.style.top=r.y+'px';b.style.width=r.w+'px';b.style.height=r.h+'px';b.onclick=e=>{e.stopPropagation();fn()};puncte.appendChild(b);return b}
+  function buton(r,eticheta,fn,cls,min){const b=document.createElement('button');b.type='button';b.className='tc-hot '+(cls||'');b.tabIndex=-1;b.setAttribute('aria-hidden','true');
+    b.title=eticheta;Object.assign(b.dataset,{x:r.x,y:r.y,w:r.w,h:r.h,min:min||''});b.onclick=e=>{e.stopPropagation();fn()};puncte.appendChild(b);pozTinte();return b}
+  function pozTinte(){   // „h” = cel puțin 32 px de ecran pe înălțime (filele: pe lățime s-ar călca între ele); „hw” = pe ambele
+    const m=32/(st.cam.s||1);
+    puncte.querySelectorAll('.tc-hot').forEach(b=>{let x=+b.dataset.x,y=+b.dataset.y,w=+b.dataset.w,h=+b.dataset.h;const k=b.dataset.min;
+      if(k&&h<m){y-=(m-h)/2;h=m}if(k==='hw'&&w<m){x-=(m-w)/2;w=m}
+      Object.assign(b.style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px'})})}
 
+  const filePermise=()=>PG&&(mod==='panglica'||(Z[st.pas-1]&&Z[st.pas-1].id==='panglica'));
+  function asteapta(img,src){   // true = imaginea e gata; altfel desenul se reia la încărcare, iar la eroare revine fila de pornire
+    if(img.getAttribute('src')!==src){img.src=src}
+    if(img.complete&&img.naturalWidth>0)return true;
+    img.onload=()=>{img.onload=img.onerror=null;if(tc.isConnected)actualizeaza(false)};
+    img.onerror=()=>{img.onload=img.onerror=null;st.eroare=T.eroareFila;st.fisier=false;st.fila=PG.activa;st.grup=null;st.tinta=null;if(tc.isConnected)actualizeaza(false)};
+    return false;
+  }
   function deseneaza(){
     rame.textContent='';puncte.textContent='';gaura(null);
-    const f=fila();
+    const f=fila();let gata=true;
     banda.hidden=st.fisier||!f||!f.src;
-    if(!banda.hidden){const r=f.plin?{x:0,y:0,w:B.w,h:B.h}:R4(PG.r);banda.src=rel(f.src);Object.assign(banda.style,{left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px'})}
+    if(!banda.hidden){const r=f.plin?{x:0,y:0,w:B.w,h:B.h}:R4(PG.r);gata=asteapta(banda,rel(f.src));Object.assign(banda.style,{left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px'})}
     fis.hidden=!st.fisier;
-    if(st.fisier){fis.src=rel(PG.fisier.src);fis.style.width=B.w+'px';fis.style.height=B.h+'px';
-      if(PG.fisier.inapoi){const r=R4(PG.fisier.inapoi);rama(r,'slab');buton(r,'Înapoi (ieși din fila File)',inchideFisier)}
+    if(st.fisier){fis.style.width=B.w+'px';fis.style.height=B.h+'px';
+      if(asteapta(fis,rel(PG.fisier.src))&&PG.fisier.inapoi){const r=R4(PG.fisier.inapoi);rama(r,'slab');buton(r,'Înapoi (ieși din fila File)',inchideFisier,'','hw')}
       return}
-    if(PG){   // filele panglicii, apăsabile în imagine
-      PG.file.forEach(x=>buton(R4(x.r),nume(x).replace(/<[^>]+>/g,''),()=>alegeFila(x.id),'tc-hot-fila'));
-      if(PG.fisier&&PG.fisier.r)buton(R4(PG.fisier.r),'Fișier (File)',deschideFisier,'tc-hot-fila');
+    if(filePermise()){   // filele panglicii, apăsabile în imagine (în modul zone: doar la pasul panglicii)
+      PG.file.forEach(x=>buton(R4(x.r),nume(x).replace(/<[^>]+>/g,''),()=>alegeFila(x.id),'tc-hot-fila','h'));
+      if(PG.fisier&&PG.fisier.r)buton(R4(PG.fisier.r),'Fișier (File)',deschideFisier,'tc-hot-fila','h');
     }
     if(mod==='zone'){
-      if(st.pas===0)Z.forEach(z=>{const r=R4(z.r);rama(r,'slab');numar(z.nr,r)});
-      else{const z=Z[st.pas-1],r=R4(z.r);gaura(r);rama(r);numar(z.nr,r);if(z.detaliu)rama(R4(z.detaliu),'punct')}
+      if(st.pas===0)Z.forEach(z=>{const r=R4(z.r);rama(r,'slab');numar(z.nr,r,z.nr_la)});
+      else{const z=Z[st.pas-1],r=R4(z.r);gaura(r);rama(r);numar(z.nr,r,z.nr_la);if(z.detaliu)rama(R4(z.detaliu),'punct')}
     }else{
+      if(!gata)return;   // chenarele grupurilor doar peste banda lor (nu peste fila de dinainte, cât se încarcă)
       const G=grupuri();
       G.forEach((g,i)=>{const r=R4(g.r);if(st.grup===null||st.grup===i)rama(r,st.grup===i?'':'slab');
         buton(r,'Grupul '+nume(g).replace(/<[^>]+>/g,''),()=>alegeGrup(st.grup===i?null:i),'tc-hot-grup')});
       if(st.grup!==null&&G[st.grup]){const r=R4(G[st.grup].r);gaura(r);numar(st.grup+1,r)}
+      else gaura(lumeMod);   // „Toată panglica”: restul ferestrei, estompat
     }
   }
 
@@ -278,31 +312,37 @@ function construieste(el,D,url){
   function scrie(){
     const f=fila();let h='';
     if(st.fisier){const F=PG.fisier;h=`<p class="tc-cap">${nume(F)}</p><p>${F.text||''}</p>`}
+    else if(st.eroare)h=`<p class="tc-sub">${esc(st.eroare)}</p>`;
     else if(mod==='zone'){
-      if(st.pas===0)h=`<p class="tc-cap">${esc((D.ansamblu||{}).titlu||'Toată fereastra')}</p><p>${(D.ansamblu||{}).text||''}</p>`;
+      if(st.pas===0)h=`<p class="tc-cap">${esc((D.ansamblu||{}).titlu||T.toataFereastra)}</p><p>${(D.ansamblu||{}).text||''}</p>`;
       else{const z=Z[st.pas-1];h=`<p class="tc-cap">${z.nr} din ${Z.length} · ${esc(z.titlu)}${z.en?` (${esc(z.en)})`:''}</p><p>${z.text||''}</p>`;
-        if(z.id==='panglica'&&f)h+=`<p class="tc-sub">Acum e deschisă fila ${nume(f)}.</p>`;
+        if(z.id==='panglica'&&f)h+=`<p class="tc-sub">${esc(T.acumFila).replace('{fila}',nume(f))}</p>`;
         if(st.pas===Z.length&&D.final)h+=`<p class="tc-sub">${D.final}</p>`}
     }else{
       const G=grupuri();
-      if(st.grup===null)h=`<p class="tc-cap">Fila ${nume(f)}</p><p>Butoanele ei sunt strânse în ${G.length} grupuri: ${G.map(g=>nume(g)).join(', ')}. Numele fiecărui grup e scris jos, sub butoanele lui.</p>`+
-        `<p class="tc-sub">Apasă pe un grup (sau pe Înainte) ca să-l vezi de aproape; apasă pe altă filă ca să vezi cum se schimbă grupurile.${PG.nota?' '+PG.nota:''}</p>`;
-      else{const g=G[st.grup];h=`<p class="tc-cap">Grupul ${nume(g)} · ${st.grup+1} din ${G.length}</p><p>Pe fila ${nume(f)}. Numele grupului e scris jos, sub butoanele lui.</p>`}
+      const S=G.filter(g=>g.strans);
+      if(st.grup===null)h=`<p class="tc-cap">Fila ${nume(f)}</p><p>Butoanele ei sunt strânse în ${G.length} grupuri: ${G.map(g=>nume(g)).join(', ')}. ${esc(T.numeJos)}`+
+        `${S.length?' '+esc(T.numeJosStrans).replace('{lista}',S.map(g=>esc(g.en)).join(', ')):''}</p>`+
+        `<p class="tc-sub">${esc(T.apasaGrup)}${tc.dataset.ingust?' '+esc(T.tragePanglica):''}${PG.nota?' '+PG.nota:''}</p>`;
+      else{const g=G[st.grup];h=`<p class="tc-cap">Grupul ${nume(g)} · ${st.grup+1} din ${G.length}</p><p>Pe fila ${nume(f)}. ${esc(g.strans?T.grupStrans:T.numeJos.replace('fiecărui grup','grupului'))}</p>`}
     }
     txt.innerHTML=h;
     // butoanele de mers
     if(mod==='zone'){
-      pasi.innerHTML=`<button type="button" class="tc-b" data-pas="0"${st.pas===0?' aria-current="step"':''}>Toată fereastra</button>`+
+      pasi.innerHTML=`<button type="button" class="tc-b" data-pas="0"${st.pas===0?' aria-current="step"':''}>${esc(T.toataFereastra)}</button>`+
         Z.map((z,i)=>`<button type="button" class="tc-b" data-pas="${i+1}" aria-label="${esc(z.nr+'. '+z.titlu)}" title="${esc(z.titlu)}"${st.pas===i+1?' aria-current="step"':''}>${z.nr}</button>`).join('');
       bIn.disabled=st.pas===0&&!st.fisier;bUrm.disabled=st.pas===Z.length&&!st.fisier;
+      bIn.textContent=T.inapoi;bUrm.textContent=T.inainte;
     }else{
       const G=grupuri();
-      pasi.innerHTML=`<button type="button" class="tc-b" data-pas="0"${st.grup===null?' aria-current="step"':''}>Toată panglica</button>`;
+      pasi.innerHTML=`<button type="button" class="tc-b" data-pas="0"${st.grup===null?' aria-current="step"':''}>${esc(T.toataPanglica)}</button>`;
       bIn.disabled=st.grup===null&&!st.fisier;bUrm.disabled=(st.grup===G.length-1||!G.length)&&!st.fisier;
-      bIn.textContent='◀ Grupul anterior';bUrm.textContent='Grupul următor ▶';
+      bIn.textContent=T.grupAnterior;bUrm.textContent=T.grupUrmator;
     }
+    if(st.fisier){bIn.textContent='◀ '+T.iesiFisier;bUrm.textContent=T.iesiFisier+' ▶'}
+    cadru.setAttribute('aria-label',`${eticheta}${f&&!st.fisier?' — fila '+(f.ro||f.en)+' deschisă':''}${st.fisier?' — ecranul filei File':''}`);
     // rândul filelor: la pasul panglicii (modul zone) sau mereu (modul panglica)
-    const zArat=mod==='panglica'||(Z[st.pas-1]&&Z[st.pas-1].id==='panglica')||st.fisier;
+    const zArat=filePermise()||st.fisier;
     rand.hidden=!PG||!zArat;
     rand.querySelectorAll('button[data-fila]').forEach(b=>b.setAttribute('aria-pressed',String(st.fisier?b.dataset.fila===PG.fisier.id:(!st.fisier&&b.dataset.fila===st.fila))));
   }
@@ -311,16 +351,18 @@ function construieste(el,D,url){
 
   /* ---------- acțiuni ---------- */
   // modul panglica: cadrul are forma benzii (vederea); cu fila File deschisă, forma ferestrei întregi
-  const MINH=140;
   function forma(){const L=lume(),w=cadru.clientWidth||600;
     if(w<560)tc.dataset.ingust='1';else delete tc.dataset.ingust;
-    if(mod==='panglica'&&!st.fisier&&w*L.h/L.w<MINH&&w<560){cadru.style.aspectRatio='auto';cadru.style.height=MINH+'px'}
+    const MINH=tc.dataset.ingust?160:200;
+    if(sus0()&&w*L.h/L.w<MINH){cadru.style.aspectRatio='auto';cadru.style.height=MINH+'px'}
     else{cadru.style.height='';cadru.style.aspectRatio=`${L.w} / ${L.h}`}}
   const tintaZ=z=>R4(z.focus||z.r);   // focus = unde se uită camera, dacă nu e chiar chenarul (bara de stare: capătul cu zoom-ul)
   function actualizeaza(anim){forma();deseneaza();scrie();laTinta(anim)}
   function mergi(n){
     if(st.fisier)st.fisier=false;
-    if(mod==='zone'){st.pas=Math.max(0,Math.min(Z.length,n));st.tinta=st.pas?tintaZ(Z[st.pas-1]):null;st.tintaPad=1.3}
+    st.eroare=null;
+    if(mod==='zone'){st.pas=Math.max(0,Math.min(Z.length,n));st.tinta=st.pas?tintaZ(Z[st.pas-1]):null;st.tintaPad=1.3;
+      if(PG&&!filePermise())st.fila=PG.activa}
     else{st.grup=n>0?Math.min(grupuri().length,n)-1:null;st.tinta=st.grup===null?null:R4(grupuri()[st.grup].r);st.tintaPad=1.25}
     actualizeaza(true);
   }
@@ -329,7 +371,7 @@ function construieste(el,D,url){
   function alegeGrup(i){mergi(i===null?0:i+1)}
   function alegeFila(id){
     if(PG.fisier&&id===PG.fisier.id){deschideFisier();return}
-    const era=st.fisier;st.fisier=false;st.fila=id;
+    const era=st.fisier;st.fisier=false;st.fila=id;st.eroare=null;
     if(mod==='panglica'){st.grup=null;st.tinta=null}
     actualizeaza(era||mod==='panglica');
   }
