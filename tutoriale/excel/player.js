@@ -193,11 +193,28 @@
     if (tag === 'TEXTAREA' || tag === 'SELECT') return true;
     return tag === 'INPUT' && tg.type !== 'checkbox';
   }
+  // „Rulează singur” si pasii din lista, AJUNSE CU TAB: Spatiu face ce face orice comutator / buton (porneste-opreste
+  // comutatorul, duce la pasul acela) - asa il anunta si cititorul de ecran. Dupa un clic cu mausul pe ele, Spatiu
+  // ramane pauza / continua. Masurat 07.11.2026 in Edge: :focus-visible NU deosebeste cele doua cazuri (la keydown e
+  // true si dupa un clic, fiindca orice tasta il aprinde), asa ca tinem minte noi cum a venit focusul. Clicul pe un
+  // element care ARE deja focusul nu da focusin, de aceea orice apasare de maus / deget sterge si semnul de tastatura.
+  var intrare = 'tasta', focusDinTasta = false;
+  function dinMaus() { intrare = 'maus'; focusDinTasta = false; }
+  document.addEventListener('pointerdown', dinMaus, true);
+  document.addEventListener('mousedown', dinMaus, true);
+  document.addEventListener('keydown', function () { intrare = 'tasta'; }, true);
+  document.addEventListener('focusin', function () { focusDinTasta = (intrare === 'tasta'); }, true);
+  function spatiuNativ(e) {
+    var tg = e.target;
+    if (!focusDinTasta || !tg || tg !== document.activeElement) return false;
+    return tg === cbSingur || !!(tg.classList && tg.classList.contains('pas-btn'));
+  }
   document.addEventListener('keydown', function (e) {
     if (e.altKey || e.ctrlKey || e.metaKey || deScris(e)) return;
     var tag = e.target && e.target.tagName;
     if (e.key === ' ' || e.key === 'Spacebar') {
       if (tag === 'SUMMARY' || tag === 'A') return;     // pe link / caz, Spatiul isi face treaba lui
+      if (spatiuNativ(e)) return;                       // comutator / pas ajuns cu Tab: treaba lui
       e.preventDefault();
       if (!e.repeat) comuta();
     } else if (e.key === 'ArrowRight') { e.preventDefault(); urmator(); }
@@ -205,7 +222,7 @@
   });
   document.addEventListener('keyup', function (e) {
     var tag = e.target && e.target.tagName;
-    if ((e.key === ' ' || e.key === 'Spacebar') && (tag === 'BUTTON' || tag === 'INPUT')) e.preventDefault();
+    if ((e.key === ' ' || e.key === 'Spacebar') && (tag === 'BUTTON' || tag === 'INPUT') && !spatiuNativ(e)) e.preventDefault();
   });
 
   actualizeaza(true);
