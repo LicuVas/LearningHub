@@ -127,3 +127,25 @@ Se încarcă după `excelx.js`; NU atinge `excelx.js`, extensiile altor lecții 
 - **O — motorul scrie „Pașii amestecați · apasă-i în ordine” deasupra oricărui exercițiu `order`** (`jocuri/_motor/motor.js`, `TIPURI.order`), deși aici elevul ordonează nume, date sau rânduri. Motorul NU are o etichetă configurabilă (verificat în `TIPURI.order`), deci lecția nu o poate schimba. Propunere: câmp `Q.eticheta` („Numele amestecate · apasă-le în ordine”), cu textul vechi ca implicit.
 - **Meniul de clic dreapta al foii** (`excelx.js`, `itemiCelula`) nu are submeniul **Sort** pe care îl are Excel-ul (semnalat de ab_sonnet, J1-12). Lecția nu cere clic dreapta.
 - **Fraza motorului la sortare** (`tip-excel.js`, „Rândurile s-au amestecat: un elev a rămas cu datele altuia…”) e generală; extensia o înlocuiește doar pentru lecția asta. Merită o frază fără „elev” direct în motor.
+
+<!-- TUTORIALE-EXCEL:START surse -->
+## Legături spre tutoriale (07.11.2026, proba)
+
+Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8z6.pages.dev), nu pe situl elevilor. Tutorialele Excel filmate stau în `tutoriale/excel/`, copiate 1:1 din `C:/00/Projects/DemoGif/site/` de `C:/00/Projects/DemoGif/_unelte/copiaza_in_lh.py`, care rescrie și bucățile de mai jos (între marcajele TUTORIALE-EXCEL START/END; nu le edita de mână). Locurile și motivele: `C:/00/Projects/DemoGif/_unelte/lh_locuri.json`. Toate legăturile se deschid într-o filă nouă (`target="_blank" rel="noopener"`), cu textul T55. Pașii NU s-au renumerotat; `afirmatii.json`, `capturi_lipsa.json` și `profil.json` rămân cum erau. Capturile statice rămân: filmul e un adaos, nu un înlocuitor (regula 4).
+
+- **pasul „Sortezi tot tabelul după o coloană” (pasul 2 din 5), „Uite cum”** (`l10-p2-film`): legătura „Vezi film” spre `10-sortare-o-coloana` („Sortezi tot tabelul după o coloană”). Același gest: clic pe o singură celulă din coloana Punctaj, fila Date (Data), butonul mic de jos. Filmul are aceleași coloane ca laboratorul (antetul pe rândul 1, punctajele în C) și primele 5 punctaje ale lui.
+- **laboratorul, pasul 3 (clasamentul: clic pe C2, butonul mic de jos)** (`l10-r3-depanare`): „Dacă nu-ți iese” (`<details>`). Cazul e jucat în Excel-ul real pe celula rândului (C2), cu butonul de sus în loc de cel de jos.
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `10-crescator-in-loc-de-descrescator`.
+  - Lăsat deoparte `10-antetul-printre-nume`: în registrul lecției coloana C are numere, deci antetul e recunoscut; cazul e doar pentru listele numai cu text.
+  - Lăsat deoparte `10-doua-coloane-selectate`: greșeala lui e la pasul 4 (clic pe A2, Sortare de la A la Z), nu la C2; acolo stă.
+- **laboratorul, pasul 4 (ordinea alfabetică: clic pe A2, butonul mic de sus)** (`l10-r4-depanare`): „Dacă nu-ți iese” (`<details>`). Ciorna punea cazul la rândul 3 (C2, butonul de jos); gestul lui e al rândului 4 (A2, Sortare de la A la Z).
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `10-doua-coloane-selectate`.
+  - Lăsat deoparte `10-antetul-printre-nume`: în registrul lecției coloana C are numere, deci antetul e recunoscut; cazul e doar pentru listele numai cu text.
+- **laboratorul, pasul 5 (capcana: doar punctajele, Sort Warning)** (`l10-r5-depanare`): „Dacă nu-ți iese” (`<details>`). Fereastra Sort Warning e jucată în Excel-ul real: apare la butonul de jos cu doar punctajele selectate, iar Continue with the current selection și Sort primesc clicul (motor_excel.py, dialog_clic).
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `10-doar-coloana-selectata`.
+- **„Acum la calculatorul din laborator”, textul de deasupra pașilor** (`l10-intro-exersare`): legătura opțională spre registrul de exersare (`exersare.html#10-sortare-o-coloana`). Registrul de exersare are o foaie pentru gestul lecției (10 Sortare, cu „✓ Gata” singur, care cere rândurile întregi). E opțional: nu înlocuiește concurs_lectia10.xlsx.
+
+Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
+
+Amprenta cazurilor folosite (sha1, primele 12): `9ce8f4807c2f`.
+<!-- TUTORIALE-EXCEL:END surse -->
