@@ -147,8 +147,13 @@
     else if (!v.paused) bPlay.textContent = '⏸ Pauză';
     else bPlay.textContent = pornit ? '▶ Continuă' : '▶ Pornește';
     bDinNou.hidden = !laFinal;
+    var foc = document.activeElement;
     bInapoi.disabled = (i === 0);
     bInainte.disabled = (i === ULTIM);
+    // Un buton dezactivat cu focusul pe el il pierde pe <body> (masurat 07.11.2026 in Edge): urmatorul Enter nu mai
+    // face nimic, iar Tab o ia de la inceputul paginii. Il mutam pe butonul activ de langa el.
+    if (foc === bInainte && bInainte.disabled) bPlay.focus();
+    else if (foc === bInapoi && bInapoi.disabled) bInainte.focus();
     bInainte.classList.toggle('atentie', opritLa === i && i < ULTIM && v.paused);
     if (stareSingur) stareSingur.textContent = singur()
       ? 'Pornit: filmul merge până la capăt, fără opriri.'
