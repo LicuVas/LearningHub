@@ -198,11 +198,17 @@ function construieste(el,D,url){
     const wx=(px-c.tx)/c.s,wy=(py-c.ty)/c.s;
     aplica({s:s2,tx:px-wx*s2,ty:py-wy*s2},false);
   }
-  const centru=()=>{const v=V(),c=st.cam;
-    if(st.tinta){const x=(st.tinta.x+st.tinta.w/2)*c.s+c.tx,y=(st.tinta.y+st.tinta.h/2)*c.s+c.ty;if(x>=0&&x<=v.w&&y>=0&&y<=v.h)return [x,y]}
+  const centru=()=>{const v=V(),c=st.cam,z=mod==='zone'&&!st.fisier&&Z[st.pas-1],t=z&&z.detaliu?R4(z.detaliu):st.tinta;
+    if(t){const x=(t.x+t.w/2)*c.s+c.tx,y=(t.y+t.h/2)*c.s+c.ty;if(x>=0&&x<=v.w&&y>=0&&y<=v.h)return [x,y]}
     return [v.w/2,v.h/2]};
-  $('.tc-zp').onclick=()=>zoomLa(1.4,...centru());
-  $('.tc-zm').onclick=()=>zoomLa(1/1.4,...centru());
+  function zoomPas(f){   // la un pas (sau la un grup ales), „+” / „−” măresc și țin SUBIECTUL în mijloc: chenarul punctat, focusul, zona
+    const z=mod==='zone'&&!st.fisier&&Z[st.pas-1],t=z&&z.detaliu?R4(z.detaliu):(st.fisier?null:st.tinta);
+    if(!t){zoomLa(f,...centru());return}
+    const v=V(),s2=Math.max(st.fit,Math.min(smax(),st.cam.s*f));
+    aplica({s:s2,tx:v.w/2-(t.x+t.w/2)*s2,ty:v.h/2-(t.y+t.h/2)*s2},false);
+  }
+  $('.tc-zp').onclick=()=>zoomPas(1.4);
+  $('.tc-zm').onclick=()=>zoomPas(1/1.4);
   $('.tc-z0').onclick=()=>aplica(tintaToata(),true);
   $('.tc-fs').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else tc.requestFullscreen().catch(()=>{})};
   document.addEventListener('fullscreenchange',()=>{if(!tc.isConnected)return;const pe=document.fullscreenElement===tc;
@@ -247,8 +253,8 @@ function construieste(el,D,url){
     if(k==='ArrowRight'||k==='PageDown')urmator();
     else if(k==='ArrowLeft'||k==='PageUp')anterior();
     else if(k==='Home')mergi(0);
-    else if(k==='+'||k==='=')zoomLa(1.4,...centru());
-    else if(k==='-')zoomLa(1/1.4,...centru());
+    else if(k==='+'||k==='=')zoomPas(1.4);
+    else if(k==='-')zoomPas(1/1.4);
     else if(k==='0')aplica(tintaToata(),true);
     else if(k==='Escape'&&st.fisier)inchideFisier();
     else ok=false;
@@ -284,9 +290,9 @@ function construieste(el,D,url){
   }
   function deseneaza(){
     rame.textContent='';puncte.textContent='';gaura(null);
-    const f=fila();let gata=true;
+    const f=fila();let gata=true;st.incarca=false;
     banda.hidden=st.fisier||!f||!f.src;
-    if(!banda.hidden){const r=f.plin?{x:0,y:0,w:B.w,h:B.h}:R4(PG.r);gata=asteapta(banda,rel(f.src));Object.assign(banda.style,{left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px'})}
+    if(!banda.hidden){const r=f.plin?{x:0,y:0,w:B.w,h:B.h}:R4(PG.r);gata=asteapta(banda,rel(f.src));st.incarca=!gata;Object.assign(banda.style,{left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px'})}
     fis.hidden=!st.fisier;
     if(st.fisier){fis.style.width=B.w+'px';fis.style.height=B.h+'px';
       if(asteapta(fis,rel(PG.fisier.src))&&PG.fisier.inapoi){const r=R4(PG.fisier.inapoi);rama(r,'slab');buton(r,'Înapoi (ieși din fila File)',inchideFisier,'','hw')}
@@ -313,6 +319,7 @@ function construieste(el,D,url){
     const f=fila();let h='';
     if(st.fisier){const F=PG.fisier;h=`<p class="tc-cap">${nume(F)}</p><p>${F.text||''}</p>`}
     else if(st.eroare)h=`<p class="tc-sub">${esc(st.eroare)}</p>`;
+    else if(st.incarca&&f)h=`<p class="tc-sub">Se încarcă fila ${nume(f)}…</p>`;
     else if(mod==='zone'){
       if(st.pas===0)h=`<p class="tc-cap">${esc((D.ansamblu||{}).titlu||T.toataFereastra)}</p><p>${(D.ansamblu||{}).text||''}</p>`;
       else{const z=Z[st.pas-1];h=`<p class="tc-cap">${z.nr} din ${Z.length} · ${esc(z.titlu)}${z.en?` (${esc(z.en)})`:''}</p><p>${z.text||''}</p>`;
