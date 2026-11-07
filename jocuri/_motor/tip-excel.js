@@ -19,8 +19,10 @@
      fereastra „There's a problem with this formula”.
    - „Copiază tabelul” pune foaia în clipboard (text + tabel), ca s-o lipești în Excel sau Google Sheets.
    FOAIA MARE (29.09.2026, contractul _campaign/revizuire_completa_2026_09/foaie_excel_mare/contract.md):
-   - foaia arată de la început cel puțin coloanele A–J și rândurile 1–20 (sau cât cere exercițiul, cols/rows/cells);
-     ce se notează NU depinde de mărime: verificarea rămâne pe celulele ei;
+   - foaia arată de la început cel puțin coloanele A–J; RÂNDURILE (schimbat 07.11.2026 la cererea profesorului, contractul
+     AI_0\SECRETARY_V3\docs\contracte\2026-11-07_linkuri_si_randuri_excel): max(5, N + 1), unde N = ultimul rând de care
+     are nevoie exercițiul (vezi randNecesar). Înainte erau cel puțin 20: elevul vedea un tabel de 2 rânduri într-o foaie
+     lungă, prin care trebuia să coboare. Ce se notează NU depinde de mărime: verificarea rămâne pe celulele ei;
    - foaia crește singură, ca în Excel (acolo foaia continuă până la rândul 1.048.576 și coloana XFD): săgeata, Enter,
      Tab (și Shift+săgeată) dincolo de margine, lipirea și umplerea (pătrățelul tras) care trec de margine, adresa
      scrisă în caseta de nume (excelx.js, prin S.creste); pentru deget, butoanele „+ rând” / „+ coloană” de sub foaie;
@@ -51,7 +53,20 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const E=()=>window.JocFoaie;
 const MODE_TXT={gata:'Gata (Ready)',enter:'Introducere (Enter)',edit:'Editare (Edit)',point:'Indicare (Point)'};
 /* FOAIA MARE: mărimea de pornire (cel puțin) și limita până la care crește foaia */
-const MIN_C=10,MIN_R=20,MAX_C=26,MAX_R=100;
+const MIN_C=10,MIN_R=5,MAX_C=26,MAX_R=100;
+/* N = ultimul rând de care are nevoie exercițiul: datele (și ale celorlalte foi, Q.foi), rândurile scrise de autor (rows),
+   adresele din verificare, din celula de pornire (start / activa), din grafic și din textul sarcinii („Sari la H15”;
+   tastele din <kbd>, ca F4, nu sunt adrese). Foaia pornește cu N + 1 rânduri, dar cel puțin MIN_R. */
+const ADR_RE=/(^|[^A-Za-z0-9_$])\$?[A-Z]{1,3}\$?([1-9]\d{0,6})(?![A-Za-z0-9_(])/g;   // fără lookbehind: Safari vechi nu-l știe
+function randNecesar(Q){
+  let n=Number(Q.rows)||0;
+  const ia=a=>{const p=pos(a);if(p)n=Math.max(n,p.r+1)};
+  [Q.cells||{}].concat((Array.isArray(Q.foi)?Q.foi:[]).map(f=>f&&f.cells||{})).forEach(o=>Object.keys(o).forEach(ia));
+  const cauta=t=>{if(t==null)return;String(t).replace(ADR_RE,(m,p,r)=>{n=Math.max(n,Number(r));return m})};
+  cauta(String(Q.q||'').replace(/<kbd>[\s\S]*?<\/kbd>/gi,' ').replace(/<[^>]*>/g,' '));
+  ['verifica','start','activa','grafic'].forEach(k=>{if(Q[k]!=null)cauta(typeof Q[k]==='string'?Q[k]:JSON.stringify(Q[k]))});
+  return n;
+}
 const eAtingere=()=>{try{return matchMedia('(pointer: coarse)').matches||navigator.maxTouchPoints>0}catch(e){return false}};
 
 /* funcțiile, cu părțile lor exact cum le arată bula Excel-ului în engleză, și o descriere pentru elev */
@@ -294,10 +309,10 @@ function render(Q,body,api){
   cerePanglica();
   if(!document.getElementById('tip-excel-css')){const s=document.createElement('style');s.id='tip-excel-css';s.textContent=CSS;document.head.appendChild(s)}
   const liber=Array.isArray(Q.o);
-  /* FOAIA MARE: cel puțin A–J × 1–20, cât cere exercițiul (cols/rows) și cât e nevoie ca toate celulele date să se vadă;
-     crește până la limită (Z100, sau cât cere exercițiul, dacă cere mai mult) */
-  let extC=0,extR=0;Object.keys(Q.cells||{}).forEach(a=>{const p=pos(a);if(p){extC=Math.max(extC,p.c+1);extR=Math.max(extR,p.r+1)}});
-  const bazaC=Math.max(Q.cols||6,extC),bazaR=Math.max(Q.rows||8,extR),LIM_C=Math.max(MAX_C,bazaC),LIM_R=Math.max(MAX_R,bazaR);
+  /* FOAIA MARE: cel puțin A–J, cât cere exercițiul (cols) și cât e nevoie ca toate celulele date să se vadă; rândurile:
+     max(5, N + 1) (randNecesar, sus); crește până la limită (Z100, sau cât cere exercițiul, dacă cere mai mult) */
+  let extC=0;Object.keys(Q.cells||{}).forEach(a=>{const p=pos(a);if(p)extC=Math.max(extC,p.c+1)});
+  const bazaC=Math.max(Q.cols||6,extC),bazaR=randNecesar(Q)+1,LIM_C=Math.max(MAX_C,bazaC),LIM_R=Math.max(MAX_R,bazaR);
   let cols=Math.min(LIM_C,Math.max(MIN_C,bazaC)),rows=Math.min(LIM_R,Math.max(MIN_R,bazaR));
   let limita='',vezi=false;   // mesajul de la marginea foii (se arată la desenul următor); vezi = celula activă trebuie adusă în vedere
   const MESAJ_LIM=(c,r)=>`În Excel foaia continuă (are 1.048.576 de rânduri și 16.384 de coloane, până la XFD); aici ne oprim la ${c&&r?'coloana '+COL(LIM_C-1)+' și rândul '+LIM_R:c?'coloana '+COL(LIM_C-1):'rândul '+LIM_R}.`;
@@ -1076,7 +1091,7 @@ function gresit(Q,body,S0){
 }
 // pentru proba automată a exersării: rezolvă (sau greșește) varianta deschisă acum
 const practica=()=>exerseaza._stare;
-window.JocExcel={render,rezolva,gresit,FUNC,varianta,
+window.JocExcel={render,rezolva,gresit,FUNC,varianta,randNecesar,
   rezolvaPractica:()=>{const x=practica();rezolva(x.Qv,x.loc,x.S)},gresestePractica:()=>{const x=practica();gresit(x.Qv,x.loc,x.S)},
   practica:()=>{const x=practica();return x?{q:x.Qv.q,cells:x.Qv.cells,verifica:x.Qv.verifica}:null}};
 })();
