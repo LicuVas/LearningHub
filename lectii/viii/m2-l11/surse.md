@@ -155,9 +155,14 @@ Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8
 - **laboratorul, pasul 3 (graficul Line din A1:C5)** (`l11-r3-depanare`): „Dacă nu-ți iese” (`<details>`). Fiecare caz e jucat în Excel-ul real: fila Inserare, galeria cu linie și elementul Line primesc clicul prin mesaje; seriile și lunile de jos sunt citite prin COM (măsurat).
   - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `12-doar-numerele`, `12-fara-antet`, `12-doar-o-clasa`.
   - Lăsat deoparte `12-anii-ca-numere`: tabelul lecției are lunile ca text; capcana anilor e în pasul 1 al lecției, nu în laborator; cazul rămâne pe pagina tutorialului.
+- **pasul „Titlul, legenda și etichetele de date” (pasul 5 din 5), „Uite cum”** (`l11-p5-film`): legătura „Vezi film” spre `13-titlu-etichete-grafic` („Titlul graficului și etichetele de date”). Pasul predă un singur clic pe titlu, scrisul, Enter, apoi Chart Design › Add Chart Element › Data Labels › Right la linie: exact ce arată filmul, pe tabelul din biblioteca_lectia11.xlsx (Luna / 8A / 8B).
+- **laboratorul, pasul 5 (titlul graficului)** (`l11-r5-depanare`): „Dacă nu-ți iese” (`<details>`). Fiecare caz e jucat în Excel-ul real: clicul pe celulă / pe titlu și scrisul merg prin mesaje; al doilea clic pune cursorul în titlu, iar textul se adaugă la cel vechi (măsurat 07.11.2026).
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `13-titlu-scris-in-celula`, `13-titlu-adaugat-la-cel-vechi`.
+- **laboratorul, pasul 6 (etichetele de date, Right)** (`l11-r6-depanare`): „Dacă nu-ți iese” (`<details>`). Jucat în Excel-ul real: clicul pe linie alege doar seria 8B, iar Data Labels › Right pune numerele doar pe ea (măsurat 07.11.2026).
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `13-etichete-pe-o-singura-linie`.
 - **„Acum la calculatorul din laborator”, textul de deasupra pașilor** (`l11-intro-exersare`): legătura opțională spre registrul de exersare (`exersare.html#12-grafic-linie`). Registrul de exersare are o foaie pentru graficul linie (12 Grafic). O verifici tu, cu ochii: nicio funcție din Excel nu vede un grafic. E opțional: nu înlocuiește biblioteca_lectia11.xlsx.
 
 Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
 
-Amprenta cazurilor folosite (sha1, primele 12): `31c0dcf2932d`.
+Amprenta cazurilor folosite (sha1, primele 12): `df5bfcb96588`.
 <!-- TUTORIALE-EXCEL:END surse -->

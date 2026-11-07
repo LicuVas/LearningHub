@@ -143,9 +143,12 @@ Doar pe proba (ramura `proba`, adusă din `proba-tutoriale`; proba.learninghub-8
   - Lăsat deoparte `10-antetul-printre-nume`: în registrul lecției coloana C are numere, deci antetul e recunoscut; cazul e doar pentru listele numai cu text.
 - **laboratorul, pasul 5 (capcana: doar punctajele, Sort Warning)** (`l10-r5-depanare`): „Dacă nu-ți iese” (`<details>`). Fereastra Sort Warning e jucată în Excel-ul real: apare la butonul de jos cu doar punctajele selectate, iar Continue with the current selection și Sort primesc clicul (motor_excel.py, dialog_clic).
   - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `10-doar-coloana-selectata`.
+- **pasul „Mai multe criterii: Add Level” (pasul 5 din 5), „Uite cum”** (`l10-p5-film`): legătura „Vezi film” spre `11-sortare-doua-criterii` („Sortezi după două criterii”). Pasul predă fereastra Sortare (Sort) cu două niveluri: Clasa, cu A to Z, apoi, cu Add Level, al doilea criteriu, de la cel mai mare la cel mai mic. Filmul face exact asta, pe un tabel cu Echipa / Clasa / Punctaj.
+- **laboratorul, pasul 6 (două criterii: Clasa, apoi Punctaj)** (`l10-r6-depanare`): „Dacă nu-ți iese” (`<details>`). Fiecare caz e jucat în Excel-ul real, în fereastra Sortare: casetele Sort by / Then by / Order, elementele listelor, Add Level, bifa My data has headers și OK primesc clicul prin mesaje (motor_excel.py, dialog_alege / dialog_clic; măsurat 07.11.2026).
+  - Cazuri luate întocmai din `excel/cazuri/<slug>.json` (verificat_excel: true, verificate în Excel-ul real prin COM): `11-fara-al-doilea-nivel`, `11-criteriile-inversate`, `11-antet-nebifat`.
 - **„Acum la calculatorul din laborator”, textul de deasupra pașilor** (`l10-intro-exersare`): legătura opțională spre registrul de exersare (`exersare.html#10-sortare-o-coloana`). Registrul de exersare are o foaie pentru gestul lecției (10 Sortare, cu „✓ Gata” singur, care cere rândurile întregi). E opțional: nu înlocuiește concurs_lectia10.xlsx.
 
 Efect secundar cunoscut: amprenta pașilor-sursă din „Cum fac…?” se schimbă la pașii atinși; `cum-fac/_build/build.mjs --verifica` îi semnalează. Pe probă e acceptabil; înainte de master îi resincronizează proprietarul cum-fac.
 
-Amprenta cazurilor folosite (sha1, primele 12): `31c0dcf2932d`.
+Amprenta cazurilor folosite (sha1, primele 12): `df5bfcb96588`.
 <!-- TUTORIALE-EXCEL:END surse -->
