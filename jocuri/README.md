@@ -444,7 +444,148 @@ Profesorul a verificat Misiunea Analist la toate clasele de la a VIII-a în sus:
 - **„Ești tot X?” (judecătorul V/1, MAJOR):** cât stă întrebarea, lucra alt elev, iar diploma ieșea pe numele lui X, cu „Trimite diploma”, cuprinsul spunea „lecția e terminată” cu 3 stele, iar un „Da” apăsat doar ca să închidă caseta trecea totul la X. Acum, **în motor**: ce se arată ca făcut e doar ce e în sertarul lui X (rândul spune „făcut acum · ținut deoparte”, bara de sus numără doar ale lui X, „Cine lucrează” spune „Jos, calculatorul întreabă: ești tu X?…”); diploma scrie „— răspunde întâi jos —” în loc de nume, iar „Trimite diploma” e oprit, cu „Răspunde întâi jos: ești tu X?”; la răspuns, S se recitește din sertar și pagina se redesenează. **În `prezenta.js`**: „Da, sunt eu” nu mai mută nimic singur. Nivelurile ținute deoparte mai vechi de 20 de minute (după `u`, pus de motor) pleacă întâi la „neînscris”; dacă a rămas ceva recent (niveluri, sau cel puțin 3 minute într-o ședință deoparte începută în ultimele 20 de minute), a doua întrebare arată CE s-a lucrat și întreabă „Ai lucrat TU asta, acum?”: „Da, eu am lucrat” -> la X; „Nu, a lucrat altcineva” -> la „neînscris” (îl primește următorul elev care se înscrie), iar X rămâne înscris. Proba: `motor_lectie\proba_intreaba.py` (caseta reală, lecția VII/4 + excel-viii, 4 răspunsuri, rețeaua blocată): pe codul vechi 24 de probleme, pe cel nou 0.
 
 
+### 07.11.2026 — prezentarea pe zone, linkurile lizibile, foaia scurtă (ramura `prezentare-zone`, publicat pe proba)
+
+- **Prezentarea pe zone peste o captură reală (`lectii\_sim\tur-captura.js`, pilot VIII/2).** Profesorul a cerut-o așa: „ca un powerpoint în care căsuțele sunt prezentate și ilustrate pe rând… pan and zoom peste imagine și face click pe filele panglicii”.
+  - În pagină: `<div class="tur-captura" data-tur="img/tur.json" data-mod="zone|panglica">`, cu figura statică ÎNĂUNTRU, ca rezervă.
+  - Componenta citește JSON-ul (formatul e în capul fișierului) și face pașii, mărirea pe zonă, tragerea, zoom-ul și filele apăsabile.
+  - Regula pentru autori: ghidul lecțiilor (`_campaign\revizuire_completa_2026_09\00_GHID_LECTII.md`), §14.
+  - Lanțul capturilor: `lectii\viii\m1-l02\_proba\capturi_tur.py` (Excel `/safe /x` pe desktopul ascuns, 1600×900, dreptunghiurile din UI Automation în ACEEAȘI rulare), apoi `fa_tur.py --scrie`.
+  - Proba: `_proba\proba_tur.py --baza <sit>`, ultima linie 0.
+  - Contract: AI_0 `SECRETARY_V3\docs\contracte\2026-11-07_prezentare_zone_excel`.
+  - Zonele, cercurile cu număr și cuvintele galbene din lista de deasupra (`<ol data-tc-zone>`) fac același lucru ca butoanele 1–6 de sub imagine: duc la zona aleasă.
+  - Al doilea clic pe zona aleasă duce înapoi la toată fereastra, ca la grupurile de pe panglică.
+  - Cuvintele din listă sunt `role=button` și merg și cu Enter/Spațiu. Cuvântul pasului curent are `aria-current="step"`.
+  - Cercurile apăsabile au zona de atingere de 32 px (`::before{inset:-8px}`).
+  - **`<mark>` într-o lecție = TERMEN NOU** pentru `verifica_lectie`: T0 cade dacă termenul e folosit înainte de definiție. Un nume deja predat se leagă cu `<span data-tc-leg>`, nu cu `<mark>`.
+  - `vector-effect: non-scaling-stroke` nu vede `scale()` din CSS, deci grosimea conturului se dă cu `calc(3px * var(--inv))`.
+  - Plafonul de mărire e de 3 px de ecran pe pixel de captură, adică ≈6,75× la fereastra întreagă. Profesorul l-a aprobat pe 07.11: „mărimea maximă e bună”.
+  - **Excel pentru capturi:**
+    - `/safe` cere „Default File Types”, iar dialogul poate apărea DUPĂ fereastra foii și blochează COM („Call was rejected by callee”). Dialogurile se tratează și în bucla de reîncercare COM.
+    - Un Excel oprit după PID lasă intrări în `HKCU\…\Excel\Resiliency\DocumentRecovery`, care se șterg. Altfel Excel-ul profesorului arată „fișiere recuperate”.
+    - Unele file au panglica cu 1 px mai scundă: pentru ele se decupează fereastra întreagă, nu banda.
+- **Culorile linkurilor (`motor.css`).** Cererea profesorului: „linkurile vizitate și nevizitate sunt prea greu vizibile”.
+  - Rămăseseră culorile browserului (#0000EE / #551A8B). Pe tema întunecată, 1240 de linkuri erau sub 4,5:1.
+  - Acum sunt jetoanele `--link` / `--link-viz`:
+    - luminos: #0B57B7 / #6A35A8;
+    - întunecat: #8FC7FF / #D2B0FF, puse în `@media (prefers-color-scheme:dark) :root:not([data-theme="light"])` și în `:root[data-theme="dark"]`.
+  - Culorile se aplică prin `:where(a:link)` / `:where(a:visited)`. `:where()` are specificitate 0, deci orice culoare pusă de autor câștigă: 239 de linkuri colorate de autor au rămas neschimbate.
+  - **Contrastul se măsoară pe fundalul EFECTIV.** Urci prin părinți până la primul fundal opac și compui pe drum transparențele (alpha).
+  - **Un link VIZITAT se poate măsura sau fotografia doar așa:** profil persistent (`launch_persistent_context`, `channel="chromium"`) și CLIC din pagină.
+    - Chrome ține „vizitat” pe trei lucruri: linkul, situl paginii și cadrul care l-a deschis.
+    - Shell-ul headless nu desenează deloc `:visited`.
+- **Foaia simulată pornește scurtă (`tip-excel.js`).** Cererea profesorului: „număr minim de 5 rânduri sau nr. necesar în exercițiu plus 1 rând”.
+  - `randNecesar(Q)` (exportat în `window.JocExcel`) dă N, cel mai mare dintre:
+    - ultimul rând cu date, și din celelalte foi (`Q.foi`);
+    - `rows` al autorului;
+    - adresele din `verifica` / `start` / `activa` / `grafic`;
+    - adresele din textul sarcinii, fără `<kbd>`.
+  - Foaia are max(5, N+1) rânduri și cel puțin coloanele A–J (`MIN_R=5`, `MIN_C=10`).
+  - Creșterea a rămas: Enter și ↓ pe ultimul rând, „+ rând” / „+ coloană”, până la Z100.
+  - Înlocuiește „cel puțin 20 de rânduri” din 29.09. Pe sit: 236 de foi, dintre care 78 au 5 rânduri, iar restul între 6 și 11.
+  - **Expresiile regulate din motor se scriu FĂRĂ lookbehind (`(?<=…)`).** Safari mai vechi de 16.4 dă eroare de sintaxă la încărcarea fișierului și cade tot simulatorul.
+    - Soluția: prefixul se prinde într-un grup (`(^|[^A-Za-z0-9_$])`) și se pune înapoi în funcția de înlocuire.
+  - Un exercițiu care trimite elevul pe un rând de sub date îl numește în verificare, în text sau în `rows`. Altfel rândul nu există de la început.
+- **O probă pentru ambele: `_motor\proba_linkuri_randuri.py`** (`--tema dark|light`, `--baza`, `--compara A B`).
+  - Ce parcurge:
+    - toate lecțiile `lectii\{v,vi,vii,viii}\*`, pe fiecare pas (cu „altfel” deschis), atelier și exercițiu;
+    - cele 5 cataloage;
+    - jocurile care folosesc `motor.css`.
+  - Ce verifică:
+    - R1: contrastul ≥ 4,5:1;
+    - R2: culoarea de vizitat;
+    - R3: culorile puse de autor rămân neschimbate (compară două rulări și sare peste culorile implicite ale browserului);
+    - R4: rândurile = max(5, N+1), cu un tokenizator independent de motor;
+    - R5: creșterea pe VIII/2 (5, ↓ 6, „+ rând” 7, Enter 8; coloanele 10, apoi 11).
+  - Ultima linie = numărul de abateri.
+  - Pe proba: 0 în ambele teme, pe 15.574 de linkuri. Contrastul minim e 7,68, iar la vizitate 7,43.
+- **Găsite pe drum, mai VECHI decât schimbările de azi.** Am dovedit-o punând înapoi `motor.css` și `tip-excel.js` de la HEAD: aceleași căderi. Le-am trecut în §10:
+  - `test_joc.py` pe `excel-antrenament-viii`: „Page.click: Timeout 6000ms”;
+  - `proba_excel_gesturi.py`: „JocMotor is not defined” pe pagina de probă;
+  - `proba_tragere.py`: 36 de abateri, iar selecția trasă se oprește la marginea vizibilă a foii, și cu 20 de rânduri, și cu 5.
+  - Tot de pe drum, la prezentarea pe zone:
+    - butonul de pe tot situl „Sunt elev — mă înscriu” acoperă rânduri de text pe telefon;
+    - când imaginea e de lățime medie, cercul 5 acoperă o parte din fila „Orar”.
+- **Lucrul în paralel pe același depozit.** Referințele `origin/*` sunt comune tuturor worktree-urilor lui `C:\00\Projects\LearningHub`: un `fetch` dintr-un worktree le mută pentru toate.
+  - Publicarea pe proba se face cu merge din `origin/proba` și push fast-forward, fără `--force`.
+  - După fiecare push, hash-ul se anunță sesiunii vecine. Orice cale din `jocuri\_motor` sau `lectii\_sim` se anunță înainte de push.
+  - Cloudflare publică proba în 20-40 de secunde.
+
+### 07.11.2026 seara — ce s-a găsit pe drum, reparat (ramura `prezentare-zone`)
+
+- **Probele cu port fix cădeau pe programe străine (`proba_excel_gesturi`: „JocMotor is not defined”).**
+  - Cauza: pe portul 8771 rula `tools\elevi_app.py` din AI_0. Pe Windows, `http.server.HTTPServer` are `allow_reuse_address=1` (SO_REUSEADDR), deci proba „pornea” FĂRĂ eroare peste portul ocupat. Cererile ajungeau la celălalt program și primeau 404.
+  - Reparat: cele 13 probe din `_motor` cu port fix iau acum un port liber de la sistem (`("127.0.0.1", 0)`, apoi `srv.server_address[1]`). `proba_sertare` avea deja ocolirea.
+  - **Regulă: o probă nouă nu primește niciodată port fix.** Când o probă „nu găsește motorul”, întâi te uiți cine ascultă pe port: `netstat -ano`, apoi procesul după PID.
+  - Pe drum, `proba_excel_gesturi` mai avea o așteptare veche. Scrisă pe 25.09, cerea ca `Elev ⇥ Nota ↵` să ducă la B2. Excel-ul REAL coboară în coloana de start a șirului de Tab-uri, adică A2 (proba din 28.09). Motorul făcea deja corect, doar proba era greșită. Acum: 86 de verificări, 0 probleme.
+- **Poarta pe `excel-antrenament-viii`: „Page.click: Timeout 6000ms”.**
+  - Cauza: la prima vizită, întrebarea evidenței („Spune cine ești”, `assets\js\prezenta.js`) are 300 px pe Pixel 7. Ea se strânge abia la primul GEST al elevului: apăsare, derulare sau tastă.
+  - Derularea făcută de Playwright e programatică, deci nu e un gest. Singurul nivel al antrenamentului stătea sub întrebare, iar clicul aștepta degeaba.
+  - Elevul adevărat derulează și trece; poarta nu o făcea.
+  - Reparat în `test_joc.py`: `primul_gest(pg)`, adică o rotiță de 1 px după încărcare, ca un elev. Acum TRECUT, cu 102 întrebări jucate.
+  - **Lecție:** o probă care deschide pagina „ca un elev” face și primul gest al elevului. Altfel testează o stare pe care niciun elev n-o vede până la capăt.
+- **`proba_tragere`: 36 de abateri. Proba era greșită, iar motorul avea și un gol real.**
+  - (1) Din 29.09 foaia arată cel puțin A–J, mai lată decât caseta ei: la 1280 px coloanele I–J sunt ascunse în derularea casetei, la 390 px E–J. Proba alegea rândurile vizibile, dar coloanele din toată foaia, deci ochea J7, pe care elevul nu-l vede.
+    - Acum alege și coloanele vizibile: 36/36 exacte.
+    - Controlul: cu defectul din 27.09 pus la loc (`focus()` fără `preventScroll`), proba îl prinde de 36 de ori.
+  - (2) **Golul real de fidelitate:** în Excel, cât ții butonul apăsat dincolo de marginea ferestrei, foaia se derulează și selecția crește. În simulator, selecția se oprea la marginea casetei.
+    - Acum, în `tip-excel.js` (`urmaresteSelectia()`): cât butonul stă dincolo de marginea casetei (stânga/dreapta) sau a foii și a ecranului (sus/jos), caseta sau pagina se derulează. Selecția crește cu o celulă la ~90 ms, iar la capăt foaia crește, ca la pătrățelul de umplere, până la limită.
+    - Merge doar pentru mouse și creion. Degetul derulează foaia de literele coloanelor (vezi `pointercancel`), iar `excelx.js` are drumul lui.
+    - Tot aici: ridicat dincolo de foaie, tragerea se încheie, iar caseta de nume revine la celula activă. Înainte rămânea „1R x 8C”, fiindcă `pointerup` pleca doar de pe foaie.
+    - Proba e în `proba_tragere.py`, „dincolo de marginea casetei”: la 1280 și 390 px, spre dreapta (zona ajunge cel puțin la J, caseta se derulează) și spre stânga (până la A).
+    - Pe motorul vechi, toate 4 cazurile pică. Pe cel nou, 4/4.
+- **„Sunt elev — mă înscriu” peste textul lecției (judecătorul prezentării, VIII/2, 390 px).**
+  - Eticheta se ferea doar de ce se poate apăsa (27.09), iar `opacity:.75` amesteca literele ei cu ale paginii.
+  - Acum `ocupat()` întoarce 2 = de apăsat, 1 = TEXT, 0 = liber. Textul înseamnă dreptunghiurile rândurilor din textul direct al elementului de deasupra (`Range.getClientRects`).
+  - Eticheta stă în primul loc liber: plină în stânga, apoi strânsă în stânga, apoi strânsă în dreapta. Dacă nu e niciunul liber, rămâne strânsă unde e doar text, ca butonul de chat al unui sit (se poate derula). Peste ceva de apăsat e ascunsă, ca înainte.
+  - Cât pagina se derulează, eticheta nu sare din colț în colț după fiecare rând. Se mută pe loc doar ca să nu stea peste ceva de apăsat; altfel așteaptă oprirea derulării.
+  - Eticheta de vizitator e opacă (`.pill.viz`) și discretă prin culori.
+  - Proba nouă: `_motor\proba_eticheta_text.py`. Ea ascunde o clipă eticheta și întreabă browserul, cu `caretRangeFromPoint`, ce literă e sub fiecare punct: altă cale decât codul etichetei. Acceptă `--prezenta <fișier vechi>` pentru comparație.
+  - Rezultat, pe 4 pagini × 2 ecrane × 2 stări:
+    - puncte pe litere acoperite: 18.849 înainte, 4.051 după;
+    - poziții în care eticheta stătea peste text deși avea loc liber: 13 înainte, 0 după;
+    - peste ceva de apăsat: 0.
+  - **Rămâne știut:** pe telefon, când textul ajunge în ambele colțuri, eticheta strânsă tot acoperă un cuvânt-două. Nu se ascunde, fiindcă e drumul elevului spre înscriere și spre „Ieși”.
+- **Cercul 5 peste fila „Orar” (prezentarea pe zone, VIII/2).**
+  - Cercul are mărime fixă pe ECRAN, deci într-o captură îngustă acoperă mult. Centrul lui stătea la capătul filelor.
+  - Acum `nr_la` acceptă `[x, y, "st"]`: x este marginea din STÂNGA a cercului (`tur-captura.js`, `pozNumere`).
+  - `fa_tur.py` îl pune imediat după butonul „+” (`Add Sheet`, din UI Automation, aceeași rulare), pe mijlocul rândului filelor, unde bara e goală. S-a schimbat doar `tur.json`; imaginile au rămas identice octet cu octet.
+  - Proba e M15 în `proba_tur.py`: la 6 lățimi (1280-390), la „Toată fereastra” și la pasul 5, cercul nu acoperă nicio filă și nici „+”. Dreptunghiurile vin din UI Automation, nu din codul componentei.
+  - Pe proba (versiunea veche): 12 abateri. Pe versiunea nouă: 0.
+- **Probele care scriu pe serverele VII. Greșeala mea din seara asta, cu ce am învățat din ea.**
+  - Am rulat într-o serie „toate probele atinse”. Printre ele erau două care scriu pe serverul real:
+    - `proba_prezenta.py`: înscrie un elev inventat la Transporturi, X E, și îl șterge la final. Ghidul lecțiilor (IV) o interzice în probe.
+    - `proba_diploma.py`: trimitea implicit o diplomă reală. Verificarea ei (`diplome.py descarca --dir <temp>`) ia de pe server TOATE diplomele care așteaptă și le șterge acolo. O diplomă reală a unui elev ar fi ajuns într-un folder temporar, nu la profesor.
+  - Inventarul făcut după aceea:
+    - elevul inventat a fost șters (proba a re-listat serverul și n-a mai găsit nimic);
+    - în panou (`activitate.py lista`) nu e niciun nume de probă;
+    - din server s-a luat doar diploma de probă: un singur rând în evidența temporară, deci nu aștepta nicio diplomă reală;
+    - folderul de pe Drive n-a fost atins;
+    - contorul de vizitatori (anonim, fără nume) a primit vizitele câtorva probe fără blocarea rețelei. Nu se poate desface.
+  - Reparat:
+    - `proba_prezenta` pornește doar cu `--server-viu`; altfel refuză, iar ultima linie e 1.
+    - `proba_diploma` nu mai trimite nimic implicit și oprește rețeaua. `--trimite-viu` refuză dacă pe server așteaptă diplome (`diplome.py lista` ≠ 0).
+    - Blocarea rețelei (regula 24) e pusă și în `proba_excel_gesturi`, `proba_varianta_text`, `proba_exersare` și `lectii\viii\m1-l02\_proba\proba_tur.py`.
+  - **Regulă: înainte să rulezi o probă pe care n-ai scris-o tu, cauți în ea `teste-vasile`, `teste.api`, `diplome.py` și blocarea rețelei (`abort`).** O serie de probe nu se face după „tot ce se numește proba_*”.
+  - Rămâne de lămurit: `proba_prezenta` pică la „pe server: 5 s pe lecție” (așteaptă ≥ 25 s). Probabil e o așteptare mai veche decât rărirea trimiterilor din 11.10 (cota Netlify): `prezenta.js` trimite de la 30 s doar la sosire. Codul de numărare n-a fost atins azi. Nu am mai rulat-o, ca să nu scriu iar pe serverul viu.
+- **Verificarea de după, pe motorul schimbat:**
+  - `test_joc.py --toate`: 27 TRECUT, 0 PICAT (2 sărite: pagini vechi fără motor);
+  - lecțiile VIII: 23/23 TRECUT;
+  - `motor_lectie\proba_stari.py` (copie pe worktree): 0 din 448 de rulări, cu controlul prins;
+  - `proba_excel_gesturi` 0, `proba_tragere` 0 (și `--capat` 0), `proba_tab_enter` 0, `proba_varianta_copiere` 0, `proba_varianta_text` 0, `proba_exersare` 0, `proba_lansator` 0, `proba_fereastra_mica` 0;
+  - `proba_inscriere_telefon`, `proba_tinut`, `proba_nume_doua_cuvinte`, `proba_unire_ctt`, `proba_diploma` (fără trimitere): 0;
+  - `proba_eticheta_text` 0; proba zonelor VIII/2: 0.
+
 ## 10. Deschis / de îmbunătățit
+
+- **(REPARATE 07.11.2026 seara, §9 „07.11.2026 seara”)** Găsite pe 07.11.2026 (§9), de reparat:
+  - `test_joc.py` pe `excel-antrenament-viii` (timeout la clic);
+  - `proba_excel_gesturi.py` („JocMotor is not defined”);
+  - `proba_tragere.py` (36 de abateri, selecția se oprește la marginea vizibilă);
+  - butonul „Sunt elev — mă înscriu” peste text pe telefon;
+  - cercul 5 peste fila „Orar” la lățime medie (VIII/2).
+- **Numele românești a 23 din 54 de grupuri ale panglicii Excel** (prezentarea pe zone, VIII/2) n-au încă sursă. Până atunci rămân în engleză (`panglica-excel.json` / `tur.json`).
+
 
 - **Foaia Excel prinde Tab în jocul obișnuit (28.09.2026, propunere, neaplicată):** ca în Excel, Tab mută între celule, deci elevul care folosește doar tastatura nu mai iese din foaie spre „Pasul următor” / „Verifică”. Propunerea: (1) la MARGINEA foii, când nu scrie în celulă, Tab din ultima coloană a simulatorului și Shift+Tab din coloana A lasă focusul să plece mai departe, spre următorul (sau precedentul) element din pagină. În simulator coloana aceea oricum nu e XFD, deci pierderea de fidelitate e mică. (2) Sub foaie, un rând scurt: „Tab mută între celule, ca în Excel; din ultima coloană, Tab iese din foaie.” (3) Pe paginile de pași și de atelier, butoanele „← Pasul anterior” / „Pasul următor →” și SUS, înaintea conținutului, ca la recitire. (1) scoate capcana, iar (3) e scurtătura; împreună respectă și Excel-ul, și regula „fără capcană de tastatură” (WCAG 2.1.2).
 

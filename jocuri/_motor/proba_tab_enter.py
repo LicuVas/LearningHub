@@ -46,7 +46,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tip-excel")
     a = ap.parse_args()
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8782), functools.partial(Tacut, directory=str(SITE)))
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Tacut, directory=str(SITE)))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     pagini = ["jocuri/excel-viii/index.html", "jocuri/excel-pas-cu-pas-viii/index.html", "jocuri/excel-antrenament-viii/index.html"]
     pagini += sorted(str(p.relative_to(SITE)).replace("\\", "/") for p in SITE.glob("lectii/viii/m1-l0*/index.html"))
@@ -68,7 +68,7 @@ def main():
                 erori = []
                 pg.on("pageerror", lambda e: erori.append("pageerror: " + str(e)[:160]))
                 pg.on("console", lambda m: erori.append("console: " + m.text[:160]) if m.type == "error" and "net::ERR_FAILED" not in m.text else None)
-                pg.goto(f"http://127.0.0.1:8782/{cale}", wait_until="load")
+                pg.goto(f"http://127.0.0.1:{srv.server_address[1]}/{cale}", wait_until="load")
                 pg.evaluate("localStorage.clear();localStorage.setItem('lh_prezenta',JSON.stringify({refuz:Date.now()}))")
                 pg.reload(wait_until="load")
                 pg.wait_for_timeout(400)

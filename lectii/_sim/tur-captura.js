@@ -18,7 +18,8 @@
      ansamblu:{titlu,text}                      „toată fereastra” (pasul 0)
      zone:[{id,nr,r,titlu,en,text,detaliu?,focus?,nr_la?}]  pașii, în ordine. detaliu = al doilea chenar, punctat; focus = unde
                                                 se uită camera, când zona e prea lată ca să se vadă mărită întreagă (bara de
-                                                formule, bara de stare); nr_la = [x,y] unde stă cercul cu numărul.
+                                                formule, bara de stare); nr_la = [x,y] unde stă cercul cu numărul
+                                                (centrul), sau [x,y,"st"]: x = marginea lui din stânga (crește spre dreapta).
                                                 Zona cu id:"panglica" e SPECIALĂ: doar la ea se pot apăsa filele (imagine + rând
                                                 de butoane), iar textul spune ce filă e deschisă.
      final:"…"                                  rândul de după ultimul pas (unde e „Încearcă tu”)
@@ -284,12 +285,17 @@ function construieste(el,D,url){
   function gaura(r){if(!r){masca.setAttribute('d','');return}
     const p=4;masca.setAttribute('d',`M0 0H${B.w}V${B.h}H0Z M${r.x-p} ${r.y-p}V${r.y+r.h+p}H${r.x+r.w+p}V${r.y-p}Z`)}
   function numar(n,r,la,fn,eticheta){const s=document.createElement('span');s.className='tc-nr';s.textContent=n;s.dataset.ax=la?la[0]:r.x+r.w;s.dataset.ay=la?la[1]:r.y+r.h/2;
+    if(la&&la[2]==='st')s.dataset.st='1';
     if(fn){s.classList.add('tc-nr-hot');s.title=eticheta||'';s.onclick=e=>{e.stopPropagation();fn()}}
     puncte.appendChild(s);pozNumere()}
-  function pozNumere(){   // centrul cercului = mijlocul laturii din dreapta a chenarului, mutat înăuntru cât să nu iasă din imagine
+  /* centrul cercului = mijlocul laturii din dreapta a chenarului (sau nr_la), mutat înăuntru cât să nu iasă din imagine.
+     Cercul are mărime fixă pe ECRAN, deci în captură e cu atât mai mare cu cât imaginea e mai îngustă. nr_la [x,y,"st"]
+     (07.11.2026): x e marginea din STÂNGA a cercului, care crește doar spre dreapta. Cercul 5 stătea peste fila „Orar” la
+     lățimi medii; acum stă imediat după butonul „+”, în bara goală, la orice lățime. */
+  function pozNumere(){
     const s=st.cam.s||1,ing=!!tc.dataset.ingust;   // cercul apăsabil: înăuntru cât îi încape toată ținta (36 / 42 px)
     puncte.querySelectorAll('.tc-nr').forEach(e=>{const k=(e.classList.contains('tc-nr-hot')?(ing?18:21):(ing?11:14))/s;
-      const x=Math.min(+e.dataset.ax,B.w-k),y=Math.min(Math.max(+e.dataset.ay,k),B.h-k);e.style.left=x+'px';e.style.top=y+'px'})}
+      const x=Math.min(+e.dataset.ax+(e.dataset.st?k:0),B.w-k),y=Math.min(Math.max(+e.dataset.ay,k),B.h-k);e.style.left=x+'px';e.style.top=y+'px'})}
   function buton(r,eticheta,fn,cls,min){const b=document.createElement('button');b.type='button';b.className='tc-hot '+(cls||'');b.tabIndex=-1;b.setAttribute('aria-hidden','true');
     b.title=eticheta;Object.assign(b.dataset,{x:r.x,y:r.y,w:r.w,h:r.h,min:min||''});b.onclick=e=>{e.stopPropagation();fn()};puncte.appendChild(b);pozTinte();return b}
   function pozTinte(){   // „h” = cel puțin 32 px de ecran pe înălțime (filele: pe lățime s-ar călca între ele); „hw” = pe ambele
@@ -432,6 +438,6 @@ function construieste(el,D,url){
 
 function cauta(rad){(rad||document).querySelectorAll('.tur-captura[data-tur]:not([data-tc-gata])').forEach(monteaza)}
 function porneste(){cauta();try{new MutationObserver(()=>cauta()).observe(document.body,{childList:true,subtree:true})}catch(e){}}
-window.TurCaptura={cauta,versiune:'2026-11-07b'};
+window.TurCaptura={cauta,versiune:'2026-11-07c'};
 if(document.body)porneste();else document.addEventListener('DOMContentLoaded',porneste);
 })();

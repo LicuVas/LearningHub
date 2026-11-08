@@ -1,6 +1,7 @@
 """Proba DIPLOMEI din browser (24.09.2026): QR spre telefon + „Trimite-o profesorului”.
 
-  python proba_diploma.py [--baza http://127.0.0.1:8765] [--joc excel-viii] [--fara-trimitere]
+  python proba_diploma.py [--baza http://127.0.0.1:8765] [--joc excel-viii] [--trimite-viu]
+  (implicit, din 07.11.2026: fără trimitere și cu rețeaua oprită; --trimite-viu refuză dacă pe server așteaptă diplome reale)
 
 Fără --baza pornește un server local pe folderul LearningHub. Joacă „ca un elev” pe un calculator de
 laborator (1366 px): deblochează nivelurile, deschide diploma, scrie numele, verifică QR-ul, alege școala și
@@ -38,22 +39,40 @@ def verifica(cond, ce):
 def server_local():
     h = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(LH))
     http.server.ThreadingHTTPServer.allow_reuse_address = True
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8765), h)
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), h)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
-    return "http://127.0.0.1:8765"
+    return "http://127.0.0.1:%d" % srv.server_address[1]
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--baza")
     ap.add_argument("--joc", default="excel-viii")
-    ap.add_argument("--fara-trimitere", action="store_true")
+    ap.add_argument("--fara-trimitere", action="store_true", help="(de la 07.11.2026 e implicit; rămâne pentru comenzile vechi)")
+    ap.add_argument("--trimite-viu", action="store_true",
+                    help="trimite diploma de probă la serverul VIU și o ia înapoi; refuză dacă pe server așteaptă diplome ale elevilor")
     a = ap.parse_args()
+    # 07.11.2026: implicit NU se trimite nimic și rețeaua e oprită (regula 24). Înainte, proba trimitea la serverul viu, iar
+    # verificarea lua de pe server TOATE diplomele care așteptau (`diplome.py descarca --dir <temp>`) și le ștergea acolo:
+    # o diplomă reală a unui elev ar fi ajuns într-un folder temporar, nu la profesor.
+    a.fara_trimitere = not a.trimite_viu
+    if a.trimite_viu:
+        r0 = subprocess.run([sys.executable, r"C:\00\AI_0\tools\diplome.py", "lista"], capture_output=True, text=True, encoding="utf-8")
+        astept = (r0.stdout.strip().splitlines() or ["?"])[-1].strip()
+        if r0.returncode != 0 or astept != "0":
+            print("REFUZ: pe server așteaptă diplome ale elevilor (%s); verificarea le-ar lua și pe ele. Rulează întâi `diplome.py descarca`." % astept)
+            print(1)
+            return 1
     baza = (a.baza or server_local()).rstrip("/")
+
+    def fara_retea(pg):   # regula 24: nicio cerere în afara serverului local, cât nu se cere --trimite-viu
+        if a.fara_trimitere:
+            pg.route("**/*", lambda r: r.continue_() if ("127.0.0.1" in r.request.url or "localhost" in r.request.url) else r.abort())
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         br = p.chromium.launch()
         pc = br.new_page(viewport={"width": 1366, "height": 800})
+        fara_retea(pc)
         erori = []
         pc.on("pageerror", lambda e: erori.append(str(e)))
         pc.goto("%s/jocuri/%s/index.html" % (baza, a.joc), wait_until="networkidle")
@@ -94,6 +113,7 @@ def main():
         verifica(not erori, "fără erori JS pe pagina jocului %s" % erori[:2])
 
         tel = br.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True)
+        fara_retea(tel)
         tel.goto(link, wait_until="networkidle")
         tel.wait_for_function("document.getElementById('dipl').src.startsWith('data:image/png')", timeout=10000)
         marime = tel.evaluate("document.getElementById('dipl').src.length")

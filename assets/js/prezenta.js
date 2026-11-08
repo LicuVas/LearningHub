@@ -522,6 +522,9 @@
     '#lhp input.cod{-webkit-text-security:disc;letter-spacing:.35em;font-size:18px;max-width:9em}' +
     '#lhp button.iesi{background:#b3392f;border-color:#b3392f}#lhp .bun{color:#86efac;font-size:13px;margin-top:6px}' +
     '#lhp .pill.nimeni .dot{background:#9aa7c2}' +
+    /* 07.11.2026: „Sunt elev — mă înscriu” era discretă prin opacity:.75, deci peste text se amestecau literele ei cu ale
+       paginii. Acum e opacă și discretă prin culori. */
+    '#lhp .pill.viz{color:#c8d3ea;border-color:#3a4562}#lhp .pill.viz .dot{background:#9aa7c2}' +
     /* 30.09.2026 noaptea: „Ieși” pe etichetă, cu aspect de buton (aceeași culoare ca „Ieși (deconectare)” din meniu) */
     '#lhp .pill .bt{background:#b3392f;color:#fff;border-radius:999px;padding:2px 9px;font-weight:600;white-space:nowrap;line-height:1.35}' +
     '@media print{#lhp{display:none}}';
@@ -580,23 +583,41 @@
     }
     return false;
   }
-  // e ceva de apăsat în dreptunghiul ăsta (cu 6 px de jur împrejur, cât un deget)?
+  /* ce e în dreptunghiul ăsta (cu 6 px de jur împrejur, cât un deget)? 2 = ceva de apăsat, 1 = TEXT de citit, 0 = nimic.
+     Textul (07.11.2026, judecătorul prezentării VIII/2 pe 390 px: „Sunt elev — mă înscriu” stătea peste rânduri din
+     text și le făcea de necitit): litere = dreptunghiurile rândurilor textului DIRECT al elementului de deasupra. */
   function ocupat(l, t, r, b) {
     /* puncte la cel mult ~28 px pe orizontală și ~9 px pe verticală (28.09.2026: cu 3 rânduri, o legătură de 17 px, ca
        „Wikimedia Commons” din lecția V/5, încăpea între ele și eticheta strânsă, acum lată cât numele, stătea peste ea) */
-    var W = document.documentElement.clientWidth, H = innerHeight, xs = [], ys = [], memo = new Map();
+    var W = document.documentElement.clientWidth, H = innerHeight, xs = [], ys = [], memo = new Map(), memoT = new Map(), niv = 0;
     for (var nx = Math.max(5, Math.ceil((r - l + 12) / 28) + 1), ix = 0; ix < nx; ix++) xs.push(l - 6 + (r - l + 12) * ix / (nx - 1));
     for (var ny = Math.max(3, Math.ceil((b - t + 10) / 9) + 1), iy = 0; iy < ny; iy++) ys.push(t - 6 + (b - t + 10) * iy / (ny - 1));
     for (var i = 0; i < xs.length; i++) for (var j = 0; j < ys.length; j++) {
-      var lst = document.elementsFromPoint(Math.min(W - 1, Math.max(0, xs[i])), Math.min(H - 1, Math.max(0, ys[j])));
+      var px = Math.min(W - 1, Math.max(0, xs[i])), py = Math.min(H - 1, Math.max(0, ys[j]));
+      var lst = document.elementsFromPoint(px, py);
       for (var k = 0; k < lst.length; k++) if (!box.contains(lst[k])) {
         var v = memo.get(lst[k]); if (v === undefined) { v = interactiv(lst[k]); memo.set(lst[k], v); }
-        if (v) return true;
+        if (v) return 2;
+        if (!niv && literaLa(lst[k], px, py, memoT)) niv = 1;
         break;
       }
     }
+    return niv;
+  }
+  function literaLa(e, x, y, memoT) {
+    var rs = memoT.get(e);
+    if (rs === undefined) {
+      rs = [];
+      for (var n = e.firstChild; n; n = n.nextSibling) if (n.nodeType === 3 && /\S/.test(n.nodeValue)) {
+        var rg = document.createRange(); rg.selectNodeContents(n);
+        var cr = rg.getClientRects(); for (var q = 0; q < cr.length; q++) rs.push(cr[q]);
+      }
+      memoT.set(e, rs);
+    }
+    for (var z = 0; z < rs.length; z++) { var c = rs[z]; if (x >= c.left && x <= c.right && y >= c.top && y <= c.bottom) return true; }
     return false;
   }
+  var ultimDerulat = 0, tFereste = 0;
   function planFereste() { if (!rafF) rafF = requestAnimationFrame(fereste); }
   function fereste() {
     rafF = 0;
@@ -610,12 +631,24 @@
       dimPill = { w: q.width, h: q.height, mw: Math.max(MINI, m.width), mh: Math.max(MINI, m.height) };
     }
     var W = document.documentElement.clientWidth, B = box.getBoundingClientRect().bottom, d = dimPill;
-    // plină în stânga -> strânsă în stânga -> strânsă în dreapta -> ascunsă (niciodată peste ceva de apăsat)
-    var mod = !ocupat(12, B - d.h, 12 + d.w, B) ? '' : !ocupat(12, B - d.mh, 12 + d.mw, B) ? 'mini st'
-      : !ocupat(W - 8 - d.mw, B - d.mh, W - 8, B) ? 'mini' : 'mini ferit';
-    if (box.className !== mod) box.className = mod;
+    /* primul loc LIBER (nici de apăsat, nici text): plină în stânga -> strânsă în stânga -> strânsă în dreapta.
+       Niciunul liber: strânsă unde e doar text (în dreapta, apoi în stânga), cât butonul de chat al unui sit — se poate
+       derula; peste ceva de apăsat: ascunsă (lasă clicurile să treacă), ca înainte. */
+    var loc = [['', 12, B - d.h, 12 + d.w, B], ['mini st', 12, B - d.mh, 12 + d.mw, B], ['mini', W - 8 - d.mw, B - d.mh, W - 8, B]], niv = {};
+    var n = function (c) { if (niv[c[0]] === undefined) niv[c[0]] = ocupat(c[1], c[2], c[3], c[4]); return niv[c[0]]; };
+    var mod = null;
+    for (var i = 0; i < loc.length && mod === null; i++) if (!n(loc[i])) mod = loc[i][0];
+    if (mod === null) mod = n(loc[2]) < 2 ? 'mini' : n(loc[1]) < 2 ? 'mini st' : 'mini ferit';
+    /* cât pagina se derulează, eticheta nu sare dintr-un colț în altul după fiecare rând de text: se mută pe loc doar
+       ca să nu stea peste ceva de apăsat; altfel așteaptă să se oprească derularea */
+    var acum = box.className;
+    if (mod !== acum && Date.now() - ultimDerulat < 200) {
+      var ca = acum === '' ? loc[0] : acum === 'mini st' ? loc[1] : acum === 'mini' ? loc[2] : null;
+      if (!ca || n(ca) < 2) { clearTimeout(tFereste); tFereste = setTimeout(planFereste, 220); return; }
+    }
+    if (acum !== mod) box.className = mod;
   }
-  addEventListener('scroll', planFereste, { passive: true, capture: true });
+  addEventListener('scroll', function () { ultimDerulat = Date.now(); planFereste(); }, { passive: true, capture: true });
   addEventListener('resize', function () { dimPill = null; planFereste(); });
   addEventListener('load', planFereste);
   setInterval(function () { if (box && document.visibilityState === 'visible') planFereste(); }, 1000);
@@ -636,7 +669,7 @@
     /* „Nu, doar vizitez” apăsat din greșeală (25.09.2026, el: „pe urmă nu mai poate intra în monitorizare”):
        rămâne un buton mic și discret, ca elevul să se poată înscrie oricând. */
     if (s === 'vizitator') {
-      arata('<span class="pill" id="lhp-elev" style="opacity:.75" title="Ești elev? Înscrie-te ca profesorul să-ți vadă munca."><span class="dot" style="background:#9aa7c2"></span><span class="t">Sunt elev — mă înscriu</span><span class="s" aria-hidden="true">Mă înscriu</span></span>');
+      arata('<span class="pill viz" id="lhp-elev" title="Ești elev? Înscrie-te ca profesorul să-ți vadă munca."><span class="dot"></span><span class="t">Sunt elev — mă înscriu</span><span class="s" aria-hidden="true">Mă înscriu</span></span>');
       $('lhp-elev').onclick = formular;
       return;
     }
