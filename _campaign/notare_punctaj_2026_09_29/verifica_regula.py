@@ -28,7 +28,7 @@ TIPARE = [
     (r"oric[aâ]t ar avea", "nota blocată de nivel"),
     (r"cel mai mic dintre (nivelurile )?criteri", "grila: nivelul = cel mai mic"),
     (r"Pe an iei \d|\b\d+ note pe an|cel pu[țţt]in [6-9] note|(?<!media a )\b[6-9] note\b", "număr de note vechi"),
-    (r"din portofoliu", "împărțirea notelor (portofoliu)"),
+    (r"(?<!dovadă )(?<!dovada )din portofoliu", "împărțirea notelor (portofoliu)"),  # „o dovadă din portofoliu” = activitatea profesorului la recapitularea finală, nu o regulă de notare (09.11.2026)
 ]
 
 
