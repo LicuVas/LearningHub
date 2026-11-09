@@ -31,7 +31,7 @@ Bugetul a crescut de la 61 % la 86 % în 11 ore, pentru 3 lecții publicate, 2 �
 3. **Ce Code::Blocks și ce compilator au laboratoarele?** Pe calculatorul tău, Code::Blocks folosește `g++` 6.3, vechi: la „`;` lipsă” arată eroarea pe rândul de dedesubt, iar `int q=pow(5,2)` dă 24. Lecțiile vor spune asta și vor evita exercițiile unde rezultatul diferă.
 
 ## De știut
-- **Capacul laptopului:** calculatorul a dormit între 08:52 și 09:15 („Lid”, adică la capac), și a mai stat o dată între 09:53 și 10:03, cu cauza neaflată. Când doarme, agenții se opresc. Dacă vrei să meargă lucrarea cât ești la școală, lasă-l deschis și în priză.
+- **Capacul laptopului:** calculatorul a dormit între 08:52 și 09:15 („Lid”, adică la capac), a mai stat între 09:53 și 10:03 și apoi de mai multe ori până la 11:47. Când doarme, agenții se opresc. Dacă vrei să meargă lucrarea cât ești la școală, lasă-l deschis și în priză. **Cât e pe baterie, lucrez cu cel mult 3 agenți deodată, iar sub 35 % nu mai pornesc alții,** ca să nu ți-l golesc la clasă.
 - **Abatere de la regula nopții:** un agent a pornit o dată `codeblocks.exe --help` pe ecranul vizibil, pe la 00:35, sub un minut. L-a închis imediat; setările Code::Blocks au rămas neschimbate.
 - **Greșeală a mea, prinsă de mine:** am bifat în catastif „judecata finală” la V/31 înainte să fie gata. Am îndreptat-o în aceeași oră, înainte de publicare.
 - **Dosar rămas:** `lectii\_sim\_teste\cpp-mic\_poarta2\_bin` (30 MB, programe de probă compilate) n-a putut fi șters: permisiunile mi-au refuzat comanda și n-am ocolit-o. Nu e în git și nu blochează publicarea (poarta de date personale dă 0 cu el pe disc, 10:48). Îl poți șterge oricând.
