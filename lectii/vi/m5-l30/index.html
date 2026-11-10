@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 30, clasa a VI-a: Editarea compoziției și a proprietăților obiectelor</title>
+<meta name="description" content="Lecția 30, clasa a VI-a: proprietățile unui personaj în Scratch (x, y, Dimensiune, Arată, efectul fantomă), ordinea pe straturi, adaugi, copiezi și ștergi personaje; aranjezi o compoziție dată până arată cum se cere. Cu un Scratch simulat în pagină.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Code:wght@500;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#F3EFFA; --paper:#FFFFFF; --paper2:#F8F5FD; --line:#DDD3EE;
+  --ink:#231B33; --ink2:#5B5270; --accent:#5F3BB0; --accentInk:#FFFFFF; --sel:#E7DEF8;
+  --mark:#FFE07A; --markInk:#2A2118; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Baloo 2","Segoe UI",system-ui,sans-serif; --fb:"Nunito Sans","Segoe UI",system-ui,sans-serif; --fm:"Fira Code",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#17121F; --paper:#211A2C; --paper2:#2A2238; --line:#433857;
+  --ink:#EFEAF7; --ink2:#C2B8D4; --accent:#C2A8F5; --accentInk:#17121F; --sel:#3A2E52;
+  --mark:#EBC95C; --markInk:#2A2118; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#17121F; --paper:#211A2C; --paper2:#2A2238; --line:#433857;
+  --ink:#EFEAF7; --ink2:#C2B8D4; --accent:#C2A8F5; --accentInk:#17121F; --sel:#3A2E52;
+  --mark:#EBC95C; --markInk:#2A2118; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: panoul de sub scenă, ca în editor */
+.banda{display:flex;align-items:center;gap:6px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent);font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-size:.72rem;font-weight:700;color:#575E75}
+.banda .pp{flex:none;display:inline-block;padding:3px 10px;border-radius:12px;background:#fff;border:1px solid #C9D4E5}
+.banda .lk{flex:none;display:inline-block;padding:4px 10px;border-radius:5px;background:#9966FF;color:#fff;border:1px solid #774DCB}
+h1,h2{font-weight:800;letter-spacing:0}
+h1 .acc{color:var(--accent)}
+code{font-family:var(--fm);font-size:.9em}
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:800;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.blk{display:inline-block;padding:1px 7px;border-radius:5px;color:#fff;font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-weight:700;font-size:.86em;white-space:nowrap;background:#774DCB}
+.descarca{display:inline-flex;align-items:center;min-height:44px;line-height:1.25;padding:6px 14px;margin:4px 0;border-radius:10px;background:var(--accent);color:var(--accentInk);font-weight:700;text-decoration:none}
+.descarca:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+figure.captura img{max-width:100%;height:auto}
+figure.captura img[src$="straturi.webp"],figure.captura img[src$="meniu-dala.webp"]{max-width:260px}
+figure.captura img[src$="start.webp"],figure.captura img[src$="rezultat.webp"]{max-width:340px}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/scratch-compozitie.js"></script>
+<script>
+/* Lecția 30, clasa a VI-a (M5, predare): „Editarea compoziției și a proprietăților obiectelor”. Legea: 00_GHID_LECTII.md.
+   Aplicația = Scratch 3 online, fără cont (contractul m5_noapte_08_11, decizia 4). Faptele: _proba/live_vi30*.py (editorul viu, headless).
+   Simulatorul: lectii/_sim/scratch-compozitie.js (NOU, proprietar VI/30; nu încarcă scratch.js).
+   Compoziția dată: compozitie-de-aranjat.sb3 (_proba/fa_model.py). Granița: NU temporizarea, efectele în afară de fantomă (fantoma e aici din R1, 10.11), sunetul (VI/31); NU tastele, structurile de control (VI/32). */
+const fig = (f, w, h, alt, cap) => `<figure class="captura"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const ACUM = (...p) => `<div class="acum" role="note"><div class="lbl">Acum în Scratch, la calculator <small>(pe telefon: sari peste)</small></div><ol>${p.map(x => `<li>${x}</li>`).join('')}</ol></div>`;
+const LINK = '<a class="descarca" href="compozitie-de-aranjat.sb3" download="compozitie-de-aranjat.sb3">Descarcă compoziția</a>';
+
+/* compoziția dată: aceeași ca în compozitie-de-aranjat.sb3 (straturile din spate în față: Copac, Pisica, Minge) */
+const START = [
+  {id: 'Copac', desen: 'copac', x: -120, y: -40, size: 100},
+  {id: 'Pisica', desen: 'pisica', x: 150, y: -110, size: 50},
+  {id: 'Minge', desen: 'minge', x: 60, y: -130, size: 100, vis: false}];
+const ORD = ['Copac', 'Pisica', 'Minge'];
+/* aceeași, cu pisica de Dimensiune 100: la 390 px, pisica mică (26 px) se apuca greu cu degetul (R1, K) */
+const START_MARE = START.map(p => p.id === 'Pisica' ? Object.assign({}, p, {size: 100}) : p);
+/* pisica lângă copac, în fața lui (după pasul 2) */
+const LANGA = [
+  {id: 'Copac', desen: 'copac', x: -120, y: -40, size: 100},
+  {id: 'Pisica', desen: 'pisica', x: -50, y: -10, size: 100},
+  {id: 'Minge', desen: 'minge', x: 60, y: -130, size: 100, vis: false}];
+const r = Math.round;
+const aproape = (p, x, y, t) => !!p && Math.abs(p.x - x) <= t && Math.abs(p.y - y) <= t;
+const unde = (p) => `x ${r(p.x)}, y ${r(p.y)}`;
+const PANOU = 'Panoul arată mereu personajul a cărui dală e apăsată (mov).';
+/* R1 (A): în căsuța panoului clicul pune doar cursorul, numărul NU se selectează; se golește întâi (probat viu, _proba/r1_live.py A) */
+const CUM = 'apasă chiar după ultima cifră, apoi ⌫ până se golește';
+const STERGE = (c, n) => `Șterge tot ce scrie în căsuța ${c} (${CUM}), scrie ${n} și apasă Enter`;
+const STERGE_XY = (x, y) => `Șterge tot ce scrie în căsuța x (${CUM}), scrie ${x}, Enter; la fel în căsuța y: ${y}, Enter`;
+const PISICA_STEARSA = 'Pisica a fost ștearsă. Apasă „Ia-o de la capăt”, sub scenă.';
+const COPAC_STERS = 'Copacul a fost șters. Apasă „Ia-o de la capăt”, sub scenă.';
+
+/* ---- atelierul: rezultatul cerut (același ca în laborator) ---- */
+const VARIANTE = ['Poziția (x, y)', 'Dimensiunea', 'Ordinea (stratul)', 'Arată', 'Direcția'];
+const RANDURI = [
+  {id: 'r1', t: 'Pisica e de două ori mai mare.', ok: 'Dimensiunea'},
+  {id: 'r2', t: 'Pisica a ajuns lângă copac.', ok: 'Poziția (x, y)'},
+  {id: 'r3', t: 'Pisica e în spatele copacului.', ok: 'Ordinea (stratul)'},
+  {id: 'r4', t: 'Mingea apare pe scenă.', ok: 'Arată'}];
+const CE_FAC = {r1: 'ce număr ai scris ca s-o faci mai mare', r2: 'ce numere ai scris ca s-o muți', r3: 'ce bloc ai apăsat ca s-o duci în spate', r4: 'ce ochi ai apăsat la minge'};
+const T_PISICA_DIM = {ce: 'Pisica are Dimensiune 100 (de două ori cât acum)', ok: S => !!S.p.Pisica && r(S.p.Pisica.size) === 100,
+  msg: S => !S.p.Pisica ? PISICA_STEARSA : `Pisica are Dimensiune ${r(S.p.Pisica.size)}, nu 100. Apasă pe dala Pisica. ${STERGE('Dimensiune', 100)}.`};
+const T_PISICA_LOC = {ce: 'Pisica stă la x -50, y -10, lângă copac', ok: S => aproape(S.p.Pisica, -50, -10, 5),
+  msg: S => !S.p.Pisica ? PISICA_STEARSA : `Pisica e la ${unde(S.p.Pisica)}. Cu dala Pisica apăsată: ${STERGE_XY(-50, -10)}.`};
+const T_PISICA_SPATE = {ce: 'Pisica e în spatele copacului', ok: S => !!S.p.Pisica && !!S.p.Copac && S.inFata('Copac', 'Pisica'),
+  msg: S => !S.p.Pisica ? PISICA_STEARSA : !S.p.Copac ? COPAC_STERS : 'Pisica e în fața copacului. Apasă pe dala Pisica; în paletă, la „mergi la stratul”, alege din listă „înapoi”, apoi apasă pe cuvintele blocului.'};
+const T_PISICA_VIZ = {ce: 'Pisica se vede (doar o parte din ea, după copac)', ok: S => !!S.p.Pisica && S.p.Pisica.vis,
+  msg: S => !S.p.Pisica ? PISICA_STEARSA : 'Ai ascuns pisica. Apasă pe dala Pisica, apoi, la Arată, pe ochiul deschis.'};
+const T_MINGE = {ce: 'Mingea se vede', ok: S => !!S.p.Minge && S.p.Minge.vis,
+  msg: S => !S.p.Minge ? 'Mingea a fost ștearsă. Apasă „Ia-o de la capăt”, sub scenă.' : 'Mingea e tot ascunsă. Apasă pe dala Minge, apoi, la Arată, pe ochiul deschis.'};
+const T_COPAC = {ce: 'Copacul a rămas cum era: x -120, y -40, Dimensiune 100, se vede', ok: S => aproape(S.p.Copac, -120, -40, 1) && r(S.p.Copac.size) === 100 && S.p.Copac.vis,
+  msg: S => !S.p.Copac ? COPAC_STERS : `Copacul s-a schimbat (acum ${unde(S.p.Copac)}, Dimensiune ${r(S.p.Copac.size)}${S.p.Copac.vis ? '' : ', ascuns'}). Apasă pe dala Copac. Șterge tot ce scrie în căsuțele x, y și Dimensiune (${CUM}) și scrie la loc -120, -40 și 100, fiecare cu Enter; la Arată, ochiul deschis. ${PANOU}`};
+const T_RASP = {ce: 'La fiecare schimbare ai ales proprietatea care a produs-o', ok: S => RANDURI.every(x => S.raspunsuri[x.id] === x.ok),
+  msg: S => { const x = RANDURI.find(q => S.raspunsuri[q.id] !== q.ok); return !S.raspunsuri[x.id] ? `Alege ceva și la „${x.t}”` : `La „${x.t}” ai ales „${S.raspunsuri[x.id]}”. Gândește-te ${CE_FAC[x.id]} și în ce căsuță sau bloc.`; }};
+const SOL_ATELIER = {p: {Pisica: {x: -50, y: -10, size: 100}, Minge: {vis: true}}, ordine: ['Pisica', 'Copac', 'Minge'], sel: 'Pisica',
+  raspunsuri: {r1: 'Dimensiunea', r2: 'Poziția (x, y)', r3: 'Ordinea (stratul)', r4: 'Arată'}};
+const PAL = ['marime_mod', 'marime_set', 'arata', 'ascunde', 'strat', 'straturi'];
+
+/* ---- laboratorul: FĂRĂ profesor, pe calculatorul comun ---- */
+const LAB = [
+  `<b>Deschide compoziția.</b> Fila Scratch e deschisă, cu compoziția de la pași? Sari la punctul 3. Altfel: ${LINK}. Într-o filă nouă: <code>scratch.mit.edu</code> › <b>Creează</b> (meniul e în engleză? <b>Settings</b> › <b>Language</b> › <b>Română</b>; apoi <b>X</b> pe filmuleț). <b>Fișier</b> › <b>Load from your computer</b> › <b>Descărcări</b> › <b>compozitie-de-aranjat</b> › <b>Deschidere</b>.`,
+  'Privește: copacul în stânga, pisica mică în dreapta jos; mingea nu se vede. Ce ai făcut la pași s-a pierdut? Fă punctele de mai jos.',
+  '<b>Doar dacă nu e deja: pisica.</b> Apasă pe dala <b>Pisica</b>. În căsuța <b>Dimensiune</b> apeși chiar după ultima cifră, <kbd>⌫</kbd> până se golește, scrii 100, <kbd>Enter</kbd>. La fel în <b>x</b>: -50, <kbd>Enter</kbd>; în <b>y</b>: -10, <kbd>Enter</kbd>.',
+  '<b>Doar dacă nu e deja: în spatele copacului.</b> Cu dala <b>Pisica</b> apăsată: bulina <b>Aspect</b>, derulezi până la „mergi la stratul în față”. Apasă ▾, alege <b>înapoi</b>, apoi apasă pe cuvintele „mergi la stratul”.',
+  '<b>Doar dacă nu e deja: mingea.</b> Apasă pe dala <b>Minge</b>; la <b>Arată</b>, apasă ochiul deschis.',
+  `<b>Verifică-te.</b> Scena trebuie să arate ca în poza de mai jos. Nu seamănă? Apasă pe fiecare dală și citește panoul: Pisica -50, -10, Dimensiune 100; Copac -120, -40, Dimensiune 100. Pisica stă în fața copacului (de exemplu, după o tragere pe scenă)? Punctul 4 din nou.${fig('rezultat.webp', 490, 548, 'Scena din Scratch: pisica pe jumătate ascunsă după copac, mingea roșie jos; sub scenă panoul Pisicii cu x -50, y -10, Dimensiune 100', 'Rezultatul cerut, în Scratch.')}`,
+  `<span class="mai-ai-timp"><b>Dacă mai ai timp (opțional): copaci departe.</b> Clic dreapta pe dala <b>Copac</b> › <b>duplică</b>, de două ori: apar <b>Copac2</b> și <b>Copac3</b>. Copac2: Dimensiune 60, x 60, y 15. Copac3: Dimensiune 40, x 170, y -5 (în fiecare căsuță, ca la punctul 3). Apoi, cu dala fiecăruia apăsată: „mergi la stratul înapoi”. Ce e departe pare mai mic, mai sus și în spate. Copacul mare, pisica și mingea rămân cum erau.</span>${fig('padure.webp', 480, 360, 'Scena din Scratch: copacul mare în stânga, cu pisica pe jumătate ascunsă după el, mingea jos; în spate, mai sus, doi copaci mai mici', 'Cu doi copaci departe, în Scratch.')}`,
+  '<b>Salvează.</b> <b>Fișier</b> › <b>Salvează pe calculatorul tău</b>. Browserul întreabă unde? Folderul tău, numele <code>Compozitie_</code>, clasa și numele tău (de exemplu <code>Compozitie_6A_Popescu</code>), <b>Salvare</b>. Numele există deja? <b>Nu</b> (sau <b>Anulare</b>), adaugă prenumele, <b>Salvare</b>. Sari la punctul 10.',
+  'Nu te-a întrebat? Explorer › <b>Descărcări</b>: fișierul <b>compozitie-de-aranjat</b> cel mai nou (ora de acum, în coloana <b>Data modificării</b>; la coadă poate avea (1) sau (2): alegi după oră, nu după număr). <kbd>F2</kbd>, <code>Compozitie_</code>, clasa și numele tău, <kbd>Enter</kbd>; <b>Decupare</b>, folderul tău, <b>Lipire</b>. Există deja? E al unui coleg: <b>Se omite acest fișier</b>, adaugă prenumele, mută-l din nou.',
+  '<b>Curățenie.</b> Întâi te uiți în folderul tău: e acolo <code>Compozitie_…</code>? Abia apoi, în <b>Descărcări</b>, ștergi doar modelul descărcat azi, <b>compozitie-de-aranjat</b> (și copiile lui cu (1) sau (2), dacă l-ai descărcat de mai multe ori). Nu atingi lucrările tale vechi și nici fișierele colegilor.',
+  '<b>Închide fila Scratch</b> (te întreabă dacă părăsești pagina? Alegi să pleci: ai salvat).'
+];
+
+JocMotor.porneste({
+  cheie: 'lectie_vi_m5_l30',
+  mod: 'lectie',
+  titlu: 'Editarea compoziției și a proprietăților obiectelor',
+  marca: 'Lecția <b>30</b> · clasa a VI-a',
+  h1: 'Editarea compoziției și a <span class="acc">proprietăților obiectelor</span>',
+  eticheta: 'Lecții TIC',
+  acasa: {href: '../../../hub/index.html', text: 'LearningHub'},
+  clasa: 'a VI-a',
+  unitate: 'VI-U4',
+  unitateTitlu: 'Animații grafice și modele 3D',
+  competente: ['CS.1.2', 'CS.3.2'],
+  lectii: '30',
+  ancoraText: 'Programa (OMEN 3393/2017), clasa a VI-a, CS.1.2 „Utilizarea eficientă a instrumentelor specializate în scopul realizării unei animații grafice”, CS.3.2 „Elaborarea de animații grafice și modele 3D folosind operații specifice pentru a ilustra dinamic diverse teme” · unitatea VI-U4 „Animații grafice și modele 3D” · lecția 30, predare · conținutul „Operații de editare a unei compoziții: inserare, copiere, mutare, ștergere a obiectelor/cadrelor”. Activitatea profesorului: elevii modifică poziția, dimensiunea și ordinea obiectelor unei compoziții date, până obțin un rezultat cerut, și spun ce proprietate a produs fiecare schimbare. Aplicația: Scratch 3, editorul online scratch.mit.edu, fără cont.',
+  intro: '<p><b>Ai nevoie de:</b> lecția 18 (Scratch: scena, x și y, Load from your computer, salvarea în folderul tău). Te ajută și lecțiile 27-29 (costum, decor, compoziție), dacă le-ai făcut.</p>',
+  cum: '<b>Cum lucrezi</b><ol><li>Un pas de citit, apoi 5 pași scurți; după fiecare exersezi în pagină și, la calculator, în Scratch, pe compoziția descărcată.</li><li>Atelierul: compoziția întreagă, în pagină.</li><li>La calculator: o verifici și o salvezi (pe telefon, atelierul ține loc de ea).</li><li>5 întrebări, pentru stele.</li></ol><p>„Încă un exercițiu” și „Dacă mai ai timp” sunt opționale: le faci doar după ce ai terminat restul.</p><p><b>Uită-te la ceas. Când mai sunt 10 minute din oră</b>, salvezi în Scratch: <b>Fișier</b> › <b>Salvează pe calculatorul tău</b>, folderul tău, numele <code>Compozitie_6A_Popescu</code> (clasa și numele tău), <b>Salvare</b>. Există deja? <b>Nu</b> (sau <b>Anulare</b>), adaugi prenumele. Nu te-a întrebat? E în <b>Descărcări</b> (<b>compozitie-de-aranjat</b>, cel mai nou): îl redenumești și îl muți în folderul tău (lecția 18). Apoi ștergi din <b>Descărcări</b> modelul <b>compozitie-de-aranjat</b> (punctul 10 de la calculator). Închizi fila Scratch și treci la întrebări: în pași, <b>Știu deja — la verificare</b>, sus; după atelier, <b>Acum în Scratch, la calculator</b>, apoi <b>La verificare</b>, jos.</p>',
+  banda: '<span class="pp">Personaj: Pisica</span><span class="pp">x -50</span><span class="pp">y -10</span><span class="pp">Dimensiune 100</span><span class="lk">mergi la stratul înapoi</span>',
+  nivele: [
+{t: 'Editarea compoziției și a proprietăților obiectelor', final: true, lectii: [30],
+ continuturi: ['Operații de editare a unei compoziții: inserare, copiere, mutare, ștergere a obiectelor/cadrelor'],
+ obiectiv: 'schimbi poziția, dimensiunea, ordinea și vizibilitatea personajelor unei compoziții date (și cât de mult se vede prin ele, cu efectul fantomă), adaugi, copiezi și ștergi personaje, spui ce proprietate a produs fiecare schimbare și salvezi compoziția.',
+ pasi: [
+  /* ---- P0: la ce folosește (fără acțiuni) ---- */
+  {t: 'La ce folosește: așezi obiectele pe scenă',
+   text: `<p>La un teatru de hârtie, decorul stă în spate, iar figurinele le așezi tu: unde stă fiecare, cât e de mare, care e în față. Așezarea lor e <mark>compoziția</mark>: ce pui într-un cadru și unde (lecția 29).</p>
+<p>În Scratch, obiectele de pe scenă sunt personajele. Fiecare are <mark>proprietăți</mark>: locul, cât e de mare, dacă se vede, cine e în față. Azi le schimbi până obții o compoziție cerută. Mai înveți să adaugi, să copiezi și să ștergi personaje.</p>
+${fig('teatru-hartie.webp', 720, 461, 'Un teatru de hârtie colorat, din secolul al XIX-lea: în mijloc scena cu decorul pictat, pe margini culise; în dreapta, figurine de oameni pe suporturi rotunde', 'Un teatru de hârtie și figurinele lui. <small>Autor necunoscut, secolul al XIX-lea, <a href="https://commons.wikimedia.org/wiki/File:Papiertheater.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, domeniu public; micșorată.</small>')}`},
+  /* ---- P1: proprietățile, panoul ---- */
+  {t: 'Proprietățile unui personaj: panoul de sub scenă',
+   text: `<p>Sub scenă stau <mark>dalele</mark>: câte una pentru fiecare personaj (la lecția 18: „personajul Sprite1”, sub scenă). Apeși pe o dală: personajul e selectat, iar panoul de deasupra dalelor îi arată proprietățile. Panoul Scenă, din dreapta (lecția 27), e altul.</p>
+<p>O proprietate e o însușire a personajului, cu o valoare pe care o poți schimba: <b>Personaj</b> (numele), <b>x</b> și <b>y</b> (locul), <b>Arată</b> (se vede sau nu), <b>Dimensiune</b> (cât e de mare), <b>Direcția</b> (încotro privește). Valorile stau în căsuțe (la lecția 18: câmpurile x, y și Direcția). Schimbi o valoare, iar pe scenă se schimbă doar personajul selectat.</p>`,
+   exemplu: `${fig('panou.webp', 400, 176, 'Panoul de sub scena Scratch: Personaj Pisica, x 150, y -110, Arată cu doi ochi, Dimensiune 50, Direcția 90; dedesubt dalele Copac, Pisica (mov, selectată) și Minge', 'Dala <b>Pisica</b> e apăsată (mov). Panoul: x 150, y -110, Dimensiune 50.')}
+${ACUM(`${LINK} De obicei ajunge în <b>Descărcări</b>.`, 'Într-o filă nouă: <code>scratch.mit.edu</code> › <b>Creează</b>. Meniul e în engleză? <b>Settings</b> › <b>Language</b> › <b>Română</b>. Apoi <b>X</b> pe filmuleț. Nu apeși <b>Logare</b>.', '<b>Fișier</b> › <b>Load from your computer</b> › <b>Descărcări</b> › <b>compozitie-de-aranjat</b> › <b>Deschidere</b>.', 'Apasă pe dala <b>Pisica</b>: panoul arată 150, -110 și 50. Apasă pe dala <b>Minge</b>: la <b>Arată</b> e apăsat ochiul tăiat. Lasă fila deschisă.')}`,
+   altfel: `<p>E ca fișa unui jucător: numele, locul pe teren, înălțimea. Schimbi ce scrie în fișă, iar jucătorul se schimbă pe teren.</p>`,
+   incearca: {t: 'compozitie', q: 'Unul dintre personaje e ascuns: are dală, dar nu se vede pe scenă. Apasă pe dale, pe rând, și citește <b>Arată</b>. Lasă selectat personajul ascuns.',
+    personaje: START, ordine: ORD, meniu: false,
+    teste: [{ce: 'Personajul ascuns e selectat', ok: S => S.sel === 'Minge',
+      msg: S => `Ai selectat ${S.p[S.sel] ? S.p[S.sel].n : 'nimic'}: se vede pe scenă, iar la Arată e apăsat ochiul deschis. Apasă pe celelalte dale și privește Arată.`}],
+    solutie: {sel: 'Minge'}, gresit: {sel: 'Pisica'},
+    ajutor: 'La Arată sunt doi ochi. Cel apăsat e mov: ochiul tăiat înseamnă ascuns.', why: 'Mingea are dală și proprietăți, dar Arată e pe ochiul tăiat: nu se vede pe scenă.'},
+   inca: [
+    {t: 'choice', q: 'Vrei să afli unde stă copacul pe scenă. Ce faci?', o: ['Apeși pe dala Copac și citești x și y în panou', 'Apeși pe dala Pisica și citești Dimensiune', 'Apeși pe Arată, la ochiul tăiat', 'Numeri pătrățelele de pe scenă'], ok: 0,
+     ajutor: 'Locul e dat de x și y.', why: 'Panoul arată proprietățile personajului a cărui dală e apăsată; locul lui e x și y.'}
+   ]},
+  /* ---- P2: mutarea și dimensiunea ---- */
+  {t: 'Mutarea și dimensiunea',
+   text: `<p>Muți un personaj în două feluri: îl <b>tragi</b> pe scenă (ții apăsat pe el și îl duci) sau scrii <b>x</b> și <b>y</b> în panou. În căsuță apeși <b>chiar după ultima cifră</b>, apoi <kbd>⌫</kbd> (Backspace) până se golește; scrii numărul nou și apeși <kbd>Enter</kbd> (pe telefon: tasta ↵). Clicul pune doar cursorul, nu selectează numărul (în blocuri, da).</p>
+<p><mark>Dimensiunea</mark> e în procente (%) din desenul personajului: 100 înseamnă cât desenul, 200 de două ori mai mare, 50 jumătate. O schimbi la fel, în căsuța <b>Dimensiune</b>. Doar cifre, cu minus în față dacă e nevoie: cu litere sau virgulă, Scratch păstrează numărul vechi. Prea mare sau prea mic? Se oprește singur la o limită.</p>`,
+   exemplu: `${ACUM('Cu dala <b>Pisica</b> apăsată: în <b>Dimensiune</b> apeși chiar după 50, <kbd>⌫</kbd> până se golește, scrii 100, <kbd>Enter</kbd>. Pisica e de două ori mai mare.', 'La fel în <b>x</b>: golești, scrii -50, <kbd>Enter</kbd>; în <b>y</b>: golești, scrii -10, <kbd>Enter</kbd>. Pisica ajunge lângă copac, în fața lui.')}`,
+   altfel: `<p>E ca la fotocopiator: 200 % face foaia de două ori mai mare, 50 % jumătate. Desenul rămâne același.</p>`,
+   incearca: {t: 'compozitie', q: 'Fă copacul de două ori mai mic (<b>Dimensiune</b> 50) și mută-l în dreapta sus: <b>x</b> 150, <b>y</b> 80. Nu schimba pisica și mingea.',
+    personaje: START, ordine: ORD, meniu: false,
+    teste: [
+     {ce: 'Copacul are Dimensiune 50', ok: S => !!S.p.Copac && r(S.p.Copac.size) === 50,
+      msg: S => `Copacul are Dimensiune ${r(S.p.Copac.size)}, nu 50. Apasă pe dala Copac. ${STERGE('Dimensiune', 50)}.`},
+     {ce: 'Copacul stă la x 150, y 80', ok: S => aproape(S.p.Copac, 150, 80, 5),
+      msg: S => `Copacul e la ${unde(S.p.Copac)}. Cu dala Copac apăsată: ${STERGE_XY(150, 80)}.`},
+     {ce: 'Pisica și mingea au rămas cum erau', ok: S => aproape(S.p.Pisica, 150, -110, 1) && r(S.p.Pisica.size) === 50 && S.p.Pisica.vis && aproape(S.p.Minge, 60, -130, 1) && !S.p.Minge.vis && r(S.p.Minge.size) === 100,
+      msg: S => (aproape(S.p.Pisica, 150, -110, 1) && r(S.p.Pisica.size) === 50 && S.p.Pisica.vis)
+        ? `Ai schimbat mingea. Apasă pe dala Minge. Șterge tot ce scrie în căsuțele x, y și Dimensiune (${CUM}) și scrie la loc 60, -130 și 100, fiecare cu Enter; la Arată, ochiul tăiat. ${PANOU}`
+        : `Ai schimbat pisica (acum ${unde(S.p.Pisica)}, Dimensiune ${r(S.p.Pisica.size)}). Apasă pe dala Pisica. Șterge tot ce scrie în căsuțele x, y și Dimensiune (${CUM}) și scrie la loc 150, -110 și 50, fiecare cu Enter. ${PANOU}`}],
+    solutie: {p: {Copac: {size: 50, x: 150, y: 80}}, sel: 'Copac'}, gresit: {p: {Pisica: {size: 50, x: 150, y: 80}}, sel: 'Pisica'},
+    ajutor: 'Întâi dala Copac. În fiecare căsuță: apeși chiar după ultima cifră, ⌫ până se golește, scrii numărul, Enter.', why: 'Ai schimbat trei proprietăți ale copacului: dimensiunea și locul (x, y). Desenul a rămas același.'},
+   inca: [
+    {t: 'compozitie', q: 'Trage pisica sus, în dreapta, lângă soare: acolo x și y sunt amândouă peste 60. Pe telefon: ții degetul pe pisică și îl duci.',
+     personaje: START_MARE, ordine: ORD, meniu: false,
+     teste: [{ce: 'Pisica stă sus, în dreapta (x și y peste 60)', ok: S => S.p.Pisica.x > 60 && S.p.Pisica.y > 60,
+       msg: S => `Pisica e la ${unde(S.p.Pisica)}. Ține apăsat pe pisică și du-o sus, în dreapta, lângă soare; apoi ridică degetul (sau lasă butonul mouse-ului).`}],
+     solutie: {p: {Pisica: {x: 150, y: 110}}, sel: 'Pisica'}, gresit: {},
+     ajutor: 'Pisica e jos, în dreapta. Apucă-o chiar de desen.', why: 'Tras pe scenă, personajul își schimbă x și y; panoul le arată pe loc.'}
+   ]},
+  /* ---- P3: ordinea, straturile ---- */
+  {t: 'Ordinea: cine e în față',
+   text: `<p>Personajele stau pe <mark>straturi</mark>, ca foile puse una peste alta: unde se suprapun, cel din față îl acoperă pe cel din spate. Decorul stă mereu în spatele tuturor.</p>
+<p>Schimbi ordinea în două feluri. Tragi un personaj pe scenă: cel tras vine în față. Sau îl selectezi și apeși în paletă, la <b>Aspect</b>, pe <span class="blk">mergi la stratul în față</span>; din listă (▾) alegi și <b>înapoi</b>. Blocul <span class="blk">mergi înainte 1 straturi</span> îl urcă doar un strat. Atenție: x și y scrise în panou nu schimbă ordinea.</p>`,
+   exemplu: `${fig('straturi.webp', 236, 256, 'Paleta Aspect din Scratch: blocurile arată, ascunde și mergi la stratul, cu lista deschisă: în față, înapoi', 'La <b>Aspect</b>: lista lui „mergi la stratul”.')}
+${ACUM('Cu dala <b>Pisica</b> apăsată: bulina <b>Aspect</b>, derulezi până la „mergi la stratul în față”.', 'Apasă ▾ și alege <b>înapoi</b>. Apoi apasă pe cuvintele „mergi la stratul”: pisica trece în spatele copacului; se vede doar o parte din ea.')}`,
+   altfel: `<p>E ca la o poză de grup: cine stă în rândul din față îi acoperă puțin pe cei din spate. Schimbi rândul, nu locul pe bancă.</p>`,
+   incearca: {t: 'compozitie', q: 'Pisica e în fața copacului. Pune copacul în fața pisicii, fără să muți vreunul din loc.',
+    personaje: LANGA, ordine: ORD, paleta: ['strat', 'straturi'], meniu: false,
+    teste: [
+     {ce: 'Copacul e în fața pisicii', ok: S => S.inFata('Copac', 'Pisica'),
+      msg: 'Pisica e tot în fața copacului. Apasă pe dala Copac; în paletă, la „mergi la stratul”, alege din listă „în față”, apoi apasă pe cuvintele blocului.'},
+     {ce: 'Copacul a rămas la x -120, y -40', ok: S => aproape(S.p.Copac, -120, -40, 2),
+      msg: S => `Copacul s-a mutat: e la ${unde(S.p.Copac)}. Cu dala Copac apăsată: ${STERGE_XY(-120, -40)} (x și y nu schimbă ordinea).`},
+     {ce: 'Pisica a rămas la x -50, y -10', ok: S => aproape(S.p.Pisica, -50, -10, 2),
+      msg: S => `Pisica s-a mutat: e la ${unde(S.p.Pisica)}. Cu dala Pisica apăsată: ${STERGE_XY(-50, -10)}.`}],
+    solutie: {ordine: ['Pisica', 'Copac', 'Minge']}, gresit: {},
+    ajutor: 'Blocul lucrează pe personajul selectat. „În față” pentru copac sau „înapoi” pentru pisică: amândouă merg.', why: 'Ordinea s-a schimbat, locul nu: x și y au rămas aceleași.'},
+   inca: [
+    {t: 'compozitie', q: 'Mingea e în spatele tuturor. Pune-o între ele: în fața copacului, dar în spatele pisicii.',
+     personaje: [{id: 'Copac', desen: 'copac', x: -40, y: 0, size: 100}, {id: 'Pisica', desen: 'pisica', x: -70, y: -40, size: 100}, {id: 'Minge', desen: 'minge', x: -10, y: -60, size: 160}],
+     ordine: ['Minge', 'Copac', 'Pisica'], paleta: ['strat', 'straturi'], meniu: false,
+     teste: [{ce: 'Mingea e în fața copacului și în spatele pisicii', ok: S => S.inFata('Minge', 'Copac') && S.inFata('Pisica', 'Minge'),
+       msg: S => S.inFata('Minge', 'Pisica')
+         ? 'Mingea e acum în fața tuturor: „în față” (sau tragerea) o duce sus de tot. Cu dala Minge apăsată: la „mergi la stratul”, alege din listă „înapoi” și apasă pe cuvintele blocului; apoi la „mergi … 1 straturi”, alege din listă „înainte” și apasă o dată pe cuvintele lui.'
+         : 'Mingea e tot în spatele copacului. Cu dala Minge apăsată: la „mergi … 1 straturi”, alege din listă „înainte”, apoi apasă o dată pe cuvintele blocului.'}],
+     solutie: {ordine: ['Copac', 'Minge', 'Pisica']}, gresit: {ordine: ['Copac', 'Pisica', 'Minge']},
+     ajutor: 'Un strat mai sus: „mergi înainte 1 straturi”.', why: 'Din spatele tuturor, un strat mai sus o pune chiar peste copac, sub pisică.'}
+   ]},
+  /* ---- P4: Arată / ascunde / fantomă ---- */
+  {t: 'Arată sau ascunde',
+   text: `<p>Un personaj poate fi în proiect fără să se vadă: e <mark>ascuns</mark>. Are dala lui și toate proprietățile, dar pe scenă nu apare și nu-l poți apuca de pe ea.</p>
+<p>În panou, la <b>Arată</b>, sunt doi ochi: ochiul deschis (<b>Afișează personajul</b>) îl arată, ochiul tăiat (<b>Ascunde personajul</b>) îl ascunde. La fel fac blocurile <span class="blk">arată</span> și <span class="blk">ascunde</span>, din <b>Aspect</b>, apăsate în paletă.</p>
+<p>A treia stare: <mark>se vede pe jumătate</mark>, ca prin geam. La <b>Aspect</b>, în <span class="blk">setează efectul culoare ▾ la 0</span>, alegi din listă <b>fantomă</b> și scrii un număr: 0 = se vede tot, 50 = pe jumătate, 100 = nu se mai vede, dar nu e ascuns (la Arată rămâne ochiul deschis).</p>`,
+   exemplu: `${ACUM('Apasă pe dala <b>Minge</b>. La <b>Arată</b>, apasă ochiul deschis: mingea apare pe scenă, jos.', 'Apasă pe dala <b>Pisica</b>. La <b>Aspect</b>, în „setează efectul culoare la 0”: ▾, alege <b>fantomă</b>; apasă pe 0 (se selectează), scrie 50, <kbd>Enter</kbd>, apoi apasă pe cuvintele „setează efectul”: pisica se vede pe jumătate. Apasă <b>Stop</b>, lângă steagul verde: efectul dispare.')}`,
+   altfel: `<p>E ca un actor care așteaptă în culise: e în piesă, are rolul lui, dar publicul nu-l vede până nu iese pe scenă. Fantoma e actorul din spatele unei perdele subțiri: îl vezi, dar șters.</p>`,
+   incearca: {t: 'compozitie', q: 'Arată mingea, ascunde copacul și fă pisica să se vadă pe jumătate: efectul <b>fantomă</b> la 50. Poți folosi ochii din panou și blocurile din paletă.',
+    personaje: START, ordine: ORD, paleta: ['arata', 'ascunde', 'efect'], meniu: false,
+    teste: [
+     {ce: 'Mingea se vede', ok: S => S.p.Minge.vis, msg: 'Mingea e tot ascunsă. Apasă pe dala Minge, apoi, la Arată, pe ochiul deschis (sau „arată”, în paletă).'},
+     {ce: 'Copacul e ascuns', ok: S => !S.p.Copac.vis, msg: 'Copacul se vede. Apasă pe dala Copac, apoi, la Arată, pe ochiul tăiat (sau „ascunde”, în paletă).'},
+     {ce: 'Pisica se vede', ok: S => S.p.Pisica.vis, msg: 'Ai ascuns pisica. Apasă pe dala Pisica, apoi pe ochiul deschis.'},
+     {ce: 'Pisica are efectul fantomă 50', ok: S => r(S.p.Pisica.fantoma || 0) === 50,
+      msg: S => `Pisica are efectul fantomă ${r(S.p.Pisica.fantoma || 0)}, nu 50. Apasă pe dala Pisica. La „setează efectul”, alege din listă „fantomă”, apasă pe numărul blocului (se selectează), scrie 50, apoi apasă pe cuvintele blocului.`}],
+    solutie: {p: {Minge: {vis: true}, Copac: {vis: false}, Pisica: {fantoma: 50}}}, gresit: {p: {Minge: {vis: true}, Copac: {vis: false}}},
+    ajutor: 'Întâi dala, apoi ochiul sau blocul. Lista blocului „setează efectul” arată întâi „culoare”: alege „fantomă”.', why: 'Copacul e tot în proiect, cu dala lui: doar nu se vede. Pisica se vede pe jumătate, iar la Arată a rămas ochiul deschis.'},
+   inca: [
+    {t: 'tf', q: 'Un personaj ascuns a fost șters din proiect.', ok: false,
+     ajutor: 'Privește dalele de sub scenă.', why: 'Ascuns nu înseamnă șters: dala lui rămâne, iar cu ochiul deschis apare din nou.'}
+   ]},
+  /* ---- P5: inserare, copiere, ștergere ---- */
+  {t: 'Adaugi, copiezi, ștergi personaje',
+   text: `<p>În dreapta jos, sub dale, butonul rotund cu o pisică e <b>Alege un personaj</b>. Deschide lista lui Scratch (numele sunt în engleză). Personajul ales apare într-un loc la întâmplare, în fața celorlalte.</p>
+<p>Clic dreapta pe o dală deschide meniul: <b>duplică</b> face o copie (din Copac, Copac2), într-un loc la întâmplare, chiar în spatele originalului; <b>șterge</b> scoate personajul. Scratch întreabă întâi „Ești sigur că vrei să ștergi acest personaj?”; butoanele sunt în engleză: <b>yes</b> = da, șterge; <b>no</b> = nu. Coșul de pe dala selectată face la fel. Ai șters din greșeală? <b>Editează</b> › <b>Anulează ștergere personaj</b> îl aduce înapoi, în același loc, dar în fața celorlalte.</p>`,
+   exemplu: `${fig('meniu-dala.webp', 248, 126, 'Meniul de clic dreapta pe dala Copac: duplică, exportă, șterge', 'Clic dreapta pe dala <b>Copac</b>.')}
+${fig('stergere.webp', 568, 512, 'Scena cu doi copaci, copia în spatele celui de la început; în dreapta jos dala Copac2 cu coșul și fereastra Ești sigur că vrei să ștergi acest personaj? cu butoanele yes și no', 'Copia, în spatele originalului, și întrebarea de la <b>șterge</b>.')}
+${ACUM('Clic dreapta pe dala <b>Copac</b> › <b>duplică</b>: apare <b>Copac2</b>.', 'Clic dreapta pe dala <b>Copac2</b> › <b>șterge</b> › <b>yes</b>. Rămân Copac, Pisica și Minge.')}`,
+   altfel: `<p>E ca la copiere în caiet: copiezi un desen și îl muți unde vrei; unul greșit îl ștergi, dar întâi te întrebi dacă chiar vrei.</p>`,
+   incearca: {t: 'compozitie', q: 'Copiază copacul și du copia în dreapta: <b>x</b> 150, <b>y</b> -40. Apoi șterge mingea. Pe telefon: meniul unei dale îl deschizi ținând degetul pe ea.',
+    personaje: START, ordine: ORD,
+    teste: [
+     {ce: 'Sunt doi copaci', ok: S => S.cate('copac') === 2,
+      msg: S => S.cate('copac') < 2 ? 'Ai un singur copac. Clic dreapta pe dala Copac (pe telefon: ține degetul pe ea), apoi duplică.' : `Ai ${S.cate('copac')} copaci. Pe cei în plus: clic dreapta pe dală, șterge, yes.`},
+     {ce: 'Un copac stă la x 150, y -40', ok: S => Object.values(S.p).some(p => p.desen === 'copac' && aproape(p, 150, -40, 5)),
+      msg: `Copia a apărut într-un loc la întâmplare. Apasă pe dala Copac2. ${STERGE_XY(150, -40)}.`},
+     {ce: 'Celălalt copac a rămas la x -120, y -40', ok: S => Object.values(S.p).some(p => p.desen === 'copac' && aproape(p, -120, -40, 2)),
+      msg: `Niciun copac nu mai e la x -120, y -40: ai mutat copacul de la început. Apasă pe dala lui. ${STERGE_XY(-120, -40)}.`},
+     {ce: 'Mingea nu mai e în proiect', ok: S => S.cate('minge') === 0,
+      msg: 'Mingea e tot în proiect: e ascunsă, dar are dală. Clic dreapta pe dala Minge, șterge, yes.'},
+     {ce: 'Pisica e tot acolo', ok: S => S.cate('pisica') === 1, msg: 'Ai șters pisica. Apasă „Ia-o de la capăt”, sub scenă.'}],
+    solutie: {adauga: [{id: 'Copac2', n: 'Copac2', desen: 'copac', x: 150, y: -40}], ordine: ['Copac2', 'Copac', 'Pisica'], sterge: ['Minge'], sel: 'Copac2'},
+    gresit: {adauga: [{id: 'Copac2', n: 'Copac2', desen: 'copac', x: 150, y: -40}], ordine: ['Copac2', 'Copac', 'Pisica', 'Minge'], p: {Minge: {vis: false}}},
+    ajutor: 'Meniul dalei: clic dreapta (pe telefon, degetul ținut pe dală). Copia are numele Copac2.', why: 'Copia are toate proprietățile copacului, în alt loc. Mingea ștearsă nu mai are dală.'},
+   inca: [
+    {t: 'compozitie', q: 'Adaugă din listă personajul <b>Apple</b> (un măr) și pune-l la <b>x</b> 0, <b>y</b> 0.',
+     personaje: START, ordine: ORD, biblioteca: true,
+     teste: [{ce: 'Apple stă la x 0, y 0', ok: S => aproape(S.dupaNume('Apple'), 0, 0, 5),
+       msg: S => !S.dupaNume('Apple') ? 'Nu e niciun Apple. Apasă Alege un personaj, sub dale, apoi Apple.' : `Apple e la ${unde(S.dupaNume('Apple'))}. Cu dala Apple apăsată: ${STERGE_XY(0, 0)}.`}],
+     solutie: {adauga: [{id: 'Apple', n: 'Apple', desen: 'apple', x: 0, y: 0}], sel: 'Apple'}, gresit: {},
+     ajutor: 'Butonul Alege un personaj e sub dale.', why: 'Personajul nou vine cu proprietățile lui: îl muți din panou, ca pe oricare.'}
+   ]}
+ ],
+ atelier: {t: 'compozitie', titlu: 'Pisica se ascunde după copac',
+  intro: `<p>Compoziția de la pași, întreagă, în pagină. Copacul rămâne neatins. În paletă, blocurile îi spun „mărimea” („setează mărimea la 100 %”): e tot Dimensiunea din panou.</p>
+<ol><li>Pisica: de două ori mai mare (<b>Dimensiune</b> 100).</li>
+<li>Pisica: lângă copac, la <b>x</b> -50, <b>y</b> -10.</li>
+<li>Pisica: în spatele copacului (se vede doar o parte din ea).</li>
+<li>Mingea se vede.</li>
+<li>Sub scenă, la fiecare schimbare, alege proprietatea care a produs-o.</li></ol>
+<p><strong>La sfârșit:</strong> „Rulează testele”.</p>`,
+  q: 'Pe telefon: meniul unei dale îl deschizi ținând degetul pe ea; paleta e sub scenă.',
+  personaje: START, ordine: ORD, paleta: PAL,
+  intrebari: {q: '<b>Ce proprietate a produs fiecare schimbare?</b>', variante: VARIANTE, randuri: RANDURI},
+  teste: [T_PISICA_DIM, T_PISICA_LOC, T_PISICA_SPATE, T_PISICA_VIZ, T_MINGE, T_COPAC, T_RASP],
+  solutie: SOL_ATELIER,
+  gresit: {p: {Pisica: {x: -50, y: -10, size: 100}, Minge: {vis: true}}, raspunsuri: {r1: 'Dimensiunea', r2: 'Poziția (x, y)', r3: 'Poziția (x, y)', r4: 'Arată'}},
+  ajutor: 'Întâi dala Pisica: Dimensiune, x, y (în fiecare căsuță: după ultima cifră, ⌫ până se golește, numărul, Enter). Apoi „mergi la stratul înapoi”. Apoi dala Minge și ochiul deschis.',
+  why: 'Fiecare schimbare a venit dintr-o singură proprietate: dimensiunea, locul (x, y), stratul, Arată.'},
+ qs: [
+  {t: 'match', q: 'Potrivește fiecare proprietate cu ce schimbă.',
+   pairs: [['Dimensiune', 'cât de mare e personajul'], ['x și y', 'unde stă pe scenă'], ['Arată', 'dacă apare pe scenă'], ['Stratul', 'cine îl acoperă pe cine'], ['Efectul fantomă', 'cât de mult vezi prin el, ca prin geam']],
+   why: 'Fiecare proprietate schimbă un singur lucru; desenul rămâne același.'},
+  {t: 'choice', q: 'Mingea are <b>Dimensiune</b> 100. Scrii 300 și apeși <kbd>Enter</kbd>. Ce vezi pe scenă?',
+   o: ['Mingea de trei ori mai mare', 'Mingea mutată cu 300 de pași', 'Mingea de 300 de ori mai mare', 'Trei mingi'], ok: 0,
+   why: 'Dimensiunea e în procente din desen: 300 % înseamnă de trei ori cât desenul.'},
+  {t: 'choice', q: 'Copacul e în fața pisicii. Scrii în panoul pisicii alte numere la <b>x</b> și <b>y</b>, ca să ajungă în dreptul copacului. Unde e pisica acum?',
+   o: ['Tot în spatele copacului', 'În fața copacului', 'Ascunsă', 'Ștearsă'], ok: 0,
+   why: 'x și y scrise în panou schimbă doar locul, nu ordinea. În față o aduce tragerea sau „mergi la stratul în față”.'},
+  {t: 'choice', q: 'Ștergi personajul <b>Copac2</b>, iar Scratch întreabă „Ești sigur că vrei să ștergi acest personaj?”. Te-ai răzgândit. Ce apeși?',
+   o: ['no', 'yes', 'duplică', 'exportă'], ok: 0,
+   why: 'Întrebarea e în română, butoanele în engleză: yes = da, șterge; no = nu, îl păstrezi.'},
+  {t: 'choice', q: 'Copacul e ascuns. Cum îl faci să se vadă?',
+   o: ['Apeși pe dala lui, apoi pe ochiul deschis, la Arată', 'Apeși pe dala lui, apoi pe „mergi la stratul în față”', 'Îl tragi pe scenă', 'Clic dreapta pe dala lui, apoi duplică'], ok: 0,
+   why: 'Ascuns, nu-l poți apuca de pe scenă, iar stratul nu-l arată. Îl arată ochiul deschis (sau blocul „arată”).'}
+ ]}
+  ],
+  tipuri: {compozitie: SimScratchCompozitie.tipuri.compozitie},
+  aplicatieReala: {aplicatie: 'Scratch, în browser, pe calculatorul din laborator', titlu: 'Acum în Scratch, la calculator', scurt: 'Scratch',
+    intro: '<p>Compoziția, în Scratch-ul adevărat, fără cont. <b>Ai făcut casetele de la pași și fila Scratch e tot deschisă? Sari la punctul 6.</b> <b>Mai sunt 10 minute din oră?</b> Sari la „Salvează”. Scratch nu se deschide, nu merge rețeaua sau ești pe telefon? Fă atelierul până la capăt, spune-i profesorului și treci la verificare.</p>',
+    pasi: LAB},
+  diploma: {
+    titlu: 'Compoziția, aranjată',
+    rezumat: 'proprietățile unui personaj în panoul de sub scenă (x, y, Dimensiune, Arată); ordinea pe straturi; efectul fantomă (se vede pe jumătate); adăugarea, copierea și ștergerea personajelor; o compoziție dată aranjată până la rezultatul cerut, salvată în folderul meu',
+    aplicatie: 'Scratch, în browser, pe calculatorul din laborator',
+    provocare: LAB
+  }
+});
+</script>
+</body>
+</html>
