@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Operații cu șiruri: citire, afișare, parcurgere</title>
+<meta name="description" content="Clasa a VIII-a, lecția 24: primul program în C++ cu un șir de valori. Scheletul programului, afișarea (cout), citirea (cin), repetiția for, tabloul și indicele de la 0; citirea unui șir, afișarea lui în ordinea citirii și în ordine inversă, cu urmărirea indicelui pe hârtie, înainte de rulare.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;800&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF0F7; --paper:#FFFFFF; --paper2:#EEF1FA; --line:#CBD1E4;
+  --ink:#161A2B; --ink2:#525A75; --accent:#3346B8; --accentInk:#FFFFFF; --sel:#E2E7FB;
+  --mark:#FFE38A; --markInk:#161A2B; --ok:#16703F; --okbg:#DFF1E5; --bad:#B8322A; --badbg:#FAE4E1;
+  --fd:"Sora","Segoe UI",system-ui,sans-serif; --fb:"Nunito Sans","Segoe UI",system-ui,sans-serif; --fm:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0E1120; --paper:#171B2E; --paper2:#20253C; --line:#323954;
+  --ink:#E4E7F3; --ink2:#A0A7C2; --accent:#8C9CFF; --accentInk:#0E1120; --sel:#2A3360;
+  --mark:#EDD05A; --markInk:#161A2B; --ok:#5ACB8E; --okbg:#13301F; --bad:#FF8076; --badbg:#3A1D1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0E1120; --paper:#171B2E; --paper2:#20253C; --line:#323954;
+  --ink:#E4E7F3; --ink2:#A0A7C2; --accent:#8C9CFF; --accentInk:#0E1120; --sel:#2A3360;
+  --mark:#EDD05A; --markInk:#161A2B; --ok:#5ACB8E; --okbg:#13301F; --bad:#FF8076; --badbg:#3A1D1B;
+}
+/* tema: fâșia de sus e un tablou cu indicii lui, de la 0 */
+.banda{display:flex;align-items:stretch;gap:0;font-family:var(--fm);font-size:.74rem;color:var(--ink2);white-space:nowrap;overflow:hidden}
+.banda span{padding:3px 9px;border-right:1px solid var(--line)}
+.banda span.b-n{font-family:var(--fb);font-weight:700;color:var(--accent)}
+h1,h2{letter-spacing:-.01em}
+pre.cod{margin:.4em 0 .6em;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper2);color:var(--ink);
+  font-family:var(--fm);font-size:.86rem;line-height:1.45;white-space:pre;overflow-x:auto;tab-size:4}
+pre.ecran{margin:.3em 0 .6em;padding:8px 10px;border-radius:8px;background:#161A2B;color:#E4E7F3;font-family:var(--fm);font-size:.88rem;line-height:1.4;white-space:pre;overflow-x:auto}
+.urm{border-collapse:collapse;margin:.4em 0 .6em;font-size:.92rem}
+.urm th,.urm td{border:1px solid var(--line);padding:3px 8px;text-align:center}
+.urm th{background:var(--paper2)}
+.urm td.nu{color:var(--bad)}
+.lacalc{margin:.6em 0 0;padding:8px 10px;border-left:4px solid var(--accent);background:var(--paper2);border-radius:6px}
+/* tabelul semnelor pe tastatură, ca la VII/24 (aceleași clase și reguli) */
+.taste{border-collapse:collapse;font-size:.86rem;margin:.3em 0}
+.taste th,.taste td{border:1px solid var(--line);padding:3px 6px;text-align:left}
+.taste th{background:var(--paper)}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<!-- simulatorul C++ comun (proprietar: componenta c_cppmic; încărcat nemodificat, sha1 a1196f49…) și extensia lecției: fișa de urmărire a indicelui -->
+<script src="../../_sim/cpp-mic.js"></script>
+<script src="../../_sim/urmarire-indice.js"></script>
+<script>
+/* conținutul programei (OMEN 3393/2017), textul exact din curriculum.json (cu ş-ul cu sedilă al sursei) */
+const P={op:'Operații cu șiruri de valori: citire, afişare, parcurgere'};
+const fig=(src,w,h,alt,cap)=>`<figure class="captura"><a href="${src}" target="_blank"><img src="${src}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const IMG='../m4-l24/img/';
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const C=s=>`<pre class="cod">${esc(s)}</pre>`;          // cod de citit
+const E=s=>`<pre class="ecran">${esc(s)}</pre>`;        // ce apare în consolă
+/* programele: aceleași (octet cu octet) ca în _proba/programe.py, probate cu g++ 16.1, g++ 6.3 și în simulator */
+const CAP=['#include <iostream>','using namespace std;','','int main() {'];
+const prog=(...r)=>[...CAP,...r,'    return 0;','}'].join('\n')+'\n';
+const CIT=['    int n, v[100];','    cin >> n;','    for (int i = 0; i < n; i++) {','        cin >> v[i];','    }'];
+const AFI=['    for (int i = 0; i < n; i++) {','        cout << v[i] << " ";','    }'];
+const INV=['    for (int i = n - 1; i >= 0; i--) {','        cout << v[i] << " ";','    }'];
+const EX1=prog('    cout << "Buna ziua!" << endl;','    cout << 20 << " " << 27 << endl;');
+const EX2=prog('    int n;','    cin >> n;','    cout << "Ai scris " << n << endl;');
+const EX3=prog('    int n;','    cin >> n;','    for (int i = 0; i < n; i++) {','        cout << i << " ";','    }','    cout << endl;');
+const EX4=prog(...CIT,...AFI,'    cout << endl;');
+const AT=prog(...CIT,...AFI,'    cout << endl;',...INV,'    cout << endl;');
+const D4='4\n3 -1 0 5\n', D6='6\n12 7 0 25 9 4\n', D1='1\n42\n', D5='5\n10 20 30 40 50\n';
+const TEL='<p class="hint">Semnele <code>{ } [ ] ; &lt; &gt; "</code> sunt în bara de deasupra programului (pe telefon și la calculator).</p>';
+/* semnele pe tastatură, pentru „Scrie-l” din Code::Blocks (acolo nu e bară): tabelul VII/24 + rândul [ ], probat cu
+   ToUnicodeEx pe aranjamentele încărcate (_proba/taste_r1.json, copia probei VII/24 taste2.py) */
+const TASTE=`<table class="taste"><tr><th>Semnul</th><th>Americană</th><th>Românească</th></tr>
+<tr><td><code>{</code> și <code>}</code></td><td><kbd>Shift</kbd> + tastele din dreapta lui P</td><td><kbd>Shift</kbd> + <kbd>AltGr</kbd> + ă / î</td></tr>
+<tr><td><code>[</code> și <code>]</code></td><td>tastele din dreapta lui P</td><td><kbd>AltGr</kbd> + ă / î</td></tr>
+<tr><td><code>;</code></td><td>tasta din dreapta lui L</td><td><kbd>Shift</kbd> + virgulă</td></tr>
+<tr><td><code>&lt;</code> și <code>&gt;</code></td><td><kbd>Shift</kbd> + virgulă / punct</td><td><kbd>AltGr</kbd> + virgulă / punct</td></tr>
+<tr><td><code>"</code></td><td><kbd>Shift</kbd> + tasta din stânga lui Enter</td><td><kbd>Shift</kbd> + <kbd>AltGr</kbd> + ț</td></tr>
+<tr><td><code>#</code></td><td colspan="2"><kbd>Shift</kbd> + 3</td></tr></table>`;
+/* testul capetelor (judecata 1, D / L1): citirea cu i <= n trecea toate testele de ieșire (la capătul datelor variabila
+   rămâne neschimbată); propunerea judecătorului opus, probată de el (j1_reparatie_D.js: 0) și de R1 (_proba/proba_r1.js) */
+const T_CAPETE={ce:'De la v[0] la v[n - 1]',codNu:'(<=\\s*n|<\\s*n\\s*\\+\\s*1)\\s*;(?![^}]*\\[\\s*i\\s*-\\s*1\\s*\\])',
+  msg:'În program, i ajunge și la n (<= n sau < n + 1), dar ultimul element e v[n − 1]. Pe șir, i pornește de la 0 și merge cât timp i < n. De la 0 până la n, citirea mai cere un număr, iar afișarea ajunge la v[n], fără valoare.'};
+const TAB=(rand,stop)=>`<table class="urm"><thead><tr><th>Pasul</th><th>i</th><th>Condiția</th><th>Se afișează</th></tr></thead><tbody>${rand.map((r,k)=>`<tr><td>${k+1}</td><td>${r[0]}</td><td>${r[1]}: da</td><td>${r[2]}</td></tr>`).join('')}<tr><td>—</td><td>${stop[0]}</td><td class="nu">${stop[1]}: nu, se oprește</td><td>—</td></tr></tbody></table>`;
+
+const PROVOCARE=[
+  `Deschide <b>Code::Blocks</b> (de pe desktop sau din meniul Start), dacă nu e deschis.${fig(IMG+'cb-editor.webp',560,215,'Code::Blocks: sus meniurile File, Edit, View, Search, Project, Build, Debug; dedesubt un fișier deschis, cu un program scurt și cu numerele rândurilor 1-9 în stânga','Code::Blocks: meniurile (în engleză) și un fișier deschis.')}`,
+  'Alege <b>File › New › Empty file</b>. Vezi: o filă nouă, goală.',
+  'Salvează: <b>File › Save file as...</b>, în <b>Documente (Documents)</b>, cu numele, clasa, lectia24 și <b>.cpp</b>, de exemplu <code>Popescu_Ana_8A_lectia24.cpp</code> (în locul lui 8A, clasa ta), apoi <b>Salvare (Save)</b>. Numele există deja? E al unui coleg: <b>Nu (No)</b> (sau <b>Anulare</b>) și o cifră înainte de .cpp.',
+  `Copiază programul de la atelier (fila <b>Atelier</b> din bara de jos a lecției): clic în program, <kbd>Ctrl</kbd>+<kbd>A</kbd> (selectezi tot), <kbd>Ctrl</kbd>+<kbd>C</kbd>; în Code::Blocks, clic în fila goală, <kbd>Ctrl</kbd>+<kbd>V</kbd>, apoi <kbd>Ctrl</kbd>+<kbd>S</kbd>. Nu se lipește? Scrie-l; semnele:${TASTE}`,
+  'Rulează: <b>Build › Build and run</b> (<kbd>F9</kbd>; pe unele laptopuri <kbd>Fn</kbd>+<kbd>F9</kbd>). În fereastra care se deschide (de obicei neagră) scrie <b>4</b>, <kbd>Enter</kbd>, <b>3 -1 0 5</b>, <kbd>Enter</kbd>. Vezi: 3 -1 0 5 și, dedesubt, 5 0 -1 3 (dacă ai terminat atelierul). Închide fereastra cu ✕. Ai scris tot și nu apare nimic? Programul mai așteaptă un număr: închide fereastra și caută <code>&lt;=</code> în citire (trebuie <code>&lt;</code>).',
+  `Nu pornește? Jos, în fila <b>Build messages</b>, e mesajul compilatorului (altfel: <b>View › Logs</b>), iar pe margine un pătrățel arată rândul. Citește rândul arătat și pe cel de deasupra: aici, <code>;</code> lipsește pe rândul 5.${fig(IMG+'cb-eroare-pv.webp',850,488,'Code::Blocks după Build: rândul 5 se termină cu endl, fără punct și virgulă; lângă rândul 6, un pătrățel roșu; jos, în fila Build messages, rândul roșu: 6, error: expected punct și virgulă before return','Code::Blocks după Build, cu fila Build messages.')}`,
+  'Ultimul pas, oricum, înainte de sfârșitul orei: <kbd>Ctrl</kbd>+<kbd>S</kbd>, apoi închide Code::Blocks cu ✕. În Documente rămân programul tău (<code>.cpp</code>) și fișierele făcute la rulare (<code>.exe</code>, <code>.o</code>). Nu atinge fișierele colegilor. La o fereastră pe care n-o cunoști, nu apeși nimic și spui profesorului.'
+];
+
+JocMotor.porneste({
+  cheie:'lectie_viii_m4_l24',
+  mod:'lectie',
+  titlu:'Operații cu șiruri: citire, afișare, parcurgere',
+  marca:'Lecția <b>24</b> · Șiruri de valori · a VIII-a',
+  h1:'Operații cu șiruri: citire, afișare, parcurgere',
+  eticheta:'Lecții TIC', acasa:{href:'../../../hub/index.html',text:'LearningHub'},
+  clasa:'a VIII-a', unitate:'VIII-U3', unitateTitlu:'Șiruri de valori. De la algoritm la program',
+  competente:['CS.2.2','CS.3.3'], lectii:'24',
+  ancoraText:'Programa (OMEN 3393/2017): CS.2.2, CS.3.3 · unitatea VIII-U3 „Șiruri de valori. De la algoritm la program” · lecția 24 · conținutul: „Operații cu șiruri de valori: citire, afișare, parcurgere”',
+  intro:`<p>Lecția 24: primul tău program în C++ cu un șir. Îl citești, îl afișezi, apoi îl afișezi de la coadă la cap.</p>
+<p><b>Ai nevoie de:</b></p>
+<ul><li>lecția 23, „Ce este un șir de valori…”: șirul, elementul, poziția, lungimea.</li></ul>`,
+  cum:`<p><b>Cum lucrezi:</b> 6 pași, atelierul, laboratorul în Code::Blocks și 5 întrebări. „Încă un exercițiu” e pentru cine termină mai repede.</p>
+<p><b>Când mai sunt 12 minute din oră</b> și n-ai ajuns la laborator: treci la el cu programul din atelier (nu se compilează? <b>Ia-o de la capăt</b>). Pe telefon, termini atelierul. Întrebările le faci ora viitoare.</p>
+<p>Numerele din exerciții sunt inventate.</p>`,
+  banda:'<span class="b-n">v</span><span>v[0] 3</span><span>v[1] −1</span><span>v[2] 0</span><span>v[3] 5</span>',
+  tipuri:Object.assign({},CppMic.tipuri,{'urmarire-indice':UrmarireIndice}),
+  nivele:[
+  {t:'Operații cu șiruri: citire, afișare, parcurgere', final:true, lectii:[24], continuturi:[P.op],
+   obiectiv:'scrii în C++ un program care citește un șir de n numere, îl afișează în ordinea citirii și apoi în ordine inversă, după ce ai urmărit pe hârtie valoarea indicelui la fiecare pas.',
+   pasi:[
+    /* ---------- PASUL 0: la ce folosește (fără acțiuni) ---------- */
+    {t:'La ce folosește',
+     text:`<p>Ai de ținut minte 40 de note. Ai face 40 de cutii separate, fiecare cu numele ei?</p>
+<p>Un program ține toate notele într-un singur șir, ca dulapurile unui vestiar: ușițe numerotate, una lângă alta. Ceri numărul și primești ușița.</p>
+<p>Azi scrii primul tău program care lucrează cu un șir.</p>
+${fig('../m4-l23/img/vestiar.webp',800,532,'Fotografie: dulapuri de lemn într-un vestiar gol, cu plăcuțe numerotate 193 și 194 în prim-plan și alte ușițe numerotate mai departe','Dulapuri numerotate. Foto: PattayaPatrol, <a href="https://commons.wikimedia.org/wiki/File:DSC_6896_Rows_of_numbered_wooden_lockers_with_metal_handles_in_a_quiet_changing_room_-_locker_193_and_194_in_focus.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noopener">CC BY-SA 4.0</a>, micșorată.')}`},
+
+    /* ---------- PASUL 1: programul și afișarea ---------- */
+    {t:'Programul și afișarea',
+     text:`<p>Un program în <b>C++</b> (un limbaj de programare) e un text scris după reguli stricte. Orice program al nostru are același <mark>schelet</mark>: primele patru rânduri și ultimele două sunt mereu la fel, iar instrucțiunile tale stau între ele.</p>
+<p><code>cout &lt;&lt;</code> afișează ce urmează: un text între ghilimele (și un spațiu, <code>" "</code>) sau un număr; <code>endl</code> trece pe rândul următor. O instrucțiune ca <code>cout</code> se termină cu <code>;</code>.</p>
+<p>La <b>Rulează</b>, <mark>compilatorul</mark> verifică programul și îl traduce pentru calculator. Dacă textul încalcă o regulă, programul <b>nu se compilează</b> (nu pornește): jos apar rândul și mesajul. Citește rândul arătat și pe cel de deasupra.</p>`,
+     exemplu:`${C(EX1)}<p>Apeși <b>Rulează</b>; jos, în <b>Consolă</b>, apare:</p>${E('Buna ziua!\n20 27')}`,
+     altfel:`<p>Gândește-te la o rețetă: are mereu titlu și listă de ingrediente, apoi pașii. Scheletul e ca titlul și lista, mereu la fel; instrucțiunile tale sunt pașii, care se schimbă.</p>`,
+     incearca:{t:'cpp-mic',pasCuPas:false,linii:9,
+       q:'Schimbă programul: pe primul rând să afișeze <b>Lectia 24</b> (fără diacritice: la rulare pot ieși alte semne), pe al doilea <b>19</b> și <b>3</b>, cu un spațiu între ele. Apasă <b>Rulează</b>, apoi <b>Verifică</b>.<p class="hint">Pe telefon, rândul lung îl tragi spre stânga. Un punct roșu apărut pe numărul unui rând îl scoți atingându-l din nou.</p>',
+       start:EX1,
+       teste:[{ce:'Programul se compilează',compileaza:true},
+              {ce:'Afișează cele două rânduri cerute',intrare:'',iese:'Lectia 24\n19 3',potrivire:'linii',arataAsteptat:true,msg:'Pe primul rând: Lectia 24, între ghilimele. Pe al doilea: 19, un spațiu, 3.'}],
+       rezolvare:prog('    cout << "Lectia 24" << endl;','    cout << 19 << " " << 3 << endl;'),
+       gresit:prog('    cout << "Lectia 24" << endl','    cout << 19 << " " << 3 << endl;'),
+       ajutor:'Schimbi doar ce e între ghilimele pe primul rând și cele două numere pe al doilea. Semnele <code>&lt;&lt;</code> și <code>;</code> rămân.',
+       why:`Primul <code>cout</code>: textul, apoi rândul următor.<div class="lacalc"><b>La calculatorul din laborator:</b> deschide acum <b>Code::Blocks</b> (aplicația pentru programe C++, pe desktop sau în meniul Start) și lasă-l deschis. Pe telefon: sari peste.</div>`},
+     inca:[
+      {t:'cpp-mic',pasCuPas:false,linii:8,
+       q:'Pe rândul gol, scrie o singură instrucțiune care afișează pe un rând numerele <b>8</b>, <b>24</b> și <b>2027</b>, cu câte un spațiu între ele.',
+       start:prog(''),
+       teste:[{ce:'Programul se compilează',compileaza:true},{ce:'Afișează cele trei numere, pe un rând',intrare:'',iese:'8 24 2027',potrivire:'linii',arataAsteptat:true}],
+       rezolvare:prog('    cout << 8 << " " << 24 << " " << 2027 << endl;'),
+       gresit:prog('    cout << 8 << 24 << 2027 << endl;'),
+       ajutor:'Între numere pui textul <code>" "</code>, legat cu <code>&lt;&lt;</code>: <code>cout &lt;&lt; 8 &lt;&lt; " " &lt;&lt; …</code>',
+       why:'<code>cout &lt;&lt; 8 &lt;&lt; " " &lt;&lt; 24 &lt;&lt; " " &lt;&lt; 2027 &lt;&lt; endl;</code> Fără spațiile dintre ghilimele, numerele s-ar lipi: 8242027.'}
+     ]},
+
+    /* ---------- PASUL 2: variabila și citirea ---------- */
+    {t:'Variabila și citirea',
+     text:`<p>O <mark>variabilă</mark> e o cutie cu nume, în care programul ține o valoare. <code>int n;</code> face cutia <code>n</code>, pentru un număr întreg (<code>int</code> = întreg); <code>int a, b;</code> face două cutii.</p>
+<p><code>cin &gt;&gt; n;</code> citește un număr și îl pune în <code>n</code>; <code>cin &gt;&gt; a &gt;&gt; b;</code> citește două, în ordine. <code>cout &lt;&lt; n</code> afișează ce e în cutie. Cutia se face mai sus de rândurile care o folosesc.</p>
+<p>Datele le scrii în <b>Date gata pentru rulare</b>, sub consolă, înainte de <b>Rulează</b>; dacă e goală, consola ți le cere și apeși <b>Trimite</b>.</p>`,
+     exemplu:`${C(EX2)}<p>Cu <b>7</b> în <b>Date gata pentru rulare</b>, consola arată:</p>${E('Ai scris 7')}`,
+     altfel:`<p>E ca un cuier cu numele tău: <code>int n;</code> pune cuierul, <code>cin</code> agață pe el ce primește, iar <code>cout</code> spune ce stă agățat acolo.</p>`,
+     incearca:{t:'cpp-mic',pasCuPas:false,linii:10,
+       q:'Pe rândul gol, scrie instrucțiunea care afișează cele două numere citite în ordine inversă, cu un spațiu între ele: pentru 5 3 (deja în <b>Date gata pentru rulare</b>) apare <b>3 5</b>.'+TEL,
+       start:prog('    int a, b;','    cin >> a >> b;',''),
+       intrare:'5 3',
+       teste:[{ce:'Programul se compilează',compileaza:true},
+              {ce:'Cu datele 5 3 afișează 3 5',intrare:'5 3',iese:'3 5',potrivire:'linii',msg:'Întâi b, apoi un spațiu, apoi a.'},
+              {ce:'Merge și cu alte date (-2 și 9)',intrare:'-2 9',iese:'9 -2',potrivire:'linii'}],
+       rezolvare:prog('    int a, b;','    cin >> a >> b;','    cout << b << " " << a << endl;'),
+       gresit:prog('    int a, b;','    cin >> a >> b;','    cout << a << " " << b << endl;'),
+       ajutor:'Ordinea din <code>cout</code> e ordinea de pe ecran: ce scrii primul apare primul.',
+       why:'<code>cout &lt;&lt; b &lt;&lt; " " &lt;&lt; a &lt;&lt; endl;</code>: întâi b, apoi un spațiu, apoi a.'},
+     inca:[
+      {t:'cpp-mic',pasCuPas:false,linii:9,
+       q:'Pe rândul gol, scrie instrucțiunea care afișează numărul citit de două ori, pe același rând, cu un spațiu între ele (pentru 7: <b>7 7</b>).',
+       start:prog('    int n;','    cin >> n;',''),
+       intrare:'7',
+       teste:[{ce:'Programul se compilează',compileaza:true},{ce:'Cu datele 7 afișează 7 7',intrare:'7',iese:'7 7',potrivire:'linii'},{ce:'Merge și cu -3',intrare:'-3',iese:'-3 -3',potrivire:'linii'}],
+       rezolvare:prog('    int n;','    cin >> n;','    cout << n << " " << n << endl;'),
+       gresit:prog('    int n;','    cin >> n;','    cout << 7 << " " << 7 << endl;'),
+       ajutor:'Afișezi cutia <code>n</code> de două ori, nu numărul 7: datele se pot schimba.',
+       why:'<code>cout &lt;&lt; n &lt;&lt; " " &lt;&lt; n &lt;&lt; endl;</code> merge cu orice număr citit.'}
+     ]},
+
+    /* ---------- PASUL 3: repetiția for și indicele i ---------- */
+    {t:'Repetiția for și indicele',
+     text:`<p>Ca să faci ceva de mai multe ori, folosești <mark>repetiția for</mark>. Are trei părți, despărțite de <code>;</code>:</p>
+<ul><li><code>int i = 0</code>: pornirea, cutia <code>i</code> cu valoarea 0;</li><li><code>i &lt; n</code>: condiția; cât timp e adevărată, repetiția continuă;</li><li><code>i++</code>: schimbarea; i crește cu 1 după fiecare pas.</li></ul>
+<p>Instrucțiunile dintre acoladele lui for sunt <mark>corpul</mark> repetiției: se fac la fiecare pas. Fiecare <code>{</code> are o <code>}</code> a ei, chiar după ultima instrucțiune din corp. Fără acolade, corpul e o singură instrucțiune.</p>
+<p>După <code>for (…)</code> nu pui <code>;</code>: corpul ar rămâne gol, iar acoladele de dedesubt nu s-ar mai repeta. Dacă în ele e <code>i</code>, compilatorul spune că nu cunoaște numele <code>i</code>.</p>
+<p>Lipsește o acoladă? Numărul lor și rândul arătat nu-ți spun unde: spune ce instrucțiuni trebuie să fie în corpul fiecărui for, pune <code>}</code> după ele, rulează cu datele din pagină.</p>`,
+     exemplu:`${C(EX3)}<p>Pe hârtie, cu datele <b>4</b>:</p>${TAB([[0,'0 &lt; 4','0'],[1,'1 &lt; 4','1'],[2,'2 &lt; 4','2'],[3,'3 &lt; 4','3']],[4,'4 &lt; 4'])}<p>Apoi rulezi și compari:</p>${E('0 1 2 3 ')}`,
+     altfel:`<p>La sport, zece elevi stau în linie, cu bilete numerotate de la 0. Profesorul spune: „Începând cu biletul 0, fiecare face o genuflexiune, cât timp numărul biletului e mai mic decât 10.” i e numărul biletului celui care face genuflexiunea acum.</p>`,
+     incearca:{t:'urmarire-indice',
+       cod:'for (int i = 1; i <= n; i++) {\n    cout << i << " ";\n}',n:4,start:1,cond:'<=',limita:4,condText:'i <= n',pas:1,afis:'i',
+       q:'Întâi pe hârtie, apoi aici: n = 4; repetiția pornește de la 1, cu condiția <code>i &lt;= n</code> („mai mic sau egal”). Completează tabelul și i la oprire.',
+       ajutor:'Pasul 1: i are valoarea de pornire. După fiecare pas, i++ îl crește cu 1. Te oprești la prima valoare pentru care i &lt;= 4 e fals.',
+       why:'i: 1, 2, 3, 4, afișate; la 5, 5 &lt;= 4 e fals și repetiția se oprește.'},
+     inca:[
+      {t:'cpp-mic',pasCuPas:false,linii:10,
+       q:'Completează programul ca să citească n și să afișeze numerele de la 1 la n, pe un rând, cu un spațiu după fiecare. Pentru 5 trebuie să apară <b>1 2 3 4 5</b>.',
+       start:prog('    int n;','    cin >> n;',''),
+       intrare:'5',
+       teste:[{ce:'Programul se compilează',compileaza:true},
+              {ce:'Pentru n = 5 afișează numerele de la 1 la 5',intrare:'5',iese:'1 2 3 4 5',potrivire:'linii',arataAsteptat:true},
+              {ce:'Pentru n = 1 afișează doar 1',intrare:'1',iese:'1',potrivire:'linii',arataAsteptat:true}],
+       rezolvare:prog('    int n;','    cin >> n;','    for (int i = 1; i <= n; i++) {','        cout << i << " ";','    }','    cout << endl;'),
+       gresit:prog('    int n;','    cin >> n;','    for (int i = 0; i <= n; i++) {','        cout << i << " ";','    }','    cout << endl;'),
+       ajutor:'Pornești de la 1 și continui cât timp <code>i &lt;= n</code>, ca în tabelul de mai sus. În corp: <code>cout &lt;&lt; i &lt;&lt; " ";</code>',
+       why:'<code>for (int i = 1; i &lt;= n; i++)</code> trece prin 1, 2, …, n. Cu <code>i = 0</code> ar apărea și 0, iar cu <code>i &lt; n</code> ar lipsi n.'},
+      {t:'choice',q:'Ce afișează programul de mai jos pentru datele 3? (Atenție la acolade.)'+C('    for (int i = 0; i < n; i++)\n        cout << i << " ";\n        cout << "*";'),
+       o:['0 1 2 *','0 *1 *2 *','0 1 2','*'],ok:0,
+       ajutor:'Fără acolade, corpul lui for e o singură instrucțiune. Spațiile de la începutul rândului nu schimbă nimic.',
+       why:'Fără acolade, corpul e doar <code>cout &lt;&lt; i &lt;&lt; " ";</code>, făcut de 3 ori: 0 1 2. Steluța se afișează o singură dată, după repetiție, deși rândul ei e împins spre dreapta.'}
+     ]},
+
+    /* ---------- PASUL 4: tabloul, indicele de la 0 ---------- */
+    {t:'Tabloul: șirul în program',
+     text:`<p>Un șir se ține într-un <mark>tablou</mark>: <code>int v[100];</code> face 100 de cutii lipite, cu același nume, <code>v</code>; folosim primele n (cel mult 100: tabloul se face înainte să știm n). Le deosebești după indice (cuvântul de la lecția 23), aici numărul dintre parantezele drepte: <code>v[0]</code>, <code>v[1]</code>…</p>
+<p>Atenție: în C++ indicele începe de la 0. Elementul de pe poziția 1 de la lecția 23 e <code>v[0]</code>, iar ultimul dintr-un șir de n e <code>v[n - 1]</code>.</p>
+<p>Citești șirul cu un for: întâi n, apoi <code>cin &gt;&gt; v[i];</code> pentru i de la 0, cât timp <code>i &lt; n</code>. La fel îl afișezi.</p>`,
+     exemplu:`<p>Datele <b>4</b>, apoi <b>3 -1 0 5</b> ajung în tablou așa:</p>${UrmarireIndice.tablou([3,-1,0,5])}<p>Între acoladele lui <code>main</code>:</p>${C([...CIT,...AFI].join('\n'))}${E('3 -1 0 5 ')}<p>Greșeala tipică e <code>i &lt;= n</code>: citirea mai așteaptă un număr, iar afișarea ajunge la <code>v[4]</code>, fără valoare.</p>`,
+     altfel:`<p>Gândește-te la vestiar, dar cu ușițele numerotate de la 0: prima ușiță are numărul 0, a doua numărul 1. Dacă sunt 4 ușițe, ultima are numărul 3, iar ușița 4 nu e a ta.</p>`,
+     incearca:{t:'cpp-mic',pasCuPas:false,linii:14,
+       q:'Pe rândul gol, scrie două repetiții: una citește cele n elemente în <code>v</code>, alta le afișează pe un rând, cu un spațiu după fiecare. Pentru 4 / 3 -1 0 5 apare <b>3 -1 0 5</b>.',
+       start:prog('    int n, v[100];','    cin >> n;',''),
+       intrare:D4,
+       teste:[{ce:'Programul se compilează',compileaza:true},T_CAPETE,
+              {ce:'Șirul, în ordinea citirii (4 elemente)',intrare:D4,iese:'3 -1 0 5',potrivire:'linii',arataAsteptat:true},
+              {ce:'Merge și cu alt șir (6 elemente)',intrare:D6,iese:'12 7 0 25 9 4',potrivire:'linii',arataAsteptat:true},
+              {ce:'Merge și cu un singur element',intrare:D1,iese:'42',potrivire:'linii',arataAsteptat:true}],
+       rezolvare:EX4,
+       gresit:prog(...CIT,'    for (int i = 0; i <= n; i++) {','        cout << v[i] << " ";','    }','    cout << endl;'),
+       ajutor:'Două repetiții cu același început, <code>for (int i = 0; i &lt; n; i++)</code>. În corpul primei: <code>cin &gt;&gt; v[i];</code>. În corpul celei de-a doua: <code>cout &lt;&lt; v[i] &lt;&lt; " ";</code>',
+       why:`Prima repetiție pune numerele în <code>v[0]</code>, …, <code>v[n - 1]</code>; a doua le afișează în aceeași ordine.`},
+     inca:[
+      {t:'urmarire-indice',
+       cod:'for (int i = 0; i < n; i++) {\n    cout << v[i] << " ";\n}',v:[8,15,4,10],start:0,cond:'<',limita:4,condText:'i < n',pas:1,afis:'v',coloana:'Se afișează v[i]',
+       q:'Pe hârtie, înainte de rulare: completează tabelul pentru datele de mai jos (primul element citit e <code>v[0]</code>).',
+       ajutor:'Pe rândul cu i = 0 se afișează v[0], adică primul număr citit.',
+       why:'i ia valorile 0, 1, 2, 3 și se afișează v[0] = 8, v[1] = 15, v[2] = 4, v[3] = 10. Când i devine 4, 4 &lt; 4 e fals și repetiția se oprește.'}
+     ]},
+
+    /* ---------- PASUL 5: afișarea în ordine inversă ---------- */
+    {t:'Afișarea în ordine inversă',
+     text:`<p>Ca să afișezi șirul de la coadă la cap, i pornește de la ultimul indice și scade:</p>
+<p><code>for (int i = n - 1; i &gt;= 0; i--)</code></p>
+<p><code>i--</code> scade i cu 1 după fiecare pas; <code>i &gt;= 0</code> („mai mare sau egal”) lasă să treacă și pasul cu <code>v[0]</code>.</p>
+<p>Capetele se greșesc ușor: <code>for (int i = n; i &gt;= 0; i--)</code> începe cu <code>v[n]</code>, fără valoare, iar <code>for (int i = n - 1; i &gt; 0; i--)</code> sare peste primul element. De aceea faci întâi în caiet tabelul i / v[i], apoi rulezi.</p>`,
+     exemplu:`<p>Pentru 4 / 3 -1 0 5, sub citire:</p>${C(INV.join('\n'))}<p>Pe hârtie:</p>${TAB([[3,'3 &gt;= 0','v[3] = 5'],[2,'2 &gt;= 0','v[2] = 0'],[1,'1 &gt;= 0','v[1] = -1'],[0,'0 &gt;= 0','v[0] = 3']],[-1,'-1 &gt;= 0'])}<p>Rulezi și compari:</p>${E('5 0 -1 3 ')}`,
+     altfel:`<p>Când cobori scările de la etajul 3, treci pe la 3, 2, 1 și te oprești abia după parter, etajul 0. Dacă te-ai opri înainte de parter, n-ai ieși din bloc.</p>`,
+     incearca:{t:'urmarire-indice',
+       cod:'for (int i = n - 1; i >= 0; i--) {\n    cout << v[i] << " ";\n}',v:[12,7,0,25],start:3,cond:'>=',limita:0,condText:'i >= 0',pas:-1,afis:'v',coloana:'Se afișează v[i]',
+       q:'Întâi pe hârtie, apoi aici: tabelul repetiției inverse pentru datele de mai jos și valoarea lui i la oprire.',
+       ajutor:'n = 4, deci pornești de la i = 3 (n − 1). Pe fiecare rând scrii valoarea lui v[i]: numărul din date, numărând de la 0.',
+       why:'i: 3, 2, 1, 0; se afișează 25, 0, 7, 12; la -1, -1 &gt;= 0 e fals și repetiția se oprește.'},
+     inca:[
+      {t:'cpp-mic',pasCuPas:false,linii:14,
+       q:'Programul citește deja șirul. Pe rândul gol, scrie repetiția care îl afișează în ordine inversă, fiecare element pe rândul lui (pentru 3 / 7 8 9: 9, apoi 8, apoi 7, unul sub altul).',
+       start:prog(...CIT,''),
+       intrare:'3\n7 8 9',
+       teste:[{ce:'Programul se compilează',compileaza:true},
+              {ce:'Cu 3 / 7 8 9 afișează 9, 8, 7, unul sub altul',intrare:'3\n7 8 9',iese:'9\n8\n7',potrivire:'linii',arataAsteptat:true},
+              {ce:'Merge și cu un șir de 5 elemente',intrare:D5,iese:'50\n40\n30\n20\n10',potrivire:'linii',arataAsteptat:true}],
+       rezolvare:prog(...CIT,'    for (int i = n - 1; i >= 0; i--) {','        cout << v[i] << endl;','    }'),
+       gresit:prog(...CIT,'    for (int i = n - 1; i > 0; i--) {','        cout << v[i] << endl;','    }'),
+       ajutor:'Pornești de la <code>n - 1</code>, continui cât timp <code>i &gt;= 0</code>, scazi cu <code>i--</code>; în corp, după element, <code>endl</code>.',
+       why:'<code>for (int i = n - 1; i &gt;= 0; i--) { cout &lt;&lt; v[i] &lt;&lt; endl; }</code> trece prin v[n − 1], …, v[0], fiecare pe rândul lui.'}
+     ]}
+   ],
+
+   /* ---------- ATELIERUL ---------- */
+   atelier:{t:'cpp-mic',pasCuPas:false,linii:20,titlu:'Atelier: șirul, în ambele sensuri',
+    intro:`<p><strong>Sarcina:</strong> programul citește și afișează un șir (pasul <i>Tabloul: șirul în program</i>, 5 din 6). Completează-l ca, pe rândul următor, să-l afișeze și invers. Pentru 4 / 3 -1 0 5:</p>${E('3 -1 0 5\n5 0 -1 3')}
+<p>Al doilea rând îl ai pe hârtie (pasul <i>Afișarea în ordine inversă</i>, 6 din 6).</p>`,
+    q:'Sub afișare, pe rândul gol: întâi <code>cout &lt;&lt; endl;</code>, apoi repetiția inversă.',
+    start:prog(...CIT,...AFI,''),
+    intrare:D4,
+    teste:[{ce:'Programul se compilează',compileaza:true},T_CAPETE,
+           {ce:'Cu datele din exemplu: șirul, apoi șirul invers',intrare:D4,iese:'3 -1 0 5\n5 0 -1 3',potrivire:'linii',arataAsteptat:true},
+           {ce:'Merge și cu alt șir (6 elemente)',intrare:D6,iese:'12 7 0 25 9 4\n4 9 25 0 7 12',potrivire:'linii',arataAsteptat:true},
+           {ce:'Merge și cu un singur element',intrare:D1,iese:'42\n42',potrivire:'linii',arataAsteptat:true},
+           {ce:'Merge și cu datele pe rânduri diferite',intrare:'3\n-4\n8\n-4\n',iese:'-4 8 -4\n-4 8 -4',potrivire:'linii',arataAsteptat:true},
+           {ce:'Merge și cu un șir ascuns',intrare:D5,iese:'10 20 30 40 50\n50 40 30 20 10',potrivire:'linii'}],
+    rezolvare:AT,
+    gresit:prog(...CIT,...AFI,...INV,'    cout << endl;'),
+    ajutor:'Între cele două afișări: <code>cout &lt;&lt; endl;</code>, în afara acoladelor. Apoi <code>for (int i = n - 1; i &gt;= 0; i--)</code>, cu <code>cout &lt;&lt; v[i] &lt;&lt; " ";</code> în corp (între ghilimele, un singur spațiu).',
+    why:'Prima afișare: i în sus; <code>endl</code>: rândul următor; a doua: i în jos, până la 0 inclusiv.',
+    solutieText:'acum vezi un program bun, cu toate testele bifate.',
+    inca:[
+     {t:'cpp-mic',pasCuPas:false,linii:20,
+      q:'Tot programul, de la zero: citește n și n numere; afișează-le pe un rând în ordinea citirii, iar pe rândul următor în ordine inversă.',
+      start:prog('    int n, v[100];','    cin >> n;',''),
+      intrare:'5\n6 -2 0 11 3',
+      teste:[{ce:'Programul se compilează',compileaza:true},T_CAPETE,
+             {ce:'Cu 5 / 6 -2 0 11 3: șirul, apoi șirul invers',intrare:'5\n6 -2 0 11 3',iese:'6 -2 0 11 3\n3 11 0 -2 6',potrivire:'linii',arataAsteptat:true},
+             {ce:'Merge și cu un șir de 2 elemente',intrare:'2\n100 -100',iese:'100 -100\n-100 100',potrivire:'linii',arataAsteptat:true}],
+      rezolvare:AT,
+      gresit:prog('    int n, v[100];','    cin >> n;','    for (int i = 0; i < n; i++) {','        cin >> v;','    }',...AFI,'    cout << endl;',...INV,'    cout << endl;'),
+      ajutor:'Trei repetiții: citirea (<code>cin &gt;&gt; v[i];</code>), afișarea de la 0 și afișarea de la n − 1 în jos, cu <code>cout &lt;&lt; endl;</code> între ultimele două.',
+      why:'Citirea pune numerele în v[0], …, v[n − 1]; urmează cele două afișări, despărțite de <code>endl</code>.'}
+    ]},
+
+   /* ---------- CELE 5 ÎNTREBĂRI ---------- */
+   qs:[
+    {t:'choice',q:'Datele sunt 4, apoi 4 9 2 7, citite în <code>v</code> de la i = 0. Ce afișează repetiția de mai jos, care pornește de la i = 1? (Fă tabelul i / v[i] pe hârtie.)'+C('    for (int i = 1; i < n; i++) {\n        cout << v[i] << " ";\n    }'),
+     o:['9 2 7','4 9 2 7','4 9 2','9 2'],ok:0,
+     ajutor:'Primul element citit e v[0]. Cu i = 1, se afișează v[1], al doilea număr citit.',
+     why:'i ia valorile 1, 2, 3: se afișează v[1] = 9, v[2] = 2, v[3] = 7, nu și v[0] = 4.'},
+    {t:'choice',q:'Un șir are n = 6 elemente, citite în <code>v</code> cu o repetiție de la i = 0. Care e indicele ultimului element?',
+     o:['5','6','7','0'],ok:0,
+     ajutor:'Indicii încep de la 0: primul element e v[0].',
+     why:'Indicii 0, 1, 2, 3, 4, 5: ultimul e v[5], adică v[n − 1].'},
+    {t:'choice',html:true,q:'Care repetiție afișează toate cele n elemente ale lui <code>v</code> în ordine inversă?',
+     o:['<code>for (int i = n - 1; i &gt;= 0; i--)</code>','<code>for (int i = n; i &gt;= 0; i--)</code>','<code>for (int i = n - 1; i &gt; 0; i--)</code>','<code>for (int i = 0; i &lt; n; i++)</code>'],ok:0,
+     ajutor:'Ultimul element e v[n − 1], primul e v[0]; i scade.',
+     why:'De la v[n − 1] până la v[0] inclusiv. Cu i = n începe cu v[n], fără valoare; cu i &gt; 0 lipsește v[0].'},
+    {t:'choice',q:'Pentru datele 4 / 3 -1 0 5, ce afișează programul de mai jos? (Atenție unde e acolada.)'+C('    for (int i = 0; i < n; i++) {\n        cout << v[i] << " ";\n        cout << endl;\n    }'),
+     o:['3, -1, 0 și 5, fiecare pe rândul lui','3 -1 0 5, toate pe un singur rând','5 0 -1 3, toate pe un singur rând','doar 3, apoi trece pe rândul următor'],ok:0,
+     ajutor:'Ce instrucțiuni sunt între acoladele lui for? Ele se fac la fiecare pas.',
+     why:'<code>cout &lt;&lt; endl;</code> e în corpul repetiției, deci se face după fiecare element.'},
+    {t:'choice',q:'Un elev citește șirul cu condiția <code>i &lt;= n</code> în loc de <code>i &lt; n</code>, cu datele 3, apoi 5 8 1. Ce se întâmplă în pagină la Rulează?',
+     o:['Programul mai așteaptă un număr','Apare o eroare de compilare','Citește doar 5 și 8','Merge la fel ca cu i &lt; n'],ok:0,html:true,
+     ajutor:'Câte valori ia i, de la 0, cât timp i &lt;= 3?',
+     why:'i ia valorile 0, 1, 2, 3: patru citiri pentru trei numere.'}
+   ]}
+  ],
+  aplicatieReala:{aplicatie:'Code::Blocks',titlu:'Acum la calculatorul din laborator',scurt:'Laborator',
+    intro:`<p>Compilatorul din Code::Blocks poate fi altă versiune decât cel din pagină: o eroare poate apărea pe rândul de dedesubt. Programele lecției merg la fel în ambele.</p>
+<p><b>Nu e Code::Blocks pe calculator sau lucrezi pe telefon?</b> Atelierul din pagină ține loc de laborator; la calculatorul din laborator, spune-i profesorului.</p>`,
+    pasi:PROVOCARE},
+  diploma:{titlu:'Primul program cu șir',
+    rezumat:'a scris în C++ un program care citește un șir de n numere și îl afișează în ordinea citirii și în ordine inversă, după ce a urmărit pe hârtie valorile indicelui',
+    aplicatie:'Code::Blocks',
+    provocare:PROVOCARE}
+});
+</script>
+</body>
+</html>
