@@ -31,6 +31,14 @@ h1{font-size:1.6rem;margin:0 0 4px}h2{font-size:1.1rem;margin:0 0 10px}
 .rand li.rel .ic{color:#fca5a5}
 .stele{color:#fbbf24;letter-spacing:1px}
 .rez{margin:0 0 10px}
+/* Lecțiile mele, pe module (10.11.2026) */
+.modul h3{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;margin:14px 0 2px;padding:7px 10px;border-radius:10px;background:#0f1526;border:1px solid var(--line);font-size:1rem;font-weight:700}
+.modul:first-child h3{margin-top:4px}
+.modul.acum h3{border-color:var(--acc);background:#14203d}
+.modul h3 .per{color:var(--mut);font-weight:400;font-size:.88rem}
+.modul h3 .mst{margin-left:auto;color:var(--mut);font-weight:400;font-size:.85rem}
+.tag.ac{color:#8fb0ff;border-color:var(--acc);font-weight:400}
+.rand .meta .sapt{color:var(--txt)}
 /* cât am lucrat */
 .cifre{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .cifra{background:#0f1526;border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;min-width:0}
@@ -122,6 +130,13 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
   function ziMinus(z,n){var d=new Date(z+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-n);return d.toISOString().slice(0,10)}
   function ziSapt(z){return new Date(z+'T12:00:00Z').getUTCDay()}   // 0 = duminică
   function ziScurt(z){var p=String(z).split('-');return (+p[2])+'.'+(+p[1])}
+  // datele din plan.json (zz.ll.aaaa) → aaaa-ll-zz; săptămâna unei zile = [luni, vineri]; perioada scrisă pe românește
+  function isoDin(d){var p=String(d||'').split('.');return p.length===3&&/^\d{4}$/.test(p[2])?p[2]+'-'+('0'+p[1]).slice(-2)+'-'+('0'+p[0]).slice(-2):''}
+  function saptDe(z){var l=ziMinus(z,(ziSapt(z)+6)%7);return [l,ziMinus(l,-4)]}
+  var LUNI=['ian.','feb.','mart.','apr.','mai','iun.','iul.','aug.','sept.','oct.','nov.','dec.'];
+  function perioada(a,b,cuAn){var x=a.split('-'),y=b.split('-'),la=LUNI[+x[1]-1],lb=LUNI[+y[1]-1];
+    if(x[0]!==y[0])return (+x[2])+' '+la+' '+x[0]+' – '+(+y[2])+' '+lb+' '+y[0];
+    return (x[1]===y[1]?(+x[2])+'–'+(+y[2])+' '+lb:(+x[2])+' '+la+' – '+(+y[2])+' '+lb)+(cuAn?' '+y[0]:'')}
   function cand(x){var t=typeof x==='number'?x:Date.parse(x||'');return isFinite(t)&&t>0?t:0}   // ISO (server) sau ms (aparat)
   // sub un minut lucrat: „sub 1 min”, nu „0 min” (altfel pare că nu s-a numărat nimic)
   function min(s){s=s||0;if(s>0&&s<60)return 'sub 1 min';var m=Math.round(s/60);return m<60?m+' min':Math.floor(m/60)+' h '+(m%60)+' min'}
@@ -506,8 +521,8 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
     // ---- lecțiile clasei lui (publicate, în ordinea din plan). Pe planul altei clase, fără Lecția 1 neatinsă: e ora de organizare
     //      a gimnaziului, pe care panoul clasei le-o sare („Lecțiile 2–…”), altfel „Continuă” i-ar trimite acolo
     var L=[];
-    if(cl)(cl.module||[]).forEach(function(m){(m.lectii||[]).forEach(function(l){if(l.stare==='publicat'&&l.cheie&&l.cale){
-      var x=lectia(l,S,D);if(!(strain&&+l.nr===1&&x.stare==='nu'))L.push(x)}})});
+    if(cl)(cl.module||[]).forEach(function(m,mi){(m.lectii||[]).forEach(function(l){if(l.stare==='publicat'&&l.cheie&&l.cale){
+      var x=lectia(l,S,D);x.mod=m;x.mi=mi;if(!(strain&&+l.nr===1&&x.stare==='nu'))L.push(x)}})});
 
     // ---- De reluat
     var R=[],vazut={};
@@ -545,10 +560,24 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
     // ---- 2. Lecțiile mele
     if(cl){
       var pana=L.filter(function(x){var p=String(x.l.data||'').split('.');return (p.length===3?p[2]+'-'+p[1]+'-'+p[0]:'9999')<=azi}),fac=pana.filter(function(x){return x.gata}).length;
+      /* pe module (10.11.2026, el: „pe jurnalul elevului separă lecțiile în module - eventual cu săptămâni între data de
+         început și de sfârșit a săptămânii”): titlul modulului cu perioada lui (luni din prima săptămână – vineri din
+         ultima), câte lecții din el sunt făcute, „acum” pe modulul de azi; la fiecare lecție, săptămâna ei (luni–vineri).
+         #lectii rămâne containerul, iar lecțiile rămân singurele li din el (probele citesc #lectii li[data-cheie]). */
+      var grupe=[];L.forEach(function(x){var g=grupe[grupe.length-1];if(!g||g.mi!==x.mi)grupe.push(g={mi:x.mi,m:x.mod,L:[]});g.L.push(x)});
       h+='<div class="card" id="lectii-mele"><h2>Lecțiile mele</h2>'+
-        (pana.length?'<p class="rez">Din lecțiile de până azi ai terminat <b>'+fac+' din '+pana.length+'</b>.</p>':'')+'<ul class="rand" id="lectii">'+
-        L.map(function(x){
-          var meta=x.stare==='gata'?'făcută':x.stare==='inc'?'începută'+(x.pas?' · '+etPas(x.pas):''):'neîncepută';
+        (pana.length?'<p class="rez">Din lecțiile de până azi ai terminat <b>'+fac+' din '+pana.length+'</b>.</p>':'')+'<div id="lectii">'+
+        grupe.map(function(g){
+          var m=g.m||{},cod=String(m.modul||'M'+(g.mi+1)),nr=cod.replace(/^M/i,''),de=isoDin(m.de_la),pn=isoDin(m.pana_la);
+          var s1=de?saptDe(de):null,s2=pn?saptDe(pn):null,acum=!!(s1&&s2&&azi>=s1[0]&&azi<=ziMinus(s2[1],-2));
+          var gata=g.L.filter(function(x){return x.gata}).length;
+          return '<section class="modul'+(acum?' acum':'')+'" data-modul="'+esc(cod)+'"><h3><span class="mn">Modulul '+esc(nr)+'</span>'+
+            (s1&&s2?'<span class="per">'+perioada(s1[0],s2[1],true)+'</span>':'')+(acum?'<span class="tag ac">acum</span>':'')+
+            '<span class="mst">'+gata+' din '+g.L.length+' '+(g.L.length===1?'făcută':'făcute')+'</span></h3><ul class="rand">'+
+        g.L.map(function(x){
+          var w=isoDin(x.l.data),sw=w?saptDe(w):null;
+          var meta=(sw?'<span class="sapt" title="Săptămâna lecției: luni – vineri">săpt. '+perioada(sw[0],sw[1],false)+'</span> · ':'')+
+            (x.stare==='gata'?'făcută':x.stare==='inc'?'începută'+(x.pas?' · '+etPas(x.pas):''):'neîncepută');
           if(FEL[x.K]==='graba')meta+=' <span class="tag gr">în grabă</span>';else if(FEL[x.K]==='stiai')meta+=' <span class="tag st">știai deja</span>';
           if(x.stele)meta+=' · <span class="stele">★ '+x.stele+'</span>';
           if(x.nota&&x.nota.nota)meta+=' · nota '+esc(x.nota.nota);
@@ -556,7 +585,7 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
           if(x.t1)meta+=' · ultima dată '+ziScurt(zi(new Date(x.t1)));
           var a=x.stare==='gata'?leg(x.url,'Reia','g'):x.stare==='inc'?leg(x.url+'?continua=1','Continuă'):leg(x.url,'Începe','g');
           return '<li class="'+x.stare+'" data-cheie="'+esc(x.K)+'" data-stare="'+x.stare+'" data-sec="'+x.sec+'"'+(FEL[x.K]?' data-fel="'+FEL[x.K]+'"':'')+'><span class="ic" aria-hidden="true">'+(x.stare==='gata'?'✓':x.stare==='inc'?'◐':'○')+'</span>'+
-            '<span class="tt">'+esc(x.titlu)+'<span class="meta">'+meta+'</span></span>'+a+'</li>'}).join('')+'</ul></div>';
+            '<span class="tt">'+esc(x.titlu)+'<span class="meta">'+meta+'</span></span>'+a+'</li>'}).join('')+'</ul></section>'}).join('')+'</div></div>';
     }
 
     // ---- 3. De reluat
