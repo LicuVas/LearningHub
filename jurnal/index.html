@@ -135,8 +135,18 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
   function saptDe(z){var l=ziMinus(z,(ziSapt(z)+6)%7);return [l,ziMinus(l,-4)]}
   var LUNI=['ian.','feb.','mart.','apr.','mai','iun.','iul.','aug.','sept.','oct.','nov.','dec.'];
   function perioada(a,b,cuAn){var x=a.split('-'),y=b.split('-'),la=LUNI[+x[1]-1],lb=LUNI[+y[1]-1];
+    if(a===b)return (+x[2])+' '+la+(cuAn?' '+x[0]:'');   // o singură zi de școală în săptămână
     if(x[0]!==y[0])return (+x[2])+' '+la+' '+x[0]+' – '+(+y[2])+' '+lb+' '+y[0];
     return (x[1]===y[1]?(+x[2])+'–'+(+y[2])+' '+lb:(+x[2])+' '+la+' – '+(+y[2])+' '+lb)+(cuAn?' '+y[0]:'')}
+  /* structura OFICIALĂ a anului (lectii/an_scolar.json, generat din school_calendar_config.py — I.S.J. Neamț 2543/2026,
+     aceeași din care iese calendarul colorat): săptămâna de școală a unei zile (S1..S36, cu zilele ei de școală) și
+     modulul (I..V, cu datele lui; Modulul V se închide după ciclul elevului: a VIII-a 11 iun., a XII-a 4 iun., X-XI la CTT 25 iun.) */
+  function saptOficiala(z){if(!AN||!z)return null;for(var i=0;i<AN.saptamani.length;i++){var w=AN.saptamani[i];if(z>=w.luni&&z<=ziMinus(w.luni,-6))return w}return null}
+  function modOficial(cod,e){if(!AN)return null;var m=null;AN.module.forEach(function(x){if(x.m===cod)m=x});if(!m)return null;
+    var r={nr:m.nr,de_la:m.de_la,pana_la:m.pana_la},n=nivelClasa(e&&e.clasa),sf=AN.sfarsit||{};
+    if(m.nr==='V'){var c=n===8?sf.clasa_VIII:n===12?sf.clasa_XII_zi:(n===10||n===11)&&/transporturi|forestier/.test(e&&e.scoala||'')?sf.liceu_tehnologic_X_XI:null;if(c)r.pana_la=c}
+    var S=AN.saptamani.filter(function(w){return w.modul===m.nr&&w.de_la<=r.pana_la});
+    if(S.length){r.s1=S[0].s;r.s2=S[S.length-1].s}return r}
   function cand(x){var t=typeof x==='number'?x:Date.parse(x||'');return isFinite(t)&&t>0?t:0}   // ISO (server) sau ms (aparat)
   // sub un minut lucrat: „sub 1 min”, nu „0 min” (altfel pare că nu s-a numărat nimic)
   function min(s){s=s||0;if(s>0&&s<60)return 'sub 1 min';var m=Math.round(s/60);return m<60?m+' min':Math.floor(m/60)+' h '+(m%60)+' min'}
@@ -222,12 +232,14 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
   var ROM={i:1,ii:2,iii:3,iv:4,v:5,vi:6,vii:7,viii:8,ix:9,x:10,xi:11,xii:12,xiii:13};
   function nivelClasa(et){var w=String(et||'').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
     for(var i=0;i<w.length;i++){var n=/^\d+$/.test(w[i])?+w[i]:ROM[w[i]];if(n)return n}return 0}
-  var PLAN=null,CAT=null,planGata=false,cerut=false,CHEI=citeste('lh_jurnal_chei')||{};
+  var PLAN=null,CAT=null,AN=null,planGata=false,cerut=false,CHEI=citeste('lh_jurnal_chei')||{};
   function incarca(){
     if(cerut)return;cerut=true;
     Promise.all([fetch('../lectii/plan.json').then(function(r){return r.ok?r.json():null}).catch(function(){return null}),
-      fetch('../jocuri/catalog.js').then(function(r){return r.ok?r.text():null}).catch(function(){return null})]).then(function(x){
+      fetch('../jocuri/catalog.js').then(function(r){return r.ok?r.text():null}).catch(function(){return null}),
+      fetch('../lectii/an_scolar.json').then(function(r){return r.ok?r.json():null}).catch(function(){return null})]).then(function(x){
       PLAN=x[0]&&x[0].clase||null;
+      AN=x[2]&&x[2].module&&x[2].saptamani?x[2]:null;   // structura oficială a anului (module, S1..S36); lipsă = ca înainte
       try{CAT=JSON.parse(x[1].slice(x[1].indexOf('{'),x[1].lastIndexOf('}')+1)).clase||[]}catch(e){CAT=[]}
       planGata=true;arata();
     });
@@ -569,14 +581,18 @@ ul{margin:0;padding-left:18px}li{margin:4px 0}
         (pana.length?'<p class="rez">Din lecțiile de până azi ai terminat <b>'+fac+' din '+pana.length+'</b>.</p>':'')+'<div id="lectii">'+
         grupe.map(function(g){
           var m=g.m||{},cod=String(m.modul||'M'+(g.mi+1)),nr=cod.replace(/^M/i,''),de=isoDin(m.de_la),pn=isoDin(m.pana_la);
-          var s1=de?saptDe(de):null,s2=pn?saptDe(pn):null,acum=!!(s1&&s2&&azi>=s1[0]&&azi<=ziMinus(s2[1],-2));
+          var MO=modOficial(cod,e),p1,p2;
+          if(MO){p1=MO.de_la;p2=MO.pana_la;nr=MO.nr}   // datele oficiale ale modulului (calendarul școlar)
+          else{var s1=de?saptDe(de):null,s2=pn?saptDe(pn):null;if(s1&&s2){p1=s1[0];p2=s2[1]}}   // fără an_scolar.json: din datele lecțiilor
+          var acum=!!(p1&&p2&&azi>=p1&&azi<=ziMinus(p2,-2));
           var gata=g.L.filter(function(x){return x.gata}).length;
           return '<section class="modul'+(acum?' acum':'')+'" data-modul="'+esc(cod)+'"><h3><span class="mn">Modulul '+esc(nr)+'</span>'+
-            (s1&&s2?'<span class="per">'+perioada(s1[0],s2[1],true)+'</span>':'')+(acum?'<span class="tag ac">acum</span>':'')+
+            (p1&&p2?'<span class="per">'+perioada(p1,p2,true)+(MO&&MO.s1?' · S'+MO.s1+'–S'+MO.s2:'')+'</span>':'')+(acum?'<span class="tag ac">acum</span>':'')+
             '<span class="mst">'+gata+' din '+g.L.length+' '+(g.L.length===1?'făcută':'făcute')+'</span></h3><ul class="rand">'+
         g.L.map(function(x){
-          var w=isoDin(x.l.data),sw=w?saptDe(w):null;
-          var meta=(sw?'<span class="sapt" title="Săptămâna lecției: luni – vineri">săpt. '+perioada(sw[0],sw[1],false)+'</span> · ':'')+
+          var w=isoDin(x.l.data),so=saptOficiala(w),sw=w?saptDe(w):null;
+          var meta=(so?'<span class="sapt" title="Săptămâna de școală '+so.s+' (zilele de școală din ea)">S'+so.s+' · '+perioada(so.de_la,so.pana_la,false)+'</span> · '
+            :sw?'<span class="sapt" title="Săptămâna lecției: luni – vineri">săpt. '+perioada(sw[0],sw[1],false)+'</span> · ':'')+
             (x.stare==='gata'?'făcută':x.stare==='inc'?'începută'+(x.pas?' · '+etPas(x.pas):''):'neîncepută');
           if(FEL[x.K]==='graba')meta+=' <span class="tag gr">în grabă</span>';else if(FEL[x.K]==='stiai')meta+=' <span class="tag st">știai deja</span>';
           if(x.stele)meta+=' · <span class="stele">★ '+x.stele+'</span>';
