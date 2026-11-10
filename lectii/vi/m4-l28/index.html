@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 28, clasa a VI-a: Gestionarea animațiilor: creare, salvare, expunere, testare, depanare</title>
+<meta name="description" content="Lecția 28, clasa a VI-a: ciclul complet pe o animație scurtă în Scratch: o creezi, o salvezi, o închizi și o deschizi la loc, o testezi, o strici dinadins, găsești eroarea, o repari și o arăți pe ecranul complet. Cu un Scratch simulat în pagină și o animație-model cu eroare, de descărcat.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&family=Livvic:ital,wght@0,400;0,600;0,700;1,400&family=Kode+Mono:wght@500;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF4FA; --paper:#FFFFFF; --paper2:#F1F6FC; --line:#CFDDEC;
+  --ink:#16283A; --ink2:#4E6276; --accent:#1F63B5; --accentInk:#FFFFFF; --sel:#DCE9F8;
+  --mark:#FFE07A; --markInk:#16283A; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Sniglet","Segoe UI",system-ui,sans-serif; --fb:"Livvic","Segoe UI",system-ui,sans-serif; --fm:"Kode Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F1823; --paper:#16212E; --paper2:#1C2A3A; --line:#304357;
+  --ink:#E4EEF8; --ink2:#A6BACE; --accent:#7DB3F2; --accentInk:#0F1823; --sel:#24405F;
+  --mark:#EBC95C; --markInk:#16283A; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F1823; --paper:#16212E; --paper2:#1C2A3A; --line:#304357;
+  --ink:#E4EEF8; --ink2:#A6BACE; --accent:#7DB3F2; --accentInk:#0F1823; --sel:#24405F;
+  --mark:#EBC95C; --markInk:#16283A; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: blocurile animației, unul după altul */
+.banda{display:flex;align-items:center;gap:4px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent);font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-size:.72rem;font-weight:700;color:#fff}
+.banda .bk{flex:none;display:inline-block;padding:4px 9px;border-radius:5px;border:1px solid rgba(0,0,0,.18)}
+.banda .mv{background:#3373CC}
+.banda .ev{background:#FFBF00;color:#3A2A00}
+.banda .ct{background:#CF8B17}
+.banda .lk{background:#774DCB}
+h1,h2{font-weight:800;letter-spacing:0}
+h1 .acc{color:var(--accent)}
+code{font-family:var(--fm);font-size:.9em}
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:800;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.ss-static{display:block!important;margin:8px 0!important;max-width:100%;overflow-x:auto}
+.ss-static .ss-b{touch-action:auto;cursor:default}
+.ss-cap{margin:0 0 4px;font-size:.85rem;color:var(--ink2)}
+.blk{display:inline-block;padding:1px 7px;border-radius:5px;color:#fff;font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-weight:700;font-size:.86em}
+.blk.mv{background:#3373CC}.blk.ev{background:#FFBF00;color:#3A2A00}.blk.ct{background:#CF8B17}.blk.lk{background:#774DCB}
+.captura.mica img{max-width:min(300px,100%)}
+.captura a{min-height:32px}
+.descarca{display:inline-flex;align-items:center;min-height:44px;line-height:1.25;padding:6px 14px;margin:4px 0;border-radius:10px;background:var(--accent);color:var(--accentInk);font-weight:700;text-decoration:none}
+.descarca:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+.caiet{border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:8px 0;background:var(--paper2)}
+.caiet b{display:block;margin-bottom:2px}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/scratch.js"></script>
+<script src="../../_sim/scratch-control.js"></script>
+<script src="../../_sim/scratch-interfata.js"></script>
+<script src="../../_sim/scratch-gestiune.js"></script>
+<script>
+/* Lecția 28, clasa a VI-a (M4, predare): „Gestionarea animațiilor: creare, salvare, expunere, testare, depanare”.
+   Legea: _campaign\revizuire_completa_2026_09\00_GHID_LECTII.md. Sursele și probele: surse.md, _proba\.
+   Aplicația = Scratch 3, editorul online, în română, fără cont, .sb3 pe calculator (contractul, decizia 4; ca la VI/18-26). Faptele sunt PROBATE în editorul viu
+   (Chromium headless, profil temporar, fără cont, 09.11.2026): _proba\live_vi28.py, live_vi28b.py, live_vi28c.py → live_vi28*.json; programele exercițiilor: _proba\oracol_programe.json.
+   Simulatorul: lectii/_sim/scratch.js, scratch-control.js, scratch-interfata.js, doar FOLOSITE; extensia mea: lectii/_sim/scratch-gestiune.js.
+   Animația-model: animatie-cu-eroare.sb3, generată de _proba\fa_model.py.
+   Granița: NU interfața ca atare (VI/27), scenariul (VI/29), proprietățile (VI/30), temporizarea (VI/31), tastele (VI/32). */
+SimScratchGestiune.stil();
+const G = SimScratchGestiune, A = SimScratch.ajutor;
+const fig = (f, w, h, alt, cap, cls) => `<figure class="captura${cls ? ' ' + cls : ''}"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const ACUM = (...p) => `<div class="acum" role="note"><div class="lbl">Acum în Scratch, la calculator</div><ol>${p.map(x => `<li>${x}</li>`).join('')}</ol><p style="margin:.3em 0 0"><b>Pe telefon sau dacă nu merge:</b> sari peste; lucrezi în pagină.</p></div>`;
+const STIVA = (b, cap) => `<div class="ss ss-static" role="img" aria-label="Blocuri Scratch: ${b.map(x => SimScratch.text(x)).join(', ')}">${cap ? `<p class="ss-cap">${cap}</p>` : ''}<div class="ss-script" style="position:relative">${b.map(x => SimScratch.html(x)).join('')}</div></div>`;
+const deseneazaStive = () => document.querySelectorAll('.ss-static:not([data-d])').forEach(e => { if (!e.offsetWidth) return; e.dataset.d = '1'; SimScratch.deseneaza(e); });
+new MutationObserver(deseneazaStive).observe(document.documentElement, {childList: true, subtree: true});
+window.addEventListener('lh-pas', () => setTimeout(deseneazaStive, 0));
+
+/* ---- programele (aceleași ca în _proba/live_vi28b.py, rulate în editorul adevărat) ---- */
+const m = n => ['mergi', n], C = ['costum_urmator'], M0 = ['mergi_la_xy', 0, 0], S0 = ['steag'];
+const R = (n, ...g) => ['repeta', n, {guri: [g]}];
+const P1 = (...b) => [{x: 14, y: 14, b}];
+const BUN = P1(S0, M0, R(40, m(5), C));
+const MODEL = P1(S0, M0, R(40, m(5), C, M0));
+const STRICAT_COSTUM = P1(S0, M0, R(40, m(5)), C);
+const LA_SFARSIT = P1(S0, R(40, m(5), C), M0);
+const FARA_START = P1(S0, R(40, m(5), C));
+const R4 = P1(S0, M0, R(4, m(5), C));
+const DESPRINS = [{x: 14, y: 14, b: [S0]}, {x: 14, y: 100, b: [M0, R(40, m(5), C)]}];
+const LUNG = P1(S0, ['mergi_la_xy', -150, 0], R(300, m(1), C));
+const LINK = '<a class="descarca" href="animatie-cu-eroare.sb3" download="animatie-cu-eroare.sb3">Descarcă animația-model</a>';
+const PAL = ['steag', 'mergi_la_xy', 'repeta', 'mergi', 'costum_urmator'];
+/* numele de azi, forma VI/18-26: Depanare_, clasa și numele (Depanare_6A_Popescu); există deja → se adaugă prenumele (Depanare_6A_Popescu_Ana) */
+const NUME_BUN = /^Depanare_\d{1,2}[a-z]_[a-zăâîșțşţ]+(?:[ _-]?[a-zăâîșțşţ]+)?$/i;
+const ANA = /^Depanare_6A_Popescu[ _-]?Ana$/i, ANA0 = /^Depanare_6A_Popescu(?:[ _-]?Ana)?$/i;
+/* P2 pe telefon: „mergi la” luat din paletă după un steag vine cu locul de acum al pisicii, nu cu 0 și 0 */
+const nenul = (P) => { let g = false; const w = (b) => { if (Array.isArray(b)) { if (b[0] === 'mergi_la_xy' && (+b[1] !== 0 || +b[2] !== 0)) g = true; b.forEach(w); } else if (b && typeof b === 'object') Object.values(b).forEach(w); }; w(P); return g; };
+const NENUL = 'În „mergi la” nu e 0 și 0: din paletă vine cu locul de acum al pisicii. Pe telefon: „Ia-o de la capăt”, apoi ia-l iar din paletă: vine cu 0 și 0. Pe calculator, scrii 0 și 0.';
+
+/* ---- testele judecă ce FACE programul (regula 29), cu mesajul scris după starea de acum (motorul citește t.msg după t.ok) ---- */
+const t_steag = () => ({ce: 'Programul pornește de la steag', msg: 'La steag nu pornește nimic: sub „când se dă click pe ⚑” nu e lipit niciun bloc. Trage blocul de sus al programului chiar sub el, până se lipesc.', ok: (U, P) => G.rulare(P).steag});
+const t_ajunge = (x, sfat) => { const t = {ce: `La capăt, pisica e la x ${x}, y 0`, msg: '', ok(U, P) { const r = G.rulare(P, {x: 0, y: 0, directie: 90}); t.msg = `La capăt, pisica e la x ${Math.round(r.x)}, y ${Math.round(r.y)}, nu la x ${x}, y 0. ${sfat(r, P)}`; return Math.abs(r.x - x) < 0.5 && Math.abs(r.y) < 0.5; }}; return t; };
+/* R1 + J3: „pleacă din același loc” = din alt loc (x + 70, y 60), pisica face ACELAȘI drum și ajunge în ACELAȘI loc ca din start (x 0, y 0); unde ajunge îl judecă t_ajunge */
+const t_alt = (x, sfat) => { const t = {ce: 'Pleacă din același loc la fiecare steag', msg: '', ok(U, P) { const r = G.rulare(P, {x: x + 70, y: 60, directie: 90}), r0 = G.rulare(P, {x: 0, y: 0, directie: 90}), capat = Math.abs(r.x - r0.x) < 0.5 && Math.abs(r.y - r0.y) < 0.5, drum = JSON.stringify(r.vazute) === JSON.stringify(r0.vazute); t.msg = `Am lăsat pisica în alt loc și am apăsat steagul: ${capat && !drum ? `a fugit de acolo și abia la capăt a sărit la x ${Math.round(r.x)}` : `a ajuns la x ${Math.round(r.x)}, y ${Math.round(r.y)}`}. ${typeof sfat === 'function' ? sfat(P) : sfat}`; return capat && drum; }}; return t; };
+const t_merge = (n) => { const t = {ce: 'Se vede mergând, nu sare dintr-o dată', msg: '', ok(U, P) { const r = G.rulare(P, {x: 0, y: 0, directie: 90}); t.msg = `Pisica se vede doar în ${r.vazute.length} ${r.vazute.length === 1 ? 'loc' : 'locuri'} pe drum. Ca să se vadă mergând: „mergi” în gura lui „repetă”, câte puțini pași la fiecare trecere, și nimic în gură care s-o ducă înapoi la start.`; return r.vazute.length >= n; }}; return t; };
+const t_costum = (n) => { const t = {ce: 'Dă din picioare pe drum: costumul se schimbă des', msg: '', ok(U, P) { const r = G.rulare(P, {x: 0, y: 0, directie: 90}); t.msg = `Costumul se schimbă ${r.costume === 0 ? 'deloc' : r.costume === 1 ? 'o singură dată' : 'de ' + r.costume + ' ori'}. „costumul următor” trebuie să stea în gura lui „repetă”, ca să se schimbe la fiecare trecere.`; return r.costume >= n; }}; return t; };
+/* R2 (O): testul judecă doar ce spune numele lui: ultima rulare cu steagul e a programului de ACUM (bună sau nu); rezultatul îl judecă celelalte teste */
+const t_pornit = () => ({ce: 'Ai apăsat steagul pe programul de acum', msg: 'Programul s-a schimbat de la ultimul steag (sau n-ai apăsat încă). Apasă steagul verde și privește pisica.', ok: (U, P, S) => { const u = S.rulari[S.rulari.length - 1]; return !!u && u.P === JSON.stringify(P.map(s => s.b)); }});
+/* R2 (O): „mergi la” lăsat deoparte = o stivă fără steag care începe cu el */
+const deoparte = (P) => P.some(s => s.b[0] && s.b[0][0] === 'mergi_la_xy');
+const SPEC = {x: 200, y: 0, costume: 10, vazute: 10};
+const SPEC100 = {x: 100, y: 0, costume: 5, vazute: 5};
+
+/* ---- „Acum în Scratch, la calculator” (laboratorul, după atelier): FĂRĂ profesor, pe calculatorul comun; fără cont.
+   Drumul literal, probat în editorul viu: _proba/live_vi28.py (Load, depanarea cu mouse-ul, ecranul complet), live_vi28b.py (Replace contents, Anulare), live_vi28c.py (închiderea filei). */
+const LAB = [
+  '<b>Animația ta.</b> Ai făcut casetele pasului 3 (salvată, închisă, deschisă la loc)? Sari la punctul 5. Nu? Rămâi în fila Scratch, dacă e deschisă. Dacă nu: <code>scratch.mit.edu</code> › <b>Creează</b>. Meniul e în engleză? <b>Settings</b> › <b>Language</b> › <b>Română</b>; abia apoi <b>X</b> la filmuleț. Fă programul din poza pasului 2. Steagul: sub scenă, x 200.',
+  '<b>Fișier</b> › <b>Salvează pe calculatorul tău</b>. Browserul întreabă unde? Folderul tău, numele <code>Depanare_</code>, clasa și numele tău (ca <code>Depanare_6A_Popescu</code>), <b>Salvare</b>. Numele există deja? <b>Nu</b> (sau <b>Anulare</b>), adaugă prenumele, <b>Salvare</b>. Sari la punctul 4.',
+  'Nu te-a întrebat? Explorer › <b>Descărcări</b>: fișierul <b>Proiect Scratch</b> cel mai nou (cu ora de acum; poate cu (1)). <kbd>F2</kbd>, numele tău de mai sus, <kbd>Enter</kbd>; <b>Decupare</b>, folderul tău, <b>Lipire</b>. Există deja? E al unui coleg: <b>Se omite acest fișier</b>, adaugă prenumele, mută-l din nou.',
+  '<b>Închizi și deschizi la loc.</b> Închide fila Scratch cu <b>×</b>, doar pe ea (browserul întreabă dacă pleci? Ai salvat: <b>Părăsiți</b> / <b>Leave</b>). Filă nouă: <code>scratch.mit.edu</code> › <b>Creează</b>, <b>X</b> la filmuleț. <b>Fișier</b> › <b>Load from your computer</b>; în <b>Deschidere</b>: folderul tău, fișierul tău, <b>Deschidere</b>. Steagul: e animația ta.',
+  '<b>Strici dinadins.</b> Ai făcut asta la casete? Treci mai departe. Nu? Trage „costumul următor” sub brațul de jos al lui „repetă”. Steagul: pisica alunecă. Scrie în caiet: „Trebuia … A făcut …”. Trage-l înapoi în gură, sub „mergi 5 pași”. Steagul: dă iar din picioare.',
+  `<b>Animația-model.</b> Ai reparat-o la casete? Treci mai departe. Nu? ${LINK} <b>Fișier</b> › <b>Load from your computer</b>; în <b>Deschidere</b>: <b>Descărcări</b>, <b>animatie-cu-eroare</b> (cel cu ora de acum), <b>Deschidere</b>. Întreabă „Replace contents…?”? <b>OK</b>: animația ta e deja salvată. Steagul. În caiet: ce ai căutat prima dată. Găsește eroarea și repar-o. Steagul de 2 ori: x 200 de fiecare dată. Nu iese în 5 minute? Treci mai departe și spune-i profesorului.`,
+  '<b>O arăți.</b> Butonul din dreapta sus, de deasupra scenei: ecranul complet. Steagul, apoi repede <b>Stop</b> (ai ratat-o? Încă o dată). <kbd>Esc</kbd> sau același buton: ieși.',
+  '<b>La sfârșitul orei (chiar dacă n-ai terminat):</b> închide fila Scratch (browserul întreabă dacă pleci? <b>Părăsiți</b> / <b>Leave</b>: modelul reparat nu trebuie păstrat). Explorer › <b>Descărcări</b>: <b>animatie-cu-eroare</b> descărcat de tine, cu ora de acum (poate cu o cifră în paranteză). Clic pe el, apoi tasta <kbd>Delete</kbd>. Fișierul tău, <code>Depanare_…</code>, rămâne în folderul tău. Fișierele colegilor, alte <b>animatie-cu-eroare</b> și lucrările din alte lecții nu le atingi. Nu goli Coșul.'
+];
+
+JocMotor.porneste({
+  cheie: 'lectie_vi_m4_l28',
+  mod: 'lectie',
+  titlu: 'Gestionarea animațiilor: creare, salvare, expunere, testare, depanare',
+  marca: 'Lecția <b>28</b> · clasa a VI-a',
+  h1: 'Gestionarea animațiilor: <span class="acc">creare, salvare, expunere, testare, depanare</span>',
+  eticheta: 'Lecții TIC',
+  acasa: {href: '../../../hub/index.html', text: 'LearningHub'},
+  clasa: 'a VI-a',
+  unitate: 'VI-U4',
+  unitateTitlu: 'Animații grafice și modele 3D',
+  competente: ['CS.1.2', 'CS.3.2', 'CS.3.3'],
+  lectii: '28',
+  ancoraText: 'Programa (OMEN 3393/2017), clasa a VI-a · unitatea VI-U4 „Animații grafice și modele 3D” · lecția 28, predare · CS.1.2, CS.3.2, CS.3.3; în programă, activitatea „testarea și depanarea unor animații”. Activitatea profesorului: ciclul complet pe o animație minimă: se creează, se rulează, se strică intenționat, se găsește eroarea, se repară; elevii notează ce au căutat prima dată. Resursa: laborator, animație-model cu eroare.',
+  intro: '<p><b>Ai nevoie de:</b> lecția 18 (Scratch: steagul, Stop, x și y, salvezi și deschizi un proiect); lecția 20 („repetă”, gura lui, brațul de jos); lecția 27 (costumele, „costumul următor”). Pentru sfârșitul orei: Explorer. Și de caiet.</p>',
+  cum: '<b>Cum lucrezi</b><ol><li>Primul pas îl citești, apoi 5 pași cu exerciții în Scratch-ul din pagină.</li><li>Atelierul: o animație stricată, de reparat.</li><li>La calculator: tot drumul, în Scratch-ul adevărat (pe telefon, rămâi în pagină).</li><li>5 întrebări.</li></ol><p><b>Când mai sunt 10 minute din oră:</b> treci la întrebări; în Scratch-ul adevărat, ultimul punct (închizi fila, ștergi modelul descărcat azi).</p>',
+  banda: '<span class="bk ev">când se dă click pe ⚑</span><span class="bk ct">repetă 40</span><span class="bk mv">mergi 5 pași</span><span class="bk lk">costumul următor</span>',
+  nivele: [
+{t: 'Gestionarea animațiilor: creare, salvare, expunere, testare, depanare', final: true, lectii: [28],
+ continuturi: ['Operații de gestionare a animațiilor: creare, deschidere, expunere, salvare, închidere, testare, depanare'],
+ obiectiv: 'faci o animație scurtă, o salvezi, o închizi și o deschizi la loc, o testezi, găsești o eroare și o repari, apoi o arăți pe ecranul complet.',
+ pasi: [
+  /* ---- pasul 0: la ce folosește (fără acțiuni) ---- */
+  {t: 'La ce folosește: o animație rar iese bine din prima',
+   text: `<p>Roata bicicletei s-a dezumflat. Nu arunci bicicleta. O încerci, cauți locul stricat, îl repari și o încerci din nou.</p>
+<p>La fel e cu o animație: o faci, o pornești, vezi ce nu merge, cauți, repari, o pornești din nou. Ca să nu pierzi ce ai lucrat, o salvezi. La sfârșit, o arăți altora.</p>
+<p>Azi treci o dată prin tot drumul ăsta, cu o animație foarte scurtă. Ține caietul aproape: vei nota ce ai căutat prima dată.</p>
+${fig('roata.webp', 560, 423, 'O mână ține o pârghie și scoate anvelopa de pe janta unei roți de bicicletă', 'Repari o bucată, nu toată bicicleta. <small>Foto: Fanny Schertzer, <a href="https://commons.wikimedia.org/wiki/File:Changing_an_inner_tube_-_Removing_the_tire.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0" target="_blank" rel="noopener">CC BY-SA 3.0</a>; decupată, inscripțiile de pe jantă șterse; aceeași licență.</small>', 'mica')}`},
+
+  /* ---- pasul 1: creare + rulare ---- */
+  {t: 'Creezi animația și o pornești',
+   text: `<p>Animația de azi: pisica fuge spre dreapta. La fiecare trecere prin „repetă”, merge 5 pași și trece la <span class="blk lk">costumul următor</span> (din <b>Aspect</b>): al doilea desen al ei, apoi iar primul. Schimbate repede, desenele par picioare care aleargă.</p>
+<p>Începi dintr-un proiect nou: <code>scratch.mit.edu</code> › <b>Creează</b>. Ai deja ceva deschis? <b>Fișier</b> › <b>Nou</b>. Primul bloc de sub steag duce pisica la start, ca să plece mereu din același loc.</p>`,
+   exemplu: `<div>${STIVA([S0, M0, R(40, m(5), C)], 'Animația ta: 5 blocuri sub steag')}</div>
+${fig('animatie-merge.webp', 650, 458, 'Programul din Scratch, cu contur galben cât rulează; pe scenă, pisica pe drum spre dreapta; sub scenă, x 100', 'Pornită, cu steagul: pe drum, x 100 (două decupaje). Durează cam o secundă.')}
+${ACUM('<code>scratch.mit.edu</code> › <b>Creează</b>. Meniul e în engleză? <b>Settings</b> › <b>Language</b> › <b>Română</b>; abia apoi <b>X</b> la filmuleț.', 'Fă programul din poză. În „mergi la x … y: …” scrii 0 și 0; la „repetă”, 40; la „mergi”, 5 (clic pe număr, scrii, <kbd>Enter</kbd>).', 'Steagul. Sub scenă, la capăt: x 200.')}`,
+   altfel: `<p>E ca la un carnețel cu desene pe colțul paginilor: răsfoiești repede și desenul pare că se mișcă. Aici, Scratch răsfoiește două desene.</p>`,
+   incearca: {t: 'gscratch', q: 'Fă aici o fugă mai scurtă: de la x 0 până la x 100. Sub steag, „mergi la x 0 y: 0”; sub el, „repetă”; în gura lui, „mergi” și „costumul următor”. Numerele le lași cum vin din paletă (10 și 10). Steagul, apoi „Rulează testele”.',
+    paleta: PAL, spec: SPEC100, program: P1(S0),
+    teste: [t_steag(), t_ajunge(100, (r, P) => nenul(P) ? NENUL : 'Verifică ordinea: „mergi la” sub steag; în gura lui „repetă”, doar „mergi” și „costumul următor”; numerele 10 și 10 (în „mergi la”, 0 și 0).'), t_alt(100, (P) => nenul(P) ? NENUL : 'Pune „mergi la x 0 y: 0” chiar sub steag, deasupra lui „repetă”. Din paletă vine cu locul de acum al pisicii: nu e 0 și 0? Pe telefon, „Ia-o de la capăt” și ia-l iar; pe calculator, scrii 0 și 0.'), t_merge(5), t_costum(5), t_pornit()],
+    solutie: P1(S0, M0, R(10, m(10), C)), gresit: P1(S0),
+    ajutor: 'Din Mișcare, „mergi la x … y: …”, chiar sub steag. Din Control, „repetă”, sub el. Din Mișcare, „mergi 10 pași”, în gură. Din Aspect, „costumul următor”, sub „mergi”, tot în gură.',
+    why: 'Fiecare trecere: 10 pași și un costum. 10 treceri × 10 pași = 100, deci pisica ajunge la x 100.'},
+   inca: [{t: 'gscratch', q: 'Aceeași fugă, de la x 0 până la x 150, cu 30 de treceri. Câți pași pui la „mergi”? Scrie numerele, steagul, „Rulează testele”.',
+     paleta: PAL, spec: {x: 150, y: 0, costume: 5, vazute: 5}, program: P1(S0, M0, R(10, m(10), C)),
+     teste: [t_ajunge(150, (r, P) => { if (nenul(P)) return NENUL; const n = A.valori(P, 'repeta'); return n.length === 1 && +n[0][0] !== 30 ? `Treceri × pași trebuie să dea 150, cu 30 de treceri. La „repetă” ai ${n[0][0]}: pune 30, apoi la „mergi” 150 : 30.` : 'Treceri × pași trebuie să dea 150. Ai 30 de treceri: la „mergi” pui 150 : 30.'; }), t_alt(150, (P) => nenul(P) ? NENUL : 'Pune „mergi la x 0 y: 0” chiar sub steag, deasupra lui „repetă”.'), t_merge(5), t_costum(5), {ce: 'În „mergi la” sunt doar 0 și 0', msg: 'Un „mergi la” nu are 0 și 0, deci pisica nu pleacă de la x 0. „Ia-o de la capăt” și schimbă doar numerele lui „repetă” și „mergi”.', ok: (U, P) => !nenul(P)}, t_pornit()],
+     solutie: P1(S0, M0, R(30, m(5), C)), gresit: P1(S0, M0, R(10, m(10), C)),
+     ajutor: 'Clic pe numărul lui „repetă”, 30, Enter. Pentru „mergi”: 150 : 30.', why: '30 de treceri × 5 pași = 150.'}]},
+
+  /* ---- pasul 2: salvare, închidere, deschidere ---- */
+  {t: 'Salvezi, închizi fila, deschizi la loc',
+   text: `<p>Fără cont, proiectul rămâne doar dacă îl salvezi pe calculator. Închizi fila nesalvat: s-a pierdut.</p>
+<p>Salvarea o știi de la lecția 18: <b>Fișier</b> › <b>Salvează pe calculatorul tău</b>. Numele de azi: <code>Depanare_</code>, clasa și numele tău (de exemplu <code>Depanare_6A_Popescu</code>). Scrie că există deja? E al unui coleg: <b>Nu</b> (sau <b>Anulare</b>) și adaugi prenumele.</p>
+<p>Deschizi la loc cu <b>Fișier</b> › <b>Load from your computer</b>.</p>`,
+   exemplu: `${fig('meniu-fisier.webp', 200, 158, 'Meniul Fișier din editor: Nou, Load from your computer și Salvează pe calculatorul tău', 'Meniul <b>Fișier</b>.')}
+<p>Ai schimbat ceva și deschizi alt fișier (sau alegi <b>Nou</b>)? Scratch întreabă <b>Replace contents of the current project?</b> (Înlocuiesc proiectul de acum?). <b>OK</b> îl înlocuiește. <b>Anulare</b> (sau Anulați, Cancel) îl păstrează: nu l-ai salvat? Anulare, apoi îl salvezi.</p>
+<p>La închiderea filei, browserul întreabă dacă pleci, chiar și după ce ai salvat. Ai salvat? Alegi să pleci (<b>Părăsiți</b> / <b>Leave</b>).</p>
+${ACUM('<b>Fișier</b> › <b>Salvează pe calculatorul tău</b>. Browserul întreabă unde? Folderul tău, numele tău de azi, <b>Salvare</b>. Nu întreabă? Faci ca la lecția 18: Explorer › <b>Descărcări</b>, <kbd>F2</kbd>, numele, apoi îl muți în folderul tău.', 'Închide fila Scratch cu <b>×</b>, doar pe ea. Filă nouă: <code>scratch.mit.edu</code> › <b>Creează</b>, <b>X</b> la filmuleț.', '<b>Fișier</b> › <b>Load from your computer</b>; în <b>Deschidere</b>: fișierul tău, <b>Deschidere</b>. Steagul: e animația ta.')}`,
+   altfel: `<p>E ca o foaie din caiet, pe care o pui în ghiozdan. Dacă o lași pe bancă și pleci, n-o mai găsești. O scoți din ghiozdan data viitoare: e aceeași.</p>`,
+   incearca: {t: 'fisier', q: 'Să zicem că ești Ana Popescu, din 6A, pe calculatorul comun. Salvează animația cu numele <code>Depanare_6A_Popescu</code>. Apoi închide fila cu ×, deschide din nou Scratch și deschide fișierul tău. Nu strica nimic din ce e deja în folder. La final, „Rulează testele”.',
+    folder: ['Depanare_6A_Popescu', 'Depanare_6B_Ionescu'],
+    teste: (() => {
+      const a = {ce: 'Fișierul tău e în folder, cu nume bun', msg: '', ok(D) {
+        const al = D.folder.filter(f => f.al === 'tu');
+        a.msg = D.pierdut ? 'Ai închis fila fără să salvezi: animația s-a pierdut. Apasă „Ia-o de la capăt” și salvează întâi.' : al.length ? `„${al[al.length - 1].nume}” nu e numele cerut. Fișier › Salvează pe calculatorul tău: Depanare_6A_Popescu; există deja? Nu, și adaugi prenumele: Depanare_6A_Popescu_Ana.` : 'În folder nu e încă niciun fișier al tău. Fișier › Salvează pe calculatorul tău.';
+        return al.some(f => NUME_BUN.test(f.nume) && ANA.test(f.nume));
+      }};
+      const b = {ce: 'Fișierele colegilor sunt neatinse', msg: 'Ai ales Da la „există deja” și ai înlocuit fișierul colegei. Apasă „Ia-o de la capăt”; la „există deja” alegi Nu și adaugi prenumele.', ok: (D) => !D.folder.some(f => f.inlocuit)};
+      const c = {ce: 'Ai închis fila și ai deschis-o iar', msg: 'Închide fila cu ×, apoi „Deschide Scratch din nou”.', ok: (D) => D.inchisa > 0 && D.fila};
+      const d = {ce: 'În editor e animația ta, deschisă la loc', msg: '', ok(D) {
+        d.msg = D.editor.cum === 'fisier' ? `În editor e „${D.editor.nume}”, fișierul altcuiva. Fișier › Load from your computer și alege fișierul tău.` : 'În editor nu e fișierul tău. Fișier › Load from your computer și alege fișierul tău.';
+        return D.editor.cum === 'fisier' && D.folder.some(f => f.al === 'tu' && f.nume === D.editor.nume);
+      }};
+      return [b, a, c, d];
+    })(),
+    rezolva(D) { D.folder.push({nume: 'Depanare_6A_Popescu_Ana', al: 'tu'}); D.salvat = 'Depanare_6A_Popescu_Ana'; D.inchisa = 1; D.fila = true; D.pierdut = false; D.editor = {cum: 'fisier', nume: 'Depanare_6A_Popescu_Ana'}; D.schimbat = false; },
+    ajutor: 'Fișier ▾, Salvează pe calculatorul tău, scrii numele, Salvare. „Există deja”: Nu, adaugi prenumele (Depanare_6A_Popescu_Ana), Salvare. × la filă, Părăsiți, Deschide Scratch din nou. Fișier ▾, Load from your computer, fișierul tău.',
+    why: 'Fișierul de pe calculator rămâne când închizi fila. Colegei Popescu îi rămâne fișierul ei: numele tău are și prenumele.'},
+   inca: [{t: 'fisier', q: 'Lucrezi de 10 minute și n-ai salvat. Ai ales din greșeală <b>Load from your computer</b> și fișierul unui coleg, iar Scratch întreabă <b>Replace contents of the current project?</b> Păstrează-ți animația și salveaz-o ca <code>Depanare_6A_Popescu</code>. „Rulează testele”.',
+     folder: ['Depanare_6B_Ionescu'], incepe: {inlocuieste: 'Depanare_6B_Ionescu'},
+     teste: (() => {
+       const a = {ce: 'Animația ta n-a fost înlocuită', msg: 'Ai apăsat OK: fișierul colegului a luat locul animației tale nesalvate, deci ai pierdut-o. Apasă „Ia-o de la capăt”; la întrebare, Anulare.', ok: (D) => !D.inlocuitNesalvat && !D.pierdut};
+       const b = {ce: 'Animația ta e salvată în folder, cu nume bun', msg: '', ok(D) {
+         const al = D.folder.filter(f => f.al === 'tu');
+         b.msg = al.length ? `„${al[al.length - 1].nume}” nu e numele cerut: Depanare_6A_Popescu.` : 'Animația ta nu e încă în folder: Fișier › Salvează pe calculatorul tău, Depanare_6A_Popescu, Salvare.';
+         return al.some(f => NUME_BUN.test(f.nume) && ANA0.test(f.nume));
+       }};
+       const c = {ce: 'Fișierul colegului e neatins', msg: 'Ai înlocuit fișierul colegului. Apasă „Ia-o de la capăt”.', ok: (D) => !D.folder.some(f => f.inlocuit)};
+       return [a, b, c];
+     })(),
+     rezolva(D) { D.folder.push({nume: 'Depanare_6A_Popescu', al: 'tu'}); D.salvat = 'Depanare_6A_Popescu'; D.propus = 'Depanare_6A_Popescu'; },
+     gata: 'așa arată gata: la „Replace contents…?”, Anulare; animația ta a rămas în editor și e salvată în folder.',
+     ajutor: 'Fereastra e deschisă: Anulare. Apoi Fișier ▾, Salvează pe calculatorul tău, Depanare_6A_Popescu, Salvare.',
+     why: 'OK ar fi pus fișierul colegului în locul animației tale nesalvate. Anulare o păstrează; după ce o salvezi, poți deschide orice fișier.'}]},
+
+  /* ---- pasul 3: testare; stricarea dinadins ---- */
+  {t: 'Testezi: ce trebuia să facă, ce face',
+   text: `<p>A <mark>testa</mark> o animație înseamnă s-o pornești și să compari ce vezi cu ce trebuia să facă. Spui întâi, în cuvinte, ce trebuie să vezi. La tine: pleacă de la x 0, dă din picioare tot drumul, ajunge la x 200.</p>
+<p>Apeși steagul și te uiți la trei lucruri: de unde pleacă, cum merge, unde se oprește (x, sub scenă). Apoi îl apeși încă o dată: a doua oară se vede ce n-a fost adus la start.</p>
+<p>Te antrenezi stricând-o dinadins: așa afli cum arată o greșeală.</p>`,
+   exemplu: `${fig('stricata.webp', 650, 458, 'Programul din Scratch cu costumul următor sub brațul lui repetă; pe scenă, pisica la capăt, sub scenă x 200', 'Stricată dinadins: „costumul următor” sub braț. Tot x 200, dar pisica alunecă: costumul se schimbă o singură dată, la capăt.')}
+${ACUM('Steagul de 2 ori. De fiecare dată, la capăt: x 200.', 'Trage „costumul următor” din gură și lasă-l sub brațul de jos al lui „repetă”. Steagul: pisica alunecă.', 'În caiet: „Trebuia: dă din picioare. A făcut: alunecă.”', 'Trage-l înapoi în gură, sub „mergi 5 pași”. Steagul: dă iar din picioare.')}`,
+   altfel: `<p>E ca la proba unei mingi: spui dinainte „trebuie să sară până la genunchi”, apoi o lași să cadă și te uiți. Fără „trebuie”, nu știi dacă e bine.</p>`,
+   incearca: {t: 'gscratch', q: 'Programul e bun. Strică-l dinadins: trage „costumul următor” din gură și lasă-l sub brațul de jos al lui „repetă”. Steagul: privește pisica și numărul de schimbări de sub scenă. Pune-l la loc, în gură, sub „mergi”. Steagul din nou, apoi „Rulează testele”.',
+    paleta: PAL, spec: SPEC, program: BUN,
+    teste: [
+     {ce: 'Ai pornit-o o dată stricată', msg: 'Încă n-ai pornit-o stricată. Trage „costumul următor” sub brațul de jos al lui „repetă”, apoi apasă steagul.', ok: (U, P, S) => S.rulari.some(r => !r.buna)},
+     (() => { const t = {ce: 'Acum e reparată: x 200 și dă din picioare', msg: '', ok(U, P) { const r = G.respecta(P, SPEC); t.msg = `Programul de acum nu e ca la început: pisica ajunge la x ${Math.round(r.prima.x)}, iar costumul se schimbă ${r.prima.costume === 0 ? 'deloc' : r.prima.costume === 1 ? 'o singură dată' : 'de ' + r.prima.costume + ' ori'}. Pune blocurile la loc: în gura lui „repetă”, „mergi 5 pași” și „costumul următor”. Nu mai găsești ceva? „Ia-o de la capăt”.`; return r.buna; }}; return t; })(),
+     t_pornit()],
+    strica: STRICAT_COSTUM, solutie: BUN, gresit: BUN,
+    ajutor: 'Apucă „costumul următor” și lasă-l chiar sub brațul de jos, până se lipește. Steagul. Apoi înapoi: chiar sub „mergi 5 pași”, în gură. Steagul.',
+    why: 'Sub braț, blocul se face o singură dată, după repetiție. În gură, se face la fiecare trecere.'}},
+
+  /* ---- pasul 4: depanare; animația-model cu eroare ---- */
+  {t: 'Depanezi: găsești eroarea și o repari',
+   text: `<p>O <mark>eroare</mark> e locul din program care face animația să nu iasă cum trebuie. A <mark>depana</mark> înseamnă să găsești eroarea și s-o repari. Nu schimbi blocuri la întâmplare:</p>
+<ol><li>Spui ce trebuia să facă și ce face.</li><li>Citești blocurile de sus în jos: ce face fiecare?</li><li>Schimbi un singur lucru.</li><li>Apeși steagul din nou.</li></ol>
+<p>Dacă ai schimbat trei lucruri odată și merge, nu știi care a fost eroarea.</p>`,
+   exemplu: `<p>Animația-model: pisica trebuia să fugă până la x 200. Eroarea e una singură; poza n-o marchează.</p>
+${fig('model-eroare.webp', 650, 451, 'Animația-model pornită: programul din Scratch cu contur galben, cu trei blocuri în gura lui repetă; pe scenă, pisica la mijloc, sub scenă x 0', 'Pornită, cu steagul: dă din picioare, dar rămâne la x 0.')}
+<div class="caiet"><b>În caiet, la fiecare animație stricată (nu se notează):</b>Ce am văzut · Ce am căutat prima dată · Unde era eroarea.</div>
+${ACUM(`${LINK} Se duce în <b>Descărcări</b>.`, '<b>Fișier</b> › <b>Load from your computer</b>; în <b>Deschidere</b>: <b>Descărcări</b>, <b>animatie-cu-eroare</b> (cel cu ora de acum), <b>Deschidere</b>. Întreabă „Replace contents…?”? Animația ta e salvată? <b>OK</b>. Nu? <b>Anulare</b>, o salvezi.', 'Steagul. Scrie în caiet ce vezi și ce cauți prima dată.', 'Găsește eroarea și repar-o. Steagul de 2 ori: x 200 de fiecare dată.')}
+<p>În bara de sus a lui Scratch vezi și <b>Depanare</b>: deschide o fereastră cu sfaturi, în engleză. Azi nu-ți trebuie; dacă ai apăsat-o, închide-o cu <b>×</b>.</p>`,
+   altfel: `<p>E ca la o rețetă ieșită prost: nu schimbi toate ingredientele odată. Schimbi unul, încerci. Altfel nu știi ce a ajutat.</p>`,
+   incearca: {t: 'gscratch', q: 'Ai aici animația-model. Apasă steagul. Scrie în caiet ce ai căutat prima dată. Găsește blocul care e de vină și trage-l în paletă (acolo dispare). Steagul din nou, apoi „Rulează testele”.',
+    paleta: PAL, spec: SPEC, program: MODEL,
+    teste: [
+     t_ajunge(200, (r, P) => Math.round(r.x) !== 0 ? 'Verifică: în gură, doar „mergi” și „costumul următor”; la „repetă”, 40; la „mergi”, 5. Te-ai încurcat? „Ia-o de la capăt”.'
+       : r.vazute.length > 1 ? 'Pisica pleacă, dar la capăt e iar la x 0. Citește programul de sus în jos, până la capăt, și după „repetă”: ce bloc o aduce înapoi? Nu-i trebuie: trage-l în paletă.'
+       : !A.dupaSteag(P).includes('repeta') ? 'Sub steag nu mai e „repetă”. L-ai tras în paletă? „Ia-o de la capăt” și trage în paletă doar blocul din gura lui „repetă”.'
+       : 'Pisica se vede tot la start. Citește blocurile din gura lui „repetă”, unul câte unul: care o aduce înapoi, la fiecare trecere?'),
+     t_alt(200, (P) => nenul(P) ? NENUL : 'Sub steag trebuie să rămână un „mergi la x 0 y: 0”, deasupra lui „repetă”. L-ai scos? „Ia-o de la capăt” și trage în paletă doar blocul din gura lui „repetă”.'),
+     t_merge(10), t_costum(10), t_pornit()],
+    solutie: BUN, gresit: MODEL,
+    ajutor: 'Ce face „mergi la x 0 y: 0” din gură? O duce la start la fiecare trecere, imediat după ce a mers. Trage-l în paletă, nu sub braț: în paletă dispare.',
+    why: 'Blocul din gură o aducea înapoi la fiecare trecere, iar scena se desenează abia la sfârșitul trecerii: pisica se vedea mereu la x 0. Tu ai scos un singur bloc.'},
+   inca: [
+     {t: 'gscratch', q: 'Altă animație stricată. Apasă steagul: nu se întâmplă nimic. Caută eroarea și repar-o, fără să schimbi vreun număr. Steagul, apoi „Rulează testele”.',
+      paleta: PAL, spec: SPEC, program: DESPRINS,
+      teste: [t_steag(), t_ajunge(200, (r, P) => nenul(P) ? NENUL : A.cuSteag(P).some(s => s.b.length > 2 && s.b[1][0] === 'mergi_la_xy') ? 'Verifică: în gură, doar „mergi” și „costumul următor”; la „repetă”, 40; la „mergi”, 5. Te-ai încurcat? „Ia-o de la capăt”.' : 'Lipește programul întreg chiar sub „când se dă click pe ⚑”.'),
+       t_alt(200, (P) => nenul(P) ? NENUL : deoparte(P) ? 'Pisica o ia de unde a rămas: „mergi la x 0 y: 0” a rămas deoparte. Lipește-l chiar sub steag, deasupra lui „repetă”.' : 'Pisica o ia de unde a rămas. Pune „mergi la x 0 y: 0” chiar sub steag, deasupra lui „repetă”. L-ai scos? „Ia-o de la capăt”: e iar deoparte, cu 0 și 0.'),
+       t_merge(10), t_costum(10), t_pornit()],
+      solutie: BUN, gresit: DESPRINS,
+      ajutor: 'Steagul pornește doar ce stă lipit sub el.', why: 'Programul era bun, dar stătea deoparte: steagul pornește doar ce e lipit sub el.'}]},
+
+  /* ---- pasul 5: expunere ---- */
+  {t: 'Expui: o arăți pe ecranul complet',
+   text: `<p>A <mark>expune</mark> animația înseamnă s-o arăți altora. O arăți pe <mark>ecranul complet</mark>: rămân doar scena, steagul, <b>Stop</b> și un buton. Blocurile, x și y nu se mai văd.</p>
+<p>Intri cu butonul din dreapta sus, de deasupra scenei. Steagul pornește animația. <b>Stop</b> o oprește unde a ajuns. Ieși cu același buton (pe calculator, și cu <kbd>Esc</kbd>). Ieșirea nu oprește animația: dacă mai merge, apeși <b>Stop</b>.</p>`,
+   exemplu: `${fig('buton-ecran.webp', 500, 42, 'Bara de deasupra scenei: steagul verde, Stop, două butoane pentru mărimea scenei și, încadrat cu roșu, butonul de ecran complet', 'Butonul de ecran complet, încadrat.')}
+${fig('ecran-complet.webp', 640, 400, 'Ecranul complet în Scratch: scena mare cu pisica; sus în stânga steagul și Stop, sus în dreapta butonul de ieșire', 'Pe ecranul complet: scena, steagul, <b>Stop</b> și butonul de ieșire, în dreapta sus.')}
+${ACUM('Butonul din dreapta sus, de deasupra scenei.', 'Steagul. Încă o dată steagul și, repede, <b>Stop</b>: pisica rămâne unde era (ai ratat-o? Încă o dată).', '<kbd>Esc</kbd> sau același buton: ieși, și vezi iar blocurile.')}`,
+   altfel: `<p>E ca la serbare: pe scenă se vede doar ce ai pregătit, nu și culisele. Blocurile sunt culisele.</p>`,
+   incearca: {t: 'expunere', q: 'Aici animația durează 10 secunde, ca să ai timp. Intră pe ecranul complet, cu butonul din dreapta sus, de deasupra scenei. Apasă steagul și, cât pisica merge, <b>Stop</b>. Ieși cu același buton (din același colț). „Rulează testele”.',
+    paleta: PAL, program: LUNG, spec: {x: 150, y: 0, costume: 10, vazute: 10}, personaj: {nume: 'Sprite1', x: -150, y: 0, directie: 90},
+    teste: [
+     {ce: 'Ai pornit-o pe ecranul complet', msg: 'Intră pe ecranul complet (butonul din dreapta sus, de deasupra scenei) și apasă steagul acolo.', ok: (U, P, S) => S.steagInComplet > 0},
+     {ce: 'Ai oprit-o cu Stop, cât mergea', msg: 'Pe ecranul complet, apasă steagul și, cât pisica merge, Stop (cercul roșu).', ok: (U, P, S) => S.stopInComplet > 0},
+     {ce: 'Ai ieșit: se văd iar blocurile', msg: 'Ești încă pe ecranul complet: apasă butonul din dreapta sus.', ok: (U, P, S) => !S.complet}],
+    solutie: LUNG, gresit: LUNG,
+    ajutor: 'Butonul cu patru colțuri, în dreapta sus. Steagul. Stop, repede. Același buton.',
+    why: 'Pe ecranul complet se vede doar animația. Stop o oprește unde a ajuns, iar butonul din colț te duce înapoi la blocuri.'}}
+ ],
+ atelier: {t: 'gscratch', titlu: 'Repară o animație stricată de altcineva',
+  intro: `<p>Trebuia: pisica pleacă de la x 0, fuge și rămâne la x 200. Apasă steagul și privește ce face.</p>
+<p><strong>Sarcina:</strong> programul are o singură eroare. Scrie în caiet ce ai căutat prima dată. Găsește eroarea și repar-o mutând un singur bloc, fără să schimbi numerele. Steagul de 2 ori, apoi „Rulează testele”.</p>`,
+  q: 'Dacă ai pierdut blocurile: „Ia-o de la capăt”, sub simulator.',
+  paleta: PAL, spec: SPEC, program: LA_SFARSIT,
+  teste: [
+   t_steag(),
+   t_ajunge(200, (r, P) => nenul(P) ? NENUL : (Math.round(r.x) === 0 ? 'Ceva o aduce pe pisică înapoi la start. Care bloc? Citește programul de sus în jos, până la capăt, și după „repetă”.' : 'Verifică: în gură, doar „mergi” și „costumul următor”; la „repetă”, 40; la „mergi”, 5. Te-ai încurcat? „Ia-o de la capăt”.')),
+   t_alt(200, (P) => nenul(P) ? NENUL : 'Fără bloc de start, al doilea steag o ia de unde a rămas. Mută „mergi la x 0 y: 0” chiar sub steag, deasupra lui „repetă”. L-ai scos? „Ia-o de la capăt”: blocul e iar la capătul programului.'),
+   t_merge(10), t_costum(10), t_pornit()],
+  solutie: BUN, gresit: LA_SFARSIT,
+  ajutor: 'Citește de sus în jos: ce face ultimul bloc? Unde trebuie să stea, ca pisica să plece din start, dar să rămână la capăt?',
+  why: '„mergi la x 0 y: 0” stătea la sfârșit și o aducea înapoi. Mutat chiar sub steag, o duce la start înainte de fugă.',
+  inca: [
+   {t: 'gscratch', q: 'Apasă steagul de 2 ori. Prima dată pare bine. A doua oară, unde pleacă pisica? Repară, fără să schimbi numărul lui „repetă”. Steagul de 2 ori, apoi „Rulează testele”.',
+    paleta: PAL, spec: SPEC, program: FARA_START,
+    teste: [t_alt(200, (P) => nenul(P) ? NENUL : 'Pisica o ia de unde a rămas. Pune „mergi la x 0 y: 0” chiar sub steag, deasupra lui „repetă”. Din paletă vine cu locul de acum al pisicii: pe telefon, „Ia-o de la capăt” și abia apoi ia-l din paletă (vine cu 0 și 0); pe calculator, scrii 0 și 0.'), t_ajunge(200, (r, P) => nenul(P) ? NENUL : A.cuSteag(P).some(s => s.b.length > 2 && s.b[1][0] === 'mergi_la_xy') ? 'Verifică: în gură, doar „mergi” și „costumul următor”; la „repetă”, 40; la „mergi”, 5. Te-ai încurcat? „Ia-o de la capăt”.' : 'Pune „mergi la x 0 y: 0” chiar sub steag, deasupra lui „repetă”.'), t_merge(10), t_costum(10), t_pornit()],
+    solutie: BUN, gresit: FARA_START,
+    ajutor: 'Din Mișcare, „mergi la x … y: …”, chiar sub steag, cu 0 și 0. Pe telefon: „Ia-o de la capăt”, apoi ia-l din paletă: vine cu 0 și 0. Pe calculator, scrii 0 și 0 în căsuțe.', why: 'Pisica nu se întoarce singură la start: al doilea steag pornește de unde a rămas, iar lângă margine se oprește.'},
+   {t: 'gscratch', q: 'Trebuia x 200. Apasă steagul: unde se oprește? Găsește numărul greșit și schimbă-l (un singur număr). Steagul, apoi „Rulează testele”.',
+    paleta: PAL, spec: SPEC, program: R4,
+    teste: [t_ajunge(200, (r, P) => { if (nenul(P)) return NENUL; const s = JSON.stringify(P), n = s.match(/\["repeta","?(-?[\d.]+)/g), k = s.match(/\["mergi","?(-?[\d.]+)/g), v = (a) => a[0].replace(/[^\d.-]/g, '');
+      return n && k && n.length === 1 && k.length === 1 ? `Treceri × pași trebuie să dea 200. Acum: ${v(n)} treceri × ${v(k)} pași. Schimbă un singur număr.` : 'Treceri × pași trebuie să dea 200.'; }), t_alt(200, (P) => nenul(P) ? NENUL : 'Sub steag trebuie să rămână „mergi la x 0 y: 0”, deasupra lui „repetă”.'), {ce: 'În „mergi la” sunt doar 0 și 0', msg: 'Un „mergi la” nu are 0 și 0, deci pisica nu pleacă de la x 0 sau sare. „Ia-o de la capăt” și schimbă un singur număr: la „repetă” sau la „mergi”.', ok: (U, P) => !nenul(P)}, t_pornit()],
+    solutie: BUN, gresit: R4,
+    ajutor: 'Ajunge la x 20: 4 treceri × 5 pași. Pentru 200: 200 : 5.', why: '4 × 5 = 20. Pentru 200: 40 de treceri × 5 pași (pisica se vede mergând) sau 4 treceri × 50 de pași (sare de 4 ori).'}
+  ]},
+ qs: [
+  {t: 'choice', q: 'Ai salvat animația și vrei să începi alta, într-un proiect gol, în aceeași filă. Ce alegi?', o: ['Fișier › Nou', 'Fișier › Load from your computer', 'Fișier › Salvează pe calculatorul tău', 'Butonul Stop'], ok: 0,
+   ajutor: 'Care dintre ele nu cere niciun fișier?', why: 'Nou deschide un proiect gol. Load deschide un fișier, Salvează scrie unul, iar Stop doar oprește ce rulează.'},
+  {t: 'choice', q: 'Lucrezi de 10 minute și n-ai salvat. Alegi „Load from your computer”, apoi un fișier, și apare „Replace contents of the current project?”. Ce apeși, ca să nu-ți pierzi lucrul?', o: ['Anulare, apoi salvezi', 'OK, apoi salvezi', 'OK, apoi Stop', 'Steagul, apoi OK'], ok: 0,
+   ajutor: 'Ce rămâne în editor după OK?', why: 'OK pune fișierul în locul lucrului tău. Anulare îl păstrează: îl salvezi, apoi deschizi fișierul.'},
+  {t: 'choice', q: 'Lucrezi fără cont. Închizi fila Scratch nesalvată, alegi să pleci (Părăsiți / Leave) și deschizi din nou Scratch. Ce găsești în editor?', o: ['Un proiect gol, fără blocurile tale', 'Animația ta, așa cum ai lăsat-o', 'Animația ta, dar fără costume', 'Ultima animație a unui coleg'], ok: 0,
+   ajutor: 'Unde rămâne proiectul, fără cont?', why: 'Fără cont, proiectul rămâne doar în fișierul salvat pe calculator. Fără fișier, s-a pierdut.'},
+  {t: 'choice', q: `Trebuia: pisica fuge până la x 200 și dă din picioare. Programul e cel de mai jos. Ce vezi la steag?${STIVA([S0, M0, R(40, C), m(5)])}`, o: ['Dă din picioare pe loc, apoi face un singur pas', 'Fuge până la x 200, dând din picioare', 'Alunecă până la x 200, fără să dea din picioare', 'Nu se întâmplă nimic'], ok: 0,
+   ajutor: 'Ce e în gură? Ce stă sub brațul de jos?', why: 'În gură e doar costumul, deci picioarele se mișcă pe loc. „mergi 5 pași” stă sub braț: se face o singură dată, la sfârșit. Asta e eroarea: x 5, în loc de x 200.'},
+  {t: 'choice', q: 'Arăți animația pe ecranul complet. Mai merge, iar tu vrei s-o oprești chiar acum. Ce apeși?', o: ['Stop', 'Steagul', 'Butonul din colț: la ieșire se oprește singură', 'Fișier › Nou'], ok: 0,
+   ajutor: 'Care buton oprește ce rulează?', why: 'Stop o oprește unde a ajuns. Steagul o pornește de la capăt, iar ieșirea de pe ecranul complet n-o oprește.'}
+ ]}
+  ],
+  tipuri: {gscratch: G.tipuri.scratch, expunere: G.tipuri.expunere, fisier: G.tipuri.fisier},
+  aplicatieReala: {aplicatie: 'Scratch, în browser, pe calculatorul din laborator', titlu: 'Acum în Scratch, la calculator', scurt: 'Scratch',
+    intro: '<p>Tot drumul, pe scurt: animația ta salvată, închisă, deschisă la loc; animația-model, reparată; ecranul complet. Ce ai făcut deja la casete nu mai faci. Doar pe telefon? Atelierul ține loc de laborator: treci la întrebări. Scratch nu se deschide? Lucrezi în pagină și îi spui profesorului.</p>',
+    pasi: LAB},
+  diploma: {
+    titlu: 'Gestionarea animațiilor',
+    rezumat: 'o animație scurtă cu „costumul următor”; salvarea cu nume de la tine, închiderea filei, deschiderea la loc, „Replace contents…?”; testarea cu steagul, de două ori; o eroare găsită și reparată, schimbând un singur lucru; ecranul complet și Stop',
+    aplicatie: 'Scratch, în browser, pe calculatorul din laborator',
+    provocare: LAB
+  }
+});
+</script>
+</body>
+</html>
