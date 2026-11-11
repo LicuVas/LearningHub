@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Toată lumea are probleme</title>
+<meta name="description" content="Pagină interactivă pentru gimnaziu: toată lumea are probleme, dar pe unele le poți alege. Școală, viață, bani și plăceri.">
+<meta name="color-scheme" content="light dark">
+<!-- Pagina „Toată lumea are probleme” (gimnaziu). Conținutul: date.js. Motorul: mai jos.
+     Nu trimite nimic în rețea: progresul și fișa elevului stau doar în browserul lui (localStorage, dacă e permis).
+     Contract + gândire + surse: C:\00\AI_0\projects\probleme-alese\ -->
+<style>
+:root { --fond:#f6f7fb; --card:#ffffff; --text:#14181f; --gri:#5b6575; --linie:#d5dae3; --acc:#2563eb; --acc-text:#ffffff;
+  --bun:#15803d; --bunf:#dcfce7; --rau:#b91c1c; --rauf:#fee2e2; --info:#1e40af; --infof:#e0ecff; --stea:#b45309; --steaf:#fef3c7;
+  --apa:#bfdbfe; --apa2:#93c5fd; --gheata:#ffffff; --gheata-l:#64748b; --usa-a:#dcfce7; --usa-b:#fee2e2; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --fond:#0f141b; --card:#18202b; --text:#eef1f5; --gri:#a3aebd;
+  --linie:#2c3746; --acc:#60a5fa; --acc-text:#0b1220; --bun:#4ade80; --bunf:#12321f; --rau:#f87171; --rauf:#3a1717; --info:#93c5fd;
+  --infof:#172a46; --stea:#fbbf24; --steaf:#3a2c0a; --apa:#1e3a5f; --apa2:#2b5287; --gheata:#e2e8f0; --gheata-l:#94a3b8;
+  --usa-a:#12321f; --usa-b:#3a1717; } }
+:root[data-theme="dark"] { --fond:#0f141b; --card:#18202b; --text:#eef1f5; --gri:#a3aebd; --linie:#2c3746; --acc:#60a5fa;
+  --acc-text:#0b1220; --bun:#4ade80; --bunf:#12321f; --rau:#f87171; --rauf:#3a1717; --info:#93c5fd; --infof:#172a46; --stea:#fbbf24;
+  --steaf:#3a2c0a; --apa:#1e3a5f; --apa2:#2b5287; --gheata:#e2e8f0; --gheata-l:#94a3b8; --usa-a:#12321f; --usa-b:#3a1717; }
+html { font-size:17px; -webkit-text-size-adjust:100%; }
+html.mare { font-size:21px; }
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { margin:0; background:var(--fond); color:var(--text); font:1rem/1.5 system-ui, "Segoe UI", Roboto, Arial, sans-serif; overflow-wrap:break-word; }
+main { max-width:600px; margin:0 auto; padding:12px 16px 48px; }
+html.mare main { max-width:880px; }
+h1 { font-size:1.5rem; line-height:1.2; margin:.3em 0 .35em; }
+h2 { font-size:1.18rem; line-height:1.25; margin:.2em 0 .5em; }
+h1:focus, h2:focus { outline:none; }
+p { margin:.45em 0; }
+a { color:var(--acc); }
+ul { padding-left:1.25em; margin:.4em 0; } li { margin:.3em 0; }
+.mic { font-size:.88rem; color:var(--gri); }
+.eticheta { display:inline-block; font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; color:var(--gri); font-weight:600; }
+.card { background:var(--card); border:1px solid var(--linie); border-radius:16px; padding:14px 16px; margin:12px 0; }
+button { font:inherit; border:0; border-radius:12px; padding:12px 14px; min-height:48px; cursor:pointer; background:var(--acc);
+  color:var(--acc-text); font-weight:600; touch-action:manipulation; }
+button:focus-visible, a:focus-visible, textarea:focus-visible, input:focus-visible { outline:3px solid var(--stea); outline-offset:2px; }
+button.alt { background:var(--card); color:var(--text); border:2px solid var(--linie); }
+button:disabled { cursor:default; }
+.next { display:block; width:100%; margin:14px 0 4px; }
+.next:disabled { opacity:.5; }
+/* bara de sus */
+.bara-sus { position:sticky; top:0; z-index:5; background:var(--fond); border-bottom:1px solid var(--linie); }
+.bara-sus .in { max-width:600px; margin:0 auto; padding:6px 16px; display:flex; align-items:center; gap:8px; }
+html.mare .bara-sus .in { max-width:880px; }
+.bara-sus button { min-height:44px; padding:8px 12px; background:var(--card); color:var(--text); border:1.5px solid var(--linie); font-size:.92rem; }
+.bara-sus .scor { margin-left:auto; font-weight:700; white-space:nowrap; }
+.bara-sus [aria-pressed="true"] { border-color:var(--acc); color:var(--acc); }
+/* meniu */
+.hero .sub { font-size:1.15rem; color:var(--gri); margin-top:0; font-style:italic; }
+.citat { border-left:5px solid var(--stea); }
+.citat blockquote { margin:0; font-size:1.05rem; }
+.citat figcaption { margin-top:6px; color:var(--gri); font-size:.9rem; }
+.citat figcaption::before { content:"— "; }
+.lista-parti { display:flex; flex-direction:column; gap:8px; }
+.parte-btn { display:flex; gap:12px; align-items:flex-start; text-align:left; background:var(--card); color:var(--text);
+  border:2px solid var(--linie); font-weight:400; padding:12px 14px; }
+.parte-btn .pe { font-size:1.7rem; line-height:1.2; }
+.parte-btn .pt { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.parte-btn small { color:var(--gri); font-size:.88rem; }
+.parte-btn .stare { color:var(--acc); font-weight:600; }
+.parte-btn.gata { border-color:var(--bun); }
+.parte-btn.gata .stare { color:var(--bun); }
+details.prof { margin:16px 0; }
+details.prof summary { cursor:pointer; font-weight:700; padding:10px 0; min-height:44px; }
+.ajutor { background:var(--infof); border-radius:14px; padding:12px 14px; margin:14px 0; }
+.ajutor p { margin:.35em 0; }
+.ajutor a { font-weight:700; }
+.mic-buton { font-size:.92rem; margin-top:10px; }
+/* parte */
+.cap-parte { margin:4px 0 6px; }
+.bara { height:8px; background:var(--linie); border-radius:4px; overflow:hidden; margin:6px 0 2px; }
+.bara i { display:block; height:100%; width:0; background:var(--acc); transition:width .3s; }
+.persoana { display:flex; gap:12px; align-items:center; margin:6px 0; }
+.persoana h2 { margin:0; }
+.mare-emoji { font-size:2.6rem; line-height:1; }
+.vede { background:var(--fond); border-radius:12px; padding:8px 12px; }
+.intrebare { font-weight:700; margin-top:.8em; font-size:1.05rem; }
+.situatie { font-size:1.08rem; }
+.optiuni { display:flex; flex-direction:column; gap:8px; margin:10px 0 4px; }
+.optiuni.doua { flex-direction:row; } .optiuni.doua > button { flex:1 1 0; }
+.opt { text-align:left; background:var(--card); color:var(--text); border:2px solid var(--linie); font-weight:500; line-height:1.35; }
+.opt:not(:disabled):hover { border-color:var(--acc); }
+.opt:disabled { opacity:.6; }
+.opt.ales { opacity:1; border-color:var(--acc); box-shadow:0 0 0 2px var(--acc) inset; }
+.opt.corect { opacity:1; border-color:var(--bun); background:var(--bunf); }
+.opt.gresit { opacity:1; border-color:var(--rau); background:var(--rauf); }
+.usa { display:flex; flex-direction:column; gap:4px; padding:14px; }
+.usa .usa-et { font-weight:800; font-size:.95rem; }
+.grila-usi { display:grid; grid-template-columns:1fr; gap:8px; margin-top:8px; }
+@media (min-width:560px) { .grila-usi { grid-template-columns:1fr 1fr; } }
+.col-usa { border-radius:12px; padding:10px 12px; border:2px solid transparent; background:var(--card); }
+.col-usa.a { background:var(--usa-a); } .col-usa.b { background:var(--usa-b); }
+.col-usa.aleasa { border-color:var(--acc); }
+.col-usa p { margin:.35em 0; }
+.raspuns { border-radius:12px; padding:10px 12px; margin-top:10px; }
+.raspuns > b:first-child { display:block; margin-bottom:2px; }
+.raspuns.bun { background:var(--bunf); } .raspuns.bun > b:first-child { color:var(--bun); }
+.raspuns.rau { background:var(--rauf); } .raspuns.rau > b:first-child { color:var(--rau); }
+.raspuns.info { background:var(--infof); } .raspuns.info > b:first-child { color:var(--info); }
+.lectie { font-weight:600; }
+.q { margin-top:14px; border-top:1px dashed var(--linie); padding-top:6px; }
+.cartonas-text { font-size:1.15rem; font-weight:600; background:var(--fond); border-radius:12px; padding:14px; margin:8px 0; }
+.mesaj { min-height:1.4em; font-weight:600; margin:6px 0; }
+.mesaj.rau { color:var(--rau); }
+/* glisor */
+.glisor { width:100%; height:44px; margin:6px 0 0; accent-color:var(--acc); }
+.rand-glisor { display:flex; justify-content:space-between; gap:8px; }
+.cand { font-weight:800; color:var(--acc); margin-bottom:0; font-size:1.05rem; }
+.etapa { min-height:4.5em; }
+.pas { margin-top:8px; width:100%; }
+/* scara */
+.scara-ord { list-style:none; padding:0; margin:8px 0; display:flex; flex-direction:column-reverse; gap:6px; }
+.scara-ord li { background:var(--bunf); border-radius:10px; padding:8px 12px; margin:0; border-left:5px solid var(--bun); }
+.scara-ord li b { color:var(--bun); }
+.tremura { animation:tremura .35s; }
+@keyframes tremura { 25% { transform:translateX(-5px); } 75% { transform:translateX(5px); } }
+/* fisa */
+label { display:block; font-weight:600; margin:12px 0 4px; }
+textarea { font:inherit; width:100%; padding:10px; border-radius:10px; border:2px solid var(--linie); background:var(--fond); color:var(--text); resize:vertical; }
+.rand { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; } .rand > button { flex:1 1 140px; }
+.rand-v { display:flex; flex-direction:column; gap:8px; }
+.rand-v .next { margin:4px 0; }
+.cartonas { background:var(--steaf); border:2px dashed var(--stea); border-radius:14px; padding:12px 14px; margin:8px 0; }
+/* desene */
+svg.desen { display:block; width:100%; height:auto; margin:6px 0; }
+.d-apa { fill:var(--apa); } .d-apa2 { fill:var(--apa2); } .d-gheata { fill:var(--gheata); stroke:var(--gheata-l); stroke-width:2; }
+.d-text { fill:var(--text); font:600 13px system-ui, sans-serif; } .d-text-mic { fill:var(--gri); font:12px system-ui, sans-serif; }
+.d-linie { stroke:var(--gri); stroke-width:2; stroke-dasharray:6 4; fill:none; }
+.d-usa-a { fill:var(--usa-a); stroke:var(--bun); stroke-width:3; } .d-usa-b { fill:var(--usa-b); stroke:var(--rau); stroke-width:3; }
+.d-clanta { fill:var(--text); }
+.d-panta { stroke:var(--gri); stroke-width:3; fill:none; }
+.d-bulgare { fill:var(--gheata); stroke:var(--gheata-l); stroke-width:2; transition:all .35s; }
+.d-insigna { fill:var(--steaf); stroke:var(--stea); stroke-width:4; } .d-steaua { fill:var(--stea); }
+.d-panglica { fill:var(--acc); }
+.gata-parte h2 { font-size:1.35rem; }
+.lege { font-weight:700; background:var(--steaf); border-radius:12px; padding:10px 12px; }
+ol.legi li { margin:.45em 0; }
+@media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+<header class="bara-sus">
+  <div class="in">
+    <button type="button" id="b-meniu" hidden>☰ Meniu</button>
+    <span class="scor" id="scor" aria-live="polite">⭐ 0 p</span>
+    <button type="button" id="b-mare" aria-pressed="false" title="Text mare (pentru proiector)">A+</button>
+    <button type="button" id="b-tema" title="Schimbă tema: închisă sau deschisă" aria-label="Schimbă tema">◐</button>
+  </div>
+</header>
+<main id="app"><p>Se încarcă…</p></main>
+<noscript><p style="padding:16px">Pagina are nevoie de JavaScript. Deschide-o într-un browser obișnuit (Chrome, Firefox, Safari).</p></noscript>
+<script src="date.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = window.PAGINA;
+  var app = document.getElementById('app');
+  if (!D || !D.parti) { app.textContent = 'Conținutul nu s-a încărcat. Reîncarcă pagina.'; return; }
+  var CHEIE = 'probleme-alese-v1';
+  var reduce = false;
+  try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  var S = incarca();
+  var ctx = null;
+  // ce lege se leagă de fiecare parte (indici în D.legi)
+  var LEGI_PARTE = { p1: [0, 1], p2: [2, 3, 6], p3: [4], p4: [5], p5: [7], p6: [8], p7: [9], p8: [] };
+
+  /* ---------- stocare (merge și fără ea) ---------- */
+  function gol() { return { v: 1, parti: {}, fisa: {}, mare: false, tema: '' }; }
+  function incarca() {
+    var o = null;
+    try { var t = window.localStorage.getItem(CHEIE); if (t) o = JSON.parse(t); } catch (e) { o = null; }
+    if (!o || typeof o !== 'object' || o.v !== 1) o = gol();
+    if (!o.parti || typeof o.parti !== 'object') o.parti = {};
+    if (!o.fisa || typeof o.fisa !== 'object') o.fisa = {};
+    return o;
+  }
+  function salveaza() { try { window.localStorage.setItem(CHEIE, JSON.stringify(S)); } catch (e) {} }
+
+  /* ---------- unelte mici ---------- */
+  function h(tag, a) {
+    var el = document.createElement(tag);
+    if (a) for (var k in a) {
+      var v = a[k];
+      if (v == null || v === false) continue;
+      if (k === 'text') el.textContent = v;
+      else if (k === 'html') el.innerHTML = v;
+      else if (k === 'class') el.className = v;
+      else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? '' : v);
+    }
+    for (var i = 2; i < arguments.length; i++) adauga(el, arguments[i]);
+    return el;
+  }
+  function adauga(el, c) {
+    if (c == null || c === false) return;
+    if (Array.isArray(c)) { c.forEach(function (x) { adauga(el, x); }); return; }
+    el.appendChild(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  function amesteca(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  // Variantele unei întrebări se amestecă la fiecare afișare (ca la potrivire), ca răspunsul bun să nu stea mereu pe același loc;
+  // ok = locul răspunsului bun în ordinea nouă. fix = true (în date.js) păstrează ordinea firească (Adevărat/Fals, Ușa A/Ușa B).
+  // „32 de puncte”, dar „5 puncte” și „101 puncte”: în română, „de” vine după numerele cu ultimele două cifre 00 sau 20–99 (de la 20 în sus)
+  function cuDe(n, subst) { var r = n % 100; return n + ((n >= 20 && (r === 0 || r >= 20)) ? ' de ' : ' ') + subst; }
+  function amestecaOpt(texte, ok, fix) {
+    if (fix) return { texte: texte.slice(), ok: ok };
+    var ord = amesteca(texte.map(function (_, k) { return k; }));
+    return { texte: ord.map(function (k) { return texte[k]; }), ok: ord.indexOf(ok) };
+  }
+  function vezi(el) {
+    if (!el) return;
+    var r = el.getBoundingClientRect();
+    if (r.top < 64 || r.top > window.innerHeight - 120) {
+      window.scrollBy({ top: r.top - 72, behavior: reduce ? 'auto' : 'smooth' });
+    }
+  }
+  function gasesteParte(id) { for (var i = 0; i < D.parti.length; i++) if (D.parti[i].id === id) return D.parti[i]; return null; }
+  function marimeBloc(b) { return b.items ? b.items.length : 1; }
+  function totalPasi(p) { return p.blocuri.reduce(function (s, b) { return s + marimeBloc(b); }, 0); }
+  function pasCurent(p, st) {
+    var s = 0;
+    for (var k = 0; k < st.b && k < p.blocuri.length; k++) s += marimeBloc(p.blocuri[k]);
+    return Math.min(s + (st.i || 0), totalPasi(p));
+  }
+  function maxBloc(b) {
+    switch (b.tip) {
+      case 'potrivire': case 'glisor': case 'sortare': case 'intrebari': return 2 * b.items.length;
+      case 'usi': return 3 * b.items.length;
+      case 'scara': return b.items.reduce(function (s, x) { return s + x.trepte.length; }, 0);
+      default: return 0;
+    }
+  }
+  function maxParte(p) { return p.blocuri.reduce(function (s, b) { return s + maxBloc(b); }, 0); }
+  function maxTotal() { return D.parti.reduce(function (s, p) { return s + maxParte(p); }, 0); }
+  function stare(id) {
+    var st = S.parti[id];
+    if (!st || typeof st !== 'object') st = S.parti[id] = { b: 0, i: 0, p: 0, best: 0, gata: false, dat: {} };
+    // dat = registrul pașilor deja punctați (cheie „bloc.pas.fel”): un pas se punctează o singură dată
+    if (!st.dat || typeof st.dat !== 'object') st.dat = {};
+    return st;
+  }
+  // plasă de siguranță: o parte nu poate arăta mai multe puncte decât are (și pentru progres vechi salvat înainte de registru)
+  function puncteParte(st, p) { var x = Math.max(st.best || 0, st.p || 0); return p ? Math.min(x, maxParte(p)) : x; }
+  function total() { var s = 0; D.parti.forEach(function (p) { var st = S.parti[p.id]; if (st) s += puncteParte(st, p); }); return s; }
+  function eGata(id) { return !!(S.parti[id] && S.parti[id].gata); }
+  function toateGata() { return D.parti.every(function (p) { return eGata(p.id); }); }
+  function inceputa(id) { var st = S.parti[id]; return !!(st && !st.gata && (st.b || st.i)); }
+
+  /* ---------- bara de sus ---------- */
+  var bMeniu = document.getElementById('b-meniu'), bMare = document.getElementById('b-mare'), bTema = document.getElementById('b-tema');
+  var elScor = document.getElementById('scor');
+  function actualizeazaScor() { elScor.textContent = '⭐ ' + total() + ' p'; }
+  function aplicaPref() {
+    var r = document.documentElement;
+    if (S.tema === 'dark' || S.tema === 'light') r.setAttribute('data-theme', S.tema); else r.removeAttribute('data-theme');
+    r.classList.toggle('mare', !!S.mare);
+    bMare.setAttribute('aria-pressed', S.mare ? 'true' : 'false');
+  }
+  function eIntunecat() {
+    if (S.tema === 'dark') return true;
+    if (S.tema === 'light') return false;
+    try { return window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) { return false; }
+  }
+  bMare.addEventListener('click', function () { S.mare = !S.mare; aplicaPref(); salveaza(); });
+  bTema.addEventListener('click', function () { S.tema = eIntunecat() ? 'light' : 'dark'; aplicaPref(); salveaza(); });
+  bMeniu.addEventListener('click', function () { mergi('#meniu'); });
+
+  /* ---------- navigare ---------- */
+  function mergi(hash) {
+    if (location.hash === hash || (hash === '#meniu' && (location.hash === '' || location.hash === '#'))) ruteaza();
+    else location.hash = hash;
+  }
+  function ruteaza() {
+    var id = (location.hash || '').replace('#', '');
+    ctx = null;
+    if (id === 'final') { bMeniu.hidden = false; arataFinal(); }
+    else if (gasesteParte(id)) { bMeniu.hidden = false; arataParte(id); }
+    else { bMeniu.hidden = true; arataMeniu(); }
+    window.scrollTo(0, 0);
+    var t = app.querySelector('h1');
+    if (t) { t.setAttribute('tabindex', '-1'); try { t.focus({ preventScroll: true }); } catch (e) {} }
+  }
+  window.addEventListener('hashchange', ruteaza);
+
+  /* ---------- cutii comune ---------- */
+  function cutieAjutor() {
+    return h('aside', { class: 'ajutor', 'aria-label': 'Unde ceri ajutor' },
+      h('b', { text: '💬 Dacă o problemă e prea grea pentru tine' }),
+      h('p', { text: 'Nu trebuie s-o duci singur. Vorbește cu un părinte, cu dirigintele, cu consilierul școlii sau cu alt adult în care ai încredere.' }),
+      h('p', null, 'Telefonul Copilului: ', h('a', { href: 'tel:116111' }, '116 111'), ' (apel gratuit). Urgență: ', h('a', { href: 'tel:112' }, '112'), '.'));
+  }
+  function cartonas(v) {
+    return h('div', { class: 'cartonas' },
+      h('p', null, h('b', { text: 'Aleg: ' }), v.aleg),
+      v.evit ? h('p', null, h('b', { text: 'Ca să nu mă aleagă: ' }), v.evit) : null,
+      v.castig ? h('p', null, h('b', { text: 'Apoi câștig: ' }), v.castig) : null);
+  }
+  function butonReset() {
+    var text = '↺ Ia-o de la capăt (șterge progresul)';
+    var b = h('button', { class: 'alt mic-buton', type: 'button' }, text);
+    var armat = false, ceas = null;
+    b.addEventListener('click', function () {
+      if (!armat) {
+        armat = true; b.textContent = 'Sigur? Apasă încă o dată ca să ștergi tot progresul.';
+        ceas = setTimeout(function () { armat = false; b.textContent = text; }, 6000);
+        return;
+      }
+      clearTimeout(ceas);
+      var p = { mare: S.mare, tema: S.tema };
+      S = gol(); S.mare = p.mare; S.tema = p.tema;
+      salveaza(); actualizeazaScor(); mergi('#meniu');
+    });
+    return b;
+  }
+  function citatProfesor() {
+    return h('figure', { class: 'card citat' },
+      h('blockquote', null, h('p', { text: '„Pentru mine a fost revelator să înțeleg, abia la 44 de ani, că toată lumea are probleme. Că nu sunt doar eu afectat, ci că viața este despre probleme și rezolvarea lor.”' })),
+      h('figcaption', { text: 'Profesorul vostru' }));
+  }
+  function sectiuneProfesor() {
+    return h('details', { class: 'prof card' },
+      h('summary', { text: '👩‍🏫 Pentru profesor: cum folosiți pagina la oră' }),
+      h('div', { html:
+        '<ul>' +
+        '<li><b>Durată:</b> mai mult de o oră. Pe telefon: cam două ore pentru toate cele 8 părți, care nu trebuie făcute deodată. Pe proiector, cu situația citită cu voce tare și vot la fiecare pas: 2–3 ore. Partea 2 singură (14 situații) ține aproape o jumătate de oră.</li>' +
+        '<li><b>Pe telefon:</b> fiecare elev merge în ritmul lui; punctele apar sus.</li>' +
+        '<li><b>Pe proiector:</b> apăsați <b>A+</b> (text mare). Citiți situația cu voce tare și lăsați clasa să voteze cu mâna ridicată înainte să apăsați.</li>' +
+        '<li><b>Pe proiector, în trei ore:</b> ora 1 = Părțile 1–2 (cam 45 de minute); ora 2 = Părțile 3–5 (cam 35 de minute); ora 3 = Părțile 6–8, cu testul final (cam 40 de minute). Timpul rămas merge pe întrebările de discuție de mai jos.</li>' +
+        '<li><b>Același proiector, mai multe clase:</b> înainte să lucrați cu altă clasă, apăsați „Ia-o de la capăt” (ultimul buton din meniu). Ora următoare deschideți din meniu partea la care a rămas clasa. Notați-vă unde a rămas fiecare clasă: în interiorul unei părți nu puteți sări direct la o anumită situație (de exemplu, la a 9-a), partea pornește de la început. De aceea e mai simplu să opriți ora la sfârșitul unei părți. Insigna de la final apare doar când toate părțile sunt gata pe același dispozitiv; cele 10 legi apar oricum, pe rând, la sfârșitul părților.</li>' +
+        '<li><b>Întrebări de discuție:</b> (1) Ce problemă ai ales azi? (2) Spune o problemă care te-a ales pentru că ai amânat ceva. (3) Ce meserie ți-ar plăcea și ce problemă rezolvă ea? (4) O plăcere câștigată din săptămâna asta. (5) Ce problemă mai bună ți-ai dori peste un an?</li>' +
+        '<li><b>Atenție la Partea 4:</b> pot ieși la iveală probleme grele de acasă. Nu cereți nimănui să spună ce problemă are. Dacă un elev povestește ceva îngrijorător, urmați procedura școlii (dirigintele, consilierul școlar).</li>' +
+        '<li><b>Datele elevilor:</b> nimic nu se trimite nicăieri. Progresul și fișa rămân doar în browserul elevului. Pe calculatoarele comune, elevul apasă la final „Ia-o de la capăt”.</li>' +
+        '</ul>' }));
+  }
+
+  /* ---------- desene ---------- */
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  function svg(markup, eticheta) {
+    var d = document.createElement('div');
+    d.innerHTML = '<svg xmlns="' + SVGNS + '" class="desen" role="img" aria-label="' + eticheta + '" ' + markup + '</svg>';
+    return d.firstChild;
+  }
+  function desen(nume) {
+    if (nume === 'aisberg') return svg('viewBox="0 0 320 210">' +
+      '<rect class="d-apa" x="0" y="64" width="320" height="146" rx="10"/>' +
+      '<polygon class="d-gheata" points="138,64 160,26 184,64"/>' +
+      '<polygon class="d-gheata" points="104,66 218,66 262,128 214,196 120,192 70,134"/>' +
+      '<line class="d-linie" x1="0" y1="64" x2="320" y2="64"/>' +
+      '<text class="d-text" x="196" y="38">Ce vezi la alții</text>' +
+      '<text class="d-text" x="166" y="122" text-anchor="middle">Ce nu vezi:</text>' +
+      '<text class="d-text-mic" x="166" y="142" text-anchor="middle">griji, frici, greșeli,</text>' +
+      '<text class="d-text-mic" x="166" y="159" text-anchor="middle">zile proaste</text>',
+      'Un aisberg: deasupra apei se vede doar un vârf mic, iar sub apă e partea cea mare: griji, frici, greșeli, zile proaste.');
+    if (nume === 'usi') return svg('viewBox="0 0 320 170">' +
+      '<path class="d-usa-a" d="M30,160 V52 a50,46 0 0 1 100,0 V160 Z"/>' +
+      '<path class="d-usa-b" d="M190,160 V52 a50,46 0 0 1 100,0 V160 Z"/>' +
+      '<circle class="d-clanta" cx="116" cy="108" r="5"/><circle class="d-clanta" cx="276" cy="108" r="5"/>' +
+      '<text class="d-text" x="80" y="70" text-anchor="middle">Ușa A</text>' +
+      '<text class="d-text-mic" x="80" y="92" text-anchor="middle">problema</text>' +
+      '<text class="d-text-mic" x="80" y="107" text-anchor="middle">pe care</text>' +
+      '<text class="d-text-mic" x="80" y="122" text-anchor="middle">o ALEGI</text>' +
+      '<text class="d-text" x="240" y="70" text-anchor="middle">Ușa B</text>' +
+      '<text class="d-text-mic" x="240" y="92" text-anchor="middle">problema</text>' +
+      '<text class="d-text-mic" x="240" y="107" text-anchor="middle">care TE</text>' +
+      '<text class="d-text-mic" x="240" y="122" text-anchor="middle">ALEGE</text>',
+      'Două uși: ușa A este problema pe care o alegi, ușa B este problema care te alege.');
+    if (nume === 'insigna') return svg('viewBox="0 0 200 200" style="max-width:200px;margin:0 auto">' +
+      '<polygon class="d-panglica" points="70,120 50,190 80,175 100,195 100,130"/>' +
+      '<polygon class="d-panglica" points="130,120 150,190 120,175 100,195 100,130"/>' +
+      '<circle class="d-insigna" cx="100" cy="82" r="66"/>' +
+      '<polygon class="d-steaua" points="100,38 112,70 146,70 118,90 129,123 100,103 71,123 82,90 54,70 88,70"/>',
+      'Insigna Alegătorul de probleme: o medalie cu o stea.');
+    return null;
+  }
+  function desenBulgare() {
+    var s = svg('viewBox="0 0 320 130">' +
+      '<path class="d-panta" d="M10,30 L310,118"/>' +
+      '<circle class="d-bulgare" cx="30" cy="26" r="8"/>',
+      'Un bulgăre de zăpadă care se rostogolește la vale și crește.');
+    return s;
+  }
+  function puneBulgare(s, v, n) {
+    var c = s.querySelector('circle');
+    var t = n > 1 ? v / (n - 1) : 0;
+    var r = 8 + t * 34;
+    var x = 30 + t * 240;
+    var y = 30 + (x - 10) * (88 / 300) - r - 2;
+    c.setAttribute('r', r.toFixed(1)); c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', y.toFixed(1));
+  }
+
+  /* ---------- piese comune ale unei alegeri ---------- */
+  function optiuni(container, texte, ok, laAlegere, clasa) {
+    var lista = h('div', { class: 'optiuni' + (clasa ? ' ' + clasa : '') });
+    var btns = texte.map(function (t, idx) {
+      var b = h('button', { class: 'opt', type: 'button', 'data-ok': (ok === -1 || idx === ok) ? '1' : null }, t);
+      b.addEventListener('click', function () {
+        if (lista.getAttribute('data-gata')) return;
+        lista.setAttribute('data-gata', '1');
+        btns.forEach(function (x) { x.disabled = true; });
+        b.classList.add('ales');
+        var bine = ok === -1 || idx === ok;
+        if (ok !== -1) { btns[ok].classList.add('corect'); if (!bine) b.classList.add('gresit'); }
+        laAlegere(idx, bine);
+      });
+      lista.appendChild(b);
+      return b;
+    });
+    container.appendChild(lista);
+    return lista;
+  }
+  function raspuns(container, fel, titlu, corp) {
+    var r = h('div', { class: 'raspuns ' + fel, role: 'status' });
+    if (titlu) r.appendChild(h('b', { text: titlu }));
+    (Array.isArray(corp) ? corp : [corp]).forEach(function (x) {
+      if (!x) return;
+      r.appendChild(typeof x === 'string' ? h('p', { text: x }) : x);
+    });
+    container.appendChild(r);
+    return r;
+  }
+  function verdict(bine) { return bine ? '✔ Corect.' : '✘ Nu chiar.'; }
+  function butonNext(container, text) {
+    var b = h('button', { class: 'next', type: 'button' }, text || 'Mai departe →');
+    b.addEventListener('click', function () { b.disabled = true; avans(); });
+    container.appendChild(b);
+    return b;
+  }
+  // Punctele unui pas se dau O SINGURĂ DATĂ: și răspunsul greșit (0 p) se trece în registru,
+  // ca o reîncărcare a paginii înainte de „Mai departe” să nu mai aducă puncte (nici a doua oară, nici „din a doua încercare”).
+  function puncte(fel, n) {
+    if (!ctx) return;
+    var st = ctx.st;
+    if (!st.dat || typeof st.dat !== 'object') st.dat = {};
+    var cheie = st.b + '.' + st.i + '.' + fel;
+    if (Object.prototype.hasOwnProperty.call(st.dat, cheie)) return;
+    st.dat[cheie] = n;
+    st.p = (st.p || 0) + n;
+    salveaza(); actualizeazaScor();
+  }
+  function corpRaspuns(bine, corect, expl) {
+    var c = [];
+    if (!bine) c.push(h('p', null, h('b', { text: 'Răspunsul: ' }), corect));
+    if (expl) c.push(h('p', { text: expl }));
+    return c;
+  }
+
+  /* ---------- felurile de blocuri ---------- */
+  var RANDARI = {
+    text: function (b, L) {
+      var c = h('section', { class: 'card', 'data-mecanica': 'text' });
+      if (b.titlu) c.appendChild(h('h2', { text: b.titlu }));
+      if (b.svg) { var d = desen(b.svg); if (d) c.appendChild(d); }
+      c.appendChild(h('div', { class: 'continut', html: b.html }));
+      if (b.ajutor) c.appendChild(cutieAjutor());
+      L.appendChild(c);
+      var n = h('button', { class: 'next', type: 'button', 'data-tip': 'text' }, 'Am înțeles →');
+      n.addEventListener('click', function () { n.disabled = true; avans(); });
+      L.appendChild(n);
+    },
+
+    potrivire: function (b, L) {
+      var it = b.items[ctx.st.i];
+      var c = h('section', { class: 'card', 'data-mecanica': 'potrivire' });
+      c.appendChild(h('span', { class: 'eticheta', text: (ctx.st.i + 1) + ' din ' + b.items.length }));
+      c.appendChild(h('div', { class: 'persoana' },
+        h('span', { class: 'mare-emoji', 'aria-hidden': 'true', text: it.emoji }),
+        h('div', null, h('h2', { text: it.cine }), it.detaliu ? h('span', { class: 'mic', text: it.detaliu }) : null)));
+      if (it.vede) c.appendChild(h('p', { class: 'vede' }, h('span', { class: 'eticheta', text: 'Ce vede lumea' }), h('br'), it.vede));
+      c.appendChild(h('p', { class: 'intrebare', text: b.intrebare }));
+      // Variantele greșite = problemele ALTOR oameni din listă, dar nu ale celor trecuți în it.nu (date.js):
+      // problema lor o are și omul de pe cartonaș (uneori pagina chiar o spune), deci n-ar fi „greșită”.
+      // Un nume din „nu” care nu e în listă apare ca eroare în consolă (îl prinde proba.py), ca greșeala de scris să nu treacă tăcută.
+      var nu = it.nu || [];
+      nu.forEach(function (n) { if (!b.items.some(function (x) { return x.cine === n; })) console.error('date.js: la „' + it.cine + '”, „nu” numește pe cineva care nu e în listă: „' + n + '”'); });
+      var alti = amesteca(b.items.filter(function (x) { return x !== it && nu.indexOf(x.cine) === -1; })).slice(0, 2).map(function (x) { return x.corect; });
+      var texte = amesteca([it.corect].concat(alti));
+      L.appendChild(c);
+      optiuni(c, texte, texte.indexOf(it.corect), function (idx, bine) {
+        puncte('q', bine ? 2 : 0);
+        var corp = [];
+        if (!bine) corp.push(h('p', null, h('b', { text: 'Răspunsul: ' }), it.corect));
+        else if (!it.ascuns && !it.expl) corp.push(h('p', { text: it.cine + ': ' + it.corect }));
+        if (it.ascuns) corp.push(h('p', null, h('b', { text: 'Ce nu vede lumea: ' }), it.ascuns));
+        if (it.alege) corp.push(h('p', null, h('b', { text: 'Ce poate alege: ' }), it.alege));
+        if (it.expl) corp.push(h('p', { text: it.expl }));
+        var r = raspuns(c, bine ? 'bun' : 'rau', verdict(bine), corp);
+        butonNext(c); vezi(r);
+      });
+    },
+
+    usi: function (b, L) {
+      var it = b.items[ctx.st.i];
+      var c = h('section', { class: 'card', 'data-mecanica': 'usi' });
+      c.appendChild(h('span', { class: 'eticheta', text: 'Situația ' + (ctx.st.i + 1) + ' din ' + b.items.length }));
+      c.appendChild(h('h2', null, h('span', { 'aria-hidden': 'true' }, it.emoji + ' '), it.titlu));
+      c.appendChild(h('p', { class: 'situatie', text: it.situatie }));
+      c.appendChild(h('p', { class: 'intrebare', text: 'Ce faci?' }));
+      var lista = h('div', { class: 'optiuni' });
+      var bA = h('button', { class: 'opt usa', type: 'button', 'data-ok': '1' }, h('span', { class: 'usa-et', text: '🚪 Ușa A' }), h('span', { text: it.a.et }));
+      var bB = h('button', { class: 'opt usa', type: 'button', 'data-ok': '1' }, h('span', { class: 'usa-et', text: '🚪 Ușa B' }), h('span', { text: it.b.et }));
+      lista.appendChild(bA); lista.appendChild(bB);
+      c.appendChild(lista);
+      L.appendChild(c);
+      function coloana(lit, u, ales) {
+        var nume = it.ambele ? 'Ușa ' + lit : (lit === 'A' ? 'Ușa A · problema aleasă' : 'Ușa B · problema care te alege');
+        return h('div', { class: 'col-usa ' + lit.toLowerCase() + (ales ? ' aleasa' : '') },
+          h('b', { text: nume + (ales ? ' (ai ales-o)' : '') }),
+          h('p', { class: 'mic', text: u.et }),
+          h('p', null, h('span', { class: 'eticheta', text: 'Acum' }), h('br'), u.acum),
+          h('p', null, h('span', { class: 'eticheta', text: 'Mai târziu' }), h('br'), u.apoi));
+      }
+      function alege(care) {
+        if (lista.getAttribute('data-gata')) return;
+        lista.setAttribute('data-gata', '1');
+        bA.disabled = true; bB.disabled = true;
+        (care === 'a' ? bA : bB).classList.add('ales');
+        puncte('usa', 1);
+        var mesaj = it.ambele ? 'Amândouă sunt alegeri. Uite ce aduce fiecare:'
+          : (care === 'a' ? 'Ai ales tu problema. Uite ce te aștepta în spatele celeilalte uși:'
+                          : 'Ușa B nu te-a scăpat de probleme. Uite ce a venit pe ea:');
+        var r = raspuns(c, 'info', mesaj, [h('div', { class: 'grila-usi' }, coloana('A', it.a, care === 'a'), coloana('B', it.b, care === 'b'))]);
+        var qz = h('div', { class: 'q' }, h('p', { class: 'intrebare', text: it.q.text }));
+        c.appendChild(qz);
+        var am = amestecaOpt(it.q.opts, it.q.ok, it.q.fix);
+        optiuni(qz, am.texte, am.ok, function (idx, bine) {
+          puncte('q', bine ? 2 : 0);
+          var corp = corpRaspuns(bine, it.q.opts[it.q.ok], null);
+          corp.push(h('p', { class: 'lectie', text: it.lectie }));
+          var r2 = raspuns(qz, bine ? 'bun' : 'rau', verdict(bine), corp);
+          butonNext(qz); vezi(r2);
+        });
+        vezi(r);
+      }
+      bA.addEventListener('click', function () { alege('a'); });
+      bB.addEventListener('click', function () { alege('b'); });
+    },
+
+    glisor: function (b, L) {
+      var it = b.items[ctx.st.i], n = it.etape.length;
+      var c = h('section', { class: 'card', 'data-mecanica': 'glisor' });
+      c.appendChild(h('span', { class: 'eticheta', text: (ctx.st.i + 1) + ' din ' + b.items.length }));
+      c.appendChild(h('h2', null, h('span', { 'aria-hidden': 'true' }, it.emoji + ' '), it.titlu));
+      var desenB = desenBulgare();
+      var cand = h('p', { class: 'cand' }), txt = h('p', { class: 'etapa', 'aria-live': 'polite' });
+      var r = h('input', { type: 'range', min: '0', max: String(n - 1), step: '1', value: '0', class: 'glisor', 'aria-label': 'Timpul care trece' });
+      var bPas = h('button', { class: 'alt pas', type: 'button' }, 'Dă timpul înainte ▶');
+      var qz = null;
+      function upd() {
+        var v = Math.max(0, Math.min(n - 1, parseInt(r.value, 10) || 0));
+        cand.textContent = it.etape[v].cand; txt.textContent = it.etape[v].text;
+        r.setAttribute('aria-valuetext', it.etape[v].cand);
+        puneBulgare(desenB, v, n);
+        bPas.disabled = v >= n - 1;
+        if (v === n - 1 && !qz) intreaba();
+      }
+      function intreaba() {
+        qz = h('div', { class: 'q' }, h('p', { class: 'intrebare', text: it.q.text }));
+        c.appendChild(qz);
+        var am = amestecaOpt(it.q.opts, it.q.ok, it.q.fix);
+        optiuni(qz, am.texte, am.ok, function (idx, bine) {
+          puncte('q', bine ? 2 : 0);
+          var r2 = raspuns(qz, bine ? 'bun' : 'rau', verdict(bine), corpRaspuns(bine, it.q.opts[it.q.ok], it.q.expl));
+          butonNext(qz); vezi(r2);
+        });
+        vezi(qz);
+      }
+      r.addEventListener('input', upd); r.addEventListener('change', upd);
+      bPas.addEventListener('click', function () { r.value = String(Math.min(n - 1, (parseInt(r.value, 10) || 0) + 1)); upd(); });
+      c.appendChild(desenB); c.appendChild(cand); c.appendChild(txt); c.appendChild(r);
+      c.appendChild(h('div', { class: 'rand-glisor' }, h('span', { class: 'mic', text: it.etape[0].cand }), h('span', { class: 'mic', text: it.etape[n - 1].cand })));
+      c.appendChild(bPas);
+      L.appendChild(c);
+      upd();
+    },
+
+    sortare: function (b, L) {
+      var it = b.items[ctx.st.i];
+      var c = h('section', { class: 'card', 'data-mecanica': 'sortare' });
+      c.appendChild(h('span', { class: 'eticheta', text: 'Cartonașul ' + (ctx.st.i + 1) + ' din ' + b.items.length }));
+      c.appendChild(h('p', { class: 'cartonas-text', text: it.text }));
+      c.appendChild(h('p', { class: 'intrebare', text: 'Unde îl pui?' }));
+      L.appendChild(c);
+      optiuni(c, b.cosuri, it.cos, function (idx, bine) {
+        puncte('q', bine ? 2 : 0);
+        var r = raspuns(c, bine ? 'bun' : 'rau', verdict(bine), corpRaspuns(bine, b.cosuri[it.cos], it.expl));
+        butonNext(c); vezi(r);
+      }, 'doua');
+    },
+
+    intrebari: function (b, L) {
+      var it = b.items[ctx.st.i];
+      var c = h('section', { class: 'card', 'data-mecanica': 'intrebare' });
+      c.appendChild(h('span', { class: 'eticheta', text: 'Întrebarea ' + (ctx.st.i + 1) + ' din ' + b.items.length }));
+      c.appendChild(h('p', { class: 'intrebare', text: it.text }));
+      L.appendChild(c);
+      var am = amestecaOpt(it.opts, it.ok, it.fix);
+      optiuni(c, am.texte, am.ok, function (idx, bine) {
+        puncte('q', bine ? 2 : 0);
+        var r = raspuns(c, bine ? 'bun' : 'rau', verdict(bine), corpRaspuns(bine, it.opts[it.ok], it.expl));
+        butonNext(c); vezi(r);
+      }, it.opts.length === 2 && it.opts.every(function (o) { return o.length < 14; }) ? 'doua' : '');
+    },
+
+    scara: function (b, L) {
+      var it = b.items[ctx.st.i], n = it.trepte.length;
+      var c = h('section', { class: 'card', 'data-mecanica': 'scara' });
+      c.appendChild(h('span', { class: 'eticheta', text: 'Scara ' + (ctx.st.i + 1) + ' din ' + b.items.length }));
+      c.appendChild(h('h2', null, h('span', { 'aria-hidden': 'true' }, it.emoji + ' '), it.titlu));
+      c.appendChild(h('p', { class: 'mic', text: 'Atinge treptele în ordine: întâi problema de început, la urmă problema cea mai bună. Scara crește de jos în sus.' }));
+      var ord = h('ol', { class: 'scara-ord', 'aria-label': 'Treptele puse până acum' });
+      var msg = h('p', { class: 'mesaj', 'aria-live': 'polite' });
+      var rest = h('div', { class: 'optiuni' });
+      var ordine = amesteca(it.trepte.map(function (_, k) { return k; }));
+      if (ordine.every(function (k, j) { return k === j; })) ordine.reverse();
+      var pus = 0, greseala = false;
+      c.appendChild(ord); c.appendChild(msg); c.appendChild(rest);
+      L.appendChild(c);
+      function deseneaza() {
+        rest.innerHTML = '';
+        ordine.forEach(function (k) {
+          if (k < pus) return;
+          var bt = h('button', { class: 'opt', type: 'button', 'data-ok': k === pus ? '1' : null }, it.trepte[k]);
+          bt.addEventListener('click', function () {
+            if (k === pus) {
+              ord.appendChild(h('li', null, h('b', { text: 'Treapta ' + (pus + 1) + ': ' }), it.trepte[k]));
+              puncte('t' + k, greseala ? 0 : 1);
+              greseala = false; pus++;
+              msg.textContent = ''; msg.className = 'mesaj';
+              if (pus === n) gata(); else deseneaza();
+            } else {
+              greseala = true;
+              puncte('t' + pus, 0); // treapta greșită o dată rămâne fără punct și după reîncărcare
+              msg.textContent = 'Nu încă. Caută o problemă de început, mai simplă decât asta.';
+              msg.className = 'mesaj rau';
+              bt.classList.add('tremura');
+              setTimeout(function () { bt.classList.remove('tremura'); }, 400);
+            }
+          });
+          rest.appendChild(bt);
+        });
+      }
+      function gata() {
+        rest.innerHTML = '';
+        var r = raspuns(c, 'bun', '✔ Scara e gata.', [it.expl]);
+        butonNext(c); vezi(r);
+      }
+      deseneaza();
+    },
+
+    fisa: function (b, L) {
+      var c = h('section', { class: 'card', 'data-mecanica': 'fisa' });
+      c.appendChild(h('h2', { text: '✍️ Problema mea de săptămâna asta' }));
+      c.appendChild(h('p', { class: 'mic', text: 'Scrii pentru tine. Rămâne doar pe acest telefon sau calculator: nu se trimite nicăieri.' }));
+      var campuri = [
+        ['aleg', 'O problemă pe care o ALEG săptămâna asta:', 'de exemplu: învăț 15 minute pe zi la engleză'],
+        ['evit', 'Problema mai urâtă pe care o evit așa:', 'de exemplu: să nu înțeleg nimic la testul de vineri'],
+        ['castig', 'Plăcerea pe care o câștig după:', 'de exemplu: un meci cu prietenii sâmbătă']];
+      var inp = {};
+      campuri.forEach(function (x) {
+        var id = 'f-' + x[0];
+        var ta = h('textarea', { id: id, rows: '2', maxlength: '160', placeholder: x[2] });
+        ta.value = S.fisa[x[0]] || '';
+        inp[x[0]] = ta;
+        c.appendChild(h('label', { for: id, text: x[1] })); c.appendChild(ta);
+      });
+      var msg = h('p', { class: 'mesaj', 'aria-live': 'polite' });
+      var bF = h('button', { class: 'opt', type: 'button', 'data-ok': '1' }, 'Fă-mi cartonașul');
+      var bS = h('button', { class: 'alt', type: 'button', 'data-tip': 'sari' }, 'Sari peste →');
+      bS.addEventListener('click', function () { bS.disabled = true; avans(); });
+      bF.addEventListener('click', function () {
+        var v = {};
+        for (var k in inp) v[k] = inp[k].value.trim().slice(0, 160);
+        if (!v.aleg) { msg.textContent = 'Scrie măcar prima problemă, pe cea pe care o alegi.'; msg.className = 'mesaj rau'; inp.aleg.focus(); return; }
+        S.fisa = v; salveaza();
+        bF.disabled = true; bS.parentNode.removeChild(bS);
+        msg.textContent = ''; msg.className = 'mesaj';
+        var r = raspuns(c, 'info', 'Cartonașul tău', [cartonas(v), 'Fă o captură de ecran dacă vrei să-l păstrezi. Îl regăsești și la final, lângă insignă.']);
+        butonNext(c); vezi(r);
+      });
+      c.appendChild(msg); c.appendChild(h('div', { class: 'rand' }, bF, bS));
+      L.appendChild(c);
+    }
+  };
+
+  /* ---------- o parte ---------- */
+  function arataParte(id) {
+    var p = gasesteParte(id), st = stare(id);
+    var nr = D.parti.indexOf(p) + 1;
+    app.innerHTML = '';
+    var bara = h('div', { class: 'bara', role: 'progressbar', 'aria-label': 'Cât ai parcurs din partea asta', 'aria-valuemin': '0', 'aria-valuemax': String(totalPasi(p)) }, h('i'));
+    var cap = h('div', { class: 'cap-parte' },
+      h('span', { class: 'eticheta', text: 'Partea ' + nr + ' din ' + D.parti.length }),
+      h('h1', { id: 'titlu-parte', tabindex: '-1' }, h('span', { 'aria-hidden': 'true' }, p.emoji + ' '), p.titlu),
+      bara);
+    var lucru = h('div', { id: 'lucru' });
+    app.appendChild(cap); app.appendChild(lucru);
+    ctx = { p: p, st: st, lucru: lucru, bara: bara };
+    if (st.gata) sfarsitParte(); else randeaza();
+  }
+  function actualizeazaBara() {
+    if (!ctx) return;
+    var t = totalPasi(ctx.p), c = ctx.st.gata ? t : pasCurent(ctx.p, ctx.st);
+    ctx.bara.firstChild.style.width = (100 * c / t) + '%';
+    ctx.bara.setAttribute('aria-valuenow', String(c));
+  }
+  function randeaza() {
+    var bl = ctx.p.blocuri;
+    if (ctx.st.b >= bl.length) return termina();
+    if (ctx.st.i >= marimeBloc(bl[ctx.st.b])) { ctx.st.b++; ctx.st.i = 0; return randeaza(); }
+    actualizeazaBara();
+    ctx.lucru.innerHTML = '';
+    var b = bl[ctx.st.b], f = RANDARI[b.tip];
+    if (f) f(b, ctx.lucru); else avans();
+  }
+  function sus() {
+    window.scrollTo(0, 0);
+    var t = document.getElementById('titlu-parte');
+    if (t) try { t.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function avans() {
+    if (!ctx) return;
+    var b = ctx.p.blocuri[ctx.st.b];
+    ctx.st.i++;
+    if (!b || ctx.st.i >= marimeBloc(b)) { ctx.st.b++; ctx.st.i = 0; }
+    salveaza();
+    if (ctx.st.b >= ctx.p.blocuri.length) return termina();
+    randeaza(); sus();
+  }
+  function termina() {
+    ctx.st.gata = true;
+    ctx.st.best = puncteParte(ctx.st, ctx.p);
+    salveaza(); actualizeazaScor();
+    sfarsitParte(); sus();
+  }
+  function sfarsitParte() {
+    var p = ctx.p, st = ctx.st, idx = D.parti.indexOf(p), urm = D.parti[idx + 1];
+    actualizeazaBara();
+    ctx.lucru.innerHTML = '';
+    var cel = puncteParte(st, p), acum = Math.min(st.p || 0, maxParte(p));
+    var c = h('section', { class: 'card gata-parte' },
+      h('h2', { text: '🎉 Gata, Partea ' + (idx + 1) + '!' }),
+      acum < cel
+        ? h('p', { text: 'Încercarea asta: ' + acum + ' din ' + cuDe(maxParte(p), 'puncte') + '. Cel mai bun scor al tău aici: ' + cel + '.' })
+        : h('p', { text: 'Ai strâns ' + cel + ' din ' + cuDe(maxParte(p), 'puncte') + ' în partea asta.' }));
+    (LEGI_PARTE[p.id] || []).forEach(function (k) { if (D.legi && D.legi[k]) c.appendChild(h('p', { class: 'lege', text: D.legi[k] })); });
+    ctx.lucru.appendChild(c);
+    var rand = h('div', { class: 'rand-v' });
+    if (urm && !eGata(urm.id)) {
+      var bU = h('button', { class: 'next', type: 'button' }, 'Partea următoare: ' + urm.emoji + ' ' + urm.titlu + ' →');
+      bU.addEventListener('click', function () { bU.disabled = true; mergi('#' + urm.id); });
+      rand.appendChild(bU);
+    } else {
+      var rest = D.parti.filter(function (x) { return !eGata(x.id); });
+      if (rest.length) {
+        var bR = h('button', { class: 'next', type: 'button' }, 'Mai ai: ' + rest[0].emoji + ' ' + rest[0].titlu + ' →');
+        bR.addEventListener('click', function () { bR.disabled = true; mergi('#' + rest[0].id); });
+        rand.appendChild(bR);
+      } else {
+        var bI = h('button', { class: 'next', type: 'button' }, '🏅 Vezi insigna →');
+        bI.addEventListener('click', function () { bI.disabled = true; mergi('#final'); });
+        rand.appendChild(bI);
+      }
+    }
+    var textRef = '↺ Refă partea', armatRef = false, ceasRef = null;
+    var bRef = h('button', { class: 'alt', type: 'button' }, textRef);
+    bRef.addEventListener('click', function () {
+      // două apăsări, ca la „Ia-o de la capăt”: refacerea scoate bifa „gata” până termini iar partea
+      if (!armatRef) {
+        armatRef = true; bRef.textContent = 'Sigur? Apasă încă o dată ca s-o iei de la începutul părții.';
+        ceasRef = setTimeout(function () { armatRef = false; bRef.textContent = textRef; }, 6000);
+        return;
+      }
+      clearTimeout(ceasRef);
+      st.b = 0; st.i = 0; st.p = 0; st.dat = {}; st.gata = false; salveaza(); actualizeazaScor(); arataParte(p.id); sus();
+    });
+    var bM = h('button', { class: 'alt', type: 'button' }, '☰ Înapoi la meniu');
+    bM.addEventListener('click', function () { mergi('#meniu'); });
+    rand.appendChild(bRef); rand.appendChild(bM);
+    ctx.lucru.appendChild(rand);
+  }
+
+  /* ---------- meniul ---------- */
+  function arataMeniu() {
+    app.innerHTML = '';
+    var prima = null;
+    for (var k = 0; k < D.parti.length; k++) if (!eGata(D.parti[k].id)) { prima = D.parti[k]; break; }
+    var hero = h('section', { class: 'hero' },
+      h('h1', { text: 'Toată lumea are probleme' }),
+      h('p', { class: 'sub', text: '…dar pe unele le poți alege tu.' }),
+      h('p', { text: 'Pentru elevii de gimnaziu (clasele V–VIII). La final vei ști de ce nimeni nu trăiește fără probleme, cum alegi problemele mici în locul celor mari și ce legătură au banii și plăcerile cu toate astea.' }),
+      h('p', { class: 'mic', text: '8 părți, cam două ore în total, dar nu trebuie să le faci pe toate deodată. Începi cu Partea 1. Ce ai făcut rămâne pe acest dispozitiv.' }));
+    var eticheta;
+    if (!prima) eticheta = '🏅 Vezi insigna →';
+    else if (inceputa(prima.id)) eticheta = 'Continuă: ' + prima.emoji + ' ' + prima.titlu + ' →';
+    else if (prima === D.parti[0] && total() === 0) eticheta = 'Începe →';
+    else eticheta = 'Continuă cu Partea ' + (D.parti.indexOf(prima) + 1) + ': ' + prima.titlu + ' →';
+    var bStart = h('button', { class: 'next', id: 'incepe', type: 'button' }, eticheta);
+    bStart.addEventListener('click', function () { mergi(prima ? '#' + prima.id : '#final'); });
+    var lista = h('nav', { class: 'lista-parti', 'aria-label': 'Părțile paginii' });
+    D.parti.forEach(function (p, k) {
+      var st = S.parti[p.id], gata = eGata(p.id);
+      var txt = gata ? '✔ gata · ' + puncteParte(st, p) + ' p' : (inceputa(p.id) ? 'în lucru: ' + Math.round(100 * pasCurent(p, st) / totalPasi(p)) + '%' : '');
+      var bt = h('button', { class: 'parte-btn' + (gata ? ' gata' : ''), type: 'button' },
+        h('span', { class: 'pe', 'aria-hidden': 'true', text: p.emoji }),
+        h('span', { class: 'pt' }, h('b', { text: 'Partea ' + (k + 1) + ' · ' + p.titlu }), h('small', { text: p.rezumat }), txt ? h('small', { class: 'stare', text: txt }) : null));
+      bt.addEventListener('click', function () { mergi('#' + p.id); });
+      lista.appendChild(bt);
+    });
+    app.appendChild(hero); app.appendChild(bStart); app.appendChild(citatProfesor());
+    app.appendChild(h('h2', { text: 'Părțile' })); app.appendChild(lista);
+    if (toateGata()) {
+      var bIns = h('button', { class: 'alt', type: 'button', style: 'width:100%;margin-top:8px' }, '🏅 Insigna și cele 10 legi');
+      bIns.addEventListener('click', function () { mergi('#final'); });
+      app.appendChild(bIns);
+    }
+    app.appendChild(sectiuneProfesor()); app.appendChild(cutieAjutor()); app.appendChild(butonReset());
+  }
+
+  /* ---------- finalul ---------- */
+  function arataFinal() {
+    app.innerHTML = '';
+    if (!toateGata()) {
+      var rest = D.parti.filter(function (p) { return !eGata(p.id); });
+      app.appendChild(h('h1', { text: '🏅 Insigna te așteaptă' }));
+      app.appendChild(h('p', { text: 'Mai ai ' + rest.length + (rest.length === 1 ? ' parte' : ' părți') + ' de parcurs:' }));
+      var l = h('div', { class: 'lista-parti' });
+      rest.forEach(function (p) {
+        var bt = h('button', { class: 'parte-btn', type: 'button' }, h('span', { class: 'pe', 'aria-hidden': 'true', text: p.emoji }), h('span', { class: 'pt' }, h('b', { text: 'Partea ' + (D.parti.indexOf(p) + 1) + ' · ' + p.titlu })));
+        bt.addEventListener('click', function () { mergi('#' + p.id); });
+        l.appendChild(bt);
+      });
+      app.appendChild(l);
+      return;
+    }
+    var c = h('section', { class: 'card', id: 'final', style: 'text-align:center' });
+    c.appendChild(desen('insigna'));
+    c.appendChild(h('h1', { text: 'Alegătorul de probleme' }));
+    c.appendChild(h('p', { text: 'Ai trecut prin toate cele 8 părți și ai strâns ' + total() + ' din ' + cuDe(maxTotal(), 'puncte') + '.' }));
+    app.appendChild(c);
+    var legi = h('ol', { class: 'legi' });
+    (D.legi || []).forEach(function (t) { legi.appendChild(h('li', { text: t })); });
+    app.appendChild(h('section', { class: 'card' }, h('h2', { text: 'Cele 10 legi ale problemelor' }), legi));
+    if (S.fisa && S.fisa.aleg) {
+      var bSterge = h('button', { class: 'alt mic-buton', type: 'button' }, 'Șterge cartonașul de pe acest dispozitiv');
+      var sec = h('section', { class: 'card' }, h('h2', { text: '✍️ Problema ta de săptămâna asta' }), cartonas(S.fisa), bSterge);
+      bSterge.addEventListener('click', function () { S.fisa = {}; salveaza(); sec.parentNode.removeChild(sec); });
+      app.appendChild(sec);
+    }
+    app.appendChild(h('section', { class: 'card citat' }, h('p', { text: 'Profesorul vostru a înțeles asta abia la 44 de ani. Voi o știți de acum. Data viitoare când ai o problemă, întreabă-te: „Care e ușa A?”' })));
+    var bM = h('button', { class: 'next', type: 'button' }, '☰ Înapoi la meniu');
+    bM.addEventListener('click', function () { mergi('#meniu'); });
+    app.appendChild(bM); app.appendChild(cutieAjutor()); app.appendChild(butonReset());
+  }
+
+  aplicaPref();
+  actualizeazaScor();
+  ruteaza();
+})();
+</script>
+</body>
+</html>
