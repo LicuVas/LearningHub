@@ -38,6 +38,11 @@
   if (/^\/(teacher|jocuri\/diploma)\//.test(p0)) return;
 
   var SELF = (document.currentScript && document.currentScript.src) || (location.origin + '/assets/js/prezenta.js');
+  /* ALT SIT (11.11.2026, situl de engleză texte-engleza-manuale, lecțiile „Exersează”): pagina poate pune ÎNAINTE
+     window.PREZENTA_SITE = {nume, materia, jurnal, faraNota, notaNota}. Schimbă doar textele și linkul jurnalului; fără el,
+     totul rămâne ca pe LearningHub. Serverul, coada, codurile și amprenta sunt aceleași. */
+  var SITE = window.PREZENTA_SITE || null;
+  var MATERIA = (SITE && SITE.materia) || 'ora de informatică';
   var K_ID = 'lh_prezenta', K_COADA = 'lh_prezenta_coada', K_JURNAL = 'lh_prezenta_jurnal', K_TINUT = 'lh_prezenta_tinut';
   // TRIMITE_LA: 2 minute de la 11.10.2026 (el: „telefoanele lor pot trimite la 2 minute în loc de 5. fă-o!”), acum că serverul e pe
   // Cloudflare (100.000 de cereri pe ZI); înainte 5 minute (cota Netlify pe lună) și, la început, 3 minute
@@ -629,7 +634,7 @@
   }
   addEventListener('resize', function () { if (box) rezerva(); });
   var $ = function (id) { return document.getElementById(id); };
-  var JURNAL_URL = new URL('../../jurnal/', SELF).href;
+  var JURNAL_URL = (SITE && SITE.jurnal) ? new URL(SITE.jurnal, location.href).href : new URL('../../jurnal/', SELF).href;
 
   function randeaza() {
     var s = stare();
@@ -678,13 +683,13 @@
       /* fără listă, eticheta ține locul butonului „Spune cine ești” (același id) și deschide direct formularul */
       var cuLista = lista().length > 0, idP = cuLista ? 'lhp-cere' : 'lhp-cine';
       arata('<span class="pill cere" id="' + idP + '" title="Profesorul vede ce lecții deschizi, cât lucrezi și ce niveluri termini — doar după ce spui cine ești."><span class="dot"></span><span class="t">' +
-        (cuLista ? 'Cine lucrează acum? <b>Alege-te din listă</b>' : '<b>Spune cine ești</b> · pentru ora de informatică') + '</span>' +
+        (cuLista ? 'Cine lucrează acum? <b>Alege-te din listă</b>' : '<b>Spune cine ești</b> · pentru ' + MATERIA) + '</span>' +
         '<span class="s" aria-hidden="true"><b>' + (cuLista ? 'Alege-te din listă' : 'Spune cine ești') + '</b></span></span>');
       $(idP).onclick = cuLista ? function () { strans = false; alege(); } : formular;
     } else if (lista().length) {
       alege();
     } else {
-      arata('<div class="bar">Lucrezi pentru ora de informatică? <b>Spune cine ești</b>: profesorul vede ce lecții deschizi, cât lucrezi și ce niveluri termini.' + NOTA + NOTA_NOTA +
+      arata('<div class="bar">Lucrezi pentru ' + MATERIA + '? <b>Spune cine ești</b>: profesorul vede ce lecții deschizi, cât lucrezi și ce niveluri termini.' + NOTA + NOTA_NOTA +
         '<div class="row"><button id="lhp-cine">Spune cine ești</button><button class="g" id="lhp-viz">Nu, doar vizitez</button></div></div>', true);
       $('lhp-cine').onclick = formular;
       $('lhp-viz').onclick = function () { eu = { refuz: Date.now() }; scrie(K_ID, eu); randeaza(); };
@@ -693,12 +698,14 @@
 
   /* Ca să nu se sperie (25.09.2026, el: „să le spunem că monitorizăm doar activitatea de pe siturile mele,
      nu activitatea lui în general - să nu creăm panică”). Apare la întrebare, în formular și în meniu. */
-  var NOTA = '<div class="mic">🔒 Se vede <b>doar</b> ce faci pe LearningHub (lecțiile și jocurile profesorului). ' +
+  var NOTA = '<div class="mic">🔒 Se vede <b>doar</b> ce faci pe ' + ((SITE && SITE.nume) || 'LearningHub (lecțiile și jocurile profesorului)') + '. ' +
     'Nu se vede nimic din alte site-uri, aplicații, mesaje, poze sau fișiere de pe calculator ori telefon.</div>';
   /* Ce înseamnă pentru notă (07.10.2026, decizia profesorului: nota lucrării de modul = 80% lucrarea + 20% munca pe
      LearningHub; SISTEM_EVALUARE §4.5, tools\nota_site.py din AI_0). Elevul o află înainte să aleagă „Nu, doar vizitez”,
      împreună cu calea fără urmărire. Scurt: bara de pe telefon nu trebuie să crească mult. */
-  var NOTA_NOTA = '<div class="mic" id="lhp-nota-nota">📝 Ce termini aici poate aduce <b>până la 2 puncte</b> la nota lucrării de modul, ' +
+  /* Pe alt sit (faraNota) regula celor 2 puncte nu se aplică; în locul ei, rândul sitului (SITE.notaNota), ca elevul să
+     afle tot ce vede profesorul (pe situl de engleză: rezultatul exercițiilor, ca notă informativă 1–10; bucla 11.11.2026, M1) */
+  var NOTA_NOTA = (SITE && SITE.faraNota) ? (SITE.notaNota ? '<div class="mic" id="lhp-nota-nota">' + esc(SITE.notaNota) + '</div>' : '') : '<div class="mic" id="lhp-nota-nota">📝 Ce termini aici poate aduce <b>până la 2 puncte</b> la nota lucrării de modul, ' +
     'de la ora la care profesorul anunță regula (fișa de criterii). Fără înscriere, faci aceeași muncă la oră, la calculatorul școlii, sau pe foaie.</div>';
 
   function meniu() {
