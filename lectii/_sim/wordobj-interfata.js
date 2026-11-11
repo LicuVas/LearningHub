@@ -85,6 +85,9 @@ const CSS=`
 .wu-cb{display:inline-flex;align-items:center;gap:3px;height:100%;padding:0 3px;border:1px solid transparent;border-radius:3px;background:var(--paper);color:var(--ink);font-family:'Segoe UI',system-ui,sans-serif;font-size:.72rem;white-space:nowrap;cursor:default;width:max-content}
 .wu-cb:hover,.wu-cb:focus-visible{border-color:#2B579A;background:var(--sel)}
 .wu-rdo{position:sticky;right:0;align-self:flex-end;flex:none;z-index:3;min-width:32px;min-height:32px;margin:0 2px 2px auto;border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--ink);cursor:default;font-size:.9rem;line-height:1}
+/* 10.11.2026: ⌄ lipit în dreapta (sticky, 32 px + 2) stătea peste „Styles...” și „Select” cât banda nu era derulată
+   până la capăt; derularea până la o comandă (scrollIntoView, focusul cu Tab) o lasă acum la stânga lui */
+.wu .pg .pg-banda{scroll-padding-inline-end:38px}
 .wu-leg{margin:0;padding:4px 8px;font-size:.76rem;border-top:1px solid var(--line);background:var(--paper2)}
 .wu-dlg:empty{display:none}
 .wu-dlg .wo-win{margin:6px}

@@ -939,6 +939,14 @@ function leaga(Q,body,api,s){
   const mesaj=(t,av)=>{s.msg=t||'';s.av=!!av};
   const rez=(r,cand)=>{if(r&&typeof r==='object'&&r.dlg){s.dlg=r.dlg;s.mn=null}else if(r)mesaj(r,true);else if(cand)mesaj(cand)};
   const deschide=p=>{if(p==='COS'||p==='PC'||isD(p)||/^[A-Z]:\/$/.test(p)){mesaj(mergi(s,p),true);s.av=!!s.msg}else mesaj('Azi nu deschidem fișiere: lucrăm doar cu ele (copiere, mutare…).',true);re()};
+  /* meniul se așază după mărimea lui REALĂ (10.11.2026): e desenat întâi în colț (acolo are toată lățimea, deci lățimea lui firească),
+     îl măsor și îl mut la punctul (px,py) din fereastra .exo. Cu intoarce: dacă nu încape la dreapta punctului se deschide spre stânga
+     (ca în Windows 11); pe verticală urcă doar cât îi trebuie ca să încapă; apoi rămâne întreg în fereastră. */
+  const aseaza=(px,py,intoarce)=>{const w=body.querySelector('.exo'),m=w&&w.querySelector('.exo-mn');if(!m||!s.mn)return null;
+    const W=w.clientWidth,H=w.clientHeight,mw=m.offsetWidth,mh=m.offsetHeight;let mx=px,my=py;
+    if(intoarce&&mx+mw+4>W)mx=px-mw;
+    mx=Math.round(Math.max(4,Math.min(mx,W-mw-4)));my=Math.round(Math.max(4,Math.min(my,H-mh-4)));
+    s.mn.x=mx;s.mn.y=my;m.style.left=mx+'px';m.style.top=my+'px';return [mx,my]};
   const act=(c)=>{
     s.mn=null;s.msg='';s.av=false;
     const p=s.sel&&!String(s.sel).startsWith('cos:')?s.sel:null,ps=selectie(s);
@@ -950,7 +958,7 @@ function leaga(Q,body,api,s){
     if(c==='del'&&ps.length>1){rez(stergeMulte(s,ps,false));re();return}
     if(c==='ren'&&ps.length>1){mesaj('Ai selectate '+ps.length+' elemente. În Windows, Redenumire le-ar da tuturor același nume, cu (1), (2)… la sfârșit. Aici redenumești câte unul: dă un clic doar pe el, fără Ctrl.',true);re();return}
     if(c==='desch'&&ps.length>1){mesaj('Ai selectate mai multe elemente. Ca să intri într-un folder, dă dublu-clic pe el.',true);re();return}
-    if(c==='noum'){s.mn={tip:'nou',x:Math.min((s._mx||10)+40,Math.max(4,x.getBoundingClientRect().width-240)),y:(s._my||110)+70};re();return}
+    if(c==='noum'){s.mn={tip:'nou',x:0,y:0};re();aseaza((s._mx||10)+40,(s._my||110)+70,false);return}
     if(c==='nouf'){rez(folderNou(s));re();return}
     if(c==='cut'||c==='copy'){if(String(s.sel).startsWith('cos:')&&c==='cut'){mesaj('Din Coș pui înapoi cu Restaurare.',true);re();return}
       if(!p){mesaj('Selectează întâi un fișier sau un folder: un clic pe el.',true);re();return}s.clip={mod:c,p,ps:[p]};mesaj((c==='cut'?'Decupat: ':'Copiat: ')+afis(M,p)+'. Acum intră în folderul unde îl vrei și alege Lipire.');re();return}
@@ -1021,8 +1029,8 @@ function leaga(Q,body,api,s){
   if(deskB){let t0=0;deskB.onclick=()=>{const t=Date.now();if(t-t0<500){s.mn=null;mergi(s,'COS');s.msg='Coșul de reciclare: aici stă ce ai șters cu Delete.';s.av=false;re()}else{t0=t;const st=body.querySelector('.exo-stare');if(st)st.textContent='Coșul se deschide cu dublu-clic: două clicuri repede.'}}}
   /* rândurile: clic = selectare, dublu-clic = deschidere, clic dreapta / ținut apăsat = meniu */
   const lst=body.querySelector('.exo-lista');
-  const meniu=(tip,ex,ey)=>{const o=x.getBoundingClientRect();const w=230,h=tip==='fond'?260:230;
-    let mx=ex-o.left,my=ey-o.top;mx=Math.max(4,Math.min(mx,o.width-w-4));my=Math.max(4,Math.min(my,o.height-h-4));s._mx=mx;s._my=my;s.mn={tip,x:mx,y:my};s.msg='';s.av=false;re()};
+  const meniu=(tip,ex,ey)=>{const o=x.getBoundingClientRect();const px=ex-o.left-x.clientLeft,py=ey-o.top-x.clientTop;
+    s.mn={tip,x:0,y:0};s.msg='';s.av=false;re();const r=aseaza(px,py,true);if(r){s._mx=r[0];s._my=r[1]}};
   body.querySelectorAll('[data-p]').forEach(b=>{const p=b.dataset.p;
     b.onclick=e=>{if(s.edit&&s.edit.p===p)return;if(Date.now()-(s._lp||0)<800)return;if(Date.now()-(s._trT||0)<400)return;const t=Date.now();s.mn=null;
       const cb=!!(e.target&&e.target.closest&&e.target.closest('[data-cb]')),ctrl=e.ctrlKey||e.metaKey||cb,shift=e.shiftKey&&!ctrl;
