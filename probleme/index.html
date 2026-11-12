@@ -46,7 +46,7 @@ button:disabled { cursor:default; }
 .bara-sus { position:sticky; top:0; z-index:5; background:var(--fond); border-bottom:1px solid var(--linie); }
 .bara-sus .in { max-width:600px; margin:0 auto; padding:6px 16px; display:flex; align-items:center; gap:8px; }
 html.mare .bara-sus .in { max-width:880px; }
-.bara-sus button { min-height:44px; padding:8px 12px; background:var(--card); color:var(--text); border:1.5px solid var(--linie); font-size:.92rem; }
+.bara-sus button { min-height:44px; min-width:44px; padding:8px 12px; background:var(--card); color:var(--text); border:1.5px solid var(--linie); font-size:.92rem; }
 .bara-sus .scor { margin-left:auto; font-weight:700; white-space:nowrap; }
 .bara-sus [aria-pressed="true"] { border-color:var(--acc); color:var(--acc); }
 /* meniu */
@@ -68,7 +68,7 @@ details.prof { margin:16px 0; }
 details.prof summary { cursor:pointer; font-weight:700; padding:10px 0; min-height:44px; }
 .ajutor { background:var(--infof); border-radius:14px; padding:12px 14px; margin:14px 0; }
 .ajutor p { margin:.35em 0; }
-.ajutor a { font-weight:700; }
+.ajutor a { font-weight:700; color:var(--info); display:inline-block; min-height:44px; line-height:44px; padding:0 6px; }
 .mic-buton { font-size:.92rem; margin-top:10px; }
 /* parte */
 .cap-parte { margin:4px 0 6px; }
@@ -88,6 +88,8 @@ details.prof summary { cursor:pointer; font-weight:700; padding:10px 0; min-heig
 .opt.ales { opacity:1; border-color:var(--acc); box-shadow:0 0 0 2px var(--acc) inset; }
 .opt.corect { opacity:1; border-color:var(--bun); background:var(--bunf); }
 .opt.gresit { opacity:1; border-color:var(--rau); background:var(--rauf); }
+.opt.corect::before { content:"✔ "; font-weight:700; } .opt.gresit::before { content:"✘ "; font-weight:700; }
+.opt .nr { font-weight:700; }
 .usa { display:flex; flex-direction:column; gap:4px; padding:14px; }
 .usa .usa-et { font-weight:800; font-size:.95rem; }
 .grila-usi { display:grid; grid-template-columns:1fr; gap:8px; margin-top:8px; }
@@ -96,7 +98,9 @@ details.prof summary { cursor:pointer; font-weight:700; padding:10px 0; min-heig
 .col-usa.a { background:var(--usa-a); } .col-usa.b { background:var(--usa-b); }
 .col-usa.aleasa { border-color:var(--acc); }
 .col-usa p { margin:.35em 0; }
+.col-usa .eticheta { font-size:.85rem; color:var(--text); }
 .raspuns { border-radius:12px; padding:10px 12px; margin-top:10px; }
+.raspuns:focus { outline:none; }
 .raspuns > b:first-child { display:block; margin-bottom:2px; }
 .raspuns.bun { background:var(--bunf); } .raspuns.bun > b:first-child { color:var(--bun); }
 .raspuns.rau { background:var(--rauf); } .raspuns.rau > b:first-child { color:var(--rau); }
@@ -129,6 +133,7 @@ textarea { font:inherit; width:100%; padding:10px; border-radius:10px; border:2p
 svg.desen { display:block; width:100%; height:auto; margin:6px 0; }
 .d-apa { fill:var(--apa); } .d-apa2 { fill:var(--apa2); } .d-gheata { fill:var(--gheata); stroke:var(--gheata-l); stroke-width:2; }
 .d-text { fill:var(--text); font:600 13px system-ui, sans-serif; } .d-text-mic { fill:var(--gri); font:12px system-ui, sans-serif; }
+.d-text-sub { fill:#14181f; font:600 13px system-ui, sans-serif; } .d-text-mic-sub { fill:#334155; font:12px system-ui, sans-serif; }
 .d-linie { stroke:var(--gri); stroke-width:2; stroke-dasharray:6 4; fill:none; }
 .d-usa-a { fill:var(--usa-a); stroke:var(--bun); stroke-width:3; } .d-usa-b { fill:var(--usa-b); stroke:var(--rau); stroke-width:3; }
 .d-clanta { fill:var(--text); }
@@ -146,7 +151,7 @@ ol.legi li { margin:.45em 0; }
 <header class="bara-sus">
   <div class="in">
     <button type="button" id="b-meniu" hidden>☰ Meniu</button>
-    <span class="scor" id="scor" aria-live="polite">⭐ 0 p</span>
+    <span class="scor" id="scor">⭐ 0 p</span>
     <button type="button" id="b-mare" aria-pressed="false" title="Text mare (pentru proiector)">A+</button>
     <button type="button" id="b-tema" title="Schimbă tema: închisă sau deschisă" aria-label="Schimbă tema">◐</button>
   </div>
@@ -166,7 +171,7 @@ ol.legi li { margin:.45em 0; }
   var S = incarca();
   var ctx = null;
   // ce lege se leagă de fiecare parte (indici în D.legi)
-  var LEGI_PARTE = { p1: [0, 1], p2: [2, 3, 6], p3: [4], p4: [5], p5: [7], p6: [8], p7: [9], p8: [] };
+  var LEGI_PARTE = { p1: [0, 1], p2: [2, 3, 6, 5], p3: [4], p4: [5], p5: [7], p6: [8], p7: [9], p8: [] };
 
   /* ---------- stocare (merge și fără ea) ---------- */
   function gol() { return { v: 1, parti: {}, fisa: {}, mare: false, tema: '' }; }
@@ -217,9 +222,11 @@ ol.legi li { margin:.45em 0; }
   function vezi(el) {
     if (!el) return;
     var r = el.getBoundingClientRect();
-    if (r.top < 64 || r.top > window.innerHeight - 120) {
-      window.scrollBy({ top: r.top - 72, behavior: reduce ? 'auto' : 'smooth' });
-    }
+    var n = el.parentNode && el.parentNode.querySelector('button.next:not([disabled])');
+    var jos = n ? n.getBoundingClientRect().bottom : r.bottom, d = 0;
+    if (r.top < 64 || r.top > window.innerHeight - 120) d = r.top - 72;
+    else if (jos > window.innerHeight) d = Math.min(jos - window.innerHeight + 12, r.top - 72);
+    if (d) window.scrollBy({ top: d, behavior: reduce ? 'auto' : 'smooth' });
   }
   function gasesteParte(id) { for (var i = 0; i < D.parti.length; i++) if (D.parti[i].id === id) return D.parti[i]; return null; }
   function marimeBloc(b) { return b.items ? b.items.length : 1; }
@@ -278,7 +285,17 @@ ol.legi li { margin:.45em 0; }
     else location.hash = hash;
   }
   function ruteaza() {
-    var id = (location.hash || '').replace('#', '');
+    var id = (location.hash || '').split('#').pop();
+    var m = /^(p\d+)-(\d+)$/.exec(id);
+    if (m && gasesteParte(m[1])) {
+      var pp = gasesteParte(m[1]), ss = stare(m[1]), k = Math.max(0, parseInt(m[2], 10) - 1);
+      ss.gata = false; ss.b = 0;
+      while (ss.b < pp.blocuri.length - 1 && k >= marimeBloc(pp.blocuri[ss.b])) { k -= marimeBloc(pp.blocuri[ss.b]); ss.b++; }
+      ss.i = Math.min(k, marimeBloc(pp.blocuri[ss.b]) - 1);
+      salveaza();
+      try { history.replaceState(null, '', '#' + m[1]); } catch (e) {}
+      id = m[1];
+    }
     ctx = null;
     if (id === 'final') { bMeniu.hidden = false; arataFinal(); }
     else if (gasesteParte(id)) { bMeniu.hidden = false; arataParte(id); }
@@ -293,8 +310,10 @@ ol.legi li { margin:.45em 0; }
   function cutieAjutor() {
     return h('aside', { class: 'ajutor', 'aria-label': 'Unde ceri ajutor' },
       h('b', { text: '💬 Dacă o problemă e prea grea pentru tine' }),
-      h('p', { text: 'Nu trebuie s-o duci singur. Vorbește cu un părinte, cu dirigintele, cu consilierul școlii sau cu alt adult în care ai încredere.' }),
-      h('p', null, 'Telefonul Copilului: ', h('a', { href: 'tel:116111' }, '116 111'), ' (apel gratuit). Urgență: ', h('a', { href: 'tel:112' }, '112'), '.'));
+      h('p', { text: 'Nu trebuie s-o duci singur. Spune unui adult în care ai încredere: cineva din familie (un părinte, un bunic), dirigintele, consilierul școlii sau alt profesor. Dacă primul adult nu te ascultă, spune altuia, până te ajută cineva.' }),
+      h('p', null, 'Telefonul Copilului: ', h('a', { href: 'tel:116111' }, '116 111'), ' (apel gratuit).'),
+      h('p', null, 'Dacă cineva îți face rău: ', h('a', { href: 'tel:119' }, '119'), ' (gratuit, zi și noapte).'),
+      h('p', null, 'Urgență: ', h('a', { href: 'tel:112' }, '112'), '.'));
   }
   function cartonas(v) {
     return h('div', { class: 'cartonas' },
@@ -326,18 +345,29 @@ ol.legi li { margin:.45em 0; }
   }
   function sectiuneProfesor() {
     return h('details', { class: 'prof card' },
-      h('summary', { text: '👩‍🏫 Pentru profesor: cum folosiți pagina la oră' }),
+      h('summary', { text: '👩‍🏫 Pentru profesor: cum folosiți pagina (citiți înainte de oră, nu pe proiector)' }),
       h('div', { html:
         '<ul>' +
-        '<li><b>Durată:</b> mai mult de o oră. Pe telefon: cam două ore pentru toate cele 8 părți, care nu trebuie făcute deodată. Pe proiector, cu situația citită cu voce tare și vot la fiecare pas: 2–3 ore. Partea 2 singură (14 situații) ține aproape o jumătate de oră.</li>' +
-        '<li><b>Pe telefon:</b> fiecare elev merge în ritmul lui; punctele apar sus.</li>' +
-        '<li><b>Pe proiector:</b> apăsați <b>A+</b> (text mare). Citiți situația cu voce tare și lăsați clasa să voteze cu mâna ridicată înainte să apăsați.</li>' +
-        '<li><b>Pe proiector, în trei ore:</b> ora 1 = Părțile 1–2 (cam 45 de minute); ora 2 = Părțile 3–5 (cam 35 de minute); ora 3 = Părțile 6–8, cu testul final (cam 40 de minute). Timpul rămas merge pe întrebările de discuție de mai jos.</li>' +
-        '<li><b>Același proiector, mai multe clase:</b> înainte să lucrați cu altă clasă, apăsați „Ia-o de la capăt” (ultimul buton din meniu). Ora următoare deschideți din meniu partea la care a rămas clasa. Notați-vă unde a rămas fiecare clasă: în interiorul unei părți nu puteți sări direct la o anumită situație (de exemplu, la a 9-a), partea pornește de la început. De aceea e mai simplu să opriți ora la sfârșitul unei părți. Insigna de la final apare doar când toate părțile sunt gata pe același dispozitiv; cele 10 legi apar oricum, pe rând, la sfârșitul părților.</li>' +
-        '<li><b>Întrebări de discuție:</b> (1) Ce problemă ai ales azi? (2) Spune o problemă care te-a ales pentru că ai amânat ceva. (3) Ce meserie ți-ar plăcea și ce problemă rezolvă ea? (4) O plăcere câștigată din săptămâna asta. (5) Ce problemă mai bună ți-ai dori peste un an?</li>' +
-        '<li><b>Atenție la Partea 4:</b> pot ieși la iveală probleme grele de acasă. Nu cereți nimănui să spună ce problemă are. Dacă un elev povestește ceva îngrijorător, urmați procedura școlii (dirigintele, consilierul școlar).</li>' +
+        '<li><b>Obiectivele:</b> la final, elevul poate: (1) explica de ce nimeni nu trăiește fără probleme, cu exemplul unui om care „pare” fără probleme; (2) deosebi, într-o situație din viața de elev, problema aleasă (ușa A) de problema care îl alege (ușa B); (3) spune ce poate alege și cui cere ajutor când o problemă nu ține de el; (4) numi o problemă pe care o alege săptămâna asta și plăcerea pe care o câștigă după ea.</li>' +
+        '<li><b>Durată:</b> pe telefon, cam două ore pentru toate cele 8 părți, care nu trebuie făcute deodată. Pe proiector, cu situația citită cu voce tare și vot la fiecare pas, fără discuție: P1 16–20 min · P2 21–28 · P3 8–10 · P4 13–16 · P5 15–19 · P6 12–16 · P7 11–16 · P8 7–9.</li>' +
+        '<li><b>Pe proiector, la Consiliere (o oră pe săptămână): cinci ore.</b> Ora 1 = Partea 1; ora 2 = Partea 2; ora 3 = Părțile 3–4; ora 4 = Părțile 5–6; ora 5 = Părțile 7–8. Fiecare oră se oprește la capătul unei părți și păstrează ultimele 10–15 minute pentru discuție și pentru întrebarea de reflecție: „Ce iau cu mine de azi? Ce îmi propun să fac?”. În trei ore (Părțile 1–2, 3–5, 6–8) încap doar cititul și votul, fără discuție.</li>' +
+        '<li><b>Pe proiector:</b> apăsați <b>A+</b> (text mare). Citiți situația cu voce tare și lăsați clasa să voteze înainte să apăsați: elevii ridică 1, 2 sau 3 degete, după numărul variantei. La cele două uși din Partea 2, votați „prima” sau „a doua”.</li>' +
+        '<li><b>Pe telefon:</b> fiecare elev merge în ritmul lui; punctele apar sus. Dați o singură parte deodată și un semn de oprire: „Când ajungeți la ecranul «Gata, Partea 2!», întoarceți telefonul cu ecranul în jos.” Cine termină primul recitește ideea de pe ecran și se gândește la un exemplu. Discuția pornește când toate telefoanele sunt întoarse.</li>' +
+        '<li><b>Punctele nu sunt note.</b> La Consiliere nu se dau note: punctele, testul din Partea 8 și insigna arată doar cât a parcurs elevul. Evaluarea se face pe portofoliu (fișa din Partea 7).</li>' +
+        '<li><b>Atenție la Partea 4:</b> pot ieși la iveală probleme grele de acasă. Nu cereți nimănui să spună ce problemă are. Dacă știți un elev aflat într-una dintre situațiile de pe cartonașe, spuneți-i înainte de oră, între patru ochi, despre ce va fi vorba. La cartonașele „Părinții mei se despart.”, „S-a îmbolnăvit bunicul.”, „Mama sau tata lucrează în altă țară și ne vedem rar.”, „Un coleg mă jignește în fiecare zi.”, „M-am născut într-o familie care nu are mulți bani.”, „Unii râd de mine pentru familia sau locul din care vin.” și „Am o boală cu care m-am născut.” nu cereți vot: citiți cartonașul, apăsați dumneavoastră „N-a ținut de mine” și citiți explicația. Votul cu mâna ridicată îi poate face pe colegi să se uite la elevul care trăiește asta. <b>Dacă un elev se emoționează:</b> nu-l întrebați în fața clasei ce are. Spuneți-i încet că nu trebuie să spună nimic și că vorbiți după oră, apoi continuați calm. După oră vorbiți cu el între patru ochi. Dacă aflați ceva îngrijorător (violență, abuz, gânduri de a-și face rău), anunțați în aceeași zi consilierul școlar și conducerea școlii, după procedura școlii.</li>' +
+        '<li><b>Întrebări de discuție</b> (la ecranul „Gata, Partea …”; toate răspunsurile sunt de bunăvoie, oricine poate spune „trec”): P1: Cine pare că n-are probleme și ce nu vedem la el? · P2: La ce situație ați ales altă ușă decât majoritatea, și de ce? Ce simți când stai în fața ușii A și ce gând te ajută s-o deschizi? · P3: Dați un exemplu (inventat sau de la un personaj) de problemă care a crescut pentru că cineva a amânat-o. · P4: Un copil se mută la o școală nouă, în mijlocul anului. Ce poate alege el în prima săptămână? Ce poate face clasa pentru el? (fără exemple personale) · P5: Alegeți un obiect din clasă: ce meserii au rezolvat probleme ca să ajungă aici? Ce meserie ți-ar plăcea și ce problemă rezolvă ea? · P6: O plăcere câștigată din săptămâna asta. O plăcere care e câștigată la un elev și pe datorie la altul: de ce? · P7: Care e treapta următoare la ceva ce știi deja să faci? Ce problemă mai bună ți-ai dori peste un an? · P8: Ce idee din cele 10 v-a surprins? Ce iau cu mine de aici?</li>' +
+        '<li><b>Fișa din Partea 7 (piesă pentru portofoliul personal de învățare):</b> pe proiector sau pe un calculator comun, fiecare elev scrie cele trei rânduri pe o foaie: Aleg… / Ca să nu mă aleagă… / Apoi câștig…; pe calculator apăsați „Sari peste →”. Pe telefon, fiecare o completează pe telefonul lui și o copiază și pe foaie. La începutul orei următoare, elevul scrie dedesubt: „Am făcut? Ce m-a ajutat? Ce m-a oprit?” și pune foaia în portofoliu.</li>' +
+        '<li><b>Același proiector, mai multe clase:</b> înainte să lucrați cu altă clasă, apăsați „Ia-o de la capăt” (ultimul buton din meniu). Sus, pe ecran, scrie unde a rămas clasa (de exemplu „Partea 2 din 8 · pasul 10 din 14”). Ora următoare, în bara de adrese, înlocuiți tot ce e după semnul # cu p2-10 (partea 2, pasul 10; dacă adresa n-are #, scrieți la sfârșit #p2-10): pagina se deschide chiar acolo. Tot e mai simplu să opriți ora la sfârșitul unei părți. Insigna apare doar când toate părțile sunt gata pe același dispozitiv. Cele 10 idei apar la sfârșitul fiecărei părți; la ultima oră, tot în bara de adrese, înlocuiți ce e după # cu final: acolo apar toate 10, chiar dacă părțile de dinainte au fost șterse.</li>' +
         '<li><b>Datele elevilor:</b> nimic nu se trimite nicăieri. Progresul și fișa rămân doar în browserul elevului. Pe calculatoarele comune, elevul apasă la final „Ia-o de la capăt”.</li>' +
+        '<li><b>Competențe vizate (programa de Consiliere și dezvoltare personală, OMEN 3393/2017).</b> Aceeași pagină, alt accent la fiecare clasă.<br><b>Clasa a V-a:</b> 3.1 factorii care ajută sau blochează învățarea, greșeala ca parte din învățare (Părțile 2, 3, 7); 4.1 ce oferă școala pentru carieră (Partea 5, „Ce legătură are asta cu școala?”); 4.2 ocupații și beneficiile lor pentru om și pentru societate (Partea 5).<br><b>Clasa a VI-a:</b> 1.2 soluții pentru situațiile de stres: prietenie ruptă, lipsuri materiale, frica de test (Partea 4; cearta și seara dinaintea testului din Partea 2); 3.2 povești de viață și depășirea dificultăților (Ștefan cel Mare, Marcus Aurelius, Viktor Frankl; „hai să-ți explic” din Partea 2).<br><b>Clasa a VII-a:</b> 1.2 stilul de viață sănătos: somn, clipuri, jocuri, aplicații gratuite (Părțile 2 și 6); 2.1 empatia (Partea 1, „Ce nu vede lumea”); 3.1 rutine și autodisciplină („Contul tău”, „Încă un clip…”, plăcerea „câștigată”); 3.2 reușită și eșec, mentalitatea de creștere („nu sunt bun la mate”, Părțile 3 și 7).<br><b>Clasa a VIII-a:</b> 1.2 luarea deciziilor: cele două uși sunt etapele „soluții alternative” și „analiza consecințelor” (Partea 2); 2.1 autocontrol, amânarea recompensei (Partea 6, plăcerea „pe datorie”); 3.1 timpul și efortul pentru învățare („Mai e timp”, „Seara dinaintea testului”, „puțin peste puterea de azi, plus odihnă”, Părțile 2 și 7).<br>Pagina NU lucrează: numirea emoțiilor (a V-a, 2.1), feedbackul pozitiv (a V-a, 2.2), negocierea conflictelor (a VIII-a, 2.2), domeniul 4, continuarea studiilor și cariera (4.1–4.2 la a VI-a, a VII-a, a VIII-a): Evaluarea Națională și liceul apar doar ca exemple (Partea 1, „Elevul de clasa a VIII-a”; Partea 2, „Mai e timp”).</li>' +
+        '<li><b>Activități în plus, din programă:</b> clasa a VII-a (2.2, exprimarea asertivă): la „Copiezi sau nu?” și „Colegul de care râd alții” (Partea 2), perechile scriu trei răspunsuri: pasiv, agresiv, asertiv. Clasa a VIII-a (1.2): scrieți pe tablă etapele deciziei (identific problema, o analizez, caut soluții, analizez consecințele, decid) și arătați unde stau cele două uși.</li>' +
         '</ul>' }));
+  }
+
+  function sectiuneParinti() {
+    return h('details', { class: 'prof card' },
+      h('summary', { text: '👪 Pentru părinți' }),
+      h('div', { html: '<p>Pagina e făcută de un profesor, pentru orele de dirigenție. Nu cere cont sau nume, nu are reclame și nu trimite nimic pe internet. Răspunsurile și ce scrie copilul rămân doar pe dispozitivul pe care lucrează.</p><p>Partea 4 vorbește și despre probleme pe care copiii nu le aleg: despărțirea părinților, o boală în familie, lipsa banilor, un părinte plecat la muncă în altă țară. Mesajul ei este „nu e vina ta” și „cere ajutor unui adult”.</p><p>După ce o parcurge, îl puteți întreba: Ce problemă ai ales săptămâna asta? Ce problemă rezolvă meseria mea? O plăcere de-a ta e câștigată sau pe datorie?</p><p>Dacă a lucrat pe telefonul dumneavoastră, la final poate apăsa „Ia-o de la capăt”, ca să se șteargă tot.</p>' }));
   }
 
   /* ---------- desene ---------- */
@@ -354,9 +384,9 @@ ol.legi li { margin:.45em 0; }
       '<polygon class="d-gheata" points="104,66 218,66 262,128 214,196 120,192 70,134"/>' +
       '<line class="d-linie" x1="0" y1="64" x2="320" y2="64"/>' +
       '<text class="d-text" x="196" y="38">Ce vezi la alții</text>' +
-      '<text class="d-text" x="166" y="122" text-anchor="middle">Ce nu vezi:</text>' +
-      '<text class="d-text-mic" x="166" y="142" text-anchor="middle">griji, frici, greșeli,</text>' +
-      '<text class="d-text-mic" x="166" y="159" text-anchor="middle">zile proaste</text>',
+      '<text class="d-text-sub" x="166" y="122" text-anchor="middle">Ce nu vezi:</text>' +
+      '<text class="d-text-mic-sub" x="166" y="142" text-anchor="middle">griji, frici, greșeli,</text>' +
+      '<text class="d-text-mic-sub" x="166" y="159" text-anchor="middle">zile proaste</text>',
       'Un aisberg: deasupra apei se vede doar un vârf mic, iar sub apă e partea cea mare: griji, frici, greșeli, zile proaste.');
     if (nume === 'usi') return svg('viewBox="0 0 320 170">' +
       '<path class="d-usa-a" d="M30,160 V52 a50,46 0 0 1 100,0 V160 Z"/>' +
@@ -399,7 +429,7 @@ ol.legi li { margin:.45em 0; }
   function optiuni(container, texte, ok, laAlegere, clasa) {
     var lista = h('div', { class: 'optiuni' + (clasa ? ' ' + clasa : '') });
     var btns = texte.map(function (t, idx) {
-      var b = h('button', { class: 'opt', type: 'button', 'data-ok': (ok === -1 || idx === ok) ? '1' : null }, t);
+      var b = h('button', { class: 'opt', type: 'button', 'data-ok': (ok === -1 || idx === ok) ? '1' : null }, h('span', { class: 'nr', 'aria-hidden': 'true', text: (idx + 1) + '. ' }), t);
       b.addEventListener('click', function () {
         if (lista.getAttribute('data-gata')) return;
         lista.setAttribute('data-gata', '1');
@@ -416,13 +446,14 @@ ol.legi li { margin:.45em 0; }
     return lista;
   }
   function raspuns(container, fel, titlu, corp) {
-    var r = h('div', { class: 'raspuns ' + fel, role: 'status' });
+    var r = h('div', { class: 'raspuns ' + fel, tabindex: '-1' });
     if (titlu) r.appendChild(h('b', { text: titlu }));
     (Array.isArray(corp) ? corp : [corp]).forEach(function (x) {
       if (!x) return;
       r.appendChild(typeof x === 'string' ? h('p', { text: x }) : x);
     });
     container.appendChild(r);
+    try { r.focus({ preventScroll: true }); } catch (e) {}
     return r;
   }
   function verdict(bine) { return bine ? '✔ Corect.' : '✘ Nu chiar.'; }
@@ -503,15 +534,15 @@ ol.legi li { margin:.45em 0; }
       c.appendChild(h('p', { class: 'situatie', text: it.situatie }));
       c.appendChild(h('p', { class: 'intrebare', text: 'Ce faci?' }));
       var lista = h('div', { class: 'optiuni' });
-      var bA = h('button', { class: 'opt usa', type: 'button', 'data-ok': '1' }, h('span', { class: 'usa-et', text: '🚪 Ușa A' }), h('span', { text: it.a.et }));
-      var bB = h('button', { class: 'opt usa', type: 'button', 'data-ok': '1' }, h('span', { class: 'usa-et', text: '🚪 Ușa B' }), h('span', { text: it.b.et }));
-      lista.appendChild(bA); lista.appendChild(bB);
+      var bA = h('button', { class: 'opt usa', type: 'button', 'data-ok': '1' }, h('span', { text: it.a.et }));
+      var bB = h('button', { class: 'opt usa', type: 'button', 'data-ok': '1' }, h('span', { text: it.b.et }));
+      amesteca([bA, bB]).forEach(function (x) { lista.appendChild(x); });
       c.appendChild(lista);
       L.appendChild(c);
       function coloana(lit, u, ales) {
         var nume = it.ambele ? 'Ușa ' + lit : (lit === 'A' ? 'Ușa A · problema aleasă' : 'Ușa B · problema care te alege');
         return h('div', { class: 'col-usa ' + lit.toLowerCase() + (ales ? ' aleasa' : '') },
-          h('b', { text: nume + (ales ? ' (ai ales-o)' : '') }),
+          h('b', { text: nume + (ales ? ' (pe aici ai mers)' : '') }),
           h('p', { class: 'mic', text: u.et }),
           h('p', null, h('span', { class: 'eticheta', text: 'Acum' }), h('br'), u.acum),
           h('p', null, h('span', { class: 'eticheta', text: 'Mai târziu' }), h('br'), u.apoi));
@@ -523,7 +554,7 @@ ol.legi li { margin:.45em 0; }
         (care === 'a' ? bA : bB).classList.add('ales');
         puncte('usa', 1);
         var mesaj = it.ambele ? 'Amândouă sunt alegeri. Uite ce aduce fiecare:'
-          : (care === 'a' ? 'Ai ales tu problema. Uite ce te aștepta în spatele celeilalte uși:'
+          : (care === 'a' ? 'Ușa A: ai ales tu problema. Uite ce te aștepta în spatele celeilalte uși:'
                           : 'Ușa B nu te-a scăpat de probleme. Uite ce a venit pe ea:');
         var r = raspuns(c, 'info', mesaj, [h('div', { class: 'grila-usi' }, coloana('A', it.a, care === 'a'), coloana('B', it.b, care === 'b'))]);
         var qz = h('div', { class: 'q' }, h('p', { class: 'intrebare', text: it.q.text }));
@@ -533,10 +564,11 @@ ol.legi li { margin:.45em 0; }
           puncte('q', bine ? 2 : 0);
           var corp = corpRaspuns(bine, it.q.opts[it.q.ok], null);
           corp.push(h('p', { class: 'lectie', text: it.lectie }));
+          if (it.ajutor) corp.push(cutieAjutor());
           var r2 = raspuns(qz, bine ? 'bun' : 'rau', verdict(bine), corp);
           butonNext(qz); vezi(r2);
         });
-        vezi(r);
+        window.scrollBy({ top: r.getBoundingClientRect().top - 72, behavior: reduce ? 'auto' : 'smooth' });
       }
       bA.addEventListener('click', function () { alege('a'); });
       bB.addEventListener('click', function () { alege('b'); });
@@ -588,8 +620,10 @@ ol.legi li { margin:.45em 0; }
       c.appendChild(h('p', { class: 'intrebare', text: 'Unde îl pui?' }));
       L.appendChild(c);
       optiuni(c, b.cosuri, it.cos, function (idx, bine) {
-        puncte('q', bine ? 2 : 0);
-        var r = raspuns(c, bine ? 'bun' : 'rau', verdict(bine), corpRaspuns(bine, b.cosuri[it.cos], it.expl));
+        var bl = it.bland && !bine;
+        puncte('q', (bine || bl) ? 2 : 0);
+        if (bl) Array.prototype.forEach.call(c.querySelectorAll('.opt.gresit'), function (x) { x.classList.remove('gresit'); });
+        var r = raspuns(c, bl ? 'info' : (bine ? 'bun' : 'rau'), bl ? 'Mulți copii cred asta. Dar nu e așa.' : verdict(bine), corpRaspuns(bine, b.cosuri[it.cos], it.expl));
         butonNext(c); vezi(r);
       }, 'doua');
     },
@@ -657,7 +691,7 @@ ol.legi li { margin:.45em 0; }
     fisa: function (b, L) {
       var c = h('section', { class: 'card', 'data-mecanica': 'fisa' });
       c.appendChild(h('h2', { text: '✍️ Problema mea de săptămâna asta' }));
-      c.appendChild(h('p', { class: 'mic', text: 'Scrii pentru tine. Rămâne doar pe acest telefon sau calculator: nu se trimite nicăieri.' }));
+      c.appendChild(h('p', { class: 'mic', text: 'Scrii pentru tine. Rămâne doar pe acest telefon sau calculator: nu se trimite nicăieri. Ești la un calculator al școlii? Atunci scrie pe o foaie și apasă „Sari peste →”.' }));
       var campuri = [
         ['aleg', 'O problemă pe care o ALEG săptămâna asta:', 'de exemplu: învăț 15 minute pe zi la engleză'],
         ['evit', 'Problema mai urâtă pe care o evit așa:', 'de exemplu: să nu înțeleg nimic la testul de vineri'],
@@ -681,7 +715,7 @@ ol.legi li { margin:.45em 0; }
         S.fisa = v; salveaza();
         bF.disabled = true; bS.parentNode.removeChild(bS);
         msg.textContent = ''; msg.className = 'mesaj';
-        var r = raspuns(c, 'info', 'Cartonașul tău', [cartonas(v), 'Fă o captură de ecran dacă vrei să-l păstrezi. Îl regăsești și la final, lângă insignă.']);
+        var r = raspuns(c, 'info', 'Cartonașul tău', [cartonas(v), 'Scrie-l și pe o foaie sau fă o captură de ecran. Peste o săptămână, citește-l iar: ai făcut ce ți-ai ales? Dacă vrei, arată-l cuiva de acasă. Îl regăsești și la final, lângă insignă.']);
         butonNext(c); vezi(r);
       });
       c.appendChild(msg); c.appendChild(h('div', { class: 'rand' }, bF, bS));
@@ -696,11 +730,13 @@ ol.legi li { margin:.45em 0; }
     app.innerHTML = '';
     var bara = h('div', { class: 'bara', role: 'progressbar', 'aria-label': 'Cât ai parcurs din partea asta', 'aria-valuemin': '0', 'aria-valuemax': String(totalPasi(p)) }, h('i'));
     var cap = h('div', { class: 'cap-parte' },
-      h('span', { class: 'eticheta', text: 'Partea ' + nr + ' din ' + D.parti.length }),
+      h('span', { class: 'eticheta', id: 'eticheta-parte', text: 'Partea ' + nr + ' din ' + D.parti.length }),
       h('h1', { id: 'titlu-parte', tabindex: '-1' }, h('span', { 'aria-hidden': 'true' }, p.emoji + ' '), p.titlu),
       bara);
     var lucru = h('div', { id: 'lucru' });
-    app.appendChild(cap); app.appendChild(lucru);
+    /* „← Pasul anterior” stă sub card, nu pe un rând al lui deasupra: pe telefoanele mici nu mai împinge comenzile sub marginea de jos */
+    var bInapoi = h('button', { class: 'alt mic-buton', type: 'button', id: 'b-inapoi', onclick: inapoi }, '← Pasul anterior');
+    app.appendChild(cap); app.appendChild(lucru); app.appendChild(bInapoi);
     ctx = { p: p, st: st, lucru: lucru, bara: bara };
     if (st.gata) sfarsitParte(); else randeaza();
   }
@@ -709,6 +745,10 @@ ol.legi li { margin:.45em 0; }
     var t = totalPasi(ctx.p), c = ctx.st.gata ? t : pasCurent(ctx.p, ctx.st);
     ctx.bara.firstChild.style.width = (100 * c / t) + '%';
     ctx.bara.setAttribute('aria-valuenow', String(c));
+    var et = document.getElementById('eticheta-parte');
+    if (et) et.textContent = 'Partea ' + (D.parti.indexOf(ctx.p) + 1) + ' din ' + D.parti.length + (ctx.st.gata ? '' : ' · pasul ' + Math.min(c + 1, t) + ' din ' + t);
+    var bi = document.getElementById('b-inapoi');
+    if (bi) bi.hidden = !!ctx.st.gata || c === 0;
   }
   function randeaza() {
     var bl = ctx.p.blocuri;
@@ -723,6 +763,14 @@ ol.legi li { margin:.45em 0; }
     window.scrollTo(0, 0);
     var t = document.getElementById('titlu-parte');
     if (t) try { t.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function inapoi() {
+    if (!ctx || ctx.st.gata) return;
+    var s = ctx.st;
+    if (s.i > 0) s.i--;
+    else if (s.b > 0) { s.b--; s.i = marimeBloc(ctx.p.blocuri[s.b]) - 1; }
+    else return;
+    salveaza(); randeaza(); sus();
   }
   function avans() {
     if (!ctx) return;
@@ -816,14 +864,20 @@ ol.legi li { margin:.45em 0; }
     app.appendChild(hero); app.appendChild(bStart); app.appendChild(citatProfesor());
     app.appendChild(h('h2', { text: 'Părțile' })); app.appendChild(lista);
     if (toateGata()) {
-      var bIns = h('button', { class: 'alt', type: 'button', style: 'width:100%;margin-top:8px' }, '🏅 Insigna și cele 10 legi');
+      var bIns = h('button', { class: 'alt', type: 'button', style: 'width:100%;margin-top:8px' }, '🏅 Insigna și cele 10 idei');
       bIns.addEventListener('click', function () { mergi('#final'); });
       app.appendChild(bIns);
     }
-    app.appendChild(sectiuneProfesor()); app.appendChild(cutieAjutor()); app.appendChild(butonReset());
+    app.appendChild(sectiuneProfesor()); app.appendChild(sectiuneParinti()); app.appendChild(cutieAjutor()); app.appendChild(butonReset());
   }
 
   /* ---------- finalul ---------- */
+  function cardLegi() {
+    var legi = h('ol', { class: 'legi' });
+    (D.legi || []).forEach(function (t) { legi.appendChild(h('li', { text: t })); });
+    return h('section', { class: 'card' }, h('h2', { text: 'Cele 10 idei despre probleme' }), legi,
+      h('p', { class: 'mic', text: 'Nu sunt legi ca ale naturii, ci idei. Sunt un mod de a privi problemele, care ajută de cele mai multe ori. Uneori amândouă ușile sunt grele. Unii oameni au mai puține uși, din motive care nu țin de ei. Dacă ți se întâmplă asta, nu e vina ta: cere ajutor unui adult.' }));
+  }
   function arataFinal() {
     app.innerHTML = '';
     if (!toateGata()) {
@@ -837,6 +891,7 @@ ol.legi li { margin:.45em 0; }
         l.appendChild(bt);
       });
       app.appendChild(l);
+      app.appendChild(cardLegi());
       return;
     }
     var c = h('section', { class: 'card', id: 'final', style: 'text-align:center' });
@@ -844,16 +899,14 @@ ol.legi li { margin:.45em 0; }
     c.appendChild(h('h1', { text: 'Alegătorul de probleme' }));
     c.appendChild(h('p', { text: 'Ai trecut prin toate cele 8 părți și ai strâns ' + total() + ' din ' + cuDe(maxTotal(), 'puncte') + '.' }));
     app.appendChild(c);
-    var legi = h('ol', { class: 'legi' });
-    (D.legi || []).forEach(function (t) { legi.appendChild(h('li', { text: t })); });
-    app.appendChild(h('section', { class: 'card' }, h('h2', { text: 'Cele 10 legi ale problemelor' }), legi));
+    app.appendChild(cardLegi());
     if (S.fisa && S.fisa.aleg) {
       var bSterge = h('button', { class: 'alt mic-buton', type: 'button' }, 'Șterge cartonașul de pe acest dispozitiv');
       var sec = h('section', { class: 'card' }, h('h2', { text: '✍️ Problema ta de săptămâna asta' }), cartonas(S.fisa), bSterge);
       bSterge.addEventListener('click', function () { S.fisa = {}; salveaza(); sec.parentNode.removeChild(sec); });
       app.appendChild(sec);
     }
-    app.appendChild(h('section', { class: 'card citat' }, h('p', { text: 'Profesorul vostru a înțeles asta abia la 44 de ani. Voi o știți de acum. Data viitoare când ai o problemă, întreabă-te: „Care e ușa A?”' })));
+    app.appendChild(h('section', { class: 'card citat' }, h('p', { text: 'Profesorul vostru a înțeles asta abia la 44 de ani. Tu o știi de acum. Data viitoare când ai o problemă, întreabă-te: „Care e ușa A?” Iar dacă problema e prea grea pentru tine, ușa A e să spui unui adult.' })));
     var bM = h('button', { class: 'next', type: 'button' }, '☰ Înapoi la meniu');
     bM.addEventListener('click', function () { mergi('#meniu'); });
     app.appendChild(bM); app.appendChild(cutieAjutor()); app.appendChild(butonReset());
