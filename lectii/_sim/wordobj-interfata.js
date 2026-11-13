@@ -17,6 +17,10 @@
    - Ctrl+Y cu ceva anulat = Refacere; FĂRĂ o anulare înainte = Repetare: după tastarea „abc” mai scrie „abc”; după ⌫
      mai șterge o literă; după Delete, la fel; după Enter mai pune un Enter. După o refacere, încă un Ctrl+Y nu mai face
      nimic. (Simulatorul lecției 5 doar reface; aici se adaugă repetarea.)
+   - (13.11.2026, PESTE probele de mai sus) Word-ul din laborator (Word 2007, văzut de profesor) anulează câte o
+     literă: fiecare literă tastată e o operație (vezi ascultătorul „input” de mai jos). Proba automată pe Word 16
+     trimitea literele prin WM_CHAR la 20 ms și dădea „tastarea = o operație”; la tastare de mână, în laborator, nu.
+     Repetarea (Ctrl+Y fără anulare) repetă deci ultima literă; în Word 2007 neprobată.
    - Un ⌫ apăsat în mijlocul tastării rupe tastarea în două operații: „merr”, ⌫, „e.” -> un Ctrl+Z scoate doar „e.”.
      (În simulatorul lecției 5, ⌫ corecta textul încă netrimis în document și Ctrl+Z scotea tot; aici ⌫ închide întâi
      tastarea, ca în Word.) Fiecare ⌫ și fiecare Delete e câte o operație (3 × ⌫ -> 3 × Ctrl+Z).
@@ -358,7 +362,12 @@ function render(Q,body,api){
     S.redo=0;
     if(a==='bs'||a==='del'||a==='enter')S.last={t:a};else if(a!=='mutare')S.last=null;
   }
-  body.addEventListener('input',e=>{if(e.target===inp){S.redo=0;if(inp.value)S.last={t:'tip',text:inp.value};dupaDoc()}});
+  /* (13.11.2026) Word-ul din laborator (Word 2007, văzut de profesor la clasă) anulează CÂTE O LITERĂ: „Titlu”, Enter,
+     „Text”, 2 × Ctrl+Z -> „Titlu” și „Te”. Deci fiecare literă tastată se închide pe loc ca operație separată.
+     Pe telefon, cât tastatura încă „compune” cuvântul (isComposing), nu ating câmpul (ar dubla literele); închid la
+     compositionend, deci acolo un cuvânt e o operație. */
+  body.addEventListener('input',e=>{if(e.target===inp){S.redo=0;if(inp.value)S.last={t:'tip',text:inp.value};if(!e.isComposing)inchideTastarea();dupaDoc()}});
+  inp.addEventListener('compositionend',()=>{setTimeout(()=>{if(!api.done()){inchideTastarea();dupaDoc()}},0)});
   let preClick=null,preK=null;
   body.addEventListener('click',e=>{const k=e.target.closest('[data-k]');if(k&&inBody.contains(k)){if(k.dataset.k==='z')inchideTastarea();preClick=sig();preK=k.dataset.k}},true);
   body.addEventListener('click',e=>{
