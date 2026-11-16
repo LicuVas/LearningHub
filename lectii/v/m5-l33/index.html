@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 33, clasa a V-a: Implementez structura alternativă. Evenimente și coliziuni</title>
+<meta name="description" content="Lecția 33, clasa a V-a: un eveniment nou, apăsarea pe personaj; decizia în blocuri, „dacă … atunci”; coliziunea cu marginea și cu alt personaj; ce se schimbă dacă lipsește condiția. Cu un Scratch simulat în pagină și un proiect de pornire de descărcat.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&family=Livvic:ital,wght@0,400;0,600;0,700;1,400&family=Kode+Mono:wght@500;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF4FA; --paper:#FFFFFF; --paper2:#F1F6FC; --line:#CFDDEC;
+  --ink:#16283A; --ink2:#4E6276; --accent:#1F63B5; --accentInk:#FFFFFF; --sel:#DCE9F8;
+  --mark:#FFE07A; --markInk:#16283A; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Sniglet","Segoe UI",system-ui,sans-serif; --fb:"Livvic","Segoe UI",system-ui,sans-serif; --fm:"Kode Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F1823; --paper:#16212E; --paper2:#1C2A3A; --line:#304357;
+  --ink:#E4EEF8; --ink2:#A6BACE; --accent:#7DB3F2; --accentInk:#0F1823; --sel:#24405F;
+  --mark:#EBC95C; --markInk:#16283A; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F1823; --paper:#16212E; --paper2:#1C2A3A; --line:#304357;
+  --ink:#E4EEF8; --ink2:#A6BACE; --accent:#7DB3F2; --accentInk:#0F1823; --sel:#24405F;
+  --mark:#EBC95C; --markInk:#16283A; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: blocuri de decizie, unul după altul */
+.banda{display:flex;align-items:center;gap:4px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent);font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-size:.72rem;font-weight:700;color:#fff}
+.banda .bk{flex:none;display:inline-block;padding:4px 9px;border-radius:5px;border:1px solid rgba(0,0,0,.18)}
+.banda .mv{background:#3373CC}
+.banda .ev{background:#FFBF00;color:#3A2A00}
+.banda .ct{background:#CF8B17}
+.banda .dt{background:#2E8EB8}
+h1,h2{font-weight:800;letter-spacing:0}
+h1 .acc{color:var(--accent)}
+code{font-family:var(--fm);font-size:.9em}
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:800;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.ss-static{display:block!important;margin:8px 0!important;max-width:100%;overflow-x:auto}
+.ss-static .ss-b{touch-action:auto;cursor:default}
+.ss-cap{margin:0 0 4px;font-size:.85rem;color:var(--ink2)}
+.stive{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:flex-start}
+.blk{display:inline-block;padding:1px 7px;border-radius:5px;color:#fff;font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-weight:700;font-size:.86em}
+.blk.mv{background:#3373CC}.blk.ev{background:#FFBF00;color:#3A2A00}.blk.ct{background:#CF8B17}.blk.dt{background:#2E8EB8}
+.captura.mica img{max-width:min(300px,100%)}
+.descarca{display:inline-flex;align-items:center;min-height:44px;line-height:1.25;padding:6px 14px;margin:4px 0;border-radius:10px;background:var(--accent);color:var(--accentInk);font-weight:700;text-decoration:none}
+.descarca:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/scratch.js"></script>
+<script src="../../_sim/scratch-conditie.js"></script>
+<script src="../../_sim/scratch-interfata.js"></script>
+<script src="../../_sim/scratch-evenimente.js"></script>
+<script>
+/* Lecția 33, clasa a V-a (M5, predare): „Implementez structura alternativă. Evenimente și coliziuni”.
+   Legea: _campaign\revizuire_completa_2026_09\00_GHID_LECTII.md. Sursele și probele: surse.md, _proba\.
+   Aplicația = Scratch 3, editorul online, în română, fără cont (ca la V/31, V/32, VI/18). Faptele sunt PROBATE în editorul viu (Chromium headless, profil temporar, fără cont, 09.11.2026):
+   _proba\live_v33.py → live_v33.json, _proba\live_lab.py → live_lab.json, _proba\live_lectie.py → live_lectie.json.
+   Simulatorul: lectii/_sim/scratch.js, scratch-conditie.js, scratch-interfata.js, doar FOLOSITE; extensia mea: lectii/_sim/scratch-evenimente.js.
+   Decizia lecției (motivul în surse.md): FĂRĂ blocul care repetă. Regula „dacă” stă sub evenimentul de apăsare: fiecare apăsare = o verificare.
+   Granița: NU repetiția, variabilele, scorul, jocul întreg (V/34). */
+SimScratchEvenimente.stil();
+const fig = (f, w, h, alt, cap, cls) => `<figure class="captura${cls ? ' ' + cls : ''}"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const ACUM = (...p) => `<div class="acum" role="note"><div class="lbl">Acum în Scratch, la calculator</div><ol>${p.map(x => `<li>${x}</li>`).join('')}</ol><p style="margin:.3em 0 0"><b>Pe telefon sau dacă nu merge:</b> sari peste; lucrezi în pagină.</p></div>`;
+const STIVA = (b, cap) => `<div class="ss ss-static" role="img" aria-label="Blocuri Scratch: ${b.map(x => SimScratch.text(x)).join(', ')}">${cap ? `<p class="ss-cap">${cap}</p>` : ''}<div class="ss-script" style="position:relative">${b.map(x => SimScratch.html(x)).join('')}</div></div>`;
+const deseneazaStive = () => document.querySelectorAll('.ss-static:not([data-d])').forEach(e => { if (!e.offsetWidth) return; e.dataset.d = '1'; SimScratch.deseneaza(e); });
+new MutationObserver(deseneazaStive).observe(document.documentElement, {childList: true, subtree: true});
+window.addEventListener('lh-pas', () => setTimeout(deseneazaStive, 0));
+
+const A = SimScratch.ajutor, E = SimScratchEvenimente;
+const NOTA = 'În pagină sunt doar blocurile de azi, iar pisica e desenată mai simplu. Mingea e alt personaj din proiect și o poți trage; în Scratch, după ce o tragi, zona de cod arată programul ei (apeși Sprite1, sub scenă). Aici, „cursorul mouse-ului” e mereu fals; în Scratch depinde unde e mouse-ul.';
+const m = n => ['mergi', n], M0 = ['mergi_la_xy', 0, 0], D90 = ['orienteaza', 90];
+const MARG = ['atinge_ob', 'marginea'], MING = ['atinge_ob', 'Minge'];
+const DACA = (c, ...g) => ['daca', Object.assign(c ? {s: {0: c}} : {}, {guri: [g]})];
+const H = (...b) => [{x: 14, y: 14, b: [['cand_personaj']].concat(b)}];
+const SUS = {nume: 'Minge', x: 100, y: 100};      // mingea în afara drumului, ca în proiectul de pornire
+const PORNIRE = (...b) => [{x: 14, y: 14, b: [['steag'], M0, D90]}, {x: 14, y: 170, b: [['cand_personaj'], m(50)].concat(b)}];
+const LINK = '<a class="descarca" href="pornire-33.sb3" download="pornire-33.sb3">Descarcă proiectul de pornire</a>';
+const PAL = ['cand_personaj', 'mergi', 'mergi_la_xy', 'daca', 'atinge_ob'];
+
+/* ---- testele judecă ce face programul la apăsări (E.serie, fără ecran), nu blocurile (regula 29) ---- */
+const LIPIT = {ce: 'Niciun bloc nu e lăsat deoparte', msg: 'Un bloc stă deoparte, nelipit: apăsarea pe pisică nu-l pornește. Lipește-l unde trebuie sau trage-l în paletă.', ok: (U, P) => A.libere(P).length === 0};
+/* prima apăsare la care pisica se întoarce în (0, 0), venind din alt loc; -1 dacă nu se întoarce */
+const intoarcere = (s) => s.findIndex((p, k) => p.x === 0 && p.y === 0 && k > 0 && s[k - 1].x !== 0);
+const merge = (P, o) => E.serie(P, 1, o)[0].x !== 0 || E.serie(P, 1, o)[0].y !== 0;
+const APASAT = n => ({ce: `Ai apăsat pe pisică de cel puțin ${n} ori, după ultima schimbare`, msg: `Apasă pe pisică, pe scenă (pe telefon, atinge-o), de ${n} ori, și privește x de sub scenă. Mingea acoperă pisica? Trage mingea într-o parte. Dacă schimbi programul, numărătoarea începe din nou.`, ok: (U, P, S) => S.clicuri >= n}) ;
+const MERGE = {ce: 'La prima apăsare, cu mingea departe, pisica merge', msg: 'La prima apăsare, pisica rămâne la x 0, chiar cu mingea departe. Verifică: „mergi” stă sub „când se dă click pe acest personaj”, cu numărul lui de la început; blocul de sub „dacă” stă în gură, nu în afara ei; condiția stă în locaș, nu în cerculețul lui „mergi”.', ok: (U, P) => merge(P, {minge: null})};
+const LA_MARGINE = {ce: 'La margine, pisica se întoarce la start', msg: 'Pisica nu se întoarce la x 0, y 0. Verifică cinci lucruri: „mergi” are numărul lui de la început; „dacă” stă sub „mergi”, nu deasupra; în locaș scrie „atinge marginea?”; în gură e „mergi la”; numerele din el sunt 0 și 0.', ok: (U, P) => intoarcere(E.serie(P, 8)) > 0};
+
+/* ---- „Acum în Scratch, la calculator” (laboratorul, după atelier): FĂRĂ profesor, pe calculatorul comun; fără cont.
+   Drumul literal, probat în editorul viu: _proba/live_lab.py → live_lab.json (fișierul încărcat, blocurile trase, lista, numerele, apăsările, salvarea). */
+const LAB = [
+  `<b>Proiectul de pornire, în Scratch.</b> Ai fila deschisă, de la casete, cu pisica și mingea? Rămâi în ea. Nu? ${LINK} Apoi, într-o filă nouă: <code>scratch.mit.edu/projects/editor</code>, <kbd>Enter</kbd>. Meniul e în engleză? <b>Settings</b> › <b>Language</b>, derulezi până la litera R, <b>Română</b>. <b>Fișier</b> › <b>Load from your computer</b>. În fereastra <b>Deschidere</b>: <b>Descărcări</b>, clic pe <b>pornire-33</b> (cel cu ora de acum), <b>Deschidere</b>. Întreabă „Replace contents…?” (înlocuiești proiectul)? <b>OK</b>. Nu merge sau nu se deschide? Jos, sub puncte, apasă <b>← Înapoi la atelier</b>, fă regula acolo și spune-i profesorului.`,
+  `<b>Ce e în proiect.</b>${fig('pornire.webp', 690, 478, 'Proiectul de pornire în Scratch: în zona de cod, un program sub steag și, încadrat (1), când se dă click pe acest personaj cu mergi 50 pași; pe scenă, pisica și mingea; sub scenă, dalele Sprite1 și Minge, încadrate (2)', 'Proiectul de pornire: 1. programul de la apăsare; 2. cele două personaje.')}Mingea e pe drum, de la casete? Trage-o sus, ca în poză. Nu vezi blocurile? Apasă <b>Sprite1</b>, sub scenă. Apasă steagul: sub scenă, x 0. Apasă o dată pe pisică: x 50.`,
+  '<b>Regula, sub „mergi 50 pași”.</b> O ai de la casete? Verifică: în locaș „atinge marginea?”, în gură „mergi la x 0 y: 0”. Nu o ai? Din <b>Control</b>, „dacă atunci” (nu „… ricoșează”, din Mișcare), lăsat peste marginea de jos a lui „mergi 50 pași”. Din <b>Detectare</b>, „atinge cursorul mouse-ului?”, în locaș; ▾ › <b>marginea</b>. Din <b>Mișcare</b>, „mergi la x … y: …”, în gură; scrie 0 și 0.',
+  '<b>Testează imediat.</b> Apasă steagul, apoi de 4 ori pe pisică. Sub scenă: x 50, x 100, x 150, x 0. La a 4-a ajunge la x 200, atinge marginea și sare la start: vezi doar x 0.',
+  '<b>Nu iese?</b> Întâi locașul: scrie altceva decât „atinge marginea?”? ▾ › <b>marginea</b>. E gol? Pune condiția. Apoi citește x. Rămâne 0 sau crește doar cu 1? Condiția a căzut în cerculețul lui „mergi” sau „mergi la” stă sub „dacă”: trage-le la locul lor. Sare prea devreme? Mingea e pe drum: trage-o sus. La a 4-a apăsare arată x 200? „dacă” stă deasupra lui „mergi”: pune-l sub el. Sare în alt loc, nu la x 0? Scrie 0 și 0 în „mergi la”. Apoi iar steagul și 4 apăsări.',
+  `<b>Scoate condiția.</b> Ai făcut asta la casete? Treci mai departe. Nu? Trage „atinge marginea?” pe un loc gol din zona de cod. Steagul, 5 apăsări: pisica nu se mai întoarce. Pune condiția la loc.${fig('fara-conditie.webp', 690, 478, 'Programul din Scratch cu locașul gol, încadrat; pe scenă, pisica trecută pe jumătate de marginea din dreapta; sub scenă, x 250, încadrat', 'Fără condiție, după 5 apăsări (două decupaje): locașul gol, x 250.')}`,
+  '<span class="mai-ai-timp"><b>Dacă mai ai timp:</b> ai făcut asta la casete? Treci mai departe. Nu? Apasă steagul: pisica revine la start. Trage mingea pe drumul ei, în dreapta ei. Zona de cod e goală? Apasă <b>Sprite1</b>, sub scenă. Sub primul „dacă”, încă un „dacă”, cu „atinge … ?” și ▾ › <b>Minge</b>, iar în gură „mergi la x … y: …” cu 0 și 0. Steagul, apoi apasă pe pisică până o atinge.</span>',
+  '<b>Salvează:</b> <b>Fișier</b> › <b>Salvează pe calculatorul tău</b>. Browserul întreabă unde? <b>Descărcări</b>, numele (clasa ta, liniuță, prenumele fără diacritice, ca <code>5A-Ana</code>, dar cu ale tale), <b>Salvare</b>. Nu întreabă? Explorer › <b>Descărcări</b> › <b>pornire-33</b> cu ora de acum (poate are o cifră în paranteză): <kbd>F2</kbd>, numele, <kbd>Enter</kbd>. Scrie că există deja? <b>Nu</b> (sau <b>Anulare</b>) și adaugi o cifră la sfârșitul numelui.',
+  '<b>Închide fila Scratch</b> cu <b>×</b>, doar pe ea: lecția rămâne deschisă. Browserul întreabă dacă pleci? Pleci.',
+  '<b>La sfârșitul orei (chiar dacă n-ai terminat):</b> fila Scratch e încă deschisă? Închide-o. Explorer › <b>Descărcări</b>, fișierele tale de azi: cel cu numele tău și <b>pornire-33</b> descărcat de tine, cu ora de acum (poate cu o cifră în paranteză). Clic pe fiecare, <kbd>Delete</kbd>. Alte pornire-33, fișierele colegilor și lucrările din alte lecții nu le atingi. Nu goli Coșul.'
+];
+
+JocMotor.porneste({
+  cheie: 'lectie_v_m5_l33',
+  mod: 'lectie',
+  titlu: 'Implementez structura alternativă. Evenimente și coliziuni',
+  marca: 'Lecția <b>33</b> · clasa a V-a',
+  h1: 'Implementez structura alternativă. <span class="acc">Evenimente și coliziuni</span>',
+  eticheta: 'Lecții TIC',
+  acasa: {href: '../../../hub/index.html', text: 'LearningHub'},
+  clasa: 'a V-a',
+  unitate: 'V-U6',
+  unitateTitlu: 'Din algoritm în joc: mediul grafic interactiv (Scratch)',
+  competente: ['CS.3.2'],
+  lectii: '33',
+  ancoraText: 'Programa (OMEN 3393/2017), clasa a V-a · unitatea V-U6 „Din algoritm în joc: mediul grafic interactiv (Scratch)” · lecția 33, predare · CS.3.2 „Implementarea unui algoritm care conţine structura secvenţială şi/sau alternativă într-un mediu grafic interactiv”, partea alternativă; cea secvențială e la lecția 32. Activitatea profesorului: elevii adaugă la un proiect o regulă de tipul „dacă atinge marginea, atunci...” și testează imediat efectul; ce se întâmplă dacă lipsește condiția.',
+  intro: '<p><b>Ai nevoie de:</b> lecția 29 (decizia: Dacă … atunci, condiția adevărată sau falsă); lecția 31 (Scratch: paleta, zona de cod, scena, steagul; salvezi proiectul); lecția 32 (mergi, schimbi numărul, „mergi la x 0 y: 0”, x și y sub scenă). Pentru sfârșitul orei: Explorer (lecțiile 9-11).</p>',
+  cum: '<b>Cum lucrezi</b><ol><li>Primul pas îl citești, apoi 5 pași cu exerciții în Scratch-ul din pagină.</li><li>Atelierul: două reguli pentru pisică.</li><li>La calculator: proiectul de pornire, în Scratch-ul adevărat (pe telefon, rămâi în pagină).</li><li>5 întrebări.</li></ol><p><b>Când mai sunt 10 minute din oră:</b> treci la întrebări; în Scratch-ul adevărat, ultimul punct (închizi fila, ștergi fișierele tale de azi).</p>',
+  banda: '<span class="bk ev">când se dă click pe acest personaj</span><span class="bk mv">mergi 50 pași</span><span class="bk ct">dacă</span><span class="bk dt">atinge marginea?</span><span class="bk ct">atunci</span>',
+  nivele: [
+{t: 'Implementez structura alternativă. Evenimente și coliziuni', final: true, lectii: [33],
+ continuturi: ['Modalități de reprezentare a structurilor secvențiale și alternative prin blocuri grafice'],
+ obiectiv: 'pornești un program cu un eveniment nou, adaugi o regulă „dacă atinge … , atunci …” și o încerci imediat, cu marginea scenei și cu alt personaj.',
+ pasi: [
+  /* ---- pasul 0: la ce folosește (fără acțiuni) ---- */
+  {t: 'La ce folosește: o regulă scrisă dinainte',
+   text: `<p>Un aspirator-robot curăță podeaua singur. Când dă de un perete, de obicei își schimbă drumul. Nu stă nimeni lângă el să-i spună asta: are o regulă, scrisă dinainte: <b>dacă</b> atinge ceva, <b>atunci</b> face altceva.</p>
+<p>Azi îi dai pisicii din Scratch o regulă ca asta. O încerci pe loc și vezi ce se schimbă dacă o parte din regulă lipsește.</p>
+${fig('aspirator-robot.webp', 480, 360, 'Un aspirator-robot rotund, portocaliu cu negru, pe o podea de lemn, lângă o mobilă albă', 'Un aspirator-robot, pe podea. <small>Foto: Mamirobothk, <a href="https://commons.wikimedia.org/wiki/File:Mopping_vacuum_cleaner_robotic.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC BY-SA 3.0; micșorată.</small>', 'mica')}`},
+  /* ---- pasul 1: evenimentul; întâi ce știe (steagul), apoi apăsarea pe personaj (merge și cu degetul) ---- */
+  {t: 'Evenimentul: ce pornește programul',
+   text: `<p>Știi deja: apeși steagul și pisica face blocurile de sub el. Apăsarea aceea e un <mark>eveniment</mark>: ceva ce se întâmplă și pornește un program.</p>
+<p>Un eveniment nou, tot din <b>Evenimente</b>, tot galben: <span class="blk ev">când se dă click pe acest personaj</span>. Programul de sub el pornește când apeși pe pisică, pe scenă (pe telefon, o atingi). Personajul e o figură de pe scenă: aici, pisica. Steagul nu pornește programul ăsta: pornește doar ce stă sub el.</p>`,
+   exemplu: `<div class="stive">${STIVA([['cand_personaj'], m(50)], 'Fiecare apăsare pe pisică: încă 50 de pași')}</div>
+${fig('paleta-eveniment.webp', 312, 67, 'Paleta Scratch, categoria Evenimente: blocul când se dă click pe acest personaj e încadrat cu roșu', 'În Scratch: bulina <b>Evenimente</b>, blocul încadrat.', 'mica')}
+${ACUM(`Descarcă proiectul de azi: ${LINK} Se duce în <b>Descărcări</b>.`, 'Într-o filă nouă: <code>scratch.mit.edu/projects/editor</code>, <kbd>Enter</kbd>. Meniul e în engleză? <b>Settings</b> › <b>Language</b>, derulezi până la litera R, <b>Română</b>.', `<b>Fișier</b> › <b>Load from your computer</b>. În fereastra <b>Deschidere</b>: <b>Descărcări</b>, clic pe <b>pornire-33</b> (cel cu ora de acum), <b>Deschidere</b>. Întreabă „Replace contents…?” (înlocuiești proiectul)? <b>OK</b>.${fig('fisier-load.webp', 274, 130, 'Meniul Fișier deschis, cu Nou, Load from your computer, încadrat cu roșu, și Salvează pe calculatorul tău', 'Meniul <b>Fișier</b>.', 'mica')}`, `Vezi pisica, mingea și două programe.${fig('pornire.webp', 690, 478, 'Proiectul de pornire în Scratch: în zona de cod, un program sub steag și, încadrat (1), când se dă click pe acest personaj cu mergi 50 pași; pe scenă, pisica și mingea; sub scenă, dalele Sprite1 și Minge, încadrate (2)', 'Proiectul de pornire (două decupaje lipite): 1. programul de la apăsare; 2. cele două personaje.')} Apasă pe pisică, pe scenă, de 2 ori: sub scenă, x 100. Lasă fila deschisă.`)}`,
+   altfel: `<p>E ca la o sonerie: sună când apeși pe buton, nu când vrea ea. Apăsarea e evenimentul, iar sunetul e programul.</p>`,
+   incearca: {t: 'eveniment', q: 'Fă un program care pornește când apeși pe pisică și o duce cu 50 de pași la fiecare apăsare. Trage blocurile în zona de cod (pe telefon: tragi cu degetul, întâi puțin spre dreapta, apoi unde vrei; numele blocului nu încape în paletă: cel cerut e al doilea bloc galben), scrie 50, apasă pe pisică de 2 ori și „Rulează testele”.',
+    paleta: ['steag', 'cand_personaj', 'mergi'], nota: NOTA, minge: SUS, clicuri: 2,
+    program: [],
+    teste: [LIPIT,
+     {ce: 'Programul pornește la apăsarea pe pisică, nu la steag', msg: 'Pisica nu merge când o apeși. Sub „când se dă click pe acest personaj” trebuie să stea „mergi”. Sub steag nu pornește la apăsare.', ok: (U, P) => merge(P)},
+     {ce: 'La fiecare apăsare: 50 de pași', msg: 'Pisica nu face 50 de pași la o apăsare. Schimbă numărul din „mergi”: clic pe el (pe telefon, atingi), scrii 50.', ok: (U, P) => { const s = E.serie(P, 2); return s[0].x === 50 && s[1].x === 100; }},
+     APASAT(2)],
+    solutie: H(m(50)),
+    gresit: [{x: 14, y: 14, b: [['steag'], m(50)]}],
+    ajutor: 'Din Evenimente, „când se dă click pe acest personaj”, pe un loc gol. Din Mișcare, „mergi 10 pași”, lipit sub el. Scrie 50. Apoi apasă pe pisică, nu pe steag.',
+    why: 'Ai schimbat evenimentul: programul pornește când apeși pe pisică. Fiecare apăsare îl pornește o dată, deci x crește cu 50 de fiecare dată.'},
+   inca: [
+    {t: 'eveniment', q: 'Programul pornește la steag. Fă-l să pornească la apăsarea pe pisică: pune blocul nou (pe telefon, al doilea bloc galben din paletă) și mută „mergi 30 pași” sub el. Trage steagul în paletă. Apoi apasă pe pisică o dată.',
+     paleta: ['steag', 'cand_personaj', 'mergi'], nota: NOTA, minge: SUS, clicuri: 1,
+     program: [{x: 14, y: 14, b: [['steag'], m(30)]}],
+     teste: [LIPIT,
+      {ce: 'Pornește la apăsare', msg: 'Pisica nu merge când o apeși: „mergi 30 pași” trebuie să stea sub „când se dă click pe acest personaj”.', ok: (U, P) => E.serie(P, 1)[0].x === 30},
+      APASAT(1)],
+     solutie: H(m(30)),
+     gresit: [{x: 14, y: 14, b: [['steag'], m(30)]}],
+     ajutor: 'Trage blocul nou pe un loc gol. Apoi trage „mergi 30 pași” și lasă-l sub el.',
+     why: 'Aceiași pași, alt eveniment: ce pornește programul se schimbă, ce face programul rămâne.'}
+   ]},
+  /* ---- pasul 2: decizia în blocuri: locașul, gura; o singură verificare ---- */
+  {t: 'Decizia, în blocuri: dacă … atunci',
+   text: `<p>La lecția 29 ai scris decizii în cuvinte: <b>Dacă</b> condiție <b>atunci</b> … În Scratch, decizia e un bloc din <b>Control</b>: <span class="blk ct">dacă ⬡ atunci</span>. Are două locuri:</p>
+<ul><li><mark>locașul</mark> cu șase colțuri: acolo stă condiția;</li>
+<li><mark>gura</mark>: blocurile din ea se fac doar dacă e adevărat ce scrie în locaș. E fals? Programul trece peste gură.</li></ul>
+<p>Programul verifică <b>o singură dată</b>, când ajunge la „dacă”. De aceea îl punem sub apăsare: fiecare apăsare, o verificare nouă. Deci azi pisica nu merge singură, ca robotul: face pași doar când o apeși.</p>`,
+   exemplu: `${fig('regula.webp', 690, 478, 'Programul din Scratch, după 3 apăsări: sub când se dă click pe acest personaj, mergi 50 pași, apoi dacă atinge marginea atunci, cu condiția încadrată (1) și mergi la x 0 y: 0 în gură, încadrat (2); pe scenă, pisica spre dreapta; sub scenă, x 150, încadrat (3)', 'În Scratch, după 3 apăsări (două decupaje lipite): 1. locașul, cu condiția; 2. gura; 3. x 150. A 4-a apăsare: x 200, atinge marginea, deci sare la x 0. Pe telefon, apasă poza ca s-o vezi mare.')}
+${fig('paleta-daca.webp', 312, 96, 'Paleta Scratch, categoria Control: blocul dacă atunci e încadrat cu roșu', 'Bulina <b>Control</b>: blocul încadrat.', 'mica')}
+${ACUM('Din <b>Control</b>, „dacă atunci”, lăsat peste marginea de jos a lui „mergi 50 pași”. În <b>Mișcare</b> e alt bloc, „dacă atinge marginea, ricoșează”: pe acela nu-l folosim.', 'Din <b>Mișcare</b>, „mergi la x … y: …”, în gură. Scrie 0 și 0.')}`,
+   altfel: `<p>E ca o regulă de acasă: „Dacă plouă, atunci iei umbrela.” Te uiți afară când ieși, nu toată ziua. Nu plouă? Pleci fără umbrelă. Ieși iar? Te uiți iar.</p>`,
+   incearca: {t: 'eveniment', q: 'Decizia e pusă, dar gura e goală. Pune în gură „mergi la x … y: …”, cu 0 și 0, ca pisica să sară la start când atinge marginea. Aici pisica face câte 70 de pași. Apasă pe ea de 3 ori, urmărește x sub scenă și „Rulează testele”.',
+    paleta: PAL, nota: NOTA, minge: SUS, clicuri: 3,
+    program: H(m(70), DACA(MARG)),
+    teste: [LIPIT, MERGE, LA_MARGINE, APASAT(3)],
+    solutie: H(m(70), DACA(MARG, M0)),
+    gresit: H(m(70), DACA(MARG), M0),
+    ajutor: 'Trage „mergi la x … y: …” și lasă-l în gura lui „dacă”, adică sub rândul portocaliu, spre dreapta. Numerele arată locul de acum al pisicii: atinge-le și scrie 0 și 0.',
+    why: 'La x 70 și la x 140, condiția e falsă: programul trece peste gură. La x 210 e adevărată: ce e în gură se face. Un bloc lăsat SUB „dacă”, nu în gură, s-ar face la fiecare apăsare.'},
+   inca: [
+    {t: 'eveniment', q: 'La lecția 29, decizia avea și „altfel”. În <b>Control</b> e și blocul „dacă atunci altfel”, cu două guri. Fă așa: când atinge marginea, pisica sare la start; altfel, spune „Salut!”. Din <b>Aspect</b> iei „spune Salut!”. Fiecare bloc, în gura lui. Apoi apasă pe pisică de 4 ori.',
+     paleta: ['cand_personaj', 'mergi', 'mergi_la_xy', 'spune', 'daca_altfel', 'atinge_ob'], nota: NOTA, minge: SUS, clicuri: 4,
+     program: H(m(50), ['daca_altfel', {s: {0: MARG}, guri: [[], []]}]),
+     teste: [LIPIT,
+      {ce: 'Când nu atinge marginea, spune „Salut!”', msg: 'La prima apăsare, pisica trebuie să spună „Salut!”. „spune Salut!” stă în gura de jos, cea de sub „altfel”.', ok: (U, P) => { const s = E.serie(P, 1)[0]; return s.spuse.length === 1 && s.x === 50; }},
+      {ce: 'Când atinge marginea, sare la start', msg: 'La a 4-a apăsare, pisica trebuie să sară la x 0, y 0. „dacă” stă sub „mergi”? „mergi la” cu 0 și 0 stă în gura de sus.', ok: (U, P) => { const r = E.serie(P, 4)[3]; return r.x === 0 && r.y === 0; }},
+      APASAT(4)],
+     solutie: H(m(50), ['daca_altfel', {s: {0: MARG}, guri: [[M0], [['spune', 'Salut!']]]}]),
+     gresit: H(m(50), ['daca_altfel', {s: {0: MARG}, guri: [[['spune', 'Salut!']], [M0]]}]),
+     ajutor: 'Gura de sus e ramura „atunci”, gura de jos e ramura „altfel”. Se face doar una dintre ele.',
+     why: 'Ca la lecția 29: condiția alege una dintre cele două ramuri; cealaltă nu se face.'}
+   ]},
+  /* ---- pasul 3: coliziunea cu marginea; condiția în locaș (cel mai greu gest) ---- */
+  {t: 'Coliziunea: atinge marginea?',
+   text: `<p><mark>Coliziune</mark> înseamnă că două lucruri de pe scenă se ating. Scratch o află cu un bloc din <b>Detectare</b>: <span class="blk dt">atinge … ?</span>. Are șase colțuri, ca locașul: e o condiție. Răspunsul e adevărat sau fals, chiar în clipa verificării.</p>
+<p>Din ▾ alegi ce atinge: <b>marginea</b> scenei. Pisica e lată, deci o atinge înainte ca mijlocul ei să ajungă la capăt: la x 200 o atinge, la x 150 nu.</p>`,
+   exemplu: `<div class="stive">${fig('paleta-atinge.webp', 312, 120, 'Paleta Scratch, categoria Detectare: blocul atinge cursorul mouse-ului e încadrat cu roșu', 'Bulina <b>Detectare</b>.', 'mica')}${fig('lista-atinge.webp', 256, 182, 'Lista deschisă a blocului atinge: cursorul mouse-ului, marginea, încadrată cu roșu, și Minge', 'Lista ▾: alegi <b>marginea</b>.', 'mica')}</div>
+<p>Lasă condiția chiar în locaș, nu mai sus. <b>Greșit:</b> a căzut în cerculețul lui „mergi”, în locul numărului, iar pisica nu mai face cei 50 de pași. Trage-o în locaș: numărul revine singur.</p>
+${fig('cerculet.webp', 326, 172, 'Greșeala din Scratch: mergi, cu atinge cursorul mouse-ului în locul numărului, încadrat; dedesubt, dacă atunci, cu locașul gol, încadrat', 'Greșit: condiția în cerculeț, locașul gol.', 'mica')}
+${ACUM('Din <b>Detectare</b>, „atinge cursorul mouse-ului?”, lăsat în locașul lui „dacă”. Din ▾, <b>marginea</b>.', 'Steagul, apoi 4 apăsări pe pisică. Citește x.')}`,
+   altfel: `<p>Ca atunci când mergi legat la ochi, cu mâna întinsă: mâna atinge peretele înainte să ajungi tu la el.</p>`,
+   incearca: {t: 'eveniment', q: 'Locașul e gol. Trage „atinge … ?” în locaș și alege <b>marginea</b> din ▾. Pe telefon: tragi din paletă întâi puțin spre dreapta, apoi lași blocul peste locaș; ▾ nu se vede? Trage zona de cod spre stânga, pe un loc gol. Aici pisica face câte 100 de pași: apasă pe ea de 2 ori și „Rulează testele”.',
+    paleta: PAL, nota: NOTA, minge: SUS, clicuri: 2,
+    program: H(m(100), DACA(null, M0)),
+    teste: [LIPIT,
+     {ce: 'În locaș e o condiție', msg: 'Locașul e gol. Trage acolo „atinge … ?”, din Detectare. Dacă a căzut în cerculețul lui „mergi”, trage-o de acolo în locaș.', ok: (U, P) => E.dacaDin(P).some(d => d.cond)},
+     {ce: 'Condiția e cea cerută', msg: 'În locaș nu scrie „atinge marginea?”. Apasă pe ▾ din el și alege marginea.', ok: (U, P) => E.dacaDin(P).some(d => d.cond === 'atinge marginea?')},
+     MERGE, LA_MARGINE, APASAT(2)],
+    solutie: H(m(100), DACA(MARG, M0)),
+    gresit: H(m(100), DACA(['atinge_ob', 'cursorul mouse-ului'], M0)),
+    ajutor: 'Locașul e în rândul portocaliu, între „dacă” și „atunci”. „atinge … ?” are și el șase colțuri: se lipește acolo. Apoi ▾ › marginea.',
+    why: 'Acum regula e întreagă: la fiecare apăsare, pisica merge și verifică dacă atinge marginea. La x 100, nu; la x 200, da: sare la start.'},
+   inca: [
+    {t: 'eveniment', q: 'Altă regulă: când atinge marginea, pisica se întoarce din drum. În gură, în locul lui „mergi la”, pune „rotește-te ↻ … grade” cu 180. Apasă pe pisică de 5 ori. Scratch o desenează cu capul în jos: așa se vede rotirea.',
+     paleta: ['cand_personaj', 'mergi', 'mergi_la_xy', 'roteste_dr', 'daca', 'atinge_ob'], nota: NOTA, minge: SUS, clicuri: 5,
+     program: H(m(50), DACA(MARG, M0)),
+     teste: [LIPIT,
+      {ce: 'După a 4-a apăsare, pisica se întoarce din drum', msg: 'La a 5-a apăsare trebuie să scrie x 150: pisica vine înapoi. În gură e doar „rotește-te ↻ 180 grade”.', ok: (U, P) => { const s = E.serie(P, 5); return s[3].x === 200 && s[4].x === 150; }},
+      APASAT(5)],
+     solutie: H(m(50), DACA(MARG, ['roteste_dr', 180])),
+     gresit: H(m(50), DACA(MARG, M0)),
+     ajutor: 'Trage „mergi la” din gură în paletă, apoi lasă în gură „rotește-te ↻ 15 grade” și scrie 180.',
+     why: 'Aceeași condiție, altă faptă: la margine, pisica se rotește de tot, deci următorul „mergi” o duce înapoi.'},
+    {t: 'eveniment', q: 'O condiție fără coliziune, cu o comparație ca la lecția 27: pisica sare la start când x e mai mare decât 100. Din <b>Operatori</b>, „( ) &gt; (50)”, în locaș. Din <b>Mișcare</b>, „poziția x” (x-ul de acum al pisicii), în prima căsuță a lui. În a doua căsuță scrie 100. Apasă pe pisică de 3 ori.',
+     paleta: ['cand_personaj', 'mergi', 'mergi_la_xy', 'pozitia_x', 'daca', 'mai_mare'], nota: NOTA, minge: SUS, clicuri: 3,
+     program: H(m(50), DACA(null, M0)),
+     teste: [LIPIT,
+      {ce: 'x 50 și x 100 nu sunt mai mari decât 100', msg: 'La primele 2 apăsări trebuie să scrie x 50 și x 100. Ce e în locaș? „poziția x”, în prima căsuță; 100, în a doua.', ok: (U, P) => { const s = E.serie(P, 2); return s[0].x === 50 && s[1].x === 100; }},
+      {ce: 'x 150 e mai mare decât 100: sare la start', msg: 'La a 3-a apăsare, pisica trebuie să sară la x 0. „dacă” stă sub „mergi”? Ce e în locaș? „poziția x”, în prima căsuță; 100, în a doua.', ok: (U, P) => { const s = E.serie(P, 3)[2]; return s.x === 0 && s.y === 0; }},
+      APASAT(3)],
+     solutie: H(m(50), DACA(['mai_mare', '', 100, {s: {0: ['pozitia_x']}}], M0)),
+     gresit: H(m(50), DACA(null, M0)),
+     ajutor: 'Întâi „( ) > (50)” în locaș. Apoi „poziția x” în prima lui căsuță, cea goală. Apoi scrii 100 în a doua.',
+     why: 'O condiție poate fi și o comparație: adevărată sau falsă, la fel ca „atinge marginea?”. Comparația se verifică și ea la fiecare apăsare.'}
+   ]},
+  /* ---- pasul 4: activitatea profesorului: ce se întâmplă dacă lipsește condiția (exercițiu + alegere, fără discuție) ---- */
+  {t: 'Dacă lipsește condiția',
+   text: `<p>Regula are două piese: condiția, care hotărăște, și gura, care face. Ce rămâne din regulă dacă lipsește prima?</p>
+<p>Încerci tu, apoi spui ce s-a schimbat față de regula întreagă, la care pisica sărea la start.</p>`,
+   exemplu: `<div class="stive">${STIVA([['cand_personaj'], m(50), DACA(MARG, M0)], 'Regula întreagă')}${STIVA([['cand_personaj'], m(50), DACA(null, M0)], 'Locașul gol')}</div>
+${ACUM('Trage „atinge marginea?” din locaș, pe un loc gol din zona de cod.', 'Steagul, apoi 5 apăsări pe pisică. Citește x.', 'Pune condiția înapoi, în locaș.')}`,
+   altfel: `<p>Gândește-te la „Dacă plouă, atunci iei umbrela”, dar fără „plouă”: „Dacă …, atunci iei umbrela”. Nu are ce să hotărască. Vezi în exercițiu ce face Scratch atunci.</p>`,
+   incearca: {t: 'eveniment', q: 'Scoate condiția din locaș (trage-o pe un loc gol din zona de cod sau în paletă). Gura rămâne cum e. Apasă steagul, apoi de 5 ori pe pisică, privește x, alege răspunsul și „Rulează testele”.',
+    paleta: PAL, nota: NOTA, minge: SUS, clicuri: 5,
+    program: PORNIRE(DACA(MARG, M0)),
+    alegere: {q: 'Ce s-a schimbat față de regula întreagă?', o: ['Pisica nu mai sare la start: x tot crește, trece de margine', 'Pisica sare la start la fiecare apăsare, deci x rămâne 0', 'Nu s-a schimbat nimic: la a 4-a apăsare tot sare la start', 'Scratch arată un mesaj de eroare, iar programul nu pornește'], ok: 0},
+    teste: [
+     {ce: 'Decizia și gura ei au rămas la locul lor', msg: 'Scoți doar condiția. „dacă”, cu „mergi la x 0 y: 0” în gură, rămâne sub „mergi”. L-ai scos? Pune-l la loc: din Control, „dacă”; în gură, „mergi la”, cu 0 și 0.', ok: (U, P) => { const d = E.dacaDin(P); return d.length === 1 && d[0].gura.join() === 'mergi_la_xy'; }},
+     {ce: 'Locașul e gol', msg: 'În locaș e încă o condiție. Trage-o afară, pe un loc gol din zona de cod.', ok: (U, P) => { const d = E.dacaDin(P); return d.length === 1 && d[0].cond === ''; }},
+     APASAT(5),
+     {ce: 'Ai spus ce s-a schimbat', msg: 'Alege, deasupra listei de teste, răspunsul care se potrivește cu ce ai văzut sub scenă.', ok: (U, P, S) => S.ales != null},
+     {ce: 'Răspunsul se potrivește cu ce s-a întâmplat', msg: 'Răspunsul nu se potrivește cu ce s-a întâmplat. Apasă steagul (pisica revine la start), apasă pe pisică de 5 ori și citește x după fiecare apăsare.', ok: (U, P, S) => S.ales === 'Pisica nu mai sare la start: x tot crește, trece de margine'}],
+    solutie: PORNIRE(DACA(null, M0)),
+    gresit: PORNIRE(DACA(MARG, M0)),
+    ajutor: 'Apucă „atinge marginea?” de cuvântul „atinge” și trage-l jos, sub program. Rămâne locașul gol. La 5 apăsări: x 50, 100, 150, 200, 250.',
+    why: 'Locașul gol e socotit fals, deci gura nu se face niciodată: fără condiție, regula nu mai lucrează.'},
+   inca: [
+    {t: 'eveniment', q: 'Altfel de „fără condiție”: scoate „mergi la x 0 y: 0” din gură și lasă-l peste marginea de jos a lui „mergi 50 pași”. Trage „dacă” în paletă. Apasă pe pisică de 3 ori și alege.',
+     paleta: PAL, nota: NOTA, minge: SUS, clicuri: 3,
+     program: H(m(50), DACA(MARG, M0)),
+     alegere: {q: 'Ce vezi la fiecare apăsare?', o: ['x rămâne 0: pisica merge și sare înapoi la start, de fiecare dată', 'x crește cu 50, ca la un program fără „mergi la”, până atinge marginea', 'Pisica sare la start doar la a 4-a apăsare, când atinge marginea', 'Pisica nu mai pornește, pentru că a dispărut decizia din program'], ok: 0},
+     teste: [LIPIT,
+      {ce: 'Decizia nu mai e în program', msg: 'Trage „dacă” în paletă, după ce ai scos „mergi la” din gura lui.', ok: (U, P) => E.dacaDin(P).length === 0},
+      {ce: 'Programul sare la start la fiecare apăsare', msg: '„mergi la x 0 y: 0” trebuie să stea chiar sub „mergi 50 pași”.', ok: (U, P) => E.serie(P, 3).every(p => p.x === 0 && p.y === 0)},
+      APASAT(3),
+      {ce: 'Răspunsul se potrivește cu ce s-a întâmplat', msg: 'Alege varianta care se potrivește cu ce arată x sub scenă, la fiecare apăsare.', ok: (U, P, S) => S.ales === 'x rămâne 0: pisica merge și sare înapoi la start, de fiecare dată'}],
+     solutie: H(m(50), M0),
+     gresit: H(m(50), DACA(MARG, M0)),
+     ajutor: 'Trage „mergi la” din gură și lasă-l peste marginea de jos a lui „mergi 50 pași”: intră chiar sub el, deasupra lui „dacă”. Apoi trage „dacă” în paletă.',
+     why: 'Fără „dacă”, blocul se face mereu. Deci locașul gol: niciodată; fără „dacă”: mereu; cu condiție: doar când e adevărată.'}
+   ]},
+  /* ---- pasul 5: coliziunea cu alt personaj ---- */
+  {t: 'Coliziunea cu alt personaj',
+   text: `<p>Pe scenă e și mingea: tot un personaj, cu poza ei mică sub scenă, <b>Minge</b>. Fiindcă există, lista ▾ din „atinge … ?” o are și pe ea.</p>
+<p>Regula e aceeași, cu altă condiție: <b>dacă</b> atinge Minge?, <b>atunci</b> … Când ajung să se atingă? Depinde de cât sunt de late: pisica la x 100 atinge mingea de la x 150; la x 50, nu.</p>
+<p>Mingea o poți trage pe scenă. Pisica nu: apăsată, ea pornește programul.</p>`,
+   exemplu: `${fig('minge-atinge.webp', 480, 372, 'Scena din Scratch, în decupaje lipite: sus, pisica la x 50 și mingea la x 150, cu loc între ele; jos, pisica la x 100, lipită de minge, încadrată; dedesubt, dalele Sprite1 și Minge, cu Minge încadrată', 'Scena (trei decupaje lipite): pisica la x 50; pisica la x 100; poza mică a mingii.')}
+${ACUM(`Apasă steagul: pisica revine la start. Trage mingea pe drumul ei, în dreapta ei. Zona de cod e goală? Arată programul mingii: apasă <b>Sprite1</b>, sub scenă.${fig('minge-selectata.webp', 690, 179, 'După ce tragi mingea: în stânga, zona de cod goală; în dreapta, dala Minge e selectată, iar dala Sprite1 e încadrată cu roșu', 'După ce tragi mingea: apasă poza încadrată.')}`, 'Sub primul „dacă”, lasă încă un „dacă”. În locaș, „atinge … ?”, ▾ › <b>Minge</b>. În gură, „mergi la x … y: …”, cu 0 și 0.', 'Steagul, apoi apasă pe pisică până o atinge.')}`,
+   altfel: `<p>E ca la „leapșa”: te-a atins colegul, atunci se schimbă rolurile. Regula e aceeași, indiferent unde pe teren vă atingeți.</p>`,
+   incearca: {t: 'eveniment', q: 'Mingea stă pe drumul pisicii, la x 180. Regula întreabă de margine, deci pisica trece prin minge. Schimbă condiția din ▾, ca pisica să sară la start când atinge mingea. Apoi apasă pe pisică de 2 ori și „Rulează testele”.',
+    paleta: PAL, nota: NOTA, minge: {nume: 'Minge', x: 180, y: 0}, clicuri: 2,
+    program: H(m(60), DACA(MARG, M0)),
+    teste: [LIPIT,
+     {ce: 'Condiția întreabă de minge', msg: 'În locaș nu scrie „atinge Minge?”. Apasă pe ▾ din el și alege Minge.', ok: (U, P) => E.dacaDin(P).some(d => d.cond === 'atinge Minge?')},
+     MERGE,
+     {ce: 'Când atinge mingea, pisica sare la start', msg: 'Pisica nu sare la start lângă minge. „mergi” are tot 60 de pași? „dacă” stă sub el? În gură e „mergi la” cu 0 și 0? (Testul socotește mingea la x 180, chiar dacă ai mutat-o.)', ok: (U, P) => { const s = E.serie(P, 2, {minge: {x: 180, y: 0}}); return s[0].x === 60 && s[1].x === 0 && s[1].y === 0; }},
+     APASAT(2)],
+    solutie: H(m(60), DACA(MING, M0)),
+    gresit: H(m(60), DACA(MARG, M0)),
+    ajutor: 'Apasă pe ▾ din „atinge marginea?”, nu pe bloc. Pe telefon, dacă nu vezi ▾, trage zona de cod spre stânga, pe un loc gol.',
+    why: 'Aceeași formă de regulă, altă coliziune. Pisica o atinge pe minge la a doua apăsare, deci sare la start.'}}
+ ],
+ atelier: {t: 'eveniment', titlu: 'Două reguli pentru pisică',
+  intro: `<p><strong>Sarcina:</strong> programele sunt ca în proiectul de pornire: steagul duce pisica la start; apăsarea pe pisică o duce 50 de pași. Adaugi sub „mergi 50 pași” două reguli, una sub alta:</p>
+<p><b>1.</b> Dacă atinge marginea, atunci sare la start. <b>2.</b> Dacă atinge mingea, atunci sare la start.</p>
+<p>Încearcă imediat: steagul, apoi apasă pe pisică. Apoi trage mingea pe drumul ei și încearcă iar. Testele își socotesc singure mingea și nu cer o anumită ordine a regulilor.</p>`,
+  q: 'Adaugă cele două reguli.',
+  paleta: PAL, nota: NOTA, minge: SUS, clicuri: 2,
+  program: PORNIRE(),
+  teste: [LIPIT, MERGE,
+   {ce: 'Regula 1: la margine, la start', msg: 'Fără minge pe drum, pisica nu sare la start la a 4-a apăsare, când atinge marginea. „mergi” are tot 50 de pași? Pune sub el un „dacă”, nu în gura altuia, cu „atinge marginea?” și „mergi la” cu 0 și 0 în gură.', ok: (U, P) => { const s = E.serie(P, 8, {minge: {x: 100, y: 100}}); return intoarcere(s) === 3; }},
+   {ce: 'Regula 2: la minge, la start', msg: 'Cu mingea pe drum (la x 150, y 0), pisica nu sare la start când o atinge. „mergi” are tot 50 de pași? Pune sub el al doilea „dacă”, nu în gura primului, cu ▾ › Minge și „mergi la” cu 0 și 0 în gură.', ok: (U, P) => { const s = E.serie(P, 2, {minge: {x: 150, y: 0}}); return s[0].x === 50 && s[1].x === 0 && s[1].y === 0; }},
+   APASAT(2)],
+  solutie: PORNIRE(DACA(MARG, M0), DACA(MING, M0)),
+  gresit: PORNIRE(DACA(MARG, M0), DACA(MARG, M0)),
+  ajutor: 'Sub „mergi 50 pași”, lasă un „dacă” peste marginea de jos a lui. Al doilea „dacă”, lăsat puțin mai jos de marginea de jos a primului, spre stânga. A intrat în gură? Trage-l de acolo, sub primul. În fiecare locaș, „atinge … ?”, fiecare cu alt ▾. În fiecare gură, „mergi la” cu 0 și 0.',
+  why: 'La fiecare apăsare, programul verifică ambele reguli, una după alta.',
+  inca: [
+   {t: 'eveniment', q: 'Pisica privește în sus (Direcția 0), iar mingea e deasupra ei, la y 150. Pune regula: când atinge mingea, sare la start. Apasă pe pisică până se întâmplă.',
+    paleta: PAL, nota: NOTA, minge: {nume: 'Minge', x: 0, y: 150}, personaj: {nume: 'Sprite1', x: 0, y: 0, directie: 0}, clicuri: 2,
+    program: H(m(50)),
+    teste: [LIPIT,
+     {ce: 'Când atinge mingea, sare la start', msg: 'Pisica nu sare la start când atinge mingea. Sub „mergi 50 pași”: „dacă”, cu „atinge Minge?” în locaș și „mergi la” cu 0 și 0 în gură.', ok: (U, P) => { const s = E.serie(P, 2, {x: 0, y: 0, directie: 0, minge: {x: 0, y: 150}}); return s[0].y === 50 && s[1].y === 0; }},
+     APASAT(2)],
+    solutie: H(m(50), DACA(MING, M0)),
+    gresit: H(m(50), DACA(MARG, M0)),
+    ajutor: 'E regula de la pasul <i>Coliziunea cu alt personaj</i> (pasul 6 din 6), altă direcție. Regula nu ține de direcție.',
+    why: 'Regula merge în orice direcție: contează doar dacă se ating.'}
+  ]},
+ qs: [
+  {t: 'choice', q: `Pisica e la x 0. Programul ei e cel de mai jos; sub steag nu e nimic. Apeși steagul de 2 ori, apoi pe pisică o dată. Ce x arată sub scenă?${STIVA([['cand_personaj'], m(30)])}`,
+   o: ['x 30', 'x 90', 'x 0', 'x 60'], ok: 0,
+   why: 'Steagul pornește doar ce stă sub el, deci aici nimic. Apăsarea pe pisică pornește programul o dată: 30 de pași.'},
+  {t: 'eveniment', q: 'Pisica se întoarce la start la fiecare apăsare, deci nu ajunge nicăieri. Mută un singur bloc, ca regula să lucreze: pisica să sară la start doar când atinge marginea.',
+   paleta: PAL, nota: NOTA, minge: SUS,
+   program: H(m(40), DACA(MARG), M0),
+   teste: [MERGE, {ce: 'La margine, pisica se întoarce la start', msg: 'Pisica nu se întoarce la start la margine. „dacă” stă sub „mergi”? „mergi la x 0 y: 0” stă în gura lui?', ok: (U, P) => intoarcere(E.serie(P, 8)) > 0}],
+   solutie: H(m(40), DACA(MARG, M0)),
+   gresit: H(m(40), DACA(MARG), M0),
+   why: 'Sub „dacă”, blocul se face mereu. În gură, doar când condiția e adevărată.'},
+  {t: 'choice', q: `Pisica e în mijlocul scenei, la x 0. Apeși o dată steagul. Ce face?${STIVA([['steag'], DACA(MARG, M0)])}`,
+   o: ['Nimic: nu atinge marginea în clipa verificării', 'Merge până atinge marginea, apoi sare la start', 'Așteaptă să ajungă la margine, apoi sare la start', 'Sare la start, apoi merge până la marginea scenei'], ok: 0,
+   why: 'Programul verifică o singură dată, când ajunge la „dacă”. Atunci pisica e în mijloc: condiția e falsă, iar programul s-a terminat.'},
+  {t: 'choice', q: 'Un coleg a scos condiția din locașul lui „dacă”. În gură a rămas „mergi la x 0 y: 0”. Când se face blocul din gură?',
+   o: ['Niciodată: locașul gol e socotit fals', 'La fiecare apăsare: fără condiție nu mai are ce-l opri', 'Doar când pisica atinge marginea scenei, ca înainte', 'Doar prima dată când pornește programul, apoi niciodată'], ok: 0,
+   why: 'Locașul gol e socotit fals, deci gura nu se face.'},
+  {t: 'eveniment', q: 'Mingea e la x 200, pe drumul pisicii. Pisica trebuie să sară la start când atinge mingea, dar regula întreabă de altceva. Repară.',
+   paleta: PAL, nota: NOTA, minge: {nume: 'Minge', x: 200, y: 0},
+   program: H(m(50), DACA(['atinge_ob', 'cursorul mouse-ului'], M0)),
+   teste: [MERGE, {ce: 'Când atinge mingea, sare la start', msg: 'Pisica nu sare la start când atinge mingea. „dacă” stă sub „mergi”? Ce scrie în locaș? Alege Minge din ▾.', ok: (U, P) => { const s = E.serie(P, 3, {minge: {x: 200, y: 0}}); return s[0].x === 50 && s[1].x === 100 && s[2].x === 0 && s[2].y === 0 && E.dacaDin(P).some(d => d.cond === 'atinge Minge?'); }}],
+   solutie: H(m(50), DACA(MING, M0)),
+   gresit: H(m(50), DACA(['atinge_ob', 'cursorul mouse-ului'], M0)),
+   why: 'Din ▾ alegi cu ce se atinge pisica. Ai ales mingea: la x 150 o atinge.'}
+ ]}
+  ],
+  tipuri: {eveniment: E.tipuri.eveniment},
+  aplicatieReala: {aplicatie: 'Scratch, în browser, pe calculatorul din laborator', titlu: 'Acum în Scratch, la calculator', scurt: 'Scratch',
+    intro: '<p>Regula, în Scratch-ul adevărat, fără cont (cam 14 minute; cu casetele făcute, cam 5). <b>Când mai sunt 10 minute din oră:</b> sari la ultimul punct.</p><details class="verif"><summary>Pe telefon sau fără calculator</summary><p>Rămâi în pagină: ai făcut regula la atelier. Nu descărca fișierul. Nimic de salvat sau de șters.</p></details>',
+    pasi: LAB},
+  diploma: {
+    titlu: 'Regula pisicii',
+    rezumat: 'a pornit un program cu un eveniment nou, apăsarea pe personaj; a pus o decizie în blocuri, „dacă … atunci”, cu condiția în locaș; a folosit coliziunea cu marginea și cu alt personaj; a văzut ce se schimbă dacă lipsește condiția',
+    aplicatie: 'Scratch, în browser, pe calculatorul din laborator',
+    provocare: LAB
+  }
+});
+</script>
+</body>
+</html>

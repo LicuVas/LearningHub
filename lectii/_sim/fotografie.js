@@ -64,6 +64,7 @@ const CSS=`
 .foto-pin i.c3,.foto-chips .nr.c3{background:#6A1B9A}
 .foto-pin i.c4,.foto-chips .nr.c4{background:#2E7D32}
 .foto-credit{font-size:.8rem;color:var(--ink2);margin:4px 0 0;line-height:1.35}
+.foto-credit a{white-space:nowrap}
 .foto-teste{margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--paper2)}
 .foto-teste ol{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:4px}
 .foto-teste li{display:flex;gap:8px;align-items:flex-start;font-size:.93rem;line-height:1.35}

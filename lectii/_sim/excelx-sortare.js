@@ -338,6 +338,10 @@ function inVedere(cont,el,stanga){const cb=cont.getBoundingClientRect(),eb=el.ge
 function derulari(body){const ctx=CTX.get(body),w=body.querySelector('#xwrap');if(!ctx||!w)return;
   const D=ctx.der||(ctx.der={tabs:null,banda:{},fila:null});
   const tabs=w.querySelector('.rb .tabs'),banda=w.querySelector('.pg-banda'),on=w.querySelector('.rb .tabs [data-tab].on'),fila=on?on.dataset.tab:'';
+  /* 10.11.2026: ↶ ↷ lipite în stânga (sticky) stau peste filele derulate sub ele (Home, Insert, cu bara pornită la Data).
+     inVedere() știa de ele („lip”), browserul nu: scroll-padding cât lățimea lor, ca derularea până la o filă
+     (scrollIntoView, focusul cu Tab) s-o aducă lângă ele, nu sub ele */
+  if(tabs){const q=tabs.querySelector('.qat');tabs.style.scrollPaddingInlineStart=q&&getComputedStyle(q).position==='sticky'?(Math.ceil(q.getBoundingClientRect().width)+6)+'px':''}
   if(tabs){if(D.tabs==null){const t=tabs.querySelector('[data-tab="data"]');if(t)inVedere(tabs,t)}else tabs.scrollLeft=D.tabs;D.tabs=tabs.scrollLeft}
   if(banda){if(fila==='data'&&D.fila!=='data'){const b=banda.querySelector('[data-so="asc"]'),g=b&&b.closest('.pg-grup');if(g)inVedere(banda,g,true)}
     else if(D.banda[fila]!=null)banda.scrollLeft=D.banda[fila];

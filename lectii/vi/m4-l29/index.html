@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 29, clasa a VI-a: Scenariul unei animații: compoziție, cadre, obiecte animate</title>
+<meta name="description" content="Lecția 29, clasa a VI-a: înainte de calculator, planul animației. Scenariul și storyboardul, cadrul și compoziția, obiectele animate; șase căsuțe în caiet, pentru o idee a ta, citite de un coleg; ce corespunde în Scratch; apoi primele două căsuțe, în Scratch simulat în pagină și în Scratch online, fără cont.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Code:wght@500;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#F7F2E7; --paper:#FFFFFF; --paper2:#FBF7EE; --line:#E5DAC2;
+  --ink:#27231B; --ink2:#615A4B; --accent:#8A5A00; --accentInk:#FFFFFF; --sel:#FFE9B8;
+  --mark:#FFE07A; --markInk:#27231B; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Baloo 2","Segoe UI",system-ui,sans-serif; --fb:"Nunito Sans","Segoe UI",system-ui,sans-serif; --fm:"Fira Code",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#17140E; --paper:#221D14; --paper2:#2B251A; --line:#4A402D;
+  --ink:#F2EBDD; --ink2:#C8BDA6; --accent:#E9B95C; --accentInk:#17140E; --sel:#4A3A1B;
+  --mark:#EBC95C; --markInk:#27231B; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#17140E; --paper:#221D14; --paper2:#2B251A; --line:#4A402D;
+  --ink:#F2EBDD; --ink2:#C8BDA6; --accent:#E9B95C; --accentInk:#17140E; --sel:#4A3A1B;
+  --mark:#EBC95C; --markInk:#27231B; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: șase căsuțe pe o foaie */
+.banda{display:flex;align-items:center;gap:5px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent)}
+.banda .cs{flex:none;display:inline-block;width:30px;height:21px;border:2px solid var(--ink2);border-radius:3px;background:#fff;color:#27231B;font-size:.7rem;font-weight:700;line-height:17px;text-align:center}
+h1,h2{font-weight:800;letter-spacing:0}
+h1 .acc{color:var(--accent)}
+code{font-family:var(--fm);font-size:.9em}
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:800;color:var(--accent);margin-bottom:2px}
+.acum ol,.acum ul{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.blk{display:inline-block;padding:1px 7px;border-radius:5px;color:#fff;font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-weight:700;font-size:.86em}
+.blk.ev{background:#FFBF00;color:#3A2A00}.blk.mv{background:#3373CC}.blk.lk{background:#774DCB}
+figure.captura img{max-width:100%;height:auto}
+.duo{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.duo figure{flex:1 1 150px;min-width:0;margin:6px 0}
+.harta{border-collapse:collapse;width:100%;margin:8px 0;font-size:.95em}
+.harta th,.harta td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+.harta th{background:var(--paper2)}
+span.mai-ai-timp{color:var(--ink2)}   /* „Dacă mai ai timp”: nu intră în timpul obligatoriu (S42; R1) */
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/scratch.js"></script>
+<script src="../../_sim/scratch-interfata.js"></script>
+<script src="../../_sim/scenariu-casute.js"></script>
+<script>
+/* Lecția 29, clasa a VI-a (M4, predare): „Scenariul unei animații: compoziție, cadre, obiecte animate”. Legea: 00_GHID_LECTII.md.
+   Activitatea profesorului = scheletul: storyboard pe hârtie, șase căsuțe, idee proprie; un coleg spune ce nu înțelege; abia apoi calculatorul.
+   Aplicația = Scratch 3 online, fără cont (contractul m5_noapte_08_11, decizia 4). Faptele: _proba/live_vi29.py (editorul viu, headless) + VI/18.
+   Simulatoarele: scratch.js și scratch-interfata.js (nemodificate) + scenariu-casute.js (NOU, proprietar VI/29).
+   Granița: NU interfața (VI/27), ciclul de depanare (VI/28), proprietățile (VI/30), temporizarea (VI/31), tastele (VI/32), notarea (VI/34-35). */
+const SC = ScenariuCasute;
+const fig = (f, w, h, alt, cap) => `<figure class="captura"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const ACUM = (lbl, ...p) => `<div class="acum" role="note"><div class="lbl">${lbl}</div><ol>${p.map(x => `<li>${x}</li>`).join('')}</ol></div>`;
+const A = SimScratch.ajutor;
+const PAL = ['steag', 'mergi_la_xy', 'spune_sec'];
+const NOTA = 'Aici sunt doar blocurile de azi și 6 decoruri; pisica e desenată mai simplu.';
+/* R1 (M1, M2, J1-m2, J1-m3): ce VEDE elevul la steag. Fiecare „spune”, cu locul pisicii și câte cadre (30 = 1 s) stă balonul
+   în același loc: până la alt loc, alt balon sau sfârșitul rulării. Un „spune” cu text gol nu pune balon (nu apare în listă);
+   unul „pentru 0 secunde” stă 0 cadre (în Scratch, balonul dispare imediat). START = de unde pornește pisica la test.
+   Structura e judecată separat, ca la VI/19: un singur bloc galben, cu blocuri sub el, și nimic deoparte. */
+const START = {x: 150, y: 0, directie: 90}, SE_VEDE = 15;
+const spuse = U => {
+  const ev = U.evenimente || [], S = [];
+  let p = [START.x, START.y];
+  ev.forEach((e, i) => {
+    if (e.tip === 'poz') p = e.valoare;
+    if (e.tip !== 'spune') return;
+    const urm = ev.slice(i + 1).find(f => f.tip === 'spune' || (f.tip === 'poz' && (f.valoare[0] !== p[0] || f.valoare[1] !== p[1])));
+    S.push({x: p[0], y: p[1], text: e.valoare, cadre: (urm ? urm.cadru : U.cadre) - e.cadru});
+  });
+  return S;
+};
+
+/* ---- storyboardurile-exemplu (desene ale autorului, cu cod) ---- */
+const COPAC = ['copac', 30, 98];
+const FLUTURE = [
+ {desen: {f: 'parc', alt: 'Pisica lângă copac; sus, în dreapta, un fluture', ob: [COPAC, ['pisica', 75, 102], ['fluture', 128, 42]]}, text: 'Pisica stă lângă copac. Sus zboară un fluture.'},
+ {desen: {f: 'parc', alt: 'Fluturele e acum mai jos, aproape de pisică', ob: [COPAC, ['pisica', 75, 102], ['fluture', 104, 66]]}, text: 'Fluturele coboară spre pisică.'},
+ {desen: {f: 'parc', alt: 'Pisica s-a mutat spre dreapta și ridică laba spre fluture', ob: [COPAC, ['pisica', 108, 102, {laba: true}], ['fluture', 136, 62]]}, text: 'Pisica fuge după fluture și ridică laba.'},
+ {desen: {f: 'parc', alt: 'Fluturele e în copac; pisica a rămas în dreapta', ob: [COPAC, ['pisica', 108, 102], ['fluture', 36, 50]]}, text: 'Fluturele zboară în copac.'},
+ {desen: {f: 'parc', alt: 'Pisica sub copac spune Hei!', ob: [COPAC, ['pisica', 68, 102], ['fluture', 36, 50], ['balon', 90, 62, {t: 'Hei!'}]]}, text: 'Pisica ajunge sub copac și strigă.'},
+ {desen: {f: 'parc', alt: 'Fluturele e sus, departe; pisica spune Pa!', ob: [COPAC, ['pisica', 68, 102], ['fluture', 136, 30], ['balon', 90, 62, {t: 'Pa!'}]]}, text: 'Fluturele pleacă. Pisica rămâne sub copac.'}
+];
+const MUNTE = ['munte', 128, 68], SOARE = ['soare', 58, 34];
+const BARCA = [
+ {id: 'b1', desen: {f: 'lac', alt: 'Barca la stânga, pe lac; soarele sus; în spate un munte', ob: [MUNTE, SOARE, ['barca', 34, 92]]}, text: 'Barca plutește încet pe lac. Soarele e sus.'},
+ {id: 'b2', desen: {f: 'lac', alt: 'Barca la mijlocul lacului; soarele sus', ob: [MUNTE, SOARE, ['barca', 82, 92]]}, text: 'Barca ajunge la mijlocul lacului.'},
+ {id: 'b3', desen: {f: 'lac', alt: 'Barca la mijloc; un nor gri iese de după munte', ob: [MUNTE, SOARE, ['barca', 82, 92], ['nor', 122, 34, {gri: true}]]}, text: 'De după munte iese un nor mare.'},
+ {id: 'b4', desen: {f: 'lac', alt: 'Norul gri acoperă soarele; plouă peste barca de la mijloc', ob: [MUNTE, SOARE, ['barca', 82, 92], ['nor', 48, 38, {gri: true, s: 1.2}], ['ploaie', 76, 62]]}, text: 'Norul acoperă soarele. Începe să plouă.'},
+ {id: 'b5', desen: {f: 'lac', alt: 'Plouă; barca merge spre stânga, o săgeată arată drumul', ob: [MUNTE, SOARE, ['nor', 48, 38, {gri: true, s: 1.2}], ['barca', 56, 92], ['sageata', 34, 100, {dx: -22}]]}, text: 'Barca se întoarce repede spre mal.'},
+ {id: 'b6', desen: {f: 'lac', alt: 'Fără nor; soarele sus, barca la stânga', ob: [MUNTE, SOARE, ['barca', 24, 92]]}, text: 'Norul a plecat. Soarele iese din nou.'}
+];
+const CASA = ['casa', 122, 102], POM = ['copac', 22, 98, {s: .8}];
+/* R1 (M3 = J1-M1): copacul e în toate căsuțele, pisica (întoarsă spre stânga) stă în dreapta mingii și o lovește spre copac;
+   numai căsuța 4 sare (pisica, deodată, pe acoperiș). Proba: _proba/proba_mingea.py. */
+const MINGEA = [
+ {id: 'n1', desen: {f: 'parc', alt: 'Un copac la stânga, o casă la dreapta; în fața casei, pisica privește spre stânga, spre o minge', ob: [POM, CASA, ['pisica', 104, 102, {flip: true}], ['minge', 76, 102]]}, text: 'Pisica, lângă casă, vede o minge.'},
+ {id: 'n2', desen: {f: 'parc', alt: 'Pisica a venit lângă minge și ridică laba spre ea', ob: [POM, CASA, ['pisica', 92, 102, {flip: true, laba: true}], ['minge', 68, 102]]}, text: 'Pisica lovește mingea cu laba.'},
+ {id: 'n3', desen: {f: 'parc', alt: 'Mingea s-a rostogolit spre stânga, lângă copac; o săgeată arată drumul; pisica a rămas pe loc', ob: [POM, CASA, ['pisica', 92, 102, {flip: true}], ['minge', 44, 102], ['sageata', 70, 95, {dx: -16}]]}, text: 'Mingea se rostogolește spre copac.'},
+ {id: 'n4', desen: {f: 'parc', alt: 'Pisica e sus, pe acoperișul casei', ob: [POM, CASA, ['pisica', 122, 62, {flip: true}], ['minge', 44, 102]]}, text: 'Pisica stă pe acoperișul casei.'},
+ {id: 'n5', desen: {f: 'parc', alt: 'Pisica de pe acoperiș spune O văd!', ob: [POM, CASA, ['pisica', 122, 62, {flip: true}], ['minge', 44, 102], ['balon', 88, 34, {t: 'O văd!'}]]}, text: 'Pisica vede mingea de acolo.'},
+ {id: 'n6', desen: {f: 'parc', alt: 'Pisica pe jos, lângă minge', ob: [POM, CASA, ['pisica', 66, 102, {flip: true}], ['minge', 44, 102]]}, text: 'Pisica coboară și ajunge la minge.'}
+];
+const FLOAREA = [
+ {id: 'f1', desen: {f: 'parc', alt: 'Un omuleț pune o sămânță în pământ', ob: [['omulet', 62, 102], ['samanta', 92, 100]]}, text: 'Omulețul pune o sămânță în pământ.'},
+ {id: 'f2', desen: {f: 'parc', alt: 'Un nor; plouă peste sămânță', ob: [['nor', 92, 40, {gri: true}], ['ploaie', 92, 62], ['samanta', 92, 100]]}, text: 'Plouă peste sămânță.'},
+ {id: 'f3', desen: {f: 'parc', alt: 'Din pământ a ieșit o frunză mică', ob: [['frunza', 92, 100], ['soare', 56, 34]]}, text: 'Din pământ iese o frunză mică.'},
+ {id: 'f4', desen: {f: 'parc', alt: 'În locul frunzei e o floare', ob: [['floare', 92, 100], ['soare', 56, 34]]}, text: 'Frunza crește și se face floare.'},
+ {id: 'f5', desen: {f: 'parc', alt: 'Omulețul lângă floare, cu brațele sus', ob: [['omulet', 62, 102, {brate: 'sus'}], ['floare', 92, 100], ['soare', 56, 34]]}, text: 'Omulețul vede floarea și se bucură.'}
+];
+
+/* ---- laboratorul: FĂRĂ profesor, pe calculatorul comun; caietul lângă tastatură ---- */
+const LAB = [
+  '<b>Pune caietul lângă tastatură</b>, deschis la storyboard. Azi faci în Scratch doar căsuța 1 și, dacă mai ai timp, căsuța 2. Pisica ține locul personajului tău, oricum l-ai desenat.',
+  '<code>scratch.mit.edu</code> › <b>Creează</b>; meniul e în engleză? <b>Settings</b> › <b>Language</b> › <b>Română</b>; apoi <b>X</b> la filmuleț.',
+  '<b>Decorul căsuței 1.</b> Sub panoul <b>Scenă</b>, butonul rotund (<b>Alege un Decor</b>): apasă chiar pe el, nu pe butoanele mici care apar. O fereastră cu fișiere? <b>Anulare</b>. Alege imaginea cea mai apropiată de desenul tău (sau oricare). Vezi: scena are alt fundal.',
+  '<b>Locul din căsuța 1.</b> Trage pisica pe scenă, unde e personajul în desen. Din <b>Evenimente</b>, primul bloc galben, „când se dă click pe ⚑”. Din <b>Mișcare</b>, „mergi la x … y: …”, lipit sub el: vine cu numerele locului de acum. Din <b>Aspect</b>, „spune Salut! pentru 2 secunde”, lipit sub el; în locul lui Salut! scrie ce vrei să spună. Paleta scrie „Scena selectată”? Apasă pe <b>Sprite1</b>, sub scenă.',
+  '<b>Steagul verde.</b> Vezi: pisica stă la locul din căsuța 1 (e deja acolo, deci nu se mișcă), cu fundalul ales, și vorbește. Altceva? Compară programul cu pasul <i>Obiectele animate și ce sunt ele în Scratch</i> (pasul 4 din 6).',
+  '<span class="mai-ai-timp"><b>Dacă mai ai timp (opțional): căsuța 2.</b> Trage pisica unde e în căsuța 2. La capătul programului lipești încă un „mergi la x … y: …” și încă un „spune … pentru 2 secunde”. Decorul îl lași la fel. Steagul: vezi cele două momente, pe rând.</span>',
+  '<b>Fișier</b> › <b>Salvează pe calculatorul tău</b>. Browserul întreabă unde? Folderul tău, numele <code>Scenariu_</code>, clasa și numele tău (de exemplu <code>Scenariu_6A_Popescu</code>), <b>Salvare</b>. Numele există deja? <b>Nu</b> (sau <b>Anulare</b>), adaugă prenumele, <b>Salvare</b>. Sari la punctul 9.',
+  'Nu te-a întrebat? Explorer › <b>Descărcări</b>: fișierul <b>Proiect Scratch</b> cel mai nou (cu ora de acum; poate cu (1)). <kbd>F2</kbd>, <code>Scenariu_</code>, clasa și numele tău, <kbd>Enter</kbd>; <b>Decupare</b>, folderul tău, <b>Lipire</b>. Există deja? E al unui coleg: <b>Se omite acest fișier</b>, adaugă prenumele, mută-l din nou.',
+  'Închide fila Scratch (te întreabă dacă pleci? Pleci: ai salvat).',
+  '<b>La sfârșitul orei</b> (chiar dacă n-ai terminat): închide fila Scratch. Nu ștergi nimic din folderul tău și nu atingi fișierele colegilor. <b>Caietul îl păstrezi:</b> îți trebuie la mini-proiect (lecția 34) și la evaluare (lecția 35). Dacă fișierul de azi nu mai e atunci, refaci căsuțele după caiet.'
+];
+
+JocMotor.porneste({
+  cheie: 'lectie_vi_m4_l29',
+  mod: 'lectie',
+  titlu: 'Scenariul unei animații: compoziție, cadre, obiecte animate',
+  marca: 'Lecția <b>29</b> · clasa a VI-a',
+  h1: 'Scenariul unei animații: <span class="acc">compoziție, cadre, obiecte animate</span>',
+  eticheta: 'Lecții TIC',
+  acasa: {href: '../../../hub/index.html', text: 'LearningHub'},
+  clasa: 'a VI-a',
+  unitate: 'VI-U4',
+  unitateTitlu: 'Animații grafice și modele 3D',
+  competente: ['CS.1.2', 'CS.3.2', 'CS.3.3'],
+  lectii: '29',
+  ancoraText: 'Programa (OMEN 3393/2017), clasa a VI-a · unitatea VI-U4 „Animații grafice și modele 3D” · lecția 29, predare · conținutul „Scenariul unei animații: compoziție, cadre, obiecte animate”. Activitatea profesorului: storyboard pe hârtie, în șase căsuțe, citit de un coleg; abia apoi calculatorul. Aplicația: Scratch 3, editorul online scratch.mit.edu, fără cont.',
+  intro: '<p><b>Ai nevoie de:</b> caiet și creion; lecția 18 (Scratch: blocurile, steagul, „mergi la x … y: …”, „spune … pentru 2 secunde”, salvarea); lecția 27 (costumele și butonul <b>Alege un Decor</b>).</p>',
+  cum: '<b>Cum lucrezi</b><ol><li>Trei pași scurți, cu exerciții (cam 12 minute).</li><li>În caiet: șase căsuțe, pentru ideea ta (11 minute). Pagina nu vede caietul.</li><li>Cineva îl citește și spune ce nu înțelege (5 minute).</li><li>Atelierul și Scratch la calculator: doar primele căsuțe (cam 10 minute).</li><li>5 întrebări, pentru stele (cam 5 minute).</li></ol><p><b>Pe telefon:</b> Scratch-ul îl faci doar în pagină.</p><p><b>Când mai sunt 10 minute din oră:</b> salvezi și închizi fila Scratch, dacă ai deschis-o, și treci la întrebări: din pași, cu <b>Știu deja — la verificare</b>, sus; din atelier și din Scratch, cu butoanele de jos, până la <b>La verificare</b>. Căsuțele nedesenate le termini când poți.</p>',
+  banda: '<span class="cs">1</span><span class="cs">2</span><span class="cs">3</span><span class="cs">4</span><span class="cs">5</span><span class="cs">6</span>',
+  nivele: [
+{t: 'Scenariul unei animații: compoziție, cadre, obiecte animate', final: true, lectii: [29],
+ continuturi: ['Scenariul unei animații: compoziție, cadre, obiecte animate'],
+ obiectiv: 'faci planul unei animații: șase căsuțe în caiet, pentru o idee a ta, cu ce se vede în fiecare și ce se mișcă; cineva îl citește și spune ce nu înțelege; apoi faci primele căsuțe în Scratch.',
+ pasi: [
+  /* ---- P0: la ce folosește (fără acțiuni) ---- */
+  {t: 'La ce folosește: planul de dinaintea animației',
+   text: `<p>Înainte de un film sau de o animație, cei care o fac o desenează pe hârtie, în căsuțe. Așa văd dacă povestea se înțelege, înainte să lucreze la calculator.</p>
+<p>Azi faci la fel, pentru o idee a ta: șase căsuțe, în caiet. Abia apoi treci la calculator, și doar cu primele căsuțe.</p>
+${fig('storyboard-creion.webp', 760, 524, 'O foaie desenată cu creionul: șase căsuțe pe două rânduri, cu oameni desenați simplu și câte două rânduri scrise sub fiecare căsuță', 'Plan desenat cu creionul, în șase căsuțe (scrisul e în spaniolă): simplu, și e destul. <small>Desen: Iván López Fuente, <a href="https://commons.wikimedia.org/wiki/File:Storyboard_-_Iv%C3%A1n_L%C3%B3pez_Fuente.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>; decupată și micșorată, aceeași licență.</small>')}`},
+  /* ---- P1: scenariul, storyboardul ---- */
+  {t: 'Scenariul și storyboardul',
+   text: `<p><mark>Scenariul</mark> spune ce se întâmplă într-o animație, pe rând, de la început până la sfârșit. Îl faci înainte să deschizi aplicația: așa știi ce ai de făcut.</p>
+<p><mark>Storyboardul</mark> (se citește „stóri-bord”) e scenariul desenat pe căsuțe: un desen mic pentru fiecare moment, în ordine, cu o propoziție sub el.</p>`,
+   exemplu: `<p>Un storyboard în șase căsuțe, „Pisica și fluturele”. Citește-l pe rând:</p>${SC.banda(FLUTURE)}`,
+   altfel: `<p>E ca o bandă desenată: citești căsuțele pe rând și înțelegi povestea, chiar dacă desenele sunt simple.</p>`,
+   incearca: {t: 'casute_ordine', q: 'Căsuțele despre barcă s-au amestecat. Pune-le în ordine. Atingi o căsuță (pe calculator: clic), apoi locul ei: cele două își schimbă locul.',
+    casute: BARCA, start: ['b3', 'b1', 'b6', 'b2', 'b5', 'b4'], ordine: ['b1', 'b2', 'b3', 'b4', 'b5', 'b6'],
+    prim: 'Pe locul 1 trebuie altă căsuță: aceea în care povestea abia începe și încă n-a apărut nicio problemă.',
+    ajutor: 'Citește propozițiile. Norul nu poate acoperi soarele înainte să apară.', why: 'Ordinea vine din poveste: barca merge liniștită, apare norul, plouă, barca se întoarce, iar la sfârșit iese soarele.'},
+   inca: [
+    {t: 'choice', q: `Lipsește o căsuță între cele două de mai jos. Care?${SC.banda([FLUTURE[0], FLUTURE[2]], {coloane: 2})}`,
+     o: ['Fluturele coboară spre pisică.', 'Pisica ajunge sub copac și strigă.', 'Fluturele pleacă pentru totdeauna.', 'Pisica doarme lângă copac.'], ok: 0,
+     ajutor: 'Pisica fuge după fluture, deci fluturele a ajuns aproape de ea.', why: 'Fără căsuța asta nu se înțelege de ce fuge pisica deodată spre dreapta.'}
+   ]},
+  /* ---- P2: cadrul, compoziția ---- */
+  {t: 'Cadrul și compoziția',
+   text: `<p>O căsuță din storyboard e un <mark>cadru</mark>: ce se vede într-un singur moment, ca o fotografie din animație. O animație adevărată are mult mai multe cadre; în storyboard desenezi doar pe cele care spun povestea.</p>
+<p><mark>Compoziția</mark> înseamnă ce pui într-un cadru și unde: ce e în fundal, ce obiecte sunt, unde stă fiecare, cine e mare și cine e mic.</p>`,
+   exemplu: `<p>Același moment, cu două compoziții. În prima abia găsești pisica și fluturele; în a doua le vezi imediat. Ce e important pui mai mare, la vedere.</p>${SC.banda([
+     {desen: {f: 'parc', alt: 'Copac foarte mare în mijloc; pisica foarte mică, într-un colț', ob: [['copac', 62, 104, {s: 1.8}], ['pisica', 140, 104, {s: .5}], ['fluture', 150, 72, {s: .5}]]}, text: 'Pisica e mică, într-un colț.'},
+     {desen: {f: 'parc', alt: 'Copac mic la stânga; pisica mare în mijloc; fluturele lângă ea', ob: [['copac', 22, 96, {s: .85}], ['pisica', 84, 104, {s: 1.4}], ['fluture', 132, 42, {s: 1.2}]]}, text: 'Pisica e mare, la mijloc.'}
+   ], {coloane: 2})}`,
+   altfel: `<p>Gândește-te la o fotografie de clasă: compoziția e cine stă în față, cine în spate și ce se vede în fundal.</p>`,
+   incearca: {t: 'casute_compozitie', q: 'Fă acest cadru: <b>copacul în stânga</b>, <b>soarele sus</b>, <b>pisica jos, în dreapta</b>. Atingi un nume, apoi un loc din cadru (pe calculator: clic).',
+    f: 'parc', obiecte: [{id: 'copac', o: 'copac', nume: 'Copacul', s: .85}, {id: 'soare', o: 'soare', nume: 'Soarele'}, {id: 'pisica', o: 'pisica', nume: 'Pisica'}],
+    teste: [
+     {ce: 'Copacul e în stânga', msg: 'Copacul nu e în coloana din stânga. Atinge „Copacul”, apoi un loc din stânga cadrului.', ok: S => S.loc.copac.c === 0},
+     {ce: 'Soarele e sus', msg: 'Soarele nu e pe rândul de sus. Atinge „Soarele”, apoi un loc de sus.', ok: S => S.loc.soare.r === 0},
+     {ce: 'Pisica e jos, în dreapta', msg: 'Pisica nu e în colțul de jos din dreapta. Atinge „Pisica”, apoi acel colț.', ok: S => S.loc.pisica.c === 2 && S.loc.pisica.r === 2}],
+    solutie: {copac: [0, 2], soare: [1, 0], pisica: [2, 2]}, gresit: {copac: [0, 2], soare: [1, 0], pisica: [1, 2]},
+    ajutor: 'Sunt 9 locuri: trei rânduri și trei coloane. Primul loc atins pentru un obiect se poate schimba oricând.', why: 'Așa arată o compoziție spusă în cuvinte: ce obiecte sunt și unde stă fiecare.'},
+   inca: [
+    {t: 'casute_compozitie', q: 'Alt cadru: <b>norul sus, în stânga</b>, <b>muntele în dreapta</b>, <b>barca jos, la mijloc</b>.',
+     f: 'lac', obiecte: [{id: 'nor', o: 'nor', nume: 'Norul'}, {id: 'munte', o: 'munte', nume: 'Muntele', s: .8}, {id: 'barca', o: 'barca', nume: 'Barca'}],
+     teste: [
+      {ce: 'Norul e sus, în stânga', msg: 'Norul nu e în colțul de sus din stânga. Atinge „Norul”, apoi acel colț.', ok: S => S.loc.nor.c === 0 && S.loc.nor.r === 0},
+      {ce: 'Muntele e în dreapta', msg: 'Muntele nu e în coloana din dreapta. Atinge „Muntele”, apoi un loc din dreapta.', ok: S => S.loc.munte.c === 2},
+      {ce: 'Barca e jos, la mijloc', msg: 'Barca nu e jos, la mijloc. Atinge „Barca”, apoi locul de jos din coloana din mijloc.', ok: S => S.loc.barca.c === 1 && S.loc.barca.r === 2}],
+     solutie: {nor: [0, 0], munte: [2, 1], barca: [1, 2]}, gresit: {nor: [2, 0], munte: [2, 1], barca: [1, 2]},
+     ajutor: 'Coloana din stânga, coloana din mijloc, coloana din dreapta; rândul de sus, cel din mijloc, cel de jos.', why: 'Ai pus fiecare obiect unde cerea cadrul.'}
+   ]},
+  /* ---- P3: obiectele animate, harta spre Scratch ---- */
+  {t: 'Obiectele animate și ce sunt ele în Scratch',
+   text: `<p>Compară căsuțele vecine, pe rând. Ce se mută sau arată altfel, măcar o dată, e un <mark>obiect animat</mark>. Ce rămâne la fel în toate căsuțele stă pe loc, în fundal.</p>
+<p>În Scratch, cuvântul „cadru” nu apare pe ecran. Cadrul de pe hârtie e, în Scratch, un moment din rularea programului: ce decor e pe scenă, unde stă personajul și ce costum are. (În jocul „Misiunea Cadru”, cadrele pisicii erau costumele ei; aici, cadrul are și decorul, și locul.)</p>
+<table class="harta"><tr><th>Pe hârtie</th><th>În Scratch</th></tr>
+<tr><td>Obiectul animat</td><td>Un <b>personaj</b>. S-a mutat? Are alt x și y. Arată altfel? Are alt <b>costum</b>.</td></tr>
+<tr><td>Fundalul căsuței</td><td><b>Decorul</b> scenei.</td></tr>
+<tr><td>Cadrul</td><td>Un <b>moment</b> din rulare.</td></tr></table>`,
+   exemplu: `${fig('fila-costume.webp', 330, 240, 'Fila Costume din editor: două desene ale pisicii, costume1 și costume2', 'Fila <b>Costume</b>: două desene ale aceleiași pisici, deci două costume.')}
+<p>Programul acesta are două momente. Pisica stă în primul cât vorbește, cam 2 secunde:</p>
+${fig('program-casute.webp', 243, 195, 'Programul din editor: când se dă click pe steag, mergi la x -120 y -40, spune Bună! pentru 2 secunde, mergi la x 120 y -40, spune Am ajuns! pentru 2 secunde', 'Captură din Scratch.')}
+<div class="duo">${fig('moment-1.webp', 360, 271, 'Scena: pisica la stânga spune Bună!, pe cer albastru cu dealuri', 'Primul moment: x −120.')}${fig('moment-2.webp', 360, 271, 'Scena: pisica la dreapta spune Am ajuns!, pe același fundal', 'Al doilea moment: x 120, același decor.')}</div>`,
+   altfel: `<p>La teatru, decorul e pânza din spate, actorul e personajul, iar costumul e cum arată actorul: cu mâna jos e un costum, cu mâna sus e altul. Un cadru e ce vezi dacă faci o fotografie a scenei.</p>`,
+   incearca: {t: 'casute_obiect', q: 'Compară cele două căsuțe vecine. Alege pentru fiecare ce s-a întâmplat cu el între ele.',
+    a: {f: 'parc', alt: 'Căsuța 1: copac la stânga, soare sus, pisica la mijloc cu laba jos, fluture sus în dreapta', ob: [['copac', 30, 98], ['soare', 88, 32], ['pisica', 82, 102], ['fluture', 136, 40]]},
+    b: {f: 'parc', alt: 'Căsuța 2: copac la stânga, soare sus, pisica la mijloc cu laba ridicată, fluture mai jos, în stânga pisicii', ob: [['copac', 30, 98], ['soare', 88, 32], ['pisica', 82, 102, {laba: true}], ['fluture', 58, 62]]},
+    obiecte: [{id: 'copac', nume: 'Copacul', ok: 'pe_loc'}, {id: 'soare', nume: 'Soarele', ok: 'pe_loc'}, {id: 'fluture', nume: 'Fluturele', ok: 'mutat'}, {id: 'pisica', nume: 'Pisica', ok: 'altfel'}],
+    gresit: {copac: 'pe_loc', soare: 'pe_loc', fluture: 'mutat', pisica: 'mutat'},
+    ajutor: 'Pune degetul pe un obiect în căsuța 1, apoi caută-l în căsuța 2: e în același loc? Arată la fel?', why: 'Fluturele are alt loc: în Scratch, alt x și y. Pisica e pe loc, dar și-a ridicat laba: alt costum. Copacul și soarele stau la fel; dacă rămân așa în toate căsuțele, țin de decor.'},
+   inca: [
+    {t: 'classify', q: 'Vrei să se vadă asta în animație. Ce schimbi în Scratch?', cats: ['Decorul', 'Costumul personajului', 'Locul personajului (x și y)'],
+     items: [['Tot fundalul se face deșert', 0], ['Pisica ajunge în dreapta scenei', 2], ['Pisica ține ochii închiși', 1], ['Pădurea se schimbă cu un castel', 0], ['Pisica urcă spre marginea de sus', 2], ['Pisica ridică laba', 1]],
+     ajutor: 'Fundalul e al scenei. Cum arată pisica ține de ea; unde stă se vede la x și y.', why: 'Decorul e fundalul, costumul e cum arată personajul, x și y spun unde stă.'}
+   ]},
+  /* ---- P4: în caiet ---- */
+  {t: 'Storyboardul tău, în caiet',
+   text: `<p>Alege o idee a ta: un personaj și ceva ce i se întâmplă. Una singură, scurtă. N-ai idee? Ia una: „Câinele își caută mingea” sau „Pisica vrea peștele de pe masă”.</p>
+<p>Desenezi șase căsuțe. Prima arată începutul, ultima sfârșitul. Personajele le faci <mark>omuleți din bețe</mark> (în engleză, stick figure): un cerc pentru cap și linii pentru corp, mâini și picioare. Nu e un concurs de desen: contează să se înțeleagă.</p>
+<p>Sub fiecare căsuță scrii o propoziție: ce se întâmplă. Cu o săgeată arăți ce se mută.</p>`,
+   exemplu: `<p>Așa arată foaia. Prima căsuță e un exemplu; celelalte așteaptă:</p>${SC.banda([
+     {desen: {f: 'alb', alt: 'O căsuță desenată simplu: omuleț din bețe, o minge și o săgeată care arată spre dreapta', ob: [['omulet', 50, 96], ['minge', 76, 96], ['sageata', 90, 88, {dx: 34}]]}, text: 'Ana lovește mingea.'},
+     {desen: {f: 'alb', alt: 'Căsuță goală'}, text: '…'}, {desen: {f: 'alb', alt: 'Căsuță goală'}, text: '…'},
+     {desen: {f: 'alb', alt: 'Căsuță goală'}, text: '…'}, {desen: {f: 'alb', alt: 'Căsuță goală'}, text: '…'}, {desen: {f: 'alb', alt: 'Căsuță goală'}, text: '…'}], {coloane: 2})}
+${ACUM('Acum, în caiet (și dacă ești pe telefon): 11 minute',
+  '<b>1 minut:</b> scrie ideea într-o singură propoziție.',
+  '<b>1 minut:</b> împarte o pagină în șase, cu mâna, fără riglă (sau ia fișa de storyboard, dacă ai primit): o linie de sus în jos, două de-a curmezișul. Propoziția o scrii jos, în căsuță.',
+  '<b>Cel mult un minut și jumătate pe căsuță.</b> Desen rapid, propoziție, săgeată dacă se mută ceva. Te uiți la ceas: după atât treci la următoarea, chiar dacă nu e gata.')}`,
+   altfel: `<p>E ca o listă de cumpărături desenată: trebuie să înțelegi ce scrie, nu să fie frumoasă.</p>`,
+   incearca: {t: 'choice', q: 'Sub căsuța asta scrii o singură propoziție. Care ajută cel mai mult pe cineva care nu știe povestea?' + SC.banda([FLUTURE[1]], {coloane: 2, fara_numere: true}).replace('<figcaption>Fluturele coboară spre pisică.</figcaption>', ''),
+    o: ['Fluturele se apropie de pisică.', 'Aici am desenat foarte frumos.', 'Asta e a doua căsuță din șase.', 'Vezi desenul și îți dai seama.'], ok: 0,
+    ajutor: 'Propoziția spune ce se întâmplă în acel moment.', why: 'Celelalte vorbesc despre desen sau despre foaie, nu despre ce se întâmplă în poveste.'},
+   inca: [
+    {t: 'choice', q: 'Au trecut 6 minute și ești tot la căsuța 1: desenezi fiecare fir de iarbă. Ce faci?',
+     o: ['Treci la căsuța 2: cerc, linii și o propoziție', 'Termini iarba, apoi vezi cât timp mai ai', 'Ștergi tot și o iei de la capăt, cu alt desen', 'Lași restul căsuțelor goale; prima contează'], ok: 0,
+     ajutor: 'Sunt șase căsuțe, cu cel mult un minut și jumătate pe fiecare.', why: 'Povestea se înțelege din toate căsuțele; o căsuță foarte frumoasă nu ține locul celorlalte.'}
+   ]},
+  /* ---- P5: citit de altcineva ---- */
+  {t: 'Citit de altcineva',
+   text: `<p>Tu știi povestea, deci nu vezi ce lipsește. Cineva care n-o știe vede.</p>
+<p>Dă-i caietul unui coleg și nu-i explica nimic. El citește căsuțele pe rând și spune unde nu înțelege. Tu doar notezi.</p>
+<p>Apoi repari o singură dată: scrii o propoziție mai clară sau adaugi lângă o căsuță în plus. Nu o iei de la capăt.</p>`,
+   exemplu: `${ACUM('Acum, cam 5 minute',
+     'Colegul citește și răspunde, la căsuțele pe care nu le înțelege: <b>Ce se întâmplă aici? Ce se mișcă? Cum s-a ajuns aici din căsuța de dinainte?</b>',
+     'Notezi lângă căsuță ce a spus. Apoi faci același lucru pentru storyboardul lui.')}
+<p><b>N-ai un coleg lângă tine?</b> Nu e nevoie de profesor. Alege una:</p>
+<ul><li>citește-ți singur căsuțele, încet, cu voce mică, și răspunde la cele trei întrebări;</li><li>citește-le mâine, ca și cum le-ar fi făcut altcineva;</li><li>scrie în caiet o singură întrebare („Ce crezi că se întâmplă în căsuța 4?”) și pune-o mai târziu cuiva.</li></ul>`,
+   altfel: `<p>E ca atunci când explici drumul spre casa ta: tu îl știi pe de rost, dar abia cel care îl urmează află unde te-ai încurcat.</p>`,
+   incearca: {t: 'casute_neclar', q: 'Ești colegul care citește. La ce căsuță te-ai opri, pentru că nu știi cum s-a ajuns acolo? Atinge-o (pe calculator: clic).',
+    casute: MINGEA, ok: 'n4',
+    dece: {n1: 'Căsuța 1 se înțelege: e începutul, pisica și mingea se văd.', n2: 'Căsuța 2 se înțelege: pisica era lângă minge și acum o lovește.', n3: 'Căsuța 3 se înțelege: pisica tocmai a lovit mingea, iar săgeata arată că mingea se rostogolește spre copac.', n5: 'Căsuța 5 urmează firesc după cea de dinainte. Caută mai devreme.', n6: 'Căsuța 6 spune chiar ce s-a întâmplat: pisica a coborât.'},
+    ajutor: 'Compară fiecare căsuță cu cea de dinainte: se vede cum s-a ajuns aici?', why: 'Pisica era pe jos, iar deodată e pe acoperiș. O căsuță în plus sau o propoziție (de ce s-a urcat, cum) ar lămuri lucrurile.'},
+   inca: [
+    {t: 'choice', q: 'Colegul spune: „Nu înțeleg de ce e pisica pe acoperiș.” Ce faci?',
+     o: ['Scrii sau desenezi ce lipsește acolo', 'Îi explici tu și lași caietul cum e', 'Desenezi acoperișul mai frumos', 'Ștergi tot și începi altă poveste'], ok: 0,
+     ajutor: 'Cel care vede animația nu te are lângă el, să-i explici.', why: 'Lipsa o repari pe hârtie, o singură dată, fără s-o iei de la capăt.'}
+   ]}
+ ],
+ atelier: {t: 'scena', titlu: 'Primele două căsuțe, în Scratch simulat',
+  intro: `<p>Faci primele două căsuțe din storyboardul „În pădure”. Pisica are două momente, în același decor:</p>
+${SC.banda([
+  {desen: {f: 'parc', alt: 'Pisica în stânga, printre copaci; spune Unde e?', ob: [['copac', 136, 98], ['copac', 104, 98, {s: .7}], ['pisica', 34, 102], ['balon', 54, 62, {t: 'Unde e?'}]]}, text: 'Căsuța 1: în stânga, spune ceva.'},
+  {desen: {f: 'parc', alt: 'Pisica în dreapta, lângă copaci; spune Uite-l!', ob: [['copac', 136, 98], ['copac', 104, 98, {s: .7}], ['pisica', 92, 102], ['balon', 62, 62, {t: 'Uite-l!'}]]}, text: 'Căsuța 2: în dreapta, spune altceva.'}], {coloane: 2})}
+<ol><li>Butonul <b>Alege un Decor</b>: pune decorul <b>Forest</b>.</li>
+<li>Trage pisica în jumătatea din stânga a scenei. Din <b>Evenimente</b>, blocul galben; sub el, „mergi la x … y: …” (vine cu locul de acum al pisicii); sub el, „spune … pentru 2 secunde”.</li>
+<li>Trage pisica în jumătatea din dreapta. Lipește la capăt încă un „mergi la x … y: …” și încă un „spune … pentru 2 secunde”.</li>
+<li>Apasă steagul verde și privește cele două momente.</li></ol>
+<p><strong>La sfârșit:</strong> „Rulează testele”. Textul din „spune” poate fi oricare.</p>`,
+  q: 'Pe telefon: blocul din paletă îl tragi întâi puțin spre dreapta, apoi unde vrei. Nu trebuie să scrii numere: le aduce blocul.',
+  paleta: PAL, program: [], pasCuPas: false, nota: NOTA,
+  teste: [
+   {ce: 'Pe scenă e decorul Forest', msg: 'Apasă butonul Alege un Decor, apoi Forest.', ok: (U, P, S) => S.decor === 'Forest'},
+   {ce: 'Programul pornește de la blocul galben', msg: 'Niciun bloc nu e lipit sub blocul galben „când se dă click pe ⚑” (sau blocul lipsește), deci la steag nu pornește nimic. Ia-l din Evenimente, dacă nu-l ai, și lipește sub el blocurile de la punctele 2 și 3. Paleta e acoperită? Apasă pe Sprite1.', ok: (U, P) => A.cuSteag(P).some(sc => sc.b.length > 1)},
+   {ce: 'Un singur bloc galben', msg: 'În zona de cod sunt mai multe blocuri galbene: la steag, toate pornesc deodată. Lasă unul singur: blocurile de sub celelalte le lipești la capătul primului program (tragi primul bloc de sub blocul galben; vin și cele de sub el), apoi tragi în paletă blocul galben rămas singur.', ok: (U, P) => A.cuSteag(P).length <= 1},
+   {ce: 'Niciun bloc nu stă deoparte', msg: 'Un grup de blocuri stă deoparte, nelipit sub blocul galben: la steag nu se execută. Trage-l de primul lui bloc și lipește-l în program, sub blocul galben sau la capăt. Nu-ți trebuie? Trage-l în paletă.', ok: (U, P) => A.libere(P).length === 0},
+   {ce: 'Pisica vorbește de două ori', o: START, msg: 'La steag, pisica trebuie să vorbească de două ori, pe rând. Lipsește un „spune”? Ia „spune … pentru 2 secunde” din Aspect și lipește-l la capăt. Un „spune” are textul gol sau aproape 0 la secunde? Scrie un text și 2: altfel, în Scratch, balonul nu apare sau dispare imediat.', ok: U => { const s = spuse(U); return s.length > 1 && s[0].cadre >= SE_VEDE && s[1].cadre >= SE_VEDE; }},
+   {ce: 'Primul moment: pisica vorbește în stânga', o: START, msg: 'Programul nu duce pisica în stânga înainte de primul „spune” (lipsește „spune” sau „mergi la”, ori „mergi la” are x 0 sau duce în dreapta). Trage pisica în stânga scenei, ia un „mergi la x … y: …” nou și lipește-l chiar deasupra primului „spune”.', ok: U => { const s = spuse(U); return s.length > 0 && s[0].x < 0; }},
+   {ce: 'Al doilea moment: pisica vorbește în dreapta', o: START, msg: 'Programul nu duce pisica în dreapta între primul și al doilea „spune” (lipsește un „spune” sau „mergi la”, ori „mergi la” are x 0 sau duce în stânga). Trage pisica în dreapta scenei, ia un „mergi la x … y: …” nou și lipește-l chiar deasupra celui de-al doilea „spune”.', ok: U => { const s = spuse(U); return s.length > 1 && s[1].x > 0; }},
+   {ce: 'Ai apăsat steagul verde', msg: 'Apasă steagul verde, deasupra scenei, și privește pisica.', ok: (U, P, S) => S.apasatSteag}],
+  solutie: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', -120, -40], ['spune_sec', 'Unde e?', 2], ['mergi_la_xy', 120, -40], ['spune_sec', 'Uite-l!', 2]]}], solutieDecor: 'Forest',
+  gresit: [{x: 14, y: 14, b: [['steag'], ['mergi_la_xy', -120, -40], ['spune_sec', 'Unde e?', 2], ['spune_sec', 'Uite-l!', 2]]}],
+  ajutor: 'Decorul se alege cu butonul de sub scenă. Pisica se trage pe scenă. „mergi la x … y: …” din paletă arată locul de acum al pisicii, deci o muți întâi și iei blocul după aceea.',
+  why: 'Ai făcut în Scratch două cadre de pe hârtie: același decor, același personaj, două locuri, două momente.'},
+ qs: [
+  {t: 'choice', q: 'Muți copacul din stânga în dreapta, în aceeași căsuță. Povestea rămâne aceeași. Ce ai schimbat?',
+   o: ['Compoziția cadrului', 'Ordinea căsuțelor', 'Scenariul poveștii', 'Costumul personajului'], ok: 0,
+   why: 'Compoziția e ce pui într-un cadru și unde. Povestea și ordinea căsuțelor au rămas la fel.'},
+  {t: 'casute_ordine', q: 'Căsuțele despre floare s-au amestecat. Pune-le în ordine.',
+   casute: FLOAREA, start: ['f3', 'f5', 'f1', 'f4', 'f2'], ordine: ['f1', 'f2', 'f3', 'f4', 'f5'],
+   prim: 'Pe locul 1 trebuie altă căsuță: aceea de dinaintea oricărei schimbări din pământ.',
+   why: 'Întâi sămânța, apoi ploaia, frunza, floarea și, la sfârșit, bucuria.'},
+  {t: 'casute_obiect', q: 'Barca, muntele, soarele: care s-a mutat între cele două căsuțe? Alege pe fiecare rând.',
+   a: {f: 'lac', alt: 'Căsuța 1: munte la dreapta, soare sus, barcă în stânga', ob: [['munte', 128, 68], ['soare', 58, 34], ['barca', 40, 92]]},
+   b: {f: 'lac', alt: 'Căsuța 2: același munte și același soare, barca la dreapta', ob: [['munte', 128, 68], ['soare', 58, 34], ['barca', 112, 92]]},
+   obiecte: [{id: 'munte', nume: 'Muntele', ok: 'pe_loc'}, {id: 'soare', nume: 'Soarele', ok: 'pe_loc'}, {id: 'barca', nume: 'Barca', ok: 'mutat'}],
+   gresit: {munte: 'mutat', soare: 'pe_loc', barca: 'mutat'},
+   why: 'Barca are alt loc, deci e obiect animat. Între aceste două căsuțe, muntele și soarele stau la fel.'},
+  {t: 'match', q: 'Potrivește ce e pe hârtie cu ce îi corespunde în Scratch.',
+   pairs: [['Fundalul căsuței', 'decorul scenei'], ['Obiectul animat', 'un personaj'], ['Cum arată obiectul', 'costumul personajului'], ['O căsuță, adică un cadru', 'un moment din rularea programului']],
+   why: 'Decorul e al scenei, costumul e al personajului, iar un cadru nu e o filă: e un moment din rulare.'},
+  {t: 'choice', q: 'Mai ai 4 minute și 3 căsuțe goale. Ce faci?',
+   o: ['Câte un desen simplu și o propoziție', 'Înfrumusețezi căsuțele deja gata', 'Le lași goale; lucrezi doar pe cele gata', 'Ștergi tot și începi o idee mai scurtă'], ok: 0,
+   why: 'Scenariul se înțelege din toate căsuțele: în fiecare e destul un desen simplu și o propoziție.'}
+ ]}
+  ],
+  tipuri: {scena: SimScratchInterfata.tipuri.scena, casute_ordine: SC.tipuri.casute_ordine, casute_compozitie: SC.tipuri.casute_compozitie, casute_obiect: SC.tipuri.casute_obiect, casute_neclar: SC.tipuri.casute_neclar},
+  aplicatieReala: {aplicatie: 'Scratch, în browser, pe calculatorul din laborator', titlu: 'Acum în Scratch, la calculator', scurt: 'Scratch',
+    intro: '<p>Primele căsuțe din storyboardul <b>tău</b>, în Scratch-ul adevărat, fără cont (cam 7 minute). <b>Când mai sunt 10 minute din oră:</b> salvează ce ai (punctul 7) și treci la întrebări, cu <b>La verificare</b>, jos. Scratch nu se deschide, nu merge rețeaua sau ești pe telefon? Ai făcut atelierul: ajunge. Ce rămâne de la tine e caietul. Spune-i profesorului și treci la întrebări.</p>',
+    pasi: LAB},
+  diploma: {
+    titlu: 'Planul animației mele',
+    rezumat: 'scenariul și storyboardul; cadrul și compoziția; obiectele animate; ce corespunde în Scratch (personaj, costum, decor, moment), exersat pe storyboarduri date și în Scratch simulat; cum desenezi șase căsuțe în caiet și cum le citește cineva care nu știe povestea',
+    aplicatie: 'Scratch, în browser, pe calculatorul din laborator',
+    provocare: LAB
+  }
+});
+</script>
+</body>
+</html>

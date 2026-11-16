@@ -23,21 +23,40 @@ const px=n=>Math.round(n*SCARA)+'px';
 // butoanele fără icoană Fluent potrivită: simbolul de pe butonul din Excel, altfel inițiala etichetei
 const GLIFE={PercentStyle:'%',TextDirectionLeftToRight:'¶→'};
 function svg(cai,m){return cai?`<svg viewBox="0 0 20 20" width="${m}" height="${m}" aria-hidden="true" focusable="false">${cai.map(d=>`<path d="${d}"/>`).join('')}</svg>`:''}
-function buton(b,date,opt){
+/* containerul unei galerii (10.11.2026): butonul fără galerie al cărui rect cuprinde dale b.galerie din același grup
+   (Forme/Shapes în PowerPoint, Styles în Word, Themes, Transitions, Animations). Desenat cu tot rect-ul, stătea SUB
+   propriile dale: nu se vedea (pe Desen, doar literele „T L L R O R…”) și nu se putea apăsa. Acum se desenează doar în
+   fâșia din dreapta dalelor (19-23 px), ca butonul ▾ More din Office. Întoarce marginea dreaptă a dalelor (pixelii din
+   dump) sau null când butonul nu e un container (ori dalele îi umplu tot rect-ul). */
+function dreaptaDale(b,g){
+  if(!g||b.galerie||b.lansator)return null;
+  const [x,y,w,h]=b.rect;
+  const d=g.butoane.filter(t=>t!==b&&t.galerie&&t.rect[0]>=x-1&&t.rect[1]>=y-1&&t.rect[0]+t.rect[2]<=x+w+1&&t.rect[1]+t.rect[3]<=y+h+1);
+  if(!d.length)return null;
+  const dr=Math.max(...d.map(t=>t.rect[0]+t.rect[2]));
+  return dr<x+w-2?dr:null;
+}
+function buton(b,date,opt,g){
   const L=(opt.legaturi||{})[b.id],ic=(date.icoane||{})[b.id],[x,y,w,h]=b.rect;
-  const pos=`left:${px(x)};top:${px(y)};width:${px(w)};height:${px(h)}`;
+  const dd=dreaptaDale(b,g);
+  /* L.lat (10.11.2026): lățimea, în px, de care are nevoie conținutul legăturii (ex. Copy cu săgeata ▾ din PowerPoint);
+     slotul ia max(L.lat, lățimea din dump), altfel .pg-camp (overflow:hidden) taie ce nu încape */
+  const lat=Math.max(L&&L.lat||0,Math.round(w*SCARA));
+  const pos=dd==null?`left:${px(x)};top:${px(y)};width:${lat}px;height:${px(h)}`
+    :`left:${px(dd)};top:${px(y)};width:${Math.round((x+w)*SCARA)-Math.round(dd*SCARA)}px;height:${px(h)}`;
   const tit=esc(L&&L.title?L.title:b.eticheta);
   if(L&&L.html)return `<span class="pg-b pg-camp" style="${pos}" title="${tit}">${L.html}</span>`;
   const attr=L?L.attr:`data-nesim="${esc(b.id)}"`;
   const arata=b.marime==='mare'||(w>=60&&b.tip_uia!=='ComboBox');   // Excel scrie eticheta doar pe butoanele late
   let corp;
-  if(b.lansator)corp=`<span class="pg-lans" aria-hidden="true"></span>`;
+  if(dd!=null)corp=`<span class="pg-sag">▾</span>`;
+  else if(b.lansator)corp=`<span class="pg-lans" aria-hidden="true"></span>`;
   else if(b.tip_uia==='ComboBox')corp=`<span class="pg-cb">${b.id==='FontSize'?'11':''}</span><span class="pg-sag">▾</span>`;
   else if(b.marime==='mare')corp=`${svg(ic,26)||''}<span class="pg-et">${esc(b.eticheta)}${b.split||b.meniu?' ▾':''}</span>`;
   else corp=`${svg(ic,16)||(arata?'':`<span class="pg-txt">${esc(GLIFE[b.id]||b.eticheta.charAt(0))}</span>`)}${arata?`<span class="pg-et">${esc(b.eticheta)}</span>`:''}${b.split||b.meniu?'<span class="pg-sag">▾</span>':''}`;
   const m=(opt.meniu||{})[b.id];
   // b.galerie = o dală dintr-o galerie (o tranziție, un stil, o temă); L.clasa = starea dată de simulator (ex. „on”)
-  return `<span class="pg-slot${b.lansator?' pg-slot-lans':''}" style="${pos}"><button type="button" class="pg-b ${b.marime==='mare'?'pg-mare':''} ${b.galerie?'pg-dala':''} ${L?'':'pg-nesim'} ${m?'pg-deschis':''} ${L&&L.clasa?esc(L.clasa):''}" ${attr} title="${tit}" aria-label="${esc(b.eticheta)}"${m?' aria-expanded="true"':''}>${corp}</button></span>`;
+  return `<span class="pg-slot${b.lansator?' pg-slot-lans':''}" style="${pos}"><button type="button" class="pg-b ${dd!=null?'pg-more':b.marime==='mare'?'pg-mare':''} ${b.galerie?'pg-dala':''} ${L?'':'pg-nesim'} ${m?'pg-deschis':''} ${L&&L.clasa?esc(L.clasa):''}" ${attr} title="${tit}" aria-label="${esc(b.eticheta)}"${m?' aria-expanded="true"':''}>${corp}</button></span>`;
 }
 function html(date,opt){
   opt=opt||{};
@@ -46,7 +65,7 @@ function html(date,opt){
   const atF=k=>opt.atribFila?opt.atribFila(k):`data-tab="${esc(k)}"`;
   const file=date.file.map(x=>`<button type="button" ${atF(tb[x.id]||x.id)} class="${x===f?'on':''}" role="tab" aria-selected="${x===f}">${esc(x.eticheta)}</button>`).join('');
   const gr=f.grupuri.map(g=>`<div class="pg-grup" role="group" aria-label="${esc(g.eticheta)}" style="width:${px(g.latime)};height:${px(g.inaltime)}">
-    ${g.butoane.map(b=>buton(b,date,opt)).join('')}<div class="pg-nume">${esc(g.eticheta)}</div></div>`).join('');
+    ${g.butoane.map(b=>buton(b,date,opt,g)).join('')}<div class="pg-nume">${esc(g.eticheta)}</div></div>`).join('');
   return `<div class="rb pg" data-aplicatie="${esc(date.aplicatie)}"><div class="tabs" role="tablist">${opt.inainte||''}${opt.fisier||'<span class="pg-fisier">File</span>'}${file}</div><div class="pg-banda">${opt.bandaInlocuita||gr}</div>`+
     // meniul deschis stă SUB bandă: banda se derulează lateral, deci ar tăia orice iese din ea
     Object.entries(opt.meniu||{}).map(([id,m])=>{const b=f.grupuri.flatMap(g=>g.butoane).find(x=>x.id===id);
@@ -85,8 +104,14 @@ const CSS=`
 .pg .pg-slot-lans{z-index:2}
 @media (max-width:760px),(pointer:coarse){
   .pg .pg-banda{padding-bottom:14px}
-  .pg .pg-slot-lans>.pg-b{inset:auto;right:0;bottom:-12px;width:32px;height:32px;align-items:flex-end;justify-content:flex-end;padding:0 3px 15px 0}
+  /* 10.11.2026: zona pornește de la marginea de SUS a săgeții și crește doar în jos (în fâșia de sub grupuri) și spre
+     stânga, nu și în sus: pe Excel-ul cu deget (excelx-test mărește butoanele la 32 px), zona veche urca 7 px peste
+     centrul lui Format Painter și i-l lua */
+  .pg .pg-slot-lans>.pg-b{inset:auto;right:0;top:0;width:32px;height:32px;align-items:flex-start;justify-content:flex-end;padding:3px 3px 0 0}
 }
+/* ▾ More al unei galerii (10.11.2026): fâșia din dreapta dalelor, cu chenarul barei de derulare a galeriei din Office */
+.pg .pg-more{border-color:var(--line);border-radius:0 2px 2px 0;background:var(--paper);padding:0 0 3px;align-items:flex-end}
+.pg .pg-more .pg-sag{font-size:.72rem;opacity:.85}
 .pg .pg-nesim{opacity:.92}
 .pg .pg-dala{border-color:var(--line);background:var(--paper);flex-direction:column;justify-content:flex-end;padding-bottom:2px;font-size:.66rem;white-space:normal}
 .pg .pg-dala .pg-et{white-space:normal;text-align:center}

@@ -644,7 +644,9 @@ function panglica(S){
     nota=`<div class="sp-ctxnota">Fila <b>${en}</b> (${ro}) apare cât e ales ${{picture:'o imagine',table:'un tabel',shape:'o formă sau o casetă'}[cx]}; după ce pui obiectul, se deschide singură. Aici nu e butonul Diapozitiv nou: ca să adaugi un diapozitiv, dă clic pe fila <b>Home</b> (Pornire).<small>În simulator fila asta nu are butoane: în lecția asta nu o folosim.</small></div>`}
   ['SlideNewGallery','SlideNewGalleryInsert'].forEach(k=>leg[k]={html:split(ic[k]||ic.SlideNewGallery),title:'Diapozitiv nou (New Slide)'});
   leg.Paste={html:splitPaste(ic.Paste),title:'Lipire (Paste) · Ctrl+V'};
-  leg.Copy={html:splitCopy(ic.Copy),title:'Copiere (Copy) · Ctrl+C'};
+  /* lat: Copy + săgeata ▾ au nevoie de 35 px (18 + 11 + marginile câmpului), slotul din dump are 20 (10.11.2026: ▾ era
+     tăiată, meniul Copy/Duplicate nu se putea deschide); fâșia din dreapta lui Copy e goală până la marginea grupului */
+  leg.Copy={html:splitCopy(ic.Copy),title:'Copiere (Copy) · Ctrl+C',lat:35};
   Object.entries(LEG).forEach(([k,[t,titlu]])=>{
     const on=(DESCHIS[t]&&S.menu===DESCHIS[t])||(t==='ins-textbox'&&S.armed&&S.armed.tip==='caseta')||(t.startsWith('shape:')&&S.armed&&S.armed.forma===t.slice(6));
     leg[k]={attr:`data-t="${t}"`,title:titlu,clasa:on?'pg-on':''}});

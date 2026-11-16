@@ -17,6 +17,10 @@
    - Ctrl+Y cu ceva anulat = Refacere; FĂRĂ o anulare înainte = Repetare: după tastarea „abc” mai scrie „abc”; după ⌫
      mai șterge o literă; după Delete, la fel; după Enter mai pune un Enter. După o refacere, încă un Ctrl+Y nu mai face
      nimic. (Simulatorul lecției 5 doar reface; aici se adaugă repetarea.)
+   - (13.11.2026, PESTE probele de mai sus) Word-ul din laborator (Word 2007, văzut de profesor) anulează câte o
+     literă: fiecare literă tastată e o operație (vezi ascultătorul „input” de mai jos). Proba automată pe Word 16
+     trimitea literele prin WM_CHAR la 20 ms și dădea „tastarea = o operație”; la tastare de mână, în laborator, nu.
+     Repetarea (Ctrl+Y fără anulare) repetă deci ultima literă; în Word 2007 neprobată.
    - Un ⌫ apăsat în mijlocul tastării rupe tastarea în două operații: „merr”, ⌫, „e.” -> un Ctrl+Z scoate doar „e.”.
      (În simulatorul lecției 5, ⌫ corecta textul încă netrimis în document și Ctrl+Z scotea tot; aici ⌫ închide întâi
      tastarea, ca în Word.) Fiecare ⌫ și fiecare Delete e câte o operație (3 × ⌫ -> 3 × Ctrl+Z).
@@ -85,6 +89,9 @@ const CSS=`
 .wu-cb{display:inline-flex;align-items:center;gap:3px;height:100%;padding:0 3px;border:1px solid transparent;border-radius:3px;background:var(--paper);color:var(--ink);font-family:'Segoe UI',system-ui,sans-serif;font-size:.72rem;white-space:nowrap;cursor:default;width:max-content}
 .wu-cb:hover,.wu-cb:focus-visible{border-color:#2B579A;background:var(--sel)}
 .wu-rdo{position:sticky;right:0;align-self:flex-end;flex:none;z-index:3;min-width:32px;min-height:32px;margin:0 2px 2px auto;border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--ink);cursor:default;font-size:.9rem;line-height:1}
+/* 10.11.2026: ⌄ lipit în dreapta (sticky, 32 px + 2) stătea peste „Styles...” și „Select” cât banda nu era derulată
+   până la capăt; derularea până la o comandă (scrollIntoView, focusul cu Tab) o lasă acum la stânga lui */
+.wu .pg .pg-banda{scroll-padding-inline-end:38px}
 .wu-leg{margin:0;padding:4px 8px;font-size:.76rem;border-top:1px solid var(--line);background:var(--paper2)}
 .wu-dlg:empty{display:none}
 .wu-dlg .wo-win{margin:6px}
@@ -355,7 +362,12 @@ function render(Q,body,api){
     S.redo=0;
     if(a==='bs'||a==='del'||a==='enter')S.last={t:a};else if(a!=='mutare')S.last=null;
   }
-  body.addEventListener('input',e=>{if(e.target===inp){S.redo=0;if(inp.value)S.last={t:'tip',text:inp.value};dupaDoc()}});
+  /* (13.11.2026) Word-ul din laborator (Word 2007, văzut de profesor la clasă) anulează CÂTE O LITERĂ: „Titlu”, Enter,
+     „Text”, 2 × Ctrl+Z -> „Titlu” și „Te”. Deci fiecare literă tastată se închide pe loc ca operație separată.
+     Pe telefon, cât tastatura încă „compune” cuvântul (isComposing), nu ating câmpul (ar dubla literele); închid la
+     compositionend, deci acolo un cuvânt e o operație. */
+  body.addEventListener('input',e=>{if(e.target===inp){S.redo=0;if(inp.value)S.last={t:'tip',text:inp.value};if(!e.isComposing)inchideTastarea();dupaDoc()}});
+  inp.addEventListener('compositionend',()=>{setTimeout(()=>{if(!api.done()){inchideTastarea();dupaDoc()}},0)});
   let preClick=null,preK=null;
   body.addEventListener('click',e=>{const k=e.target.closest('[data-k]');if(k&&inBody.contains(k)){if(k.dataset.k==='z')inchideTastarea();preClick=sig();preK=k.dataset.k}},true);
   body.addEventListener('click',e=>{

@@ -1,0 +1,22 @@
+# Proprietarul componentei `lectii\_sim\cpp-mic.js`, runda R2 (decizii structurale)
+
+Ești PROPRIETARUL PROASPĂT al componentei `C:\00\Projects\LearningHub\lectii\_sim\cpp-mic.js` (sha1 de pornire `a4cc7a41463571388cb2aab0a0339d41c42aa058`; dacă diferă, un predecesor a început deja: vezi `inainte_r2\` și `stare_autor.md`). A doua poartă a dat iar **NU_LANSA**: 7 BLOCANTE noi, plus B5 și B7 deschise. Citește `lectii\_sim\_teste\cpp-mic\_poarta2\poarta2.md` întreg, `lectii\_sim\cpp-mic.GATA.md`, `lectii\_sim\_teste\cpp-mic\stare_autor.md`, gărzile din `C:\00\Projects\LearningHub\_campaign\revizuire_completa_2026_09\m5_noapte_08_11\prompturi\c_cppmic.md` și ghidul VI.3, „Arbitrajul și deciziile structurale”.
+
+**Aceeași familie de defect a revenit două runde. Dirijorul oprește cercul cu decizii STRUCTURALE; NU mai adaugi cazuri una câte una.** Copia dinainte în `_teste\cpp-mic\inainte_r2\cpp-mic.js`.
+
+**D1. Explicațiile românești = listă POZITIVĂ (B5, N1, N2, N4; ghid: „altBun pe listă pozitivă”).**
+Explicația specifică apare NUMAI pe o clasă de greșeală recunoscută sigur, cu reparație care chiar compilează: o probă automată aplică reparația spusă și compilează cu g++. Tot restul primește mesajul lui g++ în engleză (nemodificat), linia, și o propoziție neutră, mereu adevărată, care nu pretinde cauza. Propune-o tu, de felul: „Compilatorul nu înțelege ce ai scris pe rândul N. Uită-te pe rândul ăsta și pe cel de deasupra: lipsește sau e în plus un semn?” (verifică să nu fie falsă nici în cazurile în care eroarea e pe alt rând, și pe N1-N4). **Regula de adevăr: niciodată „lipsește X” dacă nu e sigur.** Oracol nou: pe toate programele cu erori (ale tale + ale ambelor porți + 30 noi): fiecare explicație specifică, urmată mecanic, duce la un program acceptat de g++ sau măcar la altă eroare, niciodată la aceeași; explicația neutră e permisă mereu. Ultima linie = explicații specifice false. Ținta: 0. Ca cifră informativă, câte erori primesc explicație specifică.
+
+**D2. „Nu înseamnă că ai greșit” numai când g++ ACCEPTĂ programul (N3).** Mesajul acela e numai pentru ce e corect în C++, dar nu e în subset (funcții proprii, `string`). Ce respinge g++ (`s=s+v` cu tablou, `if(v>m)`, `x**2`) e eroare de compilare, cu linia lui g++ și, dacă nu e sigur altceva, cu propoziția neutră. Proba: toate programele refuzate cu mesajul de subset se compilează cu g++ (banc: toate cele ale porților). La `cin>>v` cu tablou, explicația nu cere ce a scris deja.
+
+**D3. Testele se opresc la primul plafon (N6).** „Verifică” pe un program fără sfârșit: primul test care atinge plafonul oprește rularea celorlalte, iar mesajul spune adevărul. Plafon pe TIMP, în pași mici, astfel încât pagina să nu stea mai mult de ~0,5 s o dată, iar „Verifică” să dea rezultatul în cel mult ~3 s la procesor ×4, chiar după multe rulări (`proba_obosit.py`). Corectează cifrele din GATA cu ce măsori.
+
+**D4. `potrivire` (B7, N5).** Un test nu respinge fără motiv: mesajul spune exact ce a căutat. Pentru cazurile din raport (`Suma este5`, `5lei`, `5 = 2 + 3`) hotărăști cu tabelul „ce vrea autorul” / „ce primește”, documentezi în GATA ce mod e potrivit pentru fiecare fel de cerință (`numere`: limita cu `i=0 i=1 …` scrisă; unde lecția predă capetele buclei: `linii`), iar exemplul din GATA primește cele 27 de programe bune ale porții sau spune de ce nu, în clar.
+
+**D5. N7:** la sfârșitul rulării „Pas cu pas”, tabelul nu mai scrie „Nicio variabilă declarată încă.”: păstrează ultimele valori, cu o notă adevărată.
+
+**Apoi:** rulezi cele 4 oracole + oracolul nou + bancurile celor două porți (`_poarta\`, `_poarta2\`; programele și scripturile lor se pot rula). `_poarta2\_bin` și `_poarta2\__pycache__` NU s-au șters: ștergerea a fost refuzată de permisiuni, deci nu le ștergi și nu ocolești refuzul; le poți refolosi. Ieșirile tale în `_iesiri\`, ignorat de git, fără cale de cont. Lungi în fișiere, în context doar coada; `C:\Program Files\Git\usr\bin\timeout.exe -k 15`; pe rând. Tabel B1-B8 + N1-N7 în GATA.
+
+**Gărzile:** nimic pe ecranul vizibil, Code::Blocks nu se pornește; Chromium headless, rețeaua blocată, `ctx.close()`; `_fara_cont.py` la orice ieșire de probă; `activitate.py lista | grep -c "nu e în catalog"` nu crește; ieșirea nu se salvează. Nu publici, nu faci commit, nu atingi alte fișiere din `lectii\_sim\`. `stare_autor.md` la zi; la ~200k de context te oprești curat.
+
+**Răspunsul final (scurt):** D1-D5 cu cifrele probelor (inclusiv cele vechi față de versiunea dinainte), oracolele, sha1, ce ar trebui să verifice a treia poartă (scurtă).

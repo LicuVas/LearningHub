@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 27, clasa a VI-a: Aplicația de animație grafică: interfață și instrumente de bază</title>
+<meta name="description" content="Lecția 27, clasa a VI-a: Scratch privit ca aplicație de animație. Ce știi deja și ce e nou; filele Costume și Sunete; blocul costumul următor; decorul; editorul grafic, cu Cerc și Umplere; notezi zonele pe o captură. Cu un Scratch simulat în pagină.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Code:wght@500;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#F3EFFA; --paper:#FFFFFF; --paper2:#F8F5FD; --line:#DDD3EE;
+  --ink:#231B33; --ink2:#5B5270; --accent:#5F3BB0; --accentInk:#FFFFFF; --sel:#E7DEF8;
+  --mark:#FFE07A; --markInk:#2A2118; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Baloo 2","Segoe UI",system-ui,sans-serif; --fb:"Nunito Sans","Segoe UI",system-ui,sans-serif; --fm:"Fira Code",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#17121F; --paper:#211A2C; --paper2:#2A2238; --line:#433857;
+  --ink:#EFEAF7; --ink2:#C2B8D4; --accent:#C2A8F5; --accentInk:#17121F; --sel:#3A2E52;
+  --mark:#EBC95C; --markInk:#2A2118; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#17121F; --paper:#211A2C; --paper2:#2A2238; --line:#433857;
+  --ink:#EFEAF7; --ink2:#C2B8D4; --accent:#C2A8F5; --accentInk:#17121F; --sel:#3A2E52;
+  --mark:#EBC95C; --markInk:#2A2118; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: blocul lecției, ca în zona de cod */
+.banda{display:flex;align-items:center;gap:4px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent);font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-size:.72rem;font-weight:700;color:#fff}
+.banda .bk{flex:none;display:inline-block;padding:4px 10px;border-radius:5px;border:1px solid rgba(0,0,0,.18)}
+.banda .ev{background:#FFBF00;color:#3A2A00;border-radius:14px 14px 5px 5px}
+.banda .lk{background:#774DCB}
+h1,h2{font-weight:800;letter-spacing:0}
+h1 .acc{color:var(--accent)}
+code{font-family:var(--fm);font-size:.9em}
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:800;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.blk{display:inline-block;padding:1px 7px;border-radius:5px;color:#fff;font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-weight:700;font-size:.86em;white-space:nowrap}
+.blk.lk{background:#774DCB}.blk.mv{background:#3373CC}.blk.ct{background:#CF8B17}
+.leg{margin:.3em 0;font-size:.95em}
+.leg b.ab{color:#1D4ED8}.leg b.po{color:#C2410C}
+:root[data-theme="dark"] .leg b.ab{color:#93B4FF}:root[data-theme="dark"] .leg b.po{color:#FFA574}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .leg b.ab{color:#93B4FF}:root:not([data-theme="light"]) .leg b.po{color:#FFA574}}
+figure.captura img{max-width:100%;height:auto}
+figure.captura img[src$="decor-ales.webp"]{max-width:260px}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/scratch.js"></script>
+<script src="../../_sim/scratch-control.js"></script>
+<script src="../../_sim/scratch-interfata.js"></script>
+<script src="../../_sim/scratch-animatie.js"></script>
+<script>
+/* Lecția 27, clasa a VI-a (M4, predare): „Aplicația de animație grafică: interfață și instrumente de bază”. Legea: 00_GHID_LECTII.md.
+   Aplicația = Scratch 3 online, fără cont (contractul m5_noapte_08_11, decizia 4). Faptele: _proba/live_v27*.py (editorul viu, headless) + VI/18-26.
+   Simulatorul: scratch.js, scratch-control.js, scratch-interfata.js (nemodificate) + scratch-animatie.js (NOU: filele, costumele, editorul grafic, notarea).
+   Granița: NU gestionarea, depanarea, testarea, ecranul complet (VI/28); NU scenariul, cuvintele lui (VI/29); NU proprietățile (VI/30); NU temporizarea, efectele sonore (VI/31); NU tastele (VI/32). */
+const fig = (f, w, h, alt, cap) => `<figure class="captura"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const ACUM = (...p) => `<div class="acum" role="note"><div class="lbl">Acum în Scratch, la calculator <small>(pe telefon: sari peste)</small></div><ol>${p.map(x => `<li>${x}</li>`).join('')}</ol></div>`;
+const NR = SimScratchAnimatie.nrSchimbari;
+const O = {x: -100, y: 0, directie: 90};
+const NOTA_D = 'Aici sunt doar blocurile de azi și 6 decoruri, iar pisica e desenată mai simplu. Aici se umple doar capul; în Scratch, orice formă. Aici Anulează merge mereu; în Scratch poate fi stinsă după primul desen. În Scratch, instrumentele au doar un desen.';
+const PAL = ['steag', 'repeta', 'mergi', 'costum_urmator'];
+const SUB_BRAT = [{x: 14, y: 14, b: [['steag'], ['repeta', 10, {guri: [[['mergi', 10]]]}], ['costum_urmator']]}];
+const BUN = [{x: 14, y: 14, b: [['steag'], ['repeta', 10, {guri: [[['mergi', 10], ['costum_urmator']]]}]]}];
+/* Mesajele testelor, după cauza adevărată (regula 28; R1, J1-B): textul se scrie la fiecare rulare a testului, iar motorul îl citește după (prin toString). */
+const viu = () => ({s: '', toString() { return this.s; }});
+const STIVA = (P) => (P || []).find(s => s.b && s.b.length > 1 && s.b[0][0] === 'steag');
+/* în stiva cu steag: câte blocuri `tip` stau în gura primului „repetă”, câte deasupra lui, câte sub brațul de jos; numărul lui „repetă”; numerele din gură */
+function unde(P, tip) {
+  const r = {gura: 0, sus: 0, jos: 0, rep: null, val: []};
+  const s = STIVA(P);
+  if (!s) return r;
+  const i = s.b.findIndex(x => x[0] === 'repeta');
+  if (i >= 0) { r.rep = Number(s.b[i][1]); ((s.b[i][2] && s.b[i][2].guri && s.b[i][2].guri[0]) || []).forEach(x => { if (x[0] === tip) { r.gura++; r.val.push(Number(x[1])); } }); }
+  s.b.forEach((x, k) => { if (x[0] === tip) { if (i < 0 || k < i) r.sus++; else r.jos++; } });
+  return r;
+}
+const de = (n) => { const a = Math.abs(n) % 100; return (n !== 0 && (a === 0 || a >= 20)) ? ' de' : ''; };
+function sfat(c, nume, ia) {
+  if (c.rep == null) return 'Sub blocul galben trebuie „repetă 10”, cu „mergi 10 pași” și „costumul următor” în gură. Lipsește? Îl iei din Control. E deoparte? Trage-l sub blocul galben.';
+  const loc = c.jos ? 'sub brațul de jos al lui „repetă”' : 'deasupra lui „repetă”';
+  if (c.gura === 0 && c.sus + c.jos === 0) return `„${nume}” nu e în programul de sub blocul galben: ${ia}.`;
+  if (c.gura === 0) return `„${nume}” e ${loc}, nu în gura lui: trage-l în gură${nume === 'costumul următor' ? ', sub „mergi”' : ''}.`;
+  if (c.sus + c.jos > 0) return `Mai ai un „${nume}” ${loc}: trage-l pe un loc gol din zona de cod.`;
+  if (c.gura > 1) return `Ai ${c.gura === 2 ? 'două' : c.gura} blocuri „${nume}” în gura lui „repetă”: lasă unul; pe celelalte trage-le pe un loc gol din zona de cod.`;
+  if (c.rep !== 10) return `„repetă” are ${c.rep}: apasă pe număr și scrie 10.`;
+  return '';
+}
+const DUBLU = (P) => { const s = STIVA(P), nSt = (P || []).filter(x => x.b && x.b.length > 1 && x.b[0][0] === 'steag').length, nRep = s ? s.b.filter(x => x[0] === 'repeta').length : 0;
+  return nSt > 1 ? 'Ai două programe cu blocul galben: la steag merg amândouă. Pe unul trage-l înapoi în paletă (vin și blocurile de sub el): așa se șterg.'
+    : nRep > 1 ? 'Sub „repetă” mai e un „repetă”: trage-l pe al doilea înapoi în paletă (vin și blocurile de sub el): așa se șterg.' : ''; };
+const M_PORN = viu(), M_COST = viu(), M_MERS = viu();
+const T_PORNIRE = {ce: 'Programul începe cu blocul galben', msg: M_PORN, ok: (U, P) => {
+  if (STIVA(P)) return true;
+  M_PORN.s = (P || []).some(s => s.b && s.b[0] && s.b[0][0] === 'steag')
+    ? 'Blocul galben stă singur: trage „repetă” și lipește-l sub el.'
+    : 'Sus, deasupra lui „repetă”, trebuie blocul galben „când se dă click pe ⚑”. Îl iei din Evenimente și lipești „repetă” sub el.';
+  return false; }};
+const T_COSTUM = {ce: 'La steag, pisica își schimbă costumul de 10 ori', o: O, msg: M_COST, ok: (U, P) => {
+  const n = NR(U);
+  if (n === 10) return true;
+  M_COST.s = `La steag, costumul ${n === 0 ? 'nu s-a schimbat deloc' : n === 1 ? 's-a schimbat o singură dată' : `s-a schimbat de ${n}${de(n)} ori`}, nu de 10 ori. ` + (sfat(unde(P, 'costum_urmator'), 'costumul următor', 'ia-l din Aspect și lasă-l în gura lui „repetă”, sub „mergi”') || DUBLU(P) || 'În gura lui „repetă 10” trebuie un singur „costumul următor”.');
+  return false; }};
+const T_MERS = {ce: 'La steag, pisica merge de 10 ori câte 10 pași', o: O, msg: M_MERS, ok: (U, P) => {
+  if (U.x === 0) return true;
+  const d = Math.round(U.x - O.x), c = unde(P, 'mergi');
+  M_MERS.s = `La steag, pisica a mers ${d}${de(d)} pași, nu 100. ` + (sfat(c, 'mergi', 'ia-l din Mișcare și lasă-l în gura lui „repetă”') || (c.val[0] !== 10 ? `„mergi” are ${c.val[0]}: apasă pe număr și scrie 10.` : (DUBLU(P) || 'În gura lui „repetă 10” trebuie un singur „mergi 10 pași”.')));
+  return false; }};
+const T_STEAG = {ce: 'Ai apăsat steagul verde', msg: 'Apasă steagul verde, deasupra scenei, și privește pisica.', ok: (U, P, S) => S.apasatSteag};
+
+/* ---- laboratorul: FĂRĂ profesor, pe calculatorul comun ---- */
+const LAB = [
+  '<b>Deschide Scratch.</b> Fila s-a închis? <code>scratch.mit.edu</code> › <b>Creează</b>. Ce ai făcut la casete s-a pierdut: fă și punctele 3-6. Meniul e în engleză? <b>Settings</b> › <b>Language</b>, derulezi până la litera R, <b>Română</b>. Apoi <b>X</b> pe fereastra cu filmulețul.',
+  '<b>Verifică-te.</b> Arată cu mouse-ul, fără lecție: paleta, zona de cod, scena, filele, panoul <b>Scenă</b>. Te-ai încurcat? Recitește pasul „Ce știi deja din Scratch și ce e nou” (pasul 2 din 6).',
+  '<b>Doar dacă nu e deja în Scratch: costumele și sunetul.</b> Fila <b>Costume</b>: apasă <b>costume2</b>, apoi <b>costume1</b>. Vezi: pisica de pe scenă se schimbă. Fila <b>Sunete</b>: apasă <b>Redare</b>.',
+  '<b>Doar dacă nu e deja în Scratch: programul.</b> Fila <b>Cod</b>. Din <b>Evenimente</b>, blocul galben; din <b>Control</b>, „repetă 10”, lipit sub el; din <b>Mișcare</b>, „mergi 10 pași”, în gură; din <b>Aspect</b>, „costumul următor”, sub „mergi”.',
+  '<b>Doar dacă nu e deja în Scratch: decorul.</b> Butonul rotund de sub panoul <b>Scenă</b> (<b>Alege un Decor</b>): apasă-l și alege <b>Forest</b> (derulează lista, dacă nu-l vezi). Paleta scrie „Scena selectată”? Apasă pe <b>Sprite1</b>, sub scenă.',
+  '<b>Doar dacă nu e deja în Scratch: cercul.</b> Fila <b>Costume</b>, <b>costume1</b>. Cu <b>Cerc</b> (cercul gol), apasă pe un loc gol de pe pânză, trage puțin, lasă. Vezi: cercul e și pe scenă. Apasă <b>costume2</b>: aici nu e.',
+  '<b>Proba.</b> Fila <b>Cod</b>. Trage pisica în stânga scenei (ții apăsat și duci). Apasă steagul verde. Vezi: pisica merge spre dreapta, x crește cu 100, iar cercul apare și dispare, repede. Cercul nu clipește? Privește programul: „costumul următor” e sub brațul de jos? Trage-l în gură, sub „mergi”, apoi steagul.',
+  '<b>Salvează.</b> <b>Fișier</b> › <b>Salvează pe calculatorul tău</b>. Browserul întreabă unde? Folderul tău, numele <code>Animatie_</code>, clasa și numele tău (de exemplu <code>Animatie_6A_Popescu</code>), <b>Salvare</b>. Numele există deja? <b>Nu</b> (sau <b>Anulare</b>), adaugă prenumele, <b>Salvare</b>. Sari la punctul 10.',
+  'Nu te-a întrebat? Explorer › <b>Descărcări</b>: fișierul <b>Proiect Scratch</b> cel mai nou (cu ora de acum; poate cu (1)). <kbd>F2</kbd>, <code>Animatie_</code>, clasa și numele tău, <kbd>Enter</kbd>; <b>Decupare</b>, folderul tău, <b>Lipire</b>. Există deja? E al unui coleg: <b>Se omite acest fișier</b>, adaugă prenumele, mută-l din nou.',
+  '<b>Închide fila Scratch</b> (te întreabă dacă pleci? Pleci: ai salvat). Fișierul rămâne în folderul tău. Nu atingi fișierele colegilor și nici lucrările tale vechi.'
+];
+
+JocMotor.porneste({
+  cheie: 'lectie_vi_m4_l27',
+  mod: 'lectie',
+  titlu: 'Aplicația de animație grafică: interfață și instrumente de bază',
+  marca: 'Lecția <b>27</b> · clasa a VI-a',
+  h1: 'Aplicația de animație grafică: <span class="acc">interfață și instrumente de bază</span>',
+  eticheta: 'Lecții TIC',
+  acasa: {href: '../../../hub/index.html', text: 'LearningHub'},
+  clasa: 'a VI-a',
+  unitate: 'VI-U4',
+  unitateTitlu: 'Animații grafice și modele 3D',
+  competente: ['CS.1.2', 'CS.3.2', 'CS.3.3'],
+  lectii: '27',
+  ancoraText: 'Programa (OMEN 3393/2017), clasa a VI-a, CS.1.2 „Utilizarea eficientă a instrumentelor specializate în scopul realizării unei animații grafice”, CS.3.2 „Elaborarea de animații grafice și modele 3D folosind operații specifice pentru a ilustra dinamic diverse teme” · unitatea VI-U4 „Animații grafice și modele 3D” · lecția 27, predare · conținuturile „Elemente de interfață ale unei aplicații de animație grafică” și „Instrumente de bază ale unei aplicații de animație grafică”. Aplicația: Scratch 3, editorul online scratch.mit.edu, fără cont.',
+  intro: '<p><b>Ai nevoie de:</b> lecția 18 (Scratch: paleta, zona de cod, scena, steagul verde, salvarea în folderul tău) și lecția 20 („repetă”).</p>',
+  cum: '<b>Cum lucrezi</b><ol><li>Un pas de citit, apoi 5 pași scurți; după fiecare exersezi în pagină și, la calculator, în Scratch, în fila de lângă lecție.</li><li>Atelierul: lista de sarcini, în pagină.</li><li>La calculator: lista, în Scratch (pe telefon, atelierul ține loc de ea).</li><li>5 întrebări, pentru stele.</li></ol><p><b>Uită-te la ceas. Când mai sunt 10 minute din oră</b>, salvezi în Scratch: <b>Fișier</b> › <b>Salvează pe calculatorul tău</b>, folderul tău, numele <code>Animatie_6A_Popescu</code> (clasa și numele tău), <b>Salvare</b>. Există deja? <b>Nu</b> (sau <b>Anulare</b>), adaugi prenumele. Nu te-a întrebat? E în <b>Descărcări</b> (<b>Proiect Scratch</b>): îl redenumești și îl muți în folderul tău (lecția 18). Închizi fila Scratch și treci la întrebări: în pași, <b>Știu deja — la verificare</b>, sus; după atelier, <b>La verificare</b>, jos.</p>',
+  banda: '<span class="bk ev">când se dă click pe ⚑</span><span class="bk lk">costumul următor</span>',
+  nivele: [
+{t: 'Aplicația de animație grafică: interfață și instrumente de bază', final: true, lectii: [27],
+ continuturi: ['Elemente de interfață ale unei aplicații de animație grafică', 'Instrumente de bază ale unei aplicații de animație grafică'],
+ obiectiv: 'recunoști în Scratch ce știi deja și ce e nou, notezi zonele pe o captură, schimbi costumul, decorul și un desen, faci pisica să pară că merge și salvezi proiectul.',
+ pasi: [
+  /* ---- P0: la ce folosește (fără acțiuni) ---- */
+  {t: 'La ce folosește: imagini care se schimbă repede',
+   text: `<p>Dacă desenezi câte o figură pe colțul fiecărei pagini dintr-un caiet și îl răsfoiești repede, figura pare că se mișcă. Așa merge orice <mark>animație</mark>: imagini puțin diferite, arătate repede una după alta.</p>
+<p>Desenele animate se fac în <mark>aplicații de animație</mark>. Sunt multe. În aceste lecții folosim Scratch: îl știi, merge în browser și nu cere cont. Azi îl privești altfel: ca pe un atelier de animație.</p>
+${fig('carte-animata.webp', 420, 524, 'Desen vechi: două mâini răsfoiesc repede o carte cu imagini; pe pagina de sus se vede un om care cade', 'O carte care se răsfoiește repede, într-un desen din 1886. <small>John Barnes Linnet, <a href="https://commons.wikimedia.org/wiki/File:Linnet_kineograph_1886.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, domeniu public; decupat.</small>')}`},
+  /* ---- P1: ce știi, ce e nou, notarea ---- */
+  {t: 'Ce știi deja din Scratch și ce e nou',
+   text: `<p>O parte din ecran o știi din lecțiile cu repetiție (albastru, pe poză). Dacă ai avut Scratch și în clasa a V-a, o știi și de acolo.</p>
+<p>Ce e nou ține de animație (portocaliu): <mark>filele</mark> de deasupra paletei (<b>Cod</b>, <b>Costume</b>, <b>Sunete</b>), <mark>panoul Scenă</mark>, de lângă personaj, și două butoane rotunde, în dreapta jos. Fundalul scenei se numește <mark>decor</mark>.</p>`,
+   exemplu: `${fig('editor-zone.webp', 960, 600, 'Editorul Scratch în română, cu zonele încadrate și numerotate de la 1 la 10: albastru ce știi, portocaliu ce e nou', 'Chenarele și numerele le-am pus noi. Pe telefon, apasă poza ca s-o vezi mare.')}
+<p class="leg"><b class="ab">Albastru, știi:</b> 1 categoriile, 2 paleta de blocuri, 3 zona de cod, 4 scena, 5 steagul verde și Stop, 6 personajul (Sprite1, cu x, y, Direcția).</p>
+<p class="leg"><b class="po">Portocaliu, nou:</b> 7 filele, 8 panoul Scenă, 9 Alege un personaj, 10 Alege un Decor.</p>
+${ACUM('Într-o filă nouă: <code>scratch.mit.edu</code> › <b>Creează</b>. Meniul e în engleză? <b>Settings</b> › <b>Language</b>, derulezi până la litera R, <b>Română</b>.', 'Apoi <b>X</b> pe fereastra cu filmulețul. Nu apeși <b>Logare</b>: lucrezi fără cont. Lasă fila deschisă.')}`,
+   altfel: `<p>E același atelier în care ai lucrat, dar azi deschizi și dulapurile pe care nu le-ai folosit: cel cu haine (Costume) și cel cu sunete.</p>`,
+   incearca: {t: 'notare', q: 'Notează zonele pe această captură. La fiecare număr, alege ce e acolo.',
+    img: 'img/zone-numere.webp', w: 960, h: 600, alt: 'Editorul Scratch în română, cu un program și un decor cu pădure; pe zone sunt doar numerele de la 1 la 7, fără nume',
+    numere: [{n: 1, nume: 'scena'}, {n: 2, nume: 'paleta de blocuri'}, {n: 3, nume: 'filele'}, {n: 4, nume: 'zona de cod'}, {n: 5, nume: 'panoul Scenă'}, {n: 6, nume: 'personajul'}, {n: 7, nume: 'categoriile'}],
+    variante: ['categoriile', 'filele', 'panoul Scenă', 'paleta de blocuri', 'personajul', 'scena', 'zona de cod'],
+    ajutor: 'Bulinele sunt categoriile. Lângă ele, blocurile de luat. În mijloc, programul. Filele sunt sus, deasupra paletei.', why: 'Zonele stau mereu în aceleași locuri, oricare ar fi programul sau decorul.'},
+   inca: [
+    {t: 'classify', q: 'Pune fiecare lucru unde îi e locul.', cats: ['Îl știi din lecțiile cu repetiție', 'E nou azi'],
+     items: [['paleta de blocuri', 0], ['steagul verde', 0], ['blocul „repetă”', 0], ['fila Costume', 1], ['fila Sunete', 1], ['butonul Alege un Decor', 1]],
+     why: 'Paleta, steagul și „repetă” le-ai folosit la programe. Costumele, sunetele și decorul țin de animație.'}
+   ]},
+  /* ---- P2: filele Costume și Sunete ---- */
+  {t: 'Filele Costume și Sunete',
+   text: `<p>Un <mark>costum</mark> e un desen al personajului. Pisica are două: <b>costume1</b> și <b>costume2</b> (numele rămân așa și în română). În fila <b>Costume</b>, lista lor stă în stânga. Apeși pe un costum din listă: pisica de pe scenă îl îmbracă.</p>
+<p>Fila <b>Sunete</b> arată sunetele personajului. Pisica are unul: <b>Meow</b> sau <b>Miau</b>, după cum s-a deschis proiectul. Butonul rotund, <b>Redare</b>, îl pornește. Azi doar îl asculți.</p>
+<p>Te întorci în fila <b>Cod</b>: programul e tot acolo.</p>`,
+   exemplu: `${fig('costume-fila.webp', 960, 600, 'Fila Costume din Scratch: numărul 1 lângă fila Costume, numărul 2 lângă lista cu costume1 și costume2', '1. Fila <b>Costume</b>. 2. Lista costumelor.')}
+${fig('doua-costume.webp', 464, 266, 'Pisica de pe scenă de două ori, cu costume1 și cu costume2: picioarele și brațele stau altfel', 'Bucăți din scenă, puse alături.')}
+${fig('sunete-fila.webp', 960, 600, 'Fila Sunete din Scratch: numărul 1 lângă filă, 2 lângă sunetul din listă, 3 lângă butonul rotund Redare', '1. Fila <b>Sunete</b>. 2. Sunetul. 3. <b>Redare</b>.')}
+${ACUM('Fila <b>Costume</b>: apasă <b>costume2</b>, apoi <b>costume1</b>. Privește pisica de pe scenă.', 'Fila <b>Sunete</b>: apasă <b>Redare</b>. Nu se aude? Poate nu ai căști sau boxe; mergi mai departe.', 'Apasă fila <b>Cod</b>.')}`,
+   altfel: `<p>La teatru, același actor poate avea două haine. Schimbă haina, iar pe scenă e tot el.</p>`,
+   incearca: {t: 'anim', q: 'Alege <b>costume2</b>. Ascultă sunetul: apasă <b>Redare</b>. La sfârșit, întoarce-te în fila <b>Cod</b>. Pe telefon: lista costumelor e sus, deasupra instrumentelor.',
+    paleta: ['steag', 'mergi'], program: [{x: 14, y: 14, b: [['steag'], ['mergi', 10]]}],
+    teste: [
+     {ce: 'Pisica are costume2', msg: 'Apasă fila Costume, apoi costume2 în lista costumelor.', ok: (U, P, S) => S.costum === 1},
+     {ce: 'Ai apăsat Redare', msg: 'Apasă fila Sunete, apoi butonul rotund Redare.', ok: (U, P, S) => S.ascultat},
+     {ce: 'Ești din nou în fila Cod', msg: 'Apasă fila Cod, deasupra paletei.', ok: (U, P, S) => S.fila === 'cod'}],
+    solutie: [{x: 14, y: 14, b: [['steag'], ['mergi', 10]]}], gresit: [{x: 14, y: 14, b: [['steag'], ['mergi', 10]]}], solutieAnim: {costum: 1, ascultat: true, fila: 'cod'},
+    ajutor: 'Filele stau deasupra paletei. Costumele sunt în fila Costume, iar Redare în fila Sunete.', why: 'Ai schimbat fila, costumul și ai ascultat sunetul. Programul a rămas în fila Cod.'},
+   inca: [
+    {t: 'choice', q: 'Vrei să vezi celălalt desen al pisicii. Unde apeși?', o: ['Fila Costume, apoi costumul din listă', 'Fila Sunete, apoi butonul Redare', 'Panoul Scenă, apoi butonul rotund', 'Steagul verde, apoi Stop, de sus'], ok: 0,
+     ajutor: 'Desenele personajului se numesc costume.', why: 'Desenele personajului stau în fila Costume.'}
+   ]},
+  /* ---- P3: costumul următor ---- */
+  {t: 'Costumul următor: pisica pare că merge',
+   text: `<p>În categoria <b>Aspect</b> e un bloc nou: <span class="blk lk">costumul următor</span>. Îmbracă pisica în costumul de după cel de acum; după ultimul, revine la primul. Apăsat în paletă, se face o dată.</p>
+<p>Schimbi costumul și muți pisica puțin, de mai multe ori: pare că merge. De aceea pui în gura lui <b>repetă</b> (lecția 20) două blocuri, în orice ordine: un „mergi” și „costumul următor”.</p>
+<p>Merge foarte repede: 10 treceri țin mai puțin de o secundă. Cum o încetinești afli la lecția 31.</p>`,
+   exemplu: `${fig('program-costum.webp', 200, 190, 'Bucată din zona de cod: când se dă click pe steag, repetă 10, cu costumul următor și mergi 10 pași în gura lui', 'Din Scratch. Aici „costumul următor” e primul în gură.')}
+${ACUM('Bulina <b>Aspect</b>: apasă de 3 ori pe „costumul următor”, în paletă. Pisica se schimbă de fiecare dată.', 'Fă programul: din <b>Evenimente</b>, blocul galben; din <b>Control</b>, „repetă 10”, lipit sub el; din <b>Mișcare</b>, „mergi 10 pași”, în gură; din <b>Aspect</b>, „costumul următor”, sub „mergi”.', 'Apasă steagul verde de 2 ori: x crește cu 100, iar pisica dă din picioare. Doar alunecă și își schimbă picioarele la sfârșit? „costumul următor” a căzut sub brațul de jos: trage-l în gură, sub „mergi”, și iar steagul.')}`,
+   altfel: `<p>E ca la caietul răsfoit: fiecare pagină are figura puțin altfel și puțin mai departe.</p>`,
+   incearca: {t: 'anim', q: 'Pisica merge, dar costumul i se schimbă o singură dată, la sfârșit. Mută „costumul următor” ca să se schimbe la fiecare trecere, apoi apasă steagul verde.',
+    paleta: PAL, program: SUB_BRAT, personaj: O,
+    teste: [T_PORNIRE, T_COSTUM, T_MERS, T_STEAG],
+    solutie: BUN, gresit: SUB_BRAT,
+    ajutor: 'Gura lui „repetă” e între brațele lui. Ce stă sub brațul de jos se face o singură dată, la sfârșit.', why: 'La fiecare trecere, pisica merge puțin și își schimbă costumul: pare că merge.'},
+   inca: [
+    {t: 'anim', q: 'Zona de cod e goală. Fă programul: blocul galben, „repetă 10”, iar în gură „costumul următor” și „mergi 10 pași”. Apasă steagul verde. Pe telefon: din paletă, tragi întâi puțin spre dreapta, apoi unde vrei.',
+     paleta: PAL, program: [], personaj: O,
+     teste: [T_PORNIRE, T_COSTUM, T_MERS, T_STEAG],
+     solutie: BUN, gresit: [{x: 14, y: 14, b: [['steag'], ['repeta', 10, {guri: [[['mergi', 10]]]}], ['costum_urmator']]}],
+     ajutor: 'Blocul galben e în Evenimente, „repetă” în Control, „mergi” în Mișcare, „costumul următor” în Aspect.', why: 'Ordinea din gură nu schimbă ce vezi: la fiecare trecere, un mers și o schimbare de costum.'}
+   ]},
+  /* ---- P4: decorul ---- */
+  {t: 'Decorul: fundalul scenei',
+   text: `<p>Personajul are costume, iar scena are <b>decoruri</b>: imaginile din spatele personajului. Lângă personaj e panoul <b>Scenă</b>. Sub el, butonul rotund <b>Alege un Decor</b>. Îl apeși și alegi o imagine din listă (numele sunt în engleză).</p>
+<p>Ai apăsat pe panoul <b>Scenă</b>? A doua filă se numește acum <b>Decoruri</b>, iar la Mișcare scrie „Scena selectată”. Apeși pe <b>Sprite1</b>, sub scenă, și revii la pisică.</p>`,
+   exemplu: `${fig('decor-lista.webp', 744, 250, 'Lista Alege un decor, cu butonul Înapoi sus și imagini mici cu numele lor în engleză', 'Lista decorurilor. <b>Înapoi</b> o închide, fără schimbări.')}
+${fig('decor-ales.webp', 371, 563, 'Scena cu pădure și pisica; sub scenă panoul Scenă, cu Decoruri 2, și butonul rotund Alege un Decor, încadrate', 'Decorul <b>Forest</b>. Încadrate: panoul <b>Scenă</b> și butonul rotund.')}
+${fig('scena-selectata.webp', 300, 240, 'Filele Cod, Decoruri, Sunete și, sub ele, lista cu backdrop1 și Forest', 'Scrie <b>Decoruri</b> în loc de Costume? Ai apăsat pe panoul <b>Scenă</b>. Lângă nume scrie tot „Costum”, dar e un decor.')}
+${ACUM('Treci cu mouse-ul peste butonul rotund de sub panoul <b>Scenă</b>: apar butoane mici. Apasă chiar pe el, cel de jos, și alege <b>Forest</b> (derulează lista, dacă nu-l vezi). O fereastră cu fișiere? <b>Anulare</b>.', 'Apasă pe panoul <b>Scenă</b> și privește filele. Apoi apasă pe <b>Sprite1</b>, sub scenă.')}`,
+   altfel: `<p>Dacă pisica e actorul, decorul e peretele pictat din spatele lui. Schimbi peretele, iar actorul rămâne pe locul lui.</p>`,
+   incearca: {t: 'anim', q: 'Pune decorul <b>Arctic</b>. Apoi apasă pe panoul <b>Scenă</b> și privește a doua filă. La sfârșit, apasă pe <b>Sprite1</b>, sub scenă.',
+    paleta: PAL, program: [],
+    teste: [
+     {ce: 'Pe scenă e decorul Arctic', msg: 'Apasă butonul Alege un Decor, apoi Arctic.', ok: (U, P, S) => S.decor === 'Arctic'},
+     {ce: 'Ai apăsat pe panoul Scenă', msg: 'Apasă pe panoul Scenă, sub scenă: a doua filă se numește atunci Decoruri.', ok: (U, P, S) => S.vazutScena},
+     {ce: 'Sprite1 e din nou selectat', msg: 'Apasă pe Sprite1, pisica mică de sub scenă.', ok: (U, P, S) => S.selectat === 'personaj'}],
+    solutie: [], solutieDecor: 'Arctic', gresit: [], solutieAnim: {vazutScena: true},
+    ajutor: 'Panoul Scenă și butonul Alege un Decor stau sub scenă. Dala cu pisica mică e Sprite1.', why: 'Decorul l-ai schimbat fără să miști pisica. Cu scena selectată, a doua filă arată decorurile.'},
+   inca: [
+    {t: 'anim', q: 'Cineva a apăsat pe panoul <b>Scenă</b>, iar paleta nu mai are blocurile pisicii. Adu-le înapoi.',
+     paleta: PAL, program: [], selectat: 'scena',
+     teste: [{ce: 'Sprite1 e din nou selectat', msg: 'Apasă pe Sprite1, pisica mică de sub scenă.', ok: (U, P, S) => S.selectat === 'personaj'}],
+     solutie: [], gresit: [],
+     ajutor: 'Dala cu pisica mică e sub scenă.', why: 'Apeși pe Sprite1, iar blocurile și fila Costume revin.'}
+   ]},
+  /* ---- P5: editorul grafic ---- */
+  {t: 'Editorul grafic: două instrumente',
+   text: `<p>În fila <b>Costume</b>, lângă listă, e <mark>editorul grafic</mark>: aici desenezi pe costum, pe <mark>pânză</mark>. În stânga pânzei stau <mark>instrumentele</mark>, doar cu desene. Azi folosești două:</p>
+<ul><li><b>Cerc</b> (cercul gol): apeși pe pânză, tragi, lași.</li><li><b>Umplere</b> (găleata): apeși pe o parte a pisicii, iar ea se face mov.</li></ul>
+<p>Schimbarea se vede și pe scenă, dar stă doar pe costumul ales. Sus, săgeata curbă spre stânga e <b>Anulează</b>. E stinsă? Lasă desenul: e doar o probă. Lângă ea, <b>Refă</b> aduce înapoi ce ai anulat.</p>`,
+   exemplu: `${fig('editor-grafic.webp', 960, 600, 'Editorul grafic din fila Costume: numărul 1 lângă instrumente, 2 pe pânza cu pisica și un cerc mov, 3 lângă butonul Anulează; pe scenă, pisica are și ea cercul', '1. Instrumentele. 2. Pânza. 3. <b>Anulează</b>, lângă <b>Refă</b>. Pe scenă se vede și cercul.')}
+${ACUM('Fila <b>Costume</b>, <b>costume1</b>. Cu <b>Cerc</b>, apasă pe un loc gol de pe pânză, trage puțin, lasă.', 'Apasă <b>Umplere</b>, apoi pe capul pisicii: capul se face mov. Apasă <b>Anulează</b>: capul revine.', 'Apasă <b>costume2</b>: aici nu e niciun cerc. Apasă din nou <b>costume1</b>.')}`,
+   altfel: `<p>E ca o foaie pe care desenezi peste un desen. Ce pui pe o foaie nu apare pe cealaltă.</p>`,
+   incearca: {t: 'anim', q: 'Deschide fila <b>Costume</b> și alege <b>costume2</b>. Cu <b>Cerc</b>, desenează un cerc pe un loc gol. Apoi, cu <b>Umplere</b>, fă capul pisicii mov. Pe telefon: tragi cu degetul pe pânză.',
+    paleta: PAL, program: [], nota: NOTA_D,
+    teste: [
+     {ce: 'Pe costume2 e un cerc', msg: 'Apasă costume2 în listă, apoi Cerc. Pe pânză: apeși, tragi puțin, lași.', ok: (U, P, S) => S.cercuri[1] >= 1},
+     {ce: 'Pe costume2, capul e mov', msg: 'Pe costume2, apasă Umplere, apoi pe capul pisicii.', ok: (U, P, S) => S.cap[1]}],
+    solutie: [], gresit: [], solutieAnim: {fila: 'costume', costum: 1, cercuri: [0, 1], cap: [false, true]},
+    ajutor: 'Instrumentele stau lângă pânză. Cercul gol e Cerc, găleata e Umplere.', why: 'Cercul și culoarea stau acum pe costume2. costume1 a rămas cum era.'},
+   inca: [
+    {t: 'anim', q: 'Pe <b>costume1</b>, desenează 2 cercuri, unul în stânga pisicii și unul în dreapta. Apoi apasă <b>Anulează</b> o dată: rămâne unul.',
+     paleta: PAL, program: [], fila: 'costume', nota: NOTA_D,
+     teste: [{ce: 'Pe costume1 e un singur cerc', msg: 'Pe costume1: două cercuri desenate, apoi Anulează o dată. Ai prea multe? Apasă Anulează până rămâne unul.', ok: (U, P, S) => S.cercuri[0] === 1}],
+     solutie: [], gresit: [], solutieAnim: {fila: 'costume', costum: 0, cercuri: [1, 0]},
+     ajutor: 'Anulează scoate ultimul desen.', why: 'Anulează a scos ultimul cerc.'}
+   ]}
+ ],
+ atelier: {t: 'anim', titlu: 'Lista de sarcini',
+  intro: `<ol><li>În fila <b>Costume</b>, pe <b>costume1</b>, desenează un cerc.</li>
+<li>Pune decorul <b>Desert</b>.</li>
+<li>În fila <b>Cod</b>, fă programul: blocul galben, „repetă 10”, iar în gură „mergi 10 pași” și „costumul următor”.</li>
+<li>Apasă steagul verde și privește pisica.</li></ol>
+<p>Le poți face în orice ordine, dar steagul îl apeși după ce ai terminat programul. <strong>La sfârșit:</strong> „Rulează testele”.</p>`,
+  q: 'Pe telefon: blocul din paletă îl tragi întâi puțin spre dreapta, apoi unde vrei; lista costumelor e sus.',
+  paleta: PAL, program: [], personaj: O, nota: NOTA_D,
+  teste: [
+   {ce: 'Pe costume1 e un cerc', msg: 'Fila Costume, costume1, Cerc. Pe pânză: apeși, tragi puțin, lași.', ok: (U, P, S) => S.cercuri[0] >= 1},
+   {ce: 'Pe scenă e decorul Desert', msg: 'Apasă butonul Alege un Decor, apoi Desert.', ok: (U, P, S) => S.decor === 'Desert'},
+   T_PORNIRE, T_COSTUM, T_MERS,
+   {ce: 'Ai apăsat steagul verde, după ce ai terminat programul', msg: 'Fila Cod: apasă steagul verde, deasupra scenei, și privește pisica.', ok: (U, P, S) => S.apasatSteag}],
+  solutie: BUN, solutieDecor: 'Desert', gresit: [], solutieAnim: {fila: 'cod', costum: 0, cercuri: [1, 0]},
+  ajutor: 'Filele stau deasupra paletei. Butonul Alege un Decor e sub scenă. „costumul următor” e la Aspect.',
+  why: 'Ai folosit tot ce e nou azi.'},
+ qs: [
+  {t: 'match', q: 'Potrivește fiecare loc cu ce găsești acolo.',
+   pairs: [['Fila Costume', 'desenele personajului'], ['Fila Sunete', 'sunetele personajului'], ['Panoul Scenă', 'decorurile scenei'], ['Categoria Aspect', 'blocul „costumul următor”']],
+   why: 'Desenele și sunetele au filele lor; decorurile țin de scenă.'},
+  {t: 'notare', q: 'Notează zonele pe această captură, cu fila Costume deschisă. La fiecare număr, alege ce e acolo.',
+   img: 'img/editor-numere.webp', w: 960, h: 600, alt: 'Fila Costume din Scratch; pe zone sunt doar numerele de la 1 la 5, fără nume',
+   numere: [{n: 1, nume: 'instrumentele'}, {n: 2, nume: 'pânza'}, {n: 3, nume: 'lista costumelor'}, {n: 4, nume: 'Anulează și Refă'}, {n: 5, nume: 'scena'}],
+   variante: ['Anulează și Refă', 'instrumentele', 'lista costumelor', 'pânza', 'scena'],
+   why: 'Lista e la marginea din stânga, instrumentele lângă pânză, iar scena în dreapta.'},
+  {t: 'choice', q: 'Vrei ca în spatele pisicii să fie altă imagine. Ce apeși?',
+   o: ['Butonul rotund de sub panoul Scenă', 'costume2, din fila Costume', 'Redare, din fila Sunete', 'Steagul verde, deasupra scenei'], ok: 0,
+   why: 'Imaginea din spate e decorul, iar decorul se alege cu butonul rotund de sub panoul Scenă.'},
+  {t: 'choice', q: 'Pisica are două costume și acum e pe <b>costume1</b>. Apeși de 3 ori pe „costumul următor”, în paletă. Ce costum are la sfârșit?',
+   o: ['costume2', 'costume1', 'costume3', 'Niciunul: pisica dispare'], ok: 0,
+   why: 'Merge 1 → 2 → 1 → 2: după ultimul, revine la primul.'},
+  {t: 'choice', q: 'Desenezi un cerc pe <b>costume1</b>, apoi alegi <b>costume2</b>. Ce vezi pe scenă?',
+   o: ['Pisica fără cerc', 'Pisica cu cerc', 'Doar cercul, fără pisică', 'Nimic: scena e goală'], ok: 0,
+   why: 'Un desen stă doar pe costumul pe care l-ai făcut.'}
+ ]}
+  ],
+  tipuri: {anim: SimScratchAnimatie.tipuri.anim, notare: SimScratchAnimatie.tipuri.notare},
+  aplicatieReala: {aplicatie: 'Scratch, în browser, pe calculatorul din laborator', titlu: 'Acum în Scratch, la calculator', scurt: 'Scratch',
+    intro: '<p>Lista, în Scratch-ul adevărat, fără cont. <b>Ai făcut casetele și fila Scratch e tot deschisă? Sari peste punctele 3-6.</b> <b>Mai sunt 10 minute din oră?</b> Sari la „Salvează”. Scratch nu se deschide, nu merge rețeaua sau ești pe telefon? Fă atelierul până la capăt, spune-i profesorului și treci la verificare.</p>',
+    pasi: LAB},
+  diploma: {
+    titlu: 'Scratch, ca aplicație de animație',
+    rezumat: 'ce știam din Scratch și ce e nou; zonele notate pe captură; filele Costume și Sunete; blocul „costumul următor”, cu „repetă”; decorul; editorul grafic, cu Cerc și Umplere; salvarea proiectului în folderul meu',
+    aplicatie: 'Scratch, în browser, pe calculatorul din laborator',
+    provocare: LAB
+  }
+});
+</script>
+</body>
+</html>

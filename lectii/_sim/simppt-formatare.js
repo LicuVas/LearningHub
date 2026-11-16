@@ -456,7 +456,9 @@ function panglicaFx(app,S){
     const loc=tel?Math.max(110,banda.clientWidth-8):Math.max(330,banda.clientWidth-alte-6),sl=[...grT.querySelectorAll(':scope > .pg-slot')];
     const more=sl.find(x=>x.querySelector('[data-fx="menu:teme"]'));let dr=0;
     sl.filter(x=>x!==more).forEach(x=>{const L=parseFloat(x.style.left),W=parseFloat(x.style.width);if(L+W+22<=loc)dr=Math.max(dr,L+W);else x.style.display='none'});
-    if(more&&dr){more.style.width=(dr+18-parseFloat(more.style.left))+'px';grT.style.width=(dr+22)+'px'}
+    /* 10.11.2026: ui-panglica desenează containerul galeriei doar în fâșia din dreapta dalelor (▾ More); aici fâșia
+       se mută lângă ultima dală rămasă (înainte containerul pornea din stânga galeriei și se lățea până la ea) */
+    if(more&&dr){more.style.left=dr+'px';more.style.width='18px';grT.style.width=(dr+22)+'px'}
   }
   /* fila contextuală Shape Format: în simppt.js e goală (cu o notă); aici primește grupurile ei de formatare */
   const band=pg.querySelector('.pg-banda'),o=S.sel&&S.sel.k==='obj'&&!S.peMini?S.slides[S.cur].obj.find(x=>x.id===S.sel.id):null;

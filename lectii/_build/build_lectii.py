@@ -267,11 +267,74 @@ def hub_nou(text, bloc):
     return text[:i] + nl + nl + "        " + bloc + text[i:]
 
 
-def poarta(slug, folder):
-    r = subprocess.run([sys.executable, str(TEST_JOC), "--dir", str(LECTII / slug), folder],
-                       capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=900)
+# 09.11.2026: cu 100+ lecții publicate, poarta rula 50 de minute la fiecare publicare și pica pe lecții vechi, neatinse,
+# doar din cauza încărcării (timeout-ul oprea tot build-ul, iar o lecție picată din întâmplare pierdea linkul de pe sit).
+# De aceea: (1) o lecție care a trecut și la care nu s-a schimbat NIMIC din ce încarcă nu se mai rejoacă; cheia = pagina,
+# fișierele locale pe care le încarcă, motorul, prezența și testul însuși; (2) rulează 3 deodată; (3) o cădere, inclusiv
+# de timp, se reia o dată singură, ca să nu ia link-ul unei lecții bune. `--fara-cache` rejoacă tot.
+CACHE_POARTA = Path(__file__).resolve().parent / "_cache_test_joc.json"
+_SRC_LOCAL = re.compile(r"""(?:src|href)=["']([^"'#?]+\.(?:js|css))""")
+
+
+def cheie_poarta(slug, folder):
+    import hashlib
+    h = hashlib.sha1()
+    pag = LECTII / slug / folder / "index.html"
+    fisiere = [pag, TEST_JOC] + sorted((LH / "jocuri" / "_motor").glob("*.js")) + sorted((LH / "jocuri" / "_motor").glob("*.css"))
+    fisiere += [p for p in [LH / "assets" / "js" / "prezenta.js", LH / "lectii" / "_sim" / "rezultat-elev.js"] if p.exists()]
+    for rel in sorted(set(_SRC_LOCAL.findall(pag.read_text(encoding="utf-8")))):
+        if "//" not in rel:
+            fisiere.append((pag.parent / rel).resolve())
+    for f in fisiere:
+        h.update(str(f.name).encode("utf-8"))
+        h.update(f.read_bytes() if f.exists() else b"LIPSA")
+    return h.hexdigest()
+
+
+def _joaca(slug, folder):
+    try:
+        r = subprocess.run([sys.executable, str(TEST_JOC), "--dir", str(LECTII / slug), folder],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=900)
+    except subprocess.TimeoutExpired:
+        return False, "test_joc a depășit 900 s"
     ok = r.returncode == 0 and "[TRECUT]" in r.stdout
     return ok, (r.stdout.strip().splitlines() or [r.stderr.strip()[:200]])[0]
+
+
+def poarta(slug, folder):
+    ok, linie = _joaca(slug, folder)
+    if not ok:
+        ok, linie2 = _joaca(slug, folder)   # o singură reluare: la a doua cădere, defectul e real
+        linie = linie2 if ok else f"{linie} | la reluare: {linie2}"
+    return ok, linie
+
+
+def porti_toate(lectii_publicate):
+    """Rezultatele porții pentru lecțiile publicate: din cache, dacă nimic nu s-a schimbat; altfel se joacă, câte 3 deodată."""
+    from concurrent.futures import ThreadPoolExecutor
+    cache = {}
+    if "--fara-cache" not in sys.argv[1:] and CACHE_POARTA.exists():
+        try:
+            cache = json.loads(CACHE_POARTA.read_text(encoding="utf-8"))
+        except ValueError:
+            cache = {}
+    rezultate, de_jucat = {}, []
+    for slug, folder in lectii_publicate:
+        k = cheie_poarta(slug, folder)
+        if cache.get(f"{slug}/{folder}", {}).get("cheie") == k:
+            rezultate[(slug, folder)] = (True, cache[f"{slug}/{folder}"]["linie"])
+        else:
+            de_jucat.append((slug, folder, k))
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        for (slug, folder, k), (ok, linie) in zip(de_jucat, ex.map(lambda t: poarta(t[0], t[1]), de_jucat)):
+            rezultate[(slug, folder)] = (ok, linie)
+            if ok:
+                cache[f"{slug}/{folder}"] = {"cheie": k, "linie": linie}
+            else:
+                cache.pop(f"{slug}/{folder}", None)
+    CACHE_POARTA.write_text(json.dumps(cache, ensure_ascii=False, indent=0), encoding="utf-8")
+    print(f"poarta test_joc: {len(lectii_publicate) - len(de_jucat)} din cache, {len(de_jucat)} jucate")
+    return rezultate
 
 
 def main():
@@ -288,6 +351,11 @@ def main():
 
     # 2) stări, căi, lecții publicate (blocate = „publicat” cu neconcordanță: NU primesc link)
     cai, blocate = set(), set()
+    rezultate_poarta = porti_toate([
+        (slug, le["cale"].rstrip("/").split("/")[-1])
+        for slug, info in plan["clase"].items() for mo in info["module"] for le in mo["lectii"]
+        if le["stare"] == "publicat" and (LECTII / slug / le["cale"].rstrip("/").split("/")[-1] / "index.html").exists()
+    ])
     for slug, info in plan["clase"].items():
         for mo in info["module"]:
             for le in mo["lectii"]:
@@ -304,7 +372,7 @@ def main():
                         necon.append(f"{le['cale']}: „publicat”, dar nu are index.html")
                         blocate.add(le["cale"])
                         continue
-                    ok, linie = poarta(slug, folder)
+                    ok, linie = rezultate_poarta[(slug, folder)]
                     if not ok:
                         necon.append(f"{le['cale']}: „publicat”, dar poarta test_joc.py NU trece: {linie}")
                         blocate.add(le["cale"])

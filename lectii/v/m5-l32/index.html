@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecția 32, clasa a V-a: Implementez structura secvențială cu blocuri grafice</title>
+<meta name="description" content="Lecția 32, clasa a V-a: pașii scriși în cuvinte devin blocuri, în aceeași ordine; aceleași blocuri în altă ordine duc pisica în alt loc; primele două blocuri o readuc la start; reproduci un traseu dat, numai cu blocuri de mișcare, apoi același traseu cu mai puține blocuri. Cu un Scratch simulat în pagină.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&family=Livvic:ital,wght@0,400;0,600;0,700;1,400&family=Kode+Mono:wght@500;600&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="../../../jocuri/_motor/motor.css">
+<style>
+:root{
+  --desk:#EEF4FA; --paper:#FFFFFF; --paper2:#F1F6FC; --line:#CFDDEC;
+  --ink:#16283A; --ink2:#4E6276; --accent:#1F63B5; --accentInk:#FFFFFF; --sel:#DCE9F8;
+  --mark:#FFE07A; --markInk:#16283A; --ok:#1E7A46; --okbg:#E0F2E6; --bad:#B8362E; --badbg:#FAE4E2;
+  --fd:"Sniglet","Segoe UI",system-ui,sans-serif; --fb:"Livvic","Segoe UI",system-ui,sans-serif; --fm:"Kode Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:#0F1823; --paper:#16212E; --paper2:#1C2A3A; --line:#304357;
+  --ink:#E4EEF8; --ink2:#A6BACE; --accent:#7DB3F2; --accentInk:#0F1823; --sel:#24405F;
+  --mark:#EBC95C; --markInk:#16283A; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}}
+:root[data-theme="dark"]{
+  --desk:#0F1823; --paper:#16212E; --paper2:#1C2A3A; --line:#304357;
+  --ink:#E4EEF8; --ink2:#A6BACE; --accent:#7DB3F2; --accentInk:#0F1823; --sel:#24405F;
+  --mark:#EBC95C; --markInk:#16283A; --ok:#6CCB8F; --okbg:#18301F; --bad:#FF877B; --badbg:#3A1E1B;
+}
+/* tema: blocuri de mișcare unul după altul */
+.banda{display:flex;align-items:center;gap:4px;padding:7px 12px;white-space:nowrap;overflow:hidden;background:var(--paper2);border-bottom:2px solid var(--accent);font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-size:.72rem;font-weight:700;color:#fff}
+.banda .bk{flex:none;display:inline-block;padding:4px 9px;border-radius:5px;border:1px solid rgba(0,0,0,.18)}
+.banda .mv{background:#3373CC}
+.banda .ev{background:#FFBF00;color:#3A2A00}
+h1,h2{font-weight:800;letter-spacing:0}
+h1 .acc{color:var(--accent)}
+code{font-family:var(--fm);font-size:.9em}
+.acum{border:2px dashed var(--accent);border-radius:10px;background:var(--paper2);padding:8px 12px;margin:12px 0 4px}
+.acum .lbl{font-family:var(--fd);font-weight:800;color:var(--accent);margin-bottom:2px}
+.acum ol{margin:.2em 0 .2em 1.2em;padding:0}
+.acum li{margin:.15em 0}
+.ss-static{display:block!important;margin:8px 0!important;max-width:100%;overflow-x:auto}
+.ss-static .ss-b{touch-action:auto;cursor:default}
+.ss-cap{margin:0 0 4px;font-size:.85rem;color:var(--ink2)}
+.stive{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:flex-start}
+.blk{display:inline-block;padding:1px 7px;border-radius:5px;color:#fff;font-family:"Helvetica Neue","Segoe UI",Arial,sans-serif;font-weight:700;font-size:.86em;white-space:nowrap}
+.blk.mv{background:#3373CC}.blk.ev{background:#FFBF00;color:#3A2A00}
+.pasi-cuv{margin:.3em 0 .3em 1.4em;padding:0}
+.captura.mica img{max-width:220px}
+</style>
+</head>
+<body>
+<script src="../../../jocuri/_motor/motor.js"></script>
+<script src="../../_sim/scratch.js"></script>
+<script src="../../_sim/scratch-interfata.js"></script>
+<script src="../../_sim/scratch-traseu.js"></script>
+<script>
+/* Lecția 32, clasa a V-a (M5, predare): „Implementez structura secvențială cu blocuri grafice”.
+   Legea: _campaign\revizuire_completa_2026_09\00_GHID_LECTII.md. Sursele și probele: surse.md, _proba\.
+   Aplicația = Scratch 3, editorul online, în română, fără cont (decizia veche, ca la VI/18 și V/31). Faptele despre mișcare sunt
+   PROBATE în editorul viu (Chromium headless, profil temporar, fără cont, 08.11.2026: _proba\live_v32.py → live_v32.json).
+   Simulatorul: lectii/_sim/scratch.js (SimScratch 1.4), doar FOLOSIT; extensia mea: lectii/_sim/scratch-traseu.js; din lectii/_sim/scratch-interfata.js (V/31) folosesc doar pazaPaleta.
+   Traseele stau în x ≥ 0, y ≥ 0: la a V-a numerele cu minus nu sunt predate.
+   Granița: secvența cu blocuri de mișcare și readusul la start. NU blocul care repetă, NU decizia, NU alte evenimente decât steagul. */
+SimScratch.stil();
+ScratchTraseu.stil();
+const fig = (f, w, h, alt, cap, cls) => `<figure class="captura${cls ? ' ' + cls : ''}"><a href="img/${f}" target="_blank"><img src="img/${f}" alt="${alt}" width="${w}" height="${h}" loading="lazy"></a><figcaption>${cap}</figcaption></figure>`;
+const ACUM = (...p) => `<div class="acum" role="note"><div class="lbl">Acum în Scratch, la calculator</div><ol>${p.map(x => `<li>${x}</li>`).join('')}</ol><p style="margin:.3em 0 0"><b>Pe telefon:</b> sari peste.</p></div>`;
+const STIVA = (b, cap) => `<div class="ss ss-static" role="img" aria-label="Blocuri Scratch: ${b.map(x => SimScratch.text(x)).join(', ')}">${cap ? `<p class="ss-cap">${cap}</p>` : ''}<div class="ss-script" style="position:relative">${b.map(x => SimScratch.html(x)).join('')}</div></div>`;
+const deseneazaStive = () => document.querySelectorAll('.ss-static:not([data-d])').forEach(e => { if (!e.offsetWidth) return; e.dataset.d = '1'; SimScratch.deseneaza(e); });
+new MutationObserver(deseneazaStive).observe(document.documentElement, {childList: true, subtree: true});
+window.addEventListener('lh-pas', () => setTimeout(deseneazaStive, 0));
+
+const A = SimScratch.ajutor, T = ScratchTraseu;
+const PAL_M = ['steag', 'mergi', 'roteste_dr', 'roteste_st'];
+const PAL = ['steag', 'mergi', 'roteste_dr', 'roteste_st', 'mergi_la_xy', 'orienteaza'];
+const NOTA = 'În pagină sunt doar blocurile de azi, iar pisica e desenată mai simplu. În Scratch, fiecare categorie are mult mai multe blocuri.';
+const S0 = [['mergi_la_xy', 0, 0], ['orienteaza', 90]];
+const P = (...b) => [{x: 14, y: 14, b: [['steag']].concat(b)}];
+const PS = (...b) => [{x: 14, y: 14, b: [['steag']].concat(S0, b)}];
+const m = n => ['mergi', n], st = g => ['roteste_st', g], dr = g => ['roteste_dr', g];
+const O0 = {x: 0, y: 0, directie: 90};
+const LIPIT = {ce: 'Totul e lipit sub blocul galben', msg: 'Un singur program: toate blocurile, lipite sub blocul galben. Ce e lăsat deoparte nu pornește la steag: lipește-l sau trage-l în paletă.', ok: (U, Pr) => Pr.length === 1 && A.cuSteag(Pr).length === 1 && A.libere(Pr).length === 0};
+/* un algoritm dat în cuvinte (fără traseu desenat): judecăm locurile prin care trece, nu blocurile */
+let mU = '';
+const DUPA = (tr, unde, fin) => [LIPIT,
+  {ce: unde, o: O0, get msg() { return mU; }, ok: (U, Pr) => { mU = T.minus(Pr) + 'Pisica nu trece pe acolo. Citește pașii algoritmului și compară-i cu blocurile, de sus în jos: un număr sau săgeata rotirii.'; const j = T.judeca(tr, T.drum(U, O0)); return j.lipsa == null && !j.iesit; }},
+  {ce: fin, o: O0, msg: 'La final, pisica e în alt loc. Mai lipsește un bloc sau un număr nu e cel din algoritm.', ok: U => T.judeca(tr, T.drum(U, O0)).capat},
+  T.final(tr, {buton: true})];
+
+/* traseele lecției (toate în x ≥ 0, y ≥ 0); programele-model sunt probate în Scratch-ul viu: _proba/live_lectie.py */
+const TR_ORDINE = [[0, 0], [50, 0], [50, 100]];
+const TR_START = [[0, 0], [150, 0], [150, 100]];
+const TR_EX = [[0, 0], [100, 0], [100, 50], [200, 50]];
+const TR_INCEARCA = [[0, 0], [50, 0], [50, 100], [150, 100]];
+const TR_PUTINE = [[0, 0], [100, 0], [100, 150]];
+const TR_ATELIER = [[0, 0], [100, 0], [100, 100], [200, 100], [200, 50]];
+const TR_INCA = [[0, 0], [150, 0], [150, 50], [50, 50], [50, 150]];
+const TR_LAB = [[0, 0], [100, 0], [100, 100]];
+const TR_INTREBARE = [[0, 0], [50, 0], [50, 150]];
+
+const FISA = T.desen(TR_LAB, {lat: 300, alt: 'Fișa cu traseul de reprodus, pe scena cu pătrățele de 50 de pași: de la S, în mijlocul scenei, 2 pătrățele spre dreapta până la punctul 1, apoi 2 pătrățele în sus până la C, capătul'});
+
+/* ---- „Acum în Scratch, la calculator” (laboratorul, după atelier): FĂRĂ profesor, pe calculatorul comun; fără cont.
+   Drumul literal, probat în editorul viu: _proba/live_lab.py → live_lab.json (blocuri trase, numere scrise, steagul, x și y citite, salvarea). */
+const LAB = [
+  '<b>Deschide Scratch.</b> Ai fila deschisă? Rămâi în ea. Nu? În bara de adrese: <code>scratch.mit.edu/projects/editor</code>, <kbd>Enter</kbd>. Meniul e în engleză? <b>Settings</b> › <b>Language</b>, derulezi până la litera R, <b>Română</b>. Nu se deschide sau nu merge internetul? Jos, sub puncte, apasă <b>← Înapoi la atelier</b>, fă traseul acolo și spune-i profesorului.',
+  '<b>Începutul programului:</b> blocul galben „când se dă click pe ⚑” (<b>Evenimente</b>), sub el „mergi la x … y: …” cu 0 și 0, sub el „orientează-te în direcția 90” (<b>Mișcare</b>). Le ai deja? Nu mai pune altele.',
+  `<b>Traseul de pe fișă:</b> un pătrățel = 50 de pași.${FISA}Citește-l de la S la C și spune-l în cuvinte. Sub program trebuie să vină primul „mergi”, cu numărul lui. Îl ai deja? Verifică numărul. Nu-l ai? Lipește-l.`,
+  '<b>Proba, bloc cu bloc:</b> apasă steagul. Vezi doar unde ajunge pisica, nu drumul. Sub scenă trebuie să scrie x 100, y 0 (punctul 1). Apoi lipește rotirea (o ai deja? nu mai pune alta) și ultimul „mergi”, apasă steagul: x 100, y 100 (capătul).',
+  '<b>Nu iese? Corectează.</b> Scrie y -100, cu minus în față? Ai pus ↻ în loc de ↺: clic dreapta pe el › <b>Șterge blocul</b>, apoi lasă ↺ peste marginea de jos a primului „mergi” și scrie 90. Alt număr? Scrie-l bine. Apoi steagul, de două ori: aceleași numere, x 100, y 100.',
+  '<span class="mai-ai-timp"><b>Dacă mai ai timp:</b> lungește traseul cu încă un colț: sub program, rotește-te ↻ 90, mergi 50. La final: x 150, y 100. Apoi unește: lipește la capăt încă un „mergi 50”; steagul: x 200, y 100. Scrie 100 în primul „mergi 50”, apoi scoate-l pe al doilea: clic dreapta pe el › <b>Șterge blocul</b>. Steagul: tot x 200, y 100.</span>',
+  '<b>Salvează</b> (ca să nu pierzi programul până la sfârșit): <b>Fișier</b> › <b>Salvează pe calculatorul tău</b>. Browserul întreabă unde? <b>Descărcări</b>, numele tău (clasa ta, liniuță, prenumele fără diacritice, liniuță, traseu, ca <code>5A-Ana-traseu</code>, dar cu ale tale), <b>Salvare</b>. Nu întreabă? Explorer › <b>Descărcări</b> › <b>Proiect Scratch</b> (cel cu ora de acum; poate are (1) la sfârșit): <kbd>F2</kbd>, numele, <kbd>Enter</kbd>. Scrie că există deja? <b>Nu</b> (sau <b>Anulare</b>) și adaugi o cifră la sfârșitul numelui.',
+  '<b>Închide fila Scratch</b> cu <b>×</b>, doar pe ea: lecția rămâne deschisă. Browserul întreabă dacă pleci? Pleci.',
+  '<b>La sfârșitul orei (chiar dacă n-ai terminat):</b> fila Scratch e încă deschisă? Închide-o. Ai salvat? Explorer › <b>Descărcări</b>: clic pe fișierul tău de azi (cel cu numele tău, care se termină cu <code>traseu</code>, sau <b>Proiect Scratch</b> cu ora de acum), <kbd>Delete</kbd>. Nu atingi alte fișiere. Nu goli Coșul.'
+];
+
+JocMotor.porneste({
+  cheie: 'lectie_v_m5_l32',
+  mod: 'lectie',
+  titlu: 'Implementez structura secvențială cu blocuri grafice',
+  marca: 'Lecția <b>32</b> · clasa a V-a',
+  h1: 'Implementez structura secvențială <span class="acc">cu blocuri grafice</span>',
+  eticheta: 'Lecții TIC',
+  acasa: {href: '../../../hub/index.html', text: 'LearningHub'},
+  clasa: 'a V-a',
+  unitate: 'V-U6',
+  unitateTitlu: 'Din algoritm în joc: mediul grafic interactiv (Scratch)',
+  competente: ['CS.3.2'],
+  lectii: '32',
+  ancoraText: 'Programa (OMEN 3393/2017), clasa a V-a · unitatea V-U6 „Din algoritm în joc: mediul grafic interactiv (Scratch)” · lecția 32, predare · CS.3.2 „Implementarea unui algoritm care conţine structura secvenţială şi/sau alternativă într-un mediu grafic interactiv”, partea secvențială; structura alternativă e la lecția 33. Activitatea profesorului: reproducerea unui traseu dat al personajului, folosind numai blocuri de mișcare; varianta avansată: același traseu cu mai puține blocuri.',
+  intro: '<p><b>Ai nevoie de:</b> lecția 28 (structura secvențială: pașii, în ordinea scrisă, fiecare o dată); lecția 19 (<kbd>Ctrl+Z</kbd>); lecția 31 (Scratch: tragi un bloc și îl lipești sub altul; salvezi proiectul). Pentru sfârșitul orei: Explorer (lecțiile 9-11).</p>',
+  cum: '<b>Cum lucrezi</b><ol><li>Primul pas îl citești, apoi 5 pași cu exerciții în Scratch-ul din pagină.</li><li>Atelierul: reproduci un traseu.</li><li>La calculator: un traseu scurt în Scratch-ul adevărat (pe telefon, rămâi în pagină).</li><li>5 întrebări.</li></ol><p><b>Când mai sunt 10 minute din oră:</b> treci la întrebări; în Scratch-ul adevărat, ultimul punct (închizi fila, ștergi fișierul tău de azi).</p>',
+  banda: '<span class="bk ev">când se dă click pe ⚑</span><span class="bk mv">mergi 100 pași</span><span class="bk mv">rotește-te ↺ 90</span><span class="bk mv">mergi 50 pași</span>',
+  nivele: [
+{t: 'Implementez structura secvențială cu blocuri grafice', final: true, lectii: [32],
+ continuturi: ['Modalități de reprezentare a structurilor secvențiale și alternative prin blocuri grafice'],
+ obiectiv: 'transformi pașii scriși în cuvinte în blocuri, în aceeași ordine, readuci pisica la start și reproduci un traseu dat, numai cu blocuri de mișcare.',
+ pasi: [
+  /* ---- pasul 0: la ce folosește (fără acțiuni) ---- */
+  {t: 'La ce folosește: un drum, spus pas cu pas',
+   text: `<p>La munte urmezi un <mark>traseu</mark>: un drum cu un început, cu locuri prin care treci, în ordine, și cu un capăt. Unde drumul se desparte, indicatorul îți spune încotro s-o iei. Dacă o iei altfel, ajungi în alt loc.</p>
+<p>Azi îi spui pisicii din Scratch, cu blocuri, pe unde să meargă.</p>
+${fig('indicator-traseu.webp', 340, 514, 'Un stâlp de lemn cu mai multe indicatoare de traseu, cu săgeți colorate spre stânga și spre dreapta, la munte', 'Un indicator de traseu la munte. <small>Foto: Krzysztof Popławski, <a href="https://commons.wikimedia.org/wiki/File:Drogowskaz_szlak%C3%B3w_turystycznych_na_Hali_Miziowej.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC BY 4.0; decupată.</small>', 'mica')}`},
+  /* ---- pasul 1: pașii în cuvinte devin blocuri (puntea V/28 → blocuri); mergi, rotește-te ---- */
+  {t: 'Pașii scriși devin blocuri',
+   text: `<p>La lecția 28 ai scris algoritmi în cuvinte, cu structura secvențială: pașii se fac unul după altul, în ordinea scrisă, fiecare o dată. În Scratch, <b>fiecare pas devine un bloc</b>, în aceeași ordine, sub blocul galben. Pisica face blocurile de sus în jos.</p>
+<p>Două blocuri din <b>Mișcare</b>, al doilea e nou:</p>
+<ul><li><span class="blk mv">mergi 10 pași</span>: merge înainte, încotro privește;</li>
+<li><span class="blk mv">rotește-te ↺ 15 grade</span>: rămâne pe loc și se întoarce spre stânga ei (↻ = spre dreapta ei). 90 de grade = un colț, ca al foii de caiet.</li></ul>`,
+   exemplu: `<p>În cuvinte: <b>1.</b> Mergi 100 de pași. <b>2.</b> Rotește-te spre stânga 90 de grade. <b>3.</b> Mergi 50 de pași. În blocuri:</p>
+${STIVA([['steag'], m(100), st(90), m(50)])}
+${fig('program-rulat.webp', 690, 458, 'Editorul Scratch după steag: în zona de cod blocul galben, mergi 100 pași, rotește-te spre stânga 90 grade, mergi 50 pași; pisica cu capul în sus; sub scenă, încadrate, x 100 și y 50 (1) și Direcția 0 (2)', 'În Scratch, după steag (două decupaje lipite): 1. x și y spun unde e pisica; 2. Direcția, încotro privește (0 = în sus).')}
+<p>Blocurile de mișcare sunt foarte repezi: nu vezi pisica mergând, o vezi direct la capăt. Numărul îl schimbi așa: clic pe el (pe telefon, atingi), scrii, <kbd>Enter</kbd> (pe telefon, atingi în altă parte).</p>
+${ACUM('În bara de adrese, într-o filă nouă: <code>scratch.mit.edu/projects/editor</code>, <kbd>Enter</kbd>. Meniul e în engleză? <b>Settings</b> › <b>Language</b>, derulezi până la litera R, <b>Română</b>. Lasă fila deschisă.', 'Din <b>Evenimente</b>, „când se dă click pe ⚑”. Sub el, din <b>Mișcare</b>, „mergi 10 pași”. Scrie în el 100. Steagul: sub scenă, x 100.')}`,
+   altfel: `<p>E ca atunci când îi spui drumul unui prieten legat la ochi: „Mergi 3 pași. Întoarce-te la stânga. Mergi 2 pași.” Fiecare propoziție e un bloc. Când se întoarce, rămâne pe loc; merge abia la propoziția următoare.</p>`,
+   incearca: {t: 'traseu', q: 'Scrie în blocuri algoritmul: <b>1.</b> Mergi 150 de pași. <b>2.</b> Rotește-te spre stânga 90 de grade. <b>3.</b> Mergi 50 de pași. Trage blocurile sub cel galben, schimbă numerele, apasă steagul o dată și „Rulează testele”. Linia portocalie arată pe unde a trecut pisica; în Scratch nu rămâne nicio linie. Pe telefon: din paletă, tragi întâi puțin spre dreapta, apoi unde vrei.',
+    paleta: PAL_M, nota: NOTA, pasCuPas: false, pune_mijloc: true,
+    program: P(),
+    teste: DUPA([[0, 0], [150, 0], [150, 50]], 'Merge întâi spre dreapta, apoi în sus', 'La final: x 150, y 50'),
+    solutie: P(m(150), st(90), m(50)),
+    gresit: P(m(150), dr(90), m(50)),
+    ajutor: 'Trei pași, trei blocuri, în aceeași ordine: „mergi” cu 150, „rotește-te ↺” cu 90, „mergi” cu 50. Atenție la săgeată: ↺ e spre stânga. Pe telefon, paleta e tăiată: primul „rotește-te” e ↻, al doilea e ↺.',
+    why: 'Fiecare pas a devenit un bloc, în aceeași ordine: 150 spre dreapta, o rotire pe loc, 50 în sus.'},
+   inca: [
+    {t: 'traseu', q: 'Încă unul, cu 5 pași: <b>1.</b> Mergi 50 de pași. <b>2.</b> Rotește-te spre stânga 90 de grade. <b>3.</b> Mergi 100 de pași. <b>4.</b> Rotește-te spre dreapta 90 de grade. <b>5.</b> Mergi 50 de pași.',
+     paleta: PAL_M, nota: NOTA, pasCuPas: false, pune_mijloc: true,
+     program: P(),
+     teste: DUPA([[0, 0], [50, 0], [50, 100], [100, 100]], 'Trece prin x 50, y 0 și x 50, y 100', 'La final: x 100, y 100'),
+     solutie: P(m(50), st(90), m(100), dr(90), m(50)),
+     gresit: P(m(50), st(90), m(100), st(90), m(50)),
+     ajutor: 'Pasul 2 e cu ↺, pasul 4 e cu ↻. Pisica se rotește de la locul unde e.',
+     why: 'Cinci pași, cinci blocuri. Două rotiri în sensuri diferite: pisica merge iar spre dreapta.'}
+   ]},
+  /* ---- pasul 2: ordinea contează (aceleași blocuri, alt loc); mutarea unui bloc ---- */
+  {t: 'Ordinea contează',
+   text: `<p>Aceleași blocuri, în altă ordine, duc pisica în alt loc. Pisica nu alege: face blocurile de sus în jos, ca executantul de la lecția 28.</p>
+<p>Ca să schimbi ordinea, tragi un bloc în alt loc. Trei lucruri de ținut minte:</p>
+<ul><li>un bloc tras vine <b>împreună cu cele de sub el</b>;</li>
+<li>lăsat peste marginea de jos a altui bloc, intră chiar sub el, între blocuri;</li>
+<li>tras înapoi în paletă, dispare (și cele de sub el).</li></ul>`,
+   exemplu: `<p>Numerele de sub scenă: x crește spre dreapta, y crește în sus, iar în mijloc x e 0 și y e 0.</p>
+<p>Trei blocuri, trei ordini, trei locuri. Pisica pleacă din mijloc, privind spre dreapta:</p>
+<div class="stive">${STIVA([m(100), st(90), m(50)], 'x 100, y 50')}${STIVA([st(90), m(100), m(50)], 'x 0, y 150')}${STIVA([m(50), st(90), m(100)], 'x 50, y 100')}</div>
+${ACUM('La programul din filă, lipește sub „mergi 100 pași” un „rotește-te ↺ 15 grade”. Scrie în el 90.')}`,
+   altfel: `<p>E ca atunci când te îmbraci: dacă îți pui întâi pantofii și apoi șosetele, nu iese la fel. Sunt aceleași lucruri, dar ordinea schimbă rezultatul.</p>`,
+   incearca: {t: 'traseu', q: 'Linia verde e drumul cerut, de la S (locul de plecare) la C (capătul). Blocurile sunt bune, dar ordinea nu: pisica ajunge la x 150, y 0. <b>Mută un singur bloc</b> (numerele rămân), apoi apasă steagul o dată și „Rulează testele”. Ai apăsat mai devreme? Apasă întâi „Pune pisica în mijloc (doar aici)”.',
+    paleta: PAL_M, nota: NOTA, pasCuPas: false, pune_mijloc: true,
+    traseu: TR_ORDINE,
+    program: P(m(50), m(100), st(90)),
+    teste: T.teste(TR_ORDINE, {faraStart: true}),
+    solutie: P(m(50), st(90), m(100)),
+    gresit: P(m(50), m(100), st(90)),
+    ajutor: 'Pisica trebuie să se rotească la colț, după primul „mergi”. Trage „rotește-te ↺ 90 grade” și lasă-l peste marginea de jos a lui „mergi 50 pași”: intră între cele două.',
+    why: 'Rotirea stă acum la colț: 50 de pași spre dreapta, rotirea, 100 de pași în sus. Aceleași blocuri, alt loc.'},
+   inca: [
+    {t: 'choice', q: `Pisica pleacă din mijloc (x 0, y 0), privind spre dreapta. Unde ajunge?${STIVA([st(90), m(40), m(20)])}`,
+     o: ['x 0, y 60', 'x 60, y 0', 'x 40, y 20', 'x 20, y 40'], ok: 0,
+     ajutor: 'Rotirea e primul bloc: încotro privește pisica atunci când începe să meargă?',
+     why: 'Întâi se rotește spre stânga, deci privește în sus, apoi merge 40 și 20 de pași: y 60, iar x rămâne 0.'}
+   ]},
+  /* ---- pasul 3: pisica nu se întoarce singură; cele două blocuri de start ---- */
+  {t: 'Înapoi la start: primele două blocuri',
+   text: `<p>Pisica nu se întoarce singură de unde a plecat. La al doilea steag pleacă <b>de unde a rămas</b> și privește încotro privea, deci ajunge în alt loc. Programul din poza de la pasul <i>Pașii scriși devin blocuri</i> (pasul 2 din 6): întâi x 100, y 50; apoi x 50, y 150.</p>
+<p>De aceea, <mark>startul</mark> (locul de plecare) îl pui în program: două blocuri, chiar sub cel galben.</p>
+<ul><li><span class="blk mv">mergi la x 0 y: 0</span>: pisica sare în mijlocul scenei;</li>
+<li><span class="blk mv">orientează-te în direcția 90</span>: privește spre dreapta. Numărul 90 rămâne cum e; a apărut un cerc? Apasă în altă parte.</li></ul>`,
+   exemplu: `<p>În paletă, „mergi la” arată locul de ACUM al pisicii, deci scrii tu 0 și 0.</p>
+${fig('paleta-start.webp', 250, 467, 'Categoria Mișcare din paletă: încadrate, mergi la x 100 y: 50 (1) și orientează-te în direcția 90 (2)', 'Pisica era la x 100, y 50.', 'mica')}
+${fig('start-doua-blocuri.webp', 690, 458, 'Programul din Scratch cu blocurile de start încadrate (1) sub blocul galben, apoi mergi 100 pași, rotește-te spre stânga 90 grade, mergi 50 pași; sub scenă, încadrate (2), x 100 și y 50', 'Cu start (două decupaje lipite): și după al doilea steag, tot x 100, y 50.')}
+${ACUM('Apasă steagul încă o dată și citește x și y: nu mai sunt aceleași numere.', 'Lasă „mergi la x … y: …” peste marginea de jos a blocului galben: intră chiar sub el. Scrie 0 și 0. A ajuns mai jos? <kbd>Ctrl+Z</kbd>, ca în Paint, și încearcă din nou.', 'Sub el, la fel, „orientează-te în direcția 90”. Steagul, de două ori: aceleași numere.')}`,
+   altfel: `<p>E ca la o cursă: la fiecare încercare te întorci la linia de start și privești înainte. Dacă ai porni de unde ai rămas data trecută, n-ai ajunge la aceeași linie de sosire.</p>`,
+   incearca: {t: 'traseu', q: 'Pisica a rămas la x 150, y 100, după prima rulare, privind în sus. Apasă steagul: iese de pe linia verde. Pune startul în program: chiar sub blocul galben, „mergi la x … y: …” (scrii 0 și 0) și „orientează-te în direcția 90”. Apoi apasă steagul de două ori și „Rulează testele”. Pe telefon: zona de cod o derulezi de pe un loc gol; de pe bloc, îl desprinzi.',
+    paleta: PAL, nota: NOTA, pasCuPas: false,
+    personaj: {nume: 'Sprite1', x: 150, y: 100, directie: 0},
+    traseu: TR_START,
+    program: P(m(150), st(90), m(100)),
+    teste: T.teste(TR_START),
+    solutie: PS(m(150), st(90), m(100)),
+    gresit: P(m(150), st(90), m(100)),
+    ajutor: 'Lasă „mergi la x … y: …” peste marginea de jos a blocului galben: intră între el și „mergi 150 pași”. Numerele arată locul de acum al pisicii: apasă pe ele și scrie 0 și 0. Apoi lasă „orientează-te în direcția 90” peste marginea de jos a lui „mergi la”.',
+    why: 'Oriunde ar fi pisica și oriunde ar privi, primele două blocuri o duc la start. Așa, programul face același drum de câte ori apeși steagul.'},
+   inca: [
+    {t: 'choice', q: 'Un program are „mergi la x 0 y: 0”, dar nu are „orientează-te în direcția 90”. Are o rotire. Ce se întâmplă la al doilea steag?',
+     o: ['Pleacă din mijloc, dar privește în altă parte, deci merge pe alt drum', 'Face exact același drum, pentru că a plecat din mijloc', 'Pleacă de unde a rămas, ca și cum n-ar avea niciun bloc de start', 'Nu mai pleacă: rămâne în mijlocul scenei, cu fața spre dreapta'], ok: 0,
+     ajutor: 'Ce schimbă „mergi la”: locul sau și direcția în care privește?',
+     why: '„mergi la” schimbă doar locul. Rotirea din prima rulare a rămas, așa că pisica privește altundeva. De aceea sunt două blocuri de start.'}
+   ]},
+  /* ---- pasul 4: citești traseul dat (activitatea profesorului) ---- */
+  {t: 'Traseul dat: îl citești, îl spui, îl construiești',
+   text: `<p>Un traseu dat e un drum desenat pe scenă, fără blocuri. S e startul, C e capătul, iar punctele 1, 2… sunt colțurile, în ordine. Un pătrățel = 50 de pași.</p>
+<p>Mergi cu ochii pe linie, de la S. Numeri pătrățelele până la colț: asta e un „mergi”. La colț vine o rotire.</p>
+<p><b>Dreapta și stânga sunt ale pisicii, nu ale ecranului.</b> Gândește-te că ești ea, pe linie. Dacă privești spre dreapta ecranului și linia urcă, te întorci spre stânga ta (↺). Dacă privești în sus și linia o ia spre dreapta ecranului, te întorci spre dreapta ta (↻).</p>`,
+   exemplu: `${T.desen(TR_EX, {lat: 260, alt: 'Traseu pe scena cu pătrățele: de la S, în mijloc, 2 pătrățele spre dreapta până la 1, un pătrățel în sus până la 2, 2 pătrățele spre dreapta până la C'})}
+<p>În cuvinte, după start: <b>1.</b> Mergi 100 de pași. <b>2.</b> Rotește-te spre stânga 90 de grade. <b>3.</b> Mergi 50 de pași. <b>4.</b> Rotește-te spre dreapta 90 de grade. <b>5.</b> Mergi 100 de pași.</p>
+${STIVA([['steag'], ...S0, m(100), st(90), m(50), dr(90), m(100)])}`,
+   altfel: `<p>Ca atunci când citești o hartă pentru cineva: „mergi până la colț; acolo o iei la stânga; mergi două străzi”. Harta nu se schimbă, dar stânga și dreapta sunt ale celui care merge.</p>`,
+   incearca: {t: 'traseu', q: 'Reproduce traseul de pe scenă. Startul e pus. Citește linia de la S la C, apoi lipește blocurile de mișcare, apasă steagul și „Rulează testele”. Nu iese? Butonul „Pas cu pas (doar aici)” face câte un bloc, iar linia portocalie crește: vezi unde o ia altfel.',
+    paleta: PAL, nota: NOTA,
+    traseu: TR_INCEARCA,
+    program: PS(),
+    teste: T.teste(TR_INCEARCA),
+    solutie: PS(m(50), st(90), m(100), dr(90), m(100)),
+    gresit: PS(['mergi_la_xy', 150, 100]),
+    ajutor: 'De la S la 1 e un pătrățel, deci 50 de pași. La 1 linia urcă: ↺ 90. De la 1 la 2 sunt 2 pătrățele. La 2 linia o ia spre dreapta ecranului: ↻ 90. De la 2 la C sunt 2 pătrățele.',
+    why: 'Ai citit linia pe bucăți: fiecare bucată a devenit un „mergi”, fiecare colț o rotire.'}},
+  /* ---- pasul 5: varianta avansată: același traseu cu mai puține blocuri (fără repetiție) ---- */
+  {t: 'Același traseu, cu mai puține blocuri',
+   text: `<p>Același drum se poate face cu mai puține blocuri. Două „mergi” lipite unul de altul se <mark>unesc</mark>: un „mergi 100” în loc de două „mergi 50”. La fel, două rotiri cu aceeași săgeată: „↺ 90” în loc de două „↺ 45”.</p>
+<p>Unești doar ce e lipit. Un „mergi” de deasupra unei rotiri nu se unește cu cel de sub ea: pisica merge în altă direcție.</p>
+<p>Blocul de prisos îl scoți așa: clic dreapta pe el (pe telefon, ții degetul pe el) › <b>Șterge blocul</b>. Pleacă doar el; cele de sub el urcă.</p>`,
+   exemplu: `<div class="stive">${STIVA([m(30), m(70), st(90), m(50)], '4 blocuri')}${STIVA([m(100), st(90), m(50)], '3 blocuri, același drum')}</div>
+${fig('meniu-bloc.webp', 240, 230, 'Meniul deschis cu clic dreapta pe un bloc din Scratch: Duplică, Adaugă comentariu și, încadrat, Șterge blocul', 'În Scratch: clic dreapta › <b>Șterge blocul</b>.', 'mica')}`,
+   altfel: `<p>E ca atunci când spui „fă 2 pași, apoi încă 3 pași” sau, mai scurt, „fă 5 pași”. Drumul e același, dar propoziția e mai scurtă.</p>`,
+   incearca: {t: 'traseu', q: 'Programul face bine traseul, dar are 9 blocuri. Lasă-l cu <b>cel mult 6</b>, pe același drum: unește ce se poate, scoate blocurile de prisos, apasă steagul și „Rulează testele”.',
+    paleta: PAL, nota: NOTA, nr_blocuri: true,
+    traseu: TR_PUTINE,
+    program: PS(m(50), m(50), st(45), st(45), m(100), m(50)),
+    teste: T.teste(TR_PUTINE, {maxBlocuri: 6}),
+    solutie: PS(m(100), st(90), m(150)),
+    gresit: PS(m(50), m(50), st(45), st(45), m(100), m(50)),
+    ajutor: 'Primul „mergi 50” devine 100, iar al doilea pleacă (Șterge blocul). La fel: primul „↺ 45” devine 90 și al doilea pleacă; „mergi 100” de sub rotiri devine 150, iar „mergi 50” de sub el pleacă.',
+    why: 'Șase blocuri, același drum: ai unit doar ce era lipit.'}}
+ ],
+ atelier: {t: 'traseu', titlu: 'Traseul de reprodus',
+  intro: `<p><strong>Sarcina:</strong> reproduci traseul de pe scenă, numai cu blocuri de mișcare. Contează unde ajunge pisica și pe unde trece, nu ce blocuri ai ales.</p>
+<p><b>Întâi în cuvinte:</b> citește linia de la S la C și spune pașii (sau scrie-i în caiet). <b>Apoi în blocuri:</b> startul, apoi câte un bloc pentru fiecare pas. Apoi steagul și „Rulează testele”.</p>
+<p>Linia poate și să coboare: privind spre dreapta ecranului, te întorci spre dreapta ta (↻).</p>`,
+  q: 'Reproduce traseul.',
+  paleta: PAL, nota: NOTA,
+  traseu: TR_ATELIER,
+  program: P(),
+  teste: T.teste(TR_ATELIER),
+  solutie: PS(m(100), st(90), m(100), dr(90), m(100), dr(90), m(50)),
+  gresit: PS(['mergi_la_xy', 200, 50]),
+  ajutor: 'De la S la 1 sunt 2 pătrățele. La 1 linia urcă: ↺ 90. De la 1 la 2 sunt 2 pătrățele. La 2 linia o ia spre dreapta ecranului: ↻ 90. De la 2 la 3 sunt 2 pătrățele. La 3 linia coboară: ↻ 90. De la 3 la C e un pătrățel. Pe telefon: zona de cod o derulezi de pe un loc gol, nu de pe bloc.',
+  why: 'Ai reprodus un traseu dat: ai citit desenul, ai spus pașii și i-ai făcut blocuri, în aceeași ordine, cu startul pus în program.',
+  inca: [
+   {t: 'traseu', q: 'Varianta avansată: programul face traseul de la atelier, dar are 13 blocuri. Lasă-l cu <b>cel mult 10</b>, pe același drum.',
+    paleta: PAL, nota: NOTA, nr_blocuri: true,
+    traseu: TR_ATELIER,
+    program: PS(m(50), m(50), st(90), m(50), m(50), dr(45), dr(45), m(100), dr(90), m(50)),
+    teste: T.teste(TR_ATELIER, {maxBlocuri: 10}),
+    solutie: PS(m(100), st(90), m(100), dr(90), m(100), dr(90), m(50)),
+    gresit: PS(m(50), m(50), st(90), m(50), m(50), dr(45), dr(45), m(100), dr(90), m(50)),
+    ajutor: 'Sunt trei perechi de blocuri lipite care se pot uni: două „mergi” la început, două „mergi” după ↺, două „↻ 45”.',
+    why: 'Zece blocuri, același drum. Blocurile despărțite de o rotire au rămas separate.'},
+   {t: 'traseu', q: 'Alt traseu, cu trei colțuri. Pune tu și startul.',
+    paleta: PAL, nota: NOTA,
+    traseu: TR_INCA,
+    program: P(),
+    teste: T.teste(TR_INCA),
+    solutie: PS(m(150), st(90), m(50), st(90), m(100), dr(90), m(100)),
+    gresit: PS(m(150), st(90), m(50), dr(90), m(100), dr(90), m(100)),
+    ajutor: 'La punctul 2, pisica privește în sus, iar linia o ia spre stânga ecranului: ↺ 90. La punctul 3 privește spre stânga ecranului, iar linia urcă: ↻ 90.',
+    why: 'La al doilea colț, stânga ei era și stânga ecranului; la al treilea, dreapta ei era sus.'}
+  ]},
+ qs: [
+  {t: 'choice', q: 'Algoritmul în cuvinte: <b>1.</b> Rotește-te spre stânga 90 de grade. <b>2.</b> Mergi 60 de pași. Ce blocuri îl fac, de sus în jos?',
+   o: ['rotește-te ↺ 90 grade, apoi mergi 60 pași', 'mergi 60 pași, apoi rotește-te ↺ 90 grade', 'rotește-te ↻ 90 grade, apoi mergi 60 pași', 'mergi 90 pași, apoi rotește-te ↺ 60 grade'], ok: 0,
+   why: 'Fiecare pas devine un bloc, în aceeași ordine. ↺ e rotirea spre stânga, cu 90 de grade.'},
+  {t: 'choice', q: `Pisica pleacă din mijloc (x 0, y 0), privind spre dreapta. Unde ajunge?${STIVA([m(40), st(90), m(80)])}`,
+   o: ['x 40, y 80', 'x 80, y 40', 'x 120, y 0', 'x 40, y 0'], ok: 0,
+   why: 'Merge 40 de pași spre dreapta, se rotește pe loc spre stânga ei, deci privește în sus, apoi urcă 80 de pași.'},
+  {t: 'choice', q: 'Sub blocul galben e doar „mergi 30 pași”. Pisica e la x 0 și privește spre dreapta. Apeși steagul de 3 ori. Ce x arată sub scenă?',
+   o: ['x 90', 'x 30', 'x 0', 'x 60'], ok: 0,
+   why: 'Pisica nu se întoarce singură la start: fiecare steag pleacă de unde a rămas. 30 + 30 + 30 = 90.'},
+  {t: 'traseu', q: 'Programul nu trece testele: pisica iese de pe linia verde. Găsește blocul greșit și corectează-l. Numerele sunt bune. Schimbă întâi blocul, apoi steagul și „Rulează testele”.',
+   paleta: PAL, nota: NOTA,
+   traseu: TR_INTREBARE,
+   program: PS(m(50), dr(90), m(150)),
+   teste: T.teste(TR_INTREBARE),
+   solutie: PS(m(50), st(90), m(150)),
+   gresit: PS(m(50), dr(90), m(150)),
+   why: 'La punctul 1 linia urcă, iar pisica privește spre dreapta ecranului: se rotește spre stânga ei, cu ↺.'},
+  {t: 'choice', q: 'Programul: mergi 20 pași, mergi 30 pași, rotește-te ↺ 90 grade, mergi 40 pași. Care variantă face același drum, cu mai puține blocuri?',
+   o: ['mergi 50 pași, rotește-te ↺ 90 grade, mergi 40 pași', 'mergi 90 pași, rotește-te ↺ 90 grade', 'mergi 50 pași, mergi 40 pași, rotește-te ↺ 90 grade', 'mergi 20 pași, rotește-te ↺ 90 grade, mergi 70 pași'], ok: 0,
+   why: 'Se unesc doar cele două „mergi” lipite: 20 + 30 = 50. „mergi 40” e de cealaltă parte a rotirii, deci rămâne separat.'}
+ ]}
+  ],
+  tipuri: {traseu: T.tipuri.traseu},
+  aplicatieReala: {aplicatie: 'Scratch, în browser, pe calculatorul din laborator', titlu: 'Acum în Scratch, la calculator', scurt: 'Scratch',
+    intro: '<p>Un traseu scurt, în Scratch-ul adevărat, fără cont (cam 12 minute). <b>Când mai sunt 10 minute din oră:</b> sari la ultimul punct.</p><details class="verif"><summary>Pe telefon sau fără calculator</summary><p>Rămâi în pagină: citește fișa de la punctul 3 și scrie în caiet pașii ei, în cuvinte. Nimic de salvat sau de șters.</p></details>',
+    pasi: LAB},
+  diploma: {
+    titlu: 'Traseul din blocuri',
+    rezumat: 'a transformat pași scriși în cuvinte în blocuri, în aceeași ordine; a văzut că aceleași blocuri în altă ordine duc pisica în alt loc; a pus startul în program, cu „mergi la x 0 y: 0” și „orientează-te în direcția 90”; a reprodus în pagină un traseu dat, numai cu blocuri de mișcare, și a făcut același traseu cu mai puține blocuri',
+    aplicatie: 'Scratch, în browser, pe calculatorul din laborator',
+    provocare: LAB
+  }
+});
+</script>
+</body>
+</html>

@@ -256,6 +256,11 @@ const CSS=`.ew{container-type:inline-size;display:grid;gap:8px;--npbg:#f9f9f9;--
 .np-format{display:flex;gap:2px;margin-left:8px;opacity:.85}
 .np-format button{border:0;background:transparent;font-weight:600;padding:2px 6px;border-radius:4px}
 .np-drop{position:absolute;z-index:6;background:#fff;border:1px solid #d0d0d0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px;min-width:15em;max-width:calc(100% - 12px)}
+/* 10.11.2026: fereastra Notepad (~260 px) e mai scundă decât meniul Fișier (~450 px), iar overflow:hidden îl tăia după Recente:
+   Salvați și Salvați ca nu se vedeau (VIII/18, atelierul). Cât e deschis un meniu, el iese din fereastră, ca în Windows. */
+.ew-win.cu-meniu{overflow:visible}
+.ew-win.cu-meniu>.np-file{border-radius:7px 7px 0 0}
+.ew-win.cu-meniu>.np-stare{border-radius:0 0 7px 7px}
 .np-drop button{display:flex;justify-content:space-between;gap:18px;width:100%;border:0;background:transparent;text-align:left;padding:5px 10px;border-radius:4px}
 .np-drop button:hover,.np-drop button:focus-visible{background:#f0f0f0}
 .np-drop .k{color:var(--npmut);font-size:12px;white-space:nowrap}
@@ -435,7 +440,7 @@ function deseneazaLive(Q,S){
 function deseneazaNotepad(Q,S){
   if(!S.np.deschis)return `<section class="ew-win" data-w="notepad" aria-label="Notepad"><div class="np-inchis"><p>Notepad e închis.${S.np.sesiune&&S.np.sesiune.length?' La pornire își redeschide filele de data trecută.':''}</p><button type="button" class="btnw prim" data-act="porneste">Pornește Notepad</button><p style="font-size:12px">(la calculator: tasta Windows, scrii Notepad, Enter)</p></div></section>`;
   const f=fila(S);
-  let h=`<section class="ew-win" data-w="notepad" aria-label="Notepad"><div class="np-file" role="tablist"><span class="np-ic" aria-hidden="true"></span>`;
+  let h=`<section class="ew-win${S.meniu?' cu-meniu':''}" data-w="notepad" aria-label="Notepad"><div class="np-file" role="tablist"><span class="np-ic" aria-hidden="true"></span>`;
   S.np.file.forEach((x,i)=>{const nm=x.n||numeFila(x.text),mod=murdar(x);
     h+=`<span class="np-fila ${i===S.np.activa?'act':''}" role="tab" aria-selected="${i===S.np.activa}"><button type="button" class="fn" data-fila="${i}" style="border:0;background:transparent;min-width:32px" title="${ESC(nm)}">${ESC(nm)}</button><button type="button" class="x" data-inchfila="${i}" aria-label="Închideți fila ${ESC(nm)}${mod?' (are modificări nesalvate)':''}" title="${mod?'Modificat: nesalvat':'Închideți fila'}">${mod?'●':'×'}</button></span>`});
   h+=`<button type="button" class="np-plus" data-act="filaNoua" aria-label="Adăugați o nouă filă" title="Adăugați o nouă filă">+</button><span class="np-fx"><button type="button" tabindex="-1" aria-hidden="true">–</button><button type="button" tabindex="-1" aria-hidden="true">▢</button><button type="button" class="inch" data-act="inchideFereastra" aria-label="Închidere (închide fereastra Notepad)" title="Închidere">✕</button></span></div>`;
@@ -611,7 +616,15 @@ function lega(Q,body,api){
     if(a==='inchideFereastra')return cmd('inchideFereastra');
     if(a==='porneste'){ACT.pornesteNotepad(S);mesaj(body,'');re();focusTa();return}
     if(a==='f5'){ACT.f5(S);S.activa='browser';mesaj(body,S.br.file.length?'Pagina s-a reîmprospătat: browserul a citit din nou fișierul salvat.':'');re();const bc=body.querySelector('.br-corp');if(bc)bc.focus({preventScroll:true})}});
-  body.querySelectorAll('[data-meniu]').forEach(b=>b.onclick=()=>{S.meniu=S.meniu===b.dataset.meniu?null:b.dataset.meniu;S.activa='notepad';re();const p=body.querySelector('.np-drop button');if(p)p.focus({preventScroll:true})});
+  body.querySelectorAll('[data-meniu]').forEach(b=>b.onclick=()=>{S.meniu=S.meniu===b.dataset.meniu?null:b.dataset.meniu;S.activa='notepad';re();const p=body.querySelector('.np-drop button');if(p)p.focus({preventScroll:true});
+    const dr=body.querySelector('.np-drop');if(dr&&dr.scrollIntoView)dr.scrollIntoView({block:'nearest'})});   /* pe ecran scund, meniul întreg intră în vedere */
+  /* un clic în afara meniului îl închide, ca în Windows (acum meniul poate acoperi ce e sub fereastră). Fără redesen: dacă
+     nodul de sub deget ar fi înlocuit, Chromium pierde clicul (vezi pânza din paint.js); un singur ascultător pe pagină */
+  E.inchideMeniu=()=>{if(!S.meniu)return;S.meniu=null;const d=body.querySelector('.np-drop');if(d)d.remove();
+    body.querySelectorAll('[data-meniu]').forEach(x=>x.setAttribute('aria-expanded','false'));const w=body.querySelector('.ew-win.cu-meniu');if(w)w.classList.remove('cu-meniu')};
+  if(!body._ewMeniuDoc){body._ewMeniuDoc=true;
+    document.addEventListener('pointerdown',e=>{const E2=body._ew,t=e.target;if(!E2||!E2.inchideMeniu||!body.isConnected)return;
+      if(t&&t.closest&&body.contains(t)&&t.closest('.np-drop,[data-meniu]'))return;E2.inchideMeniu()},true)}
   body.querySelectorAll('[data-cmd]').forEach(b=>b.onclick=()=>cmd(b.dataset.cmd));
   body.querySelectorAll('[data-format]').forEach(b=>b.onclick=()=>mesaj(body,'Nu folosim butoanele de formatare ale Notepad-ului: în pagina web scrii etichetele tu, cu tastatura.'));
   /* dialogurile */

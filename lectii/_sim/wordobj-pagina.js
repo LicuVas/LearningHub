@@ -215,8 +215,10 @@ const CSS=`
 .wp .wp-tile table{border-collapse:collapse;width:60px;height:36px;table-layout:fixed}
 .wp .wp-tile td{padding:0;height:7px}
 .pg .wp-gal{display:flex;gap:2px;align-items:stretch;width:100%;height:100%}
-.pg .wp-gal .wp-tile{flex:0 0 auto;max-width:none;justify-content:center;padding:2px}
-.pg .wp-gal .wp-tile table{width:44px;height:32px}
+/* 10.11.2026: cele 14 dale se strâng (cel mult 44 px fiecare) cât să încapă toate în caseta de 693 px, iar ▾ More
+   rămâne în ea, în dreapta, ca în Word; înainte More ieșea din casetă (tăiat), iar Grid Table 4 nu se putea alege */
+.pg .wp-gal .wp-tile{flex:1 1 44px;min-width:0;max-width:none;justify-content:center;padding:2px}
+.pg .wp-gal .wp-tile table{width:100%;max-width:44px;height:32px}
 .pg .wp-gal .wp-more{margin-left:auto;flex:0 0 22px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;font-size:.8rem}
 .pg .wp-camp{display:flex;align-items:center;gap:2px;width:100%;height:100%;font-size:.72rem}
 .pg .wp-camp input{width:100%;min-width:0;height:100%;font-size:16px;transform-origin:left center;border:1px solid var(--line);border-radius:2px;padding:0 3px;background:var(--paper);color:var(--ink)}
@@ -420,7 +422,10 @@ function render(Q,body,api){
     const t=prima(doc,'tbl');
     if(t){const bi=doc.bl.indexOf(t),tb=corp.querySelector(`table[data-b="${bi}"]`);if(tb){const r=relRect(tb),row=tb.rows[0];
       const cells=[...row.cells];let x=r.x;
+      /* linia unei coloane ieșite din foaie (tabel mai lat decât pagina Portrait) nu se desenează: ar sta tăiată
+         de foaie (overflow-x:hidden), deci nu se poate apuca; cât e trasă chiar acum, rămâne */
       cells.forEach((c,ci)=>{const rc=relRect(c);x=rc.x+rc.w;
+        if(x>foaie.clientWidth&&!(tragere&&tragere.k==='col'&&tragere.i===ci))return;
         h+=`<button type="button" class="wp-cb${tragere&&tragere.k==='col'&&tragere.i===ci?' drag':''}" data-cb="${ci}" style="left:${x.toFixed(1)}px;top:${r.y.toFixed(1)}px;height:${r.h.toFixed(1)}px" aria-label="Linia din dreapta coloanei ${ci+1}: trage ca s-o lățești sau s-o îngustezi"></button>`});
     }}
     ov.innerHTML=h;
