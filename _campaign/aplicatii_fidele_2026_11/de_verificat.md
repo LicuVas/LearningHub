@@ -72,3 +72,26 @@ Detaliul: `runde/3/diferente.md` (D1-D9). Până la răspuns, simulatorul face c
 - [ ] **R3-8** Word, document nou: **Ctrl+S** → „Save this file” → **More save options** → ce se deschide (fereastra Save As sau pagina File › Save As)? (Simulatorul: fereastra Save As — critic runda 2, [FARA_REFERINTA].)
 - [ ] **R3-9** Pe un **telefon Android** (Chrome + Gboard, sugestii pornite), pe poligon: scrii „Ion” fără spațiu și atingi un buton din afara aplicației; apoi scrii „mere” la capătul unui rând și atingi alt rând → „mere” rămâne unde l-ai scris? Tastatura clipește (se ascunde și reapare) la atingere? (Simulatorul: cuvântul intră în document la atingere, caseta iese o clipă din focus — probat doar cu IME emulat prin CDP.)
 <!-- RUNDA3-WORD:END -->
+
+<!-- ACOPERIRE-R3:START (scris de agentul rundei `acoperire` după platoul B-word, 18.11.2026) -->
+## Runda `acoperire` · Word — ce n-a putut fi dovedit invizibil (un minut fiecare)
+
+Lămurite din Word-ul real (desktop ascuns, `referinte/acoperire_word_r3.py`), deci scoase din întrebări: R2-1 (lista Font
+Size: 8 … 72, 16 rânduri), R2-2 / A2-1 (Ctrl+S pe document nou = fereastra „Save this file”: File name „Poezia mea”, caseta
+mică Save as type, „Choose a Location”, More options…, Save, Cancel), R3-1 (Save as type: 17 rânduri), R3-4 (Ctrl+W și ✕ cu
+modificări = „Save your changes to this file?”: More options…, Save, Don't Save, Cancel; Don't Save → Word rămâne deschis,
+gol, titlul „Word”), R3-8 (More options… → pagina File › Save As), R1-7 (File pe document nou → Home), R1-2 (listele
+Bullets, Numbering, Borders, Change Case, Line and Paragraph Spacing, Table, Margins, Orientation). Detaliul:
+`runde/3/acoperire_word.md`.
+
+- [ ] **AC-1** (`word-font-size-tastat`, = R3-5) Word: selectezi un cuvânt, dai **clic cu mouse-ul** în caseta **Font Size**
+  (nu Alt, H, F, S): valoarea „11” se selectează singură? Tastezi 20 + Enter → mărimea e 20 sau 1120? (Pe desktopul ascuns
+  clicul postat nu dă focusul casetei — încercat de 2 ori, 18.11; scenariul rămâne fără rezultat real.)
+- [ ] **AC-2** Word pe un PC din laborator: salvezi un document nou cu F12 ca „Tema mea” → ce scrie sus, în bara de titlu
+  („Tema mea - Word”, „Tema mea - Saved to this PC”, „Tema mea.docx - …”)? (Pe PC-ul tău: „Tema mea.docx  -  Saved to this
+  PC”; extensia vine probabil din setarea ta „arată extensiile”, HideFileExt = 0.)
+- [ ] **AC-3** Word, fereastra „Save this file” / „Save your changes…”: ce buton apasă **Enter** (Save?) și unde e cursorul
+  când apare fereastra (în File name, cu numele selectat?). (UI Automation nu spune butonul implicit; Enter nu l-am încercat,
+  fiindcă ar fi salvat în Documentele tale.) Și ce scrie sub „Documents” în „Choose a Location” pe PC-ul din laborator
+  (pe al tău: „OneDrive - Personal”).
+<!-- ACOPERIRE-R3:END -->

@@ -1269,6 +1269,8 @@ def scenarii(app, iduri=None):
         s = json.loads(f.read_text(encoding="utf-8"))
         if iduri and s["id"] not in iduri:
             continue
+        if s.get("rulat_de") and Path(__file__).name not in s["rulat_de"]:
+            continue   # rulat de alt generator (runda `acoperire` 18.11.2026: acoperire_word_r3.py), cu gesturi pe care nu le am
         out.append(s)
     return out
 

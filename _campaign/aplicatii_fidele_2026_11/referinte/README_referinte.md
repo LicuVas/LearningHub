@@ -189,3 +189,13 @@ Detaliul complet, grup cu grup (`id_grup_saec` dedus din idMso-urile controalelo
   PowerPoint are o singură instanță: dacă alt program cere PowerPoint cât rulează scriptul, se lipește de instanța ascunsă —
   scriptul închide atunci doar prezentarea lui și lasă aplicația (scrie asta în `erori`).
 - `__pycache__/` din acest dosar e produs de importurile mele de probă; e în `.gitignore`.
+
+## Runda `acoperire` pe Word (18.11.2026) — suprafețe noi în `uia_word.json`
+Generator-soră: `acoperire_word_r3.py` (`capturi` / `scrie` / `verifica`, plus `scenarii` pentru rezultatele reale ale
+scenariilor noi). Aceeași instanță nouă `WINWORD /x` pe desktopul ascuns `LHRefOffice`, fereastra 1366×768 css, gesturile
+din `ruleaza_real.py`; niciun Save adevărat (Cancel / Esc). Cheile vechi NU au fost atinse; cele 16 noi:
+`dialog.save_this_file` (Ctrl+S pe document nou), `dialog.save_your_changes_to_this_file` (Ctrl+W și ✕ cu modificări —
+aceeași fereastră), `lista.FontSize`, `lista.FileSaveAs_tip`, `lista.FileSaveAs_navigare` (doar elementele implicite
+Windows; 19 personale scoase), `dialog.FileSaveAs_pdf`, `dialog.open` (Ctrl+F12), `backstage.Open_rand_recent` (structura,
+textele = „<fișier>”) și 8 liste din panglică (`lista.<idMso>`). Cum, când și faptele (ce pagină deschide Ctrl+O / File /
+More options…): blocul `acoperire_r3` din `uia_word.json`. Ce n-a mers invizibil: `de_verificat.md` AC-1…AC-3.

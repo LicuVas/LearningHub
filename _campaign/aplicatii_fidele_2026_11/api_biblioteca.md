@@ -129,6 +129,8 @@ clic dreapta, ▾, galerie — `meniu:Duplicate Slide`, `meniu:Narrow`, `meniu:3
 `tabel`, `imagine`, `grafic`, `lista` (un element din folderul curent: `lista:tema.docx`), `arbore` (panoul de navigare:
 `arbore:Ana`), `bara_comenzi` (`bara_comenzi:Nou`), `nav` (`nav:sus`, `nav:inapoi`, `nav:inainte`), `adresa`, `cautare`,
 `cos` (`cos:notite.txt`), `desktop` (`desktop:Coș de reciclare`), `bara_activitati` (`bara_activitati:Start`), `start`,
+`bara_titlu` (butoanele ferestrei aplicației din bara de titlu: `bara_titlu:Close` = ✕; runda `acoperire` 18.11.2026),
+`camp:tip_fisier` (caseta Save as type a ferestrei Save As; idem),
 `fereastra_app`, `unealta` (Paint), `culoare`, `panza`.
 Țintele virtuale (nu sunt elemente; le dă `LH.aplicatii.dreptunghi(app, tinta) -> {x,y,width,height}` în coordonatele
 ferestrei): `cuvant:<cuvânt>#<a câta apariție>[@stanga|@dreapta|@mijloc]`, `pozitie:<k>` (caretul înaintea caracterului k,
@@ -146,12 +148,27 @@ detail = { aplicatie: 'word',            // numele din §1
            tinta:    'panglica:Home/Font/Bold',  // ținta canonică (§3) a elementului apăsat; la taste: ținta focusului
            inainte:  {...}, dupa: {...}, // starea (§5) înainte și după gest — obiecte JSON (cel mult 50 KB fiecare)
            ts:       1763330000000,      // Date.now() la gest
-           profil:   'word365',  pas: window.__lhPas || null }   // opționale
+           profil:   'word365',  pas: window.__lhPas || null,     // opționale
+           activat:  'dialog_salvare:Save' }    // opțional: butonul apăsat de tastă fără să aibă focusul (vezi mai jos)
 ```
 - Felurile de gest (din `suprafete.json`): `clic_fila`, `fila_file`, `clic_comanda_panglica`, `lansator_grup`,
   `meniu_derulant`, `acces_rapid`, `zoom`, `clic_dreapta`, `dublu_clic`, `shift_clic`, `ctrl_clic`, `selectie`, `tragere`,
   `umplere_tragere`, `rotita`, `tastare`, `sageti`, `alt_sageti`, `tasta_delete|backspace|enter|esc|tab|home_end|pagina|
-  windows|f2|f4|f5|f12`, `ctrl_<literă>`, `ctrl_shift_<literă>`. Un clic simplu în afara acestor ținte: `gest:'clic'`.
+  windows|f2|f4|f5|f12`, `ctrl_<literă>`, `ctrl_shift_<literă>`, `tasta_acces`. Un clic simplu în afara acestor ținte: `gest:'clic'`.
+- **`tasta_acces`** (runda `acoperire`, 18.11.2026) = o tastă din șirul tastelor de acces ale panglicii / Backstage
+  (KeyTips: Alt, apoi literele afișate pe file și comenzi; literele vin din referință, `uia_<app>.json › tasta_acces`,
+  ex. Home „Alt, H”, Bold „Alt, H, 1”, Font Size „Alt, H, F S”). Câte UN eveniment pe tastă. Când tasta duce la capăt un
+  șir (comanda e „apăsată”), `tinta` = ținta canonică a comenzii (§3), ca la clicul pe ea, iar `actiune` = ce a făcut
+  aplicația (aceeași ca la clic). Tastele care doar arată literele (Alt) sau sunt începutul unui șir de mai multe litere
+  („F” din „F S”) au `actiune: 'arata_taste_acces'` / `'prefix_tasta_acces'`, iar `tinta` = ținta focusului; ele NU
+  sunt greșeli pentru asistent (§6.3), ca navigarea. Esc în modul tastelor de acces: `tasta_esc`.
+- **`activat`** (opțional; runda `acoperire`, 18.11.2026) = ținta canonică (§3) a butonului pe care TASTA l-a apăsat
+  fără ca butonul să fie ținta focusului: Enter într-o fereastră apasă butonul ei implicit (Enter în caseta File name a
+  ferestrei Save As = Save: `gest:'tasta_enter'`, `actiune:'salvare'`, `tinta:'camp:nume_fisier'`,
+  `activat:'dialog_salvare:Save'`). Sursa regulii: learn.microsoft.com/en-us/windows/win32/dlgbox/
+  dlgbox-programming-considerations (ENTER → „IDOK or control identifier of the default push button”). `tinta` rămâne
+  ținta focusului (regula de mai sus); `activat` lipsește când tasta n-a apăsat niciun buton. O lecție care așteaptă un
+  buton îl recunoaște din `tinta` SAU din `activat` (§6.3 face la fel).
   Dublul clic = trei evenimente (`clic`, `clic`, `dublu_clic`); biblioteca îl recunoaște chiar dacă primul clic redesenează
   elementul (deci nu se bizuie doar pe `dblclick` nativ). O tragere nu emite și `clic`.
 - La `tastare` în Word / Excel / PowerPoint, `dupa` diferă de `inainte` (tastarea schimbă documentul).
@@ -172,6 +189,9 @@ Ce spune `stare()` la `text` / `celule` trebuie să fie ȘI pe ecran (regula „
 - **word**: `text` (LISTA paragrafelor — un `Array` de șiruri, nu un șir unit cu `\n` — fără ¶ de la capăt), `formatare_pe_caractere` (bucăți la rând
   `{text, bold, italic, underline, marime}`), `selectie` `{de_la, pana_la, text}`, `aliniere_paragrafe`, `stil_paragrafe`,
   `liste`, `tabele`, `imagini`, `pagina`, `cuvinte`, `nume_fisier`, `dialog_salvare` `{titlu, nume_propus, tip_propus}`;
+  din runda `acoperire` (18.11.2026; sensul exact în `descriere` a scenariilor `word-ctrl-*`, `word-salvare-pdf`,
+  `word-x-nesalvat-cancel`): `dialog` `{titlu, intrebare, butoane, apasat}` (fereastra care întreabă, ca la Explorer),
+  `documente_deschise`, `titlu_fereastra`, `pagina_backstage`, `tip_salvare_afisat`, `fisiere_salvate`;
 - **excel**: `celule` `{A1: {valoare, text, formula?}}` (`text` = ce se vede în celulă), `format_celule`, `selectie` `{activa, zona}`, `nume_fisier`;
 - **powerpoint**: `diapozitive`, `formatare_text`, `tema`, `tranzitie_galerie`, `animatie_galerie`, `nume_fisier`;
 - **explorer**: `nume_fisiere` (numele reale din folderul de lucru, cu extensie, folderele cu „/” — comparate ca mulțime),
@@ -189,8 +209,9 @@ Verificarea unei sarcini se face pe stare, nu pe ultimul clic (glosar: „verifi
 - `LH.aplicatii.ascunde()`: scoate bulele și evidențierile.
 - **§6.3** `LH.aplicatii.asistent(nume, {pasi: [{tinta, indiciu, asteapta?}], dupaGreseli: 2, dupaSecunde: 30}) -> {opreste(), pas()}`
   (și `deschide(..., {asistent: {...}})`). Pasul curent e făcut când vine un eveniment al aplicației cu `tinta` = ținta
-  canonică a pasului (aliasul `mso:` se rezolvă) sau `asteapta(ev)` = true. **Greșeală** = orice alt eveniment al
-  aplicației, în afară de `rotita`, `sageti`, `tasta_home_end`, `tasta_pagina`. După `dupaGreseli` greșeli la rând SAU după
+  canonică a pasului (aliasul `mso:` se rezolvă), cu `activat` (§4) = ținta canonică a pasului, sau `asteapta(ev)` =
+  true. **Greșeală** = orice alt eveniment al aplicației, în afară de `rotita`, `sageti`, `tasta_home_end`,
+  `tasta_pagina` și `tasta_acces` cu `actiune` `arata_taste_acces` / `prefix_tasta_acces` (§4). După `dupaGreseli` greșeli la rând SAU după
   `dupaSecunde` secunde fără pasul făcut: `evidentiaza` + `indiciu` pe ținta pasului. Pasul făcut: bula și evidențierea
   dispar, contoarele și ceasul pornesc de la zero pentru pasul următor. Ceasul repornește și la `lh-pas` (motorul schimbă pasul).
   Asistentul de mai mulți pași: după pasul k făcut, evidențierea și indiciul (la greșeli sau la ceas) vin pe ținta
