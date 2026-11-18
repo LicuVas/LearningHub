@@ -22,9 +22,35 @@
   const egal = (a, b) => a === b || (!!a && !!b && a.b === b.b && a.i === b.i && a.u === b.u && a.sz === b.sz);
   const ALINIERI = { left: 'stanga', center: 'centru', right: 'dreapta', justify: 'stanga-dreapta' };
 
+  /* „Save this file” (Ctrl+S pe un document nou, Word M365). NU e în referința UIA: elementele vin DOAR din paginile
+     Microsoft citate în runde/2/diferente.md D7 — „press CTRL+S to open the Save this file dialog box”
+     (support.microsoft.com/en-US/Office/collab-files/save-office-files-to-your-favorite-folder); „enter a file name in the
+     File name box” · „Click Save.” (support.microsoft.com/en-au/word/word-for-new-users); „the Location drop-down” · „open
+     the full Save As window by selecting More save options” (support.microsoft.com/en-au/topic/a7f0a209-ad22-4212-bb53-
+     6cd8e801a6fb). Locul „Documente” = folderul în care se deschide fereastra Save As a referinței (uia_word.json ›
+     dialog.FileSaveAs). Geometria e a noastră: abatere propusă (de_aprobat.md A2-1), captura cerută (de_verificat.md R2-2). */
+  const SALVARE_NOUA = 'dialog.SaveThisFile';
+  function cuSalvareNoua(d) {
+    if (!d || !d.suprafete || d.suprafete[SALVARE_NOUA]) return d;
+    const x = 380, y = 170;
+    const nod = { t: 'Window', e: 'Save this file', r: [x, y, 520, 236], c: [
+      { t: 'TitleBar', e: 'Save this file', r: [x, y, 520, 40] },
+      { t: 'Text', e: 'File name', r: [x + 24, y + 50, 472, 20] },
+      { t: 'Edit', e: 'File name', v: '', r: [x + 24, y + 72, 472, 28] },
+      { t: 'Text', e: 'Location', r: [x + 24, y + 110, 472, 20] },
+      { t: 'ComboBox', e: 'Location', v: 'Documente', r: [x + 24, y + 132, 472, 28] },
+      { t: 'Hyperlink', e: 'More save options', r: [x + 24, y + 190, 160, 26] },
+      { t: 'Button', e: 'Save', r: [x + 408, y + 186, 88, 32] }] };
+    return Object.assign({}, d, {
+      suprafete: Object.assign({}, d.suprafete, { [SALVARE_NOUA]: nod }),
+      dialoguri: Object.assign({}, d.dialoguri, { [SALVARE_NOUA]: { titlu: 'Save this file', file: [{ s: SALVARE_NOUA, fila: null }] } })
+    });
+  }
+
   function creeaza(I, c) {
     const PG = window.LH.aplicatii; // obiectul public (pentru mesaje / asistent)
     const pang = modul('panglica'), st = modul('stare');
+    I.date = cuSalvareNoua(I.date);
     const date = I.date, root = I.root;
     const scenariu = !!I.opt.scenariu;
     const p2007 = I.profil.id === 'word2007';
@@ -297,6 +323,25 @@
       if (inCuvant(M.sel.f)) { const w = cuvantLa(M.sel.f); return { a: w.a, b: w.b }; }
       return null;
     }
+    /* caseta Font Size: o mărime scrisă + Enter se aplică pe selecție (fără selecție: pe cuvântul cursorului, ca Grow/Shrink,
+       altfel pe ce se tastează de acum). Limitele: „Word: between 1 and 1638, in multiples of .5 (such as 10.5 or 105.5)”
+       (support.microsoft.com/en-US/Office/fonts/change-the-font-size). Enter nu ajunge în document; focusul se întoarce în
+       document. O valoare în afara limitelor nu schimbă nimic (mesajul lui Word: NEVERIFICAT, de_verificat.md R2-5). */
+    function marimeScrisa(inp) {
+      const n = Number(String(inp.value).trim().replace(',', '.'));
+      let r = 'fara_efect';
+      if (Number.isFinite(n) && n >= 1 && n <= 1638 && Number.isInteger(n * 2)) {
+        const iv = intervalFormat();
+        if (!iv) M.fmtIns = Object.freeze(Object.assign({}, fmtLa(M.sel.f), { sz: n }));
+        else { schimba('format', () => aplica(iv.a, iv.b, f => Object.freeze(Object.assign({}, f, { sz: n })))); H.rupe(); }
+        r = 'marime_font';
+      }
+      const ins = M.fmtIns;
+      I.focus();
+      actualizeaza();
+      M.fmtIns = ins;
+      return r;
+    }
     function comuta(camp) {
       const r = intervalFormat();
       const fn = () => {
@@ -546,15 +591,17 @@
     const pozitie = (e, r, baza) => { e.style.position = 'absolute'; e.style.left = (r[0] - (baza ? baza[0] : 0)) + 'px'; e.style.top = (r[1] - (baza ? baza[1] : 0)) + 'px'; };
     const OPT = {
       tinta(n, ctx) {
-        if (ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === 'dialog.PictureInsertFromFile') {
+        if (ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === 'dialog.PictureInsertFromFile' || ctx.cheie === SALVARE_NOUA) {
           if (n.t === 'Edit' && /^File name:?$/.test(n.e)) return 'camp:nume_fisier';
           if (n.t === 'ComboBox' && /^File name:?$/.test(n.e)) return null;
-          if (ctx.cheie === 'dialog.FileSaveAs' && n.t === 'Button' && /^(Save|Cancel)$/.test(n.e)) return 'dialog_salvare:' + n.e;
+          if (ctx.cheie !== 'dialog.PictureInsertFromFile' && n.t === 'Button' && /^(Save|Cancel)$/.test(n.e)) return 'dialog_salvare:' + n.e;
         }
         return undefined;
       },
       editabil(n, ctx) {
-        if ((ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === 'dialog.PictureInsertFromFile') && n.t === 'Edit' && /^File name/.test(n.e)) return true;
+        if ((ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === 'dialog.PictureInsertFromFile' || ctx.cheie === SALVARE_NOUA) && n.t === 'Edit' && /^File name/.test(n.e)) return true;
+        /* caseta Font Size: „type the size you want in the Font Size box” (support.microsoft.com/en-US/Office/fonts/change-the-font-size) */
+        if (/^panglica/.test(ctx.cheie || '') && n.t === 'Edit' && n.e === 'Font Size') return true;
         if (ctx.cheie === 'dialog.TableInsertDialogWord' && n.t === 'Spinner' && /^Number of/.test(n.e)) return true;
         return false;
       }
@@ -806,7 +853,7 @@
         e.setAttribute('aria-pressed', bif[id] ? 'true' : 'false');
       }));
       const mf = root.querySelector('[data-lh-id-mso="FontSize"] input');
-      if (mf) mf.value = String(marime(par, f0));
+      if (mf && document.activeElement !== mf) mf.value = String(marime(par, f0));
       const ff = root.querySelector('[data-lh-id-mso="Font"] input');
       if (ff) ff.value = /^Heading|^Title/.test(par.stil) ? 'Calibri Light (Headings)' : 'Calibri (Body)';
       /* bara de stare: numărul de cuvinte și zoom-ul (eticheta declarată = textul de pe ecran) */
@@ -891,11 +938,20 @@
       meniuLa(anc, lista.map(s => ({ tinta: s, html: '<span class="lh-ap-prev lh-ap-stil-' + s.replace(/\s+/g, '-').toLowerCase() + '" aria-hidden="true">AaBbCcDd</span><span class="lh-ap-text">' + esc(s) + '</span>', fa: () => stil(s) })), 'lh-ap-galerie');
     }
 
+    /* cu Backstage sau o fereastră deschisă, tastatura e a lor, nu a documentului (uia_word.json › backstage.nav și
+       dialog.FontDialog au tastele lor; critic runda 1, GRAV 2) */
+    function focusStrat() {
+      const s = dialog ? dialog.el : backstage ? backstage.strat : null;
+      if (!s) { I.focus(); return; }
+      if (s.contains(document.activeElement) && document.activeElement !== intrare) return;
+      if (!s.hasAttribute('tabindex')) s.setAttribute('tabindex', '-1');
+      try { s.focus({ preventScroll: true }); } catch (e) { /* */ }
+    }
     function inchideDialog() {
       if (!dialog) return;
       dialog.strat.remove();
       dialog = null;
-      I.focus();
+      focusStrat();
     }
     function deschideDialog(baza, fila) {
       const info = date.dialoguri[baza];
@@ -904,10 +960,11 @@
       if (dialog) inchideDialog();
       const strat2 = stratNou('lh-ap-strat-dialog');
       dialog = { baza, strat: strat2, fila: null };
-      if (baza === 'dialog.FileSaveAs') {
+      if (baza === 'dialog.FileSaveAs' || baza === SALVARE_NOUA) {
         const prim = (M.P.find(p => p.t.trim()) || { t: '' }).t.trim();
         const propus = (prim ? prim.replace(/[\\/:*?"<>|]/g, '').slice(0, 60) : M.nume.replace(/\.docx$/i, '')) + '.docx';
-        M.dialogSalvare = { titlu: date.dialoguri[baza].titlu, nume_propus: propus, tip_propus: 'Word Document (*.docx)' };
+        M.dialogSalvare = { titlu: date.dialoguri[baza].titlu, nume_propus: propus,
+          tip_propus: baza === SALVARE_NOUA ? null : 'Word Document (*.docx)' };
         dialog.propus = propus;
       }
       arataFilaDialog(fila || null);
@@ -936,16 +993,19 @@
       });
       const nf = s.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
       if (nf) {
-        if (dialog.baza === 'dialog.FileSaveAs') nf.value = dialog.propus;
+        if (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === SALVARE_NOUA) nf.value = dialog.propus;
         setTimeout(() => { try { nf.focus({ preventScroll: true }); nf.select(); } catch (e) { /* */ } }, 0);
-      } else setTimeout(() => { try { s.focus && s.focus({ preventScroll: true }); } catch (e) { /* */ } }, 0);
+      } else {
+        s.setAttribute('tabindex', '-1');
+        setTimeout(() => { if (dialog && dialog.el === s) focusStrat(); }, 0);
+      }
       dialog.strat.addEventListener('keydown', e => {
         if (e.key === 'Enter' && e.target.closest('input')) { e.preventDefault(); implicitDialog(); }
       });
     }
     function implicitDialog() {
       if (!dialog) return null;
-      if (dialog.baza === 'dialog.FileSaveAs') return salveaza();
+      if (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === SALVARE_NOUA) return salveaza();
       if (dialog.baza === 'dialog.PictureInsertFromFile') return insereazaImagine();
       if (dialog.baza === 'dialog.TableInsertDialogWord') return okTabel();
       inchideDialog();
@@ -998,8 +1058,10 @@
         pozitie(nav, SUP['backstage.nav'].r);
         inner.appendChild(nav);
         backstage.nav = nav;
+        s.setAttribute('tabindex', '-1');
       }
       arataPaginaBackstage(pagina || 'Home');
+      focusStrat();
     }
     function arataPaginaBackstage(pagina) {
       const k = 'backstage.' + pagina;
@@ -1037,6 +1099,7 @@
     const CMD = {
       Bold: () => comuta('b'), Italic: () => comuta('i'), UnderlineGallery: () => comuta('u'),
       FontSizeIncreaseWord: () => marimeFont(1), FontSizeDecreaseWord: () => marimeFont(-1),
+      FontSize: elx => { const c = elx.querySelector('input'); if (c && document.activeElement !== c) try { c.focus({ preventScroll: true }); } catch (x) { /* */ } return 'camp'; },
       AlignLeft: () => aliniaza('stanga'), AlignCenter: () => aliniaza('centru'), AlignRight: () => aliniaza('dreapta'),
       AlignJustifyMenu: () => aliniaza('stanga-dreapta'),
       BulletsGalleryWord: () => lista('marcatori'), NumberingGalleryWord: () => lista('numerotare'),
@@ -1194,6 +1257,17 @@
         }
         return I.nesimulat(v);
       }
+      if (dialog && dialog.baza === SALVARE_NOUA) {
+        /* „More save options” → fereastra Save As întreagă (din referință), cu numele scris de elev */
+        if (v === 'More save options') {
+          const scris = valoareCamp('camp:nume_fisier').trim();
+          if (!deschideDialog('dialog.FileSaveAs')) return I.nesimulat(v);
+          const nf = dialog.el.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
+          if (scris && nf) { dialog.propus = scris; nf.value = scris; }
+          return 'salvare_ca';
+        }
+        if (fel === 'camp' && v === 'Location') return I.nesimulat('Location ▾');   // rândurile listei: NEVERIFICAT (R2-2)
+      }
       if (fel === 'fila_dialog' && dialog) { dialog.cheiePlasa = null; arataFilaDialog(v === (date.dialoguri[dialog.baza].file[0].fila || null) ? null : (date.dialoguri[dialog.baza].file.some(f => f.fila === v) ? v : null)); return 'fila_dialog'; }
       if (fel === 'dialog_salvare' && dialog) return v === 'Save' ? salveaza() : (inchideDialog(), 'anulare');
       if (fel === 'fereastra' && dialog) {
@@ -1279,16 +1353,17 @@
     I.la.tasta = (e, g, inCamp) => {
       if (inCamp) {
         if (dialog && e.key === 'Escape') { inchideDialog(); return 'anulare'; }
+        if (e.key === 'Enter' && e.target.closest && e.target.closest('[data-lh-id-mso="FontSize"]')) { e.preventDefault(); return marimeScrisa(e.target); }
         return null;
       }
       if (dialog) {
         if (e.key === 'Escape') { inchideDialog(); return 'anulare'; }
         if (e.key === 'Enter') { e.preventDefault(); return implicitDialog(); }
-        return null;
+        return 'fara_efect';
       }
       if (meniu && e.key === 'Escape') { inchideMeniu(); return 'inchidere_meniu'; }
       if (strat && strat.contextual && e.key === 'Escape') { inchideMeniuContextual(); return 'inchidere_meniu'; }
-      if (backstage) { if (e.key === 'Escape') { inchideBackstage(); return 'inapoi'; } return null; }
+      if (backstage) { if (e.key === 'Escape') { inchideBackstage(); return 'inapoi'; } return 'fara_efect'; }
       let r = null;
       const sh = e.shiftKey;
       switch (g) {
@@ -1326,9 +1401,11 @@
            Ctrl+D „Display the Font dialog box.”, Ctrl+Shift+V „Paste text only.”, Ctrl+S „Save the document.” */
         case 'ctrl_d': r = deschideDialog('dialog.FontDialog') ? 'dialog_font' : null; break;
         case 'ctrl_shift_v': r = lipeste(true); break;
-        /* un document deja salvat se salvează sub numele lui, fără alți pași; la prima salvare fereastra depinde de versiune
-           („the Save As or Save this file window appears”, support.microsoft.com/en-au/word/word-for-new-users) — nedovedit aici */
-        case 'ctrl_s': r = M.salvat ? 'salvare' : I.nesimulat('Ctrl+S'); break;
+        /* un document deja salvat se salvează sub numele lui, fără alți pași; la prima salvare: „depending on the Word version,
+           the Save As or Save this file window appears” (support.microsoft.com/en-au/word/word-for-new-users); în Word M365
+           „press CTRL+S to open the Save this file dialog box” (support.microsoft.com/en-US/Office/collab-files/
+           save-office-files-to-your-favorite-folder). Profilul word2007 (Word 2007 nu are „Save this file”) → Save As. */
+        case 'ctrl_s': r = M.salvat ? 'salvare' : (deschideDialog(p2007 ? 'dialog.FileSaveAs' : SALVARE_NOUA) ? 'dialog_salvare' : I.nesimulat('Ctrl+S')); break;
         case 'tasta_esc': r = 'fara_efect'; break;
         case 'tasta_windows': r = 'fara_efect'; break;
         default:
@@ -1338,23 +1415,41 @@
       actualizeaza();
       return r;
     };
-    I.la.text = v => { const r = scrie(v, false); actualizeaza(); return r; };
-    I.la.sterge = g => { const r = g === 'tasta_backspace' ? backspace() : del(); actualizeaza(); return r; };
+    /* textul venit pe calea „input” (telefon, IME): același AutoCorect ca pe tastatura fizică (scenarii_real/
+       word-tastare-majuscula-automata.json), mai puțin lipirea / plasarea (critic runda 1, GRAV 6). Cu Backstage sau o
+       fereastră deschisă, documentul nu se vede și nu se schimbă (GRAV 2). */
+    I.la.text = (v, info) => {
+      if (dialog || backstage) return 'fara_efect';
+      const r = scrie(v, !/^insertFrom(Paste|Drop)/.test((info && info.tip) || ''));
+      actualizeaza();
+      return r;
+    };
+    I.la.sterge = g => {
+      if (dialog || backstage) return 'fara_efect';
+      const r = g === 'tasta_backspace' ? backspace() : del();
+      actualizeaza();
+      return r;
+    };
 
     /* ---- tastele de acces (KeyTips): Alt apăsat și eliberat arată literele de pe file, apoi pe comenzile filei.
        Literele vin din referință (uia_word.json › tasta_acces, ex. Home „Alt, H”, Bold „Alt, H, 1”). */
-    const kt = { activ: false, fila: null, prefix: '', insigne: [] };
+    /* kt.cale = literele apăsate deja (ex. ['F', 'A'] după Alt, F, A); fiecare nivel arată tastele elementelor care au
+       aceeași cale în referință (Home „Alt, H”, Bold „Alt, H, 1”, Save As „Alt, F, A”, Browse „Alt, F, A, O”) */
+    const kt = { activ: false, cale: [], prefix: '', insigne: [] };
     function ktCurata() { kt.insigne.forEach(x => x.remove()); kt.insigne = []; }
-    function ktIesi() { ktCurata(); kt.activ = false; kt.fila = null; kt.prefix = ''; }
-    function ktTinte() {
+    function ktIesi() { ktCurata(); kt.activ = false; kt.cale = []; kt.prefix = ''; }
+    function ktTinte(cale) {
+      cale = cale || kt.cale;
       const R = root.getBoundingClientRect(), out = [];
-      root.querySelectorAll('[data-lh-tip]').forEach(x => {
+      /* cu Backstage deschis, doar elementele lui se văd și se pot atinge; cadrul lui (backstage.cadru) are o copie a listei
+         din stânga, acoperită de lista adevărată (backstage.nav) — copia nu primește taste */
+      (backstage ? backstage.strat : root).querySelectorAll('[data-lh-tip]').forEach(x => {
         const n = x.__nod;
-        if (!n || !n.ta || !L._vizibil(x)) return;
-        const p = String(n.ta).split(',').map(s => s.trim());
-        if (p[0] !== 'Alt') return;
-        if (!kt.fila && p.length === 2) out.push({ x, cheie: p[1].replace(/\s+/g, '') });
-        else if (kt.fila && p.length === 3 && p[1].replace(/\s+/g, '') === kt.fila) out.push({ x, cheie: p[2].replace(/\s+/g, '') });
+        if (!n || !n.ta || !L._vizibil(x) || x.closest('.lh-ap-cadru')) return;
+        const p = String(n.ta).split(',').map(s => s.replace(/\s+/g, ''));
+        if (p[0] !== 'Alt' || p.length !== cale.length + 2) return;
+        for (let i = 0; i < cale.length; i++) if (p[i + 1] !== cale[i]) return;
+        out.push({ x, cheie: p[p.length - 1] });
       });
       /* o singură insignă pe literă: un buton împărțit și partea lui apăsabilă poartă aceeași tastă */
       const unic = new Map();
@@ -1381,12 +1476,23 @@
       const { out } = ktTinte();
       const exact = out.find(o => o.cheie === kt.prefix);
       if (exact) {
-        const fila = exact.x.getAttribute('data-lh-tip') === 'TabItem' ? kt.prefix : null;
+        const cheie = kt.prefix;
         kt.prefix = '';
-        exact.x.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-        if (fila) { kt.fila = fila; ktArata(); } else ktIesi();
-      } else if (out.some(o => o.cheie.indexOf(kt.prefix) === 0)) ktArata();
-      else kt.prefix = kt.prefix.slice(0, -1);
+        ktCurata();
+        /* o casetă (Font Size „Alt, H, F S”): tasta pune cursorul în ea, cu valoarea selectată (NEVERIFICAT: R2-5) */
+        const camp = exact.x.matches('input:not([readonly])') ? exact.x : exact.x.querySelector('input:not([readonly])');
+        if (camp) {
+          ktIesi();
+          try { camp.focus({ preventScroll: true }); camp.select(); } catch (x) { /* */ }
+          I.tastaFaraClic('camp', exact.x);
+          return true;
+        }
+        I.activeazaTasta(exact.x, cheie);
+        /* nivelul următor: ce s-a deschis are la rândul lui taste (fila Home, File → Backstage, pagina Save As) */
+        const cale = kt.cale.concat([cheie]);
+        if (kt.activ && ktTinte(cale).out.length) { kt.cale = cale; ktArata(); } else ktIesi();
+      } else if (out.some(o => o.cheie.indexOf(kt.prefix) === 0)) { ktArata(); I.tastaFaraClic('prefix_tasta_acces'); }
+      else { kt.prefix = kt.prefix.slice(0, -1); I.tastaFaraClic('fara_efect'); }
       return true;
     }
     let altSingur = false;
@@ -1396,17 +1502,24 @@
       if (!kt.activ) return;
       e.preventDefault();
       e.stopPropagation();
-      if (e.key === 'Escape') { if (kt.fila) { kt.fila = null; kt.prefix = ''; ktArata(); } else ktIesi(); return; }
+      if (e.key === 'Escape') {
+        /* Esc urcă un nivel; din Backstage (sau de pe primul nivel) iese din tastele de acces */
+        if (kt.cale.length && !(backstage && kt.cale.length <= 1)) { kt.cale = kt.cale.slice(0, -1); kt.prefix = ''; ktArata(); }
+        else ktIesi();
+        I.tastaFaraClic('iesire_taste_acces');
+        return;
+      }
       ktLitera(e);
     }, true);
     root.addEventListener('keyup', e => {
       if (e.key !== 'Alt' || !altSingur) return;
       altSingur = false;
       e.preventDefault();
-      if (kt.activ) { ktIesi(); return; }
+      if (kt.activ) { ktIesi(); I.tastaFaraClic('iesire_taste_acces'); return; }
       if (dialog || backstage) return;
       kt.activ = true;
       ktArata();
+      I.tastaFaraClic('arata_taste_acces');
     });
     root.addEventListener('pointerdown', () => { if (kt.activ) ktIesi(); }, true);
 

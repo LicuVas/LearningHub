@@ -40,3 +40,19 @@ sau arată doar elementele dovedite. Detaliul: `runde/1/diferente.md`, partea B.
 - [ ] **R1-7** File pe un document nou → ce pagină apare întâi (Home sau Info)?
 - [ ] **R1-8** Clic dreapta pe text, ÎN AFARA selecției: cursorul se mută acolo înainte de meniu?
 <!-- RUNDA1-WORD:END -->
+
+<!-- RUNDA2-WORD:START (scris de constructorul rundei 2, 18.11.2026 — tastatura: ce am făcut fără referință de gest) -->
+## Runda 2 · Word · tastatura — de lămurit (un minut fiecare)
+
+Detaliul: `runde/2/diferente.md` (D1-D8). Până la răspuns, simulatorul face ce scrie în paranteză.
+
+- [ ] **R2-1** Home › **Font Size ▾**: ce rânduri are lista, în ordine (o captură UI Automation într-o rundă `acoperire`, sau o fotografie). (Simulatorul: mesajul central „Font Size ▾ … nu e simulată”; mărimea se scrie în casetă + Enter.)
+- [ ] **R2-2** Document NOU, **Ctrl+S**: fereastra „Save this file” — captură UI Automation (titlul, câmpurile, butoanele, ce scrie în File name și în Location pe PC-ul din laborator, ce face Esc). Apoi „More save options” → ce se deschide. (Simulatorul: File name cu prima linie a documentului, Location „Documente”, More save options → Save As, Save, Esc închide.)
+- [ ] **R2-3** Pe un **telefon Android** (Chrome + Gboard sau Samsung Keyboard): pe poligon (`aplicatii/poligon.html?aplicatie=word`) tastezi „ana are mere. el are pere.” → ce scrie în document? Apoi lipești un cuvânt (apăsare lungă › Paste) la început de propoziție: primește majusculă? (Simulatorul: „Ana are mere. El are pere.”; lipirea fără majusculă.)
+- [ ] **R2-4** Word: **Ctrl+D** (fereastra Font) → unde e cursorul (în caseta „Font:”? cu textul selectat?) și ce se întâmplă dacă tastezi „qw”. (Simulatorul: fereastra are focusul, tastele nu ajung în document; nu scriu în niciun câmp.)
+- [ ] **R2-5** Word: selectezi un cuvânt, **Alt, H, F, S** → valoarea din Font Size e selectată? Tastezi „0” + Enter → ce mesaj apare? Tastezi „abc” + Enter? (Simulatorul: valoarea selectată; o valoare în afara 1-1638 / nu din 0,5 în 0,5 → caseta revine, fără mesaj.)
+- [ ] **R2-6** Word: **Alt, F** → apar literele pe File/Backstage (H, N, O, I, S, A …)? Apoi **A** → pagina Save As cu literele ei (Y1, C, A, O …)? Apoi **O** → fereastra Save As? (Simulatorul: da, din `uia_word.json › tasta_acces`.)
+- [ ] **R2-7** Word, tabel 2×2 (Nume / Punctaj / Ana / 9), cursorul în prima celulă: **↓** apoi „X” → unde apare X? **End, →** apoi „Y”? **Enter** în celulă apoi „Q”? (Simulatorul: ↓ nu iese din celulă, → rămâne la capătul celulei, Enter nu face nimic — criticul rundei 1, prin COM: `XAna`, `YPunctaj`, `Nume¶Q`; COM nu e gestul, deci nereparat.)
+- [ ] **R2-8** Word: selectezi un cuvânt, **Ctrl+B**, apoi tastezi „XYZ” peste el → XYZ e aldin? (Simulatorul: nu; COM: da.)
+- [ ] **R2-9** Word, document cu text + un tabel: **Ctrl+A**, **Delete** → mai rămâne tabelul? (Simulatorul: da; COM: nu.)
+<!-- RUNDA2-WORD:END -->

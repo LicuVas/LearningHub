@@ -356,9 +356,32 @@
       if (inCamp) setTimeout(() => emite(I, g, act || I.ultimaActiune || g, t, ina), 0);
       else emite(I, g, act || I.ultimaActiune || g, t, ina);
     });
-    /* textul venit fără keydown utilizabil (telefon, IME, diacritice): evenimentul „input” pe intrarea documentului */
+    /* textul venit fără keydown utilizabil (telefon, IME, diacritice): evenimentul „input” pe intrarea documentului.
+       Tastaturile care COMPUN cuvântul (Gboard, Samsung Keyboard, IME) trimit „input” cu isComposing la fiecare literă:
+       cât compun, caseta NU se golește și documentul nu se schimbă; textul compus pleacă O SINGURĂ dată, la sfârșitul
+       compunerii, oricare ar fi ordinea „input” / „compositionend” (Chrome, Safari). Cuvântul în lucru se vede la cursor
+       (clasa lh-ap-compune). Critic runda 1, GRAV 1. */
     if (I.intrare) {
-      I.intrare.addEventListener('beforeinput', e => {
+      const X = I.intrare;
+      let compune = false;
+      const trimite = tip => {
+        const v = X.value;
+        X.value = '';
+        if (!v) return;
+        const ina = st();
+        const act = I.la && I.la.text ? I.la.text(v, { tip: tip || '' }) : 'scriere';
+        emite(I, 'tastare', act || 'fara_efect', I.zonaTinta, ina);
+      };
+      const latime = () => { X.style.width = compune ? Math.max(1, [...X.value].length + 1) + 'ch' : ''; };
+      X.addEventListener('compositionstart', () => { compune = true; r.classList.add('lh-ap-compune'); latime(); });
+      X.addEventListener('compositionend', () => {
+        compune = false;
+        r.classList.remove('lh-ap-compune');
+        latime();
+        setTimeout(() => { if (!compune) trimite('insertFromComposition'); }, 0);
+      });
+      X.addEventListener('beforeinput', e => {
+        if (compune || e.isComposing) return;   // ștergerile din timpul compunerii sunt ale casetei, nu ale documentului
         if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
           e.preventDefault();
           const ina = st();
@@ -367,15 +390,23 @@
           emite(I, g, act, I.zonaTinta, ina);
         }
       });
-      I.intrare.addEventListener('input', () => {
-        const v = I.intrare.value;
-        I.intrare.value = '';
-        if (!v) return;
-        const ina = st();
-        const act = I.la && I.la.text ? I.la.text(v) : 'scriere';
-        emite(I, 'tastare', act, I.zonaTinta, ina);
+      X.addEventListener('input', e => {
+        if (compune || e.isComposing) { latime(); return; }
+        trimite(e.inputType);
       });
     }
+    /* tastele de acces (KeyTips): gestul elevului e o TASTĂ (§4), nu un clic. Efectul clicului pe element, fără
+       MouseEvent sintetic și fără detectorul de dublu clic de mai sus (critic runda 1, GRAV 5). */
+    I.activeazaTasta = (el, tasta) => {
+      const t = tintaDin(I, el), ina = st();
+      I.ultimaActiune = null;
+      const ev = { target: el, clientX: NaN, clientY: NaN, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false,
+        button: 0, detail: 0, tasta, preventDefault() {} };
+      let act = null;
+      if (I.la && I.la.clic) act = I.la.clic(t, ev, 1, 'tasta_acces');
+      return emite(I, 'tasta_acces', act || I.ultimaActiune || 'tasta_acces', t, ina);
+    };
+    I.tastaFaraClic = (actiune, el) => emite(I, 'tasta_acces', actiune, tintaDin(I, el || document.activeElement), st());
   }
 
   /* ------------------------------------------------------------ asistarea (§6) */
@@ -418,6 +449,9 @@
     return b;
   };
   const NEGRESELI = new Set(['rotita', 'sageti', 'tasta_home_end', 'tasta_pagina']);
+  /* tastele de acces care doar ARATĂ literele sau așteaptă a doua literă nu schimbă nimic (ca săgețile): nu sunt greșeli;
+     activarea unei comenzi prin tastă rămâne greșeală dacă nu e ținta pasului */
+  const NAVIGARE_TA = new Set(['arata_taste_acces', 'prefix_tasta_acces']);
   L.asistent = function (nume, cfg) {
     cfg = cfg || {};
     const pasi = cfg.pasi || [];
@@ -452,7 +486,7 @@
       if (typeof p.asteapta === 'function') { try { bun = !!p.asteapta(ev); } catch (e) { bun = false; } }
       else bun = ev.tinta === p.tinta || (!!canonPas(p) && ev.tinta === canonPas(p));
       if (bun) { L.ascunde(); k++; gres = 0; porneste(); return; }
-      if (NEGRESELI.has(ev.gest)) return;
+      if (NEGRESELI.has(ev.gest) || (ev.gest === 'tasta_acces' && NAVIGARE_TA.has(ev.actiune))) return;
       gres++;
       if (gres >= dupaGreseli) arata();
     });
