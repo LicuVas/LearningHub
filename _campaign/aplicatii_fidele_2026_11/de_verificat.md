@@ -95,3 +95,31 @@ Bullets, Numbering, Borders, Change Case, Line and Paragraph Spacing, Table, Mar
   fiindcă ar fi salvat în Documentele tale.) Și ce scrie sub „Documents” în „Choose a Location” pe PC-ul din laborator
   (pe al tău: „OneDrive - Personal”).
 <!-- ACOPERIRE-R3:END -->
+
+<!-- RUNDA4-WORD:START (constructorul rundei 4, 19.11.2026; detaliul: runde/4/diferente.md D17-D25) -->
+## Runda 4 · Word · închid / deschid / liste — de lămurit (un minut fiecare)
+
+Până la răspuns, simulatorul face ce scrie în paranteză.
+
+- [ ] **AC-4** Word, document salvat și NEmodificat (sau unul nou, gol): **Ctrl+W** → se închide fără nicio întrebare?
+  (Simulatorul: da, fără întrebare — pagina Microsoft a defectului „prompted to save … with no edits made”.)
+- [ ] **AC-5** Word, document **deja salvat** („Orar.docx”) cu un rând nou: **Ctrl+W** → ce fereastră apare (aceeași „Save your
+  changes to this file?” cu File name, sau alta, cu numele fișierului în întrebare?) și unde salvează **Save**. Apoi: **✕** pe
+  ultimul document + **Don't Save** → se închide tot Word-ul? Și **More options…** din „Save your changes…” → ce deschide?
+  (Simulatorul: aceeași fereastră, numele documentului în File name, Save = același fișier; ✕ pe ultimul document închide
+  Word-ul; More options… = mesajul central.)
+- [ ] **AC-6** Word, F12 → fereastra Save As pe PC-ul din **laborator**: panoul din stânga, de sus în jos (unde sunt
+  **Documente** și **Descărcări**: sub „Acest PC”, fixate sus?). (Simulatorul: doar implicitele din referință — Acasă,
+  Galerie, Acest PC, Rețea — unul sub altul; „Documente” nu se poate alege din stânga, deci lecția m1-l03:119 încă nu.)
+- [ ] **AC-7** Word, File › Open › **Recent**: rândul arată numele cu extensie („Orar.docx”) sau fără? Un document tocmai
+  salvat urcă primul? Deschizi un fișier din Recent cât alt document e deschis → apare a doua fereastră Word? (Simulatorul:
+  numele fără extensie; salvatul urcă primul; documentul vechi rămâne „deschis în spate”, documente_deschise = 2.)
+- [ ] **AC-8** Word, Ctrl+S pe document nou → „Save this file”: ce **scrie** în caseta mică de lângă File name („.docx”?) și ce
+  rânduri are lista ei și lista **Choose a Location** ▾? (Simulatorul: caseta arată valoarea din referință, „Word Document
+  (*.docx)”, tăiată la 41 px; amândouă ▾ dau mesajul central.)
+- [ ] **AC-9** Word, F12 → Save as type **Rich Text Format (*.rtf)** (sau Plain Text, OpenDocument) → Save: ce fișier apare și
+  ce scrie apoi în bara de titlu? (Simulatorul: doar .docx și PDF au efect; celelalte 15 rânduri se pot alege, dar Save dă
+  mesajul central.)
+- [ ] **AC-10** Word, Font Size ▾ (sau Alt+↓ în casetă): în lista deschisă e marcată mărimea curentă (11)? Săgeata ↓ pornește de
+  la ea? (Simulatorul: mărimea curentă e marcată, ↓ mută marcajul de la ea.)
+<!-- RUNDA4-WORD:END -->

@@ -15,3 +15,7 @@ Aprobat → se mută în `abateri.md`; respins → se repară sau se scoate.
   name „Poezia mea”, tip „Word Document (*.docx)”). Fereastra reală are și ce lipsea din cea construită: caseta mică Save as
   type, „Choose a Location” cu ▾, More options… (→ File › Save As) și Cancel. Rândul rămâne deschis până fereastra
   bibliotecii e refăcută după referință (atunci se închide fără aprobare: nu mai e abatere).
+  **19.11.2026, runda 4 (constructorul):** fereastra inventată (`cuSalvareNoua`, `word.js`) e scoasă; Ctrl+S pe document nou
+  desenează acum `dialog.save_this_file` din referință (File name „Poezia mea” fără .docx, Save as type, Choose a Location,
+  More options… → File › Save As, Save, Cancel). Rândul rămâne bifat-deschis până îl confirmă criticul rundei 5 (atunci
+  orchestratorul îl închide); ce n-are referință din fereastra asta e în `de_verificat.md` AC-8.

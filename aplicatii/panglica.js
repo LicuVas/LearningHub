@@ -125,7 +125,9 @@
     }
     if (fel === 'backstage' || fel === 'dialog' || fel === 'alta') {
       if (t === 'ListItem' || t === 'TreeItem' || t === 'DataItem') return { text: n.e, icoana: !!n.id };
-      if (w >= 40 && h >= 14) return { text: n.e, icoana: false, sageata: t === 'MenuItem' || t === 'SplitButton' };
+      /* butonul care își are numele într-un copil Text („More options…” în ferestrele Office) nu-l scrie de două ori */
+      const textInCopil = (n.c || []).some(c => c.t === 'Text' && c.e === n.e);
+      if (w >= 40 && h >= 14) return { text: textInCopil ? null : n.e, icoana: false, sageata: t === 'MenuItem' || t === 'SplitButton' };
       return { icoana: true };
     }
     return { icoana: true };
@@ -253,6 +255,13 @@
       if (!a.text && n.e) el.title = n.e + (n.k ? ' (' + n.k + ')' : '');
       else if (n.h) el.title = n.h;
     }
+    /* în ferestre (dialog / Backstage), un SplitButton cu loc de text (≥ 50 px rămași după copii) își scrie numele: firimitura
+       „Documente” din bara de adrese, antetele coloanelor „Nume”, „Data modificării”… (uia_word.json › dialog.FileSaveAs);
+       copiii lui (filtrul, săgeata) sunt doar săgeată. „Detalii” (54 − 16 px) și „Toate locațiile” (34 px) rămân pictograme.
+       Critic runda 3, GRAV A2 */
+    const splitCuText = t === 'SplitButton' && (ctx.fel === 'dialog' || ctx.fel === 'backstage' || ctx.fel === 'alta') && !!n.e &&
+      !/^\[/.test(n.e) && r[2] - (n.c || []).reduce((s, c) => s + ((c.r || [0, 0, 0])[2] || 0), 0) >= 50;
+    if (splitCuText) html = '<span class="lh-ap-text">' + esc(n.e) + '</span>';
     /* SplitButton: părțile lui desenează conținutul; partea „săgeată” a unui buton MARE poartă numele sub pictogramă */
     if (t === 'SplitButton' && n.c && n.c.length) {
       el.classList.add('lh-ap-split');
@@ -291,7 +300,10 @@
       if (t === 'SplitButton' && h(n) >= 56) c2.splitMare = true;
       for (const c of n.c) {
         const ce = nodEl(I, c, r, c2, opt);
-        if (c2.splitMare && /More Options/.test(c.e || '')) {
+        if (splitCuText && c.t === 'Button') {
+          ce.innerHTML = glifSageata;
+          ce.removeAttribute('title');
+        } else if (c2.splitMare && /More Options/.test(c.e || '')) {
           ce.classList.add('lh-ap-mare-jos');
           ce.innerHTML = '<span class="lh-ap-text">' + esc(faraPuncte(n.e)) + '</span>' + glifSageata;
         } else if (c2.splitMare && c.t === 'Button') {
