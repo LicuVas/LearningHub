@@ -192,12 +192,16 @@
   };
 
   /* ------------------------------------------------------------ evenimentele standard (§4) */
-  function emite(I, gest, actiune, tinta, inainte) {
+  function emite(I, gest, actiune, tinta, inainte, extra) {
     if (!I || !I.root.isConnected) return null;
     let dupa;
     try { dupa = clona(I.stare()); } catch (e) { dupa = {}; }
     const d = { aplicatie: I.app, gest, actiune: actiune || gest, tinta: tinta || I.zonaTinta, inainte: inainte || {}, dupa,
       ts: Date.now(), profil: I.profil.id, pas: W.__lhPas || null };
+    /* activat = butonul pe care tasta l-a apăsat fără să fie ținta focusului (Enter într-o fereastră = butonul implicit:
+       learn.microsoft.com/en-us/windows/win32/dlgbox/dlgbox-programming-considerations, ENTER „… IDOK or control
+       identifier of the default push button”); critic runda 2, GRAV N2 */
+    if (extra && extra.activat) d.activat = extra.activat;
     const lim = (setari().evenimente || {}).tampon || 500;
     EV.push(d);
     while (EV.length > lim) EV.shift();
@@ -288,10 +292,21 @@
     }
     r.addEventListener('pointerdown', e => {
       if (e.button !== 0) { jos = null; return; }
-      const t = tintaDin(I, e.target);
+      /* încheierea compunerii (laAtingere, pe window, înaintea acestui ascultător) redesenează documentul: elementul atins
+         nu mai e în pagină → se ia elementul nou din același punct, ca atingerea să mute cursorul acolo (critic runda 2, N3 b) */
+      let tg = e.target, ex = e;
+      if (!tg.isConnected) {
+        const x = document.elementFromPoint(e.clientX, e.clientY);
+        if (x && r.contains(x)) {
+          tg = x;
+          ex = { target: x, clientX: e.clientX, clientY: e.clientY, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey,
+            altKey: e.altKey, button: e.button, buttons: e.buttons, pointerType: e.pointerType, preventDefault: () => e.preventDefault() };
+        }
+      }
+      const t = tintaDin(I, tg);
       inaintePas = st();
-      jos = { x: e.clientX, y: e.clientY, t, tras: false, fel: null, tinta0: e.target };
-      if (I.la && I.la.jos) jos.fel = I.la.jos(e, t) || null;
+      jos = { x: e.clientX, y: e.clientY, t, tras: false, fel: null, tinta0: tg };
+      if (I.la && I.la.jos) jos.fel = I.la.jos(ex, t) || null;
     }, true);
     r.addEventListener('pointermove', e => {
       if (!jos || !(e.buttons & 1)) return;
@@ -348,13 +363,19 @@
       if (!g) return;
       const inCamp = eCamp(e.target);
       const ina = st();
+      /* la taste, ținta = focusul din MOMENTUL tastei (§4): Enter în File name închide fereastra, iar focusul de după e
+         documentul (critic runda 2, GRAV N2) */
+      const t0 = inCamp && r.contains(e.target) ? tintaDin(I, e.target) : null;
       I.ultimaActiune = null;
+      I.activat = null;
       let act = null;
       if (I.la && I.la.tasta) act = I.la.tasta(e, g, inCamp);
+      const extra = I.activat ? { activat: I.activat } : null;
+      I.activat = null;
       if (!inCamp && (e.ctrlKey || e.metaKey || e.altKey || /^F\d/.test(e.key) || e.key === 'Tab')) e.preventDefault();
-      const t = tintaDin(I, document.activeElement && r.contains(document.activeElement) ? document.activeElement : null);
-      if (inCamp) setTimeout(() => emite(I, g, act || I.ultimaActiune || g, t, ina), 0);
-      else emite(I, g, act || I.ultimaActiune || g, t, ina);
+      const t = t0 || tintaDin(I, document.activeElement && r.contains(document.activeElement) ? document.activeElement : null);
+      if (inCamp) setTimeout(() => emite(I, g, act || I.ultimaActiune || g, t, ina, extra), 0);
+      else emite(I, g, act || I.ultimaActiune || g, t, ina, extra);
     });
     /* textul venit fără keydown utilizabil (telefon, IME, diacritice): evenimentul „input” pe intrarea documentului.
        Tastaturile care COMPUN cuvântul (Gboard, Samsung Keyboard, IME) trimit „input” cu isComposing la fiecare literă:
@@ -378,8 +399,30 @@
         compune = false;
         r.classList.remove('lh-ap-compune');
         latime();
-        setTimeout(() => { if (!compune) trimite('insertFromComposition'); }, 0);
+        /* textul pleacă ACUM: o atingere care a încheiat compunerea e urmată imediat de „click” (un „Verifică” citește
+           stare()); caseta rămâne goală, deci un „input” venit după (Safari) nu mai are ce trimite (critic runda 2, N3) */
+        trimite('insertFromComposition');
+        setTimeout(() => { if (!compune && X.value) trimite('insertFromComposition'); }, 0);
       });
+      /* O atingere oriunde (alt rând, panglica, „Verifică” din lecție) încheie întâi cuvântul aflat în compunere, ÎNAINTE ca
+         aplicația să mute cursorul: caseta iese din focus, iar browserul încheie compunerea (compositionend → trimite; ordinea
+         „mousedown → compositionend → blur”, critic runda 2). Atingerea în aplicație readuce focusul în document (I.la.jos).
+         Plasă: dacă browserul nu încheie compunerea, biblioteca trimite ea textul casetei. Critic runda 2, GRAV N3. */
+      I.incheieCompunerea = tinta => {
+        if (!compune || tinta === X) return;
+        try { X.blur(); } catch (e) { /* */ }
+        if (compune) {
+          compune = false;
+          r.classList.remove('lh-ap-compune');
+          latime();
+          trimite('insertFromComposition');
+        }
+      };
+      const laAtingere = e => {
+        if (!r.isConnected) { W.removeEventListener('pointerdown', laAtingere, true); return; }
+        I.incheieCompunerea(e.target);
+      };
+      W.addEventListener('pointerdown', laAtingere, true);
       X.addEventListener('beforeinput', e => {
         if (compune || e.isComposing) return;   // ștergerile din timpul compunerii sunt ale casetei, nu ale documentului
         if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
@@ -484,7 +527,7 @@
       if (!p || ev.aplicatie !== nume) return;
       let bun = false;
       if (typeof p.asteapta === 'function') { try { bun = !!p.asteapta(ev); } catch (e) { bun = false; } }
-      else bun = ev.tinta === p.tinta || (!!canonPas(p) && ev.tinta === canonPas(p));
+      else bun = ev.tinta === p.tinta || (!!canonPas(p) && ev.tinta === canonPas(p)) || (!!ev.activat && ev.activat === p.tinta);
       if (bun) { L.ascunde(); k++; gres = 0; porneste(); return; }
       if (NEGRESELI.has(ev.gest) || (ev.gest === 'tasta_acces' && NAVIGARE_TA.has(ev.actiune))) return;
       gres++;

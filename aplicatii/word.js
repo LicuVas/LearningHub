@@ -63,6 +63,7 @@
       tab: [], img: [],
       pag: { orientare: 'portret', latime_cm: 21.0, inaltime_cm: 29.7, margini_cm: { sus: 2.5, jos: 2.5, stanga: 2.5, dreapta: 2.5 } },
       sel: { a: 0, f: 0 }, cel: null, fmtIns: null, nume: 'Document1', salvat: false, dialogSalvare: null, zoom: 100,
+      folder: null, salvari: [],
       semne: false, clip: null, ultima: null
     };
     if (c.tabel && c.tabel.randuri && c.tabel.coloane) {
@@ -576,7 +577,11 @@
         pagina: JSON.parse(JSON.stringify(M.pag)),
         cuvinte: cuvinte(),
         nume_fisier: M.nume,
-        dialog_salvare: M.dialogSalvare ? Object.assign({}, M.dialogSalvare) : null
+        dialog_salvare: M.dialogSalvare ? Object.assign({}, M.dialogSalvare) : null,
+        /* chei în plus (§5 le permite): folderul documentului salvat și fișierele scrise (lecția m1-l03 verifică folderul;
+           critic runda 2, GRAV N4) */
+        folder_fisier: M.folder,
+        fisiere_salvate: M.salvari.map(x => Object.assign({}, x))
       };
     };
     I.pxPePunct = () => PX_PT * M.zoom / 100;
@@ -999,9 +1004,6 @@
         s.setAttribute('tabindex', '-1');
         setTimeout(() => { if (dialog && dialog.el === s) focusStrat(); }, 0);
       }
-      dialog.strat.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && e.target.closest('input')) { e.preventDefault(); implicitDialog(); }
-      });
     }
     function implicitDialog() {
       if (!dialog) return null;
@@ -1015,15 +1017,45 @@
       const x = dialog && dialog.el.querySelector('[data-lh-tinta="' + tinta + '"] input');
       return x ? x.value : '';
     }
+    /* folderul în care se deschide fereastra Save As = bara ei de adrese în referință (uia_word.json › dialog.FileSaveAs ›
+       ToolBar „Adresă: Documente”); „Save this file” are același loc (Location, A2-1) */
+    function folderSalvare() {
+      let f = null;
+      (function cauta(n) { if (!n || f) return; const m = /^Adres[ăa]: (.+)$/.exec(n.e || ''); if (m) { f = m[1]; return; } (n.c || []).forEach(cauta); })(SUP['dialog.FileSaveAs']);
+      return f || 'Documente';
+    }
     function salveaza() {
       let v = valoareCamp('camp:nume_fisier').trim();
       if (!v) return 'fara_efect';
-      if (!/\.[a-z0-9]{2,5}$/i.test(v)) v += '.docx';
-      M.nume = v;
-      M.salvat = true;
+      const folder = folderSalvare(), tip = (dialog && dialog.tip) || null;
+      let r = 'salvare';
+      if (tip && /\(\*\.pdf\)/.test(tip)) {
+        /* Save as type „PDF (*.pdf)”: o copie PDF lângă document; documentul deschis rămâne cel de lucru (NEVERIFICAT: R3-2) */
+        M.salvari.push({ nume: v.replace(/\.(docx?|pdf)$/i, '') + '.pdf', folder, tip });
+        r = 'salvare_pdf';
+      } else {
+        if (!/\.[a-z0-9]{2,5}$/i.test(v)) v += '.docx';
+        M.nume = v;
+        M.salvat = true;
+        M.folder = folder;
+        M.salvari.push({ nume: v, folder, tip: tip || 'Word Document (*.docx)' });
+      }
       inchideDialog();
       if (backstage) inchideBackstage();
-      return 'salvare';
+      /* bara de titlu arată numele imediat, pe orice drum (Enter / Save; F12 / Ctrl+S) — critic runda 2, GRAV N1 */
+      actualizeazaPanglica();
+      return r;
+    }
+    /* Save As › „Save as type:” ▾ — DOAR rândurile citate: „Word Document (*.docx)” (uia_word.json › dialog.FileSaveAs,
+       valoarea casetei) și „PDF (*.pdf)” (support.microsoft.com/en-us/office/save-or-convert-to-pdf-or-xps-in-office-desktop-
+       apps-d85416c5-7d77-4fd6-a216-6f4bf7c7c110: „In the drop-down list, select PDF.”); celelalte: NEVERIFICAT (R3-1) */
+    const TIPURI_SALVARE = ['Word Document (*.docx)', 'PDF (*.pdf)'];
+    function alegeTip(cb, tip) {
+      if (!dialog) return 'fara_efect';
+      dialog.tip = tip;
+      if (M.dialogSalvare) M.dialogSalvare.tip_propus = tip;
+      cb.querySelectorAll('[data-lh-tip="Text"]').forEach(x => { const sp = x.querySelector('.lh-ap-text') || x; sp.textContent = tip; });
+      return 'tip_fisier';
     }
     function insereazaImagine() {
       const v = valoareCamp('camp:nume_fisier').trim();
@@ -1099,7 +1131,14 @@
     const CMD = {
       Bold: () => comuta('b'), Italic: () => comuta('i'), UnderlineGallery: () => comuta('u'),
       FontSizeIncreaseWord: () => marimeFont(1), FontSizeDecreaseWord: () => marimeFont(-1),
-      FontSize: elx => { const c = elx.querySelector('input'); if (c && document.activeElement !== c) try { c.focus({ preventScroll: true }); } catch (x) { /* */ } return 'camp'; },
+      FontSize: elx => {
+        const c = elx.querySelector('input');
+        /* săgeata ▾ (Button „Open” al casetei în referință): rândurile listei NU sunt în referință (de_verificat R2-1) →
+           mesajul central, nu tăcere (R12; critic runda 2, GRAV 3) */
+        if (!c) return I.nesimulat('Font Size ▾');
+        if (document.activeElement !== c) try { c.focus({ preventScroll: true }); } catch (x) { /* */ }
+        return 'camp';
+      },
       AlignLeft: () => aliniaza('stanga'), AlignCenter: () => aliniaza('centru'), AlignRight: () => aliniaza('dreapta'),
       AlignJustifyMenu: () => aliniaza('stanga-dreapta'),
       BulletsGalleryWord: () => lista('marcatori'), NumberingGalleryWord: () => lista('numerotare'),
@@ -1270,6 +1309,14 @@
       }
       if (fel === 'fila_dialog' && dialog) { dialog.cheiePlasa = null; arataFilaDialog(v === (date.dialoguri[dialog.baza].file[0].fila || null) ? null : (date.dialoguri[dialog.baza].file.some(f => f.fila === v) ? v : null)); return 'fila_dialog'; }
       if (fel === 'dialog_salvare' && dialog) return v === 'Save' ? salveaza() : (inchideDialog(), 'anulare');
+      /* săgeata casetei „Save as type:” (ținta ei în fereastră: fereastra:Deschidere) → lista cu rândurile citate */
+      if (dialog && dialog.baza === 'dialog.FileSaveAs' && (fel === 'fereastra' || fel === 'meniu_derulant')) {
+        const cb = elx.closest('[data-lh-tip="ComboBox"]');
+        if (cb && /^Save as type/.test(cb.getAttribute('data-lh-eticheta') || '')) {
+          meniuLa(elx, TIPURI_SALVARE.map(tip => ({ tinta: tip, text: tip, fa: () => alegeTip(cb, tip) })));
+          return 'meniu_tip_fisier';
+        }
+      }
       if (fel === 'fereastra' && dialog) {
         if (/^(OK|Insert)$/.test(v)) return implicitDialog();
         if (/^(Cancel|Închidere|Close)$/.test(v)) { inchideDialog(); return 'anulare'; }
@@ -1351,14 +1398,25 @@
     const NESIM_TASTE = { ctrl_f: 'Ctrl+F', ctrl_h: 'Ctrl+H', ctrl_m: 'Ctrl+M', ctrl_n: 'Ctrl+N', ctrl_o: 'Ctrl+O',
       ctrl_p: 'Ctrl+P', ctrl_q: 'Ctrl+Q', ctrl_w: 'Ctrl+W', ctrl_shift_m: 'Ctrl+Shift+M' };
     I.la.tasta = (e, g, inCamp) => {
+      const eSalvare = () => dialog && (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === SALVARE_NOUA);
       if (inCamp) {
         if (dialog && e.key === 'Escape') { inchideDialog(); return 'anulare'; }
         if (e.key === 'Enter' && e.target.closest && e.target.closest('[data-lh-id-mso="FontSize"]')) { e.preventDefault(); return marimeScrisa(e.target); }
+        /* Alt+↓ deschide lista casetei (support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-7142-4b50-
+           afb2-f762f663ceb2: „Open the menu for the selected button. | Alt+Down arrow key”); rândurile ei: NEVERIFICAT (R2-1) */
+        if (e.key === 'ArrowDown' && e.altKey && e.target.closest && e.target.closest('[data-lh-id-mso="FontSize"]')) { e.preventDefault(); return I.nesimulat('Font Size ▾'); }
+        /* Enter într-un câmp al ferestrei = butonul ei implicit (Save: uia_word.json › dialog.FileSaveAs, Button „Save”
+           id_win32 1 = IDOK); evenimentul spune ce s-a apăsat (activat), ținta rămâne focusul (§4) — critic runda 2, N2 */
+        if (dialog && e.key === 'Enter' && dialog.strat.contains(e.target)) {
+          e.preventDefault();
+          if (eSalvare()) I.activat = 'dialog_salvare:Save';
+          return implicitDialog();
+        }
         return null;
       }
       if (dialog) {
         if (e.key === 'Escape') { inchideDialog(); return 'anulare'; }
-        if (e.key === 'Enter') { e.preventDefault(); return implicitDialog(); }
+        if (e.key === 'Enter') { e.preventDefault(); if (eSalvare()) I.activat = 'dialog_salvare:Save'; return implicitDialog(); }
         return 'fara_efect';
       }
       if (meniu && e.key === 'Escape') { inchideMeniu(); return 'inchidere_meniu'; }
@@ -1406,6 +1464,10 @@
            „press CTRL+S to open the Save this file dialog box” (support.microsoft.com/en-US/Office/collab-files/
            save-office-files-to-your-favorite-folder). Profilul word2007 (Word 2007 nu are „Save this file”) → Save As. */
         case 'ctrl_s': r = M.salvat ? 'salvare' : (deschideDialog(p2007 ? 'dialog.FileSaveAs' : SALVARE_NOUA) ? 'dialog_salvare' : I.nesimulat('Ctrl+S')); break;
+        /* support.microsoft.com/en-us/office/open-files-from-the-file-menu-97f087d8-3136-4485-8e86-c5b12a8c4176: „select
+           File > Open, select the Open icon, or press CTRL+O” → pagina Open din Backstage (uia_word.json › backstage.Open).
+           Word 2007 n-are Backstage, iar fereastra Open nu are referință → mesajul central (critic runda 2, GRAV N4) */
+        case 'ctrl_o': if (p2007) r = I.nesimulat('Ctrl+O'); else { deschideBackstage('Open'); r = 'backstage'; } break;
         case 'tasta_esc': r = 'fara_efect'; break;
         case 'tasta_windows': r = 'fara_efect'; break;
         default:

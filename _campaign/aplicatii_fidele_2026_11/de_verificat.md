@@ -56,3 +56,19 @@ Detaliul: `runde/2/diferente.md` (D1-D8). Până la răspuns, simulatorul face c
 - [ ] **R2-8** Word: selectezi un cuvânt, **Ctrl+B**, apoi tastezi „XYZ” peste el → XYZ e aldin? (Simulatorul: nu; COM: da.)
 - [ ] **R2-9** Word, document cu text + un tabel: **Ctrl+A**, **Delete** → mai rămâne tabelul? (Simulatorul: da; COM: nu.)
 <!-- RUNDA2-WORD:END -->
+
+<!-- RUNDA3-WORD:START (scris de constructorul rundei 3, 18.11.2026 — fișierele lecției m1-l03 și constatările [FARA_REFERINTA] ale criticului 2) -->
+## Runda 3 · Word · salvez / închid / deschid — de lămurit (un minut fiecare)
+
+Detaliul: `runde/3/diferente.md` (D1-D9). Până la răspuns, simulatorul face ce scrie în paranteză.
+
+- [ ] **R3-1** Word, F12 → fereastra Save As → **Save as type ▾**: toate rândurile listei, în ordine (o captură UI Automation într-o rundă `acoperire`, sau o fotografie). (Simulatorul: doar „Word Document (*.docx)” și „PDF (*.pdf)”, singurele citate.)
+- [ ] **R3-2** Word, document `Orar.docx` deschis: F12 → Save as type **PDF (*.pdf)** → Save → ce scrie apoi în bara de titlu (tot „Orar” = documentul .docx rămâne deschis?) și se deschide singur PDF-ul (bifa „Open file after publishing”)? (Simulatorul: titlul rămâne al documentului .docx; PDF-ul apare doar în `stare().fisiere_salvate`.)
+- [ ] **R3-3** Word, F12 → fereastra Save As: ce scrie, în ordine, în **panoul din stânga** (Acasă, Desktop, Documente…?). (Simulatorul: panoul din referință are etichetele nesalvate; fereastra se deschide în Documente, citat din bara de adrese.)
+- [ ] **R3-4** Word, document modificat nesalvat: **Ctrl+W** → captură a ferestrei care întreabă (titlul, textul, butoanele în ordine: Save / Don't Save / Cancel?) și ce rămâne după **Save** (Word deschis, fără document?). La fel cu **✕** din colțul ferestrei. Apoi, pe un document nemodificat: Ctrl+W închide fără întrebare? (Simulatorul: mesajul central „Ctrl+W … aici nu e simulată” / „Close …”.)
+- [ ] **R3-5** Word: clic cu mouse-ul în caseta **Font Size** (nu Alt, H, F, S): valoarea „11” se selectează singură sau cursorul ajunge la capăt? Tastezi „20” + Enter → mărimea e 20 sau 1120? (Simulatorul: cursorul la capăt, „1120” — critic runda 2, [FARA_REFERINTA].)
+- [ ] **R3-6** Word, Save As: nume **Pop.Mihai**, **Tema/1**, **Tema.doc** + Save → ce nume are fișierul (se adaugă .docx? „/” dă mesaj?). (Simulatorul: „Pop.Mihai” fără .docx, „Tema/1.docx” acceptat — critic runda 2, [FARA_REFERINTA].)
+- [ ] **R3-7** Word, document deja salvat ca „Orar.docx”, al cărui prim rând e „Luni”: **F12** → ce scrie în File name: „Orar” sau „Luni”? (Simulatorul: primul rând — critic runda 2, [FARA_REFERINTA].)
+- [ ] **R3-8** Word, document nou: **Ctrl+S** → „Save this file” → **More save options** → ce se deschide (fereastra Save As sau pagina File › Save As)? (Simulatorul: fereastra Save As — critic runda 2, [FARA_REFERINTA].)
+- [ ] **R3-9** Pe un **telefon Android** (Chrome + Gboard, sugestii pornite), pe poligon: scrii „Ion” fără spațiu și atingi un buton din afara aplicației; apoi scrii „mere” la capătul unui rând și atingi alt rând → „mere” rămâne unde l-ai scris? Tastatura clipește (se ascunde și reapare) la atingere? (Simulatorul: cuvântul intră în document la atingere, caseta iese o clipă din focus — probat doar cu IME emulat prin CDP.)
+<!-- RUNDA3-WORD:END -->
