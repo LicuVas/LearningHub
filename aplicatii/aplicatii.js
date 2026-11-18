@@ -1,0 +1,510 @@
+/* aplicatii.js — BIBLIOTECA CENTRALĂ a aplicațiilor simulate din LearningHub (contractul: _campaign/aplicatii_fidele_2026_11/
+   api_biblioteca.md §1-§8 și oracole/CONVENTIE_ARBORE.md). Singurul fișier pe care îl cere o pagină:
+       <script src="../../../aplicatii/aplicatii.js"></script>
+       <div data-lh-aplicatie-loc></div>
+       <script>LH.aplicatii.deschide('word', {continut: {paragrafe: ['Ana are mere.']}})</script>
+   Restul (setari.json, stare.js, panglica.js, <aplicatie>.js, date/<aplicatie>.json, profiluri/*.json, aplicatii.css) se
+   încarcă de aici, de lângă acest fișier. Aici stau: registrul instanțelor (radacini), evenimentele standard (§4),
+   asistarea (§6), tipul comun pentru motorul lecțiilor (§8.1). Interfața fiecărei aplicații se GENEREAZĂ din referința
+   reală (date/<aplicatie>.json, scrisă de _unelte/genereaza_<aplicatie>.py) și o desenează panglica.js — o singură dată,
+   pentru toate paginile (R1-R3). */
+(function () {
+  'use strict';
+  const W = window;
+  if (W.LH && W.LH.aplicatii && W.LH.aplicatii.__biblioteca) return;
+  const SCR = document.currentScript;
+  const BAZA = SCR && SCR.src ? SCR.src.replace(/[?#].*$/, '').replace(/[^/]*$/, '') : 'aplicatii/';
+  const APLICATII = ['windows', 'explorer', 'word', 'excel', 'powerpoint', 'paint'];
+  const PROFILURI = { word: ['word365', 'word2007'], excel: ['excel365'], powerpoint: ['powerpoint365'], explorer: ['windows11'],
+    windows: ['windows11'], paint: ['paint11'] };
+  const SETARI_IMPLICITE = { versiune: '?', profil: { word: 'word365', excel: 'excel365', powerpoint: 'powerpoint365',
+    explorer: 'windows11', windows: 'windows11', paint: 'paint11' }, limba: 'en', tema: 'auto',
+    asistare: { dupaGreseli: 2, dupaSecunde: 30 }, evenimente: { tampon: 500 } };
+
+  const L = { __biblioteca: true, versiune: null, setari: null };
+  const MODULE = {};          // module încărcate: stare, panglica, word...
+  const INST = {};            // nume -> instanța deschisă
+  const EV = [];              // ultimele evenimente (setari.evenimente.tampon)
+  W.__lhAplicatieEv = EV;
+  const clona = o => JSON.parse(JSON.stringify(o === undefined ? null : o));
+  L._clona = clona;
+  L._baza = BAZA;
+
+  /* ------------------------------------------------------------ încărcarea */
+  const promis = {};
+  function script(src) {
+    if (promis[src]) return promis[src];
+    return (promis[src] = new Promise((ok, nu) => {
+      const s = document.createElement('script');
+      s.src = BAZA + src + (L.versiune ? '?v=' + encodeURIComponent(L.versiune) : '');
+      s.async = false;
+      s.onload = () => ok(true);
+      s.onerror = () => nu(new Error('biblioteca: nu s-a încărcat ' + src));
+      document.head.appendChild(s);
+    }));
+  }
+  function json(src) {
+    if (promis[src]) return promis[src];
+    return (promis[src] = fetch(BAZA + src + (L.versiune ? '?v=' + encodeURIComponent(L.versiune) : ''), { cache: 'no-cache' })
+      .then(r => { if (!r.ok) throw new Error('biblioteca: ' + src + ' ' + r.status); return r.json(); }));
+  }
+  function css() {
+    if (document.querySelector('link[data-lh-aplicatii-css]')) return Promise.resolve(true);
+    return new Promise(ok => {
+      const l = document.createElement('link');
+      l.rel = 'stylesheet';
+      l.href = BAZA + 'aplicatii.css' + (L.versiune ? '?v=' + encodeURIComponent(L.versiune) : '');
+      l.setAttribute('data-lh-aplicatii-css', '');
+      l.onload = () => ok(true);
+      l.onerror = () => ok(false);
+      document.head.appendChild(l);
+    });
+  }
+  L._modul = (nume, m) => { MODULE[nume] = m; return m; };
+  L._module = MODULE;
+  L._json = json;
+  L._script = script;
+
+  L.gata = json('setari.json').catch(() => SETARI_IMPLICITE).then(s => {
+    L.setari = Object.assign({}, SETARI_IMPLICITE, s || {});
+    L.versiune = L.setari.versiune;
+    return Promise.all([css(), script('stare.js'), script('panglica.js')]);
+  }).then(() => true);
+
+  function setari() { return L.setari || SETARI_IMPLICITE; }
+
+  /* ------------------------------------------------------------ deschide / inchide */
+  const SURSE_APP = { word: ['word.js', 'date/word.json'] };
+  function incarcaApp(nume) {
+    const s = SURSE_APP[nume];
+    if (!s) return Promise.reject(new Error('„' + nume + '” nu e încă în bibliotecă (vine într-un val următor)'));
+    return Promise.all([script(s[0]), json(s[1])]).then(r => r[1]);
+  }
+  function alegeProfil(nume, cerut) {
+    const voie = PROFILURI[nume] || [];
+    const impl = (setari().profil || {})[nume] || voie[0];
+    return voie.indexOf(cerut) >= 0 ? cerut : impl;
+  }
+  function locDin(opt) {
+    let loc = opt.loc;
+    if (typeof loc === 'string') loc = document.querySelector(loc);
+    if (!loc || !loc.appendChild) loc = document.querySelector('[data-lh-aplicatie-loc]');
+    if (!loc) { loc = document.createElement('div'); document.body.appendChild(loc); }
+    return loc;
+  }
+
+  L.deschide = function (nume, opt) {
+    opt = opt || {};
+    if (APLICATII.indexOf(nume) < 0) return Promise.reject(new Error('aplicație necunoscută: ' + nume));
+    return L.gata.then(() => incarcaApp(nume)).then(date => {
+      const M = MODULE[nume];
+      if (!M || typeof M.creeaza !== 'function') throw new Error('biblioteca: modulul ' + nume + ' lipsește');
+      const profilId = alegeProfil(nume, opt.profil);
+      return json('profiluri/' + profilId + '.json').catch(() => ({ id: profilId })).then(profil => {
+        const loc = locDin(opt);
+        if (INST[nume]) L.inchide(nume);
+        const root = document.createElement('div');
+        root.setAttribute('data-lh-aplicatie', nume);
+        root.setAttribute('data-lh-profil', profilId);
+        root.setAttribute('data-lh-versiune', String(L.versiune));
+        root.className = 'lh-ap lh-ap-' + nume + (opt.scenariu ? ' lh-ap-scenariu' : '');
+        const tema = setari().tema;
+        if (tema && tema !== 'auto') root.setAttribute('data-lh-tema', tema);
+        root.tabIndex = -1;
+        loc.appendChild(root);
+        const I = { app: nume, root, opt, profil: Object.assign({ id: profilId }, profil), date, setari: setari(),
+          zonaTinta: 'document', ultimaActiune: null };
+        I.emite = (gest, actiune, tinta, inainte) => emite(I, gest, actiune, tinta, inainte);
+        I.nesimulat = (eticheta, tinta) => nesimulat(I, eticheta, tinta);
+        M.creeaza(I, opt.continut || {}, L);
+        leagaGesturi(I);
+        INST[nume] = I;
+        if (opt.focus) try { (I.focus || (() => root.focus({ preventScroll: true })))(); } catch (e) { /* */ }
+        I.api = { aplicatie: nume, radacina: root, stare: () => clona(I.stare()), element: t => L.element(nume, t),
+          focus: () => (I.focus ? I.focus() : root.focus({ preventScroll: true })), inchide: () => L.inchide(nume) };
+        if (opt.asistent) {
+          const P = (W.LH && W.LH.aplicatii) || W.LHAplicatii || L;
+          I.asist = P.asistent(nume, opt.asistent);
+        }
+        return I.api;
+      });
+    });
+  };
+  function viu(nume) {
+    const I = INST[nume];
+    if (I && !I.root.isConnected) { opresteInstanta(I); delete INST[nume]; return null; }
+    return I || null;
+  }
+  function opresteInstanta(I) {
+    if (I.asist) try { I.asist.opreste(); } catch (e) { /* */ }
+    if (I.distruge) try { I.distruge(); } catch (e) { /* */ }
+    if (I._laSus) W.removeEventListener('pointerup', I._laSus, true);
+  }
+  L.inchide = function (nume) {
+    const I = INST[nume];
+    if (!I) return;
+    opresteInstanta(I);
+    I.root.remove();
+    delete INST[nume];
+  };
+  /* §1 (reparația 8): rădăcinile create de bibliotecă — O1 acceptă un [data-lh-aplicatie] doar dacă e aici */
+  L.radacini = () => Object.keys(INST).map(n => INST[n].root).filter(r => r && r.isConnected);
+
+  /* ------------------------------------------------------------ ținte (§3) */
+  const canon = e => {
+    const t = e.getAttribute('data-lh-tinta') || '', id = e.getAttribute('data-lh-id');
+    return t.indexOf(':') >= 0 || id == null || id === '' ? t : t + ':' + id;
+  };
+  L._canon = canon;
+  const vizibil = e => {
+    if (!e || !e.isConnected) return false;
+    const r = e.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) return false;
+    const s = getComputedStyle(e);
+    return s.visibility !== 'hidden' && s.display !== 'none';
+  };
+  L._vizibil = vizibil;
+  L.element = function (nume, t) {
+    const I = viu(nume);
+    if (!I || !t) return null;
+    if (t.indexOf('mso:') === 0) {
+      const id = t.slice(4);
+      return [...I.root.querySelectorAll('[data-lh-id-mso="' + CSS.escape(id) + '"]')].find(vizibil) || null;
+    }
+    return [...I.root.querySelectorAll('[data-lh-tinta]')].find(e => canon(e) === t && vizibil(e)) || null;
+  };
+  L.tinte = function (nume) {
+    const I = viu(nume);
+    if (!I) return [];
+    return [...new Set([...I.root.querySelectorAll('[data-lh-tinta]')].filter(vizibil).map(canon))];
+  };
+  L.stare = function (nume) { const I = viu(nume); return I ? clona(I.stare()) : null; };
+  L.pxPePunct = function (nume) { const I = viu(nume); return I && I.pxPePunct ? I.pxPePunct() : 1; };
+  L.deschideSuprafata = function (cheie) {
+    const nume = Object.keys(INST).find(n => viu(n));
+    const I = nume && INST[nume];
+    if (!I || !I.deschideSuprafata) return Promise.reject(new Error('nicio aplicație deschisă'));
+    return Promise.resolve(I.deschideSuprafata(cheie));
+  };
+  L.demonstratie = function (nume, gest) {
+    const M = MODULE[nume];
+    return M && M.demonstratie ? (M.demonstratie[gest] || null) : null;
+  };
+
+  /* ------------------------------------------------------------ evenimentele standard (§4) */
+  function emite(I, gest, actiune, tinta, inainte) {
+    if (!I || !I.root.isConnected) return null;
+    let dupa;
+    try { dupa = clona(I.stare()); } catch (e) { dupa = {}; }
+    const d = { aplicatie: I.app, gest, actiune: actiune || gest, tinta: tinta || I.zonaTinta, inainte: inainte || {}, dupa,
+      ts: Date.now(), profil: I.profil.id, pas: W.__lhPas || null };
+    const lim = (setari().evenimente || {}).tampon || 500;
+    EV.push(d);
+    while (EV.length > lim) EV.shift();
+    try { W.dispatchEvent(new CustomEvent('lh-aplicatie', { detail: d })); } catch (e) { /* */ }
+    return d;
+  }
+  L.asculta = fn => {
+    const h = e => { try { fn(e.detail); } catch (x) { /* */ } };
+    W.addEventListener('lh-aplicatie', h);
+    return () => W.removeEventListener('lh-aplicatie', h);
+  };
+  /* mesajul central standard pentru o comandă afișată, nesimulată (R12, api §3: data-lh-nesimulat, role=status) */
+  function nesimulat(I, eticheta) {
+    I.root.querySelectorAll('[data-lh-nesimulat]:not([data-lh-tip])').forEach(x => x.remove());
+    const m = document.createElement('div');
+    m.className = 'lh-ap-mesaj';
+    m.setAttribute('data-lh-nesimulat', eticheta);
+    m.setAttribute('role', 'status');
+    const sablon = ((setari().mesaje || {}).nesimulat) || 'În aplicația reală, „{x}” funcționează; aici nu e simulată.';
+    m.textContent = sablon.replace('{x}', eticheta);
+    I.root.appendChild(m);
+    clearTimeout(I._tMesaj);
+    I._tMesaj = setTimeout(() => m.remove(), I.opt.scenariu ? 60000 : 5000);
+    return 'nesimulat';
+  }
+
+  const TASTE = { Delete: 'tasta_delete', Backspace: 'tasta_backspace', Enter: 'tasta_enter', Escape: 'tasta_esc', Tab: 'tasta_tab',
+    Home: 'tasta_home_end', End: 'tasta_home_end', PageUp: 'tasta_pagina', PageDown: 'tasta_pagina', Meta: 'tasta_windows',
+    OS: 'tasta_windows' };
+  function litera(e) {
+    const m = /^Key([A-Z])$/.exec(e.code || '');
+    if (m) return m[1].toLowerCase();
+    return e.key && e.key.length === 1 && /[a-z]/i.test(e.key) ? e.key.toLowerCase() : null;
+  }
+  function gestTasta(e) {
+    const k = e.key, c = e.ctrlKey || (e.metaKey && k !== 'Meta');
+    if (/^Arrow/.test(k)) return e.altKey ? 'alt_sageti' : 'sageti';
+    if (/^F\d{1,2}$/.test(k)) return 'tasta_' + k.toLowerCase();
+    if (c && !e.altKey) {
+      const l = litera(e);
+      if (l) return (e.shiftKey ? 'ctrl_shift_' : 'ctrl_') + l;
+      if (!(k in TASTE)) return null;      // Ctrl+Enter, Ctrl+Home… → felul tastei
+    }
+    if (k in TASTE) return TASTE[k];
+    if (k && k.length === 1 && !e.altKey) return 'tastare';
+    return null;
+  }
+  L._gestTasta = gestTasta;
+  const FEL_CLIC = { fila: 'clic_fila', panglica: 'clic_comanda_panglica', lansator: 'lansator_grup', meniu_derulant: 'meniu_derulant',
+    acces_rapid: 'acces_rapid', zoom: 'zoom' };
+  function gestClic(t, e) {
+    if (e.shiftKey) return 'shift_clic';
+    if (e.ctrlKey || e.metaKey) return 'ctrl_clic';
+    if (!t) return 'clic';
+    if (t === 'fila:File' || t === 'fila_file') return 'fila_file';
+    return FEL_CLIC[t.split(':')[0]] || 'clic';
+  }
+  function tintaDin(I, el) {
+    const x = el && el.closest && el.closest('[data-lh-tinta]');
+    if (x && I.root.contains(x)) return canon(x);
+    return 'fereastra_app:' + I.app;
+  }
+  L._tintaDin = tintaDin;
+  const eCamp = el => !!(el && el.closest && el.closest('input,textarea,select,[contenteditable="true"]') &&
+    !el.closest('[data-lh-intrare-document]'));
+
+  function leagaGesturi(I) {
+    const r = I.root;
+    let jos = null, faraClic = 0, ultim = null, inaintePas = null;
+    const st = () => { try { return clona(I.stare()); } catch (e) { return {}; } };
+    /* Clicul se recunoaște la RIDICAREA butonului (pointerup), nu din evenimentul „click” al browserului: dacă apăsarea
+       redesenează elementul (cursorul pus în document, panglica schimbată), browserul nu mai trimite „click” — §4 cere
+       ca dublul clic să fie recunoscut și atunci. „click” rămâne doar pentru clicurile fără mouse (tastatură, el.click()). */
+    function clicul(t, ev, ina) {
+      const acum = Date.now();
+      const n = ultim && acum - ultim.ts < 500 && Math.hypot(ev.clientX - ultim.x, ev.clientY - ultim.y) < 6 ? ultim.n + 1 : 1;
+      ultim = { ts: acum, x: ev.clientX, y: ev.clientY, n };
+      const g = gestClic(t, ev);
+      I.ultimaActiune = null;
+      let act = null;
+      if (I.la && I.la.clic) act = I.la.clic(t, ev, n, g);
+      emite(I, g, act || I.ultimaActiune || 'clic', t, ina);
+      if (n === 2) {
+        let a2 = null;
+        if (I.la && I.la.dublu) a2 = I.la.dublu(t, ev);
+        emite(I, 'dublu_clic', a2 || 'dublu_clic', t, ina);
+      }
+    }
+    r.addEventListener('pointerdown', e => {
+      if (e.button !== 0) { jos = null; return; }
+      const t = tintaDin(I, e.target);
+      inaintePas = st();
+      jos = { x: e.clientX, y: e.clientY, t, tras: false, fel: null, tinta0: e.target };
+      if (I.la && I.la.jos) jos.fel = I.la.jos(e, t) || null;
+    }, true);
+    r.addEventListener('pointermove', e => {
+      if (!jos || !(e.buttons & 1)) return;
+      if (!jos.tras && Math.hypot(e.clientX - jos.x, e.clientY - jos.y) > 5) jos.tras = true;
+      if (jos.tras && I.la && I.la.misca) I.la.misca(e, jos);
+    });
+    const laSus = e => {
+      const j = jos;
+      jos = null;
+      if (!j || !r.isConnected) return;
+      faraClic = Date.now();
+      if (j.tras) {
+        const g = j.t === 'maner_umplere' ? 'umplere_tragere' : (j.fel || 'selectie');
+        let act = g;
+        if (I.la && I.la.sus) act = I.la.sus(e, j, g) || g;
+        emite(I, g, act, j.t, inaintePas || st());
+        return;
+      }
+      if (I.la && I.la.sus) I.la.sus(e, j, null);
+      const sub = document.elementFromPoint(e.clientX, e.clientY);
+      if (!sub || !r.contains(sub)) { if (!(j.tinta0 && j.tinta0.isConnected && r.contains(j.tinta0))) return; }
+      const tg = j.tinta0 && j.tinta0.isConnected ? j.tinta0 : sub;
+      const ev = { target: tg, clientX: e.clientX, clientY: e.clientY, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey,
+        altKey: e.altKey, button: 0, preventDefault() {} };
+      const ina = inaintePas || st();
+      inaintePas = null;
+      clicul(j.t, ev, ina);
+    };
+    I._laSus = laSus;
+    W.addEventListener('pointerup', laSus, true);
+    r.addEventListener('click', e => {
+      if (e.detail > 0) return;   // clicul de mouse a fost tratat la ridicare (pointerup)
+      const t = tintaDin(I, e.target);
+      clicul(t, e, st());
+    });
+    r.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      const t = tintaDin(I, e.target), ina = st();
+      let act = null;
+      if (I.la && I.la.dreapta) act = I.la.dreapta(t, e);
+      emite(I, 'clic_dreapta', act || 'meniu_contextual', t, ina);
+    });
+    r.addEventListener('wheel', e => {
+      const ina = st(), t = tintaDin(I, e.target);
+      if (e.ctrlKey) {
+        e.preventDefault();
+        let act = null;
+        if (I.la && I.la.zoomRotita) act = I.la.zoomRotita(e);
+        emite(I, 'zoom', act || 'zoom', t, ina);
+      } else emite(I, 'rotita', 'derulare', t, ina);
+    }, { passive: false });
+    r.addEventListener('keydown', e => {
+      const g = gestTasta(e);
+      if (!g) return;
+      const inCamp = eCamp(e.target);
+      const ina = st();
+      I.ultimaActiune = null;
+      let act = null;
+      if (I.la && I.la.tasta) act = I.la.tasta(e, g, inCamp);
+      if (!inCamp && (e.ctrlKey || e.metaKey || e.altKey || /^F\d/.test(e.key) || e.key === 'Tab')) e.preventDefault();
+      const t = tintaDin(I, document.activeElement && r.contains(document.activeElement) ? document.activeElement : null);
+      if (inCamp) setTimeout(() => emite(I, g, act || I.ultimaActiune || g, t, ina), 0);
+      else emite(I, g, act || I.ultimaActiune || g, t, ina);
+    });
+    /* textul venit fără keydown utilizabil (telefon, IME, diacritice): evenimentul „input” pe intrarea documentului */
+    if (I.intrare) {
+      I.intrare.addEventListener('beforeinput', e => {
+        if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
+          e.preventDefault();
+          const ina = st();
+          const g = e.inputType === 'deleteContentBackward' ? 'tasta_backspace' : 'tasta_delete';
+          const act = I.la && I.la.sterge ? I.la.sterge(g) : g;
+          emite(I, g, act, I.zonaTinta, ina);
+        }
+      });
+      I.intrare.addEventListener('input', () => {
+        const v = I.intrare.value;
+        I.intrare.value = '';
+        if (!v) return;
+        const ina = st();
+        const act = I.la && I.la.text ? I.la.text(v) : 'scriere';
+        emite(I, 'tastare', act, I.zonaTinta, ina);
+      });
+    }
+  }
+
+  /* ------------------------------------------------------------ asistarea (§6) */
+  const aplicatiaDe = t => Object.keys(INST).find(n => viu(n) && L.element(n, t)) || null;
+  L.ascunde = function () {
+    document.querySelectorAll('[data-lh-indiciu]').forEach(x => x.remove());
+    document.querySelectorAll('[data-lh-evidentiat]').forEach(x => x.removeAttribute('data-lh-evidentiat'));
+  };
+  L.evidentiaza = function (t, o) {
+    const n = (o && o.aplicatie) || aplicatiaDe(t), e = n && L.element(n, t);
+    if (!e) return null;
+    document.querySelectorAll('[data-lh-evidentiat]').forEach(x => x.removeAttribute('data-lh-evidentiat'));
+    e.setAttribute('data-lh-evidentiat', '');
+    try { e.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (x) { /* */ }
+    return e;
+  };
+  L.indiciu = function (t, text, o) {
+    const n = (o && o.aplicatie) || aplicatiaDe(t), e = n && L.element(n, t);
+    if (!e) return null;
+    document.querySelectorAll('[data-lh-indiciu]').forEach(x => x.remove());
+    const I = INST[n], R = I.root.getBoundingClientRect();
+    try { e.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (x) { /* */ }
+    const r = e.getBoundingClientRect();
+    const b = document.createElement('div');
+    b.className = 'lh-ap-indiciu';
+    b.setAttribute('data-lh-indiciu', '');
+    b.setAttribute('data-lh-pentru', t);
+    b.setAttribute('role', 'status');
+    b.textContent = text;
+    b.style.visibility = 'hidden';
+    I.root.appendChild(b);
+    const bw = b.offsetWidth, bh = b.offsetHeight, vw = document.documentElement.clientWidth, vh = W.innerHeight;
+    /* sub țintă (6 px), altfel deasupra; pe orizontală aliniat cu ținta, ținut în fereastră */
+    let top = r.bottom + 6;
+    if (top + bh > vh - 4 && r.top - 6 - bh >= 4) top = r.top - 6 - bh;
+    let left = Math.min(Math.max(4, r.left), Math.max(4, vw - bw - 4));
+    b.style.left = (left - R.left) + 'px';
+    b.style.top = (top - R.top) + 'px';
+    b.style.visibility = '';
+    return b;
+  };
+  const NEGRESELI = new Set(['rotita', 'sageti', 'tasta_home_end', 'tasta_pagina']);
+  L.asistent = function (nume, cfg) {
+    cfg = cfg || {};
+    const pasi = cfg.pasi || [];
+    const impl = setari().asistare || {};
+    const dupaGreseli = cfg.dupaGreseli || impl.dupaGreseli || 2, dupaSecunde = cfg.dupaSecunde || impl.dupaSecunde || 30;
+    let k = 0, gres = 0, ceas = 0, oprit = false;
+    const pas = () => pasi[k];
+    const root = () => { const I = INST[nume]; return I && I.root; };
+    const opreste = () => {
+      if (oprit) return;
+      oprit = true;
+      off();
+      clearTimeout(ceas);
+      W.removeEventListener('lh-pas', laPas);
+      L.ascunde();
+    };
+    const desprins = () => { const r = root(); if (!r || !r.isConnected) { opreste(); return true; } return false; };
+    const arata = () => {
+      if (desprins()) return;
+      const p = pas();
+      if (!p) return;
+      L.evidentiaza(p.tinta, { aplicatie: nume });
+      L.indiciu(p.tinta, p.indiciu || 'Aici', { aplicatie: nume });
+    };
+    const porneste = () => { clearTimeout(ceas); if (!pas() || oprit) return; ceas = setTimeout(arata, dupaSecunde * 1000); };
+    const canonPas = p => { const el = L.element(nume, p.tinta); return el ? canon(el) : null; };
+    const off = L.asculta(ev => {
+      if (oprit || desprins()) return;
+      const p = pas();
+      if (!p || ev.aplicatie !== nume) return;
+      let bun = false;
+      if (typeof p.asteapta === 'function') { try { bun = !!p.asteapta(ev); } catch (e) { bun = false; } }
+      else bun = ev.tinta === p.tinta || (!!canonPas(p) && ev.tinta === canonPas(p));
+      if (bun) { L.ascunde(); k++; gres = 0; porneste(); return; }
+      if (NEGRESELI.has(ev.gest)) return;
+      gres++;
+      if (gres >= dupaGreseli) arata();
+    });
+    const laPas = () => { gres = 0; porneste(); };
+    W.addEventListener('lh-pas', laPas);
+    porneste();
+    return { opreste, pas: () => k };
+  };
+
+  /* ------------------------------------------------------------ tipul comun pentru motorul lecțiilor (§8.1) */
+  L.tipMotor = {
+    /* Q = {t:'aplicatie', aplicatie, continut, profil?, sarcina:{cerinte:[{ce, verifica: stare => bool}]}, asistent?} */
+    render(Q, body, api) {
+      body.innerHTML = '';
+      const P = (W.LH && W.LH.aplicatii) || W.LHAplicatii || L;
+      const opt = { loc: body, continut: Q.continut || {}, profil: Q.profil, focus: true };
+      if (Q.asistent) opt.asistent = Q.asistent;
+      let inst = null;
+      const gata = P.deschide(Q.aplicatie, opt).then(x => { inst = x; return x; });
+      const verifica = () => {
+        const s = inst ? inst.stare() : null;
+        const cer = ((Q.sarcina || {}).cerinte) || [];
+        const rez = cer.map(c => { try { return !!c.verifica(s); } catch (e) { return false; } });
+        return { ok: rez.length > 0 && rez.every(Boolean), rez };
+      };
+      /* „Verifică” al motorului: verdictul vine din STAREA aplicației (glosar: „verificăm” = interogarea stării) */
+      if (api && typeof api.checkButton === 'function') {
+        api.checkButton(() => {
+          const v = verifica();
+          const gres = ((Q.sarcina || {}).cerinte || []).filter((c, k) => !v.rez[k]).map(c => c.ce).filter(Boolean);
+          if (api.resolve) api.resolve(v.ok, v.ok ? undefined : (gres.length ? 'Încă nu: ' + gres.join('; ') + '.' : 'Mai încearcă.'));
+          return v.ok;
+        }, 'Verifică');
+      }
+      body.__lhAplicatie = { gata, verifica, instanta: () => inst };
+      return body.__lhAplicatie;
+    },
+    /* pentru test_joc / oracol_sarcini (§8.1): Q.rezolvare(instanta) / Q.gresit(instanta) fac gesturile soluției, respectiv
+       ale unei greșeli, prin API-ul instanței; aici doar se cheamă, după ce aplicația e gata */
+    rezolva(Q, body) {
+      const x = body && body.__lhAplicatie;
+      if (!x || typeof (Q && Q.rezolvare) !== 'function') return null;
+      return x.gata.then(inst => Q.rezolvare(inst));
+    },
+    gresit(Q, body) {
+      const x = body && body.__lhAplicatie;
+      if (!x || typeof (Q && Q.gresit) !== 'function') return null;
+      return x.gata.then(inst => Q.gresit(inst));
+    }
+  };
+
+  W.LH = W.LH || {};
+  W.LH.aplicatii = L;
+  W.LHAplicatii = L;
+})();

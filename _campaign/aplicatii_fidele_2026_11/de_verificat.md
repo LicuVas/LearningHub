@@ -24,3 +24,19 @@ scrie în clipboard-ul tău) și faptele care depind de PC-ul din laborator. Sce
 - [ ] `excel-separator-virgula` — Excel: A1 = 4, A2 = 5; în B1 scrii =SUM(A1,A2) + Enter → apare un mesaj? ce scrie în el? (pe PC-ul tău, invizibil: formula nu a fost primită, Excel a rămas în editare, nicio fereastră de mesaj găsită).
 - [ ] `powerpoint-tragere-forma` — PowerPoint: tragi caseta titlului de pe diapozitivul 1 mai jos cu mouse-ul → rămâne pe același diapozitiv, cu același text? (se schimbă doar locul).
 <!-- OFFICE:END -->
+
+<!-- RUNDA1-WORD:START (scris de constructorul rundei 1, 18.11.2026 — ce NU am implementat fiindcă referința nu-l dovedește) -->
+## Runda 1 · Word în biblioteca centrală — de lămurit (un minut fiecare, pe un PC cu Word)
+
+Până la răspuns, simulatorul dă la aceste locuri mesajul central „În aplicația reală, „X” funcționează; aici nu e simulată.”
+sau arată doar elementele dovedite. Detaliul: `runde/1/diferente.md`, partea B.
+
+- [ ] **R1-1** Insert › **Pictures ▾**: rândurile, în ORDINE, pe Word-ul din laborator (pagina Microsoft dă This Device, Generate an Image, Stock Images, Online Pictures; simulatorul arată This Device, Stock Images, Online Pictures). Scenariul `word-imagine-inserare` ar trebui să aibă pasul „meniu: This Device” (azi apasă direct `mso:PictureInsertFromFile`, care nu e pe ecran → neexecutabil).
+- [ ] **R1-2** Listele deschise (o captură UI Automation într-o rundă `acoperire`, sau o fotografie): Layout › **Margins ▾** și **Orientation ▾** (toate rândurile, nu doar „Narrow Margins”/„Landscape”), Insert › **Table ▾** (numele căsuțelor grilei + rândurile de sub ea, ex. „Insert Table...”), Home › **Bullets ▾**, **Numbering ▾**, **Borders ▾** (are „Borders and Shading...”?), **Change Case ▾**, **Line and Paragraph Spacing ▾**.
+- [ ] **R1-3** Bara **Acces rapid** pe PC-urile din laborator: se vede? ce butoane are (Save, Undo, Redo…)? (pe PC-ul tău, în Word: ascunsă.)
+- [ ] **R1-4** Comenzile afișate fără scenariu real, pe care le predă o lecție: pentru fiecare, un scenariu scurt (text de pornire, gestul, ce se citește). Primele: Strikethrough, Subscript, Superscript, Clear Formatting, Show All (¶), Format Painter, Font Color, Text Highlight Color.
+- [ ] **R1-5** Scurtăturile, pe un document NOU nesalvat — ce FEREASTRĂ apare: **Ctrl+S** (File › Save As, „Save this file” sau Save As? Microsoft: „depending on the Word version”), **Ctrl+P**, **Ctrl+O**, **Ctrl+F**, **Ctrl+H**, **Ctrl+N**, **Ctrl+W**, **Ctrl+Enter**. (Ctrl+D, Ctrl+Shift+V și Ctrl+S pe document deja salvat: lămurite din pagina Microsoft a scurtăturilor, implementate.)
+- [x] **R1-6** File › Save As › **Browse** → fereastra Save As (lămurit din support.microsoft.com/en-us/office/collab-files/save-your-files; implementat).
+- [ ] **R1-7** File pe un document nou → ce pagină apare întâi (Home sau Info)?
+- [ ] **R1-8** Clic dreapta pe text, ÎN AFARA selecției: cursorul se mută acolo înainte de meniu?
+<!-- RUNDA1-WORD:END -->

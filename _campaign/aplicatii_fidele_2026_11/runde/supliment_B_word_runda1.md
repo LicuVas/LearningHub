@@ -30,6 +30,10 @@ marchează interfața ca s-o vadă O1/O2/O3/O7/O8) · `D/oracole/CONVENTIE_RADAC
 5. I1: la 360-390 px panglica se derulează lateral, nu se taie; zone de atins ≥ 32 px. I7: nicio captură Microsoft.
 
 ## Măsurarea
+- Pasul 1 îl pornești PRIMUL, în fundal (Bash `run_in_background`; durează ~40-60 min: porțile singure ~35 min), și cât
+  rulează citești documentele și referințele. NU scrii nimic sub `aplicatii/` până nu s-a terminat (biblioteca apărută la
+  jumătatea măsurării ar strica numerele de pornire). Linia de bază așteptată (reverificare2_etapa0.md, 18.11): O1 61,
+  O2 13392, O3 18546, O4 162, O5 201, O6 0, O7 355, O8 102, O9 48, porți 41 (doar cum_fac). Dacă iese altfel, scrii de ce.
 - Pasul 1 și pasul 7: `python D/oracole/masoara.py --runda 1 --paralel 3` (întreagă; durează). Între ele, ca să iterezi
   repede: `--doar O3,O4,O5,O8,O9` (măsurare PARȚIALĂ, nu ține loc de pasul 7). În raport: numerele întregi înainte → după,
   plus partea Word din detaliile fiecărui oracol (`runde/1/iesiri/<O#>/*.json`).

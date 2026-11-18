@@ -22,6 +22,11 @@ Unde se joacă (în ordine; primul care merge):
     1. <rad>/aplicatii/poligon.html cu biblioteca centrală (window.LH.aplicatii) — contractul din ../api_biblioteca.md;
     2. paginile din „lectii” ale scenariului, apoi paginile din inventar.json cu aceeași aplicație principală, pe
        simulatoarele VECHI care au adaptor în sim_runner.js (azi: doar Explorer).
+    O pagină cu biblioteca pe care pregătirea pică DOAR pentru că aplicația nu e (încă) în bibliotecă (biblioteca spune
+    „„<app>” nu e încă în bibliotecă” și n-a pus nicio rădăcină [data-lh-aplicatie=<app>]) e tratată ca o pagină fără
+    motor pentru aplicația aceea: se trece la pagina următoare (runda `acoperire` din 18.11.2026 — înainte, în etapa B,
+    biblioteca doar cu Word oprea scenariile Explorer pe poligon, fără să mai ajungă la adaptorul vechi). Orice alt eșec
+    de pregătire pe bibliotecă rămâne eșec (neexecutabil), nu se ascunde pe o pagină veche.
 Rezultatul simulat al fiecărui scenariu: D/runde/_sim/<id>.json (cu LH_IESIRE: <LH_IESIRE>/_sim/<id>.json), aceeași formă
 ca rezultatul real: {id, mod_probat, stare, eroare, cum}. mod_probat = true doar dacă scenariul s-a jucat până la capăt.
 Cheile comparate ca MULȚIMI (descrierea scenariilor: „ordonate cu sorted() din Python”): nume_fisiere, in_cos.
@@ -359,6 +364,18 @@ def deschide(pg, baza, pagina):
     pg.add_script_tag(path=str(RUNNER))
 
 
+def lipseste_din_biblioteca(pg, app, eroare):
+    """True doar dacă pregătirea pe bibliotecă a picat pentru că aplicația NU e (încă) în ea: fraza bibliotecii
+    (aplicatii/aplicatii.js › incarcaApp: „„<app>” nu e încă în bibliotecă”) pentru EXACT aplicația scenariului, și nicio
+    rădăcină [data-lh-aplicatie=<app>] pusă în pagină (biblioteca n-a început s-o deschidă). Altă frază, altă aplicație
+    sau o rădăcină începută = aplicația e în bibliotecă și pică: rămâne eșec. Dacă biblioteca își schimbă fraza, trecerea
+    se oprește și scenariile ies neexecutabile (numărul crește, nu se ascunde nimic)."""
+    if not re.search(r"[„“\"']%s[”“\"'] nu e încă în bibliotecă" % re.escape(str(app)), str(eroare or "")):
+        return False
+    return not pg.evaluate("a=>[...document.querySelectorAll('[data-lh-aplicatie]')]"
+                           ".some(e=>e.getAttribute('data-lh-aplicatie')===a)", app)
+
+
 def joaca(br, baza, scen, inv, plecate, cache_motor):
     """Întoarce (rezultat_sim, pagina, motor, eroare)."""
     app = scen.get("aplicatie")
@@ -381,6 +398,11 @@ def joaca(br, baza, scen, inv, plecate, cache_motor):
                 continue
             r = pg.evaluate("s=>window.LHSimRunner.pregateste(s)", scen)
             if not r.get("ok"):
+                if m == "biblioteca" and lipseste_din_biblioteca(pg, app, r.get("eroare")):
+                    # ca și cum biblioteca n-ar exista pentru aplicația asta: pagina nu are motor pentru ea -> următoarea
+                    cache_motor[(pagina, app)] = None
+                    erori.append("%s: %s" % (pagina, r.get("eroare", "?")))
+                    continue
                 return None, pagina, m, "neexecutabil: " + r.get("eroare", "?")
             pg.wait_for_timeout(150)
             for i, pas in enumerate(scen.get("pasi") or []):
@@ -402,8 +424,8 @@ def joaca(br, baza, scen, inv, plecate, cache_motor):
         finally:
             ctx.close()
     if fara_motor and not erori:
-        return None, None, None, ("neexecutabil: pe cele %d pagini candidate (%s…) nu e nici biblioteca (aplicatii/poligon.html), "
-                                  "nici un simulator vechi cu adaptor pentru „%s”" % (len(fara_motor), fara_motor[0], app))
+        return None, None, None, ("neexecutabil: pe cele %d pagini candidate (%s…) nu e nici biblioteca cu „%s” (aplicatii/poligon.html), "
+                                  "nici un simulator vechi cu adaptor pentru „%s”" % (len(fara_motor), fara_motor[0], app, app))
     return None, None, None, "neexecutabil: " + ("; ".join(erori[:3]) if erori else "nicio pagină candidată pe disc")
 
 
