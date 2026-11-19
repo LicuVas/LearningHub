@@ -233,3 +233,9 @@ Cererea (18.11, 14:59, verbatim): „continua acum cu etapa 0. apoi mergi cu urm
 - Jurnal rândul 12. opreste.py → OPRESTE (PLATOU: O1-O9 egale în r8-r10; și LIMITA_VAL 6/6). Raportul valului: runde/10/raport.md. B-excel NU se bifează „gata” în catastif (3 GRAV deschise; deblocatori: acoperire Excel pt X10 + rundă Excel pt A1/T1).
 - de_verificat R10-5…R10-9 (din [FARA_REFERINTA] ale criticului 10; patru dovedite prin COM).
 - Runda 11: pregateste_runda.py 11 --etapa B --aplicatia powerpoint (unghi stare_finala_erori); runde/11/masurare_pornire.json = runde/10/masurare.json cu O6 din reluare; supliment_B_powerpoint_runda11.md. Constructorul 1 pornit după commit.
+
+## 19.11.2026 ~22:45 — runda 11 (B-powerpoint): constructorul 1 PREDARE, constructorul 2 pornit
+- Constructorul 1 (390k): generatorul + date/powerpoint.json, powerpoint.js (fereastra, panglica, miniaturi, diapozitive, Design/Transitions/Animations, Save As, F5); 13/17 scenarii; parțial O4 50→33, O5 113→82, O9 34→27, O3/O8 neschimbate; proba 14 gesturi 0 picate; regres Word/Excel 0 (în afara căderilor acceptate X6/X8).
+- Verificat: lacăt 0, date personale 0. Commit de control 1b68edcc. Procese Office: doar WINWORD pid 28392 (-Embedding, pornit 16:56:54 prin DCOM) — nu e al rundei 11 (pornită 22:05) și nu e dovedit al nostru, deci NU se atinge.
+- Deciziile mele pe întrebările lui: runde/11/decizii_orchestrator.md (diapozitiv-nou-buton, imagine, salvare-ca rămân pentru o rundă acoperire; ținta margine_forma păstrată și judecată de critic).
+- Constructorul 2: formatarea pe bucăți de text, ferestrele Font/Paragraph/Insert Table, salvarea/închiderea, apoi pasul 7 complet.

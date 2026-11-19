@@ -385,4 +385,30 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **R11-10** `powerpoint-imagine` (`mso:PictureInsertFromFile`) și `powerpoint-salvare-ca` (`fila: FileTab`, apoi `mso:FileSaveAs`):
   țintele nu există pe ecran în referință (pe panglică e `FlyoutAnchorInsertPictures`; fila File e `FileTabButton`; Save As e un
   rând din Backstage fără idMso). Rămân neexecutabile până la o rundă `acoperire` (lista Pictures ▾) / o reparație a scenariului.
+- [ ] **R11-11** (constructorul 2) Formatarea pe bucăți de text — ce nu e probat pe PowerPoint real:
+  (a) Bold / Italic / Underline / Increase Font cu cursorul STRÂNS în cuvânt → tot cuvântul (simulatorul: da, ca Word —
+  `scenarii_real/word-ctrl-b-fara-selectie.json`); cu cursorul în afara unui cuvânt → doar formatul de scriere;
+  (b) `formatare_text.marime` la mărimi amestecate (simulatorul: a primului caracter; COM `Font.Size` pe un TextRange amestecat:
+  necunoscut) și `bold` amestecat (simulatorul: true, ca `bool(msoTriStateMixed)` din `ruleaza_real.py`);
+  (c) caseta Font Size din panglică la mărimi amestecate (simulatorul: goală; PowerPoint poate arăta „NN+”);
+  (d) limitele mărimii scrise (simulatorul: 1-4000 pt, pas 0,1) și ce se întâmplă cu o valoare în afara lor (simulatorul: nimic);
+  (e) Undo după formatare păstrează selecția? (simulatorul: nu — caseta nu mai e aleasă, ca la constructorul 1).
+  Scenarii: `powerpoint-bold-un-cuvant` (selecție Characters(1,3) + Bold → `Runs`), `powerpoint-ctrl-b-cursor-in-cuvant`,
+  `powerpoint-font-size-scris` (caseta Font Size, 40 + Enter), citire `TextRange.Runs(i).Font.Bold/Size`.
+- [ ] **R11-12** (constructorul 2) Ferestrele Font / Paragraph / Insert Table:
+  (a) numele valorilor care nu apar în referință: Font style „Bold” / „Italic” / „Bold Italic” (referința: doar „Regular”),
+  Underline style când textul e subliniat (simulatorul: gol; referința: doar „(none)”), Alignment „Left” / „Right” / „Justified” /
+  „Distributed” (referința: doar „Centered”); listele lor ▾ sunt necapturate (Open = mesajul central);
+  (b) valorile de pornire ale paragrafelor în casetele care NU sunt titlul Title Slide (simulatorul: Before/After 0 pt, Multiple 0,9,
+  aliniere la stânga) — referința le dă doar pentru titlul Title Slide;
+  (c) More / Less la Size, Before text, Before, After, At (pasul): simulatorul dă mesajul central; la Number of columns / rows ±1;
+  (d) Insert Table: limitele 1-75 și mesajul la o valoare greșită (simulatorul: fereastra rămâne deschisă, nimic);
+  (e) eticheta „Insert Table...” din lista Table ▾ (comanda `TableInsert` e copilul lui `TableInsertGallery` în lista Microsoft S11;
+  eticheta nu e capturată);
+  (f) Font Color: culoarea implicită a butonului și paleta ▾ nu sunt în referință → Font Color rămâne cu mesajul central.
+  Scenarii: dump UIA al fiecărei ferestre cu un text aldin / subliniat / aliniat la stânga ales; lista Table ▾ deschisă.
+- [ ] **R11-13** (constructorul 2) „Save your changes” la File › Close / Ctrl+W pe o prezentare modificată (lecția m1-l03 o cere:
+  Save / Don't Save / Cancel) NU e în `uia_powerpoint.json` (Excel îl are: `dialog.save_your_changes_to_this_file`). Simulatorul:
+  File › Close dă mesajul central. Starea `modificat` (true după orice schimbare, false după Save / Save As) e gata. Scenariu
+  `powerpoint-ctrl-w-modificat` într-o rundă `acoperire` (dump UIA al ferestrei, butoanele, ce rămâne după Don't Save).
 <!-- RUNDA11-POWERPOINT:END -->
