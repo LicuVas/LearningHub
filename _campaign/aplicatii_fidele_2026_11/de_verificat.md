@@ -153,58 +153,73 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 
 ## Runda 6 · Excel în biblioteca centrală — de lămurit (un minut fiecare, pe PC-ul cu Excel)
 <!-- RUNDA6-EXCEL:START -->
-- [ ] **R6-1** Excel, B1 activă, A1:A3 = 4, 5, 6: tastezi `=SUM(A1,A2)` și Enter. Apare o fereastră (ce scrie, ce butoane)
+- [x] **R6-1** Excel, B1 activă, A1:A3 = 4, 5, 6: tastezi `=SUM(A1,A2)` și Enter. Apare o fereastră (ce scrie, ce butoane)
   sau Excel rămâne doar în editare? (`excel-separator-virgula` are `mod_probat: false`.) (Simulatorul: rămâne în editare,
   fără mesaj, ca citirea de atunci.)
-- [ ] **R6-2** Excel, A4 activă: tastezi `=SU`. Ce funcție e aleasă primă în lista care apare (SUBSTITUTE?), iar după Tab ce
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/uia_excel.json › suprafete[dialog.eroare_formula_2]` („There's a problem with this formula” [OK]) + `referinte/scenarii_real/excel-separator-virgula.json`.
+- [x] **R6-2** Excel, A4 activă: tastezi `=SU`. Ce funcție e aleasă primă în lista care apare (SUBSTITUTE?), iar după Tab ce
   scrie în celulă? (`excel-autocompletare-tab`, `mod_probat: false`.) (Simulatorul: Tab scrie „=SUBSTITUTE(”, prima funcție
   în ordine alfabetică din cele simulate; cu `A1:A3)` + Enter rămâne în editare.)
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/scenarii_real/excel-autocompletare-tab.json` (=SU + Tab → SUBSTITUTE, apoi „You've entered too few arguments”, `referinte/uia_excel.json › suprafete[dialog.eroare_formula_3]`); lista de completare însăși rămâne [NEVERIFICAT].
 - [ ] **R6-3** Excel, o celulă goală: tastezi `7.1`, `7.9`, `7.12` și Enter. Ce text arată celula (luna scurtă: „ian”,
   „sept”…?). Doar „mai” e probat (`excel-zecimale-punct`: „07.mai”). (Simulatorul: ian, feb, mar, apr, mai, iun, iul, aug,
   sept, oct, nov, dec — nedovedite.)
-- [ ] **R6-4** Excel, registru nou (Book1), Ctrl+S: se deschide pagina **File › Save As** sau o fereastră mică „Save this
+- [x] **R6-4** Excel, registru nou (Book1), Ctrl+S: se deschide pagina **File › Save As** sau o fereastră mică „Save this
   file” (ca la Word)? O captură UI Automation ar închide rândul. (Simulatorul: pagina File › Save As.)
-- [ ] **R6-5** Scenariul `excel-salvare-ca` cere `fila: FileTab` + `id_mso: FileSaveAs`, dar în Excel real (referința)
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/uia_excel.json › suprafete[dialog.save_this_file]` (fereastra „Save this file”, ca la Word).
+- [x] **R6-5** Scenariul `excel-salvare-ca` cere `fila: FileTab` + `id_mso: FileSaveAs`, dar în Excel real (referința)
   butonul File are idMso `FileTabButton`, iar „Save As” din Backstage n-are idMso. Scenariul se poate juca doar dacă e
   rescris (o rundă `acoperire`): File → Save As → Browse → File name. (Simulatorul face drumul real; starea „Note.xlsx”
   e probată în `runde/6/proba_excel.py`, cazul gest.salvare_ca.)
-- [ ] **R6-6** Excel, selectezi B2:C4 cu numere: bara de stare arată „Average: … Count: … Sum: …”? În ce ordine și unde?
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `scenarii/excel/excel-salvare-ca.json` rescris pe File › Save As › Browse + `referinte/scenarii_real/excel-salvare-ca.json` (probat).
+- [x] **R6-6** Excel, selectezi B2:C4 cu numere: bara de stare arată „Average: … Count: … Sum: …”? În ce ordine și unde?
   Referința are bara de stare a unei foi goale. (Simulatorul: nu le arată.)
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/uia_excel.json › suprafete[bara_stare#selectie_numere]` (Average, Count, Sum, înaintea vederilor).
 - [ ] **R6-7** Excel, `=1/3` și Enter, coloana lată de 64 px: ce text arată celula („0,333333”?). (Simulatorul: cel mult
   10-11 caractere, ca formatul General — lățimea exactă nedovedită.)
 <!-- RUNDA6-EXCEL:END -->
 
 ## Runda 7 · Excel (unghiul gest_tastatura) — de lămurit (un minut fiecare, pe PC-ul cu Excel)
 <!-- RUNDA7-EXCEL:START -->
-- [ ] **R7-1** Excel, B2:B6 cu numere, B8 activă: săgeata ▾ de lângă Σ (AutoSum). Ce rânduri are lista (Sum, Average, Count
+- [x] **R7-1** Excel, B2:B6 cu numere, B8 activă: săgeata ▾ de lângă Σ (AutoSum). Ce rânduri are lista (Sum, Average, Count
   Numbers, Max, Min, More Functions…?), în ce ordine, și ce scrie Average în B8? O captură UI Automation a listei într-o rundă
   `acoperire` ar închide rândul. (Simulatorul: mesajul central; lecția m2-l08:63 cere „Medie (Average)”.)
-- [ ] **R7-2** Excel: tastezi `=SUM(B2:B7)B2:B6` și Enter. Ce fereastră apare (titlu, text, butoane)? (`com_r6b.json › D4`
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/uia_excel.json › suprafete[lista.AutoSum]` (Sum, Average, Count Numbers, Max, Min, More Functions...; Average → =AVERAGE(B2:B7)).
+- [x] **R7-2** Excel: tastezi `=SUM(B2:B7)B2:B6` și Enter. Ce fereastră apare (titlu, text, butoane)? (`com_r6b.json › D4`
   arată doar că Excel n-o primește.) (Simulatorul: rămâne în editare și arată mesajul central „Excel nu primește formula…”.)
-- [ ] **R7-3** Excel, coloana A de 64 px: tastezi de mână `1234567890` și `12345678901234`, apoi `=25/3` în A3. Se lățește
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/uia_excel.json › suprafete[dialog.eroare_formula]` („We found a typo…” [Yes, No]).
+- [x] **R7-3** Excel, coloana A de 64 px: tastezi de mână `1234567890` și `12345678901234`, apoi `=25/3` în A3. Se lățește
   coloana la primele două (până la ce lățime)? La a treia nu? (Probat doar „741234567” → întreg, `excel-zero-in-fata`.)
   (Simulatorul: numărul TASTAT în format General lățește coloana cât să încapă; formula și conținutul de pornire nu.)
-- [ ] **R7-4** Excel, coloana de 64 px: `=1/30000` (0,0000333…) și `=1/7000000`. Ce text arată („3,33E-05”? „0,000033”?).
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/scenarii_real/excel-numere-afisare.json` (doar valorile probate acolo).
+- [x] **R7-4** Excel, coloana de 64 px: `=1/30000` (0,0000333…) și `=1/7000000`. Ce text arată („3,33E-05”? „0,000033”?).
   (Simulatorul: sub 0,0001 trece în notație științifică — prag ales, nedovedit.)
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/scenarii_real/excel-numere-afisare.json` (=1/30000 → 3,33333E-05; =1/7000000 → 1,42857E-07).
 - [ ] **R7-5** Excel, E5 activă: clic dreapta pe litera C. Se alege coloana C (meniul apoi Column Width… pune lățimea pe C)?
   (Simulatorul: da — clicul dreapta pe o literă din afara selecției alege coloana.)
-- [ ] **R7-6** Excel: dublu clic pe linia dintre A și B, cu „Situația notelor la informatică” în A1. Ce lățime ia A
+- [x] **R7-6** Excel: dublu clic pe linia dintre A și B, cu „Situația notelor la informatică” în A1. Ce lățime ia A
   (Column Width… o arată în caractere)? (Simulatorul: textul măsurat + 7 px.)
-- [ ] **R7-7** Excel, după Σ: ce mod scrie bara de stare (Enter / Point)? (Simulatorul: „Enter” până la primul clic pe o
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/scenarii_real/excel-autofit-latime.json` (A = 186 px).
+- [x] **R7-7** Excel, după Σ: ce mod scrie bara de stare (Enter / Point)? (Simulatorul: „Enter” până la primul clic pe o
   celulă, apoi „Point”.)
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/uia_excel.json › acoperire_r7.fapte` (după Σ / Average: „Cell Mode Point”).
 - [x] **R6-7** (din runda 6) — lămurit de criticul 6: `runde/6/critic_probe/com_r6.json` (Range.Text, Excel real) dă
   „0,333333” la `=1/3` în coloana de 64 px; afișarea după lățime e acum în `excel.js › inLatime`.
-- [ ] **R7-8** Excel: săgeata ▾ de lângă găleata Fill Color. Ce are galeria (Theme Colors, Standard Colors, No Fill, More Colors…)
+- [x] **R7-8** Excel: săgeata ▾ de lângă găleata Fill Color. Ce are galeria (Theme Colors, Standard Colors, No Fill, More Colors…)
   și în ce ordine? O captură UI Automation într-o rundă `acoperire`. (Simulatorul: mesajul central „Fill Color”; butonul pune galben,
   `com_r7c.json › fill`.)
-- [ ] **R7-9** Excel: lista Borders ▾ deschisă. Titlurile grupurilor („Borders”, „Draw Borders”?), pictogramele, mărimea rândurilor.
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/uia_excel.json › suprafete[lista.CellFillColorPicker]`.
+- [x] **R7-9** Excel: lista Borders ▾ deschisă. Titlurile grupurilor („Borders”, „Draw Borders”?), pictogramele, mărimea rândurilor.
   (Simulatorul: lista din S11 în ordinea de acolo, cu etichetele din `GetLabelMso`, fără titluri; `excel.js › meniuBorduri`.)
-- [ ] **R7-10** Excel: B2 cu Wrap Text, apeși din nou Wrap Text. Se oprește încadrarea? Rândul revine la 14,4 pt? (`com_r7c.json ›
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/uia_excel.json › suprafete[lista.Borders]`.
+- [x] **R7-10** Excel: B2 cu Wrap Text, apeși din nou Wrap Text. Se oprește încadrarea? Rândul revine la 14,4 pt? (`com_r7c.json ›
   wrap_din_nou`: al doilea `ExecuteMso` n-a schimbat nimic — neconcludent.) (Simulatorul: comutator; rândul revine la 19 px.)
-- [ ] **R7-11** Excel: Data › Sort pe un tabel cu antet, apoi Add Level. Ce scrie în stânga rândului al doilea („Then by”?)
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/scenarii_real/excel-wrap-de-doua-ori.json` (a doua apăsare oprește încadrarea, rândul revine).
+- [x] **R7-11** Excel: Data › Sort pe un tabel cu antet, apoi Add Level. Ce scrie în stânga rândului al doilea („Then by”?)
   și cum se numește în UI Automation (DataItem / ComboBox)? Referința are un singur nivel (`uia_excel.json › dialog.SortDialog`),
   iar `surse_microsoft.md` nu are pagina. O captură UIA după Add Level, într-o rundă `acoperire`, închide rândul. (Simulatorul:
   „Then by”, din lecția m2-l10:63.)
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/uia_excel.json › suprafete[dialog.SortDialog#Add Level]` (rândul 2 = „Then by”) + `referinte/uia_excel.json › suprafete[lista.SortDialog_SortOn]`, `[lista.SortDialog_SortBy_fara_antet]` (Column A/B/C).
 - [ ] **R7-12** Excel, fereastra Sort: lista Order pe o coloană cu numere („Smallest to Largest”, „Largest to Smallest”, „Custom
   List...”?) și pe una cu text („A to Z”, „Z to A”, „Custom List...”?); se schimbă singură ordinea când alegi o coloană cu numere?
   Lista Sort On (doar „Cell Values” sau și Cell Color / Font Color / Conditional Formatting Icon)? Fără „My data has headers”,
@@ -212,20 +227,22 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **R7-13** Excel: C2:C7 aleasă într-un tabel A1:C7, butonul Sort Largest to Smallest de pe fila Data. Apare Sort Warning
   (referința a deschis-o prin `ExecuteMso('SortDialog')`, nu prin buton)? Unde apare pe ecran (captura: x = -27, deci la marginea
   din stânga)? (Simulatorul: apare și la butoane, ca în lecția m2-l10:62, :148; poziția din referință, adusă în fereastră.)
-- [ ] **R7-14** Excel, fereastra Sort: OK cu un nivel fără coloană (ce fereastră de eroare?); Add Level adaugă rândul la coadă sau
+- [x] **R7-14** Excel, fereastra Sort: OK cu un nivel fără coloană (ce fereastră de eroare?); Add Level adaugă rândul la coadă sau
   sub nivelul ales? Delete Level pe ultimul nivel rămas? (Simulatorul: mesajul central „Sort”; la coadă; se poate șterge tot, OK
   închide fără sortare.)
-- [ ] **R7-15** Excel: registru nou, scrii ceva, Ctrl+W. Fereastra „Want to save your changes to Book1?” (titlu, text, butoanele
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/uia_excel.json › suprafete[dialog.SortDialog_eroare_nivel_gol]` („All sort criteria must have a column or row specified…” [OK]).
+- [x] **R7-15** Excel: registru nou, scrii ceva, Ctrl+W. Fereastra „Want to save your changes to Book1?” (titlu, text, butoanele
   Save / Don't Save / Cancel, care e apăsat de Enter)? Nu e în `uia_excel.json`. (Simulatorul: mesajul central „Close (Ctrl+W)”,
   registrul rămâne deschis.) Și: în Chrome pe calculator, Ctrl+N / Ctrl+W sunt ale browserului (nu ajung la pagină; proba headless le
   trimite prin CDP) — elevul are File › New › Blank workbook și File › Close.
+  **Lămurit în runda `acoperire` Excel (19.11.2026, Excel real pe desktopul ascuns):** `referinte/uia_excel.json › suprafete[dialog.save_your_changes_to_this_file]` + `referinte/scenarii_real/excel-ctrl-w-modificat.json` (More options…, Save, Don't Save, Cancel).
 - [ ] **R7-16** Excel, un singur registru, nemodificat: Ctrl+W. Cum arată fereastra fără registru (zona gri? panglica gri? titlul
   „Excel”?). O captură UIA într-o rundă `acoperire`. (Simulatorul: zona documentului gri, fără celule; titlul „Excel”; Ctrl+N deschide BookN.)
 - [ ] **R7-17** Excel, Save As (F12): ce rânduri are panoul din stânga pe un profil curat și în ce ordine (referința Excel le are
   „nesalvat”)? (Simulatorul: Acasă, Galerie, Documente, Acest PC, Rețea, la 24 px, ca în Word.)
 - [ ] **R7-18** Excel: redenumirea foii cu un nume care există deja sau cu `/` — ce fereastră apare? Se poate anula cu Ctrl+Z?
   (Simulatorul: numele rămâne cel vechi, fără mesaj; redenumirea nu intră în Ctrl+Z.)
-- [ ] **R6-4 · DE ACOPERIT (runda 7)** Excel: Ctrl+S pe un registru nou, nesalvat. Ce fereastră se deschide (pagina File › Save As,
+- [x] **R6-4 · DE ACOPERIT (runda 7)** Excel: Ctrl+S pe un registru nou, nesalvat. Ce fereastră se deschide (pagina File › Save As,
   fereastra „Save this file” ca în Word, sau Save As)? Captura lipsește din `uia_excel.json`; lecția m1-l03:95-97 descrie „Save this
   file”. Simulatorul a rămas cum era (pagina File › Save As) — nu s-a inventat nimic.
 - [ ] **R7-19** Excel, foaie goală, 1366 × 768: culoarea barelor de derulare și a cursorului, desenul săgeților, mărimea cursorului

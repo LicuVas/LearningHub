@@ -107,3 +107,53 @@ Cererea (18.11, 14:59, verbatim): „continua acum cu etapa 0. apoi mergi cu urm
 - Urmează: rândul 8 în jurnal (oracole_inainte = masurare_pornire.json al rundei, 04:53-05:24; oracole_dupa = masurare.json
   09:37) + opreste.py; commit local; runda 8 (graficele + ce găsește criticul). treaz.py ține până ~12:04: îl repornesc la
   notificarea criticului.
+
+## 19.11.2026 10:07 — criticul 7: GRAV 9; jurnal rândul 8; opreste CONTINUA; commit 9c6730e2; pornită runda ACOPERIRE Excel
+- Criticul rece 7 (343k context, 25 min): ÎNCHISE X1, X2, X3, X4, X6, X7, X9. DESCHISE X5 (lista ▾ de lângă Σ = mesajul
+  central; m2-l08:63 o cere), X8 (Ctrl+S pe registru nou = Backstage Save As, fără referință; Ctrl+W cu modificări =
+  mesajul central, exercițiul m1-l03:182 nu se poate face), X10 (graficele). NOI: K1 tastatura în ferestrele Sort / Sort
+  Warning / Format Cells / Column Width / Save As; K2 Enter în ferestre fără „activat” → asistentul §6.3 dă indiciu după
+  pasul corect; K3 cu meniul de clic dreapta / lista Borders deschise tastele ajung în foaie; K4 =AV+Tab → AVERAGE (real:
+  AVEDEV, lecția m2-l08:66 avertizează); K5 „=” + săgeată = mesaj fals (real: modul Point, =B4); K6 fără KeyTips în Excel,
+  Alt+= și Ctrl+Shift+% tac. Regresul Word: curat (10/11 capturi identice, a 11-a = cursorul care clipește).
+  GRAV_VECHI_DESCHISE 3, GRAV 9.
+- Excel-ul utilizatorului (pid 29924) NU mai rulează. Verificat: criticul a oprit doar instanța lui (PID citit din Hwnd-ul
+  DispatchEx, com_r7k.py:73-78), a șters o singură intrare DocumentRecovery scrisă la 09:56 de propria rulare (fără fișier);
+  intrările vechi ale omului (122CE5, 4147402) sunt neatinse. porti.py omoară doar arborele propriu. La 08:37 Excel-ul lui
+  încă rula → închis între 08:37 și 09:56, nu de uneltele noastre (NESIGUR cine: probabil omul).
+- Jurnal rândul 8 (runda 7, gest_tastatura, O neschimbate, GRAV 9). opreste.py: CONTINUA (2/6 în val), promptul rundei 8
+  scris (unghi stare_finala_erori). Commit local 9c6730e2 (122 de fișiere, grep date personale 0).
+- treaz.py repornit --ore 6 (până ~16:10).
+- DECIZIA: înainte de runda 8, o rundă ACOPERIRE pe Excel (precedentul Word: rândul 4). Motiv: X5, X8 și etichetele Sort
+  NU se pot repara fără capturi reale, iar K1-K6 nu sunt văzute de oracole. Agent separat (opus, fundal), promptul
+  runde/7/acoperire_prompt.md; înainte = runde/7/masurare_final_r7.json; după = masoara --runda 7 → pornirea rundei 8;
+  reînghețare + --verifica 0. Valul: r6, r7, acoperire, r8, r9, r10 = 6.
+- După acoperire: rândul din jurnal cu acoperire:true, opreste.py, commit, apoi suplimentul rundei 8 (ținta: X5, X8, X10
+  grafice, K1-K6, cu referințele noi) + constructorul.
+
+## 19.11.2026 10:47 — acoperirea Excel: agentul a PREDAT după capturi; termin EU pașii mecanici
+- Agentul acoperire (368k context, 37 min): referinte/acoperire_excel_r7.py (nou), uia_excel.json +17 suprafețe
+  (save_this_file, save_your_changes_to_this_file, lista.AutoSum, Sort după Add Level + listele + eroarea, 3 ferestre de
+  eroare a formulei, Fill Color, Borders, galeria Column Chart, bara de stare cu selecție, panoul stâng Save As cu 19
+  elemente personale scoase), 12 scenarii noi + 3 rerulate (excel-salvare-ca rescris), toate mod_probat true;
+  api_biblioteca.md §5 excel (chei noi). Oracole neatinse → mutanții nu se declanșează. NEVERIFICAT: Order după
+  alegerea coloanei (R7-12), Excel fără registru (R7-16), lista de completare =AV/=SU, R7-17 parțial, R7-18/5/13/19, R6-3.
+- Verificat de mine: date personale în fișierele noi = 0 (doar „OneDrive - Personal”, eticheta Microsoft, deja în HEAD;
+  numele din generator = gărzi regex). Captura brută (cu folderele fixate ale omului) MUTATĂ din worktree în scratchpad
+  (capturi_excel_brut_r7.json) — nu se comite; uia_excel_inainte.json.bak șters (copie a unui fișier urmărit).
+- de_verificat.md: bifate 18 rânduri (R6-1, R6-2 parțial, R6-4 ×2, R6-5, R6-6, R7-1, R7-2, R7-3, R7-4, R7-6, R7-7,
+  R7-8, R7-9, R7-10, R7-11, R7-14, R7-15), fiecare cu calea dovezii.
+- ingheata.py --acoperire → 351 fișiere (amprenta c1d67eb8df0ceb56), --verifica 0. Ordinea ca la Word: reînghețare
+  ÎNAINTE de măsurare (masoara refuză lacătul rupt).
+- Măsurarea după acoperire, SINGURĂ pe mașină: runde/7/acoperire/masurare_dupa_acoperire.log, --compara
+  masurare_final_r7.json. Apoi: acoperire_excel.md, rândul jurnal acoperire:true, opreste.py, commit, suplimentul r8 +
+  constructorul (pornirea lui = măsurarea asta, fără să mai măsoare o oră).
+
+### 19.11.2026 ~11:50 — măsurarea după acoperire gata; acoperire_excel.md; jurnal; CONTINUA → runda 8
+- Măsurarea (10:46-11:45, singură): O1 61, O2 13392, O3 20337→21586, O4 43→69, O5 113, O6 0, O7 353→343, O8 102,
+  O9 34, porți 41 (cum_fac), lacăt ok, neconcludente 0. O3 +1249 = exact cele 17 suprafețe noi (pe_suprafata);
+  O4 +26 = diferențe +27 (point K5, av-tab K4, alt-egal K6, ctrl-w X8, erorile R6-1/R6-2, numere R7-3/4, autofit R7-6),
+  neexecutabil +1 (sortare-doua-niveluri: „Clasa” nu e în lista Then by), fără real −2. aplicatii/ neatins de la 07:17:06.
+- runde/7/acoperire_excel.md → ACOPERIRE_PARTIALA. Jurnal rândul 9 (acoperire: true). opreste.py → CONTINUA (3/6 în val).
+- Suplimentul r8: __PORNIRE__ completat; runde/8/masurare_pornire.json = copia lui runde/7/masurare.json (făcută de mine).
+- Următorul: commit local, apoi constructorul rundei 8 (opus, fundal), unghiul criticului 8 = stare_finala_erori.

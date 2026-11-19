@@ -1,4 +1,4 @@
-<!-- Runda 8 · etapa B · aplicația excel · unghiul stare_finala_erori · generat de pregateste_runda.py la 2026-11-19 10:04 din prompt_runda.md (sha256 09a338ac5aaa) -->
+<!-- Runda 8 · etapa B · aplicația excel · unghiul stare_finala_erori · generat de pregateste_runda.py la 2026-11-19 11:48 din prompt_runda.md (sha256 09a338ac5aaa) -->
 
 <rol>
 Ești runda 8 (etapa B) a lucrării „Aplicațiile fidele” din LearningHub. Nu ești autorul rundelor anterioare și nu le
@@ -59,10 +59,10 @@ Fă pașii în ordine. Fiecare pas lasă un ARTEFACT în D/runde/8/; un pas făr
        - ## [FARA_REFERINTA] (nu le număr GRAV)
        - GRAV_VECHI_DESCHISE: 3
        - GRAV: 9
-     Oracolele după runda precedentă: O1=61, O2=13392, O3=20337, O4=43, O5=113, O6=0, O7=353, O8=102, O9=34
-     Cele mai mari rămase: O3=20337, O2=13392, O7=353 (la etapa B ținta = suprafața cu (O3+O4+O8) × lecții cea mai mare, din inventar.json)
+     Oracolele după runda precedentă: O1=61, O2=13392, O3=21586 (era 20337), O4=69 (era 43), O5=113, O6=0, O7=343 (era 353), O8=102, O9=34
+     Cele mai mari rămase: O3=21586, O2=13392, O7=343 (la etapa B ținta = suprafața cu (O3+O4+O8) × lecții cea mai mare, din inventar.json)
      Porțile după runda precedentă (n = probleme): test_joc=0, controale_taiate=0, cum_fac=41, fereastra_mica=0, date_personale=0, word2007_j2=0
-     Ținta rundei precedente: runda 2 B-excel: GRAV X1-X10 din runde/6/critic.md (supliment_B_excel_runda7.md); 3 constructori (predare dupa 6, 7, 10) · reparat: ['constructorul 1: X9 telefon, X5 Sigma, X6 #NAME?, X1 numere, X2 text lung, X7 latimea coloanei; proba 44/57 -> 0/57', 'constructorul 2: X7 rest (Fill Color, Borders S11, Percent, Wrap Text); proba 13/17 -> 0/17', 'constructorul 3: X10 Sort pe niveluri + Sort Warning, X8 (Book2.., Ctrl+W, File New/Close, redenumire, panoul Save As), X3, X4; 22 picate -> 0; graficele NEINCEPUTE', 'criticul 7: inchise X1, X2, X3, X4, X6, X7, X9; deschise X5 (lista Sigma), X8 (Ctrl+S, Ctrl+W cu modificari), X10 (graficele); noi K1-K6 (tastatura in ferestre, Enter fara activat, taste in foaie cu meniu deschis, =AV+Tab, = + sageata, KeyTips); regresul Word curat']
+     Ținta rundei precedente: referintele reale lipsa pentru GRAV-urile criticului 7 (X5, X8, X10, K1-K6) si de_verificat R6/R7: capturi UIA Excel real (desktop ascuns) + 12 scenarii noi + 3 refacute + api §5 · reparat: ['runde/7/acoperire_excel.md: ACOPERIRE_PARTIALA; O3 20337->21586 (exact cele 17 suprafete noi), O4 43->69 (scenariile noi: K4, K5, K6, X8, R6-1, R6-2, R7-3/4, R7-6, Sort pe doua niveluri), O7 353->343; oracolele neatinse; repere.lock reinghetat (351 fisiere), --verifica 0; de_verificat: 18 randuri bifate']
       (GRAV-urile criticului din runda trecută au întâietate).
    Scrii numerele care au ales ținta și LISTA fișierelor pe care le deține runda (doar acelea se modifică).
 

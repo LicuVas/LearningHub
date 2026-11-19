@@ -193,6 +193,12 @@ Ce spune `stare()` la `text` / `celule` trebuie să fie ȘI pe ecran (regula „
   `word-x-nesalvat-cancel`): `dialog` `{titlu, intrebare, butoane, apasat}` (fereastra care întreabă, ca la Explorer),
   `documente_deschise`, `titlu_fereastra`, `pagina_backstage`, `tip_salvare_afisat`, `fisiere_salvate`;
 - **excel**: `celule` `{A1: {valoare, text, formula?}}` (`text` = ce se vede în celulă), `format_celule`, `selectie` `{activa, zona}`, `nume_fisier`;
+  din runda `acoperire` după runda 7 (19.11.2026; sensul exact în `descriere` a scenariilor `excel-ctrl-n`,
+  `excel-ctrl-w-modificat`, `excel-column-width-enter`, `excel-numere-afisare`, `excel-wrap-de-doua-ori`, `excel-av-tab`):
+  `fereastra_mesaj` `{titlu, texte, butoane}` (mesajul apărut după ultimul pas, `null` dacă niciunul), `ramane_in_editare`
+  (true/false), `dialog` `{titlu, intrebare, butoane, apasat}` (fereastra care întreabă, ca la Word), `registru_activ`
+  (numele registrului activ, `null` fără registru), `latimi_coloane` `{litera: px}` și `inaltimi_randuri` `{rând: px}`
+  (doar cele diferite de standard; px la 100% = puncte × 4/3), iar în `format_celule` câmpul `incadrare: true` (Wrap Text);
 - **powerpoint**: `diapozitive`, `formatare_text`, `tema`, `tranzitie_galerie`, `animatie_galerie`, `nume_fisier`;
 - **explorer**: `nume_fisiere` (numele reale din folderul de lucru, cu extensie, folderele cu „/” — comparate ca mulțime),
   `ordine_afisata` (în ordinea vederii), `in_cos`, `continut_fisiere`, `dialog` (ultimul dialog apărut:
