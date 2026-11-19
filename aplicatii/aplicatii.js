@@ -74,7 +74,8 @@
   function setari() { return L.setari || SETARI_IMPLICITE; }
 
   /* ------------------------------------------------------------ deschide / inchide */
-  const SURSE_APP = { word: ['word.js', 'date/word.json'], excel: ['excel.js', 'date/excel.json'] };
+  const SURSE_APP = { word: ['word.js', 'date/word.json'], excel: ['excel.js', 'date/excel.json'],
+    powerpoint: ['powerpoint.js', 'date/powerpoint.json'] };
   function incarcaApp(nume) {
     const s = SURSE_APP[nume];
     if (!s) return Promise.reject(new Error('„' + nume + '” nu e încă în bibliotecă (vine într-un val următor)'));

@@ -353,3 +353,36 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   nou inserat după ce grila a fost derulată 20 de rânduri în jos? (Simulatorul: B2; mijlocul zonei vizibile, G20; criticul 10,
   [FARA_REFERINTA] 7, 10.)
 <!-- RUNDA10-EXCEL:END -->
+
+<!-- RUNDA11-POWERPOINT:BEGIN -->
+## Runda 11 (B-powerpoint, constructorul): ce face PowerPoint real și n-are referință (nu se implementează ca „fidel” până nu e probat)
+- [ ] **R11-1** Listele ▾ necapturate (README_referinte.md, „listele derulante și galeriile deschise”): New Slide ▾ și Layout
+  (`SlideLayoutGallery`) arată în simulator DOAR aspectele numite de scenariile reale (Title Slide, Title and Content, Title Only);
+  Office Theme are mai multe (lecțiile citează Two Content, Blank, Comparison, Section Header…). Pictures ▾
+  (`FlyoutAnchorInsertPictures`: This Device… / Stock Images / Online Pictures) dă mesajul central. De capturat într-o rundă
+  `acoperire`: lista Layout, lista New Slide ▾, lista Pictures ▾, grila Table ▾ (scenariu: deschiderea fiecărei liste, dump UIA).
+- [ ] **R11-2** Casetele aspectelor (poziție, mărime, font: titlul Title Slide 60 pt e dovedit — `powerpoint-bold-text.json`;
+  subtitlul 24, titlul Title and Content 44, conținutul 28 NU) și textul-îndemn din caseta goală („Click to add title”…; simulatorul
+  arată doar chenarul punctat, fără text). Scenariu: `Shapes(i).Left/Top/Width/Height`, `TextFrame.TextRange.Font.Size` și
+  `.Text` pe fiecare aspect, prin COM.
+- [ ] **R11-3** Codurile `tranzitie_cod` / `animatii_cod` pentru alte efecte decât Fade (3849) și Fly In (2): simulatorul dă `null`.
+  Scenariu: fiecare efect din primul rând al galeriilor, `SlideShowTransition.EntryEffect` / `TimeLine.MainSequence(i).EffectType`.
+- [ ] **R11-4** Pașii Increase / Decrease Font Size în afară de 60 → 66 (simulatorul: lista 8…96 a casetei Font Size).
+- [ ] **R11-5** Mutarea casetei: în simulator, tragerea mută caseta doar când e aleasă ca OBIECT (clic pe margine sau Esc din
+  editare); tragerea în textul casetei alege text. De probat pe PowerPoint real cu mouse-ul (gest real, ecranul profesorului —
+  `powerpoint-tragere-forma` e deja „trimis la profesor”).
+- [ ] **R11-6** Comenzile gri în referință (`activ:false`: Font, Paragraph, Drawing, Animations; Effect Options / Preview la
+  Transitions) devin active în simulator când e o casetă aleasă / un text în editare (la Transitions: când diapozitivul are o
+  tranziție). Dovedit doar pentru Cut/Copy/Paste (README_referinte.md); de probat cu un dump UIA cu o casetă aleasă.
+- [ ] **R11-7** Galeria Animations aplicată a doua oară pe aceeași casetă ÎNLOCUIEȘTE efectul (Add Animation adaugă): în simulator
+  da; scenariul real `powerpoint-animatie-fly-in` are o singură aplicare (`[2]`). Scenariu: Appear apoi Fly In pe aceeași casetă.
+- [ ] **R11-8** Delete pe o casetă de aspect GOALĂ aleasă ca obiect: dispare sau rămâne? (simulatorul: dispare.)
+- [ ] **R11-9** `powerpoint-diapozitiv-nou-buton`: rulatorul O4 apasă CENTRUL lui `mso:SlideNewGallery` (SplitButton [129,83,42,78]);
+  centrul (y = 122) cade în partea ▾ (MenuItem `SlideNewGallery_Dropdown` [129,120,42,41]), care în PowerPoint deschide lista
+  aspectelor — simulatorul o deschide (fidel geometriei referinței). Realul a fost rulat cu UIA Invoke pe SlideNewGallery
+  (`scenarii_real/powerpoint-diapozitiv-nou-buton.json › cum`). De hotărât de orchestrator: scenariul ținește partea de sus
+  (`tinta: "panglica:Home/Slides/New Slide"`) sau se probează pe real un clic de mouse în punctul (150,122).
+- [ ] **R11-10** `powerpoint-imagine` (`mso:PictureInsertFromFile`) și `powerpoint-salvare-ca` (`fila: FileTab`, apoi `mso:FileSaveAs`):
+  țintele nu există pe ecran în referință (pe panglică e `FlyoutAnchorInsertPictures`; fila File e `FileTabButton`; Save As e un
+  rând din Backstage fără idMso). Rămân neexecutabile până la o rundă `acoperire` (lista Pictures ▾) / o reparație a scenariului.
+<!-- RUNDA11-POWERPOINT:END -->
