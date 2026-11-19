@@ -184,3 +184,15 @@ Cererea (18.11, 14:59, verbatim): „continua acum cu etapa 0. apoi mergi cu urm
 - DECIZIE: X10 (graficele) NU mai primește un al treilea constructor în runda 8 — măsurarea e curată și proaspătă, iar
   graficele se potrivesc cu unghiul rundei 9 (aspect). Criticul 8 pornit acum (unghi stare_finala_erori, diff de la
   4b53a65a). Prompt: scratchpad critic8_prompt.txt.
+
+### 19.11.2026 ~16:30 — criticul 8: GRAV 7; jurnal rândul 10; CONTINUA (4/6); suplimentul rundei 9
+- Criticul 8 (370k, 26 min): ÎNCHISE X5, X8, K2, K3, K4, K5, K6. DESCHISE K1 (focusul iese din Sort după alegerea pe
+  nivelul 2, excel.js:1526) și X10 (graficele). NOI: E1 (KeyTips pornite singure după Alt+literă care închide fereastra),
+  E2 (Enter pe casetă de bifat/radio o comută), E3 (bara „Enter” în loc de „Point” după Σ), E4 (No/Esc în typo nu trece
+  în Edit; săgeata redeschide fereastra), E5 (Yes în typo dă #VALUE!, real se varsă pe 5 rânduri). Regresul Word: nu strică.
+  Excel-ul criticului: instanță proprie ascunsă, oprită forțat doar pe PID-ul ei, fără intrări noi de recuperare.
+- Jurnal rândul 10 (runda 8, O4 69 → 50, GRAV 7). opreste.py → CONTINUA (4/6 în val). Commit 1c73a5fe.
+- de_verificat.md: R8-12…R8-19 din [FARA_REFERINTA] ale criticului 8.
+- runde/supliment_B_excel_runda9.md: E1, E2, K1, E4, E3 (mici, cauza cu fișier:rând), apoi X10 graficele (unghiul
+  criticului 9 = aspect), E5 la urmă. La predare, fără pasul 7 complet (doar --doar O4,O5,O9). runde/9/masurare_pornire.json
+  = runde/8/masurare.json (copiată de mine).

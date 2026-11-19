@@ -273,4 +273,13 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **R8-11** Excel, registru nou modificat, Ctrl+W → „Save your changes to this file?”: scrii un nume în caseta File name a ferestrei
   și apeși **Save** — se salvează direct (cu ce nume, în ce folder) și se închide, sau apare încă o fereastră? Și ce face **More
   options…** din fereastra asta? (Simulatorul: salvează din caseta ei și închide; More options… = mesajul central; D17.)
+- [ ] [FARA_REFERINTA critic 8, `runde/8/critic.md`] **R8-12** Excel, un fișier DEJA salvat (de ex. Tema_mea.xlsx), modificat, Ctrl+W:
+  ce fereastră apare (tot „Save your changes to this file?” cu File name, sau varianta scurtă Save / Don't Save / Cancel)?
+  (Lecția m1-l03:176-182.) **R8-13** după Ctrl+S pe un fișier salvat, Ctrl+Z, apoi Ctrl+W: mai întreabă? **R8-14** `=SUM(A1,A2)`
+  + Enter → „There's a problem with this formula” → apasă **OK** (nu Esc): rămâi în editare cu formula (cum spun lecțiile
+  m2-l09:61, m2-l13:106) sau în Ready? Aceeași întrebare la „You've entered too few arguments”. **R8-15** `=SUM(B2:B4` (fără
+  paranteza de la final) + Enter: Excel o închide singur sau dă o fereastră? La fel `=` singur + Enter și `=B2+` + Enter.
+  **R8-16** `=IF(B2>=9;„da”;„nu”)` cu ghilimelele românești: ce fereastră? **R8-17** `=E5+1` scris în E5 (referință circulară):
+  ce fereastră, ce arată celula? **R8-18** Save this file › Choose a Location ▾: ce rânduri are lista? **R8-19** Σ sau ▾ ›
+  Average lângă un singur număr: ce zonă propune Excel (`=AVERAGE(B5)` sau `=AVERAGE(B5:B5)`)? (Simulatorul: `B5:B5`.)
 <!-- RUNDA8-EXCEL:END -->
