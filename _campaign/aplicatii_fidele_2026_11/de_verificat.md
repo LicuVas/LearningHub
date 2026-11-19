@@ -268,4 +268,9 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] [FARA_REFERINTA critic 7] **R8-5** Ctrl+PageDown / Ctrl+PageUp (lecția m1-l03:197: foaia din dreapta / stânga);
   **R8-6** Alt+Enter în celulă (rând nou în aceeași celulă?); **R8-7** Ctrl+1 (fereastra Format Cells?); **R8-8** Ctrl+C / X / V /
   B în timpul editării unei celule; **R8-9** File (Backstage) fără niciun registru deschis: care comenzi sunt gri?
+- [ ] **R8-10** Excel, registru nou (Book1) nesalvat: **File › Save** (din Backstage, nu Ctrl+S) — se deschide pagina File › Save As
+  sau fereastra „Save this file”? (Simulatorul: pagina Save As, ca Word; `runde/8/diferente.md` D16.)
+- [ ] **R8-11** Excel, registru nou modificat, Ctrl+W → „Save your changes to this file?”: scrii un nume în caseta File name a ferestrei
+  și apeși **Save** — se salvează direct (cu ce nume, în ce folder) și se închide, sau apare încă o fereastră? Și ce face **More
+  options…** din fereastra asta? (Simulatorul: salvează din caseta ei și închide; More options… = mesajul central; D17.)
 <!-- RUNDA8-EXCEL:END -->

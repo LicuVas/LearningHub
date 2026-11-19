@@ -157,3 +157,30 @@ Cererea (18.11, 14:59, verbatim): „continua acum cu etapa 0. apoi mergi cu urm
 - runde/7/acoperire_excel.md → ACOPERIRE_PARTIALA. Jurnal rândul 9 (acoperire: true). opreste.py → CONTINUA (3/6 în val).
 - Suplimentul r8: __PORNIRE__ completat; runde/8/masurare_pornire.json = copia lui runde/7/masurare.json (făcută de mine).
 - Următorul: commit local, apoi constructorul rundei 8 (opus, fundal), unghiul criticului 8 = stare_finala_erori.
+
+### 19.11.2026 ~14:30 — runda 8: constructorul 1 PREDARE (6/9), constructorul 2 pornit
+- Constructorul 1 (377k context, 2 h 33 min): K3, K5, K4, X5, K2, K1 reparate (proba runde/8/proba_grav.py 49/64 → 14/66,
+  restul pe X8 + K6). A atins și aplicatii.js (cârlig opțional pus doar de Excel; regresul Word 0) și a regenerat
+  date/excel.json. Măsurarea lui (12:25-13:49, 84 min — încărcată): O4 69 → 56, restul neschimbat; porți test_joc 2 +
+  controale_taiate 2 = timeout-uri pe pagini fără bibliotecă, 0 la reluare. O3 NU a scăzut deși listele Σ/Borders sunt
+  desenate — întrebare dată constructorului 2.
+- Probe vechi contrazise de referința nouă: 7/proba_grav › X6 (fereastra „We found a typo…” în loc de mesajul central),
+  7/proba_grav_cont2 › X8 (va pica la repararea X8). Notate în runde/8/diferente.md D14; criticul să judece pe referință.
+- porti.py rulat direct rescrie oracole/porti.json (reper); constructorul l-a pus la loc, --verifica 0.
+- Punct de control local: commit d0ab48fd (aplicatii/* + runde/8 + de_verificat). Revert pentru constructorul 2 = git restore.
+- treaz repornit la 14:25 (--ore 6, până ~20:25). Constructorul 2: X8, K6, întrebarea O3, apoi X10; măsurarea pasului 7
+  singură, comparată cu runde/8/masurare_pornire.json.
+
+### 19.11.2026 ~15:55 — runda 8: constructorul 2 PREDARE (X8 + K6 gata, X10 neînceput); criticul 8 pornit
+- Constructorul 2 (294k, 83 min): X8 (Save this file, Save your changes; registrul nou cu conținut = modificat), K6
+  (KeyTips copiate din word.js, Alt+=, Ctrl+Shift+%). proba_grav.py 0/65. Doar excel.js atins (+177/−7).
+- Măsurarea pasului 7 (14:39:35-15:45:34, singură, după ultima scriere 14:31:46; nicio probă în paralel): O4 69 → 50,
+  restul neschimbat, porți 41 (cum_fac), regres niciunul, lacăt ok. runde/8/masurare.json (cea a constructorului 1 →
+  masurare_constructor1.json).
+- Întrebarea O3 lămurită: O2/O3 randează doar paginile din inventar.json, niciuna nu încarcă aplicatii/ → O3 nu se mișcă
+  în etapa B; se mișcă în etapa C. Constatare, oracolul neatins.
+- Abateri de judecat de critic: D16 (File › Save din Backstage → Save As, fără referință Excel → R8-10), D17 (Save din
+  „Save your changes” salvează direct → R8-11), D18 (7/proba_grav_cont2 › X8 cade, contrazisă de referință).
+- DECIZIE: X10 (graficele) NU mai primește un al treilea constructor în runda 8 — măsurarea e curată și proaspătă, iar
+  graficele se potrivesc cu unghiul rundei 9 (aspect). Criticul 8 pornit acum (unghi stare_finala_erori, diff de la
+  4b53a65a). Prompt: scratchpad critic8_prompt.txt.

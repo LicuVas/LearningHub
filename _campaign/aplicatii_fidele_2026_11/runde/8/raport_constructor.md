@@ -68,3 +68,89 @@ Note: `cadru.md`, `tinta.md`, `contra.md`, `diferente.md` (D1-D15), `de_verifica
   dreapta cu caseta „Type to search” deasupra (R8-2); focusul și ordinea Tab în Sort Warning / Sort (R8-3, R8-4).
 - Lista ▾ „More Functions...” rămâne mesaj central, cum cere suplimentul (referința are totuși `dialog.FunctionWizard`).
 - Galeria Fill Color ▾ (`lista.CellFillColorPicker`) nu e desenată: Fill ▾ dă încă mesajul central (nu e GRAV; 512 puncte O3).
+
+---
+
+# Constructorul 2 (continuă de la d0ab48fd; X8 și K6; X10 neînceput)
+
+## Numerele
+Pornirea rundei rămâne `masurare_pornire.json`; punctul intermediar = măsurarea constructorului 1 (copie: `masurare_constructor1.json`,
+O4 56). Măsurarea parțială după X8 + K6 (`partial_c2_k6.log`, `--doar O4,O5,O9`): **O4 56 → 50**, O5 113 → 113, O9 34 → 34.
+Măsurarea pasului 7 (`masurare_c2.log`, pornită după ultima scriere sub `aplicatii/`, singură pe mașină):
+
+| | O1 | O2 | O3 | O4 | O5 | O6 | O7 | O8 | O9 | porți | suma |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| pornirea rundei (`masurare_pornire.json`) | 61 | 13392 | 21586 | 69 | 113 | 0 | 343 | 102 | 34 | 41 (cum_fac) | 35741 |
+| constructorul 1 (`masurare_constructor1.json`) | 61 | 13392 | 21586 | 56 | 113 | 0 | 343 | 102 | 34 | 45 în măsurare (41 la re-rulare) | 35732 |
+| **constructorul 2** (`masurare.json`, 14:39-15:45) | 61 | 13392 | 21586 | **50** | 113 | 0 | 343 | 102 | 34 | **41** (test_joc 0, controale_taiate 0, cum_fac 41, restul 0) | **35722** |
+
+Lacăt: ok; neconcludente 0; „regres față de 8/masurare_pornire.json: niciunul (n cu n pe O1-O9 și pe fiecare poartă)”;
+`ingheata.py --verifica` = 0 (351 fișiere, INTACT). De data asta porțile n-au avut timeout-uri (măsurarea a rulat singură, 66 min).
+O4 50 = 56 − 5 (`excel-ctrl-w-modificat`) − 1 (`excel-alt-egal`).
+
+Proba GRAV-urilor (`proba_grav.py`, toată): **0 picate din 65** (`proba_grav_c2_dupa.json`): K3 11/11, K5 8/8, K4 4/4, X5 8/8,
+X8 13/13, K2 6/6, K1 9/9, K6 6/6. La predarea constructorului 1: 14 picate (X8 9, K6 5).
+
+## Fiecare GRAV (constructorul 2)
+- **X8 — reparat.** Ctrl+S și Save din Acces rapid pe un registru nou deschid „Save this file” (`uia_excel.json ›
+  acoperire_r7.fapte.a_ctrl_s_registru_nou`: `dialog.save_this_file`, backstage null, focus în File name), cu „Book1” fără
+  extensie în caseta File name (Edit File name `v: Book1`); Enter / Save salvează („Tema mea” → „Tema mea.xlsx”, titlul „Tema mea
+  - Excel”), Cancel închide, More options… → pagina File › Save As (`more_options.backstage`). Ctrl+W și File › Close pe un
+  registru modificat deschid „Save your changes to this file?”; `stare().dialog` = `{titlu: '', intrebare: 'Save your changes to
+  this file?', butoane: [More options…, Save, Don't Save, Cancel], apasat: null}`, `registru_activ` Book1 (exact
+  `scenarii_real/excel-ctrl-w-modificat.json`). Cancel lasă registrul, Don't Save îl închide nesalvat, Save salvează cu numele din
+  caseta File name a ACESTEI ferestre și închide (D17). Conținutul pus la pornire într-un registru nou nesalvat contează ca
+  modificare (`acoperire_r7.fapte.b_ctrl_w_modificat.registru_saved_inainte = false`); lecția poate da `modificat: false`, ca la
+  Word. Cod: `excel.js` › `SALVARE_NOUA` / `INTREBARE_INCHIDERE`, `dialogStare`, `butoaneJos`, `M.mod` la pornire, `inchideRegistru`
+  / `inchideRegistruAcum` / `raspunsInchidere`, `salveaza`, `implicitDialog`, `OPT.tinta` / `OPT.editabil`, ramura `fereastra` din
+  `I.la.clic`. Proba: X8 13/13. O4: `excel-ctrl-w-modificat` 5 → 0.
+- **K6 — reparat.** KeyTips ca în Word (codul din `word.js:1985-2071` copiat în `excel.js`, Word neatins): Alt arată literele
+  filelor din referință (`file_panglicii › ta`: Home H, Insert N, Data A…), H trece pe Home și arată literele ei, 1 = Bold (A1 nu intră în editare),
+  Alt, H, U deschide lista Σ ▾ și arată literele ei (`Alt, H, U, S`…); fiecare tastă emite `tasta_acces` (§4); Esc urcă un nivel și
+  închide lista deschisă de o tastă. Alt+= = Σ (`panglica.TabHome › Sum`, AccessKey „Alt+=”): B5 → `=SUM(B2:B4)` = 24 după Enter,
+  ca `scenarii_real/excel-alt-egal.json`; Ctrl+Shift+% = Percent Style (0,25 → 25%). Partea comună nu dă gest pentru Alt+caracter /
+  Ctrl+Shift+cifră, deci Excel le prinde singur și emite `tasta_acces` (Sum) / `ctrl_shift_5` (Percent Style). Proba: K6 6/6.
+  O4: `excel-alt-egal` 1 → 0.
+- **X10 graficele — NEFĂCUT** (neînceput; m-am oprit ca măsurarea și raportul să încapă sub ~200k de context). Planul, cu
+  faptele din referință (`h_grafic`, cheile din `date/excel.json`), e în `stare_autor.md` › Rămâne › 3.
+
+## Întrebarea O3 (de ce listele Σ și Borders n-au scăzut O3)
+Oracolul O3 (și O2) randează doar cele 60 de pagini din `inventar.json`; niciuna nu încarcă `aplicatii/aplicatii.js`, iar
+poligonul nu e în inventar. Randarea folosită în măsurarea constructorului 1 (`oracole/_iesiri/randare_f665709fad68106e.json`)
+are 323 de instanțe Excel pe 18 pagini, toate din simulatoarele vechi, fără nicio cheie `lista.*` sau `dialog.save*`;
+`excel.lista.AutoSum` (43 puncte) și `excel.lista.Borders` (134) au `randari: 0` și înainte, și după. În `jurnal.jsonl`, O2/O3 n-au
+scăzut în nicio rundă B (Word 1-5, Excel 6-7). Nu e o greșeală în simulator: plasa oracolului (`structura_lib.py:1604-1622`)
+ar citi listele, fiindcă `aplicatii.js:591` pune `window.LHAplicatii` și `excel.js › I.deschideSuprafata` le deschide. **Constatare
+(oracolul neatins):** în etapa B, O3/O2 nu pot vedea munca pe bibliotecă; se vor mișca abia când o pagină din inventar trece pe
+bibliotecă (etapa C). Detaliile, cu dovezile: `stare_autor.md` › „Întrebarea O3”.
+
+## Regresul (constructorul 2, `regres_c2_rezumat.txt`)
+- Word: `5/proba_grav` 0, `4/proba_grav` 0, `4/proba_telefon` 0, `3/proba_grav` 0, `2/proba_grav` 0.
+- Excel: `6/proba_excel` 0, `7/proba_grav_cont` 0, `8/proba_grav` 0 (toate cele 65); `7/proba_grav` 2 (X6, D14 — de la constructorul
+  1, neschimbat); `7/proba_grav_cont2` **3**, toate pe X8 și explicate de referința nouă (D18): mesajul central la Ctrl+W pe
+  registru modificat (:51) e acum fereastra reală; startul `{A1: Ana}` al verificării „Ctrl+W pe singurul registru, nemodificat”
+  (:61) e acum registru modificat (`registru_saved_inainte = false`), deci Excel întreabă, iar urmarea ei (:64, Ctrl+N din Excel
+  gol) nu mai are Excel gol. Probele vechi NU sunt schimbate.
+
+## Abateri de la supliment (cu citat; de judecat de critic)
+- **D16** File › Save din Backstage pe registru nou: suplimentul cerea „Save this file”; referința Excel are doar Ctrl+S. Am lăsat
+  pagina File › Save As (ca `word.js:1698`), [NEVERIFICAT] → `de_verificat` R8-10. Verificarea corespunzătoare din `proba_grav.py`
+  (scrisă de constructorul 1 după supliment) e rescrisă pe pagina Save As, apoi Ctrl+S → Cancel.
+- **D17** Save în „Save your changes…” pe registru nou: suplimentul scria „prin Save this file dacă e nou”; referința arată că
+  fereastra are caseta ei File name (v „Book1”, cu focusul). Save salvează din ea, fără a doua fereastră (ca `word.js:1715`);
+  după Save Excel real n-a fost capturat → `de_verificat` R8-11. Verificarea din `proba_grav.py` e rescrisă (focus + „Book1” în
+  caseta ei, „Lista” + Save → `salvare_si_inchidere`, Excel gol).
+
+## Fișierele schimbate de constructorul 2 (necomise)
+`aplicatii/excel.js` (singurul fișier de cod). Note: `runde/8/proba_grav.py` (x8: două verificări rescrise, D16/D17),
+`diferente.md` (D16-D18), `de_verificat.md › RUNDA8-EXCEL` (R8-10, R8-11), `stare_autor.md`, `gata_pentru_critic.md`, acest
+raport; ieșirile `proba_grav_c2_*`, `regres_c2_*`, `partial_c2_k6.log`, `masurare_c2.log`, `masurare_constructor1.json`.
+
+## NESIGUR (constructorul 2)
+- D16 și D17 (mai sus): alegeri după referință și după Word, contra textului suplimentului.
+- Numele gestului pentru Ctrl+Shift+% (`ctrl_shift_5`) nu e în `suprafete.json › gesturi` (lista are doar `ctrl_shift_<literă>`);
+  Alt+= e emis ca `tasta_acces` (e AccessKey-ul lui Sum în referință).
+- More options… din „Save your changes…” = mesajul central (efectul nu e capturat, R8-11).
+- Rămase pe O4 (nu sunt GRAV-uri ale criticului 7): `excel-numere-afisare` 6, `excel-autofit-latime` 1, `excel-autocompletare-tab`
+  1, `excel-separator-virgula` 1 (celula în editare apare în `stare().celule`).
+

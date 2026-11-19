@@ -290,6 +290,12 @@
       if (parti.length) F().sel = { activa: { r: parti[0].r0, c: parti[0].c0 }, zone: parti };
     }
     if (c.nume) { M.nume = /\.[a-z0-9]{2,5}$/i.test(c.nume) ? String(c.nume) : c.nume + '.xlsx'; M.salvat = true; }
+    /* „modificat”: conținutul pus la pornire într-un registru nou, nesalvat, contează ca modificare (Excel real, conținut pus
+       prin COM: uia_excel.json › acoperire_r7.fapte.b_ctrl_w_modificat.registru_saved_inainte = false; scenariul
+       excel-ctrl-w-modificat pornește cu A1 = „x” și Excel întreabă); lecția îl poate spune explicit (ca la Word) */
+    M.mod = typeof c.modificat === 'boolean' ? c.modificat : (!M.nume && M.foi.some(f => Object.keys(f.cel).length > 0));
+    /* ferestrele de salvare ale Office (X8, m1-l03): Ctrl+S pe registru nou și întrebarea de la închidere */
+    const SALVARE_NOUA = 'dialog.save_this_file', INTREBARE_INCHIDERE = 'dialog.save_your_changes_to_this_file';
     let BOOK = (Z.registru || {}).e || 'Book1';
 
     /* ---- valorile (recalculare la cerere, cu ciclu → 0) */
@@ -482,10 +488,25 @@
       Object.keys(f.lat || {}).forEach(k => { latimi[colNume(+k)] = f.lat[k]; });
       Object.keys(INALT).forEach(r => { inaltimi[String(+r + 1)] = INALT[r]; });
       return { celule: cel, format_celule: fmt, latimi_coloane: latimi, inaltimi_randuri: inaltimi, selectie: selectieStare(), nume_fisier: M.nume, fereastra_mesaj: M.mesaj,
-        ramane_in_editare: !!M.edit, foi: M.foi.map(x => x.nume), foaie_activa: F().nume, dialog: dialog ? { titlu: (date.dialoguri[dialog.baza] || {}).titlu || '' } : null,
+        ramane_in_editare: !!M.edit, foi: M.foi.map(x => x.nume), foaie_activa: F().nume, dialog: dialogStare(),
         pagina_backstage: backstage ? backstage.pagina : null, titlu_fereastra: titlu(),
         registru_activ: REG.gol ? null : numeRegistru(), registre: REG.alte.map(r => r.nume ? r.nume.replace(/\.[a-z0-9]{2,5}$/i, '') : r.book).concat(REG.gol ? [] : [numeRegistru()]) };
     };
+    /* `dialog` (§5): fereastra deschisă; „Save your changes to this file?” = fereastra care ÎNTREABĂ, în forma din
+       scenarii_real/excel-ctrl-w-modificat.json: {titlu: '' (bara de titlu goală), intrebare, butoane: rândul de jos, de la
+       stânga la dreapta (uia_excel.json › dialog.save_your_changes_to_this_file), apasat: null cât e deschisă} */
+    function dialogStare() {
+      if (!dialog) return null;
+      if (dialog.baza === INTREBARE_INCHIDERE) return { titlu: '', intrebare: (date.dialoguri[dialog.baza] || {}).titlu || '', butoane: butoaneJos(dialog.baza), apasat: null };
+      return { titlu: (date.dialoguri[dialog.baza] || {}).titlu || '' };
+    }
+    function butoaneJos(baza) {
+      const b = [];
+      (function u(n, inTitlu) { if (!n) return; if (n.t === 'Button' && !inTitlu && n.r) b.push(n); (n.c || []).forEach(c => u(c, inTitlu || n.t === 'TitleBar')); })(SUP[baza], false);
+      if (!b.length) return [];
+      const jos = Math.max(...b.map(n => n.r[1] + n.r[3]));
+      return b.filter(n => n.r[1] + n.r[3] >= jos - 10).sort((x, y) => x.r[0] - y.r[0]).map(n => n.e);
+    }
     const numeRegistru = () => (M.nume ? M.nume.replace(/\.[a-z0-9]{2,5}$/i, '') : BOOK);
     const titlu = () => REG.gol ? 'Excel' : numeRegistru() + '  -  Excel';
     const instantaneu = () => ({ foi: clona(M.foi), fi: M.fi });
@@ -527,6 +548,13 @@
           if (n.t === 'ComboBox' && /^Save as type:?$/.test(n.e)) return 'camp:tip_fisier';
           if (n.t === 'Button' && /^(Save|Cancel)$/.test(n.e)) return 'dialog_salvare:' + n.e;
         }
+        /* „Save this file” / „Save your changes to this file?” (uia_excel.json › suprafete): caseta File name, caseta mică Save
+           as type; Save / Cancel din „Save this file” = ca în Save As; butoanele întrebării rămân fereastra:<buton> */
+        if (ctx.cheie === SALVARE_NOUA || ctx.cheie === INTREBARE_INCHIDERE) {
+          if (n.t === 'Edit' && /^File name:?$/.test(n.e)) return 'camp:nume_fisier';
+          if (n.t === 'ComboBox' && /^Save as type:?$/.test(n.e)) return 'camp:tip_fisier';
+          if (ctx.cheie === SALVARE_NOUA && n.t === 'Button' && /^(Save|Cancel)$/.test(n.e)) return 'dialog_salvare:' + n.e;
+        }
         return undefined;
       },
       la(n, e, ctx) {
@@ -549,7 +577,7 @@
           if (bl) { e.setAttribute('data-lh-id-mso', bl[0]); const ic = pang.icoana(I, bl[0], 16); if (ic && /^<svg|^<span/.test(ic)) e.insertAdjacentHTML('afterbegin', ic); }
         }
       },
-      editabil(n, ctx) { return (ctx.cheie === 'dialog.FileSaveAs' && n.t === 'Edit' && /^File name/.test(n.e)) || (ctx.cheie === 'dialog.ColumnWidth' && n.t === 'Edit'); }
+      editabil(n, ctx) { return (/^dialog\.(FileSaveAs|save_this_file|save_your_changes_to_this_file)$/.test(ctx.cheie || '') && n.t === 'Edit' && /^File name/.test(n.e)) || (ctx.cheie === 'dialog.ColumnWidth' && n.t === 'Edit'); }
     };
     const desen = (cheie, extra) => pang.deseneaza(I, cheie, Object.assign({}, OPT, extra || {}));
     const titluEl = desen('bara_titlu');
@@ -1766,16 +1794,34 @@
       dupaRegistru();
       return 'registru_nou';
     }
+    /* registrul modificat: Excel întreabă „Save your changes to this file?” (uia_excel.json ›
+       dialog.save_your_changes_to_this_file; scenarii_real/excel-ctrl-w-modificat.json: dialog {titlu '', intrebare,
+       butoane [More options…, Save, Don't Save, Cancel]}, registru_activ Book1 — registrul rămâne deschis cât întreabă).
+       Același drum pentru Ctrl+W și File › Close (în Chrome Ctrl+W nu ajunge la pagină). */
     function inchideRegistru() {
       if (REG.gol) return 'fara_efect';
       if (M.edit && !confirma()) return 'fara_efect';
-      if (M.mod) return I.nesimulat('Close (Ctrl+W)');
+      if (M.mod) { inchideMeniu(); if (backstage) inchideBackstage(); return deschideDialog(INTREBARE_INCHIDERE) ? 'intrebare_salvare' : I.nesimulat('Close (Ctrl+W)'); }
+      return inchideRegistruAcum('inchidere_registru');
+    }
+    function inchideRegistruAcum(actiune) {
       inchideMeniu();
       if (dialog) inchideDialog();
       if (REG.alte.length) incarcaRegistru(REG.alte.pop());
       else { REG.gol = true; incarcaRegistru({ foi: [foaieNoua('Sheet1')], fi: 0, nume: null, salvat: false, mod: false, H: istoricNou(), book: BOOK }); }
       dupaRegistru();
-      return 'inchidere_registru';
+      return actiune;
+    }
+    /* răspunsul la „Save your changes to this file?”: Cancel / ✕ = registrul rămâne (acoperire_r7.fapte.b_ctrl_w_modificat:
+       registre_dupa_cancel 1); Don't Save = se închide nesalvat; Save = salvat cu numele din caseta File name a ACESTEI
+       ferestre (fereastra are caseta ei, v „Book1”, cu focusul: uia_excel.json), apoi închis — ca word.js (Save → salvat,
+       apoi închis). More options… și Choose a Location ▾: efectul nu e în referință → mesajul central */
+    function raspunsInchidere(v) {
+      if (v === 'Cancel' || v === 'Închidere') { inchideDialog(); return 'anulare'; }
+      if (v === "Don't Save") { inchideDialog(); return inchideRegistruAcum('inchidere_fara_salvare'); }
+      if (v === 'Save') { const r = salveazaDinDialog(); return r === 'salvare' ? inchideRegistruAcum('salvare_si_inchidere') : r; }
+      if (v === 'Open') return I.nesimulat('Choose a Location ▾');
+      return I.nesimulat(v);
     }
     /* Excel fără registru: zona documentului goală, gri, fără celule (aspectul NU e în referință — de_verificat R7-16) */
     function arataGol() { golEl.style.display = REG.gol ? '' : 'none'; }
@@ -1948,7 +1994,8 @@
         marcheazaFolder();
       }
       const nf = s.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
-      if (nf) { nf.value = (M.nume ? M.nume : BOOK + '.xlsx'); setTimeout(() => { try { nf.focus({ preventScroll: true }); nf.select(); } catch (e) { /* */ } }, 0); }
+      /* Save As propune numele CU extensia; „Save this file” / „Save your changes” FĂRĂ (uia_excel.json › Edit File name v „Book1”) */
+      if (nf) { nf.value = dialog.baza === SALVARE_NOUA || dialog.baza === INTREBARE_INCHIDERE ? numeRegistru() : (M.nume ? M.nume : BOOK + '.xlsx'); setTimeout(() => { try { nf.focus({ preventScroll: true }); nf.select(); } catch (e) { /* */ } }, 0); }
       else { s.setAttribute('tabindex', '-1'); if (!focusInitial(s)) setTimeout(() => { if (dialog && dialog.el === s) focusStrat(); }, 0); }
     }
     function marcheazaFolder() {
@@ -2105,7 +2152,8 @@
     }
     function implicitDialog() {
       if (!dialog) return null;
-      if (dialog.baza === 'dialog.FileSaveAs') return salveazaDinDialog();
+      if (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === SALVARE_NOUA) return salveazaDinDialog();
+      if (dialog.baza === INTREBARE_INCHIDERE) return raspunsInchidere('Save');
       if (dialog.baza === 'dialog.ColumnWidth') return latimeDinDialog();
       if (dialog.baza === 'dialog.SortDialog') return sortDinDialog();
       if (dialog.baza === 'dialog.SortWarning') return sortDinAvertizare();
@@ -2147,10 +2195,14 @@
       backstage.nav.querySelectorAll('[data-lh-tip="ListItem"]').forEach(x => x.classList.toggle('activ', x.getAttribute('data-lh-eticheta') === pagina));
       return true;
     }
-    /* Ctrl+S pe un registru nesalvat: pagina File › Save As (de_verificat R6-4); F12: fereastra Save As (dialog.FileSaveAs) */
+    /* Ctrl+S / Save din Acces rapid pe un registru nesalvat: fereastra „Save this file” (uia_excel.json ›
+       acoperire_r7.fapte.a_ctrl_s_registru_nou: cheie dialog.save_this_file, backstage null, focus în File name); F12: fereastra
+       Save As (dialog.FileSaveAs) */
     function salveaza() {
       if (M.edit && !confirma()) return 'fara_efect';
       if (M.nume) { M.salvat = true; M.mod = false; actualizeazaBare(); return 'salvare'; }
+      if (backstage) inchideBackstage();
+      if (deschideDialog(SALVARE_NOUA)) return 'salvare_ca';
       deschideBackstage('Save As');
       return 'pagina_backstage';
     }
@@ -2356,6 +2408,15 @@
       if (fel === 'fila_dialog' && dialog) { arataFilaDialog((date.dialoguri[dialog.baza].file.some(x => x.fila === v) && v !== date.dialoguri[dialog.baza].file[0].fila) ? v : null); return 'fila_dialog'; }
       if (fel === 'dialog_salvare' && dialog) return v === 'Save' ? salveazaDinDialog() : (inchideDialog(), 'anulare');
       if (fel === 'fereastra' && dialog && /^dialog\.eroare_formula/.test(dialog.baza)) return raspunsEroare(v);
+      if (fel === 'fereastra' && dialog && dialog.baza === INTREBARE_INCHIDERE) return raspunsInchidere(v);
+      if (dialog && (dialog.baza === SALVARE_NOUA || dialog.baza === INTREBARE_INCHIDERE)) {
+        /* More options… → pagina File › Save As (acoperire_r7.fapte.a_ctrl_s_registru_nou.more_options.backstage „Save As”) */
+        if (fel === 'fereastra' && v === 'More options…') { inchideDialog(); deschideBackstage('Save As'); return 'pagina_backstage'; }
+        if (fel === 'fereastra' && /^(Cancel|Închidere)$/.test(v)) { inchideDialog(); return 'anulare'; }
+        /* rândurile listelor Choose a Location ▾ și Save as type ▾ nu sunt în referință → mesajul central (ca word.js) */
+        if (fel === 'fereastra' && v === 'Open') return I.nesimulat('Choose a Location ▾');
+        if (fel === 'camp' && v === 'tip_fisier') return I.nesimulat('Save as type ▾');
+      }
       if (fel === 'fereastra' && dialog) {
         if (/^(OK|Insert)$/.test(v)) return implicitDialog();
         if (/^(Cancel|Închidere|Close)$/.test(v)) { inchideDialog(); return 'anulare'; }
@@ -2650,6 +2711,115 @@
       }
       I.emite('tasta_acces', act || 'tasta_acces', t, ina);
     }, true);
+    /* ---- tastele de acces ale panglicii (KeyTips; critic runda 7, GRAV K6) — același mecanism ca word.js:1981-2071: Alt
+       apăsat și eliberat arată literele filelor, apoi ale comenzilor filei. Literele vin din referință (uia_excel.json →
+       date/excel.json › `ta`: Home „Alt, H”, Insert „Alt, N”, Data „Alt, A”, Bold „Alt, H, 1”, AutoSum ▾ „Alt, H, U”, rândurile
+       listei AutoSum „Alt, H, U, S”…). Fiecare tastă emite tasta_acces (§4); o tastă care duce la capăt șirul apasă comanda
+       prin același drum ca clicul (I.activeazaTasta, partea comună). Word nu e atins: codul e copiat, nu mutat. */
+    const kt = { activ: false, cale: [], prefix: '', insigne: [] };
+    function ktCurata() { kt.insigne.forEach(x => x.remove()); kt.insigne = []; }
+    function ktIesi() { ktCurata(); kt.activ = false; kt.cale = []; kt.prefix = ''; }
+    function ktTinte(cale) {
+      cale = cale || kt.cale;
+      const R = root.getBoundingClientRect(), out = [];
+      (backstage ? backstage.strat : root).querySelectorAll('[data-lh-tip]').forEach(x => {
+        const n = x.__nod;
+        if (!n || !n.ta || !L._vizibil(x) || x.closest('.lh-ap-cadru')) return;
+        const p = String(n.ta).split(',').map(s => s.replace(/\s+/g, ''));
+        if (p[0] !== 'Alt' || p.length !== cale.length + 2) return;
+        for (let i = 0; i < cale.length; i++) if (p[i + 1] !== cale[i]) return;
+        out.push({ x, cheie: p[p.length - 1] });
+      });
+      const unic = new Map();
+      out.forEach(o => { const v = unic.get(o.cheie); if (!v || (!v.x.hasAttribute('data-lh-tinta') && o.x.hasAttribute('data-lh-tinta'))) unic.set(o.cheie, o); });
+      return { R, out: [...unic.values()] };
+    }
+    function ktArata() {
+      ktCurata();
+      const { R, out } = ktTinte();
+      out.forEach(o => {
+        if (kt.prefix && o.cheie.indexOf(kt.prefix) !== 0) return;
+        const r = o.x.getBoundingClientRect(), b = el('span', 'lh-ap-keytip', { 'aria-hidden': 'true' });
+        b.textContent = o.cheie;
+        b.style.left = (r.left - R.left + r.width / 2) + 'px';
+        b.style.top = (r.bottom - R.top - 6) + 'px';
+        root.appendChild(b);
+        kt.insigne.push(b);
+      });
+      return out;
+    }
+    function ktLitera(e) {
+      if (!/^[a-z0-9]$/i.test(e.key)) { I.tastaFaraClic('fara_efect'); return false; }
+      kt.prefix += e.key.toUpperCase();
+      const { out } = ktTinte();
+      const exact = out.find(o => o.cheie === kt.prefix);
+      if (exact) {
+        const cheie = kt.prefix;
+        kt.prefix = '';
+        ktCurata();
+        const camp = exact.x.matches('input:not([readonly])') ? exact.x : exact.x.querySelector('input:not([readonly])');
+        if (camp) {
+          ktIesi();
+          try { camp.focus({ preventScroll: true }); camp.select(); } catch (x) { /* */ }
+          I.tastaFaraClic('camp', exact.x);
+          return true;
+        }
+        I.activeazaTasta(exact.x, cheie);
+        /* nivelul următor: ce s-a deschis are la rândul lui taste (fila Home, lista AutoSum ▾, File → Backstage) */
+        const cale = kt.cale.concat([cheie]);
+        if (kt.activ && ktTinte(cale).out.length) { kt.cale = cale; ktArata(); } else ktIesi();
+      } else if (out.some(o => o.cheie.indexOf(kt.prefix) === 0)) { ktArata(); I.tastaFaraClic('prefix_tasta_acces'); }
+      else { kt.prefix = kt.prefix.slice(0, -1); I.tastaFaraClic('fara_efect'); }
+      return true;
+    }
+    /* Alt+= = Sum (uia_excel.json › panglica.TabHome › Button „Sum”, AccessKey „Alt+=”; scenarii_real/excel-alt-egal.json:
+       B5 „=SUM(B2:B4)” = 24 după Enter) și Ctrl+Shift+% = Percent Style (panglica.TabHome › Percent Style, scurtătura
+       „Ctrl+Shift+%”). Partea comună (gestTasta) nu dă gest pentru Alt+caracter și Ctrl+Shift+cifră, deci Excel le prinde
+       aici și emite singur: tasta_acces cu ținta comenzii Sum (§4: tasta e AccessKey-ul ei), ctrl_shift_5 cu ținta comenzii
+       Percent Style. Cu o fereastră, Backstage sau un meniu deschis, ori în editare: fara_efect. */
+    const tintaCmd = id => { const x = root.querySelector('[data-lh-suprafata="panglica.TabHome"] [data-lh-id-mso="' + id + '"]'); return x ? L._tintaDin(I, x) : 'panglica:Home/' + id; };
+    function scurtaturaPanglica(e) {
+      const sum = e.altKey && !e.ctrlKey && !e.metaKey && (e.code === 'Equal' || e.key === '=');
+      const pr = (e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && (e.code === 'Digit5' || e.key === '%');
+      if (!sum && !pr) return false;
+      e.preventDefault();
+      e.stopPropagation();
+      const ina = I.stare();
+      const liber = !dialog && !backstage && !meniu && !REG.gol && !redenumire;
+      let act = 'fara_efect';
+      if (sum && liber && !M.edit) act = autoSum();
+      if (pr && liber && !M.edit) act = procent();
+      I.emite(sum ? 'tasta_acces' : 'ctrl_shift_5', act || 'fara_efect', sum ? tintaCmd('AutoSum') : tintaCmd('PercentStyle'), ina);
+      return true;
+    }
+    let altSingur = false;
+    root.addEventListener('keydown', e => {
+      if (e.key === 'Alt') { altSingur = true; return; }
+      altSingur = false;
+      if (!kt.activ) { scurtaturaPanglica(e); return; }
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === 'Escape') {
+        /* Esc urcă un nivel (o listă deschisă de o tastă se închide); de pe primul nivel iese din tastele de acces */
+        if (meniu) inchideMeniu();
+        if (kt.cale.length && !(backstage && kt.cale.length <= 1)) { kt.cale = kt.cale.slice(0, -1); kt.prefix = ''; ktArata(); }
+        else ktIesi();
+        I.tastaFaraClic('iesire_taste_acces');
+        return;
+      }
+      ktLitera(e);
+    }, true);
+    root.addEventListener('keyup', e => {
+      if (e.key !== 'Alt' || !altSingur) return;
+      altSingur = false;
+      e.preventDefault();
+      if (kt.activ) { ktIesi(); I.tastaFaraClic('iesire_taste_acces'); return; }
+      if (dialog || backstage) return;
+      kt.activ = true;
+      ktArata();
+      I.tastaFaraClic('arata_taste_acces');
+    });
+    root.addEventListener('pointerdown', () => { if (kt.activ) ktIesi(); }, true);
     /* plasa oracolelor (CONVENTIE_ARBORE.md §4.6): deschide o suprafață fără gestul ei */
     I.deschideSuprafata = cheie => {
       if (/^panglica\./.test(cheie)) return activeazaFila(cheie.slice(9));

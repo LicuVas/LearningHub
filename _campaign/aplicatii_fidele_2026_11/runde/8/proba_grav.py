@@ -186,7 +186,11 @@ def x8(pw, base):
     tasta(s, "Escape")
     s.clic_sel(APP + '[data-lh-tinta="fila:File"]')
     s.clic_sel(APP + '[data-lh-suprafata="backstage.nav"] [data-lh-eticheta="Save"]')
-    verif("X8", "File › Save pe registru nou → „Save this file”", fereastra(s, "dialog.save_this_file"), {"pag": s.stare().get("pagina_backstage")})
+    # constructorul 2: File › Save din Backstage NU e în referința Excel (acoperire_r7.fapte are doar Ctrl+S); rămâne ca în
+    # Word (word.js:1698: pagina File › Save As) — diferente.md D16, de_verificat R8-10
+    verif("X8", "File › Save pe registru nou → pagina File › Save As (ca word.js:1698; fără referință Excel: de_verificat R8-10)",
+          s.stare().get("pagina_backstage") == "Save As" and not fereastra(s, "dialog.save_this_file"), {"pag": s.stare().get("pagina_backstage")})
+    tasta(s, "Escape"); tasta(s, "Control+s")
     s.clic_sel(APP + '[data-lh-suprafata="dialog.save_this_file"] [data-lh-eticheta="Cancel"]')
     verif("X8", "Cancel închide fereastra, registrul rămâne nesalvat", not fereastra(s, "dialog.save_this_file") and s.stare().get("nume_fisier") is None, s.stare().get("nume_fisier"))
     s.gata()
@@ -205,11 +209,18 @@ def x8(pw, base):
     s.clic_sel(APP + '[data-lh-tinta="fila:File"]')
     s.clic_sel(APP + '[data-lh-suprafata="backstage.nav"] [data-lh-eticheta="Close"]')
     verif("X8", "File › Close pe registru modificat → aceeași fereastră", fereastra(s, "dialog.save_your_changes_to_this_file"), s.mesaj())
+    # constructorul 2: fereastra întrebării ARE caseta ei File name (uia_excel.json › dialog.save_your_changes_to_this_file ›
+    # Edit „File name” v „Book1”; acoperire_r7.fapte.b_ctrl_w_modificat.focus = File name), deci Save salvează din ea, fără
+    # a doua fereastră (ca word.js:1715) — diferente.md D17, de_verificat R8-11
+    a = ae(s); nf = s.ev("()=>{const e=document.querySelector('[data-lh-aplicatie] [data-lh-suprafata=\"dialog.save_your_changes_to_this_file\"] [data-lh-tinta=\"camp:nume_fisier\"] input');return e?e.value:null}")
+    verif("X8", "fereastra întrebării: focusul în caseta ei File name, cu „Book1” (uia_excel.json › Edit File name v Book1)",
+          (a or {}).get("tinta", "").startswith("camp:nume_fisier") and nf == "Book1", {"ae": a, "nf": nf})
+    s.pg.keyboard.press("Control+a"); s.pg.keyboard.type("Lista"); n0 = nev(s)
     s.clic_sel(APP + '[data-lh-suprafata="dialog.save_your_changes_to_this_file"] [data-lh-eticheta="Save"]')
-    verif("X8", "Save pe registru NOU → „Save this file”", fereastra(s, "dialog.save_this_file"), None)
-    s.pg.keyboard.press("Control+a"); s.pg.keyboard.type("Lista"); tasta(s, "Enter")
-    st = s.stare()
-    verif("X8", "„Lista” + Enter → salvat și închis: Excel gol (registru_activ null)", st.get("registru_activ", "x") is None and not fereastra(s, "dialog.save_this_file"), {"activ": st.get("registru_activ", "x"), "mesaj": s.mesaj()})
+    st = s.stare(); e = evd(s, n0)
+    verif("X8", "„Lista” + Save → salvat și închis (acțiunea salvare_si_inchidere): Excel gol (registru_activ null), fără altă fereastră",
+          st.get("registru_activ", "x") is None and not fereastra(s, "dialog.save_this_file") and any(x.get("actiune") == "salvare_si_inchidere" for x in e),
+          {"activ": st.get("registru_activ", "x"), "mesaj": s.mesaj(), "ev": e})
     tasta(s, "Control+n"); s.scrie("A1", "x"); tasta(s, "Control+w")
     s.clic_sel(APP + '[data-lh-suprafata="dialog.save_your_changes_to_this_file"] [data-lh-eticheta="Don\'t Save"]')
     verif("X8", "Don't Save → registrul se închide nesalvat", s.stare().get("registru_activ", "x") is None, s.stare().get("registru_activ", "x"))
