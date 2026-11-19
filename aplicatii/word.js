@@ -624,12 +624,12 @@
     const pozitie = (e, r, baza) => { e.style.position = 'absolute'; e.style.left = (r[0] - (baza ? baza[0] : 0)) + 'px'; e.style.top = (r[1] - (baza ? baza[1] : 0)) + 'px'; };
     const OPT = {
       tinta(n, ctx) {
-        if (ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === 'dialog.PictureInsertFromFile' || ctx.cheie === SALVARE_NOUA || ctx.cheie === INTREBARE_INCHIDERE) {
+        if (ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === 'dialog.FileSaveAs_pdf' || ctx.cheie === 'dialog.open' || ctx.cheie === 'dialog.PictureInsertFromFile' || ctx.cheie === SALVARE_NOUA || ctx.cheie === INTREBARE_INCHIDERE) {
           if (n.t === 'Edit' && /^File name:?$/.test(n.e)) return 'camp:nume_fisier';
           if (n.t === 'ComboBox' && /^File name:?$/.test(n.e)) return null;
           /* caseta Save as type = camp:tip_fisier (api_biblioteca.md §3; scenariul word-salvare-pdf, pasul 2) */
           if (n.t === 'ComboBox' && /^Save as type:?$/.test(n.e)) return 'camp:tip_fisier';
-          if ((ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === SALVARE_NOUA) && n.t === 'Button' && /^(Save|Cancel)$/.test(n.e)) return 'dialog_salvare:' + n.e;
+          if ((ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === 'dialog.FileSaveAs_pdf' || ctx.cheie === SALVARE_NOUA) && n.t === 'Button' && /^(Save|Cancel)$/.test(n.e)) return 'dialog_salvare:' + n.e;
         }
         /* rândurile unei liste deschise (uia_word.json › lista.*) = meniu:<rând> (§3) */
         if (/^lista\./.test(ctx.cheie || '')) return n.t === 'ListItem' && n.e ? 'meniu:' + n.e : null;
@@ -638,6 +638,14 @@
       /* ferestrele Office (NUIDialog): bara de titlu fără text (scenariile: dialog.titlu = ""); textul mare = numele
          ferestrei interioare (în UI Automation nu e nod Text, deci locul lui e al nostru — diferente.md D25) */
       la(n, e, ctx) {
+        /* zona PDF: eticheta grupului „Optimize for:” stă în stânga butoanelor radio (uia_word.json › dialog.FileSaveAs_pdf ›
+           Group „Optimize for:” [43,476,250,67], radiourile de la x = 159); grupurile „Rând metadate” n-au text pe ecran — GRAV T3 */
+        if (ctx.cheie === 'dialog.FileSaveAs_pdf' && n.t === 'Group' && /:$/.test(n.e || '')) {
+          const q = document.createElement('span');
+          q.className = 'lh-ap-grup-eticheta';
+          q.textContent = n.e;
+          e.appendChild(q);
+        }
         if (OFFICE_NUI.indexOf(ctx.cheie) < 0) return;
         if (n.t === 'TitleBar') e.querySelectorAll('.lh-ap-titlu-dialog').forEach(x => x.remove());
         if (n.t === 'Window' && ctx.adancime === 2 && n.e) {
@@ -649,7 +657,7 @@
         }
       },
       editabil(n, ctx) {
-        if ((ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === 'dialog.PictureInsertFromFile' || ctx.cheie === SALVARE_NOUA || ctx.cheie === INTREBARE_INCHIDERE) && n.t === 'Edit' && /^File name/.test(n.e)) return true;
+        if ((ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === 'dialog.FileSaveAs_pdf' || ctx.cheie === 'dialog.open' || ctx.cheie === 'dialog.PictureInsertFromFile' || ctx.cheie === SALVARE_NOUA || ctx.cheie === INTREBARE_INCHIDERE) && n.t === 'Edit' && /^File name/.test(n.e)) return true;
         /* caseta Font Size: „type the size you want in the Font Size box” (support.microsoft.com/en-US/Office/fonts/change-the-font-size) */
         if (/^panglica/.test(ctx.cheie || '') && n.t === 'Edit' && n.e === 'Font Size') return true;
         if (ctx.cheie === 'dialog.TableInsertDialogWord' && n.t === 'Spinner' && /^Number of/.test(n.e)) return true;
@@ -1013,10 +1021,13 @@
       inchideMeniu();
       if (dialog) inchideDialog();
       const strat2 = stratNou('lh-ap-strat-dialog');
-      dialog = { baza, strat: strat2, fila: null };
+      dialog = { baza, strat: strat2, fila: null, desen: baza, folder: folderAdresa(baza === 'dialog.open' ? 'dialog.open' : 'dialog.FileSaveAs') };
       if (baza === 'dialog.FileSaveAs' || baza === SALVARE_NOUA || baza === INTREBARE_INCHIDERE) {
         const prim = (M.P.find(p => p.t.trim()) || { t: '' }).t.trim();
-        let propus = prim ? prim.replace(/[\\/:*?"<>|]/g, '').slice(0, 60) : faraExt(M.nume);
+        /* document deja salvat: numele fișierului (Word real, COM — runde/4/critic.md:104: după SaveAs2 dă „numele
+           fișierului. După o modificare dă tot numele fișierului”); document nou: primul rând (word-salvare-ca-f12.json).
+           Critic runda 4, GRAV T1 */
+        let propus = M.salvat ? faraExt(M.nume) : prim ? prim.replace(/[\\/:*?"<>|]/g, '').slice(0, 60) : faraExt(M.nume);
         /* „Save your changes…” pe un document deja salvat: numele lui (fără referință — AC-5) */
         if (baza === INTREBARE_INCHIDERE && M.salvat) propus = faraExt(M.nume);
         /* fereastra Save As propune numele CU extensia („Tema mea de azi.docx”), ferestrele Office FĂRĂ („Poezia mea”):
@@ -1032,13 +1043,15 @@
     }
     function arataFilaDialog(fila) {
       const info = date.dialoguri[dialog.baza];
-      const k = (info.file.find(f => f.fila === fila) || info.file[0]).s;
+      /* Save As cu „PDF (*.pdf)” ales = altă fereastră în referință (uia_word.json › dialog.FileSaveAs_pdf: Optimize for,
+         Options..., Open file after publishing; fără Save Thumbnail) — critic runda 4, GRAV T3 */
+      const k = dialog.desen && dialog.desen !== dialog.baza && SUP[dialog.desen] ? dialog.desen : (info.file.find(f => f.fila === fila) || info.file[0]).s;
       dialog.fila = fila;
       dialog.strat.innerHTML = '';
       const s = desen(k);
       /* suprafața dialogului poartă cheia de BAZĂ pe orice filă (oracolul apasă filele și compune singur „#<filă>”,
          CONVENTIE_ARBORE.md §4.3); doar deschisă prin plasa cu o cheie „#…” poartă cheia întreagă */
-      s.setAttribute('data-lh-suprafata', dialog.cheiePlasa || dialog.baza);
+      s.setAttribute('data-lh-suprafata', dialog.cheiePlasa || (k === 'dialog.FileSaveAs_pdf' ? k : dialog.baza));
       const r = SUP[k].r, R = root.getBoundingClientRect();
       s.style.position = 'absolute';
       s.style.left = Math.max(0, Math.min(r[0], R.width - r[2])) + 'px';
@@ -1048,16 +1061,28 @@
       /* panoul din stânga al ferestrei Save As: elementele IMPLICITE Windows 11 din referință (uia_word.json ›
          lista.FileSaveAs_navigare; cele 19 personale au fost scoase). În captură erau în afara ecranului, deci locul
          rândurilor (unul sub altul, la 24 px) e al nostru — AC-6. Critic runda 3, GRAV A2 */
-      const arb = dialog.baza === 'dialog.FileSaveAs' && s.querySelector('[data-lh-tip="Tree"][data-lh-eticheta="Panou de navigare"]');
+      const arb = (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === 'dialog.open') && s.querySelector('[data-lh-tip="Tree"][data-lh-eticheta="Panou de navigare"]');
       if (arb && SUP['lista.FileSaveAs_navigare']) {
-        (SUP['lista.FileSaveAs_navigare'].c || []).filter(n => n.t === 'TreeItem' && n.e).forEach((n, k) => {
-          const x = el('div', 'lh-ap-n lh-ap-t-TreeItem lh-ap-nav-rand', { 'data-lh-tip': 'TreeItem', 'data-lh-eticheta': n.e, role: 'treeitem',
-            'data-lh-tinta': 'arbore:' + n.e });
-          x.style.left = '4px'; x.style.top = (6 + 24 * k) + 'px'; x.style.width = '200px'; x.style.height = '22px';
-          x.innerHTML = '<span class="lh-ap-text">' + esc(n.e) + '</span>';
+        /* + câte un rând pentru fiecare folder din CONȚINUT (fișierele lecției și folderul ferestrei), în ordinea numelor
+           implicite Windows 11 din referinte/acoperire_word_r3.py:57 (NAV_IMPLICIT: Acasă, Galerie, Desktop, Descărcări,
+           Documente, …, Acest PC, Rețea); locul rândurilor nu e în referință — de_verificat.md R5-1. Fereastra Open are
+           același panou Windows (dialog.open › Tree „Panou de navigare”). Critic runda 4, GRAV N4 */
+        const impl = (SUP['lista.FileSaveAs_navigare'].c || []).filter(n => n.t === 'TreeItem' && n.e).map(n => n.e);
+        const ORD = ['Acasă', 'Galerie', 'Desktop', 'Descărcări', 'Documente', 'Imagini', 'Muzică', 'Videoclipuri', 'Acest PC', 'Rețea'];
+        const poz = x => { const i = ORD.indexOf(x); return i < 0 ? 7.5 : i; };
+        const fold = [...new Set(M.fs.map(f => f.folder).concat([dialog.folder]).filter(x => x && impl.indexOf(x) < 0))];
+        const tot = impl.concat(fold).sort((a, b) => poz(a) - poz(b) || a.localeCompare(b));
+        const lat = Math.max(60, Math.min(200, arb.getBoundingClientRect().width - 24));
+        tot.forEach((nume, i) => {
+          const x = el('div', 'lh-ap-n lh-ap-t-TreeItem lh-ap-nav-rand', { 'data-lh-tip': 'TreeItem', 'data-lh-eticheta': nume, role: 'treeitem',
+            'data-lh-tinta': 'arbore:' + nume });
+          if (fold.indexOf(nume) >= 0) x.__folder = nume;
+          x.style.left = '4px'; x.style.top = (6 + 24 * i) + 'px'; x.style.width = lat + 'px'; x.style.height = '22px';
+          x.innerHTML = '<span class="lh-ap-text">' + esc(nume) + '</span>';
           arb.appendChild(x);
         });
       }
+      umpleFolder(s);
       /* fila dialogului: TabItem-ul ales e marcat */
       s.querySelectorAll('[data-lh-tip="TabItem"]').forEach((t, i) => {
         const on = fila ? t.getAttribute('data-lh-eticheta') === fila : i === 0;
@@ -1067,8 +1092,12 @@
       const nf = s.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
       if (nf) {
         /* numele propus de bibliotecă (valoarea din referință e textul capturii, ex. „Ana are mere”) */
-        if (dialog.propus != null) nf.value = dialog.propus;
-        setTimeout(() => { try { nf.focus({ preventScroll: true }); nf.select(); } catch (e) { /* */ } }, 0);
+        if (dialog.numeAcum != null) nf.value = dialog.numeAcum;
+        else if (dialog.propus != null) nf.value = dialog.propus;
+        const ti = dialog.focusTip && s.querySelector('[data-lh-tinta="camp:tip_fisier"] input');
+        /* redesenată după alegerea tipului (T3): focusul rămâne în caseta Save as type, ca Enter să fie tot Save */
+        if (ti) { try { ti.focus({ preventScroll: true }); } catch (e) { /* */ } }
+        else setTimeout(() => { try { nf.focus({ preventScroll: true }); nf.select(); } catch (e) { /* */ } }, 0);
       } else {
         s.setAttribute('tabindex', '-1');
         setTimeout(() => { if (dialog && dialog.el === s) focusStrat(); }, 0);
@@ -1077,6 +1106,7 @@
     function implicitDialog() {
       if (!dialog) return null;
       if (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === SALVARE_NOUA) return salveaza();
+      if (dialog.baza === 'dialog.open') return deschideDinOpen(valoareCamp('camp:nume_fisier'));
       /* Enter în „Save your changes…” = Save, ca în „Save this file” (butonul apăsat de Enter: NEVERIFICAT, AC-3) */
       if (dialog.baza === INTREBARE_INCHIDERE) {
         if (M.intrebare) M.intrebare.apasat = 'Save';
@@ -1094,11 +1124,12 @@
     }
     /* folderul în care se deschide fereastra Save As = bara ei de adrese în referință (uia_word.json › dialog.FileSaveAs ›
        ToolBar „Adresă: Documente”); „Save this file” are același loc (Location, A2-1) */
-    function folderSalvare() {
+    function folderAdresa(cheie) {
       let f = null;
-      (function cauta(n) { if (!n || f) return; const m = /^Adres[ăa]: (.+)$/.exec(n.e || ''); if (m) { f = m[1]; return; } (n.c || []).forEach(cauta); })(SUP['dialog.FileSaveAs']);
+      (function cauta(n) { if (!n || f) return; const m = /^Adres[ăa]: (.+)$/.exec(n.e || ''); if (m) { f = m[1]; return; } (n.c || []).forEach(cauta); })(SUP[cheie]);
       return f || 'Documente';
     }
+    function folderSalvare() { return folderAdresa('dialog.FileSaveAs'); }
     /* ---- fișierele din foldere (conținutul lecției + ce salvează elevul), cu textul lor */
     function gasesteFisier(nume, folder) {
       return M.fs.find(f => f.nume.toLowerCase() === String(nume).toLowerCase() && f.folder === folder) || null;
@@ -1118,16 +1149,25 @@
       let v = valoareCamp('camp:nume_fisier').trim();
       if (!v) return 'fara_efect';
       /* „Save your changes…” pe un document deja salvat: în folderul lui (AC-5); altfel folderul ferestrei (referința) */
-      const folder = dialog && dialog.baza === INTREBARE_INCHIDERE && M.salvat && M.folder ? M.folder : folderSalvare();
+      const folder = dialog && dialog.baza === INTREBARE_INCHIDERE && M.salvat && M.folder ? M.folder : (dialog && dialog.folder) || folderSalvare();
       const tip = (dialog && dialog.tip) || TIPURI_SALVARE[0] || 'Word Document (*.docx)';
       let r = 'salvare';
+      /* un fișier cu același nume există deja în folder: Word întreabă („The file … already exists”, lecția m1-l03:157-159);
+         fereastra întrebării NU e în referință → mesajul central, fișierul NU se atinge, fereastra de salvare rămâne
+         deschisă (de_verificat.md R5-3). Excepție: „Save your changes…” pe documentul salvat = același fișier (AC-5).
+         Critic runda 4, GRAV T2 */
+      const exista = n => !!gasesteFisier(n, folder) && !(dialog && dialog.baza === INTREBARE_INCHIDERE && M.salvat &&
+        n.toLowerCase() === String(M.nume).toLowerCase() && folder === M.folder);
       if (/\(\*\.pdf\)/.test(tip)) {
         /* Save as type „PDF (*.pdf)”: o copie PDF; documentul deschis rămâne cel de lucru, nesalvat
            (scenarii_real/word-salvare-pdf.json: fisiere_salvate ["Orar.pdf"], nume_fisier null) */
-        scrieFisier(v.replace(/\.(docx?|pdf)$/i, '') + '.pdf', folder, tip);
+        const np = v.replace(/\.(docx?|pdf)$/i, '') + '.pdf';
+        if (exista(np)) return I.nesimulat(np + ' already exists');
+        scrieFisier(np, folder, tip);
         r = 'salvare_pdf';
       } else if (tip === TIPURI_SALVARE[0] || !TIPURI_SALVARE.length) {
         if (!/\.[a-z0-9]{2,5}$/i.test(v)) v += '.docx';
+        if (exista(v)) return I.nesimulat(v + ' already exists');
         M.nume = v;
         M.salvat = true;
         M.folder = folder;
@@ -1155,6 +1195,17 @@
     function alegeTip(cb, tip) {
       if (!dialog) return 'fara_efect';
       dialog.tip = tip;
+      /* PDF ↔ celelalte tipuri: fereastra se redesenează din referința ei (dialog.FileSaveAs_pdf / dialog.FileSaveAs), cu
+         numele scris și folderul păstrate — critic runda 4, GRAV T3 */
+      const vrut = dialog.baza === 'dialog.FileSaveAs' && /\(\*\.pdf\)/.test(tip) && SUP['dialog.FileSaveAs_pdf'] ? 'dialog.FileSaveAs_pdf' : dialog.baza;
+      if (dialog.baza === 'dialog.FileSaveAs' && vrut !== dialog.desen) {
+        dialog.numeAcum = valoareCamp('camp:nume_fisier');
+        dialog.desen = vrut;
+        dialog.focusTip = true;
+        arataFilaDialog(dialog.fila);
+        dialog.focusTip = false;
+        cb = dialog.el.querySelector('[data-lh-tinta="camp:tip_fisier"]') || cb;
+      }
       const inp = cb.querySelector('input');
       if (inp) inp.value = tip;
       cb.querySelectorAll('[data-lh-tip="Text"]').forEach(x => { const sp = x.querySelector('.lh-ap-text') || x; sp.textContent = tip; });
@@ -1233,6 +1284,9 @@
         e.preventDefault();
         const x = meniu.__randuri[k];
         if (!x) { inchideMeniu(); return 'inchidere_meniu'; }
+        /* Enter apasă rândul marcat, deși focusul rămâne în casetă: evenimentul poartă `activat` = ținta rândului, ca
+           asistentul să vadă același pas ca la clic (api_biblioteca.md §4 „activat”, §6.3) — critic runda 4, GRAV T6 */
+        try { I.activat = L._canon(x) || null; } catch (z) { I.activat = null; }
         const r = x.__fa();
         inchideMeniu();
         return r;
@@ -1360,6 +1414,79 @@
       incarcaDoc({ P: f.text.map(t => parIn(t)), nume: f.nume, folder: f.folder, salvat: true, modificat: false });
       return 'deschidere';
     }
+    /* fereastra Open: numele ales sau scris, din folderul ferestrei; fișierul se deschide ca din Recent. Un PDF (Files of
+       type le arată și pe ele) și un nume negăsit n-au efect dovedit în referință → mesajul central. Critic runda 4, N4 */
+    function deschideDinOpen(v) {
+      v = String(v || '').trim().replace(/^"|"$/g, '');
+      if (!v || !dialog) return 'fara_efect';
+      const c = M.fs.filter(x => x.folder === dialog.folder && (x.nume.toLowerCase() === v.toLowerCase() || faraExt(x.nume).toLowerCase() === v.toLowerCase()));
+      const f = c.find(x => !/\.pdf$/i.test(x.nume)) || c[0];
+      if (!f || /\.pdf$/i.test(f.nume)) return I.nesimulat(f ? f.nume : v);
+      inchideDialog();
+      return deschideFisier({ nume: f.nume, folder: f.folder });
+    }
+    function alegeRandOpen(x) {
+      dialog.el.querySelectorAll('[data-lh-tinta^="lista:"]').forEach(r => r.toggleAttribute('data-lh-selectat', r === x));
+      const nf = dialog.el.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
+      if (nf) nf.value = faraExt(x.__fisier.nume);
+    }
+    function navigheaza(folder) {
+      dialog.folder = folder;
+      umpleFolder(dialog.el);
+      return 'navigare';
+    }
+    /* bara de adrese și lista ferestrei = folderul curent (dialog.folder); în Open, rândurile listei = fișierele lui din
+       CONȚINUT (uia_word.json › dialog.open › List „Vizualizare elemente”: 8 ListItem, texte redactate); pe ecran numele
+       fără extensie, ca la Recent (AC-7); ținta lista:<nume.ext> (api §3). Critic runda 4, GRAV N4 */
+    function umpleFolder(s) {
+      if (!dialog || !(dialog.baza === 'dialog.FileSaveAs' || dialog.baza === 'dialog.open')) return;
+      const f0 = folderAdresa(dialog.baza === 'dialog.open' ? 'dialog.open' : 'dialog.FileSaveAs');
+      const adr = [...s.querySelectorAll('[data-lh-tip="SplitButton"]')].find(x => x.getAttribute('data-lh-eticheta') === f0 && x.closest('[data-lh-eticheta^="Adres"]'));
+      if (adr && dialog.folder !== f0) {
+        adr.closest('[data-lh-eticheta^="Adres"]').setAttribute('data-lh-eticheta', 'Adresă: ' + dialog.folder);
+        adr.setAttribute('data-lh-eticheta', dialog.folder);
+        if (adr.hasAttribute('data-lh-tinta')) adr.setAttribute('data-lh-tinta', 'fereastra:' + dialog.folder);
+        const t = adr.querySelector('.lh-ap-text');
+        if (t) t.textContent = dialog.folder;
+      }
+      s.querySelectorAll('.lh-ap-nav-rand').forEach(x => x.toggleAttribute('data-lh-selectat', x.getAttribute('data-lh-eticheta') === dialog.folder));
+      if (dialog.baza !== 'dialog.open') return;
+      const fis = M.fs.filter(f => f.folder === dialog.folder).sort((a, b) => a.nume.localeCompare(b.nume));
+      const randuri = s.__randuriOpen || (s.__randuriOpen = [...s.querySelectorAll('[data-lh-tip="List"][data-lh-eticheta="Vizualizare elemente"] [data-lh-tip="ListItem"]')]);
+      randuri.forEach((x, k) => {
+        const f = fis[k];
+        x.__fisier = f || null;
+        x.removeAttribute('data-lh-selectat');
+        if (!f) { x.style.display = 'none'; return; }
+        x.style.display = '';
+        x.setAttribute('data-lh-eticheta', faraExt(f.nume));
+        x.setAttribute('data-lh-tinta', 'lista:' + f.nume);
+        x.innerHTML = '<span class="lh-ap-text">' + esc(faraExt(f.nume)) + '</span>';
+      });
+    }
+    /* Ctrl+N / File › Blank document: un document nou, gol; cel deschis rămâne în fereastra lui (documente_deschise crește).
+       support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-7142-4b50-afb2-f762f663ceb2: „Create a new
+       document. | Ctrl+N”; lecția m1-l03:116. Numele „Document1”: numerotarea nu e în referință (de_verificat R5-2).
+       Critic runda 4, GRAV T5 */
+    function documentNou() {
+      if (M.inchisApp) return 'fara_efect';
+      if (M.deschis) M.altele.push(instantaneuDoc());
+      incarcaDoc({ P: [parIn('')], nume: 'Document1', salvat: false, modificat: false });
+      return 'document_nou';
+    }
+    /* zona PDF (uia_word.json › dialog.FileSaveAs_pdf): bifa „Open file after publishing” (fapte.e_dupa_pdf.bife = 0) și
+       butoanele radio „Optimize for:” își schimbă starea ca orice CheckBox / RadioButton — critic runda 4, GRAV T3 */
+    function comutaCaseta(x, tn) {
+      const pune = (y, on) => {
+        y.setAttribute('aria-checked', on ? 'true' : 'false');
+        const c = y.querySelector('.lh-ap-caseta');
+        if (c) c.innerHTML = on ? pang.glif(tn === 'RadioButton' ? 'punct' : 'bifa', 12) : '';
+      };
+      if (tn === 'CheckBox') { const on = x.getAttribute('aria-checked') !== 'true'; pune(x, on); return on ? 'bifare' : 'debifare'; }
+      (x.closest('[data-lh-tip="Group"]') || dialog.el).querySelectorAll('[data-lh-tip="RadioButton"]').forEach(y => pune(y, y === x));
+      return 'alegere_optiune';
+    }
+    const numeTasta = e => (e.ctrlKey ? 'Ctrl+' : '') + (e.altKey ? 'Alt+' : '') + (e.shiftKey ? 'Shift+' : '') + (String(e.key || '').length === 1 ? String(e.key).toUpperCase() : e.key);
     /* File › Open › Recent: rândurile = lista Recent din conținut (+ documentele salvate); forma rândului din
        uia_word.json › backstage.Open_rand_recent (ListItem 753×61, Alt, F, O, Y 3…). Fără `recente`, rândurile rămân ale
        referinței (goale: textele lor sunt personale). Pe rând: numele fără extensie, ca în bara de titlu (AC-7). */
@@ -1561,6 +1688,11 @@
         if (n2.id === 'FileTabButton' || v === 'Back') { inchideBackstage(); return 'inapoi'; }
         /* File › Save As › Browse → fereastra Save As (support.microsoft.com/en-us/office/collab-files/save-your-files) */
         if (v === 'Browse' && backstage && backstage.pagina === 'Save As') return deschideDialog('dialog.FileSaveAs') ? 'salvare_ca' : I.nesimulat(v);
+        /* File › Open › Browse → fereastra Windows Open (uia_word.json › dialog.open › deschis_prin: „Backstage › Open ›
+           Browse deschide aceeași fereastră”) — critic runda 4, GRAV N4 */
+        if (v === 'Browse' && backstage && backstage.pagina === 'Open' && !p2007) return deschideDialog('dialog.open') ? 'deschidere_fereastra_open' : I.nesimulat(v);
+        /* File › Home / New › Blank document = document nou (lecția m1-l03:116; fapte.g_file_document_nou) — GRAV T5 */
+        if (v === 'Blank document') { inchideBackstage(); return documentNou(); }
         if (elx.closest('[data-lh-suprafata="backstage.nav"],[data-lh-suprafata="backstage.cadru"]') && n2.t === 'ListItem') {
           if (n2.a === 0) return 'indisponibil';
           if (v === 'Save') return arataPaginaBackstage('Save As') ? 'pagina_backstage' : I.nesimulat(v);
@@ -1584,8 +1716,23 @@
           return I.nesimulat(v);   // More options… aici: efectul nu e în referință (AC-5)
         }
       }
+      /* fereastra Open (uia_word.json › dialog.open; Ctrl+F12 / File › Open › Browse) — critic runda 4, GRAV N4 + T4 */
+      if (dialog && dialog.baza === 'dialog.open') {
+        if (fel === 'lista' && elx.__fisier) { alegeRandOpen(elx); return 'selectare'; }
+        if (fel === 'arbore') return elx.__folder ? navigheaza(elx.__folder) : I.nesimulat(v);
+        if (fel === 'fereastra' && v === 'Open') return deschideDinOpen(valoareCamp('camp:nume_fisier'));
+        if (fel === 'fereastra' && /^(Cancel|Închidere)$/.test(v)) { inchideDialog(); return 'anulare'; }
+        if (fel === 'camp' && v === 'nume_fisier') return 'camp';
+        if (fel === 'camp') return I.nesimulat(v + ' ▾');
+        return I.nesimulat(v || tinta);
+      }
       if (fel === 'fila_dialog' && dialog) { dialog.cheiePlasa = null; arataFilaDialog(v === (date.dialoguri[dialog.baza].file[0].fila || null) ? null : (date.dialoguri[dialog.baza].file.some(f => f.fila === v) ? v : null)); return 'fila_dialog'; }
       if (fel === 'dialog_salvare' && dialog) return v === 'Save' ? salveaza() : (inchideDialog(), 'anulare');
+      if (dialog && dialog.baza === 'dialog.FileSaveAs' && fel === 'arbore' && elx.__folder) return navigheaza(elx.__folder);
+      if (dialog && dialog.desen === 'dialog.FileSaveAs_pdf' && fel === 'fereastra') {
+        const tn = (elx.__nod || {}).t;
+        if (tn === 'CheckBox' || tn === 'RadioButton') return comutaCaseta(elx, tn);
+      }
       /* caseta „Save as type:” (camp:tip_fisier) sau săgeata ei → lista din referință (uia_word.json › lista.FileSaveAs_tip:
          17 rânduri, sub casetă, cât ea de lată) — critic runda 3, GRAV A1 */
       if (dialog && dialog.baza === 'dialog.FileSaveAs' && (fel === 'fereastra' || fel === 'meniu_derulant' || fel === 'camp')) {
@@ -1601,12 +1748,17 @@
       if (dialog && dialog.strat.contains(elx)) return I.nesimulat(v);
       if (fel === 'zoom') return zoomClic(elx, e, v);
       if (fel === 'bara_derulare') { zona.scrollBy({ top: v === 'Line up' ? -40 : v === 'Line down' ? 40 : zona.clientHeight * 0.9 }); return 'derulare'; }
-      if (fel === 'panglica' || fel === 'meniu_derulant' || fel === 'lansator' || fel === 'meniu') return M.deschis ? apasa(elx, tinta) : 'fara_efect';
+      /* fără document, comenzile panglicii n-au pe ce lucra: mesajul central, nu tăcere (R12; critic runda 4, GRAV T5) */
+      if (fel === 'panglica' || fel === 'meniu_derulant' || fel === 'lansator' || fel === 'meniu') return M.deschis ? apasa(elx, tinta) : I.nesimulat(String((elx.__nod || {}).e || v).replace(/^.*\//, '') || tinta);
       /* ✕ al ferestrei Word = Ctrl+W pe document (acoperire_r3.fapte.b_x_la_fel_ca_ctrl_w: true) — critic runda 3, GRAV N4 */
       if (fel === 'bara_titlu' && v === 'Close') return cerereInchidere('x');
       return I.nesimulat(v || tinta);
     };
-    I.la.dublu = tinta => (/^text:|^document/.test(tinta || '') ? 'selectare_cuvant' : null);
+    I.la.dublu = tinta => {
+      /* dublu clic pe un fișier din fereastra Open = Open (rândul ales + butonul implicit) */
+      if (dialog && dialog.baza === 'dialog.open' && /^lista:/.test(tinta || '')) return deschideDinOpen(tinta.slice(6));
+      return /^text:|^document/.test(tinta || '') ? 'selectare_cuvant' : null;
+    };
     I.la.dreapta = (tinta, e) => {
       if (dialog || backstage || !M.deschis) return null;
       if (eInDocument(e.target)) return meniuContextual(e.clientX, e.clientY);
@@ -1672,12 +1824,12 @@
       H.rupe();
       return 'cursor';
     }
-    const NESIM_TASTE = { ctrl_f: 'Ctrl+F', ctrl_h: 'Ctrl+H', ctrl_m: 'Ctrl+M', ctrl_n: 'Ctrl+N', ctrl_o: 'Ctrl+O',
+    const NESIM_TASTE = { ctrl_f: 'Ctrl+F', ctrl_h: 'Ctrl+H', ctrl_m: 'Ctrl+M', ctrl_o: 'Ctrl+O',
       ctrl_p: 'Ctrl+P', ctrl_q: 'Ctrl+Q', ctrl_shift_m: 'Ctrl+Shift+M' };
     I.la.tasta = (e, g, inCamp) => {
       /* Enter într-o fereastră apasă butonul ei implicit: Save (Save As, „Save this file”, „Save your changes…”) */
       const activatEnter = () => !dialog ? null : (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === SALVARE_NOUA) ? 'dialog_salvare:Save' :
-        dialog.baza === INTREBARE_INCHIDERE ? 'fereastra:Save' : null;
+        dialog.baza === INTREBARE_INCHIDERE ? 'fereastra:Save' : dialog.baza === 'dialog.open' ? 'fereastra:Open' : null;
       /* o listă deschisă (Font Size, Save as type) ia săgețile, Enter și Esc înaintea casetei și a ferestrei */
       const rl = tastaLista(e);
       if (rl) return rl;
@@ -1708,7 +1860,13 @@
       if (strat && strat.contextual && e.key === 'Escape') { inchideMeniuContextual(); return 'inchidere_meniu'; }
       if (backstage) { if (e.key === 'Escape') { inchideBackstage(); return 'inapoi'; } return 'fara_efect'; }
       /* fără document (Ctrl+W → Don't Save) tastele nu au unde scrie; Ctrl+O deschide pagina Open */
-      if (!M.deschis && g !== 'ctrl_o') { actualizeaza(); return 'fara_efect'; }
+      /* fără document (Ctrl+W → Don't Save): tastarea și navigarea n-au unde ajunge; Ctrl+O, Ctrl+N, Ctrl+F12 merg ca de
+         obicei; celelalte comenzi dau mesajul central, nu tac (R12; critic runda 4, GRAV T5) */
+      if (!M.deschis && g !== 'ctrl_o' && g !== 'ctrl_n' && !(g === 'tasta_f12' && e.ctrlKey)) {
+        actualizeaza();
+        if (M.inchisApp || /^(tastare|sageti|alt_sageti|tasta_(enter|backspace|delete|tab|home_end|pagina|esc|windows))$/.test(g)) return 'fara_efect';
+        return I.nesimulat(numeTasta(e));
+      }
       let r = null;
       const sh = e.shiftKey;
       switch (g) {
@@ -1728,7 +1886,15 @@
           else r = M.cel ? muta1(e.key === 'Home' ? -999 : 999, sh) : capRand(e.key === 'End', sh);
           break;
         case 'tasta_pagina': e.preventDefault(); zona.scrollBy({ top: (e.key === 'PageUp' ? -1 : 1) * zona.clientHeight * 0.9 }); r = 'derulare'; break;
-        case 'tasta_f12': e.preventDefault(); r = deschideDialog('dialog.FileSaveAs') ? 'salvare_ca' : null; break;
+        /* support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-7142-4b50-afb2-f762f663ceb2 (citit 19.11.2026):
+           „Ctrl+F12: displays the Open dialog box.” (= uia_word.json › acoperire_r3.fapte.d_ctrl_f12, titlul „Open”);
+           „Shift+F12: saves the document.”; „F12 alone: displays the Save As dialog box.” — critic runda 4, GRAV T4 */
+        case 'tasta_f12':
+          e.preventDefault();
+          if (e.ctrlKey) r = M.inchisApp ? 'fara_efect' : p2007 ? I.nesimulat('Ctrl+F12') : deschideDialog('dialog.open') ? 'deschidere_fereastra_open' : I.nesimulat('Ctrl+F12');
+          else if (e.shiftKey) r = M.salvat ? salveazaPeLoc() : (deschideDialog(p2007 ? 'dialog.FileSaveAs' : SALVARE_NOUA) ? 'dialog_salvare' : I.nesimulat('Shift+F12'));
+          else r = deschideDialog('dialog.FileSaveAs') ? 'salvare_ca' : null;
+          break;
         case 'ctrl_a': M.cel = null; M.sel = { a: 0, f: lungime() }; H.rupe(); r = 'selectare_tot'; break;
         case 'ctrl_b': r = comuta('b'); break;
         case 'ctrl_i': r = comuta('i'); break;
@@ -1757,6 +1923,7 @@
         case 'ctrl_o': if (p2007) r = I.nesimulat('Ctrl+O'); else { deschideBackstage('Open'); r = 'backstage'; } break;
         /* Ctrl+W: „Close the document. | Ctrl+W” (support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-
            7142-4b50-afb2-f762f663ceb2); modificat → „Save your changes to this file?” (scenarii_real/word-ctrl-w-nesalvat.json) */
+        case 'ctrl_n': r = documentNou(); break;
         case 'ctrl_w': r = cerereInchidere('ctrlw'); break;
         case 'tasta_esc': r = 'fara_efect'; break;
         case 'tasta_windows': r = 'fara_efect'; break;
@@ -1791,13 +1958,14 @@
       if (!dialog || !dialog.el || !e.altKey || e.ctrlKey || e.metaKey || !/^Key[A-Z]$/.test(e.code || '')) return;
       const re = new RegExp('^alt\\+' + e.code.slice(3) + '$', 'i');
       const cand = [...dialog.el.querySelectorAll('*')].filter(x => x.__nod && re.test(x.__nod.ta || '') && L._vizibil(x));
-      const x = cand.find(c => c.__nod.t === 'Button') || cand.find(c => c.__nod.t === 'ComboBox' || c.__nod.t === 'Edit');
+      const APASA = ['Button', 'SplitButton', 'CheckBox', 'RadioButton'];   // T3: Alt+E/A/M/O în zona PDF; N4: Alt+O = Open
+      const x = cand.find(c => APASA.indexOf(c.__nod.t) >= 0) || cand.find(c => c.__nod.t === 'ComboBox' || c.__nod.t === 'Edit');
       if (!x) return;
       e.preventDefault();
       e.stopPropagation();
       const ina = I.stare();
       let act, t;
-      if (x.__nod.t === 'Button') {
+      if (APASA.indexOf(x.__nod.t) >= 0) {
         t = L._canon(x);
         act = I.la.clic(t, { target: x, clientX: 0, clientY: 0, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false, button: 0, preventDefault() {} }, 1);
         actualizeaza();

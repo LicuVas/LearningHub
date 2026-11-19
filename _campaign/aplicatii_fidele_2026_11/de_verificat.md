@@ -123,3 +123,30 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **AC-10** Word, Font Size ▾ (sau Alt+↓ în casetă): în lista deschisă e marcată mărimea curentă (11)? Săgeata ↓ pornește de
   la ea? (Simulatorul: mărimea curentă e marcată, ↓ mută marcajul de la ea.)
 <!-- RUNDA4-WORD:END -->
+
+<!-- RUNDA5-WORD:START (scris de constructorul rundei 5, 19.11.2026 — GRAV-urile T1-T6 + N4 ale criticului 4 și constatările lui [FARA_REFERINTA]) -->
+## Runda 5 · Word · Open, document nou, „already exists”, zona PDF — de lămurit (un minut fiecare)
+
+Până la răspuns, simulatorul face ce scrie în paranteză.
+
+- [ ] **R5-1** Word, **Ctrl+F12** (sau File › Open › Browse) și **F12**, pe PC-ul din **laborator**: panoul din stânga, de sus în
+  jos — unde sunt **Descărcări** și **Documente** (fixate sus, după Galerie? sub „Acest PC”?). Clic pe Descărcări → lista arată
+  fișierele cu extensie („club-lectura.docx”) sau fără? (Simulatorul: Acasă, Galerie, apoi folderele din conținutul lecției —
+  Descărcări, Documente —, apoi Acest PC, Rețea, unul sub altul la 24 px; numele din listă fără extensie. Temeiul: numele
+  implicite din `referinte/acoperire_word_r3.py:57`; locul e al nostru — lărgește AC-6.)
+- [ ] **R5-2** Word gol (Ctrl+W › Don't Save), apoi **Ctrl+N**: titlul e „Document1 - Word” sau „Document2 - Word”? Și, tot fără
+  document, clic pe **B** / **Ctrl+B** / **F12**: comenzile sunt gri? se întâmplă ceva? (Simulatorul: „Document1”; comenzile
+  dau mesajul central „În aplicația reală, „X” funcționează; aici nu e simulată.”)
+- [ ] **R5-3** Word, document cu text, **F12** → File name = numele unui fișier care EXISTĂ în folder → Enter: ce fereastră apare
+  (titlul, textul, butoanele, care e ales)? Același lucru cu **PDF (*.pdf)** și un PDF existent, și cu numele documentului
+  deschis chiar el. O captură UI Automation a ferestrei ar închide rândul. (Simulatorul: mesajul central „„X.docx already
+  exists” …”, fișierul neatins, fereastra Save As rămâne deschisă.)
+- [ ] **R5-4** [FARA_REFERINTA, critic 4] Word, „are” selectat, clic pe **▾ Font Size**, apoi tastezi „20”: unde ajung cifrele
+  (în casetă sau în document)? UIA `FocusedElement` după clicul pe ▾. (Simulatorul: focusul rămâne în document, „20”
+  înlocuiește cuvântul.)
+- [ ] **R5-5** [FARA_REFERINTA, critic 4] Word, ferestrele **Save As**, **Save this file**, **Save your changes…**: ordinea
+  focusului la **Tab** / **Shift+Tab** (UIA `FocusedElement` după fiecare Tab). (Simulatorul: primul Tab din File name iese din
+  fereastră.)
+- [ ] **R5-6** Word, F12 → **PDF (*.pdf)**: care buton radio „Optimize for:” e ales la deschidere (Standard?) — referința are
+  `b = None` pe amândouă. (Simulatorul: niciunul marcat până la primul clic / Alt+A / Alt+M.)
+<!-- RUNDA5-WORD:END -->
