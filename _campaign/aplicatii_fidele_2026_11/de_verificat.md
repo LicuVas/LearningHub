@@ -287,4 +287,16 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **R9-1** Excel, B2:B7 numere, clic pe B8, Home › Σ (AutoSum): bara de stare arată „Point”. Apasă ↓ (sau ↑): ce scrie
   formula (`=SUM(B9)` / `=SUM(B7)`, adică pornește din celula B8, sau altceva)? (Simulatorul, după runda 9: ↓ → `=SUM(B9)`, ↑ →
   `=SUM(B7)`, mecanismul modului Point de la „=” + săgeată; referința dă doar modul, `c_autosum.mod_dupa_sigma`.)
+- [ ] **R9-2** Excel, un grafic ales, fila Chart Design aleasă; clic pe o celulă: ce filă e aleasă după ce dispar Chart Design și
+  Format (Home, fila de dinainte de grafic, alta)? (Simulatorul: Home, ca Word la tabel / imagine.)
+- [ ] **R9-3** Excel, un grafic Clustered Column ales; Insert › Insert Column or Bar Chart ▾ › Clustered Bar: graficul ales își
+  schimbă tipul sau apare un al doilea grafic? (Simulatorul: își schimbă tipul, după lecția m2-l11.)
+- [ ] **R9-4** Excel, A1:B4 aleasă, Insert › Clustered Column: locul (x, y) și mărimea graficului nou (ChartObjects(1).Left / Top /
+  Width / Height); legenda la o singură serie (HasLegend); titlul (ChartTitle.Text, HasTitle). (Simulatorul: lângă tabel, la
+  dreapta, 480 × 288 px; legenda doar la mai multe serii; titlul = numele seriei sau „Chart Title”.)
+- [ ] **R9-5** Excel, Change Chart Type › All Charts › Line și apoi Pie: dump UI Automation al ferestrei (rândul de subtipuri și
+  numele de sub el). (Simulatorul: doar numele „Line” / „Pie”, fără rândul de subtipuri.)
+- [ ] **R9-6** Excel, dump-uri UI Automation pentru `lista.ChartTypeLineInsertGallery` (Insert › Insert Line or Area Chart ▾),
+  `lista.ChartTypePieInsertGallery` și lista Chart Design › Add Chart Element ▾ › Data Labels (laboratorul m2-l11, pașii 3 și 6;
+  azi mesajul central). Plus: ce se vede în tabel cât graficul e ales (zonele sursă încadrate colorat).
 <!-- RUNDA9-EXCEL:END -->

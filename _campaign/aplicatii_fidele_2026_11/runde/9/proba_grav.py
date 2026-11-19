@@ -241,20 +241,156 @@ def e5(pw, base):
     s.gata()
 
 # ------------------------------------------------------------------ X10: graficele (m2-l11)
+GR = APP + '[data-lh-tinta="grafic"]'
+def file_vizibile(s): return s.ev("()=>[...document.querySelectorAll('[data-lh-aplicatie] [data-lh-tip=\"TabItem\"]')].filter(e=>e.getClientRects().length&&!e.closest('[data-lh-suprafata^=\"dialog.\"]')).map(e=>e.getAttribute('data-lh-eticheta'))")
+def fila_aleasa(s): return s.ev("()=>{const e=[...document.querySelectorAll('[data-lh-aplicatie] [data-lh-tip=\"TabItem\"][aria-selected=\"true\"]')].find(e=>e.getClientRects().length&&!e.closest('[data-lh-suprafata^=\"dialog.\"]'));return e?e.getAttribute('data-lh-eticheta'):null}")
+def graf_rect(s, i=1): return s.ev("i=>{const e=[...document.querySelectorAll('[data-lh-aplicatie] [data-lh-tinta=\"grafic\"][data-lh-id=\"'+i+'\"]')].find(e=>e.getClientRects().length);if(!e)return null;const r=e.getBoundingClientRect();return [r.x,r.y,r.width,r.height]}", i)
+def graf_ecran(s, i=1):
+    """ce se vede în grafic: titlul, legenda, numele de pe axa categoriilor, câte bare / linii / felii, mânerele"""
+    return s.ev("""i=>{const g=[...document.querySelectorAll('[data-lh-aplicatie] [data-lh-tinta="grafic"][data-lh-id="'+i+'"]')].find(e=>e.getClientRects().length);if(!g)return null;
+      const t=q=>[...g.querySelectorAll(q)].map(e=>e.textContent.trim());
+      const ti=g.querySelector('[data-lh-tinta$="/titlu"]');
+      return {titlu:ti&&ti.getClientRects().length?ti.textContent:null,legenda:t('.lh-ap-x-gr-leg-text'),categorii:t('.lh-ap-x-gr-cat'),
+        bare:g.querySelectorAll('rect.lh-ap-x-gr-bara').length,linii:g.querySelectorAll('polyline.lh-ap-x-gr-linie').length,felii:g.querySelectorAll('path.lh-ap-x-gr-felie').length,
+        valori:[...g.querySelectorAll('[data-lh-valoare]')].map(e=>+e.getAttribute('data-lh-valoare')),manere:[...g.querySelectorAll('.lh-ap-x-gr-maner')].filter(e=>e.getClientRects().length).length}}""", i)
+def clic_grafic(s, i=1):
+    r = graf_rect(s, i)
+    if not r: return False
+    s.pg.mouse.click(r[0] + 6, r[1] + r[3] - 6); s.pg.wait_for_timeout(200); return True
+def lista_x10(s): return s.ev("()=>[...document.querySelectorAll('[data-lh-aplicatie] [data-lh-suprafata=\"lista.ChartTypeColumnInsertGallery\"] [data-lh-tip=\"ListItem\"],[data-lh-aplicatie] [data-lh-suprafata=\"lista.ChartTypeColumnInsertGallery\"] [data-lh-tip=\"MenuItem\"]')].filter(e=>e.getClientRects().length).map(e=>e.getAttribute('data-lh-eticheta'))")
+def ev_gest(s, n0): return evd(s, n0)
+LISTA_REF = ["Clustered Column", "Stacked Column", "100% Stacked Column", "3-D Clustered Column", "3-D Stacked Column",
+             "3-D 100% Stacked Column", "3-D Column", "Clustered Bar", "Stacked Bar", "100% Stacked Bar", "3-D Clustered Bar",
+             "3-D Stacked Bar", "3-D 100% Stacked Bar", "More Column Charts..."]
+FILE_DUPA = ["Home", "Insert", "Draw", "Page Layout", "Formulas", "Data", "Review", "View", "Help", "Chart Design", "Format", "Sheet1"]   # uia_excel.json › acoperire_r7.fapte.h_grafic.file_dupa
+NOTE3 = {"A1": "Elev", "B1": "Nota", "A2": "Ana", "B2": 9, "A3": "Bogdan", "B3": 7, "A4": "Dan", "B4": 8}
+LUNI = {"A1": "Luna", "B1": "8A", "C1": "8B", "A2": "septembrie", "B2": 12, "C2": 9, "A3": "octombrie", "B3": 18, "C3": 14,
+        "A4": "noiembrie", "B4": 25, "C4": 20, "A5": "decembrie", "B5": 15, "C5": 22}
+def gr0(s): return (s.stare().get("grafice") or [None])[0]
+def dlg_ctt(s): return fereastra(s, "dialog.ChartChangeType")
+def ctt_alege(s, tip):
+    s.clic_sel(APP + '[data-lh-suprafata="dialog.ChartChangeType"] [data-lh-tip="ListItem"][data-lh-eticheta="%s"]' % tip)
+def ctt_eticheta(s): return s.ev("()=>{const e=document.querySelector('[data-lh-aplicatie] [data-lh-suprafata=\"dialog.ChartChangeType\"] .lh-ap-x-ctt-nume');return e&&e.getClientRects().length?e.textContent.trim():null}")
+def ok_ctt(s): s.clic_sel(APP + '[data-lh-suprafata="dialog.ChartChangeType"] [data-lh-tip="Button"][data-lh-eticheta="OK"]')
+def deschide_lista(s): return s.clic_sel(APP + '[data-lh-id-mso="ChartTypeColumnInsertGallery"]')
+def rand_lista(s, et): return s.clic_sel(APP + '[data-lh-suprafata="lista.ChartTypeColumnInsertGallery"] [data-lh-tip="ListItem"][data-lh-eticheta="%s"]' % et)
+
 def x10(pw, base):
+    # 1. lista ▾ din referință + inserarea Clustered Column (gesturi de mouse)
     s = S(pw, base)
-    s.deschide({"celule": {"A1": "Elev", "B1": "Nota", "A2": "Ana", "B2": 9, "A3": "Bogdan", "B3": 7, "A4": "Dan", "B4": 8}, "selectie": "A1"})
-    zona(s, "A1", "B4"); fila(s, "TabInsert")
-    ok = s.clic_sel(APP + '[data-lh-id-mso="ChartTypeColumnInsertGallery"]')
-    vis = s.ev("()=>[...document.querySelectorAll('[data-lh-aplicatie] [data-lh-suprafata=\"lista.ChartTypeColumnInsertGallery\"] [data-lh-tip=\"ListItem\"]')].filter(e=>e.getClientRects().length).map(e=>e.getAttribute('data-lh-eticheta'))")
-    verif("X10", "Insert › Insert Column or Bar Chart ▾ deschide lista din referință (Clustered Column întâi), fără mesaj central",
-          ok and len(vis) >= 4 and vis[0] == "Clustered Column" and not s.mesaj(), {"ok": ok, "vis": vis, "mesaj": s.mesaj()})
-    s.clic_sel(APP + '[data-lh-suprafata="lista.ChartTypeColumnInsertGallery"] [data-lh-tip="ListItem"][data-lh-eticheta="Clustered Column"]')
-    st = s.stare(); gr = st.get("grafice")
-    file = s.ev("()=>[...document.querySelectorAll('[data-lh-aplicatie] [data-lh-tip=\"TabItem\"]')].filter(e=>e.getClientRects().length).map(e=>e.getAttribute('data-lh-eticheta'))")
-    verif("X10", "Clustered Column → un grafic în stare (tip, zona A1:B4), filele Chart Design și Format apar după Help",
-          isinstance(gr, list) and len(gr) == 1 and "Chart Design" in file and "Format" in file, {"grafice": gr, "file": file})
-    verif("X10", "fără erori în pagină", not s.erori, s.erori[:3])
+    s.deschide({"celule": dict(NOTE3), "selectie": "A1"})
+    zona(s, "A1", "B4"); fila(s, "TabInsert"); n0 = nev(s)
+    ok = deschide_lista(s)
+    vis = lista_x10(s)
+    verif("X10", "Insert › Insert Column or Bar Chart ▾ deschide lista din referință (13 rânduri + More Column Charts..., în ordinea din uia_excel.json), fără mesaj central",
+          ok and vis == LISTA_REF and not s.mesaj(), {"ok": ok, "vis": vis, "mesaj": s.mesaj()})
+    grupuri = s.ev("()=>[...document.querySelectorAll('[data-lh-aplicatie] [data-lh-suprafata=\"lista.ChartTypeColumnInsertGallery\"] .lh-ap-x-gr-grup')].filter(e=>e.getClientRects().length).map(e=>e.textContent.trim())")
+    ico = s.ev("()=>[...document.querySelectorAll('[data-lh-aplicatie] [data-lh-suprafata=\"lista.ChartTypeColumnInsertGallery\"] [data-lh-tip=\"ListItem\"] svg')].filter(e=>e.getClientRects().length).length")
+    verif("X10", "lista arată titlurile grupurilor 2-D Column, 3-D Column, 2-D Bar, 3-D Bar și o pictogramă pe fiecare din cele 13 rânduri",
+          grupuri == ["2-D Column", "3-D Column", "2-D Bar", "3-D Bar"] and ico == 13, {"grupuri": grupuri, "pictograme": ico})
+    rand_lista(s, "Clustered Column")
+    st = s.stare(); gr = st.get("grafice") or []
+    g = gr[0] if gr else {}
+    verif("X10", "Clustered Column → un grafic în stare: tip, zona A1:B4, titlul „Nota”, seria Nota, categoriile Ana, Bogdan, Dan, valorile 9, 7, 8",
+          len(gr) == 1 and g.get("tip") == "Clustered Column" and g.get("zona") == "A1:B4" and g.get("titlu") == "Nota" and g.get("serii") == ["Nota"]
+          and g.get("categorii") == ["Ana", "Bogdan", "Dan"] and g.get("valori") == [[9, 7, 8]], gr)
+    ec = graf_ecran(s)
+    verif("X10", "ecranul = starea: titlul Nota, 3 bare cu valorile 9, 7, 8, jos Ana, Bogdan, Dan; graficul ales (8 mânere pe margini)",
+          ec and ec["titlu"] == "Nota" and ec["bare"] == 3 and ec["valori"] == [9, 7, 8] and ec["categorii"] == ["Ana", "Bogdan", "Dan"] and ec["manere"] == 8, ec)
+    fv = file_vizibile(s)
+    verif("X10", "după inserare: filele … Help, Chart Design, Format (h_grafic.file_dupa), Chart Design aleasă cu Style 1 în panglică, grafic_activ",
+          fv == FILE_DUPA and fila_aleasa(s) == "Chart Design" and st.get("grafic_activ") is True
+          and s.ev("()=>!![...document.querySelectorAll('[data-lh-aplicatie] [data-lh-eticheta=\"Style 1\"]')].find(e=>e.getClientRects().length)"),
+          {"file": fv, "aleasa": fila_aleasa(s), "activ": st.get("grafic_activ")})
+    e = ev_gest(s, n0)
+    verif("X10", "evenimente §4: lista deschisă (meniu_derulant) și inserarea pe meniu:Clustered Column (inserare_grafic)",
+          any(x["actiune"] == "meniu_derulant" for x in e) and any(x["tinta"] == "meniu:Clustered Column" and x["actiune"] == "inserare_grafic" for x in e), e)
+    # 2. clic pe o celulă → graficul nu mai e ales; clic pe marginea lui albă → ales din nou
+    s.clic("B12")
+    st = s.stare(); fv = file_vizibile(s)
+    verif("X10", "clic pe o celulă: graficul nu mai e ales, filele Chart Design / Format dispar, mânerele dispar",
+          st.get("grafic_activ") is False and "Chart Design" not in fv and fila_aleasa(s) not in ("Chart Design", "Format") and (graf_ecran(s) or {}).get("manere") == 0,
+          {"file": fv, "aleasa": fila_aleasa(s), "ec": graf_ecran(s)})
+    n0 = nev(s); clic_grafic(s)
+    st = s.stare(); fv = file_vizibile(s)
+    verif("X10", "clic pe marginea graficului: ales din nou (eveniment pe ținta grafic:1), filele Chart Design și Format înapoi",
+          st.get("grafic_activ") is True and "Chart Design" in fv and any(x["tinta"] == "grafic:1" for x in ev_gest(s, n0)), {"file": fv, "ev": ev_gest(s, n0)})
+    # 3. Change Chart Type: Pie, OK; Ctrl+Z înapoi
+    fila(s, "Ctx_ChartDesign"); n0 = nev(s)
+    s.clic_sel(APP + '[data-lh-id-mso="ChartChangeType"]')
+    verif("X10", "Chart Design › Change Chart Type... deschide fereastra (fila All Charts aleasă, Column ales, în dreapta Clustered Column)",
+          dlg_ctt(s) and ctt_eticheta(s) == "Clustered Column" and s.ev("()=>{const e=document.querySelector('[data-lh-aplicatie] [data-lh-suprafata=\"dialog.ChartChangeType\"] [data-lh-tip=\"TabItem\"][aria-selected=\"true\"]');return e&&e.getAttribute('data-lh-eticheta')}") == "All Charts",
+          {"dlg": oricefereastra(s), "et": ctt_eticheta(s)})
+    ctt_alege(s, "Pie")
+    verif("X10", "Pie în stânga: în dreapta numele „Pie”, fără mesaj central", ctt_eticheta(s) == "Pie" and not s.mesaj(), {"et": ctt_eticheta(s), "mesaj": s.mesaj()})
+    ok_ctt(s)
+    g = gr0(s) or {}; ec = graf_ecran(s) or {}
+    verif("X10", "OK → graficul e Pie (3 felii, legenda Ana, Bogdan, Dan), fereastra închisă, eveniment schimbare_tip_grafic",
+          g.get("tip") == "Pie" and ec.get("felii") == 3 and ec.get("legenda") == ["Ana", "Bogdan", "Dan"] and not dlg_ctt(s)
+          and any(x["actiune"] == "schimbare_tip_grafic" for x in ev_gest(s, n0)), {"g": g, "ec": ec})
+    tasta(s, "Control+z")
+    verif("X10", "Ctrl+Z → graficul redevine Clustered Column", (gr0(s) or {}).get("tip") == "Clustered Column", gr0(s))
+    # 4. titlul: un clic, scrii, Enter
+    s.clic_sel(GR + ' [data-lh-tinta="grafic:1/titlu"]'); scrie_taste(s, "Note bune"); tasta(s, "Enter")
+    verif("X10", "un clic pe titlu, „Note bune” + Enter → titlul nou în stare și pe ecran, nicio celulă scrisă",
+          (gr0(s) or {}).get("titlu") == "Note bune" and (graf_ecran(s) or {}).get("titlu") == "Note bune" and not any(txt(s, a) == "Note bune" for a in ("B12", "A1")),
+          {"g": gr0(s), "ec": graf_ecran(s)})
+    # 5. graficul e legat de tabel
+    s.clic("B3"); scrie_taste(s, "10"); tasta(s, "Enter")
+    verif("X10", "B3 = 10 → bara lui Bogdan arată 10 (graficul legat de tabel)", (graf_ecran(s) or {}).get("valori") == [9, 10, 8] and (gr0(s) or {}).get("valori") == [[9, 10, 8]], graf_ecran(s))
+    # 6. mutarea și mărirea cu mouse-ul
+    r = graf_rect(s)
+    clic_grafic(s)
+    s.pg.mouse.move(r[0] + 6, r[1] + r[3] - 6); s.pg.mouse.down(); s.pg.mouse.move(r[0] + 60, r[1] + r[3] + 30, steps=6); s.pg.mouse.up(); s.pg.wait_for_timeout(200)
+    r2 = graf_rect(s)
+    verif("X10", "tragerea de margine mută graficul (54 px la dreapta, 36 în jos), mărimea rămâne", bool(r2) and abs(r2[0] - r[0] - 54) <= 2 and abs(r2[1] - r[1] - 36) <= 2 and abs(r2[2] - r[2]) <= 1, {"r": r, "r2": r2})
+    m = s.ev("()=>{const e=[...document.querySelectorAll('[data-lh-aplicatie] [data-lh-tinta=\"grafic:1/maner\"][data-lh-colt=\"jd\"]')].find(e=>e.getClientRects().length);if(!e)return null;const r=e.getBoundingClientRect();return [r.x+r.width/2,r.y+r.height/2]}")
+    if m:
+        s.pg.mouse.move(m[0], m[1]); s.pg.mouse.down(); s.pg.mouse.move(m[0] + 80, m[1] + 40, steps=6); s.pg.mouse.up(); s.pg.wait_for_timeout(200)
+    r3 = graf_rect(s)
+    verif("X10", "tragerea de cerculețul din dreapta-jos mărește graficul (+80 × +40)", bool(m and r3 and r2) and abs(r3[2] - r2[2] - 80) <= 2 and abs(r3[3] - r2[3] - 40) <= 2, {"m": m, "r2": r2, "r3": r3})
+    # 7. Delete cu graficul ales îl șterge; Ctrl+Z îl readuce
+    clic_grafic(s); n0 = nev(s); tasta(s, "Delete")
+    verif("X10", "Delete cu graficul ales → graficul dispare (stare și ecran), eveniment stergere_grafic", s.stare().get("grafice") == [] and not graf_rect(s)
+          and any(x["actiune"] == "stergere_grafic" for x in ev_gest(s, n0)), s.stare().get("grafice"))
+    tasta(s, "Control+z")
+    verif("X10", "Ctrl+Z → graficul revine", len(s.stare().get("grafice") or []) == 1 and bool(graf_rect(s)), s.stare().get("grafice"))
+    verif("X10", "fără erori în pagină (partea 1)", not s.erori, s.erori[:3])
+    s.gata()
+
+    # 8. două serii (LUNI, laboratorul m2-l11): Switch Row/Column, Line prin Change Chart Type, Clustered Bar din listă cu graficul ales
+    s = S(pw, base)
+    s.deschide({"celule": dict(LUNI), "selectie": "A1"})
+    zona(s, "A1", "C5"); fila(s, "TabInsert")
+    deschide_lista(s); rand_lista(s, "Clustered Column")
+    g = gr0(s) or {}; ec = graf_ecran(s) or {}
+    verif("X10", "A1:C5 → seriile 8A, 8B (valorile pe 4 rânduri, 2 coloane), categoriile lunile, titlul Chart Title, legenda 8A, 8B, 8 bare",
+          g.get("serii") == ["8A", "8B"] and g.get("categorii") == ["septembrie", "octombrie", "noiembrie", "decembrie"] and g.get("titlu") == "Chart Title"
+          and ec.get("legenda") == ["8A", "8B"] and ec.get("bare") == 8, {"g": g, "ec": ec})
+    n0 = nev(s); s.clic_sel(APP + '[data-lh-id-mso="ChartSwitchRowColumn"]')
+    g = gr0(s) or {}; ec = graf_ecran(s) or {}
+    verif("X10", "Switch Row/Column → seriile sunt lunile, categoriile 8A, 8B; titlul rămâne; eveniment comutare_rand_coloana",
+          g.get("serii") == ["septembrie", "octombrie", "noiembrie", "decembrie"] and g.get("categorii") == ["8A", "8B"] and g.get("titlu") == "Chart Title"
+          and ec.get("legenda") == g.get("serii") and any(x["actiune"] == "comutare_rand_coloana" for x in ev_gest(s, n0)), {"g": g, "ec": ec})
+    s.clic_sel(APP + '[data-lh-id-mso="ChartSwitchRowColumn"]')
+    s.clic_sel(APP + '[data-lh-id-mso="ChartChangeType"]'); ctt_alege(s, "Line")
+    et = ctt_eticheta(s); ok_ctt(s)
+    g = gr0(s) or {}; ec = graf_ecran(s) or {}
+    verif("X10", "Change Chart Type › Line › OK → tipul Line, două linii, legenda 8A, 8B", et == "Line" and g.get("tip") == "Line" and ec.get("linii") == 2 and ec.get("legenda") == ["8A", "8B"], {"et": et, "g": g, "ec": ec})
+    fila(s, "TabInsert"); deschide_lista(s); rand_lista(s, "Clustered Bar")
+    gr = s.stare().get("grafice") or []
+    verif("X10", "cu graficul ales, Insert › Clustered Bar îi schimbă tipul (m2-l11: „nu face încă un grafic”)", len(gr) == 1 and gr[0].get("tip") == "Clustered Bar" and (graf_ecran(s) or {}).get("bare") == 8, gr)
+    # 9. tastatura: Alt, N, C → lista; ↓ + Enter → Clustered Column pe zona aleasă
+    s.clic("H20"); zona(s, "A1", "B5"); tasta(s, "Alt"); tasta(s, "n"); tasta(s, "c")
+    vis = lista_x10(s)
+    tasta(s, "ArrowDown"); tasta(s, "Enter")
+    gr = s.stare().get("grafice") or []
+    verif("X10", "tastatura: Alt, N, C deschide lista; ↓ + Enter inserează Clustered Column pe A1:B5 (al doilea grafic)",
+          vis == LISTA_REF and len(gr) == 2 and gr[1].get("tip") == "Clustered Column" and gr[1].get("zona") == "A1:B5", {"vis": vis, "gr": gr})
+    # 10. un rând nesimulat dă mesajul central, nu un grafic fals
+    s.clic("H20"); fila(s, "TabInsert"); deschide_lista(s); rand_lista(s, "3-D Column")
+    verif("X10", "3-D Column (nesimulat) → mesajul central, niciun grafic nou", bool(s.mesaj()) and len(s.stare().get("grafice") or []) == 2, {"mesaj": s.mesaj()})
+    verif("X10", "fără erori în pagină (partea 2)", not s.erori, s.erori[:3])
     s.gata()
 
 PROBE = {"E1": e1, "E2": e2, "K1": k1, "E4": e4, "E3": e3, "E5": e5, "X10": x10}

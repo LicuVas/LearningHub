@@ -48,3 +48,65 @@
 
 ## Fișiere schimbate
 `aplicatii/excel.js` (+36 / −3); notele `runde/9/*`; `de_verificat.md` (+R9-1).
+
+
+---
+
+# Constructorul 2 (19.11.2026, după `c0eaf3e1`): X10 graficele; E5 amânat
+
+## Numerele
+- Proba X10 (`proba_grav.py --doar X10`, 26 de verificări, gesturi reale de mouse și tastatură, headless, doar 127.0.0.1):
+  **înainte 15 picate din 15** (proba se oprea: nu exista niciun grafic) → **după 0 picate din 26**.
+  Toată proba rundei (`proba_grav_c2.json`): **71 de verificări, 1 picată** (E5, neatins). E1 9/9, E2 7/7, K1 8/8, E4 10/10,
+  E3 9/9, X10 26/26.
+- Oracolele, `--doar O4,O5,O9` după ultima scriere sub `aplicatii/` (`masurare_partial_c2.log`, copia `masurare_partial_c2.json`):
+  O4 50 → **50**, O5 113 → **113**, O9 34 → **34**; lacăt ok; regres niciunul. Neschimbate: niciun scenariu O4 și nicio țintă
+  O5 / O9 nu trece prin grafice.
+- Pasul 7 (`masoara.py --runda 9 --paralel 3 --compara runde/9/masurare_pornire.json`, pornit după ultima scriere sub
+  `aplicatii/`, singur pe mașină; `masurare_pas7_c2.log`; `masurare.json` = copia `masurare_pas7_c2.json`): O1 61 → **61**, O2 13392 → **13392**, O3 21586 → **21586**, O4 50 → **50**, O5 113 → **113**, O7 343 → **343**, O8 102 → **102**, O9 34 → **34**, porți 41 → **41** (toate pe cum_fac; test_joc 0, controale_taiate 0, fereastra_mica 0, date_personale 0, word2007_j2 0); lacăt ok. **O6 a ieșit NECONCLUDENT** (depășit timpul: 1802 s; la pornire dura 1770 s din limita de 1800). Reluat SINGUR (`--doar O6`, `masurare_o6_c2.log` / `masurare_o6_c2.json`): **O6 = 0** în 1445 s, „regres: niciunul”. Deci nicio creștere; scăderi nici ele (O2/O3 nu văd biblioteca în etapa B, iar scenariile O4 / țintele O5, O9 nu trec prin grafice). `ingheata.py --verifica` = 0.
+- Regresul (`sh runde/9/regres.sh regres_c2` → `regres_c2_rezumat.txt`): Excel `8/proba_grav` 0, `7/proba_grav_cont` 0,
+  `6/proba_excel` 0, `7/proba_grav` 2 (D14), `7/proba_grav_cont2` 3 (D18) — rândurile PICAT identice cu `regres_c1_*` (diff gol);
+  Word `5/proba_grav` 0, `4/proba_grav` 0, `4/proba_telefon` 0, `3/proba_grav` 0, `2/proba_grav` 0.
+
+## FĂCUT (cu dovada observată)
+- **X10 graficele** — `aplicatii/excel.js`, secțiunea „graficele” + legăturile; `aplicatii/aplicatii.css`, coada „graficele”:
+  - Insert › Insert Column or Bar Chart ▾ = lista din `uia_excel.json › lista.ChartTypeColumnInsertGallery`: 13 rânduri + More
+    Column Charts..., în ordinea din referință, cu titlurile grupurilor (2-D Column, 3-D Column, 2-D Bar, 3-D Bar) și pictograme
+    desenate; locul listei [597, 110, 227, 416] față de referință [596, 106.4, 227.2, 416]. Alt, N, C o deschide; ↓ / Enter merg
+    în listă (KeyTips cedează săgețile când e deschisă o listă).
+  - Clustered Column / Clustered Bar inserează graficul pe zona aleasă (o singură celulă = zona curentă); seriile pe coloane când
+    valorile au mai multe rânduri decât coloane, altfel pe rânduri; numele doar din text (capcana anilor din m2-l11); titlul =
+    numele seriei unice sau „Chart Title”. Celelalte rânduri (Stacked, 3-D, More Column Charts...) = mesajul central (R12).
+  - După inserare: filele „… Help, Chart Design, Format, Sheet1” = `h_grafic.file_dupa`, Chart Design aleasă (Style 1 în
+    panglică), `grafic_activ` true. Clic pe o celulă = graficul nu mai e ales, filele dispar; clic pe grafic = ales din nou.
+  - Chart Design › Change Chart Type... = `dialog.ChartChangeType` pe fila All Charts: Column (subtipurile din referință),
+    Bar (subtipurile 2-D / 3-D Bar din lista ▾), Line, Pie; OK schimbă tipul. Switch Row/Column comută seriile cu categoriile.
+    Cu graficul ales, Insert › alt tip îi schimbă tipul (m2-l11).
+  - Titlul: un clic, scrii (textul apare în bara de formule), Enter → titlul nou; Delete șterge graficul (sau titlul ales);
+    tragerea de margine mută graficul, mânerele îl măresc; graficul e legat de tabel (B3 = 10 → bara arată 10); Ctrl+Z pe toate.
+  - `stare().grafice` = [{tip, zona, titlu, serii, categorii, valori, legenda, pozitie}], `grafic_activ`, `grafic_element_ales`;
+    evenimente §4 cu ținte canonice (`meniu:Clustered Column`, `grafic:1`, `fereastra:Pie`…) și acțiuni `inserare_grafic`,
+    `schimbare_tip_grafic`, `comutare_rand_coloana`, `alegere_grafic`, `titlu_grafic`, `mutare_grafic`, `redimensionare_grafic`,
+    `stergere_grafic`.
+  - Plasa oracolelor `I.deschideSuprafata`: `lista.ChartTypeColumnInsertGallery` și `panglica_context.*` (inserează un grafic
+    dacă foaia n-are).
+  - Dovada: `proba_grav_c2.json` (X10 26/26); capturi headless verificate de mine: lista, graficul cu Chart Design, fereastra
+    Change Chart Type pe Bar.
+
+## NEFĂCUT
+- **E5** (Yes în „We found a typo…” → vărsare pe D2:D6) — neînceput: cere rezultat-zonă în motorul de calcul și celule vărsate
+  în stare, pe ecran, la recalcul și la Ctrl+Z; nu încape curat lângă grafice. Deblocator: runda 10 (planul în `stare_autor.md`).
+- Laboratorul m2-l11, pașii 3 (Insert Line or Area Chart ▾) și 6 (Add Chart Element › Data Labels): rămân pe mesajul central,
+  listele lor nu sunt în referință. Deblocator: o rundă `acoperire` cu R9-6. În poligon, linia se obține prin Clustered Column
+  + Change Chart Type › Line.
+
+## NESIGUR
+- [NEVERIFICAT], în `de_verificat.md` R9-2…R9-6 și `diferente.md` D9-D14: fila aleasă după ieșirea din grafic (Home), Insert ›
+  alt tip cu graficul ales (schimbă tipul, după lecție), locul / mărimea / legenda / titlul graficului nou, subtipurile Line / Pie
+  din Change Chart Type, listele Line / Pie / Add Chart Element, încadrarea colorată a sursei în tabel.
+- Desenul graficului e simplu (SVG: bare, linii, felii, axe, legendă), fără pretenție de pixel: referința nu dă pixelii lui.
+- Butoanele Chart Design n-au pictograme (lipsesc din `date/excel.json`, ca înainte): se văd doar etichetele.
+
+## Fișiere schimbate (constructorul 2)
+`aplicatii/excel.js` (+~380), `aplicatii/aplicatii.css` (+20, la capăt); `runde/9/proba_grav.py` (X10 extinsă: 26 de verificări),
+notele `runde/9/*` (`stare_autor.md`, `diferente.md`, `gata_pentru_critic.md`, acest raport), `de_verificat.md` (+R9-2…R9-6).

@@ -20,7 +20,29 @@ E5, X10). Înainte (cod neatins, `proba_grav_inainte.json`): 25 picate din 48.
   Point a săgeților, `ales` se golește când `pk` înlocuiește zona. Proba E3: 9/9 (Σ, ▾ Average, Alt+= → „Point”; Enter → 48 / 8;
   Σ + ↓ → „=SUM(B9)” în editare, `referinta`; Σ + „B2:B6” → 40). Ce scrie exact săgeata după Σ = [NEVERIFICAT] (R9-1).
 
-## Urmează (constructorul 2): X10 (graficele), apoi E5
+## Constructorul 2 (19.11.2026, seara)
+- **X10 gata și probat** (`aplicatii/excel.js` secțiunea „graficele” + legăturile; `aplicatii/aplicatii.css` coada „graficele”):
+  lista ▾ din `lista.ChartTypeColumnInsertGallery` (titlurile grupurilor + pictograme desenate); Clustered Column / Clustered
+  Bar inserează pe zona aleasă (o celulă = zona curentă), lângă tabel, 480 × 288; filele Chart Design + Format după Help, Chart
+  Design aleasă; clic pe celulă = graficul nu mai e ales (fila contextuală → Home); clic pe grafic = ales; titlul: un clic,
+  scrii (în bara de formule), Enter; Delete șterge graficul / titlul ales; tragere = mutare, mânerele = mărire; Change Chart
+  Type (All Charts) cu Column / Bar (subtipurile din referință) și Line / Pie (doar numele: referința n-are rândul lor);
+  Switch Row/Column; Insert › alt tip cu graficul ales = schimbă tipul; Ctrl+Z pe toate (graficele stau în foaie);
+  `stare().grafice` [{tip, zona, titlu, serii, categorii, valori, legenda, pozitie}], `grafic_activ`, `grafic_element_ales`;
+  evenimente `inserare_grafic`, `schimbare_tip_grafic`, `comutare_rand_coloana`, `alegere_grafic`, `titlu_grafic`,
+  `mutare_grafic`, `redimensionare_grafic`, `stergere_grafic`; Alt, N, C → lista, ↓/Enter în listă (KeyTips cedează săgețile).
+- Proba: `proba_grav.py --doar X10` = 26 verificări (era 15/15 picate, proba se oprea) → 0 picate. Toată proba rundei:
+  `proba_grav_c2.json` = 71 verificări, 1 picată (E5).
+- Numerele la final (constructorul 2, după ultima scriere sub `aplicatii/`):
+  `--doar O4,O5,O9` (`masurare_partial_c2.*`): 50 / 113 / 34 = ca la pornire. Regresul `regres_c2_rezumat.txt`: Excel 8/0,
+  7cont/0, 6/0, 7/2 (D14), 7cont2/3 (D18) — PICAT identice cu `regres_c1`; Word 5, 4, 4-telefon, 3, 2 = 0.
+  **Pasul 7** (`masurare_pas7_c2.log`, `masurare.json` = `masurare_pas7_c2.json`): O1 61, O2 13392, O3 21586, O4 50, O5 113,
+  O7 343, O8 102, O9 34, porți 41 = ca la pornire; O6 NECONCLUDENT (1802 s, la limită și la pornire: 1770 s) → reluat singur
+  (`masurare_o6_c2.*`): O6 = 0, regres niciunul. `ingheata.py --verifica` = 0. Rândul `runde/9/gata_pentru_critic.md` scris.
+- **E5 NU se face în runda 9** (vezi mai jos, neschimbat): cere rezultat-zonă în motorul de calcul + vărsare în celule, stare,
+  ecran, recalcul și Ctrl+Z — nu încape curat lângă grafice. Rămâne pentru runda 10.
+
+## (istoric) Urmează (constructorul 2): X10 (graficele), apoi E5
 Proba e scrisă: `proba_grav.py --doar X10` (2 verificări + erori; azi pică amândouă) și `--doar E5` (1 verificare). Extinde
 proba X10 ÎNAINTE de cod (Change Chart Type, evenimentele §4, `stare().grafice`, Ctrl+Z, drumul m2-l11).
 

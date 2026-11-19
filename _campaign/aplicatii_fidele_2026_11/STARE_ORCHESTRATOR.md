@@ -196,3 +196,12 @@ Cererea (18.11, 14:59, verbatim): „continua acum cu etapa 0. apoi mergi cu urm
 - runde/supliment_B_excel_runda9.md: E1, E2, K1, E4, E3 (mici, cauza cu fișier:rând), apoi X10 graficele (unghiul
   criticului 9 = aspect), E5 la urmă. La predare, fără pasul 7 complet (doar --doar O4,O5,O9). runde/9/masurare_pornire.json
   = runde/8/masurare.json (copiată de mine).
+
+### 19.11.2026 ~16:40 — runda 9: constructorul 1 PREDARE (5/7), constructorul 2 pornit (X10 + E5 + pasul 7)
+- Constructorul 1 (235k, 20 min): E1, E2, K1, E4, E3 reparate; proba runde/9/proba_grav.py 25/48 → 3/48 (rămase X10 2,
+  E5 1); --doar O4,O5,O9: 50 / 113 / 34 neschimbate; regresul Word 0, Excel 0 (în afară de D14/D18 deja explicate).
+  Doar excel.js (+36/−3). Nesigur: ↓ după Σ dă =SUM(B9) → R9-1 în de_verificat.
+- Punct de control local c0eaf3e1. runde/9/masurare.json = măsurarea PARȚIALĂ a constructorului 1.
+- Pe mașină: un EXCEL.EXE /automation -Embedding (pid 4692, 16:33:24) pornit de tools/gif_demo/verifica_banda.py
+  --pe-ascuns (altă consolă, registrul de exersare) — NU e al nostru și nici al omului; neatins.
+- Constructorul 2 pornit: X10 graficele (m2-l11), E5 dacă încape, apoi pasul 7 complet singur.

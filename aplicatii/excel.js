@@ -490,6 +490,7 @@
       return { celule: cel, format_celule: fmt, latimi_coloane: latimi, inaltimi_randuri: inaltimi, selectie: selectieStare(), nume_fisier: M.nume, fereastra_mesaj: M.mesaj,
         ramane_in_editare: !!M.edit, foi: M.foi.map(x => x.nume), foaie_activa: F().nume, dialog: dialogStare(),
         pagina_backstage: backstage ? backstage.pagina : null, titlu_fereastra: titlu(),
+        grafice: stareGrafice(), grafic_activ: !!M.gr, grafic_element_ales: M.gr ? (M.gr.parte === 'titlu' ? 'Chart Title' : 'Chart Area') : null,
         registru_activ: REG.gol ? null : numeRegistru(), registre: REG.alte.map(r => r.nume ? r.nume.replace(/\.[a-z0-9]{2,5}$/i, '') : r.book).concat(REG.gol ? [] : [numeRegistru()]) };
     };
     /* `dialog` (§5): fereastra deschisă; „Save your changes to this file?” = fereastra care ÎNTREABĂ, în forma din
@@ -520,6 +521,18 @@
 
     /* ============================================================ fereastra (din date/excel.json) */
     let filaActiva = 'TabHome', strat = null, meniu = null, dialog = null, backstage = null;
+    /* graficele (X10; codul în secțiunea „graficele”, mai jos): constantele stau aici, înaintea primului desen */
+    const GR_TIP = { 'Clustered Column': 'col', 'Clustered Bar': 'bar', 'Line': 'line', 'Pie': 'pie' };
+    const GR_FAMILIE = { 'Clustered Column': 'Column', 'Clustered Bar': 'Bar', 'Line': 'Line', 'Pie': 'Pie' };
+    const GR_DIN_STANGA = { Column: 'Clustered Column', Bar: 'Clustered Bar', Line: 'Line', Pie: 'Pie' };
+    /* subtipurile din dreapta ferestrei: Column = rândul din referință; Bar = rândurile 2-D / 3-D Bar din lista ▾ (aceeași referință) */
+    const GR_SUB_BAR = ['Clustered Bar', 'Stacked Bar', '100% Stacked Bar', '3-D Clustered Bar', '3-D Stacked Bar', '3-D 100% Stacked Bar'];
+    const GR_CUL = ['#4472c4', '#ed7d31', '#a5a5a5', '#ffc000', '#5b9bd5', '#70ad47'];
+    let contextActiv = null;
+    M.gr = null;        // graficul ales: { i, parte: 'grafic' | 'titlu' }
+    M.grTitlu = null;   // textul tastat pe titlul ales, încă nepus (se vede în bara de formule, ca în Excel)
+    const grafice = () => (F().grafice || (F().grafice = []));
+    const gNum = (k, n) => Array.from({ length: Math.max(0, n) }, (x, j) => k + j);
     root.innerHTML = '';
     const el = (tag, cls, attrs) => { const e = document.createElement(tag); if (cls) e.className = cls; Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
     const pozitie = (e, r, baza) => { e.style.position = 'absolute'; e.style.left = (r[0] - (baza ? baza[0] : 0)) + 'px'; e.style.top = (r[1] - (baza ? baza[1] : 0)) + 'px'; };
@@ -572,6 +585,14 @@
         if (ctx.cheie === 'bara_stare' && n.t === 'Text' && /^Zoom \d/.test(n.e || '')) elZoomText = e;
         if (ctx.cheie === 'bara_stare' && n.t === 'Button' && n.e === 'Normal') e.classList.add('lh-ap-apasat');
         /* lista Borders din referință n-are idMso pe rânduri: idMso-ul (pentru efect și pictogramă) vine din BORD_LISTA, după etichetă */
+        /* lista ▾ a graficelor (uia_excel.json › lista.ChartTypeColumnInsertGallery): titlul fiecărui grup (2-D Column…) în banda
+           de sus a grupului (29,6 px până la primul rând) și o pictogramă desenată pe rânduri (referința nu dă pictogramele) */
+        if (ctx.cheie === 'lista.ChartTypeColumnInsertGallery') {
+          if (n.t === 'Group' && (n.e || '').trim()) { const h = el('div', 'lh-ap-x-gr-grup'); h.textContent = n.e; e.appendChild(h); }
+          if (n.t === 'ListItem') e.innerHTML = pictogramaGrafic(n.e, 32);
+        }
+        /* Chart Design › Quick Styles: rândurile Style 1…16 din referință n-au imagine; se desenează graficul ales, mic */
+        if (ctx.cheie === 'panglica_context.Ctx_ChartDesign' && n.t === 'ListItem' && /^Style \d+$/.test(n.e || '')) { const g0 = M.gr && grafice()[M.gr.i]; e.innerHTML = pictogramaGrafic(g0 ? g0.tip : 'Clustered Column', 40); }
         if (ctx.cheie === 'lista.Borders' && n.t === 'MenuItem') {
           const bl = BORD_LISTA.find(x => x[1] === n.e);
           if (bl) { e.setAttribute('data-lh-id-mso', bl[0]); const ic = pang.icoana(I, bl[0], 16); if (ic && /^<svg|^<span/.test(ic)) e.insertAdjacentHTML('afterbegin', ic); }
@@ -720,6 +741,24 @@
 
     /* ---- filele panglicii */
     function deseneazaFile() {
+      /* filele contextuale (graficul ales): după Help, în ordinea din date/excel.json › context.grafic (= h_grafic.file_dupa
+         „… Help, Chart Design, Format”); locul și lățimea ca word.js:712-737; tasta de acces = a grupului filei din referință */
+      RAND_FILE.querySelectorAll('[data-lh-context]').forEach(x => x.remove());
+      if (contextActiv && (date.context || {})[contextActiv]) {
+        const ultima = [...RAND_FILE.querySelectorAll('[data-lh-tip="TabItem"]')].pop();
+        let x = ultima ? ultima.offsetLeft + ultima.offsetWidth + 1 : 0;
+        date.context[contextActiv].forEach(cx => {
+          const t = el('div', 'lh-ap-n lh-ap-t-TabItem lh-ap-context', { 'data-lh-tip': 'TabItem', 'data-lh-eticheta': cx.e, 'data-lh-id-mso': cx.id,
+            'data-lh-tinta': 'fila:' + cx.e, role: 'tab', 'data-lh-context': contextActiv });
+          const gr = ((SUP[cx.s] || {}).c || [])[0] || {};
+          t.__nod = { t: 'TabItem', e: cx.e, id: cx.id, ta: gr.ta || null };
+          t.innerHTML = '<span class="lh-ap-text">' + esc(cx.e) + '</span>';
+          const w = cx.e.length * 7 + 22;
+          Object.assign(t.style, { left: x + 'px', top: '0px', width: w + 'px', height: '30px' });
+          x += w + 1;
+          RAND_FILE.appendChild(t);
+        });
+      }
       RAND_FILE.querySelectorAll('[data-lh-tip="TabItem"]').forEach(t => {
         const on = t.getAttribute('data-lh-id-mso') === filaActiva;
         t.setAttribute('aria-selected', on ? 'true' : 'false');
@@ -878,6 +917,7 @@
       }
       corpIn.appendChild(frag);
       corpIn.append(selStrat, clipStrat, propEl, maner);
+      deseneazaGrafice(true);
       deseneazaSelectia();
       if (aveaFocus) I.focus();
       sincronDerulare();
@@ -978,8 +1018,8 @@
     /* ---- barele: Name Box, bara de formule, modul celulei (bara de stare), titlul, Undo/Redo gri */
     function actualizeazaBare() {
       const f = F(), s = f.sel, a = adr(s.activa.r, s.activa.c);
-      if (document.activeElement !== inNume) inNume.value = M.trageInfo || a;
-      inF.value = M.edit ? M.edit.text : textEditare(f, a);
+      if (document.activeElement !== inNume) inNume.value = M.gr ? 'Chart ' + (M.gr.i + 1) : (M.trageInfo || a);
+      inF.value = M.gr ? (M.grTitlu || '') : M.edit ? M.edit.text : textEditare(f, a);
       const mod = M.edit ? (M.edit.punct ? 'Point' : M.edit.mod) : 'Ready';
       if (elMod) { elMod.firstChild.textContent = mod; elMod.setAttribute('data-lh-eticheta', 'Cell Mode ' + mod); }
       if (elZoomText) { const t = elZoomText.querySelector('.lh-ap-text') || elZoomText; t.textContent = M.zoom + ' %'; elZoomText.setAttribute('data-lh-eticheta', 'Zoom ' + M.zoom + ' %'); }
@@ -1997,6 +2037,7 @@
       s.querySelectorAll('[data-lh-tip="TabItem"]').forEach((t, i) => { const on = fila ? t.getAttribute('data-lh-eticheta') === fila : i === 0; t.setAttribute('aria-selected', on ? 'true' : 'false'); t.classList.toggle('activ', on); });
       if (dialog.baza === 'dialog.SortDialog') pregatesteSort(s);
       if (dialog.baza === 'dialog.SortWarning') pregatesteAvertizare(s);
+      if (dialog.baza === 'dialog.ChartChangeType') pregatesteTipGrafic(s);
       const lc = s.querySelector('[data-lh-tinta="camp:latime_coloana"] input');
       if (lc) {
         const c0 = F().sel.zone[F().sel.zone.length - 1].c0;
@@ -2189,6 +2230,7 @@
       if (dialog.baza === 'dialog.SortWarning') return sortDinAvertizare();
       if (/^dialog\.eroare_formula/.test(dialog.baza)) return raspunsEroare(dialog.baza === 'dialog.eroare_formula' ? 'Yes' : 'OK');
       if (dialog.baza === 'dialog.SortDialog_eroare_nivel_gol') { inchideDialog(); return 'inchidere'; }
+      if (dialog.baza === 'dialog.ChartChangeType') return aplicaTipGrafic();
       const b = dialog.baza.replace(/^dialog\./, '');
       inchideDialog();
       return I.nesimulat((date.dialoguri['dialog.' + b] || {}).titlu || b);
@@ -2244,6 +2286,7 @@
       const n = elx.__nod || {}, nume = String(n.e || tinta.replace(/^.*\//, ''));
       if (elx.getAttribute('aria-disabled') === 'true' || (elx.closest('[aria-disabled="true"]') && root.contains(elx.closest('[aria-disabled="true"]')))) return 'indisponibil';
       if (M.edit && !/^(AutoSum)$/.test(id || '') && !confirma()) return 'fara_efect';
+      if (M.grTitlu != null) { M.grTitlu = null; actualizeazaBare(); }
       if (REG.gol) return 'indisponibil';
       switch (id) {
         case 'Bold': return comutaFormat('bold');
@@ -2266,6 +2309,9 @@
         case 'CellFillColorPicker': return umpleCuloare('FFFF00');
         case 'BordersGallery_Dropdown': return SUP['lista.Borders'] ? listaRef('lista.Borders', elx) : meniuBorduri(elx);
         case 'AutoSumMenu_Dropdown': return listaRef('lista.AutoSum', elx) || I.nesimulat('AutoSum');
+        case 'ChartTypeColumnInsertGallery': return listaRef('lista.ChartTypeColumnInsertGallery', elx) || I.nesimulat(nume);
+        case 'ChartChangeType': return M.gr ? dialogTipGrafic() : 'indisponibil';
+        case 'ChartSwitchRowColumn': return M.gr ? comutaRandColoana() : 'indisponibil';
         case 'PercentStyle': return procent();
         case 'WrapText': return incadreaza();
       }
@@ -2275,6 +2321,315 @@
       if (id && id in LANSATOR_FILA) return LANSATOR_FILA[id] ? (deschideDialog('dialog.FormatCellsDialog', LANSATOR_FILA[id] === 'Number' ? null : LANSATOR_FILA[id]) ? 'fereastra' : I.nesimulat(nume)) : I.nesimulat(nume);
       if (id && date.lansatoare[id]) return deschideDialog(date.lansatoare[id]) ? 'fereastra' : I.nesimulat(nume);
       return I.nesimulat(nume);
+    }
+
+    /* ============================================================ graficele (critic runda 8, GRAV X10; lecția m2-l11)
+       Referința: uia_excel.json › lista.ChartTypeColumnInsertGallery (lista ▾ a lui Insert › Insert Column or Bar Chart),
+       acoperire_r7.fapte.h_grafic (după Clustered Column: filele „… Help, Chart Design, Format”, Chart Design aleasă cu
+       „Style 1”, grafice_pe_foaie 1, grafic_activ), panglica_context.Ctx_ChartDesign / Ctx_Format, dialog.ChartChangeType
+       (+ #All Charts). Desenul e SIMPLU (bare / linii / felii din date, titlu, axe, legendă): referința nu dă pixelii
+       graficului, deci nu se pretinde fidelitate de pixel acolo (diferente.md, runda 9). Simulate: Clustered Column,
+       Clustered Bar (din listă), Line și Pie (din Change Chart Type); celelalte rânduri = mesajul central (R12).
+       Graficul stă în foaie (f.grafice), deci Ctrl+Z îl ia cu instantaneul; valorile se citesc din celule la fiecare desen
+       (graficul e legat de tabel, m2-l11). Geometria e în px la 100 %. */
+    function dateGrafic(g) {
+      const f = F(), q = zonaDin(g.zona) || { r0: 0, c0: 0, r1: 0, c1: 0 };
+      const v = (r, c0) => valoare(f, r, c0), gol = x => x == null || x === '', nr = x => typeof x === 'number';
+      const colt = v(q.r0, q.c0);
+      /* numele: antetul (rândul de sus) și prima coloană intră ca nume doar dacă sunt TEXT (m2-l11: „Drept nume ia doar textul”;
+         colțul gol le face nume oricum — capcana anilor) */
+      const antet = q.r1 > q.r0 && gNum(q.c0 + 1, q.c1 - q.c0).concat(gol(colt) ? [] : [q.c0]).every(c => !nr(v(q.r0, c))) && gNum(q.c0, q.c1 - q.c0 + 1).some(c => typeof v(q.r0, c) === 'string' && v(q.r0, c) !== '');
+      const cat = q.c1 > q.c0 && (gol(colt) || gNum(q.r0 + (antet ? 1 : 0), q.r1 - q.r0 + (antet ? 0 : 1)).every(r => !nr(v(r, q.c0))));
+      const r0 = q.r0 + (antet ? 1 : 0), c0 = q.c0 + (cat ? 1 : 0), nR = q.r1 - r0 + 1, nC = q.c1 - c0 + 1;
+      const val = (r, c) => { const x = v(r, c); return nr(x) ? x : gol(x) ? null : 0; };
+      const numeCol = k => antet ? textCelula(f, q.r0, c0 + k) : '';
+      const numeRand = k => cat ? textCelula(f, r0 + k, q.c0) : '';
+      /* seriile: pe coloane dacă valorile ocupă mai multe rânduri decât coloane, altfel (și la egalitate) pe rânduri (m2-l11) */
+      let peCol = nR > nC;
+      if (g.comutat) peCol = !peCol;
+      const o = peCol
+        ? { serii: gNum(0, nC).map(k => numeCol(k) || 'Series' + (k + 1)), categorii: gNum(0, nR).map(k => cat ? numeRand(k) : String(k + 1)), valori: gNum(0, nC).map(k => gNum(0, nR).map(j => val(r0 + j, c0 + k))), dinAntet: antet }
+        : { serii: gNum(0, nR).map(k => numeRand(k) || 'Series' + (k + 1)), categorii: gNum(0, nC).map(k => antet ? numeCol(k) : String(k + 1)), valori: gNum(0, nR).map(k => gNum(0, nC).map(j => val(r0 + k, c0 + j))), dinAntet: cat };
+      o.tip = GR_TIP[g.tip] || 'col';
+      if (o.tip === 'pie') { o.serii = o.serii.slice(0, 1); o.valori = o.valori.slice(0, 1); }
+      o.legenda = o.tip === 'pie' ? o.categorii.slice() : (o.serii.length > 1 ? o.serii.slice() : []);
+      return o;
+    }
+    function titluGrafic(g, d) {
+      if (g.faraTitlu) return null;
+      if (g.titlu != null) return g.titlu;
+      return d.serii.length === 1 && d.dinAntet ? d.serii[0] : 'Chart Title';
+    }
+    function scaraGrafic(min, max) {
+      if (max <= min) max = min + 1;
+      const brut = (max - min) / 5, p = Math.pow(10, Math.floor(Math.log10(brut))), m = brut / p;
+      const pas = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p;
+      return { min: Math.floor(min / pas) * pas, max: Math.ceil(max / pas) * pas, pas };
+    }
+    const gTxt = (x, y, s, cls, anc, k) => '<text class="' + cls + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="' + anc + '" font-size="' + (12 * k).toFixed(1) + '" fill="#595959">' + esc(String(s)) + '</text>';
+    function desenAxe(d, P, k) {
+      const toate = [].concat(...d.valori).filter(x => x != null), sc = scaraGrafic(Math.min(0, ...toate), Math.max(0, ...toate));
+      const et = []; for (let x = sc.min; x <= sc.max + sc.pas / 2; x += sc.pas) et.push(Math.round(x * 1e6) / 1e6);
+      const lat = Math.max(...et.map(x => String(x).length)) * 7 * k + 10 * k, bar = d.tip === 'bar';
+      const latCat = bar ? Math.max(...d.categorii.map(x => String(x).length), 1) * 6.5 * k + 10 * k : 0;
+      const A = { x: P.x + (bar ? latCat : lat), y: P.y, w: P.w - (bar ? latCat : lat) - 12 * k, h: P.h - 20 * k };
+      const nc = Math.max(1, d.categorii.length), ns = Math.max(1, d.serii.length);
+      const poz = x => (x - sc.min) / (sc.max - sc.min);
+      let s = '';
+      et.forEach(x => {
+        if (bar) { const px = A.x + poz(x) * A.w; s += '<line x1="' + px + '" y1="' + A.y + '" x2="' + px + '" y2="' + (A.y + A.h) + '" stroke="#d9d9d9"/>' + gTxt(px, A.y + A.h + 14 * k, x, 'lh-ap-x-gr-val', 'middle', k); }
+        else { const py = A.y + A.h - poz(x) * A.h; s += '<line x1="' + A.x + '" y1="' + py + '" x2="' + (A.x + A.w) + '" y2="' + py + '" stroke="#d9d9d9"/>' + gTxt(A.x - 6 * k, py + 4 * k, x, 'lh-ap-x-gr-val', 'end', k); }
+      });
+      const band = (bar ? A.h : A.w) / nc, bw = band / (ns + 2.19), zero = poz(0);
+      d.categorii.forEach((c, j) => {
+        /* la bare, prima categorie e JOS (m2-l11: „Primul nume, Ana, e jos”) */
+        if (bar) s += gTxt(A.x - 6 * k, A.y + A.h - band * (j + 0.5) + 4 * k, c, 'lh-ap-x-gr-cat', 'end', k);
+        else s += gTxt(A.x + band * (j + 0.5), A.y + A.h + 14 * k, c, 'lh-ap-x-gr-cat', 'middle', k);
+      });
+      d.valori.forEach((serie, i) => {
+        const cul = GR_CUL[i % GR_CUL.length];
+        if (d.tip === 'line') {
+          const pts = serie.map((x, j) => x == null ? null : [A.x + band * (j + 0.5), A.y + A.h - poz(x) * A.h]);
+          s += '<polyline class="lh-ap-x-gr-linie" fill="none" stroke="' + cul + '" stroke-width="' + (3 * k).toFixed(1) + '" stroke-linejoin="round" points="' + pts.filter(Boolean).map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') + '"/>';
+          pts.forEach((p, j) => { if (p) s += '<circle data-lh-valoare="' + serie[j] + '" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="0.1" fill="none"/>'; });
+          return;
+        }
+        serie.forEach((x, j) => {
+          if (x == null) return;
+          const a = Math.min(zero, poz(x)), b = Math.abs(poz(x) - zero), o = band * j + (band - ns * bw) / 2 + i * bw;
+          const r = bar ? [A.x + a * A.w, A.y + A.h - o - bw, b * A.w, bw] : [A.x + o, A.y + A.h - (a + b) * A.h, bw, b * A.h];
+          s += '<rect class="lh-ap-x-gr-bara" data-lh-valoare="' + x + '" x="' + r[0].toFixed(1) + '" y="' + r[1].toFixed(1) + '" width="' + Math.max(0, r[2]).toFixed(1) + '" height="' + Math.max(0, r[3]).toFixed(1) + '" fill="' + cul + '"/>';
+        });
+      });
+      s += bar ? '<line x1="' + (A.x + zero * A.w) + '" y1="' + A.y + '" x2="' + (A.x + zero * A.w) + '" y2="' + (A.y + A.h) + '" stroke="#bfbfbf"/>'
+        : '<line x1="' + A.x + '" y1="' + (A.y + A.h - zero * A.h) + '" x2="' + (A.x + A.w) + '" y2="' + (A.y + A.h - zero * A.h) + '" stroke="#bfbfbf"/>';
+      return s;
+    }
+    function desenPlacinta(d, P, k) {
+      const vals = (d.valori[0] || []).map(x => Math.max(0, x || 0)), tot = vals.reduce((a, b) => a + b, 0);
+      const cx = P.x + P.w / 2, cy = P.y + P.h / 2, r = Math.max(4, Math.min(P.w, P.h) / 2 - 4 * k);
+      let s = '', u = -Math.PI / 2;
+      vals.forEach((x, j) => {
+        const f = tot ? x / tot : 0, u2 = u + f * 2 * Math.PI, cul = GR_CUL[j % GR_CUL.length];
+        const pt = a => (cx + r * Math.cos(a)).toFixed(1) + ' ' + (cy + r * Math.sin(a)).toFixed(1);
+        const dd = f >= 0.9999 ? 'M ' + pt(u) + ' A ' + r + ' ' + r + ' 0 1 1 ' + pt(u + Math.PI) + ' A ' + r + ' ' + r + ' 0 1 1 ' + pt(u) + ' Z'
+          : 'M ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' L ' + pt(u) + ' A ' + r + ' ' + r + ' 0 ' + (f > 0.5 ? 1 : 0) + ' 1 ' + pt(u2) + ' Z';
+        s += '<path class="lh-ap-x-gr-felie" data-lh-valoare="' + x + '" d="' + dd + '" fill="' + cul + '" stroke="#fff" stroke-width="1"/>';
+        u = u2;
+      });
+      return s;
+    }
+    function desenGrafic(g, i) {
+      const d = dateGrafic(g), k = z(), W = g.w * k, Hh = g.h * k, ales = !!(M.gr && M.gr.i === i);
+      const box = el('div', 'lh-ap-x-grafic' + (ales ? ' lh-ap-x-gr-ales' : ''), { 'data-lh-tinta': 'grafic', 'data-lh-id': String(i + 1), 'aria-label': 'Chart ' + (i + 1) });
+      Object.assign(box.style, { left: g.x * k + 'px', top: g.y * k + 'px', width: W + 'px', height: Hh + 'px' });
+      const t = titluGrafic(g, d);
+      let sus = 10 * k;
+      if (t != null) {
+        const te = el('div', 'lh-ap-x-gr-titlu' + (ales && M.gr.parte === 'titlu' ? ' lh-ap-x-gr-titlu-ales' : ''), { 'data-lh-tinta': 'grafic:' + (i + 1) + '/titlu' });
+        te.textContent = t; te.style.fontSize = (18.67 * k) + 'px'; te.style.top = (6 * k) + 'px';
+        box.appendChild(te);
+        sus = 42 * k;
+      }
+      const josLeg = d.legenda.length ? 26 * k : 6 * k;
+      const P = { x: 8 * k, y: sus, w: W - 16 * k, h: Math.max(10, Hh - sus - josLeg) };
+      box.insertAdjacentHTML('beforeend', '<svg class="lh-ap-x-gr-svg" aria-hidden="true" width="' + W + '" height="' + Hh + '">' + (d.tip === 'pie' ? desenPlacinta(d, P, k) : desenAxe(d, P, k)) + '</svg>');
+      if (d.legenda.length) {
+        const lg = el('div', 'lh-ap-x-gr-leg');
+        lg.style.bottom = (6 * k) + 'px'; lg.style.fontSize = (12 * k) + 'px';
+        d.legenda.forEach((n, j) => { const x = el('span', 'lh-ap-x-gr-leg-el'), m = el('i', d.tip === 'line' ? 'lh-ap-x-gr-leg-linie' : ''), tx = el('span', 'lh-ap-x-gr-leg-text'); m.style.background = GR_CUL[j % GR_CUL.length]; tx.textContent = n; x.append(m, tx); lg.appendChild(x); });
+        box.appendChild(lg);
+      }
+      if (ales && M.gr.parte === 'grafic') {
+        [['ss', 0, 0], ['sm', 0.5, 0], ['sd', 1, 0], ['ms', 0, 0.5], ['md', 1, 0.5], ['js', 0, 1], ['jm', 0.5, 1], ['jd', 1, 1]].forEach(([c, fx, fy]) => {
+          const m = el('div', 'lh-ap-x-gr-maner', { 'data-lh-tinta': 'grafic:' + (i + 1) + '/maner', 'data-lh-colt': c });
+          m.style.left = (fx * W) + 'px'; m.style.top = (fy * Hh) + 'px';
+          box.appendChild(m);
+        });
+      }
+      return box;
+    }
+    function deseneazaGrafice(faraBare) {
+      corpIn.querySelectorAll('.lh-ap-x-grafic').forEach(x => x.remove());
+      if (M.gr && !grafice()[M.gr.i]) { M.gr = null; M.grTitlu = null; }
+      grafice().forEach((g, i) => corpIn.appendChild(desenGrafic(g, i)));
+      contextGrafic();
+      if (!faraBare) actualizeazaBare();
+    }
+    /* filele contextuale Chart Design / Format cât e ales un grafic (date/excel.json › context.grafic); fără grafic ales, o filă
+       contextuală aleasă lasă locul lui Home (ca word.js › actualizeaza; de_verificat R9-2) */
+    function contextGrafic() {
+      const ctx = M.gr ? 'grafic' : null;
+      if (ctx === contextActiv) return;
+      contextActiv = ctx;
+      if (!ctx && /^Ctx_/.test(filaActiva)) filaActiva = 'TabHome';
+      deseneazaFile();
+      deseneazaPanglica();
+    }
+    function deselecteazaGrafic() { if (!M.gr) return; M.gr = null; M.grTitlu = null; deseneazaGrafice(); }
+    function insereazaGrafic(tip) {
+      if (M.edit && !confirma()) return 'fara_efect';
+      if (M.gr && grafice()[M.gr.i]) {
+        /* cu graficul ales, butonul altui tip îi schimbă tipul, nu face încă un grafic (m2-l11; de_verificat R9-3) */
+        const i = M.gr.i;
+        if (grafice()[i].tip !== tip) schimba('grafic', () => { grafice()[i].tip = tip; });
+        M.gr.parte = 'grafic';
+        deseneazaGrafice();
+        return 'schimbare_tip_grafic';
+      }
+      const f = F(), q0 = f.sel.zone[f.sel.zone.length - 1], u = ultim(f);
+      let q = q0.r0 === q0.r1 && q0.c0 === q0.c1 ? (zonaCurenta(f, q0.r0, q0.c0) || q0) : q0;
+      q = { r0: q.r0, c0: q.c0, r1: Math.max(q.r0, Math.min(q.r1, u.r)), c1: Math.max(q.c0, Math.min(q.c1, u.c)) };
+      /* locul: lângă tabel, la dreapta (m2-l11: „Graficul apare lângă tabel”); 480 × 288 px = 5 × 3 in (mărimea implicită
+         Office; locul și mărimea exacte = de_verificat R9-4) */
+      const x = xCol(q.c1 + 2) / z(), y = yRand(q.r0 + 1) / z();
+      schimba('grafic', () => { grafice().push({ tip, zona: zonaText(q), x, y, w: 480, h: 288 }); });
+      M.gr = { i: grafice().length - 1, parte: 'grafic' }; M.grTitlu = null;
+      deseneazaGrafice();
+      activeazaFila('Ctx_ChartDesign');
+      return 'inserare_grafic';
+    }
+    function comutaRandColoana() {
+      const i = M.gr.i;
+      schimba('grafic', () => { const g = grafice()[i]; g.comutat = !g.comutat; });
+      deseneazaGrafice();
+      return 'comutare_rand_coloana';
+    }
+    /* Change Chart Type (dialog.ChartChangeType, deschisă pe All Charts): stânga = familiile din referință, dreapta = subtipurile
+       familiei alese, numele subtipului ales și previzualizarea. Line / Pie: referința nu are rândul lor de subtipuri, deci
+       se scrie doar numele (de_verificat R9-5) */
+    function pictogramaGrafic(nume, px) {
+      const bar = /Bar$/.test(nume), d3 = /^3-D/.test(nume), st = /Stacked/.test(nume), p100 = /100%/.test(nume), plin = nume === '3-D Column';
+      const H2 = [[9, 6], [14, 10], [11, 15]];
+      let r = [];
+      H2.forEach(([a, b], j) => {
+        if (plin) { r.push([3 + j * 7, 22 - a, 4, a, 0], [3 + j * 7 + 2, 22 - a - b / 3 - 4, 3, b / 3, 1]); return; }
+        if (p100) { const t = a + b; r.push([4 + j * 7, 22 - 18 * a / t, 4, 18 * a / t, 0], [4 + j * 7, 4, 4, 18 * b / t, 1]); return; }
+        if (st) { r.push([4 + j * 7, 22 - a, 4, a, 0], [4 + j * 7, 22 - a - b * 0.6, 4, b * 0.6, 1]); return; }
+        r.push([3 + j * 7, 22 - a, 3, a, 0], [6 + j * 7, 22 - b, 3, b, 1]);
+      });
+      if (nume === 'Line') return '<svg width="' + px + '" height="' + px + '" viewBox="0 0 24 24" aria-hidden="true"><polyline points="2,18 8,12 14,15 22,6" fill="none" stroke="#4472c4" stroke-width="1.6"/><polyline points="2,20 8,17 14,10 22,12" fill="none" stroke="#ed7d31" stroke-width="1.6"/></svg>';
+      if (nume === 'Pie') return '<svg width="' + px + '" height="' + px + '" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12 L12 3 A9 9 0 0 1 20.5 15 Z" fill="#ed7d31"/><path d="M12 12 L20.5 15 A9 9 0 1 1 12 3 Z" fill="#4472c4"/></svg>';
+      /* barele culcate pornesc din axa din stânga (x = 2): coloana [x, y, w, h] cu baza la 22 devine bara [24 - y - h, x, h, w] */
+      if (bar) r = r.map(([x, y, w, h, s]) => [24 - y - h, x, h, w, s]);
+      const cul = ['#4472c4', '#ed7d31'], adanc = ['#2f5597', '#c55a11'];
+      let s = bar ? '<line x1="1.5" y1="2" x2="1.5" y2="23" stroke="#a6a6a6" stroke-width=".8"/>' : '<line x1="2" y1="22.5" x2="22" y2="22.5" stroke="#a6a6a6" stroke-width=".8"/>';
+      r.forEach(([x, y, w, h, i]) => {
+        if (d3) s += '<path d="M' + x + ' ' + y + ' l1.5 -1.5 h' + w + ' v' + h + ' l-1.5 1.5 Z" fill="' + adanc[i] + '"/>';
+        s += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + cul[i] + '"/>';
+      });
+      return '<svg width="' + px + '" height="' + px + '" viewBox="0 0 24 24" aria-hidden="true">' + s + '</svg>';
+    }
+    function pregatesteTipGrafic(s) {
+      if (!dialog.fam) { const g = M.gr && grafice()[M.gr.i]; dialog.fam = g ? GR_FAMILIE[g.tip] : 'Column'; dialog.subtip = g ? g.tip : 'Clustered Column'; }
+      const st = s.querySelector('[data-lh-tip="Menu"][data-lh-eticheta="Chart Types"]');
+      if (st) st.querySelectorAll('[data-lh-tip="ListItem"]').forEach(x => { const on = x.getAttribute('data-lh-eticheta') === dialog.fam; x.classList.toggle('lh-ap-ales', on); x.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      const meniuri = [...s.querySelectorAll('[data-lh-tip="Menu"]')].filter(m => m !== st && !m.contains(st) && m.querySelector('[data-lh-tip="ListItem"]'));
+      const [randSub, previz] = meniuri;
+      if (randSub) {
+        if (!randSub.__ref) randSub.__ref = [...randSub.querySelectorAll('[data-lh-tip="ListItem"]')].map(x => x.getAttribute('data-lh-eticheta'));
+        const nume = dialog.fam === 'Column' ? randSub.__ref : dialog.fam === 'Bar' ? GR_SUB_BAR : [];
+        randSub.querySelectorAll('[data-lh-tip="ListItem"]').forEach((x, j) => {
+          const n = nume[j];
+          x.style.visibility = n ? '' : 'hidden';
+          if (!n) return;
+          x.setAttribute('data-lh-eticheta', n); x.setAttribute('data-lh-tinta', 'fereastra:' + n);
+          x.innerHTML = pictogramaGrafic(n, 40);
+          const on = n === dialog.subtip; x.classList.toggle('lh-ap-ales', on); x.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+      }
+      const tx = [...s.querySelectorAll('[data-lh-tip="Text"]')].find(x => x.getClientRects().length && (x.__nod || {}).e);
+      if (tx) {
+        tx.classList.add('lh-ap-x-ctt-nume');
+        const nm = dialog.fam === 'Column' || dialog.fam === 'Bar' ? dialog.subtip : dialog.fam;
+        (tx.querySelector('.lh-ap-text') || tx).textContent = nm; tx.setAttribute('data-lh-eticheta', nm);
+      }
+      if (previz) previz.querySelectorAll('[data-lh-tip="ListItem"]').forEach((x, j) => {
+        x.style.visibility = j === 0 ? '' : 'hidden';
+        x.setAttribute('data-lh-eticheta', dialog.subtip); x.setAttribute('data-lh-tinta', 'fereastra:' + dialog.subtip);
+        x.innerHTML = pictogramaGrafic(dialog.subtip, 110);
+      });
+    }
+    function dialogTipGrafic() {
+      if (!deschideDialog('dialog.ChartChangeType', 'All Charts')) return I.nesimulat('Change Chart Type');
+      return 'fereastra';
+    }
+    function clicTipGrafic(elx, v) {
+      if (elx.closest('[data-lh-eticheta="Chart Types"]')) {
+        if (!GR_DIN_STANGA[v]) return I.nesimulat(v);
+        if (dialog.fam !== v) { dialog.fam = v; dialog.subtip = GR_DIN_STANGA[v]; }
+        pregatesteTipGrafic(dialog.el);
+        return 'alegere_tip_grafic';
+      }
+      if (GR_TIP[v]) { dialog.subtip = v; pregatesteTipGrafic(dialog.el); return 'alegere_tip_grafic'; }
+      return I.nesimulat(v);
+    }
+    function aplicaTipGrafic() {
+      const tip = dialog.subtip, i = M.gr ? M.gr.i : -1;
+      inchideDialog();
+      if (!GR_TIP[tip] || !grafice()[i]) { I.focus(); return 'anulare'; }
+      if (grafice()[i].tip !== tip) schimba('grafic', () => { grafice()[i].tip = tip; });
+      M.gr.parte = 'grafic';
+      deseneazaGrafice();
+      I.focus();
+      return 'schimbare_tip_grafic';
+    }
+    /* apăsarea pe grafic: alege graficul (marginea, suprafața) sau titlul; tragerea mută graficul, mânerele îl măresc */
+    function josGrafic(e, tinta, gx) {
+      if (M.edit && !confirma()) return null;
+      const i = +gx.getAttribute('data-lh-id') - 1, g = grafice()[i];
+      if (!g) return null;
+      const mn = /\/maner$/.test(tinta) && e.target.closest ? e.target.closest('[data-lh-colt]') : null;
+      const parte = !mn && /\/titlu$/.test(tinta) ? 'titlu' : 'grafic';
+      if (!(M.gr && M.gr.i === i && M.gr.parte === parte)) { M.gr = { i, parte }; M.grTitlu = null; deseneazaGrafice(); }
+      ancora = { grafic: i, colt: mn ? mn.getAttribute('data-lh-colt') : null, fix: parte === 'titlu', x0: e.clientX, y0: e.clientY, g0: { x: g.x, y: g.y, w: g.w, h: g.h }, ina: instantaneu() };
+      josFacut = true;
+      I.focus();
+      return 'tragere';
+    }
+    function mutaGrafic(e) {
+      const a = ancora, g = grafice()[a.grafic];
+      if (!g || a.fix) return;
+      const k = z(), dx = (e.clientX - a.x0) / k, dy = (e.clientY - a.y0) / k, o = a.g0, c = a.colt;
+      if (!c) { g.x = Math.max(0, o.x + dx); g.y = Math.max(0, o.y + dy); }
+      else {
+        if (c[1] === 'd') g.w = Math.max(40, o.w + dx);
+        if (c[1] === 's') { g.w = Math.max(40, o.w - dx); g.x = o.x + o.w - g.w; }
+        if (c[0] === 'j') g.h = Math.max(30, o.h + dy);
+        if (c[0] === 's') { g.h = Math.max(30, o.h - dy); g.y = o.y + o.h - g.h; }
+      }
+      a.schimbat = true;
+      const x = corpIn.querySelector('.lh-ap-x-grafic[data-lh-id="' + (a.grafic + 1) + '"]');
+      if (x) x.replaceWith(desenGrafic(g, a.grafic));
+    }
+    function susGrafic(an) {
+      if (!an.schimbat) return 'fara_efect';
+      H.inainte('grafic', an.ina);
+      M.salvat = false; M.mod = true; invalid();
+      deseneazaGrafice();
+      return an.colt ? 'redimensionare_grafic' : 'mutare_grafic';
+    }
+    /* tastele cu un grafic ales: Delete îl șterge; pe titlul ales, ce scrii (în bara de formule) devine titlul la Enter
+       (m2-l11: „scrie … și apasă Enter. Titlul vechi dispare”); Esc renunță */
+    function tastaGrafic(e, g, ctrl) {
+      const k = e.key, i = M.gr.i;
+      if (M.gr.parte === 'titlu') {
+        if (g === 'tastare' && !ctrl) { e.preventDefault(); M.grTitlu = (M.grTitlu || '') + k; actualizeazaBare(); return 'scriere'; }
+        if (k === 'Backspace' && M.grTitlu != null) { e.preventDefault(); M.grTitlu = M.grTitlu.slice(0, -1); actualizeazaBare(); return 'stergere_inapoi'; }
+        if (k === 'Enter' && M.grTitlu != null) { e.preventDefault(); const t = M.grTitlu; M.grTitlu = null; schimba('grafic', () => { const x = grafice()[i]; x.titlu = t; x.faraTitlu = false; }); deseneazaGrafice(); return 'titlu_grafic'; }
+        if (k === 'Escape') { e.preventDefault(); if (M.grTitlu != null) { M.grTitlu = null; actualizeazaBare(); return 'anulare'; } M.gr.parte = 'grafic'; deseneazaGrafice(); return 'anulare'; }
+        if (k === 'Delete') { e.preventDefault(); schimba('grafic', () => { grafice()[i].faraTitlu = true; }); M.gr.parte = 'grafic'; deseneazaGrafice(); return 'stergere_titlu_grafic'; }
+      }
+      if (k === 'Delete') { e.preventDefault(); schimba('grafic', () => { grafice().splice(i, 1); }); M.gr = null; deseneazaGrafice(); return 'stergere_grafic'; }
+      if ((g === 'tastare' && !ctrl) || /^Arrow|^Enter$|^Escape$|^Backspace$/.test(k)) { e.preventDefault(); return 'fara_efect'; }
+      return null;
+    }
+    function stareGrafice() {
+      return (F().grafice || []).map(g => {
+        const d = dateGrafic(g);
+        return { tip: g.tip, zona: g.zona, titlu: titluGrafic(g, d), serii: d.serii, categorii: d.categorii, valori: d.valori, legenda: d.legenda,
+          pozitie: { x: Math.round(g.x), y: Math.round(g.y), w: Math.round(g.w), h: Math.round(g.h) } };
+      });
     }
 
     /* ============================================================ gesturile (aplicatii.js le cheamă; §4) */
@@ -2291,6 +2646,9 @@
       const tg = e.target;
       if (meniu && !meniu.contains(tg)) inchideMeniu();
       josFacut = false;
+      const gx = !dialog && !backstage && /^grafic(:|$)/.test(tinta || '') && tg.closest ? tg.closest('.lh-ap-x-grafic') : null;
+      if (gx) return josGrafic(e, tinta, gx);
+      if (M.gr && !dialog && !backstage && inGrila(tg)) deselecteazaGrafic();
       if (dialog || backstage || !inGrila(tg) || tg === maner || tg.closest('.lh-ap-x-maner')) {
         if (tg === maner) { ancora = { umplere: true }; return 'umplere'; }
         ancora = null;
@@ -2338,6 +2696,7 @@
     };
     I.la.misca = (e, j) => {
       if (!ancora) return;
+      if (ancora.grafic != null) { mutaGrafic(e); return; }
       if (ancora.latime != null) {
         const f = F(), w = Math.max(0, Math.round(ancora.w0 + (e.clientX - ancora.x0) / z()));
         if (f.lat[ancora.latime] !== w) { f.lat[ancora.latime] = w; ancora.schimbat = true; deseneazaGrila(); }
@@ -2382,6 +2741,7 @@
       ancora = null;
       M.trageInfo = null;
       if (!g) return null;
+      if (an && an.grafic != null) return susGrafic(an);
       if (g === 'umplere_tragere' && an && an.umplere) { const p = celulaLa(e.clientX, e.clientY); return umple(p.r, p.c); }
       if (an && an.latime != null) {
         if (!an.schimbat) return 'fara_efect';
@@ -2402,6 +2762,7 @@
       if (!tinta) return null;
       const [fel] = tinta.split(':');
       const v = tinta.slice(fel.length + 1);
+      if (fel === 'grafic' && !dialog && !backstage) { josFacut = false; return M.gr && M.gr.parte === 'titlu' ? 'alegere_titlu_grafic' : 'alegere_grafic'; }
       const p = celulaDin(tinta);
       if (p && !dialog && !backstage) {
         if (!josFacut) { if (M.edit && !confirma()) return 'fara_efect'; alege(p.r, p.c, e.shiftKey, e.ctrlKey || e.metaKey); }
@@ -2447,6 +2808,7 @@
         if (fel === 'fereastra' && v === 'Open') return I.nesimulat('Choose a Location ▾');
         if (fel === 'camp' && v === 'tip_fisier') return I.nesimulat('Save as type ▾');
       }
+      if (fel === 'fereastra' && dialog && dialog.baza === 'dialog.ChartChangeType' && elx.getAttribute('data-lh-tip') === 'ListItem') return clicTipGrafic(elx, v);
       if (fel === 'fereastra' && dialog) {
         if (/^(OK|Insert)$/.test(v)) return implicitDialog();
         if (/^(Cancel|Închidere|Close)$/.test(v)) { inchideDialog(); return 'anulare'; }
@@ -2459,6 +2821,7 @@
         inchideMeniu();
         /* lista ▾ a lui Σ (uia_excel.json › lista.AutoSum; acoperire_r7.fapte: Average pe B8 → =AVERAGE(B2:B7)): funcția
            rândului, cu zona propusă aleasă, ca la Σ; More Functions... = mesajul central */
+        if (lista === 'lista.ChartTypeColumnInsertGallery') return GR_TIP[v] ? insereazaGrafic(v) : I.nesimulat(v);
         if (lista === 'lista.AutoSum') return SIGMA_FN[v] ? (M.edit ? 'fara_efect' : autoSum(SIGMA_FN[v])) : I.nesimulat(v);
         if (idm && BORD_EFECT.has(idm)) return borduri(idm);
         if (/^Cut$/.test(v)) return copiaza(true);
@@ -2652,6 +3015,7 @@
         return 'fara_efect';
       }
       /* ------------------------------------------------ fără editare */
+      if (M.gr) { const rg = tastaGrafic(e, g, ctrl); if (rg) return rg; }
       const f = F(), s = f.sel, a = s.activa;
       if (g === 'tastare' && !ctrl) { e.preventDefault(); M.clip = M.clip && !M.clip.decupat ? M.clip : M.clip; porneste(adr(a.r, a.c), k, 'Enter'); return 'scriere'; }
       if (g === 'tasta_f2') { e.preventDefault(); porneste(adr(a.r, a.c), textEditare(f, adr(a.r, a.c)), 'Edit'); return 'editare'; }
@@ -2705,12 +3069,14 @@
     /* textul venit fără keydown utilizabil (telefon, IME): ca tastarea */
     I.la.text = v => {
       if (dialog || backstage || REG.gol) return 'fara_efect';
+      if (M.gr && !M.edit) { if (M.gr.parte !== 'titlu') return 'fara_efect'; M.grTitlu = (M.grTitlu || '') + v; actualizeazaBare(); return 'scriere'; }
       if (!M.edit) { const a = F().sel.activa; porneste(adr(a.r, a.c), v, 'Enter'); return 'scriere'; }
       insereaza(v);
       return 'scriere';
     };
     I.la.sterge = g => {
       if (REG.gol) return 'fara_efect';
+      if (M.gr && !M.edit) return tastaGrafic({ key: g === 'tasta_backspace' ? 'Backspace' : 'Delete', preventDefault() {} }, g, false) || 'fara_efect';
       if (M.edit) { const ed = M.edit; if (stergeAles(ed)) { ed.propus = null; deseneazaSelectia(); return g === 'tasta_backspace' ? 'stergere_inapoi' : 'stergere_inainte'; } if (g === 'tasta_backspace') { if (ed.poz > 0) { ed.text = ed.text.slice(0, ed.poz - 1) + ed.text.slice(ed.poz); ed.poz--; } } else ed.text = ed.text.slice(0, ed.poz) + ed.text.slice(ed.poz + 1); deseneazaSelectia(); return g === 'tasta_backspace' ? 'stergere_inapoi' : 'stergere_inainte'; }
       if (g === 'tasta_backspace') { const a = F().sel.activa; porneste(adr(a.r, a.c), '', 'Enter'); return 'editare'; }
       return golesteContinut();
@@ -2830,6 +3196,9 @@
       if (e.key === 'Alt') { altSingur = true; return; }
       altSingur = false;
       if (!kt.activ) { scurtaturaPanglica(e); return; }
+      /* o listă deschisă din taste (Alt, N, C → lista graficelor, unde doar More Column Charts... are literă, „Alt, N, C, M”):
+         săgețile și Enter merg în listă (regula meniurilor din tastaMeniu); literele rămân ale tastelor de acces */
+      if (meniu && /^(ArrowDown|ArrowUp|Enter)$/.test(e.key)) { ktIesi(); return; }
       e.preventDefault();
       e.stopPropagation();
       if (e.key === 'Escape') {
@@ -2858,6 +3227,15 @@
       if (/^panglica\./.test(cheie)) return activeazaFila(cheie.slice(9));
       if (/^backstage\./.test(cheie)) { const p = cheie.slice(10); deschideBackstage(p === 'nav' || p === 'cadru' ? 'Home' : p); return true; }
       if (/^dialog\./.test(cheie)) { const [b, fl] = cheie.split('#'); return deschideDialog(b, fl || null); }
+      if (cheie === 'lista.ChartTypeColumnInsertGallery') {
+        if (!activeazaFila('TabInsert')) return false;
+        const x = root.querySelector('[data-lh-suprafata="panglica.TabInsert"] [data-lh-id-mso="ChartTypeColumnInsertGallery"]');
+        return !!(x && listaRef(cheie, x));
+      }
+      if (/^panglica_context\./.test(cheie)) {
+        if (!grafice().length) { if (insereazaGrafic('Clustered Column') !== 'inserare_grafic') return false; } else { M.gr = { i: 0, parte: 'grafic' }; deseneazaGrafice(); }
+        return activeazaFila(cheie.slice(17));
+      }
       if (/^lista\./.test(cheie)) {
         const anc = { 'lista.AutoSum': 'AutoSumMenu_Dropdown', 'lista.Borders': 'BordersGallery_Dropdown' }[cheie];
         if (!anc || !activeazaFila('TabHome')) return false;
