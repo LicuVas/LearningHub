@@ -205,3 +205,11 @@ Cererea (18.11, 14:59, verbatim): „continua acum cu etapa 0. apoi mergi cu urm
 - Pe mașină: un EXCEL.EXE /automation -Embedding (pid 4692, 16:33:24) pornit de tools/gif_demo/verifica_banda.py
   --pe-ascuns (altă consolă, registrul de exersare) — NU e al nostru și nici al omului; neatins.
 - Constructorul 2 pornit: X10 graficele (m2-l11), E5 dacă încape, apoi pasul 7 complet singur.
+
+## 19.11.2026 ~19:00 — runda 9: constructorul 2 GATA_PENTRU_CRITIC, criticul 9 pornit (unghi aspect)
+- Constructorul 2: X10 (graficele) reparat, proba X10 15/15 picate -> 0/26; toată proba rundei 71 verificări, 1 picată (E5, neatins, rămas pentru runda 10).
+- Pasul 7 (masurare_pas7_c2.json = masurare.json): pornit 17:11:46, după ultima scriere sub aplicatii/ (excel.js 16:58:53), singur; O1 61, O2 13392, O3 21586, O4 50, O5 113, O7 343, O8 102, O9 34, porti 41 (doar cum_fac) = egal cu pornirea. O6 a depășit 1800 s (NECONCLUDENT), reluat singur --doar O6 = 0 (masurare_o6_c2.json).
+- Verificat de mine: ingheata --verifica 0; date personale în diff + fișiere noi 0; niciun EXCEL.EXE pornit.
+- Commit 78a6cb20 (punct de control). Criticul 9 pornit pe unghiul aspect: judecă K1, X10, E1-E5 (diff 30dbbe30 -- aplicatii), ieșirea runde/9/critic.md.
+- treaz repornit (6 ore, până ~01:00).
+- Urmează: rândul 11 în jurnal (oracole_dupa cu O6 = 0 din masurare_o6_c2.json), opreste.py (5/6), commit, suplimentul rundei 10, constructorul.

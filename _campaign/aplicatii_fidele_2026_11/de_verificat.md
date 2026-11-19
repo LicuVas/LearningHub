@@ -299,4 +299,14 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **R9-6** Excel, dump-uri UI Automation pentru `lista.ChartTypeLineInsertGallery` (Insert › Insert Line or Area Chart ▾),
   `lista.ChartTypePieInsertGallery` și lista Chart Design › Add Chart Element ▾ › Data Labels (laboratorul m2-l11, pașii 3 și 6;
   azi mesajul central). Plus: ce se vede în tabel cât graficul e ales (zonele sursă încadrate colorat).
+- [ ] **R9-7** Excel, un grafic ales: dublu clic pe titlul „Chart Title”. Apare cursorul în titlu (ce scrii se adaugă la titlul
+  vechi, cum spune lecția m2-l11) sau doar se alege titlul? (Simulatorul: dublu clic = un clic, titlul doar ales; criticul 9,
+  [FARA_REFERINTA] 5.)
+- [ ] **R9-8** Excel, graficul ales (nu titlul): Esc, Enter, apoi o literă. Ce se întâmplă cu fiecare (deselectare, intrare în
+  editarea titlului, nimic)? (Simulatorul: fără efect; criticul 9, [FARA_REFERINTA] 9.)
+- [ ] **R9-9** Excel, un grafic ales, Alt: literele KeyTips de pe Chart Design la lățime întreagă (grupurile ZL, ZS, ZD, ZT, ZO
+  din simulator) și, după Alt, N, C: ce rând din lista ▾ are focusul și ce alege ↓ + Enter. (Criticul 9, [FARA_REFERINTA] 8, 10.)
+- [ ] **R9-10** Excel, pictogramele butoanelor mari din Chart Design (Add Chart Element, Quick Layout, Change Colors, Switch
+  Row/Column, Select Data, Change Chart Type, Move Chart) și din Insert › Charts (Line, Pie, Hierarchy…): capturi la 100%,
+  pentru icoanele Fluent cerute de contract (I7). (Simulatorul: doar text, sau un pătrat gol; criticul 9, [FARA_REFERINTA] 4.)
 <!-- RUNDA9-EXCEL:END -->
