@@ -250,3 +250,22 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   zona folosită, nu după 40 × 26 de celule). Ce e despărțitorul [806,714,32,31] (⋮, trage lățimea filelor?). (Simulatorul: gri
   deschis, săgeți Fluent, cursorul proporțional cu grila desenată; despărțitorul gol.)
 <!-- RUNDA7-EXCEL:END -->
+
+## Runda 8 · Excel (K1-K6, X5, X8) — de lămurit (un minut fiecare, pe PC-ul cu Excel)
+<!-- RUNDA8-EXCEL:START -->
+- [ ] **R8-1** Excel, B2:B7 numere; în D2 scrii `=SUM(B2:B7)B2:B6` + Enter → fereastra „We found a typo…”. Apasă **No**: ce
+  urmează (altă fereastră? rămâi în editare cu formula ta?). Apoi din nou, apasă **Yes**: unde ajunge celula activă (D3?) și ce
+  arată D2 (valoarea sau #VALUE! / vărsare pe mai multe rânduri)? (Simulatorul: No = înapoi în editare cu formula neschimbată;
+  Yes = formula corectată primită, celula activă coboară, valoarea calculată de simulator.)
+- [ ] **R8-2** Excel, meniul de clic dreapta pe o celulă are sus caseta „Type to search…” (`uia_excel.json ›
+  meniu_contextual.celula › Edit MenuTextBoxAutomationId`). Apasă litera **C**: copiază (tasta de acces a lui Copy) sau scrie
+  „c” în caseta de căutare? Apoi ↓: pe ce rând ajunge alegerea (Cut sau caseta)? (Simulatorul: C = Copy, ↓ = Cut, primul rând.)
+- [ ] **R8-3** Excel, fereastra Sort Warning (C2:C3 aleasă + Sort A to Z): unde e focusul la deschidere (butonul Sort..., un buton
+  radio, Cancel)? Tab de 3 ori: pe ce controale trece? (Simulatorul: focusul pe cutia ferestrei; Tab: butonul radio ales,
+  Sort..., Cancel — ordinea arborelui UIA.)
+- [ ] **R8-4** Excel, fereastra Sort cu un nivel: Tab de 10 ori de la OK — pe ce controale trece focusul și în ce ordine?
+  (Simulatorul: ordinea arborelui UIA din `dialog.SortDialog`.)
+- [ ] [FARA_REFERINTA critic 7] **R8-5** Ctrl+PageDown / Ctrl+PageUp (lecția m1-l03:197: foaia din dreapta / stânga);
+  **R8-6** Alt+Enter în celulă (rând nou în aceeași celulă?); **R8-7** Ctrl+1 (fereastra Format Cells?); **R8-8** Ctrl+C / X / V /
+  B în timpul editării unei celule; **R8-9** File (Backstage) fără niciun registru deschis: care comenzi sunt gri?
+<!-- RUNDA8-EXCEL:END -->

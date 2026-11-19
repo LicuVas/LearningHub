@@ -162,7 +162,7 @@
   }
   /* funcțiile simulate: [minim, maxim de argumente]; un nume necunoscut dă #NAME? (ca în Excel) */
   const FN = {
-    ABS: [1, 1], AND: [1, 255], AVERAGE: [1, 255], AVERAGEIF: [2, 3], CONCAT: [1, 255], CONCATENATE: [1, 255], COUNT: [1, 255],
+    ABS: [1, 1], AND: [1, 255], AVEDEV: [1, 255], AVERAGE: [1, 255], AVERAGEIF: [2, 3], CONCAT: [1, 255], CONCATENATE: [1, 255], COUNT: [1, 255],
     COUNTA: [1, 255], COUNTBLANK: [1, 1], COUNTIF: [2, 2], IF: [2, 3], IFERROR: [2, 2], INT: [1, 1], LEFT: [1, 2], LEN: [1, 1],
     LOWER: [1, 1], MAX: [1, 255], MEDIAN: [1, 255], MID: [3, 3], MIN: [1, 255], MOD: [2, 2], NOT: [1, 1], OR: [1, 255],
     POWER: [2, 2], PRODUCT: [1, 255], PROPER: [1, 1], RIGHT: [1, 2], ROUND: [2, 2], ROUNDDOWN: [2, 2], ROUNDUP: [2, 2],
@@ -376,6 +376,8 @@
       switch (F2) {
         case 'SUM': return toate(true).reduce((s, x) => s + x, 0);
         case 'PRODUCT': return toate(true).reduce((s, x) => s * x, 1);
+        /* AVEDEV = media abaterilor absolute de la medie (scenarii_real/excel-av-tab.json: 9, 7, 8 → 0,666667) */
+        case 'AVEDEV': { const o = toate(true); if (!o.length) throw ERR('#NUM!'); const m = o.reduce((s, x) => s + x, 0) / o.length; return o.reduce((s, x) => s + Math.abs(x - m), 0) / o.length; }
         case 'AVERAGE': { const o = toate(true); if (!o.length) throw ERR('#DIV/0!'); return o.reduce((s, x) => s + x, 0) / o.length; }
         case 'MIN': { const o = toate(true); return o.length ? Math.min(...o) : 0; }
         case 'MAX': { const o = toate(true); return o.length ? Math.max(...o) : 0; }
@@ -516,6 +518,8 @@
           return 'acces_rapid:' + ((ctx.parinteUnit && ctx.parinteUnit.t === 'SplitButton') ? ctx.parinteUnit.e : n.e);
         }
         if (/^panglica/.test(ctx.cheie || '') && n.t === 'Button' && n.id && n.id in LANSATOR) return 'lansator:' + [ctx.fila, ctx.grup].filter(Boolean).join('/');
+        /* rândurile unei liste ▾ desenate din referință (lista.AutoSum, lista.Borders) = meniu:<rând> (§3) */
+        if (/^lista\./.test(ctx.cheie || '')) return (n.t === 'MenuItem' || n.t === 'ListItem') && n.e ? 'meniu:' + n.e : null;
         if (ctx.cheie === 'dialog.ColumnWidth' && n.t === 'Edit') return 'camp:latime_coloana';
         if (ctx.cheie === 'dialog.FileSaveAs') {
           if (n.t === 'Edit' && /^File name:?$/.test(n.e)) return 'camp:nume_fisier';
@@ -539,6 +543,11 @@
         if (ctx.cheie === 'bara_stare' && n.t === 'Text' && /^Cell Mode /.test(n.e || '')) { e.innerHTML = '<span class="lh-ap-text"></span>'; elMod = e; }
         if (ctx.cheie === 'bara_stare' && n.t === 'Text' && /^Zoom \d/.test(n.e || '')) elZoomText = e;
         if (ctx.cheie === 'bara_stare' && n.t === 'Button' && n.e === 'Normal') e.classList.add('lh-ap-apasat');
+        /* lista Borders din referință n-are idMso pe rânduri: idMso-ul (pentru efect și pictogramă) vine din BORD_LISTA, după etichetă */
+        if (ctx.cheie === 'lista.Borders' && n.t === 'MenuItem') {
+          const bl = BORD_LISTA.find(x => x[1] === n.e);
+          if (bl) { e.setAttribute('data-lh-id-mso', bl[0]); const ic = pang.icoana(I, bl[0], 16); if (ic && /^<svg|^<span/.test(ic)) e.insertAdjacentHTML('afterbegin', ic); }
+        }
       },
       editabil(n, ctx) { return (ctx.cheie === 'dialog.FileSaveAs' && n.t === 'Edit' && /^File name/.test(n.e)) || (ctx.cheie === 'dialog.ColumnWidth' && n.t === 'Edit'); }
     };
@@ -1094,6 +1103,7 @@
       e.poz += s.length;
       e.punct = false;
       e.propus = null;
+      e.pk = null;
       deseneazaSelectia();
     }
     /* Enter: Excel primește conținutul; o formulă greșită NU e primită (rămâne în editare — de_verificat R6-2) */
@@ -1108,7 +1118,7 @@
         else nou = { f: en };
       } else if (s === '=') ok = false;
       else if (s !== '') { const k = constanta(s); nou = { v: k.v }; if (k.ap) nou.ap = true; fn = k.fn || null; }
-      if (!ok) { mesajFormula(); return false; }
+      if (!ok) { if (!fereastraEroare(s)) mesajFormula(); return false; }
       M.edit = null;
       schimba('scriere', () => {
         if (nou) f.cel[e.a] = nou; else delete f.cel[e.a];
@@ -1125,6 +1135,48 @@
       return true;
     }
     function renunta() { M.edit = null; deseneazaSelectia(); }
+    /* ferestrele reale de eroare a formulei (uia_excel.json › dialog.eroare_formula*, runda acoperire după runda 7), în locul
+       mesajului central, DOAR pe cazurile capturate:
+       - „=SUM(A1,A2)” (virgula, separatorul englez, pe Excel românesc) → dialog.eroare_formula_2 „There's a problem with this
+         formula.” (scenarii_real/excel-separator-virgula.json: OK, ramane_in_editare true);
+       - prea puține argumente („=SU” + Tab + „A1:A3)” → SUBSTITUTE) → dialog.eroare_formula_3 „You've entered too few arguments
+         for this function.” (scenarii_real/excel-autocompletare-tab.json);
+       - o referință lipită de „)” („=SUM(B2:B7)B2:B6”) → dialog.eroare_formula „We found a typo … =SUM(B2:B7)*B2:B6 … accept
+         this correction?” (Yes cu focusul, No).
+       Altfel (ex. „=” singur, paranteză lipsă): mesajul central, ca înainte (fără referință). */
+    function motivFormula(text) { try { arbore(jetoane(text.slice(1), 'ro')); return null; } catch (e) { return (e && e.message) || 'alta'; } }
+    function fereastraEroare(text) {
+      const mo = motivFormula(text);
+      if (!mo) return false;
+      let cheie = null, corectat = null;
+      if (mo === 'argumente') cheie = 'dialog.eroare_formula_3';
+      else if (mo === 'rest') {
+        const re = /\)\s*(?=\$?[A-Za-z]{1,3}\$?\d)/g;
+        let m;
+        while (!corectat && (m = re.exec(text))) { const c = text.slice(0, m.index + 1) + '*' + text.slice(m.index + 1).replace(/^\s+/, ''); if (!motivFormula(c)) corectat = c; }
+        if (corectat) cheie = 'dialog.eroare_formula';
+      } else if (/,/.test(text.replace(/"[^"]*"/g, ''))) cheie = 'dialog.eroare_formula_2';
+      if (!cheie || !SUP[cheie] || !deschideDialog(cheie)) return false;
+      if (corectat) {
+        /* textul ferestrei arată formula corectată a elevului, nu pe cea din captură (=SUM(B2:B7)*B2:B6) */
+        dialog.corectat = corectat;
+        dialog.el.querySelectorAll('[data-lh-tip="Text"]').forEach(x => {
+          const t0 = x.getAttribute('data-lh-eticheta') || '';
+          if (!/typo/.test(t0)) return;
+          const nou = t0.replace(/\u202d=[^\n]*/, '\u202d' + corectat);
+          x.setAttribute('data-lh-eticheta', nou);
+          const sp = x.querySelector('.lh-ap-text') || x;
+          sp.textContent = nou;
+        });
+      }
+      const texte = [], butoane = [];
+      dialog.el.querySelectorAll('[data-lh-tip="Text"],[data-lh-tip="Button"]').forEach(x => {
+        if (x.closest('[data-lh-tip="TitleBar"]')) return;
+        (x.getAttribute('data-lh-tip') === 'Button' ? butoane : texte).push(x.getAttribute('data-lh-eticheta') || '');
+      });
+      M.mesaj = { titlu: 'Microsoft Excel', texte, butoane };
+      return true;
+    }
     function mesajFormula() {
       root.querySelectorAll('[data-lh-nesimulat]:not([data-lh-tip])').forEach(x => x.remove());
       const m = el('div', 'lh-ap-mesaj', { 'data-lh-nesimulat': 'formula', role: 'status' });
@@ -1150,7 +1202,10 @@
       deseneazaSelectia();
       return 'adresa_fixa';
     }
-    /* Tab în timp ce Excel arată lista funcțiilor (după „=SU”): completează prima funcție din listă, cu „(” */
+    /* Tab în timp ce Excel arată lista funcțiilor (după „=SU”): completează prima funcție din listă, cu „(”. Lista vizibilă nu
+       e capturată (de_verificat); prima funcție = prima în ordine alfabetică dintre cele simulate, ceea ce dă exact rezultatele
+       din Excel real: „=AV” → AVEDEV (scenarii_real/excel-av-tab.json), „=AVER” → AVERAGE (excel-aver-tab.json), „=SU” →
+       SUBSTITUTE (excel-autocompletare-tab.json). Critic runda 7, GRAV K4. */
     function completare() {
       const e = M.edit;
       if (!e || e.text.charAt(0) !== '=') return null;
@@ -1303,13 +1358,15 @@
       return 'imbinare_centrare';
     }
     /* AutoSum (excel-autosum-buton): =SUM(numerele de deasupra; altfel din stânga), în editare — Enter îl primește */
-    function autoSum() {
+    const SIGMA_FN = { Sum: 'SUM', Average: 'AVERAGE', 'Count Numbers': 'COUNT', Max: 'MAX', Min: 'MIN' };
+    function autoSum(fnx) {
+      const FX = fnx || 'SUM';
       const f = F(), s = f.sel;
       if (!unaSingura()) {
         const q = s.zone[s.zone.length - 1];
         const tinta2 = q.r1 + 1 < MAXR ? { r: q.r1 + 1, c: q.c0 } : null;
         if (!tinta2) return 'fara_efect';
-        schimba('scriere', () => { for (let c0 = q.c0; c0 <= q.c1; c0++) f.cel[adr(q.r1 + 1, c0)] = { f: '=SUM(' + adr(q.r0, c0) + ':' + adr(q.r1, c0) + ')' }; });
+        schimba('scriere', () => { for (let c0 = q.c0; c0 <= q.c1; c0++) f.cel[adr(q.r1 + 1, c0)] = { f: '=' + FX + '(' + adr(q.r0, c0) + ':' + adr(q.r1, c0) + ')' }; });
         actualizeaza();
         return 'suma_automata';
       }
@@ -1317,7 +1374,7 @@
       let zona = '';
       if (nr(a.r - 1, a.c)) { let r = a.r - 1; while (nr(r - 1, a.c)) r--; zona = adr(r, a.c) + ':' + adr(a.r - 1, a.c); }
       else if (nr(a.r, a.c - 1)) { let c0 = a.c - 1; while (nr(a.r, c0 - 1)) c0--; zona = adr(a.r, c0) + ':' + adr(a.r, a.c - 1); }
-      const t = '=SUM(' + zona + ')';
+      const t = '=' + FX + '(' + zona + ')';
       /* zona propusă e aleasă (scrisul sau tragerea elevului o înlocuiește) și încadrată punctat (lecția m2-l08:181);
          cursorul stă înaintea parantezei; Enter o primește (scenarii_real/excel-autosum-buton) */
       porneste(adr(a.r, a.c), t, 'Enter', t.length - 1, zona ? [t.length - 1 - zona.length, t.length - 1] : null, zona ? zonaDin(zona) : null);
@@ -1522,7 +1579,9 @@
     function sortDinDialog() {
       const S0 = dialog.sort;
       if (!S0) { inchideDialog(); return I.nesimulat('Sort'); }
-      if (S0.niv.some(n => n.c == null)) return I.nesimulat('Sort');
+      /* un nivel fără coloană: fereastra de eroare peste Sort (uia_excel.json › dialog.SortDialog_eroare_nivel_gol: „All sort
+         criteria must have a column or row specified…”, OK cu focusul); Sort rămâne deschisă */
+      if (S0.niv.some(n => n.c == null)) return deschideDialog('dialog.SortDialog_eroare_nivel_gol', null, true) ? 'eroare_sortare' : I.nesimulat('Sort');
       inchideDialog();
       if (!S0.niv.length) return 'anulare';
       sorteazaZona(F(), S0.q, S0.antet, S0.niv);
@@ -1768,6 +1827,68 @@
       meniu = m;
       return 'meniu_contextual';
     }
+    /* ---- o listă ▾ a panglicii desenată din referință (uia_excel.json › lista.<…>: lista.AutoSum, lista.Borders), sub
+       butonul ei: lista.AutoSum [1048,106.4] sub SplitButton AutoSum [1053,83,48,24] → 5 px la stânga, lipită dedesubt */
+    function listaRef(cheie, anc) {
+      inchideMeniu();
+      if (!SUP[cheie]) return null;
+      const m = desen(cheie);
+      const R = root.getBoundingClientRect(), b = (anc.closest('[data-lh-tip="SplitButton"]') || anc).getBoundingClientRect();
+      const w = SUP[cheie].r[2], h = SUP[cheie].r[3];
+      m.setAttribute('data-lh-suprafata', cheie);
+      m.setAttribute('role', 'menu');
+      m.classList.add('lh-ap-x-meniu', 'lh-ap-x-ref');
+      if (cheie === 'lista.Borders') m.classList.add('lh-ap-x-meniu-borduri');
+      m.style.left = Math.max(0, Math.min(b.left - R.left - 5, R.width - w - 2)) + 'px';
+      m.style.top = Math.max(0, Math.min(b.bottom - R.top, R.height - h - 2)) + 'px';
+      root.appendChild(m);
+      meniu = m;
+      return 'meniu_derulant';
+    }
+    /* ---- tastele cu un meniu sau o listă deschisă (critic runda 7, GRAV K3). Regula Office pentru meniuri (support.microsoft.com
+       „Keyboard shortcuts in Excel”, aceeași ca în word.js › tastaLista): ↓/↑ mută alegerea, Enter apasă rândul ales, Esc
+       închide; litera de acces a rândului (uia_excel.json › meniu_contextual.* / lista.*: AccessKey, ultima literă a șirului
+       „Alt, H, U, A”) îl apasă. Orice altă tastă e fără efect: nu ajunge în foaia din spate. Enter / litera emit evenimentul
+       cu ținta rândului și `activat` = rândul (§4), ca asistentul să vadă același pas ca la clic. */
+    function randuriMeniu() {
+      if (!meniu) return [];
+      return [...meniu.querySelectorAll('[data-lh-tip="MenuItem"][data-lh-tinta],[data-lh-tip="ListItem"][data-lh-tinta]')]
+        .filter(x => L._vizibil(x) && !(x.__nod && x.__nod.a === 0) && x.getAttribute('aria-disabled') !== 'true');
+    }
+    function marcheazaRand(x) {
+      if (!meniu) return;
+      meniu.querySelectorAll('.lh-ap-ales').forEach(y => y.classList.remove('lh-ap-ales'));
+      if (x) x.classList.add('lh-ap-ales');
+      meniu.__ales = x || null;
+    }
+    const literaRand = x => { const ta = String((x.__nod && x.__nod.ta) || '').split(',').pop().replace(/\s+/g, ''); return ta.length === 1 ? ta.toUpperCase() : null; };
+    function apasaRand(x) {
+      const t = L._canon(x);
+      I.activat = t;
+      I.tintaTasta = t;
+      return I.la.clic(t, { target: x, clientX: NaN, clientY: NaN, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false, button: 0, preventDefault() {} }, 1, 'tasta');
+    }
+    function tastaMeniu(e, g) {
+      const k = e.key, rs = randuriMeniu();
+      e.preventDefault();
+      if (k === 'Escape') { inchideMeniu(); I.focus(); return 'inchidere_meniu'; }
+      if ((k === 'ArrowDown' || k === 'ArrowUp') && !e.altKey) {
+        const i = rs.indexOf(meniu.__ales);
+        marcheazaRand(rs[k === 'ArrowDown' ? Math.min(rs.length - 1, i + 1) : Math.max(0, i - 1)]);
+        if (meniu.__ales) I.tintaTasta = L._canon(meniu.__ales);
+        return 'mutare_in_meniu';
+      }
+      if (k === 'Enter' || k === ' ') {
+        const x = meniu.__ales;
+        if (!x) { inchideMeniu(); I.focus(); return 'inchidere_meniu'; }
+        return apasaRand(x);
+      }
+      if (g === 'tastare' && !e.ctrlKey && !e.metaKey && /^[a-z0-9]$/i.test(k)) {
+        const x = rs.find(r => literaRand(r) === k.toUpperCase());
+        if (x) return apasaRand(x);
+      }
+      return 'fara_efect';
+    }
     function focusStrat() {
       const s = dialog ? dialog.el : backstage ? backstage.strat : null;
       if (!s) { I.focus(); return; }
@@ -1775,13 +1896,15 @@
       if (!s.hasAttribute('tabindex')) s.setAttribute('tabindex', '-1');
       try { s.focus({ preventScroll: true }); } catch (e) { /* */ }
     }
-    function inchideDialog() { if (!dialog) return; dialog.strat.remove(); dialog = null; focusStrat(); }
-    function deschideDialog(baza, fila) {
+    /* o fereastră deschisă PESTE alta (eroarea „All sort criteria…” peste Sort) o ține minte în `sub`; închiderea ei o readuce */
+    function inchideDialog() { if (!dialog) return; if (/^dialog\.eroare_formula/.test(dialog.baza)) M.mesaj = null; const sub = dialog.sub || null; dialog.strat.remove(); dialog = sub; focusStrat(); }
+    function deschideDialog(baza, fila, peste) {
       const info = date.dialoguri[baza];
       if (!info) return false;
       inchideMeniu();
-      if (dialog) inchideDialog();
-      dialog = { baza, strat: stratNou('lh-ap-strat-dialog'), fila: null };
+      const sub = peste && dialog ? dialog : null;
+      if (dialog && !sub) inchideDialog();
+      dialog = { baza, strat: stratNou('lh-ap-strat-dialog'), fila: null, sub };
       arataFilaDialog(fila || null);
       return true;
     }
@@ -1826,7 +1949,7 @@
       }
       const nf = s.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
       if (nf) { nf.value = (M.nume ? M.nume : BOOK + '.xlsx'); setTimeout(() => { try { nf.focus({ preventScroll: true }); nf.select(); } catch (e) { /* */ } }, 0); }
-      else { s.setAttribute('tabindex', '-1'); setTimeout(() => { if (dialog && dialog.el === s) focusStrat(); }, 0); }
+      else { s.setAttribute('tabindex', '-1'); if (!focusInitial(s)) setTimeout(() => { if (dialog && dialog.el === s) focusStrat(); }, 0); }
     }
     function marcheazaFolder() {
       if (!dialog || !dialog.el) return;
@@ -1858,12 +1981,136 @@
       actualizeaza();
       return 'latime_coloana';
     }
+    /* ---- tastatura în ferestre (critic runda 7, GRAV K1 + K2) ----
+       Focusul la deschidere, din referință: Sort → OK (uia_excel.json › acoperire_r7.fapte.d_sort.focus_la_deschidere);
+       ferestrele de eroare → Yes / OK și „Save this file” / „Save your changes” → File name (uia_excel.json › suprafete.<cheie>.focus).
+       Tab / Shift+Tab: prin controalele ferestrei, în ordinea arborelui UIA din referință (fără bara de titlu; un grup de butoane
+       radio = o singură oprire, pe cel ales); ordinea Tab a Excel-ului real NU e capturată separat (contra.md). Enter = butonul cu
+       focusul, altfel butonul implicit (OK / Save / Sort... / Yes); Space = controlul cu focusul; ↑/↓ mută alegerea într-un
+       grup radio; Alt+↓ deschide lista casetei din Sort (ComboBox › Open „Alt+Down Arrow”), ↑/↓ o parcurg, Enter alege, Esc o
+       închide. Enter / Space trec prin ACELAȘI drum ca clicul și pun `activat` = ținta butonului (§4), iar ținta evenimentului
+       = focusul din momentul tastei (cârligul I.tintaTasta din aplicatii.js). */
+    const FOCUS0 = { 'dialog.SortDialog': 'OK', 'dialog.SortDialog_eroare_nivel_gol': 'OK', 'dialog.eroare_formula': 'Yes',
+      'dialog.eroare_formula_2': 'OK', 'dialog.eroare_formula_3': 'OK' };
+    const IMPLICIT = ['OK', 'Save', 'Sort...', 'Yes', 'Insert'];
+    const esteButon = x => !!x && /^(Button|CheckBox|RadioButton)$/.test(x.getAttribute('data-lh-tip') || '');
+    function controaleDialog() {
+      if (!dialog || !dialog.el) return [];
+      return [...dialog.el.querySelectorAll('[data-lh-tip]')].filter(x => {
+        const t = x.getAttribute('data-lh-tip');
+        if (!/^(Button|CheckBox|RadioButton|ComboBox|Edit|TabItem)$/.test(t) || x.closest('[data-lh-tip="TitleBar"]') || !L._vizibil(x)) return false;
+        if (x.__nod && x.__nod.a === 0) return false;
+        const p = x.parentElement && x.parentElement.closest('[data-lh-tip="ComboBox"]');
+        if (p && dialog.el.contains(p)) return false;
+        if (t === 'Button' && !x.getAttribute('data-lh-eticheta')) return false;
+        if (t === 'RadioButton') {
+          const fr = [...x.parentElement.children].filter(y => y.getAttribute('data-lh-tip') === 'RadioButton');
+          const ales = fr.find(y => y.getAttribute('aria-checked') === 'true');
+          if (ales && ales !== x) return false;
+          if (!ales && fr[0] !== x) return false;
+        }
+        return true;
+      });
+    }
+    function focusControl(x) {
+      if (!x) return;
+      const t = x.querySelector('input:not([readonly])') || x;
+      if (t === x && !x.hasAttribute('tabindex')) x.setAttribute('tabindex', '-1');
+      try { t.focus({ preventScroll: true }); if (t.tagName === 'INPUT' && t.select) t.select(); } catch (z) { /* */ }
+    }
+    function focusInitial(s0) {
+      const et = FOCUS0[dialog.baza];
+      const x = et && [...s0.querySelectorAll('[data-lh-tip="Button"]')].find(b => b.getAttribute('data-lh-eticheta') === et && !b.closest('[data-lh-tip="TitleBar"]'));
+      if (x) { setTimeout(() => { if (dialog && dialog.el === s0) focusControl(x); }, 0); return true; }
+      return false;
+    }
+    function tabDialog(inapoi) {
+      const cs = controaleDialog();
+      if (!cs.length) return 'fara_efect';
+      const a = document.activeElement;
+      let i = cs.findIndex(x => x === a || x.contains(a));
+      i = i < 0 ? (inapoi ? cs.length - 1 : 0) : (i + (inapoi ? -1 : 1) + cs.length) % cs.length;
+      focusControl(cs[i]);
+      return 'mutare_focus';
+    }
+    function butonImplicit() {
+      const bs = [...dialog.el.querySelectorAll('[data-lh-tip="Button"]')].filter(x => !x.closest('[data-lh-tip="TitleBar"]') && L._vizibil(x) && x.closest('[data-lh-tinta]'));
+      for (const n of IMPLICIT) { const b = bs.find(x => x.getAttribute('data-lh-eticheta') === n); if (b) return b; }
+      return null;
+    }
+    const evFals = x => ({ target: x, clientX: NaN, clientY: NaN, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false, button: 0, preventDefault() {} });
+    function apasaInDialog(x) {
+      const t = L._canon(x.closest('[data-lh-tinta]') || x);
+      I.activat = t;
+      return I.la.clic(t, evFals(x), 1, 'tasta') || 'fara_efect';
+    }
+    function tastaDialog(e, g, inCamp) {
+      const k = e.key, a = document.activeElement;
+      const fx = a && dialog.el && dialog.el.contains(a) ? a : null;
+      const ctl = fx && fx.closest('[data-lh-tip]');
+      if (fx && !inCamp) I.tintaTasta = L._tintaDin(I, fx);
+      /* lista deschisă a unei casete din Sort */
+      const LS = dialog.sort && dialog.sort.lista;
+      if (LS) {
+        const its = [...LS.el.querySelectorAll('.lh-ap-x-lista-el')];
+        let i = its.findIndex(x => x.classList.contains('lh-ap-ales'));
+        if (k === 'ArrowDown' || k === 'ArrowUp') {
+          e.preventDefault();
+          i = k === 'ArrowDown' ? Math.min(its.length - 1, i + 1) : Math.max(0, i - 1);
+          its.forEach((x, j) => x.classList.toggle('lh-ap-ales', j === i));
+          return 'mutare_in_lista';
+        }
+        if (k === 'Enter') { e.preventDefault(); if (its[i]) { I.activat = L._canon(its[i].closest('[data-lh-tinta]') || its[i]); return I.la.clic(I.activat, evFals(its[i]), 1, 'tasta') || 'alegere'; } inchideListaSort(); return 'inchidere_meniu'; }
+        if (k === 'Escape') { e.preventDefault(); inchideListaSort(); return 'inchidere_meniu'; }
+      }
+      if (k === 'Escape') { inchideDialog(); return 'anulare'; }
+      if (k === 'Tab') { e.preventDefault(); return tabDialog(e.shiftKey); }
+      if (k === 'Enter' || (k === ' ' && esteButon(ctl))) {
+        e.preventDefault();
+        const b = esteButon(ctl) ? ctl : butonImplicit();
+        return b ? apasaInDialog(b) : implicitDialog();
+      }
+      if (/^Arrow/.test(k)) {
+        if (e.altKey && (k === 'ArrowDown' || k === 'ArrowUp') && ctl && ctl.getAttribute('data-lh-tip') === 'ComboBox' && dialog.sort && ctl.closest('[data-lh-nivel]')) {
+          e.preventDefault();
+          const niv = +ctl.closest('[data-lh-nivel]').getAttribute('data-lh-nivel');
+          dialog.sort.ales = niv;
+          return deschideListaSort(niv, ctl.getAttribute('data-lh-camp'), ctl);
+        }
+        if (ctl && ctl.getAttribute('data-lh-tip') === 'RadioButton') {
+          e.preventDefault();
+          const fr = [...ctl.parentElement.children].filter(y => y.getAttribute('data-lh-tip') === 'RadioButton');
+          const j = fr.indexOf(ctl) + (k === 'ArrowDown' || k === 'ArrowRight' ? 1 : -1);
+          const x = fr[Math.max(0, Math.min(fr.length - 1, j))];
+          const r = I.la.clic(L._canon(x.closest('[data-lh-tinta]') || x), evFals(x), 1, 'tasta');
+          focusControl(x);
+          return r || 'alegere';
+        }
+        return inCamp ? null : 'fara_efect';
+      }
+      return inCamp ? null : 'fara_efect';
+    }
+    /* răspunsul la o fereastră de eroare a formulei: OK / Închidere / No = înapoi în editare, cu formula neschimbată
+       (excel-separator-virgula / excel-autocompletare-tab: ramane_in_editare true); Yes = corectura primită, ca la Enter
+       (ce face No și unde merge celula după Yes: de_verificat RUNDA8 R8-1) */
+    function raspunsEroare(v) {
+      const corectat = dialog && dialog.corectat;
+      inchideDialog();
+      if (v !== 'Yes' || !corectat || !M.edit) { deseneazaSelectia(); return 'anulare'; }
+      const a = pa(M.edit.a);
+      M.edit.text = corectat; M.edit.poz = corectat.length; M.edit.pk = null;
+      if (!confirma()) { deseneazaSelectia(); return 'formula_neprimita'; }
+      alege(a.r + 1, a.c);
+      return 'confirmare';
+    }
     function implicitDialog() {
       if (!dialog) return null;
       if (dialog.baza === 'dialog.FileSaveAs') return salveazaDinDialog();
       if (dialog.baza === 'dialog.ColumnWidth') return latimeDinDialog();
       if (dialog.baza === 'dialog.SortDialog') return sortDinDialog();
       if (dialog.baza === 'dialog.SortWarning') return sortDinAvertizare();
+      if (/^dialog\.eroare_formula/.test(dialog.baza)) return raspunsEroare(dialog.baza === 'dialog.eroare_formula' ? 'Yes' : 'OK');
+      if (dialog.baza === 'dialog.SortDialog_eroare_nivel_gol') { inchideDialog(); return 'inchidere'; }
       const b = dialog.baza.replace(/^dialog\./, '');
       inchideDialog();
       return I.nesimulat((date.dialoguri['dialog.' + b] || {}).titlu || b);
@@ -1935,7 +2182,8 @@
         case 'Undo': return anuleaza();
         case 'Redo': return reface();
         case 'CellFillColorPicker': return umpleCuloare('FFFF00');
-        case 'BordersGallery_Dropdown': return meniuBorduri(elx);
+        case 'BordersGallery_Dropdown': return SUP['lista.Borders'] ? listaRef('lista.Borders', elx) : meniuBorduri(elx);
+        case 'AutoSumMenu_Dropdown': return listaRef('lista.AutoSum', elx) || I.nesimulat('AutoSum');
         case 'PercentStyle': return procent();
         case 'WrapText': return incadreaza();
       }
@@ -1972,7 +2220,7 @@
         josFacut = true;
         if (M.edit) {
           if (M.edit.a === adr(p.r, p.c)) { ancora = null; return 'selectie'; }
-          if (poatePuncta() || (M.edit.ales && M.edit.text.charAt(0) === '=')) { insereaza(adr(p.r, p.c)); M.edit.punct = true; M.edit.propus = { r0: p.r, c0: p.c, r1: p.r, c1: p.c }; ancora = { punct: true, de: p }; deseneazaSelectia(); I.focus(); return 'selectie'; }
+          if (poatePuncta() || (M.edit.ales && M.edit.text.charAt(0) === '=')) { insereaza(adr(p.r, p.c)); M.edit.punct = true; M.edit.pk = { i: M.edit.poz - adr(p.r, p.c).length, j: M.edit.poz, r: p.r, c: p.c }; M.edit.propus = { r0: p.r, c0: p.c, r1: p.r, c1: p.c }; ancora = { punct: true, de: p }; deseneazaSelectia(); I.focus(); return 'selectie'; }
           if (!confirma()) { ancora = null; return 'selectie'; }
         }
         M.tabCol = null;
@@ -2028,6 +2276,7 @@
       if (ancora.punct) {
         const e2 = M.edit;
         if (!e2) return;
+        e2.pk = null;
         const a0 = adr(ancora.de.r, ancora.de.c), z2 = p.r === ancora.de.r && p.c === ancora.de.c ? a0 : zonaText({ r0: Math.min(p.r, ancora.de.r), c0: Math.min(p.c, ancora.de.c), r1: Math.max(p.r, ancora.de.r), c1: Math.max(p.c, ancora.de.c) });
         const i = e2.text.lastIndexOf(ancora.ultim || a0, e2.poz);
         if (i >= 0) { const u = ancora.ultim || a0; e2.text = e2.text.slice(0, i) + z2 + e2.text.slice(i + u.length); e2.poz = i + z2.length; ancora.ultim = z2; e2.propus = zonaDin(z2); deseneazaSelectia(); }
@@ -2106,6 +2355,7 @@
       if (fel === 'arbore' && dialog && dialog.baza === 'dialog.FileSaveAs') { dialog.folder = v; M.folder = v; marcheazaFolder(); return 'folder'; }
       if (fel === 'fila_dialog' && dialog) { arataFilaDialog((date.dialoguri[dialog.baza].file.some(x => x.fila === v) && v !== date.dialoguri[dialog.baza].file[0].fila) ? v : null); return 'fila_dialog'; }
       if (fel === 'dialog_salvare' && dialog) return v === 'Save' ? salveazaDinDialog() : (inchideDialog(), 'anulare');
+      if (fel === 'fereastra' && dialog && /^dialog\.eroare_formula/.test(dialog.baza)) return raspunsEroare(v);
       if (fel === 'fereastra' && dialog) {
         if (/^(OK|Insert)$/.test(v)) return implicitDialog();
         if (/^(Cancel|Închidere|Close)$/.test(v)) { inchideDialog(); return 'anulare'; }
@@ -2114,8 +2364,11 @@
       if (fel === 'camp') return 'camp';
       if (dialog && dialog.strat.contains(elx)) return I.nesimulat(v);
       if (fel === 'meniu' && meniu && meniu.contains(elx)) {
-        const idm = elx.getAttribute('data-lh-id-mso');
+        const idm = elx.getAttribute('data-lh-id-mso'), lista = meniu.getAttribute('data-lh-suprafata');
         inchideMeniu();
+        /* lista ▾ a lui Σ (uia_excel.json › lista.AutoSum; acoperire_r7.fapte: Average pe B8 → =AVERAGE(B2:B7)): funcția
+           rândului, cu zona propusă aleasă, ca la Σ; More Functions... = mesajul central */
+        if (lista === 'lista.AutoSum') return SIGMA_FN[v] ? (M.edit ? 'fara_efect' : autoSum(SIGMA_FN[v])) : I.nesimulat(v);
         if (idm && BORD_EFECT.has(idm)) return borduri(idm);
         if (/^Cut$/.test(v)) return copiaza(true);
         if (/^Copy$/.test(v)) return copiaza(false);
@@ -2229,20 +2482,11 @@
           if (k === 'Escape') { inNume.blur(); actualizeazaBare(); I.focus(); return 'anulare'; }
           return null;
         }
-        if (dialog && k === 'Escape') { inchideDialog(); return 'anulare'; }
-        if (dialog && k === 'Enter' && dialog.strat.contains(e.target)) {
-          e.preventDefault();
-          if (dialog.baza === 'dialog.FileSaveAs') I.activat = 'dialog_salvare:Save';
-          return implicitDialog();
-        }
+        if (dialog && dialog.strat.contains(e.target)) return tastaDialog(e, g, true);
         return null;
       }
-      if (dialog) {
-        if (k === 'Escape') { inchideDialog(); return 'anulare'; }
-        if (k === 'Enter') { e.preventDefault(); return implicitDialog(); }
-        return 'fara_efect';
-      }
-      if (meniu && k === 'Escape') { inchideMeniu(); return 'inchidere_meniu'; }
+      if (dialog) return tastaDialog(e, g, false);
+      if (meniu) return tastaMeniu(e, g);
       if (backstage) { if (k === 'Escape') { inchideBackstage(); return 'inapoi'; } return 'fara_efect'; }
       const ctrl = e.ctrlKey || e.metaKey;
       if (REG.gol) {
@@ -2278,14 +2522,31 @@
           return 'confirmare';
         }
         if (k === 'Escape') { renunta(); return 'anulare'; }
-        if (g === 'tasta_f2') { ed.mod = ed.mod === 'Edit' ? 'Enter' : 'Edit'; deseneazaSelectia(); return 'mod_editare'; }
+        if (g === 'tasta_f2') { ed.mod = ed.mod === 'Edit' ? 'Enter' : 'Edit'; ed.pk = null; ed.punct = false; deseneazaSelectia(); return 'mod_editare'; }
         if (g === 'tasta_f4') { e.preventDefault(); return f4(); }
-        if (k === 'Backspace') { e.preventDefault(); if (stergeAles(ed)) ed.propus = null; else if (ed.poz > 0) { ed.text = ed.text.slice(0, ed.poz - 1) + ed.text.slice(ed.poz); ed.poz--; } deseneazaSelectia(); return 'stergere_inapoi'; }
-        if (k === 'Delete') { e.preventDefault(); if (stergeAles(ed)) ed.propus = null; else ed.text = ed.text.slice(0, ed.poz) + ed.text.slice(ed.poz + 1); deseneazaSelectia(); return 'stergere_inainte'; }
+        if (k === 'Backspace') { e.preventDefault(); ed.pk = null; ed.punct = false; if (stergeAles(ed)) ed.propus = null; else if (ed.poz > 0) { ed.text = ed.text.slice(0, ed.poz - 1) + ed.text.slice(ed.poz); ed.poz--; } deseneazaSelectia(); return 'stergere_inapoi'; }
+        if (k === 'Delete') { e.preventDefault(); ed.pk = null; ed.punct = false; if (stergeAles(ed)) ed.propus = null; else ed.text = ed.text.slice(0, ed.poz) + ed.text.slice(ed.poz + 1); deseneazaSelectia(); return 'stergere_inainte'; }
         if (/^Arrow/.test(k)) {
           e.preventDefault();
           if (ed.mod === 'Edit' && (k === 'ArrowLeft' || k === 'ArrowRight')) { ed.ales = null; ed.poz = Math.max(0, Math.min(ed.text.length, ed.poz + (k === 'ArrowLeft' ? -1 : 1))); deseneazaSelectia(); return 'mutare_cursor'; }
           if (ed.mod === 'Edit') return 'fara_efect';
+          /* modul Point (critic runda 7, GRAV K5): într-o formulă, după un operator (= + - * / ( ; …), săgeata scrie adresa
+             celulei vecine celei editate; apăsările următoare o mută (scenarii_real/excel-point-egal-sus.json: „=” + ↑ + Enter →
+             B5 = „=B4”; excel-point-plus-dreapta.json: „=B2+” + → + Enter → „=B2+E2”). Bara de stare: „Point”. */
+          if (!ctrl && !e.shiftKey && ed.text.charAt(0) === '=' && (ed.pk || poatePuncta())) {
+            const d = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[k];
+            const b0 = ed.pk || pa(ed.a);
+            const r = Math.max(0, Math.min(MAXR - 1, b0.r + d[0])), c0 = Math.max(0, Math.min(MAXC - 1, b0.c + d[1])), s2 = adr(r, c0);
+            if (ed.pk) ed.text = ed.text.slice(0, ed.pk.i) + s2 + ed.text.slice(ed.pk.j);
+            else { stergeAles(ed); ed.pk = { i: ed.poz }; ed.text = ed.text.slice(0, ed.poz) + s2 + ed.text.slice(ed.poz); }
+            Object.assign(ed.pk, { j: ed.pk.i + s2.length, r, c: c0 });
+            ed.poz = ed.pk.j;
+            ed.punct = true;
+            ed.propus = { r0: r, c0, r1: r, c1: c0 };
+            vedeCelula(r, c0);
+            deseneazaSelectia();
+            return 'referinta';
+          }
           /* modul Enter: săgeata primește conținutul și mută (excel-sageata-confirma) */
           const a = pa(ed.a);
           if (!confirma()) { deseneazaSelectia(); return 'formula_neprimita'; }
@@ -2294,7 +2555,7 @@
           alege(a.r + d[0], a.c + d[1]);
           return 'confirmare';
         }
-        if (k === 'Home' || k === 'End') { e.preventDefault(); ed.ales = null; ed.poz = k === 'Home' ? 0 : ed.text.length; deseneazaSelectia(); return 'mutare_cursor'; }
+        if (k === 'Home' || k === 'End') { e.preventDefault(); ed.pk = null; ed.punct = false; ed.ales = null; ed.poz = k === 'Home' ? 0 : ed.text.length; deseneazaSelectia(); return 'mutare_cursor'; }
         if (ctrl && g === 'ctrl_z') { renunta(); return 'anulare'; }
         if (ctrl && g === 'ctrl_a') { e.preventDefault(); return 'fara_efect'; }
         return 'fara_efect';
@@ -2363,11 +2624,43 @@
       if (g === 'tasta_backspace') { const a = F().sel.activa; porneste(adr(a.r, a.c), '', 'Enter'); return 'editare'; }
       return golesteContinut();
     };
+    /* ---- Alt + literă într-o fereastră (critic runda 7, GRAV K1): tasta de acces din referință (uia_excel.json › dialog.* ›
+       AccessKey: Sort Add Level „ALT+A”, Delete Level „ALT+D”, Copy Level „ALT+C”, Options „ALT+O”, My data has headers „ALT+h”;
+       Sort Warning Sort... „Alt+S”, Expand „Alt+E”, Continue „Alt+C”; Column Width „ALT+C”; Save As File name „ALT+n”, Save as
+       type „ALT+t”, Save „Alt+s”). Butonul / caseta de bifat / butonul radio se apasă ca la clic; caseta primește focusul. Un
+       eveniment tasta_acces (§4) cu ținta comenzii; fără potrivire: tasta_acces „fara_efect”. Același mecanism ca word.js. */
+    root.addEventListener('keydown', e => {
+      if (!dialog || !dialog.el || !e.altKey || e.ctrlKey || e.metaKey || !/^Key[A-Z]$/.test(e.code || '')) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const re = new RegExp('^alt\\+' + e.code.slice(3) + '$', 'i');
+      const cand = [...dialog.el.querySelectorAll('[data-lh-tip]')].filter(x => x.__nod && re.test(String(x.__nod.ta || '').replace(/\s+/g, '')) && L._vizibil(x));
+      const x = cand.find(c => esteButon(c)) || cand.find(c => /^(ComboBox|Edit)$/.test(c.getAttribute('data-lh-tip')));
+      const ina = I.stare();
+      if (!x) { I.emite('tasta_acces', 'fara_efect', L._tintaDin(I, document.activeElement), ina); return; }
+      let act, t;
+      if (esteButon(x)) {
+        t = L._canon(x.closest('[data-lh-tinta]') || x);
+        act = I.la.clic(t, evFals(x), 1, 'tasta_acces');
+        if (dialog && dialog.el && dialog.el.contains(x)) focusControl(x);
+      } else {
+        focusControl(x);
+        t = L._tintaDin(I, x.querySelector('input') || x);
+        act = 'focus_camp';
+      }
+      I.emite('tasta_acces', act || 'tasta_acces', t, ina);
+    }, true);
     /* plasa oracolelor (CONVENTIE_ARBORE.md §4.6): deschide o suprafață fără gestul ei */
     I.deschideSuprafata = cheie => {
       if (/^panglica\./.test(cheie)) return activeazaFila(cheie.slice(9));
       if (/^backstage\./.test(cheie)) { const p = cheie.slice(10); deschideBackstage(p === 'nav' || p === 'cadru' ? 'Home' : p); return true; }
       if (/^dialog\./.test(cheie)) { const [b, fl] = cheie.split('#'); return deschideDialog(b, fl || null); }
+      if (/^lista\./.test(cheie)) {
+        const anc = { 'lista.AutoSum': 'AutoSumMenu_Dropdown', 'lista.Borders': 'BordersGallery_Dropdown' }[cheie];
+        if (!anc || !activeazaFila('TabHome')) return false;
+        const x = root.querySelector('[data-lh-suprafata="panglica.TabHome"] [data-lh-id-mso="' + anc + '"]');
+        return !!(x && listaRef(cheie, x));
+      }
       if (/^meniu_contextual\./.test(cheie)) { const R = celEl.B2 ? celEl.B2.getBoundingClientRect() : root.getBoundingClientRect(); return !!meniuContextual(cheie, R.left + 4, R.top + 4); }
       return false;
     };

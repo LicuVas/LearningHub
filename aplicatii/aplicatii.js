@@ -368,12 +368,17 @@
       const t0 = inCamp && r.contains(e.target) ? tintaDin(I, e.target) : null;
       I.ultimaActiune = null;
       I.activat = null;
+      /* opțional (doar aplicațiile care îl pun, azi Excel): ținta focusului citită de aplicație ÎNAINTE ca tasta să închidă
+         fereastra / meniul (§4: „la taste: ținta focusului” din MOMENTUL tastei; critic runda 7, GRAV K2). Word nu-l pune. */
+      I.tintaTasta = null;
       let act = null;
       if (I.la && I.la.tasta) act = I.la.tasta(e, g, inCamp);
       const extra = I.activat ? { activat: I.activat } : null;
       I.activat = null;
+      const tAp = I.tintaTasta;
+      I.tintaTasta = null;
       if (!inCamp && (e.ctrlKey || e.metaKey || e.altKey || /^F\d/.test(e.key) || e.key === 'Tab')) e.preventDefault();
-      const t = t0 || tintaDin(I, document.activeElement && r.contains(document.activeElement) ? document.activeElement : null);
+      const t = t0 || tAp || tintaDin(I, document.activeElement && r.contains(document.activeElement) ? document.activeElement : null);
       if (inCamp) setTimeout(() => emite(I, g, act || I.ultimaActiune || g, t, ina, extra), 0);
       else emite(I, g, act || I.ultimaActiune || g, t, ina, extra);
     });
