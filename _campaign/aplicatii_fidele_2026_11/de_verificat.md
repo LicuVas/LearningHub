@@ -150,3 +150,26 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **R5-6** Word, F12 → **PDF (*.pdf)**: care buton radio „Optimize for:” e ales la deschidere (Standard?) — referința are
   `b = None` pe amândouă. (Simulatorul: niciunul marcat până la primul clic / Alt+A / Alt+M.)
 <!-- RUNDA5-WORD:END -->
+
+## Runda 6 · Excel în biblioteca centrală — de lămurit (un minut fiecare, pe PC-ul cu Excel)
+<!-- RUNDA6-EXCEL:START -->
+- [ ] **R6-1** Excel, B1 activă, A1:A3 = 4, 5, 6: tastezi `=SUM(A1,A2)` și Enter. Apare o fereastră (ce scrie, ce butoane)
+  sau Excel rămâne doar în editare? (`excel-separator-virgula` are `mod_probat: false`.) (Simulatorul: rămâne în editare,
+  fără mesaj, ca citirea de atunci.)
+- [ ] **R6-2** Excel, A4 activă: tastezi `=SU`. Ce funcție e aleasă primă în lista care apare (SUBSTITUTE?), iar după Tab ce
+  scrie în celulă? (`excel-autocompletare-tab`, `mod_probat: false`.) (Simulatorul: Tab scrie „=SUBSTITUTE(”, prima funcție
+  în ordine alfabetică din cele simulate; cu `A1:A3)` + Enter rămâne în editare.)
+- [ ] **R6-3** Excel, o celulă goală: tastezi `7.1`, `7.9`, `7.12` și Enter. Ce text arată celula (luna scurtă: „ian”,
+  „sept”…?). Doar „mai” e probat (`excel-zecimale-punct`: „07.mai”). (Simulatorul: ian, feb, mar, apr, mai, iun, iul, aug,
+  sept, oct, nov, dec — nedovedite.)
+- [ ] **R6-4** Excel, registru nou (Book1), Ctrl+S: se deschide pagina **File › Save As** sau o fereastră mică „Save this
+  file” (ca la Word)? O captură UI Automation ar închide rândul. (Simulatorul: pagina File › Save As.)
+- [ ] **R6-5** Scenariul `excel-salvare-ca` cere `fila: FileTab` + `id_mso: FileSaveAs`, dar în Excel real (referința)
+  butonul File are idMso `FileTabButton`, iar „Save As” din Backstage n-are idMso. Scenariul se poate juca doar dacă e
+  rescris (o rundă `acoperire`): File → Save As → Browse → File name. (Simulatorul face drumul real; starea „Note.xlsx”
+  e probată în `runde/6/proba_excel.py`, cazul gest.salvare_ca.)
+- [ ] **R6-6** Excel, selectezi B2:C4 cu numere: bara de stare arată „Average: … Count: … Sum: …”? În ce ordine și unde?
+  Referința are bara de stare a unei foi goale. (Simulatorul: nu le arată.)
+- [ ] **R6-7** Excel, `=1/3` și Enter, coloana lată de 64 px: ce text arată celula („0,333333”?). (Simulatorul: cel mult
+  10-11 caractere, ca formatul General — lățimea exactă nedovedită.)
+<!-- RUNDA6-EXCEL:END -->
