@@ -213,3 +213,11 @@ Cererea (18.11, 14:59, verbatim): „continua acum cu etapa 0. apoi mergi cu urm
 - Commit 78a6cb20 (punct de control). Criticul 9 pornit pe unghiul aspect: judecă K1, X10, E1-E5 (diff 30dbbe30 -- aplicatii), ieșirea runde/9/critic.md.
 - treaz repornit (6 ore, până ~01:00).
 - Urmează: rândul 11 în jurnal (oracole_dupa cu O6 = 0 din masurare_o6_c2.json), opreste.py (5/6), commit, suplimentul rundei 10, constructorul.
+
+## 19.11.2026 ~19:35 — runda 9 închisă (criticul 9: GRAV 4), runda 10 pornită (ultima din valul B-excel)
+- Criticul 9 (aspect): închise K1, E1, E2, E3, E4. Deschise X10 (Insert Line ▾ și Add Chart Element › Data Labels pe mesajul central; m2-l11:251 cere etichete) și E5. Noi: A1 (graficul nou în D2, real în mijlocul ferestrei H11; pe telefon iese din ecran), A2 (bara de stare fără Average/Count/Sum, ref `bara_stare#selectie_numere`). Word curat.
+- Jurnal rândul 11 (runda 9, aspect, O6 = 0 din reluare). opreste.py → CONTINUA (5/6). de_verificat R9-7…R9-10 (din [FARA_REFERINTA] 5, 8, 9, 10, 4).
+- runde/10/masurare_pornire.json = runde/9/masurare.json cu O6 din masurare_o6_c2.json (cheia nota_orchestrator).
+- Supliment runda 10: A1, A2, E5, apoi MINOR (ținta tastelor cu graficul ales, Esc în Sort, axa, Quick Styles, More Column Charts). X10 NU: listele lipsă cer o rundă `acoperire`, iar valul nu mai are loc de ea (deblocatorul = R9-6).
+- Commit 5d542c04. Constructorul 1 al rundei 10 pornit.
+- După runda 10: rândul 12 în jurnal, opreste.py → OPRESTE (LIMITA_VAL 6/6), raport de val, apoi valul următor din catastif (B-powerpoint).

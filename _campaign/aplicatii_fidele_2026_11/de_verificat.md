@@ -310,3 +310,30 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   Row/Column, Select Data, Change Chart Type, Move Chart) și din Insert › Charts (Line, Pie, Hierarchy…): capturi la 100%,
   pentru icoanele Fluent cerute de contract (I7). (Simulatorul: doar text, sau un pătrat gol; criticul 9, [FARA_REFERINTA] 4.)
 <!-- RUNDA9-EXCEL:END -->
+
+## Runda 10 · Excel (A1 locul graficului, A2 rezumatul selecției, E5 vărsarea) — de lămurit (un minut fiecare, pe PC-ul cu Excel)
+<!-- RUNDA10-EXCEL:START -->
+- [ ] **R10-1** Excel VIZIBIL, maximizat la 1366×768 (100 %), A1:B6 aleasă, Insert › Insert Column or Bar Chart ▾ › Clustered
+  Column: în ce celulă cade colțul stânga-sus al graficului? Apoi la fel cu fereastra îngustată sub ~500 px și cu grila derulată
+  ~40 de rânduri în jos. (COM invizibil, `runde/10/probe/com_r10_b.json` + `com_r10_c.json`, 9 ferestre: left = (UsableWidth −
+  360)/2 − 10,2 pt, top = (UsableHeight − 216)/2 − 7,2 pt, minim 0, mărimea fixă 360 × 216 pt. Fereastra invizibilă nu se lasă
+  derulată, deci „raportat la derulare” e nedovedit. Simulatorul: formula pe zona vizibilă a grilei, plus derularea → G5 la
+  1366×768; telefonul: lipit stânga-sus. Gestul real pe galerie n-a putut fi jucat invizibil, doar `Shapes.AddChart2`.) R9-4
+  e lămurit pe partea de loc și mărime.
+- [ ] **R10-2** Excel, bara de stare, cu numerele 9, 7 / 8, 10 / 6, 5 în B2:C4: ce arată bara (Average / Count / Sum, sau nimic)
+  pentru: (a) o singură celulă cu număr (B2); (b) B1:B3 = „Nota”, 9, 8 (text + numere); (c) doar text (A1:A3); (d) o zonă cu
+  goluri (B2:B10, numai B2:B4 pline); (e) o zonă cu o eroare (#DIV/0!); (f) un grafic ales; (g) o zonă de 2 celule cu una
+  singură plină; (h) media 10/3 (câte zecimale: „3,333333333”?); (i) sume mari (separator de mii?). (Simulatorul: (a), (f), (g)
+  → nimic, rămâne Display Settings; (b) Average 8,5 · Count 3 · Sum 17; (c) doar Count; (d) se numără doar cele pline; (e) doar
+  Count; (h) formatul General al celulei (10 cifre); (i) fără separator. Referința dă doar B2:C4 numere,
+  `bara_stare#selectie_numere`.)
+- [ ] **R10-3** Excel, vărsarea: (a) `=SUM(B2:B7)*B2:B6` în D2 cu D4 deja ocupată: ce arată D2 (#SPILL!?) și se vede chenarul
+  vărsării? (b) clic pe D3 (celulă vărsată): ce arată bara de formule (formula gri a lui D2?) și ce face Delete pe D3?
+  (c) `=B2:B6` simplu, `=B2:B6&"x"`, `=B2:B6>5`: se varsă? (d) `=B2:B4*C2:C3` (zone de mărimi diferite): #N/A în D4?
+  (e) `=B2:B100*2` (zonă mare, multe goluri): se varsă cu 0? (Simulatorul: (a) #VALUE! în D2, fără chenar; (b) bara goală,
+  Delete fără efect; (c) nu se varsă, ca înainte; (d) #N/A în afara zonei mici; (e) se varsă cu 0, până la 5000 de celule.
+  `com_r8.json` dă doar cazul simplu: D2:D6 = 432…288, HasSpill, D3 fără formulă.)
+- [ ] **R10-4** Excel, axa valorilor la un grafic Clustered Column cu valorile 0…10 (maxim exact 10), 0…100, 0…0,5 și cu o
+  valoare negativă (−3): ce minim / maxim / pas pune Excel? (Simulatorul: 5 % deasupra maximului, apoi pasul 1 / 2 / 5 × 10^k
+  cu cel mult 10 diviziuni; regula e potrivită pe cele 3 cazuri COM din `com_r9.json` (0–10/1, 0–25/5, 0–30/5).)
+<!-- RUNDA10-EXCEL:END -->
