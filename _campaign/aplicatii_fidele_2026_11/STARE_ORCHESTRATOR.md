@@ -60,3 +60,50 @@ Cererea (18.11, 14:59, verbatim): „continua acum cu etapa 0. apoi mergi cu urm
 - 19.11 03:20 commituri locale f0dd888b (runda 5 + critic 5 + raportul valului Word) si bc56ca36 (runde/6/prompt.md + supliment_B_excel_runda6.md). VALUL B-EXCEL, runda 6 (unghi aspect): constructor PROASPAT pornit (opus, fundal), tinta = Excel in biblioteca generat din uia_excel.json, regres Word 0. La notificare: PREDARE -> constructor proaspat din runde/6/stare_autor.md; GATA_PENTRU_CRITIC -> verific (--verifica, git status, C:/Users, masurarea pornita dupa ultima scriere), criticul rece 6 (aspect, Excel; regresul Word), apoi jurnal + opreste.py.
 - 19.11 04:30 constructor 6 GATA_PENTRU_CRITIC (455k context, iar peste regula): Excel in biblioteca (excel.js, date/excel.json generat, genereaza_excel.py, profiluri/excel365.json; aplicatii.js/css/poligon atinse). O4 101->43, O5 154->113, O9 41->34, restul neschimbate, porti 41, suma 34582->34476, lacat ok, --verifica 0, nicio cale C:/Users. A scris sub aplicatii/ abia la 03:49:47, dupa masurarea de pornire (03:48:57); masurarea finala a pornit ~03:51 -> valabila. Regres Word 0 picate. Excel-ul DESCHIS pe PC (pid 29924, din 18.11 15:38, registrul trimite_*.xlsm) e al lui Vasile - neatins. PASUL 8: CRITICUL RECE 6 pornit (opus, fundal, unghi aspect pe Excel + drumurile lectiilor VIII + regresul Word; DOAR DispatchEx) -> runde/6/critic.md.
 - 19.11 04:52 CRITICUL 6 (aspect, Excel): GRAV 10 (X1-X10), regresul Word curat (6 capturi identice pixel cu pixel). jurnal.jsonl randul 7 -> opreste.py CONTINUA (1/6 in val B-excel) -> runde/7/prompt.md (unghi gest_tastatura). Nepublicat. Excel-ul lui Vasile (pid 29924) neatins.
+- 19.11 04:52 commituri locale cb86fbc3 (runda 6 + critic 6 + runde/7/prompt.md), b3de71c9 + 270b7bc2 (supliment_B_excel_runda7.md). PASUL 3 runda 7 (B-excel, unghi gest_tastatura): constructor PROASPAT pornit (opus, fundal), tinta = X1-X10 in ordinea X9, X5, X6, X1, X2, X7, X10, X8, X3, X4. DE ACOPERIT Excel (pentru o runda `acoperire` viitoare): fereastra de la Ctrl+S pe registru nou, "Save your changes" la Ctrl+W, scenariul excel-salvare-ca rescris (R6-5), bara de stare Average/Count/Sum pe zona cu numere, selectia gri, adresele colorate in formula (Point). treaz.py se termina ~08:01: la notificarea criticului 7 il repornesc (TaskStop + --ore 6) daca valul continua.
+
+## 19.11.2026 06:04 — runda 7: constructorul 1 a PREDAT, pornit constructorul 2 (continuare)
+- Constructorul 1 (307k context, 71 min): X9, X5, X6, X1, X2, X7 (lățimea coloanei) gata; proba lui 44/57 → 0/57 picate;
+  regresul Excel r6 0/20 și Word r2-r5 + telefon 0. Măsurarea de după (pornită ~05:27, după ultima scriere sub aplicatii/
+  de la 05:24:53): suma 34476 → 34476, niciun regres, lacăt ok. Necomis: aplicatii/excel.js, aplicatii/aplicatii.css.
+- Verificat de mine: EXCEL.EXE doar pid 29924 (al utilizatorului), niciun masoara.py rămas pornit, git status = doar
+  fișierele rundei + note.
+- Constructorul 2 PROASPĂT (opus, fundal): X7 rest → X10 → X8 → X3 → X4. Pornirea lui = runde/7/masurare.json (copiată în
+  masurare_pornire_cont.json); pasul 7 cu --compara pe ea → masurare_dupa_cont.log; proba nouă runde/7/proba_grav_cont.py;
+  la regres se întoarce la copia lui din %TEMP%, NU la git restore (ar șterge reparațiile constructorului 1).
+- treaz.py: oprit cel vechi (--ore 7, de la 01:01), repornit --ore 6 (ține până ~12:04).
+- La GATA_PENTRU_CRITIC: verificările obișnuite (mtime masurare_dupa_cont vs ultima scriere), apoi criticul rece 7 (unghi
+  gest_tastatura) pe toată runda 7 (X1-X10 + regres Excel/Word). La PREDARE: constructorul 3 din stare_autor.md.
+
+## 19.11.2026 06:55 — runda 7: constructorul 2 a PREDAT după X7 rest, pornit constructorul 3
+- Constructorul 2 (291k context, 51 min): X7 rest gata (Fill Color, Borders ▾ după lista S11, Percent Style, Wrap Text cu
+  înălțimi de rând variabile), cu dovezi din Excel real (com_r7c.json). Proba proba_grav_cont.py: X7r 13/17 → 0/17; X10s
+  6/11 neatins. Regres Excel 0/57 + 0/20, Word 0 la toate cinci. Măsurarea de după: pornită 06:18 (ultima scriere 06:14:47),
+  suma 34476 → 34476, lacăt ok, niciun regres. git diff aplicatii: 2 fișiere, +402/−41, necomis.
+- Verificat de mine: EXCEL.EXE doar pid 29924 (al utilizatorului), niciun PowerPoint, nicio cale C:/Users în runde/7 sau
+  de_verificat.md. consum.py: VERDE, 25%.
+- Constructorul 3 PROASPĂT (opus, fundal): X10 Sort → X8 → X3 → X4 → graficele. Pornirea = masurare_pornire_cont2.json,
+  pasul 7 → masurare_dupa_cont2.log; proba nouă proba_grav_cont2.py; la regres se întoarce la copia lui din %TEMP%.
+
+## 19.11.2026 08:39 — runda 7: constructorul 3 a PREDAT (X10 Sort, X8, X3, X4 gata; graficele nu)
+- Constructorul 3 (329k context, 102 min): Sort cu niveluri + Sort Warning (ca com_r7c), X8 (Ctrl+N Book2…, Ctrl+W,
+  File › New/Close, redenumirea pe filă, panoul stâng Save As), X3 (Fluent MIT), X4 (barele desenate pe dreptunghiurile
+  din referință). Proba lui: Sort 6/11 → 0/11; X8/X3/X4 16 picate → 0/26. Regres Excel 0/57 + 0/17 + 0/20, Word 0.
+  Graficele (m2-l11) NEÎNCEPUTE. Etichetele Sort fără referință (Then by, Smallest/Largest…) → de_verificat R7-11 … R7-19.
+- Pasul 7 al lui (07:20 → 08:12, după ultima scriere 07:17:06): O1-O9 neschimbate, dar porți controale_taiate 0 → 1 = o
+  EROARE de clic (Timeout 8000 ms, zoom125, vi/m2-l14), nu un defect; m2-l14 nu încarcă biblioteca (grep -c aplicatii = 0,
+  verificat de mine). Constructorul a rerulat poarta pe toate lecțiile: 0. A păstrat codul (copia c3safe în %TEMP%).
+- Hotărârea mea: păstrez codul (dovada e străină de schimbare), dar opreste.py ar da REGRES pe 42 → rerulez EU măsurarea
+  întreagă, SINGURĂ pe mașină (fără critic în paralel, ca să nu provoc din nou timeout-uri): masurare_dupa_orch.log,
+  pornită 08:38. Criticul rece 7 pornește după ea (promptul pregătit în scratchpad: critic7_prompt.txt).
+- Dacă măsurarea mea iese tot 42: diagnostic pe poartă înainte de jurnal, nu scriu un rând fals.
+
+## 19.11.2026 09:38 — măsurarea mea curată; pornit criticul rece 7
+- masurare_dupa_orch.log (08:38:10 → 09:37:17, singură pe mașină, după ultima scriere 07:17:06): O1 61, O2 13392, O3 20337,
+  O4 43, O5 113, O6 0, O7 353, O8 102, O9 34, porți 41 (controale_taiate 0, doar cum_fac), lacăt ok, neconcludente 0,
+  suma 34476, regres față de masurare_pornire_cont2.json: niciunul. masurare.json = asta (pentru rândul din jurnal).
+- Criticul rece 7 (opus, general-purpose, fundal): unghi gest_tastatura pe Excel, verdict X1-X10, constatări noi „GRAV K…”,
+  regres Word; DispatchEx doar; NU citește notele constructorilor / de_verificat / STARE / jurnal / suplimentele.
+- Urmează: rândul 8 în jurnal (oracole_inainte = masurare_pornire.json al rundei, 04:53-05:24; oracole_dupa = masurare.json
+  09:37) + opreste.py; commit local; runda 8 (graficele + ce găsește criticul). treaz.py ține până ~12:04: îl repornesc la
+  notificarea criticului.

@@ -65,6 +65,47 @@
     }
     return String(v);
   }
+  /* ---- ce ÎNCAPE în celulă (critic 6, GRAV X1). Lățimea textului în „cifre” Calibri 11 (cifra = 1); coloana de w px (100 %)
+     are loc pentru (3·w − 16) / 22 cifre: 64 px → 8. Calibrat pe Excel real (runde/6/critic_probe/com_r6.json, Range.Text):
+     64 px: „8,333333”, „66,66667”, „0,333333”, „1,23E+09”, „1,23E+11”, „########” (data 12.03.2026), „-3,25”, „07.mai”;
+     coloana de 3,56 caractere (≈ 30,7 px): „76” (75,5), „8,3” (=25/3), „###” (1234), „###” (data). Nu taie niciodată o cifră:
+     numărul în format General se rotunjește, apoi trece în notație științifică, apoi „#”; celelalte formate → „#”. */
+  const LAT_CAR = { ',': 0.5, '.': 0.5, 'E': 0.96, '+': 1, '-': 0.6, '#': 1, '%': 1.41, ':': 0.53, ' ': 0.45, '/': 0.75,
+    m: 1.58, w: 1.41, i: 0.46, l: 0.46, j: 0.47, t: 0.66, r: 0.69, f: 0.6, s: 0.77, c: 0.83, z: 0.78 };
+  const latCifre = t => { let n = 0; for (const ch of String(t)) n += /\d/.test(ch) ? 1 : (LAT_CAR[ch] != null ? LAT_CAR[ch] : 0.95); return n; };
+  const unitatiDin = px => (3 * px - 16) / 22;
+  const pxDin = u => Math.ceil((22 * u + 16) / 3);
+  const diezi = u => '#'.repeat(Math.max(0, Math.floor(u + 1e-9)));
+  const virgula = t => t.replace('.', ',');
+  function rotunjit(n, d) { const a = Math.abs(n), f = Math.pow(10, d); return (n < 0 ? -1 : 1) * Math.round(a * f + 1e-9 * a * f) / f; }
+  function stiintific(n, d) {
+    let t = n.toExponential(d);   // ex. 1.23e+9
+    let [mant, ex] = t.split('e');
+    if (mant.indexOf('.') >= 0) mant = mant.replace(/0+$/, '').replace(/\.$/, '');
+    const sg = ex.charAt(0) === '-' ? '-' : '+', e2 = ex.replace(/^[+-]/, '');
+    return virgula(mant) + 'E' + sg + (e2.length < 2 ? '0' : '') + e2;
+  }
+  function inLatime(v, fn, u) {
+    const t = afisat(v, fn);
+    if (u == null || typeof v !== 'number' || latCifre(t) <= u + 1e-9) return t;
+    if (fn && fn !== 'General') return diezi(u);
+    if (!isFinite(v)) return t;
+    const a = Math.abs(v);
+    if (a >= 1e-4 || a === 0) {
+      const intreg = String(Math.round(a)).length + (v < 0 ? 0.6 : 0);
+      if (intreg <= u + 1e-9 && a < 1e11) {
+        for (let d = 9; d >= 0; d--) {
+          const x = rotunjit(v, d);
+          if (x === 0 && v !== 0) break;
+          const t2 = virgula(String(x));
+          if (/e/i.test(t2)) break;
+          if (latCifre(t2) <= u + 1e-9) return t2;
+        }
+      }
+    }
+    for (let d = 5; d >= 0; d--) { const t2 = stiintific(v, d); if (latCifre(t2) <= u + 1e-9) return t2; }
+    return diezi(u);
+  }
   /* o constantă tastată într-o celulă (nu formulă): ce face din ea Excel cu setările românești */
   function constanta(s) {
     if (s.charAt(0) === "'") return { v: s.slice(1), ap: true };
@@ -101,9 +142,10 @@
         }
         out.push({ t: 'str', v, s: s.slice(i, j + 1) }); i = j + 1; continue;
       }
-      let m = /^(\$?[A-Za-z]{1,3}\$?\d+)(:\$?[A-Za-z]{1,3}\$?\d+)?(?![A-Za-z0-9_(])/.exec(r);
+      let m = /^(\$?[A-Za-z]{1,3}\$?\d+)(:\$?[A-Za-z]{1,3}\$?\d+)?(?![A-Za-z0-9_(À-ɏ])/.exec(r);
       if (m && pa(m[1]) && (!m[2] || pa(m[2].slice(1)))) { out.push({ t: m[2] ? 'zona' : 'ref', s: m[0] }); i += m[0].length; continue; }
-      m = /^([A-Za-z][A-Za-z0-9_.]*)\s*\(/.exec(r);
+      /* numele de funcții pot avea diacritice (=DACĂ(…) e primită și dă #NAME?: runde/6/critic_probe/com_r6b.json › D3, D5) */
+      m = /^([A-Za-zÀ-ɏ][A-Za-z0-9_.À-ɏ]*)\s*\(/.exec(r);
       if (m) { out.push({ t: 'fn', v: m[1].toUpperCase(), s: m[1].toUpperCase() + '(' }); i += m[0].length; continue; }
       m = /^(TRUE|FALSE)(?![A-Za-z0-9_(])/i.exec(r);
       if (m) { out.push({ t: 'bool', v: m[1].toUpperCase() === 'TRUE', s: m[1].toUpperCase() }); i += m[0].length; continue; }
@@ -112,7 +154,7 @@
       m = /^(<>|<=|>=|[-+*/^&=<>%()])/.exec(r);
       if (m) { out.push({ t: 'op', s: m[0] }); i += m[0].length; continue; }
       if (ch === sep) { out.push({ t: 'sep', s: sep }); i++; continue; }
-      m = /^[A-Za-z_][A-Za-z0-9_.]*/.exec(r);
+      m = /^[A-Za-z_À-ɏ][A-Za-z0-9_.À-ɏ]*/.exec(r);
       if (m) { out.push({ t: 'nume', v: m[0].toUpperCase(), s: m[0] }); i += m[0].length; continue; }
       throw new Error('caracter');
     }
@@ -199,16 +241,31 @@
 
   function creeaza(I, c) {
     const root = I.root, date = I.date, pang = L._module.panglica, esc = pang.esc;
-    const H = L._module.stare.istoric(() => false);   // fiecare confirmare = o unitate (scenarii_real/excel-ctrl-z-celula)
+    let H = L._module.stare.istoric(() => false);   // fiecare confirmare = o unitate (scenarii_real/excel-ctrl-z-celula)
     const SUP = date.suprafete, Z = date.zona || {};
+    /* X3: pictogramele barei Acces rapid lipsesc din date (date/excel.json › fara_icoana: FileSave, Undo, Redo), iar desenul de rezervă al
+       barei de titlu era lupa → Fluent UI System Icons (Microsoft, MIT), @fluentui/svg-icons@1.1.343 (save, arrow_undo, arrow_redo;
+       aceeași sursă și versiune ca _cercetare/office_comenzi/icoane_build.py) */
+    const ICO_QAT = {"FileSave": ["M3 5c0-1.1.9-2 2-2h8.38a2 2 0 0 1 1.41.59l1.62 1.62A2 2 0 0 1 17 6.62V15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1v-4.5c0-.83.67-1.5 1.5-1.5h7c.83 0 1.5.67 1.5 1.5V16a1 1 0 0 0 1-1V6.62a1 1 0 0 0-.3-.7L14.1 4.28a1 1 0 0 0-.71-.29H13v2.5c0 .83-.67 1.5-1.5 1.5h-4A1.5 1.5 0 0 1 6 6.5V4zm2 0v2.5c0 .28.22.5.5.5h4a.5.5 0 0 0 .5-.5V4zm7 12v-4.5a.5.5 0 0 0-.5-.5h-7a.5.5 0 0 0-.5.5V16z"], "Undo": ["M5 2.5a.5.5 0 0 0-1 0v4.9c0 .33.27.6.6.6h4.9a.5.5 0 0 0 0-1H5.9l3.48-3.02a4 4 0 0 1 5.25 6.04l-8.17 7.1a.5.5 0 0 0 .65.76l8.17-7.1a5 5 0 0 0-6.56-7.55L5 6.46z"], "Redo": ["M15 2.5a.5.5 0 0 1 1 0v4.9a.6.6 0 0 1-.6.6h-4.9a.5.5 0 0 1 0-1h3.6l-3.48-3.02a4 4 0 1 0-5.24 6.04l8.17 7.1a.5.5 0 1 1-.66.76l-8.17-7.1a5 5 0 1 1 6.56-7.55L15 6.46z"]};
+    const ICO_CHEVRON = '<path d="M15.85 7.65c.2.2.2.5 0 .7l-5.46 5.49a.55.55 0 0 1-.78 0L4.15 8.35a.5.5 0 1 1 .7-.7L10 12.8l5.15-5.16c.2-.2.5-.2.7 0"/>';
+    date.icoane = date.icoane || {};
+    Object.keys(ICO_QAT).forEach(k => { if (!date.icoane[k]) date.icoane[k] = ICO_QAT[k]; });
     const scenariu = !!I.opt.scenariu;
     const clona = L._clona;
 
     /* ============================================================ modelul */
-    const M = { foi: [], fi: 0, nume: null, salvat: false, edit: null, clip: null, tabCol: null, zoom: 100, mesaj: null };
-    function foaieNoua(nume) { return { nume, cel: {}, fmt: {}, merge: [], sel: { activa: { r: 0, c: 0 }, zone: [{ r0: 0, c0: 0, r1: 0, c1: 0 }] } }; }
+    const M = { foi: [], fi: 0, nume: null, salvat: false, edit: null, clip: null, tabCol: null, zoom: 100, mesaj: null, mod: false };
+    /* registrele deschise (X8, m1-l03): cel activ stă în M; alte = cele din spate; nr = ultimul BookN dat (com_r7c.json › registre_noi:
+       Book2, Book3, Book4 — numerele nu se refolosesc); gol = Excel deschis fără niciun registru (m1-l03:59) */
+    const REG = { alte: [], nr: 1, gol: false };
+    /* lat = lățimile coloanelor (px la 100 %; lipsă = 64, uia_excel.json › zona_document), latSet = puse de elev / lecție */
+    /* bord = bordurile, ca MUCHII comune între celule (Excel real: No Border pe B2 șterge și B1.jos, A2.dreapta — com_r7c.json ›
+       none_border): 'h,r,c' = linia de SUS a celulei (r, c), 'v,r,c' = linia din STÂNGA ei; valoarea: subtire | groasa | dubla */
+    function foaieNoua(nume) { return { nume, cel: {}, fmt: {}, merge: [], lat: {}, latSet: {}, bord: {}, sel: { activa: { r: 0, c: 0 }, zone: [{ r0: 0, c0: 0, r1: 0, c1: 0 }] } }; }
     const F = () => M.foi[M.fi];
-    function puneStart(f, celule, format) {
+    function puneStart(f, celule, format, latimi) {
+      /* latimi (CONȚINUT, opțional): { A: 120, C: 90 } = lățimea coloanei în px la 100 % */
+      Object.entries(latimi || {}).forEach(([k, px]) => { const c0 = colIdx(k); if (c0 >= 0 && c0 < MAXC && isFinite(+px) && +px >= 0) { f.lat[c0] = +px; f.latSet[c0] = true; } });
       Object.entries(celule || {}).forEach(([a, v]) => {
         const p = pa(a);
         if (!p || v == null || v === '') return;
@@ -226,14 +283,14 @@
     }
     /* parametrii de CONȚINUT (lecția alege foaia, nu interfața): celule, selectie, format (formatul `start` al scenariilor),
        plus foi: [{nume, celule, format}] și nume (registrul deja salvat) */
-    if (Array.isArray(c.foi) && c.foi.length) c.foi.forEach((x, i) => { const f = foaieNoua(String(x.nume || 'Sheet' + (i + 1))); puneStart(f, x.celule, x.format); M.foi.push(f); });
-    else { const tab = ((Z.file_foi || {}).c || []).find(x => x.t === 'TabItem'); M.foi.push(foaieNoua(tab ? tab.e : 'Sheet1')); puneStart(M.foi[0], c.celule, c.format); }
+    if (Array.isArray(c.foi) && c.foi.length) c.foi.forEach((x, i) => { const f = foaieNoua(String(x.nume || 'Sheet' + (i + 1))); puneStart(f, x.celule, x.format, x.latimi); M.foi.push(f); });
+    else { const tab = ((Z.file_foi || {}).c || []).find(x => x.t === 'TabItem'); M.foi.push(foaieNoua(tab ? tab.e : 'Sheet1')); puneStart(M.foi[0], c.celule, c.format, c.latimi); }
     if (c.selectie) {
       const parti = String(c.selectie).split(',').map(zonaDin).filter(Boolean);
       if (parti.length) F().sel = { activa: { r: parti[0].r0, c: parti[0].c0 }, zone: parti };
     }
     if (c.nume) { M.nume = /\.[a-z0-9]{2,5}$/i.test(c.nume) ? String(c.nume) : c.nume + '.xlsx'; M.salvat = true; }
-    const BOOK = (Z.registru || {}).e || 'Book1';
+    let BOOK = (Z.registru || {}).e || 'Book1';
 
     /* ---- valorile (recalculare la cerere, cu ciclu → 0) */
     let cache = null;
@@ -367,7 +424,15 @@
       return { r, c: c0 };
     }
     const fmtDe = (f, a) => f.fmt[a] || {};
-    const textCelula = (f, r, c0) => { const a = adr(r, c0), x = f.cel[a]; if (!x) return ''; return afisat(valoare(f, r, c0), fmtDe(f, a).format_numar); };
+    const latPx = (f, c0) => (f.lat && f.lat[c0] != null ? f.lat[c0] : 64);
+    /* câte cifre încap în celulă (celula îmbinată = toate coloanele ei) */
+    function unitati(f, r, c0) {
+      const m = mergeLa(f, r, c0);
+      let px = 0;
+      if (m) for (let k = m.c0; k <= m.c1; k++) px += latPx(f, k); else px = latPx(f, c0);
+      return unitatiDin(px);
+    }
+    const textCelula = (f, r, c0) => { const a = adr(r, c0), x = f.cel[a]; if (!x) return ''; return inLatime(valoare(f, r, c0), fmtDe(f, a).format_numar, unitati(f, r, c0)); };
     /* ce se scrie în bara de formule / în celulă la F2: formula pe românește, numărul cu virgulă, textul cu apostroful lui */
     function textEditare(f, a) {
       const x = f.cel[a];
@@ -388,7 +453,7 @@
       Object.keys(f.cel).forEach(a => {
         const p = pa(a), x = f.cel[a];
         let v = valoare(f, p.r, p.c);
-        const o = { valoare: eErr(v) ? v.e : v, text: afisat(v, fmtDe(f, a).format_numar) };
+        const o = { valoare: eErr(v) ? v.e : v, text: inLatime(v, fmtDe(f, a).format_numar, unitati(f, p.r, p.c)) };
         if (x.f) o.formula = x.f;
         cel[a] = o;
       });
@@ -401,18 +466,32 @@
         if (x.aliniere) o.aliniere = x.aliniere;
         if (x.imbinat) o.imbinat = x.imbinat;
         if (x.format_numar && x.format_numar !== 'General') o.format_numar = x.format_numar;
+        if (x.umplere) o.umplere = x.umplere;
+        if (x.incadrare) o.incadrare = true;
         if (Object.keys(o).length) fmt[a] = o;
       });
-      return { celule: cel, format_celule: fmt, selectie: selectieStare(), nume_fisier: M.nume, fereastra_mesaj: M.mesaj,
+      /* bordurile pe celulă, ca Range.Borders din Excel real: muchia comună apare la ambele celule (com_r7c.json › all_borders) */
+      Object.keys(f.bord || {}).forEach(k => {
+        const [t, r, c0] = k.split(','), R = +r, C = +c0, v = f.bord[k];
+        const pune = (rr, cc, latura) => { if (rr < 0 || cc < 0) return; const a = adr(rr, cc); fmt[a] = fmt[a] || {}; (fmt[a].borduri = fmt[a].borduri || {})[latura] = v; };
+        if (t === 'h') { pune(R, C, 'sus'); pune(R - 1, C, 'jos'); } else { pune(R, C, 'stanga'); pune(R, C - 1, 'dreapta'); }
+      });
+      const latimi = {}, inaltimi = {};
+      Object.keys(f.lat || {}).forEach(k => { latimi[colNume(+k)] = f.lat[k]; });
+      Object.keys(INALT).forEach(r => { inaltimi[String(+r + 1)] = INALT[r]; });
+      return { celule: cel, format_celule: fmt, latimi_coloane: latimi, inaltimi_randuri: inaltimi, selectie: selectieStare(), nume_fisier: M.nume, fereastra_mesaj: M.mesaj,
         ramane_in_editare: !!M.edit, foi: M.foi.map(x => x.nume), foaie_activa: F().nume, dialog: dialog ? { titlu: (date.dialoguri[dialog.baza] || {}).titlu || '' } : null,
-        pagina_backstage: backstage ? backstage.pagina : null, titlu_fereastra: titlu() };
+        pagina_backstage: backstage ? backstage.pagina : null, titlu_fereastra: titlu(),
+        registru_activ: REG.gol ? null : numeRegistru(), registre: REG.alte.map(r => r.nume ? r.nume.replace(/\.[a-z0-9]{2,5}$/i, '') : r.book).concat(REG.gol ? [] : [numeRegistru()]) };
     };
-    const titlu = () => (M.nume ? M.nume.replace(/\.[a-z0-9]{2,5}$/i, '') : BOOK) + '  -  Excel';
+    const numeRegistru = () => (M.nume ? M.nume.replace(/\.[a-z0-9]{2,5}$/i, '') : BOOK);
+    const titlu = () => REG.gol ? 'Excel' : numeRegistru() + '  -  Excel';
     const instantaneu = () => ({ foi: clona(M.foi), fi: M.fi });
     function schimba(tip, fn) {
       H.inainte(tip, instantaneu());
       fn();
       M.salvat = false;
+      M.mod = true;
       invalid();
     }
 
@@ -437,6 +516,7 @@
           return 'acces_rapid:' + ((ctx.parinteUnit && ctx.parinteUnit.t === 'SplitButton') ? ctx.parinteUnit.e : n.e);
         }
         if (/^panglica/.test(ctx.cheie || '') && n.t === 'Button' && n.id && n.id in LANSATOR) return 'lansator:' + [ctx.fila, ctx.grup].filter(Boolean).join('/');
+        if (ctx.cheie === 'dialog.ColumnWidth' && n.t === 'Edit') return 'camp:latime_coloana';
         if (ctx.cheie === 'dialog.FileSaveAs') {
           if (n.t === 'Edit' && /^File name:?$/.test(n.e)) return 'camp:nume_fisier';
           if (n.t === 'ComboBox' && /^File name:?$/.test(n.e)) return null;
@@ -447,6 +527,7 @@
       },
       la(n, e, ctx) {
         if (ctx.cheie === 'bara_titlu' && n.t === 'ToolBar' && QAT.has(n)) e.setAttribute('data-lh-suprafata', 'acces_rapid');
+        if (ctx.cheie === 'bara_titlu' && QAT.has(n) && n.t === 'MenuItem' && /^Customize Quick Access Toolbar$/.test(n.e || '')) e.innerHTML = pang.svg(ICO_CHEVRON, 12);   // ▾ în loc de lupă (Fluent chevron_down)
         if (ctx.cheie === 'bara_titlu' && n.t === 'TitleBar' && /\s-\s/.test(n.e || '')) {
           const t = el('span', 'lh-ap-text lh-ap-x-titlu');
           t.textContent = titlu();
@@ -459,7 +540,7 @@
         if (ctx.cheie === 'bara_stare' && n.t === 'Text' && /^Zoom \d/.test(n.e || '')) elZoomText = e;
         if (ctx.cheie === 'bara_stare' && n.t === 'Button' && n.e === 'Normal') e.classList.add('lh-ap-apasat');
       },
-      editabil(n, ctx) { return ctx.cheie === 'dialog.FileSaveAs' && n.t === 'Edit' && /^File name/.test(n.e); }
+      editabil(n, ctx) { return (ctx.cheie === 'dialog.FileSaveAs' && n.t === 'Edit' && /^File name/.test(n.e)) || (ctx.cheie === 'dialog.ColumnWidth' && n.t === 'Edit'); }
     };
     const desen = (cheie, extra) => pang.deseneaza(I, cheie, Object.assign({}, OPT, extra || {}));
     const titluEl = desen('bara_titlu');
@@ -516,8 +597,79 @@
     const ff = Z.file_foi || { e: 'Book1', id: 'Book1', r: [1, 713, 805, 32], c: [] };
     const tabFoi = el('div', 'lh-ap-x-file-foi', { 'data-lh-tip': 'Tab', 'data-lh-eticheta': ff.e, 'data-lh-id-mso': ff.id });
     paneReg.append(tabFoi, paneSh);
+    /* ---- X4: banda de sub foaie după uia_excel.json › zona_document (1366 × 768): filele [1,713,805,32], despărțitorul Pane ''
+       [806,714,32,31], bara orizontală Pane 'Horizontal' [838,720,508,17] PE ACELAȘI RÂND, la dreapta; bara verticală Pane
+       'Vertical' [1346,220,17,496] de la rândul antetelor. Barele lui Chrome de pe grilă sunt ascunse (CSS), ca să nu mai stea
+       deasupra filelor și peste rândul 25 (critic 6, X4); barele desenate derulează grila. */
+    const banda = el('div', 'lh-ap-x-banda', { 'aria-hidden': 'true' });
+    const desp = el('div', 'lh-ap-x-desp', { 'data-lh-tip': 'Pane', 'data-lh-eticheta': '' });
+    function baraDerulare(vert) {
+      const pane = el('div', 'lh-ap-x-db ' + (vert ? 'lh-ap-x-db-v' : 'lh-ap-x-db-h'), { 'data-lh-tip': 'Pane', 'data-lh-eticheta': vert ? 'Vertical' : 'Horizontal' });
+      const sb = el('div', 'lh-ap-x-sb', { 'data-lh-tip': 'ScrollBar', 'data-lh-eticheta': '' });
+      const buton = (et, gl) => { const x = el('div', 'lh-ap-x-sb-btn', { 'data-lh-tip': 'Button', 'data-lh-eticheta': et, role: 'button', 'aria-label': et, 'data-lh-tinta': 'derulare:' + et }); x.innerHTML = pang.glif(gl, 10); return x; };
+      const pista = el('div', 'lh-ap-x-sb-pista', { 'data-lh-tinta': 'derulare:' + (vert ? 'pagina_v' : 'pagina_h') });
+      const cursor = el('div', 'lh-ap-x-sb-cursor', { 'data-lh-tip': 'Thumb', 'data-lh-eticheta': '' });
+      pista.appendChild(cursor);
+      sb.append(buton(vert ? 'Line up' : 'Line left', 'sus'), pista, buton(vert ? 'Line down' : 'Line right', 'sageata'));
+      pane.appendChild(sb);
+      /* tragerea cursorului barei (pointer capturat pe cursor; nu trece prin gesturile foii) */
+      cursor.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        e.stopPropagation(); e.preventDefault();
+        const st = vert ? e.clientY : e.clientX, s0 = vert ? corp.scrollTop : corp.scrollLeft;
+        const cursa = Math.max(1, vert ? pista.clientHeight - cursor.offsetHeight : pista.clientWidth - cursor.offsetWidth);
+        const max = Math.max(0, vert ? corp.scrollHeight - corp.clientHeight : corp.scrollWidth - corp.clientWidth);
+        try { cursor.setPointerCapture(e.pointerId); } catch (x) { /* */ }
+        const misca = ev => { const v = Math.max(0, Math.min(max, s0 + ((vert ? ev.clientY : ev.clientX) - st) * max / cursa)); if (vert) corp.scrollTop = v; else corp.scrollLeft = v; };
+        const gata = () => { cursor.removeEventListener('pointermove', misca); cursor.removeEventListener('pointerup', gata); cursor.removeEventListener('pointercancel', gata); };
+        cursor.addEventListener('pointermove', misca); cursor.addEventListener('pointerup', gata); cursor.addEventListener('pointercancel', gata);
+      });
+      return { pane, pista, cursor };
+    }
+    const barV = baraDerulare(true), barH = baraDerulare(false);
+    paneReg.insertBefore(banda, tabFoi);
+    paneReg.append(desp, barH.pane, barV.pane);
+    function aseazaBanda() {
+      const W = paneReg.clientWidth || 1366;
+      /* la 1366 px: filele 805, despărțitorul 32, bara până la 20 px de margine; mai îngust: aceeași proporție, filele cel puțin 260 px */
+      const tw = Math.max(Math.min(805, Math.round((W - 53) * 805 / 1313)), Math.min(260, W - 93));
+      tabFoi.style.width = tw + 'px';
+      desp.style.left = (tw + 1) + 'px';
+      barH.pane.style.left = (tw + 33) + 'px';
+      barH.pane.style.width = Math.max(0, W - 20 - tw - 33) + 'px';
+      aseazaCursoare();
+    }
+    function aseazaCursoare() {
+      [[barV, true], [barH, false]].forEach(([b, vert]) => {
+        const lung = vert ? b.pista.clientHeight : b.pista.clientWidth;
+        const vede = vert ? corp.clientHeight : corp.clientWidth, tot = vert ? corp.scrollHeight : corp.scrollWidth, poz = vert ? corp.scrollTop : corp.scrollLeft;
+        if (!lung || !tot) return;
+        const m = Math.max(Math.min(17, lung), Math.round(lung * Math.min(1, vede / tot)));
+        const x = tot > vede ? Math.round((lung - m) * poz / (tot - vede)) : 0;
+        if (vert) Object.assign(b.cursor.style, { top: x + 'px', height: m + 'px' }); else Object.assign(b.cursor.style, { left: x + 'px', width: m + 'px' });
+      });
+    }
+    function derulare(v, e) {
+      const r = randLa(corp.scrollTop), c0 = colLa(corp.scrollLeft);
+      if (v === 'Line down') corp.scrollTop = yRand(r + 1);
+      else if (v === 'Line up') corp.scrollTop = yRand(Math.max(0, corp.scrollTop > yRand(r) ? r : r - 1));
+      else if (v === 'Line right') corp.scrollLeft = xCol(c0 + 1);
+      else if (v === 'Line left') corp.scrollLeft = xCol(Math.max(0, corp.scrollLeft > xCol(c0) ? c0 : c0 - 1));
+      else if (v === 'pagina_v' || v === 'pagina_h') {
+        const vert = v === 'pagina_v', b = (vert ? barV : barH).cursor.getBoundingClientRect();
+        const inainte = vert ? e.clientY > b.bottom : e.clientX > b.right;
+        if (vert) corp.scrollTop += (inainte ? 1 : -1) * Math.max(HR(), corp.clientHeight - HR());
+        else corp.scrollLeft += (inainte ? 1 : -1) * Math.max(LC(), corp.clientWidth - LC());
+      } else return 'fara_efect';
+      sincronDerulare();
+      return 'derulare';
+    }
+    if (typeof ResizeObserver === 'function') { try { new ResizeObserver(() => aseazaBanda()).observe(paneReg); } catch (e) { /* */ } }
     paneFoaie.appendChild(paneReg);
     zonaSup.append(randF, paneFoaie);
+    const golEl = el('div', 'lh-ap-x-gol', { 'data-lh-tip': 'Pane', 'data-lh-eticheta': 'Excel' });
+    golEl.style.display = 'none';
+    zonaSup.appendChild(golEl);
     const intrare = el('textarea', 'lh-ap-intrare', { 'data-lh-intrare-document': '', 'aria-label': 'Grid', autocomplete: 'off', autocorrect: 'off',
       autocapitalize: 'off', spellcheck: 'false', rows: '1' });
     I.intrare = intrare;
@@ -556,9 +708,52 @@
     }
 
     /* ============================================================ grila („ecranul = starea”, §3) */
-    const z = () => M.zoom / 100;
+    /* telefonul (I1, api_biblioteca §I1 regula 4: zone de atins >= 32 px): la <= 480 px grila se desenează de 1,7 ori mai mare
+       (rândul 19 → 32,3 px), ca panglica (aplicatii.css: zoom 1,34); zoomul afișat rămâne al registrului. Pe calculator = 1. */
+    const ingust = window.matchMedia ? window.matchMedia('(max-width:480px)') : null;
+    const tel = () => (ingust && ingust.matches ? 1.7 : 1);
+    const z = () => M.zoom / 100 * tel();
     const LC = () => 64 * z(), HR = () => 19 * z(), HA = () => 20 * z(), LA = () => 26 * z();
-    let NR = 0, NC = 0, celEl = {};
+    let NR = 0, NC = 0, celEl = {}, PX = [0];
+    /* marginile coloanelor (px pe ecran, de la stânga grilei): PX[c] = x-ul coloanei c */
+    function geomCol() { const f = F(); PX = [0]; for (let c0 = 0; c0 < NC; c0++) PX.push(PX[c0] + latPx(f, c0) * z()); }
+    const xCol = c0 => (c0 <= NC ? PX[c0] : PX[NC] + (c0 - NC) * LC());
+    const wCol = c0 => latPx(F(), c0) * z();
+    function colLa(x) { let c0 = 0; while (c0 < NC - 1 && PX[c0 + 1] <= x) c0++; return c0; }
+    /* rândurile: 19 px, afară de cele cu text încadrat (Wrap Text), care cresc singure cu câte 19 px pe rând de text
+       (com_r7c.json › wrap: 14,4 pt → 72 pt = 5 rânduri, coloana de 64 px; „Situația notelor la informatică” → 57,6 pt = 4) */
+    let PY = [0], INALT = {};
+    const latIncadrare = px => px - 9;   // lățimea pe care se așază textul încadrat (calibrată pe com_r7c: 5 și 4 rânduri la 64 px)
+    function liniiIncadrate(t, px) {
+      const w = latIncadrare(px), sp = latimeText(' ') / z();
+      let n = 0;
+      String(t).split('\n').forEach(par => {
+        let lin = -1;
+        n++;
+        par.split(/ +/).forEach(cuv => {
+          const lc = latimeText(cuv) / z();
+          if (lin < 0) { lin = lc; return; }
+          if (lin + sp + lc <= w) lin += sp + lc; else { n++; lin = lc; }
+        });
+      });
+      return Math.max(1, n);
+    }
+    function inaltimiAuto(f) {
+      const o = {};
+      Object.keys(f.fmt).forEach(a => {
+        if (!f.fmt[a].incadrare || !f.cel[a]) return;
+        const p = pa(a);
+        if (!p || mergeLa(f, p.r, p.c)) return;
+        const t = inLatime(valoare(f, p.r, p.c), f.fmt[a].format_numar, unitati(f, p.r, p.c));
+        const h = liniiIncadrate(t, latPx(f, p.c)) * 19;
+        if (h > 19) o[p.r] = Math.max(o[p.r] || 0, h);
+      });
+      return o;
+    }
+    function geomRand() { const f = F(); INALT = inaltimiAuto(f); PY = [0]; for (let r = 0; r < NR; r++) PY.push(PY[r] + (INALT[r] || 19) * z()); }
+    const yRand = r => (r <= NR ? PY[r] : PY[NR] + (r - NR) * HR());
+    const hRand = r => (INALT[r] || 19) * z();
+    function randLa(y) { let lo = 0, hi = NR - 1; if (y <= 0) return 0; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (PY[m] <= y) lo = m; else hi = m - 1; } return lo; }
     function intindere() {
       const f = F(), u = ultim(f), a = f.sel.activa;
       let r = Math.max(u.r, a.r), c0 = Math.max(u.c, a.c);
@@ -572,24 +767,31 @@
       const aveaFocus = document.activeElement === intrare;
       if (intrare.parentNode) intrare.parentNode.removeChild(intrare);
       NR = x.r; NC = x.c;
+      geomCol();
+      geomRand();
       const lc = LC(), hr = HR();
       root.style.setProperty('--lh-ap-x-z', String(z()));
       colt.style.width = LA() + 'px'; colt.style.height = HA() + 'px';
       antC.style.left = LA() + 'px'; antC.style.height = HA() + 'px';
       antR.style.top = HA() + 'px'; antR.style.width = LA() + 'px';
       corp.style.left = LA() + 'px'; corp.style.top = HA() + 'px';
-      corpIn.style.width = (NC * lc) + 'px'; corpIn.style.height = (NR * hr) + 'px';
-      antCin.style.width = (NC * lc + 40) + 'px'; antRin.style.height = (NR * hr + 40) + 'px';
+      void lc;
+      corpIn.style.width = PX[NC] + 'px'; corpIn.style.height = PY[NR] + 'px';
+      aseazaBanda();
+      antCin.style.width = (PX[NC] + 40) + 'px'; antRin.style.height = (PY[NR] + 40) + 'px';
       antCin.innerHTML = ''; antRin.innerHTML = ''; corpIn.innerHTML = ''; celEl = {};
       for (let c0 = 0; c0 < NC; c0++) {
         const h = el('div', 'lh-ap-x-ant lh-ap-x-ant-col', { 'data-lh-tip': 'DataItem', 'data-lh-eticheta': colNume(c0), 'data-lh-tinta': 'antet_coloana', 'data-lh-id': colNume(c0) });
-        h.style.left = (c0 * lc) + 'px'; h.style.width = lc + 'px'; h.style.height = HA() + 'px';
+        h.style.left = xCol(c0) + 'px'; h.style.width = wCol(c0) + 'px'; h.style.height = HA() + 'px';
         h.textContent = colNume(c0);
+        /* linia dintre litere: săgeata dublă ↔; tragerea schimbă lățimea, dublul clic o potrivește (lecția m1-l06:79, :111) */
+        const mg = el('div', 'lh-ap-x-ant-margine', { 'data-lh-tinta': 'antet_coloana_margine', 'data-lh-id': colNume(c0), 'aria-hidden': 'true' });
+        h.appendChild(mg);
         antCin.appendChild(h);
       }
       for (let r = 0; r < NR; r++) {
         const h = el('div', 'lh-ap-x-ant lh-ap-x-ant-rand', { 'data-lh-tip': 'DataItem', 'data-lh-eticheta': String(r + 1), 'data-lh-tinta': 'antet_rand', 'data-lh-id': String(r + 1) });
-        h.style.top = (r * hr) + 'px'; h.style.height = hr + 'px'; h.style.width = LA() + 'px';
+        h.style.top = yRand(r) + 'px'; h.style.height = hRand(r) + 'px'; h.style.width = LA() + 'px';
         h.textContent = String(r + 1);
         antRin.appendChild(h);
       }
@@ -598,28 +800,34 @@
         for (let c0 = 0; c0 < NC; c0++) {
           const a = adr(r, c0), m = mergeLa(f, r, c0);
           const d = el('div', 'lh-ap-x-c', { 'data-lh-tinta': 'celula', 'data-lh-id': a });
-          let w = lc, h = hr;
+          let w = wCol(c0), h = hRand(r);
           if (m) {
             if (m.r0 !== r || m.c0 !== c0) { d.style.display = 'none'; frag.appendChild(d); celEl[a] = d; continue; }
-            w = (m.c1 - m.c0 + 1) * lc; h = (m.r1 - m.r0 + 1) * hr;
+            w = xCol(Math.min(m.c1, NC - 1) + 1) - xCol(m.c0); h = yRand(Math.min(m.r1, NR - 1) + 1) - yRand(m.r0);
             d.classList.add('lh-ap-x-imbinat');
           }
-          d.style.left = (c0 * lc) + 'px'; d.style.top = (r * hr) + 'px'; d.style.width = w + 'px'; d.style.height = h + 'px';
+          d.style.left = xCol(c0) + 'px'; d.style.top = yRand(r) + 'px'; d.style.width = w + 'px'; d.style.height = h + 'px';
+          const fm0 = f.fmt[a] || {};
+          if (fm0.umplere) d.style.background = '#' + fm0.umplere;
+          bordStil(f, d, r, c0, m);
           const x2 = f.cel[a];
           if (x2) {
             const v = valoare(f, r, c0), fm = fmtDe(f, a);
             const s = el('span', 'lh-ap-x-t');
-            s.textContent = afisat(v, fm.format_numar);
+            s.textContent = inLatime(v, fm.format_numar, unitati(f, r, c0));
             const al = fm.aliniere || (typeof v === 'number' ? 'dreapta' : typeof v === 'boolean' || eErr(v) ? 'centru' : 'stanga');
             d.classList.add('lh-ap-x-al-' + al);
             if (fm.bold) s.style.fontWeight = '700';
             if (fm.italic) s.style.fontStyle = 'italic';
             if (fm.underline) s.style.textDecoration = 'underline';
+            /* Wrap Text: textul se așază pe rânduri în celulă (rândul a crescut în geomRand), jos, ca alinierea implicită */
+            if (fm.incadrare && !m) { d.classList.add('lh-ap-x-incadrat'); s.style.width = latIncadrare(latPx(f, c0)) * z() + 'px'; s.style.lineHeight = HR() + 'px'; }
             /* textul mai lung decât celula trece peste vecinul din dreapta GOL (ca în Excel); numerele nu */
-            if (al === 'stanga' && typeof v === 'string' && !m) {
+            else if (al === 'stanga' && typeof v === 'string' && !m) {
+              if (fm.umplere) s.style.background = '#' + fm.umplere;
               let k = c0 + 1;
               while (k < NC && !f.cel[adr(r, k)] && !mergeLa(f, r, k)) k++;
-              d.style.setProperty('--lh-ap-x-max', ((k - c0) * lc) + 'px');
+              d.style.setProperty('--lh-ap-x-max', (xCol(k) - xCol(c0)) + 'px');
               d.classList.add('lh-ap-x-curge');
             }
             d.appendChild(s);
@@ -632,7 +840,7 @@
         }
       }
       corpIn.appendChild(frag);
-      corpIn.append(selStrat, clipStrat, maner);
+      corpIn.append(selStrat, clipStrat, propEl, maner);
       deseneazaSelectia();
       if (aveaFocus) I.focus();
       sincronDerulare();
@@ -640,6 +848,7 @@
     function sincronDerulare() {
       antCin.style.transform = 'translateX(' + (-corp.scrollLeft) + 'px)';
       antRin.style.transform = 'translateY(' + (-corp.scrollTop) + 'px)';
+      aseazaCursoare();
     }
     corp.addEventListener('scroll', sincronDerulare, { passive: true });
 
@@ -647,7 +856,9 @@
     const selStrat = el('div', 'lh-ap-x-sel-strat', { 'aria-hidden': 'true' });
     const clipStrat = el('div', 'lh-ap-x-clip', { 'aria-hidden': 'true' });
     const maner = el('div', 'lh-ap-x-maner', { 'data-lh-tinta': 'maner_umplere', 'aria-label': 'Fill Handle' });
-    const dr = q => { const lc = LC(), hr = HR(); return { x: q.c0 * lc, y: q.r0 * hr, w: (Math.min(q.c1, NC - 1) - q.c0 + 1) * lc, h: (Math.min(q.r1, NR - 1) - q.r0 + 1) * hr }; };
+    const propEl = el('div', 'lh-ap-x-propus', { 'aria-hidden': 'true' });
+    propEl.style.display = 'none';
+    const dr = q => ({ x: xCol(q.c0), y: yRand(q.r0), w: xCol(Math.min(q.c1, NC - 1) + 1) - xCol(q.c0), h: yRand(Math.min(q.r1, NR - 1) + 1) - yRand(q.r0) });
     function deseneazaSelectia() {
       const f = F(), s = f.sel;
       selStrat.innerHTML = '';
@@ -688,8 +899,11 @@
     }
     let edEl = null, caretEl = null;
     const masura = document.createElement('canvas').getContext('2d');
+    /* lățimea (px la 100 %) în care încape un număr: după modelul lui Excel și după cifrele desenate pe ecran (marginile celulei 2+2 px + linia) */
+    const latNecesar = t => Math.max(pxDin(latCifre(t)), Math.ceil(latimeText(t) / z() + 6));
     function latimeText(s) { masura.font = (14.667 * z()) + 'px Calibri, Carlito, "Segoe UI", sans-serif'; return masura.measureText(s).width; }
     function deseneazaEditarea() {
+      propEl.style.display = 'none';
       if (edEl) { edEl.remove(); edEl = null; }
       if (caretEl) { caretEl.remove(); caretEl = null; }
       Object.values(celEl).forEach(x => x.classList.remove('lh-ap-x-ined'));
@@ -704,9 +918,20 @@
       caretEl = el('span', 'lh-ap-x-caret', { 'aria-hidden': 'true' });
       caretEl.style.left = (3 + latimeText(M.edit.text.slice(0, M.edit.poz))) + 'px';
       ce.appendChild(caretEl);
+      if (M.edit.ales) {
+        const [a0, a1] = M.edit.ales, sp = el('span', 'lh-ap-x-ed-sel', { 'aria-hidden': 'true' });
+        sp.textContent = M.edit.text.slice(a0, a1);
+        sp.style.left = (3 + latimeText(M.edit.text.slice(0, a0))) + 'px';
+        ce.appendChild(sp);
+        caretEl.style.display = 'none';
+      }
+      if (M.edit.propus) {
+        const b = dr(M.edit.propus);
+        Object.assign(propEl.style, { display: '', left: b.x + 'px', top: b.y + 'px', width: b.w + 'px', height: b.h + 'px' });
+      }
     }
     function vedeCelula(r, c0) {
-      const lc = LC(), hr = HR(), x = c0 * lc, y = r * hr;
+      const lc = wCol(c0), hr = hRand(r), x = xCol(c0), y = yRand(r);
       if (x < corp.scrollLeft) corp.scrollLeft = x;
       else if (x + lc > corp.scrollLeft + corp.clientWidth) corp.scrollLeft = x + lc - corp.clientWidth;
       if (y < corp.scrollTop) corp.scrollTop = y;
@@ -737,9 +962,16 @@
     }
     /* ---- filele foilor (Book1 › Tab: Scroll Left/Right gri, filele, Add Sheet — poziții din referință) */
     function foileFile() {
-      const sem = M.foi.map(x => x.nume).join('|') + '#' + M.fi;
+      const sem = M.foi.map(x => x.nume).join('|') + '#' + M.fi, semN = M.foi.map(x => x.nume).join('|');
       if (tabFoi.__sem === sem) return;
+      /* la schimbarea foii active doar marcajul: elementele rămân, ca dublul clic să nimerească fila */
+      if (tabFoi.__nume === semN && !redenumire) {
+        tabFoi.__sem = sem;
+        tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]').forEach(t => { const on = t.getAttribute('data-lh-id') === M.foi[M.fi].nume; t.classList.toggle('activ', on); t.setAttribute('aria-selected', on ? 'true' : 'false'); });
+        return;
+      }
       tabFoi.__sem = sem;
+      tabFoi.__nume = semN;
       tabFoi.innerHTML = '';
       const r0 = ff.r || [1, 713, 805, 32];
       tabFoi.style.width = r0[2] + 'px';
@@ -774,6 +1006,14 @@
 
     function actualizeaza() { invalid(); deseneazaGrila(); }
     I.focus = () => { try { intrare.focus({ preventScroll: true }); } catch (e) { /* */ } };
+    if (ingust) { const laSchimbare = () => { if (!root.isConnected) { try { ingust.removeEventListener('change', laSchimbare); } catch (e) { /* */ } return; } actualizeaza(); }; try { ingust.addEventListener('change', laSchimbare); } catch (e) { /* */ } }
+    /* focusul rămâne în caseta de intrare a celulei când se apasă grila, panglica sau barele (ca în word.js): altfel apăsarea
+       mută focusul pe rădăcină, iar tastatura telefonului / cea care compune nu mai are unde scrie (critic 6, GRAV X9).
+       Tot așa nu mai apare selecția albastră a browserului peste celule la tragere. Câmpurile (Name Box, ferestre) își iau focusul. */
+    root.addEventListener('mousedown', e => {
+      if (e.target.closest && e.target.closest('input,textarea,select')) return;
+      e.preventDefault();
+    });
     I.pxPePunct = () => 96 / 72 * M.zoom / 100;
     activeazaFila('TabHome');
     actualizeaza();
@@ -833,16 +1073,27 @@
     }
 
     /* ============================================================ editarea celulei */
-    function porneste(a, text, mod, poz) {
-      M.edit = { a, text, mod, poz: poz == null ? text.length : poz, original: text };
+    function porneste(a, text, mod, poz, ales, propus) {
+      M.edit = { a, text, mod, poz: poz == null ? text.length : poz, original: text, ales: ales || null, propus: propus || null };
       deseneazaSelectia();
       I.focus();
     }
+    /* textul ales (zona propusă de Σ, lecția m2-l08:181/196/201 „scrie B2:B6 peste zona propusă”) se înlocuiește cu ce scrie
+       elevul; fără text ales, se inserează la cursor */
+    function stergeAles(e) {
+      if (!e || !e.ales) return false;
+      e.text = e.text.slice(0, e.ales[0]) + e.text.slice(e.ales[1]);
+      e.poz = e.ales[0];
+      e.ales = null;
+      return true;
+    }
     function insereaza(s) {
       const e = M.edit;
+      stergeAles(e);
       e.text = e.text.slice(0, e.poz) + s + e.text.slice(e.poz);
       e.poz += s.length;
       e.punct = false;
+      e.propus = null;
       deseneazaSelectia();
     }
     /* Enter: Excel primește conținutul; o formulă greșită NU e primită (rămâne în editare — de_verificat R6-2) */
@@ -857,17 +1108,31 @@
         else nou = { f: en };
       } else if (s === '=') ok = false;
       else if (s !== '') { const k = constanta(s); nou = { v: k.v }; if (k.ap) nou.ap = true; fn = k.fn || null; }
-      if (!ok) return false;
+      if (!ok) { mesajFormula(); return false; }
       M.edit = null;
       schimba('scriere', () => {
         if (nou) f.cel[e.a] = nou; else delete f.cel[e.a];
         if (fn) { f.fmt[e.a] = Object.assign({}, f.fmt[e.a] || {}, { format_numar: fn }); }
+        /* un număr TASTAT care nu încape lățește coloana (Excel real, gest: excel-zero-in-fata → „741234567” întreg, 9 cifre);
+           rezultatele formulelor și conținutul de pornire nu (com_r6.json: „1,23E+09”, „8,333333”) */
+        if (nou && typeof nou.v === 'number' && !fn && !f.latSet[p.c] && !mergeLa(f, p.r, p.c)) {
+          const fm = (fmtDe(f, e.a).format_numar) || 'General', t = afisat(nou.v, fm);
+          if (fm === 'General' && latCifre(t) > unitatiDin(latPx(f, p.c)) + 1e-9) f.lat[p.c] = latNecesar(t);
+        }
       });
       f.sel.activa = { r: p.r, c: p.c };
       deseneazaGrila();
       return true;
     }
     function renunta() { M.edit = null; deseneazaSelectia(); }
+    function mesajFormula() {
+      root.querySelectorAll('[data-lh-nesimulat]:not([data-lh-tip])').forEach(x => x.remove());
+      const m = el('div', 'lh-ap-mesaj', { 'data-lh-nesimulat': 'formula', role: 'status' });
+      m.textContent = 'Excel nu primește formula așa cum e scrisă. În aplicația reală apare o fereastră de eroare (aici nu e simulată). Corectează formula sau apasă Esc.';
+      root.appendChild(m);
+      clearTimeout(I._tMesaj);
+      I._tMesaj = setTimeout(() => m.remove(), scenariu ? 60000 : 6000);
+    }
     /* F4 pe referința de la cursor: A1 → $A$1 → A$1 → $A1 → A1 (excel-f4-adresa-fixa, excel-f4-de-doua-ori) */
     function f4() {
       const e = M.edit;
@@ -923,6 +1188,90 @@
       actualizeaza();
       return 'aliniere';
     }
+    /* ---- runda 7 (critic 6: X7) — Fill Color, Borders, Percent Style, Wrap Text (lecția m1-l06:76, :77, :177, :255) */
+    /* Fill Color (butonul): culoarea din eticheta lui, „Fill Color RGB(255, 255, 0)” (uia_excel.json › panglica.TabHome);
+       Excel real: Interior.Color = 65535 (com_r7c.json › fill) */
+    function umpleCuloare(hex) {
+      const f = F();
+      schimba('format', () => celuleZone(f, true).forEach(x => { f.fmt[x] = Object.assign({}, f.fmt[x] || {}); if (hex) f.fmt[x].umplere = hex; else delete f.fmt[x].umplere; }));
+      actualizeaza();
+      return 'umplere_culoare';
+    }
+    /* Percent Style: formatul „0%” (com_r7c.json › percent: 0,1 → 10%, 0,125 → 13%, 9 → 900%; valoarea rămâne) */
+    function procent() {
+      const f = F();
+      schimba('format', () => celuleZone(f, true).forEach(x => { f.fmt[x] = Object.assign({}, f.fmt[x] || {}, { format_numar: '0%' }); }));
+      actualizeaza();
+      return 'format_numar';
+    }
+    /* Wrap Text: comutator (lista Microsoft S11: WrapText = toggleButton); rândul crește singur (geomRand) */
+    function incadreaza() {
+      const f = F(), a = f.sel.activa, on = !fmtDe(f, adr(a.r, a.c)).incadrare;
+      schimba('format', () => celuleZone(f, true).forEach(x => { f.fmt[x] = Object.assign({}, f.fmt[x] || {}); if (on) f.fmt[x].incadrare = true; else delete f.fmt[x].incadrare; }));
+      actualizeaza();
+      return 'incadrare_text';
+    }
+    /* Borders: lista = BordersGallery din lista Microsoft a comenzilor Excel (surse_microsoft.md S11, în ordinea de acolo);
+       etichetele = CommandBars.GetLabelMso din Excel real (com_r7c.json › etichete); efectul pe muchii = com_r7c.json
+       (all_borders, bottom_border, outside_border, none_border). Butonul principal = Bottom Border (uia_excel.json). */
+    const BORD_LISTA = [['BorderBottomNoToggle', 'Bottom Border'], ['BorderTopNoToggle', 'Top Border'], ['BorderLeftNoToggle', 'Left Border'],
+      ['BorderRightNoToggle', 'Right Border'], ['BorderNone', 'No Border'], ['BordersAll', 'All Borders'], ['BorderOutside', 'Outside Borders'],
+      ['BorderThickOutside', 'Thick Outside Borders'], ['BorderDoubleBottom', 'Bottom Double Border'], ['BorderThickBottom', 'Thick Bottom Border'],
+      ['BorderTopAndBottom', 'Top and Bottom Border'], ['BorderTopAndThickBottom', 'Top and Thick Bottom Border'],
+      ['BorderTopAndDoubleBottom', 'Top and Double Bottom Border'], ['BorderDrawLine', 'Draw Border'], ['BorderDrawGrid', 'Draw Border Grid'],
+      ['BorderErase', 'Erase Border'], ['BorderColorPickerExcel', 'Line Color'], ['BorderStyle', 'Line Style'], ['BordersMoreDialog', 'More Borders...']];
+    const BORD_EFECT = new Set(BORD_LISTA.slice(0, 13).map(x => x[0]));
+    const LIN = { subtire: '1px solid #000', groasa: '2px solid #000', dubla: '3px double #000' };
+    function bordStil(f, d, r, c0, m) {
+      const B = f.bord || {}, r1 = m ? m.r1 : r, c1 = m ? m.c1 : c0;
+      const jos = B['h,' + (r1 + 1) + ',' + c0], dr2 = B['v,' + r + ',' + (c1 + 1)];
+      if (jos) d.style.borderBottom = LIN[jos];
+      if (dr2) d.style.borderRight = LIN[dr2];
+      const sh = [];
+      if (r === 0 && B['h,0,' + c0]) sh.push('inset 0 1px 0 #000');
+      if (c0 === 0 && B['v,' + r + ',0']) sh.push('inset 1px 0 0 #000');
+      if (sh.length) d.style.boxShadow = sh.join(',');
+    }
+    function borduri(id) {
+      const f = F();
+      if (!f.bord) f.bord = {};
+      schimba('format', () => f.sel.zone.forEach(q0 => {
+        const B = f.bord, q = { r0: q0.r0, c0: q0.c0, r1: Math.min(q0.r1, NR - 1), c1: Math.min(q0.c1, NC - 1) };
+        const H_ = (r, c0, v) => { const k = 'h,' + r + ',' + c0; if (v) B[k] = v; else delete B[k]; };
+        const V_ = (r, c0, v) => { const k = 'v,' + r + ',' + c0; if (v) B[k] = v; else delete B[k]; };
+        const sus = v => { for (let c0 = q.c0; c0 <= q.c1; c0++) H_(q.r0, c0, v); };
+        const jos = v => { for (let c0 = q.c0; c0 <= q.c1; c0++) H_(q.r1 + 1, c0, v); };
+        const st = v => { for (let r = q.r0; r <= q.r1; r++) V_(r, q.c0, v); };
+        const dr2 = v => { for (let r = q.r0; r <= q.r1; r++) V_(r, q.c1 + 1, v); };
+        const tot = v => { for (let r = q.r0; r <= q.r1 + 1; r++) for (let c0 = q.c0; c0 <= q.c1; c0++) H_(r, c0, v); for (let r = q.r0; r <= q.r1; r++) for (let c0 = q.c0; c0 <= q.c1 + 1; c0++) V_(r, c0, v); };
+        const contur = v => { sus(v); jos(v); st(v); dr2(v); };
+        ({ BorderBottomNoToggle: () => jos('subtire'), BorderTopNoToggle: () => sus('subtire'), BorderLeftNoToggle: () => st('subtire'),
+          BorderRightNoToggle: () => dr2('subtire'), BorderNone: () => tot(null), BordersAll: () => tot('subtire'), BorderOutside: () => contur('subtire'),
+          BorderThickOutside: () => contur('groasa'), BorderDoubleBottom: () => jos('dubla'), BorderThickBottom: () => jos('groasa'),
+          BorderTopAndBottom: () => { sus('subtire'); jos('subtire'); }, BorderTopAndThickBottom: () => { sus('subtire'); jos('groasa'); },
+          BorderTopAndDoubleBottom: () => { sus('subtire'); jos('dubla'); } })[id]();
+      }));
+      actualizeaza();
+      return 'borduri';
+    }
+    /* lista Borders ▾: sub săgeată, ca meniurile panglicii; aspectul exact (titlurile „Borders” / „Draw Borders”, pictogramele)
+       nu e în referință → de_verificat RUNDA7-EXCEL R7-9 */
+    function meniuBorduri(elx) {
+      inchideMeniu();
+      const m = el('div', 'lh-ap-x-meniu lh-ap-x-meniu-borduri', { role: 'menu', 'data-lh-suprafata': 'meniu.BordersGallery', 'aria-label': 'Borders' });
+      BORD_LISTA.forEach(([id, e]) => {
+        const it = el('div', 'lh-ap-n lh-ap-t-MenuItem', { role: 'menuitem', 'data-lh-tip': 'MenuItem', 'data-lh-eticheta': e, 'data-lh-id-mso': id, 'data-lh-tinta': 'meniu:' + e });
+        const ic = pang.icoana(I, id, 16);
+        it.innerHTML = (ic && /^<svg|^<span/.test(ic) ? ic : '<span class="lh-ap-x-mi-gol" aria-hidden="true"></span>') + '<span class="lh-ap-text">' + esc(e) + '</span>';
+        m.appendChild(it);
+      });
+      const R = root.getBoundingClientRect(), b = (elx.closest('[data-lh-tip="SplitButton"]') || elx).getBoundingClientRect();
+      m.style.left = Math.max(0, Math.min(b.left - R.left, R.width - 240)) + 'px';
+      m.style.top = (b.bottom - R.top + 1) + 'px';
+      root.appendChild(m);
+      meniu = m;
+      return 'meniu_derulant';
+    }
     function golesteContinut() {
       const f = F();
       schimba('stergere', () => celuleZone(f, false).forEach(x => { delete f.cel[x]; }));
@@ -969,7 +1318,9 @@
       if (nr(a.r - 1, a.c)) { let r = a.r - 1; while (nr(r - 1, a.c)) r--; zona = adr(r, a.c) + ':' + adr(a.r - 1, a.c); }
       else if (nr(a.r, a.c - 1)) { let c0 = a.c - 1; while (nr(a.r, c0 - 1)) c0--; zona = adr(a.r, c0) + ':' + adr(a.r, a.c - 1); }
       const t = '=SUM(' + zona + ')';
-      porneste(adr(a.r, a.c), t, 'Enter', zona ? t.length : t.length - 1);
+      /* zona propusă e aleasă (scrisul sau tragerea elevului o înlocuiește) și încadrată punctat (lecția m2-l08:181);
+         cursorul stă înaintea parantezei; Enter o primește (scenarii_real/excel-autosum-buton) */
+      porneste(adr(a.r, a.c), t, 'Enter', t.length - 1, zona ? [t.length - 1 - zona.length, t.length - 1] : null, zona ? zonaDin(zona) : null);
       return 'suma_automata';
     }
     /* Sort A to Z / Z to A (excel-sortare-a-z): zona curentă în jurul celulei active; primul rând = antet dacă e text
@@ -985,32 +1336,222 @@
       }
       return q;
     }
-    function sorteaza(desc) {
-      const f = F(), a = f.sel.activa;
-      const q = unaSingura() ? zonaCurenta(f, a.r, a.c) : f.sel.zone[0];
-      if (!q) return I.nesimulat(desc ? 'Sort Z to A' : 'Sort A to Z');
+    /* rândul de antet: text deasupra unor numere sau antet îngroșat (Excel îl recunoaște singur; „My data has headers”) */
+    function areAntet(f, q) {
       let antet = false;
       for (let c0 = q.c0; c0 <= q.c1 && !antet; c0++) {
         const v0 = valoare(f, q.r0, c0);
         if (typeof v0 === 'string') for (let r = q.r0 + 1; r <= q.r1; r++) if (typeof valoare(f, r, c0) === 'number') { antet = true; break; }
       }
       if (fmtDe(f, adr(q.r0, q.c0)).bold && !fmtDe(f, adr(q.r0 + 1, q.c0)).bold) antet = true;
-      const r0 = antet ? q.r0 + 1 : q.r0, col = Math.max(q.c0, Math.min(q.c1, a.c));
-      const randuri = [];
+      return antet;
+    }
+    /* sortarea pe NIVELURI (m2-l10:63; Excel real: com_r7c.json › sortare_doua_niveluri): niv = [{c, desc}], primul contează
+       cel mai mult; celulele goale ajung la coadă în ambele ordini; la egalitate rândurile își păstrează ordinea */
+    function sorteazaZona(f, q, antet, niv) {
+      const r0 = antet ? q.r0 + 1 : q.r0, randuri = [];
       for (let r = r0; r <= q.r1; r++) {
-        const o = { k: valoare(f, r, col), cel: [], fmt: [] };
+        const o = { k: niv.map(n => valoare(f, r, n.c)), cel: [], fmt: [] };
         for (let c0 = q.c0; c0 <= q.c1; c0++) { o.cel.push(f.cel[adr(r, c0)]); o.fmt.push(f.fmt[adr(r, c0)]); }
         randuri.push(o);
       }
-      const cmp = (x, y) => { if (x.k == null) return y.k == null ? 0 : 1; if (y.k == null) return -1; return compara(x.k, y.k); };
-      randuri.sort((x, y) => desc ? (x.k == null ? 1 : y.k == null ? -1 : -compara(x.k, y.k)) : cmp(x, y));
-      schimba('sortare', () => randuri.forEach((o, i) => o.cel.forEach((x, k) => {
-        const ad = adr(r0 + i, q.c0 + k);
-        if (x) f.cel[ad] = x; else delete f.cel[ad];
-        if (o.fmt[k]) f.fmt[ad] = o.fmt[k]; else delete f.fmt[ad];
-      })));
+      const una = (a, b, desc) => { if (a == null || a === '') return (b == null || b === '') ? 0 : 1; if (b == null || b === '') return -1; return desc ? -compara(a, b) : compara(a, b); };
+      randuri.sort((x, y) => { for (let i = 0; i < niv.length; i++) { const d = una(x.k[i], y.k[i], niv[i].desc); if (d) return d; } return 0; });
+      schimba('sortare', () => {
+        randuri.forEach((o, i) => o.cel.forEach((x, k) => {
+          const ad = adr(r0 + i, q.c0 + k);
+          if (x) f.cel[ad] = x; else delete f.cel[ad];
+          if (o.fmt[k]) f.fmt[ad] = o.fmt[k]; else delete f.fmt[ad];
+        }));
+        f.sortare = niv.map(n => ({ c: n.c, desc: !!n.desc }));
+      });
+    }
+    /* zona din jurul selecției (Sort Warning: „Microsoft Excel found data next to your selection”) */
+    function zonaLarga(f, q) {
+      const z0 = zonaCurenta(f, q.r0, q.c0);
+      return z0 ? { r0: Math.min(z0.r0, q.r0), c0: Math.min(z0.c0, q.c0), r1: Math.max(z0.r1, q.r1), c1: Math.max(z0.c1, q.c1) } : null;
+    }
+    /* o singură zonă de mai multe celule, cu date lângă ea (alte coloane) → fereastra Sort Warning (uia_excel.json › dialog.SortWarning) */
+    function cereAvertizare(f) {
+      if (unaSingura() || f.sel.zone.length !== 1) return null;
+      const q = f.sel.zone[0];
+      if (q.r1 >= MAXR - 1 || q.c1 >= MAXC - 1) return null;
+      const reg = zonaLarga(f, q);
+      return reg && (reg.c0 < q.c0 || reg.c1 > q.c1) ? { q: Object.assign({}, q), reg } : null;
+    }
+    let avertPend = null, sortPend = null;
+    function sorteaza(desc) {
+      const f = F(), a = f.sel.activa;
+      const av = cereAvertizare(f);
+      if (av) { avertPend = Object.assign(av, { buton: true, desc }); return deschideDialog('dialog.SortWarning') ? 'fereastra' : I.nesimulat(desc ? 'Sort Z to A' : 'Sort A to Z'); }
+      const q = unaSingura() ? zonaCurenta(f, a.r, a.c) : f.sel.zone[0];
+      if (!q) return I.nesimulat(desc ? 'Sort Z to A' : 'Sort A to Z');
+      sorteazaZona(f, q, areAntet(f, q), [{ c: Math.max(q.c0, Math.min(q.c1, a.c)), desc }]);
       actualizeaza();
       return desc ? 'sortare_descrescatoare' : 'sortare_crescatoare';
+    }
+    /* Data › Sort: fereastra Sort pe zona curentă (sau Sort Warning întâi, ca în referință: dialog.SortWarning, deschis_prin SortDialog) */
+    function dialogSortare() {
+      const f = F(), a = f.sel.activa;
+      const av = cereAvertizare(f);
+      if (av) { avertPend = Object.assign(av, { buton: false }); return deschideDialog('dialog.SortWarning') ? 'fereastra' : I.nesimulat('Sort'); }
+      const q = unaSingura() ? zonaCurenta(f, a.r, a.c) : f.sel.zone[0];
+      if (!q) return I.nesimulat('Sort');
+      sortPend = q;
+      return deschideDialog('dialog.SortDialog') ? 'fereastra' : I.nesimulat('Sort');
+    }
+    const numericaCol = (f, q, antet, c0) => { let n = 0; for (let r = antet ? q.r0 + 1 : q.r0; r <= q.r1; r++) { const v = valoare(f, r, c0); if (v == null || v === '') continue; if (typeof v !== 'number') return false; n++; } return n > 0; };
+    /* etichetele ordinii: „A to Z” e în referință (dialog.SortDialog › Order); celelalte din lecția m2-l10:63 și din butoanele
+       panglicii (Sort Largest to Smallest) — de_verificat R7-12 */
+    function ordineEt(S0, n) {
+      const num = n.c != null && numericaCol(F(), S0.q, S0.antet, n.c);
+      return num ? (n.desc ? 'Largest to Smallest' : 'Smallest to Largest') : (n.desc ? 'Z to A' : 'A to Z');
+    }
+    function numeColoana(S0, c0) {
+      const t = S0.antet ? textCelula(F(), S0.q.r0, c0) : '';
+      return t || 'Column ' + colNume(c0);
+    }
+    function bifeaza(e, on, radio) {
+      if (!e) return;
+      e.classList.toggle('lh-ap-bifat', on);
+      e.setAttribute('aria-checked', on ? 'true' : 'false');
+      const c = e.querySelector('.lh-ap-caseta');
+      if (c) c.innerHTML = on ? pang.glif(radio ? 'punct' : 'bifa', 12) : '';
+    }
+    /* fereastra Sort: rândul „Sort Field” din referință e nivelul 0; Add Level adaugă rânduri sub el, la 22 px (DataGrid) */
+    function pregatesteSort(s) {
+      if (!dialog.sort) {
+        const f = F(), a = f.sel.activa;
+        const q = sortPend || (unaSingura() ? zonaCurenta(f, a.r, a.c) : f.sel.zone[0]) || { r0: a.r, c0: a.c, r1: a.r, c1: a.c };
+        sortPend = null;
+        const antet = areAntet(f, q);
+        const vechi = (f.sortare || []).filter(n => n.c >= q.c0 && n.c <= q.c1);
+        dialog.sort = { q, antet, niv: vechi.length ? vechi.map(n => ({ c: n.c, desc: n.desc })) : [{ c: null, desc: false }], ales: 0 };
+      }
+      s.classList.add('lh-ap-x-sort');
+      s.querySelectorAll('[data-lh-tip="HeaderItem"]').forEach(h => { if (!h.textContent.trim()) h.innerHTML = '<span class="lh-ap-text">' + esc(h.getAttribute('data-lh-eticheta') || '') + '</span>'; });
+      dialog.sort.li0 = s.querySelector('[data-lh-tip="ListItem"][data-lh-eticheta="Sort Field"]');
+      bifeaza(s.querySelector('[data-lh-tip="CheckBox"][data-lh-eticheta="My data has headers"]'), dialog.sort.antet, false);
+      deseneazaNiveluri();
+    }
+    function deseneazaNiveluri() {
+      const S0 = dialog.sort, li0 = S0.li0;
+      if (!li0) return;
+      inchideListaSort();
+      li0.parentNode.querySelectorAll('.lh-ap-x-nivel-copie').forEach(x => x.remove());
+      li0.style.display = S0.niv.length ? '' : 'none';
+      const top0 = parseFloat(li0.style.top) || 22;
+      S0.niv.forEach((n, i) => {
+        const r = i ? li0.cloneNode(true) : li0;
+        if (i) { r.classList.add('lh-ap-x-nivel-copie'); r.style.top = (top0 + 22 * i) + 'px'; li0.parentNode.appendChild(r); }
+        r.setAttribute('data-lh-nivel', String(i));
+        r.classList.toggle('lh-ap-x-nivel-ales', i === S0.ales);
+        const et = i ? 'Then by' : 'Sort by';
+        const lab = r.querySelector('[data-lh-tip="DataItem"] > [data-lh-tip="Text"]');
+        if (lab) { lab.classList.add('lh-ap-x-nivel-et'); lab.innerHTML = '<span class="lh-ap-text">' + et + '</span>'; lab.style.width = 'auto'; lab.setAttribute('data-lh-eticheta', et); }
+        const di = r.querySelector('[data-lh-tip="DataItem"]');
+        if (di) di.setAttribute('data-lh-eticheta', et);
+        const cb = [...r.querySelectorAll('[data-lh-tip="ComboBox"]')];
+        const val = [n.c == null ? '' : numeColoana(S0, n.c), 'Cell Values', ordineEt(S0, n)];
+        ['coloana', 'pe', 'ordine'].forEach((camp, k) => {
+          const e = cb[k];
+          if (!e) return;
+          e.setAttribute('data-lh-camp', camp);
+          if (camp === 'coloana') e.setAttribute('data-lh-eticheta', et);
+          const inp = e.querySelector('input');
+          if (inp) inp.value = val[k];
+          e.setAttribute('data-lh-valoare', val[k]);
+        });
+      });
+    }
+    function inchideListaSort() { if (dialog && dialog.sort && dialog.sort.lista) { dialog.sort.lista.el.remove(); dialog.sort.lista = null; } }
+    function deschideListaSort(i, camp, cb) {
+      const S0 = dialog.sort, n = S0.niv[i];
+      inchideListaSort();
+      let el0 = [];
+      if (camp === 'coloana') for (let c0 = S0.q.c0; c0 <= S0.q.c1; c0++) el0.push({ e: numeColoana(S0, c0), c: c0 });
+      else if (camp === 'ordine') { const a0 = ordineEt(S0, { c: n.c, desc: false }), d0 = ordineEt(S0, { c: n.c, desc: true }); el0 = [{ e: a0, desc: false }, { e: d0, desc: true }, { e: 'Custom List...' }]; }
+      else el0 = [{ e: 'Cell Values' }];
+      const R = dialog.el.getBoundingClientRect(), b = cb.getBoundingClientRect(), k = (R.width / dialog.el.offsetWidth) || 1;
+      const l = el('div', 'lh-ap-x-lista-combo', { role: 'listbox', 'data-lh-tip': 'List', 'data-lh-eticheta': cb.getAttribute('data-lh-eticheta') || camp });
+      Object.assign(l.style, { left: ((b.left - R.left) / k) + 'px', top: ((b.bottom - R.top) / k) + 'px', width: (b.width / k) + 'px' });
+      el0.forEach(x => {
+        const it = el('div', 'lh-ap-x-lista-el', { role: 'option', 'data-lh-tip': 'ListItem', 'data-lh-eticheta': x.e, 'data-lh-tinta': 'lista_sortare:' + x.e });
+        it.textContent = x.e;
+        it.__alege = x;
+        l.appendChild(it);
+      });
+      dialog.el.appendChild(l);
+      S0.lista = { el: l, i, camp };
+      return 'lista';
+    }
+    function clicSortare(elx, v) {
+      if (dialog.baza === 'dialog.SortWarning') {
+        const A = dialog.avert;
+        if (!A) return null;
+        if (/^(Expand the selection|Continue with the current selection)$/.test(v)) { A.extinde = v === 'Expand the selection'; radioAvertizare(); return 'alegere'; }
+        if (v === 'Sort...') return sortDinAvertizare();
+        return null;
+      }
+      const S0 = dialog.sort;
+      if (!S0) return null;
+      const it = elx.closest('.lh-ap-x-lista-el');
+      if (it && S0.lista) {
+        const x = it.__alege || {}, L0 = S0.lista, n = S0.niv[L0.i];
+        inchideListaSort();
+        if (L0.camp === 'coloana' && x.c != null) n.c = x.c;
+        else if (L0.camp === 'ordine') { if (x.desc == null) return I.nesimulat('Custom List...'); n.desc = x.desc; }
+        deseneazaNiveluri();
+        return 'alegere';
+      }
+      inchideListaSort();
+      const rand = elx.closest('[data-lh-nivel]'), cb = elx.closest('[data-lh-camp]');
+      if (rand) {
+        S0.ales = +rand.getAttribute('data-lh-nivel');
+        deseneazaNiveluri();
+        const cb2 = cb && dialog.el.querySelector('[data-lh-nivel="' + S0.ales + '"] [data-lh-camp="' + cb.getAttribute('data-lh-camp') + '"]');
+        return cb2 ? deschideListaSort(S0.ales, cb2.getAttribute('data-lh-camp'), cb2) : 'alegere_nivel';
+      }
+      if (v === 'Add Level') { if (S0.niv.length >= 64) return 'fara_efect'; S0.niv.push({ c: null, desc: false }); S0.ales = S0.niv.length - 1; deseneazaNiveluri(); return 'nivel_nou'; }
+      if (v === 'Delete Level') { if (!S0.niv.length) return 'fara_efect'; S0.niv.splice(S0.ales, 1); S0.ales = Math.max(0, Math.min(S0.ales, S0.niv.length - 1)); deseneazaNiveluri(); return 'stergere_nivel'; }
+      if (v === 'Copy Level') { if (!S0.niv.length) return 'fara_efect'; S0.niv.splice(S0.ales + 1, 0, Object.assign({}, S0.niv[S0.ales])); S0.ales += 1; deseneazaNiveluri(); return 'copiere_nivel'; }
+      if (v === 'My data has headers') { S0.antet = !S0.antet; bifeaza(elx.closest('[data-lh-tip="CheckBox"]') || elx, S0.antet, false); deseneazaNiveluri(); return 'bifare'; }
+      return null;
+    }
+    /* OK în fereastra Sort: sortarea pe niveluri; un nivel fără coloană = mesajul central (fereastra de eroare nu e în referință) */
+    function sortDinDialog() {
+      const S0 = dialog.sort;
+      if (!S0) { inchideDialog(); return I.nesimulat('Sort'); }
+      if (S0.niv.some(n => n.c == null)) return I.nesimulat('Sort');
+      inchideDialog();
+      if (!S0.niv.length) return 'anulare';
+      sorteazaZona(F(), S0.q, S0.antet, S0.niv);
+      actualizeaza();
+      return 'sortare';
+    }
+    function radioAvertizare() {
+      const A = dialog.avert;
+      bifeaza(dialog.el.querySelector('[data-lh-tip="RadioButton"][data-lh-eticheta="Expand the selection"]'), A.extinde, true);
+      bifeaza(dialog.el.querySelector('[data-lh-tip="RadioButton"][data-lh-eticheta="Continue with the current selection"]'), !A.extinde, true);
+    }
+    function pregatesteAvertizare() {
+      if (!dialog.avert) {
+        const f = F(), q = Object.assign({}, f.sel.zone[0]);
+        dialog.avert = avertPend || { q, reg: zonaLarga(f, q) || q, buton: false };
+        avertPend = null;
+        dialog.avert.extinde = true;   // „Expand the selection (Extindeți selecția), aleasă de la început” — m2-l10:149
+      }
+      radioAvertizare();
+    }
+    /* Sort... în Sort Warning: Expand = zona întreagă, rânduri întregi; Continue = doar selecția (capcana lecției m2-l10:62) */
+    function sortDinAvertizare() {
+      const A = dialog.avert, f = F(), a = f.sel.activa;
+      inchideDialog();
+      const q = A.extinde ? A.reg : A.q;
+      if (!A.buton) { sortPend = q; return deschideDialog('dialog.SortDialog') ? 'fereastra' : I.nesimulat('Sort'); }
+      sorteazaZona(f, q, areAntet(f, q), [{ c: Math.max(q.c0, Math.min(q.c1, a.c)), desc: A.desc }]);
+      actualizeaza();
+      return A.desc ? 'sortare_descrescatoare' : 'sortare_crescatoare';
     }
     /* copierea / decuparea / lipirea (excel-copiere-lipire, excel-decupare-lipire) */
     function copiaza(decupat) {
@@ -1147,6 +1688,70 @@
       actualizeaza();
       return 'fila_foii';
     }
+    /* ---- registrele (X8, m1-l03:58-59, :110): Ctrl+N / File › New › Blank workbook = BookN nou, gol, cu Sheet1; Ctrl+W / File › Close
+       = închiderea registrului activ (rămâne cel din spate, altfel Excel deschis, gol). Cu modificări nesalvate Excel întreabă
+       „Save your changes” — fereastra NU e în referința Excel: mesajul central standard (de_verificat R7-15) */
+    const istoricNou = () => L._module.stare.istoric(() => false);
+    const registruActiv = () => ({ foi: M.foi, fi: M.fi, nume: M.nume, salvat: M.salvat, mod: M.mod, H, book: BOOK });
+    function incarcaRegistru(r) { M.foi = r.foi; M.fi = r.fi; M.nume = r.nume; M.salvat = r.salvat; M.mod = r.mod; H = r.H; BOOK = r.book; M.clip = null; }
+    function dupaRegistru() { if (backstage) inchideBackstage(); arataGol(); tabFoi.__sem = null; tabFoi.__nume = null; actualizeaza(); actualizeazaBare(); I.focus(); }
+    function registruNou() {
+      if (M.edit && !confirma()) return 'fara_efect';
+      inchideMeniu();
+      if (dialog) inchideDialog();
+      if (!REG.gol) REG.alte.push(registruActiv());
+      REG.nr += 1;
+      const tab = ((Z.file_foi || {}).c || []).find(x => x.t === 'TabItem');
+      incarcaRegistru({ foi: [foaieNoua(tab ? tab.e : 'Sheet1')], fi: 0, nume: null, salvat: false, mod: false, H: istoricNou(), book: 'Book' + REG.nr });
+      REG.gol = false;
+      dupaRegistru();
+      return 'registru_nou';
+    }
+    function inchideRegistru() {
+      if (REG.gol) return 'fara_efect';
+      if (M.edit && !confirma()) return 'fara_efect';
+      if (M.mod) return I.nesimulat('Close (Ctrl+W)');
+      inchideMeniu();
+      if (dialog) inchideDialog();
+      if (REG.alte.length) incarcaRegistru(REG.alte.pop());
+      else { REG.gol = true; incarcaRegistru({ foi: [foaieNoua('Sheet1')], fi: 0, nume: null, salvat: false, mod: false, H: istoricNou(), book: BOOK }); }
+      dupaRegistru();
+      return 'inchidere_registru';
+    }
+    /* Excel fără registru: zona documentului goală, gri, fără celule (aspectul NU e în referință — de_verificat R7-16) */
+    function arataGol() { golEl.style.display = REG.gol ? '' : 'none'; }
+    /* ---- redenumirea foii (m1-l03:285: „dublu clic pe filă, scrii, Enter”; și clic dreapta › Rename): caseta stă pe filă,
+       textul NU ajunge în celulă; Enter / clic în altă parte = numele nou, Esc = renunți */
+    let redenumire = null;
+    function pornesteRedenumire(nume) {
+      const i = M.foi.findIndex(x => x.nume === nume);
+      if (i < 0) return 'fara_efect';
+      if (M.edit && !confirma()) return 'fara_efect';
+      if (redenumire) terminaRedenumire(true);
+      if (i !== M.fi) { M.fi = i; actualizeaza(); }
+      foileFile();
+      const t = [...tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]')].find(x => x.getAttribute('data-lh-id') === nume);
+      if (!t) return 'fara_efect';
+      const inp = el('input', 'lh-ap-x-ff-in', { 'data-lh-tip': 'Edit', 'aria-label': nume, spellcheck: 'false', autocomplete: 'off', maxlength: '31' });
+      inp.value = nume;
+      t.appendChild(inp);
+      redenumire = { i, inp, vechi: nume };
+      inp.addEventListener('blur', () => { if (redenumire && redenumire.inp === inp) terminaRedenumire(true); });
+      try { inp.focus({ preventScroll: true }); inp.select(); } catch (e) { /* */ }
+      return 'redenumire';
+    }
+    function terminaRedenumire(ok) {
+      const R0 = redenumire;
+      if (!R0) return;
+      redenumire = null;
+      const v = String(R0.inp.value || '').trim();
+      R0.inp.remove();
+      const bun = v && v.length <= 31 && !/[\\/?*[\]:]/.test(v) && !/^'|'$/.test(v) && !M.foi.some((x, k) => k !== R0.i && x.nume.toLowerCase() === v.toLowerCase());
+      if (ok && bun && v !== R0.vechi && M.foi[R0.i]) { M.foi[R0.i].nume = v; M.mod = true; M.salvat = false; }
+      tabFoi.__sem = null; tabFoi.__nume = null;
+      foileFile();
+      I.focus();
+    }
 
     /* ============================================================ meniuri, ferestre, Backstage */
     function stratNou(cls) { const s = el('div', 'lh-ap-strat ' + (cls || '')); root.appendChild(s); return s; }
@@ -1194,9 +1799,38 @@
       dialog.strat.appendChild(s);
       dialog.el = s;
       s.querySelectorAll('[data-lh-tip="TabItem"]').forEach((t, i) => { const on = fila ? t.getAttribute('data-lh-eticheta') === fila : i === 0; t.setAttribute('aria-selected', on ? 'true' : 'false'); t.classList.toggle('activ', on); });
+      if (dialog.baza === 'dialog.SortDialog') pregatesteSort(s);
+      if (dialog.baza === 'dialog.SortWarning') pregatesteAvertizare(s);
+      const lc = s.querySelector('[data-lh-tinta="camp:latime_coloana"] input');
+      if (lc) {
+        const c0 = F().sel.zone[F().sel.zone.length - 1].c0;
+        lc.value = String(Math.round(caractereDin(latPx(F(), c0)) * 100) / 100).replace('.', ',');
+        setTimeout(() => { try { lc.focus({ preventScroll: true }); lc.select(); } catch (e) { /* */ } }, 0);
+        return;
+      }
+      const arb = dialog.baza === 'dialog.FileSaveAs' && s.querySelector('[data-lh-tip="Tree"][data-lh-eticheta="Panou de navigare"]');
+      if (arb) {
+        /* panoul din stânga: fereastra Save As e fereastra comună Windows (#32770 și în uia_excel.json, și în uia_word.json); în
+           referința Excel rândurile sunt „[element de listă, nesalvat]”, deci numele implicite Windows 11 vin din uia_word.json ›
+           lista.FileSaveAs_navigare (Acasă, Galerie, Acest PC, Rețea), plus Documente, folderul lecției m1-l03:58 („alege
+           Documente”), în ordinea din word.js (NAV_IMPLICIT). Locul rândurilor (24 px) e cel din Word — de_verificat R7-17 */
+        const lat = Math.max(60, Math.min(200, (parseFloat(arb.style.width) || 234) - 24));
+        ['Acasă', 'Galerie', 'Documente', 'Acest PC', 'Rețea'].forEach((nume, i) => {
+          const x = el('div', 'lh-ap-n lh-ap-t-TreeItem lh-ap-nav-rand', { 'data-lh-tip': 'TreeItem', 'data-lh-eticheta': nume, role: 'treeitem', 'data-lh-tinta': 'arbore:' + nume });
+          Object.assign(x.style, { left: '4px', top: (6 + 24 * i) + 'px', width: lat + 'px', height: '22px' });
+          x.innerHTML = '<span class="lh-ap-text">' + esc(nume) + '</span>';
+          arb.appendChild(x);
+        });
+        if (dialog.folder == null) dialog.folder = M.folder || null;
+        marcheazaFolder();
+      }
       const nf = s.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
       if (nf) { nf.value = (M.nume ? M.nume : BOOK + '.xlsx'); setTimeout(() => { try { nf.focus({ preventScroll: true }); nf.select(); } catch (e) { /* */ } }, 0); }
       else { s.setAttribute('tabindex', '-1'); setTimeout(() => { if (dialog && dialog.el === s) focusStrat(); }, 0); }
+    }
+    function marcheazaFolder() {
+      if (!dialog || !dialog.el) return;
+      dialog.el.querySelectorAll('.lh-ap-nav-rand').forEach(x => { const on = x.getAttribute('data-lh-eticheta') === dialog.folder; x.toggleAttribute('data-lh-selectat', on); x.setAttribute('aria-selected', on ? 'true' : 'false'); });
     }
     function salveazaDinDialog() {
       const x = dialog && dialog.el.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
@@ -1204,14 +1838,32 @@
       if (!v) return 'fara_efect';
       M.nume = /\.[a-z0-9]{2,5}$/i.test(v) ? v : v + '.xlsx';
       M.salvat = true;
+      M.mod = false;
       inchideDialog();
       if (backstage) inchideBackstage();
       actualizeazaBare();
       return 'salvare';
     }
+    /* lățimea în caractere, cum o arată fereastra Column Width (64 px = 8,11: uia_excel.json › dialog.ColumnWidth › Edit) */
+    const caractereDin = px => Math.max(0, (px - 5.33) / 7.234);
+    const pxDinCaractere = n => Math.round(n * 7.234 + 5.33);
+    function latimeDinDialog() {
+      const x = dialog && dialog.el.querySelector('[data-lh-tinta="camp:latime_coloana"] input');
+      const n = parseFloat(String(x ? x.value : '').trim().replace(',', '.'));
+      if (!isFinite(n) || n < 0 || n > 255) return 'fara_efect';
+      const f = F(), cols = new Set();
+      f.sel.zone.forEach(q => { for (let c0 = q.c0; c0 <= Math.min(q.c1, NC - 1); c0++) cols.add(c0); });
+      inchideDialog();
+      schimba('format', () => cols.forEach(c0 => { f.lat[c0] = n === 0 ? 0 : pxDinCaractere(n); f.latSet[c0] = true; }));
+      actualizeaza();
+      return 'latime_coloana';
+    }
     function implicitDialog() {
       if (!dialog) return null;
       if (dialog.baza === 'dialog.FileSaveAs') return salveazaDinDialog();
+      if (dialog.baza === 'dialog.ColumnWidth') return latimeDinDialog();
+      if (dialog.baza === 'dialog.SortDialog') return sortDinDialog();
+      if (dialog.baza === 'dialog.SortWarning') return sortDinAvertizare();
       const b = dialog.baza.replace(/^dialog\./, '');
       inchideDialog();
       return I.nesimulat((date.dialoguri['dialog.' + b] || {}).titlu || b);
@@ -1251,7 +1903,7 @@
     /* Ctrl+S pe un registru nesalvat: pagina File › Save As (de_verificat R6-4); F12: fereastra Save As (dialog.FileSaveAs) */
     function salveaza() {
       if (M.edit && !confirma()) return 'fara_efect';
-      if (M.nume) { M.salvat = true; actualizeazaBare(); return 'salvare'; }
+      if (M.nume) { M.salvat = true; M.mod = false; actualizeazaBare(); return 'salvare'; }
       deschideBackstage('Save As');
       return 'pagina_backstage';
     }
@@ -1263,6 +1915,7 @@
       const n = elx.__nod || {}, nume = String(n.e || tinta.replace(/^.*\//, ''));
       if (elx.getAttribute('aria-disabled') === 'true' || (elx.closest('[aria-disabled="true"]') && root.contains(elx.closest('[aria-disabled="true"]')))) return 'indisponibil';
       if (M.edit && !/^(AutoSum)$/.test(id || '') && !confirma()) return 'fara_efect';
+      if (REG.gol) return 'indisponibil';
       switch (id) {
         case 'Bold': return comutaFormat('bold');
         case 'Italic': return comutaFormat('italic');
@@ -1274,13 +1927,21 @@
         case 'AutoSum': return M.edit ? 'fara_efect' : autoSum();
         case 'SortAscendingExcel': return sorteaza(false);
         case 'SortDescendingExcel': return sorteaza(true);
+        case 'SortDialog': return dialogSortare();
         case 'Copy': return copiaza(false);
         case 'Cut': return copiaza(true);
         case 'Paste': return lipeste();
         case 'FileSave': return salveaza();
         case 'Undo': return anuleaza();
         case 'Redo': return reface();
+        case 'CellFillColorPicker': return umpleCuloare('FFFF00');
+        case 'BordersGallery_Dropdown': return meniuBorduri(elx);
+        case 'PercentStyle': return procent();
+        case 'WrapText': return incadreaza();
       }
+      if (id && BORD_EFECT.has(id)) return borduri(id);
+      /* mesajul central numește comanda cum o vede elevul (MINOR critic 6): săgeata „More Options” poartă numele butonului ei */
+      if (/^More Options$/.test(nume)) { const sp = elx.closest('[data-lh-tip="SplitButton"]'); if (sp && sp.getAttribute('data-lh-eticheta')) return I.nesimulat(sp.getAttribute('data-lh-eticheta')); }
       if (id && id in LANSATOR_FILA) return LANSATOR_FILA[id] ? (deschideDialog('dialog.FormatCellsDialog', LANSATOR_FILA[id] === 'Number' ? null : LANSATOR_FILA[id]) ? 'fereastra' : I.nesimulat(nume)) : I.nesimulat(nume);
       if (id && date.lansatoare[id]) return deschideDialog(date.lansatoare[id]) ? 'fereastra' : I.nesimulat(nume);
       return I.nesimulat(nume);
@@ -1291,7 +1952,7 @@
     function celulaLa(x, y) {
       const b = corp.getBoundingClientRect();
       const cx = x - b.left + corp.scrollLeft, cy = y - b.top + corp.scrollTop;
-      return { r: Math.max(0, Math.min(NR - 1, Math.floor(cy / HR()))), c: Math.max(0, Math.min(NC - 1, Math.floor(cx / LC()))) };
+      return { r: Math.max(0, Math.min(NR - 1, randLa(cy))), c: Math.max(0, Math.min(NC - 1, colLa(cx))) };
     }
     const inGrila = tg => corp.contains(tg) || antC.contains(tg) || antR.contains(tg) || colt.contains(tg);
     I.la = {};
@@ -1303,7 +1964,7 @@
       if (dialog || backstage || !inGrila(tg) || tg === maner || tg.closest('.lh-ap-x-maner')) {
         if (tg === maner) { ancora = { umplere: true }; return 'umplere'; }
         ancora = null;
-        if (!dialog && !backstage && !tg.closest('input,textarea,select')) setTimeout(() => { if (!dialog && !backstage && document.activeElement !== inNume) I.focus(); }, 0);
+        if (!dialog && !backstage && !tg.closest('input,textarea,select')) setTimeout(() => { if (!dialog && !backstage && document.activeElement !== inNume && !redenumire) I.focus(); }, 0);
         return null;
       }
       const p = celulaDin(tinta);
@@ -1311,7 +1972,7 @@
         josFacut = true;
         if (M.edit) {
           if (M.edit.a === adr(p.r, p.c)) { ancora = null; return 'selectie'; }
-          if (poatePuncta()) { insereaza(adr(p.r, p.c)); M.edit.punct = true; ancora = { punct: true, de: p }; I.focus(); return 'selectie'; }
+          if (poatePuncta() || (M.edit.ales && M.edit.text.charAt(0) === '=')) { insereaza(adr(p.r, p.c)); M.edit.punct = true; M.edit.propus = { r0: p.r, c0: p.c, r1: p.r, c1: p.c }; ancora = { punct: true, de: p }; deseneazaSelectia(); I.focus(); return 'selectie'; }
           if (!confirma()) { ancora = null; return 'selectie'; }
         }
         M.tabCol = null;
@@ -1320,12 +1981,20 @@
         I.focus();
         return 'selectie';
       }
+      const am = /^antet_coloana_margine:([A-Z]+)$/.exec(tinta || '');
+      if (am) {
+        if (M.edit && !confirma()) return null;
+        const c0 = colIdx(am[1]);
+        ancora = { latime: c0, x0: e.clientX, w0: latPx(F(), c0), ina: instantaneu() };
+        josFacut = true;
+        return 'tragere';
+      }
       const ac = /^antet_coloana:([A-Z]+)$/.exec(tinta || ''), ar = /^antet_rand:(\d+)$/.exec(tinta || '');
       if (ac || ar || tinta === 'selecteaza_tot') {
         if (M.edit && !confirma()) return null;
         const s = F().sel;
         const q = ac ? { r0: 0, c0: colIdx(ac[1]), r1: MAXR - 1, c1: colIdx(ac[1]) } : ar ? { r0: +ar[1] - 1, c0: 0, r1: +ar[1] - 1, c1: MAXC - 1 } : { r0: 0, c0: 0, r1: MAXR - 1, c1: MAXC - 1 };
-        s.zone = [q]; s.activa = { r: ac ? corp.scrollTop / HR() | 0 : q.r0, c: ar ? corp.scrollLeft / LC() | 0 : q.c0 };
+        s.zone = [q]; s.activa = { r: ac ? randLa(corp.scrollTop) : q.r0, c: ar ? colLa(corp.scrollLeft) : q.c0 };
         if (tinta === 'selecteaza_tot') s.activa = { r: 0, c: 0 };
         ancora = { antet: ac ? 'c' : ar ? 'r' : null, q };
         josFacut = true;
@@ -1339,6 +2008,12 @@
     };
     I.la.misca = (e, j) => {
       if (!ancora) return;
+      if (ancora.latime != null) {
+        const f = F(), w = Math.max(0, Math.round(ancora.w0 + (e.clientX - ancora.x0) / z()));
+        if (f.lat[ancora.latime] !== w) { f.lat[ancora.latime] = w; ancora.schimbat = true; deseneazaGrila(); }
+        M.trageInfo = null;
+        return;
+      }
       const p = celulaLa(e.clientX, e.clientY);
       if (ancora.umplere) {
         const q = F().sel.zone[F().sel.zone.length - 1];
@@ -1355,7 +2030,7 @@
         if (!e2) return;
         const a0 = adr(ancora.de.r, ancora.de.c), z2 = p.r === ancora.de.r && p.c === ancora.de.c ? a0 : zonaText({ r0: Math.min(p.r, ancora.de.r), c0: Math.min(p.c, ancora.de.c), r1: Math.max(p.r, ancora.de.r), c1: Math.max(p.c, ancora.de.c) });
         const i = e2.text.lastIndexOf(ancora.ultim || a0, e2.poz);
-        if (i >= 0) { const u = ancora.ultim || a0; e2.text = e2.text.slice(0, i) + z2 + e2.text.slice(i + u.length); e2.poz = i + z2.length; ancora.ultim = z2; deseneazaSelectia(); }
+        if (i >= 0) { const u = ancora.ultim || a0; e2.text = e2.text.slice(0, i) + z2 + e2.text.slice(i + u.length); e2.poz = i + z2.length; ancora.ultim = z2; e2.propus = zonaDin(z2); deseneazaSelectia(); }
         return;
       }
       if (ancora.antet) {
@@ -1377,6 +2052,16 @@
       M.trageInfo = null;
       if (!g) return null;
       if (g === 'umplere_tragere' && an && an.umplere) { const p = celulaLa(e.clientX, e.clientY); return umple(p.r, p.c); }
+      if (an && an.latime != null) {
+        if (!an.schimbat) return 'fara_efect';
+        H.inainte('format', an.ina);
+        F().latSet[an.latime] = true;
+        M.salvat = false;
+        M.mod = true;
+        invalid();
+        actualizeaza();
+        return 'latime_coloana';
+      }
       if (g === 'selectie') { deseneazaSelectia(); return an && an.punct ? 'referinta' : 'selectare'; }
       return null;
     };
@@ -1390,10 +2075,12 @@
       if (p && !dialog && !backstage) {
         if (!josFacut) { if (M.edit && !confirma()) return 'fara_efect'; alege(p.r, p.c, e.shiftKey, e.ctrlKey || e.metaKey); }
         josFacut = false;
+        if (!M.edit || !M.edit.punct) I.focus();
         if (M.edit && M.edit.punct) return 'referinta';
         return e.shiftKey ? 'extindere_selectie' : (e.ctrlKey || e.metaKey) ? 'adaugare_selectie' : 'selectare_celula';
       }
       josFacut = false;
+      if (fel === 'antet_coloana_margine') return 'fara_efect';
       if (/^antet_(coloana|rand)$/.test(fel) || tinta === 'selecteaza_tot') return fel === 'antet_coloana' ? 'selectare_coloana' : fel === 'antet_rand' ? 'selectare_rand' : 'selectare_tot';
       if (tinta === 'grila' || tinta === 'maner_umplere') return 'fara_efect';
       if (!elx || !root.contains(elx)) return null;
@@ -1405,14 +2092,18 @@
       if (fel === 'backstage') {
         const n2 = elx.__nod || {};
         if (n2.id === 'FileTabButton' || v === 'Back') { inchideBackstage(); return 'inapoi'; }
+        if (v === 'Blank workbook' && backstage && backstage.pagina === 'New') return registruNou();
+        if (v === 'Close' && elx.closest('[data-lh-suprafata="backstage.nav"]')) { inchideBackstage(); return inchideRegistru(); }
         if (v === 'Browse' && backstage && backstage.pagina === 'Save As') return deschideDialog('dialog.FileSaveAs') ? 'salvare_ca' : I.nesimulat(v);
         if (elx.closest('[data-lh-suprafata="backstage.nav"]') && n2.t === 'ListItem') {
           if (n2.a === 0) return 'indisponibil';
-          if (v === 'Save') { if (M.nume) { M.salvat = true; inchideBackstage(); return 'salvare'; } return arataPaginaBackstage('Save As') ? 'pagina_backstage' : I.nesimulat(v); }
+          if (v === 'Save') { if (M.nume) { M.salvat = true; M.mod = false; inchideBackstage(); return 'salvare'; } return arataPaginaBackstage('Save As') ? 'pagina_backstage' : I.nesimulat(v); }
           return arataPaginaBackstage(v) ? 'pagina_backstage' : I.nesimulat(v);
         }
         return I.nesimulat(v);
       }
+      if (dialog && elx && dialog.el && dialog.el.contains(elx) && /^dialog\.Sort(Dialog|Warning)$/.test(dialog.baza)) { const r = clicSortare(elx, v); if (r) return r; }
+      if (fel === 'arbore' && dialog && dialog.baza === 'dialog.FileSaveAs') { dialog.folder = v; M.folder = v; marcheazaFolder(); return 'folder'; }
       if (fel === 'fila_dialog' && dialog) { arataFilaDialog((date.dialoguri[dialog.baza].file.some(x => x.fila === v) && v !== date.dialoguri[dialog.baza].file[0].fila) ? v : null); return 'fila_dialog'; }
       if (fel === 'dialog_salvare' && dialog) return v === 'Save' ? salveazaDinDialog() : (inchideDialog(), 'anulare');
       if (fel === 'fereastra' && dialog) {
@@ -1423,7 +2114,9 @@
       if (fel === 'camp') return 'camp';
       if (dialog && dialog.strat.contains(elx)) return I.nesimulat(v);
       if (fel === 'meniu' && meniu && meniu.contains(elx)) {
+        const idm = elx.getAttribute('data-lh-id-mso');
         inchideMeniu();
+        if (idm && BORD_EFECT.has(idm)) return borduri(idm);
         if (/^Cut$/.test(v)) return copiaza(true);
         if (/^Copy$/.test(v)) return copiaza(false);
         if (/^(Paste|Keep Text Only)$/.test(v)) return lipeste();
@@ -1438,6 +2131,7 @@
         if (v === 'Column Width...') return deschideDialog('dialog.ColumnWidth') ? 'fereastra' : I.nesimulat(v);
         if (v === 'Row Height...') return deschideDialog('dialog.RowHeight') ? 'fereastra' : I.nesimulat(v);
         if (v === 'Move or Copy...') return deschideDialog('dialog.SheetMoveOrCopy') ? 'fereastra' : I.nesimulat(v);
+        if (v === 'Rename') return pornesteRedenumire(F().nume);
         return I.nesimulat(v);
       }
       if (fel === 'fila_foii') return alegeFoaia(v);
@@ -1449,10 +2143,32 @@
         return 'editare';
       }
       if (fel === 'zoom') return zoomClic(elx, e, v);
+      if (fel === 'derulare') return derulare(v, e);
       if (fel === 'acces_rapid' || fel === 'panglica' || fel === 'meniu_derulant' || fel === 'lansator' || fel === 'meniu') return apasa(elx, tinta);
       return I.nesimulat(v || tinta);
     };
+    /* potrivirea automată a lățimii (dublu clic pe linia dintre litere): cea mai lată valoare din coloană */
+    function potriveste(c0) {
+      const f = F();
+      let px = 0;
+      Object.keys(f.cel).forEach(a => {
+        const q = pa(a);
+        if (!q || q.c !== c0 || mergeLa(f, q.r, q.c)) return;
+        const v = valoare(f, q.r, q.c), fm = fmtDe(f, a);
+        const t = afisat(v, fm.format_numar);
+        const w = typeof v === 'number' ? latNecesar(t) : Math.ceil(latimeText(t) / z() + 7 + (fm.bold ? 1 : 0));
+        px = Math.max(px, w);
+      });
+      if (!px || px === latPx(f, c0)) return 'fara_efect';
+      schimba('format', () => { f.lat[c0] = px; f.latSet[c0] = true; });
+      actualizeaza();
+      return 'potrivire_latime';
+    }
     I.la.dublu = tinta => {
+      const fm = /^fila_foii:(.+)$/.exec(tinta || '');
+      if (fm && !dialog && !backstage && !REG.gol) return pornesteRedenumire(fm[1]);
+      const am = /^antet_coloana_margine:([A-Z]+)$/.exec(tinta || '');
+      if (am && !dialog && !backstage) return potriveste(colIdx(am[1]));
       const p = celulaDin(tinta);
       if (p && !dialog && !backstage) {
         const f = F(), a = adr(p.r, p.c);
@@ -1471,9 +2187,20 @@
         if (!s.zone.some(q => inZona(q, p.r, p.c))) alege(p.r, p.c);
         return meniuContextual('meniu_contextual.celula', e.clientX, e.clientY);
       }
-      if (/^antet_coloana:/.test(tinta || '')) return meniuContextual('meniu_contextual.antet_coloana', e.clientX, e.clientY);
-      if (/^antet_rand:/.test(tinta || '')) return meniuContextual('meniu_contextual.antet_rand', e.clientX, e.clientY);
-      if (/^fila_foii:/.test(tinta || '')) return meniuContextual('meniu_contextual.fila_foii', e.clientX, e.clientY);
+      /* clic dreapta pe o literă / un număr din afara selecției alege coloana / rândul (meniul e al lor: Column Width…) */
+      const ac = /^antet_coloana:([A-Z]+)$/.exec(tinta || ''), ar = /^antet_rand:(\d+)$/.exec(tinta || '');
+      if (ac || ar) {
+        if (M.edit && !confirma()) return null;
+        const s = F().sel, c0 = ac ? colIdx(ac[1]) : 0, r = ar ? +ar[1] - 1 : 0;
+        const deja = s.zone.some(q => ac ? (q.r0 === 0 && q.r1 === MAXR - 1 && c0 >= q.c0 && c0 <= q.c1) : (q.c0 === 0 && q.c1 === MAXC - 1 && r >= q.r0 && r <= q.r1));
+        if (!deja) {
+          const q = ac ? { r0: 0, c0, r1: MAXR - 1, c1: c0 } : { r0: r, c0: 0, r1: r, c1: MAXC - 1 };
+          s.zone = [q]; s.activa = { r: ac ? randLa(corp.scrollTop) : r, c: ac ? c0 : colLa(corp.scrollLeft) };
+          deseneazaSelectia();
+        }
+        return meniuContextual(ac ? 'meniu_contextual.antet_coloana' : 'meniu_contextual.antet_rand', e.clientX, e.clientY);
+      }
+      if (/^fila_foii:/.test(tinta || '')) { if (REG.gol) return null; alegeFoaia(tinta.slice(10)); return meniuContextual('meniu_contextual.fila_foii', e.clientX, e.clientY); }
       return null;
     };
     function zoomClic(elx, e, v) {
@@ -1492,6 +2219,11 @@
     I.la.tasta = (e, g, inCamp) => {
       const k = e.key;
       if (inCamp) {
+        if (redenumire && e.target === redenumire.inp) {
+          if (k === 'Enter') { e.preventDefault(); terminaRedenumire(true); return 'redenumire_foaie'; }
+          if (k === 'Escape') { e.preventDefault(); terminaRedenumire(false); return 'anulare'; }
+          return null;
+        }
         if (e.target === inNume) {
           if (k === 'Enter') { e.preventDefault(); const q = zonaDin(inNume.value); inNume.blur(); if (q) { F().sel = { activa: { r: q.r0, c: q.c0 }, zone: [q] }; actualizeaza(); vedeCelula(q.r0, q.c0); I.focus(); return 'salt_la_adresa'; } inNume.value = adr(F().sel.activa.r, F().sel.activa.c); I.focus(); return 'fara_efect'; }
           if (k === 'Escape') { inNume.blur(); actualizeazaBare(); I.focus(); return 'anulare'; }
@@ -1513,6 +2245,11 @@
       if (meniu && k === 'Escape') { inchideMeniu(); return 'inchidere_meniu'; }
       if (backstage) { if (k === 'Escape') { inchideBackstage(); return 'inapoi'; } return 'fara_efect'; }
       const ctrl = e.ctrlKey || e.metaKey;
+      if (REG.gol) {
+        if (ctrl && g === 'ctrl_n') { e.preventDefault(); return registruNou(); }
+        if (ctrl && g === 'ctrl_o') { e.preventDefault(); return deschideBackstage('Open'); }
+        return 'fara_efect';
+      }
       if (g === 'tasta_f12') { e.preventDefault(); if (M.edit && !confirma()) return 'fara_efect'; return deschideDialog('dialog.FileSaveAs') ? 'salvare_ca' : I.nesimulat('Save As'); }
       /* ------------------------------------------------ în editare */
       if (M.edit) {
@@ -1543,11 +2280,11 @@
         if (k === 'Escape') { renunta(); return 'anulare'; }
         if (g === 'tasta_f2') { ed.mod = ed.mod === 'Edit' ? 'Enter' : 'Edit'; deseneazaSelectia(); return 'mod_editare'; }
         if (g === 'tasta_f4') { e.preventDefault(); return f4(); }
-        if (k === 'Backspace') { e.preventDefault(); if (ed.poz > 0) { ed.text = ed.text.slice(0, ed.poz - 1) + ed.text.slice(ed.poz); ed.poz--; } deseneazaSelectia(); return 'stergere_inapoi'; }
-        if (k === 'Delete') { e.preventDefault(); ed.text = ed.text.slice(0, ed.poz) + ed.text.slice(ed.poz + 1); deseneazaSelectia(); return 'stergere_inainte'; }
+        if (k === 'Backspace') { e.preventDefault(); if (stergeAles(ed)) ed.propus = null; else if (ed.poz > 0) { ed.text = ed.text.slice(0, ed.poz - 1) + ed.text.slice(ed.poz); ed.poz--; } deseneazaSelectia(); return 'stergere_inapoi'; }
+        if (k === 'Delete') { e.preventDefault(); if (stergeAles(ed)) ed.propus = null; else ed.text = ed.text.slice(0, ed.poz) + ed.text.slice(ed.poz + 1); deseneazaSelectia(); return 'stergere_inainte'; }
         if (/^Arrow/.test(k)) {
           e.preventDefault();
-          if (ed.mod === 'Edit' && (k === 'ArrowLeft' || k === 'ArrowRight')) { ed.poz = Math.max(0, Math.min(ed.text.length, ed.poz + (k === 'ArrowLeft' ? -1 : 1))); deseneazaSelectia(); return 'mutare_cursor'; }
+          if (ed.mod === 'Edit' && (k === 'ArrowLeft' || k === 'ArrowRight')) { ed.ales = null; ed.poz = Math.max(0, Math.min(ed.text.length, ed.poz + (k === 'ArrowLeft' ? -1 : 1))); deseneazaSelectia(); return 'mutare_cursor'; }
           if (ed.mod === 'Edit') return 'fara_efect';
           /* modul Enter: săgeata primește conținutul și mută (excel-sageata-confirma) */
           const a = pa(ed.a);
@@ -1557,7 +2294,7 @@
           alege(a.r + d[0], a.c + d[1]);
           return 'confirmare';
         }
-        if (k === 'Home' || k === 'End') { e.preventDefault(); ed.poz = k === 'Home' ? 0 : ed.text.length; deseneazaSelectia(); return 'mutare_cursor'; }
+        if (k === 'Home' || k === 'End') { e.preventDefault(); ed.ales = null; ed.poz = k === 'Home' ? 0 : ed.text.length; deseneazaSelectia(); return 'mutare_cursor'; }
         if (ctrl && g === 'ctrl_z') { renunta(); return 'anulare'; }
         if (ctrl && g === 'ctrl_a') { e.preventDefault(); return 'fara_efect'; }
         return 'fara_efect';
@@ -1597,6 +2334,8 @@
           case 'ctrl_d': return umpleCu(true);
           case 'ctrl_r': return umpleCu(false);
           case 'ctrl_s': return salveaza();
+          case 'ctrl_n': e.preventDefault(); return registruNou();
+          case 'ctrl_w': e.preventDefault(); return inchideRegistru();
           case 'ctrl_o': return deschideBackstage('Open');
           case 'ctrl_a': {
             const q = zonaCurenta(f, a.r, a.c);
@@ -1613,13 +2352,14 @@
     };
     /* textul venit fără keydown utilizabil (telefon, IME): ca tastarea */
     I.la.text = v => {
-      if (dialog || backstage) return 'fara_efect';
+      if (dialog || backstage || REG.gol) return 'fara_efect';
       if (!M.edit) { const a = F().sel.activa; porneste(adr(a.r, a.c), v, 'Enter'); return 'scriere'; }
       insereaza(v);
       return 'scriere';
     };
     I.la.sterge = g => {
-      if (M.edit) { const ed = M.edit; if (g === 'tasta_backspace') { if (ed.poz > 0) { ed.text = ed.text.slice(0, ed.poz - 1) + ed.text.slice(ed.poz); ed.poz--; } } else ed.text = ed.text.slice(0, ed.poz) + ed.text.slice(ed.poz + 1); deseneazaSelectia(); return g === 'tasta_backspace' ? 'stergere_inapoi' : 'stergere_inainte'; }
+      if (REG.gol) return 'fara_efect';
+      if (M.edit) { const ed = M.edit; if (stergeAles(ed)) { ed.propus = null; deseneazaSelectia(); return g === 'tasta_backspace' ? 'stergere_inapoi' : 'stergere_inainte'; } if (g === 'tasta_backspace') { if (ed.poz > 0) { ed.text = ed.text.slice(0, ed.poz - 1) + ed.text.slice(ed.poz); ed.poz--; } } else ed.text = ed.text.slice(0, ed.poz) + ed.text.slice(ed.poz + 1); deseneazaSelectia(); return g === 'tasta_backspace' ? 'stergere_inapoi' : 'stergere_inainte'; }
       if (g === 'tasta_backspace') { const a = F().sel.activa; porneste(adr(a.r, a.c), '', 'Enter'); return 'editare'; }
       return golesteContinut();
     };
