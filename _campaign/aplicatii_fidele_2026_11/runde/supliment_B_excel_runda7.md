@@ -35,7 +35,8 @@ Se citește DUPĂ `runde/7/prompt.md` și are întâietate acolo unde îl comple
    pe fila foii = redenumire pe loc (textul NU ajunge în celulă); panoul din stânga al Save As după `dialog.FileSaveAs` din
    `uia_excel.json`. **Ctrl+S pe un registru nou**: ce fereastră deschide Excel-ul de pe PC NU e capturat (la Word e „Save
    this file”, dar asta nu e dovadă pentru Excel) → NU inventezi; lași cum e, cu rând în `de_verificat.md` („DE ACOPERIT”).
-9. **X3** — Acces rapid: pictogramele Save / Undo / Redo (Fluent, MIT, din `jocuri/_motor/icoane*` — doar citire, copiate în `aplicatii/`).
+9. **X3** — Acces rapid: pictogramele Save / Undo / Redo (SVG Fluent, MIT: cele din `aplicatii/panglica.js`, sau din `jocuri/_motor/panglica-{excel,word}.js` — acestea doar
+   citire, copiate în `aplicatii/`).
 10. **X4** — banda de sub foaie: filele foilor, „+” și bara de derulare orizontală așezate ca în referință (dreptunghiurile din
     `uia_excel.json`, scara 1,0, cadrul 1366×768 css); nimic nu acoperă rândurile foii.
 Constatările [FARA_REFERINTA] din `runde/6/critic.md` le treci în `de_verificat.md` dacă nu sunt deja; nu le „repari” din memorie.
