@@ -336,4 +336,20 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **R10-4** Excel, axa valorilor la un grafic Clustered Column cu valorile 0…10 (maxim exact 10), 0…100, 0…0,5 și cu o
   valoare negativă (−3): ce minim / maxim / pas pune Excel? (Simulatorul: 5 % deasupra maximului, apoi pasul 1 / 2 / 5 × 10^k
   cu cel mult 10 diviziuni; regula e potrivită pe cele 3 cazuri COM din `com_r9.json` (0–10/1, 0–25/5, 0–30/5).)
+- [ ] **R10-5** Excel, după vărsarea D2:D6 (`=SUM(B2:B7)*B2:B6`): Ctrl+↓ și Ctrl+Shift+↓ din D2, Ctrl+↑ din D7, Ctrl+A în D3.
+  (COM invizibil, criticul 10, `runde/10/critic_probe/com_r10k3.json`: `End(xlDown)` din D2 = $D$6, `End(xlUp)` din D7 = $D$6,
+  `CurrentRegion` al lui D3 = $D$2:$D$6. Simulatorul: D40, D2, D2:D51, toată foaia. Gestul real de tastatură nu e jucat; de
+  înghețat într-o rundă `acoperire` împreună cu R10-3 a, c, unde criticul 10 a dovedit prin COM `#SPILL!` la zona ocupată și
+  vărsarea lui `=B2:B6`, `=B2:B6>8`, `=B2:B6&"a"`, `com_r10k.json`.)
+- [ ] **R10-6** Excel, Ctrl+↓ din ultima celulă plină a unei coloane și Ctrl+→ din ultima plină a unui rând: ajunge la rândul
+  1.048.576 / coloana XFD? (COM, `com_r10k2.json`: `End(xlDown)` = $A$1048576, `End(xlToRight)` = $XFD$7. Simulatorul: se
+  oprește la marginea grilei desenate, A40 / Z4.)
+- [ ] **R10-7** Excel, un grafic ales: Ctrl+C, Ctrl+X, Backspace, apoi Delete + Ctrl+Z (graficul revine ales sau neales?).
+  (Simulatorul: Ctrl+C / Ctrl+X lucrează pe celule, Backspace fără efect, graficul revine neales; criticul 10, [FARA_REFERINTA] 8.)
+- [ ] **R10-8** Excel, Change Chart Type deschis din taste (Alt, J, C, C): ordinea Tab (Recommended Charts, All Charts, lista
+  tipurilor din stânga, rândul subtipurilor, OK, Cancel) și ce fac săgețile în lista tipurilor. (Simulatorul: lista și subtipurile
+  nu primesc focusul, deci Line / Pie nu se pot alege din tastatură; criticul 10, [FARA_REFERINTA] 9.)
+- [ ] **R10-9** Excel, vărsarea D2:D6, Ctrl+Z (vărsarea dispare), Ctrl+Y: care e celula activă după Ctrl+Y? Și unde cade un grafic
+  nou inserat după ce grila a fost derulată 20 de rânduri în jos? (Simulatorul: B2; mijlocul zonei vizibile, G20; criticul 10,
+  [FARA_REFERINTA] 7, 10.)
 <!-- RUNDA10-EXCEL:END -->

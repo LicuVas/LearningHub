@@ -221,3 +221,15 @@ Cererea (18.11, 14:59, verbatim): „continua acum cu etapa 0. apoi mergi cu urm
 - Supliment runda 10: A1, A2, E5, apoi MINOR (ținta tastelor cu graficul ales, Esc în Sort, axa, Quick Styles, More Column Charts). X10 NU: listele lipsă cer o rundă `acoperire`, iar valul nu mai are loc de ea (deblocatorul = R9-6).
 - Commit 5d542c04. Constructorul 1 al rundei 10 pornit.
 - După runda 10: rândul 12 în jurnal, opreste.py → OPRESTE (LIMITA_VAL 6/6), raport de val, apoi valul următor din catastif (B-powerpoint).
+
+## 19.11.2026 ~21:45 — runda 10: constructorul 1 GATA_PENTRU_CRITIC (un singur constructor), criticul 10 pornit (gest_tastatura)
+- Reparate de constructor: A1 (locul graficului după zona vizibilă a grilei: măsurat prin COM în 9 mărimi de fereastră, com_r10_b/c.json; pe grila simulatorului dă G5, nu H11 — D-A1-1; fereastra mică: lipit sus, tăiat jos ~60 px, ca Excel — D-A1-2), A2 (Average 7,5 · Count 6 · Sum 45), E5 (vărsarea D2:D6, recalcul, Ctrl+Z), MINOR: ținta tastelor cu graficul ales, Esc pe Then by, axa. Rămase: Quick Styles, ▾ la More Column Charts. Proba 19 → 0/32.
+- Pasul 7: pornit 19:59:21 după ultima scriere 19:41:28, singur; O1-O9 + porți egale cu pornirea; O6 iar NECONCLUDENT pe timp (1801 s), reluat singur 21:12 = 0 (masurare_o6.json). O4 = 51 o dată la parțial („Failed to fetch” la un scenariu Word), reluat 50.
+- Verificat: lacăt 0, date personale 0, niciun EXCEL.EXE. Commit 770587e5. Criticul 10 pornit: X10, E5, A1, A2 + unghiul gest_tastatura (diff 5d542c04..770587e5).
+- Urmează: rândul 12 în jurnal, opreste.py (6/6 → OPRESTE pe LIMITA_VAL), commit, raportul valului B-excel, apoi B-powerpoint.
+
+## 19.11.2026 ~22:05 — valul B-excel OPRIT (PLATOU + LIMITA_VAL), valul B-powerpoint pornit (runda 11)
+- Criticul 10 (gest_tastatura): închise E5, A2. Deschise X10 (neatins), A1 (pe telefon graficul acoperă tabelul: nu se mută cu degetul, atingerea pe C5 alege graficul, nu se șterge). Nou T1 (pe telefon literele din titlul graficului au ținta celula:A1; asistentul dă indiciu fals). Word curat. GRAV 3.
+- Jurnal rândul 12. opreste.py → OPRESTE (PLATOU: O1-O9 egale în r8-r10; și LIMITA_VAL 6/6). Raportul valului: runde/10/raport.md. B-excel NU se bifează „gata” în catastif (3 GRAV deschise; deblocatori: acoperire Excel pt X10 + rundă Excel pt A1/T1).
+- de_verificat R10-5…R10-9 (din [FARA_REFERINTA] ale criticului 10; patru dovedite prin COM).
+- Runda 11: pregateste_runda.py 11 --etapa B --aplicatia powerpoint (unghi stare_finala_erori); runde/11/masurare_pornire.json = runde/10/masurare.json cu O6 din reluare; supliment_B_powerpoint_runda11.md. Constructorul 1 pornit după commit.
