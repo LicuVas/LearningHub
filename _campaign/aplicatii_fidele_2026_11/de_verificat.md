@@ -283,3 +283,8 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   ce fereastră, ce arată celula? **R8-18** Save this file › Choose a Location ▾: ce rânduri are lista? **R8-19** Σ sau ▾ ›
   Average lângă un singur număr: ce zonă propune Excel (`=AVERAGE(B5)` sau `=AVERAGE(B5:B5)`)? (Simulatorul: `B5:B5`.)
 <!-- RUNDA8-EXCEL:END -->
+<!-- RUNDA9-EXCEL:START -->
+- [ ] **R9-1** Excel, B2:B7 numere, clic pe B8, Home › Σ (AutoSum): bara de stare arată „Point”. Apasă ↓ (sau ↑): ce scrie
+  formula (`=SUM(B9)` / `=SUM(B7)`, adică pornește din celula B8, sau altceva)? (Simulatorul, după runda 9: ↓ → `=SUM(B9)`, ↑ →
+  `=SUM(B7)`, mecanismul modului Point de la „=” + săgeată; referința dă doar modul, `c_autosum.mod_dupa_sigma`.)
+<!-- RUNDA9-EXCEL:END -->

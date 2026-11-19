@@ -1406,6 +1406,10 @@
       /* zona propusă e aleasă (scrisul sau tragerea elevului o înlocuiește) și încadrată punctat (lecția m2-l08:181);
          cursorul stă înaintea parantezei; Enter o primește (scenarii_real/excel-autosum-buton) */
       porneste(adr(a.r, a.c), t, 'Enter', t.length - 1, zona ? [t.length - 1 - zona.length, t.length - 1] : null, zona ? zonaDin(zona) : null);
+      /* critic runda 8, GRAV E3: cu zona propusă, celula e în modul Point (uia_excel.json › acoperire_r7.fapte.c_autosum:
+         mod_dupa_sigma / mod_dupa_average „Cell Mode Point”); o săgeată înlocuiește zona cu o referință (mecanismul K5,
+         pornit din celula editată), nu primește formula */
+      if (zona) { M.edit.punct = true; M.edit.pk = { i: t.length - 1 - zona.length, j: t.length - 1, r: a.r, c: a.c }; deseneazaSelectia(); }
       return 'suma_automata';
     }
     /* Sort A to Z / Z to A (excel-sortare-a-z): zona curentă în jurul celulei active; primul rând = antet dacă e text
@@ -1523,6 +1527,11 @@
       const S0 = dialog.sort, li0 = S0.li0;
       if (!li0) return;
       inchideListaSort();
+      /* critic runda 8, GRAV K1: rândurile 2+ se redesenează; focusul care era pe un control al lor trece pe echivalentul
+         lui din rândul nou (același nivel, aceeași casetă), ca să nu cadă din fereastră */
+      const a0 = document.activeElement, r0 = a0 && dialog.el.contains(a0) ? a0.closest('.lh-ap-x-nivel-copie') : null;
+      const fNiv = r0 ? r0.getAttribute('data-lh-nivel') : null, fc = r0 && a0.closest('[data-lh-camp]');
+      const fCamp = fc ? fc.getAttribute('data-lh-camp') : 'coloana';
       li0.parentNode.querySelectorAll('.lh-ap-x-nivel-copie').forEach(x => x.remove());
       li0.style.display = S0.niv.length ? '' : 'none';
       const top0 = parseFloat(li0.style.top) || 22;
@@ -1548,6 +1557,12 @@
           e.setAttribute('data-lh-valoare', val[k]);
         });
       });
+      if (fNiv != null) focusNivel(+fNiv, fCamp);
+    }
+    function focusNivel(i, camp) {
+      if (!dialog || !dialog.el || !dialog.sort) return;
+      const n = Math.max(0, Math.min(dialog.sort.niv.length - 1, i));
+      focusControl(dialog.el.querySelector('[data-lh-nivel="' + n + '"] [data-lh-camp="' + camp + '"]'));
     }
     function inchideListaSort() { if (dialog && dialog.sort && dialog.sort.lista) { dialog.sort.lista.el.remove(); dialog.sort.lista = null; } }
     function deschideListaSort(i, camp, cb) {
@@ -1587,6 +1602,7 @@
         if (L0.camp === 'coloana' && x.c != null) n.c = x.c;
         else if (L0.camp === 'ordine') { if (x.desc == null) return I.nesimulat('Custom List...'); n.desc = x.desc; }
         deseneazaNiveluri();
+        focusNivel(L0.i, L0.camp);
         return 'alegere';
       }
       inchideListaSort();
@@ -1595,6 +1611,7 @@
         S0.ales = +rand.getAttribute('data-lh-nivel');
         deseneazaNiveluri();
         const cb2 = cb && dialog.el.querySelector('[data-lh-nivel="' + S0.ales + '"] [data-lh-camp="' + cb.getAttribute('data-lh-camp') + '"]');
+        if (cb2) focusControl(cb2);
         return cb2 ? deschideListaSort(S0.ales, cb2.getAttribute('data-lh-camp'), cb2) : 'alegere_nivel';
       }
       if (v === 'Add Level') { if (S0.niv.length >= 64) return 'fara_efect'; S0.niv.push({ c: null, desc: false }); S0.ales = S0.niv.length - 1; deseneazaNiveluri(); return 'nivel_nou'; }
@@ -1943,7 +1960,17 @@
       try { s.focus({ preventScroll: true }); } catch (e) { /* */ }
     }
     /* o fereastră deschisă PESTE alta (eroarea „All sort criteria…” peste Sort) o ține minte în `sub`; închiderea ei o readuce */
-    function inchideDialog() { if (!dialog) return; if (/^dialog\.eroare_formula/.test(dialog.baza)) M.mesaj = null; const sub = dialog.sub || null; dialog.strat.remove(); dialog = sub; focusStrat(); }
+    function inchideDialog() {
+      if (!dialog) return;
+      if (/^dialog\.eroare_formula/.test(dialog.baza)) M.mesaj = null;
+      /* critic runda 8, GRAV E4: după „We found a typo…” închisă fără Yes (No / Esc / Închidere), celula trece în modul Edit
+         (uia_excel.json › acoperire_r7.fapte.e_sum_lipit.mod_dupa_inchidere „Cell Mode Edit”): săgețile mută cursorul în
+         formulă. Celelalte două ferestre de eroare rămân cum erau (de_verificat R8-14). */
+      const edit = dialog.baza === 'dialog.eroare_formula' && M.edit;
+      if (edit) { M.edit.mod = 'Edit'; M.edit.punct = false; M.edit.pk = null; M.edit.ales = null; }
+      const sub = dialog.sub || null; dialog.strat.remove(); dialog = sub; focusStrat();
+      if (edit) deseneazaSelectia();
+    }
     function deschideDialog(baza, fila, peste) {
       const info = date.dialoguri[baza];
       if (!info) return false;
@@ -2114,7 +2141,10 @@
       if (k === 'Tab') { e.preventDefault(); return tabDialog(e.shiftKey); }
       if (k === 'Enter' || (k === ' ' && esteButon(ctl))) {
         e.preventDefault();
-        const b = esteButon(ctl) ? ctl : butonImplicit();
+        /* critic runda 8, GRAV E2: Enter apasă butonul cu focusul doar dacă e buton de apăsat (push button); pe o casetă de
+           bifat sau un buton radio apasă butonul implicit (§4 `activat`: ENTER = „IDOK or control identifier of the default
+           push button”). Space comută în continuare caseta / alege butonul radio. */
+        const b = (k === 'Enter' ? !!ctl && ctl.getAttribute('data-lh-tip') === 'Button' : esteButon(ctl)) ? ctl : butonImplicit();
         return b ? apasaInDialog(b) : implicitDialog();
       }
       if (/^Arrow/.test(k)) {
@@ -2598,7 +2628,7 @@
             const d = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[k];
             const b0 = ed.pk || pa(ed.a);
             const r = Math.max(0, Math.min(MAXR - 1, b0.r + d[0])), c0 = Math.max(0, Math.min(MAXC - 1, b0.c + d[1])), s2 = adr(r, c0);
-            if (ed.pk) ed.text = ed.text.slice(0, ed.pk.i) + s2 + ed.text.slice(ed.pk.j);
+            if (ed.pk) { ed.text = ed.text.slice(0, ed.pk.i) + s2 + ed.text.slice(ed.pk.j); ed.ales = null; }
             else { stergeAles(ed); ed.pk = { i: ed.poz }; ed.text = ed.text.slice(0, ed.poz) + s2 + ed.text.slice(ed.poz); }
             Object.assign(ed.pk, { j: ed.pk.i + s2.length, r, c: c0 });
             ed.poz = ed.pk.j;
@@ -2693,6 +2723,9 @@
     root.addEventListener('keydown', e => {
       if (!dialog || !dialog.el || !e.altKey || e.ctrlKey || e.metaKey || !/^Key[A-Z]$/.test(e.code || '')) return;
       e.preventDefault();
+      /* critic runda 8, GRAV E1: litera consumată aici e tot o tastă apăsată cât Alt e ținut, deci Alt nu mai e „singur”
+         (KeyTips apar doar la Alt apăsat și eliberat singur; referința: Save „Alt+s”, cu „+”, față de filele „Alt, H”) */
+      altSingur = false;
       e.stopImmediatePropagation();
       const re = new RegExp('^alt\\+' + e.code.slice(3) + '$', 'i');
       const cand = [...dialog.el.querySelectorAll('[data-lh-tip]')].filter(x => x.__nod && re.test(String(x.__nod.ta || '').replace(/\s+/g, '')) && L._vizibil(x));
